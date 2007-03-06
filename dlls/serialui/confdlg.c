@@ -376,10 +376,10 @@ static INT_PTR CALLBACK SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM w
         {
         case IDOK:
             SERIALUI_DialogInfoToDCB(hWnd,info);
-            EndDialog(hWnd,1);
+            EndDialog(hWnd, ERROR_SUCCESS);
             return TRUE;
         case IDCANCEL:
-            EndDialog(hWnd,0);
+            EndDialog(hWnd, ERROR_CANCELLED);
             return TRUE;
 /* test code for Get/SetDefaultCommConfig begins */
         case ID_GETDEFAULT:
@@ -431,38 +431,44 @@ static VOID SERIALUI_strfree( LPWSTR strW )
 /***********************************************************************
  * drvCommConfigDialogW (SERIALUI.@)
  *
- * Used by Win9x KERNEL to show a dialog for configuring a COMM port.
+ * Show a dialog for configuring a Serial Port.
+ *
  */
-BOOL WINAPI drvCommConfigDialogW(
-	LPCWSTR lpszName,
-	HWND hWndParent,
-	LPCOMMCONFIG lpCommConfig
-) {
+DWORD WINAPI drvCommConfigDialogW(LPCWSTR lpszName, HWND hWndParent, LPCOMMCONFIG lpCommConfig)
+{
     SERIALUI_DialogInfo info;
+    INT res;
 
     info.lpCommConfig  = lpCommConfig;
     info.lpszDevice    = lpszName;
     info.bConvert      = FALSE;
     info.dwFlowControl = 0;
 
-    if(!lpCommConfig)
-        return FALSE;
+    if ((!lpCommConfig) || (!lpszName))
+        return ERROR_INVALID_PARAMETER;
 
-    return DialogBoxParamW(SERIALUI_hModule,
+    if (lpCommConfig->dwSize < sizeof(COMMCONFIG))
+        return ERROR_INSUFFICIENT_BUFFER;
+
+    if (!lpszName[0])
+        return ERROR_BADKEY;
+
+    res = DialogBoxParamW( SERIALUI_hModule,
                            MAKEINTRESOURCEW(IDD_SERIALUICONFIG),
                            hWndParent,
                            SERIALUI_ConfigDialogProc,
                            (LPARAM)&info);
+
+    return (res == -1) ? GetLastError() : res ;
 }
 
 /***********************************************************************
  * drvCommConfigDialogA (SERIALUI.@)
  */
-BOOL WINAPI drvCommConfigDialogA(
-	LPCSTR lpszName, HWND hWndParent, LPCOMMCONFIG lpCommConfig )
+DWORD WINAPI drvCommConfigDialogA(LPCSTR lpszName, HWND hWndParent, LPCOMMCONFIG lpCommConfig)
 {
     LPWSTR strW = SERIALUI_strdup( lpszName );
-    BOOL r = drvCommConfigDialogW( strW, hWndParent, lpCommConfig );
+    DWORD r = drvCommConfigDialogW( strW, hWndParent, lpCommConfig );
     SERIALUI_strfree( strW );
     return r;
 }
@@ -560,7 +566,8 @@ DWORD WINAPI drvGetDefaultCommConfigW(
     r = sizeof(comW) / sizeof(WCHAR);       /* len of "com\0" */
     lstrcpynW(szKeyName, lpszDevice, r);    /* simulate a lstrcmpnW */
     r--;
-    if( lstrcmpW(szKeyName, comW) ||
+
+    if( lstrcmpiW(szKeyName, comW) ||
         (lpszDevice[r] < '1') || (lpszDevice[r] > '9') || lpszDevice[r+1]) {
         return ERROR_BADKEY;
     }
@@ -593,7 +600,6 @@ DWORD WINAPI drvGetDefaultCommConfigW(
     else
     {
         /* FIXME: default to a hardcoded commconfig */
-
         lpCommConfig->dcb.DCBlength = sizeof(DCB);
         lpCommConfig->dcb.BaudRate = 9600;
         lpCommConfig->dcb.fBinary = TRUE;

@@ -1194,23 +1194,20 @@ BOOL WINAPI CommConfigDialogA(
     HWND hWnd,                 /* [in] parent window for the dialog */
     LPCOMMCONFIG lpCommConfig) /* [out] pointer to struct to fill */
 {
-    FARPROC lpfnCommDialog;
-    HMODULE hConfigModule;
-    BOOL r = FALSE;
+    LPWSTR  lpDeviceW = NULL;
+    DWORD   len;
+    BOOL    r;
 
     TRACE("(%s, %p, %p)\n", debugstr_a(lpszDevice), hWnd, lpCommConfig);
 
-    hConfigModule = LoadLibraryW(lpszSerialUI);
-    if(!hConfigModule)
-        return FALSE;
-
-    lpfnCommDialog = GetProcAddress(hConfigModule, "drvCommConfigDialogA");
-
-    if(lpfnCommDialog)
-        r = lpfnCommDialog(lpszDevice,hWnd,lpCommConfig);
-
-    FreeLibrary(hConfigModule);
-
+    if (lpszDevice)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, lpszDevice, -1, NULL, 0 );
+        lpDeviceW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, lpszDevice, -1, lpDeviceW, len );
+    }
+    r = CommConfigDialogW(lpDeviceW, hWnd, lpCommConfig);
+    HeapFree( GetProcessHeap(), 0, lpDeviceW );
     return r;
 }
 
@@ -1224,24 +1221,23 @@ BOOL WINAPI CommConfigDialogW(
     HWND hWnd,                 /* [in] parent window for the dialog */
     LPCOMMCONFIG lpCommConfig) /* [out] pointer to struct to fill */
 {
-    FARPROC lpfnCommDialog;
+    FARPROC pCommConfigDialog;
     HMODULE hConfigModule;
-    BOOL r = FALSE;
+    DWORD   res = ERROR_INVALID_PARAMETER;
 
     TRACE("(%s, %p, %p)\n", debugstr_w(lpszDevice), hWnd, lpCommConfig);
-
     hConfigModule = LoadLibraryW(lpszSerialUI);
-    if(!hConfigModule)
-        return FALSE;
 
-    lpfnCommDialog = GetProcAddress(hConfigModule, "drvCommConfigDialogW");
+    if (hConfigModule) {
+        pCommConfigDialog = GetProcAddress(hConfigModule, "drvCommConfigDialogW");
+        if (pCommConfigDialog) {
+            res = pCommConfigDialog(lpszDevice, hWnd, lpCommConfig);
+        }
+        FreeLibrary(hConfigModule);
+    }
 
-    if(lpfnCommDialog)
-        r = lpfnCommDialog(lpszDevice,hWnd,lpCommConfig);
-
-    FreeLibrary(hConfigModule);
-
-    return r;
+    if (res) SetLastError(res);
+    return (res == ERROR_SUCCESS);
 }
 
 /***********************************************************************
