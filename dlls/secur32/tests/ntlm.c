@@ -1116,6 +1116,74 @@ end:
     HeapFree(GetProcessHeap(), 0, complex_data[3].pvBuffer);
 }
 
+static void testAcquireCredentialsHandle(void)
+{
+    CredHandle cred;
+    TimeStamp ttl;
+    static char test_user[] = "testuser",
+                workgroup[] = "WORKGROUP",
+                test_pass[] = "testpass",
+                sec_pkg_name[] = "NTLM";
+    SECURITY_STATUS ret;
+    SEC_WINNT_AUTH_IDENTITY id;
+    PSecPkgInfo             pkg_info = NULL;
+
+    if(pQuerySecurityPackageInfoA(sec_pkg_name, &pkg_info) != SEC_E_OK)
+    {
+        skip("NTLM package not installed, skipping test\n");
+        return;
+    }
+    pFreeContextBuffer(pkg_info);
+
+    id.User = (unsigned char*) test_user;
+    id.UserLength = strlen((char *) id.User);
+    id.Domain = (unsigned char *) workgroup;
+    id.DomainLength = strlen((char *) id.Domain);
+    id.Password = (unsigned char*) test_pass;
+    id.PasswordLength = strlen((char *) id.Password);
+    id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+
+    ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
+            NULL, &id, NULL, NULL, &cred, &ttl);
+    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+            getSecError(ret));
+    pFreeCredentialsHandle(&cred);
+
+    id.DomainLength = 0;
+    ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
+            NULL, &id, NULL, NULL, &cred, &ttl);
+    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+            getSecError(ret));
+    pFreeCredentialsHandle(&cred);
+
+    id.Domain = NULL;
+    ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
+            NULL, &id, NULL, NULL, &cred, &ttl);
+    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+            getSecError(ret));
+    pFreeCredentialsHandle(&cred);
+
+    id.Domain = (unsigned char *) workgroup;
+    id.DomainLength = strlen((char *) id.Domain);
+    id.UserLength = 0;
+    id.User = NULL;
+    ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
+            NULL, &id, NULL, NULL, &cred, &ttl);
+    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+            getSecError(ret));
+    pFreeCredentialsHandle(&cred);
+
+    id.User = (unsigned char*) test_user;
+    id.UserLength = strlen((char *) id.User);
+    id.Password = NULL;
+    id.PasswordLength = 0;
+    ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
+            NULL, &id, NULL, NULL, &cred, &ttl);
+    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+            getSecError(ret));
+    pFreeCredentialsHandle(&cred);
+}
+
 START_TEST(ntlm)
 {
     InitFunctionPtrs();
@@ -1125,6 +1193,7 @@ START_TEST(ntlm)
        pInitializeSecurityContextA && pCompleteAuthToken &&
        pQuerySecurityPackageInfoA)
     {
+        testAcquireCredentialsHandle();
         testInitializeSecurityContextFlags();
         if(pAcceptSecurityContext)
         {

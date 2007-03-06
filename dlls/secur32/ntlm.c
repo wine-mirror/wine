@@ -163,12 +163,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                     PSEC_WINNT_AUTH_IDENTITY_W auth_data = 
                         (PSEC_WINNT_AUTH_IDENTITY_W)pAuthData;
 
-                    if (!auth_data->UserLength || !auth_data->DomainLength)
-                    {
-                        ret = SEC_E_NO_CREDENTIALS;
-                        phCredential = NULL;
-                        break;
-                    }
                     /* Get username and domain from pAuthData */
                     username = HeapAlloc(GetProcessHeap(), 0, 
                             (auth_data->UserLength + 1) * sizeof(SEC_WCHAR));
