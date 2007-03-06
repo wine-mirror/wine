@@ -1373,16 +1373,6 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
         ascii_chars = XLookupString(event, Str, sizeof(Str), &keysym, NULL);
     wine_tsx11_unlock();
 
-    /* Ignore some unwanted events */
-    if ((keysym >= XK_ISO_Lock && keysym <= XK_ISO_Last_Group_Lock) ||
-         keysym == XK_Mode_switch)
-    {
-        wine_tsx11_lock();
-        TRACE("Ignoring %s keyboard event\n", XKeysymToString(keysym));
-        wine_tsx11_unlock();
-        return;
-    }
-
     TRACE_(key)("state = %X nbyte = %d, status 0x%x\n", event->state, ascii_chars, status);
 
     if (status == XBufferOverflow)
@@ -2555,9 +2545,9 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 		ksname = "No Name";
 	    if ((keysym >> 8) != 0xff)
 		{
-		ERR("Please report: no char for keysym %04lX (%s) :\n",
+		WARN("no char for keysym %04lX (%s) :\n",
                     keysym, ksname);
-		ERR("(virtKey=%X,scanCode=%X,keycode=%X,state=%X)\n",
+		WARN("virtKey=%X, scanCode=%X, keycode=%X, state=%X\n",
                     virtKey, scanCode, e.keycode, e.state);
 		}
 	    }
