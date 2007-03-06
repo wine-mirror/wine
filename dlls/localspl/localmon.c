@@ -520,7 +520,13 @@ DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInput
     if (!lstrcmpW(pszDataName, cmd_SetDefaultCommConfigW)) {
         /* get the portname from the Handle */
         ptr =  strchrW(((xcv_t *)hXcv)->nameW, ' ');
-        ptr++;  /* skip the space */
+        if (ptr) {
+            ptr++;  /* skip the space */
+        }
+        else
+        {
+            ptr =  ((xcv_t *)hXcv)->nameW;
+        }
         lstrcpynW(buffer, ptr, sizeof(buffer)/sizeof(WCHAR));
         if (buffer[0]) buffer[lstrlenW(buffer)-1] = '\0';  /* remove the ':' */
         res = SetDefaultCommConfigW(buffer, (LPCOMMCONFIG) pInputData, cbInputData);
