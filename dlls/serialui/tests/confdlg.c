@@ -31,6 +31,8 @@
 
 
 static HINSTANCE   hdll;
+static DWORD  (WINAPI *pCommConfigDialogA)(LPCSTR, HWND, LPCOMMCONFIG);
+static DWORD  (WINAPI *pCommConfigDialogW)(LPCWSTR, HWND, LPCOMMCONFIG);
 static DWORD  (WINAPI *pGetDefaultCommConfigA)(LPCSTR, LPCOMMCONFIG, LPDWORD);
 static DWORD  (WINAPI *pGetDefaultCommConfigW)(LPCWSTR, LPCOMMCONFIG, LPDWORD);
 
@@ -55,6 +57,14 @@ static LPCSTR load_functions(void)
     hdll = LoadLibraryA(ptr);
     if (!hdll) return ptr;
 
+    ptr = "drvCommConfigDialogA";
+    pCommConfigDialogA = (VOID *) GetProcAddress(hdll, ptr);
+    if (!pCommConfigDialogA) return ptr;
+
+    ptr = "drvCommConfigDialogW";
+    pCommConfigDialogW = (VOID *) GetProcAddress(hdll, ptr);
+    if (!pCommConfigDialogW) return ptr;
+
     ptr = "drvGetDefaultCommConfigA";
     pGetDefaultCommConfigA = (VOID *) GetProcAddress(hdll, ptr);
     if (!pGetDefaultCommConfigA) return ptr;
@@ -66,6 +76,155 @@ static LPCSTR load_functions(void)
 
     return NULL;
 }
+
+/* ################# */
+
+static void test_drvCommConfigDialogA(void)
+{
+    COMMCONFIG  pCC[3];
+    CHAR        bufferA[16];
+    DWORD       i;
+    DWORD       res;
+    DWORD       len;
+
+
+    /* test ports "com1" - "com4" */
+    for (i = 1; i < 5 ; i++) {
+        sprintf(bufferA, fmt_comA, i);
+        len = sizeof(pCC);
+        ZeroMemory(pCC, sizeof(pCC));
+        SetLastError(0xdeadbeef);
+        res = pGetDefaultCommConfigA(bufferA, pCC, &len);
+        if (res == ERROR_CALL_NOT_IMPLEMENTED) {
+            /* NT does not implement the ANSI API */
+            skip("*A not implemented\n");
+            return;
+        }
+
+        if (res == ERROR_SUCCESS) {
+
+            if (winetest_interactive) {
+                SetLastError(0xdeadbeef);
+                res = pCommConfigDialogA(bufferA, NULL, pCC);
+                /* OK: ERROR_SUCCESS,  Cancel: ERROR_CANCELLED */
+                trace("returned %u with %u for '%s'\n", res, GetLastError(), bufferA);
+            }
+
+            ZeroMemory(pCC, sizeof(pCC));
+            SetLastError(0xdeadbeef);
+            res = pCommConfigDialogA(bufferA, NULL, pCC);
+            ok( res == ERROR_INSUFFICIENT_BUFFER,
+                "returned %u with %u for '%s' (expected ERROR_INSUFFICIENT_BUFFER)\n",
+                res, GetLastError(), bufferA);
+
+
+            SetLastError(0xdeadbeef);
+            res = pCommConfigDialogA(bufferA, NULL, NULL);
+            ok( res == ERROR_INVALID_PARAMETER,
+                "returned %u with %u for '%s' (expected ERROR_INVALID_PARAMETER)\n",
+                res, GetLastError(), bufferA);
+        }
+    }
+
+
+    ZeroMemory(pCC, sizeof(pCC));
+    SetLastError(0xdeadbeef);
+    res = pCommConfigDialogA(emptyA, NULL, pCC);
+    ok( res == ERROR_INSUFFICIENT_BUFFER,
+        "returned %u with %u (expected ERROR_INSUFFICIENT_BUFFER)\n",
+        res, GetLastError());
+
+
+    ZeroMemory(pCC, sizeof(pCC));
+    pCC[0].dwSize = sizeof(COMMCONFIG);
+    SetLastError(0xdeadbeef);
+    res = pCommConfigDialogA(emptyA, NULL, pCC);
+    ok( res == ERROR_BADKEY, "returned %u with %u (expected ERROR_BADKEY)\n",
+        res, GetLastError());
+
+
+    ZeroMemory(pCC, sizeof(pCC));
+    SetLastError(0xdeadbeef);
+    res = pCommConfigDialogA(NULL, NULL, pCC);
+    ok( res == ERROR_INVALID_PARAMETER,
+        "returned %u with %u (expected ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+}
+
+/* ################# */
+
+static void test_drvCommConfigDialogW(void)
+{
+    COMMCONFIG  pCC[3];
+    CHAR        bufferA[16];
+    WCHAR       bufferW[16];
+    DWORD       i;
+    DWORD       res;
+    DWORD       len;
+
+
+    /* test ports "com1" - "com4" */
+    for (i = 1; i < 5 ; i++) {
+        sprintf(bufferA, fmt_comA, i);
+        MultiByteToWideChar( CP_ACP, 0, bufferA, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) );
+        len = sizeof(pCC);
+        ZeroMemory(pCC, sizeof(pCC));
+        SetLastError(0xdeadbeef);
+        res = pGetDefaultCommConfigW(bufferW, pCC, &len);
+        if (res == ERROR_CALL_NOT_IMPLEMENTED) {
+            skip("*W not implemented\n");
+            return;
+        }
+
+        if (res == ERROR_SUCCESS) {
+
+            if (winetest_interactive) {
+                SetLastError(0xdeadbeef);
+                res = pCommConfigDialogW(bufferW, NULL, pCC);
+                /* OK: ERROR_SUCCESS,  Cancel: ERROR_CANCELLED */
+                trace("returned %u with %u for '%s'\n", res, GetLastError(), bufferA);
+            }
+
+            ZeroMemory(pCC, sizeof(pCC));
+            SetLastError(0xdeadbeef);
+            res = pCommConfigDialogW(bufferW, NULL, pCC);
+            ok( res == ERROR_INSUFFICIENT_BUFFER,
+                "returned %u with %u for '%s' (expected ERROR_INSUFFICIENT_BUFFER)\n",
+                res, GetLastError(), bufferA);
+
+            SetLastError(0xdeadbeef);
+            res = pCommConfigDialogW(bufferW, NULL, NULL);
+            ok( res == ERROR_INVALID_PARAMETER,
+                "returned %u with %u for '%s' (expected ERROR_INVALID_PARAMETER)\n",
+                res, GetLastError(), bufferA);
+        }
+    }
+
+
+    ZeroMemory(pCC, sizeof(pCC));
+    SetLastError(0xdeadbeef);
+    res = pCommConfigDialogW(emptyW, NULL, pCC);
+    ok( res == ERROR_INSUFFICIENT_BUFFER,
+        "returned %u with %u (expected ERROR_INSUFFICIENT_BUFFER)\n",
+        res, GetLastError());
+
+
+    ZeroMemory(pCC, sizeof(pCC));
+    pCC[0].dwSize = sizeof(COMMCONFIG);
+    SetLastError(0xdeadbeef);
+    res = pCommConfigDialogW(emptyW, NULL, pCC);
+    ok( res == ERROR_BADKEY, "returned %u with %u (expected ERROR_BADKEY)\n",
+        res, GetLastError());
+
+
+    ZeroMemory(pCC, sizeof(pCC));
+    SetLastError(0xdeadbeef);
+    res = pCommConfigDialogW(NULL, NULL, pCC);
+    ok( res == ERROR_INVALID_PARAMETER,
+        "returned %u with %u (expected ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+}
+
 
 /* ################# */
 
@@ -265,6 +424,8 @@ START_TEST(confdlg)
         return;
     }
 
+    test_drvCommConfigDialogA();
+    test_drvCommConfigDialogW();
     test_drvGetDefaultCommConfigA();
     test_drvGetDefaultCommConfigW();
 
