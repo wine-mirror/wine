@@ -1208,7 +1208,6 @@ DECL_HANDLER(duplicate_token)
                 privilege_add( token, &privilege->luid, privilege->enabled );
 
             access = req->access;
-            if (access & MAXIMUM_ALLOWED) access = TOKEN_ALL_ACCESS; /* FIXME: needs general solution */
             reply->new_handle = alloc_handle( current->process, token, access, req->attributes);
             release_object( token );
         }

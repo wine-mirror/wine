@@ -1713,7 +1713,6 @@ DECL_HANDLER(create_key)
     struct unicode_str name, class;
     unsigned int access = req->access;
 
-    if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
     reply->hkey = 0;
 
     if (req->namelen > get_req_data_size())
@@ -1752,7 +1751,6 @@ DECL_HANDLER(open_key)
     struct unicode_str name;
     unsigned int access = req->access;
 
-    if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
     reply->hkey = 0;
     /* NOTE: no access rights are required to open the parent key, only the child key */
     if ((parent = get_parent_hkey_obj( req->parent )))
