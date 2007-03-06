@@ -41,7 +41,8 @@ SUBDIRS = \
 	winevdm \
 	winhelp \
 	winver \
-	wordpad
+	wordpad \
+	xcopy
 
 # Sub-directories to run make install into
 INSTALLSUBDIRS = \
@@ -77,7 +78,8 @@ INSTALLSUBDIRS = \
 	winevdm \
 	winhelp \
 	winver \
-	wordpad
+	wordpad \
+	xcopy
 
 # Programs to install in bin directory
 INSTALLPROGS = \
