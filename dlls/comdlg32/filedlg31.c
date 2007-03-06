@@ -696,7 +696,7 @@ static LPWSTR FD31_DupToW(LPCSTR str, DWORD size)
  *                              FD31_MapOfnStructA          [internal]
  *      map a 32 bits Ansi structure to an Unicode one
  */
-void FD31_MapOfnStructA(const LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open)
+void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, BOOL open)
 {
     UNICODE_STRING usBuffer;
 

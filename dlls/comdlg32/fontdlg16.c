@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 static const WCHAR strWineFontData16[] =
                                {'_','_','W','I','N','E','_','F','O','N','T','D','L','G','D','A','T','A','1','6',0};
 
-static void FONT_LogFont16To32W( const LPLOGFONT16 font16, LPLOGFONTW font32 )
+static void FONT_LogFont16To32W( const LOGFONT16 *font16, LPLOGFONTW font32 )
 {
     font32->lfHeight = font16->lfHeight;
     font32->lfWidth = font16->lfWidth;
