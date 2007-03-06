@@ -105,6 +105,13 @@ static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 }
 
 static void state_zenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    /* No z test without depth stencil buffers */
+    if(stateblock->wineD3DDevice->stencilBufferTarget == NULL) {
+        glDisable(GL_DEPTH_TEST); /* This also disables z writing in gl */
+        checkGLcall("glDisable GL_DEPTH_TEST");
+        return;
+    }
+
     switch ((WINED3DZBUFFERTYPE) stateblock->renderState[WINED3DRS_ZENABLE]) {
         case WINED3DZB_FALSE:
             glDisable(GL_DEPTH_TEST);
@@ -611,6 +618,13 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *c
     GLint depthFail_ccw = GL_KEEP;
     GLint stencilPass_ccw = GL_KEEP;
 
+    /* No stencil test without a stencil buffer */
+    if(stateblock->wineD3DDevice->stencilBufferTarget == NULL) {
+        glDisable(GL_STENCIL_TEST);
+        checkGLcall("glDisable GL_STENCIL_TEST");
+        return;
+    }
+
     if( stateblock->set.renderState[WINED3DRS_STENCILENABLE] )
         onesided_enable = stateblock->renderState[WINED3DRS_STENCILENABLE];
     if( stateblock->set.renderState[WINED3DRS_TWOSIDEDSTENCILMODE] )
@@ -664,7 +678,11 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *c
 }
 
 static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    glStencilMask(stateblock->renderState[WINED3DRS_STENCILWRITEMASK]);
+    if(stateblock->wineD3DDevice->stencilBufferTarget) {
+        glStencilMask(stateblock->renderState[WINED3DRS_STENCILWRITEMASK]);
+    } else {
+        glStencilMask(0);
+    }
     checkGLcall("glStencilMask");
 }
 

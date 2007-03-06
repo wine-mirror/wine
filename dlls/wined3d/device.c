@@ -5175,6 +5175,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
             set_depth_stencil_fbo(iface, pNewZStencil);
         }
+
+        if((!tmp && pNewZStencil) || (!pNewZStencil && tmp)) {
+            /* Swapping NULL / non NULL depth stencil affects the depth and tests */
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZENABLE));
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_STENCILENABLE));
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
+        }
     }
 
     return hr;
