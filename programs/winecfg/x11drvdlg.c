@@ -44,7 +44,6 @@ static struct SHADERMODE
   const char* settingStr;
 } const D3D_VS_Modes[] = {
   {IDS_SHADER_MODE_HARDWARE,  "hardware"},
-  {IDS_SHADER_MODE_EMULATION, "emulation"},
   {IDS_SHADER_MODE_NONE,      "none"},
   {0, 0}
 };

@@ -152,7 +152,6 @@ static WINED3DGLTYPE const glTypeLookup[WINED3DDECLTYPE_UNUSED] = {
  */
 #define VS_NONE    0
 #define VS_HW      1
-#define VS_SW      2
 
 #define PS_NONE    0
 #define PS_HW      1
@@ -168,7 +167,6 @@ static WINED3DGLTYPE const glTypeLookup[WINED3DDECLTYPE_UNUSED] = {
 #define ORM_PBUFFER     1
 #define ORM_FBO         2
 
-#define SHADER_SW   0
 #define SHADER_ARB  1
 #define SHADER_GLSL 2
 #define SHADER_NONE 3
@@ -1461,7 +1459,6 @@ void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED
     void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface);
 
 struct SHADER_OPCODE_ARG;
-typedef void (*shader_fct_t)();
 typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
 
 /* Struct to maintain a list of GLSL shader programs and their associated pixel and
@@ -1557,7 +1554,6 @@ typedef struct SHADER_OPCODE {
     const char*   glname;
     char          dst_token;
     CONST UINT    num_params;
-    shader_fct_t  soft_fct;
     SHADER_HANDLER hw_fct;
     SHADER_HANDLER hw_glsl_fct;
     DWORD         min_version;

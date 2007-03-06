@@ -246,26 +246,17 @@ static void select_shader_mode(
     int* ps_selected,
     int* vs_selected) {
 
-    /* Give priority to user disable/emulation request.
-     * Then respect REF device for software.
-     * Then check capabilities for hardware, and fallback to software */
-
     if (wined3d_settings.vs_mode == VS_NONE) {
         *vs_selected = SHADER_NONE;
-    } else if (DeviceType == WINED3DDEVTYPE_REF || wined3d_settings.vs_mode == VS_SW) {
-        *vs_selected = SHADER_SW;
     } else if (gl_info->supported[ARB_VERTEX_SHADER] && wined3d_settings.glslRequested) {
         *vs_selected = SHADER_GLSL;
     } else if (gl_info->supported[ARB_VERTEX_PROGRAM]) {
         *vs_selected = SHADER_ARB;
     } else {
-        *vs_selected = SHADER_SW;
+        *vs_selected = SHADER_NONE;
     }
 
-    /* Fallback to SHADER_NONE where software pixel shaders should be used */
     if (wined3d_settings.ps_mode == PS_NONE) {
-        *ps_selected = SHADER_NONE;
-    } else if (DeviceType == WINED3DDEVTYPE_REF) {
         *ps_selected = SHADER_NONE;
     } else if (gl_info->supported[ARB_FRAGMENT_SHADER] && wined3d_settings.glslRequested) {
         *ps_selected = SHADER_GLSL;
@@ -293,9 +284,6 @@ void select_shader_max_constants(
              * and we reference one row of the PROJECTION matrix which counts as 1 PARAM. */
             gl_info->max_vshader_constantsF = gl_info->vs_arb_constantsF - 3;
             break;
-        case SHADER_SW:
-            gl_info->max_vshader_constantsF = 96;  /* TODO: Fixup software shaders */
-            break;
         default:
             gl_info->max_vshader_constantsF = 0;
             break;
@@ -315,9 +303,6 @@ void select_shader_max_constants(
              * a free constant to do that, so no need to reduce the number of available constants.
              */
             gl_info->max_pshader_constantsF = gl_info->ps_arb_constantsF;
-            break;
-        case SHADER_SW:
-            gl_info->max_pshader_constantsF = 96;  /* TODO: Fixup software shaders */
             break;
         default:
             gl_info->max_pshader_constantsF = 0;
@@ -2263,9 +2248,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     } else if (vs_selected_mode == SHADER_ARB) {
         *pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
         TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
-    } else if (vs_selected_mode == SHADER_SW) {
-        *pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
-        TRACE_(d3d_caps)("Software vertex shader version 3.0 enabled\n");
     } else {
         *pCaps->VertexShaderVersion  = 0;
         TRACE_(d3d_caps)("Vertex shader functionality not available\n");
@@ -2287,11 +2269,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         *pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
         *pCaps->PixelShader1xMaxValue = 1.0;
         TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
-    /* FIXME: Uncomment this when there is support for software Pixel Shader 3.0 and PS_SW is defined
-    } else if (ps_selected_mode = SHADER_SW) {
-        *pCaps->PixelShaderVersion    = WINED3DPS_VERSION(3,0);
-        *pCaps->PixelShader1xMaxValue = 1.0;
-        TRACE_(d3d_caps)("Software pixel shader version 3.0 enabled\n"); */
     } else {
         *pCaps->PixelShaderVersion    = 0;
         *pCaps->PixelShader1xMaxValue = 0.0;

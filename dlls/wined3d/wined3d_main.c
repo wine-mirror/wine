@@ -143,11 +143,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                     TRACE("Disable vertex shaders\n");
                     wined3d_settings.vs_mode = VS_NONE;
                 }
-                else if (!strcmp(buffer,"emulation"))
-                {
-                    TRACE("Force SW vertex shaders\n");
-                    wined3d_settings.vs_mode = VS_SW;
-                }
             }
             if ( !get_config_key( hkey, appkey, "PixelShaderMode", buffer, size) )
             {
