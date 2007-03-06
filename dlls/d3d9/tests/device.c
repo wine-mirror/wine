@@ -1157,6 +1157,87 @@ cleanup:
     if(hwnd) DestroyWindow(hwnd);
 }
 
+static void test_depthstenciltest(void)
+{
+    HRESULT                      hr;
+    HWND                         hwnd               = NULL;
+    IDirect3D9                  *pD3d               = NULL;
+    IDirect3DDevice9            *pDevice            = NULL;
+    D3DPRESENT_PARAMETERS        d3dpp;
+    D3DDISPLAYMODE               d3ddm;
+    IDirect3DSurface9           *pDepthStencil           = NULL;
+    DWORD                        state;
+
+    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
+    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D9_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth  = 800;
+    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+
+    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(hr == D3D_OK, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    if(!pDevice) goto cleanup;
+
+    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pDepthStencil);
+    ok(hr == D3D_OK && pDepthStencil != NULL, "IDirect3DDevice9_GetDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));
+
+    /* Try to clear */
+    hr = IDirect3DDevice9_Clear(pDevice, 0, NULL, D3DCLEAR_ZBUFFER, 0x00000000, 1.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetDepthStencilSurface(pDevice, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));
+
+    /* This left the render states untouched! */
+    hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_ZENABLE, &state);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(state == D3DZB_TRUE, "D3DRS_ZENABLE is %s\n", state == D3DZB_FALSE ? "D3DZB_FALSE" : (state == D3DZB_TRUE ? "D3DZB_TRUE" : "D3DZB_USEW"));
+    hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_ZWRITEENABLE, &state);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(state == TRUE, "D3DRS_ZWRITEENABLE is %s\n", state ? "TRUE" : "FALSE");
+    hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_STENCILENABLE, &state);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(state == FALSE, "D3DRS_STENCILENABLE is %s\n", state ? "TRUE" : "FALSE");
+    hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_STENCILWRITEMASK, &state);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(state == 0xffffffff, "D3DRS_STENCILWRITEMASK is 0x%08x\n", state);
+
+    /* This is supposed to fail now */
+    hr = IDirect3DDevice9_Clear(pDevice, 0, NULL, D3DCLEAR_ZBUFFER, 0x00000000, 1.0, 0);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetRenderState(pDevice, D3DRS_ZENABLE, D3DZB_FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetDepthStencilSurface(pDevice, pDepthStencil);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_ZENABLE, &state);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(state == D3DZB_FALSE, "D3DRS_ZENABLE is %s\n", state == D3DZB_FALSE ? "D3DZB_FALSE" : (state == D3DZB_TRUE ? "D3DZB_TRUE" : "D3DZB_USEW"));
+
+    /* Now it works again */
+    hr = IDirect3DDevice9_Clear(pDevice, 0, NULL, D3DCLEAR_ZBUFFER, 0x00000000, 1.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+
+cleanup:
+    if(pDepthStencil) IDirect3DSurface9_Release(pDepthStencil);
+    if(pD3d) IDirect3D9_Release(pD3d);
+    if(pDevice) IDirect3D9_Release(pDevice);
+    if(hwnd) DestroyWindow(hwnd);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -1178,5 +1259,6 @@ START_TEST(device)
         test_reset();
         test_scene();
         test_limits();
+        test_depthstenciltest();
     }
 }

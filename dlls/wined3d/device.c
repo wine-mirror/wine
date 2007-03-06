@@ -1744,7 +1744,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     LEAVE_GL();
 
     /* Clear the screen */
-    IWineD3DDevice_Clear((IWineD3DDevice *) This, 0, NULL, WINED3DCLEAR_STENCIL|WINED3DCLEAR_ZBUFFER|WINED3DCLEAR_TARGET, 0x00, 1.0, 0);
+    IWineD3DDevice_Clear((IWineD3DDevice *) This, 0, NULL,
+                          WINED3DCLEAR_TARGET | pPresentationParameters->EnableAutoDepthStencil ? WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL : 0,
+                          0x00, 1.0, 0);
 
     This->d3d_initialized = TRUE;
     return WINED3D_OK;
@@ -4123,15 +4125,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
                                         DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    /* TODO: From MSDN This method fails if you specify the WINED3DCLEAR_ZBUFFER or WINED3DCLEAR_STENCIL flags when the
-      render target does not have an attached depth buffer. Similarly, if you specify the WINED3DCLEAR_STENCIL flag
-      when the depth-buffer format does not contain stencil buffer information, this method fails. */
     GLbitfield     glMask = 0;
     unsigned int   i;
     CONST WINED3DRECT* curRect;
 
     TRACE("(%p) Count (%d), pRects (%p), Flags (%x), Z (%f), Stencil (%d)\n", This,
           Count, pRects, Flags, Z, Stencil);
+
+    if(Flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL) && This->stencilBufferTarget == NULL) {
+        WARN("Clearing depth and/or stencil without a depth stencil buffer attached, returning WINED3DERR_INVALIDCALL\n");
+        /* TODO: What about depth stencil buffers without stencil bits? */
+        return WINED3DERR_INVALIDCALL;
+    }
 
     ENTER_GL();
 
@@ -5160,16 +5165,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
         * stencil buffer and incure an extra memory overhead
          ******************************************************/
 
-
         tmp = This->stencilBufferTarget;
         This->stencilBufferTarget = pNewZStencil;
         /* should we be calling the parent or the wined3d surface? */
         if (NULL != This->stencilBufferTarget) IWineD3DSurface_AddRef(This->stencilBufferTarget);
         if (NULL != tmp) IWineD3DSurface_Release(tmp);
         hr = WINED3D_OK;
-        /** TODO: glEnable/glDisable on depth/stencil    depending on
-         *   pNewZStencil is NULL and the depth/stencil is enabled in d3d
-          **********************************************************/
+
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
             set_depth_stencil_fbo(iface, pNewZStencil);
         }
