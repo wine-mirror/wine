@@ -1438,7 +1438,6 @@ static HRESULT WINAPI HeapUnknown_QueryInterface(IUnknown *iface, REFIID riid, v
 static ULONG WINAPI HeapUnknown_AddRef(IUnknown *iface)
 {
     HeapUnknown *This = (HeapUnknown *)iface;
-    trace("HeapUnknown_AddRef(%p)\n", iface);
     return InterlockedIncrement((LONG*)&This->refs);
 }
 
@@ -1446,7 +1445,6 @@ static ULONG WINAPI HeapUnknown_Release(IUnknown *iface)
 {
     HeapUnknown *This = (HeapUnknown *)iface;
     ULONG refs = InterlockedDecrement((LONG*)&This->refs);
-    trace("HeapUnknown_Release(%p)\n", iface);
     if (!refs) HeapFree(GetProcessHeap(), 0, This);
     return refs;
 }
