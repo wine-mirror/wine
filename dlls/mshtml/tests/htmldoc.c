@@ -207,7 +207,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ok(bindinfo.dwOptionsFlags == 0, "bindinfo.dwOptionsFlags=%d\n", bindinfo.dwOptionsFlags);
     /* TODO: test dwCodePage */
     /* TODO: test securityAttributes */
-    ok(IsEqualGUID(&IID_NULL, &bindinfo.iid), "unexepected bindinfo.iid\n");
+    ok(IsEqualGUID(&IID_NULL, &bindinfo.iid), "unexpected bindinfo.iid\n");
     ok(bindinfo.pUnk == NULL, "bindinfo.pUnk=%p\n", bindinfo.pUnk);
     ok(bindinfo.dwReserved == 0, "bindinfo.dwReserved=%d\n", bindinfo.dwReserved);
 

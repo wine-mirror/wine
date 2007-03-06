@@ -191,7 +191,7 @@ typedef struct _tagDUPLEX {
     struct _tagDUPLEX           *next;
 } DUPLEX;
 
-/* Many MacOSX based ppd files don't include a *ColorDevice line, so
+/* Many Mac OS X based ppd files don't include a *ColorDevice line, so
    we use a tristate here rather than a boolean.  Code that
    cares is expected to treat these as if they were colour. */
 typedef enum {

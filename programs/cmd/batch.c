@@ -495,7 +495,7 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
     /* 4. Handle 'z' : File length */
     if (exists &&
         memchr(firstModifier, 'z', modifierLen) != NULL) {
-      /* FIXME: Output full 64 bit size (sprintf not support I64 here) */
+      /* FIXME: Output full 64 bit size (sprintf does not support I64 here) */
       ULONG/*64*/ fullsize = /*(fileInfo.nFileSizeHigh << 32) +*/
                                   fileInfo.nFileSizeLow;
 
@@ -505,14 +505,14 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
       strcat(finaloutput, thisoutput);
     }
 
-    /* 4. Handle 's' : Use short paths (File doesnt have to exist) */
+    /* 4. Handle 's' : Use short paths (File doesn't have to exist) */
     if (memchr(firstModifier, 's', modifierLen) != NULL) {
       if (finaloutput[0] != 0x00) strcat(finaloutput, " ");
-      /* Dont flag as doneModifier - %~s on its own is processed later */
+      /* Don't flag as doneModifier - %~s on its own is processed later */
       GetShortPathName(outputparam, outputparam, sizeof(outputparam));
     }
 
-    /* 5. Handle 'f' : Fully qualified path (File doesnt have to exist) */
+    /* 5. Handle 'f' : Fully qualified path (File doesn't have to exist) */
     /*      Note this overrides d,p,n,x                                 */
     if (memchr(firstModifier, 'f', modifierLen) != NULL) {
       doneModifier = TRUE;

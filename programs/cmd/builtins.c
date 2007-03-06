@@ -1504,7 +1504,7 @@ void WCMD_assoc (char *command) {
       return;
     }
 
-    /* If no paramaters then list all associations */
+    /* If no parameters then list all associations */
     if (*command == 0x00) {
       int index = 0;
 

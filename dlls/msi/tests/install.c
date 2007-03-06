@@ -1195,7 +1195,7 @@ static void test_readonlyfile(void)
     lstrcat(path, "\\maximus");
     file = CreateFile(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                       NULL, CREATE_NEW, FILE_ATTRIBUTE_READONLY, NULL);
-    if (file == INVALID_HANDLE_VALUE) printf("didnt work here: %d\n", GetLastError());
+    if (file == INVALID_HANDLE_VALUE) printf("didn't work here: %d\n", GetLastError());
 
     WriteFile(file, "readonlyfile", 20, &size, NULL);
     CloseHandle(file);
