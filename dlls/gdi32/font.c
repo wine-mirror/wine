@@ -877,7 +877,11 @@ INT16 WINAPI EnumFontFamilies16( HDC16 hDC, LPCSTR lpFamily,
     LOGFONT16	lf;
 
     lf.lfCharSet = DEFAULT_CHARSET;
-    if( lpFamily ) lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
+    if (lpFamily)
+    {
+        if (!*lpFamily) return 1;
+        lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
+    }
     else lf.lfFaceName[0] = '\0';
 
     return EnumFontFamiliesEx16( hDC, &lf, efproc, lpData, 0 );
@@ -892,7 +896,11 @@ INT WINAPI EnumFontFamiliesA( HDC hDC, LPCSTR lpFamily,
     LOGFONTA	lf;
 
     lf.lfCharSet = DEFAULT_CHARSET;
-    if( lpFamily ) lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
+    if (lpFamily)
+    {
+        if (!*lpFamily) return 1;
+        lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
+    }
     else lf.lfFaceName[0] = lf.lfFaceName[1] = '\0';
 
     return EnumFontFamiliesExA( hDC, &lf, efproc, lpData, 0 );
@@ -907,7 +915,11 @@ INT WINAPI EnumFontFamiliesW( HDC hDC, LPCWSTR lpFamily,
     LOGFONTW  lf;
 
     lf.lfCharSet = DEFAULT_CHARSET;
-    if( lpFamily ) lstrcpynW( lf.lfFaceName, lpFamily, LF_FACESIZE );
+    if (lpFamily)
+    {
+        if (!*lpFamily) return 1;
+        lstrcpynW( lf.lfFaceName, lpFamily, LF_FACESIZE );
+    }
     else lf.lfFaceName[0] = 0;
 
     return EnumFontFamiliesExW( hDC, &lf, efproc, lpData, 0 );

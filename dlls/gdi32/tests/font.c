@@ -49,6 +49,25 @@ static void init(void)
     pGetGlyphIndicesW = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesW");
 }
 
+static INT CALLBACK is_truetype_font_installed_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
+{
+    if (type != TRUETYPE_FONTTYPE) return 1;
+
+    return 0;
+}
+
+static BOOL is_truetype_font_installed(const char *name)
+{
+    HDC hdc = GetDC(0);
+    BOOL ret = FALSE;
+
+    if (!EnumFontFamiliesA(hdc, name, is_truetype_font_installed_proc, 0))
+        ret = TRUE;
+
+    ReleaseDC(0, hdc);
+    return ret;
+}
+
 static INT CALLBACK is_font_installed_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
 {
     return 0;
@@ -1104,7 +1123,7 @@ static void test_GetFontUnicodeRanges(void)
     LOGFONTA lf;
     HDC hdc;
     HFONT hfont, hfont_old;
-    DWORD size, i;
+    DWORD size;
     GLYPHSET *gs;
 
     if (!pGetFontUnicodeRanges)
@@ -1130,9 +1149,10 @@ static void test_GetFontUnicodeRanges(void)
 
     size = pGetFontUnicodeRanges(hdc, gs);
     ok(size, "GetFontUnicodeRanges failed\n");
-
+#if 0
     for (i = 0; i < gs->cRanges; i++)
         trace("%03d wcLow %04x cGlyphs %u\n", i, gs->ranges[i].wcLow, gs->ranges[i].cGlyphs);
+#endif
     trace("found %u ranges\n", gs->cRanges);
 
     HeapFree(GetProcessHeap(), 0, gs);
@@ -1140,6 +1160,241 @@ static void test_GetFontUnicodeRanges(void)
     SelectObject(hdc, hfont_old);
     DeleteObject(hfont);
     ReleaseDC(NULL, hdc);
+}
+
+#define MAX_ENUM_FONTS 256
+
+struct enum_font_data
+{
+    int total;
+    LOGFONT lf[MAX_ENUM_FONTS];
+};
+
+static INT CALLBACK arial_enum_proc(const LOGFONT *lf, const TEXTMETRIC *tm, DWORD type, LPARAM lParam)
+{
+    struct enum_font_data *efd = (struct enum_font_data *)lParam;
+
+    if (type != TRUETYPE_FONTTYPE) return 1;
+#if 0
+    trace("enumed font \"%s\", charset %d, weight %d, italic %d\n",
+          lf->lfFaceName, lf->lfCharSet, lf->lfWeight, lf->lfItalic);
+#endif
+    if (efd->total < MAX_ENUM_FONTS)
+        efd->lf[efd->total++] = *lf;
+
+    return 1;
+}
+
+static void get_charset_stats(struct enum_font_data *efd,
+                              int *ansi_charset, int *symbol_charset,
+                              int *russian_charset)
+{
+    int i;
+
+    *ansi_charset = 0;
+    *symbol_charset = 0;
+    *russian_charset = 0;
+
+    for (i = 0; i < efd->total; i++)
+    {
+        switch (efd->lf[i].lfCharSet)
+        {
+        case ANSI_CHARSET:
+            (*ansi_charset)++;
+            break;
+        case SYMBOL_CHARSET:
+            (*symbol_charset)++;
+            break;
+        case RUSSIAN_CHARSET:
+            (*russian_charset)++;
+            break;
+        }
+    }
+}
+
+static void test_EnumFontFamilies(const char *font_name, INT font_charset)
+{
+    struct enum_font_data efd;
+    LOGFONT lf;
+    HDC hdc;
+    int i, ret, ansi_charset, symbol_charset, russian_charset;
+
+    trace("Testing font %s, charset %d\n", *font_name ? font_name : "<empty>", font_charset);
+
+    if (*font_name && !is_truetype_font_installed(font_name))
+    {
+        skip("%s is not installed\n", font_name);
+        return;
+    }
+
+    hdc = GetDC(0);
+
+    /* Observed behaviour: EnumFontFamilies enumerates aliases like "Arial Cyr"
+     * while EnumFontFamiliesEx doesn't.
+     */
+    if (!*font_name && font_charset == DEFAULT_CHARSET) /* do it only once */
+    {
+        efd.total = 0;
+        SetLastError(0xdeadbeef);
+        ret = EnumFontFamilies(hdc, NULL, arial_enum_proc, (LPARAM)&efd);
+        ok(ret, "EnumFontFamilies error %u\n", GetLastError());
+        get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
+        trace("enumerated ansi %d, symbol %d, russian %d fonts for NULL\n",
+              ansi_charset, symbol_charset, russian_charset);
+        ok(efd.total > 0, "no fonts enumerated: NULL\n");
+        ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
+        ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
+        ok(russian_charset > 0, "NULL family should enumerate RUSSIAN_CHARSET\n");
+    }
+
+    efd.total = 0;
+    SetLastError(0xdeadbeef);
+    ret = EnumFontFamilies(hdc, font_name, arial_enum_proc, (LPARAM)&efd);
+    ok(ret, "EnumFontFamilies error %u\n", GetLastError());
+    get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
+    trace("enumerated ansi %d, symbol %d, russian %d fonts for %s\n",
+          ansi_charset, symbol_charset, russian_charset,
+          *font_name ? font_name : "<empty>");
+    if (*font_name)
+        ok(efd.total > 0, "no fonts enumerated: %s\n", font_name);
+    else
+        ok(!efd.total, "no fonts should be enumerated for empty font_name\n");
+    for (i = 0; i < efd.total; i++)
+    {
+/* FIXME: remove completely once Wine is fixed */
+if (efd.lf[i].lfCharSet != font_charset)
+{
+todo_wine
+    ok(efd.lf[i].lfCharSet == font_charset, "%d: got charset %d\n", i, efd.lf[i].lfCharSet);
+}
+else
+        ok(efd.lf[i].lfCharSet == font_charset, "%d: got charset %d\n", i, efd.lf[i].lfCharSet);
+        ok(!lstrcmp(efd.lf[i].lfFaceName, font_name), "expected %s, got %s\n",
+           font_name, efd.lf[i].lfFaceName);
+    }
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfCharSet = ANSI_CHARSET;
+    lstrcpy(lf.lfFaceName, font_name);
+    efd.total = 0;
+    SetLastError(0xdeadbeef);
+    ret = EnumFontFamiliesEx(hdc, &lf, arial_enum_proc, (LPARAM)&efd, 0);
+    ok(ret, "EnumFontFamiliesEx error %u\n", GetLastError());
+    get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
+    trace("enumerated ansi %d, symbol %d, russian %d fonts for %s ANSI_CHARSET\n",
+          ansi_charset, symbol_charset, russian_charset,
+          *font_name ? font_name : "<empty>");
+    if (font_charset == SYMBOL_CHARSET)
+    {
+        if (*font_name)
+            ok(efd.total == 0, "no fonts should be enumerated: %s ANSI_CHARSET\n", font_name);
+        else
+            ok(efd.total > 0, "no fonts enumerated: %s\n", font_name);
+    }
+    else
+    {
+        ok(efd.total > 0, "no fonts enumerated: %s ANSI_CHARSET\n", font_name);
+        for (i = 0; i < efd.total; i++)
+        {
+            ok(efd.lf[i].lfCharSet == ANSI_CHARSET, "%d: got charset %d\n", i, efd.lf[i].lfCharSet);
+            if (*font_name)
+                ok(!lstrcmp(efd.lf[i].lfFaceName, font_name), "expected %s, got %s\n",
+                   font_name, efd.lf[i].lfFaceName);
+        }
+    }
+
+    /* DEFAULT_CHARSET should enumerate all available charsets */
+    memset(&lf, 0, sizeof(lf));
+    lf.lfCharSet = DEFAULT_CHARSET;
+    lstrcpy(lf.lfFaceName, font_name);
+    efd.total = 0;
+    SetLastError(0xdeadbeef);
+    EnumFontFamiliesEx(hdc, &lf, arial_enum_proc, (LPARAM)&efd, 0);
+    ok(ret, "EnumFontFamiliesEx error %u\n", GetLastError());
+    get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
+    trace("enumerated ansi %d, symbol %d, russian %d fonts for %s DEFAULT_CHARSET\n",
+          ansi_charset, symbol_charset, russian_charset,
+          *font_name ? font_name : "<empty>");
+    ok(efd.total > 0, "no fonts enumerated: %s DEFAULT_CHARSET\n", font_name);
+    for (i = 0; i < efd.total; i++)
+    {
+        if (*font_name)
+            ok(!lstrcmp(efd.lf[i].lfFaceName, font_name), "expected %s, got %s\n",
+               font_name, efd.lf[i].lfFaceName);
+    }
+    if (*font_name)
+    {
+        switch (font_charset)
+        {
+        case ANSI_CHARSET:
+            ok(ansi_charset > 0,
+               "ANSI_CHARSET should enumerate ANSI_CHARSET for %s\n", font_name);
+            ok(!symbol_charset,
+               "ANSI_CHARSET should NOT enumerate SYMBOL_CHARSET for %s\n", font_name);
+            ok(russian_charset > 0,
+               "ANSI_CHARSET should enumerate RUSSIAN_CHARSET for %s\n", font_name);
+            break;
+        case SYMBOL_CHARSET:
+            ok(!ansi_charset,
+               "SYMBOL_CHARSET should NOT enumerate ANSI_CHARSET for %s\n", font_name);
+            ok(symbol_charset,
+               "SYMBOL_CHARSET should enumerate SYMBOL_CHARSET for %s\n", font_name);
+            ok(!russian_charset,
+               "SYMBOL_CHARSET should NOT enumerate RUSSIAN_CHARSET for %s\n", font_name);
+            break;
+        case DEFAULT_CHARSET:
+            ok(ansi_charset > 0,
+               "DEFAULT_CHARSET should enumerate ANSI_CHARSET for %s\n", font_name);
+            ok(symbol_charset > 0,
+               "DEFAULT_CHARSET should enumerate SYMBOL_CHARSET for %s\n", font_name);
+            ok(russian_charset > 0,
+               "DEFAULT_CHARSET should enumerate RUSSIAN_CHARSET for %s\n", font_name);
+            break;
+        }
+    }
+    else
+    {
+        ok(ansi_charset > 0,
+           "DEFAULT_CHARSET should enumerate ANSI_CHARSET for %s\n", *font_name ? font_name : "<empty>");
+        ok(symbol_charset > 0,
+           "DEFAULT_CHARSET should enumerate SYMBOL_CHARSET for %s\n", *font_name ? font_name : "<empty>");
+        ok(russian_charset > 0,
+           "DEFAULT_CHARSET should enumerate RUSSIAN_CHARSET for %s\n", *font_name ? font_name : "<empty>");
+    }
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfCharSet = SYMBOL_CHARSET;
+    lstrcpy(lf.lfFaceName, font_name);
+    efd.total = 0;
+    SetLastError(0xdeadbeef);
+    EnumFontFamiliesEx(hdc, &lf, arial_enum_proc, (LPARAM)&efd, 0);
+    ok(ret, "EnumFontFamiliesEx error %u\n", GetLastError());
+    get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
+    trace("enumerated ansi %d, symbol %d, russian %d fonts for %s SYMBOL_CHARSET\n",
+          ansi_charset, symbol_charset, russian_charset,
+          *font_name ? font_name : "<empty>");
+    if (*font_name && font_charset == ANSI_CHARSET)
+        ok(efd.total == 0, "no fonts should be enumerated: %s SYMBOL_CHARSET\n", font_name);
+    else
+    {
+        ok(efd.total > 0, "no fonts enumerated: %s SYMBOL_CHARSET\n", font_name);
+        for (i = 0; i < efd.total; i++)
+        {
+            ok(efd.lf[i].lfCharSet == SYMBOL_CHARSET, "%d: got charset %d\n", i, efd.lf[i].lfCharSet);
+            if (*font_name)
+                ok(!lstrcmp(efd.lf[i].lfFaceName, font_name), "expected %s, got %s\n",
+                   font_name, efd.lf[i].lfFaceName);
+        }
+
+        ok(!ansi_charset,
+           "SYMBOL_CHARSET should NOT enumerate ANSI_CHARSET for %s\n", *font_name ? font_name : "<empty>");
+        ok(symbol_charset > 0,
+           "SYMBOL_CHARSET should enumerate SYMBOL_CHARSET for %s\n", *font_name ? font_name : "<empty>");
+        ok(!russian_charset,
+           "SYMBOL_CHARSET should NOT enumerate RUSSIAN_CHARSET for %s\n", *font_name ? font_name : "<empty>");
+    }
+
+    ReleaseDC(0, hdc);
 }
 
 START_TEST(font)
@@ -1158,4 +1413,18 @@ START_TEST(font)
     test_SetTextJustification();
     test_font_charset();
     test_GetFontUnicodeRanges();
+    /* On Windows Arial has a lot of default charset aliases such as Arial Cyr,
+     * I'd like to avoid them in this test.
+     */
+    test_EnumFontFamilies("Arial Black", ANSI_CHARSET);
+    test_EnumFontFamilies("Symbol", SYMBOL_CHARSET);
+    if (is_truetype_font_installed("Arial Black") &&
+        (is_truetype_font_installed("Symbol") || is_truetype_font_installed("Wingdings")))
+    {
+        test_EnumFontFamilies("", ANSI_CHARSET);
+        test_EnumFontFamilies("", SYMBOL_CHARSET);
+        test_EnumFontFamilies("", DEFAULT_CHARSET);
+    }
+    else
+        skip("Arial Black or Symbol/Wingdings is not installed\n");
 }
