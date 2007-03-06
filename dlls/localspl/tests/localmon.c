@@ -1043,4 +1043,7 @@ START_TEST(localmon)
     test_XcvDataPort_MonitorUI();
     test_XcvDataPort_PortIsValid();
     test_XcvOpenPort();
+
+    /* Cleanup our temporary file */
+    DeleteFileW(tempfileW);
 }
