@@ -227,7 +227,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                             helper->pwlen = WideCharToMultiByte(CP_UNIXCP, 
                                 WC_NO_BEST_FIT_CHARS, auth_data->Password, 
                                 auth_data->PasswordLength, NULL, 0, NULL,
-                                NULL) + 1;
+                                NULL);
 
                             helper->password = HeapAlloc(GetProcessHeap(), 0, 
                                     helper->pwlen);
@@ -235,7 +235,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                             WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
                                 auth_data->Password, auth_data->PasswordLength,
                                 helper->password, helper->pwlen, NULL, NULL);
-                            helper->password[helper->pwlen - 1] = '\0';
                         }
                     }
 
@@ -507,11 +506,11 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         {
             lstrcpynA(buffer, "PW ", max_len-1);
             if((ret = encodeBase64((unsigned char*)helper->password,
-                        helper->pwlen-1, buffer+3,
+                        helper->pwlen, buffer+3,
                         max_len-3, &buffer_len)) != SEC_E_OK)
             {
                 TRACE("Deleting password!\n");
-                memset(helper->password, 0, helper->pwlen-1);
+                memset(helper->password, 0, helper->pwlen);
                 HeapFree(GetProcessHeap(), 0, helper->password);
                 goto isc_end;
             }
@@ -695,7 +694,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                         helper->pwlen, unicode_password, passwd_lenW);
 
                 SECUR32_CreateNTLMv1SessionKey((PBYTE)unicode_password,
-                        lstrlenW(unicode_password) * sizeof(SEC_WCHAR), helper->session_key);
+                        passwd_lenW * sizeof(SEC_WCHAR), helper->session_key);
 
                 HeapFree(GetProcessHeap(), 0, unicode_password);
             }
@@ -739,7 +738,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     {
         TRACE("Deleting password!\n");
         if(helper->password)
-            memset(helper->password, 0, helper->pwlen-1);
+            memset(helper->password, 0, helper->pwlen);
         HeapFree(GetProcessHeap(), 0, helper->password);
     }
 isc_end:
