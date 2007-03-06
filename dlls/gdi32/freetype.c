@@ -1805,7 +1805,7 @@ static const struct nls_update_font_list
     /* Korean */
     { 949, 949, "vga949.fon", "hvgafix.fon", "hvgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
-      "Tahoma",  "Times New Roman", /* FIXME unverified */
+      "Gulim",  "Batang",
     },
     /* Chinese Traditional */
     { 950, 950, "vga950.fon", "cvgafix.fon", "cvgasys.fon",
