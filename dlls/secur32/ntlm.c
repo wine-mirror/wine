@@ -172,11 +172,15 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                     /* Get username and domain from pAuthData */
                     username = HeapAlloc(GetProcessHeap(), 0, 
                             (auth_data->UserLength + 1) * sizeof(SEC_WCHAR));
-                    lstrcpyW(username, auth_data->User);
+                    memcpy(username, auth_data->User,
+                           auth_data->UserLength * sizeof(SEC_WCHAR));
+                    username[auth_data->UserLength] = '\0';
 
                     domain = HeapAlloc(GetProcessHeap(), 0,
                             (auth_data->DomainLength + 1) * sizeof(SEC_WCHAR));
-                    lstrcpyW(domain, auth_data->Domain);
+                    memcpy(domain, auth_data->Domain,
+                           auth_data->DomainLength * sizeof(SEC_WCHAR));
+                    domain[auth_data->DomainLength] = '\0';
                 }
                 TRACE("Username is %s\n", debugstr_w(username));
                 unixcp_size =  WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
@@ -222,15 +226,16 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                         {
                             helper->pwlen = WideCharToMultiByte(CP_UNIXCP, 
                                 WC_NO_BEST_FIT_CHARS, auth_data->Password, 
-                                auth_data->PasswordLength+1, NULL, 0, NULL,
+                                auth_data->PasswordLength, NULL, 0, NULL,
                                 NULL) + 1;
 
                             helper->password = HeapAlloc(GetProcessHeap(), 0, 
                                     helper->pwlen);
 
                             WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
-                                auth_data->Password, auth_data->PasswordLength+1,
+                                auth_data->Password, auth_data->PasswordLength,
                                 helper->password, helper->pwlen, NULL, NULL);
+                            helper->password[helper->pwlen - 1] = '\0';
                         }
                     }
 
@@ -304,11 +309,11 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(
             if(identity->UserLength != 0)
             {
                 user_sizeW = MultiByteToWideChar(CP_ACP, 0, 
-                    (LPCSTR)identity->User, identity->UserLength+1, NULL, 0);
+                    (LPCSTR)identity->User, identity->UserLength, NULL, 0);
                 user = HeapAlloc(GetProcessHeap(), 0, user_sizeW * 
                         sizeof(SEC_WCHAR));
                 MultiByteToWideChar(CP_ACP, 0, (LPCSTR)identity->User, 
-                    identity->UserLength+1, user, user_sizeW);
+                    identity->UserLength, user, user_sizeW);
             }
             else
             {
@@ -318,11 +323,11 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(
             if(identity->DomainLength != 0)
             {
                 domain_sizeW = MultiByteToWideChar(CP_ACP, 0, 
-                    (LPCSTR)identity->Domain, identity->DomainLength+1, NULL, 0);
+                    (LPCSTR)identity->Domain, identity->DomainLength, NULL, 0);
                 domain = HeapAlloc(GetProcessHeap(), 0, domain_sizeW 
                     * sizeof(SEC_WCHAR));
                 MultiByteToWideChar(CP_ACP, 0, (LPCSTR)identity->Domain, 
-                    identity->DomainLength+1, domain, domain_sizeW);
+                    identity->DomainLength, domain, domain_sizeW);
             }
             else
             {
@@ -502,11 +507,11 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         {
             lstrcpynA(buffer, "PW ", max_len-1);
             if((ret = encodeBase64((unsigned char*)helper->password,
-                        helper->pwlen-2, buffer+3,
+                        helper->pwlen-1, buffer+3,
                         max_len-3, &buffer_len)) != SEC_E_OK)
             {
                 TRACE("Deleting password!\n");
-                memset(helper->password, 0, helper->pwlen-2);
+                memset(helper->password, 0, helper->pwlen-1);
                 HeapFree(GetProcessHeap(), 0, helper->password);
                 goto isc_end;
             }
@@ -734,7 +739,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     {
         TRACE("Deleting password!\n");
         if(helper->password)
-            memset(helper->password, 0, helper->pwlen-2);
+            memset(helper->password, 0, helper->pwlen-1);
         HeapFree(GetProcessHeap(), 0, helper->password);
     }
 isc_end:
