@@ -69,6 +69,7 @@ static BOOL  (WINAPI *pDeletePortUI)(PCWSTR, HWND, PCWSTR);
 static const WCHAR cmd_ConfigureLPTPortCommandOKW[] = {'C','o','n','f','i','g','u','r','e',
                                     'L','P','T','P','o','r','t',
                                     'C','o','m','m','a','n','d','O','K',0};
+static WCHAR cmd_DeletePortW[] = {'D','e','l','e','t','e','P','o','r','t',0};
 static WCHAR cmd_GetTransmissionRetryTimeoutW[] = {'G','e','t',
                                     'T','r','a','n','s','m','i','s','s','i','o','n',
                                     'R','e','t','r','y','T','i','m','e','o','u','t',0};
@@ -479,6 +480,48 @@ static void test_XcvDataPort_ConfigureLPTPortCommandOK(void)
     RegCloseKey(hroot);
     pXcvClosePort(hXcv);
 
+}
+
+/* ########################### */
+
+static void test_XcvDataPort_DeletePort(void)
+{
+    DWORD   res;
+    HANDLE  hXcv;
+    DWORD   needed;
+
+
+    if ((pXcvOpenPort == NULL) || (pXcvDataPort == NULL) || (pXcvClosePort == NULL)) return;
+
+    hXcv = (HANDLE) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvOpenPort(emptyW, SERVER_ALL_ACCESS, &hXcv);
+    ok(res, "hXcv: %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
+    if (!res) return;
+
+    /* cleanup: just to make sure */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_DeletePortW, (PBYTE) tempfileW, (lstrlenW(tempfileW) + 1) * sizeof(WCHAR), NULL, 0, &needed);
+    ok( !res  || (res == ERROR_FILE_NOT_FOUND),
+        "returned %d with %u (expected ERROR_SUCCESS or ERROR_FILE_NOT_FOUND)\n",
+        res, GetLastError());
+
+
+    /* ToDo: cmd_AddPortW for tempfileW, then cmd_DeletePortW for the existing Port */
+
+
+    /* try to delete a non-existing Port */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_DeletePortW, (PBYTE) tempfileW, (lstrlenW(tempfileW) + 1) * sizeof(WCHAR), NULL, 0, &needed);
+    ok( res == ERROR_FILE_NOT_FOUND,
+        "returned %d with %u (expected ERROR_FILE_NOT_FOUND)\n", res, GetLastError());
+
+    /* emptyW as Portname: ERROR_FILE_NOT_FOUND is returned */
+    /* NULL as Portname: Native localspl.dll crashed */
+
+    pXcvClosePort(hXcv);
 }
 
 /* ########################### */
@@ -1039,6 +1082,7 @@ START_TEST(localmon)
     test_EnumPorts();
     test_XcvClosePort();
     test_XcvDataPort_ConfigureLPTPortCommandOK();
+    test_XcvDataPort_DeletePort();
     test_XcvDataPort_GetTransmissionRetryTimeout();
     test_XcvDataPort_MonitorUI();
     test_XcvDataPort_PortIsValid();
