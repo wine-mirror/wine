@@ -236,7 +236,6 @@ static nsresult NSAPI nsChannel_GetName(nsIHttpChannel *iface, nsACString *aName
     if(This->channel)
         return nsIChannel_GetName(This->channel, aName);
 
-    FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
