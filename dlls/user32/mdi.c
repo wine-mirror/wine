@@ -1852,7 +1852,7 @@ void WINAPI ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam,
  *    Failure: 0
  */
 WORD WINAPI
-CascadeWindows (HWND hwndParent, UINT wFlags, const LPRECT lpRect,
+CascadeWindows (HWND hwndParent, UINT wFlags, const RECT *lpRect,
 		UINT cKids, const HWND *lpKids)
 {
     FIXME("(%p,0x%08x,...,%u,...): stub\n", hwndParent, wFlags, cKids);
@@ -1868,7 +1868,7 @@ CascadeWindows (HWND hwndParent, UINT wFlags, const LPRECT lpRect,
  *    Failure: 0
  */
 WORD WINAPI
-TileWindows (HWND hwndParent, UINT wFlags, const LPRECT lpRect,
+TileWindows (HWND hwndParent, UINT wFlags, const RECT *lpRect,
 	     UINT cKids, const HWND *lpKids)
 {
     FIXME("(%p,0x%08x,...,%u,...): stub\n", hwndParent, wFlags, cKids);

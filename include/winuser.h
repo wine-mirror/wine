@@ -4185,7 +4185,7 @@ BOOL        WINAPI UpdateLayeredWindowIndirect(HWND,UPDATELAYEREDWINDOWINFO CONS
 #endif /* defined(_WINGDI_) && !defined(NOGDI) */
 
 HKL         WINAPI ActivateKeyboardLayout(HKL,UINT);
-WORD        WINAPI CascadeWindows(HWND, UINT, const LPRECT, UINT, const HWND *);
+WORD        WINAPI CascadeWindows(HWND, UINT, const RECT *, UINT, const HWND *);
 INT       WINAPI CopyAcceleratorTableA(HACCEL,LPACCEL,INT);
 INT       WINAPI CopyAcceleratorTableW(HACCEL,LPACCEL,INT);
 #define     CopyAcceleratorTable WINELIB_NAME_AW(CopyAcceleratorTable)
@@ -4259,7 +4259,7 @@ BOOL      WINAPI SetMenuItemInfoW(HMENU,UINT,BOOL,const MENUITEMINFOW*);
 #define     SetMenuItemInfo WINELIB_NAME_AW(SetMenuItemInfo)
 BOOL      WINAPI SetWindowContextHelpId(HWND,DWORD);
 HWINEVENTHOOK WINAPI SetWinEventHook(DWORD,DWORD,HMODULE,WINEVENTPROC,DWORD,DWORD,DWORD);
-WORD        WINAPI TileWindows (HWND, UINT, const LPRECT,
+WORD        WINAPI TileWindows (HWND, UINT, const RECT *,
                                 UINT, const HWND *);
 INT         WINAPI ToUnicode(UINT,UINT,PBYTE,LPWSTR,int,UINT);
 INT         WINAPI ToUnicodeEx(UINT,UINT,LPBYTE,LPWSTR,int,UINT,HKL);
