@@ -2508,7 +2508,7 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
          * If the texture is dirty, or the part can't be used,
          * re-position the part to load
          */
-        if(!(This->Flags & SFLAG_DIRTY)) {
+        if(This->Flags & SFLAG_INTEXTURE) {
             if(This->glRect.left <= x1 && This->glRect.right >= x2 &&
                This->glRect.top <= y1 && This->glRect.bottom >= x2 ) {
                 /* Ok, the rectangle is ok, re-use it */
@@ -2516,12 +2516,12 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
             } else {
                 /* Rectangle is not ok, dirtify the texture to reload it */
                 TRACE("Dirtifying texture to force reload\n");
-                This->Flags |= SFLAG_DIRTY;
+                This->Flags &= ~SFLAG_INTEXTURE;
             }
         }
 
         /* Now if we are dirty(no else if!) */
-        if(This->Flags & SFLAG_DIRTY) {
+        if(!(This->Flags & SFLAG_INTEXTURE)) {
             /* Set the new rectangle. Use the following strategy:
              * 1) Use as big textures as possible.
              * 2) Place the texture part in the way that the requested

@@ -709,12 +709,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
             /* Do that before switching the context:
              * Read the back buffer of the old drawable into the destination texture
              */
-            ((IWineD3DSurfaceImpl *) This->lastActiveRenderTarget)->Flags |= SFLAG_INPBUFFER;
-            ((IWineD3DSurfaceImpl *) This->lastActiveRenderTarget)->Flags &= ~SFLAG_INTEXTURE;
-            IWineD3DSurface_AddDirtyRect(This->lastActiveRenderTarget, NULL);
             IWineD3DSurface_PreLoad(This->lastActiveRenderTarget);
-            ((IWineD3DSurfaceImpl *) This->lastActiveRenderTarget)->Flags &= ~SFLAG_INPBUFFER;
-            ((IWineD3DSurfaceImpl *) This->lastActiveRenderTarget)->Flags &= ~SFLAG_INTEXTURE;
         }
         This->lastActiveRenderTarget = target;
         if(oldRenderOffscreen != This->render_offscreen && This->depth_copy_state != WINED3D_DCS_NO_COPY) {

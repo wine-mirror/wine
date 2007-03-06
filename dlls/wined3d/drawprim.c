@@ -1002,6 +1002,9 @@ void drawPrimitive(IWineD3DDevice *iface,
                    int   minIndex) {
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSwapChain            *swapchain;
+    IWineD3DBaseTexture          *texture = NULL;
+    IWineD3DSurfaceImpl          *target;
     int i;
 
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
@@ -1009,8 +1012,41 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     /* Invalidate the back buffer memory so LockRect will read it the next time */
     for(i = 0; i < GL_LIMITS(buffers); i++) {
-        if(This->render_targets[i]) {
-            ((IWineD3DSurfaceImpl *) This->render_targets[i])->Flags |= SFLAG_GLDIRTY;
+        target = (IWineD3DSurfaceImpl *) This->render_targets[i];
+        /* TODO: Only do all that if we're going to change anything
+         * Texture container dirtification does not work quite right yet
+         */
+        if(target /*&& target->Flags & (SFLAG_INTEXTURE | SFLAG_INSYSMEM)*/) {
+            swapchain = NULL;
+            texture = NULL;
+
+            if(i == 0) {
+                IWineD3DSurface_GetContainer((IWineD3DSurface *) target, &IID_IWineD3DSwapChain, (void **)&swapchain);
+                if(swapchain) {
+                    /* Onscreen target. Invalidate system memory copy and texture copy */
+                    target->Flags &= ~(SFLAG_INSYSMEM | SFLAG_INTEXTURE);
+                    target->Flags |= SFLAG_INDRAWABLE;
+                    IWineD3DSwapChain_Release(swapchain);
+                } else if(wined3d_settings.offscreen_rendering_mode != ORM_FBO) {
+                    /* Non-FBO target: Invalidate system copy, texture copy and dirtify the container */
+                    IWineD3DSurface_GetContainer((IWineD3DSurface *) target, &IID_IWineD3DBaseTexture, (void **)&texture);
+
+                    if(texture) {
+                        IWineD3DBaseTexture_SetDirty(texture, TRUE);
+                        IWineD3DTexture_Release(texture);
+                    }
+
+                    target->Flags &= ~(SFLAG_INSYSMEM | SFLAG_INTEXTURE);
+                    target->Flags |= SFLAG_INDRAWABLE;
+                } else {
+                    /* FBO offscreen target. Invalidate system memory copy */
+                    target->Flags &= ~SFLAG_INSYSMEM;
+                }
+            } else {
+                /* Must be an fbo render target */
+                target->Flags &= ~SFLAG_INSYSMEM;
+                target->Flags |=  SFLAG_INTEXTURE;
+            }
         }
     }
 

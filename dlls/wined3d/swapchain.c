@@ -177,6 +177,8 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         /* The cursor must have pow2 sizes */
         cursor.pow2Width = cursor.currentDesc.Width;
         cursor.pow2Height = cursor.currentDesc.Height;
+        /* The surface is in the texture */
+        cursor.Flags |= SFLAG_INTEXTURE;
         /* DDBLT_KEYSRC will cause BltOverride to enable the alpha test with GL_NOTEQUAL, 0.0,
          * which is exactly what we want :-)
          */
@@ -299,13 +301,13 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         IWineD3DDevice_Clear((IWineD3DDevice*)This->wineD3DDevice, 0, NULL, WINED3DCLEAR_STENCIL|WINED3DCLEAR_ZBUFFER, 0x00, 1.0, 0);
     }
 
-    if(!(((IWineD3DSurfaceImpl *) This->frontBuffer)->Flags   & SFLAG_GLDIRTY) ||
-       !(((IWineD3DSurfaceImpl *) This->backBuffer[0])->Flags & SFLAG_GLDIRTY) ) {
+    if(((IWineD3DSurfaceImpl *) This->frontBuffer)->Flags   & SFLAG_INSYSMEM ||
+       ((IWineD3DSurfaceImpl *) This->backBuffer[0])->Flags & SFLAG_INSYSMEM ) {
         /* Both memory copies of the surfaces are ok, flip them around too instead of dirtifying */
         IWineD3DSurfaceImpl *front = (IWineD3DSurfaceImpl *) This->frontBuffer;
         IWineD3DSurfaceImpl *back = (IWineD3DSurfaceImpl *) This->backBuffer[0];
-        BOOL frontdirty = front->Flags & SFLAG_GLDIRTY;
-        BOOL backdirty = back->Flags & SFLAG_GLDIRTY;
+        BOOL frontuptodate = front->Flags & SFLAG_INSYSMEM;
+        BOOL backuptodate = back->Flags & SFLAG_INSYSMEM;
 
         /* Flip the DC */
         {
@@ -349,10 +351,10 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
             front->dib.client_memory = back->dib.client_memory;
             back->dib.client_memory = tmp;
         }
-        if(frontdirty) back->Flags |= SFLAG_GLDIRTY;
-        else back->Flags &= ~SFLAG_GLDIRTY;
-        if(backdirty) front->Flags |= SFLAG_GLDIRTY;
-        else front->Flags &= ~SFLAG_GLDIRTY;
+        if(frontuptodate) back->Flags |= SFLAG_INSYSMEM;
+        else back->Flags &= ~SFLAG_INSYSMEM;
+        if(backuptodate) front->Flags |= SFLAG_INSYSMEM;
+        else front->Flags &= ~SFLAG_INSYSMEM;
     }
 
     TRACE("returning\n");
