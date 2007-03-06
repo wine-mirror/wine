@@ -76,7 +76,7 @@ static void test_session_guid(LPDIRECTPLAY4 pDP)
     IDirectPlayX_GetSessionDesc(pDP, NULL, &sessionSize);
     newSession = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sessionSize);
     IDirectPlayX_GetSessionDesc(pDP, newSession, &sessionSize);
-    todo_wine ok( !IsEqualGUID(&newSession->guidInstance, &zeroGuid), "Session guid not initialized");
+    todo_wine ok( !IsEqualGUID(&newSession->guidInstance, &zeroGuid), "Session guid not initialized\n");
     HeapFree(GetProcessHeap(), 0, newSession);
 }
 
