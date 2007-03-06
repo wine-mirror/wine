@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Henri Verbeet
+ * Copyright 2005, 2007 Henri Verbeet
  * Copyright (C) 2007 Stefan Dösinger(for CodeWeavers)
  *
  * This library is free software; you can redistribute it and/or
@@ -314,9 +314,108 @@ static void clear_test(IDirect3DDevice9 *device)
     ok(color == 0x00ffffff, "Clear rectangle 4(neg, neg) has color %08x\n", color);
 }
 
+typedef struct {
+    float in[4];
+    DWORD out;
+} test_data_t;
+
+/*
+ *  c7      rounded     ARGB
+ * -2.4     -2          0x00ffff00
+ * -1.6     -2          0x00ffff00
+ * -0.4      0          0x0000ffff
+ *  0.4      0          0x0000ffff
+ *  1.6      2          0x00ff00ff
+ *  2.4      2          0x00ff00ff
+ */
+static void test_mova(IDirect3DDevice9 *device)
+{
+    static const DWORD mova_test[] = {
+        0xfffe0200,                                                             /* vs_2_0                       */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0              */
+        0x05000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 1.0, 0.0, 0.0, 1.0   */
+        0x05000051, 0xa00f0001, 0x3f800000, 0x3f800000, 0x00000000, 0x3f800000, /* def c1, 1.0, 1.0, 0.0, 1.0   */
+        0x05000051, 0xa00f0002, 0x00000000, 0x3f800000, 0x00000000, 0x3f800000, /* def c2, 0.0, 1.0, 0.0, 1.0   */
+        0x05000051, 0xa00f0003, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000, /* def c3, 0.0, 1.0, 1.0, 1.0   */
+        0x05000051, 0xa00f0004, 0x00000000, 0x00000000, 0x3f800000, 0x3f800000, /* def c4, 0.0, 0.0, 1.0, 1.0   */
+        0x05000051, 0xa00f0005, 0x3f800000, 0x00000000, 0x3f800000, 0x3f800000, /* def c5, 1.0, 0.0, 1.0, 1.0   */
+        0x05000051, 0xa00f0006, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000, /* def c6, 1.0, 1.0, 1.0, 1.0   */
+        0x0200002e, 0xb0010000, 0xa0000007,                                     /* mova a0.x, c7.x              */
+        0x03000001, 0xd00f0000, 0xa0e42003, 0xb0000000,                         /* mov oD0, c[a0.x + 3]         */
+        0x02000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                 */
+        0x0000ffff                                                              /* END                          */
+    };
+
+    static const test_data_t test_data[] = {
+        {{-2.4f, 0.0f, 0.0f, 0.0f}, 0x00ffff00},
+        {{-1.6f, 0.0f, 0.0f, 0.0f}, 0x00ffff00},
+        {{-0.4f, 0.0f, 0.0f, 0.0f}, 0x0000ffff},
+        {{ 0.4f, 0.0f, 0.0f, 0.0f}, 0x0000ffff},
+        {{ 1.6f, 0.0f, 0.0f, 0.0f}, 0x00ff00ff},
+        {{ 2.4f, 0.0f, 0.0f, 0.0f}, 0x00ff00ff}
+    };
+
+    static const float quad[][3] = {
+        {-1.0f, -1.0f, 0.0f},
+        {-1.0f,  1.0f, 0.0f},
+        { 1.0f, -1.0f, 0.0f},
+        { 1.0f,  1.0f, 0.0f},
+    };
+
+    static const D3DVERTEXELEMENT9 decl_elements[] = {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        D3DDECL_END()
+    };
+
+    IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
+    IDirect3DVertexShader9 *mova_shader = NULL;
+    HRESULT hr;
+    int i;
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, mova_test, &mova_shader);
+    ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, mova_shader);
+    ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed (%08x)\n", hr);
+
+    for (i = 0; i < (sizeof(test_data) / sizeof(test_data_t)); ++i)
+    {
+        DWORD color;
+
+        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 7, test_data[i].in, 1);
+        ok(SUCCEEDED(hr), "SetVertexShaderConstantF failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "BeginScene failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], 3 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "EndScene failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Present failed (%08x)\n", hr);
+
+        color = getPixelColor(device, 320, 240);
+        ok(color == test_data[i].out, "Expected color %08x, got %08x (for input %f)\n", test_data[i].out, color, test_data[i].in[0]);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Clear failed (%08x)\n", hr);
+    }
+
+    IDirect3DVertexDeclaration9_Release(vertex_declaration);
+    IDirect3DVertexShader9_Release(mova_shader);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
+    D3DCAPS9 caps;
     HRESULT hr;
     DWORD color;
 
@@ -329,6 +428,8 @@ START_TEST(visual)
 
     device_ptr = init_d3d9();
     if (!device_ptr) return;
+
+    IDirect3DDevice9_GetDeviceCaps(device_ptr, &caps);
 
     /* Check for the reliability of the returned data */
     hr = IDirect3DDevice9_Clear(device_ptr, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
@@ -364,6 +465,12 @@ START_TEST(visual)
     /* Now execute the real tests */
     lighting_test(device_ptr);
     clear_test(device_ptr);
+
+    if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0))
+    {
+        test_mova(device_ptr);
+    }
+    else skip("No vs_2_0 support\n");
 
 cleanup:
     if(device_ptr) IDirect3DDevice9_Release(device_ptr);
