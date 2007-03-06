@@ -35,6 +35,7 @@ static void test_fullpath(void)
 {
     char full[MAX_PATH];
     char tmppath[MAX_PATH];
+    char prevpath[MAX_PATH];
     char level1[MAX_PATH];
     char level2[MAX_PATH];
     char teststring[MAX_PATH];
@@ -42,6 +43,7 @@ static void test_fullpath(void)
     BOOL rc,free1,free2;
 
     free1=free2=TRUE;
+    GetCurrentDirectory(MAX_PATH, prevpath);
     GetTempPath(MAX_PATH,tmppath);
     strcpy(level1,tmppath);
     strcat(level1,"msvcrt-test\\");
@@ -79,6 +81,7 @@ static void test_fullpath(void)
     ok(strcmp(freeme,teststring)==0,"Invalid Path returned %s\n",freeme);
     free(freeme);
 
+    SetCurrentDirectory(prevpath);
     if (free2)
         RemoveDirectory(level2);
     if (free1)
