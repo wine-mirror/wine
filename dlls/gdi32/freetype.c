@@ -740,7 +740,25 @@ static Family *find_family_from_name(const WCHAR *name)
 
     return NULL;
 }
-    
+
+static Face *find_face_from_path_index(const CHAR *file_name, const INT index)
+{
+    Family *family;
+    Face *face;
+
+    TRACE("looking for file %s index %i\n", debugstr_a(file_name), index);
+
+    LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
+    {
+        LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+        {
+            if(!strcasecmp(face->file, file_name) && face->face_index == index)
+                return face;
+	}
+    }
+    return NULL;
+}
+
 static void DumpSubstList(void)
 {
     FontSubst *psub;
@@ -2714,6 +2732,9 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     family = NULL;
     if(lf.lfFaceName[0] != '\0') {
         FontSubst *psub;
+        SYSTEM_LINKS *font_link;
+        CHILD_FONT *font_link_entry;
+
         psub = get_font_subst(&font_subst_list, lf.lfFaceName, lf.lfCharSet);
 
 	if(psub) {
@@ -2739,6 +2760,33 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
                 }
             }
 	}
+
+        /*
+	 * Try check the SystemLink list first for a replacement font.
+	 * We may find good replacements there.
+         */
+        LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
+        {
+            if(!strcmpW(font_link->font_name, lf.lfFaceName))
+            {
+                TRACE("found entry in system list\n");
+                LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
+                {
+                    face = find_face_from_path_index(font_link_entry->file_name,
+                                font_link_entry->index);
+                    if (face)
+                    {
+                        family = face->family;
+                        if(csi.fs.fsCsb[0] &
+                            (face->fs.fsCsb[0] | face->fs_links.fsCsb[0]))
+                        {
+                            if(face->scalable || can_use_bitmap)
+                                goto found;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /* If requested charset was DEFAULT_CHARSET then try using charset
