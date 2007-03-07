@@ -187,6 +187,12 @@ typedef struct
     unsigned short attr;
 } char_info_t;
 
+typedef struct
+{
+    unsigned int low_part;
+    int          high_part;
+} luid_t;
+
 #define MAX_ACL_LEN 65535
 
 struct security_descriptor
@@ -4005,6 +4011,17 @@ struct get_token_impersonation_level_reply
 };
 
 
+struct allocate_locally_unique_id_request
+{
+    struct request_header __header;
+};
+struct allocate_locally_unique_id_reply
+{
+    struct reply_header __header;
+    luid_t         luid;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -4224,6 +4241,7 @@ enum request
     REQ_query_symlink,
     REQ_get_object_info,
     REQ_get_token_impersonation_level,
+    REQ_allocate_locally_unique_id,
     REQ_NB_REQUESTS
 };
 
@@ -4448,6 +4466,7 @@ union generic_request
     struct query_symlink_request query_symlink_request;
     struct get_object_info_request get_object_info_request;
     struct get_token_impersonation_level_request get_token_impersonation_level_request;
+    struct allocate_locally_unique_id_request allocate_locally_unique_id_request;
 };
 union generic_reply
 {
@@ -4670,8 +4689,9 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
     struct get_object_info_reply get_object_info_reply;
     struct get_token_impersonation_level_reply get_token_impersonation_level_reply;
+    struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 279
+#define SERVER_PROTOCOL_VERSION 280
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

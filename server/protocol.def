@@ -203,6 +203,12 @@ typedef struct
     unsigned short attr;
 } char_info_t;
 
+typedef struct
+{
+    unsigned int low_part;
+    int          high_part;
+} luid_t;
+
 #define MAX_ACL_LEN 65535
 
 struct security_descriptor
@@ -2869,4 +2875,10 @@ enum message_type
     obj_handle_t   handle;        /* handle to the object */
 @REPLY
     int            impersonation_level; /* impersonation level of the impersonation token */
+@END
+
+/* Allocate a locally-unique identifier */
+@REQ(allocate_locally_unique_id)
+@REPLY
+    luid_t         luid;
 @END

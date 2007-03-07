@@ -1090,25 +1090,28 @@ NTSTATUS WINAPI NtShutdownSystem(SHUTDOWN_ACTION Action)
 
 /******************************************************************************
  *  NtAllocateLocallyUniqueId (NTDLL.@)
- *
- * FIXME: the server should do that
  */
 NTSTATUS WINAPI NtAllocateLocallyUniqueId(PLUID Luid)
 {
-    static LUID luid = { SE_MAX_WELL_KNOWN_PRIVILEGE, 0 };
+    NTSTATUS status;
 
-    FIXME("%p\n", Luid);
+    TRACE("%p\n", Luid);
 
     if (!Luid)
         return STATUS_ACCESS_VIOLATION;
 
-    luid.LowPart++;
-    if (luid.LowPart==0)
-        luid.HighPart++;
-    Luid->HighPart = luid.HighPart;
-    Luid->LowPart = luid.LowPart;
+    SERVER_START_REQ( allocate_locally_unique_id )
+    {
+        status = wine_server_call( req );
+        if (!status)
+        {
+            Luid->LowPart = reply->luid.low_part;
+            Luid->HighPart = reply->luid.high_part;
+        }
+    }
+    SERVER_END_REQ;
 
-    return STATUS_SUCCESS;
+    return status;
 }
 
 /******************************************************************************

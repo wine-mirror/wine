@@ -365,6 +365,15 @@ static inline void allocate_luid( LUID *luid )
     *luid = prev_luid_value;
 }
 
+DECL_HANDLER( allocate_locally_unique_id )
+{
+    LUID luid;
+
+    allocate_luid( &luid );
+    reply->luid.low_part = luid.LowPart;
+    reply->luid.high_part = luid.HighPart;
+}
+
 static inline void luid_and_attr_from_privilege( LUID_AND_ATTRIBUTES *out, const struct privilege *in)
 {
     out->Luid = in->luid;
