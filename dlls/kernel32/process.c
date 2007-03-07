@@ -90,6 +90,7 @@ const WCHAR *DIR_System = NULL;
 
 static const WCHAR comW[] = {'.','c','o','m',0};
 static const WCHAR batW[] = {'.','b','a','t',0};
+static const WCHAR cmdW[] = {'.','c','m','d',0};
 static const WCHAR pifW[] = {'.','p','i','f',0};
 static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 
@@ -1688,7 +1689,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
                                            inherit, flags, startup_info, info, unixdir, FALSE );
                 break;
             }
-            if (!strcmpiW( p, batW ))
+            if (!strcmpiW( p, batW ) || !strcmpiW( p, cmdW ) )
             {
                 TRACE( "starting %s as batch binary\n", debugstr_w(name) );
                 retv = create_cmd_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
