@@ -105,7 +105,6 @@ const char *get_time_str(unsigned long _t)
      * I wonder if Wine isn't broken wrt to GMT settings...
      */
     if (len && str[len-1] == '\n') len--;
-    if (len >= sizeof(buf)) len = sizeof(buf) - 1;
     buf = dump_want_n(len + 1);
     if (buf)
     {
