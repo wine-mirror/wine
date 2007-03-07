@@ -1,6 +1,6 @@
  /*
  * Copyright 2004 by Krzysztof Foltman
- * Copyright 2006 by YunSong Hwang
+ * Copyright 2006,2007 by YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,10 +33,12 @@ BEGIN
     BEGIN
         MENUITEM "되돌리기(&U)\tCtrl+Z",               ID_EDIT_UNDO
         MENUITEM "다시 실행(&R)\tCtrl+Y",               ID_EDIT_REDO
-        MENUITEM "모두 선택(&S)\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "잘라내기(&T)\tCtrl+X",                ID_EDIT_CUT
         MENUITEM "복사(&C)\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "붙여넣기(&P)\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM "지우기(&C)\tDEL",                 ID_EDIT_CLEAR
+        MENUITEM "모두 선택(&S)\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "읽기 전용(&O)",                  ID_EDIT_READONLY
         MENUITEM "수정 가능(&M)",                   ID_EDIT_MODIFIED
@@ -64,4 +66,11 @@ BEGIN
             MENUITEM "오른쪽(&R)\tCtrl+R",        ID_ALIGN_RIGHT
         END
     END
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_RICHTEXT_FILES_RTF,  "리치 텍스트 파일형식 (*.rtf)"
+    STRING_TEXT_FILES_TXT,      "텍스트 파일 (*.txt)"
+    STRING_ALL_FILES,           "모둔 문서 (*.*)"
 END
