@@ -22,7 +22,7 @@ ALL_LIBS     = $(IMPORTS:%=-l%) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 EXTRA_OBJS   = testlist.o
 
 CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
-CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(RC_SRCS:.rc=.res.cross.o) testlist.cross.o
+CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(RC_SRCS:.rc=.res.cross.o) $(BISON_SRCS:.y=.tab.cross.o) $(LEX_SRCS:.l=.yy.cross.o) $(IDL_GEN_C_SRCS:.c=.cross.o) testlist.cross.o
 CROSSCC      = @CROSSCC@
 CROSSWINDRES = @CROSSWINDRES@
 
