@@ -1241,7 +1241,7 @@ UINT16 WINAPI waveOutGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
  *			waveOutOpen			[MMSYSTEM.404]
  */
 UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
-                            const LPWAVEFORMATEX lpFormat, DWORD dwCallback,
+                            const WAVEFORMATEX *lpFormat, DWORD dwCallback,
 			    DWORD dwInstance, DWORD dwFlags)
 {
     HANDLE		hWaveOut;
@@ -1532,7 +1532,7 @@ UINT16 WINAPI waveInGetDevCaps16(UINT16 uDeviceID, LPWAVEINCAPS16 lpCaps,
  * 				waveInOpen			[MMSYSTEM.504]
  */
 UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
-                           const LPWAVEFORMATEX lpFormat, DWORD dwCallback,
+                           const WAVEFORMATEX *lpFormat, DWORD dwCallback,
                            DWORD dwInstance, DWORD dwFlags)
 {
     HANDLE		hWaveIn;
