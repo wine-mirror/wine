@@ -4221,8 +4221,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
                 continue;
             }
 
-            glScissor(curRect[i].x1, target->currentDesc.Height - curRect[i].y2,
-                        curRect[i].x2 - curRect[i].x1, curRect[i].y2 - curRect[i].y1);
+            if(This->render_offscreen) {
+                glScissor(curRect[i].x1, curRect[i].y1,
+                          curRect[i].x2 - curRect[i].x1, curRect[i].y2 - curRect[i].y1);
+            } else {
+                glScissor(curRect[i].x1, target->currentDesc.Height - curRect[i].y2,
+                          curRect[i].x2 - curRect[i].x1, curRect[i].y2 - curRect[i].y1);
+            }
             checkGLcall("glScissor");
 
             glClear(glMask);
