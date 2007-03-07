@@ -80,7 +80,7 @@ FILESUBTYPE    WINE_FILESUBTYPE
     {
 	BLOCK "040904E4" /* LANG_ENGLISH/SUBLANG_DEFAULT, CP 1252 */
 	{
-	    VALUE "CompanyName", "Wine Team"
+	    VALUE "CompanyName", "Microsoft Corporation"  /* GameGuard depends on this */
 	    VALUE "FileDescription", WINE_FILEDESCRIPTION_STR
 	    VALUE "FileVersion", WINE_FILEVERSION_STR
 	    VALUE "InternalName", WINE_FILENAME
