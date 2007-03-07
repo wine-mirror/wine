@@ -489,7 +489,10 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LPWSTR servername, DWORD level,
     switch (level)
     {
         case 100:
+        case 101:
+        case 102:
         {
+            static const WCHAR lanroot[] = {'c',':','\\','l','a','n','m','a','n',0};  /* FIXME */
             DWORD computerNameLen, domainNameLen, size;
             WCHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
             LSA_OBJECT_ATTRIBUTES ObjectAttributes;
@@ -512,28 +515,31 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LPWSTR servername, DWORD level,
                 LsaQueryInformationPolicy(PolicyHandle,
                  PolicyAccountDomainInformation, (PVOID*)&DomainInfo);
                 domainNameLen = lstrlenW(DomainInfo->DomainName.Buffer) + 1;
-                size = sizeof(WKSTA_INFO_100) + computerNameLen * sizeof(WCHAR)
-                 + domainNameLen * sizeof(WCHAR);
+                size = sizeof(WKSTA_INFO_102) + computerNameLen * sizeof(WCHAR)
+                    + domainNameLen * sizeof(WCHAR) + sizeof(lanroot);
                 ret = NetApiBufferAllocate(size, (LPVOID *)bufptr);
                 if (ret == NERR_Success)
                 {
-                    PWKSTA_INFO_100 info = (PWKSTA_INFO_100)*bufptr;
+                    /* INFO_100 and INFO_101 structures are subsets of INFO_102 */
+                    PWKSTA_INFO_102 info = (PWKSTA_INFO_102)*bufptr;
                     OSVERSIONINFOW verInfo;
 
-                    info->wki100_platform_id = PLATFORM_ID_NT;
-                    info->wki100_computername = (LPWSTR)(*bufptr +
-                     sizeof(WKSTA_INFO_100));
-                    memcpy(info->wki100_computername, computerName,
+                    info->wki102_platform_id = PLATFORM_ID_NT;
+                    info->wki102_computername = (LPWSTR)(*bufptr +
+                     sizeof(WKSTA_INFO_102));
+                    memcpy(info->wki102_computername, computerName,
                      computerNameLen * sizeof(WCHAR));
-                    info->wki100_langroup = (LPWSTR)(*bufptr +
-                     sizeof(WKSTA_INFO_100) + computerNameLen * sizeof(WCHAR));
-                    memcpy(info->wki100_langroup, DomainInfo->DomainName.Buffer,
+                    info->wki102_langroup = info->wki102_computername + computerNameLen;
+                    memcpy(info->wki102_langroup, DomainInfo->DomainName.Buffer,
                      domainNameLen * sizeof(WCHAR));
+                    info->wki102_lanroot = info->wki102_langroup + domainNameLen;
+                    memcpy(info->wki102_lanroot, lanroot, sizeof(lanroot));
                     memset(&verInfo, 0, sizeof(verInfo));
                     verInfo.dwOSVersionInfoSize = sizeof(verInfo);
                     GetVersionExW(&verInfo);
-                    info->wki100_ver_major = verInfo.dwMajorVersion;
-                    info->wki100_ver_minor = verInfo.dwMinorVersion;
+                    info->wki102_ver_major = verInfo.dwMajorVersion;
+                    info->wki102_ver_minor = verInfo.dwMinorVersion;
+                    info->wki102_logged_on_users = 1;
                 }
                 LsaFreeMemory(DomainInfo);
                 LsaClose(PolicyHandle);
