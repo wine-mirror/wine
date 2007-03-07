@@ -181,7 +181,11 @@ unsigned short get_type_vt(type_t *t)
   case RPC_FC_OP:
   case RPC_FC_FP:
     if(t->ref)
+    {
+      if (match(t->ref->name, "SAFEARRAY"))
+        return VT_SAFEARRAY;
       return VT_PTR;
+    }
 
     error("get_type_vt: unknown-deref-type: %d\n", t->ref->type);
     break;

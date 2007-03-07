@@ -903,14 +903,22 @@ static int encode_type(
 	*decoded_size = 8 /*sizeof(TYPEDESC)*/ + child_size;
         break;
     }
-#if 0
 
 
     case VT_SAFEARRAY:
-	/* FIXME: Make with the error checking. */
-	FIXME("SAFEARRAY vartype, may not work correctly.\n");
+	{
+	int next_vt;
 
-	ctl2_encode_typedesc(typelib, tdesc->u.lptdesc, &target_type, NULL, NULL, &child_size);
+	/* skip over SAFEARRAY type straight to element type */
+	type = type->ref;
+
+	for(next_vt = 0; type->ref; type = type->ref) {
+	    next_vt = get_type_vt(type->ref);
+	    if (next_vt != 0)
+	        break;
+	}
+
+	encode_type(typelib, next_vt, type->ref, &target_type, NULL, NULL, &child_size);
 
 	for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
 	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
@@ -934,15 +942,14 @@ static int encode_type(
 	    typedata[1] = target_type;
 	}
 
-	*encoded_tdesc = typeoffset;
+	*encoded_type = typeoffset;
 
 	*width = 4;
 	*alignment = 4;
-	*decoded_size = sizeof(TYPEDESC) + child_size;
+	*decoded_size = 8 /*sizeof(TYPEDESC)*/ + child_size;
 	break;
+	}
 
-
-#endif
 
     case VT_USERDEFINED:
       {

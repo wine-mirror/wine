@@ -90,7 +90,7 @@ static var_t *make_var(char *name);
 static func_list_t *append_func(func_list_t *list, func_t *func);
 static func_t *make_func(var_t *def, var_list_t *args);
 static type_t *make_class(char *name);
-static type_t *make_safearray(void);
+static type_t *make_safearray(typeref_t *tref);
 static type_t *make_builtin(char *name);
 static type_t *make_int(int sign);
 
@@ -833,7 +833,7 @@ type:	  tVOID					{ $$ = make_tref(NULL, duptype(find_type("void", 0), 1)); }
 	| tSTRUCT aIDENTIFIER			{ $$ = make_tref(NULL, get_type(RPC_FC_STRUCT, $2, tsSTRUCT)); }
 	| uniondef				{ $$ = make_tref(NULL, $1); }
 	| tUNION aIDENTIFIER			{ $$ = make_tref(NULL, find_type2($2, tsUNION)); }
-	| tSAFEARRAY '(' type ')'		{ $$ = make_tref(NULL, make_safearray()); }
+	| tSAFEARRAY '(' type ')'		{ $$ = make_tref(NULL, make_safearray($3)); }
 	;
 
 typedef: tTYPEDEF m_attributes type pident_list	{ reg_typedefs(type_ref($3), $4, $2);
@@ -1321,9 +1321,19 @@ static type_t *make_class(char *name)
   return c;
 }
 
-static type_t *make_safearray(void)
+static type_t *make_safearray(typeref_t *tref)
 {
-  return make_type(RPC_FC_FP, find_type("SAFEARRAY", 0));
+  const type_t *sa_orig = find_type("SAFEARRAY", 0);
+  type_t *sa = make_type(sa_orig->type, sa_orig->ref);
+  type_t *ptr;
+
+  if (sa_orig->name)
+    sa->name = strdup(sa_orig->name);
+  sa->ref = type_ref(tref);
+  ptr = make_type(RPC_FC_FP, sa);
+  ptr->name = strdup("SAFEARRAY");
+
+  return ptr;
 }
 
 #define HASHMAX 64
