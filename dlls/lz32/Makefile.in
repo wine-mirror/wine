@@ -7,6 +7,9 @@ IMPORTLIB = liblz32.$(IMPLIBEXT)
 IMPORTS   = kernel32
 
 C_SRCS   = lzexpand_main.c
+
+RC_SRCS  = version.rc
+
 C_SRCS16 = lzexpand16.c
 SPEC_SRCS16 = lzexpand.spec
 

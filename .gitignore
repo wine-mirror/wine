@@ -18,6 +18,7 @@ dlls/advapi32/libadvapi32.def
 dlls/advapi32/tests/*.ok
 dlls/advapi32/tests/advapi32_crosstest.exe
 dlls/advapi32/tests/testlist.c
+dlls/advapi32/version.res
 dlls/advpack/libadvpack.def
 dlls/advpack/tests/*.ok
 dlls/advpack/tests/advpack_crosstest.exe
@@ -249,6 +250,7 @@ dlls/icmp/libicmp.def
 dlls/imagehlp/libimagehlp.def
 dlls/imm.dll16
 dlls/imm32/libimm32.def
+dlls/imm32/version.res
 dlls/infosoft/tests/*.ok
 dlls/infosoft/tests/infosoft_crosstest.exe
 dlls/infosoft/tests/testlist.c
@@ -256,6 +258,7 @@ dlls/iphlpapi/libiphlpapi.def
 dlls/iphlpapi/tests/*.ok
 dlls/iphlpapi/tests/iphlpapi_crosstest.exe
 dlls/iphlpapi/tests/testlist.c
+dlls/iphlpapi/version.res
 dlls/itss/rsrc.res
 dlls/itss/tests/*.ok
 dlls/itss/tests/data.chm
@@ -283,6 +286,7 @@ dlls/lz32/liblz32.def
 dlls/lz32/tests/*.ok
 dlls/lz32/tests/lz32_crosstest.exe
 dlls/lz32/tests/testlist.c
+dlls/lz32/version.res
 dlls/lzexpand.dll16
 dlls/mapi32/libmapi32.def
 dlls/mapi32/tests/*.ok
@@ -363,6 +367,7 @@ dlls/ntdll/libntdll.def
 dlls/ntdll/tests/*.ok
 dlls/ntdll/tests/ntdll_crosstest.exe
 dlls/ntdll/tests/testlist.c
+dlls/ntdll/version.res
 dlls/ntdsapi/libntdsapi.def
 dlls/objsel/objsel.res
 dlls/odbc32/libodbc32.def
@@ -430,6 +435,7 @@ dlls/rpcrt4/librpcrt4.def
 dlls/rpcrt4/tests/*.ok
 dlls/rpcrt4/tests/rpcrt4_crosstest.exe
 dlls/rpcrt4/tests/testlist.c
+dlls/rpcrt4/version.res
 dlls/rsabase/tests/*.ok
 dlls/rsabase/tests/rsabase_crosstest.exe
 dlls/rsabase/tests/testlist.c
@@ -437,6 +443,7 @@ dlls/rsaenh/librsaenh.def
 dlls/rsaenh/tests/*.ok
 dlls/rsaenh/tests/rsaenh_crosstest.exe
 dlls/rsaenh/tests/testlist.c
+dlls/rsaenh/version.res
 dlls/sane.ds/rsrc.res
 dlls/secur32/libsecur32.def
 dlls/secur32/tests/*.ok
@@ -603,6 +610,7 @@ dlls/version/tests/*.ok
 dlls/version/tests/testlist.c
 dlls/version/tests/version.res
 dlls/version/tests/version_crosstest.exe
+dlls/version/version.res
 dlls/w32sys.dll16
 dlls/win32s16.dll16
 dlls/win87em.dll16
@@ -612,6 +620,7 @@ dlls/wined3d/libwined3d.def
 dlls/winedos/libwinedos.def
 dlls/wineps.drv/rsrc.res
 dlls/wineps16.drv16
+dlls/winex11.drv/version.res
 dlls/wing.dll16
 dlls/wininet/libwininet.def
 dlls/wininet/rsrc.res

@@ -52,6 +52,8 @@ C_SRCS = \
 	virtual.c \
 	wcstring.c
 
+RC_SRCS = version.rc
+
 EXTRA_OBJS = relay32.o
 
 @MAKE_DLL_RULES@

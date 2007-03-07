@@ -11,6 +11,8 @@ C_SRCS = \
 	install.c \
 	resource.c
 
+RC_SRCS = version.rc
+
 C_SRCS16 = \
 	ver16.c
 

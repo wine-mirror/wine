@@ -18,6 +18,8 @@ C_SRCS = \
 	rsa.c \
 	rsaenh.c
 
+RC_SRCS = version.rc
+
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

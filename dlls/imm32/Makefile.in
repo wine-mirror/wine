@@ -9,6 +9,8 @@ IMPORTS   = user32 gdi32 kernel32
 C_SRCS = \
 	imm.c
 
+RC_SRCS = version.rc
+
 SPEC_SRCS16 = imm.spec
 
 @MAKE_DLL_RULES@
