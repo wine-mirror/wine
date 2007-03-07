@@ -217,7 +217,7 @@ static int     FILEDLG95_LOOKIN_RemoveMostExpandedItem(HWND hwnd);
 static void    FILEDLG95_LOOKIN_Clean(HWND hwnd);
 
 /* Miscellaneous tool functions */
-static HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrFileName);
+static HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPWSTR lpstrFileName);
 IShellFolder* GetShellFolderFromPidl(LPITEMIDLIST pidlAbs);
 LPITEMIDLIST  GetParentPidl(LPITEMIDLIST pidl);
 static LPITEMIDLIST GetPidlFromName(IShellFolder *psf,LPWSTR lpcstrFileName);
@@ -227,7 +227,6 @@ static void *MemAlloc(UINT size);
 static void MemFree(void *mem);
 
 static INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-LRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 static INT_PTR FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCount, UINT sizeUsed);
 static BOOL BrowseSelectedFolder(HWND hwnd);
@@ -275,10 +274,10 @@ static BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
     /* old style hook messages */
     if (IsHooked(fodInfos))
     {
-      fodInfos->HookMsg.fileokstring = RegisterWindowMessageA(FILEOKSTRINGA);
-      fodInfos->HookMsg.lbselchstring = RegisterWindowMessageA(LBSELCHSTRINGA);
-      fodInfos->HookMsg.helpmsgstring = RegisterWindowMessageA(HELPMSGSTRINGA);
-      fodInfos->HookMsg.sharevistring = RegisterWindowMessageA(SHAREVISTRINGA);
+      fodInfos->HookMsg.fileokstring = RegisterWindowMessageW(FILEOKSTRINGW);
+      fodInfos->HookMsg.lbselchstring = RegisterWindowMessageW(LBSELCHSTRINGW);
+      fodInfos->HookMsg.helpmsgstring = RegisterWindowMessageW(HELPMSGSTRINGW);
+      fodInfos->HookMsg.sharevistring = RegisterWindowMessageW(SHAREVISTRINGW);
     }
 
     /* Some shell namespace extensions depend on COM being initialized. */
@@ -1145,11 +1144,11 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   int win2000plus = 0;
   int win98plus   = 0;
   int handledPath = FALSE;
-  OSVERSIONINFOA osVi;
+  OSVERSIONINFOW osVi;
   static const WCHAR szwSlash[] = { '\\', 0 };
   static const WCHAR szwStar[] = { '*',0 };
 
-  TBBUTTON tbb[] =
+  static const TBBUTTON tbb[] =
   {
    {0,                 0,                   TBSTATE_ENABLED, BTNS_SEP, {0, 0}, 0, 0 },
    {VIEW_PARENTFOLDER, FCIDM_TB_UPFOLDER,   TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0 },
@@ -1174,8 +1173,8 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   TRACE("%p\n", fodInfos);
 
   /* Get windows version emulating */
-  osVi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-  GetVersionExA(&osVi);
+  osVi.dwOSVersionInfoSize = sizeof(osVi);
+  GetVersionExW(&osVi);
   if (osVi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
     win98plus   = ((osVi.dwMajorVersion > 4) || ((osVi.dwMajorVersion == 4) && (osVi.dwMinorVersion > 0)));
   } else if (osVi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
@@ -1214,15 +1213,15 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
           rectTB.right - rectTB.left, rectTB.bottom - rectTB.top,
           hwnd, (HMENU)IDC_TOOLBAR, COMDLG32_hInstance, NULL);
 
-  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
+  SendMessageW(fodInfos->DlgInfos.hwndTB, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
 
 /* FIXME: use TB_LOADIMAGES when implemented */
-/*  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_LOADIMAGES, (WPARAM) IDB_VIEW_SMALL_COLOR, HINST_COMMCTRL);*/
-  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_ADDBITMAP, (WPARAM) 12, (LPARAM) &tba[0]);
-  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_ADDBITMAP, (WPARAM) 1, (LPARAM) &tba[1]);
+/*  SendMessageW(fodInfos->DlgInfos.hwndTB, TB_LOADIMAGES, IDB_VIEW_SMALL_COLOR, HINST_COMMCTRL);*/
+  SendMessageW(fodInfos->DlgInfos.hwndTB, TB_ADDBITMAP, 12, (LPARAM) &tba[0]);
+  SendMessageW(fodInfos->DlgInfos.hwndTB, TB_ADDBITMAP, 1, (LPARAM) &tba[1]);
 
-  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_ADDBUTTONSA, (WPARAM) 9,(LPARAM) &tbb);
-  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_AUTOSIZE, 0, 0);
+  SendMessageW(fodInfos->DlgInfos.hwndTB, TB_ADDBUTTONSW, 9, (LPARAM) &tbb);
+  SendMessageW(fodInfos->DlgInfos.hwndTB, TB_AUTOSIZE, 0, 0);
 
   /* Set the window text with the text specified in the OPENFILENAME structure */
   if(fodInfos->title)
@@ -1419,7 +1418,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   /* Must the open as read only check box be checked ?*/
   if(fodInfos->ofnInfos->Flags & OFN_READONLY)
   {
-    SendDlgItemMessageA(hwnd,IDC_OPENREADONLY,BM_SETCHECK,(WPARAM)TRUE,0);
+    SendDlgItemMessageW(hwnd,IDC_OPENREADONLY,BM_SETCHECK,TRUE,0);
   }
 
   /* Must the open as read only check box be hidden? */
@@ -2031,7 +2030,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
         WCHAR *ext = NULL;
 
         /* update READONLY check box flag */
-	if ((SendMessageA(GetDlgItem(hwnd,IDC_OPENREADONLY),BM_GETCHECK,0,0) & 0x03) == BST_CHECKED)
+	if ((SendMessageW(GetDlgItem(hwnd,IDC_OPENREADONLY),BM_GETCHECK,0,0) & 0x03) == BST_CHECKED)
 	  fodInfos->ofnInfos->Flags |= OFN_READONLY;
 	else
 	  fodInfos->ofnInfos->Flags &= ~OFN_READONLY;
@@ -3029,8 +3028,8 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
     FileOpenDlgInfos *fodInfos;
     LPITEMIDLIST      pidl;
     UINT              nFiles = 0, nFileToOpen, nFileSelected, nLength = 0;
-    char              lpstrTemp[MAX_PATH];
-    LPSTR             lpstrAllFile = NULL, lpstrCurrFile = NULL;
+    WCHAR             lpstrTemp[MAX_PATH];
+    LPWSTR            lpstrAllFile, lpstrCurrFile;
 
     TRACE("\n");
     fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
@@ -3054,7 +3053,7 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
 
           if ( ! IsPidlFolder(fodInfos->Shell.FOIShellFolder, pidl) ) /* Ignore folders */
 	  {
-            nLength += strlen( lpstrTemp ) + 3;
+            nLength += lstrlenW( lpstrTemp ) + 3;
             nFiles++;
 	  }
           COMDLG32_SHFree( pidl );
@@ -3064,8 +3063,7 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
 
     /* allocate the buffer */
     if (nFiles <= 1) nLength = MAX_PATH;
-    lpstrAllFile = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nLength);
-    lpstrAllFile[0] = '\0';
+    lpstrAllFile = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nLength * sizeof(WCHAR));
 
     /* Generate the string for the edit control */
     if(nFiles >= 1)
@@ -3086,55 +3084,56 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
             if ( nFiles > 1)
 	    {
               *lpstrCurrFile++ =  '\"';
-              strcpy( lpstrCurrFile, lpstrTemp );
-              lpstrCurrFile += strlen( lpstrTemp );
-              strcpy( lpstrCurrFile, "\" " );
-              lpstrCurrFile += 2;
+              lstrcpyW( lpstrCurrFile, lpstrTemp );
+              lpstrCurrFile += lstrlenW( lpstrTemp );
+              *lpstrCurrFile++ = '\"';
+              *lpstrCurrFile++ = ' ';
+              *lpstrCurrFile = 0;
 	    }
 	    else
 	    {
-              strcpy( lpstrAllFile, lpstrTemp );
+              lstrcpyW( lpstrAllFile, lpstrTemp );
 	    }
           }
           COMDLG32_SHFree( (LPVOID) pidl );
 	}
       }
-      SetWindowTextA( fodInfos->DlgInfos.hwndFileName, lpstrAllFile );
+      SetWindowTextW( fodInfos->DlgInfos.hwndFileName, lpstrAllFile );
        
       /* Select the file name like Windows does */ 
-      SendMessageA(fodInfos->DlgInfos.hwndFileName, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+      SendMessageW(fodInfos->DlgInfos.hwndFileName, EM_SETSEL, 0, (LPARAM)-1);
     }
     HeapFree(GetProcessHeap(),0, lpstrAllFile );
 }
 
 
 /* copied from shell32 to avoid linking to it
- * FIXME: why?  shell32 is already linked
+ * Although shell32 is already linked the behaviour of exported StrRetToStrN
+ * is dependent on whether emulated OS is unicode or not.
  */
-static HRESULT COMDLG32_StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+static HRESULT COMDLG32_StrRetToStrNW (LPWSTR dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
 {
 	switch (src->uType)
 	{
 	  case STRRET_WSTR:
-	    WideCharToMultiByte(CP_ACP, 0, src->u.pOleStr, -1, (LPSTR)dest, len, NULL, NULL);
+	    lstrcpynW(dest, src->u.pOleStr, len);
 	    COMDLG32_SHFree(src->u.pOleStr);
 	    break;
 
 	  case STRRET_CSTR:
-	    lstrcpynA((LPSTR)dest, src->u.cStr, len);
+            if (!MultiByteToWideChar( CP_ACP, 0, src->u.cStr, -1, dest, len ) && len)
+                  dest[len-1] = 0;
 	    break;
 
 	  case STRRET_OFFSET:
-	    lstrcpynA((LPSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
+            if (!MultiByteToWideChar( CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->u.uOffset, -1, dest, len ) && len)
+                  dest[len-1] = 0;
 	    break;
 
 	  default:
-	    FIXME("unknown type!\n");
-	    if (len)
-	    {
-	      *(LPSTR)dest = '\0';
-	    }
-	    return(E_FAIL);
+	    FIXME("unknown type %x!\n", src->uType);
+	    if (len) *dest = '\0';
+	    return E_FAIL;
 	}
 	return S_OK;
 }
@@ -3315,7 +3314,7 @@ UINT GetNumSelected( IDataObject *doSelected )
  * E_FAIL otherwise
  */
 
-static HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrFileName)
+static HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPWSTR lpstrFileName)
 {
   STRRET str;
   HRESULT hRes;
@@ -3333,7 +3332,7 @@ static HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR
   /* Get the display name of the pidl relative to the folder */
   if (SUCCEEDED(hRes = IShellFolder_GetDisplayNameOf(lpsf, pidl, dwFlags, &str)))
   {
-      return COMDLG32_StrRetToStrNA(lpstrFileName, MAX_PATH, &str, pidl);
+      return COMDLG32_StrRetToStrNW(lpstrFileName, MAX_PATH, &str, pidl);
   }
   return E_FAIL;
 }
@@ -3762,7 +3761,7 @@ static BOOL GetFileName31A(LPOPENFILENAMEA lpofn, /* addess of structure with da
     lfs = FD31_AllocPrivate((LPARAM) lpofn, dlgType, &callbacks, (DWORD) FALSE);
     if (lfs)
     {
-        hInst = (HINSTANCE)GetWindowLongPtrA( lpofn->hwndOwner, GWLP_HINSTANCE );
+        hInst = (HINSTANCE)GetWindowLongPtrW( lpofn->hwndOwner, GWLP_HINSTANCE );
         bRet = DialogBoxIndirectParamA( hInst, lfs->template, lpofn->hwndOwner,
                                         FD32_FileOpenDlgProc, (LPARAM)lfs);
         FD31_DestroyPrivate(lfs);
