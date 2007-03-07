@@ -913,8 +913,7 @@ void WINAPI ILGlobalFree( LPITEMIDLIST pidl)
 {
     TRACE("%p\n", pidl);
 
-    if (pidl)
-        Free(pidl);
+    Free(pidl);
 }
 
 /*************************************************************************

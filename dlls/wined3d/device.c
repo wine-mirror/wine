@@ -1507,7 +1507,7 @@ error:
             FIXME("(%p) Something's still holding the front buffer\n",This);
         }
     }
-    if(object) HeapFree(GetProcessHeap(), 0, object);
+    HeapFree(GetProcessHeap(), 0, object);
     return hr;
 }
 
