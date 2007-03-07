@@ -2404,7 +2404,7 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
   {
      PROPSHEETPAGEW* psp = (PROPSHEETPAGEW*)psInfo->proppage[index].hpage;
 
-     if ((psp->dwFlags & PSP_USETITLE) && psInfo->proppage[index].pszText)
+     if (psp->dwFlags & PSP_USETITLE)
         Free ((LPVOID)psInfo->proppage[index].pszText);
 
      DestroyPropertySheetPage(psInfo->proppage[index].hpage);
@@ -2719,7 +2719,7 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
 
      if(psp)
      {
-        if ((psp->dwFlags & PSP_USETITLE) && psInfo->proppage[i].pszText)
+        if (psp->dwFlags & PSP_USETITLE)
            Free ((LPVOID)psInfo->proppage[i].pszText);
 
         DestroyPropertySheetPage(psInfo->proppage[i].hpage);

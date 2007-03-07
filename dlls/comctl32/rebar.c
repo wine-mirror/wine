@@ -2750,10 +2750,8 @@ REBAR_Destroy (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    lpBand = &infoPtr->bands[i];
 
 	    /* delete text strings */
-	    if (lpBand->lpText) {
-		Free (lpBand->lpText);
-		lpBand->lpText = NULL;
-	    }
+            Free (lpBand->lpText);
+            lpBand->lpText = NULL;
 	    /* destroy child window */
 	    DestroyWindow (lpBand->hwndChild);
 	}

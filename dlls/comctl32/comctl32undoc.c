@@ -954,10 +954,8 @@ BOOL Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc)
 	*lppDest = ptr;
     }
     else {
-	if (*lppDest) {
-	    Free (*lppDest);
-	    *lppDest = NULL;
-	}
+        Free (*lppDest);
+        *lppDest = NULL;
     }
 
     return TRUE;
@@ -994,10 +992,8 @@ BOOL Str_SetPtrWtoA (LPSTR *lppDest, LPCWSTR lpSrc)
         *lppDest = ptr;
     }
     else {
-        if (*lppDest) {
-            Free (*lppDest);
-            *lppDest = NULL;
-        }
+        Free (*lppDest);
+        *lppDest = NULL;
     }
 
     return TRUE;

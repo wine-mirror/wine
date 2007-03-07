@@ -957,12 +957,12 @@ HEADER_PrepareCallbackItems(HWND hwnd, INT iItem, INT reqMask)
 static void
 HEADER_FreeCallbackItems(HEADER_ITEM *lpItem)
 {
-    if (lpItem->callbackMask&HDI_TEXT && lpItem->pszText != NULL)
+    if (lpItem->callbackMask&HDI_TEXT)
     {
         Free(lpItem->pszText);
         lpItem->pszText = NULL;
     }
-    
+
     if (lpItem->callbackMask&HDI_IMAGE)
         lpItem->iImage = I_IMAGECALLBACK;
 }

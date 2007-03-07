@@ -215,10 +215,8 @@ BOOL WINAPI Str_SetPtrA (LPSTR *lppDest, LPCSTR lpSrc)
         *lppDest = ptr;
     }
     else {
-        if (*lppDest) {
-            Free (*lppDest);
-            *lppDest = NULL;
-        }
+        Free (*lppDest);
+        *lppDest = NULL;
     }
 
     return TRUE;
@@ -274,10 +272,8 @@ BOOL WINAPI Str_SetPtrW (LPWSTR *lppDest, LPCWSTR lpSrc)
         *lppDest = ptr;
     }
     else {
-        if (*lppDest) {
-            Free (*lppDest);
-            *lppDest = NULL;
-        }
+        Free (*lppDest);
+        *lppDest = NULL;
     }
 
     return TRUE;

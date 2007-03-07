@@ -1580,10 +1580,8 @@ static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr)
     if (infoPtr->hwndCombo)
 	DestroyWindow (infoPtr->hwndCombo);
 
-    if (infoPtr->edit) {
-	Free (infoPtr->edit);
-	infoPtr->edit = 0;
-    }
+    Free (infoPtr->edit);
+    infoPtr->edit = 0;
 
     if (infoPtr->items) {
         CBE_ITEMDATA *item, *next;

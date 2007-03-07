@@ -675,23 +675,20 @@ static VOID SYSLINK_Render (SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
         PDOC_TEXTBLOCK bl, cbl;
         INT nFit;
         SIZE szDim;
-        
+
         if(Current->nText == 0)
         {
             continue;
         }
-        
+
         tx = Current->Text;
         n = Current->nText;
 
-        if (Current->Blocks != NULL)
-        {
-            Free(Current->Blocks);
-            Current->Blocks = NULL;
-        }
+        Free(Current->Blocks);
+        Current->Blocks = NULL;
         bl = NULL;
         nBlocks = 0;
-        
+
         if(Current->Type == slText)
         {
             SelectObject(hdc, infoPtr->Font);

@@ -5385,8 +5385,7 @@ TOOLBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
     Free (infoPtr->bitmaps);            /* bitmaps list */
 
     /* delete button data */
-    if (infoPtr->buttons)
-	Free (infoPtr->buttons);
+    Free (infoPtr->buttons);
 
     /* delete strings */
     if (infoPtr->strings) {
