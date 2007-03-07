@@ -217,6 +217,7 @@ dlls/dplayx/tests/*.ok
 dlls/dplayx/tests/dplayx_crosstest.exe
 dlls/dplayx/tests/testlist.c
 dlls/dplayx/version.res
+dlls/dpnaddr/version.res
 dlls/dpnet/libdpnet.def
 dlls/dpnet/version.res
 dlls/dpnhpast/version.res

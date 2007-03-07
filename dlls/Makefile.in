@@ -64,6 +64,7 @@ BASEDIRS = \
 	dnsapi \
 	dplay \
 	dplayx \
+	dpnaddr \
 	dpnet \
 	dpnhpast \
 	dsound \
