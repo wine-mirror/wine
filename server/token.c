@@ -74,13 +74,13 @@ const PSID security_interactive_sid = (PSID)&interactive_sid;
 static const PSID security_authenticated_user_sid = (PSID)&authenticated_user_sid;
 static const PSID security_local_system_sid = (PSID)&local_system_sid;
 
-static LUID prev_luid_value = { 1000, 0 };
+static luid_t prev_luid_value = { 1000, 0 };
 
 struct token
 {
     struct object  obj;             /* object header */
-    LUID           token_id;        /* system-unique id of token */
-    LUID           modified_id;     /* new id allocated every time token is modified */
+    luid_t         token_id;        /* system-unique id of token */
+    luid_t         modified_id;     /* new id allocated every time token is modified */
     struct list    privileges;      /* privileges available to the token */
     struct list    groups;          /* groups that the user of this token belongs to (sid_and_attributes) */
     SID           *user;            /* SID of user this token represents */
@@ -359,19 +359,15 @@ static inline int is_equal_luid( const LUID *luid1, const LUID *luid2 )
     return (luid1->LowPart == luid2->LowPart && luid1->HighPart == luid2->HighPart);
 }
 
-static inline void allocate_luid( LUID *luid )
+static inline void allocate_luid( luid_t *luid )
 {
-    prev_luid_value.LowPart++;
+    prev_luid_value.low_part++;
     *luid = prev_luid_value;
 }
 
 DECL_HANDLER( allocate_locally_unique_id )
 {
-    LUID luid;
-
-    allocate_luid( &luid );
-    reply->luid.low_part = luid.LowPart;
-    reply->luid.high_part = luid.HighPart;
+    allocate_luid( &reply->luid );
 }
 
 static inline void luid_and_attr_from_privilege( LUID_AND_ATTRIBUTES *out, const struct privilege *in)
@@ -438,7 +434,7 @@ static struct token *create_token( unsigned primary, const SID *user,
                                    const SID_AND_ATTRIBUTES *groups, unsigned int group_count,
                                    const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count,
                                    const ACL *default_dacl, TOKEN_SOURCE source,
-                                   const LUID *modified_id,
+                                   const luid_t *modified_id,
                                    SECURITY_IMPERSONATION_LEVEL impersonation_level )
 {
     struct token *token = alloc_object( &token_ops );
@@ -1177,7 +1173,7 @@ DECL_HANDLER(duplicate_token)
                                                      TOKEN_DUPLICATE,
                                                      &token_ops )))
     {
-        const LUID *modified_id =
+        const luid_t *modified_id =
             req->primary || (req->impersonation_level == src_token->impersonation_level) ?
                 &src_token->modified_id : NULL;
         struct token *token = NULL;
