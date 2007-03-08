@@ -223,8 +223,9 @@ static void testQuerySecurityPackageInfo(void)
     pkg_info = (void *)0xdeadbeef;
     sec_status = pQuerySecurityPackageInfoA(winetest, &pkg_info);
 
-    ok( sec_status != SEC_E_OK,
-        "Return value of QuerySecurityPackageInfo() should not be %s for a nonexistent package\n", getSecError(SEC_E_OK));
+    ok( sec_status == SEC_E_SECPKG_NOT_FOUND,
+        "Return value of QuerySecurityPackageInfo() should be %s for a nonexistent package\n",
+        getSecError(SEC_E_SECPKG_NOT_FOUND));
 
     ok(pkg_info == (void *)0xdeadbeef, "wrong pkg_info address %p\n", pkg_info);
 
