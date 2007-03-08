@@ -536,6 +536,14 @@ HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC * ppbc)
 
     TRACE("(%d,%p)\n",reserved,ppbc);
 
+    *ppbc = NULL;
+
+    if (reserved != 0)
+    {
+        ERR("reserved should be 0, not 0x%x\n", reserved);
+        return E_INVALIDARG;
+    }
+
     newBindCtx = HeapAlloc(GetProcessHeap(), 0, sizeof(BindCtxImpl));
     if (newBindCtx == 0)
         return E_OUTOFMEMORY;

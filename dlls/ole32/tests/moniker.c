@@ -1448,7 +1448,6 @@ static void test_bind_context(void)
     static const WCHAR wszParamName[] = {'G','e','m','m','a',0};
 
     hr = CreateBindCtx(0xdeadbeef, &pBindCtx);
-    todo_wine
     ok(hr == E_INVALIDARG, "CreateBindCtx with reserved value non-zero should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 
     hr = CreateBindCtx(0, &pBindCtx);
