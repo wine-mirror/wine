@@ -2007,7 +2007,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     }
 
 lerror:
-    if (!bSuccess && nsocket == -1)
+    if (!bSuccess && nsocket != -1)
         closesocket(nsocket);
 
     if (!bSuccess && lpwfs)
@@ -2378,7 +2378,7 @@ static BOOL FTP_InitListenSocket(LPWININETFTPSESSIONW lpwfs)
         bSuccess = TRUE;
 
 lend:
-    if (!bSuccess && lpwfs->lstnSocket == -1)
+    if (!bSuccess && lpwfs->lstnSocket != -1)
     {
         closesocket(lpwfs->lstnSocket);
         lpwfs->lstnSocket = -1;
