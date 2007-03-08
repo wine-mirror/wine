@@ -710,13 +710,14 @@ static BOOL RPCRT4_StartRPCSS(void)
 BOOL RPCRT4_RPCSSOnDemandCall(PRPCSS_NP_MESSAGE msg, char *vardata_payload, PRPCSS_NP_REPLY reply)
 {
     HANDLE client_handle;
+    BOOL ret;
     int i, j = 0;
 
     TRACE("(msg == %p, vardata_payload == %p, reply == %p)\n", msg, vardata_payload, reply);
 
     client_handle = RPCRT4_RpcssNPConnect();
 
-    while (!client_handle) {
+    while (INVALID_HANDLE_VALUE == client_handle) {
         /* start the RPCSS process */
 	if (!RPCRT4_StartRPCSS()) {
 	    ERR("Unable to start RPCSS process.\n");
@@ -726,13 +727,13 @@ BOOL RPCRT4_RPCSSOnDemandCall(PRPCSS_NP_MESSAGE msg, char *vardata_payload, PRPC
         for (i = 0; i < 60; i++) {
             Sleep(200);
             client_handle = RPCRT4_RpcssNPConnect();
-            if (client_handle) break;
+            if (INVALID_HANDLE_VALUE != client_handle) break;
         } 
         /* we are only willing to try twice */
 	if (j++ >= 1) break;
     }
 
-    if (!client_handle) {
+    if (INVALID_HANDLE_VALUE == client_handle) {
         /* no dice! */
         ERR("Unable to connect to RPCSS process!\n");
 	SetLastError(RPC_E_SERVER_DIED_DNE);
@@ -740,12 +741,14 @@ BOOL RPCRT4_RPCSSOnDemandCall(PRPCSS_NP_MESSAGE msg, char *vardata_payload, PRPC
     }
 
     /* great, we're connected.  now send the message */
+    ret = TRUE;
     if (!RPCRT4_SendReceiveNPMsg(client_handle, msg, vardata_payload, reply)) {
         ERR("Something is amiss: RPC_SendReceive failed.\n");
-	return FALSE;
+	ret = FALSE;
     }
+    CloseHandle(client_handle);
 
-    return TRUE;
+    return ret;
 }
 
 #define MAX_RPC_ERROR_TEXT 256
