@@ -460,6 +460,17 @@ void WCMD_process_command (char *command)
  */
 
     if ((cmd[1] == ':') && IsCharAlpha (cmd[0]) && (strlen(cmd) == 2)) {
+      char envvar[5];
+      char dir[MAX_PATH];
+
+      /* According to MSDN CreateProcess docs, special env vars record
+         the current directory on each drive, in the form =C:
+         so see if one specified, and if so go back to it             */
+      strcpy(envvar, "=");
+      strcat(envvar, cmd);
+      if (GetEnvironmentVariable(envvar, dir, MAX_PATH) == 0) {
+        sprintf(cmd, "%s\\", cmd);
+      }
       status = SetCurrentDirectory (cmd);
       if (!status) WCMD_print_error ();
       HeapFree( GetProcessHeap(), 0, cmd );

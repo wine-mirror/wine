@@ -1108,12 +1108,23 @@ void WCMD_setshow_default (char *command) {
 
     /* Change to that directory */
     WINE_TRACE("Really changing to directory '%s'\n", string);
+
     status = SetCurrentDirectory (string);
     if (!status) {
       errorlevel = 1;
       WCMD_print_error ();
       return;
     }
+
+    /* Set special =C: type environment variable */
+    if ((string[1] == ':') && IsCharAlpha (string[0])) {
+      char env[4];
+      strcpy(env, "=");
+      strncpy(env+1, string, 2);
+      env[3] = 0x00;
+      SetEnvironmentVariable(env, string);
+    }
+
    }
   return;
 }
