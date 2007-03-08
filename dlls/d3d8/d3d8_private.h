@@ -515,6 +515,9 @@ typedef struct {
     const IDirect3DVertexDeclaration8Vtbl *lpVtbl;
     LONG ref_count;
 
+    DWORD *elements;
+    DWORD elements_size; /* Size of elements, in bytes */
+
     IWineD3DVertexDeclaration *wined3d_vertex_declaration;
 } IDirect3DVertexDeclaration8Impl;
 
@@ -619,7 +622,7 @@ typedef struct IDirect3DPixelShader8Impl {
  * to see how not defined it here
  */
 void load_local_constants(const DWORD *d3d8_elements, IWineD3DVertexShader *wined3d_vertex_shader);
-size_t convert_to_wined3d_declaration(const DWORD *d3d8_elements, WINED3DVERTEXELEMENT **wined3d_elements);
+size_t convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3d8_elements_size, WINED3DVERTEXELEMENT **wined3d_elements);
 
 /* Callbacks */
 extern HRESULT WINAPI D3D8CB_CreateSurface(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,

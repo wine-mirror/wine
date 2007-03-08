@@ -62,6 +62,7 @@ static ULONG WINAPI IDirect3DVertexDeclaration8Impl_Release(IDirect3DVertexDecla
 
     if (!ref_count) {
         IWineD3DVertexDeclaration_Release(This->wined3d_vertex_declaration);
+        HeapFree(GetProcessHeap(), 0, This->elements);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -271,7 +272,7 @@ static const wined3d_usage_t wined3d_usage_lookup[] = {
 };
 
 /* TODO: find out where rhw (or positionT) is for declaration8 */
-size_t convert_to_wined3d_declaration(const DWORD *d3d8_elements, WINED3DVERTEXELEMENT **wined3d_elements)
+size_t convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3d8_elements_size, WINED3DVERTEXELEMENT **wined3d_elements)
 {
     const DWORD *token = d3d8_elements;
     WINED3DVERTEXELEMENT *element;
@@ -325,6 +326,8 @@ size_t convert_to_wined3d_declaration(const DWORD *d3d8_elements, WINED3DVERTEXE
     element = *wined3d_elements + element_count++;
     element->Stream = 0xFF;
     element->Type = WINED3DDECLTYPE_UNUSED;
+
+    *d3d8_elements_size = (++token - d3d8_elements) * sizeof(DWORD);
 
     return element_count;
 }

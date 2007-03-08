@@ -1214,13 +1214,25 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexDeclaration(IDirect3DDevi
     object->ref_count = 1;
     object->lpVtbl = &Direct3DVertexDeclaration8_Vtbl;
 
-    wined3d_element_count = convert_to_wined3d_declaration(declaration, &wined3d_elements);
+    wined3d_element_count = convert_to_wined3d_declaration(declaration, &object->elements_size, &wined3d_elements);
+    object->elements = HeapAlloc(GetProcessHeap(), 0, object->elements_size);
+    if (!object->elements) {
+        ERR("Memory allocation failed\n");
+        HeapFree(GetProcessHeap(), 0, wined3d_elements);
+        HeapFree(GetProcessHeap(), 0, object);
+        *decl_ptr = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    CopyMemory(object->elements, declaration, object->elements_size);
+
     hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, &object->wined3d_vertex_declaration,
             (IUnknown *)object, wined3d_elements, wined3d_element_count);
     HeapFree(GetProcessHeap(), 0, wined3d_elements);
 
     if (FAILED(hr)) {
         ERR("(%p) : IWineD3DDevice_CreateVertexDeclaration call failed\n", This);
+        HeapFree(GetProcessHeap(), 0, object->elements);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
         *decl_ptr = (IDirect3DVertexDeclaration8 *)object;
