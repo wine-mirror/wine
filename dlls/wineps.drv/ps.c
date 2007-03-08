@@ -365,7 +365,7 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
 	}
     }
 
-    for(page = physDev->pi->ppd->PageSizes; page; page = page->next) {
+    LIST_FOR_EACH_ENTRY(page, &physDev->pi->ppd->PageSizes, PAGESIZE, entry) {
         if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize) {
 	    if(page->InvocationString) {
 	        PSDRV_WriteFeature(physDev->job.hJob, "*PageSize", page->Name,

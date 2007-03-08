@@ -469,23 +469,17 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
  */
 static PAGESIZE *PSDRV_PPDGetPageSizeInfo(PPD *ppd, char *name)
 {
-    PAGESIZE *page = ppd->PageSizes, *lastpage;
+    PAGESIZE *page;
 
-    if(!page) {
-       page = ppd->PageSizes = HeapAlloc( PSDRV_Heap,
-					    HEAP_ZERO_MEMORY, sizeof(*page) );
-       return page;
-    } else {
-        for( ; page; page = page->next) {
-	    if(!strcmp(page->Name, name))
-	         return page;
-	    lastpage = page;
-	}
-
-	lastpage->next = HeapAlloc( PSDRV_Heap,
-					   HEAP_ZERO_MEMORY, sizeof(*page) );
-	return lastpage->next;
+    LIST_FOR_EACH_ENTRY(page, &ppd->PageSizes, PAGESIZE, entry)
+    {
+        if(!strcmp(page->Name, name))
+            return page;
     }
+
+    page = HeapAlloc( PSDRV_Heap,  HEAP_ZERO_MEMORY, sizeof(*page) );
+    list_add_tail(&ppd->PageSizes, &page->entry);
+    return page;
 }
 
 /**********************************************************************
@@ -573,6 +567,7 @@ PPD *PSDRV_ParsePPD(char *fname)
     }
 
     ppd->ColorDevice = CD_NotSpecified;
+    list_init(&ppd->PageSizes);
 
     /*
      *	The Windows PostScript drivers create the following "virtual bin" for
@@ -868,7 +863,7 @@ PPD *PSDRV_ParsePPD(char *fname)
     ppd->DefaultPageSize = NULL;
     if(default_pagesize) {
 	PAGESIZE *page;
-	for(page = ppd->PageSizes; page; page = page->next) {
+	LIST_FOR_EACH_ENTRY(page, &ppd->PageSizes, PAGESIZE, entry) {
             if(!strcmp(page->Name, default_pagesize)) {
                 ppd->DefaultPageSize = page;
                 TRACE("DefaultPageSize: %s\n", page->Name);
@@ -878,7 +873,7 @@ PPD *PSDRV_ParsePPD(char *fname)
         HeapFree(PSDRV_Heap, 0, default_pagesize);
     }
     if(!ppd->DefaultPageSize) {
-        ppd->DefaultPageSize = ppd->PageSizes;
+        ppd->DefaultPageSize = LIST_ENTRY(list_head(&ppd->PageSizes), PAGESIZE, entry);
         TRACE("Setting DefaultPageSize to first in list\n");
     }
 
@@ -911,7 +906,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 	for(fn = ppd->InstalledFonts; fn; fn = fn->next)
 	    TRACE("'%s'\n", fn->Name);
 
-	for(page = ppd->PageSizes; page; page = page->next) {
+	LIST_FOR_EACH_ENTRY(page, &ppd->PageSizes, PAGESIZE, entry) {
 	    TRACE("'%s' aka '%s' (%d) invoked by '%s'\n", page->Name,
 	      page->FullName, page->WinPage, page->InvocationString);
 	    if(page->ImageableArea)

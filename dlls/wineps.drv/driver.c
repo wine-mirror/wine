@@ -67,7 +67,7 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
     if(dm2->dmPublic.dmFields & DM_PAPERSIZE) {
         PAGESIZE *page;
 
-	for(page = pi->ppd->PageSizes; page; page = page->next) {
+	LIST_FOR_EACH_ENTRY(page, &pi->ppd->PageSizes, PAGESIZE, entry) {
 	    if(page->WinPage == dm2->dmPublic.u1.s1.dmPaperSize)
 	        break;
 	}
@@ -208,11 +208,13 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
     di = (PSDRV_DLGINFO*)((PROPSHEETPAGEA*)lParam)->lParam;
     SetWindowLongPtrW(hwnd, DWLP_USER, (LONG_PTR)di);
 
-    for(ps = di->pi->ppd->PageSizes, i = 0; ps; ps = ps->next, i++) {
+    i = 0;
+    LIST_FOR_EACH_ENTRY(ps, &di->pi->ppd->PageSizes, PAGESIZE, entry) {
       SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_INSERTSTRING, i,
 			  (LPARAM)ps->FullName);
       if(di->pi->Devmode->dmPublic.u1.s1.dmPaperSize == ps->WinPage)
 	Cursel = i;
+      i++;
     }
     SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_SETCURSEL, Cursel, 0);
     
@@ -242,8 +244,11 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
     case IDD_PAPERS:
       if(HIWORD(wParam) == LBN_SELCHANGE) {
 	Cursel = SendDlgItemMessageA(hwnd, LOWORD(wParam), LB_GETCURSEL, 0, 0);
-	for(i = 0, ps = di->pi->ppd->PageSizes; i < Cursel; i++, ps = ps->next)
-	  ;
+        i = 0;
+	LIST_FOR_EACH_ENTRY(ps, &di->pi->ppd->PageSizes, PAGESIZE, entry) {
+            if(i >= Cursel) break;
+            i++;
+        }
 	TRACE("Setting pagesize to item %d Winpage = %d\n", Cursel,
 	      ps->WinPage);
 	di->dlgdm->dmPublic.u1.s1.dmPaperSize = ps->WinPage;
@@ -461,9 +466,12 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       WORD *wp = (WORD *)lpszOutput;
       int i = 0;
 
-      for(ps = pi->ppd->PageSizes; ps; ps = ps->next, i++)
+      LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
+      {
+        i++;
 	if(lpszOutput != NULL)
 	  *wp++ = ps->WinPage;
+      }
       return i;
     }
 
@@ -473,12 +481,15 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       POINT16 *pt = (POINT16 *)lpszOutput;
       int i = 0;
 
-      for(ps = pi->ppd->PageSizes; ps; ps = ps->next, i++)
+      LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
+      {
+        i++;
 	if(lpszOutput != NULL) {
 	  pt->x = ps->PaperDimension->x * 254.0 / 72.0;
 	  pt->y = ps->PaperDimension->y * 254.0 / 72.0;
 	  pt++;
 	}
+      }
       return i;
     }
 
@@ -488,11 +499,14 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       char *cp = lpszOutput;
       int i = 0;
 
-      for(ps = pi->ppd->PageSizes; ps; ps = ps->next, i++)
+      LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
+      {
+        i++;
 	if(lpszOutput != NULL) {
 	  lstrcpynA(cp, ps->FullName, 64);
 	  cp += 64;
 	}
+      }
       return i;
     }
 
@@ -576,15 +590,14 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
   case DC_MAXEXTENT:
     {
       PAGESIZE *ps;
-      int i;
       POINT ptMax;
       ptMax.x = ptMax.y = 0;
 
       if(lpszOutput == NULL)
 	return -1;
 
-      i = 0;
-      for(ps = pi->ppd->PageSizes; ps; ps = ps->next, i++) {
+      LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
+      {
 	if(ps->PaperDimension->x > ptMax.x)
 	  ptMax.x = ps->PaperDimension->x;
 	if(ps->PaperDimension->y > ptMax.y)
@@ -597,15 +610,14 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
   case DC_MINEXTENT:
     {
       PAGESIZE *ps;
-      int i;
       POINT ptMax;
       ptMax.x = ptMax.y = 0;
 
       if(lpszOutput == NULL)
 	return -1;
 
-      i = 0;
-      for(ps = pi->ppd->PageSizes; ps; ps = ps->next, i++) {
+      LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
+      {
 	if(ps->PaperDimension->x > ptMax.x)
 	  ptMax.x = ps->PaperDimension->x;
 	if(ps->PaperDimension->y > ptMax.y)

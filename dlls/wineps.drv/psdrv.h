@@ -29,6 +29,8 @@
 #include "wine/wingdi16.h"
 #include "winspool.h"
 
+#include "wine/list.h"
+
 typedef struct {
     INT		    index;
     LPCSTR	    sz;
@@ -131,13 +133,13 @@ typedef struct {
 /* Solaris kludge */
 #undef PAGESIZE
 typedef struct _tagPAGESIZE {
+    struct list         entry;
     char		*Name;
     char		*FullName;
     char		*InvocationString;
     IMAGEABLEAREA	*ImageableArea;
     PAPERDIMENSION	*PaperDimension;
     WORD		WinPage; /*eg DMPAPER_A4. Doesn't really belong here */
-    struct _tagPAGESIZE *next;
 } PAGESIZE;
 
 
@@ -211,7 +213,7 @@ typedef struct {
     char		*JCLEnd;
     char		*DefaultFont;
     FONTNAME		*InstalledFonts; /* ptr to a list of FontNames */
-    PAGESIZE		*PageSizes;
+    struct list         PageSizes;
     PAGESIZE            *DefaultPageSize;
     OPTION		*InstalledOptions;
     CONSTRAINT		*Constraints;
