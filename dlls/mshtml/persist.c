@@ -217,6 +217,8 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
             V_VT(&var) = VT_I4;
             V_I4(&var) = 0;
             IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
+
+            IOleCommandTarget_Release(cmdtrg);
         }
     }
 
@@ -532,7 +534,7 @@ static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM
 
     nsAString_Finish(&nsstr);
 
-    ERR("%s\n", debugstr_a(str));
+    TRACE("%s\n", debugstr_a(str));
 
     hres = IStream_Write(pStm, str, len, &written);
     if(FAILED(hres))
