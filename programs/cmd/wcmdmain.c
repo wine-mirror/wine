@@ -411,7 +411,7 @@ void WCMD_process_command (char *command)
       /* Replace use of %0...%9 if in batch program*/
       } else if (context && (i >= 0) && (i <= 9)) {
         s = strdup (p+2);
-        t = WCMD_parameter (context -> command, i + context -> shift_count, NULL);
+        t = WCMD_parameter (context -> command, i + context -> shift_count[i], NULL);
         strcpy (p, t);
         strcat (p, s);
         free (s);
@@ -629,7 +629,7 @@ void WCMD_process_command (char *command)
         WCMD_setshow_env (p);
 	break;
       case WCMD_SHIFT:
-        WCMD_shift ();
+        WCMD_shift (p);
         break;
       case WCMD_TIME:
         WCMD_setshow_time ();

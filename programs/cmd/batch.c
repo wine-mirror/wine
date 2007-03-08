@@ -89,7 +89,7 @@ void WCMD_batch (char *file, char *command, int called, char *startLabel, HANDLE
   context = (BATCH_CONTEXT *)LocalAlloc (LMEM_FIXED, sizeof (BATCH_CONTEXT));
   context -> h = h;
   context -> command = command;
-  context -> shift_count = 0;
+  memset(context -> shift_count, 0x00, sizeof(context -> shift_count));
   context -> prev_context = prev_context;
   context -> skip_rest = FALSE;
 
@@ -386,7 +386,7 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
   /* Extract the parameter to play with */
   if ((*lastModifier >= '0' && *lastModifier <= '9')) {
     strcpy(outputparam, WCMD_parameter (context -> command,
-                 *lastModifier-'0' + context -> shift_count, NULL));
+                 *lastModifier-'0' + context -> shift_count[*lastModifier-'0'], NULL));
   } else {
     /* FIXME: Retrieve 'for' variable %c\n", *lastModifier); */
     /* Need to get 'for' loop variable into outputparam      */

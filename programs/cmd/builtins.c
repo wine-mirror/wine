@@ -1388,11 +1388,32 @@ void WCMD_setshow_time (void) {
  * WCMD_shift
  *
  * Shift batch parameters.
+ * Optional /n says where to start shifting (n=0-8)
  */
 
-void WCMD_shift (void) {
+void WCMD_shift (char *command) {
+  int start;
 
-  if (context != NULL) context -> shift_count++;
+  if (context != NULL) {
+    char *pos = strchr(command, '/');
+    int   i;
+
+    if (pos == NULL) {
+      start = 0;
+    } else if (*(pos+1)>='0' && *(pos+1)<='8') {
+      start = (*(pos+1) - '0');
+    } else {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      WCMD_print_error();
+      return;
+    }
+
+    WINE_TRACE("Shifting variables, starting at %d\n", start);
+    for (i=start;i<=8;i++) {
+      context -> shift_count[i] = context -> shift_count[i+1] + 1;
+    }
+    context -> shift_count[9] = context -> shift_count[9] + 1;
+  }
 
 }
 

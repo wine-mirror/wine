@@ -68,7 +68,7 @@ void WCMD_setshow_env (char *command);
 void WCMD_setshow_path (char *command);
 void WCMD_setshow_prompt (void);
 void WCMD_setshow_time (void);
-void WCMD_shift (void);
+void WCMD_shift (char *command);
 void WCMD_show_prompt (void);
 void WCMD_title (char *);
 void WCMD_type (void);
@@ -91,7 +91,7 @@ void WCMD_splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ex
 typedef struct {
   char *command;	/* The command which invoked the batch file */
   HANDLE h;             /* Handle to the open batch file */
-  int shift_count;	/* Number of SHIFT commands executed */
+  int shift_count[10];	/* Offset in terms of shifts for %0 - %9 */
   void *prev_context;	/* Pointer to the previous context block */
   BOOL  skip_rest;      /* Skip the rest of the batch program and exit */
 } BATCH_CONTEXT;
