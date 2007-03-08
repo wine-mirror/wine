@@ -1105,6 +1105,7 @@ void WCMD_setshow_default (char *command) {
     WINE_TRACE("Really changing to directory '%s'\n", string);
     status = SetCurrentDirectory (string);
     if (!status) {
+      errorlevel = 1;
       WCMD_print_error ();
       return;
     }
