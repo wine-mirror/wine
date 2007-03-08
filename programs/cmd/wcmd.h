@@ -101,7 +101,10 @@ typedef struct {
 struct env_stack
 {
   struct env_stack *next;
-  int    stackdepth;       /* Only used for pushd and popd */
+  union {
+    int    stackdepth;       /* Only used for pushd and popd */
+    char   cwd;              /* Only used for set/endlocal   */
+  };
   WCHAR *strings;
 };
 

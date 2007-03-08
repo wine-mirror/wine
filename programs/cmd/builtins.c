@@ -893,6 +893,7 @@ static WCHAR *WCMD_dupenv( const WCHAR *env )
 void WCMD_setlocal (const char *s) {
   WCHAR *env;
   struct env_stack *env_copy;
+  char cwd[MAX_PATH];
 
   /* DISABLEEXTENSIONS ignored */
 
@@ -910,11 +911,16 @@ void WCMD_setlocal (const char *s) {
   {
     env_copy->next = saved_environment;
     saved_environment = env_copy;
+
+    /* Save the current drive letter */
+    GetCurrentDirectory (MAX_PATH, cwd);
+    env_copy->cwd = cwd[0];
   }
   else
     LocalFree (env_copy);
 
   FreeEnvironmentStringsW (env);
+
 }
 
 /*****************************************************************************
@@ -935,6 +941,8 @@ static inline WCHAR *WCMD_strchrW(WCHAR *str, WCHAR ch)
  * WCMD_endlocal
  *
  *  endlocal pops the environment off a stack
+ *  Note: When searching for '=', search from char position 1, to handle
+ *        special internal environment variables =C:, =D: etc
  */
 void WCMD_endlocal (void) {
   WCHAR *env, *old, *p;
@@ -954,7 +962,7 @@ void WCMD_endlocal (void) {
   len = 0;
   while (old[len]) {
     n = lstrlenW(&old[len]) + 1;
-    p = WCMD_strchrW(&old[len], '=');
+    p = WCMD_strchrW(&old[len] + 1, '=');
     if (p)
     {
       *p++ = 0;
@@ -970,7 +978,7 @@ void WCMD_endlocal (void) {
   len = 0;
   while (env[len]) {
     n = lstrlenW(&env[len]) + 1;
-    p = WCMD_strchrW(&env[len], '=');
+    p = WCMD_strchrW(&env[len] + 1, '=');
     if (p)
     {
       *p++ = 0;
@@ -978,6 +986,18 @@ void WCMD_endlocal (void) {
     }
     len += n;
   }
+
+  /* Restore current drive letter */
+  if (IsCharAlpha(temp->cwd)) {
+    char envvar[4];
+    char cwd[MAX_PATH];
+    sprintf(envvar, "=%c:", temp->cwd);
+    if (GetEnvironmentVariable(envvar, cwd, MAX_PATH)) {
+      WINE_TRACE("Resetting cwd to %s\n", cwd);
+      SetCurrentDirectory(cwd);
+    }
+  }
+
   LocalFree (env);
   LocalFree (temp);
 }
