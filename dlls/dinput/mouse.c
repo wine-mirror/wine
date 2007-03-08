@@ -177,6 +177,7 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
     newDevice->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
     memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
     InitializeCriticalSection(&newDevice->base.crit);
+    newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysMouseImpl*->base.crit");
     newDevice->dinput = dinput;
 
     /* Create copy of default data format */
@@ -278,6 +279,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     release_DataFormat(&This->base.data_format);
 
     IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
+    This->base.crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->base.crit);
     HeapFree(GetProcessHeap(),0,This);
     return 0;

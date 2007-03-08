@@ -196,6 +196,7 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, const void *kvt, IDirectInpu
     memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
     newDevice->dinput = dinput;
     InitializeCriticalSection(&newDevice->base.crit);
+    newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
 
     /* Create copy of default data format */
     if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIKeyboard.dwSize))) goto failed;
@@ -290,6 +291,7 @@ static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     release_DataFormat(&This->base.data_format);
 
     IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
+    This->base.crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->base.crit);
     HeapFree(GetProcessHeap(), 0, This);
 

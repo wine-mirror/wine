@@ -471,7 +471,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->dinput = dinput;
     CopyMemory(&newDevice->base.guid, rguid, sizeof(*rguid));
     InitializeCriticalSection(&newDevice->base.crit);
-    newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)"DINPUT_joystick";
+    newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
 
     /* setup_dinput_options may change these */
     newDevice->deadzone = 0;
