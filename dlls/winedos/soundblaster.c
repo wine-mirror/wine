@@ -94,7 +94,7 @@ static DWORD CALLBACK SB_Poll( void *dummy )
         } else
             continue;
 
-        result = IDirectSoundBuffer_Lock(lpdsbuf,buf_off,size,&lpbuf1,&dwsize1,&lpbuf2,&dwsize2,0);
+        result = IDirectSoundBuffer_Lock(lpdsbuf,buf_off,size,(LPVOID *)&lpbuf1,&dwsize1,(LPVOID *)&lpbuf2,&dwsize2,0);
         if (result != DS_OK) {
 	  ERR("Unable to lock sound buffer !\n");
           continue;

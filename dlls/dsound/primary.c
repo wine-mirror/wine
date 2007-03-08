@@ -663,7 +663,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetFormat(
 }
 
 static HRESULT WINAPI PrimaryBufferImpl_Lock(
-	LPDIRECTSOUNDBUFFER8 iface,DWORD writecursor,DWORD writebytes,LPVOID lplpaudioptr1,LPDWORD audiobytes1,LPVOID lplpaudioptr2,LPDWORD audiobytes2,DWORD flags
+	LPDIRECTSOUNDBUFFER8 iface,DWORD writecursor,DWORD writebytes,LPVOID *lplpaudioptr1,LPDWORD audiobytes1,LPVOID *lplpaudioptr2,LPDWORD audiobytes2,DWORD flags
 ) {
 	HRESULT hres;
         DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;

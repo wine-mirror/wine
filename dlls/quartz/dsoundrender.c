@@ -198,7 +198,7 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
         }
 
         size2 = min(buf_free, size);
-        hr = IDirectSoundBuffer_Lock(This->dsbuffer, This->write_pos, size2, &lpbuf1, &dwsize1, &lpbuf2, &dwsize2, 0);
+        hr = IDirectSoundBuffer_Lock(This->dsbuffer, This->write_pos, size2, (LPVOID *)&lpbuf1, &dwsize1, (LPVOID *)&lpbuf2, &dwsize2, 0);
         if (hr != DS_OK) {
             ERR("Unable to lock sound buffer! (%x)\n", hr);
             break;

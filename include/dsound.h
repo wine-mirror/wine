@@ -544,7 +544,7 @@ DECLARE_INTERFACE_(IDirectSoundBuffer,IUnknown)
     STDMETHOD(GetFrequency)(THIS_ LPDWORD lpdwFrequency) PURE;
     STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE;
     STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND lpDirectSound, LPCDSBUFFERDESC lpcDSBufferDesc) PURE;
-    STDMETHOD(Lock)(THIS_ DWORD dwWriteCursor, DWORD dwWriteBytes, LPVOID lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE;
+    STDMETHOD(Lock)(THIS_ DWORD dwOffset, DWORD dwBytes, LPVOID *ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID *ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) PURE;
     STDMETHOD(Play)(THIS_ DWORD dwReserved1, DWORD dwReserved2, DWORD dwFlags) PURE;
     STDMETHOD(SetCurrentPosition)(THIS_ DWORD dwNewPosition) PURE;
     STDMETHOD(SetFormat)(THIS_ LPCWAVEFORMATEX lpcfxFormat) PURE;
@@ -552,7 +552,7 @@ DECLARE_INTERFACE_(IDirectSoundBuffer,IUnknown)
     STDMETHOD(SetPan)(THIS_ LONG lPan) PURE;
     STDMETHOD(SetFrequency)(THIS_ DWORD dwFrequency) PURE;
     STDMETHOD(Stop)(THIS) PURE;
-    STDMETHOD(Unlock)(THIS_ LPVOID lpvAudioPtr1, DWORD dwAudioBytes1, LPVOID lpvAudioPtr2, DWORD dwAudioPtr2) PURE;
+    STDMETHOD(Unlock)(THIS_ LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioPtr2) PURE;
     STDMETHOD(Restore)(THIS) PURE;
 };
 #undef INTERFACE
@@ -627,7 +627,7 @@ DECLARE_INTERFACE_(IDirectSoundBuffer8,IUnknown)
     STDMETHOD(GetFrequency)(THIS_ LPDWORD lpdwFrequency) PURE;
     STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE;
     STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND lpDirectSound, LPCDSBUFFERDESC lpcDSBufferDesc) PURE;
-    STDMETHOD(Lock)(THIS_ DWORD dwWriteCursor, DWORD dwWriteBytes, LPVOID lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE;
+    STDMETHOD(Lock)(THIS_ DWORD dwOffset, DWORD dwBytes, LPVOID *ppvAudioPtr1, LPDWORD pdwAudioBytes1, LPVOID *ppvAudioPtr2, LPDWORD pdwAudioBytes2, DWORD dwFlags) PURE;
     STDMETHOD(Play)(THIS_ DWORD dwReserved1, DWORD dwReserved2, DWORD dwFlags) PURE;
     STDMETHOD(SetCurrentPosition)(THIS_ DWORD dwNewPosition) PURE;
     STDMETHOD(SetFormat)(THIS_ LPCWAVEFORMATEX lpcfxFormat) PURE;
@@ -635,7 +635,7 @@ DECLARE_INTERFACE_(IDirectSoundBuffer8,IUnknown)
     STDMETHOD(SetPan)(THIS_ LONG lPan) PURE;
     STDMETHOD(SetFrequency)(THIS_ DWORD dwFrequency) PURE;
     STDMETHOD(Stop)(THIS) PURE;
-    STDMETHOD(Unlock)(THIS_ LPVOID lpvAudioPtr1, DWORD dwAudioBytes1, LPVOID lpvAudioPtr2, DWORD dwAudioPtr2) PURE;
+    STDMETHOD(Unlock)(THIS_ LPVOID pvAudioPtr1, DWORD dwAudioBytes1, LPVOID pvAudioPtr2, DWORD dwAudioPtr2) PURE;
     STDMETHOD(Restore)(THIS) PURE;
     STDMETHOD(SetFX)(THIS_ DWORD dwEffectsCount, LPDSEFFECTDESC pDSFXDesc, LPDWORD pdwResultCodes) PURE;
     STDMETHOD(AcquireResources)(THIS_ DWORD dwFlags, DWORD dwEffectsCount, LPDWORD pdwResultCodes) PURE;

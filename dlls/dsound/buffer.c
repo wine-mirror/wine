@@ -565,7 +565,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetFormat(
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
-	LPDIRECTSOUNDBUFFER8 iface,DWORD writecursor,DWORD writebytes,LPVOID lplpaudioptr1,LPDWORD audiobytes1,LPVOID lplpaudioptr2,LPDWORD audiobytes2,DWORD flags
+	LPDIRECTSOUNDBUFFER8 iface,DWORD writecursor,DWORD writebytes,LPVOID *lplpaudioptr1,LPDWORD audiobytes1,LPVOID *lplpaudioptr2,LPDWORD audiobytes2,DWORD flags
 ) {
 	HRESULT hres = DS_OK;
 	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
@@ -1450,9 +1450,9 @@ static HRESULT WINAPI SecondaryBufferImpl_Lock(
     LPDIRECTSOUNDBUFFER8 iface,
     DWORD writecursor,
     DWORD writebytes,
-    LPVOID lplpaudioptr1,
+    LPVOID *lplpaudioptr1,
     LPDWORD audiobytes1,
-    LPVOID lplpaudioptr2,
+    LPVOID *lplpaudioptr2,
     LPDWORD audiobytes2,
     DWORD dwFlags)
 {
