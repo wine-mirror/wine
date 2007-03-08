@@ -551,6 +551,7 @@ PPD *PSDRV_ParsePPD(char *fname)
     PPD *ppd;
     PPDTuple tuple;
     char *default_pagesize = NULL, *default_duplex = NULL;
+    PAGESIZE *page, *page_cursor2;
 
     TRACE("file '%s'\n", fname);
 
@@ -647,7 +648,6 @@ PPD *PSDRV_ParsePPD(char *fname)
 	}
 
 	else if(!strcmp("*PageSize", tuple.key)) {
-	    PAGESIZE *page;
 	    page = PSDRV_PPDGetPageSizeInfo(ppd, tuple.option);
 
 	    if(!page->Name) {
@@ -694,7 +694,6 @@ PPD *PSDRV_ParsePPD(char *fname)
         }
 
         else if(!strcmp("*ImageableArea", tuple.key)) {
-	    PAGESIZE *page;
 	    page = PSDRV_PPDGetPageSizeInfo(ppd, tuple.option);
 
 	    if(!page->Name) {
@@ -719,7 +718,6 @@ PPD *PSDRV_ParsePPD(char *fname)
 
 
 	else if(!strcmp("*PaperDimension", tuple.key)) {
-	    PAGESIZE *page;
 	    page = PSDRV_PPDGetPageSizeInfo(ppd, tuple.option);
 
 	    if(!page->Name) {
@@ -859,10 +857,25 @@ PPD *PSDRV_ParsePPD(char *fname)
 
     }
 
+    /* Remove any partial page size entries, that is any without a PageSize or a PaperDimension (we can
+       cope with a missing ImageableArea). */
+    LIST_FOR_EACH_ENTRY_SAFE(page, page_cursor2, &ppd->PageSizes, PAGESIZE, entry)
+    {
+        if(!page->InvocationString || !page->PaperDimension)
+        {
+            WARN("Removing page %s since it has a missing %s entry\n", debugstr_a(page->FullName),
+                 page->InvocationString ? "PaperDimension" : "InvocationString");
+            HeapFree(PSDRV_Heap, 0, page->Name);
+            HeapFree(PSDRV_Heap, 0, page->FullName);
+            HeapFree(PSDRV_Heap, 0, page->InvocationString);
+            HeapFree(PSDRV_Heap, 0, page->ImageableArea);
+            HeapFree(PSDRV_Heap, 0, page->PaperDimension);
+            list_remove(&page->entry);
+        }
+    }
 
     ppd->DefaultPageSize = NULL;
     if(default_pagesize) {
-	PAGESIZE *page;
 	LIST_FOR_EACH_ENTRY(page, &ppd->PageSizes, PAGESIZE, entry) {
             if(!strcmp(page->Name, default_pagesize)) {
                 ppd->DefaultPageSize = page;
