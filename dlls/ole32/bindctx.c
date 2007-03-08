@@ -423,7 +423,11 @@ BindCtxImpl_RevokeObjectParam(IBindCtx* iface,LPOLESTR ppenum)
 static HRESULT WINAPI
 BindCtxImpl_EnumObjectParam(IBindCtx* iface,IEnumString** pszkey)
 {
-    FIXME("(%p,%p),stub!\n",iface,pszkey);
+    TRACE("(%p,%p)\n",iface,pszkey);
+
+    *pszkey = NULL;
+
+    /* not implemented in native either */
     return E_NOTIMPL;
 }
 

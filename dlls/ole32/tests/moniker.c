@@ -1487,7 +1487,6 @@ static void test_bind_context(void)
 
     hr = IBindCtx_EnumObjectParam(pBindCtx, &pEnumString);
     ok(hr == E_NOTIMPL, "IBindCtx_EnumObjectParam should have returned E_NOTIMPL instead of 0x%08x\n", hr);
-    todo_wine
     ok(!pEnumString, "pEnumString should be NULL\n");
 
     hr = IBindCtx_RegisterObjectBound(pBindCtx, NULL);
