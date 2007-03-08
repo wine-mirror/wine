@@ -2308,7 +2308,7 @@ BOOL pdb_fetch_file_info(struct pdb_lookup* pdb_lookup)
 
     if (image) UnmapViewOfFile(image);
     if (hMap) CloseHandle(hMap);
-    if (hFile) CloseHandle(hFile);
+    if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
 
     return ret;
 }

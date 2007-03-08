@@ -142,7 +142,7 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
 
     if (dbg_mapping) UnmapViewOfFile(dbg_mapping);
     if (hMap) CloseHandle(hMap);
-    if (hFile != NULL) CloseHandle(hFile);
+    if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
     return ret;
 }
 
