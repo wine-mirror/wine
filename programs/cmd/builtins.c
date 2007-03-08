@@ -600,9 +600,8 @@ void WCMD_goto (void) {
  *	Push a directory onto the stack
  */
 
-void WCMD_pushd (void) {
+void WCMD_pushd (char *command) {
     struct env_stack *curdir;
-    BOOL   status;
     WCHAR *thisdir;
 
     curdir  = LocalAlloc (LMEM_FIXED, sizeof (struct env_stack));
@@ -615,9 +614,9 @@ void WCMD_pushd (void) {
     }
 
     GetCurrentDirectoryW (1024, thisdir);
-    status = SetCurrentDirectoryA (param1);
-    if (!status) {
-      WCMD_print_error ();
+    errorlevel = 0;
+    WCMD_setshow_default(command);
+    if (errorlevel) {
       LocalFree(curdir);
       LocalFree(thisdir);
       return;

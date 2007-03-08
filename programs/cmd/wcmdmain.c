@@ -640,7 +640,7 @@ void WCMD_process_command (char *command)
         WCMD_volume (0, p);
         break;
       case WCMD_PUSHD:
-        WCMD_pushd();
+        WCMD_pushd(p);
         break;
       case WCMD_POPD:
         WCMD_popd();

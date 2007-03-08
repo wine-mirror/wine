@@ -55,7 +55,7 @@ void WCMD_pipe (char *command);
 void WCMD_popd (void);
 void WCMD_print_error (void);
 void WCMD_process_command (char *command);
-void WCMD_pushd (void);
+void WCMD_pushd (char *);
 int  WCMD_read_console (char *string, int str_len);
 void WCMD_remove_dir (char *command);
 void WCMD_rename (void);
