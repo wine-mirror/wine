@@ -324,7 +324,8 @@ enum i386_trap_code
     TRAP_x86_ARITHTRAP  = 16,  /* Floating point exception */
     TRAP_x86_ALIGNFLT   = 17,  /* Alignment check exception */
     TRAP_x86_MCHK       = 18,  /* Machine check exception */
-    TRAP_x86_CACHEFLT   = 19   /* Cache flush exception */
+    TRAP_x86_CACHEFLT   = 19   /* SIMD exception (via SIGFPE) if CPU is SSE capable
+                                  otherwise Cache flush exception (via SIGSEV) */
 #endif
 };
 
@@ -1209,6 +1210,19 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     case TRAP_x86_ARITHTRAP:  /* Floating point exception */
     case TRAP_x86_UNKNOWN:    /* Unknown fault code */
         rec->ExceptionCode = get_fpu_code( win_context );
+        break;
+    case TRAP_x86_CACHEFLT:  /* SIMD exception */
+        /* TODO:
+         * Behaviour only tested for divide-by-zero exceptions
+         * Check for other SIMD exceptions as well */
+        if(siginfo->si_code != FPE_FLTDIV)
+            FIXME("untested SIMD exception: %#x. Might not work correctly\n",
+                  siginfo->si_code);
+
+        rec->ExceptionCode = STATUS_FLOAT_MULTIPLE_TRAPS;
+        rec->NumberParameters = 1;
+        /* no idea what meaning is actually behind this but thats what native does */
+        rec->ExceptionInformation[0] = 0;
         break;
     default:
         ERR( "Got unexpected trap %d\n", get_trap_code(context) );
