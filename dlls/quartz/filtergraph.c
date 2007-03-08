@@ -72,7 +72,8 @@ static int EventsQueue_Init(EventsQueue* omr)
     omr->msg_tosave = 0;
     omr->msg_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     omr->ring_buffer_size = EVENTS_RING_BUFFER_INCREMENT;
-    omr->messages = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(Event));
+    omr->messages = CoTaskMemAlloc(omr->ring_buffer_size * sizeof(Event));
+    ZeroMemory(omr->messages, omr->ring_buffer_size * sizeof(Event));
 
     InitializeCriticalSection(&omr->msg_crst);
     return TRUE;
@@ -81,7 +82,7 @@ static int EventsQueue_Init(EventsQueue* omr)
 static int EventsQueue_Destroy(EventsQueue* omr)
 {
     CloseHandle(omr->msg_event);
-    HeapFree(GetProcessHeap(),0,omr->messages);
+    CoTaskMemFree(omr->messages);
     DeleteCriticalSection(&omr->msg_crst);
     return TRUE;
 }
@@ -268,9 +269,9 @@ static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
 	CloseHandle(This->hEventCompletion);
 	EventsQueue_Destroy(&This->evqueue);
 	DeleteCriticalSection(&This->cs);
-	HeapFree(GetProcessHeap(), 0, This->ppFiltersInGraph);
-	HeapFree(GetProcessHeap(), 0, This->pFilterNames);
-	HeapFree(GetProcessHeap(), 0, This);
+	CoTaskMemFree(This->ppFiltersInGraph);
+	CoTaskMemFree(This->pFilterNames);
+	CoTaskMemFree(This);
     }
     return ref;
 }
@@ -4487,7 +4488,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     if( pUnkOuter )
         return CLASS_E_NOAGGREGATION;
 
-    fimpl = HeapAlloc(GetProcessHeap(), 0, sizeof(*fimpl));
+    fimpl = CoTaskMemAlloc(sizeof(*fimpl));
     fimpl->IGraphBuilder_vtbl = &IGraphBuilder_VTable;
     fimpl->IMediaControl_vtbl = &IMediaControl_VTable;
     fimpl->IMediaSeeking_vtbl = &IMediaSeeking_VTable;

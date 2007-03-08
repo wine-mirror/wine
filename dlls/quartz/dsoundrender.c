@@ -411,7 +411,7 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
        
         IPin_Release(This->ppPins[0]);
         
-        HeapFree(GetProcessHeap(), 0, This->ppPins);
+        CoTaskMemFree(This->ppPins);
         This->lpVtbl = NULL;
         This->IBasicAudio_vtbl = NULL;
         

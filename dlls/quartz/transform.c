@@ -282,7 +282,7 @@ static ULONG WINAPI TransformFilter_Release(IBaseFilter * iface)
         for (i = 0; i < 2; i++)
             IPin_Release(This->ppPins[i]);
 
-        HeapFree(GetProcessHeap(), 0, This->ppPins);
+        CoTaskMemFree(This->ppPins);
         This->lpVtbl = NULL;
 
 	This->pFuncsTable->pfnCleanup(This);

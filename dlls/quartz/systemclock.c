@@ -117,7 +117,7 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
       SetEvent((HANDLE) it->hEvent);
       /** ... and Release it */
       QUARTZ_RemoveAviseEntryFromQueue(This, it);
-      HeapFree(GetProcessHeap(), 0, it);
+      CoTaskMemFree(it);
     }
     if (NULL != it) timeOut = (DWORD) ((it->rtBaseTime + it->rtIntervalTime) - curTime) / (REFERENCE_TIME)10000;
 
@@ -225,7 +225,7 @@ static ULONG WINAPI SystemClockImpl_Release(IReferenceClock* iface) {
       CloseHandle(This->adviseThread);
     }
     DeleteCriticalSection(&This->safe);
-    HeapFree(GetProcessHeap(), 0, This);
+    CoTaskMemFree(This);
   }
   return ref;
 }
@@ -271,10 +271,11 @@ static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock* iface, REFEREN
   if (NULL == pdwAdviseCookie) {
     return E_POINTER;
   }
-  pEntry = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SystemClockAdviseEntry));
+  pEntry = CoTaskMemAlloc(sizeof(SystemClockAdviseEntry));
   if (NULL == pEntry) {
     return E_OUTOFMEMORY;
   }
+  ZeroMemory(pEntry, sizeof(SystemClockAdviseEntry));
 
   pEntry->hEvent = (HANDLE) hEvent;
   pEntry->rtBaseTime = rtBaseTime + rtStreamTime;
@@ -306,10 +307,11 @@ static HRESULT WINAPI SystemClockImpl_AdvisePeriodic(IReferenceClock* iface, REF
   if (NULL == pdwAdviseCookie) {
     return E_POINTER;
   }
-  pEntry = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SystemClockAdviseEntry));
+  pEntry = CoTaskMemAlloc(sizeof(SystemClockAdviseEntry));
   if (NULL == pEntry) {
     return E_OUTOFMEMORY;
   }
+  ZeroMemory(pEntry, sizeof(SystemClockAdviseEntry));
 
   pEntry->hEvent = (HANDLE) hSemaphore;
   pEntry->rtBaseTime = rtStartTime;
@@ -345,7 +347,7 @@ static HRESULT WINAPI SystemClockImpl_Unadvise(IReferenceClock* iface, DWORD_PTR
   }
 
   QUARTZ_RemoveAviseEntryFromQueue(This, pEntry);
-  HeapFree(GetProcessHeap(), 0, pEntry);
+  CoTaskMemFree(pEntry);
 
   SystemClockPostMessageToAdviseThread(This, ADVISE_REMOVE);
 
@@ -370,11 +372,13 @@ HRESULT QUARTZ_CreateSystemClock(IUnknown * pUnkOuter, LPVOID * ppv) {
   
   TRACE("(%p,%p)\n", ppv, pUnkOuter);
   
-  obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SystemClockImpl));
+  obj = CoTaskMemAlloc(sizeof(SystemClockImpl));
   if (NULL == obj) 	{
     *ppv = NULL;
     return E_OUTOFMEMORY;
   }
+  ZeroMemory(obj, sizeof(SystemClockImpl));
+
   obj->lpVtbl = &SystemClock_Vtbl;
   obj->ref = 0;  /* will be inited by QueryInterface */
 

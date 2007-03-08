@@ -192,7 +192,7 @@ static ULONG WINAPI Parser_Release(IBaseFilter * iface)
         for (i = 0; i < This->cStreams + 1; i++)
             IPin_Release(This->ppPins[i]);
         
-        HeapFree(GetProcessHeap(), 0, This->ppPins);
+        CoTaskMemFree(This->ppPins);
         This->lpVtbl = NULL;
         
         TRACE("Destroying parser\n");
@@ -486,7 +486,7 @@ HRESULT Parser_AddPin(ParserImpl * This, PIN_INFO * piOutput, ALLOCATOR_PROPERTI
 
     ppOldPins = This->ppPins;
 
-    This->ppPins = HeapAlloc(GetProcessHeap(), 0, (This->cStreams + 2) * sizeof(IPin *));
+    This->ppPins = CoTaskMemAlloc((This->cStreams + 2) * sizeof(IPin *));
     memcpy(This->ppPins, ppOldPins, (This->cStreams + 1) * sizeof(IPin *));
 
     hr = Parser_OutputPin_Construct(piOutput, props, NULL, Parser_OutputPin_QueryAccept, amt, fSamplesPerSec, &This->csFilter, This->ppPins + This->cStreams + 1);
@@ -497,11 +497,11 @@ HRESULT Parser_AddPin(ParserImpl * This, PIN_INFO * piOutput, ALLOCATOR_PROPERTI
         ((Parser_OutputPin *)(This->ppPins[This->cStreams + 1]))->dwLength = dwLength;
         ((Parser_OutputPin *)(This->ppPins[This->cStreams + 1]))->pin.pin.pUserData = (LPVOID)This->ppPins[This->cStreams + 1];
         This->cStreams++;
-        HeapFree(GetProcessHeap(), 0, ppOldPins);
+        CoTaskMemFree(ppOldPins);
     }
     else
     {
-        HeapFree(GetProcessHeap(), 0, This->ppPins);
+        CoTaskMemFree(This->ppPins);
         This->ppPins = ppOldPins;
         ERR("Failed with error %x\n", hr);
     }
@@ -517,7 +517,7 @@ static HRESULT Parser_RemoveOutputPins(ParserImpl * This)
     IPin ** ppOldPins = This->ppPins;
 
     /* reduce the pin array down to 1 (just our input pin) */
-    This->ppPins = HeapAlloc(GetProcessHeap(), 0, sizeof(IPin *) * 1);
+    This->ppPins = CoTaskMemAlloc(sizeof(IPin *) * 1);
     memcpy(This->ppPins, ppOldPins, sizeof(IPin *) * 1);
 
     for (i = 0; i < This->cStreams; i++)
@@ -527,7 +527,7 @@ static HRESULT Parser_RemoveOutputPins(ParserImpl * This)
     }
 
     This->cStreams = 0;
-    HeapFree(GetProcessHeap(), 0, ppOldPins);
+    CoTaskMemFree(ppOldPins);
 
     return S_OK;
 }

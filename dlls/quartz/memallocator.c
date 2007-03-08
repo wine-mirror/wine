@@ -154,7 +154,7 @@ static ULONG WINAPI BaseMemAllocator_Release(IMemAllocator * iface)
         CloseHandle(This->hSemWaiting);
         if (This->bCommitted)
             This->fnFree(iface);
-        HeapFree(GetProcessHeap(), 0, This->pProps);
+        CoTaskMemFree(This->pProps);
         CoTaskMemFree(This);
         return 0;
     }
@@ -179,7 +179,7 @@ static HRESULT WINAPI BaseMemAllocator_SetProperties(IMemAllocator * iface, ALLO
         else
         {
             if (!This->pProps)
-                This->pProps = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->pProps));
+                This->pProps = CoTaskMemAlloc(sizeof(*This->pProps));
 
             if (!This->pProps)
                 hr = E_OUTOFMEMORY;

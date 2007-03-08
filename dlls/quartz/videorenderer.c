@@ -532,7 +532,7 @@ static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
         
         IPin_Release(This->ppPins[0]);
         
-        HeapFree(GetProcessHeap(), 0, This->ppPins);
+        CoTaskMemFree(This->ppPins);
         This->lpVtbl = NULL;
         
         TRACE("Destroying Video Renderer\n");
