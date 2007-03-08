@@ -27,8 +27,7 @@ CFLAGS    = @CFLAGS@
 CPPFLAGS  = @CPPFLAGS@
 LIBS      = @LIBS@
 BISON     = @BISON@
-LEX       = @LEX@
-LEXLIB    = @LEXLIB@
+FLEX      = @FLEX@
 EXEEXT    = @EXEEXT@
 OBJEXT    = @OBJEXT@
 LIBEXT    = @LIBEXT@
@@ -141,7 +140,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(BISON) $(BISONFLAGS) -p $*_ -o $*.tab.c -d $<
 
 .l.yy.c:
-	$(LEX) $(LEXFLAGS) -t $< >$@ || ($(RM) $@ && exit 1)
+	$(FLEX) $(LEXFLAGS) -o$@ $<
 
 .mc.mc.rc:
 	$(LDPATH) $(WMC) -i -U -H /dev/null -o $@ $<

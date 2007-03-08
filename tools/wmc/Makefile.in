@@ -24,7 +24,7 @@ all: $(PROGRAMS) $(MANPAGES)
 @MAKE_RULES@
 
 wmc$(EXEEXT): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE_LDFLAGS) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE_LDFLAGS) $(LIBPORT) $(LDFLAGS)
 
 install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_DATA) wmc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)

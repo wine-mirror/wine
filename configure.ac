@@ -84,14 +84,12 @@ AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
 AC_SUBST(TOOLSDIR,$wine_cv_toolsdir)
 
 AC_PATH_XTRA
-AC_PROG_LEX
 
-dnl **** Just additional warning checks, since AC_PROG just sets 'lex' even
-dnl **** without one present.
-AC_CHECK_PROGS(XLEX,$LEX flex lex,none)
-if test "$XLEX" = "none"
+dnl Check for flex
+AC_CHECK_PROGS(FLEX,flex,none)
+if test "$FLEX" = "none"
 then
-  AC_MSG_ERROR([no suitable lex found. Please install the 'flex' package.])
+  AC_MSG_ERROR([no suitable flex found. Please install the 'flex' package.])
 fi
 
 dnl Check for bison

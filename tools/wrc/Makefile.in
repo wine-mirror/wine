@@ -29,7 +29,7 @@ all: $(PROGRAMS) $(MANPAGES)
 @MAKE_RULES@
 
 wrc$(EXEEXT): $(OBJS) $(LIBWPP)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE_LDFLAGS) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE_LDFLAGS) $(LIBPORT) $(LDFLAGS)
 
 install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_DATA) wrc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wrc.$(prog_manext)
