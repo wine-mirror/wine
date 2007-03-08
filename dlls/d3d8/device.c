@@ -1391,18 +1391,12 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEV
     return IWineD3DDevice_GetVertexShaderConstantF(This->WineD3DDevice, Register, (float *)pConstantData, ConstantCount);
 }
 
-/* FIXME: There currently isn't a proper way to retrieve the declaration from
- * the wined3d shader. However, rather than simply adding this, the relation
- * between d3d8 and wined3d shaders should be fixed. A d3d8 vertex shader
- * should contain both a wined3d vertex shader and a wined3d vertex
- * declaration, and eg. SetVertexShader in d3d8 should set both of them in
- * wined3d. This would also allow us to get rid of the vertexDeclaration field
- * in IWineD3DVertexShaderImpl */
 static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderDeclaration(LPDIRECT3DDEVICE8 iface, DWORD pVertexShader, void* pData, DWORD* pSizeOfData) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
+    IDirect3DVertexDeclaration8Impl *declaration;
     IDirect3DVertexShader8Impl *shader = NULL;
 
-    TRACE("(%p) : pVertexShader %#x, pData %p, pSizeOfData %p\n", This, pVertexShader, pData, pSizeOfData);
+    TRACE("(%p) : pVertexShader 0x%08x, pData %p, *pSizeOfData %u\n", This, pVertexShader, pData, *pSizeOfData);
 
     if (pVertexShader <= VS_HIGHESTFIXEDFXF || This->allocated_shader_handles <= pVertexShader - (VS_HIGHESTFIXEDFXF + 1)) {
         ERR("Passed an invalid shader handle.\n");
@@ -1410,8 +1404,24 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderDeclaration(LPDIRECT3D
     }
 
     shader = This->shader_handles[pVertexShader - (VS_HIGHESTFIXEDFXF + 1)];
-    FIXME("Unimplemented, returning D3DERR_INVALIDCALL\n");
-    return D3DERR_INVALIDCALL;
+    declaration = (IDirect3DVertexDeclaration8Impl *)shader->vertex_declaration;
+
+    /* If pData is NULL, we just return the required size of the buffer. */
+    if (!pData) {
+        *pSizeOfData = declaration->elements_size;
+        return D3D_OK;
+    }
+
+    /* MSDN claims that if *pSizeOfData is smaller than the required size
+     * we should write the required size and return D3DERR_MOREDATA.
+     * That's not actually true. */
+    if (*pSizeOfData < declaration->elements_size) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    CopyMemory(pData, declaration->elements, declaration->elements_size);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderFunction(LPDIRECT3DDEVICE8 iface, DWORD pVertexShader, void* pData, DWORD* pSizeOfData) {
