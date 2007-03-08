@@ -619,6 +619,8 @@ void WCMD_pushd (char *command) {
       return;
     }
 
+    /* Change directory using CD code with /D parameter */
+    strcpy(quals, "/D");
     GetCurrentDirectoryW (1024, thisdir);
     errorlevel = 0;
     WCMD_setshow_default(command);
@@ -1075,15 +1077,25 @@ void WCMD_setshow_default (char *command) {
 
   BOOL status;
   char string[1024];
+  char cwd[1024];
   char *pos;
   WIN32_FIND_DATA fd;
   HANDLE hff;
 
   WINE_TRACE("Request change to directory '%s'\n", command);
+
+  /* Skip /D and trailing whitespace if on the front of the command line */
+  if (CompareString (LOCALE_USER_DEFAULT,
+                     NORM_IGNORECASE | SORT_STRINGSORT,
+                     command, 2, "/D", -1) == 2) {
+    command += 2;
+    while (*command && *command==' ') command++;
+  }
+
+  GetCurrentDirectory (sizeof(cwd), cwd);
   if (strlen(command) == 0) {
-    GetCurrentDirectory (sizeof(string), string);
-    strcat (string, "\n");
-    WCMD_output (string);
+    strcat (cwd, "\n");
+    WCMD_output (cwd);
   }
   else {
     /* Remove any double quotes, which may be in the
@@ -1134,9 +1146,20 @@ void WCMD_setshow_default (char *command) {
       errorlevel = 1;
       WCMD_print_error ();
       return;
+    } else {
+
+      /* Restore old directory if drive letter would change, and
+           CD x:\directory /D (or pushd c:\directory) not supplied */
+      if ((strstr(quals, "/D") == NULL) &&
+          (param1[1] == ':') && (toupper(param1[0]) != toupper(cwd[0]))) {
+        SetCurrentDirectory(cwd);
+      }
     }
 
-    /* Set special =C: type environment variable */
+    /* Set special =C: type environment variable, for drive letter of
+       change of directory, even if path was restored due to missing
+       /D (allows changing drive letter when not resident on that
+       drive                                                          */
     if ((string[1] == ':') && IsCharAlpha (string[0])) {
       char env[4];
       strcpy(env, "=");
