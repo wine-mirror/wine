@@ -334,7 +334,7 @@ static VOID NPMainWorkThread(LPVOID ignored)
 
 static HANDLE RPCSS_NPConnect(void)
 {
-  HANDLE the_pipe = NULL;
+  HANDLE the_pipe;
   DWORD dwmode, wait_result;
   HANDLE master_mutex = RPCSS_GetMasterMutex();
   
@@ -371,7 +371,6 @@ static HANDLE RPCSS_NPConnect(void)
     if (GetLastError() != ERROR_PIPE_BUSY) {
       WINE_WARN("Unable to open named pipe %s (assuming unavailable).\n", 
         wine_dbgstr_a(NAME_RPCSS_NAMED_PIPE));
-      the_pipe = NULL;
       break;
     }
 
@@ -390,7 +389,7 @@ static HANDLE RPCSS_NPConnect(void)
 
   }
 
-  if (the_pipe) {
+  if (the_pipe != INVALID_HANDLE_VALUE) {
     dwmode = PIPE_READMODE_MESSAGE;
     /* SetNamedPipeHandleState not implemented ATM, but still seems to work somehow. */
     if (! SetNamedPipeHandleState(the_pipe, &dwmode, NULL, NULL))
@@ -468,12 +467,13 @@ BOOL RPCSS_BecomePipeServer(void)
    *     ready to listen on it
    */
   
-  if ((client_handle = RPCSS_NPConnect()) != NULL) {
+  if ((client_handle = RPCSS_NPConnect()) != INVALID_HANDLE_VALUE) {
     msg.message_type = RPCSS_NP_MESSAGE_TYPEID_RANMSG;
     msg.message.ranmsg.timeout = RPCSS_GetMaxLazyTimeout();
     msg.vardata_payload_size = 0;
     if (!RPCSS_SendReceiveNPMsg(client_handle, &msg, &reply))
       WINE_ERR("Something is amiss: RPC_SendReceive failed.\n");
+    CloseHandle(client_handle);
     rslt = FALSE;
   }
   if (rslt) {
