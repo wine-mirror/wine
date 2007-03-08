@@ -972,6 +972,7 @@ BOOL WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft)
     newtm.tm_mday = (fatdate & 0x1f);
     newtm.tm_mon  = ((fatdate >> 5) & 0x0f) - 1;
     newtm.tm_year = (fatdate >> 9) + 80;
+    newtm.tm_isdst = -1;
 #ifdef HAVE_TIMEGM
     RtlSecondsSince1970ToTime( timegm(&newtm), (LARGE_INTEGER *)ft );
 #else
