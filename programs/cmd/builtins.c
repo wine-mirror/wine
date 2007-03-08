@@ -1046,18 +1046,31 @@ void WCMD_setshow_attrib (void) {
  *	Set/Show the current default directory
  */
 
-void WCMD_setshow_default (void) {
+void WCMD_setshow_default (char *command) {
 
   BOOL status;
   char string[1024];
+  char *pos;
 
-  if (strlen(param1) == 0) {
+  WINE_TRACE("Request change to directory '%s'\n", command);
+  if (strlen(command) == 0) {
     GetCurrentDirectory (sizeof(string), string);
     strcat (string, "\n");
     WCMD_output (string);
   }
   else {
-    status = SetCurrentDirectory (param1);
+    /* Remove any double quotes, which may be in the
+       middle, eg. cd "C:\Program Files"\Microsoft is ok */
+    pos = string;
+    while (*command) {
+      if (*command != '"') *pos++ = *command;
+      command++;
+    }
+    *pos = 0x00;
+
+    /* Change to that directory */
+    WINE_TRACE("Really changing to directory '%s'\n", string);
+    status = SetCurrentDirectory (string);
     if (!status) {
       WCMD_print_error ();
       return;

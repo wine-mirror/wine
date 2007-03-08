@@ -543,7 +543,7 @@ void WCMD_process_command (char *command)
         break;
       case WCMD_CD:
       case WCMD_CHDIR:
-        WCMD_setshow_default ();
+        WCMD_setshow_default (p);
         break;
       case WCMD_CLS:
         WCMD_clear_screen ();

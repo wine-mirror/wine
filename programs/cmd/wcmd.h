@@ -63,7 +63,7 @@ void WCMD_run_program (char *command, int called);
 void WCMD_setlocal (const char *command);
 void WCMD_setshow_attrib (void);
 void WCMD_setshow_date (void);
-void WCMD_setshow_default (void);
+void WCMD_setshow_default (char *command);
 void WCMD_setshow_env (char *command);
 void WCMD_setshow_path (char *command);
 void WCMD_setshow_prompt (void);
