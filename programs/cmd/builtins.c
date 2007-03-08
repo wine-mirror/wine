@@ -1051,6 +1051,8 @@ void WCMD_setshow_default (char *command) {
   BOOL status;
   char string[1024];
   char *pos;
+  WIN32_FIND_DATA fd;
+  HANDLE hff;
 
   WINE_TRACE("Request change to directory '%s'\n", command);
   if (strlen(command) == 0) {
@@ -1067,6 +1069,37 @@ void WCMD_setshow_default (char *command) {
       command++;
     }
     *pos = 0x00;
+
+    /* Search for approprate directory */
+    WINE_TRACE("Looking for directory '%s'\n", string);
+    hff = FindFirstFile (string, &fd);
+    while (hff != INVALID_HANDLE_VALUE) {
+      if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        char fpath[MAX_PATH];
+        char drive[10];
+        char dir[MAX_PATH];
+        char fname[MAX_PATH];
+        char ext[MAX_PATH];
+
+        /* Convert path into actual directory spec */
+        GetFullPathName (string, sizeof(fpath), fpath, NULL);
+        WCMD_splitpath(fpath, drive, dir, fname, ext);
+
+        /* Rebuild path */
+        sprintf(string, "%s%s%s", drive, dir, fd.cFileName);
+
+        FindClose(hff);
+        hff = INVALID_HANDLE_VALUE;
+        break;
+      }
+
+      /* Step on to next match */
+      if (FindNextFile(hff, &fd) == 0) {
+        FindClose(hff);
+        hff = INVALID_HANDLE_VALUE;
+        break;
+      }
+    }
 
     /* Change to that directory */
     WINE_TRACE("Really changing to directory '%s'\n", string);
