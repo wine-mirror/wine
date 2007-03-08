@@ -604,6 +604,12 @@ void WCMD_pushd (char *command) {
     struct env_stack *curdir;
     WCHAR *thisdir;
 
+    if (strchr(command, '/') != NULL) {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      WCMD_print_error();
+      return;
+    }
+
     curdir  = LocalAlloc (LMEM_FIXED, sizeof (struct env_stack));
     thisdir = LocalAlloc (LMEM_FIXED, 1024 * sizeof(WCHAR));
     if( !curdir || !thisdir ) {
