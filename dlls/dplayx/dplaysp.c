@@ -144,6 +144,7 @@ static BOOL DPSP_CreateIUnknown( LPVOID lpSP )
   }
 
   InitializeCriticalSection( &This->unk->DPSP_lock );
+  This->unk->DPSP_lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlaySPImpl*->DirectPlaySPIUnknownData*->DPSP_lock");
 
   return TRUE;
 }
@@ -152,6 +153,7 @@ static BOOL DPSP_DestroyIUnknown( LPVOID lpSP )
 {
   IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)lpSP;
 
+  This->unk->DPSP_lock.DebugInfo->Spare[0] = 0;
   DeleteCriticalSection( &This->unk->DPSP_lock );
   HeapFree( GetProcessHeap(), 0, This->unk );
 

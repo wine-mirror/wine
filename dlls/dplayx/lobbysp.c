@@ -119,6 +119,7 @@ static BOOL DPLSP_CreateIUnknown( LPVOID lpSP )
   }
 
   InitializeCriticalSection( &This->unk->DPLSP_lock );
+  This->unk->DPLSP_lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDPLobbySPImpl*->DPLobbySPIUnknownData*->DPLSP_lock");
 
   return TRUE;
 }
@@ -127,6 +128,7 @@ static BOOL DPLSP_DestroyIUnknown( LPVOID lpSP )
 {
   IDPLobbySPImpl *This = (IDPLobbySPImpl *)lpSP;
 
+  This->unk->DPLSP_lock.DebugInfo->Spare[0] = 0;
   DeleteCriticalSection( &This->unk->DPLSP_lock );
   HeapFree( GetProcessHeap(), 0, This->unk );
 

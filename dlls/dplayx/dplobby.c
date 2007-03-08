@@ -154,6 +154,7 @@ static BOOL DPL_CreateIUnknown( LPVOID lpDPL )
   }
 
   InitializeCriticalSection( &This->unk->DPL_lock );
+  This->unk->DPL_lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayLobbyAImpl*->DirectPlayLobbyIUnknownData*->DPL_lock");
 
   return TRUE;
 }
@@ -162,6 +163,7 @@ static BOOL DPL_DestroyIUnknown( LPVOID lpDPL )
 {
   IDirectPlayLobbyAImpl *This = (IDirectPlayLobbyAImpl *)lpDPL;
 
+  This->unk->DPL_lock.DebugInfo->Spare[0] = 0;
   DeleteCriticalSection( &This->unk->DPL_lock );
   HeapFree( GetProcessHeap(), 0, This->unk );
 

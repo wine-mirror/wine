@@ -243,6 +243,7 @@ static BOOL DP_CreateIUnknown( LPVOID lpDP )
   }
 
   InitializeCriticalSection( &This->unk->DP_lock );
+  This->unk->DP_lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlay2AImpl*->DirectPlayIUnknownData*->DP_lock");
 
   return TRUE;
 }
@@ -251,6 +252,7 @@ static BOOL DP_DestroyIUnknown( LPVOID lpDP )
 {
   IDirectPlay2AImpl *This = (IDirectPlay2AImpl *)lpDP;
 
+  This->unk->DP_lock.DebugInfo->Spare[0] = 0;
   DeleteCriticalSection( &This->unk->DP_lock );
   HeapFree( GetProcessHeap(), 0, This->unk );
 
