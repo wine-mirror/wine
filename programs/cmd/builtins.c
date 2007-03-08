@@ -1133,10 +1133,13 @@ void WCMD_setshow_date (void) {
   if (lstrlen(param1) == 0) {
     if (GetDateFormat (LOCALE_USER_DEFAULT, 0, NULL, NULL,
   		curdate, sizeof(curdate))) {
-      WCMD_output ("Current Date is %s\nEnter new date: ", curdate);
-      ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer), &count, NULL);
-      if (count > 2) {
-        WCMD_output (nyi);
+      WCMD_output ("Current Date is %s\n", curdate);
+      if (strstr (quals, "/T") == NULL) {
+        WCMD_output("Enter new date: ");
+        ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer), &count, NULL);
+        if (count > 2) {
+          WCMD_output (nyi);
+        }
       }
     }
     else WCMD_print_error ();
