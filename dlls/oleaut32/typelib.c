@@ -5213,7 +5213,7 @@ static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc,
         break;
 
     case TKIND_COCLASS:
-        *vt |= VT_UNKNOWN;
+        *vt |= VT_DISPATCH;
         break;
 
     case TKIND_RECORD:

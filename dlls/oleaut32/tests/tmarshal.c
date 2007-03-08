@@ -433,7 +433,7 @@ HRESULT WINAPI Widget_CloneCoclass(
     IWidget *iface,
     ApplicationObject2 **ppVal)
 {
-    trace("CloneDispatch()\n");
+    trace("CloneCoclass()\n");
     return S_OK;
 }
 
@@ -900,6 +900,23 @@ static void test_typelibmarshal(void)
 
     ok(V_VT(&varresult) == VT_I2, "V_VT(&varresult) was %d instead of VT_I2\n", V_VT(&varresult));
     ok(V_I2(&varresult) == 1234, "V_I2(&varresult) was %d instead of 1234\n", V_I2(&varresult));
+    VariantClear(&varresult);
+
+    /* call CloneCoclass */
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = NULL;
+    VariantInit(&varresult);
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_CLONECOCLASS, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
+    ok_ole_success(hr, IDispatch_Invoke);
+
+    ok(excepinfo.wCode == 0x0 && excepinfo.scode == S_OK,
+       "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
+       excepinfo.wCode, excepinfo.scode);
+
+    ok(V_VT(&varresult) == VT_DISPATCH, "V_VT(&varresult) was %d instead of VT_DISPATCH\n", V_VT(&varresult));
+    ok(!V_DISPATCH(&varresult), "V_DISPATCH(&varresult) should be NULL instead of %p\n", V_DISPATCH(&varresult));
     VariantClear(&varresult);
 
     /* call Value with a VT_VARIANT|VT_BYREF type */
