@@ -112,7 +112,7 @@ typedef struct tagPARAM2STR
     DWORD         dwSize;
     LPPARAM2STRDATA data;
 } PARAM2STR, *LPPARAM2STR;
-typedef const LPPARAM2STR LPCPARAM2STR;
+typedef const PARAM2STR *LPCPARAM2STR;
 
 #define SERIALUI_TABLESIZE(x) ((sizeof (x))/(sizeof (x[0])))
 
