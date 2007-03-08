@@ -20,14 +20,15 @@
 
 #include <stdarg.h>
 #include <string.h>
-#include <assert.h>
 
 #define COBJMACROS
 
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "objbase.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -273,10 +274,8 @@ BindCtxImpl_GetBindOptions(IBindCtx* iface,BIND_OPTS *pbindopts)
         return E_POINTER;
 
     if (pbindopts->cbStruct > sizeof(BIND_OPTS2))
-    {
-        WARN("invalid size\n");
-        return E_INVALIDARG; /* FIXME : not verified */
-    }
+        pbindopts->cbStruct = sizeof(BIND_OPTS2);
+
     memcpy(pbindopts, &This->bindOption2, pbindopts->cbStruct);
     return S_OK;
 }
@@ -510,7 +509,7 @@ static HRESULT BindCtxImpl_Construct(BindCtxImpl* This)
 
     This->bindOption2.dwTrackFlags = 0;
     This->bindOption2.dwClassContext = CLSCTX_SERVER;
-    This->bindOption2.locale = 1033;
+    This->bindOption2.locale = GetThreadLocale();
     This->bindOption2.pServerInfo = 0;
 
     /* Initialize the bindctx table */

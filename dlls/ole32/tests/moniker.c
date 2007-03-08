@@ -1455,10 +1455,8 @@ static void test_bind_context(void)
 
     bind_opts.cbStruct = -1;
     hr = IBindCtx_GetBindOptions(pBindCtx, (BIND_OPTS *)&bind_opts);
-    todo_wine {
     ok_ole_success(hr, "IBindCtx_GetBindOptions");
     ok(bind_opts.cbStruct == sizeof(bind_opts), "bind_opts.cbStruct was %d\n", bind_opts.cbStruct);
-    }
 
     bind_opts.cbStruct = sizeof(bind_opts);
     hr = IBindCtx_GetBindOptions(pBindCtx, (BIND_OPTS *)&bind_opts);
@@ -1470,13 +1468,7 @@ static void test_bind_context(void)
     ok(bind_opts.dwTrackFlags == 0, "bind_opts.dwTrackFlags was 0x%x instead of 0\n", bind_opts.dwTrackFlags);
     ok(bind_opts.dwClassContext == (CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER),
         "bind_opts.dwClassContext should have been 0x15 instead of 0x%x\n", bind_opts.dwClassContext);
-    if (bind_opts.locale != GetThreadLocale())  /* should be removed once wine is fixed */
-    {
-        todo_wine
-        ok(bind_opts.locale == GetThreadLocale(), "bind_opts.locale should have been 0x%x instead of 0x%x\n", GetThreadLocale(), bind_opts.locale);
-    }
-    else
-        ok(bind_opts.locale == GetThreadLocale(), "bind_opts.locale should have been 0x%x instead of 0x%x\n", GetThreadLocale(), bind_opts.locale);
+    ok(bind_opts.locale == GetThreadLocale(), "bind_opts.locale should have been 0x%x instead of 0x%x\n", GetThreadLocale(), bind_opts.locale);
 
     ok(bind_opts.pServerInfo == NULL, "bind_opts.pServerInfo should have been NULL instead of %p\n", bind_opts.pServerInfo);
 
