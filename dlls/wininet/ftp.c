@@ -271,7 +271,7 @@ lend:
 BOOL WINAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
     LPCWSTR lpszNewRemoteFile, DWORD dwFlags, DWORD dwContext)
 {
-    HANDLE hFile = NULL;
+    HANDLE hFile;
     BOOL bSuccess = FALSE;
     LPWININETAPPINFOW hIC = NULL;
     INT nResCode;
@@ -324,8 +324,7 @@ BOOL WINAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
             &iar, sizeof(INTERNET_ASYNC_RESULT));
     }
 
-    if (hFile)
-        CloseHandle(hFile);
+    CloseHandle(hFile);
 
     return bSuccess;
 }
@@ -1350,7 +1349,7 @@ lend:
     if (lpwfs->lstnSocket != -1)
         closesocket(lpwfs->lstnSocket);
 
-    if (hFile)
+    if (INVALID_HANDLE_VALUE != hFile)
         CloseHandle(hFile);
 
     hIC = lpwfs->lpAppInfo;

@@ -380,7 +380,6 @@ static void test_getfile(void)
         SetLastError(0xdeadbeef);
         bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_non_existing_deadbeef", TRUE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
         ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
-        todo_wine
         ok ( GetLastError() == ERROR_FILE_EXISTS,
             "Expected ERROR_FILE_EXISTS, got %d\n", GetLastError());
 
@@ -388,7 +387,6 @@ static void test_getfile(void)
         SetLastError(0xdeadbeef);
         bRet = FtpGetFileA(hFtp, "should_be_non_existing_deadbeef", "should_be_non_existing_deadbeef", TRUE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
         ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
-        todo_wine
         ok ( GetLastError() == ERROR_FILE_EXISTS,
             "Expected ERROR_FILE_EXISTS, got %d\n", GetLastError());
 
