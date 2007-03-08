@@ -4266,9 +4266,9 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     struct ws2_async *wsa;
     IO_STATUS_BLOCK* iosb;
 
-    TRACE("socket %04x, wsabuf %p, nbufs %d, flags %d, from %p, fromlen %ld, ovl %p, func %p\n",
+    TRACE("socket %04x, wsabuf %p, nbufs %d, flags %d, from %p, fromlen %d, ovl %p, func %p\n",
           s, lpBuffers, dwBufferCount, *lpFlags, lpFrom,
-          (lpFromlen ? *lpFromlen : -1L),
+          (lpFromlen ? *lpFromlen : -1),
           lpOverlapped, lpCompletionRoutine);
 
     fd = get_sock_fd( s, FILE_READ_DATA, &flags );
