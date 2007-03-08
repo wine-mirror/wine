@@ -834,6 +834,8 @@ static void test_shader(void)
     DWORD                        hPixelShader = 0, hVertexShader = 0;
     DWORD                        hPixelShader2 = 0, hVertexShader2 = 0;
     DWORD                        hTempHandle;
+    DWORD data_size;
+    void *data;
 
     static DWORD dwVertexDecl[] =
     {
@@ -841,6 +843,9 @@ static void test_shader(void)
         D3DVSD_REG(D3DVSDE_POSITION,  D3DVSDT_FLOAT3),
         D3DVSD_END()
     };
+    const DWORD vertex_decl_size = sizeof(dwVertexDecl);
+    const DWORD simple_vs_size = sizeof(simple_vs);
+    const DWORD simple_ps_size = sizeof(simple_ps);
 
     pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
@@ -863,7 +868,7 @@ static void test_shader(void)
     if(!pDevice) goto cleanup;
 
     /* First create a vertex shader */
-    hr = IDirect3DDevice8_CreateVertexShader(pDevice, dwVertexDecl, NULL, &hVertexShader, 0);
+    hr = IDirect3DDevice8_CreateVertexShader(pDevice, dwVertexDecl, simple_vs, &hVertexShader, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %s\n", DXGetErrorString8(hr));
     /* Msdn says that the new vertex shader is set immediately. This is wrong, apparently */
     hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
@@ -875,6 +880,38 @@ static void test_shader(void)
     hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
     ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %s\n", DXGetErrorString8(hr));
     ok(hTempHandle == hVertexShader, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, hVertexShader);
+    /* Verify that we can retrieve the declaration */
+    hr = IDirect3DDevice8_GetVertexShaderDeclaration(pDevice, hVertexShader, NULL, &data_size);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderDeclaration returned %s\n", DXGetErrorString8(hr));
+    ok(data_size == vertex_decl_size, "Got data_size %u, expected %u\n", data_size, vertex_decl_size);
+    data = HeapAlloc(GetProcessHeap(), 0, vertex_decl_size);
+    data_size = 1;
+    hr = IDirect3DDevice8_GetVertexShaderDeclaration(pDevice, hVertexShader, data, &data_size);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_GetVertexShaderDeclaration returned %s (0x%#x), "
+            "expected D3DERR_INVALIDCALL\n", DXGetErrorString8(hr), hr);
+    ok(data_size == 1, "Got data_size %u, expected 1\n", data_size);
+    data_size = vertex_decl_size;
+    hr = IDirect3DDevice8_GetVertexShaderDeclaration(pDevice, hVertexShader, data, &data_size);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderDeclaration returned %s\n", DXGetErrorString8(hr));
+    ok(data_size == vertex_decl_size, "Got data_size %u, expected %u\n", data_size, vertex_decl_size);
+    ok(!memcmp(data, dwVertexDecl, vertex_decl_size), "data not equal to shader declaration\n");
+    HeapFree(GetProcessHeap(), 0, data);
+    /* Verify that we can retrieve the shader function */
+    hr = IDirect3DDevice8_GetVertexShaderFunction(pDevice, hVertexShader, NULL, &data_size);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderFucntion returned %s\n", DXGetErrorString8(hr));
+    ok(data_size == simple_vs_size, "Got data_size %u, expected %u\n", data_size, simple_vs_size);
+    data = HeapAlloc(GetProcessHeap(), 0, simple_vs_size);
+    data_size = 1;
+    hr = IDirect3DDevice8_GetVertexShaderFunction(pDevice, hVertexShader, data, &data_size);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_GetVertexShaderFunction returned %s (0x%#x), "
+            "expected D3DERR_INVALIDCALL\n", DXGetErrorString8(hr), hr);
+    ok(data_size == 1, "Got data_size %u, expected 1\n", data_size);
+    data_size = simple_vs_size;
+    hr = IDirect3DDevice8_GetVertexShaderFunction(pDevice, hVertexShader, data, &data_size);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderFunction returned %s\n", DXGetErrorString8(hr));
+    ok(data_size == simple_vs_size, "Got data_size %u, expected %u\n", data_size, simple_vs_size);
+    ok(!memcmp(data, simple_vs, simple_vs_size), "data not equal to shader function\n");
+    HeapFree(GetProcessHeap(), 0, data);
     /* Delete the assigned shader. This is supposed to work */
     hr = IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
     ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %s\n", DXGetErrorString8(hr));
@@ -896,6 +933,22 @@ static void test_shader(void)
     hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
     ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
     ok(hTempHandle == hPixelShader, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, hPixelShader);
+    /* Verify that we can retrieve the shader function */
+    hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, NULL, &data_size);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShaderFucntion returned %s\n", DXGetErrorString8(hr));
+    ok(data_size == simple_ps_size, "Got data_size %u, expected %u\n", data_size, simple_ps_size);
+    data = HeapAlloc(GetProcessHeap(), 0, simple_ps_size);
+    data_size = 1;
+    hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, data, &data_size);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_GetPixelShaderFunction returned %s (0x%#x), "
+            "expected D3DERR_INVALIDCALL\n", DXGetErrorString8(hr), hr);
+    ok(data_size == 1, "Got data_size %u, expected 1\n", data_size);
+    data_size = simple_ps_size;
+    hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, data, &data_size);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShaderFunction returned %s\n", DXGetErrorString8(hr));
+    ok(data_size == simple_ps_size, "Got data_size %u, expected %u\n", data_size, simple_ps_size);
+    ok(!memcmp(data, simple_ps, simple_ps_size), "data not equal to shader function\n");
+    HeapFree(GetProcessHeap(), 0, data);
     /* Delete the assigned shader. This is supposed to work */
     hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
     ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
