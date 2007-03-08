@@ -564,7 +564,7 @@ static void MSCDEX_Request(BYTE *driver_request, BOOL dorealmode)
     PTR_AT(driver_request, 3, WORD) = 0;
     devName[4] = 'A' + CDROM_GetHeap()->hdr.drive + driver_request[1];
     h = CreateFileA(devName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
-    if (!h) {
+    if (h == INVALID_HANDLE_VALUE) {
         WARN("Couldn't open cdrom handle\n");
         driver_request[4] |= 0x80;
         driver_request[3] = 1;  /* unknown unit */
