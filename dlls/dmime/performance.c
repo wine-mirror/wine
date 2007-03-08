@@ -196,6 +196,7 @@ static ULONG WINAPI IDirectMusicPerformance8Impl_Release (LPDIRECTMUSICPERFORMAN
   TRACE("(%p): ReleaseRef to %d\n", This, ref);
   
   if (ref == 0) {
+    This->safe.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->safe);
     HeapFree(GetProcessHeap(), 0, This);
   }
@@ -1040,6 +1041,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPerformanceImpl (LPCGUID lpcGUID, LPVOID 
 	obj->pDirectSound = NULL;
 	obj->pDefaultPath = NULL;
 	InitializeCriticalSection(&obj->safe);
+	obj->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectMusicPerformance8Impl*->safe");
 
 	/**
 	 * @see http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/htm/latencyandbumpertime.asp
