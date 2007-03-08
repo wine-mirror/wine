@@ -262,10 +262,68 @@ int main (int argc, char *argv[])
   /* Note: cmd.exe /c dir does not get a new color, /k dir does */
   if (opt_t) {
       if (!(((opt_t & 0xF0) >> 4) == (opt_t & 0x0F))) {
-          defaultColor = opt_t;
+          defaultColor = opt_t & 0xFF;
           param1[0] = 0x00;
           WCMD_color();
       }
+  } else {
+      /* Check HKCU\Software\Microsoft\Command Processor
+         Then  HKLM\Software\Microsoft\Command Processor
+           for defaultcolour value
+           Note  Can be supplied as DWORD or REG_SZ
+           Note2 When supplied as REG_SZ it's in decimal!!! */
+      HKEY key;
+      DWORD type;
+      DWORD value=0, size=4;
+
+      if (RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Microsoft\\Command Processor",
+                       0, KEY_READ, &key) == ERROR_SUCCESS) {
+          char  strvalue[4];
+
+          /* See if DWORD or REG_SZ */
+          if (RegQueryValueEx(key, "DefaultColor", NULL, &type,
+                     NULL, NULL) == ERROR_SUCCESS) {
+              if (type == REG_DWORD) {
+                  size = sizeof(DWORD);
+                  RegQueryValueEx(key, "DefaultColor", NULL, NULL,
+                                  (LPBYTE)&value, &size);
+              } else if (type == REG_SZ) {
+                  size = sizeof(strvalue);
+                  RegQueryValueEx(key, "DefaultColor", NULL, NULL,
+                                  (LPBYTE)strvalue, &size);
+                  value = strtoul(strvalue, NULL, 10);
+              }
+          }
+      }
+
+      if (value == 0 && RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                       "Software\\Microsoft\\Command Processor",
+                       0, KEY_READ, &key) == ERROR_SUCCESS) {
+          char  strvalue[4];
+
+          /* See if DWORD or REG_SZ */
+          if (RegQueryValueEx(key, "DefaultColor", NULL, &type,
+                     NULL, NULL) == ERROR_SUCCESS) {
+              if (type == REG_DWORD) {
+                  size = sizeof(DWORD);
+                  RegQueryValueEx(key, "DefaultColor", NULL, NULL,
+                                  (LPBYTE)&value, &size);
+              } else if (type == REG_SZ) {
+                  size = sizeof(strvalue);
+                  RegQueryValueEx(key, "DefaultColor", NULL, NULL,
+                                  (LPBYTE)strvalue, &size);
+                  value = strtoul(strvalue, NULL, 10);
+              }
+          }
+      }
+
+      /* If one found, set the screen to that colour */
+      if (!(((value & 0xF0) >> 4) == (value & 0x0F))) {
+          defaultColor = value & 0xFF;
+          param1[0] = 0x00;
+          WCMD_color();
+      }
+
   }
 
   if (opt_k) {
