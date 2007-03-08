@@ -1210,9 +1210,12 @@ static int WCMD_setshow_sortenv(const char *s, const char *stub)
     if (!stub || CompareString (LOCALE_USER_DEFAULT,
                                 NORM_IGNORECASE | SORT_STRINGSORT,
                                 str[i], stublen, stub, -1) == 2) {
-      WCMD_output_asis(str[i]);
-      WCMD_output_asis("\n");
-      displayedcount++;
+      /* Don't display special internal variables */
+      if (str[i][0] != '=') {
+        WCMD_output_asis(str[i]);
+        WCMD_output_asis("\n");
+        displayedcount++;
+      }
     }
   }
 
