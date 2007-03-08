@@ -63,6 +63,7 @@ int main (int argc, char *argv[])
   DWORD count;
   HANDLE h;
   int opt_q;
+  int opt_t = 0;
 
   opt_c=opt_k=opt_q=opt_s=0;
   while (*argv!=NULL)
@@ -82,7 +83,9 @@ int main (int argc, char *argv[])
           opt_k=1;
       } else if (tolower(c)=='s') {
           opt_s=1;
-      } else if (tolower(c)=='t' || tolower(c)=='x' || tolower(c)=='y') {
+      } else if (tolower(c)=='t' && (*argv)[2]==':') {
+          opt_t=strtoul(&(*argv)[3], NULL, 16);
+      } else if (tolower(c)=='x' || tolower(c)=='y') {
           /* Ignored for compatibility with Windows */
       }
 
@@ -255,6 +258,15 @@ int main (int argc, char *argv[])
   SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ENABLE_LINE_INPUT |
                  ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT);
   SetConsoleTitle("Wine Command Prompt");
+
+  /* Note: cmd.exe /c dir does not get a new color, /k dir does */
+  if (opt_t) {
+      if (!(((opt_t & 0xF0) >> 4) == (opt_t & 0x0F))) {
+          defaultColor = opt_t;
+          param1[0] = 0x00;
+          WCMD_color();
+      }
+  }
 
   if (opt_k) {
       WCMD_process_command(cmd);
