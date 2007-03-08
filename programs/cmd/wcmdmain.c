@@ -35,11 +35,11 @@ const char * const inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", 
 		"HELP", "IF", "LABEL", "MD", "MKDIR", "MOVE", "PATH", "PAUSE",
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
                 "TIME", "TITLE", "TYPE", "VERIFY", "VER", "VOL", 
-                "ENDLOCAL", "SETLOCAL", "PUSHD", "POPD", "ASSOC", "EXIT" };
+                "ENDLOCAL", "SETLOCAL", "PUSHD", "POPD", "ASSOC", "COLOR", "EXIT" };
 
 HINSTANCE hinst;
 DWORD errorlevel;
-int echo_mode = 1, verify_mode = 0;
+int echo_mode = 1, verify_mode = 0, defaultColor = 7;
 static int opt_c, opt_k, opt_s;
 const char nyi[] = "Not Yet Implemented\n\n";
 const char newline[] = "\n";
@@ -577,6 +577,9 @@ void WCMD_process_command (char *command)
         break;
       case WCMD_ASSOC:
         WCMD_assoc(p);
+        break;
+      case WCMD_COLOR:
+        WCMD_color();
         break;
       case WCMD_EXIT:
         WCMD_exit ();

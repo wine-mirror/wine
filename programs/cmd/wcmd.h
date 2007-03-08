@@ -32,6 +32,7 @@ void WCMD_batch (char *, char *, int, char *, HANDLE);
 void WCMD_call (char *command);
 void WCMD_change_tty (void);
 void WCMD_clear_screen (void);
+void WCMD_color (void);
 void WCMD_copy (void);
 void WCMD_create_dir (void);
 void WCMD_delete (char *);
@@ -157,9 +158,10 @@ struct env_stack
 #define WCMD_PUSHD  38
 #define WCMD_POPD   39
 #define WCMD_ASSOC  40
+#define WCMD_COLOR  41
 
 /* Must be last in list */
-#define WCMD_EXIT   41
+#define WCMD_EXIT   42
 
 /* Some standard messages */
 extern const char nyi[];

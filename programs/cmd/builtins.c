@@ -47,7 +47,7 @@ struct env_stack *pushd_directories;
 
 extern HINSTANCE hinst;
 extern char *inbuilt[];
-extern int echo_mode, verify_mode;
+extern int echo_mode, verify_mode, defaultColor;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
 extern DWORD errorlevel;
@@ -1630,4 +1630,53 @@ void WCMD_assoc (char *command) {
 
     /* Clean up */
     RegCloseKey(key);
+}
+
+/****************************************************************************
+ * WCMD_color
+ *
+ * Clear the terminal screen.
+ */
+
+void WCMD_color (void) {
+
+  /* Emulate by filling the screen from the top left to bottom right with
+        spaces, then moving the cursor to the top left afterwards */
+  CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+  HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+  if (param1[0] != 0x00 && strlen(param1) > 2) {
+    WCMD_output ("Argument invalid\n");
+    return;
+  }
+
+  if (GetConsoleScreenBufferInfo(hStdOut, &consoleInfo))
+  {
+      COORD topLeft;
+      DWORD screenSize;
+      DWORD color = 0;
+
+      screenSize = consoleInfo.dwSize.X * (consoleInfo.dwSize.Y + 1);
+
+      topLeft.X = 0;
+      topLeft.Y = 0;
+
+      /* Convert the color hex digits */
+      if (param1[0] == 0x00) {
+        color = defaultColor;
+      } else {
+        color = strtoul(param1, NULL, 16);
+      }
+
+      /* Fail if fg == bg color */
+      if (((color & 0xF0) >> 4) == (color & 0x0F)) {
+        errorlevel = 1;
+        return;
+      }
+
+      /* Set the current screen contents and ensure all future writes
+         remain this color                                             */
+      FillConsoleOutputAttribute(hStdOut, color, screenSize, topLeft, &screenSize);
+      SetConsoleTextAttribute(hStdOut, color);
+  }
 }
