@@ -1311,10 +1311,13 @@ void WCMD_setshow_time (void) {
     GetLocalTime(&st);
     if (GetTimeFormat (LOCALE_USER_DEFAULT, 0, &st, NULL,
   		curtime, sizeof(curtime))) {
-      WCMD_output ("Current Time is %s\nEnter new time: ", curtime);
-      ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer), &count, NULL);
-      if (count > 2) {
-        WCMD_output (nyi);
+      WCMD_output ("Current Time is %s\n", curtime);
+      if (strstr (quals, "/T") == NULL) {
+        WCMD_output ("Enter new time: ", curtime);
+        ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer), &count, NULL);
+        if (count > 2) {
+          WCMD_output (nyi);
+        }
       }
     }
     else WCMD_print_error ();
