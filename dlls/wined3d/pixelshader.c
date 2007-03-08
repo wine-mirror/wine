@@ -127,8 +127,10 @@ static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* 
     return WINED3D_OK;
   }
   if (*pSizeOfData < This->baseShader.functionLength) {
-    *pSizeOfData = This->baseShader.functionLength;
-    return WINED3DERR_MOREDATA;
+    /* MSDN claims (for d3d8 at least) that if *pSizeOfData is smaller
+     * than the required size we should write the required size and
+     * return D3DERR_MOREDATA. That's not actually true. */
+    return WINED3DERR_INVALIDCALL;
   }
   if (NULL == This->baseShader.function) { /* no function defined */
     TRACE("(%p) : GetFunction no User Function defined using NULL to %p\n", This, pData);
