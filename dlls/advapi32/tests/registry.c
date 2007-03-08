@@ -754,7 +754,6 @@ static void test_reg_query_value(void)
     LONG size, ret;
 
     static const WCHAR expected[] = {'d','a','t','a',0};
-    static const WCHAR set[] = {'d','a','t','a'};
 
     ret = RegCreateKeyA(hkey_main, "subkey", &subkey);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
@@ -845,19 +844,16 @@ static void test_reg_query_value(void)
     ok(size == sizeof(expected), "Got wrong size: %d\n", size);
 
     /* unicode - set the value without a NULL terminator */
-    ret = RegSetValueW(subkey, NULL, REG_SZ, set, sizeof(set));
+    ret = RegSetValueW(subkey, NULL, REG_SZ, expected, sizeof(expected)-sizeof(WCHAR));
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
 
     /* unicode - read the unterminated value, value is terminated for us */
     memset(valW, 'a', sizeof(valW));
     size = sizeof(valW);
     ret = RegQueryValueW(subkey, NULL, valW, &size);
-    todo_wine
-    {
-        ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
-        ok(!lstrcmpW(valW, expected), "Got wrong value\n");
-        ok(size == sizeof(expected), "Got wrong size: %d\n", size);
-    }
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ok(!lstrcmpW(valW, expected), "Got wrong value\n");
+    ok(size == sizeof(expected), "Got wrong size: %d\n", size);
 
     RegDeleteKeyA(subkey, "");
 }
