@@ -64,7 +64,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 /* Calls cpuid with an eax of 'ax' and returns the 16 bytes in *p
  * We are compiled with -fPIC, so we can't clobber ebx.
  */
-static inline void do_cpuid(int ax, int *p)
+static inline void do_cpuid(unsigned int ax, unsigned int *p)
 {
 #ifdef __i386__
 	__asm__("pushl %%ebx\n\t"
@@ -242,6 +242,57 @@ static void create_env_registry_keys( const SYSTEM_INFO *info )
     NtSetValueKey( env_key, &valueW, 0, REG_SZ, revW, (strlenW(revW)+1)*sizeof(WCHAR) );
 
     NtClose( env_key );
+}
+
+static inline void get_cpuinfo( SYSTEM_INFO *info )
+{
+    unsigned int regs[4], regs2[4];
+
+    if (!have_cpuid()) return;
+
+    do_cpuid(0x00000000, regs);  /* get standard cpuid level and vendor name */
+    if (regs[0]>=0x00000001)   /* Check for supported cpuid version */
+    {
+        do_cpuid(0x00000001, regs2); /* get cpu features */
+        switch ((regs2[0] >> 8) & 0xf)  /* cpu family */
+        {
+        case 3:
+            info->dwProcessorType = PROCESSOR_INTEL_386;
+            info->wProcessorLevel = 3;
+            break;
+        case 4:
+            info->dwProcessorType = PROCESSOR_INTEL_486;
+            info->wProcessorLevel = 4;
+            break;
+        case 5:
+            info->dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+            info->wProcessorLevel = 5;
+            break;
+        case 6:
+        case 15: /* PPro/2/3/4 has same info as P1 */
+            info->dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+            info->wProcessorLevel = 6;
+            break;
+        default:
+            FIXME("unknown cpu family %d, please report! (-> setting to 386)\n",
+                  (regs2[0] >> 8)&0xf);
+            break;
+        }
+        PF[PF_FLOATING_POINT_EMULATED]     = !(regs2[3] & 1);
+        PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] & (1 << 4 )) >> 4;
+        PF[PF_COMPARE_EXCHANGE_DOUBLE]     = (regs2[3] & (1 << 8 )) >> 8;
+        PF[PF_MMX_INSTRUCTIONS_AVAILABLE]  = (regs2[3] & (1 << 23)) >> 23;
+
+        if (regs[1] == AUTH &&
+            regs[3] == ENTI &&
+            regs[2] == CAMD) {
+            do_cpuid(0x80000000, regs);  /* get vendor cpuid level */
+            if (regs[0]>=0x80000001) {
+                do_cpuid(0x80000001, regs2);  /* get vendor features */
+                PF[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 31 )) >> 31;
+            }
+        }
+    }
 }
 
 /****************************************************************************
@@ -500,7 +551,6 @@ VOID WINAPI GetSystemInfo(
 	}
 	fclose (f);
 	}
-	memcpy(si,&cachedsi,sizeof(*si));
 #elif defined (__NetBSD__)
         {
              int mib[2];
@@ -590,65 +640,31 @@ VOID WINAPI GetSystemInfo(
              }
 
         }
-        memcpy(si,&cachedsi,sizeof(*si));
 #elif defined(__FreeBSD__)
 	{
-	unsigned int regs[4], regs2[4];
 	int ret, len, num;
-	if (!have_cpuid())
-		regs[0] = 0;			/* No cpuid support -- skip the rest */
-	else
-		do_cpuid(0x00000000, regs);	/* get standard cpuid level and vendor name */
-	if (regs[0]>=0x00000001) {		/* Check for supported cpuid version */
-		do_cpuid(0x00000001, regs2);	/* get cpu features */
-		switch ((regs2[0] >> 8)&0xf) {	/* cpu family */
-		case 3: cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
-			cachedsi.wProcessorLevel = 3;
-			break;
-		case 4: cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
-			cachedsi.wProcessorLevel = 4;
-			break;
-		case 5:
-			cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-			cachedsi.wProcessorLevel = 5;
-			break;
-		case 6:
-		case 15: /* PPro/2/3/4 has same info as P1 */
-			cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-			cachedsi.wProcessorLevel = 6;
-			break;
-		default:
-			FIXME("unknown FreeBSD cpu family %d, please report! (-> setting to 386)\n",
-				(regs2[0] >> 8)&0xf);
-			break;
-		}
-		PF[PF_FLOATING_POINT_EMULATED]     = !(regs2[3] & 1);
-		PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] & (1 << 4 )) >> 4;
-		PF[PF_COMPARE_EXCHANGE_DOUBLE]     = (regs2[3] & (1 << 8 )) >> 8;
-		PF[PF_MMX_INSTRUCTIONS_AVAILABLE]  = (regs2[3] & (1 << 23)) >> 23;
-		/* Check for OS support of SSE -- Is this used, and should it be sse1 or sse2? */
-		/*len = sizeof(num);
-		ret = sysctlbyname("hw.instruction_sse", &num, &len, NULL, 0);
-		if (!ret)
-			PF[PF_XMMI_INSTRUCTIONS_AVAILABLE] = num;*/
-		
-		if (regs[1] == AUTH &&
-		    regs[3] == ENTI &&
-		    regs[2] == CAMD) {
-			do_cpuid(0x80000000, regs);		/* get vendor cpuid level */
-			if (regs[0]>=0x80000001) {
-				do_cpuid(0x80000001, regs2);	/* get vendor features */
-				PF[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = 
-				    (regs2[3] & (1 << 31 )) >> 31;
-			}
-		}
-	}
+
+        get_cpuinfo( &cachedsi );
+
+        /* Check for OS support of SSE -- Is this used, and should it be sse1 or sse2? */
+        /*len = sizeof(num);
+          ret = sysctlbyname("hw.instruction_sse", &num, &len, NULL, 0);
+          if (!ret)
+          PF[PF_XMMI_INSTRUCTIONS_AVAILABLE] = num;*/
+
 	len = sizeof(num);
 	ret = sysctlbyname("hw.ncpu", &num, &len, NULL, 0);
 	if (!ret)
 		cachedsi.dwNumberOfProcessors = num;
 	}
-	memcpy(si,&cachedsi,sizeof(*si));
+#elif defined(__sun)
+	{
+            int num = sysconf( _SC_NPROCESSORS_ONLN );
+
+            if (num == -1) num = 1;
+            get_cpuinfo( &cachedsi );
+            cachedsi.dwNumberOfProcessors = num;
+	}
 #elif defined (__APPLE__)
 	{
 	size_t valSize;
@@ -766,10 +782,11 @@ VOID WINAPI GetSystemInfo(
 	if (!sysctlbyname("hw.cpufrequency", &longVal, &valSize, NULL, 0))
 	    cpuHz = longVal;
 	}
-	memcpy(si,&cachedsi,sizeof(*si));
 #else
 	FIXME("not yet supported on this system\n");
 #endif
+        memcpy(si,&cachedsi,sizeof(*si));
+
         TRACE("<- CPU arch %d, res'd %d, pagesize %d, minappaddr %p, maxappaddr %p,"
               " act.cpumask %08x, numcpus %d, CPU type %d, allocgran. %d, CPU level %d, CPU rev %d\n",
               si->u.s.wProcessorArchitecture, si->u.s.wReserved, si->dwPageSize,
