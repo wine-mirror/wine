@@ -493,6 +493,9 @@ void DocHost_Init(DocHost *This, IDispatch *disp)
     This->frame_hwnd = NULL;
     This->url = NULL;
 
+    This->silent = VARIANT_FALSE;
+    This->offline = VARIANT_FALSE;
+
     DocHost_ClientSite_Init(This);
     DocHost_Frame_Init(This);
 

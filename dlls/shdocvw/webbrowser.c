@@ -706,7 +706,7 @@ static HRESULT WINAPI WebBrowser_get_Offline(IWebBrowser2 *iface, VARIANT_BOOL *
 
     TRACE("(%p)->(%p)\n", This, pbOffline);
 
-    *pbOffline = This->offline;
+    *pbOffline = This->doc_host.offline;
     return S_OK;
 }
 
@@ -716,7 +716,7 @@ static HRESULT WINAPI WebBrowser_put_Offline(IWebBrowser2 *iface, VARIANT_BOOL b
 
     TRACE("(%p)->(%x)\n", This, bOffline);
 
-    This->offline = bOffline ? VARIANT_TRUE : VARIANT_FALSE;
+    This->doc_host.offline = bOffline ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
 }
 
@@ -726,7 +726,7 @@ static HRESULT WINAPI WebBrowser_get_Silent(IWebBrowser2 *iface, VARIANT_BOOL *p
 
     TRACE("(%p)->(%p)\n", This, pbSilent);
 
-    *pbSilent = This->silent;
+    *pbSilent = This->doc_host.silent;
     return S_OK;
 }
 
@@ -736,7 +736,7 @@ static HRESULT WINAPI WebBrowser_put_Silent(IWebBrowser2 *iface, VARIANT_BOOL bS
 
     TRACE("(%p)->(%x)\n", This, bSilent);
 
-    This->silent = bSilent ? VARIANT_TRUE : VARIANT_FALSE;
+    This->doc_host.silent = bSilent ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
 }
 
@@ -927,8 +927,6 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
     ret->address_bar = VARIANT_TRUE;
     ret->status_bar = VARIANT_TRUE;
     ret->tool_bar = VARIANT_TRUE;
-    ret->silent = VARIANT_FALSE;
-    ret->offline = VARIANT_FALSE;
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
