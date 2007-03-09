@@ -253,7 +253,6 @@ typedef struct tagLISTVIEW_INFO
   COLORREF clrBk;
   COLORREF clrText;
   COLORREF clrTextBk;
-  COLORREF clrTextBkDefault;
   HIMAGELIST himlNormal;
   HIMAGELIST himlSmall;
   HIMAGELIST himlState;
@@ -966,9 +965,7 @@ static void prepaint_setup (LISTVIEW_INFO *infoPtr, HDC hdc, NMLVCUSTOMDRAW *lpn
     if (lpnmlvcd->clrTextBk != CLR_NONE)
     {
 	SetBkMode(hdc, OPAQUE);
-	if (lpnmlvcd->clrTextBk == CLR_DEFAULT)
-	    SetBkColor(hdc, infoPtr->clrTextBkDefault);
-	else
+	if (lpnmlvcd->clrTextBk != CLR_DEFAULT)
 	    SetBkColor(hdc,lpnmlvcd->clrTextBk);
     }
     else
@@ -4036,7 +4033,7 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc, D
 static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    COLORREF oldTextColor, oldClrTextBk, oldClrText;
+    COLORREF oldTextColor, oldBkColor, oldClrTextBk, oldClrText;
     NMLVCUSTOMDRAW nmlvcd;
     HFONT hOldFont;
     DWORD cdmode;
@@ -4051,7 +4048,7 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     /* save dc values we're gonna trash while drawing */
     hOldFont = SelectObject(hdc, infoPtr->hFont);
     oldBkMode = GetBkMode(hdc);
-    infoPtr->clrTextBkDefault = GetBkColor(hdc);
+    oldBkColor = GetBkColor(hdc);
     oldTextColor = GetTextColor(hdc);
 
     oldClrTextBk = infoPtr->clrTextBk;
@@ -4111,7 +4108,7 @@ enddraw:
 
     SelectObject(hdc, hOldFont);
     SetBkMode(hdc, oldBkMode);
-    SetBkColor(hdc, infoPtr->clrTextBkDefault);
+    SetBkColor(hdc, oldBkColor);
     SetTextColor(hdc, oldTextColor);
     infoPtr->bIsDrawing = FALSE;
 }
