@@ -1444,8 +1444,13 @@ static void test_bind_context(void)
     BIND_OPTS2 bind_opts;
     HeapUnknown *unknown;
     HeapUnknown *unknown2;
+    IUnknown *param_obj;
     ULONG refs;
     static const WCHAR wszParamName[] = {'G','e','m','m','a',0};
+    static const WCHAR wszNonExistant[] = {'N','o','n','E','x','i','s','t','a','n','t',0};
+
+    hr = CreateBindCtx(0, NULL);
+    ok(hr == E_INVALIDARG, "CreateBindCtx with NULL ppbc should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 
     hr = CreateBindCtx(0xdeadbeef, &pBindCtx);
     ok(hr == E_INVALIDARG, "CreateBindCtx with reserved value non-zero should have returned E_INVALIDARG instead of 0x%08x\n", hr);
@@ -1458,6 +1463,12 @@ static void test_bind_context(void)
     ok_ole_success(hr, "IBindCtx_GetBindOptions");
     ok(bind_opts.cbStruct == sizeof(bind_opts), "bind_opts.cbStruct was %d\n", bind_opts.cbStruct);
 
+    bind_opts.cbStruct = sizeof(BIND_OPTS);
+    hr = IBindCtx_GetBindOptions(pBindCtx, (BIND_OPTS *)&bind_opts);
+    ok_ole_success(hr, "IBindCtx_GetBindOptions");
+    todo_wine
+    ok(bind_opts.cbStruct == sizeof(BIND_OPTS), "bind_opts.cbStruct was %d\n", bind_opts.cbStruct);
+
     bind_opts.cbStruct = sizeof(bind_opts);
     hr = IBindCtx_GetBindOptions(pBindCtx, (BIND_OPTS *)&bind_opts);
     ok_ole_success(hr, "IBindCtx_GetBindOptions");
@@ -1469,7 +1480,6 @@ static void test_bind_context(void)
     ok(bind_opts.dwClassContext == (CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER),
         "bind_opts.dwClassContext should have been 0x15 instead of 0x%x\n", bind_opts.dwClassContext);
     ok(bind_opts.locale == GetThreadLocale(), "bind_opts.locale should have been 0x%x instead of 0x%x\n", GetThreadLocale(), bind_opts.locale);
-
     ok(bind_opts.pServerInfo == NULL, "bind_opts.pServerInfo should have been NULL instead of %p\n", bind_opts.pServerInfo);
 
     bind_opts.cbStruct = -1;
@@ -1479,11 +1489,22 @@ static void test_bind_context(void)
     hr = IBindCtx_RegisterObjectParam(pBindCtx, (WCHAR *)wszParamName, NULL);
     ok(hr == E_INVALIDARG, "IBindCtx_RegisterObjectParam should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 
-    unknown = (HeapUnknown *)HeapAlloc(GetProcessHeap(), 0, sizeof(*unknown));
+    unknown = HeapAlloc(GetProcessHeap(), 0, sizeof(*unknown));
     unknown->lpVtbl = &HeapUnknown_Vtbl;
     unknown->refs = 1;
     hr = IBindCtx_RegisterObjectParam(pBindCtx, (WCHAR *)wszParamName, (IUnknown *)&unknown->lpVtbl);
     ok_ole_success(hr, "IBindCtx_RegisterObjectParam");
+
+    hr = IBindCtx_GetObjectParam(pBindCtx, (WCHAR *)wszParamName, &param_obj);
+    ok_ole_success(hr, "IBindCtx_GetObjectParam");
+    IUnknown_Release(param_obj);
+
+    hr = IBindCtx_GetObjectParam(pBindCtx, (WCHAR *)wszNonExistant, &param_obj);
+    ok(hr == E_FAIL, "IBindCtx_GetObjectParam with non-existing key should have failed with E_FAIL instead of 0x%08x\n", hr);
+    ok(param_obj == NULL, "IBindCtx_GetObjectParam with non-existing key should have set output parameter to NULL instead of %p\n", param_obj);
+
+    hr = IBindCtx_RevokeObjectParam(pBindCtx, (WCHAR *)wszNonExistant);
+    ok(hr == E_FAIL, "IBindCtx_RevokeObjectParam with non-existing key should have failed with E_FAIL instead of 0x%08x\n", hr);
 
     hr = IBindCtx_EnumObjectParam(pBindCtx, &pEnumString);
     ok(hr == E_NOTIMPL, "IBindCtx_EnumObjectParam should have returned E_NOTIMPL instead of 0x%08x\n", hr);
@@ -1493,11 +1514,21 @@ static void test_bind_context(void)
     todo_wine
     ok_ole_success(hr, "IBindCtx_RegisterObjectBound(NULL)");
 
-    unknown2 = (HeapUnknown *)HeapAlloc(GetProcessHeap(), 0, sizeof(*unknown));
+    hr = IBindCtx_RevokeObjectBound(pBindCtx, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "IBindCtx_RevokeObjectBound(NULL) should have return E_INVALIDARG instead of 0x%08x\n", hr);
+
+    unknown2 = HeapAlloc(GetProcessHeap(), 0, sizeof(*unknown));
     unknown2->lpVtbl = &HeapUnknown_Vtbl;
     unknown2->refs = 1;
     hr = IBindCtx_RegisterObjectBound(pBindCtx, (IUnknown *)&unknown2->lpVtbl);
     ok_ole_success(hr, "IBindCtx_RegisterObjectBound");
+
+    hr = IBindCtx_RevokeObjectBound(pBindCtx, (IUnknown *)&unknown2->lpVtbl);
+    ok_ole_success(hr, "IBindCtx_RevokeObjectBound");
+
+    hr = IBindCtx_RevokeObjectBound(pBindCtx, (IUnknown *)&unknown2->lpVtbl);
+    ok(hr == MK_E_NOTBOUND, "IBindCtx_RevokeObjectBound with not bound object should have returned MK_E_NOTBOUND instead of 0x%08x\n", hr);
 
     IBindCtx_Release(pBindCtx);
 

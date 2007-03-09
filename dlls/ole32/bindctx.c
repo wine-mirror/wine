@@ -539,6 +539,8 @@ HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC * ppbc)
 
     TRACE("(%d,%p)\n",reserved,ppbc);
 
+    if (!ppbc) return E_INVALIDARG;
+
     *ppbc = NULL;
 
     if (reserved != 0)
