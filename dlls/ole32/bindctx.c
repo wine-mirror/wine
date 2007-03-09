@@ -267,16 +267,20 @@ static HRESULT WINAPI
 BindCtxImpl_GetBindOptions(IBindCtx* iface,BIND_OPTS *pbindopts)
 {
     BindCtxImpl *This = (BindCtxImpl *)iface;
+    ULONG cbStruct;
 
     TRACE("(%p,%p)\n",This,pbindopts);
 
     if (pbindopts==NULL)
         return E_POINTER;
 
-    if (pbindopts->cbStruct > sizeof(BIND_OPTS2))
-        pbindopts->cbStruct = sizeof(BIND_OPTS2);
+    cbStruct = pbindopts->cbStruct;
+    if (cbStruct > sizeof(BIND_OPTS2))
+        cbStruct = sizeof(BIND_OPTS2);
 
-    memcpy(pbindopts, &This->bindOption2, pbindopts->cbStruct);
+    memcpy(pbindopts, &This->bindOption2, cbStruct);
+    pbindopts->cbStruct = cbStruct;
+
     return S_OK;
 }
 

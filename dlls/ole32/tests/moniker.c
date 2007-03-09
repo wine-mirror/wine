@@ -1466,7 +1466,6 @@ static void test_bind_context(void)
     bind_opts.cbStruct = sizeof(BIND_OPTS);
     hr = IBindCtx_GetBindOptions(pBindCtx, (BIND_OPTS *)&bind_opts);
     ok_ole_success(hr, "IBindCtx_GetBindOptions");
-    todo_wine
     ok(bind_opts.cbStruct == sizeof(BIND_OPTS), "bind_opts.cbStruct was %d\n", bind_opts.cbStruct);
 
     bind_opts.cbStruct = sizeof(bind_opts);
