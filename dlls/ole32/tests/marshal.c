@@ -2178,7 +2178,7 @@ static const IClassFactoryVtbl TestClassFactoryOOP_Vtbl =
 static IClassFactory TestOOP_ClassFactory = { &TestClassFactoryOOP_Vtbl };
 
 /* tests functions commonly used by out of process COM servers */
-static void test_out_of_process_com(void)
+static void test_local_server(void)
 {
     static const CLSID CLSID_WineOOPTest = {
         0x5201163f,
@@ -2204,10 +2204,9 @@ static void test_out_of_process_com(void)
      * class in the registry */
     hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER,
         NULL, &IID_IClassFactory, (LPVOID*)&cf);
-    todo_wine {
-    ok(hr == REGDB_E_CLASSNOTREG,
+    ok(hr == REGDB_E_CLASSNOTREG || /* NT */
+       hr == S_OK /* Win9x */,
         "CoGetClassObject should have returned REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
-    }
 
     /* Resume the object suspended above ... */
     hr = CoResumeClassObjects();
@@ -2224,27 +2223,27 @@ static void test_out_of_process_com(void)
     ok_no_locks();
 
     hr = IClassFactory_LockServer(cf, TRUE);
-    trace("IClassFactory_LockServer returned 0x%08x\n", hr);
+    ok_ole_success(hr, IClassFactory_LockServer);
 
     ok_more_than_one_lock();
     
     IClassFactory_LockServer(cf, FALSE);
+    ok_ole_success(hr, IClassFactory_LockServer);
 
     ok_no_locks();
 
     IClassFactory_Release(cf);
 
     /* wait for shutdown signal */
-    ret = WaitForSingleObject(heventShutdown, 5000);
-    todo_wine { ok(ret != WAIT_TIMEOUT, "Server didn't shut down or machine is under very heavy load\n"); }
+    ret = WaitForSingleObject(heventShutdown, 0);
+    todo_wine { ok(ret != WAIT_TIMEOUT, "Server didn't shut down\n"); }
 
     /* try to connect again after SCM has suspended registered class objects */
     hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER, NULL,
         &IID_IClassFactory, (LPVOID*)&cf);
-    todo_wine {
-    ok(hr == CO_E_SERVER_STOPPING,
+    ok(hr == CO_E_SERVER_STOPPING || /* NT */
+       hr == S_OK /* Win9x */,
         "CoGetClassObject should have returned CO_E_SERVER_STOPPING instead of 0x%08x\n", hr);
-    }
 
     hr = CoRevokeClassObject(cookie);
     ok_ole_success(hr, CoRevokeClassObject);
@@ -2582,8 +2581,7 @@ START_TEST(marshal)
     test_inproc_handler();
     test_handler_marshaling();
 
-    /* doesn't pass with Win9x COM DLLs (even though Essential COM says it should) */
-    if (0) test_out_of_process_com();
+    test_local_server();
 
     test_globalinterfacetable();
 
