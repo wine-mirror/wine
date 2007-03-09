@@ -29,6 +29,8 @@
 #include "htiframe.h"
 #include "mshtmhst.h"
 #include "idispids.h"
+#include "olectl.h"
+#include "mshtmdid.h"
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -66,8 +68,18 @@ DEFINE_EXPECT(Frame_GetWindow);
 DEFINE_EXPECT(Frame_SetActiveObject);
 DEFINE_EXPECT(UIWindow_SetActiveObject);
 DEFINE_EXPECT(SetMenu);
+DEFINE_EXPECT(Invoke_AMBIENT_USERMODE);
+DEFINE_EXPECT(Invoke_AMBIENT_DLCONTROL);
+DEFINE_EXPECT(Invoke_AMBIENT_USERAGENT);
+DEFINE_EXPECT(Invoke_AMBIENT_PALETTE);
 DEFINE_EXPECT(Invoke_AMBIENT_SILENT);
 DEFINE_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+DEFINE_EXPECT(EnableModeless_TRUE);
+DEFINE_EXPECT(EnableModeless_FALSE);
+DEFINE_EXPECT(GetHostInfo);
+DEFINE_EXPECT(GetOptionKeyPath);
+DEFINE_EXPECT(GetOverridesKeyPath);
+DEFINE_EXPECT(SetStatusText);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
 
@@ -169,7 +181,6 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
     ok(IsEqualGUID(&IID_NULL, riid), "riid != IID_NULL\n");
     ok(pDispParams != NULL, "pDispParams == NULL\n");
     ok(pExcepInfo == NULL, "pExcepInfo=%p, expected NULL\n", pExcepInfo);
-    ok(puArgErr == NULL, "puArgErr=%p\n", puArgErr);
     ok(V_VT(pVarResult) == VT_EMPTY, "V_VT(pVarResult)=%d\n", V_VT(pVarResult));
     ok(wFlags == DISPATCH_PROPERTYGET, "wFlags=%08x, expected DISPATCH_PROPERTYGET\n", wFlags);
     ok(pDispParams->rgvarg == NULL, "pDispParams->rgvarg = %p\n", pDispParams->rgvarg);
@@ -179,13 +190,30 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
     ok(pDispParams->cNamedArgs == 0, "pDispParams->cNamedArgs = %d\n", pDispParams->cNamedArgs);
 
     switch(dispIdMember) {
+    case DISPID_AMBIENT_USERMODE:
+        CHECK_EXPECT2(Invoke_AMBIENT_USERMODE);
+        return E_FAIL;
+    case DISPID_AMBIENT_DLCONTROL:
+        CHECK_EXPECT(Invoke_AMBIENT_DLCONTROL);
+        ok(puArgErr != NULL, "puArgErr=%p\n", puArgErr);
+        return E_FAIL;
+    case DISPID_AMBIENT_USERAGENT:
+       CHECK_EXPECT(Invoke_AMBIENT_USERAGENT);
+        ok(puArgErr != NULL, "puArgErr=%p\n", puArgErr);
+        return E_FAIL;
+    case DISPID_AMBIENT_PALETTE:
+        CHECK_EXPECT(Invoke_AMBIENT_PALETTE);
+        ok(puArgErr != NULL, "puArgErr=%p\n", puArgErr);
+        return E_FAIL;
     case DISPID_AMBIENT_OFFLINEIFNOTCONNECTED:
         CHECK_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        ok(puArgErr == NULL, "puArgErr=%p\n", puArgErr);
         V_VT(pVarResult) = VT_BOOL;
         V_BOOL(pVarResult) = VARIANT_FALSE;
         return S_OK;
     case DISPID_AMBIENT_SILENT:
         CHECK_EXPECT(Invoke_AMBIENT_SILENT);
+        ok(puArgErr == NULL, "puArgErr=%p\n", puArgErr);
         V_VT(pVarResult) = VT_BOOL;
         V_BOOL(pVarResult) = VARIANT_FALSE;
         return S_OK;
@@ -380,14 +408,18 @@ static HRESULT WINAPI InPlaceFrame_RemoveMenus(IOleInPlaceFrame *iface, HMENU hm
 
 static HRESULT WINAPI InPlaceFrame_SetStatusText(IOleInPlaceFrame *iface, LPCOLESTR pszStatusText)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT2(SetStatusText);
+    /* FIXME: Check pszStatusText */
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceFrame_EnableModeless(IOleInPlaceFrame *iface, BOOL fEnable)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    if(fEnable)
+        CHECK_EXPECT(EnableModeless_TRUE);
+    else
+        CHECK_EXPECT(EnableModeless_FALSE);
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceFrame_TranslateAccelerator(IOleInPlaceFrame *iface, LPMSG lpmsg, WORD wID)
@@ -618,8 +650,17 @@ static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface
 
 static HRESULT WINAPI DocHostUIHandler_GetHostInfo(IDocHostUIHandler2 *iface, DOCHOSTUIINFO *pInfo)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(GetHostInfo);
+    ok(pInfo != NULL, "pInfo=NULL\n");
+    if(pInfo) {
+        ok(pInfo->cbSize == sizeof(DOCHOSTUIINFO), "pInfo->cbSize=%u, expected %u\n",
+                pInfo->cbSize, sizeof(DOCHOSTUIINFO));
+        ok(!pInfo->dwFlags, "pInfo->dwFlags=%08x, expected 0\n", pInfo->dwFlags);
+        ok(!pInfo->dwDoubleClick, "pInfo->dwDoubleClick=%08x, expected 0\n", pInfo->dwDoubleClick);
+        ok(!pInfo->pchHostCss, "pInfo->pchHostCss=%p, expected NULL\n", pInfo->pchHostCss);
+        ok(!pInfo->pchHostNS, "pInfo->pchhostNS=%p, expected NULL\n", pInfo->pchHostNS);
+    }
+    return E_FAIL;
 }
 
 static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD dwID,
@@ -677,7 +718,11 @@ static HRESULT WINAPI DocHostUIHandler_TranslateAccelerator(IDocHostUIHandler2 *
 static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *iface,
         LPOLESTR *pchKey, DWORD dw)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(GetOptionKeyPath);
+    ok(pchKey != NULL, "pchKey==NULL\n");
+    if(pchKey)
+        ok(*pchKey == NULL, "*pchKey=%p\n", *pchKey);
+    ok(!dw, "dw=%x\n", dw);
     return E_NOTIMPL;
 }
 
@@ -711,7 +756,11 @@ static HRESULT WINAPI DocHostUIHandler_FilterDataObject(IDocHostUIHandler2 *ifac
 static HRESULT WINAPI DocHostUIHandler_GetOverrideKeyPath(IDocHostUIHandler2 *iface,
         LPOLESTR *pchKey, DWORD dw)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(GetOverridesKeyPath);
+    ok(pchKey != NULL, "pchKey==NULL\n");
+    if(pchKey)
+        ok(*pchKey == NULL, "*pchKey=%p\n", *pchKey);
+    ok(!dw, "dw=%x\n", dw);
     return E_NOTIMPL;
 }
 
@@ -1256,6 +1305,51 @@ static void test_Extent(IUnknown *unk)
     IOleObject_Release(oleobj);
 }
 
+static void test_Navigate2(IUnknown *unk)
+{
+    IWebBrowser2 *webbrowser;
+    VARIANT url;
+    HRESULT hres;
+
+    static const WCHAR wszAboutBlank[] =
+        {'a','b','o','u','t',':','b','l','a','n','k',0};
+
+    hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&webbrowser);
+    ok(hres == S_OK, "QueryInterface(IID_IWebBrowser) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    V_VT(&url) = VT_BSTR;
+    V_BSTR(&url) = SysAllocString(wszAboutBlank);
+
+    SET_EXPECT(Invoke_AMBIENT_USERMODE);
+    SET_EXPECT(EnableModeless_FALSE);
+    SET_EXPECT(GetHostInfo);
+    SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
+    SET_EXPECT(Invoke_AMBIENT_USERAGENT);
+    SET_EXPECT(Invoke_AMBIENT_PALETTE);
+    SET_EXPECT(GetOptionKeyPath);
+    SET_EXPECT(GetOverridesKeyPath);
+    SET_EXPECT(SetStatusText);
+    SET_EXPECT(EnableModeless_TRUE);
+
+    hres = IWebBrowser2_Navigate2(webbrowser, &url, NULL, NULL, NULL, NULL);
+    ok(hres == S_OK, "Navigate2 failed: %08x\n", hres);
+
+    CHECK_CALLED(Invoke_AMBIENT_USERMODE);
+    CHECK_CALLED(EnableModeless_FALSE);
+    CHECK_CALLED(GetHostInfo);
+    CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
+    CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
+    CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+    CHECK_CALLED(GetOptionKeyPath);
+    CHECK_CALLED(GetOverridesKeyPath);
+    CHECK_CALLED(SetStatusText);
+    CHECK_CALLED(EnableModeless_TRUE);
+
+    IWebBrowser2_Release(webbrowser);
+}
+
 static void test_QueryInterface(IUnknown *unk)
 {
     IQuickActivate *qa = (IQuickActivate*)0xdeadbeef;
@@ -1289,6 +1383,7 @@ static void test_WebBrowser(void)
     test_Extent(unk);
     test_wb_funcs(unk, TRUE);
     test_DoVerb(unk);
+    test_Navigate2(unk);
     test_ClientSite(unk, NULL);
     test_ie_funcs(unk);
     test_GetControlInfo(unk);
@@ -1298,8 +1393,40 @@ static void test_WebBrowser(void)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
+static void gecko_installer_workaround(BOOL disable)
+{
+    HKEY hkey;
+    DWORD res;
+
+    static BOOL has_url = FALSE;
+    static char url[2048];
+
+    if(!disable && !has_url)
+        return;
+
+    res = RegOpenKey(HKEY_CURRENT_USER, "Software\\Wine\\MSHTML", &hkey);
+    if(res != ERROR_SUCCESS)
+        return;
+
+    if(disable) {
+        DWORD type, size = sizeof(url);
+
+        res = RegQueryValueEx(hkey, "GeckoUrl", NULL, &type, (PVOID)url, &size);
+        if(res == ERROR_SUCCESS && type == REG_SZ)
+            has_url = TRUE;
+
+        RegDeleteValue(hkey, "GeckoUrl");
+    }else {
+        RegSetValueEx(hkey, "GeckoUrl", 0, REG_SZ, (PVOID)url, lstrlenA(url)+1);
+    }
+
+    RegCloseKey(hkey);
+}
+
 START_TEST(webbrowser)
 {
+    gecko_installer_workaround(TRUE);
+
     container_hwnd = create_container_window();
 
     OleInitialize(NULL);
@@ -1307,4 +1434,6 @@ START_TEST(webbrowser)
     test_WebBrowser();
 
     OleUninitialize();
+
+    gecko_installer_workaround(FALSE);
 }
