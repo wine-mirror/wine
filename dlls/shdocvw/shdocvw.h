@@ -74,9 +74,11 @@ typedef struct {
 
     IDispatch *disp;
 
+    IDispatch *client_disp;
+    IDocHostUIHandler *hostui;
+
     IUnknown *document;
     IOleDocumentView *view;
-    IDocHostUIHandler *hostui;
 
     HWND hwnd;
     HWND frame_hwnd;

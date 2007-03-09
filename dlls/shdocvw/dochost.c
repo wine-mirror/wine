@@ -486,6 +486,8 @@ void DocHost_Init(DocHost *This, IDispatch *disp)
 
     This->disp = disp;
 
+    This->client_disp = NULL;
+
     This->document = NULL;
     This->hostui = NULL;
 
@@ -504,6 +506,9 @@ void DocHost_Init(DocHost *This, IDispatch *disp)
 
 void DocHost_Release(DocHost *This)
 {
+    if(This->client_disp)
+        IDispatch_Release(This->client_disp);
+
     DocHost_ClientSite_Release(This);
 
     ConnectionPointContainer_Destroy(&This->cps);

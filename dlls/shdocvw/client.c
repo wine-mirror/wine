@@ -433,6 +433,14 @@ static HRESULT WINAPI ClDispatch_Invoke(IDispatch *iface, DISPID dispIdMember, R
           debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     switch(dispIdMember) {
+    case DISPID_AMBIENT_USERMODE:
+    case DISPID_AMBIENT_DLCONTROL:
+    case DISPID_AMBIENT_USERAGENT:
+    case DISPID_AMBIENT_PALETTE:
+        if(!This->client_disp)
+            return E_FAIL;
+        return IDispatch_Invoke(This->client_disp, dispIdMember, riid, lcid, wFlags,
+                                pDispParams, pVarResult, pExcepInfo, puArgErr);
     case DISPID_AMBIENT_OFFLINEIFNOTCONNECTED:
         V_VT(pVarResult) = VT_BOOL;
         V_BOOL(pVarResult) = This->offline;

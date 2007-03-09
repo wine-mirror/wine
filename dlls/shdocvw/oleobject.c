@@ -307,6 +307,9 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
 
     IOleClientSite_AddRef(pClientSite);
 
+    IOleClientSite_QueryInterface(This->client, &IID_IDispatch,
+                                  (void**)&This->doc_host.client_disp);
+
     IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler,
                                   (void**)&This->doc_host.hostui);
 
