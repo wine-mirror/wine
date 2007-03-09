@@ -133,6 +133,8 @@ extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 /* process tracing mechanism to use */
 #ifdef __APPLE__
 #define USE_MACH
+#elif defined(__sun)
+#define USE_PROCFS
 #else
 #define USE_PTRACE
 #endif

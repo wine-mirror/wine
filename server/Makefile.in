@@ -32,6 +32,7 @@ C_SRCS = \
 	named_pipe.c \
 	object.c \
 	process.c \
+	procfs.c \
 	ptrace.c \
 	queue.c \
 	region.c \
