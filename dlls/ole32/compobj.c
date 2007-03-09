@@ -1542,6 +1542,11 @@ HRESULT WINAPI CoRegisterClassObject(
 
   *lpdwRegister = 0;
 
+  /* REGCLS_MULTIPLEUSE implies registering as inproc server. This is what
+   * differentiates the flag from REGCLS_MULTI_SEPARATE. */
+  if (flags & REGCLS_MULTIPLEUSE)
+    dwClsContext |= CLSCTX_INPROC_SERVER;
+
   /*
    * First, check if the class is already registered.
    * If it is, this should cause an error.
