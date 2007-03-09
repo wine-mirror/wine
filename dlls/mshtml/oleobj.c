@@ -66,6 +66,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     HTMLDocument *This = OLEOBJ_THIS(iface);
     IDocHostUIHandler *pDocHostUIHandler = NULL;
     IOleCommandTarget *cmdtrg = NULL;
+    VARIANT silent;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pClientSite);
@@ -171,7 +172,15 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_USERMODE);
 
     IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_OFFLINEIFNOTCONNECTED); 
-    IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_SILENT);
+
+    hres = get_client_disp_property(This->client, DISPID_AMBIENT_SILENT, &silent);
+    if(SUCCEEDED(hres)) {
+        if(V_VT(&silent) != VT_BOOL)
+            WARN("V_VT(silent) = %d\n", V_VT(&silent));
+        else if(V_BOOL(&silent))
+            FIXME("silent == true\n");
+    }
+
     IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_USERAGENT);
     IOleControl_OnAmbientPropertyChange(CONTROL(This), DISPID_AMBIENT_PALETTE);
 
