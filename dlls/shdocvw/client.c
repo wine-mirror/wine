@@ -16,8 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
+
 #include "wine/debug.h"
 #include "shdocvw.h"
+#include "mshtmdid.h"
+#include "idispids.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -400,13 +404,46 @@ static HRESULT WINAPI ClDispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LP
     return E_NOTIMPL;
 }
 
+static const char *debugstr_dispid(DISPID dispid)
+{
+    static char buf[16];
+
+#define CASE_DISPID(did) case did: return #did
+    switch(dispid) {
+        CASE_DISPID(DISPID_AMBIENT_USERMODE);
+        CASE_DISPID(DISPID_AMBIENT_DLCONTROL);
+        CASE_DISPID(DISPID_AMBIENT_USERAGENT);
+        CASE_DISPID(DISPID_AMBIENT_PALETTE);
+        CASE_DISPID(DISPID_AMBIENT_OFFLINEIFNOTCONNECTED);
+        CASE_DISPID(DISPID_AMBIENT_SILENT);
+    }
+#undef CASE_DISPID
+
+    sprintf(buf, "%d", dispid);
+    return buf;
+}
+
 static HRESULT WINAPI ClDispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
                                         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                                         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     DocHost *This = DISP_THIS(iface);
-    FIXME("(%p)->(%d %s %d %04x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
-          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    TRACE("(%p)->(%s %s %d %04x %p %p %p %p)\n", This, debugstr_dispid(dispIdMember),
+          debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    switch(dispIdMember) {
+    case DISPID_AMBIENT_OFFLINEIFNOTCONNECTED:
+        V_VT(pVarResult) = VT_BOOL;
+        V_BOOL(pVarResult) = This->offline;
+        return S_OK;
+    case DISPID_AMBIENT_SILENT:
+        V_VT(pVarResult) = VT_BOOL;
+        V_BOOL(pVarResult) = This->offline;
+        return S_OK;
+    }
+
+    FIXME("unhandled dispid %d\n", dispIdMember);
     return E_NOTIMPL;
 }
 
