@@ -4250,11 +4250,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, WI
                                                 UINT PrimitiveCount) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    This->stateBlock->streamIsUP = FALSE;
 
     TRACE("(%p) : Type=(%d,%s), Start=%d, Count=%d\n", This, PrimitiveType,
                                debug_d3dprimitivetype(PrimitiveType),
                                StartVertex, PrimitiveCount);
+
+    /* The index buffer is not needed here, but restore it, otherwise it is hell to keep track of */
+    if(This->stateBlock->streamIsUP) {
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
+        This->stateBlock->streamIsUP = FALSE;
+    }
 
     if(This->stateBlock->loadBaseVertexIndex != 0) {
         This->stateBlock->loadBaseVertexIndex = 0;
@@ -4277,8 +4282,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
     WINED3DINDEXBUFFER_DESC  IdxBufDsc;
     GLuint vbo;
 
+    if(This->stateBlock->streamIsUP) {
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
+        This->stateBlock->streamIsUP = FALSE;
+    }
     pIB = This->stateBlock->pIndexData;
-    This->stateBlock->streamIsUP = FALSE;
     vbo = ((IWineD3DIndexBufferImpl *) pIB)->vbo;
 
     TRACE("(%p) : Type=(%d,%s), min=%d, CountV=%d, startIdx=%d, countP=%d\n", This,
