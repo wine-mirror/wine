@@ -400,14 +400,14 @@ static void FONT_LogFontWTo16( const LOGFONTW* font32, LPLOGFONT16 font16 )
 /***********************************************************************
  *           Checksums
  */
-static UINT16   __lfCheckSum( LPLOGFONT16 plf )
+static UINT16   __lfCheckSum( const LOGFONT16 *plf )
 {
     CHAR        font[LF_FACESIZE];
     UINT16      checksum = 0;
-    UINT16 *ptr;
+    const UINT16 *ptr;
     int i;
 
-    ptr = (UINT16 *)plf;
+    ptr = (const UINT16 *)plf;
     for (i = 0; i < 9; i++) checksum ^= *ptr++;
     for (i = 0; i < LF_FACESIZE; i++)
     {
@@ -1033,7 +1033,7 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
  * font info		- http://www.microsoft.com/kb/articles/q65/1/23.htm
  * Windows font metrics	- http://www.microsoft.com/kb/articles/q32/6/67.htm
  */
-static void XFONT_GetLeading( const LPIFONTINFO16 pFI, const XFontStruct* x_fs,
+static void XFONT_GetLeading( const IFONTINFO16 *pFI, const XFontStruct* x_fs,
 			      INT16* pIL, INT16* pEL, const XFONTTRANS *XFT )
 {
     unsigned long height;
@@ -2727,7 +2727,7 @@ static void XFONT_GrowFreeList(int start, int end)
    }
 }
 
-static fontObject* XFONT_LookupCachedFont( const LPLOGFONT16 plf, UINT16* checksum )
+static fontObject* XFONT_LookupCachedFont( const LOGFONT16 *plf, UINT16* checksum )
 {
     UINT16	cs = __lfCheckSum( plf );
     int		i = fontMRU, prev = -1;
@@ -3017,7 +3017,7 @@ static BOOL XFONT_SetX11Trans( fontObject *pfo )
 /***********************************************************************
  *           X Device Font Objects
  */
-static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
+static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf,
 				     LPCSTR* faceMatched, BOOL bSubFont,
 				     WORD internal_charset,
 				     WORD* pcharsetMatched )
