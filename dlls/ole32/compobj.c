@@ -106,6 +106,8 @@ struct registered_psclsid
  * libraries are freed
  */
 static LONG s_COMLockCount = 0;
+/* Reference count used by CoAddRefServerProcess/CoReleaseServerProcess */
+static LONG s_COMServerProcessReferences = 0;
 
 /*
  * This linked list contains the list of registered class objects. These
@@ -2771,11 +2773,23 @@ HRESULT WINAPI CoSuspendClassObjects(void)
  *
  * RETURNS
  *  New reference count.
+ *
+ * SEE ALSO
+ *  CoReleaseServerProcess().
  */
 ULONG WINAPI CoAddRefServerProcess(void)
 {
-    FIXME("\n");
-    return 2;
+    ULONG refs;
+
+    TRACE("\n");
+
+    EnterCriticalSection(&csRegisteredClassList);
+    refs = ++s_COMServerProcessReferences;
+    LeaveCriticalSection(&csRegisteredClassList);
+
+    TRACE("refs before: %d\n", refs - 1);
+
+    return refs;
 }
 
 /***********************************************************************
@@ -2786,11 +2800,30 @@ ULONG WINAPI CoAddRefServerProcess(void)
  *
  * RETURNS
  *  New reference count.
+ *
+ * NOTES
+ *  When reference count reaches 0, this function suspends all registered
+ *  classes so no new connections are accepted.
+ *
+ * SEE ALSO
+ *  CoAddRefServerProcess(), CoSuspendClassObjects().
  */
 ULONG WINAPI CoReleaseServerProcess(void)
 {
-    FIXME("\n");
-    return 1;
+    ULONG refs;
+
+    TRACE("\n");
+
+    EnterCriticalSection(&csRegisteredClassList);
+
+    refs = --s_COMServerProcessReferences;
+    /* FIXME: if (!refs) COM_SuspendClassObjects(); */
+
+    LeaveCriticalSection(&csRegisteredClassList);
+
+    TRACE("refs after: %d\n", refs);
+
+    return refs;
 }
 
 /***********************************************************************

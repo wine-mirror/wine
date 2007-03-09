@@ -2303,7 +2303,7 @@ static void test_local_server(void)
 
     /* wait for shutdown signal */
     ret = WaitForSingleObject(heventShutdown, 0);
-    todo_wine { ok(ret != WAIT_TIMEOUT, "Server didn't shut down\n"); }
+    ok(ret != WAIT_TIMEOUT, "Server didn't shut down\n");
 
     /* try to connect again after SCM has suspended registered class objects */
     hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER, NULL,
