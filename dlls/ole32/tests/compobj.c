@@ -640,6 +640,67 @@ static void test_CoMarshalInterThreadInterfaceInStream(void)
     CoUninitialize();
 }
 
+static void test_CoRegisterClassObject(void)
+{
+    static const CLSID CLSID_WineOOPTest = {
+        0x5201163f,
+        0x8164,
+        0x4fd0,
+        {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
+    }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
+    DWORD cookie;
+    HRESULT hr;
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    /* CLSCTX_INPROC_SERVER */
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
+                               CLSCTX_INPROC_SERVER, REGCLS_SINGLEUSE, &cookie);
+    ok_ole_success(hr, "CoRegisterClassObject");
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, "CoRevokeClassObject");
+
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
+                               CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie);
+    ok_ole_success(hr, "CoRegisterClassObject");
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, "CoRevokeClassObject");
+
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
+                               CLSCTX_INPROC_SERVER, REGCLS_MULTI_SEPARATE, &cookie);
+    ok_ole_success(hr, "CoRegisterClassObject");
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, "CoRevokeClassObject");
+
+    /* CLSCTX_LOCAL_SERVER */
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
+                               CLSCTX_LOCAL_SERVER, REGCLS_SINGLEUSE, &cookie);
+    ok_ole_success(hr, "CoRegisterClassObject");
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, "CoRevokeClassObject");
+
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
+                               CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE, &cookie);
+    ok_ole_success(hr, "CoRegisterClassObject");
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, "CoRevokeClassObject");
+
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
+                               CLSCTX_LOCAL_SERVER, REGCLS_MULTI_SEPARATE, &cookie);
+    ok_ole_success(hr, "CoRegisterClassObject");
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, "CoRevokeClassObject");
+
+    /* CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER */
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
+                               CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER, REGCLS_SINGLEUSE, &cookie);
+    ok_ole_success(hr, "CoRegisterClassObject");
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, "CoRevokeClassObject");
+
+    CoUninitialize();
+}
+
 START_TEST(compobj)
 {
     HMODULE hOle32 = GetModuleHandle("ole32");
@@ -662,4 +723,5 @@ START_TEST(compobj)
     test_CoGetInterfaceAndReleaseStream();
     test_CoMarshalInterface();
     test_CoMarshalInterThreadInterfaceInStream();
+    test_CoRegisterClassObject();
 }
