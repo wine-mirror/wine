@@ -413,8 +413,7 @@ static BOOL try_application_url(LPCWSTR url)
     return ShellExecuteExW(&exec_info);
 }
 
-static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
-                        IBindStatusCallback *callback)
+static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx)
 {
     IOleObject *oleobj;
     IPersistMoniker *persist;
@@ -499,9 +498,11 @@ static HRESULT bind_url_to_object(DocHost *This, LPCWSTR url, PBYTE post_data, U
 
     callback = create_callback(This, post_data, post_data_len, (LPWSTR)headers, &cancel);
     CreateAsyncBindCtx(0, callback, 0, &bindctx);
+    IBindStatusCallback_Release(callback);
 
-    hres = navigate(This, mon, bindctx, callback);
+    hres = navigate(This, mon, bindctx);
 
+    IBindCtx_Release(bindctx);
     IMoniker_Release(mon);
 
     return hres;
@@ -602,7 +603,7 @@ static HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
 
     This->url = url;
 
-    return navigate(This, mon, bindctx, callback);
+    return navigate(This, mon, bindctx);
 }
 
 #define HLINKFRAME_THIS(iface) DEFINE_THIS(WebBrowser, HlinkFrame, iface)
