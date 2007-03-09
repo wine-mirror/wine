@@ -30,6 +30,155 @@
 #include "commctrl.h" 
 
 #include "wine/test.h"
+#include "msg.h"
+
+#define NUM_MSG_SEQUENCES   1
+#define LISTVIEW_SEQ_INDEX  0
+
+static struct msg_sequence *MsgSequences[NUM_MSG_SEQUENCES];
+
+static const struct message FillRootSeq[] = {
+    { TVM_INSERTITEM, sent },
+    { TVM_GETITEM, sent },
+    { TVM_INSERTITEM, sent },
+    { 0 }
+};
+
+static const struct message DoTest1Seq[] = {
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { 0 }
+};
+
+static const struct message DoTest2Seq[] = {
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    { 0 }
+};
+
+static const struct message DoFocusTestSeq[] = {
+    { TVM_INSERTITEM, sent },
+    { TVM_INSERTITEM, sent },
+    { WM_WINDOWPOSCHANGING, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam|defwinproc, 0x00000001 },
+    { WM_WINDOWPOSCHANGED, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { WM_WINDOWPOSCHANGING, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0x00000001 },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_SIZE, sent|defwinproc },
+    { WM_WINDOWPOSCHANGING, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam|defwinproc, 0x00000001 },
+    { WM_WINDOWPOSCHANGED, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { TVM_SELECTITEM, sent|wparam, 0x00000009 },
+    /* The following end up out of order in wine */
+    { WM_PAINT, sent|defwinproc },
+    { WM_NCPAINT, sent|wparam|defwinproc, 0x00000001 },
+    { WM_ERASEBKGND, sent|defwinproc },
+    { TVM_EDITLABEL, sent },
+    { WM_COMMAND, sent|wparam|defwinproc, 0x04000000 },
+    { WM_COMMAND, sent|wparam|defwinproc, 0x03000000 },
+    { WM_PARENTNOTIFY, sent|wparam|defwinproc, 0x00000001 },
+    { WM_KILLFOCUS, sent|defwinproc },
+    { WM_PAINT, sent|defwinproc },
+    { WM_COMMAND, sent|wparam|defwinproc, 0x01000000},
+    { WM_ERASEBKGND, sent|defwinproc },
+    { 0 }
+};
+
+static const struct message TestGetSetBkColorSeq[] = {
+    { TVM_GETBKCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_SETBKCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_GETBKCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_SETBKCOLOR, sent|wparam|lparam, 0x00000000, 0x00ffffff },
+    { TVM_GETBKCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_SETBKCOLOR, sent|wparam|lparam, 0x00000000, 0xffffffff },
+    { 0 }
+};
+
+static const struct message TestGetSetImageListSeq[] = {
+    { TVM_SETIMAGELIST, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_GETIMAGELIST, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { 0 }
+};
+
+static const struct message TestGetSetIndentSeq[] = {
+    { TVM_SETINDENT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_GETINDENT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    /* The actual amount to indent is dependent on the system for this message */
+    { TVM_SETINDENT, sent },
+    { TVM_GETINDENT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { 0 }
+};
+
+static const struct message TestGetSetInsertMarkColorSeq[] = {
+    { TVM_SETINSERTMARKCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_GETINSERTMARKCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { 0 }
+};
+
+static const struct message TestGetSetItemSeq[] = {
+    { TVM_GETITEM, sent },
+    { TVM_SETITEM, sent },
+    { TVM_GETITEM, sent },
+    { TVM_SETITEM, sent },
+    { 0 }
+};
+
+static const struct message TestGetSetItemHeightSeq[] = {
+    { TVM_GETITEMHEIGHT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_SETITEMHEIGHT, sent|wparam|lparam, 0xffffffff, 0x00000000 },
+    { TVM_GETITEMHEIGHT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_SETITEMHEIGHT, sent|wparam|lparam, 0x00000020, 0x00000000 },
+    { TVM_GETITEMHEIGHT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_SETITEMHEIGHT, sent|wparam|lparam, 0x00000009, 0x00000000 },
+    { WM_WINDOWPOSCHANGING, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam|defwinproc, 0x00000001 },
+    { WM_WINDOWPOSCHANGED, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { TVM_GETITEMHEIGHT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { 0 }
+};
+
+static const struct message TestGetSetScrollTimeSeq[] = {
+    { TVM_SETSCROLLTIME, sent|wparam|lparam, 0x00000014, 0x00000000 },
+    { TVM_GETSCROLLTIME, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { 0 }
+};
+
+static const struct message TestGetSetTextColorSeq[] = {
+    { TVM_GETTEXTCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_GETTEXTCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0x00000000, 0x00ffffff },
+    { TVM_GETTEXTCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_SETTEXTCOLOR, sent|wparam|lparam, 0x00000000, 0xffffffff },
+    { 0 }
+};
+
+static const struct message TestGetSetToolTipsSeq[] = {
+    { TVM_SETTOOLTIPS, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_GETTOOLTIPS, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { 0 }
+};
+
+static const struct message TestGetSetUnicodeFormatSeq[] = {
+    { TVM_SETUNICODEFORMAT, sent|wparam|lparam, 0x00000001, 0x00000000 },
+    { TVM_GETUNICODEFORMAT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_SETUNICODEFORMAT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_GETUNICODEFORMAT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { TVM_SETUNICODEFORMAT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { 0 }
+};
 
 static HWND hMainWnd;
 
@@ -166,7 +315,8 @@ static void DoFocusTest(void)
     assert(hChild2);
 
     ShowWindow(hMainWnd,SW_SHOW);
-    SendMessageW(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hChild);
+    /* Using SendMessageA since Win98 doesn't have default unicode support */
+    SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hChild);
     hEdit = TreeView_EditLabel(hTree, hChild);
     ScrollWindowEx(hTree, -10, 0, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN);
     ok(GetFocus() == hEdit, "Edit control should have focus\n");
@@ -228,8 +378,8 @@ static void TestGetSetIndent(void)
 static void TestGetSetInsertMarkColor(void)
 {
     COLORREF crColor = RGB(0,0,0);
-    SendMessage( hTree, TVM_SETBKCOLOR, 0, crColor );
-    crColor = (COLORREF)SendMessage( hTree, TVM_GETBKCOLOR, 0, 0 );
+    SendMessage( hTree, TVM_SETINSERTMARKCOLOR, 0, crColor );
+    crColor = (COLORREF)SendMessage( hTree, TVM_GETINSERTMARKCOLOR, 0, 0 );
     ok(crColor == RGB(0,0,0), "Insert mark color reported as 0x%.8x, expected 0x00000000\n", crColor);
 }
 
@@ -349,20 +499,93 @@ static void TestGetSetUnicodeFormat(void)
 
 static void TestGetSet(void)
 {
-    TestGetSetBkColor();            /* TVM_GETBKCOLOR and TVM_SETBKCOLOR */
-    TestGetSetImageList();          /* TVM_GETIMAGELIST and TVM_SETIMAGELIST */
-    TestGetSetIndent();             /* TVM_SETINDENT and TVM_GETINDENT */
-    TestGetSetInsertMarkColor();    /* TVM_GETINSERTMARKCOLOR and TVM_GETINSERTMARKCOLOR */
-    TestGetSetItem();               /* TVM_GETITEM and TVM_SETITEM */
-    TestGetSetItemHeight();         /* TVM_GETITEMHEIGHT and TVM_SETITEMHEIGHT*/
-    TestGetSetScrollTime();         /* TVM_GETSCROLLTIME and TVM_SETSCROLLTIME */
-    TestGetSetTextColor();          /* TVM_GETTEXTCOLOR and TVM_SETTEXTCOLOR */
-    TestGetSetToolTips();           /* TVM_GETTOOLTIPS and TVM_SETTOOLTIPS */
-    TestGetSetUnicodeFormat();      /* TVM_GETUNICODEFORMAT and TVM_SETUNICODEFORMAT */
+    /* TVM_GETBKCOLOR and TVM_SETBKCOLOR */
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+    TestGetSetBkColor();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetBkColorSeq,
+        "TestGetSetBkColor", FALSE);
+
+    /* TVM_GETIMAGELIST and TVM_SETIMAGELIST */
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+    TestGetSetImageList();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetImageListSeq,
+        "TestGetImageList", FALSE);
+
+    /* TVM_SETINDENT and TVM_GETINDENT */
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+    TestGetSetIndent();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetIndentSeq,
+        "TestGetSetIndent", FALSE);
+
+    /* TVM_GETINSERTMARKCOLOR and TVM_GETINSERTMARKCOLOR */
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+    TestGetSetInsertMarkColor();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetInsertMarkColorSeq,
+        "TestGetSetInsertMarkColor", FALSE);
+
+    /* TVM_GETITEM and TVM_SETITEM */
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+    TestGetSetItem();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetItemSeq,
+        "TestGetSetItem", FALSE);
+
+    /* TVM_GETITEMHEIGHT and TVM_SETITEMHEIGHT */
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+    TestGetSetItemHeight();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetItemHeightSeq,
+        "TestGetSetItemHeight", FALSE);
+
+    /* TVM_GETSCROLLTIME and TVM_SETSCROLLTIME */
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+    TestGetSetScrollTime();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetScrollTimeSeq,
+        "TestGetSetScrollTime", FALSE);
+
+    /* TVM_GETTEXTCOLOR and TVM_SETTEXTCOLOR */
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+    TestGetSetTextColor();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetTextColorSeq,
+        "TestGetSetTextColor", FALSE);
+
+    /* TVM_GETTOOLTIPS and TVM_SETTOOLTIPS */
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+    TestGetSetToolTips();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetToolTipsSeq,
+        "TestGetSetToolTips", FALSE);
+
+    /* TVM_GETUNICODEFORMAT and TVM_SETUNICODEFORMAT */
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+    TestGetSetUnicodeFormat();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetUnicodeFormatSeq,
+        "TestGetSetUnicodeFormat", FALSE);
+}
+
+/* This function hooks in and records all messages to the treeview control */
+static LRESULT WINAPI TreeviewWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+    WNDPROC *lpOldProc = (WNDPROC*)GetWindowLongA(hwnd, GWL_USERDATA);
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(MsgSequences, LISTVIEW_SEQ_INDEX, &msg);
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(*lpOldProc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
 }
 
 static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    WNDPROC *pOldWndProc;
+
     switch(msg) {
 
     case WM_CREATE:
@@ -372,6 +595,18 @@ static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
             0, 0, 120, 100, hWnd, (HMENU)100, GetModuleHandleA(0), 0);
 
         SetFocus(hTree);
+
+        pOldWndProc = HeapAlloc(GetProcessHeap(), 0, sizeof(WNDPROC));
+        if ( !ok(pOldWndProc != NULL, "Failed to allocate memory for subclass_info.\n") )
+        {
+            PostQuitMessage(1);
+            break;
+        }
+
+        /* Record the old WNDPROC so we can call it after recording the messages */
+        *pOldWndProc = (WNDPROC)SetWindowLongA(hTree, GWL_WNDPROC, (LONG)TreeviewWndProc);
+        SetWindowLongA(hTree, GWL_USERDATA, (LONG)pOldWndProc);
+
         return 0;
     }
     case WM_NOTIFY:
@@ -415,11 +650,11 @@ START_TEST(treeview)
     WNDCLASSA wc;
     MSG msg;
     INITCOMMONCONTROLSEX icex;
-    RECT rc;
   
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
     icex.dwICC   = ICC_TREEVIEW_CLASSES;
     InitCommonControlsEx(&icex);
+    init_msg_sequences(MsgSequences, NUM_MSG_SEQUENCES);
   
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
@@ -436,12 +671,27 @@ START_TEST(treeview)
 
     hMainWnd = CreateWindowExA(0, "MyTestWnd", "Blah", WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, 130, 105, NULL, NULL, GetModuleHandleA(NULL), 0);
-    GetClientRect(hMainWnd, &rc);
 
+    if ( !ok(hMainWnd != NULL, "Failed to create parent window. Tests aborted.\n") )
+        return;
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     FillRoot();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, FillRootSeq, "FillRoot", FALSE);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     DoTest1();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, DoTest1Seq, "DoTest1", FALSE);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     DoTest2();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, DoTest2Seq, "DoTest2", FALSE);
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     DoFocusTest();
+    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, DoFocusTestSeq, "DoFocusTest", TRUE);
+
+    /* Sequences tested inside due to number */
     TestGetSet();
 
     PostMessageA(hMainWnd, WM_CLOSE, 0, 0);
