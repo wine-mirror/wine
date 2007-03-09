@@ -490,6 +490,7 @@ void DocHost_Init(DocHost *This, IDispatch *disp)
 
     This->document = NULL;
     This->hostui = NULL;
+    This->frame = NULL;
 
     This->hwnd = NULL;
     This->frame_hwnd = NULL;
@@ -508,6 +509,8 @@ void DocHost_Release(DocHost *This)
 {
     if(This->client_disp)
         IDispatch_Release(This->client_disp);
+    if(This->frame)
+        IOleInPlaceFrame_Release(This->frame);
 
     DocHost_ClientSite_Release(This);
 

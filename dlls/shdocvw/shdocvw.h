@@ -76,6 +76,7 @@ typedef struct {
 
     IDispatch *client_disp;
     IDocHostUIHandler *hostui;
+    IOleInPlaceFrame *frame;
 
     IUnknown *document;
     IOleDocumentView *view;
@@ -117,7 +118,6 @@ struct WebBrowser {
     /* window context */
 
     HWND frame_hwnd;
-    IOleInPlaceFrame *frame;
     IOleInPlaceUIWindow *uiwindow;
     RECT pos_rect;
     RECT clip_rect;

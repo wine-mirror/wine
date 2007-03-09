@@ -138,7 +138,7 @@ static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site)
 
     IOleInPlaceSite_OnInPlaceActivate(This->inplace);
 
-    IOleInPlaceSite_GetWindowContext(This->inplace, &This->frame, &This->uiwindow,
+    IOleInPlaceSite_GetWindowContext(This->inplace, &This->doc_host.frame, &This->uiwindow,
                                      &This->pos_rect, &This->clip_rect,
                                      &This->frameinfo);
 
@@ -153,8 +153,8 @@ static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site)
         IOleClientSite_GetContainer(This->client, &This->container);
     }
 
-    if(This->frame)
-        IOleInPlaceFrame_GetWindow(This->frame, &This->frame_hwnd);
+    if(This->doc_host.frame)
+        IOleInPlaceFrame_GetWindow(This->doc_host.frame, &This->frame_hwnd);
 
     return S_OK;
 }
@@ -174,13 +174,13 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site)
 
     IOleInPlaceSite_OnUIActivate(This->inplace);
 
-    if(This->frame)
-        IOleInPlaceFrame_SetActiveObject(This->frame, ACTIVEOBJ(This), wszitem);
+    if(This->doc_host.frame)
+        IOleInPlaceFrame_SetActiveObject(This->doc_host.frame, ACTIVEOBJ(This), wszitem);
     if(This->uiwindow)
         IOleInPlaceUIWindow_SetActiveObject(This->uiwindow, ACTIVEOBJ(This), wszitem);
 
-    if(This->frame)
-        IOleInPlaceFrame_SetMenu(This->frame, NULL, NULL, This->shell_embedding_hwnd);
+    if(This->doc_host.frame)
+        IOleInPlaceFrame_SetMenu(This->doc_host.frame, NULL, NULL, This->shell_embedding_hwnd);
 
     SetFocus(This->shell_embedding_hwnd);
 
@@ -886,7 +886,6 @@ void WebBrowser_OleObject_Init(WebBrowser *This)
     This->inplace = NULL;
     This->container = NULL;
     This->frame_hwnd = NULL;
-    This->frame = NULL;
     This->uiwindow = NULL;
     This->shell_embedding_hwnd = NULL;
 
@@ -904,8 +903,6 @@ void WebBrowser_OleObject_Destroy(WebBrowser *This)
         IOleObject_SetClientSite(OLEOBJ(This), NULL);
     if(This->container)
         IOleContainer_Release(This->container);
-    if(This->frame)
-        IOleInPlaceFrame_Release(This->frame);
     if(This->uiwindow)
         IOleInPlaceUIWindow_Release(This->uiwindow);
 }
