@@ -32,6 +32,8 @@
 #define LISTVIEW_ID 0
 #define HEADER_ID   1
 
+#define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+
 HWND hwndparent;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
@@ -416,14 +418,43 @@ static void test_checkboxes(void)
     DestroyWindow(hwnd);
 }
 
+static void insert_column(HWND hwnd, int idx)
+{
+    LVCOLUMN column;
+    DWORD rc;
+
+    memset(&column, 0xaa, sizeof(column));
+    column.mask = LVCF_SUBITEM;
+    column.iSubItem = idx;
+
+    rc = ListView_InsertColumn(hwnd, idx, &column);
+    expect(idx, rc);
+}
+
+static void insert_item(HWND hwnd, int idx)
+{
+    static CHAR text[] = "foo";
+
+    LVITEMA item;
+    DWORD rc;
+
+    memset(&item, 0xaa, sizeof (item));
+    item.mask = LVIF_TEXT;
+    item.iItem = idx;
+    item.iSubItem = 0;
+    item.pszText = text;
+
+    rc = ListView_InsertItemA(hwnd, &item);
+    expect(idx, rc);
+}
+
 static void test_items(void)
 {
     const LPARAM lparamTest = 0x42;
     HWND hwnd;
     LVITEMA item;
-    LVCOLUMNA column;
     DWORD r;
-    static CHAR text[]  = "Text";
+    static CHAR text[] = "Text";
 
     hwnd = CreateWindowEx(0, "SysListView32", "foo", LVS_REPORT,
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
@@ -434,13 +465,8 @@ static void test_items(void)
      */
 
     /* Set up two columns */
-    column.mask = LVCF_SUBITEM;
-    column.iSubItem = 0;
-    r = SendMessage(hwnd, LVM_INSERTCOLUMNA, 0, (LPARAM)&column);
-    ok(r == 0, "ret %d\n", r);
-    column.iSubItem = 1;
-    r = SendMessage(hwnd, LVM_INSERTCOLUMNA, 1, (LPARAM)&column);
-    ok(r == 1, "ret %d\n", r);
+    insert_column(hwnd, 0);
+    insert_column(hwnd, 1);
 
     /* Insert an item with just a param */
     memset (&item, 0xaa, sizeof (item));
@@ -580,6 +606,60 @@ static void test_redraw(void)
     DestroyWindow(hwnd);
 }
 
+static LRESULT WINAPI cd_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    COLORREF clr, c0ffee = RGB(0xc0, 0xff, 0xee);
+
+    if(msg == WM_NOTIFY) {
+        NMHDR *nmhdr = (PVOID)lp;
+        if(nmhdr->code == NM_CUSTOMDRAW) {
+            NMLVCUSTOMDRAW *nmlvcd = (PVOID)nmhdr;
+            trace("NMCUSTOMDRAW (0x%.8x)\n", nmlvcd->nmcd.dwDrawStage);
+            switch(nmlvcd->nmcd.dwDrawStage) {
+            case CDDS_PREPAINT:
+                SetBkColor(nmlvcd->nmcd.hdc, c0ffee);
+                return CDRF_NOTIFYITEMDRAW;
+            case CDDS_ITEMPREPAINT:
+                nmlvcd->clrTextBk = CLR_DEFAULT;
+                return CDRF_NOTIFYSUBITEMDRAW;
+            case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
+                clr = GetBkColor(nmlvcd->nmcd.hdc);
+                todo_wine ok(clr == c0ffee, "clr=%.8x\n", clr);
+                return CDRF_NOTIFYPOSTPAINT;
+            case CDDS_ITEMPOSTPAINT | CDDS_SUBITEM:
+                clr = GetBkColor(nmlvcd->nmcd.hdc);
+                todo_wine ok(clr == c0ffee, "clr=%.8x\n", clr);
+                return CDRF_DODEFAULT;
+            }
+            return CDRF_DODEFAULT;
+        }
+    }
+
+    return DefWindowProcA(hwnd, msg, wp, lp);
+}
+
+static void test_customdraw(void)
+{
+    HWND hwnd;
+    WNDPROC oldwndproc;
+
+    hwnd = create_listview_control();
+
+    insert_column(hwnd, 0);
+    insert_column(hwnd, 1);
+    insert_item(hwnd, 0);
+
+    oldwndproc = (WNDPROC)SetWindowLongPtr(hwndparent, GWL_WNDPROC,
+                                           (INT_PTR)cd_wndproc);
+
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
+
+    SetWindowLongPtr(hwndparent, GWL_WNDPROC, (INT_PTR)oldwndproc);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     INITCOMMONCONTROLSEX icc;
@@ -597,4 +677,5 @@ START_TEST(listview)
     test_items();
     test_create();
     test_redraw();
+    test_customdraw();
 }
