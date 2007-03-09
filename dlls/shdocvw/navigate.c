@@ -450,13 +450,19 @@ static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx)
     if(FAILED(hres))
         return hres;
 
-    if(FAILED(hres)) {
-        IPersistMoniker_Release(persist);
-        return hres;
-    }
+    if(This->frame)
+        IOleInPlaceFrame_EnableModeless(This->frame, FALSE); /* FIXME */
 
     hres = IPersistMoniker_Load(persist, FALSE, mon, bindctx, 0);
     IPersistMoniker_Release(persist);
+
+    if(This->frame) {
+        static const WCHAR empty[] = {0};
+
+        IOleInPlaceFrame_SetStatusText(This->frame, empty); /* FIXME */
+        IOleInPlaceFrame_EnableModeless(This->frame, TRUE); /* FIXME */
+    }
+
     if(FAILED(hres)) {
         WARN("Load failed: %08x\n", hres);
         return hres;
