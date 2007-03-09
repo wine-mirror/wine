@@ -1732,6 +1732,7 @@ struct local_server_params
     CLSID clsid;
     IStream *stream;
     HANDLE ready_event;
+    BOOL multi_use;
     HANDLE pipe;
 };
 
@@ -1749,6 +1750,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
     LARGE_INTEGER	seekto;
     ULARGE_INTEGER	newpos;
     ULONG		res;
+    BOOL multi_use = lsp->multi_use;
 
     TRACE("Starting threader for %s.\n",debugstr_guid(&lsp->clsid));
 
@@ -1817,13 +1819,20 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         DisconnectNamedPipe(hPipe);
 
         TRACE("done marshalling IClassFactory\n");
+
+        if (!multi_use)
+        {
+            TRACE("single use object, shutting down pipe %s\n", debugstr_w(pipefn));
+            CloseHandle(hPipe);
+            break;
+        }
     }
     IStream_Release(pStm);
     return 0;
 }
 
 /* starts listening for a local server */
-HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, void **registration)
+HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration)
 {
     DWORD tid;
     HANDLE thread, ready_event;
@@ -1833,6 +1842,7 @@ HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, void **registratio
     lsp->stream = stream;
     IStream_AddRef(stream);
     lsp->ready_event = ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    lsp->multi_use = multi_use;
 
     thread = CreateThread(NULL, 0, local_server_thread, lsp, 0, &tid);
     if (!thread)

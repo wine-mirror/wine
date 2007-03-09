@@ -23,6 +23,7 @@
 #define CONST_VTABLE
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -49,6 +50,14 @@ static const IID IID_IWineTest =
 
 #define EXTENTID_WineTest IID_IWineTest
 #define CLSID_WineTest IID_IWineTest
+
+static const CLSID CLSID_WineOOPTest =
+{
+    0x5201163f,
+    0x8164,
+    0x4fd0,
+    {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
+}; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
 
 static void test_cocreateinstance_proxy(void)
 {
@@ -2152,6 +2161,11 @@ static HRESULT WINAPI TestOOP_IClassFactory_CreateInstance(
     REFIID riid,
     LPVOID *ppvObj)
 {
+    if (IsEqualIID(riid, &IID_IClassFactory) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppvObj = iface;
+        return S_OK;
+    }
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
@@ -2177,19 +2191,72 @@ static const IClassFactoryVtbl TestClassFactoryOOP_Vtbl =
 
 static IClassFactory TestOOP_ClassFactory = { &TestClassFactoryOOP_Vtbl };
 
+static void test_register_local_server(void)
+{
+    DWORD cookie;
+    HRESULT hr;
+    HANDLE ready_event;
+    HANDLE quit_event;
+    DWORD wait;
+
+    heventShutdown = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&TestOOP_ClassFactory,
+                               CLSCTX_LOCAL_SERVER, REGCLS_SINGLEUSE, &cookie);
+    ok_ole_success(hr, CoRegisterClassObject);
+
+    ready_event = CreateEvent(NULL, FALSE, FALSE, "Wine COM Test Ready Event");
+    SetEvent(ready_event);
+
+    quit_event = CreateEvent(NULL, FALSE, FALSE, "Wine COM Test Quit Event");
+
+    do
+    {
+        wait = MsgWaitForMultipleObjects(1, &quit_event, FALSE, INFINITE, QS_ALLINPUT);
+        if (wait == WAIT_OBJECT_0+1)
+        {
+            MSG msg;
+            BOOL ret = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+            if (ret)
+            {
+                trace("Message 0x%x\n", msg.message);
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+    }
+    while (wait == WAIT_OBJECT_0+1);
+
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, CoRevokeClassObject);
+}
+
+static HANDLE create_target_process(const char *arg)
+{
+    char **argv;
+    char cmdline[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFO si = { 0 };
+    si.cb = sizeof(si);
+
+    winetest_get_mainargs( &argv );
+    sprintf(cmdline, "%s %s %s", argv[0], argv[1], arg);
+    ok(CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL,
+                     &si, &pi) != 0, "error: %u\n", GetLastError());
+    ok(CloseHandle(pi.hThread) != 0, "error %u\n", GetLastError());
+    return pi.hProcess;
+}
+
 /* tests functions commonly used by out of process COM servers */
 static void test_local_server(void)
 {
-    static const CLSID CLSID_WineOOPTest = {
-        0x5201163f,
-        0x8164,
-        0x4fd0,
-        {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
-    }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
     DWORD cookie;
     HRESULT hr;
     IClassFactory * cf;
     DWORD ret;
+    HANDLE process;
+    HANDLE quit_event;
+    HANDLE ready_event;
 
     heventShutdown = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -2249,6 +2316,28 @@ static void test_local_server(void)
     ok_ole_success(hr, CoRevokeClassObject);
 
     CloseHandle(heventShutdown);
+
+    process = create_target_process("-Embedding");
+    ok(process != NULL, "couldn't start local server process, error was %d\n", GetLastError());
+
+    ready_event = CreateEvent(NULL, FALSE, FALSE, "Wine COM Test Ready Event");
+    WaitForSingleObject(ready_event, 1000);
+    CloseHandle(ready_event);
+
+    hr = CoCreateInstance(&CLSID_WineOOPTest, NULL, CLSCTX_LOCAL_SERVER, &IID_IClassFactory, (void **)&cf);
+    ok_ole_success(hr, CoCreateInstance);
+
+    IClassFactory_Release(cf);
+
+    hr = CoCreateInstance(&CLSID_WineOOPTest, NULL, CLSCTX_LOCAL_SERVER, &IID_IClassFactory, (void **)&cf);
+    ok(hr == REGDB_E_CLASSNOTREG, "Second CoCreateInstance on REGCLS_SINGLEUSE object should have failed\n");
+
+    quit_event = CreateEvent(NULL, FALSE, FALSE, "Wine COM Test Quit Event");
+    SetEvent(quit_event);
+
+    WaitForSingleObject(process, INFINITE);
+    CloseHandle(quit_event);
+    CloseHandle(process);
 }
 
 struct git_params
@@ -2532,7 +2621,20 @@ START_TEST(marshal)
 {
     WNDCLASS wndclass;
     HMODULE hOle32 = GetModuleHandle("ole32");
+    int argc;
+    char **argv;
+
     if (!(pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx"))) goto no_test;
+
+    argc = winetest_get_mainargs( &argv );
+    if (argc > 2 && (!strcmp(argv[2], "-Embedding")))
+    {
+        pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+        test_register_local_server();
+        CoUninitialize();
+
+        return;
+    }
 
     /* register a window class used in several tests */
     memset(&wndclass, 0, sizeof(wndclass));

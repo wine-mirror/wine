@@ -221,7 +221,7 @@ HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan);
 void    RPC_ExecuteCall(struct dispatch_params *params);
 HRESULT RPC_RegisterInterface(REFIID riid);
 void    RPC_UnregisterInterface(REFIID riid);
-HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, void **registration);
+HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration);
 void    RPC_StopLocalServer(void *registration);
 HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
 HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook);

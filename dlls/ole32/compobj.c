@@ -1622,6 +1622,7 @@ HRESULT WINAPI CoRegisterClassObject(
 
       hr = RPC_StartLocalServer(&newClass->classIdentifier,
                                 newClass->pMarshaledData,
+                                flags & (REGCLS_MULTIPLEUSE|REGCLS_MULTI_SEPARATE),
                                 &newClass->RpcRegistration);
   }
   return S_OK;
