@@ -316,18 +316,23 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
         return CLASS_E_NOAGGREGATION;
     
     pDSoundRender = CoTaskMemAlloc(sizeof(DSoundRenderImpl));
+    if (!pDSoundRender)
+        return E_OUTOFMEMORY;
+    ZeroMemory(pDSoundRender, sizeof(DSoundRenderImpl));
 
     pDSoundRender->lpVtbl = &DSoundRender_Vtbl;
     pDSoundRender->IBasicAudio_vtbl = &IBasicAudio_Vtbl;
     pDSoundRender->refCount = 1;
     InitializeCriticalSection(&pDSoundRender->csFilter);
     pDSoundRender->state = State_Stopped;
-    pDSoundRender->pClock = NULL;
-    pDSoundRender->init = FALSE;
-    pDSoundRender->started = FALSE;
-    ZeroMemory(&pDSoundRender->filterInfo, sizeof(FILTER_INFO));
 
     pDSoundRender->ppPins = CoTaskMemAlloc(1 * sizeof(IPin *));
+    if (!pDSoundRender->ppPins)
+    {
+        DeleteCriticalSection(&pDSoundRender->csFilter);
+        CoTaskMemFree(pDSoundRender);
+        return E_OUTOFMEMORY;
+    }
 
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
