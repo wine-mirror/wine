@@ -289,25 +289,26 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
         This->inplace = NULL;
     }
 
-    if(This->doc_host.hostui)
+    if(This->doc_host.hostui) {
         IDocHostUIHandler_Release(This->doc_host.hostui);
+        This->doc_host.hostui = NULL;
+    }
+
     if(This->client)
         IOleClientSite_Release(This->client);
+
+    This->client = pClientSite;
 
     if(!pClientSite) {
         if(This->doc_host.document)
             deactivate_document(&This->doc_host);
-        This->client = NULL;
         return S_OK;
     }
 
-    This->client = pClientSite;
     IOleClientSite_AddRef(pClientSite);
 
-    hres = IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler,
-                                         (void**)&This->doc_host.hostui);
-    if(FAILED(hres))
-        This->doc_host.hostui = NULL;
+    IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler,
+                                  (void**)&This->doc_host.hostui);
 
     hres = IOleClientSite_GetContainer(This->client, &container);
     if(SUCCEEDED(hres)) {
