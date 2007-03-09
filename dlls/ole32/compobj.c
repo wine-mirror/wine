@@ -117,6 +117,7 @@ static LONG s_COMLockCount = 0;
  */
 typedef struct tagRegisteredClass
 {
+  struct list entry;
   CLSID     classIdentifier;
   LPUNKNOWN classObject;
   DWORD     runContext;
@@ -124,10 +125,9 @@ typedef struct tagRegisteredClass
   DWORD     dwCookie;
   LPSTREAM  pMarshaledData; /* FIXME: only really need to store OXID and IPID */
   void     *RpcRegistration;
-  struct tagRegisteredClass* nextClass;
 } RegisteredClass;
 
-static RegisteredClass* firstRegisteredClass = NULL;
+static struct list RegisteredClassList = LIST_INIT(RegisteredClassList);
 
 static CRITICAL_SECTION csRegisteredClassList;
 static CRITICAL_SECTION_DEBUG class_cs_debug =
@@ -1445,21 +1445,16 @@ static HRESULT COM_GetRegisteredClassObject(
 	LPUNKNOWN*  ppUnk)
 {
   HRESULT hr = S_FALSE;
-  RegisteredClass* curClass;
-
-  EnterCriticalSection( &csRegisteredClassList );
+  RegisteredClass *curClass;
 
   /*
    * Sanity check
    */
   assert(ppUnk!=0);
 
-  /*
-   * Iterate through the whole list and try to match the class ID.
-   */
-  curClass = firstRegisteredClass;
+  EnterCriticalSection( &csRegisteredClassList );
 
-  while (curClass != 0)
+  LIST_FOR_EACH_ENTRY(curClass, &RegisteredClassList, RegisteredClass, entry)
   {
     /*
      * Check if we have a match on the class ID and context.
@@ -1475,20 +1470,12 @@ static HRESULT COM_GetRegisteredClassObject(
       IUnknown_AddRef(curClass->classObject);
 
       hr = S_OK;
-      goto end;
+      break;
     }
-
-    /*
-     * Step to the next class in the list.
-     */
-    curClass = curClass->nextClass;
   }
 
-end:
   LeaveCriticalSection( &csRegisteredClassList );
-  /*
-   * If we get to here, we haven't found our class.
-   */
+
   return hr;
 }
 
@@ -1569,8 +1556,6 @@ HRESULT WINAPI CoRegisterClassObject(
   if ( newClass == NULL )
     return E_OUTOFMEMORY;
 
-  EnterCriticalSection( &csRegisteredClassList );
-
   newClass->classIdentifier = *rclsid;
   newClass->runContext      = dwClsContext;
   newClass->connectFlags    = flags;
@@ -1582,7 +1567,6 @@ HRESULT WINAPI CoRegisterClassObject(
    * unique. FIXME: not on 64-bit platforms.
    */
   newClass->dwCookie        = (DWORD)newClass;
-  newClass->nextClass       = firstRegisteredClass;
 
   /*
    * Since we're making a copy of the object pointer, we have to increase its
@@ -1591,7 +1575,8 @@ HRESULT WINAPI CoRegisterClassObject(
   newClass->classObject     = pUnk;
   IUnknown_AddRef(newClass->classObject);
 
-  firstRegisteredClass = newClass;
+  EnterCriticalSection( &csRegisteredClassList );
+  list_add_tail(&RegisteredClassList, &newClass->entry);
   LeaveCriticalSection( &csRegisteredClassList );
 
   *lpdwRegister = newClass->dwCookie;
@@ -1647,30 +1632,20 @@ HRESULT WINAPI CoRevokeClassObject(
         DWORD dwRegister)
 {
   HRESULT hr = E_INVALIDARG;
-  RegisteredClass** prevClassLink;
-  RegisteredClass*  curClass;
+  RegisteredClass *curClass;
 
   TRACE("(%08x)\n",dwRegister);
 
   EnterCriticalSection( &csRegisteredClassList );
 
-  /*
-   * Iterate through the whole list and try to match the cookie.
-   */
-  curClass      = firstRegisteredClass;
-  prevClassLink = &firstRegisteredClass;
-
-  while (curClass != 0)
+  LIST_FOR_EACH_ENTRY(curClass, &RegisteredClassList, RegisteredClass, entry)
   {
     /*
      * Check if we have a match on the cookie.
      */
     if (curClass->dwCookie == dwRegister)
     {
-      /*
-       * Remove the class from the chain.
-       */
-      *prevClassLink = curClass->nextClass;
+      list_remove(&curClass->entry);
 
       if (curClass->runContext & CLSCTX_LOCAL_SERVER)
         RPC_StopLocalServer(curClass->RpcRegistration);
@@ -1684,7 +1659,6 @@ HRESULT WINAPI CoRevokeClassObject(
       {
         LARGE_INTEGER zero;
         memset(&zero, 0, sizeof(zero));
-        /* FIXME: stop local server thread */
         IStream_Seek(curClass->pMarshaledData, zero, STREAM_SEEK_SET, NULL);
         CoReleaseMarshalData(curClass->pMarshaledData);
       }
@@ -1695,21 +1669,12 @@ HRESULT WINAPI CoRevokeClassObject(
       HeapFree(GetProcessHeap(), 0, curClass);
 
       hr = S_OK;
-      goto end;
+      break;
     }
-
-    /*
-     * Step to the next class in the list.
-     */
-    prevClassLink = &(curClass->nextClass);
-    curClass      = curClass->nextClass;
   }
 
-end:
   LeaveCriticalSection( &csRegisteredClassList );
-  /*
-   * If we get to here, we haven't found our class.
-   */
+
   return hr;
 }
 
@@ -2384,9 +2349,11 @@ static void COM_RevokeAllClasses(void)
 {
   EnterCriticalSection( &csRegisteredClassList );
 
-  while (firstRegisteredClass!=0)
+  while (list_head(&RegisteredClassList))
   {
-    CoRevokeClassObject(firstRegisteredClass->dwCookie);
+    RegisteredClass *curClass = LIST_ENTRY(list_head(&RegisteredClassList),
+                                           RegisteredClass, entry);
+    CoRevokeClassObject(curClass->dwCookie);
   }
 
   LeaveCriticalSection( &csRegisteredClassList );
