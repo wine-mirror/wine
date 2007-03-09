@@ -206,7 +206,7 @@ static void test_monthcal_currDate(HWND hwnd)
     /* Overflow matters, check for wDay */
     st_test.wDay += 4;
     res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st_test);
-    todo_wine {expect(0,res);}
+    expect(0,res);
 
     /* correct wDay before checking for wMonth */
     st_test.wDay -= 4;
@@ -215,7 +215,7 @@ static void test_monthcal_currDate(HWND hwnd)
     /* Overflow matters, check for wMonth */
     st_test.wMonth += 4;
     res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st_test);
-    todo_wine {expect(0,res);}
+    expect(0,res);
 
     /* checking if gets the information right, modify st_new */
     st_new.wYear += 4;
@@ -231,7 +231,7 @@ static void test_monthcal_currDate(HWND hwnd)
     /* st_new change to st_origin, above settings with overflow */
     /* should not change the current settings */
     expect(st_original.wYear, st_new.wYear);
-    todo_wine {expect(st_original.wMonth, st_new.wMonth);}
+    expect(st_original.wMonth, st_new.wMonth);
     expect(st_original.wDay, st_new.wDay);
     expect(st_original.wHour, st_new.wHour);
     expect(st_original.wMinute, st_new.wMinute);

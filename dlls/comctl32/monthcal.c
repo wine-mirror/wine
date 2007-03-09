@@ -1038,6 +1038,8 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   if((infoPtr==NULL) ||(lpSel==NULL)) return FALSE;
   if(GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & MCS_MULTISELECT) return FALSE;
 
+  if(!MONTHCAL_ValidateTime(*lpSel)) return FALSE;
+
   infoPtr->currentMonth=lpSel->wMonth;
   infoPtr->currentYear=lpSel->wYear;
 
