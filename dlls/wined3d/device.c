@@ -4124,6 +4124,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
 static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONST WINED3DRECT* pRects,
                                         DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSurfaceImpl *target = (IWineD3DSurfaceImpl *)This->render_targets[0];
 
     GLbitfield     glMask = 0;
     unsigned int   i;
@@ -4181,6 +4182,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     }
 
     if (!curRect) {
+        /* In drawable flag is set below */
+
         glScissor(This->stateBlock->viewport.X,
                   (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height -
                   (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)),
@@ -4190,12 +4193,23 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         glClear(glMask);
         checkGLcall("glClear");
     } else {
+        if(!(target->Flags & SFLAG_INDRAWABLE) &&
+           !(wined3d_settings.offscreen_rendering_mode == ORM_FBO && This->render_offscreen && target->Flags & SFLAG_INTEXTURE)) {
+
+            if(curRect[0].x1 > 0 || curRect[0].y1 > 0 ||
+               curRect[0].x2 < target->currentDesc.Width ||
+               curRect[0].y2 < target->currentDesc.Height) {
+                TRACE("Partial clear, and surface not in drawable. Blitting texture to drawable\n");
+                blt_to_drawable(This, target);
+            }
+        }
+
         /* Now process each rect in turn */
         for (i = 0; i < Count; i++) {
             /* Note gl uses lower left, width/height */
             TRACE("(%p) %p Rect=(%d,%d)->(%d,%d) glRect=(%d,%d), len=%d, hei=%d\n", This, curRect,
                   curRect[i].x1, curRect[i].y1, curRect[i].x2, curRect[i].y2,
-                  curRect[i].x1, (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height - curRect[i].y2),
+                  curRect[i].x1, (target->currentDesc.Height - curRect[i].y2),
                   curRect[i].x2 - curRect[i].x1, curRect[i].y2 - curRect[i].y1);
 
             /* Tests show that rectangles where x1 > x2 or y1 > y2 are ignored silently.
@@ -4207,7 +4221,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
                 continue;
             }
 
-            glScissor(curRect[i].x1, ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height - curRect[i].y2,
+            glScissor(curRect[i].x1, target->currentDesc.Height - curRect[i].y2,
                         curRect[i].x2 - curRect[i].x1, curRect[i].y2 - curRect[i].y1);
             checkGLcall("glScissor");
 
@@ -4234,11 +4248,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
      * it is most likely more efficient to perform a clear on the sysmem copy too isntead of downloading it
      */
     if(This->render_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        ((IWineD3DSurfaceImpl *)This->render_targets[0])->Flags |= SFLAG_INTEXTURE;
-        ((IWineD3DSurfaceImpl *)This->render_targets[0])->Flags &= ~SFLAG_INSYSMEM;
+        target->Flags |= SFLAG_INTEXTURE;
+        target->Flags &= ~SFLAG_INSYSMEM;
     } else {
-        ((IWineD3DSurfaceImpl *)This->render_targets[0])->Flags |= SFLAG_INDRAWABLE;
-        ((IWineD3DSurfaceImpl *)This->render_targets[0])->Flags &= ~(SFLAG_INTEXTURE | SFLAG_INSYSMEM);
+        target->Flags |= SFLAG_INDRAWABLE;
+        target->Flags &= ~(SFLAG_INTEXTURE | SFLAG_INSYSMEM);
     }
     return WINED3D_OK;
 }

@@ -989,6 +989,127 @@ inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVertexStride
     }
 }
 
+struct coords {
+    int x, y, z;
+};
+
+void blt_to_drawable(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *surface) {
+    struct coords coords[4];
+    int low_coord;
+
+    /* TODO: This could be supported for lazy unlocking */
+    if(!(surface->Flags & SFLAG_INTEXTURE)) {
+        /* It is ok at init to be nowhere */
+        if(!(surface->Flags & SFLAG_INSYSMEM)) {
+            ERR("Blitting surfaces from sysmem not supported yet\n");
+        }
+        return;
+    }
+
+    ENTER_GL();
+    ActivateContext(This, This->render_targets[0], CTXUSAGE_BLIT);
+
+    if(surface->glDescription.target == GL_TEXTURE_2D) {
+        glBindTexture(GL_TEXTURE_2D, surface->glDescription.textureName);
+        checkGLcall("GL_TEXTURE_2D, This->glDescription.textureName)");
+
+        coords[0].x = 0;    coords[0].y = 0;    coords[0].z = 0;
+        coords[1].x = 0;    coords[1].y = 1;    coords[1].z = 0;
+        coords[2].x = 1;    coords[2].y = 1;    coords[2].z = 0;
+        coords[3].x = 1;    coords[3].y = 0;    coords[3].z = 0;
+
+        low_coord = 0;
+    } else {
+        /* Must be a cube map */
+        glDisable(GL_TEXTURE_2D);
+        checkGLcall("glDisable(GL_TEXTURE_2D)");
+        glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+        checkGLcall("glEnable(surface->glDescription.target)");
+        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, surface->glDescription.textureName);
+        checkGLcall("GL_TEXTURE_CUBE_MAP_ARB, This->glDescription.textureName)");
+
+        switch(surface->glDescription.target) {
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+                coords[0].x =  1;   coords[0].y = -1;   coords[0].z =  1;
+                coords[1].x =  1;   coords[1].y =  1;   coords[1].z =  1;
+                coords[2].x =  1;   coords[2].y =  1;   coords[2].z = -1;
+                coords[3].x =  1;   coords[3].y = -1;   coords[3].z = -1;
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+                coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
+                coords[1].x = -1;   coords[1].y =  1;   coords[1].z =  1;
+                coords[2].x = -1;   coords[2].y =  1;   coords[2].z = -1;
+                coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+                coords[0].x = -1;   coords[0].y =  1;   coords[0].z =  1;
+                coords[1].x =  1;   coords[1].y =  1;   coords[1].z =  1;
+                coords[2].x =  1;   coords[2].y =  1;   coords[2].z = -1;
+                coords[3].x = -1;   coords[3].y =  1;   coords[3].z = -1;
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+                coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
+                coords[1].x =  1;   coords[1].y = -1;   coords[1].z =  1;
+                coords[2].x =  1;   coords[2].y = -1;   coords[2].z = -1;
+                coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+                coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
+                coords[1].x =  1;   coords[1].y = -1;   coords[1].z =  1;
+                coords[2].x =  1;   coords[2].y = -1;   coords[2].z =  1;
+                coords[3].x = -1;   coords[3].y = -1;   coords[3].z =  1;
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+                coords[0].x = -1;   coords[0].y = -1;   coords[0].z = -1;
+                coords[1].x =  1;   coords[1].y = -1;   coords[1].z = -1;
+                coords[2].x =  1;   coords[2].y = -1;   coords[2].z = -1;
+                coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+
+            default:
+                ERR("Unexpected texture target \n");
+                LEAVE_GL();
+                return;
+        }
+
+        low_coord = -1;
+    }
+
+    if(This->render_offscreen) {
+        coords[0].y = coords[0].y == 1 ? low_coord : 1;
+        coords[1].y = coords[1].y == 1 ? low_coord : 1;
+        coords[2].y = coords[2].y == 1 ? low_coord : 1;
+        coords[3].y = coords[3].y == 1 ? low_coord : 1;
+    }
+
+    glBegin(GL_QUADS);
+        glTexCoord3iv((GLint *) &coords[0]);
+        glVertex2i(0, 0);
+
+        glTexCoord3iv((GLint *) &coords[1]);
+        glVertex2i(0, surface->pow2Height);
+
+        glTexCoord3iv((GLint *) &coords[2]);
+        glVertex2i(surface->pow2Width, surface->pow2Height);
+
+        glTexCoord3iv((GLint *) &coords[3]);
+        glVertex2i(surface->pow2Width, 0);
+    glEnd();
+    checkGLcall("glEnd");
+
+    if(surface->glDescription.target != GL_TEXTURE_2D) {
+        glEnable(GL_TEXTURE_2D);
+        checkGLcall("glEnable(GL_TEXTURE_2D)");
+        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+    }
+    LEAVE_GL();
+}
+
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void drawPrimitive(IWineD3DDevice *iface,
                    int PrimitiveType,
@@ -1013,6 +1134,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     /* Invalidate the back buffer memory so LockRect will read it the next time */
     for(i = 0; i < GL_LIMITS(buffers); i++) {
         target = (IWineD3DSurfaceImpl *) This->render_targets[i];
+
         /* TODO: Only do all that if we're going to change anything
          * Texture container dirtification does not work quite right yet
          */
@@ -1022,6 +1144,12 @@ void drawPrimitive(IWineD3DDevice *iface,
 
             if(i == 0) {
                 IWineD3DSurface_GetContainer((IWineD3DSurface *) target, &IID_IWineD3DSwapChain, (void **)&swapchain);
+
+                /* Need the surface in the drawable! */
+                if(!(target->Flags & SFLAG_INDRAWABLE) && (swapchain || wined3d_settings.offscreen_rendering_mode != ORM_FBO)) {
+                    blt_to_drawable(This, target);
+                }
+
                 if(swapchain) {
                     /* Onscreen target. Invalidate system memory copy and texture copy */
                     target->Flags &= ~(SFLAG_INSYSMEM | SFLAG_INTEXTURE);
