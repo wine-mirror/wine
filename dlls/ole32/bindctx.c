@@ -158,7 +158,7 @@ BindCtxImpl_RegisterObjectBound(IBindCtx* iface,IUnknown* punk)
     TRACE("(%p,%p)\n",This,punk);
 
     if (punk==NULL)
-        return E_POINTER;
+        return S_OK;
 
     IUnknown_AddRef(punk);
 
@@ -196,6 +196,9 @@ BindCtxImpl_RevokeObjectBound(IBindCtx* iface, IUnknown* punk)
     BindCtxImpl *This = (BindCtxImpl *)iface;
 
     TRACE("(%p,%p)\n",This,punk);
+
+    if (!punk)
+        return E_INVALIDARG;
 
     /* check if the object was registered or not */
     if (BindCtxImpl_GetObjectIndex(This,punk,NULL,&index)==S_FALSE)

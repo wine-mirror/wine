@@ -1510,11 +1510,9 @@ static void test_bind_context(void)
     ok(!pEnumString, "pEnumString should be NULL\n");
 
     hr = IBindCtx_RegisterObjectBound(pBindCtx, NULL);
-    todo_wine
     ok_ole_success(hr, "IBindCtx_RegisterObjectBound(NULL)");
 
     hr = IBindCtx_RevokeObjectBound(pBindCtx, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "IBindCtx_RevokeObjectBound(NULL) should have return E_INVALIDARG instead of 0x%08x\n", hr);
 
     unknown2 = HeapAlloc(GetProcessHeap(), 0, sizeof(*unknown));
