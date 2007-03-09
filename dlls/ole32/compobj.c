@@ -123,6 +123,7 @@ typedef struct tagRegisteredClass
   DWORD     connectFlags;
   DWORD     dwCookie;
   LPSTREAM  pMarshaledData; /* FIXME: only really need to store OXID and IPID */
+  void     *RpcRegistration;
   struct tagRegisteredClass* nextClass;
 } RegisteredClass;
 
@@ -1574,6 +1575,7 @@ HRESULT WINAPI CoRegisterClassObject(
   newClass->runContext      = dwClsContext;
   newClass->connectFlags    = flags;
   newClass->pMarshaledData  = NULL;
+  newClass->RpcRegistration = NULL;
 
   /*
    * Use the address of the chain node as the cookie since we are sure it's
@@ -1618,7 +1620,9 @@ HRESULT WINAPI CoRegisterClassObject(
 
       IUnknown_Release(classfac);
 
-      RPC_StartLocalServer(&newClass->classIdentifier, newClass->pMarshaledData);
+      hr = RPC_StartLocalServer(&newClass->classIdentifier,
+                                newClass->pMarshaledData,
+                                &newClass->RpcRegistration);
   }
   return S_OK;
 }
@@ -1666,6 +1670,9 @@ HRESULT WINAPI CoRevokeClassObject(
        * Remove the class from the chain.
        */
       *prevClassLink = curClass->nextClass;
+
+      if (curClass->runContext & CLSCTX_LOCAL_SERVER)
+        RPC_StopLocalServer(curClass->RpcRegistration);
 
       /*
        * Release the reference to the class object.

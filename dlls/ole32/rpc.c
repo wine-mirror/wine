@@ -1732,6 +1732,7 @@ struct local_server_params
     CLSID clsid;
     IStream *stream;
     HANDLE ready_event;
+    HANDLE pipe;
 };
 
 /* FIXME: should call to rpcss instead */
@@ -1757,6 +1758,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
                               PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
                               4096, 4096, 500 /* 0.5 second timeout */, NULL );
 
+    lsp->pipe = hPipe;
     SetEvent(lsp->ready_event);
 
     HeapFree(GetProcessHeap(), 0, lsp);
@@ -1768,9 +1770,21 @@ static DWORD WINAPI local_server_thread(LPVOID param)
     }
     
     while (1) {
-        if (!ConnectNamedPipe(hPipe,NULL) && GetLastError() != ERROR_PIPE_CONNECTED) {
-            ERR("Failure during ConnectNamedPipe %u, ABORT!\n",GetLastError());
-            break;
+        if (!ConnectNamedPipe(hPipe,NULL))
+        {
+            DWORD error = GetLastError();
+            /* client already connected isn't an error */
+            if (error != ERROR_PIPE_CONNECTED)
+            {
+                /* if error wasn't caused by RPC_StopLocalServer closing the
+                 * pipe for us */
+                if (error != ERROR_INVALID_HANDLE)
+                {
+                    ERR("Failure during ConnectNamedPipe %u\n", error);
+                    CloseHandle(hPipe);
+                }
+                break;
+            }
         }
 
         TRACE("marshalling IClassFactory to client\n");
@@ -1804,12 +1818,12 @@ static DWORD WINAPI local_server_thread(LPVOID param)
 
         TRACE("done marshalling IClassFactory\n");
     }
-    CloseHandle(hPipe);
     IStream_Release(pStm);
     return 0;
 }
 
-void RPC_StartLocalServer(REFCLSID clsid, IStream *stream)
+/* starts listening for a local server */
+HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, void **registration)
 {
     DWORD tid;
     HANDLE thread, ready_event;
@@ -1821,9 +1835,20 @@ void RPC_StartLocalServer(REFCLSID clsid, IStream *stream)
     lsp->ready_event = ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     thread = CreateThread(NULL, 0, local_server_thread, lsp, 0, &tid);
+    if (!thread)
+        return HRESULT_FROM_WIN32(GetLastError());
     CloseHandle(thread);
-    /* FIXME: failure handling */
 
     WaitForSingleObject(ready_event, INFINITE);
     CloseHandle(ready_event);
+
+    *registration = lsp->pipe;
+    return S_OK;
+}
+
+/* stops listening for a local server */
+void RPC_StopLocalServer(void *registration)
+{
+    HANDLE pipe = registration;
+    CloseHandle(pipe);
 }
