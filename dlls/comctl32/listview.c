@@ -4030,31 +4030,68 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc, D
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] hdc : device context handle
+ * [I] prcErase : rect to be erased before refresh (may be NULL)
  *
  * RETURN:
  * NoneX
  */
-static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
+static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc, RECT *prcErase)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    COLORREF oldTextColor, oldBkColor, oldClrTextBk, oldClrText;
+    COLORREF oldTextColor = 0, oldBkColor = 0, oldClrTextBk, oldClrText;
     NMLVCUSTOMDRAW nmlvcd;
-    HFONT hOldFont;
+    HFONT hOldFont = 0;
     DWORD cdmode;
-    INT oldBkMode;
+    INT oldBkMode = 0;
     RECT rcClient;
     ITERATOR i;
+    HDC hdcOrig = hdc;
+    HBITMAP hbmp = NULL;
 
     LISTVIEW_DUMP(infoPtr);
-  
+
+    if (infoPtr->dwLvExStyle & LVS_EX_DOUBLEBUFFER) {
+        TRACE("double buffering\n");
+
+        hdc = CreateCompatibleDC(hdcOrig);
+        if (!hdc) {
+            ERR("Failed to create DC for backbuffer\n");
+            return;
+        }
+        hbmp = CreateCompatibleBitmap(hdcOrig, infoPtr->rcList.right,
+                                      infoPtr->rcList.bottom);
+        if (!hbmp) {
+            ERR("Failed to create bitmap for backbuffer\n");
+            DeleteDC(hdc);
+            return;
+        }
+
+        SelectObject(hdc, hbmp);
+        SelectObject(hdc, infoPtr->hFont);
+    } else {
+        /* Save dc values we're gonna trash while drawing
+         * FIXME: Should be done in LISTVIEW_DrawItem() */
+        hOldFont = SelectObject(hdc, infoPtr->hFont);
+        oldBkMode = GetBkMode(hdc);
+        oldBkColor = GetBkColor(hdc);
+        oldTextColor = GetTextColor(hdc);
+    }
+
     infoPtr->bIsDrawing = TRUE;
 
-    /* save dc values we're gonna trash while drawing */
-    hOldFont = SelectObject(hdc, infoPtr->hFont);
-    oldBkMode = GetBkMode(hdc);
-    oldBkColor = GetBkColor(hdc);
-    oldTextColor = GetTextColor(hdc);
+    if (prcErase) {
+        LISTVIEW_FillBkgnd(infoPtr, hdc, prcErase);
+    } else if (infoPtr->dwLvExStyle & LVS_EX_DOUBLEBUFFER) {
+        /* If no erasing was done (usually because RedrawWindow was called
+         * with RDW_INVALIDATE only) we need to copy the old contents into
+         * the backbuffer before continuing. */
+        BitBlt(hdc, infoPtr->rcList.left, infoPtr->rcList.top,
+               infoPtr->rcList.right - infoPtr->rcList.left,
+               infoPtr->rcList.bottom - infoPtr->rcList.top,
+               hdcOrig, infoPtr->rcList.left, infoPtr->rcList.top, SRCCOPY);
+    }
 
+    /* FIXME: Shouldn't need to do this */
     oldClrTextBk = infoPtr->clrTextBk;
     oldClrText   = infoPtr->clrText;
    
@@ -4110,10 +4147,21 @@ enddraw:
     infoPtr->clrTextBk = oldClrTextBk;
     infoPtr->clrText = oldClrText;
 
-    SelectObject(hdc, hOldFont);
-    SetBkMode(hdc, oldBkMode);
-    SetBkColor(hdc, oldBkColor);
-    SetTextColor(hdc, oldTextColor);
+    if(hbmp) {
+        BitBlt(hdcOrig, infoPtr->rcList.left, infoPtr->rcList.top,
+               infoPtr->rcList.right - infoPtr->rcList.left,
+               infoPtr->rcList.bottom - infoPtr->rcList.top,
+               hdc, infoPtr->rcList.left, infoPtr->rcList.top, SRCCOPY);
+
+        DeleteObject(hbmp);
+        DeleteDC(hdc);
+    } else {
+        SelectObject(hdc, hOldFont);
+        SetBkMode(hdc, oldBkMode);
+        SetBkColor(hdc, oldBkColor);
+        SetTextColor(hdc, oldTextColor);
+    }
+
     infoPtr->bIsDrawing = FALSE;
 }
 
@@ -7884,6 +7932,9 @@ static inline BOOL LISTVIEW_EraseBkgnd(LISTVIEW_INFO *infoPtr, HDC hdc)
 
     if (!GetClipBox(hdc, &rc)) return FALSE;
 
+    /* for double buffered controls we need to do this during refresh */
+    if (infoPtr->dwLvExStyle & LVS_EX_DOUBLEBUFFER) return FALSE;
+
     return LISTVIEW_FillBkgnd(infoPtr, hdc, &rc);
 }
 	
@@ -8803,15 +8854,14 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
     UpdateWindow(infoPtr->hwndHeader);
 
     if (hdc) 
-	LISTVIEW_Refresh(infoPtr, hdc);
+        LISTVIEW_Refresh(infoPtr, hdc, NULL);
     else
     {
 	PAINTSTRUCT ps;
 
 	hdc = BeginPaint(infoPtr->hwndSelf, &ps);
 	if (!hdc) return 1;
-	if (ps.fErase) LISTVIEW_FillBkgnd(infoPtr, hdc, &ps.rcPaint);
-	LISTVIEW_Refresh(infoPtr, hdc);
+	LISTVIEW_Refresh(infoPtr, hdc, ps.fErase ? &ps.rcPaint : NULL);
 	EndPaint(infoPtr->hwndSelf, &ps);
     }
 
