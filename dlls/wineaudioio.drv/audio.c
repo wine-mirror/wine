@@ -901,6 +901,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->msg_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     memset(wwo->messages, 0, sizeof(WWO_MSG)*WWO_RING_BUFFER_SIZE);
     InitializeCriticalSection(&wwo->msg_crst);
+    wwo->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINE_WAVEOUT.msg_crst");
 
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
     	TRACE("Starting wodPlayer Thread\n");
@@ -953,6 +954,10 @@ static DWORD wodClose(WORD wDevID)
 	ret = WAVERR_STILLPLAYING;
     } else {
 	TRACE("imhere[3-close]\n");
+
+	wwo->msg_crst.DebugInfo->Spare[0] = 0;
+	DeleteCriticalSection(&wwo->msg_crst);
+
 	if (wwo->hEvent != INVALID_HANDLE_VALUE) {
 	    wodPlayer_Message(wwo, WINE_WM_CLOSING, 0);
 	    WaitForSingleObject(wwo->hEvent, INFINITE);
