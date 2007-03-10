@@ -946,6 +946,11 @@ static inline DWORD notify_customdraw (LISTVIEW_INFO *infoPtr, DWORD dwDrawStage
 
 static void prepaint_setup (LISTVIEW_INFO *infoPtr, HDC hdc, NMLVCUSTOMDRAW *lpnmlvcd)
 {
+    if (lpnmlvcd->clrTextBk == CLR_DEFAULT)
+        lpnmlvcd->clrTextBk = comctl32_color.clrWindow;
+    if (lpnmlvcd->clrText == CLR_DEFAULT)
+        lpnmlvcd->clrText = comctl32_color.clrWindowText;
+
     /* apprently, for selected items, we have to override the returned values */
     if (lpnmlvcd->nmcd.uItemState & CDIS_SELECTED)
     {
@@ -965,8 +970,7 @@ static void prepaint_setup (LISTVIEW_INFO *infoPtr, HDC hdc, NMLVCUSTOMDRAW *lpn
     if (lpnmlvcd->clrTextBk != CLR_NONE)
     {
 	SetBkMode(hdc, OPAQUE);
-	if (lpnmlvcd->clrTextBk != CLR_DEFAULT)
-	    SetBkColor(hdc,lpnmlvcd->clrTextBk);
+	SetBkColor(hdc,lpnmlvcd->clrTextBk);
     }
     else
 	SetBkMode(hdc, TRANSPARENT);
@@ -7717,7 +7721,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
 
   /* initialize color information  */
   infoPtr->clrBk = CLR_NONE;
-  infoPtr->clrText = comctl32_color.clrWindowText;
+  infoPtr->clrText = CLR_DEFAULT;
   infoPtr->clrTextBk = CLR_DEFAULT;
   LISTVIEW_SetBkColor(infoPtr, comctl32_color.clrWindow);
 
