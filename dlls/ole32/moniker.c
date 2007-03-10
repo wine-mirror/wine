@@ -279,6 +279,9 @@ RunningObjectTableImpl_Destroy(void)
         rot_entry_delete(rot_entry);
     }
 
+    DEBUG_CLEAR_CRITSEC_NAME(&runningObjectTableInstance->lock);
+    DeleteCriticalSection(&runningObjectTableInstance->lock);
+
     /* free the ROT structure memory */
     HeapFree(GetProcessHeap(),0,runningObjectTableInstance);
     runningObjectTableInstance = NULL;
@@ -824,6 +827,7 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize(void)
 
     list_init(&runningObjectTableInstance->rot);
     InitializeCriticalSection(&runningObjectTableInstance->lock);
+    DEBUG_SET_CRITSEC_NAME(&runningObjectTableInstance->lock, "RunningObjectTableImpl.lock");
 
     return S_OK;
 }
