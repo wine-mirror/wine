@@ -74,6 +74,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
         case DLL_PROCESS_ATTACH:
             TRACE("Initialization\n");
             InitializeCriticalSection(&csTablet);
+            csTablet.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": csTablet");
             hx11drv = GetModuleHandleA("winex11.drv");
             if (hx11drv)
             {
@@ -96,6 +97,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
                 hwndDefault = 0;
             }
             TABLET_Unregister();
+            csTablet.DebugInfo->Spare[0] = 0;
             DeleteCriticalSection(&csTablet);
             break;
     }
