@@ -166,17 +166,6 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
     DWORD size2;
     DWORD play_pos,buf_free;
 
-    if (This->state != State_Running) {
-        DWORD state;
-        if (SUCCEEDED(IDirectSoundBuffer_GetStatus(This->dsbuffer, &state))) {
-            if (state & DSBSTATUS_PLAYING) {
-                IDirectSoundBuffer_Stop(This->dsbuffer);
-                This->started = FALSE;
-            }
-        }
-        return S_OK;
-    }
-
     while (1)
     {
         hr = IDirectSoundBuffer_GetCurrentPosition(This->dsbuffer, &play_pos, NULL);
@@ -241,6 +230,9 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
     HRESULT hr;
 
     TRACE("%p %p\n", iface, pSample);
+
+    if (This->state != State_Running)
+        return VFW_E_WRONG_STATE;
     
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
@@ -452,7 +444,21 @@ static HRESULT WINAPI DSoundRender_Stop(IBaseFilter * iface)
 
     EnterCriticalSection(&This->csFilter);
     {
-        This->state = State_Stopped;
+        DWORD state = 0;
+        if (This->dsbuffer)
+        {
+            hr = IDirectSoundBuffer_GetStatus(This->dsbuffer, &state);
+            if (SUCCEEDED(hr))
+            {
+                if (state & DSBSTATUS_PLAYING)
+                    hr = IDirectSoundBuffer_Stop(This->dsbuffer);
+            }
+        }
+        if (SUCCEEDED(hr))
+        {
+            This->started = FALSE;
+            This->state = State_Stopped;
+        }
     }
     LeaveCriticalSection(&This->csFilter);
     
@@ -468,7 +474,21 @@ static HRESULT WINAPI DSoundRender_Pause(IBaseFilter * iface)
 
     EnterCriticalSection(&This->csFilter);
     {
-        This->state = State_Paused;
+        DWORD state = 0;
+        if (This->dsbuffer)
+        {
+            hr = IDirectSoundBuffer_GetStatus(This->dsbuffer, &state);
+            if (SUCCEEDED(hr))
+            {
+                if (state & DSBSTATUS_PLAYING)
+                    hr = IDirectSoundBuffer_Stop(This->dsbuffer);
+            }
+        }
+        if (SUCCEEDED(hr))
+        {
+            This->started = FALSE;
+            This->state = State_Paused;
+        }
     }
     LeaveCriticalSection(&This->csFilter);
 
