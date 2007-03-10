@@ -545,7 +545,7 @@ static int ESD_InitRingMessage(ESD_MSG_RING* mr)
     mr->ring_buffer_size = ESD_RING_BUFFER_INCREMENT;
     mr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,mr->ring_buffer_size * sizeof(RING_MSG));
     InitializeCriticalSection(&mr->msg_crst);
-    mr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)"WINEESD_msg_crst";
+    mr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ESD_MSG_RING.msg_crst");
     return 0;
 }
 
@@ -563,6 +563,7 @@ static int ESD_DestroyRingMessage(ESD_MSG_RING* mr)
 #endif
     HeapFree(GetProcessHeap(),0,mr->messages);
     mr->messages=NULL;
+    mr->msg_crst.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&mr->msg_crst);
     return 0;
 }
