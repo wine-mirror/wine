@@ -1230,7 +1230,7 @@ static int OSS_InitRingMessage(OSS_MSG_RING* omr)
     omr->ring_buffer_size = OSS_RING_BUFFER_INCREMENT;
     omr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(OSS_MSG));
     InitializeCriticalSection(&omr->msg_crst);
-    omr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)"WINEOSS_msg_crst";
+    omr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": OSS_MSG_RING.msg_crst");
     return 0;
 }
 
@@ -1247,6 +1247,7 @@ static int OSS_DestroyRingMessage(OSS_MSG_RING* omr)
     CloseHandle(omr->msg_event);
 #endif
     HeapFree(GetProcessHeap(),0,omr->messages);
+    omr->msg_crst.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&omr->msg_crst);
     return 0;
 }
