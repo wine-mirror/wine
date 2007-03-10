@@ -4755,7 +4755,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
     /* this needs to be done in lines if the sourceRect != the sourceWidth */
     srcWidth   = pSourceRect ? pSourceRect->right - pSourceRect->left   : srcSurfaceWidth;
-    srcHeight  = pSourceRect ? pSourceRect->top   - pSourceRect->bottom : srcSurfaceHeight;
+    srcHeight  = pSourceRect ? pSourceRect->bottom - pSourceRect->top   : srcSurfaceHeight;
     srcLeft    = pSourceRect ? pSourceRect->left : 0;
     destLeft   = pDestPoint  ? pDestPoint->x : 0;
     destTop    = pDestPoint  ? pDestPoint->y : 0;
