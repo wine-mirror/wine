@@ -118,6 +118,7 @@ void WINAPI RtlInitializeResource(LPRTL_RWLOCK rwl)
 	rwl->hOwningThreadId = 0;
 	rwl->dwTimeoutBoost = 0; /* no info on this one, default value is 0 */
 	RtlInitializeCriticalSection( &rwl->rtlCS );
+        rwl->rtlCS.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RTL_RWLOCK.rtlCS");
         NtCreateSemaphore( &rwl->hExclusiveReleaseSemaphore, SEMAPHORE_ALL_ACCESS, NULL, 0, 65535 );
         NtCreateSemaphore( &rwl->hSharedReleaseSemaphore, SEMAPHORE_ALL_ACCESS, NULL, 0, 65535 );
     }
@@ -140,6 +141,7 @@ void WINAPI RtlDeleteResource(LPRTL_RWLOCK rwl)
 	NtClose( rwl->hExclusiveReleaseSemaphore );
 	NtClose( rwl->hSharedReleaseSemaphore );
 	RtlLeaveCriticalSection( &rwl->rtlCS );
+	rwl->rtlCS.DebugInfo->Spare[0] = 0;
 	RtlDeleteCriticalSection( &rwl->rtlCS );
     }
 }

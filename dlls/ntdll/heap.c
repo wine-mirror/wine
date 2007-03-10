@@ -653,7 +653,11 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
             heap->critSection.SpinCount      = 0;
             process_heap_critsect_debug.CriticalSection = &heap->critSection;
         }
-        else RtlInitializeCriticalSection( &heap->critSection );
+        else
+        {
+            RtlInitializeCriticalSection( &heap->critSection );
+            heap->critSection.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": HEAP.critSection");
+        }
 
         if (flags & HEAP_SHARED)
         {
@@ -1128,6 +1132,7 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
     list_remove( &heapPtr->entry );
     RtlLeaveCriticalSection( &processHeap->critSection );
 
+    heapPtr->critSection.DebugInfo->Spare[0] = 0;
     RtlDeleteCriticalSection( &heapPtr->critSection );
     subheap = &heapPtr->subheap;
     while (subheap)
