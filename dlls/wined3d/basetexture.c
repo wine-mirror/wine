@@ -279,6 +279,12 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
             TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
             glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
             checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
+            if(textureDimensions==GL_TEXTURE_CUBE_MAP_ARB) {
+                /* Cubemaps are always set to clamp, regardeless of the sampler state. */
+                glTexParameteri(textureDimensions, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(textureDimensions, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                glTexParameteri(textureDimensions, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            }
         }
 		
     } else { /* this only happened if we've run out of openGL textures */
@@ -355,7 +361,13 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
                 if (*state < minLookup[WINELOOKUP_WARPPARAM] || *state > maxLookup[WINELOOKUP_WARPPARAM]) {
                     FIXME("Unrecognized or unsupported WINED3DTADDRESS_* value %d, state %d\n", *state, textureObjectSamplerStates[i].function);
                 } else {
-                    GLint wrapParm = stateLookup[WINELOOKUP_WARPPARAM][*state - minLookup[WINELOOKUP_WARPPARAM]];
+                    GLint wrapParm;
+                    if(textureDimensions==GL_TEXTURE_CUBE_MAP_ARB) {
+                        /* Cubemaps are always set to clamp, regardeless of the sampler state. */
+                        wrapParm = GL_CLAMP_TO_EDGE;
+                    } else {
+                        wrapParm = stateLookup[WINELOOKUP_WARPPARAM][*state - minLookup[WINELOOKUP_WARPPARAM]];
+                    }
                     TRACE("Setting WRAP_R to %d for %x\n", wrapParm, textureDimensions);
                     glTexParameteri(textureDimensions, warpLookupType(textureObjectSamplerStates[i].function), wrapParm);
                     checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_R, wrapParm)");
