@@ -604,6 +604,7 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
             IStream_Release(STREAM(This->stream));
 
         ReleaseBindInfo(&This->bindinfo);
+        This->section.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->section);
         HeapFree(GetProcessHeap(), 0, This->mime);
         HeapFree(GetProcessHeap(), 0, This->url);
@@ -1220,6 +1221,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->bindf = 0;
 
     InitializeCriticalSection(&ret->section);
+    ret->section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": Binding.section");
 
     hres = get_callback(pbc, &ret->callback);
     if(FAILED(hres)) {
