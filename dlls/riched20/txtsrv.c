@@ -78,6 +78,7 @@ HRESULT WINAPI CreateTextServices(IUnknown  * pUnkOuter,
    if (ITextImpl == NULL)
       return E_OUTOFMEMORY;
    InitializeCriticalSection(&ITextImpl->csTxtSrv);
+   ITextImpl->csTxtSrv.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ITextServicesImpl.csTxtSrv");
    ITextImpl->ref = 1;
    ITextHost_AddRef(pITextHost);
    ITextImpl->pMyHost = pITextHost;
@@ -135,6 +136,7 @@ static ULONG WINAPI fnTextSrv_Release(ITextServices *iface)
    if (!ref)
    {
       ITextHost_Release(This->pMyHost);
+      This->csTxtSrv.DebugInfo->Spare[0] = 0;
       DeleteCriticalSection(&This->csTxtSrv);
       CoTaskMemFree(This);
    }
