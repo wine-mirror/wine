@@ -1671,6 +1671,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     }
 
     RtlInitializeCriticalSection( &info->cs );
+    info->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FIND_FIRST_INFO.cs");
     info->path     = nt_name;
     info->magic    = FIND_FIRST_MAGIC;
     info->data_pos = 0;
@@ -1849,6 +1850,7 @@ BOOL WINAPI FindClose( HANDLE handle )
                 info->data_pos = 0;
                 info->data_len = 0;
                 RtlLeaveCriticalSection( &info->cs );
+                info->cs.DebugInfo->Spare[0] = 0;
                 RtlDeleteCriticalSection( &info->cs );
                 HeapFree( GetProcessHeap(), 0, info );
             }
