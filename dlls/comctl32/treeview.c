@@ -1825,7 +1825,7 @@ TREEVIEW_SetItemHeight(TREEVIEW_INFO *infoPtr, INT newHeight)
     }
 
     /* Round down, unless we support odd ("non even") heights. */
-    if (!(infoPtr->dwStyle) & TVS_NONEVENHEIGHT)
+    if (!(infoPtr->dwStyle & TVS_NONEVENHEIGHT))
 	infoPtr->uItemHeight &= ~1;
 
     if (infoPtr->uItemHeight != prevHeight)

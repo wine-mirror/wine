@@ -428,12 +428,10 @@ static void TestGetSetItemHeight(void)
     ulNewHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
     ok(ulNewHeight == 2*ulOldHeight, "New height not set properly, reported %d, expected %d\n", ulNewHeight, 2*ulOldHeight);
 
-    todo_wine {
-        /* Assuming tree doesn't have TVS_NONEVENHEIGHT set, so a set of 9 will round down to 8 */
-        SendMessage( hTree, TVM_SETITEMHEIGHT, 9, 0 );
-        ulNewHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
-        ok(ulNewHeight == 8, "Uneven height not set properly, reported %d, expected %d\n", ulNewHeight, 8);
-    }
+    /* Assuming tree doesn't have TVS_NONEVENHEIGHT set, so a set of 9 will round down to 8 */
+    SendMessage( hTree, TVM_SETITEMHEIGHT, 9, 0 );
+    ulNewHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
+    ok(ulNewHeight == 8, "Uneven height not set properly, reported %d, expected %d\n", ulNewHeight, 8);
 }
 
 static void TestGetSetScrollTime(void)
