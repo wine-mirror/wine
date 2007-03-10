@@ -84,7 +84,7 @@ int ALSA_InitRingMessage(ALSA_MSG_RING* omr)
     omr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(ALSA_MSG));
 
     InitializeCriticalSection(&omr->msg_crst);
-    omr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)"WINEALSA_msg_crst";
+    omr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ALSA_MSG_RING.msg_crst");
     return 0;
 }
 
