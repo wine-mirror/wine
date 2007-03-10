@@ -39,7 +39,7 @@ typedef struct
 typedef VOID (WINAPI *fnMD4Init)( MD4_CTX *ctx );
 typedef VOID (WINAPI *fnMD4Update)( MD4_CTX *ctx, const unsigned char *src, const int len );
 typedef VOID (WINAPI *fnMD4Final)( MD4_CTX *ctx );
-typedef int (WINAPI *fnSystemFunction007)(PUNICODE_STRING,LPBYTE);
+typedef int (WINAPI *fnSystemFunction007)(const UNICODE_STRING *, LPBYTE);
 typedef int (WINAPI *md4hashfunc)(LPVOID, const LPBYTE, LPBYTE);
 
 fnMD4Init pMD4Init;

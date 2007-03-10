@@ -285,12 +285,12 @@ static void MD4Transform( unsigned int buf[4], const unsigned int in[16] )
  *  Failure: STATUS_UNSUCCESSFUL
  *
  */
-NTSTATUS WINAPI SystemFunction007(PUNICODE_STRING string, LPBYTE hash)
+NTSTATUS WINAPI SystemFunction007(const UNICODE_STRING *string, LPBYTE hash)
 {
     MD4_CTX ctx;
 
     MD4Init( &ctx );
-    MD4Update( &ctx, (BYTE*) string->Buffer, string->Length );
+    MD4Update( &ctx, (const BYTE *)string->Buffer, string->Length );
     MD4Final( &ctx );
     memcpy( hash, ctx.digest, 0x10 );
 
@@ -313,7 +313,7 @@ NTSTATUS WINAPI SystemFunction007(PUNICODE_STRING string, LPBYTE hash)
  *  Failure: STATUS_UNSUCCESSFUL
  *
  */
-NTSTATUS WINAPI SystemFunction010(LPVOID unknown, LPBYTE data, LPBYTE hash)
+NTSTATUS WINAPI SystemFunction010(LPVOID unknown, const BYTE *data, LPBYTE hash)
 {
     MD4_CTX ctx;
 
