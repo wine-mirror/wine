@@ -276,7 +276,7 @@ static inline void service_set_multi_string( struct reg_value *val,
 }
 
 static inline LONG service_write_values( HKEY hKey,
-                                         struct reg_value *val, int n )
+                                         const struct reg_value *val, int n )
 {
     LONG r = ERROR_SUCCESS;
     int i;
@@ -294,7 +294,7 @@ static inline LONG service_write_values( HKEY hKey,
 /******************************************************************************
  * Service IPC functions
  */
-static LPWSTR service_get_pipe_name(LPWSTR service)
+static LPWSTR service_get_pipe_name(LPCWSTR service)
 {
     static const WCHAR prefix[] = { '\\','\\','.','\\','p','i','p','e','\\',
                    '_','_','w','i','n','e','s','e','r','v','i','c','e','_',0};
@@ -308,7 +308,7 @@ static LPWSTR service_get_pipe_name(LPWSTR service)
     return name;
 }
 
-static HANDLE service_open_pipe(LPWSTR service)
+static HANDLE service_open_pipe(LPCWSTR service)
 {
     LPWSTR szPipe = service_get_pipe_name( service );
     HANDLE handle = INVALID_HANDLE_VALUE;
@@ -329,7 +329,7 @@ static HANDLE service_open_pipe(LPWSTR service)
 /******************************************************************************
  * service_get_event_handle
  */
-static HANDLE service_get_event_handle(LPWSTR service)
+static HANDLE service_get_event_handle(LPCWSTR service)
 {
     static const WCHAR prefix[] = { 
            '_','_','w','i','n','e','s','e','r','v','i','c','e','_',0};
