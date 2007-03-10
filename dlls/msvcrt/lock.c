@@ -42,11 +42,13 @@ static inline void msvcrt_mlock_set_entry_initialized( int locknum, BOOL initial
 static inline void msvcrt_initialize_mlock( int locknum )
 {
   InitializeCriticalSection( &(lock_table[ locknum ].crit) );
+  lock_table[ locknum ].crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": LOCKTABLEENTRY.crit");
   msvcrt_mlock_set_entry_initialized( locknum, TRUE );
 }
 
 static inline void msvcrt_uninitialize_mlock( int locknum )
 {
+  lock_table[ locknum ].crit.DebugInfo->Spare[0] = 0;
   DeleteCriticalSection( &(lock_table[ locknum ].crit) );
   msvcrt_mlock_set_entry_initialized( locknum, FALSE );
 }
@@ -136,4 +138,3 @@ void CDECL _unlock( int locknum )
 
   LeaveCriticalSection( &(lock_table[ locknum ].crit) );
 }
-

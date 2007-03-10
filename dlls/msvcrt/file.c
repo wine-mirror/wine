@@ -328,6 +328,7 @@ void msvcrt_init_io(void)
   int           i;
 
   InitializeCriticalSection(&MSVCRT_file_cs);
+  MSVCRT_file_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MSVCRT_file_cs");
   GetStartupInfoA(&si);
   if (si.cbReserved2 != 0 && si.lpReserved2 != NULL)
   {
@@ -796,6 +797,7 @@ void msvcrt_free_io(void)
     MSVCRT_fclose(&MSVCRT__iob[0]);
     MSVCRT_fclose(&MSVCRT__iob[1]);
     MSVCRT_fclose(&MSVCRT__iob[2]);
+    MSVCRT_file_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&MSVCRT_file_cs);
 }
 
