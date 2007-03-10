@@ -502,6 +502,7 @@ static int ARTS_InitRingMessage(ARTS_MSG_RING* mr)
     mr->ring_buffer_size = ARTS_RING_BUFFER_INCREMENT;
     mr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,mr->ring_buffer_size * sizeof(RING_MSG));
     InitializeCriticalSection(&mr->msg_crst);
+    mr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ARTS_MSG_RING.msg_crst");
     return 0;
 }
 
@@ -514,6 +515,7 @@ static int ARTS_DestroyRingMessage(ARTS_MSG_RING* mr)
     CloseHandle(mr->msg_event);
     HeapFree(GetProcessHeap(),0,mr->messages);
     mr->messages=NULL;
+    mr->msg_crst.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&mr->msg_crst);
     return 0;
 }
