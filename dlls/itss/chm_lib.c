@@ -705,8 +705,11 @@ struct chmFile *chm_openW(const WCHAR *filename)
 
     /* initialize mutexes, if needed */
     InitializeCriticalSection(&newHandle->mutex);
+    newHandle->mutex.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": chmFile.mutex");
     InitializeCriticalSection(&newHandle->lzx_mutex);
+    newHandle->lzx_mutex.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": chmFile.lzx_mutex");
     InitializeCriticalSection(&newHandle->cache_mutex);
+    newHandle->cache_mutex.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": chmFile.cache_mutex");
 
     /* read and verify header */
     sremain = _CHM_ITSF_V3_LEN;
@@ -826,8 +829,11 @@ void chm_close(struct chmFile *h)
             CHM_CLOSE_FILE(h->fd);
         h->fd = CHM_NULL_FD;
 
+        h->mutex.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&h->mutex);
+        h->lzx_mutex.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&h->lzx_mutex);
+        h->cache_mutex.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&h->cache_mutex);
 
         if (h->lzx_state)
