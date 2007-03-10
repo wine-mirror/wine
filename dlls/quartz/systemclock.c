@@ -224,6 +224,7 @@ static ULONG WINAPI SystemClockImpl_Release(IReferenceClock* iface) {
       WaitForSingleObject(This->adviseThread, INFINITE);
       CloseHandle(This->adviseThread);
     }
+    This->safe.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->safe);
     CoTaskMemFree(This);
   }
@@ -384,6 +385,7 @@ HRESULT QUARTZ_CreateSystemClock(IUnknown * pUnkOuter, LPVOID * ppv) {
 
   obj->lastTimeTickCount = GetTickCount();
   InitializeCriticalSection(&obj->safe);
+  obj->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SystemClockImpl.safe");
 
   return SystemClockImpl_QueryInterface((IReferenceClock*) obj, &IID_IReferenceClock, ppv);
 }

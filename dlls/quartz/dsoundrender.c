@@ -316,11 +316,13 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pDSoundRender->IBasicAudio_vtbl = &IBasicAudio_Vtbl;
     pDSoundRender->refCount = 1;
     InitializeCriticalSection(&pDSoundRender->csFilter);
+    pDSoundRender->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter");
     pDSoundRender->state = State_Stopped;
 
     pDSoundRender->ppPins = CoTaskMemAlloc(1 * sizeof(IPin *));
     if (!pDSoundRender->ppPins)
     {
+        pDSoundRender->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&pDSoundRender->csFilter);
         CoTaskMemFree(pDSoundRender);
         return E_OUTOFMEMORY;
@@ -340,6 +342,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
     else
     {
         CoTaskMemFree(pDSoundRender->ppPins);
+        pDSoundRender->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&pDSoundRender->csFilter);
         CoTaskMemFree(pDSoundRender);
     }
@@ -395,8 +398,9 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
 
     if (!refCount)
     {
+        This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
-	if (This->pClock)
+        if (This->pClock)
             IReferenceClock_Release(This->pClock);
 
         if (This->dsbuffer)

@@ -71,6 +71,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMP
     pParser->lpVtbl = &Parser_Vtbl;
     pParser->refCount = 1;
     InitializeCriticalSection(&pParser->csFilter);
+    pParser->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ParserImpl.csFilter");
     pParser->state = State_Stopped;
     pParser->pClock = NULL;
     ZeroMemory(&pParser->filterInfo, sizeof(FILTER_INFO));
@@ -93,6 +94,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMP
     else
     {
         CoTaskMemFree(pParser->ppPins);
+        pParser->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&pParser->csFilter);
         CoTaskMemFree(pParser);
     }
@@ -185,6 +187,7 @@ static ULONG WINAPI Parser_Release(IBaseFilter * iface)
     {
         ULONG i;
 
+        This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
         if (This->pClock)
             IReferenceClock_Release(This->pClock);

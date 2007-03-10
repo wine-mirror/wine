@@ -76,6 +76,7 @@ static int EventsQueue_Init(EventsQueue* omr)
     ZeroMemory(omr->messages, omr->ring_buffer_size * sizeof(Event));
 
     InitializeCriticalSection(&omr->msg_crst);
+    omr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": EventsQueue.msg_crst");
     return TRUE;
 }
 
@@ -83,6 +84,7 @@ static int EventsQueue_Destroy(EventsQueue* omr)
 {
     CloseHandle(omr->msg_event);
     CoTaskMemFree(omr->messages);
+    omr->msg_crst.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&omr->msg_crst);
     return TRUE;
 }
@@ -268,6 +270,7 @@ static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
 	IFilterMapper2_Release(This->pFilterMapper2);
 	CloseHandle(This->hEventCompletion);
 	EventsQueue_Destroy(&This->evqueue);
+        This->cs.DebugInfo->Spare[0] = 0;
 	DeleteCriticalSection(&This->cs);
 	CoTaskMemFree(This->ppFiltersInGraph);
 	CoTaskMemFree(This->pFilterNames);
@@ -4516,6 +4519,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->state = State_Stopped;
     EventsQueue_Init(&fimpl->evqueue);
     InitializeCriticalSection(&fimpl->cs);
+    fimpl->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IFilterGraphImpl.cs");
     fimpl->nItfCacheEntries = 0;
 
     hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&fimpl->pFilterMapper2);

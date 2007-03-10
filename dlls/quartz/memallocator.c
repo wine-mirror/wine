@@ -105,6 +105,7 @@ static HRESULT BaseMemAllocator_Init(HRESULT (* fnAlloc)(IMemAllocator *), HRESU
     pMemAlloc->lWaiting = 0;
 
     InitializeCriticalSection(&pMemAlloc->csState);
+    pMemAlloc->csState.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BaseMemAllocator.csState");
 
     return S_OK;
 }
@@ -155,6 +156,8 @@ static ULONG WINAPI BaseMemAllocator_Release(IMemAllocator * iface)
         if (This->bCommitted)
             This->fnFree(iface);
         CoTaskMemFree(This->pProps);
+        This->csState.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->csState);
         CoTaskMemFree(This);
         return 0;
     }

@@ -437,6 +437,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     
     pVideoRenderer->refCount = 1;
     InitializeCriticalSection(&pVideoRenderer->csFilter);
+    pVideoRenderer->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter");
     pVideoRenderer->state = State_Stopped;
     pVideoRenderer->pClock = NULL;
     pVideoRenderer->init = 0;
@@ -460,6 +461,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     else
     {
         CoTaskMemFree(pVideoRenderer->ppPins);
+        pVideoRenderer->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&pVideoRenderer->csFilter);
         CoTaskMemFree(pVideoRenderer);
     }
@@ -520,6 +522,7 @@ static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
 
     if (!refCount)
     {
+        This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
 
         DestroyWindow(This->hWnd);
