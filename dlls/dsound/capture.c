@@ -1665,7 +1665,7 @@ static HRESULT DirectSoundCaptureDevice_Create(
     device->state = STATE_STOPPED;
 
     InitializeCriticalSection( &(device->lock) );
-    device->lock.DebugInfo->Spare[0] = (DWORD_PTR)"DSCAPTURE_lock";
+    device->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DirectSoundCaptureDevice.lock");
 
     *ppDevice = device;
 

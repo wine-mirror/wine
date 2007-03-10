@@ -1224,7 +1224,7 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     device->pwfx->cbSize = 0;
 
     InitializeCriticalSection(&(device->mixlock));
-    device->mixlock.DebugInfo->Spare[0] = (DWORD_PTR)"DSOUND_mixlock";
+    device->mixlock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DirectSoundDevice.mixlock");
 
     RtlInitializeResource(&(device->buffer_list_lock));
 
