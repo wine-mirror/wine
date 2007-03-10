@@ -185,7 +185,7 @@ static void append_str(char **str, const char *data)
     *str += strlen(*str);
 }
 
-static void create_inf_file()
+static void create_inf_file(void)
 {
     char data[1024];
     char *ptr = data;
@@ -215,7 +215,7 @@ static void create_inf_file()
     CloseHandle(hf);
 }
 
-static void translateinfstring_test()
+static void translateinfstring_test(void)
 {
     HRESULT hr;
     char buffer[MAX_PATH];

@@ -483,7 +483,7 @@ static void test_Invoke(void)
     IFontDisp_Release(fontdisp);
 }
 
-static void test_IsEqual()
+static void test_IsEqual(void)
 {
     FONTDESC fd;
     LPVOID pvObj = NULL;

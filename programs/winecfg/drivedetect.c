@@ -289,7 +289,7 @@ static void ensure_drive_c_is_mapped(void)
     }
 }
 
-int autodetect_drives()
+int autodetect_drives(void)
 {
 #ifdef HAVE_MNTENT_H
     struct mntent *ent;

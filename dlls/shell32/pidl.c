@@ -1357,7 +1357,7 @@ LPITEMIDLIST _ILAlloc(PIDLTYPE type, unsigned int size)
     return pidlOut;
 }
 
-LPITEMIDLIST _ILCreateDesktop()
+LPITEMIDLIST _ILCreateDesktop(void)
 {
     LPITEMIDLIST ret;
 
@@ -1368,25 +1368,25 @@ LPITEMIDLIST _ILCreateDesktop()
     return ret;
 }
 
-LPITEMIDLIST _ILCreateMyComputer()
+LPITEMIDLIST _ILCreateMyComputer(void)
 {
     TRACE("()\n");
     return _ILCreateGuid(PT_GUID, &CLSID_MyComputer);
 }
 
-LPITEMIDLIST _ILCreateMyDocuments()
+LPITEMIDLIST _ILCreateMyDocuments(void)
 {
     TRACE("()\n");
     return _ILCreateGuid(PT_GUID, &CLSID_MyDocuments);
 }
 
-LPITEMIDLIST _ILCreateIExplore()
+LPITEMIDLIST _ILCreateIExplore(void)
 {
     TRACE("()\n");
     return _ILCreateGuid(PT_GUID, &CLSID_Internet);
 }
 
-LPITEMIDLIST _ILCreateControlPanel()
+LPITEMIDLIST _ILCreateControlPanel(void)
 {
     LPITEMIDLIST parent = _ILCreateGuid(PT_GUID, &CLSID_MyComputer), ret = NULL;
 
@@ -1405,7 +1405,7 @@ LPITEMIDLIST _ILCreateControlPanel()
     return ret;
 }
 
-LPITEMIDLIST _ILCreatePrinters()
+LPITEMIDLIST _ILCreatePrinters(void)
 {
     LPITEMIDLIST parent = _ILCreateGuid(PT_GUID, &CLSID_MyComputer), ret = NULL;
 
@@ -1424,13 +1424,13 @@ LPITEMIDLIST _ILCreatePrinters()
     return ret;
 }
 
-LPITEMIDLIST _ILCreateNetwork()
+LPITEMIDLIST _ILCreateNetwork(void)
 {
     TRACE("()\n");
     return _ILCreateGuid(PT_GUID, &CLSID_NetworkPlaces);
 }
 
-LPITEMIDLIST _ILCreateBitBucket()
+LPITEMIDLIST _ILCreateBitBucket(void)
 {
     TRACE("()\n");
     return _ILCreateGuid(PT_GUID, &CLSID_RecycleBin);

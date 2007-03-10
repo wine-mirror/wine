@@ -222,7 +222,7 @@ IACListVtbl TestACL_ACListVtbl =
 #define expect_end(obj) \
     ok(obj->lpVtbl->Next(obj, 1, &wstr, &i) == S_FALSE, "Unexpected return from Next\n");
 
-void test_ACLMulti()
+void test_ACLMulti(void)
 {
     const char *strings1[] = {"a", "c", "e"};
     const char *strings2[] = {"a", "b", "d"};

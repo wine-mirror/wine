@@ -691,7 +691,7 @@ static void test_StrCpyNXW(void)
     ok(ret##type == (exp), "Type " #type ", expected %p but got %p (string base %p)\n", \
     (exp), ret##type, str);
 
-static void test_StrRStrI()
+static void test_StrRStrI(void)
 {
     static const CHAR szTest[] = "yAxxxxAy";
     static const CHAR szTest2[] = "ABABABAB";
@@ -760,7 +760,7 @@ static void test_SHUnicodeToUnicode(void)
      dwRet, dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
 }
 
-static void test_StrXXX_overflows()
+static void test_StrXXX_overflows(void)
 {
     CHAR str1[2*MAX_PATH+1], buf[2*MAX_PATH];
     WCHAR wstr1[2*MAX_PATH+1], wbuf[2*MAX_PATH];

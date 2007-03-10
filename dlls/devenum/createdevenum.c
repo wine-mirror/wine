@@ -221,7 +221,7 @@ static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory)
  *
  * Creates the keys in the registry for the dynamic categories
  */
-static HRESULT DEVENUM_CreateSpecialCategories()
+static HRESULT DEVENUM_CreateSpecialCategories(void)
 {
     HRESULT res;
     WCHAR szDSoundNameFormat[MAX_PATH + 1];

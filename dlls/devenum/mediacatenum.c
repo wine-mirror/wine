@@ -679,7 +679,7 @@ static const IMonikerVtbl IMoniker_Vtbl =
     DEVENUM_IMediaCatMoniker_IsSystemMoniker
 };
 
-MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct()
+MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct(void)
 {
     MediaCatMoniker * pMoniker = NULL;
     pMoniker = CoTaskMemAlloc(sizeof(MediaCatMoniker));

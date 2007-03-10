@@ -110,7 +110,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
  *           MAIN_CreateGroups
  */
 
-static VOID MAIN_CreateGroups()
+static VOID MAIN_CreateGroups(void)
 {
   CHAR buffer[BUFFER_SIZE];
   CHAR szPath[MAX_PATHNAME_LEN];
@@ -144,7 +144,7 @@ static VOID MAIN_CreateGroups()
  *           MAIN_AutoStart
  */
 
-VOID MAIN_AutoStart()
+VOID MAIN_AutoStart(void)
 {
   CHAR buffer[BUFFER_SIZE];
   HLOCAL hGroup, hProgram;
@@ -344,7 +344,7 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
  *           MAIN_RegisterMainWinClass
  */
 
-static ATOM MAIN_RegisterMainWinClass()
+static ATOM MAIN_RegisterMainWinClass(void)
 {
   WNDCLASS class;
 
@@ -367,7 +367,7 @@ static ATOM MAIN_RegisterMainWinClass()
  *           MAIN_CreateMainWindow
  */
 
-static VOID MAIN_CreateMainWindow()
+static VOID MAIN_CreateMainWindow(void)
 {
   INT  left , top, right, bottom, width, height, show;
   CHAR buffer[100];
@@ -404,7 +404,7 @@ static VOID MAIN_CreateMainWindow()
  *           MAIN_CreateMDIWindow
  */
 
-static VOID MAIN_CreateMDIWindow()
+static VOID MAIN_CreateMDIWindow(void)
 {
   CLIENTCREATESTRUCT ccs;
   RECT rect;

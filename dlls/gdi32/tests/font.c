@@ -518,7 +518,7 @@ static void test_text_extents(void)
     ReleaseDC(NULL, hdc);
 }
 
-static void test_GetGlyphIndices()
+static void test_GetGlyphIndices(void)
 {
     HDC      hdc;
     HFONT    hfont;

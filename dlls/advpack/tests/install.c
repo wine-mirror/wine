@@ -30,7 +30,7 @@ static HRESULT (WINAPI *pLaunchINFSectionEx)(HWND, HINSTANCE, LPSTR, INT);
 
 static char CURR_DIR[MAX_PATH];
 
-static BOOL init_function_pointers()
+static BOOL init_function_pointers(void)
 {
     HMODULE hAdvPack = LoadLibraryA("advpack.dll");
     if (!hAdvPack)
@@ -80,7 +80,7 @@ static void create_inf_file(LPCSTR filename)
     CloseHandle(hf);
 }
 
-static void test_RunSetupCommand()
+static void test_RunSetupCommand(void)
 {
     HRESULT hr;
     HANDLE hexe;
@@ -194,7 +194,7 @@ static void test_RunSetupCommand()
        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %d\n", hr);
 }
 
-static void test_LaunchINFSection()
+static void test_LaunchINFSection(void)
 {
     HRESULT hr;
     char cmdline[MAX_PATH];
@@ -226,7 +226,7 @@ static void test_LaunchINFSection()
     DeleteFileA("test.inf");
 }
 
-static void test_LaunchINFSectionEx()
+static void test_LaunchINFSectionEx(void)
 {
     HRESULT hr;
     char cmdline[MAX_PATH];

@@ -319,7 +319,7 @@ static void test_ffcn(void)
 
 /* this test concentrates on the wait behavior when multiple threads are
  * waiting on a change notification handle. */
-static void test_ffcnMultipleThreads()
+static void test_ffcnMultipleThreads(void)
 {
     LONG r;
     DWORD filter, threadId, status, exitcode;

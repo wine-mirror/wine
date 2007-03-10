@@ -624,7 +624,7 @@ void nsnode_to_nsstring(nsIDOMNode *nsdoc, nsAString *str)
     nsIContentSerializer_Release(serializer);
 }
 
-void close_gecko()
+void close_gecko(void)
 {
     TRACE("()\n");
 

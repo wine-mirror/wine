@@ -260,7 +260,7 @@ BOOL moveDrive(struct drive *pSrc, struct drive *pDst)
 #endif
 
 /* Load currently defined drives into the drives array  */
-void load_drives()
+void load_drives(void)
 {
     char *devices, *dev;
     int len;

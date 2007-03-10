@@ -365,7 +365,7 @@ static HRESULT register_clsids(int count, const register_info * pRegInfo, LPCWST
 typedef HRESULT (WINAPI *DllRegisterServer_func)(void);
 
 /* calls DllRegisterServer() for the Quartz DLL */
-static void DEVENUM_RegisterQuartz()
+static void DEVENUM_RegisterQuartz(void)
 {
     HANDLE hDLL = LoadLibraryA("quartz.dll");
     DllRegisterServer_func pDllRegisterServer = NULL;

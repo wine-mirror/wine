@@ -308,7 +308,7 @@ static void add_band_w(HWND hRebar, LPCSTR lpszText, int cxMinChild, int cx, int
     SendMessage(hRebar, RB_INSERTBAND, -1, (LPARAM)&rbi);
 }
 
-static void layout_test()
+static void layout_test(void)
 {
     HWND hRebar = NULL;
     REBARBANDINFO rbi;
@@ -625,7 +625,7 @@ static int resize_numtests = 0;
 
 #endif
 
-static void resize_test()
+static void resize_test(void)
 {
     DWORD dwStyles[] = {CCS_TOP, CCS_TOP | CCS_NODIVIDER, CCS_BOTTOM, CCS_BOTTOM | CCS_NODIVIDER, CCS_VERT, CCS_RIGHT,
         CCS_NOPARENTALIGN, CCS_NOPARENTALIGN | CCS_NODIVIDER, CCS_NORESIZE, CCS_NOMOVEY, CCS_NOMOVEY | CCS_VERT,
@@ -713,7 +713,7 @@ static void expect_band_content(UINT uBand, UINT fStyle, COLORREF clrFore,
     expect_eq(rb.cxHeader, cxHeader, int, "%d");
 }
 
-static void bandinfo_test()
+static void bandinfo_test(void)
 {
     REBARBANDINFOA rb;
     CHAR szABC[] = "ABC";

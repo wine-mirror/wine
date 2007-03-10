@@ -139,7 +139,7 @@ static LRESULT WINAPI listview_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     return ret;
 }
 
-static HWND create_listview_control()
+static HWND create_listview_control(void)
 {
     struct subclass_info *info;
     HWND hwnd;
@@ -567,7 +567,7 @@ static LRESULT CALLBACK create_test_wndproc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return CallWindowProc(listviewWndProc, hwnd, uMsg, wParam, lParam);
 }
 
-static void test_create()
+static void test_create(void)
 {
     HWND hList;
     HWND hHeader;

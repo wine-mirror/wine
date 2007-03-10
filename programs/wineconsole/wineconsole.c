@@ -51,7 +51,7 @@ static void printf_res(UINT uResId, ...)
     va_end(args);
 }
 
-static void WINECON_Usage()
+static void WINECON_Usage(void)
 {
     printf_res(IDS_USAGE_HEADER);
     printf_res(IDS_USAGE_BACKEND);

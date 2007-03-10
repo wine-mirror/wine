@@ -552,7 +552,7 @@ static void communicate(SspiData *from, SspiData *to)
 }
 
 /**********************************************************************/
-static void testInitializeSecurityContextFlags()
+static void testInitializeSecurityContextFlags(void)
 {
     SECURITY_STATUS         sec_status;
     PSecPkgInfo             pkg_info = NULL;
@@ -897,7 +897,7 @@ tAuthend:
             getSecError(sec_status));
 }
 
-static void testSignSeal()
+static void testSignSeal(void)
 {
     SECURITY_STATUS         client_stat = SEC_I_CONTINUE_NEEDED;
     SECURITY_STATUS         server_stat = SEC_I_CONTINUE_NEEDED;

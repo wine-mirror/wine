@@ -31,7 +31,7 @@ IDirect3DDevice7    *Direct3DDevice = NULL;
 
 static HRESULT (WINAPI *pDirectDrawCreateEx)(LPGUID,LPVOID*,REFIID,LPUNKNOWN);
 
-static BOOL createObjects()
+static BOOL createObjects(void)
 {
     HRESULT hr;
     HMODULE hmod = GetModuleHandleA("ddraw.dll");
@@ -104,7 +104,7 @@ static BOOL createObjects()
     return FALSE;
 }
 
-static void releaseObjects()
+static void releaseObjects(void)
 {
     IDirect3DDevice7_Release(Direct3DDevice);
     IDirect3D7_Release(Direct3D);

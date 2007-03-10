@@ -298,6 +298,6 @@ LANGID WINAPI MsiGetLanguage(MSIHANDLE);
 
 UINT WINAPI MsiSetInstallLevel(MSIHANDLE, int);
 
-MSIHANDLE WINAPI MsiGetLastErrorRecord();
+MSIHANDLE WINAPI MsiGetLastErrorRecord(void);
 
 #endif /* __WINE_MSIQUERY_H */

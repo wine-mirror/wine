@@ -112,7 +112,7 @@ const char * getDSBCAPS(DWORD xmask) {
     return buffer;
 }
 
-HWND get_hwnd()
+HWND get_hwnd(void)
 {
     HWND hwnd=GetForegroundWindow();
     if (!hwnd)

@@ -1025,7 +1025,7 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(UINT wFormatID)
  *
  * Renders synthesized DIB
  */
-static BOOL X11DRV_CLIPBOARD_RenderSynthesizedDIB()
+static BOOL X11DRV_CLIPBOARD_RenderSynthesizedDIB(void)
 {
     BOOL bret = FALSE;
     LPWINE_CLIPDATA lpSource = NULL;
@@ -1067,7 +1067,7 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedDIB()
  *
  * Renders synthesized bitmap
  */
-static BOOL X11DRV_CLIPBOARD_RenderSynthesizedBitmap()
+static BOOL X11DRV_CLIPBOARD_RenderSynthesizedBitmap(void)
 {
     BOOL bret = FALSE;
     LPWINE_CLIPDATA lpSource = NULL;

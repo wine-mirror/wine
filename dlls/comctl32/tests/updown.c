@@ -198,7 +198,7 @@ static LRESULT WINAPI edit_subclass_proc(HWND hwnd, UINT message, WPARAM wParam,
     return ret;
 }
 
-static HWND create_edit_control()
+static HWND create_edit_control(void)
 {
     struct subclass_info *info;
     RECT rect;
@@ -247,7 +247,7 @@ static LRESULT WINAPI updown_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
     return ret;
 }
 
-static HWND create_updown_control()
+static HWND create_updown_control(void)
 {
     struct subclass_info *info;
     HWND updown;

@@ -116,7 +116,7 @@ static void set_last_error(void)
 static const WCHAR wDevicemapScsi[] = {'H','A','R','D','W','A','R','E','\\','D','E','V','I','C','E','M','A','P','\\','S','c','s','i',0};
 
 /* Exported functions */
-int ASPI_GetNumControllers()
+int ASPI_GetNumControllers(void)
 {
     HKEY hkeyScsi, hkeyPort;
     DWORD i = 0, numPorts, num_ha = 0;

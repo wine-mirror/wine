@@ -673,7 +673,7 @@ HexEdit_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-void HexEdit_Register()
+void HexEdit_Register(void)
 {
     WNDCLASS wndClass;
 
@@ -690,7 +690,7 @@ void HexEdit_Register()
 }
 
 
-void HexEdit_Unregister()
+void HexEdit_Unregister(void)
 {
     UnregisterClass(HEXEDIT_CLASS, NULL);
 }

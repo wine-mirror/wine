@@ -629,7 +629,7 @@ static void init_shell_folder_listview_headers(HWND dialog) {
 }
 
 /* Reads the currently set shell folder symbol link targets into asfiInfo. */
-static void read_shell_folder_link_targets() {
+static void read_shell_folder_link_targets(void) {
     WCHAR wszPath[MAX_PATH];
     HRESULT hr;
     int i;
@@ -763,7 +763,7 @@ static void on_shell_folder_edit_changed(HWND hDlg) {
     SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
 }
 
-static void apply_shell_folder_changes() {
+static void apply_shell_folder_changes(void) {
     WCHAR wszPath[MAX_PATH];
     char szBackupPath[FILENAME_MAX], szUnixPath[FILENAME_MAX], *pszUnixPath = NULL;
     int i, cUnixPathLen;

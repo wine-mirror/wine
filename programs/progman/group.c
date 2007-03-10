@@ -57,7 +57,7 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
  *           GROUP_RegisterGroupWinClass
  */
 
-ATOM GROUP_RegisterGroupWinClass()
+ATOM GROUP_RegisterGroupWinClass(void)
 {
   WNDCLASS class;
 
@@ -80,7 +80,7 @@ ATOM GROUP_RegisterGroupWinClass()
  *           GROUP_NewGroup
  */
 
-VOID GROUP_NewGroup()
+VOID GROUP_NewGroup(void)
 {
   CHAR szName[MAX_PATHNAME_LEN] = "";
   CHAR szFile[MAX_PATHNAME_LEN] = "";
@@ -271,7 +271,7 @@ VOID GROUP_DeleteGroup(HLOCAL hGroup)
  *           GROUP_FirstGroup
  */
 
-HLOCAL GROUP_FirstGroup()
+HLOCAL GROUP_FirstGroup(void)
 {
   return(Globals.hGroups);
 }
@@ -294,7 +294,7 @@ HLOCAL GROUP_NextGroup(HLOCAL hGroup)
  *           GROUP_ActiveGroup
  */
 
-HLOCAL GROUP_ActiveGroup()
+HLOCAL GROUP_ActiveGroup(void)
 {
   return(Globals.hActiveGroup);
 }

@@ -49,7 +49,7 @@ static HWND hEditorWnd;
 static char szFilter[MAX_STRING_LEN];
 
 /* Load string resources */
-static void DoLoadStrings()
+static void DoLoadStrings(void)
 {
     LPSTR p = szFilter;
     char files_rtf[] = "*.rtf";
@@ -176,7 +176,7 @@ static void DoOpenFile(LPCWSTR szFileName)
     SetWindowText(hMainWnd, szCaption);
 }
 
-static void DialogOpenFile()
+static void DialogOpenFile(void)
 {
     OPENFILENAME ofn;
 
@@ -253,7 +253,7 @@ static void HandleCommandLine(LPWSTR cmdline)
         MessageBox(hMainWnd, "Printing not implemented", "WordPad", MB_OK);
 }
 
-static void DoDefaultFont()
+static void DoDefaultFont(void)
 {
     static const WCHAR szFaceName[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
     CHARFORMAT2W fmt;

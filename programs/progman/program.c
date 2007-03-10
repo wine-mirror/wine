@@ -71,7 +71,7 @@ static LRESULT CALLBACK PROGRAM_ProgramWndProc(HWND hWnd, UINT msg, WPARAM wPara
  *           PROGRAM_RegisterProgramWinClass
  */
 
-ATOM PROGRAM_RegisterProgramWinClass()
+ATOM PROGRAM_RegisterProgramWinClass(void)
 {
   WNDCLASS class;
 
