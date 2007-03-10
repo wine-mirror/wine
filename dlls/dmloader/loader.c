@@ -805,7 +805,8 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderImpl (LPCGUID lpcGUID, LPVOID *ppob
 	obj->dwRef = 0; /* will be inited with QueryInterface */
 	/* init critical section */
 	/* init cache/alias list */
-	/*InitializeCriticalSection (&obj->CritSect); */
+	/*InitializeCriticalSection (&obj->CritSect);
+	obj->CritSect.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectMusicLoaderImpl.CritSect"); */
 	obj->pObjects = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(struct list));
 	list_init (obj->pObjects);
 	/* init settings */
@@ -846,7 +847,8 @@ HRESULT WINAPI DMUSIC_DestroyDirectMusicLoaderImpl (LPDIRECTMUSICLOADER8 iface) 
 	IDirectMusicLoader8_ClearCache (iface, &GUID_DirectMusicAllTypes);
 	/* FIXME: release all allocated entries */
 	/* destroy critical section */
-	/*DeleteCriticalSection (&This->CritSect); */
+	/*This->CritSect.DebugInfo->Spare[0] = 0;
+	DeleteCriticalSection (&This->CritSect); */
 	
 	/* decrease number of instances */
 	InterlockedDecrement (&dwDirectMusicLoader);
