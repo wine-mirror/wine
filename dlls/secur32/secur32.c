@@ -543,6 +543,7 @@ static void SECUR32_initializeProviders(void)
 
     TRACE("\n");
     InitializeCriticalSection(&cs);
+    cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
     /* First load built-in providers */
     SECUR32_initSchannelSP();
     /* Do not load Negotiate yet. This breaks for some user on the wine-users
@@ -684,6 +685,7 @@ static void SECUR32_freeProviders(void)
     }
 
     LeaveCriticalSection(&cs);
+    cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&cs);
 }
 
