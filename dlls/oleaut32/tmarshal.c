@@ -441,6 +441,7 @@ TMProxyImpl_Release(LPRPCPROXYBUFFER iface)
     if (!refCount)
     {
         if (This->dispatch_proxy) IRpcProxyBuffer_Release(This->dispatch_proxy);
+        This->crit.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->crit);
         if (This->chanbuf) IRpcChannelBuffer_Release(This->chanbuf);
         VirtualFree(This->asmstubs, 0, MEM_RELEASE);
@@ -1679,6 +1680,7 @@ PSFacBuf_CreateProxy(
     proxy->chanbuf      = 0;
 
     InitializeCriticalSection(&proxy->crit);
+    proxy->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": TMProxyImpl.crit");
 
     proxy->lpvtbl = HeapAlloc(GetProcessHeap(),0,sizeof(LPBYTE)*nroffuncs);
     for (i=0;i<nroffuncs;i++) {
