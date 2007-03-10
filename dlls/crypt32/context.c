@@ -192,6 +192,7 @@ struct ContextList *ContextList_Create(
         list->contextInterface = contextInterface;
         list->contextSize = contextSize;
         InitializeCriticalSection(&list->cs);
+        list->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ContextList.cs");
         list_init(&list->contexts);
     }
     return list;
@@ -303,6 +304,7 @@ void ContextList_Empty(struct ContextList *list)
 void ContextList_Free(struct ContextList *list)
 {
     ContextList_Empty(list);
+    list->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&list->cs);
     CryptMemFree(list);
 }

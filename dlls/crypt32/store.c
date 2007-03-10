@@ -370,6 +370,7 @@ static void WINAPI CRYPT_CollectionCloseStore(HCERTSTORE store, DWORD dwFlags)
         CertCloseStore((HCERTSTORE)entry->store, dwFlags);
         CryptMemFree(entry);
     }
+    cs->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&cs->cs);
     CryptMemFree(cs);
 }
@@ -675,6 +676,7 @@ static WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
             store->hdr.crls.enumContext    = CRYPT_CollectionEnumCRL;
             store->hdr.crls.deleteContext  = CRYPT_CollectionDeleteCRL;
             InitializeCriticalSection(&store->cs);
+            store->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PWINE_COLLECTIONSTORE->cs");
             list_init(&store->stores);
         }
     }
@@ -1225,6 +1227,7 @@ static void WINAPI CRYPT_RegCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 
     CRYPT_RegFlushStore(store, FALSE);
     RegCloseKey(store->key);
+    store->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&store->cs);
     CryptMemFree(store);
 }
@@ -1471,6 +1474,7 @@ static WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv,
                     regInfo->memStore = memStore;
                     regInfo->key = key;
                     InitializeCriticalSection(&regInfo->cs);
+                    regInfo->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PWINE_REGSTOREINFO->cs");
                     list_init(&regInfo->certsToDelete);
                     list_init(&regInfo->crlsToDelete);
                     CRYPT_RegReadFromReg(regInfo);

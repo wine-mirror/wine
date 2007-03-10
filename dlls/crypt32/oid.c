@@ -75,6 +75,7 @@ struct OIDFunction
 static void init_function_sets(void)
 {
     InitializeCriticalSection(&funcSetCS);
+    funcSetCS.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": funcSetCS");
     list_init(&funcSets);
 }
 
@@ -95,9 +96,11 @@ static void free_function_sets(void)
             list_remove(&functionCursor->next);
             CryptMemFree(functionCursor);
         }
+        setCursor->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&setCursor->cs);
         CryptMemFree(setCursor);
     }
+    funcSetCS.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&funcSetCS);
 }
 
@@ -130,6 +133,7 @@ HCRYPTOIDFUNCSET WINAPI CryptInitOIDFunctionSet(LPCSTR pszFuncName,
             if (ret->name)
             {
                 InitializeCriticalSection(&ret->cs);
+                ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": OIDFunctionSet.cs");
                 list_init(&ret->functions);
                 strcpy(ret->name, pszFuncName);
                 list_add_tail(&funcSets, &ret->next);
@@ -1178,6 +1182,7 @@ static void init_oid_info(HINSTANCE hinst)
     DWORD i;
 
     InitializeCriticalSection(&oidInfoCS);
+    oidInfoCS.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": oidInfoCS");
     list_init(&oidInfo);
     for (i = 0; i < sizeof(oidInfoConstructors) /
      sizeof(oidInfoConstructors[0]); i++)
@@ -1250,6 +1255,7 @@ static void free_oid_info(void)
         list_remove(&info->entry);
         CryptMemFree(info);
     }
+    oidInfoCS.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&oidInfoCS);
 }
 
