@@ -76,7 +76,7 @@ static	BOOL	WINMM_CreateIData(HINSTANCE hInstDLL)
 
     WINMM_IData.hWinMM32Instance = hInstDLL;
     InitializeCriticalSection(&WINMM_IData.cs);
-    WINMM_IData.cs.DebugInfo->Spare[0] = (DWORD_PTR)"WINMM_IData";
+    WINMM_IData.cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINE_MM_IDATA.cs");
     WINMM_IData.psStopEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     WINMM_IData.psLastEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     TRACE("Initialized IData (%p)\n", &WINMM_IData);
@@ -94,6 +94,7 @@ static	void WINMM_DeleteIData(void)
      * inside WINMM_IData */
     CloseHandle(WINMM_IData.psStopEvent);
     CloseHandle(WINMM_IData.psLastEvent);
+    WINMM_IData.cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&WINMM_IData.cs);
 }
 
