@@ -62,6 +62,7 @@ struct NBCmdQueue *NBCmdQueueCreate(HANDLE heap)
     {
         queue->heap = heap;
         InitializeCriticalSection(&queue->cs);
+        queue->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": NBCmdQueue.cs");
         queue->head = NULL;
     }
     return queue;
@@ -193,6 +194,7 @@ void NBCmdQueueDestroy(struct NBCmdQueue *queue)
     if (queue)
     {
         NBCmdQueueCancelAll(queue);
+        queue->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&queue->cs);
         HeapFree(queue->heap, 0, queue);
     }

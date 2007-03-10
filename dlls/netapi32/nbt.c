@@ -1050,6 +1050,7 @@ static UCHAR NetBTCall(void *adapt, PNCB ncb, void **sess)
                     {
                         session->fd = fd;
                         InitializeCriticalSection(&session->cs);
+                        session->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": NetBTSession.cs");
                         *sess = session;
                     }
                     else
@@ -1243,6 +1244,7 @@ static UCHAR NetBTHangup(void *adapt, void *sess)
     closesocket(session->fd);
     session->fd = INVALID_SOCKET;
     session->bytesPending = 0;
+    session->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&session->cs);
     HeapFree(GetProcessHeap(), 0, session);
 

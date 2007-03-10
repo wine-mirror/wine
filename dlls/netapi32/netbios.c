@@ -104,6 +104,7 @@ void NetBIOSInit(void)
 {
     memset(&gNBTable, 0, sizeof(gNBTable));
     InitializeCriticalSection(&gNBTable.cs);
+    gNBTable.cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": NetBIOSAdapterTable.cs");
 }
 
 void NetBIOSShutdown(void)
@@ -122,6 +123,7 @@ void NetBIOSShutdown(void)
         if (gTransports[i].transport.cleanup)
             gTransports[i].transport.cleanup();
     LeaveCriticalSection(&gNBTable.cs);
+    gNBTable.cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&gNBTable.cs);
     HeapFree(GetProcessHeap(), 0, gNBTable.table);
 }
@@ -210,6 +212,7 @@ BOOL NetBIOSRegisterAdapter(ULONG transport, DWORD ifIndex, void *data)
             gNBTable.table[i].impl.data = data;
             gNBTable.table[i].cmdQueue = NBCmdQueueCreate(GetProcessHeap());
             InitializeCriticalSection(&gNBTable.table[i].cs);
+            gNBTable.table[i].cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": NetBIOSAdapterTable.NetBIOSAdapter.cs");
             gNBTable.table[i].enabled = TRUE;
             ret = TRUE;
         }
@@ -246,6 +249,7 @@ static void nbShutdownAdapter(NetBIOSAdapter *adapter)
         if (adapter->transport->cleanupAdapter)
             adapter->transport->cleanupAdapter(adapter->impl.data);
         NBCmdQueueDestroy(adapter->cmdQueue);
+        adapter->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&adapter->cs);
         memset(adapter, 0, sizeof(NetBIOSAdapter));
     }

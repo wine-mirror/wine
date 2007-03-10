@@ -104,6 +104,7 @@ struct NBNameCache *NBNameCacheCreate(HANDLE heap, DWORD entryExpireTimeMS)
     {
         cache->heap = heap;
         InitializeCriticalSection(&cache->cs);
+        cache->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": NBNameCache.cs");
         cache->entryExpireTimeMS = entryExpireTimeMS;
         cache->head = NULL;
     }
@@ -204,6 +205,7 @@ void NBNameCacheDestroy(struct NBNameCache *cache)
 {
     if (cache)
     {
+        cache->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&cache->cs);
         while (cache->head)
             NBNameCacheUnlinkNode(cache, &cache->head);
