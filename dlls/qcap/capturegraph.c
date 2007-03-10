@@ -105,6 +105,7 @@ IUnknown * CALLBACK QCAP_createCaptureGraphBuilder2(IUnknown *pUnkOuter,
         pCapture->ref = 1;
         pCapture->mygraph = NULL;
         InitializeCriticalSection(&pCapture->csFilter);
+        pCapture->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": CaptureGraphImpl.csFilter");
         *phr = S_OK;
         ObjectRefCount(TRUE);
     }
@@ -160,6 +161,7 @@ fnCaptureGraphBuilder2_Release(ICaptureGraphBuilder2 * iface)
     if (!ref)
     {
         FIXME("Release IGraphFilter or w/e\n");
+        This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
         This->lpVtbl = NULL;
         This->lpVtbl2 = NULL;
