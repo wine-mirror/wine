@@ -58,6 +58,7 @@ void init_handle_table(HANDLETABLE *lpTable)
     lpTable->iEntries = 0;
     lpTable->iFirstFree = 0;
     InitializeCriticalSection(&lpTable->mutex);
+    lpTable->mutex.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": HANDLETABLE.mutex");
 }
 
 /******************************************************************************
@@ -76,6 +77,7 @@ void destroy_handle_table(HANDLETABLE *lpTable)
     TRACE("(lpTable=%p)\n", lpTable);
         
     HeapFree(GetProcessHeap(), 0, lpTable->paEntries);
+    lpTable->mutex.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&lpTable->mutex);
 }
 
