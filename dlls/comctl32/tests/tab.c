@@ -1,6 +1,7 @@
 /* Unit test suite for tab control.
  *
  * Copyright 2003 Vitaliy Margolen
+ * Copyright 2007 Hagop Hagopian
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +21,7 @@
 #include <assert.h>
 #include <windows.h>
 #include <commctrl.h>
+#include <stdio.h>
 
 #include "wine/test.h"
 
@@ -27,6 +29,11 @@
 #define TAB_DEFAULT_WIDTH 96
 #define TAB_PADDING_X 6
 #define EXTRA_ICON_PADDING 3
+#define MAX_TABLEN 32
+
+#define expect(expected, got) ok ( expected == got, "Expected %d, got %d\n", expected, got)
+#define expect_str(expected, got)\
+ ok ( strcmp(expected, got) == 0, "Expected '%s', got '%s'\n", expected, got)
 
 #define TabWidthPadded(padd_x, num) (DEFAULT_MIN_TAB_WIDTH - (TAB_PADDING_X - (padd_x)) * num)
 
@@ -92,6 +99,87 @@ create_tabcontrol (DWORD style, DWORD mask)
     }
 
     return handle;
+}
+
+static HWND createFilledTabControl(DWORD style, DWORD mask, INT nTabs)
+{
+    HWND tabHandle;
+    TCITEM tcNewTab;
+    INT i;
+
+    tabHandle = CreateWindow (
+        WC_TABCONTROLA,
+        "TestTab",
+        WS_CLIPSIBLINGS | WS_CLIPCHILDREN | TCS_FOCUSNEVER | style,
+        0, 0, 300, 100,
+        NULL, NULL, NULL, 0);
+
+    assert(tabHandle);
+
+    SetWindowLong(tabHandle, GWL_STYLE, WS_CLIPSIBLINGS | WS_CLIPCHILDREN | TCS_FOCUSNEVER | style);
+    SendMessage (tabHandle, WM_SETFONT, 0, (LPARAM) hFont);
+
+    tcNewTab.mask = mask;
+
+    for (i = 0; i < nTabs; i++)
+    {
+        char tabName[MAX_TABLEN];
+
+        sprintf(tabName, "Tab %d", i+1);
+        tcNewTab.pszText = tabName;
+        tcNewTab.iImage = i;
+        SendMessage (tabHandle, TCM_INSERTITEM, i, (LPARAM) &tcNewTab);
+    }
+
+    if (winetest_interactive)
+    {
+        ShowWindow (tabHandle, SW_SHOW);
+        RedrawWindow (tabHandle, NULL, 0, RDW_UPDATENOW);
+        Sleep (1000);
+    }
+
+    return tabHandle;
+}
+
+static HWND create_tooltip (HWND hTab, char toolTipText[])
+{
+    HWND hwndTT;
+
+    TOOLINFO ti;
+    LPTSTR lptstr = toolTipText;
+    RECT rect;
+
+    /* Creating a tooltip window*/
+    hwndTT = CreateWindowEx(
+        WS_EX_TOPMOST,
+        TOOLTIPS_CLASS,
+        NULL,
+        WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        hTab, NULL, 0, NULL);
+
+    SetWindowPos(
+        hwndTT,
+        HWND_TOPMOST,
+        0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+    GetClientRect (hTab, &rect);
+
+    /* Initialize members of toolinfo*/
+    ti.cbSize = sizeof(TOOLINFO);
+    ti.uFlags = TTF_SUBCLASS;
+    ti.hwnd = hTab;
+    ti.hinst = 0;
+    ti.uId = 0;
+    ti.lpszText = lptstr;
+
+    ti.rect = rect;
+
+    /* Add toolinfo structure to the tooltip control */
+    SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
+
+    return hwndTT;
 }
 
 static void test_tab(INT nMinTabWidth)
@@ -223,6 +311,167 @@ static void test_tab(INT nMinTabWidth)
     DeleteObject(hFont);
 }
 
+static void test_getters_setters(INT nTabs)
+{
+    HWND hTab;
+    RECT rTab;
+    INT nTabsRetrieved;
+    INT rowCount;
+
+    hTab = createFilledTabControl(TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, nTabs);
+    ok(hTab != NULL, "Failed to create tab control\n");
+
+    todo_wine{
+        expect(DEFAULT_MIN_TAB_WIDTH, (int)SendMessage(hTab, TCM_SETMINTABWIDTH, 0, -1));
+    }
+    /* Testing GetItemCount */
+    nTabsRetrieved = SendMessage(hTab, TCM_GETITEMCOUNT, 0, 0);
+    expect(nTabs, nTabsRetrieved);
+
+    /* Testing GetRowCount */
+    rowCount = SendMessage(hTab, TCM_GETROWCOUNT, 0, 0);
+    expect(1, rowCount);
+
+    /* Testing GetItemRect */
+    ok(SendMessage(hTab, TCM_GETITEMRECT, 0, (LPARAM) &rTab), "GetItemRect failed.\n");
+    CheckSize(hTab, TAB_DEFAULT_WIDTH, -1 , "Default Width");
+
+    /* Testing CurFocus */
+    {
+        INT focusIndex;
+
+        /* Testing CurFocus with largest appropriate value */
+        SendMessage(hTab, TCM_SETCURFOCUS, nTabs-1, 0);
+        focusIndex = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
+            expect(nTabs-1, focusIndex);
+
+        /* Testing CurFocus with negative value */
+        SendMessage(hTab, TCM_SETCURFOCUS, -10, 0);
+        focusIndex = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
+        todo_wine{
+            expect(-1, focusIndex);
+        }
+
+        /* Testing CurFocus with value larger than number of tabs */
+        focusIndex = SendMessage(hTab, TCM_SETCURSEL, 1, 0);
+        todo_wine{
+            expect(-1, focusIndex);
+        }
+        SendMessage(hTab, TCM_SETCURFOCUS, nTabs+1, 0);
+        focusIndex = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
+        todo_wine{
+            expect(1, focusIndex);
+        }
+    }
+
+    /* Testing CurSel */
+    {
+        INT selectionIndex;
+
+        /* Testing CurSel with largest appropriate value */
+        selectionIndex = SendMessage(hTab, TCM_SETCURSEL, nTabs-1, 0);
+            expect(1, selectionIndex);
+        selectionIndex = SendMessage(hTab, TCM_GETCURSEL, 0, 0);
+            expect(nTabs-1, selectionIndex);
+
+        /* Testing CurSel with negative value */
+        SendMessage(hTab, TCM_SETCURSEL, -10, 0);
+        selectionIndex = SendMessage(hTab, TCM_GETCURSEL, 0, 0);
+        todo_wine{
+            expect(-1, selectionIndex);
+        }
+
+        /* Testing CurSel with value larger than number of tabs */
+        selectionIndex = SendMessage(hTab, TCM_SETCURSEL, 1, 0);
+        todo_wine{
+            expect(-1, selectionIndex);
+        }
+        selectionIndex = SendMessage(hTab, TCM_SETCURSEL, nTabs+1, 0);
+            expect(-1, selectionIndex);
+        selectionIndex = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
+        todo_wine{
+            expect(1, selectionIndex);
+        }
+    }
+
+    /* Testing ExtendedStyle */
+    {
+        DWORD prevExtendedStyle;
+        DWORD extendedStyle;
+
+        /* Testing Flat Seperators */
+        extendedStyle = SendMessage(hTab, TCM_GETEXTENDEDSTYLE, 0, 0);
+        prevExtendedStyle = SendMessage(hTab, TCM_SETEXTENDEDSTYLE, 0, TCS_EX_FLATSEPARATORS);
+            expect(extendedStyle, prevExtendedStyle);
+
+        extendedStyle = SendMessage(hTab, TCM_GETEXTENDEDSTYLE, 0, 0);
+        todo_wine{
+            expect(TCS_EX_FLATSEPARATORS, extendedStyle);
+        }
+
+        /* Testing Register Drop */
+        prevExtendedStyle = SendMessage(hTab, TCM_SETEXTENDEDSTYLE, 0, TCS_EX_REGISTERDROP);
+            expect(extendedStyle, prevExtendedStyle);
+
+        extendedStyle = SendMessage(hTab, TCM_GETEXTENDEDSTYLE, 0, 0);
+        todo_wine{
+            expect(TCS_EX_REGISTERDROP, extendedStyle);
+        }
+    }
+
+    /* Testing UnicodeFormat */
+    {
+        INT unicodeFormat;
+
+        unicodeFormat = SendMessage(hTab, TCM_SETUNICODEFORMAT, TRUE, 0);
+        todo_wine{
+            expect(0, unicodeFormat);
+        }
+        unicodeFormat = SendMessage(hTab, TCM_GETUNICODEFORMAT, 0, 0);
+            expect(1, unicodeFormat);
+
+        unicodeFormat = SendMessage(hTab, TCM_SETUNICODEFORMAT, FALSE, 0);
+            expect(1, unicodeFormat);
+        unicodeFormat = SendMessage(hTab, TCM_GETUNICODEFORMAT, 0, 0);
+            expect(0, unicodeFormat);
+
+        unicodeFormat = SendMessage(hTab, TCM_SETUNICODEFORMAT, TRUE, 0);
+            expect(0, unicodeFormat);
+    }
+
+    /* Testing GetSet Item */
+    {
+        TCITEM tcItem;
+        char szText[32] = "New Label";
+
+        tcItem.mask = TCIF_TEXT;
+        tcItem.pszText = &szText[0];
+        tcItem.cchTextMax = sizeof(szText);
+
+        ok ( SendMessage(hTab, TCM_SETITEM, 0, (LPARAM) &tcItem), "Setting new item failed.\n");
+        ok ( SendMessage(hTab, TCM_GETITEM, 0, (LPARAM) &tcItem), "Getting item failed.\n");
+        expect_str("New Label", tcItem.pszText);
+
+        ok ( SendMessage(hTab, TCM_GETITEM, 1, (LPARAM) &tcItem), "Getting item failed.\n");
+        expect_str("Tab 2", tcItem.pszText);
+    }
+
+    /* Testing GetSet ToolTip */
+    {
+        HWND toolTip;
+        char toolTipText[32] = "ToolTip Text Test";
+
+        toolTip = create_tooltip(hTab, toolTipText);
+        SendMessage(hTab, TCM_SETTOOLTIPS, (LPARAM) toolTip, 0);
+        ok (toolTip == (HWND) SendMessage(hTab,TCM_GETTOOLTIPS,0,0), "ToolTip was set incorrectly.");
+
+        SendMessage(hTab, TCM_SETTOOLTIPS, (LPARAM) NULL, 0);
+        ok (NULL  == (HWND) SendMessage(hTab,TCM_GETTOOLTIPS,0,0), "ToolTip was set incorrectly.");
+    }
+
+    DestroyWindow(hTab);
+}
+
 START_TEST(tab)
 {
     LOGFONTA logfont;
@@ -246,4 +495,7 @@ START_TEST(tab)
     test_tab(54);
     trace ("Testing with MinWidth set to 94\n");
     test_tab(94);
+
+    /* Testing getters and setters with 5 tabs */
+    test_getters_setters(5);
 }
