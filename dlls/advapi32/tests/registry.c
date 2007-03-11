@@ -33,6 +33,22 @@ static DWORD GLE;
 static const char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
 static const char * sTestpath2 = "%FOO%\\subdir1";
 
+static HMODULE hadvapi32;
+static DWORD (WINAPI *pRegGetValueA)(HKEY,LPCSTR,LPCSTR,DWORD,LPDWORD,PVOID,LPDWORD);
+
+#define ADVAPI32_GET_PROC(func) \
+    p ## func = (void*)GetProcAddress(hadvapi32, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
+
+static void InitFunctionPtrs(void)
+{
+    hadvapi32 = GetModuleHandleA("advapi32.dll");
+
+    /* This function was introduced with Windows 2003 SP1 */
+    ADVAPI32_GET_PROC(RegGetValueA)
+}
+
 /* delete key and all its subkeys */
 static DWORD delete_key( HKEY hkey )
 {
@@ -360,9 +376,6 @@ static void test_query_value_ex(void)
 
 static void test_get_value(void)
 {
-    HMODULE hadvapi32;
-    DWORD (WINAPI *pRegGetValueA)(HKEY,LPCSTR,LPCSTR,DWORD,LPDWORD,PVOID,LPDWORD);
-    
     DWORD ret;
     DWORD size;
     DWORD type;
@@ -370,16 +383,11 @@ static void test_get_value(void)
     CHAR buf[80];
     CHAR expanded[] = "bar\\subdir1";
    
-    /* This function was introduced with Windows 2003 SP1 */
-    hadvapi32 = LoadLibraryA("advapi32.dll");
-    if(!hadvapi32) 
+    if(!pRegGetValueA)
     {
-        ok(0, "error=%d\n", GetLastError());
+        skip("RegGetValue not available on this platform\n");
         return;
     }
-    pRegGetValueA = (PVOID)GetProcAddress(hadvapi32, "RegGetValueA");
-    if(!pRegGetValueA) 
-        return;
 
     /* Query REG_DWORD using RRF_RT_REG_DWORD (ok) */
     size = type = dw = 0xdeadbeef;
@@ -860,6 +868,9 @@ static void test_reg_query_value(void)
 
 START_TEST(registry)
 {
+    /* Load pointers for functions that are not available in all Windows versions */
+    InitFunctionPtrs();
+
     setup_main_key();
     test_set_value();
     create_test_entries();
