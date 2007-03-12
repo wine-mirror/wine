@@ -2234,8 +2234,10 @@ LONG WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInformati
 
     /* FIXME: Check for valid SecurityInformation values */
 
-    if (*lpcbSecurityDescriptor < sizeof(SECURITY_DESCRIPTOR))
+    if (*lpcbSecurityDescriptor < sizeof(SECURITY_DESCRIPTOR)) {
+	*lpcbSecurityDescriptor = sizeof(SECURITY_DESCRIPTOR);
         return ERROR_INSUFFICIENT_BUFFER;
+    }
 
     FIXME("(%p,%d,%p,%d): stub\n",hkey,SecurityInformation,
           pSecurityDescriptor,lpcbSecurityDescriptor?*lpcbSecurityDescriptor:0);
@@ -2243,6 +2245,7 @@ LONG WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInformati
     /* Do not leave security descriptor filled with garbage */
     RtlCreateSecurityDescriptor(pSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
+    *lpcbSecurityDescriptor = sizeof(SECURITY_DESCRIPTOR);
     return ERROR_SUCCESS;
 }
 
