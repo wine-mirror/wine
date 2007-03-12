@@ -28,6 +28,8 @@
 
 #include "wine/test.h"
 
+#define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
+
 static void test_logpen(void)
 {
     static const struct
@@ -427,7 +429,61 @@ else
     }
 }
 
+static unsigned int atoi2(const char *s)
+{
+    unsigned int ret = 0;
+    while(*s) ret = (ret << 1) | (*s++ == '1');
+    return ret;
+}
+
+#define TEST_LINE(x1, x2, z) \
+    { int buf = 0; \
+      SetBitmapBits(bmp, sizeof(buf), &buf); \
+      MoveToEx(hdc, x1, 0, NULL); \
+      LineTo(hdc, x2, 0); \
+      GetBitmapBits(bmp, sizeof(buf), &buf); \
+      expect(atoi2(z), buf); }
+
+static void test_ps_alternate(void)
+{
+    HDC hdc;
+    HBITMAP bmp;
+    HPEN pen;
+    LOGBRUSH lb;
+
+    lb.lbStyle = BS_SOLID;
+    lb.lbColor = RGB(0xff,0xff,0xff);
+
+    SetLastError(0xdeadbeef);
+    pen = ExtCreatePen(PS_COSMETIC|PS_ALTERNATE, 1, &lb, 0, NULL);
+    if(pen == NULL && GetLastError() == 0xdeadbeef) {
+        skip("looks like 9x, skipping PS_ALTERNATE tests\n");
+        return;
+    }
+    ok(pen != NULL, "gle=%d\n", GetLastError());
+    hdc = CreateCompatibleDC(NULL);
+    ok(hdc != NULL, "gle=%d\n", GetLastError());
+    bmp = CreateBitmap(8, 1, 1, 1, NULL);
+    ok(bmp != NULL, "gle=%d\n", GetLastError());
+    ok(SelectObject(hdc, bmp) != NULL, "gle=%d\n", GetLastError());
+    ok(SelectObject(hdc, pen) != NULL, "gle=%d\n", GetLastError());
+    ok(SetBkMode(hdc, TRANSPARENT), "gle=%d\n", GetLastError());
+
+    TEST_LINE(0, 1, "10000000")
+    TEST_LINE(0, 2, "10000000")
+    TEST_LINE(0, 3, "10100000")
+    TEST_LINE(0, 4, "10100000")
+    TEST_LINE(1, 4, "01010000")
+    TEST_LINE(1, 5, "01010000")
+    TEST_LINE(4, 8, "00001010")
+
+    DeleteObject(pen);
+    DeleteObject(bmp);
+    DeleteDC(hdc);
+}
+
 START_TEST(pen)
 {
     test_logpen();
+    test_ps_alternate();
 }
