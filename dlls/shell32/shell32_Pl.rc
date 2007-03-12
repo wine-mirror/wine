@@ -105,6 +105,19 @@ FONT 8, "MS Shell Dlg"
 	4, 40, 180, 120
 }
 
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Komunikat"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Tak", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Tak na &wszystkie", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Nie", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Anuluj", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "O %s"
@@ -173,12 +186,12 @@ STRINGTABLE DISCARDABLE
 	IDS_TRASHFOLDER_TEXT "Czy jesteœ pewien, ¿e chcesz umieœciæ folder '%1' i ca³¹ jego zawartoœæ w koszu"
 	IDS_TRASHMULTIPLE_TEXT "Elementów: %1 - czy na pewno chcesz je umieœciæ w Koszu?"
 	IDS_CANTTRASH_TEXT "Nie mogê przenieœæ elementu '%1' do Kosza. Czy chcesz go zamiast tego usun¹æ?"
-	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
+	IDS_OVERWRITEFILE_TEXT "Ten folder ju¿ zawiera plik o nazwie '%1'.\n\nCzy chcesz go zast¹piæ?"
 	IDS_OVERWRITEFILE_CAPTION "PotwierdŸ zast¹pienie pliku"
-	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
-	    "If the files in the destination folder have the same names as files in the\n"\
-	    "selected folder they will be replaced. Do you still want to move or copy\n"\
-	    "the folder?"
+	IDS_OVERWRITEFOLDER_TEXT "Ten folder ju¿ zawiera folder o nazwie '%1'.\n\n"\
+	    "Je¿eli w docelowym folderze wyst¹pi¹ pliki o takich samych nazwach jak\n"\
+	    "w wybranym folderze, to zostan¹ one zast¹pione. Czy chcesz mimo to przenieœæ\n"\
+	    "lub skopiowaæ folder?"
 
         /* message box strings */
         IDS_RESTART_TITLE       "Uruchom ponownie"
