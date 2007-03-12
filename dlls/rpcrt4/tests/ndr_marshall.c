@@ -984,6 +984,121 @@ todo_wine {
     /* NdrFree isn't exported so we can't test free'ing */
 }
 
+static void test_conformant_array(void)
+{
+    RPC_MESSAGE RpcMessage;
+    MIDL_STUB_MESSAGE StubMsg;
+    MIDL_STUB_DESC StubDesc;
+    void *ptr;
+    unsigned char *mem, *mem_orig;
+    unsigned char memsrc[20];
+
+    static const unsigned char fmtstr_conf_array[] =
+    {
+        0x1b,              /* FC_CARRAY */
+        0x0,               /* align */
+        NdrFcShort( 0x1 ), /* elem size */
+        0x40,              /* Corr desc:  const */
+        0x0,
+        NdrFcShort(0x10),  /* const = 0x10 */
+        0x1,               /* FC_BYTE */
+        0x5b               /* FC_END */
+    };
+
+    StubDesc = Object_StubDesc;
+    StubDesc.pFormatTypes = fmtstr_conf_array;
+
+    NdrClientInitializeNew(
+                           &RpcMessage,
+                           &StubMsg,
+                           &StubDesc,
+                           0);
+
+    StubMsg.BufferLength = 0;
+    NdrConformantArrayBufferSize( &StubMsg,
+                          memsrc,
+                          fmtstr_conf_array );
+    ok(StubMsg.BufferLength >= 20, "length %d\n", StubMsg.BufferLength);
+
+    /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
+    StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
+
+    ptr = NdrConformantArrayMarshall( &StubMsg,  memsrc, fmtstr_conf_array );
+    ok(ptr == NULL, "ret %p\n", ptr);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == 20, "Buffer %p Start %p len %d\n", StubMsg.Buffer, StubMsg.BufferStart, 20);
+    ok(!memcmp(StubMsg.BufferStart + 4, memsrc, 16), "incorrectly marshaled\n");
+
+    StubMsg.Buffer = StubMsg.BufferStart;
+    StubMsg.MemorySize = 0;
+    mem = NULL;
+
+    /* Client */
+    my_alloc_called = 0;
+    /* passing mem == NULL with must_alloc == 0 crashes under Windows */
+    NdrConformantArrayUnmarshall( &StubMsg, &mem, fmtstr_conf_array, 1);
+    ok(mem != NULL, "mem not alloced\n");
+    ok(mem != StubMsg.BufferStart + 4, "mem pointing at buffer\n");
+    ok(my_alloc_called == 1, "alloc called %d\n", my_alloc_called);
+
+    my_alloc_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    mem_orig = mem;
+    NdrConformantArrayUnmarshall( &StubMsg, &mem, fmtstr_conf_array, 0);
+    ok(mem == mem_orig, "mem alloced\n");
+    ok(mem != StubMsg.BufferStart + 4, "mem pointing at buffer\n");
+    ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
+
+    my_alloc_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrConformantArrayUnmarshall( &StubMsg, &mem, fmtstr_conf_array, 1);
+    ok(mem != mem_orig, "mem not alloced\n");
+    ok(mem != StubMsg.BufferStart + 4, "mem pointing at buffer\n");
+    ok(my_alloc_called == 1, "alloc called %d\n", my_alloc_called);
+
+    my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrConformantArrayFree( &StubMsg, mem, fmtstr_conf_array );
+    ok(my_free_called == 0, "free called %d\n", my_free_called);
+    StubMsg.pfnFree(mem);
+
+    /* Server */
+    my_alloc_called = 0;
+    StubMsg.IsClient = 0;
+    mem = NULL;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrConformantArrayUnmarshall( &StubMsg, &mem, fmtstr_conf_array, 0);
+todo_wine {
+    ok(mem == StubMsg.BufferStart + 4, "mem not pointing at buffer\n");
+    ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
+}
+    my_alloc_called = 0;
+    mem = NULL;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrConformantArrayUnmarshall( &StubMsg, &mem, fmtstr_conf_array, 1);
+    ok(mem != StubMsg.BufferStart + 4, "mem pointing at buffer\n");
+    ok(my_alloc_called == 1, "alloc called %d\n", my_alloc_called);
+    StubMsg.pfnFree(mem);
+
+    my_alloc_called = 0;
+    mem = mem_orig;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrConformantArrayUnmarshall( &StubMsg, &mem, fmtstr_conf_array, 0);
+    ok(mem == mem_orig, "mem alloced\n");
+    ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
+
+    my_alloc_called = 0;
+    mem = mem_orig;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    NdrConformantArrayUnmarshall( &StubMsg, &mem, fmtstr_conf_array, 1);
+    ok(mem != StubMsg.BufferStart + 4, "mem pointing at buffer\n");
+    ok(my_alloc_called == 1, "alloc called %d\n", my_alloc_called);
+    StubMsg.pfnFree(mem);
+    StubMsg.pfnFree(mem_orig);
+
+    HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
+}
+
 START_TEST( ndr_marshall )
 {
     test_ndr_simple_type();
@@ -992,4 +1107,5 @@ START_TEST( ndr_marshall )
     test_fullpointer_xlat();
     test_client_init();
     test_ndr_allocate();
+    test_conformant_array();
 }
