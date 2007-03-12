@@ -623,8 +623,18 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             return WINED3DERR_INVALIDCALL;
         }
 
-        if (This->resource.format == WINED3DFMT_DXT1) { /* DXT1 is half byte per pixel */
-            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel / 2));
+        /* DXTn textures are based on compressed blocks of 4x4 pixels, each
+         * 16 bytes large (8 bytes in case of DXT1). Because of that Pitch has
+         * slightly different meaning compared to regular textures. For DXTn
+         * textures Pitch is the size of a row of blocks, 4 high and "width"
+         * long. The x offset is calculated differently as well, since moving 4
+         * pixels to the right actually moves an entire 4x4 block to right, ie
+         * 16 bytes (8 in case of DXT1). */
+        if (This->resource.format == WINED3DFMT_DXT1) {
+            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top / 4) + (pRect->left * 2);
+        } else if (This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3
+                || This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
+            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top / 4) + (pRect->left * 4);
         } else {
             pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
         }

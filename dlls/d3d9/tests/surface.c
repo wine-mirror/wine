@@ -218,7 +218,7 @@ static void test_lockrect_offset(IDirect3DDevice9 *device)
         offset = (BYTE *)locked_rect.pBits - base;
         expected_offset = (rect.top / dxt_formats[i].block_height) * locked_rect.Pitch
                         + (rect.left / dxt_formats[i].block_width) * dxt_formats[i].block_size;
-        todo_wine ok(offset == expected_offset, "Got offset %u, expected offset %u for format %s\n", offset, expected_offset, dxt_formats[i].name);
+        ok(offset == expected_offset, "Got offset %u, expected offset %u for format %s\n", offset, expected_offset, dxt_formats[i].name);
 
         hr = IDirect3DSurface9_UnlockRect(surface);
         ok(SUCCEEDED(hr), "UnlockRect failed (%08x)\n", hr);
