@@ -1145,18 +1145,15 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
  * IWineD3DVertexDeclaration implementation structure
  */
 typedef struct IWineD3DVertexDeclarationImpl {
- /* IUnknown  Information     */
-  const IWineD3DVertexDeclarationVtbl *lpVtbl;
-  LONG                    ref;     /* Note: Ref counting not required */
+    /* IUnknown  Information */
+    const IWineD3DVertexDeclarationVtbl *lpVtbl;
+    LONG                    ref;
 
-  IUnknown               *parent;
-  /** precomputed fvf if simple declaration */
-  IWineD3DDeviceImpl     *wineD3DDevice;
-  DWORD   fvf[MAX_STREAMS];
-  DWORD   allFVF;
+    IUnknown                *parent;
+    IWineD3DDeviceImpl      *wineD3DDevice;
 
-  WINED3DVERTEXELEMENT  *pDeclarationWine;
-  UINT                   declarationWNumElements;
+    WINED3DVERTEXELEMENT    *pDeclarationWine;
+    UINT                    declarationWNumElements;
 } IWineD3DVertexDeclarationImpl;
 
 extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;

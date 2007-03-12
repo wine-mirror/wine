@@ -1548,7 +1548,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice*
             This, ((IWineD3DImpl *)This->wineD3D)->dxVersion, elements, element_count, ppVertexDeclaration);
 
     D3DCREATEOBJECTINSTANCE(object, VertexDeclaration)
-    object->allFVF = 0;
 
     hr = IWineD3DVertexDeclaration_SetDeclaration((IWineD3DVertexDeclaration *)object, elements, element_count);
 
