@@ -172,7 +172,6 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
         return FALSE;
     }
 
-    memset(&strided, 0, sizeof(strided));
     /* There are certain vertex data types that need to be fixed up. The Vertex Buffers FVF doesn't
      * help finding them, only the vertex declaration or the device FVF can determine that at drawPrim
      * time. Rules are as follows:
@@ -210,12 +209,6 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
         if(strided.u.s.specular.VBO != This->vbo)    memset(&strided.u.s.specular, 0, sizeof(strided.u.s.specular));
         if(strided.u.s.position2.VBO != This->vbo)   memset(&strided.u.s.position2, 0, sizeof(strided.u.s.position2));
     }
-
-    /* Filter out data that does not come from this VBO */
-    if(strided.u.s.position.VBO != This->vbo)    memset(&strided.u.s.position, 0, sizeof(strided.u.s.position));
-    if(strided.u.s.diffuse.VBO != This->vbo)     memset(&strided.u.s.diffuse, 0, sizeof(strided.u.s.diffuse));
-    if(strided.u.s.specular.VBO != This->vbo)    memset(&strided.u.s.specular, 0, sizeof(strided.u.s.specular));
-    if(strided.u.s.position2.VBO != This->vbo)   memset(&strided.u.s.position2, 0, sizeof(strided.u.s.position2));
 
     /* We have a declaration now in the buffer */
     This->Flags |= VBFLAG_HASDESC;
