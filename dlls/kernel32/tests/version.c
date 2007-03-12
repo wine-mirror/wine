@@ -49,7 +49,11 @@ START_TEST(version)
     BOOL ret;
 
     init_function_pointers();
-    if(!pVerifyVersionInfoA || !pVerSetConditionMask) return;
+    if(!pVerifyVersionInfoA || !pVerSetConditionMask)
+    {
+        skip("Needed functions not available\n");
+        return;
+    }
 
     ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION,
         pVerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL));
