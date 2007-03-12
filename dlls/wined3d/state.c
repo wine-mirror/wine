@@ -1173,7 +1173,7 @@ static void state_pointsprite(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         val = GL_FALSE;
     }
 
-    for (i = 0; i < GL_LIMITS(texture_stages); i++) {
+    for (i = 0; i < GL_LIMITS(textures); i++) {
         /* Note the WINED3DRS value applies to all textures, but GL has one
          * per texture, so apply it now ready to be used!
          */
@@ -1496,7 +1496,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
     if (mapped_stage != -1) {
         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            if (mapped_stage >= GL_LIMITS(sampler_stages)) {
+            if (mapped_stage >= GL_LIMITS(textures)) {
                 if (stateblock->textureState[stage][WINED3DTSS_COLOROP] != WINED3DTOP_DISABLE &&
                         stateblock->textureState[stage][WINED3DTSS_COLOROP] != 0) {
                     FIXME("Attempt to enable unsupported stage!\n");
@@ -1569,7 +1569,7 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     /* Do not care for enabled / disabled stages, just assign the settigns. colorop disables / enables required stuff */
     if (mapped_stage != -1) {
         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            if (stage >= GL_LIMITS(sampler_stages)) {
+            if (stage >= GL_LIMITS(textures)) {
                 if (stateblock->textureState[stage][WINED3DTSS_COLOROP] != WINED3DTOP_DISABLE &&
                         stateblock->textureState[stage][WINED3DTSS_COLOROP] != 0) {
                     FIXME("Attempt to enable unsupported stage!\n");
@@ -1625,14 +1625,17 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
 static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD texUnit = state - STATE_TRANSFORM(WINED3DTS_TEXTURE0);
+    DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[texUnit];
+
+    if (mapped_stage < 0) return;
 
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        if(texUnit >= GL_LIMITS(sampler_stages)) {
+        if(mapped_stage >= GL_LIMITS(textures)) {
             return;
         }
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stateblock->wineD3DDevice->texUnitMap[texUnit]));
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
         checkGLcall("glActiveTextureARB");
-    } else if (texUnit > 0) {
+    } else if (mapped_stage > 0) {
         /* We can't do anything here */
         WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
         return;
@@ -1656,7 +1659,7 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     }
 
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        if(stage >= GL_LIMITS(sampler_stages)) {
+        if(mapped_stage >= GL_LIMITS(samplers)) {
             return;
         }
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
@@ -1881,7 +1884,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
     }
 
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        if(sampler >= GL_LIMITS(sampler_stages)) {
+        if (mapped_stage >= GL_LIMITS(samplers)) {
             return;
         }
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));

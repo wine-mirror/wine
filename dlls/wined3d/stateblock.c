@@ -1062,7 +1062,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
        then the default texture will kick in until replaced by a SetTexture call     */
     ENTER_GL();
 
-    for (i = 0; i < GL_LIMITS(texture_stages); i++) {
+    for (i = 0; i < GL_LIMITS(textures); i++) {
         GLubyte white = 255;
 
         /* Note this avoids calling settexture, so pretend it has been called */
