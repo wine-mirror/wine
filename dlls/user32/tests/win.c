@@ -4139,7 +4139,7 @@ static void test_ShowWindow(void)
     ok(!IsWindow(hwnd), "window should not exist\n");
 }
 
-void test_gettext(void)
+static void test_gettext(void)
 {
     WNDCLASS cls;
     LPCSTR clsname = "gettexttest";

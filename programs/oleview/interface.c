@@ -40,7 +40,7 @@ BOOL IsInterface(HTREEITEM item)
     return FALSE;
 }
 
-IUnknown *GetInterface(void)
+static IUnknown *GetInterface(void)
 {
     HTREEITEM hSelect;
     TVITEM tvi;
@@ -116,7 +116,7 @@ INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
     return FALSE;
 }
 
-void IPersistStreamInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
+static void IPersistStreamInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
 {
     DIALOG_INFO di;
     WCHAR wszClassMoniker[] = { 'C','l','a','s','s','M','o','n','i','k','e','r','\0' };
@@ -130,7 +130,7 @@ void IPersistStreamInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
             globals.hMainWnd, InterfaceViewerProc, (LPARAM)&di);
 }
 
-void IPersistInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
+static void IPersistInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
 {
     DIALOG_INFO di;
     WCHAR wszClassMoniker[] = { 'C','l','a','s','s','M','o','n','i','k','e','r','\0' };
@@ -144,7 +144,7 @@ void IPersistInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
             globals.hMainWnd, InterfaceViewerProc, (LPARAM)&di);
 }
 
-void DefaultInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
+static void DefaultInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
 {
     DIALOG_INFO di;
 

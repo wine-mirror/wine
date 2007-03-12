@@ -140,7 +140,7 @@ LPTSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     return ret;
 }
 
-LPTSTR GetPathFullPath(HWND hwndTV, LPTSTR path) {
+static LPTSTR GetPathFullPath(HWND hwndTV, LPTSTR path) {
     LPTSTR parts[2];
     LPTSTR ret;
 

@@ -856,7 +856,7 @@ static void depth_copy(IWineD3DDevice *iface) {
     }
 }
 
-inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd, UINT numberOfVertices,
+static inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd, UINT numberOfVertices,
                                  GLenum glPrimitiveType, const void *idxData, short idxSize, ULONG minIndex,
                                  ULONG startIdx, ULONG startVertex) {
     UINT numInstances = 0;

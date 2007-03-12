@@ -268,7 +268,7 @@ static void select_shader_mode(
 }
 
 /** Select the number of report maximum shader constants based on the selected shader modes */
-void select_shader_max_constants(
+static void select_shader_max_constants(
     int ps_selected_mode,
     int vs_selected_mode,
     WineD3D_GL_Info *gl_info) {

@@ -45,7 +45,7 @@ static NTSTATUS (WINAPI *pNtOpenSymbolicLinkObject)(PHANDLE, ACCESS_MASK, POBJEC
 static NTSTATUS (WINAPI *pNtCreateSymbolicLinkObject)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PUNICODE_STRING);
 
 
-void test_case_sensitive (void)
+static void test_case_sensitive (void)
 {
     static const WCHAR buffer1[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s','\\','t','e','s','t',0};
     static const WCHAR buffer2[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s','\\','T','e','s','t',0};
@@ -96,7 +96,7 @@ void test_case_sensitive (void)
     pNtClose(Event);
 }
 
-void test_namespace_pipe(void)
+static void test_namespace_pipe(void)
 {
     static const WCHAR buffer1[] = {'\\','?','?','\\','P','I','P','E','\\','t','e','s','t','\\','p','i','p','e',0};
     static const WCHAR buffer2[] = {'\\','?','?','\\','P','I','P','E','\\','T','E','S','T','\\','P','I','P','E',0};
@@ -278,7 +278,7 @@ static void test_name_collisions(void)
     pNtClose(dir);
 }
 
-void test_directory(void)
+static void test_directory(void)
 {
     NTSTATUS status;
     UNICODE_STRING str;
@@ -465,7 +465,7 @@ void test_directory(void)
     status = pNtOpenSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr); \
     ok(status == STATUS_SUCCESS, "Failed to open SymbolicLink(%08x)\n", status);
 
-void test_symboliclink(void)
+static void test_symboliclink(void)
 {
     NTSTATUS status;
     UNICODE_STRING str, target;

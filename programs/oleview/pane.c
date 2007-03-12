@@ -20,7 +20,7 @@
 
 #include "main.h"
 
-int GetSplitPos(HWND hWnd)
+static int GetSplitPos(HWND hWnd)
 {
     PANE *pane = (PANE *)GetMenu(hWnd);
 
@@ -30,7 +30,7 @@ int GetSplitPos(HWND hWnd)
             pane->pos : pane->width-pane->size/2-1);
 }
 
-void DrawSplitMoving(HWND hWnd, int x)
+static void DrawSplitMoving(HWND hWnd, int x)
 {
     RECT rt;
     HDC hdc = GetDC(hWnd);

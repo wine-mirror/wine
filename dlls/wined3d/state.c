@@ -2754,7 +2754,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
     }
 }
 
-inline void drawPrimitiveTraceDataLocations(
+static inline void drawPrimitiveTraceDataLocations(
     WineDirect3DVertexStridedData *dataLocations) {
 
     /* Dump out what parts we have supplied */

@@ -39,7 +39,7 @@ static const WCHAR schema_xml[] = {
     '<','/','S','c','h','e','m','a','>','\n',0
 };
 
-void test_schema_refs(void)
+static void test_schema_refs(void)
 {
     IXMLDOMDocument2 *doc;
     IXMLDOMSchemaCollection *schema;

@@ -203,7 +203,7 @@ static void test_dtm_set_format(HWND hWndDateTime)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 }
 
-void test_mccolor_types(HWND hWndDateTime, int mccolor_type, const char* mccolor_name)
+static void test_mccolor_types(HWND hWndDateTime, int mccolor_type, const char* mccolor_name)
 {
     LRESULT r;
     COLORREF theColor, prevColor;
@@ -262,7 +262,7 @@ static void test_dtm_get_monthcal(HWND hWndDateTime)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 }
 
-void fill_systime_struct(SYSTEMTIME *st, int year, int month, int dayofweek, int day, int hour, int minute, int second, int milliseconds)
+static void fill_systime_struct(SYSTEMTIME *st, int year, int month, int dayofweek, int day, int hour, int minute, int second, int milliseconds)
 {
     st->wYear = year;
     st->wMonth = month;
@@ -274,7 +274,7 @@ void fill_systime_struct(SYSTEMTIME *st, int year, int month, int dayofweek, int
     st->wMilliseconds = milliseconds;
 }
 
-LPARAM compare_systime_date(SYSTEMTIME *st1, SYSTEMTIME *st2)
+static LPARAM compare_systime_date(SYSTEMTIME *st1, SYSTEMTIME *st2)
 {
     return (st1->wYear == st2->wYear)
             && (st1->wMonth == st2->wMonth)
@@ -282,7 +282,7 @@ LPARAM compare_systime_date(SYSTEMTIME *st1, SYSTEMTIME *st2)
             && (st1->wDay == st2->wDay);
 }
 
-LPARAM compare_systime_time(SYSTEMTIME *st1, SYSTEMTIME *st2)
+static LPARAM compare_systime_time(SYSTEMTIME *st1, SYSTEMTIME *st2)
 {
     return (st1->wHour == st2->wHour)
             && (st1->wMinute == st2->wMinute)
@@ -290,7 +290,7 @@ LPARAM compare_systime_time(SYSTEMTIME *st1, SYSTEMTIME *st2)
             && (st1->wMilliseconds == st2->wMilliseconds);
 }
 
-LPARAM compare_systime(SYSTEMTIME *st1, SYSTEMTIME *st2)
+static LPARAM compare_systime(SYSTEMTIME *st1, SYSTEMTIME *st2)
 {
     if(!compare_systime_date(st1, st2))
         return 0;

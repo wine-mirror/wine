@@ -209,7 +209,7 @@ static void write_enums(FILE *h, var_list_t *enums)
   fprintf(h, "\n");
 }
 
-int needs_space_after(type_t *t)
+static int needs_space_after(type_t *t)
 {
   return t->kind == TKIND_ALIAS || ! is_ptr(t);
 }

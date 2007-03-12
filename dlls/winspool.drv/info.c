@@ -843,7 +843,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
  * flush the cached PORT_INFO_2W - data
  */
 
-void monitor_flush(monitor_t * pm)
+static void monitor_flush(monitor_t * pm)
 {
     if (!pm) return;
 

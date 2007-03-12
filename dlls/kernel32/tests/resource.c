@@ -161,7 +161,7 @@ static void update_resources_delete( void )
     ok( r, "EndUpdateResouce failed\n");
 }
 
-void update_resources_version(void)
+static void update_resources_version(void)
 {
     HANDLE res = NULL;
     BOOL r;
@@ -191,7 +191,7 @@ void update_resources_version(void)
 
 typedef void (*res_check_func)( IMAGE_RESOURCE_DIRECTORY* );
 
-void check_empty( IMAGE_RESOURCE_DIRECTORY *dir )
+static void check_empty( IMAGE_RESOURCE_DIRECTORY *dir )
 {
     char *pad;
 
@@ -203,13 +203,13 @@ void check_empty( IMAGE_RESOURCE_DIRECTORY *dir )
     ok( !memcmp( pad, "PADDINGXXPADDING", 16), "padding wrong\n");
 }
 
-void check_not_empty( IMAGE_RESOURCE_DIRECTORY *dir )
+static void check_not_empty( IMAGE_RESOURCE_DIRECTORY *dir )
 {
     ok( dir->NumberOfNamedEntries == 0, "NumberOfNamedEntries should be 0 instead of %d\n", dir->NumberOfNamedEntries);
     ok( dir->NumberOfIdEntries == 1, "NumberOfIdEntries should be 1 instead of %d\n", dir->NumberOfIdEntries);
 }
 
-void check_exe( res_check_func fn )
+static void check_exe( res_check_func fn )
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;

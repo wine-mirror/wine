@@ -97,7 +97,7 @@ static const WCHAR wszDefaultValue[]
 static const WCHAR wszReadOnly[] = { 'r','e','a','d','o','n','l','y','\0' };
 static const WCHAR wszConst[] = { 'c','o','n','s','t','\0' };
 
-void ShowLastError(void)
+static void ShowLastError(void)
 {
     DWORD error = GetLastError();
     LPWSTR lpMsgBuf;
@@ -112,7 +112,7 @@ void ShowLastError(void)
     return;
 }
 
-void SaveIdl(WCHAR *wszFileName)
+static void SaveIdl(WCHAR *wszFileName)
 {
     HTREEITEM hIDL;
     TVITEM tvi;
@@ -154,7 +154,7 @@ void SaveIdl(WCHAR *wszFileName)
     CloseHandle(hFile);
 }
 
-void GetSaveIdlAsPath(void)
+static void GetSaveIdlAsPath(void)
 {
     OPENFILENAME saveidl;
     WCHAR *pFileName;
@@ -273,13 +273,13 @@ static TYPELIB_DATA *InitializeTLData(void)
     return pTLData;
 }
 
-void AddSpaces(TYPELIB_DATA *pTLData, int tabSize)
+static void AddSpaces(TYPELIB_DATA *pTLData, int tabSize)
 {
     for(; tabSize>0; tabSize--)
         AddToTLDataStrW(pTLData, wszSpace);
 }
 
-void AddChildrenData(HTREEITEM hParent, TYPELIB_DATA *pData)
+static void AddChildrenData(HTREEITEM hParent, TYPELIB_DATA *pData)
 {
     HTREEITEM hCur;
     TVITEM tvi;
@@ -298,7 +298,7 @@ void AddChildrenData(HTREEITEM hParent, TYPELIB_DATA *pData)
     }while((hCur = TreeView_GetNextSibling(typelib.hTree, hCur)));
 }
 
-void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, ITypeInfo *pTypeInfo)
+static void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, ITypeInfo *pTypeInfo)
 {
     int i;
     BSTR bstrData;
@@ -373,7 +373,7 @@ void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, ITypeIn
     }
 }
 
-int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
+static int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
 {
     int i;
     TVINSERTSTRUCT tvis;
@@ -437,7 +437,7 @@ int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
     return 0;
 }
 
-int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
+static int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
 {
     int i;
     TVINSERTSTRUCT tvis;
@@ -499,7 +499,7 @@ int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
     return 0;
 }
 
-int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
+static int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
 {
     int i, j, tabSize;
     unsigned namesNo;
@@ -689,7 +689,7 @@ int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
     return 0;
 }
 
-int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent)
+static int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent)
 {
     int i;
     TVINSERTSTRUCT tvis;
@@ -737,7 +737,7 @@ int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent)
     return 0;
 }
 
-void AddIdlData(HTREEITEM hCur, TYPELIB_DATA *pTLData)
+static void AddIdlData(HTREEITEM hCur, TYPELIB_DATA *pTLData)
 {
     TVITEM tvi;
 
@@ -755,7 +755,7 @@ void AddIdlData(HTREEITEM hCur, TYPELIB_DATA *pTLData)
     }
 }
 
-void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
+static void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
 {
     HTREEITEM hCur;
     TVITEM tvi;
@@ -789,7 +789,7 @@ void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
     }
 }
 
-void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wszName,
+static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wszName,
         WCHAR *wszHelpString, unsigned long ulHelpContext, TYPEATTR *pTypeAttr,
         TYPELIB_DATA *pTLData)
 {
@@ -919,7 +919,7 @@ void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wszName,
     AddToStrW(pTLData->wszInsertAfter, wszNewLine);
 }
 
-void CreateTypedefHeader(ITypeInfo *pTypeInfo,
+static void CreateTypedefHeader(ITypeInfo *pTypeInfo,
         TYPEATTR *pTypeAttr, TYPELIB_DATA *pTLData)
 {
     BOOL bFirst = TRUE;
@@ -957,7 +957,7 @@ void CreateTypedefHeader(ITypeInfo *pTypeInfo,
     }
 }
 
-int PopulateTree(void)
+static int PopulateTree(void)
 {
     TVINSERTSTRUCT tvis;
     TVITEM tvi;
@@ -1285,7 +1285,7 @@ void UpdateData(HTREEITEM item)
     SetWindowText(typelib.hEdit, ((TYPELIB_DATA*)tvi.lParam)->idl);
 }
 
-void TypeLibResizeChild(void)
+static void TypeLibResizeChild(void)
 {
     RECT client, stat;
 
@@ -1300,7 +1300,7 @@ void TypeLibResizeChild(void)
             client.right, client.bottom-stat.bottom, TRUE);
 }
 
-void TypeLibMenuCommand(WPARAM wParam, HWND hWnd)
+static void TypeLibMenuCommand(WPARAM wParam, HWND hWnd)
 {
     BOOL vis;
 
@@ -1322,7 +1322,7 @@ void TypeLibMenuCommand(WPARAM wParam, HWND hWnd)
     }
 }
 
-void UpdateTypeLibStatusBar(int itemID)
+static void UpdateTypeLibStatusBar(int itemID)
 {
     WCHAR info[MAX_LOAD_STRING];
 
@@ -1332,7 +1332,7 @@ void UpdateTypeLibStatusBar(int itemID)
     SendMessage(typelib.hStatusBar, SB_SETTEXT, 0, (LPARAM)info);
 }
 
-void EmptyTLTree(void)
+static void EmptyTLTree(void)
 {
     HTREEITEM cur, del;
     TVITEM tvi;

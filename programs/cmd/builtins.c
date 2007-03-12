@@ -173,7 +173,7 @@ void WCMD_copy (void) {
  * they do not already exist.
  */
 
-BOOL create_full_path(CHAR* path)
+static BOOL create_full_path(CHAR* path)
 {
     int len;
     CHAR *new_path;

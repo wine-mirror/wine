@@ -75,7 +75,7 @@ void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
 /**
  * Loads (pixel shader) samplers
  */
-void shader_glsl_load_psamplers(
+static void shader_glsl_load_psamplers(
     WineD3D_GL_Info *gl_info,
     IWineD3DStateBlock* iface) {
 
@@ -165,7 +165,7 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL
  * Loads integer constants (aka uniforms) into the currently set GLSL program.
  * When @constants_set == NULL, it will load all the constants.
  */
-void shader_glsl_load_constantsI(
+static void shader_glsl_load_constantsI(
     IWineD3DBaseShaderImpl* This,
     WineD3D_GL_Info *gl_info,
     GLhandleARB programId,
@@ -223,7 +223,7 @@ void shader_glsl_load_constantsI(
  * Loads boolean constants (aka uniforms) into the currently set GLSL program.
  * When @constants_set == NULL, it will load all the constants.
  */
-void shader_glsl_load_constantsB(
+static void shader_glsl_load_constantsB(
     IWineD3DBaseShaderImpl* This,
     WineD3D_GL_Info *gl_info,
     GLhandleARB programId,

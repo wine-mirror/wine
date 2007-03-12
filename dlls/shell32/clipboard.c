@@ -248,23 +248,3 @@ HGLOBAL RenderPREFEREDDROPEFFECT (DWORD dwFlags)
 	GlobalUnlock(hGlobal);
 	return hGlobal;
 }
-
-/**************************************************************************
- * IsDataInClipboard
- *
- * checks if there is something in the clipboard we can use
- */
-BOOL IsDataInClipboard (HWND hwnd)
-{
-	BOOL ret = FALSE;
-
-	if (OpenClipboard(hwnd))
-	{
-	  if (GetOpenClipboardWindow())
-	  {
-	    ret = IsClipboardFormatAvailable(CF_TEXT);
-	  }
-	  CloseClipboard();
-	}
-	return ret;
-}

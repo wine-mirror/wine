@@ -131,7 +131,7 @@ INT_PTR CALLBACK CreateInstOnProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM
     return FALSE;
 }
 
-void InitOpenFileName(HWND hWnd, OPENFILENAME *pofn, WCHAR *wszFilter,
+static void InitOpenFileName(HWND hWnd, OPENFILENAME *pofn, WCHAR *wszFilter,
         WCHAR *wszTitle, WCHAR *wszFileName)
 {
     memset(pofn, 0, sizeof(OPENFILENAME));
@@ -147,7 +147,7 @@ void InitOpenFileName(HWND hWnd, OPENFILENAME *pofn, WCHAR *wszFilter,
     pofn->Flags = OFN_HIDEREADONLY;
 }
 
-void CopyClsid(HTREEITEM item)
+static void CopyClsid(HTREEITEM item)
 {
     TVITEM tvi;
 
@@ -168,7 +168,7 @@ void CopyClsid(HTREEITEM item)
     }
 }
 
-void CopyHTMLTag(HTREEITEM item)
+static void CopyHTMLTag(HTREEITEM item)
 {
     TVITEM tvi;
 
@@ -193,7 +193,7 @@ void CopyHTMLTag(HTREEITEM item)
     }
 }
 
-void ResizeChild(void)
+static void ResizeChild(void)
 {
     RECT client, stat, tool;
 
@@ -280,7 +280,7 @@ void RefreshMenu(HTREEITEM item)
         EnableMenuItem(hMenu, IDM_COPYCLSID, MF_ENABLED);
 }
 
-int MenuCommand(WPARAM wParam, HWND hWnd)
+static int MenuCommand(WPARAM wParam, HWND hWnd)
 {
     BOOL vis;
     HTREEITEM hSelect;
@@ -426,7 +426,7 @@ int MenuCommand(WPARAM wParam, HWND hWnd)
     return 0;
 }
 
-void UpdateStatusBar(int itemID)
+static void UpdateStatusBar(int itemID)
 {
     WCHAR info[MAX_LOAD_STRING];
 
@@ -475,7 +475,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
     return 0;
 }
 
-BOOL InitApplication(HINSTANCE hInst)
+static BOOL InitApplication(HINSTANCE hInst)
 {
     WNDCLASS wc;
     WCHAR wszAppName[MAX_LOAD_STRING];
@@ -494,7 +494,7 @@ BOOL InitApplication(HINSTANCE hInst)
     return TRUE;
 }
 
-BOOL InitInstance(HINSTANCE hInst, int nCmdShow)
+static BOOL InitInstance(HINSTANCE hInst, int nCmdShow)
 {
     HWND hWnd;
     WCHAR wszAppName[MAX_LOAD_STRING];

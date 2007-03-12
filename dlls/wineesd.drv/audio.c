@@ -267,7 +267,7 @@ void volume_effect16(void *bufin, void* bufout, int length, int left,
 }
 
 /* length is the number of 8 bit samples */
-void volume_effect8(void *bufin, void* bufout, int length, int left,
+static void volume_effect8(void *bufin, void* bufout, int length, int left,
 		int right, int 	nChannels)
 {
   BYTE *d_out = (BYTE *)bufout;

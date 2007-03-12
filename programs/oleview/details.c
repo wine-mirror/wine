@@ -28,7 +28,7 @@ static const WCHAR wszProxyStubClsid32[] =
     { 'P','r','o','x','y','S','t','u','b','C','l','s','i','d','3','2','\0' };
 static const WCHAR wszTypeLib[] = { 'T','y','p','e','L','i','b','\0' };
 
-void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL addings)
+static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL addings)
 {
     int i=0, j, retEnum;
     HKEY hCurKey;
@@ -201,7 +201,7 @@ void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL addings)
     }
 }
 
-void CreateReg(WCHAR *buffer)
+static void CreateReg(WCHAR *buffer)
 {
     HKEY hKey;
     DWORD lenBuffer=-1, lastLenBuffer, lenTree;
@@ -328,7 +328,7 @@ void RefreshDetails(HTREEITEM item)
     if(show) CreateReg(wszBuf);
 }
 
-void CreateTabCtrl(HWND hWnd)
+static void CreateTabCtrl(HWND hWnd)
 {
     TCITEM tci;
     WCHAR buffer[MAX_LOAD_STRING];

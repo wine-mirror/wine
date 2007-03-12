@@ -604,7 +604,7 @@ const char* debug_d3dtexturestate(DWORD state) {
   }
 }
 
-const char* debug_d3dtop(WINED3DTEXTUREOP d3dtop) {
+static const char* debug_d3dtop(WINED3DTEXTUREOP d3dtop) {
     switch (d3dtop) {
 #define D3DTOP_TO_STR(u) case u: return #u
         D3DTOP_TO_STR(WINED3DTOP_DISABLE);

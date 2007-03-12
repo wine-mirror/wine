@@ -66,12 +66,12 @@ typedef struct
 extern IEnumStringVtbl TestACLVtbl;
 extern IACListVtbl TestACL_ACListVtbl;
 
-TestACL *impl_from_IACList(IACList *iface)
+static TestACL *impl_from_IACList(IACList *iface)
 {
     return (TestACL *)((char *)iface - FIELD_OFFSET(TestACL, aclVtbl));
 }
 
-TestACL *TestACL_Constructor(int limit, const char **strings)
+static TestACL *TestACL_Constructor(int limit, const char **strings)
 {
     TestACL *This = CoTaskMemAlloc(sizeof(TestACL));
     ZeroMemory(This, sizeof(*This));
@@ -222,7 +222,7 @@ IACListVtbl TestACL_ACListVtbl =
 #define expect_end(obj) \
     ok(obj->lpVtbl->Next(obj, 1, &wstr, &i) == S_FALSE, "Unexpected return from Next\n");
 
-void test_ACLMulti(void)
+static void test_ACLMulti(void)
 {
     const char *strings1[] = {"a", "c", "e"};
     const char *strings2[] = {"a", "b", "d"};
