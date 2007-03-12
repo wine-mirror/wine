@@ -694,6 +694,7 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
 
 void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(((IWineD3DDeviceImpl *)(This->baseShader.device))->wineD3D))->gl_info;
 
     DWORD dst = arg->dst;
     DWORD src = arg->src[0] & WINED3DSP_REGNUM_MASK;
@@ -714,11 +715,12 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
          * So the surface loading code converts the -128 ... 127 signed integers to
          * 0 ... 255 unsigned ones. The following line undoes that.
          *
-         * TODO: Both GL_NV_texture_shader and GL_ATI_envmap_bumpmap provide pixel formats
-         * suitable for loading the Direct3D perturbation data. If one of them is used, do
+         * TODO: GL_ATI_envmap_bumpmap provides pixel formats
+         * suitable for loading the Direct3D perturbation data. If it is used, do
          * not correct the signedness
          */
-        shader_addline(buffer, "MAD T%u, T%u, coefmul.x, -one;\n", src, src);
+        if(!GL_SUPPORT(NV_TEXTURE_SHADER3))
+            shader_addline(buffer, "MAD T%u, T%u, coefmul.x, -one;\n", src, src);
 
         shader_addline(buffer, "SWZ TMP2, bumpenvmat, x, z, 0, 0;\n");
         shader_addline(buffer, "DP3 TMP.r, TMP2, T%u;\n", src);

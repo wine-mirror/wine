@@ -1455,15 +1455,43 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_V8U8:
-            /* TODO: GL_NV_texture_shader and GL_ATI_envmap_bumpmap provide suitable formats.
-             * use one of them instead of converting
+            /* TODO: GL_ATI_envmap_bumpmap provides suitable formats.
+             * use it instead of converting
              * Remember to adjust the texbem instruction in the shader
              */
+            if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
             *convert = CONVERT_V8U8;
             *format = GL_BGR;
             *internal = GL_RGB8;
             *type = GL_BYTE;
             *target_bpp = 3;
+            break;
+
+        case WINED3DFMT_X8L8V8U8:
+            if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
+            FIXME("Conversion for D3D_X8L8V8U8 not implemented\n");
+            *format = GL_BGRA;
+            *internal = GL_RGBA8;
+            *type = GL_BYTE;
+            *target_bpp = 4;
+            break;
+
+        case WINED3DFMT_Q8W8V8U8:
+            if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
+            FIXME("Conversion for D3D_Q8W8V8U8 not implemented\n");
+            *format = GL_BGRA;
+            *internal = GL_RGBA8;
+            *type = GL_BYTE;
+            *target_bpp = 4;
+            break;
+
+        case WINED3DFMT_V16U16:
+            if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
+            FIXME("Conversion for D3D_V16U16 not implemented\n");
+            *format = GL_COLOR_INDEX;
+            *internal = GL_COLOR_INDEX;
+            *type = GL_SHORT;
+            *target_bpp = 4;
             break;
 
         default:
