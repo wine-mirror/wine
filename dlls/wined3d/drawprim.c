@@ -207,25 +207,25 @@ void primitiveDeclarationConvertToStridedData(
             stride_used = fixed_get_input(element->Usage, element->UsageIndex, &idx);
 
         if (stride_used) {
-           TRACE("Loaded %s array %u [usage=%s, usage_idx=%u, "
-                 "stream=%u, offset=%u, stride=%u, VBO=%u]\n",
-                 useVertexShaderFunction? "shader": "fixed function", idx,
-                 debug_d3ddeclusage(element->Usage), element->UsageIndex,
-                 element->Stream, element->Offset, stride, streamVBO);
+            TRACE("Loaded %s array %u [usage=%s, usage_idx=%u, "
+                    "stream=%u, offset=%u, stride=%u, VBO=%u]\n",
+                    useVertexShaderFunction? "shader": "fixed function", idx,
+                    debug_d3ddeclusage(element->Usage), element->UsageIndex,
+                    element->Stream, element->Offset, stride, streamVBO);
 
-           strided->u.input[idx].lpData = data;
-           strided->u.input[idx].dwType = element->Type;
-           strided->u.input[idx].dwStride = stride;
-           strided->u.input[idx].VBO = streamVBO;
-           strided->u.input[idx].streamNo = element->Stream;
-           if (!useVertexShaderFunction) {
-               if (element->Usage == WINED3DDECLUSAGE_POSITION)
-                   strided->u.s.position_transformed = FALSE;
-               else if (element->Usage == WINED3DDECLUSAGE_POSITIONT)
-                   strided->u.s.position_transformed = TRUE;
-           }
+            strided->u.input[idx].lpData = data;
+            strided->u.input[idx].dwType = element->Type;
+            strided->u.input[idx].dwStride = stride;
+            strided->u.input[idx].VBO = streamVBO;
+            strided->u.input[idx].streamNo = element->Stream;
+            if (!useVertexShaderFunction) {
+                if (element->Usage == WINED3DDECLUSAGE_POSITION)
+                    strided->u.s.position_transformed = FALSE;
+                else if (element->Usage == WINED3DDECLUSAGE_POSITIONT)
+                    strided->u.s.position_transformed = TRUE;
+            }
         }
-    };
+    }
     /* Now call PreLoad on all the vertex buffers. In the very rare case
      * that the buffers stopps converting PreLoad will dirtify the VDECL again.
      * The vertex buffer can now use the strided structure in the device instead of finding its
@@ -235,7 +235,7 @@ void primitiveDeclarationConvertToStridedData(
      * once in there.
      */
     for(i=0; i < numPreloadStreams; i++) {
-            IWineD3DVertexBuffer_PreLoad(This->stateBlock->streamSource[preLoadStreams[i]]);
+        IWineD3DVertexBuffer_PreLoad(This->stateBlock->streamSource[preLoadStreams[i]]);
     }
 }
 
