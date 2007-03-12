@@ -509,10 +509,8 @@ static void test_dtm_set_and_get_system_time(HWND hWndDateTime)
     /* set st to invalid value */
     fill_systime_struct(&st, 0, 0, 7, 0, 24, 60, 60, 1000);
 
-    todo_wine {
-        r = SendMessage(hWndDateTime, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
-        expect_unsuccess(0, r);
-    }
+    r = SendMessage(hWndDateTime, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
+    expect_unsuccess(0, r);
 
     ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_and_get_system_time_seq, "test_dtm_set_and_get_system_time", FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
