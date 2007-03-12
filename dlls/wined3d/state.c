@@ -2800,7 +2800,7 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
         if(TRACE_ON(d3d)) {
             drawPrimitiveTraceDataLocations(dataLocations);
         }
-    } else if (stateblock->vertexDecl || stateblock->vertexShader) {
+    } else if (stateblock->vertexDecl) {
         /* Note: This is a fixed function or shader codepath.
          * This means it must handle both types of strided data.
          * Shaders must go through here to zero the strided data, even if they
@@ -2808,11 +2808,8 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
          */
         TRACE("================ Vertex Declaration  ===================\n");
         memset(dataLocations, 0, sizeof(*dataLocations));
-
-        if (stateblock->vertexDecl) {
-            primitiveDeclarationConvertToStridedData((IWineD3DDevice *) device, useVertexShaderFunction,
-                dataLocations, &fixup);
-        }
+        primitiveDeclarationConvertToStridedData((IWineD3DDevice *) device,
+                useVertexShaderFunction, dataLocations, &fixup);
     } else {
         /* Note: This codepath is not reachable from d3d9 (see fvf->decl9 conversion)
          * It is reachable through d3d8, but only for fixed-function.
