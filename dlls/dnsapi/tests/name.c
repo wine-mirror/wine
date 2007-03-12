@@ -219,10 +219,16 @@ static void test_DnsNameCompare_A( void )
 START_TEST(name)
 {
     dnsapi = LoadLibraryA( "dnsapi.dll" );
-    if (!dnsapi) return;
+    if (!dnsapi)
+    {
+        /* Doesn't exist before W2K */
+        skip("dnsapi.dll cannot be loaded\n");
+        return;
+    }
 
     if (!init_function_ptrs())
     {
+        skip("Needed functions are not available\n");
         FreeLibrary( dnsapi );
         return;
     }
