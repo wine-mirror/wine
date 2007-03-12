@@ -1730,6 +1730,11 @@ TREEVIEW_NaturalHeight(TREEVIEW_INFO *infoPtr)
         height = tm.tmHeight + tm.tmExternalLeading + TVHEIGHT_FONT_ADJUST;
     if (height < infoPtr->normalImageHeight)
         height = infoPtr->normalImageHeight;
+
+    /* Round down, unless we support odd ("non even") heights. */
+    if (!(infoPtr->dwStyle & TVS_NONEVENHEIGHT))
+        height &= ~1;
+
     return height;
 }
 
@@ -2325,13 +2330,15 @@ TREEVIEW_DrawItemLines(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 	HTREEITEM parent;
         LOGBRUSH lb;
 
-	/*
-	 * Get a dotted grey pen
-	 */
+	/* Get a dotted grey pen */
         lb.lbStyle = BS_SOLID;
         lb.lbColor = infoPtr->clrLine;
         hNewPen = ExtCreatePen(PS_COSMETIC|PS_ALTERNATE, 1, &lb, 0, NULL);
 	hOldPen = SelectObject(hdc, hNewPen);
+
+        /* Make sure the center is on a dot (using +2 instead
+         * of +1 gives us pixel-by-pixel compat with native) */
+        centery = (centery + 2) & ~1;
 
 	MoveToEx(hdc, item->stateOffset, centery, NULL);
 	LineTo(hdc, centerx - 1, centery);
