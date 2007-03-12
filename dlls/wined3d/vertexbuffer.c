@@ -197,7 +197,7 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
      *  FALSE: otherwise
      */
 
-    if(device->stateBlock->vertexShader && ((IWineD3DVertexShaderImpl *) device->stateBlock->vertexShader)->baseShader.function) {
+    if (use_vs(device)) {
         /* Assume no conversion */
         memset(&strided, 0, sizeof(strided));
     } else {

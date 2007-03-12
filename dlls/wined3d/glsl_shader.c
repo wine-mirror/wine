@@ -2049,7 +2049,7 @@ void delete_glsl_program_entry(IWineD3DDevice *iface, struct glsl_shader_prog_li
  * the program in the hash table.  If it creates a program, it will link the
  * given objects, too.
  */
-static void set_glsl_shader_program(IWineD3DDevice *iface) {
+static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use_vs) {
     IWineD3DDeviceImpl *This               = (IWineD3DDeviceImpl *)iface;
     WineD3D_GL_Info *gl_info               = &((IWineD3DImpl *)(This->wineD3D))->gl_info;
     IWineD3DPixelShader  *pshader          = This->stateBlock->pixelShader;
@@ -2059,8 +2059,8 @@ static void set_glsl_shader_program(IWineD3DDevice *iface) {
     int i;
     char glsl_name[8];
 
-    GLhandleARB vshader_id = (vshader && This->vs_selected_mode == SHADER_GLSL) ? ((IWineD3DBaseShaderImpl*)vshader)->baseShader.prgId : 0;
-    GLhandleARB pshader_id = (pshader && This->ps_selected_mode == SHADER_GLSL) ? ((IWineD3DBaseShaderImpl*)pshader)->baseShader.prgId : 0;
+    GLhandleARB vshader_id = use_vs ? ((IWineD3DBaseShaderImpl*)vshader)->baseShader.prgId : 0;
+    GLhandleARB pshader_id = use_ps ? ((IWineD3DBaseShaderImpl*)pshader)->baseShader.prgId : 0;
     entry = get_glsl_program_entry(This, vshader_id, pshader_id);
     if (entry) {
         This->stateBlock->glsl_program = entry;
@@ -2179,7 +2179,7 @@ static void shader_glsl_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(This->wineD3D))->gl_info;
     GLhandleARB program_id = 0;
 
-    if (useVS || usePS) set_glsl_shader_program(iface);
+    if (useVS || usePS) set_glsl_shader_program(iface, usePS, useVS);
     else This->stateBlock->glsl_program = NULL;
 
     program_id = This->stateBlock->glsl_program ? This->stateBlock->glsl_program->programId : 0;

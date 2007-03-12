@@ -1936,4 +1936,18 @@ typedef struct {
 } PixelFormatDesc;
 
 const PixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt);
+
+inline static BOOL use_vs(IWineD3DDeviceImpl *device) {
+    return (device->vs_selected_mode != SHADER_NONE
+            && device->stateBlock->vertexShader
+            && ((IWineD3DVertexShaderImpl *)device->stateBlock->vertexShader)->baseShader.function
+            && !device->strided_streams.u.s.position_transformed);
+}
+
+inline static BOOL use_ps(IWineD3DDeviceImpl *device) {
+    return (device->ps_selected_mode != SHADER_NONE
+            && device->stateBlock->pixelShader
+            && ((IWineD3DPixelShaderImpl *)device->stateBlock->pixelShader)->baseShader.function);
+}
+
 #endif

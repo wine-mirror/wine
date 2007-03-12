@@ -161,6 +161,17 @@ void primitiveDeclarationConvertToStridedData(
 
     memset(isPreLoaded, 0, sizeof(isPreLoaded));
 
+    /* Check for transformed vertices, disable vertex shader if present */
+    strided->u.s.position_transformed = FALSE;
+    for (i = 0; i < vertexDeclaration->declarationWNumElements - 1; ++i) {
+        element = vertexDeclaration->pDeclarationWine + i;
+
+        if (element->Usage == WINED3DDECLUSAGE_POSITIONT) {
+            strided->u.s.position_transformed = TRUE;
+            useVertexShaderFunction = FALSE;
+        }
+    }
+
     /* Translate the declaration into strided data */
     for (i = 0 ; i < vertexDeclaration->declarationWNumElements - 1; ++i) {
         GLint streamVBO = 0;
@@ -188,7 +199,7 @@ void primitiveDeclarationConvertToStridedData(
             data    = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[element->Stream], 0, &streamVBO);
             if(fixup) {
                 if( streamVBO != 0) *fixup = TRUE;
-                else if(*fixup && This->stateBlock->vertexShader == NULL) {
+                else if(*fixup && !useVertexShaderFunction) {
                     /* This may be bad with the fixed function pipeline */
                     FIXME("Missing fixed and unfixed vertices, expect graphics glitches\n");
                 }
@@ -218,12 +229,6 @@ void primitiveDeclarationConvertToStridedData(
             strided->u.input[idx].dwStride = stride;
             strided->u.input[idx].VBO = streamVBO;
             strided->u.input[idx].streamNo = element->Stream;
-            if (!useVertexShaderFunction) {
-                if (element->Usage == WINED3DDECLUSAGE_POSITION)
-                    strided->u.s.position_transformed = FALSE;
-                else if (element->Usage == WINED3DDECLUSAGE_POSITIONT)
-                    strided->u.s.position_transformed = TRUE;
-            }
         }
     }
     /* Now call PreLoad on all the vertex buffers. In the very rare case
@@ -796,9 +801,7 @@ static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
      * and this seems easier and more efficient than providing the shader backend with a private
      * storage to read and restore the old shader settings
      */
-    This->shader_backend->shader_select(iface,
-        This->stateBlock->pixelShader && ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.function,
-        This->stateBlock->vertexShader && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.function);
+    This->shader_backend->shader_select(iface, use_ps(This), use_vs(This));
 }
 
 static void depth_copy(IWineD3DDevice *iface) {

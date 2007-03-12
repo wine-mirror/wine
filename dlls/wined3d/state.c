@@ -395,7 +395,7 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     DWORD enable  = 0xFFFFFFFF;
     DWORD disable = 0x00000000;
 
-    if(stateblock->vertexShader) {
+    if (use_vs(stateblock->wineD3DDevice)) {
         /* The spec says that opengl clipping planes are disabled when using shaders. Direct3D planes aren't,
          * so that is an issue. The MacOS ATI driver keeps clipping planes activated with shaders in some
          * contitions I got sick of tracking down. The shader state handler disables all clip planes because
@@ -709,8 +709,8 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     fogend = tmpvalue.f;
 
     /* Activate when vertex shaders are in the state table */
-    if(stateblock->vertexShader && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function &&
-       ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog) {
+    if (use_vs(stateblock->wineD3DDevice)
+            && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog) {
         glFogi(GL_FOG_MODE, GL_LINEAR);
         checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
         if (stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
@@ -1977,17 +1977,16 @@ static void shaderconstant(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
        return;
     }
     
-    device->shader_backend->shader_load_constants((IWineD3DDevice *) device,
-        stateblock->pixelShader && ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function,
-        stateblock->vertexShader && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function);
+    device->shader_backend->shader_load_constants((IWineD3DDevice *) device, use_ps(device), use_vs(device));
 }
 
 static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    BOOL use_ps = stateblock->pixelShader && ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function != NULL;
-    BOOL use_vs = stateblock->vertexShader && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL;
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+    BOOL use_pshader = use_ps(device);
+    BOOL use_vshader = use_vs(device);
     int i;
 
-    if (use_ps) {
+    if (use_pshader) {
         if(!context->last_was_pshader) {
             /* Former draw without a pixel shader, some samplers
              * may be disabled because of WINED3DTSS_COLOROP = WINED3DTOP_DISABLE
@@ -2018,14 +2017,14 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     }
 
     if(!isStateDirty(context, StateTable[STATE_VSHADER].representative)) {
-        stateblock->wineD3DDevice->shader_backend->shader_select((IWineD3DDevice *)stateblock->wineD3DDevice, use_ps, use_vs);
+        device->shader_backend->shader_select((IWineD3DDevice *)stateblock->wineD3DDevice, use_pshader, use_vshader);
 
-        if(!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vs || use_ps)) {
+        if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vshader || use_pshader)) {
             shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
         }
     }
 
-    context->last_was_pshader = use_ps;
+    context->last_was_pshader = use_pshader;
 }
 
 static void tex_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -2827,6 +2826,10 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
         }
      }
 
+    if (dataLocations->u.s.position_transformed) {
+        useVertexShaderFunction = FALSE;
+    }
+
     /* Unload the old arrays before loading the new ones to get old junk out */
     if(context->numberedArraysLoaded) {
         unloadNumberedArrays(stateblock);
@@ -2906,6 +2909,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     transformed = ((device->strided_streams.u.s.position.lpData != NULL ||
                     device->strided_streams.u.s.position.VBO != 0) &&
                     device->strided_streams.u.s.position_transformed) ? TRUE : FALSE;
+    if (transformed) useVertexShaderFunction = FALSE;
 
     if(transformed != context->last_was_rhw && !useVertexShaderFunction) {
         updateFog = TRUE;
@@ -2916,7 +2920,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         state_lighting(STATE_RENDER(WINED3DRS_LIGHTING), stateblock, context);
     }
 
-    if (!useVertexShaderFunction && transformed) {
+    if (transformed) {
         context->last_was_rhw = TRUE;
     } else {
 
