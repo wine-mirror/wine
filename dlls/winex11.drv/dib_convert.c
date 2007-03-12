@@ -40,8 +40,8 @@
  *   of the image. This is always >0.
  * - srcbits
  *   Points to the first byte containing data to be copied. If the source
- *   surface starts are coordinates (x,y) then this is:
- *   image_ptr+x*bytes_pre_pixel+y*bytes_per_line
+ *   surface starts at coordinates (x,y) then this is:
+ *   image_ptr+x*bytes_per_pixel+y*bytes_per_line
  *   (with further adjustments for top-down/bottom-up images)
  * - srclinebytes
  *   This is the number of bytes per line. It may be >0 or <0 depending on
