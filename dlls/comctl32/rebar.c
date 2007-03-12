@@ -1575,7 +1575,7 @@ REBAR_CommonSetupBand(HWND hwnd, LPREBARBANDINFOW lprbbi, REBAR_BAND *lpBand)
 	lpBand->cxMinChild = lprbbi->cxMinChild;
 	lpBand->cyMinChild = lprbbi->cyMinChild;
         /* These fields where added in WIN32_IE == 0x400 and are set only for RBBS_VARIABLEHEIGHT bands */
-        if (lprbbi->cbSize >= sizeof (REBARBANDINFOA) && (lprbbi->fStyle & RBBS_VARIABLEHEIGHT)) {
+        if (lprbbi->cbSize >= sizeof (REBARBANDINFOA) && (lpBand->fStyle & RBBS_VARIABLEHEIGHT)) {
 	    lpBand->cyMaxChild = lprbbi->cyMaxChild;
             lpBand->cyIntegral = lprbbi->cyIntegral;
 
