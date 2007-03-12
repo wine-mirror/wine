@@ -603,7 +603,7 @@ static void free_file_node(struct ExtractFileList *pNode)
 }
 
 /* determines whether szFile is in the NULL-separated szFileList */
-static BOOL file_in_list(LPSTR szFile, LPSTR szFileList)
+static BOOL file_in_list(LPCSTR szFile, LPCSTR szFileList)
 {
     DWORD dwLen = lstrlenA(szFile);
     DWORD dwTestLen;
@@ -627,7 +627,7 @@ static BOOL file_in_list(LPSTR szFile, LPSTR szFileList)
 /* removes nodes from the linked list that aren't specified in szFileList
  * returns the number of files that are in both the linked list and szFileList
  */
-static DWORD fill_file_list(EXTRACTdest *extractDest, LPCSTR szCabName, LPSTR szFileList)
+static DWORD fill_file_list(EXTRACTdest *extractDest, LPCSTR szCabName, LPCSTR szFileList)
 {
     DWORD dwNumFound = 0;
     struct ExtractFileList *pNode;

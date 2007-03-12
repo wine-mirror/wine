@@ -214,7 +214,7 @@ LPWSTR get_parameter(LPWSTR *params, WCHAR separator)
     return token;
 }
 
-static BOOL is_full_path(LPWSTR path)
+static BOOL is_full_path(LPCWSTR path)
 {
     const int MIN_PATH_LEN = 3;
 
@@ -229,7 +229,7 @@ static BOOL is_full_path(LPWSTR path)
 
 /* retrieves the contents of a field, dynamically growing the buffer if necessary */
 static WCHAR *get_field_string(INFCONTEXT *context, DWORD index, WCHAR *buffer,
-                               WCHAR *static_buffer, DWORD *size)
+                               const WCHAR *static_buffer, DWORD *size)
 {
     DWORD required;
 

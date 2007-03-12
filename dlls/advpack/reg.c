@@ -98,7 +98,7 @@ error:
     return FALSE;
 }
 
-static void strentry_atow(STRENTRYA *aentry, STRENTRYW *wentry)
+static void strentry_atow(const STRENTRYA *aentry, STRENTRYW *wentry)
 {
     DWORD name_len, val_len;
 
@@ -171,7 +171,7 @@ HRESULT WINAPI RegInstallA(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTa
     return hr;
 }
 
-static HRESULT write_predefined_strings(HMODULE hm, LPWSTR ini_path)
+static HRESULT write_predefined_strings(HMODULE hm, LPCWSTR ini_path)
 {
     WCHAR mod_path[MAX_PATH + 2];
     WCHAR sys_mod_path[MAX_PATH + 2];
