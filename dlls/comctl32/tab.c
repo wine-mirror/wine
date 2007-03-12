@@ -2930,6 +2930,8 @@ static inline LRESULT TAB_SetImageList (TAB_INFO *infoPtr, HIMAGELIST himlNew)
     HIMAGELIST himlPrev = infoPtr->himl;
     TRACE("\n");
     infoPtr->himl = himlNew;
+    TAB_SetItemBounds(infoPtr);
+    InvalidateRect(infoPtr->hwnd, NULL, TRUE);
     return (LRESULT)himlPrev;
 }
 
