@@ -25,3 +25,4 @@
 #include "credui_resources.h"
 
 #include "credui_En.rc"
+#include "credui_Pl.rc"
