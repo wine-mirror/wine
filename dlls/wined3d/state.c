@@ -2905,10 +2905,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
     handleStreams(stateblock, useVertexShaderFunction, context);
 
-    /* Do I have to use ? TRUE : FALSE ? Or can I rely on 15==15 being equal to TRUE(=1)? */
-    transformed = ((device->strided_streams.u.s.position.lpData != NULL ||
-                    device->strided_streams.u.s.position.VBO != 0) &&
-                    device->strided_streams.u.s.position_transformed) ? TRUE : FALSE;
+    transformed = device->strided_streams.u.s.position_transformed;
     if (transformed) useVertexShaderFunction = FALSE;
 
     if(transformed != context->last_was_rhw && !useVertexShaderFunction) {
