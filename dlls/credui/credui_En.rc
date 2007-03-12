@@ -1,5 +1,5 @@
 /*
- * Top level resource file for Credentials UI
+ * English language resource file for Credentials UI
  *
  * Copyright 2007 Robert Shearman (for CodeWeavers)
  *
@@ -18,10 +18,19 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winnls.h"
-#include "credui_resources.h"
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
-#include "credui_En.rc"
+IDD_CREDDIALOG DIALOG DISCARDABLE  0, 0, 220, 82
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Enter User Name and Password"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "&User Name:",IDC_STATIC,7,10,72,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_USERNAME,80,10,130,12,ES_AUTOHSCROLL
+    LTEXT           "&Password:",IDC_STATIC,7,27,72,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_PASSWORD,80,27,130,12,ES_PASSWORD | ES_AUTOHSCROLL
+    LTEXT           "&Domain Name:",IDC_STATIC,7,44,72,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_DOMAIN,80,44,130,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,7,61,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,67,61,50,14
+END
