@@ -191,6 +191,12 @@ Ustawienia flagi nic nie zmieniaj¹ pod Wine'em.\n"
 
   WCMD_VOL,    "Pomoc o VOL\n"
 
+  WCMD_PUSHD, "PUSHD <nazwakatalogu> zapamiêtuje aktualny katalog na stosie, a\n\
+               nastêpnie przechodzi do katalogu podanego jako parametr\n"
+
+  WCMD_POPD, "POPD ustala aktualny katalog na ostatni katalog zapamiêtany przez\n\
+              PUSHD\n"
+
   WCMD_EXIT,
 "EXIT koñczy bierz¹c¹ sesjê cmd i powraca do systemu operacyjnego\n\
 lub pow³oki, w której uruchomiono cmd.\n"
@@ -210,7 +216,9 @@ HELP\t\tWyœwietla dok³adniejsz¹ pomoc o komendzie\n\
 MD (MKDIR)\tTworzy katalog\n\
 MOVE\t\tPrzenosi katalog lub pliki\n\
 PATH\t\tUstawia lub wyœwietla œcie¿kê przeszukiwania\n\
+POPD\t\tWraca do katalogu zapamiêtanego przez PUSHD\n\
 PROMPT\t\tZmienia tekst zg³oszenia\n\
+PUSHD\t\tPrzechodzi do nowego katalogu zapamiêtuj¹c stary\n\
 REN (RENAME)\tZmienia nazwê pliku\n\
 RD (RMDIR)\tUsuwa katalog\n\
 SET\t\tUstawia lub wyœwietla zmienne œrodowiskowe\n\
