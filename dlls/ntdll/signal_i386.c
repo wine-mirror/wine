@@ -243,6 +243,27 @@ typedef struct ucontext SIGCONTEXT;
 
 typedef ucontext_t SIGCONTEXT;
 
+/* work around silly renaming of struct members in OS X 10.5 */
+#if __DARWIN_UNIX03 && defined(_STRUCT_X86_EXCEPTION_STATE32)
+#define EAX_sig(context)     ((context)->uc_mcontext->__ss.__eax)
+#define EBX_sig(context)     ((context)->uc_mcontext->__ss.__ebx)
+#define ECX_sig(context)     ((context)->uc_mcontext->__ss.__ecx)
+#define EDX_sig(context)     ((context)->uc_mcontext->__ss.__edx)
+#define ESI_sig(context)     ((context)->uc_mcontext->__ss.__esi)
+#define EDI_sig(context)     ((context)->uc_mcontext->__ss.__edi)
+#define EBP_sig(context)     ((context)->uc_mcontext->__ss.__ebp)
+#define CS_sig(context)      ((context)->uc_mcontext->__ss.__cs)
+#define DS_sig(context)      ((context)->uc_mcontext->__ss.__ds)
+#define ES_sig(context)      ((context)->uc_mcontext->__ss.__es)
+#define FS_sig(context)      ((context)->uc_mcontext->__ss.__fs)
+#define GS_sig(context)      ((context)->uc_mcontext->__ss.__gs)
+#define SS_sig(context)      ((context)->uc_mcontext->__ss.__ss)
+#define EFL_sig(context)     ((context)->uc_mcontext->__ss.__eflags)
+#define EIP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->__ss.__eip))
+#define ESP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->__ss.__esp))
+#define TRAP_sig(context)    ((context)->uc_mcontext->__es.__trapno)
+#define ERROR_sig(context)   ((context)->uc_mcontext->__es.__err)
+#else
 #define EAX_sig(context)     ((context)->uc_mcontext->ss.eax)
 #define EBX_sig(context)     ((context)->uc_mcontext->ss.ebx)
 #define ECX_sig(context)     ((context)->uc_mcontext->ss.ecx)
@@ -250,21 +271,18 @@ typedef ucontext_t SIGCONTEXT;
 #define ESI_sig(context)     ((context)->uc_mcontext->ss.esi)
 #define EDI_sig(context)     ((context)->uc_mcontext->ss.edi)
 #define EBP_sig(context)     ((context)->uc_mcontext->ss.ebp)
-
 #define CS_sig(context)      ((context)->uc_mcontext->ss.cs)
 #define DS_sig(context)      ((context)->uc_mcontext->ss.ds)
 #define ES_sig(context)      ((context)->uc_mcontext->ss.es)
 #define FS_sig(context)      ((context)->uc_mcontext->ss.fs)
 #define GS_sig(context)      ((context)->uc_mcontext->ss.gs)
 #define SS_sig(context)      ((context)->uc_mcontext->ss.ss)
-
 #define EFL_sig(context)     ((context)->uc_mcontext->ss.eflags)
-
 #define EIP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->ss.eip))
 #define ESP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->ss.esp))
-
 #define TRAP_sig(context)    ((context)->uc_mcontext->es.trapno)
 #define ERROR_sig(context)   ((context)->uc_mcontext->es.err)
+#endif
 
 #endif /* __APPLE__ */
 
@@ -1335,7 +1353,7 @@ BOOL SIGNAL_Init(void)
     struct sigaction sig_act;
 
 #ifdef HAVE_SIGALTSTACK
-    struct sigaltstack ss;
+    stack_t ss;
 
 #ifdef __APPLE__
     int mib[2], val = 1;
