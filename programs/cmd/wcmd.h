@@ -104,7 +104,7 @@ struct env_stack
   union {
     int    stackdepth;       /* Only used for pushd and popd */
     char   cwd;              /* Only used for set/endlocal   */
-  };
+  } u;
   WCHAR *strings;
 };
 

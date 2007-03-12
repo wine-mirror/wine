@@ -1028,8 +1028,8 @@ void WCMD_show_prompt (void) {
 	  break;
 	case '+':
 	  if (pushd_directories) {
-	    memset(q, '+', pushd_directories->stackdepth);
-	    q = q + pushd_directories->stackdepth;
+	    memset(q, '+', pushd_directories->u.stackdepth);
+	    q = q + pushd_directories->u.stackdepth;
 	  }
 	  break;
       }
