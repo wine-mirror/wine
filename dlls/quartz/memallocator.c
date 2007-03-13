@@ -490,7 +490,10 @@ static ULONG WINAPI StdMediaSample2_Release(IMediaSample2 * iface)
 
     if (!ref)
     {
-        IMemAllocator_ReleaseBuffer(This->pParent, (IMediaSample *)iface);
+        if (This->pParent)
+            IMemAllocator_ReleaseBuffer(This->pParent, (IMediaSample *)iface);
+        else
+            StdMediaSample2_Delete(This);
         return 0;
     }
     return ref;
@@ -813,7 +816,17 @@ static HRESULT StdMemAllocator_Free(IMemAllocator * iface)
     StdMemAllocator *This = (StdMemAllocator *)iface;
     struct list * cursor;
 
-    assert(list_empty(&This->base.used_list));
+    if (!list_empty(&This->base.used_list))
+    {
+        WARN("Freeing allocator with outstanding samples!\n");
+        while ((cursor = list_head(&This->base.used_list)) != NULL)
+        {
+            StdMediaSample2 *pSample;
+            list_remove(cursor);
+            pSample = LIST_ENTRY(cursor, StdMediaSample2, listentry);
+            pSample->pParent = NULL;
+        }
+    }
 
     while ((cursor = list_head(&This->base.free_list)) != NULL)
     {
