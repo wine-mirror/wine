@@ -58,9 +58,11 @@
  *  (typedef) definitions.
  */
 
+#undef BOOL
 #undef DWORD
 #undef LPDWORD
 
+#define BOOL    BOOL
 #define DWORD   DWORD
 #define LPDWORD LPDWORD
 
