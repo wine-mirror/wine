@@ -64,17 +64,25 @@ static int match_ext(const WCHAR* ptr, size_t len)
     return 0;
 }
 
+static const WCHAR* get_filename(const WCHAR* name, const WCHAR* endptr)
+{
+    const WCHAR*        ptr;
+
+    if (!endptr) endptr = name + strlenW(name);
+    for (ptr = endptr - 1; ptr >= name; ptr--)
+    {
+        if (*ptr == '/' || *ptr == '\\') break;
+    }
+    return ++ptr;
+}
+
 static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
 {
-    const WCHAR *ptr,*endptr;
+    const WCHAR *ptr, *endptr;
     size_t      len, l;
 
-    endptr = in + strlenW(in);
-    for (ptr = endptr - 1;
-         ptr >= in && *ptr != '/' && *ptr != '\\';
-         ptr--);
-    ptr++;
-    len = min(endptr-ptr,size-1);
+    ptr = get_filename(in, endptr = in + strlenW(in));
+    len = min(endptr - ptr, size - 1);
     memcpy(out, ptr, len * sizeof(WCHAR));
     out[len] = '\0';
     if (len > 4 && (l = match_ext(out, len)))
