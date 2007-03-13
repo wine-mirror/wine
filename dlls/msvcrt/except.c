@@ -88,7 +88,7 @@ static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
                                    PCONTEXT context,
                                    EXCEPTION_REGISTRATION_RECORD** dispatch)
 {
-  if (rec->ExceptionFlags & 0x6)
+  if (!(rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
     return ExceptionContinueSearch;
   *dispatch = frame;
   return ExceptionCollidedUnwind;
@@ -126,28 +126,26 @@ void CDECL _global_unwind2(EXCEPTION_REGISTRATION_RECORD* frame)
  */
 void CDECL _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
 {
-  MSVCRT_EXCEPTION_FRAME *curframe = frame;
   EXCEPTION_REGISTRATION_RECORD reg;
 
   TRACE("(%p,%d,%d)\n",frame, frame->trylevel, trylevel);
 
   /* Register a handler in case of a nested exception */
-  reg.Handler = (PEXCEPTION_HANDLER)MSVCRT_nested_handler;
+  reg.Handler = MSVCRT_nested_handler;
   reg.Prev = NtCurrentTeb()->Tib.ExceptionList;
   __wine_push_frame(&reg);
 
   while (frame->trylevel != TRYLEVEL_END && frame->trylevel != trylevel)
   {
-    int curtrylevel = frame->scopetable[frame->trylevel].previousTryLevel;
-    curframe = frame;
-    curframe->trylevel = curtrylevel;
-    if (!frame->scopetable[curtrylevel].lpfnFilter)
-    {
-      ERR("__try block cleanup not implemented - expect crash!\n");
-      /* FIXME: Remove current frame, set ebp, call
-       * frame->scopetable[curtrylevel].lpfnHandler()
-       */
-    }
+      int level = frame->trylevel;
+      frame->trylevel = frame->scopetable[level].previousTryLevel;
+      if (!frame->scopetable[level].lpfnFilter)
+      {
+          FIXME( "__try block cleanup level %d handler %p not fully implemented\n",
+                 level, frame->scopetable[level].lpfnHandler );
+          /* FIXME: should probably set ebp to frame->_ebp */
+          frame->scopetable[level].lpfnHandler();
+      }
   }
   __wine_pop_frame(&reg);
   TRACE("unwound OK\n");
