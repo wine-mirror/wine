@@ -39,8 +39,16 @@ extern int echo_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern DWORD errorlevel;
 
+typedef enum _DISPLAYTIME
+{
+    Creation = 0,
+    Access,
+    Written
+} DISPLAYTIME;
+
 static int file_total, dir_total, recurse, wide, bare, max_width, lower;
 static ULONGLONG byte_total;
+static DISPLAYTIME dirTime;
 
 /*****************************************************************************
  * WCMD_directory
@@ -55,9 +63,11 @@ void WCMD_directory (void) {
   int status, paged_mode;
   ULARGE_INTEGER avail, total, free;
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+  char *p;
 
   byte_total = 0;
   file_total = dir_total = 0;
+  dirTime = Written;
 
   /* Handle args */
   paged_mode = (strstr(quals, "/P") != NULL);
@@ -65,6 +75,23 @@ void WCMD_directory (void) {
   wide    = (strstr(quals, "/W") != NULL);
   bare    = (strstr(quals, "/B") != NULL);
   lower   = (strstr(quals, "/L") != NULL);
+
+  if ((p = strstr(quals, "/T")) != NULL) {
+    p = p + 2;
+    if (*p==':') p++;  /* Skip optional : */
+
+    if (*p == 'A') dirTime = Access;
+    else if (*p == 'C') dirTime = Creation;
+    else if (*p == 'W') dirTime = Written;
+
+    /* Support /T and /T: with no parms, default to written */
+    else if (*p == '/') dirTime = Written;
+    else {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      WCMD_print_error();
+      return;
+    }
+  }
 
   /* Handle conflicting args and initialization */
   if (bare) wide = FALSE;
@@ -212,7 +239,13 @@ void WCMD_list_directory (char *search_path, int level) {
         while ( (*p = tolower(*p)) ) ++p;
     }
 
-    FileTimeToLocalFileTime (&(fd+i)->ftLastWriteTime, &ft);
+    if (dirTime == Written) {
+      FileTimeToLocalFileTime (&(fd+i)->ftLastWriteTime, &ft);
+    } else if (dirTime == Access) {
+      FileTimeToLocalFileTime (&(fd+i)->ftLastAccessTime, &ft);
+    } else {
+      FileTimeToLocalFileTime (&(fd+i)->ftCreationTime, &ft);
+    }
     FileTimeToSystemTime (&ft, &st);
     GetDateFormat (0, DATE_SHORTDATE, &st, NULL, datestring,
       		sizeof(datestring));
