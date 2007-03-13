@@ -35,7 +35,8 @@ const char * const inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", 
 		"HELP", "IF", "LABEL", "MD", "MKDIR", "MOVE", "PATH", "PAUSE",
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
                 "TIME", "TITLE", "TYPE", "VERIFY", "VER", "VOL", 
-                "ENDLOCAL", "SETLOCAL", "PUSHD", "POPD", "ASSOC", "COLOR", "EXIT" };
+                "ENDLOCAL", "SETLOCAL", "PUSHD", "POPD", "ASSOC", "COLOR", "FTYPE",
+                "EXIT" };
 
 HINSTANCE hinst;
 DWORD errorlevel;
@@ -657,10 +658,13 @@ void WCMD_process_command (char *command)
         WCMD_popd();
         break;
       case WCMD_ASSOC:
-        WCMD_assoc(p);
+        WCMD_assoc(p, TRUE);
         break;
       case WCMD_COLOR:
         WCMD_color();
+        break;
+      case WCMD_FTYPE:
+        WCMD_assoc(p, FALSE);
         break;
       case WCMD_EXIT:
         WCMD_exit ();

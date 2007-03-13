@@ -1615,9 +1615,10 @@ BOOL WCMD_ask_confirm (char *message, BOOL showSureText) {
 /*****************************************************************************
  * WCMD_assoc
  *
- *	Lists or sets file associations
+ *	Lists or sets file associations  (assoc = TRUE)
+ *      Lists or sets file types         (assoc = FALSE)
  */
-void WCMD_assoc (char *command) {
+void WCMD_assoc (char *command, BOOL assoc) {
 
     HKEY    key;
     DWORD   accessOptions = KEY_READ;
@@ -1657,12 +1658,19 @@ void WCMD_assoc (char *command) {
 
         if (rc == ERROR_SUCCESS) {
 
-          /* Only interested in extension ones */
-          if (keyName[0] == '.') {
+          /* Only interested in extension ones if assoc, or others
+             if not assoc                                          */
+          if ((keyName[0] == '.' && assoc) ||
+              (!(keyName[0] == '.') && (!assoc)))
+          {
+            char subkey[MAXSTRING];
+            strcpy(subkey, keyName);
+            if (!assoc) strcat(subkey, "\\Shell\\Open\\Command");
 
-            if (RegOpenKeyEx(key, keyName, 0,
+            if (RegOpenKeyEx(key, subkey, 0,
                              accessOptions, &readKey) == ERROR_SUCCESS) {
 
+              valueLen = sizeof(keyValue);
               rc = RegQueryValueEx(readKey, NULL, NULL, NULL,
                                    (LPBYTE)keyValue, &valueLen);
               WCMD_output_asis(keyName);
@@ -1683,13 +1691,18 @@ void WCMD_assoc (char *command) {
       /* Parameter supplied - if no '=' on command line, its a query */
       if (newValue == NULL) {
         char *space;
+        char subkey[MAXSTRING];
 
         /* Query terminates the parameter at the first space */
         strcpy(keyValue, command);
         space = strchr(keyValue, ' ');
         if (space) *space=0x00;
 
-        if (RegOpenKeyEx(key, keyValue, 0,
+        /* Set up key name */
+        strcpy(subkey, keyValue);
+        if (!assoc) strcat(subkey, "\\Shell\\Open\\Command");
+
+        if (RegOpenKeyEx(key, subkey, 0,
                          accessOptions, &readKey) == ERROR_SUCCESS) {
 
           rc = RegQueryValueEx(readKey, NULL, NULL, NULL,
@@ -1706,7 +1719,11 @@ void WCMD_assoc (char *command) {
           char  outbuffer[MAXSTRING];
 
           /* Load the translated 'File association not found' */
-          LoadString (hinst, WCMD_NOASSOC, msgbuffer, sizeof(msgbuffer));
+          if (assoc) {
+            LoadString (hinst, WCMD_NOASSOC, msgbuffer, sizeof(msgbuffer));
+          } else {
+            LoadString (hinst, WCMD_NOFTYPE, msgbuffer, sizeof(msgbuffer));
+          }
           sprintf(outbuffer, msgbuffer, keyValue);
           WCMD_output_asis(outbuffer);
           errorlevel = 2;
@@ -1715,18 +1732,24 @@ void WCMD_assoc (char *command) {
       /* Not a query - its a set or clear of a value */
       } else {
 
+        char subkey[MAXSTRING];
+
         /* Get pointer to new value */
         *newValue = 0x00;
         newValue++;
 
-        /* If nothing after '=' then clear value */
+        /* Set up key name */
+        strcpy(subkey, command);
+        if (!assoc) strcat(subkey, "\\Shell\\Open\\Command");
+
+        /* If nothing after '=' then clear value - only valid for ASSOC */
         if (*newValue == 0x00) {
 
-          rc = RegDeleteKey(key, command);
-          if (rc == ERROR_SUCCESS) {
+          if (assoc) rc = RegDeleteKey(key, command);
+          if (assoc && rc == ERROR_SUCCESS) {
             WINE_TRACE("HKCR Key '%s' deleted\n", command);
 
-          } else if (rc != ERROR_FILE_NOT_FOUND) {
+          } else if (assoc && rc != ERROR_FILE_NOT_FOUND) {
             WCMD_print_error();
             errorlevel = 2;
 
@@ -1735,7 +1758,11 @@ void WCMD_assoc (char *command) {
             char  outbuffer[MAXSTRING];
 
             /* Load the translated 'File association not found' */
-            LoadString (hinst, WCMD_NOASSOC, msgbuffer, sizeof(msgbuffer));
+            if (assoc) {
+              LoadString (hinst, WCMD_NOASSOC, msgbuffer, sizeof(msgbuffer));
+            } else {
+              LoadString (hinst, WCMD_NOFTYPE, msgbuffer, sizeof(msgbuffer));
+            }
             sprintf(outbuffer, msgbuffer, keyValue);
             WCMD_output_asis(outbuffer);
             errorlevel = 2;
@@ -1743,7 +1770,7 @@ void WCMD_assoc (char *command) {
 
         /* It really is a set value = contents */
         } else {
-          rc = RegCreateKeyEx(key, command, 0, NULL, REG_OPTION_NON_VOLATILE,
+          rc = RegCreateKeyEx(key, subkey, 0, NULL, REG_OPTION_NON_VOLATILE,
                               accessOptions, NULL, &readKey, NULL);
           if (rc == ERROR_SUCCESS) {
             rc = RegSetValueEx(readKey, NULL, 0, REG_SZ,

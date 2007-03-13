@@ -230,4 +230,5 @@ Skriv «HELP <kommando>» for mer informasjon om kommandoene ovenfor\n"
   WCMD_YES, "Y"
   WCMD_NO, "N"
   WCMD_NOASSOC, "File association missing for extension %s\n"
+  WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
 }
