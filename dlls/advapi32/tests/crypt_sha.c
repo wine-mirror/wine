@@ -51,12 +51,16 @@ static void test_sha_ctx(void)
    ULONG result[5];
    ULONG result_correct[5] = {0xe014f93, 0xe09791ec, 0x6dcf96c8, 0x8e9385fc, 0x1611c1bb};
 
-   hmod = LoadLibrary("advapi32.dll");
+   hmod = GetModuleHandleA("advapi32.dll");
    pA_SHAInit = GetProcAddress(hmod, "A_SHAInit");
    pA_SHAUpdate = GetProcAddress(hmod, "A_SHAUpdate");
    pA_SHAFinal = GetProcAddress(hmod, "A_SHAFinal");
 
-   if (!pA_SHAInit || !pA_SHAUpdate || !pA_SHAFinal) return;
+   if (!pA_SHAInit || !pA_SHAUpdate || !pA_SHAFinal)
+   {
+      skip("A_SHAInit and/or A_SHAUpdate and/or A_SHAFinal are not available\n");
+      return;
+   }
 
    RtlZeroMemory(&ctx, sizeof(ctx));
    pA_SHAInit(&ctx);
@@ -71,8 +75,6 @@ static void test_sha_ctx(void)
    pA_SHAFinal(&ctx, result);
    ok(!ctxcmp(&ctx, &ctx_initialized), "context hasn't been reinitialized\n");
    ok(!memcmp(result, result_correct, sizeof(result)), "incorrect result\n");
-
-   FreeLibrary(hmod);
 }
 
 START_TEST(crypt_sha)
