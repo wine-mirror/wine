@@ -398,6 +398,8 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
 
     if (!refCount)
     {
+        IPin *pConnectedTo;
+
         This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
         if (This->pClock)
@@ -410,6 +412,13 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
             IDirectSound_Release(This->dsound);
         This->dsound = NULL;
        
+        if (SUCCEEDED(IPin_ConnectedTo(This->ppPins[0], &pConnectedTo)))
+        {
+            IPin_Disconnect(pConnectedTo);
+            IPin_Release(pConnectedTo);
+        }
+        IPin_Disconnect(This->ppPins[0]);
+
         IPin_Release(This->ppPins[0]);
         
         CoTaskMemFree(This->ppPins);

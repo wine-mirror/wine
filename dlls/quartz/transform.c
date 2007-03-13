@@ -283,7 +283,18 @@ static ULONG WINAPI TransformFilter_Release(IBaseFilter * iface)
             IReferenceClock_Release(This->pClock);
 
         for (i = 0; i < 2; i++)
+        {
+            IPin *pConnectedTo;
+
+            if (SUCCEEDED(IPin_ConnectedTo(This->ppPins[i], &pConnectedTo)))
+            {
+                IPin_Disconnect(pConnectedTo);
+                IPin_Release(pConnectedTo);
+            }
+            IPin_Disconnect(This->ppPins[i]);
+
             IPin_Release(This->ppPins[i]);
+        }
 
         CoTaskMemFree(This->ppPins);
         This->lpVtbl = NULL;
