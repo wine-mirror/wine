@@ -1432,28 +1432,49 @@ void WCMD_title (char *command) {
  * Copy a file to standard output.
  */
 
-void WCMD_type (void) {
+void WCMD_type (char *command) {
 
-  HANDLE h;
-  char buffer[512];
-  DWORD count;
+  int   argno         = 0;
+  char *argN          = command;
+  BOOL  writeHeaders  = FALSE;
 
   if (param1[0] == 0x00) {
     WCMD_output ("Argument missing\n");
     return;
   }
-  h = CreateFile (param1, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-  		FILE_ATTRIBUTE_NORMAL, NULL);
-  if (h == INVALID_HANDLE_VALUE) {
-    WCMD_print_error ();
-    return;
+
+  if (param2[0] != 0x00) writeHeaders = TRUE;
+
+  /* Loop through all args */
+  errorlevel = 0;
+  while (argN) {
+    char *thisArg = WCMD_parameter (command, argno++, &argN);
+
+    HANDLE h;
+    char buffer[512];
+    DWORD count;
+
+    if (!argN) break;
+
+    WINE_TRACE("type: Processing arg '%s'\n", thisArg);
+    h = CreateFile (thisArg, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL, NULL);
+    if (h == INVALID_HANDLE_VALUE) {
+      WCMD_print_error ();
+      WCMD_output ("%s :Failed\n", thisArg);
+      errorlevel = 1;
+    } else {
+      if (writeHeaders) {
+        WCMD_output("\n%s\n\n", thisArg);
+      }
+      while (ReadFile (h, buffer, sizeof(buffer), &count, NULL)) {
+        if (count == 0) break;	/* ReadFile reports success on EOF! */
+        buffer[count] = 0;
+        WCMD_output_asis (buffer);
+      }
+      CloseHandle (h);
+    }
   }
-  while (ReadFile (h, buffer, sizeof(buffer), &count, NULL)) {
-    if (count == 0) break;	/* ReadFile reports success on EOF! */
-    buffer[count] = 0;
-    WCMD_output_asis (buffer);
-  }
-  CloseHandle (h);
 }
 
 /****************************************************************************

@@ -71,7 +71,7 @@ void WCMD_setshow_time (void);
 void WCMD_shift (char *command);
 void WCMD_show_prompt (void);
 void WCMD_title (char *);
-void WCMD_type (void);
+void WCMD_type (char *);
 void WCMD_verify (char *command);
 void WCMD_version (void);
 int  WCMD_volume (int mode, char *command);

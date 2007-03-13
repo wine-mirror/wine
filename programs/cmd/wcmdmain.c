@@ -669,7 +669,7 @@ void WCMD_process_command (char *command)
           WCMD_title(&whichcmd[count+1]);
         break;
       case WCMD_TYPE:
-        WCMD_type ();
+        WCMD_type (p);
 	break;
       case WCMD_VER:
         WCMD_version ();
