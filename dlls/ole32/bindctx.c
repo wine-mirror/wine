@@ -33,9 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-/* represent the first size table and it's increment block size */
-#define  BLOCK_TAB_SIZE 10
-#define  MAX_TAB_SIZE   0xFFFFFFFF
+#define  BINDCTX_FIRST_TABLE_SIZE 4
 
 /* data structure of the BindCtx table elements */
 typedef struct BindCtxObject{
@@ -66,6 +64,7 @@ typedef struct BindCtxImpl{
 /* IBindCtx prototype functions : */
 static HRESULT WINAPI BindCtxImpl_ReleaseBoundObjects(IBindCtx*);
 static HRESULT BindCtxImpl_GetObjectIndex(BindCtxImpl*, IUnknown*, LPOLESTR, DWORD *);
+static HRESULT BindCtxImpl_ExpandTable(BindCtxImpl *);
 
 /*******************************************************************************
  *        BindCtx_QueryInterface
@@ -160,6 +159,13 @@ BindCtxImpl_RegisterObjectBound(IBindCtx* iface,IUnknown* punk)
     if (punk==NULL)
         return S_OK;
 
+    if (lastIndex == This->bindCtxTableSize)
+    {
+        HRESULT hr = BindCtxImpl_ExpandTable(This);
+        if (FAILED(hr))
+            return hr;
+    }
+
     IUnknown_AddRef(punk);
 
     /* put the object in the first free element in the table */
@@ -168,20 +174,6 @@ BindCtxImpl_RegisterObjectBound(IBindCtx* iface,IUnknown* punk)
     This->bindCtxTable[lastIndex].regType = 0;
     lastIndex= ++This->bindCtxTableLastIndex;
 
-    if (lastIndex == This->bindCtxTableSize){ /* the table is full so it must be resized */
-
-        if (This->bindCtxTableSize > (MAX_TAB_SIZE-BLOCK_TAB_SIZE)){
-            FIXME("This->bindCtxTableSize: %d is out of data limite\n", This->bindCtxTableSize);
-            return E_FAIL;
-        }
-
-        This->bindCtxTableSize+=BLOCK_TAB_SIZE; /* new table size */
-
-        This->bindCtxTable = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,This->bindCtxTable,
-                                         This->bindCtxTableSize * sizeof(BindCtxObject));
-        if (!This->bindCtxTable)
-            return E_OUTOFMEMORY;
-    }
     return S_OK;
 }
 
@@ -330,6 +322,14 @@ BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR pszkey, IUnknown* punk)
 	IUnknown_AddRef(punk);
 	return S_OK;
     }
+
+    if (This->bindCtxTableLastIndex == This->bindCtxTableSize)
+    {
+        HRESULT hr = BindCtxImpl_ExpandTable(This);
+        if (FAILED(hr))
+            return hr;
+    }
+
     This->bindCtxTable[This->bindCtxTableLastIndex].pObj = punk;
     This->bindCtxTable[This->bindCtxTableLastIndex].regType = 1;
 
@@ -350,21 +350,6 @@ BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR pszkey, IUnknown* punk)
 
     This->bindCtxTableLastIndex++;
 
-    if (This->bindCtxTableLastIndex == This->bindCtxTableSize)
-    {
-        /* table is full ! must be resized */
-
-        This->bindCtxTableSize+=BLOCK_TAB_SIZE; /* new table size */
-        if (This->bindCtxTableSize > (MAX_TAB_SIZE-BLOCK_TAB_SIZE))
-        {
-            FIXME("This->bindCtxTableSize: %d is out of data limite\n", This->bindCtxTableSize);
-            return E_FAIL;
-        }
-        This->bindCtxTable = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,This->bindCtxTable,
-                                         This->bindCtxTableSize * sizeof(BindCtxObject));
-        if (!This->bindCtxTable)
-            return E_OUTOFMEMORY;
-    }
     IUnknown_AddRef(punk);
     return S_OK;
 }
@@ -483,6 +468,29 @@ static HRESULT BindCtxImpl_GetObjectIndex(BindCtxImpl* This,
     return S_FALSE;
 }
 
+static HRESULT BindCtxImpl_ExpandTable(BindCtxImpl *This)
+{
+    if (!This->bindCtxTableSize)
+    {
+        This->bindCtxTableSize = BINDCTX_FIRST_TABLE_SIZE;
+        This->bindCtxTable = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+                                       This->bindCtxTableSize * sizeof(BindCtxObject));
+    }
+    else
+    {
+        This->bindCtxTableSize *= 2;
+
+        This->bindCtxTable = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,This->bindCtxTable,
+                                         This->bindCtxTableSize * sizeof(BindCtxObject));
+    }
+
+    if (!This->bindCtxTable)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
+
 /* Virtual function table for the BindCtx class. */
 static const IBindCtxVtbl VT_BindCtxImpl =
 {
@@ -524,13 +532,9 @@ static HRESULT BindCtxImpl_Construct(BindCtxImpl* This)
     This->bindOption2.pServerInfo = 0;
 
     /* Initialize the bindctx table */
-    This->bindCtxTableSize=BLOCK_TAB_SIZE;
+    This->bindCtxTableSize=0;
     This->bindCtxTableLastIndex=0;
-    This->bindCtxTable = HeapAlloc(GetProcessHeap(), 0,
-                                This->bindCtxTableSize*sizeof(BindCtxObject));
-
-    if (This->bindCtxTable==NULL)
-        return E_OUTOFMEMORY;
+    This->bindCtxTable = NULL;
 
     return S_OK;
 }
