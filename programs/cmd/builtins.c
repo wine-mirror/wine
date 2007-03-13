@@ -1278,6 +1278,7 @@ void WCMD_setshow_env (char *s) {
   char *p;
   int status;
 
+  errorlevel = 0;
   if (param1[0] == 0x00 && quals[0] == 0x00) {
     env = GetEnvironmentStrings ();
     WCMD_setshow_sortenv( env, NULL );
@@ -1314,11 +1315,13 @@ void WCMD_setshow_env (char *s) {
     }
 
   } else {
+    DWORD gle;
     p = strchr (s, '=');
     if (p == NULL) {
       env = GetEnvironmentStrings ();
       if (WCMD_setshow_sortenv( env, s ) == 0) {
         WCMD_output ("Environment variable %s not defined\n", s);
+        errorlevel = 1;
       }
       return;
     }
@@ -1326,7 +1329,10 @@ void WCMD_setshow_env (char *s) {
 
     if (strlen(p) == 0) p = NULL;
     status = SetEnvironmentVariable (s, p);
-    if ((!status) & (GetLastError() != ERROR_ENVVAR_NOT_FOUND)) WCMD_print_error();
+    gle = GetLastError();
+    if ((!status) & (gle == ERROR_ENVVAR_NOT_FOUND)) {
+      errorlevel = 1;
+    } else if ((!status)) WCMD_print_error();
   }
 }
 
