@@ -78,7 +78,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
     hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
     if (FAILED(hr)) {
 	ERR("Unable to retrieve media type\n");
-	goto error;
+	return hr;
     }
 
     while(!stop)
@@ -99,7 +99,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 	hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pSample, NULL, NULL, 0);
 	if (FAILED(hr)) {
 	    ERR("Unable to get delivery buffer (%x)\n", hr);
-	    goto error;
+	    return hr;
 	}
 
 	hr = IMediaSample_SetActualDataLength(pSample, 0);
@@ -152,11 +152,13 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
         }
 
 error:
-	if (unprepare_header && (res = acmStreamUnprepareHeader(This->has, &ash, 0)))
-	    ERR("Cannot unprepare header %d\n", res);
+        if (unprepare_header && (res = acmStreamUnprepareHeader(This->has, &ash, 0)))
+            ERR("Cannot unprepare header %d\n", res);
+        unprepare_header = FALSE;
 
-	if (pSample)
-	    IMediaSample_Release(pSample);
+        if (pSample)
+            IMediaSample_Release(pSample);
+        pSample = NULL;
     }
 
     return hr;
