@@ -194,11 +194,16 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     }
 
     object_name = p+2;
+    len = strlenW(object_name);
+
     if(*object_name != '/' && *object_name != '\\') {
-        int len = strlenW(object_name)+1;
-        memmove(object_name+1, object_name, len*sizeof(WCHAR));
+        memmove(object_name+1, object_name, (len+1)*sizeof(WCHAR));
         *object_name = '/';
+        len++;
     }
+
+    if(object_name[len-1] == '/')
+        object_name[--len] = 0;
 
     for(p=object_name; *p; p++) {
         if(*p == '\\')
