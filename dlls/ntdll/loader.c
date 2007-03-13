@@ -798,7 +798,18 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
         if (TRACE_ON(relay))
             DPRINTF("%04x:Call TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
                     GetCurrentThreadId(), *callback, module, reason_names[reason] );
-        (*callback)( module, reason, NULL );
+        __TRY
+        {
+            (*callback)( module, reason, NULL );
+        }
+        __EXCEPT(NULL)
+        {
+            if (TRACE_ON(relay))
+                DPRINTF("%04x:exception in TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
+                        GetCurrentThreadId(), callback, module, reason_names[reason] );
+            return;
+        }
+        __ENDTRY
         if (TRACE_ON(relay))
             DPRINTF("%04x:Ret  TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
                     GetCurrentThreadId(), *callback, module, reason_names[reason] );
