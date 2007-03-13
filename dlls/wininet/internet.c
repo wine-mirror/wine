@@ -2860,9 +2860,9 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUr
 
 	if (urlComponents.dwExtraInfoLength) {
 		WCHAR *path_extra;
-		DWORD size = urlComponents.dwUrlPathLength + urlComponents.dwExtraInfoLength + 1;
+		DWORD len = urlComponents.dwUrlPathLength + urlComponents.dwExtraInfoLength + 1;
 
-		if (!(path_extra = HeapAlloc(GetProcessHeap(), 0, size)))
+		if (!(path_extra = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
 		{
 			InternetCloseHandle(client);
 			break;
