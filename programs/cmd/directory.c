@@ -47,6 +47,7 @@ typedef enum _DISPLAYTIME
 } DISPLAYTIME;
 
 static int file_total, dir_total, recurse, wide, bare, max_width, lower;
+static int shortname;
 static ULONGLONG byte_total;
 static DISPLAYTIME dirTime;
 
@@ -71,10 +72,11 @@ void WCMD_directory (void) {
 
   /* Handle args */
   paged_mode = (strstr(quals, "/P") != NULL);
-  recurse = (strstr(quals, "/S") != NULL);
-  wide    = (strstr(quals, "/W") != NULL);
-  bare    = (strstr(quals, "/B") != NULL);
-  lower   = (strstr(quals, "/L") != NULL);
+  recurse    = (strstr(quals, "/S") != NULL);
+  wide       = (strstr(quals, "/W") != NULL);
+  bare       = (strstr(quals, "/B") != NULL);
+  lower      = (strstr(quals, "/L") != NULL);
+  shortname  = (strstr(quals, "/X") != NULL);
 
   if ((p = strstr(quals, "/T")) != NULL) {
     p = p + 2;
@@ -94,7 +96,8 @@ void WCMD_directory (void) {
   }
 
   /* Handle conflicting args and initialization */
-  if (bare) wide = FALSE;
+  if (bare || shortname) wide = FALSE;
+  if (bare) shortname = FALSE;
 
   if (wide) {
       if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo))
@@ -280,8 +283,13 @@ void WCMD_list_directory (char *search_path, int level) {
       dir_count++;
 
       if (!bare) {
-         WCMD_output ("%10s  %8s  <DIR>         %s\n",
-      	     datestring, timestring, (fd+i)->cFileName);
+         if (shortname) {
+             WCMD_output ("%10s  %8s  <DIR>         %-13s%s\n",
+		     datestring, timestring, (fd+i)->cAlternateFileName, (fd+i)->cFileName);
+         } else {
+             WCMD_output ("%10s  %8s  <DIR>         %s\n",
+		     datestring, timestring, (fd+i)->cFileName);
+         }
       } else {
          if (!((strcmp((fd+i)->cFileName, ".") == 0) ||
                (strcmp((fd+i)->cFileName, "..") == 0))) {
@@ -294,10 +302,16 @@ void WCMD_list_directory (char *search_path, int level) {
       file_size.u.LowPart = (fd+i)->nFileSizeLow;
       file_size.u.HighPart = (fd+i)->nFileSizeHigh;
       byte_count.QuadPart += file_size.QuadPart;
-	  if (!bare) {
-         WCMD_output ("%10s  %8s    %10s  %s\n",
-     	     datestring, timestring,
-	         WCMD_filesize64(file_size.QuadPart), (fd+i)->cFileName);
+      if (!bare) {
+         if (shortname) {
+             WCMD_output ("%10s  %8s    %10s  %-13s%s\n",
+	         datestring, timestring,
+                 WCMD_filesize64(file_size.QuadPart), (fd+i)->cAlternateFileName, (fd+i)->cFileName);
+         } else {
+             WCMD_output ("%10s  %8s    %10s  %s\n",
+	         datestring, timestring,
+                 WCMD_filesize64(file_size.QuadPart), (fd+i)->cFileName);
+         }
       } else {
          WCMD_output ("%s%s\n", recurse?real_path:"", (fd+i)->cFileName);
       }
