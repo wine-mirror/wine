@@ -132,8 +132,6 @@ static void testBinaryToStringA(void)
     BOOL ret;
     DWORD strLen = 0, i;
 
-    if (!pCryptBinaryToStringA) return;
-
     ret = pCryptBinaryToStringA(NULL, 0, 0, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
@@ -320,8 +318,6 @@ static void testStringToBinaryA(void)
     BOOL ret;
     DWORD bufLen = 0, i;
 
-    if (!pCryptStringToBinaryA) return;
-
     ret = pCryptStringToBinaryA(NULL, 0, 0, NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
@@ -443,7 +439,7 @@ static void testStringToBinaryA(void)
 
 START_TEST(base64)
 {
-    HMODULE lib = LoadLibraryA("crypt32");
+    HMODULE lib = GetModuleHandleA("crypt32");
 
     if (lib)
     {
@@ -452,9 +448,14 @@ START_TEST(base64)
         pCryptStringToBinaryA = (CryptStringToBinaryAFunc)GetProcAddress(lib,
          "CryptStringToBinaryA");
 
-        testBinaryToStringA();
-        testStringToBinaryA();
+        if (pCryptBinaryToStringA)
+            testBinaryToStringA();
+        else
+            skip("CryptBinaryToStringA is not available\n");
 
-        FreeLibrary(lib);
+        if (pCryptStringToBinaryA)
+            testStringToBinaryA();
+        else
+            skip("CryptStringToBinaryA is not available\n");
     }
 }
