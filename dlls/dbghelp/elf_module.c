@@ -1348,7 +1348,7 @@ static BOOL elf_search_and_load_file(struct process* pcs, const WCHAR* filename,
     static WCHAR        S_libstdcPPW[] = {'l','i','b','s','t','d','c','+','+','\0'};
 
     if (filename == NULL || *filename == '\0') return FALSE;
-    if ((module = module_find_by_name(pcs, filename, DMT_ELF)))
+    if ((module = module_is_already_loaded(pcs, filename)))
     {
         elf_info->module = module;
         module->elf_info->elf_mark = 1;

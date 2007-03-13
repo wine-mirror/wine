@@ -190,46 +190,50 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
  *	module_find_by_name
  *
  */
-struct module* module_find_by_name(const struct process* pcs,
-                                   const WCHAR* name, enum module_type type)
+struct module* module_find_by_name(const struct process* pcs, const WCHAR* name)
 {
     struct module*      module;
 
-    if (type == DMT_UNKNOWN)
+    for (module = pcs->lmodules; module; module = module->next)
     {
-        if ((module = module_find_by_name(pcs, name, DMT_PE)) ||
-            (module = module_find_by_name(pcs, name, DMT_ELF)))
-            return module;
-    }
-    else
-    {
-        WCHAR   modname[MAX_PATH];
-
-        for (module = pcs->lmodules; module; module = module->next)
-        {
-            if (type == module->type &&
-                !strcmpiW(name, module->module.LoadedImageName))
-                return module;
-        }
-        module_fill_module(name, modname, sizeof(modname));
-        for (module = pcs->lmodules; module; module = module->next)
-        {
-            if (type == module->type &&
-                !strcmpiW(modname, module->module.ModuleName))
-                return module;
-        }
+        if (!strcmpiW(name, module->module.ModuleName)) return module;
     }
     SetLastError(ERROR_INVALID_NAME);
     return NULL;
 }
 
-struct module* module_find_by_nameA(const struct process* pcs,
-                                    const char* name, enum module_type type)
+struct module* module_find_by_nameA(const struct process* pcs, const char* name)
 {
     WCHAR wname[MAX_PATH];
 
     MultiByteToWideChar(CP_ACP, 0, name, -1, wname, sizeof(wname) / sizeof(WCHAR));
-    return module_find_by_name(pcs, wname, type);
+    return module_find_by_name(pcs, wname);
+}
+
+/***********************************************************************
+ *	module_is_already_loaded
+ *
+ */
+struct module* module_is_already_loaded(const struct process* pcs, const WCHAR* name)
+{
+    struct module*      module;
+    const WCHAR*        filename;
+
+    /* first compare the loaded image name... */
+    for (module = pcs->lmodules; module; module = module->next)
+    {
+        if (!strcmpiW(name, module->module.LoadedImageName))
+            return module;
+    }
+    /* then compare the standard filenames (without the path) ... */
+    filename = get_filename(name, NULL);
+    for (module = pcs->lmodules; module; module = module->next)
+    {
+        if (!strcmpiW(filename, get_filename(module->module.LoadedImageName, NULL)))
+            return module;
+    }
+    SetLastError(ERROR_INVALID_NAME);
+    return NULL;
 }
 
 /***********************************************************************
@@ -511,33 +515,36 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     /* this is a Wine extension to the API just to redo the synchronisation */
     if (!wImageName && !hFile) return 0;
 
-    if (module_is_elf_container_loaded(pcs, wImageName, BaseOfDll))
+    /* check if the module is already loaded, or if it's a builtin PE module with
+     * an containing ELF module
+     */
+    if (wImageName)
     {
-        /* force the loading of DLL as builtin */
-        if ((module = pe_load_module_from_pcs(pcs, wImageName, wModuleName,
-                                              BaseOfDll, SizeOfDll)))
-            goto done;
-        WARN("Couldn't locate %s\n", debugstr_w(wImageName));
-        return 0;
+        module = module_is_already_loaded(pcs, wImageName);
+        if (!module && module_is_elf_container_loaded(pcs, wImageName, BaseOfDll))
+        {
+            /* force the loading of DLL as builtin */
+            module = pe_load_module_from_pcs(pcs, wImageName, BaseOfDll, SizeOfDll);
+        }
     }
-    TRACE("Assuming %s as native DLL\n", debugstr_w(wImageName));
-    if (!(module = pe_load_module(pcs, wImageName, hFile, BaseOfDll, SizeOfDll)))
+    if (!module)
     {
-        if (module_get_type_by_name(wImageName) == DMT_ELF &&
-            (module = elf_load_module(pcs, wImageName, BaseOfDll)))
-            goto done;
-        FIXME("Should have successfully loaded debug information for image %s\n",
-              debugstr_w(wImageName));
-        if ((module = pe_load_module_from_pcs(pcs, wImageName, wModuleName,
-                                              BaseOfDll, SizeOfDll)))
-            goto done;
+        /* otherwise, try a regular PE module */
+        if (!(module = pe_load_module(pcs, wImageName, hFile, BaseOfDll, SizeOfDll)))
+        {
+            /* and finally and ELF module */
+            if (module_get_type_by_name(wImageName) == DMT_ELF)
+                module = elf_load_module(pcs, wImageName, BaseOfDll);
+        }
+    }
+    if (!module)
+    {
         WARN("Couldn't locate %s\n", debugstr_w(wImageName));
         return 0;
     }
     module->module.NumSyms = module->ht_symbols.num_elts;
-done:
-    /* by default pe_load_module fills module.ModuleName from a derivation
-     * of ImageName. Overwrite it, if we have better information
+    /* by default module_new fills module.ModuleName from a derivation
+     * of LoadedImageName. Overwrite it, if we have better information
      */
     if (wModuleName)
         module_set_module(module, wModuleName);

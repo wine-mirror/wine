@@ -441,10 +441,13 @@ extern struct module*
                                         enum module_type type);
 extern struct module*
                     module_find_by_name(const struct process* pcs,
-                                        const WCHAR* name, enum module_type type);
+                                        const WCHAR* name);
 extern struct module*
                     module_find_by_nameA(const struct process* pcs,
-                                         const char* name, enum module_type type);
+                                         const char* name);
+extern struct module*
+                    module_is_already_loaded(const struct process* pcs,
+                                             const WCHAR* imgname);
 extern BOOL         module_get_debug(struct module_pair*);
 extern struct module*
                     module_new(struct process* pcs, const WCHAR* name,
@@ -479,7 +482,7 @@ extern struct module*
                                    HANDLE hFile, DWORD base, DWORD size);
 extern struct module*
                     pe_load_module_from_pcs(struct process* pcs, const WCHAR* name,
-                                            const WCHAR* mod_name, DWORD base, DWORD size);
+                                            DWORD base, DWORD size);
 extern BOOL         pe_load_debug_info(const struct process* pcs,
                                        struct module* module);
 /* source.c */

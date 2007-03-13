@@ -329,17 +329,13 @@ struct module* pe_load_module(struct process* pcs, const WCHAR* name,
     struct module*      module = NULL;
     BOOL                opened = FALSE;
     HANDLE              hMap;
-    void*               mapping;
     WCHAR               loaded_name[MAX_PATH];
 
     loaded_name[0] = '\0';
     if (!hFile)
     {
-        if (!name)
-        {
-            /* FIXME SetLastError */
-            return NULL;
-        }
+
+        assert(name);
 
         if ((hFile = FindExecutableImageExW(name, pcs->search_path, loaded_name, NULL, NULL)) == NULL)
             return NULL;
@@ -348,9 +344,11 @@ struct module* pe_load_module(struct process* pcs, const WCHAR* name,
     else if (name) strcpyW(loaded_name, name);
     else if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
         FIXME("Trouble ahead (no module name passed in deferred mode)\n");
-    if (!(module = module_find_by_name(pcs, loaded_name, DMT_PE)) &&
-        (hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
+
+    if ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
     {
+        void*   mapping;
+
         if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
         {
             IMAGE_NT_HEADERS*   nth = RtlImageNtHeader(mapping);
@@ -400,41 +398,21 @@ BOOL pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth)
  *
  */
 struct module* pe_load_module_from_pcs(struct process* pcs, const WCHAR* name,
-                                       const WCHAR* mod_name, DWORD base, DWORD size)
+                                       DWORD base, DWORD size)
 {
-    struct module*      module;
-    const WCHAR*        ptr;
+    struct module*      module = NULL;
 
-    if ((module = module_find_by_name(pcs, name, DMT_PE))) return module;
-    if (mod_name) ptr = mod_name;
-    else
+    if (base && pcs->dbg_hdr_addr)
     {
-        for (ptr = name + strlenW(name) - 1; ptr >= name; ptr--)
-        {
-            if (*ptr == '/' || *ptr == '\\')
-            {
-                ptr++;
-                break;
-            }
-        }
-    }
-    if (ptr && (module = module_find_by_name(pcs, ptr, DMT_PE))) return module;
-    if (base)
-    {
-        if (pcs->dbg_hdr_addr)
-        {
-            IMAGE_NT_HEADERS    nth;
+        IMAGE_NT_HEADERS    nth;
 
-            if (pe_load_nt_header(pcs->handle, base, &nth))
-            {
-                if (!size) size = nth.OptionalHeader.SizeOfImage;
-                module = module_new(pcs, name, DMT_PE, FALSE, base, size,
-                                    nth.FileHeader.TimeDateStamp,
-                                    nth.OptionalHeader.CheckSum);
-            }
-        } else if (size)
+        if (pe_load_nt_header(pcs->handle, base, &nth))
+        {
+            if (!size) size = nth.OptionalHeader.SizeOfImage;
             module = module_new(pcs, name, DMT_PE, FALSE, base, size,
-                                0 /* FIXME */, 0 /* FIXME */);
+                                nth.FileHeader.TimeDateStamp,
+                                nth.OptionalHeader.CheckSum);
+        }
     }
     return module;
 }
