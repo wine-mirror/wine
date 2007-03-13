@@ -385,15 +385,20 @@ int main (int argc, char *argv[])
 
 void WCMD_process_command (char *command)
 {
-    char *cmd, *p, *s, *t;
+    char *cmd, *p, *s, *t, *redir;
     int status, i;
     DWORD count, creationDisposition;
     HANDLE h;
     char *whichcmd;
     SECURITY_ATTRIBUTES sa;
     char *new_cmd;
-    HANDLE old_stdin = INVALID_HANDLE_VALUE;
-    HANDLE old_stdout = INVALID_HANDLE_VALUE;
+    char *first_redir = NULL;
+    HANDLE old_stdhandles[3] = {INVALID_HANDLE_VALUE,
+                                INVALID_HANDLE_VALUE,
+                                INVALID_HANDLE_VALUE};
+    DWORD  idx_stdhandles[3] = {STD_INPUT_HANDLE,
+                                STD_OUTPUT_HANDLE,
+                                STD_ERROR_HANDLE};
 
     /* Move copy of the command onto the heap so it can be expanded */
     new_cmd = HeapAlloc( GetProcessHeap(), 0, MAXSTRING );
@@ -486,16 +491,16 @@ void WCMD_process_command (char *command)
       return;
     }
 
-    /* Don't issue newline WCMD_output (newline);           @JED*/
-
     sa.nLength = sizeof(sa);
     sa.lpSecurityDescriptor = NULL;
     sa.bInheritHandle = TRUE;
+
 /*
- *	Redirect stdin and/or stdout if required.
+ *	Redirect stdin, stdout and/or stderr if required.
  */
 
     if ((p = strchr(cmd,'<')) != NULL) {
+      if (first_redir == NULL) first_redir = p;
       h = CreateFile (WCMD_parameter (++p, 0, NULL), GENERIC_READ, FILE_SHARE_READ, &sa, OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
@@ -503,11 +508,24 @@ void WCMD_process_command (char *command)
         HeapFree( GetProcessHeap(), 0, cmd );
 	return;
       }
-      old_stdin = GetStdHandle (STD_INPUT_HANDLE);
+      old_stdhandles[0] = GetStdHandle (STD_INPUT_HANDLE);
       SetStdHandle (STD_INPUT_HANDLE, h);
     }
-    if ((p = strchr(cmd,'>')) != NULL) {
-      *p++ = '\0';
+
+    /* Scan the whole command looking for > and 2> */
+    redir = cmd;
+    while (redir != NULL && ((p = strchr(redir,'>')) != NULL)) {
+      int handle = 0;
+
+      if (*(p-1)!='2') {
+        if (first_redir == NULL) first_redir = p;
+        handle = 1;
+      } else {
+        if (first_redir == NULL) first_redir = (p-1);
+        handle = 2;
+      }
+
+      p++;
       if ('>' == *p) {
         creationDisposition = OPEN_ALWAYS;
         p++;
@@ -515,21 +533,24 @@ void WCMD_process_command (char *command)
       else {
         creationDisposition = CREATE_ALWAYS;
       }
+      redir = p;
       h = CreateFile (WCMD_parameter (p, 0, NULL), GENERIC_WRITE, 0, &sa, creationDisposition,
-		FILE_ATTRIBUTE_NORMAL, NULL);
+                      FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
-	WCMD_print_error ();
+        WCMD_print_error ();
         HeapFree( GetProcessHeap(), 0, cmd );
-	return;
+        return;
       }
       if (SetFilePointer (h, 0, NULL, FILE_END) ==
-          INVALID_SET_FILE_POINTER) {
+            INVALID_SET_FILE_POINTER) {
         WCMD_print_error ();
       }
-      old_stdout = GetStdHandle (STD_OUTPUT_HANDLE);
-      SetStdHandle (STD_OUTPUT_HANDLE, h);
+      old_stdhandles[handle] = GetStdHandle (idx_stdhandles[handle]);
+      SetStdHandle (idx_stdhandles[handle], h);
     }
-    if ((p = strchr(cmd,'<')) != NULL) *p = '\0';
+
+    /* Terminate the command string at <, or first 2> or > */
+    if (first_redir != NULL) *first_redir = '\0';
 
 /*
  * Strip leading whitespaces, and a '@' if supplied
@@ -681,13 +702,13 @@ void WCMD_process_command (char *command)
         WCMD_run_program (whichcmd, 0);
     }
     HeapFree( GetProcessHeap(), 0, cmd );
-    if (old_stdin != INVALID_HANDLE_VALUE) {
-      CloseHandle (GetStdHandle (STD_INPUT_HANDLE));
-      SetStdHandle (STD_INPUT_HANDLE, old_stdin);
-    }
-    if (old_stdout != INVALID_HANDLE_VALUE) {
-      CloseHandle (GetStdHandle (STD_OUTPUT_HANDLE));
-      SetStdHandle (STD_OUTPUT_HANDLE, old_stdout);
+
+    /* Restore old handles */
+    for (i=0; i<3; i++) {
+      if (old_stdhandles[i] != INVALID_HANDLE_VALUE) {
+        CloseHandle (GetStdHandle (idx_stdhandles[i]));
+        SetStdHandle (idx_stdhandles[i], old_stdhandles[i]);
+      }
     }
 }
 
