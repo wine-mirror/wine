@@ -131,7 +131,7 @@ struct symt_compiland* symt_new_compiland(struct module* module,
     struct symt_compiland*    sym;
 
     TRACE_(dbghelp_symt)("Adding compiland symbol %s:%s\n",
-                         module->module_name, source_get(module, src_idx));
+                         debugstr_w(module->module.ModuleName), source_get(module, src_idx));
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag = SymTagCompiland;
@@ -152,7 +152,7 @@ struct symt_public* symt_new_public(struct module* module,
     struct symt**       p;
 
     TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%lx\n",
-                         module->module_name, name, address);
+                         debugstr_w(module->module.ModuleName), name, address);
     if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) &&
         symt_find_nearest(module, address) != NULL)
         return NULL;
@@ -187,7 +187,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
     DWORD64             tsz;
 
     TRACE_(dbghelp_symt)("Adding global symbol %s:%s @%lx %p\n",
-                         module->module_name, name, addr, type);
+                         debugstr_w(module->module.ModuleName), name, addr, type);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag      = SymTagData;
@@ -202,7 +202,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
         {
             if (tsz != size)
                 FIXME("Size mismatch for %s.%s between type (%s) and src (%lu)\n",
-                      module->module_name, name,
+                      debugstr_w(module->module.ModuleName), name,
                       wine_dbgstr_longlong(tsz), size);
         }
         if (compiland)
@@ -224,7 +224,7 @@ struct symt_function* symt_new_function(struct module* module,
     struct symt**               p;
 
     TRACE_(dbghelp_symt)("Adding global function %s:%s @%lx-%lx\n",
-                         module->module_name, name, addr, addr + size - 1);
+                         debugstr_w(module->module.ModuleName), name, addr, addr + size - 1);
 
     assert(!sig_type || sig_type->tag == SymTagFunctionType);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
@@ -310,7 +310,7 @@ struct symt_data* symt_add_func_local(struct module* module,
     struct symt**       p;
 
     TRACE_(dbghelp_symt)("Adding local symbol (%s:%s): %s %p\n",
-                         module->module_name, func->hash_elt.name,
+                         debugstr_w(module->module.ModuleName), func->hash_elt.name,
                          name, type);
 
     assert(func);
@@ -425,7 +425,7 @@ struct symt_thunk* symt_new_thunk(struct module* module,
     struct symt_thunk*  sym;
 
     TRACE_(dbghelp_symt)("Adding global thunk %s:%s @%lx-%lx\n",
-                         module->module_name, name, addr, addr + size - 1);
+                         debugstr_w(module->module.ModuleName), name, addr, addr + size - 1);
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -455,7 +455,7 @@ struct symt_data* symt_new_constant(struct module* module,
     struct symt_data*  sym;
 
     TRACE_(dbghelp_symt)("Adding constant value %s:%s\n",
-                         module->module_name, name);
+                         debugstr_w(module->module.ModuleName), name);
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {

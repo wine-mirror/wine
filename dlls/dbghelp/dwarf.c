@@ -330,7 +330,8 @@ static const char* dwarf2_debug_traverse_ctx(const dwarf2_traverse_context_t* ct
 
 static const char* dwarf2_debug_ctx(const dwarf2_parse_context_t* ctx)
 {
-    return wine_dbg_sprintf("ctx(%p,%s)", ctx, ctx->module->module_name);
+    return wine_dbg_sprintf("ctx(%p,%s)",
+                            ctx, debugstr_w(ctx->module->module.ModuleName));
 }
 
 static const char* dwarf2_debug_di(const dwarf2_debug_info_t* di)
@@ -1749,7 +1750,8 @@ static void dwarf2_set_line_number(struct module* module, unsigned long address,
 
     if (!file || !(psrc = vector_at(v, file - 1))) return;
 
-    TRACE("%s %lx %s %u\n", module->module_name, address, source_get(module, *psrc), line);
+    TRACE("%s %lx %s %u\n",
+          debugstr_w(module->module.ModuleName), address, source_get(module, *psrc), line);
     if (!(symt = symt_find_nearest(module, address)) ||
         symt->symt.tag != SymTagFunction) return;
     func = (struct symt_function*)symt;

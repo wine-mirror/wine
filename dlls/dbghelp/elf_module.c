@@ -529,7 +529,7 @@ static const Elf32_Sym* elf_lookup_symtab(const struct module* module,
     if (!result && !(result = weak_result))
     {
         FIXME("Couldn't find symbol %s!%s in symtab\n",
-              module->module_name, name);
+              debugstr_w(module->module.ModuleName), name);
         return NULL;
     }
     return result->symp;
@@ -567,17 +567,19 @@ static void elf_finish_stabs_info(struct module* module, struct hash_table* symt
                 if (((struct symt_function*)sym)->address != module->elf_info->elf_addr &&
                     ((struct symt_function*)sym)->address != module->elf_info->elf_addr + symp->st_value)
                     FIXME("Changing address for %p/%s!%s from %08lx to %08lx\n",
-                          sym, module->module_name, sym->hash_elt.name,
+                          sym, debugstr_w(module->module.ModuleName), sym->hash_elt.name,
                           ((struct symt_function*)sym)->address, module->elf_info->elf_addr + symp->st_value);
                 if (((struct symt_function*)sym)->size && ((struct symt_function*)sym)->size != symp->st_size)
                     FIXME("Changing size for %p/%s!%s from %08lx to %08x\n",
-                          sym, module->module_name, sym->hash_elt.name,
+                          sym, debugstr_w(module->module.ModuleName), sym->hash_elt.name,
                           ((struct symt_function*)sym)->size, symp->st_size);
 
                 ((struct symt_function*)sym)->address = module->elf_info->elf_addr +
                                                         symp->st_value;
                 ((struct symt_function*)sym)->size    = symp->st_size;
-            } else FIXME("Couldn't find %s!%s\n", module->module_name, sym->hash_elt.name);
+            } else
+                FIXME("Couldn't find %s!%s\n",
+                      debugstr_w(module->module.ModuleName), sym->hash_elt.name);
             break;
         case SymTagData:
             switch (((struct symt_data*)sym)->kind)
@@ -593,13 +595,15 @@ static void elf_finish_stabs_info(struct module* module, struct hash_table* symt
                 if (((struct symt_data*)sym)->u.var.offset != module->elf_info->elf_addr &&
                     ((struct symt_data*)sym)->u.var.offset != module->elf_info->elf_addr + symp->st_value)
                     FIXME("Changing address for %p/%s!%s from %08lx to %08lx\n",
-                          sym, module->module_name, sym->hash_elt.name,
+                          sym, debugstr_w(module->module.ModuleName), sym->hash_elt.name,
                           ((struct symt_function*)sym)->address, module->elf_info->elf_addr + symp->st_value);
                     ((struct symt_data*)sym)->u.var.offset = module->elf_info->elf_addr +
                                                           symp->st_value;
                     ((struct symt_data*)sym)->kind = (ELF32_ST_BIND(symp->st_info) == STB_LOCAL) ?
                         DataIsFileStatic : DataIsGlobal;
-                } else FIXME("Couldn't find %s!%s\n", module->module_name, sym->hash_elt.name);
+                } else
+                    FIXME("Couldn't find %s!%s\n",
+                          debugstr_w(module->module.ModuleName), sym->hash_elt.name);
                 break;
             default:;
             }
@@ -694,7 +698,7 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                 if ((xsize || ste->symp->st_size) &&
                     (kind == (ELF32_ST_BIND(ste->symp->st_info) == STB_LOCAL) ? DataIsFileStatic : DataIsGlobal))
                     FIXME("Duplicate in %s: %s<%08x-%08x> %s<%s-%s>\n",
-                          module->module_name,
+                          debugstr_w(module->module.ModuleName),
                           ste->ht_elt.name, addr, ste->symp->st_size,
                           symt->hash_elt.name,
                           wine_dbgstr_longlong(xaddr), wine_dbgstr_longlong(xsize));
@@ -1055,7 +1059,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             const BYTE* dw2_debug_line;
             const BYTE* dw2_debug_loclist;
 
-            TRACE("Loading Dwarf2 information for %s\n", module->module_name);
+            TRACE("Loading Dwarf2 information for %s\n", debugstr_w(module->module.ModuleName));
 
 	    elf_find_section(fmap, ".debug_str", SHT_NULL, &debug_str_sect);
 	    elf_find_section(fmap, ".debug_abbrev", SHT_NULL, &debug_abbrev_sect);
