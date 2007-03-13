@@ -533,18 +533,37 @@ void WCMD_process_command (char *command)
       else {
         creationDisposition = CREATE_ALWAYS;
       }
+
+      /* Add support for 2>&1 */
       redir = p;
-      h = CreateFile (WCMD_parameter (p, 0, NULL), GENERIC_WRITE, 0, &sa, creationDisposition,
-                      FILE_ATTRIBUTE_NORMAL, NULL);
-      if (h == INVALID_HANDLE_VALUE) {
-        WCMD_print_error ();
-        HeapFree( GetProcessHeap(), 0, cmd );
-        return;
+      if (*p == '&') {
+        int idx = *(p+1) - '0';
+
+        if (DuplicateHandle(GetCurrentProcess(),
+                        GetStdHandle(idx_stdhandles[idx]),
+                        GetCurrentProcess(),
+                        &h,
+                        0, TRUE, DUPLICATE_SAME_ACCESS) == 0) {
+          WINE_FIXME("Duplicating handle failed with gle %d\n", GetLastError());
+        }
+        WINE_TRACE("Redirect %d (%p) to %d (%p)\n", handle, GetStdHandle(idx_stdhandles[idx]), idx, h);
+
+      } else {
+        char *param = WCMD_parameter (p, 0, NULL);
+        h = CreateFile (param, GENERIC_WRITE, 0, &sa, creationDisposition,
+                        FILE_ATTRIBUTE_NORMAL, NULL);
+        if (h == INVALID_HANDLE_VALUE) {
+          WCMD_print_error ();
+          HeapFree( GetProcessHeap(), 0, cmd );
+          return;
+        }
+        if (SetFilePointer (h, 0, NULL, FILE_END) ==
+              INVALID_SET_FILE_POINTER) {
+          WCMD_print_error ();
+        }
+        WINE_TRACE("Redirect %d to '%s' (%p)\n", handle, param, h);
       }
-      if (SetFilePointer (h, 0, NULL, FILE_END) ==
-            INVALID_SET_FILE_POINTER) {
-        WCMD_print_error ();
-      }
+
       old_stdhandles[handle] = GetStdHandle (idx_stdhandles[handle]);
       SetStdHandle (idx_stdhandles[handle], h);
     }
