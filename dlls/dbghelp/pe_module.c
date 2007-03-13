@@ -320,11 +320,11 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
 }
 
 /******************************************************************
- *		pe_load_module
+ *		pe_load_native_module
  *
  */
-struct module* pe_load_module(struct process* pcs, const WCHAR* name,
-                              HANDLE hFile, DWORD base, DWORD size)
+struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
+                                     HANDLE hFile, DWORD base, DWORD size)
 {
     struct module*      module = NULL;
     BOOL                opened = FALSE;
@@ -394,11 +394,11 @@ BOOL pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth)
 }
 
 /******************************************************************
- *		pe_load_module_from_pcs
+ *		pe_load_builtin_module
  *
  */
-struct module* pe_load_module_from_pcs(struct process* pcs, const WCHAR* name,
-                                       DWORD base, DWORD size)
+struct module* pe_load_builtin_module(struct process* pcs, const WCHAR* name,
+                                      DWORD base, DWORD size)
 {
     struct module*      module = NULL;
 

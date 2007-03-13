@@ -478,11 +478,11 @@ extern BOOL         pdb_fetch_file_info(struct pdb_lookup* pdb_lookup);
 /* pe_module.c */
 extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth);
 extern struct module*
-                    pe_load_module(struct process* pcs, const WCHAR* name,
-                                   HANDLE hFile, DWORD base, DWORD size);
+                    pe_load_native_module(struct process* pcs, const WCHAR* name,
+                                          HANDLE hFile, DWORD base, DWORD size);
 extern struct module*
-                    pe_load_module_from_pcs(struct process* pcs, const WCHAR* name,
-                                            DWORD base, DWORD size);
+                    pe_load_builtin_module(struct process* pcs, const WCHAR* name,
+                                           DWORD base, DWORD size);
 extern BOOL         pe_load_debug_info(const struct process* pcs,
                                        struct module* module);
 /* source.c */

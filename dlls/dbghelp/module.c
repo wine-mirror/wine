@@ -524,13 +524,13 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
         if (!module && module_is_elf_container_loaded(pcs, wImageName, BaseOfDll))
         {
             /* force the loading of DLL as builtin */
-            module = pe_load_module_from_pcs(pcs, wImageName, BaseOfDll, SizeOfDll);
+            module = pe_load_builtin_module(pcs, wImageName, BaseOfDll, SizeOfDll);
         }
     }
     if (!module)
     {
         /* otherwise, try a regular PE module */
-        if (!(module = pe_load_module(pcs, wImageName, hFile, BaseOfDll, SizeOfDll)))
+        if (!(module = pe_load_native_module(pcs, wImageName, hFile, BaseOfDll, SizeOfDll)))
         {
             /* and finally and ELF module */
             if (module_get_type_by_name(wImageName) == DMT_ELF)
