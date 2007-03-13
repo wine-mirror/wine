@@ -2725,7 +2725,7 @@ INT WINAPI GetSystemMetrics( INT index )
         return tmMenuFont.tmHeight <= 0 ? 13 :
         ((tmMenuFont.tmHeight + tmMenuFont.tmExternalLeading + 1) / 2) * 2 - 1;
     case SM_SLOWMACHINE:
-        return 0;  /* FIXME: Should check the type of processor */
+        return 0;  /* Never true */
     case SM_MIDEASTENABLED:
         return 0;  /* FIXME */
     case SM_MOUSEWHEELPRESENT:
