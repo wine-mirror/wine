@@ -632,33 +632,71 @@ BOOL WINAPI SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll)
  *		SymEnumerateModules (DBGHELP.@)
  *
  */
+struct enum_modW64_32
+{
+    PSYM_ENUMMODULES_CALLBACK   cb;
+    PVOID                       user;
+    char                        module[MAX_PATH];
+};
+
+static BOOL CALLBACK enum_modW64_32(PWSTR name, DWORD64 base, PVOID user)
+{
+    struct enum_modW64_32*      x = user;
+
+    WideCharToMultiByte(CP_ACP, 0, name, -1, x->module, sizeof(x->module), NULL, NULL);
+    return x->cb(x->module, (DWORD)base, x->user);
+}
+
 BOOL  WINAPI SymEnumerateModules(HANDLE hProcess,
                                  PSYM_ENUMMODULES_CALLBACK EnumModulesCallback,  
                                  PVOID UserContext)
 {
-    struct process*     pcs = process_find_by_handle(hProcess);
-    struct module*      module;
+    struct enum_modW64_32       x;
 
-    if (!pcs) return FALSE;
-    
-    for (module = pcs->lmodules; module; module = module->next)
-    {
-        if (!(dbghelp_options & SYMOPT_WINE_WITH_ELF_MODULES) && module->type == DMT_ELF)
-            continue;
-        if (!EnumModulesCallback(module->module_name,
-                                 module->module.BaseOfImage, UserContext))
-            break;
-    }
-    return TRUE;
+    x.cb = EnumModulesCallback;
+    x.user = UserContext;
+
+    return SymEnumerateModulesW64(hProcess, enum_modW64_32, &x);
 }
 
 /******************************************************************
  *		SymEnumerateModules64 (DBGHELP.@)
  *
  */
+struct enum_modW64_64
+{
+    PSYM_ENUMMODULES_CALLBACK64 cb;
+    PVOID                       user;
+    char                        module[MAX_PATH];
+};
+
+static BOOL CALLBACK enum_modW64_64(PWSTR name, DWORD64 base, PVOID user)
+{
+    struct enum_modW64_64*      x = user;
+
+    WideCharToMultiByte(CP_ACP, 0, name, -1, x->module, sizeof(x->module), NULL, NULL);
+    return x->cb(x->module, base, x->user);
+}
+
 BOOL  WINAPI SymEnumerateModules64(HANDLE hProcess,
                                    PSYM_ENUMMODULES_CALLBACK64 EnumModulesCallback,  
                                    PVOID UserContext)
+{
+    struct enum_modW64_64       x;
+
+    x.cb = EnumModulesCallback;
+    x.user = UserContext;
+
+    return SymEnumerateModulesW64(hProcess, enum_modW64_64, &x);
+}
+
+/******************************************************************
+ *		SymEnumerateModulesW64 (DBGHELP.@)
+ *
+ */
+BOOL  WINAPI SymEnumerateModulesW64(HANDLE hProcess,
+                                    PSYM_ENUMMODULES_CALLBACKW64 EnumModulesCallback,
+                                    PVOID UserContext)
 {
     struct process*     pcs = process_find_by_handle(hProcess);
     struct module*      module;
@@ -669,7 +707,7 @@ BOOL  WINAPI SymEnumerateModules64(HANDLE hProcess,
     {
         if (!(dbghelp_options & SYMOPT_WINE_WITH_ELF_MODULES) && module->type == DMT_ELF)
             continue;
-        if (!EnumModulesCallback(module->module_name,
+        if (!EnumModulesCallback(module->module.ModuleName,
                                  module->module.BaseOfImage, UserContext))
             break;
     }
