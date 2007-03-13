@@ -2,6 +2,7 @@
  * ListView tests
  *
  * Copyright 2006 Mike McCormack for CodeWeavers
+ * Copyright 2007 George Gov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,10 +34,34 @@
 #define HEADER_ID   1
 
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+#define expect2(expected1, expected2, got1, got2) ok(expected1 == got1 && expected2 == got2, \
+       "expected (%d,%d), got (%d,%d)\n", expected1, expected2, got1, got2)
 
 HWND hwndparent;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
+
+static const struct message create_parent_wnd_seq[] = {
+    { WM_GETMINMAXINFO,     sent },
+    { WM_NCCREATE,          sent },
+    { WM_NCCALCSIZE,        sent|wparam, 0 },
+    { WM_CREATE,            sent },
+    { WM_SHOWWINDOW,        sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_ACTIVATEAPP,       sent|wparam, 1 },
+    { WM_NCACTIVATE,        sent|wparam, 1 },
+    { WM_ACTIVATE,          sent|wparam, 1 },
+    { WM_IME_SETCONTEXT,    sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY,        sent|defwinproc|optional },
+    { WM_SETFOCUS,          sent|wparam|defwinproc, 0 },
+    /* Win9x adds SWP_NOZORDER below */
+    { WM_WINDOWPOSCHANGED,  sent, /*|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE*/ },
+    { WM_NCCALCSIZE,        sent|wparam|optional, 1 },
+    { WM_SIZE,              sent },
+    { WM_MOVE,              sent },
+    { 0 }
+};
 
 static const struct message redraw_listview_seq[] = {
     { WM_PAINT,      sent|id,            0, 0, LISTVIEW_ID },
@@ -46,6 +71,75 @@ static const struct message redraw_listview_seq[] = {
     { WM_NOTIFY,     sent|id|defwinproc, 0, 0, LISTVIEW_ID },
     { WM_NCPAINT,    sent|id|defwinproc, 0, 0, LISTVIEW_ID },
     { WM_ERASEBKGND, sent|id|defwinproc, 0, 0, LISTVIEW_ID },
+    { 0 }
+};
+
+static const struct message listview_icon_spacing_seq[] = {
+    { LVM_SETICONSPACING, sent|lparam, 0, (LPARAM) MAKELONG(20, 30) },
+    { LVM_SETICONSPACING, sent|lparam, 0, (LPARAM) MAKELONG(25, 35) },
+    { LVM_SETICONSPACING, sent|lparam, 0, (LPARAM) MAKELONG(-1, -1) },
+    { 0 }
+};
+
+static const struct message listview_color_seq[] = {
+    { LVM_SETBKCOLOR,     sent|lparam, 0, RGB(0,0,0) },
+    { LVM_GETBKCOLOR,     sent },
+    { LVM_SETTEXTCOLOR,   sent|lparam, 0, RGB(0,0,0) },
+    { LVM_GETTEXTCOLOR,   sent },
+    { LVM_SETTEXTBKCOLOR, sent|lparam, 0, RGB(0,0,0) },
+    { LVM_GETTEXTBKCOLOR, sent },
+
+    { LVM_SETBKCOLOR,     sent|lparam, 0, RGB(100,50,200) },
+    { LVM_GETBKCOLOR,     sent },
+    { LVM_SETTEXTCOLOR,   sent|lparam, 0, RGB(100,50,200) },
+    { LVM_GETTEXTCOLOR,   sent },
+    { LVM_SETTEXTBKCOLOR, sent|lparam, 0, RGB(100,50,200) },
+    { LVM_GETTEXTBKCOLOR, sent },
+
+    { LVM_SETBKCOLOR,     sent|lparam, 0, CLR_NONE },
+    { LVM_GETBKCOLOR,     sent },
+    { LVM_SETTEXTCOLOR,   sent|lparam, 0, CLR_NONE },
+    { LVM_GETTEXTCOLOR,   sent },
+    { LVM_SETTEXTBKCOLOR, sent|lparam, 0, CLR_NONE },
+    { LVM_GETTEXTBKCOLOR, sent },
+
+    { LVM_SETBKCOLOR,     sent|lparam, 0, RGB(255,255,255) },
+    { LVM_GETBKCOLOR,     sent },
+    { LVM_SETTEXTCOLOR,   sent|lparam, 0, RGB(255,255,255) },
+    { LVM_GETTEXTCOLOR,   sent },
+    { LVM_SETTEXTBKCOLOR, sent|lparam, 0, RGB(255,255,255) },
+    { LVM_GETTEXTBKCOLOR, sent },
+    { 0 }
+};
+
+static const struct message listview_item_count_seq[] = {
+    { LVM_GETITEMCOUNT,   sent },
+    { LVM_INSERTITEM,     sent },
+    { LVM_INSERTITEM,     sent },
+    { LVM_INSERTITEM,     sent },
+    { LVM_GETITEMCOUNT,   sent },
+    { LVM_DELETEITEM,     sent|wparam, 2 },
+    { LVM_GETITEMCOUNT,   sent },
+    { LVM_DELETEALLITEMS, sent },
+    { LVM_GETITEMCOUNT,   sent },
+    { LVM_INSERTITEM,     sent },
+    { LVM_INSERTITEM,     sent },
+    { LVM_GETITEMCOUNT,   sent },
+    { LVM_INSERTITEM,     sent },
+    { LVM_GETITEMCOUNT,   sent },
+    { 0 }
+};
+
+static const struct message listview_itempos_seq[] = {
+    { LVM_INSERTITEM,      sent },
+    { LVM_INSERTITEM,      sent },
+    { LVM_INSERTITEM,      sent },
+    { LVM_SETITEMPOSITION, sent|wparam|lparam, 1, MAKELPARAM(10,5) },
+    { LVM_GETITEMPOSITION, sent|wparam,        1 },
+    { LVM_SETITEMPOSITION, sent|wparam|lparam, 2, MAKELPARAM(0,0) },
+    { LVM_GETITEMPOSITION, sent|wparam,        2 },
+    { LVM_SETITEMPOSITION, sent|wparam|lparam, 0, MAKELPARAM(20,20) },
+    { LVM_GETITEMPOSITION, sent|wparam,        0 },
     { 0 }
 };
 
@@ -152,6 +246,36 @@ static HWND create_listview_control(void)
     GetClientRect(hwndparent, &rect);
     hwnd = CreateWindowExA(0, WC_LISTVIEW, "foo",
                            WS_CHILD | WS_BORDER | WS_VISIBLE | LVS_REPORT,
+                           0, 0, rect.right, rect.bottom,
+                           hwndparent, NULL, GetModuleHandleA(NULL), NULL);
+    ok(hwnd != NULL, "gle=%d\n", GetLastError());
+
+    if (!hwnd)
+    {
+        HeapFree(GetProcessHeap(), 0, info);
+        return NULL;
+    }
+
+    info->oldproc = (WNDPROC)SetWindowLongA(hwnd, GWL_WNDPROC,
+                                            (LONG)listview_subclass_proc);
+    SetWindowLongA(hwnd, GWL_USERDATA, (LONG)info);
+
+    return hwnd;
+}
+
+static HWND create_custom_listview_control(DWORD style)
+{
+    struct subclass_info *info;
+    HWND hwnd;
+    RECT rect;
+
+    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
+    if (!info)
+        return NULL;
+
+    GetClientRect(hwndparent, &rect);
+    hwnd = CreateWindowExA(0, WC_LISTVIEW, "foo",
+                           WS_CHILD | WS_BORDER | WS_VISIBLE | style,
                            0, 0, rect.right, rect.bottom,
                            hwndparent, NULL, GetModuleHandleA(NULL), NULL);
     ok(hwnd != NULL, "gle=%d\n", GetLastError());
@@ -660,6 +784,238 @@ static void test_customdraw(void)
     DestroyWindow(hwnd);
 }
 
+static void test_icon_spacing(void)
+{
+    /* LVM_SETICONSPACING */
+    /* note: LVM_SETICONSPACING returns the previous icon spacing if successful */
+    /* note: the first test will fail if the default icon spacing is not (43,43) */
+
+    HWND hwnd;
+    DWORD r;
+
+    hwnd = create_custom_listview_control(LVS_ICON);
+    ok(hwnd != NULL, "failed to create a listview window");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    trace("test icon spacing\n");
+    todo_wine {
+        r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(20, 30));
+        expect(MAKELONG(43,43), r);
+    }
+        r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(25, 35));
+        expect(MAKELONG(20,30), r);
+        r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(-1,-1));
+        expect(MAKELONG(25,35), r);
+
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_icon_spacing_seq, "test icon spacing seq", FALSE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    DestroyWindow(hwnd);
+}
+
+static void test_color(void)
+{
+    /* SETBKCOLOR/GETBKCOLOR, SETTEXTCOLOR/GETTEXTCOLOR, SETTEXTBKCOLOR/GETTEXTBKCOLOR */
+
+    HWND hwnd;
+    DWORD r;
+    int i;
+
+    COLORREF color;
+    COLORREF colors[4] = {RGB(0,0,0), RGB(100,50,200), CLR_NONE, RGB(255,255,255)};
+
+    hwnd = create_listview_control();
+    ok(hwnd != NULL, "failed to create a listview window");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    trace("test color seq\n");
+    for (i = 0; i < 4; i++)
+    {
+        color = colors[i];
+
+        r = SendMessage(hwnd, LVM_SETBKCOLOR, 0, color);
+        expect(TRUE, r);
+        r = SendMessage(hwnd, LVM_GETBKCOLOR, 0, color);
+        expect(color, r);
+
+        r = SendMessage(hwnd, LVM_SETTEXTCOLOR, 0, color);
+        expect (TRUE, r);
+        r = SendMessage(hwnd, LVM_GETTEXTCOLOR, 0, color);
+        expect(color, r);
+
+        r = SendMessage(hwnd, LVM_SETTEXTBKCOLOR, 0, color);
+        expect(TRUE, r);
+        r = SendMessage(hwnd, LVM_GETTEXTBKCOLOR, 0, color);
+        expect(color, r);
+    }
+
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_color_seq, "test color seq", FALSE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    DestroyWindow(hwnd);
+}
+
+static void test_item_count(void)
+{
+    /* LVM_INSERTITEM, LVM_DELETEITEM, LVM_DELETEALLITEMS, LVM_GETITEMCOUNT */
+
+    HWND hwnd;
+    DWORD r;
+
+    LVITEM item0;
+    LVITEM item1;
+    LVITEM item2;
+    static CHAR item0text[] = "item0";
+    static CHAR item1text[] = "item1";
+    static CHAR item2text[] = "item2";
+
+    hwnd = create_listview_control();
+    ok(hwnd != NULL, "failed to create a listview window");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    trace("test item count\n");
+
+    r = SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    expect(0, r);
+
+    /* [item0] */
+    item0.mask = LVIF_TEXT;
+    item0.iItem = 0;
+    item0.iSubItem = 0;
+    item0.pszText = item0text;
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item0);
+    expect(0, r);
+
+    /* [item0, item1] */
+    item1.mask = LVIF_TEXT;
+    item1.iItem = 1;
+    item1.iSubItem = 0;
+    item1.pszText = item1text;
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item1);
+    expect(1, r);
+
+    /* [item0, item1, item2] */
+    item2.mask = LVIF_TEXT;
+    item2.iItem = 2;
+    item2.iSubItem = 0;
+    item2.pszText = item2text;
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item2);
+    expect(2, r);
+
+    r = SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    expect(3, r);
+
+    /* [item0, item1] */
+    r = SendMessage(hwnd, LVM_DELETEITEM, (WPARAM) 2, 0);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    expect(2, r);
+
+    /* [] */
+    r = SendMessage(hwnd, LVM_DELETEALLITEMS, 0, 0);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    expect(0, r);
+
+    /* [item0] */
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item1);
+    expect(0, r);
+
+    /* [item0, item1] */
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item1);
+    expect(1, r);
+
+    r = SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    expect(2, r);
+
+    /* [item0, item1, item2] */
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item2);
+    expect(2, r);
+
+    r = SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    expect(3, r);
+
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_item_count_seq, "test item count seq", FALSE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    DestroyWindow(hwnd);
+}
+
+static void test_item_position(void)
+{
+    /* LVM_SETITEMPOSITION/LVM_GETITEMPOSITION */
+
+    HWND hwnd;
+    DWORD r;
+    POINT position;
+
+    LVITEM item0;
+    LVITEM item1;
+    LVITEM item2;
+    static CHAR item0text[] = "item0";
+    static CHAR item1text[] = "item1";
+    static CHAR item2text[] = "item2";
+
+    hwnd = create_custom_listview_control(LVS_ICON);
+    ok(hwnd != NULL, "failed to create a listview window");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    trace("test item position\n");
+
+    /* [item0] */
+    item0.mask = LVIF_TEXT;
+    item0.iItem = 0;
+    item0.iSubItem = 0;
+    item0.pszText = item0text;
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item0);
+    expect(0, r);
+
+    /* [item0, item1] */
+    item1.mask = LVIF_TEXT;
+    item1.iItem = 1;
+    item1.iSubItem = 0;
+    item1.pszText = item1text;
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item1);
+    expect(1, r);
+
+    /* [item0, item1, item2] */
+    item2.mask = LVIF_TEXT;
+    item2.iItem = 2;
+    item2.iSubItem = 0;
+    item2.pszText = item2text;
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item2);
+    expect(2, r);
+
+    r = SendMessage(hwnd, LVM_SETITEMPOSITION, 1, MAKELPARAM(10,5));
+    expect(TRUE, r);
+    r = SendMessage(hwnd, LVM_GETITEMPOSITION, 1, (LPARAM) &position);
+    expect(TRUE, r);
+    expect2(10, 5, position.x, position.y);
+
+    r = SendMessage(hwnd, LVM_SETITEMPOSITION, 2, MAKELPARAM(0,0));
+    expect(TRUE, r);
+    r = SendMessage(hwnd, LVM_GETITEMPOSITION, 2, (LPARAM) &position);
+    expect(TRUE, r);
+    expect2(0, 0, position.x, position.y);
+
+    r = SendMessage(hwnd, LVM_SETITEMPOSITION, 0, MAKELPARAM(20,20));
+    expect(TRUE, r);
+    r = SendMessage(hwnd, LVM_GETITEMPOSITION, 0, (LPARAM) &position);
+    expect(TRUE, r);
+    expect2(20, 20, position.x, position.y);
+
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_itempos_seq, "test item position seq", TRUE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     INITCOMMONCONTROLSEX icc;
@@ -670,7 +1026,10 @@ START_TEST(listview)
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hwndparent = create_parent_window();
+    ok_sequence(sequences, PARENT_SEQ_INDEX, create_parent_wnd_seq, "create parent window", TRUE);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     test_images();
     test_checkboxes();
@@ -678,4 +1037,8 @@ START_TEST(listview)
     test_create();
     test_redraw();
     test_customdraw();
+    test_icon_spacing();
+    test_color();
+    test_item_count();
+    test_item_position();
 }
