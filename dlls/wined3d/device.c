@@ -5241,6 +5241,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
     }
 
     if(pCursorBitmap) {
+        WINED3DLOCKED_RECT rect;
+
         /* MSDN: Cursor must be A8R8G8B8 */
         if (WINED3DFMT_A8R8G8B8 != pSur->resource.format) {
             ERR("(%p) : surface(%p) has an invalid format\n", This, pCursorBitmap);
@@ -5255,20 +5257,54 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
         }
 
         /* TODO: MSDN: Cursor sizes must be a power of 2 */
-        /* This is to tell our texture code to load a SCRATCH surface. This allows us to use out
-         * Texture and Blitting code to draw the cursor
-         */
-        pSur->Flags |= SFLAG_FORCELOAD;
-        IWineD3DSurface_PreLoad(pCursorBitmap);
-        pSur->Flags &= ~SFLAG_FORCELOAD;
+
         /* Do not store the surface's pointer because the application may release
          * it after setting the cursor image. Windows doesn't addref the set surface, so we can't
          * do this either without creating circular refcount dependencies. Copy out the gl texture instead.
          */
-        This->cursorTexture = pSur->glDescription.textureName;
         This->cursorWidth = pSur->currentDesc.Width;
         This->cursorHeight = pSur->currentDesc.Height;
-        pSur->glDescription.textureName = 0; /* Prevent the texture from being changed or deleted */
+        if (SUCCEEDED(IWineD3DSurface_LockRect(pCursorBitmap, &rect, NULL, WINED3DLOCK_READONLY)))
+        {
+            const PixelFormatDesc *tableEntry = getFormatDescEntry(WINED3DFMT_A8R8G8B8);
+            char *mem, *bits = (char *)rect.pBits;
+            GLint intfmt = tableEntry->glInternal;
+            GLint format = tableEntry->glFormat;
+            GLint type = tableEntry->glType;
+            INT height = This->cursorHeight;
+            INT width = This->cursorWidth;
+            INT bpp = tableEntry->bpp;
+            INT i;
+
+            /* Reformat the texture memory (pitch and width can be different) */
+            mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
+            for(i = 0; i < height; i++)
+                memcpy(&mem[width * bpp * i], &bits[rect.Pitch * i], width * bpp);
+            IWineD3DSurface_UnlockRect(pCursorBitmap);
+            ENTER_GL();
+            /* Make sure that a proper texture unit is selected */
+            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+                checkGLcall("glActiveTextureARB");
+            }
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(0));
+            /* Create a new cursor texture */
+            glGenTextures(1, &This->cursorTexture);
+            checkGLcall("glGenTextures");
+            glBindTexture(GL_TEXTURE_2D, This->cursorTexture);
+            checkGLcall("glBindTexture");
+            /* Copy the bitmap memory into the cursor texture */
+            glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, format, type, mem);
+            HeapFree(GetProcessHeap(), 0, mem);
+            checkGLcall("glTexImage2D");
+            LEAVE_GL();
+        }
+        else
+        {
+            FIXME("A cursor texture was not returned.\n");
+            This->cursorTexture = 0;
+        }
+
     }
 
     This->xHotSpot = XHotSpot;

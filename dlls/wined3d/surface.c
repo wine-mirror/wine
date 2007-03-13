@@ -1744,7 +1744,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     *  these resources cannot be accessed by the Direct3D device nor set as textures or render targets.
     *  However, these resources can always be created, locked, and copied.
     */
-    if (This->resource.pool == WINED3DPOOL_SCRATCH && !(This->Flags & SFLAG_FORCELOAD) )
+    if (This->resource.pool == WINED3DPOOL_SCRATCH )
     {
         FIXME("(%p) Operation not supported for scratch textures\n",This);
         return WINED3DERR_INVALIDCALL;

@@ -1116,9 +1116,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
 #define SFLAG_DYNCHANGE   0x00000C00 /* Surface contents are changed very often, implies DYNLOCK */
 #define SFLAG_DCINUSE     0x00001000 /* Set between GetDC and ReleaseDC calls */
 #define SFLAG_LOST        0x00002000 /* Surface lost flag for DDraw */
-#define SFLAG_FORCELOAD   0x00004000 /* To force PreLoading of a scratch cursor */
-#define SFLAG_USERPTR     0x00008000 /* The application allocated the memory for this surface */
-#define SFLAG_GLCKEY      0x00010000 /* The gl texture was created with a color key */
+#define SFLAG_USERPTR     0x00004000 /* The application allocated the memory for this surface */
+#define SFLAG_GLCKEY      0x00008000 /* The gl texture was created with a color key */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL
