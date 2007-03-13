@@ -60,6 +60,7 @@ static char *WCMD_expand_envvar(char *start);
 int main (int argc, char *argv[])
 {
   char string[1024];
+  char envvar[4];
   char* cmd=NULL;
   DWORD count;
   HANDLE h;
@@ -325,6 +326,13 @@ int main (int argc, char *argv[])
           WCMD_color();
       }
 
+  }
+
+  /* Save cwd into appropriate env var */
+  GetCurrentDirectory(1024, string);
+  if (IsCharAlpha(string[0]) && string[1] == ':') {
+    sprintf(envvar, "=%c:", string[0]);
+    SetEnvironmentVariable(envvar, string);
   }
 
   if (opt_k) {
