@@ -117,8 +117,9 @@ static void SaveIdl(WCHAR *wszFileName)
     HTREEITEM hIDL;
     TVITEM tvi;
     HANDLE hFile;
-    DWORD dwNumWrite;
+    DWORD len, dwNumWrite;
     char *wszIdl;
+    TYPELIB_DATA *data;
 
     hIDL = TreeView_GetChild(typelib.hTree, TVI_ROOT);
 
@@ -126,31 +127,24 @@ static void SaveIdl(WCHAR *wszFileName)
     tvi.hItem = hIDL;
 
     SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    data = (TYPELIB_DATA *)tvi.lParam;
 
     hFile = CreateFile(wszFileName, GENERIC_WRITE, FILE_SHARE_WRITE,
-            NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+                       NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if(hFile == INVALID_HANDLE_VALUE)
     {
         ShowLastError();
         return;
     }
 
-    wszIdl = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(WCHAR)*((TYPELIB_DATA *)(tvi.lParam))->idlLen);
-    wine_utf8_wcstombs(((TYPELIB_DATA *)(tvi.lParam))->idl,
-            ((TYPELIB_DATA *)(tvi.lParam))->idlLen, wszIdl,
-            ((TYPELIB_DATA *)(tvi.lParam))->idlLen);
+    len = WideCharToMultiByte( CP_UTF8, 0, data->idl, data->idlLen, NULL, 0, NULL, NULL );
+    wszIdl = HeapAlloc(GetProcessHeap(), 0, len);
+    WideCharToMultiByte( CP_UTF8, 0, data->idl, data->idlLen, wszIdl, len, NULL, NULL );
 
-    if(!WriteFile(hFile, wszIdl, ((TYPELIB_DATA *)(tvi.lParam))->idlLen,
-                &dwNumWrite, NULL))
-    {
-                ShowLastError();
-                HeapFree(GetProcessHeap(), 0, wszIdl);
-                return;
-    }
+    if(!WriteFile(hFile, wszIdl, len, &dwNumWrite, NULL))
+        ShowLastError();
 
     HeapFree(GetProcessHeap(), 0, wszIdl);
-    SetEndOfFile(hFile);
     CloseHandle(hFile);
 }
 
