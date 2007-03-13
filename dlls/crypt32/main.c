@@ -238,5 +238,7 @@ BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
     FIXME("stub: %p, %d, %p, %d, %p, %p, %p\n",
         pVerifyPara, dwSignerIndex, pbSignedBlob, cbSignedBlob,
         pbDecoded, pcbDecoded, ppSignerCert);
+    if (ppSignerCert)
+        *ppSignerCert = NULL;
     return FALSE;
 }
