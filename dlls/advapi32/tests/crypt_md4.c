@@ -136,9 +136,6 @@ static void test_md4hashfunc(md4hashfunc func)
     unsigned char in[0x10], output[0x10];
     int r;
 
-    if (!func)
-        return;
-
     memset(in, 0, sizeof in);
     memset(output, 0, sizeof output);
     r = func(0, in, output);
@@ -150,7 +147,7 @@ START_TEST(crypt_md4)
 {
     HMODULE module;
 
-    if (!(module = LoadLibrary( "advapi32.dll" ))) return;
+    if (!(module = GetModuleHandleA( "advapi32.dll" ))) return;
 
     pMD4Init = (fnMD4Init)GetProcAddress( module, "MD4Init" );
     pMD4Update = (fnMD4Update)GetProcAddress( module, "MD4Update" );
@@ -158,16 +155,24 @@ START_TEST(crypt_md4)
 
     if (pMD4Init && pMD4Update && pMD4Final)
         test_md4_ctx();
+    else
+        skip("MD4Init and/or MD4Update and/or MD4Final are not available\n");
 
     pSystemFunction007 = (fnSystemFunction007)GetProcAddress( module, "SystemFunction007" );
     if (pSystemFunction007)
         test_SystemFunction007();
+    else
+        skip("SystemFunction007 is not available\n");
 
     pSystemFunction010 = (md4hashfunc)GetProcAddress( module, "SystemFunction010" );
+    if (pSystemFunction010)
+        test_md4hashfunc(pSystemFunction010);
+    else
+        skip("SystemFunction010 is not available\n");
+
     pSystemFunction011 = (md4hashfunc)GetProcAddress( module, "SystemFunction011" );
-
-    test_md4hashfunc(pSystemFunction010);
-    test_md4hashfunc(pSystemFunction011);
-
-    FreeLibrary( module );
+    if (pSystemFunction011)
+        test_md4hashfunc(pSystemFunction011);
+    else
+        skip("SystemFunction011 is not available\n");
 }
