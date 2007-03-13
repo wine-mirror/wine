@@ -71,7 +71,7 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 	    if(page->WinPage == dm2->dmPublic.u1.s1.dmPaperSize)
 	        break;
 	}
-	if(page) {
+	if(&page->entry != &pi->ppd->PageSizes ) {
 	    dm1->dmPublic.u1.s1.dmPaperSize = dm2->dmPublic.u1.s1.dmPaperSize;
 	    dm1->dmPublic.u1.s1.dmPaperWidth = page->PaperDimension->x *
 								254.0 / 72.0;
