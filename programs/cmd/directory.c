@@ -39,7 +39,7 @@ extern int echo_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern DWORD errorlevel;
 
-static int file_total, dir_total, recurse, wide, bare, max_width;
+static int file_total, dir_total, recurse, wide, bare, max_width, lower;
 static ULONGLONG byte_total;
 
 /*****************************************************************************
@@ -64,6 +64,7 @@ void WCMD_directory (void) {
   recurse = (strstr(quals, "/S") != NULL);
   wide    = (strstr(quals, "/W") != NULL);
   bare    = (strstr(quals, "/B") != NULL);
+  lower   = (strstr(quals, "/L") != NULL);
 
   /* Handle conflicting args and initialization */
   if (bare) wide = FALSE;
@@ -204,6 +205,13 @@ void WCMD_list_directory (char *search_path, int level) {
   }
 
   for (i=0; i<entry_count; i++) {
+
+    /* /L convers all names to lower case */
+    if (lower) {
+        char *p = (fd+i)->cFileName;
+        while ( (*p = tolower(*p)) ) ++p;
+    }
+
     FileTimeToLocalFileTime (&(fd+i)->ftLastWriteTime, &ft);
     FileTimeToSystemTime (&ft, &st);
     GetDateFormat (0, DATE_SHORTDATE, &st, NULL, datestring,
