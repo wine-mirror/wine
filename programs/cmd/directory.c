@@ -46,10 +46,20 @@ typedef enum _DISPLAYTIME
     Written
 } DISPLAYTIME;
 
+typedef enum _DISPLAYORDER
+{
+    Name = 0,
+    Extension,
+    Size,
+    Date
+} DISPLAYORDER;
+
 static int file_total, dir_total, recurse, wide, bare, max_width, lower;
 static int shortname, usernames;
 static ULONGLONG byte_total;
 static DISPLAYTIME dirTime;
+static DISPLAYORDER dirOrder;
+static BOOL orderReverse, orderGroupDirs, orderGroupDirsReverse;
 
 /*****************************************************************************
  * WCMD_directory
@@ -69,6 +79,10 @@ void WCMD_directory (void) {
   byte_total = 0;
   file_total = dir_total = 0;
   dirTime = Written;
+  dirOrder = Name;
+  orderReverse = FALSE;
+  orderGroupDirs = FALSE;
+  orderGroupDirsReverse = FALSE;
 
   /* Handle args */
   paged_mode = (strstr(quals, "/P") != NULL);
@@ -93,6 +107,28 @@ void WCMD_directory (void) {
       SetLastError(ERROR_INVALID_PARAMETER);
       WCMD_print_error();
       return;
+    }
+  }
+
+  if ((p = strstr(quals, "/O")) != NULL) {
+    p = p + 2;
+    if (*p==':') p++;  /* Skip optional : */
+    while (*p && *p != '/') {
+      switch (*p) {
+      case 'N': dirOrder = Name;       break;
+      case 'E': dirOrder = Extension;  break;
+      case 'S': dirOrder = Size;       break;
+      case 'D': dirOrder = Date;       break;
+      case '-': if (*(p+1)=='G') orderGroupDirsReverse=TRUE;
+                else orderReverse = TRUE;
+                break;
+      case 'G': orderGroupDirs = TRUE; break;
+      default:
+          SetLastError(ERROR_INVALID_PARAMETER);
+          WCMD_print_error();
+          return;
+      }
+      p++;
     }
   }
 
@@ -410,10 +446,83 @@ char * WCMD_strrev (char *buff) {
 }
 
 
+/*****************************************************************************
+ * WCMD_dir_sort
+ *
+ * Sort based on the /O options supplied on the command line
+ */
 int WCMD_dir_sort (const void *a, const void *b)
 {
-  return (lstrcmpi(((const WIN32_FIND_DATA *)a)->cFileName,
-                   ((const WIN32_FIND_DATA *)b)->cFileName));
+  WIN32_FIND_DATA *filea = (WIN32_FIND_DATA *)a;
+  WIN32_FIND_DATA *fileb = (WIN32_FIND_DATA *)b;
+  int result = 0;
+
+  /* If /OG or /O-G supplied, dirs go at the top or bottom, ignoring the
+     requested sort order for the directory components                   */
+  if (orderGroupDirs &&
+      ((filea->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
+       (fileb->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)))
+  {
+    BOOL aDir = filea->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+    if (aDir) result = -1;
+    else result = 1;
+    if (orderGroupDirsReverse) result = -result;
+    return result;
+
+  /* Order by Name: */
+  } else if (dirOrder == Name) {
+    result = lstrcmpi(filea->cFileName, fileb->cFileName);
+
+  /* Order by Size: */
+  } else if (dirOrder == Size) {
+    ULONG64 sizea = (((ULONG64)filea->nFileSizeHigh) << 32) + filea->nFileSizeLow;
+    ULONG64 sizeb = (((ULONG64)fileb->nFileSizeHigh) << 32) + fileb->nFileSizeLow;
+    if( sizea < sizeb ) result = -1;
+    else if( sizea == sizeb ) result = 0;
+    else result = 1;
+
+  /* Order by Date: (Takes into account which date (/T option) */
+  } else if (dirOrder == Date) {
+
+    FILETIME *ft;
+    ULONG64 timea, timeb;
+
+    if (dirTime == Written) {
+      ft = &filea->ftLastWriteTime;
+      timea = (((ULONG64)ft->dwHighDateTime) << 32) + ft->dwLowDateTime;
+      ft = &fileb->ftLastWriteTime;
+      timeb = (((ULONG64)ft->dwHighDateTime) << 32) + ft->dwLowDateTime;
+    } else if (dirTime == Access) {
+      ft = &filea->ftLastAccessTime;
+      timea = (((ULONG64)ft->dwHighDateTime) << 32) + ft->dwLowDateTime;
+      ft = &fileb->ftLastAccessTime;
+      timeb = (((ULONG64)ft->dwHighDateTime) << 32) + ft->dwLowDateTime;
+    } else {
+      ft = &filea->ftCreationTime;
+      timea = (((ULONG64)ft->dwHighDateTime) << 32) + ft->dwLowDateTime;
+      ft = &fileb->ftCreationTime;
+      timeb = (((ULONG64)ft->dwHighDateTime) << 32) + ft->dwLowDateTime;
+    }
+    if( timea < timeb ) result = -1;
+    else if( timea == timeb ) result = 0;
+    else result = 1;
+
+  /* Order by Extension: (Takes into account which date (/T option) */
+  } else if (dirOrder == Extension) {
+      char drive[10];
+      char dir[MAX_PATH];
+      char fname[MAX_PATH];
+      char extA[MAX_PATH];
+      char extB[MAX_PATH];
+
+      /* Split into components */
+      WCMD_splitpath(filea->cFileName, drive, dir, fname, extA);
+      WCMD_splitpath(fileb->cFileName, drive, dir, fname, extB);
+      result = lstrcmpi(extA, extB);
+  }
+
+  if (orderReverse) result = -result;
+  return result;
 }
 
 /*****************************************************************************
