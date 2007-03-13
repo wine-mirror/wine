@@ -351,6 +351,9 @@ static HRESULT WINAPI ITSS_IStorageImpl_OpenStream(
             *p = '/';
     }
 
+    if(*--p == '/')
+        *p = 0;
+
     TRACE("Resolving %s\n", debugstr_w(path));
 
     r = chm_resolve_object(This->chmfile, path, &ui);
