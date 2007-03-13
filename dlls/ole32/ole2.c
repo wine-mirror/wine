@@ -2325,7 +2325,8 @@ HRESULT WINAPI OleCreate(
     IUnknown * pUnk = NULL;
     IOleObject *pOleObject = NULL;
 
-    FIXME("\n\t%s\n\t%s semi-stub!\n", debugstr_guid(rclsid), debugstr_guid(riid));
+    TRACE("(%s, %s, %d, %p, %p, %p, %p)\n", debugstr_guid(rclsid),
+        debugstr_guid(riid), renderopt, pFormatEtc, pClientSite, pStg, ppvObj);
 
     hres = CoCreateInstance(rclsid, 0, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER, riid, (LPVOID*)&pUnk);
 
