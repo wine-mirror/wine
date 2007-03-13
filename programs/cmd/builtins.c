@@ -1278,11 +1278,42 @@ void WCMD_setshow_env (char *s) {
   char *p;
   int status;
 
-  if (strlen(param1) == 0) {
+  if (param1[0] == 0x00 && quals[0] == 0x00) {
     env = GetEnvironmentStrings ();
     WCMD_setshow_sortenv( env, NULL );
+    return;
   }
-  else {
+
+  /* See if /P supplied, and if so echo the prompt, and read in a reply */
+  if (CompareString (LOCALE_USER_DEFAULT,
+                     NORM_IGNORECASE | SORT_STRINGSORT,
+                     s, 2, "/P", -1) == 2) {
+    char string[MAXSTRING];
+    DWORD count;
+
+    s += 2;
+    while (*s && *s==' ') s++;
+
+    /* If no parameter, or no '=' sign, return an error */
+    if (!(*s) || ((p = strchr (s, '=')) == NULL )) {
+      WCMD_output ("Argument missing\n");
+      return;
+    }
+
+    /* Output the prompt */
+    *p++ = '\0';
+    if (strlen(p) != 0) WCMD_output(p);
+
+    /* Read the reply */
+    ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
+    if (count > 1) {
+      string[count-1] = '\0'; /* ReadFile output is not null-terminated! */
+      if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
+      WINE_TRACE("set /p: Setting var '%s' to '%s'\n", s, string);
+      status = SetEnvironmentVariable (s, string);
+    }
+
+  } else {
     p = strchr (s, '=');
     if (p == NULL) {
       env = GetEnvironmentStrings ();
