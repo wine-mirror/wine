@@ -358,27 +358,39 @@ struct module* module_find_by_addr(const struct process* pcs, unsigned long addr
     return module;
 }
 
+/******************************************************************
+ *		module_is_elf_container_loaded
+ *
+ * checks whether the ELF container, for a (supposed) PE builtin is
+ * already loaded
+ */
 static BOOL module_is_elf_container_loaded(struct process* pcs,
-                                           const WCHAR* ImageName,
-                                           const WCHAR* ModuleName)
+                                           const WCHAR* ImageName, DWORD base)
 {
-    WCHAR               buffer[MAX_PATH];
     size_t              len;
     struct module*      module;
+    LPCWSTR             filename, modname;
 
-    if (!ModuleName)
-    {
-        module_fill_module(ImageName, buffer, sizeof(buffer));
-        ModuleName = buffer;
-    }
-    len = strlenW(ModuleName);
+    if (!base) return FALSE;
+    filename = get_filename(ImageName, NULL);
+    len = strlenW(filename);
+
     for (module = pcs->lmodules; module; module = module->next)
     {
-        if (!strncmpiW(module->module.ModuleName, ModuleName, len) &&
-            module->type == DMT_ELF &&
-            !strcmpW(module->module.ModuleName + len, S_ElfW))
-            return TRUE;
+        if (module->type == DMT_ELF &&
+            base >= module->module.BaseOfImage &&
+            base < module->module.BaseOfImage + module->module.ImageSize)
+        {
+            modname = get_filename(module->module.LoadedImageName, NULL);
+            if (!strncmpiW(modname, filename, len) &&
+                !memcmp(modname + len, S_DotSoW, 3 * sizeof(WCHAR)))
+            {
+                return TRUE;
+            }
+        }
     }
+    /* likely a native PE module */
+    WARN("Couldn't find container for %s\n", debugstr_w(ImageName));
     return FALSE;
 }
 
@@ -499,7 +511,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     /* this is a Wine extension to the API just to redo the synchronisation */
     if (!wImageName && !hFile) return 0;
 
-    if (module_is_elf_container_loaded(pcs, wImageName, wModuleName))
+    if (module_is_elf_container_loaded(pcs, wImageName, BaseOfDll))
     {
         /* force the loading of DLL as builtin */
         if ((module = pe_load_module_from_pcs(pcs, wImageName, wModuleName,
