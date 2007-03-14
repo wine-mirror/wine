@@ -32,7 +32,7 @@
 #include <errno.h>
 
 typedef void (*_INITTERMFUN)(void);
-static unsigned int (*p_initterm)(_INITTERMFUN *start, _INITTERMFUN *end);
+static void (*p_initterm)(_INITTERMFUN *start, _INITTERMFUN *end);
 
 static int callbacked;
 
@@ -43,8 +43,7 @@ static void initcallback(void)
 
 #define initterm_test(start, end, expected) \
     callbacked = 0; \
-    rc = p_initterm(start, end); \
-    ok(expected == rc, "_initterm: return result mismatch: got %i, expected %i\n", rc, expected); \
+    p_initterm(start, end); \
     ok(expected == callbacked,"_initterm: callbacks count mismatch: got %i, expected %i\n", callbacked, expected);
 
 static void test_initterm(void)

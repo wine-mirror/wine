@@ -339,10 +339,9 @@ void CDECL __wgetmainargs(int *argc, MSVCRT_wchar_t** *wargv, MSVCRT_wchar_t** *
 /*********************************************************************
  *		_initterm (MSVCRT.@)
  */
-unsigned int CDECL _initterm(_INITTERMFUN *start,_INITTERMFUN *end)
+void CDECL _initterm(_INITTERMFUN *start,_INITTERMFUN *end)
 {
   _INITTERMFUN* current = start;
-  unsigned int count=0;
 
   TRACE("(%p,%p)\n",start,end);
   while (current<end)
@@ -352,11 +351,9 @@ unsigned int CDECL _initterm(_INITTERMFUN *start,_INITTERMFUN *end)
       TRACE("Call init function %p\n",*current);
       (**current)();
       TRACE("returned\n");
-      count++;
     }
     current++;
   }
-  return count;
 }
 
 /*********************************************************************
