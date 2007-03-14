@@ -288,12 +288,14 @@ unsigned char * WINAPI NdrInterfacePointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg
   *(LPVOID*)ppMemory = NULL;
   if (pStubMsg->Buffer + sizeof(DWORD) < (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength) {
     stream = RpcStream_Create(pStubMsg, FALSE);
-    if (stream) {
+    if (!stream) RpcRaiseException(E_OUTOFMEMORY);
+    if (*((RpcStreamImpl *)stream)->size != 0)
       hr = COM_UnmarshalInterface(stream, &IID_NULL, (LPVOID*)ppMemory);
-      IStream_Release(stream);
-      if (FAILED(hr))
+    else
+      hr = S_OK;
+    IStream_Release(stream);
+    if (FAILED(hr))
         RpcRaiseException(hr);
-    }
   }
   return NULL;
 }
