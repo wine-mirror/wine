@@ -110,6 +110,86 @@ static const struct message get_edit_text_seq[] = {
     { 0 }
 };
 
+static const struct message test_updown_pos_seq[] = {
+    { UDM_SETRANGE, sent|lparam, 0, MAKELONG(100,0) },
+    { UDM_GETRANGE, sent},
+    { UDM_SETPOS, sent|lparam, 0, 5},
+    { UDM_GETPOS, sent},
+    { UDM_SETPOS, sent|lparam, 0, 0},
+    { UDM_GETPOS, sent},
+    { UDM_SETPOS, sent|lparam, 0, MAKELONG(-1,0)},
+    { UDM_GETPOS, sent},
+    { UDM_SETPOS, sent|lparam, 0, 100},
+    { UDM_GETPOS, sent},
+    { UDM_SETPOS, sent|lparam, 0, 101},
+    { UDM_GETPOS, sent},
+    { 0 }
+};
+
+static const struct message test_updown_pos32_seq[] = {
+    { UDM_SETRANGE32, sent|lparam, 0, 1000 },
+    { UDM_GETRANGE32, sent}, /* Cannot check wparam and lparam as they are ptrs */
+    { UDM_SETPOS32, sent|lparam, 0, 500 },
+    { UDM_GETPOS32, sent},
+    { UDM_SETPOS32, sent|lparam, 0, 0 },
+    { UDM_GETPOS32, sent},
+    { UDM_SETPOS32, sent|lparam, 0, -1 },
+    { UDM_GETPOS32, sent},
+    { UDM_SETPOS32, sent|lparam, 0, 1000 },
+    { UDM_GETPOS32, sent},
+    { UDM_SETPOS32, sent|lparam, 0, 1001 },
+    { UDM_GETPOS32, sent},
+    { 0 }
+};
+
+static const struct message test_updown_buddy_seq[] = {
+    { UDM_GETBUDDY, sent },
+    { UDM_SETBUDDY, sent },
+    { WM_STYLECHANGING, sent|defwinproc },
+    { WM_STYLECHANGED, sent|defwinproc },
+    { WM_STYLECHANGING, sent|defwinproc },
+    { WM_STYLECHANGED, sent|defwinproc },
+    { WM_WINDOWPOSCHANGING, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam|optional|defwinproc, 1 },
+    { WM_WINDOWPOSCHANGED, sent|defwinproc },
+    { WM_MOVE, sent|defwinproc },
+    { UDM_GETBUDDY, sent },
+    { 0 }
+};
+
+static const struct message test_updown_base_seq[] = {
+    { UDM_SETBASE, sent|wparam, 10 },
+    { UDM_GETBASE, sent },
+    { UDM_SETBASE, sent|wparam, 80 },
+    { UDM_GETBASE, sent },
+    { UDM_SETBASE, sent|wparam, 16 },
+    { UDM_GETBASE, sent },
+    { UDM_SETBASE, sent|wparam, 80 },
+    { UDM_GETBASE, sent },
+    { UDM_SETBASE, sent|wparam, 10 },
+    { UDM_GETBASE, sent },
+    { 0 }
+};
+
+static const struct message test_updown_unicode_seq[] = {
+    { UDM_SETUNICODEFORMAT, sent|wparam, 0 },
+    { UDM_GETUNICODEFORMAT, sent },
+    { UDM_SETUNICODEFORMAT, sent|wparam, 1 },
+    { UDM_GETUNICODEFORMAT, sent },
+    { UDM_SETUNICODEFORMAT, sent|wparam, 0 },
+    { UDM_GETUNICODEFORMAT, sent },
+    { 0 }
+};
+
+static const struct message test_updown_destroy_seq[] = {
+    { WM_SHOWWINDOW, sent|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent},
+    { WM_WINDOWPOSCHANGED, sent},
+    { WM_DESTROY, sent},
+    { WM_NCDESTROY, sent},
+    { 0 }
+};
+
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static long defwndproc_counter = 0;
@@ -239,7 +319,7 @@ static LRESULT WINAPI updown_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
-    add_message(sequences, EDIT_SEQ_INDEX, &msg);
+    add_message(sequences, UPDOWN_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
     ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
@@ -278,6 +358,8 @@ static HWND create_updown_control(void)
 static void test_updown_pos(void)
 {
     int r;
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* Set Range from 0 to 100 */
     SendMessage(updown, UDM_SETRANGE, 0 , MAKELONG(100,0) );
@@ -324,12 +406,16 @@ static void test_updown_pos(void)
     r = SendMessage(updown, UDM_GETPOS, 0 , 0 );
     expect(100,LOWORD(r));
     expect(1,HIWORD(r));
+
+    ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_pos_seq , "test updown pos", FALSE);
 }
 
 static void test_updown_pos32(void)
 {
     int r;
     int low, high;
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* Set the position to 0 to 1000 */
     SendMessage(updown, UDM_SETRANGE32, 0 , 1000 );
@@ -374,19 +460,34 @@ static void test_updown_pos32(void)
     r = SendMessage(updown, UDM_GETPOS32, 0 , (LPARAM) &high );
     expect(1000,r);
     expect(1,high);
+
+    ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_pos32_seq, "test updown pos32", FALSE);
 }
 
 static void test_updown_buddy(void)
 {
     HWND buddyReturn;
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
     buddyReturn = (HWND)SendMessage(updown, UDM_GETBUDDY, 0 , 0 );
     ok(buddyReturn == edit, "Expected edit handle\n");
+
+    buddyReturn = (HWND)SendMessage(updown, UDM_SETBUDDY, (WPARAM) edit, 0);
+    ok(buddyReturn == edit, "Expected edit handle\n");
+
+    buddyReturn = (HWND)SendMessage(updown, UDM_GETBUDDY, 0 , 0 );
+    ok(buddyReturn == edit, "Expected edit handle\n");
+
+    ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_buddy_seq, "test updown buddy", TRUE);
+    ok_sequence(sequences, EDIT_SEQ_INDEX, add_updown_with_edit_seq, "test updown buddy_edit", FALSE);
 }
 
 static void test_updown_base(void)
 {
     int r;
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     SendMessage(updown, UDM_SETBASE, 10 , 0);
     r = SendMessage(updown, UDM_GETBASE, 0 , 0);
@@ -415,11 +516,15 @@ static void test_updown_base(void)
     expect(16,r);
     r = SendMessage(updown, UDM_GETBASE, 0 , 0);
     expect(10,r);
+
+    ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_base_seq, "test updown base", FALSE);
 }
 
 static void test_updown_unicode(void)
 {
     int r;
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* Set it to ANSI, don't check return as we don't know previous state */
     SendMessage(updown, UDM_SETUNICODEFORMAT, 0 , 0);
@@ -437,6 +542,8 @@ static void test_updown_unicode(void)
     expect(1,r);
     r = SendMessage(updown, UDM_GETUNICODEFORMAT, 0 , 0);
     expect(0,r);
+
+    ok_sequence(sequences, UPDOWN_SEQ_INDEX, test_updown_unicode_seq, "test updown unicode", FALSE);
 }
 
 
