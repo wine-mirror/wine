@@ -309,9 +309,19 @@ extern "C" {
 #define CP_INSTALLED 0x1
 #define CP_SUPPORTED 0x2
 
+#define HIGH_SURROGATE_START 0xd800
+#define HIGH_SURROGATE_END   0xdbff
+#define LOW_SURROGATE_START  0xdc00
+#define LOW_SURROGATE_END    0xdfff
+
+#define IS_HIGH_SURROGATE(ch)       ((ch) >= HIGH_SURROGATE_START && (ch) <= HIGH_SURROGATE_END)
+#define IS_LOW_SURROGATE(ch)        ((ch) >= LOW_SURROGATE_START  && (ch) <= LOW_SURROGATE_END)
+#define IS_SURROGATE_PAIR(high,low) (IS_HIGH_SURROGATE(high) && IS_LOW_SURROGATE(low))
+
 #define WC_DISCARDNS         0x0010
 #define WC_SEPCHARS          0x0020
 #define WC_DEFAULTCHAR       0x0040
+#define WC_ERR_INVALID_CHARS 0x0080
 #define WC_COMPOSITECHECK    0x0200
 #define WC_NO_BEST_FIT_CHARS 0x0400
 
