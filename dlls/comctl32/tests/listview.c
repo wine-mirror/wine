@@ -794,7 +794,7 @@ static void test_icon_spacing(void)
     DWORD r;
 
     hwnd = create_custom_listview_control(LVS_ICON);
-    ok(hwnd != NULL, "failed to create a listview window");
+    ok(hwnd != NULL, "failed to create a listview window\n");
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -826,7 +826,7 @@ static void test_color(void)
     COLORREF colors[4] = {RGB(0,0,0), RGB(100,50,200), CLR_NONE, RGB(255,255,255)};
 
     hwnd = create_listview_control();
-    ok(hwnd != NULL, "failed to create a listview window");
+    ok(hwnd != NULL, "failed to create a listview window\n");
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -872,7 +872,7 @@ static void test_item_count(void)
     static CHAR item2text[] = "item2";
 
     hwnd = create_listview_control();
-    ok(hwnd != NULL, "failed to create a listview window");
+    ok(hwnd != NULL, "failed to create a listview window\n");
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -962,7 +962,7 @@ static void test_item_position(void)
     static CHAR item2text[] = "item2";
 
     hwnd = create_custom_listview_control(LVS_ICON);
-    ok(hwnd != NULL, "failed to create a listview window");
+    ok(hwnd != NULL, "failed to create a listview window\n");
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 

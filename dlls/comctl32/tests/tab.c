@@ -463,10 +463,10 @@ static void test_getters_setters(INT nTabs)
 
         toolTip = create_tooltip(hTab, toolTipText);
         SendMessage(hTab, TCM_SETTOOLTIPS, (LPARAM) toolTip, 0);
-        ok (toolTip == (HWND) SendMessage(hTab,TCM_GETTOOLTIPS,0,0), "ToolTip was set incorrectly.");
+        ok (toolTip == (HWND) SendMessage(hTab,TCM_GETTOOLTIPS,0,0), "ToolTip was set incorrectly.\n");
 
         SendMessage(hTab, TCM_SETTOOLTIPS, (LPARAM) NULL, 0);
-        ok (NULL  == (HWND) SendMessage(hTab,TCM_GETTOOLTIPS,0,0), "ToolTip was set incorrectly.");
+        ok (NULL  == (HWND) SendMessage(hTab,TCM_GETTOOLTIPS,0,0), "ToolTip was set incorrectly.\n");
     }
 
     DestroyWindow(hTab);
