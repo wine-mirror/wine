@@ -355,7 +355,8 @@ typedef enum tagREGCLS
     REGCLS_SINGLEUSE = 0,
     REGCLS_MULTIPLEUSE = 1,
     REGCLS_MULTI_SEPARATE = 2,
-    REGCLS_SUSPENDED = 4
+    REGCLS_SUSPENDED = 4,
+    REGCLS_SURROGATE = 8
 } REGCLS;
 
 HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo, REFIID iid, LPVOID *ppv);
@@ -363,6 +364,7 @@ HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsC
 HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister);
 HRESULT WINAPI CoGetPSClsid(REFIID riid,CLSID *pclsid);
 HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid);
+HRESULT WINAPI CoRegisterSurrogate(LPSURROGATE pSurrogate);
 HRESULT WINAPI CoSuspendClassObjects(void);
 HRESULT WINAPI CoResumeClassObjects(void);
 ULONG WINAPI CoAddRefServerProcess(void);
@@ -400,6 +402,7 @@ HRESULT WINAPI CoRevertToSelf(void);
 HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID pClsidNew);
 HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew);
 HRESULT WINAPI CoAllowSetForegroundWindow(IUnknown *pUnk, LPVOID lpvReserved);
+HRESULT WINAPI CoGetObjectContext(REFIID riid, LPVOID *ppv);
 
 HRESULT WINAPI CoCreateGuid(GUID* pguid);
 BOOL WINAPI CoIsOle1Class(REFCLSID rclsid);
