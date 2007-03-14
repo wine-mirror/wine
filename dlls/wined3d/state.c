@@ -708,7 +708,26 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     tmpvalue.d = stateblock->renderState[WINED3DRS_FOGEND];
     fogend = tmpvalue.f;
 
-    /* Activate when vertex shaders are in the state table */
+    /* Fog Rules:
+     *
+     * With fixed function vertex processing, Direct3D knows 2 different fog input sources.
+     * It can use the Z value of the vertex, or the alpha component of the specular color.
+     * This depends on the fog vertex, fog table and the vertex declaration. If the Z value
+     * is used, fogstart, fogend and the equation type are used, otherwise linear fog with
+     * start = 255, end = 0 is used. Obviously the msdn is not very clear on that.
+     *
+     * FOGTABLEMODE != NONE:
+     *  The Z value is used, with the equation specified, no matter what vertex type.
+     *
+     * FOGTABLEMODE == NONE, FOGVERTEXMODE != NONE, untransformed:
+     *  Per vertex fog is calculated using the specified fog equation and the parameters
+     *
+     * FOGTABLEMODE == NONE, FOGVERTEXMODE != NONE, transformed, OR
+     * FOGTABLEMODE == NONE, FOGVERTEXMODE == NONE, untransformed:
+     *  Linear fog with start = 255.0, end = 0.0, input comes from the specular color
+     *
+     * Vertex shaders work in a simmilar way, but need more testing
+     */
     if (use_vs(stateblock->wineD3DDevice)
             && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog) {
         glFogi(GL_FOG_MODE, GL_LINEAR);
@@ -728,9 +747,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         context->last_was_foggy_shader = FALSE;
 
         switch (stateblock->renderState[WINED3DRS_FOGVERTEXMODE]) {
-            /* Processed vertices have their fog factor stored in the specular value. Fall too the none case.
-             * If we are drawing untransformed vertices atm, d3ddevice_set_ortho will update the fog
-             */
+            /* If processed vertices are used, fall through to the NONE case */
             case WINED3DFOG_EXP:  {
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_EXP);
