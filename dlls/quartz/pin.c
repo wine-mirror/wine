@@ -79,31 +79,40 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
      * connected pin */
     if (SUCCEEDED(hr))
     {
+        This->pMemInputPin = NULL;
         hr = IPin_QueryInterface(pReceivePin, &IID_IMemInputPin, (LPVOID)&This->pMemInputPin);
 
         if (SUCCEEDED(hr))
+        {
             hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pMemAlloc);
 
-        if (hr == VFW_E_NO_ALLOCATOR)
-        {
-            /* Input pin provides no allocator, use standard memory allocator */
-            hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (LPVOID*)&pMemAlloc);
+            if (hr == VFW_E_NO_ALLOCATOR)
+            {
+                /* Input pin provides no allocator, use standard memory allocator */
+                hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (LPVOID*)&pMemAlloc);
+
+                if (SUCCEEDED(hr))
+                {
+                    hr = IMemInputPin_NotifyAllocator(This->pMemInputPin, pMemAlloc, FALSE);
+                }
+            }
 
             if (SUCCEEDED(hr))
-            {
-                hr = IMemInputPin_NotifyAllocator(This->pMemInputPin, pMemAlloc, FALSE);
-            }
+                hr = IMemAllocator_SetProperties(pMemAlloc, &This->allocProps, &actual);
+
+            if (pMemAlloc)
+                IMemAllocator_Release(pMemAlloc);
         }
-
-        if (SUCCEEDED(hr))
-            hr = IMemAllocator_SetProperties(pMemAlloc, &This->allocProps, &actual);
-
-        if (pMemAlloc)
-            IMemAllocator_Release(pMemAlloc);
 
         /* break connection if we couldn't get the allocator */
         if (FAILED(hr))
+        {
+            if (This->pMemInputPin)
+                IMemInputPin_Release(This->pMemInputPin);
+            This->pMemInputPin = NULL;
+
             IPin_Disconnect(pReceivePin);
+        }
     }
 
     if (FAILED(hr))
@@ -1069,6 +1078,8 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
             }
         }
 
+        This->pReader = NULL;
+        This->pAlloc = NULL;
         if (SUCCEEDED(hr))
         {
             hr = IPin_QueryInterface(pReceivePin, &IID_IAsyncReader, (LPVOID *)&This->pReader);
@@ -1094,6 +1105,15 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
             CopyMediaType(&This->pin.mtCurrent, pmt);
             This->pin.pConnectedTo = pReceivePin;
             IPin_AddRef(pReceivePin);
+        }
+        else
+        {
+             if (This->pReader)
+                 IAsyncReader_Release(This->pReader);
+             This->pReader = NULL;
+             if (This->pAlloc)
+                 IMemAllocator_Release(This->pAlloc);
+             This->pAlloc = NULL;
         }
     }
     LeaveCriticalSection(This->pin.pCritSec);
