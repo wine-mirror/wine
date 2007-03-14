@@ -1304,11 +1304,13 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
                                   / (lpmemex->ullTotalPhys / 100);
     }
 
-    /* Project2k refuses to start if it sees less than 1Mb of free swap */
-    if (lpmemex->ullTotalPageFile < lpmemex->ullTotalPhys)
-        lpmemex->ullTotalPageFile = lpmemex->ullTotalPhys;
-    if (lpmemex->ullAvailPageFile < lpmemex->ullAvailPhys)
-        lpmemex->ullAvailPageFile = lpmemex->ullAvailPhys;
+    /* Win98 returns only the swapsize in ullTotalPageFile/ullAvailPageFile,
+       WinXP returns the size of physical memory + swapsize;
+       mimic the behavior of XP.
+       Note: Project2k refuses to start if it sees less than 1Mb of free swap.
+    */
+    lpmemex->ullTotalPageFile += lpmemex->ullTotalPhys;
+    lpmemex->ullAvailPageFile += lpmemex->ullAvailPhys;
 
     /* FIXME: should do something for other systems */
     GetSystemInfo(&si);
