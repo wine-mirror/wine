@@ -1074,7 +1074,7 @@ void blt_to_drawable(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *surface) {
                 coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
 
             default:
-                ERR("Unexpected texture target \n");
+                ERR("Unexpected texture target\n");
                 LEAVE_GL();
                 return;
         }
