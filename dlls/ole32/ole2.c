@@ -948,7 +948,7 @@ HRESULT WINAPI OleLoad(
   STATSTG          storageInfo;
   HRESULT          hres;
 
-  TRACE("(%p,%p,%p,%p)\n", pStg, riid, pClientSite, ppvObj);
+  TRACE("(%p, %s, %p, %p)\n", pStg, debugstr_guid(riid), pClientSite, ppvObj);
 
   *ppvObj = NULL;
 
