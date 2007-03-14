@@ -321,7 +321,7 @@ static void run_rtlraiseexception_test(DWORD exceptioncode)
     pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
 }
 
-static void test_rtlraiseexcpetion(void)
+static void test_rtlraiseexception(void)
 {
     if (!pRtlRaiseException)
     {
@@ -553,7 +553,7 @@ static void test_exceptions(void)
     res = pNtGetContextThread(GetCurrentThread(), &ctx);
     ok (res == STATUS_SUCCESS,"NtGetContextThread failed with %x\n", res);
     ok(ctx.Dr0 == 0x42424242,"failed to set debugregister 0 to 0x42424242, got %x\n", ctx.Dr0);
-    ok(ctx.Dr7 == 0x155,"failed to set debugregister 7 to 0x155, got %x\n", ctx.Dr7);
+    ok((ctx.Dr7 & ~0xdc00) == 0x155,"failed to set debugregister 7 to 0x155, got %x\n", ctx.Dr7);
 
     /* test single stepping behavior */
     got_exception = 0;
@@ -644,7 +644,7 @@ static void test_debugger(void)
             status = pNtGetContextThread(pi.hThread, &ctx);
             ok(!status, "NtGetContextThread failed with 0x%x\n", status);
 
-            trace("excpetion 0x%x at %p firstchance=%d Eip=0x%x, Eax=0x%x\n",
+            trace("exception 0x%x at %p firstchance=%d Eip=0x%x, Eax=0x%x\n",
                   de.u.Exception.ExceptionRecord.ExceptionCode,
                   de.u.Exception.ExceptionRecord.ExceptionAddress, de.u.Exception.dwFirstChance, ctx.Eip, ctx.Eax);
 
@@ -862,7 +862,7 @@ START_TEST(exception)
 
     test_prot_fault();
     test_exceptions();
-    test_rtlraiseexcpetion();
+    test_rtlraiseexception();
     test_debugger();
     test_simd_exceptions();
 
