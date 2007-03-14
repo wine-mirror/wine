@@ -29,8 +29,6 @@
  *
  * TODO
  *   -- implement GetMUILanguage + InitMUILanguage
- *   -- LibMain => DLLMain ("DLLMain takes over the functionality of both the
- *                           LibMain and the WEP function.", MSDN)
  *   -- finish NOTES for MenuHelp, GetEffectiveClientRect and GetStatusTextW
  *   -- FIXMEs + BUGS (search for them)
  *
@@ -129,13 +127,20 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	    /* Get all the colors at DLL load */
 	    COMCTL32_RefreshSysColors();
 
-            /* register all Win95 common control classes */
+            /* like comctl32 5.82+ register all the common control classes */
             ANIMATE_Register ();
+            COMBOEX_Register ();
+            DATETIME_Register ();
             FLATSB_Register ();
             HEADER_Register ();
             HOTKEY_Register ();
+            IPADDRESS_Register ();
             LISTVIEW_Register ();
+            MONTHCAL_Register ();
+            NATIVEFONT_Register ();
+            PAGER_Register ();
             PROGRESS_Register ();
+            REBAR_Register ();
             STATUS_Register ();
             SYSLINK_Register ();
             TAB_Register ();
@@ -593,9 +598,8 @@ CreateUpDownControl (DWORD style, INT x, INT y, INT cx, INT cy,
  *     No return values.
  *
  * NOTES
- *     This function is just a dummy.
- *     The Win95 controls are registered at the DLL's initialization.
- *     To register other controls InitCommonControlsEx() must be used.
+ *     This function is just a dummy - all the controls are registered at
+ *     the DLL's initialization. See InitCommonContolsEx for details.
  */
 
 VOID WINAPI
@@ -617,81 +621,24 @@ InitCommonControls (void)
  *     Failure: FALSE
  *
  * NOTES
- *     Only the additional common controls are registered by this function.
- *     The Win95 controls are registered at the DLL's initialization.
+ *     Probaly all versions of comctl32 initializes the Win95 controls in DllMain
+ *     during DLL initializaiton. Starting from comctl32 v5.82 all the controls
+ *     are initialized there. We follow this behaviour and this function is just
+ *     a dummy.
  *
- * FIXME
- *     implement the following control classes:
- *       ICC_LINK_CLASS
- *       ICC_STANDARD_CLASSES
+ *     Note: when writing programs under Windows, if you don't call any function
+ *     from comctl32 the linker may not link this DLL. If InitCommonControlsEx
+ *     was the only comctl32 function you were calling and you remove it you may
+ *     have a false impression that InitCommonControlsEx actually did something.
  */
 
 BOOL WINAPI
 InitCommonControlsEx (const INITCOMMONCONTROLSEX *lpInitCtrls)
 {
-    INT cCount;
-    DWORD dwMask;
-
-    if (!lpInitCtrls)
-	return FALSE;
-    if (lpInitCtrls->dwSize != sizeof(INITCOMMONCONTROLSEX))
-	return FALSE;
+    if (!lpInitCtrls || lpInitCtrls->dwSize != sizeof(INITCOMMONCONTROLSEX))
+        return FALSE;
 
     TRACE("(0x%08x)\n", lpInitCtrls->dwICC);
-
-    for (cCount = 0; cCount < 32; cCount++) {
-	dwMask = 1 << cCount;
-	if (!(lpInitCtrls->dwICC & dwMask))
-	    continue;
-
-	switch (lpInitCtrls->dwICC & dwMask) {
-	    /* dummy initialization */
-	    case ICC_ANIMATE_CLASS:
-	    case ICC_BAR_CLASSES:
-	    case ICC_LISTVIEW_CLASSES:
-	    case ICC_TREEVIEW_CLASSES:
-	    case ICC_TAB_CLASSES:
-	    case ICC_UPDOWN_CLASS:
-	    case ICC_PROGRESS_CLASS:
-	    case ICC_HOTKEY_CLASS:
-		break;
-
-	    /* advanced classes - not included in Win95 */
-	    case ICC_DATE_CLASSES:
-		MONTHCAL_Register ();
-		DATETIME_Register ();
-		break;
-
-	    case ICC_USEREX_CLASSES:
-		COMBOEX_Register ();
-		break;
-
-	    case ICC_COOL_CLASSES:
-		REBAR_Register ();
-		break;
-
-	    case ICC_INTERNET_CLASSES:
-		IPADDRESS_Register ();
-		break;
-
-	    case ICC_PAGESCROLLER_CLASS:
-		PAGER_Register ();
-		break;
-
-	    case ICC_NATIVEFNTCTL_CLASS:
-		NATIVEFONT_Register ();
-		break;
-
-	    case ICC_LINK_CLASS:
-		SYSLINK_Register ();
-		break;
-
-	    default:
-		FIXME("Unknown class! dwICC=0x%X\n", dwMask);
-		break;
-	}
-    }
-
     return TRUE;
 }
 
