@@ -603,28 +603,26 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 	if(ps->PaperDimension->y > ptMax.y)
 	  ptMax.y = ps->PaperDimension->y;
       }
-      *((POINT*)lpszOutput) = ptMax;
-      return 1;
+      return MAKELONG(ptMax.x * 254.0 / 72.0, ptMax.y * 254.0 / 72.0 );
     }
 
   case DC_MINEXTENT:
     {
       PAGESIZE *ps;
-      POINT ptMax;
-      ptMax.x = ptMax.y = 0;
+      POINT ptMin;
+      ptMin.x = ptMin.y = -1;
 
       if(lpszOutput == NULL)
 	return -1;
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
-	if(ps->PaperDimension->x > ptMax.x)
-	  ptMax.x = ps->PaperDimension->x;
-	if(ps->PaperDimension->y > ptMax.y)
-	  ptMax.y = ps->PaperDimension->y;
+	if(ptMin.x == -1 || ps->PaperDimension->x < ptMin.x)
+	  ptMin.x = ps->PaperDimension->x;
+	if(ptMin.y == -1 || ps->PaperDimension->y < ptMin.y)
+	  ptMin.y = ps->PaperDimension->y;
       }
-      *((POINT*)lpszOutput) = ptMax;
-      return 1;
+      return MAKELONG(ptMin.x * 254.0 / 72.0, ptMin.y * 254.0 / 72.0);
     }
 
   case DC_SIZE:
