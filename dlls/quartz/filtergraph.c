@@ -416,7 +416,17 @@ static HRESULT WINAPI GraphBuilder_RemoveFilter(IGraphBuilder *iface,
     {
         if (This->ppFiltersInGraph[i] == pFilter)
         {
-            /* FIXME: disconnect pins */
+            IEnumPins *penumpins;
+            hr = IBaseFilter_EnumPins(pFilter, &penumpins);
+            if (SUCCEEDED(hr)) {
+                IPin *ppin;
+                while(IEnumPins_Next(penumpins, 1, &ppin, NULL) == S_OK) {
+                    IPin_Disconnect(ppin);
+                    IPin_Release(ppin);
+                }
+                IEnumPins_Release(penumpins);
+            }
+
             hr = IBaseFilter_JoinFilterGraph(pFilter, NULL, This->pFilterNames[i]);
             if (SUCCEEDED(hr))
             {
