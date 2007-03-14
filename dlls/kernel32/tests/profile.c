@@ -145,6 +145,7 @@ static void test_profile_sections(void)
     static const char content[]="[section1]\r\n[section2]\r\n[section3]\r\n";
     static const char testfile3[]=".\\testwine3.ini";
     static const WCHAR testfile3W[]={ '.','\\','t','e','s','t','w','i','n','e','3','.','i','n','i',0 };
+    static const WCHAR not_here[] = {'.','\\','n','o','t','_','h','e','r','e','.','i','n','i',0};
     DeleteFileA( testfile3 );
     h = CreateFileA( testfile3, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
         FILE_ATTRIBUTE_NORMAL, NULL);
@@ -185,6 +186,19 @@ static void test_profile_sections(void)
     ok( buf[ret+1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
     
     DeleteFileA( testfile3 );
+
+    /* Tests on non-existent file */
+    memset(buf, 0xcc, sizeof(buf));
+    ret = GetPrivateProfileSectionNamesA( buf, 10, ".\\not_here.ini" );
+    ok( ret == 0, "expected return size 0, got %d\n", ret );
+    ok( buf[0] == 0, "returned buffer not terminated with null\n" );
+    ok( buf[1] != 0, "returned buffer terminated with double-null\n" );
+
+    memset(bufW, 0xcc, sizeof(bufW));
+    ret = GetPrivateProfileSectionNamesW( bufW, 10, not_here );
+    ok( ret == 0, "expected return size 0, got %d\n", ret );
+    ok( bufW[0] == 0, "returned buffer not terminated with null\n" );
+    ok( bufW[1] != 0, "returned buffer terminated with double-null\n" );
 }
 
 START_TEST(profile)

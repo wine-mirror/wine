@@ -1629,6 +1629,8 @@ DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
         else
           ret = ret-1;
     }
+    else if(size)
+        buffer[0] = '\0';
 
     RtlFreeUnicodeString(&filenameW);
     HeapFree(GetProcessHeap(), 0, bufferW);
