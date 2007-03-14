@@ -59,10 +59,14 @@
 #include "thread.h"
 #include "wine/library.h"
 #include "ntdll_misc.h"
+#include "wine/exception.h"
+#include "wine/debug.h"
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 #endif
+
+#undef ERR  /* Solaris needs to define this */
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -196,10 +200,7 @@ typedef struct sigcontext SIGCONTEXT;
 #ifdef _SCO_DS
 #include <sys/regset.h>
 #endif
-/* Solaris kludge */
-#undef ERR
 #include <sys/ucontext.h>
-#undef ERR
 typedef struct ucontext SIGCONTEXT;
 
 #ifdef _SCO_DS
@@ -231,6 +232,9 @@ typedef struct ucontext SIGCONTEXT;
 #define ESP_sig(context)     ((context)->uc_mcontext.gregs[R_ESP])
 #else
 #define ESP_sig(context)     ((context)->uc_mcontext.gregs[ESP])
+#endif
+#ifdef ERR
+#define ERROR_sig(context)   ((context)->uc_mcontext.gregs[ERR])
 #endif
 #ifdef TRAPNO
 #define TRAP_sig(context)     ((context)->uc_mcontext.gregs[TRAPNO])
@@ -285,9 +289,6 @@ typedef ucontext_t SIGCONTEXT;
 #endif
 
 #endif /* __APPLE__ */
-
-#include "wine/exception.h"
-#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
@@ -899,10 +900,10 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     if ((char *)stack >= (char *)get_signal_stack() &&
         (char *)stack < (char *)get_signal_stack() + signal_stack_size)
     {
-        ERR( "nested exception on signal stack in thread %04x eip %08x esp %08x stack %p-%p\n",
-             GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
-             (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
-             NtCurrentTeb()->Tib.StackBase );
+        WINE_ERR( "nested exception on signal stack in thread %04x eip %08x esp %08x stack %p-%p\n",
+                  GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
+                  (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
+                  NtCurrentTeb()->Tib.StackBase );
         server_abort_thread(1);
     }
 
@@ -913,10 +914,10 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
         UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)stack;
         if (diff < 4096)
         {
-            ERR( "stack overflow %u bytes in thread %04x eip %08x esp %08x stack %p-%p\n",
-                 diff, GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
-                 (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
-                 NtCurrentTeb()->Tib.StackBase );
+            WINE_ERR( "stack overflow %u bytes in thread %04x eip %08x esp %08x stack %p-%p\n",
+                      diff, GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
+                      (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
+                      NtCurrentTeb()->Tib.StackBase );
             server_abort_thread(1);
         }
         else WARN( "exception outside of stack limits in thread %04x eip %08x esp %08x stack %p-%p\n",
@@ -1165,7 +1166,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
-        ERR( "Got unexpected trap %d\n", get_trap_code(context) );
+        WINE_ERR( "Got unexpected trap %d\n", get_trap_code(context) );
         /* fall through */
     case TRAP_x86_NMI:       /* NMI interrupt */
     case TRAP_x86_DNA:       /* Device not available exception */
@@ -1243,7 +1244,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec->ExceptionInformation[0] = 0;
         break;
     default:
-        ERR( "Got unexpected trap %d\n", get_trap_code(context) );
+        WINE_ERR( "Got unexpected trap %d\n", get_trap_code(context) );
         rec->ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
         break;
     }
@@ -1485,7 +1486,7 @@ void __wine_enter_vm86( CONTEXT *context )
             break;
         case VM86_SIGNAL: /* cannot happen because vm86_enter handles this case */
         default:
-            ERR( "unhandled result from vm86 mode %x\n", res );
+            WINE_ERR( "unhandled result from vm86 mode %x\n", res );
             continue;
         }
         __regs_RtlRaiseException( &rec, context );
