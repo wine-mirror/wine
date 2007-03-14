@@ -1262,14 +1262,6 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
                 lpmemex->ullAvailPhys += cached*1024;
         }
         fclose( f );
-
-        if (lpmemex->ullTotalPhys)
-        {
-            DWORDLONG TotalPhysical = lpmemex->ullTotalPhys+lpmemex->ullTotalPageFile;
-            DWORDLONG AvailPhysical = lpmemex->ullAvailPhys+lpmemex->ullAvailPageFile;
-            lpmemex->dwMemoryLoad = (TotalPhysical-AvailPhysical)
-                                      / (TotalPhysical / 100);
-        }
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__APPLE__)
     mib[0] = CTL_HW;
@@ -1284,7 +1276,6 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     lpmemex->ullAvailPhys = val;
     lpmemex->ullTotalPageFile = val;
     lpmemex->ullAvailPageFile = val;
-    lpmemex->dwMemoryLoad = lpmemex->ullTotalPhys - lpmemex->ullAvailPhys;
 #elif defined ( sun )
     pagesize=sysconf(_SC_PAGESIZE);
     maxpages=sysconf(_SC_PHYS_PAGES);
@@ -1305,8 +1296,13 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     lpmemex->ullAvailPhys = pagesize*freepages;
     lpmemex->ullTotalPageFile = swapspace;
     lpmemex->ullAvailPageFile = swapfree;
-    lpmemex->dwMemoryLoad =  lpmemex->ullTotalPhys - lpmemex->ullAvailPhys;
 #endif
+
+    if (lpmemex->ullTotalPhys)
+    {
+        lpmemex->dwMemoryLoad = (lpmemex->ullTotalPhys-lpmemex->ullAvailPhys)
+                                  / (lpmemex->ullTotalPhys / 100);
+    }
 
     /* Project2k refuses to start if it sees less than 1Mb of free swap */
     if (lpmemex->ullTotalPageFile < lpmemex->ullTotalPhys)
