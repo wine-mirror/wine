@@ -60,9 +60,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 {
 	UINT i;
-	int rootsize = 0,size = 0;
-	char szRootPath[MAX_PATH];
-	char szFileName[MAX_PATH];
+	int rootlen = 0,size = 0;
+	WCHAR wszRootPath[MAX_PATH];
+	WCHAR wszFileName[MAX_PATH];
 	HGLOBAL hGlobal;
 	DROPFILES *pDropFiles;
 	int offset;
@@ -72,39 +72,38 @@ HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	/* get the size needed */
 	size = sizeof(DROPFILES);
 
-	SHGetPathFromIDListA(pidlRoot, szRootPath);
-	PathAddBackslashA(szRootPath);
-	rootsize = strlen(szRootPath);
+	SHGetPathFromIDListW(pidlRoot, wszRootPath);
+	PathAddBackslashW(wszRootPath);
+	rootlen = strlenW(wszRootPath);
 
 	for (i=0; i<cidl;i++)
 	{
-	  _ILSimpleGetText(apidl[i], szFileName, MAX_PATH);
-	  size += rootsize + strlen(szFileName) + 1;
+	  _ILSimpleGetTextW(apidl[i], wszFileName, MAX_PATH);
+	  size += (rootlen + strlenW(wszFileName) + 1) * sizeof(WCHAR);
 	}
 
-	size++;
+	size += sizeof(WCHAR);
 
 	/* Fill the structure */
 	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, size);
 	if(!hGlobal) return hGlobal;
 
         pDropFiles = (DROPFILES *)GlobalLock(hGlobal);
-        pDropFiles->pFiles = sizeof(DROPFILES);
-        pDropFiles->fWide = FALSE;
+	offset = (sizeof(DROPFILES) + sizeof(WCHAR) - 1) / sizeof(WCHAR);
+        pDropFiles->pFiles = offset * sizeof(WCHAR);
+        pDropFiles->fWide = TRUE;
 
-	offset = pDropFiles->pFiles;
-	strcpy(szFileName, szRootPath);
+	strcpyW(wszFileName, wszRootPath);
 
 	for (i=0; i<cidl;i++)
 	{
 
-	  _ILSimpleGetText(apidl[i], szFileName + rootsize, MAX_PATH - rootsize);
-	  size = strlen(szFileName) + 1;
-	  strcpy(((char*)pDropFiles)+offset, szFileName);
-	  offset += size;
+	  _ILSimpleGetTextW(apidl[i], wszFileName + rootlen, MAX_PATH - rootlen);
+	  strcpyW(((WCHAR*)pDropFiles)+offset, wszFileName);
+	  offset += strlenW(wszFileName) + 1;
 	}
 
-	((char*)pDropFiles)[offset] = 0;
+	((WCHAR*)pDropFiles)[offset] = 0;
 	GlobalUnlock(hGlobal);
 
 	return hGlobal;
