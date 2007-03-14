@@ -364,7 +364,7 @@ __ASM_GLOBAL_FUNC(call_thread_entry_point,
 #else
 static inline DWORD call_thread_entry_point( PRTL_THREAD_START_ROUTINE entry, void *arg )
 {
-    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)rtl_func;
+    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)entry;
     return func( arg );
 }
 #endif
