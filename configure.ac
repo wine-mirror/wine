@@ -1169,6 +1169,7 @@ then
   WINE_GET_SONAME(curses,waddch)
   WINE_GET_SONAME(jpeg,jpeg_start_decompress)
   WINE_GET_SONAME(capi20,capi20_isinstalled)
+  WINE_GET_SONAME(sane,sane_init)
 fi
 
 

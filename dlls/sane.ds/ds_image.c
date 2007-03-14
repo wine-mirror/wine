@@ -99,7 +99,7 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
         if (activeDS.currentState == 6)
         {
             /* return general image description information about the image about to be transferred */
-            status = sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
+            status = psane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
             activeDS.sane_param_valid = TRUE;
             TRACE("Getting parameters\n");
         }
@@ -217,23 +217,23 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
 
             ScanningDialogBox(activeDS.progressWnd,0);
 
-            status = sane_start (activeDS.deviceHandle);
+            status = psane_start (activeDS.deviceHandle);
             if (status != SANE_STATUS_GOOD)
             {
-                WARN("sane_start: %s\n", sane_strstatus (status));
-                sane_cancel (activeDS.deviceHandle);
+                WARN("psane_start: %s\n", psane_strstatus (status));
+                psane_cancel (activeDS.deviceHandle);
                 activeDS.twCC = TWCC_OPERATIONERROR;
                 return TWRC_FAILURE;
             }
 
-            status = sane_get_parameters (activeDS.deviceHandle,
+            status = psane_get_parameters (activeDS.deviceHandle,
                     &activeDS.sane_param);
             activeDS.sane_param_valid = TRUE;
 
             if (status != SANE_STATUS_GOOD)
             {
-                WARN("sane_get_parameters: %s\n", sane_strstatus (status));
-                sane_cancel (activeDS.deviceHandle);
+                WARN("psane_get_parameters: %s\n", psane_strstatus (status));
+                psane_cancel (activeDS.deviceHandle);
                 activeDS.twCC = TWCC_OPERATIONERROR;
                 return TWRC_FAILURE;
             }
@@ -249,7 +249,7 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
         /* access memory buffer */
         if (pImageMemXfer->Memory.Length < activeDS.sane_param.bytes_per_line)
         {
-            sane_cancel (activeDS.deviceHandle);
+            psane_cancel (activeDS.deviceHandle);
             activeDS.twCC = TWCC_BADVALUE;
             return TWRC_FAILURE;
         }
@@ -272,7 +272,7 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
         while (consumed_len < (activeDS.sane_param.bytes_per_line*rows) && 
                 status == SANE_STATUS_GOOD)
         {
-            status = sane_read (activeDS.deviceHandle, ptr, 
+            status = psane_read (activeDS.deviceHandle, ptr,
                     (activeDS.sane_param.bytes_per_line*rows) - consumed_len ,
                     &buff_len);
             consumed_len += buff_len;
@@ -294,8 +294,8 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
             if (status == SANE_STATUS_EOF)
             {
                 ScanningDialogBox(activeDS.progressWnd, -1);
-                TRACE("sane_read: %s\n", sane_strstatus (status));
-                sane_cancel (activeDS.deviceHandle);
+                TRACE("psane_read: %s\n", psane_strstatus (status));
+                psane_cancel (activeDS.deviceHandle);
                 twRC = TWRC_XFERDONE;
             }
             activeDS.twCC = TWRC_SUCCESS;
@@ -303,8 +303,8 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
         else if (status != SANE_STATUS_EOF)
         {
             ScanningDialogBox(activeDS.progressWnd, -1);
-            WARN("sane_read: %s\n", sane_strstatus (status));
-            sane_cancel (activeDS.deviceHandle);
+            WARN("psane_read: %s\n", psane_strstatus (status));
+            psane_cancel (activeDS.deviceHandle);
             activeDS.twCC = TWCC_OPERATIONERROR;
             twRC = TWRC_FAILURE;
         }
@@ -344,21 +344,21 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     else
     {
         /* Transfer an image from the source to the application */
-        status = sane_start (activeDS.deviceHandle);
+        status = psane_start (activeDS.deviceHandle);
         if (status != SANE_STATUS_GOOD)
         {
-            WARN("sane_start: %s\n", sane_strstatus (status));
-            sane_cancel (activeDS.deviceHandle);
+            WARN("psane_start: %s\n", psane_strstatus (status));
+            psane_cancel (activeDS.deviceHandle);
             activeDS.twCC = TWCC_OPERATIONERROR;
             return TWRC_FAILURE;
         }
 
-        status = sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
+        status = psane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
         activeDS.sane_param_valid = TRUE;
         if (status != SANE_STATUS_GOOD)
         {
-            WARN("sane_get_parameters: %s\n", sane_strstatus (status));
-            sane_cancel (activeDS.deviceHandle);
+            WARN("psane_get_parameters: %s\n", psane_strstatus (status));
+            psane_cancel (activeDS.deviceHandle);
             activeDS.twCC = TWCC_OPERATIONERROR;
             return TWRC_FAILURE;
         }
@@ -387,14 +387,14 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
                                  DIB_RGB_COLORS, &pBits, 0, 0);
         if (!hDIB)
         {
-            sane_cancel (activeDS.deviceHandle);
+            psane_cancel (activeDS.deviceHandle);
             activeDS.twCC = TWCC_LOWMEMORY;
             return TWRC_FAILURE;
         }
 
         do
         {
-            status = sane_read (activeDS.deviceHandle, buffer,
+            status = psane_read (activeDS.deviceHandle, buffer,
                                 sizeof (buffer),  &buff_len);
             if (status == SANE_STATUS_GOOD)
             {
@@ -403,14 +403,14 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
             }
             else if (status != SANE_STATUS_EOF)
             {
-                WARN("sane_read: %s\n", sane_strstatus (status));
-                sane_cancel (activeDS.deviceHandle);
+                WARN("psane_read: %s\n", psane_strstatus (status));
+                psane_cancel (activeDS.deviceHandle);
                 activeDS.twCC = TWCC_OPERATIONERROR;
                 return TWRC_FAILURE;
             }
         } while (status == SANE_STATUS_GOOD);
 
-        sane_cancel (activeDS.deviceHandle);
+        psane_cancel (activeDS.deviceHandle);
         ReleaseDC (activeDS.hwndOwner, dc);
         *pHandle = (TW_UINT32)hDIB;
         twRC = TWRC_XFERDONE;

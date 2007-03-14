@@ -576,7 +576,7 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
 #ifdef HAVE_SANE
             else
             {
-                sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
+                psane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
                 activeDS.sane_param_valid = TRUE;
             }
 #endif

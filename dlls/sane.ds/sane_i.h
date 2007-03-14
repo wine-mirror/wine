@@ -25,6 +25,24 @@
 
 #ifdef HAVE_SANE
 # include <sane/sane.h>
+
+#define MAKE_FUNCPTR(f) typeof(f) * p##f;
+MAKE_FUNCPTR(sane_init)
+MAKE_FUNCPTR(sane_exit)
+MAKE_FUNCPTR(sane_get_devices)
+MAKE_FUNCPTR(sane_open)
+MAKE_FUNCPTR(sane_close)
+MAKE_FUNCPTR(sane_get_option_descriptor)
+MAKE_FUNCPTR(sane_control_option)
+MAKE_FUNCPTR(sane_get_parameters)
+MAKE_FUNCPTR(sane_start)
+MAKE_FUNCPTR(sane_read)
+MAKE_FUNCPTR(sane_cancel)
+MAKE_FUNCPTR(sane_set_io_mode)
+MAKE_FUNCPTR(sane_get_select_fd)
+MAKE_FUNCPTR(sane_strstatus)
+#undef MAKE_FUNCPTR
+
 #endif
 #include <stdarg.h>
 

@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -28,10 +29,63 @@
 #include "twain.h"
 #include "sane_i.h"
 #include "wine/debug.h"
+#include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 HINSTANCE SANE_instance;
+
+#ifdef HAVE_SANE
+#ifndef SONAME_LIBSANE
+#define SONAME_LIBSANE      "libsane.so"
+#endif
+
+static void *libsane_handle;
+
+static void close_libsane(void *h)
+{
+    if (h)
+        wine_dlclose(h, NULL, 0);
+}
+
+static void *open_libsane(void)
+{
+    void *h;
+
+    h = wine_dlopen(SONAME_LIBSANE, RTLD_GLOBAL | RTLD_NOW, NULL, 0);
+    if (!h)
+    {
+        WARN("dlopen(%s) failed\n", SONAME_LIBSANE);
+        return NULL;
+    }
+
+#define LOAD_FUNCPTR(f) \
+    if((p##f = wine_dlsym(h, #f, NULL, 0)) == NULL) { \
+        close_libsane(h); \
+        ERR("Could not dlsym %s\n", #f); \
+        return NULL; \
+    }
+
+    LOAD_FUNCPTR(sane_init)
+    LOAD_FUNCPTR(sane_exit)
+    LOAD_FUNCPTR(sane_get_devices)
+    LOAD_FUNCPTR(sane_open)
+    LOAD_FUNCPTR(sane_close)
+    LOAD_FUNCPTR(sane_get_option_descriptor)
+    LOAD_FUNCPTR(sane_control_option)
+    LOAD_FUNCPTR(sane_get_parameters)
+    LOAD_FUNCPTR(sane_start)
+    LOAD_FUNCPTR(sane_read)
+    LOAD_FUNCPTR(sane_cancel)
+    LOAD_FUNCPTR(sane_set_io_mode)
+    LOAD_FUNCPTR(sane_get_select_fd)
+    LOAD_FUNCPTR(sane_strstatus)
+#undef LOAD_FUNCPTR
+
+    return h;
+}
+
+#endif /* HAVE_SANE */
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -43,7 +97,12 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 #ifdef HAVE_SANE
 	    SANE_Status status;
 	    SANE_Int version_code;
-	    status = sane_init (&version_code, NULL);
+
+            libsane_handle = open_libsane();
+            if (! libsane_handle)
+                return FALSE;
+
+	    status = psane_init (&version_code, NULL);
 #endif
 	    SANE_instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
@@ -52,7 +111,10 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_DETACH:
 #ifdef HAVE_SANE
             TRACE("calling sane_exit()\n");
-	    sane_exit ();
+	    psane_exit ();
+
+            close_libsane(libsane_handle);
+            libsane_handle = NULL;
 #endif 
 	    SANE_instance = NULL;
             break;
@@ -81,7 +143,7 @@ static TW_UINT16 SANE_SourceControlHandler (
 	    {
 		case MSG_CLOSEDS:
 #ifdef HAVE_SANE
-		     sane_close (activeDS.deviceHandle);
+		     psane_close (activeDS.deviceHandle);
 #endif
 		     break;
 		case MSG_OPENDS:
@@ -543,7 +605,7 @@ static void
 detect_sane_devices(void) {
     if (sane_devlist && sane_devlist[0]) return;
     TRACE("detecting sane...\n");
-    if (sane_get_devices (&sane_devlist, SANE_FALSE) != SANE_STATUS_GOOD)
+    if (psane_get_devices (&sane_devlist, SANE_FALSE) != SANE_STATUS_GOOD)
 	return;
 }
 
@@ -599,13 +661,13 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
 	FIXME("Scanner not found? Using first one!\n");
 	i=0;
     }
-    status = sane_open(sane_devlist[i]->name,&activeDS.deviceHandle);
+    status = psane_open(sane_devlist[i]->name,&activeDS.deviceHandle);
     if (status == SANE_STATUS_GOOD) {
 	activeDS.currentState = 4;
 	activeDS.twCC = TWRC_SUCCESS;
 	return TWRC_SUCCESS;
     }
-    FIXME("sane_open(%s): %s\n", sane_devlist[i]->name, sane_strstatus (status));
+    FIXME("sane_open(%s): %s\n", sane_devlist[i]->name, psane_strstatus (status));
     return TWRC_FAILURE;
 }
 #endif
