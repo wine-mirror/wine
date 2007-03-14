@@ -1312,6 +1312,13 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     lpmemex->ullTotalPageFile += lpmemex->ullTotalPhys;
     lpmemex->ullAvailPageFile += lpmemex->ullAvailPhys;
 
+    /* Titan Quest refuses to run if TotalPageFile <= ullTotalPhys */
+    if(lpmemex->ullTotalPageFile == lpmemex->ullTotalPhys)
+    {
+        lpmemex->ullTotalPhys -= 1;
+        lpmemex->ullAvailPhys -= 1;
+    }
+
     /* FIXME: should do something for other systems */
     GetSystemInfo(&si);
     lpmemex->ullTotalVirtual  = (char*)si.lpMaximumApplicationAddress-(char*)si.lpMinimumApplicationAddress;
