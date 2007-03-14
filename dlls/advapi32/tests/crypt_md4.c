@@ -147,7 +147,7 @@ START_TEST(crypt_md4)
 {
     HMODULE module;
 
-    if (!(module = GetModuleHandleA( "advapi32.dll" ))) return;
+    module = GetModuleHandleA( "advapi32.dll" );
 
     pMD4Init = (fnMD4Init)GetProcAddress( module, "MD4Init" );
     pMD4Update = (fnMD4Update)GetProcAddress( module, "MD4Update" );
