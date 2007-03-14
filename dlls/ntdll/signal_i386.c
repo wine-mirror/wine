@@ -772,7 +772,7 @@ void set_cpu_context( const CONTEXT *context )
  * Check if the fault location is a privileged instruction.
  * Based on the instruction emulation code in dlls/kernel/instr.c.
  */
-static inline int is_privileged_instr( CONTEXT86 *context )
+static inline DWORD is_privileged_instr( CONTEXT86 *context )
 {
     const BYTE *instr;
     unsigned int prefix_count = 0;
@@ -794,7 +794,7 @@ static inline int is_privileged_instr( CONTEXT86 *context )
     case 0xf0:  /* lock */
     case 0xf2:  /* repne */
     case 0xf3:  /* repe */
-        if (++prefix_count >= 15) return 0;
+        if (++prefix_count >= 15) return EXCEPTION_ILLEGAL_INSTRUCTION;
         instr++;
         continue;
 
@@ -805,7 +805,7 @@ static inline int is_privileged_instr( CONTEXT86 *context )
         case 0x21: /* mov drX, reg */
         case 0x22: /* mov reg, crX */
         case 0x23: /* mov reg drX */
-            return 1;
+            return EXCEPTION_PRIV_INSTRUCTION;
         }
         return 0;
     case 0x6c: /* insb (%dx) */
@@ -824,7 +824,7 @@ static inline int is_privileged_instr( CONTEXT86 *context )
     case 0xf4: /* hlt */
     case 0xfa: /* cli */
     case 0xfb: /* sti */
-        return 1;
+        return EXCEPTION_PRIV_INSTRUCTION;
     default:
         return 0;
     }
@@ -1144,16 +1144,17 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     case TRAP_x86_SEGNPFLT:  /* Segment not present exception */
     case TRAP_x86_PROTFLT:   /* General protection fault */
     case TRAP_x86_UNKNOWN:   /* Unknown fault code */
-        if (!get_error_code(context) && is_privileged_instr( get_exception_context(rec) ))
-            rec->ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
-        else
         {
             WORD err = get_error_code(context);
+            if (!err && (rec->ExceptionCode = is_privileged_instr( get_exception_context(rec) ))) break;
             rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
             rec->NumberParameters = 2;
             rec->ExceptionInformation[0] = 0;
             /* if error contains a LDT selector, use that as fault address */
-            rec->ExceptionInformation[1] = (err & 7) == 4 ? (err & ~7) : 0xffffffff;
+            if ((err & 7) == 4 && !wine_ldt_is_system( err | 7 ))
+                rec->ExceptionInformation[1] = err & ~7;
+            else
+                rec->ExceptionInformation[1] = 0xffffffff;
         }
         break;
     case TRAP_x86_PAGEFLT:  /* Page fault */
