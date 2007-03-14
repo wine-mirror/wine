@@ -41,7 +41,6 @@
  *   - check UDM_GETPOS, for up-down control with a buddy window, position is the caption of the buddy window, so change the
  *     caption of the buddy window then call UDM_GETPOS
  *   - check UDM_SETRANGE, max can be less than min, so clicking the up arrow decreases the current position
- *   - check UDM_GETRANGE
  *   - more stuff to test
  */
 
@@ -52,6 +51,8 @@
 
 #include "wine/test.h"
 #include "msg.h"
+
+#define expect(EXPECTED,GOT) ok((GOT)==(EXPECTED), "Expected %d, got %d\n", (EXPECTED), (GOT))
 
 #define NUM_MSG_SEQUENCES   3
 #define PARENT_SEQ_INDEX    0
@@ -281,48 +282,48 @@ static void test_updown_pos(void)
     /* Set Range from 0 to 100 */
     SendMessage(updown, UDM_SETRANGE, 0 , MAKELONG(100,0) );
     r = SendMessage(updown, UDM_GETRANGE, 0,0);
-    ok(LOWORD(r) == 100, "Expected 100, got %d\n", LOWORD(r));
-    ok(HIWORD(r) == 0, "Expected 0, got %d\n", HIWORD(r));
+    expect(100,LOWORD(r));
+    expect(0,HIWORD(r));
 
     /* Set the position to 5, return is not checked as it was set before func call */
     SendMessage(updown, UDM_SETPOS, 0 , MAKELONG(5,0) );
     /* Since UDM_SETBUDDYINT was not set at creation HIWORD(r) will always be 1 as a return from UDM_GETPOS */
     /* Get the position, which should be 5 */
     r = SendMessage(updown, UDM_GETPOS, 0 , 0 );
-    ok(LOWORD(r) == 5, "Expected 5, got %d\n", LOWORD(r));
-    ok(HIWORD(r) == 1, "Expected 1, got %d\n", HIWORD(r));
+    expect(5,LOWORD(r));
+    expect(1,HIWORD(r));
 
     /* Set the position to 0, return should be 5 */
     r = SendMessage(updown, UDM_SETPOS, 0 , MAKELONG(0,0) );
-    ok(r == 5, "Expected 5, got %d\n", r);
+    expect(5,r);
     /* Get the position, which should be 0 */
     r = SendMessage(updown, UDM_GETPOS, 0 , 0 );
-    ok(LOWORD(r) == 0, "Expected 0, got %d\n", LOWORD(r));
-    ok(HIWORD(r) == 1, "Expected 1, got %d\n", HIWORD(r));
+    expect(0,LOWORD(r));
+    expect(1,HIWORD(r));
 
     /* Set the position to -1, return should be 0 */
     r = SendMessage(updown, UDM_SETPOS, 0 , MAKELONG(-1,0) );
-    ok(r == 0, "Expected 0, got %d\n", r);
+    expect(0,r);
     /* Get the position, which should be 0 */
     r = SendMessage(updown, UDM_GETPOS, 0 , 0 );
-    ok(LOWORD(r) == 0, "Expected 0, got %d\n", LOWORD(r));
-    ok(HIWORD(r) == 1, "Expected 1, got %d\n", HIWORD(r));
+    expect(0,LOWORD(r));
+    expect(1,HIWORD(r));
 
     /* Set the position to 100, return should be 0 */
     r = SendMessage(updown, UDM_SETPOS, 0 , MAKELONG(100,0) );
-    ok(r == 0, "Expected 0, got %d\n", r);
+    expect(0,r);
     /* Get the position, which should be 100 */
     r = SendMessage(updown, UDM_GETPOS, 0 , 0 );
-    ok(LOWORD(r) == 100, "Expected 100, got %d\n", LOWORD(r));
-    ok(HIWORD(r) == 1, "Expected 1, got %d\n", HIWORD(r));
+    expect(100,LOWORD(r));
+    expect(1,HIWORD(r));
 
     /* Set the position to 101, return should be 100 */
     r = SendMessage(updown, UDM_SETPOS, 0 , MAKELONG(101,0) );
-    ok(r == 100, "Expected 100, got %d\n", r);
+    expect(100,r);
     /* Get the position, which should be 100 */
     r = SendMessage(updown, UDM_GETPOS, 0 , 0 );
-    ok(LOWORD(r) == 100, "Expected 100, got %d\n", LOWORD(r));
-    ok(HIWORD(r) == 1, "Expected 1, got %d\n", HIWORD(r));
+    expect(100,LOWORD(r));
+    expect(1,HIWORD(r));
 }
 
 static void test_updown_pos32(void)
@@ -334,45 +335,45 @@ static void test_updown_pos32(void)
     SendMessage(updown, UDM_SETRANGE32, 0 , 1000 );
 
     r = SendMessage(updown, UDM_GETRANGE32, (WPARAM) &low , (LPARAM) &high );
-    ok(low == 0, "Expected 0, got %d\n", low);
-    ok(high == 1000, "Expected 1000, got %d\n", high);
+    expect(0,low);
+    expect(1000,high);
 
     /* Set position to 500, don't check return since it is unset*/
-    r = SendMessage(updown, UDM_SETPOS32, 0 , 500 );
+    SendMessage(updown, UDM_SETPOS32, 0 , 500 );
 
     /* Since UDM_SETBUDDYINT was not set at creation bRet will always be true as a return from UDM_GETPOS32 */
 
     r = SendMessage(updown, UDM_GETPOS32, 0 , (LPARAM) &high );
-    ok(r == 500, "Expected 500, got %d\n", r);
-    ok(high == 1 , "Expected 0, got %d\n", high);
+    expect(500,r);
+    expect(1,high);
 
     /* Set position to 0, return should be 500 */
     r = SendMessage(updown, UDM_SETPOS32, 0 , 0 );
-    ok(r == 500, "Expected 500, got %d\n", r);
+    expect(500,r);
     r = SendMessage(updown, UDM_GETPOS32, 0 , (LPARAM) &high );
-    ok(r == 0, "Expected 0, got %d\n", r);
-    ok(high == 1 , "Expected 0, got %d\n", high);
+    expect(0,r);
+    expect(1,high);
 
-    /* Set position to -1 which sohuld become 0, return should be 0 */
+    /* Set position to -1 which should become 0, return should be 0 */
     r = SendMessage(updown, UDM_SETPOS32, 0 , -1 );
-    ok(r == 0, "Expected 0, got %d\n", r);
+    expect(0,r);
     r = SendMessage(updown, UDM_GETPOS32, 0 , (LPARAM) &high );
-    ok(r == 0, "Expected 0, got %d\n", r);
-    ok(high == 1 , "Expected 0, got %d\n", high);
+    expect(0,r);
+    expect(1,high);
 
     /* Set position to 1000, return should be 0 */
     r = SendMessage(updown, UDM_SETPOS32, 0 , 1000 );
-    ok(r == 0, "Expected 0, got %d\n", r);
+    expect(0,r);
     r = SendMessage(updown, UDM_GETPOS32, 0 , (LPARAM) &high );
-    ok(r == 1000, "Expected 1000, got %d\n", r);
-    ok(high == 1 , "Expected 0, got %d\n", high);
+    expect(1000,r);
+    expect(1,high);
 
-    /* Set position to 1001 which sohuld become 1000, return should be 1000 */
+    /* Set position to 1001 which should become 1000, return should be 1000 */
     r = SendMessage(updown, UDM_SETPOS32, 0 , 1001 );
-    ok(r == 1000, "Expected 1000, got %d\n", r);
+    expect(1000,r);
     r = SendMessage(updown, UDM_GETPOS32, 0 , (LPARAM) &high );
-    ok(r == 1000, "Expected 0, got %d\n", r);
-    ok(high == 1 , "Expected 0, got %d\n", high);
+    expect(1000,r);
+    expect(1,high);
 }
 
 static void test_updown_buddy(void)
@@ -389,31 +390,31 @@ static void test_updown_base(void)
 
     SendMessage(updown, UDM_SETBASE, 10 , 0);
     r = SendMessage(updown, UDM_GETBASE, 0 , 0);
-    ok(r == 10, "Expected 10, got %d\n", r);
+    expect(10,r);
 
     /* Set base to an invalid value, should return 0 and stay at 10 */
     r = SendMessage(updown, UDM_SETBASE, 80 , 0);
-    ok(r == 0, "Expected 0, got %d\n", r);
+    expect(0,r);
     r = SendMessage(updown, UDM_GETBASE, 0 , 0);
-    ok(r == 10, "Expected 10, got %d\n", r);
+    expect(10,r);
 
     /* Set base to 16 now, should get 16 as the return */
     r = SendMessage(updown, UDM_SETBASE, 16 , 0);
-    ok(r == 10, "Expected 10, got %d\n", r);
+    expect(10,r);
     r = SendMessage(updown, UDM_GETBASE, 0 , 0);
-    ok(r == 16, "Expected 16, got %d\n", r);
+    expect(16,r);
 
     /* Set base to an invalid value, should return 0 and stay at 16 */
     r = SendMessage(updown, UDM_SETBASE, 80 , 0);
-    ok(r == 0, "Expected 0, got %d\n", r);
+    expect(0,r);
     r = SendMessage(updown, UDM_GETBASE, 0 , 0);
-    ok(r == 16, "Expected 16, got %d\n", r);
+    expect(16,r);
 
     /* Set base back to 10, return should be 16 */
     r = SendMessage(updown, UDM_SETBASE, 10 , 0);
-    ok(r == 16, "Expected 16, got %d\n", r);
+    expect(16,r);
     r = SendMessage(updown, UDM_GETBASE, 0 , 0);
-    ok(r == 10, "Expected 10, got %d\n", r);
+    expect(10,r);
 }
 
 static void test_updown_unicode(void)
@@ -423,19 +424,19 @@ static void test_updown_unicode(void)
     /* Set it to ANSI, don't check return as we don't know previous state */
     SendMessage(updown, UDM_SETUNICODEFORMAT, 0 , 0);
     r = SendMessage(updown, UDM_GETUNICODEFORMAT, 0 , 0);
-    ok(r == 0, "Expected 0, got %d\n", r);
+    expect(0,r);
 
     /* Now set it to Unicode format */
     r = SendMessage(updown, UDM_SETUNICODEFORMAT, 1 , 0);
-    ok(r == 0, "Expected 0, got %d\n", r);
+    expect(0,r);
     r = SendMessage(updown, UDM_GETUNICODEFORMAT, 0 , 0);
-    ok(r == 1, "Expected 1, got %d\n", r);
+    expect(1,r);
 
     /* And now set it back to ANSI */
     r = SendMessage(updown, UDM_SETUNICODEFORMAT, 0 , 0);
-    ok(r == 1, "Expected 1, got %d\n", r);
+    expect(1,r);
     r = SendMessage(updown, UDM_GETUNICODEFORMAT, 0 , 0);
-    ok(r == 0, "Expected 0, got %d\n", r);
+    expect(0,r);
 }
 
 
