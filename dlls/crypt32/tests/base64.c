@@ -441,21 +441,18 @@ START_TEST(base64)
 {
     HMODULE lib = GetModuleHandleA("crypt32");
 
-    if (lib)
-    {
-        pCryptBinaryToStringA = (CryptBinaryToStringAFunc)GetProcAddress(lib,
-         "CryptBinaryToStringA");
-        pCryptStringToBinaryA = (CryptStringToBinaryAFunc)GetProcAddress(lib,
-         "CryptStringToBinaryA");
+    pCryptBinaryToStringA = (CryptBinaryToStringAFunc)GetProcAddress(lib,
+     "CryptBinaryToStringA");
+    pCryptStringToBinaryA = (CryptStringToBinaryAFunc)GetProcAddress(lib,
+     "CryptStringToBinaryA");
 
-        if (pCryptBinaryToStringA)
-            testBinaryToStringA();
-        else
-            skip("CryptBinaryToStringA is not available\n");
+    if (pCryptBinaryToStringA)
+        testBinaryToStringA();
+    else
+        skip("CryptBinaryToStringA is not available\n");
 
-        if (pCryptStringToBinaryA)
-            testStringToBinaryA();
-        else
-            skip("CryptStringToBinaryA is not available\n");
-    }
+    if (pCryptStringToBinaryA)
+        testStringToBinaryA();
+    else
+        skip("CryptStringToBinaryA is not available\n");
 }
