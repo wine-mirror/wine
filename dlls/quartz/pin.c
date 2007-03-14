@@ -880,6 +880,7 @@ HRESULT OutputPin_SendSample(OutputPin * This, IMediaSample * pSample)
 {
     HRESULT hr = S_OK;
     IMemInputPin * pMemConnected = NULL;
+    PIN_INFO pinInfo;
 
     EnterCriticalSection(This->pin.pCritSec);
     {
@@ -889,9 +890,10 @@ HRESULT OutputPin_SendSample(OutputPin * This, IMediaSample * pSample)
         {
             /* we don't have the lock held when using This->pMemInputPin,
              * so we need to AddRef it to stop it being deleted while we are
-             * using it. */
+             * using it. Same with its filter. */
             pMemConnected = This->pMemInputPin;
             IMemInputPin_AddRef(pMemConnected);
+            hr = IPin_QueryPinInfo(This->pin.pConnectedTo, &pinInfo);
         }
     }
     LeaveCriticalSection(This->pin.pCritSec);
@@ -902,9 +904,11 @@ HRESULT OutputPin_SendSample(OutputPin * This, IMediaSample * pSample)
          * then it causes some problems (most notably with the native Video
          * Renderer) if we are re-entered for whatever reason */
         hr = IMemInputPin_Receive(pMemConnected, pSample);
-        IMemInputPin_Release(pMemConnected);
+        IBaseFilter_Release(pinInfo.pFilter);
     }
-    
+    if (pMemConnected)
+        IMemInputPin_Release(pMemConnected);
+
     return hr;
 }
 
@@ -1155,6 +1159,7 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
 
     REFERENCE_TIME rtCurrent;
     ALLOCATOR_PROPERTIES allocProps;
+    PIN_INFO pinInfo;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     
@@ -1174,6 +1179,8 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
         IMediaSample * pSample = NULL;
         REFERENCE_TIME rtSampleStop;
         DWORD_PTR dwUser;
+
+        pinInfo.pFilter = NULL;
 
         TRACE("Process sample\n");
 
@@ -1195,10 +1202,15 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
             hr = IAsyncReader_WaitForNext(This->pReader, 10000, &pSample, &dwUser);
 
         if (SUCCEEDED(hr))
+            hr = IPin_QueryPinInfo((IPin*)&This->pin, &pinInfo);
+
+        if (SUCCEEDED(hr))
             hr = This->fnSampleProc(This->pin.pUserData, pSample);
         else
             ERR("Processing error: %x\n", hr);
-        
+
+        if (pinInfo.pFilter)
+            IBaseFilter_Release(pinInfo.pFilter);
         if (pSample)
             IMediaSample_Release(pSample);
     }
