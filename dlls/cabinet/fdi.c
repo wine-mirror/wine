@@ -2107,7 +2107,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
 
           do {
 
-            pathlen = (userpath) ? strlen(userpath) : 0;
+            pathlen = strlen(userpath);
             filenamelen = (cab->mii.nextname) ? strlen(cab->mii.nextname) : 0;
 
             /* slight overestimation here to save CPU cycles in the developer's brain */
