@@ -430,7 +430,7 @@ static HRESULT WINAPI GraphBuilder_RemoveFilter(IGraphBuilder *iface,
             hr = IBaseFilter_JoinFilterGraph(pFilter, NULL, This->pFilterNames[i]);
             if (SUCCEEDED(hr))
             {
-                IPin_Release(pFilter);
+                IBaseFilter_Release(pFilter);
                 CoTaskMemFree(This->pFilterNames[i]);
                 memmove(This->ppFiltersInGraph+i, This->ppFiltersInGraph+i+1, sizeof(IBaseFilter*)*(This->nFilters - 1 - i));
                 memmove(This->pFilterNames+i, This->pFilterNames+i+1, sizeof(LPWSTR)*(This->nFilters - 1 - i));
@@ -650,12 +650,12 @@ static HRESULT GetInternalConnections(IBaseFilter* pfilter, IPin* pinputpin, IPi
             else
                 IPin_Release(ppin);
         }
+        IEnumPins_Release(penumpins);
         nb = i;
         if (FAILED(hr)) {
             ERR("Next failed (%x)\n", hr);
             return hr;
         }
-        IEnumPins_Release(penumpins);
     } else if (FAILED(hr)) {
         ERR("Cannot get internal connection (%x)\n", hr);
         return hr;
@@ -714,10 +714,9 @@ static HRESULT WINAPI GraphBuilder_Connect(IGraphBuilder *iface,
        return hr;
 
     hr = IBaseFilter_GetClassID(PinInfo.pFilter, &FilterCLSID);
+    IBaseFilter_Release(PinInfo.pFilter);
     if (FAILED(hr))
        return hr;
-
-    IBaseFilter_Release(PinInfo.pFilter);
 
     /* Find the appropriate transform filter than can transform the minor media type of output pin of the upstream 
      * filter to the minor mediatype of input pin of the renderer */
@@ -830,6 +829,7 @@ static HRESULT WINAPI GraphBuilder_Connect(IGraphBuilder *iface,
             while (++i < nb) IPin_Release(ppins[i]);
             CoTaskMemFree(ppins);
             IPin_Release(ppinfilter);
+            IBaseFilter_Release(pfilter);
             break;
         }
 
@@ -926,6 +926,7 @@ static HRESULT WINAPI GraphBuilder_Render(IGraphBuilder *iface,
             hr = IGraphBuilder_AddFilter(iface, pfilter, NULL);
             if (FAILED(hr)) {
                 ERR("Unable to add filter (%x)\n", hr);
+                IBaseFilter_Release(pfilter);
                 pfilter = NULL;
                 goto error;
             }
@@ -936,6 +937,7 @@ static HRESULT WINAPI GraphBuilder_Render(IGraphBuilder *iface,
                 goto error;
             }
             hr = IEnumPins_Next(penumpins, 1, &ppinfilter, &pin);
+            IEnumPins_Release(penumpins);
             if (FAILED(hr)) {
                ERR("Next (%x)\n", hr);
                goto error;
@@ -944,14 +946,17 @@ static HRESULT WINAPI GraphBuilder_Render(IGraphBuilder *iface,
                ERR("No Pin\n");
                goto error;
             }
-            IEnumPins_Release(penumpins);
 
 	    /* Connect the pin to render to the renderer */
             hr = IGraphBuilder_Connect(iface, ppinOut, ppinfilter);
             if (FAILED(hr)) {
                 TRACE("Unable to connect to renderer (%x)\n", hr);
+                IPin_Release(ppinfilter);
                 goto error;
             }
+            IPin_Release(ppinfilter);
+            IBaseFilter_Release(pfilter);
+            pfilter = NULL;
             break;
 
 error:
@@ -977,7 +982,7 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
     static const WCHAR string[] = {'R','e','a','d','e','r',0};
     IBaseFilter* preader = NULL;
     IBaseFilter* psplitter = NULL;
-    IPin* ppinreader;
+    IPin* ppinreader = NULL;
     IPin* ppinsplitter;
     IEnumPins* penumpins;
     ULONG pin;
@@ -1021,6 +1026,8 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
 
     if (FAILED(hr))
     {
+        if (ppinreader)
+            IPin_Release(ppinreader);
         if (pEnumMoniker)
             IEnumMoniker_Release(pEnumMoniker);
         if (preader) {
@@ -1079,7 +1086,8 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
             }
         }
 
-        IPin_Release(ppinsplitter);
+        if (ppinsplitter)
+            IPin_Release(ppinsplitter);
         ppinsplitter = NULL;
 
         if (SUCCEEDED(hr)) {
@@ -1116,6 +1124,11 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
 
         hr = (partial ? VFW_S_PARTIAL_RENDER : S_OK);
     }
+
+    IPin_Release(ppinreader);
+    IBaseFilter_Release(preader);
+    if (psplitter);
+        IBaseFilter_Release(psplitter);
 
     return hr;
 }
@@ -1171,6 +1184,7 @@ static HRESULT WINAPI GraphBuilder_AddSourceFilter(IGraphBuilder *iface,
 
     if (ppFilter)
         *ppFilter = preader;
+    IFileSourceFilter_Release(pfile);
 
     return S_OK;
     
@@ -1326,10 +1340,12 @@ static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundF
     hr = IPin_ConnectedTo(pOutputPin, &pInputPin);
 
     if (SUCCEEDED(hr))
+    {
         hr = IPin_QueryPinInfo(pInputPin, &PinInfo);
-
-    if (SUCCEEDED(hr))
-        hr = GetInternalConnections(PinInfo.pFilter, pInputPin, &ppPins, &nb);
+        if (SUCCEEDED(hr))
+            hr = GetInternalConnections(PinInfo.pFilter, pInputPin, &ppPins, &nb);
+        IPin_Release(pInputPin);
+    }
 
     if (SUCCEEDED(hr))
     {
