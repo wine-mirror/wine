@@ -2637,7 +2637,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         DWORD oldCKeyFlags = Src->CKeyFlags;
         DDCOLORKEY oldBltCKey = This->SrcBltCKey;
         RECT SourceRectangle;
-        GLint oldDraw;
 
         TRACE("Blt from surface %p to rendertarget %p\n", Src, This);
 
@@ -2687,11 +2686,17 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         /* Activate the destination context, set it up for blitting */
         ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
 
-        glGetIntegerv(GL_DRAW_BUFFER, &oldDraw);
-        if(This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer) {
+        if(!dstSwapchain) {
+            TRACE("Drawing to offscreen buffer\n");
+            glDrawBuffer(myDevice->offscreenBuffer);
+        } else if(This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer) {
             TRACE("Drawing to front buffer\n");
             glDrawBuffer(GL_FRONT);
             checkGLcall("glDrawBuffer GL_FRONT");
+        } else {
+            TRACE("Drawing to back buffer\n");
+            glDrawBuffer(GL_BACK);
+            checkGLcall("glDrawBuffer GL_BACK");
         }
 
         /* Bind the texture */
@@ -2722,7 +2727,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         }
 
         /* Draw a textured quad
-            */
+         */
         glBegin(GL_QUADS);
 
         glColor3d(1.0f, 1.0f, 1.0f);
@@ -2755,8 +2760,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         glBindTexture(GL_TEXTURE_2D, 0);
         checkGLcall("glEnable glBindTexture");
 
-        if(This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer && oldDraw == GL_BACK) {
-            glDrawBuffer(oldDraw);
+        /* The draw buffer should only need to be restored if we were drawing to the front buffer, and there is a back buffer.
+         * otherwise the context manager should choose between GL_BACK / offscreenDrawBuffer
+         */
+        if(dstSwapchain && This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer && dstSwapchain->backBuffer) {
+            glDrawBuffer(GL_BACK);
         }
         /* Restore the color key parameters */
         Src->CKeyFlags = oldCKeyFlags;
