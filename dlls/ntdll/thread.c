@@ -349,6 +349,26 @@ static PUNHANDLED_EXCEPTION_FILTER get_unhandled_exception_filter(void)
     return unhandled_exception_filter;
 }
 
+#ifdef __i386__
+/* wrapper for apps that don't declare the thread function correctly */
+extern DWORD call_thread_entry_point( PRTL_THREAD_START_ROUTINE entry, void *arg );
+__ASM_GLOBAL_FUNC(call_thread_entry_point,
+                  "pushl %ebp\n\t"
+                  "movl %esp,%ebp\n\t"
+                  "subl $4,%esp\n\t"
+                  "pushl 12(%ebp)\n\t"
+                  "movl 8(%ebp),%eax\n\t"
+                  "call *%eax\n\t"
+                  "leave\n\t"
+                  "ret" );
+#else
+static inline DWORD call_thread_entry_point( PRTL_THREAD_START_ROUTINE entry, void *arg )
+{
+    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)rtl_func;
+    return func( arg );
+}
+#endif
+
 /***********************************************************************
  *           call_thread_func
  *
@@ -356,16 +376,15 @@ static PUNHANDLED_EXCEPTION_FILTER get_unhandled_exception_filter(void)
  */
 static void DECLSPEC_NORETURN call_thread_func( PRTL_THREAD_START_ROUTINE rtl_func, void *arg )
 {
-    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)rtl_func;
     DWORD exit_code;
     BOOL last;
 
     MODULE_DllThreadAttach( NULL );
 
     if (TRACE_ON(relay))
-        DPRINTF( "%04x:Starting thread proc %p (arg=%p)\n", GetCurrentThreadId(), func, arg );
+        DPRINTF( "%04x:Starting thread proc %p (arg=%p)\n", GetCurrentThreadId(), rtl_func, arg );
 
-    exit_code = func( arg );
+    exit_code = call_thread_entry_point( rtl_func, arg );
 
     /* send the exit code to the server */
     SERVER_START_REQ( terminate_thread )
