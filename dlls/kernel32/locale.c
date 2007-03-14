@@ -1892,7 +1892,7 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
         /* fall through */
     case CP_UTF8:
         if (used) *used = FALSE;  /* all chars are valid for UTF-8 */
-        ret = wine_utf8_wcstombs( src, srclen, dst, dstlen );
+        ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
         break;
     default:
         if (!(table = get_codepage_table( page )))

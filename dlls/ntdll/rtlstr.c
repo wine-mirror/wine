@@ -76,7 +76,7 @@ int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int ds
     if (unix_table)
         return wine_cp_wcstombs( unix_table, flags, src, srclen, dst, dstlen, defchar, used );
     if (used) *used = 0;  /* all chars are valid for UTF-8 */
-    return wine_utf8_wcstombs( src, srclen, dst, dstlen );
+    return wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
 }
 
 /**************************************************************************

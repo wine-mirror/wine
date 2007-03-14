@@ -58,8 +58,8 @@ inline static int get_length_wcs_utf8( const WCHAR *src, unsigned int srclen )
 }
 
 /* wide char to UTF-8 string conversion */
-/* return -1 on dst buffer overflow */
-int wine_utf8_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen )
+/* return -1 on dst buffer overflow, -2 on invalid input char */
+int wine_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
 {
     int len;
 

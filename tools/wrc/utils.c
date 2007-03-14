@@ -270,12 +270,12 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
     {
         ret->type = str_char;
         ret->size = cptable ? wine_cp_wcstombs( cptable, 0, str->str.wstr, str->size, NULL, 0, NULL, NULL )
-                            : wine_utf8_wcstombs( str->str.wstr, str->size, NULL, 0 );
+                            : wine_utf8_wcstombs( 0, str->str.wstr, str->size, NULL, 0 );
         ret->str.cstr = xmalloc( ret->size + 1 );
         if (cptable)
             wine_cp_wcstombs( cptable, 0, str->str.wstr, str->size, ret->str.cstr, ret->size, NULL, NULL );
         else
-            wine_utf8_wcstombs( str->str.wstr, str->size, ret->str.cstr, ret->size );
+            wine_utf8_wcstombs( 0, str->str.wstr, str->size, ret->str.cstr, ret->size );
         ret->str.cstr[ret->size] = 0;
     }
     else if(str->type == str_unicode)
