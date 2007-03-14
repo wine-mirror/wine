@@ -29,30 +29,60 @@ static const char utf8_length[128] =
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x90-0x9f */
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xa0-0xaf */
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xb0-0xbf */
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xc0-0xcf */
+    0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xc0-0xcf */
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xd0-0xdf */
     2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 0xe0-0xef */
-    3,3,3,3,3,3,3,3,4,4,4,4,5,5,0,0  /* 0xf0-0xff */
+    3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0  /* 0xf0-0xff */
 };
 
 /* first byte mask depending on UTF-8 sequence length */
-static const unsigned char utf8_mask[6] = { 0x7f, 0x1f, 0x0f, 0x07, 0x03, 0x01 };
+static const unsigned char utf8_mask[4] = { 0x7f, 0x1f, 0x0f, 0x07 };
 
 /* minimum Unicode value depending on UTF-8 sequence length */
-static const unsigned int utf8_minval[6] = { 0x0, 0x80, 0x800, 0x10000, 0x200000, 0x4000000 };
+static const unsigned int utf8_minval[4] = { 0x0, 0x80, 0x800, 0x10000 };
 
+
+/* get the next char value taking surrogates into account */
+static inline unsigned int get_surrogate_value( const WCHAR *src, unsigned int srclen )
+{
+    if (src[0] >= 0xd800 && src[0] <= 0xdfff)  /* surrogate pair */
+    {
+        if (src[0] > 0xdbff || /* invalid high surrogate */
+            srclen <= 1 ||     /* missing low surrogate */
+            src[1] < 0xdc00 || src[1] > 0xdfff) /* invalid low surrogate */
+            return 0;
+        return 0x10000 + ((src[0] & 0x3ff) << 10) + (src[1] & 0x3ff);
+    }
+    return src[0];
+}
 
 /* query necessary dst length for src string */
-inline static int get_length_wcs_utf8( const WCHAR *src, unsigned int srclen )
+static inline int get_length_wcs_utf8( int flags, const WCHAR *src, unsigned int srclen )
 {
     int len;
-    for (len = 0; srclen; srclen--, src++, len++)
+    unsigned int val;
+
+    for (len = 0; srclen; srclen--, src++)
     {
-        if (*src >= 0x80)
+        if (*src < 0x80)  /* 0x00-0x7f: 1 byte */
         {
             len++;
-            if (*src >= 0x800) len++;
+            continue;
         }
+        if (*src < 0x800)  /* 0x80-0x7ff: 2 bytes */
+        {
+            len += 2;
+            continue;
+        }
+        if (!(val = get_surrogate_value( src, srclen )))
+        {
+            if (flags & WC_ERR_INVALID_CHARS) return -2;
+            continue;
+        }
+        if (val < 0x10000)  /* 0x800-0xffff: 3 bytes */
+            len += 3;
+        else   /* 0x10000-0x10ffff: 4 bytes */
+            len += 4;
     }
     return len;
 }
@@ -63,11 +93,12 @@ int wine_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int 
 {
     int len;
 
-    if (!dstlen) return get_length_wcs_utf8( src, srclen );
+    if (!dstlen) return get_length_wcs_utf8( flags, src, srclen );
 
     for (len = dstlen; srclen; srclen--, src++)
     {
         WCHAR ch = *src;
+        unsigned int val;
 
         if (ch < 0x80)  /* 0x00-0x7f: 1 byte */
         {
@@ -86,53 +117,80 @@ int wine_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int 
             continue;
         }
 
-        /* 0x800-0xffff: 3 bytes */
+        if (!(val = get_surrogate_value( src, srclen )))
+        {
+            if (flags & WC_ERR_INVALID_CHARS) return -2;
+            continue;
+        }
 
-        if ((len -= 3) < 0) return -1;  /* overflow */
-        dst[2] = 0x80 | (ch & 0x3f);
-        ch >>= 6;
-        dst[1] = 0x80 | (ch & 0x3f);
-        ch >>= 6;
-        dst[0] = 0xe0 | ch;
-        dst += 3;
+        if (val < 0x10000)  /* 0x800-0xffff: 3 bytes */
+        {
+            if ((len -= 3) < 0) return -1;  /* overflow */
+            dst[2] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[1] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[0] = 0xe0 | val;
+            dst += 3;
+        }
+        else   /* 0x10000-0x10ffff: 4 bytes */
+        {
+            if ((len -= 4) < 0) return -1;  /* overflow */
+            dst[3] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[2] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[1] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[0] = 0xf0 | val;
+            dst += 4;
+        }
     }
     return dstlen - len;
 }
 
 /* query necessary dst length for src string */
-inline static int get_length_mbs_utf8( const unsigned char *src, int srclen )
+inline static int get_length_mbs_utf8( int flags, const char *src, int srclen )
 {
-    int ret;
-    const unsigned char *srcend = src + srclen;
+    int len, ret = 0;
+    unsigned int res;
+    const char *srcend = src + srclen;
 
-    for (ret = 0; src < srcend; ret++)
+    while (src < srcend)
     {
         unsigned char ch = *src++;
-        if (ch < 0xc0) continue;
-
-        switch(utf8_length[ch-0x80])
+        if (ch < 0x80)  /* special fast case for 7-bit ASCII */
         {
-        case 5:
-            if (src >= srcend) return ret;  /* ignore partial char */
-            if ((ch = *src ^ 0x80) >= 0x40) continue;
-            src++;
-        case 4:
-            if (src >= srcend) return ret;  /* ignore partial char */
-            if ((ch = *src ^ 0x80) >= 0x40) continue;
-            src++;
+            ret++;
+            continue;
+        }
+        len = utf8_length[ch-0x80];
+        if (src + len > srcend) goto bad;
+        res = ch & utf8_mask[len];
+
+        switch(len)
+        {
         case 3:
-            if (src >= srcend) return ret;  /* ignore partial char */
-            if ((ch = *src ^ 0x80) >= 0x40) continue;
+            if ((ch = *src ^ 0x80) >= 0x40) goto bad;
+            res = (res << 6) | ch;
             src++;
         case 2:
-            if (src >= srcend) return ret;  /* ignore partial char */
-            if ((ch = *src ^ 0x80) >= 0x40) continue;
+            if ((ch = *src ^ 0x80) >= 0x40) goto bad;
+            res = (res << 6) | ch;
             src++;
         case 1:
-            if (src >= srcend) return ret;  /* ignore partial char */
-            if ((ch = *src ^ 0x80) >= 0x40) continue;
+            if ((ch = *src ^ 0x80) >= 0x40) goto bad;
+            res = (res << 6) | ch;
             src++;
+            if (res < utf8_minval[len]) goto bad;
+            if (res > 0x10ffff) goto bad;
+            if (res > 0xffff) ret++;
+            ret++;
+            continue;
         }
+    bad:
+        if (flags & MB_ERR_INVALID_CHARS) return -2;  /* bad char */
+        /* otherwise ignore it */
     }
     return ret;
 }
@@ -141,60 +199,55 @@ inline static int get_length_mbs_utf8( const unsigned char *src, int srclen )
 /* return -1 on dst buffer overflow, -2 on invalid input char */
 int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
 {
-    int len, count;
+    int len;
     unsigned int res;
     const char *srcend = src + srclen;
+    WCHAR *dstend = dst + dstlen;
 
-    if (!dstlen) return get_length_mbs_utf8( (const unsigned char*)src, srclen );
+    if (!dstlen) return get_length_mbs_utf8( flags, src, srclen );
 
-    for (count = dstlen; count && (src < srcend); count--, dst++)
+    while ((dst < dstend) && (src < srcend))
     {
         unsigned char ch = *src++;
         if (ch < 0x80)  /* special fast case for 7-bit ASCII */
         {
-            *dst = ch;
+            *dst++ = ch;
             continue;
         }
         len = utf8_length[ch-0x80];
+        if (src + len > srcend) goto bad;
         res = ch & utf8_mask[len];
 
         switch(len)
         {
-        case 5:
-            if (src >= srcend) goto done;  /* ignore partial char */
-            if ((ch = *src ^ 0x80) >= 0x40) goto bad;
-            res = (res << 6) | ch;
-            src++;
-        case 4:
-            if (src >= srcend) goto done;  /* ignore partial char */
-            if ((ch = *src ^ 0x80) >= 0x40) goto bad;
-            res = (res << 6) | ch;
-            src++;
         case 3:
-            if (src >= srcend) goto done;  /* ignore partial char */
             if ((ch = *src ^ 0x80) >= 0x40) goto bad;
             res = (res << 6) | ch;
             src++;
         case 2:
-            if (src >= srcend) goto done;  /* ignore partial char */
             if ((ch = *src ^ 0x80) >= 0x40) goto bad;
             res = (res << 6) | ch;
             src++;
         case 1:
-            if (src >= srcend) goto done;  /* ignore partial char */
             if ((ch = *src ^ 0x80) >= 0x40) goto bad;
             res = (res << 6) | ch;
             src++;
             if (res < utf8_minval[len]) goto bad;
-            if (res >= 0x10000) goto bad;  /* FIXME: maybe we should do surrogates here */
-            *dst = res;
+            if (res > 0x10ffff) goto bad;
+            if (res <= 0xffff) *dst++ = res;
+            else /* we need surrogates */
+            {
+                if (dst == dstend - 1) return -1;  /* overflow */
+                res -= 0x10000;
+                *dst++ = 0xd800 | (res >> 10);
+                *dst++ = 0xdc00 | (res & 0x3ff);
+            }
             continue;
         }
     bad:
         if (flags & MB_ERR_INVALID_CHARS) return -2;  /* bad char */
-        *dst = (WCHAR)'?';
+        /* otherwise ignore it */
     }
     if (src < srcend) return -1;  /* overflow */
-done:
-    return dstlen - count;
+    return dstlen - (dstend - dst);
 }
