@@ -49,7 +49,6 @@ static void initcallback(void)
 static void test_initterm(void)
 {
     int i;
-    int rc;
     static _INITTERMFUN callbacks[4];
 
     if (!p_initterm)
