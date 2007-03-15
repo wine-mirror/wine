@@ -119,7 +119,7 @@ struct elf_file_map
 struct elf_section_map
 {
     struct elf_file_map*        fmap;
-    unsigned                    sidx;
+    long                        sidx;
 };
 
 struct symtab_elt
@@ -178,8 +178,7 @@ static BOOL elf_find_section(struct elf_file_map* fmap, const char* name,
         if (fmap->shstrtab == ELF_NO_MAP)
         {
             struct elf_section_map  hdr_esm = {fmap, fmap->elfhdr.e_shstrndx};
-            fmap->shstrtab = elf_map_section(&hdr_esm);
-            if (fmap->shstrtab == ELF_NO_MAP) return FALSE;
+            if ((fmap->shstrtab = elf_map_section(&hdr_esm)) == ELF_NO_MAP) break;
         }
         for (i = 0; i < fmap->elfhdr.e_shnum; i++)
         {
@@ -193,6 +192,8 @@ static BOOL elf_find_section(struct elf_file_map* fmap, const char* name,
         }
         fmap = fmap->alternate;
     }
+    esm->fmap = NULL;
+    esm->sidx = -1;
     return FALSE;
 }
 
