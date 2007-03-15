@@ -279,7 +279,7 @@ DATETIME_SetFormatW (DATETIME_INFO *infoPtr, LPCWSTR lpszFormat)
     DATETIME_UseFormat (infoPtr, lpszFormat);
     InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
-    return infoPtr->nrFields;
+    return 1;
 }
 
 

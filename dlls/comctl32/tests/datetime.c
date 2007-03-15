@@ -190,14 +190,12 @@ static void test_dtm_set_format(HWND hWndDateTime)
 {
     LRESULT r;
 
-    todo_wine {
-        r = SendMessage(hWndDateTime, DTM_SETFORMAT, 0, (LPARAM)NULL);
-        expect(1, r);
+    r = SendMessage(hWndDateTime, DTM_SETFORMAT, 0, (LPARAM)NULL);
+    expect(1, r);
 
-        r = SendMessage(hWndDateTime, DTM_SETFORMAT, 0,
-            (LPARAM)"'Today is: 'hh':'m':'s dddd MMM dd', 'yyyy");
-        expect(1, r);
-    }
+    r = SendMessage(hWndDateTime, DTM_SETFORMAT, 0,
+		    (LPARAM)"'Today is: 'hh':'m':'s dddd MMM dd', 'yyyy");
+    expect(1, r);
 
     ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_format_seq, "test_dtm_set_format", FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
