@@ -347,7 +347,6 @@ static void test_XcvClosePort(void)
     DWORD   res;
     HANDLE hXcv;
 
-    if ((pXcvOpenPort == NULL) || (pXcvClosePort == NULL)) return;
 
     if (0)
     {
@@ -439,7 +438,6 @@ static void test_XcvDataPort_ConfigureLPTPortCommandOK(void)
     DWORD   res;
     DWORD   needed;
 
-    if ((pXcvOpenPort == NULL) || (pXcvDataPort == NULL) || (pXcvClosePort == NULL)) return;
 
     hXcv = (HANDLE) 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -545,8 +543,6 @@ static void test_XcvDataPort_DeletePort(void)
     DWORD   needed;
 
 
-    if ((pXcvOpenPort == NULL) || (pXcvDataPort == NULL) || (pXcvClosePort == NULL)) return;
-
     hXcv = (HANDLE) 0xdeadbeef;
     SetLastError(0xdeadbeef);
     res = pXcvOpenPort(emptyW, SERVER_ALL_ACCESS, &hXcv);
@@ -590,8 +586,6 @@ static void test_XcvDataPort_GetTransmissionRetryTimeout(void)
     DWORD   needed;
     DWORD   len;
 
-
-    if ((pXcvOpenPort == NULL) || (pXcvDataPort == NULL) || (pXcvClosePort == NULL)) return;
 
     hXcv = (HANDLE) 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -717,8 +711,6 @@ static void test_XcvDataPort_MonitorUI(void)
     DWORD   len;
 
 
-    if ((pXcvOpenPort == NULL) || (pXcvDataPort == NULL) || (pXcvClosePort == NULL)) return;
-
     hXcv = (HANDLE) 0xdeadbeef;
     SetLastError(0xdeadbeef);
     res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
@@ -831,8 +823,6 @@ static void test_XcvDataPort_PortIsValid(void)
     HANDLE  hXcv;
     DWORD   needed;
 
-
-    if ((pXcvOpenPort == NULL) || (pXcvDataPort == NULL) || (pXcvClosePort == NULL)) return;
 
     hXcv = (HANDLE) 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -989,7 +979,6 @@ static void test_XcvOpenPort(void)
     DWORD   res;
     HANDLE  hXcv;
 
-    if ((pXcvOpenPort == NULL) || (pXcvClosePort == NULL)) return;
 
     if (0)
     {
