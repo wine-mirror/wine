@@ -1060,6 +1060,13 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             const BYTE* dw2_debug_line;
             const BYTE* dw2_debug_loclist;
 
+            /* debug info might have a different base address than .so file
+             * when elf file is prelinked after splitting off debug info
+             * adjust symbol base addresses accordingly
+             */
+            unsigned long load_offset = module->elf_info->elf_addr +
+                          fmap->elf_start - debug_sect.fmap->elf_start;
+
             TRACE("Loading Dwarf2 information for %s\n", debugstr_w(module->module.ModuleName));
 
 	    elf_find_section(fmap, ".debug_str", SHT_NULL, &debug_str_sect);
@@ -1075,7 +1082,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             if (dw2_debug != ELF_NO_MAP && dw2_debug_abbrev != ELF_NO_MAP && dw2_debug_str != ELF_NO_MAP)
             {
                 /* OK, now just parse dwarf2 debug infos. */
-                lret = dwarf2_parse(module, module->elf_info->elf_addr, thunks,
+                lret = dwarf2_parse(module, load_offset, thunks,
                                     dw2_debug, elf_get_map_size(&debug_sect),
                                     dw2_debug_abbrev, elf_get_map_size(&debug_abbrev_sect),
                                     dw2_debug_str, elf_get_map_size(&debug_str_sect),
