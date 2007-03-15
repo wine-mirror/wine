@@ -21,41 +21,25 @@
 #include "wine/test.h"
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
 
+
 static HWND create_trackbar(DWORD style)
 {
     HWND hWndTrack;
 
     hWndTrack = CreateWindowEx(
       0, TRACKBAR_CLASS,"Trackbar Control", style,
-      10, 10, 200, 200, NULL, NULL,NULL ,NULL);
+      10,10, 100, 50,
+      NULL, NULL,GetModuleHandleA(NULL) ,NULL);
 
     return hWndTrack;
 }
 
-static void test_trackbar_control(void)
-{
-    HWND hWndTrackbar;
-    DWORD style = WS_VISIBLE | TBS_TOOLTIPS | TBS_ENABLESELRANGE | TBS_FIXEDLENGTH | TBS_AUTOTICKS;
-    int r;
+static void test_trackbar_buddy(HWND hWndTrackbar){
     HWND hWndLeftBuddy;
     HWND hWndRightBuddy;
     HWND hWndCurrentBuddy;
-    HWND hWndTooltip;
     HWND rTest;
-    DWORD *rPTics;
 
-    hWndTrackbar = create_trackbar(style);
-
-    ok(hWndTrackbar != NULL, "Expected non NULL value\n");
-
-    if (hWndTrackbar == NULL){
-      skip("trackbar control not present?\n");
-      return;
-    }
-
-    /* TEST OF ALL SETTER and GETTER MESSAGES with required styles turned on*/
-
-    /* test TBM_SETBUDDY */
     hWndLeftBuddy = (HWND) CreateWindowEx(0, STATUSCLASSNAME, NULL, 0,
         0,0,300,20, NULL, NULL, NULL, NULL);
     ok(hWndLeftBuddy != NULL, "Expected non NULL value\n");
@@ -74,6 +58,7 @@ static void test_trackbar_control(void)
 
     ok(hWndRightBuddy != NULL, "expected non NULL value\n");
 
+    /* test TBM_SETBUDDY */
     if (hWndRightBuddy != NULL){
         hWndCurrentBuddy = (HWND) SendMessage(hWndTrackbar, TBM_GETBUDDY, TRUE, 0);
         rTest = (HWND) SendMessage(hWndTrackbar, TBM_SETBUDDY, TRUE, (LPARAM) hWndRightBuddy);
@@ -81,7 +66,7 @@ static void test_trackbar_control(void)
         rTest = (HWND) SendMessage(hWndTrackbar, TBM_SETBUDDY, TRUE, (LPARAM) hWndRightBuddy);
         ok(rTest == hWndRightBuddy, "Expected hWndRightbuddy\n");
      } else
-        skip("Right buddy control not present?\n");
+       skip("Right buddy control not present?\n");
 
     /* test TBM_GETBUDDY */
     if (hWndLeftBuddy != NULL){
@@ -94,6 +79,10 @@ static void test_trackbar_control(void)
         ok(rTest == hWndRightBuddy, "Expected hWndRightBuddy\n");
         DestroyWindow(hWndRightBuddy);
     }
+}
+
+static void test_line_size(HWND hWndTrackbar){
+    int r;
 
     /* test TBM_SETLINESIZE */
     r = SendMessage(hWndTrackbar, TBM_SETLINESIZE, 0, 10);
@@ -103,6 +92,10 @@ static void test_trackbar_control(void)
     /* test TBM_GETLINESIZE */
     r = SendMessage(hWndTrackbar, TBM_GETLINESIZE, 0,0);
     expect(4, r);
+}
+
+static void test_page_size(HWND hWndTrackbar){
+    int r;
 
     /* test TBM_SETPAGESIZE */
     r = SendMessage(hWndTrackbar, TBM_SETPAGESIZE, 0, 10);
@@ -111,10 +104,14 @@ static void test_trackbar_control(void)
     expect(10, r);
 
     /* test TBM_GETPAGESIZE */
+    r = SendMessage(hWndTrackbar, TBM_GETPAGESIZE, 0,0);
     todo_wine{
-        r = SendMessage(hWndTrackbar, TBM_GETPAGESIZE, 0,0);
         expect(20, r);
     }
+}
+
+static void test_position(HWND hWndTrackbar){
+    int r;
 
     /* test TBM_SETPOS */
     SendMessage(hWndTrackbar, TBM_SETPOS, TRUE, -1);
@@ -133,6 +130,10 @@ static void test_trackbar_control(void)
     /* test TBM_GETPOS */
     r = SendMessage(hWndTrackbar, TBM_GETPOS, 0,0);
     expect(20, r);
+}
+
+static void test_range(HWND hWndTrackbar){
+    int r;
 
     /* test TBM_SETRANGE */
     SendMessage(hWndTrackbar, TBM_SETRANGE, TRUE, MAKELONG(0, 10));
@@ -188,6 +189,10 @@ static void test_trackbar_control(void)
     /* test TBM_GETRANGEMIN */
     r = SendMessage(hWndTrackbar, TBM_GETRANGEMIN, 0,0);
     expect(5, r);
+}
+
+static void test_selection(HWND hWndTrackbar){
+    int r;
 
     /* test TBM_SETSEL */
     SendMessage(hWndTrackbar, TBM_SETSEL, TRUE, MAKELONG(0,10));
@@ -241,6 +246,10 @@ static void test_trackbar_control(void)
     /* test TBM_GETSELSTART */
     r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
     expect(8, r);
+}
+
+static void test_thumb_length(HWND hWndTrackbar){
+    int r;
 
     /* testing TBM_SETTHUMBLENGTH */
     SendMessage(hWndTrackbar, TBM_SETTHUMBLENGTH, 15, 0);
@@ -253,14 +262,18 @@ static void test_trackbar_control(void)
     /* test TBM_GETTHUMBLENGTH */
     r = SendMessage(hWndTrackbar, TBM_GETTHUMBLENGTH, 0,0);
     expect(20, r);
+}
+
+static void test_tic_settings(HWND hWndTrackbar){
+    int r;
 
     /* testing TBM_SETTIC */
     /* Set tics at 5 and 10 */
     /* 0 and 20 are out of range and should not be set */
     r = SendMessage(hWndTrackbar, TBM_SETTIC, 0, 0);
     ok(r == FALSE, "Expected FALSE, got %d\n", r);
+    r = SendMessage(hWndTrackbar, TBM_SETTIC, 0, 5);
     todo_wine{
-        r = SendMessage(hWndTrackbar, TBM_SETTIC, 0, 5);
         ok(r == TRUE, "Expected TRUE, got %d\n", r);
         r = SendMessage(hWndTrackbar, TBM_SETTIC, 0, 10);
         ok(r == TRUE, "Expected TRUE, got %d\n", r);
@@ -270,9 +283,9 @@ static void test_trackbar_control(void)
 
     /* test TBM_SETTICFREQ */
     SendMessage(hWndTrackbar, TBM_SETRANGE, TRUE, MAKELONG(0, 10));
+    SendMessage(hWndTrackbar, TBM_SETTICFREQ, 2, 0);
+    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
     todo_wine{
-        SendMessage(hWndTrackbar, TBM_SETTICFREQ, 2, 0);
-        r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
         expect(6, r);
         SendMessage(hWndTrackbar, TBM_SETTICFREQ, 5, 0);
         r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
@@ -286,10 +299,15 @@ static void test_trackbar_control(void)
     /* since TIC FREQ is 15, there should be only 2 tics now */
     r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
     expect(2, r);
+}
+
+static void test_tic_placement(HWND hWndTrackbar){
+    int r;
+    DWORD *rPTics;
 
     /* test TBM_GETPTICS */
+    rPTics = (DWORD *) SendMessage(hWndTrackbar, TBM_GETPTICS, 0,0);
     todo_wine{
-        rPTics = (DWORD *) SendMessage(hWndTrackbar, TBM_GETPTICS, 0,0);
         expect(1, rPTics[0]);
         expect(2, rPTics[1]);
         expect(3, rPTics[2]);
@@ -297,8 +315,8 @@ static void test_trackbar_control(void)
     }
 
     /* test TBM_GETTIC */
+    r = SendMessage(hWndTrackbar, TBM_GETTIC, 0,0);
     todo_wine{
-        r = SendMessage(hWndTrackbar, TBM_GETTIC, 0,0);
         expect(1, r);
         r = SendMessage(hWndTrackbar, TBM_GETTIC, 4,0);
         expect(5, r);
@@ -307,16 +325,22 @@ static void test_trackbar_control(void)
     expect(-1, r);
 
     /* test TBM_GETTICPIC */
+    r = SendMessage(hWndTrackbar, TBM_GETTICPOS, 0, 0);
     todo_wine{
-        r = SendMessage(hWndTrackbar, TBM_GETTICPOS, 0, 0);
-        expect(28, r);
+        ok(r > 0, "Expected r > 0, got %d\n", r);
         r = SendMessage(hWndTrackbar, TBM_GETTICPOS, 4, 0);
-        expect(97, r);
+        ok(r > 0, "Expected r > 0, got %d\n", r);
     }
+}
+
+static void test_tool_tips(HWND hWndTrackbar){
+    int r;
+    HWND hWndTooltip;
+    HWND rTest;
 
     /* testing TBM_SETTIPSIDE */
+    r = SendMessage(hWndTrackbar, TBM_SETTIPSIDE, TBTS_TOP, 0);
     todo_wine{
-        r = SendMessage(hWndTrackbar, TBM_SETTIPSIDE, TBTS_TOP, 0);
         expect(0, r);
     }
     r = SendMessage(hWndTrackbar, TBM_SETTIPSIDE, TBTS_LEFT, 0);
@@ -348,6 +372,10 @@ static void test_trackbar_control(void)
     /* test TBM_GETTOOLTIPS */
     rTest = (HWND) SendMessage(hWndTrackbar, TBM_GETTOOLTIPS, 0,0);
     ok(rTest == hWndTooltip, "Expected hWndTooltip\n");
+}
+
+static void test_unicode(HWND hWndTrackbar){
+    int r;
 
     /* testing TBM_SETUNICODEFORMAT */
     r = SendMessage(hWndTrackbar, TBM_SETUNICODEFORMAT, TRUE, 0);
@@ -358,30 +386,22 @@ static void test_trackbar_control(void)
     /* test TBM_GETUNICODEFORMAT */
     r = SendMessage(hWndTrackbar, TBM_GETUNICODEFORMAT, 0,0);
     ok(r == FALSE, "Expected FALSE, got %d\n",r);
+}
 
-    DestroyWindow(hWndTrackbar);
-
-    /* test getters and setters without styles set */
-    hWndTrackbar = create_trackbar(0);
-
-    ok(hWndTrackbar != NULL, "Expected non NULL value\n");
-
-    if (hWndTrackbar == NULL){
-      skip("trackbar control not present?\n");
-      return;
-    }
+static void test_ignore_selection(HWND hWndTrackbar){
+    int r;
 
     /* test TBM_SETSEL  ensure that it is ignored */
+    SendMessage(hWndTrackbar, TBM_SETSEL, TRUE, MAKELONG(0,10));
+    r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
     todo_wine{
-        SendMessage(hWndTrackbar, TBM_SETSEL, TRUE, MAKELONG(0,10));
-        r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
         expect(0, r);
     }
     r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
     expect(0, r);
+    SendMessage(hWndTrackbar, TBM_SETSEL, FALSE, MAKELONG(0,10));
+    r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
     todo_wine{
-        SendMessage(hWndTrackbar, TBM_SETSEL, FALSE, MAKELONG(0,10));
-        r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
         expect(0, r);
     }
     r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
@@ -391,6 +411,11 @@ static void test_trackbar_control(void)
     SendMessage(hWndTrackbar, TBM_SETSELEND, TRUE, 0);
     r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
     expect(0, r);
+    SendMessage(hWndTrackbar, TBM_SETSELEND, TRUE, 10);
+    r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
+    todo_wine{
+        expect(0,r);
+    }
     SendMessage(hWndTrackbar, TBM_SETSELEND, FALSE, 0);
     r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
     expect(0, r);
@@ -399,18 +424,58 @@ static void test_trackbar_control(void)
     SendMessage(hWndTrackbar, TBM_SETSELSTART, TRUE, 0);
     r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
     expect(0, r);
+    SendMessage(hWndTrackbar, TBM_SETSELSTART, TRUE, 10);
+    r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
+    todo_wine{
+        expect(0,r);
+    }
     SendMessage(hWndTrackbar, TBM_SETSELSTART, FALSE, 0);
     r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
     expect(0, r);
-
-    DestroyWindow(hWndTrackbar);
 }
-
-
 
 START_TEST(trackbar)
 {
+    DWORD style = WS_VISIBLE | TBS_TOOLTIPS | TBS_ENABLESELRANGE | TBS_FIXEDLENGTH | TBS_AUTOTICKS;
+    HWND hWndTrackbar;
+
     InitCommonControls();
 
-    test_trackbar_control();
+    /* create trackbar with set styles */
+    hWndTrackbar = create_trackbar(style);
+
+    ok(hWndTrackbar != NULL, "Expected non NULL value\n");
+
+    if (!hWndTrackbar){
+        skip("trackbar control not present?\n");
+        return;
+    }
+
+    /* TEST OF ALL SETTER and GETTER MESSAGES with required styles turned on*/
+    test_trackbar_buddy(hWndTrackbar);
+    test_line_size(hWndTrackbar);
+    test_page_size(hWndTrackbar);
+    test_position(hWndTrackbar);
+    test_range(hWndTrackbar);
+    test_selection(hWndTrackbar);
+    test_thumb_length(hWndTrackbar);
+    test_tic_settings(hWndTrackbar);
+    test_tic_placement(hWndTrackbar);
+    test_tool_tips(hWndTrackbar);
+    test_unicode(hWndTrackbar);
+
+    DestroyWindow(hWndTrackbar);
+
+    /* test getters and setters without styles set */
+    hWndTrackbar = create_trackbar(0);
+
+    ok(hWndTrackbar != NULL, "Expected non NULL value\n");
+
+    if (!hWndTrackbar){
+        skip("trackbar control not present?\n");
+        return;
+    }
+    test_ignore_selection(hWndTrackbar);
+
+    DestroyWindow(hWndTrackbar);
 }
