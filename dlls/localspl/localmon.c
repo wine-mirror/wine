@@ -459,6 +459,9 @@ DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInput
     TRACE("(%p, %s, %p, %d, %p, %d, %p)\n", hXcv, debugstr_w(pszDataName),
           pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
 
+    /* Native localspl.dll crashes on w2k and xp, when XcvDataPort is called
+       with "AddPort" as command. We do not need to implement this */
+
     if (!lstrcmpW(pszDataName, cmd_ConfigureLPTPortCommandOKW)) {
         TRACE("InputData (%d): %s\n", cbInputData, debugstr_w( (LPWSTR) pInputData));
         res = RegCreateKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_WindowsW, &hroot);
