@@ -910,10 +910,18 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
 {
     MENUITEMINFOW menuInfo;
     HMENU menu = GetMenu( frame );
+    INT nItems;
+    UINT iId;
 
     TRACE("frame %p, child %p\n", frame, hChild);
 
     if( !menu ) return 0;
+
+    /* if there is no system buttons then nothing to do */
+    nItems = GetMenuItemCount(menu) - 1;
+    iId = GetMenuItemID(menu, nItems);
+    if ( !(iId == SC_RESTORE || iId == SC_CLOSE) )
+        return 0;
 
     /*
      * Remove the system menu, If that menu is the icon of the window
@@ -1531,7 +1539,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
 
             frame = GetParent(client);
             MDI_RestoreFrameMenu( frame, hwnd );
-            MDI_UpdateFrameText( frame, client, FALSE, NULL );
+            MDI_UpdateFrameText( frame, client, TRUE, NULL );
         }
 
         if( wParam == SIZE_MAXIMIZED )
