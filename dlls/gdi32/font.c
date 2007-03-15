@@ -287,10 +287,17 @@ static void FONT_TextMetricWToA(const TEXTMETRICW *ptmW, LPTEXTMETRICA ptmA )
     ptmA->tmOverhang = ptmW->tmOverhang;
     ptmA->tmDigitizedAspectX = ptmW->tmDigitizedAspectX;
     ptmA->tmDigitizedAspectY = ptmW->tmDigitizedAspectY;
-    ptmA->tmFirstChar = ptmW->tmFirstChar > 255 ? 255 : ptmW->tmFirstChar;
-    ptmA->tmLastChar = ptmW->tmLastChar > 255 ? 255 : ptmW->tmLastChar;
-    ptmA->tmDefaultChar = ptmW->tmDefaultChar > 255 ? 255 : ptmW->tmDefaultChar;
-    ptmA->tmBreakChar = ptmW->tmBreakChar > 255 ? 255 : ptmW->tmBreakChar;
+    ptmA->tmFirstChar = min(ptmW->tmFirstChar, 255);
+    if (ptmW->tmCharSet == SYMBOL_CHARSET)
+    {
+        UINT last_char = ptmW->tmLastChar;
+        if (last_char > 0xf000) last_char -= 0xf000;
+        ptmA->tmLastChar = min(last_char, 255);
+    }
+    else
+        ptmA->tmLastChar = min(ptmW->tmLastChar, 255);
+    ptmA->tmDefaultChar = min(ptmW->tmDefaultChar, 255);
+    ptmA->tmBreakChar = min(ptmW->tmBreakChar, 255);
     ptmA->tmItalic = ptmW->tmItalic;
     ptmA->tmUnderlined = ptmW->tmUnderlined;
     ptmA->tmStruckOut = ptmW->tmStruckOut;
@@ -1365,6 +1372,9 @@ BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
     {
     /* device layer returns values in device units
      * therefore we have to convert them to logical */
+
+        metrics->tmDigitizedAspectX = GetDeviceCaps(hdc, LOGPIXELSX);
+        metrics->tmDigitizedAspectY = GetDeviceCaps(hdc, LOGPIXELSY);
 
 #define WDPTOLP(x) ((x<0)?					\
 		(-abs(INTERNAL_XDSTOWS(dc, (x)))):		\

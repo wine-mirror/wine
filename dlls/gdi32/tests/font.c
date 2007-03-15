@@ -408,7 +408,7 @@ static void test_GdiGetCharDimensions(void)
 
     if (!pGdiGetCharDimensions)
     {
-        skip("GetFontUnicodeRanges not available on this platform\n");
+        skip("GdiGetCharDimensions not available on this platform\n");
         return;
     }
 
@@ -1397,6 +1397,222 @@ else
     ReleaseDC(0, hdc);
 }
 
+/* PANOSE is 10 bytes in size, need to pack the structure properly */
+#include "pshpack2.h"
+typedef struct
+{
+    USHORT version;
+    SHORT xAvgCharWidth;
+    USHORT usWeightClass;
+    USHORT usWidthClass;
+    SHORT fsType;
+    SHORT ySubscriptXSize;
+    SHORT ySubscriptYSize;
+    SHORT ySubscriptXOffset;
+    SHORT ySubscriptYOffset;
+    SHORT ySuperscriptXSize;
+    SHORT ySuperscriptYSize;
+    SHORT ySuperscriptXOffset;
+    SHORT ySuperscriptYOffset;
+    SHORT yStrikeoutSize;
+    SHORT yStrikeoutPosition;
+    SHORT sFamilyClass;
+    PANOSE panose;
+    ULONG ulUnicodeRange1;
+    ULONG ulUnicodeRange2;
+    ULONG ulUnicodeRange3;
+    ULONG ulUnicodeRange4;
+    CHAR achVendID[4];
+    USHORT fsSelection;
+    USHORT usFirstCharIndex;
+    USHORT usLastCharIndex;
+    /* According to the Apple spec, original version didn't have the below fields,
+     * version numbers were taked from the OpenType spec.
+     */
+    /* version 0 (TrueType 1.5) */
+    USHORT sTypoAscender;
+    USHORT sTypoDescender;
+    USHORT sTypoLineGap;
+    USHORT usWinAscent;
+    USHORT usWinDescent;
+    /* version 1 (TrueType 1.66) */
+    ULONG ulCodePageRange1;
+    ULONG ulCodePageRange2;
+    /* version 2 (OpenType 1.2) */
+    SHORT sxHeight;
+    SHORT sCapHeight;
+    USHORT usDefaultChar;
+    USHORT usBreakChar;
+    USHORT usMaxContext;
+} TT_OS2_V2;
+#include "poppack.h"
+
+#ifdef WORDS_BIGENDIAN
+#define GET_BE_WORD(x) (x)
+#else
+#define GET_BE_WORD(x) MAKEWORD(HIBYTE(x), LOBYTE(x))
+#endif
+
+#define MS_MAKE_TAG(ch0, ch1, ch2, ch3) \
+                    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
+                    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
+#define MS_OS2_TAG MS_MAKE_TAG('O','S','/','2')
+
+static void test_text_metrics(const LOGFONTA *lf)
+{
+    HDC hdc;
+    HFONT hfont, hfont_old;
+    TEXTMETRICA tmA;
+    TEXTMETRICW tmW;
+    UINT first_unicode_char, last_unicode_char, default_char, break_char;
+    INT test_char;
+    TT_OS2_V2 tt_os2;
+    USHORT version;
+    LONG size, ret;
+    const char *font_name = lf->lfFaceName;
+
+    trace("Testing font metrics for %s, charset %d\n", font_name, lf->lfCharSet);
+
+    hdc = GetDC(0);
+
+    SetLastError(0xdeadbeef);
+    hfont = CreateFontIndirectA(lf);
+    ok(hfont != 0, "CreateFontIndirect error %u\n", GetLastError());
+
+    hfont_old = SelectObject(hdc, hfont);
+
+    size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
+    if (size == GDI_ERROR)
+    {
+        trace("OS/2 chunk was not found\n");
+        goto end_of_test;
+    }
+    if (size > sizeof(tt_os2))
+    {
+        trace("got too large OS/2 chunk of size %u\n", size);
+        size = sizeof(tt_os2);
+    }
+
+    memset(&tt_os2, 0, sizeof(tt_os2));
+    ret = GetFontData(hdc, MS_OS2_TAG, 0, &tt_os2, size);
+    ok(ret == size, "GetFontData should return %u not %u\n", size, ret);
+
+    version = GET_BE_WORD(tt_os2.version);
+    trace("OS/2 chunk version %u, vendor %4.4s\n", version, (LPCSTR)&tt_os2.achVendID);
+
+    first_unicode_char = GET_BE_WORD(tt_os2.usFirstCharIndex);
+    last_unicode_char = GET_BE_WORD(tt_os2.usLastCharIndex);
+    default_char = GET_BE_WORD(tt_os2.usDefaultChar);
+    break_char = GET_BE_WORD(tt_os2.usBreakChar);
+
+    trace("for %s first %x, last %x, default %x, break %x\n", font_name,
+           first_unicode_char, last_unicode_char, default_char, break_char);
+
+    SetLastError(0xdeadbeef);
+    ret = GetTextMetricsA(hdc, &tmA);
+    ok(ret, "GetTextMetricsA error %u\n", GetLastError());
+
+    trace("A: first %x, last %x, default %x, break %x\n",
+          tmA.tmFirstChar, tmA.tmLastChar, tmA.tmDefaultChar, tmA.tmBreakChar);
+
+    SetLastError(0xdeadbeef);
+    ret = GetTextMetricsW(hdc, &tmW);
+    ok(ret, "GetTextMetricsA error %u\n", GetLastError());
+
+    trace("W: first %x, last %x, default %x, break %x\n",
+          tmW.tmFirstChar, tmW.tmLastChar, tmW.tmDefaultChar, tmW.tmBreakChar);
+
+    if (lf->lfCharSet == SYMBOL_CHARSET)
+    {
+        test_char = min(last_unicode_char - 0xf000, 255);
+        ok(tmA.tmLastChar == test_char, "A: tmLastChar for %s %02x != %02x\n",
+           font_name, tmA.tmLastChar, test_char);
+
+        /* It appears that for fonts with SYMBOL_CHARSET Windows always sets
+         * symbol range to 0 - f0ff
+         */
+        ok(tmW.tmFirstChar == 0, "W: tmFirstChar for %s %02x != 0\n",
+           font_name, tmW.tmFirstChar);
+        /* FIXME: Windows returns f0ff here, while Wine f0xx */
+        ok(tmW.tmLastChar >= 0xf000, "W: tmLastChar for %s %02x != 0xf0ff\n",
+           font_name, tmW.tmLastChar);
+
+        ok(tmA.tmDefaultChar == 0x1f, "A: tmDefaultChar for %s %02x != 0\n",
+           font_name, tmW.tmDefaultChar);
+        ok(tmA.tmBreakChar == 0x20, "A: tmBreakChar for %s %02x != 0xf0ff\n",
+           font_name, tmW.tmBreakChar);
+        ok(tmW.tmDefaultChar == 0x1f, "W: tmDefaultChar for %s %02x != 0\n",
+           font_name, tmW.tmDefaultChar);
+        ok(tmW.tmBreakChar == 0x20, "W: tmBreakChar for %s %02x != 0xf0ff\n",
+           font_name, tmW.tmBreakChar);
+    }
+    else
+    {
+        test_char = min(tmW.tmLastChar, 255);
+        ok(tmA.tmLastChar == test_char, "A: tmLastChar for %s %02x != %02x\n",
+           font_name, tmA.tmLastChar, test_char);
+
+        ok(tmW.tmFirstChar == first_unicode_char, "W: tmFirstChar for %s %02x != %02x\n",
+           font_name, tmW.tmFirstChar, first_unicode_char);
+        ok(tmW.tmLastChar == last_unicode_char, "W: tmLastChar for %s %02x != %02x\n",
+           font_name, tmW.tmLastChar, last_unicode_char);
+    }
+#if 0 /* FIXME: This doesn't appear to be what Windows does */
+    test_char = min(tmW.tmFirstChar - 1, 255);
+    ok(tmA.tmFirstChar == test_char, "A: tmFirstChar for %s %02x != %02x\n",
+       font_name, tmA.tmFirstChar, test_char);
+#endif
+    ret = GetDeviceCaps(hdc, LOGPIXELSX);
+    ok(tmW.tmDigitizedAspectX == ret, "tmDigitizedAspectX %u != %u\n",
+       tmW.tmDigitizedAspectX, ret);
+    ret = GetDeviceCaps(hdc, LOGPIXELSY);
+    ok(tmW.tmDigitizedAspectX == ret, "tmDigitizedAspectY %u != %u\n",
+       tmW.tmDigitizedAspectX, ret);
+
+end_of_test:
+    SelectObject(hdc, hfont_old);
+    DeleteObject(hfont);
+
+    ReleaseDC(0, hdc);
+}
+
+static INT CALLBACK enum_truetype_font_proc(const LOGFONT *lf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
+{
+    INT *enumed = (INT *)lParam;
+
+    if (type == TRUETYPE_FONTTYPE)
+    {
+        (*enumed)++;
+        test_text_metrics(lf);
+    }
+    return 1;
+}
+
+static void test_GetTextMetrics(void)
+{
+    LOGFONTA lf;
+    HDC hdc;
+    INT enumed;
+
+    SetLastError(0xdeadbeef);
+    GetTextMetricsW(0, NULL);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("Skipping GetTextMetrics test on a Win9x platform\n");
+        return;
+    }
+
+    hdc = GetDC(0);
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfCharSet = DEFAULT_CHARSET;
+    enumed = 0;
+    EnumFontFamiliesExA(hdc, &lf, enum_truetype_font_proc, (LPARAM)&enumed, 0);
+    trace("Tested metrics of %d truetype fonts\n", enumed);
+
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(font)
 {
     init();
@@ -1427,4 +1643,5 @@ START_TEST(font)
     }
     else
         skip("Arial Black or Symbol/Wingdings is not installed\n");
+    test_GetTextMetrics();
 }
