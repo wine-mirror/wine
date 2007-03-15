@@ -178,6 +178,7 @@ typedef struct dwarf2_parse_context_s
     const struct elf_thunk_area*thunks;
     struct sparse_array         abbrev_table;
     struct sparse_array         debug_info_table;
+    unsigned long               load_offset;
     unsigned long               ref_offset;
     unsigned char               word_size;
 } dwarf2_parse_context_t;
@@ -1301,7 +1302,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                 ext.u.uvalue = 0;
             symt_new_global_variable(subpgm->ctx->module, subpgm->compiland,
                                      name.u.string, !ext.u.uvalue,
-                                     subpgm->ctx->module->module.BaseOfImage + loc.offset,
+                                     subpgm->ctx->load_offset + loc.offset,
                                      0, param_type);
             break;
         default:
@@ -1384,7 +1385,7 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
         name.u.string = NULL;
 
     loc.kind = loc_absolute;
-    loc.offset = subpgm->ctx->module->module.BaseOfImage + low_pc.u.uvalue,
+    loc.offset = subpgm->ctx->load_offset + low_pc.u.uvalue;
     symt_add_function_point(subpgm->ctx->module, subpgm->func, SymTagLabel,
                             &loc, name.u.string);
 }
@@ -1407,7 +1408,7 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
     if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_high_pc, &high_pc)) high_pc.u.uvalue = 0;
 
     block = symt_open_func_block(subpgm->ctx->module, subpgm->func, parent_block,
-                                 subpgm->ctx->module->module.BaseOfImage + low_pc.u.uvalue - subpgm->func->address,
+                                 subpgm->ctx->load_offset + low_pc.u.uvalue - subpgm->func->address,
                                  high_pc.u.uvalue - low_pc.u.uvalue);
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
@@ -1460,7 +1461,7 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
         high_pc.u.uvalue = 0;
 
     block = symt_open_func_block(subpgm->ctx->module, subpgm->func, parent_block,
-                                 subpgm->ctx->module->module.BaseOfImage + low_pc.u.uvalue - subpgm->func->address,
+                                 subpgm->ctx->load_offset + low_pc.u.uvalue - subpgm->func->address,
                                  high_pc.u.uvalue - low_pc.u.uvalue);
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
@@ -1547,7 +1548,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
      * (not the case for stabs), we just drop Wine's thunks here...
      * Actual thunks will be created in elf_module from the symbol table
      */
-    if (elf_is_in_thunk_area(ctx->module->module.BaseOfImage + low_pc.u.uvalue,
+    if (elf_is_in_thunk_area(ctx->load_offset + low_pc.u.uvalue,
                              ctx->thunks) >= 0)
         return NULL;
     if (!dwarf2_find_attribute(ctx, di, DW_AT_declaration, &is_decl))
@@ -1561,7 +1562,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     if (!is_decl.u.uvalue)
     {
         subpgm.func = symt_new_function(ctx->module, compiland, name.u.string,
-                                        ctx->module->module.BaseOfImage + low_pc.u.uvalue,
+                                        ctx->load_offset + low_pc.u.uvalue,
                                         high_pc.u.uvalue - low_pc.u.uvalue,
                                         &sig_type->symt);
         di->symt = &subpgm.func->symt;
@@ -1908,7 +1909,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                         end_sequence = TRUE;
                         break;
                     case DW_LNE_set_address:
-                        address = ctx->module->module.BaseOfImage + dwarf2_parse_addr(&traverse);
+                        address = ctx->load_offset + dwarf2_parse_addr(&traverse);
                         break;
                     case DW_LNE_define_file:
                         FIXME("not handled %s\n", traverse.data);
@@ -1938,7 +1939,8 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
                                           const dwarf2_comp_unit_t* comp_unit,
                                           struct module* module,
                                           const struct elf_thunk_area* thunks,
-                                          const unsigned char* comp_unit_cursor)
+                                          const unsigned char* comp_unit_cursor,
+                                          unsigned long load_offset)
 {
     dwarf2_parse_context_t ctx;
     dwarf2_traverse_context_t traverse;
@@ -1966,6 +1968,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     ctx.module = module;
     ctx.word_size = comp_unit->word_size;
     ctx.thunks = thunks;
+    ctx.load_offset = load_offset;
     ctx.ref_offset = comp_unit_cursor - sections[section_debug].address;
 
     traverse.start_data = comp_unit_cursor + sizeof(dwarf2_comp_unit_stream_t);
@@ -1999,7 +2002,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
         if (!dwarf2_find_attribute(&ctx, di, DW_AT_low_pc, &low_pc))
             low_pc.u.uvalue = 0;
         di->symt = &symt_new_compiland(module, 
-                                       module->module.BaseOfImage + low_pc.u.uvalue,
+                                       ctx.load_offset + low_pc.u.uvalue,
                                        source_new(module, comp_dir.u.string, name.u.string))->symt;
 
         if (di->abbrev->have_child)
@@ -2208,7 +2211,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
         comp_unit.word_size = *(unsigned char*) comp_unit_stream->word_size;
 
         dwarf2_parse_compilation_unit(section, &comp_unit, module,
-                                      thunks, comp_unit_cursor);
+                                      thunks, comp_unit_cursor, load_offset);
         comp_unit_cursor += comp_unit.length + sizeof(unsigned);
     }
     module->module.SymType = SymDia;
