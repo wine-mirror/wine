@@ -548,6 +548,144 @@ static void fog_test(IDirect3DDevice9 *device)
     IDirect3DDevice9_SetVertexDeclaration(device, NULL);
 }
 
+/* This test verifies the behaviour of cube maps wrt. texture wrapping.
+ * D3D cube map wrapping always behaves like GL_CLAMP_TO_EDGE,
+ * regardless of the actual addressing mode set. */
+static void test_cube_wrap(IDirect3DDevice9 *device)
+{
+    static const float quad[][6] = {
+        {-1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
+        {-1.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
+        { 1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
+        { 1.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
+    };
+
+    static const D3DVERTEXELEMENT9 decl_elements[] = {
+        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+
+    static const struct {
+        D3DTEXTUREADDRESS mode;
+        const char *name;
+    } address_modes[] = {
+        {D3DTADDRESS_WRAP, "D3DTADDRESS_WRAP"},
+        {D3DTADDRESS_MIRROR, "D3DTADDRESS_MIRROR"},
+        {D3DTADDRESS_CLAMP, "D3DTADDRESS_CLAMP"},
+        {D3DTADDRESS_BORDER, "D3DTADDRESS_BORDER"},
+        {D3DTADDRESS_MIRRORONCE, "D3DTADDRESS_MIRRORONCE"},
+    };
+
+    IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
+    IDirect3DCubeTexture9 *texture = NULL;
+    IDirect3DSurface9 *surface = NULL;
+    D3DLOCKED_RECT locked_rect;
+    HRESULT hr;
+    INT x, y, face;
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed (0x%08x)\n", hr);
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 128, 128,
+            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surface, NULL);
+    ok(SUCCEEDED(hr), "CreateOffscreenPlainSurface failed (0x%08x)\n", hr);
+
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
+
+    for (y = 0; y < 128; ++y)
+    {
+        DWORD *ptr = (DWORD *)(((BYTE *)locked_rect.pBits) + (y * locked_rect.Pitch));
+        for (x = 0; x < 64; ++x)
+        {
+            *ptr++ = 0xffff0000;
+        }
+        for (x = 64; x < 128; ++x)
+        {
+            *ptr++ = 0xff0000ff;
+        }
+    }
+
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "UnlockRect failed (0x%08x)\n", hr);
+
+    hr = IDirect3DDevice9_CreateCubeTexture(device, 128, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_DEFAULT, &texture, NULL);
+    ok(SUCCEEDED(hr), "CreateCubeTexture failed (0x%08x)\n", hr);
+
+    /* Create cube faces */
+    for (face = 0; face < 6; ++face)
+    {
+        IDirect3DSurface9 *face_surface = NULL;
+
+        hr= IDirect3DCubeTexture9_GetCubeMapSurface(texture, face, 0, &face_surface);
+        ok(SUCCEEDED(hr), "GetCubeMapSurface failed (0x%08x)\n", hr);
+
+        hr = IDirect3DDevice9_UpdateSurface(device, surface, NULL, face_surface, NULL);
+        ok(SUCCEEDED(hr), "UpdateSurface failed (0x%08x)\n", hr);
+
+        IDirect3DSurface9_Release(face_surface);
+    }
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(SUCCEEDED(hr), "SetTexture failed (0x%08x)\n", hr);
+
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+    ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_MINFILTER failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+    ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_MAGFILTER failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_BORDERCOLOR, 0xff00ff00);
+    ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_BORDERCOLOR failed (0x%08x)\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+    for (x = 0; x < (sizeof(address_modes) / sizeof(*address_modes)); ++x)
+    {
+        DWORD color;
+
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSU, address_modes[x].mode);
+        ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_ADDRESSU (%s) failed (0x%08x)\n", address_modes[x].name, hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSV, address_modes[x].mode);
+        ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_ADDRESSV (%s) failed (0x%08x)\n", address_modes[x].name, hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "BeginScene failed (0x%08x)\n", hr);
+
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], sizeof(quad[0]));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (0x%08x)\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "EndScene failed (0x%08x)\n", hr);
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+        /* Due to the nature of this test, we sample essentially at the edge
+         * between two faces. Because of this it's undefined from which face
+         * the driver will sample. Furtunately that's not important for this
+         * test, since all we care about is that it doesn't sample from the
+         * other side of the surface or from the border. */
+        color = getPixelColor(device, 320, 240);
+        ok(color == 0x00ff0000 || color == 0x000000ff,
+                "Got color 0x%08x for addressing mode %s, expected 0x00ff0000 or 0x000000ff.\n",
+                color, address_modes[x].name);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Clear failed (0x%08x)\n", hr);
+    }
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "SetTexture failed (0x%08x)\n", hr);
+
+    IDirect3DVertexDeclaration9_Release(vertex_declaration);
+    IDirect3DCubeTexture9_Release(texture);
+    IDirect3DSurface9_Release(surface);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -602,6 +740,7 @@ START_TEST(visual)
     lighting_test(device_ptr);
     clear_test(device_ptr);
     fog_test(device_ptr);
+    test_cube_wrap(device_ptr);
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0))
     {
