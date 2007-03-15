@@ -19,26 +19,484 @@
 #include <stdio.h>
 
 #include "wine/test.h"
+#include "msg.h"
+
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+#define NUM_MSG_SEQUENCE 2
+#define PARENT_SEQ_INDEX 0
+#define TRACKBAR_SEQ_INDEX 1
 
 
-static HWND create_trackbar(DWORD style)
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCE];
+
+static const struct message create_parent_wnd_seq[] = {
+    { WM_GETMINMAXINFO, sent },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|defwinproc|optional },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    /* Win9x adds SWP_NOZORDER below */
+    { WM_WINDOWPOSCHANGED, sent, /*|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE*/ },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { 0 }
+};
+
+static const struct message create_trackbar_wnd_seq[] = {
+    {0}
+};
+
+static const struct message parent_empty_test_seq[] = {
+    {0}
+};
+
+static const struct message parent_create_trackbar_wnd_seq[] = {
+    { WM_NOTIFYFORMAT, sent},
+    { 0x0129, sent}, /* should be WM_QUERYUISTATE instead of 0x0129 */
+    { WM_WINDOWPOSCHANGING, sent},
+    { WM_NCACTIVATE, sent},
+    { PBT_APMRESUMECRITICAL, sent},
+    { WM_WINDOWPOSCHANGING, sent},
+    { PBT_APMRESUMESTANDBY, sent},
+    { WM_IME_SETCONTEXT, sent|optional},
+    { WM_IME_NOTIFY, sent|optional},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    {0}
+};
+
+static const struct message parent_new_window_test_seq[] = {
+    { WM_WINDOWPOSCHANGING, sent},
+    { WM_NCACTIVATE, sent},
+    { PBT_APMRESUMECRITICAL, sent},
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional},
+    { WM_IME_NOTIFY, sent|defwinproc|optional},
+    { WM_SETFOCUS, sent|defwinproc},
+    { WM_NOTIFYFORMAT, sent},
+    { 0x0129, sent}, /* should be WM_QUERYUISTATE instead of 0x0129*/
+    {0}
+};
+
+static const struct message buddy_window_test_seq[] = {
+    { TBM_GETBUDDY, sent|wparam, TRUE},
+    { TBM_SETBUDDY, sent|wparam, FALSE},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_SETBUDDY, sent|wparam, FALSE},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETBUDDY, sent|wparam, TRUE},
+    { TBM_SETBUDDY, sent|wparam, TRUE},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_SETBUDDY, sent|wparam, TRUE},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETBUDDY, sent|wparam, FALSE},
+    { TBM_GETBUDDY, sent|wparam, TRUE},
+    {0}
+};
+
+static const struct message parent_buddy_window_test_seq[] = {
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    {0}
+};
+
+static const struct message line_size_test_seq[] = {
+    { TBM_SETLINESIZE, sent|lparam, 0, 10},
+    { TBM_SETLINESIZE, sent|lparam, 0, 4},
+    { TBM_GETLINESIZE, sent},
+    {0}
+};
+
+static const struct message page_size_test_seq[] = {
+    { TBM_SETPAGESIZE, sent|lparam, 0, 10},
+    { TBM_SETPAGESIZE, sent|lparam, 0, -1},
+    { TBM_GETPAGESIZE, sent},
+    {0}
+};
+
+static const struct message position_test_seq[] = {
+    { TBM_SETPOS, sent|wparam|lparam, TRUE, -1},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETPOS, sent},
+    { TBM_SETPOS, sent|wparam|lparam, TRUE, 5},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETPOS, sent},
+    { TBM_SETPOS, sent|wparam|lparam, TRUE, 1000},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETPOS, sent},
+    { TBM_SETPOS, sent|wparam|lparam, FALSE, 20},
+    { TBM_GETPOS, sent},
+    { TBM_GETPOS, sent},
+    {0}
+};
+
+static const struct message parent_position_test_seq[] = {
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    {0}
+};
+
+static const struct message range_test_seq[] = {
+    { TBM_SETRANGE, sent|wparam|lparam, TRUE, MAKELONG(0, 10)},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETRANGEMAX, sent},
+    { TBM_GETRANGEMIN, sent},
+    { TBM_SETRANGE, sent|wparam|lparam, TRUE, MAKELONG(-1, 1000)},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETRANGEMAX, sent},
+    { TBM_GETRANGEMIN, sent},
+    { TBM_SETRANGE, sent|wparam|lparam, TRUE, MAKELONG(10, 0)},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETRANGEMAX, sent},
+    { TBM_GETRANGEMIN, sent},
+    { TBM_SETRANGE, sent|wparam|lparam, FALSE, MAKELONG(0, 10)},
+    { TBM_GETRANGEMAX, sent},
+    { TBM_GETRANGEMIN, sent},
+    { TBM_SETRANGEMAX, sent|wparam|lparam, TRUE, 10},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETRANGEMAX, sent},
+    { TBM_SETRANGEMAX, sent|wparam|lparam, TRUE, -1},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETRANGEMAX, sent},
+    { TBM_SETRANGEMAX, sent|wparam|lparam, FALSE, 10},
+    { TBM_GETRANGEMAX, sent},
+    { TBM_SETRANGEMIN, sent|wparam|lparam, TRUE, 0},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETRANGEMIN, sent},
+    { TBM_SETRANGEMIN, sent|wparam|lparam, TRUE, 10},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETRANGEMIN, sent},
+    { TBM_SETRANGEMIN, sent|wparam|lparam, TRUE, -10},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETRANGEMIN, sent},
+    { TBM_SETRANGEMIN, sent|wparam|lparam, FALSE, 5},
+    { TBM_GETRANGEMIN, sent},
+    { TBM_GETRANGEMAX, sent},
+    { TBM_GETRANGEMIN, sent},
+    {0}
+};
+
+static const struct message parent_range_test_seq[] = {
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    {0}
+};
+
+static const struct message selection_test_seq[] = {
+    { TBM_SETSEL, sent|wparam|lparam, TRUE, MAKELONG(0, 10)},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETSELEND, sent},
+    { TBM_GETSELSTART, sent},
+    { TBM_SETSEL, sent|wparam|lparam, TRUE, MAKELONG(5, 20)},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETSELEND, sent},
+    { TBM_GETSELSTART, sent},
+    { TBM_SETSEL, sent|wparam|lparam, FALSE, MAKELONG(5, 10)},
+    { TBM_GETSELEND, sent},
+    { TBM_GETSELSTART, sent},
+    { TBM_SETSELEND, sent|wparam|lparam, TRUE, 10},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETSELEND, sent},
+    { TBM_SETSELEND, sent|wparam|lparam, TRUE, 20},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETSELEND, sent},
+    { TBM_SETSELEND, sent|wparam|lparam, TRUE, 4},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETSELEND, sent},
+    { TBM_SETSELEND, sent|wparam|lparam, FALSE, 2},
+    { TBM_GETSELEND, sent},
+    { TBM_GETSELEND, sent},
+    { TBM_SETSELSTART, sent|wparam|lparam, TRUE, 5},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETSELSTART, sent},
+    { TBM_SETSELSTART, sent|wparam|lparam, TRUE, 0},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETSELSTART, sent},
+    { TBM_SETSELSTART, sent|wparam|lparam, TRUE, 20},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETSELSTART, sent},
+    { TBM_SETSELSTART, sent|wparam|lparam, FALSE, 8},
+    { TBM_GETSELSTART, sent},
+    { TBM_GETSELSTART, sent},
+    {0}
+};
+
+static const struct message parent_selection_test_seq[] = {
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    {0}
+};
+
+static const struct message tic_settings_test_seq[] = {
+    { TBM_SETTIC, sent|lparam, 0, 0},
+    { TBM_SETTIC, sent|lparam, 0, 5},
+    { TBM_SETTIC, sent|lparam, 0, 10},
+    { TBM_SETTIC, sent|lparam, 0, 20},
+    { TBM_SETRANGE, sent|wparam|lparam, TRUE, MAKELONG(0,10)},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_SETTICFREQ, sent|wparam, 2},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETNUMTICS, sent},
+    { TBM_SETTICFREQ, sent|wparam, 5},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETNUMTICS, sent},
+    { TBM_SETTICFREQ, sent|wparam, 15},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETNUMTICS, sent},
+    { TBM_GETNUMTICS, sent},
+    {0}
+};
+
+static const struct message parent_tic_settings_test_seq[] = {
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    {0}
+};
+
+static const struct message thumb_length_test_seq[] = {
+    { TBM_SETTHUMBLENGTH, sent|wparam|lparam, 15, 0},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETTHUMBLENGTH, sent},
+    { TBM_SETTHUMBLENGTH, sent|wparam|lparam, 20, 0},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETTHUMBLENGTH, sent},
+    { TBM_GETTHUMBLENGTH, sent},
+    {0}
+};
+
+static const struct message parent_thumb_length_test_seq[] = {
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    {0}
+};
+
+static const struct message tic_placement_test_seq[] = {
+    { TBM_GETPTICS, sent},
+    { TBM_GETTIC, sent|wparam, 0},
+    { TBM_GETTIC, sent|wparam, 4},
+    { TBM_GETTIC, sent|wparam, 11},
+    { TBM_GETTICPOS, sent|wparam, 0},
+    { TBM_GETTICPOS, sent|wparam, 4},
+    {0}
+};
+
+static const struct message tool_tips_test_seq[] = {
+    { TBM_SETTIPSIDE, sent|wparam, TBTS_TOP},
+    { TBM_SETTIPSIDE, sent|wparam, TBTS_LEFT},
+    { TBM_SETTIPSIDE, sent|wparam, TBTS_BOTTOM},
+    { TBM_SETTIPSIDE, sent|wparam, TBTS_RIGHT},
+    { TBM_SETTOOLTIPS, sent},
+    { TBM_GETTOOLTIPS, sent},
+    { TBM_SETTOOLTIPS, sent},
+    { TBM_GETTOOLTIPS, sent},
+    { TBM_SETTOOLTIPS, sent},
+    { TBM_GETTOOLTIPS, sent},
+    { TBM_GETTOOLTIPS, sent},
+    {0}
+};
+
+static const struct message unicode_test_seq[] = {
+    { TBM_SETUNICODEFORMAT, sent|wparam, TRUE},
+    { TBM_SETUNICODEFORMAT, sent|wparam, FALSE},
+    { TBM_GETUNICODEFORMAT, sent},
+    {0}
+};
+
+static const struct message ignore_selection_test_seq[] = {
+    { TBM_SETSEL, sent|wparam|lparam, TRUE, MAKELONG(0,10)},
+    { TBM_GETSELEND, sent},
+    { TBM_GETSELSTART, sent},
+    { TBM_SETSEL, sent|wparam|lparam, FALSE, MAKELONG(0,10)},
+    { TBM_GETSELEND, sent},
+    { TBM_GETSELSTART, sent},
+    { TBM_SETSELEND, sent|wparam|lparam, TRUE,0},
+    { TBM_GETSELEND, sent},
+    { TBM_SETSELEND, sent|wparam|lparam, TRUE, 10},
+    { TBM_GETSELEND, sent},
+    { TBM_SETSELEND, sent|wparam|lparam, FALSE,0},
+    { TBM_GETSELEND, sent},
+    { TBM_SETSELSTART, sent|wparam|lparam, TRUE,0},
+    { TBM_GETSELSTART, sent},
+    { TBM_SETSELSTART, sent|wparam|lparam, TRUE, 10},
+    { TBM_GETSELSTART, sent},
+    { TBM_SETSELSTART, sent|wparam|lparam, FALSE,0},
+    { TBM_GETSELSTART, sent},
+    {0}
+};
+
+struct subclass_info
 {
-    HWND hWndTrack;
+    WNDPROC oldproc;
+};
 
+static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    /* do not log painting messages */
+    if (message != WM_PAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCPAINT &&
+        message != WM_NCHITTEST &&
+        message != WM_GETTEXT &&
+        message != WM_GETICON &&
+        message != WM_DEVICECHANGE)
+    {
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        if (defwndproc_counter) msg.flags |= defwinproc;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        add_message(sequences, PARENT_SEQ_INDEX, &msg);
+    }
+
+    defwndproc_counter++;
+    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static BOOL register_parent_wnd_class(void){
+    WNDCLASSA cls;
+
+    cls.style = 0;
+    cls.lpfnWndProc = parent_wnd_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "Trackbar test parent class";
+    return RegisterClassA(&cls);
+}
+
+static HWND create_parent_window(void){
+    if (!register_parent_wnd_class())
+        return NULL;
+
+    return CreateWindowEx(0, "Trackbar test parent class",
+        "Trackbar test parent window",
+        WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+        WS_MAXIMIZEBOX | WS_VISIBLE,
+        0, 0, 100, 100,
+        GetDesktopWindow(), NULL, GetModuleHandleA(NULL), NULL);
+}
+
+static LRESULT WINAPI trackbar_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
+    struct subclass_info *info = (struct subclass_info *) GetWindowLongA(hwnd, GWL_USERDATA);
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(sequences, TRACKBAR_SEQ_INDEX, &msg);
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static HWND create_trackbar(DWORD style, HWND parent){
+    struct subclass_info *info;
+    HWND hWndTrack;
+    RECT rect;
+
+    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
+    if (!info)
+        return NULL;
+
+    GetClientRect(parent, &rect);
     hWndTrack = CreateWindowEx(
       0, TRACKBAR_CLASS,"Trackbar Control", style,
-      10,10, 100, 50,
-      NULL, NULL,GetModuleHandleA(NULL) ,NULL);
+      rect.right,rect.bottom, 100, 50,
+      parent, NULL,GetModuleHandleA(NULL) ,NULL);
+
+    if (!hWndTrack)
+    {
+        HeapFree(GetProcessHeap(), 0, info);
+        return NULL;
+    }
+
+    info->oldproc = (WNDPROC)SetWindowLongA(hWndTrack, GWL_WNDPROC, (LONG)trackbar_subclass_proc);
+
+    SetWindowLongA(hWndTrack, GWL_USERDATA, (LONG)info);
 
     return hWndTrack;
 }
+
+/* test functions for setters, getters, and sequences */
 
 static void test_trackbar_buddy(HWND hWndTrackbar){
     HWND hWndLeftBuddy;
     HWND hWndRightBuddy;
     HWND hWndCurrentBuddy;
     HWND rTest;
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
 
     hWndLeftBuddy = (HWND) CreateWindowEx(0, STATUSCLASSNAME, NULL, 0,
         0,0,300,20, NULL, NULL, NULL, NULL);
@@ -79,10 +537,16 @@ static void test_trackbar_buddy(HWND hWndTrackbar){
         ok(rTest == hWndRightBuddy, "Expected hWndRightBuddy\n");
         DestroyWindow(hWndRightBuddy);
     }
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, buddy_window_test_seq, "buddy test sequence", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_buddy_window_test_seq, "parent buddy test seq", TRUE);
+
 }
 
 static void test_line_size(HWND hWndTrackbar){
     int r;
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
 
     /* test TBM_SETLINESIZE */
     r = SendMessage(hWndTrackbar, TBM_SETLINESIZE, 0, 10);
@@ -92,10 +556,16 @@ static void test_line_size(HWND hWndTrackbar){
     /* test TBM_GETLINESIZE */
     r = SendMessage(hWndTrackbar, TBM_GETLINESIZE, 0,0);
     expect(4, r);
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, line_size_test_seq, "linesize test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent line test sequence", FALSE);
 }
+
 
 static void test_page_size(HWND hWndTrackbar){
     int r;
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
 
     /* test TBM_SETPAGESIZE */
     r = SendMessage(hWndTrackbar, TBM_SETPAGESIZE, 0, 10);
@@ -108,11 +578,15 @@ static void test_page_size(HWND hWndTrackbar){
     todo_wine{
         expect(20, r);
     }
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, page_size_test_seq, "page size test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent page size test sequence", FALSE);
 }
 
 static void test_position(HWND hWndTrackbar){
     int r;
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* test TBM_SETPOS */
     SendMessage(hWndTrackbar, TBM_SETPOS, TRUE, -1);
     r = SendMessage(hWndTrackbar, TBM_GETPOS, 0, 0);
@@ -130,11 +604,15 @@ static void test_position(HWND hWndTrackbar){
     /* test TBM_GETPOS */
     r = SendMessage(hWndTrackbar, TBM_GETPOS, 0,0);
     expect(20, r);
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, position_test_seq, "position test sequence", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_position_test_seq, "parent position test sequence", TRUE);
 }
 
 static void test_range(HWND hWndTrackbar){
     int r;
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* test TBM_SETRANGE */
     SendMessage(hWndTrackbar, TBM_SETRANGE, TRUE, MAKELONG(0, 10));
     r = SendMessage(hWndTrackbar, TBM_GETRANGEMAX, 0,0);
@@ -189,11 +667,15 @@ static void test_range(HWND hWndTrackbar){
     /* test TBM_GETRANGEMIN */
     r = SendMessage(hWndTrackbar, TBM_GETRANGEMIN, 0,0);
     expect(5, r);
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, range_test_seq, "range test sequence", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_range_test_seq, "parent range test sequence", TRUE);
 }
 
 static void test_selection(HWND hWndTrackbar){
     int r;
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* test TBM_SETSEL */
     SendMessage(hWndTrackbar, TBM_SETSEL, TRUE, MAKELONG(0,10));
     r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
@@ -246,11 +728,15 @@ static void test_selection(HWND hWndTrackbar){
     /* test TBM_GETSELSTART */
     r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
     expect(8, r);
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, selection_test_seq, "selection test sequence", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_selection_test_seq, "parent selection test seqence", TRUE);
 }
 
 static void test_thumb_length(HWND hWndTrackbar){
     int r;
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* testing TBM_SETTHUMBLENGTH */
     SendMessage(hWndTrackbar, TBM_SETTHUMBLENGTH, 15, 0);
     r = SendMessage(hWndTrackbar, TBM_GETTHUMBLENGTH, 0,0);
@@ -262,11 +748,15 @@ static void test_thumb_length(HWND hWndTrackbar){
     /* test TBM_GETTHUMBLENGTH */
     r = SendMessage(hWndTrackbar, TBM_GETTHUMBLENGTH, 0,0);
     expect(20, r);
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, thumb_length_test_seq, "thumb length test sequence", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_thumb_length_test_seq, "parent thumb lenth test sequence", TRUE);
 }
 
 static void test_tic_settings(HWND hWndTrackbar){
     int r;
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* testing TBM_SETTIC */
     /* Set tics at 5 and 10 */
     /* 0 and 20 are out of range and should not be set */
@@ -299,12 +789,16 @@ static void test_tic_settings(HWND hWndTrackbar){
     /* since TIC FREQ is 15, there should be only 2 tics now */
     r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
     expect(2, r);
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, tic_settings_test_seq, "tic settings test sequence", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_tic_settings_test_seq, "parent tic settings test sequence", TRUE);
 }
 
 static void test_tic_placement(HWND hWndTrackbar){
     int r;
     DWORD *rPTics;
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* test TBM_GETPTICS */
     rPTics = (DWORD *) SendMessage(hWndTrackbar, TBM_GETPTICS, 0,0);
     todo_wine{
@@ -331,13 +825,18 @@ static void test_tic_placement(HWND hWndTrackbar){
         r = SendMessage(hWndTrackbar, TBM_GETTICPOS, 4, 0);
         ok(r > 0, "Expected r > 0, got %d\n", r);
     }
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, tic_placement_test_seq, "get tic placement test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent get tic placement test sequence", FALSE);
 }
+
 
 static void test_tool_tips(HWND hWndTrackbar){
     int r;
     HWND hWndTooltip;
     HWND rTest;
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* testing TBM_SETTIPSIDE */
     r = SendMessage(hWndTrackbar, TBM_SETTIPSIDE, TBTS_TOP, 0);
     todo_wine{
@@ -372,11 +871,16 @@ static void test_tool_tips(HWND hWndTrackbar){
     /* test TBM_GETTOOLTIPS */
     rTest = (HWND) SendMessage(hWndTrackbar, TBM_GETTOOLTIPS, 0,0);
     ok(rTest == hWndTooltip, "Expected hWndTooltip\n");
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, tool_tips_test_seq, "tool tips test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent tool tips test sequence", FALSE);
 }
+
 
 static void test_unicode(HWND hWndTrackbar){
     int r;
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* testing TBM_SETUNICODEFORMAT */
     r = SendMessage(hWndTrackbar, TBM_SETUNICODEFORMAT, TRUE, 0);
     ok(r == FALSE, "Expected FALSE, got %d\n",r);
@@ -386,11 +890,15 @@ static void test_unicode(HWND hWndTrackbar){
     /* test TBM_GETUNICODEFORMAT */
     r = SendMessage(hWndTrackbar, TBM_GETUNICODEFORMAT, 0,0);
     ok(r == FALSE, "Expected FALSE, got %d\n",r);
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, unicode_test_seq, "unicode test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent unicode test sequence", FALSE);
 }
 
 static void test_ignore_selection(HWND hWndTrackbar){
     int r;
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* test TBM_SETSEL  ensure that it is ignored */
     SendMessage(hWndTrackbar, TBM_SETSEL, TRUE, MAKELONG(0,10));
     r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
@@ -432,17 +940,36 @@ static void test_ignore_selection(HWND hWndTrackbar){
     SendMessage(hWndTrackbar, TBM_SETSELSTART, FALSE, 0);
     r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
     expect(0, r);
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, ignore_selection_test_seq, "ignore selection setting test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent ignore selection setting test sequence", FALSE);
 }
 
 START_TEST(trackbar)
 {
     DWORD style = WS_VISIBLE | TBS_TOOLTIPS | TBS_ENABLESELRANGE | TBS_FIXEDLENGTH | TBS_AUTOTICKS;
     HWND hWndTrackbar;
+    HWND hWndParent;
 
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCE);
     InitCommonControls();
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
+
+    /* create parent window */
+    hWndParent = create_parent_window();
+    ok(hWndParent != NULL, "Failed to create parent Window!\n");
+
+    if(!hWndParent){
+        skip("parent window not present\n");
+        return;
+    }
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, create_parent_wnd_seq, "create Parent Window", TRUE);
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
+
     /* create trackbar with set styles */
-    hWndTrackbar = create_trackbar(style);
+    hWndTrackbar = create_trackbar(style, hWndParent);
 
     ok(hWndTrackbar != NULL, "Expected non NULL value\n");
 
@@ -450,6 +977,10 @@ START_TEST(trackbar)
         skip("trackbar control not present?\n");
         return;
     }
+
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, create_trackbar_wnd_seq, "create Trackbar Window", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_create_trackbar_wnd_seq, "parent trackbar window", TRUE);
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
 
     /* TEST OF ALL SETTER and GETTER MESSAGES with required styles turned on*/
     test_trackbar_buddy(hWndTrackbar);
@@ -464,10 +995,11 @@ START_TEST(trackbar)
     test_tool_tips(hWndTrackbar);
     test_unicode(hWndTrackbar);
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
     DestroyWindow(hWndTrackbar);
 
     /* test getters and setters without styles set */
-    hWndTrackbar = create_trackbar(0);
+    hWndTrackbar = create_trackbar(0, hWndParent);
 
     ok(hWndTrackbar != NULL, "Expected non NULL value\n");
 
@@ -475,7 +1007,12 @@ START_TEST(trackbar)
         skip("trackbar control not present?\n");
         return;
     }
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_new_window_test_seq, "new trackbar window test sequence", TRUE);
+
     test_ignore_selection(hWndTrackbar);
 
     DestroyWindow(hWndTrackbar);
+
+    DestroyWindow(hWndParent);
 }
