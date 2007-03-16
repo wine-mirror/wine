@@ -583,6 +583,8 @@ INT MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
     DWORD len;
     INT ret;
 
+    if (cbOutput) return 0;  /* escapes that require output cannot work in metafiles */
+
     len = sizeof(*mr) + sizeof(WORD) + ((cbInput + 1) & ~1);
     mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     mr->rdSize = len / 2;
