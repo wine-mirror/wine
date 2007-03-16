@@ -1042,7 +1042,10 @@ TRACKBAR_GetNumTics (TRACKBAR_INFO *infoPtr)
     if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & TBS_NOTICKS)
         return 0;
 
-    return infoPtr->uNumTics + 2;
+    if(infoPtr->uNumTics == 0)
+        return 2;
+    else
+        return infoPtr->uNumTics + 1;
 }
 
 

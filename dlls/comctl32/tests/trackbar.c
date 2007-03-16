@@ -775,12 +775,10 @@ static void test_tic_settings(HWND hWndTrackbar){
     SendMessage(hWndTrackbar, TBM_SETRANGE, TRUE, MAKELONG(0, 10));
     SendMessage(hWndTrackbar, TBM_SETTICFREQ, 2, 0);
     r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
-    todo_wine{
-        expect(6, r);
-        SendMessage(hWndTrackbar, TBM_SETTICFREQ, 5, 0);
-        r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
-        expect(3, r);
-    }
+    expect(6, r);
+    SendMessage(hWndTrackbar, TBM_SETTICFREQ, 5, 0);
+    r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
+    expect(3, r);
     SendMessage(hWndTrackbar, TBM_SETTICFREQ, 15, 0);
     r = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0,0);
     expect(2, r);
