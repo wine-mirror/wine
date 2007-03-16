@@ -1480,7 +1480,7 @@ static char *WCMD_expand_envvar(char *start) {
     /* ~ is substring manipulation */
     if (savedchar == '~') {
 
-      int   substrposition, substrlength;
+      int   substrposition, substrlength = 0;
       char *commapos = strchr(colonpos+2, ',');
       char *startCopy;
 
