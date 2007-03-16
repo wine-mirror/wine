@@ -2232,21 +2232,11 @@ LONG WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInformati
     TRACE("(%p,%d,%p,%d)\n",hkey,SecurityInformation,pSecurityDescriptor,
           lpcbSecurityDescriptor?*lpcbSecurityDescriptor:0);
 
-    /* FIXME: Check for valid SecurityInformation values */
+    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
-    if (*lpcbSecurityDescriptor < sizeof(SECURITY_DESCRIPTOR)) {
-	*lpcbSecurityDescriptor = sizeof(SECURITY_DESCRIPTOR);
-        return ERROR_INSUFFICIENT_BUFFER;
-    }
-
-    FIXME("(%p,%d,%p,%d): stub\n",hkey,SecurityInformation,
-          pSecurityDescriptor,lpcbSecurityDescriptor?*lpcbSecurityDescriptor:0);
-
-    /* Do not leave security descriptor filled with garbage */
-    RtlCreateSecurityDescriptor(pSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
-
-    *lpcbSecurityDescriptor = sizeof(SECURITY_DESCRIPTOR);
-    return ERROR_SUCCESS;
+    return RtlNtStatusToDosError( NtQuerySecurityObject( hkey,
+                SecurityInformation, pSecurityDescriptor,
+                *lpcbSecurityDescriptor, lpcbSecurityDescriptor ) );
 }
 
 
