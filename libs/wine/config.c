@@ -203,7 +203,7 @@ static void init_paths(void)
 
     if (prefix)
     {
-        if (!(config_dir = strdup( prefix ))) fatal_error( "virtual memory exhausted\n");
+        config_dir = xstrdup( prefix );
         remove_trailing_slashes( config_dir );
         if (config_dir[0] != '/')
             fatal_error( "invalid directory %s in WINEPREFIX: not an absolute path\n", prefix );
