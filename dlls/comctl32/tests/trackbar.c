@@ -902,16 +902,12 @@ static void test_ignore_selection(HWND hWndTrackbar){
     /* test TBM_SETSEL  ensure that it is ignored */
     SendMessage(hWndTrackbar, TBM_SETSEL, TRUE, MAKELONG(0,10));
     r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
-    todo_wine{
-        expect(0, r);
-    }
+    expect(0, r);
     r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
     expect(0, r);
     SendMessage(hWndTrackbar, TBM_SETSEL, FALSE, MAKELONG(0,10));
     r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
-    todo_wine{
-        expect(0, r);
-    }
+    expect(0, r);
     r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
     expect(0, r);
 
@@ -921,9 +917,7 @@ static void test_ignore_selection(HWND hWndTrackbar){
     expect(0, r);
     SendMessage(hWndTrackbar, TBM_SETSELEND, TRUE, 10);
     r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
-    todo_wine{
-        expect(0,r);
-    }
+    expect(0,r);
     SendMessage(hWndTrackbar, TBM_SETSELEND, FALSE, 0);
     r = SendMessage(hWndTrackbar, TBM_GETSELEND, 0,0);
     expect(0, r);
@@ -934,9 +928,7 @@ static void test_ignore_selection(HWND hWndTrackbar){
     expect(0, r);
     SendMessage(hWndTrackbar, TBM_SETSELSTART, TRUE, 10);
     r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
-    todo_wine{
-        expect(0,r);
-    }
+    expect(0,r);
     SendMessage(hWndTrackbar, TBM_SETSELSTART, FALSE, 0);
     r = SendMessage(hWndTrackbar, TBM_GETSELSTART, 0,0);
     expect(0, r);
