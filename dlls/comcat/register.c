@@ -111,7 +111,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_RegisterCategories(
     if (res != ERROR_SUCCESS) return E_FAIL;
 
     for (; cCategories; --cCategories, ++rgci) {
-	WCHAR fmt[4] = { '%', 'l', 'X', 0 };
+	static const WCHAR fmt[] = { '%', 'l', 'X', 0 };
 	WCHAR keyname[39];
 	WCHAR valname[9];
 	HKEY cat_key;

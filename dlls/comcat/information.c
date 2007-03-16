@@ -433,9 +433,9 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Clone(
     IEnumCATEGORYINFO **ppenum)
 {
     IEnumCATEGORYINFOImpl *This = (IEnumCATEGORYINFOImpl *)iface;
-    WCHAR keyname[21] = { 'C', 'o', 'm', 'p', 'o', 'n', 'e', 'n',
-			  't', ' ', 'C', 'a', 't', 'e', 'g', 'o',
-			  'r', 'i', 'e', 's', 0 };
+    static const WCHAR keyname[] = { 'C', 'o', 'm', 'p', 'o', 'n', 'e', 'n',
+                                     't', ' ', 'C', 'a', 't', 'e', 'g', 'o',
+                                     'r', 'i', 'e', 's', 0 };
     IEnumCATEGORYINFOImpl *new_this;
 
     TRACE("\n");
@@ -473,9 +473,9 @@ static LPENUMCATEGORYINFO COMCAT_IEnumCATEGORYINFO_Construct(LCID lcid)
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumCATEGORYINFOImpl));
     if (This) {
-	WCHAR keyname[21] = { 'C', 'o', 'm', 'p', 'o', 'n', 'e', 'n',
-			      't', ' ', 'C', 'a', 't', 'e', 'g', 'o',
-			      'r', 'i', 'e', 's', 0 };
+        static const WCHAR keyname[] = { 'C', 'o', 'm', 'p', 'o', 'n', 'e', 'n',
+                                         't', ' ', 'C', 'a', 't', 'e', 'g', 'o',
+                                         'r', 'i', 'e', 's', 0 };
 
 	This->lpVtbl = &COMCAT_IEnumCATEGORYINFO_Vtbl;
 	This->lcid = lcid;
@@ -490,7 +490,7 @@ static LPENUMCATEGORYINFO COMCAT_IEnumCATEGORYINFO_Construct(LCID lcid)
 static HRESULT COMCAT_GetCategoryDesc(HKEY key, LCID lcid, PWCHAR pszDesc,
 				      ULONG buf_wchars)
 {
-    WCHAR fmt[4] = { '%', 'l', 'X', 0 };
+    static const WCHAR fmt[] = { '%', 'l', 'X', 0 };
     WCHAR valname[5];
     HRESULT res;
     DWORD type, size = (buf_wchars - 1) * sizeof(WCHAR);
@@ -549,12 +549,12 @@ static HRESULT COMCAT_IsClassOfCategories(
     HKEY key,
     struct class_categories const* categories)
 {
-    WCHAR impl_keyname[23] = { 'I', 'm', 'p', 'l', 'e', 'm', 'e', 'n',
-			       't', 'e', 'd', ' ', 'C', 'a', 't', 'e',
-			       'g', 'o', 'r', 'i', 'e', 's', 0 };
-    WCHAR req_keyname[20] = { 'R', 'e', 'q', 'u', 'i', 'r', 'e', 'd',
-			      ' ', 'C', 'a', 't', 'e', 'g', 'o', 'r',
-			      'i', 'e', 's', 0 };
+    static const WCHAR impl_keyname[] = { 'I', 'm', 'p', 'l', 'e', 'm', 'e', 'n',
+                                          't', 'e', 'd', ' ', 'C', 'a', 't', 'e',
+                                          'g', 'o', 'r', 'i', 'e', 's', 0 };
+    static const WCHAR req_keyname[]  = { 'R', 'e', 'q', 'u', 'i', 'r', 'e', 'd',
+                                          ' ', 'C', 'a', 't', 'e', 'g', 'o', 'r',
+                                          'i', 'e', 's', 0 };
     HKEY subkey;
     HRESULT res;
     DWORD index;
@@ -735,7 +735,7 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Clone(
     IEnumGUID **ppenum)
 {
     CLSID_IEnumGUIDImpl *This = (CLSID_IEnumGUIDImpl *)iface;
-    WCHAR keyname[6] = { 'C', 'L', 'S', 'I', 'D', 0 };
+    static const WCHAR keyname[] = { 'C', 'L', 'S', 'I', 'D', 0 };
     CLSID_IEnumGUIDImpl *new_this;
     DWORD size;
 
