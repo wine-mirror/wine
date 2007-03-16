@@ -36,6 +36,9 @@
 #define NB_SERVER_LOOPS 8
 
 static HANDLE alarm_event;
+static BOOL (WINAPI *pDuplicateTokenEx)(HANDLE,DWORD,LPSECURITY_ATTRIBUTES,
+                                        SECURITY_IMPERSONATION_LEVEL,TOKEN_TYPE,PHANDLE);
+
 
 static void test_CreateNamedPipe(int pipemode)
 {
@@ -907,7 +910,7 @@ static HANDLE make_impersonation_token(DWORD Access, SECURITY_IMPERSONATION_LEVE
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE, &ProcessToken);
     ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
 
-    ret = DuplicateTokenEx(ProcessToken, Access, NULL, ImpersonationLevel, TokenImpersonation, &Token);
+    ret = pDuplicateTokenEx(ProcessToken, Access, NULL, ImpersonationLevel, TokenImpersonation, &Token);
     ok(ret, "DuplicateToken failed with error %d\n", GetLastError());
 
     CloseHandle(ProcessToken);
@@ -1196,6 +1199,11 @@ static void test_impersonation(void)
     HANDLE hProcessToken;
     BOOL ret;
 
+    if( !pDuplicateTokenEx ) {
+        skip("DuplicateTokenEx not found\n");
+        return;
+    }
+
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hProcessToken);
     if (!ret)
     {
@@ -1246,6 +1254,11 @@ static void test_impersonation(void)
 
 START_TEST(pipe)
 {
+    HMODULE hmod;
+
+    hmod = GetModuleHandle("advapi32.dll");
+    pDuplicateTokenEx = (void *) GetProcAddress(hmod, "DuplicateTokenEx");
+
     trace("test 1 of 7:\n");
     if (test_DisconnectNamedPipe())
         return;
