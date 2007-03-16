@@ -55,6 +55,8 @@ typedef BOOL (WINAPI *fnGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
                                           PSECURITY_DESCRIPTOR, DWORD, LPDWORD);
 typedef DWORD (WINAPI *fnRtlAdjustPrivilege)(ULONG,BOOLEAN,BOOLEAN,PBOOLEAN);
 typedef BOOL (WINAPI *fnCreateWellKnownSid)(WELL_KNOWN_SID_TYPE,PSID,PSID,DWORD*);
+typedef BOOL (WINAPI *fnDuplicateTokenEx)(HANDLE,DWORD,LPSECURITY_ATTRIBUTES,
+                                        SECURITY_IMPERSONATION_LEVEL,TOKEN_TYPE,PHANDLE);
 
 typedef NTSTATUS (WINAPI *fnLsaQueryInformationPolicy)(LSA_HANDLE,POLICY_INFORMATION_CLASS,PVOID*);
 typedef NTSTATUS (WINAPI *fnLsaClose)(LSA_HANDLE);
@@ -76,6 +78,7 @@ fnConvertStringSidToSidA pConvertStringSidToSidA;
 fnGetFileSecurityA pGetFileSecurityA;
 fnRtlAdjustPrivilege pRtlAdjustPrivilege;
 fnCreateWellKnownSid pCreateWellKnownSid;
+fnDuplicateTokenEx pDuplicateTokenEx;
 fnLsaQueryInformationPolicy pLsaQueryInformationPolicy;
 fnLsaClose pLsaClose;
 fnLsaFreeMemory pLsaFreeMemory;
@@ -1592,6 +1595,11 @@ static void test_impersonation_level(void)
     HKEY hkey;
     DWORD error;
 
+    pDuplicateTokenEx = (fnDuplicateTokenEx) GetProcAddress(hmod, "DuplicateTokenEx");
+    if( !pDuplicateTokenEx ) {
+        skip("DuplicateTokenEx\n");
+        return;
+    }
     ret = ImpersonateSelf(SecurityAnonymous);
     ok(ret, "ImpersonateSelf(SecurityAnonymous) failed with error %d\n", GetLastError());
     ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY_SOURCE | TOKEN_IMPERSONATE | TOKEN_ADJUST_DEFAULT, TRUE, &Token);
@@ -1608,7 +1616,7 @@ static void test_impersonation_level(void)
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE, &ProcessToken);
     ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
 
-    ret = DuplicateTokenEx(ProcessToken,
+    ret = pDuplicateTokenEx(ProcessToken,
         TOKEN_QUERY | TOKEN_DUPLICATE | TOKEN_IMPERSONATE, NULL,
         SecurityAnonymous, TokenImpersonation, &Token);
     ok(ret, "DuplicateTokenEx failed with error %d\n", GetLastError());
