@@ -244,7 +244,9 @@ static void test_GetComputerName(void)
     size = 0;
     ret = GetComputerNameA((LPSTR)0xdeadbeef, &size);
     error = GetLastError();
-    ok(!ret && error == ERROR_MORE_DATA, "GetComputerNameA should have failed with ERROR_MORE_DATA instead of %d\n", error);
+    todo_wine
+    ok(!ret && error == ERROR_BUFFER_OVERFLOW, "GetComputerNameA should have failed with ERROR_BUFFER_OVERFLOW instead of %d\n", error);
+    size++; /* nul terminating character */
     name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
     ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
     ret = GetComputerNameA(name, &size);
@@ -264,7 +266,9 @@ static void test_GetComputerName(void)
     size = 0;
     ret = GetComputerNameW((LPWSTR)0xdeadbeef, &size);
     error = GetLastError();
-    ok(!ret && error == ERROR_MORE_DATA, "GetComputerNameW should have failed with ERROR_MORE_DATA instead of %d\n", error);
+    todo_wine
+    ok(!ret && error == ERROR_BUFFER_OVERFLOW, "GetComputerNameW should have failed with ERROR_BUFFER_OVERFLOW instead of %d\n", error);
+    size++; /* nul terminating character */
     nameW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(nameW[0]));
     ok(nameW != NULL, "HeapAlloc failed with error %d\n", GetLastError());
     ret = GetComputerNameW(nameW, &size);
