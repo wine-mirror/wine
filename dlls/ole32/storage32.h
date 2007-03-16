@@ -191,11 +191,11 @@ BigBlockFile*  BIGBLOCKFILE_Construct(HANDLE hFile,
                                       BOOL fileBased);
 void           BIGBLOCKFILE_Destructor(LPBIGBLOCKFILE This);
 void           BIGBLOCKFILE_EnsureExists(LPBIGBLOCKFILE This, ULONG index);
-void*          BIGBLOCKFILE_GetBigBlock(LPBIGBLOCKFILE This, ULONG index);
-void*          BIGBLOCKFILE_GetROBigBlock(LPBIGBLOCKFILE This, ULONG index);
-void           BIGBLOCKFILE_ReleaseBigBlock(LPBIGBLOCKFILE This, void *pBlock);
 void           BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize);
-ULARGE_INTEGER BIGBLOCKFILE_GetSize(LPBIGBLOCKFILE This);
+HRESULT        BIGBLOCKFILE_ReadAt(LPBIGBLOCKFILE This, ULARGE_INTEGER offset,
+           void* buffer, ULONG size, ULONG* bytesRead);
+HRESULT        BIGBLOCKFILE_WriteAt(LPBIGBLOCKFILE This, ULARGE_INTEGER offset,
+           void* buffer, const ULONG size, ULONG* bytesRead);
 
 /*************************************************************************
  * Ole Convert support
