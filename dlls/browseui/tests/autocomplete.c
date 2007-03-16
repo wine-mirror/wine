@@ -296,7 +296,6 @@ static void test_ACLMulti(void)
     acl2->expret = E_FAIL;
     ok(acl->lpVtbl->Expand(acl, exp) == E_FAIL, "Unexpected Expand return\n");
 
-    ok(mgr->lpVtbl->Remove(mgr, (IUnknown *)0xdeadbeef) == E_FAIL, "Unexpected Remove return\n");
     stop_on_error(mgr->lpVtbl->Remove(mgr, (IUnknown *)acl1));
     ok(acl1->ref == 1, "acl1 not released\n");
     expect_end(obj);
