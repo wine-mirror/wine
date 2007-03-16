@@ -830,6 +830,11 @@ static void test_reg_query_value(void)
     valW[0] = '\0';
     size = 0;
     ret = RegQueryValueW(subkey, NULL, valW, &size);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("RegQueryValueW is not implemented\n");
+        goto cleanup;
+    }
     ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
     ok(lstrlenW(valW) == 0, "Expected valW to be untouched\n");
@@ -863,6 +868,7 @@ static void test_reg_query_value(void)
     ok(!lstrcmpW(valW, expected), "Got wrong value\n");
     ok(size == sizeof(expected), "Got wrong size: %d\n", size);
 
+cleanup:
     RegDeleteKeyA(subkey, "");
 }
 
