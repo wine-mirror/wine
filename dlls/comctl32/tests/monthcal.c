@@ -135,26 +135,56 @@ static const struct message monthcal_curr_date_seq[] = {
 
 static const struct message monthcal_first_day_seq[] = {
     { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
+    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, -5},
+    { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
+    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, -4},
+    { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
+    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, -3},
+    { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
+    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, -2},
+    { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
+    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, -1},
+    { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
     { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
-
     { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
     { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 1},
-
     { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
     { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 2},
-
     { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
     { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 3},
-
     { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
     { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 4},
-
     { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
     { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 5},
-
     { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
-    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 6},
 
+    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 6},
+    { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
+    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 7},
+    { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
+    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 8},
+    { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
+    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 9},
+    { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
+    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 10},
+    { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
+
+    { MCM_SETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 11},
     { MCM_GETFIRSTDAYOFWEEK, sent|wparam|lparam, 0, 0},
     { 0 }
 };
@@ -583,40 +613,43 @@ static void test_monthcal_currDate(HWND hwnd)
 
 static void test_monthcal_firstDay(HWND hwnd)
 {
-    int res, fday, i, temp;
+    int res, fday, i, prev;
     TCHAR b[128];
     LCID lcid = LOCALE_USER_DEFAULT;
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* Setter and Getters for first day of week */
-    todo_wine {
-        /* check for locale first day */
-        if(GetLocaleInfo(lcid, LOCALE_IFIRSTDAYOFWEEK, b, 128)){
-            fday = atoi(b);
-            res = SendMessage(hwnd, MCM_GETFIRSTDAYOFWEEK, 0, 0);
-            expect(fday, res);
-            res = SendMessage(hwnd, MCM_SETFIRSTDAYOFWEEK, 0, (LPARAM) 0);
-            expect(fday, res);
-        }else{
-            skip("Cannot retrieve first day of the week\n");
-            SendMessage(hwnd, MCM_SETFIRSTDAYOFWEEK, 0, (LPARAM) 0);
-        }
-
-        /* check for days of the week*/
-        for (i = 1, temp = 0x10000; i < 7; i++, temp++){
-            res = SendMessage(hwnd, MCM_GETFIRSTDAYOFWEEK, 0, 0);
-            expect(temp, res);
-            res = SendMessage(hwnd, MCM_SETFIRSTDAYOFWEEK, 0, (LPARAM) i);
-            expect(temp, res);
-        }
-
-        /* check for returning to the original first day */
+    /* check for locale first day */
+    if(GetLocaleInfo(lcid, LOCALE_IFIRSTDAYOFWEEK, b, 128)){
+        fday = atoi(b);
         res = SendMessage(hwnd, MCM_GETFIRSTDAYOFWEEK, 0, 0);
-        todo_wine {expect(temp, res);}
+        expect(fday, res);
+        prev = fday;
+
+        /* checking for the values that actually will be stored as */
+        /* current first day when we set a new value */
+        for (i = -5; i < 12; i++){
+            res = SendMessage(hwnd, MCM_SETFIRSTDAYOFWEEK, 0, (LPARAM) i);
+            expect(prev, res);
+            res = SendMessage(hwnd, MCM_GETFIRSTDAYOFWEEK, 0, 0);
+            prev = res;
+
+            if (i == -1){
+                expect(MAKELONG(fday, FALSE), res);
+            }else if (i >= 7){
+                expect(MAKELONG(fday, TRUE), res);
+            }else{
+                expect(MAKELONG(i, TRUE), res);
+            }
+        }
+
+        ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_first_day_seq, "monthcal firstDay", FALSE);
+
+    }else{
+        skip("Cannot retrieve first day of the week\n");
     }
 
-    ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_first_day_seq, "monthcal firstDay", FALSE);
 }
 
 static void test_monthcal_unicode(HWND hwnd)
