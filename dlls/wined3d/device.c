@@ -70,9 +70,6 @@ static inline Display *get_display( HDC hdc )
     return display;
 }
 
-/* allocate one pbuffer per surface */
-BOOL pbuffer_per_surface = FALSE;
-
 /* static function declarations */
 static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource);
 
