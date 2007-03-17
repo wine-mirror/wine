@@ -45,13 +45,13 @@ static struct user_handle *handle_to_entry( user_handle_t handle )
     return NULL;
 }
 
-inline static user_handle_t entry_to_handle( struct user_handle *ptr )
+static inline user_handle_t entry_to_handle( struct user_handle *ptr )
 {
     int index = ptr - handles;
     return (user_handle_t)((((unsigned long)index << 1) + FIRST_USER_HANDLE) + (ptr->generation << 16));
 }
 
-inline static struct user_handle *alloc_user_entry(void)
+static inline struct user_handle *alloc_user_entry(void)
 {
     struct user_handle *handle;
 
@@ -78,7 +78,7 @@ inline static struct user_handle *alloc_user_entry(void)
     return handle;
 }
 
-inline static void *free_user_entry( struct user_handle *ptr )
+static inline void *free_user_entry( struct user_handle *ptr )
 {
     void *ret;
     ret = ptr->ptr;

@@ -306,13 +306,13 @@ void set_queue_hooks( struct thread *thread, struct hook_table *hooks )
 }
 
 /* check the queue status */
-inline static int is_signaled( struct msg_queue *queue )
+static inline int is_signaled( struct msg_queue *queue )
 {
     return ((queue->wake_bits & queue->wake_mask) || (queue->changed_bits & queue->changed_mask));
 }
 
 /* set some queue bits */
-inline static void set_queue_bits( struct msg_queue *queue, unsigned int bits )
+static inline void set_queue_bits( struct msg_queue *queue, unsigned int bits )
 {
     queue->wake_bits |= bits;
     queue->changed_bits |= bits;
@@ -320,26 +320,26 @@ inline static void set_queue_bits( struct msg_queue *queue, unsigned int bits )
 }
 
 /* clear some queue bits */
-inline static void clear_queue_bits( struct msg_queue *queue, unsigned int bits )
+static inline void clear_queue_bits( struct msg_queue *queue, unsigned int bits )
 {
     queue->wake_bits &= ~bits;
     queue->changed_bits &= ~bits;
 }
 
 /* check whether msg is a keyboard message */
-inline static int is_keyboard_msg( struct message *msg )
+static inline int is_keyboard_msg( struct message *msg )
 {
     return (msg->msg >= WM_KEYFIRST && msg->msg <= WM_KEYLAST);
 }
 
 /* check if message is matched by the filter */
-inline static int check_msg_filter( unsigned int msg, unsigned int first, unsigned int last )
+static inline int check_msg_filter( unsigned int msg, unsigned int first, unsigned int last )
 {
     return (msg >= first && msg <= last);
 }
 
 /* check whether a message filter contains at least one potential hardware message */
-inline static int filter_contains_hw_range( unsigned int first, unsigned int last )
+static inline int filter_contains_hw_range( unsigned int first, unsigned int last )
 {
     /* hardware message ranges are (in numerical order):
      *   WM_NCMOUSEFIRST .. WM_NCMOUSELAST
@@ -354,7 +354,7 @@ inline static int filter_contains_hw_range( unsigned int first, unsigned int las
 }
 
 /* get the QS_* bit corresponding to a given hardware message */
-inline static int get_hardware_msg_bit( struct message *msg )
+static inline int get_hardware_msg_bit( struct message *msg )
 {
     if (msg->msg == WM_MOUSEMOVE || msg->msg == WM_NCMOUSEMOVE) return QS_MOUSEMOVE;
     if (is_keyboard_msg( msg )) return QS_KEY;
@@ -362,7 +362,7 @@ inline static int get_hardware_msg_bit( struct message *msg )
 }
 
 /* get the current thread queue, creating it if needed */
-inline static struct msg_queue *get_current_queue(void)
+static inline struct msg_queue *get_current_queue(void)
 {
     struct msg_queue *queue = current->queue;
     if (!queue) queue = create_msg_queue( current, NULL );
@@ -370,7 +370,7 @@ inline static struct msg_queue *get_current_queue(void)
 }
 
 /* get a (pseudo-)unique id to tag hardware messages */
-inline static unsigned int get_unique_id(void)
+static inline unsigned int get_unique_id(void)
 {
     static unsigned int id;
     if (!++id) id = 1;  /* avoid an id of 0 */
@@ -860,7 +860,7 @@ static void thread_input_destroy( struct object *obj )
 }
 
 /* fix the thread input data when a window is destroyed */
-inline static void thread_input_cleanup_window( struct msg_queue *queue, user_handle_t window )
+static inline void thread_input_cleanup_window( struct msg_queue *queue, user_handle_t window )
 {
     struct thread_input *input = queue->input;
 

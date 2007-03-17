@@ -284,7 +284,7 @@ static void sock_wake_up( struct sock *sock, int pollev )
     }
 }
 
-inline static int sock_error( struct fd *fd )
+static inline int sock_error( struct fd *fd )
 {
     unsigned int optval = 0, optlen;
 

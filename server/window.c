@@ -107,7 +107,7 @@ static struct window *progman_window;
 static struct window *taskman_window;
 
 /* retrieve a pointer to a window from its handle */
-inline static struct window *get_window( user_handle_t handle )
+static inline struct window *get_window( user_handle_t handle )
 {
     struct window *ret = get_user_object( handle, USER_WINDOW );
     if (!ret) set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
@@ -285,7 +285,7 @@ static obj_handle_t get_property( struct window *win, atom_t atom )
 }
 
 /* destroy all properties of a window */
-inline static void destroy_properties( struct window *win )
+static inline void destroy_properties( struct window *win )
 {
     int i;
 

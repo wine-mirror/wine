@@ -350,7 +350,7 @@ static void key_destroy( struct object *obj )
 }
 
 /* get the request vararg as registry path */
-inline static void get_req_path( struct unicode_str *str, int skip_root )
+static inline void get_req_path( struct unicode_str *str, int skip_root )
 {
     static const WCHAR root_name[] = { '\\','R','e','g','i','s','t','r','y','\\' };
 

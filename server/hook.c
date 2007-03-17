@@ -180,14 +180,14 @@ static struct hook *find_hook( struct thread *thread, int index, void *proc )
 }
 
 /* get the first hook in the chain */
-inline static struct hook *get_first_hook( struct hook_table *table, int index )
+static inline struct hook *get_first_hook( struct hook_table *table, int index )
 {
     struct list *elem = list_head( &table->hooks[index] );
     return elem ? HOOK_ENTRY( elem ) : NULL;
 }
 
 /* check if a given hook should run in the current thread */
-inline static int run_hook_in_current_thread( struct hook *hook )
+static inline int run_hook_in_current_thread( struct hook *hook )
 {
     if ((!hook->process || hook->process == current->process) &&
         (!(hook->flags & WINEVENT_SKIPOWNPROCESS) || hook->process != current->process))
@@ -200,7 +200,7 @@ inline static int run_hook_in_current_thread( struct hook *hook )
 }
 
 /* check if a given hook should run in the owner thread instead of the current thread */
-inline static int run_hook_in_owner_thread( struct hook *hook )
+static inline int run_hook_in_owner_thread( struct hook *hook )
 {
     if ((hook->index == WH_MOUSE_LL - WH_MINHOOK ||
          hook->index == WH_KEYBOARD_LL - WH_MINHOOK))
@@ -209,7 +209,7 @@ inline static int run_hook_in_owner_thread( struct hook *hook )
 }
 
 /* find the first non-deleted hook in the chain */
-inline static struct hook *get_first_valid_hook( struct hook_table *table, int index,
+static inline struct hook *get_first_valid_hook( struct hook_table *table, int index,
                                                  int event, user_handle_t win,
                                                  int object_id, int child_id )
 {

@@ -145,14 +145,14 @@ extern void finish_process_tracing( struct process *process );
 extern int read_process_memory( struct process *process, const void *ptr, data_size_t size, char *dest );
 extern int write_process_memory( struct process *process, void *ptr, data_size_t size, const char *src );
 
-inline static process_id_t get_process_id( struct process *process ) { return process->id; }
+static inline process_id_t get_process_id( struct process *process ) { return process->id; }
 
-inline static int is_process_init_done( struct process *process )
+static inline int is_process_init_done( struct process *process )
 {
     return process->startup_state == STARTUP_DONE;
 }
 
-inline static struct process_dll *get_process_exe_module( struct process *process )
+static inline struct process_dll *get_process_exe_module( struct process *process )
 {
     struct list *ptr = list_head( &process->dlls );
     return ptr ? LIST_ENTRY( ptr, struct process_dll, entry ) : NULL;

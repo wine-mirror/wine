@@ -136,7 +136,7 @@ static const struct fd_ops thread_fd_ops =
 static struct list thread_list = LIST_INIT(thread_list);
 
 /* initialize the structure for a newly allocated thread */
-inline static void init_thread_structure( struct thread *thread )
+static inline void init_thread_structure( struct thread *thread )
 {
     int i;
 

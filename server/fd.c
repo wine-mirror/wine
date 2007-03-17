@@ -1026,7 +1026,7 @@ static int set_unix_lock( struct fd *fd, file_pos_t start, file_pos_t end, int t
 }
 
 /* check if interval [start;end) overlaps the lock */
-inline static int lock_overlaps( struct file_lock *lock, file_pos_t start, file_pos_t end )
+static inline int lock_overlaps( struct file_lock *lock, file_pos_t start, file_pos_t end )
 {
     if (lock->end && start >= lock->end) return 0;
     if (end && lock->start >= end) return 0;

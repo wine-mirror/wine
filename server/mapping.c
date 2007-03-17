@@ -266,7 +266,7 @@ static int get_image_params( struct mapping *mapping )
 }
 
 /* get the size of the unix file associated with the mapping */
-inline static int get_file_size( struct file *file, file_pos_t *size )
+static inline int get_file_size( struct file *file, file_pos_t *size )
 {
     struct stat st;
     int unix_fd = get_file_unix_fd( file );

@@ -79,7 +79,7 @@ extern void no_cancel_async( struct fd *fd );
 extern void main_loop(void);
 extern void remove_process_locks( struct process *process );
 
-inline static struct fd *get_obj_fd( struct object *obj ) { return obj->ops->get_fd( obj ); }
+static inline struct fd *get_obj_fd( struct object *obj ) { return obj->ops->get_fd( obj ); }
 
 /* timeout functions */
 

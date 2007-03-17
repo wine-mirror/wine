@@ -47,7 +47,7 @@ static const char *get_status_name( unsigned int status );
 
 /* utility functions */
 
-inline static void remove_data( data_size_t size )
+static inline void remove_data( data_size_t size )
 {
     cur_data = (const char *)cur_data + size;
     cur_size -= size;

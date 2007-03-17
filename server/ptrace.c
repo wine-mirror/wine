@@ -86,7 +86,7 @@
 #define PT_READ_D   3
 #define PT_WRITE_D  4
 #define PT_STEP     5
-inline static int ptrace(int req, ...) { errno = EPERM; return -1; /*FAIL*/ }
+static inline int ptrace(int req, ...) { errno = EPERM; return -1; /*FAIL*/ }
 #endif  /* HAVE_SYS_PTRACE_H */
 
 /* handle a status returned by wait4 */

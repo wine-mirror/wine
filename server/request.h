@@ -66,32 +66,32 @@ extern void trace_request(void);
 extern void trace_reply( enum request req, const union generic_reply *reply );
 
 /* get the request vararg data */
-inline static const void *get_req_data(void)
+static inline const void *get_req_data(void)
 {
     return current->req_data;
 }
 
 /* get the request vararg size */
-inline static data_size_t get_req_data_size(void)
+static inline data_size_t get_req_data_size(void)
 {
     return current->req.request_header.request_size;
 }
 
 /* get the request vararg as unicode string */
-inline static void get_req_unicode_str( struct unicode_str *str )
+static inline void get_req_unicode_str( struct unicode_str *str )
 {
     str->str = get_req_data();
     str->len = (get_req_data_size() / sizeof(WCHAR)) * sizeof(WCHAR);
 }
 
 /* get the reply maximum vararg size */
-inline static data_size_t get_reply_max_size(void)
+static inline data_size_t get_reply_max_size(void)
 {
     return current->req.request_header.reply_size;
 }
 
 /* allocate and fill the reply data */
-inline static void *set_reply_data( const void *data, data_size_t size )
+static inline void *set_reply_data( const void *data, data_size_t size )
 {
     void *ret = set_reply_data_size( size );
     if (ret) memcpy( ret, data, size );
@@ -99,7 +99,7 @@ inline static void *set_reply_data( const void *data, data_size_t size )
 }
 
 /* set the reply data pointer directly (will be freed by request code) */
-inline static void set_reply_data_ptr( void *data, data_size_t size )
+static inline void set_reply_data_ptr( void *data, data_size_t size )
 {
     assert( size <= get_reply_max_size() );
     current->reply_size = size;
