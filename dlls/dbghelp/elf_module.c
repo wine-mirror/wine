@@ -23,7 +23,7 @@
 #include "wine/port.h"
 
 #if defined(__svr4__) || defined(__sun)
-#define __ELF__
+#define __ELF__ 1
 /* large files are not supported by libelf */
 #undef _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 32
@@ -516,10 +516,10 @@ static const Elf32_Sym* elf_lookup_symtab(const struct module* module,
         }
         if (result)
         {
-            FIXME("Already found symbol %s (%s) in symtab %s @%08x and %s @%08x\n", 
+            FIXME("Already found symbol %s (%s) in symtab %s @%08x and %s @%08x\n",
                   name, compiland_name,
-                  source_get(module, result->compiland->source), result->symp->st_value,
-                  source_get(module, ste->compiland->source), ste->symp->st_value);
+                  source_get(module, result->compiland->source), (unsigned int)result->symp->st_value,
+                  source_get(module, ste->compiland->source), (unsigned int)ste->symp->st_value);
         }
         else
         {
@@ -573,7 +573,7 @@ static void elf_finish_stabs_info(struct module* module, struct hash_table* symt
                 if (((struct symt_function*)sym)->size && ((struct symt_function*)sym)->size != symp->st_size)
                     FIXME("Changing size for %p/%s!%s from %08lx to %08x\n",
                           sym, debugstr_w(module->module.ModuleName), sym->hash_elt.name,
-                          ((struct symt_function*)sym)->size, symp->st_size);
+                          ((struct symt_function*)sym)->size, (unsigned int)symp->st_size);
 
                 ((struct symt_function*)sym)->address = module->elf_info->elf_addr +
                                                         symp->st_value;
@@ -700,7 +700,7 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                     (kind == (ELF32_ST_BIND(ste->symp->st_info) == STB_LOCAL) ? DataIsFileStatic : DataIsGlobal))
                     FIXME("Duplicate in %s: %s<%08x-%08x> %s<%s-%s>\n",
                           debugstr_w(module->module.ModuleName),
-                          ste->ht_elt.name, addr, ste->symp->st_size,
+                          ste->ht_elt.name, addr, (unsigned int)ste->symp->st_size,
                           symt->hash_elt.name,
                           wine_dbgstr_longlong(xaddr), wine_dbgstr_longlong(xsize));
             }
