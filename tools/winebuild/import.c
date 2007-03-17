@@ -97,7 +97,7 @@ static int func_cmp( const void *func1, const void *func2 )
 }
 
 /* add a name to a name table */
-inline static void add_name( struct name_table *table, const char *name )
+static inline void add_name( struct name_table *table, const char *name )
 {
     if (table->count == table->size)
     {
@@ -109,7 +109,7 @@ inline static void add_name( struct name_table *table, const char *name )
 }
 
 /* remove a name from a name table */
-inline static void remove_name( struct name_table *table, unsigned int idx )
+static inline void remove_name( struct name_table *table, unsigned int idx )
 {
     assert( idx < table->count );
     free( table->names[idx] );
@@ -119,7 +119,7 @@ inline static void remove_name( struct name_table *table, unsigned int idx )
 }
 
 /* make a name table empty */
-inline static void empty_name_table( struct name_table *table )
+static inline void empty_name_table( struct name_table *table )
 {
     unsigned int i;
 
@@ -128,7 +128,7 @@ inline static void empty_name_table( struct name_table *table )
 }
 
 /* locate a name in a (sorted) list */
-inline static const char *find_name( const char *name, const struct name_table *table )
+static inline const char *find_name( const char *name, const struct name_table *table )
 {
     char **res = NULL;
 
@@ -137,13 +137,13 @@ inline static const char *find_name( const char *name, const struct name_table *
 }
 
 /* sort a name table */
-inline static void sort_names( struct name_table *table )
+static inline void sort_names( struct name_table *table )
 {
     if (table->count) qsort( table->names, table->count, sizeof(*table->names), name_cmp );
 }
 
 /* locate an export in a (sorted) export list */
-inline static ORDDEF *find_export( const char *name, ORDDEF **table, int size )
+static inline ORDDEF *find_export( const char *name, ORDDEF **table, int size )
 {
     ORDDEF func, *odp, **res = NULL;
 

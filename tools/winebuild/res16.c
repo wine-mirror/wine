@@ -79,7 +79,7 @@ static const unsigned char *file_end;   /* end of resource file */
 static const char *file_name;  /* current resource file name */
 
 
-inline static struct resource *add_resource( DLLSPEC *spec )
+static inline struct resource *add_resource( DLLSPEC *spec )
 {
     spec->resources = xrealloc( spec->resources, (spec->nb_resources + 1) * sizeof(*spec->resources) );
     return &spec->resources[spec->nb_resources++];

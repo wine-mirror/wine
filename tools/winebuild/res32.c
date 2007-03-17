@@ -93,7 +93,7 @@ static const char *file_name;  /* current resource file name */
 #define RESDIR_SIZE(n)  (sizeof(IMAGE_RESOURCE_DIRECTORY) + (n) * sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY))
 
 
-inline static struct resource *add_resource( DLLSPEC *spec )
+static inline struct resource *add_resource( DLLSPEC *spec )
 {
     spec->resources = xrealloc( spec->resources, (spec->nb_resources + 1) * sizeof(spec->resources[0]) );
     return &spec->resources[spec->nb_resources++];

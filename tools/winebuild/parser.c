@@ -79,12 +79,12 @@ static int IsNumberString(const char *s)
     return 1;
 }
 
-inline static int is_token_separator( char ch )
+static inline int is_token_separator( char ch )
 {
     return strchr( separator_chars, ch ) != NULL;
 }
 
-inline static int is_token_comment( char ch )
+static inline int is_token_comment( char ch )
 {
     return strchr( comment_chars, ch ) != NULL;
 }
