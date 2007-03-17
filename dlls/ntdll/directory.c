@@ -236,24 +236,22 @@ static char *get_default_lpt_device( int num )
 #include <sys/vfstab.h>
 static char *parse_vfstab_entries( FILE *f, dev_t dev, ino_t ino)
 {
-
-    struct vfstab vfs_entry;
-    struct vfstab *entry=&vfs_entry;
+    struct vfstab entry;
     struct stat st;
     char *device;
 
-    while (! getvfsent( f, entry ))
+    while (! getvfsent( f, &entry ))
     {
         /* don't even bother stat'ing network mounts, there's no meaningful device anyway */
-        if (!strcmp( entry->vfs_fstype, "nfs" ) ||
-            !strcmp( entry->vfs_fstype, "smbfs" ) ||
-            !strcmp( entry->vfs_fstype, "ncpfs" )) continue;
+        if (!strcmp( entry.vfs_fstype, "nfs" ) ||
+            !strcmp( entry.vfs_fstype, "smbfs" ) ||
+            !strcmp( entry.vfs_fstype, "ncpfs" )) continue;
 
-        if (stat( entry->vfs_mountp, &st ) == -1) continue;
+        if (stat( entry.vfs_mountp, &st ) == -1) continue;
         if (st.st_dev != dev || st.st_ino != ino) continue;
-        if (!strcmp( entry->vfs_fstype, "fd" ))
+        if (!strcmp( entry.vfs_fstype, "fd" ))
         {
-            if ((device = strstr( entry->vfs_mntopts, "dev=" )))
+            if ((device = strstr( entry.vfs_mntopts, "dev=" )))
             {
                 char *p = strchr( device + 4, ',' );
                 if (p) *p = 0;
@@ -261,7 +259,7 @@ static char *parse_vfstab_entries( FILE *f, dev_t dev, ino_t ino)
             }
         }
         else
-            return entry->vfs_special;
+            return entry.vfs_special;
     }
     return NULL;
 }
@@ -335,25 +333,23 @@ static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
 #include <sys/mnttab.h>
 static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
 {
-
-    volatile struct mnttab mntentry;
-    struct mnttab *entry=&mntentry;
+    struct mnttab entry;
     struct stat st;
     char *device;
 
 
-    while (( ! getmntent( f , entry) ))
+    while (( ! getmntent( f, &entry) ))
     {
         /* don't even bother stat'ing network mounts, there's no meaningful device anyway */
-        if (!strcmp( entry->mnt_fstype, "nfs" ) ||
-            !strcmp( entry->mnt_fstype, "smbfs" ) ||
-            !strcmp( entry->mnt_fstype, "ncpfs" )) continue;
+        if (!strcmp( entry.mnt_fstype, "nfs" ) ||
+            !strcmp( entry.mnt_fstype, "smbfs" ) ||
+            !strcmp( entry.mnt_fstype, "ncpfs" )) continue;
 
-        if (stat( entry->mnt_mountp, &st ) == -1) continue;
+        if (stat( entry.mnt_mountp, &st ) == -1) continue;
         if (st.st_dev != dev || st.st_ino != ino) continue;
-        if (!strcmp( entry->mnt_fstype, "fd" ))
+        if (!strcmp( entry.mnt_fstype, "fd" ))
         {
-            if ((device = strstr( entry->mnt_mntopts, "dev=" )))
+            if ((device = strstr( entry.mnt_mntopts, "dev=" )))
             {
                 char *p = strchr( device + 4, ',' );
                 if (p) *p = 0;
@@ -361,7 +357,7 @@ static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
             }
         }
         else
-            return entry->mnt_special;
+            return entry.mnt_special;
     }
     return NULL;
 }
