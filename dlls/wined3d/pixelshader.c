@@ -330,7 +330,7 @@ static void pshader_set_limits(
 
 /** Generate a pixel shader string using either GL_FRAGMENT_PROGRAM_ARB
     or GLSL and send it to the card */
-inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
+static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
     IWineD3DPixelShader *iface,
     shader_reg_maps* reg_maps,
     CONST DWORD *pFunction) {

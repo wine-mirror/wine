@@ -483,7 +483,7 @@ static void pshader_gen_input_modifier_line (
         sprintf(outregstr, "T%c%s", 'A' + tmpreg, swzstr);
 }
 
-inline static void pshader_gen_output_modifier_line(
+static inline void pshader_gen_output_modifier_line(
     SHADER_BUFFER* buffer,
     int saturate,
     char *write_mask,

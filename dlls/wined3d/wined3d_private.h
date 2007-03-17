@@ -1806,22 +1806,22 @@ extern void print_glsl_info_log(
     WineD3D_GL_Info *gl_info,
     GLhandleARB obj);
 
-inline static int shader_get_regtype(const DWORD param) {
+static inline int shader_get_regtype(const DWORD param) {
     return (((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT) |
             ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2));
 }
 
 extern unsigned int shader_get_float_offset(const DWORD reg);
 
-inline static BOOL shader_is_pshader_version(DWORD token) {
+static inline BOOL shader_is_pshader_version(DWORD token) {
     return 0xFFFF0000 == (token & 0xFFFF0000);
 }
 
-inline static BOOL shader_is_vshader_version(DWORD token) {
+static inline BOOL shader_is_vshader_version(DWORD token) {
     return 0xFFFE0000 == (token & 0xFFFF0000);
 }
 
-inline static BOOL shader_is_comment(DWORD token) {
+static inline BOOL shader_is_comment(DWORD token) {
     return WINED3DSIO_COMMENT == (token & WINED3DSI_OPCODE_MASK);
 }
 
@@ -1936,14 +1936,14 @@ typedef struct {
 
 const PixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt);
 
-inline static BOOL use_vs(IWineD3DDeviceImpl *device) {
+static inline BOOL use_vs(IWineD3DDeviceImpl *device) {
     return (device->vs_selected_mode != SHADER_NONE
             && device->stateBlock->vertexShader
             && ((IWineD3DVertexShaderImpl *)device->stateBlock->vertexShader)->baseShader.function
             && !device->strided_streams.u.s.position_transformed);
 }
 
-inline static BOOL use_ps(IWineD3DDeviceImpl *device) {
+static inline BOOL use_ps(IWineD3DDeviceImpl *device) {
     return (device->ps_selected_mode != SHADER_NONE
             && device->stateBlock->pixelShader
             && ((IWineD3DPixelShaderImpl *)device->stateBlock->pixelShader)->baseShader.function);

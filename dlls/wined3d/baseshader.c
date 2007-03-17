@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 
-inline static BOOL shader_is_version_token(DWORD token) {
+static inline BOOL shader_is_version_token(DWORD token) {
     return shader_is_pshader_version(token) ||
            shader_is_vshader_version(token);
 }

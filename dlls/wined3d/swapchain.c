@@ -35,7 +35,7 @@ enum x11drv_escape_codes
 };
 
 /* retrieve the X display to use on a given DC */
-inline static Display *get_display( HDC hdc )
+static inline Display *get_display( HDC hdc )
 {
     Display *display;
     enum x11drv_escape_codes escape = X11DRV_GET_DISPLAY;

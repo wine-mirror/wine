@@ -85,7 +85,7 @@ IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *p
     return (IWineD3D *)object;
 }
 
-inline static DWORD get_config_key(HKEY defkey, HKEY appkey, const char* name, char* buffer, DWORD size)
+static inline DWORD get_config_key(HKEY defkey, HKEY appkey, const char* name, char* buffer, DWORD size)
 {
     if (0 != appkey && !RegQueryValueExA( appkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
     if (0 != defkey && !RegQueryValueExA( defkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
