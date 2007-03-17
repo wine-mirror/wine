@@ -67,7 +67,7 @@ static const char visual_id_prop[]    = "__wine_x11_visual_id";
  *
  * Check if a given window should be managed
  */
-inline static BOOL is_window_managed( HWND hwnd )
+static inline BOOL is_window_managed( HWND hwnd )
 {
     DWORD style, ex_style;
 

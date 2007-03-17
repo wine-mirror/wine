@@ -758,7 +758,7 @@ int X11DRV_GetCurrentPacket(LPWTPACKET *packet)
 }
 
 
-inline static int CopyTabletData(LPVOID target, LPVOID src, INT size)
+static inline int CopyTabletData(LPVOID target, LPVOID src, INT size)
 {
     /*
      * It is valid to call CopyTabletData with NULL.

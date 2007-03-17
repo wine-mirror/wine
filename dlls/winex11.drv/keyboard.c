@@ -1293,7 +1293,7 @@ static void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, DWORD event_
  * Updates internal state for <vkey>, depending on key <state> under X
  *
  */
-inline static void KEYBOARD_UpdateOneState ( int vkey, int state, DWORD time )
+static inline void KEYBOARD_UpdateOneState ( int vkey, int state, DWORD time )
 {
     /* Do something if internal table state != X state for keycode */
     if (((key_state_table[vkey] & 0x80)!=0) != state)

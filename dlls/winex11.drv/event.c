@@ -351,7 +351,7 @@ DWORD EVENT_x11_time_to_win32_time(Time time)
  *
  * Check if we can activate the specified window.
  */
-inline static BOOL can_activate_window( HWND hwnd )
+static inline BOOL can_activate_window( HWND hwnd )
 {
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     if (!(style & WS_VISIBLE)) return FALSE;

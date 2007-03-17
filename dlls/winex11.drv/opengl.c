@@ -541,7 +541,7 @@ static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx)
  *
  * For use by wglGetCurrentReadDCARB.
  */
-inline static HDC get_hdc_from_Drawable(GLXDrawable d)
+static inline HDC get_hdc_from_Drawable(GLXDrawable d)
 {
     Wine_GLContext *ret;
     for (ret = context_list; ret; ret = ret->next) {
@@ -552,7 +552,7 @@ inline static HDC get_hdc_from_Drawable(GLXDrawable d)
     return NULL;
 }
 
-inline static BOOL is_valid_context( Wine_GLContext *ctx )
+static inline BOOL is_valid_context( Wine_GLContext *ctx )
 {
     Wine_GLContext *ptr;
     for (ptr = context_list; ptr; ptr = ptr->next) if (ptr == ctx) break;

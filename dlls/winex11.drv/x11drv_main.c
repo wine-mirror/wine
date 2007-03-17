@@ -274,7 +274,7 @@ void wine_tsx11_unlock(void)
  *
  * Get a config key from either the app-specific or the default config
  */
-inline static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
+static inline DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
                                     char *buffer, DWORD size )
 {
     if (appkey && !RegQueryValueExA( appkey, name, 0, NULL, (LPBYTE)buffer, &size )) return 0;

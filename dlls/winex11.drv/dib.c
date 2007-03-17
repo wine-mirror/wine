@@ -111,7 +111,7 @@ static void X11DRV_DIB_Unlock(X_PHYSBITMAP *,BOOL);
  *
  * Return the width of an X image in bytes
  */
-inline static int X11DRV_DIB_GetXImageWidthBytes( int width, int depth )
+static inline int X11DRV_DIB_GetXImageWidthBytes( int width, int depth )
 {
     if (!depth || depth > 32) goto error;
 

@@ -365,7 +365,7 @@ static int		fontLF = -1, fontMRU = -1;	/* last free, most recently used */
 /***********************************************************************
  *           is_stock_font
  */
-inline static BOOL is_stock_font( HFONT font )
+static inline BOOL is_stock_font( HFONT font )
 {
     int i;
     for (i = OEM_FIXED_FONT; i <= DEFAULT_GUI_FONT; i++)
