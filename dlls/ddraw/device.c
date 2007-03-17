@@ -1207,7 +1207,7 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
             sdesc.dwSize = sizeof(sdesc);
             sdesc.dwFlags = DDSD_PIXELFORMAT | DDSD_CAPS;
             sdesc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
-            sdesc.ddpfPixelFormat.dwSize = sizeof(sdesc.ddpfPixelFormat.dwSize);
+            sdesc.ddpfPixelFormat.dwSize = sizeof(sdesc.ddpfPixelFormat);
             PixelFormat_WineD3DtoDD(&sdesc.ddpfPixelFormat, FormatList[i]);
 
             TRACE("Enumerating WineD3DFormat %d\n", FormatList[i]);
