@@ -77,7 +77,7 @@ struct hook16_queue_info
 /***********************************************************************
  *           map_msg_16_to_32
  */
-inline static void map_msg_16_to_32( const MSG16 *msg16, MSG *msg32 )
+static inline void map_msg_16_to_32( const MSG16 *msg16, MSG *msg32 )
 {
     msg32->hwnd    = WIN_Handle32(msg16->hwnd);
     msg32->message = msg16->message;
@@ -92,7 +92,7 @@ inline static void map_msg_16_to_32( const MSG16 *msg16, MSG *msg32 )
 /***********************************************************************
  *           map_msg_32_to_16
  */
-inline static void map_msg_32_to_16( const MSG *msg32, MSG16 *msg16 )
+static inline void map_msg_32_to_16( const MSG *msg32, MSG16 *msg16 )
 {
     msg16->hwnd    = HWND_16(msg32->hwnd);
     msg16->message = msg32->message;

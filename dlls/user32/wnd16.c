@@ -51,7 +51,7 @@ static BOOL CALLBACK wnd_enum_callback( HWND hwnd, LPARAM param )
 }
 
 /* convert insert after window handle to 32-bit */
-inline static HWND full_insert_after_hwnd( HWND16 hwnd )
+static inline HWND full_insert_after_hwnd( HWND16 hwnd )
 {
     HWND ret = WIN_Handle32( hwnd );
     if (ret == (HWND)0xffff) ret = HWND_TOPMOST;

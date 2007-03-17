@@ -701,7 +701,7 @@ BOOL WINPROC_IsUnicode( WNDPROC proc, BOOL def_val )
  *
  * Return TRUE if the lparam is a string
  */
-inline static BOOL WINPROC_TestLBForStr( HWND hwnd, UINT msg )
+static inline BOOL WINPROC_TestLBForStr( HWND hwnd, UINT msg )
 {
     DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
     if (msg <= CB_MSGMAX)

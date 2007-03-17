@@ -721,7 +721,7 @@ BOOL WINAPI UnhookWinEvent(HWINEVENTHOOK hEventHook)
     return ret;
 }
 
-inline static BOOL find_first_hook(DWORD id, DWORD event, HWND hwnd, LONG object_id,
+static inline BOOL find_first_hook(DWORD id, DWORD event, HWND hwnd, LONG object_id,
                                    LONG child_id, struct hook_info *info)
 {
     struct user_thread_info *thread_info = get_user_thread_info();
@@ -755,7 +755,7 @@ inline static BOOL find_first_hook(DWORD id, DWORD event, HWND hwnd, LONG object
     return ret && (info->tid || info->proc);
 }
 
-inline static BOOL find_next_hook(DWORD event, HWND hwnd, LONG object_id,
+static inline BOOL find_next_hook(DWORD event, HWND hwnd, LONG object_id,
                                   LONG child_id, struct hook_info *info)
 {
     BOOL ret;
@@ -782,7 +782,7 @@ inline static BOOL find_next_hook(DWORD event, HWND hwnd, LONG object_id,
     return ret;
 }
 
-inline static void find_hook_close(DWORD id)
+static inline void find_hook_close(DWORD id)
 {
     SERVER_START_REQ( finish_hook_chain )
     {

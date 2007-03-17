@@ -4524,7 +4524,7 @@ BOOL WINAPI GetMenuItemInfoW( HMENU hmenu, UINT item, BOOL bypos,
 
 
 /* set a menu item text from a ASCII or Unicode string */
-inline static void set_menu_item_text( MENUITEM *menu, LPCWSTR text, BOOL unicode )
+static inline void set_menu_item_text( MENUITEM *menu, LPCWSTR text, BOOL unicode )
 {
     if (!text)
         menu->text = NULL;

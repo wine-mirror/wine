@@ -131,7 +131,7 @@ const struct builtin_class_descr SCROLL_builtin_class =
  *  Determine if the supplied SCROLLINFO struct is valid.
  *  info     [in] The SCROLLINFO struct to be tested
  */
-inline static BOOL SCROLL_ScrollInfoValid( LPCSCROLLINFO info )
+static inline BOOL SCROLL_ScrollInfoValid( LPCSCROLLINFO info )
 {
     return !(info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)
         || (info->cbSize != sizeof(*info)

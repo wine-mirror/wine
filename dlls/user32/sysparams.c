@@ -703,7 +703,7 @@ static inline int get_display_dpi(void)
  *       Technical Reference to the Windows 2000 Registry ->
  *       HKEY_CURRENT_USER -> Control Panel -> Desktop -> WindowMetrics
  */
-inline static int SYSPARAMS_Twips2Pixels(int x)
+static inline int SYSPARAMS_Twips2Pixels(int x)
 {
     if (x < 0)
         x = (-x * get_display_dpi() + 720) / 1440;

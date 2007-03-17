@@ -165,7 +165,7 @@ const struct builtin_class_descr COMBOLBOX_builtin_class =
 
 
 /* check whether app is a Win 3.1 app */
-inline static BOOL is_old_app( LB_DESCR *descr )
+static inline BOOL is_old_app( LB_DESCR *descr )
 {
     return (GetExpWinVer16( GetWindowLongPtrW(descr->self, GWLP_HINSTANCE) ) & 0xFF00 ) == 0x0300;
 }

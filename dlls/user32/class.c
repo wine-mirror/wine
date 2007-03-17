@@ -92,7 +92,7 @@ static CLASS *get_class_ptr( HWND hwnd, BOOL write_access )
 /***********************************************************************
  *           release_class_ptr
  */
-inline static void release_class_ptr( CLASS *ptr )
+static inline void release_class_ptr( CLASS *ptr )
 {
     USER_Unlock();
 }
@@ -154,7 +154,7 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
  *
  * Get the menu name as a ASCII string.
  */
-inline static LPSTR CLASS_GetMenuNameA( CLASS *classPtr )
+static inline LPSTR CLASS_GetMenuNameA( CLASS *classPtr )
 {
     if (!HIWORD(classPtr->menuName)) return (LPSTR)classPtr->menuName;
     return (LPSTR)(classPtr->menuName + strlenW(classPtr->menuName) + 1);
@@ -166,7 +166,7 @@ inline static LPSTR CLASS_GetMenuNameA( CLASS *classPtr )
  *
  * Get the menu name as a Unicode string.
  */
-inline static LPWSTR CLASS_GetMenuNameW( CLASS *classPtr )
+static inline LPWSTR CLASS_GetMenuNameW( CLASS *classPtr )
 {
     return classPtr->menuName;
 }

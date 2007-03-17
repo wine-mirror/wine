@@ -212,14 +212,14 @@ static const unsigned int message_unicode_flags[] =
 };
 
 /* check whether a given message type includes pointers */
-inline static int is_pointer_message( UINT message )
+static inline int is_pointer_message( UINT message )
 {
     if (message >= 8*sizeof(message_pointer_flags)) return FALSE;
     return (message_pointer_flags[message / 32] & SET(message)) != 0;
 }
 
 /* check whether a given message type contains Unicode (or ASCII) chars */
-inline static int is_unicode_message( UINT message )
+static inline int is_unicode_message( UINT message )
 {
     if (message >= 8*sizeof(message_unicode_flags)) return FALSE;
     return (message_unicode_flags[message / 32] & SET(message)) != 0;
@@ -228,7 +228,7 @@ inline static int is_unicode_message( UINT message )
 #undef SET
 
 /* add a data field to a packed message */
-inline static void push_data( struct packed_message *data, const void *ptr, size_t size )
+static inline void push_data( struct packed_message *data, const void *ptr, size_t size )
 {
     data->data[data->count] = ptr;
     data->size[data->count] = size;
@@ -236,13 +236,13 @@ inline static void push_data( struct packed_message *data, const void *ptr, size
 }
 
 /* add a string to a packed message */
-inline static void push_string( struct packed_message *data, LPCWSTR str )
+static inline void push_string( struct packed_message *data, LPCWSTR str )
 {
     push_data( data, str, (strlenW(str) + 1) * sizeof(WCHAR) );
 }
 
 /* retrieve a pointer to data from a packed message and increment the buffer pointer */
-inline static void *get_data( void **buffer, size_t size )
+static inline void *get_data( void **buffer, size_t size )
 {
     void *ret = *buffer;
     *buffer = (char *)*buffer + size;
@@ -250,7 +250,7 @@ inline static void *get_data( void **buffer, size_t size )
 }
 
 /* make sure that the buffer contains a valid null-terminated Unicode string */
-inline static BOOL check_string( LPCWSTR str, size_t size )
+static inline BOOL check_string( LPCWSTR str, size_t size )
 {
     for (size /= sizeof(WCHAR); size; size--, str++)
         if (!*str) return TRUE;
@@ -258,7 +258,7 @@ inline static BOOL check_string( LPCWSTR str, size_t size )
 }
 
 /* make sure that there is space for 'size' bytes in buffer, growing it if needed */
-inline static void *get_buffer_space( void **buffer, size_t size )
+static inline void *get_buffer_space( void **buffer, size_t size )
 {
     void *ret;
 
@@ -274,34 +274,34 @@ inline static void *get_buffer_space( void **buffer, size_t size )
 }
 
 /* check whether a combobox expects strings or ids in CB_ADDSTRING/CB_INSERTSTRING */
-inline static BOOL combobox_has_strings( HWND hwnd )
+static inline BOOL combobox_has_strings( HWND hwnd )
 {
     DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
     return (!(style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) || (style & CBS_HASSTRINGS));
 }
 
 /* check whether a listbox expects strings or ids in LB_ADDSTRING/LB_INSERTSTRING */
-inline static BOOL listbox_has_strings( HWND hwnd )
+static inline BOOL listbox_has_strings( HWND hwnd )
 {
     DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
     return (!(style & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) || (style & LBS_HASSTRINGS));
 }
 
 /* check whether message is in the range of keyboard messages */
-inline static BOOL is_keyboard_message( UINT message )
+static inline BOOL is_keyboard_message( UINT message )
 {
     return (message >= WM_KEYFIRST && message <= WM_KEYLAST);
 }
 
 /* check whether message is in the range of mouse messages */
-inline static BOOL is_mouse_message( UINT message )
+static inline BOOL is_mouse_message( UINT message )
 {
     return ((message >= WM_NCMOUSEFIRST && message <= WM_NCMOUSELAST) ||
             (message >= WM_MOUSEFIRST && message <= WM_MOUSELAST));
 }
 
 /* check whether message matches the specified hwnd filter */
-inline static BOOL check_hwnd_filter( const MSG *msg, HWND hwnd_filter )
+static inline BOOL check_hwnd_filter( const MSG *msg, HWND hwnd_filter )
 {
     if (!hwnd_filter) return TRUE;
     return (msg->hwnd == hwnd_filter || IsChild( hwnd_filter, msg->hwnd ));
@@ -2114,7 +2114,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
  *
  * Process all pending sent messages.
  */
-inline static void process_sent_messages(void)
+static inline void process_sent_messages(void)
 {
     MSG msg;
     peek_message( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
