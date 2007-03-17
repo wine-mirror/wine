@@ -135,17 +135,17 @@ static LRESULT WINAPI COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam,
 static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr);
 typedef INT (WINAPI *cmp_func_t)(LPCWSTR, LPCWSTR);
 
-inline static BOOL is_textW(LPCWSTR str)
+static inline BOOL is_textW(LPCWSTR str)
 {
     return str && str != LPSTR_TEXTCALLBACKW;
 }
 
-inline static BOOL is_textA(LPCSTR str)
+static inline BOOL is_textA(LPCSTR str)
 {
     return str && str != LPSTR_TEXTCALLBACKA;
 }
 
-inline static LPCSTR debugstr_txt(LPCWSTR str)
+static inline LPCSTR debugstr_txt(LPCWSTR str)
 {
     if (str == LPSTR_TEXTCALLBACKW) return "(callback)";
     return debugstr_w(str);
@@ -174,13 +174,13 @@ static void COMBOEX_DumpInput (COMBOBOXEXITEMW *input)
 }
 
 
-inline static CBE_ITEMDATA *get_item_data(COMBOEX_INFO *infoPtr, INT index)
+static inline CBE_ITEMDATA *get_item_data(COMBOEX_INFO *infoPtr, INT index)
 {
     return (CBE_ITEMDATA *)SendMessageW (infoPtr->hwndCombo, CB_GETITEMDATA,
 		                         (WPARAM)index, 0);
 }
 
-inline static cmp_func_t get_cmp_func(COMBOEX_INFO *infoPtr)
+static inline cmp_func_t get_cmp_func(COMBOEX_INFO *infoPtr)
 {
     return infoPtr->dwExtStyle & CBES_EX_CASESENSITIVE ? lstrcmpW : lstrcmpiW;
 }
@@ -601,7 +601,7 @@ static BOOL COMBOEX_GetItemA (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA *cit)
 }
 
 
-inline static BOOL COMBOEX_HasEditChanged (COMBOEX_INFO *infoPtr)
+static inline BOOL COMBOEX_HasEditChanged (COMBOEX_INFO *infoPtr)
 {
     return COMBOEX_HasEdit(infoPtr) &&
 	   (infoPtr->flags & WCBE_EDITHASCHANGED) == WCBE_EDITHASCHANGED;

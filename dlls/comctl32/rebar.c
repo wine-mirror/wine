@@ -1978,7 +1978,7 @@ REBAR_GetBandBorders (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 REBAR_GetBandCount (REBAR_INFO *infoPtr)
 {
     TRACE("band count %u!\n", infoPtr->uNumBands);
@@ -2102,7 +2102,7 @@ REBAR_GetBarInfo (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 REBAR_GetBkColor (REBAR_INFO *infoPtr)
 {
     COLORREF clr = infoPtr->clrBk;
@@ -2152,7 +2152,7 @@ REBAR_GetRect (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 REBAR_GetRowCount (REBAR_INFO *infoPtr)
 {
     TRACE("%u\n", infoPtr->uNumRows);
@@ -2183,7 +2183,7 @@ REBAR_GetRowHeight (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 REBAR_GetTextColor (REBAR_INFO *infoPtr)
 {
     TRACE("text color 0x%06x!\n", infoPtr->clrText);
@@ -2192,14 +2192,14 @@ REBAR_GetTextColor (REBAR_INFO *infoPtr)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 REBAR_GetToolTips (REBAR_INFO *infoPtr)
 {
     return (LRESULT)infoPtr->hwndToolTip;
 }
 
 
-inline static LRESULT
+static inline LRESULT
 REBAR_GetUnicodeFormat (REBAR_INFO *infoPtr)
 {
     TRACE("%s hwnd=%p\n",
@@ -2209,7 +2209,7 @@ REBAR_GetUnicodeFormat (REBAR_INFO *infoPtr)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 REBAR_GetVersion (REBAR_INFO *infoPtr)
 {
     TRACE("version %d\n", infoPtr->iVersion);
@@ -2619,7 +2619,7 @@ REBAR_SetTextColor (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 /* << REBAR_SetTooltips >> */
 
 
-inline static LRESULT
+static inline LRESULT
 REBAR_SetUnicodeFormat (REBAR_INFO *infoPtr, WPARAM wParam)
 {
     BOOL bTemp = infoPtr->bUnicode;
@@ -2999,7 +2999,7 @@ REBAR_MouseMove (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 REBAR_NCCalcSize (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     HTHEME theme;
@@ -3283,7 +3283,7 @@ REBAR_SetFont (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 REBAR_SetRedraw (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
      /*****************************************************
       *

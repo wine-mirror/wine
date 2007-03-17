@@ -256,7 +256,7 @@ static void TOOLBAR_TooltipSetRect(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *button);
 static LRESULT
 TOOLBAR_NotifyFormat(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
 
-inline static int default_top_margin(TOOLBAR_INFO *infoPtr)
+static inline int default_top_margin(TOOLBAR_INFO *infoPtr)
 {
     return (infoPtr->dwStyle & TBSTYLE_FLAT ? 0 : TOP_BORDER);
 }
@@ -3519,7 +3519,7 @@ TOOLBAR_GetDisabledImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLBAR_GetExtendedStyle (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
@@ -3739,7 +3739,7 @@ TOOLBAR_GetUnicodeFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLBAR_GetVersion (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
@@ -3774,7 +3774,7 @@ TOOLBAR_HideButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLBAR_HitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     return TOOLBAR_InternalHitTest (hwnd, (LPPOINT)lParam);
@@ -4045,7 +4045,7 @@ TOOLBAR_MarkButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 /* fixes up an index of a button affected by a move */
-inline static void TOOLBAR_MoveFixupIndex(INT* pIndex, INT nIndex, INT nMoveIndex, BOOL bMoveUp)
+static inline void TOOLBAR_MoveFixupIndex(INT* pIndex, INT nIndex, INT nMoveIndex, BOOL bMoveUp)
 {
     if (bMoveUp)
     {
@@ -5058,7 +5058,7 @@ TOOLBAR_SetStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLBAR_SetToolTips (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
@@ -6078,7 +6078,7 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLBAR_NCActivate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
 /*    if (wndPtr->dwStyle & CCS_NODIVIDER) */
@@ -6088,7 +6088,7 @@ TOOLBAR_NCActivate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLBAR_NCCalcSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     if (!(GetWindowLongW(hwnd, GWL_STYLE) & CCS_NODIVIDER))
@@ -6336,7 +6336,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLBAR_Notify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);

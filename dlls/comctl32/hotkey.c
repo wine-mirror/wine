@@ -274,7 +274,7 @@ HOTKEY_EraseBackground (HOTKEY_INFO *infoPtr, HDC hdc)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 HOTKEY_GetFont (HOTKEY_INFO *infoPtr)
 {
     return (LRESULT)infoPtr->hFont;
@@ -402,7 +402,7 @@ HOTKEY_LButtonDown (HOTKEY_INFO *infoPtr)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 HOTKEY_NCCreate (HWND hwnd, LPCREATESTRUCTW lpcs)
 {
     HOTKEY_INFO *infoPtr;

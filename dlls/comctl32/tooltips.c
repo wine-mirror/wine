@@ -174,7 +174,7 @@ static LRESULT CALLBACK
 TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uId, DWORD_PTR dwRef);
 
 
-inline static UINT_PTR
+static inline UINT_PTR
 TOOLTIPS_GetTitleIconIndex(HICON hIcon)
 {
     UINT i;
@@ -1484,7 +1484,7 @@ TOOLTIPS_GetMargin (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLTIPS_GetMaxTipWidth (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1540,7 +1540,7 @@ TOOLTIPS_GetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLTIPS_GetTipBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1548,7 +1548,7 @@ TOOLTIPS_GetTipBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLTIPS_GetTipTextColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1556,7 +1556,7 @@ TOOLTIPS_GetTipTextColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLTIPS_GetToolCount (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1756,7 +1756,7 @@ TOOLTIPS_NewToolRectW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLTIPS_Pop (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1889,7 +1889,7 @@ TOOLTIPS_SetMargin (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLTIPS_SetMaxTipWidth (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1901,7 +1901,7 @@ TOOLTIPS_SetMaxTipWidth (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLTIPS_SetTipBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -1912,7 +1912,7 @@ TOOLTIPS_SetTipBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 TOOLTIPS_SetTipTextColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);

@@ -161,7 +161,7 @@ static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, UINT mask, HDITEMW *
     }
 }
 
-inline static LRESULT
+static inline LRESULT
 HEADER_IndexToOrder (HWND hwnd, INT iItem)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
@@ -1178,7 +1178,7 @@ HEADER_GetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 HEADER_GetItemCount (HWND hwnd)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
@@ -1239,7 +1239,7 @@ HEADER_SetOrderArray(HWND hwnd, WPARAM wParam, LPARAM lParam)
     return TRUE;
 }
 
-inline static LRESULT
+static inline LRESULT
 HEADER_GetUnicodeFormat (HWND hwnd)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
@@ -1432,7 +1432,7 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     return TRUE;
 }
 
-inline static LRESULT
+static inline LRESULT
 HEADER_SetUnicodeFormat (HWND hwnd, WPARAM wParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);

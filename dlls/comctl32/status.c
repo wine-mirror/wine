@@ -828,7 +828,7 @@ STATUSBAR_SetTipTextW (STATUS_INFO *infoPtr, INT id, LPWSTR text)
 }
 
 
-inline static LRESULT
+static inline LRESULT
 STATUSBAR_SetUnicodeFormat (STATUS_INFO *infoPtr, BOOL bUnicode)
 {
     BOOL bOld = infoPtr->bUnicode;
