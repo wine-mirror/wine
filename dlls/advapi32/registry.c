@@ -86,13 +86,13 @@ static const WCHAR * const root_key_names[NB_SPECIAL_ROOT_KEYS] =
 
 
 /* check if value type needs string conversion (Ansi<->Unicode) */
-inline static int is_string( DWORD type )
+static inline int is_string( DWORD type )
 {
     return (type == REG_SZ) || (type == REG_EXPAND_SZ) || (type == REG_MULTI_SZ);
 }
 
 /* check if current version is NT or Win95 */
-inline static int is_version_nt(void)
+static inline int is_version_nt(void)
 {
     return !(GetVersion() & 0x80000000);
 }
@@ -136,7 +136,7 @@ static HKEY create_special_root_hkey( HANDLE hkey, DWORD access )
 }
 
 /* map the hkey from special root to normal key if necessary */
-inline static HKEY get_special_root_hkey( HKEY hkey )
+static inline HKEY get_special_root_hkey( HKEY hkey )
 {
     HKEY ret = hkey;
 
