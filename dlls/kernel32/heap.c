@@ -78,7 +78,7 @@ static HANDLE systemHeap;   /* globally shared heap */
  *
  * Create the system heap.
  */
-inline static HANDLE HEAP_CreateSystemHeap(void)
+static inline HANDLE HEAP_CreateSystemHeap(void)
 {
     int created;
     void *base;

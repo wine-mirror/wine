@@ -393,7 +393,7 @@ static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
  * If yes, we unprotect the resources to let broken apps continue
  * (Windows does this too).
  */
-inline static BOOL check_resource_write( void *addr )
+static inline BOOL check_resource_write( void *addr )
 {
     void *rsrc;
     DWORD size;
@@ -416,7 +416,7 @@ inline static BOOL check_resource_write( void *addr )
  *
  * Check for executing a protected area.
  */
-inline static BOOL check_no_exec( void *addr )
+static inline BOOL check_no_exec( void *addr )
 {
     MEMORY_BASIC_INFORMATION info;
 

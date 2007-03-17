@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 
 /* check if a file name is for an executable file (.exe or .com) */
-inline static BOOL is_executable( const WCHAR *name )
+static inline BOOL is_executable( const WCHAR *name )
 {
     static const WCHAR exeW[] = {'.','e','x','e',0};
     static const WCHAR comW[] = {'.','c','o','m',0};
@@ -708,7 +708,7 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR 
  * Check if the file name contains a path; helper for SearchPathW.
  * A relative path is not considered a path unless it starts with ./ or ../
  */
-inline static BOOL contains_pathW (LPCWSTR name)
+static inline BOOL contains_pathW (LPCWSTR name)
 {
     if (RtlDetermineDosPathNameType_U( name ) != RELATIVE_PATH) return TRUE;
     if (name[0] != '.') return FALSE;

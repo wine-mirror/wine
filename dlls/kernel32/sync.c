@@ -51,7 +51,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(sync);
 
 /* check if current version is NT or Win95 */
-inline static int is_version_nt(void)
+static inline int is_version_nt(void)
 {
     return !(GetVersion() & 0x80000000);
 }

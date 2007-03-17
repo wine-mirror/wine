@@ -91,7 +91,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name );
 
 
 /* patch all the flat cs references of the code segment if necessary */
-inline static void patch_code_segment( NE_MODULE *pModule )
+static inline void patch_code_segment( NE_MODULE *pModule )
 {
 #ifdef __i386__
     int i;

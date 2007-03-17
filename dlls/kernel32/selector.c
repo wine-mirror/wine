@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(selector);
 #define LDT_SIZE 8192
 
 /* get the number of selectors needed to cover up to the selector limit */
-inline static WORD get_sel_count( WORD sel )
+static inline WORD get_sel_count( WORD sel )
 {
     return (wine_ldt_copy.limit[sel >> __AHSHIFT] >> 16) + 1;
 }

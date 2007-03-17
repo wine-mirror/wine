@@ -173,7 +173,7 @@ static inline void strcpynAtoW( WCHAR *dst, const char *src, size_t n )
  *
  * Retrieve the ANSI codepage for a given locale.
  */
-inline static UINT get_lcid_codepage( LCID lcid )
+static inline UINT get_lcid_codepage( LCID lcid )
 {
     UINT ret;
     if (!GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER, (WCHAR *)&ret,
@@ -563,7 +563,7 @@ static LCID convert_default_lcid( LCID lcid, LCTYPE lctype )
  *
  * Create the Control Panel\\International registry key.
  */
-inline static HANDLE create_registry_key(void)
+static inline HANDLE create_registry_key(void)
 {
     static const WCHAR intlW[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
                                   'I','n','t','e','r','n','a','t','i','o','n','a','l',0};

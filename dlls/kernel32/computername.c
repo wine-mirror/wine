@@ -180,7 +180,7 @@ static BOOL dns_domainname ( char *name, int *size )
 /*********************************************************************** 
  *                      _init_attr    (INTERNAL)
  */
-inline static void _init_attr ( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *name )
+static inline void _init_attr ( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *name )
 {
     attr->Length = sizeof (OBJECT_ATTRIBUTES);
     attr->RootDirectory = 0;

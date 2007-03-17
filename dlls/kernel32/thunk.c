@@ -1629,7 +1629,7 @@ static SEGPTR    ThunkletCallbackGlueSL = 0;
 
 
 /* map a thunk allocated on ThunkletHeap to a 16-bit pointer */
-inline static SEGPTR get_segptr( void *thunk )
+static inline SEGPTR get_segptr( void *thunk )
 {
     if (!thunk) return 0;
     return MAKESEGPTR( ThunkletCodeSel, (char *)thunk - (char *)ThunkletHeap );
