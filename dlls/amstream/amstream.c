@@ -123,7 +123,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetMediaStream(IAMMultiMediaStream
 {
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
     MSPID PurposeId;
-    int i;
+    unsigned int i;
 
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, idPurpose, ppMediaStream);
 
