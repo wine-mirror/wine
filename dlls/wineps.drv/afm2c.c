@@ -53,7 +53,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-inline static void cursorto(FILE *of, int np, int cp)
+static inline void cursorto(FILE *of, int np, int cp)
 {
     int ntp = np & 0xfffffff8;
     int ctp = cp & 0xfffffff8;

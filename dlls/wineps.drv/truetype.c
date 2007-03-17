@@ -279,7 +279,7 @@ static BOOL FindMSTTString(FT_Face face, FT_CharMap charmap, FT_UShort name_id,
  *  units.
  *
  */
-inline static float PSUnits(LONG x, USHORT em_size)
+static inline float PSUnits(LONG x, USHORT em_size)
 {
     return 1000.0 * (float)x / (float)em_size;
 }

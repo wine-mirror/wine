@@ -190,7 +190,7 @@ static BOOL FindLine(FILE *file, CHAR buffer[], INT bufsize, LPCSTR key)
  *  Linux x86/gcc).
  *
  */
-inline static BOOL DoubleToFloat(float *p_f, double d)
+static inline BOOL DoubleToFloat(float *p_f, double d)
 {
     if (d > (double)FLT_MAX || d < -(double)FLT_MAX)
     	return FALSE;
@@ -205,7 +205,7 @@ inline static BOOL DoubleToFloat(float *p_f, double d)
  *  Utility function to add or subtract 0.5 before converting to integer type.
  *
  */
-inline static float Round(float f)
+static inline float Round(float f)
 {
     return (f >= 0.0) ? (f + 0.5) : (f - 0.5);
 }
@@ -819,7 +819,7 @@ static int cmpUV(const void *a, const void *b)
     return (int)(*((const LONG *)a) - *((const LONG *)b));
 }
 
-inline static BOOL IsWinANSI(LONG uv)
+static inline BOOL IsWinANSI(LONG uv)
 {
     if ((0x0020 <= uv && uv <= 0x007e) || (0x00a0 <= uv && uv <= 0x00ff) ||
     	    (0x2018 <= uv && uv <= 0x201a) || (0x201c <= uv && uv <= 0x201e) ||

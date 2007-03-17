@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
 
 /* Return the width of a DIB bitmap in bytes. DIB bitmap data is 32-bit aligned. */
-inline static int get_dib_width_bytes( int width, int depth )
+static inline int get_dib_width_bytes( int width, int depth )
 {
     int words;
 

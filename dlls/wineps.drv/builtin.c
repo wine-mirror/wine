@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           is_stock_font
  */
-inline static BOOL is_stock_font( HFONT font )
+static inline BOOL is_stock_font( HFONT font )
 {
     int i;
     for (i = OEM_FIXED_FONT; i <= DEFAULT_GUI_FONT; i++)
@@ -55,7 +55,7 @@ inline static BOOL is_stock_font( HFONT font )
  *  Scale builtin font to requested lfHeight
  *
  */
-inline static float Round(float f)
+static inline float Round(float f)
 {
     return (f > 0) ? (f + 0.5) : (f - 0.5);
 }

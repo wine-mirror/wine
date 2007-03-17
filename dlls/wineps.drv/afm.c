@@ -197,7 +197,7 @@ static void PSDRV_DumpFontList(void)
  *  Tries to use formula in TrueType specification; falls back to simple mean
  *  if any lowercase latin letter (or space) is not present.
  */
-inline static SHORT MeanCharWidth(const AFM *afm)
+static inline SHORT MeanCharWidth(const AFM *afm)
 {
     float   w = 0.0;
     int     i;

@@ -55,17 +55,17 @@ static int cmp_by_name(const void *a, const void *b)
     return strcmp(((const GLYPHINFO *)a)->name, ((const GLYPHINFO *)b)->name);
 }
 
-inline static void sort_by_UV()
+static inline void sort_by_UV()
 {
     qsort(glyphs, num_glyphs, sizeof(GLYPHINFO), cmp_by_UV);
 }
 
-inline static void sort_by_name()
+static inline void sort_by_name()
 {
     qsort(glyphs, num_glyphs, sizeof(GLYPHINFO), cmp_by_name);
 }
 
-inline static GLYPHINFO *search_by_name(const char *name)
+static inline GLYPHINFO *search_by_name(const char *name)
 {
     GLYPHINFO	gi;
 
@@ -80,7 +80,7 @@ inline static GLYPHINFO *search_by_name(const char *name)
  *  Use the 'optimal' combination of tabs and spaces to position the cursor
  */
 
-inline static void fcpto(FILE *f, int newpos, int curpos)
+static inline void fcpto(FILE *f, int newpos, int curpos)
 {
     int newtpos = newpos & ~7;
     int curtpos = curpos & ~7;
@@ -103,7 +103,7 @@ inline static void fcpto(FILE *f, int newpos, int curpos)
  *  Make main() look "purty"
  */
 
-inline static void triple_space(FILE *f)
+static inline void triple_space(FILE *f)
 {
     fputc('\n', f);  fputc('\n', f);
 }

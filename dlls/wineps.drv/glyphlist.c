@@ -73,7 +73,7 @@ INT PSDRV_GlyphListInit(void)
  *  list if necessary; returns index on success (-1 on failure)
  *
  */
-inline static INT GlyphListInsert(LPCSTR szName, INT index)
+static inline INT GlyphListInsert(LPCSTR szName, INT index)
 {
     GLYPHNAME *g;
 
