@@ -24,12 +24,17 @@
 #include <stdio.h>
 
 #include "wine/test.h"
+#include "msg.h"
 
 #define DEFAULT_MIN_TAB_WIDTH 54
 #define TAB_DEFAULT_WIDTH 96
 #define TAB_PADDING_X 6
 #define EXTRA_ICON_PADDING 3
 #define MAX_TABLEN 32
+
+#define NUM_MSG_SEQUENCES  2
+#define PARENT_SEQ_INDEX   0
+#define TAB_SEQ_INDEX      1
 
 #define expect(expected, got) ok ( expected == got, "Expected %d, got %d\n", expected, got)
 #define expect_str(expected, got)\
@@ -58,6 +63,174 @@
             rTab.right - rTab.left, rTab.bottom - rTab.top);
 
 static HFONT hFont = 0;
+
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
+
+static const struct message create_parent_wnd_seq[] = {
+    { WM_GETMINMAXINFO, sent },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|defwinproc|optional },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    /* Win9x adds SWP_NOZORDER below */
+    { WM_WINDOWPOSCHANGED, sent},
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { 0 }
+};
+
+static const struct message add_tab_to_parent[] = {
+    { TCM_INSERTITEMA, sent },
+    { TCM_INSERTITEMA, sent },
+    { WM_NOTIFYFORMAT, sent|defwinproc },
+    { WM_QUERYUISTATE, sent|wparam|lparam|defwinproc, 0, 0 },
+    { WM_PARENTNOTIFY, sent|defwinproc },
+    { TCM_INSERTITEMA, sent },
+    { TCM_INSERTITEMA, sent },
+    { TCM_INSERTITEMA, sent },
+    { 0 }
+};
+
+static const struct message add_tab_to_parent_interactive[] = {
+    { TCM_INSERTITEMA, sent },
+    { TCM_INSERTITEMA, sent },
+    { WM_NOTIFYFORMAT, sent|defwinproc },
+    { WM_QUERYUISTATE, sent|wparam|lparam|defwinproc, 0, 0 },
+    { WM_PARENTNOTIFY, sent|defwinproc },
+    { TCM_INSERTITEMA, sent },
+    { TCM_INSERTITEMA, sent },
+    { TCM_INSERTITEMA, sent },
+    { WM_SHOWWINDOW, sent},
+    { WM_WINDOWPOSCHANGING, sent},
+    { WM_WINDOWPOSCHANGING, sent},
+    { WM_NCACTIVATE, sent},
+    { WM_ACTIVATE, sent},
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional},
+    { WM_IME_NOTIFY, sent|defwinproc|optional},
+    { WM_SETFOCUS, sent|defwinproc},
+    { WM_WINDOWPOSCHANGED, sent},
+    { WM_SIZE, sent},
+    { WM_MOVE, sent},
+    { 0 }
+};
+
+static const struct message add_tab_control_parent_seq[] = {
+    { WM_NOTIFYFORMAT, sent },
+    { WM_QUERYUISTATE, sent|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static const struct message add_tab_control_parent_seq_interactive[] = {
+    { WM_NOTIFYFORMAT, sent },
+    { WM_QUERYUISTATE, sent|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|optional},
+    { WM_NCACTIVATE, sent},
+    { WM_ACTIVATE, sent},
+    { WM_WINDOWPOSCHANGING, sent|optional},
+    { WM_KILLFOCUS, sent},
+    { WM_IME_SETCONTEXT, sent|optional},
+    { WM_IME_NOTIFY, sent|optional},
+    { 0 }
+};
+
+static const struct message empty_sequence[] = {
+    { 0 }
+};
+
+static const struct message set_min_tab_width_seq[] = {
+    { TCM_SETMINTABWIDTH, sent|wparam, 0 },
+    { TCM_SETMINTABWIDTH, sent|wparam, 0 },
+    { 0 }
+};
+
+static const struct message get_item_count_seq[] = {
+    { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static const struct message get_row_count_seq[] = {
+    { TCM_GETROWCOUNT, sent|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static const struct message get_item_rect_seq[] = {
+    { TCM_GETITEMRECT, sent },
+    { TCM_GETITEMRECT, sent },
+    { 0 }
+};
+
+static const struct message getset_cur_focus_seq[] = {
+    { TCM_SETCURFOCUS, sent|lparam, 0 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
+    { TCM_SETCURFOCUS, sent|lparam, 0 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
+    { TCM_SETCURSEL, sent|lparam, 0 },
+    { TCM_SETCURFOCUS, sent|lparam, 0 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static const struct message getset_cur_sel_seq[] = {
+    { TCM_SETCURSEL, sent|lparam, 0 },
+    { TCM_GETCURSEL, sent|wparam|lparam, 0, 0 },
+    { TCM_SETCURSEL, sent|lparam, 0 },
+    { TCM_GETCURSEL, sent|wparam|lparam, 0, 0 },
+    { TCM_SETCURSEL, sent|lparam, 0 },
+    { TCM_SETCURSEL, sent|lparam, 0 },
+    { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static const struct message getset_extended_style_seq[] = {
+    { TCM_GETEXTENDEDSTYLE, sent|wparam|lparam, 0, 0 },
+    { TCM_SETEXTENDEDSTYLE, sent },
+    { TCM_GETEXTENDEDSTYLE, sent|wparam|lparam, 0, 0 },
+    { TCM_SETEXTENDEDSTYLE, sent },
+    { TCM_GETEXTENDEDSTYLE, sent|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static const struct message getset_unicode_format_seq[] = {
+    { CCM_SETUNICODEFORMAT, sent|lparam, 0 },
+    { CCM_GETUNICODEFORMAT, sent|wparam|lparam, 0, 0 },
+    { CCM_SETUNICODEFORMAT, sent|lparam, 0 },
+    { CCM_GETUNICODEFORMAT, sent|wparam|lparam, 0, 0 },
+    { CCM_SETUNICODEFORMAT, sent|lparam, 0 },
+    { 0 }
+};
+
+static const struct message getset_item_seq[] = {
+    { TCM_SETITEMA, sent },
+    { TCM_GETITEMA, sent },
+    { TCM_GETITEMA, sent },
+    { 0 }
+};
+
+static const struct message getset_tooltip_seq[] = {
+    { WM_NOTIFYFORMAT, sent },
+    { WM_QUERYUISTATE, sent|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NOTIFYFORMAT, sent },
+    { TCM_SETTOOLTIPS, sent|lparam, 0 },
+    { TCM_GETTOOLTIPS, sent|wparam|lparam, 0, 0 },
+    { TCM_SETTOOLTIPS, sent|lparam, 0 },
+    { TCM_GETTOOLTIPS, sent|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static const struct message getset_tooltip_parent_seq[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { 0 }
+};
 
 static HWND
 create_tabcontrol (DWORD style, DWORD mask)
@@ -101,23 +274,131 @@ create_tabcontrol (DWORD style, DWORD mask)
     return handle;
 }
 
-static HWND createFilledTabControl(DWORD style, DWORD mask, INT nTabs)
+static LRESULT WINAPI parentWindowProcess(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    /* do not log painting messages */
+    if (message != WM_PAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCPAINT &&
+        message != WM_NCHITTEST &&
+        message != WM_GETTEXT &&
+        message != WM_GETICON &&
+        message != WM_DEVICECHANGE)
+    {
+        trace("parent: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        if (defwndproc_counter) msg.flags |= defwinproc;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        add_message(sequences, PARENT_SEQ_INDEX, &msg);
+    }
+
+    defwndproc_counter++;
+    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static BOOL registerParentWindowClass(void)
+{
+    WNDCLASSA cls;
+
+    cls.style = 0;
+    cls.lpfnWndProc = parentWindowProcess;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "Tab test parent class";
+    return RegisterClassA(&cls);
+}
+
+static HWND createParentWindow(void)
+{
+    if (!registerParentWindowClass())
+        return NULL;
+
+    return CreateWindowEx(0, "Tab test parent class",
+                          "Tab test parent window",
+                          WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                          WS_MAXIMIZEBOX | WS_VISIBLE,
+                          0, 0, 100, 100,
+                          GetDesktopWindow(), NULL, GetModuleHandleA(NULL), NULL);
+}
+
+struct subclass_info
+{
+    WNDPROC oldproc;
+};
+
+static LRESULT WINAPI tabSubclassProcess(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongA(hwnd, GWL_USERDATA);
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    /* do not log painting messages */
+    if (message != WM_PAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCPAINT &&
+        message != WM_NCHITTEST &&
+        message != WM_GETTEXT &&
+        message != WM_GETICON &&
+        message != WM_DEVICECHANGE)
+    {
+        trace("tab: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        if (defwndproc_counter) msg.flags |= defwinproc;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        add_message(sequences, TAB_SEQ_INDEX, &msg);
+    }
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static HWND createFilledTabControl(HWND parent_wnd, DWORD style, DWORD mask, INT nTabs)
 {
     HWND tabHandle;
     TCITEM tcNewTab;
+    struct subclass_info *info;
+    RECT rect;
     INT i;
+
+    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
+    if (!info)
+        return NULL;
+
+    GetClientRect(parent_wnd, &rect);
 
     tabHandle = CreateWindow (
         WC_TABCONTROLA,
         "TestTab",
         WS_CLIPSIBLINGS | WS_CLIPCHILDREN | TCS_FOCUSNEVER | style,
-        0, 0, 300, 100,
-        NULL, NULL, NULL, 0);
+        0, 0, rect.right, rect.bottom,
+        parent_wnd, NULL, NULL, 0);
 
     assert(tabHandle);
 
-    SetWindowLong(tabHandle, GWL_STYLE, WS_CLIPSIBLINGS | WS_CLIPCHILDREN | TCS_FOCUSNEVER | style);
-    SendMessage (tabHandle, WM_SETFONT, 0, (LPARAM) hFont);
+    info->oldproc = (WNDPROC)SetWindowLongA(tabHandle, GWL_WNDPROC, (LONG)tabSubclassProcess);
+    SetWindowLongA(tabHandle, GWL_USERDATA, (LONG)info);
 
     tcNewTab.mask = mask;
 
@@ -314,31 +595,65 @@ static void test_tab(INT nMinTabWidth)
 static void test_getters_setters(INT nTabs)
 {
     HWND hTab;
+    HWND parent_wnd;
     RECT rTab;
     INT nTabsRetrieved;
     INT rowCount;
 
-    hTab = createFilledTabControl(TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, nTabs);
+    parent_wnd = createParentWindow();
+    ok(parent_wnd != NULL, "Failed to create parent window!\n");
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, nTabs);
     ok(hTab != NULL, "Failed to create tab control\n");
 
+    if(!winetest_interactive)
+        ok_sequence(sequences, TAB_SEQ_INDEX, add_tab_to_parent,
+                    "Tab sequence, after adding tab control to parent", TRUE);
+    else
+        ok_sequence(sequences, TAB_SEQ_INDEX, add_tab_to_parent_interactive,
+                    "Tab sequence, after adding tab control to parent", TRUE);
+
+    if(!winetest_interactive)
+        ok_sequence(sequences, PARENT_SEQ_INDEX, add_tab_control_parent_seq,
+                    "Parent after sequence, adding tab control to parent", TRUE);
+    else
+        ok_sequence(sequences, PARENT_SEQ_INDEX, add_tab_control_parent_seq_interactive,
+                    "Parent after sequence, adding tab control to parent", TRUE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
     todo_wine{
         expect(DEFAULT_MIN_TAB_WIDTH, (int)SendMessage(hTab, TCM_SETMINTABWIDTH, 0, -1));
     }
+    ok_sequence(sequences, TAB_SEQ_INDEX, set_min_tab_width_seq, "Set minTabWidth test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Set minTabWidth test parent sequence", FALSE);
+
     /* Testing GetItemCount */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nTabsRetrieved = SendMessage(hTab, TCM_GETITEMCOUNT, 0, 0);
     expect(nTabs, nTabsRetrieved);
+    ok_sequence(sequences, TAB_SEQ_INDEX, get_item_count_seq, "Get itemCount test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Getset itemCount test parent sequence", FALSE);
 
     /* Testing GetRowCount */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
     rowCount = SendMessage(hTab, TCM_GETROWCOUNT, 0, 0);
     expect(1, rowCount);
+    ok_sequence(sequences, TAB_SEQ_INDEX, get_row_count_seq, "Get rowCount test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Get rowCount test parent sequence", FALSE);
 
     /* Testing GetItemRect */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
     ok(SendMessage(hTab, TCM_GETITEMRECT, 0, (LPARAM) &rTab), "GetItemRect failed.\n");
     CheckSize(hTab, TAB_DEFAULT_WIDTH, -1 , "Default Width");
+    ok_sequence(sequences, TAB_SEQ_INDEX, get_item_rect_seq, "Get itemRect test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Get itemRect test parent sequence", FALSE);
 
     /* Testing CurFocus */
     {
         INT focusIndex;
+
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
         /* Testing CurFocus with largest appropriate value */
         SendMessage(hTab, TCM_SETCURFOCUS, nTabs-1, 0);
@@ -357,16 +672,21 @@ static void test_getters_setters(INT nTabs)
         todo_wine{
             expect(-1, focusIndex);
         }
+
         SendMessage(hTab, TCM_SETCURFOCUS, nTabs+1, 0);
         focusIndex = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
         todo_wine{
             expect(1, focusIndex);
         }
+
+        ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_focus_seq, "Getset curFoc test sequence", FALSE);
     }
 
     /* Testing CurSel */
     {
         INT selectionIndex;
+
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
         /* Testing CurSel with largest appropriate value */
         selectionIndex = SendMessage(hTab, TCM_SETCURSEL, nTabs-1, 0);
@@ -392,12 +712,17 @@ static void test_getters_setters(INT nTabs)
         todo_wine{
             expect(1, selectionIndex);
         }
+
+        ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_sel_seq, "Getset curSel test sequence", FALSE);
+        ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Getset curSel test parent sequence", FALSE);
     }
 
     /* Testing ExtendedStyle */
     {
         DWORD prevExtendedStyle;
         DWORD extendedStyle;
+
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
         /* Testing Flat Seperators */
         extendedStyle = SendMessage(hTab, TCM_GETEXTENDEDSTYLE, 0, 0);
@@ -417,11 +742,16 @@ static void test_getters_setters(INT nTabs)
         todo_wine{
             expect(TCS_EX_REGISTERDROP, extendedStyle);
         }
+
+        ok_sequence(sequences, TAB_SEQ_INDEX, getset_extended_style_seq, "Getset extendedStyle test sequence", FALSE);
+        ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Getset extendedStyle test parent sequence", FALSE);
     }
 
     /* Testing UnicodeFormat */
     {
         INT unicodeFormat;
+
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
         unicodeFormat = SendMessage(hTab, TCM_SETUNICODEFORMAT, TRUE, 0);
         todo_wine{
@@ -437,12 +767,17 @@ static void test_getters_setters(INT nTabs)
 
         unicodeFormat = SendMessage(hTab, TCM_SETUNICODEFORMAT, TRUE, 0);
             expect(0, unicodeFormat);
+
+        ok_sequence(sequences, TAB_SEQ_INDEX, getset_unicode_format_seq, "Getset unicodeFormat test sequence", FALSE);
+        ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Getset unicodeFormat test parent sequence", FALSE);
     }
 
     /* Testing GetSet Item */
     {
         TCITEM tcItem;
         char szText[32] = "New Label";
+
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
         tcItem.mask = TCIF_TEXT;
         tcItem.pszText = &szText[0];
@@ -454,6 +789,9 @@ static void test_getters_setters(INT nTabs)
 
         ok ( SendMessage(hTab, TCM_GETITEM, 1, (LPARAM) &tcItem), "Getting item failed.\n");
         expect_str("Tab 2", tcItem.pszText);
+
+        ok_sequence(sequences, TAB_SEQ_INDEX, getset_item_seq, "Getset item test sequence", FALSE);
+        ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Getset item test parent sequence", FALSE);
     }
 
     /* Testing GetSet ToolTip */
@@ -461,15 +799,21 @@ static void test_getters_setters(INT nTabs)
         HWND toolTip;
         char toolTipText[32] = "ToolTip Text Test";
 
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
         toolTip = create_tooltip(hTab, toolTipText);
         SendMessage(hTab, TCM_SETTOOLTIPS, (LPARAM) toolTip, 0);
         ok (toolTip == (HWND) SendMessage(hTab,TCM_GETTOOLTIPS,0,0), "ToolTip was set incorrectly.\n");
 
         SendMessage(hTab, TCM_SETTOOLTIPS, (LPARAM) NULL, 0);
         ok (NULL  == (HWND) SendMessage(hTab,TCM_GETTOOLTIPS,0,0), "ToolTip was set incorrectly.\n");
+
+        ok_sequence(sequences, TAB_SEQ_INDEX, getset_tooltip_seq, "Getset tooltip test sequence", TRUE);
+        ok_sequence(sequences, PARENT_SEQ_INDEX, getset_tooltip_parent_seq, "Getset tooltip test parent sequence", TRUE);
     }
 
     DestroyWindow(hTab);
+    DestroyWindow(parent_wnd);
 }
 
 START_TEST(tab)
@@ -495,6 +839,8 @@ START_TEST(tab)
     test_tab(54);
     trace ("Testing with MinWidth set to 94\n");
     test_tab(94);
+
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* Testing getters and setters with 5 tabs */
     test_getters_setters(5);
