@@ -94,12 +94,16 @@ static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *ifac
     /* Overrider the IWineD3DResource Preload method */
     UINT i;
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
     TRACE("(%p) : About to load texture\n", This);
 
     IWineD3DVolumeTexture_BindTexture(iface);
 
     ENTER_GL();
+    if(!device->isInDraw) {
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    }
     /* If were dirty then reload the volumes */
     if(This->baseTexture.dirty) {
         for (i = 0; i < This->baseTexture.levels; i++) {

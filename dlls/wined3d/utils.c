@@ -810,7 +810,8 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
     get_src_and_opr_nvrc(stage, arg3, is_alpha, &tex_op_args.input[2],
             &tex_op_args.mapping[2], &tex_op_args.component_usage[2], texture_idx);
 
-    ENTER_GL();
+
+    /* This is called by a state handler which has the gl lock held and a context for the thread */
 
     switch(op)
     {
@@ -1082,7 +1083,6 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
 
     checkGLcall("set_tex_op_nvrc()\n");
 
-    LEAVE_GL();
 }
 
 static void get_src_and_opr(DWORD arg, BOOL is_alpha, GLenum* source, GLenum* operand) {
@@ -1160,7 +1160,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
 
         TRACE("Alpha?(%d), Stage:%d Op(%s), a1(%d), a2(%d), a3(%d)\n", isAlpha, Stage, debug_d3dtop(op), arg1, arg2, arg3);
 
-        ENTER_GL();
+        /* This is called by a state handler which has the gl lock held and a context for the thread */
 
         /* Note: Operations usually involve two ars, src0 and src1 and are operations of
            the form (a1 <operation> a2). However, some of the more complex operations
@@ -1681,7 +1681,6 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE4_NV);
             checkGLcall("GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE4_NV");
 
-            LEAVE_GL();
             return;
           }
         } /* GL_NV_texture_env_combine4 */
@@ -2148,7 +2147,6 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
                 break;
               default:
                 FIXME("Can't use COMBINE4 and COMBINE together, thisop=%s, otherop=%s, isAlpha(%d)\n", debug_d3dtop(op), debug_d3dtop(op2), isAlpha);
-                LEAVE_GL();
                 return;
               }
             }
@@ -2158,12 +2156,9 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE));
             checkGLcall("GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE)");
 
-            LEAVE_GL();
             return;
           }
         }
-
-        LEAVE_GL();
 
         /* After all the extensions, if still unhandled, report fixme */
         FIXME("Unhandled texture operation %s\n", debug_d3dtop(op));

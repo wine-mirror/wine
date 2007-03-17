@@ -146,6 +146,8 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
     ENTER_GL();
 
+    /* Does glXSwapBuffers need a glx context? I don't think so. Blt will activate its own context if needed */
+
     /* Render the cursor onto the back buffer, using our nifty directdraw blitting code :-) */
     if(This->wineD3DDevice->bCursorVisible && This->wineD3DDevice->cursorTexture) {
         IWineD3DSurfaceImpl cursor;

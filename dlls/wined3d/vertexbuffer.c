@@ -62,7 +62,10 @@ static ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface
     if (ref == 0) {
 
         if(This->vbo) {
+            IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
             ENTER_GL();
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
             GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
             checkGLcall("glDeleteBuffersARB");
             LEAVE_GL();
@@ -244,6 +247,7 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
 
 static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *) iface;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     BYTE *data;
     UINT start = 0, end = 0, stride = 0;
     BOOL declChanged = FALSE;
@@ -259,7 +263,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     }
 
     /* Reading the declaration makes only sense if the stateblock is finalized and the buffer bound to a stream */
-    if(This->resource.wineD3DDevice->isInDraw && This->bindCount > 0) {
+    if(device->isInDraw && This->bindCount > 0) {
         declChanged = IWineD3DVertexBufferImpl_FindDecl(This);
     } else if(This->Flags & VBFLAG_HASDESC) {
         /* Reuse the declaration stored in the buffer. It will most likely not change, and if it does
@@ -284,6 +288,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
         if(This->declChanges > VB_MAXDECLCHANGES) {
             FIXME("Too much declaration changes, stopping converting\n");
             ENTER_GL();
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
             GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
             checkGLcall("glDeleteBuffersARB");
             LEAVE_GL();
@@ -294,7 +299,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
              * to force a reload. This happens only once per changed vertexbuffer and should occur rather
              * rarely
              */
-            IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_STREAMSRC);
+            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
 
             return;
         }
@@ -337,6 +342,9 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
         TRACE("No conversion needed, locking directly into the VBO in future\n");
 
         ENTER_GL();
+        if(!device->isInDraw) {
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        }
         GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
         checkGLcall("glBindBufferARB");
         GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end-start, This->resource.allocatedMemory + start));
@@ -367,6 +375,9 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
                    This->strided.u.s.specular.dwType == WINED3DDECLTYPE_SHORT4 || This->strided.u.s.specular.dwType == WINED3DDECLTYPE_D3DCOLOR);
 
     ENTER_GL();
+    if(!device->isInDraw) {
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    }
     GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
     checkGLcall("glBindBufferARB");
     GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end - start, data));

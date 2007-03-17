@@ -104,11 +104,23 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
     unsigned int i,j;
     BOOL setGlTextureDesc = FALSE;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
     TRACE("(%p) : About to load texture: dirtified(%d)\n", This, This->baseTexture.dirty);
 
     if (This->baseTexture.textureName == 0)  setGlTextureDesc = TRUE;
 
+    /* We only have to activate a context for gl when we're not drawing. In most cases PreLoad will be called during draw
+     * and a context was activated at the beginning of drawPrimitive
+     */
+    if(!device->isInDraw) {
+        /* No danger of recursive calls, ActivateContext sets isInDraw to true when loading
+         * offscreen render targets into their texture
+         */
+        ENTER_GL();
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        LEAVE_GL();
+    }
     IWineD3DCubeTexture_BindTexture(iface);
 
     ENTER_GL();

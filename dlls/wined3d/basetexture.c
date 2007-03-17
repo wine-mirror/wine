@@ -96,9 +96,12 @@ ULONG WINAPI IWineD3DBaseTextureImpl_Release(IWineD3DBaseTexture *iface) {
 /* class static */
 void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
     TRACE("(%p) : textureName(%d)\n", This, This->baseTexture.textureName);
     if (This->baseTexture.textureName != 0) {
         ENTER_GL();
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         TRACE("(%p) : Deleting texture %d\n", This, This->baseTexture.textureName);
         glDeleteTextures(1, &This->baseTexture.textureName);
         LEAVE_GL();
@@ -236,7 +239,6 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
 
     textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
     ENTER_GL();
-
     /* Generate a texture name if we don't already have one */
     if (This->baseTexture.textureName == 0) {
         glGenTextures(1, &This->baseTexture.textureName);

@@ -60,12 +60,8 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
             TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p\n", This, This->glDescription.level,
                 This->glDescription.glFormat, This->glDescription.glType, This->resource.allocatedMemory);
 
-            ENTER_GL();
-
             GL_EXTCALL(glGetCompressedTexImageARB(This->glDescription.target, This->glDescription.level, This->resource.allocatedMemory));
             checkGLcall("glGetCompressedTexImageARB()");
-
-            LEAVE_GL();
         }
     } else {
         void *mem;
@@ -89,13 +85,9 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         TRACE("(%p) : Calling glGetTexImage level %d, format %#x, type %#x, data %p\n", This, This->glDescription.level,
                 This->glDescription.glFormat, This->glDescription.glType, mem);
 
-        ENTER_GL();
-
         glGetTexImage(This->glDescription.target, This->glDescription.level, This->glDescription.glFormat,
                 This->glDescription.glType, mem);
         checkGLcall("glGetTexImage()");
-
-        LEAVE_GL();
 
         if (This->Flags & SFLAG_NONPOW2) {
             LPBYTE src_data, dst_data;
@@ -258,6 +250,7 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
              * and the lastActiveRenderTarget member shouldn't matter
              */
             if(swapchain) {
+                ENTER_GL(); /* For ActivateContext */
                 if(swapchain->backBuffer && swapchain->backBuffer[0] != iface) {
                     TRACE("Activating primary back buffer\n");
                     ActivateContext(device, swapchain->backBuffer[0], CTXUSAGE_RESOURCELOAD);
@@ -272,6 +265,7 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
                      */
                     device->lastActiveRenderTarget = (IWineD3DSurface *) 0xdeadbabe;
                 }
+                LEAVE_GL();
             } else {
                 /* May happen during ddraw uninitialization */
                 TRACE("Render target set, but swapchain does not exist!\n");
@@ -281,6 +275,15 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
 
         if (This->glDescription.textureName != 0) { /* release the openGL texture.. */
             ENTER_GL();
+
+            /* Need a context to destroy the texture. Use the currently active render target, but only if
+             * the primary render target exists. Otherwise lastActiveRenderTarget is garbage, see above.
+             * When destroying the primary rt, Uninit3D will activate a context before doing anything
+             */
+            if(device->render_targets[0]) {
+                ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            }
+
             TRACE("Deleting texture %d\n", This->glDescription.textureName);
             glDeleteTextures(1, &This->glDescription.textureName);
             LEAVE_GL();
@@ -338,13 +341,11 @@ DWORD   WINAPI IWineD3DSurfaceImpl_GetPriority(IWineD3DSurface *iface) {
 }
 
 void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
-    /* TODO: re-write the way textures and managed,
-    *  use a 'opengl context manager' to manage RenderTarget surfaces
-    ** *********************************************************/
-
     /* TODO: check for locks */
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DBaseTexture *baseTexture = NULL;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
     TRACE("(%p)Checking to see if the container is a base texture\n", This);
     if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == WINED3D_OK) {
         TRACE("Passing to conatiner\n");
@@ -352,10 +353,12 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
         IWineD3DBaseTexture_Release(baseTexture);
     } else {
     TRACE("(%p) : About to load surface\n", This);
+
     ENTER_GL();
-#if 0 /* TODO: context manager support */
-     IWineD3DContextManager_PushState(This->contextManager, GL_TEXTURE_2D, ENABLED, NOW /* make sure the state is applied now */);
-#endif
+    if(!device->isInDraw) {
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    }
+
     glEnable(This->glDescription.target);/* make sure texture support is enabled in this context */
     if (!This->glDescription.level) {
         if (!This->glDescription.textureName) {
@@ -377,11 +380,6 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
        tmp = 0.9f;
         glPrioritizeTextures(1, &This->glDescription.textureName, &tmp);
     }
-    /* TODO: disable texture support, if it wastn't enabled when we entered. */
-#if 0 /* TODO: context manager support */
-     IWineD3DContextManager_PopState(This->contextManager, GL_TEXTURE_2D, DISABLED,DELAYED
-              /* we don't care when the state is disabled(if atall) */);
-#endif
     LEAVE_GL();
     }
     return;
@@ -768,24 +766,25 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         /* This path is for normal surfaces, offscreen render targets and everything else that is in a gl texture */
         TRACE("locking an ordinarary surface\n");
 
-        /* TODO: Make sure that *any* context is active for this thread. It is not important which context that is,
-         * nor that is has any special setup(CTXUSAGE_LOADRESOURCE is fine), but the code below needs a context.
-         * A context is guaranteed to be there in a single threaded environment, but not with multithreading
-         */
         if (0 != This->glDescription.textureName) {
             /* Now I have to copy thing bits back */
 
+            ENTER_GL();
+
+            if(myDevice->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
+                ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            }
+
             /* Make sure that a proper texture unit is selected, bind the texture and dirtify the sampler to restore the texture on the next draw */
             if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                ENTER_GL();
                 GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
                 checkGLcall("glActiveTextureARB");
-                LEAVE_GL();
             }
             IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
             IWineD3DSurface_PreLoad(iface);
 
             surface_download_data(This);
+            LEAVE_GL();
         }
 
         /* The local copy is now up to date to the opengl one because a full download was done */

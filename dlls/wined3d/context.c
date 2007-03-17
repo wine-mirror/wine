@@ -706,6 +706,14 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
             }
         }
         if (readTexture) {
+            BOOL oldInDraw = This->isInDraw;
+
+            /* PreLoad requires a context to load the texture, thus it will call ActivateContext.
+             * Set the isInDraw to true to signal PreLoad that it has a context. Will be tricky
+             * when using offscreen rendering with multithreading
+             */
+            This->isInDraw = TRUE;
+
             /* Do that before switching the context:
              * Read the back buffer of the old drawable into the destination texture
              */
@@ -713,6 +721,8 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
             /* Assume that the drawable will be modified by some other things now */
             ((IWineD3DSurfaceImpl *) This->lastActiveRenderTarget)->Flags &= ~SFLAG_INDRAWABLE;
+
+            This->isInDraw = oldInDraw;
         }
         This->lastActiveRenderTarget = target;
         if(oldRenderOffscreen != This->render_offscreen && This->depth_copy_state != WINED3D_DCS_NO_COPY) {

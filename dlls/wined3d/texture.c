@@ -97,10 +97,20 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
     unsigned int i;
     BOOL setGlTextureDesc = FALSE;
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
     TRACE("(%p) : About to load texture\n", This);
 
     if (This->baseTexture.textureName == 0)  setGlTextureDesc = TRUE;
+
+    if(!device->isInDraw) {
+        /* ActivateContext sets isInDraw to TRUE when loading a pbuffer into a texture, thus no danger of
+         * recursive calls
+         */
+        ENTER_GL();
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        LEAVE_GL();
+    }
 
     IWineD3DTexture_BindTexture(iface);
     ENTER_GL();
