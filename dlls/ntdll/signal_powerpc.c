@@ -167,7 +167,7 @@ static wine_signal_handler handlers[256];
 /***********************************************************************
  *           dispatch_signal
  */
-inline static int dispatch_signal(unsigned int sig)
+static inline int dispatch_signal(unsigned int sig)
 {
     if (handlers[sig] == NULL) return 0;
     return handlers[sig](sig);
@@ -239,7 +239,7 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
  *
  * Set the FPU context from a sigcontext.
  */
-inline static void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
+static inline void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
 #define C(x)   context->Fpr##x = FLOAT_sig(x,sigcontext)
         C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
@@ -256,7 +256,7 @@ inline static void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
  *
  * Restore the FPU context to a sigcontext.
  */
-inline static void restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
+static inline void restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
 #define C(x)  FLOAT_sig(x,sigcontext) = context->Fpr##x
         C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);

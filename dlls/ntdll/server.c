@@ -283,7 +283,7 @@ static void read_reply_data( void *buffer, size_t size )
  *
  * Wait for a reply from the server.
  */
-inline static void wait_reply( struct __server_request_info *req )
+static inline void wait_reply( struct __server_request_info *req )
 {
     read_reply_data( &req->u.reply, sizeof(req->u.reply) );
     if (req->u.reply.reply_header.reply_size)
@@ -473,7 +473,7 @@ struct fd_cache_entry
 static struct fd_cache_entry *fd_cache[FD_CACHE_ENTRIES];
 static struct fd_cache_entry fd_cache_initial_block[FD_CACHE_BLOCK_SIZE];
 
-inline static unsigned int handle_to_index( obj_handle_t handle, unsigned int *entry )
+static inline unsigned int handle_to_index( obj_handle_t handle, unsigned int *entry )
 {
     unsigned long idx = ((unsigned long)handle >> 2) - 1;
     *entry = idx / FD_CACHE_BLOCK_SIZE;

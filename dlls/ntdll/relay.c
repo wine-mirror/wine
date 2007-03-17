@@ -83,14 +83,14 @@ static const WCHAR **debug_from_snoop_includelist;
 static BOOL init_done;
 
 /* compare an ASCII and a Unicode string without depending on the current codepage */
-inline static int strcmpAW( const char *strA, const WCHAR *strW )
+static inline int strcmpAW( const char *strA, const WCHAR *strW )
 {
     while (*strA && ((unsigned char)*strA == *strW)) { strA++; strW++; }
     return (unsigned char)*strA - *strW;
 }
 
 /* compare an ASCII and a Unicode string without depending on the current codepage */
-inline static int strncmpiAW( const char *strA, const WCHAR *strW, int n )
+static inline int strncmpiAW( const char *strA, const WCHAR *strW, int n )
 {
     int ret = 0;
     for ( ; n > 0; n--, strA++, strW++)

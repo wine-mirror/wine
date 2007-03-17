@@ -54,7 +54,7 @@ static wine_signal_handler handlers[256];
 /***********************************************************************
  *           dispatch_signal
  */
-inline static int dispatch_signal(unsigned int sig)
+static inline int dispatch_signal(unsigned int sig)
 {
     if (handlers[sig] == NULL) return 0;
     return handlers[sig](sig);

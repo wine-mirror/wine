@@ -352,7 +352,7 @@ enum i386_trap_code
 /***********************************************************************
  *           dispatch_signal
  */
-inline static int dispatch_signal(unsigned int sig)
+static inline int dispatch_signal(unsigned int sig)
 {
     if (handlers[sig] == NULL) return 0;
     return handlers[sig](sig);
@@ -539,7 +539,7 @@ typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
  *
  * Handler initialization when the full context is not needed.
  */
-inline static void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *gs )
+static inline void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *gs )
 {
     void *stack = (void *)(ESP_sig(sigcontext) & ~3);
     TEB *teb = get_current_teb();
@@ -596,7 +596,7 @@ inline static void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
  *
  * Save the thread FPU context.
  */
-inline static void save_fpu( CONTEXT *context )
+static inline void save_fpu( CONTEXT *context )
 {
 #ifdef __GNUC__
     context->ContextFlags |= CONTEXT_FLOATING_POINT;
@@ -610,7 +610,7 @@ inline static void save_fpu( CONTEXT *context )
  *
  * Restore the FPU context to a sigcontext.
  */
-inline static void restore_fpu( const CONTEXT *context )
+static inline void restore_fpu( const CONTEXT *context )
 {
     FLOATING_SAVE_AREA float_status = context->FloatSave;
     /* reset the current interrupt status */
@@ -626,7 +626,7 @@ inline static void restore_fpu( const CONTEXT *context )
  *
  * Build a context structure from the signal info.
  */
-inline static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext, WORD fs, WORD gs )
+static inline void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext, WORD fs, WORD gs )
 {
     struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
 
@@ -674,7 +674,7 @@ inline static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext,
  *
  * Restore the signal info from the context.
  */
-inline static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
+static inline void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 {
     struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
 

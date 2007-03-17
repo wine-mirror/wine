@@ -61,12 +61,12 @@ struct work_item
     PVOID context;
 };
 
-inline static LONG interlocked_inc( PLONG dest )
+static inline LONG interlocked_inc( PLONG dest )
 {
     return interlocked_xchg_add( (int *)dest, 1 ) + 1;
 }
 
-inline static LONG interlocked_dec( PLONG dest )
+static inline LONG interlocked_dec( PLONG dest )
 {
     return interlocked_xchg_add( (int *)dest, -1 ) - 1;
 }
