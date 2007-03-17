@@ -231,19 +231,10 @@ static inline LRESULT TAB_GetCurSel (const TAB_INFO *infoPtr)
 }
 
 /* RETURNS
- *   the index of the tab item that has the focus
- * NOTE
- *   we have not to return negative value
- * TODO
- *   test for windows */
+ *   the index of the tab item that has the focus. */
 static inline LRESULT
 TAB_GetCurFocus (const TAB_INFO *infoPtr)
 {
-    if (infoPtr->uFocus<0)
-    {
-        FIXME("we have not to return negative value\n");
-        return 0;
-    }
     return infoPtr->uFocus;
 }
 
@@ -255,10 +246,13 @@ static inline LRESULT TAB_GetToolTips (const TAB_INFO *infoPtr)
 
 static inline LRESULT TAB_SetCurSel (TAB_INFO *infoPtr, INT iItem)
 {
-  INT prevItem = -1;
+  INT prevItem = infoPtr->iSelected;
 
-  if (iItem >= 0 && iItem < infoPtr->uNumItem) {
-      prevItem=infoPtr->iSelected;
+  if (iItem < 0)
+      infoPtr->iSelected=-1;
+  else if (iItem >= infoPtr->uNumItem)
+      return -1;
+  else {
       if (infoPtr->iSelected != iItem) {
           infoPtr->iSelected=iItem;
           TAB_EnsureSelectionVisible(infoPtr);
@@ -270,23 +264,25 @@ static inline LRESULT TAB_SetCurSel (TAB_INFO *infoPtr, INT iItem)
 
 static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
 {
-  if (iItem < 0 || iItem >= infoPtr->uNumItem) return 0;
-
-  if (GetWindowLongW(infoPtr->hwnd, GWL_STYLE) & TCS_BUTTONS) {
-    FIXME("Should set input focus\n");
-  } else {
-    int oldFocus = infoPtr->uFocus;
-    if (infoPtr->iSelected != iItem || oldFocus == -1 ) {
-      infoPtr->uFocus = iItem;
-      if (oldFocus != -1) {
-        if (!TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING))  {
-          infoPtr->iSelected = iItem;
-          TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
+  if (iItem < 0)
+      infoPtr->uFocus = -1;
+  else if (iItem < infoPtr->uNumItem) {
+    if (GetWindowLongW(infoPtr->hwnd, GWL_STYLE) & TCS_BUTTONS) {
+      FIXME("Should set input focus\n");
+    } else {
+      int oldFocus = infoPtr->uFocus;
+      if (infoPtr->iSelected != iItem || oldFocus == -1 ) {
+        infoPtr->uFocus = iItem;
+        if (oldFocus != -1) {
+          if (!TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING))  {
+            infoPtr->iSelected = iItem;
+            TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
+          }
+          else
+            infoPtr->iSelected = iItem;
+          TAB_EnsureSelectionVisible(infoPtr);
+          TAB_InvalidateTabArea(infoPtr);
         }
-        else
-          infoPtr->iSelected = iItem;
-        TAB_EnsureSelectionVisible(infoPtr);
-        TAB_InvalidateTabArea(infoPtr);
       }
     }
   }

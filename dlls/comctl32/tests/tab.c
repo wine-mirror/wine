@@ -663,9 +663,7 @@ static void test_getters_setters(INT nTabs)
         /* Testing CurFocus with negative value */
         SendMessage(hTab, TCM_SETCURFOCUS, -10, 0);
         focusIndex = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
-        todo_wine{
             expect(-1, focusIndex);
-        }
 
         /* Testing CurFocus with value larger than number of tabs */
         focusIndex = SendMessage(hTab, TCM_SETCURSEL, 1, 0);
@@ -697,15 +695,12 @@ static void test_getters_setters(INT nTabs)
         /* Testing CurSel with negative value */
         SendMessage(hTab, TCM_SETCURSEL, -10, 0);
         selectionIndex = SendMessage(hTab, TCM_GETCURSEL, 0, 0);
-        todo_wine{
             expect(-1, selectionIndex);
-        }
 
         /* Testing CurSel with value larger than number of tabs */
         selectionIndex = SendMessage(hTab, TCM_SETCURSEL, 1, 0);
-        todo_wine{
             expect(-1, selectionIndex);
-        }
+
         selectionIndex = SendMessage(hTab, TCM_SETCURSEL, nTabs+1, 0);
             expect(-1, selectionIndex);
         selectionIndex = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
