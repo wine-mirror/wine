@@ -65,6 +65,9 @@ static BOOL  (WINAPI *pAddPortUI)(PCWSTR, HWND, PCWSTR, PWSTR *);
 static BOOL  (WINAPI *pConfigurePortUI)(PCWSTR, HWND, PCWSTR);
 static BOOL  (WINAPI *pDeletePortUI)(PCWSTR, HWND, PCWSTR);
 
+static HANDLE hXcv_noaccess;
+
+/* ########################### */
 
 static const WCHAR cmd_AddPortW[] = {'A','d','d','P','o','r','t',0};
 static const WCHAR cmd_ConfigureLPTPortCommandOKW[] = {'C','o','n','f','i','g','u','r','e',
@@ -345,7 +348,7 @@ static void test_InitializePrintMonitor(void)
 static void test_XcvClosePort(void)
 {
     DWORD   res;
-    HANDLE hXcv;
+    HANDLE hXcv2;
 
 
     if (0)
@@ -357,19 +360,19 @@ static void test_XcvClosePort(void)
 
 
     SetLastError(0xdeadbeef);
-    hXcv = (HANDLE) 0xdeadbeef;
-    res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
-    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
+    hXcv2 = (HANDLE) 0xdeadbeef;
+    res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv2);
+    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv2);
 
     if (res) {
         SetLastError(0xdeadbeef);
-        res = pXcvClosePort(hXcv);
+        res = pXcvClosePort(hXcv2);
         ok( res, "returned %d with %u (expected '!= 0')\n", res, GetLastError());
 
         if (0)
         {
         /* test for "Double Free": crash with native localspl.dll (w2k+xp) */
-        res = pXcvClosePort(hXcv);
+        res = pXcvClosePort(hXcv2);
         }
     }
 }
@@ -797,22 +800,15 @@ static void test_XcvDataPort_MonitorUI(void)
 
 
     /* small check without access-rights: */
-    hXcv = (HANDLE) 0xdeadbeef;
-    SetLastError(0xdeadbeef);
-    res = pXcvOpenPort(emptyW, 0, &hXcv);
-    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
-    if (!res) return;
+    if (!hXcv_noaccess) return;
 
     /* The ACCESS_MASK is ignored for "MonitorUI" */
     memset(buffer, 0, len);
     needed = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, buffer, sizeof(buffer), &needed);
+    res = pXcvDataPort(hXcv_noaccess, cmd_MonitorUIW, NULL, 0, buffer, sizeof(buffer), &needed);
     ok( res == ERROR_SUCCESS, "returned %d with %u and 0x%x "
         "(expected 'ERROR_SUCCESS')\n", res, GetLastError(), needed);
-
-    pXcvClosePort(hXcv);
-
 }
 
 /* ########################### */
@@ -956,19 +952,13 @@ static void test_XcvDataPort_PortIsValid(void)
 
 
     /* small check without access-rights: */
-    hXcv = (HANDLE) 0xdeadbeef;
-    SetLastError(0xdeadbeef);
-    res = pXcvOpenPort(emptyW, 0, &hXcv);
-    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
-    if (!res) return;
+    if (!hXcv_noaccess) return;
 
     /* The ACCESS_MASK from XcvOpenPort is ignored in "PortIsValid" */
     needed = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    res = pXcvDataPort(hXcv, cmd_PortIsValidW, (PBYTE) portname_lpt1W, sizeof(portname_lpt1W), NULL, 0, &needed);
+    res = pXcvDataPort(hXcv_noaccess, cmd_PortIsValidW, (PBYTE) portname_lpt1W, sizeof(portname_lpt1W), NULL, 0, &needed);
     ok( res == ERROR_SUCCESS, "returned %d with %u (expected ERROR_SUCCESS)\n", res, GetLastError());
-
-    pXcvClosePort(hXcv);
 
 }
 
@@ -977,45 +967,45 @@ static void test_XcvDataPort_PortIsValid(void)
 static void test_XcvOpenPort(void)
 {
     DWORD   res;
-    HANDLE  hXcv;
+    HANDLE  hXcv2;
 
 
     if (0)
     {
     /* crash with native localspl.dll (w2k+xp) */
-    res = pXcvOpenPort(NULL, SERVER_ACCESS_ADMINISTER, &hXcv);
+    res = pXcvOpenPort(NULL, SERVER_ACCESS_ADMINISTER, &hXcv2);
     res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, NULL);
     }
 
 
     /* The returned handle is the result from a previous "spoolss.dll,DllAllocSplMem" */
     SetLastError(0xdeadbeef);
-    hXcv = (HANDLE) 0xdeadbeef;
-    res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
-    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
-    if (res) pXcvClosePort(hXcv);
+    hXcv2 = (HANDLE) 0xdeadbeef;
+    res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv2);
+    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv2);
+    if (res) pXcvClosePort(hXcv2);
 
 
     /* The ACCESS_MASK is not checked in XcvOpenPort */
     SetLastError(0xdeadbeef);
-    hXcv = (HANDLE) 0xdeadbeef;
-    res = pXcvOpenPort(emptyW, 0, &hXcv);
-    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
-    if (res) pXcvClosePort(hXcv);
+    hXcv2 = (HANDLE) 0xdeadbeef;
+    res = pXcvOpenPort(emptyW, 0, &hXcv2);
+    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv2);
+    if (res) pXcvClosePort(hXcv2);
 
 
     /* A copy of pszObject is saved in the Memory-Block */
     SetLastError(0xdeadbeef);
-    hXcv = (HANDLE) 0xdeadbeef;
-    res = pXcvOpenPort(portname_lpt1W, SERVER_ALL_ACCESS, &hXcv);
-    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
-    if (res) pXcvClosePort(hXcv);
+    hXcv2 = (HANDLE) 0xdeadbeef;
+    res = pXcvOpenPort(portname_lpt1W, SERVER_ALL_ACCESS, &hXcv2);
+    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv2);
+    if (res) pXcvClosePort(hXcv2);
 
     SetLastError(0xdeadbeef);
-    hXcv = (HANDLE) 0xdeadbeef;
-    res = pXcvOpenPort(portname_fileW, SERVER_ALL_ACCESS, &hXcv);
-    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
-    if (res) pXcvClosePort(hXcv);
+    hXcv2 = (HANDLE) 0xdeadbeef;
+    res = pXcvOpenPort(portname_fileW, SERVER_ALL_ACCESS, &hXcv2);
+    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv2);
+    if (res) pXcvClosePort(hXcv2);
 
 }
 
@@ -1084,6 +1074,12 @@ START_TEST(localmon)
         GET_MONITOR_FUNC(XcvOpenPort);
         GET_MONITOR_FUNC(XcvDataPort);
         GET_MONITOR_FUNC(XcvClosePort);
+
+        if ((pXcvOpenPort) && (pXcvDataPort) && (pXcvClosePort)) {
+            SetLastError(0xdeadbeef);
+            res = pXcvOpenPort(emptyW, 0, &hXcv_noaccess);
+            ok(res, "hXcv_noaccess: %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv_noaccess);
+        }
     }
 
     if ((!pInitializePrintMonitorUI) && (pXcvOpenPort) && (pXcvDataPort) && (pXcvClosePort)) {
@@ -1137,6 +1133,7 @@ START_TEST(localmon)
         test_XcvDataPort_PortIsValid();
         test_XcvOpenPort();
     }
+    if (hXcv_noaccess) pXcvClosePort(hXcv_noaccess);
 
     /* Cleanup our temporary file */
     DeleteFileW(tempfileW);
