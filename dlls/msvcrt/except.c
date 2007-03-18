@@ -234,7 +234,7 @@ int CDECL _except_handler3(PEXCEPTION_RECORD rec,
     }
   }
 #else
-  TRACE("exception %lx flags=%lx at %p handler=%p %p %p stub\n",
+  FIXME("exception %lx flags=%lx at %p handler=%p %p %p stub\n",
         rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
         frame->handler, context, dispatcher);
 #endif
