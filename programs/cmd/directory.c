@@ -64,6 +64,7 @@ static DISPLAYTIME dirTime;
 static DISPLAYORDER dirOrder;
 static BOOL orderReverse, orderGroupDirs, orderGroupDirsReverse, orderByCol;
 static BOOL seperator;
+static ULONG showattrs, attrsbits;
 
 /*****************************************************************************
  * WCMD_directory
@@ -107,6 +108,8 @@ void WCMD_directory (void) {
   orderReverse = FALSE;
   orderGroupDirs = FALSE;
   orderGroupDirsReverse = FALSE;
+  showattrs  = 0;
+  attrsbits  = 0;
 
   /* Handle args - Loop through so right most is the effective one */
   /* Note: /- appears to be a negate rather than an off, eg. dir
@@ -188,6 +191,45 @@ void WCMD_directory (void) {
                 p++;
               }
               p = p - 1; /* So when step on, move to '/' */
+              break;
+    case 'A': p = p + 1;
+              showattrs = 0;
+              attrsbits = 0;
+              if (*p==':') p++;  /* Skip optional : */
+              while (*p && *p != '/') {
+                BOOL anegate = FALSE;
+                ULONG mask;
+
+                /* Note /A: - options are 'offs' not toggles */
+                if (*p=='-') {
+                  anegate = TRUE;
+                  p++;
+                }
+
+                WINE_TRACE("Processing subparm '%c' (in %s)\n", *p, quals);
+                switch (*p) {
+                case 'D': mask = FILE_ATTRIBUTE_DIRECTORY; break;
+                case 'H': mask = FILE_ATTRIBUTE_HIDDEN;    break;
+                case 'S': mask = FILE_ATTRIBUTE_SYSTEM;    break;
+                case 'R': mask = FILE_ATTRIBUTE_READONLY;  break;
+                case 'A': mask = FILE_ATTRIBUTE_ARCHIVE;   break;
+                default:
+                    SetLastError(ERROR_INVALID_PARAMETER);
+                    WCMD_print_error();
+                    return;
+                }
+
+                /* Keep running list of bits we care about */
+                attrsbits |= mask;
+
+                /* Mask shows what MUST be in the bits we care about */
+                if (anegate) showattrs = showattrs & ~mask;
+                else showattrs |= mask;
+
+                p++;
+              }
+              p = p - 1; /* So when step on, move to '/' */
+              WINE_TRACE("Result: showattrs %x, bits %x\n", showattrs, attrsbits);
               break;
     default:
               SetLastError(ERROR_INVALID_PARAMETER);
@@ -313,6 +355,9 @@ void WCMD_list_directory (char *search_path, int level) {
     return;
   }
   do {
+    /* Skip any which are filtered out by attribute */
+    if (((fd+entry_count)->dwFileAttributes & attrsbits) != showattrs) continue;
+
     entry_count++;
 
     /* Keep running track of longest filename for wide output */
@@ -330,6 +375,14 @@ void WCMD_list_directory (char *search_path, int level) {
     }
   } while (FindNextFile(hff, (fd+entry_count)) != 0);
   FindClose (hff);
+
+  /* Handle case where everything is filtered out */
+  if (entry_count == 0) {
+    SetLastError (ERROR_FILE_NOT_FOUND);
+    WCMD_print_error ();
+    HeapFree(GetProcessHeap(),0,fd);
+    return;
+  }
 
   /* Sort the list of files */
   qsort (fd, entry_count, sizeof(WIN32_FIND_DATA), WCMD_dir_sort);
