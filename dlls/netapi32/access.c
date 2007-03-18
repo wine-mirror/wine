@@ -91,7 +91,7 @@ static BOOL NETAPI_IsKnownUser(LPCWSTR UserName)
 #define NETAPI_ForceKnownUser(UserName, FailureCode) \
     if (!NETAPI_IsKnownUser(UserName)) \
     { \
-        FIXME("Can't find information for user %s\n", \
+        TRACE("Can't find information for user %s\n", \
               debugstr_w(UserName)); \
         return FailureCode; \
     }
@@ -296,7 +296,7 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
         return NERR_InternalError;
     }
     default:
-        ERR("Invalid level %d is specified\n", level);
+        TRACE("Invalid level %d is specified\n", level);
         return ERROR_INVALID_LEVEL;
     }
     return NERR_Success;
