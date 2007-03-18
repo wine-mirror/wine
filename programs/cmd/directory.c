@@ -82,6 +82,8 @@ void WCMD_directory (void) {
   char *p;
   char string[MAXSTRING];
 
+  errorlevel = 0;
+
   /* Prefill Quals with (uppercased) DIRCMD env var */
   if (GetEnvironmentVariable ("DIRCMD", string, sizeof(string))) {
     p = string;
@@ -167,6 +169,7 @@ void WCMD_directory (void) {
               } else {
                 SetLastError(ERROR_INVALID_PARAMETER);
                 WCMD_print_error();
+                errorlevel = 1;
                 return;
               }
               break;
@@ -186,6 +189,7 @@ void WCMD_directory (void) {
                 default:
                     SetLastError(ERROR_INVALID_PARAMETER);
                     WCMD_print_error();
+                    errorlevel = 1;
                     return;
                 }
                 p++;
@@ -216,6 +220,7 @@ void WCMD_directory (void) {
                 default:
                     SetLastError(ERROR_INVALID_PARAMETER);
                     WCMD_print_error();
+                    errorlevel = 1;
                     return;
                 }
 
@@ -234,6 +239,7 @@ void WCMD_directory (void) {
     default:
               SetLastError(ERROR_INVALID_PARAMETER);
               WCMD_print_error();
+              errorlevel = 1;
               return;
     }
     p = p + 1;
@@ -260,6 +266,7 @@ void WCMD_directory (void) {
   if (!status) {
     WCMD_print_error();
     if (paged_mode) WCMD_leave_paged_mode();
+    errorlevel = 1;
     return;
   }
   lstrcpyn (drive, path, 3);
@@ -268,6 +275,7 @@ void WCMD_directory (void) {
      status = WCMD_volume (0, drive);
      if (!status) {
          if (paged_mode) WCMD_leave_paged_mode();
+       errorlevel = 1;
        return;
      }
   }
@@ -352,6 +360,7 @@ void WCMD_list_directory (char *search_path, int level) {
     SetLastError (ERROR_FILE_NOT_FOUND);
     WCMD_print_error ();
     HeapFree(GetProcessHeap(),0,fd);
+    errorlevel = 1;
     return;
   }
   do {
@@ -371,7 +380,8 @@ void WCMD_list_directory (char *search_path, int level) {
     if (fd == NULL) {
       FindClose (hff);
       WCMD_output ("Memory Allocation Error");
-       return;
+      errorlevel = 1;
+      return;
     }
   } while (FindNextFile(hff, (fd+entry_count)) != 0);
   FindClose (hff);
@@ -381,6 +391,7 @@ void WCMD_list_directory (char *search_path, int level) {
     SetLastError (ERROR_FILE_NOT_FOUND);
     WCMD_print_error ();
     HeapFree(GetProcessHeap(),0,fd);
+    errorlevel = 1;
     return;
   }
 
