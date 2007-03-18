@@ -89,6 +89,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
 {
     HWND tray;
     COPYDATASTRUCT cds;
+    char *buffer = NULL;
 
     TRACE("dwMessage = %d, nid->cbSize=%d\n", dwMessage, nid->cbSize);
 
@@ -102,7 +103,6 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     if (nid->uFlags & NIF_ICON)
     {
         ICONINFO iconinfo;
-        char *buffer;
         BITMAP bmMask;
         BITMAP bmColour;
         LONG cbMaskBits;
@@ -156,8 +156,7 @@ noicon:
 
     /* FIXME: if statement only needed because we don't support interprocess
      * icon handles */
-    if (nid->uFlags & NIF_ICON)
-        HeapFree(GetProcessHeap(), 0, cds.lpData);
+    HeapFree(GetProcessHeap(), 0, buffer);
 
     return TRUE;
 }
