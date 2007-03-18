@@ -424,7 +424,6 @@ static void ACCESS_QueryGuestDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD p
 }
 
 /************************************************************
- *                NetQueryDisplayInformation  (NETAPI32.@)
  * Copies NET_DISPLAY_USER record.
  */
 static void ACCESS_CopyDisplayUser(PNET_DISPLAY_USER dest, LPWSTR *dest_buf,
