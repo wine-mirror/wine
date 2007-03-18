@@ -88,14 +88,6 @@ static BOOL NETAPI_IsKnownUser(LPCWSTR UserName)
     return Result;
 }
 
-#define NETAPI_ForceKnownUser(UserName, FailureCode) \
-    if (!NETAPI_IsKnownUser(UserName)) \
-    { \
-        TRACE("Can't find information for user %s\n", \
-              debugstr_w(UserName)); \
-        return FailureCode; \
-    }
-
 /************************************************************
  *                NetUserAdd (NETAPI32.@)
  */
@@ -152,7 +144,12 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
     if (status != NERR_Success)
         return status;
     NETAPI_ForceLocalComputer(servername, NERR_InvalidComputer);
-    NETAPI_ForceKnownUser(username, NERR_UserNotFound);
+
+    if(!NETAPI_IsKnownUser(username))
+    {
+        TRACE("User %s is unknown.\n", debugstr_w(username));
+        return NERR_UserNotFound;
+    }
 
     switch (level)
     {
