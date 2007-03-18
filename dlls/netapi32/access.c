@@ -553,7 +553,7 @@ NetQueryDisplayInformation(
     }
 
     default:
-        ERR("Invalid level %d is specified\n", Level);
+        TRACE("Invalid level %d is specified\n", Level);
         return ERROR_INVALID_LEVEL;
     }
     return NERR_Success;
@@ -690,7 +690,7 @@ NET_API_STATUS WINAPI NetUserModalsGet(
             *pbuffer = NULL;
             return NERR_InternalError;
         default:
-            WARN("Invalid level %d is specified\n", level);
+            TRACE("Invalid level %d is specified\n", level);
             *pbuffer = NULL;
             return ERROR_INVALID_LEVEL;
     }
