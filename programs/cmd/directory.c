@@ -63,7 +63,7 @@ static ULONGLONG byte_total;
 static DISPLAYTIME dirTime;
 static DISPLAYORDER dirOrder;
 static BOOL orderReverse, orderGroupDirs, orderGroupDirsReverse, orderByCol;
-static BOOL noseperator;
+static BOOL seperator;
 
 /*****************************************************************************
  * WCMD_directory
@@ -79,63 +79,122 @@ void WCMD_directory (void) {
   ULARGE_INTEGER avail, total, free;
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   char *p;
+  char string[MAXSTRING];
+
+  /* Prefill Quals with (uppercased) DIRCMD env var */
+  if (GetEnvironmentVariable ("DIRCMD", string, sizeof(string))) {
+    p = string;
+    while ( (*p = toupper(*p)) ) ++p;
+    strcat(string,quals);
+    strcpy(quals, string);
+  }
 
   byte_total = 0;
   file_total = dir_total = 0;
+
+  /* Initialize all flags to their defaults as if no DIRCMD or quals */
+  paged_mode = FALSE;
+  recurse    = FALSE;
+  wide       = FALSE;
+  bare       = FALSE;
+  lower      = FALSE;
+  shortname  = FALSE;
+  usernames  = FALSE;
+  orderByCol = FALSE;
+  seperator  = TRUE;
   dirTime = Written;
   dirOrder = Name;
   orderReverse = FALSE;
   orderGroupDirs = FALSE;
   orderGroupDirsReverse = FALSE;
 
-  /* Handle args */
-  paged_mode = (strstr(quals, "/P") != NULL);
-  recurse    = (strstr(quals, "/S") != NULL);
-  wide       = (strstr(quals, "/W") != NULL);
-  bare       = (strstr(quals, "/B") != NULL);
-  lower      = (strstr(quals, "/L") != NULL);
-  shortname  = (strstr(quals, "/X") != NULL);
-  usernames  = (strstr(quals, "/Q") != NULL);
-  orderByCol = (strstr(quals, "/D") != NULL);
-  noseperator= (strstr(quals, "/-C") != NULL);
+  /* Handle args - Loop through so right most is the effective one */
+  /* Note: /- appears to be a negate rather than an off, eg. dir
+           /-W is wide, or dir /w /-w /-w is also wide             */
+  p = quals;
+  while (*p && (*p=='/' || *p==' ')) {
+    BOOL negate = FALSE;
+    if (*p++==' ') continue;  /* Skip / and blanks introduced through DIRCMD */
 
-  if ((p = strstr(quals, "/T")) != NULL) {
-    p = p + 2;
-    if (*p==':') p++;  /* Skip optional : */
-
-    if (*p == 'A') dirTime = Access;
-    else if (*p == 'C') dirTime = Creation;
-    else if (*p == 'W') dirTime = Written;
-
-    /* Support /T and /T: with no parms, default to written */
-    else if (*p == '/') dirTime = Written;
-    else {
-      SetLastError(ERROR_INVALID_PARAMETER);
-      WCMD_print_error();
-      return;
-    }
-  }
-
-  if ((p = strstr(quals, "/O")) != NULL) {
-    p = p + 2;
-    if (*p==':') p++;  /* Skip optional : */
-    while (*p && *p != '/') {
-      switch (*p) {
-      case 'N': dirOrder = Name;       break;
-      case 'E': dirOrder = Extension;  break;
-      case 'S': dirOrder = Size;       break;
-      case 'D': dirOrder = Date;       break;
-      case '-': if (*(p+1)=='G') orderGroupDirsReverse=TRUE;
-                else orderReverse = TRUE;
-                break;
-      case 'G': orderGroupDirs = TRUE; break;
-      default:
-          SetLastError(ERROR_INVALID_PARAMETER);
-          WCMD_print_error();
-          return;
-      }
+    if (*p=='-') {
+      negate = TRUE;
       p++;
     }
+
+    WINE_TRACE("Processing arg '%c' (in %s)\n", *p, quals);
+    switch (*p) {
+    case 'P': if (negate) paged_mode = !paged_mode;
+              else paged_mode = TRUE;
+              break;
+    case 'S': if (negate) recurse = !recurse;
+              else recurse = TRUE;
+              break;
+    case 'W': if (negate) wide = !wide;
+              else wide = TRUE;
+              break;
+    case 'B': if (negate) bare = !bare;
+              else bare = TRUE;
+              break;
+    case 'L': if (negate) lower = !lower;
+              else lower = TRUE;
+              break;
+    case 'X': if (negate) shortname = !shortname;
+              else shortname = TRUE;
+              break;
+    case 'Q': if (negate) usernames = !usernames;
+              else usernames = TRUE;
+              break;
+    case 'D': if (negate) orderByCol = !orderByCol;
+              else orderByCol = TRUE;
+              break;
+    case 'C': if (negate) seperator = !seperator;
+              else seperator = TRUE;
+              break;
+    case 'T': p = p + 1;
+              if (*p==':') p++;  /* Skip optional : */
+
+              if (*p == 'A') dirTime = Access;
+              else if (*p == 'C') dirTime = Creation;
+              else if (*p == 'W') dirTime = Written;
+
+              /* Support /T and /T: with no parms, default to written */
+              else if (*p == 0x00 || *p == '/') {
+                dirTime = Written;
+                p = p - 1; /* So when step on, move to '/' */
+              } else {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                WCMD_print_error();
+                return;
+              }
+              break;
+    case 'O': p = p + 1;
+              if (*p==':') p++;  /* Skip optional : */
+              while (*p && *p != '/') {
+                WINE_TRACE("Processing subparm '%c' (in %s)\n", *p, quals);
+                switch (*p) {
+                case 'N': dirOrder = Name;       break;
+                case 'E': dirOrder = Extension;  break;
+                case 'S': dirOrder = Size;       break;
+                case 'D': dirOrder = Date;       break;
+                case '-': if (*(p+1)=='G') orderGroupDirsReverse=TRUE;
+                          else orderReverse = TRUE;
+                          break;
+                case 'G': orderGroupDirs = TRUE; break;
+                default:
+                    SetLastError(ERROR_INVALID_PARAMETER);
+                    WCMD_print_error();
+                    return;
+                }
+                p++;
+              }
+              p = p - 1; /* So when step on, move to '/' */
+              break;
+    default:
+              SetLastError(ERROR_INVALID_PARAMETER);
+              WCMD_print_error();
+              return;
+    }
+    p = p + 1;
   }
 
   /* Handle conflicting args and initialization */
@@ -443,7 +502,7 @@ char * WCMD_filesize64 (ULONGLONG n) {
   p = buff;
   i = -3;
   do {
-    if (!noseperator && (++i)%3 == 1) *p++ = ',';
+    if (seperator && ((++i)%3 == 1)) *p++ = ',';
     q = n / 10;
     r = n - (q * 10);
     *p++ = r + '0';
