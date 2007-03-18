@@ -556,6 +556,75 @@ static void test_instances(void)
     check_thread_instance( "EDIT", (HINSTANCE)0x12345678, (HINSTANCE)0x12345678, (HINSTANCE)0xdeadbeef );
 }
 
+static void test_defwndproc()
+{
+    char classA[] = "deftest";
+    WCHAR classW[] = {'d','e','f','t','e','s','t',0};
+    int i;
+
+    for (i = 0; i < 4; i++)
+    {
+        WNDCLASSEXA cls;  /* the memory layout of WNDCLASSEXA and WNDCLASSEXW is the same */
+        ATOM atom;
+        HWND hwnd;
+        ZeroMemory(&cls, sizeof(cls));
+        cls.cbSize = sizeof(cls);
+        cls.hInstance = GetModuleHandle(NULL);
+        cls.hbrBackground = GetStockObject (WHITE_BRUSH);
+        if (i & 1)
+            cls.lpfnWndProc = DefWindowProcA;
+        else
+            cls.lpfnWndProc = DefWindowProcW;
+
+        if (i & 2)
+        {
+            cls.lpszClassName = classA;
+            atom = RegisterClassExA(&cls);
+        }
+        else
+        {
+            cls.lpszClassName = (LPSTR)classW;
+            atom = RegisterClassExW((WNDCLASSEXW *)&cls);
+        }
+        ok(atom != 0, "Couldn't register class, i=%d, %d\n", i, GetLastError());
+
+        hwnd = CreateWindowA(classA, NULL, 0, 0, 0, 100, 100, NULL, NULL, GetModuleHandle(NULL), NULL);
+        ok(hwnd != NULL, "Couldn't create window i=%d\n", i);
+        if ((i & 1) && (i & 2))
+        {
+            ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)DefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
+                (void *)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), DefWindowProcA);
+            ok(GetClassLongPtrA(hwnd, GCLP_WNDPROC) == (LONG_PTR)DefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
+                (void *)GetClassLongPtrA(hwnd, GCLP_WNDPROC), DefWindowProcA);
+        }
+        else
+        todo_wine {
+            ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)DefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
+                (void *)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), DefWindowProcA);
+            ok(GetClassLongPtrA(hwnd, GCLP_WNDPROC) == (LONG_PTR)DefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
+                (void *)GetClassLongPtrA(hwnd, GCLP_WNDPROC), DefWindowProcA);
+        }
+
+        if (!(i & 1) && !(i & 2))
+        {
+            ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)DefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
+                (void *)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), DefWindowProcW);
+            ok(GetClassLongPtrW(hwnd, GCLP_WNDPROC) == (LONG_PTR)DefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
+                (void *)GetClassLongPtrW(hwnd, GCLP_WNDPROC), DefWindowProcW);
+        }
+        else
+        todo_wine {
+            ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)DefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
+                (void *)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), DefWindowProcW);
+            ok(GetClassLongPtrW(hwnd, GCLP_WNDPROC) == (LONG_PTR)DefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
+                (void *)GetClassLongPtrW(hwnd, GCLP_WNDPROC), DefWindowProcW);
+        }
+
+        DestroyWindow(hwnd);
+        UnregisterClass((LPSTR)(DWORD_PTR)atom, GetModuleHandle(NULL));
+    }
+}
+
 static LRESULT WINAPI TestDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -619,4 +688,5 @@ START_TEST(class)
     CreateDialogParamTest(hInstance);
     test_styles();
     test_instances();
+    test_defwndproc();
 }
