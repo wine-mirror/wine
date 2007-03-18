@@ -28,6 +28,9 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include "wcmd.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 int WCMD_dir_sort (const void *a, const void *b);
 void WCMD_list_directory (char *path, int level);
@@ -59,7 +62,7 @@ static int shortname, usernames;
 static ULONGLONG byte_total;
 static DISPLAYTIME dirTime;
 static DISPLAYORDER dirOrder;
-static BOOL orderReverse, orderGroupDirs, orderGroupDirsReverse;
+static BOOL orderReverse, orderGroupDirs, orderGroupDirsReverse, orderByCol;
 
 /*****************************************************************************
  * WCMD_directory
@@ -92,6 +95,7 @@ void WCMD_directory (void) {
   lower      = (strstr(quals, "/L") != NULL);
   shortname  = (strstr(quals, "/X") != NULL);
   usernames  = (strstr(quals, "/Q") != NULL);
+  orderByCol = (strstr(quals, "/D") != NULL);
 
   if ((p = strstr(quals, "/T")) != NULL) {
     p = p + 2;
@@ -136,6 +140,7 @@ void WCMD_directory (void) {
   if (bare || shortname) wide = FALSE;
   if (bare) shortname = FALSE;
   if (wide) usernames = FALSE;
+  if (orderByCol) wide = TRUE;
 
   if (wide) {
       if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo))
@@ -203,6 +208,8 @@ void WCMD_list_directory (char *search_path, int level) {
   SYSTEMTIME st;
   HANDLE hff;
   int status, dir_count, file_count, entry_count, i, widest, cur_width, tmp_width;
+  int numCols, numRows;
+  int rows, cols;
   ULARGE_INTEGER byte_count, file_size;
 
   dir_count = 0;
@@ -248,7 +255,7 @@ void WCMD_list_directory (char *search_path, int level) {
     entry_count++;
 
     /* Keep running track of longest filename for wide output */
-    if (wide) {
+    if (wide || orderByCol) {
        int tmpLen = strlen((fd+(entry_count-1))->cFileName) + 3;
        if ((fd+(entry_count-1))->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) tmpLen = tmpLen + 2;
        if (tmpLen > widest) widest = tmpLen;
@@ -272,8 +279,30 @@ void WCMD_list_directory (char *search_path, int level) {
      WCMD_output ("Directory of %s\n\n", real_path);
   }
 
-  for (i=0; i<entry_count; i++) {
+  /* Work out the number of columns */
+  WINE_TRACE("%d entries, maxwidth=%d, widest=%d\n", entry_count, max_width, widest);
+  if (wide || orderByCol) {
+    numCols = max(1, (int)max_width / widest);
+    numRows = entry_count / numCols;
+    if (entry_count % numCols) numRows++;
+  } else {
+    numCols = 1;
+    numRows = entry_count;
+  }
+  WINE_TRACE("cols=%d, rows=%d\n", numCols, numRows);
+
+  for (rows=0; rows<numRows; rows++) {
+   for (cols=0; cols<numCols; cols++) {
     char username[24];
+
+    /* Work out the index of the entry being pointed to */
+    if (orderByCol) {
+      i = (cols * numRows) + rows;
+      if (i >= entry_count) continue;
+    } else {
+      i = (rows * numCols) + cols;
+      if (i >= entry_count) continue;
+    }
 
     /* /L convers all names to lower case */
     if (lower) {
@@ -320,7 +349,6 @@ void WCMD_list_directory (char *search_path, int level) {
       cur_width = cur_width + widest;
 
       if ((cur_width + widest) > max_width) {
-          WCMD_output ("\n");
           cur_width = 0;
       } else {
           WCMD_output ("%*.s", (tmp_width - cur_width) ,"");
@@ -333,11 +361,11 @@ void WCMD_list_directory (char *search_path, int level) {
          WCMD_output ("%10s  %8s  <DIR>         ", datestring, timestring);
          if (shortname) WCMD_output ("%-13s", (fd+i)->cAlternateFileName);
          if (usernames) WCMD_output ("%-23s", username);
-         WCMD_output("%s\n",(fd+i)->cFileName);
+         WCMD_output("%s",(fd+i)->cFileName);
       } else {
          if (!((strcmp((fd+i)->cFileName, ".") == 0) ||
                (strcmp((fd+i)->cFileName, "..") == 0))) {
-            WCMD_output ("%s%s\n", recurse?real_path:"", (fd+i)->cFileName);
+            WCMD_output ("%s%s", recurse?real_path:"", (fd+i)->cFileName);
          }
       }
     }
@@ -351,15 +379,14 @@ void WCMD_list_directory (char *search_path, int level) {
                       WCMD_filesize64(file_size.QuadPart));
          if (shortname) WCMD_output ("%-13s", (fd+i)->cAlternateFileName);
          if (usernames) WCMD_output ("%-23s", username);
-         WCMD_output("%s\n",(fd+i)->cFileName);
+         WCMD_output("%s",(fd+i)->cFileName);
       } else {
-         WCMD_output ("%s%s\n", recurse?real_path:"", (fd+i)->cFileName);
+         WCMD_output ("%s%s", recurse?real_path:"", (fd+i)->cFileName);
       }
     }
-  }
-
-  if (wide && cur_width>0) {
-      WCMD_output ("\n");
+   }
+   WCMD_output ("\n");
+   cur_width = 0;
   }
 
   if (!bare) {
