@@ -57,17 +57,6 @@ UINT	WINAPI DragQueryFileW(HDROP hDrop, UINT lFile, LPWSTR lpszFile, UINT lLengt
 void	WINAPI DragFinish(HDROP h);
 BOOL	WINAPI DragQueryPoint(HDROP hDrop, POINT *p);
 
-#define NIF_MESSAGE             0x00000001
-#define NIF_ICON                0x00000002
-#define NIF_TIP                 0x00000004
-#define NIF_STATE               0x00000008
-#define NIF_INFO                0x00000010
-#define NIF_GUID                0x00000020
-
-#define NIM_ADD                 0x00000000
-#define NIM_MODIFY              0x00000001
-#define NIM_DELETE              0x00000002
-
 
 
 /******************************************
@@ -346,6 +335,51 @@ void WINAPI WinExecErrorW(HWND hwnd,INT error, LPCWSTR lpstrFileName, LPCWSTR lp
 /******************************************
  * Tray Notification
  */
+/* notifyicondata.uFlags values*/
+#define NIF_MESSAGE             0x00000001
+#define NIF_ICON                0x00000002
+#define NIF_TIP                 0x00000004
+#define NIF_STATE               0x00000008
+#define NIF_INFO                0x00000010
+#define NIF_GUID                0x00000020
+#define NIF_REALTIME            0x00000040
+#define NIF_SHOWTIP             0x00000080
+
+/* notifyicondata.dwState values */
+#define NIS_HIDDEN              0x00000001
+#define NIS_SHAREDICON          0x00000002
+
+/* notifyicondata.dwInfoFlags values */
+#define NIIF_NONE               0x00000000
+#define NIIF_INFO               0x00000001
+#define NIIF_WARNING            0x00000002
+#define NIIF_ERROR              0x00000003
+#define NIIF_USER               0x00000004
+#define NIIF_ICONMASK           0x0000000f
+#define NIIF_NOSOUND            0x00000010
+#define NIIF_LARGEICON          0x00000020
+
+/* dwMessage values */
+#define NIM_ADD                 0x00000000
+#define NIM_MODIFY              0x00000001
+#define NIM_DELETE              0x00000002
+#define NIM_SETFOCUS            0x00000003
+#define NIM_SETVERSION          0x00000004
+
+#define NOTIFY_VERSION   3     /* supported by Windows 2000 and later */
+#define NOTIFY_VERSION_4 4     /* supported by Windows Vista */
+
+/* callback message lParam values */
+#define NIN_SELECT              (WM_USER+0)
+#define NINF_KEY                1
+#define NIN_KEYSELECT           (NIN_SELECT|NINF_KEY)  /* WM_USER+1 */
+#define NIN_BALOONSHOW          (WM_USER+2)
+#define NIN_BALOONHIDE          (WM_USER+3)
+#define NIN_BALOONTIMEOUT       (WM_USER+4)
+#define NIN_BALOONCLICK         (WM_USER+5)
+#define NIN_POPUPOPEN           (WM_USER+6)
+#define NIN_POPUPCLOSE          (WM_USER+7)
+
 typedef struct _NOTIFYICONDATAA
 {	DWORD cbSize;
 	HWND hWnd;
