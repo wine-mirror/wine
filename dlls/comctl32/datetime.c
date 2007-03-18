@@ -176,10 +176,12 @@ DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, SYSTEMTIME *lprgSysT
         MONTHCAL_CopyTime (lprgSysTimeArray, &infoPtr->date);
         SendMessageW (infoPtr->hMonthCal, MCM_SETCURSEL, 0, (LPARAM)(&infoPtr->date));
         SendMessageW (infoPtr->hwndCheckbut, BM_SETCHECK, BST_CHECKED, 0);
-    } else if (flag == GDT_NONE) {
+    } else if ((infoPtr->dwStyle & DTS_SHOWNONE) && (flag == GDT_NONE)) {
         infoPtr->dateValid = FALSE;
         SendMessageW (infoPtr->hwndCheckbut, BM_SETCHECK, BST_UNCHECKED, 0);
     }
+    else
+        return 0;
 
     InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
     return TRUE;

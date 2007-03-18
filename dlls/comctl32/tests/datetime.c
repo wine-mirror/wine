@@ -112,6 +112,9 @@ static const struct message test_dtm_set_range_swap_min_max_seq[] = {
 
 static const struct message test_dtm_set_and_get_system_time_seq[] = {
     { DTM_SETSYSTEMTIME, sent|wparam, 0x00000001 },
+    { WM_DESTROY, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { WM_NCDESTROY, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { DTM_SETSYSTEMTIME, sent|wparam, 0x00000001 },
     { DTM_GETSYSTEMTIME, sent|wparam, 0x00000000 },
     { DTM_SETSYSTEMTIME, sent|wparam, 0x00000000 },
     { DTM_SETSYSTEMTIME, sent|wparam, 0x00000000 },
@@ -477,6 +480,23 @@ static void test_dtm_set_and_get_system_time(HWND hWndDateTime)
     LRESULT r;
     SYSTEMTIME st;
     SYSTEMTIME getSt;
+    HWND hWndDateTime_test_gdt_none;
+
+    hWndDateTime_test_gdt_none = create_datetime_control(0, 0);
+
+    ok(hWndDateTime_test_gdt_none!=NULL, "Expected non NULL, got %p\n", hWndDateTime_test_gdt_none);
+    if(hWndDateTime_test_gdt_none) {
+        r = SendMessage(hWndDateTime_test_gdt_none, DTM_SETSYSTEMTIME, GDT_NONE, (LPARAM)&st);
+        expect(0, r);
+    }
+    else {
+        skip("hWndDateTime_test_gdt_none is NULL\n");
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+        return;
+    }
+
+    DestroyWindow(hWndDateTime_test_gdt_none);
 
     r = SendMessage(hWndDateTime, DTM_SETSYSTEMTIME, GDT_NONE, (LPARAM)&st);
     expect(1, r);
