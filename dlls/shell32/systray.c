@@ -45,7 +45,8 @@ static const WCHAR classname[] = /* Shell_TrayWnd */ {'S','h','e','l','l','_','T
 BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid)
 {
     NOTIFYICONDATAW nidW;
-    
+
+    ZeroMemory(&nidW, sizeof(nidW));
     nidW.cbSize = sizeof(nidW);
     nidW.hWnd   = pnid->hWnd;
     nidW.uID    = pnid->uID;
@@ -54,21 +55,30 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid)
     nidW.hIcon  = pnid->hIcon;
 
     /* szTip */
-    MultiByteToWideChar(CP_ACP, 0, pnid->szTip, -1, nidW.szTip, sizeof(nidW.szTip)/sizeof(WCHAR));
+    if (pnid->uFlags & NIF_TIP)
+        MultiByteToWideChar(CP_ACP, 0, pnid->szTip, -1, nidW.szTip, sizeof(nidW.szTip)/sizeof(WCHAR));
 
-    nidW.dwState      = pnid->dwState;
-    nidW.dwStateMask  = pnid->dwStateMask;
+    if (pnid->cbSize >= NOTIFYICONDATAA_V2_SIZE)
+    {
+        nidW.dwState      = pnid->dwState;
+        nidW.dwStateMask  = pnid->dwStateMask;
 
-    /* szInfo */
-    MultiByteToWideChar(CP_ACP, 0, pnid->szInfo, -1,  nidW.szInfo, sizeof(nidW.szInfo)/sizeof(WCHAR));
+        /* szInfo, szInfoTitle */
+        if (pnid->uFlags & NIF_INFO)
+        {
+            MultiByteToWideChar(CP_ACP, 0, pnid->szInfo, -1,  nidW.szInfo, sizeof(nidW.szInfo)/sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, pnid->szInfoTitle, -1, nidW.szInfoTitle, sizeof(nidW.szInfoTitle)/sizeof(WCHAR));
+        }
 
-    nidW.u.uTimeout = pnid->u.uTimeout;
-
-    /* szInfoTitle */
-    MultiByteToWideChar(CP_ACP, 0, pnid->szInfoTitle, -1, nidW.szInfoTitle, sizeof(nidW.szInfoTitle)/sizeof(WCHAR));
+        nidW.u.uTimeout = pnid->u.uTimeout;
+        nidW.dwInfoFlags = pnid->dwInfoFlags;
+    }
     
-    nidW.dwInfoFlags = pnid->dwInfoFlags;
+    if (pnid->cbSize >= NOTIFYICONDATAA_V3_SIZE)
+        nidW.guidItem = pnid->guidItem;
 
+    if (pnid->cbSize >= sizeof(NOTIFYICONDATAA))
+        nidW.hBalloonIcon = pnid->hBalloonIcon;
     return Shell_NotifyIconW(dwMessage, &nidW);
 }
 
@@ -80,7 +90,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     HWND tray;
     COPYDATASTRUCT cds;
 
-    TRACE("dwMessage = %d\n", dwMessage);
+    TRACE("dwMessage = %d, nid->cbSize=%d\n", dwMessage, nid->cbSize);
 
     tray = FindWindowExW(0, NULL, classname, NULL);
     if (!tray) return FALSE;
@@ -111,7 +121,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
 
         cbMaskBits = (bmMask.bmPlanes * bmMask.bmWidth * bmMask.bmHeight * bmMask.bmBitsPixel) / 8;
         cbColourBits = (bmColour.bmPlanes * bmColour.bmWidth * bmColour.bmHeight * bmColour.bmBitsPixel) / 8;
-        cds.cbData = sizeof(*nid) + 2*sizeof(BITMAP) + cbMaskBits + cbColourBits;
+        cds.cbData = nid->cbSize + 2*sizeof(BITMAP) + cbMaskBits + cbColourBits;
         buffer = HeapAlloc(GetProcessHeap(), 0, cds.cbData);
         if (!buffer)
         {
@@ -122,7 +132,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         cds.lpData = buffer;
 
         memcpy(buffer, nid, sizeof(*nid));
-        buffer += sizeof(*nid);
+        buffer += nid->cbSize;
         memcpy(buffer, &bmMask, sizeof(bmMask));
         buffer += sizeof(bmMask);
         memcpy(buffer, &bmColour, sizeof(bmColour));
@@ -138,7 +148,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     else
     {
 noicon:
-        cds.cbData = sizeof(*nid);
+        cds.cbData = nid->cbSize;
         cds.lpData = nid;
     }
 
