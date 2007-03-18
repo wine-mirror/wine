@@ -655,7 +655,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
                                       NULL);
         }
         if(buflen == GDI_ERROR) {
-            ERR("GetGlyphOutlineW failed\n");
+            WARN("GetGlyphOutlineW failed\n");
             return FALSE;
         }
         TRACE("Turning off antialiasing for this monochrome font\n");
@@ -1258,7 +1258,12 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    UploadGlyph(physDev, wstr[idx], antialias);
 	}
     }
-    assert(formatEntry);
+    if (!formatEntry)
+    {
+        WARN("could not upload requested glyphs\n");
+        LeaveCriticalSection(&xrender_cs);
+        goto done_unlock;
+    }
 
     TRACE("Writing %s at %d,%d\n", debugstr_wn(wstr,count),
           physDev->dc_rect.left + x, physDev->dc_rect.top + y);

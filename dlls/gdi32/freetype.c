@@ -3398,7 +3398,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *font, UINT glyph, UINT format,
     err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
 
     if(err) {
-        FIXME("FT_Load_Glyph on index %x returns %d\n", glyph_index, err);
+        WARN("FT_Load_Glyph on index %x returns %d\n", glyph_index, err);
 	return GDI_ERROR;
     }
 	
