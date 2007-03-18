@@ -284,7 +284,7 @@ void WCMD_directory (void) {
   lstrcpyn (drive, path, 4);
   GetDiskFreeSpaceEx (drive, &avail, &total, &free);
 
-  if (!bare) {
+  if (errorlevel==0 && !bare) {
      if (recurse) {
        WCMD_output ("\n\n     Total files listed:\n%8d files%25s bytes\n",
             file_total, WCMD_filesize64 (byte_total));
