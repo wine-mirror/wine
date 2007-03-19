@@ -20,13 +20,14 @@
 
 #include <stdarg.h>
 
-#include <wine/test.h>
 #include <windef.h>
 #include <winbase.h>
 #include <winerror.h>
 #include <lmaccess.h>
 #include <lmerr.h>
 #include <lmapibuf.h>
+
+#include "wine/test.h"
 
 WCHAR user_name[UNLEN + 1];
 WCHAR computer_name[MAX_COMPUTERNAME_LENGTH + 1];
@@ -36,6 +37,9 @@ static const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a','
 static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
 static const WCHAR sNonexistentUser[] = {'N','o','n','e','x','i','s','t','e','n','t',' ',
                                 'U','s','e','r',0};
+static const WCHAR sTestUserName[] = {'t', 'e', 's', 't', 'u', 's', 'e', 'r', 0};
+static const WCHAR sTestUserOldPass[] = {'o', 'l', 'd', 'p', 'a', 's', 's', 0};
+static const WCHAR sTestUserNewPass[] = {'n', 'e', 'w', 'p', 'a', 's', 's', 0};
 static const WCHAR sBadNetPath[] = {'\\','\\','B','a',' ',' ','p','a','t','h',0};
 static const WCHAR sInvalidName[] = {'\\',0};
 static const WCHAR sInvalidName2[] = {'\\','\\',0};
@@ -46,6 +50,9 @@ static NET_API_STATUS (WINAPI *pNetApiBufferSize)(LPVOID,LPDWORD)=NULL;
 static NET_API_STATUS (WINAPI *pNetQueryDisplayInformation)(LPWSTR,DWORD,DWORD,DWORD,DWORD,LPDWORD,PVOID*)=NULL;
 static NET_API_STATUS (WINAPI *pNetUserGetInfo)(LPCWSTR,LPCWSTR,DWORD,LPBYTE*)=NULL;
 static NET_API_STATUS (WINAPI *pNetUserModalsGet)(LPCWSTR,DWORD,LPBYTE*)=NULL;
+static NET_API_STATUS (WINAPI *pNetUserAdd)(LPCWSTR,DWORD,LPBYTE,LPDWORD)=NULL;
+static NET_API_STATUS (WINAPI *pNetUserChangePassword)(LPCWSTR,LPCWSTR,LPCWSTR,LPCWSTR)=NULL;
+static NET_API_STATUS (WINAPI *pNetUserDel)(LPCWSTR,LPCWSTR)=NULL;
 
 static int init_access_tests(void)
 {
@@ -192,6 +199,49 @@ static void run_usermodalsget_tests(void)
         pNetApiBufferFree(umi2);
 }
 
+static void run_userhandling_tests(void)
+{
+    NET_API_STATUS ret;
+    USER_INFO_1 usri;
+
+    if(!pNetUserAdd || !pNetUserChangePassword || !pNetUserDel)
+    {
+        skip("Functions for modifying the user database missing. Skipping test.\n");
+        return;
+    }
+
+    usri.usri1_name = (LPWSTR) sTestUserName;
+    usri.usri1_password = (LPWSTR) sTestUserOldPass;
+    usri.usri1_priv = USER_PRIV_USER;
+    usri.usri1_home_dir = NULL;
+    usri.usri1_comment = NULL;
+    usri.usri1_flags = UF_SCRIPT;
+    usri.usri1_script_path = NULL;
+
+    ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
+    if(ret == ERROR_ACCESS_DENIED)
+    {
+        skip("Insufficient permissions to add users. Skipping test.\n");
+        return;
+    }
+    if(ret == NERR_UserExists)
+    {
+        skip("User already exists, skipping test to not mess up the system\n");
+        return;
+    }
+
+    ok(ret == NERR_Success, "Adding user failed with error 0x%08x\n", ret);
+    if(ret != NERR_Success)
+        return;
+
+    ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserOldPass,
+            sTestUserNewPass);
+    todo_wine ok(ret == NERR_Success, "Changing the password failed.\n");
+
+    ret = pNetUserDel(NULL, sTestUserName);
+    todo_wine ok(ret == NERR_Success, "Deleting the user failed.\n");
+}
+
 START_TEST(access)
 {
     HMODULE hnetapi32=LoadLibraryA("netapi32.dll");
@@ -200,6 +250,9 @@ START_TEST(access)
     pNetQueryDisplayInformation=(void*)GetProcAddress(hnetapi32,"NetQueryDisplayInformation");
     pNetUserGetInfo=(void*)GetProcAddress(hnetapi32,"NetUserGetInfo");
     pNetUserModalsGet=(void*)GetProcAddress(hnetapi32,"NetUserModalsGet");
+    pNetUserAdd=(void*)GetProcAddress(hnetapi32, "NetUserAdd");
+    pNetUserChangePassword=(void*)GetProcAddress(hnetapi32, "NetUserChangePassword");
+    pNetUserDel=(void*)GetProcAddress(hnetapi32, "NetUserDel");
 
     if (!pNetApiBufferSize)
         trace("It appears there is no netapi32 functionality on this platform\n");
@@ -208,5 +261,6 @@ START_TEST(access)
         run_usergetinfo_tests();
         run_querydisplayinformation1_tests();
         run_usermodalsget_tests();
+        run_userhandling_tests();
     }
 }
