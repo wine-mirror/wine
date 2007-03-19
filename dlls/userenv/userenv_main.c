@@ -121,3 +121,15 @@ BOOL WINAPI LoadUserProfileA( HANDLE hToken, LPPROFILEINFOA lpProfileInfo )
     lpProfileInfo->hProfile = HKEY_CURRENT_USER;
     return TRUE;
 }
+
+BOOL WINAPI RegisterGPNotification( HANDLE event, BOOL machine )
+{
+    FIXME("%p %d\n", event, machine );
+    return TRUE;
+}
+
+BOOL WINAPI UnregisterGPNotification( HANDLE event )
+{
+    FIXME("%p\n", event );
+    return TRUE;
+}

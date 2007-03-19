@@ -9,4 +9,6 @@
 @ stdcall GetUserProfileDirectoryW(ptr ptr ptr)
 @ stdcall LoadUserProfileA(ptr ptr)
 @ stub LoadUserProfileW
+@ stdcall RegisterGPNotification(long long)
 @ stub UnloadUserProfile
+@ stdcall UnregisterGPNotification(long)
