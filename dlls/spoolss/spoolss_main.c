@@ -142,3 +142,9 @@ BOOL WINAPI DllFreeSplStr(LPWSTR pwstr)
     TRACE("(%s) PTR: %p\n", debugstr_w(pwstr), pwstr);
     return HeapFree(GetProcessHeap(), 0, pwstr);
 }
+
+HANDLE WINAPI RevertToPrinterSelf(void)
+{
+    FIXME("() stub\n");
+    return NULL;
+}

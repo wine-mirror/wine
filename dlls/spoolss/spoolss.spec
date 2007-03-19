@@ -101,7 +101,7 @@
 @ stub ReplyOpenPrinter
 @ stub ReplyPrinterChangeNotification
 @ stub ResetPrinterW
-@ stub RevertToPrinterSelf
+@ stdcall RevertToPrinterSelf()
 @ stub RouterAllocPrinterNotifyInfo
 @ stub RouterFindFirstPrinterChangeNotification
 @ stub RouterFindNextPrinterChangeNotification
