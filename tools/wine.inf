@@ -45,6 +45,7 @@ AddReg=\
     Nls,\
     OLE,\
     Printing,\
+    Services, \
     Tapi,\
     Timezones
 
@@ -68,6 +69,7 @@ AddReg=\
     Nls,\
     OLE,\
     Printing,\
+    Services, \
     Tapi,\
     Timezones,\
     VersionInfo
@@ -81,6 +83,7 @@ CurrentVersion="Software\Microsoft\Windows\CurrentVersion"
 CurrentVersionNT="Software\Microsoft\Windows NT\CurrentVersion"
 FontSubStr="Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes"
 Control="System\CurrentControlSet\Control"
+Services="System\CurrentControlSet\Services"
 
 [Classes]
 HKCR,.avi,"Content Type",2,"video/avi"
@@ -2577,6 +2580,16 @@ HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"Display",,"Australia/
 HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"Dlt",,"Tasmania Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"Std",,"Tasmania Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
+
+[Services]
+HKLM,"%Services%\Spooler","Description",,"Loads files to memory for later printing."
+HKLM,"%Services%\Spooler","DisplayName",,"Print Spooler"
+HKLM,"%Services%\Spooler","ErrorControl",0x10001,1
+HKLM,"%Services%\Spooler","Group",,"SpoolerGroup"
+HKLM,"%Services%\Spooler","ImagePath",,"spoolsv.exe"
+HKLM,"%Services%\Spooler","ObjectName",,"LocalSystem"
+HKLM,"%Services%\Spooler","Start",0x10001,2
+HKLM,"%Services%\Spooler","Type",0x10001,0x110
 
 [VersionInfo]
 HKLM,%CurrentVersionNT%,"CurrentVersion",2,"5.0"
