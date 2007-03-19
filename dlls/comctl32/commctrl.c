@@ -693,12 +693,13 @@ CreateToolbarEx (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
        SendMessageW (hwndTB, TB_SETBITMAPSIZE, 0,
                      MAKELPARAM((WORD)dxBitmap, (WORD)dyBitmap));
 
-       if (dxButton <= 0)
-           dxButton = 24;
-       if (dyButton <= 0)
-           dyButton = 22;
-       SendMessageW (hwndTB, TB_SETBUTTONSIZE, 0,
-                     MAKELPARAM((WORD)dxButton, (WORD)dyButton));
+       if (dxButton < 0)
+           dxButton = dxBitmap;
+       if (dyButton < 0)
+           dyButton = dyBitmap;
+       /* TB_SETBUTTONSIZE -> TB_SETBITMAPSIZE bug introduced for Windows compatibility */
+       if (dxButton != 0 && dyButton != 0)
+            SendMessageW(hwndTB, TB_SETBITMAPSIZE, 0, MAKELPARAM(dxButton, dyButton));
 
 
 	/* add bitmaps */

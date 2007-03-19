@@ -869,6 +869,45 @@ static void test_sizes(void)
     DestroyWindow(hToolbar);
 }
 
+
+static void test_createtoolbarex()
+{
+    HWND hToolbar;
+    TBBUTTON btns[3];
+    ZeroMemory(&btns, sizeof(btns));
+
+    hToolbar = CreateToolbarEx(hMainWnd, WS_VISIBLE, 1, 16, GetModuleHandle(NULL), IDB_BITMAP_128x15, btns,
+        3, 20, 20, 16, 16, sizeof(TBBUTTON));
+    CHECK_IMAGELIST(16, 20, 20);
+    compare((int)SendMessage(hToolbar, TB_GETBUTTONSIZE, 0, 0), 0x1a001b, "%x");
+    DestroyWindow(hToolbar);
+
+    hToolbar = CreateToolbarEx(hMainWnd, WS_VISIBLE, 1, 16, GetModuleHandle(NULL), IDB_BITMAP_128x15, btns,
+        3, 4, 4, 16, 16, sizeof(TBBUTTON));
+    CHECK_IMAGELIST(32, 4, 4);
+    compare((int)SendMessage(hToolbar, TB_GETBUTTONSIZE, 0, 0), 0xa000b, "%x");
+    DestroyWindow(hToolbar);
+
+    hToolbar = CreateToolbarEx(hMainWnd, WS_VISIBLE, 1, 16, GetModuleHandle(NULL), IDB_BITMAP_128x15, btns,
+        3, 0, 8, 12, 12, sizeof(TBBUTTON));
+    CHECK_IMAGELIST(16, 12, 12);
+    compare((int)SendMessage(hToolbar, TB_GETBUTTONSIZE, 0, 0), 0x120013, "%x");
+    DestroyWindow(hToolbar);
+
+    hToolbar = CreateToolbarEx(hMainWnd, WS_VISIBLE, 1, 16, GetModuleHandle(NULL), IDB_BITMAP_128x15, btns,
+        3, -1, 8, 12, 12, sizeof(TBBUTTON));
+    CHECK_IMAGELIST(16, 12, 8);
+    compare((int)SendMessage(hToolbar, TB_GETBUTTONSIZE, 0, 0), 0xe0013, "%x");
+    DestroyWindow(hToolbar);
+
+    hToolbar = CreateToolbarEx(hMainWnd, WS_VISIBLE, 1, 16, GetModuleHandle(NULL), IDB_BITMAP_128x15, btns,
+        3, -1, 8, -1, 12, sizeof(TBBUTTON));
+    CHECK_IMAGELIST(16, 16, 8);
+    compare((int)SendMessage(hToolbar, TB_GETBUTTONSIZE, 0, 0), 0xe0017, "%x");
+    DestroyWindow(hToolbar);
+}
+
+
 START_TEST(toolbar)
 {
     WNDCLASSA wc;
@@ -899,6 +938,7 @@ START_TEST(toolbar)
     test_add_string();
     test_hotitem();
     test_sizes();
+    test_createtoolbarex();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
