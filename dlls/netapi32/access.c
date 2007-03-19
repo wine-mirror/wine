@@ -31,7 +31,6 @@
 #include "lmerr.h"
 #include "winreg.h"
 #include "ntsecapi.h"
-#include "netapi32_misc.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -40,6 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
 static const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a','t',
                                 'o','r',0};
 static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
+
+BOOL NETAPI_IsLocalComputer(LPCWSTR ServerName);
 
 /************************************************************
  *                NETAPI_ValidateServername
@@ -143,7 +144,13 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
     status = NETAPI_ValidateServername(servername);
     if (status != NERR_Success)
         return status;
-    NETAPI_ForceLocalComputer(servername, NERR_InvalidComputer);
+
+    if(!NETAPI_IsLocalComputer(servername))
+    {
+        FIXME("Only implemented for local computer, but remote server"
+              "%s was requested.\n", debugstr_w(servername));
+        return NERR_InvalidComputer;
+    }
 
     if(!NETAPI_IsKnownUser(username))
     {
@@ -466,7 +473,14 @@ NetQueryDisplayInformation(
     TRACE("(%s, %d, %d, %d, %d, %p, %p)\n", debugstr_w(ServerName),
           Level, Index, EntriesRequested, PreferredMaximumLength,
           ReturnedEntryCount, SortedBuffer);
-    NETAPI_ForceLocalComputer(ServerName, ERROR_ACCESS_DENIED);
+
+    if(!NETAPI_IsLocalComputer(ServerName))
+    {
+        FIXME("Only implemented on local computer, but requested for "
+              "remote server %s\n", debugstr_w(ServerName));
+        return ERROR_ACCESS_DENIED;
+    }
+
     switch (Level)
     {
     case 1:
