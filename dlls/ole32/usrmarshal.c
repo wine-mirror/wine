@@ -35,6 +35,8 @@
 #include "ole2.h"
 #include "oleauto.h"
 #include "rpcproxy.h"
+
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -1471,7 +1473,13 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
         size = HGLOBAL_UserSize(pFlags, size, &pStgMedium->u.hGlobal);
         break;
     case TYMED_FILE:
-        FIXME("TYMED_FILE\n");
+        TRACE("TYMED_FILE\n");
+        if (pStgMedium->u.lpszFileName)
+        {
+            TRACE("file name is %s\n", debugstr_w(pStgMedium->u.lpszFileName));
+            size += 3 * sizeof(DWORD) +
+                (strlenW(pStgMedium->u.lpszFileName) + 1) * sizeof(WCHAR);
+        }
         break;
     case TYMED_ISTREAM:
         FIXME("TYMED_ISTREAM\n");
@@ -1545,7 +1553,24 @@ unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *p
         pBuffer = HGLOBAL_UserMarshal(pFlags, pBuffer, &pStgMedium->u.hGlobal);
         break;
     case TYMED_FILE:
-        FIXME("TYMED_FILE\n");
+        TRACE("TYMED_FILE\n");
+        if (pStgMedium->u.lpszFileName)
+        {
+            DWORD len;
+            len = strlenW(pStgMedium->u.lpszFileName);
+            /* conformance */
+            *(DWORD *)pBuffer = len + 1;
+            pBuffer += sizeof(DWORD);
+            /* offset */
+            *(DWORD *)pBuffer = 0;
+            pBuffer += sizeof(DWORD);
+            /* variance */
+            *(DWORD *)pBuffer = len + 1;
+            pBuffer += sizeof(DWORD);
+
+            TRACE("file name is %s\n", debugstr_w(pStgMedium->u.lpszFileName));
+            memcpy(pBuffer, pStgMedium->u.lpszFileName, (len + 1) * sizeof(WCHAR));
+        }
         break;
     case TYMED_ISTREAM:
         FIXME("TYMED_ISTREAM\n");
@@ -1595,7 +1620,7 @@ unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *p
  */
 unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, STGMEDIUM *pStgMedium)
 {
-    DWORD content;
+    DWORD content = 0;
     DWORD releaseunk;
 
     ALIGN_POINTER(pBuffer, 3);
@@ -1622,7 +1647,43 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
         pBuffer = HGLOBAL_UserUnmarshal(pFlags, pBuffer, &pStgMedium->u.hGlobal);
         break;
     case TYMED_FILE:
-        FIXME("TYMED_FILE\n");
+        TRACE("TYMED_FILE\n");
+        if (content)
+        {
+            DWORD conformance;
+            DWORD variance;
+            conformance = *(DWORD *)pBuffer;
+            pBuffer += sizeof(DWORD);
+            if (*(DWORD *)pBuffer != 0)
+            {
+                ERR("invalid offset %d\n", *(DWORD *)pBuffer);
+                RpcRaiseException(RPC_S_INVALID_BOUND);
+                return NULL;
+            }
+            pBuffer += sizeof(DWORD);
+            variance = *(DWORD *)pBuffer;
+            pBuffer += sizeof(DWORD);
+            if (conformance != variance)
+            {
+                ERR("conformance (%d) and variance (%d) should be equal\n",
+                    conformance, variance);
+                RpcRaiseException(RPC_S_INVALID_BOUND);
+                return NULL;
+            }
+            if (conformance > 0x7fffffff)
+            {
+                ERR("conformance 0x%x too large\n", conformance);
+                RpcRaiseException(RPC_S_INVALID_BOUND);
+                return NULL;
+            }
+            pStgMedium->u.lpszFileName = CoTaskMemAlloc(conformance * sizeof(WCHAR));
+            if (!pStgMedium->u.lpszFileName) RpcRaiseException(ERROR_OUTOFMEMORY);
+            TRACE("unmarshalled file name is %s\n", debugstr_wn((const WCHAR *)pBuffer, variance));
+            memcpy(pStgMedium->u.lpszFileName, pBuffer, variance * sizeof(WCHAR));
+            pBuffer += variance * sizeof(WCHAR);
+        }
+        else
+            pStgMedium->u.lpszFileName = NULL;
         break;
     case TYMED_ISTREAM:
         FIXME("TYMED_ISTREAM\n");
