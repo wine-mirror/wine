@@ -100,7 +100,7 @@ static void ANIMATE_Notify(ANIMATE_INFO *infoPtr, UINT notif)
 		 (LPARAM)infoPtr->hwndSelf);
 }
 
-static BOOL ANIMATE_LoadResW(ANIMATE_INFO *infoPtr, HINSTANCE hInst, LPWSTR lpName)
+static BOOL ANIMATE_LoadResW(ANIMATE_INFO *infoPtr, HINSTANCE hInst, LPCWSTR lpName)
 {
     static const WCHAR aviW[] = { 'A', 'V', 'I', 0 };
     HRSRC 	hrsrc;
@@ -217,7 +217,7 @@ static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
     infoPtr->transparentColor = ANIMATE_COLOR_NONE;
 }
 
-static void ANIMATE_TransparentBlt(ANIMATE_INFO *infoPtr, HDC hdcDest, HDC hdcSource)
+static void ANIMATE_TransparentBlt(ANIMATE_INFO const *infoPtr, HDC hdcDest, HDC hdcSource)
 {
     HDC hdcMask;
     HBITMAP hbmMask;
@@ -251,8 +251,8 @@ static void ANIMATE_TransparentBlt(ANIMATE_INFO *infoPtr, HDC hdcDest, HDC hdcSo
 
 static BOOL ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
 {
-    void *pBitmapData;
-    LPBITMAPINFO pBitmapInfo;
+    void const *pBitmapData;
+    BITMAPINFO const *pBitmapInfo;
     HDC hdcMem;
     HBITMAP hbmOld;
     int nOffsetX = 0;
@@ -825,7 +825,7 @@ static LRESULT ANIMATE_Destroy(ANIMATE_INFO *infoPtr)
 }
 
 
-static BOOL ANIMATE_EraseBackground(ANIMATE_INFO *infoPtr, HDC hdc)
+static BOOL ANIMATE_EraseBackground(ANIMATE_INFO const *infoPtr, HDC hdc)
 {
     RECT rect;
     HBRUSH hBrush = 0;
