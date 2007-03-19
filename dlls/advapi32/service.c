@@ -755,7 +755,7 @@ static BOOL service_run_threads(void)
  *
  * See StartServiceCtrlDispatcherW.
  */
-BOOL WINAPI StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
+BOOL WINAPI StartServiceCtrlDispatcherA( const SERVICE_TABLE_ENTRYA *servent )
 {
     service_data *info;
     DWORD sz, len;
@@ -801,7 +801,7 @@ BOOL WINAPI StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
  *  Success: TRUE.
  *  Failure: FALSE.
  */
-BOOL WINAPI StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
+BOOL WINAPI StartServiceCtrlDispatcherW( const SERVICE_TABLE_ENTRYW *servent )
 {
     service_data *info;
     DWORD sz, len;

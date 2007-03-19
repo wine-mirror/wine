@@ -326,8 +326,8 @@ BOOL        WINAPI SetServiceStatus(SERVICE_STATUS_HANDLE,LPSERVICE_STATUS);
 BOOL        WINAPI StartServiceA(SC_HANDLE,DWORD,LPCSTR*);
 BOOL        WINAPI StartServiceW(SC_HANDLE,DWORD,LPCWSTR*);
 #define     StartService WINELIB_NAME_AW(StartService)
-BOOL        WINAPI StartServiceCtrlDispatcherA(LPSERVICE_TABLE_ENTRYA);
-BOOL        WINAPI StartServiceCtrlDispatcherW(LPSERVICE_TABLE_ENTRYW);
+BOOL        WINAPI StartServiceCtrlDispatcherA(const SERVICE_TABLE_ENTRYA*);
+BOOL        WINAPI StartServiceCtrlDispatcherW(const SERVICE_TABLE_ENTRYW*);
 #define     StartServiceCtrlDispatcher WINELIB_NAME_AW(StartServiceCtrlDispatcher)
 BOOL        WINAPI UnlockServiceDatabase(SC_LOCK);
 
