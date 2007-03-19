@@ -558,9 +558,13 @@ static void test_instances(void)
 
 static void test_defwndproc()
 {
-    char classA[] = "deftest";
-    WCHAR classW[] = {'d','e','f','t','e','s','t',0};
+    static const char classA[] = "deftest";
+    static const WCHAR classW[] = {'d','e','f','t','e','s','t',0};
+    WNDPROC pDefWindowProcA, pDefWindowProcW;
     int i;
+
+    pDefWindowProcA = (void *)GetProcAddress(GetModuleHandle("user32.dll"), "DefWindowProcA");
+    pDefWindowProcW = (void *)GetProcAddress(GetModuleHandle("user32.dll"), "DefWindowProcW");
 
     for (i = 0; i < 4; i++)
     {
@@ -572,9 +576,9 @@ static void test_defwndproc()
         cls.hInstance = GetModuleHandle(NULL);
         cls.hbrBackground = GetStockObject (WHITE_BRUSH);
         if (i & 1)
-            cls.lpfnWndProc = DefWindowProcA;
+            cls.lpfnWndProc = pDefWindowProcA;
         else
-            cls.lpfnWndProc = DefWindowProcW;
+            cls.lpfnWndProc = pDefWindowProcW;
 
         if (i & 2)
         {
@@ -583,7 +587,7 @@ static void test_defwndproc()
         }
         else
         {
-            cls.lpszClassName = (LPSTR)classW;
+            cls.lpszClassName = (LPCSTR)classW;
             atom = RegisterClassExW((WNDCLASSEXW *)&cls);
         }
         ok(atom != 0, "Couldn't register class, i=%d, %d\n", i, GetLastError());
@@ -592,32 +596,32 @@ static void test_defwndproc()
         ok(hwnd != NULL, "Couldn't create window i=%d\n", i);
         if ((i & 1) && (i & 2))
         {
-            ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)DefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
-                (void *)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), DefWindowProcA);
-            ok(GetClassLongPtrA(hwnd, GCLP_WNDPROC) == (LONG_PTR)DefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
-                (void *)GetClassLongPtrA(hwnd, GCLP_WNDPROC), DefWindowProcA);
+            ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
+                (void *)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), pDefWindowProcA);
+            ok(GetClassLongPtrA(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
+                (void *)GetClassLongPtrA(hwnd, GCLP_WNDPROC), pDefWindowProcA);
         }
         else
         todo_wine {
-            ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)DefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
-                (void *)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), DefWindowProcA);
-            ok(GetClassLongPtrA(hwnd, GCLP_WNDPROC) == (LONG_PTR)DefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
-                (void *)GetClassLongPtrA(hwnd, GCLP_WNDPROC), DefWindowProcA);
+            ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
+                (void *)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), pDefWindowProcA);
+            ok(GetClassLongPtrA(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
+                (void *)GetClassLongPtrA(hwnd, GCLP_WNDPROC), pDefWindowProcA);
         }
 
         if (!(i & 1) && !(i & 2))
         {
-            ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)DefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
-                (void *)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), DefWindowProcW);
-            ok(GetClassLongPtrW(hwnd, GCLP_WNDPROC) == (LONG_PTR)DefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
-                (void *)GetClassLongPtrW(hwnd, GCLP_WNDPROC), DefWindowProcW);
+            ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
+                (void *)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), pDefWindowProcW);
+            ok(GetClassLongPtrW(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
+                (void *)GetClassLongPtrW(hwnd, GCLP_WNDPROC), pDefWindowProcW);
         }
         else
         todo_wine {
-            ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)DefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
-                (void *)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), DefWindowProcW);
-            ok(GetClassLongPtrW(hwnd, GCLP_WNDPROC) == (LONG_PTR)DefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
-                (void *)GetClassLongPtrW(hwnd, GCLP_WNDPROC), DefWindowProcW);
+            ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
+                (void *)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), pDefWindowProcW);
+            ok(GetClassLongPtrW(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
+                (void *)GetClassLongPtrW(hwnd, GCLP_WNDPROC), pDefWindowProcW);
         }
 
         DestroyWindow(hwnd);
