@@ -125,7 +125,6 @@ typedef struct
     INT      nButtonHeight;
     INT      nButtonWidth;
     INT      nBitmapHeight;
-    INT      nVBitmapHeight;  /* see TOOLBAR_Create for an explanation */
     INT      nBitmapWidth;
     INT      nIndent;
     INT      nRows;           /* number of button rows */
@@ -1560,7 +1559,7 @@ static inline SIZE TOOLBAR_MeasureButton(TOOLBAR_INFO *infoPtr, SIZE sizeString,
     if (infoPtr->dwStyle & TBSTYLE_LIST)
     {
         /* set button height from bitmap / text height... */
-        sizeButton.cy = max((bHasBitmap ? infoPtr->nVBitmapHeight : 0),
+        sizeButton.cy = max((bHasBitmap ? infoPtr->nBitmapHeight : 0),
             sizeString.cy);
 
         /* ... add on the necessary padding */
@@ -1589,7 +1588,7 @@ static inline SIZE TOOLBAR_MeasureButton(TOOLBAR_INFO *infoPtr, SIZE sizeString,
     {
         if (bHasBitmap)
         {
-            sizeButton.cy = infoPtr->nVBitmapHeight + DEFPAD_CY;
+            sizeButton.cy = infoPtr->nBitmapHeight + DEFPAD_CY;
             if (sizeString.cy > 0)
                 sizeButton.cy += 1 + sizeString.cy;
             sizeButton.cx = infoPtr->szPadding.cx +
@@ -2777,9 +2776,6 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (lpAddBmp->nID & 1)
 	{
 	    /* large icons */
-	    /* FIXME: on windows the size of the images is 25x24 but the size of the bitmap
-             * in rsrc is only 24x24. Fix the bitmap (how?) and then fix this
-             */
 	    SendMessageW (hwnd, TB_SETBITMAPSIZE, 0,
 			  MAKELPARAM((WORD)24, (WORD)24));
 	    SendMessageW (hwnd, TB_SETBUTTONSIZE, 0,
@@ -4442,7 +4438,7 @@ TOOLBAR_SetBitmapSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
              LOWORD(lParam), HIWORD(lParam));
 
     infoPtr->nBitmapWidth = (INT)LOWORD(lParam);
-    infoPtr->nVBitmapHeight = infoPtr->nBitmapHeight = (INT)HIWORD(lParam);
+    infoPtr->nBitmapHeight = (INT)HIWORD(lParam);
 
     if ((himlDef == infoPtr->himlInt) &&
         (ImageList_GetImageCount(infoPtr->himlInt) == 0))
@@ -4593,7 +4589,7 @@ TOOLBAR_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (cy == 0) cx = 22;
     
     cx = max(cx, infoPtr->szPadding.cx + infoPtr->nBitmapWidth);
-    cy = max(cy, infoPtr->szPadding.cy + infoPtr->nVBitmapHeight);
+    cy = max(cy, infoPtr->szPadding.cy + infoPtr->nBitmapHeight);
 
     infoPtr->nButtonWidth = cx;
     infoPtr->nButtonHeight = cy;
@@ -4852,7 +4848,6 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
         infoPtr->nBitmapWidth = 1;
         infoPtr->nBitmapHeight = 1;
     }
-    infoPtr->nVBitmapHeight = infoPtr->nBitmapHeight;
     TOOLBAR_CalcToolbar(hwnd);
 
     TRACE("hwnd %p, new himl=%p, id = %d, count=%d, bitmap w=%d, h=%d\n",
@@ -5321,13 +5316,8 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* initialize info structure */
     infoPtr->nButtonWidth = 23;
     infoPtr->nButtonHeight = 22;
-    infoPtr->nBitmapHeight = 15;
+    infoPtr->nBitmapHeight = 16;
     infoPtr->nBitmapWidth = 16;
-    /* By default Windows creates an image list with 16x15 icons but computes the button size as
-     * if the icons were 16x16. That's why we keep infoPtr->nVBitmapHeight. After a call to
-     * TB_SETBITMAPSIZE or TB_SETIMAGELIST the nVBitmapHeight = nBitmapHeight.
-     */
-    infoPtr->nVBitmapHeight = 16;
 
     infoPtr->nMaxTextRows = 1;
     infoPtr->cxMin = -1;

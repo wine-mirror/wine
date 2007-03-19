@@ -1,6 +1,7 @@
 /* Unit tests for treeview.
  *
  * Copyright 2005 Krzysztof Foltman
+ * Copyright 2007 Mikolaj Zalewski
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -185,7 +186,7 @@ static void rebuild_toolbar_with_buttons(HWND *hToolbar)
     if (himl != NULL) {\
         ok(ImageList_GetImageCount(himl) == count, "Images count mismatch - %d vs %d\n", count, ImageList_GetImageCount(himl)); \
         ImageList_GetIconSize(himl, &cx, &cy); \
-        ok(cx == dx && cy == cy, "Icon size mismatch - %dx%d vs %dx%d\n", dx, dy, cx, cy); \
+        ok(cx == dx && cy == dy, "Icon size mismatch - %dx%d vs %dx%d\n", dx, dy, cx, cy); \
     } \
 }
 
@@ -196,7 +197,7 @@ static void rebuild_toolbar_with_buttons(HWND *hToolbar)
     if (himl != NULL) {\
         todo_wine ok(ImageList_GetImageCount(himl) == count, "Images count mismatch - %d vs %d\n", count, ImageList_GetImageCount(himl)); \
         ImageList_GetIconSize(himl, &cx, &cy); \
-        ok(cx == dx && cy == cy, "Icon size mismatch - %dx%d vs %dx%d\n", dx, dy, cx, cy); \
+        ok(cx == dx && cy == dy, "Icon size mismatch - %dx%d vs %dx%d\n", dx, dy, cx, cy); \
     } \
 }
 
@@ -207,7 +208,7 @@ static void rebuild_toolbar_with_buttons(HWND *hToolbar)
     if (himl != NULL) {\
         todo_wine ok(ImageList_GetImageCount(himl) == count, "Images count mismatch - %d vs %d\n", count, ImageList_GetImageCount(himl)); \
         ImageList_GetIconSize(himl, &cx, &cy); \
-        todo_wine ok(cx == dx && cy == cy, "Icon size mismatch - %dx%d vs %dx%d\n", dx, dy, cx, cy); \
+        todo_wine ok(cx == dx && cy == dy, "Icon size mismatch - %dx%d vs %dx%d\n", dx, dy, cx, cy); \
     } \
 }
 
@@ -235,63 +236,63 @@ static void test_add_bitmap(void)
 
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 8, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(8, 16, 15);
+    CHECK_IMAGELIST(8, 16, 16);
     
     /* adding more bitmaps */
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 5, (LPARAM)&bmp80) == 8, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(13, 16, 15);
+    CHECK_IMAGELIST(13, 16, 16);
     /* adding the same bitmap will simply return the index of the already loaded block */
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 8, (LPARAM)&bmp128);
     ok(ret == 0, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST(13, 16, 15);
+    CHECK_IMAGELIST(13, 16, 16);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 5, (LPARAM)&bmp80);
     ok(ret == 8, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST(13, 16, 15);
+    CHECK_IMAGELIST(13, 16, 16);
     /* even if we increase the wParam */
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 55, (LPARAM)&bmp80);
     ok(ret == 8, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST(13, 16, 15);
+    CHECK_IMAGELIST(13, 16, 16);
 
     /* when the wParam is smaller than the bitmaps count but non-zero, all the bitmaps will be added*/
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 3, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(8, 16, 15);
+    CHECK_IMAGELIST(8, 16, 16);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 5, (LPARAM)&bmp80);
     ok(ret == 3, "TB_ADDBITMAP - unexpected return %d\n", ret);
     /* the returned value is misleading - id 8 is the id of the first icon from bmp80 */
-    CHECK_IMAGELIST(13, 16, 15);
+    CHECK_IMAGELIST(13, 16, 16);
 
     /* the same for negative wParam */
     rebuild_toolbar(&hToolbar);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, -143, (LPARAM)&bmp128);
     ok(ret == 0, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST(8, 16, 15);
+    CHECK_IMAGELIST(8, 16, 16);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp80);
     ok(ret == -143, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST(13, 16, 15);
+    CHECK_IMAGELIST(13, 16, 16);
 
     /* for zero only one bitmap will be added */
     rebuild_toolbar(&hToolbar);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&bmp80);
     ok(ret == 0, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST(1, 16, 15);
+    CHECK_IMAGELIST(1, 16, 16);
 
     /* if wParam is larger than the amount of icons, the list is grown */
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 100, (LPARAM)&bmp80) == 0, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(100, 16, 15);
+    CHECK_IMAGELIST(100, 16, 16);
     ret = SendMessageA(hToolbar, TB_ADDBITMAP, 100, (LPARAM)&bmp128);
     ok(ret == 100, "TB_ADDBITMAP - unexpected return %d\n", ret);
-    CHECK_IMAGELIST(200, 16, 15);
+    CHECK_IMAGELIST(200, 16, 16);
 
     /* adding built-in items - the wParam is ignored */
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 5, (LPARAM)&bmp80) == 0, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(5, 16, 15);
+    CHECK_IMAGELIST(5, 16, 16);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&stdsmall) == 5, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(20, 16, 15);
+    CHECK_IMAGELIST(20, 16, 16);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 5, (LPARAM)&bmp128) == 20, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(28, 16, 15);
+    CHECK_IMAGELIST(28, 16, 16);
 
     /* when we increase the bitmap size, less icons will be created */
     rebuild_toolbar(&hToolbar);
@@ -308,14 +309,14 @@ static void test_add_bitmap(void)
     /* loading a standard bitmaps automatically resizes the icons */
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&stdsmall) == 2, "TB_ADDBITMAP - unexpected return\n");
     UpdateWindow(hToolbar);
-    CHECK_IMAGELIST(28, 16, 15);
+    CHECK_IMAGELIST(28, 16, 16);
 
     /* two more SETBITMAPSIZE tests */
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 100, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(100, 16, 15);
+    CHECK_IMAGELIST(100, 16, 16);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 100, (LPARAM)&bmp80) == 100, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(200, 16, 15);
+    CHECK_IMAGELIST(200, 16, 16);
     ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(8, 8)) == TRUE, "TB_SETBITMAPSIZE failed\n");
     UpdateWindow(hToolbar);
     CHECK_IMAGELIST(200, 8, 8);
@@ -324,9 +325,9 @@ static void test_add_bitmap(void)
     CHECK_IMAGELIST(200, 30, 30);
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 5, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(8, 16, 15);
+    CHECK_IMAGELIST(8, 16, 16);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 3, (LPARAM)&bmp80) == 5, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(13, 16, 15);
+    CHECK_IMAGELIST(13, 16, 16);
     ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(30, 30)) == TRUE, "TB_SETBITMAPSIZE failed\n");
     UpdateWindow(hToolbar);
     CHECK_IMAGELIST(8, 30, 30);
@@ -362,7 +363,7 @@ static void test_add_bitmap(void)
     addbmp.nID = IDB_STD_SMALL_COLOR;
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(15, 16, 15);
+    CHECK_IMAGELIST(15, 16, 16);
     addbmp.nID = IDB_STD_LARGE_COLOR;
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
@@ -371,7 +372,7 @@ static void test_add_bitmap(void)
     addbmp.nID = IDB_VIEW_SMALL_COLOR;
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(12, 16, 15);
+    CHECK_IMAGELIST(12, 16, 16);
     addbmp.nID = IDB_VIEW_LARGE_COLOR;
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
@@ -380,7 +381,7 @@ static void test_add_bitmap(void)
     addbmp.nID = IDB_HIST_SMALL_COLOR;
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
-    CHECK_IMAGELIST(5, 16, 15);
+    CHECK_IMAGELIST(5, 16, 16);
     addbmp.nID = IDB_HIST_LARGE_COLOR;
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
