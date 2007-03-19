@@ -378,7 +378,16 @@ static ULONG WINAPI AsyncReader_Release(IBaseFilter * iface)
     if (!refCount)
     {
         if (This->pOutputPin)
+        {
+            IPin *pConnectedTo;
+            if(SUCCEEDED(IPin_ConnectedTo(This->pOutputPin, &pConnectedTo)))
+            {
+                IPin_Disconnect(pConnectedTo);
+                IPin_Release(pConnectedTo);
+            }
+            IPin_Disconnect(This->pOutputPin);
             IPin_Release(This->pOutputPin);
+        }
         This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
         This->lpVtbl = NULL;
