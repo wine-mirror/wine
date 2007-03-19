@@ -554,7 +554,7 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffe
     TRACE("(%x,%p,%p)\n", *pFlags, Buffer, pvar);
 
     ALIGN_POINTER(Buffer, 7);
-    VariantInit(pvar);
+    VariantClear(pvar);
 
     header = (variant_wire_t *)Buffer; 
     

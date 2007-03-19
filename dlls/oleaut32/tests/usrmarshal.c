@@ -1188,7 +1188,6 @@ static void test_marshal_VARIANT(void)
            V_VT(V_VARIANTREF(&v)), V_VT(V_VARIANTREF(&v3)));
         ok(V_R8(V_VARIANTREF(&v)) == V_R8(V_VARIANTREF(&v3)), "r8s differ\n");
         VARIANT_UserFree(&umcb.Flags, &v3);
-        todo_wine
         ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
         IUnknown_Release((IUnknown *)heap_unknown);
     }
