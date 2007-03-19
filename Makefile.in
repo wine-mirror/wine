@@ -449,6 +449,7 @@ ALL_MAKEFILES = \
 	programs/regsvr32/Makefile \
 	programs/rpcss/Makefile \
 	programs/rundll32/Makefile \
+	programs/spoolsv/Makefile \
 	programs/start/Makefile \
 	programs/taskmgr/Makefile \
 	programs/uninstaller/Makefile \
@@ -786,6 +787,7 @@ programs/regedit/Makefile: programs/regedit/Makefile.in programs/Makeprog.rules
 programs/regsvr32/Makefile: programs/regsvr32/Makefile.in programs/Makeprog.rules
 programs/rpcss/Makefile: programs/rpcss/Makefile.in programs/Makeprog.rules
 programs/rundll32/Makefile: programs/rundll32/Makefile.in programs/Makeprog.rules
+programs/spoolsv/Makefile: programs/spoolsv/Makefile.in programs/Makeprog.rules
 programs/start/Makefile: programs/start/Makefile.in programs/Makeprog.rules
 programs/taskmgr/Makefile: programs/taskmgr/Makefile.in programs/Makeprog.rules
 programs/uninstaller/Makefile: programs/uninstaller/Makefile.in programs/Makeprog.rules

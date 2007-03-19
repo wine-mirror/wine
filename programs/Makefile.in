@@ -24,6 +24,7 @@ SUBDIRS = \
 	regsvr32 \
 	rpcss \
 	rundll32 \
+	spoolsv \
 	start \
 	taskmgr \
 	uninstaller \
@@ -63,6 +64,7 @@ INSTALLSUBDIRS = \
 	regsvr32 \
 	rpcss \
 	rundll32 \
+	spoolsv \
 	start \
 	taskmgr \
 	uninstaller \
