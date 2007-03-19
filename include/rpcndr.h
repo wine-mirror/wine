@@ -274,8 +274,8 @@ typedef struct _USER_MARSHAL_ROUTINE_QUADRUPLE
 
 /* 'USRC' */
 #define USER_MARSHAL_CB_SIGNATURE \
-	( (DWORD)'U'         | ( (DWORD)'S' << 8 ) | \
-	( (DWORD)'R' << 16 ) | ( (DWORD)'C' << 24 ) )
+	( ( (DWORD)'U' << 24 ) | ( (DWORD)'S' << 16 ) | \
+	  ( (DWORD)'R' << 8  ) | ( (DWORD)'C'       ) )
 
 typedef enum
 {
