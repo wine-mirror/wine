@@ -524,9 +524,6 @@ static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
     {
         IPin *pConnectedTo;
 
-        This->csFilter.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&This->csFilter);
-
         DestroyWindow(This->hWnd);
         PostThreadMessageA(This->ThreadID, WM_QUIT, 0, 0);
         WaitForSingleObject(This->hThread, INFINITE);
@@ -547,6 +544,9 @@ static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
         CoTaskMemFree(This->ppPins);
         This->lpVtbl = NULL;
         
+        This->csFilter.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->csFilter);
+
         TRACE("Destroying Video Renderer\n");
         CoTaskMemFree(This);
         

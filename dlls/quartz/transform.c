@@ -276,9 +276,6 @@ static ULONG WINAPI TransformFilter_Release(IBaseFilter * iface)
     {
         ULONG i;
 
-        This->csFilter.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&This->csFilter);
-
         if (This->pClock)
             IReferenceClock_Release(This->pClock);
 
@@ -300,6 +297,9 @@ static ULONG WINAPI TransformFilter_Release(IBaseFilter * iface)
         This->lpVtbl = NULL;
 
 	This->pFuncsTable->pfnCleanup(This);
+
+        This->csFilter.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->csFilter);
 
         TRACE("Destroying transform filter\n");
         CoTaskMemFree(This);

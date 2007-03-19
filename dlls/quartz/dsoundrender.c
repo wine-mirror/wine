@@ -400,8 +400,6 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
     {
         IPin *pConnectedTo;
 
-        This->csFilter.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&This->csFilter);
         if (This->pClock)
             IReferenceClock_Release(This->pClock);
 
@@ -425,6 +423,9 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
         This->lpVtbl = NULL;
         This->IBasicAudio_vtbl = NULL;
         
+        This->csFilter.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->csFilter);
+
         TRACE("Destroying Audio Renderer\n");
         CoTaskMemFree(This);
         
