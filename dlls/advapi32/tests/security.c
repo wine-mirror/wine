@@ -1686,6 +1686,16 @@ static void test_impersonation_level(void)
     HeapFree(GetProcessHeap(), 0, PrivilegeSet);
 }
 
+static void test_SetEntriesInAcl(void)
+{
+    ACL *acl = (ACL*)0xdeadbeef;
+    DWORD res;
+
+    res = SetEntriesInAclW(0, NULL, NULL, &acl);
+    ok(res == ERROR_SUCCESS, "SetEntriesInAcl failed: %u\n", res);
+    ok(acl == NULL, "acl=%p, expected NULL\n", acl);
+}
+
 START_TEST(security)
 {
     init();
@@ -1706,4 +1716,5 @@ START_TEST(security)
     test_LookupAccountName();
     test_process_security();
     test_impersonation_level();
+    test_SetEntriesInAcl();
 }
