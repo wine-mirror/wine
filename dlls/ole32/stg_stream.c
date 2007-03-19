@@ -486,7 +486,10 @@ static HRESULT WINAPI StgStreamImpl_Seek(
    */
 
   if (!This->parentStorage)
+  {
+    WARN("storage reverted\n");
     return STG_E_REVERTED;
+  }
 
   /*
    * The caller is allowed to pass in NULL as the new position return value.
@@ -515,6 +518,7 @@ static HRESULT WINAPI StgStreamImpl_Seek(
       *plibNewPosition = This->streamSize;
       break;
     default:
+      WARN("invalid dwOrigin %d\n", dwOrigin);
       return STG_E_INVALIDFUNCTION;
   }
 
@@ -549,19 +553,28 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
   TRACE("(%p, %d)\n", iface, libNewSize.u.LowPart);
 
   if(!This->parentStorage)
+  {
+    WARN("storage reverted\n");
     return STG_E_REVERTED;
+  }
 
   /*
    * As documented.
    */
   if (libNewSize.u.HighPart != 0)
+  {
+    WARN("invalid value for libNewSize.u.HighPart %d\n", libNewSize.u.HighPart);
     return STG_E_INVALIDFUNCTION;
+  }
 
   /*
    * Do we have permission?
    */
   if (!(This->grfMode & (STGM_WRITE | STGM_READWRITE)))
+  {
+    WARN("access denied\n");
     return STG_E_ACCESSDENIED;
+  }
 
   if (This->streamSize.u.LowPart == libNewSize.u.LowPart)
     return S_OK;
@@ -669,7 +682,10 @@ static HRESULT WINAPI StgStreamImpl_CopyTo(
    */
 
   if (!This->parentStorage)
+  {
+    WARN("storage reverted\n");
     return STG_E_REVERTED;
+  }
 
   if ( pstm == 0 )
     return STG_E_INVALIDPOINTER;
@@ -703,6 +719,7 @@ static HRESULT WINAPI StgStreamImpl_CopyTo(
     if (bytesRead != bytesWritten)
     {
       hr = STG_E_MEDIUMFULL;
+      WARN("medium full\n");
       break;
     }
 
@@ -744,7 +761,10 @@ static HRESULT WINAPI StgStreamImpl_Commit(
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
   if (!This->parentStorage)
+  {
+    WARN("storage reverted\n");
     return STG_E_REVERTED;
+  }
 
   return S_OK;
 }
@@ -772,7 +792,10 @@ static HRESULT WINAPI StgStreamImpl_LockRegion(
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
   if (!This->parentStorage)
+  {
+    WARN("storage reverted\n");
     return STG_E_REVERTED;
+  }
 
   FIXME("not implemented!\n");
   return E_NOTIMPL;
@@ -787,7 +810,10 @@ static HRESULT WINAPI StgStreamImpl_UnlockRegion(
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
   if (!This->parentStorage)
+  {
+    WARN("storage reverted\n");
     return STG_E_REVERTED;
+  }
 
   FIXME("not implemented!\n");
   return E_NOTIMPL;
@@ -818,7 +844,10 @@ static HRESULT WINAPI StgStreamImpl_Stat(
    */
 
   if (!This->parentStorage)
+  {
+    WARN("storage reverted\n");
     return STG_E_REVERTED;
+  }
 
   /*
    * Read the information from the property.
@@ -838,6 +867,7 @@ static HRESULT WINAPI StgStreamImpl_Stat(
     return S_OK;
   }
 
+  WARN("failed to read properties\n");
   return E_FAIL;
 }
 
