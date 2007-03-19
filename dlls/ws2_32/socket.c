@@ -2873,27 +2873,71 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         return SOCKET_ERROR;
     }
 
-    if (_is_blocking(s))
+    *lpNumberOfBytesSent = 0;
+    if ( _is_blocking(s) )
     {
-        /* FIXME: exceptfds? */
-        int timeout = GET_SNDTIMEO(fd);
-        if( !do_block(fd, POLLOUT, timeout)) {
-            err = WSAETIMEDOUT;
-            goto err_free; /* msdn says a timeout in send is fatal */
+        /* On a blocking non-overlapped stream socket,
+         * sending blocks until the entire buffer is sent. */
+        struct iovec *piovec = iovec;
+        int finish_time = GET_SNDTIMEO(fd);
+        if (finish_time >= 0)
+            finish_time += GetTickCount();
+        while ( dwBufferCount > 0 )
+        {
+            int timeout;
+            if ( finish_time >= 0 )
+            {
+                timeout = finish_time - GetTickCount();
+                if ( timeout < 0 )
+                    timeout = 0;
+            }
+            else
+                timeout = finish_time;
+            /* FIXME: exceptfds? */
+            if( !do_block(fd, POLLOUT, timeout)) {
+                err = WSAETIMEDOUT;
+                goto err_free; /* msdn says a timeout in send is fatal */
+            }
+
+            n = WS2_send( fd, piovec, dwBufferCount, to, tolen, dwFlags );
+            if ( n == -1 )
+            {
+                err = wsaErrno();
+                goto err_free;
+            }
+            *lpNumberOfBytesSent += n;
+
+            while ( n > 0 )
+            {
+                if ( piovec->iov_len > n )
+                {
+                    piovec->iov_base = (char*)piovec->iov_base + n;
+                    piovec->iov_len -= n;
+                    n = 0;
+                }
+                else
+                {
+                    n -= piovec->iov_len;
+                    --dwBufferCount;
+                    ++piovec;
+                }
+            }
         }
     }
-
-    n = WS2_send( fd, iovec, dwBufferCount, to, tolen, dwFlags );
-    if ( n == -1 )
+    else
     {
-        err = wsaErrno();
-        if ( err == WSAEWOULDBLOCK )
-            _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
-        goto err_free;
+        n = WS2_send( fd, iovec, dwBufferCount, to, tolen, dwFlags );
+        if ( n == -1 )
+        {
+            err = wsaErrno();
+            if ( err == WSAEWOULDBLOCK )
+                _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
+            goto err_free;
+        }
+        *lpNumberOfBytesSent = n;
     }
 
-    TRACE(" -> %i bytes\n", n);
-    *lpNumberOfBytesSent = n;
+    TRACE(" -> %i bytes\n", *lpNumberOfBytesSent);
 
     HeapFree( GetProcessHeap(), 0, iovec );
     release_sock_fd( s, fd );

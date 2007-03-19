@@ -1620,6 +1620,115 @@ static void test_inet_addr(void)
     ok(addr == INADDR_NONE, "inet_addr succeeded unexpectedly\n");
 }
 
+static DWORD WINAPI drain_socket_thread(LPVOID arg)
+{
+    char buffer[1024];
+    SOCKET sock = *(SOCKET*)arg;
+
+    while (recv(sock, buffer, sizeof(buffer), 0) > 0)
+        ;
+    return 0;
+}
+
+static void test_send(void)
+{
+    SOCKET src = INVALID_SOCKET;
+    SOCKET server = INVALID_SOCKET;
+    SOCKET dst = INVALID_SOCKET;
+    HANDLE hThread = NULL;
+    struct sockaddr_in addr;
+    int len;
+    const int buflen = 1024*1024;
+    char *buffer = NULL;
+    int ret;
+
+    src = socket(AF_INET, SOCK_STREAM, 0);
+    if (src == INVALID_SOCKET)
+    {
+        ok(0, "socket failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    server = socket(AF_INET, SOCK_STREAM, 0);
+    if (server == INVALID_SOCKET)
+    {
+        ok(0, "socket failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    ret = bind(server, (struct sockaddr*)&addr, sizeof(addr));
+    if (ret != 0)
+    {
+        ok(0, "bind failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    len = sizeof(addr);
+    ret = getsockname(server, (struct sockaddr*)&addr, &len);
+    if (ret != 0)
+    {
+        ok(0, "getsockname failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    ret = listen(server, 1);
+    if (ret != 0)
+    {
+        ok(0, "listen failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    ret = connect(src, (struct sockaddr*)&addr, sizeof(addr));
+    if (ret != 0)
+    {
+        ok(0, "connect failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    len = sizeof(addr);
+    dst = accept(server, (struct sockaddr*)&addr, &len);
+    if (dst == INVALID_SOCKET)
+    {
+        ok(0, "accept failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, NULL);
+    if (hThread == NULL)
+    {
+        ok(0, "CreateThread failed, error %d\n", GetLastError());
+        goto end;
+    }
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, buflen);
+    if (buffer == NULL)
+    {
+        ok(0, "HeapAlloc failed, error %d\n", GetLastError());
+        goto end;
+    }
+
+    ret = send(src, buffer, buflen, 0);
+    if (ret >= 0)
+        ok(ret == buflen, "send should have sent %d bytes, but it only sent %d\n", buflen, ret);
+    else
+        ok(0, "send failed, error %d\n", WSAGetLastError());
+
+end:
+    if (src != INVALID_SOCKET)
+        closesocket(src);
+    if (server != INVALID_SOCKET)
+        closesocket(server);
+    if (dst != INVALID_SOCKET)
+        closesocket(dst);
+    if (hThread != NULL)
+        CloseHandle(hThread);
+    if (buffer != NULL)
+        HeapFree(GetProcessHeap(), 0, buffer);
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -1652,6 +1761,8 @@ START_TEST( sock )
     test_accept();
     test_getsockname();
     test_inet_addr();
+
+    test_send();
 
     Exit();
 }
