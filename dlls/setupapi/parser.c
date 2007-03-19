@@ -256,7 +256,7 @@ static struct line *add_line( struct inf_file *file, int section_index )
 
 
 /* retrieve a given line from section/line index */
-inline static struct line *get_line( struct inf_file *file, unsigned int section_index,
+static inline struct line *get_line( struct inf_file *file, unsigned int section_index,
                                      unsigned int line_index )
 {
     struct section *section;
@@ -444,7 +444,7 @@ static WCHAR *push_string( struct inf_file *file, const WCHAR *string )
 
 
 /* push the current state on the parser stack */
-inline static void push_state( struct parser *parser, enum parser_state state )
+static inline void push_state( struct parser *parser, enum parser_state state )
 {
     assert( parser->stack_pos < sizeof(parser->stack)/sizeof(parser->stack[0]) );
     parser->stack[parser->stack_pos++] = state;
@@ -452,7 +452,7 @@ inline static void push_state( struct parser *parser, enum parser_state state )
 
 
 /* pop the current state */
-inline static void pop_state( struct parser *parser )
+static inline void pop_state( struct parser *parser )
 {
     assert( parser->stack_pos );
     parser->state = parser->stack[--parser->stack_pos];
@@ -460,7 +460,7 @@ inline static void pop_state( struct parser *parser )
 
 
 /* set the parser state and return the previous one */
-inline static enum parser_state set_state( struct parser *parser, enum parser_state state )
+static inline enum parser_state set_state( struct parser *parser, enum parser_state state )
 {
     enum parser_state ret = parser->state;
     parser->state = state;
@@ -469,14 +469,14 @@ inline static enum parser_state set_state( struct parser *parser, enum parser_st
 
 
 /* check if the pointer points to an end of file */
-inline static int is_eof( struct parser *parser, const WCHAR *ptr )
+static inline int is_eof( struct parser *parser, const WCHAR *ptr )
 {
     return (ptr >= parser->end || *ptr == CONTROL_Z);
 }
 
 
 /* check if the pointer points to an end of line */
-inline static int is_eol( struct parser *parser, const WCHAR *ptr )
+static inline int is_eol( struct parser *parser, const WCHAR *ptr )
 {
     return (ptr >= parser->end || *ptr == CONTROL_Z || *ptr == '\n');
 }

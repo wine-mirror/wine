@@ -29,7 +29,7 @@
 #define REGPART_RENAME "\\Rename"
 #define REG_VERSIONCONFLICT "Software\\Microsoft\\VersionConflictManager"
 
-inline static WCHAR *strdupAtoW( const char *str )
+static inline WCHAR *strdupAtoW( const char *str )
 {
     WCHAR *ret = NULL;
     if (str)

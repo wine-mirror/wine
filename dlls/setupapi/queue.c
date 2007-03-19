@@ -73,7 +73,7 @@ struct file_queue
 };
 
 
-inline static WCHAR *strdupW( const WCHAR *str )
+static inline WCHAR *strdupW( const WCHAR *str )
 {
     WCHAR *ret = NULL;
     if (str)
@@ -84,7 +84,7 @@ inline static WCHAR *strdupW( const WCHAR *str )
     return ret;
 }
 
-inline static char *strdupWtoA( const WCHAR *str )
+static inline char *strdupWtoA( const WCHAR *str )
 {
     char *ret = NULL;
     if (str)
@@ -97,7 +97,7 @@ inline static char *strdupWtoA( const WCHAR *str )
 }
 
 /* append a file operation to a queue */
-inline static void queue_file_op( struct file_op_queue *queue, struct file_op *op )
+static inline void queue_file_op( struct file_op_queue *queue, struct file_op *op )
 {
     op->next = NULL;
     if (queue->tail) queue->tail->next = op;
