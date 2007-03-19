@@ -795,7 +795,7 @@ DestroyCallback(IDirectDrawSurface7 *surf,
  * Reads a config key from the registry. Taken from WineD3D
  *
  ***********************************************************************/
-inline static DWORD get_config_key(HKEY defkey, HKEY appkey, const char* name, char* buffer, DWORD size)
+static inline DWORD get_config_key(HKEY defkey, HKEY appkey, const char* name, char* buffer, DWORD size)
 {
     if (0 != appkey && !RegQueryValueExA( appkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
     if (0 != defkey && !RegQueryValueExA( defkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
