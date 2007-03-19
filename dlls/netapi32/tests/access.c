@@ -56,7 +56,10 @@ static int init_access_tests(void)
     dwSize = sizeof(user_name);
     rc=GetUserNameW(user_name, &dwSize);
     if (rc==FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("netapi32 functions seem to be missing.\n");
         return 0;
+    }
     ok(rc, "User Name Retrieved\n");
 
     computer_name[0] = 0;
@@ -74,13 +77,16 @@ static void run_usergetinfo_tests(void)
 
     /* If this one is not defined then none of the others will be defined */
     if (!pNetUserGetInfo)
+    {
+        skip("netapi32 functions seem to be missing.\n");
         return;
+    }
 
     /* Level 0 */
     rc=pNetUserGetInfo(NULL, sAdminUserName, 0, (LPBYTE *)&ui0);
     if (rc != NERR_Success) {
-        trace ("Aborting usergetinfo_tests().   NetUserGetInfo: rc=%d\n", rc);
-	return;
+        skip("Aborting usergetinfo_tests().   NetUserGetInfo: rc=%d\n", rc);
+        return;
     }
     ok(!lstrcmpW(sAdminUserName, ui0->usri0_name), "This is really user name\n");
     pNetApiBufferSize(ui0, &dwSize);
@@ -133,7 +139,10 @@ static void run_querydisplayinformation1_tests(void)
     BOOL hasGuest = FALSE;
 
     if (!pNetQueryDisplayInformation)
+    {
+        skip("netapi32 functions seem to be missing.\n");
         return;
+    }
 
     do
     {
