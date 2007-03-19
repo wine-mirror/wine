@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -404,6 +406,45 @@ static void test_marshal_BSTR(void)
     SysFreeString(b);
 }
 
+typedef struct
+{
+    const IUnknownVtbl *lpVtbl;
+    ULONG refs;
+} HeapUnknown;
+
+static HRESULT WINAPI HeapUnknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *ppv = (LPVOID)iface;
+        return S_OK;
+    }
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HeapUnknown_AddRef(IUnknown *iface)
+{
+    HeapUnknown *This = (HeapUnknown *)iface;
+    return InterlockedIncrement((LONG*)&This->refs);
+}
+
+static ULONG WINAPI HeapUnknown_Release(IUnknown *iface)
+{
+    HeapUnknown *This = (HeapUnknown *)iface;
+    ULONG refs = InterlockedDecrement((LONG*)&This->refs);
+    if (!refs) HeapFree(GetProcessHeap(), 0, This);
+    return refs;
+}
+
+static const IUnknownVtbl HeapUnknown_Vtbl =
+{
+    HeapUnknown_QueryInterface,
+    HeapUnknown_AddRef,
+    HeapUnknown_Release
+};
+
 static void check_variant_header(DWORD *wirev, VARIANT *v, unsigned long size)
 {
     WORD *wp;
@@ -445,6 +486,7 @@ static void test_marshal_VARIANT(void)
     SAFEARRAYBOUND sab;
     LPSAFEARRAY lpsa;
     DECIMAL dec, dec2;
+    HeapUnknown *heap_unknown;
 
     umcb.Flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
     umcb.pReserve = NULL;
@@ -1056,6 +1098,54 @@ static void test_marshal_VARIANT(void)
            V_VT(V_VARIANTREF(&v)), V_VT(V_VARIANTREF(&v3))); 
         ok(V_R8(V_VARIANTREF(&v)) == V_R8(V_VARIANTREF(&v3)), "r8s differ\n"); 
         VARIANT_UserFree(&umcb.Flags, &v3);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** UNKNOWN ***/
+    heap_unknown = HeapAlloc(GetProcessHeap(), 0, sizeof(*heap_unknown));
+    heap_unknown->lpVtbl = &HeapUnknown_Vtbl;
+    heap_unknown->refs = 1;
+    VariantInit(&v);
+    VariantInit(&v2);
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown *)heap_unknown;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size > 32, "size %ld\n", size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    memset(buffer, 0xcc, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    wirev = (DWORD*)buffer;
+    check_variant_header(wirev, &v, next - buffer);
+    wirev += 5;
+
+    todo_wine
+    ok(*wirev == (DWORD_PTR)V_UNKNOWN(&v), "wv[5] %08x\n", *wirev);
+    wirev++;
+    todo_wine
+    ok(*wirev == next - buffer - 0x20, "wv[6] %08x\n", *wirev);
+    wirev++;
+    todo_wine
+    ok(*wirev == next - buffer - 0x20, "wv[7] %08x\n", *wirev);
+    wirev++;
+    todo_wine
+    ok(*wirev == 0x574f454d, "wv[8] %08x\n", *wirev);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VARIANT v3;
+        VariantInit(&v3);
+        V_VT(&v3) = VT_UNKNOWN;
+        V_UNKNOWN(&v3) = (IUnknown *)heap_unknown;
+        IUnknown_AddRef(V_UNKNOWN(&v3));
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
+        ok(V_VT(&v) == V_VT(&v3), "got vt %d expect %d\n", V_VT(&v), V_VT(&v3));
+        ok(V_VT(V_VARIANTREF(&v)) == V_VT(V_VARIANTREF(&v3)), "vts differ %x %x\n",
+           V_VT(V_VARIANTREF(&v)), V_VT(V_VARIANTREF(&v3)));
+        ok(V_R8(V_VARIANTREF(&v)) == V_R8(V_VARIANTREF(&v3)), "r8s differ\n");
+        VARIANT_UserFree(&umcb.Flags, &v3);
+        todo_wine
+        ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
+        IUnknown_Release((IUnknown *)heap_unknown);
     }
     HeapFree(GetProcessHeap(), 0, buffer);
 }
