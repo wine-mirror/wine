@@ -116,7 +116,7 @@ DWORD WINAPI DsRoleGetPrimaryDomainInformation(
              POLICY_VIEW_LOCAL_INFORMATION, &PolicyHandle);
             if (NtStatus != STATUS_SUCCESS)
             {
-                ERR("LsaOpenPolicyFailed with NT status %x\n",
+                TRACE("LsaOpenPolicyFailed with NT status %x\n",
                     LsaNtStatusToWinError(NtStatus));
                 return ERROR_OUTOFMEMORY;
             }

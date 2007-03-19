@@ -295,7 +295,7 @@ NetWkstaTransportEnum(LPWSTR ServerName, DWORD level, PBYTE* pbuf,
                 break;
             }
             default:
-                ERR("Invalid level %d is specified\n", level);
+                TRACE("Invalid level %d is specified\n", level);
                 ret = ERROR_INVALID_LEVEL;
         }
     }
@@ -366,7 +366,7 @@ NET_API_STATUS WINAPI NetWkstaUserGetInfo(LPWSTR reserved, DWORD level,
                                  &PolicyHandle);
         if (NtStatus != STATUS_SUCCESS)
         {
-            ERR("LsaOpenPolicyFailed with NT status %x\n",
+            TRACE("LsaOpenPolicyFailed with NT status %x\n",
                 LsaNtStatusToWinError(NtStatus));
             NetApiBufferFree(ui0);
             return ERROR_NOT_ENOUGH_MEMORY;
@@ -426,7 +426,7 @@ NET_API_STATUS WINAPI NetWkstaUserGetInfo(LPWSTR reserved, DWORD level,
         break;
     }
     default:
-        ERR("Invalid level %d is specified\n", level);
+        TRACE("Invalid level %d is specified\n", level);
         return ERROR_INVALID_LEVEL;
     }
     return NERR_Success;
