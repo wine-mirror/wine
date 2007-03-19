@@ -66,13 +66,13 @@ typedef struct _MSVCRT_EXCEPTION_FRAME
 #define TRYLEVEL_END (-1) /* End of trylevel list */
 
 #if defined(__GNUC__) && defined(__i386__)
-inline static void call_finally_block( void *code_block, void *base_ptr )
+static inline void call_finally_block( void *code_block, void *base_ptr )
 {
     __asm__ __volatile__ ("movl %1,%%ebp; call *%%eax"
                           : : "a" (code_block), "g" (base_ptr));
 }
 
-inline static DWORD call_filter( void *func, void *arg, void *ebp )
+static inline DWORD call_filter( void *func, void *arg, void *ebp )
 {
     DWORD ret;
     __asm__ __volatile__ ("pushl %%ebp; pushl %3; movl %2,%%ebp; call *%%eax; popl %%ebp; popl %%ebp"

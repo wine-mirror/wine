@@ -49,7 +49,7 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
                                EXCEPTION_REGISTRATION_RECORD* nested_frame, int nested_trylevel );
 
 /* call a function with a given ebp */
-inline static void *call_ebp_func( void *func, void *ebp )
+static inline void *call_ebp_func( void *func, void *ebp )
 {
     void *ret;
     int dummy;
@@ -65,7 +65,7 @@ inline static void *call_ebp_func( void *func, void *ebp )
 }
 
 /* call a copy constructor */
-inline static void call_copy_ctor( void *func, void *this, void *src, int has_vbase )
+static inline void call_copy_ctor( void *func, void *this, void *src, int has_vbase )
 {
     TRACE( "calling copy ctor %p object %p src %p\n", func, this, src );
     if (has_vbase)
@@ -78,13 +78,13 @@ inline static void call_copy_ctor( void *func, void *this, void *src, int has_vb
 }
 
 /* call the destructor of the exception object */
-inline static void call_dtor( void *func, void *object )
+static inline void call_dtor( void *func, void *object )
 {
     __asm__ __volatile__("call *%0" : : "r" (func), "c" (object) : "eax", "edx", "memory" );
 }
 
 /* continue execution to the specified address after exception is caught */
-inline static void DECLSPEC_NORETURN continue_after_catch( cxx_exception_frame* frame, void *addr )
+static inline void DECLSPEC_NORETURN continue_after_catch( cxx_exception_frame* frame, void *addr )
 {
     __asm__ __volatile__("movl -4(%0),%%esp; leal 12(%0),%%ebp; jmp *%1"
                          : : "r" (frame), "a" (addr) );
@@ -276,7 +276,7 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
 
 /* find and call the appropriate catch block for an exception */
 /* returns the address to continue execution to after the catch block was called */
-inline static void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame *frame,
+static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame *frame,
                                      const cxx_function_descr *descr, int nested_trylevel,
                                      cxx_exception_type *info )
 {
