@@ -350,12 +350,14 @@ static void test_add_bitmap(void)
     CHECK_IMAGELIST(4, 20, 15);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return\n");
     CHECK_IMAGELIST(10, 20, 15);
-    /* however TB_SETBITMAPSIZE/add std bitmap won't change the image size (the button size does change!) */
+    /* however TB_SETBITMAPSIZE/add std bitmap won't change the image size (the button size does change) */
     ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(8, 8)) == TRUE, "TB_SETBITMAPSIZE failed\n");
     UpdateWindow(hToolbar);
+    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(15, 14), "%x");
     CHECK_IMAGELIST(10, 20, 15);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&stdsmall) == 1, "TB_SETBITMAPSIZE failed\n");
     UpdateWindow(hToolbar);
+    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(23, 22), "%x");
     CHECK_IMAGELIST_TODO_COUNT(22, 20, 15);
 
     /* check standard bitmaps */
@@ -364,10 +366,12 @@ static void test_add_bitmap(void)
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
     CHECK_IMAGELIST(15, 16, 16);
+    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(23, 22), "%x");
     addbmp.nID = IDB_STD_LARGE_COLOR;
     rebuild_toolbar(&hToolbar);
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 1, (LPARAM)&addbmp) == 0, "TB_ADDBITMAP - unexpected return\n");
     CHECK_IMAGELIST(15, 24, 24);
+    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(31, 30), "%x");
 
     addbmp.nID = IDB_VIEW_SMALL_COLOR;
     rebuild_toolbar(&hToolbar);

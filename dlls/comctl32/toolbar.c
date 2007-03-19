@@ -2775,19 +2775,13 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	/* Windows resize all the buttons to the size of a newly added standard image */
 	if (lpAddBmp->nID & 1)
 	{
-	    /* large icons */
-	    SendMessageW (hwnd, TB_SETBITMAPSIZE, 0,
-			  MAKELPARAM((WORD)24, (WORD)24));
-	    SendMessageW (hwnd, TB_SETBUTTONSIZE, 0,
-			  MAKELPARAM((WORD)31, (WORD)30));
+	    /* large icons: 24x24. Will make the button 31x30 */
+	    SendMessageW (hwnd, TB_SETBITMAPSIZE, 0, MAKELPARAM(24, 24));
 	}
 	else
 	{
-	    /* small icons */
-	    SendMessageW (hwnd, TB_SETBITMAPSIZE, 0,
-			  MAKELPARAM((WORD)16, (WORD)16));
-	    SendMessageW (hwnd, TB_SETBUTTONSIZE, 0,
-			  MAKELPARAM((WORD)22, (WORD)22));
+	    /* small icons: 16x16. Will make the buttons 23x22 */
+	    SendMessageW (hwnd, TB_SETBITMAPSIZE, 0, MAKELPARAM(16, 16));
 	}
 
 	TOOLBAR_CalcToolbar (hwnd);
