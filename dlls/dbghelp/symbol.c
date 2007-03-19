@@ -41,14 +41,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 WINE_DECLARE_DEBUG_CHANNEL(dbghelp_symt);
 
-inline static int cmp_addr(ULONG64 a1, ULONG64 a2)
+static inline int cmp_addr(ULONG64 a1, ULONG64 a2)
 {
     if (a1 > a2) return 1;
     if (a1 < a2) return -1;
     return 0;
 }
 
-inline static int cmp_sorttab_addr(const struct module* module, int idx, ULONG64 addr)
+static inline int cmp_sorttab_addr(const struct module* module, int idx, ULONG64 addr)
 {
     ULONG64     ref;
 
