@@ -190,28 +190,6 @@ static void rebuild_toolbar_with_buttons(HWND *hToolbar)
     } \
 }
 
-#define CHECK_IMAGELIST_TODO_COUNT(count, dx, dy) { \
-    int cx, cy; \
-    HIMAGELIST himl = (HIMAGELIST)SendMessageA(hToolbar, TB_GETIMAGELIST, 0, 0); \
-    ok(himl != NULL, "No image list\n"); \
-    if (himl != NULL) {\
-        todo_wine ok(ImageList_GetImageCount(himl) == count, "Images count mismatch - %d vs %d\n", count, ImageList_GetImageCount(himl)); \
-        ImageList_GetIconSize(himl, &cx, &cy); \
-        ok(cx == dx && cy == dy, "Icon size mismatch - %dx%d vs %dx%d\n", dx, dy, cx, cy); \
-    } \
-}
-
-#define CHECK_IMAGELIST_TODO_COUNT_SIZE(count, dx, dy) { \
-    int cx, cy; \
-    HIMAGELIST himl = (HIMAGELIST)SendMessageA(hToolbar, TB_GETIMAGELIST, 0, 0); \
-    ok(himl != NULL, "No image list\n"); \
-    if (himl != NULL) {\
-        todo_wine ok(ImageList_GetImageCount(himl) == count, "Images count mismatch - %d vs %d\n", count, ImageList_GetImageCount(himl)); \
-        ImageList_GetIconSize(himl, &cx, &cy); \
-        todo_wine ok(cx == dx && cy == dy, "Icon size mismatch - %dx%d vs %dx%d\n", dx, dy, cx, cy); \
-    } \
-}
-
 static void test_add_bitmap(void)
 {
     HWND hToolbar = NULL;
@@ -358,7 +336,7 @@ static void test_add_bitmap(void)
     ok(SendMessageA(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&stdsmall) == 1, "TB_SETBITMAPSIZE failed\n");
     UpdateWindow(hToolbar);
     compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(23, 22), "%x");
-    CHECK_IMAGELIST_TODO_COUNT(22, 20, 15);
+    CHECK_IMAGELIST(22, 20, 15);
 
     /* check standard bitmaps */
     addbmp.hInst = HINST_COMMCTRL;

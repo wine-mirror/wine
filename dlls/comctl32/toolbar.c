@@ -2669,7 +2669,8 @@ TOOLBAR_AddBitmapToImageList(TOOLBAR_INFO *infoPtr, HIMAGELIST himlDef, const TB
 
     /* enlarge the bitmap if needed */
     ImageList_GetIconSize(himlDef, &cxIcon, &cyIcon);
-    COMCTL32_EnsureBitmapSize(&hbmLoad, cxIcon*(INT)bitmap->nButtons, cyIcon, comctl32_color.clrBtnFace);
+    if (bitmap->hInst != COMCTL32_hModule)
+        COMCTL32_EnsureBitmapSize(&hbmLoad, cxIcon*(INT)bitmap->nButtons, cyIcon, comctl32_color.clrBtnFace);
     
     nIndex = ImageList_AddMasked(himlDef, hbmLoad, comctl32_color.clrBtnFace);
     DeleteObject(hbmLoad);
