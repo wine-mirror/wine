@@ -737,7 +737,6 @@ HINTERNET WINAPI FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
     if (!FTP_SendPortOrPasv(lpwfs))
         goto lend;
 
-    hIC = lpwfs->lpAppInfo;
     if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_LIST, NULL,
         lpwfs->hdr.lpfnStatusCB, &lpwfs->hdr, lpwfs->hdr.dwContext))
         goto lend;
@@ -767,6 +766,7 @@ lend:
     if (lpwfs->lstnSocket != -1)
         closesocket(lpwfs->lstnSocket);
 
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         INTERNET_ASYNC_RESULT iar;
