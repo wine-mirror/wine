@@ -1127,7 +1127,7 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
 
     IPin_Release(ppinreader);
     IBaseFilter_Release(preader);
-    if (psplitter);
+    if (psplitter)
         IBaseFilter_Release(psplitter);
 
     return hr;
