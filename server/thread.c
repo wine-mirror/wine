@@ -318,6 +318,7 @@ static void thread_apc_destroy( struct object *obj )
 {
     struct thread_apc *apc = (struct thread_apc *)obj;
     if (apc->caller) release_object( apc->caller );
+    if (apc->owner) release_object( apc->owner );
 }
 
 /* queue an async procedure call */
@@ -332,6 +333,7 @@ static struct thread_apc *create_apc( struct object *owner, const apc_call_t *ca
         apc->owner       = owner;
         apc->executed    = 0;
         apc->result.type = APC_NONE;
+        if (owner) grab_object( owner );
     }
     return apc;
 }
