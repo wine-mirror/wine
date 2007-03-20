@@ -1317,7 +1317,7 @@ BOOL WINAPI FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, 
     hFile = CreateFileW(lpszNewFile, GENERIC_WRITE, 0, 0, fFailIfExists ?
         CREATE_NEW : CREATE_ALWAYS, dwLocalFlagsAttribute, 0);
     if (INVALID_HANDLE_VALUE == hFile)
-        goto lend;
+        return FALSE;
 
     /* Set up socket to retrieve data */
     nBytes = FTP_SendRetrieve(lpwfs, lpszRemoteFile, dwInternetFlags);
@@ -1345,12 +1345,10 @@ BOOL WINAPI FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, 
         }
     }
 
-lend:
     if (lpwfs->lstnSocket != -1)
         closesocket(lpwfs->lstnSocket);
 
-    if (INVALID_HANDLE_VALUE != hFile)
-        CloseHandle(hFile);
+    CloseHandle(hFile);
 
     hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
