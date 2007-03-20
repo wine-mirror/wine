@@ -638,6 +638,9 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
             if(oldRenderOffscreen) {
                 Context_MarkStateDirty(context, WINED3DRS_CULLMODE);
+                Context_MarkStateDirty(context, WINED3DTS_PROJECTION);
+                Context_MarkStateDirty(context, STATE_VDECL);
+                Context_MarkStateDirty(context, STATE_VIEWPORT);
             }
         } else {
             TRACE("Rendering offscreen\n");
@@ -703,6 +706,9 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
             if(!oldRenderOffscreen) {
                 Context_MarkStateDirty(context, WINED3DRS_CULLMODE);
+                Context_MarkStateDirty(context, WINED3DTS_PROJECTION);
+                Context_MarkStateDirty(context, STATE_VDECL);
+                Context_MarkStateDirty(context, STATE_VIEWPORT);
             }
         }
         if (readTexture) {
