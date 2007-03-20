@@ -124,12 +124,8 @@ extern struct object *create_serial( struct fd *fd, unsigned int options );
 /* async I/O functions */
 extern struct async *create_async( struct thread *thread, const struct timeval *timeout,
                                    struct list *queue, void *, void *, void *);
-extern void async_terminate_head( struct list *queue, int status );
-
-static inline void async_terminate_queue( struct list *queue, int status )
-{
-    while (!list_empty( queue )) async_terminate_head( queue, status );
-}
+extern void async_terminate_head( struct list *queue, unsigned int status );
+extern void async_terminate_queue( struct list *queue, unsigned int status );
 
 /* access rights that require Unix read permission */
 #define FILE_UNIX_READ_ACCESS (FILE_READ_DATA|FILE_READ_ATTRIBUTES|FILE_READ_EA)
