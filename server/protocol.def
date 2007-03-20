@@ -352,6 +352,11 @@ typedef union
     enum apc_type type;
     struct
     {
+        enum apc_type    type;      /* APC_ASYNC_IO */
+        unsigned int     status;    /* new status of async operation */
+    } async_io;
+    struct
+    {
         enum apc_type    type;      /* APC_VIRTUAL_ALLOC */
         unsigned int     status;    /* status returned by call */
         void            *addr;      /* resulting address */

@@ -338,6 +338,11 @@ typedef union
     {
         enum apc_type    type;
         unsigned int     status;
+    } async_io;
+    struct
+    {
+        enum apc_type    type;
+        unsigned int     status;
         void            *addr;
         unsigned long    size;
     } virtual_alloc;
@@ -4694,6 +4699,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 281
+#define SERVER_PROTOCOL_VERSION 282
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

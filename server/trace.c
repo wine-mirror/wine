@@ -179,6 +179,10 @@ static void dump_apc_result( const apc_result_t *result )
     {
     case APC_NONE:
         break;
+    case APC_ASYNC_IO:
+        fprintf( stderr, "APC_ASYNC_IO,status=%s",
+                 get_status_name( result->async_io.status ) );
+        break;
     case APC_VIRTUAL_ALLOC:
         fprintf( stderr, "APC_VIRTUAL_ALLOC,status=%s,addr=%p,size=%lu",
                  get_status_name( result->virtual_alloc.status ),
