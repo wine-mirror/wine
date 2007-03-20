@@ -624,7 +624,7 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 {
     IAutoCompleteImpl *This = (IAutoCompleteImpl *)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
     WCHAR *msg;
-    int sel = -1, len;
+    int sel, len;
 
     switch (uMsg) {
 	case WM_MOUSEMOVE:
@@ -632,9 +632,11 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 	    SendMessageW(hwnd, LB_SETCURSEL, (WPARAM)sel, (LPARAM)0);
 	    break;
 	case WM_LBUTTONDOWN:
-	    len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, (LPARAM)NULL);
+	    sel = SendMessageW(hwnd, LB_GETCURSEL, 0, 0);
+	    if (sel < 0)
+		break;
+	    len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
 	    msg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (len+1)*sizeof(WCHAR));
-	    sel = (INT)SendMessageW(hwnd, LB_GETCURSEL, 0, 0);
 	    SendMessageW(hwnd, LB_GETTEXT, sel, (LPARAM)msg);
 	    SendMessageW(This->hwndEdit, WM_SETTEXT, 0, (LPARAM)msg);
 	    SendMessageW(This->hwndEdit, EM_SETSEL, 0, lstrlenW(msg));
