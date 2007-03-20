@@ -982,9 +982,10 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
             }
             SERVER_START_REQ(connect_named_pipe)
             {
-                req->handle = handle;
-                req->event = event ? event : internal_event;
-                req->func = pipe_completion_wait;
+                req->handle  = handle;
+                req->io_apc  = pipe_completion_wait;
+                req->io_sb   = io;
+                req->io_user = event ? event : internal_event;
                 io->u.Status = wine_server_call(req);
             }
             SERVER_END_REQ;
@@ -1018,8 +1019,9 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
                 req->handle = handle;
                 req->timeout = buff->TimeoutSpecified ? buff->Timeout.QuadPart / -10000L
                                : NMPWAIT_USE_DEFAULT_WAIT;
-                req->event = event ? event : internal_event;
-                req->func = pipe_completion_wait;
+                req->io_apc  = pipe_completion_wait;
+                req->io_sb   = io;
+                req->io_user = event ? event : internal_event;
                 wine_server_add_data( req, buff->Name, buff->NameLength );
                 io->u.Status = wine_server_call( req );
             }

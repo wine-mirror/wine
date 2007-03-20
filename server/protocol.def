@@ -1997,8 +1997,9 @@ enum message_type
 /* Connect to a named pipe */
 @REQ(connect_named_pipe)
     obj_handle_t   handle;
-    obj_handle_t   event;
-    void*          func;
+    void*          io_apc;       /* APC routine to queue upon end of async */
+    void*          io_sb;        /* I/O status block */
+    void*          io_user;      /* data to pass back to caller */
 @END
 
 
@@ -2006,8 +2007,9 @@ enum message_type
 @REQ(wait_named_pipe)
     obj_handle_t   handle;
     unsigned int   timeout;
-    obj_handle_t   event;
-    void*          func;
+    void*          io_apc;       /* APC routine to queue upon end of async */
+    void*          io_sb;        /* I/O status block */
+    void*          io_user;      /* data to pass back to caller */
     VARARG(name,unicode_str);    /* pipe name */
 @END
 

@@ -2425,16 +2425,18 @@ static void dump_open_named_pipe_reply( const struct open_named_pipe_reply *req 
 static void dump_connect_named_pipe_request( const struct connect_named_pipe_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " event=%p,", req->event );
-    fprintf( stderr, " func=%p", req->func );
+    fprintf( stderr, " io_apc=%p,", req->io_apc );
+    fprintf( stderr, " io_sb=%p,", req->io_sb );
+    fprintf( stderr, " io_user=%p", req->io_user );
 }
 
 static void dump_wait_named_pipe_request( const struct wait_named_pipe_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " timeout=%08x,", req->timeout );
-    fprintf( stderr, " event=%p,", req->event );
-    fprintf( stderr, " func=%p,", req->func );
+    fprintf( stderr, " io_apc=%p,", req->io_apc );
+    fprintf( stderr, " io_sb=%p,", req->io_sb );
+    fprintf( stderr, " io_user=%p,", req->io_user );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }

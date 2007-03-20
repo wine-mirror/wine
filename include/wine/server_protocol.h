@@ -2709,8 +2709,9 @@ struct connect_named_pipe_request
 {
     struct request_header __header;
     obj_handle_t   handle;
-    obj_handle_t   event;
-    void*          func;
+    void*          io_apc;
+    void*          io_sb;
+    void*          io_user;
 };
 struct connect_named_pipe_reply
 {
@@ -2724,8 +2725,9 @@ struct wait_named_pipe_request
     struct request_header __header;
     obj_handle_t   handle;
     unsigned int   timeout;
-    obj_handle_t   event;
-    void*          func;
+    void*          io_apc;
+    void*          io_sb;
+    void*          io_user;
     /* VARARG(name,unicode_str); */
 };
 struct wait_named_pipe_reply
@@ -4692,6 +4694,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 280
+#define SERVER_PROTOCOL_VERSION 281
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
