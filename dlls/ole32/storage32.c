@@ -62,6 +62,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 #define OLESTREAM_ID 0x501
 #define OLESTREAM_MAX_STR_LEN 255
 
+/*
+ * These are signatures to detect the type of Document file.
+ */
+static const BYTE STORAGE_magic[8]    ={0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1};
+static const BYTE STORAGE_oldmagic[8] ={0xd0,0xcf,0x11,0xe0,0x0e,0x11,0xfc,0x0d};
+
 static const char rootPropertyName[] = "Root Entry";
 
 /****************************************************************************
