@@ -823,6 +823,8 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     object->pow2scalingFactorY  =  (((float)Height) / ((float)pow2Height));
     TRACE(" xf(%f) yf(%f)\n", object->pow2scalingFactorX, object->pow2scalingFactorY);
 
+    object->baseTexture.format = Format;
+
     /* Calculate levels for mip mapping */
     if (Levels == 0) {
         TRACE("calculating levels %d\n", object->baseTexture.levels);
@@ -896,6 +898,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     object->width  = Width;
     object->height = Height;
     object->depth  = Depth;
+    object->baseTexture.format = Format;
 
     /* Calculate levels for mip mapping */
     if (Levels == 0) {
@@ -1011,6 +1014,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     /* TODO: support for native non-power 2 */
     /* Precalculated scaling for 'faked' non power of two texture coords */
     object->pow2scalingFactor    = ((float)EdgeLength) / ((float)pow2EdgeLength);
+    object->baseTexture.format = Format;
 
     /* Calculate levels for mip mapping */
     if (Levels == 0) {
