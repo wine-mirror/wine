@@ -831,6 +831,39 @@ static void test_renamefile(void)
     InternetCloseHandle(hInternet);
 }
 
+static void test_multiple(void)
+{
+    BOOL      bRet;
+    HINTERNET hInternet, hFtp, hOpenFile;
+
+    hInternet = InternetOpen(NULL, 0, NULL, NULL, 0);
+    hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
+    if(!hFtp)
+    {
+        skip("No ftp connection could be made to ftp.winehq.org\n");
+        InternetCloseHandle(hInternet);
+        return;
+    }
+
+    /* A correct call */
+    bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
+    DeleteFileA("should_be_non_existing_deadbeef");
+
+    /* This call by itself succeeds in Wine for the test_openfile test */
+    SetLastError(0xdeadbeef);
+    hOpenFile = FtpOpenFileA(hFtp, "welcome.msg", GENERIC_READ, FTP_TRANSFER_TYPE_ASCII, 0);
+    todo_wine
+    {
+    ok ( hOpenFile != NULL, "Expected FtpOpenFileA to succeed\n");
+    ok ( GetLastError() == ERROR_SUCCESS || GetLastError() == ERROR_FILE_NOT_FOUND,
+        "Expected ERROR_SUCCESS or ERROR_FILE_NOT_FOUND (win98), got %d\n", GetLastError());
+    }
+
+    InternetCloseHandle(hOpenFile);
+    InternetCloseHandle(hFtp);
+    InternetCloseHandle(hInternet);
+}
+
 START_TEST(ftp)
 {
     /* The first call should always be a proper InternetOpen, if not
@@ -850,4 +883,11 @@ START_TEST(ftp)
     test_putfile();
     test_removedir();
     test_renamefile();
+
+    /* A test that does two particular calls in one connection, this currently fails on Wine.
+     * The problem lies in FtpGetFile but is exposed in FtpOpenFile.
+     * Once this is fixed we should change the total test to setup and clear the connections
+     * only once. (and get rid of test_multiple).
+     */
+    test_multiple();
 }
