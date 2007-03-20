@@ -715,11 +715,12 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
          * So the surface loading code converts the -128 ... 127 signed integers to
          * 0 ... 255 unsigned ones. The following line undoes that.
          *
-         * TODO: GL_ATI_envmap_bumpmap provides pixel formats
-         * suitable for loading the Direct3D perturbation data. If it is used, do
-         * not correct the signedness
+         * TODO: GL_ATI_envmap_bumpmap supports D3DFMT_DU8DV8 only. If conversion for other formats
+         * is implemented check the texture format.
+         *
+         * TODO: Move that to the common sampling function
          */
-        if(!GL_SUPPORT(NV_TEXTURE_SHADER3))
+        if(!GL_SUPPORT(NV_TEXTURE_SHADER3) && !GL_SUPPORT(ATI_ENVMAP_BUMPMAP))
             shader_addline(buffer, "MAD T%u, T%u, coefmul.x, -one;\n", src, src);
 
         shader_addline(buffer, "SWZ TMP2, bumpenvmat, x, z, 0, 0;\n");

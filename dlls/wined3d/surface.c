@@ -1464,11 +1464,14 @@ static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BO
             break;
 
         case WINED3DFMT_V8U8:
-            /* TODO: GL_ATI_envmap_bumpmap provides suitable formats.
-             * use it instead of converting
-             * Remember to adjust the texbem instruction in the shader
-             */
             if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
+            else if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+                *format = GL_DUDV_ATI;
+                *internal = GL_DU8DV8_ATI;
+                *type = GL_BYTE;
+                /* No conversion - Just change the gl type */
+                break;
+            }
             *convert = CONVERT_V8U8;
             *format = GL_BGR;
             *internal = GL_RGB8;
@@ -1483,6 +1486,7 @@ static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BO
             *internal = GL_RGBA8;
             *type = GL_BYTE;
             *target_bpp = 4;
+            /* Not supported by GL_ATI_envmap_bumpmap */
             break;
 
         case WINED3DFMT_Q8W8V8U8:
@@ -1492,6 +1496,7 @@ static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BO
             *internal = GL_RGBA8;
             *type = GL_BYTE;
             *target_bpp = 4;
+            /* Not supported by GL_ATI_envmap_bumpmap */
             break;
 
         case WINED3DFMT_V16U16:
@@ -1501,6 +1506,9 @@ static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BO
             *internal = GL_COLOR_INDEX;
             *type = GL_SHORT;
             *target_bpp = 4;
+            /* What should I do here about GL_ATI_envmap_bumpmap?
+             * Convert it or allow data loss by loading it into a 8 bit / channel texture?
+             */
             break;
 
         default:
