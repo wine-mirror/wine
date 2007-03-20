@@ -85,7 +85,7 @@ static const struct object_ops mailslot_ops =
 };
 
 static enum server_fd_type mailslot_get_info( struct fd *fd, int *flags );
-static void mailslot_queue_async( struct fd *, void*, void*, void*, int, int );
+static void mailslot_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 
 static const struct fd_ops mailslot_fd_ops =
 {
@@ -236,8 +236,7 @@ static unsigned int mailslot_map_access( struct object *obj, unsigned int access
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
-static void mailslot_queue_async( struct fd *fd, void *apc, void *user,
-                                  void *iosb, int type, int count )
+static void mailslot_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     struct mailslot *mailslot = get_fd_user( fd );
 
@@ -260,9 +259,9 @@ static void mailslot_queue_async( struct fd *fd, void *apc, void *user,
     {
         struct timeval when = current_time;
         add_timeout( &when, mailslot->read_timeout );
-        fd_queue_async_timeout( fd, apc, user, iosb, type, count, &when );
+        fd_queue_async_timeout( fd, data, type, count, &when );
     }
-    else fd_queue_async_timeout( fd, apc, user, iosb, type, count, NULL );
+    else fd_queue_async_timeout( fd, data, type, count, NULL );
 }
 
 static void mailslot_device_dump( struct object *obj, int verbose )

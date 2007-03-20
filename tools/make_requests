@@ -44,6 +44,7 @@ my %formats =
     "char_info_t"   => "&dump_char_info",
     "apc_call_t"    => "&dump_apc_call",
     "apc_result_t"  => "&dump_apc_result",
+    "async_data_t"  => "&dump_async_data",
     "luid_t"        => "&dump_luid",
 );
 

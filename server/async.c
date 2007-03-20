@@ -38,9 +38,7 @@ struct async
     struct thread       *thread;          /* owning thread */
     struct list          queue_entry;     /* entry in file descriptor queue */
     struct timeout_user *timeout;
-    void                *apc;             /* apc function to call when alerted */
-    void                *user;            /* user-private argument for apc */
-    void                *sb;              /* pointer to I/O status block in client addr space */
+    async_data_t         data;            /* data for async I/O call */
 };
 
 static void async_dump( struct object *obj, int verbose );
@@ -86,9 +84,9 @@ static void async_terminate( struct async *async, unsigned int status )
 
     memset( &data, 0, sizeof(data) );
     data.type            = APC_ASYNC_IO;
-    data.async_io.func   = async->apc;
-    data.async_io.user   = async->user;
-    data.async_io.sb     = async->sb;
+    data.async_io.func   = async->data.callback;
+    data.async_io.user   = async->data.arg;
+    data.async_io.sb     = async->data.iosb;
     data.async_io.status = status;
     thread_queue_apc( async->thread, &async->obj, &data );
 
@@ -109,16 +107,14 @@ static void async_timeout( void *private )
 
 /* create an async on a given queue of a fd */
 struct async *create_async( struct thread *thread, const struct timeval *timeout,
-                            struct list *queue, void *io_apc, void *io_user, void *io_sb )
+                            struct list *queue, const async_data_t *data )
 {
     struct async *async = alloc_object( &async_ops );
 
     if (!async) return NULL;
 
     async->thread = (struct thread *)grab_object( thread );
-    async->apc = io_apc;
-    async->user = io_user;
-    async->sb = io_sb;
+    async->data = *data;
 
     list_add_tail( queue, &async->queue_entry );
 

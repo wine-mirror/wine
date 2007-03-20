@@ -318,9 +318,9 @@ static ULONG fileio_queue_async(async_fileio* fileio, IO_STATUS_BLOCK* iosb,
     SERVER_START_REQ( register_async )
     {
         req->handle = fileio->handle;
-        req->io_apc = apc;
-        req->io_sb = iosb;
-        req->io_user = fileio;
+        req->async.callback = apc;
+        req->async.iosb     = iosb;
+        req->async.arg      = fileio;
         req->type = do_read ? ASYNC_TYPE_READ : ASYNC_TYPE_WRITE;
         req->count = (fileio->count < iosb->Information) ? 
             0 : fileio->count - iosb->Information;
@@ -983,9 +983,9 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
             SERVER_START_REQ(connect_named_pipe)
             {
                 req->handle  = handle;
-                req->io_apc  = pipe_completion_wait;
-                req->io_sb   = io;
-                req->io_user = event ? event : internal_event;
+                req->async.callback = pipe_completion_wait;
+                req->async.iosb     = io;
+                req->async.arg      = event ? event : internal_event;
                 io->u.Status = wine_server_call(req);
             }
             SERVER_END_REQ;
@@ -1019,9 +1019,9 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
                 req->handle = handle;
                 req->timeout = buff->TimeoutSpecified ? buff->Timeout.QuadPart / -10000L
                                : NMPWAIT_USE_DEFAULT_WAIT;
-                req->io_apc  = pipe_completion_wait;
-                req->io_sb   = io;
-                req->io_user = event ? event : internal_event;
+                req->async.callback = pipe_completion_wait;
+                req->async.iosb     = io;
+                req->async.arg      = event ? event : internal_event;
                 wine_server_add_data( req, buff->Name, buff->NameLength );
                 io->u.Status = wine_server_call( req );
             }

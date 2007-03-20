@@ -243,6 +243,11 @@ static void dump_apc_result( const apc_result_t *result )
     fputc( '}', stderr );
 }
 
+static void dump_async_data( const async_data_t *data )
+{
+    fprintf( stderr, "{callback=%p,iosb=%p,arg=%p}", data->callback, data->iosb, data->arg );
+}
+
 static void dump_luid( const luid_t *luid )
 {
     fprintf( stderr, "%d.%u", luid->high_part, luid->low_part );
@@ -1652,9 +1657,8 @@ static void dump_read_directory_changes_request( const struct read_directory_cha
     fprintf( stderr, " event=%p,", req->event );
     fprintf( stderr, " subtree=%d,", req->subtree );
     fprintf( stderr, " want_data=%d,", req->want_data );
-    fprintf( stderr, " io_apc=%p,", req->io_apc );
-    fprintf( stderr, " io_sb=%p,", req->io_sb );
-    fprintf( stderr, " io_user=%p", req->io_user );
+    fprintf( stderr, " async=" );
+    dump_async_data( &req->async );
 }
 
 static void dump_read_change_request( const struct read_change_request *req )
@@ -2380,10 +2384,9 @@ static void dump_register_async_request( const struct register_async_request *re
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " io_apc=%p,", req->io_apc );
-    fprintf( stderr, " io_sb=%p,", req->io_sb );
-    fprintf( stderr, " io_user=%p,", req->io_user );
-    fprintf( stderr, " count=%d", req->count );
+    fprintf( stderr, " count=%d,", req->count );
+    fprintf( stderr, " async=" );
+    dump_async_data( &req->async );
 }
 
 static void dump_cancel_async_request( const struct cancel_async_request *req )
@@ -2429,18 +2432,17 @@ static void dump_open_named_pipe_reply( const struct open_named_pipe_reply *req 
 static void dump_connect_named_pipe_request( const struct connect_named_pipe_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " io_apc=%p,", req->io_apc );
-    fprintf( stderr, " io_sb=%p,", req->io_sb );
-    fprintf( stderr, " io_user=%p", req->io_user );
+    fprintf( stderr, " async=" );
+    dump_async_data( &req->async );
 }
 
 static void dump_wait_named_pipe_request( const struct wait_named_pipe_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " async=" );
+    dump_async_data( &req->async );
+    fprintf( stderr, "," );
     fprintf( stderr, " timeout=%08x,", req->timeout );
-    fprintf( stderr, " io_apc=%p,", req->io_apc );
-    fprintf( stderr, " io_sb=%p,", req->io_sb );
-    fprintf( stderr, " io_user=%p,", req->io_user );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }

@@ -157,6 +157,14 @@ typedef struct
 } rectangle_t;
 
 
+typedef struct
+{
+    void           *callback;
+    void           *iosb;
+    void           *arg;
+} async_data_t;
+
+
 
 struct callback_msg_data
 {
@@ -1649,9 +1657,7 @@ struct read_directory_changes_request
     obj_handle_t event;
     int          subtree;
     int          want_data;
-    void*        io_apc;
-    void*        io_sb;
-    void*        io_user;
+    async_data_t async;
 };
 struct read_directory_changes_reply
 {
@@ -2639,10 +2645,8 @@ struct register_async_request
     struct request_header __header;
     obj_handle_t handle;
     int          type;
-    void*        io_apc;
-    void*        io_sb;
-    void*        io_user;
     int          count;
+    async_data_t async;
 };
 struct register_async_reply
 {
@@ -2714,9 +2718,7 @@ struct connect_named_pipe_request
 {
     struct request_header __header;
     obj_handle_t   handle;
-    void*          io_apc;
-    void*          io_sb;
-    void*          io_user;
+    async_data_t   async;
 };
 struct connect_named_pipe_reply
 {
@@ -2729,10 +2731,8 @@ struct wait_named_pipe_request
 {
     struct request_header __header;
     obj_handle_t   handle;
+    async_data_t   async;
     unsigned int   timeout;
-    void*          io_apc;
-    void*          io_sb;
-    void*          io_user;
     /* VARARG(name,unicode_str); */
 };
 struct wait_named_pipe_reply
@@ -4699,6 +4699,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 282
+#define SERVER_PROTOCOL_VERSION 283
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -172,6 +172,14 @@ typedef struct
     int  bottom;
 } rectangle_t;
 
+/* structure for parameters of async I/O calls */
+typedef struct
+{
+    void           *callback;      /* client-side callback to call upon end of async */
+    void           *iosb;          /* I/O status block in client addr space */
+    void           *arg;           /* opaque user data to pass to callback */
+} async_data_t;
+
 /* structures for extra message data */
 
 struct callback_msg_data
@@ -1293,9 +1301,7 @@ enum char_info_mode
     obj_handle_t event;         /* handle to the event */
     int          subtree;       /* watch the subtree? */
     int          want_data;     /* flag indicating whether change data should be collected */
-    void*        io_apc;        /* APC routine to queue upon end of async */
-    void*        io_sb;         /* I/O status block (unique across all async on this handle) */
-    void*        io_user;       /* data to pass back to caller */
+    async_data_t async;         /* async I/O parameters */
 @END
 
 
@@ -1949,10 +1955,8 @@ enum message_type
 @REQ(register_async)
     obj_handle_t handle;        /* handle to comm port, socket or file */
     int          type;          /* type of queue to look after */
-    void*        io_apc;        /* APC routine to queue upon end of async */
-    void*        io_sb;         /* I/O status block (unique across all async on this handle) */
-    void*        io_user;       /* data to pass back to caller */
     int          count;         /* count - usually # of bytes to be read/written */
+    async_data_t async;         /* async I/O parameters */
 @END
 #define ASYNC_TYPE_READ  0x01
 #define ASYNC_TYPE_WRITE 0x02
@@ -2002,19 +2006,15 @@ enum message_type
 /* Connect to a named pipe */
 @REQ(connect_named_pipe)
     obj_handle_t   handle;
-    void*          io_apc;       /* APC routine to queue upon end of async */
-    void*          io_sb;        /* I/O status block */
-    void*          io_user;      /* data to pass back to caller */
+    async_data_t   async;       /* async I/O parameters */
 @END
 
 
 /* Wait for a named pipe */
 @REQ(wait_named_pipe)
     obj_handle_t   handle;
+    async_data_t   async;        /* async I/O parameters */
     unsigned int   timeout;
-    void*          io_apc;       /* APC routine to queue upon end of async */
-    void*          io_sb;        /* I/O status block */
-    void*          io_user;      /* data to pass back to caller */
     VARARG(name,unicode_str);    /* pipe name */
 @END
 

@@ -39,7 +39,7 @@ struct fd_ops
     /* get file information */
     enum server_fd_type (*get_file_info)(struct fd *fd, int *flags);
     /* queue an async operation */
-    void (*queue_async)(struct fd *, void* apc, void* user, void* io_sb, int type, int count);
+    void (*queue_async)(struct fd *, const async_data_t *data, int type, int count);
     /* cancel an async operation */
     void (*cancel_async)(struct fd *);
 };
@@ -68,13 +68,13 @@ extern void default_fd_remove_queue( struct object *obj, struct wait_queue_entry
 extern int default_fd_signaled( struct object *obj, struct thread *thread );
 extern int default_fd_get_poll_events( struct fd *fd );
 extern void default_poll_event( struct fd *fd, int event );
-extern void fd_queue_async_timeout( struct fd *fd, void *apc, void *user, void *io_sb, int type,
+extern void fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type,
                                     int count, const struct timeval *timeout );
-extern void default_fd_queue_async( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count );
+extern void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 extern void default_fd_cancel_async( struct fd *fd );
 extern int no_flush( struct fd *fd, struct event **event );
 extern enum server_fd_type no_get_file_info( struct fd *fd, int *flags );
-extern void no_queue_async( struct fd *fd, void* apc, void* user, void* io_sb, int type, int count);
+extern void no_queue_async( struct fd *fd, const async_data_t *data, int type, int count);
 extern void no_cancel_async( struct fd *fd );
 extern void main_loop(void);
 extern void remove_process_locks( struct process *process );
@@ -123,7 +123,7 @@ extern struct object *create_serial( struct fd *fd, unsigned int options );
 
 /* async I/O functions */
 extern struct async *create_async( struct thread *thread, const struct timeval *timeout,
-                                   struct list *queue, void *, void *, void *);
+                                   struct list *queue, const async_data_t *data );
 extern void async_terminate_head( struct list *queue, unsigned int status );
 extern void async_terminate_queue( struct list *queue, unsigned int status );
 

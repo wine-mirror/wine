@@ -96,7 +96,7 @@ static void sock_destroy( struct object *obj );
 static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
 static enum server_fd_type sock_get_info( struct fd *fd, int *flags );
-static void sock_queue_async( struct fd *fd, void *apc, void *user, void *iosb, int type, int count );
+static void sock_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 static void sock_cancel_async( struct fd *fd );
 
 static int sock_get_error( int err );
@@ -508,8 +508,7 @@ static enum server_fd_type sock_get_info( struct fd *fd, int *flags )
     return FD_TYPE_SOCKET;
 }
 
-static void sock_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
-                              int type, int count )
+static void sock_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     struct sock *sock = get_fd_user( fd );
     struct list *queue;
@@ -544,8 +543,7 @@ static void sock_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
     }
     else
     {
-        if (!create_async( current, NULL, queue, apc, user, iosb ))
-            return;
+        if (!create_async( current, NULL, queue, data )) return;
     }
 
     pollev = sock_reselect( sock );

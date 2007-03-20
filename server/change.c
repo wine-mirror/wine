@@ -1100,9 +1100,7 @@ DECL_HANDLER(read_directory_changes)
     dir->event = event;
 
     /* requests don't timeout */
-    if ( req->io_apc && !create_async( current, NULL, &dir->change_q,
-                        req->io_apc, req->io_user, req->io_sb ))
-        return;
+    if (!create_async( current, NULL, &dir->change_q, &req->async )) return;
 
     /* assign it once */
     if (!dir->filter)

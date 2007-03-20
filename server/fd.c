@@ -1711,7 +1711,7 @@ void default_poll_event( struct fd *fd, int event )
     wake_up( fd->user, 0 );
 }
 
-void fd_queue_async_timeout( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count,
+void fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type, int count,
                              const struct timeval *timeout )
 {
     struct list *queue;
@@ -1737,8 +1737,7 @@ void fd_queue_async_timeout( struct fd *fd, void *apc, void *user, void *io_sb, 
         return;
     }
 
-    if (!create_async( current, timeout, queue, apc, user, io_sb ))
-        return;
+    if (!create_async( current, timeout, queue, data )) return;
 
     /* Check if the new pending request can be served immediately */
     events = check_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
@@ -1747,9 +1746,9 @@ void fd_queue_async_timeout( struct fd *fd, void *apc, void *user, void *io_sb, 
     set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
 }
 
-void default_fd_queue_async( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count )
+void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
-    fd_queue_async_timeout( fd, apc, user, io_sb, type, count, NULL );
+    fd_queue_async_timeout( fd, data, type, count, NULL );
 }
 
 void default_fd_cancel_async( struct fd *fd )
@@ -1773,8 +1772,7 @@ enum server_fd_type no_get_file_info( struct fd *fd, int *flags )
 }
 
 /* default queue_async() routine */
-void no_queue_async( struct fd *fd, void* apc, void* user, void* io_sb, 
-                     int type, int count)
+void no_queue_async( struct fd *fd, const async_data_t *data, int type, int count)
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
 }
@@ -1945,8 +1943,7 @@ DECL_HANDLER(register_async)
 
     if (fd)
     {
-        fd->fd_ops->queue_async( fd, req->io_apc, req->io_user, req->io_sb, 
-                                 req->type, req->count );
+        fd->fd_ops->queue_async( fd, &req->async, req->type, req->count );
         release_object( fd );
     }
 }

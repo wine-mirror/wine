@@ -2272,9 +2272,9 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
         req->filter     = CompletionFilter;
         req->want_data  = (Buffer != NULL);
         req->subtree    = WatchTree;
-        req->io_apc     = read_changes_apc;
-        req->io_sb      = IoStatusBlock;
-        req->io_user    = info;
+        req->async.callback = read_changes_apc;
+        req->async.iosb     = IoStatusBlock;
+        req->async.arg      = info;
         status = wine_server_call( req );
     }
     SERVER_END_REQ;

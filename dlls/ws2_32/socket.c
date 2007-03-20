@@ -1158,9 +1158,9 @@ static ULONG ws2_queue_async(struct ws2_async* wsa, IO_STATUS_BLOCK* iosb)
     SERVER_START_REQ( register_async )
     {
         req->handle = wsa->hSocket;
-        req->io_apc = apc;
-        req->io_sb = iosb;
-        req->io_user = wsa;
+        req->async.callback = apc;
+        req->async.iosb = iosb;
+        req->async.arg  = wsa;
         req->type = type;
         req->count = iosb->Information;
         status = wine_server_call( req );
