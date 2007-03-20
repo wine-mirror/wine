@@ -1832,7 +1832,7 @@ static const struct nls_update_font_list
     }
 };
 
-inline static HKEY create_fonts_NT_registry_key(void)
+static inline HKEY create_fonts_NT_registry_key(void)
 {
     HKEY hkey = 0;
 
@@ -1841,7 +1841,7 @@ inline static HKEY create_fonts_NT_registry_key(void)
     return hkey;
 }
 
-inline static HKEY create_fonts_9x_registry_key(void)
+static inline HKEY create_fonts_9x_registry_key(void)
 {
     HKEY hkey = 0;
 
@@ -1850,7 +1850,7 @@ inline static HKEY create_fonts_9x_registry_key(void)
     return hkey;
 }
 
-inline static HKEY create_config_fonts_registry_key(void)
+static inline HKEY create_config_fonts_registry_key(void)
 {
     HKEY hkey = 0;
 

@@ -528,7 +528,7 @@ static DWORD get_dpi( void )
  *
  * Increment the reference count of a GDI object.
  */
-inline static void inc_ref_count( HGDIOBJ handle )
+static inline void inc_ref_count( HGDIOBJ handle )
 {
     GDIOBJHDR *header;
 
@@ -545,7 +545,7 @@ inline static void inc_ref_count( HGDIOBJ handle )
  *
  * Decrement the reference count of a GDI object.
  */
-inline static void dec_ref_count( HGDIOBJ handle )
+static inline void dec_ref_count( HGDIOBJ handle )
 {
     GDIOBJHDR *header;
 
@@ -638,7 +638,7 @@ static int next_large_handle;
  *
  * Allocate a GDI handle from the large heap. Helper for GDI_AllocObject
  */
-inline static GDIOBJHDR *alloc_large_heap( WORD size, HGDIOBJ *handle )
+static inline GDIOBJHDR *alloc_large_heap( WORD size, HGDIOBJ *handle )
 {
     int i;
     GDIOBJHDR *obj;

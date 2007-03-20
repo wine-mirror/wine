@@ -454,7 +454,7 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn);
 /***********************************************************************
  *            get_region_type
  */
-inline static INT get_region_type( const RGNOBJ *obj )
+static inline INT get_region_type( const RGNOBJ *obj )
 {
     switch(obj->rgn->numRects)
     {
