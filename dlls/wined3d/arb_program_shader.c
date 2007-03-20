@@ -382,6 +382,8 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
 static void shader_hw_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const char *dst_str, const char *coord_reg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler_idx];
+    WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(((IWineD3DDeviceImpl *)(This->baseShader.device))->wineD3D))->gl_info;
 
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
@@ -413,6 +415,19 @@ static void shader_hw_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const ch
         shader_addline(buffer, "TXP %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
     } else {
         shader_addline(buffer, "TEX %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
+    }
+
+    /* Signedness correction */
+    if(!GL_SUPPORT(NV_TEXTURE_SHADER3) /* Provides signed formats */ && texture) {
+        WINED3DFORMAT format = texture->baseTexture.format;
+
+        if((format == WINED3DFMT_V8U8 && !GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) ||
+            format == WINED3DFMT_Q8W8V8U8 ||
+            format == WINED3DFMT_V16U16) {
+            shader_addline(buffer, "MAD %s, %s, coefmul.x, -one;\n", dst_str, dst_str);
+        } else if(format == WINED3DFMT_X8L8V8U8) {
+            shader_addline(buffer, "MAD %s.rg, %s, coefmul.x, -one;\n", dst_str, dst_str);
+        }
     }
 }
 
@@ -694,7 +709,6 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
 
 void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(((IWineD3DDeviceImpl *)(This->baseShader.device))->wineD3D))->gl_info;
 
     DWORD dst = arg->dst;
     DWORD src = arg->src[0] & WINED3DSP_REGNUM_MASK;
@@ -709,19 +723,7 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
     pshader_get_register_name(dst, reg_coord);
 
     if(This->bumpenvmatconst) {
-        /*shader_addline(buffer, "MOV T%u, fragment.texcoord[%u];\n", 1, 1); Not needed - done already */
-
-        /* Plain GL does not have any signed formats suitable for that instruction.
-         * So the surface loading code converts the -128 ... 127 signed integers to
-         * 0 ... 255 unsigned ones. The following line undoes that.
-         *
-         * TODO: GL_ATI_envmap_bumpmap supports D3DFMT_DU8DV8 only. If conversion for other formats
-         * is implemented check the texture format.
-         *
-         * TODO: Move that to the common sampling function
-         */
-        if(!GL_SUPPORT(NV_TEXTURE_SHADER3) && !GL_SUPPORT(ATI_ENVMAP_BUMPMAP))
-            shader_addline(buffer, "MAD T%u, T%u, coefmul.x, -one;\n", src, src);
+        /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed */
 
         shader_addline(buffer, "SWZ TMP2, bumpenvmat, x, z, 0, 0;\n");
         shader_addline(buffer, "DP3 TMP.r, TMP2, T%u;\n", src);

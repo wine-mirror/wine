@@ -45,7 +45,10 @@ typedef enum {
     CONVERT_CK_8888,
     CONVERT_CK_8888_ARGB,
     CONVERT_RGB32_888,
-    CONVERT_V8U8
+    CONVERT_V8U8,
+    CONVERT_X8L8V8U8,
+    CONVERT_Q8W8V8U8,
+    CONVERT_V16U16
 } CONVERT_TYPES;
 
 HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
@@ -1475,37 +1478,37 @@ static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BO
             *convert = CONVERT_V8U8;
             *format = GL_BGR;
             *internal = GL_RGB8;
-            *type = GL_BYTE;
+            *type = GL_UNSIGNED_BYTE;
             *target_bpp = 3;
             break;
 
         case WINED3DFMT_X8L8V8U8:
             if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
-            FIXME("Conversion for D3D_X8L8V8U8 not implemented\n");
+            *convert = CONVERT_X8L8V8U8;
             *format = GL_BGRA;
             *internal = GL_RGBA8;
-            *type = GL_BYTE;
+            *type = GL_UNSIGNED_BYTE;
             *target_bpp = 4;
             /* Not supported by GL_ATI_envmap_bumpmap */
             break;
 
         case WINED3DFMT_Q8W8V8U8:
             if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
-            FIXME("Conversion for D3D_Q8W8V8U8 not implemented\n");
+            *convert = CONVERT_Q8W8V8U8;
             *format = GL_BGRA;
             *internal = GL_RGBA8;
-            *type = GL_BYTE;
+            *type = GL_UNSIGNED_BYTE;
             *target_bpp = 4;
             /* Not supported by GL_ATI_envmap_bumpmap */
             break;
 
         case WINED3DFMT_V16U16:
             if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
-            FIXME("Conversion for D3D_V16U16 not implemented\n");
-            *format = GL_COLOR_INDEX;
-            *internal = GL_COLOR_INDEX;
+            *convert = CONVERT_V16U16;
+            *format = GL_BGR;
+            *internal = GL_RGB16;
             *type = GL_SHORT;
-            *target_bpp = 4;
+            *target_bpp = 6;
             /* What should I do here about GL_ATI_envmap_bumpmap?
              * Convert it or allow data loss by loading it into a 8 bit / channel texture?
              */
@@ -1644,6 +1647,26 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                     /* G */ Dest[1] = (color >> 8) + 128; /* V */
                     /* R */ Dest[2] = (color) + 128;      /* U */
                     Dest += 3;
+                }
+            }
+            break;
+        }
+
+        case CONVERT_Q8W8V8U8:
+        {
+            unsigned int x, y;
+            DWORD *Source;
+            unsigned char *Dest;
+            for(y = 0; y < height; y++) {
+                Source = (DWORD *) (src + y * pitch);
+                Dest = (unsigned char *) (dst + y * outpitch);
+                for (x = 0; x < width; x++ ) {
+                    long color = (*Source++);
+                    /* B */ Dest[0] = ((color >> 16) & 0xff) + 128; /* W */
+                    /* G */ Dest[1] = ((color >> 8 ) & 0xff) + 128; /* V */
+                    /* R */ Dest[2] = (color         & 0xff) + 128; /* U */
+                    /* A */ Dest[3] = ((color >> 24) & 0xff) + 128; /* Q */
+                    Dest += 4;
                 }
             }
             break;
