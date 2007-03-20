@@ -130,6 +130,7 @@ static void test_GetSetEnvironmentVariableW(void)
     if (ret == FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
     {
         /* Must be Win9x which doesn't support the Unicode functions */
+        skip("SetEnvironmentVariableW is not implemented\n");
         return;
     }
     ok(ret == TRUE,
