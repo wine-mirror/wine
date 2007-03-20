@@ -1017,7 +1017,7 @@ START_TEST(localmon)
 
         if ((pXcvOpenPort) && (pXcvDataPort) && (pXcvClosePort)) {
             SetLastError(0xdeadbeef);
-            res = pXcvOpenPort(emptyW, 0, &hXcv);
+            res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
             ok(res, "hXcv: %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
 
             SetLastError(0xdeadbeef);
