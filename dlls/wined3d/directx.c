@@ -798,6 +798,9 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
                 gl_info->vs_ati_version = VS_VERSION_11;
                 TRACE_(d3d_caps)(" FOUND: ATI (EXT) Vertex Shader support - version=%02x\n", gl_info->vs_ati_version);
                 gl_info->supported[EXT_VERTEX_SHADER] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_ATI_envmap_bumpmap") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ATI Environment Bump Mapping support\n");
+                gl_info->supported[ATI_ENVMAP_BUMPMAP] = TRUE;
             /**
              * Apple
              */

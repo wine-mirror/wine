@@ -1159,6 +1159,21 @@ typedef void (APIENTRY * PGLFNFINISHFENCEAPPLEPROC) (GLuint);
 typedef GLboolean (APIENTRY * PGLFNISFENCEAPPLEPROC) (GLuint);
 typedef GLboolean (APIENTRY * PGLFNTESTOBJECTAPPLEPROC) (GLenum, GLuint);
 typedef void (APIENTRY * PGLFNFINISHOBJECTAPPLEPROC) (GLenum, GLuint);
+/* GL_ATI_envmap_bumpmap */
+#ifndef GL_ATI_envmap_bumpmap
+#define GL_BUMP_ROT_MATRIX_ATI              0x8775
+#define GL_BUMP_ROT_MATRIX_SIZE_ATI         0x8776
+#define GL_BUMP_NUM_TEX_UNITS_ATI           0x8777
+#define GL_BUMP_TEX_UNITS_ATI               0x8778
+#define GL_DUDV_ATI                         0x8779
+#define GL_DU8DV8_ATI                       0x877A
+#define GL_BUMP_ENVMAP_ATI                  0x877B
+#define GL_BUMP_TARGET_ATI                  0x877C
+#endif
+typedef void (APIENTRY * PGLFNTEXBUMPPARAMETERIVATIPROC) (GLenum, GLuint);
+typedef void (APIENTRY * PGLFNTEXBUMPPARAMETERFVATIPROC) (GLenum, GLuint);
+typedef void (APIENTRY * PGLFNGETTEXBUMPPARAMETERIVATIPROC) (GLenum, GLuint);
+typedef void (APIENTRY * PGLFNGETTEXBUMPPARAMETERFVATIPROC) (GLenum, GLuint);
 
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
@@ -1522,6 +1537,7 @@ typedef enum _GL_SupportedExt {
   ATI_TEXTURE_ENV_COMBINE3,
   ATI_TEXTURE_MIRROR_ONCE,
   EXT_VERTEX_SHADER,
+  ATI_ENVMAP_BUMPMAP,
   /* APPLE */
   APPLE_FENCE,
 
@@ -1732,6 +1748,11 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNISFENCEAPPLEPROC,                          glIsFenceAPPLE); \
     USE_GL_FUNC(PGLFNTESTOBJECTAPPLEPROC,                       glTestObjectAPPLE); \
     USE_GL_FUNC(PGLFNFINISHOBJECTAPPLEPROC,                     glFinishObjectAPPLE); \
+    /* GL_ATI_envmap_bumpmap */ \
+    USE_GL_FUNC(PGLFNTEXBUMPPARAMETERIVATIPROC,                 glTexBumpParameterivATI); \
+    USE_GL_FUNC(PGLFNTEXBUMPPARAMETERFVATIPROC,                 glTexBumpParameterfvATI); \
+    USE_GL_FUNC(PGLFNGETTEXBUMPPARAMETERIVATIPROC,              glGetTexBumpParameterivATI); \
+    USE_GL_FUNC(PGLFNGETTEXBUMPPARAMETERFVATIPROC,              glGetTexBumpParameterfvATI); \
 
 /* OpenGL 2.0 functions */
 #define GL2_FUNCS_GEN \
