@@ -2148,7 +2148,6 @@ done:
 struct read_changes_info
 {
     HANDLE FileHandle;
-    HANDLE Event;
     PIO_APC_ROUTINE ApcRoutine;
     PVOID ApcContext;
     PVOID Buffer;
@@ -2259,7 +2258,6 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
         return STATUS_NO_MEMORY;
 
     info->FileHandle = FileHandle;
-    info->Event      = Event;
     info->Buffer     = Buffer;
     info->BufferSize = BufferSize;
     info->ApcRoutine = ApcRoutine;
@@ -2268,13 +2266,13 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
     SERVER_START_REQ( read_directory_changes )
     {
         req->handle     = FileHandle;
-        req->event      = Event;
         req->filter     = CompletionFilter;
         req->want_data  = (Buffer != NULL);
         req->subtree    = WatchTree;
         req->async.callback = read_changes_apc;
         req->async.iosb     = IoStatusBlock;
         req->async.arg      = info;
+        req->async.event    = Event;
         status = wine_server_call( req );
     }
     SERVER_END_REQ;

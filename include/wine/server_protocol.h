@@ -1655,7 +1655,6 @@ struct read_directory_changes_request
     struct request_header __header;
     unsigned int filter;
     obj_handle_t handle;
-    obj_handle_t event;
     int          subtree;
     int          want_data;
     async_data_t async;
@@ -4700,6 +4699,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 284
+#define SERVER_PROTOCOL_VERSION 285
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

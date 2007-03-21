@@ -1299,7 +1299,6 @@ enum char_info_mode
 @REQ(read_directory_changes)
     unsigned int filter;        /* notification filter */
     obj_handle_t handle;        /* handle to the directory */
-    obj_handle_t event;         /* handle to the event */
     int          subtree;       /* watch the subtree? */
     int          want_data;     /* flag indicating whether change data should be collected */
     async_data_t async;         /* async I/O parameters */

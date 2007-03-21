@@ -1655,7 +1655,6 @@ static void dump_read_directory_changes_request( const struct read_directory_cha
 {
     fprintf( stderr, " filter=%08x,", req->filter );
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " event=%p,", req->event );
     fprintf( stderr, " subtree=%d,", req->subtree );
     fprintf( stderr, " want_data=%d,", req->want_data );
     fprintf( stderr, " async=" );
