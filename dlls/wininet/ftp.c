@@ -2825,9 +2825,10 @@ static BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, DW
     }
 
     TRACE("Data transfer complete\n");
-    HeapFree(GetProcessHeap(), 0, lpszBuffer);
 
 recv_end:
+    HeapFree(GetProcessHeap(), 0, lpszBuffer);
+
     return  (nRC != -1);
 }
 
