@@ -959,10 +959,21 @@ static struct inf_file *parse_file( HANDLE handle, const WCHAR *class, UINT *err
 
     if (!RtlIsTextUnicode( buffer, size, NULL ))
     {
-        WCHAR *new_buff = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) );
-        if (new_buff)
+        static const BYTE utf8_bom[3] = { 0xef, 0xbb, 0xbf };
+        WCHAR *new_buff;
+        UINT codepage = CP_ACP;
+        UINT offset = 0;
+
+        if (size > sizeof(utf8_bom) && !memcmp( buffer, utf8_bom, sizeof(utf8_bom) ))
         {
-            DWORD len = MultiByteToWideChar( CP_ACP, 0, buffer, size, new_buff, size );
+            codepage = CP_UTF8;
+            offset = sizeof(utf8_bom);
+        }
+
+        if ((new_buff = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) )))
+        {
+            DWORD len = MultiByteToWideChar( codepage, 0, (char *)buffer + offset,
+                                             size - offset, new_buff, size );
             err = parse_buffer( file, new_buff, new_buff + len, error_line );
             HeapFree( GetProcessHeap(), 0, new_buff );
         }
