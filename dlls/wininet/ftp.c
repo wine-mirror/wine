@@ -2801,9 +2801,6 @@ static BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, DW
 
     TRACE("\n");
 
-    if (INVALID_HANDLE_VALUE == hFile)
-        return FALSE;
-
     lpszBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CHAR)*DATA_PACKET_SIZE);
     if (NULL == lpszBuffer)
     {
