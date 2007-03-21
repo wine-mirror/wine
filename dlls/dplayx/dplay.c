@@ -1280,6 +1280,9 @@ static lpPlayerList DP_FindPlayer( IDirectPlay2AImpl* This, DPID dpid )
 
   TRACE( "(%p)->(0x%08x)\n", This, dpid );
 
+  if(This->dp2->lpSysGroup == NULL)
+    return NULL;
+
   DPQ_FIND_ENTRY( This->dp2->lpSysGroup->players, players, lpPData->dpid, ==, dpid, lpPlayers );
 
   return lpPlayers;
