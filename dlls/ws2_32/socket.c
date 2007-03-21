@@ -1049,8 +1049,6 @@ static void CALLBACK ws2_async_terminate(ws2_async* as, IO_STATUS_BLOCK* iosb)
 {
     TRACE( "as: %p uovl %p ovl %p\n", as, as->user_overlapped, iosb );
 
-    if (as->event) NtSetEvent( as->event, NULL );
-
     if (as->completion_func)
         as->completion_func( NtStatusToWSAError (iosb->u.Status),
                              iosb->Information, as->user_overlapped, as->flags );
@@ -1118,10 +1116,7 @@ WS2_make_async(SOCKET s, enum ws2_mode mode, struct iovec *iovec, DWORD dwBuffer
     {
         *piosb = (IO_STATUS_BLOCK*)lpOverlapped;
         if (!lpCompletionRoutine)
-        {
             wsa->event = lpOverlapped->hEvent;
-            NtResetEvent(wsa->event, NULL);
-        }
     }
     else if (!(*piosb = HeapAlloc( GetProcessHeap(), 0, sizeof(IO_STATUS_BLOCK))))
         goto error;
@@ -1161,6 +1156,7 @@ static ULONG ws2_queue_async(struct ws2_async* wsa, IO_STATUS_BLOCK* iosb)
         req->async.callback = apc;
         req->async.iosb = iosb;
         req->async.arg  = wsa;
+        req->async.event = wsa->event;
         req->type = type;
         req->count = iosb->Information;
         status = wine_server_call( req );
