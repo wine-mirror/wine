@@ -299,8 +299,6 @@ static void fileio_terminate(async_fileio *fileio, IO_STATUS_BLOCK* iosb)
 {
     TRACE("data: %p\n", fileio);
 
-    if (fileio->event) NtSetEvent( fileio->event, NULL );
-
     if (fileio->apc && 
         (iosb->u.Status == STATUS_SUCCESS || fileio->queue_apc_on_error))
         fileio->apc( fileio->apc_user, iosb, iosb->Information );
@@ -321,6 +319,7 @@ static ULONG fileio_queue_async(async_fileio* fileio, IO_STATUS_BLOCK* iosb,
         req->async.callback = apc;
         req->async.iosb     = iosb;
         req->async.arg      = fileio;
+        req->async.event    = fileio->event;
         req->type = do_read ? ASYNC_TYPE_READ : ASYNC_TYPE_WRITE;
         req->count = (fileio->count < iosb->Information) ? 
             0 : fileio->count - iosb->Information;
@@ -573,7 +572,6 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         fileio->queue_apc_on_error = 0;
         fileio->avail_mode = (flags & FD_FLAG_AVAILABLE);
         fileio->event = hEvent;
-        if (hEvent) NtResetEvent(hEvent, NULL);
         if (needs_close) close( unix_handle );
 
         io_status->u.Status = STATUS_PENDING;
@@ -804,7 +802,6 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         fileio->queue_apc_on_error = 0;
         fileio->avail_mode = (flags & FD_FLAG_AVAILABLE);
         fileio->event = hEvent;
-        if (hEvent) NtResetEvent(hEvent, NULL);
         if (needs_close) close( unix_handle );
 
         io_status->Information = 0;
