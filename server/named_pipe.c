@@ -826,6 +826,7 @@ DECL_HANDLER(connect_named_pipe)
         server->state = ps_wait_open;
         create_async( current, NULL, &server->wait_q, &req->async );
         async_terminate_queue( &server->pipe->waiters, STATUS_SUCCESS );
+        set_error( STATUS_PENDING );
         break;
     case ps_connected_server:
         assert( server->fd );
@@ -865,32 +866,23 @@ DECL_HANDLER(wait_named_pipe)
         return;
     }
     server = find_server( pipe, ps_wait_open );
-    if (server)
-    {
-        apc_call_t data;
-
-        /* there's already a server waiting for a client to connect */
-        memset( &data, 0, sizeof(data) );
-        data.type            = APC_ASYNC_IO;
-        data.async_io.func   = req->async.callback;
-        data.async_io.user   = req->async.arg;
-        data.async_io.sb     = req->async.iosb;
-        data.async_io.status = STATUS_SUCCESS;
-        thread_queue_apc( current, NULL, &data );
-        release_object( server );
-    }
-    else
+    if (!server)
     {
         if (req->timeout == NMPWAIT_WAIT_FOREVER)
-            create_async( current, NULL, &pipe->waiters, &req->async );
+        {
+            if (create_async( current, NULL, &pipe->waiters, &req->async ))
+                set_error( STATUS_PENDING );
+        }
         else
         {
             struct timeval when = current_time;
             if (req->timeout == NMPWAIT_USE_DEFAULT_WAIT) add_timeout( &when, pipe->timeout );
             else add_timeout( &when, req->timeout );
-            create_async( current, &when, &pipe->waiters, &req->async );
+            if (create_async( current, &when, &pipe->waiters, &req->async ))
+                set_error( STATUS_PENDING );
         }
     }
+    else release_object( server );
 
     release_object( pipe );
 }
