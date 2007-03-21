@@ -756,11 +756,13 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
 
 extern HINSTANCE hInst;
 
-static HRESULT do_register_dll_server(LPCOLESTR wszDll, LPCOLESTR wszId, BOOL do_register)
+static HRESULT do_register_dll_server(LPCOLESTR wszDll, LPCOLESTR wszId,
+                                      BOOL do_register, const struct _ATL_REGMAP_ENTRY* pMapEntries)
 {
     WCHAR buf[MAX_PATH];
     HRESULT hres;
     IRegistrar *pRegistrar;
+    const struct _ATL_REGMAP_ENTRY *pMapEntry;
 
     static const WCHAR wszModule[] = {'M','O','D','U','L','E',0};
     static const WCHAR wszRegistry[] = {'R','E','G','I','S','T','R','Y',0};
@@ -769,6 +771,9 @@ static HRESULT do_register_dll_server(LPCOLESTR wszDll, LPCOLESTR wszId, BOOL do
 
     Registrar_create(NULL, &IID_IRegistrar, (void**)&pRegistrar);
     IRegistrar_AddReplacement(pRegistrar, wszModule, wszDll);
+
+    for (pMapEntry = pMapEntries; pMapEntry && pMapEntry->szKey; pMapEntry++)
+        IRegistrar_AddReplacement(pRegistrar, pMapEntry->szKey, pMapEntry->szData);
 
     StringFromGUID2(&CLSID_ATLRegistrar, buf, sizeof(buf)/sizeof(buf[0]));
     IRegistrar_AddReplacement(pRegistrar, wszCLSID_ATLRegistrar, buf);
@@ -785,7 +790,7 @@ static HRESULT do_register_dll_server(LPCOLESTR wszDll, LPCOLESTR wszId, BOOL do
 static HRESULT do_register_server(BOOL do_register)
 {
     static const WCHAR wszDll[] = {'a','t','l','.','d','l','l',0};
-    return do_register_dll_server(wszDll, MAKEINTRESOURCEW(101), do_register);
+    return do_register_dll_server(wszDll, MAKEINTRESOURCEW(101), do_register, NULL);
 }
 
 /***********************************************************************
@@ -801,8 +806,8 @@ HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW* pM, LPCOLESTR 
      */
     WCHAR module_name[MAX_PATH];
 
-    if(pMapEntries || pReg) {
-        FIXME("MapEntries and Registrar parameter not supported\n");
+    if(pReg) {
+        FIXME("Registrar parameter not supported\n");
         return E_FAIL;
     }
 
@@ -815,7 +820,7 @@ HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW* pM, LPCOLESTR 
     TRACE("%p (%s), %s, %d, %p, %p\n", hInst, debugstr_w(module_name),
 	debugstr_w(lpszRes), bRegister, pMapEntries, pReg);
 
-    return do_register_dll_server(module_name, lpszRes, bRegister);
+    return do_register_dll_server(module_name, lpszRes, bRegister, pMapEntries);
 }
 
 /***********************************************************************
