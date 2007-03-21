@@ -237,11 +237,23 @@
  
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
+static BOOL ME_RegisterEditorClass(HINSTANCE);
+
+static const WCHAR RichEdit20W[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '2', '0', 'W', 0};
+static const WCHAR RichEdit50W[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '5', '0', 'W', 0};
+static const WCHAR REListBox20W[] = {'R','E','L','i','s','t','B','o','x','2','0','W', 0};
+static const WCHAR REComboBox20W[] = {'R','E','C','o','m','b','o','B','o','x','2','0','W', 0};
+
 int me_debug = 0;
 HANDLE me_heap = NULL;
 
 static BOOL ME_ListBoxRegistered = FALSE;
 static BOOL ME_ComboBoxRegistered = FALSE;
+
+static inline int is_version_nt(void)
+{
+    return !(GetVersion() & 0x80000000);
+}
 
 static ME_TextBuffer *ME_MakeText(void) {
   
@@ -1232,11 +1244,6 @@ void ME_DestroyEditor(ME_TextEditor *editor)
   FREE_OBJ(editor);
 }
 
-static const WCHAR wszClassName[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '2', '0', 'W', 0};
-static const WCHAR wszClassName50[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '5', '0', 'W', 0};
-static const WCHAR wszClassNameListBox[] = {'R','E','L','i','s','t','B','o','x','2','0','W', 0};
-static const WCHAR wszClassNameComboBox[] = {'R','E','C','o','m','b','o','B','o','x','2','0','W', 0};
-
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("\n");
@@ -1245,19 +1252,19 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_PROCESS_ATTACH:
       DisableThreadLibraryCalls(hinstDLL);
       me_heap = HeapCreate (0, 0x10000, 0);
-      ME_RegisterEditorClass(hinstDLL);
+      if (!ME_RegisterEditorClass(hinstDLL)) return FALSE;
       LookupInit();
       break;
 
     case DLL_PROCESS_DETACH:
-      UnregisterClassW(wszClassName, 0);
-      UnregisterClassW(wszClassName50, 0);
+      UnregisterClassW(RichEdit20W, 0);
+      UnregisterClassW(RichEdit50W, 0);
       UnregisterClassA("RichEdit20A", 0);
       UnregisterClassA("RichEdit50A", 0);
       if (ME_ListBoxRegistered)
-          UnregisterClassW(wszClassNameListBox, 0);
+          UnregisterClassW(REListBox20W, 0);
       if (ME_ComboBoxRegistered)
-          UnregisterClassW(wszClassNameComboBox, 0);
+          UnregisterClassW(REComboBox20W, 0);
       LookupCleanup();
       HeapDestroy (me_heap);
       me_heap = NULL;
@@ -1901,7 +1908,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_EmptyUndoStack(editor);
     ME_SetSelection(editor, 0, 0);
     ME_UpdateRepaint(editor);
-    return 0;
+    return 1;
   }
   case EM_CANPASTE:
   {
@@ -2703,9 +2710,8 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
   return nWritten;  
 }
 
-void ME_RegisterEditorClass(HINSTANCE hInstance)
+static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
 {
-  BOOL bResult;
   WNDCLASSW wcW;
   WNDCLASSA wcA;
   
@@ -2718,12 +2724,22 @@ void ME_RegisterEditorClass(HINSTANCE hInstance)
   wcW.hCursor = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_IBEAM));
   wcW.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
   wcW.lpszMenuName = NULL;
-  wcW.lpszClassName = wszClassName;
-  bResult = RegisterClassW(&wcW);  
-  assert(bResult);
-  wcW.lpszClassName = wszClassName50;
-  bResult = RegisterClassW(&wcW);  
-  assert(bResult);
+
+  if (is_version_nt())
+  {
+    wcW.lpszClassName = RichEdit20W;
+    if (!RegisterClassW(&wcW)) return FALSE;
+    wcW.lpszClassName = RichEdit50W;
+    if (!RegisterClassW(&wcW)) return FALSE;
+  }
+  else
+  {
+    /* WNDCLASSA/W have the same layout */
+    wcW.lpszClassName = (LPCWSTR)"RichEdit20W";
+    if (!RegisterClassA((WNDCLASSA *)&wcW)) return FALSE;
+    wcW.lpszClassName = (LPCWSTR)"RichEdit50W";
+    if (!RegisterClassA((WNDCLASSA *)&wcW)) return FALSE;
+  }
 
   wcA.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
   wcA.lpfnWndProc = RichEditANSIWndProc;
@@ -2735,11 +2751,11 @@ void ME_RegisterEditorClass(HINSTANCE hInstance)
   wcA.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
   wcA.lpszMenuName = NULL;
   wcA.lpszClassName = "RichEdit20A";
-  bResult = RegisterClassA(&wcA);  
-  assert(bResult);
+  if (!RegisterClassA(&wcA)) return FALSE;
   wcA.lpszClassName = "RichEdit50A";
-  bResult = RegisterClassA(&wcA);  
-  assert(bResult);
+  if (!RegisterClassA(&wcA)) return FALSE;
+
+  return TRUE;
 }
 
 LRESULT WINAPI REComboWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -2781,7 +2797,7 @@ LRESULT WINAPI REExtendedRegisterClass(void)
   {
       wcW.style = CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS;
       wcW.lpfnWndProc = REListWndProc;
-      wcW.lpszClassName = wszClassNameListBox;
+      wcW.lpszClassName = REListBox20W;
       if (RegisterClassW(&wcW)) ME_ListBoxRegistered = TRUE;
   }
 
@@ -2789,7 +2805,7 @@ LRESULT WINAPI REExtendedRegisterClass(void)
   {
       wcW.style = CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
       wcW.lpfnWndProc = REComboWndProc;
-      wcW.lpszClassName = wszClassNameComboBox;
+      wcW.lpszClassName = REComboBox20W;
       if (RegisterClassW(&wcW)) ME_ComboBoxRegistered = TRUE;  
   }
 

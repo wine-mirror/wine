@@ -1562,6 +1562,89 @@ static void test_EM_StreamIn_Undo(void)
 
 }
 
+static void test_unicode_conversions(void)
+{
+    static const WCHAR textW[] = {'t','e','s','t',0};
+    static const char textA[] = "test";
+    char bufA[64];
+    WCHAR bufW[64];
+    HWND hwnd;
+    int is_win9x, ret;
+
+    is_win9x = GetVersion() & 0x80000000;
+
+#define set_textA(hwnd, txt) \
+    do { \
+        ret = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)txt); \
+        ok(ret, "SendMessageA(WM_SETTEXT) error %u\n", GetLastError()); \
+    } while(0)
+#define expect_textA(hwnd, txt, todo) \
+    do { \
+        memset(bufA, 0xAA, sizeof(bufA)); \
+        ret = SendMessageA(hwnd, WM_GETTEXT, 64, (LPARAM)bufA); \
+        ok(ret, "SendMessageA(WM_GETTEXT) error %u\n", GetLastError()); \
+        ret = lstrcmpA(bufA, txt); \
+        if (todo) \
+            todo_wine ok(!ret, "strings not match: expected %s got %s\n", txt, bufA); \
+        else \
+            ok(!ret, "strings not match: expected %s got %s\n", txt, bufA); \
+    } while(0)
+
+#define set_textW(hwnd, txt) \
+    do { \
+        ret = SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)txt); \
+        ok(ret, "SendMessageW(WM_SETTEXT) error %u\n", GetLastError()); \
+    } while(0)
+#define expect_textW(hwnd, txt) \
+    do { \
+        memset(bufW, 0xAA, sizeof(bufW)); \
+        ret = SendMessageW(hwnd, WM_GETTEXT, 64, (LPARAM)bufW); \
+        ok(ret, "SendMessageW(WM_GETTEXT) error %u\n", GetLastError()); \
+        ret = lstrcmpW(bufW, txt); \
+        ok(!ret, "strings not match\n"); \
+    } while(0)
+
+    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP,
+                           0, 0, 200, 60, 0, 0, 0, 0);
+    ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
+
+    ret = IsWindowUnicode(hwnd);
+    if (is_win9x)
+        ok(!ret, "RichEdit20W should NOT be unicode under Win9x\n");
+    else
+        ok(ret, "RichEdit20W should be unicode under NT\n");
+
+    if (is_win9x)
+        set_textA(hwnd, textW);
+    else
+        set_textA(hwnd, textA);
+    expect_textA(hwnd, textA, is_win9x);
+
+    if (!is_win9x)
+    {
+        set_textW(hwnd, textW);
+        expect_textW(hwnd, textW);
+    }
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowExA(0, "RichEdit20A", NULL, WS_POPUP,
+                           0, 0, 200, 60, 0, 0, 0, 0);
+    ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
+
+    ret = IsWindowUnicode(hwnd);
+    ok(!ret, "RichEdit20A should NOT be unicode\n");
+
+    set_textA(hwnd, textA);
+    expect_textA(hwnd, textA, FALSE);
+
+    if (!is_win9x)
+    {
+        set_textW(hwnd, textW);
+        expect_textW(hwnd, textW);
+    }
+    DestroyWindow(hwnd);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -1571,6 +1654,7 @@ START_TEST( editor )
    * RICHED20.DLL, so the linker doesn't actually link to it. */
   hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
+
   test_EM_FINDTEXT();
   test_EM_GETLINE();
   test_EM_SCROLLCARET();
@@ -1591,6 +1675,7 @@ START_TEST( editor )
   test_EM_EXSETSEL();
   test_WM_PASTE();
   test_EM_StreamIn_Undo();
+  test_unicode_conversions();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
