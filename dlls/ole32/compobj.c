@@ -833,7 +833,6 @@ void WINAPI CoUninitialize(void)
 
 /******************************************************************************
  *		CoDisconnectObject	[OLE32.@]
- *		CoDisconnectObject	[COMPOBJ.15]
  *
  * Disconnects all connections to this object from remote processes. Dispatches
  * pending RPCs while blocking new RPCs from occurring, and then calls

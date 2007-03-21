@@ -648,6 +648,15 @@ HRESULT WINAPI CoCreateInstance16(
 }
 
 /***********************************************************************
+ *           CoDisconnectObject [COMPOBJ.15]
+ */
+HRESULT WINAPI CoDisconnectObject16( LPUNKNOWN lpUnk, DWORD reserved )
+{
+  FIXME("(%p, 0x%08x): stub!\n", lpUnk, reserved);
+  return E_NOTIMPL;
+}
+
+/***********************************************************************
  *           DllGetClassObject                          [OLE2.4]
  */
 HRESULT WINAPI DllGetClassObject16(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
