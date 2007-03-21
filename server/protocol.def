@@ -178,6 +178,7 @@ typedef struct
     void           *callback;      /* client-side callback to call upon end of async */
     void           *iosb;          /* I/O status block in client addr space */
     void           *arg;           /* opaque user data to pass to callback */
+    obj_handle_t    event;         /* event to signal when done */
 } async_data_t;
 
 /* structures for extra message data */

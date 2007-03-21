@@ -162,6 +162,7 @@ typedef struct
     void           *callback;
     void           *iosb;
     void           *arg;
+    obj_handle_t    event;
 } async_data_t;
 
 
@@ -4699,6 +4700,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 283
+#define SERVER_PROTOCOL_VERSION 284
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

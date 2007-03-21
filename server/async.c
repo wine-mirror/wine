@@ -38,6 +38,7 @@ struct async
     struct thread       *thread;          /* owning thread */
     struct list          queue_entry;     /* entry in file descriptor queue */
     struct timeout_user *timeout;
+    struct event        *event;
     async_data_t         data;            /* data for async I/O call */
 };
 
@@ -73,6 +74,7 @@ static void async_destroy( struct object *obj )
     assert( obj->ops == &async_ops );
 
     if (async->timeout) remove_timeout_user( async->timeout );
+    if (async->event) release_object( async->event );
     release_object( async->thread );
 }
 
@@ -109,11 +111,20 @@ static void async_timeout( void *private )
 struct async *create_async( struct thread *thread, const struct timeval *timeout,
                             struct list *queue, const async_data_t *data )
 {
-    struct async *async = alloc_object( &async_ops );
+    struct event *event = NULL;
+    struct async *async;
 
-    if (!async) return NULL;
+    if (data->event && !(event = get_event_obj( thread->process, data->event, EVENT_MODIFY_STATE )))
+        return NULL;
+
+    if (!(async = alloc_object( &async_ops )))
+    {
+        if (event) release_object( event );
+        return NULL;
+    }
 
     async->thread = (struct thread *)grab_object( thread );
+    async->event = event;
     async->data = *data;
 
     list_add_tail( queue, &async->queue_entry );
@@ -121,6 +132,7 @@ struct async *create_async( struct thread *thread, const struct timeval *timeout
     if (timeout) async->timeout = add_timeout_user( timeout, async_timeout, async );
     else async->timeout = NULL;
 
+    if (event) reset_event( event );
     return async;
 }
 
