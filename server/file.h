@@ -124,6 +124,7 @@ extern struct object *create_serial( struct fd *fd, unsigned int options );
 /* async I/O functions */
 extern struct async *create_async( struct thread *thread, const struct timeval *timeout,
                                    struct list *queue, const async_data_t *data );
+extern void async_set_result( struct object *obj, unsigned int status );
 extern void async_terminate_head( struct list *queue, unsigned int status );
 extern void async_terminate_queue( struct list *queue, unsigned int status );
 

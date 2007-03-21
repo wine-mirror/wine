@@ -136,6 +136,23 @@ struct async *create_async( struct thread *thread, const struct timeval *timeout
     return async;
 }
 
+/* store the result of the client-side async callback */
+void async_set_result( struct object *obj, unsigned int status )
+{
+    struct async *async = (struct async *)obj;
+
+    if (obj->ops != &async_ops) return;  /* in case the client messed up the APC results */
+
+    if (status == STATUS_PENDING)
+    {
+        /* FIXME: restart the async operation */
+    }
+    else
+    {
+        if (async->event) set_event( async->event );
+    }
+}
+
 /* terminate the async operation at the head of the queue */
 void async_terminate_head( struct list *queue, unsigned int status )
 {
