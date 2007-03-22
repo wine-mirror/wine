@@ -1249,6 +1249,7 @@ static void dump_open_file_object_request( const struct open_file_object_request
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " sharing=%08x,", req->sharing );
+    fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " filename=" );
     dump_varargs_unicode_str( cur_size );
 }

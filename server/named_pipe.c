@@ -202,6 +202,8 @@ static void named_pipe_device_dump( struct object *obj, int verbose );
 static struct fd *named_pipe_device_get_fd( struct object *obj );
 static struct object *named_pipe_device_lookup_name( struct object *obj,
     struct unicode_str *name, unsigned int attr );
+static struct object *named_pipe_device_open_file( struct object *obj, unsigned int access,
+                                                   unsigned int sharing, unsigned int options );
 static void named_pipe_device_destroy( struct object *obj );
 static enum server_fd_type named_pipe_device_get_file_info( struct fd *fd, int *flags );
 
@@ -217,7 +219,7 @@ static const struct object_ops named_pipe_device_ops =
     named_pipe_device_get_fd,         /* get_fd */
     pipe_map_access,                  /* map_access */
     named_pipe_device_lookup_name,    /* lookup_name */
-    no_open_file,                     /* open_file */
+    named_pipe_device_open_file,      /* open_file */
     fd_close_handle,                  /* close_handle */
     named_pipe_device_destroy         /* destroy */
 };
@@ -432,6 +434,12 @@ static struct object *named_pipe_device_lookup_name( struct object *obj, struct 
         name->len = 0;
 
     return found;
+}
+
+static struct object *named_pipe_device_open_file( struct object *obj, unsigned int access,
+                                                   unsigned int sharing, unsigned int options )
+{
+    return grab_object( obj );
 }
 
 static void named_pipe_device_destroy( struct object *obj )

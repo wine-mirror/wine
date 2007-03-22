@@ -861,6 +861,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     unsigned int attributes;    /* open attributes */
     obj_handle_t rootdir;       /* root directory */
     unsigned int sharing;       /* sharing flags */
+    unsigned int options;       /* file options */
     VARARG(filename,unicode_str); /* file name */
 @REPLY
     obj_handle_t handle;        /* handle to the file */

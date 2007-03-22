@@ -1035,6 +1035,7 @@ struct open_file_object_request
     unsigned int attributes;
     obj_handle_t rootdir;
     unsigned int sharing;
+    unsigned int options;
     /* VARARG(filename,unicode_str); */
 };
 struct open_file_object_reply
@@ -4699,6 +4700,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 285
+#define SERVER_PROTOCOL_VERSION 286
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

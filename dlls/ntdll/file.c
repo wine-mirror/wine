@@ -218,6 +218,7 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
             req->attributes = attr->Attributes;
             req->rootdir    = attr->RootDirectory;
             req->sharing    = sharing;
+            req->options    = options;
             wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
             io->u.Status = wine_server_call( req );
             *handle = reply->handle;

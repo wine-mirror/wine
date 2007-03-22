@@ -1871,7 +1871,7 @@ DECL_HANDLER(open_file_object)
 {
     struct unicode_str name;
     struct directory *root = NULL;
-    struct object *obj;
+    struct object *obj, *result;
 
     get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
@@ -1879,12 +1879,10 @@ DECL_HANDLER(open_file_object)
 
     if ((obj = open_object_dir( root, &name, req->attributes, NULL )))
     {
-        /* make sure this is a valid file object */
-        struct fd *fd = get_obj_fd( obj );
-        if (fd)
+        if ((result = obj->ops->open_file( obj, req->access, req->sharing, req->options )))
         {
-            reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
-            release_object( fd );
+            reply->handle = alloc_handle( current->process, result, req->access, req->attributes );
+            release_object( result );
         }
         release_object( obj );
     }
