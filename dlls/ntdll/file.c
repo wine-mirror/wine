@@ -2085,17 +2085,12 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
                                        PLARGE_INTEGER timeout)
 {
     NTSTATUS    status;
-    static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
 
     TRACE("(%p %x %s %p %x %d %x %d %d %d %d %d %d %p)\n",
           handle, access, debugstr_w(attr->ObjectName->Buffer), iosb, sharing, dispo,
           options, pipe_type, read_mode, completion_mode, max_inst, inbound_quota,
           outbound_quota, timeout);
 
-    if (attr->ObjectName->Length < sizeof(leadin) ||
-        strncmpiW( attr->ObjectName->Buffer, 
-                   leadin, sizeof(leadin)/sizeof(leadin[0]) ))
-        return STATUS_OBJECT_NAME_INVALID;
     /* assume we only get relative timeout, and storable in a DWORD as ms */
     if (timeout->QuadPart > 0 || (timeout->QuadPart / -10000) >> 32)
         FIXME("Wrong time %s\n", wine_dbgstr_longlong(timeout->QuadPart));

@@ -585,7 +585,11 @@ static struct named_pipe *create_named_pipe( struct directory *root, const struc
 
     if (!name || !name->len) return alloc_object( &named_pipe_ops );
 
-    if (!(obj = find_object_dir( root, name, attr, &new_name ))) return NULL;
+    if (!(obj = find_object_dir( root, name, attr, &new_name )))
+    {
+        set_error( STATUS_OBJECT_NAME_INVALID );
+        return NULL;
+    }
     if (!new_name.len)
     {
         if (attr & OBJ_OPENIF && obj->ops == &named_pipe_ops)
@@ -603,7 +607,7 @@ static struct named_pipe *create_named_pipe( struct directory *root, const struc
     }
 
     if (obj->ops != &named_pipe_device_ops)
-        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        set_error( STATUS_OBJECT_NAME_INVALID );
     else
     {
         struct named_pipe_device *dev = (struct named_pipe_device *)obj;
