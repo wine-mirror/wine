@@ -1786,38 +1786,39 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
     glsl_src_param_t coord_param;
     DWORD sampler_type;
     DWORD sampler_idx;
-    BOOL projected;
-    DWORD mask = 0;
+    DWORD mask;
     DWORD flags;
     char coord_mask[6];
-
-    /* All versions have a destination register */
-    shader_glsl_append_dst(arg->buffer, arg);
 
     sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
     flags = deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
 
-    /* TODO: Does texbem even support projected textures? half-life 2 uses it */
-    if (flags & WINED3DTTFF_PROJECTED) {
-        projected = TRUE;
-        switch (flags & ~WINED3DTTFF_PROJECTED) {
-            case WINED3DTTFF_COUNT1: FIXME("WINED3DTTFF_PROJECTED with WINED3DTTFF_COUNT1?\n"); break;
-            case WINED3DTTFF_COUNT2: mask = WINED3DSP_WRITEMASK_1; break;
-            case WINED3DTTFF_COUNT3: mask = WINED3DSP_WRITEMASK_2; break;
-            case WINED3DTTFF_COUNT4:
-            case WINED3DTTFF_DISABLE: mask = WINED3DSP_WRITEMASK_3; break;
-        }
-    } else {
-        projected = FALSE;
-    }
-
     sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
-    shader_glsl_get_sample_function(sampler_type, projected, &sample_function);
-    mask |= sample_function.coord_mask;
+    shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
+    mask = sample_function.coord_mask;
 
     shader_glsl_get_write_mask(arg->dst, dst_swizzle);
 
     shader_glsl_get_write_mask(mask, coord_mask);
+
+    /* with projective textures, texbem only divides the static texture coord, not the displacement,
+         * so we can't let the GL handle this.
+         */
+    if (flags & WINED3DTTFF_PROJECTED) {
+        DWORD div_mask=0;
+        char coord_div_mask[3];
+        switch (flags & ~WINED3DTTFF_PROJECTED) {
+            case WINED3DTTFF_COUNT1: FIXME("WINED3DTTFF_PROJECTED with WINED3DTTFF_COUNT1?\n"); break;
+            case WINED3DTTFF_COUNT2: div_mask = WINED3DSP_WRITEMASK_1; break;
+            case WINED3DTTFF_COUNT3: div_mask = WINED3DSP_WRITEMASK_2; break;
+            case WINED3DTTFF_COUNT4:
+            case WINED3DTTFF_DISABLE: div_mask = WINED3DSP_WRITEMASK_3; break;
+        }
+        shader_glsl_get_write_mask(div_mask, coord_div_mask);
+        shader_addline(arg->buffer, "T%u%s /= T%u%s;\n", sampler_idx, coord_mask, sampler_idx, coord_div_mask);
+    }
+
+    shader_glsl_append_dst(arg->buffer, arg);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0|WINED3DSP_WRITEMASK_1, &coord_param);
     shader_addline(arg->buffer, "%s(Psampler%u, T%u%s + vec4(bumpenvmat * %s, 0.0, 0.0)%s )%s);\n",
                    sample_function.name, sampler_idx, sampler_idx, coord_mask, coord_param.param_str, coord_mask, dst_swizzle);
