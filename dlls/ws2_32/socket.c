@@ -2930,6 +2930,8 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
             goto err_free;
         }
+        else
+            _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
         *lpNumberOfBytesSent = n;
     }
 

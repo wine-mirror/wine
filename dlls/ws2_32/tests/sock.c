@@ -1729,6 +1729,146 @@ end:
         HeapFree(GetProcessHeap(), 0, buffer);
 }
 
+static void test_write_events(void)
+{
+    SOCKET src = INVALID_SOCKET;
+    SOCKET server = INVALID_SOCKET;
+    SOCKET dst = INVALID_SOCKET;
+    HANDLE hThread = NULL;
+    HANDLE hEvent = INVALID_HANDLE_VALUE;
+    struct sockaddr_in addr;
+    int len;
+    u_long one = 1;
+    int ret;
+
+    src = socket(AF_INET, SOCK_STREAM, 0);
+    if (src == INVALID_SOCKET)
+    {
+        ok(0, "socket failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    server = socket(AF_INET, SOCK_STREAM, 0);
+    if (server == INVALID_SOCKET)
+    {
+        ok(0, "socket failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    ret = bind(server, (struct sockaddr*)&addr, sizeof(addr));
+    if (ret != 0)
+    {
+        ok(0, "bind failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    len = sizeof(addr);
+    ret = getsockname(server, (struct sockaddr*)&addr, &len);
+    if (ret != 0)
+    {
+        ok(0, "getsockname failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    ret = listen(server, 1);
+    if (ret != 0)
+    {
+        ok(0, "listen failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    ret = connect(src, (struct sockaddr*)&addr, sizeof(addr));
+    if (ret != 0)
+    {
+        ok(0, "connect failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    len = sizeof(addr);
+    dst = accept(server, (struct sockaddr*)&addr, &len);
+    if (dst == INVALID_SOCKET)
+    {
+        ok(0, "accept failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, NULL);
+    if (hThread == NULL)
+    {
+        ok(0, "CreateThread failed, error %d\n", GetLastError());
+        goto end;
+    }
+
+    hEvent = CreateEventW(NULL, FALSE, TRUE, NULL);
+    if (hEvent == INVALID_HANDLE_VALUE)
+    {
+        ok(0, "CreateEventW failed, error %d\n", GetLastError());
+        goto end;
+    }
+
+    ret = ioctlsocket(src, FIONBIO, &one);
+    if (ret)
+    {
+        ok(0, "ioctlsocket failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    ret = WSAEventSelect(src, hEvent, FD_WRITE | FD_CLOSE);
+    if (ret)
+    {
+        ok(0, "WSAEventSelect failed, error %d\n", ret);
+        goto end;
+    }
+
+    for (len = 100; len > 0; --len)
+    {
+         WSANETWORKEVENTS netEvents;
+         DWORD dwRet = WaitForSingleObject(hEvent, 5000);
+         if (dwRet != WAIT_OBJECT_0)
+         {
+             ok(0, "WaitForSingleObject failed, error %d\n", dwRet);
+             goto end;
+         }
+
+         ret = WSAEnumNetworkEvents(src, NULL, &netEvents);
+         if (ret)
+         {
+             ok(0, "WSAEnumNetworkEvents failed, error %d\n", ret);
+             goto end;
+         }
+
+         if (netEvents.lNetworkEvents & FD_WRITE)
+         {
+             ret = send(src, "a", 1, 0);
+             if (ret < 0 && WSAGetLastError() != WSAEWOULDBLOCK)
+             {
+                 ok(0, "send failed, error %d\n", WSAGetLastError());
+                 goto end;
+             }
+         }
+
+         if (netEvents.lNetworkEvents & FD_CLOSE)
+         {
+             ok(0, "unexpected close\n");
+             goto end;
+         }
+    }
+
+end:
+    if (src != INVALID_SOCKET)
+        closesocket(src);
+    if (server != INVALID_SOCKET)
+        closesocket(server);
+    if (dst != INVALID_SOCKET)
+        closesocket(dst);
+    if (hThread != NULL)
+        CloseHandle(hThread);
+    CloseHandle(hEvent);
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -1763,6 +1903,7 @@ START_TEST( sock )
     test_inet_addr();
 
     test_send();
+    test_write_events();
 
     Exit();
 }
