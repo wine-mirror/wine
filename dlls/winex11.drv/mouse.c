@@ -2,6 +2,7 @@
  * X11 mouse driver
  *
  * Copyright 1998 Ulrich Weigand
+ * Copyright 2007 Henri Verbeet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,9 +20,23 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <X11/Xlib.h>
 #include <stdarg.h>
+
+#ifdef HAVE_X11_XCURSOR_XCURSOR_H
+# include <X11/Xcursor/Xcursor.h>
+# ifndef SONAME_LIBXCURSOR
+#  define SONAME_LIBXCURSOR "libXcursor.so"
+# endif
+static void *xcursor_handle;
+# define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(XcursorImageCreate);
+MAKE_FUNCPTR(XcursorImageDestroy);
+MAKE_FUNCPTR(XcursorImageLoadCursor);
+# undef MAKE_FUNCPTR
+#endif /* HAVE_X11_XCURSOR_XCURSOR_H */
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -32,6 +47,7 @@
 #include "win.h"
 #include "x11drv.h"
 #include "wine/server.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
@@ -74,6 +90,32 @@ static DWORD last_time_modified;
 static RECT cursor_clip; /* Cursor clipping rect */
 
 BOOL X11DRV_SetCursorPos( INT x, INT y );
+
+
+/***********************************************************************
+ *		X11DRV_Xcursor_Init
+ *
+ * Load the Xcursor library for use.
+ */
+void X11DRV_Xcursor_Init(void)
+{
+#ifdef HAVE_X11_XCURSOR_XCURSOR_H
+    xcursor_handle = wine_dlopen(SONAME_LIBXCURSOR, RTLD_NOW, NULL, 0);
+    if (!xcursor_handle)  /* wine_dlopen failed. */
+    {
+        WARN("Xcursor failed to load.  Using fallback code.\n");
+        return;
+    }
+#define LOAD_FUNCPTR(f) \
+        p##f = wine_dlsym(xcursor_handle, #f, NULL, 0)
+
+    LOAD_FUNCPTR(XcursorImageCreate);
+    LOAD_FUNCPTR(XcursorImageDestroy);
+    LOAD_FUNCPTR(XcursorImageLoadCursor);
+#undef LOAD_FUNCPTR
+#endif /* HAVE_X11_XCURSOR_XCURSOR_H */
+}
+
 
 /***********************************************************************
  *		get_coords
@@ -352,6 +394,165 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
 }
 
 
+#ifdef HAVE_X11_XCURSOR_XCURSOR_H
+
+/***********************************************************************
+ *              create_cursor_image
+ *
+ * Create an XcursorImage from a CURSORICONINFO
+ */
+static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
+{
+    int x, xmax;
+    int y, ymax;
+    int and_size, xor_size;
+    unsigned char *and_bits, *and_ptr, *xor_bits, *xor_ptr;
+    int and_width_bytes, xor_width_bytes;
+    XcursorPixel *pixel_ptr;
+    XcursorImage *image;
+
+    ymax = (ptr->nHeight > 32) ? 32 : ptr->nHeight;
+    xmax = (ptr->nWidth > 32) ? 32 : ptr->nWidth;
+
+    and_width_bytes = xmax / 8;
+    xor_width_bytes = and_width_bytes * ptr->bBitsPerPixel;
+
+    and_size = ptr->nWidth * ptr->nHeight / 8;
+    and_ptr = and_bits = (unsigned char *)(ptr + 1);
+
+    xor_size = xor_width_bytes * ptr->nHeight;
+    xor_ptr = xor_bits = and_ptr + and_size;
+
+    image = pXcursorImageCreate( xmax, ymax );
+    pixel_ptr = image->pixels;
+
+    /* On windows, to calculate the color for a pixel, first an AND is done
+     * with the background and the "and" bitmap, then an XOR with the "xor"
+     * bitmap. This means that when the data in the "and" bitmap is 0, the
+     * pixel will get the color as specified in the "xor" bitmap.
+     * However, if the data in the "and" bitmap is 1, the result will be the
+     * background XOR'ed with the value in the "xor" bitmap. In case the "xor"
+     * data is completely black (0x000000) the pixel will become transparent,
+     * in case it's white (0xffffff) the pixel will become the inverse of the
+     * background color.
+     *
+     * Since we can't support inverting colors, we map the grayscale value of
+     * the "xor" data to the alpha channel, and xor the the color with either
+     * black or white.
+     */
+    for (y = 0; y < ymax; ++y)
+    {
+        and_ptr = and_bits + (y * and_width_bytes);
+        xor_ptr = xor_bits + (y * xor_width_bytes);
+
+        for (x = 0; x < xmax; ++x)
+        {
+            /* Xcursor pixel data is in ARGB format, with A in the high byte */
+            switch (ptr->bBitsPerPixel)
+            {
+                case 32:
+                    /* BGRA, 8 bits each */
+                    *pixel_ptr = *xor_ptr++;
+                    *pixel_ptr |= *xor_ptr++ << 8;
+                    *pixel_ptr |= *xor_ptr++ << 16;
+                    *pixel_ptr |= *xor_ptr++ << 24;
+                    break;
+
+                case 24:
+                    /* BGR, 8 bits each */
+                    *pixel_ptr = *xor_ptr++;
+                    *pixel_ptr |= *xor_ptr++ << 8;
+                    *pixel_ptr |= *xor_ptr++ << 16;
+                    break;
+
+                case 16:
+                    /* BGR, 5 red, 6 green, 5 blue */
+                    *pixel_ptr = *xor_ptr * 0x1f;
+                    *pixel_ptr |= (*xor_ptr & 0xe0) << 3;
+                    ++xor_ptr;
+                    *pixel_ptr |= (*xor_ptr & 0x07) << 11;
+                    *pixel_ptr |= (*xor_ptr & 0xf8) << 13;
+                    break;
+
+                case 1:
+                    if (*xor_ptr & (1 << (7 - (x & 7)))) *pixel_ptr = 0xffffff;
+                    else *pixel_ptr = 0;
+                    if ((x & 7) == 7) ++xor_ptr;
+                    break;
+
+                default:
+                    FIXME("Currently no support for cursors with %d bits per pixel\n", ptr->bBitsPerPixel);
+                    return 0;
+            }
+
+            if (ptr->bBitsPerPixel != 32)
+            {
+                /* Alpha channel */
+                if (~*and_ptr & (1 << (7 - (x & 7)))) *pixel_ptr |= 0xff << 24;
+                else if (*pixel_ptr)
+                {
+                    int alpha = (*pixel_ptr & 0xff) * 0.30f
+                            + ((*pixel_ptr & 0xff00) >> 8) * 0.55f
+                            + ((*pixel_ptr & 0xff0000) >> 16) * 0.15f;
+                    *pixel_ptr ^= ((x + y) % 2) ? 0xffffff : 0x000000;
+                    *pixel_ptr |= alpha << 24;
+                }
+                if ((x & 7) == 7) ++and_ptr;
+            }
+            ++pixel_ptr;
+        }
+    }
+
+    return image;
+}
+
+
+/***********************************************************************
+ *              create_xcursor_cursor
+ *
+ * Use Xcursor to create an X cursor from a Windows one.
+ */
+static Cursor create_xcursor_cursor( Display *display, CURSORICONINFO *ptr )
+{
+    Cursor cursor;
+    XcursorImage *image;
+
+    if (!ptr) /* Create an empty cursor */
+    {
+        image = pXcursorImageCreate( 1, 1 );
+        image->xhot = 0;
+        image->yhot = 0;
+        *(image->pixels) = 0;
+        cursor = pXcursorImageLoadCursor( display, image );
+        pXcursorImageDestroy( image );
+
+        return cursor;
+    }
+
+    image = create_cursor_image( ptr );
+    if (!image) return 0;
+
+    /* Make sure hotspot is valid */
+    image->xhot = ptr->ptHotSpot.x;
+    image->yhot = ptr->ptHotSpot.y;
+    if (image->xhot < 0 || image->xhot >= image->width ||
+        image->yhot < 0 || image->yhot >= image->height)
+    {
+        image->xhot = image->width / 2;
+        image->yhot = image->height / 2;
+    }
+
+    image->delay = 0;
+
+    cursor = pXcursorImageLoadCursor( display, image );
+    pXcursorImageDestroy( image );
+
+    return cursor;
+}
+
+#endif /* HAVE_X11_XCURSOR_XCURSOR_H */
+
+
 /***********************************************************************
  *		create_cursor
  *
@@ -362,6 +563,10 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
     Pixmap pixmapBits, pixmapMask, pixmapMaskInv, pixmapAll;
     XColor fg, bg;
     Cursor cursor = None;
+
+#ifdef HAVE_X11_XCURSOR_XCURSOR_H
+    if (pXcursorImageLoadCursor) return create_xcursor_cursor( display, ptr );
+#endif
 
     if (!ptr)  /* Create an empty cursor */
     {

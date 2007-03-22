@@ -228,6 +228,7 @@ extern BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev);
 
 /* X11 driver internal functions */
 
+extern void X11DRV_Xcursor_Init(void);
 extern void X11DRV_BITMAP_Init(void);
 extern void X11DRV_FONT_Init( int log_pixels_x, int log_pixels_y );
 

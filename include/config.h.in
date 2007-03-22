@@ -924,6 +924,9 @@
 /* Define to 1 if you have the <X11/extensions/XShm.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XSHM_H
 
+/* Define to 1 if you have the <X11/Xcursor/Xcursor.h> header file. */
+#undef HAVE_X11_XCURSOR_XCURSOR_H
+
 /* Define to 1 if you have the <X11/XKBlib.h> header file. */
 #undef HAVE_X11_XKBLIB_H
 
@@ -1028,6 +1031,9 @@
 
 /* Define to the soname of the libX11 library. */
 #undef SONAME_LIBX11
+
+/* Define to the soname of the libXcursor library. */
+#undef SONAME_LIBXCURSOR
 
 /* Define to the soname of the libXext library. */
 #undef SONAME_LIBXEXT

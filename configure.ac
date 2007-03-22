@@ -335,6 +335,7 @@ then
     AC_CHECK_HEADERS([X11/Xlib.h \
                       X11/XKBlib.h \
                       X11/Xutil.h \
+                      X11/Xcursor/Xcursor.h \
                       X11/extensions/shape.h \
                       X11/extensions/XInput.h \
                       X11/extensions/XShm.h \
@@ -1151,6 +1152,7 @@ then
   WINE_GET_SONAME(Xinerama,XineramaQueryScreens,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xrender,XRenderQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xrandr,XRRQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+  WINE_GET_SONAME(Xcursor,XcursorImageLoadCursor,[$X_LIBS -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(freetype,FT_Init_FreeType,[$X_LIBS])
   WINE_GET_SONAME(GL,glXQueryExtension,[$X_LIBS $X_EXTRA_LIBS])
   WINE_GET_SONAME(hal,libhal_ctx_new)

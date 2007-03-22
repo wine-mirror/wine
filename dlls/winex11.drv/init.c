@@ -89,6 +89,9 @@ static void device_init(void)
     /* Initialize XRender */
     X11DRV_XRender_Init();
 
+    /* Init Xcursor */
+    X11DRV_Xcursor_Init();
+
     palette_size = X11DRV_PALETTE_Init();
 
     X11DRV_BITMAP_Init();
