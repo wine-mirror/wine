@@ -825,7 +825,7 @@ static inline BOOL msi_free( void *mem )
     return HeapFree( GetProcessHeap(), 0, mem );
 }
 
-inline static char *strdupWtoA( LPCWSTR str )
+static inline char *strdupWtoA( LPCWSTR str )
 {
     LPSTR ret = NULL;
     DWORD len;
@@ -838,7 +838,7 @@ inline static char *strdupWtoA( LPCWSTR str )
     return ret;
 }
 
-inline static LPWSTR strdupAtoW( LPCSTR str )
+static inline LPWSTR strdupAtoW( LPCSTR str )
 {
     LPWSTR ret = NULL;
     DWORD len;
@@ -851,7 +851,7 @@ inline static LPWSTR strdupAtoW( LPCSTR str )
     return ret;
 }
 
-inline static LPWSTR strdupW( LPCWSTR src )
+static inline LPWSTR strdupW( LPCWSTR src )
 {
     LPWSTR dest;
     if (!src) return NULL;
