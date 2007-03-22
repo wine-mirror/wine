@@ -144,7 +144,7 @@ static HRESULT VARIANT_FromDisp(IDispatch* pdispIn, LCID lcid, void* pOut,
 }
 
 /* Inline return type */
-#define RETTYP inline static HRESULT
+#define RETTYP static inline HRESULT
 
 
 /* Simple compiler cast from one type to another */
