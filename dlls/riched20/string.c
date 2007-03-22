@@ -345,9 +345,9 @@ ME_CallWordBreakProc(ME_TextEditor *editor, ME_String *str, INT start, INT code)
     return editor->pfnWordBreak(str->szData, start, str->nLen, code);
 }
 
-LPWSTR ME_ToUnicode(HWND hWnd, LPVOID psz)
+LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz)
 {
-  if (IsWindowUnicode(hWnd))
+  if (unicode)
     return (LPWSTR)psz;
   else {
     WCHAR *tmp;
@@ -358,27 +358,8 @@ LPWSTR ME_ToUnicode(HWND hWnd, LPVOID psz)
   }
 }
 
-void ME_EndToUnicode(HWND hWnd, LPVOID psz)
+void ME_EndToUnicode(BOOL unicode, LPVOID psz)
 {
-  if (!IsWindowUnicode(hWnd))
-    FREE_OBJ(psz);
-}
-
-LPSTR ME_ToAnsi(HWND hWnd, LPVOID psz)
-{
-  if (!IsWindowUnicode(hWnd))
-    return (LPSTR)psz;
-  else {
-    char *tmp;
-    int nChars = WideCharToMultiByte(CP_ACP, 0, (WCHAR *)psz, -1, NULL, 0, NULL, NULL);
-    if((tmp = ALLOC_N_OBJ(char, nChars)) != NULL)
-      WideCharToMultiByte(CP_ACP, 0, (WCHAR *)psz, -1, tmp, nChars, NULL, NULL);
-    return tmp;
-  }
-}
-
-void ME_EndToAnsi(HWND hWnd, LPVOID psz)
-{
-  if (!IsWindowUnicode(hWnd))
+  if (!unicode)
     FREE_OBJ(psz);
 }

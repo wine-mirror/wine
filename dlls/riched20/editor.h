@@ -115,10 +115,8 @@ int ME_VPosToPos(ME_String *s, int nVPos);
 int ME_PosToVPos(ME_String *s, int nPos);
 void ME_StrDeleteV(ME_String *s, int nVChar, int nChars);
 /* smart helpers for A<->W conversions, they reserve/free memory and call MultiByte<->WideChar functions */
-LPWSTR ME_ToUnicode(HWND hWnd, LPVOID psz);
-void ME_EndToUnicode(HWND hWnd, LPVOID psz);
-LPSTR ME_ToAnsi(HWND hWnd, LPVOID psz);
-void ME_EndToAnsi(HWND hWnd, LPVOID psz);
+LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz);
+void ME_EndToUnicode(BOOL unicode, LPVOID psz);
 
 static inline int ME_IsWSpace(WCHAR ch)
 {

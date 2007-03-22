@@ -1578,16 +1578,13 @@ static void test_unicode_conversions(void)
         ret = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)txt); \
         ok(ret, "SendMessageA(WM_SETTEXT) error %u\n", GetLastError()); \
     } while(0)
-#define expect_textA(hwnd, txt, todo) \
+#define expect_textA(hwnd, txt) \
     do { \
         memset(bufA, 0xAA, sizeof(bufA)); \
         ret = SendMessageA(hwnd, WM_GETTEXT, 64, (LPARAM)bufA); \
         ok(ret, "SendMessageA(WM_GETTEXT) error %u\n", GetLastError()); \
         ret = lstrcmpA(bufA, txt); \
-        if (todo) \
-            todo_wine ok(!ret, "strings not match: expected %s got %s\n", txt, bufA); \
-        else \
-            ok(!ret, "strings not match: expected %s got %s\n", txt, bufA); \
+        ok(!ret, "strings not match: expected %s got %s\n", txt, bufA); \
     } while(0)
 
 #define set_textW(hwnd, txt) \
@@ -1601,7 +1598,7 @@ static void test_unicode_conversions(void)
         ret = SendMessageW(hwnd, WM_GETTEXT, 64, (LPARAM)bufW); \
         ok(ret, "SendMessageW(WM_GETTEXT) error %u\n", GetLastError()); \
         ret = lstrcmpW(bufW, txt); \
-        ok(!ret, "strings not match\n"); \
+        ok(!ret, "strings not match expected[0] %x got[0] %x\n", txt[0], bufW[0]); \
     } while(0)
 
     hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP,
@@ -1614,11 +1611,30 @@ static void test_unicode_conversions(void)
     else
         ok(ret, "RichEdit20W should be unicode under NT\n");
 
+    memset(bufA, 0xAA, sizeof(bufA));
+    ret = SendMessageA(hwnd, WM_GETTEXT, 64, (LPARAM)bufA);
+    ok(!ret, "empty richedit should return 0, got %d\n", ret);
+    ok(!*bufA, "empty richedit should return empty string, got %s\n", bufA);
+
+    ret = SendMessageA(hwnd, WM_CHAR, (WPARAM)textW[0], 0);
+    ok(!ret, "SendMessageA(WM_CHAR) should return 0, got %d\n", ret);
+    expect_textA(hwnd, "t");
+
+    ret = SendMessageA(hwnd, WM_CHAR, (WPARAM)textA[1], 0);
+    ok(!ret, "SendMessageA(WM_CHAR) should return 0, got %d\n", ret);
+    expect_textA(hwnd, "te");
+
+    set_textA(hwnd, NULL);
+    memset(bufA, 0xAA, sizeof(bufA));
+    ret = SendMessageA(hwnd, WM_GETTEXT, 64, (LPARAM)bufA);
+    ok(!ret, "empty richedit should return 0, got %d\n", ret);
+    ok(!*bufA, "empty richedit should return empty string, got %s\n", bufA);
+
     if (is_win9x)
         set_textA(hwnd, textW);
     else
         set_textA(hwnd, textA);
-    expect_textA(hwnd, textA, is_win9x);
+    expect_textA(hwnd, textA);
 
     if (!is_win9x)
     {
@@ -1635,7 +1651,7 @@ static void test_unicode_conversions(void)
     ok(!ret, "RichEdit20A should NOT be unicode\n");
 
     set_textA(hwnd, textA);
-    expect_textA(hwnd, textA, FALSE);
+    expect_textA(hwnd, textA);
 
     if (!is_win9x)
     {
