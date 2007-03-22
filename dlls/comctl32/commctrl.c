@@ -378,10 +378,10 @@ ShowHideMenuCtl (HWND hwnd, UINT_PTR uFlags, LPINT lpInfo)
  */
 
 VOID WINAPI
-GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, LPINT lpInfo)
+GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, const INT *lpInfo)
 {
     RECT rcCtrl;
-    INT  *lpRun;
+    const INT *lpRun;
     HWND hwndCtrl;
 
     TRACE("(%p %p %p)\n",
@@ -426,7 +426,7 @@ GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, LPINT lpInfo)
  *     (will be written ...)
  */
 
-void WINAPI DrawStatusTextW (HDC hdc, LPRECT lprc, LPCWSTR text, UINT style)
+void WINAPI DrawStatusTextW (HDC hdc, LPCRECT lprc, LPCWSTR text, UINT style)
 {
     RECT r = *lprc;
     UINT border = BDR_SUNKENOUTER;
@@ -475,7 +475,7 @@ void WINAPI DrawStatusTextW (HDC hdc, LPRECT lprc, LPCWSTR text, UINT style)
  *     No return value.
  */
 
-void WINAPI DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
+void WINAPI DrawStatusTextA (HDC hdc, LPCRECT lprc, LPCSTR text, UINT style)
 {
     INT len;
     LPWSTR textW = NULL;
@@ -743,7 +743,8 @@ CreateMappedBitmap (HINSTANCE hInstance, INT_PTR idBitmap, UINT wFlags,
 {
     HGLOBAL hglb;
     HRSRC hRsrc;
-    LPBITMAPINFOHEADER lpBitmap, lpBitmapInfo;
+    const BITMAPINFOHEADER *lpBitmap;
+    LPBITMAPINFOHEADER lpBitmapInfo;
     UINT nSize, nColorTableSize, iColor;
     RGBQUAD *pColorTable;
     INT i, iMaps, nWidth, nHeight;
@@ -819,7 +820,7 @@ CreateMappedBitmap (HINSTANCE hInstance, INT_PTR idBitmap, UINT wFlags,
     if (hbm) {
 	HDC hdcDst = CreateCompatibleDC (hdcScreen);
 	HBITMAP hbmOld = SelectObject (hdcDst, hbm);
-	LPBYTE lpBits = (LPBYTE)(lpBitmap + 1);
+	const BYTE *lpBits = (const BYTE *)(lpBitmap + 1);
 	lpBits += nColorTableSize * sizeof(RGBQUAD);
 	StretchDIBits (hdcDst, 0, 0, nWidth, nHeight, 0, 0, nWidth, nHeight,
 		         lpBits, (LPBITMAPINFO)lpBitmapInfo, DIB_RGB_COLORS,
@@ -1087,8 +1088,8 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
 BOOL WINAPI GetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
                               UINT_PTR uID, DWORD_PTR *pdwRef)
 {
-   LPSUBCLASS_INFO stack;
-   LPSUBCLASSPROCS proc;
+   const SUBCLASS_INFO *stack;
+   const SUBCLASSPROCS *proc;
 
    TRACE ("(%p, %p, %x, %p)\n", hWnd, pfnSubclass, uID, pdwRef);
 
@@ -1254,7 +1255,7 @@ LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
       else
          ret = CallWindowProcA (stack->origproc, hWnd, uMsg, wParam, lParam);
    } else {
-      LPSUBCLASSPROCS proc = stack->stackpos;
+      const SUBCLASSPROCS *proc = stack->stackpos;
       stack->stackpos = stack->stackpos->next; 
       /* call the Subclass procedure from the stack */
       ret = proc->subproc (hWnd, uMsg, wParam, lParam,

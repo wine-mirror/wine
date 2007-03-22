@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 BOOL WINAPI ShowHideMenuCtl (HWND, UINT_PTR, LPINT);
-VOID WINAPI GetEffectiveClientRect (HWND, LPRECT, LPINT);
+VOID WINAPI GetEffectiveClientRect (HWND, LPRECT, const INT*);
 VOID WINAPI InitCommonControls (VOID);
 
 typedef struct tagINITCOMMONCONTROLSEX {
@@ -340,8 +340,8 @@ static const WCHAR STATUSCLASSNAMEW[] = { 'm','s','c','t','l','s','_',
 HWND WINAPI CreateStatusWindowA (LONG, LPCSTR, HWND, UINT);
 HWND WINAPI CreateStatusWindowW (LONG, LPCWSTR, HWND, UINT);
 #define CreateStatusWindow WINELIB_NAME_AW(CreateStatusWindow)
-VOID WINAPI DrawStatusTextA (HDC, LPRECT, LPCSTR, UINT);
-VOID WINAPI DrawStatusTextW (HDC, LPRECT, LPCWSTR, UINT);
+VOID WINAPI DrawStatusTextA (HDC, LPCRECT, LPCSTR, UINT);
+VOID WINAPI DrawStatusTextW (HDC, LPCRECT, LPCWSTR, UINT);
 #define DrawStatusText WINELIB_NAME_AW(DrawStatusText)
 VOID WINAPI MenuHelp (UINT, WPARAM, LPARAM, HMENU,
                       HINSTANCE, HWND, UINT*);
