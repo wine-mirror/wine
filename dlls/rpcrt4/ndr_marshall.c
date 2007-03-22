@@ -532,7 +532,7 @@ finish_conf:
 
 /* multiply two numbers together, raising an RPC_S_INVALID_BOUND exception if
  * the result overflows 32-bits */
-inline static ULONG safe_multiply(ULONG a, ULONG b)
+static inline ULONG safe_multiply(ULONG a, ULONG b)
 {
     ULONGLONG ret = (ULONGLONG)a * b;
     if (ret > 0xffffffff)

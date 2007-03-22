@@ -97,7 +97,7 @@ static LONG listen_count;
 
 static UUID uuid_nil;
 
-inline static RpcObjTypeMap *LookupObjTypeMap(UUID *ObjUuid)
+static inline RpcObjTypeMap *LookupObjTypeMap(UUID *ObjUuid)
 {
   RpcObjTypeMap *rslt = RpcObjTypeMaps;
   RPC_STATUS dummy;
@@ -110,7 +110,7 @@ inline static RpcObjTypeMap *LookupObjTypeMap(UUID *ObjUuid)
   return rslt;
 }
 
-inline static UUID *LookupObjType(UUID *ObjUuid)
+static inline UUID *LookupObjType(UUID *ObjUuid)
 {
   RpcObjTypeMap *map = LookupObjTypeMap(ObjUuid);
   if (map)
