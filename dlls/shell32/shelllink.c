@@ -201,7 +201,7 @@ static inline IShellLinkImpl *impl_from_IObjectWithSite( IObjectWithSite *iface 
 static HRESULT ShellLink_UpdatePath(LPWSTR sPathRel, LPCWSTR path, LPCWSTR sWorkDir, LPWSTR* psPath);
 
 /* strdup on the process heap */
-inline static LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str)
+static inline LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str)
 {
     INT len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
     LPWSTR p = HeapAlloc( heap, flags, len*sizeof (WCHAR) );
@@ -211,7 +211,7 @@ inline static LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str)
     return p;
 }
 
-inline static LPWSTR strdupW( LPCWSTR src )
+static inline LPWSTR strdupW( LPCWSTR src )
 {
     LPWSTR dest;
     if (!src) return NULL;

@@ -175,7 +175,7 @@ BOOL16      WINAPI AboutDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
 void WINAPI _InsertMenuItem (HMENU hmenu, UINT indexMenu, BOOL fByPosition,
 			UINT wID, UINT fType, LPCSTR dwTypeData, UINT fState);
 
-inline static BOOL SHELL_OsIsUnicode(void)
+static inline BOOL SHELL_OsIsUnicode(void)
 {
     /* if high-bit of version is 0, we are emulating NT */
     return !(GetVersion() & 0x80000000);
@@ -186,26 +186,26 @@ inline static BOOL SHELL_OsIsUnicode(void)
 	  SHFree(*ptr); \
 	  *ptr = NULL; \
 	};
-inline static void __SHCloneStrA(char ** target,const char * source)
+static inline void __SHCloneStrA(char ** target,const char * source)
 {
 	*target = SHAlloc(strlen(source)+1);
 	strcpy(*target, source);
 }
 
-inline static void __SHCloneStrWtoA(char ** target, const WCHAR * source)
+static inline void __SHCloneStrWtoA(char ** target, const WCHAR * source)
 {
 	int len = WideCharToMultiByte(CP_ACP, 0, source, -1, NULL, 0, NULL, NULL);
 	*target = SHAlloc(len);
 	WideCharToMultiByte(CP_ACP, 0, source, -1, *target, len, NULL, NULL);
 }
 
-inline static void __SHCloneStrW(WCHAR ** target, const WCHAR * source)
+static inline void __SHCloneStrW(WCHAR ** target, const WCHAR * source)
 {
 	*target = SHAlloc( (lstrlenW(source)+1) * sizeof(WCHAR) );
 	lstrcpyW(*target, source);
 }
 
-inline static WCHAR * __SHCloneStrAtoW(WCHAR ** target, const char * source)
+static inline WCHAR * __SHCloneStrAtoW(WCHAR ** target, const char * source)
 {
 	int len = MultiByteToWideChar(CP_ACP, 0, source, -1, NULL, 0);
 	*target = SHAlloc(len*sizeof(WCHAR));
