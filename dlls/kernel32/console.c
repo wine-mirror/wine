@@ -2405,6 +2405,15 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
     return TRUE;
 }
 
+/******************************************************************
+ *              AttachConsole  (KERNEL32.@)
+ */
+BOOL WINAPI AttachConsole(DWORD dwProcessId)
+{
+    FIXME("stub %x\n",dwProcessId);
+    return TRUE;
+}
+
 
 /* ====================================================================
  *

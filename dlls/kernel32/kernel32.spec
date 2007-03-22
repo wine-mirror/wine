@@ -148,7 +148,7 @@
 @ stub AllocateUserPhysicalPages
 @ stdcall AreFileApisANSI()
 @ stdcall AssignProcessToJobObject(ptr ptr)
-# @ stub AttachConsole
+@ stdcall AttachConsole(long)
 @ stdcall BackupRead(ptr ptr long ptr long long ptr)
 @ stdcall BackupSeek(ptr long long ptr ptr ptr)
 @ stdcall BackupWrite(ptr ptr long ptr long long ptr)
