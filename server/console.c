@@ -59,6 +59,7 @@ static const struct object_ops console_input_ops =
     no_get_fd,                        /* get_fd */
     console_map_access,               /* map_access */
     no_lookup_name,                   /* lookup_name */
+    no_open_file,                     /* open_file */
     no_close_handle,                  /* close_handle */
     console_input_destroy             /* destroy */
 };
@@ -87,6 +88,7 @@ static const struct object_ops console_input_events_ops =
     no_get_fd,                        /* get_fd */
     console_map_access,               /* map_access */
     no_lookup_name,                   /* lookup_name */
+    no_open_file,                     /* open_file */
     no_close_handle,                  /* close_handle */
     console_input_events_destroy      /* destroy */
 };
@@ -126,6 +128,7 @@ static const struct object_ops screen_buffer_ops =
     no_get_fd,                        /* get_fd */
     console_map_access,               /* map_access */
     no_lookup_name,                   /* lookup_name */
+    no_open_file,                     /* open_file */
     no_close_handle,                  /* close_handle */
     screen_buffer_destroy             /* destroy */
 };

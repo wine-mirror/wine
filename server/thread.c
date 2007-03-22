@@ -94,6 +94,7 @@ static const struct object_ops thread_apc_ops =
     no_get_fd,                  /* get_fd */
     no_map_access,              /* map_access */
     no_lookup_name,             /* lookup_name */
+    no_open_file,               /* open_file */
     no_close_handle,            /* close_handle */
     thread_apc_destroy          /* destroy */
 };
@@ -119,6 +120,7 @@ static const struct object_ops thread_ops =
     no_get_fd,                  /* get_fd */
     thread_map_access,          /* map_access */
     no_lookup_name,             /* lookup_name */
+    no_open_file,               /* open_file */
     no_close_handle,            /* close_handle */
     destroy_thread              /* destroy */
 };

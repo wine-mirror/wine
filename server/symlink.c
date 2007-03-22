@@ -63,6 +63,7 @@ static const struct object_ops symlink_ops =
     no_get_fd,                    /* get_fd */
     symlink_map_access,           /* map_access */
     symlink_lookup_name,          /* lookup_name */
+    no_open_file,                 /* open_file */
     no_close_handle,              /* close_handle */
     symlink_destroy               /* destroy */
 };

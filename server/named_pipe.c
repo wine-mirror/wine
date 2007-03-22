@@ -122,6 +122,7 @@ static const struct object_ops named_pipe_ops =
     no_get_fd,                    /* get_fd */
     named_pipe_map_access,        /* map_access */
     no_lookup_name,               /* lookup_name */
+    no_open_file,                 /* open_file */
     no_close_handle,              /* close_handle */
     named_pipe_destroy            /* destroy */
 };
@@ -148,6 +149,7 @@ static const struct object_ops pipe_server_ops =
     pipe_server_get_fd,           /* get_fd */
     pipe_map_access,              /* map_access */
     no_lookup_name,               /* lookup_name */
+    no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
     pipe_server_destroy           /* destroy */
 };
@@ -181,6 +183,7 @@ static const struct object_ops pipe_client_ops =
     pipe_client_get_fd,           /* get_fd */
     pipe_map_access,              /* map_access */
     no_lookup_name,               /* lookup_name */
+    no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
     pipe_client_destroy           /* destroy */
 };
@@ -214,6 +217,7 @@ static const struct object_ops named_pipe_device_ops =
     named_pipe_device_get_fd,         /* get_fd */
     pipe_map_access,                  /* map_access */
     named_pipe_device_lookup_name,    /* lookup_name */
+    no_open_file,                     /* open_file */
     fd_close_handle,                  /* close_handle */
     named_pipe_device_destroy         /* destroy */
 };

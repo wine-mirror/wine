@@ -80,6 +80,7 @@ static const struct object_ops mailslot_ops =
     mailslot_get_fd,           /* get_fd */
     mailslot_map_access,       /* map_access */
     no_lookup_name,            /* lookup_name */
+    no_open_file,              /* open_file */
     fd_close_handle,           /* close_handle */
     mailslot_destroy           /* destroy */
 };
@@ -124,6 +125,7 @@ static const struct object_ops mail_writer_ops =
     mail_writer_get_fd,         /* get_fd */
     mail_writer_map_access,     /* map_access */
     no_lookup_name,             /* lookup_name */
+    no_open_file,               /* open_file */
     fd_close_handle,            /* close_handle */
     mail_writer_destroy         /* destroy */
 };
@@ -167,6 +169,7 @@ static const struct object_ops mailslot_device_ops =
     mailslot_device_get_fd,         /* get_fd */
     no_map_access,                  /* map_access */
     mailslot_device_lookup_name,    /* lookup_name */
+    no_open_file,                   /* open_file */
     fd_close_handle,                /* close_handle */
     mailslot_device_destroy         /* destroy */
 };

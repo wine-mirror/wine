@@ -63,6 +63,7 @@ static const struct object_ops mutex_ops =
     no_get_fd,                 /* get_fd */
     mutex_map_access,          /* map_access */
     no_lookup_name,            /* lookup_name */
+    no_open_file,              /* open_file */
     no_close_handle,           /* close_handle */
     mutex_destroy              /* destroy */
 };

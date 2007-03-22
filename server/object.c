@@ -371,6 +371,13 @@ struct object *no_lookup_name( struct object *obj, struct unicode_str *name,
     return NULL;
 }
 
+struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,
+                             unsigned int options )
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    return NULL;
+}
+
 int no_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
     return 1;  /* ok to close */
