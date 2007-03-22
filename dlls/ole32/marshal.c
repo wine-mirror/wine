@@ -68,7 +68,7 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt,
  * IPIDs identify an interface stub and are apartment scoped
  */
 
-inline static HRESULT get_facbuf_for_iid(REFIID riid, IPSFactoryBuffer **facbuf)
+static inline HRESULT get_facbuf_for_iid(REFIID riid, IPSFactoryBuffer **facbuf)
 {
     HRESULT       hr;
     CLSID         clsid;
