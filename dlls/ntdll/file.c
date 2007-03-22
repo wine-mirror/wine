@@ -2187,8 +2187,6 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
      PLARGE_INTEGER TimeOut)
 {
     LARGE_INTEGER timeout;
-    static const WCHAR leadin[] = {
-        '\\','?','?','\\','M','A','I','L','S','L','O','T','\\'};
     NTSTATUS ret;
 
     TRACE("%p %08x %p %p %08x %08x %08x %p\n",
@@ -2196,17 +2194,8 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
               CreateOptions, MailslotQuota, MaxMessageSize, TimeOut);
 
     if (!pHandle) return STATUS_ACCESS_VIOLATION;
-
     if (!attr) return STATUS_INVALID_PARAMETER;
-
     if (!attr->ObjectName) return STATUS_OBJECT_PATH_SYNTAX_BAD;
-
-    if (attr->ObjectName->Length < sizeof(leadin) ||
-        strncmpiW( attr->ObjectName->Buffer, 
-                   leadin, sizeof(leadin)/sizeof(leadin[0]) ))
-    {
-        return STATUS_OBJECT_NAME_INVALID;
-    }
 
     /*
      *  For a NULL TimeOut pointer set the default timeout value

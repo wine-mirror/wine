@@ -345,7 +345,11 @@ static struct mailslot *create_mailslot( struct directory *root,
 
     if (!name || !name->len) return alloc_object( &mailslot_ops );
 
-    if (!(obj = find_object_dir( root, name, attr, &new_name ))) return NULL;
+    if (!(obj = find_object_dir( root, name, attr, &new_name )))
+    {
+        set_error( STATUS_OBJECT_NAME_INVALID );
+        return NULL;
+    }
 
     if (!new_name.len)
     {
@@ -362,7 +366,7 @@ static struct mailslot *create_mailslot( struct directory *root,
 
     if (obj->ops != &mailslot_device_ops)
     {
-        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        set_error( STATUS_OBJECT_NAME_INVALID );
         release_object( obj );
         return NULL;
     }
