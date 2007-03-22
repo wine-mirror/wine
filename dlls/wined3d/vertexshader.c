@@ -336,11 +336,11 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         if (This->baseShader.hex_version >= WINED3DVS_VERSION(3,0))
             vshader_glsl_output_unpack(&buffer, This->semantics_out);
 
-        /* Clamp the fog from 0 to 1 if it's used */
-        if (reg_maps->fog) {
+        /* If this shader doesn't use fog copy the z coord to the fog coord so that we can use table fog */
+        if (reg_maps->fog)
             This->usesFog = 1;
-            shader_addline(&buffer, "gl_FogFragCoord = clamp(gl_FogFragCoord, 0.0, 1.0);\n");
-        }
+        else
+            shader_addline(&buffer, "gl_FogFragCoord = gl_Position.z;\n");
         
         /* Write the final position.
          *
@@ -382,17 +382,14 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         /* We need a constant to fixup the final position */
         shader_addline(&buffer, "PARAM posFixup = program.env[%d];\n", ARB_SHADER_PRIVCONST_POS);
 
-        if (reg_maps->fog) {
-            This->usesFog = 1;
-            shader_addline(&buffer, "TEMP TMP_FOG;\n");
-        }
-
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 
-        /* Make sure the fog value is positive - values above 1.0 are ignored */
+        /* If this shader doesn't use fog copy the z coord to the fog coord so that we can use table fog */
         if (reg_maps->fog)
-            shader_addline(&buffer, "MAX result.fogcoord, TMP_FOG, 0.0;\n");
+            This->usesFog = 1;
+        else
+            shader_addline(&buffer, "MOV result.fogcoord, TMP_OUT.z;\n");
 
         /* Write the final position.
          *
