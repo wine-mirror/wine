@@ -12398,6 +12398,9 @@ IDR_AVI_FILECOPY AVI searching.avi
 /* BINRES findcomputer.avi */
 IDR_AVI_FINDCOMPUTER AVI searching.avi
 
+/* BINRES filenuke.avi */
+IDR_AVI_FILENUKE AVI searching.avi
+
 /*--------------------- END FIXME ------------------------*/
 
 /*
