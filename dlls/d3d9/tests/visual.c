@@ -408,6 +408,9 @@ static void test_mova(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "Clear failed (%08x)\n", hr);
     }
 
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
+
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
     IDirect3DVertexShader9_Release(mova_shader);
 }
@@ -686,6 +689,240 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(surface);
 }
 
+/* This test tests fog in combination with shaders.
+ * What's tested: linear fog (vertex and table) with pixel shader
+ *                linear table fog with non foggy vertex shader
+ *                vertex fog with foggy vertex shader
+ * What's not tested: non linear fog with shader
+ *                    table fog with foggy vertex shader
+ */
+static void fog_with_shader_test(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    DWORD color;
+    /* NOTE: changing these values will not effect the tests with foggy vertex shader, as the values are hardcoded in the shader*/
+    union {float f; DWORD i;} start={.f=0.9}, end={.f=0.1};
+    unsigned int i, j;
+
+    /* basic vertex shader without fog computation ("non foggy") */
+    static const DWORD vertex_shader_code1[] = {
+        0xfffe0101,                                                             /* vs_1_1                       */
+        0x0000001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0              */
+        0x0000001f, 0x8000000a, 0x900f0001,                                     /* dcl_color0 v1                */
+        0x00000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                 */
+        0x00000001, 0xd00f0000, 0x90e40001,                                     /* mov oD0, v1                  */
+        0x0000ffff
+    };
+    /* basic vertex shader with reversed fog computation ("foggy") */
+    static const DWORD vertex_shader_code2[] = {
+        0xfffe0101,                                                             /* vs_1_1                        */
+        0x0000001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0               */
+        0x0000001f, 0x8000000a, 0x900f0001,                                     /* dcl_color0 v1                 */
+        0x00000051, 0xa00f0000, 0xbfa00000, 0x00000000, 0xbf666666, 0x00000000, /* def c0, -1.25, 0.0, -0.9, 0.0 */
+        0x00000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                  */
+        0x00000001, 0xd00f0000, 0x90e40001,                                     /* mov oD0, v1                   */
+        0x00000002, 0x800f0000, 0x90aa0000, 0xa0aa0000,                         /* add r0, v0.z, c0.z            */
+        0x00000005, 0xc00f0001, 0x80000000, 0xa0000000,                         /* mul oFog, r0.x, c0.x          */
+        0x0000ffff
+    };
+    /* basic pixel shader */
+    static const DWORD pixel_shader_code[] = {
+        0xffff0101,                                                             /* ps_1_1     */
+        0x00000001, 0x800f0000, 0x90e40000,                                     /* mov r0, vo */
+        0x0000ffff
+    };
+
+    static struct vertex quad[] = {
+        {-1.0f, -1.0f,  0.0f,          0xFFFF0000  },
+        {-1.0f,  1.0f,  0.0f,          0xFFFF0000  },
+        { 1.0f, -1.0f,  0.0f,          0xFFFF0000  },
+        { 1.0f,  1.0f,  0.0f,          0xFFFF0000  },
+    };
+
+    static const D3DVERTEXELEMENT9 decl_elements[] = {
+        {0,  0, D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT,    D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END()
+    };
+
+    IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
+    IDirect3DVertexShader9      *vertex_shader[3]   = {NULL, NULL, NULL};
+    IDirect3DPixelShader9       *pixel_shader[2]    = {NULL, NULL};
+
+    /* This reference data was collected on a nVidia GeForce 7600GS driver version 84.19 DirectX version 9.0c on Windows XP */
+    static const struct test_data_t {
+        int vshader;
+        int pshader;
+        D3DFOGMODE vfog;
+        D3DFOGMODE tfog;
+        unsigned int color[11];
+    } test_data[] = {
+        /* only pixel shader: */
+        {0, 1, 0, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+        {0, 1, 1, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+        {0, 1, 2, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+        {0, 1, 3, 0,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+        {0, 1, 3, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+
+        /* vertex shader */
+        {1, 0, 0, 0,
+        {0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00,
+         0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00}},
+        {1, 0, 0, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+        {1, 0, 1, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+        {1, 0, 2, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+        {1, 0, 3, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+
+        /* vertex shader and pixel shader */
+        {1, 1, 0, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+        {1, 1, 1, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+        {1, 1, 2, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+        {1, 1, 3, 3,
+        {0x0000ff00, 0x0000ff00, 0x0020df00, 0x0040bf00, 0x005fa000, 0x007f8000,
+         0x009f6000, 0x00bf4000, 0x00df2000, 0x00ff0000, 0x00df2000}},
+
+        /* foggy vertex shader */
+        {2, 0, 0, 0,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x001fe000}},
+        {2, 0, 1, 0,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x001fe000}},
+        {2, 0, 2, 0,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x001fe000}},
+        {2, 0, 3, 0,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x001fe000}},
+
+        /* foggy vertex shader and pixel shader */
+        {2, 1, 0, 0,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x001fe000}},
+        {2, 1, 1, 0,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x001fe000}},
+        {2, 1, 2, 0,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x001fe000}},
+        {2, 1, 3, 0,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x001fe000}},
+
+    };
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, vertex_shader_code1, &vertex_shader[1]);
+    ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateVertexShader(device, vertex_shader_code2, &vertex_shader[2]);
+    ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, pixel_shader_code, &pixel_shader[1]);
+    ok(SUCCEEDED(hr), "CreatePixelShader failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed (%08x)\n", hr);
+
+    /* Setup initial states: No lighting, fog on, fog color */
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Turning off lighting failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, TRUE);
+    ok(hr == D3D_OK, "Turning on fog calculations failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGCOLOR, 0xFF00FF00 /* A nice green */);
+    ok(hr == D3D_OK, "Setting fog color failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed (%08x)\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_NONE);
+    ok(hr == D3D_OK, "Turning off table fog failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGVERTEXMODE, D3DFOG_NONE);
+    ok(hr == D3D_OK, "Turning off vertex fog failed (%08x)\n", hr);
+
+    /* Use fogtart = 0.1 and end = 0.9 to test behavior outside the fog transition phase, too*/
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, start.i);
+    ok(hr == D3D_OK, "Setting fog start failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGEND, end.i);
+    ok(hr == D3D_OK, "Setting fog end failed (%08x)\n", hr);
+
+    for (i = 0; i < 22; i++)
+    {
+        hr = IDirect3DDevice9_SetVertexShader(device, vertex_shader[test_data[i].vshader]);
+        ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_SetPixelShader(device, pixel_shader[test_data[i].pshader]);
+        ok(SUCCEEDED(hr), "SetPixelShader failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGVERTEXMODE, test_data[i].vfog);
+        ok( hr == D3D_OK, "Setting fog vertex mode to D3DFOG_LINEAR failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, test_data[i].tfog);
+        ok( hr == D3D_OK, "Setting fog table mode to D3DFOG_LINEAR failed (%08x)\n", hr);
+
+        for(j=0; j < 11; j++)
+        {
+            /* Don't use the whole zrange to prevent rounding errors */
+            quad[0].z = 0.001f + (float)j / 10.001f;
+            quad[1].z = 0.001f + (float)j / 10.001f;
+            quad[2].z = 0.001f + (float)j / 10.001f;
+            quad[3].z = 0.001f + (float)j / 10.001f;
+
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok( hr == D3D_OK, "BeginScene returned failed (%08x)\n", hr);
+
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], sizeof(quad[0]));
+            ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(hr == D3D_OK, "EndScene failed (%08x)\n", hr);
+
+            IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+            /* As the red and green component are the result of blending use 5% tolerance on the expected value */
+            color = getPixelColor(device, 128, 240);
+            ok((unsigned char)(color) == ((unsigned char)test_data[i].color[j])
+                    && abs( ((unsigned char)(color>>8)) - (unsigned char)(test_data[i].color[j]>>8) ) < 13
+                    && abs( ((unsigned char)(color>>16)) - (unsigned char)(test_data[i].color[j]>>16) ) < 13,
+                    "fog ps%i vs%i fvm%i ftm%i: got color %08x, expected %08x +-5%%\n", test_data[i].vshader, test_data[i].pshader, test_data[i].vfog, test_data[i].tfog, color, test_data[i].color[j]);
+        }
+    }
+
+    /* reset states */
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(SUCCEEDED(hr), "SetPixelShader failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
+    ok(hr == D3D_OK, "Turning off fog calculations failed (%08x)\n", hr);
+
+    IDirect3DVertexShader9_Release(vertex_shader[1]);
+    IDirect3DVertexShader9_Release(vertex_shader[2]);
+    IDirect3DPixelShader9_Release(pixel_shader[1]);
+    IDirect3DVertexDeclaration9_Release(vertex_declaration);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -747,6 +984,12 @@ START_TEST(visual)
         test_mova(device_ptr);
     }
     else skip("No vs_2_0 support\n");
+
+    if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1) && caps.PixelShaderVersion >= D3DVS_VERSION(1, 1))
+    {
+        fog_with_shader_test(device_ptr);
+    }
+    else skip("No vs_1_1 and ps_1_1 support\n");
 
 cleanup:
     if(device_ptr) IDirect3DDevice9_Release(device_ptr);
