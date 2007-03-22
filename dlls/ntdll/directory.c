@@ -1799,7 +1799,7 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
 NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
                                     UINT disposition, BOOLEAN check_case )
 {
-    static const WCHAR uncW[] = {'U','N','C','\\'};
+    static const WCHAR unixW[] = {'u','n','i','x'};
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
 
     NTSTATUS status = STATUS_SUCCESS;
@@ -1807,71 +1807,87 @@ NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *un
     const WCHAR *name, *p;
     struct stat st;
     char *unix_name;
-    int pos, ret, name_len, unix_len, used_default;
+    int pos, ret, name_len, unix_len, prefix_len, used_default;
+    WCHAR prefix[MAX_DIR_ENTRY_LEN];
+    BOOLEAN is_unix = FALSE;
 
     name     = nameW->Buffer;
     name_len = nameW->Length / sizeof(WCHAR);
 
     if (!name_len || !IS_SEPARATOR(name[0])) return STATUS_OBJECT_PATH_SYNTAX_BAD;
 
-    if ((pos = get_dos_prefix_len( nameW )))
+    if (!(pos = get_dos_prefix_len( nameW )))
+        return STATUS_BAD_DEVICE_TYPE;  /* no DOS prefix, assume NT native name */
+
+    name += pos;
+    name_len -= pos;
+
+    /* check for sub-directory */
+    for (pos = 0; pos < name_len; pos++)
     {
-        BOOLEAN is_unc = FALSE;
+        if (IS_SEPARATOR(name[pos])) break;
+        if (name[pos] < 32 || strchrW( invalid_charsW, name[pos] ))
+            return STATUS_OBJECT_NAME_INVALID;
+    }
+    if (pos > MAX_DIR_ENTRY_LEN)
+        return STATUS_OBJECT_NAME_INVALID;
 
-        name += pos;
-        name_len -= pos;
+    if (pos == name_len)  /* no subdir, plain DOS device */
+        return get_dos_device( name, name_len, unix_name_ret );
 
-        /* check for UNC prefix */
-        if (name_len > 4 && !memicmpW( name, uncW, 4 ))
-        {
-            name += 3;
-            name_len -= 3;
-            is_unc = TRUE;
-        }
-        else
-        {
-            /* check for a drive letter with path */
-            if (name_len < 3 || !isalphaW(name[0]) || name[1] != ':' || !IS_SEPARATOR(name[2]))
-            {
-                /* not a drive with path, try other DOS devices */
-                return get_dos_device( name, name_len, unix_name_ret );
-            }
-            name += 2;  /* skip drive letter */
-            name_len -= 2;
-        }
+    for (prefix_len = 0; prefix_len < pos; prefix_len++)
+        prefix[prefix_len] = tolowerW(name[prefix_len]);
 
-        /* check for invalid characters */
+    name += prefix_len;
+    name_len -= prefix_len;
+
+    /* check for invalid characters (all chars except 0 are valid for unix) */
+    is_unix = (prefix_len == 4 && !memcmp( prefix, unixW, sizeof(unixW) ));
+    if (is_unix)
+    {
+        for (p = name; p < name + name_len; p++)
+            if (!*p) return STATUS_OBJECT_NAME_INVALID;
+        check_case = TRUE;
+    }
+    else
+    {
         for (p = name; p < name + name_len; p++)
             if (*p < 32 || strchrW( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
-
-        unix_len = ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
-        unix_len += MAX_DIR_ENTRY_LEN + 3;
-        unix_len += strlen(config_dir) + sizeof("/dosdevices/") + 3;
-        if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
-            return STATUS_NO_MEMORY;
-        strcpy( unix_name, config_dir );
-        strcat( unix_name, "/dosdevices/" );
-        pos = strlen(unix_name);
-        if (is_unc)
-        {
-            strcpy( unix_name + pos, "unc" );
-            pos += 3;
-        }
-        else
-        {
-            unix_name[pos++] = tolowerW( name[-2] );
-            unix_name[pos++] = ':';
-            unix_name[pos] = 0;
-        }
     }
-    else  /* no DOS prefix, assume NT native name, map directly to Unix */
+
+    unix_len = ntdll_wcstoumbs( 0, prefix, prefix_len, NULL, 0, NULL, NULL );
+    unix_len += ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
+    unix_len += MAX_DIR_ENTRY_LEN + 3;
+    unix_len += strlen(config_dir) + sizeof("/dosdevices/");
+    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
+        return STATUS_NO_MEMORY;
+    strcpy( unix_name, config_dir );
+    strcat( unix_name, "/dosdevices/" );
+    pos = strlen(unix_name);
+
+    ret = ntdll_wcstoumbs( 0, prefix, prefix_len, unix_name + pos, unix_len - pos - 1,
+                           NULL, &used_default );
+    if (!ret || used_default)
     {
-        if (!name_len || !IS_SEPARATOR(name[0])) return STATUS_OBJECT_NAME_INVALID;
-        unix_len = ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
-        unix_len += MAX_DIR_ENTRY_LEN + 3;
-        if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
-            return STATUS_NO_MEMORY;
-        pos = 0;
+        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        return STATUS_OBJECT_NAME_INVALID;
+    }
+    pos += ret;
+
+    /* check if prefix exists (except for DOS drives to avoid extra stat calls) */
+
+    if (prefix_len != 2 || prefix[1] != ':')
+    {
+        unix_name[pos] = 0;
+        if (lstat( unix_name, &st ) == -1 && errno == ENOENT)
+        {
+            if (!is_unix)
+            {
+                RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+                return STATUS_BAD_DEVICE_TYPE;
+            }
+            pos = 0;  /* fall back to unix root */
+        }
     }
 
     /* try a shortcut first */
