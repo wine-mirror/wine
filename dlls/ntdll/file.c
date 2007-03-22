@@ -143,7 +143,6 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
                               ULONG options, PVOID ea_buffer, ULONG ea_length )
 {
     static const WCHAR pipeW[] = {'\\','?','?','\\','p','i','p','e','\\'};
-    static const WCHAR mailslotW[] = {'\\','?','?','\\','M','A','I','L','S','L','O','T','\\'};
     ANSI_STRING unix_name;
     int created = FALSE;
 
@@ -170,28 +169,6 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
             req->attributes = attr->Attributes;
             req->rootdir = attr->RootDirectory;
             req->flags = options;
-            wine_server_add_data( req, attr->ObjectName->Buffer,
-                                  attr->ObjectName->Length );
-            io->u.Status = wine_server_call( req );
-            *handle = reply->handle;
-        }
-        SERVER_END_REQ;
-        return io->u.Status;
-    }
-
-    /* check for mailslot */
-
-    if (attr->ObjectName->Length > sizeof(mailslotW) &&
-        !memicmpW( attr->ObjectName->Buffer, mailslotW, sizeof(mailslotW)/sizeof(WCHAR) ))
-    {
-        if (attr->SecurityQualityOfService)
-            FIXME("SecurityQualityOfService ignored\n");
-        SERVER_START_REQ( open_mailslot )
-        {
-            req->access = access & GENERIC_WRITE;
-            req->attributes = attr->Attributes;
-            req->rootdir = attr->RootDirectory;
-            req->sharing = sharing;
             wine_server_add_data( req, attr->ObjectName->Buffer,
                                   attr->ObjectName->Length );
             io->u.Status = wine_server_call( req );

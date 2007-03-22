@@ -3881,23 +3881,6 @@ struct create_mailslot_reply
 
 
 
-struct open_mailslot_request
-{
-    struct request_header __header;
-    unsigned int   access;
-    unsigned int   attributes;
-    obj_handle_t   rootdir;
-    unsigned int   sharing;
-    /* VARARG(name,unicode_str); */
-};
-struct open_mailslot_reply
-{
-    struct reply_header __header;
-    obj_handle_t   handle;
-};
-
-
-
 struct set_mailslot_info_request
 {
     struct request_header __header;
@@ -4240,7 +4223,6 @@ enum request
     REQ_get_token_groups,
     REQ_set_security_object,
     REQ_create_mailslot,
-    REQ_open_mailslot,
     REQ_set_mailslot_info,
     REQ_create_directory,
     REQ_open_directory,
@@ -4465,7 +4447,6 @@ union generic_request
     struct get_token_groups_request get_token_groups_request;
     struct set_security_object_request set_security_object_request;
     struct create_mailslot_request create_mailslot_request;
-    struct open_mailslot_request open_mailslot_request;
     struct set_mailslot_info_request set_mailslot_info_request;
     struct create_directory_request create_directory_request;
     struct open_directory_request open_directory_request;
@@ -4688,7 +4669,6 @@ union generic_reply
     struct get_token_groups_reply get_token_groups_reply;
     struct set_security_object_reply set_security_object_reply;
     struct create_mailslot_reply create_mailslot_reply;
-    struct open_mailslot_reply open_mailslot_reply;
     struct set_mailslot_info_reply set_mailslot_info_reply;
     struct create_directory_reply create_directory_reply;
     struct open_directory_reply open_directory_reply;
@@ -4700,6 +4680,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 286
+#define SERVER_PROTOCOL_VERSION 287
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

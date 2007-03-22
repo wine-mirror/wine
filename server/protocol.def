@@ -2792,18 +2792,6 @@ enum message_type
 @END
 
 
-/* Open an existing mailslot */
-@REQ(open_mailslot)
-    unsigned int   access;
-    unsigned int   attributes;    /* object attributes */
-    obj_handle_t   rootdir;       /* root directory */
-    unsigned int   sharing;       /* sharing mode */
-    VARARG(name,unicode_str);     /* mailslot name */
-@REPLY
-    obj_handle_t   handle;        /* handle to the mailslot */
-@END
-
-
 /* Set mailslot information */
 @REQ(set_mailslot_info)
     obj_handle_t   handle;        /* handle to the mailslot */
