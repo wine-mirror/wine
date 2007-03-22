@@ -87,7 +87,16 @@ HANDLE WINAPI CreateActCtxW(PCACTCTXW pActCtx)
  */
 BOOL WINAPI ActivateActCtx(HANDLE hActCtx, ULONG_PTR *ulCookie)
 {
-  FIXME("%p %p\n", hActCtx, ulCookie );
+  static BOOL reported = FALSE;
+
+  if (reported)
+    TRACE("%p %p\n", hActCtx, ulCookie);
+  else
+  {
+    FIXME("%p %p\n", hActCtx, ulCookie);
+    reported = TRUE;
+  }
+
   if (ulCookie)
     *ulCookie = ACTCTX_FAKE_COOKIE;
   return TRUE;
@@ -100,7 +109,16 @@ BOOL WINAPI ActivateActCtx(HANDLE hActCtx, ULONG_PTR *ulCookie)
  */
 BOOL WINAPI DeactivateActCtx(DWORD dwFlags, ULONG_PTR ulCookie)
 {
-  FIXME("%08x %08lx\n", dwFlags, ulCookie);
+  static BOOL reported = FALSE;
+
+  if (reported)
+    TRACE("%08x %08lx\n", dwFlags, ulCookie);
+  else
+  {
+    FIXME("%08x %08lx\n", dwFlags, ulCookie);
+    reported = TRUE;
+  }
+
   if (ulCookie != ACTCTX_FAKE_COOKIE)
     return FALSE;
   return TRUE;
