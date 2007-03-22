@@ -284,7 +284,7 @@ static void pshader_get_register_name(
     break;
     case WINED3DSPR_COLOROUT:
         if (reg == 0)
-            sprintf(regstr, "result.color");
+            sprintf(regstr, "TMP_COLOR");
         else {
             /* TODO: See GL_ARB_draw_buffers */
             FIXME("Unsupported write to render target %u\n", reg);

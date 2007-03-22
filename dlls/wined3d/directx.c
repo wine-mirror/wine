@@ -291,18 +291,18 @@ static void select_shader_max_constants(
 
     switch (ps_selected_mode) {
         case SHADER_GLSL:
-            /* Subtract the other potential uniforms from the max available (bools & ints).
+            /* Subtract the other potential uniforms from the max available (bools & ints), and 2 states for fog.
              * In theory the texbem instruction may need one more shader constant too. But lets assume
              * that a sm <= 1.3 shader does not need all the uniforms provided by a glsl-capable card,
              * and lets not take away a uniform needlessly from all other shaders.
              */
-            gl_info->max_pshader_constantsF = gl_info->ps_glsl_constantsF - (MAX_CONST_B / 4) - MAX_CONST_I;
+            gl_info->max_pshader_constantsF = gl_info->ps_glsl_constantsF - (MAX_CONST_B / 4) - MAX_CONST_I - 2;
             break;
         case SHADER_ARB:
             /* The arb shader only loads the bump mapping environment matrix into the shader if it finds
-             * a free constant to do that, so no need to reduce the number of available constants.
+             * a free constant to do that, so only reduce the number of available constants by 2 for the fog states.
              */
-            gl_info->max_pshader_constantsF = gl_info->ps_arb_constantsF;
+            gl_info->max_pshader_constantsF = gl_info->ps_arb_constantsF - 2;
             break;
         default:
             gl_info->max_pshader_constantsF = 0;

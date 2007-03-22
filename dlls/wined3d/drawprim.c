@@ -682,7 +682,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
             specularColor = ptrToCoords[0];
             VTRACE(("specularColor=%lx\n", specularColor));
 
-            /* special case where the fog density is stored in the diffuse alpha channel */
+            /* special case where the fog density is stored in the specular alpha channel */
             if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] &&
               (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || sd->u.s.position.dwType == WINED3DDECLTYPE_FLOAT4 )&&
               This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
