@@ -2415,21 +2415,6 @@ static void dump_create_named_pipe_reply( const struct create_named_pipe_reply *
     fprintf( stderr, " handle=%p", req->handle );
 }
 
-static void dump_open_named_pipe_request( const struct open_named_pipe_request *req )
-{
-    fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " attributes=%08x,", req->attributes );
-    fprintf( stderr, " rootdir=%p,", req->rootdir );
-    fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " name=" );
-    dump_varargs_unicode_str( cur_size );
-}
-
-static void dump_open_named_pipe_reply( const struct open_named_pipe_reply *req )
-{
-    fprintf( stderr, " handle=%p", req->handle );
-}
-
 static void dump_connect_named_pipe_request( const struct connect_named_pipe_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
@@ -3599,7 +3584,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_register_async_request,
     (dump_func)dump_cancel_async_request,
     (dump_func)dump_create_named_pipe_request,
-    (dump_func)dump_open_named_pipe_request,
     (dump_func)dump_connect_named_pipe_request,
     (dump_func)dump_wait_named_pipe_request,
     (dump_func)dump_disconnect_named_pipe_request,
@@ -3819,7 +3803,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_create_named_pipe_reply,
-    (dump_func)dump_open_named_pipe_reply,
     (dump_func)0,
     (dump_func)0,
     (dump_func)0,
@@ -4039,7 +4022,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "register_async",
     "cancel_async",
     "create_named_pipe",
-    "open_named_pipe",
     "connect_named_pipe",
     "wait_named_pipe",
     "disconnect_named_pipe",

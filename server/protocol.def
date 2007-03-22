@@ -1992,18 +1992,6 @@ enum message_type
 #define NAMED_PIPE_NONBLOCKING_MODE     0x0004
 #define NAMED_PIPE_SERVER_END           0x8000
 
-/* Open an existing named pipe */
-@REQ(open_named_pipe)
-    unsigned int   access;
-    unsigned int   attributes;   /* object attributes */
-    obj_handle_t   rootdir;      /* root directory */
-    unsigned int   flags;        /* file flags */
-    VARARG(name,unicode_str);    /* pipe name */
-@REPLY
-    obj_handle_t   handle;       /* handle to the pipe */
-@END
-
-
 /* Connect to a named pipe */
 @REQ(connect_named_pipe)
     obj_handle_t   handle;

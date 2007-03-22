@@ -108,6 +108,8 @@ struct named_pipe_device
 
 static void named_pipe_dump( struct object *obj, int verbose );
 static unsigned int named_pipe_map_access( struct object *obj, unsigned int access );
+static struct object *named_pipe_open_file( struct object *obj, unsigned int access,
+                                            unsigned int sharing, unsigned int options );
 static void named_pipe_destroy( struct object *obj );
 
 static const struct object_ops named_pipe_ops =
@@ -122,7 +124,7 @@ static const struct object_ops named_pipe_ops =
     no_get_fd,                    /* get_fd */
     named_pipe_map_access,        /* map_access */
     no_lookup_name,               /* lookup_name */
-    no_open_file,                 /* open_file */
+    named_pipe_open_file,         /* open_file */
     no_close_handle,              /* close_handle */
     named_pipe_destroy            /* destroy */
 };
@@ -688,6 +690,69 @@ static inline struct pipe_server *find_server2( struct named_pipe *pipe,
     return NULL;
 }
 
+static struct object *named_pipe_open_file( struct object *obj, unsigned int access,
+                                            unsigned int sharing, unsigned int options )
+{
+    struct named_pipe *pipe = (struct named_pipe *)obj;
+    struct pipe_server *server;
+    struct pipe_client *client;
+    int fds[2];
+
+    if (!(server = find_server2( pipe, ps_idle_server, ps_wait_open )))
+    {
+        set_error( STATUS_PIPE_NOT_AVAILABLE );
+        return NULL;
+    }
+
+    if ((client = create_pipe_client( options )))
+    {
+        if (!socketpair( PF_UNIX, SOCK_STREAM, 0, fds ))
+        {
+            int res = 0;
+
+            assert( !client->fd );
+            assert( !server->fd );
+
+            /* for performance reasons, only set nonblocking mode when using
+             * overlapped I/O. Otherwise, we will be doing too much busy
+             * looping */
+            if (is_overlapped( options ))
+                res = fcntl( fds[1], F_SETFL, O_NONBLOCK );
+            if ((res != -1) && is_overlapped( server->options ))
+                res = fcntl( fds[0], F_SETFL, O_NONBLOCK );
+
+            if (pipe->insize)
+            {
+                setsockopt( fds[0], SOL_SOCKET, SO_RCVBUF, &pipe->insize, sizeof(pipe->insize) );
+                setsockopt( fds[1], SOL_SOCKET, SO_RCVBUF, &pipe->insize, sizeof(pipe->insize) );
+            }
+            if (pipe->outsize)
+            {
+                setsockopt( fds[0], SOL_SOCKET, SO_SNDBUF, &pipe->outsize, sizeof(pipe->outsize) );
+                setsockopt( fds[1], SOL_SOCKET, SO_SNDBUF, &pipe->outsize, sizeof(pipe->outsize) );
+            }
+
+            client->fd = create_anonymous_fd( &pipe_client_fd_ops,
+                                            fds[1], &client->obj );
+            server->fd = create_anonymous_fd( &pipe_server_fd_ops,
+                                            fds[0], &server->obj );
+            if (client->fd && server->fd && res != 1)
+            {
+                if (server->state == ps_wait_open)
+                    async_terminate_head( &server->wait_q, STATUS_SUCCESS );
+                assert( list_empty( &server->wait_q ) );
+                server->state = ps_connected_server;
+                server->client = client;
+                client->server = server;
+            }
+        }
+        else
+            file_set_error();
+    }
+    release_object( server );
+    return &client->obj;
+}
+
 DECL_HANDLER(create_named_pipe)
 {
     struct named_pipe *pipe;
@@ -745,85 +810,6 @@ DECL_HANDLER(create_named_pipe)
     }
 
     release_object( pipe );
-}
-
-DECL_HANDLER(open_named_pipe)
-{
-    struct pipe_server *server;
-    struct pipe_client *client;
-    struct unicode_str name;
-    struct directory *root = NULL;
-    struct named_pipe *pipe;
-    int fds[2];
-
-    get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
-
-    pipe = open_object_dir( root, &name, req->attributes, &named_pipe_ops );
-
-    if (root) release_object( root );
-    if (!pipe) return;
-
-    server = find_server2( pipe, ps_idle_server, ps_wait_open );
-    release_object( pipe );
-
-    if (!server)
-    {
-        set_error( STATUS_PIPE_NOT_AVAILABLE );
-        return;
-    }
-
-    client = create_pipe_client( req->flags );
-    if (client)
-    {
-        if (!socketpair( PF_UNIX, SOCK_STREAM, 0, fds ))
-        {
-            int res = 0;
-
-            assert( !client->fd );
-            assert( !server->fd );
-
-            /* for performance reasons, only set nonblocking mode when using
-             * overlapped I/O. Otherwise, we will be doing too much busy
-             * looping */
-            if (is_overlapped( req->flags ))
-                res = fcntl( fds[1], F_SETFL, O_NONBLOCK );
-            if ((res != -1) && is_overlapped( server->options ))
-                res = fcntl( fds[0], F_SETFL, O_NONBLOCK );
-
-            if (pipe->insize)
-            {
-                setsockopt( fds[0], SOL_SOCKET, SO_RCVBUF, &pipe->insize, sizeof(pipe->insize) );
-                setsockopt( fds[1], SOL_SOCKET, SO_RCVBUF, &pipe->insize, sizeof(pipe->insize) );
-            }
-            if (pipe->outsize)
-            {
-                setsockopt( fds[0], SOL_SOCKET, SO_SNDBUF, &pipe->outsize, sizeof(pipe->outsize) );
-                setsockopt( fds[1], SOL_SOCKET, SO_SNDBUF, &pipe->outsize, sizeof(pipe->outsize) );
-            }
-
-            client->fd = create_anonymous_fd( &pipe_client_fd_ops,
-                                            fds[1], &client->obj );
-            server->fd = create_anonymous_fd( &pipe_server_fd_ops,
-                                            fds[0], &server->obj );
-            if (client->fd && server->fd && res != 1)
-            {
-                if (server->state == ps_wait_open)
-                    async_terminate_head( &server->wait_q, STATUS_SUCCESS );
-                assert( list_empty( &server->wait_q ) );
-                server->state = ps_connected_server;
-                server->client = client;
-                client->server = server;
-                reply->handle = alloc_handle( current->process, client, req->access, req->attributes );
-            }
-        }
-        else
-            file_set_error();
-
-        release_object( client );
-    }
-    release_object( server );
 }
 
 DECL_HANDLER(connect_named_pipe)

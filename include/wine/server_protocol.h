@@ -2698,23 +2698,6 @@ struct create_named_pipe_reply
 #define NAMED_PIPE_SERVER_END           0x8000
 
 
-struct open_named_pipe_request
-{
-    struct request_header __header;
-    unsigned int   access;
-    unsigned int   attributes;
-    obj_handle_t   rootdir;
-    unsigned int   flags;
-    /* VARARG(name,unicode_str); */
-};
-struct open_named_pipe_reply
-{
-    struct reply_header __header;
-    obj_handle_t   handle;
-};
-
-
-
 struct connect_named_pipe_request
 {
     struct request_header __header;
@@ -4150,7 +4133,6 @@ enum request
     REQ_register_async,
     REQ_cancel_async,
     REQ_create_named_pipe,
-    REQ_open_named_pipe,
     REQ_connect_named_pipe,
     REQ_wait_named_pipe,
     REQ_disconnect_named_pipe,
@@ -4374,7 +4356,6 @@ union generic_request
     struct register_async_request register_async_request;
     struct cancel_async_request cancel_async_request;
     struct create_named_pipe_request create_named_pipe_request;
-    struct open_named_pipe_request open_named_pipe_request;
     struct connect_named_pipe_request connect_named_pipe_request;
     struct wait_named_pipe_request wait_named_pipe_request;
     struct disconnect_named_pipe_request disconnect_named_pipe_request;
@@ -4596,7 +4577,6 @@ union generic_reply
     struct register_async_reply register_async_reply;
     struct cancel_async_reply cancel_async_reply;
     struct create_named_pipe_reply create_named_pipe_reply;
-    struct open_named_pipe_reply open_named_pipe_reply;
     struct connect_named_pipe_reply connect_named_pipe_reply;
     struct wait_named_pipe_reply wait_named_pipe_reply;
     struct disconnect_named_pipe_reply disconnect_named_pipe_reply;
@@ -4680,6 +4660,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 287
+#define SERVER_PROTOCOL_VERSION 288
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
