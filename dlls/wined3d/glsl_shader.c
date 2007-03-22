@@ -359,7 +359,7 @@ void shader_glsl_load_constants(
             float *data = (float *) &stateBlock->textureState[(int) ((IWineD3DPixelShaderImpl *) pshader)->needsbumpmat][WINED3DTSS_BUMPENVMAT00];
             pos = GL_EXTCALL(glGetUniformLocationARB(programId, "bumpenvmat"));
             checkGLcall("glGetUniformLocationARB");
-            GL_EXTCALL(glUniform4fvARB(pos, 1, data));
+            GL_EXTCALL(glUniformMatrix2fvARB(pos, 1, 0, data));
             checkGLcall("glUniform4fvARB");
         }
     }
@@ -401,7 +401,7 @@ void shader_generate_glsl_declarations(
     if(!pshader)
         shader_addline(buffer, "uniform vec4 posFixup;\n");
     else if(reg_maps->bumpmat)
-        shader_addline(buffer, "uniform vec4 bumpenvmat;\n");
+        shader_addline(buffer, "uniform mat2 bumpenvmat;\n");
 
     /* Declare texture samplers */ 
     for (i = 0; i < This->baseShader.limits.sampler; i++) {
@@ -1783,6 +1783,7 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     char dst_swizzle[6];
     glsl_sample_function_t sample_function;
+    glsl_src_param_t coord_param;
     DWORD sampler_type;
     DWORD sampler_idx;
     BOOL projected;
@@ -1817,9 +1818,9 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
     shader_glsl_get_write_mask(arg->dst, dst_swizzle);
 
     shader_glsl_get_write_mask(mask, coord_mask);
-    FIXME("Bump map transform not handled yet\n");
-    shader_addline(arg->buffer, "%s(Psampler%u, T%u%s)%s);\n",
-                   sample_function.name, sampler_idx, sampler_idx, coord_mask, dst_swizzle);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0|WINED3DSP_WRITEMASK_1, &coord_param);
+    shader_addline(arg->buffer, "%s(Psampler%u, T%u%s + vec4(bumpenvmat * %s, 0.0, 0.0)%s )%s);\n",
+                   sample_function.name, sampler_idx, sampler_idx, coord_mask, coord_param.param_str, coord_mask, dst_swizzle);
 }
 
 /** Process the WINED3DSIO_TEXREG2AR instruction in GLSL
