@@ -2278,7 +2278,7 @@ extern NTSTATUS wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRI
 #define RtlRetrieveUlonglong(p,s) memcpy((p), (s), sizeof(ULONGLONG))
 #define RtlZeroMemory(Destination,Length) memset((Destination),0,(Length))
 
-inline static BOOLEAN RtlCheckBit(PCRTL_BITMAP lpBits, ULONG ulBit)
+static inline BOOLEAN RtlCheckBit(PCRTL_BITMAP lpBits, ULONG ulBit)
 {
     if (lpBits && ulBit < lpBits->SizeOfBitMap &&
         lpBits->Buffer[ulBit >> 5] & (1 << (ulBit & 31)))
@@ -2287,11 +2287,11 @@ inline static BOOLEAN RtlCheckBit(PCRTL_BITMAP lpBits, ULONG ulBit)
 }
 
 /* These are implemented as __fastcall, so we can't let Winelib apps link with them */
-inline static USHORT RtlUshortByteSwap(USHORT s)
+static inline USHORT RtlUshortByteSwap(USHORT s)
 {
     return (s >> 8) | (s << 8);
 }
-inline static ULONG RtlUlongByteSwap(ULONG i)
+static inline ULONG RtlUlongByteSwap(ULONG i)
 {
 #if defined(__i386__) && defined(__GNUC__)
     ULONG ret;

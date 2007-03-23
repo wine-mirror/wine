@@ -90,14 +90,14 @@ extern void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, 
 extern void USER_Lock(void);
 extern void USER_Unlock(void);
 
-inline static HWND WIN_GetFullHandle( HWND hwnd )
+static inline HWND WIN_GetFullHandle( HWND hwnd )
 {
     if (!HIWORD(hwnd) && hwnd) hwnd = WIN_Handle32( LOWORD(hwnd) );
     return hwnd;
 }
 
 /* to release pointers retrieved by WIN_GetPtr */
-inline static void WIN_ReleasePtr( WND *ptr )
+static inline void WIN_ReleasePtr( WND *ptr )
 {
     USER_Unlock();
 }

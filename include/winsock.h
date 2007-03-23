@@ -523,11 +523,11 @@ int WINAPI __WSAFDIsSet(SOCKET,WS(fd_set)*);
 
 #else  /* WORDS_BIGENDIAN */
 
-inline static u_short __wine_ushort_swap(u_short s)
+static inline u_short __wine_ushort_swap(u_short s)
 {
     return (s >> 8) | (s << 8);
 }
-inline static u_long __wine_ulong_swap(u_long l)
+static inline u_long __wine_ulong_swap(u_long l)
 {
     return ((u_long)__wine_ushort_swap((u_short)l) << 16) | __wine_ushort_swap((u_short)(l >> 16));
 }

@@ -387,7 +387,7 @@ DWORD VFWAPIV ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,L
 
 LRESULT	VFWAPI	ICSendMessage(HIC hic, UINT msg, DWORD_PTR dw1, DWORD_PTR dw2);
 
-inline static LRESULT VFWAPI ICDecompressEx(HIC hic, DWORD dwFlags,
+static inline LRESULT VFWAPI ICDecompressEx(HIC hic, DWORD dwFlags,
 					    LPBITMAPINFOHEADER lpbiSrc, LPVOID lpSrc,
 					    int xSrc, int ySrc, int dxSrc, int dySrc,
 					    LPBITMAPINFOHEADER lpbiDst, LPVOID lpDst,
@@ -411,7 +411,7 @@ inline static LRESULT VFWAPI ICDecompressEx(HIC hic, DWORD dwFlags,
     return ICSendMessage(hic, ICM_DECOMPRESSEX, (DWORD_PTR)&ic, sizeof(ic));
 }
 
-inline static LRESULT VFWAPI ICDecompressExBegin(HIC hic, DWORD dwFlags,
+static inline LRESULT VFWAPI ICDecompressExBegin(HIC hic, DWORD dwFlags,
 						 LPBITMAPINFOHEADER lpbiSrc,
 						 LPVOID lpSrc,
 						 int xSrc, int ySrc, int dxSrc, int dySrc,
@@ -439,7 +439,7 @@ inline static LRESULT VFWAPI ICDecompressExBegin(HIC hic, DWORD dwFlags,
     ic.dyDst = dyDst;
     return ICSendMessage(hic, ICM_DECOMPRESSEX_BEGIN, (DWORD_PTR)&ic, sizeof(ic));
 }
-inline static LRESULT VFWAPI ICDecompressExQuery(HIC hic, DWORD dwFlags,
+static inline LRESULT VFWAPI ICDecompressExQuery(HIC hic, DWORD dwFlags,
 						 LPBITMAPINFOHEADER lpbiSrc,
 						 LPVOID lpSrc,
 						 int xSrc, int ySrc, int dxSrc, int dySrc,
@@ -519,14 +519,14 @@ HIC	VFWAPI	ICGetDisplayFormat(HIC hic, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHE
 #define ICGetStateSize(hic) \
     ICGetState(hic, NULL, 0)
 
-inline static DWORD ICGetDefaultQuality(HIC hic)
+static inline DWORD ICGetDefaultQuality(HIC hic)
 {
    DWORD dwICValue;
    ICSendMessage(hic, ICM_GETDEFAULTQUALITY, (DWORD_PTR)(LPVOID)&dwICValue, sizeof(DWORD));
    return dwICValue;
 }
 
-inline static DWORD ICGetDefaultKeyFrameRate(HIC hic)
+static inline DWORD ICGetDefaultKeyFrameRate(HIC hic)
 {
    DWORD dwICValue;
    ICSendMessage(hic, ICM_GETDEFAULTKEYFRAMERATE, (DWORD_PTR)(LPVOID)&dwICValue, sizeof(DWORD));
@@ -609,7 +609,7 @@ typedef struct {
 
 DWORD VFWAPIV ICDraw(HIC hic,DWORD dwFlags,LPVOID lpFormat,LPVOID lpData,DWORD cbData,LONG lTime);
 
-inline static LRESULT VFWAPI ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpbiIn,
+static inline LRESULT VFWAPI ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpbiIn,
 						 LPBITMAPINFOHEADER lpbiOut,
 						 int dxSrc, int dySrc,
 						 int dxDst, int dyDst,
@@ -666,7 +666,7 @@ inline static LRESULT VFWAPI ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpb
 #define ICDrawRenderBuffer(hic) \
     ICSendMessage(hic, ICM_DRAW_RENDERBUFFER, 0, 0)
 
-inline static LRESULT VFWAPI ICSetStatusProc(HIC hic, DWORD dwFlags, LRESULT lParam,
+static inline LRESULT VFWAPI ICSetStatusProc(HIC hic, DWORD dwFlags, LRESULT lParam,
 					     LONG (CALLBACK *fpfnStatus)(LPARAM, UINT, LONG))
 {
     ICSETSTATUSPROC ic;
