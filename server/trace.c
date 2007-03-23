@@ -116,8 +116,9 @@ static void dump_apc_call( const apc_call_t *call )
         fprintf( stderr, ",arg=%p", call->timer.arg );
         break;
     case APC_ASYNC_IO:
-        fprintf( stderr, "APC_ASYNC_IO,user=%p,sb=%p,status=%s",
-                 call->async_io.user, call->async_io.sb, get_status_name(call->async_io.status) );
+        fprintf( stderr, "APC_ASYNC_IO,func=%p,user=%p,sb=%p,status=%s",
+                 call->async_io.func, call->async_io.user, call->async_io.sb,
+                 get_status_name(call->async_io.status) );
         break;
     case APC_VIRTUAL_ALLOC:
         fprintf( stderr, "APC_VIRTUAL_ALLOC,addr=%p,size=%lu,zero_bits=%u,op_type=%x,prot=%x",
