@@ -941,9 +941,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
 
             if (!event && io->u.Status == STATUS_PENDING)
             {
-                do
-                    io->u.Status = NtWaitForSingleObject(internal_event, TRUE, NULL);
-                while(io->u.Status == STATUS_USER_APC);
+                while (NtWaitForSingleObject(internal_event, TRUE, NULL) == STATUS_USER_APC) /*nothing*/ ;
             }
             if (internal_event) NtClose(internal_event);
         }
@@ -975,9 +973,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
 
             if (!event && io->u.Status == STATUS_PENDING)
             {
-                do
-                    io->u.Status = NtWaitForSingleObject(internal_event, TRUE, NULL);
-                while(io->u.Status == STATUS_USER_APC);
+                while (NtWaitForSingleObject(internal_event, TRUE, NULL) == STATUS_USER_APC) /*nothing*/ ;
             }
             if (internal_event) NtClose(internal_event);
         }
