@@ -159,7 +159,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 /* critical section to protect some non-rentrant net function */
 extern CRITICAL_SECTION csWSgetXXXbyYYY;
 
-inline static const char *debugstr_sockaddr( const struct WS_sockaddr *a )
+static inline const char *debugstr_sockaddr( const struct WS_sockaddr *a )
 {
     if (!a) return "(nil)";
     return wine_dbg_sprintf("{ family %d, address %s, port %d }",
@@ -346,7 +346,7 @@ static const int ws_eai_map[][2] =
     { 0, 0 }
 };
 
-inline static DWORD NtStatusToWSAError( const DWORD status )
+static inline DWORD NtStatusToWSAError( const DWORD status )
 {
     /* We only need to cover the status codes set by server async request handling */
     DWORD wserr;
@@ -374,7 +374,7 @@ inline static DWORD NtStatusToWSAError( const DWORD status )
 }
 
 /* set last error code from NT status without mapping WSA errors */
-inline static unsigned int set_error( unsigned int err )
+static inline unsigned int set_error( unsigned int err )
 {
     if (err)
     {
@@ -384,7 +384,7 @@ inline static unsigned int set_error( unsigned int err )
     return err;
 }
 
-inline static int get_sock_fd( SOCKET s, DWORD access, int *flags )
+static inline int get_sock_fd( SOCKET s, DWORD access, int *flags )
 {
     int fd;
     if (set_error( wine_server_handle_to_fd( SOCKET2HANDLE(s), access, &fd, flags ) ))
@@ -392,7 +392,7 @@ inline static int get_sock_fd( SOCKET s, DWORD access, int *flags )
     return fd;
 }
 
-inline static void release_sock_fd( SOCKET s, int fd )
+static inline void release_sock_fd( SOCKET s, int fd )
 {
     wine_server_release_fd( SOCKET2HANDLE(s), fd );
 }
@@ -590,7 +590,7 @@ static char *strdup_lower(const char *str)
     return ret;
 }
 
-inline static int sock_error_p(int s)
+static inline int sock_error_p(int s)
 {
     unsigned int optval, optlen;
 
@@ -1074,7 +1074,7 @@ static void WINAPI WS2_async_recv(void*, IO_STATUS_BLOCK*, ULONG);
 static void WINAPI WS2_async_send(void*, IO_STATUS_BLOCK*, ULONG);
 static void WINAPI WS2_async_shutdown( void*, IO_STATUS_BLOCK*, ULONG);
 
-inline static struct ws2_async*
+static inline struct ws2_async*
 WS2_make_async(SOCKET s, enum ws2_mode mode, struct iovec *iovec, DWORD dwBufferCount,
                LPDWORD lpFlags, struct WS_sockaddr *addr,
                LPINT addrlen, LPWSAOVERLAPPED lpOverlapped,
