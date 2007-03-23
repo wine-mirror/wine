@@ -236,12 +236,12 @@ LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd)
 /*
  * Flushes all packets from the queue.
  */
-inline static void TABLET_FlushQueue(LPOPENCONTEXT context)
+static inline void TABLET_FlushQueue(LPOPENCONTEXT context)
 {
     context->PacketsQueued = 0;
 }
 
-inline static int CopyTabletData(LPVOID target, LPVOID src, INT size)
+static inline int CopyTabletData(LPVOID target, LPVOID src, INT size)
 {
     memcpy(target,src,size);
     return(size);
