@@ -85,7 +85,7 @@ static const WCHAR wszOpen     [] = {'o','p','e','n',0};
 static const WCHAR wszSystemIni[] = {'s','y','s','t','e','m','.','i','n','i',0};
 
 /* dup a string and uppercase it */
-inline static LPWSTR str_dup_upper( LPCWSTR str )
+static inline LPWSTR str_dup_upper( LPCWSTR str )
 {
     INT len = (strlenW(str) + 1) * sizeof(WCHAR);
     LPWSTR p = HeapAlloc( GetProcessHeap(), 0, len );
