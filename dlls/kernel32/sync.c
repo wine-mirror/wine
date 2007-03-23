@@ -1287,7 +1287,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
     }
 
     pipe_wait->TimeoutSpecified = !(nTimeOut == NMPWAIT_USE_DEFAULT_WAIT);
-    pipe_wait->Timeout.QuadPart = nTimeOut * -10000L;
+    pipe_wait->Timeout.QuadPart = (ULONGLONG)nTimeOut * -10000;
     pipe_wait->NameLength = nt_name.Length - sizeof(leadin);
     memcpy(pipe_wait->Name, nt_name.Buffer + sizeof(leadin)/sizeof(WCHAR),
            pipe_wait->NameLength);
