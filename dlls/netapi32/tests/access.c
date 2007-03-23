@@ -32,6 +32,7 @@
 WCHAR user_name[UNLEN + 1];
 WCHAR computer_name[MAX_COMPUTERNAME_LENGTH + 1];
 
+/* FIXME : Tests should be language independent */
 static const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a','t',
                                 'o','r',0};
 static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
@@ -64,7 +65,7 @@ static int init_access_tests(void)
     rc=GetUserNameW(user_name, &dwSize);
     if (rc==FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("netapi32 functions seem to be missing.\n");
+        skip("GetUserNameW is not available.\n");
         return 0;
     }
     ok(rc, "User Name Retrieved\n");
@@ -81,13 +82,6 @@ static void run_usergetinfo_tests(void)
     PUSER_INFO_0 ui0 = NULL;
     PUSER_INFO_10 ui10 = NULL;
     DWORD dwSize;
-
-    /* If this one is not defined then none of the others will be defined */
-    if (!pNetUserGetInfo)
-    {
-        skip("netapi32 functions seem to be missing.\n");
-        return;
-    }
 
     /* Level 0 */
     rc=pNetUserGetInfo(NULL, sAdminUserName, 0, (LPBYTE *)&ui0);
@@ -145,12 +139,6 @@ static void run_querydisplayinformation1_tests(void)
     BOOL hasAdmin = FALSE;
     BOOL hasGuest = FALSE;
 
-    if (!pNetQueryDisplayInformation)
-    {
-        skip("netapi32 functions seem to be missing.\n");
-        return;
-    }
-
     do
     {
         Result = pNetQueryDisplayInformation(
@@ -204,12 +192,6 @@ static void run_userhandling_tests(void)
     NET_API_STATUS ret;
     USER_INFO_1 usri;
 
-    if(!pNetUserAdd || !pNetUserChangePassword || !pNetUserDel)
-    {
-        skip("Functions for modifying the user database missing. Skipping test.\n");
-        return;
-    }
-
     usri.usri1_name = (LPWSTR) sTestUserName;
     usri.usri1_password = (LPWSTR) sTestUserOldPass;
     usri.usri1_priv = USER_PRIV_USER;
@@ -245,6 +227,7 @@ static void run_userhandling_tests(void)
 START_TEST(access)
 {
     HMODULE hnetapi32=LoadLibraryA("netapi32.dll");
+
     pNetApiBufferFree=(void*)GetProcAddress(hnetapi32,"NetApiBufferFree");
     pNetApiBufferSize=(void*)GetProcAddress(hnetapi32,"NetApiBufferSize");
     pNetQueryDisplayInformation=(void*)GetProcAddress(hnetapi32,"NetQueryDisplayInformation");
@@ -254,8 +237,14 @@ START_TEST(access)
     pNetUserChangePassword=(void*)GetProcAddress(hnetapi32, "NetUserChangePassword");
     pNetUserDel=(void*)GetProcAddress(hnetapi32, "NetUserDel");
 
-    if (!pNetApiBufferSize)
-        trace("It appears there is no netapi32 functionality on this platform\n");
+    /* These functions were introduced with NT. It's safe to assume that
+     * if one is not available, none are.
+     */
+    if (!pNetApiBufferFree) {
+        skip("Needed functions are not available\n");
+        FreeLibrary(hnetapi32);
+        return;
+    }
 
     if (init_access_tests()) {
         run_usergetinfo_tests();
@@ -263,4 +252,6 @@ START_TEST(access)
         run_usermodalsget_tests();
         run_userhandling_tests();
     }
+
+    FreeLibrary(hnetapi32);
 }

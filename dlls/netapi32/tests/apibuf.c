@@ -41,9 +41,6 @@ static void run_apibuf_tests(void)
     DWORD dwSize;
     NET_API_STATUS res;
 
-    if (!pNetApiBufferAllocate)
-        return;
-
     /* test normal logic */
     ok(pNetApiBufferAllocate(1024, (LPVOID *)&p) == NERR_Success,
        "Reserved memory\n");
@@ -96,12 +93,16 @@ static void run_apibuf_tests(void)
 START_TEST(apibuf)
 {
     HMODULE hnetapi32=LoadLibraryA("netapi32.dll");
+
     pNetApiBufferAllocate=(void*)GetProcAddress(hnetapi32,"NetApiBufferAllocate");
     pNetApiBufferFree=(void*)GetProcAddress(hnetapi32,"NetApiBufferFree");
     pNetApiBufferReallocate=(void*)GetProcAddress(hnetapi32,"NetApiBufferReallocate");
     pNetApiBufferSize=(void*)GetProcAddress(hnetapi32,"NetApiBufferSize");
-    if (!pNetApiBufferSize)
-        trace("It appears there is no netapi32 functionality on this platform\n");
 
-    run_apibuf_tests();
+    if (pNetApiBufferAllocate && pNetApiBufferFree && pNetApiBufferReallocate && pNetApiBufferSize)
+        run_apibuf_tests();
+    else
+        skip("Needed functions are not available\n");
+
+    FreeLibrary(hnetapi32);
 }

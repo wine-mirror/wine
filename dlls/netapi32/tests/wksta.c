@@ -50,8 +50,10 @@ static int init_wksta_tests(void)
     user_name[0] = 0;
     dwSize = sizeof(user_name);
     rc=GetUserNameW(user_name, &dwSize);
-    if (rc==FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    if (rc==FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED) {
+        skip("GetUserNameW is not implemented\n");
         return 0;
+    }
     ok(rc, "User Name Retrieved\n");
 
     computer_name[0] = 0;
@@ -63,8 +65,6 @@ static int init_wksta_tests(void)
 static void run_get_comp_name_tests(void)
 {
     LPWSTR ws = NULL;
-    if (!pNetpGetComputerName)
-        return;
 
     ok(pNetpGetComputerName(&ws) == NERR_Success, "Computer name is retrieved\n");
     ok(!lstrcmpW(computer_name, ws), "This is really computer name\n");
@@ -77,9 +77,6 @@ static void run_wkstausergetinfo_tests(void)
     LPWKSTA_USER_INFO_1 ui1 = NULL;
     LPWKSTA_USER_INFO_1101 ui1101 = NULL;
     DWORD dwSize;
-
-    if (!pNetWkstaUserGetInfo)
-        return;
 
     /* Level 0 */
     ok(pNetWkstaUserGetInfo(NULL, 0, (LPBYTE *)&ui0) == NERR_Success,
@@ -128,9 +125,6 @@ static void run_wkstatransportenum_tests(void)
     NET_API_STATUS apiReturn;
     DWORD entriesRead, totalEntries;
 
-    if (!pNetWkstaTransportEnum)
-        return;
-
     /* 1st check: is param 2 (level) correct? (only if param 5 passed?) */
     apiReturn = pNetWkstaTransportEnum(NULL, 1, NULL, MAX_PREFERRED_LENGTH,
         NULL, &totalEntries, NULL);
@@ -177,17 +171,27 @@ static void run_wkstatransportenum_tests(void)
 START_TEST(wksta)
 {
     HMODULE hnetapi32=LoadLibraryA("netapi32.dll");
+
     pNetApiBufferFree=(void*)GetProcAddress(hnetapi32,"NetApiBufferFree");
     pNetApiBufferSize=(void*)GetProcAddress(hnetapi32,"NetApiBufferSize");
     pNetpGetComputerName=(void*)GetProcAddress(hnetapi32,"NetpGetComputerName");
     pNetWkstaUserGetInfo=(void*)GetProcAddress(hnetapi32,"NetWkstaUserGetInfo");
     pNetWkstaTransportEnum=(void*)GetProcAddress(hnetapi32,"NetWkstaTransportEnum");
-    if (!pNetApiBufferSize)
-        trace("It appears there is no netapi32 functionality on this platform\n");
+
+    /* These functions were introduced with NT. It's safe to assume that
+     * if one is not available, none are.
+     */
+    if (!pNetApiBufferFree) {
+        skip("Needed functions are not available\n");
+        FreeLibrary(hnetapi32);
+        return;
+    }
 
     if (init_wksta_tests()) {
         run_get_comp_name_tests();
         run_wkstausergetinfo_tests();
         run_wkstatransportenum_tests();
     }
+
+    FreeLibrary(hnetapi32);
 }
