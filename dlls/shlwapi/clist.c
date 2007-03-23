@@ -49,7 +49,7 @@ HRESULT WINAPI SHAddDataBlock(LPSHLWAPI_CLIST*,LPCSHLWAPI_CLIST);
  *
  * Internal helper: move a DataBlock pointer to the next item.
  */
-inline static LPSHLWAPI_CLIST NextItem(LPSHLWAPI_CLIST lpList)
+static inline LPSHLWAPI_CLIST NextItem(LPSHLWAPI_CLIST lpList)
 {
   char* address = (char*)lpList;
   address += lpList->ulSize;

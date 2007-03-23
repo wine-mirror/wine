@@ -1958,7 +1958,7 @@ HRESULT WINAPI SHStrDupW(LPCWSTR src, LPWSTR * dest)
  *
  * Internal helper for SHLWAPI_WriteTimeClass.
  */
-inline static LPWSTR SHLWAPI_WriteReverseNum(LPWSTR lpszOut, DWORD dwNum)
+static inline LPWSTR SHLWAPI_WriteReverseNum(LPWSTR lpszOut, DWORD dwNum)
 {
   *lpszOut-- = '\0';
 
@@ -1978,7 +1978,7 @@ inline static LPWSTR SHLWAPI_WriteReverseNum(LPWSTR lpszOut, DWORD dwNum)
  *
  * Internal helper for SHLWAPI_WriteTimeClass.
  */
-inline static int SHLWAPI_FormatSignificant(LPWSTR lpszNum, int dwDigits)
+static inline int SHLWAPI_FormatSignificant(LPWSTR lpszNum, int dwDigits)
 {
   /* Zero non significant digits, return remaining significant digits */
   while (*lpszNum)
