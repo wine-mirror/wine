@@ -71,14 +71,14 @@ typedef struct
 #endif
 } WININET_NETCONNECTION;
 
-inline static LPWSTR WININET_strdupW( LPCWSTR str )
+static inline LPWSTR WININET_strdupW( LPCWSTR str )
 {
     LPWSTR ret = HeapAlloc( GetProcessHeap(), 0, (strlenW(str) + 1)*sizeof(WCHAR) );
     if (ret) strcpyW( ret, str );
     return ret;
 }
 
-inline static LPWSTR WININET_strdup_AtoW( LPCSTR str )
+static inline LPWSTR WININET_strdup_AtoW( LPCSTR str )
 {
     int len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0);
     LPWSTR ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
@@ -87,7 +87,7 @@ inline static LPWSTR WININET_strdup_AtoW( LPCSTR str )
     return ret;
 }
 
-inline static LPSTR WININET_strdup_WtoA( LPCWSTR str )
+static inline LPSTR WININET_strdup_WtoA( LPCWSTR str )
 {
     int len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
     LPSTR ret = HeapAlloc( GetProcessHeap(), 0, len );
@@ -96,7 +96,7 @@ inline static LPSTR WININET_strdup_WtoA( LPCWSTR str )
     return ret;
 }
 
-inline static void WININET_find_data_WtoA(LPWIN32_FIND_DATAW dataW, LPWIN32_FIND_DATAA dataA)
+static inline void WININET_find_data_WtoA(LPWIN32_FIND_DATAW dataW, LPWIN32_FIND_DATAA dataA)
 {
     dataA->dwFileAttributes = dataW->dwFileAttributes;
     dataA->ftCreationTime   = dataW->ftCreationTime;
