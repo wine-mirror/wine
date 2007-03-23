@@ -666,25 +666,13 @@ static struct pipe_client *create_pipe_client( unsigned int flags )
     return client;
 }
 
-static inline struct pipe_server *find_server( struct named_pipe *pipe, enum pipe_state state )
+static struct pipe_server *find_available_server( struct named_pipe *pipe )
 {
     struct pipe_server *server;
 
     LIST_FOR_EACH_ENTRY( server, &pipe->servers, struct pipe_server, entry )
     {
-        if (server->state == state) return (struct pipe_server *)grab_object( server );
-    }
-    return NULL;
-}
-
-static inline struct pipe_server *find_server2( struct named_pipe *pipe,
-                                                enum pipe_state state1, enum pipe_state state2 )
-{
-    struct pipe_server *server;
-
-    LIST_FOR_EACH_ENTRY( server, &pipe->servers, struct pipe_server, entry )
-    {
-        if (server->state == state1 || server->state == state2)
+        if (server->state == ps_idle_server || server->state == ps_wait_open)
             return (struct pipe_server *)grab_object( server );
     }
     return NULL;
@@ -698,7 +686,7 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
     struct pipe_client *client;
     int fds[2];
 
-    if (!(server = find_server2( pipe, ps_idle_server, ps_wait_open )))
+    if (!(server = find_available_server( pipe )))
     {
         set_error( STATUS_PIPE_NOT_AVAILABLE );
         return NULL;
@@ -867,7 +855,7 @@ DECL_HANDLER(wait_named_pipe)
         set_error( STATUS_PIPE_NOT_AVAILABLE );
         return;
     }
-    server = find_server( pipe, ps_wait_open );
+    server = find_available_server( pipe );
     if (!server)
     {
         if (req->timeout == NMPWAIT_WAIT_FOREVER)
