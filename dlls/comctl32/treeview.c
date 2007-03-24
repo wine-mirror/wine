@@ -3793,7 +3793,8 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
 
         if (strcmpW(newText, editedItem->pszText) != 0)
         {
-            if (NULL == ReAlloc(editedItem->pszText, iLength + 1))
+            WCHAR *ptr = ReAlloc(editedItem->pszText, sizeof(WCHAR)*(iLength + 1));
+            if (ptr == NULL)
             {
                 ERR("OutOfMemory, cannot allocate space for label\n");
                 DestroyWindow(infoPtr->hwndEdit);
@@ -3802,6 +3803,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
             }
             else
             {
+                editedItem->pszText = ptr;
                 editedItem->cchTextMax = iLength + 1;
                 strcpyW(editedItem->pszText, newText);
             }
