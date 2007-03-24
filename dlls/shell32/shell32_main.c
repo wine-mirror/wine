@@ -1236,3 +1236,21 @@ HRESULT WINAPI DllCanUnloadNow(void)
     FIXME("stub\n");
     return S_FALSE;
 }
+
+/***********************************************************************
+ *              SHPathPrepareForWriteA (SHELL32.@)
+ */
+HRESULT WINAPI SHPathPrepareForWriteA(HWND hwnd, IUnknown *modless, LPCSTR path, DWORD flags)
+{
+    FIXME("%p %p %s 0x%08x\n", hwnd, modless, debugstr_a(path), flags);
+    return S_OK;
+}
+
+/***********************************************************************
+ *              SHPathPrepareForWriteA (SHELL32.@)
+ */
+HRESULT WINAPI SHPathPrepareForWriteW(HWND hwnd, IUnknown *modless, LPCWSTR path, DWORD flags)
+{
+    FIXME("%p %p %s 0x%08x\n", hwnd, modless, debugstr_w(path), flags);
+    return S_OK;
+}

@@ -362,8 +362,8 @@
 @ stdcall SHIsFileAvailableOffline(wstr ptr)
 @ stdcall SHLoadInProc(long)
 @ stdcall SHLoadNonloadedIconOverlayIdentifiers()
-@ stub SHPathPrepareForWriteA
-@ stub SHPathPrepareForWriteW
+@ stdcall SHPathPrepareForWriteA(long ptr str long)
+@ stdcall SHPathPrepareForWriteW(long ptr wstr long)
 @ stdcall SHQueryRecycleBinA(str ptr)
 @ stdcall SHQueryRecycleBinW(wstr ptr)
 @ stdcall SHSetLocalizedName(wstr wstr long)
