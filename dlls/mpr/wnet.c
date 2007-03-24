@@ -1700,11 +1700,40 @@ DWORD WINAPI WNetSetConnectionW( LPCWSTR lpName, DWORD dwProperty,
 DWORD WINAPI WNetGetUniversalNameA ( LPCSTR lpLocalPath, DWORD dwInfoLevel,
                                      LPVOID lpBuffer, LPDWORD lpBufferSize )
 {
+    DWORD err, size;
+
     FIXME( "(%s, 0x%08X, %p, %p): stub\n",
            debugstr_a(lpLocalPath), dwInfoLevel, lpBuffer, lpBufferSize);
 
-    SetLastError(WN_NO_NETWORK);
-    return WN_NO_NETWORK;
+    switch (dwInfoLevel)
+    {
+    case UNIVERSAL_NAME_INFO_LEVEL:
+    {
+        LPUNIVERSAL_NAME_INFOA info = (LPUNIVERSAL_NAME_INFOA)lpBuffer;
+
+        size = sizeof(*info) + lstrlenA(lpLocalPath) + 1;
+        if (*lpBufferSize < size)
+        {
+            err = WN_MORE_DATA;
+            break;
+        }
+        info->lpUniversalName = (char *)info + sizeof(*info);
+        lstrcpyA(info->lpUniversalName, lpLocalPath);
+        *lpBufferSize = size;
+        err = WN_NO_ERROR;
+        break;
+    }
+    case REMOTE_NAME_INFO_LEVEL:
+        err = WN_NO_NETWORK;
+        break;
+
+    default:
+        err = WN_BAD_VALUE;
+        break;
+    }
+
+    SetLastError(err);
+    return err;
 }
 
 /*****************************************************************
