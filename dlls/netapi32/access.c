@@ -91,26 +91,22 @@ static NET_API_STATUS NETAPI_ValidateServername(LPCWSTR ServerName)
 }
 
 /************************************************************
- *                NETAPI_IsKnownUser
+ *                NETAPI_FindUser
  *
- * Checks whether the user name indicates current user.
+ * Looks for a user in the user database.
+ * Returns a pointer to the entry in the user list when the user
+ * is found, NULL otherwise.
  */
-static BOOL NETAPI_IsKnownUser(LPCWSTR UserName)
+static struct sam_user* NETAPI_FindUser(LPCWSTR UserName)
 {
-    DWORD dwSize = UNLEN + 1;
-    BOOL Result;
-    LPWSTR buf;
+    struct sam_user *user;
 
-    if (!lstrcmpW(UserName, sAdminUserName) ||
-        !lstrcmpW(UserName, sGuestUserName))
-        return TRUE;
-    NetApiBufferAllocate(dwSize * sizeof(WCHAR), (LPVOID *) &buf);
-    Result = GetUserNameW(buf, &dwSize);
-
-    Result = Result && !lstrcmpW(UserName, buf);
-    NetApiBufferFree(buf);
-
-    return Result;
+    LIST_FOR_EACH_ENTRY(user, &user_list, struct sam_user, entry)
+    {
+        if(lstrcmpW(user->user_name, UserName) == 0)
+            return user;
+    }
+    return NULL;
 }
 
 /************************************************************
@@ -198,17 +194,24 @@ NET_API_STATUS WINAPI NetUserAdd(LPCWSTR servername,
 NET_API_STATUS WINAPI NetUserDel(LPCWSTR servername, LPCWSTR username)
 {
     NET_API_STATUS status;
-    FIXME("(%s, %s) stub!\n", debugstr_w(servername), debugstr_w(username));
+    struct sam_user *user;
 
-    status = NETAPI_ValidateServername(servername);
-    if (status != NERR_Success)
+    TRACE("(%s, %s)\n", debugstr_w(servername), debugstr_w(username));
+
+    if((status = NETAPI_ValidateServername(servername))!= NERR_Success)
         return status;
 
-    if (!NETAPI_IsKnownUser(username))
+    if ((user = NETAPI_FindUser(username)) == NULL)
         return NERR_UserNotFound;
 
-    /* Delete the user here */
-    return status;
+    list_remove(&user->entry);
+
+    HeapFree(GetProcessHeap(), 0, user->home_dir);
+    HeapFree(GetProcessHeap(), 0, user->user_comment);
+    HeapFree(GetProcessHeap(), 0, user->user_logon_script_path);
+    HeapFree(GetProcessHeap(), 0, user);
+
+    return NERR_Success;
 }
 
 /************************************************************
@@ -232,7 +235,7 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
         return NERR_InvalidComputer;
     }
 
-    if(!NETAPI_IsKnownUser(username))
+    if(!NETAPI_FindUser(username))
     {
         TRACE("User %s is unknown.\n", debugstr_w(username));
         return NERR_UserNotFound;
@@ -404,7 +407,7 @@ NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
     if (status != NERR_Success)
         return status;
 
-    if (!NETAPI_IsKnownUser(username))
+    if (!NETAPI_FindUser(username))
         return NERR_UserNotFound;
 
     if (bufptr) *bufptr = NULL;

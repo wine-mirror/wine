@@ -259,7 +259,10 @@ static void run_userhandling_tests(void)
     todo_wine ok(ret == NERR_Success, "Changing the password failed.\n");
 
     ret = pNetUserDel(NULL, sTestUserName);
-    todo_wine ok(ret == NERR_Success, "Deleting the user failed.\n");
+    ok(ret == NERR_Success, "Deleting the user failed.\n");
+
+    ret = pNetUserDel(NULL, sTestUserName);
+    ok(ret == NERR_UserNotFound, "Deleting a nonexistent user returned 0x%08x\n",ret);
 }
 
 START_TEST(access)
