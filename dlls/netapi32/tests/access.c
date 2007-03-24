@@ -217,26 +217,26 @@ static void run_userhandling_tests(void)
     usri.usri1_password = sTestUserOldPass;
 
     ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
-    todo_wine ok(ret == NERR_BadUsername, "Adding user with too long username returned 0x%08x\n", ret);
+    ok(ret == NERR_BadUsername, "Adding user with too long username returned 0x%08x\n", ret);
 
     usri.usri1_name = sTestUserName;
     usri.usri1_password = sTooLongPassword;
 
     ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
-    todo_wine ok(ret == NERR_PasswordTooShort, "Adding user with too long password returned 0x%08x\n", ret);
+    ok(ret == NERR_PasswordTooShort, "Adding user with too long password returned 0x%08x\n", ret);
 
     usri.usri1_name = sTooLongName;
     usri.usri1_password = sTooLongPassword;
 
     ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
-    todo_wine ok(ret == NERR_BadUsername,
+    ok(ret == NERR_BadUsername,
             "Adding user with too long username/password returned 0x%08x\n", ret);
 
     usri.usri1_name = sTestUserName;
     usri.usri1_password = sTestUserOldPass;
 
     ret = pNetUserAdd(NULL, 5, (LPBYTE)&usri, NULL);
-    todo_wine ok(ret == ERROR_INVALID_LEVEL, "Adding user with level 5 returned 0x%08x\n", ret);
+    ok(ret == ERROR_INVALID_LEVEL, "Adding user with level 5 returned 0x%08x\n", ret);
 
     ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
     if(ret == ERROR_ACCESS_DENIED)

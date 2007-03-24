@@ -33,12 +33,36 @@
 #include "ntsecapi.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
+
+/* NOTE: So far, this is implemented to support tests that require user logins,
+ *       but not designed to handle real user databases. Those should probably
+ *       be synced with either the host's user database or with Samba.
+ *
+ * FIXME: The user database should hold all the information the USER_INFO_4 struct
+ * needs, but for the first try, I will just implement the USER_INFO_1 fields.
+ */
+
+struct sam_user
+{
+    struct list entry;
+    WCHAR user_name[LM20_UNLEN+1];
+    WCHAR user_password[PWLEN + 1];
+    DWORD sec_since_passwd_change;
+    DWORD user_priv;
+    LPWSTR home_dir;
+    LPWSTR user_comment;
+    DWORD user_flags;
+    LPWSTR user_logon_script_path;
+};
 
 static const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a','t',
                                 'o','r',0};
 static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
+
+static struct list user_list = LIST_INIT( user_list );
 
 BOOL NETAPI_IsLocalComputer(LPCWSTR ServerName);
 
@@ -96,18 +120,74 @@ NET_API_STATUS WINAPI NetUserAdd(LPCWSTR servername,
                   DWORD level, LPBYTE bufptr, LPDWORD parm_err)
 {
     NET_API_STATUS status;
+    struct sam_user * su = NULL;
+
     FIXME("(%s, %d, %p, %p) stub!\n", debugstr_w(servername), level, bufptr, parm_err);
 
-    status = NETAPI_ValidateServername(servername);
-    if (status != NERR_Success)
+    if((status = NETAPI_ValidateServername(servername)) != NERR_Success)
         return status;
-    
-    if ((bufptr != NULL) && (level > 0) && (level <= 4))
+
+    switch(level)
+    {
+    /* Level 3 and 4 are identical for the purposes of NetUserAdd */
+    case 4:
+    case 3:
+        FIXME("Level 3 and 4 not implemented.\n");
+        /* Fall through */
+    case 2:
+        FIXME("Level 2 not implemented.\n");
+        /* Fall throught */
+    case 1:
     {
         PUSER_INFO_1 ui = (PUSER_INFO_1) bufptr;
-        TRACE("usri%d_name: %s\n", level, debugstr_w(ui->usri1_name));
-        TRACE("usri%d_password: %s\n", level, debugstr_w(ui->usri1_password));
-        TRACE("usri%d_comment: %s\n", level, debugstr_w(ui->usri1_comment));
+        su = HeapAlloc(GetProcessHeap(), 0, sizeof(struct sam_user));
+        if(!su)
+        {
+            status = NERR_InternalError;
+            break;
+        }
+
+        if(lstrlenW(ui->usri1_name) > LM20_UNLEN)
+        {
+            status = NERR_BadUsername;
+            break;
+        }
+
+        /*FIXME: do other checks for a valid username */
+        lstrcpyW(su->user_name, ui->usri1_name);
+
+        if(lstrlenW(ui->usri1_password) > PWLEN)
+        {
+            /* Always return PasswordTooShort on invalid passwords. */
+            status = NERR_PasswordTooShort;
+            break;
+        }
+        lstrcpyW(su->user_password, ui->usri1_password);
+
+        su->sec_since_passwd_change = ui->usri1_password_age;
+        su->user_priv = ui->usri1_priv;
+        su->user_flags = ui->usri1_flags;
+
+        /*FIXME: set the other LPWSTRs to NULL for now */
+        su->home_dir = NULL;
+        su->user_comment = NULL;
+        su->user_logon_script_path = NULL;
+
+        list_add_head(&user_list, &su->entry);
+        return NERR_Success;
+    }
+    default:
+        TRACE("Invalid level %d specified.\n", level);
+        status = ERROR_INVALID_LEVEL;
+        break;
+    }
+
+    if(su)
+    {
+        HeapFree(GetProcessHeap(), 0, su->home_dir);
+        HeapFree(GetProcessHeap(), 0, su->user_comment);
+        HeapFree(GetProcessHeap(), 0, su->user_logon_script_path);
+        HeapFree(GetProcessHeap(), 0, su);
     }
     return status;
 }
