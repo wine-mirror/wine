@@ -955,9 +955,13 @@ NTSTATUS WINAPI RtlSelfRelativeToAbsoluteSD(
     if (status != STATUS_SUCCESS)
         return status;
 
-    /* Copy structures */
+    /* Copy structures, and clear the ones we don't set */
     pAbs->Revision = pRel->Revision;
     pAbs->Control = pRel->Control & ~SE_SELF_RELATIVE;
+    pAbs->Sacl = NULL;
+    pAbs->Dacl = NULL;
+    pAbs->Owner = NULL;
+    pAbs->Group = NULL;
 
     if (pRel->Control & SE_SACL_PRESENT)
     {
