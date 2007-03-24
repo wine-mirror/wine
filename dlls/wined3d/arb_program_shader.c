@@ -663,7 +663,6 @@ void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD dst = arg->dst;
-    DWORD* src = arg->src;
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD hex_version = This->baseShader.hex_version;
 
@@ -674,8 +673,10 @@ void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
         shader_addline(buffer, "MOV_SAT T%u%s, fragment.texcoord[%u];\n", reg, tmp, reg);
     } else {
         DWORD reg1 = dst & WINED3DSP_REGNUM_MASK;
-        DWORD reg2 = src[0] & WINED3DSP_REGNUM_MASK;
-        shader_addline(buffer, "MOV R%u%s, fragment.texcoord[%u];\n", reg1, tmp, reg2);
+        char reg_src[40];
+
+        pshader_gen_input_modifier_line(buffer, arg->src[0], 0, reg_src);
+        shader_addline(buffer, "MOV R%u%s, %s;\n", reg1, tmp, reg_src);
    }
 }
 
