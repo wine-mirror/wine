@@ -2848,6 +2848,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             }
         } else if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+            GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo));
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
         }
