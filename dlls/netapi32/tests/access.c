@@ -38,9 +38,24 @@ static const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a','
 static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
 static const WCHAR sNonexistentUser[] = {'N','o','n','e','x','i','s','t','e','n','t',' ',
                                 'U','s','e','r',0};
-static const WCHAR sTestUserName[] = {'t', 'e', 's', 't', 'u', 's', 'e', 'r', 0};
-static const WCHAR sTestUserOldPass[] = {'o', 'l', 'd', 'p', 'a', 's', 's', 0};
-static const WCHAR sTestUserNewPass[] = {'n', 'e', 'w', 'p', 'a', 's', 's', 0};
+static WCHAR sTooLongName[] = {'T','h','i','s',' ','i','s',' ','a',' ','b','a','d',
+    ' ','u','s','e','r','n','a','m','e',0};
+static WCHAR sTooLongPassword[] = {'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
+    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
+    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
+    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
+    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
+    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
+    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
+    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
+    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
+    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
+    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
+    'a', 0};
+
+static WCHAR sTestUserName[] = {'t', 'e', 's', 't', 'u', 's', 'e', 'r', 0};
+static WCHAR sTestUserOldPass[] = {'o', 'l', 'd', 'p', 'a', 's', 's', 0};
+static WCHAR sTestUserNewPass[] = {'n', 'e', 'w', 'p', 'a', 's', 's', 0};
 static const WCHAR sBadNetPath[] = {'\\','\\','B','a',' ',' ','p','a','t','h',0};
 static const WCHAR sInvalidName[] = {'\\',0};
 static const WCHAR sInvalidName2[] = {'\\','\\',0};
@@ -192,13 +207,36 @@ static void run_userhandling_tests(void)
     NET_API_STATUS ret;
     USER_INFO_1 usri;
 
-    usri.usri1_name = (LPWSTR) sTestUserName;
-    usri.usri1_password = (LPWSTR) sTestUserOldPass;
     usri.usri1_priv = USER_PRIV_USER;
     usri.usri1_home_dir = NULL;
     usri.usri1_comment = NULL;
     usri.usri1_flags = UF_SCRIPT;
     usri.usri1_script_path = NULL;
+
+    usri.usri1_name = sTooLongName;
+    usri.usri1_password = sTestUserOldPass;
+
+    ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
+    todo_wine ok(ret == NERR_BadUsername, "Adding user with too long username returned 0x%08x\n", ret);
+
+    usri.usri1_name = sTestUserName;
+    usri.usri1_password = sTooLongPassword;
+
+    ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
+    todo_wine ok(ret == NERR_PasswordTooShort, "Adding user with too long password returned 0x%08x\n", ret);
+
+    usri.usri1_name = sTooLongName;
+    usri.usri1_password = sTooLongPassword;
+
+    ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
+    todo_wine ok(ret == NERR_BadUsername,
+            "Adding user with too long username/password returned 0x%08x\n", ret);
+
+    usri.usri1_name = sTestUserName;
+    usri.usri1_password = sTestUserOldPass;
+
+    ret = pNetUserAdd(NULL, 5, (LPBYTE)&usri, NULL);
+    todo_wine ok(ret == ERROR_INVALID_LEVEL, "Adding user with level 5 returned 0x%08x\n", ret);
 
     ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
     if(ret == ERROR_ACCESS_DENIED)
