@@ -1768,6 +1768,171 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 }
 
 
+static BOOL PATH_WidenPath(DC *dc)
+{
+    INT i, j, numStrokes, nLinePts, penWidth, penWidthIn, penWidthOut, size;
+    BOOL ret = FALSE;
+    GdiPath *pPath, *pNewPath, **pStrokes, *pUpPath, *pDownPath;
+    EXTLOGPEN *elp;
+    FLOAT fCos, fSin, nPente;
+
+    pPath = &dc->path;
+
+    PATH_FlattenPath(pPath);
+
+    if(pPath->state != PATH_Closed) {
+       ERR("Path Closed\n");
+       return FALSE;
+    }
+
+    size = GetObjectW( dc->hPen, 0, NULL );
+    if (!size) return FALSE;
+
+    elp = HeapAlloc( GetProcessHeap(), 0, size );
+
+    GetObjectW( dc->hPen, size, elp );
+    /* FIXME: add support for user style pens */
+    penWidth = elp->elpWidth;
+    HeapFree( GetProcessHeap(), 0, elp );
+
+    /* FIXME : If extPen, use the shape on corners */
+    penWidthIn = penWidth / 2;
+    penWidthOut = penWidth / 2;
+    if(penWidthIn + penWidthOut < penWidth)
+        penWidthOut++;
+
+    numStrokes = 0;
+    nLinePts = 0;
+
+    pStrokes = HeapAlloc(GetProcessHeap(), 0, numStrokes * sizeof(GdiPath*));
+    pStrokes[0] = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
+    PATH_InitGdiPath(pStrokes[0]);
+    pStrokes[0]->pFlags = HeapAlloc(GetProcessHeap(), 0, pPath->numEntriesUsed * sizeof(INT));
+    pStrokes[0]->pPoints = HeapAlloc(GetProcessHeap(), 0, pPath->numEntriesUsed * sizeof(POINT));
+    pStrokes[0]->numEntriesUsed = 0;
+
+    for(i = 0, j = 0; i < pPath->numEntriesUsed; i++, j++) {
+        if((i == 0 || (pPath->pFlags[i-1] & PT_CLOSEFIGURE)) &&
+            (pPath->pFlags[i] != PT_MOVETO)) {
+            ERR("Expected PT_MOVETO %s, got path flag %c\n",
+                i == 0 ? "as first point" : "after PT_CLOSEFIGURE",
+                pPath->pFlags[i]);
+            return FALSE;
+        }
+        switch(pPath->pFlags[i]) {
+            case PT_MOVETO:
+                numStrokes++;
+                j = 0;
+                pStrokes = HeapReAlloc(GetProcessHeap(), 0, pStrokes, numStrokes * sizeof(GdiPath*));
+                pStrokes[numStrokes - 1] = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
+                PATH_InitGdiPath(pStrokes[numStrokes - 1]);
+                pStrokes[numStrokes - 1]->pFlags = HeapAlloc(GetProcessHeap(), 0, pPath->numEntriesUsed * sizeof(INT));
+                pStrokes[numStrokes - 1]->pPoints = HeapAlloc(GetProcessHeap(), 0, pPath->numEntriesUsed * sizeof(POINT));
+                pStrokes[numStrokes - 1]->numEntriesUsed = 0;
+
+                pStrokes[numStrokes - 1]->pFlags[j] = pPath->pFlags[i];
+                pStrokes[numStrokes - 1]->pPoints[j].x = pPath->pPoints[i].x;
+                pStrokes[numStrokes - 1]->pPoints[j].y = pPath->pPoints[i].y;
+                pStrokes[numStrokes - 1]->numEntriesUsed++;
+
+                break;
+            case PT_LINETO:
+            case (PT_LINETO | PT_CLOSEFIGURE):
+                pStrokes[numStrokes - 1]->pFlags[j] = pPath->pFlags[i];
+                pStrokes[numStrokes - 1]->pPoints[j].x = pPath->pPoints[i].x;
+                pStrokes[numStrokes - 1]->pPoints[j].y = pPath->pPoints[i].y;
+                pStrokes[numStrokes - 1]->numEntriesUsed++;
+                break;
+            case PT_BEZIERTO:
+                /* should never happen because of the FlattenPath call */
+                ERR("Should never happen \n");
+                break;
+            default:
+                ERR("Got path flag %c\n", pPath->pFlags[i]);
+                return FALSE;
+        }
+    }
+
+    pNewPath = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
+    PATH_InitGdiPath(pNewPath);
+    pNewPath->pFlags = HeapAlloc(GetProcessHeap(), 0, 4 * pPath->numEntriesUsed * sizeof(INT));
+    pNewPath->pPoints = HeapAlloc(GetProcessHeap(), 0, 4 * pPath->numEntriesUsed * sizeof(POINT));
+    pNewPath->numEntriesUsed = 0;
+    pNewPath->numEntriesAllocated = 4 * pPath->numEntriesUsed;
+
+    for(i = 0; i < numStrokes; i++) {
+        pUpPath = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
+        PATH_InitGdiPath(pUpPath);
+        pUpPath->pFlags = HeapAlloc(GetProcessHeap(), 0, 2 * pStrokes[i]->numEntriesUsed * sizeof(INT));
+        pUpPath->pPoints = HeapAlloc(GetProcessHeap(), 0, 2 * pStrokes[i]->numEntriesUsed * sizeof(POINT));
+        pUpPath->numEntriesUsed = 0;
+        pDownPath = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
+        PATH_InitGdiPath(pDownPath);
+        pDownPath->pFlags = HeapAlloc(GetProcessHeap(), 0, 2 * pStrokes[i]->numEntriesUsed * sizeof(INT));
+        pDownPath->pPoints = HeapAlloc(GetProcessHeap(), 0, 2 * pStrokes[i]->numEntriesUsed * sizeof(POINT));
+        pDownPath->numEntriesUsed = 0;
+        for(j = 0; j < pStrokes[i]->numEntriesUsed - 1; j++) {
+            if(pStrokes[i]->pPoints[j+1].x != pStrokes[i]->pPoints[j].x) {
+                nPente = (pStrokes[i]->pPoints[j+1].y - pStrokes[i]->pPoints[j].y) / (pStrokes[i]->pPoints[j+1].x - pStrokes[i]->pPoints[j].x);
+                fCos = cos(atan(nPente));
+                fSin = sin(atan(nPente));
+            }
+            else if(pStrokes[i]->pPoints[j+1].y > pStrokes[i]->pPoints[j].y) {
+                fCos = 0;
+                fSin = -1;
+            }
+            else {
+                fCos = 0;
+                fSin = 1;
+            }
+
+            /* FIXME : Improve corners */
+            pUpPath->pPoints[2 * j].x = pStrokes[i]->pPoints[j].x + penWidthOut * fSin;
+            pUpPath->pPoints[2 * j].y = pStrokes[i]->pPoints[j].y + penWidthOut * fCos;
+            pUpPath->pFlags[2 * j] = pStrokes[i]->pFlags[j];
+            pUpPath->pPoints[2 * j + 1] .x = pStrokes[i]->pPoints[j+1].x + penWidthOut * fSin;
+            pUpPath->pPoints[2 * j + 1] .y = pStrokes[i]->pPoints[j+1].y + penWidthOut * fCos;
+            pUpPath->pFlags[2 * j + 1] = PT_LINETO;
+            pUpPath->numEntriesUsed = pUpPath->numEntriesUsed + 2;
+
+            pDownPath->pPoints[2 * j].x = pStrokes[i]->pPoints[j].x - penWidthIn * fSin;
+            pDownPath->pPoints[2 * j].y = pStrokes[i]->pPoints[j].y - penWidthIn * fCos;
+            pDownPath->pFlags[2 * j] = PT_LINETO;
+            pDownPath->pPoints[2 * j + 1] .x = pStrokes[i]->pPoints[j+1].x - penWidthIn * fSin;
+            pDownPath->pPoints[2 * j + 1] .y = pStrokes[i]->pPoints[j+1].y - penWidthIn * fCos;
+            pDownPath->pFlags[2 * j + 1] = PT_LINETO;
+            pDownPath->numEntriesUsed = pUpPath->numEntriesUsed;
+        }
+
+        for(j = 0; j < pUpPath->numEntriesUsed; j++) {
+            pNewPath->pPoints[pNewPath->numEntriesUsed + j].x = pUpPath->pPoints[j].x;
+            pNewPath->pPoints[pNewPath->numEntriesUsed + j].y = pUpPath->pPoints[j].y;
+            pNewPath->pFlags[pNewPath->numEntriesUsed + j] = pUpPath->pFlags[j];
+            pNewPath->pPoints[pNewPath->numEntriesUsed + pUpPath->numEntriesUsed + j].x = pDownPath->pPoints[pUpPath->numEntriesUsed - j - 1].x;
+            pNewPath->pPoints[pNewPath->numEntriesUsed + pUpPath->numEntriesUsed + j].y = pDownPath->pPoints[pUpPath->numEntriesUsed - j - 1].y;
+            pNewPath->pFlags[pNewPath->numEntriesUsed + pUpPath->numEntriesUsed + j] = pDownPath->pFlags[pUpPath->numEntriesUsed - j - 1];
+        }
+        pNewPath->numEntriesUsed += 2 * pUpPath->numEntriesUsed;
+        pNewPath->pFlags[pNewPath->numEntriesUsed - 1] = PT_CLOSEFIGURE | PT_LINETO;
+
+        PATH_DestroyGdiPath(pStrokes[i]);
+        HeapFree(GetProcessHeap(), 0, pStrokes[i]);
+        PATH_DestroyGdiPath(pUpPath);
+        HeapFree(GetProcessHeap(), 0, pUpPath);
+        PATH_DestroyGdiPath(pDownPath);
+        HeapFree(GetProcessHeap(), 0, pDownPath);
+    }
+    HeapFree(GetProcessHeap(), 0, pStrokes);
+
+    pNewPath->state = PATH_Closed;
+    if (!(ret = PATH_AssignGdiPath(pPath, pNewPath)))
+        ERR("Assign path failed\n");
+    PATH_DestroyGdiPath(pNewPath);
+    HeapFree(GetProcessHeap(), 0, pNewPath);
+    return ret;
+}
+
+
 /*******************************************************************
  *      StrokeAndFillPath [GDI32.@]
  *
@@ -1833,9 +1998,10 @@ BOOL WINAPI WidenPath(HDC hdc)
    if(!dc) return FALSE;
 
    if(dc->funcs->pWidenPath)
-     ret = dc->funcs->pWidenPath(dc->physDev);
-
-   FIXME("stub\n");
+      ret = dc->funcs->pWidenPath(dc->physDev);
+   else
+      ret = PATH_WidenPath(dc);
    GDI_ReleaseObj( hdc );
+   FIXME("partially implemented\n");
    return ret;
 }
