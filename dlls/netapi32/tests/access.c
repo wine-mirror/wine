@@ -254,9 +254,29 @@ static void run_userhandling_tests(void)
     if(ret != NERR_Success)
         return;
 
+    ret = pNetUserChangePassword(NULL, sNonexistentUser, sTestUserOldPass,
+            sTestUserNewPass);
+    ok(ret == NERR_UserNotFound,
+            "Changing password for nonexistent user returned 0x%08x.\n", ret);
+
+    ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserOldPass,
+            sTestUserOldPass);
+    ok(ret == NERR_Success,
+            "Changing old password to old password returned 0x%08x.\n", ret);
+
+    ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserNewPass,
+            sTestUserOldPass);
+    ok(ret == ERROR_INVALID_PASSWORD,
+            "Trying to change password giving an invalid password returned 0x%08x.\n", ret);
+
+    ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserOldPass,
+            sTooLongPassword);
+    ok(ret == ERROR_PASSWORD_RESTRICTION,
+            "Changing to a password that's too long returned 0x%08x.\n", ret);
+
     ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserOldPass,
             sTestUserNewPass);
-    todo_wine ok(ret == NERR_Success, "Changing the password failed.\n");
+    ok(ret == NERR_Success, "Changing the password correctly returned 0x%08x.\n", ret);
 
     ret = pNetUserDel(NULL, sTestUserName);
     ok(ret == NERR_Success, "Deleting the user failed.\n");

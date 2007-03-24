@@ -813,6 +813,23 @@ NET_API_STATUS WINAPI NetUserModalsGet(
 NET_API_STATUS WINAPI NetUserChangePassword(LPCWSTR domainname, LPCWSTR username,
     LPCWSTR oldpassword, LPCWSTR newpassword)
 {
-    FIXME("(%s, %s, ..., ...)\n", debugstr_w(domainname), debugstr_w(username));
-    return NERR_InternalError;
+    struct sam_user *user;
+
+    TRACE("(%s, %s, ..., ...)\n", debugstr_w(domainname), debugstr_w(username));
+
+    if(domainname)
+        FIXME("Ignoring domainname %s.\n", debugstr_w(domainname));
+
+    if((user = NETAPI_FindUser(username)) == NULL)
+        return NERR_UserNotFound;
+
+    if(lstrcmpW(user->user_password, oldpassword) != 0)
+        return ERROR_INVALID_PASSWORD;
+
+    if(lstrlenW(newpassword) > PWLEN)
+        return ERROR_PASSWORD_RESTRICTION;
+
+    lstrcpyW(user->user_password, newpassword);
+
+    return NERR_Success;
 }
