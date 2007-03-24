@@ -32,10 +32,6 @@
 WCHAR user_name[UNLEN + 1];
 WCHAR computer_name[MAX_COMPUTERNAME_LENGTH + 1];
 
-/* FIXME : Tests should be language independent */
-static const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a','t',
-                                'o','r',0};
-static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
 static const WCHAR sNonexistentUser[] = {'N','o','n','e','x','i','s','t','e','n','t',' ',
                                 'U','s','e','r',0};
 static WCHAR sTooLongName[] = {'T','h','i','s',' ','i','s',' ','a',' ','b','a','d',
@@ -91,6 +87,26 @@ static int init_access_tests(void)
     return 1;
 }
 
+static NET_API_STATUS create_test_user(void)
+{
+    USER_INFO_1 usri;
+
+    usri.usri1_name = sTestUserName;
+    usri.usri1_password = sTestUserOldPass;
+    usri.usri1_priv = USER_PRIV_USER;
+    usri.usri1_home_dir = NULL;
+    usri.usri1_comment = NULL;
+    usri.usri1_flags = UF_SCRIPT;
+    usri.usri1_script_path = NULL;
+
+    return pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
+}
+
+static NET_API_STATUS delete_test_user(void)
+{
+    return pNetUserDel(NULL, sTestUserName);
+}
+
 static void run_usergetinfo_tests(void)
 {
     NET_API_STATUS rc;
@@ -98,22 +114,25 @@ static void run_usergetinfo_tests(void)
     PUSER_INFO_10 ui10 = NULL;
     DWORD dwSize;
 
-    /* Level 0 */
-    rc=pNetUserGetInfo(NULL, sAdminUserName, 0, (LPBYTE *)&ui0);
-    if (rc != NERR_Success) {
-        skip("Aborting usergetinfo_tests().   NetUserGetInfo: rc=%d\n", rc);
+    if((rc = create_test_user()) != NERR_Success )
+    {
+        skip("Skipping usergetinfo_tests, create_test_user failed: 0x%08x\n", rc);
         return;
     }
-    ok(!lstrcmpW(sAdminUserName, ui0->usri0_name), "This is really user name\n");
+
+    /* Level 0 */
+    rc=pNetUserGetInfo(NULL, sTestUserName, 0, (LPBYTE *)&ui0);
+    ok(rc == NERR_Success, "NetUserGetInfo level 0 failed: 0x%08x.\n", rc);
+    ok(!lstrcmpW(sTestUserName, ui0->usri0_name),"Username mismatch for level 0.\n");
     pNetApiBufferSize(ui0, &dwSize);
     ok(dwSize >= (sizeof(USER_INFO_0) +
                   (lstrlenW(ui0->usri0_name) + 1) * sizeof(WCHAR)),
        "Is allocated with NetApiBufferAllocate\n");
 
     /* Level 10 */
-    rc=pNetUserGetInfo(NULL, sAdminUserName, 10, (LPBYTE *)&ui10);
-    ok(rc == NERR_Success, "NetUserGetInfo: rc=%d\n", rc);
-    ok(!lstrcmpW(sAdminUserName, ui10->usri10_name), "This is really user name\n");
+    rc=pNetUserGetInfo(NULL, sTestUserName, 10, (LPBYTE *)&ui10);
+    ok(rc == NERR_Success, "NetUserGetInfo level 10 failed: 0x%08x.\n", rc);
+    ok(!lstrcmpW(sTestUserName, ui10->usri10_name), "Username mismatch for level 10.\n");
     pNetApiBufferSize(ui10, &dwSize);
     ok(dwSize >= (sizeof(USER_INFO_10) +
                   (lstrlenW(ui10->usri10_name) + 1 +
@@ -126,26 +145,31 @@ static void run_usergetinfo_tests(void)
     pNetApiBufferFree(ui10);
 
     /* errors handling */
-    rc=pNetUserGetInfo(NULL, sAdminUserName, 10000, (LPBYTE *)&ui0);
+    rc=pNetUserGetInfo(NULL, sTestUserName, 10000, (LPBYTE *)&ui0);
     ok(rc == ERROR_INVALID_LEVEL,"Invalid Level: rc=%d\n",rc);
     rc=pNetUserGetInfo(NULL, sNonexistentUser, 0, (LPBYTE *)&ui0);
     ok(rc == NERR_UserNotFound,"Invalid User Name: rc=%d\n",rc);
     todo_wine {
         /* FIXME - Currently Wine can't verify whether the network path is good or bad */
-        rc=pNetUserGetInfo(sBadNetPath, sAdminUserName, 0, (LPBYTE *)&ui0);
+        rc=pNetUserGetInfo(sBadNetPath, sTestUserName, 0, (LPBYTE *)&ui0);
         ok(rc == ERROR_BAD_NETPATH || rc == ERROR_NETWORK_UNREACHABLE,
            "Bad Network Path: rc=%d\n",rc);
     }
-    rc=pNetUserGetInfo(sEmptyStr, sAdminUserName, 0, (LPBYTE *)&ui0);
+    rc=pNetUserGetInfo(sEmptyStr, sTestUserName, 0, (LPBYTE *)&ui0);
     ok(rc == ERROR_BAD_NETPATH || rc == NERR_Success,
        "Bad Network Path: rc=%d\n",rc);
-    rc=pNetUserGetInfo(sInvalidName, sAdminUserName, 0, (LPBYTE *)&ui0);
+    rc=pNetUserGetInfo(sInvalidName, sTestUserName, 0, (LPBYTE *)&ui0);
     ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%d\n",rc);
-    rc=pNetUserGetInfo(sInvalidName2, sAdminUserName, 0, (LPBYTE *)&ui0);
+    rc=pNetUserGetInfo(sInvalidName2, sTestUserName, 0, (LPBYTE *)&ui0);
     ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%d\n",rc);
+
+    if(delete_test_user() != NERR_Success)
+        trace("Deleting the test user failed. You might have to manually delete it.");
 }
 
-/* checks Level 1 of NetQueryDisplayInformation */
+/* checks Level 1 of NetQueryDisplayInformation
+ * FIXME: Needs to be rewritten to not depend on the spelling of the users,
+ * ideally based on the admin and guest user SIDs/RIDs.*/
 static void run_querydisplayinformation1_tests(void)
 {
     PNET_DISPLAY_USER Buffer, rec;
@@ -153,6 +177,9 @@ static void run_querydisplayinformation1_tests(void)
     DWORD i = 0;
     BOOL hasAdmin = FALSE;
     BOOL hasGuest = FALSE;
+    static const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a',
+        't','o','r',0};
+    static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
 
     do
     {
@@ -308,10 +335,10 @@ START_TEST(access)
     }
 
     if (init_access_tests()) {
+        run_userhandling_tests();
         run_usergetinfo_tests();
         run_querydisplayinformation1_tests();
         run_usermodalsget_tests();
-        run_userhandling_tests();
     }
 
     FreeLibrary(hnetapi32);
