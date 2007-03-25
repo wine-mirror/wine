@@ -84,6 +84,7 @@ typedef struct PullPin
 	HANDLE hEventStateChanged;
 	REFERENCE_TIME rtStart;
 	REFERENCE_TIME rtStop;
+	REFERENCE_TIME rtCurrent;
 } PullPin;
 
 /*** Initializers ***/

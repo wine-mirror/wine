@@ -1044,6 +1044,7 @@ HRESULT PullPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID p
     pPinImpl->hEventStateChanged = CreateEventW(NULL, FALSE, TRUE, NULL);
 
     pPinImpl->rtStart = 0;
+    pPinImpl->rtCurrent = 0;
     pPinImpl->rtStop = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
 
     return S_OK;
@@ -1177,7 +1178,6 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
     PullPin *This = (PullPin *)iface;
     HRESULT hr;
 
-    REFERENCE_TIME rtCurrent;
     ALLOCATOR_PROPERTIES allocProps;
     PIN_INFO pinInfo;
 
@@ -1187,11 +1187,12 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
 
     hr = IMemAllocator_GetProperties(This->pAlloc, &allocProps);
 
-    rtCurrent = MEDIATIME_FROM_BYTES(ALIGNDOWN(BYTES_FROM_MEDIATIME(This->rtStart), allocProps.cbAlign));
+    if (This->rtCurrent < This->rtStart)
+        This->rtCurrent = MEDIATIME_FROM_BYTES(ALIGNDOWN(BYTES_FROM_MEDIATIME(This->rtStart), allocProps.cbAlign));
 
     TRACE("Start\n");
 
-    while (rtCurrent < This->rtStop && hr == S_OK)
+    while (This->rtCurrent < This->rtStop && hr == S_OK)
     {
         /* FIXME: to improve performance by quite a bit this should be changed
          * so that one sample is processed while one sample is fetched. However,
@@ -1208,11 +1209,11 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
 
         if (SUCCEEDED(hr))
         {
-            rtSampleStop = rtCurrent + MEDIATIME_FROM_BYTES(IMediaSample_GetSize(pSample));
+            rtSampleStop = This->rtCurrent + MEDIATIME_FROM_BYTES(IMediaSample_GetSize(pSample));
             if (rtSampleStop > This->rtStop)
                 rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(This->rtStop), allocProps.cbAlign));
-            hr = IMediaSample_SetTime(pSample, &rtCurrent, &rtSampleStop);
-            rtCurrent = rtSampleStop;
+            hr = IMediaSample_SetTime(pSample, &This->rtCurrent, &rtSampleStop);
+            This->rtCurrent = rtSampleStop;
         }
 
         if (SUCCEEDED(hr))
