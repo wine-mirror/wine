@@ -3253,14 +3253,13 @@ static HRESULT WINAPI DP_SetSessionDesc
   HeapFree( GetProcessHeap(), 0, This->dp2->lpSessionDesc );
 
   This->dp2->lpSessionDesc = lpTempSessDesc;
+  /* Set the new */
+  DP_CopySessionDesc( This->dp2->lpSessionDesc, lpSessDesc, bAnsi );
   if( bInitial )
   {
     /*Initializing session GUID*/
     CoCreateGuid( &(This->dp2->lpSessionDesc->guidInstance) );
   }
-  /* Set the new */
-  DP_CopySessionDesc( This->dp2->lpSessionDesc, lpSessDesc, bAnsi );
-
   /* If this is an external invocation of the interface, we should be
    * letting everyone know that things have changed. Otherwise this is
    * just an initialization and it doesn't need to be propagated.
