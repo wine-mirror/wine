@@ -178,8 +178,8 @@
 @ stdcall GdiFlush()
 # @ stub GdiFullscreenControl
 @ stdcall GdiGetBatchLimit()
-@ stdcall GdiGetCharDimensions(ptr ptr ptr)
-# @ stub GdiGetCodePage
+@ stdcall GdiGetCharDimensions(long ptr ptr)
+@ stdcall GdiGetCodePage(long)
 # @ stub GdiGetDC
 # @ stub GdiGetDevmodeForPage
 @ stub GdiGetLocalBitmap

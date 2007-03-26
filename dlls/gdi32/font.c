@@ -347,22 +347,11 @@ static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRIC
 
 
 /***********************************************************************
- *           FONT_mbtowc
- *
- * Returns a Unicode translation of str using the charset of the
- * currently selected font in hdc.  If count is -1 then str is assumed
- * to be '\0' terminated, otherwise it contains the number of bytes to
- * convert.  If plenW is non-NULL, on return it will point to the
- * number of WCHARs that have been written.  If pCP is non-NULL, on
- * return it will point to the codepage used in the conversion.  The
- * caller should free the returned LPWSTR from the process heap
- * itself.
+ *           GdiGetCodePage   (GDI32.@)
  */
-static LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
+DWORD WINAPI GdiGetCodePage( HDC hdc )
 {
     UINT cp = CP_ACP;
-    INT lenW;
-    LPWSTR strW;
     CHARSETINFO csi;
     int charset = GetTextCharset(hdc);
 
@@ -402,6 +391,28 @@ static LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
     }
 
     TRACE("charset %d => cp %d\n", charset, cp);
+    return cp;
+}
+
+/***********************************************************************
+ *           FONT_mbtowc
+ *
+ * Returns a Unicode translation of str using the charset of the
+ * currently selected font in hdc.  If count is -1 then str is assumed
+ * to be '\0' terminated, otherwise it contains the number of bytes to
+ * convert.  If plenW is non-NULL, on return it will point to the
+ * number of WCHARs that have been written.  If pCP is non-NULL, on
+ * return it will point to the codepage used in the conversion.  The
+ * caller should free the returned LPWSTR from the process heap
+ * itself.
+ */
+static LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
+{
+    UINT cp;
+    INT lenW;
+    LPWSTR strW;
+
+    cp = GdiGetCodePage( hdc );
 
     if(count == -1) count = strlen(str);
     lenW = MultiByteToWideChar(cp, 0, str, count, NULL, 0);

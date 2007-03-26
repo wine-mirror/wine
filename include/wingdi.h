@@ -3396,6 +3396,7 @@ BOOL      WINAPI GdiComment(HDC,UINT,const BYTE *);
 DEVMODEW * WINAPI GdiConvertToDevmodeW(const DEVMODEA *);
 BOOL      WINAPI GdiFlush(void);
 LONG      WINAPI GdiGetCharDimensions(HDC, LPTEXTMETRICW, LONG *);
+DWORD     WINAPI GdiGetCodePage(HDC);
 BOOL      WINAPI GdiGradientFill(HDC,PTRIVERTEX,ULONG,PVOID,ULONG,ULONG);
 BOOL      WINAPI GdiIsMetaFileDC(HDC);
 BOOL      WINAPI GdiIsMetaPrintDC(HDC);
