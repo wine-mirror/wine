@@ -459,13 +459,16 @@ write:
 }
 
 /***********************************************************************
- *           RPCRT4_AuthNegotiate (internal)
+ *           RPCRT4_ClientAuthorize (internal)
+ *
+ * Authorize a client connection. A NULL in param signifies a new connection.
  */
-static void RPCRT4_AuthNegotiate(RpcConnection *conn, SecBuffer *out)
+static RPC_STATUS RPCRT4_ClientAuthorize(RpcConnection *conn, SecBuffer *in,
+                                         SecBuffer *out)
 {
   SECURITY_STATUS r;
   SecBufferDesc out_desc;
-  unsigned char *buffer;
+  SecBufferDesc inp_desc;
   ULONG context_req = ISC_REQ_CONNECTION | ISC_REQ_USE_DCE_STYLE |
                       ISC_REQ_MUTUAL_AUTH | ISC_REQ_DELEGATE;
 
@@ -474,24 +477,33 @@ static void RPCRT4_AuthNegotiate(RpcConnection *conn, SecBuffer *out)
   else if (conn->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_PKT_PRIVACY)
     context_req |= ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY;
 
-  buffer = HeapAlloc(GetProcessHeap(), 0, conn->AuthInfo->cbMaxToken);
-
   out->BufferType = SECBUFFER_TOKEN;
   out->cbBuffer = conn->AuthInfo->cbMaxToken;
-  out->pvBuffer = buffer;
+  out->pvBuffer = HeapAlloc(GetProcessHeap(), 0, out->cbBuffer);
 
   out_desc.ulVersion = 0;
   out_desc.cBuffers = 1;
   out_desc.pBuffers = out;
 
-  conn->attr = 0;
-  SecInvalidateHandle(&conn->ctx);
+  inp_desc.cBuffers = 1;
+  inp_desc.pBuffers = in;
+  inp_desc.ulVersion = 0;
 
-  r = InitializeSecurityContextA(&conn->AuthInfo->cred, NULL, NULL,
-        context_req, 0, SECURITY_NETWORK_DREP,
-        NULL, 0, &conn->ctx, &out_desc, &conn->attr, &conn->exp);
+  r = InitializeSecurityContextA(&conn->AuthInfo->cred, in ? &conn->ctx : NULL,
+        NULL, context_req, 0, SECURITY_NETWORK_DREP,
+        in ? &inp_desc : NULL, 0, &conn->ctx, &out_desc, &conn->attr,
+        &conn->exp);
+  if (FAILED(r))
+  {
+      HeapFree(GetProcessHeap(), 0, out->pvBuffer);
+      out->pvBuffer = NULL;
+      WARN("InitializeSecurityContext failed with error 0x%08x\n", r);
+      return ERROR_ACCESS_DENIED; /* FIXME: is this correct? */
+  }
 
-  TRACE("r = %08x cbBuffer = %ld attr = %08x\n", r, out->cbBuffer, conn->attr);
+  TRACE("r = 0x%08x, cbBuffer = %ld, attr = 0x%08x\n", r, out->cbBuffer, conn->attr);
+
+  return RPC_S_OK;
 }
 
 /***********************************************************************
@@ -500,46 +512,18 @@ static void RPCRT4_AuthNegotiate(RpcConnection *conn, SecBuffer *out)
 static RPC_STATUS RPCRT_AuthorizeConnection(RpcConnection* conn,
                                             BYTE *challenge, ULONG count)
 {
-  SecBufferDesc inp_desc, out_desc;
   SecBuffer inp, out;
-  SECURITY_STATUS r;
   RpcPktHdr *resp_hdr;
   RPC_STATUS status;
-  ULONG context_req = ISC_REQ_CONNECTION | ISC_REQ_USE_DCE_STYLE |
-                      ISC_REQ_MUTUAL_AUTH | ISC_REQ_DELEGATE;
 
   TRACE("challenge %s, %d bytes\n", challenge, count);
-
-  if (conn->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_PKT_INTEGRITY)
-    context_req |= ISC_REQ_INTEGRITY;
-  else if (conn->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_PKT_PRIVACY)
-    context_req |= ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY;
-
-  out.BufferType = SECBUFFER_TOKEN;
-  out.cbBuffer = conn->AuthInfo->cbMaxToken;
-  out.pvBuffer = HeapAlloc(GetProcessHeap(), 0, out.cbBuffer);
-
-  out_desc.ulVersion = 0;
-  out_desc.cBuffers = 1;
-  out_desc.pBuffers = &out;
 
   inp.BufferType = SECBUFFER_TOKEN;
   inp.pvBuffer = challenge;
   inp.cbBuffer = count;
 
-  inp_desc.cBuffers = 1;
-  inp_desc.pBuffers = &inp;
-  inp_desc.ulVersion = 0;
-
-  r = InitializeSecurityContextA(&conn->AuthInfo->cred, &conn->ctx, NULL,
-        context_req, 0, SECURITY_NETWORK_DREP,
-        &inp_desc, 0, &conn->ctx, &out_desc, &conn->attr, &conn->exp);
-  if (r)
-  {
-    HeapFree(GetProcessHeap(), 0, out.pvBuffer);
-    WARN("InitializeSecurityContext failed with error 0x%08x\n", r);
-    return ERROR_ACCESS_DENIED;
-  }
+  status = RPCRT4_ClientAuthorize(conn, &inp, &out);
+  if (status) return status;
 
   resp_hdr = RPCRT4_BuildAuthHeader(NDR_LOCAL_DATA_REPRESENTATION);
   if (!resp_hdr)
@@ -569,12 +553,8 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
     return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, NULL, 0);
   }
 
-  out.BufferType = SECBUFFER_TOKEN;
-  out.cbBuffer = 0;
-  out.pvBuffer = NULL;
-
   /* tack on a negotiate packet */
-  RPCRT4_AuthNegotiate(Connection, &out);
+  RPCRT4_ClientAuthorize(Connection, NULL, &out);
   r = RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, out.pvBuffer, out.cbBuffer);
   HeapFree(GetProcessHeap(), 0, out.pvBuffer);
 

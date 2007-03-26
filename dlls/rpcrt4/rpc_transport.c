@@ -1381,10 +1381,13 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   NewConnection->NextCallId = 1;
 
   SecInvalidateHandle(&NewConnection->ctx);
+  memset(&NewConnection->exp, 0, sizeof(NewConnection->exp));
+  NewConnection->attr = 0;
   if (AuthInfo) RpcAuthInfo_AddRef(AuthInfo);
   NewConnection->AuthInfo = AuthInfo;
   if (QOS) RpcQualityOfService_AddRef(QOS);
   NewConnection->QOS = QOS;
+
   list_init(&NewConnection->conn_pool_entry);
 
   TRACE("connection: %p\n", NewConnection);
