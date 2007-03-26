@@ -66,6 +66,9 @@ typedef struct DSoundRenderImpl
     LPDIRECTSOUNDBUFFER dsbuffer;
     DWORD write_pos;
     BOOL init;
+
+    long volume;
+    long pan;
 } DSoundRenderImpl;
 
 static HRESULT DSoundRender_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
@@ -141,6 +144,7 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
 
     memset(&buf_desc,0,sizeof(DSBUFFERDESC));
     buf_desc.dwSize = sizeof(DSBUFFERDESC);
+    buf_desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY;
     buf_desc.dwBufferBytes = DSBUFFERSIZE;
     buf_desc.lpwfxFormat = &wav_fmt;
     hr = IDirectSound_CreateSoundBuffer(This->dsound, &buf_desc, &This->dsbuffer, NULL);
@@ -149,6 +153,15 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
         IDirectSound_Release(This->dsound);
         return hr;
     }
+
+    hr = IDirectSoundBuffer_SetVolume(This->dsbuffer, This->volume);
+    if (FAILED(hr))
+        ERR("Can't set volume to %ld (%x)!\n", This->volume, hr);
+
+    hr = IDirectSoundBuffer_SetPan(This->dsbuffer, This->pan);
+    if (FAILED(hr))
+        ERR("Can't set pan to %ld (%x)!\n", This->pan, hr);
+
     hr = IDirectSoundBuffer_Play(This->dsbuffer, 0, 0, DSBPLAY_LOOPING);
     if (FAILED(hr)) {
         ERR("Can't start sound buffer (%x)!\n", hr);
@@ -801,8 +814,17 @@ static HRESULT WINAPI Basicaudio_put_Volume(IBasicAudio *iface,
 					    long lVolume) {
     ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld): stub !!!\n", This, iface, lVolume);
+    TRACE("(%p/%p)->(%ld)\n", This, iface, lVolume);
 
+    if (lVolume > DSBVOLUME_MAX || lVolume < DSBVOLUME_MIN)
+        return E_INVALIDARG;
+
+    if (This->dsbuffer) {
+        if (FAILED(IDirectSoundBuffer_SetVolume(This->dsbuffer, lVolume)))
+            return E_FAIL;
+    }
+
+    This->volume = lVolume;
     return S_OK;
 }
 
@@ -810,8 +832,12 @@ static HRESULT WINAPI Basicaudio_get_Volume(IBasicAudio *iface,
 					    long *plVolume) {
     ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, plVolume);
+    TRACE("(%p/%p)->(%p)\n", This, iface, plVolume);
 
+    if (!plVolume)
+        return E_POINTER;
+
+    *plVolume = This->volume;
     return S_OK;
 }
 
@@ -819,8 +845,17 @@ static HRESULT WINAPI Basicaudio_put_Balance(IBasicAudio *iface,
 					     long lBalance) {
     ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld): stub !!!\n", This, iface, lBalance);
+    TRACE("(%p/%p)->(%ld)\n", This, iface, lBalance);
 
+    if (lBalance < DSBPAN_LEFT || lBalance > DSBPAN_RIGHT)
+        return E_INVALIDARG;
+
+    if (This->dsbuffer) {
+        if (FAILED(IDirectSoundBuffer_SetPan(This->dsbuffer, lBalance)))
+            return E_FAIL;
+    }
+
+    This->pan = lBalance;
     return S_OK;
 }
 
@@ -828,8 +863,12 @@ static HRESULT WINAPI Basicaudio_get_Balance(IBasicAudio *iface,
 					     long *plBalance) {
     ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, plBalance);
+    TRACE("(%p/%p)->(%p)\n", This, iface, plBalance);
 
+    if (!plBalance)
+        return E_POINTER;
+
+    *plBalance = This->pan;
     return S_OK;
 }
 
