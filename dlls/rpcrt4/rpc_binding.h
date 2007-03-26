@@ -80,6 +80,8 @@ typedef struct _RpcConnection
   TimeStamp exp;
   ULONG attr;
   RpcAuthInfo *AuthInfo;
+  ULONG encryption_auth_len;
+  ULONG signature_auth_len;
   RpcQualityOfService *QOS;
 
   /* client-only */

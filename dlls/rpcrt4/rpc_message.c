@@ -59,7 +59,7 @@ enum secure_packet_direction
 
 static RPC_STATUS I_RpcReAllocateBuffer(PRPC_MESSAGE pMsg);
 
-static DWORD RPCRT4_GetHeaderSize(RpcPktHdr *Header)
+static DWORD RPCRT4_GetHeaderSize(const RpcPktHdr *Header)
 {
   static const DWORD header_sizes[] = {
     sizeof(Header->request), 0, sizeof(Header->response),
@@ -82,14 +82,14 @@ static DWORD RPCRT4_GetHeaderSize(RpcPktHdr *Header)
   return ret;
 }
 
-static int packet_has_body(RpcPktHdr *Header)
+static int packet_has_body(const RpcPktHdr *Header)
 {
     return (Header->common.ptype == PKT_FAULT) ||
            (Header->common.ptype == PKT_REQUEST) ||
            (Header->common.ptype == PKT_RESPONSE);
 }
 
-static int packet_has_auth_verifier(RpcPktHdr *Header)
+static int packet_has_auth_verifier(const RpcPktHdr *Header)
 {
     return !(Header->common.ptype == PKT_BIND_NACK) &&
            !(Header->common.ptype == PKT_SHUTDOWN);
@@ -379,7 +379,12 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
   if (AuthLength)
     Header->common.auth_len = AuthLength;
   else if (Connection->AuthInfo && packet_has_auth_verifier(Header))
-    Header->common.auth_len = 16 /* FIXME */;
+  {
+    if ((Connection->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_PKT_PRIVACY) && packet_has_body(Header))
+      Header->common.auth_len = Connection->signature_auth_len;
+    else
+      Header->common.auth_len = Connection->encryption_auth_len;
+  }
   else
     Header->common.auth_len = 0;
   Header->common.flags |= RPC_FLG_FIRST;
@@ -469,6 +474,8 @@ static RPC_STATUS RPCRT4_ClientAuthorize(RpcConnection *conn, SecBuffer *in,
   SECURITY_STATUS r;
   SecBufferDesc out_desc;
   SecBufferDesc inp_desc;
+  SecPkgContext_Sizes secctx_sizes;
+  BOOL continue_needed;
   ULONG context_req = ISC_REQ_CONNECTION | ISC_REQ_USE_DCE_STYLE |
                       ISC_REQ_MUTUAL_AUTH | ISC_REQ_DELEGATE;
 
@@ -480,6 +487,7 @@ static RPC_STATUS RPCRT4_ClientAuthorize(RpcConnection *conn, SecBuffer *in,
   out->BufferType = SECBUFFER_TOKEN;
   out->cbBuffer = conn->AuthInfo->cbMaxToken;
   out->pvBuffer = HeapAlloc(GetProcessHeap(), 0, out->cbBuffer);
+  if (!out->pvBuffer) return ERROR_OUTOFMEMORY;
 
   out_desc.ulVersion = 0;
   out_desc.cBuffers = 1;
@@ -495,13 +503,13 @@ static RPC_STATUS RPCRT4_ClientAuthorize(RpcConnection *conn, SecBuffer *in,
         &conn->exp);
   if (FAILED(r))
   {
-      HeapFree(GetProcessHeap(), 0, out->pvBuffer);
-      out->pvBuffer = NULL;
       WARN("InitializeSecurityContext failed with error 0x%08x\n", r);
-      return ERROR_ACCESS_DENIED; /* FIXME: is this correct? */
+      goto failed;
   }
 
   TRACE("r = 0x%08x, attr = 0x%08x\n", r, conn->attr);
+  continue_needed = ((r == SEC_I_CONTINUE_NEEDED) ||
+                     (r == SEC_I_COMPLETE_AND_CONTINUE));
 
   if ((r == SEC_I_COMPLETE_NEEDED) || (r == SEC_I_COMPLETE_AND_CONTINUE))
   {
@@ -509,16 +517,31 @@ static RPC_STATUS RPCRT4_ClientAuthorize(RpcConnection *conn, SecBuffer *in,
       r = CompleteAuthToken(&conn->ctx, &out_desc);
       if (FAILED(r))
       {
-          HeapFree(GetProcessHeap(), 0, out->pvBuffer);
-          out->pvBuffer = NULL;
           WARN("CompleteAuthToken failed with error 0x%08x\n", r);
-          return ERROR_ACCESS_DENIED; /* FIXME: is this correct? */
+          goto failed;
       }
   }
 
   TRACE("cbBuffer = %ld\n", out->cbBuffer);
 
+  if (!continue_needed)
+  {
+      r = QueryContextAttributesA(&conn->ctx, SECPKG_ATTR_SIZES, &secctx_sizes);
+      if (FAILED(r))
+      {
+          WARN("QueryContextAttributes failed with error 0x%08x\n", r);
+          goto failed;
+      }
+      conn->signature_auth_len = secctx_sizes.cbMaxSignature;
+      conn->encryption_auth_len = secctx_sizes.cbSecurityTrailer;
+  }
+
   return RPC_S_OK;
+
+failed:
+  HeapFree(GetProcessHeap(), 0, out->pvBuffer);
+  out->pvBuffer = NULL;
+  return ERROR_ACCESS_DENIED; /* FIXME: is this correct? */
 }
 
 /***********************************************************************

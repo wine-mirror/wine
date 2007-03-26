@@ -1385,6 +1385,8 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   NewConnection->attr = 0;
   if (AuthInfo) RpcAuthInfo_AddRef(AuthInfo);
   NewConnection->AuthInfo = AuthInfo;
+  NewConnection->encryption_auth_len = 0;
+  NewConnection->signature_auth_len = 0;
   if (QOS) RpcQualityOfService_AddRef(QOS);
   NewConnection->QOS = QOS;
 
