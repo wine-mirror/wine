@@ -7,6 +7,7 @@ IMPORTS   = setupapi advapi32 kernel32
 
 CTESTS = \
 	devinst.c \
+	misc.c \
 	parser.c \
 	query.c \
 	stringtable.c

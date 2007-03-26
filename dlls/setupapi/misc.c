@@ -886,13 +886,14 @@ BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
                               DWORD buffer_size, PDWORD required_size, PSTR *component )
 {
     BOOL ret = FALSE;
-    WCHAR destW[MAX_PATH], *sourceW = NULL, *locationW = NULL;
-    INT size = sizeof(destW);
+    LPWSTR destW = NULL, sourceW = NULL, locationW = NULL;
+    INT size = MAX_PATH;
 
     TRACE("%s, %s, %d, %d, %p, %d, %p, %p\n", debugstr_a(source), debugstr_a(location),
           media_type, style, dest, buffer_size, required_size, component);
 
-    if (source && !(sourceW = strdupAtoW( source ))) return FALSE;
+    if (dest && !(destW = MyMalloc( MAX_PATH * sizeof(WCHAR) ))) return FALSE;
+    if (source && !(sourceW = strdupAtoW( source ))) goto done;
     if (location && !(locationW = strdupAtoW( location ))) goto done;
 
     if (!(ret = SetupCopyOEMInfW( sourceW, locationW, media_type, style, destW, size, NULL, NULL )))
@@ -916,6 +917,7 @@ BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
     }
 
 done:
+    MyFree( destW );
     HeapFree( GetProcessHeap(), 0, sourceW );
     HeapFree( GetProcessHeap(), 0, locationW );
     return ret;
@@ -936,11 +938,17 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
     TRACE("%s, %s, %d, %d, %p, %d, %p, %p\n", debugstr_w(source), debugstr_w(location),
           media_type, style, dest, buffer_size, required_size, component);
 
+    if (!source)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     if (!GetWindowsDirectoryW( target, sizeof(target)/sizeof(WCHAR) )) return FALSE;
 
     strcatW( target, inf_oem );
-    p = strrchrW( source, '\\' ) + 1;
-    strcatW( target, p );
+    if ((p = strrchrW( source, '\\' )))
+        strcatW( target, p + 1 );
 
     size = strlenW( target ) + 1;
     if (dest)
