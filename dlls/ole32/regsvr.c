@@ -491,7 +491,8 @@ static struct regsvr_coclass const coclass_list[] = {
 	"FileMoniker",
 	NULL,
 	"ole32.dll",
-	"Both"
+	"Both",
+        "file"
     },
     {   &CLSID_ItemMoniker,
 	"ItemMoniker",
@@ -547,7 +548,8 @@ static struct regsvr_coclass const coclass_list[] = {
 	"ClassMoniker",
 	NULL,
 	"ole32.dll",
-	"Both"
+	"Both",
+        "CLSID"
     },
     {	&CLSID_PSFactoryBuffer,
 	"PSFactoryBuffer",
