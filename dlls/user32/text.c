@@ -1030,6 +1030,7 @@ INT WINAPI DrawTextExA( HDC hdc, LPSTR str, INT count,
    DWORD wcount;
    DWORD wmax;
    DWORD amax;
+   UINT cp;
 
    if (!count) return 0;
    if( !str || ((count == -1) && !(count = strlen(str))))
@@ -1041,7 +1042,8 @@ INT WINAPI DrawTextExA( HDC hdc, LPSTR str, INT count,
         }
         return 0;
    }
-   wcount = MultiByteToWideChar( CP_ACP, 0, str, count, NULL, 0 );
+   cp = GdiGetCodePage( hdc );
+   wcount = MultiByteToWideChar( cp, 0, str, count, NULL, 0 );
    wmax = wcount;
    amax = count;
    if (flags & DT_MODIFYSTRING)
@@ -1052,7 +1054,7 @@ INT WINAPI DrawTextExA( HDC hdc, LPSTR str, INT count,
    wstr = HeapAlloc(GetProcessHeap(), 0, wmax * sizeof(WCHAR));
    if (wstr)
    {
-       MultiByteToWideChar( CP_ACP, 0, str, count, wstr, wcount );
+       MultiByteToWideChar( cp, 0, str, count, wstr, wcount );
        if (flags & DT_MODIFYSTRING)
            for (i=4, p=wstr+wcount; i--; p++) *p=0xFFFE;
            /* Initialise the extra characters so that we can see which ones
@@ -1066,7 +1068,7 @@ INT WINAPI DrawTextExA( HDC hdc, LPSTR str, INT count,
              * and so we need to measure it ourselves.
              */
             for (i=4, p=wstr+wcount; i-- && *p != 0xFFFE; p++) wcount++;
-            WideCharToMultiByte( CP_ACP, 0, wstr, wcount, str, amax, NULL, NULL );
+            WideCharToMultiByte( cp, 0, wstr, wcount, str, amax, NULL, NULL );
        }
        HeapFree(GetProcessHeap(), 0, wstr);
    }
