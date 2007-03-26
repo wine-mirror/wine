@@ -139,6 +139,8 @@ static RPC_STATUS RPCRT4_CreateBindingW(RpcBinding** Binding, BOOL server, LPWST
 static RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr,
                                           LPSTR Endpoint, LPSTR NetworkOptions)
 {
+  RPC_STATUS status;
+
   TRACE("(RpcBinding == ^%p, NetworkAddr == %s, EndPoint == %s, NetworkOptions == %s)\n", Binding,
    debugstr_a(NetworkAddr), debugstr_a(Endpoint), debugstr_a(NetworkOptions));
 
@@ -154,12 +156,20 @@ static RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr
   Binding->NetworkOptions = RPCRT4_strdupAtoW(NetworkOptions);
   if (!Binding->Endpoint) ERR("out of memory?\n");
 
+  status = RPCRT4_GetAssociation(Binding->Protseq, Binding->NetworkAddr,
+                                 Binding->Endpoint, Binding->NetworkOptions,
+                                 &Binding->Assoc);
+  if (status != RPC_S_OK)
+      return status;
+
   return RPC_S_OK;
 }
 
 static RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPWSTR NetworkAddr,
                                           LPWSTR Endpoint, LPWSTR NetworkOptions)
 {
+  RPC_STATUS status;
+
   TRACE("(RpcBinding == ^%p, NetworkAddr == %s, EndPoint == %s, NetworkOptions == %s)\n", Binding, 
    debugstr_w(NetworkAddr), debugstr_w(Endpoint), debugstr_w(NetworkOptions));
 
@@ -175,15 +185,31 @@ static RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPWSTR NetworkAdd
   HeapFree(GetProcessHeap(), 0, Binding->NetworkOptions);
   Binding->NetworkOptions = RPCRT4_strdupW(NetworkOptions);
 
+  status = RPCRT4_GetAssociation(Binding->Protseq, Binding->NetworkAddr,
+                                 Binding->Endpoint, Binding->NetworkOptions,
+                                 &Binding->Assoc);
+  if (status != RPC_S_OK)
+      return status;
+
   return RPC_S_OK;
 }
 
 RPC_STATUS RPCRT4_ResolveBinding(RpcBinding* Binding, LPSTR Endpoint)
 {
+  RPC_STATUS status;
+
   TRACE("(RpcBinding == ^%p, EndPoint == \"%s\"\n", Binding, Endpoint);
 
   RPCRT4_strfree(Binding->Endpoint);
   Binding->Endpoint = RPCRT4_strdupA(Endpoint);
+
+  RpcAssoc_Release(Binding->Assoc);
+  Binding->Assoc = NULL;
+  status = RPCRT4_GetAssociation(Binding->Protseq, Binding->NetworkAddr,
+                                 Binding->Endpoint, Binding->NetworkOptions,
+                                 &Binding->Assoc);
+  if (status != RPC_S_OK)
+      return status;
 
   return RPC_S_OK;
 }
@@ -226,7 +252,7 @@ RPC_STATUS RPCRT4_DestroyBinding(RpcBinding* Binding)
     return RPC_S_OK;
 
   TRACE("binding: %p\n", Binding);
-  /* FIXME: release connections */
+  if (Binding->Assoc) RpcAssoc_Release(Binding->Assoc);
   RPCRT4_strfree(Binding->Endpoint);
   RPCRT4_strfree(Binding->NetworkAddr);
   RPCRT4_strfree(Binding->Protseq);
@@ -248,9 +274,8 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
 
   if (!Binding->server) {
     /* try to find a compatible connection from the connection pool */
-    NewConnection = RPCRT4_GetIdleConnection(InterfaceId, TransferSyntax,
-        Binding->Protseq, Binding->NetworkAddr, Binding->Endpoint,
-        Binding->AuthInfo, Binding->QOS);
+    NewConnection = RpcAssoc_GetIdleConnection(Binding->Assoc, InterfaceId,
+        TransferSyntax, Binding->AuthInfo, Binding->QOS);
     if (NewConnection) {
       *Connection = NewConnection;
       return RPC_S_OK;
@@ -340,7 +365,7 @@ RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding, RpcConnection* Connection)
     return RPCRT4_DestroyConnection(Connection);
   }
   else {
-    RPCRT4_ReleaseIdleConnection(Connection);
+    RpcAssoc_ReleaseIdleConnection(Binding->Assoc, Connection);
     return RPC_S_OK;
   }
 }
@@ -881,6 +906,8 @@ RPC_STATUS RPC_ENTRY RpcBindingCopy(
   DestBinding->NetworkAddr = RPCRT4_strndupA(SrcBinding->NetworkAddr, -1);
   DestBinding->Endpoint = RPCRT4_strndupA(SrcBinding->Endpoint, -1);
   DestBinding->NetworkOptions = RPCRT4_strdupW(SrcBinding->NetworkOptions);
+  if (SrcBinding->Assoc) SrcBinding->Assoc->refs++;
+  DestBinding->Assoc = SrcBinding->Assoc;
 
   if (SrcBinding->AuthInfo) RpcAuthInfo_AddRef(SrcBinding->AuthInfo);
   DestBinding->AuthInfo = SrcBinding->AuthInfo;

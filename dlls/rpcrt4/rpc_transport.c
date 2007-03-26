@@ -80,16 +80,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
-static CRITICAL_SECTION connection_pool_cs;
-static CRITICAL_SECTION_DEBUG connection_pool_cs_debug =
+static CRITICAL_SECTION assoc_list_cs;
+static CRITICAL_SECTION_DEBUG assoc_list_cs_debug =
 {
-    0, 0, &connection_pool_cs,
-    { &connection_pool_cs_debug.ProcessLocksList, &connection_pool_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": connection_pool") }
+    0, 0, &assoc_list_cs,
+    { &assoc_list_cs_debug.ProcessLocksList, &assoc_list_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": assoc_list_cs") }
 };
-static CRITICAL_SECTION connection_pool_cs = { &connection_pool_cs_debug, -1, 0, 0, 0, 0 };
+static CRITICAL_SECTION assoc_list_cs = { &assoc_list_cs_debug, -1, 0, 0, 0, 0 };
 
-static struct list connection_pool = LIST_INIT(connection_pool);
+static struct list assoc_list = LIST_INIT(assoc_list);
 
 /**** ncacn_np support ****/
 
@@ -1393,38 +1393,114 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   return RPC_S_OK;
 }
 
-RpcConnection *RPCRT4_GetIdleConnection(const RPC_SYNTAX_IDENTIFIER *InterfaceId,
-    const RPC_SYNTAX_IDENTIFIER *TransferSyntax, LPCSTR Protseq, LPCSTR NetworkAddr,
-    LPCSTR Endpoint, const RpcAuthInfo* AuthInfo, const RpcQualityOfService *QOS)
+RPC_STATUS RPCRT4_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr,
+                                 LPCSTR Endpoint, LPCWSTR NetworkOptions,
+                                 RpcAssoc **assoc_out)
+{
+  RpcAssoc *assoc;
+
+  EnterCriticalSection(&assoc_list_cs);
+  LIST_FOR_EACH_ENTRY(assoc, &assoc_list, RpcAssoc, entry)
+  {
+    if (!strcmp(Protseq, assoc->Protseq) &&
+        !strcmp(NetworkAddr, assoc->NetworkAddr) &&
+        !strcmp(Endpoint, assoc->Endpoint) &&
+        ((!assoc->NetworkOptions && !NetworkOptions) || !strcmpW(NetworkOptions, assoc->NetworkOptions)))
+    {
+      assoc->refs++;
+      *assoc_out = assoc;
+      LeaveCriticalSection(&assoc_list_cs);
+      TRACE("using existing assoc %p\n", assoc);
+      return RPC_S_OK;
+    }
+  }
+
+  assoc = HeapAlloc(GetProcessHeap(), 0, sizeof(*assoc));
+  if (!assoc)
+  {
+    LeaveCriticalSection(&assoc_list_cs);
+    return RPC_S_OUT_OF_RESOURCES;
+  }
+  assoc->refs = 1;
+  list_init(&assoc->connection_pool);
+  InitializeCriticalSection(&assoc->cs);
+  assoc->Protseq = RPCRT4_strdupA(Protseq);
+  assoc->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
+  assoc->Endpoint = RPCRT4_strdupA(Endpoint);
+  assoc->NetworkOptions = NetworkOptions ? RPCRT4_strdupW(NetworkOptions) : NULL;
+  list_add_head(&assoc_list, &assoc->entry);
+  *assoc_out = assoc;
+
+  LeaveCriticalSection(&assoc_list_cs);
+
+  TRACE("new assoc %p\n", assoc);
+
+  return RPC_S_OK;
+}
+
+ULONG RpcAssoc_Release(RpcAssoc *assoc)
+{
+  ULONG refs;
+
+  EnterCriticalSection(&assoc_list_cs);
+  refs = --assoc->refs;
+  if (!refs)
+    list_remove(&assoc->entry);
+  LeaveCriticalSection(&assoc_list_cs);
+
+  if (!refs)
+  {
+    RpcConnection *Connection, *cursor2;
+
+    TRACE("destroying assoc %p\n", assoc);
+
+    LIST_FOR_EACH_ENTRY_SAFE(Connection, cursor2, &assoc->connection_pool, RpcConnection, conn_pool_entry)
+    {
+      list_remove(&Connection->conn_pool_entry);
+      RPCRT4_DestroyConnection(Connection);
+    }
+
+    HeapFree(GetProcessHeap(), 0, assoc->NetworkOptions);
+    HeapFree(GetProcessHeap(), 0, assoc->Endpoint);
+    HeapFree(GetProcessHeap(), 0, assoc->NetworkAddr);
+    HeapFree(GetProcessHeap(), 0, assoc->Protseq);
+
+    HeapFree(GetProcessHeap(), 0, assoc);
+  }
+
+  return refs;
+}
+
+RpcConnection *RpcAssoc_GetIdleConnection(RpcAssoc *assoc,
+    const RPC_SYNTAX_IDENTIFIER *InterfaceId,
+    const RPC_SYNTAX_IDENTIFIER *TransferSyntax, const RpcAuthInfo *AuthInfo,
+    const RpcQualityOfService *QOS)
 {
   RpcConnection *Connection;
   /* try to find a compatible connection from the connection pool */
-  EnterCriticalSection(&connection_pool_cs);
-  LIST_FOR_EACH_ENTRY(Connection, &connection_pool, RpcConnection, conn_pool_entry)
+  EnterCriticalSection(&assoc->cs);
+  LIST_FOR_EACH_ENTRY(Connection, &assoc->connection_pool, RpcConnection, conn_pool_entry)
     if ((Connection->AuthInfo == AuthInfo) &&
         (Connection->QOS == QOS) &&
         !memcmp(&Connection->ActiveInterface, InterfaceId,
-           sizeof(RPC_SYNTAX_IDENTIFIER)) &&
-        !strcmp(rpcrt4_conn_get_name(Connection), Protseq) &&
-        !strcmp(Connection->NetworkAddr, NetworkAddr) &&
-        !strcmp(Connection->Endpoint, Endpoint))
+                sizeof(RPC_SYNTAX_IDENTIFIER)))
     {
       list_remove(&Connection->conn_pool_entry);
-      LeaveCriticalSection(&connection_pool_cs);
+      LeaveCriticalSection(&assoc->cs);
       TRACE("got connection from pool %p\n", Connection);
       return Connection;
     }
 
-  LeaveCriticalSection(&connection_pool_cs);
+  LeaveCriticalSection(&assoc->cs);
   return NULL;
 }
 
-void RPCRT4_ReleaseIdleConnection(RpcConnection *Connection)
+void RpcAssoc_ReleaseIdleConnection(RpcAssoc *assoc, RpcConnection *Connection)
 {
   assert(!Connection->server);
-  EnterCriticalSection(&connection_pool_cs);
-  list_add_head(&connection_pool, &Connection->conn_pool_entry);
-  LeaveCriticalSection(&connection_pool_cs);
+  EnterCriticalSection(&assoc->cs);
+  list_add_head(&assoc->connection_pool, &Connection->conn_pool_entry);
+  LeaveCriticalSection(&assoc->cs);
 }
 
 
