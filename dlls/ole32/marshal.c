@@ -335,6 +335,13 @@ static const IMultiQIVtbl ClientIdentity_Vtbl =
     ClientIdentity_QueryMultipleInterfaces
 };
 
+/* FIXME: remove these */
+static HRESULT WINAPI StdMarshalImpl_GetUnmarshalClass(LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext, void* pvDestContext, DWORD mshlflags, CLSID* pCid);
+static HRESULT WINAPI StdMarshalImpl_GetMarshalSizeMax(LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext, void* pvDestContext, DWORD mshlflags, DWORD* pSize);
+static HRESULT WINAPI StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, void **ppv);
+static HRESULT WINAPI StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm);
+static HRESULT WINAPI StdMarshalImpl_DisconnectObject(LPMARSHAL iface, DWORD dwReserved);
+
 static HRESULT WINAPI Proxy_QueryInterface(IMarshal *iface, REFIID riid, void **ppvObject)
 {
     ICOM_THIS_MULTI(struct proxy_manager, lpVtblMarshal, iface);
@@ -346,13 +353,6 @@ static ULONG WINAPI Proxy_AddRef(IMarshal *iface)
     ICOM_THIS_MULTI(struct proxy_manager, lpVtblMarshal, iface);
     return IMultiQI_AddRef((IMultiQI *)&This->lpVtbl);
 }
-
-/* FIXME: remove these */
-static HRESULT WINAPI StdMarshalImpl_GetUnmarshalClass(LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext, void* pvDestContext, DWORD mshlflags, CLSID* pCid);
-static HRESULT WINAPI StdMarshalImpl_GetMarshalSizeMax(LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext, void* pvDestContext, DWORD mshlflags, DWORD* pSize);
-static HRESULT WINAPI StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, void **ppv);
-static HRESULT WINAPI StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm);
-static HRESULT WINAPI StdMarshalImpl_DisconnectObject(LPMARSHAL iface, DWORD dwReserved);
 
 static ULONG WINAPI Proxy_Release(IMarshal *iface)
 {
@@ -471,6 +471,72 @@ static const IMarshalVtbl ProxyMarshal_Vtbl =
     StdMarshalImpl_UnmarshalInterface,
     StdMarshalImpl_ReleaseMarshalData,
     StdMarshalImpl_DisconnectObject
+};
+
+static HRESULT WINAPI ProxyCliSec_QueryInterface(IClientSecurity *iface, REFIID riid, void **ppvObject)
+{
+    ICOM_THIS_MULTI(struct proxy_manager, lpVtblCliSec, iface);
+    return IMultiQI_QueryInterface((IMultiQI *)&This->lpVtbl, riid, ppvObject);
+}
+
+static ULONG WINAPI ProxyCliSec_AddRef(IClientSecurity *iface)
+{
+    ICOM_THIS_MULTI(struct proxy_manager, lpVtblCliSec, iface);
+    return IMultiQI_AddRef((IMultiQI *)&This->lpVtbl);
+}
+
+static ULONG WINAPI ProxyCliSec_Release(IClientSecurity *iface)
+{
+    ICOM_THIS_MULTI(struct proxy_manager, lpVtblCliSec, iface);
+    return IMultiQI_Release((IMultiQI *)&This->lpVtbl);
+}
+
+static HRESULT WINAPI ProxyCliSec_QueryBlanket(IClientSecurity *iface,
+                                               IUnknown *pProxy,
+                                               DWORD *pAuthnSvc,
+                                               DWORD *pAuthzSvc,
+                                               OLECHAR **pServerPrincName,
+                                               DWORD *pAuthnLevel,
+                                               DWORD *pImpLevel,
+                                               void **pAuthInfo,
+                                               DWORD *pCapabilities)
+{
+    FIXME("(%p, %p, %p, %p, %p, %p, %p, %p): stub\n", pProxy, pAuthnSvc,
+          pAuthzSvc, pServerPrincName, pAuthnLevel, pImpLevel, pAuthInfo,
+          pCapabilities);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProxyCliSec_SetBlanket(IClientSecurity *iface,
+                                             IUnknown *pProxy, DWORD AuthnSvc,
+                                             DWORD AuthzSvc,
+                                             OLECHAR *pServerPrincName,
+                                             DWORD AuthnLevel, DWORD ImpLevel,
+                                             void *pAuthInfo,
+                                             DWORD Capabilities)
+{
+    FIXME("(%p, %d, %d, %s, %d, %d, %p, 0x%x): stub\n", pProxy, AuthnSvc,
+          AuthzSvc, debugstr_w(pServerPrincName), AuthnLevel, ImpLevel,
+          pAuthInfo, Capabilities);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProxyCliSec_CopyProxy(IClientSecurity *iface,
+                                            IUnknown *pProxy, IUnknown **ppCopy)
+{
+    FIXME("(%p, %p): stub\n", pProxy, ppCopy);
+    *ppCopy = NULL;
+    return E_NOTIMPL;
+}
+
+static const IClientSecurityVtbl ProxyCliSec_Vtbl =
+{
+    ProxyCliSec_QueryInterface,
+    ProxyCliSec_AddRef,
+    ProxyCliSec_Release,
+    ProxyCliSec_QueryBlanket,
+    ProxyCliSec_SetBlanket,
+    ProxyCliSec_CopyProxy
 };
 
 static HRESULT ifproxy_get_public_ref(struct ifproxy * This)
@@ -599,6 +665,7 @@ static HRESULT proxy_manager_construct(
 
     This->lpVtbl = &ClientIdentity_Vtbl;
     This->lpVtblMarshal = &ProxyMarshal_Vtbl;
+    This->lpVtblCliSec = &ProxyCliSec_Vtbl;
 
     list_init(&This->entry);
     list_init(&This->interfaces);
@@ -723,9 +790,9 @@ static HRESULT proxy_manager_query_local_interface(struct proxy_manager * This, 
     }
     if (IsEqualIID(riid, &IID_IClientSecurity))
     {
-        FIXME("requesting IClientSecurity, but it is unimplemented\n");
-        *ppv = NULL;
-        return E_NOINTERFACE;
+        *ppv = (void *)&This->lpVtblCliSec;
+        IUnknown_AddRef((IUnknown *)*ppv);
+        return S_OK;
     }
 
     hr = proxy_manager_find_ifproxy(This, riid, &ifproxy);

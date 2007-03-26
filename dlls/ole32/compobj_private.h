@@ -121,6 +121,7 @@ struct proxy_manager
 {
   const IMultiQIVtbl *lpVtbl;
   const IMarshalVtbl *lpVtblMarshal;
+  const IClientSecurityVtbl *lpVtblCliSec;
   struct apartment *parent; /* owning apartment (RO) */
   struct list entry;        /* entry in apartment (CS parent->cs) */
   OXID oxid;                /* object exported ID (RO) */

@@ -1405,7 +1405,7 @@ static void test_proxy_interfaces(void)
     if (hr == S_OK) IUnknown_Release(pOtherUnknown);
 
     hr = IUnknown_QueryInterface(pProxy, &IID_IClientSecurity, (LPVOID*)&pOtherUnknown);
-    todo_wine { ok_ole_success(hr, IUnknown_QueryInterface IID_IClientSecurity); }
+    ok_ole_success(hr, IUnknown_QueryInterface IID_IClientSecurity);
     if (hr == S_OK) IUnknown_Release(pOtherUnknown);
 
     hr = IUnknown_QueryInterface(pProxy, &IID_IMultiQI, (LPVOID*)&pOtherUnknown);
