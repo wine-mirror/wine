@@ -736,6 +736,16 @@ RunningObjectTableImpl_EnumRunning(IRunningObjectTable* iface,
 
 /***********************************************************************
  *           GetRunningObjectTable (OLE32.@)
+ *
+ * Retrieves the global running object table.
+ *
+ * PARAMS
+ *  reserved [I] Reserved. Set to 0.
+ *  pprot    [O] Address that receives the pointer to the running object table.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: Any HRESULT code.
  */
 HRESULT WINAPI
 GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
@@ -758,6 +768,15 @@ GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
 
 /******************************************************************************
  *              OleRun        [OLE32.@]
+ *
+ * Set the OLE object to the running state.
+ *
+ * PARAMS
+ *  pUnknown [I] OLE object to run.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: Any HRESULT code.
  */
 HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
 {

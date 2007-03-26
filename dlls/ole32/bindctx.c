@@ -541,7 +541,18 @@ static HRESULT BindCtxImpl_Construct(BindCtxImpl* This)
 
 /******************************************************************************
  *        CreateBindCtx (OLE32.@)
- ******************************************************************************/
+ *
+ * Creates a bind context. A bind context encompasses information and options
+ * used when binding to a moniker.
+ *
+ * PARAMS
+ *  reserved [I] Reserved. Set to 0.
+ *  ppbc     [O] Address that receives the bind context object.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: Any HRESULT code.
+ */
 HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC * ppbc)
 {
     BindCtxImpl* newBindCtx = 0;
@@ -576,6 +587,21 @@ HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC * ppbc)
     return hr;
 }
 
+/******************************************************************************
+ *              BindMoniker        [OLE32.@]
+ *
+ * Binds to a moniker.
+ *
+ * PARAMS
+ *  pmk      [I] Moniker to bind to.
+ *  grfOpt   [I] Reserved option flags. Set to 0.
+ *  riid     [I] ID of the interface to bind to.
+ *  pvResult [O] Address that receives the interface of the object that was bound to.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: Any HRESULT code.
+ */
 HRESULT WINAPI BindMoniker(LPMONIKER pmk, DWORD grfOpt, REFIID riid, LPVOID * ppvResult)
 {
     HRESULT res;
