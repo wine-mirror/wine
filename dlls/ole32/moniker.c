@@ -734,80 +734,6 @@ RunningObjectTableImpl_EnumRunning(IRunningObjectTable* iface,
     return hr;
 }
 
-/***********************************************************************
- *           GetRunningObjectTable (OLE32.@)
- *
- * Retrieves the global running object table.
- *
- * PARAMS
- *  reserved [I] Reserved. Set to 0.
- *  pprot    [O] Address that receives the pointer to the running object table.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: Any HRESULT code.
- */
-HRESULT WINAPI
-GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
-{
-    IID riid=IID_IRunningObjectTable;
-    HRESULT res;
-
-    TRACE("()\n");
-
-    if (reserved!=0)
-        return E_UNEXPECTED;
-
-    if(runningObjectTableInstance==NULL)
-        return CO_E_NOTINITIALIZED;
-
-    res = IRunningObjectTable_QueryInterface((IRunningObjectTable*)runningObjectTableInstance,&riid,(void**)pprot);
-
-    return res;
-}
-
-/******************************************************************************
- *              OleRun        [OLE32.@]
- *
- * Set the OLE object to the running state.
- *
- * PARAMS
- *  pUnknown [I] OLE object to run.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: Any HRESULT code.
- */
-HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
-{
-    IRunnableObject *runable;
-    HRESULT hres;
-
-    TRACE("(%p)\n", pUnknown);
-
-    hres = IUnknown_QueryInterface(pUnknown, &IID_IRunnableObject, (void**)&runable);
-    if (FAILED(hres))
-        return S_OK; /* Appears to return no error. */
-
-    hres = IRunnableObject_Run(runable, NULL);
-    IRunnableObject_Release(runable);
-    return hres;
-}
-
-/******************************************************************************
- *              MkParseDisplayName        [OLE32.@]
- */
-HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName,
-				LPDWORD pchEaten, LPMONIKER *ppmk)
-{
-    FIXME("(%p, %s, %p, %p): stub.\n", pbc, debugstr_w(szUserName), pchEaten, *ppmk);
-
-    if (!(IsValidInterface((LPUNKNOWN) pbc)))
-        return E_INVALIDARG;
-
-    return MK_E_SYNTAX;
-}
-
 /* Virtual function table for the IRunningObjectTable class. */
 static const IRunningObjectTableVtbl VT_RunningObjectTableImpl =
 {
@@ -866,6 +792,154 @@ HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void)
     RunningObjectTableImpl_Destroy();
 
     return S_OK;
+}
+
+/***********************************************************************
+ *           GetRunningObjectTable (OLE32.@)
+ *
+ * Retrieves the global running object table.
+ *
+ * PARAMS
+ *  reserved [I] Reserved. Set to 0.
+ *  pprot    [O] Address that receives the pointer to the running object table.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: Any HRESULT code.
+ */
+HRESULT WINAPI
+GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
+{
+    IID riid=IID_IRunningObjectTable;
+    HRESULT res;
+
+    TRACE("()\n");
+
+    if (reserved!=0)
+        return E_UNEXPECTED;
+
+    if(runningObjectTableInstance==NULL)
+        return CO_E_NOTINITIALIZED;
+
+    res = IRunningObjectTable_QueryInterface((IRunningObjectTable*)runningObjectTableInstance,&riid,(void**)pprot);
+
+    return res;
+}
+
+/******************************************************************************
+ *              MkParseDisplayName        [OLE32.@]
+ */
+HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName,
+				LPDWORD pchEaten, LPMONIKER *ppmk)
+{
+    FIXME("(%p, %s, %p, %p): stub.\n", pbc, debugstr_w(szUserName), pchEaten, *ppmk);
+
+    if (!(IsValidInterface((LPUNKNOWN) pbc)))
+        return E_INVALIDARG;
+
+    return MK_E_SYNTAX;
+}
+
+/***********************************************************************
+ *        GetClassFile (OLE32.@)
+ *
+ * Retrieves the class ID associated with the given filename.
+ *
+ * PARAMS
+ *  filePathName [I] Filename to retrieve the class ID for.
+ *  pclsid       [O] Address that receives the class ID for the file.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: Any HRESULT code.
+ */
+HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
+{
+    IStorage *pstg=0;
+    HRESULT res;
+    int nbElm, length, i;
+    LONG sizeProgId;
+    LPOLESTR *pathDec=0,absFile=0,progId=0;
+    LPWSTR extension;
+    static const WCHAR bkslashW[] = {'\\',0};
+    static const WCHAR dotW[] = {'.',0};
+
+    TRACE("%s, %p\n", debugstr_w(filePathName), pclsid);
+
+    /* if the file contain a storage object the return the CLSID written by IStorage_SetClass method*/
+    if((StgIsStorageFile(filePathName))==S_OK){
+
+        res=StgOpenStorage(filePathName,NULL,STGM_READ | STGM_SHARE_DENY_WRITE,NULL,0,&pstg);
+
+        if (SUCCEEDED(res))
+            res=ReadClassStg(pstg,pclsid);
+
+        IStorage_Release(pstg);
+
+        return res;
+    }
+    /* if the file is not a storage object then attemps to match various bits in the file against a
+       pattern in the registry. this case is not frequently used ! so I present only the psodocode for
+       this case
+
+     for(i=0;i<nFileTypes;i++)
+
+        for(i=0;j<nPatternsForType;j++){
+
+            PATTERN pat;
+            HANDLE  hFile;
+
+            pat=ReadPatternFromRegistry(i,j);
+            hFile=CreateFileW(filePathName,,,,,,hFile);
+            SetFilePosition(hFile,pat.offset);
+            ReadFile(hFile,buf,pat.size,&r,NULL);
+            if (memcmp(buf&pat.mask,pat.pattern.pat.size)==0){
+
+                *pclsid=ReadCLSIDFromRegistry(i);
+                return S_OK;
+            }
+        }
+     */
+
+    /* if the above strategies fail then search for the extension key in the registry */
+
+    /* get the last element (absolute file) in the path name */
+    nbElm=FileMonikerImpl_DecomposePath(filePathName,&pathDec);
+    absFile=pathDec[nbElm-1];
+
+    /* failed if the path represente a directory and not an absolute file name*/
+    if (!lstrcmpW(absFile, bkslashW))
+        return MK_E_INVALIDEXTENSION;
+
+    /* get the extension of the file */
+    extension = NULL;
+    length=lstrlenW(absFile);
+    for(i = length-1; (i >= 0) && *(extension = &absFile[i]) != '.'; i--)
+        /* nothing */;
+
+    if (!extension || !lstrcmpW(extension, dotW))
+        return MK_E_INVALIDEXTENSION;
+
+    res=RegQueryValueW(HKEY_CLASSES_ROOT, extension, NULL, &sizeProgId);
+
+    /* get the progId associated to the extension */
+    progId = CoTaskMemAlloc(sizeProgId);
+    res = RegQueryValueW(HKEY_CLASSES_ROOT, extension, progId, &sizeProgId);
+
+    if (res==ERROR_SUCCESS)
+        /* return the clsid associated to the progId */
+        res= CLSIDFromProgID(progId,pclsid);
+
+    for(i=0; pathDec[i]!=NULL;i++)
+        CoTaskMemFree(pathDec[i]);
+    CoTaskMemFree(pathDec);
+
+    CoTaskMemFree(progId);
+
+    if (res==ERROR_SUCCESS)
+        return res;
+
+    return MK_E_INVALIDEXTENSION;
 }
 
 /***********************************************************************

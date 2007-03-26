@@ -934,6 +934,34 @@ HRESULT WINAPI OleSetContainedObject(
 }
 
 /******************************************************************************
+ *              OleRun        [OLE32.@]
+ *
+ * Set the OLE object to the running state.
+ *
+ * PARAMS
+ *  pUnknown [I] OLE object to run.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: Any HRESULT code.
+ */
+HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
+{
+    IRunnableObject *runable;
+    HRESULT hres;
+
+    TRACE("(%p)\n", pUnknown);
+
+    hres = IUnknown_QueryInterface(pUnknown, &IID_IRunnableObject, (void**)&runable);
+    if (FAILED(hres))
+        return S_OK; /* Appears to return no error. */
+
+    hres = IRunnableObject_Run(runable, NULL);
+    IRunnableObject_Release(runable);
+    return hres;
+}
+
+/******************************************************************************
  *              OleLoad        [OLE32.@]
  */
 HRESULT WINAPI OleLoad(
