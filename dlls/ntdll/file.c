@@ -282,14 +282,13 @@ static ULONG fileio_queue_async(async_fileio* fileio, IO_STATUS_BLOCK* iosb,
     }
     SERVER_END_REQ;
 
-    if ( status ) iosb->u.Status = status;
-    if ( iosb->u.Status != STATUS_PENDING )
+    if (status != STATUS_PENDING)
     {
+        iosb->u.Status = status;
         (apc)( fileio, iosb, iosb->u.Status );
-        return iosb->u.Status;
     }
-    NtCurrentTeb()->num_async_io++;
-    return STATUS_SUCCESS;
+    else NtCurrentTeb()->num_async_io++;
+    return status;
 }
 
 /***********************************************************************
@@ -531,7 +530,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
         io_status->u.Status = STATUS_PENDING;
         ret = fileio_queue_async(fileio, io_status, TRUE);
-        if (ret != STATUS_SUCCESS)
+        if (ret != STATUS_PENDING)
         {
             if (flags & FD_FLAG_TIMEOUT) NtClose(hEvent);
             return ret;
@@ -762,7 +761,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         io_status->Information = 0;
         io_status->u.Status = STATUS_PENDING;
         ret = fileio_queue_async(fileio, io_status, FALSE);
-        if (ret != STATUS_SUCCESS)
+        if (ret != STATUS_PENDING)
         {
             if (flags & FD_FLAG_TIMEOUT) NtClose(hEvent);
             return ret;

@@ -1150,6 +1150,7 @@ static ULONG ws2_queue_async(struct ws2_async* wsa, IO_STATUS_BLOCK* iosb)
     default: FIXME("Unknown internal mode (%d)\n", wsa->mode); return STATUS_INVALID_PARAMETER;
     }
 
+    iosb->u.Status = STATUS_PENDING;
     SERVER_START_REQ( register_async )
     {
         req->handle = wsa->hSocket;
@@ -1163,18 +1164,13 @@ static ULONG ws2_queue_async(struct ws2_async* wsa, IO_STATUS_BLOCK* iosb)
     }
     SERVER_END_REQ;
 
-    if ( status ) iosb->u.Status = status;
-    if ( iosb->u.Status != STATUS_PENDING )
+    if (status != STATUS_PENDING)
     {
-        /* Note: we get here a non zero status when we couldn't queue the async
-         * in the server. Therefore, we simply terminate the async.
-         */
-        status = iosb->u.Status;
+        iosb->u.Status = status;
         ws2_async_terminate(wsa, iosb);
-        return status;
     }
-    NtCurrentTeb()->num_async_io++;
-    return STATUS_SUCCESS;
+    else NtCurrentTeb()->num_async_io++;
+    return status;
 }
 
 /***********************************************************************
@@ -1500,7 +1496,7 @@ static int WS2_register_async_shutdown( SOCKET s, enum ws2_mode mode )
 
     /* Hack: this will cause ws2_async_terminate() to free the overlapped structure */
     wsa->user_overlapped = NULL;
-    if ( (ret = ws2_queue_async( wsa, iosb )) )
+    if ((ret = ws2_queue_async( wsa, iosb )) != STATUS_PENDING)
     {
         err = NtStatusToWSAError( ret );
         goto out;
@@ -2843,7 +2839,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             goto err_free;
         }
 
-        if ( ( ret = ws2_queue_async( wsa, iosb ) ) )
+        if ((ret = ws2_queue_async( wsa, iosb )) != STATUS_PENDING)
         {
             err = NtStatusToWSAError( ret );
 
@@ -4349,7 +4345,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             goto err_free;
         }
 
-        if ( ( ret = ws2_queue_async( wsa, iosb )) )
+        if ((ret = ws2_queue_async( wsa, iosb )) != STATUS_PENDING)
         {
             err = NtStatusToWSAError( ret );
 

@@ -545,6 +545,7 @@ static void sock_queue_async( struct fd *fd, const async_data_t *data, int type,
     else
     {
         if (!create_async( current, NULL, queue, data )) return;
+        set_error( STATUS_PENDING );
     }
 
     pollev = sock_reselect( sock );

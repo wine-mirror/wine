@@ -273,6 +273,7 @@ static void serial_queue_async( struct fd *fd, const async_data_t *data, int typ
 
     add_timeout( &when, timeout );
     if (!create_async( current, timeout ? &when : NULL, queue, data )) return;
+    set_error( STATUS_PENDING );
 
     /* Check if the new pending request can be served immediately */
     events = check_fd_events( fd, serial_get_poll_events( fd ) );

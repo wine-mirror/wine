@@ -1742,6 +1742,7 @@ void fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type, 
     }
 
     if (!create_async( current, timeout, queue, data )) return;
+    set_error( STATUS_PENDING );
 
     /* Check if the new pending request can be served immediately */
     events = check_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
@@ -1937,9 +1938,7 @@ DECL_HANDLER(register_async)
      * 3. Carry out any operations necessary to adjust the object's poll events
      *    Usually: set_elect_events (obj, obj->ops->get_poll_events()).
      * 4. When the async request is triggered, then send back (with a proper APC)
-     *    the trigger (STATUS_ALERTED) to the thread that posted the request. 
-     *    async_destroy() is to be called: it will both notify the sender about
-     *    the trigger and destroy the request by itself
+     *    the trigger (STATUS_ALERTED) to the thread that posted the request.
      * See also the implementations in file.c, serial.c, and sock.c.
      */
 
