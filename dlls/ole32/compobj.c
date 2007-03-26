@@ -1840,10 +1840,28 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
 /***********************************************************************
  *           CoGetClassObject [OLE32.@]
  *
- * FIXME.  If request allows of several options and there is a failure
- *         with one (other than not being registered) do we try the
- *         others or return failure?  (E.g. inprocess is registered but
- *         the DLL is not found but the server version works)
+ * Creates an object of the specified class.
+ *
+ * PARAMS
+ *  rclsid       [I] Class ID to create an instance of.
+ *  dwClsContext [I] Flags to restrict the location of the created instance.
+ *  pServerInfo  [I] Optional. Details for connecting to a remote server.
+ *  iid          [I] The ID of the interface of the instance to return.
+ *  ppv          [O] On returns, contains a pointer to the specified interface of the object.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: HRESULT code.
+ *
+ * NOTES
+ *  The dwClsContext parameter can be one or more of the following:
+ *| CLSCTX_INPROC_SERVER - Use an in-process server, such as from a DLL.
+ *| CLSCTX_INPROC_HANDLER - Use an in-process object which handles certain functions for an object running in another process.
+ *| CLSCTX_LOCAL_SERVER - Connect to an object running in another process.
+ *| CLSCTX_REMOTE_SERVER - Connect to an object running on another machine.
+ *
+ * SEE ALSO
+ *  CoCreateInstance()
  */
 HRESULT WINAPI CoGetClassObject(
     REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
@@ -1985,7 +2003,15 @@ HRESULT WINAPI CoResumeClassObjects(void)
 /***********************************************************************
  *        GetClassFile (OLE32.@)
  *
- * This function supplies the CLSID associated with the given filename.
+ * Retrieves the class ID associated with the given filename.
+ *
+ * PARAMS
+ *  filePathName [I] Filename to retrieve the class ID for.
+ *  pclsid       [O] Address that receives the class ID for the file.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: Any HRESULT code.
  */
 HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
 {
