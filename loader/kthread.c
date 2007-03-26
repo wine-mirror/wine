@@ -167,7 +167,7 @@ static int next_temp_stack;  /* next temp stack to use */
  *
  * Get a temporary stack address to run the thread exit code on.
  */
-inline static char *get_temp_stack(void)
+static inline char *get_temp_stack(void)
 {
     unsigned int next = interlocked_xchg_add( &next_temp_stack, 1 );
     return temp_stacks[next % NB_TEMP_STACKS] + TEMP_STACK_SIZE;
