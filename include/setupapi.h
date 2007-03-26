@@ -415,6 +415,11 @@ DECL_WINELIB_SETUPAPI_TYPE_AW(PFILEPATHS)
 #define SP_COPY_NOPRUNE                   0x00100000
 #define SP_COPY_OEM_F6_INF                0x00200000
 
+#define SPOST_NONE  0
+#define SPOST_PATH  1
+#define SPOST_URL   2
+#define SPOST_MAX   3
+
 #define FLG_ADDREG_DELREG_BIT             0x00008000
 #define FLG_ADDREG_BINVALUETYPE           0x00000001
 #define FLG_ADDREG_NOCLOBBER              0x00000002
