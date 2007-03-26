@@ -3806,6 +3806,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
                 editedItem->pszText = ptr;
                 editedItem->cchTextMax = iLength + 1;
                 strcpyW(editedItem->pszText, newText);
+                TREEVIEW_ComputeTextWidth(infoPtr, editedItem, 0);
             }
         }
         if(newText != tmpText) Free(newText);
