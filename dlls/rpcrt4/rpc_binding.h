@@ -30,10 +30,11 @@ typedef struct _RpcAuthInfo
 {
   LONG refs;
 
-  unsigned long AuthnLevel;
-  unsigned long AuthnSvc;
+  ULONG AuthnLevel;
+  ULONG AuthnSvc;
   CredHandle cred;
   TimeStamp exp;
+  ULONG cbMaxToken;
 } RpcAuthInfo;
 
 typedef struct _RpcQualityOfService

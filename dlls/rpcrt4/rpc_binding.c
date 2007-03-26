@@ -967,7 +967,9 @@ RPC_STATUS WINAPI RpcRevertToSelfEx(RPC_BINDING_HANDLE BindingHandle)
     return RPC_S_OK;
 }
 
-static RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc, CredHandle cred, TimeStamp exp, RpcAuthInfo **ret)
+static RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc,
+                                     CredHandle cred, TimeStamp exp,
+                                     ULONG cbMaxToken, RpcAuthInfo **ret)
 {
     RpcAuthInfo *AuthInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*AuthInfo));
     if (!AuthInfo)
@@ -978,6 +980,7 @@ static RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc, CredHandl
     AuthInfo->AuthnSvc = AuthnSvc;
     AuthInfo->cred = cred;
     AuthInfo->exp = exp;
+    AuthInfo->cbMaxToken = cbMaxToken;
     *ret = AuthInfo;
     return RPC_S_OK;
 }
@@ -1225,6 +1228,7 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
   ULONG package_count;
   ULONG i;
   PSecPkgInfoA packages;
+  ULONG cbMaxToken;
 
   TRACE("%p %s %u %u %p %u %p\n", Binding, debugstr_a((const char*)ServerPrincName),
         AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
@@ -1306,12 +1310,14 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
   TRACE("found package %s for service %u\n", packages[i].Name, AuthnSvc);
   r = AcquireCredentialsHandleA((SEC_CHAR *)ServerPrincName, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
                                 AuthIdentity, NULL, NULL, &cred, &exp);
+  cbMaxToken = packages[i].cbMaxToken;
   FreeContextBuffer(packages);
   if (r == ERROR_SUCCESS)
   {
     if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
     bind->AuthInfo = NULL;
-    r = RpcAuthInfo_Create(AuthnLevel, AuthnSvc, cred, exp, &bind->AuthInfo);
+    r = RpcAuthInfo_Create(AuthnLevel, AuthnSvc, cred, exp, cbMaxToken,
+                           &bind->AuthInfo);
     if (r != RPC_S_OK)
       FreeCredentialsHandle(&cred);
     return RPC_S_OK;
@@ -1338,6 +1344,7 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
   ULONG package_count;
   ULONG i;
   PSecPkgInfoW packages;
+  ULONG cbMaxToken;
 
   TRACE("%p %s %u %u %p %u %p\n", Binding, debugstr_w((const WCHAR*)ServerPrincName),
         AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
@@ -1419,12 +1426,14 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
   TRACE("found package %s for service %u\n", debugstr_w(packages[i].Name), AuthnSvc);
   r = AcquireCredentialsHandleW((SEC_WCHAR *)ServerPrincName, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
                                 AuthIdentity, NULL, NULL, &cred, &exp);
+  cbMaxToken = packages[i].cbMaxToken;
   FreeContextBuffer(packages);
   if (r == ERROR_SUCCESS)
   {
     if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
     bind->AuthInfo = NULL;
-    r = RpcAuthInfo_Create(AuthnLevel, AuthnSvc, cred, exp, &bind->AuthInfo);
+    r = RpcAuthInfo_Create(AuthnLevel, AuthnSvc, cred, exp, cbMaxToken,
+                           &bind->AuthInfo);
     if (r != RPC_S_OK)
       FreeCredentialsHandle(&cred);
     return RPC_S_OK;
