@@ -110,7 +110,7 @@ static RPC_STATUS RPCRT4_AllocBinding(RpcBinding** Binding, BOOL server)
   return RPC_S_OK;
 }
 
-static RPC_STATUS RPCRT4_CreateBindingA(RpcBinding** Binding, BOOL server, LPSTR Protseq)
+static RPC_STATUS RPCRT4_CreateBindingA(RpcBinding** Binding, BOOL server, LPCSTR Protseq)
 {
   RpcBinding* NewBinding;
 
@@ -123,7 +123,7 @@ static RPC_STATUS RPCRT4_CreateBindingA(RpcBinding** Binding, BOOL server, LPSTR
   return RPC_S_OK;
 }
 
-static RPC_STATUS RPCRT4_CreateBindingW(RpcBinding** Binding, BOOL server, LPWSTR Protseq)
+static RPC_STATUS RPCRT4_CreateBindingW(RpcBinding** Binding, BOOL server, LPCWSTR Protseq)
 {
   RpcBinding* NewBinding;
 
@@ -136,8 +136,8 @@ static RPC_STATUS RPCRT4_CreateBindingW(RpcBinding** Binding, BOOL server, LPWST
   return RPC_S_OK;
 }
 
-static RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr,
-                                          LPSTR Endpoint, LPSTR NetworkOptions)
+static RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPCSTR NetworkAddr,
+                                          LPCSTR Endpoint, LPCSTR NetworkOptions)
 {
   RPC_STATUS status;
 
@@ -165,8 +165,8 @@ static RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr
   return RPC_S_OK;
 }
 
-static RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPWSTR NetworkAddr,
-                                          LPWSTR Endpoint, LPWSTR NetworkOptions)
+static RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPCWSTR NetworkAddr,
+                                          LPCWSTR Endpoint, LPCWSTR NetworkOptions)
 {
   RPC_STATUS status;
 
@@ -194,7 +194,7 @@ static RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPWSTR NetworkAdd
   return RPC_S_OK;
 }
 
-RPC_STATUS RPCRT4_ResolveBinding(RpcBinding* Binding, LPSTR Endpoint)
+RPC_STATUS RPCRT4_ResolveBinding(RpcBinding* Binding, LPCSTR Endpoint)
 {
   RPC_STATUS status;
 
@@ -214,7 +214,7 @@ RPC_STATUS RPCRT4_ResolveBinding(RpcBinding* Binding, LPSTR Endpoint)
   return RPC_S_OK;
 }
 
-RPC_STATUS RPCRT4_SetBindingObject(RpcBinding* Binding, UUID* ObjectUuid)
+RPC_STATUS RPCRT4_SetBindingObject(RpcBinding* Binding, const UUID* ObjectUuid)
 {
   TRACE("(*RpcBinding == ^%p, UUID == %s)\n", Binding, debugstr_guid(ObjectUuid)); 
   if (ObjectUuid) memcpy(&Binding->ObjectUuid, ObjectUuid, sizeof(UUID));
@@ -838,17 +838,17 @@ RPC_STATUS WINAPI RpcBindingToStringBindingA( RPC_BINDING_HANDLE Binding, RPC_CS
 {
   RPC_STATUS ret;
   RpcBinding* bind = (RpcBinding*)Binding;
-  LPSTR ObjectUuid;
+  RPC_CSTR ObjectUuid;
 
   TRACE("(%p,%p)\n", Binding, StringBinding);
 
-  ret = UuidToStringA(&bind->ObjectUuid, (unsigned char**)&ObjectUuid);
+  ret = UuidToStringA(&bind->ObjectUuid, &ObjectUuid);
   if (ret != RPC_S_OK) return ret;
 
-  ret = RpcStringBindingComposeA((unsigned char*) ObjectUuid, (unsigned char*)bind->Protseq, (unsigned char*) bind->NetworkAddr,
+  ret = RpcStringBindingComposeA(ObjectUuid, (unsigned char*)bind->Protseq, (unsigned char*) bind->NetworkAddr,
                                  (unsigned char*) bind->Endpoint, NULL, StringBinding);
 
-  RpcStringFreeA((unsigned char**)&ObjectUuid);
+  RpcStringFreeA(&ObjectUuid);
 
   return ret;
 }
