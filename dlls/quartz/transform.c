@@ -92,9 +92,7 @@ static HRESULT TransformFilter_Sample(LPVOID iface, IMediaSample * pSample)
     }
 #endif
 
-    This->pFuncsTable->pfnProcessSampleData(This, pbSrcStream, cbSrcStream);
-
-    return S_OK;
+    return This->pFuncsTable->pfnProcessSampleData(This, pbSrcStream, cbSrcStream);
 }
 
 static HRESULT TransformFilter_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
