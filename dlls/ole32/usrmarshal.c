@@ -1470,7 +1470,8 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
         break;
     case TYMED_HGLOBAL:
         TRACE("TYMED_HGLOBAL\n");
-        size = HGLOBAL_UserSize(pFlags, size, &pStgMedium->u.hGlobal);
+        if (pStgMedium->u.hGlobal)
+            size = HGLOBAL_UserSize(pFlags, size, &pStgMedium->u.hGlobal);
         break;
     case TYMED_FILE:
         TRACE("TYMED_FILE\n");
@@ -1482,21 +1483,35 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
         }
         break;
     case TYMED_ISTREAM:
-        FIXME("TYMED_ISTREAM\n");
+        TRACE("TYMED_ISTREAM\n");
+        if (pStgMedium->u.pstm)
+        {
+            FIXME("not implemented for IStream %p\n", pStgMedium->u.pstm);
+        }
         break;
     case TYMED_ISTORAGE:
-        FIXME("TYMED_ISTORAGE\n");
+        TRACE("TYMED_ISTORAGE\n");
+        if (pStgMedium->u.pstg)
+        {
+            FIXME("not implemented for IStorage %p\n", pStgMedium->u.pstg);
+        }
         break;
     case TYMED_GDI:
-        FIXME("TYMED_GDI\n");
+        TRACE("TYMED_GDI\n");
+        if (pStgMedium->u.hBitmap)
+        {
+            FIXME("not implemented for GDI object %p\n", pStgMedium->u.hBitmap);
+        }
         break;
     case TYMED_MFPICT:
         TRACE("TYMED_MFPICT\n");
-        size = HMETAFILEPICT_UserSize(pFlags, size, &pStgMedium->u.hMetaFilePict);
+        if (pStgMedium->u.hMetaFilePict)
+            size = HMETAFILEPICT_UserSize(pFlags, size, &pStgMedium->u.hMetaFilePict);
         break;
     case TYMED_ENHMF:
         TRACE("TYMED_ENHMF\n");
-        size = HENHMETAFILE_UserSize(pFlags, size, &pStgMedium->u.hEnhMetaFile);
+        if (pStgMedium->u.hEnhMetaFile)
+            size = HENHMETAFILE_UserSize(pFlags, size, &pStgMedium->u.hEnhMetaFile);
         break;
     default:
         RaiseException(DV_E_TYMED, 0, 0, NULL);
@@ -1550,7 +1565,8 @@ unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *p
         break;
     case TYMED_HGLOBAL:
         TRACE("TYMED_HGLOBAL\n");
-        pBuffer = HGLOBAL_UserMarshal(pFlags, pBuffer, &pStgMedium->u.hGlobal);
+        if (pStgMedium->u.hGlobal)
+            pBuffer = HGLOBAL_UserMarshal(pFlags, pBuffer, &pStgMedium->u.hGlobal);
         break;
     case TYMED_FILE:
         TRACE("TYMED_FILE\n");
@@ -1573,21 +1589,35 @@ unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *p
         }
         break;
     case TYMED_ISTREAM:
-        FIXME("TYMED_ISTREAM\n");
+        TRACE("TYMED_ISTREAM\n");
+        if (pStgMedium->u.pstm)
+        {
+            FIXME("not implemented for IStream %p\n", pStgMedium->u.pstm);
+        }
         break;
     case TYMED_ISTORAGE:
-        FIXME("TYMED_ISTORAGE\n");
+        TRACE("TYMED_ISTORAGE\n");
+        if (pStgMedium->u.pstg)
+        {
+            FIXME("not implemented for IStorage %p\n", pStgMedium->u.pstg);
+        }
         break;
     case TYMED_GDI:
-        FIXME("TYMED_GDI\n");
+        TRACE("TYMED_GDI\n");
+        if (pStgMedium->u.hBitmap)
+        {
+            FIXME("not implemented for GDI object %p\n", pStgMedium->u.hBitmap);
+        }
         break;
     case TYMED_MFPICT:
         TRACE("TYMED_MFPICT\n");
-        pBuffer = HMETAFILEPICT_UserMarshal(pFlags, pBuffer, &pStgMedium->u.hMetaFilePict);
+        if (pStgMedium->u.hMetaFilePict)
+            pBuffer = HMETAFILEPICT_UserMarshal(pFlags, pBuffer, &pStgMedium->u.hMetaFilePict);
         break;
     case TYMED_ENHMF:
         TRACE("TYMED_ENHMF\n");
-        pBuffer = HENHMETAFILE_UserMarshal(pFlags, pBuffer, &pStgMedium->u.hEnhMetaFile);
+        if (pStgMedium->u.hEnhMetaFile)
+            pBuffer = HENHMETAFILE_UserMarshal(pFlags, pBuffer, &pStgMedium->u.hEnhMetaFile);
         break;
     default:
         RaiseException(DV_E_TYMED, 0, 0, NULL);
@@ -1644,7 +1674,8 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
         break;
     case TYMED_HGLOBAL:
         TRACE("TYMED_HGLOBAL\n");
-        pBuffer = HGLOBAL_UserUnmarshal(pFlags, pBuffer, &pStgMedium->u.hGlobal);
+        if (content)
+            pBuffer = HGLOBAL_UserUnmarshal(pFlags, pBuffer, &pStgMedium->u.hGlobal);
         break;
     case TYMED_FILE:
         TRACE("TYMED_FILE\n");
@@ -1686,21 +1717,45 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
             pStgMedium->u.lpszFileName = NULL;
         break;
     case TYMED_ISTREAM:
-        FIXME("TYMED_ISTREAM\n");
+        TRACE("TYMED_ISTREAM\n");
+        if (content)
+        {
+            FIXME("not implemented for IStream\n");
+        }
+        else
+            pStgMedium->u.pstm = NULL;
         break;
     case TYMED_ISTORAGE:
-        FIXME("TYMED_ISTORAGE\n");
+        TRACE("TYMED_ISTORAGE\n");
+        if (content)
+        {
+            FIXME("not implemented for IStorage\n");
+        }
+        else
+            pStgMedium->u.pstg = NULL;
         break;
     case TYMED_GDI:
-        FIXME("TYMED_GDI\n");
+        TRACE("TYMED_GDI\n");
+        if (content)
+        {
+            FIXME("not implemented for GDI object\n");
+        }
+        else
+            pStgMedium->u.hBitmap = NULL;
         break;
     case TYMED_MFPICT:
         TRACE("TYMED_MFPICT\n");
-        pBuffer = HMETAFILEPICT_UserUnmarshal(pFlags, pBuffer, &pStgMedium->u.hMetaFilePict);
+        if (content)
+            pBuffer = HMETAFILEPICT_UserUnmarshal(pFlags, pBuffer, &pStgMedium->u.hMetaFilePict);
+        else
+            pStgMedium->u.hMetaFilePict = NULL;
         break;
     case TYMED_ENHMF:
         TRACE("TYMED_ENHMF\n");
-        pBuffer = HENHMETAFILE_UserUnmarshal(pFlags, pBuffer, &pStgMedium->u.hEnhMetaFile);
+        if (content)
+            pBuffer = HENHMETAFILE_UserUnmarshal(pFlags, pBuffer, &pStgMedium->u.hEnhMetaFile);
+        else
+            pStgMedium->u.hEnhMetaFile = NULL;
         break;
     default:
         RaiseException(DV_E_TYMED, 0, 0, NULL);
