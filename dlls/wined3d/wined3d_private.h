@@ -1625,6 +1625,7 @@ extern void shader_arb_load_constants(
 extern void shader_hw_def(SHADER_OPCODE_ARG *arg);
 
 /* ARB pixel shader prototypes */
+extern void pshader_hw_bem(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_cnd(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_cmp(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
@@ -1700,6 +1701,7 @@ extern void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texkill(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg);
+extern void pshader_glsl_bem(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg);

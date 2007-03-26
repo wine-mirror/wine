@@ -197,6 +197,8 @@ HRESULT shader_get_registers_used(
     /* There are some minor differences between pixel and vertex shaders */
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
 
+    reg_maps->bumpmat = -1;
+
     if (pToken == NULL)
         return WINED3D_OK;
 
@@ -295,7 +297,15 @@ HRESULT shader_get_registers_used(
             DWORD snum = *pToken & WINED3DSP_REGNUM_MASK; 
             reg_maps->labels[snum] = 1;
             pToken += curOpcode->num_params;
- 
+
+        } else if(WINED3DSIO_BEM == curOpcode->opcode) {
+            DWORD regnum = *pToken & WINED3DSP_REGNUM_MASK;
+            if(reg_maps->bumpmat != -1 && reg_maps->bumpmat != regnum) {
+                FIXME("Pixel shader uses bem or texbem instruction on more than 1 sampler\n");
+            } else {
+                reg_maps->bumpmat = regnum;
+            }
+
         /* Set texture, address, temporary registers */
         } else {
             int i, limit;
@@ -347,7 +357,7 @@ HRESULT shader_get_registers_used(
 
                 /* texbem is only valid with < 1.4 pixel shaders */
                 if(WINED3DSIO_TEXBEM == curOpcode->opcode) {
-                    if(reg_maps->bumpmat != 0 && reg_maps->bumpmat != sampler_code) {
+                    if(reg_maps->bumpmat != -1 && reg_maps->bumpmat != sampler_code) {
                         FIXME("Pixel shader uses texbem instruction on more than 1 sampler\n");
                     } else {
                         reg_maps->bumpmat = sampler_code;

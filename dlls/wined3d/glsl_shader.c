@@ -355,7 +355,7 @@ void shader_glsl_load_constants(
         /* Upload the environment bump map matrix if needed. The needsbumpmat member specifies the texture stage to load the matrix from.
          * It can't be 0 for a valid texbem instruction.
          */
-        if(((IWineD3DPixelShaderImpl *) pshader)->needsbumpmat != 0) {
+        if(((IWineD3DPixelShaderImpl *) pshader)->needsbumpmat != -1) {
             float *data = (float *) &stateBlock->textureState[(int) ((IWineD3DPixelShaderImpl *) pshader)->needsbumpmat][WINED3DTSS_BUMPENVMAT00];
             pos = GL_EXTCALL(glGetUniformLocationARB(programId, "bumpenvmat"));
             checkGLcall("glGetUniformLocationARB");
@@ -400,7 +400,7 @@ void shader_generate_glsl_declarations(
 
     if(!pshader)
         shader_addline(buffer, "uniform vec4 posFixup;\n");
-    else if(reg_maps->bumpmat)
+    else if(reg_maps->bumpmat != -1)
         shader_addline(buffer, "uniform mat2 bumpenvmat;\n");
 
     /* Declare texture samplers */ 
@@ -1822,6 +1822,17 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0|WINED3DSP_WRITEMASK_1, &coord_param);
     shader_addline(arg->buffer, "%s(Psampler%u, T%u%s + vec4(bumpenvmat * %s, 0.0, 0.0)%s )%s);\n",
                    sample_function.name, sampler_idx, sampler_idx, coord_mask, coord_param.param_str, coord_mask, dst_swizzle);
+}
+
+void pshader_glsl_bem(SHADER_OPCODE_ARG* arg) {
+    glsl_src_param_t src0_param, src1_param;
+
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0|WINED3DSP_WRITEMASK_1, &src0_param);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_0|WINED3DSP_WRITEMASK_1, &src1_param);
+
+    shader_glsl_append_dst(arg->buffer, arg);
+    shader_addline(arg->buffer, "%s + bumpenvmat * %s);\n",
+                   src0_param.param_str, src1_param.param_str);
 }
 
 /** Process the WINED3DSIO_TEXREG2AR instruction in GLSL

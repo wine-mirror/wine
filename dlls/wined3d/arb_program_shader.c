@@ -177,7 +177,7 @@ void shader_generate_arb_declarations(
             shader_addline(buffer, "MOV T%u, fragment.texcoord[%u];\n", i, i);
     }
 
-    if(reg_maps->bumpmat /* Only  a pshader can use texbem */) {
+    if(reg_maps->bumpmat != -1 /* Only a pshader can use texbem */) {
         /* If the shader does not use all available constants, use the next free constant to load the bump mapping environment matrix from
          * the stateblock into the shader. If no constant is available don't load, texbem will then just sample the texture without applying
          * bump mapping.
@@ -510,6 +510,34 @@ static inline void pshader_gen_output_modifier_line(
         regstr, write_mask, regstr, shift_tab[shift]);
 }
 
+void pshader_hw_bem(SHADER_OPCODE_ARG* arg) {
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+
+    SHADER_BUFFER* buffer = arg->buffer;
+    char dst_name[50];
+    char src_name[2][50];
+    char dst_wmask[20];
+
+    pshader_get_register_name(arg->dst, dst_name);
+    shader_arb_get_write_mask(arg->dst, dst_wmask);
+    strcat(dst_name, dst_wmask);
+
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name[0]);
+    pshader_gen_input_modifier_line(buffer, arg->src[1], 1, src_name[1]);
+
+    if(This->bumpenvmatconst != -1) {
+        /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed */
+        shader_addline(buffer, "SWZ TMP2, bumpenvmat, x, z, 0, 0;\n");
+        shader_addline(buffer, "DP3 TMP.r, TMP2, %s;\n", src_name[1]);
+        shader_addline(buffer, "SWZ TMP2, bumpenvmat, y, w, 0, 0;\n");
+        shader_addline(buffer, "DP3 TMP.g, TMP2, %s;\n", src_name[1]);
+
+        shader_addline(buffer, "ADD %s, %s, TMP;\n", dst_name, src_name[0]);
+    } else {
+        shader_addline(buffer, "MOV %s, %s;\n", dst_name, src_name[0]);
+    }
+}
+
 void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
 
     SHADER_BUFFER* buffer = arg->buffer;
@@ -723,7 +751,7 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
     /* Can directly use the name because texbem is only valid for <= 1.3 shaders */
     pshader_get_register_name(dst, reg_coord);
 
-    if(This->bumpenvmatconst) {
+    if(This->bumpenvmatconst != -1) {
         /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed */
 
         shader_addline(buffer, "SWZ TMP2, bumpenvmat, x, z, 0, 0;\n");
