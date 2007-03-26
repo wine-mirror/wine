@@ -223,9 +223,11 @@ static ULONG WINAPI Parser_Release(IBaseFilter * iface)
 
 static HRESULT WINAPI Parser_GetClassID(IBaseFilter * iface, CLSID * pClsid)
 {
+    ParserImpl *This = (ParserImpl *)iface;
+
     TRACE("(%p)\n", pClsid);
 
-    *pClsid = CLSID_AviSplitter;
+    *pClsid = This->clsid;
 
     return S_OK;
 }
