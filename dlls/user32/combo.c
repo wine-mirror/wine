@@ -205,8 +205,9 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
  * The height of the text area is set in two ways.
  * It can be set explicitly through a combobox message or through a
  * WM_MEASUREITEM callback.
- * If this is not the case, the height is set to 13 dialog units.
+ * If this is not the case, the height is set to font height + 4px
  * This height was determined through experimentation.
+ * CBCalcPlacement will add 2*COMBO_YBORDERSIZE pixels for the border
  */
 static INT CBGetTextAreaHeight(
   HWND        hwnd,
@@ -237,14 +238,7 @@ static INT CBGetTextAreaHeight(
 
     ReleaseDC(hwnd, hDC);
 
-    iTextItemHeight = ((13 * baseUnitY) / 8);
-
-    /*
-     * This "formula" calculates the height of the complete control.
-     * To calculate the height of the text area, we have to remove the
-     * borders.
-     */
-    iTextItemHeight -= 2*COMBO_YBORDERSIZE();
+    iTextItemHeight = baseUnitY + 4;
   }
 
   /*

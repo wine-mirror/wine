@@ -8,6 +8,7 @@ IMPORTS   = user32 gdi32 advapi32 kernel32
 CTESTS = \
 	class.c \
 	clipboard.c \
+	combo.c \
 	cursoricon.c \
 	dce.c \
 	dde.c \
