@@ -501,7 +501,22 @@ static RPC_STATUS RPCRT4_ClientAuthorize(RpcConnection *conn, SecBuffer *in,
       return ERROR_ACCESS_DENIED; /* FIXME: is this correct? */
   }
 
-  TRACE("r = 0x%08x, cbBuffer = %ld, attr = 0x%08x\n", r, out->cbBuffer, conn->attr);
+  TRACE("r = 0x%08x, attr = 0x%08x\n", r, conn->attr);
+
+  if ((r == SEC_I_COMPLETE_NEEDED) || (r == SEC_I_COMPLETE_AND_CONTINUE))
+  {
+      TRACE("complete needed\n");
+      r = CompleteAuthToken(&conn->ctx, &out_desc);
+      if (FAILED(r))
+      {
+          HeapFree(GetProcessHeap(), 0, out->pvBuffer);
+          out->pvBuffer = NULL;
+          WARN("CompleteAuthToken failed with error 0x%08x\n", r);
+          return ERROR_ACCESS_DENIED; /* FIXME: is this correct? */
+      }
+  }
+
+  TRACE("cbBuffer = %ld\n", out->cbBuffer);
 
   return RPC_S_OK;
 }
