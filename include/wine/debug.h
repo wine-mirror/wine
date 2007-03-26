@@ -253,11 +253,11 @@ static inline const char *wine_dbgstr_longlong( ULONGLONG ll )
 #ifdef __WINESRC__
 /* Wine uses shorter names that are very likely to conflict with other software */
 
-inline static const char *debugstr_an( const char * s, int n ) { return wine_dbgstr_an( s, n ); }
-inline static const char *debugstr_wn( const WCHAR *s, int n ) { return wine_dbgstr_wn( s, n ); }
-inline static const char *debugstr_guid( const struct _GUID *id ) { return wine_dbgstr_guid(id); }
-inline static const char *debugstr_a( const char *s )  { return wine_dbgstr_an( s, -1 ); }
-inline static const char *debugstr_w( const WCHAR *s ) { return wine_dbgstr_wn( s, -1 ); }
+static inline const char *debugstr_an( const char * s, int n ) { return wine_dbgstr_an( s, n ); }
+static inline const char *debugstr_wn( const WCHAR *s, int n ) { return wine_dbgstr_wn( s, n ); }
+static inline const char *debugstr_guid( const struct _GUID *id ) { return wine_dbgstr_guid(id); }
+static inline const char *debugstr_a( const char *s )  { return wine_dbgstr_an( s, -1 ); }
+static inline const char *debugstr_w( const WCHAR *s ) { return wine_dbgstr_wn( s, -1 ); }
 
 #define TRACE                      WINE_TRACE
 #define TRACE_(ch)                 WINE_TRACE_(ch)

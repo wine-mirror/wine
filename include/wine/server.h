@@ -56,7 +56,7 @@ extern int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, i
 extern void wine_server_release_fd( obj_handle_t handle, int unix_fd );
 
 /* do a server call and set the last error code */
-inline static unsigned int wine_server_call_err( void *req_ptr )
+static inline unsigned int wine_server_call_err( void *req_ptr )
 {
     unsigned int res = wine_server_call( req_ptr );
     if (res) SetLastError( RtlNtStatusToDosError(res) );
@@ -64,13 +64,13 @@ inline static unsigned int wine_server_call_err( void *req_ptr )
 }
 
 /* get the size of the variable part of the returned reply */
-inline static data_size_t wine_server_reply_size( const void *reply )
+static inline data_size_t wine_server_reply_size( const void *reply )
 {
     return ((const struct reply_header *)reply)->reply_size;
 }
 
 /* add some data to be sent along with the request */
-inline static void wine_server_add_data( void *req_ptr, const void *ptr, data_size_t size )
+static inline void wine_server_add_data( void *req_ptr, const void *ptr, data_size_t size )
 {
     struct __server_request_info * const req = req_ptr;
     if (size)
@@ -82,7 +82,7 @@ inline static void wine_server_add_data( void *req_ptr, const void *ptr, data_si
 }
 
 /* set the pointer and max size for the reply var data */
-inline static void wine_server_set_reply( void *req_ptr, void *ptr, data_size_t max_size )
+static inline void wine_server_set_reply( void *req_ptr, void *ptr, data_size_t max_size )
 {
     struct __server_request_info * const req = req_ptr;
     req->reply_data = ptr;

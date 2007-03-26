@@ -98,7 +98,7 @@ static char *xstrdup( const char *str )
 }
 
 /* remove all trailing slashes from a path name */
-inline static void remove_trailing_slashes( char *path )
+static inline void remove_trailing_slashes( char *path )
 {
     int len = strlen( path );
     while (len > 1 && path[len-1] == '/') path[--len] = 0;

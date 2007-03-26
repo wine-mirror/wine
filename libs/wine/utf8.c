@@ -150,7 +150,7 @@ int wine_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int 
 }
 
 /* query necessary dst length for src string */
-inline static int get_length_mbs_utf8( int flags, const char *src, int srclen )
+static inline int get_length_mbs_utf8( int flags, const char *src, int srclen )
 {
     int len, ret = 0;
     unsigned int res;
