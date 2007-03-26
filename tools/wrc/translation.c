@@ -79,6 +79,9 @@ static int get_language_id(resource_t *resource) {
 		case res_anicur:
 		case res_aniico:
 			return resource->res.ani->data->lvc.language->id;
+                case res_html:
+                        return resource->res.html->data->lvc.language->id;
+
 		default:
 			/* Not supposed to reach here */
 			fprintf(stderr, "Not supposed to reach here (get_language_id())\n");
@@ -614,6 +617,16 @@ static int compare_rcdata(rcdata_t *rcdata1, rcdata_t *rcdata2) {
 	return different;
 }
 
+static int compare_html(html_t *rcdata1, html_t *rcdata2) {
+        int different = 0;
+        if(!different &&
+           ((rcdata1->memopt != rcdata2->memopt) ||
+           (rcdata1->data->lvc.version != rcdata2->data->lvc.version) ||
+           (rcdata1->data->lvc.characts != rcdata2->data->lvc.characts)))
+                different = 1;
+        return different;
+}
+
 static int compare_stringtable(stringtable_t *stringtable1, stringtable_t *stringtable2) {
 	int different = 0;
 	int i;
@@ -917,6 +930,8 @@ static int compare(resource_t *resource1, resource_t *resource2) {
 			return compare_stringtable(resource1->res.stt, resource2->res.stt);
 		case res_usr:
 			return compare_user(resource1->res.usr, resource2->res.usr);
+		case res_html:
+		        return compare_html(resource1->res.html, resource2->res.html);
 		case res_msg:
 			return compare_messagetable(resource1->res.msg, resource2->res.msg);
 		case res_ver:
@@ -978,6 +993,7 @@ void verify_translations(resource_t *top) {
 			case res_toolbar:
 			case res_anicur:
 			case res_aniico:
+			case res_html:
 				add_resource(next);
 				break;
 			default:
@@ -1027,6 +1043,8 @@ void verify_translations(resource_t *top) {
 	res_names[res_anicur] = strdup("ani_cursor");
 	present_resources[res_aniico] = 1;
 	res_names[res_aniico] = strdup("ani_icon");
+	present_resources[res_html] = 1;
+	res_names[res_html] = strdup("html");
 
 	for(res_type = res_0; res_type <= res_usr; res_type++) {
 		if(!present_resources[res_type]) {
