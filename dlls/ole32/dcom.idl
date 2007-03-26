@@ -108,6 +108,14 @@ interface ObjectRpcBaseTypes
     [size_is(wNumEntries)] unsigned short aStringArray[];
   } DUALSTRINGARRAY;
 
+  typedef struct tagOXID_INFO {
+    DWORD dwTid;
+    DWORD dwPid;
+    IPID ipidRemUnknown;
+    DWORD dwAuthnHint;
+    DUALSTRINGARRAY *psa;
+  } OXID_INFO;
+
   const unsigned long OBJREF_SIGNATURE = 0x574f454d; /* "MEOW" */
   const unsigned long OBJREF_STANDARD = 0x1;
   const unsigned long OBJREF_HANDLER = 0x2;
