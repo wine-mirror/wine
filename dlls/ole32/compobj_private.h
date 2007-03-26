@@ -93,6 +93,7 @@ struct stub_manager
     OID               oid;        /* apartment-scoped unique identifier (RO) */
     IUnknown         *object;     /* the object we are managing the stub for (RO) */
     ULONG             next_ipid;  /* currently unused (LOCK) */
+    OXID_INFO         oxid_info;  /* string binding, ipid of rem unknown and other information (RO) */
 
     /* We need to keep a count of the outstanding marshals, so we can enforce the
      * marshalling rules (ie, you can only unmarshal normal marshals once). Note
@@ -125,6 +126,7 @@ struct proxy_manager
   struct apartment *parent; /* owning apartment (RO) */
   struct list entry;        /* entry in apartment (CS parent->cs) */
   OXID oxid;                /* object exported ID (RO) */
+  OXID_INFO oxid_info;      /* string binding, ipid of rem unknown and other information (RO) */
   OID oid;                  /* object ID (RO) */
   struct list interfaces;   /* imported interfaces (CS cs) */
   LONG refs;                /* proxy reference count (LOCK) */
@@ -227,6 +229,7 @@ void    RPC_StopLocalServer(void *registration);
 HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
 HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook);
 void    RPC_UnregisterAllChannelHooks(void);
+HRESULT RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info);
 
 /* This function initialize the Running Object Table */
 HRESULT WINAPI RunningObjectTableImpl_Initialize(void);

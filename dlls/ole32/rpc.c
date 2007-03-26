@@ -1488,6 +1488,23 @@ void RPC_UnregisterInterface(REFIID riid)
     LeaveCriticalSection(&csRegIf);
 }
 
+HRESULT RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info)
+{
+    oxid_info->dwTid = 0;
+    oxid_info->dwPid = 0;
+    oxid_info->dwAuthnHint = RPC_C_AUTHN_LEVEL_NONE;
+    /* FIXME: this is a hack around not having an OXID resolver yet -
+     * this function should contact the machine's OXID resolver and then it
+     * should give us the IPID of the IRemUnknown interface */
+    oxid_info->ipidRemUnknown.Data1 = 0xffffffff;
+    oxid_info->ipidRemUnknown.Data2 = 0xffff;
+    oxid_info->ipidRemUnknown.Data3 = 0xffff;
+    memcpy(&oxid_info->ipidRemUnknown.Data4, &oxid, sizeof(OXID));
+    oxid_info->psa = NULL /* FIXME */;
+
+    return S_OK;
+}
+
 /* make the apartment reachable by other threads and processes and create the
  * IRemUnknown object */
 void RPC_StartRemoting(struct apartment *apt)

@@ -51,7 +51,8 @@ extern const CLSID CLSID_DfMarshal;
 
 static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt,
                                 MSHCTX dest_context, void *dest_context_data,
-                                REFIID riid, void **object);
+                                REFIID riid, const OXID_INFO *oxid_info,
+                                void **object);
 
 /* Marshalling just passes a unique identifier to the remote client,
  * that makes it possible to find the passed interface again.
@@ -299,7 +300,7 @@ static HRESULT WINAPI ClientIdentity_QueryMultipleInterfaces(IMultiQI *iface, UL
                     hrobj = unmarshal_object(&qiresults[i].std, This->parent,
                                              This->dest_context,
                                              This->dest_context_data,
-                                             pMQIs[index].pIID,
+                                             pMQIs[index].pIID, &This->oxid_info,
                                              (void **)&pMQIs[index].pItf);
 
                 if (hrobj == S_OK)
@@ -651,7 +652,7 @@ static void ifproxy_destroy(struct ifproxy * This)
 
 static HRESULT proxy_manager_construct(
     APARTMENT * apt, ULONG sorflags, OXID oxid, OID oid,
-    struct proxy_manager ** proxy_manager)
+    const OXID_INFO *oxid_info, struct proxy_manager ** proxy_manager)
 {
     struct proxy_manager * This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
@@ -661,6 +662,25 @@ static HRESULT proxy_manager_construct(
     {
         HeapFree(GetProcessHeap(), 0, This);
         return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    if (oxid_info)
+    {
+        This->oxid_info.dwPid = oxid_info->dwPid;
+        This->oxid_info.dwTid = oxid_info->dwTid;
+        This->oxid_info.ipidRemUnknown = oxid_info->ipidRemUnknown;
+        This->oxid_info.dwAuthnHint = oxid_info->dwAuthnHint;
+        This->oxid_info.psa = NULL /* FIXME: copy from oxid_info */;
+    }
+    else
+    {
+        HRESULT hr = RPC_ResolveOxid(oxid, &This->oxid_info);
+        if (FAILED(hr))
+        {
+            CloseHandle(This->remoting_mutex);
+            HeapFree(GetProcessHeap(), 0, This);
+            return hr;
+        }
     }
 
     This->lpVtbl = &ClientIdentity_Vtbl;
@@ -951,19 +971,12 @@ static HRESULT proxy_manager_get_remunknown(struct proxy_manager * This, IRemUnk
         stdobjref.oxid = This->oxid;
         /* FIXME: what should be used for the oid? The DCOM draft doesn't say */
         stdobjref.oid = (OID)-1;
-        /* FIXME: this is a hack around not having an OXID resolver yet -
-         * the OXID resolver should give us the IPID of the IRemUnknown
-         * interface */
-        stdobjref.ipid.Data1 = 0xffffffff;
-        stdobjref.ipid.Data2 = 0xffff;
-        stdobjref.ipid.Data3 = 0xffff;
-        assert(sizeof(stdobjref.ipid.Data4) == sizeof(stdobjref.oxid));
-        memcpy(&stdobjref.ipid.Data4, &stdobjref.oxid, sizeof(OXID));
-        
+        stdobjref.ipid = This->oxid_info.ipidRemUnknown;
+
         /* do the unmarshal */
         hr = unmarshal_object(&stdobjref, This->parent, This->dest_context,
                               This->dest_context_data, &IID_IRemUnknown,
-                              (void**)&This->remunk);
+                              &This->oxid_info, (void**)&This->remunk);
         if (hr == S_OK)
             *remunk = This->remunk;
     }
@@ -1010,6 +1023,7 @@ static void proxy_manager_destroy(struct proxy_manager * This)
     }
 
     if (This->remunk) IRemUnknown_Release(This->remunk);
+    CoTaskMemFree(This->oxid_info.psa);
 
     DEBUG_CLEAR_CRITSEC_NAME(&This->cs);
     DeleteCriticalSection(&This->cs);
@@ -1156,7 +1170,8 @@ StdMarshalImpl_MarshalInterface(
  * and table marshaling */
 static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt,
                                 MSHCTX dest_context, void *dest_context_data,
-                                REFIID riid, void **object)
+                                REFIID riid, const OXID_INFO *oxid_info,
+                                void **object)
 {
     struct proxy_manager *proxy_manager = NULL;
     HRESULT hr = S_OK;
@@ -1174,7 +1189,7 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt,
     if (!find_proxy_manager(apt, stdobjref->oxid, stdobjref->oid, &proxy_manager))
     {
         hr = proxy_manager_construct(apt, stdobjref->flags,
-                                     stdobjref->oxid, stdobjref->oid,
+                                     stdobjref->oxid, stdobjref->oid, oxid_info,
                                      &proxy_manager);
     }
     else
@@ -1225,7 +1240,7 @@ static HRESULT WINAPI
 StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, void **ppv)
 {
     StdMarshalImpl *This = (StdMarshalImpl *)iface;
-    struct stub_manager  *stubmgr;
+    struct stub_manager *stubmgr = NULL;
     STDOBJREF stdobjref;
     ULONG res;
     HRESULT hres;
@@ -1276,8 +1291,6 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
         {
             if (!stub_manager_notify_unmarshal(stubmgr, &stdobjref.ipid))
                 hres = CO_E_OBJNOTCONNECTED;
-
-            stub_manager_int_release(stubmgr);
         }
         else
         {
@@ -1286,8 +1299,6 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
                 wine_dbgstr_longlong(stdobjref.oid));
             hres = CO_E_OBJNOTCONNECTED;
         }
-
-        apartment_release(stub_apt);
     }
     else
         TRACE("Treating unmarshal from OXID %s as inter-process\n",
@@ -1295,7 +1306,11 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
 
     if (hres == S_OK)
         hres = unmarshal_object(&stdobjref, apt, This->dwDestContext,
-                                This->pvDestContext, riid, ppv);
+                                This->pvDestContext, riid,
+                                stubmgr ? &stubmgr->oxid_info : NULL, ppv);
+
+    if (stubmgr) stub_manager_int_release(stubmgr);
+    if (stub_apt) apartment_release(stub_apt);
 
     if (hres) WARN("Failed with error 0x%08x\n", hres);
     else TRACE("Successfully created proxy %p\n", *ppv);

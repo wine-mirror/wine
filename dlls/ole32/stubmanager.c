@@ -70,6 +70,23 @@ struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object)
      * and the caller will also hold a reference */
     sm->refs   = 2;
 
+    sm->oxid_info.dwPid = GetCurrentProcessId();
+    sm->oxid_info.dwTid = GetCurrentThreadId();
+    /*
+     * FIXME: this is a hack for marshalling IRemUnknown. In real
+     * DCOM, the IPID of the IRemUnknown interface is generated like
+     * any other and passed to the OXID resolver which then returns it
+     * when queried. We don't have an OXID resolver yet so instead we
+     * use a magic IPID reserved for IRemUnknown.
+     */
+    sm->oxid_info.ipidRemUnknown.Data1 = 0xffffffff;
+    sm->oxid_info.ipidRemUnknown.Data2 = 0xffff;
+    sm->oxid_info.ipidRemUnknown.Data3 = 0xffff;
+    assert(sizeof(sm->oxid_info.ipidRemUnknown.Data4) == sizeof(apt->oxid));
+    memcpy(&sm->oxid_info.ipidRemUnknown.Data4, &apt->oxid, sizeof(OXID));
+    sm->oxid_info.dwAuthnHint = RPC_C_AUTHN_LEVEL_NONE;
+    sm->oxid_info.psa = NULL /* FIXME */;
+
     /* yes, that's right, this starts at zero. that's zero EXTERNAL
      * refs, ie nobody has unmarshalled anything yet. we can't have
      * negative refs because the stub manager cannot be explicitly
@@ -102,6 +119,7 @@ static void stub_manager_delete(struct stub_manager *m)
         stub_manager_delete_ifstub(m, ifstub);
     }
 
+    CoTaskMemFree(m->oxid_info.psa);
     IUnknown_Release(m->object);
 
     DEBUG_CLEAR_CRITSEC_NAME(&m->lock);
@@ -451,21 +469,10 @@ struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *s
     stub->flags = flags;
     stub->iid = *iid;
 
-    /* 
-     * FIXME: this is a hack for marshalling IRemUnknown. In real
-     * DCOM, the IPID of the IRemUnknown interface is generated like
-     * any other and passed to the OXID resolver which then returns it
-     * when queried. We don't have an OXID resolver yet so instead we
-     * use a magic IPID reserved for IRemUnknown.
-     */
+    /* FIXME: find a cleaner way of identifying that we are creating an ifstub
+     * for the remunknown interface */
     if (IsEqualIID(iid, &IID_IRemUnknown))
-    {
-        stub->ipid.Data1 = 0xffffffff;
-        stub->ipid.Data2 = 0xffff;
-        stub->ipid.Data3 = 0xffff;
-        assert(sizeof(stub->ipid.Data4) == sizeof(m->apt->oxid));
-        memcpy(&stub->ipid.Data4, &m->apt->oxid, sizeof(OXID));
-    }
+        stub->ipid = m->oxid_info.ipidRemUnknown;
     else
         generate_ipid(m, &stub->ipid);
 
