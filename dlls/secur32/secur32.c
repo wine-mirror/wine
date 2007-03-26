@@ -389,7 +389,7 @@ static void _copyPackageInfo(PSecPkgInfoW info, const SecPkgInfoA *inInfoA,
 }
 
 SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
- const SecurityFunctionTableW *fnTableW, const PWSTR moduleName)
+ const SecurityFunctionTableW *fnTableW, PCWSTR moduleName)
 {
     SecureProvider *ret;
 
