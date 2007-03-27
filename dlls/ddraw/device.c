@@ -308,6 +308,11 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         /* Restore the render targets */
         if(This->OffScreenTarget)
         {
+            /* Set the device up to render to the front buffer since the back buffer will
+             * vanish soon.
+             */
+            IWineD3DDevice_SetRenderTarget(This->wineD3DDevice, 0,
+                                           This->ddraw->d3d_target->WineD3DSurface);
             /* This->target is the offscreen target.
              * This->ddraw->d3d_target is the target used by DDraw
              */

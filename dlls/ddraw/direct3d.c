@@ -855,6 +855,10 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
         if(hr != D3D_OK)
             ERR("(%p) Error %08x setting the front and back buffer\n", This, hr);
 
+        /* Render to the back buffer */
+        IWineD3DDevice_SetRenderTarget(This->wineD3DDevice, 0,
+                                       target->WineD3DSurface);
+
         object->OffScreenTarget = TRUE;
     }
     else
