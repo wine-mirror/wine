@@ -135,7 +135,7 @@ static void test_profile_string(void)
     DeleteFileA( TESTFILE2);
 }
 
-static void test_profile_sections(void)
+static void test_profile_sections_names(void)
 {
     HANDLE h;
     int ret;
@@ -205,5 +205,5 @@ START_TEST(profile)
 {
     test_profile_int();
     test_profile_string();
-    test_profile_sections();
+    test_profile_sections_names();
 }
