@@ -132,11 +132,20 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
     TRACE("nBlockAlign = %d\n", format->nBlockAlign);
     TRACE("wBitsPerSample = %d\n", format->wBitsPerSample);
     TRACE("cbSize = %d\n", format->cbSize);
-    
+
+    /* Lock the critical section to make sure we're still marked to play while
+       setting up the playback buffer */
+    EnterCriticalSection(&This->csFilter);
+
+    if (This->state != State_Running) {
+        hr = VFW_E_WRONG_STATE;
+        goto getout;
+    }
+
     hr = DirectSoundCreate(NULL, &This->dsound, NULL);
     if (FAILED(hr)) {
 	ERR("Cannot create Direct Sound object\n");
-	return hr;
+	goto getout;
     }
 
     wav_fmt = *format;
@@ -151,7 +160,7 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
     if (FAILED(hr)) {
         ERR("Can't create sound buffer !\n");
         IDirectSound_Release(This->dsound);
-        return hr;
+        goto getout;
     }
 
     hr = IDirectSoundBuffer_SetVolume(This->dsbuffer, This->volume);
@@ -167,11 +176,13 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
         ERR("Can't start sound buffer (%x)!\n", hr);
         IDirectSoundBuffer_Release(This->dsbuffer);
         IDirectSound_Release(This->dsound);
-        return hr;
+        goto getout;
     }
 
     This->write_pos = 0;
-    
+
+getout:
+    LeaveCriticalSection(&This->csFilter);
     return hr;
 }
 
