@@ -150,6 +150,16 @@ void async_set_result( struct object *obj, unsigned int status )
     }
     else
     {
+        if (async->data.apc)
+        {
+            apc_call_t data;
+            data.type         = APC_USER;
+            data.user.func    = async->data.apc;
+            data.user.args[0] = (unsigned long)async->data.apc_arg;
+            data.user.args[1] = (unsigned long)async->data.iosb;
+            data.user.args[2] = 0;
+            thread_queue_apc( async->thread, NULL, &data );
+        }
         if (async->event) set_event( async->event );
     }
 }

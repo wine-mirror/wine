@@ -922,7 +922,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         {
             HANDLE internal_event = 0;
 
-            if(!event)
+            if(!event && !apc)
             {
                 io->u.Status = NtCreateEvent(&internal_event, EVENT_ALL_ACCESS, NULL, FALSE, FALSE);
                 if (io->u.Status != STATUS_SUCCESS) return io->u.Status;
@@ -933,12 +933,14 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
                 req->async.callback = pipe_completion_wait;
                 req->async.iosb     = io;
                 req->async.arg      = NULL;
+                req->async.apc      = apc;
+                req->async.apc_arg  = apc_context;
                 req->async.event    = event ? event : internal_event;
                 io->u.Status = wine_server_call(req);
             }
             SERVER_END_REQ;
 
-            if (!event && io->u.Status == STATUS_PENDING)
+            if (internal_event && io->u.Status == STATUS_PENDING)
             {
                 while (NtWaitForSingleObject(internal_event, TRUE, NULL) == STATUS_USER_APC) /*nothing*/ ;
             }
@@ -951,7 +953,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
             HANDLE internal_event = 0;
             FILE_PIPE_WAIT_FOR_BUFFER *buff = in_buffer;
 
-            if(!event)
+            if(!event && !apc)
             {
                 io->u.Status = NtCreateEvent(&internal_event, EVENT_ALL_ACCESS, NULL, FALSE, FALSE);
                 if (io->u.Status != STATUS_SUCCESS) return io->u.Status;
@@ -964,13 +966,15 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
                 req->async.callback = pipe_completion_wait;
                 req->async.iosb     = io;
                 req->async.arg      = NULL;
+                req->async.apc      = apc;
+                req->async.apc_arg  = apc_context;
                 req->async.event    = event ? event : internal_event;
                 wine_server_add_data( req, buff->Name, buff->NameLength );
                 io->u.Status = wine_server_call( req );
             }
             SERVER_END_REQ;
 
-            if (!event && io->u.Status == STATUS_PENDING)
+            if (internal_event && io->u.Status == STATUS_PENDING)
             {
                 while (NtWaitForSingleObject(internal_event, TRUE, NULL) == STATUS_USER_APC) /*nothing*/ ;
             }

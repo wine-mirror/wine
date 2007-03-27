@@ -2164,8 +2164,6 @@ done:
 struct read_changes_info
 {
     HANDLE FileHandle;
-    PIO_APC_ROUTINE ApcRoutine;
-    PVOID ApcContext;
     PVOID Buffer;
     ULONG BufferSize;
 };
@@ -2177,7 +2175,7 @@ static void WINAPI read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, ULONG st
     NTSTATUS ret = STATUS_SUCCESS;
     int len, action, i;
 
-    TRACE("%p %p %p %08x\n", info, info->ApcContext, iosb, status);
+    TRACE("%p %p %08x\n", info, iosb, status);
 
     /*
      * FIXME: race me!
@@ -2266,9 +2264,6 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
     if (CompletionFilter == 0 || (CompletionFilter & ~FILE_NOTIFY_ALL))
         return STATUS_INVALID_PARAMETER;
 
-    if (ApcRoutine)
-        FIXME("parameters ignored %p %p\n", ApcRoutine, ApcContext );
-
     info = RtlAllocateHeap( GetProcessHeap(), 0, sizeof *info );
     if (!info)
         return STATUS_NO_MEMORY;
@@ -2276,8 +2271,6 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
     info->FileHandle = FileHandle;
     info->Buffer     = Buffer;
     info->BufferSize = BufferSize;
-    info->ApcRoutine = ApcRoutine;
-    info->ApcContext = ApcContext;
 
     SERVER_START_REQ( read_directory_changes )
     {
@@ -2288,6 +2281,8 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
         req->async.callback = read_changes_apc;
         req->async.iosb     = IoStatusBlock;
         req->async.arg      = info;
+        req->async.apc      = ApcRoutine;
+        req->async.apc_arg  = ApcContext;
         req->async.event    = Event;
         status = wine_server_call( req );
     }
