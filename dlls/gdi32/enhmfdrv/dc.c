@@ -317,10 +317,10 @@ INT EMFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
         return physDev->technology;
     case PLANES:
         return physDev->planes;
-
+    case NUMCOLORS:
+        return physDev->numcolors;
     default:
         FIXME("Unimplemented cap %d\n", cap);
 	return 0;
-
     }
 }

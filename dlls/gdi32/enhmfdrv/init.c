@@ -356,6 +356,7 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->rastercaps = GetDeviceCaps(hRefDC, RASTERCAPS);
     physDev->technology = GetDeviceCaps(hRefDC, TECHNOLOGY);
     physDev->planes = GetDeviceCaps(hRefDC, PLANES);
+    physDev->numcolors = GetDeviceCaps(hRefDC, NUMCOLORS);
 
     physDev->emh->iType = EMR_HEADER;
     physDev->emh->nSize = size;

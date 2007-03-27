@@ -46,6 +46,7 @@ typedef struct
     INT        rastercaps;
     INT        technology;
     INT        planes;
+    INT        numcolors;
 } EMFDRV_PDEVICE;
 
 
