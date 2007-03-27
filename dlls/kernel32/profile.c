@@ -1322,7 +1322,13 @@ UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
 INT WINAPI GetPrivateProfileSectionW( LPCWSTR section, LPWSTR buffer,
 				      DWORD len, LPCWSTR filename )
 {
-    int		ret = 0;
+    int ret = 0;
+
+    if (!section || !buffer)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 
     TRACE("(%s, %p, %d, %s)\n", debugstr_w(section), buffer, len, debugstr_w(filename));
 
@@ -1346,9 +1352,14 @@ INT WINAPI GetPrivateProfileSectionA( LPCSTR section, LPSTR buffer,
     LPWSTR bufferW;
     INT retW, ret = 0;
 
-    bufferW = buffer ? HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR)) : NULL;
-    if (section) RtlCreateUnicodeStringFromAsciiz(&sectionW, section);
-    else sectionW.Buffer = NULL;
+    if (!section || !buffer)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    bufferW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    RtlCreateUnicodeStringFromAsciiz(&sectionW, section);
     if (filename) RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
     else filenameW.Buffer = NULL;
 
