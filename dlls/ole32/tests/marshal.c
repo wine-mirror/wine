@@ -2460,9 +2460,7 @@ static void WINAPI TestChannelHook_ClientGetSize(
     trace("\t%s method %d\n", debugstr_iid(riid), info->iMethod);
     trace("\tcid: %s\n", debugstr_iid(&info->uCausality));
     ok(info->cbSize == sizeof(*info), "info->cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
-    todo_wine {
     ok(info->dwServerPid == GetCurrentProcessId(), "info->dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
-    }
     ok(!info->pObject, "info->pObject should be NULL\n");
     ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
 
@@ -2479,9 +2477,7 @@ static void WINAPI TestChannelHook_ClientFillBuffer(
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
     trace("TestChannelHook_ClientFillBuffer\n");
     ok(info->cbSize == sizeof(*info), "info->cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
-    todo_wine {
     ok(info->dwServerPid == GetCurrentProcessId(), "info->dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
-    }
     ok(!info->pObject, "info->pObject should be NULL\n");
     ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
 
@@ -2501,8 +2497,8 @@ static void WINAPI TestChannelHook_ClientNotify(
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
     trace("TestChannelHook_ClientNotify hrFault = 0x%08x\n", hrFault);
     ok(info->cbSize == sizeof(*info), "info->cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
-    todo_wine {
     ok(info->dwServerPid == GetCurrentProcessId(), "info->dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
+    todo_wine {
     ok(info->pObject != NULL, "info->pObject shouldn't be NULL\n");
     }
     ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");

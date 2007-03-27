@@ -218,6 +218,7 @@ struct dispatch_params;
 
 void    RPC_StartRemoting(struct apartment *apt);
 HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
+                                const OXID_INFO *oxid_info,
                                 DWORD dest_context, void *dest_context_data,
                                 IRpcChannelBuffer **chan);
 HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan);

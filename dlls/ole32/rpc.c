@@ -104,6 +104,7 @@ typedef struct
 
     RPC_BINDING_HANDLE     bind; /* handle to the remote server */
     OXID                   oxid; /* apartment in which the channel is valid */
+    DWORD                  server_pid; /* id of server process */
     DWORD                  dest_context; /* returned from GetDestCtx */
     LPVOID                 dest_context_data; /* returned from GetDestCtx */
     HANDLE                 event; /* cached event handle */
@@ -596,7 +597,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
     message_state->channel_hook_info.iid = *riid;
     message_state->channel_hook_info.cbSize = sizeof(message_state->channel_hook_info);
     message_state->channel_hook_info.uCausality = COM_CurrentCausalityId();
-    message_state->channel_hook_info.dwServerPid = 0; /* FIXME */
+    message_state->channel_hook_info.dwServerPid = This->server_pid;
     message_state->channel_hook_info.iMethod = msg->ProcNum;
     message_state->channel_hook_info.pObject = NULL; /* only present on server-side */
 
@@ -998,6 +999,7 @@ static const IRpcChannelBufferVtbl ServerRpcChannelBufferVtbl =
 
 /* returns a channel buffer for proxies */
 HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
+                                const OXID_INFO *oxid_info,
                                 DWORD dest_context, void *dest_context_data,
                                 IRpcChannelBuffer **chan)
 {
@@ -1007,7 +1009,7 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
     RPC_STATUS              status;
     LPWSTR                  string_binding;
 
-    /* connect to the apartment listener thread */
+    /* FIXME: get the endpoint from oxid_info->psa instead */
     get_rpc_endpoint(endpoint, oxid);
 
     TRACE("proxy pipe: connecting to endpoint: %s\n", debugstr_w(endpoint));
@@ -1052,6 +1054,7 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
     This->super.refs = 1;
     This->bind = bind;
     apartment_getoxid(COM_CurrentApt(), &This->oxid);
+    This->server_pid = oxid_info->dwPid;
     This->dest_context = dest_context;
     This->dest_context_data = dest_context_data;
     This->event = NULL;
@@ -1488,8 +1491,12 @@ void RPC_UnregisterInterface(REFIID riid)
     LeaveCriticalSection(&csRegIf);
 }
 
+/* get the info for an OXID, including the IPID for the rem unknown interface
+ * and the string binding */
 HRESULT RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info)
 {
+    TRACE("%s\n", wine_dbgstr_longlong(oxid));
+
     oxid_info->dwTid = 0;
     oxid_info->dwPid = 0;
     oxid_info->dwAuthnHint = RPC_C_AUTHN_LEVEL_NONE;
