@@ -69,7 +69,7 @@ static unsigned int file_map_access( struct object *obj, unsigned int access );
 static void file_destroy( struct object *obj );
 
 static int file_get_poll_events( struct fd *fd );
-static int file_flush( struct fd *fd, struct event **event );
+static void file_flush( struct fd *fd, struct event **event );
 static enum server_fd_type file_get_info( struct fd *fd, int *flags );
 
 static const struct object_ops file_ops =
@@ -227,16 +227,10 @@ static int file_get_poll_events( struct fd *fd )
     return events;
 }
 
-static int file_flush( struct fd *fd, struct event **event )
+static void file_flush( struct fd *fd, struct event **event )
 {
-    int ret = 0, unix_fd = get_unix_fd( fd );
-
-    if (unix_fd != -1)
-    {
-        ret = (fsync( unix_fd ) != -1);
-        if (!ret) file_set_error();
-    }
-    return ret;
+    int unix_fd = get_unix_fd( fd );
+    if (unix_fd != -1 && fsync( unix_fd ) == -1) file_set_error();
 }
 
 static enum server_fd_type file_get_info( struct fd *fd, int *flags )

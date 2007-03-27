@@ -136,7 +136,7 @@ static unsigned int pipe_map_access( struct object *obj, unsigned int access );
 static void pipe_server_dump( struct object *obj, int verbose );
 static struct fd *pipe_server_get_fd( struct object *obj );
 static void pipe_server_destroy( struct object *obj);
-static int pipe_server_flush( struct fd *fd, struct event **event );
+static void pipe_server_flush( struct fd *fd, struct event **event );
 static enum server_fd_type pipe_server_get_info( struct fd *fd, int *flags );
 
 static const struct object_ops pipe_server_ops =
@@ -170,7 +170,7 @@ static const struct fd_ops pipe_server_fd_ops =
 static void pipe_client_dump( struct object *obj, int verbose );
 static struct fd *pipe_client_get_fd( struct object *obj );
 static void pipe_client_destroy( struct object *obj );
-static int pipe_client_flush( struct fd *fd, struct event **event );
+static void pipe_client_flush( struct fd *fd, struct event **event );
 static enum server_fd_type pipe_client_get_info( struct fd *fd, int *flags );
 
 static const struct object_ops pipe_client_ops =
@@ -517,20 +517,15 @@ static void check_flushed( void *arg )
     }
 }
 
-static int pipe_server_flush( struct fd *fd, struct event **event )
+static void pipe_server_flush( struct fd *fd, struct event **event )
 {
     struct pipe_server *server = get_fd_user( fd );
 
-    if (!server)
-        return 0;
-
-    if (server->state != ps_connected_server)
-        return 0;
+    if (!server || server->state != ps_connected_server) return;
 
     /* FIXME: if multiple threads flush the same pipe,
               maybe should create a list of processes to notify */
-    if (server->flush_poll)
-        return 0;
+    if (server->flush_poll) return;
 
     if (pipe_data_remaining( server ))
     {
@@ -539,20 +534,16 @@ static int pipe_server_flush( struct fd *fd, struct event **event )
         /* this kind of sux - 
            there's no unix way to be alerted when a pipe becomes empty */
         server->event = create_event( NULL, NULL, 0, 0, 0 );
-        if (!server->event)
-            return 0;
+        if (!server->event) return;
         add_timeout( &tv, 100 );
         server->flush_poll = add_timeout_user( &tv, check_flushed, server );
         *event = server->event;
     }
-
-    return 0; 
 }
 
-static int pipe_client_flush( struct fd *fd, struct event **event )
+static void pipe_client_flush( struct fd *fd, struct event **event )
 {
     /* FIXME: what do we have to do for this? */
-    return 0;
 }
 
 static inline int is_overlapped( unsigned int options )

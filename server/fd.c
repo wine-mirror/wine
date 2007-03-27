@@ -1763,10 +1763,9 @@ void default_fd_cancel_async( struct fd *fd )
 }
 
 /* default flush() routine */
-int no_flush( struct fd *fd, struct event **event )
+void no_flush( struct fd *fd, struct event **event )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return 0;
 }
 
 /* default get_file_info() routine */
