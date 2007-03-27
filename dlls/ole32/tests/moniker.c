@@ -679,7 +679,7 @@ static int count_moniker_matches(IBindCtx * pbc, IEnumMoniker * spEM)
         hr=IMoniker_GetDisplayName(spMoniker, pbc, NULL, &szDisplayn);
         if (SUCCEEDED(hr))
         {
-            if (!lstrcmpW(szDisplayn, wszFileName1) || !lstrcmpW(szDisplayn, wszFileName2))
+            if (!lstrcmpiW(szDisplayn, wszFileName1) || !lstrcmpiW(szDisplayn, wszFileName2))
                 matchCnt++;
             CoTaskMemFree(szDisplayn);
         }
