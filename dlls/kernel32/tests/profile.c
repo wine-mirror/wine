@@ -116,13 +116,6 @@ static void test_profile_string(void)
     ok( ret == 18 && !strcmp( buf, "name1,name2,name4"), "wrong keys returned(%d): %s\n", ret,
             buf);
 
-    ret=GetPrivateProfileSectionA("s", buf, sizeof(buf), TESTFILE2);
-    for( p = buf + strlen(buf) + 1; *p;p += strlen(p)+1) 
-        p[-1] = ',';
-    /* and test */
-    ok( ret == 35 && !strcmp( buf, "name1=val1,name2=,name3,name4=val4"), "wrong section returned(%d): %s\n",
-            ret, buf);
-    
     /* add a new key to test that the file is quite usable */
     WritePrivateProfileStringA( "s", "name5", "val5", TESTFILE2); 
     ret=GetPrivateProfileStringA( "s", NULL, "", buf, sizeof(buf),
@@ -133,6 +126,33 @@ static void test_profile_string(void)
             ret, buf);
 
     DeleteFileA( TESTFILE2);
+}
+
+static void test_profile_sections(void)
+{
+    HANDLE h;
+    int ret;
+    DWORD count;
+    char buf[100];
+    char *p;
+    static const char content[]="[s]\r\nname1=val1\r\nname2=\r\nname3\r\nname4=val4\r\n";
+    static const char testfile4[]=".\\testwine4.ini";
+
+    DeleteFileA( testfile4 );
+    h = CreateFileA( testfile4, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok( h != INVALID_HANDLE_VALUE, " cannot create %s\n", testfile4);
+    if( h == INVALID_HANDLE_VALUE) return;
+    WriteFile( h, content, sizeof(content), &count, NULL);
+    CloseHandle( h);
+
+    ret=GetPrivateProfileSectionA("s", buf, sizeof(buf), testfile4);
+    for( p = buf + strlen(buf) + 1; *p;p += strlen(p)+1)
+        p[-1] = ',';
+    /* and test */
+    ok( ret == 35 && !strcmp( buf, "name1=val1,name2=,name3,name4=val4"), "wrong section returned(%d): %s\n",
+            ret, buf);
+
+    DeleteFileA( testfile4 );
 }
 
 static void test_profile_sections_names(void)
@@ -205,5 +225,6 @@ START_TEST(profile)
 {
     test_profile_int();
     test_profile_string();
+    test_profile_sections();
     test_profile_sections_names();
 }
