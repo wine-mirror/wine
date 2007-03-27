@@ -3757,7 +3757,7 @@ TOOLBAR_HideButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
 	btnPtr->fsState |= TBSTATE_HIDDEN;
 
-    TOOLBAR_CalcToolbar (hwnd);
+    TOOLBAR_LayoutToolbar (hwnd);
 
     InvalidateRect (hwnd, NULL, TRUE);
 
@@ -4099,7 +4099,7 @@ TOOLBAR_MoveButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
         TOOLBAR_MoveFixupIndex(&infoPtr->nHotItem, nIndex, nMoveIndex, FALSE);
     }
 
-    TOOLBAR_CalcToolbar(hwnd);
+    TOOLBAR_LayoutToolbar(hwnd);
     TOOLBAR_AutoSize(hwnd);
     InvalidateRect(hwnd, NULL, TRUE);
 

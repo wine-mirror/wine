@@ -843,6 +843,18 @@ static void test_sizes(void)
     SendMessageA(hToolbar, TB_INSERTBUTTON, 1, (LPARAM)&buttons2[0]);
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(23, 22), "Unexpected button size\n");
 
+    /* TB_HIDEBUTTON and TB_MOVEBUTTON doesn't force a recalc */
+    SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(100, 100));
+    ok(SendMessageA(hToolbar, TB_MOVEBUTTON, 0, 1), "TB_MOVEBUTTON failed\n");
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(100, 100), "Unexpected button size\n");
+    ok(SendMessageA(hToolbar, TB_HIDEBUTTON, 20, TRUE), "TB_HIDEBUTTON failed\n");
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(100, 100), "Unexpected button size\n");
+    /* however changing the hidden flag with TB_SETSTATE does */
+    ok(SendMessageA(hToolbar, TB_SETSTATE, 20, TBSTATE_ENABLED|TBSTATE_HIDDEN), "TB_SETSTATE failed\n");
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(100, 100), "Unexpected button size\n");
+    ok(SendMessageA(hToolbar, TB_SETSTATE, 20, TBSTATE_ENABLED), "TB_SETSTATE failed\n");
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(23, 22), "Unexpected button size\n");
+
     rebuild_toolbar(&hToolbar);
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]);
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(27, 39), "Unexpected button size\n");
