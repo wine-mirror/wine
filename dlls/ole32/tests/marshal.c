@@ -48,6 +48,14 @@ static const IID IID_IWineTest =
     {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
 }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
 
+static const IID IID_IRemUnknown =
+{
+    0x00000131,
+    0x0000,
+    0x0000,
+    {0xc0,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}
+};
+
 #define EXTENTID_WineTest IID_IWineTest
 #define CLSID_WineTest IID_IWineTest
 
@@ -141,7 +149,9 @@ static HRESULT WINAPI Test_IClassFactory_QueryInterface(
     if (ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IClassFactory))
+        IsEqualGUID(riid, &IID_IClassFactory) ||
+        /* the only other interface Wine is currently able to marshal (for testing two proxies) */
+        IsEqualGUID(riid, &IID_IRemUnknown))
     {
         *ppvObj = (LPVOID)iface;
         IClassFactory_AddRef(iface);
@@ -2110,6 +2120,99 @@ static void test_handler_marshaling(void)
 }
 
 
+static void test_client_security(void)
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IClassFactory *pProxy = NULL;
+    IUnknown *pProxy2 = NULL;
+    IUnknown *pUnknown1 = NULL;
+    IUnknown *pUnknown2 = NULL;
+    IClientSecurity *pCliSec = NULL;
+    IMarshal *pMarshal;
+    DWORD tid;
+    HANDLE thread;
+    static const LARGE_INTEGER ullZero;
+    DWORD dwAuthnSvc;
+    DWORD dwAuthzSvc;
+    OLECHAR *pServerPrincName;
+    DWORD dwAuthnLevel;
+    DWORD dwImpLevel;
+    void *pAuthInfo;
+    DWORD dwCapabilities;
+    void *pv;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, "CreateStreamOnHGlobal");
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, "CoUnmarshalInterface");
+    IStream_Release(pStream);
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IUnknown, (LPVOID*)&pUnknown1);
+    ok_ole_success(hr, "IUnknown_QueryInterface IID_IUnknown");
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IRemUnknown, (LPVOID*)&pProxy2);
+    ok_ole_success(hr, "IUnknown_QueryInterface IID_IStream");
+
+    hr = IUnknown_QueryInterface(pProxy2, &IID_IUnknown, (LPVOID*)&pUnknown2);
+    ok_ole_success(hr, "IUnknown_QueryInterface IID_IUnknown");
+
+    ok(pUnknown1 == pUnknown2, "both proxy's IUnknowns should be the same - %p, %p\n", pUnknown1, pUnknown2);
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IMarshal, (LPVOID*)&pMarshal);
+    ok_ole_success(hr, "IUnknown_QueryInterface IID_IMarshal");
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IClientSecurity, (LPVOID*)&pCliSec);
+    ok_ole_success(hr, "IUnknown_QueryInterface IID_IClientSecurity");
+
+    hr = IClientSecurity_QueryBlanket(pCliSec, (IUnknown *)pProxy, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    todo_wine ok_ole_success(hr, "IClientSecurity_QueryBlanket (all NULLs)");
+
+    hr = IClientSecurity_QueryBlanket(pCliSec, (IUnknown *)pMarshal, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    todo_wine ok(hr == E_NOINTERFACE, "IClientSecurity_QueryBlanket with local interface should have returned E_NOINTERFACE instead of 0x%08x\n", hr);
+
+    hr = IClientSecurity_QueryBlanket(pCliSec, (IUnknown *)pProxy, &dwAuthnSvc, &dwAuthzSvc, &pServerPrincName, &dwAuthnLevel, &dwImpLevel, &pAuthInfo, &dwCapabilities);
+    todo_wine ok_ole_success(hr, "IClientSecurity_QueryBlanket");
+
+    hr = IClientSecurity_SetBlanket(pCliSec, (IUnknown *)pProxy, dwAuthnSvc, dwAuthzSvc, pServerPrincName, dwAuthnLevel, RPC_C_IMP_LEVEL_IMPERSONATE, pAuthInfo, dwCapabilities);
+    todo_wine ok_ole_success(hr, "IClientSecurity_SetBlanket");
+
+    hr = IClassFactory_CreateInstance(pProxy, NULL, &IID_IWineTest, &pv);
+    ok(hr == E_NOINTERFACE, "COM call should have succeeded instead of returning 0x%08x\n", hr);
+
+    hr = IClientSecurity_SetBlanket(pCliSec, (IUnknown *)pMarshal, dwAuthnSvc, dwAuthzSvc, pServerPrincName, dwAuthnLevel, dwImpLevel, pAuthInfo, dwCapabilities);
+    todo_wine ok(hr == E_NOINTERFACE, "IClientSecurity_SetBlanket with local interface should have returned E_NOINTERFACE instead of 0x%08x\n", hr);
+
+    hr = IClientSecurity_SetBlanket(pCliSec, (IUnknown *)pProxy, 0xdeadbeef, dwAuthzSvc, pServerPrincName, dwAuthnLevel, dwImpLevel, pAuthInfo, dwCapabilities);
+    todo_wine ok(hr == E_INVALIDARG, "IClientSecurity_SetBlanke with invalid dwAuthnSvc should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
+    CoTaskMemFree(pServerPrincName);
+
+    hr = IClientSecurity_QueryBlanket(pCliSec, (IUnknown *)pUnknown1, &dwAuthnSvc, &dwAuthzSvc, &pServerPrincName, &dwAuthnLevel, &dwImpLevel, &pAuthInfo, &dwCapabilities);
+    todo_wine ok_ole_success(hr, "IClientSecurity_QueryBlanket(IUnknown)");
+
+    CoTaskMemFree(pServerPrincName);
+
+    IClassFactory_Release(pProxy);
+#if 0
+    /* FIXME: fix stub manager to not depend on the IID of the interface to
+     * determine whether it is really the rem unknown for the object before
+     * re-enabling this line */
+    IUnknown_Release(pProxy2);
+#endif
+    IUnknown_Release(pUnknown1);
+    IUnknown_Release(pUnknown2);
+    IMarshal_Release(pMarshal);
+    IClientSecurity_Release(pCliSec);
+
+    end_host_object(tid, thread);
+}
+
 static HANDLE heventShutdown;
 
 static void LockModuleOOP(void)
@@ -2678,6 +2781,7 @@ START_TEST(marshal)
     test_freethreadedmarshaler();
     test_inproc_handler();
     test_handler_marshaling();
+    test_client_security();
 
     test_local_server();
 
