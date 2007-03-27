@@ -2,6 +2,7 @@
  * FileMonikers implementation
  *
  * Copyright 1999  Noomen Hamza
+ * Copyright 2007  Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1404,6 +1405,105 @@ HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER * ppmk)
 
     return hr;
 }
+
+/* find a character from a set in reverse without the string having to be null-terminated */
+static inline WCHAR *memrpbrkW(const WCHAR *ptr, size_t n, const WCHAR *accept)
+{
+    const WCHAR *end, *ret = NULL;
+    for (end = ptr + n; ptr < end; ptr++) if (strchrW(accept, *ptr)) ret = ptr;
+    return (WCHAR *)ret;
+}
+
+HRESULT FileMoniker_CreateFromDisplayName(LPBC pbc, LPCOLESTR szDisplayName,
+                                          LPDWORD pchEaten, LPMONIKER *ppmk)
+{
+    LPCWSTR end;
+    static const WCHAR wszSeparators[] = {':','\\','/','!',0};
+
+    for (end = szDisplayName + strlenW(szDisplayName);
+         end && (end != szDisplayName);
+         end = memrpbrkW(szDisplayName, end - szDisplayName, wszSeparators))
+    {
+        HRESULT hr;
+        IRunningObjectTable *rot;
+        IMoniker *file_moniker;
+        LPWSTR file_display_name;
+        LPWSTR full_path_name;
+        DWORD full_path_name_len;
+        int len = end - szDisplayName;
+
+        file_display_name = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+        if (!file_display_name) return E_OUTOFMEMORY;
+        memcpy(file_display_name, szDisplayName, len * sizeof(WCHAR));
+        file_display_name[len] = '\0';
+
+        hr = CreateFileMoniker(file_display_name, &file_moniker);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, file_display_name);
+            return hr;
+        }
+
+        hr = IBindCtx_GetRunningObjectTable(pbc, &rot);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, file_display_name);
+            IMoniker_Release(file_moniker);
+            return hr;
+        }
+
+        hr = IRunningObjectTable_IsRunning(rot, file_moniker);
+        IRunningObjectTable_Release(rot);
+        if (FAILED(hr))
+        {
+            HeapFree(GetProcessHeap(), 0, file_display_name);
+            IMoniker_Release(file_moniker);
+            return hr;
+        }
+        if (hr == S_OK)
+        {
+            TRACE("found running file moniker for %s\n", debugstr_w(file_display_name));
+            *pchEaten = len;
+            *ppmk = file_moniker;
+            HeapFree(GetProcessHeap(), 0, file_display_name);
+            return S_OK;
+        }
+
+        full_path_name_len = GetFullPathNameW(file_display_name, 0, NULL, NULL);
+        if (!full_path_name_len)
+        {
+            HeapFree(GetProcessHeap(), 0, file_display_name);
+            IMoniker_Release(file_moniker);
+            return MK_E_SYNTAX;
+        }
+        full_path_name = HeapAlloc(GetProcessHeap(), 0, full_path_name_len * sizeof(WCHAR));
+        if (!full_path_name)
+        {
+            HeapFree(GetProcessHeap(), 0, file_display_name);
+            IMoniker_Release(file_moniker);
+            return E_OUTOFMEMORY;
+        }
+        GetFullPathNameW(file_display_name, full_path_name_len, full_path_name, NULL);
+
+        if (GetFileAttributesW(full_path_name) == INVALID_FILE_ATTRIBUTES)
+            TRACE("couldn't open file %s\n", debugstr_w(full_path_name));
+        else
+        {
+            TRACE("got file moniker for %s\n", debugstr_w(szDisplayName));
+            *pchEaten = len;
+            *ppmk = file_moniker;
+            HeapFree(GetProcessHeap(), 0, file_display_name);
+            HeapFree(GetProcessHeap(), 0, full_path_name);
+            return S_OK;
+        }
+        HeapFree(GetProcessHeap(), 0, file_display_name);
+        HeapFree(GetProcessHeap(), 0, full_path_name);
+        IMoniker_Release(file_moniker);
+    }
+
+    return MK_E_CANTOPENFILE;
+}
+
 
 static HRESULT WINAPI FileMonikerCF_QueryInterface(LPCLASSFACTORY iface,
                                                   REFIID riid, LPVOID *ppv)

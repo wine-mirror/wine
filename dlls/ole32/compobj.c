@@ -1246,6 +1246,7 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID clsid)
     if (RegOpenKeyW(HKEY_CLASSES_ROOT,buf,&xhkey))
     {
         HeapFree(GetProcessHeap(),0,buf);
+        WARN("couldn't open key for ProgID %s\n", debugstr_w(progid));
         return CO_E_CLASSSTRING;
     }
     HeapFree(GetProcessHeap(),0,buf);
@@ -1253,6 +1254,7 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID clsid)
     if (RegQueryValueW(xhkey,NULL,buf2,&buf2len))
     {
         RegCloseKey(xhkey);
+        WARN("couldn't query clsid value for ProgID %s\n", debugstr_w(progid));
         return CO_E_CLASSSTRING;
     }
     RegCloseKey(xhkey);

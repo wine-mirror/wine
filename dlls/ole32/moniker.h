@@ -35,6 +35,11 @@ HRESULT AntiMonikerCF_Create(REFIID riid, LPVOID *ppv);
 HRESULT CompositeMonikerCF_Create(REFIID riid, LPVOID *ppv);
 HRESULT ClassMonikerCF_Create(REFIID riid, LPVOID *ppv);
 
+HRESULT FileMoniker_CreateFromDisplayName(LPBC pbc, LPCOLESTR szDisplayName,
+                                          LPDWORD pchEaten, LPMONIKER *ppmk);
+HRESULT ClassMoniker_CreateFromDisplayName(LPBC pbc, LPCOLESTR szDisplayName,
+                                           LPDWORD pchEaten, LPMONIKER *ppmk);
+
 HRESULT MonikerMarshal_Create(IMoniker *inner, IUnknown **outer);
 
 

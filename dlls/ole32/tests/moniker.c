@@ -777,12 +777,12 @@ static void test_MkParseDisplayName(void)
     ok_ole_success(hr, CreateBindCtx);
 
     hr = MkParseDisplayName(pbc, wszNonExistantProgId, &eaten, &pmk);
-    todo_wine { ok(hr == MK_E_CANTOPENFILE, "MkParseDisplayName should have failed with MK_E_CANTOPENFILE instead of 0x%08x\n", hr); }
+    ok(hr == MK_E_CANTOPENFILE, "MkParseDisplayName should have failed with MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
 
     /* no special handling of "clsid:" without the string form of the clsid
      * following */
     hr = MkParseDisplayName(pbc, wszDisplayNameClsid, &eaten, &pmk);
-    todo_wine { ok(hr == MK_E_CANTOPENFILE, "MkParseDisplayName should have failed with MK_E_CANTOPENFILE instead of 0x%08x\n", hr); }
+    ok(hr == MK_E_CANTOPENFILE, "MkParseDisplayName should have failed with MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
 
     /* shows clsid has higher precedence than a running object */
     hr = CreateFileMoniker(wszDisplayName, &pmk);
@@ -794,7 +794,7 @@ static void test_MkParseDisplayName(void)
     IMoniker_Release(pmk);
     pmk = NULL;
     hr = MkParseDisplayName(pbc, wszDisplayName, &eaten, &pmk);
-    todo_wine { ok_ole_success(hr, MkParseDisplayName); }
+    ok_ole_success(hr, MkParseDisplayName);
     if (pmk)
     {
         IMoniker_IsSystemMoniker(pmk, &moniker_type);
@@ -814,7 +814,7 @@ static void test_MkParseDisplayName(void)
     IMoniker_Release(pmk);
     pmk = NULL;
     hr = MkParseDisplayName(pbc, wszDisplayNameRunning, &eaten, &pmk);
-    todo_wine { ok_ole_success(hr, MkParseDisplayName); }
+    ok_ole_success(hr, MkParseDisplayName);
     if (pmk)
     {
         IMoniker_IsSystemMoniker(pmk, &moniker_type);
@@ -830,7 +830,7 @@ static void test_MkParseDisplayName(void)
 
     expected_display_name = wszDisplayNameProgId1;
     hr = MkParseDisplayName(pbc, wszDisplayNameProgId1, &eaten, &pmk);
-    todo_wine { ok_ole_success(hr, MkParseDisplayName); }
+    ok_ole_success(hr, MkParseDisplayName);
     if (pmk)
     {
         IMoniker_IsSystemMoniker(pmk, &moniker_type);
@@ -840,7 +840,7 @@ static void test_MkParseDisplayName(void)
 
     expected_display_name = wszDisplayNameProgId2;
     hr = MkParseDisplayName(pbc, wszDisplayNameProgId2, &eaten, &pmk);
-    todo_wine { ok_ole_success(hr, MkParseDisplayName); }
+    ok_ole_success(hr, MkParseDisplayName);
     if (pmk)
     {
         IMoniker_IsSystemMoniker(pmk, &moniker_type);
@@ -849,7 +849,7 @@ static void test_MkParseDisplayName(void)
     }
 
     hr = MkParseDisplayName(pbc, wszDisplayNameProgIdFail, &eaten, &pmk);
-    todo_wine { ok(hr == MK_E_CANTOPENFILE, "MkParseDisplayName with ProgId without marker should fail with MK_E_CANTOPENFILE instead of 0x%08x\n", hr); }
+    ok(hr == MK_E_CANTOPENFILE, "MkParseDisplayName with ProgId without marker should fail with MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
 
     hr = CoRevokeClassObject(pdwReg1);
     ok_ole_success(hr, CoRevokeClassObject);
@@ -858,7 +858,7 @@ static void test_MkParseDisplayName(void)
     strcat(szDisplayNameFile, "\\kernel32.dll");
     MultiByteToWideChar(CP_ACP, 0, szDisplayNameFile, -1, wszDisplayNameFile, sizeof(wszDisplayNameFile)/sizeof(wszDisplayNameFile[0]));
     hr = MkParseDisplayName(pbc, wszDisplayNameFile, &eaten, &pmk);
-    todo_wine { ok_ole_success(hr, MkParseDisplayName); }
+    ok_ole_success(hr, MkParseDisplayName);
     if (pmk)
     {
         IMoniker_IsSystemMoniker(pmk, &moniker_type);
@@ -867,7 +867,7 @@ static void test_MkParseDisplayName(void)
     }
 
     hr = MkParseDisplayName(pbc, wszDisplayName, &eaten, &pmk);
-    todo_wine { ok_ole_success(hr, MkParseDisplayName); }
+    ok_ole_success(hr, MkParseDisplayName);
 
     if (pmk)
     {

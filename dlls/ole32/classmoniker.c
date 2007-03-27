@@ -2,7 +2,7 @@
  *	                      Class Monikers
  *
  *           Copyright 1999  Noomen Hamza
- *           Copyright 2005  Robert Shearman
+ *           Copyright 2005-2007  Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -732,6 +732,87 @@ HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, IMoniker **ppmk)
     }
 
     return ClassMoniker_QueryInterface((IMoniker *)newClassMoniker, &IID_IMoniker, (void**)ppmk);
+}
+
+HRESULT ClassMoniker_CreateFromDisplayName(LPBC pbc, LPCOLESTR szDisplayName,
+                                           LPDWORD pchEaten, LPMONIKER *ppmk)
+{
+    HRESULT hr;
+    LPCWSTR s = strchrW(szDisplayName, ':');
+    LPCWSTR end;
+    CLSID clsid;
+    BYTE table[256];
+    int i;
+
+    if (!s)
+        return MK_E_SYNTAX;
+
+    s++;
+
+    for (end = s; *end && (*end != ':'); end++)
+        ;
+
+    TRACE("parsing %s\n", debugstr_wn(s, end - s));
+
+    /* validate the CLSID string */
+    if (s[0] == '{')
+    {
+        if ((end - s != 38) || (s[37] != '}'))
+            return MK_E_SYNTAX;
+        s++;
+    }
+    else
+    {
+        if (end - s != 36)
+            return MK_E_SYNTAX;
+    }
+
+    for (i=0; i<36; i++)
+    {
+        if ((i == 8)||(i == 13)||(i == 18)||(i == 23))
+        {
+            if (s[i] != '-')
+                return MK_E_SYNTAX;
+            continue;
+        }
+        if (!(((s[i] >= '0') && (s[i] <= '9'))  ||
+              ((s[i] >= 'a') && (s[i] <= 'f'))  ||
+              ((s[i] >= 'A') && (s[i] <= 'F'))))
+            return MK_E_SYNTAX;
+    }
+
+    /* quick lookup table */
+    memset(table, 0, 256);
+
+    for (i = 0; i < 10; i++)
+        table['0' + i] = i;
+    for (i = 0; i < 6; i++)
+    {
+        table['A' + i] = i+10;
+        table['a' + i] = i+10;
+    }
+
+    /* in form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX */
+
+    clsid.Data1 = (table[s[0]] << 28 | table[s[1]] << 24 | table[s[2]] << 20 | table[s[3]] << 16 |
+                   table[s[4]] << 12 | table[s[5]] << 8  | table[s[6]] << 4  | table[s[7]]);
+    clsid.Data2 = table[s[9]] << 12  | table[s[10]] << 8 | table[s[11]] << 4 | table[s[12]];
+    clsid.Data3 = table[s[14]] << 12 | table[s[15]] << 8 | table[s[16]] << 4 | table[s[17]];
+
+    /* these are just sequential bytes */
+    clsid.Data4[0] = table[s[19]] << 4 | table[s[20]];
+    clsid.Data4[1] = table[s[21]] << 4 | table[s[22]];
+    clsid.Data4[2] = table[s[24]] << 4 | table[s[25]];
+    clsid.Data4[3] = table[s[26]] << 4 | table[s[27]];
+    clsid.Data4[4] = table[s[28]] << 4 | table[s[29]];
+    clsid.Data4[5] = table[s[30]] << 4 | table[s[31]];
+    clsid.Data4[6] = table[s[32]] << 4 | table[s[33]];
+    clsid.Data4[7] = table[s[34]] << 4 | table[s[35]];
+
+    hr = CreateClassMoniker(&clsid, ppmk);
+    if (SUCCEEDED(hr))
+        *pchEaten = (*end == ':' ? end + 1 : end) - szDisplayName;
+    return hr;
 }
 
 static HRESULT WINAPI ClassMonikerCF_QueryInterface(LPCLASSFACTORY iface,

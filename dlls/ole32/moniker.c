@@ -4,6 +4,7 @@
  *	Copyright 1998	Marcus Meissner
  *      Copyright 1999  Noomen Hamza
  *      Copyright 2005  Robert Shearman (for CodeWeavers)
+ *      Copyright 2007  Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -43,6 +44,7 @@
 #include "wine/unicode.h"
 
 #include "compobj_private.h"
+#include "moniker.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -826,18 +828,129 @@ GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
     return res;
 }
 
+static HRESULT get_moniker_for_progid_display_name(LPBC pbc,
+                                                   LPCOLESTR szDisplayName,
+                                                   LPDWORD pchEaten,
+                                                   LPMONIKER *ppmk)
+{
+    CLSID clsid;
+    HRESULT hr;
+    LPWSTR progid;
+    LPCWSTR start = szDisplayName;
+    LPCWSTR end;
+    int len;
+    IMoniker *class_moniker;
+
+    if (*start == '@')
+        start++;
+
+    /* find end delimiter */
+    for (end = start; *end; end++)
+        if (*end == ':')
+            break;
+
+    len = end - start;
+
+    /* must start with '@' or have a ':' somewhere and mustn't be one character
+     * long (since that looks like an absolute path) */
+    if (((start == szDisplayName) && (*end == '\0')) || (len <= 1))
+        return MK_E_SYNTAX;
+
+    progid = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+    if (progid)
+    {
+        memcpy(progid, start, len * sizeof(WCHAR));
+        progid[len] = '\0';
+    }
+    hr = CLSIDFromProgID(progid, &clsid);
+    HeapFree(GetProcessHeap(), 0, progid);
+    if (FAILED(hr))
+        return MK_E_SYNTAX;
+
+    hr = CreateClassMoniker(&clsid, &class_moniker);
+    if (SUCCEEDED(hr))
+    {
+        IParseDisplayName *pdn;
+        hr = IMoniker_BindToObject(class_moniker, pbc, NULL,
+                                   &IID_IParseDisplayName, (void **)&pdn);
+        IMoniker_Release(class_moniker);
+        if (SUCCEEDED(hr))
+        {
+            hr = IParseDisplayName_ParseDisplayName(pdn, pbc,
+                                                    (LPOLESTR)szDisplayName,
+                                                    pchEaten, ppmk);
+            IParseDisplayName_Release(pdn);
+        }
+    }
+    return hr;
+}
+
 /******************************************************************************
  *              MkParseDisplayName        [OLE32.@]
  */
-HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName,
+HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szDisplayName,
 				LPDWORD pchEaten, LPMONIKER *ppmk)
 {
-    FIXME("(%p, %s, %p, %p): stub.\n", pbc, debugstr_w(szUserName), pchEaten, *ppmk);
+    HRESULT hr = MK_E_SYNTAX;
+    static const WCHAR wszClsidColon[] = {'c','l','s','i','d',':'};
+    IMoniker *moniker;
+    DWORD chEaten;
+
+    TRACE("(%p, %s, %p, %p)\n", pbc, debugstr_w(szDisplayName), pchEaten, ppmk);
 
     if (!(IsValidInterface((LPUNKNOWN) pbc)))
         return E_INVALIDARG;
 
-    return MK_E_SYNTAX;
+    *pchEaten = 0;
+    *ppmk = NULL;
+
+    if (!strncmpiW(szDisplayName, wszClsidColon, sizeof(wszClsidColon)/sizeof(wszClsidColon[0])))
+    {
+        hr = ClassMoniker_CreateFromDisplayName(pbc, szDisplayName, &chEaten, &moniker);
+        if (FAILED(hr) && (hr != MK_E_SYNTAX))
+            return hr;
+    }
+    else
+    {
+        hr = get_moniker_for_progid_display_name(pbc, szDisplayName, &chEaten, &moniker);
+        if (FAILED(hr) && (hr != MK_E_SYNTAX))
+            return hr;
+    }
+
+    if (FAILED(hr))
+    {
+        hr = FileMoniker_CreateFromDisplayName(pbc, szDisplayName, &chEaten, &moniker);
+        if (FAILED(hr) && (hr != MK_E_SYNTAX))
+            return hr;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        while (TRUE)
+        {
+            IMoniker *next_moniker;
+            *pchEaten += chEaten;
+            szDisplayName += chEaten;
+            if (!*szDisplayName)
+            {
+                *ppmk = moniker;
+                return S_OK;
+            }
+            chEaten = 0;
+            hr = IMoniker_ParseDisplayName(moniker, pbc, NULL,
+                                           (LPOLESTR)szDisplayName, &chEaten,
+                                           &next_moniker);
+            IMoniker_Release(moniker);
+            if (FAILED(hr))
+            {
+                *pchEaten = 0;
+                break;
+            }
+            moniker = next_moniker;
+        }
+    }
+
+    return hr;
 }
 
 /***********************************************************************
