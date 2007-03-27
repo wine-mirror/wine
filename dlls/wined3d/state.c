@@ -1254,7 +1254,13 @@ static void state_lastpixel(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
     if(stateblock->renderState[WINED3DRS_LASTPIXEL]) {
         TRACE("Last Pixel Drawing Enabled\n");
     } else {
-        FIXME("Last Pixel Drawing Disabled, not handled yet\n");
+        static BOOL first = TRUE;
+        if(first) {
+            FIXME("Last Pixel Drawing Disabled, not handled yet\n");
+            first = FALSE;
+        } else {
+            TRACE("Last Pixel Drawing Disabled, not handled yet\n");
+        }
     }
 }
 
