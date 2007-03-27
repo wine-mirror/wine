@@ -135,7 +135,7 @@ static void test_profile_sections(void)
     DWORD count;
     char buf[100];
     char *p;
-    static const char content[]="[s]\r\nname1=val1\r\nname2=\r\nname3\r\nname4=val4\r\n";
+    static const char content[]="[section1]\r\nname1=val1\r\nname2=\r\nname3\r\nname4=val4\r\n[section2]\r\n";
     static const char testfile4[]=".\\testwine4.ini";
 
     DeleteFileA( testfile4 );
@@ -145,12 +145,41 @@ static void test_profile_sections(void)
     WriteFile( h, content, sizeof(content), &count, NULL);
     CloseHandle( h);
 
-    ret=GetPrivateProfileSectionA("s", buf, sizeof(buf), testfile4);
+    /* Some parameter checking */
+    SetLastError(0xdeadbeef);
+    ret = GetPrivateProfileSectionA( NULL, NULL, 0, NULL );
+    ok( ret == 0, "expected return size 0, got %d\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetPrivateProfileSectionA( NULL, NULL, 0, testfile4 );
+    ok( ret == 0, "expected return size 0, got %d\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetPrivateProfileSectionA( "section1", NULL, 0, testfile4 );
+    ok( ret == 0, "expected return size 0, got %d\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetPrivateProfileSectionA( NULL, buf, sizeof(buf), testfile4 );
+    ok( ret == 0, "expected return size 0, got %d\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetPrivateProfileSectionA( "section1", buf, sizeof(buf), NULL );
+    ok( ret == 0, "expected return size 0, got %d\n", ret );
+    todo_wine
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+
+    /* And a real one */
+    ret=GetPrivateProfileSectionA("section1", buf, sizeof(buf), testfile4);
     for( p = buf + strlen(buf) + 1; *p;p += strlen(p)+1)
         p[-1] = ',';
-    /* and test */
     ok( ret == 35 && !strcmp( buf, "name1=val1,name2=,name3,name4=val4"), "wrong section returned(%d): %s\n",
             ret, buf);
+    ok( buf[ret-1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
+    ok( GetLastError() == S_OK, "expected S_OK, got %d\n", GetLastError());
 
     DeleteFileA( testfile4 );
 }
