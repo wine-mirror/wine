@@ -961,7 +961,7 @@ static void test_moniker(
 
     hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &display_name);
     ok_ole_success(hr, IMoniker_GetDisplayName);
-	ok(!lstrcmpW(display_name, expected_display_name), "display name wasn't what was expected\n");
+    ok(!lstrcmpW(display_name, expected_display_name), "%s: display name wasn't what was expected\n", testname);
 
     CoTaskMemFree(display_name);
     IBindCtx_Release(bindctx);
