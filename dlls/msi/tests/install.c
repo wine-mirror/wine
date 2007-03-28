@@ -1141,7 +1141,7 @@ static void create_cc_test_files(void)
 static void delete_cab_files(void)
 {
     SHFILEOPSTRUCT shfl;
-    CHAR path[MAX_PATH];
+    CHAR path[MAX_PATH+10];
 
     lstrcpyA(path, CURR_DIR);
     lstrcatA(path, "\\*.cab");
@@ -1149,7 +1149,7 @@ static void delete_cab_files(void)
 
     shfl.hwnd = NULL;
     shfl.wFunc = FO_DELETE;
-    shfl.pFrom = (LPCSTR)path;
+    shfl.pFrom = path;
     shfl.pTo = NULL;
     shfl.fFlags = FOF_FILESONLY | FOF_NOCONFIRMATION | FOF_NORECURSION | FOF_SILENT;
 
