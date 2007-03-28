@@ -70,39 +70,36 @@ static void init_function_pointers(void)
 {
     hadvapi32 = GetModuleHandleA("advapi32.dll");
 
-    if(hadvapi32)
-    {
-        pCryptAcquireContextA = (void*)GetProcAddress(hadvapi32, "CryptAcquireContextA");
-        pCryptEnumProviderTypesA = (void*)GetProcAddress(hadvapi32, "CryptEnumProviderTypesA");
-        pCryptEnumProvidersA = (void*)GetProcAddress(hadvapi32, "CryptEnumProvidersA");
-        pCryptGetDefaultProviderA = (void*)GetProcAddress(hadvapi32, "CryptGetDefaultProviderA");
-        pCryptReleaseContext = (void*)GetProcAddress(hadvapi32, "CryptReleaseContext");
-        pCryptSetProviderExA = (void*)GetProcAddress(hadvapi32, "CryptSetProviderExA");
-        pCryptCreateHash = (void*)GetProcAddress(hadvapi32, "CryptCreateHash");
-        pCryptDestroyHash = (void*)GetProcAddress(hadvapi32, "CryptDestroyHash");
-        pCryptGenRandom = (void*)GetProcAddress(hadvapi32, "CryptGenRandom");
-        pCryptContextAddRef = (void*)GetProcAddress(hadvapi32, "CryptContextAddRef");
-        pCryptGenKey = (void*)GetProcAddress(hadvapi32, "CryptGenKey");
-        pCryptDestroyKey = (void*)GetProcAddress(hadvapi32, "CryptDestroyKey");
-        pCryptDecrypt = (void*)GetProcAddress(hadvapi32, "CryptDecrypt");
-        pCryptDeriveKey = (void*)GetProcAddress(hadvapi32, "CryptDeriveKey");
-        pCryptDuplicateHash = (void*)GetProcAddress(hadvapi32, "CryptDuplicateHash");
-        pCryptDuplicateKey = (void*)GetProcAddress(hadvapi32, "CryptDuplicateKey");
-        pCryptEncrypt = (void*)GetProcAddress(hadvapi32, "CryptEncrypt");
-        pCryptExportKey = (void*)GetProcAddress(hadvapi32, "CryptExportKey");
-        pCryptGetHashParam = (void*)GetProcAddress(hadvapi32, "CryptGetHashParam");
-        pCryptGetKeyParam = (void*)GetProcAddress(hadvapi32, "CryptGetKeyParam");
-        pCryptGetProvParam = (void*)GetProcAddress(hadvapi32, "CryptGetProvParam");
-        pCryptGetUserKey = (void*)GetProcAddress(hadvapi32, "CryptGetUserKey");
-        pCryptHashData = (void*)GetProcAddress(hadvapi32, "CryptHashData");
-        pCryptHashSessionKey = (void*)GetProcAddress(hadvapi32, "CryptHashSessionKey");
-        pCryptImportKey = (void*)GetProcAddress(hadvapi32, "CryptImportKey");
-        pCryptSignHashW = (void*)GetProcAddress(hadvapi32, "CryptSignHashW");
-        pCryptSetHashParam = (void*)GetProcAddress(hadvapi32, "CryptSetHashParam");
-        pCryptSetKeyParam = (void*)GetProcAddress(hadvapi32, "CryptSetKeyParam");
-        pCryptSetProvParam = (void*)GetProcAddress(hadvapi32, "CryptSetProvParam");
-        pCryptVerifySignatureW = (void*)GetProcAddress(hadvapi32, "CryptVerifySignatureW");
-    }
+    pCryptAcquireContextA = (void*)GetProcAddress(hadvapi32, "CryptAcquireContextA");
+    pCryptEnumProviderTypesA = (void*)GetProcAddress(hadvapi32, "CryptEnumProviderTypesA");
+    pCryptEnumProvidersA = (void*)GetProcAddress(hadvapi32, "CryptEnumProvidersA");
+    pCryptGetDefaultProviderA = (void*)GetProcAddress(hadvapi32, "CryptGetDefaultProviderA");
+    pCryptReleaseContext = (void*)GetProcAddress(hadvapi32, "CryptReleaseContext");
+    pCryptSetProviderExA = (void*)GetProcAddress(hadvapi32, "CryptSetProviderExA");
+    pCryptCreateHash = (void*)GetProcAddress(hadvapi32, "CryptCreateHash");
+    pCryptDestroyHash = (void*)GetProcAddress(hadvapi32, "CryptDestroyHash");
+    pCryptGenRandom = (void*)GetProcAddress(hadvapi32, "CryptGenRandom");
+    pCryptContextAddRef = (void*)GetProcAddress(hadvapi32, "CryptContextAddRef");
+    pCryptGenKey = (void*)GetProcAddress(hadvapi32, "CryptGenKey");
+    pCryptDestroyKey = (void*)GetProcAddress(hadvapi32, "CryptDestroyKey");
+    pCryptDecrypt = (void*)GetProcAddress(hadvapi32, "CryptDecrypt");
+    pCryptDeriveKey = (void*)GetProcAddress(hadvapi32, "CryptDeriveKey");
+    pCryptDuplicateHash = (void*)GetProcAddress(hadvapi32, "CryptDuplicateHash");
+    pCryptDuplicateKey = (void*)GetProcAddress(hadvapi32, "CryptDuplicateKey");
+    pCryptEncrypt = (void*)GetProcAddress(hadvapi32, "CryptEncrypt");
+    pCryptExportKey = (void*)GetProcAddress(hadvapi32, "CryptExportKey");
+    pCryptGetHashParam = (void*)GetProcAddress(hadvapi32, "CryptGetHashParam");
+    pCryptGetKeyParam = (void*)GetProcAddress(hadvapi32, "CryptGetKeyParam");
+    pCryptGetProvParam = (void*)GetProcAddress(hadvapi32, "CryptGetProvParam");
+    pCryptGetUserKey = (void*)GetProcAddress(hadvapi32, "CryptGetUserKey");
+    pCryptHashData = (void*)GetProcAddress(hadvapi32, "CryptHashData");
+    pCryptHashSessionKey = (void*)GetProcAddress(hadvapi32, "CryptHashSessionKey");
+    pCryptImportKey = (void*)GetProcAddress(hadvapi32, "CryptImportKey");
+    pCryptSignHashW = (void*)GetProcAddress(hadvapi32, "CryptSignHashW");
+    pCryptSetHashParam = (void*)GetProcAddress(hadvapi32, "CryptSetHashParam");
+    pCryptSetKeyParam = (void*)GetProcAddress(hadvapi32, "CryptSetKeyParam");
+    pCryptSetProvParam = (void*)GetProcAddress(hadvapi32, "CryptSetProvParam");
+    pCryptVerifySignatureW = (void*)GetProcAddress(hadvapi32, "CryptVerifySignatureW");
 }
 
 static void init_environment(void)

@@ -431,8 +431,6 @@ static void test_msidecomposedesc(void)
     HMODULE hmod;
 
     hmod = GetModuleHandle("msi.dll");
-    if (!hmod)
-        return;
     pMsiDecomposeDescriptorA = (fnMsiDecomposeDescriptorA)
         GetProcAddress(hmod, "MsiDecomposeDescriptorA");
     if (!pMsiDecomposeDescriptorA)

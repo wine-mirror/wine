@@ -218,9 +218,12 @@ static void do_test( HWND hwnd, int seqnr, const KEV td[] )
     int kmctr, i;
 
     module = GetModuleHandleA("user32");
-    if (!module) return;
     ptr_SendInput = (void *)GetProcAddress(module, "SendInput");
-    if (!ptr_SendInput) return;
+    if (!ptr_SendInput)
+    {
+        skip("skipping SendInput tests\n");
+        return;
+    }
 
     buf[0]='\0';
     TrackSysKey=0; /* see input.c */

@@ -130,14 +130,16 @@ static void nt_mailslot_test(void)
 START_TEST(file)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
-
-    if (hntdll)
+    if (!hntdll)
     {
-        pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
-        pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
-        pNtCreateMailslotFile   = (void *)GetProcAddress(hntdll, "NtCreateMailslotFile");
-        pNtClose                = (void *)GetProcAddress(hntdll, "NtClose");
-
-        nt_mailslot_test();
+        skip("not running on NT, skipping test\n");
+        return;
     }
+
+    pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
+    pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
+    pNtCreateMailslotFile   = (void *)GetProcAddress(hntdll, "NtCreateMailslotFile");
+    pNtClose                = (void *)GetProcAddress(hntdll, "NtClose");
+
+    nt_mailslot_test();
 }

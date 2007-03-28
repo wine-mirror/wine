@@ -395,7 +395,7 @@ static void test_XcvDataPort_AddPort(void)
      */
     if (0)
     {
-    /* create a Port for a normal, writeable file */
+    /* create a Port for a normal, writable file */
     SetLastError(0xdeadbeef);
     res = pXcvDataPort(hXcv, cmd_AddPortW, (PBYTE) tempfileW, (lstrlenW(tempfileW) + 1) * sizeof(WCHAR), NULL, 0, NULL);
 

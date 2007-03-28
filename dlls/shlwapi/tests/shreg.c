@@ -381,11 +381,8 @@ START_TEST(shreg)
         if (!hkey) return;
 
 	hshlwapi = GetModuleHandleA("shlwapi.dll");
-	if (hshlwapi)
-	{
-		pSHCopyKeyA=(SHCopyKeyA_func)GetProcAddress(hshlwapi,"SHCopyKeyA");
-		pSHRegGetPathA=(SHRegGetPathA_func)GetProcAddress(hshlwapi,"SHRegGetPathA");
-	}
+        pSHCopyKeyA=(SHCopyKeyA_func)GetProcAddress(hshlwapi,"SHCopyKeyA");
+        pSHRegGetPathA=(SHRegGetPathA_func)GetProcAddress(hshlwapi,"SHRegGetPathA");
 	test_SHGetValue();
 	test_SHQUeryValueEx();
 	test_SHGetRegPath();

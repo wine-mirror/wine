@@ -40,9 +40,7 @@ static int (WINAPI *pSHCreateDirectoryExA)(HWND, LPCSTR, LPSECURITY_ATTRIBUTES);
 static void InitFunctionPointers(void)
 {
     hshell32 = GetModuleHandleA("shell32.dll");
-
-    if(hshell32)
-	pSHCreateDirectoryExA = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExA");
+    pSHCreateDirectoryExA = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExA");
 }
 
 /* creates a file with the specified name for tests */

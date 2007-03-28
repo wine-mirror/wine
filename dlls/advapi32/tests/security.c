@@ -672,15 +672,18 @@ static void test_AccessCheck(void)
     DWORD err;
 
     NtDllModule = GetModuleHandle("ntdll.dll");
-
     if (!NtDllModule)
     {
-        trace("not running on NT, skipping test\n");
+        skip("not running on NT, skipping test\n");
         return;
     }
     pRtlAdjustPrivilege = (fnRtlAdjustPrivilege)
                           GetProcAddress(NtDllModule, "RtlAdjustPrivilege");
-    if (!pRtlAdjustPrivilege) return;
+    if (!pRtlAdjustPrivilege)
+    {
+        skip("missing RtlAdjustPrivilege, skipping test\n");
+        return;
+    }
 
     Acl = HeapAlloc(GetProcessHeap(), 0, 256);
     res = InitializeAcl(Acl, 256, ACL_REVISION);

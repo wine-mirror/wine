@@ -28,9 +28,7 @@ static UINT (WINAPI *pPrivateExtractIconsA)(LPCTSTR, int, int, int, HICON *, UIN
 static void init_function_pointers(void) 
 {
     HMODULE hmod = GetModuleHandleA("user32.dll");
-    if (hmod) {
-        pPrivateExtractIconsA = (void*)GetProcAddress(hmod, "PrivateExtractIconsA");
-    }
+    pPrivateExtractIconsA = (void*)GetProcAddress(hmod, "PrivateExtractIconsA");
 }
 
 static void test_LoadStringA (void)

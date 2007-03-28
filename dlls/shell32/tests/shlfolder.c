@@ -55,20 +55,14 @@ static void init_function_pointers(void)
     HRESULT hr;
 
     hmod = GetModuleHandleA("shell32.dll");
-    if(hmod)
-    {
-        pSHBindToParent = (void*)GetProcAddress(hmod, "SHBindToParent");
-        pSHGetSpecialFolderPathW = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathW");
-        pILFindLastID = (void *)GetProcAddress(hmod, (LPCSTR)16);
-        pILFree = (void*)GetProcAddress(hmod, (LPSTR)155);
-        pILIsEqual = (void*)GetProcAddress(hmod, (LPSTR)21);
-    }
+    pSHBindToParent = (void*)GetProcAddress(hmod, "SHBindToParent");
+    pSHGetSpecialFolderPathW = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathW");
+    pILFindLastID = (void *)GetProcAddress(hmod, (LPCSTR)16);
+    pILFree = (void*)GetProcAddress(hmod, (LPSTR)155);
+    pILIsEqual = (void*)GetProcAddress(hmod, (LPSTR)21);
 
     hmod = GetModuleHandleA("shlwapi.dll");
-    if(hmod)
-    {
-        pStrRetToBufW = (void*)GetProcAddress(hmod, "StrRetToBufW");
-    }
+    pStrRetToBufW = (void*)GetProcAddress(hmod, "StrRetToBufW");
 
     hr = SHGetMalloc(&ppM);
     ok(hr == S_OK, "SHGetMalloc failed %08x\n", hr);

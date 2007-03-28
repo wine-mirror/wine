@@ -288,8 +288,6 @@ static void test_MRUListA(void)
 START_TEST(mru)
 {
     hComctl32 = GetModuleHandleA("comctl32.dll");
-    if (!hComctl32)
-        return;
 
     delete_reg_entries();
     if (!create_reg_entries())

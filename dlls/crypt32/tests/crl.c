@@ -81,11 +81,7 @@ static BOOL (WINAPI *pCertIsValidCRLForCertificate)(PCCERT_CONTEXT, PCCRL_CONTEX
 static void init_function_pointers(void)
 {
     HMODULE hdll = GetModuleHandleA("crypt32.dll");
-
-    if(hdll)
-    {
-        pCertIsValidCRLForCertificate = (void*)GetProcAddress(hdll, "CertIsValidCRLForCertificate");
-    }
+    pCertIsValidCRLForCertificate = (void*)GetProcAddress(hdll, "CertIsValidCRLForCertificate");
 }
 
 static void testCreateCRL(void)

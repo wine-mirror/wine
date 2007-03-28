@@ -31,13 +31,9 @@ static HRESULT (WINAPI *pStgCreatePropSetStg)(IStorage *, DWORD, IPropertySetSto
 static void init_function_pointers(void)
 {
     HMODULE hmod = GetModuleHandleA("ole32.dll");
-
-    if(hmod)
-    {
-        pFmtIdToPropStgName = (void*)GetProcAddress(hmod, "FmtIdToPropStgName");
-        pPropStgNameToFmtId = (void*)GetProcAddress(hmod, "PropStgNameToFmtId");
-        pStgCreatePropSetStg = (void*)GetProcAddress(hmod, "StgCreatePropSetStg");
-    }
+    pFmtIdToPropStgName = (void*)GetProcAddress(hmod, "FmtIdToPropStgName");
+    pPropStgNameToFmtId = (void*)GetProcAddress(hmod, "PropStgNameToFmtId");
+    pStgCreatePropSetStg = (void*)GetProcAddress(hmod, "StgCreatePropSetStg");
 }
 /* FIXME: this creates an ANSI storage, try to find conditions under which
  * Unicode translation fails

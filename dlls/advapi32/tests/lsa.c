@@ -45,16 +45,14 @@ static BOOL init(void)
 {
     hadvapi32 = GetModuleHandle("advapi32.dll");
 
-    if (hadvapi32) {
-        pLsaClose = (void*)GetProcAddress(hadvapi32, "LsaClose");
-        pLsaFreeMemory = (void*)GetProcAddress(hadvapi32, "LsaFreeMemory");
-        pLsaOpenPolicy = (void*)GetProcAddress(hadvapi32, "LsaOpenPolicy");
-        pLsaQueryInformationPolicy = (void*)GetProcAddress(hadvapi32, "LsaQueryInformationPolicy");
-        pConvertSidToStringSidA = (void*)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
+    pLsaClose = (void*)GetProcAddress(hadvapi32, "LsaClose");
+    pLsaFreeMemory = (void*)GetProcAddress(hadvapi32, "LsaFreeMemory");
+    pLsaOpenPolicy = (void*)GetProcAddress(hadvapi32, "LsaOpenPolicy");
+    pLsaQueryInformationPolicy = (void*)GetProcAddress(hadvapi32, "LsaQueryInformationPolicy");
+    pConvertSidToStringSidA = (void*)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
 
-        if (pLsaClose && pLsaFreeMemory && pLsaOpenPolicy && pLsaQueryInformationPolicy && pConvertSidToStringSidA)
-            return TRUE;
-    }
+    if (pLsaClose && pLsaFreeMemory && pLsaOpenPolicy && pLsaQueryInformationPolicy && pConvertSidToStringSidA)
+        return TRUE;
 
     return FALSE;
 }

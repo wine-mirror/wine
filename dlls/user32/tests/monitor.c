@@ -33,15 +33,11 @@ static HMONITOR (WINAPI *pMonitorFromWindow)(HWND,DWORD);
 static void init_function_pointers(void)
 {
     hdll = GetModuleHandleA("user32.dll");
-
-    if(hdll)
-    {
-       pEnumDisplayDevicesA = (void*)GetProcAddress(hdll, "EnumDisplayDevicesA");
-       pEnumDisplayMonitors = (void*)GetProcAddress(hdll, "EnumDisplayMonitors");
-       pGetMonitorInfoA = (void*)GetProcAddress(hdll, "GetMonitorInfoA");
-       pMonitorFromPoint = (void*)GetProcAddress(hdll, "MonitorFromPoint");
-       pMonitorFromWindow = (void*)GetProcAddress(hdll, "MonitorFromWindow");
-    }
+    pEnumDisplayDevicesA = (void*)GetProcAddress(hdll, "EnumDisplayDevicesA");
+    pEnumDisplayMonitors = (void*)GetProcAddress(hdll, "EnumDisplayMonitors");
+    pGetMonitorInfoA = (void*)GetProcAddress(hdll, "GetMonitorInfoA");
+    pMonitorFromPoint = (void*)GetProcAddress(hdll, "MonitorFromPoint");
+    pMonitorFromWindow = (void*)GetProcAddress(hdll, "MonitorFromWindow");
 }
 
 static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc,

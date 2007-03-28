@@ -87,16 +87,12 @@ static IsValidLanguageGroupFn pIsValidLanguageGroup;
 static void InitFunctionPointers(void)
 {
   hKernel32 = GetModuleHandleA("kernel32");
-
-  if (hKernel32)
-  {
-    pEnumSystemLanguageGroupsA = (void*)GetProcAddress(hKernel32, "EnumSystemLanguageGroupsA");
-    pEnumLanguageGroupLocalesA = (void*)GetProcAddress(hKernel32, "EnumLanguageGroupLocalesA");
-    pFoldStringA = (void*)GetProcAddress(hKernel32, "FoldStringA");
-    pFoldStringW = (void*)GetProcAddress(hKernel32, "FoldStringW");
-    pIsValidLanguageGroup = (void*)GetProcAddress(hKernel32, "IsValidLanguageGroup");
-    pEnumUILanguagesA = (void*)GetProcAddress(hKernel32, "EnumUILanguagesA");
-  }
+  pEnumSystemLanguageGroupsA = (void*)GetProcAddress(hKernel32, "EnumSystemLanguageGroupsA");
+  pEnumLanguageGroupLocalesA = (void*)GetProcAddress(hKernel32, "EnumLanguageGroupLocalesA");
+  pFoldStringA = (void*)GetProcAddress(hKernel32, "FoldStringA");
+  pFoldStringW = (void*)GetProcAddress(hKernel32, "FoldStringW");
+  pIsValidLanguageGroup = (void*)GetProcAddress(hKernel32, "IsValidLanguageGroup");
+  pEnumUILanguagesA = (void*)GetProcAddress(hKernel32, "EnumUILanguagesA");
 }
 
 #define eq(received, expected, label, type) \

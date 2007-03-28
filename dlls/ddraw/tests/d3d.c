@@ -53,11 +53,7 @@ typedef struct _TVERTEX
 static void init_function_pointers(void)
 {
     HMODULE hmod = GetModuleHandleA("ddraw.dll");
-
-    if(hmod)
-    {
-        pDirectDrawCreateEx = (void*)GetProcAddress(hmod, "DirectDrawCreateEx");
-    }
+    pDirectDrawCreateEx = (void*)GetProcAddress(hmod, "DirectDrawCreateEx");
 }
 
 

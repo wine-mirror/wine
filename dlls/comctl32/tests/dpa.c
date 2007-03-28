@@ -450,12 +450,6 @@ START_TEST(dpa)
 
     hcomctl32 = GetModuleHandleA("comctl32.dll");
 
-    if(!hcomctl32)
-    {
-        ok(0, "error=%d\n", GetLastError());
-        return;
-    }
-
     if(InitFunctionPtrs(hcomctl32))
         test_dpa();
     else

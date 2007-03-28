@@ -541,29 +541,32 @@ static void test_symboliclink(void)
 START_TEST(om)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
-    if (hntdll)
+    if (!hntdll)
     {
-        pRtlCreateUnicodeStringFromAsciiz = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeStringFromAsciiz");
-        pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
-        pNtCreateEvent          = (void *)GetProcAddress(hntdll, "NtCreateEvent");
-        pNtCreateMutant         = (void *)GetProcAddress(hntdll, "NtCreateMutant");
-        pNtOpenMutant           = (void *)GetProcAddress(hntdll, "NtOpenMutant");
-        pNtOpenFile             = (void *)GetProcAddress(hntdll, "NtOpenFile");
-        pNtClose                = (void *)GetProcAddress(hntdll, "NtClose");
-        pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
-        pNtCreateNamedPipeFile  = (void *)GetProcAddress(hntdll, "NtCreateNamedPipeFile");
-        pNtOpenDirectoryObject  = (void *)GetProcAddress(hntdll, "NtOpenDirectoryObject");
-        pNtCreateDirectoryObject= (void *)GetProcAddress(hntdll, "NtCreateDirectoryObject");
-        pNtOpenSymbolicLinkObject = (void *)GetProcAddress(hntdll, "NtOpenSymbolicLinkObject");
-        pNtCreateSymbolicLinkObject = (void *)GetProcAddress(hntdll, "NtCreateSymbolicLinkObject");
-        pNtCreateSemaphore      =  (void *)GetProcAddress(hntdll, "NtCreateSemaphore");
-        pNtCreateTimer          =  (void *)GetProcAddress(hntdll, "NtCreateTimer");
-        pNtCreateSection        =  (void *)GetProcAddress(hntdll, "NtCreateSection");
-
-        test_case_sensitive();
-        test_namespace_pipe();
-        test_name_collisions();
-        test_directory();
-        test_symboliclink();
+        skip("not running on NT, skipping test\n");
+        return;
     }
+
+    pRtlCreateUnicodeStringFromAsciiz = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeStringFromAsciiz");
+    pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
+    pNtCreateEvent          = (void *)GetProcAddress(hntdll, "NtCreateEvent");
+    pNtCreateMutant         = (void *)GetProcAddress(hntdll, "NtCreateMutant");
+    pNtOpenMutant           = (void *)GetProcAddress(hntdll, "NtOpenMutant");
+    pNtOpenFile             = (void *)GetProcAddress(hntdll, "NtOpenFile");
+    pNtClose                = (void *)GetProcAddress(hntdll, "NtClose");
+    pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
+    pNtCreateNamedPipeFile  = (void *)GetProcAddress(hntdll, "NtCreateNamedPipeFile");
+    pNtOpenDirectoryObject  = (void *)GetProcAddress(hntdll, "NtOpenDirectoryObject");
+    pNtCreateDirectoryObject= (void *)GetProcAddress(hntdll, "NtCreateDirectoryObject");
+    pNtOpenSymbolicLinkObject = (void *)GetProcAddress(hntdll, "NtOpenSymbolicLinkObject");
+    pNtCreateSymbolicLinkObject = (void *)GetProcAddress(hntdll, "NtCreateSymbolicLinkObject");
+    pNtCreateSemaphore      =  (void *)GetProcAddress(hntdll, "NtCreateSemaphore");
+    pNtCreateTimer          =  (void *)GetProcAddress(hntdll, "NtCreateTimer");
+    pNtCreateSection        =  (void *)GetProcAddress(hntdll, "NtCreateSection");
+
+    test_case_sensitive();
+    test_namespace_pipe();
+    test_name_collisions();
+    test_directory();
+    test_symboliclink();
 }

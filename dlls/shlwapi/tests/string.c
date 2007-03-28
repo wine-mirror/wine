@@ -829,8 +829,6 @@ START_TEST(string)
   GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, decimalDelim, 8);
 
   hShlwapi = GetModuleHandleA("shlwapi");
-  if (!hShlwapi)
-     return;
 
   test_StrChrA();
   test_StrChrW();
