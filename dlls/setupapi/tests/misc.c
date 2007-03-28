@@ -102,7 +102,7 @@ static void test_SetupCopyOEMInf(void)
 {
     CHAR toolong[MAX_PATH * 2];
     CHAR path[MAX_PATH], dest[MAX_PATH];
-    CHAR tmpfile[MAX_PATH];
+    CHAR tmpfile[MAX_PATH], dest_save[MAX_PATH];
     LPSTR inf;
     DWORD size;
     BOOL res;
@@ -134,11 +134,8 @@ static void test_SetupCopyOEMInf(void)
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf(path, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-           "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
     /* try a long SourceInfFileName */
     memset(toolong, 'a', MAX_PATH * 2);
@@ -164,11 +161,8 @@ static void test_SetupCopyOEMInf(void)
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf(path, NULL, SPOST_NONE, SP_COPY_REPLACEONLY, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-           "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     ok(file_exists(tmpfile), "Expected source inf to exist\n");
 
     /* try an absolute SourceInfFileName, without DestinationInfFileName */
@@ -177,32 +171,23 @@ static void test_SetupCopyOEMInf(void)
     lstrcat(path, tmpfile);
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf(path, NULL, SPOST_NONE, 0, NULL, 0, NULL, NULL);
-    todo_wine
-    {
-        ok(res == TRUE, "Expected TRUE, got %d\n", res);
-        ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
-    }
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(file_exists(path), "Expected source inf to exist\n");
 
     /* try SP_COPY_REPLACEONLY, dest exists */
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf(path, NULL, SPOST_NONE, SP_COPY_REPLACEONLY, NULL, 0, NULL, NULL);
-    todo_wine
-    {
-        ok(res == TRUE, "Expected TRUE, got %d\n", res);
-        ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
-    }
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(file_exists(path), "Expected source inf to exist\n");
 
     /* try SP_COPY_NOOVERWRITE */
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf(path, NULL, SPOST_NONE, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_FILE_EXISTS,
-           "Expected ERROR_FILE_EXISTS, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_FILE_EXISTS,
+       "Expected ERROR_FILE_EXISTS, got %d\n", GetLastError());
 
     /* get the DestinationInfFileName */
     SetLastError(0xdeadbeef);
@@ -217,6 +202,24 @@ static void test_SetupCopyOEMInf(void)
     }
     ok(file_exists(path), "Expected source inf to exist\n");
 
+    lstrcpy(dest_save, dest);
+    DeleteFile(dest_save);
+
+    /* get the DestinationInfFileName, DestinationInfFileNameSize is too small
+     *   - inf is still copied
+     */
+    lstrcpy(dest, "aaa");
+    size = 0;
+    SetLastError(0xdeadbeef);
+    res = SetupCopyOEMInf(path, NULL, SPOST_NONE, 0, dest, 5, &size, NULL);
+    ok(res == FALSE, "Expected FALSE, got %d\n", res);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(file_exists(path), "Expected source inf to exist\n");
+    ok(file_exists(dest_save), "Expected dest inf to exist\n");
+    ok(!lstrcmp(dest, "aaa"), "Expected dest to be unchanged\n");
+    ok(size == lstrlen(dest_save) + 1, "Expected size to be lstrlen(dest_save) + 1\n");
+
     /* get the DestinationInfFileName and DestinationInfFileNameSize */
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf(path, NULL, SPOST_NONE, 0, dest, MAX_PATH, &size, NULL);
@@ -229,6 +232,7 @@ static void test_SetupCopyOEMInf(void)
         ok(check_format(dest, NULL), "Expected %%windir%%\\inf\\OEMx.inf, got %s\n", dest);
     }
     ok(file_exists(path), "Expected source inf to exist\n");
+    ok(size == lstrlen(dest_save) + 1, "Expected size to be lstrlen(dest_save) + 1\n");
 
     /* get the DestinationInfFileName, DestinationInfFileNameSize, and DestinationInfFileNameComponent */
     SetLastError(0xdeadbeef);
@@ -242,15 +246,16 @@ static void test_SetupCopyOEMInf(void)
         ok(check_format(dest, inf), "Expected %%windir%%\\inf\\OEMx.inf, got %s\n", dest);
     }
     ok(file_exists(path), "Expected source inf to exist\n");
+    ok(size == lstrlen(dest_save) + 1, "Expected size to be lstrlen(dest_save) + 1\n");
 
     /* try SP_COPY_DELETESOURCE */
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf(path, NULL, SPOST_NONE, SP_COPY_DELETESOURCE, NULL, 0, NULL, NULL);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(!file_exists(path), "Expected source inf to not exist\n");
     todo_wine
     {
-        ok(res == TRUE, "Expected TRUE, got %d\n", res);
         ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
-        ok(!file_exists(path), "Expected source inf to not exist\n");
     }
 }
 

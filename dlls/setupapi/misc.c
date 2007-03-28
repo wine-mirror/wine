@@ -887,20 +887,21 @@ BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
 {
     BOOL ret = FALSE;
     LPWSTR destW = NULL, sourceW = NULL, locationW = NULL;
-    INT size = MAX_PATH;
+    DWORD size;
 
     TRACE("%s, %s, %d, %d, %p, %d, %p, %p\n", debugstr_a(source), debugstr_a(location),
           media_type, style, dest, buffer_size, required_size, component);
 
-    if (dest && !(destW = MyMalloc( MAX_PATH * sizeof(WCHAR) ))) return FALSE;
+    if (dest && !(destW = MyMalloc( buffer_size * sizeof(WCHAR) ))) return FALSE;
     if (source && !(sourceW = strdupAtoW( source ))) goto done;
     if (location && !(locationW = strdupAtoW( location ))) goto done;
 
-    if (!(ret = SetupCopyOEMInfW( sourceW, locationW, media_type, style, destW, size, NULL, NULL )))
+    if (!(ret = SetupCopyOEMInfW( sourceW, locationW, media_type, style, destW,
+                                  buffer_size, &size, NULL )))
+    {
+        if (required_size) *required_size = size;
         goto done;
-
-    size = WideCharToMultiByte( CP_ACP, 0, destW, -1, NULL, 0, NULL, NULL );
-    if (required_size) *required_size = size;
+    }
 
     if (dest)
     {
@@ -957,17 +958,18 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
     if ((p = strrchrW( source, '\\' )))
         strcatW( target, p + 1 );
 
+    if (!(ret = CopyFileW( source, target, (style & SP_COPY_NOOVERWRITE) != 0 )))
+        return ret;
+
+    if (style & SP_COPY_DELETESOURCE)
+        DeleteFileW( source );
+
     size = strlenW( target ) + 1;
     if (dest)
     {
         if (buffer_size >= size)
         {
-            /* FIXME: honour style flags */
-            if ((ret = CopyFileW( source, target, (style & SP_COPY_NOOVERWRITE) != 0 )))
-            {
-                if (style & SP_COPY_DELETESOURCE) DeleteFileW( source );
-                strcpyW( dest, target );
-            }
+            strcpyW( dest, target );
         }
         else
         {
