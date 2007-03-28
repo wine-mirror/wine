@@ -1417,7 +1417,10 @@ static void state_patchsegments(DWORD state, IWineD3DStateBlockImpl *stateblock,
 
     TRACE("Stub\n");
     if (stateblock->renderState[WINED3DRS_PATCHSEGMENTS] != tmpvalue.d)
-        ERR("(WINED3DRS_PATCHSEGMENTS,%d) not yet implemented\n", tmpvalue.d);
+    {
+        tmpvalue.d = stateblock->renderState[WINED3DRS_PATCHSEGMENTS];
+        ERR("(WINED3DRS_PATCHSEGMENTS,%f) not yet implemented\n", tmpvalue.f);
+    }
 }
 
 static void state_positiondegree(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
