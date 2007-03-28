@@ -381,9 +381,9 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
   else if (Connection->AuthInfo && packet_has_auth_verifier(Header))
   {
     if ((Connection->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_PKT_PRIVACY) && packet_has_body(Header))
-      Header->common.auth_len = Connection->signature_auth_len;
-    else
       Header->common.auth_len = Connection->encryption_auth_len;
+    else
+      Header->common.auth_len = Connection->signature_auth_len;
   }
   else
     Header->common.auth_len = 0;
