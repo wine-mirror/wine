@@ -1063,7 +1063,7 @@ VOID WINAPI SHSetInstanceExplorer (LPUNKNOWN lpUnknown)
  * NOTES
  *  gets the interface pointer of the explorer and a reference
  */
-HRESULT WINAPI SHGetInstanceExplorer (LPUNKNOWN * lpUnknown)
+HRESULT WINAPI SHGetInstanceExplorer (IUnknown **lpUnknown)
 {	TRACE("%p\n", lpUnknown);
 
 	*lpUnknown = SHELL32_IExplorerInterface;

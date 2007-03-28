@@ -1489,7 +1489,7 @@ DWORD WINAPI WNetCancelConnection2W( LPCWSTR lpName, DWORD dwFlags, BOOL fForce 
 /*****************************************************************
  *  WNetRestoreConnectionA [MPR.@]
  */
-DWORD WINAPI WNetRestoreConnectionA( HWND hwndOwner, LPSTR lpszDevice )
+DWORD WINAPI WNetRestoreConnectionA( HWND hwndOwner, LPCSTR lpszDevice )
 {
     FIXME( "(%p, %s), stub\n", hwndOwner, debugstr_a(lpszDevice) );
 
@@ -1500,7 +1500,7 @@ DWORD WINAPI WNetRestoreConnectionA( HWND hwndOwner, LPSTR lpszDevice )
 /*****************************************************************
  *  WNetRestoreConnectionW [MPR.@]
  */
-DWORD WINAPI WNetRestoreConnectionW( HWND hwndOwner, LPWSTR lpszDevice )
+DWORD WINAPI WNetRestoreConnectionW( HWND hwndOwner, LPCWSTR lpszDevice )
 {
     FIXME( "(%p, %s), stub\n", hwndOwner, debugstr_w(lpszDevice) );
 
