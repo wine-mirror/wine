@@ -243,11 +243,8 @@ static void test_SetupCopyOEMInf(void)
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf(path, NULL, SPOST_NONE, SP_COPY_DELETESOURCE, NULL, 0, NULL, NULL);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(!file_exists(path), "Expected source inf to not exist\n");
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
-    }
 }
 
 START_TEST(misc)

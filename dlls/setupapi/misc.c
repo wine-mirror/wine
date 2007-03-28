@@ -921,6 +921,7 @@ done:
     MyFree( destW );
     HeapFree( GetProcessHeap(), 0, sourceW );
     HeapFree( GetProcessHeap(), 0, locationW );
+    if (ret) SetLastError(ERROR_SUCCESS);
     return ret;
 }
 
@@ -980,6 +981,7 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
 
     if (component) *component = p + 1;
     if (required_size) *required_size = size;
+    if (ret) SetLastError(ERROR_SUCCESS);
 
     return ret;
 }
