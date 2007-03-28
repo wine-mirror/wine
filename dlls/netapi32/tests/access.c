@@ -164,7 +164,7 @@ static void run_usergetinfo_tests(void)
     ok(rc == ERROR_INVALID_NAME,"Invalid Server Name: rc=%d\n",rc);
 
     if(delete_test_user() != NERR_Success)
-        trace("Deleting the test user failed. You might have to manually delete it.");
+        trace("Deleting the test user failed. You might have to manually delete it.\n");
 }
 
 /* checks Level 1 of NetQueryDisplayInformation
