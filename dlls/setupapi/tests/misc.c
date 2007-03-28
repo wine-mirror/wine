@@ -118,15 +118,21 @@ static void test_SetupCopyOEMInf(void)
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf("", NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-           "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
-    /* try nonexistent SourceInfFileName */
+    /* try a relative nonexistent SourceInfFileName */
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf("nonexistent", NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    ok(res == FALSE, "Expected FALSE, got %d\n", res);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+
+    /* try an absolute nonexistent SourceInfFileName */
+    lstrcpy(path, CURR_DIR);
+    lstrcat(path, "\\nonexistent");
+    SetLastError(0xdeadbeef);
+    res = SetupCopyOEMInf(path, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
     todo_wine
     {
@@ -140,11 +146,8 @@ static void test_SetupCopyOEMInf(void)
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf(toolong, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-           "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
     get_temp_filename(tmpfile);
     create_inf_file(tmpfile);
@@ -153,11 +156,8 @@ static void test_SetupCopyOEMInf(void)
     SetLastError(0xdeadbeef);
     res = SetupCopyOEMInf(tmpfile, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-           "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     ok(file_exists(tmpfile), "Expected tmpfile to exist\n");
 
     /* try SP_COPY_REPLACEONLY, dest does not exist */

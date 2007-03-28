@@ -944,6 +944,13 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
         return FALSE;
     }
 
+    /* check for a relative path */
+    if (!(*source == '\\' || (*source && source[1] == ':')))
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
     if (!GetWindowsDirectoryW( target, sizeof(target)/sizeof(WCHAR) )) return FALSE;
 
     strcatW( target, inf_oem );
