@@ -63,7 +63,7 @@ static ULONGLONG byte_total;
 static DISPLAYTIME dirTime;
 static DISPLAYORDER dirOrder;
 static BOOL orderReverse, orderGroupDirs, orderGroupDirsReverse, orderByCol;
-static BOOL seperator;
+static BOOL separator;
 static ULONG showattrs, attrsbits;
 
 /*****************************************************************************
@@ -104,7 +104,7 @@ void WCMD_directory (void) {
   shortname  = FALSE;
   usernames  = FALSE;
   orderByCol = FALSE;
-  seperator  = TRUE;
+  separator  = TRUE;
   dirTime = Written;
   dirOrder = Name;
   orderReverse = FALSE;
@@ -152,8 +152,8 @@ void WCMD_directory (void) {
     case 'D': if (negate) orderByCol = !orderByCol;
               else orderByCol = TRUE;
               break;
-    case 'C': if (negate) seperator = !seperator;
-              else seperator = TRUE;
+    case 'C': if (negate) separator = !separator;
+              else separator = TRUE;
               break;
     case 'T': p = p + 1;
               if (*p==':') p++;  /* Skip optional : */
@@ -566,7 +566,7 @@ char * WCMD_filesize64 (ULONGLONG n) {
   p = buff;
   i = -3;
   do {
-    if (seperator && ((++i)%3 == 1)) *p++ = ',';
+    if (separator && ((++i)%3 == 1)) *p++ = ',';
     q = n / 10;
     r = n - (q * 10);
     *p++ = r + '0';
