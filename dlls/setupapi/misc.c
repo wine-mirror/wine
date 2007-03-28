@@ -956,7 +956,7 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
         if (buffer_size >= size)
         {
             /* FIXME: honour style flags */
-            if ((ret = CopyFileW( source, target, FALSE )))
+            if ((ret = CopyFileW( source, target, (style & SP_COPY_NOOVERWRITE) != 0 )))
             {
                 if (style & SP_COPY_DELETESOURCE) DeleteFileW( source );
                 strcpyW( dest, target );
