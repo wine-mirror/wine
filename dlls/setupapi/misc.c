@@ -978,7 +978,7 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
 /***********************************************************************
  *      InstallCatalog  (SETUPAPI.@)
  */
-DWORD InstallCatalog( LPCSTR catalog, LPCSTR basename, LPSTR fullname )
+DWORD WINAPI InstallCatalog( LPCSTR catalog, LPCSTR basename, LPSTR fullname )
 {
     FIXME("%s, %s, %p\n", debugstr_a(catalog), debugstr_a(basename), fullname);
     return 0;
