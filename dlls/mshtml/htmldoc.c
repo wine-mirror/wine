@@ -113,6 +113,9 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IPersistStreamInit, riid)) {
         TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppvObject);
         *ppvObject = PERSTRINIT(This);
+    }else if(IsEqualGUID(&DIID_DispHTMLDocument, riid)) {
+        TRACE("(%p)->(DIID_DispHTMLDocument %p)\n", This, ppvObject);
+        *ppvObject = HTMLDOC(This);
     }else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
         FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppvObject);
         return E_NOINTERFACE;
