@@ -1845,7 +1845,7 @@ static BOOL PATH_WidenPath(DC *dc)
                 break;
             case PT_BEZIERTO:
                 /* should never happen because of the FlattenPath call */
-                ERR("Should never happen \n");
+                ERR("Should never happen\n");
                 break;
             default:
                 ERR("Got path flag %c\n", pPath->pFlags[i]);
