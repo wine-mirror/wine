@@ -1019,7 +1019,9 @@ static void test_EM_LIMITTEXT(void)
 static void test_EM_EXLIMITTEXT(void)
 {
   int i, selBegin, selEnd, len1, len2;
+  int result;
   char text[1024 + 1];
+  char buffer[1024 + 1];
   int textlimit = 0; /* multiple of 100 */
   HWND hwndRichEdit = new_richedit(NULL);
   
@@ -1086,6 +1088,18 @@ static void test_EM_EXLIMITTEXT(void)
   ok(len1 == len2, 
     "EM_EXLIMITTEXT: No Change Expected\nOld Length: %d, New Length: %d, Limit: %d\n",
     len1,len2,i);
+
+  /* set text up to the limit, select all the text, then add a char */
+  textlimit = 5;
+  memset(text, 'W', textlimit);
+  text[textlimit] = 0;
+  SendMessage(hwndRichEdit, EM_EXLIMITTEXT, 0, textlimit);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, -1);
+  SendMessage(hwndRichEdit, WM_CHAR, 'A', 1);
+  SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  result = strcmp(buffer, "A");
+  ok(0 == result, "got string = \"%s\"\n", buffer);
 
   DestroyWindow(hwndRichEdit);
 }
