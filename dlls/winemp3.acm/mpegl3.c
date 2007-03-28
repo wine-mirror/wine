@@ -374,6 +374,8 @@ static	LRESULT	MPEG3_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
  */
 static	void	MPEG3_Reset(PACMDRVSTREAMINSTANCE adsi, AcmMpeg3Data* aad)
 {
+    ExitMP3(&aad->mp);
+    InitMP3(&aad->mp);
 }
 
 /***********************************************************************
