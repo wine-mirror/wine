@@ -5,8 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shlwapi.dll
 IMPORTLIB = libshlwapi.$(IMPLIBEXT)
-IMPORTS   = ole32 user32 gdi32 advapi32 kernel32 ntdll
-DELAYIMPORTS = oleaut32
+IMPORTS   = user32 gdi32 advapi32 kernel32 ntdll
+DELAYIMPORTS = oleaut32 ole32 comctl32 comdlg32 mpr mlang urlmon shell32 winmm version
 EXTRALIBS = -luuid
 
 C_SRCS = \

@@ -50,7 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
   } while (0)
 
 /* DLL handles for late bound calls */
-extern HMODULE SHLWAPI_hshell32;
+static HMODULE SHLWAPI_hshell32;
 
 /* Function pointers for GET_FUNC macro; these need to be global because of gcc bug */
 typedef BOOL (WINAPI *fnpIsNetDrive)(int);

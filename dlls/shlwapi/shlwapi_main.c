@@ -23,24 +23,14 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winerror.h"
-#include "wine/debug.h"
 #define NO_SHLWAPI_REG
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 HINSTANCE shlwapi_hInstance = 0;
-HMODULE SHLWAPI_hshell32 = 0;
-HMODULE SHLWAPI_hwinmm = 0;
-HMODULE SHLWAPI_hcomdlg32 = 0;
-HMODULE SHLWAPI_hcomctl32 = 0;
-HMODULE SHLWAPI_hmpr = 0;
-HMODULE SHLWAPI_hmlang = 0;
-HMODULE SHLWAPI_hurlmon = 0;
-HMODULE SHLWAPI_hversion = 0;
-
 DWORD SHLWAPI_ThreadRef_index = TLS_OUT_OF_INDEXES;
 
 /*************************************************************************
@@ -74,14 +64,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    SHLWAPI_ThreadRef_index = TlsAlloc();
 	    break;
 	  case DLL_PROCESS_DETACH:
-	    if (SHLWAPI_hshell32)  FreeLibrary(SHLWAPI_hshell32);
-	    if (SHLWAPI_hwinmm)    FreeLibrary(SHLWAPI_hwinmm);
-	    if (SHLWAPI_hcomdlg32) FreeLibrary(SHLWAPI_hcomdlg32);
-	    if (SHLWAPI_hcomctl32) FreeLibrary(SHLWAPI_hcomctl32);
-	    if (SHLWAPI_hmpr)      FreeLibrary(SHLWAPI_hmpr);
-	    if (SHLWAPI_hmlang)    FreeLibrary(SHLWAPI_hmlang);
-	    if (SHLWAPI_hurlmon)   FreeLibrary(SHLWAPI_hurlmon);
-	    if (SHLWAPI_hversion)  FreeLibrary(SHLWAPI_hversion);
 	    if (SHLWAPI_ThreadRef_index != TLS_OUT_OF_INDEXES) TlsFree(SHLWAPI_ThreadRef_index);
 	    break;
 	}

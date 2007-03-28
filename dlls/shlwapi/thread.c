@@ -26,30 +26,17 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "wine/debug.h"
+#include "winuser.h"
 #define NO_SHLWAPI_REG
 #define NO_SHLWAPI_PATH
 #define NO_SHLWAPI_GDI
 #define NO_SHLWAPI_STREAM
 #define NO_SHLWAPI_USER
 #include "shlwapi.h"
+#include "shlobj.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
-
-/* Get a function pointer from a DLL handle */
-#define GET_FUNC(func, module, name, fail) \
-  do { \
-    if (!func) { \
-      if (!SHLWAPI_h##module && !(SHLWAPI_h##module = LoadLibraryA(#module ".dll"))) return fail; \
-      if (!(func = (void*)GetProcAddress(SHLWAPI_h##module, name))) return fail; \
-    } \
-  } while (0)
-
-/* DLL handles for late bound calls */
-extern HMODULE SHLWAPI_hshell32;
-
-/* Function pointers for GET_FUNC macro; these need to be global because of gcc bug */
-static HRESULT (WINAPI *pSHGetInstanceExplorer)(IUnknown**);
 
 extern DWORD SHLWAPI_ThreadRef_index;  /* Initialised in shlwapi_main.c */
 
@@ -118,9 +105,7 @@ HRESULT WINAPI _SHGetInstanceExplorer(IUnknown **lppUnknown)
 {
   /* This function is used within SHLWAPI only to hold the IE reference
    * for threads created with the CTF_PROCESS_REF flag set. */
-
-  GET_FUNC(pSHGetInstanceExplorer, shell32, "SHGetInstanceExplorer", E_FAIL);
-  return pSHGetInstanceExplorer(lppUnknown);
+    return SHGetInstanceExplorer(lppUnknown);
 }
 
 /* Internal thread information structure */
