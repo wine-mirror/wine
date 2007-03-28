@@ -479,8 +479,10 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
             checkGLcall("glActiveTextureARB");
 
-            glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-            checkGLcall("glDisable GL_TEXTURE_CUBE_MAP_ARB");
+            if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                checkGLcall("glDisable GL_TEXTURE_CUBE_MAP_ARB");
+            }
             glDisable(GL_TEXTURE_3D);
             checkGLcall("glDisable GL_TEXTURE_3D");
             glDisable(GL_TEXTURE_2D);
@@ -497,8 +499,10 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
         checkGLcall("glActiveTextureARB");
     }
-    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-    checkGLcall("glDisable GL_TEXTURE_CUBE_MAP_ARB");
+    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        checkGLcall("glDisable GL_TEXTURE_CUBE_MAP_ARB");
+    }
     glDisable(GL_TEXTURE_3D);
     checkGLcall("glDisable GL_TEXTURE_3D");
     glDisable(GL_TEXTURE_1D);

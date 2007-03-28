@@ -1552,14 +1552,18 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock)
             case GL_TEXTURE_2D:
                 glDisable(GL_TEXTURE_3D);
                 checkGLcall("glDisable(GL_TEXTURE_3D)");
-                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+                if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+                }
                 glEnable(GL_TEXTURE_2D);
                 checkGLcall("glEnable(GL_TEXTURE_2D)");
                 break;
             case GL_TEXTURE_3D:
-                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+                if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+                }
                 glDisable(GL_TEXTURE_2D);
                 checkGLcall("glDisable(GL_TEXTURE_2D)");
                 glEnable(GL_TEXTURE_3D);
@@ -1579,8 +1583,10 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock)
         checkGLcall("glDisable(GL_TEXTURE_2D)");
         glDisable(GL_TEXTURE_3D);
         checkGLcall("glDisable(GL_TEXTURE_3D)");
-        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+        if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+            glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+            checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+        }
         glEnable(GL_TEXTURE_1D);
         checkGLcall("glEnable(GL_TEXTURE_1D)");
         /* Binding textures is done by samplers. A dummy texture will be bound */
@@ -1636,8 +1642,10 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
             checkGLcall("glDisable(GL_TEXTURE_2D)");
             glDisable(GL_TEXTURE_3D);
             checkGLcall("glDisable(GL_TEXTURE_3D)");
-            glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-            checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+            if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+            }
         }
         /* All done */
         return;
