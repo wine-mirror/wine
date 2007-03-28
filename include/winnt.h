@@ -4798,6 +4798,86 @@ ULONGLONG WINAPI VerSetConditionMask(ULONGLONG,DWORD,BYTE);
 #define	VER_AND					6
 #define	VER_OR					7
 
+typedef struct _ACTIVATION_CONTEXT_DETAILED_INFORMATION {
+    DWORD dwFlags;
+    DWORD ulFormatVersion;
+    DWORD ulAssemblyCount;
+    DWORD ulRootManifestPathType;
+    DWORD ulRootManifestPathChars;
+    DWORD ulRootConfigurationPathType;
+    DWORD ulRootConfigurationPathChars;
+    DWORD ulAppDirPathType;
+    DWORD ulAppDirPathChars;
+    PCWSTR lpRootManifestPath;
+    PCWSTR lpRootConfigurationPath;
+    PCWSTR lpAppDirPath;
+} ACTIVATION_CONTEXT_DETAILED_INFORMATION, *PACTIVATION_CONTEXT_DETAILED_INFORMATION;
+
+typedef struct _ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION {
+    DWORD ulFlags;
+    DWORD ulEncodedAssemblyIdentityLength;
+    DWORD ulManifestPathType;
+    DWORD ulManifestPathLength;
+    LARGE_INTEGER liManifestLastWriteTime;
+    DWORD ulPolicyPathType;
+    DWORD ulPolicyPathLength;
+    LARGE_INTEGER liPolicyLastWriteTime;
+    DWORD ulMetadataSatelliteRosterIndex;
+    DWORD ulManifestVersionMajor;
+    DWORD ulManifestVersionMinor;
+    DWORD ulPolicyVersionMajor;
+    DWORD ulPolicyVersionMinor;
+    DWORD ulAssemblyDirectoryNameLength;
+    PCWSTR lpAssemblyEncodedAssemblyIdentity;
+    PCWSTR lpAssemblyManifestPath;
+    PCWSTR lpAssemblyPolicyPath;
+    PCWSTR lpAssemblyDirectoryName;
+    DWORD  ulFileCount;
+} ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION, *PACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION;
+
+typedef struct _ACTIVATION_CONTEXT_QUERY_INDEX {
+    DWORD ulAssemblyIndex;
+    DWORD ulFileIndexInAssembly;
+} ACTIVATION_CONTEXT_QUERY_INDEX, *PACTIVATION_CONTEXT_QUERY_INDEX;
+
+typedef const struct _ACTIVATION_CONTEXT_QUERY_INDEX *PCACTIVATION_CONTEXT_QUERY_INDEX;
+
+typedef struct _ASSEMBLY_FILE_DETAILED_INFORMATION {
+    DWORD ulFlags;
+    DWORD ulFilenameLength;
+    DWORD ulPathLength;
+    PCWSTR lpFileName;
+    PCWSTR lpFilePath;
+} ASSEMBLY_FILE_DETAILED_INFORMATION, *PASSEMBLY_FILE_DETAILED_INFORMATION;
+
+typedef const ASSEMBLY_FILE_DETAILED_INFORMATION *PCASSEMBLY_FILE_DETAILED_INFORMATION;
+
+typedef enum _ACTIVATION_CONTEXT_INFO_CLASS {
+    ActivationContextBasicInformation                       = 1,
+    ActivationContextDetailedInformation                    = 2,
+    AssemblyDetailedInformationInActivationContext          = 3,
+    FileInformationInAssemblyOfAssemblyInActivationContext  = 4,
+    MaxActivationContextInfoClass,
+
+    AssemblyDetailedInformationInActivationContxt          = 3,
+    FileInformationInAssemblyOfAssemblyInActivationContxt  = 4
+} ACTIVATION_CONTEXT_INFO_CLASS;
+
+#define ACTIVATION_CONTEXT_PATH_TYPE_NONE         1
+#define ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE   2
+#define ACTIVATION_CONTEXT_PATH_TYPE_URL          3
+#define ACTIVATION_CONTEXT_PATH_TYPE_ASSEMBLYREF  4
+
+#define ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION          1
+#define ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION               2
+#define ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION      3
+#define ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION        4
+#define ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION     5
+#define ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION  6
+#define ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION        7
+#define ACTIVATION_CONTEXT_SECTION_GLOBAL_OBJECT_RENAME_TABLE    8
+#define ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES                9
+
 #ifdef __cplusplus
 }
 #endif
