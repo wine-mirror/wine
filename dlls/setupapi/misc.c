@@ -978,7 +978,7 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
         }
     }
 
-    if (component) *component = p;
+    if (component) *component = p + 1;
     if (required_size) *required_size = size;
 
     return ret;

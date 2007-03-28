@@ -92,7 +92,7 @@ static BOOL check_format(LPSTR path, LPSTR inf)
 
     GetWindowsDirectory(check, MAX_PATH);
     lstrcat(check, format);
-    res = !strncmp(check, path, lstrlen(check)) &&
+    res = !strncasecmp(check, path, lstrlen(check)) &&
           path[lstrlen(check)] != '\\';
 
     return (!inf) ? res : res && (inf == path + lstrlen(check) - 3);
@@ -196,10 +196,7 @@ static void test_SetupCopyOEMInf(void)
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(lstrlen(dest) != 0, "Expected a non-zero length string\n");
     ok(file_exists(dest), "Expected destination inf to exist\n");
-    todo_wine
-    {
-        ok(check_format(dest, NULL), "Expected %%windir%%\\inf\\OEMx.inf, got %s\n", dest);
-    }
+    ok(check_format(dest, NULL), "Expected %%windir%%\\inf\\OEMx.inf, got %s\n", dest);
     ok(file_exists(path), "Expected source inf to exist\n");
 
     lstrcpy(dest_save, dest);
@@ -227,10 +224,7 @@ static void test_SetupCopyOEMInf(void)
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(lstrlen(dest) + 1 == size, "Expected sizes to match, got (%d, %d)\n", lstrlen(dest), size);
     ok(file_exists(dest), "Expected destination inf to exist\n");
-    todo_wine
-    {
-        ok(check_format(dest, NULL), "Expected %%windir%%\\inf\\OEMx.inf, got %s\n", dest);
-    }
+    ok(check_format(dest, NULL), "Expected %%windir%%\\inf\\OEMx.inf, got %s\n", dest);
     ok(file_exists(path), "Expected source inf to exist\n");
     ok(size == lstrlen(dest_save) + 1, "Expected size to be lstrlen(dest_save) + 1\n");
 
@@ -241,10 +235,7 @@ static void test_SetupCopyOEMInf(void)
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(lstrlen(dest) + 1 == size, "Expected sizes to match, got (%d, %d)\n", lstrlen(dest), size);
     ok(file_exists(dest), "Expected destination inf to exist\n");
-    todo_wine
-    {
-        ok(check_format(dest, inf), "Expected %%windir%%\\inf\\OEMx.inf, got %s\n", dest);
-    }
+    ok(check_format(dest, inf), "Expected %%windir%%\\inf\\OEMx.inf, got %s\n", dest);
     ok(file_exists(path), "Expected source inf to exist\n");
     ok(size == lstrlen(dest_save) + 1, "Expected size to be lstrlen(dest_save) + 1\n");
 
