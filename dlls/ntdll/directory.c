@@ -1507,7 +1507,8 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
 
     if (show_dot_files == -1) init_options();
 
-    if ((cwd = open(".", O_RDONLY)) != -1 && fchdir( fd ) != -1)
+    cwd = open( ".", O_RDONLY );
+    if (fchdir( fd ) != -1)
     {
 #ifdef VFAT_IOCTL_READDIR_BOTH
         if ((read_directory_vfat( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
@@ -1526,7 +1527,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
         read_directory_readdir( fd, io, buffer, length, single_entry, mask, restart_scan );
 
     done:
-        if (fchdir( cwd ) == -1) chdir( "/" );
+        if (cwd == -1 || fchdir( cwd ) == -1) chdir( "/" );
     }
     else io->u.Status = FILE_GetNtStatus();
 
