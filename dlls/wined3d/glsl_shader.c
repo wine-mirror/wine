@@ -1156,26 +1156,35 @@ void shader_glsl_cnd(SHADER_OPCODE_ARG* arg) {
     glsl_src_param_t src0_param;
     glsl_src_param_t src1_param;
     glsl_src_param_t src2_param;
-    DWORD write_mask;
-    size_t mask_size;
-
-    write_mask = shader_glsl_append_dst(arg->buffer, arg);
+    DWORD write_mask, cmp_channel = 0;
+    unsigned int i, j;
 
     if (shader->baseShader.hex_version < WINED3DPS_VERSION(1, 4)) {
-        mask_size = 1;
+        write_mask = shader_glsl_append_dst(arg->buffer, arg);
         shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, &src0_param);
-    } else {
-        mask_size = shader_glsl_get_write_mask_size(write_mask);
-        shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], write_mask, &src0_param);
+        shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, &src1_param);
+        shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, &src2_param);
+        shader_addline(arg->buffer, "%s < 0.5 ? %s : %s);\n",
+                src0_param.param_str, src1_param.param_str, src2_param.param_str);
+        return;
     }
+    /* Cycle through all source0 channels */
+    for (i=0; i<4; i++) {
+        write_mask = 0;
+        /* Find the destination channels which use the current source0 channel */
+        for (j=0; j<4; j++) {
+            if ( ((arg->src[0] >> (WINED3DSP_SWIZZLE_SHIFT + 2*j)) & 0x3) == i ) {
+                write_mask |= WINED3DSP_WRITEMASK_0 << j;
+                cmp_channel = WINED3DSP_WRITEMASK_0 << j;
+            }
+        }
+        write_mask = shader_glsl_append_dst_ext(arg->buffer, arg, arg->dst & (~WINED3DSP_SWIZZLE_MASK | write_mask));
+        if (!write_mask) continue;
 
-    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, &src1_param);
-    shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, &src2_param);
+        shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], cmp_channel, &src0_param);
+        shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, &src1_param);
+        shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, &src2_param);
 
-    if (mask_size > 1) {
-        shader_addline(arg->buffer, "mix(%s, %s, vec%d(lessThan(%s, vec%d(0.5)))));\n",
-                src2_param.param_str, src1_param.param_str, mask_size, src0_param.param_str, mask_size);
-    } else {
         shader_addline(arg->buffer, "%s < 0.5 ? %s : %s);\n",
                 src0_param.param_str, src1_param.param_str, src2_param.param_str);
     }
