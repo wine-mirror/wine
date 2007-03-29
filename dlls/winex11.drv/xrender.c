@@ -1076,7 +1076,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     int textPixel, backgroundPixel;
     HRGN saved_region = 0;
     BOOL disable_antialias = FALSE;
-    AA_Type antialias = AA_None;
+    AA_Type aa_type = AA_None;
     DIBSECTION bmp;
     unsigned int idx;
     double cosEsc, sinEsc;
@@ -1244,18 +1244,18 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     EnterCriticalSection(&xrender_cs);
     entry = glyphsetCache + physDev->xrender->cache_index;
     if( disable_antialias == FALSE )
-        antialias = entry->aa_default;
-    formatEntry = entry->format[antialias];
+        aa_type = entry->aa_default;
+    formatEntry = entry->format[aa_type];
 
     for(idx = 0; idx < count; idx++) {
         if( !formatEntry ) {
-	    UploadGlyph(physDev, wstr[idx], antialias);
+	    UploadGlyph(physDev, wstr[idx], aa_type);
             /* re-evaluate antialias since aa_default may have changed */
             if( disable_antialias == FALSE )
-                antialias = entry->aa_default;
-            formatEntry = entry->format[antialias];
+                aa_type = entry->aa_default;
+            formatEntry = entry->format[aa_type];
         } else if( wstr[idx] >= formatEntry->nrealized || formatEntry->realized[wstr[idx]] == FALSE) {
-	    UploadGlyph(physDev, wstr[idx], antialias);
+	    UploadGlyph(physDev, wstr[idx], aa_type);
 	}
     }
     if (!formatEntry)
@@ -1299,7 +1299,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         wine_tsx11_lock();
 	XSetForeground( gdi_display, physDev->gc, textPixel );
 
-	if(antialias == AA_None) {
+	if(aa_type == AA_None) {
 	    for(idx = 0; idx < count; idx++) {
 	        SharpGlyphMono(physDev, physDev->dc_rect.left + x + xoff,
 			       physDev->dc_rect.top + y + yoff,
