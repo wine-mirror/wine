@@ -291,6 +291,9 @@ typedef enum _WINED3DSHADER_INSTRUCTION_OPCODE_TYPE {
 
 #define WINED3DSHADER_INSTRUCTION_PREDICATED (1 << 28)
 
+/* Undocumented opcode control to identify projective texture lookups in ps 2.0 and later */
+#define WINED3DSI_TEXLD_PROJECT 0x00010000
+
 /** Shader version tokens, and shader end tokens **/
 
 #define WINED3DPS_VERSION(major, minor) (0xFFFF0000 | ((major) << 8) | (minor))

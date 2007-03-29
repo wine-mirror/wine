@@ -941,6 +941,9 @@ void shader_trace_init(
                             default:
                                 TRACE("_(%u)", op);
                         }
+                    } else if (curOpcode->opcode == WINED3DSIO_TEX &&
+                               This->baseShader.hex_version >= WINED3DPS_VERSION(2,0)) {
+                        if(opcode_token & WINED3DSI_TEXLD_PROJECT) TRACE("p");
                     }
 
                     /* Destination token */

@@ -1472,8 +1472,13 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
         }
     } else {
         sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
-        /* TODO: Handle D3DSI_TEXLD_PROJECTED... */
-        projected = FALSE;
+        if(arg->opcode_token & WINED3DSI_TEXLD_PROJECT) {
+                /* ps 2.0 texldp instruction always divides by the fourth component. */
+                projected = TRUE;
+                mask = WINED3DSP_WRITEMASK_3;
+        } else {
+            projected = FALSE;
+        }
     }
 
     sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
