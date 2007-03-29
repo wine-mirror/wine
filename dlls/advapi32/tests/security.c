@@ -857,7 +857,13 @@ static void test_token_attr(void)
     SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
 
     /* cygwin-like use case */
+    SetLastError(0xdeadbeef);
     ret = OpenProcessToken(GetCurrentProcess(), MAXIMUM_ALLOWED, &Token);
+    if(!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("OpenProcessToken is not implemented\n");
+        return;
+    }
     ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
     if (ret)
     {
@@ -878,15 +884,9 @@ static void test_token_attr(void)
         return;
     }
 
+    SetLastError(0xdeadbeef);
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &Token);
-    GLE = GetLastError();
-    ok(ret || (GLE == ERROR_CALL_NOT_IMPLEMENTED), 
-        "OpenProcessToken failed with error %d\n", GLE);
-    if(!ret && (GLE == ERROR_CALL_NOT_IMPLEMENTED))
-    {
-        trace("OpenProcessToken() not implemented, skipping test_token_attr()\n");
-        return;
-    }
+    ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
 
     /* groups */
     ret = GetTokenInformation(Token, TokenGroups, NULL, 0, &Size);
