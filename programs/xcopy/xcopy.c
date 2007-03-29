@@ -51,6 +51,7 @@
 #define OPT_NOPROMPT     0x00000100
 #define OPT_SHORTNAME    0x00000200
 #define OPT_MUSTEXIST    0x00000400
+#define OPT_REPLACEREAD  0x00000800
 
 #define MAXSTRING 8192
 
@@ -155,6 +156,7 @@ int main (int argc, char *argv[])
             case 'Y': flags |= OPT_NOPROMPT;      break;
             case 'N': flags |= OPT_SHORTNAME;     break;
             case 'U': flags |= OPT_MUSTEXIST;     break;
+            case 'R': flags |= OPT_REPLACEREAD;   break;
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
             default:
@@ -473,6 +475,13 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                     printf("%S -> %S\n", copyFrom, copyTo);
                 } else {
                     printf("%S\n", copyFrom);
+                }
+
+                /* If allowing overwriting of read only files, remove any
+                   write protection                                       */
+                if ((destAttribs & FILE_ATTRIBUTE_READONLY) &&
+                    (flags & OPT_REPLACEREAD)) {
+                    SetFileAttributes(copyTo, destAttribs & ~FILE_ATTRIBUTE_READONLY);
                 }
 
                 copiedFile = TRUE;
