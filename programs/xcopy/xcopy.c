@@ -52,6 +52,7 @@
 #define OPT_SHORTNAME    0x00000200
 #define OPT_MUSTEXIST    0x00000400
 #define OPT_REPLACEREAD  0x00000800
+#define OPT_COPYHIDSYS   0x00001000
 
 #define MAXSTRING 8192
 
@@ -157,6 +158,7 @@ int main (int argc, char *argv[])
             case 'N': flags |= OPT_SHORTNAME;     break;
             case 'U': flags |= OPT_MUSTEXIST;     break;
             case 'R': flags |= OPT_REPLACEREAD;   break;
+            case 'H': flags |= OPT_COPYHIDSYS;    break;
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
             default:
@@ -390,7 +392,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
     BOOL            findres = TRUE;
     WCHAR           *inputpath, *outputpath;
     BOOL            copiedFile = FALSE;
-    DWORD           destAttribs;
+    DWORD           destAttribs, srcAttribs;
     BOOL            skipFile;
 
     /* Allocate some working memory on heap to minimize footprint */
@@ -440,9 +442,20 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                                                       wine_dbgstr_w(copyTo));
             if (!copiedFile && !(flags & OPT_SIMULATE)) XCOPY_CreateDirectory(deststem);
 
+            /* See if allowed to copy it */
+            srcAttribs = GetFileAttributesW(copyFrom);
+            if ((srcAttribs & FILE_ATTRIBUTE_HIDDEN) ||
+                (srcAttribs & FILE_ATTRIBUTE_SYSTEM)) {
+
+                if (!(flags & OPT_COPYHIDSYS)) {
+                    skipFile = TRUE;
+                }
+            }
+
             /* See if file exists */
             destAttribs = GetFileAttributesW(copyTo);
-            if (destAttribs != INVALID_FILE_ATTRIBUTES && !(flags & OPT_NOPROMPT)) {
+            if (!skipFile &&
+                destAttribs != INVALID_FILE_ATTRIBUTES && !(flags & OPT_NOPROMPT)) {
                 DWORD count;
                 char  answer[10];
                 BOOL  answered = FALSE;
