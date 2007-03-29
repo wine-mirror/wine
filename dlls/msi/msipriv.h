@@ -755,7 +755,7 @@ extern LPWSTR msi_dup_record_field(MSIRECORD *row, INT index);
 extern LPWSTR msi_dup_property(MSIPACKAGE *package, LPCWSTR prop);
 extern int msi_get_property_int( MSIPACKAGE *package, LPCWSTR prop, int def );
 extern LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
-                      BOOL set_prop, MSIFOLDER **folder);
+                      BOOL set_prop, BOOL load_prop, MSIFOLDER **folder);
 extern MSICOMPONENT *get_loaded_component( MSIPACKAGE* package, LPCWSTR Component );
 extern MSIFEATURE *get_loaded_feature( MSIPACKAGE* package, LPCWSTR Feature );
 extern MSIFILE *get_loaded_file( MSIPACKAGE* package, LPCWSTR file );

@@ -163,7 +163,7 @@ static UINT WINAPI MSI_GetTargetPath( MSIHANDLE hInstall, LPCWSTR szFolder,
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    path = resolve_folder( package, szFolder, FALSE, FALSE, NULL );
+    path = resolve_folder( package, szFolder, FALSE, FALSE, TRUE, NULL );
     msiobj_release( &package->hdr );
 
     if (!path)
@@ -241,7 +241,7 @@ static UINT MSI_GetSourcePath( MSIHANDLE hInstall, LPCWSTR szFolder,
         return ERROR_INVALID_PARAMETER;
     }
 
-    path = resolve_folder(package, szFolder, TRUE, FALSE, NULL);
+    path = resolve_folder(package, szFolder, TRUE, FALSE, TRUE, NULL);
     msiobj_release( &package->hdr );
 
     TRACE("path = %s\n",debugstr_w(path));
@@ -340,7 +340,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
            attrib & FILE_ATTRIBUTE_READONLY))
         return ERROR_FUNCTION_FAILED;
 
-    path = resolve_folder(package,szFolder,FALSE,FALSE,&folder);
+    path = resolve_folder(package,szFolder,FALSE,FALSE,FALSE,&folder);
     if (!path)
         return ERROR_DIRECTORY;
 
@@ -355,7 +355,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
          */
         msi_free(folder->ResolvedTarget);
         folder->ResolvedTarget = NULL;
-        path2 = resolve_folder(package,szFolder,FALSE,TRUE,NULL);
+        path2 = resolve_folder(package,szFolder,FALSE,TRUE,FALSE,NULL);
         msi_free(path2);
     }
     else
@@ -370,7 +370,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
 
         LIST_FOR_EACH_ENTRY( f, &package->folders, MSIFOLDER, entry )
         {
-            path2 = resolve_folder(package, f->Directory, FALSE, TRUE, NULL);
+            path2 = resolve_folder(package, f->Directory, FALSE, TRUE, FALSE, NULL);
             msi_free(path2);
         }
 
@@ -382,7 +382,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
             if (!comp)
                 continue;
 
-            p = resolve_folder(package, comp->Directory, FALSE, FALSE, NULL);
+            p = resolve_folder(package, comp->Directory, FALSE, FALSE, FALSE, NULL);
             msi_free(file->TargetPath);
 
             file->TargetPath = build_directory_name(2, p, file->FileName);

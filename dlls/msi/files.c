@@ -446,7 +446,7 @@ static VOID set_file_source(MSIPACKAGE* package, MSIFILE* file, LPCWSTR path)
     if (!file->IsCompressed)
     {
         LPWSTR p, path;
-        p = resolve_folder(package, file->Component->Directory, TRUE, FALSE, NULL);
+        p = resolve_folder(package, file->Component->Directory, TRUE, FALSE, TRUE, NULL);
         path = build_directory_name(2, p, file->ShortName);
         if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
         {
@@ -845,7 +845,7 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
     {
         LPCWSTR destkey;
         destkey = MSI_RecordGetString(row,5);
-        dest_path = resolve_folder(package, destkey, FALSE,FALSE,NULL);
+        dest_path = resolve_folder(package, destkey, FALSE, FALSE, TRUE, NULL);
         if (!dest_path)
         {
             /* try a Property */

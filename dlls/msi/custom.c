@@ -826,7 +826,7 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
 
     memset(&si,0,sizeof(STARTUPINFOW));
 
-    filename = resolve_folder(package, source, FALSE, FALSE, NULL);
+    filename = resolve_folder(package, source, FALSE, FALSE, TRUE, NULL);
 
     if (!filename)
         return ERROR_FUNCTION_FAILED;

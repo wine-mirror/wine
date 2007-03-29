@@ -122,7 +122,7 @@ static LPWSTR deformat_component(MSIPACKAGE* package, LPCWSTR key, DWORD* sz)
     comp = get_loaded_component(package,key);
     if (comp)
     {
-        value = resolve_folder(package, comp->Directory, FALSE, FALSE, NULL);
+        value = resolve_folder(package, comp->Directory, FALSE, FALSE, TRUE, NULL);
         *sz = (strlenW(value)) * sizeof(WCHAR);
     }
 

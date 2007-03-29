@@ -266,6 +266,25 @@ static const CHAR rof_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\t
                                     "Media\tDiskId\n"
                                     "1\t1\t\t\tDISK1\t\n";
 
+static const CHAR sdp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                               "s72\tS255\tI2\n"
+                                               "InstallExecuteSequence\tAction\n"
+                                               "AllocateRegistrySpace\tNOT Installed\t1550\n"
+                                               "CostFinalize\t\t1000\n"
+                                               "CostInitialize\t\t800\n"
+                                               "FileCost\t\t900\n"
+                                               "InstallFiles\t\t4000\n"
+                                               "InstallFinalize\t\t6600\n"
+                                               "InstallInitialize\t\t1500\n"
+                                               "InstallValidate\t\t1400\n"
+                                               "LaunchConditions\t\t100\n"
+                                               "SetDirProperty\t\t950";
+
+static const CHAR sdp_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComments\n"
+                                            "s72\ti2\tS64\tS0\tS255\n"
+                                            "CustomAction\tAction\n"
+                                            "SetDirProperty\t51\tMSITESTDIR\t[CommonFilesFolder]msitest\\\t\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -372,6 +391,19 @@ static const msi_table rof_tables[] =
     ADD_TABLE(rof_feature_comp),
     ADD_TABLE(rof_file),
     ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table sdp_tables[] =
+{
+    ADD_TABLE(rof_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rof_file),
+    ADD_TABLE(sdp_install_exec_seq),
+    ADD_TABLE(sdp_custom_action),
     ADD_TABLE(rof_media),
     ADD_TABLE(property),
 };
@@ -1195,7 +1227,6 @@ static void test_readonlyfile(void)
     lstrcat(path, "\\maximus");
     file = CreateFile(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                       NULL, CREATE_NEW, FILE_ATTRIBUTE_READONLY, NULL);
-    if (file == INVALID_HANDLE_VALUE) printf("didn't work here: %d\n", GetLastError());
 
     WriteFile(file, "readonlyfile", 20, &size, NULL);
     CloseHandle(file);
@@ -1209,6 +1240,24 @@ static void test_readonlyfile(void)
     /* Delete the files in the temp (current) folder */
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
+    DeleteFile(msifile);
+}
+
+static void test_setdirproperty(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\maximus", 500);
+    create_database(msifile, sdp_tables, sizeof(sdp_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("Common Files\\msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("Common Files\\msitest", FALSE), "File not installed\n");
+
     DeleteFile(msifile);
 }
 
@@ -1238,6 +1287,7 @@ START_TEST(install)
     test_samesequence();
     test_uiLevelFlags();
     test_readonlyfile();
+    test_setdirproperty();
 
     SetCurrentDirectoryA(prev_path);
 }
