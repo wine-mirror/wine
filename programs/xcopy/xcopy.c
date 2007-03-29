@@ -55,6 +55,8 @@
 #define OPT_COPYHIDSYS   0x00001000
 #define OPT_IGNOREERRORS 0x00002000
 #define OPT_SRCPROMPT    0x00004000
+#define OPT_ARCHIVEONLY  0x00008000
+#define OPT_REMOVEARCH   0x00010000
 
 #define MAXSTRING 8192
 
@@ -166,6 +168,9 @@ int main (int argc, char *argv[])
             case 'H': flags |= OPT_COPYHIDSYS;    break;
             case 'C': flags |= OPT_IGNOREERRORS;  break;
             case 'P': flags |= OPT_SRCPROMPT;     break;
+            case 'A': flags |= OPT_ARCHIVEONLY;   break;
+            case 'M': flags |= OPT_ARCHIVEONLY |
+                               OPT_REMOVEARCH;    break;
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
             default:
@@ -454,12 +459,19 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
             /* See if allowed to copy it */
             srcAttribs = GetFileAttributesW(copyFrom);
+            WINE_TRACE("Source attribs: %d\n", srcAttribs);
+
             if ((srcAttribs & FILE_ATTRIBUTE_HIDDEN) ||
                 (srcAttribs & FILE_ATTRIBUTE_SYSTEM)) {
 
                 if (!(flags & OPT_COPYHIDSYS)) {
                     skipFile = TRUE;
                 }
+            }
+
+            if (!(srcAttribs & FILE_ATTRIBUTE_ARCHIVE) &&
+                (flags & OPT_ARCHIVEONLY)) {
+                skipFile = TRUE;
             }
 
             /* Prompt each file if necessary */
@@ -483,6 +495,8 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
             /* See if file exists */
             destAttribs = GetFileAttributesW(copyTo);
+            WINE_TRACE("Dest attribs: %d\n", srcAttribs);
+
             if (!skipFile &&
                 destAttribs != INVALID_FILE_ATTRIBUTES && !(flags & OPT_NOPROMPT)) {
                 DWORD count;
@@ -551,7 +565,15 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                         return RC_WRITEERROR;
                     }
                 }
-                filesCopied++;
+
+                /* If /M supplied, remove the archive bit after successful copy */
+                if (!skipFile) {
+                    if ((srcAttribs & FILE_ATTRIBUTE_ARCHIVE) &&
+                        (flags & OPT_REMOVEARCH)) {
+                        SetFileAttributes(copyFrom, (srcAttribs & ~FILE_ATTRIBUTE_ARCHIVE));
+                    }
+                    filesCopied++;
+                }
             }
         }
 
