@@ -571,18 +571,7 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
  */
 void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
 {
-    wine_tsx11_lock();
-    if(physDev->xrender->tile_pict)
-        pXRenderFreePicture(gdi_display, physDev->xrender->tile_pict);
-
-    if(physDev->xrender->tile_xpm)
-        XFreePixmap(gdi_display, physDev->xrender->tile_xpm);
-
-    if(physDev->xrender->pict) {
-	TRACE("freeing pict = %lx dc = %p\n", physDev->xrender->pict, physDev->hdc);
-        pXRenderFreePicture(gdi_display, physDev->xrender->pict);
-    }
-    wine_tsx11_unlock();
+    X11DRV_XRender_UpdateDrawable(physDev);
 
     EnterCriticalSection(&xrender_cs);
     if(physDev->xrender->cache_index != -1)
@@ -598,19 +587,32 @@ void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
  *   X11DRV_XRender_UpdateDrawable
  *
  * This gets called from X11DRV_SetDrawable and X11DRV_SelectBitmap.
- * It deletes the pict when the drawable changes.
+ * It deletes the pict and tile when the drawable changes.
  */
 void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
 {
-    if(physDev->xrender->pict) {
-        TRACE("freeing pict %08lx from dc %p drawable %08lx\n", physDev->xrender->pict,
-              physDev->hdc, physDev->drawable);
-        wine_tsx11_lock();
+    wine_tsx11_lock();
+
+    if(physDev->xrender->pict)
+    {
+        TRACE("freeing pict = %lx dc = %p\n", physDev->xrender->pict, physDev->hdc);
         XFlush(gdi_display);
         pXRenderFreePicture(gdi_display, physDev->xrender->pict);
-        wine_tsx11_unlock();
+        physDev->xrender->pict = 0;
     }
-    physDev->xrender->pict = 0;
+    if(physDev->xrender->tile_pict)
+    {
+        pXRenderFreePicture(gdi_display, physDev->xrender->tile_pict);
+        physDev->xrender->tile_pict = 0;
+    }
+    if(physDev->xrender->tile_xpm)
+    {
+        XFreePixmap(gdi_display, physDev->xrender->tile_xpm);
+        physDev->xrender->tile_xpm = 0;
+    }
+
+    wine_tsx11_unlock();
+
     return;
 }
 
