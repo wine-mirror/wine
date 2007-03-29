@@ -1549,8 +1549,6 @@ static void state_ckeyblend(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
  */
 static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock) {
     if(stateblock->textures[stage]) {
-        glDisable(GL_TEXTURE_1D);
-        checkGLcall("glDisable(GL_TEXTURE_1D)");
         switch(stateblock->textureDimensions[stage]) {
             case GL_TEXTURE_2D:
                 glDisable(GL_TEXTURE_3D);
@@ -1590,8 +1588,6 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock)
             glDisable(GL_TEXTURE_CUBE_MAP_ARB);
             checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
         }
-        glEnable(GL_TEXTURE_1D);
-        checkGLcall("glEnable(GL_TEXTURE_1D)");
         /* Binding textures is done by samplers. A dummy texture will be bound */
     }
 }
@@ -1639,8 +1635,6 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         TRACE("Stage disabled\n");
         if (mapped_stage != -1) {
             /* Disable everything here */
-            glDisable(GL_TEXTURE_1D);
-            checkGLcall("glDisable(GL_TEXTURE_1D)");
             glDisable(GL_TEXTURE_2D);
             checkGLcall("glDisable(GL_TEXTURE_2D)");
             glDisable(GL_TEXTURE_3D);
@@ -2079,8 +2073,8 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
                 activate_dimensions(sampler, stateblock);
             }
         } /* Otherwise tex_colorop disables the stage */
-        glBindTexture(GL_TEXTURE_1D, stateblock->wineD3DDevice->dummyTextureName[sampler]);
-        checkGLcall("glBindTexture(GL_TEXTURE_1D, stateblock->wineD3DDevice->dummyTextureName[sampler])");
+        glBindTexture(GL_TEXTURE_2D, stateblock->wineD3DDevice->dummyTextureName[sampler]);
+        checkGLcall("glBindTexture(GL_TEXTURE_2D, stateblock->wineD3DDevice->dummyTextureName[sampler])");
     }
 }
 

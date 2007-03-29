@@ -487,8 +487,6 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
             checkGLcall("glDisable GL_TEXTURE_3D");
             glDisable(GL_TEXTURE_2D);
             checkGLcall("glDisable GL_TEXTURE_2D");
-            glDisable(GL_TEXTURE_1D);
-            checkGLcall("glDisable GL_TEXTURE_1D");
 
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
             checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);");
@@ -505,8 +503,6 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     }
     glDisable(GL_TEXTURE_3D);
     checkGLcall("glDisable GL_TEXTURE_3D");
-    glDisable(GL_TEXTURE_1D);
-    checkGLcall("glDisable GL_TEXTURE_1D");
     glEnable(GL_TEXTURE_2D);
     checkGLcall("glEnable GL_TEXTURE_2D");
 

@@ -1083,13 +1083,14 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         checkGLcall("glGenTextures");
         TRACE("Dummy Texture %d given name %d\n", i, ThisDevice->dummyTextureName[i]);
 
-        /* Generate a dummy 1d texture */
-        This->textureDimensions[i] = GL_TEXTURE_1D;
-        glBindTexture(GL_TEXTURE_1D, ThisDevice->dummyTextureName[i]);
+        /* Generate a dummy 2d texture (not using 1d because they cause many
+         * DRI drivers fall back to sw) */
+        This->textureDimensions[i] = GL_TEXTURE_2D;
+        glBindTexture(GL_TEXTURE_2D, ThisDevice->dummyTextureName[i]);
         checkGLcall("glBindTexture");
 
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE, 1, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, &white);
-        checkGLcall("glTexImage1D");
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 1, 1, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, &white);
+        checkGLcall("glTexImage2D");
     }
 
     LEAVE_GL();
