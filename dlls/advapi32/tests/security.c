@@ -1299,6 +1299,11 @@ static void test_LookupAccountName(void)
     sid_use = 0xcafebabe;
     SetLastError(0xdeadbeef);
     ret = LookupAccountNameA(NULL, user_name, NULL, &sid_size, NULL, &domain_size, &sid_use);
+    if(!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("LookupAccountNameA is not implemented\n");
+        return;
+    }
     ok(!ret, "Expected 0, got %d\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
