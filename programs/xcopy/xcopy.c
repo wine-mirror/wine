@@ -50,6 +50,7 @@
 #define OPT_NOCOPY       0x00000080
 #define OPT_NOPROMPT     0x00000100
 #define OPT_SHORTNAME    0x00000200
+#define OPT_MUSTEXIST    0x00000400
 
 #define MAXSTRING 8192
 
@@ -153,6 +154,7 @@ int main (int argc, char *argv[])
             case 'T': flags |= OPT_NOCOPY | OPT_RECURSIVE; break;
             case 'Y': flags |= OPT_NOPROMPT;      break;
             case 'N': flags |= OPT_SHORTNAME;     break;
+            case 'U': flags |= OPT_MUSTEXIST;     break;
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
             default:
@@ -456,6 +458,11 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                     else if (toupper(answer[0]) != 'Y')
                         answered = FALSE;
                 }
+            }
+
+            /* See if it has to exist! */
+            if (destAttribs == INVALID_FILE_ATTRIBUTES && (flags & OPT_MUSTEXIST)) {
+                skipFile = TRUE;
             }
 
             /* Output a status message */
