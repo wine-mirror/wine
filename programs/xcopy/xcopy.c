@@ -49,6 +49,7 @@
 #define OPT_PAUSE        0x00000040
 #define OPT_NOCOPY       0x00000080
 #define OPT_NOPROMPT     0x00000100
+#define OPT_SHORTNAME    0x00000200
 
 #define MAXSTRING 8192
 
@@ -151,6 +152,7 @@ int main (int argc, char *argv[])
             case 'W': flags |= OPT_PAUSE;         break;
             case 'T': flags |= OPT_NOCOPY | OPT_RECURSIVE; break;
             case 'Y': flags |= OPT_NOPROMPT;      break;
+            case 'N': flags |= OPT_SHORTNAME;     break;
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
             default:
@@ -412,11 +414,19 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
             /* Get the filename information */
             lstrcpyW(copyFrom, srcstem);
-            lstrcatW(copyFrom, finddata->cFileName);
+            if (flags & OPT_SHORTNAME) {
+              lstrcatW(copyFrom, finddata->cAlternateFileName);
+            } else {
+              lstrcatW(copyFrom, finddata->cFileName);
+            }
 
             lstrcpyW(copyTo, deststem);
             if (*destspec == 0x00) {
-                lstrcatW(copyTo, finddata->cFileName);
+                if (flags & OPT_SHORTNAME) {
+                    lstrcatW(copyTo, finddata->cAlternateFileName);
+                } else {
+                    lstrcatW(copyTo, finddata->cFileName);
+                }
             } else {
                 lstrcatW(copyTo, destspec);
             }
