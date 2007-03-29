@@ -1702,6 +1702,23 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         }
     }
 
+    if (GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
+
+        BOOL half_pixel_support = GL_SUPPORT(ARB_HALF_FLOAT_PIXEL);
+
+        switch (CheckFormat) {
+            case WINED3DFMT_R16F:
+            case WINED3DFMT_A16B16G16R16F:
+                if (!half_pixel_support) break;
+            case WINED3DFMT_R32F:
+            case WINED3DFMT_A32B32G32R32F:
+                TRACE_(d3d_caps)("[OK]\n");
+                return WINED3D_OK;
+            default:
+                break; /* Avoid compiler warnings */
+        }
+    }
+
     /* This format is nothing special and it is supported perfectly.
      * However, ati and nvidia driver on windows do not mark this format as
      * supported (tested with the dxCapsViewer) and pretending to
