@@ -806,7 +806,7 @@ static void init_msvcrt_io_block(STARTUPINFO* st)
 void WCMD_run_program (char *command, int called) {
 
   char  temp[MAX_PATH];
-  char  pathtosearch[MAX_PATH];
+  char  pathtosearch[MAXSTRING];
   char *pathposn;
   char  stemofsearch[MAX_PATH];
   char *lastSlash;
@@ -834,7 +834,7 @@ void WCMD_run_program (char *command, int called) {
   } else {
 
     /* Convert eg. ..\fred to include a directory by removing file part */
-    GetFullPathName(param1, MAX_PATH, pathtosearch, NULL);
+    GetFullPathName(param1, sizeof(pathtosearch), pathtosearch, NULL);
     lastSlash = strrchr(pathtosearch, '\\');
     if (lastSlash) *lastSlash = 0x00;
     if (strchr(lastSlash, '.') != NULL) extensionsupplied = TRUE;
