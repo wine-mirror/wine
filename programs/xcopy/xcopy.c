@@ -54,6 +54,7 @@
 #define OPT_REPLACEREAD  0x00000800
 #define OPT_COPYHIDSYS   0x00001000
 #define OPT_IGNOREERRORS 0x00002000
+#define OPT_SRCPROMPT    0x00004000
 
 #define MAXSTRING 8192
 
@@ -145,7 +146,10 @@ int main (int argc, char *argv[])
                 return RC_INITERROR;
             }
         } else {
-            /* Process all the switch options */
+            /* Process all the switch options
+                 Note: Windows docs say /P prompts when dest is created
+                       but tests show it is done for each src file
+                       regardless of the destination                   */
             switch (toupper(argvW[0][1])) {
             case 'I': flags |= OPT_ASSUMEDIR;     break;
             case 'S': flags |= OPT_RECURSIVE;     break;
@@ -161,6 +165,7 @@ int main (int argc, char *argv[])
             case 'R': flags |= OPT_REPLACEREAD;   break;
             case 'H': flags |= OPT_COPYHIDSYS;    break;
             case 'C': flags |= OPT_IGNOREERRORS;  break;
+            case 'P': flags |= OPT_SRCPROMPT;     break;
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
             default:
@@ -454,6 +459,25 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
                 if (!(flags & OPT_COPYHIDSYS)) {
                     skipFile = TRUE;
+                }
+            }
+
+            /* Prompt each file if necessary */
+            if (!skipFile && (flags & OPT_SRCPROMPT)) {
+                DWORD count;
+                char  answer[10];
+                BOOL  answered = FALSE;
+
+                while (!answered) {
+                    printf("%S? (Yes|No)\n", copyFrom);
+                    ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer),
+                              &count, NULL);
+
+                    answered = TRUE;
+                    if (toupper(answer[0]) == 'N')
+                        skipFile = TRUE;
+                    else if (toupper(answer[0]) != 'Y')
+                        answered = FALSE;
                 }
             }
 
