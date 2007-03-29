@@ -47,6 +47,7 @@
 #define OPT_FULL         0x00000010
 #define OPT_SIMULATE     0x00000020
 #define OPT_PAUSE        0x00000040
+#define OPT_NOCOPY       0x00000080
 
 WINE_DEFAULT_DEBUG_CHANNEL(xcopy);
 
@@ -132,6 +133,7 @@ int main (int argc, char *argv[])
             case 'F': flags |= OPT_FULL;          break;
             case 'L': flags |= OPT_SIMULATE;      break;
             case 'W': flags |= OPT_PAUSE;         break;
+            case 'T': flags |= OPT_NOCOPY | OPT_RECURSIVE; break;
             default:
               WINE_FIXME("Unhandled parameter '%s'\n", wine_dbgstr_w(*argvW));
             }
@@ -181,7 +183,7 @@ int main (int argc, char *argv[])
     /* Finished - print trailer and exit */
     if (flags & OPT_SIMULATE) {
         printf("%d file(s) would be copied\n", filesCopied);
-    } else {
+    } else if (!(flags & OPT_NOCOPY)) {
         printf("%d file(s) copied\n", filesCopied);
     }
     if (rc == RC_OK && filesCopied == 0) rc = RC_NOFILES;
@@ -412,8 +414,8 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
             }
 
             copiedFile = TRUE;
-            if (flags & OPT_SIMULATE) {
-                /* Skip copy as just simulating */
+            if (flags & OPT_SIMULATE || flags & OPT_NOCOPY) {
+                /* Skip copy */
             } else if (CopyFile(copyFrom, copyTo, TRUE) == 0) {
                 printf("Copying of '%S' to '%S' failed with r/c %d\n",
                        copyFrom, copyTo, GetLastError());
