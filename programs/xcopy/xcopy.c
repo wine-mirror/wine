@@ -48,6 +48,7 @@
 #define OPT_SIMULATE     0x00000020
 #define OPT_PAUSE        0x00000040
 #define OPT_NOCOPY       0x00000080
+#define OPT_NOPROMPT     0x00000100
 
 WINE_DEFAULT_DEBUG_CHANNEL(xcopy);
 
@@ -134,6 +135,8 @@ int main (int argc, char *argv[])
             case 'L': flags |= OPT_SIMULATE;      break;
             case 'W': flags |= OPT_PAUSE;         break;
             case 'T': flags |= OPT_NOCOPY | OPT_RECURSIVE; break;
+            case 'Y': flags |= OPT_NOPROMPT;      break;
+            case '-': if (argvW[0][2]=='Y') flags &= ~OPT_NOPROMPT; break;
             default:
               WINE_FIXME("Unhandled parameter '%s'\n", wine_dbgstr_w(*argvW));
             }
@@ -178,7 +181,6 @@ int main (int argc, char *argv[])
     rc = XCOPY_DoCopy(sourcestem, sourcespec,
                 destinationstem, destinationspec,
                 flags);
-
 
     /* Finished - print trailer and exit */
     if (flags & OPT_SIMULATE) {
@@ -366,6 +368,8 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
     BOOL            findres = TRUE;
     WCHAR           *inputpath, *outputpath;
     BOOL            copiedFile = FALSE;
+    DWORD           destAttribs;
+    BOOL            skipFile;
 
     /* Allocate some working memory on heap to minimize footprint */
     finddata = HeapAlloc(GetProcessHeap(), 0, sizeof(WIN32_FIND_DATA));
@@ -379,6 +383,8 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
     /* Search 1 - Look for matching files */
     h = FindFirstFile(inputpath, finddata);
     while (h != INVALID_HANDLE_VALUE && findres) {
+
+        skipFile = FALSE;
 
         /* Ignore . and .. */
         if (lstrcmpW(finddata->cFileName, wchr_dot)==0 ||
@@ -404,23 +410,47 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                                                       wine_dbgstr_w(copyTo));
             if (!copiedFile && !(flags & OPT_SIMULATE)) XCOPY_CreateDirectory(deststem);
 
-            /* Output a status message */
-            if (flags & OPT_QUIET) {
-                /* Skip message */
-            } else if (flags & OPT_FULL) {
-                printf("%S -> %S\n", copyFrom, copyTo);
-            } else {
-                printf("%S\n", copyFrom);
+            /* See if file exists */
+            destAttribs = GetFileAttributesW(copyTo);
+            if (destAttribs != INVALID_FILE_ATTRIBUTES && !(flags & OPT_NOPROMPT)) {
+                DWORD count;
+                char  answer[10];
+                BOOL  answered = FALSE;
+
+                while (!answered) {
+                    printf("Overwrite %S? (Yes|No|All)\n", copyTo);
+                    ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer),
+                              &count, NULL);
+
+                    answered = TRUE;
+                    if (toupper(answer[0]) == 'A')
+                        flags |= OPT_NOPROMPT;
+                    else if (toupper(answer[0]) == 'N')
+                        skipFile = TRUE;
+                    else if (toupper(answer[0]) != 'Y')
+                        answered = FALSE;
+                }
             }
 
-            copiedFile = TRUE;
-            if (flags & OPT_SIMULATE || flags & OPT_NOCOPY) {
-                /* Skip copy */
-            } else if (CopyFile(copyFrom, copyTo, TRUE) == 0) {
-                printf("Copying of '%S' to '%S' failed with r/c %d\n",
-                       copyFrom, copyTo, GetLastError());
+            /* Output a status message */
+            if (!skipFile) {
+                if (flags & OPT_QUIET) {
+                    /* Skip message */
+                } else if (flags & OPT_FULL) {
+                    printf("%S -> %S\n", copyFrom, copyTo);
+                } else {
+                    printf("%S\n", copyFrom);
+                }
+
+                copiedFile = TRUE;
+                if (flags & OPT_SIMULATE || flags & OPT_NOCOPY) {
+                    /* Skip copy */
+                } else if (CopyFile(copyFrom, copyTo, FALSE) == 0) {
+                    printf("Copying of '%S' to '%S' failed with r/c %d\n",
+                           copyFrom, copyTo, GetLastError());
+                }
+                filesCopied++;
             }
-            filesCopied++;
         }
 
         /* Find next file */
