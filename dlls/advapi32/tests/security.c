@@ -1709,7 +1709,12 @@ static void test_SetEntriesInAcl(void)
     DWORD res;
 
     res = SetEntriesInAclW(0, NULL, NULL, &acl);
-    ok(res == ERROR_SUCCESS, "SetEntriesInAcl failed: %u\n", res);
+    if(res == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("SetEntriesInAclW is not implemented\n");
+        return;
+    }
+    ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
     ok(acl == NULL, "acl=%p, expected NULL\n", acl);
 }
 
