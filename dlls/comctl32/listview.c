@@ -420,7 +420,7 @@ static INT LISTVIEW_GetLabelWidth(const LISTVIEW_INFO *, INT);
 static void LISTVIEW_GetOrigin(const LISTVIEW_INFO *, LPPOINT);
 static BOOL LISTVIEW_GetViewRect(const LISTVIEW_INFO *, LPRECT);
 static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *, INT);
-static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *, const LVITEMW *, BOOL);
+static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *, LVITEMW *, BOOL);
 static void LISTVIEW_UpdateScroll(const LISTVIEW_INFO *);
 static void LISTVIEW_SetSelection(LISTVIEW_INFO *, INT);
 static void LISTVIEW_UpdateSize(LISTVIEW_INFO *);
@@ -3590,7 +3590,7 @@ static BOOL set_sub_item(const LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, 
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL isW)
+static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem, BOOL isW)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     HWND hwndSelf = infoPtr->hwndSelf;
@@ -3606,7 +3606,7 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, B
     if ((lpLVItem->mask & LVIF_TEXT) && is_textW(lpLVItem->pszText))
     {
 	pszText = lpLVItem->pszText;
-	((LVITEMW *)lpLVItem)->pszText = textdupTtoW(lpLVItem->pszText, isW);
+	lpLVItem->pszText = textdupTtoW(lpLVItem->pszText, isW);
     }
 
     /* actually set the fields */
@@ -3634,7 +3634,7 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, B
     if (pszText)
     {
 	textfreeT(lpLVItem->pszText, isW);
-	((LVITEMW *)lpLVItem)->pszText = pszText;
+	lpLVItem->pszText = pszText;
     }
 
     return bResult;
@@ -3723,7 +3723,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 {
     UINT uFormat, uView = infoPtr->dwStyle & LVS_TYPEMASK;
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
-    static const WCHAR szCallback[] = { '(', 'c', 'a', 'l', 'l', 'b', 'a', 'c', 'k', ')', 0 };
+    static WCHAR szCallback[] = { '(', 'c', 'a', 'l', 'l', 'b', 'a', 'c', 'k', ')', 0 };
     DWORD cdsubitemmode = CDRF_DODEFAULT;
     LPRECT lprcFocus;
     RECT rcSelect, rcBox, rcIcon, rcLabel, rcStateIcon;
@@ -3748,7 +3748,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
     if (nSubItem > 0 && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)) 
 	lvItem.state = LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED);
-    if (lvItem.pszText == LPSTR_TEXTCALLBACKW) lvItem.pszText = (LPWSTR)szCallback;
+    if (lvItem.pszText == LPSTR_TEXTCALLBACKW) lvItem.pszText = szCallback;
     TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
     /* now check if we need to update the focus rectangle */
