@@ -50,6 +50,8 @@
 #define OPT_NOCOPY       0x00000080
 #define OPT_NOPROMPT     0x00000100
 
+#define MAXSTRING 8192
+
 WINE_DEFAULT_DEBUG_CHANNEL(xcopy);
 
 /* Prototypes */
@@ -91,8 +93,13 @@ int main (int argc, char *argv[])
     WCHAR   sourcespec[MAX_PATH] = {0};       /* Filespec of source      */
     WCHAR   destinationstem[MAX_PATH] = {0};  /* Stem of destination     */
     WCHAR   destinationspec[MAX_PATH] = {0};  /* Filespec of destination */
+    WCHAR   copyCmd[MAXSTRING];               /* COPYCMD env var         */
     DWORD   flags = 0;                        /* Option flags            */
     LPWSTR *argvW = NULL;
+    const WCHAR PROMPTSTR1[]  = {'/', 'Y', 0};
+    const WCHAR PROMPTSTR2[]  = {'/', 'y', 0};
+    const WCHAR COPYCMD[]  = {'C', 'O', 'P', 'Y', 'C', 'M', 'D', 0};
+
     /*
      * Parse the command line
      */
@@ -104,6 +111,14 @@ int main (int argc, char *argv[])
     if (argc < 2) {
         printf("Invalid number of parameters - Use xcopy /? for help\n");
         return RC_INITERROR;
+    }
+
+    /* Preinitialize flags based on COPYCMD */
+    if (GetEnvironmentVariable(COPYCMD, copyCmd, MAXSTRING)) {
+        if (wcsstr(copyCmd, PROMPTSTR1) != NULL ||
+            wcsstr(copyCmd, PROMPTSTR2) != NULL) {
+            flags |= OPT_NOPROMPT;
+        }
     }
 
     /* Skip first arg, which is the program name */
@@ -136,7 +151,8 @@ int main (int argc, char *argv[])
             case 'W': flags |= OPT_PAUSE;         break;
             case 'T': flags |= OPT_NOCOPY | OPT_RECURSIVE; break;
             case 'Y': flags |= OPT_NOPROMPT;      break;
-            case '-': if (argvW[0][2]=='Y') flags &= ~OPT_NOPROMPT; break;
+            case '-': if (toupper(argvW[0][2])=='Y')
+                          flags &= ~OPT_NOPROMPT; break;
             default:
               WINE_FIXME("Unhandled parameter '%s'\n", wine_dbgstr_w(*argvW));
             }
