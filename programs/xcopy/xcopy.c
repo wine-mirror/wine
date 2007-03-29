@@ -46,6 +46,7 @@
 #define OPT_QUIET        0x00000008
 #define OPT_FULL         0x00000010
 #define OPT_SIMULATE     0x00000020
+#define OPT_PAUSE        0x00000040
 
 WINE_DEFAULT_DEBUG_CHANNEL(xcopy);
 
@@ -130,6 +131,7 @@ int main (int argc, char *argv[])
             case 'Q': flags |= OPT_QUIET;         break;
             case 'F': flags |= OPT_FULL;          break;
             case 'L': flags |= OPT_SIMULATE;      break;
+            case 'W': flags |= OPT_PAUSE;         break;
             default:
               WINE_FIXME("Unhandled parameter '%s'\n", wine_dbgstr_w(*argvW));
             }
@@ -159,6 +161,16 @@ int main (int argc, char *argv[])
     WINE_TRACE("Source Spec : '%s'\n", wine_dbgstr_w(sourcespec));
     WINE_TRACE("Dest   Stem : '%s'\n", wine_dbgstr_w(destinationstem));
     WINE_TRACE("Dest   Spec : '%s'\n", wine_dbgstr_w(destinationspec));
+
+    /* Pause if necessary */
+    if (flags & OPT_PAUSE) {
+        DWORD count;
+        char pausestr[10];
+
+        printf("Press <enter> to begin copying\n");
+        ReadFile (GetStdHandle(STD_INPUT_HANDLE), pausestr, sizeof(pausestr),
+                  &count, NULL);
+    }
 
     /* Now do the hard work... */
     rc = XCOPY_DoCopy(sourcestem, sourcespec,
