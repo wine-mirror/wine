@@ -53,6 +53,7 @@
 #define OPT_MUSTEXIST    0x00000400
 #define OPT_REPLACEREAD  0x00000800
 #define OPT_COPYHIDSYS   0x00001000
+#define OPT_IGNOREERRORS 0x00002000
 
 #define MAXSTRING 8192
 
@@ -159,6 +160,7 @@ int main (int argc, char *argv[])
             case 'U': flags |= OPT_MUSTEXIST;     break;
             case 'R': flags |= OPT_REPLACEREAD;   break;
             case 'H': flags |= OPT_COPYHIDSYS;    break;
+            case 'C': flags |= OPT_IGNOREERRORS;  break;
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
             default:
@@ -394,6 +396,9 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
     BOOL            copiedFile = FALSE;
     DWORD           destAttribs, srcAttribs;
     BOOL            skipFile;
+    LPVOID          lpMsgBuf;
+    DWORD           error_code;
+    int             status;
 
     /* Allocate some working memory on heap to minimize footprint */
     finddata = HeapAlloc(GetProcessHeap(), 0, sizeof(WIN32_FIND_DATA));
@@ -503,6 +508,24 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 } else if (CopyFile(copyFrom, copyTo, FALSE) == 0) {
                     printf("Copying of '%S' to '%S' failed with r/c %d\n",
                            copyFrom, copyTo, GetLastError());
+
+                    error_code = GetLastError ();
+                    status = FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                                            FORMAT_MESSAGE_FROM_SYSTEM,
+                                            NULL, error_code, 0,
+                                            (LPTSTR) &lpMsgBuf, 0, NULL);
+                    if (!status) {
+                        WINE_FIXME("FIXME: Cannot display message for error %d, status %d\n",
+                                   error_code, GetLastError());
+                    } else {
+                        printf("%S\n", lpMsgBuf);
+                        LocalFree ((HLOCAL)lpMsgBuf);
+                    }
+                    if (flags & OPT_IGNOREERRORS) {
+                        skipFile = TRUE;
+                    } else {
+                        return RC_WRITEERROR;
+                    }
                 }
                 filesCopied++;
             }
