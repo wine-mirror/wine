@@ -873,7 +873,10 @@ static void test_token_attr(void)
     }
 
     if(!pConvertSidToStringSidA)
+    {
+        skip("ConvertSidToStringSidA is not available\n");
         return;
+    }
 
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &Token);
     GLE = GetLastError();
