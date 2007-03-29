@@ -1608,10 +1608,16 @@ static void test_impersonation_level(void)
 
     pDuplicateTokenEx = (fnDuplicateTokenEx) GetProcAddress(hmod, "DuplicateTokenEx");
     if( !pDuplicateTokenEx ) {
-        skip("DuplicateTokenEx\n");
+        skip("DuplicateTokenEx is not available\n");
         return;
     }
+    SetLastError(0xdeadbeef);
     ret = ImpersonateSelf(SecurityAnonymous);
+    if(!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("ImpersonateSelf is not implemented\n");
+        return;
+    }
     ok(ret, "ImpersonateSelf(SecurityAnonymous) failed with error %d\n", GetLastError());
     ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY_SOURCE | TOKEN_IMPERSONATE | TOKEN_ADJUST_DEFAULT, TRUE, &Token);
     ok(!ret, "OpenThreadToken should have failed\n");
