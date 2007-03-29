@@ -97,10 +97,6 @@ typedef struct {
     HMODULE         hdll;
     DWORD           refcount;
     DWORD           dwMonitorSize;
-    LPPORT_INFO_2W  cache;          /* cached PORT_INFO_2W data */
-    DWORD           pi1_needed;     /* size for PORT_INFO_1W */
-    DWORD           pi2_needed;     /* size for PORT_INFO_2W */
-    DWORD           returned;       /* number of cached PORT_INFO_2W - entries */
 } monitor_t;
 
 typedef struct {
@@ -838,28 +834,6 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
 }
 
 /******************************************************************
- * monitor_flush [internal]
- *
- * flush the cached PORT_INFO_2W - data
- */
-
-static void monitor_flush(monitor_t * pm)
-{
-    if (!pm) return;
-
-    EnterCriticalSection(&monitor_handles_cs);
-
-    TRACE("%p (%s) cache: %p (%d, %d)\n", pm, debugstr_w(pm->name), pm->cache, pm->pi1_needed, pm->pi2_needed);
-
-    HeapFree(GetProcessHeap(), 0, pm->cache);
-    pm->cache = NULL;
-    pm->pi1_needed = 0;
-    pm->pi2_needed = 0;
-    pm->returned = 0;
-    LeaveCriticalSection(&monitor_handles_cs);
-}
-
-/******************************************************************
  * monitor_unload [internal]
  *
  * release a printmonitor and unload it from memory, when needed
@@ -1214,10 +1188,14 @@ static DWORD get_ports_from_all_monitors(DWORD level, LPBYTE pPorts, DWORD cbBuf
     LPWSTR      ptr;
     LPPORT_INFO_2W cache;
     LPPORT_INFO_2W out;
+    LPBYTE  pi_buffer = NULL;
+    DWORD   pi_allocated = 0;
+    DWORD   pi_needed;
+    DWORD   pi_index;
+    DWORD   pi_returned;
     DWORD   res;
-    DWORD   cacheindex;
     DWORD   outindex = 0;
-    DWORD   needed = 0;
+    DWORD   needed;
     DWORD   numentries;
     DWORD   entrysize;
 
@@ -1235,36 +1213,27 @@ static DWORD get_ports_from_all_monitors(DWORD level, LPBYTE pPorts, DWORD cbBuf
     LIST_FOR_EACH_ENTRY(pm, &monitor_handles, monitor_t, entry)
     {
         if ((pm->monitor) && (pm->monitor->pfnEnumPorts)) {
-            if (pm->cache == NULL) {
-                res = pm->monitor->pfnEnumPorts(NULL, 2, NULL, 0, &(pm->pi2_needed), &(pm->returned));
-                if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-                    pm->cache = HeapAlloc(GetProcessHeap(), 0, (pm->pi2_needed));
-                    res = pm->monitor->pfnEnumPorts(NULL, 2, (LPBYTE) pm->cache, pm->pi2_needed, &(pm->pi2_needed), &(pm->returned));
-                }
-                TRACE("(%s) got %d with %d (cache need %d byte for %d entries)\n", 
-                        debugstr_w(pm->name), res, GetLastError(), pm->pi2_needed, pm->returned);
-                res = FALSE;
-            }     
-            if (pm->cache && (level == 1) && (pm->pi1_needed == 0) && (pm->returned > 0)) {
-                cacheindex = 0;
-                cache = pm->cache;
-                while (cacheindex < (pm->returned)) {
-                    pm->pi1_needed += sizeof(PORT_INFO_1W);
-                    pm->pi1_needed += (lstrlenW(cache->pPortName) + 1) * sizeof(WCHAR);
-                    cache++;
-                    cacheindex++;
-                }
-                TRACE("%d byte for %d cached PORT_INFO_1W entries (%s)\n",
-                        pm->pi1_needed, cacheindex, debugstr_w(pm->name));
+            pi_needed = 0;
+            pi_returned = 0;
+            res = pm->monitor->pfnEnumPorts(NULL, level, pi_buffer, pi_allocated, &pi_needed, &pi_returned);
+            if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+                /* Do not use HeapReAlloc (we do not need the old data in the buffer) */
+                HeapFree(GetProcessHeap(), 0, pi_buffer);
+                pi_buffer = HeapAlloc(GetProcessHeap(), 0, pi_needed);
+                pi_allocated = (pi_buffer) ? pi_needed : 0;
+                res = pm->monitor->pfnEnumPorts(NULL, level, pi_buffer, pi_allocated, &pi_needed, &pi_returned);
             }
-            numentries += pm->returned;
-            needed += (level == 1) ? pm->pi1_needed : pm->pi2_needed;
+            TRACE(  "(%s) got %d with %d (need %d byte for %d entries)\n",
+                    debugstr_w(pm->name), res, GetLastError(), pi_needed, pi_returned);
 
-            /* fill the buffer, if we have one */
-            if (pPorts && (cbBuf >= needed ) && pm->cache) {
-                cacheindex = 0;
-                cache = pm->cache;
-                while (cacheindex < pm->returned) {
+            numentries += pi_returned;
+            needed += pi_needed;
+
+            /* fill the output-buffer (pPorts), if we have one */
+            if (pPorts && (cbBuf >= needed ) && pi_buffer) {
+                pi_index = 0;
+                while (pi_returned > pi_index) {
+                    cache = (LPPORT_INFO_2W) &pi_buffer[pi_index * entrysize];
                     out = (LPPORT_INFO_2W) &pPorts[outindex * entrysize];
                     out->pPortName = ptr;
                     lstrcpyW(ptr, cache->pPortName);
@@ -1280,13 +1249,14 @@ static DWORD get_ports_from_all_monitors(DWORD level, LPBYTE pPorts, DWORD cbBuf
                         out->fPortType = cache->fPortType;
                         out->Reserved = cache->Reserved;
                     }
-                    cache++;
-                    cacheindex++;
+                    pi_index++;
                     outindex++;
                 }
             }
         }
     }
+    /* the temporary portinfo-buffer is no longer needed */
+    HeapFree(GetProcessHeap(), 0, pi_buffer);
 
     *lpreturned = numentries;
     TRACE("need %d byte for %d entries\n", needed, numentries);
@@ -2464,9 +2434,6 @@ BOOL WINAPI DeletePortW (LPWSTR pName, HWND hWnd, LPWSTR pPortName)
         }
         monitor_unload(pui);
     }
-    /* always invalidate cached PORT_INFO_2W */
-    monitor_flush(pm);
-
     monitor_unload(pm);
 
     TRACE("returning %d with %u\n", res, GetLastError());
@@ -6052,9 +6019,6 @@ BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
         }
         monitor_unload(pui);
     }
-    /* invalidate cached PORT_INFO_2W */
-    monitor_flush(pm);
-
     monitor_unload(pm);
     TRACE("returning %d with %u\n", res, GetLastError());
     return res;
