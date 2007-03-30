@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -689,6 +690,16 @@ void *wine_dlopen( const char *filename, int flag, char *error, size_t errorsize
     void *ret;
     const char *s;
     dlerror(); dlerror();
+#ifdef __sun
+    if (strchr( filename, ':' ))
+    {
+        char path[PATH_MAX];
+        /* Solaris' brain damaged dlopen() treats ':' as a path separator */
+        realpath( filename, path );
+        ret = dlopen( path, flag | RTLD_FIRST );
+    }
+    else
+#endif
     ret = dlopen( filename, flag | RTLD_FIRST );
     s = dlerror();
     if (error && errorsize)
