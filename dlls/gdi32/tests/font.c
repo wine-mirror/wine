@@ -30,6 +30,8 @@
 
 #include "wine/test.h"
 
+#define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
+
 LONG  (WINAPI *pGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
 BOOL  (WINAPI *pGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
 DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
@@ -1480,6 +1482,46 @@ static void test_text_metrics(const LOGFONTA *lf)
     ok(hfont != 0, "CreateFontIndirect error %u\n", GetLastError());
 
     hfont_old = SelectObject(hdc, hfont);
+
+    if(lf->lfWidth > 0) {
+        HFONT hfont2;
+        GLYPHMETRICS gm1, gm2;
+        LOGFONTA lf2 = *lf;
+        MAT2 mat2 = { {0,1}, {0,0}, {0,0}, {0,1} };
+
+        /* negative widths are handled just as positive ones */
+        lf2.lfWidth *= -1;
+
+        SetLastError(0xdeadbeef);
+        hfont2 = CreateFontIndirectA(&lf2);
+        ok(hfont != 0, "CreateFontIndirect error %u\n", GetLastError());
+        SelectObject(hdc, hfont2);
+
+        memset(&gm1, 0xaa, sizeof(gm1));
+        SetLastError(0xdeadbeef);
+        ret = GetGlyphOutlineA(hdc, 'x', GGO_METRICS, &gm1, 0, NULL, &mat2);
+        ok(ret != GDI_ERROR, "GetGlyphOutline error 0x%x\n", GetLastError());
+
+        SelectObject(hdc, hfont);
+        DeleteObject(hfont2);
+
+        memset(&gm2, 0xbb, sizeof(gm2));
+        SetLastError(0xdeadbeef);
+        ret = GetGlyphOutlineA(hdc, 'x', GGO_METRICS, &gm2, 0, NULL, &mat2);
+        ok(ret != GDI_ERROR, "GetGlyphOutline error 0x%x\n", GetLastError());
+
+        ok(gm1.gmBlackBoxX == gm2.gmBlackBoxX &&
+           gm1.gmBlackBoxY == gm2.gmBlackBoxY &&
+           gm1.gmptGlyphOrigin.x == gm2.gmptGlyphOrigin.x &&
+           gm1.gmptGlyphOrigin.y == gm2.gmptGlyphOrigin.y &&
+           gm1.gmCellIncX == gm2.gmCellIncX &&
+           gm1.gmCellIncY == gm2.gmCellIncY,
+           "gm1=%d,%d,%d,%d,%d,%d gm2=%d,%d,%d,%d,%d,%d\n",
+           gm1.gmBlackBoxX, gm1.gmBlackBoxY, gm1.gmptGlyphOrigin.x,
+           gm1.gmptGlyphOrigin.y, gm1.gmCellIncX, gm1.gmCellIncY,
+           gm2.gmBlackBoxX, gm2.gmBlackBoxY, gm2.gmptGlyphOrigin.x,
+           gm2.gmptGlyphOrigin.y, gm2.gmCellIncX, gm2.gmCellIncY);
+    }
 
     size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
     if (size == GDI_ERROR)

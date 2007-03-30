@@ -2953,7 +2953,7 @@ found:
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
 
-    ret->aveWidth = FT_IS_SCALABLE(ret->ft_face) ? lf.lfWidth : 0;
+    ret->aveWidth = FT_IS_SCALABLE(ret->ft_face) ? abs(lf.lfWidth) : 0;
     list_add_head(&gdi_font_list, &ret->entry);
     return ret;
 }
