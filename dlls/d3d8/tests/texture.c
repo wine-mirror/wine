@@ -101,6 +101,32 @@ static void test_texture_stage_states(IDirect3DDevice8 *device_ptr, int num_stag
     }
 }
 
+static void test_cube_texture_from_pool(IDirect3DDevice8 *device_ptr, DWORD caps, D3DPOOL pool, BOOL need_cap)
+{
+    IDirect3DCubeTexture8 *texture_ptr = NULL;
+    HRESULT hr;
+
+    hr = IDirect3DDevice8_CreateCubeTexture(device_ptr, 512, 1, 0, D3DFMT_X8R8G8B8, pool, &texture_ptr);
+    trace("pool=%d hr=0x%.8x\n", pool, hr);
+
+    if((caps & D3DPTEXTURECAPS_CUBEMAP) || !need_cap)
+        ok(SUCCEEDED(hr), "hr=0x%.8x\n", hr);
+    else
+        ok(hr == D3DERR_INVALIDCALL, "hr=0x%.8x\n", hr);
+
+    if(texture_ptr) IDirect3DCubeTexture8_Release(texture_ptr);
+}
+
+static void test_cube_textures(IDirect3DDevice8 *device_ptr, DWORD caps)
+{
+    trace("texture caps: 0x%.8x\n", caps);
+
+    test_cube_texture_from_pool(device_ptr, caps, D3DPOOL_DEFAULT, TRUE);
+    test_cube_texture_from_pool(device_ptr, caps, D3DPOOL_MANAGED, TRUE);
+    test_cube_texture_from_pool(device_ptr, caps, D3DPOOL_SYSTEMMEM, TRUE);
+    test_cube_texture_from_pool(device_ptr, caps, D3DPOOL_SCRATCH, FALSE);
+}
+
 START_TEST(texture)
 {
     D3DCAPS8 caps;
@@ -120,4 +146,5 @@ START_TEST(texture)
     IDirect3DDevice8_GetDeviceCaps(device_ptr, &caps);
 
     test_texture_stage_states(device_ptr, caps.MaxTextureBlendStages);
+    test_cube_textures(device_ptr, caps.TextureCaps);
 }

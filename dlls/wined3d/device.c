@@ -999,6 +999,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         return WINED3DERR_INVALIDCALL;
     }
 
+    if (!GL_SUPPORT(ARB_TEXTURE_CUBE_MAP) && Pool != WINED3DPOOL_SCRATCH) {
+        WARN("(%p) : Tried to create not supported cube texture\n", This);
+        return WINED3DERR_INVALIDCALL;
+    }
+
     D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, WINED3DRTYPE_CUBETEXTURE, 0);
     D3DINITIALIZEBASETEXTURE(object->baseTexture);
 
