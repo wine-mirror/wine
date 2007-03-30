@@ -774,7 +774,7 @@ static HRESULT WINAPI GraphBuilder_Connect(IGraphBuilder *iface,
             goto error;
         }
 
-        hr = IGraphBuilder_AddFilter(iface, pfilter, NULL);
+        hr = IGraphBuilder_AddFilter(iface, pfilter, V_UNION(&var, bstrVal));
         if (FAILED(hr)) {
             ERR("Unable to add filter (%x)\n", hr);
             IBaseFilter_Release(pfilter);
@@ -923,7 +923,7 @@ static HRESULT WINAPI GraphBuilder_Render(IGraphBuilder *iface,
                goto error;
             }
 
-            hr = IGraphBuilder_AddFilter(iface, pfilter, NULL);
+            hr = IGraphBuilder_AddFilter(iface, pfilter, V_UNION(&var, bstrVal));
             if (FAILED(hr)) {
                 ERR("Unable to add filter (%x)\n", hr);
                 IBaseFilter_Release(pfilter);
@@ -1056,7 +1056,7 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
            continue;
         }
 
-        hr = IGraphBuilder_AddFilter(iface, psplitter, NULL);
+        hr = IGraphBuilder_AddFilter(iface, psplitter, V_UNION(&var, bstrVal));
         if (FAILED(hr)) {
             ERR("Unable add filter (%x)\n", hr);
             IBaseFilter_Release(psplitter);
