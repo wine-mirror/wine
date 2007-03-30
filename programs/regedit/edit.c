@@ -322,6 +322,59 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
         params.cbData = len;
         result = DialogBoxParam(NULL, MAKEINTRESOURCE(IDD_EDIT_BINARY), hwnd,
             bin_modify_dlgproc, (LPARAM)&params);
+    } else if ( type == REG_MULTI_SZ ) {
+        TCHAR char1 = (TCHAR)'\r', char2 = (TCHAR)'\n';
+        TCHAR *tmpValueData = NULL;
+        INT i, j, count;
+
+        for ( i = 0, count = 0; i < len - 1; i++)
+            if ( !stringValueData[i] && stringValueData[i + 1] )
+                count++;
+        tmpValueData = HeapAlloc( GetProcessHeap(), 0, ( len + count ) * sizeof(TCHAR));
+        if ( !tmpValueData ) goto done;
+
+        for ( i = 0, j = 0; i < len - 1; i++)
+        {
+            if ( !stringValueData[i] && stringValueData[i + 1])
+            {
+                tmpValueData[j++] = char1;
+                tmpValueData[j++] = char2;
+            }
+            else
+                tmpValueData[j++] = stringValueData[i];
+        }
+        tmpValueData[j] = stringValueData[i];
+        HeapFree( GetProcessHeap(), 0, stringValueData);
+        stringValueData = tmpValueData;
+        tmpValueData = NULL;
+
+        if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_MULTI_STRING), hwnd, modify_dlgproc) == IDOK)
+        {
+            len = lstrlen( stringValueData );
+            tmpValueData = HeapAlloc( GetProcessHeap(), 0, (len + 2) * sizeof(TCHAR));
+            if ( !tmpValueData ) goto done;
+
+            for ( i = 0, j = 0; i < len - 1; i++)
+            {
+                if ( stringValueData[i] == char1 && stringValueData[i + 1] == char2)
+                {
+                    if ( tmpValueData[j - 1] != 0)
+                        tmpValueData[j++] = 0;
+                    i++;
+                }
+                else
+                    tmpValueData[j++] = stringValueData[i];
+            }
+            tmpValueData[j++] = stringValueData[i];
+            tmpValueData[j++] = 0;
+            tmpValueData[j++] = 0;
+            HeapFree( GetProcessHeap(), 0, stringValueData);
+            stringValueData = tmpValueData;
+
+            lRet = RegSetValueEx(hKey, valueName, 0, type, (LPBYTE)stringValueData, j * sizeof(TCHAR));
+            if (lRet == ERROR_SUCCESS) result = TRUE;
+            else error_code_messagebox(hwnd, lRet);
+        }
     } else {
         error(hwnd, IDS_UNSUPPORTED_TYPE, type);
     }
