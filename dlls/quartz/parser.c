@@ -762,13 +762,32 @@ static HRESULT WINAPI Parser_InputPin_Disconnect(IPin * iface)
     return hr;
 }
 
+HRESULT WINAPI Parser_PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
+{
+    HRESULT hr;
+
+    TRACE("()\n");
+
+    hr = PullPin_ReceiveConnection(iface, pReceivePin, pmt);
+    if (FAILED(hr))
+    {
+        IPinImpl *This = (IPinImpl *)iface;
+
+        EnterCriticalSection(This->pCritSec);
+        Parser_RemoveOutputPins((ParserImpl *)This->pinInfo.pFilter);
+        LeaveCriticalSection(This->pCritSec);
+    }
+
+    return hr;
+}
+
 static const IPinVtbl Parser_InputPin_Vtbl =
 {
     PullPin_QueryInterface,
     IPinImpl_AddRef,
     PullPin_Release,
     OutputPin_Connect,
-    PullPin_ReceiveConnection,
+    Parser_PullPin_ReceiveConnection,
     Parser_InputPin_Disconnect,
     IPinImpl_ConnectedTo,
     IPinImpl_ConnectionMediaType,
