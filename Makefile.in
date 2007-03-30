@@ -482,6 +482,8 @@ ALL_MAKEFILES = \
 
 Makefile $(ALL_MAKEFILES): config.status
 	@./config.status $@
+.INIT: Makefile
+.BEGIN: Makefile
 
 $(RECURSE_TARGETS) $(MAKEDEP): $(ALL_MAKEFILES)
 
