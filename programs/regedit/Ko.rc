@@ -61,37 +61,38 @@ BEGIN
         BEGIN
             MENUITEM "&키(&K)",                 ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "문자값(&S)",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "문자열 값(&S)",            ID_EDIT_NEW_STRINGVALUE
             MENUITEM "이진값(&B)",               ID_EDIT_NEW_BINARYVALUE
-            MENUITEM "DWORD 값(&D)",            ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "DWORD 값(&D)",             ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "다중 문자열 값(&M)",       ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "삭제(&D)\tDel",                ID_EDIT_DELETE
-        MENUITEM "이름 바꾸기(&R)\tF2",           ID_EDIT_RENAME
+        MENUITEM "이름 바꾸기(&R)\tF2",          ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "키 이름 복사(&C)",              ID_EDIT_COPYKEYNAME
+        MENUITEM "키 이름 복사(&C)",             ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "찾기(&F)\tCtrl+F",             ID_EDIT_FIND, GRAYED
-        MENUITEM "다음 찾기(&x)\tF3",             ID_EDIT_FINDNEXT, GRAYED
+        MENUITEM "다음 찾기(&x)\tF3",            ID_EDIT_FINDNEXT, GRAYED
     END
     POPUP "보기(&V)"
     BEGIN
-        MENUITEM "상태 표기줄(&B)",               ID_VIEW_STATUSBAR
+        MENUITEM "상태 표기줄(&B)",              ID_VIEW_STATUSBAR
         MENUITEM SEPARATOR
-        MENUITEM "나누기(&L)",                     ID_VIEW_SPLIT
+        MENUITEM "나누기(&L)",                   ID_VIEW_SPLIT
         MENUITEM SEPARATOR
-        MENUITEM "새로 고침(&R)\tF5",             ID_VIEW_REFRESH
+        MENUITEM "새로 고침(&R)\tF5",            ID_VIEW_REFRESH
     END
     POPUP "즐겨 찾기(&F)"
     BEGIN
-        MENUITEM "즐겨 찾기 추가(&A)",            ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "즐겨 찾기 제거(&R)",            ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "즐겨 찾기 추가(&A)",           ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "즐겨 찾기 제거(&R)",           ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "도움말(&H)"
     BEGIN
-        MENUITEM "도움말 항목(&H)\tF1",            ID_HELP_HELPTOPICS
+        MENUITEM "도움말 항목(&H)\tF1",          ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
-        MENUITEM "레지스트리 편집기 정보(&A)",      ID_HELP_ABOUT
+        MENUITEM "레지스트리 편집기 정보(&A)",   ID_HELP_ABOUT
     END
 END
 
@@ -100,26 +101,27 @@ BEGIN
   POPUP ""
   BEGIN
 	MENUITEM "수정(&M)",                     ID_EDIT_MODIFY
-	MENUITEM "이진값 고치기",          ID_EDIT_MODIFY_BIN
+	MENUITEM "이진값 고치기",                ID_EDIT_MODIFY_BIN
 	MENUITEM SEPARATOR
 	MENUITEM "삭제(&D)\tDel",                ID_EDIT_DELETE
-	MENUITEM "이름 바꾸기(&R)",               ID_EDIT_RENAME
+	MENUITEM "이름 바꾸기(&R)",              ID_EDIT_RENAME
   END
   POPUP ""
   BEGIN
         POPUP "새로 만들기(&N)"
         BEGIN
-            MENUITEM "&키(&K)",                 ID_EDIT_NEW_KEY
+            MENUITEM "&키(&K)",                  ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "문자값(&S)",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "문자열 값(&S)",            ID_EDIT_NEW_STRINGVALUE
             MENUITEM "이진값(&B)",               ID_EDIT_NEW_BINARYVALUE
-            MENUITEM "DWORD 값(&D)",            ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "DWORD 값(&D)",             ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "다중 문자열 값(&M)",       ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "삭제(&D)\tDel",                ID_EDIT_DELETE
-        MENUITEM "이름 바꾸기(&R)\tF2",           ID_EDIT_RENAME
+        MENUITEM "이름 바꾸기(&R)\tF2",          ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "키 이름 복사(&C)",              ID_EDIT_COPYKEYNAME
+        MENUITEM "키 이름 복사(&C)",             ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "찾기(&F)\tCtrl+F",             ID_EDIT_FIND, GRAYED
   END
@@ -133,7 +135,7 @@ END
 IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "즐겨 찾기 추가"
-FONT 8, "MS Shell Dlg"
+FONT 9, "MS Shell Dlg"
 BEGIN
     LTEXT           "이름:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
@@ -144,7 +146,7 @@ END
 IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "즐겨 찾기 제거"
-FONT 8, "MS Shell Dlg"
+FONT 9, "MS Shell Dlg"
 BEGIN
     LTEXT           "이름:",IDC_STATIC,5,5,119,8
     LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
@@ -155,7 +157,7 @@ END
 IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "문자열 편집"
-FONT 8, "MS Shell Dlg"
+FONT 9, "MS Shell Dlg"
 BEGIN
     LTEXT           "값 이름:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
@@ -168,7 +170,7 @@ END
 IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "DWORD 편집"
-FONT 8, "MS Shell Dlg"
+FONT 9, "MS Shell Dlg"
 BEGIN
     LTEXT           "값 이름:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
@@ -184,7 +186,7 @@ END
 IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "이진 값 편집"
-FONT 8, "MS Shell Dlg"
+FONT 9, "MS Shell Dlg"
 BEGIN
     LTEXT           "값 이름:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
@@ -194,10 +196,23 @@ BEGIN
     PUSHBUTTON      "취소",IDCANCEL,175,80,30,11,WS_GROUP
 END
 
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "다중 문자열 편집"
+FONT 9, "MS Shell Dlg"
+BEGIN
+    LTEXT           "값 이름:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "값 데이터:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "확인",IDOK,140,160,30,11,WS_GROUP
+    PUSHBUTTON      "취소",IDCANCEL,175,160,30,11,WS_GROUP
+END
+
 IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "찾기"
-FONT 8, "MS Shell Dlg"
+FONT 9, "MS Shell Dlg"
 BEGIN
     LTEXT           "찾기:",IDC_STATIC,5,7,119,8
     EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
@@ -213,12 +228,12 @@ END
 IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
 STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
 WS_BORDER
-FONT 8, "MS Shell Dlg"
-	BEGIN
-		GROUPBOX "레지스트리 불러오기", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
-		AUTORADIOBUTTON "모두(&A)", IDC_EXPORT_ALL, 12, 15, 244, 12
-		AUTORADIOBUTTON "선택된 부분만(&E):", IDC_EXPORT_SELECTED, 12, 30, 70, 12
-		EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
+FONT 9, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "레지스트리 불러오기", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "모두(&A)", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "선택된 부분만(&E):", IDC_EXPORT_SELECTED, 12, 30, 70, 12
+    EDITTEXT        IDC_EXPORT_PATH, 82, 30, 184, 12
 END
 
 /*
@@ -253,9 +268,10 @@ STRINGTABLE DISCARDABLE
 BEGIN
     ID_EDIT_MODIFY          "값 데이타 고치기"
     ID_EDIT_NEW_KEY         "새 키 더하기"
-    ID_EDIT_NEW_STRINGVALUE "새 문자 값 더하기"
+    ID_EDIT_NEW_STRINGVALUE "새 문자열 값 더하기"
     ID_EDIT_NEW_BINARYVALUE "새 바이너리 값 더하기"
     ID_EDIT_NEW_DWORDVALUE  "새 더블 워드 값 더하기"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "새 다중 문자열 값 더하기"
     ID_REGISTRY_IMPORTREGISTRYFILE "텍스트 파일을 레지스트리에 끼워넣기"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "레지스트리의 전부나 일부분을 텍스트 파일로 내보내기"
@@ -286,7 +302,7 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ERROR		    "에러"
-    IDS_BAD_KEY		    " 키 '%s'를 질의할 수 없습니다"
+    IDS_BAD_KEY		    "키 '%s'를 질의할 수 없습니다"
     IDS_BAD_VALUE           "값 '%s'를 질의할 수 없습니다"
     IDS_UNSUPPORTED_TYPE    "이 타입 (%ld)의 키를 고칠 수 없습니다"
     IDS_TOO_BIG_VALUE       "값이 너무 큽니다 (%ld)"
