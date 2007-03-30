@@ -19,6 +19,18 @@
  */
 
 /*
+ * FIXME:
+ * This should now support all options listed in the xcopy help from
+ * windows XP except:
+ *  /Z - Copy from network drives in restartable mode
+ *  /X - Copy file audit settings (sets /O)
+ *  /O - Copy file ownership + ACL info
+ *  /G - Copy encrypted files to unencrypted destination
+ *  /V - Verifies files
+ *  /? (or no parms) - List Help
+ */
+
+/*
  * Notes:
  * Apparently, valid return codes are:
  *   0 - OK
