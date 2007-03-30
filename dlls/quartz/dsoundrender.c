@@ -203,13 +203,13 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
             ERR("Error GetCurrentPosition: %x\n", hr);
             break;
         }
-        if (This->write_pos < play_pos)
+        if (This->write_pos <= play_pos)
              buf_free = play_pos-This->write_pos;
         else
              buf_free = DSBUFFERSIZE - This->write_pos + play_pos;
 
-        /* This situation is ambiguous; Assume full when playing */
-        if(buf_free == DSBUFFERSIZE)
+        /* Wait for enough of the buffer to empty before filling it */
+        if(buf_free < DSBUFFERSIZE/4)
         {
             Sleep(10);
             continue;
@@ -234,11 +234,7 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
         size -= dwsize1 + dwsize2;
         data += dwsize1 + dwsize2;
         This->write_pos = (This->write_pos + dwsize1 + dwsize2) % DSBUFFERSIZE;
-
-        if (!size)
-            break;
-        Sleep(10);
-    } while (This->state == State_Running);
+    } while (size && This->state == State_Running);
 
     return hr;
 }
