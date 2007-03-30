@@ -164,6 +164,7 @@ typedef struct tagDirectPlay2Data
   /* For async EnumSessions requests */
   HANDLE hEnumSessionThread;
   HANDLE hKillEnumSessionThreadEvent;
+  DWORD  dwEnumSessionLock;
 
   LPVOID lpNameServerData; /* DPlay interface doesn't know contents */
 

@@ -272,6 +272,7 @@ static BOOL DP_CreateDirectPlay2( LPVOID lpDP )
   This->dp2->bConnectionOpen = FALSE;
 
   This->dp2->hEnumSessionThread = INVALID_HANDLE_VALUE;
+  This->dp2->dwEnumSessionLock = 0;
 
   This->dp2->bHostInterface = FALSE;
 
@@ -2273,7 +2274,6 @@ static HRESULT WINAPI DP_IF_EnumSessions
     return hr;
   }
 
-  /* FIXME: Interface locking sucks in this method */
   if( ( dwFlags & DPENUMSESSIONS_ASYNC ) )
   {
     /* Enumerate everything presently in the local session cache */
@@ -2281,11 +2281,14 @@ static HRESULT WINAPI DP_IF_EnumSessions
                                    This->dp2->lpNameServerData, dwTimeout,
                                    lpContext );
 
+    if( This->dp2->dwEnumSessionLock != 0 )
+      return DPERR_CONNECTING;
 
     /* See if we've already created a thread to service this interface */
     if( This->dp2->hEnumSessionThread == INVALID_HANDLE_VALUE )
     {
       DWORD dwThreadId;
+      This->dp2->dwEnumSessionLock++;
 
       /* Send the first enum request inline since the user may cancel a dialog
        * if one is presented. Also, may also have a connecting return code.
@@ -2326,6 +2329,7 @@ static HRESULT WINAPI DP_IF_EnumSessions
                                                       0,
                                                       &dwThreadId );
       }
+      This->dp2->dwEnumSessionLock--;
     }
   }
   else
