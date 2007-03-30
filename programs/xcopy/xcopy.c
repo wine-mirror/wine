@@ -585,25 +585,6 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 skipFile = TRUE;
             }
 
-            /* Prompt each file if necessary */
-            if (!skipFile && (flags & OPT_SRCPROMPT)) {
-                DWORD count;
-                char  answer[10];
-                BOOL  answered = FALSE;
-
-                while (!answered) {
-                    printf("%S? (Yes|No)\n", copyFrom);
-                    ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer),
-                              &count, NULL);
-
-                    answered = TRUE;
-                    if (toupper(answer[0]) == 'N')
-                        skipFile = TRUE;
-                    else if (toupper(answer[0]) != 'Y')
-                        answered = FALSE;
-                }
-            }
-
             /* See if file exists */
             destAttribs = GetFileAttributesW(copyTo);
             WINE_TRACE("Dest attribs: %d\n", srcAttribs);
@@ -633,6 +614,49 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 }
             }
 
+            /* See if exclude list provided. Note since filenames are case
+               insensitive, need to uppercase the filename before doing
+               strstr                                                     */
+            if (!skipFile && (flags & OPT_EXCLUDELIST)) {
+                EXCLUDELIST *pos = excludeList;
+                WCHAR copyFromUpper[MAX_PATH];
+
+                /* Uppercase source filename */
+                lstrcpyW(copyFromUpper, copyFrom);
+                CharUpperBuff(copyFromUpper, lstrlenW(copyFromUpper));
+
+                /* Loop through testing each exclude line */
+                while (pos) {
+                    if (wcsstr(copyFromUpper, pos->name) != NULL) {
+                        WINE_TRACE("Skipping file as matches exclude '%s'\n",
+                                   wine_dbgstr_w(pos->name));
+                        skipFile = TRUE;
+                        pos = NULL;
+                    } else {
+                        pos = pos->next;
+                    }
+                }
+            }
+
+            /* Prompt each file if necessary */
+            if (!skipFile && (flags & OPT_SRCPROMPT)) {
+                DWORD count;
+                char  answer[10];
+                BOOL  answered = FALSE;
+
+                while (!answered) {
+                    printf("%S? (Yes|No)\n", copyFrom);
+                    ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer),
+                              &count, NULL);
+
+                    answered = TRUE;
+                    if (toupper(answer[0]) == 'N')
+                        skipFile = TRUE;
+                    else if (toupper(answer[0]) != 'Y')
+                        answered = FALSE;
+                }
+            }
+
             if (!skipFile &&
                 destAttribs != INVALID_FILE_ATTRIBUTES && !(flags & OPT_NOPROMPT)) {
                 DWORD count;
@@ -657,30 +681,6 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
             /* See if it has to exist! */
             if (destAttribs == INVALID_FILE_ATTRIBUTES && (flags & OPT_MUSTEXIST)) {
                 skipFile = TRUE;
-            }
-
-            /* See if exclude list provided. Note since filenames are case
-               insensitive, need to uppercase the filename before doing
-               strstr                                                     */
-            if (!skipFile && (flags & OPT_EXCLUDELIST)) {
-                EXCLUDELIST *pos = excludeList;
-                WCHAR copyFromUpper[MAX_PATH];
-
-                /* Uppercase source filename */
-                lstrcpyW(copyFromUpper, copyFrom);
-                CharUpperBuff(copyFromUpper, lstrlenW(copyFromUpper));
-
-                /* Loop through testing each exclude line */
-                while (pos) {
-                    if (wcsstr(copyFromUpper, pos->name) != NULL) {
-                        WINE_TRACE("Skipping file as matches exclude '%s'\n",
-                                   wine_dbgstr_w(pos->name));
-                        skipFile = TRUE;
-                        pos = NULL;
-                    } else {
-                        pos = pos->next;
-                    }
-                }
             }
 
             /* Output a status message */
