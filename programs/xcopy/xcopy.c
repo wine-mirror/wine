@@ -32,36 +32,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <wine/debug.h>
-
-/* Local #defines */
-#define RC_OK         0
-#define RC_NOFILES    1
-#define RC_CTRLC      2
-#define RC_INITERROR  4
-#define RC_WRITEERROR 5
-
-#define OPT_ASSUMEDIR    0x00000001
-#define OPT_RECURSIVE    0x00000002
-#define OPT_EMPTYDIR     0x00000004
-#define OPT_QUIET        0x00000008
-#define OPT_FULL         0x00000010
-#define OPT_SIMULATE     0x00000020
-#define OPT_PAUSE        0x00000040
-#define OPT_NOCOPY       0x00000080
-#define OPT_NOPROMPT     0x00000100
-#define OPT_SHORTNAME    0x00000200
-#define OPT_MUSTEXIST    0x00000400
-#define OPT_REPLACEREAD  0x00000800
-#define OPT_COPYHIDSYS   0x00001000
-#define OPT_IGNOREERRORS 0x00002000
-#define OPT_SRCPROMPT    0x00004000
-#define OPT_ARCHIVEONLY  0x00008000
-#define OPT_REMOVEARCH   0x00010000
-#define OPT_EXCLUDELIST  0x00020000
-#define OPT_DATERANGE    0x00040000
-#define OPT_DATENEWER    0x00080000
-
-#define MAXSTRING 8192
+#include "xcopy.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xcopy);
 
@@ -75,6 +46,8 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 static BOOL XCOPY_CreateDirectory(const WCHAR* path);
 static BOOL XCOPY_ProcessExcludeList(WCHAR* parms);
 static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName);
+static WCHAR *XCOPY_LoadMessage(UINT id);
+static void XCOPY_FailMessage(DWORD err);
 
 /* Typedefs */
 typedef struct _EXCLUDELIST
@@ -133,7 +106,7 @@ int main (int argc, char *argv[])
 
     /* Confirm at least one parameter */
     if (argc < 2) {
-        printf("Invalid number of parameters - Use xcopy /? for help\n");
+        wprintf(XCOPY_LoadMessage(STRING_INVPARMS));
         return RC_INITERROR;
     }
 
@@ -160,7 +133,7 @@ int main (int argc, char *argv[])
             } else if (supplieddestination[0] == 0x00) {
                 lstrcpyW(supplieddestination, *argvW);
             } else {
-                printf("Invalid number of parameters - Use xcopy /? for help\n");
+                wprintf(XCOPY_LoadMessage(STRING_INVPARMS));
                 return RC_INITERROR;
             }
         } else {
@@ -193,20 +166,7 @@ int main (int argc, char *argv[])
                                          &argvW[0][1], 8,
                                          EXCLUDE, -1) == 2) {
                         if (XCOPY_ProcessExcludeList(&argvW[0][9])) {
-                          LPWSTR lpMsgBuf;
-                          int status;
-
-                          status = FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                                                  FORMAT_MESSAGE_FROM_SYSTEM,
-                                                  NULL, ERROR_INVALID_PARAMETER, 0,
-                                                  (LPTSTR) &lpMsgBuf, 0, NULL);
-                          if (!status) {
-                            WINE_FIXME("FIXME: Cannot display message for error %d, status %d\n",
-                                       ERROR_INVALID_PARAMETER, GetLastError());
-                          } else {
-                            printf("%S\n", lpMsgBuf);
-                            LocalFree ((HLOCAL)lpMsgBuf);
-                          }
+                          XCOPY_FailMessage(ERROR_INVALID_PARAMETER);
                           return RC_INITERROR;
                         } else flags |= OPT_EXCLUDELIST;
                       } else flags |= OPT_EMPTYDIR;
@@ -253,20 +213,7 @@ int main (int argc, char *argv[])
                               WINE_TRACE("Date being used is: %s %s\n",
                                          wine_dbgstr_w(datestring), wine_dbgstr_w(timestring));
                           } else {
-                              LPWSTR lpMsgBuf;
-                              int status;
-
-                              status = FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                                                      FORMAT_MESSAGE_FROM_SYSTEM,
-                                                      NULL, ERROR_INVALID_PARAMETER, 0,
-                                                      (LPTSTR) &lpMsgBuf, 0, NULL);
-                              if (!status) {
-                                WINE_FIXME("FIXME: Cannot display message for error %d, status %d\n",
-                                           ERROR_INVALID_PARAMETER, GetLastError());
-                              } else {
-                                printf("%S\n", lpMsgBuf);
-                                LocalFree ((HLOCAL)lpMsgBuf);
-                              }
+                              XCOPY_FailMessage(ERROR_INVALID_PARAMETER);
                               return RC_INITERROR;
                           }
                       } else {
@@ -277,7 +224,9 @@ int main (int argc, char *argv[])
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
             default:
-              WINE_FIXME("Unhandled parameter '%s'\n", wine_dbgstr_w(*argvW));
+                WINE_TRACE("Unhandled parameter '%s'\n", wine_dbgstr_w(*argvW));
+                wprintf(XCOPY_LoadMessage(STRING_INVPARM), *argvW);
+                return RC_INITERROR;
             }
         }
         argvW++;
@@ -311,7 +260,7 @@ int main (int argc, char *argv[])
         DWORD count;
         char pausestr[10];
 
-        printf("Press <enter> to begin copying\n");
+        wprintf(XCOPY_LoadMessage(STRING_PAUSE));
         ReadFile (GetStdHandle(STD_INPUT_HANDLE), pausestr, sizeof(pausestr),
                   &count, NULL);
     }
@@ -331,9 +280,9 @@ int main (int argc, char *argv[])
 
     /* Finished - print trailer and exit */
     if (flags & OPT_SIMULATE) {
-        printf("%d file(s) would be copied\n", filesCopied);
+        wprintf(XCOPY_LoadMessage(STRING_SIMCOPY), filesCopied);
     } else if (!(flags & OPT_NOCOPY)) {
-        printf("%d file(s) copied\n", filesCopied);
+        wprintf(XCOPY_LoadMessage(STRING_COPY), filesCopied);
     }
     if (rc == RC_OK && filesCopied == 0) rc = RC_NOFILES;
     return rc;
@@ -388,13 +337,7 @@ static int XCOPY_ProcessSourceParm(WCHAR *suppliedsource, WCHAR *stem, WCHAR *sp
         DWORD attribs = GetFileAttributes(actualsource);
 
         if (attribs == INVALID_FILE_ATTRIBUTES) {
-            LPWSTR lpMsgBuf;
-            DWORD lastError = GetLastError();
-            int status;
-            status = FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                                    FORMAT_MESSAGE_FROM_SYSTEM,
-                                    NULL, lastError, 0, (LPWSTR) &lpMsgBuf, 0, NULL);
-            printf("%S\n", lpMsgBuf);
+            XCOPY_FailMessage(GetLastError());
             return RC_INITERROR;
 
         /* Directory: */
@@ -451,11 +394,15 @@ static int XCOPY_ProcessDestParm(WCHAR *supplieddestination, WCHAR *stem, WCHAR 
         } else {
             DWORD count;
             char  answer[10] = "";
+            WCHAR fileChar[2];
+            WCHAR dirChar[2];
 
-            while (answer[0] != 'F' && answer[0] != 'D') {
-                printf("Is %S a filename or directory\n"
-                       "on the target?\n"
-                       "(F - File, D - Directory)\n", supplieddestination);
+            /* Read the F and D characters from the resource file */
+            wcscpy(fileChar, XCOPY_LoadMessage(STRING_FILE_CHAR));
+            wcscpy(dirChar, XCOPY_LoadMessage(STRING_DIR_CHAR));
+
+            while (answer[0] != fileChar[0] && answer[0] != dirChar[0]) {
+                wprintf(XCOPY_LoadMessage(STRING_QISDIR), supplieddestination);
 
                 ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer), &count, NULL);
                 WINE_TRACE("User answer %c\n", answer[0]);
@@ -463,7 +410,7 @@ static int XCOPY_ProcessDestParm(WCHAR *supplieddestination, WCHAR *stem, WCHAR 
                 answer[0] = toupper(answer[0]);
             }
 
-            if (answer[0] == 'D') {
+            if (answer[0] == dirChar[0]) {
                 isDir = TRUE;
             } else {
                 isDir = FALSE;
@@ -517,9 +464,6 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
     BOOL            copiedFile = FALSE;
     DWORD           destAttribs, srcAttribs;
     BOOL            skipFile;
-    LPVOID          lpMsgBuf;
-    DWORD           error_code;
-    int             status;
 
     /* Allocate some working memory on heap to minimize footprint */
     finddata = HeapAlloc(GetProcessHeap(), 0, sizeof(WIN32_FIND_DATA));
@@ -643,16 +587,22 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 DWORD count;
                 char  answer[10];
                 BOOL  answered = FALSE;
+                WCHAR yesChar[2];
+                WCHAR noChar[2];
+
+                /* Read the Y and N characters from the resource file */
+                wcscpy(yesChar, XCOPY_LoadMessage(STRING_YES_CHAR));
+                wcscpy(noChar, XCOPY_LoadMessage(STRING_NO_CHAR));
 
                 while (!answered) {
-                    printf("%S? (Yes|No)\n", copyFrom);
+                    wprintf(XCOPY_LoadMessage(STRING_SRCPROMPT), copyFrom);
                     ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer),
                               &count, NULL);
 
                     answered = TRUE;
-                    if (toupper(answer[0]) == 'N')
+                    if (toupper(answer[0]) == noChar[0])
                         skipFile = TRUE;
-                    else if (toupper(answer[0]) != 'Y')
+                    else if (toupper(answer[0]) != yesChar[0])
                         answered = FALSE;
                 }
             }
@@ -662,18 +612,26 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 DWORD count;
                 char  answer[10];
                 BOOL  answered = FALSE;
+                WCHAR yesChar[2];
+                WCHAR allChar[2];
+                WCHAR noChar[2];
+
+                /* Read the A,Y and N characters from the resource file */
+                wcscpy(yesChar, XCOPY_LoadMessage(STRING_YES_CHAR));
+                wcscpy(allChar, XCOPY_LoadMessage(STRING_ALL_CHAR));
+                wcscpy(noChar, XCOPY_LoadMessage(STRING_NO_CHAR));
 
                 while (!answered) {
-                    printf("Overwrite %S? (Yes|No|All)\n", copyTo);
+                    wprintf(XCOPY_LoadMessage(STRING_OVERWRITE), copyTo);
                     ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer),
                               &count, NULL);
 
                     answered = TRUE;
-                    if (toupper(answer[0]) == 'A')
+                    if (toupper(answer[0]) == allChar[0])
                         flags |= OPT_NOPROMPT;
-                    else if (toupper(answer[0]) == 'N')
+                    else if (toupper(answer[0]) == noChar[0])
                         skipFile = TRUE;
-                    else if (toupper(answer[0]) != 'Y')
+                    else if (toupper(answer[0]) != yesChar[0])
                         answered = FALSE;
                 }
             }
@@ -704,21 +662,12 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 if (flags & OPT_SIMULATE || flags & OPT_NOCOPY) {
                     /* Skip copy */
                 } else if (CopyFile(copyFrom, copyTo, FALSE) == 0) {
-                    printf("Copying of '%S' to '%S' failed with r/c %d\n",
-                           copyFrom, copyTo, GetLastError());
 
-                    error_code = GetLastError ();
-                    status = FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                                            FORMAT_MESSAGE_FROM_SYSTEM,
-                                            NULL, error_code, 0,
-                                            (LPTSTR) &lpMsgBuf, 0, NULL);
-                    if (!status) {
-                        WINE_FIXME("FIXME: Cannot display message for error %d, status %d\n",
-                                   error_code, GetLastError());
-                    } else {
-                        printf("%S\n", lpMsgBuf);
-                        LocalFree ((HLOCAL)lpMsgBuf);
-                    }
+                    DWORD error = GetLastError();
+                    wprintf(XCOPY_LoadMessage(STRING_COPYFAIL),
+                           copyFrom, copyTo, error);
+                    XCOPY_FailMessage(error);
+
                     if (flags & OPT_IGNOREERRORS) {
                         skipFile = TRUE;
                     } else {
@@ -893,7 +842,7 @@ static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName) {
     /* Open the file */
     inFile = _wfopen(filename, readTextMode);
     if (inFile == NULL) {
-        printf("Failed to open '%S'\n", filename);
+        wprintf(XCOPY_LoadMessage(STRING_OPENFAIL), filename);
         *endOfName = endChar;
         return TRUE;
     }
@@ -918,7 +867,7 @@ static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName) {
 
     /* See if EOF or error occurred */
     if (!feof(inFile)) {
-        printf("Failed during reading of '%S'\n", filename);
+        wprintf(XCOPY_LoadMessage(STRING_READFAIL), filename);
         *endOfName = endChar;
         return TRUE;
     }
@@ -927,4 +876,40 @@ static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName) {
     *endOfName = endChar;
     fclose(inFile);
     return FALSE;
+}
+
+/* =========================================================================
+ * Load a string from the resource file, handling any error
+ * Returns string retrieved from resource file
+ * ========================================================================= */
+static WCHAR *XCOPY_LoadMessage(UINT id) {
+    static WCHAR msg[2048];
+    const WCHAR failedMsg[]  = {'F', 'a', 'i', 'l', 'e', 'd', '!', 0};
+
+    if (!LoadString(GetModuleHandle(NULL), id, msg, sizeof(msg))) {
+       WINE_FIXME("LoadString failed with %d\n", GetLastError());
+       lstrcpyW(msg, failedMsg);
+    }
+    return msg;
+}
+
+/* =========================================================================
+ * Load a string for a system error and writes it to the screen
+ * Returns string retrieved from resource file
+ * ========================================================================= */
+static void XCOPY_FailMessage(DWORD err) {
+    LPWSTR lpMsgBuf;
+    int status;
+
+    status = FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                            FORMAT_MESSAGE_FROM_SYSTEM,
+                            NULL, err, 0,
+                            (LPTSTR) &lpMsgBuf, 0, NULL);
+    if (!status) {
+      WINE_FIXME("FIXME: Cannot display message for error %d, status %d\n",
+                 err, GetLastError());
+    } else {
+      printf("%S\n", lpMsgBuf);
+      LocalFree ((HLOCAL)lpMsgBuf);
+    }
 }

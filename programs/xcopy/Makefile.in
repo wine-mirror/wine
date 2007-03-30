@@ -12,6 +12,8 @@ MODCFLAGS = @BUILTINFLAG@
 C_SRCS = \
 	xcopy.c
 
+RC_SRCS = rsrc.rc
+
 @MAKE_PROG_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

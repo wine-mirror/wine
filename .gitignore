@@ -875,6 +875,7 @@ programs/winver/winver
 programs/wordpad/rsrc.res
 programs/wordpad/toolbar.bmp
 programs/wordpad/wordpad
+programs/xcopy/rsrc.res
 programs/xcopy/xcopy
 server/wineserver
 server/wineserver.man
