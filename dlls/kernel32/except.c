@@ -186,7 +186,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     UNICODE_STRING nameW;
     char *cmdline, *env, *p;
     HANDLE		hDbgConf;
-    DWORD		bAuto = FALSE;
+    DWORD		bAuto = TRUE;
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
     char*		format = NULL;
@@ -260,7 +260,6 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
                bAuto = atoiW( str );
            }
        }
-       else bAuto = TRUE;
 
        NtClose(hDbgConf);
     }
