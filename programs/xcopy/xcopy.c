@@ -57,6 +57,7 @@
 #define OPT_SRCPROMPT    0x00004000
 #define OPT_ARCHIVEONLY  0x00008000
 #define OPT_REMOVEARCH   0x00010000
+#define OPT_EXCLUDELIST  0x00020000
 
 #define MAXSTRING 8192
 
@@ -70,9 +71,20 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                         WCHAR *deststem, WCHAR *destspec,
                         DWORD flags);
 static BOOL XCOPY_CreateDirectory(const WCHAR* path);
+static BOOL XCOPY_ProcessExcludeList(WCHAR* parms);
+static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName);
+
+/* Typedefs */
+typedef struct _EXCLUDELIST
+{
+  struct _EXCLUDELIST *next;
+  WCHAR               *name;
+} EXCLUDELIST;
+
 
 /* Global variables */
 static ULONG filesCopied           = 0;              /* Number of files copied  */
+static EXCLUDELIST *excludeList    = NULL;           /* Excluded strings list   */
 static const WCHAR wchr_slash[]   = {'\\', 0};
 static const WCHAR wchr_star[]    = {'*', 0};
 static const WCHAR wchr_dot[]     = {'.', 0};
@@ -107,6 +119,7 @@ int main (int argc, char *argv[])
     const WCHAR PROMPTSTR1[]  = {'/', 'Y', 0};
     const WCHAR PROMPTSTR2[]  = {'/', 'y', 0};
     const WCHAR COPYCMD[]  = {'C', 'O', 'P', 'Y', 'C', 'M', 'D', 0};
+    const WCHAR EXCLUDE[]  = {'E', 'X', 'C', 'L', 'U', 'D', 'E', ':', 0};
 
     /*
      * Parse the command line
@@ -155,7 +168,6 @@ int main (int argc, char *argv[])
             switch (toupper(argvW[0][1])) {
             case 'I': flags |= OPT_ASSUMEDIR;     break;
             case 'S': flags |= OPT_RECURSIVE;     break;
-            case 'E': flags |= OPT_EMPTYDIR;      break;
             case 'Q': flags |= OPT_QUIET;         break;
             case 'F': flags |= OPT_FULL;          break;
             case 'L': flags |= OPT_SIMULATE;      break;
@@ -171,6 +183,32 @@ int main (int argc, char *argv[])
             case 'A': flags |= OPT_ARCHIVEONLY;   break;
             case 'M': flags |= OPT_ARCHIVEONLY |
                                OPT_REMOVEARCH;    break;
+
+            /* E can be /E or /EXCLUDE */
+            case 'E': if (CompareString (LOCALE_USER_DEFAULT,
+                                         NORM_IGNORECASE | SORT_STRINGSORT,
+                                         &argvW[0][1], 8,
+                                         EXCLUDE, -1) == 2) {
+                        if (XCOPY_ProcessExcludeList(&argvW[0][9])) {
+                          LPWSTR lpMsgBuf;
+                          int status;
+
+                          status = FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                                                  FORMAT_MESSAGE_FROM_SYSTEM,
+                                                  NULL, ERROR_INVALID_PARAMETER, 0,
+                                                  (LPTSTR) &lpMsgBuf, 0, NULL);
+                          if (!status) {
+                            WINE_FIXME("FIXME: Cannot display message for error %d, status %d\n",
+                                       ERROR_INVALID_PARAMETER, GetLastError());
+                          } else {
+                            printf("%S\n", lpMsgBuf);
+                            LocalFree ((HLOCAL)lpMsgBuf);
+                          }
+                          return RC_INITERROR;
+                        } else flags |= OPT_EXCLUDELIST;
+                      } else flags |= OPT_EMPTYDIR;
+                      break;
+
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
             default:
@@ -217,6 +255,14 @@ int main (int argc, char *argv[])
     rc = XCOPY_DoCopy(sourcestem, sourcespec,
                 destinationstem, destinationspec,
                 flags);
+
+    /* Clear up exclude list allocated memory */
+    while (excludeList) {
+        EXCLUDELIST *pos = excludeList;
+        excludeList = excludeList -> next;
+        HeapFree(GetProcessHeap(), 0, pos->name);
+        HeapFree(GetProcessHeap(), 0, pos);
+    }
 
     /* Finished - print trailer and exit */
     if (flags & OPT_SIMULATE) {
@@ -523,6 +569,30 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 skipFile = TRUE;
             }
 
+            /* See if exclude list provided. Note since filenames are case
+               insensitive, need to uppercase the filename before doing
+               strstr                                                     */
+            if (!skipFile && (flags & OPT_EXCLUDELIST)) {
+                EXCLUDELIST *pos = excludeList;
+                WCHAR copyFromUpper[MAX_PATH];
+
+                /* Uppercase source filename */
+                lstrcpyW(copyFromUpper, copyFrom);
+                CharUpperBuff(copyFromUpper, lstrlenW(copyFromUpper));
+
+                /* Loop through testing each exclude line */
+                while (pos) {
+                    if (wcsstr(copyFromUpper, pos->name) != NULL) {
+                        WINE_TRACE("Skipping file as matches exclude '%s'\n",
+                                   wine_dbgstr_w(pos->name));
+                        skipFile = TRUE;
+                        pos = NULL;
+                    } else {
+                        pos = pos->next;
+                    }
+                }
+            }
+
             /* Output a status message */
             if (!skipFile) {
                 if (flags & OPT_QUIET) {
@@ -679,4 +749,92 @@ static BOOL XCOPY_CreateDirectory(const WCHAR* path)
     }
     HeapFree(GetProcessHeap(),0,new_path);
     return ret;
+}
+
+/* =========================================================================
+ * Process the /EXCLUDE: file list, building up a list of substrings to
+ * avoid copying
+ * Returns TRUE on any failure
+ * ========================================================================= */
+static BOOL XCOPY_ProcessExcludeList(WCHAR* parms) {
+
+    WCHAR *filenameStart = parms;
+
+    WINE_TRACE("/EXCLUDE parms: '%s'\n", wine_dbgstr_w(parms));
+    excludeList = NULL;
+
+    while (*parms && *parms != ' ' && *parms != '/') {
+
+        /* If found '+' then process the file found so far */
+        if (*parms == '+') {
+            if (XCOPY_ProcessExcludeFile(filenameStart, parms)) {
+                return TRUE;
+            }
+            filenameStart = parms+1;
+        }
+        parms++;
+    }
+
+    if (filenameStart != parms) {
+        if (XCOPY_ProcessExcludeFile(filenameStart, parms)) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+/* =========================================================================
+ * Process a single file from the /EXCLUDE: file list, building up a list
+ * of substrings to avoid copying
+ * Returns TRUE on any failure
+ * ========================================================================= */
+static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName) {
+
+    WCHAR   endChar = *endOfName;
+    WCHAR   buffer[MAXSTRING];
+    FILE   *inFile  = NULL;
+    const WCHAR readTextMode[]  = {'r', 't', 0};
+
+    /* Null terminate the filename (temporarily updates the filename hence
+         parms not const)                                                 */
+    *endOfName = 0x00;
+
+    /* Open the file */
+    inFile = _wfopen(filename, readTextMode);
+    if (inFile == NULL) {
+        printf("Failed to open '%S'\n", filename);
+        *endOfName = endChar;
+        return TRUE;
+    }
+
+    /* Process line by line */
+    while (fgetws(buffer, sizeof(buffer), inFile) != NULL) {
+        EXCLUDELIST *thisEntry;
+        int length = lstrlenW(buffer);
+
+        /* Strip CRLF */
+        buffer[length-1] = 0x00;
+
+        thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(EXCLUDELIST));
+        thisEntry->next = excludeList;
+        excludeList = thisEntry;
+        thisEntry->name = HeapAlloc(GetProcessHeap(), 0,
+                                    (length * sizeof(WCHAR))+1);
+        lstrcpyW(thisEntry->name, buffer);
+        CharUpperBuff(thisEntry->name, length);
+        WINE_TRACE("Read line : '%s'\n", wine_dbgstr_w(thisEntry->name));
+    }
+
+    /* See if EOF or error occurred */
+    if (!feof(inFile)) {
+        printf("Failed during reading of '%S'\n", filename);
+        *endOfName = endChar;
+        return TRUE;
+    }
+
+    /* Revert the input string to original form, and cleanup + return */
+    *endOfName = endChar;
+    fclose(inFile);
+    return FALSE;
 }
