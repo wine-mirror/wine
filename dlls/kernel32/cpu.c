@@ -385,7 +385,7 @@ VOID WINAPI GetSystemInfo(
 	/* FIXME: the two entries below should be computed somehow... */
 	cachedsi.lpMinimumApplicationAddress	= (void *)0x00010000;
 	cachedsi.lpMaximumApplicationAddress	= (void *)0x7FFEFFFF;
-	cachedsi.dwActiveProcessorMask		= 1;
+	cachedsi.dwActiveProcessorMask		= 0;
 	cachedsi.dwNumberOfProcessors		= 1;
 	cachedsi.dwProcessorType		= PROCESSOR_INTEL_PENTIUM;
 	cachedsi.dwAllocationGranularity	= 0x10000;
@@ -785,6 +785,9 @@ VOID WINAPI GetSystemInfo(
 #else
 	FIXME("not yet supported on this system\n");
 #endif
+        if (!cachedsi.dwActiveProcessorMask)
+            cachedsi.dwActiveProcessorMask = (1 << cachedsi.dwNumberOfProcessors) - 1;
+
         memcpy(si,&cachedsi,sizeof(*si));
 
         TRACE("<- CPU arch %d, res'd %d, pagesize %d, minappaddr %p, maxappaddr %p,"
