@@ -58,6 +58,8 @@
 #define OPT_ARCHIVEONLY  0x00008000
 #define OPT_REMOVEARCH   0x00010000
 #define OPT_EXCLUDELIST  0x00020000
+#define OPT_DATERANGE    0x00040000
+#define OPT_DATENEWER    0x00080000
 
 #define MAXSTRING 8192
 
@@ -85,6 +87,7 @@ typedef struct _EXCLUDELIST
 /* Global variables */
 static ULONG filesCopied           = 0;              /* Number of files copied  */
 static EXCLUDELIST *excludeList    = NULL;           /* Excluded strings list   */
+static FILETIME dateRange;                           /* Date range to copy after*/
 static const WCHAR wchr_slash[]   = {'\\', 0};
 static const WCHAR wchr_star[]    = {'*', 0};
 static const WCHAR wchr_dot[]     = {'.', 0};
@@ -207,6 +210,68 @@ int main (int argc, char *argv[])
                           return RC_INITERROR;
                         } else flags |= OPT_EXCLUDELIST;
                       } else flags |= OPT_EMPTYDIR;
+                      break;
+
+            /* D can be /D or /D: */
+            case 'D': if ((argvW[0][2])==':' && isdigit(argvW[0][3])) {
+                          SYSTEMTIME st;
+                          WCHAR     *pos = &argvW[0][3];
+                          BOOL       isError = FALSE;
+                          memset(&st, 0x00, sizeof(st));
+
+                          /* Parse the arg : Month */
+                          st.wMonth = _wtol(pos);
+                          while (*pos && isdigit(*pos)) pos++;
+                          if (*pos++ != '-') isError = TRUE;
+
+                          /* Parse the arg : Day */
+                          if (!isError) {
+                              st.wDay = _wtol(pos);
+                              while (*pos && isdigit(*pos)) pos++;
+                              if (*pos++ != '-') isError = TRUE;
+                          }
+
+                          /* Parse the arg : Day */
+                          if (!isError) {
+                              st.wYear = _wtol(pos);
+                              if (st.wYear < 100) st.wYear+=2000;
+                          }
+
+                          if (!isError && SystemTimeToFileTime(&st, &dateRange)) {
+                              SYSTEMTIME st;
+                              WCHAR datestring[32], timestring[32];
+
+                              flags |= OPT_DATERANGE;
+
+                              /* Debug info: */
+                              FileTimeToSystemTime (&dateRange, &st);
+                              GetDateFormat (0, DATE_SHORTDATE, &st, NULL, datestring,
+                                          sizeof(datestring));
+                              GetTimeFormat (0, TIME_NOSECONDS, &st,
+                                          NULL, timestring, sizeof(timestring));
+
+                              WINE_TRACE("Date being used is: %s %s\n",
+                                         wine_dbgstr_w(datestring), wine_dbgstr_w(timestring));
+                          } else {
+                              LPWSTR lpMsgBuf;
+                              int status;
+
+                              status = FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                                                      FORMAT_MESSAGE_FROM_SYSTEM,
+                                                      NULL, ERROR_INVALID_PARAMETER, 0,
+                                                      (LPTSTR) &lpMsgBuf, 0, NULL);
+                              if (!status) {
+                                WINE_FIXME("FIXME: Cannot display message for error %d, status %d\n",
+                                           ERROR_INVALID_PARAMETER, GetLastError());
+                              } else {
+                                printf("%S\n", lpMsgBuf);
+                                LocalFree ((HLOCAL)lpMsgBuf);
+                              }
+                              return RC_INITERROR;
+                          }
+                      } else {
+                          flags |= OPT_DATENEWER;
+                      }
                       break;
 
             case '-': if (toupper(argvW[0][2])=='Y')
@@ -542,6 +607,31 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
             /* See if file exists */
             destAttribs = GetFileAttributesW(copyTo);
             WINE_TRACE("Dest attribs: %d\n", srcAttribs);
+
+            /* Check date ranges if a destination file already exists */
+            if (!skipFile && (flags & OPT_DATERANGE) &&
+                (CompareFileTime(&finddata->ftLastWriteTime, &dateRange) < 0)) {
+                WINE_TRACE("Skipping file as modified date too old\n");
+                skipFile = TRUE;
+            }
+
+            /* If just /D supplied, only overwrite if src newer than dest */
+            if (!skipFile && (flags & OPT_DATENEWER) &&
+               (destAttribs != INVALID_FILE_ATTRIBUTES)) {
+                HANDLE h = CreateFile(copyTo, GENERIC_READ, FILE_SHARE_READ,
+                                      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
+                                      NULL);
+                if (h != INVALID_HANDLE_VALUE) {
+                    FILETIME writeTime;
+                    GetFileTime(h, NULL, NULL, &writeTime);
+
+                    if (CompareFileTime(&finddata->ftLastWriteTime, &writeTime) <= 0) {
+                        WINE_TRACE("Skipping file as dest newer or same date\n");
+                        skipFile = TRUE;
+                    }
+                    CloseHandle(h);
+                }
+            }
 
             if (!skipFile &&
                 destAttribs != INVALID_FILE_ATTRIBUTES && !(flags & OPT_NOPROMPT)) {
