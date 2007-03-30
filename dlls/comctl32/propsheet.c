@@ -2023,6 +2023,11 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
     return FALSE;
   }
 
+  /* unset active page while doing this transition. */
+  if (psInfo->active_page != -1)
+     ShowWindow(psInfo->proppage[psInfo->active_page].hwndPage, SW_HIDE);
+  psInfo->active_page = -1;
+
   while (1) {
     int result;
     PSHNOTIFY psn;
