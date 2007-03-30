@@ -27,7 +27,6 @@
  *  /O - Copy file ownership + ACL info
  *  /G - Copy encrypted files to unencrypted destination
  *  /V - Verifies files
- *  /? (or no parms) - List Help
  */
 
 /*
@@ -235,6 +234,8 @@ int main (int argc, char *argv[])
 
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
+            case '?': wprintf(XCOPY_LoadMessage(STRING_HELP));
+                      return RC_OK;
             default:
                 WINE_TRACE("Unhandled parameter '%s'\n", wine_dbgstr_w(*argvW));
                 wprintf(XCOPY_LoadMessage(STRING_INVPARM), *argvW);

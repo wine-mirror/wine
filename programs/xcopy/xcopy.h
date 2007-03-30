@@ -65,3 +65,4 @@
 #define STRING_ALL_CHAR         114
 #define STRING_FILE_CHAR        115
 #define STRING_DIR_CHAR         116
+#define STRING_HELP             117
