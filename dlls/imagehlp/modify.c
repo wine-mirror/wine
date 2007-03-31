@@ -53,8 +53,7 @@ BOOL WINAPI BindImageEx(
     Flags, debugstr_a(ImageName), debugstr_a(DllPath),
     debugstr_a(SymbolPath), StatusRoutine
   );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+  return TRUE;
 }
 
 
