@@ -130,6 +130,13 @@ int main (int argc, char *argv[])
         }
     }
 
+    /* FIXME: On UNIX, files starting with a '.' are treated as hidden under
+       wine, but on windows these can be normal files. At least one installer
+       uses files such as .packlist and (validly) expects them to be copied.
+       Under wine, if we do not copy hidden files by default then they get
+       lose                                                                   */
+    flags |= OPT_COPYHIDSYS;
+
     /* Skip first arg, which is the program name */
     argvW++;
 
