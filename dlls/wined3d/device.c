@@ -4823,14 +4823,14 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     /* This function doesn't support compressed textures
     the pitch is just bytesPerPixel * width */
     if(srcWidth != srcSurfaceWidth  || srcLeft ){
-        rowoffset = (srcSurfaceWidth - srcWidth) * pSrcSurface->bytesPerPixel;
+        rowoffset = srcSurfaceWidth * pSrcSurface->bytesPerPixel;
         offset   += srcLeft * pSrcSurface->bytesPerPixel;
         /* TODO: do we ever get 3bpp?, would a shift and an add be quicker than a mul (well maybe a cycle or two) */
     }
     /* TODO DXT formats */
 
     if(pSourceRect != NULL && pSourceRect->top != 0){
-       offset +=  pSourceRect->top * srcWidth * pSrcSurface->bytesPerPixel;
+       offset +=  pSourceRect->top * srcSurfaceWidth * pSrcSurface->bytesPerPixel;
     }
     TRACE("(%p) glTexSubImage2D, Level %d, left %d, top %d, width %d, height %d , ftm %d, type %d, memory %p\n"
     ,This
