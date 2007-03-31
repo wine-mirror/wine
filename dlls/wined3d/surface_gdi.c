@@ -726,10 +726,6 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
 
     if (Flags & DDBLT_WAIT)
     {
-        static BOOL displayed = FALSE;
-        if (!displayed)
-            FIXME("Can't handle DDBLT_WAIT flag right now.\n");
-        displayed = TRUE;
         Flags &= ~DDBLT_WAIT;
     }
     if (Flags & DDBLT_ASYNC)
