@@ -93,7 +93,7 @@ typedef struct
 
 #define ANIMATE_COLOR_NONE  	0xffffffff
 
-static void ANIMATE_Notify(ANIMATE_INFO *infoPtr, UINT notif)
+static void ANIMATE_Notify(const ANIMATE_INFO *infoPtr, UINT notif)
 {
     SendMessageW(infoPtr->hwndNotify, WM_COMMAND,
 		 MAKEWPARAM(GetDlgCtrlID(infoPtr->hwndSelf), notif),
@@ -772,7 +772,7 @@ static BOOL ANIMATE_Stop(ANIMATE_INFO *infoPtr)
 }
 
 
-static BOOL ANIMATE_Create(HWND hWnd, LPCREATESTRUCTW lpcs)
+static BOOL ANIMATE_Create(HWND hWnd, const CREATESTRUCTW *lpcs)
 {
     static const WCHAR msvfw32W[] = { 'm', 's', 'v', 'f', 'w', '3', '2', '.', 'd', 'l', 'l', 0 };
     ANIMATE_INFO *infoPtr;
@@ -843,7 +843,7 @@ static BOOL ANIMATE_EraseBackground(ANIMATE_INFO const *infoPtr, HDC hdc)
 }
 
 
-static LRESULT ANIMATE_StyleChanged(ANIMATE_INFO *infoPtr, WPARAM wStyleType, LPSTYLESTRUCT lpss)
+static LRESULT ANIMATE_StyleChanged(ANIMATE_INFO *infoPtr, WPARAM wStyleType, const STYLESTRUCT *lpss)
 {
     TRACE("(styletype=%x, styleOld=0x%08x, styleNew=0x%08x)\n",
           wStyleType, lpss->styleOld, lpss->styleNew);

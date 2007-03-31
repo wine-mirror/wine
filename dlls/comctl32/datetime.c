@@ -137,7 +137,7 @@ static const int maxrepetition [] = {4,2,2,2,4,2,2,4,-1,-1};
 
 
 static DWORD
-DATETIME_GetSystemTime (DATETIME_INFO *infoPtr, SYSTEMTIME *lprgSysTimeArray)
+DATETIME_GetSystemTime (const DATETIME_INFO *infoPtr, SYSTEMTIME *lprgSysTimeArray)
 {
     if (!lprgSysTimeArray) return GDT_NONE;
 

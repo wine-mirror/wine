@@ -1019,7 +1019,7 @@ typedef struct tagNOTIFYDATA
  * DoNotify [Internal]
  */
 
-static LRESULT DoNotify (LPNOTIFYDATA lpNotify, UINT uCode, LPNMHDR lpHdr)
+static LRESULT DoNotify (const NOTIFYDATA *lpNotify, UINT uCode, LPNMHDR lpHdr)
 {
     NMHDR nmhdr;
     LPNMHDR lpNmh = NULL;

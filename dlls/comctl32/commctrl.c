@@ -1490,7 +1490,7 @@ static inline int IsDelimiter(WCHAR c)
     return FALSE;
 }
 
-static int CALLBACK PathWordBreakProc(LPWSTR lpch, int ichCurrent, int cch, int code)
+static int CALLBACK PathWordBreakProc(LPCWSTR lpch, int ichCurrent, int cch, int code)
 {
     if (code == WB_ISDELIMITER)
         return IsDelimiter(lpch[ichCurrent]);
