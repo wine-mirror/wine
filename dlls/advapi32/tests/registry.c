@@ -631,6 +631,16 @@ static void test_reg_close_key(void)
     ret = RegCloseKey(NULL);
     ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_BADKEY, /* Windows 95 returns BADKEY */
        "expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %d\n", ret);
+
+    /* Check to see if we didn't potentially close our main handle, which could happen on win98 as
+     * win98 doesn't give a new handle when the same key is opened.
+     * Not re-opening will make some next tests fail.
+     */
+    if (hkey_main == hkHandle)
+    {
+        trace("The main handle is most likely closed, so re-opening\n");
+        RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkey_main );
+    }
 }
 
 static void test_reg_delete_key(void)
