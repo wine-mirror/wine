@@ -48,7 +48,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(xcopy);
 
 /* Prototypes */
-static int XCOPY_ProcessSourceParm(WCHAR *suppliedsource, WCHAR *stem, WCHAR *spec);
+static int XCOPY_ProcessSourceParm(WCHAR *suppliedsource, WCHAR *stem,
+                                   WCHAR *spec, DWORD flags);
 static int XCOPY_ProcessDestParm(WCHAR *supplieddestination, WCHAR *stem,
                                  WCHAR *spec, WCHAR *srcspec, DWORD flags);
 static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
@@ -255,7 +256,7 @@ int main (int argc, char *argv[])
     WINE_TRACE("Destination : '%s'\n", wine_dbgstr_w(supplieddestination));
 
     /* Extract required information from source specification */
-    rc = XCOPY_ProcessSourceParm(suppliedsource, sourcestem, sourcespec);
+    rc = XCOPY_ProcessSourceParm(suppliedsource, sourcestem, sourcespec, flags);
 
     /* Extract required information from destination specification */
     rc = XCOPY_ProcessDestParm(supplieddestination, destinationstem,
@@ -307,11 +308,13 @@ int main (int argc, char *argv[])
    XCOPY_ProcessSourceParm - Takes the supplied source parameter, and
      converts it into a stem and a filespec
    ========================================================================= */
-static int XCOPY_ProcessSourceParm(WCHAR *suppliedsource, WCHAR *stem, WCHAR *spec)
+static int XCOPY_ProcessSourceParm(WCHAR *suppliedsource, WCHAR *stem,
+                                   WCHAR *spec, DWORD flags)
 {
     WCHAR             actualsource[MAX_PATH];
     WCHAR            *starPos;
     WCHAR            *questPos;
+    DWORD             attribs;
 
     /*
      * Validate the source, expanding to full path ensuring it exists
@@ -321,56 +324,79 @@ static int XCOPY_ProcessSourceParm(WCHAR *suppliedsource, WCHAR *stem, WCHAR *sp
         return RC_INITERROR;
     }
 
+    /* If full names required, convert to using the full path */
+    if (flags & OPT_FULL) {
+        lstrcpyW(suppliedsource, actualsource);
+    }
+
     /*
      * Work out the stem of the source
      */
 
-    /* If no wildcard were supplied then the source is either a single
-       file or a directory - in which case thats the stem of the search,
-       otherwise split off the wildcards and use the higher level as the
-       stem                                                              */
-    lstrcpyW(stem, actualsource);
-    starPos = wcschr(stem, '*');
-    questPos = wcschr(stem, '?');
+    /* If a directory is supplied, use that as-is (either fully or
+          partially qualified)
+       If a filename is supplied + a directory or drive path, use that
+          as-is
+       Otherwise
+          If no directory or path specified, add eg. C:
+          stem is Drive/Directory is bit up to last \ (or first :)
+          spec is bit after that                                         */
+
+    starPos = wcschr(suppliedsource, '*');
+    questPos = wcschr(suppliedsource, '?');
     if (starPos || questPos) {
+        attribs = 0x00;  /* Ensures skips invalid or directory check below */
+    } else {
+        attribs = GetFileAttributes(actualsource);
+    }
+
+    if (attribs == INVALID_FILE_ATTRIBUTES) {
+        XCOPY_FailMessage(GetLastError());
+        return RC_INITERROR;
+
+    /* Directory:
+         stem should be exactly as supplied plus a '\', unless it was
+          eg. C: in which case no slash required */
+    } else if (attribs & FILE_ATTRIBUTE_DIRECTORY) {
+        WCHAR lastChar;
+
+        WINE_TRACE("Directory supplied\n");
+        lstrcpyW(stem, suppliedsource);
+        lastChar = stem[lstrlenW(stem)-1];
+        if (lastChar != '\\' && lastChar != ':') {
+            lstrcatW(stem, wchr_slash);
+        }
+        lstrcpyW(spec, wchr_star);
+
+    /* File or wildcard search:
+         stem should be:
+           Up to and including last slash if directory path supplied
+           If c:filename supplied, just the c:
+           Otherwise stem should be the current drive letter + ':' */
+    } else {
         WCHAR *lastDir;
 
-        if (starPos) *starPos = 0x00;
-        if (questPos) *questPos = 0x00;
+        WINE_TRACE("Filename supplied\n");
+        lastDir   = wcsrchr(suppliedsource, '\\');
 
-        lastDir = wcsrchr(stem, '\\');
-        if (lastDir) *(lastDir+1) = 0x00;
-        else {
-            WINE_FIXME("Unexpected syntax error in source parameter\n");
-            return RC_INITERROR;
-        }
-        lstrcpyW(spec, actualsource + (lastDir - stem)+1);
-    } else {
-
-        DWORD attribs = GetFileAttributes(actualsource);
-
-        if (attribs == INVALID_FILE_ATTRIBUTES) {
-            XCOPY_FailMessage(GetLastError());
-            return RC_INITERROR;
-
-        /* Directory: */
-        } else if (attribs & FILE_ATTRIBUTE_DIRECTORY) {
-            lstrcatW(stem, wchr_slash);
-            lstrcpyW(spec, wchr_star);
-
-        /* File: */
+        if (lastDir) {
+            lstrcpyW(stem, suppliedsource);
+            stem[(lastDir-suppliedsource) + 1] = 0x00;
+            lstrcpyW(spec, (lastDir+1));
+        } else if (suppliedsource[1] == ':') {
+            lstrcpyW(stem, suppliedsource);
+            stem[2] = 0x00;
+            lstrcpyW(spec, suppliedsource+2);
         } else {
-            WCHAR drive[MAX_PATH];
-            WCHAR dir[MAX_PATH];
-            WCHAR fname[MAX_PATH];
-            WCHAR ext[MAX_PATH];
-            _wsplitpath(actualsource, drive, dir, fname, ext);
-            lstrcpyW(stem, drive);
-            lstrcatW(stem, dir);
-            lstrcpyW(spec, fname);
-            lstrcatW(spec, ext);
+            WCHAR curdir[MAXSTRING];
+            GetCurrentDirectory (sizeof(curdir), curdir);
+            stem[0] = curdir[0];
+            stem[1] = curdir[1];
+            stem[2] = 0x00;
+            lstrcpyW(spec, suppliedsource);
         }
     }
+
     return RC_OK;
 }
 
@@ -868,14 +894,17 @@ static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName) {
         /* Strip CRLF */
         buffer[length-1] = 0x00;
 
-        thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(EXCLUDELIST));
-        thisEntry->next = excludeList;
-        excludeList = thisEntry;
-        thisEntry->name = HeapAlloc(GetProcessHeap(), 0,
-                                    (length * sizeof(WCHAR))+1);
-        lstrcpyW(thisEntry->name, buffer);
-        CharUpperBuff(thisEntry->name, length);
-        WINE_TRACE("Read line : '%s'\n", wine_dbgstr_w(thisEntry->name));
+        /* If more than CRLF */
+        if (length > 1) {
+          thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(EXCLUDELIST));
+          thisEntry->next = excludeList;
+          excludeList = thisEntry;
+          thisEntry->name = HeapAlloc(GetProcessHeap(), 0,
+                                      (length * sizeof(WCHAR))+1);
+          lstrcpyW(thisEntry->name, buffer);
+          CharUpperBuff(thisEntry->name, length);
+          WINE_TRACE("Read line : '%s'\n", wine_dbgstr_w(thisEntry->name));
+        }
     }
 
     /* See if EOF or error occurred */
