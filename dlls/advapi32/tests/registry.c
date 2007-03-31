@@ -281,10 +281,13 @@ static void test_enum_value(void)
 
     /* Unicode tests */
 
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     res = RegSetValueExW( test_key, testW, 0, REG_SZ, (const BYTE *)foobarW, 7*sizeof(WCHAR) );
     if (res==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
-        return;
+    {
+        skip("RegSetValueExW is not implemented\n");
+        goto cleanup;
+    }
     ok( res == 0, "RegSetValueExW failed error %d\n", res );
 
     /* overflow both name and data */
@@ -342,6 +345,10 @@ static void test_enum_value(void)
     ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !memcmp( valueW, testW, sizeof(testW) ), "value is not 'Test'\n" );
     ok( !memcmp( dataW, foobarW, sizeof(foobarW) ), "data is not 'foobar'\n" );
+
+cleanup:
+    RegDeleteKeyA(test_key, "");
+    RegCloseKey(test_key);
 }
 
 static void test_query_value_ex(void)
@@ -783,14 +790,16 @@ static void test_reg_query_value(void)
     SetLastError(0xdeadbeef);
     size = MAX_PATH;
     ret = RegQueryValueA((HKEY)0xcafebabe, "subkey", val, &size);
-    ok(ret == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", ret);
+    ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_BADKEY, /* Windows 98 returns BADKEY */
+       "Expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try a NULL hkey */
     SetLastError(0xdeadbeef);
     size = MAX_PATH;
     ret = RegQueryValueA(NULL, "subkey", val, &size);
-    ok(ret == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", ret);
+    ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_BADKEY, /* Windows 98 returns BADKEY */
+       "Expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try a NULL value */
@@ -880,6 +889,7 @@ static void test_reg_query_value(void)
 
 cleanup:
     RegDeleteKeyA(subkey, "");
+    RegCloseKey(subkey);
 }
 
 START_TEST(registry)
