@@ -740,8 +740,8 @@ HEADER_DrawTrackLine (HWND hwnd, HDC hdc, INT x)
  * 
  * NOTE: We depend on HDITEMA and HDITEMW having the same structure
  */
-static void HEADER_CopyHDItemForNotify(HEADER_INFO *infoPtr, HDITEMW *dest,
-    HDITEMW *src, BOOL fSourceUnicode, LPVOID *ppvScratch)
+static void HEADER_CopyHDItemForNotify(const HEADER_INFO *infoPtr, HDITEMW *dest,
+    const HDITEMW *src, BOOL fSourceUnicode, LPVOID *ppvScratch)
 {
     *ppvScratch = NULL;
     *dest = *src;
@@ -1394,7 +1394,7 @@ HEADER_SetBitmapMargin(HWND hwnd, WPARAM wParam)
 }
 
 static LRESULT
-HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
+HEADER_SetItemT (HWND hwnd, INT nItem, const HDITEMW *phdi, BOOL bUnicode)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     HEADER_ITEM *lpItem;
