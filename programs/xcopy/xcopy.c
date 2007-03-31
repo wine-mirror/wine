@@ -181,7 +181,7 @@ int main (int argc, char *argv[])
                           XCOPY_FailMessage(ERROR_INVALID_PARAMETER);
                           return RC_INITERROR;
                         } else flags |= OPT_EXCLUDELIST;
-                      } else flags |= OPT_EMPTYDIR;
+                      } else flags |= OPT_EMPTYDIR | OPT_RECURSIVE;
                       break;
 
             /* D can be /D or /D: */
