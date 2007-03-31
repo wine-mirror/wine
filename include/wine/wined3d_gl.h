@@ -1147,7 +1147,7 @@ typedef void (APIENTRY * PGLFNFINISHFENCENVPROC) (GLuint);
 typedef GLboolean (APIENTRY * PGLFNISFENCENVPROC) (GLuint);
 typedef void (APIENTRY * PGLFNGETFENCEIVNVPROC) (GLuint, GLenum, GLint *);
 /* GL_APPLE_fence */
-#ifndef GL_NV_fence
+#ifndef GL_APPLE_fence
 #define GL_DRAW_PIXELS_APPLE                0x8A0A
 #define GL_FENCE_APPLE                      0x84F3
 #endif
@@ -1159,6 +1159,10 @@ typedef void (APIENTRY * PGLFNFINISHFENCEAPPLEPROC) (GLuint);
 typedef GLboolean (APIENTRY * PGLFNISFENCEAPPLEPROC) (GLuint);
 typedef GLboolean (APIENTRY * PGLFNTESTOBJECTAPPLEPROC) (GLenum, GLuint);
 typedef void (APIENTRY * PGLFNFINISHOBJECTAPPLEPROC) (GLenum, GLuint);
+/* GL_APPLE_client_storage */
+#ifndef GL_APPLE_client_storage
+#define GL_UNPACK_CLIENT_STORAGE_APPLE      0x85B2
+#endif
 /* GL_ATI_envmap_bumpmap */
 #ifndef GL_ATI_envmap_bumpmap
 #define GL_BUMP_ROT_MATRIX_ATI              0x8775
@@ -1540,6 +1544,7 @@ typedef enum _GL_SupportedExt {
   ATI_ENVMAP_BUMPMAP,
   /* APPLE */
   APPLE_FENCE,
+  APPLE_CLIENT_STORAGE,
 
   OPENGL_SUPPORTED_EXT_END
 } GL_SupportedExt;

@@ -812,6 +812,8 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
                  */
                 gl_info->supported[NV_FENCE] = FALSE;
                 gl_info->supported[APPLE_FENCE] = TRUE;
+            } else if (strstr(ThisExtn, "GL_APPLE_client_storage")) {
+                gl_info->supported[APPLE_CLIENT_STORAGE] = TRUE;
             }
 
             if (*GL_Extensions == ' ') GL_Extensions++;
