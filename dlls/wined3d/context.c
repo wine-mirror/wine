@@ -352,6 +352,14 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     glPixelStorei(GL_UNPACK_ALIGNMENT, SURFACE_ALIGNMENT);
     checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, SURFACE_ALIGNMENT);");
 
+    if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+        /* Most textures will use client storage if supported. Exceptions are non-native power of 2 textures
+         * and textures in DIB sections(due to the memory protection).
+         */
+        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
+    }
+
     if(oldDrawable && oldCtx) {
         glXMakeCurrent(display, oldDrawable, oldCtx);
     }

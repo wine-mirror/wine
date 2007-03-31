@@ -167,6 +167,11 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLsizei width, GLsize
         if (!GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
             FIXME("Using DXT1/3/5 without advertized support\n");
         } else {
+            if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+                /* Neither NONPOW2, DIBSECTION nor OVERSIZE flags can be set on compressed textures */
+                This->Flags |= SFLAG_CLIENT;
+            }
+
             TRACE("(%p) : Calling glCompressedTexSubImage2D w %d, h %d, data %p\n", This, width, height, data);
             ENTER_GL();
             /* glCompressedTexSubImage2D for uploading and glTexImage2D for allocating does not work well on some drivers(r200 dri, MacOS ATI driver)
@@ -188,6 +193,8 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLsizei width, GLsize
 }
 
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type) {
+    BOOL enable_client_storage = FALSE;
+
     TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n", This,
             This->glDescription.target, This->glDescription.level, debug_d3dformat(This->resource.format), internal, width, height, format, type);
 
@@ -201,9 +208,32 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
 
     ENTER_GL();
 
-    glTexImage2D(This->glDescription.target, This->glDescription.level, internal, width, height, 0, format, type, NULL);
+    if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+        if(This->Flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION | SFLAG_OVERSIZE | SFLAG_CONVERTED) || This->resource.allocatedMemory == NULL) {
+            /* In some cases we want to disable client storage.
+             * SFLAG_NONPOW2 has a bigger opengl texture than the client memory, and different pitches
+             * SFLAG_DIBSECTION: Dibsections may have read / write protections on the memory. Avoid issues...
+             * SFLAG_OVERSIZE: The gl texture is smaller than the allocated memory
+             * SFLAG_CONVERTED: The conversion destination memory is freed after loading the surface
+             * allocatedMemory == NULL: Not defined in the extension. Seems to disable client storage effectively
+             */
+            glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+            checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
+            This->Flags &= SFLAG_CLIENT;
+            enable_client_storage = TRUE;
+        } else {
+            This->Flags |= SFLAG_CLIENT;
+            /* Below point opengl to our allocated texture memory */
+        }
+    }
+    glTexImage2D(This->glDescription.target, This->glDescription.level, internal, width, height, 0, format, type,
+                 This->Flags & SFLAG_CLIENT ? This->resource.allocatedMemory : NULL);
     checkGLcall("glTexImage2D");
 
+    if(enable_client_storage) {
+        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
+    }
     LEAVE_GL();
 }
 
@@ -1203,6 +1233,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     if(!This->hDC) {
         int extraline = 0;
         SYSTEM_INFO sysInfo;
+        void *oldmem = This->resource.allocatedMemory;
 
         switch (This->bytesPerPixel) {
             case 2:
@@ -1306,7 +1337,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         if(This->resource.allocatedMemory) {
             memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, b_info->bmiHeader.biSizeImage);
             /* We won't need that any more */
-            HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
         } else {
             /* This is to make LockRect read the gl Texture although memory is allocated */
             This->Flags &= ~SFLAG_INSYSMEM;
@@ -1326,6 +1356,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
                       FALSE);
 
         This->Flags |= SFLAG_DIBSECTION;
+
+        if(This->Flags & SFLAG_CLIENT) {
+            IWineD3DSurface_PreLoad(iface);
+        }
+        HeapFree(GetProcessHeap(), 0, oldmem);
     }
 
     /* Lock the surface */
@@ -1874,6 +1909,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             surface_upload_data(This, This->currentDesc.Width, This->currentDesc.Height, format, type, mem);
         }
     } else {
+        /* When making the realloc conditional, keep in mind that GL_APPLE_client_storage may be in use, and This->resource.allocatedMemory
+         * changed. So also keep track of memory changes. In this case the texture has to be reallocated
+         */
         surface_allocate_surface(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type);
         if (mem) {
             surface_upload_data(This, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type, mem);
@@ -2161,6 +2199,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
     }
 
     if(Mem && Mem != This->resource.allocatedMemory) {
+        void *release = NULL;
 
         /* Do I have to copy the old surface content? */
         if(This->Flags & SFLAG_DIBSECTION) {
@@ -2177,14 +2216,31 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
                 This->hDC = NULL;
                 This->Flags &= ~SFLAG_DIBSECTION;
         } else if(!(This->Flags & SFLAG_USERPTR)) {
-            HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+            release = This->resource.allocatedMemory;
         }
         This->resource.allocatedMemory = Mem;
-        This->Flags |= SFLAG_USERPTR;
+        This->Flags |= SFLAG_USERPTR | SFLAG_INSYSMEM;
+
+        /* Now the surface memory is most up do date. Invalidate drawable and texture */
+        This->Flags &= ~(SFLAG_INDRAWABLE | SFLAG_INTEXTURE);
+
+        /* For client textures opengl has to be notified */
+        if(This->Flags & SFLAG_CLIENT) {
+            IWineD3DSurface_PreLoad(iface);
+            /* And hope that the app behaves correctly and did not free the old surface memory before setting a new pointer */
+        }
+
+        /* Now free the old memory if any */
+        HeapFree(GetProcessHeap(), 0, release);
     } else if(This->Flags & SFLAG_USERPTR) {
         /* Lockrect and GetDC will re-create the dib section and allocated memory */
         This->resource.allocatedMemory = NULL;
         This->Flags &= ~SFLAG_USERPTR;
+
+        if(This->Flags & SFLAG_CLIENT) {
+            /* This respecifies an empty texture and opengl knows that the old memory is gone */
+            IWineD3DSurface_PreLoad(iface);
+        }
     }
     return WINED3D_OK;
 }
@@ -3200,6 +3256,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
         This->glRect.bottom = This->pow2Height;
     }
 
+    if(GL_SUPPORT(APPLE_CLIENT_STORAGE) && This->resource.allocatedMemory == NULL) {
+        /* Make sure that memory is allocated from the start if we are going to use GL_APPLE_client_storage.
+         * Otherwise a glTexImage2D with a NULL pointer may be done, e.g. when blitting or with offscreen render
+         * targets, thus the client storage wouldn't be used for that texture
+         */
+        This->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->resource.size + 4);
+    }
     return WINED3D_OK;
 }
 

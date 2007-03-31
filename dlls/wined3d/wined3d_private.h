@@ -1117,6 +1117,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
 #define SFLAG_LOST        0x00002000 /* Surface lost flag for DDraw */
 #define SFLAG_USERPTR     0x00004000 /* The application allocated the memory for this surface */
 #define SFLAG_GLCKEY      0x00008000 /* The gl texture was created with a color key */
+#define SFLAG_CLIENT      0x00010000 /* GL_APPLE_client_storage is used on that texture */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL
@@ -1125,6 +1126,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
  * SFLAG_LOCKED: The app requires access to the surface data
  * SFLAG_DYNLOCK: Avoid freeing the data for performance
  * SFLAG_DYNCHANGE: Same reason as DYNLOCK
+ * SFLAG_CLIENT: OpenGL uses our memory as backup
  */
 #define SFLAG_DONOTFREE  (SFLAG_OVERSIZE   | \
                           SFLAG_CONVERTED  | \
@@ -1132,7 +1134,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
                           SFLAG_LOCKED     | \
                           SFLAG_DYNLOCK    | \
                           SFLAG_DYNCHANGE  | \
-                          SFLAG_USERPTR)
+                          SFLAG_USERPTR    | \
+                          SFLAG_CLIENT)
 
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]);
 

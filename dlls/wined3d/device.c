@@ -5475,6 +5475,7 @@ static void updateSurfaceDesc(IWineD3DSurfaceImpl *surface, WINED3DPRESENT_PARAM
         glDeleteTextures(1, &surface->glDescription.textureName);
         LEAVE_GL();
         surface->glDescription.textureName = 0;
+        surface->Flags &= ~SFLAG_CLIENT;
     }
     if(surface->pow2Width != pPresentationParameters->BackBufferWidth ||
        surface->pow2Height != pPresentationParameters->BackBufferHeight) {

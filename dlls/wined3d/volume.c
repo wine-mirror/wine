@@ -291,7 +291,11 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLen
         checkGLcall("glTexImage3D");
     } else
         WARN("This OpenGL implementation doesn't support 3D textures\n");
-    
+
+    /* When adding code releasing This->resource.allocatedMemory to save data keep in mind that
+     * GL_UNPACK_CLIENT_STORAGE_APPLE is enabled by default if supported(GL_APPLE_client_storage).
+     * Thus do not release This->resource.allocatedMemory if GL_APPLE_client_storage is supported.
+     */
     return WINED3D_OK;
 
 }
