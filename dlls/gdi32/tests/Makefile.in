@@ -16,6 +16,7 @@ CTESTS = \
 	mapping.c \
 	metafile.c \
 	palette.c \
+	path.c \
 	pen.c
 
 @MAKE_TEST_RULES@
