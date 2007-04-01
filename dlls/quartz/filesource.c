@@ -1045,6 +1045,7 @@ static HRESULT WINAPI FileAsyncReader_Request(IAsyncReader * iface, IMediaSample
 static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dwTimeout, IMediaSample ** ppSample, DWORD_PTR * pdwUser)
 {
     HRESULT hr = S_OK;
+    DWORD dwBytes = 0;
     DATAREQUEST * pDataRq = NULL;
     FileAsyncReader *This = impl_from_IAsyncReader(iface);
 
@@ -1083,7 +1084,6 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
 
     if (SUCCEEDED(hr))
     {
-        DWORD dwBytes;
         /* get any errors */
         if (!GetOverlappedResult(This->hFile, &pDataRq->ovl, &dwBytes, FALSE))
             hr = HRESULT_FROM_WIN32(GetLastError());
@@ -1091,6 +1091,7 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
 
     if (SUCCEEDED(hr))
     {
+        IMediaSample_SetActualDataLength(pDataRq->pSample, dwBytes);
         *ppSample = pDataRq->pSample;
         *pdwUser = pDataRq->dwUserData;
     }

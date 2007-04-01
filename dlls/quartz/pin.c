@@ -1198,6 +1198,7 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
          * so that one sample is processed while one sample is fetched. However,
          * it is harder to debug so for the moment it will stay as it is */
         IMediaSample * pSample = NULL;
+        REFERENCE_TIME rtSampleStart;
         REFERENCE_TIME rtSampleStop;
         DWORD_PTR dwUser;
 
@@ -1209,10 +1210,11 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
 
         if (SUCCEEDED(hr))
         {
-            rtSampleStop = This->rtCurrent + MEDIATIME_FROM_BYTES(IMediaSample_GetSize(pSample));
+            rtSampleStart = This->rtCurrent;
+            rtSampleStop = rtSampleStart + MEDIATIME_FROM_BYTES(IMediaSample_GetSize(pSample));
             if (rtSampleStop > This->rtStop)
                 rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(This->rtStop), allocProps.cbAlign));
-            hr = IMediaSample_SetTime(pSample, &This->rtCurrent, &rtSampleStop);
+            hr = IMediaSample_SetTime(pSample, &rtSampleStart, &rtSampleStop);
             This->rtCurrent = rtSampleStop;
         }
 
@@ -1224,6 +1226,14 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
 
         if (SUCCEEDED(hr))
             hr = IPin_QueryPinInfo((IPin*)&This->pin, &pinInfo);
+
+        if (SUCCEEDED(hr))
+        {
+            rtSampleStop = rtSampleStart + MEDIATIME_FROM_BYTES(IMediaSample_GetActualDataLength(pSample));
+            if (rtSampleStop > This->rtStop)
+                rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(This->rtStop), allocProps.cbAlign));
+            hr = IMediaSample_SetTime(pSample, &rtSampleStart, &rtSampleStop);
+        }
 
         if (SUCCEEDED(hr))
             hr = This->fnSampleProc(This->pin.pUserData, pSample);
