@@ -1121,6 +1121,15 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
     return hr;
 }
 
+static void CALLBACK PullPin_SafeThreadStop(ULONG_PTR handle)
+{
+    HANDLE hThread = (HANDLE)handle;
+
+    if (hThread)
+        CloseHandle(hThread);
+    ExitThread(0);
+}
+
 HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
     PullPin *This = (PullPin *)iface;
@@ -1155,7 +1164,14 @@ ULONG WINAPI PullPin_Release(IPin * iface)
     if (!refCount)
     {
         if (This->hThread)
-            PullPin_StopProcessing(This);
+        {
+            HRESULT hr;
+
+            if (!QueueUserAPC(PullPin_SafeThreadStop, This->hThread, (ULONG_PTR)This->hThread))
+                ERR("Cannot stop PullPin thread (GetLastError() = %d)!", GetLastError());
+            if (This->pAlloc && FAILED(hr = IMemAllocator_Decommit(This->pAlloc)))
+                ERR("Allocator decommit failed with error %x. Possible memory leak\n", hr);
+        }
         if(This->pAlloc)
             IMemAllocator_Release(This->pAlloc);
         if(This->pReader)
