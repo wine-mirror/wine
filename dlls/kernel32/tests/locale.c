@@ -2225,13 +2225,42 @@ static void test_EnumTimeFormatsA(void)
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 }
 
+static void test_GetCPInfo(void)
+{
+    BOOL ret;
+    CPINFO cpinfo;
+
+    SetLastError(0xdeadbeef);
+    ret = GetCPInfo(CP_SYMBOL, &cpinfo);
+    ok(!ret, "GetCPInfo(CP_SYMBOL) should fail\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetCPInfo(CP_UTF7, &cpinfo);
+    ok(ret, "GetCPInfo(CP_UTF7) error %u\n", GetLastError());
+    ok(cpinfo.DefaultChar[0] == 0x3f, "expected 0x3f, got 0x%x\n", cpinfo.DefaultChar[0]);
+    ok(cpinfo.DefaultChar[1] == 0, "expected 0, got 0x%x\n", cpinfo.DefaultChar[1]);
+    ok(cpinfo.LeadByte[0] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[0]);
+    ok(cpinfo.LeadByte[1] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[1]);
+    ok(cpinfo.MaxCharSize == 5, "expected 5, got 0x%x\n", cpinfo.MaxCharSize);
+
+    SetLastError(0xdeadbeef);
+    ret = GetCPInfo(CP_UTF8, &cpinfo);
+    ok(ret, "GetCPInfo(CP_UTF8) error %u\n", GetLastError());
+    ok(cpinfo.DefaultChar[0] == 0x3f, "expected 0x3f, got 0x%x\n", cpinfo.DefaultChar[0]);
+    ok(cpinfo.DefaultChar[1] == 0, "expected 0, got 0x%x\n", cpinfo.DefaultChar[1]);
+    ok(cpinfo.LeadByte[0] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[0]);
+    ok(cpinfo.LeadByte[1] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[1]);
+    ok(cpinfo.MaxCharSize == 4, "expected 5, got 0x%x\n", cpinfo.MaxCharSize);
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
 
   test_EnumTimeFormatsA();
   test_EnumDateFormatsA();
-
   test_GetLocaleInfoA();
   test_GetTimeFormatA();
   test_GetDateFormatA();
@@ -2248,7 +2277,7 @@ START_TEST(locale)
   test_EnumLanguageGroupLocalesA();
   test_SetLocaleInfoA();
   test_EnumUILanguageA();
-
+  test_GetCPInfo();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }
