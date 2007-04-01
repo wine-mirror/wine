@@ -212,32 +212,33 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         dbg_printf("WineDbg starting on minidump on pid %04x\n", pid);
         switch (msi->ProcessorArchitecture)
         {
-        case PROCESSOR_ARCHITECTURE_UNKNOWN: 
+        case PROCESSOR_ARCHITECTURE_UNKNOWN:
             str = "Unknown";
             break;
         case PROCESSOR_ARCHITECTURE_INTEL:
             strcpy(tmp, "Intel ");
             switch (msi->ProcessorLevel)
             {
-            case 3: str = "80386"; break;
-            case 4: str = "80486"; break;
-            case 5: str = "Pentium"; break;
-            case 6: str = "Pentium Pro/II"; break;
+            case  3: str = "80386"; break;
+            case  4: str = "80486"; break;
+            case  5: str = "Pentium"; break;
+            case  6: str = "Pentium Pro/II or AMD Athlon"; break;
+            case 15: str = "Pentium 4 or AMD Athlon64"; break;
             default: str = "???"; break;
             }
             strcat(tmp, str);
             if (msi->ProcessorLevel == 3 || msi->ProcessorLevel == 4)
             {
                 if (HIWORD(msi->ProcessorRevision) == 0xFF)
-                    sprintf(tmp + strlen(tmp), "-%c%d",
+                    sprintf(tmp + strlen(tmp), " (%c%d)",
                             'A' + HIBYTE(LOWORD(msi->ProcessorRevision)),
                             LOBYTE(LOWORD(msi->ProcessorRevision)));
                 else
-                    sprintf(tmp + strlen(tmp), "-%c%d",
+                    sprintf(tmp + strlen(tmp), " (%c%d)",
                             'A' + HIWORD(msi->ProcessorRevision),
                             LOWORD(msi->ProcessorRevision));
             }
-            else sprintf(tmp + strlen(tmp), "-%d.%d",
+            else sprintf(tmp + strlen(tmp), " (%d.%d)",
                          HIWORD(msi->ProcessorRevision),
                          LOWORD(msi->ProcessorRevision));
             str = tmp;
@@ -256,7 +257,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             break;
         }
         dbg_printf("  %s was running on #%d %s CPU%s",
-                   exec_name, msi->u.s.NumberOfProcessors, str, 
+                   exec_name, msi->u.s.NumberOfProcessors, str,
                    msi->u.s.NumberOfProcessors < 2 ? "" : "s");
         switch (msi->MajorVersion)
         {

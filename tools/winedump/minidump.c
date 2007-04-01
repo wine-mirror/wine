@@ -249,28 +249,30 @@ void mdmp_dump(void)
             printf("System Information:\n");
             switch (msi->ProcessorArchitecture)
             {
-            case PROCESSOR_ARCHITECTURE_UNKNOWN: 
+            case PROCESSOR_ARCHITECTURE_UNKNOWN:
                 str = "Unknown";
                 break;
             case PROCESSOR_ARCHITECTURE_INTEL:
                 strcpy(tmp, "Intel ");
                 switch (msi->ProcessorLevel)
                 {
-                case 3: str = "80386"; break;
-                case 4: str = "80486"; break;
-                case 5: str = "Pentium"; break;
-                case 6: str = "Pentium Pro/II"; break;
+                case  3: str = "80386"; break;
+                case  4: str = "80486"; break;
+                case  5: str = "Pentium"; break;
+                case  6: str = "Pentium Pro/II or AMD Athlon"; break;
+                case 15: str = "Pentium 4 or AMD Athlon64"; break;
                 default: str = "???"; break;
                 }
                 strcat(tmp, str);
+                strcat(tmp, " (");
                 if (msi->ProcessorLevel == 3 || msi->ProcessorLevel == 4)
                 {
                     if (HIWORD(msi->ProcessorRevision) == 0xFF)
-                        sprintf(tmp + strlen(tmp), "-%c%d", 'A' + HIBYTE(LOWORD(msi->ProcessorRevision)), LOBYTE(LOWORD(msi->ProcessorRevision)));
+                        sprintf(tmp + strlen(tmp), "%c%d", 'A' + HIBYTE(LOWORD(msi->ProcessorRevision)), LOBYTE(LOWORD(msi->ProcessorRevision)));
                     else
-                        sprintf(tmp + strlen(tmp), "-%c%d", 'A' + HIWORD(msi->ProcessorRevision), LOWORD(msi->ProcessorRevision));
+                        sprintf(tmp + strlen(tmp), "%c%d", 'A' + HIWORD(msi->ProcessorRevision), LOWORD(msi->ProcessorRevision));
                 }
-                else sprintf(tmp + strlen(tmp), "-%d.%d", HIWORD(msi->ProcessorRevision), LOWORD(msi->ProcessorRevision));
+                else sprintf(tmp + strlen(tmp), "%d.%d", HIWORD(msi->ProcessorRevision), LOWORD(msi->ProcessorRevision));
                 str = tmp;
                 break;
             case PROCESSOR_ARCHITECTURE_MIPS:
@@ -286,7 +288,7 @@ void mdmp_dump(void)
                 str = "???";
                 break;
             }
-            printf("  Processor: %s (#%d CPUs)\n", str, msi->u.s.NumberOfProcessors);
+            printf("  Processor: %s, #%d CPUs)\n", str, msi->u.s.NumberOfProcessors);
             switch (msi->MajorVersion)
             {
             case 3:
@@ -324,13 +326,13 @@ void mdmp_dump(void)
             printf("  Reserved1: %u\n", msi->u1.Reserved1);
             if (msi->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
             {
-                printf("  x86.VendorId: %.12s\n", 
+                printf("  x86.VendorId: %.12s\n",
                        (const char*)&msi->Cpu.X86CpuInfo.VendorId[0]);
                 printf("  x86.VersionInformation: %x\n",
                        msi->Cpu.X86CpuInfo.VersionInformation);
                 printf("  x86.FeatureInformation: %x\n",
                        msi->Cpu.X86CpuInfo.FeatureInformation);
-                printf("  x86.AMDExtendedCpuFeatures: %u\n",
+                printf("  x86.AMDExtendedCpuFeatures: %x\n",
                        msi->Cpu.X86CpuInfo.AMDExtendedCpuFeatures);
             }
         }
