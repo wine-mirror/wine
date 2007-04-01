@@ -2662,7 +2662,11 @@ DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
         FIXME("Can't find codepage for charset %d\n", charset);
         return 0;
     }
-    if (!GetCPInfo(csi.ciACP, &cpi))
+    /* GetCPInfo() will fail on CP_SYMBOL, and WideCharToMultiByte is supposed
+     * to fail on an invalid character for CP_SYMBOL.
+     */
+    cpi.DefaultChar[0] = 0;
+    if (csi.ciACP != CP_SYMBOL && !GetCPInfo(csi.ciACP, &cpi))
     {
         FIXME("Can't find codepage %u info\n", csi.ciACP);
         return 0;
