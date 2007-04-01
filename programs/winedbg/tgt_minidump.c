@@ -131,6 +131,29 @@ BOOL CALLBACK validate_file(PCWSTR name, void* user)
     return FALSE; /* get the first file we find !! */
 }
 
+static BOOL is_pe_module_embedded(struct tgt_process_minidump_data* data,
+                                  MINIDUMP_MODULE* pe_mm)
+{
+    ULONG                       size;
+    MINIDUMP_DIRECTORY*         dir;
+    MINIDUMP_MODULE_LIST*       mml;
+
+    if (MiniDumpReadDumpStream(data->mapping, Wine_ElfModuleListStream, &dir,
+                               (void**)&mml, &size))
+    {
+        MINIDUMP_MODULE*        mm;
+        unsigned                i;
+
+        for (i = 0, mm = &mml->Modules[0]; i < mml->NumberOfModules; i++, mm++)
+        {
+            if (mm->BaseOfImage <= pe_mm->BaseOfImage &&
+                mm->BaseOfImage + mm->SizeOfImage >= pe_mm->BaseOfImage + pe_mm->SizeOfImage)
+                return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
 {
     ULONG                       size;
@@ -166,7 +189,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             mm = &mml->Modules[0];
             mds = (MINIDUMP_STRING*)((char*)data->mapping + mm->ModuleNameRva);
             len = WideCharToMultiByte(CP_ACP, 0, mds->Buffer,
-                                      mds->Length / sizeof(WCHAR), 
+                                      mds->Length / sizeof(WCHAR),
                                       exec_name, sizeof(exec_name) - 1, NULL, NULL);
             exec_name[len] = 0;
             for (ptr = exec_name + len - 1; ptr >= exec_name; ptr--)
@@ -309,14 +332,24 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     }
     if (MiniDumpReadDumpStream(data->mapping, ModuleListStream, &dir, &stream, &size))
     {
+        WCHAR   buffer[MAX_PATH];
+
         mml = (MINIDUMP_MODULE_LIST*)stream;
         for (i = 0, mm = &mml->Modules[0]; i < mml->NumberOfModules; i++, mm++)
         {
             mds = (MINIDUMP_STRING*)((char*)data->mapping + mm->ModuleNameRva);
             memcpy(nameW, mds->Buffer, mds->Length);
             nameW[mds->Length / sizeof(WCHAR)] = 0;
-            SymLoadModuleExW(hProc, NULL, nameW, NULL, mm->BaseOfImage, mm->SizeOfImage,
-                             NULL, 0);
+            if (SymFindFileInPathW(hProc, NULL, nameW, (void*)(DWORD_PTR)mm->TimeDateStamp,
+                                   mm->SizeOfImage, 0, SSRVOPT_DWORD, buffer, validate_file, NULL))
+                SymLoadModuleExW(hProc, NULL, buffer, NULL, mm->BaseOfImage, mm->SizeOfImage,
+                                 NULL, 0);
+            else if (is_pe_module_embedded(data, mm))
+                SymLoadModuleExW(hProc, NULL, nameW, NULL, mm->BaseOfImage, mm->SizeOfImage,
+                                 NULL, 0);
+            else
+                SymLoadModuleExW(hProc, NULL, nameW, NULL, mm->BaseOfImage, mm->SizeOfImage,
+                                 NULL, SLMFLAG_VIRTUAL);
         }
     }
     if (MiniDumpReadDumpStream(data->mapping, ExceptionStream, &dir, &stream, &size))
