@@ -30,6 +30,7 @@
 #include "winnls.h"
 #include "setupapi.h"
 #include "advpub.h"
+#include "ole2.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "advpack_private.h"
@@ -350,8 +351,10 @@ static HRESULT adv_install(ADVInfo *info)
     if (hr != S_OK)
         return hr;
 
+    OleInitialize(NULL);
     hr = iterate_section_fields(info->hinf, info->install_sec,
                                 RegisterOCXs, register_ocxs_callback, NULL);
+    OleUninitialize();
     if (hr != S_OK)
         return hr;
 

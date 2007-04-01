@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = advpack.dll
 IMPORTLIB = libadvpack.$(IMPLIBEXT)
-IMPORTS   = setupapi version user32 advapi32 kernel32 ntdll
+IMPORTS   = ole32 setupapi version user32 advapi32 kernel32 ntdll
 
 C_SRCS = \
 	advpack.c \
