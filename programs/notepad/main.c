@@ -144,7 +144,8 @@ static VOID NOTEPAD_SaveSettingToRegistry(void)
         SET_NOTEPAD_REG(hkey, value_iMarginRight,     Globals.iMarginRight);
 #undef SET_NOTEPAD_REG
 
-        data = (DWORD)(abs(Globals.lfFont.lfHeight) * 72 / get_dpi() * 10); /* method of native notepad.exe */
+        /* Store the current value as 10 * twips */
+        data = MulDiv(abs(Globals.lfFont.lfHeight), 720 , get_dpi());
         RegSetValueEx(hkey, value_iPointSize, 0, REG_DWORD, (LPBYTE)&data, sizeof(DWORD));
 
         RegSetValueEx(hkey, value_lfFaceName, 0, REG_SZ, (LPBYTE)&Globals.lfFont.lfFaceName,
@@ -239,7 +240,8 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
         size = sizeof(DWORD);
         if(RegQueryValueEx(hkey, value_iPointSize, 0, &type, (LPBYTE)&data, &size) == ERROR_SUCCESS)
             if(type == REG_DWORD)
-                Globals.lfFont.lfHeight = (LONG)(-abs(data / 10 * get_dpi() / 72)); /* method of native notepad.exe */
+                /* The value is stored as 10 * twips */
+                Globals.lfFont.lfHeight = -MulDiv(abs(data), get_dpi(), 720);
 
         size = sizeof(Globals.lfFont.lfFaceName);
         if(RegQueryValueEx(hkey, value_lfFaceName, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
