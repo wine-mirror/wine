@@ -64,6 +64,7 @@ typedef struct DSoundRenderImpl
 
     LPDIRECTSOUND dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
+    DWORD buf_size;
     DWORD write_pos;
     BOOL init;
 
@@ -99,8 +100,6 @@ static HRESULT DSoundRender_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLE
     return E_FAIL;
 }
 
-
-#define DSBUFFERSIZE 8192
 
 static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
 {
@@ -148,13 +147,15 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
 	goto getout;
     }
 
+    This->buf_size = format->nAvgBytesPerSec;
+
     wav_fmt = *format;
     wav_fmt.cbSize = 0;
 
     memset(&buf_desc,0,sizeof(DSBUFFERDESC));
     buf_desc.dwSize = sizeof(DSBUFFERDESC);
     buf_desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY;
-    buf_desc.dwBufferBytes = DSBUFFERSIZE;
+    buf_desc.dwBufferBytes = This->buf_size;
     buf_desc.lpwfxFormat = &wav_fmt;
     hr = IDirectSound_CreateSoundBuffer(This->dsound, &buf_desc, &This->dsbuffer, NULL);
     if (FAILED(hr)) {
@@ -206,10 +207,10 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
         if (This->write_pos <= play_pos)
              buf_free = play_pos-This->write_pos;
         else
-             buf_free = DSBUFFERSIZE - This->write_pos + play_pos;
+             buf_free = This->buf_size - This->write_pos + play_pos;
 
         /* Wait for enough of the buffer to empty before filling it */
-        if(buf_free < DSBUFFERSIZE/4)
+        if(buf_free < This->buf_size/4)
         {
             Sleep(10);
             continue;
@@ -233,7 +234,7 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
 
         size -= dwsize1 + dwsize2;
         data += dwsize1 + dwsize2;
-        This->write_pos = (This->write_pos + dwsize1 + dwsize2) % DSBUFFERSIZE;
+        This->write_pos = (This->write_pos + dwsize1 + dwsize2) % This->buf_size;
     } while (size && This->state == State_Running);
 
     return hr;
