@@ -56,6 +56,12 @@ static const WCHAR value_lfStrikeOut[]      = {'l','f','S','t','r','i','k','e','
 static const WCHAR value_lfUnderline[]      = {'l','f','U','n','d','e','r','l','i','n','e','\0'};
 static const WCHAR value_lfWeight[]         = {'l','f','W','e','i','g','h','t','\0'};
 static const WCHAR value_lfFaceName[]       = {'l','f','F','a','c','e','N','a','m','e','\0'};
+static const WCHAR value_iMarginTop[]       = {'i','M','a','r','g','i','n','T','o','p','\0'};
+static const WCHAR value_iMarginBottom[]    = {'i','M','a','r','g','i','n','B','o','t','t','o','m','\0'};
+static const WCHAR value_iMarginLeft[]      = {'i','M','a','r','g','i','n','L','e','f','t','\0'};
+static const WCHAR value_iMarginRight[]     = {'i','M','a','r','g','i','n','R','i','g','h','t','\0'};
+static const WCHAR value_szHeader[]         = {'s','z','H','e','a','d','e','r','\0'};
+static const WCHAR value_szFooter[]         = {'s','z','T','r','a','i','l','e','r','\0'};
 
 /***********************************************************************
  *
@@ -132,6 +138,10 @@ static VOID NOTEPAD_SaveSettingToRegistry(void)
         SET_NOTEPAD_REG(hkey, value_lfStrikeOut,      Globals.lfFont.lfStrikeOut);
         SET_NOTEPAD_REG(hkey, value_lfUnderline,      Globals.lfFont.lfUnderline);
         SET_NOTEPAD_REG(hkey, value_lfWeight,         Globals.lfFont.lfWeight);
+        SET_NOTEPAD_REG(hkey, value_iMarginTop,       Globals.iMarginTop);
+        SET_NOTEPAD_REG(hkey, value_iMarginBottom,    Globals.iMarginBottom);
+        SET_NOTEPAD_REG(hkey, value_iMarginLeft,      Globals.iMarginLeft);
+        SET_NOTEPAD_REG(hkey, value_iMarginRight,     Globals.iMarginRight);
 #undef SET_NOTEPAD_REG
 
         data = (DWORD)(abs(Globals.lfFont.lfHeight) * 72 / get_dpi() * 10); /* method of native notepad.exe */
@@ -139,6 +149,12 @@ static VOID NOTEPAD_SaveSettingToRegistry(void)
 
         RegSetValueEx(hkey, value_lfFaceName, 0, REG_SZ, (LPBYTE)&Globals.lfFont.lfFaceName,
                       lstrlen(Globals.lfFont.lfFaceName) * sizeof(Globals.lfFont.lfFaceName[0]));
+
+        RegSetValueEx(hkey, value_szHeader, 0, REG_SZ, (LPBYTE)&Globals.szHeader,
+                      lstrlen(Globals.szHeader) * sizeof(Globals.szHeader[0]));
+
+        RegSetValueEx(hkey, value_szFooter, 0, REG_SZ, (LPBYTE)&Globals.szFooter,
+                      lstrlen(Globals.szFooter) * sizeof(Globals.szFooter[0]));
 
         RegCloseKey(hkey);
     }
@@ -164,6 +180,10 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
     SetRect( &main_rect, 0, 0, dx, dy );
 
     Globals.bWrapLongLines  = TRUE;
+    Globals.iMarginTop = 2500;
+    Globals.iMarginBottom = 2500;
+    Globals.iMarginLeft = 2000;
+    Globals.iMarginRight = 2000;
     
     Globals.lfFont.lfHeight         = -12;
     Globals.lfFont.lfWidth          = 0;
@@ -180,9 +200,14 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
     Globals.lfFont.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
     lstrcpy(Globals.lfFont.lfFaceName, systemW);
 
+    LoadString(Globals.hInstance, STRING_PAGESETUP_HEADERVALUE, Globals.szHeader,
+               sizeof(Globals.szHeader) / sizeof(Globals.szHeader[0]));
+    LoadString(Globals.hInstance, STRING_PAGESETUP_FOOTERVALUE, Globals.szFooter,
+               sizeof(Globals.szFooter) / sizeof(Globals.szFooter[0]));
+
     if(RegOpenKey(HKEY_CURRENT_USER, notepad_reg_key, &hkey) == ERROR_SUCCESS)
     {
-        WORD  data_lfFaceName[LF_FACESIZE];
+        WORD  data_helper[MAX_PATH];
         DWORD type, data, size;
 
 #define QUERY_NOTEPAD_REG(hkey, value_name, ret) do { DWORD type, data; DWORD size = sizeof(DWORD); if(RegQueryValueEx(hkey, value_name, 0, &type, (LPBYTE)&data, &size) == ERROR_SUCCESS) if(type == REG_DWORD) ret = (typeof(ret))data; } while(0)
@@ -202,6 +227,10 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
         QUERY_NOTEPAD_REG(hkey, value_lfStrikeOut,      Globals.lfFont.lfStrikeOut);
         QUERY_NOTEPAD_REG(hkey, value_lfUnderline,      Globals.lfFont.lfUnderline);
         QUERY_NOTEPAD_REG(hkey, value_lfWeight,         Globals.lfFont.lfWeight);
+        QUERY_NOTEPAD_REG(hkey, value_iMarginTop,       Globals.iMarginTop);
+        QUERY_NOTEPAD_REG(hkey, value_iMarginBottom,    Globals.iMarginBottom);
+        QUERY_NOTEPAD_REG(hkey, value_iMarginLeft,      Globals.iMarginLeft);
+        QUERY_NOTEPAD_REG(hkey, value_iMarginRight,     Globals.iMarginRight);
 #undef QUERY_NOTEPAD_REG
 
         main_rect.right = main_rect.left + dx;
@@ -213,10 +242,19 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
                 Globals.lfFont.lfHeight = (LONG)(-abs(data / 10 * get_dpi() / 72)); /* method of native notepad.exe */
 
         size = sizeof(Globals.lfFont.lfFaceName);
-        if(RegQueryValueEx(hkey, value_lfFaceName, 0, &type, (LPBYTE)&data_lfFaceName, &size) == ERROR_SUCCESS)
+        if(RegQueryValueEx(hkey, value_lfFaceName, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
             if(type == REG_SZ)
-                lstrcpy(Globals.lfFont.lfFaceName, data_lfFaceName);
+                lstrcpy(Globals.lfFont.lfFaceName, data_helper);
         
+        size = sizeof(Globals.szHeader);
+        if(RegQueryValueEx(hkey, value_szHeader, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
+            if(type == REG_SZ)
+                lstrcpy(Globals.szHeader, data_helper);
+
+        size = sizeof(Globals.szFooter);
+        if(RegQueryValueEx(hkey, value_szFooter, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
+            if(type == REG_SZ)
+                lstrcpy(Globals.szFooter, data_helper);
         RegCloseKey(hkey);
     }
 }

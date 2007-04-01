@@ -38,10 +38,10 @@ typedef struct
   WCHAR   szFileName[MAX_PATH];
   WCHAR   szFileTitle[MAX_PATH];
   WCHAR   szFilter[2 * MAX_STRING_LEN + 100];
-  WCHAR   szMarginTop[MAX_PATH];
-  WCHAR   szMarginBottom[MAX_PATH];
-  WCHAR   szMarginLeft[MAX_PATH];
-  WCHAR   szMarginRight[MAX_PATH];
+  INT     iMarginTop;
+  INT     iMarginBottom;
+  INT     iMarginLeft;
+  INT     iMarginRight;
   WCHAR   szHeader[MAX_PATH];
   WCHAR   szFooter[MAX_PATH];
 

@@ -747,12 +747,13 @@ static INT_PTR WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wPara
         {
         case IDOK:
           /* save user input and close dialog */
-          GetDlgItemText(hDlg, 0x141, Globals.szHeader, SIZEOF(Globals.szHeader));
-          GetDlgItemText(hDlg, 0x143, Globals.szFooter, SIZEOF(Globals.szFooter));
-          GetDlgItemText(hDlg, 0x14A, Globals.szMarginTop, SIZEOF(Globals.szMarginTop));
-          GetDlgItemText(hDlg, 0x150, Globals.szMarginBottom, SIZEOF(Globals.szMarginBottom));
-          GetDlgItemText(hDlg, 0x147, Globals.szMarginLeft, SIZEOF(Globals.szMarginLeft));
-          GetDlgItemText(hDlg, 0x14D, Globals.szMarginRight, SIZEOF(Globals.szMarginRight));
+          GetDlgItemText(hDlg, IDC_PAGESETUP_HEADERVALUE, Globals.szHeader, SIZEOF(Globals.szHeader));
+          GetDlgItemText(hDlg, IDC_PAGESETUP_FOOTERVALUE, Globals.szFooter, SIZEOF(Globals.szFooter));
+
+          Globals.iMarginTop = GetDlgItemInt(hDlg, IDC_PAGESETUP_TOPVALUE, NULL, FALSE) * 100;
+          Globals.iMarginBottom = GetDlgItemInt(hDlg, IDC_PAGESETUP_BOTTOMVALUE, NULL, FALSE) * 100;
+          Globals.iMarginLeft = GetDlgItemInt(hDlg, IDC_PAGESETUP_LEFTVALUE, NULL, FALSE) * 100;
+          Globals.iMarginRight = GetDlgItemInt(hDlg, IDC_PAGESETUP_RIGHTVALUE, NULL, FALSE) * 100;
           EndDialog(hDlg, IDOK);
           return TRUE;
 
@@ -777,12 +778,12 @@ static INT_PTR WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wPara
 
     case WM_INITDIALOG:
        /* fetch last user input prior to display dialog */
-       SetDlgItemText(hDlg, 0x141, Globals.szHeader);
-       SetDlgItemText(hDlg, 0x143, Globals.szFooter);
-       SetDlgItemText(hDlg, 0x14A, Globals.szMarginTop);
-       SetDlgItemText(hDlg, 0x150, Globals.szMarginBottom);
-       SetDlgItemText(hDlg, 0x147, Globals.szMarginLeft);
-       SetDlgItemText(hDlg, 0x14D, Globals.szMarginRight);
+       SetDlgItemText(hDlg, IDC_PAGESETUP_HEADERVALUE, Globals.szHeader);
+       SetDlgItemText(hDlg, IDC_PAGESETUP_FOOTERVALUE, Globals.szFooter);
+       SetDlgItemInt(hDlg, IDC_PAGESETUP_TOPVALUE, Globals.iMarginTop / 100, FALSE);
+       SetDlgItemInt(hDlg, IDC_PAGESETUP_BOTTOMVALUE, Globals.iMarginBottom / 100, FALSE);
+       SetDlgItemInt(hDlg, IDC_PAGESETUP_LEFTVALUE, Globals.iMarginLeft / 100, FALSE);
+       SetDlgItemInt(hDlg, IDC_PAGESETUP_RIGHTVALUE, Globals.iMarginRight / 100, FALSE);
        break;
     }
 
