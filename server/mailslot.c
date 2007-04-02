@@ -236,10 +236,9 @@ static struct fd *mailslot_get_fd( struct object *obj )
 
 static unsigned int mailslot_map_access( struct object *obj, unsigned int access )
 {
+    /* mailslots can only be read */
     if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
-    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
-    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
-    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
+    if (access & GENERIC_ALL)     access |= FILE_GENERIC_READ;
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
@@ -285,12 +284,6 @@ static void mailslot_queue_async( struct fd *fd, const async_data_t *data, int t
     struct mailslot *mailslot = get_fd_user( fd );
 
     assert(mailslot->obj.ops == &mailslot_ops);
-
-    if (type != ASYNC_TYPE_READ)
-    {
-        set_error(STATUS_INVALID_PARAMETER);
-        return;
-    }
 
     if (list_empty( &mailslot->writers ) ||
         !mailslot_message_count( mailslot ))

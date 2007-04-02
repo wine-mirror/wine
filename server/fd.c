@@ -1728,8 +1728,7 @@ int fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type, i
         queue = fd->wait_q;
         break;
     default:
-        set_error( STATUS_INVALID_PARAMETER );
-        return 0;
+        assert(0);
     }
 
     if (!create_async( current, timeout, queue, data )) return 0;
@@ -1946,21 +1945,23 @@ DECL_HANDLER(unmount_device)
 /* create / reschedule an async I/O */
 DECL_HANDLER(register_async)
 {
-    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+    unsigned int access;
+    struct fd *fd;
 
-    /*
-     * The queue_async method must do the following:
-     *
-     * 1. Get the async_queue for the request of given type.
-     * 2. Create a new asynchronous request for the selected queue
-     * 3. Carry out any operations necessary to adjust the object's poll events
-     *    Usually: set_elect_events (obj, obj->ops->get_poll_events()).
-     * 4. When the async request is triggered, then send back (with a proper APC)
-     *    the trigger (STATUS_ALERTED) to the thread that posted the request.
-     * See also the implementations in file.c, serial.c, and sock.c.
-     */
+    switch(req->type)
+    {
+    case ASYNC_TYPE_READ:
+        access = FILE_READ_DATA;
+        break;
+    case ASYNC_TYPE_WRITE:
+        access = FILE_WRITE_DATA;
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
 
-    if (fd)
+    if ((fd = get_handle_fd_obj( current->process, req->handle, access )))
     {
         fd->fd_ops->queue_async( fd, &req->async, req->type, req->count );
         release_object( fd );
