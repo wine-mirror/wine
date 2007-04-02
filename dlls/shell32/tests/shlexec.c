@@ -347,15 +347,15 @@ static void doChild(int argc, char** argv)
         return;
 
     /* Arguments */
-    childPrintf(hFile, "[Arguments]\n");
+    childPrintf(hFile, "[Arguments]\r\n");
     if (winetest_debug > 2)
         trace("argcA=%d\n", argc);
-    childPrintf(hFile, "argcA=%d\n", argc);
+    childPrintf(hFile, "argcA=%d\r\n", argc);
     for (i = 0; i < argc; i++)
     {
         if (winetest_debug > 2)
             trace("argvA%d=%s\n", i, argv[i]);
-        childPrintf(hFile, "argvA%d=%s\n", i, encodeA(argv[i]));
+        childPrintf(hFile, "argvA%d=%s\r\n", i, encodeA(argv[i]));
     }
     CloseHandle(hFile);
 
