@@ -153,7 +153,6 @@ struct dir
     int            want_data; /* return change data */
     long           signaled; /* the file changed */
     int            subtree;  /* do we want to watch subdirectories? */
-    struct list    change_q; /* change readers */
     struct list    change_records;   /* data for the change */
     struct list    in_entry; /* entry in the inode dirs list */
     struct inode  *inode;    /* inode of the associated directory */
@@ -184,7 +183,6 @@ static const struct object_ops dir_ops =
 
 static int dir_get_poll_events( struct fd *fd );
 static enum server_fd_type dir_get_info( struct fd *fd, int *flags );
-static void dir_cancel_async( struct fd *fd );
 
 static const struct fd_ops dir_fd_ops =
 {
@@ -193,7 +191,7 @@ static const struct fd_ops dir_fd_ops =
     no_flush,                 /* flush */
     dir_get_info,             /* get_file_info */
     default_fd_queue_async,   /* queue_async */
-    dir_cancel_async          /* cancel_async */
+    default_fd_cancel_async   /* cancel_async */
 };
 
 static struct list change_list = LIST_INIT(change_list);
@@ -342,7 +340,6 @@ static void dir_destroy( struct object *obj )
         free_inode( dir->inode );
     }
 
-    async_terminate_queue( &dir->change_q, STATUS_CANCELLED );
     while ((record = get_first_change_record( dir ))) free( record );
 
     if (dir->event) release_object( dir->event );
@@ -371,13 +368,6 @@ static enum server_fd_type dir_get_info( struct fd *fd, int *flags )
     *flags = 0;
     return FD_TYPE_DIR;
 }
-
-static void dir_cancel_async( struct fd *fd )
-{
-    struct dir *dir = (struct dir *) get_fd_user( fd );
-    async_terminate_queue( &dir->change_q, STATUS_CANCELLED );
-}
-
 
 #ifdef USE_INOTIFY
 
@@ -582,8 +572,7 @@ static void inotify_do_change_notify( struct dir *dir, unsigned int action,
         list_add_tail( &dir->change_records, &record->entry );
     }
 
-    if (!list_empty( &dir->change_q ))
-        async_terminate_head( &dir->change_q, STATUS_ALERTED );
+    fd_async_terminate_head( dir->fd, ASYNC_TYPE_WAIT, STATUS_ALERTED );
 }
 
 static unsigned int filter_from_event( struct inotify_event *ie )
@@ -1048,7 +1037,6 @@ struct object *create_dir_obj( struct fd *fd )
     if (!dir)
         return NULL;
 
-    list_init( &dir->change_q );
     list_init( &dir->change_records );
     dir->event = NULL;
     dir->filter = 0;
@@ -1091,7 +1079,7 @@ DECL_HANDLER(read_directory_changes)
     dir->event = event;
 
     /* requests don't timeout */
-    if (!create_async( current, NULL, &dir->change_q, &req->async )) goto end;
+    if (!fd_queue_async_timeout( dir->fd, &req->async, ASYNC_TYPE_WAIT, 0, NULL )) goto end;
 
     /* assign it once */
     if (!dir->filter)
@@ -1108,9 +1096,8 @@ DECL_HANDLER(read_directory_changes)
         dir->signaled--;
 
     /* if there's already a change in the queue, send it */
-    if (!list_empty( &dir->change_q ) &&
-        !list_empty( &dir->change_records ))
-        async_terminate_head( &dir->change_q, STATUS_ALERTED );
+    if (!list_empty( &dir->change_records ))
+        fd_async_terminate_head( dir->fd, ASYNC_TYPE_WAIT, STATUS_ALERTED );
 
     /* setup the real notification */
     if (!inotify_adjust_changes( dir ))
