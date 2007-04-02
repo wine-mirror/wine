@@ -2865,7 +2865,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
         }
     }
     if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        /* The number of the mapped stages increses monotonic, so we're fine to use the last used one */
+        /* The number of the mapped stages increases monotonically, so it's fine to use the last used one */
         for (textureNo = mapped_stage + 1; textureNo < GL_LIMITS(textures); ++textureNo) {
             GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo));
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);

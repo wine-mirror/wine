@@ -77,8 +77,8 @@ HANDLE RPCRT4_RpcssNPConnect(void)
     if (!ReleaseMutex(master_mutex))
       ERR("Failed to release master mutex.  Expect deadlock.\n");
 
-    /* wait for the named pipe.  We are only 
-       willing to wait only 5 seconds.  It should be available /very/ soon. */
+    /* wait for the named pipe.  We are only willing to wait for 5 seconds.
+       It should be available /very/ soon. */
     if (! WaitNamedPipeA(NAME_RPCSS_NAMED_PIPE, MASTER_MUTEX_WAITNAMEDPIPE_TIMEOUT))
     {
       ERR("Named pipe unavailable after waiting.  Something is probably wrong.\n");

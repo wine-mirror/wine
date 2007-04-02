@@ -719,7 +719,7 @@ static void test_getters_setters(INT nTabs)
 
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-        /* Testing Flat Seperators */
+        /* Testing Flat Separators */
         extendedStyle = SendMessage(hTab, TCM_GETEXTENDEDSTYLE, 0, 0);
         prevExtendedStyle = SendMessage(hTab, TCM_SETEXTENDEDSTYLE, 0, TCS_EX_FLATSEPARATORS);
             expect(extendedStyle, prevExtendedStyle);

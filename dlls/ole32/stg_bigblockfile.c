@@ -745,7 +745,7 @@ static HRESULT WINAPI ImplBIGBLOCKFILE_ReadAt(
 
     TRACE("(%p)-> %i %p %i %p\n",This, ulOffset.u.LowPart, pv, cb, pcbRead);
 
-    /* verify a sane enviroment */
+    /* verify a sane environment */
     if (!This) return E_FAIL;
 
     if (offset_in_page + bytes_left > PAGE_SIZE)
@@ -833,7 +833,7 @@ static HRESULT WINAPI ImplBIGBLOCKFILE_WriteAt(
 
     TRACE("(%p)-> %i %p %i %p\n",This, ulOffset.u.LowPart, pv, cb, pcbWritten);
 
-    /* verify a sane enviroment */
+    /* verify a sane environment */
     if (!This) return E_FAIL;
 
     if (This->flProtect != PAGE_READWRITE)

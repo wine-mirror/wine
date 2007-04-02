@@ -236,7 +236,7 @@ static void test_profile_sections_names(void)
     
     DeleteFileA( testfile3 );
 
-    /* Tests on non-existent file */
+    /* Tests on nonexistent file */
     memset(buf, 0xcc, sizeof(buf));
     ret = GetPrivateProfileSectionNamesA( buf, 10, ".\\not_here.ini" );
     ok( ret == 0, "expected return size 0, got %d\n", ret );

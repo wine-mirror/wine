@@ -539,7 +539,7 @@ static void test_XcvDataPort_DeletePort(void)
     /* ToDo: cmd_AddPortW for tempfileW, then cmd_DeletePortW for the existing Port */
 
 
-    /* try to delete a non-existing Port */
+    /* try to delete a nonexistent Port */
     needed = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);
     res = pXcvDataPort(hXcv, cmd_DeletePortW, (PBYTE) tempfileW, (lstrlenW(tempfileW) + 1) * sizeof(WCHAR), NULL, 0, &needed);
