@@ -1391,6 +1391,11 @@ static const char *szFailOk = "Call failed, hres = %08x\n";
 #define EXPECT_CY(val) EXPECT_OK { EXPECT_TYPE(VT_CY); \
   ok(V_CY(&vOut).int64 == (LONG64)(val * CY_MULTIPLIER), "Expected r8 = 0x%x%08x, got 0x%x%08x\n", \
       (DWORD)((LONG64)val >> 23), (DWORD)(LONG64)val, (DWORD)(V_CY(&vOut).int64 >>32), (DWORD)V_CY(&vOut).int64); }
+#define EXPECT_DECIMAL(valHi, valMid, valLo) EXPECT_OK { EXPECT_TYPE(VT_DECIMAL); \
+  ok((V_DECIMAL(&vOut).Hi32 == valHi) && (V_DECIMAL(&vOut).Mid32 == valMid) && \
+  (V_DECIMAL(&vOut).Lo32 == valLo), \
+  "Expected decimal = %x/0x%x%08x, got %x/0x%x%08x\n", valHi, valMid, valLo, \
+  V_DECIMAL(&vOut).Hi32, V_DECIMAL(&vOut).Mid32, V_DECIMAL(&vOut).Lo32); }
 
 static void test_VarNumFromParseNum(void)
 {
@@ -1454,6 +1459,8 @@ static void test_VarNumFromParseNum(void)
   /* 0x7f */
   SETRGB(0, 7); SETRGB(1, 0xf);
   CONVERT(2,0,0,2,4,0, INTEGER_VTBITS); EXPECT_I1(0x7f);
+  SETRGB(0, 7); SETRGB(1, 0xf);
+  CONVERT(2,0,0,2,4,0, VTBIT_DECIMAL); EXPECT_DECIMAL(0,0,0x7f);
   /* 0x7fff */
   SETRGB(0, 7); SETRGB(1, 0xf); SETRGB(2, 0xf); SETRGB(3, 0xf);
   CONVERT(4,0,0,4,4,0, INTEGER_VTBITS); EXPECT_I2(0x7fff);

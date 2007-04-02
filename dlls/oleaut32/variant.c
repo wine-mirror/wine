@@ -2019,7 +2019,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
       V_UI8(pVarDst) = ul64;
       return S_OK;
     }
-    else if ((dwVtBits & REAL_VTBITS) == VTBIT_DECIMAL)
+    else if ((dwVtBits & VTBIT_DECIMAL) == VTBIT_DECIMAL)
     {
       V_VT(pVarDst) = VT_DECIMAL;
       DEC_SIGNSCALE(&V_DECIMAL(pVarDst)) = SIGNSCALE(DECIMAL_POS,0);
