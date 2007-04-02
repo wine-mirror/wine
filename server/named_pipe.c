@@ -793,6 +793,7 @@ DECL_HANDLER(create_named_pipe)
 DECL_HANDLER(connect_named_pipe)
 {
     struct pipe_server *server;
+    struct async *async;
 
     server = get_pipe_server_obj(current->process, req->handle, 0);
     if (!server)
@@ -804,9 +805,12 @@ DECL_HANDLER(connect_named_pipe)
     case ps_wait_connect:
         assert( !server->fd );
         server->state = ps_wait_open;
-        create_async( current, NULL, server->wait_q, &req->async );
-        if (server->pipe->waiters) async_wake_up( server->pipe->waiters, STATUS_SUCCESS );
-        set_error( STATUS_PENDING );
+        if ((async = create_async( current, server->wait_q, &req->async )))
+        {
+            if (server->pipe->waiters) async_wake_up( server->pipe->waiters, STATUS_SUCCESS );
+            release_object( async );
+            set_error( STATUS_PENDING );
+        }
         break;
     case ps_connected_server:
         assert( server->fd );
@@ -848,23 +852,25 @@ DECL_HANDLER(wait_named_pipe)
     server = find_available_server( pipe );
     if (!server)
     {
+        struct async *async;
+
         if (!pipe->waiters && !(pipe->waiters = create_async_queue( NULL )))
         {
             release_object( pipe );
             return;
         }
-        if (req->timeout == NMPWAIT_WAIT_FOREVER)
+
+        if ((async = create_async( current, pipe->waiters, &req->async )))
         {
-            if (create_async( current, NULL, pipe->waiters, &req->async ))
-                set_error( STATUS_PENDING );
-        }
-        else
-        {
-            struct timeval when = current_time;
-            if (req->timeout == NMPWAIT_USE_DEFAULT_WAIT) add_timeout( &when, pipe->timeout );
-            else add_timeout( &when, req->timeout );
-            if (create_async( current, &when, pipe->waiters, &req->async ))
-                set_error( STATUS_PENDING );
+            if (req->timeout != NMPWAIT_WAIT_FOREVER)
+            {
+                struct timeval when = current_time;
+                if (req->timeout == NMPWAIT_USE_DEFAULT_WAIT) add_timeout( &when, pipe->timeout );
+                else add_timeout( &when, req->timeout );
+                async_set_timeout( async, &when );
+            }
+            release_object( async );
+            set_error( STATUS_PENDING );
         }
     }
     else release_object( server );

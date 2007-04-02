@@ -282,6 +282,7 @@ static struct object *mailslot_open_file( struct object *obj, unsigned int acces
 static void mailslot_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     struct mailslot *mailslot = get_fd_user( fd );
+    struct async *async;
 
     assert(mailslot->obj.ops == &mailslot_ops);
 
@@ -292,13 +293,17 @@ static void mailslot_queue_async( struct fd *fd, const async_data_t *data, int t
         return;
     }
 
-    if (mailslot->read_timeout != -1)
+    if ((async = fd_queue_async( fd, data, type, count )))
     {
-        struct timeval when = current_time;
-        add_timeout( &when, max(1,mailslot->read_timeout) );
-        fd_queue_async_timeout( fd, data, type, count, &when );
+        if (mailslot->read_timeout != -1)
+        {
+            struct timeval when = current_time;
+            add_timeout( &when, max(1,mailslot->read_timeout) );
+            async_set_timeout( async, &when );
+        }
+        release_object( async );
+        set_error( STATUS_PENDING );
     }
-    else fd_queue_async_timeout( fd, data, type, count, NULL );
 }
 
 static void mailslot_device_dump( struct object *obj, int verbose )

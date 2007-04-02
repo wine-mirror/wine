@@ -1708,38 +1708,37 @@ void default_poll_event( struct fd *fd, int event )
     wake_up( fd->user, 0 );
 }
 
-int fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type, int count,
-                            const struct timeval *timeout )
+struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     struct async_queue *queue;
+    struct async *async;
 
     switch (type)
     {
     case ASYNC_TYPE_READ:
-        if (!fd->read_q && !(fd->read_q = create_async_queue( fd ))) return 0;
+        if (!fd->read_q && !(fd->read_q = create_async_queue( fd ))) return NULL;
         queue = fd->read_q;
         break;
     case ASYNC_TYPE_WRITE:
-        if (!fd->write_q && !(fd->write_q = create_async_queue( fd ))) return 0;
+        if (!fd->write_q && !(fd->write_q = create_async_queue( fd ))) return NULL;
         queue = fd->write_q;
         break;
     case ASYNC_TYPE_WAIT:
-        if (!fd->wait_q && !(fd->wait_q = create_async_queue( fd ))) return 0;
+        if (!fd->wait_q && !(fd->wait_q = create_async_queue( fd ))) return NULL;
         queue = fd->wait_q;
         break;
     default:
         assert(0);
     }
 
-    if (!create_async( current, timeout, queue, data )) return 0;
-    set_error( STATUS_PENDING );
-
-    if (!fd->inode)
-        set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
-    else  /* regular files are always ready for read and write */
-        if (type != ASYNC_TYPE_WAIT) async_wake_up( queue, STATUS_ALERTED );
-
-    return 1;
+    if ((async = create_async( current, queue, data )))
+    {
+        if (!fd->inode)
+            set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
+        else  /* regular files are always ready for read and write */
+            if (type != ASYNC_TYPE_WAIT) async_wake_up( queue, STATUS_ALERTED );
+    }
+    return async;
 }
 
 void fd_async_wake_up( struct fd *fd, int type, unsigned int status )
@@ -1763,6 +1762,7 @@ void fd_async_wake_up( struct fd *fd, int type, unsigned int status )
 void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     int flags;
+    struct async *async;
 
     fd->fd_ops->get_file_info( fd, &flags );
     if (!(flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT)))
@@ -1770,7 +1770,11 @@ void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, 
         set_error( STATUS_INVALID_HANDLE );
         return;
     }
-    fd_queue_async_timeout( fd, data, type, count, NULL );
+    if ((async = fd_queue_async( fd, data, type, count )))
+    {
+        release_object( async );
+        set_error( STATUS_PENDING );
+    }
 }
 
 void default_fd_cancel_async( struct fd *fd )

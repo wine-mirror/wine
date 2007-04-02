@@ -1058,6 +1058,7 @@ DECL_HANDLER(read_directory_changes)
 {
     struct event *event = NULL;
     struct dir *dir;
+    struct async *async;
 
     if (!req->filter)
     {
@@ -1079,7 +1080,7 @@ DECL_HANDLER(read_directory_changes)
     dir->event = event;
 
     /* requests don't timeout */
-    if (!fd_queue_async_timeout( dir->fd, &req->async, ASYNC_TYPE_WAIT, 0, NULL )) goto end;
+    if (!(async = fd_queue_async( dir->fd, &req->async, ASYNC_TYPE_WAIT, 0 ))) goto end;
 
     /* assign it once */
     if (!dir->filter)
@@ -1103,6 +1104,7 @@ DECL_HANDLER(read_directory_changes)
     if (!inotify_adjust_changes( dir ))
         dnotify_adjust_changes( dir );
 
+    release_object( async );
     set_error(STATUS_PENDING);
 
 end:

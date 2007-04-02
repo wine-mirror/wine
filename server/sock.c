@@ -546,7 +546,9 @@ static void sock_queue_async( struct fd *fd, const async_data_t *data, int type,
     }
     else
     {
-        if (!create_async( current, NULL, queue, data )) return;
+        struct async *async;
+        if (!(async = create_async( current, queue, data ))) return;
+        release_object( async );
         set_error( STATUS_PENDING );
     }
 

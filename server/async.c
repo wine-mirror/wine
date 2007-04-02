@@ -166,8 +166,7 @@ struct async_queue *create_async_queue( struct fd *fd )
 }
 
 /* create an async on a given queue of a fd */
-struct async *create_async( struct thread *thread, const struct timeval *timeout,
-                            struct async_queue *queue, const async_data_t *data )
+struct async *create_async( struct thread *thread, struct async_queue *queue, const async_data_t *data )
 {
     struct event *event = NULL;
     struct async *async;
@@ -184,14 +183,21 @@ struct async *create_async( struct thread *thread, const struct timeval *timeout
     async->thread = (struct thread *)grab_object( thread );
     async->event = event;
     async->data = *data;
+    async->timeout = NULL;
 
     list_add_tail( &queue->queue, &async->queue_entry );
-
-    if (timeout) async->timeout = add_timeout_user( timeout, async_timeout, async );
-    else async->timeout = NULL;
+    grab_object( async );
 
     if (event) reset_event( event );
     return async;
+}
+
+/* set the timeout of an async operation */
+void async_set_timeout( struct async *async, const struct timeval *timeout )
+{
+    if (async->timeout) remove_timeout_user( async->timeout );
+    if (timeout) async->timeout = add_timeout_user( timeout, async_timeout, async );
+    else async->timeout = NULL;
 }
 
 /* store the result of the client-side async callback */

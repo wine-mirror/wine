@@ -198,8 +198,8 @@ static enum server_fd_type serial_get_info( struct fd *fd, int *flags )
 static void serial_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     struct serial *serial = get_fd_user( fd );
-    struct timeval when = current_time;
     int timeout = 0;
+    struct async *async;
 
     assert(serial->obj.ops == &serial_ops);
 
@@ -213,8 +213,17 @@ static void serial_queue_async( struct fd *fd, const async_data_t *data, int typ
         break;
     }
 
-    add_timeout( &when, timeout );
-    fd_queue_async_timeout( fd, data, type, count, timeout ? &when : NULL );
+    if ((async = fd_queue_async( fd, data, type, count )))
+    {
+        if (timeout)
+        {
+            struct timeval when = current_time;
+            add_timeout( &when, timeout );
+            async_set_timeout( async, &when );
+        }
+        release_object( async );
+        set_error( STATUS_PENDING );
+    }
 }
 
 static void serial_flush( struct fd *fd, struct event **event )
