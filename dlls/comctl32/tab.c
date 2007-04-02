@@ -164,9 +164,9 @@ static const WCHAR themeClass[] = { 'T','a','b',0 };
 /******************************************************************************
  * Prototypes
  */
-static void TAB_InvalidateTabArea(TAB_INFO *);
+static void TAB_InvalidateTabArea(const TAB_INFO *);
 static void TAB_EnsureSelectionVisible(TAB_INFO *);
-static void TAB_DrawItemInterior(TAB_INFO *, HDC, INT, RECT*);
+static void TAB_DrawItemInterior(const TAB_INFO *, HDC, INT, RECT*);
 
 static BOOL
 TAB_SendSimpleNotify (const TAB_INFO *infoPtr, UINT code)
@@ -199,7 +199,7 @@ TAB_RelayEvent (HWND hwndTip, HWND hwndMsg, UINT uMsg,
 }
 
 static void
-TAB_DumpItemExternalT(TCITEMW *pti, UINT iItem, BOOL isW)
+TAB_DumpItemExternalT(const TCITEMW *pti, UINT iItem, BOOL isW)
 {
     if (TRACE_ON(tab)) {
 	TRACE("external tab %d, mask=0x%08x, dwState=0x%08x, dwStateMask=0x%08x, cchTextMax=0x%08x\n",
@@ -210,7 +210,7 @@ TAB_DumpItemExternalT(TCITEMW *pti, UINT iItem, BOOL isW)
 }
 
 static void
-TAB_DumpItemInternal(TAB_INFO *infoPtr, UINT iItem)
+TAB_DumpItemInternal(const TAB_INFO *infoPtr, UINT iItem)
 {
     if (TRACE_ON(tab)) {
 	TAB_ITEM *ti;
@@ -458,7 +458,7 @@ static BOOL TAB_InternalGetItemRect(
 }
 
 static inline BOOL
-TAB_GetItemRect(TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+TAB_GetItemRect(const TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
   return TAB_InternalGetItemRect(infoPtr, (INT)wParam, (LPRECT)lParam, (LPRECT)NULL);
 }
@@ -535,11 +535,7 @@ static void TAB_FocusChanging(const TAB_INFO *infoPtr)
   }
 }
 
-static INT TAB_InternalHitTest (
-  TAB_INFO* infoPtr,
-  POINT     pt,
-  UINT*     flags)
-
+static INT TAB_InternalHitTest (const TAB_INFO *infoPtr, POINT pt, UINT *flags)
 {
   RECT rect;
   INT iCount;
@@ -560,7 +556,7 @@ static INT TAB_InternalHitTest (
 }
 
 static inline LRESULT
-TAB_HitTest (TAB_INFO *infoPtr, LPTCHITTESTINFO lptest)
+TAB_HitTest (const TAB_INFO *infoPtr, LPTCHITTESTINFO lptest)
 {
   return TAB_InternalHitTest (infoPtr, lptest->pt, &lptest->flags);
 }
@@ -578,7 +574,7 @@ TAB_HitTest (TAB_INFO *infoPtr, LPTCHITTESTINFO lptest)
  * doesn't do it that way. Maybe depends on tab control styles ?
  */
 static inline LRESULT
-TAB_NCHitTest (TAB_INFO *infoPtr, LPARAM lParam)
+TAB_NCHitTest (const TAB_INFO *infoPtr, LPARAM lParam)
 {
   POINT pt;
   UINT dummyflag;
@@ -659,7 +655,7 @@ TAB_RButtonDown (const TAB_INFO *infoPtr)
  * only calls TAB_DrawItemInterior for the single specified item.
  */
 static void
-TAB_DrawLoneItemInterior(TAB_INFO* infoPtr, int iItem)
+TAB_DrawLoneItemInterior(const TAB_INFO* infoPtr, int iItem)
 {
   HDC hdc = GetDC(infoPtr->hwnd);
   RECT r, rC;
@@ -677,7 +673,7 @@ TAB_DrawLoneItemInterior(TAB_INFO* infoPtr, int iItem)
 
 /* update a tab after hottracking - invalidate it or just redraw the interior,
  * based on whether theming is used or not */
-static inline void hottrack_refresh (TAB_INFO* infoPtr, int tabIndex)
+static inline void hottrack_refresh(const TAB_INFO *infoPtr, int tabIndex)
 {
     if (tabIndex == -1) return;
 
@@ -862,10 +858,7 @@ TAB_MouseMove (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
  * Calculates the tab control's display area given the window rectangle or
  * the window rectangle given the requested display rectangle.
  */
-static LRESULT TAB_AdjustRect(
-  TAB_INFO *infoPtr,
-  WPARAM fLarger,
-  LPRECT prc)
+static LRESULT TAB_AdjustRect(const TAB_INFO *infoPtr, WPARAM fLarger, LPRECT prc)
 {
     DWORD lStyle = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
     LONG *iRightBottom, *iLeftTop;
@@ -923,11 +916,7 @@ static LRESULT TAB_AdjustRect(
  * This method will handle the notification from the scroll control and
  * perform the scrolling operation on the tab control.
  */
-static LRESULT TAB_OnHScroll(
-  TAB_INFO *infoPtr,
-  int     nScrollCode,
-  int     nPos,
-  HWND    hwndScroll)
+static LRESULT TAB_OnHScroll(TAB_INFO *infoPtr, int nScrollCode, int nPos, HWND hwndScroll)
 {
   if(nScrollCode == SB_THUMBPOSITION && nPos != infoPtr->leftmostVisible)
   {
@@ -1439,13 +1428,7 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
 
 
 static void
-TAB_EraseTabInterior
-    (
-    TAB_INFO*   infoPtr,
-    HDC         hdc,
-    INT         iItem,
-    RECT*       drawRect
-    )
+TAB_EraseTabInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect)
 {
     LONG     lStyle  = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
     HBRUSH   hbr = CreateSolidBrush (comctl32_color.clrBtnFace);
@@ -1507,13 +1490,7 @@ TAB_EraseTabInterior
  * into the tab control.
  */
 static void
-TAB_DrawItemInterior
-  (
-  TAB_INFO*   infoPtr,
-  HDC         hdc,
-  INT         iItem,
-  RECT*       drawRect
-  )
+TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect)
 {
   LONG      lStyle  = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
 
@@ -1929,10 +1906,7 @@ TAB_DrawItemInterior
  *
  * This method is used to draw a single tab into the tab control.
  */
-static void TAB_DrawItem(
-  TAB_INFO *infoPtr,
-  HDC  hdc,
-  INT  iItem)
+static void TAB_DrawItem(const TAB_INFO *infoPtr, HDC  hdc, INT  iItem)
 {
   LONG      lStyle  = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
   RECT      itemRect;
@@ -2282,7 +2256,7 @@ static void TAB_DrawItem(
  * This method is used to draw the raised border around the tab control
  * "content" area.
  */
-static void TAB_DrawBorder (TAB_INFO *infoPtr, HDC hdc)
+static void TAB_DrawBorder(const TAB_INFO *infoPtr, HDC hdc)
 {
   RECT rect;
   DWORD lStyle = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
@@ -2497,7 +2471,7 @@ static void TAB_EnsureSelectionVisible(
  * tabs. It is called when the state of the control changes and needs
  * to be redisplayed
  */
-static void TAB_InvalidateTabArea(TAB_INFO* infoPtr)
+static void TAB_InvalidateTabArea(const TAB_INFO *infoPtr)
 {
   RECT clientRect, rInvalidate, rAdjClient;
   DWORD lStyle = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
@@ -3114,7 +3088,7 @@ TAB_Destroy (TAB_INFO *infoPtr)
 }
 
 /* update theme after a WM_THEMECHANGED message */
-static LRESULT theme_changed (TAB_INFO* infoPtr)
+static LRESULT theme_changed(const TAB_INFO *infoPtr)
 {
     HTHEME theme = GetWindowTheme (infoPtr->hwnd);
     CloseThemeData (theme);
