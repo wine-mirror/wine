@@ -299,7 +299,9 @@ sub update_makefiles(@)
     push @lines, "ALL_MAKEFILES = \\\n\t";
     push @lines, join (" \\\n\t", @targets ), "\n\n";
     push @lines, "Makefile \$(ALL_MAKEFILES): config.status\n";
-    push @lines, "\t\@./config.status \$\@\n\n";
+    push @lines, "\t\@./config.status \$\@\n";
+    push @lines, ".INIT: Makefile\n";
+    push @lines, ".BEGIN: Makefile\n\n";
     push @lines, "\$(RECURSE_TARGETS) \$(MAKEDEP): \$(ALL_MAKEFILES)\n\n";
     push @lines, "distclean::\n";
     push @lines, "\t\$(RM) Makefile \$(ALL_MAKEFILES)\n\n";
