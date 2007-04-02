@@ -74,7 +74,7 @@ struct pipe_server
     struct named_pipe   *pipe;
     struct timeout_user *flush_poll;
     struct event        *event;
-    struct list          wait_q;     /* only a single one can be queued */
+    struct async_queue  *wait_q;     /* only a single one can be queued */
     unsigned int         options;    /* pipe options */
 };
 
@@ -96,7 +96,7 @@ struct named_pipe
     unsigned int        timeout;
     unsigned int        instances;
     struct list         servers;     /* list of servers using this pipe */
-    struct list         waiters;     /* list of clients waiting to connect */
+    struct async_queue *waiters;     /* list of clients waiting to connect */
 };
 
 struct named_pipe_device
@@ -274,7 +274,7 @@ static void named_pipe_destroy( struct object *obj)
 
     assert( list_empty( &pipe->servers ) );
     assert( !pipe->instances );
-    async_terminate_queue( &pipe->waiters, STATUS_HANDLES_CLOSED );
+    if (pipe->waiters) release_object( pipe->waiters );
 }
 
 static struct fd *pipe_client_get_fd( struct object *obj )
@@ -366,7 +366,7 @@ static void pipe_server_destroy( struct object *obj)
         server->client = NULL;
     }
 
-    async_terminate_head( &server->wait_q, STATUS_HANDLES_CLOSED );
+    release_object( server->wait_q );
 
     assert( server->pipe->instances );
     server->pipe->instances--;
@@ -634,7 +634,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     server->client = NULL;
     server->flush_poll = NULL;
     server->options = options;
-    list_init( &server->wait_q );
+    server->wait_q = create_async_queue( NULL );
 
     list_add_head( &pipe->servers, &server->entry );
     grab_object( pipe );
@@ -718,8 +718,7 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
             if (client->fd && server->fd && res != 1)
             {
                 if (server->state == ps_wait_open)
-                    async_terminate_head( &server->wait_q, STATUS_SUCCESS );
-                assert( list_empty( &server->wait_q ) );
+                    async_wake_up( server->wait_q, STATUS_SUCCESS );
                 server->state = ps_connected_server;
                 server->client = client;
                 client->server = server;
@@ -753,8 +752,8 @@ DECL_HANDLER(create_named_pipe)
     {
         /* initialize it if it didn't already exist */
         pipe->instances = 0;
+        pipe->waiters = NULL;
         list_init( &pipe->servers );
-        list_init( &pipe->waiters );
         pipe->insize = req->insize;
         pipe->outsize = req->outsize;
         pipe->maxinstances = req->maxinstances;
@@ -805,8 +804,8 @@ DECL_HANDLER(connect_named_pipe)
     case ps_wait_connect:
         assert( !server->fd );
         server->state = ps_wait_open;
-        create_async( current, NULL, &server->wait_q, &req->async );
-        async_terminate_queue( &server->pipe->waiters, STATUS_SUCCESS );
+        create_async( current, NULL, server->wait_q, &req->async );
+        if (server->pipe->waiters) async_wake_up( server->pipe->waiters, STATUS_SUCCESS );
         set_error( STATUS_PENDING );
         break;
     case ps_connected_server:
@@ -849,9 +848,14 @@ DECL_HANDLER(wait_named_pipe)
     server = find_available_server( pipe );
     if (!server)
     {
+        if (!pipe->waiters && !(pipe->waiters = create_async_queue( NULL )))
+        {
+            release_object( pipe );
+            return;
+        }
         if (req->timeout == NMPWAIT_WAIT_FOREVER)
         {
-            if (create_async( current, NULL, &pipe->waiters, &req->async ))
+            if (create_async( current, NULL, pipe->waiters, &req->async ))
                 set_error( STATUS_PENDING );
         }
         else
@@ -859,7 +863,7 @@ DECL_HANDLER(wait_named_pipe)
             struct timeval when = current_time;
             if (req->timeout == NMPWAIT_USE_DEFAULT_WAIT) add_timeout( &when, pipe->timeout );
             else add_timeout( &when, req->timeout );
-            if (create_async( current, &when, &pipe->waiters, &req->async ))
+            if (create_async( current, &when, pipe->waiters, &req->async ))
                 set_error( STATUS_PENDING );
         }
     }

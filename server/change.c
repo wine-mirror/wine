@@ -572,7 +572,7 @@ static void inotify_do_change_notify( struct dir *dir, unsigned int action,
         list_add_tail( &dir->change_records, &record->entry );
     }
 
-    fd_async_terminate_head( dir->fd, ASYNC_TYPE_WAIT, STATUS_ALERTED );
+    fd_async_wake_up( dir->fd, ASYNC_TYPE_WAIT, STATUS_ALERTED );
 }
 
 static unsigned int filter_from_event( struct inotify_event *ie )
@@ -1097,7 +1097,7 @@ DECL_HANDLER(read_directory_changes)
 
     /* if there's already a change in the queue, send it */
     if (!list_empty( &dir->change_records ))
-        fd_async_terminate_head( dir->fd, ASYNC_TYPE_WAIT, STATUS_ALERTED );
+        fd_async_wake_up( dir->fd, ASYNC_TYPE_WAIT, STATUS_ALERTED );
 
     /* setup the real notification */
     if (!inotify_adjust_changes( dir ))

@@ -171,9 +171,9 @@ struct fd
     int                  fs_locks :1; /* can we use filesystem locks for this fd? */
     int                  unmounted :1;/* has the device been unmounted? */
     int                  poll_index;  /* index of fd in poll array */
-    struct list          read_q;      /* async readers of this fd */
-    struct list          write_q;     /* async writers of this fd */
-    struct list          wait_q;      /* other async waiters of this fd */
+    struct async_queue  *read_q;      /* async readers of this fd */
+    struct async_queue  *write_q;     /* async writers of this fd */
+    struct async_queue  *wait_q;      /* other async waiters of this fd */
 };
 
 static void fd_dump( struct object *obj, int verbose );
@@ -1286,9 +1286,9 @@ static void fd_destroy( struct object *obj )
 {
     struct fd *fd = (struct fd *)obj;
 
-    async_terminate_queue( &fd->read_q, STATUS_CANCELLED );
-    async_terminate_queue( &fd->write_q, STATUS_CANCELLED );
-    async_terminate_queue( &fd->wait_q, STATUS_CANCELLED );
+    if (fd->read_q) release_object( fd->read_q );
+    if (fd->write_q) release_object( fd->write_q );
+    if (fd->wait_q) release_object( fd->wait_q );
 
     remove_fd_locks( fd );
     list_remove( &fd->inode_entry );
@@ -1330,8 +1330,8 @@ static inline void unmount_fd( struct fd *fd )
 {
     assert( fd->inode );
 
-    async_terminate_queue( &fd->read_q, STATUS_VOLUME_DISMOUNTED );
-    async_terminate_queue( &fd->write_q, STATUS_VOLUME_DISMOUNTED );
+    async_wake_up( fd->read_q, STATUS_VOLUME_DISMOUNTED );
+    async_wake_up( fd->write_q, STATUS_VOLUME_DISMOUNTED );
 
     if (fd->poll_index != -1) set_fd_events( fd, -1 );
 
@@ -1363,11 +1363,11 @@ static struct fd *alloc_fd_object(void)
     fd->fs_locks   = 1;
     fd->unmounted  = 0;
     fd->poll_index = -1;
+    fd->read_q     = NULL;
+    fd->write_q    = NULL;
+    fd->wait_q     = NULL;
     list_init( &fd->inode_entry );
     list_init( &fd->locks );
-    list_init( &fd->read_q );
-    list_init( &fd->write_q );
-    list_init( &fd->wait_q );
 
     if ((fd->poll_index = add_poll_user( fd )) == -1)
     {
@@ -1394,11 +1394,11 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     fd->fs_locks   = 0;
     fd->unmounted  = 0;
     fd->poll_index = -1;
+    fd->read_q     = NULL;
+    fd->write_q    = NULL;
+    fd->wait_q     = NULL;
     list_init( &fd->inode_entry );
     list_init( &fd->locks );
-    list_init( &fd->read_q );
-    list_init( &fd->write_q );
-    list_init( &fd->wait_q );
     return fd;
 }
 
@@ -1692,27 +1692,16 @@ int default_fd_get_poll_events( struct fd *fd )
 {
     int events = 0;
 
-    if (!list_empty( &fd->read_q ))
-        events |= POLLIN;
-    if (!list_empty( &fd->write_q ))
-        events |= POLLOUT;
-
+    if (async_waiting( fd->read_q )) events |= POLLIN;
+    if (async_waiting( fd->write_q )) events |= POLLOUT;
     return events;
 }
 
 /* default handler for poll() events */
 void default_poll_event( struct fd *fd, int event )
 {
-    if (!list_empty( &fd->read_q ) && (POLLIN & event) )
-    {
-        async_terminate_head( &fd->read_q, STATUS_ALERTED );
-        return;
-    }
-    if (!list_empty( &fd->write_q ) && (POLLOUT & event) )
-    {
-        async_terminate_head( &fd->write_q, STATUS_ALERTED );
-        return;
-    }
+    if (event & POLLIN) async_wake_up( fd->read_q, STATUS_ALERTED );
+    if (event & POLLOUT) async_wake_up( fd->write_q, STATUS_ALERTED );
 
     /* if an error occurred, stop polling this fd to avoid busy-looping */
     if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
@@ -1722,18 +1711,21 @@ void default_poll_event( struct fd *fd, int event )
 int fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type, int count,
                             const struct timeval *timeout )
 {
-    struct list *queue;
+    struct async_queue *queue;
 
     switch (type)
     {
     case ASYNC_TYPE_READ:
-        queue = &fd->read_q;
+        if (!fd->read_q && !(fd->read_q = create_async_queue( fd ))) return 0;
+        queue = fd->read_q;
         break;
     case ASYNC_TYPE_WRITE:
-        queue = &fd->write_q;
+        if (!fd->write_q && !(fd->write_q = create_async_queue( fd ))) return 0;
+        queue = fd->write_q;
         break;
     case ASYNC_TYPE_WAIT:
-        queue = &fd->wait_q;
+        if (!fd->wait_q && !(fd->wait_q = create_async_queue( fd ))) return 0;
+        queue = fd->wait_q;
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );
@@ -1746,41 +1738,23 @@ int fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type, i
     if (!fd->inode)
         set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
     else  /* regular files are always ready for read and write */
-        if (type != ASYNC_TYPE_WAIT) async_terminate_head( queue, STATUS_ALERTED );
+        if (type != ASYNC_TYPE_WAIT) async_wake_up( queue, STATUS_ALERTED );
 
     return 1;
 }
 
-void fd_async_terminate_head( struct fd *fd, int type, unsigned int status )
+void fd_async_wake_up( struct fd *fd, int type, unsigned int status )
 {
     switch (type)
     {
     case ASYNC_TYPE_READ:
-        async_terminate_head( &fd->read_q, status );
+        async_wake_up( fd->read_q, status );
         break;
     case ASYNC_TYPE_WRITE:
-        async_terminate_head( &fd->write_q, status );
+        async_wake_up( fd->write_q, status );
         break;
     case ASYNC_TYPE_WAIT:
-        async_terminate_head( &fd->wait_q, status );
-        break;
-    default:
-        assert(0);
-    }
-}
-
-void fd_async_terminate_queue( struct fd *fd, int type, unsigned int status )
-{
-    switch (type)
-    {
-    case ASYNC_TYPE_READ:
-        async_terminate_queue( &fd->read_q, status );
-        break;
-    case ASYNC_TYPE_WRITE:
-        async_terminate_queue( &fd->write_q, status );
-        break;
-    case ASYNC_TYPE_WAIT:
-        async_terminate_queue( &fd->wait_q, status );
+        async_wake_up( fd->wait_q, status );
         break;
     default:
         assert(0);
@@ -1802,9 +1776,9 @@ void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, 
 
 void default_fd_cancel_async( struct fd *fd )
 {
-    async_terminate_queue( &fd->read_q, STATUS_CANCELLED );
-    async_terminate_queue( &fd->write_q, STATUS_CANCELLED );
-    async_terminate_queue( &fd->wait_q, STATUS_CANCELLED );
+    async_wake_up( fd->read_q, STATUS_CANCELLED );
+    async_wake_up( fd->write_q, STATUS_CANCELLED );
+    async_wake_up( fd->wait_q, STATUS_CANCELLED );
 }
 
 /* default flush() routine */

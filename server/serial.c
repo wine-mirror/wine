@@ -267,7 +267,7 @@ DECL_HANDLER(set_serial_info)
             serial->eventmask = req->eventmask;
             if (!serial->eventmask)
             {
-                fd_async_terminate_queue( serial->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
+                fd_async_wake_up( serial->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
             }
         }
 

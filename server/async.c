@@ -62,6 +62,35 @@ static const struct object_ops async_ops =
     async_destroy              /* destroy */
 };
 
+
+struct async_queue
+{
+    struct object        obj;             /* object header */
+    struct fd           *fd;              /* file descriptor owning this queue */
+    struct list          queue;           /* queue of async objects */
+};
+
+static void async_queue_dump( struct object *obj, int verbose );
+static void async_queue_destroy( struct object *obj );
+
+static const struct object_ops async_queue_ops =
+{
+    sizeof(struct async_queue),      /* size */
+    async_queue_dump,                /* dump */
+    no_add_queue,                    /* add_queue */
+    NULL,                            /* remove_queue */
+    NULL,                            /* signaled */
+    NULL,                            /* satisfied */
+    no_signal,                       /* signal */
+    no_get_fd,                       /* get_fd */
+    no_map_access,                   /* map_access */
+    no_lookup_name,                  /* lookup_name */
+    no_open_file,                    /* open_file */
+    no_close_handle,                 /* close_handle */
+    async_queue_destroy              /* destroy */
+};
+
+
 static void async_dump( struct object *obj, int verbose )
 {
     struct async *async = (struct async *)obj;
@@ -77,6 +106,21 @@ static void async_destroy( struct object *obj )
     if (async->timeout) remove_timeout_user( async->timeout );
     if (async->event) release_object( async->event );
     release_object( async->thread );
+}
+
+static void async_queue_dump( struct object *obj, int verbose )
+{
+    struct async_queue *async_queue = (struct async_queue *)obj;
+    assert( obj->ops == &async_queue_ops );
+    fprintf( stderr, "Async queue fd=%p\n", async_queue->fd );
+}
+
+static void async_queue_destroy( struct object *obj )
+{
+    struct async_queue *async_queue = (struct async_queue *)obj;
+    assert( obj->ops == &async_queue_ops );
+
+    async_wake_up( async_queue, STATUS_HANDLES_CLOSED );
 }
 
 /* notifies client thread of new status of its async request */
@@ -108,9 +152,22 @@ static void async_timeout( void *private )
     async_terminate( async, STATUS_TIMEOUT );
 }
 
+/* create a new async queue for a given fd */
+struct async_queue *create_async_queue( struct fd *fd )
+{
+    struct async_queue *queue = alloc_object( &async_queue_ops );
+
+    if (queue)
+    {
+        queue->fd = fd;
+        list_init( &queue->queue );
+    }
+    return queue;
+}
+
 /* create an async on a given queue of a fd */
 struct async *create_async( struct thread *thread, const struct timeval *timeout,
-                            struct list *queue, const async_data_t *data )
+                            struct async_queue *queue, const async_data_t *data )
 {
     struct event *event = NULL;
     struct async *async;
@@ -128,7 +185,7 @@ struct async *create_async( struct thread *thread, const struct timeval *timeout
     async->event = event;
     async->data = *data;
 
-    list_add_tail( queue, &async->queue_entry );
+    list_add_tail( &queue->queue, &async->queue_entry );
 
     if (timeout) async->timeout = add_timeout_user( timeout, async_timeout, async );
     else async->timeout = NULL;
@@ -164,21 +221,23 @@ void async_set_result( struct object *obj, unsigned int status )
     }
 }
 
-/* terminate the async operation at the head of the queue */
-void async_terminate_head( struct list *queue, unsigned int status )
+/* check if an async operation is waiting to be alerted */
+int async_waiting( struct async_queue *queue )
 {
-    struct list *ptr = list_head( queue );
-    if (ptr) async_terminate( LIST_ENTRY( ptr, struct async, queue_entry ), status );
+    return queue && !list_empty( &queue->queue );
 }
 
-/* terminate all async operations on the queue */
-void async_terminate_queue( struct list *queue, unsigned int status )
+/* wake up async operations on the queue */
+void async_wake_up( struct async_queue *queue, unsigned int status )
 {
     struct list *ptr, *next;
 
-    LIST_FOR_EACH_SAFE( ptr, next, queue )
+    if (!queue) return;
+
+    LIST_FOR_EACH_SAFE( ptr, next, &queue->queue )
     {
         struct async *async = LIST_ENTRY( ptr, struct async, queue_entry );
         async_terminate( async, status );
+        if (status == STATUS_ALERTED) break;  /* only wake up the first one */
     }
 }
