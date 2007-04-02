@@ -302,7 +302,7 @@ static void mailslot_queue_async( struct fd *fd, const async_data_t *data, int t
     if (mailslot->read_timeout != -1)
     {
         struct timeval when = current_time;
-        add_timeout( &when, mailslot->read_timeout );
+        add_timeout( &when, max(1,mailslot->read_timeout) );
         fd_queue_async_timeout( fd, data, type, count, &when );
     }
     else fd_queue_async_timeout( fd, data, type, count, NULL );

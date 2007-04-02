@@ -1719,18 +1719,10 @@ void default_poll_event( struct fd *fd, int event )
     wake_up( fd->user, 0 );
 }
 
-void fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type, int count,
-                             const struct timeval *timeout )
+int fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type, int count,
+                            const struct timeval *timeout )
 {
     struct list *queue;
-    int events, flags;
-
-    fd->fd_ops->get_file_info( fd, &flags );
-    if (!(flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT)))
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        return;
-    }
 
     switch (type)
     {
@@ -1745,17 +1737,18 @@ void fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type, 
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );
-        return;
+        return 0;
     }
 
-    if (!create_async( current, timeout, queue, data )) return;
+    if (!create_async( current, timeout, queue, data )) return 0;
     set_error( STATUS_PENDING );
 
-    /* Check if the new pending request can be served immediately */
-    events = check_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
-    if (events) fd->fd_ops->poll_event( fd, events );
+    if (!fd->inode)
+        set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
+    else  /* regular files are always ready for read and write */
+        if (type != ASYNC_TYPE_WAIT) async_terminate_head( queue, STATUS_ALERTED );
 
-    set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
+    return 1;
 }
 
 void fd_async_terminate_head( struct fd *fd, int type, unsigned int status )
@@ -1796,6 +1789,14 @@ void fd_async_terminate_queue( struct fd *fd, int type, unsigned int status )
 
 void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
+    int flags;
+
+    fd->fd_ops->get_file_info( fd, &flags );
+    if (!(flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT)))
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
     fd_queue_async_timeout( fd, data, type, count, NULL );
 }
 
