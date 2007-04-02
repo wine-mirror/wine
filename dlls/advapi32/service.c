@@ -249,7 +249,7 @@ static inline void service_set_value( struct reg_value *val,
 }
 
 static inline void service_set_dword( struct reg_value *val, 
-                                      LPCWSTR name, DWORD *data )
+                                      LPCWSTR name, const DWORD *data )
 {
     service_set_value( val, REG_DWORD, name, data, sizeof (DWORD));
 }
@@ -488,7 +488,7 @@ static BOOL service_send_start_message(HANDLE pipe, LPCWSTR *argv, DWORD argc)
 /******************************************************************************
  * service_handle_get_status
  */
-static BOOL service_handle_get_status(HANDLE pipe, service_data *service)
+static BOOL service_handle_get_status(HANDLE pipe, const service_data *service)
 {
     DWORD count = 0;
     TRACE("\n");
@@ -545,7 +545,7 @@ static BOOL service_send_control(HANDLE pipe, DWORD dwControl, DWORD *result)
 /******************************************************************************
  * service_accepts_control
  */
-static BOOL service_accepts_control(service_data *service, DWORD dwControl)
+static BOOL service_accepts_control(const service_data *service, DWORD dwControl)
 {
     DWORD a = service->status.dwControlsAccepted;
 
