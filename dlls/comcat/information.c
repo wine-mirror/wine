@@ -35,7 +35,7 @@ struct class_categories {
 };
 
 static struct class_categories *COMCAT_PrepareClassCategories(
-    ULONG impl_count, CATID *impl_catids, ULONG req_count, CATID *req_catids);
+    ULONG impl_count, const CATID *impl_catids, ULONG req_count, const CATID *req_catids);
 static HRESULT COMCAT_IsClassOfCategories(
     HKEY key, struct class_categories const* class_categories);
 static LPENUMGUID COMCAT_CLSID_IEnumGUID_Construct(
@@ -513,7 +513,7 @@ static HRESULT COMCAT_GetCategoryDesc(HKEY key, LCID lcid, PWCHAR pszDesc,
  * COMCAT_PrepareClassCategories
  */
 static struct class_categories *COMCAT_PrepareClassCategories(
-    ULONG impl_count, CATID *impl_catids, ULONG req_count, CATID *req_catids)
+    ULONG impl_count, const CATID *impl_catids, ULONG req_count, const CATID *req_catids)
 {
     struct class_categories *categories;
     WCHAR *strings;

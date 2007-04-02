@@ -41,10 +41,10 @@ static const WCHAR req_keyname[20] = {
 
 static HRESULT COMCAT_RegisterClassCategories(
     REFCLSID rclsid, LPCWSTR type,
-    ULONG cCategories, CATID *rgcatid);
+    ULONG cCategories, const CATID *rgcatid);
 static HRESULT COMCAT_UnRegisterClassCategories(
     REFCLSID rclsid, LPCWSTR type,
-    ULONG cCategories, CATID *rgcatid);
+    ULONG cCategories, const CATID *rgcatid);
 
 /**********************************************************************
  * COMCAT_ICatRegister_QueryInterface
@@ -256,7 +256,7 @@ static HRESULT COMCAT_RegisterClassCategories(
     REFCLSID rclsid,
     LPCWSTR type,
     ULONG cCategories,
-    CATID *rgcatid)
+    const CATID *rgcatid)
 {
     WCHAR keyname[39];
     HRESULT res;
@@ -309,7 +309,7 @@ static HRESULT COMCAT_UnRegisterClassCategories(
     REFCLSID rclsid,
     LPCWSTR type,
     ULONG cCategories,
-    CATID *rgcatid)
+    const CATID *rgcatid)
 {
     WCHAR keyname[68] = { 'C', 'L', 'S', 'I', 'D', '\\' };
     HRESULT res;
