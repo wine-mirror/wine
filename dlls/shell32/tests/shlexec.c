@@ -697,12 +697,12 @@ static void test_find_executable(void)
 
     strcpy(command, "your word");
     rc=(int)FindExecutableA(NULL, NULL, command);
-    ok(rc == SE_ERR_FNF || rc > 32, "FindExecutable(NULL) returned %d\n", rc);
+    ok(rc == SE_ERR_FNF || rc > 32 /* nt4 */, "FindExecutable(NULL) returned %d\n", rc);
     ok(strcmp(command, "your word") != 0, "FindExecutable(NULL) returned command=[%s]\n", command);
 
     strcpy(command, "your word");
     rc=(int)FindExecutableA(tmpdir, NULL, command);
-    todo_wine ok(rc == SE_ERR_FNF || rc > 32, "FindExecutable(NULL) returned %d\n", rc);
+    ok(rc == SE_ERR_NOASSOC /* >= win2000 */ || rc > 32 /* win98, nt4 */, "FindExecutable(NULL) returned %d\n", rc);
     ok(strcmp(command, "your word") != 0, "FindExecutable(NULL) returned command=[%s]\n", command);
 
     sprintf(filename, "%s\\test file.sfe", tmpdir);
@@ -723,7 +723,7 @@ static void test_find_executable(void)
 
     sprintf(filename, "%s\\test file.shl", tmpdir);
     rc=(int)FindExecutableA(filename, NULL, command);
-    ok(rc > 32, "FindExecutable(%s) returned %d\n", filename, rc);
+    ok(rc == SE_ERR_FNF /* NT4 */ || rc > 32, "FindExecutable(%s) returned %d\n", filename, rc);
 
     sprintf(filename, "%s\\test file.shlfoo", tmpdir);
     rc=(int)FindExecutableA(filename, NULL, command);
