@@ -1596,7 +1596,7 @@ static void test_bind_context(void)
     IUnknown *param_obj;
     ULONG refs;
     static const WCHAR wszParamName[] = {'G','e','m','m','a',0};
-    static const WCHAR wszNonExistant[] = {'N','o','n','E','x','i','s','t','a','n','t',0};
+    static const WCHAR wszNonExistent[] = {'N','o','n','E','x','i','s','t','e','n','t',0};
 
     hr = CreateBindCtx(0, NULL);
     ok(hr == E_INVALIDARG, "CreateBindCtx with NULL ppbc should have returned E_INVALIDARG instead of 0x%08x\n", hr);
@@ -1647,12 +1647,12 @@ static void test_bind_context(void)
     ok_ole_success(hr, "IBindCtx_GetObjectParam");
     IUnknown_Release(param_obj);
 
-    hr = IBindCtx_GetObjectParam(pBindCtx, (WCHAR *)wszNonExistant, &param_obj);
-    ok(hr == E_FAIL, "IBindCtx_GetObjectParam with non-existing key should have failed with E_FAIL instead of 0x%08x\n", hr);
-    ok(param_obj == NULL, "IBindCtx_GetObjectParam with non-existing key should have set output parameter to NULL instead of %p\n", param_obj);
+    hr = IBindCtx_GetObjectParam(pBindCtx, (WCHAR *)wszNonExistent, &param_obj);
+    ok(hr == E_FAIL, "IBindCtx_GetObjectParam with nonexistent key should have failed with E_FAIL instead of 0x%08x\n", hr);
+    ok(param_obj == NULL, "IBindCtx_GetObjectParam with nonexistent key should have set output parameter to NULL instead of %p\n", param_obj);
 
-    hr = IBindCtx_RevokeObjectParam(pBindCtx, (WCHAR *)wszNonExistant);
-    ok(hr == E_FAIL, "IBindCtx_RevokeObjectParam with non-existing key should have failed with E_FAIL instead of 0x%08x\n", hr);
+    hr = IBindCtx_RevokeObjectParam(pBindCtx, (WCHAR *)wszNonExistent);
+    ok(hr == E_FAIL, "IBindCtx_RevokeObjectParam with nonexistent key should have failed with E_FAIL instead of 0x%08x\n", hr);
 
     hr = IBindCtx_EnumObjectParam(pBindCtx, &pEnumString);
     ok(hr == E_NOTIMPL, "IBindCtx_EnumObjectParam should have returned E_NOTIMPL instead of 0x%08x\n", hr);
