@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -31,7 +32,7 @@
 static void test_widenpath(void)
 {
     HDC hdc = GetDC(0);
-    HPEN greenPen;
+    HPEN greenPen, narrowPen;
     HPEN oldPen;
     POINT pnt[6];
     INT nSize;
@@ -67,12 +68,25 @@ static void test_widenpath(void)
     ok(nSize != -1, "GetPath fails after calling WidenPath.\n");
     ok(nSize > 6, "Path number of points is to low. Should be more than 6 but is %d\n", nSize);
 
+    AbortPath(hdc);
+
     todo_wine {
         /* Test WidenPath with an empty path */
         SetLastError(0xdeadbeef);
         BeginPath(hdc);
         ok(WidenPath(hdc) == FALSE, "WidenPath fails while widening an empty path. Error : %d\n", GetLastError());
     }
+
+    AbortPath(hdc);
+
+    /* Test when the pen width is equal to 1. The path should not change */
+    narrowPen = CreatePen(PS_SOLID, 1, RGB(0,0,0));
+    oldPen = SelectObject(hdc, narrowPen);
+    BeginPath(hdc);
+    Polyline(hdc, pnt, 6);
+    EndPath(hdc);
+    nSize = GetPath(hdc, NULL, NULL, 0);
+    ok(nSize == 6, "WidenPath fails detecting 1px wide pen. Path length is %d, should be 6\n", nSize);
 
     ReleaseDC(0, hdc);
     return;

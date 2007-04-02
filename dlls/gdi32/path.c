@@ -1795,6 +1795,11 @@ static BOOL PATH_WidenPath(DC *dc)
     penWidth = elp->elpWidth;
     HeapFree( GetProcessHeap(), 0, elp );
 
+    /* pen width must be strictly higher than 1 */
+    if(penWidth == 1) {
+        return TRUE;
+    }
+
     /* FIXME : If extPen, use the shape on corners */
     penWidthIn = penWidth / 2;
     penWidthOut = penWidth / 2;
