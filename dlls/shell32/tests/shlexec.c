@@ -774,14 +774,18 @@ static void test_find_executable(void)
         }
         if (rc > 32)
         {
+            int equal;
+            equal=strcmp(command, argv0) == 0 ||
+                /* NT4 returns an extra 0x8 character! */
+                (strlen(command) == strlen(argv0)+1 && strncmp(command, argv0, strlen(argv0)) == 0);
             if ((test->todo & 0x20)==0)
             {
-                ok(strcmp(command, argv0) == 0, "FindExecutable(%s) returned command='%s' instead of '%s'\n",
+                ok(equal, "FindExecutable(%s) returned command='%s' instead of '%s'\n",
                    filename, command, argv0);
             }
             else todo_wine
             {
-                ok(strcmp(command, argv0) == 0, "FindExecutable(%s) returned command='%s' instead of '%s'\n",
+                ok(equal, "FindExecutable(%s) returned command='%s' instead of '%s'\n",
                    filename, command, argv0);
             }
         }
