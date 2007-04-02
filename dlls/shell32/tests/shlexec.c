@@ -759,6 +759,8 @@ static void test_find_executable(void)
                 c++;
             }
         }
+        /* Win98 does not '\0'-terminate command! */
+        memset(command, '\0', sizeof(command));
         rc=(int)FindExecutableA(filename, NULL, command);
         if (rc > 32)
             rc=33;
