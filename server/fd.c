@@ -173,6 +173,7 @@ struct fd
     int                  poll_index;  /* index of fd in poll array */
     struct list          read_q;      /* async readers of this fd */
     struct list          write_q;     /* async writers of this fd */
+    struct list          wait_q;      /* other async waiters of this fd */
 };
 
 static void fd_dump( struct object *obj, int verbose );
@@ -1287,6 +1288,7 @@ static void fd_destroy( struct object *obj )
 
     async_terminate_queue( &fd->read_q, STATUS_CANCELLED );
     async_terminate_queue( &fd->write_q, STATUS_CANCELLED );
+    async_terminate_queue( &fd->wait_q, STATUS_CANCELLED );
 
     remove_fd_locks( fd );
     list_remove( &fd->inode_entry );
@@ -1365,6 +1367,7 @@ static struct fd *alloc_fd_object(void)
     list_init( &fd->locks );
     list_init( &fd->read_q );
     list_init( &fd->write_q );
+    list_init( &fd->wait_q );
 
     if ((fd->poll_index = add_poll_user( fd )) == -1)
     {
@@ -1395,6 +1398,7 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     list_init( &fd->locks );
     list_init( &fd->read_q );
     list_init( &fd->write_q );
+    list_init( &fd->wait_q );
     return fd;
 }
 
@@ -1736,6 +1740,9 @@ void fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type, 
     case ASYNC_TYPE_WRITE:
         queue = &fd->write_q;
         break;
+    case ASYNC_TYPE_WAIT:
+        queue = &fd->wait_q;
+        break;
     default:
         set_error( STATUS_INVALID_PARAMETER );
         return;
@@ -1751,6 +1758,42 @@ void fd_queue_async_timeout( struct fd *fd, const async_data_t *data, int type, 
     set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
 }
 
+void fd_async_terminate_head( struct fd *fd, int type, unsigned int status )
+{
+    switch (type)
+    {
+    case ASYNC_TYPE_READ:
+        async_terminate_head( &fd->read_q, status );
+        break;
+    case ASYNC_TYPE_WRITE:
+        async_terminate_head( &fd->write_q, status );
+        break;
+    case ASYNC_TYPE_WAIT:
+        async_terminate_head( &fd->wait_q, status );
+        break;
+    default:
+        assert(0);
+    }
+}
+
+void fd_async_terminate_queue( struct fd *fd, int type, unsigned int status )
+{
+    switch (type)
+    {
+    case ASYNC_TYPE_READ:
+        async_terminate_queue( &fd->read_q, status );
+        break;
+    case ASYNC_TYPE_WRITE:
+        async_terminate_queue( &fd->write_q, status );
+        break;
+    case ASYNC_TYPE_WAIT:
+        async_terminate_queue( &fd->wait_q, status );
+        break;
+    default:
+        assert(0);
+    }
+}
+
 void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     fd_queue_async_timeout( fd, data, type, count, NULL );
@@ -1760,6 +1803,7 @@ void default_fd_cancel_async( struct fd *fd )
 {
     async_terminate_queue( &fd->read_q, STATUS_CANCELLED );
     async_terminate_queue( &fd->write_q, STATUS_CANCELLED );
+    async_terminate_queue( &fd->wait_q, STATUS_CANCELLED );
 }
 
 /* default flush() routine */
