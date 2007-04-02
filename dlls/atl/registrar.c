@@ -149,7 +149,7 @@ static HRESULT get_word(LPCOLESTR *str, strbuf *buf)
     return S_OK;
 }
 
-static HRESULT do_preprocess(Registrar *This, LPCOLESTR data, strbuf *buf)
+static HRESULT do_preprocess(const Registrar *This, LPCOLESTR data, strbuf *buf)
 {
     LPCOLESTR iter, iter2 = data;
     rep_list *rep_iter;
@@ -663,7 +663,7 @@ static const IRegistrarVtbl RegistrarVtbl = {
     Registrar_ResourceUnregister,
 };
 
-static HRESULT Registrar_create(LPUNKNOWN pUnkOuter, REFIID riid, void **ppvObject)
+static HRESULT Registrar_create(const IUnknown *pUnkOuter, REFIID riid, void **ppvObject)
 {
     Registrar *ret;
 
