@@ -71,7 +71,7 @@ typedef struct _ITmpFileImpl {
   PAVISTREAM   *ppStreams;
 } ITmpFileImpl;
 
-PAVIFILE AVIFILE_CreateAVITempFile(int nStreams, PAVISTREAM *ppStreams) {
+PAVIFILE AVIFILE_CreateAVITempFile(int nStreams, const PAVISTREAM *ppStreams) {
   ITmpFileImpl *tmpFile;
   int           i;
 
