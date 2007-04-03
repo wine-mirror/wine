@@ -913,7 +913,10 @@ HRESULT OutputPin_SendSample(OutputPin * This, IMediaSample * pSample)
          * then it causes some problems (most notably with the native Video
          * Renderer) if we are re-entered for whatever reason */
         hr = IMemInputPin_Receive(pMemConnected, pSample);
-        IBaseFilter_Release(pinInfo.pFilter);
+
+        /* If the filter's destroyed, tell upstream to stop sending data */
+        if(IBaseFilter_Release(pinInfo.pFilter) == 0 && SUCCEEDED(hr))
+            hr = S_FALSE;
     }
     if (pMemConnected)
         IMemInputPin_Release(pMemConnected);
