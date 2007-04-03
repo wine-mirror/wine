@@ -1418,8 +1418,13 @@ static void state_patchsegments(DWORD state, IWineD3DStateBlockImpl *stateblock,
     TRACE("Stub\n");
     if (stateblock->renderState[WINED3DRS_PATCHSEGMENTS] != tmpvalue.d)
     {
+        static BOOL displayed = FALSE;
+
         tmpvalue.d = stateblock->renderState[WINED3DRS_PATCHSEGMENTS];
-        FIXME("(WINED3DRS_PATCHSEGMENTS,%f) not yet implemented\n", tmpvalue.f);
+        if(!displayed)
+            FIXME("(WINED3DRS_PATCHSEGMENTS,%f) not yet implemented\n", tmpvalue.f);
+
+        displayed = TRUE;
     }
 }
 
