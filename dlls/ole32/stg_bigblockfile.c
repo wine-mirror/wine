@@ -861,18 +861,18 @@ static HRESULT WINAPI ImplBIGBLOCKFILE_WriteAt(
         MappedPage *page = BIGBLOCKFILE_GetMappedView(This, page_index);
 
         TRACE("page %i,  offset %u, bytes_to_page %u, bytes_left %u\n",
-            page->page_index, offset_in_page, bytes_to_page, bytes_left);
-
-        if (page->mapped_bytes < bytes_to_page)
-        {
-            ERR("Not enough bytes mapped to the page. This should never happen\n");
-            rc = E_FAIL;
-            break;
-        }
+            page ? page->page_index : 0, offset_in_page, bytes_to_page, bytes_left);
 
         if (!page)
         {
             ERR("Unable to get a page to write. This should never happen\n");
+            rc = E_FAIL;
+            break;
+        }
+
+        if (page->mapped_bytes < bytes_to_page)
+        {
+            ERR("Not enough bytes mapped to the page. This should never happen\n");
             rc = E_FAIL;
             break;
         }
