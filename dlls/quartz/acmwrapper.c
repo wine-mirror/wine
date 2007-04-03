@@ -81,7 +81,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 	return hr;
     }
 
-    while(!stop)
+    while(hr == S_OK && !stop)
     {
 	DWORD rem_buf = This->max_size - This->current_size;
 	DWORD rem_smp = size - offset;
