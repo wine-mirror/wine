@@ -1325,7 +1325,7 @@ static void state_wrap(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DC
        stateblock->renderState[WINED3DRS_WRAP13] ||
        stateblock->renderState[WINED3DRS_WRAP14] ||
        stateblock->renderState[WINED3DRS_WRAP15] ) {
-        ERR("(WINED3DRS_WRAP0) Texture wraping not yet supported\n");
+        FIXME("(WINED3DRS_WRAP0) Texture wraping not yet supported\n");
     }
 }
 
@@ -1387,25 +1387,25 @@ static void state_perspective(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 static void state_stippledalpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     TRACE("Stub\n");
     if (stateblock->renderState[WINED3DRS_STIPPLEDALPHA])
-        ERR(" Stippled Alpha not supported yet.\n");
+        FIXME(" Stippled Alpha not supported yet.\n");
 }
 
 static void state_antialias(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     TRACE("Stub\n");
     if (stateblock->renderState[WINED3DRS_ANTIALIAS])
-        ERR(" Antialias not supported yet.\n");
+        FIXME(" Antialias not supported yet.\n");
 }
 
 static void state_multisampmask(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     TRACE("Stub\n");
     if (stateblock->renderState[WINED3DRS_MULTISAMPLEMASK] != 0xFFFFFFFF)
-        ERR("(WINED3DRS_MULTISAMPLEMASK,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_MULTISAMPLEMASK]);
+        FIXME("(WINED3DRS_MULTISAMPLEMASK,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_MULTISAMPLEMASK]);
 }
 
 static void state_patchedgestyle(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     TRACE("Stub\n");
     if (stateblock->renderState[WINED3DRS_PATCHEDGESTYLE] != WINED3DPATCHEDGE_DISCRETE)
-        ERR("(WINED3DRS_PATCHEDGESTYLE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_PATCHEDGESTYLE]);
+        FIXME("(WINED3DRS_PATCHEDGESTYLE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_PATCHEDGESTYLE]);
 }
 
 static void state_patchsegments(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -1419,20 +1419,20 @@ static void state_patchsegments(DWORD state, IWineD3DStateBlockImpl *stateblock,
     if (stateblock->renderState[WINED3DRS_PATCHSEGMENTS] != tmpvalue.d)
     {
         tmpvalue.d = stateblock->renderState[WINED3DRS_PATCHSEGMENTS];
-        ERR("(WINED3DRS_PATCHSEGMENTS,%f) not yet implemented\n", tmpvalue.f);
+        FIXME("(WINED3DRS_PATCHSEGMENTS,%f) not yet implemented\n", tmpvalue.f);
     }
 }
 
 static void state_positiondegree(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     TRACE("Stub\n");
     if (stateblock->renderState[WINED3DRS_POSITIONDEGREE] != WINED3DDEGREE_CUBIC)
-        ERR("(WINED3DRS_POSITIONDEGREE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_POSITIONDEGREE]);
+        FIXME("(WINED3DRS_POSITIONDEGREE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_POSITIONDEGREE]);
 }
 
 static void state_normaldegree(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     TRACE("Stub\n");
     if (stateblock->renderState[WINED3DRS_NORMALDEGREE] != WINED3DDEGREE_LINEAR)
-        ERR("(WINED3DRS_NORMALDEGREE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_NORMALDEGREE]);
+        FIXME("(WINED3DRS_NORMALDEGREE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_NORMALDEGREE]);
 }
 
 static void state_tessellation(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -1444,7 +1444,7 @@ static void state_tessellation(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 
 static void state_srgbwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     if(stateblock->renderState[WINED3DRS_SRGBWRITEENABLE])
-        ERR("Render state WINED3DRS_SRGBWRITEENABLE not yet implemented\n");
+        FIXME("Render state WINED3DRS_SRGBWRITEENABLE not yet implemented\n");
 }
 
 static void state_seperateblend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -1948,7 +1948,7 @@ static void tex_bumpenvlscale(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
     tmpvalue.d = stateblock->textureState[stage][WINED3DTSS_BUMPENVLSCALE];
     if(tmpvalue.f != 0.0) {
-        ERR("WINED3DTSS_BUMPENVLSCALE not supported yet\n");
+        FIXME("WINED3DTSS_BUMPENVLSCALE not supported yet\n");
     }
 }
 
@@ -1961,7 +1961,7 @@ static void tex_bumpenvloffset(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 
     tmpvalue.d = stateblock->textureState[stage][WINED3DTSS_BUMPENVLOFFSET];
     if(tmpvalue.f != 0.0) {
-        ERR("WINED3DTSS_BUMPENVLOFFSET not supported yet\n");
+        FIXME("WINED3DTSS_BUMPENVLOFFSET not supported yet\n");
     }
 }
 
@@ -1973,7 +1973,7 @@ static void tex_resultarg(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD
     }
 
     if(stateblock->textureState[stage][WINED3DTSS_RESULTARG] != WINED3DTA_CURRENT) {
-        ERR("WINED3DTSS_RESULTARG not supported yet\n");
+        FIXME("WINED3DTSS_RESULTARG not supported yet\n");
     }
 }
 
