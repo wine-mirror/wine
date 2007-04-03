@@ -235,7 +235,7 @@ HRESULT WINAPI AtlInternalQueryInterface(void* this, const _ATL_INTMAP_ENTRY* pE
             {
                 TRACE("Offset\n");
                 *ppvObject = ((LPSTR)this+pEntries[i].dw);
-                IUnknown_AddRef((IUnknown*)this);
+                IUnknown_AddRef((IUnknown*)*ppvObject);
                 rc = S_OK;
             }
             else
