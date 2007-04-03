@@ -368,7 +368,7 @@ static void test_NtCreateKey(void)
     status = pNtCreateKey(&key, am, &attr, 0, 0, 0, 0);
     ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08x\n", status);
 
-    pNtClose(&key);
+    pNtClose(key);
 }
 
 static void test_NtSetValueKey(void)
@@ -390,7 +390,7 @@ static void test_NtSetValueKey(void)
     ok(status == STATUS_SUCCESS, "NtSetValueKey Failed: 0x%08x\n", status);
 
     pRtlFreeUnicodeString(&ValName);
-    pNtClose(&key);
+    pNtClose(key);
 }
 
 static void test_RtlOpenCurrentUser(void)
@@ -399,7 +399,7 @@ static void test_RtlOpenCurrentUser(void)
     HKEY handle;
     status=pRtlOpenCurrentUser(KEY_READ, &handle);
     ok(status == STATUS_SUCCESS, "RtlOpenCurrentUser Failed: 0x%08x\n", status);
-    pNtClose(&handle);
+    pNtClose(handle);
 }
 
 static void test_RtlCheckRegistryKey(void)

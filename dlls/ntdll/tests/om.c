@@ -171,7 +171,7 @@ static void test_namespace_pipe(void)
     ok(status == STATUS_SUCCESS, "Failed to open Directory(%08x)\n", status);
 #define DIR_TEST_CREATE_OPEN_SUCCESS(h,n) \
     pRtlCreateUnicodeStringFromAsciiz(&str, n);\
-    DIR_TEST_CREATE_SUCCESS(h) pNtClose(h); DIR_TEST_OPEN_SUCCESS(h) pNtClose(h); \
+    DIR_TEST_CREATE_SUCCESS(&h) pNtClose(h); DIR_TEST_OPEN_SUCCESS(&h) pNtClose(h); \
     pRtlFreeUnicodeString(&str);
 
 static void test_name_collisions(void)
@@ -352,7 +352,7 @@ static void test_directory(void)
     DIR_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_NAME_INVALID)
 
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
-    DIR_TEST_CREATE_OPEN_SUCCESS(&h, "")
+    DIR_TEST_CREATE_OPEN_SUCCESS(h, "")
     DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\", STATUS_OBJECT_PATH_SYNTAX_BAD)
     DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\om.c-test", STATUS_OBJECT_PATH_SYNTAX_BAD)
     DIR_TEST_CREATE_OPEN_FAILURE(&h, "\\om.c-test\\", STATUS_OBJECT_PATH_SYNTAX_BAD)
