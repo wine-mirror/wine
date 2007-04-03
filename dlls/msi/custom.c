@@ -887,7 +887,8 @@ void ACTION_FinishCustomActions(MSIPACKAGE* package)
     {
         if (info->package == package )
         {
-            wait_handles[handle_count++] = info->handle;
+            if (DuplicateHandle(GetCurrentProcess(), info->handle, GetCurrentProcess(), &wait_handles[handle_count], SYNCHRONIZE, FALSE, 0))
+                handle_count++;
             free_custom_action_data( info );
         }
     }
@@ -895,7 +896,10 @@ void ACTION_FinishCustomActions(MSIPACKAGE* package)
     LeaveCriticalSection( &msi_custom_action_cs );
 
     for (i = 0; i < handle_count; i++)
+    {
         msi_dialog_check_messages( wait_handles[i] );
+        CloseHandle( wait_handles[i] );
+    }
 
     HeapFree( GetProcessHeap(), 0, wait_handles );
 }
