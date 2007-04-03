@@ -181,6 +181,7 @@ typedef struct _IFilterGraphImpl {
     int nFilters;
     int filterCapacity;
     long nameIndex;
+    IReferenceClock *refClock;
     EventsQueue evqueue;
     HANDLE hEventCompletion;
     int CompletionStatus;
@@ -263,8 +264,15 @@ static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
     
     if (ref == 0) {
         int i;
+
+        if (This->refClock)
+            IReferenceClock_Release(This->refClock);
+
         for (i = 0; i < This->nFilters; i++)
+        {
+            IBaseFilter_SetSyncSource(This->ppFiltersInGraph[i], NULL);
             IBaseFilter_Release(This->ppFiltersInGraph[i]);
+        }
         for (i = 0; i < This->nItfCacheEntries; i++)
             IUnknown_Release(This->ItfCacheEntries[i].iface);
 	IFilterMapper2_Release(This->pFilterMapper2);
@@ -392,6 +400,7 @@ static HRESULT WINAPI GraphBuilder_AddFilter(IGraphBuilder *iface,
         This->ppFiltersInGraph[This->nFilters] = pFilter;
         This->pFilterNames[This->nFilters] = wszFilterName;
         This->nFilters++;
+        IBaseFilter_SetSyncSource(pFilter, This->refClock);
     }
     else
 	CoTaskMemFree(wszFilterName);
@@ -430,6 +439,7 @@ static HRESULT WINAPI GraphBuilder_RemoveFilter(IGraphBuilder *iface,
             hr = IBaseFilter_JoinFilterGraph(pFilter, NULL, This->pFilterNames[i]);
             if (SUCCEEDED(hr))
             {
+                IBaseFilter_SetSyncSource(pFilter, NULL);
                 IBaseFilter_Release(pFilter);
                 CoTaskMemFree(This->pFilterNames[i]);
                 memmove(This->ppFiltersInGraph+i, This->ppFiltersInGraph+i+1, sizeof(IBaseFilter*)*(This->nFilters - 1 - i));
@@ -4253,16 +4263,58 @@ static HRESULT WINAPI MediaFilter_GetState(IMediaFilter *iface, DWORD dwMsTimeou
 
 static HRESULT WINAPI MediaFilter_SetSyncSource(IMediaFilter *iface, IReferenceClock *pClock)
 {
-    FIXME("(%p): stub\n", pClock);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
+    HRESULT hr = S_OK;
+    int i;
 
-    return E_NOTIMPL;
+    TRACE("(%p/%p)->(%p)\n", iface, This, pClock);
+
+    EnterCriticalSection(&This->cs);
+    {
+        for (i = 0;i < This->nFilters;i++)
+        {
+            hr = IBaseFilter_SetSyncSource(This->ppFiltersInGraph[i], pClock);
+            if (FAILED(hr))
+                break;
+        }
+
+        if (FAILED(hr))
+        {
+            for(;i >= 0;i--)
+                IBaseFilter_SetSyncSource(This->ppFiltersInGraph[i], This->refClock);
+        }
+        else
+        {
+            if (This->refClock)
+                IReferenceClock_Release(This->refClock);
+            This->refClock = pClock;
+            if (This->refClock)
+                IReferenceClock_AddRef(This->refClock);
+        }
+    }
+    LeaveCriticalSection(&This->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI MediaFilter_GetSyncSource(IMediaFilter *iface, IReferenceClock **ppClock)
 {
-    FIXME("(%p): stub\n", ppClock);
+    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p/%p)->(%p)\n", iface, This, ppClock);
+
+    if (!ppClock)
+        return E_POINTER;
+
+    EnterCriticalSection(&This->cs);
+    {
+        *ppClock = This->refClock;
+        if (*ppClock)
+            IReferenceClock_AddRef(*ppClock);
+    }
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static const IMediaFilterVtbl IMediaFilter_VTable =
@@ -4535,6 +4587,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->nFilters = 0;
     fimpl->filterCapacity = 0;
     fimpl->nameIndex = 1;
+    fimpl->refClock = NULL;
     fimpl->hEventCompletion = CreateEventW(0, TRUE, FALSE, 0);
     fimpl->HandleEcComplete = TRUE;
     fimpl->HandleEcRepaint = TRUE;
