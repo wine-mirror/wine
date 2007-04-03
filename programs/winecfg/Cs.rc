@@ -7,6 +7,7 @@
  * Copyright 2003 Dimitrie O. Paun
  * Copyright 2003-2004 Mike Hearn
  * Copyright 2004 David Kredba
+ * Copyright 2007 Vit Hrachovy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,22 +24,25 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  */
-
+/* Czech strings in CP1250 */
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
-/* Czech strings in CP1250 */
+IDR_WINECFG MENU DISCARDABLE
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Upravit", IDC_AUDIO_CONFIGURE
+    END
+END
 
-IDD_ABOUTCFG DIALOGEX 0, 0, 260, 250
+IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
 STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Verze Wine:",IDC_STATIC,119,17,55,8
-    LTEXT           "CVS",IDC_WINEVER,179,17,56,8
-    CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | 
-                    SS_REALSIZEIMAGE | WS_BORDER,15,17,157,111, WS_EX_TRANSPARENT
+    LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
+    CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    GROUPBOX        "Informace",IDC_STATIC,8,4,244,106
-    CTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
+    LTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_STATIC,119,44,124,72
 END
 
@@ -47,36 +51,43 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "NastavenÌ aplikacÌ",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine umÌ p¯edstÌrat r˘znÈ verze Windows pro kaûdou jednu applikaci.",
-                    IDC_STATIC,15,20,227,20
+    LTEXT           "Wine umÌ p¯edstÌrat r˘znÈ verze Windows pro kaûdou jednu applikaci. Tato z·loûka je spojen· se sloûkami Knihovny a Obraz a umoûÚuje zmÏnit nastavenÌ celÈho systÈmu nebo nastavenÌ kaûdÈ aplikace zvl·öù.",
+                    IDC_STATIC,15,20,227,30
     CONTROL         "Aplikace",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,40,230,140
-    PUSHBUTTON	    "P¯id&at aplikaci...",IDC_APP_ADDAPP, 90,184,75,14
-    PUSHBUTTON	    "Odeb&rat aplikaci",IDC_APP_REMOVEAPP, 170,184,75,14
-    LTEXT           "Verze &Windows:",IDC_STATIC,17,204,58,8
-    COMBOBOX        IDC_WINVER,83,202,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
-    LTEXT           "Verse &DOS:",IDC_STATIC,17,223,57,8
-    COMBOBOX        IDC_DOSVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+                    15,50,230,150
+    PUSHBUTTON	    "P¯id&at aplikaci...",IDC_APP_ADDAPP, 90,204,75,14
+    PUSHBUTTON	    "Odeb&rat aplikaci",IDC_APP_REMOVEAPP, 170,204,75,14
+    LTEXT           "Verze &Windows:",IDC_STATIC,17,226,58,8
+    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    CONTROL	    "Povolit aplikacÌm DirectX drûet ukazatel myöi ve svÈm oknÏ ?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    
-    GROUPBOX        " NastavenÌ oken ",IDC_STATIC,8,25,244,120
+    GROUPBOX        " NastavenÌ oken ",IDC_STATIC,8,4,244,180
 
-    /* FIXME: the wording of this explanation could be a lot better */
+    CONTROL	    "Povolit aplikacÌm DirectX zadrûet ukazatel myöi ve svÈm oknÏ",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
+    LTEXT 	    "Okna spravovan· vaöÌm spr·vcem oken budou mÌt standardnÌ okraje, budou respektovat virtu·lnÌ plochy a budou vidÏt v seznamu oken. \n\nNespravovan· okna budou odpojena od vaöeho spr·vce oken. To znamen·, ûe se okna nesplynou se vzhledem systÈmu, ale vylepöÌ to simulaci prost¯edÌ Windows, takûe nÏkterÈ programy mohou pracovat lÈpe.",
+		    IDC_STATIC,15,37,228,80
+    CONTROL	    "Povolit spr·vci oken kontrolu nad okny",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,8
+
     LTEXT           "M˘ûete si vybrat emulaci plochy windows, kde jsou okna aplikacÌ uzav¯ena v jednÈ 'virtu·lnÌ obrazovce' nebo mohou b˝t umÌstÏna na standardnÌm desktopu.",
-                    IDC_STATIC,15,73,228,28
-    LTEXT           "Velikost desktopu:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
+                    IDC_STATIC,15,120,228,28
+    LTEXT           "Velikost desktopu:",IDC_DESKTOP_SIZE,15,167,64,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
     CONTROL         "Emulace virtu·lnÌho desktopu",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,152,230,10
 		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,94,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,147,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,60
+
+    LTEXT			"Podpora stÌnov·nÌ vertex˘: ",IDC_STATIC,15,199,100,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,105,197,140,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL         "Povolit stÌnov·nÌ pixel˘ (spolÈh· se na hardware podporu)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,216,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -85,56 +96,216 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "N·hrady DLL",IDC_STATIC,8,4,244,240
     LTEXT           "M˘ûete vybrat zda budou pouûity dynamicky linkovanÈ knihovny vestavÏnÈ ve Wine nebo nativnÌ (vzatÈ z Windows nebo poskytnutÈ aplikacÌ)."
-                    ,  IDC_STATIC,15,17,228,32
-    LISTBOX         IDC_DLLS_LIST,15,50,142,187,WS_BORDER | WS_TABSTOP | WS_VSCROLL
-    LTEXT           "Po¯adÌ nahrav·nÌ:",IDC_STATIC,163,50,37,8
-    CONTROL         "&VestavÏn· (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,163,65,75,10
-    CONTROL         "&NativnÌ (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,163,80,75,10
-    CONTROL         "VestavÏ&n· a pak nativnÌ",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,163,95,75,10
-    CONTROL         "Nati&vnÌ a pak vestavÏn·",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,163,110,75,10
-    CONTROL         "&Zak·zat",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,163,125,75,10
-    PUSHBUTTON	    "P¯id&at n·hradu DLL pro:",IDC_DLLS_ADDDLL, 163,184,82,14
-    COMBOBOX        IDC_DLLCOMBO,163,204,82,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
-    PUSHBUTTON	    "Odeb&rat DLL n·hradu",IDC_DLLS_REMOVEDLL,163,224,82,14
+                    ,IDC_STATIC,16,16,220,32
+    LTEXT           "Nov· n·hrada pro DLL:",IDC_STATIC,16,58,100,8
+    COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
+    PUSHBUTTON      "P¯id&at",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON
+    LTEXT           "St·vajÌcÌ n·hrady:",IDC_STATIC,16,86,100,8
+    LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
+    PUSHBUTTON      "&Upravit",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "Odeb&rat DLL n·hradu",IDC_DLLS_REMOVEDLL,164,114,82,14
 END
 
-IDD_SYSTEMCFG DIALOG DISCARDABLE  0, 0, 260, 250
-STYLE WS_CHILD
+IDD_LOADORDER DIALOG DISCARDABLE 80, 110, 120, 92
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit Override"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Jednotky",IDC_STATIC,8,4,244,120
-    LISTBOX         IDC_LIST_DRIVES,15,23,179,90,WS_VSCROLL
-    PUSHBUTTON      "P¯id&at",IDC_DRIVE_ADD,197,22,50,22
-    PUSHBUTTON      "Odeb&rat",IDC_DRIVE_REMOVE,197,51,50,22
-    PUSHBUTTON      "Upra&vit",IDC_DRIVE_EDIT,197,80,50,22
+    GROUPBOX        " Po¯adÌ nahrav·nÌ ",IDC_STATIC,8,4,105,66
+    CONTROL         "&VestavÏn· (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
+    CONTROL         "&NativnÌ (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
+    CONTROL         "&VestavÏn· (Wine)",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "Nati&vnÌ a pak vestavÏn·",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,90,10
+    CONTROL         "&Zak·zat",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
+    PUSHBUTTON      "Storno",IDCANCEL,57,74,45,14,WS_GROUP
 END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Mapov·nÌ disk˘",IDC_STATIC,7,107,246,112
-    LISTBOX         IDC_LIST_DRIVES,14,118,232,76,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "P¯idat...",IDC_BUTTON_ADD,14,199,37,14
-    PUSHBUTTON      "Odebrat",IDC_BUTTON_REMOVE,55,199,37,14
-    PUSHBUTTON      "Upravit...",IDC_BUTTON_EDIT,97,199,37,14
-    PUSHBUTTON      "Autodetekovat...",IDC_BUTTON_AUTODETECT,197,199,49,14
-    LTEXT	    "Varov·nÌ: Vypad· to, ûe disk C nenÌ definov·n. KliknÏte na 'P¯idat...' a vytvo¯te ho.", IDS_DRIVE_NO_C, 7,223,250,110
+    GROUPBOX        " Mapov·nÌ disk˘ ",IDC_STATIC,8,4,244,240
+    CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                    LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
+    PUSHBUTTON      "P¯id&at...",IDC_BUTTON_ADD,15,98,37,14
+    PUSHBUTTON      "Odeb&rat",IDC_BUTTON_REMOVE,56,98,37,14
+    PUSHBUTTON      "Auto&detekce...",IDC_BUTTON_AUTODETECT,197,98,49,14
+
+    /* editing drive details */
+    LTEXT           "&Cesta:",IDC_STATIC,15,123,20,9
+    EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Proch·zet...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
+
+    LTEXT           "&Typ:",IDC_STATIC_TYPE,15,138,21,10
+    COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    LTEXT           "Popisek a sÈriovÈ ËÌslo",IDC_LABELSERIAL_STATIC,15,155,95,10
+
+    PUSHBUTTON      "&Ukaû rozöÌ¯enÈ volby",IDC_BUTTON_SHOW_HIDE_ADVANCED,155,136,91,13
+    CONTROL         "Autodetekce &ze za¯ÌzenÌ:",IDC_RADIO_AUTODETECT,"Button",
+                    BS_AUTORADIOBUTTON,15,166,93,10
+    EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Proch·&zet...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
+    CONTROL         "RuË&nÌ p¯i¯azenÌ:",IDC_RADIO_ASSIGN,"Button",
+                    BS_AUTORADIOBUTTON,15,195,69,10
+
+    LTEXT           "P&opisek:",IDC_STATIC_LABEL,33,208,29,12
+    EDITTEXT        IDC_EDIT_LABEL,83,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "&SÈriovÈ ËÌslo:",IDC_STATIC_SERIAL,33,225,49,12
+    EDITTEXT        IDC_EDIT_SERIAL,83,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+
+    CONTROL         "Zobrazit soubory s teËkou na zaË·tku n·zvu",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
 END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT	"OvladaË zvukovÈ karty: ",IDC_STATIC,10,20,60,8
-    COMBOBOX	IDC_AUDIO_DRIVER,70,18,85,85,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON	"Autodetekce",IDC_AUDIO_AUTODETECT,170,20,49,14
+    GROUPBOX        " OvladaË zvukovÈ karty ",IDC_STATIC,8,4,244,195
+    LTEXT           "Vyberte ovladaË zvukovÈ karty zaökrtnutÌm polÌËka u p¯ÌsluönÈho ovladaËe. Kdyû nezaökrtnete ani jeden ovladaË, zvuk se vypne. Vybrat vÌce jak jeden ovladaË se nedoporuËuje. DetailnÌ vlastnosti ovladaËe m˘ûete upravit prav˝m kliknutÌm na zvolen˝ ovladaË.",IDC_STATIC,15,20,227,50
+    CONTROL         "Za¯ÌzenÌ",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,65,140,127
+    PUSHBUTTON	    "Ovl·dacÌ panel",IDC_AUDIO_CONTROL_PANEL,170,65,59,14
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
+    LTEXT           "Hardwarov· akcelerace: ",IDC_STATIC,15,215,90,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "VzorkovacÌ frekvence:",IDC_STATIC,15,232,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "PoËet bit˘ na vzorek:",IDC_STATIC,137,232,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Emulace za¯ÌzenÌ",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
+END
+
+IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Vzhled ",IDC_STATIC,8,4,244,106
+    LTEXT           "TÈma:",IDC_STATIC,15,16,130,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Instalovat tÈma...",IDC_THEME_INSTALL,152,23,93,14
+    LTEXT           "Barva:",IDC_THEME_COLORTEXT,15,40,112,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Velikost",IDC_THEME_SIZETEXT,135,40,110,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Poloûka:",IDC_STATIC,15,64,112,8
+    COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
+    LTEXT           "Barva:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
+    PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
+    LTEXT           "Velikost:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
+    CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
+    PUSHBUTTON      "PÌsmo",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    GROUPBOX        " Dom·cÌ adres·¯e ",IDC_STATIC,8,114,244,100
+    CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
+    CONTROL         "Odkaz na:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
+    PUSHBUTTON      "Proch·zet",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
-    IDS_TAB_GENERAL         "VöeobecnÈ"
+    IDS_TAB_APPLICATIONS    "Programy"
     IDS_TAB_DLLS            "Knihovny"
     IDS_TAB_DRIVES          "Disky"
+    IDS_CHOOSE_PATH         "Vyberte prosÌm unixov˝ cÌlov˝ adres·¯."
+    IDS_HIDE_ADVANCED       "Schovat rozöÌ¯enÈ moûnosti"
+    IDS_SHOW_ADVANCED       "Zobrazit rozöÌ¯enÈ moûnosti"
+    IDS_NOTHEME             "(Bez tÈmatu)"
+    IDS_TAB_GRAPHICS        "Obraz"
+    IDS_TAB_DESKTOP_INTEGRATION "ZaËlenÏnÌ do pracovnÌ plochy"
+    IDS_TAB_AUDIO           "Zvuk"
+    IDS_TAB_ABOUT           "O programu"
+    IDS_WINECFG_TITLE       "Konfigurace Wine"
+    IDS_WINECFG_TITLE_APP   "⁄prava Wine pro %s"
+    IDS_THEMEFILE           "Soubory s tÈmaty vzhledu"
+    IDS_THEMEFILE_SELECT    "Zvolte soubor s tÈmatem vzhledu"
+    IDS_AUDIO_MISSING       "V registrech chybÌ z·znam o vybranÈm zvukovÈm ovladaËi.\n\nAutomaticky byl zvolen doporuËen˝ ovladaË.\nM˘ûete pouûÌt tento ovladaË nebo si z ostatnÌch dostupn˝ch vybrat jin˝.\n\nDokud nekliknete na tlaËÌtko ProvÈst, nebude vybran˝ ovladaË pouûit."
+    IDS_SHELL_FOLDER        "Dom·cÌ adres·¯e"
+    IDS_LINKS_TO            "Odkaz na"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING         "NedoporuËuje se mÏnit po¯adÌ nahr·v·nÌ tÈto knihovny.\nUrËitÏ to chcete udÏlat?"
+    IDS_DLL_WARNING_CAPTION "Varov·nÌ: systÈmov· knihovna"
+    IDS_DLL_NATIVE          "nativnÌ"
+    IDS_DLL_BUILTIN         "vestavÏn·"
+    IDS_DLL_NATIVE_BUILTIN  "nativnÌ, vestavÏn·"
+    IDS_DLL_BUILTIN_NATIVE  "vestavÏn·, nativnÌ"
+    IDS_DLL_DISABLED        "zak·zat"
+    IDS_DEFAULT_SETTINGS    "StandardnÌ nastavenÌ"
+    IDS_EXECUTABLE_FILTER   "Programy Wine (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "PouûÌt vöeobecn· nastavenÌ"
+    IDS_SELECT_EXECUTABLE   "Zvolte spustiteln˝ soubor"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SHADER_MODE_HARDWARE    "Hardwarov˝"
+    IDS_SHADER_MODE_NONE        "é·dn˝"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DRIVE_UNKNOWN           "Autodetekce"
+    IDS_DRIVE_FIXED             "MÌstnÌ pevn˝ disk"
+    IDS_DRIVE_REMOTE            "SÌùov˝ disk"
+    IDS_DRIVE_REMOVABLE         "Disketa"
+    IDS_DRIVE_CDROM             "CD-ROM"
+    IDS_DRIVE_LETTERS_EXCEEDED  "DalöÌ disk jiû nenÌ moûno p¯idat.\n\nKaûd˝ disk musÌ mÌt p¯i¯azeno pÌsmeno od A do Z, takûe nelze mÌt vÌce neû 26 disk˘"
+    IDS_SYSTEM_DRIVE_LABEL      "SystÈmov˝ disk"
+    IDS_CONFIRM_DELETE_C        "UrËitÏ chcete smazat disk C?\n\nVÏtöina aplikacÌ ve Windows Ëek·, ûe disk C existuje a tÏûce zkolabuje v p¯ÌpadÏ, ûe tomu tak nenÌ. Pokud smaûete disk C, nezapomeÚte jej znovu vytvo¯it!"
+    IDS_COL_DRIVELETTER         "PÌsmeno"
+    IDS_COL_DRIVEMAPPING        "P¯Ìpojn˝ bod"
+    IDS_NO_DRIVE_C              "Varov·nÌ: Vypad· to, ûe disk C nenÌ definov·n.\n\nKliknÏte na ëP¯idat...í v z·loûce Disky a vytvo¯te ho!\n"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ACCEL_FULL              "Pln·"
+    IDS_ACCEL_STANDARD          "StandardnÌ"
+    IDS_ACCEL_BASIC             "Z·kladnÌ"
+    IDS_ACCEL_EMULATION         "Emulace"
+    IDS_DRIVER_ALSA             "OvladaË ALSA"
+    IDS_DRIVER_ARTS             "OvladaË aRts"
+    IDS_DRIVER_ESOUND           "OvladaË EsounD"
+    IDS_DRIVER_OSS              "OvladaË OSS"
+    IDS_DRIVER_JACK             "OvladaË JACK"
+    IDS_DRIVER_NAS              "OvladaË NAS"
+    IDS_DRIVER_AUDIOIO          "OvladaË Audio IO (Solaris)"
+    IDS_DRIVER_COREAUDIO        "OvladaË CoreAudio"
+    IDS_OPEN_DRIVER_ERROR       "Nemohu otev¯Ìt %s!"
+    IDS_SOUNDDRIVERS            "OvladaËe zvuku"
+    IDS_DEVICES_WAVEOUT         "Za¯ÌzenÌ Wave V˝stup"
+    IDS_DEVICES_WAVEIN          "Za¯ÌzenÌ Wave Vstup"
+    IDS_DEVICES_MIDIOUT         "Za¯ÌzenÌ MIDI V˝stup"
+    IDS_DEVICES_MIDIIN          "Za¯ÌzenÌ MIDI Vstup"
+    IDS_DEVICES_AUX             "Za¯ÌzenÌ Aux"
+    IDS_DEVICES_MIXER           "Za¯ÌzenÌ MÌch·nÌ"
+    IDS_UNAVAILABLE_DRIVER      "V registru byl nalezen ovladaË, kter˝ nenÌ k dispozici!\n\nOdstranit ì%sî z registru?"
+    IDS_WARNING                 "Varov·nÌ"
+END
+
+/* text - font or string ? */
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDC_SYSPARAMS_BUTTON            "PozadÌ ovl·dacÌch prvk˘"
+    IDC_SYSPARAMS_BUTTON_TEXT       "PÌsmo ovl·dacÌch prvk˘"
+    IDC_SYSPARAMS_DESKTOP           "Plocha"
+    IDC_SYSPARAMS_MENU              "PozadÌ menu"
+    IDC_SYSPARAMS_MENU_TEXT         "PÌsmo menu"
+    IDC_SYSPARAMS_SCROLLBAR         "RolovacÌ pruh"
+    IDC_SYSPARAMS_SELECTION         "PozadÌ v˝bÏru"
+    IDC_SYSPARAMS_SELECTION_TEXT    "PÌsmo v˝bÏru"
+    IDC_SYSPARAMS_TOOLTIP           "PozadÌ tipu"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "PÌsmo tipu"
+    IDC_SYSPARAMS_WINDOW            "PozadÌ okna"
+    IDC_SYSPARAMS_WINDOW_TEXT       "PÌsmo okna"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "PozadÌ titulku aktivnÌho okna"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "PÌsmo titulku aktivnÌho okna"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "PozadÌ titulku neaktivnÈho okna"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "PÌsmo titulku neaktivnÌho okna"
 END
