@@ -162,7 +162,8 @@ BEGIN
     GROUPBOX        " Driver Selection ",IDC_STATIC,8,4,244,195
     LTEXT           "Select a sound driver by checking the box of the desired driver.  Disable sound by not selecting any driver. Selection of multiple drivers is not recommended. Configure a driver by right-clicking on it.",IDC_STATIC,15,20,227,30
     CONTROL         "Devices",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140 
-    PUSHBUTTON	    "Control Panel",IDC_AUDIO_CONTROL_PANEL,170,50,59,14
+    PUSHBUTTON      "Test Sound",IDC_AUDIO_TEST,170,50,59,14
+    PUSHBUTTON	    "Control Panel",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Hardware Acceleration: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP

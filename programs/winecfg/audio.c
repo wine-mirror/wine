@@ -731,6 +731,9 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           case IDC_AUDIO_CONFIGURE:
 	     configureAudioDriver(hDlg);
 	     break;
+          case IDC_AUDIO_TEST:
+             MessageBox(NULL, "Audio Test not implemented yet!", "Fixme", MB_OK | MB_ICONERROR);
+             break;
           case IDC_AUDIO_CONTROL_PANEL:
 	     MessageBox(NULL, "Launching audio control panel not implemented yet!", "Fixme", MB_OK | MB_ICONERROR);
              break;

@@ -159,16 +159,17 @@
 
 /* audio tab */
 #define IDC_AUDIO_CONFIGURE             1300
-#define IDC_AUDIO_CONTROL_PANEL         1301
-#define IDC_DSOUND_HW_ACCEL             1302
-#define IDC_DSOUND_DRV_EMUL             1303
-#define IDC_AUDIO_TREE			1304
-#define IDR_WINECFG			1305
-#define IDB_CHECKBOX                    1306
-#define IDB_DEVICE                      1307
-#define IDS_AUDIO_MISSING               1308
-#define IDC_DSOUND_RATES                1309
-#define IDC_DSOUND_BITS                 1310
+#define IDC_AUDIO_TEST                  1301
+#define IDC_AUDIO_CONTROL_PANEL         1302
+#define IDC_DSOUND_HW_ACCEL             1303
+#define IDC_DSOUND_DRV_EMUL             1304
+#define IDC_AUDIO_TREE			1305
+#define IDR_WINECFG			1306
+#define IDB_CHECKBOX                    1307
+#define IDB_DEVICE                      1308
+#define IDS_AUDIO_MISSING               1309
+#define IDC_DSOUND_RATES                1310
+#define IDC_DSOUND_BITS                 1311
 #define IDS_ACCEL_FULL                  8300
 #define IDS_ACCEL_STANDARD              8301
 #define IDS_ACCEL_BASIC                 8302
