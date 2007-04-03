@@ -240,6 +240,7 @@ static const TransformFuncsTable ACMWrapper_FuncsTable = {
     NULL,
     ACMWrapper_ProcessSampleData,
     NULL,
+    NULL,
     ACMWrapper_ConnectInput,
     ACMWrapper_Cleanup
 };

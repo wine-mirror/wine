@@ -24,6 +24,7 @@ typedef struct TransformFuncsTable {
     HRESULT (*pfnProcessBegin) (TransformFilterImpl* This);
     HRESULT (*pfnProcessSampleData) (TransformFilterImpl* This, LPBYTE data, DWORD size);
     HRESULT (*pfnProcessEnd) (TransformFilterImpl* This);
+    HRESULT (*pfnQueryConnect) (TransformFilterImpl* This, const AM_MEDIA_TYPE * pmt);
     HRESULT (*pfnConnectInput) (TransformFilterImpl* This, const AM_MEDIA_TYPE * pmt);
     HRESULT (*pfnCleanup) (TransformFilterImpl* This);
 } TransformFuncsTable;

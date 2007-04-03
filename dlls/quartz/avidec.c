@@ -261,6 +261,7 @@ static const TransformFuncsTable AVIDec_FuncsTable = {
     AVIDec_ProcessBegin,
     AVIDec_ProcessSampleData,
     AVIDec_ProcessEnd,
+    NULL,
     AVIDec_ConnectInput,
     AVIDec_Cleanup
 };

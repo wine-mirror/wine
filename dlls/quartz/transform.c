@@ -97,12 +97,14 @@ static HRESULT TransformFilter_Sample(LPVOID iface, IMediaSample * pSample)
 
 static HRESULT TransformFilter_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 {
-    /* TransformFilterImpl* This = (TransformFilterImpl*)iface; */
+    TransformFilterImpl* This = (TransformFilterImpl*)iface;
     TRACE("%p\n", iface);
     dump_AM_MEDIA_TYPE(pmt);
 
-    /* FIXME: Add a function to verify media type with the actual filter */
-    /* return This->pFuncsTable->pfnConnectInput(This, pmt); */
+    if (This->pFuncsTable->pfnQueryConnect)
+        return This->pFuncsTable->pfnQueryConnect(This, pmt);
+    /* Assume OK if there's no query method (the connection will fail if
+       needed) */
     return S_OK;
 }
 
