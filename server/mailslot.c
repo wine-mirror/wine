@@ -208,17 +208,6 @@ static void mailslot_dump( struct object *obj, int verbose )
              mailslot->max_msgsize, mailslot->read_timeout );
 }
 
-static int mailslot_message_count(struct mailslot *mailslot)
-{
-    struct pollfd pfd;
-
-    /* poll the socket to see if there's any messages */
-    pfd.fd = get_unix_fd( mailslot->fd );
-    pfd.events = POLLIN;
-    pfd.revents = 0;
-    return (poll( &pfd, 1, 0 ) == 1) ? 1 : 0;
-}
-
 static enum server_fd_type mailslot_get_info( struct fd *fd, int *flags )
 {
     struct mailslot *mailslot = get_fd_user( fd );
@@ -286,20 +275,13 @@ static void mailslot_queue_async( struct fd *fd, const async_data_t *data, int t
 
     assert(mailslot->obj.ops == &mailslot_ops);
 
-    if (list_empty( &mailslot->writers ) ||
-        !mailslot_message_count( mailslot ))
-    {
-        set_error(STATUS_IO_TIMEOUT);
-        return;
-    }
-
     if ((async = fd_queue_async( fd, data, type, count )))
     {
         if (mailslot->read_timeout != -1)
         {
             struct timeval when = current_time;
             add_timeout( &when, max(1,mailslot->read_timeout) );
-            async_set_timeout( async, &when );
+            async_set_timeout( async, &when, STATUS_IO_TIMEOUT );
         }
         release_object( async );
         set_error( STATUS_PENDING );

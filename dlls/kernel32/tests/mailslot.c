@@ -299,7 +299,7 @@ static int mailslot_test(void)
     ok( !ReadFile( hSlot, buffer, sizeof buffer, &count, NULL), "slot read\n");
     ok( GetLastError() == ERROR_SEM_TIMEOUT, "wrong error %u\n", GetLastError() );
     dwTimeout = GetTickCount() - dwTimeout;
-    todo_wine ok( dwTimeout >= 1000, "timeout too short %u\n", dwTimeout );
+    ok( dwTimeout >= 1000, "timeout too short %u\n", dwTimeout );
     ok( CloseHandle( hSlot ), "closing the mailslot\n");
 
     return 0;

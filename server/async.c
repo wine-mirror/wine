@@ -38,6 +38,7 @@ struct async
     struct thread       *thread;          /* owning thread */
     struct list          queue_entry;     /* entry in file descriptor queue */
     struct timeout_user *timeout;
+    unsigned int         timeout_status;  /* status to report upon timeout */
     struct event        *event;
     async_data_t         data;            /* data for async I/O call */
 };
@@ -149,7 +150,7 @@ static void async_timeout( void *private )
     struct async *async = private;
 
     async->timeout = NULL;
-    async_terminate( async, STATUS_TIMEOUT );
+    async_terminate( async, async->timeout_status );
 }
 
 /* create a new async queue for a given fd */
@@ -193,11 +194,12 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
 }
 
 /* set the timeout of an async operation */
-void async_set_timeout( struct async *async, const struct timeval *timeout )
+void async_set_timeout( struct async *async, const struct timeval *timeout, unsigned int status )
 {
     if (async->timeout) remove_timeout_user( async->timeout );
     if (timeout) async->timeout = add_timeout_user( timeout, async_timeout, async );
     else async->timeout = NULL;
+    async->timeout_status = status;
 }
 
 /* store the result of the client-side async callback */

@@ -219,7 +219,7 @@ static void serial_queue_async( struct fd *fd, const async_data_t *data, int typ
         {
             struct timeval when = current_time;
             add_timeout( &when, timeout );
-            async_set_timeout( async, &when );
+            async_set_timeout( async, &when, STATUS_TIMEOUT );
         }
         release_object( async );
         set_error( STATUS_PENDING );

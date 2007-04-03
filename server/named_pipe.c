@@ -867,7 +867,7 @@ DECL_HANDLER(wait_named_pipe)
                 struct timeval when = current_time;
                 if (req->timeout == NMPWAIT_USE_DEFAULT_WAIT) add_timeout( &when, pipe->timeout );
                 else add_timeout( &when, req->timeout );
-                async_set_timeout( async, &when );
+                async_set_timeout( async, &when, STATUS_TIMEOUT );
             }
             release_object( async );
             set_error( STATUS_PENDING );
