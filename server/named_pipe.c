@@ -274,7 +274,7 @@ static void named_pipe_destroy( struct object *obj)
 
     assert( list_empty( &pipe->servers ) );
     assert( !pipe->instances );
-    if (pipe->waiters) release_object( pipe->waiters );
+    free_async_queue( pipe->waiters );
 }
 
 static struct fd *pipe_client_get_fd( struct object *obj )
@@ -366,7 +366,7 @@ static void pipe_server_destroy( struct object *obj)
         server->client = NULL;
     }
 
-    release_object( server->wait_q );
+    free_async_queue( server->wait_q );
 
     assert( server->pipe->instances );
     server->pipe->instances--;

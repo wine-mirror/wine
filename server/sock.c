@@ -581,8 +581,8 @@ static void sock_destroy( struct object *obj )
     if ( sock->deferred )
         release_object( sock->deferred );
 
-    if (sock->read_q) release_object( sock->read_q );
-    if (sock->write_q) release_object( sock->write_q );
+    free_async_queue( sock->read_q );
+    free_async_queue( sock->write_q );
     if (sock->event) release_object( sock->event );
     if (sock->fd)
     {

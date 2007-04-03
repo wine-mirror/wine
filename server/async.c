@@ -36,7 +36,8 @@ struct async
 {
     struct object        obj;             /* object header */
     struct thread       *thread;          /* owning thread */
-    struct list          queue_entry;     /* entry in file descriptor queue */
+    struct list          queue_entry;     /* entry in async queue list */
+    struct async_queue  *queue;           /* queue containing this async */
     struct timeout_user *timeout;
     unsigned int         timeout_status;  /* status to report upon timeout */
     struct event        *event;
@@ -72,7 +73,6 @@ struct async_queue
 };
 
 static void async_queue_dump( struct object *obj, int verbose );
-static void async_queue_destroy( struct object *obj );
 
 static const struct object_ops async_queue_ops =
 {
@@ -88,7 +88,7 @@ static const struct object_ops async_queue_ops =
     no_lookup_name,                  /* lookup_name */
     no_open_file,                    /* open_file */
     no_close_handle,                 /* close_handle */
-    async_queue_destroy              /* destroy */
+    no_destroy                       /* destroy */
 };
 
 
@@ -106,6 +106,8 @@ static void async_destroy( struct object *obj )
 
     if (async->timeout) remove_timeout_user( async->timeout );
     if (async->event) release_object( async->event );
+    release_object( async->queue );
+    async->queue = NULL;
     release_object( async->thread );
 }
 
@@ -114,14 +116,6 @@ static void async_queue_dump( struct object *obj, int verbose )
     struct async_queue *async_queue = (struct async_queue *)obj;
     assert( obj->ops == &async_queue_ops );
     fprintf( stderr, "Async queue fd=%p\n", async_queue->fd );
-}
-
-static void async_queue_destroy( struct object *obj )
-{
-    struct async_queue *async_queue = (struct async_queue *)obj;
-    assert( obj->ops == &async_queue_ops );
-
-    async_wake_up( async_queue, STATUS_HANDLES_CLOSED );
 }
 
 /* notifies client thread of new status of its async request */
@@ -166,6 +160,15 @@ struct async_queue *create_async_queue( struct fd *fd )
     return queue;
 }
 
+/* free an async queue, cancelling all async operations */
+void free_async_queue( struct async_queue *queue )
+{
+    if (!queue) return;
+    queue->fd = NULL;
+    async_wake_up( queue, STATUS_HANDLES_CLOSED );
+    release_object( queue );
+}
+
 /* create an async on a given queue of a fd */
 struct async *create_async( struct thread *thread, struct async_queue *queue, const async_data_t *data )
 {
@@ -185,6 +188,7 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
     async->event = event;
     async->data = *data;
     async->timeout = NULL;
+    async->queue = (struct async_queue *)grab_object( queue );
 
     list_add_tail( &queue->queue, &async->queue_entry );
     grab_object( async );

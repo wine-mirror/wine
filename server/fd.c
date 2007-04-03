@@ -1286,9 +1286,9 @@ static void fd_destroy( struct object *obj )
 {
     struct fd *fd = (struct fd *)obj;
 
-    if (fd->read_q) release_object( fd->read_q );
-    if (fd->write_q) release_object( fd->write_q );
-    if (fd->wait_q) release_object( fd->wait_q );
+    free_async_queue( fd->read_q );
+    free_async_queue( fd->write_q );
+    free_async_queue( fd->wait_q );
 
     remove_fd_locks( fd );
     list_remove( &fd->inode_entry );
