@@ -4972,7 +4972,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
     memset(&BltFx, 0, sizeof(BltFx));
     BltFx.dwSize = sizeof(BltFx);
     BltFx.u5.dwFillColor = color;
-    return IWineD3DSurface_Blt(pSurface, (RECT *) pRect, NULL, NULL, DDBLT_COLORFILL, &BltFx);
+    return IWineD3DSurface_Blt(pSurface, (RECT *) pRect, NULL, NULL, DDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
 }
 
 /* rendertarget and deptth stencil functions */

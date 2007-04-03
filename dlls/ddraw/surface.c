@@ -719,7 +719,8 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
                                Src ? Src->WineD3DSurface : NULL,
                                SrcRect,
                                Flags,
-                               DDBltFx);
+                               DDBltFx,
+                               WINED3DTEXF_NONE);
 }
 
 /*****************************************************************************

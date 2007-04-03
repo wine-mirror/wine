@@ -1093,7 +1093,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(GetDC)(THIS_ HDC *pHdc) PURE;
     STDMETHOD(ReleaseDC)(THIS_ HDC hdc) PURE;
     STDMETHOD(Flip)(THIS_ IWineD3DSurface *Override, DWORD FLAGS) PURE;
-    STDMETHOD(Blt)(THIS_ RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) PURE;
+    STDMETHOD(Blt)(THIS_ RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter) PURE;
     STDMETHOD(GetBltStatus)(THIS_ DWORD Flags) PURE;
     STDMETHOD(GetFlipStatus)(THIS_ DWORD Flags) PURE;
     STDMETHOD(IsLost)(THIS) PURE;
@@ -1146,7 +1146,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_GetDC(p,a)                   (p)->lpVtbl->GetDC(p,a)
 #define IWineD3DSurface_ReleaseDC(p,a)               (p)->lpVtbl->ReleaseDC(p,a)
 #define IWineD3DSurface_Flip(p,a,b)                  (p)->lpVtbl->Flip(p,a,b)
-#define IWineD3DSurface_Blt(p,a,b,c,d,e)             (p)->lpVtbl->Blt(p,a,b,c,d,e)
+#define IWineD3DSurface_Blt(p,a,b,c,d,e,f)           (p)->lpVtbl->Blt(p,a,b,c,d,e,f)
 #define IWineD3DSurface_GetBltStatus(p,a)            (p)->lpVtbl->GetBltStatus(p,a)
 #define IWineD3DSurface_GetFlipStatus(p,a)           (p)->lpVtbl->GetFlipStatus(p,a)
 #define IWineD3DSurface_IsLost(p)                    (p)->lpVtbl->IsLost(p)
