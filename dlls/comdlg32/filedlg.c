@@ -3580,7 +3580,7 @@ static BOOL CALLBACK FD32_Init(LPARAM lParam, PFD31_DATA lfs, DWORD data)
  *
  *      called from the common 16/32 code to call the appropriate hook
  */
-static BOOL CALLBACK FD32_CallWindowProc(PFD31_DATA lfs, UINT wMsg, WPARAM wParam,
+static BOOL CALLBACK FD32_CallWindowProc(const FD31_DATA *lfs, UINT wMsg, WPARAM wParam,
                                  LPARAM lParam)
 {
     BOOL ret;
@@ -3608,7 +3608,7 @@ static BOOL CALLBACK FD32_CallWindowProc(PFD31_DATA lfs, UINT wMsg, WPARAM wPara
  *                              FD32_UpdateResult            [internal]
  *          update the real client structures if any
  */
-static void CALLBACK FD32_UpdateResult(PFD31_DATA lfs)
+static void CALLBACK FD32_UpdateResult(const FD31_DATA *lfs)
 {
     PFD32_PRIVATE priv = (PFD32_PRIVATE) lfs->private1632;
     LPOPENFILENAMEW ofnW = lfs->ofnW;
@@ -3628,7 +3628,7 @@ static void CALLBACK FD32_UpdateResult(PFD31_DATA lfs)
  *                              FD32_UpdateFileTitle            [internal]
  *          update the real client structures if any
  */
-static void CALLBACK FD32_UpdateFileTitle(PFD31_DATA lfs)
+static void CALLBACK FD32_UpdateFileTitle(const FD31_DATA *lfs)
 {
     PFD32_PRIVATE priv = (PFD32_PRIVATE) lfs->private1632;
     LPOPENFILENAMEW ofnW = lfs->ofnW;
@@ -3646,7 +3646,7 @@ static void CALLBACK FD32_UpdateFileTitle(PFD31_DATA lfs)
  *                              FD32_SendLbGetCurSel         [internal]
  *          retrieve selected listbox item
  */
-static LRESULT CALLBACK FD32_SendLbGetCurSel(PFD31_DATA lfs)
+static LRESULT CALLBACK FD32_SendLbGetCurSel(const FD31_DATA *lfs)
 {
     return SendDlgItemMessageW(lfs->hwnd, lst1, LB_GETCURSEL, 0, 0);
 }
@@ -3656,7 +3656,7 @@ static LRESULT CALLBACK FD32_SendLbGetCurSel(PFD31_DATA lfs)
  *                              FD32_Destroy          [internal]
  *      called from the common 16/32 code to cleanup 32 bit data
  */
-static void CALLBACK FD32_Destroy(PFD31_DATA lfs)
+static void CALLBACK FD32_Destroy(const FD31_DATA *lfs)
 {
     PFD32_PRIVATE priv = (PFD32_PRIVATE) lfs->private1632;
 
