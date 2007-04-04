@@ -30,9 +30,9 @@ BEGIN
     BEGIN
         MENUITEM "Za&koñcz",                       ID_REGISTRY_EXIT
     END
-    POPUP "&Help"
+    POPUP "&Pomoc"
     BEGIN
-        MENUITEM "&About ...",                  ID_HELP_ABOUT
+        MENUITEM "&O programie...",                  ID_HELP_ABOUT
     END
 END
 
@@ -61,6 +61,7 @@ BEGIN
             MENUITEM "&Dana tekstowa",       ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Dana binarna",        ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&Dana liczbowa (DWORD)",ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Dana wielotekstowa (MULTISZ)",ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "U&suñ\tDel",                  ID_EDIT_DELETE
@@ -111,6 +112,7 @@ BEGIN
             MENUITEM "&Dana tekstowa",        ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Dana binarna",         ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&Dana liczbowa (DWORD)",ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Dana wielotekstowa (MULTISZ)",ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "U&suñ\tDel",                  ID_EDIT_DELETE
@@ -218,6 +220,19 @@ BEGIN
     PUSHBUTTON   "Anuluj",IDCANCEL,175,80,30,11,WS_GROUP
 END
 
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Edycja danej wielotekstowej"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nazwa:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Wartoœæ:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "OK",IDOK,140,160,30,11,WS_GROUP
+    PUSHBUTTON   "Anuluj",IDCANCEL,175,160,30,11,WS_GROUP
+END
+
 /*
  * String Table
  */
@@ -253,6 +268,7 @@ BEGIN
     ID_EDIT_NEW_STRINGVALUE "Dodaje now¹ dan¹ tekstow¹"
     ID_EDIT_NEW_BINARYVALUE "Dodaje now¹ dan¹ binarn¹"
     ID_EDIT_NEW_DWORDVALUE  "Dodaje now¹ dan¹ liczbow¹"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Dodaj now¹ dan¹ wielotekstow¹ (MULTISZ)"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importuje plik tekstowy do rejestru"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Eksportuje czêœæ lub ca³oœæ rejestru do pliku tekstowego"
