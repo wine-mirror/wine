@@ -76,7 +76,7 @@ static const IServiceProviderVtbl IShellBrowserImpl_IServiceProvider_Vtbl;
 *   Local Prototypes
 */
 
-static HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IShellView *ppshv);
+static HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, const IShellView *ppshv);
 
 /*
  *   Helper functions
@@ -125,7 +125,7 @@ static void COMDLG32_DumpSBSPFlags(UINT uflags)
     }
 }
 
-static void COMDLG32_UpdateCurrentDir(FileOpenDlgInfos *fodInfos)
+static void COMDLG32_UpdateCurrentDir(const FileOpenDlgInfos *fodInfos)
 {
     LPSHELLFOLDER psfDesktop;
     STRRET strret;
@@ -895,7 +895,7 @@ static HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBr
 /**************************************************************************
 *  IShellBrowserImpl_ICommDlgBrowser_OnSelChange
 */
-static HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IShellView *ppshv)
+static HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, const IShellView *ppshv)
 {
     FileOpenDlgInfos *fodInfos;
 
