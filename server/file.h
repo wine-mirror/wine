@@ -63,9 +63,8 @@ extern int check_fd_events( struct fd *fd, int events );
 extern void set_fd_events( struct fd *fd, int events );
 extern obj_handle_t lock_fd( struct fd *fd, file_pos_t offset, file_pos_t count, int shared, int wait );
 extern void unlock_fd( struct fd *fd, file_pos_t offset, file_pos_t count );
+extern void set_fd_signaled( struct fd *fd, int signaled );
 
-extern int default_fd_add_queue( struct object *obj, struct wait_queue_entry *entry );
-extern void default_fd_remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int default_fd_signaled( struct object *obj, struct thread *thread );
 extern int default_fd_get_poll_events( struct fd *fd );
 extern void default_poll_event( struct fd *fd, int event );

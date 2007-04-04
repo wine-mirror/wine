@@ -193,6 +193,7 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
     list_add_tail( &queue->queue, &async->queue_entry );
     grab_object( async );
 
+    if (queue->fd) set_fd_signaled( queue->fd, 0 );
     if (event) reset_event( event );
     return async;
 }
@@ -230,6 +231,7 @@ void async_set_result( struct object *obj, unsigned int status )
             thread_queue_apc( async->thread, NULL, &data );
         }
         if (async->event) set_event( async->event );
+        else if (async->queue->fd) set_fd_signaled( async->queue->fd, 1 );
     }
 }
 

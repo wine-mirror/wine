@@ -168,6 +168,7 @@ struct fd
     unsigned int         access;      /* file access (FILE_READ_DATA etc.) */
     unsigned int         sharing;     /* file sharing mode */
     int                  unix_fd;     /* unix file descriptor */
+    int                  signaled :1; /* is the fd signaled? */
     int                  fs_locks :1; /* can we use filesystem locks for this fd? */
     int                  unmounted :1;/* has the device been unmounted? */
     int                  poll_index;  /* index of fd in poll array */
@@ -1360,6 +1361,7 @@ static struct fd *alloc_fd_object(void)
     fd->access     = 0;
     fd->sharing    = 0;
     fd->unix_fd    = -1;
+    fd->signaled   = 1;
     fd->fs_locks   = 1;
     fd->unmounted  = 0;
     fd->poll_index = -1;
@@ -1391,6 +1393,7 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     fd->access     = 0;
     fd->sharing    = 0;
     fd->unix_fd    = -1;
+    fd->signaled   = 0;
     fd->fs_locks   = 0;
     fd->unmounted  = 0;
     fd->poll_index = -1;
@@ -1610,6 +1613,13 @@ int is_fd_removable( struct fd *fd )
     return (fd->inode && fd->inode->device->removable);
 }
 
+/* set or clear the fd signaled state */
+void set_fd_signaled( struct fd *fd, int signaled )
+{
+    fd->signaled = signaled;
+    if (signaled) wake_up( fd->user, 0 );
+}
+
 /* handler for close_handle that refuses to close fd-associated handles in other processes */
 int fd_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
@@ -1635,55 +1645,11 @@ int check_fd_events( struct fd *fd, int events )
     return pfd.revents;
 }
 
-/* default add_queue() routine for objects that poll() on an fd */
-int default_fd_add_queue( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct fd *fd = get_obj_fd( obj );
-
-    if (!fd) return 0;
-    if (!fd->inode && list_empty( &obj->wait_queue ))  /* first on the queue */
-        set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
-    add_queue( obj, entry );
-    release_object( fd );
-    return 1;
-}
-
-/* default remove_queue() routine for objects that poll() on an fd */
-void default_fd_remove_queue( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct fd *fd = get_obj_fd( obj );
-
-    grab_object( obj );
-    remove_queue( obj, entry );
-    if (!fd->inode && list_empty( &obj->wait_queue ))  /* last on the queue is gone */
-        set_fd_events( fd, 0 );
-    release_object( obj );
-    release_object( fd );
-}
-
 /* default signaled() routine for objects that poll() on an fd */
 int default_fd_signaled( struct object *obj, struct thread *thread )
 {
-    int events, ret;
     struct fd *fd = get_obj_fd( obj );
-
-    if (fd->inode) ret = 1; /* regular files are always signaled */
-    else
-    {
-        events = fd->fd_ops->get_poll_events( fd );
-        ret = check_fd_events( fd, events ) != 0;
-
-        if (ret)
-        {
-            /* stop waiting on select() if we are signaled */
-            set_fd_events( fd, 0 );
-        }
-        else if (!list_empty( &obj->wait_queue ))
-        {
-            /* restart waiting on poll() if we are no longer signaled */
-            set_fd_events( fd, events );
-        }
-    }
+    int ret = fd->signaled;
     release_object( fd );
     return ret;
 }
@@ -1705,7 +1671,7 @@ void default_poll_event( struct fd *fd, int event )
 
     /* if an error occurred, stop polling this fd to avoid busy-looping */
     if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
-    wake_up( fd->user, 0 );
+    else set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
 }
 
 struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
