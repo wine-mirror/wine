@@ -173,11 +173,15 @@ static CRITICAL_SECTION csOpenDllList = { &dll_cs_debug, -1, 0, 0, 0, 0 };
 static const WCHAR wszAptWinClass[] = {'O','l','e','M','a','i','n','T','h','r','e','a','d','W','n','d','C','l','a','s','s',' ',
                                        '0','x','#','#','#','#','#','#','#','#',' ',0};
 static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
+                                        REFCLSID rclsid, REFIID riid, void **ppv);
 
 static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret);
 static OpenDll *COMPOBJ_DllList_Get(LPCWSTR library_name);
 static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry);
 static void COMPOBJ_DllList_FreeUnused(int Timeout);
+
+static DWORD COM_RegReadPath(HKEY hkeyroot, const WCHAR *keyname, const WCHAR *valuename, WCHAR * dst, DWORD dstlen);
 
 static void COMPOBJ_InitProcess( void )
 {
@@ -479,15 +483,24 @@ struct host_object_params
     IStream *stream; /* stream that the object will be marshaled into */
 };
 
-static HRESULT apartment_hostobject(const struct host_object_params *params)
+static HRESULT apartment_hostobject(struct apartment *apt,
+                                    const struct host_object_params *params)
 {
     IUnknown *object;
     HRESULT hr;
     static const LARGE_INTEGER llZero;
+    WCHAR dllpath[MAX_PATH+1];
 
     TRACE("\n");
 
-    hr = get_inproc_class_object(params->hkeydll, &params->clsid, &params->iid, (void **)&object);
+    if (COM_RegReadPath(params->hkeydll, NULL, NULL, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
+    {
+        /* failure: CLSID is not found in registry */
+        WARN("class %s not registered inproc\n", debugstr_guid(&params->clsid));
+        return REGDB_E_CLASSNOTREG;
+    }
+
+    hr = apartment_getclassobject(apt, dllpath, &params->clsid, &params->iid, (void **)&object);
     if (FAILED(hr))
         return hr;
 
@@ -507,7 +520,7 @@ static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LP
         RPC_ExecuteCall((struct dispatch_params *)lParam);
         return 0;
     case DM_HOSTOBJECT:
-        return apartment_hostobject((const struct host_object_params *)lParam);
+        return apartment_hostobject(COM_CurrentApt(), (const struct host_object_params *)lParam);
     default:
         return DefWindowProcW(hWnd, msg, wParam, lParam);
     }
@@ -546,6 +559,37 @@ void apartment_joinmta(void)
 {
     apartment_addref(MTA);
     COM_CurrentInfo()->apt = MTA;
+}
+
+static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
+                                        REFCLSID rclsid, REFIID riid, void **ppv)
+{
+    typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, REFIID iid, LPVOID *ppv);
+    DllGetClassObjectFunc DllGetClassObject;
+    OpenDll *open_dll_entry;
+    HRESULT hr;
+
+    hr = COMPOBJ_DllList_Add( dllpath, &open_dll_entry );
+    if (FAILED(hr))
+    {
+        ERR("couldn't load in-process dll %s\n", debugstr_w(dllpath));
+        return hr;
+    }
+
+    if (!(DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress(open_dll_entry->library, "DllGetClassObject")))
+    {
+        /* failure: the dll did not export DllGetClassObject */
+        ERR("couldn't find function DllGetClassObject in %s\n", debugstr_w(dllpath));
+        return CO_E_DLLNOTFOUND;
+    }
+
+    /* OK: get the ClassObject */
+    hr = DllGetClassObject(rclsid, riid, ppv);
+
+    if (hr != S_OK)
+        ERR("DllGetClassObject returned error 0x%08x\n", hr);
+
+    return hr;
 }
 
 /*****************************************************************************
@@ -1769,18 +1813,15 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
     static const WCHAR wszApartment[] = {'A','p','a','r','t','m','e','n','t',0};
     static const WCHAR wszFree[] = {'F','r','e','e',0};
     static const WCHAR wszBoth[] = {'B','o','t','h',0};
-    typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, REFIID iid, LPVOID *ppv);
-    DllGetClassObjectFunc DllGetClassObject;
     WCHAR dllpath[MAX_PATH+1];
     WCHAR threading_model[10 /* strlenW(L"apartment")+1 */];
     HRESULT hr;
-    OpenDll *open_dll_entry;
+    APARTMENT *apt = COM_CurrentApt();
 
     get_threading_model(hkeydll, threading_model, ARRAYSIZE(threading_model));
     /* "Apartment" */
     if (!strcmpiW(threading_model, wszApartment))
     {
-        APARTMENT *apt = COM_CurrentApt();
         if (apt->multi_threaded)
         {
             /* try to find an STA */
@@ -1809,7 +1850,6 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
     /* "Free" */
     else if (!strcmpiW(threading_model, wszFree))
     {
-        APARTMENT *apt = COM_CurrentApt();
         if (!apt->multi_threaded)
         {
             FIXME("should create object %s in multi-threaded apartment\n",
@@ -1819,8 +1859,6 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
     /* everything except "Apartment", "Free" and "Both" */
     else if (strcmpiW(threading_model, wszBoth))
     {
-        APARTMENT *apt = COM_CurrentApt();
-
         /* everything else is main-threaded */
         if (threading_model[0])
             FIXME("unrecognised threading model %s for object %s, should be main-threaded?\n",
@@ -1859,27 +1897,7 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
         return REGDB_E_CLASSNOTREG;
     }
 
-    hr = COMPOBJ_DllList_Add( dllpath, &open_dll_entry );
-    if (FAILED(hr))
-    {
-        ERR("couldn't load in-process dll %s\n", debugstr_w(dllpath));
-        return hr;
-    }
-
-    if (!(DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress(open_dll_entry->library, "DllGetClassObject")))
-    {
-        /* failure: the dll did not export DllGetClassObject */
-        ERR("couldn't find function DllGetClassObject in %s\n", debugstr_w(dllpath));
-        return CO_E_DLLNOTFOUND;
-    }
-
-    /* OK: get the ClassObject */
-    hr = DllGetClassObject(rclsid, riid, ppv);
-
-    if (hr != S_OK)
-        ERR("DllGetClassObject returned error 0x%08x\n", hr);
-
-    return hr;
+    return apartment_getclassobject(apt, dllpath, rclsid, riid, ppv);
 }
 
 /***********************************************************************
