@@ -74,8 +74,59 @@ static void test_SQLInstallerError(void)
     ok(sql_ret == SQL_SUCCESS_WITH_INFO, "SQLInstallerError(null addresses) failed with %d instead of SQL_SUCCESS_WITH_INFO\n", sql_ret);
 }
 
+static void test_SQLInstallDriverManager(void)
+{
+    BOOL bool_ret;
+    RETCODE sql_ret;
+    DWORD error_code;
+    CHAR target_path[MAX_PATH];
+    WORD path_out;
+
+    /* NULL check */
+    bool_ret = SQLInstallDriverManager(NULL, 0, NULL);
+    sql_ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
+    ok(!bool_ret, "SQLInstallDriverManager unexpectedly succeeded\n");
+    todo_wine
+    ok(sql_ret == SQL_SUCCESS_WITH_INFO && error_code == ODBC_ERROR_INVALID_BUFF_LEN,
+        "Expected SQLInstallDriverManager to fail with ODBC_ERROR_INVALID_BUFF_LEN\n");
+
+    /* Length smaller then MAX_PATH */
+    bool_ret = SQLInstallDriverManager(target_path, MAX_PATH / 2, NULL);
+    sql_ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
+    todo_wine {
+    ok(!bool_ret, "SQLInstallDriverManager unexpectedly succeeded\n");
+    ok(sql_ret == SQL_SUCCESS_WITH_INFO && error_code == ODBC_ERROR_INVALID_BUFF_LEN,
+        "Expected SQLInstallDriverManager to fail with ODBC_ERROR_INVALID_BUFF_LEN\n");
+    }
+
+    path_out = 0xcafe;
+    bool_ret = SQLInstallDriverManager(target_path, MAX_PATH / 2, &path_out);
+    sql_ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
+    todo_wine {
+    ok(!bool_ret, "SQLInstallDriverManager unexpectedly succeeded\n");
+    ok(sql_ret == SQL_SUCCESS_WITH_INFO && error_code == ODBC_ERROR_INVALID_BUFF_LEN,
+        "Expected SQLInstallDriverManager to fail with ODBC_ERROR_INVALID_BUFF_LEN\n");
+    ok(path_out == 0xcafe, "Expected path_out to not have changed\n");
+    }
+
+    /* Length OK */
+    bool_ret = SQLInstallDriverManager(target_path, MAX_PATH, NULL);
+    sql_ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
+    ok(bool_ret, "SQLInstallDriverManager unexpectedly failed\n");
+    ok(sql_ret == SQL_NO_DATA, "Expected SQL_NO_DATA, got %d\n", sql_ret);
+
+    path_out = 0xcafe;
+    bool_ret = SQLInstallDriverManager(target_path, MAX_PATH, &path_out);
+    sql_ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
+    ok(bool_ret, "SQLInstallDriverManager unexpectedly failed\n");
+    ok(sql_ret == SQL_NO_DATA, "Expected SQL_NO_DATA, got %d\n", sql_ret);
+    /* path_out should in practice be less then 0xcafe */
+    ok(path_out != 0xcafe, "Expected path_out to show the correct amount of bytes\n");
+}
+
 START_TEST(misc)
 {
     test_SQLConfigMode();
     test_SQLInstallerError();
+    test_SQLInstallDriverManager();
 }
