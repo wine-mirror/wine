@@ -3188,13 +3188,12 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
     }
     SERVER_END_REQ;
 
-    /* Add the thread event to the handle list */
+    /* add the queue to the handle list */
     for (i = 0; i < count; i++) handles[i] = pHandles[i];
     handles[count] = get_server_queue_handle();
 
     ReleaseThunkLock( &lock );
     ret = USER_Driver->pMsgWaitForMultipleObjectsEx( count+1, handles, timeout, mask, flags );
-    if (ret == count+1) ret = count; /* pretend the msg queue is ready */
     if (lock) RestoreThunkLock( lock );
     return ret;
 }

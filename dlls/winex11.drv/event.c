@@ -278,32 +278,26 @@ static int process_events( Display *display, ULONG_PTR mask )
 DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                           DWORD timeout, DWORD mask, DWORD flags )
 {
-    DWORD i, ret;
+    DWORD ret;
     struct x11drv_thread_data *data = TlsGetValue( thread_data_tls_index );
 
-    if (!data || data->process_event_count)
+    if (!data)
     {
         if (!count && !timeout) return WAIT_TIMEOUT;
         return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
                                          timeout, flags & MWMO_ALERTABLE );
     }
 
-    /* check whether only server queue handle was passed in */
-    if (count < 2) flags &= ~MWMO_WAITALL;
+    if (data->process_event_count) mask = 0;  /* don't process nested events */
 
     data->process_event_count++;
 
-    if (process_events( data->display, mask )) ret = count;
+    if (process_events( data->display, mask )) ret = count - 1;
     else if (count || timeout)
     {
-        HANDLE new_handles[MAXIMUM_WAIT_OBJECTS+1];  /* FIXME! */
-
-        for (i = 0; i < count; i++) new_handles[i] = handles[i];
-        new_handles[count] = data->display_fd;
-
-        ret = WaitForMultipleObjectsEx( count+1, new_handles, flags & MWMO_WAITALL,
+        ret = WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
                                         timeout, flags & MWMO_ALERTABLE );
-        if (ret == count) process_events( data->display, mask );
+        if (ret == count - 1) process_events( data->display, mask );
     }
     else ret = WAIT_TIMEOUT;
 

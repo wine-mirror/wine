@@ -459,7 +459,6 @@ static void thread_detach(void)
     if (data)
     {
         X11DRV_ResetSelectionOwner();
-        CloseHandle( data->display_fd );
         wine_tsx11_lock();
         if (data->xim) XCloseIM( data->xim );
         XCloseDisplay( data->display );
@@ -486,6 +485,32 @@ static void process_detach(void)
 
     DeleteCriticalSection( &X11DRV_CritSection );
     TlsFree( thread_data_tls_index );
+}
+
+
+/* store the display fd into the message queue */
+static void set_queue_display_fd( Display *display )
+{
+    HANDLE handle;
+    int ret;
+
+    if (wine_server_fd_to_handle( ConnectionNumber(display), GENERIC_READ | SYNCHRONIZE, 0, &handle ))
+    {
+        MESSAGE( "x11drv: Can't allocate handle for display fd\n" );
+        ExitProcess(1);
+    }
+    SERVER_START_REQ( set_queue_fd )
+    {
+        req->handle = handle;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (ret)
+    {
+        MESSAGE( "x11drv: Can't store handle for display fd\n" );
+        ExitProcess(1);
+    }
+    CloseHandle( handle );
 }
 
 
@@ -535,12 +560,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     else if (!(data->xim = X11DRV_SetupXIM( data->display, input_style )))
         WARN("Input Method is not available\n");
 
-    if (wine_server_fd_to_handle( ConnectionNumber(data->display), GENERIC_READ | SYNCHRONIZE,
-                                  0, &data->display_fd ))
-    {
-        MESSAGE( "x11drv: Can't allocate handle for display fd\n" );
-        ExitProcess(1);
-    }
+    set_queue_display_fd( data->display );
     data->process_event_count = 0;
     data->cursor = None;
     data->cursor_window = None;
