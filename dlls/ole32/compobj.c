@@ -174,7 +174,7 @@ static const WCHAR wszAptWinClass[] = {'O','l','e','M','a','i','n','T','h','r','
                                        '0','x','#','#','#','#','#','#','#','#',' ',0};
 static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, HANDLE hLibrary, OpenDll **ret);
+static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret);
 static OpenDll *COMPOBJ_DllList_Get(LPCWSTR library_name);
 static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry);
 static void COMPOBJ_DllList_FreeUnused(int Timeout);
@@ -553,18 +553,37 @@ void apartment_joinmta(void)
  */
 
 /* caller must ensure that library_name is not already in the open dll list */
-static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, HANDLE hLibrary, OpenDll **ret)
+static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret)
 {
     OpenDll *entry;
     int len;
     HRESULT hr = S_OK;
+    HANDLE hLibrary;
 
     TRACE("\n");
+
+    *ret = COMPOBJ_DllList_Get(library_name);
+    if (*ret) return S_OK;
+
+    /* do this outside the csOpenDllList to avoid creating a lock dependency on
+     * the loader lock */
+    hLibrary = LoadLibraryExW(library_name, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+    if (!hLibrary)
+    {
+        /* failure: DLL could not be loaded */
+        return E_ACCESSDENIED; /* FIXME: or should this be CO_E_DLLNOTFOUND? */
+    }
 
     EnterCriticalSection( &csOpenDllList );
 
     *ret = COMPOBJ_DllList_Get(library_name);
-    if (!*ret)
+    if (*ret)
+    {
+        /* another caller to this function already added the dll while we
+         * weren't in the critical section */
+        FreeLibrary(hLibrary);
+    }
+    else
     {
         len = strlenW(library_name);
         entry = HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
@@ -578,7 +597,10 @@ static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, HANDLE hLibrary, OpenDl
             list_add_tail(&openDllList, &entry->entry);
         }
         else
+        {
             hr = E_OUTOFMEMORY;
+            FreeLibrary(hLibrary);
+        }
         *ret = entry;
     }
 
@@ -1747,7 +1769,6 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
     static const WCHAR wszApartment[] = {'A','p','a','r','t','m','e','n','t',0};
     static const WCHAR wszFree[] = {'F','r','e','e',0};
     static const WCHAR wszBoth[] = {'B','o','t','h',0};
-    HINSTANCE hLibrary;
     typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, REFIID iid, LPVOID *ppv);
     DllGetClassObjectFunc DllGetClassObject;
     WCHAR dllpath[MAX_PATH+1];
@@ -1838,20 +1859,17 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
         return REGDB_E_CLASSNOTREG;
     }
 
-    if ((hLibrary = LoadLibraryExW(dllpath, 0, LOAD_WITH_ALTERED_SEARCH_PATH)) == 0)
+    hr = COMPOBJ_DllList_Add( dllpath, &open_dll_entry );
+    if (FAILED(hr))
     {
-        /* failure: DLL could not be loaded */
         ERR("couldn't load in-process dll %s\n", debugstr_w(dllpath));
-        return E_ACCESSDENIED; /* FIXME: or should this be CO_E_DLLNOTFOUND? */
+        return hr;
     }
 
-    COMPOBJ_DllList_Add( dllpath, hLibrary, &open_dll_entry );
-
-    if (!(DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress(hLibrary, "DllGetClassObject")))
+    if (!(DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress(open_dll_entry->library, "DllGetClassObject")))
     {
         /* failure: the dll did not export DllGetClassObject */
         ERR("couldn't find function DllGetClassObject in %s\n", debugstr_w(dllpath));
-        FreeLibrary( hLibrary );
         return CO_E_DLLNOTFOUND;
     }
 
