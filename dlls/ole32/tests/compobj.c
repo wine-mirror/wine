@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "shlguid.h"
+#include "urlmon.h" /* for CLSID_FileProtocol */
 
 #include "wine/test.h"
 
@@ -701,6 +702,57 @@ static void test_CoRegisterClassObject(void)
     CoUninitialize();
 }
 
+static DWORD CALLBACK free_libraries_thread(LPVOID p)
+{
+    CoFreeUnusedLibraries();
+    return 0;
+}
+
+static inline BOOL is_module_loaded(const char *module)
+{
+    return GetModuleHandle(module) ? TRUE : FALSE;
+}
+
+static void test_CoFreeUnusedLibraries(void)
+{
+    HRESULT hr;
+    IUnknown *pUnk;
+    DWORD tid;
+    HANDLE thread;
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    ok(!is_module_loaded("urlmon.dll"), "urlmon.dll shouldn't be loaded\n");
+
+    hr = CoCreateInstance(&CLSID_FileProtocol, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        trace("IE not installed so can't run CoFreeUnusedLibraries test\n");
+        return;
+    }
+    ok_ole_success(hr, "CoCreateInstance");
+
+    ok(is_module_loaded("urlmon.dll"), "urlmon.dll should be loaded\n");
+
+    IUnknown_Release(pUnk);
+
+    ok(is_module_loaded("urlmon.dll"), "urlmon.dll should be loaded\n");
+
+    thread = CreateThread(NULL, 0, free_libraries_thread, NULL, 0, &tid);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    todo_wine
+    ok(is_module_loaded("urlmon.dll"), "urlmon.dll should be loaded\n");
+
+    CoFreeUnusedLibraries();
+
+    ok(!is_module_loaded("urlmon.dll"), "urlmon.dll shouldn't be loaded\n");
+
+    CoUninitialize();
+}
+
+
 START_TEST(compobj)
 {
     HMODULE hOle32 = GetModuleHandle("ole32");
@@ -724,4 +776,5 @@ START_TEST(compobj)
     test_CoMarshalInterface();
     test_CoMarshalInterThreadInterfaceInStream();
     test_CoRegisterClassObject();
+    test_CoFreeUnusedLibraries();
 }
