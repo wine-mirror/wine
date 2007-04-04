@@ -120,10 +120,10 @@ QueryPathOfRegTypeLib16(
  *  Both parameters are FAR pointers.
  */
 HRESULT WINAPI LoadTypeLib16(
-    LPOLESTR szFile, /* [in] Name of file to load from */
+    LPSTR szFile, /* [in] Name of file to load from */
     ITypeLib** pptLib) /* [out] Destination for loaded ITypeLib interface */
 {
-    FIXME("(%s,%p): stub\n",debugstr_w((LPWSTR)szFile),pptLib);
+    FIXME("(%s,%p): stub\n",debugstr_a(szFile),pptLib);
 
     if (pptLib!=0)
       *pptLib=0;
