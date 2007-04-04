@@ -151,11 +151,16 @@ static CRITICAL_SECTION csRegisteredClassList = { &class_cs_debug, -1, 0, 0, 0, 
  * next unload-call but not before 600 sec.
  */
 
+typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, REFIID iid, LPVOID *ppv);
+typedef HRESULT (WINAPI *DllCanUnloadNowFunc)(void);
+
 typedef struct tagOpenDll
 {
   LONG refs;
   LPWSTR library_name;
   HANDLE library;
+  DllGetClassObjectFunc DllGetClassObject;
+  DllCanUnloadNowFunc DllCanUnloadNow;
   struct list entry;
 } OpenDll;
 
@@ -564,27 +569,14 @@ void apartment_joinmta(void)
 static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
                                         REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, REFIID iid, LPVOID *ppv);
-    DllGetClassObjectFunc DllGetClassObject;
     OpenDll *open_dll_entry;
     HRESULT hr;
 
     hr = COMPOBJ_DllList_Add( dllpath, &open_dll_entry );
     if (FAILED(hr))
-    {
-        ERR("couldn't load in-process dll %s\n", debugstr_w(dllpath));
         return hr;
-    }
 
-    if (!(DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress(open_dll_entry->library, "DllGetClassObject")))
-    {
-        /* failure: the dll did not export DllGetClassObject */
-        ERR("couldn't find function DllGetClassObject in %s\n", debugstr_w(dllpath));
-        return CO_E_DLLNOTFOUND;
-    }
-
-    /* OK: get the ClassObject */
-    hr = DllGetClassObject(rclsid, riid, ppv);
+    hr = open_dll_entry->DllGetClassObject(rclsid, riid, ppv);
 
     if (hr != S_OK)
         ERR("DllGetClassObject returned error 0x%08x\n", hr);
@@ -603,6 +595,8 @@ static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret)
     int len;
     HRESULT hr = S_OK;
     HANDLE hLibrary;
+    DllCanUnloadNowFunc DllCanUnloadNow;
+    DllGetClassObjectFunc DllGetClassObject;
 
     TRACE("\n");
 
@@ -614,8 +608,20 @@ static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret)
     hLibrary = LoadLibraryExW(library_name, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
     if (!hLibrary)
     {
+        ERR("couldn't load in-process dll %s\n", debugstr_w(library_name));
         /* failure: DLL could not be loaded */
         return E_ACCESSDENIED; /* FIXME: or should this be CO_E_DLLNOTFOUND? */
+    }
+
+    DllCanUnloadNow = GetProcAddress(hLibrary, "DllCanUnloadNow");
+    /* Note: failing to find DllCanUnloadNow is not a failure */
+    DllGetClassObject = GetProcAddress(hLibrary, "DllGetClassObject");
+    if (!DllGetClassObject)
+    {
+        /* failure: the dll did not export DllGetClassObject */
+        ERR("couldn't find function DllGetClassObject in %s\n", debugstr_w(library_name));
+        FreeLibrary(hLibrary);
+        return CO_E_DLLNOTFOUND;
     }
 
     EnterCriticalSection( &csOpenDllList );
@@ -638,6 +644,8 @@ static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret)
             memcpy(entry->library_name, library_name, (len + 1)*sizeof(WCHAR));
             entry->library = hLibrary;
             entry->refs = 1;
+            entry->DllCanUnloadNow = DllCanUnloadNow;
+            entry->DllGetClassObject = DllGetClassObject;
             list_add_tail(&openDllList, &entry->entry);
         }
         else
@@ -689,8 +697,6 @@ static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry)
 static void COMPOBJ_DllList_FreeUnused(int Timeout)
 {
     OpenDll *curr, *next;
-    typedef HRESULT (WINAPI *DllCanUnloadNowFunc)(void);
-    DllCanUnloadNowFunc DllCanUnloadNow;
 
     TRACE("\n");
 
@@ -698,9 +704,7 @@ static void COMPOBJ_DllList_FreeUnused(int Timeout)
 
     LIST_FOR_EACH_ENTRY_SAFE(curr, next, &openDllList, OpenDll, entry)
     {
-	DllCanUnloadNow = (DllCanUnloadNowFunc) GetProcAddress(curr->library, "DllCanUnloadNow");
-
-	if ( (DllCanUnloadNow != NULL) && (DllCanUnloadNow() == S_OK) )
+	if ( (curr->DllCanUnloadNow != NULL) && (curr->DllCanUnloadNow() == S_OK) )
             COMPOBJ_DllList_ReleaseRef(curr);
     }
 
