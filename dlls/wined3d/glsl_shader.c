@@ -1148,7 +1148,7 @@ void shader_glsl_cmp(SHADER_OPCODE_ARG* arg) {
     }
 }
 
-/** Process the CND opcode in GLSL (dst = (src0 < 0.5) ? src1 : src2) */
+/** Process the CND opcode in GLSL (dst = (src0 > 0.5) ? src1 : src2) */
 /* For ps 1.1-1.3, only a single component of src0 is used. For ps 1.4
  * the compare is done per component of src0. */
 void shader_glsl_cnd(SHADER_OPCODE_ARG* arg) {
@@ -1164,7 +1164,7 @@ void shader_glsl_cnd(SHADER_OPCODE_ARG* arg) {
         shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, &src0_param);
         shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, &src1_param);
         shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, &src2_param);
-        shader_addline(arg->buffer, "%s < 0.5 ? %s : %s);\n",
+        shader_addline(arg->buffer, "%s > 0.5 ? %s : %s);\n",
                 src0_param.param_str, src1_param.param_str, src2_param.param_str);
         return;
     }
@@ -1185,7 +1185,7 @@ void shader_glsl_cnd(SHADER_OPCODE_ARG* arg) {
         shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, &src1_param);
         shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, &src2_param);
 
-        shader_addline(arg->buffer, "%s < 0.5 ? %s : %s);\n",
+        shader_addline(arg->buffer, "%s > 0.5 ? %s : %s);\n",
                 src0_param.param_str, src1_param.param_str, src2_param.param_str);
     }
 }
