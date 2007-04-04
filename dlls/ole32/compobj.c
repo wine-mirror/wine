@@ -151,12 +151,15 @@ static CRITICAL_SECTION csRegisteredClassList = { &class_cs_debug, -1, 0, 0, 0, 
  * next unload-call but not before 600 sec.
  */
 
-typedef struct tagOpenDll {
-  HINSTANCE hLibrary;
-  struct tagOpenDll *next;
+typedef struct tagOpenDll
+{
+  LONG refs;
+  LPWSTR library_name;
+  HANDLE library;
+  struct list entry;
 } OpenDll;
 
-static OpenDll *openDllList = NULL; /* linked list of open dlls */
+static struct list openDllList = LIST_INIT(openDllList);
 
 static CRITICAL_SECTION csOpenDllList;
 static CRITICAL_SECTION_DEBUG dll_cs_debug =
@@ -171,7 +174,9 @@ static const WCHAR wszAptWinClass[] = {'O','l','e','M','a','i','n','T','h','r','
                                        '0','x','#','#','#','#','#','#','#','#',' ',0};
 static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-static void COMPOBJ_DLLList_Add(HANDLE hLibrary);
+static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, HANDLE hLibrary, OpenDll **ret);
+static OpenDll *COMPOBJ_DllList_Get(LPCWSTR library_name);
+static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry);
 static void COMPOBJ_DllList_FreeUnused(int Timeout);
 
 static void COMPOBJ_InitProcess( void )
@@ -547,44 +552,77 @@ void apartment_joinmta(void)
  * This section contains OpenDllList implementation
  */
 
-static void COMPOBJ_DLLList_Add(HANDLE hLibrary)
+/* caller must ensure that library_name is not already in the open dll list */
+static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, HANDLE hLibrary, OpenDll **ret)
 {
-    OpenDll *ptr;
-    OpenDll *tmp;
+    OpenDll *entry;
+    int len;
+    HRESULT hr = S_OK;
 
     TRACE("\n");
 
     EnterCriticalSection( &csOpenDllList );
 
-    if (openDllList == NULL) {
-        /* empty list -- add first node */
-        openDllList = HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
-	openDllList->hLibrary=hLibrary;
-	openDllList->next = NULL;
-    } else {
-        /* search for this dll */
-        int found = FALSE;
-        for (ptr = openDllList; ptr->next != NULL; ptr=ptr->next) {
-  	    if (ptr->hLibrary == hLibrary) {
-	        found = TRUE;
-		break;
-	    }
+    *ret = COMPOBJ_DllList_Get(library_name);
+    if (!*ret)
+    {
+        len = strlenW(library_name);
+        entry = HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
+        if (entry)
+            entry->library_name = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
+        if (entry && entry->library_name)
+        {
+            memcpy(entry->library_name, library_name, (len + 1)*sizeof(WCHAR));
+            entry->library = hLibrary;
+            entry->refs = 1;
+            list_add_tail(&openDllList, &entry->entry);
         }
-	if (!found) {
-	    /* dll not found, add it */
- 	    tmp = openDllList;
-	    openDllList = HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
-	    openDllList->hLibrary = hLibrary;
-	    openDllList->next = tmp;
-	}
+        else
+            hr = E_OUTOFMEMORY;
+        *ret = entry;
     }
 
     LeaveCriticalSection( &csOpenDllList );
+
+    return hr;
+}
+
+static OpenDll *COMPOBJ_DllList_Get(LPCWSTR library_name)
+{
+    OpenDll *ptr;
+    OpenDll *ret = NULL;
+    EnterCriticalSection(&csOpenDllList);
+    LIST_FOR_EACH_ENTRY(ptr, &openDllList, OpenDll, entry)
+    {
+        if (!strcmpiW(library_name, ptr->library_name))
+        {
+            ret = ptr;
+            break;
+        }
+    }
+    LeaveCriticalSection(&csOpenDllList);
+    return ret;
+}
+
+static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry)
+{
+    if (!InterlockedDecrement(&entry->refs))
+    {
+        EnterCriticalSection(&csOpenDllList);
+        list_remove(&entry->entry);
+        LeaveCriticalSection(&csOpenDllList);
+
+        TRACE("freeing %p\n", entry->library);
+        FreeLibrary(entry->library);
+
+        HeapFree(GetProcessHeap(), 0, entry->library_name);
+        HeapFree(GetProcessHeap(), 0, entry);
+    }
 }
 
 static void COMPOBJ_DllList_FreeUnused(int Timeout)
 {
-    OpenDll *curr, *next, *prev = NULL;
+    OpenDll *curr, *next;
     typedef HRESULT (WINAPI *DllCanUnloadNowFunc)(void);
     DllCanUnloadNowFunc DllCanUnloadNow;
 
@@ -592,27 +630,12 @@ static void COMPOBJ_DllList_FreeUnused(int Timeout)
 
     EnterCriticalSection( &csOpenDllList );
 
-    for (curr = openDllList; curr != NULL; ) {
-	DllCanUnloadNow = (DllCanUnloadNowFunc) GetProcAddress(curr->hLibrary, "DllCanUnloadNow");
+    LIST_FOR_EACH_ENTRY_SAFE(curr, next, &openDllList, OpenDll, entry)
+    {
+	DllCanUnloadNow = (DllCanUnloadNowFunc) GetProcAddress(curr->library, "DllCanUnloadNow");
 
-	if ( (DllCanUnloadNow != NULL) && (DllCanUnloadNow() == S_OK) ) {
-	    next = curr->next;
-
-	    TRACE("freeing %p\n", curr->hLibrary);
-	    FreeLibrary(curr->hLibrary);
-
-	    HeapFree(GetProcessHeap(), 0, curr);
-	    if (curr == openDllList) {
-		openDllList = next;
-	    } else {
-	      prev->next = next;
-	    }
-
-	    curr = next;
-	} else {
-	    prev = curr;
-	    curr = curr->next;
-	}
+	if ( (DllCanUnloadNow != NULL) && (DllCanUnloadNow() == S_OK) )
+            COMPOBJ_DllList_ReleaseRef(curr);
     }
 
     LeaveCriticalSection( &csOpenDllList );
@@ -1730,6 +1753,7 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
     WCHAR dllpath[MAX_PATH+1];
     WCHAR threading_model[10 /* strlenW(L"apartment")+1 */];
     HRESULT hr;
+    OpenDll *open_dll_entry;
 
     get_threading_model(hkeydll, threading_model, ARRAYSIZE(threading_model));
     /* "Apartment" */
@@ -1821,6 +1845,8 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
         return E_ACCESSDENIED; /* FIXME: or should this be CO_E_DLLNOTFOUND? */
     }
 
+    COMPOBJ_DllList_Add( dllpath, hLibrary, &open_dll_entry );
+
     if (!(DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress(hLibrary, "DllGetClassObject")))
     {
         /* failure: the dll did not export DllGetClassObject */
@@ -1830,7 +1856,6 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
     }
 
     /* OK: get the ClassObject */
-    COMPOBJ_DLLList_Add( hLibrary );
     hr = DllGetClassObject(rclsid, riid, ppv);
 
     if (hr != S_OK)
