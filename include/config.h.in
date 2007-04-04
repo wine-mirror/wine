@@ -17,9 +17,6 @@
 /* Define to 1 if you have the <arpa/nameser.h> header file. */
 #undef HAVE_ARPA_NAMESER_H
 
-/* Define if you have ARTS sound server */
-#undef HAVE_ARTS
-
 /* Define to 1 if you have the `asctime_r' function. */
 #undef HAVE_ASCTIME_R
 

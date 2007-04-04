@@ -270,7 +270,6 @@ BEGIN
     IDS_ACCEL_BASIC             "Základní"
     IDS_ACCEL_EMULATION         "Emulace"
     IDS_DRIVER_ALSA             "Ovladaè ALSA"
-    IDS_DRIVER_ARTS             "Ovladaè aRts"
     IDS_DRIVER_ESOUND           "Ovladaè EsounD"
     IDS_DRIVER_OSS              "Ovladaè OSS"
     IDS_DRIVER_JACK             "Ovladaè JACK"

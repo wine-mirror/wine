@@ -67,7 +67,6 @@ static const char * const builtin_only[] =
     "vdmdbg",
     "w32skrnl",
     "winealsa.drv",
-    "winearts.drv",
     "wineaudioio.drv",
     "wined3d",
     "winedos",

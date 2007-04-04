@@ -4894,21 +4894,6 @@ WORD
 
 DWORD_PTR
 
-%%winearts.drv
-
-%long
-
-DWORD
-HDRVR
-LPARAM
-LRESULT
-UINT
-WORD
-
-%long --pointer
-
-DWORD_PTR
-
 %%wineaudioio.drv
 
 %long

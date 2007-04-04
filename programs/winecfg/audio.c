@@ -82,9 +82,6 @@ static const char* DSound_Bits[] = {
 
 static const AUDIO_DRIVER sAudioDrivers[] = {
   {IDS_DRIVER_ALSA,      "alsa"},
-#if 0  /* arts library is buggy */
-  {IDS_DRIVER_ARTS,      "arts"},
-#endif
   {IDS_DRIVER_ESOUND,    "esd"},
   {IDS_DRIVER_OSS,       "oss"},
   {IDS_DRIVER_JACK,      "jack"},

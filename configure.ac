@@ -785,36 +785,6 @@ WINE_CHECK_LIB_FUNCS(\
         pthread_get_stacksize_np,
         [$LIBPTHREAD])
 
-dnl **** Check for aRts Sound Server ****
-AC_PATH_PROG(ARTSCCONFIG, artsc-config)
-if test x$ARTSCCONFIG != x -a x$ARTSCCONFIG != x'"$ARTSCCONFIG"';
-then
-    ARTSC_CFLAGS=""
-    for i in `$ARTSCCONFIG --cflags`
-    do
-      case "$i" in
-        -I*) ARTSC_CFLAGS="$ARTSC_CFLAGS $i";;
-      esac
-    done
-    ARTSC_LIBS=""
-    for i in `$ARTSCCONFIG --libs`
-    do
-      case "$i" in
-        -L/usr/lib|-L/usr/lib64) ;;
-        -L*|-l*) ARTSC_LIBS="$ARTSC_LIBS $i";;
-      esac
-    done
-    save_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS $ARTSC_CFLAGS"
-    AC_CHECK_LIB(artsc,arts_init,
-        [AC_TRY_COMPILE([#include <artsc.h>],[arts_stream_t stream;],
-            [AC_SUBST(ARTSLIBS, $ARTSC_LIBS)
-            AC_SUBST(ARTSINCL, $ARTSC_CFLAGS)
-            AC_DEFINE(HAVE_ARTS, 1, [Define if you have ARTS sound server])])],,
-            $ARTSC_LIBS)
-    CFLAGS="$save_CFLAGS"
-fi
-
 dnl **** Check for EsounD ****
 AC_PATH_PROG(ESDCONFIG, esd-config)
 if test x$ESDCONFIG != x -a x$ESDCONFIG != x'"$ESDCONFIG"';
@@ -1755,7 +1725,6 @@ AC_CONFIG_FILES([dlls/vtdapi.vxd/Makefile])
 AC_CONFIG_FILES([dlls/vwin32.vxd/Makefile])
 AC_CONFIG_FILES([dlls/w32skrnl/Makefile])
 AC_CONFIG_FILES([dlls/winealsa.drv/Makefile])
-AC_CONFIG_FILES([dlls/winearts.drv/Makefile])
 AC_CONFIG_FILES([dlls/wineaudioio.drv/Makefile])
 AC_CONFIG_FILES([dlls/winecoreaudio.drv/Makefile])
 AC_CONFIG_FILES([dlls/winecrt0/Makefile])
@@ -2048,7 +2017,6 @@ then
 fi
 
 if test -z "$ALSALIBS" -a \
-        -z "$ARTSC_LIBS" -a \
         -z "$AUDIOIOLIBS" -a \
         -z "$NASLIBS" -a \
         -z "$ESD_LIBS" -a \
@@ -2060,7 +2028,7 @@ then
   echo >&2
   AC_MSG_WARN([No sound system was found. Windows applications will be silent.])
   AC_MSG_WARN([The currently supported sound systems are:])
-  AC_MSG_WARN([ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS])
+  AC_MSG_WARN([ALSA, EsounD, AudioIO, Jack, NAS and OSS])
 fi
 
 echo

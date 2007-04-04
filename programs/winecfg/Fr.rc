@@ -266,7 +266,6 @@ BEGIN
     IDS_ACCEL_BASIC             "Basique"
     IDS_ACCEL_EMULATION         "Émulation"
     IDS_DRIVER_ALSA             "Pilote ALSA"
-    IDS_DRIVER_ARTS             "Pilote aRts"
     IDS_DRIVER_ESOUND           "Pilote EsounD"
     IDS_DRIVER_OSS              "Pilote OSS"
     IDS_DRIVER_JACK             "Pilote JACK"

@@ -731,9 +731,6 @@ FREETYPEINCL
 ft_devel
 ft_devel2
 FONTSSUBDIRS
-ARTSCCONFIG
-ARTSLIBS
-ARTSINCL
 ESDCONFIG
 ESDLIBS
 ESDINCL
@@ -11777,181 +11774,6 @@ done
 
 LIBS="$ac_wine_check_funcs_save_LIBS"
 
-# Extract the first word of "artsc-config", so it can be a program name with args.
-set dummy artsc-config; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_ARTSCCONFIG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $ARTSCCONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_ARTSCCONFIG="$ARTSCCONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_ARTSCCONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-ARTSCCONFIG=$ac_cv_path_ARTSCCONFIG
-if test -n "$ARTSCCONFIG"; then
-  { echo "$as_me:$LINENO: result: $ARTSCCONFIG" >&5
-echo "${ECHO_T}$ARTSCCONFIG" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-if test x$ARTSCCONFIG != x -a x$ARTSCCONFIG != x'"$ARTSCCONFIG"';
-then
-    ARTSC_CFLAGS=""
-    for i in `$ARTSCCONFIG --cflags`
-    do
-      case "$i" in
-        -I*) ARTSC_CFLAGS="$ARTSC_CFLAGS $i";;
-      esac
-    done
-    ARTSC_LIBS=""
-    for i in `$ARTSCCONFIG --libs`
-    do
-      case "$i" in
-        -L/usr/lib|-L/usr/lib64) ;;
-        -L*|-l*) ARTSC_LIBS="$ARTSC_LIBS $i";;
-      esac
-    done
-    save_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS $ARTSC_CFLAGS"
-    { echo "$as_me:$LINENO: checking for arts_init in -lartsc" >&5
-echo $ECHO_N "checking for arts_init in -lartsc... $ECHO_C" >&6; }
-if test "${ac_cv_lib_artsc_arts_init+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lartsc $ARTSC_LIBS $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char arts_init ();
-int
-main ()
-{
-return arts_init ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_artsc_arts_init=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_artsc_arts_init=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_artsc_arts_init" >&5
-echo "${ECHO_T}$ac_cv_lib_artsc_arts_init" >&6; }
-if test $ac_cv_lib_artsc_arts_init = yes; then
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <artsc.h>
-int
-main ()
-{
-arts_stream_t stream;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  ARTSLIBS=$ARTSC_LIBS
-
-            ARTSINCL=$ARTSC_CFLAGS
-
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_ARTS 1
-_ACEOF
-
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-
-    CFLAGS="$save_CFLAGS"
-fi
-
 # Extract the first word of "esd-config", so it can be a program name with args.
 set dummy esd-config; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -20848,8 +20670,6 @@ ac_config_files="$ac_config_files dlls/w32skrnl/Makefile"
 
 ac_config_files="$ac_config_files dlls/winealsa.drv/Makefile"
 
-ac_config_files="$ac_config_files dlls/winearts.drv/Makefile"
-
 ac_config_files="$ac_config_files dlls/wineaudioio.drv/Makefile"
 
 ac_config_files="$ac_config_files dlls/winecoreaudio.drv/Makefile"
@@ -21831,7 +21651,6 @@ do
     "dlls/vwin32.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vwin32.vxd/Makefile" ;;
     "dlls/w32skrnl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/w32skrnl/Makefile" ;;
     "dlls/winealsa.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winealsa.drv/Makefile" ;;
-    "dlls/winearts.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winearts.drv/Makefile" ;;
     "dlls/wineaudioio.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wineaudioio.drv/Makefile" ;;
     "dlls/winecoreaudio.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winecoreaudio.drv/Makefile" ;;
     "dlls/winecrt0/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winecrt0/Makefile" ;;
@@ -22163,9 +21982,6 @@ FREETYPEINCL!$FREETYPEINCL$ac_delim
 ft_devel!$ft_devel$ac_delim
 ft_devel2!$ft_devel2$ac_delim
 FONTSSUBDIRS!$FONTSSUBDIRS$ac_delim
-ARTSCCONFIG!$ARTSCCONFIG$ac_delim
-ARTSLIBS!$ARTSLIBS$ac_delim
-ARTSINCL!$ARTSINCL$ac_delim
 ESDCONFIG!$ESDCONFIG$ac_delim
 ESDLIBS!$ESDLIBS$ac_delim
 ESDINCL!$ESDINCL$ac_delim
@@ -22205,7 +22021,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 74; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 71; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -22882,7 +22698,6 @@ echo "$as_me: WARNING: Fonts will not be built. Dialog text may be invisible or 
 fi
 
 if test -z "$ALSALIBS" -a \
-        -z "$ARTSC_LIBS" -a \
         -z "$AUDIOIOLIBS" -a \
         -z "$NASLIBS" -a \
         -z "$ESD_LIBS" -a \
@@ -22896,8 +22711,8 @@ then
 echo "$as_me: WARNING: No sound system was found. Windows applications will be silent." >&2;}
   { echo "$as_me:$LINENO: WARNING: The currently supported sound systems are:" >&5
 echo "$as_me: WARNING: The currently supported sound systems are:" >&2;}
-  { echo "$as_me:$LINENO: WARNING: ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS" >&5
-echo "$as_me: WARNING: ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS" >&2;}
+  { echo "$as_me:$LINENO: WARNING: ALSA, EsounD, AudioIO, Jack, NAS and OSS" >&5
+echo "$as_me: WARNING: ALSA, EsounD, AudioIO, Jack, NAS and OSS" >&2;}
 fi
 
 echo

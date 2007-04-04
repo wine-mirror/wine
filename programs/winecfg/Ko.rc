@@ -268,7 +268,6 @@ BEGIN
    IDS_ACCEL_BASIC             "기본"
    IDS_ACCEL_EMULATION         "애뮬레이션"
    IDS_DRIVER_ALSA             "ALSA 드라이버"
-   IDS_DRIVER_ARTS             "aRts 드라이버"
    IDS_DRIVER_ESOUND           "EsounD 드라이버"
    IDS_DRIVER_OSS              "OSS 드라이버"
    IDS_DRIVER_JACK             "JACK 드라이버"

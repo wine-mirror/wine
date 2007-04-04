@@ -188,7 +188,6 @@ BASEDIRS = \
 	vwin32.vxd \
 	w32skrnl \
 	winealsa.drv \
-	winearts.drv \
 	wineaudioio.drv \
 	winecoreaudio.drv \
 	winedos \
