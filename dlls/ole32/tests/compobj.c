@@ -742,7 +742,6 @@ static void test_CoFreeUnusedLibraries(void)
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
 
-    todo_wine
     ok(is_module_loaded("urlmon.dll"), "urlmon.dll should be loaded\n");
 
     CoFreeUnusedLibraries();

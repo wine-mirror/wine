@@ -154,6 +154,7 @@ struct apartment
   BOOL remunk_exported;    /* has the IRemUnknown interface for this apartment been created yet? (CS cs) */
   LONG remoting_started;   /* has the RPC system been started for this apartment? (LOCK) */
   struct list psclsids;    /* list of registered PS CLSIDs (CS cs) */
+  struct list loaded_dlls; /* list of dlls loaded by this apartment (CS cs) */
 
   /* FIXME: OID's should be given out by RPCSS */
   OID oidc;                /* object ID counter, starts at 1, zero is invalid OID (CS cs) */

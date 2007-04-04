@@ -175,6 +175,12 @@ static CRITICAL_SECTION_DEBUG dll_cs_debug =
 };
 static CRITICAL_SECTION csOpenDllList = { &dll_cs_debug, -1, 0, 0, 0, 0 };
 
+struct apartment_loaded_dll
+{
+    struct list entry;
+    OpenDll *dll;
+};
+
 static const WCHAR wszAptWinClass[] = {'O','l','e','M','a','i','n','T','h','r','e','a','d','W','n','d','C','l','a','s','s',' ',
                                        '0','x','#','#','#','#','#','#','#','#',' ',0};
 static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -184,7 +190,6 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
 static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret);
 static OpenDll *COMPOBJ_DllList_Get(LPCWSTR library_name);
 static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry);
-static void COMPOBJ_DllList_FreeUnused(int Timeout);
 
 static DWORD COM_RegReadPath(HKEY hkeyroot, const WCHAR *keyname, const WCHAR *valuename, WCHAR * dst, DWORD dstlen);
 
@@ -244,6 +249,7 @@ static APARTMENT *apartment_construct(DWORD model)
     list_init(&apt->proxies);
     list_init(&apt->stubmgrs);
     list_init(&apt->psclsids);
+    list_init(&apt->loaded_dlls);
     apt->ipidc = 0;
     apt->refs = 1;
     apt->remunk_exported = FALSE;
@@ -388,6 +394,14 @@ DWORD apartment_release(struct apartment *apt)
         assert(list_empty(&apt->stubmgrs));
 
         if (apt->filter) IUnknown_Release(apt->filter);
+
+        while ((cursor = list_head(&apt->loaded_dlls)))
+        {
+            struct apartment_loaded_dll *apartment_loaded_dll = LIST_ENTRY(cursor, struct apartment_loaded_dll, entry);
+            COMPOBJ_DllList_ReleaseRef(apartment_loaded_dll->dll);
+            list_remove(cursor);
+            HeapFree(GetProcessHeap(), 0, apartment_loaded_dll);
+        }
 
         DEBUG_CLEAR_CRITSEC_NAME(&apt->cs);
         DeleteCriticalSection(&apt->cs);
@@ -569,19 +583,67 @@ void apartment_joinmta(void)
 static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
                                         REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    OpenDll *open_dll_entry;
-    HRESULT hr;
+    HRESULT hr = S_OK;
+    BOOL found = FALSE;
+    struct apartment_loaded_dll *apartment_loaded_dll;
 
-    hr = COMPOBJ_DllList_Add( dllpath, &open_dll_entry );
-    if (FAILED(hr))
-        return hr;
+    EnterCriticalSection(&apt->cs);
 
-    hr = open_dll_entry->DllGetClassObject(rclsid, riid, ppv);
+    LIST_FOR_EACH_ENTRY(apartment_loaded_dll, &apt->loaded_dlls, struct apartment_loaded_dll, entry)
+        if (!strcmpiW(dllpath, apartment_loaded_dll->dll->library_name))
+        {
+            TRACE("found %s already loaded\n", debugstr_w(dllpath));
+            found = TRUE;
+            break;
+        }
 
-    if (hr != S_OK)
-        ERR("DllGetClassObject returned error 0x%08x\n", hr);
+    if (!found)
+    {
+        apartment_loaded_dll = HeapAlloc(GetProcessHeap(), 0, sizeof(*apartment_loaded_dll));
+        if (!apartment_loaded_dll)
+            hr = E_OUTOFMEMORY;
+        if (SUCCEEDED(hr))
+        {
+            hr = COMPOBJ_DllList_Add( dllpath, &apartment_loaded_dll->dll );
+            if (FAILED(hr))
+                HeapFree(GetProcessHeap(), 0, apartment_loaded_dll);
+        }
+        if (SUCCEEDED(hr))
+        {
+            TRACE("added new loaded dll %s\n", debugstr_w(dllpath));
+            list_add_tail(&apt->loaded_dlls, &apartment_loaded_dll->entry);
+        }
+    }
+
+    LeaveCriticalSection(&apt->cs);
+
+    if (SUCCEEDED(hr))
+    {
+        TRACE("calling DllGetClassObject %p\n", apartment_loaded_dll->dll->DllGetClassObject);
+        /* OK: get the ClassObject */
+        hr = apartment_loaded_dll->dll->DllGetClassObject(rclsid, riid, ppv);
+
+        if (hr != S_OK)
+            ERR("DllGetClassObject returned error 0x%08x\n", hr);
+    }
 
     return hr;
+}
+
+static void apartment_freeunusedlibraries(struct apartment *apt)
+{
+    struct apartment_loaded_dll *entry, *next;
+    EnterCriticalSection(&apt->cs);
+    LIST_FOR_EACH_ENTRY_SAFE(entry, next, &apt->loaded_dlls, struct apartment_loaded_dll, entry)
+    {
+	if (entry->dll->DllCanUnloadNow && (entry->dll->DllCanUnloadNow() == S_OK))
+        {
+            list_remove(&entry->entry);
+            COMPOBJ_DllList_ReleaseRef(entry->dll);
+            HeapFree(GetProcessHeap(), 0, entry);
+        }
+    }
+    LeaveCriticalSection(&apt->cs);
 }
 
 /*****************************************************************************
@@ -668,7 +730,8 @@ static OpenDll *COMPOBJ_DllList_Get(LPCWSTR library_name)
     EnterCriticalSection(&csOpenDllList);
     LIST_FOR_EACH_ENTRY(ptr, &openDllList, OpenDll, entry)
     {
-        if (!strcmpiW(library_name, ptr->library_name))
+        if (!strcmpiW(library_name, ptr->library_name) &&
+            (InterlockedIncrement(&ptr->refs) != 1) /* entry is being destroy if == 1 */)
         {
             ret = ptr;
             break;
@@ -692,23 +755,6 @@ static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry)
         HeapFree(GetProcessHeap(), 0, entry->library_name);
         HeapFree(GetProcessHeap(), 0, entry);
     }
-}
-
-static void COMPOBJ_DllList_FreeUnused(int Timeout)
-{
-    OpenDll *curr, *next;
-
-    TRACE("\n");
-
-    EnterCriticalSection( &csOpenDllList );
-
-    LIST_FOR_EACH_ENTRY_SAFE(curr, next, &openDllList, OpenDll, entry)
-    {
-	if ( (curr->DllCanUnloadNow != NULL) && (curr->DllCanUnloadNow() == S_OK) )
-            COMPOBJ_DllList_ReleaseRef(curr);
-    }
-
-    LeaveCriticalSection( &csOpenDllList );
 }
 
 /******************************************************************************
@@ -2314,9 +2360,14 @@ void WINAPI CoFreeAllLibraries(void)
  */
 void WINAPI CoFreeUnusedLibraries(void)
 {
-    /* FIXME: Calls to CoFreeUnusedLibraries from any thread always route
-     * through the main apartment's thread to call DllCanUnloadNow */
-    COMPOBJ_DllList_FreeUnused(0);
+    struct apartment *apt = COM_CurrentApt();
+    if (!apt)
+    {
+        ERR("apartment not initialised\n");
+        return;
+    }
+
+    apartment_freeunusedlibraries(apt);
 }
 
 /***********************************************************************
