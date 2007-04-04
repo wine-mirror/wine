@@ -274,7 +274,10 @@ static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
             IBaseFilter_Release(This->ppFiltersInGraph[i]);
         }
         for (i = 0; i < This->nItfCacheEntries; i++)
-            IUnknown_Release(This->ItfCacheEntries[i].iface);
+        {
+            if (This->ItfCacheEntries[i].iface)
+                IUnknown_Release(This->ItfCacheEntries[i].iface);
+        }
 	IFilterMapper2_Release(This->pFilterMapper2);
 	CloseHandle(This->hEventCompletion);
 	EventsQueue_Destroy(&This->evqueue);
