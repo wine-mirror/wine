@@ -394,7 +394,7 @@ static HRESULT WINAPI BaseMemAllocator_ReleaseBuffer(IMemAllocator * iface, IMed
     LeaveCriticalSection(&This->csState);
 
     /* notify a waiting thread that there is now a free buffer */
-    if (!ReleaseSemaphore(This->hSemWaiting, 1, NULL))
+    if (This->hSemWaiting && !ReleaseSemaphore(This->hSemWaiting, 1, NULL))
     {
         ERR("ReleaseSemaphore failed with error %u\n", GetLastError());
         hr = HRESULT_FROM_WIN32(GetLastError());
