@@ -239,14 +239,11 @@ sub GET_ERROR_NAMES()
     my %errors = ();
     foreach my $f (glob "server/*.c")
     {
+        next if $f eq "server/trace.c";
         open FILE, $f or die "Can't open $f";
         while (<FILE>)
         {
-            if (/set_error\s*\(\s*STATUS_(\w+)\s*\)/)
-            {
-                $errors{$1} = "STATUS_$1" unless $1 eq "SUCCESS";
-            }
-            elsif (/async_terminate_\w+\s*\(.*,\s*STATUS_(\w+)\s*\)/)
+            if (/STATUS_(\w+)/)
             {
                 $errors{$1} = "STATUS_$1" unless $1 eq "SUCCESS";
             }
