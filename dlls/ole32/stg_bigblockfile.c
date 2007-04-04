@@ -114,6 +114,7 @@ static MappedPage* BIGBLOCKFILE_CreatePage(LPBIGBLOCKFILE This,
 static DWORD     BIGBLOCKFILE_GetProtectMode(DWORD openFlags);
 static BOOL      BIGBLOCKFILE_FileInit(LPBIGBLOCKFILE This, HANDLE hFile);
 static BOOL      BIGBLOCKFILE_MemInit(LPBIGBLOCKFILE This, ILockBytes* plkbyt);
+static void      BIGBLOCKFILE_DeleteList(LPBIGBLOCKFILE This, MappedPage *list);
 
 /* Note that this evaluates a and b multiple times, so don't
  * pass expressions with side effects. */
@@ -356,7 +357,15 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
   TRACE("from %u to %u\n", This->filesize.u.LowPart, newSize.u.LowPart);
   /*
    * unmap all views, must be done before call to SetEndFile
+   *
+   * Just ditch the victim list because there is no guarentee we will need them
+   * and it is not worth the performance hit to unmap and remap them all.
    */
+  BIGBLOCKFILE_DeleteList(This, This->victimhead);
+  This->victimhead = NULL;
+  This->victimtail = NULL;
+  This->num_victim_pages = 0;
+
   BIGBLOCKFILE_UnmapAllMappedPages(This);
 
   if (This->fileBased)
