@@ -2178,15 +2178,6 @@ static void WINAPI read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, ULONG st
 
     TRACE("%p %p %08x\n", info, iosb, status);
 
-    /*
-     * FIXME: race me!
-     *
-     * hEvent/hDir is set before the output buffer and iosb is updated.
-     * Since the thread that called NtNotifyChangeDirectoryFile is usually
-     * waiting, we'll be safe since we're called in that thread's context.
-     * If a different thread is waiting on our hEvent/hDir we're going to be
-     * in trouble...
-     */
     SERVER_START_REQ( read_change )
     {
         req->handle = info->FileHandle;

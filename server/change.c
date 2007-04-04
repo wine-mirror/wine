@@ -147,11 +147,9 @@ struct dir
     struct object  obj;      /* object header */
     struct fd     *fd;       /* file descriptor to the directory */
     struct list    entry;    /* entry in global change notifications list */
-    struct event  *event;
     unsigned int   filter;   /* notification filter */
     int            notified; /* SIGIO counter */
     int            want_data; /* return change data */
-    long           signaled; /* the file changed */
     int            subtree;  /* do we want to watch subdirectories? */
     struct list    change_records;   /* data for the change */
     struct list    in_entry; /* entry in the inode dirs list */
@@ -162,7 +160,6 @@ static struct fd *dir_get_fd( struct object *obj );
 static unsigned int dir_map_access( struct object *obj, unsigned int access );
 static void dir_dump( struct object *obj, int verbose );
 static void dir_destroy( struct object *obj );
-static int dir_signaled( struct object *obj, struct thread *thread );
 
 static const struct object_ops dir_ops =
 {
@@ -170,7 +167,7 @@ static const struct object_ops dir_ops =
     dir_dump,                 /* dump */
     add_queue,                /* add_queue */
     remove_queue,             /* remove_queue */
-    dir_signaled,             /* signaled */
+    default_fd_signaled,      /* signaled */
     no_satisfied,             /* satisfied */
     no_signal,                /* signal */
     dir_get_fd,               /* get_fd */
@@ -254,15 +251,7 @@ static void dir_dump( struct object *obj, int verbose )
 {
     struct dir *dir = (struct dir *)obj;
     assert( obj->ops == &dir_ops );
-    fprintf( stderr, "Dirfile fd=%p event=%p filter=%08x\n",
-             dir->fd, dir->event, dir->filter );
-}
-
-static int dir_signaled( struct object *obj, struct thread *thread )
-{
-    struct dir *dir = (struct dir *)obj;
-    assert (obj->ops == &dir_ops);
-    return (dir->event == NULL) && dir->signaled;
+    fprintf( stderr, "Dirfile fd=%p filter=%08x\n", dir->fd, dir->filter );
 }
 
 /* enter here directly from SIGIO signal handler */
@@ -279,11 +268,6 @@ void do_change_notify( int unix_fd )
     }
 }
 
-static void dir_signal_changed( struct dir *dir )
-{
-    if (!dir->event) wake_up( &dir->obj, 0 );
-}
-
 /* SIGIO callback, called synchronously with the poll loop */
 void sigio_callback(void)
 {
@@ -291,13 +275,8 @@ void sigio_callback(void)
 
     LIST_FOR_EACH_ENTRY( dir, &change_list, struct dir, entry )
     {
-        long count = interlocked_xchg( &dir->notified, 0 );
-        if (count)
-        {
-            dir->signaled += count;
-            if (dir->signaled == count)  /* was it 0? */
-                dir_signal_changed( dir );
-        }
+        if (interlocked_xchg( &dir->notified, 0 ))
+            fd_async_wake_up( dir->fd, ASYNC_TYPE_WAIT, STATUS_NOTIFY_ENUM_DIR );
     }
 }
 
@@ -342,7 +321,6 @@ static void dir_destroy( struct object *obj )
 
     while ((record = get_first_change_record( dir ))) free( record );
 
-    if (dir->event) release_object( dir->event );
     release_object( dir->fd );
 
     if (inotify_fd && list_empty( &change_list ))
@@ -1038,10 +1016,8 @@ struct object *create_dir_obj( struct fd *fd )
         return NULL;
 
     list_init( &dir->change_records );
-    dir->event = NULL;
     dir->filter = 0;
     dir->notified = 0;
-    dir->signaled = 0;
     dir->want_data = 0;
     dir->inode = NULL;
     grab_object( fd );
@@ -1056,7 +1032,6 @@ struct object *create_dir_obj( struct fd *fd )
 /* enable change notifications for a directory */
 DECL_HANDLER(read_directory_changes)
 {
-    struct event *event = NULL;
     struct dir *dir;
     struct async *async;
 
@@ -1070,15 +1045,6 @@ DECL_HANDLER(read_directory_changes)
     if (!dir)
         return;
 
-    /* possibly send changes through an event flag */
-    if (req->async.event &&
-        !(event = get_event_obj( current->process, req->async.event, EVENT_MODIFY_STATE )))
-        goto end;
-
-    /* discard the current data, and move onto the next event */
-    if (dir->event) release_object( dir->event );
-    dir->event = event;
-
     /* requests don't timeout */
     if (!(async = fd_queue_async( dir->fd, &req->async, ASYNC_TYPE_WAIT, 0 ))) goto end;
 
@@ -1091,10 +1057,6 @@ DECL_HANDLER(read_directory_changes)
         dir->subtree = req->subtree;
         dir->want_data = req->want_data;
     }
-
-    /* remove any notifications */
-    if (dir->signaled>0)
-        dir->signaled--;
 
     /* if there's already a change in the queue, send it */
     if (!list_empty( &dir->change_records ))
@@ -1128,10 +1090,6 @@ DECL_HANDLER(read_change)
     }
     else
         set_error( STATUS_NO_DATA_DETECTED );
-
-    /* now signal it */
-    dir->signaled++;
-    dir_signal_changed( dir );
 
     release_object( dir );
 }
