@@ -228,6 +228,7 @@ DECL_HANDLER(set_atom_information);
 DECL_HANDLER(empty_atom_table);
 DECL_HANDLER(init_atom_table);
 DECL_HANDLER(get_msg_queue);
+DECL_HANDLER(set_queue_fd);
 DECL_HANDLER(set_queue_mask);
 DECL_HANDLER(get_queue_status);
 DECL_HANDLER(get_process_idle_event);
@@ -450,6 +451,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_empty_atom_table,
     (req_handler)req_init_atom_table,
     (req_handler)req_get_msg_queue,
+    (req_handler)req_set_queue_fd,
     (req_handler)req_set_queue_mask,
     (req_handler)req_get_queue_status,
     (req_handler)req_get_process_idle_event,

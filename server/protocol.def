@@ -1783,6 +1783,12 @@ enum char_info_mode
 @END
 
 
+/* Set the file descriptor associated to the current thread queue */
+@REQ(set_queue_fd)
+    obj_handle_t handle;       /* handle to the file descriptor */
+@END
+
+
 /* Set the current message queue wakeup mask */
 @REQ(set_queue_mask)
     unsigned int wake_mask;    /* wakeup bits mask */

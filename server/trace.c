@@ -2214,6 +2214,11 @@ static void dump_get_msg_queue_reply( const struct get_msg_queue_reply *req )
     fprintf( stderr, " handle=%p", req->handle );
 }
 
+static void dump_set_queue_fd_request( const struct set_queue_fd_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
 static void dump_set_queue_mask_request( const struct set_queue_mask_request *req )
 {
     fprintf( stderr, " wake_mask=%08x,", req->wake_mask );
@@ -3568,6 +3573,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_empty_atom_table_request,
     (dump_func)dump_init_atom_table_request,
     (dump_func)dump_get_msg_queue_request,
+    (dump_func)dump_set_queue_fd_request,
     (dump_func)dump_set_queue_mask_request,
     (dump_func)dump_get_queue_status_request,
     (dump_func)dump_get_process_idle_event_request,
@@ -3787,6 +3793,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_init_atom_table_reply,
     (dump_func)dump_get_msg_queue_reply,
+    (dump_func)0,
     (dump_func)dump_set_queue_mask_reply,
     (dump_func)dump_get_queue_status_reply,
     (dump_func)dump_get_process_idle_event_reply,
@@ -4006,6 +4013,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "empty_atom_table",
     "init_atom_table",
     "get_msg_queue",
+    "set_queue_fd",
     "set_queue_mask",
     "get_queue_status",
     "get_process_idle_event",

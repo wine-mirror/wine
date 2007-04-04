@@ -113,6 +113,7 @@ struct thread_input
 struct msg_queue
 {
     struct object          obj;             /* object header */
+    struct fd             *fd;              /* optional file descriptor to poll */
     unsigned int           wake_bits;       /* wakeup bits */
     unsigned int           wake_mask;       /* wakeup mask */
     unsigned int           changed_bits;    /* changed wakeup bits */
@@ -139,6 +140,7 @@ static void msg_queue_remove_queue( struct object *obj, struct wait_queue_entry 
 static int msg_queue_signaled( struct object *obj, struct thread *thread );
 static int msg_queue_satisfied( struct object *obj, struct thread *thread );
 static void msg_queue_destroy( struct object *obj );
+static void msg_queue_poll_event( struct fd *fd, int event );
 static void thread_input_dump( struct object *obj, int verbose );
 static void thread_input_destroy( struct object *obj );
 static void timer_callback( void *private );
@@ -158,6 +160,16 @@ static const struct object_ops msg_queue_ops =
     no_open_file,              /* open_file */
     no_close_handle,           /* close_handle */
     msg_queue_destroy          /* destroy */
+};
+
+static const struct fd_ops msg_queue_fd_ops =
+{
+    NULL,                        /* get_poll_events */
+    msg_queue_poll_event,        /* poll_event */
+    no_flush,                    /* flush */
+    no_get_file_info,            /* get_file_info */
+    no_queue_async,              /* queue_async */
+    no_cancel_async              /* cancel async */
 };
 
 
@@ -243,6 +255,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
     if (!input && !(input = create_thread_input( thread ))) return NULL;
     if ((queue = alloc_object( &msg_queue_ops )))
     {
+        queue->fd              = NULL;
         queue->wake_bits       = 0;
         queue->wake_mask       = 0;
         queue->changed_bits    = 0;
@@ -778,6 +791,8 @@ static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *ent
     {
         if (process->idle_event) set_event( process->idle_event );
     }
+    if (queue->fd && list_empty( &obj->wait_queue ))  /* first on the queue */
+        set_fd_events( queue->fd, POLLIN );
     add_queue( obj, entry );
     return 1;
 }
@@ -788,6 +803,8 @@ static void msg_queue_remove_queue(struct object *obj, struct wait_queue_entry *
     struct process *process = entry->thread->process;
 
     remove_queue( obj, entry );
+    if (queue->fd && list_empty( &obj->wait_queue ))  /* last on the queue is gone */
+        set_fd_events( queue->fd, 0 );
 
     assert( entry->thread->queue == queue );
 
@@ -808,7 +825,18 @@ static void msg_queue_dump( struct object *obj, int verbose )
 static int msg_queue_signaled( struct object *obj, struct thread *thread )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
-    return is_signaled( queue );
+    int ret = 0;
+
+    if (queue->fd)
+    {
+        if ((ret = check_fd_events( queue->fd, POLLIN )))
+            /* stop waiting on select() if we are signaled */
+            set_fd_events( queue->fd, 0 );
+        else if (!list_empty( &obj->wait_queue ))
+            /* restart waiting on poll() if we are no longer signaled */
+            set_fd_events( queue->fd, POLLIN );
+    }
+    return ret || is_signaled( queue );
 }
 
 static int msg_queue_satisfied( struct object *obj, struct thread *thread )
@@ -843,6 +871,16 @@ static void msg_queue_destroy( struct object *obj )
     if (queue->timeout) remove_timeout_user( queue->timeout );
     if (queue->input) release_object( queue->input );
     if (queue->hooks) release_object( queue->hooks );
+    if (queue->fd) release_object( queue->fd );
+}
+
+static void msg_queue_poll_event( struct fd *fd, int event )
+{
+    struct msg_queue *queue = get_fd_user( fd );
+    assert( queue->obj.ops == &msg_queue_ops );
+
+    if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
+    wake_up( &queue->obj, 0 );
 }
 
 static void thread_input_dump( struct object *obj, int verbose )
@@ -1521,6 +1559,31 @@ DECL_HANDLER(get_msg_queue)
 
     reply->handle = 0;
     if (queue) reply->handle = alloc_handle( current->process, queue, SYNCHRONIZE, 0 );
+}
+
+
+/* set the file descriptor associated to the current thread queue */
+DECL_HANDLER(set_queue_fd)
+{
+    struct msg_queue *queue = get_current_queue();
+    struct file *file;
+    int unix_fd;
+
+    if (queue->fd)  /* fd can only be set once */
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+    if (!(file = get_file_obj( current->process, req->handle, SYNCHRONIZE ))) return;
+
+    if ((unix_fd = get_file_unix_fd( file )) != -1)
+    {
+        if ((unix_fd = dup( unix_fd )) != -1)
+            queue->fd = create_anonymous_fd( &msg_queue_fd_ops, unix_fd, &queue->obj );
+        else
+            file_set_error();
+    }
+    release_object( file );
 }
 
 
