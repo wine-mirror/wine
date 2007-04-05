@@ -316,7 +316,6 @@ void WCMD_directory (char *cmd) {
       WINE_TRACE("Using location '%s'\n", fullname);
 
       status = GetFullPathName (fullname, sizeof(path), path, NULL);
-      WINE_TRACE("Using path '%s'\n", path);
 
       /*
        *  If the path supplied does not include a wildcard, and the endpoint of the
@@ -333,8 +332,13 @@ void WCMD_directory (char *cmd) {
             strcat (path, "\\*");
           }
         }
+      } else {
+        /* Special case wildcard search with no extension (ie parameters ending in '.') as
+           GetFullPathName strips off the additional '.'                                  */
+        if (fullname[strlen(fullname)-1] == '.') strcat(path, ".");
       }
 
+      WINE_TRACE("Using path '%s'\n", path);
       thisEntry = (DIRECTORY_STACK *) HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
       if (fullParms == NULL) fullParms = thisEntry;
       if (prevEntry != NULL) prevEntry->next = thisEntry;
