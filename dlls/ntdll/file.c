@@ -244,6 +244,7 @@ typedef struct async_fileio
     PIO_APC_ROUTINE     apc;
     void*               apc_user;
     char*               buffer;
+    unsigned int        already;
     unsigned int        count;
     int                 queue_apc_on_error;
     BOOL                avail_mode;
@@ -255,6 +256,8 @@ static void fileio_terminate(async_fileio *fileio, IO_STATUS_BLOCK* iosb, NTSTAT
     TRACE("data: %p\n", fileio);
 
     iosb->u.Status = status;
+    iosb->Information = fileio->already;
+
     if (fileio->apc && (status == STATUS_SUCCESS || fileio->queue_apc_on_error))
         fileio->apc( fileio->apc_user, iosb, 0 );
 
@@ -276,8 +279,7 @@ static ULONG fileio_queue_async(async_fileio* fileio, IO_STATUS_BLOCK* iosb,
         req->async.arg      = fileio;
         req->async.event    = fileio->event;
         req->type = do_read ? ASYNC_TYPE_READ : ASYNC_TYPE_WRITE;
-        req->count = (fileio->count < iosb->Information) ? 
-            0 : fileio->count - iosb->Information;
+        req->count = (fileio->count < fileio->already) ? 0 : fileio->count - fileio->already;
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -342,7 +344,6 @@ static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULON
 {
     async_fileio *fileio = (async_fileio*)user;
     int fd, needs_close, result;
-    int already = iosb->Information;
 
     TRACE("%p %p 0x%x\n", iosb, fileio->buffer, status);
 
@@ -356,7 +357,7 @@ static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULON
             fileio_terminate(fileio, iosb, status);
             break;
         }
-        result = read(fd, &fileio->buffer[already], fileio->count - already);
+        result = read(fd, &fileio->buffer[fileio->already], fileio->count - fileio->already);
         if (needs_close) close( fd );
 
         if (result < 0)
@@ -371,12 +372,12 @@ static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULON
         }
         else if (result == 0)
         {
-            status = iosb->Information ? STATUS_SUCCESS : STATUS_END_OF_FILE;
+            status = fileio->already ? STATUS_SUCCESS : STATUS_END_OF_FILE;
         }
         else
         {
-            iosb->Information += result;
-            if (iosb->Information >= fileio->count || fileio->avail_mode)
+            fileio->already += result;
+            if (fileio->already >= fileio->count || fileio->avail_mode)
                 status = STATUS_SUCCESS;
             else
             {
@@ -387,8 +388,8 @@ static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULON
                 status = (fileio->avail_mode) ? STATUS_SUCCESS : STATUS_PENDING;
             }
 
-            TRACE("read %d more bytes %ld/%d so far (%s)\n",
-                  result, iosb->Information, fileio->count,
+            TRACE("read %d more bytes %u/%u so far (%s)\n",
+                  result, fileio->already, fileio->count,
                   (status == STATUS_SUCCESS) ? "success" : "pending");
         }
         /* queue another async operation ? */
@@ -440,14 +441,9 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
-    io_status->Information = 0;
     status = server_get_unix_fd( hFile, FILE_READ_DATA, &unix_handle,
                                  &needs_close, &type, &flags );
-    if (status)
-    {
-        io_status->u.Status = status;
-        return status;
-    }
+    if (status) return status;
 
     if (type == FD_TYPE_FILE && offset)
     {
@@ -514,6 +510,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             goto done;
         }
         fileio->handle = hFile;
+        fileio->already = 0;
         fileio->count = length;
         fileio->apc = apc;
         fileio->apc_user = apc_user;
@@ -587,7 +584,6 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
 {
     async_fileio *fileio = (async_fileio *) ovp;
     int result, fd, needs_close;
-    int already = iosb->Information;
 
     TRACE("(%p %p 0x%x)\n",iosb, fileio->buffer, status);
 
@@ -601,7 +597,7 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
             fileio_terminate(fileio, iosb, status);
             break;
         }
-        result = write(fd, &fileio->buffer[already], fileio->count - already);
+        result = write(fd, &fileio->buffer[fileio->already], fileio->count - fileio->already);
         if (needs_close) close( fd );
 
         if (result < 0)
@@ -611,10 +607,9 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
         }
         else
         {
-            iosb->Information += result;
-            status = (iosb->Information < fileio->count) ? STATUS_PENDING : STATUS_SUCCESS;
-            TRACE("wrote %d more bytes %ld/%d so far\n", 
-                  result, iosb->Information, fileio->count);
+            fileio->already += result;
+            status = (fileio->already < fileio->count) ? STATUS_PENDING : STATUS_SUCCESS;
+            TRACE("wrote %d more bytes %u/%u so far\n", result, fileio->already, fileio->count);
         }
         if (status == STATUS_PENDING)
             fileio_queue_async(fileio, iosb, FALSE);
@@ -664,14 +659,9 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
-    io_status->Information = 0;
     status = server_get_unix_fd( hFile, FILE_WRITE_DATA, &unix_handle,
                                  &needs_close, &type, &flags );
-    if (status)
-    {
-        io_status->u.Status = status;
-        return status;
-    }
+    if (status) return status;
 
     if (type == FD_TYPE_FILE && offset)
     {
@@ -739,6 +729,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             goto done;
         }
         fileio->handle = hFile;
+        fileio->already = 0;
         fileio->count = length;
         fileio->apc = apc;
         fileio->apc_user = apc_user;
@@ -747,7 +738,6 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         fileio->avail_mode = (flags & FD_FLAG_AVAILABLE);
         fileio->event = hEvent;
 
-        io_status->Information = 0;
         io_status->u.Status = STATUS_PENDING;
         status = fileio_queue_async(fileio, io_status, FALSE);
         if (status != STATUS_PENDING)
