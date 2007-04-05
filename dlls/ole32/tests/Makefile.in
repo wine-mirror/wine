@@ -9,6 +9,7 @@ EXTRALIBS = -luuid
 CTESTS = \
 	clipboard.c \
 	compobj.c \
+	dragdrop.c \
 	errorinfo.c \
 	hglobalstream.c \
 	marshal.c \
