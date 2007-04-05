@@ -33,10 +33,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 int WCMD_dir_sort (const void *a, const void *b);
-void WCMD_list_directory (char *path, int level);
+static void WCMD_list_directory (DIRECTORY_STACK *parms, int level);
 char * WCMD_filesize64 (ULONGLONG free);
 char * WCMD_strrev (char *buff);
 static void WCMD_getfileowner(char *filename, char *owner, int ownerlen);
+static void WCMD_dir_trailer(char drive);
 
 extern int echo_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
@@ -57,11 +58,12 @@ typedef enum _DISPLAYORDER
     Date
 } DISPLAYORDER;
 
-struct directory_stack
+typedef struct _DIRECTORY_STACK
 {
-  struct directory_stack *next;
-  char  *name;
-};
+  struct _DIRECTORY_STACK *next;
+  char  *dirName;
+  char  *fileName;
+} DIRECTORY_STACK;
 
 static int file_total, dir_total, recurse, wide, bare, max_width, lower;
 static int shortname, usernames;
@@ -79,14 +81,25 @@ static ULONG showattrs, attrsbits;
  *
  */
 
-void WCMD_directory (void) {
+void WCMD_directory (char *cmd) {
 
-  char path[MAX_PATH], drive[8];
+  char path[MAX_PATH], cwd[MAX_PATH];
   int status, paged_mode;
-  ULARGE_INTEGER avail, total, free;
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   char *p;
   char string[MAXSTRING];
+  int   argno         = 0;
+  int   argsProcessed = 0;
+  char *argN          = cmd;
+  char  lastDrive;
+  BOOL  trailerReqd = FALSE;
+  DIRECTORY_STACK *fullParms = NULL;
+  DIRECTORY_STACK *prevEntry = NULL;
+  DIRECTORY_STACK *thisEntry = NULL;
+  char drive[10];
+  char dir[MAX_PATH];
+  char fname[MAX_PATH];
+  char ext[MAX_PATH];
 
   errorlevel = 0;
 
@@ -267,40 +280,155 @@ void WCMD_directory (void) {
      WCMD_enter_paged_mode();
   }
 
-  if (param1[0] == '\0') strcpy (param1, ".");
-  status = GetFullPathName (param1, sizeof(path), path, NULL);
-  if (!status) {
-    WCMD_print_error();
-    if (paged_mode) WCMD_leave_paged_mode();
-    errorlevel = 1;
-    return;
-  }
-  lstrcpyn (drive, path, 3);
+  argno         = 0;
+  argsProcessed = 0;
+  argN          = cmd;
+  GetCurrentDirectory (1024, cwd);
+  strcat(cwd, "\\");
 
-  if (!bare) {
-     status = WCMD_volume (0, drive);
-     if (!status) {
-         if (paged_mode) WCMD_leave_paged_mode();
-       errorlevel = 1;
-       return;
-     }
+  /* Loop through all args, calculating full effective directory */
+  fullParms = NULL;
+  prevEntry = NULL;
+  while (argN) {
+    char fullname[MAXSTRING];
+    char *thisArg = WCMD_parameter (cmd, argno++, &argN);
+    if (argN && argN[0] != '/') {
+
+      WINE_TRACE("Found parm '%s'\n", thisArg);
+      if (thisArg[1] == ':' && thisArg[2] == '\\') {
+        strcpy(fullname, thisArg);
+      } else if (thisArg[1] == ':' && thisArg[2] != '\\') {
+        char envvar[4];
+        sprintf(envvar, "=%c:", thisArg[0]);
+        if (!GetEnvironmentVariable(envvar, fullname, MAX_PATH)) {
+          sprintf(fullname, "%c:", thisArg[0]);
+        }
+        strcat(fullname, "\\");
+        strcat(fullname, &thisArg[2]);
+      } else if (thisArg[0] == '\\') {
+        strncpy(fullname, cwd, 2);
+        fullname[2] = 0x00;
+        strcat((fullname+2), thisArg);
+      } else {
+        strcpy(fullname, cwd);
+        strcat(fullname, thisArg);
+      }
+      WINE_TRACE("Using location '%s'\n", fullname);
+
+      status = GetFullPathName (fullname, sizeof(path), path, NULL);
+      WINE_TRACE("Using path '%s'\n", path);
+
+      /*
+       *  If the path supplied does not include a wildcard, and the endpoint of the
+       *  path references a directory, we need to list the *contents* of that
+       *  directory not the directory file itself.
+       */
+      if ((strchr(path, '*') == NULL) && (strchr(path, '%') == NULL)) {
+        status = GetFileAttributes (path);
+        if ((status != INVALID_FILE_ATTRIBUTES) && (status & FILE_ATTRIBUTE_DIRECTORY)) {
+          if (path[strlen(path)-1] == '\\') {
+            strcat (path, "*");
+          }
+          else {
+            strcat (path, "\\*");
+          }
+        }
+      }
+
+      thisEntry = (DIRECTORY_STACK *) HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
+      if (fullParms == NULL) fullParms = thisEntry;
+      if (prevEntry != NULL) prevEntry->next = thisEntry;
+      prevEntry = thisEntry;
+      thisEntry->next = NULL;
+
+      /* Split into components */
+      WCMD_splitpath(path, drive, dir, fname, ext);
+      WINE_TRACE("Path Parts: drive: '%s' dir: '%s' name: '%s' ext:'%s'\n",
+                 drive, dir, fname, ext);
+
+      thisEntry->dirName = HeapAlloc(GetProcessHeap(),0,strlen(drive)+strlen(dir)+1);
+      strcpy(thisEntry->dirName, drive);
+      strcat(thisEntry->dirName, dir);
+
+      thisEntry->fileName = HeapAlloc(GetProcessHeap(),0,strlen(fname)+strlen(ext)+1);
+      strcpy(thisEntry->fileName, fname);
+      strcat(thisEntry->fileName, ext);
+
+    }
   }
 
-  WCMD_list_directory (path, 0);
-  lstrcpyn (drive, path, 4);
-  GetDiskFreeSpaceEx (drive, &avail, &total, &free);
-
-  if (errorlevel==0 && !bare) {
-     if (recurse) {
-       WCMD_output ("\n     Total files listed:\n%8d files%25s bytes\n",
-            file_total, WCMD_filesize64 (byte_total));
-       WCMD_output ("%8d directories %18s bytes free\n\n",
-            dir_total, WCMD_filesize64 (free.QuadPart));
-     } else {
-       WCMD_output (" %18s bytes free\n\n", WCMD_filesize64 (free.QuadPart));
-     }
+  /* If just 'dir' entered, a '*' parameter is assumed */
+  if (fullParms == NULL) {
+    WINE_TRACE("Inserting default '*'\n");
+    fullParms = (DIRECTORY_STACK *) HeapAlloc(GetProcessHeap(),0, sizeof(DIRECTORY_STACK));
+    fullParms->next = NULL;
+    fullParms->dirName = HeapAlloc(GetProcessHeap(),0,(strlen(cwd)+1));
+    strcpy(fullParms->dirName, cwd);
+    fullParms->fileName = HeapAlloc(GetProcessHeap(),0,2);
+    strcpy(fullParms->fileName, "*");
   }
+
+  lastDrive = '?';
+  prevEntry = NULL;
+  thisEntry = fullParms;
+  trailerReqd = FALSE;
+
+  while (thisEntry != NULL) {
+
+    /* Output disk free (trailer) and volume information (header) if the drive
+       letter changes */
+    if (lastDrive != toupper(thisEntry->dirName[0])) {
+
+      /* Trailer Information */
+      if (lastDrive != '?') {
+        trailerReqd = FALSE;
+        WCMD_dir_trailer(prevEntry->dirName[0]);
+      }
+
+      lastDrive = toupper(thisEntry->dirName[0]);
+
+      if (!bare) {
+         char drive[3];
+
+         WINE_TRACE("Writing volume for '%c:'\n", thisEntry->dirName[0]);
+         strncpy(drive, thisEntry->dirName, 2);
+         drive[2] = 0x00;
+         status = WCMD_volume (0, drive);
+         trailerReqd = TRUE;
+         if (!status) {
+           errorlevel = 1;
+           goto exit;
+         }
+      }
+    } else {
+      if (!bare) WCMD_output ("\n\n");
+    }
+
+    /* Clear any errors from previous invocations, and process it */
+    errorlevel = 0;
+    WCMD_list_directory (thisEntry, 0);
+
+    /* Step to next parm */
+    prevEntry = thisEntry;
+    thisEntry = thisEntry->next;
+  }
+
+  /* Trailer Information */
+  if (trailerReqd) {
+    WCMD_dir_trailer(prevEntry->dirName[0]);
+  }
+
+exit:
   if (paged_mode) WCMD_leave_paged_mode();
+
+  /* Free storage allocated for parms */
+  while (fullParms != NULL) {
+    prevEntry = fullParms;
+    fullParms = prevEntry->next;
+    HeapFree(GetProcessHeap(),0,prevEntry->dirName);
+    HeapFree(GetProcessHeap(),0,prevEntry->fileName);
+    HeapFree(GetProcessHeap(),0,prevEntry);
+  }
 }
 
 /*****************************************************************************
@@ -309,22 +437,18 @@ void WCMD_directory (void) {
  * List a single file directory. This function (and those below it) can be called
  * recursively when the /S switch is used.
  *
- * FIXME: Entries sorted by name only. Should we support DIRCMD??
  * FIXME: Assumes 24-line display for the /P qualifier.
- * FIXME: Other command qualifiers not supported.
- * FIXME: DIR /S FILENAME fails if at least one matching file is not found in the top level.
  */
 
-void WCMD_list_directory (char *search_path, int level) {
+static void WCMD_list_directory (DIRECTORY_STACK *parms, int level) {
 
   char string[1024], datestring[32], timestring[32];
-  char *p;
   char real_path[MAX_PATH];
   WIN32_FIND_DATA *fd;
   FILETIME ft;
   SYSTEMTIME st;
   HANDLE hff;
-  int status, dir_count, file_count, entry_count, i, widest, cur_width, tmp_width;
+  int dir_count, file_count, entry_count, i, widest, cur_width, tmp_width;
   int numCols, numRows;
   int rows, cols;
   ULARGE_INTEGER byte_count, file_size;
@@ -336,35 +460,14 @@ void WCMD_list_directory (char *search_path, int level) {
   widest = 0;
   cur_width = 0;
 
-/*
- *  If the path supplied does not include a wildcard, and the endpoint of the
- *  path references a directory, we need to list the *contents* of that
- *  directory not the directory file itself. However, only do this on first
- *  entry and not subsequent recursion
- */
-
-  if ((level == 0) &&
-      (strchr(search_path, '*') == NULL) && (strchr(search_path, '%') == NULL)) {
-    status = GetFileAttributes (search_path);
-    if ((status != INVALID_FILE_ATTRIBUTES) && (status & FILE_ATTRIBUTE_DIRECTORY)) {
-      if (search_path[strlen(search_path)-1] == '\\') {
-        strcat (search_path, "*");
-      }
-      else {
-        strcat (search_path, "\\*");
-      }
-    }
-  }
-
-  /* Work out the actual current directory name */
-  p = strrchr (search_path, '\\');
-  memset(real_path, 0x00, sizeof(real_path));
-  lstrcpyn (real_path, search_path, (p-search_path+2));
+  /* Work out the full path + filename */
+  strcpy(real_path, parms->dirName);
+  strcat(real_path, parms->fileName);
 
   /* Load all files into an in memory structure */
   fd = HeapAlloc(GetProcessHeap(),0,sizeof(WIN32_FIND_DATA));
-  WINE_TRACE("Looking for matches to '%s'\n", search_path);
-  hff = FindFirstFile (search_path, fd);
+  WINE_TRACE("Looking for matches to '%s'\n", real_path);
+  hff = FindFirstFile (real_path, fd);
   if (hff == INVALID_HANDLE_VALUE) {
     entry_count = 0;
   } else {
@@ -391,6 +494,10 @@ void WCMD_list_directory (char *search_path, int level) {
     } while (FindNextFile(hff, (fd+entry_count)) != 0);
     FindClose (hff);
   }
+
+  /* Work out the actual current directory name without a trailing \ */
+  strcpy(real_path, parms->dirName);
+  real_path[strlen(parms->dirName)-1] = 0x00;
 
   /* Output the results */
   if (!bare) {
@@ -438,8 +545,7 @@ void WCMD_list_directory (char *search_path, int level) {
 
       /* /Q gets file ownership information */
       if (usernames) {
-          p = strrchr (search_path, '\\');
-          lstrcpyn (string, search_path, (p-search_path+2));
+          lstrcpy (string, parms->dirName);
           lstrcat (string, (fd+i)->cFileName);
           WCMD_getfileowner(string, username, sizeof(username));
       }
@@ -491,7 +597,7 @@ void WCMD_list_directory (char *search_path, int level) {
         } else {
            if (!((strcmp((fd+i)->cFileName, ".") == 0) ||
                  (strcmp((fd+i)->cFileName, "..") == 0))) {
-              WCMD_output ("%s%s", recurse?real_path:"", (fd+i)->cFileName);
+              WCMD_output ("%s%s", recurse?parms->dirName:"", (fd+i)->cFileName);
            } else {
               addNewLine = FALSE;
            }
@@ -509,7 +615,7 @@ void WCMD_list_directory (char *search_path, int level) {
            if (usernames) WCMD_output ("%-23s", username);
            WCMD_output("%s",(fd+i)->cFileName);
         } else {
-           WCMD_output ("%s%s", recurse?real_path:"", (fd+i)->cFileName);
+           WCMD_output ("%s%s", recurse?parms->dirName:"", (fd+i)->cFileName);
         }
       }
      }
@@ -538,14 +644,13 @@ void WCMD_list_directory (char *search_path, int level) {
 
   /* When recursing, look in all subdirectories for matches */
   if (recurse) {
-    struct directory_stack *dirStack = NULL;
-    struct directory_stack *lastEntry = NULL;
+    DIRECTORY_STACK *dirStack = NULL;
+    DIRECTORY_STACK *lastEntry = NULL;
     WIN32_FIND_DATA finddata;
 
     /* Build path to search */
-    strcpy(string, search_path);
-    p = strrchr (string, '\\');
-    strcpy(p+1, "*");
+    strcpy(string, parms->dirName);
+    strcat(string, "*");
 
     WINE_TRACE("Recursive, looking for '%s'\n", string);
     hff = FindFirstFile (string, &finddata);
@@ -555,34 +660,35 @@ void WCMD_list_directory (char *search_path, int level) {
             (strcmp(finddata.cFileName, "..") != 0) &&
             (strcmp(finddata.cFileName, ".") != 0)) {
 
-          struct directory_stack *thisDir;
+          DIRECTORY_STACK *thisDir;
 
           /* Work out search parameter in sub dir */
-          p = strrchr (search_path, '\\');
-          lstrcpyn (string, search_path, (p-search_path+2));
-          string[(p-search_path+2)] = 0x00;
-          lstrcat (string, finddata.cFileName);
-          lstrcat (string, p);
+          strcpy (string, parms->dirName);
+          strcat (string, finddata.cFileName);
+          strcat (string, "\\");
           WINE_TRACE("Recursive, Adding to search list '%s'\n", string);
 
           /* Allocate memory, add to list */
-          thisDir = (struct directory_stack *) HeapAlloc(GetProcessHeap(),0,sizeof(struct directory_stack));
+          thisDir = (DIRECTORY_STACK *) HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
           if (dirStack == NULL) dirStack = thisDir;
           if (lastEntry != NULL) lastEntry->next = thisDir;
           lastEntry = thisDir;
           thisDir->next = NULL;
-          thisDir->name = HeapAlloc(GetProcessHeap(),0,(strlen(string)+1));
-          strcpy(thisDir->name, string);
+          thisDir->dirName = HeapAlloc(GetProcessHeap(),0,(strlen(string)+1));
+          strcpy(thisDir->dirName, string);
+          thisDir->fileName = HeapAlloc(GetProcessHeap(),0,(strlen(parms->fileName)+1));
+          strcpy(thisDir->fileName, parms->fileName);
         }
       } while (FindNextFile(hff, &finddata) != 0);
       FindClose (hff);
 
       while (dirStack != NULL) {
-        struct directory_stack *thisDir = dirStack;
+        DIRECTORY_STACK *thisDir = dirStack;
         dirStack = thisDir->next;
 
-        WCMD_list_directory (thisDir->name, 1);
-        HeapFree(GetProcessHeap(),0,thisDir->name);
+        WCMD_list_directory (thisDir, 1);
+        HeapFree(GetProcessHeap(),0,thisDir->dirName);
+        HeapFree(GetProcessHeap(),0,thisDir->fileName);
         HeapFree(GetProcessHeap(),0,thisDir);
       }
     }
@@ -594,8 +700,6 @@ void WCMD_list_directory (char *search_path, int level) {
     WCMD_print_error ();
     errorlevel = 1;
   }
-
-  return;
 }
 
 /*****************************************************************************
@@ -778,4 +882,30 @@ void WCMD_getfileowner(char *filename, char *owner, int ownerlen) {
         HeapFree(GetProcessHeap(),0,secBuffer);
     }
     return;
+}
+
+/*****************************************************************************
+ * WCMD_dir_trailer
+ *
+ * Print out the trailer for the supplied drive letter
+ */
+static void WCMD_dir_trailer(char drive) {
+    ULARGE_INTEGER avail, total, freebytes;
+    DWORD status;
+    char driveName[4] = "c:\\";
+
+    driveName[0] = drive;
+    status = GetDiskFreeSpaceEx (driveName, &avail, &total, &freebytes);
+    WINE_TRACE("Writing trailer for '%s' gave %d(%d)\n", driveName, status, GetLastError());
+
+    if (errorlevel==0 && !bare) {
+      if (recurse) {
+        WCMD_output ("\n     Total files listed:\n%8d files%25s bytes\n",
+             file_total, WCMD_filesize64 (byte_total));
+        WCMD_output ("%8d directories %18s bytes free\n\n",
+             dir_total, WCMD_filesize64 (freebytes.QuadPart));
+      } else {
+        WCMD_output (" %18s bytes free\n\n", WCMD_filesize64 (freebytes.QuadPart));
+      }
+    }
 }

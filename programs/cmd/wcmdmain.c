@@ -622,7 +622,7 @@ void WCMD_process_command (char *command)
         WCMD_delete (p);
         break;
       case WCMD_DIR:
-        WCMD_directory ();
+        WCMD_directory (p);
         break;
       case WCMD_ECHO:
         WCMD_echo(&whichcmd[count]);

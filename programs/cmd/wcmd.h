@@ -36,7 +36,7 @@ void WCMD_color (void);
 void WCMD_copy (void);
 void WCMD_create_dir (void);
 void WCMD_delete (char *);
-void WCMD_directory (void);
+void WCMD_directory (char *);
 void WCMD_echo (const char *);
 void WCMD_endlocal (void);
 void WCMD_enter_paged_mode(void);
