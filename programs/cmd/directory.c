@@ -57,6 +57,12 @@ typedef enum _DISPLAYORDER
     Date
 } DISPLAYORDER;
 
+struct directory_stack
+{
+  struct directory_stack *next;
+  char  *name;
+};
+
 static int file_total, dir_total, recurse, wide, bare, max_width, lower;
 static int shortname, usernames;
 static ULONGLONG byte_total;
@@ -286,7 +292,7 @@ void WCMD_directory (void) {
 
   if (errorlevel==0 && !bare) {
      if (recurse) {
-       WCMD_output ("\n\n     Total files listed:\n%8d files%25s bytes\n",
+       WCMD_output ("\n     Total files listed:\n%8d files%25s bytes\n",
             file_total, WCMD_filesize64 (byte_total));
        WCMD_output ("%8d directories %18s bytes free\n\n",
             dir_total, WCMD_filesize64 (free.QuadPart));
@@ -333,10 +339,12 @@ void WCMD_list_directory (char *search_path, int level) {
 /*
  *  If the path supplied does not include a wildcard, and the endpoint of the
  *  path references a directory, we need to list the *contents* of that
- *  directory not the directory file itself.
+ *  directory not the directory file itself. However, only do this on first
+ *  entry and not subsequent recursion
  */
 
-  if ((strchr(search_path, '*') == NULL) && (strchr(search_path, '%') == NULL)) {
+  if ((level == 0) &&
+      (strchr(search_path, '*') == NULL) && (strchr(search_path, '%') == NULL)) {
     status = GetFileAttributes (search_path);
     if ((status != INVALID_FILE_ATTRIBUTES) && (status & FILE_ATTRIBUTE_DIRECTORY)) {
       if (search_path[strlen(search_path)-1] == '\\') {
@@ -355,196 +363,238 @@ void WCMD_list_directory (char *search_path, int level) {
 
   /* Load all files into an in memory structure */
   fd = HeapAlloc(GetProcessHeap(),0,sizeof(WIN32_FIND_DATA));
+  WINE_TRACE("Looking for matches to '%s'\n", search_path);
   hff = FindFirstFile (search_path, fd);
   if (hff == INVALID_HANDLE_VALUE) {
-    SetLastError (ERROR_FILE_NOT_FOUND);
-    WCMD_print_error ();
-    HeapFree(GetProcessHeap(),0,fd);
-    errorlevel = 1;
-    return;
+    entry_count = 0;
+  } else {
+    do {
+      /* Skip any which are filtered out by attribute */
+      if (((fd+entry_count)->dwFileAttributes & attrsbits) != showattrs) continue;
+
+      entry_count++;
+
+      /* Keep running track of longest filename for wide output */
+      if (wide || orderByCol) {
+         int tmpLen = strlen((fd+(entry_count-1))->cFileName) + 3;
+         if ((fd+(entry_count-1))->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) tmpLen = tmpLen + 2;
+         if (tmpLen > widest) widest = tmpLen;
+      }
+
+      fd = HeapReAlloc(GetProcessHeap(),0,fd,(entry_count+1)*sizeof(WIN32_FIND_DATA));
+      if (fd == NULL) {
+        FindClose (hff);
+        WCMD_output ("Memory Allocation Error");
+        errorlevel = 1;
+        return;
+      }
+    } while (FindNextFile(hff, (fd+entry_count)) != 0);
+    FindClose (hff);
   }
-  do {
-    /* Skip any which are filtered out by attribute */
-    if (((fd+entry_count)->dwFileAttributes & attrsbits) != showattrs) continue;
-
-    entry_count++;
-
-    /* Keep running track of longest filename for wide output */
-    if (wide || orderByCol) {
-       int tmpLen = strlen((fd+(entry_count-1))->cFileName) + 3;
-       if ((fd+(entry_count-1))->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) tmpLen = tmpLen + 2;
-       if (tmpLen > widest) widest = tmpLen;
-    }
-
-    fd = HeapReAlloc(GetProcessHeap(),0,fd,(entry_count+1)*sizeof(WIN32_FIND_DATA));
-    if (fd == NULL) {
-      FindClose (hff);
-      WCMD_output ("Memory Allocation Error");
-      errorlevel = 1;
-      return;
-    }
-  } while (FindNextFile(hff, (fd+entry_count)) != 0);
-  FindClose (hff);
-
-  /* Handle case where everything is filtered out */
-  if (entry_count == 0) {
-    SetLastError (ERROR_FILE_NOT_FOUND);
-    WCMD_print_error ();
-    HeapFree(GetProcessHeap(),0,fd);
-    errorlevel = 1;
-    return;
-  }
-
-  /* Sort the list of files */
-  qsort (fd, entry_count, sizeof(WIN32_FIND_DATA), WCMD_dir_sort);
 
   /* Output the results */
   if (!bare) {
-     if (level != 0) WCMD_output ("\n\n");
-     WCMD_output ("Directory of %s\n\n", real_path);
+     if (level != 0 && (entry_count > 0)) WCMD_output ("\n");
+     if ((entry_count > 0) || (!recurse && level == 0)) WCMD_output ("Directory of %s\n\n", real_path);
   }
 
-  /* Work out the number of columns */
-  WINE_TRACE("%d entries, maxwidth=%d, widest=%d\n", entry_count, max_width, widest);
-  if (wide || orderByCol) {
-    numCols = max(1, (int)max_width / widest);
-    numRows = entry_count / numCols;
-    if (entry_count % numCols) numRows++;
-  } else {
-    numCols = 1;
-    numRows = entry_count;
-  }
-  WINE_TRACE("cols=%d, rows=%d\n", numCols, numRows);
+  /* Handle case where everything is filtered out */
+  if (entry_count > 0) {
 
-  for (rows=0; rows<numRows; rows++) {
-   for (cols=0; cols<numCols; cols++) {
-    char username[24];
+    /* Sort the list of files */
+    qsort (fd, entry_count, sizeof(WIN32_FIND_DATA), WCMD_dir_sort);
 
-    /* Work out the index of the entry being pointed to */
-    if (orderByCol) {
-      i = (cols * numRows) + rows;
-      if (i >= entry_count) continue;
+    /* Work out the number of columns */
+    WINE_TRACE("%d entries, maxwidth=%d, widest=%d\n", entry_count, max_width, widest);
+    if (wide || orderByCol) {
+      numCols = max(1, (int)max_width / widest);
+      numRows = entry_count / numCols;
+      if (entry_count % numCols) numRows++;
     } else {
-      i = (rows * numCols) + cols;
-      if (i >= entry_count) continue;
+      numCols = 1;
+      numRows = entry_count;
     }
+    WINE_TRACE("cols=%d, rows=%d\n", numCols, numRows);
 
-    /* /L convers all names to lower case */
-    if (lower) {
-        char *p = (fd+i)->cFileName;
-        while ( (*p = tolower(*p)) ) ++p;
-    }
+    for (rows=0; rows<numRows; rows++) {
+     BOOL addNewLine = TRUE;
+     for (cols=0; cols<numCols; cols++) {
+      char username[24];
 
-    /* /Q gets file ownership information */
-    if (usernames) {
-        p = strrchr (search_path, '\\');
-        lstrcpyn (string, search_path, (p-search_path+2));
-        lstrcat (string, (fd+i)->cFileName);
-        WCMD_getfileowner(string, username, sizeof(username));
-    }
-
-    if (dirTime == Written) {
-      FileTimeToLocalFileTime (&(fd+i)->ftLastWriteTime, &ft);
-    } else if (dirTime == Access) {
-      FileTimeToLocalFileTime (&(fd+i)->ftLastAccessTime, &ft);
-    } else {
-      FileTimeToLocalFileTime (&(fd+i)->ftCreationTime, &ft);
-    }
-    FileTimeToSystemTime (&ft, &st);
-    GetDateFormat (0, DATE_SHORTDATE, &st, NULL, datestring,
-      		sizeof(datestring));
-    GetTimeFormat (0, TIME_NOSECONDS, &st,
-      		NULL, timestring, sizeof(timestring));
-
-    if (wide) {
-
-      tmp_width = cur_width;
-      if ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-          WCMD_output ("[%s]", (fd+i)->cFileName);
-          dir_count++;
-          tmp_width = tmp_width + strlen((fd+i)->cFileName) + 2;
+      /* Work out the index of the entry being pointed to */
+      if (orderByCol) {
+        i = (cols * numRows) + rows;
+        if (i >= entry_count) continue;
       } else {
-          WCMD_output ("%s", (fd+i)->cFileName);
-          tmp_width = tmp_width + strlen((fd+i)->cFileName) ;
-          file_count++;
-          file_size.u.LowPart = (fd+i)->nFileSizeLow;
-          file_size.u.HighPart = (fd+i)->nFileSizeHigh;
-      byte_count.QuadPart += file_size.QuadPart;
-      }
-      cur_width = cur_width + widest;
-
-      if ((cur_width + widest) > max_width) {
-          cur_width = 0;
-      } else {
-          WCMD_output ("%*.s", (tmp_width - cur_width) ,"");
+        i = (rows * numCols) + cols;
+        if (i >= entry_count) continue;
       }
 
-    } else if ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-      dir_count++;
-
-      if (!bare) {
-         WCMD_output ("%10s  %8s  <DIR>         ", datestring, timestring);
-         if (shortname) WCMD_output ("%-13s", (fd+i)->cAlternateFileName);
-         if (usernames) WCMD_output ("%-23s", username);
-         WCMD_output("%s",(fd+i)->cFileName);
-      } else {
-         if (!((strcmp((fd+i)->cFileName, ".") == 0) ||
-               (strcmp((fd+i)->cFileName, "..") == 0))) {
-            WCMD_output ("%s%s", recurse?real_path:"", (fd+i)->cFileName);
-         }
+      /* /L convers all names to lower case */
+      if (lower) {
+          char *p = (fd+i)->cFileName;
+          while ( (*p = tolower(*p)) ) ++p;
       }
-    }
-    else {
-      file_count++;
-      file_size.u.LowPart = (fd+i)->nFileSizeLow;
-      file_size.u.HighPart = (fd+i)->nFileSizeHigh;
-      byte_count.QuadPart += file_size.QuadPart;
-      if (!bare) {
-         WCMD_output ("%10s  %8s    %10s  ", datestring, timestring,
-                      WCMD_filesize64(file_size.QuadPart));
-         if (shortname) WCMD_output ("%-13s", (fd+i)->cAlternateFileName);
-         if (usernames) WCMD_output ("%-23s", username);
-         WCMD_output("%s",(fd+i)->cFileName);
-      } else {
-         WCMD_output ("%s%s", recurse?real_path:"", (fd+i)->cFileName);
-      }
-    }
-   }
-   WCMD_output ("\n");
-   cur_width = 0;
-  }
 
-  if (!bare) {
-     if (file_count == 1) {
-       WCMD_output ("       1 file %25s bytes\n", WCMD_filesize64 (byte_count.QuadPart));
+      /* /Q gets file ownership information */
+      if (usernames) {
+          p = strrchr (search_path, '\\');
+          lstrcpyn (string, search_path, (p-search_path+2));
+          lstrcat (string, (fd+i)->cFileName);
+          WCMD_getfileowner(string, username, sizeof(username));
+      }
+
+      if (dirTime == Written) {
+        FileTimeToLocalFileTime (&(fd+i)->ftLastWriteTime, &ft);
+      } else if (dirTime == Access) {
+        FileTimeToLocalFileTime (&(fd+i)->ftLastAccessTime, &ft);
+      } else {
+        FileTimeToLocalFileTime (&(fd+i)->ftCreationTime, &ft);
+      }
+      FileTimeToSystemTime (&ft, &st);
+      GetDateFormat (0, DATE_SHORTDATE, &st, NULL, datestring,
+			sizeof(datestring));
+      GetTimeFormat (0, TIME_NOSECONDS, &st,
+			NULL, timestring, sizeof(timestring));
+
+      if (wide) {
+
+        tmp_width = cur_width;
+        if ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            WCMD_output ("[%s]", (fd+i)->cFileName);
+            dir_count++;
+            tmp_width = tmp_width + strlen((fd+i)->cFileName) + 2;
+        } else {
+            WCMD_output ("%s", (fd+i)->cFileName);
+            tmp_width = tmp_width + strlen((fd+i)->cFileName) ;
+            file_count++;
+            file_size.u.LowPart = (fd+i)->nFileSizeLow;
+            file_size.u.HighPart = (fd+i)->nFileSizeHigh;
+        byte_count.QuadPart += file_size.QuadPart;
+        }
+        cur_width = cur_width + widest;
+
+        if ((cur_width + widest) > max_width) {
+            cur_width = 0;
+        } else {
+            WCMD_output ("%*.s", (tmp_width - cur_width) ,"");
+        }
+
+      } else if ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        dir_count++;
+
+        if (!bare) {
+           WCMD_output ("%10s  %8s  <DIR>         ", datestring, timestring);
+           if (shortname) WCMD_output ("%-13s", (fd+i)->cAlternateFileName);
+           if (usernames) WCMD_output ("%-23s", username);
+           WCMD_output("%s",(fd+i)->cFileName);
+        } else {
+           if (!((strcmp((fd+i)->cFileName, ".") == 0) ||
+                 (strcmp((fd+i)->cFileName, "..") == 0))) {
+              WCMD_output ("%s%s", recurse?real_path:"", (fd+i)->cFileName);
+           } else {
+              addNewLine = FALSE;
+           }
+        }
+      }
+      else {
+        file_count++;
+        file_size.u.LowPart = (fd+i)->nFileSizeLow;
+        file_size.u.HighPart = (fd+i)->nFileSizeHigh;
+        byte_count.QuadPart += file_size.QuadPart;
+        if (!bare) {
+           WCMD_output ("%10s  %8s    %10s  ", datestring, timestring,
+                        WCMD_filesize64(file_size.QuadPart));
+           if (shortname) WCMD_output ("%-13s", (fd+i)->cAlternateFileName);
+           if (usernames) WCMD_output ("%-23s", username);
+           WCMD_output("%s",(fd+i)->cFileName);
+        } else {
+           WCMD_output ("%s%s", recurse?real_path:"", (fd+i)->cFileName);
+        }
+      }
      }
-     else {
-       WCMD_output ("%8d files %24s bytes\n", file_count, WCMD_filesize64 (byte_count.QuadPart));
-     }
-  }
-  byte_total = byte_total + byte_count.QuadPart;
-  file_total = file_total + file_count;
-  dir_total = dir_total + dir_count;
+     if (addNewLine) WCMD_output ("\n");
+     cur_width = 0;
+    }
 
-  if (!bare) {
-     if (dir_count == 1) WCMD_output ("1 directory         ");
-     else WCMD_output ("%8d directories", dir_count);
-  }
-  for (i=0; i<entry_count; i++) {
-    if ((recurse) &&
-          ((fd+i)->cFileName[0] != '.') &&
-      	  ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-#if 0
-      GetFullPathName ((fd+i)->cFileName, sizeof(string), string, NULL);
-#endif
-      p = strrchr (search_path, '\\');
-      lstrcpyn (string, search_path, (p-search_path+2));
-      lstrcat (string, (fd+i)->cFileName);
-      lstrcat (string, p);
-      WCMD_list_directory (string, 1);
+    if (!bare) {
+       if (file_count == 1) {
+         WCMD_output ("       1 file %25s bytes\n", WCMD_filesize64 (byte_count.QuadPart));
+       }
+       else {
+         WCMD_output ("%8d files %24s bytes\n", file_count, WCMD_filesize64 (byte_count.QuadPart));
+       }
+    }
+    byte_total = byte_total + byte_count.QuadPart;
+    file_total = file_total + file_count;
+    dir_total = dir_total + dir_count;
+
+    if (!bare && !recurse) {
+       if (dir_count == 1) WCMD_output ("%8d directory         ", 1);
+       else WCMD_output ("%8d directories", dir_count);
     }
   }
   HeapFree(GetProcessHeap(),0,fd);
+
+  /* When recursing, look in all subdirectories for matches */
+  if (recurse) {
+    struct directory_stack *dirStack = NULL;
+    struct directory_stack *lastEntry = NULL;
+    WIN32_FIND_DATA finddata;
+
+    /* Build path to search */
+    strcpy(string, search_path);
+    p = strrchr (string, '\\');
+    strcpy(p+1, "*");
+
+    WINE_TRACE("Recursive, looking for '%s'\n", string);
+    hff = FindFirstFile (string, &finddata);
+    if (hff != INVALID_HANDLE_VALUE) {
+      do {
+        if ((finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+            (strcmp(finddata.cFileName, "..") != 0) &&
+            (strcmp(finddata.cFileName, ".") != 0)) {
+
+          struct directory_stack *thisDir;
+
+          /* Work out search parameter in sub dir */
+          p = strrchr (search_path, '\\');
+          lstrcpyn (string, search_path, (p-search_path+2));
+          string[(p-search_path+2)] = 0x00;
+          lstrcat (string, finddata.cFileName);
+          lstrcat (string, p);
+          WINE_TRACE("Recursive, Adding to search list '%s'\n", string);
+
+          /* Allocate memory, add to list */
+          thisDir = (struct directory_stack *) HeapAlloc(GetProcessHeap(),0,sizeof(struct directory_stack));
+          if (dirStack == NULL) dirStack = thisDir;
+          if (lastEntry != NULL) lastEntry->next = thisDir;
+          lastEntry = thisDir;
+          thisDir->next = NULL;
+          thisDir->name = HeapAlloc(GetProcessHeap(),0,(strlen(string)+1));
+          strcpy(thisDir->name, string);
+        }
+      } while (FindNextFile(hff, &finddata) != 0);
+      FindClose (hff);
+
+      while (dirStack != NULL) {
+        struct directory_stack *thisDir = dirStack;
+        dirStack = thisDir->next;
+
+        WCMD_list_directory (thisDir->name, 1);
+        HeapFree(GetProcessHeap(),0,thisDir->name);
+        HeapFree(GetProcessHeap(),0,thisDir);
+      }
+    }
+  }
+
+  /* Handle case where everything is filtered out */
+  if ((file_total + dir_total == 0) && (level == 0)) {
+    SetLastError (ERROR_FILE_NOT_FOUND);
+    WCMD_print_error ();
+    errorlevel = 1;
+  }
+
   return;
 }
 
