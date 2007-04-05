@@ -289,9 +289,18 @@ HRESULT WINAPI RegisterDragDrop(
 
   TRACE("(%p,%p)\n", hwnd, pDropTarget);
 
+  if (!COM_CurrentApt())
+  {
+    ERR("COM not initialized\n");
+    return CO_E_NOTINITIALIZED;
+  }
+
   if (!pDropTarget)
     return E_INVALIDARG;
-  
+
+  if (!IsWindow(hwnd))
+    return DRAGDROP_E_INVALIDHWND;
+
   /*
    * First, check if the window is already registered.
    */

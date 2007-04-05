@@ -113,7 +113,6 @@ START_TEST(dragdrop)
     HRESULT hr;
 
     hr = RegisterDragDrop(GetDesktopWindow(), &DropTarget);
-    todo_wine
     ok(hr == CO_E_NOTINITIALIZED, "RegisterDragDrop without OLE initialized should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
 
     OleInitialize(NULL);
@@ -122,19 +121,14 @@ START_TEST(dragdrop)
     ok(hr == E_INVALIDARG, "RegisterDragDrop with NULL IDropTarget * should return E_INVALIDARG instead of 0x%08x\n", hr);
 
     hr = RegisterDragDrop(NULL, &DropTarget);
-    todo_wine
     ok(hr == DRAGDROP_E_INVALIDHWND, "RegisterDragDrop with NULL hwnd should return DRAGDROP_E_INVALIDHWND instead of 0x%08x\n", hr);
 
     hr = RegisterDragDrop((HWND)0xdeadbeef, &DropTarget);
-    todo_wine
     ok(hr == DRAGDROP_E_INVALIDHWND, "RegisterDragDrop with garbage hwnd should return DRAGDROP_E_INVALIDHWND instead of 0x%08x\n", hr);
 
-    todo_wine
     ok(droptarget_addref_called == 0, "DropTarget_AddRef shouldn't have been called\n");
     hr = RegisterDragDrop(GetDesktopWindow(), &DropTarget);
-    todo_wine
     ok_ole_success(hr, "RegisterDragDrop");
-    todo_wine
     ok(droptarget_addref_called == 1, "DropTarget_AddRef should have been called once, not %d times\n", droptarget_addref_called);
 
     hr = RegisterDragDrop(GetDesktopWindow(), &DropTarget);
@@ -148,7 +142,6 @@ START_TEST(dragdrop)
     hr = RevokeDragDrop(GetDesktopWindow());
     todo_wine
     ok_ole_success(hr, "RevokeDragDrop");
-    todo_wine
     ok(droptarget_release_called == 1, "DropTarget_Release should have been called once, not %d times\n", droptarget_release_called);
 
     hr = RevokeDragDrop(NULL);
