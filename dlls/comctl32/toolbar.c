@@ -5860,6 +5860,10 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	{
 	    SendMessageW (infoPtr->hwndNotify, WM_COMMAND,
 	      MAKEWPARAM(infoPtr->buttons[nHit].idCommand, BN_CLICKED), (LPARAM)hwnd);
+
+            /* In case we have just been destroyed... */
+            if(!IsWindow(hwnd))
+                return 0;
         }
     }
 
