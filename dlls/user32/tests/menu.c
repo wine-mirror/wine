@@ -526,6 +526,7 @@ static void test_menu_add_string( void )
     HMENU hmenu;
     MENUITEMINFO info;
     BOOL rc;
+    int ret;
 
     char string[0x80];
     char string2[0x80];
@@ -571,8 +572,15 @@ static void test_menu_add_string( void )
     ok (GetMenuString( hmenu, 0, strback, 99, MF_BYPOSITION), "GetMenuString on ownerdraw entry failed\n");
     ok (!strcmp( strback, "Dummy string" ), "Menu text from Ansi version incorrect\n");
 
-    ok (GetMenuStringW( hmenu, 0, (WCHAR *)strbackW, 99, MF_BYPOSITION), "GetMenuStringW on ownerdraw entry failed\n");
-    ok (!lstrcmpW( strbackW, expectedString ), "Menu text from Unicode version incorrect\n");
+    SetLastError(0xdeadbeef);
+    ret = GetMenuStringW( hmenu, 0, (WCHAR *)strbackW, 99, MF_BYPOSITION);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        skip("GetMenuStringW is not implemented\n");
+    else
+    {
+        ok (ret, "GetMenuStringW on ownerdraw entry failed\n");
+        ok (!lstrcmpW( strbackW, expectedString ), "Menu text from Unicode version incorrect\n");
+    }
 
     /* Just change ftype to string and see what text is stored */
     memset(&info, 0x00, sizeof(info));
@@ -627,9 +635,12 @@ static void test_menu_add_string( void )
     ok (rc, "InsertMenuItem failed\n");
     ok (!GetMenuString( hmenu, 0, NULL, 0, MF_BYPOSITION),
             "GetMenuString on ownerdraw entry succeeded.\n");
-    ok (!GetMenuStringW( hmenu, 0, NULL, 0, MF_BYPOSITION),
-            "GetMenuStringW on ownerdraw entry succeeded.\n");
-
+    SetLastError(0xdeadbeef);
+    ret = GetMenuStringW( hmenu, 0, NULL, 0, MF_BYPOSITION);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        skip("GetMenuStringW is not implemented\n");
+    else
+        ok (!ret, "GetMenuStringW on ownerdraw entry succeeded.\n");
 
     DestroyMenu( hmenu );
 }
@@ -681,6 +692,11 @@ static  WCHAR *strcpyW( WCHAR *dst, const WCHAR *src )
     else strcpyW( (WCHAR*)string, (WCHAR*)init);\
     if( ansi) ret = InsertMenuItemA(hmenu, 0, TRUE, &info1 );\
     else ret = InsertMenuItemW(hmenu, 0, TRUE, (MENUITEMINFOW*)&info1 );\
+    if( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)\
+    {\
+        skip("InsertMenuItem%s not implemented\n", ansi ? "A" : "W");\
+        break;\
+    }\
     if( !(eret1)) { ok( (eret1)==ret,"InsertMenuItem should have failed.\n");\
         stop = TRUE;\
     } else ok( (eret1)==ret,"InsertMenuItem failed, err %d\n",GetLastError());\
@@ -697,8 +713,14 @@ static  WCHAR *strcpyW( WCHAR *dst, const WCHAR *src )
   MENUITEMINFOA *einfo = &einfoA;\
   MENUITEMINFOW *info2W = (MENUITEMINFOW *)&info2A;\
   if( !stop) {\
+    SetLastError( 0xdeadbeef);\
     ret = ansi ? GetMenuItemInfoA( hmenu, 0, TRUE, info2 ) :\
         GetMenuItemInfoW( hmenu, 0, TRUE, info2W );\
+    if( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)\
+    {\
+        skip("GetMenuItemInfo%s not implemented\n", ansi ? "A" : "W");\
+        break;\
+    }\
     if( !(eret2)) ok( (eret2)==ret,"GetMenuItemInfo should have failed.\n");\
     else { \
       ok( (eret2)==ret,"GetMenuItemInfo failed, err %d\n",GetLastError());\
@@ -730,8 +752,14 @@ submenu = CreateMenu();\
 /* modify menu */
 #define TMII_MODM( flags, id, data, eret  )\
 if( !stop) {\
+    SetLastError( 0xdeadbeef);\
     if(ansi)ret = ModifyMenuA( hmenu, 0, flags, (UINT_PTR)id, (char*)data);\
     else ret = ModifyMenuW( hmenu, 0, flags, (UINT_PTR)id, (WCHAR*)data);\
+    if( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)\
+    {\
+        skip("ModifyMenu%s not implemented\n", ansi ? "A" : "W");\
+        break;\
+    }\
     if( !(eret)) ok( (eret)==ret,"ModifyMenuA should have failed.\n");\
     else  ok( (eret)==ret,"ModifyMenuA failed, err %d\n",GetLastError());\
 }
@@ -746,6 +774,11 @@ if( !stop) {\
     else strcpyW( (WCHAR*)string, (WCHAR*)init);\
     if( ansi) ret = SetMenuItemInfoA(hmenu, 0, TRUE, &info1 );\
     else ret = SetMenuItemInfoW(hmenu, 0, TRUE, (MENUITEMINFOW*)&info1 );\
+    if( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)\
+    {\
+        skip("SetMenuItemInfo%s not implemented\n", ansi ? "A" : "W");\
+        break;\
+    }\
     if( !(eret1)) { ok( (eret1)==ret,"InsertMenuItem should have failed.\n");\
         stop = TRUE;\
     } else ok( (eret1)==ret,"InsertMenuItem failed, err %d\n",GetLastError());\
