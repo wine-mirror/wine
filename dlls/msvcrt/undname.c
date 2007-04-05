@@ -1156,6 +1156,15 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         }
         sym->stack.start = 1;
     }
+    else if (*sym->current == '$')
+    {
+        /* Strange construct, it's a name with a template argument list
+           and that's all. */
+        sym->current++;
+        sym->result = get_template_name(sym);
+        ret = TRUE;
+        goto done;
+    }
 
     /* Either a class name, or '@' if the symbol is not a class member */
     if (*sym->current != '@')
