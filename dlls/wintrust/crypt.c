@@ -42,15 +42,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
  *
  * RETURNS
  *   Success: TRUE. catAdmin contains the context handle.
- *   Failure: FAIL.
+ *   Failure: FALSE.
  *
  */
 BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
                     const GUID *sysSystem, DWORD dwFlags )
 {
     FIXME("%p %s %x\n", catAdmin, debugstr_guid(sysSystem), dwFlags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    if (catAdmin) *catAdmin = (HCATADMIN)0xdeadbeef;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -60,8 +61,9 @@ BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash,
                                                 BYTE* pbHash, DWORD dwFlags )
 {
     FIXME("%p %p %p %x\n", hFile, pcbHash, pbHash, dwFlags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    if (pbHash && pcbHash) memset(pbHash, 0, *pcbHash);
+    return TRUE;
 }
 
 /***********************************************************************
@@ -74,7 +76,6 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
                                                  HCATINFO* phPrevCatInfo )
 {
     FIXME("%p %p %d %d %p\n", hCatAdmin, pbHash, cbHash, dwFlags, phPrevCatInfo);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return NULL;
 }
 
@@ -84,7 +85,7 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
  * Release a catalog administrator context handle.
  *
  * PARAMS
- *   catAdmin  [I] Pointer to the context handle.
+ *   catAdmin  [I] Context handle.
  *   dwFlags   [I] Reserved.
  *
  * RETURNS
@@ -95,8 +96,28 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
 BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
 {
     FIXME("%p %x\n", hCatAdmin, dwFlags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    return TRUE;
+}
+
+/***********************************************************************
+ *      CryptCATAdminRemoveCatalog (WINTRUST.@)
+ *
+ * Remove a catalog file.
+ *
+ * PARAMS
+ *   catAdmin         [I] Context handle.
+ *   pwszCatalogFile  [I] Catalog file.
+ *   dwFlags          [I] Reserved.
+ *
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FALSE.
+ *
+ */
+BOOL WINAPI CryptCATAdminRemoveCatalog(HCATADMIN hCatAdmin, LPCWSTR pwszCatalogFile, DWORD dwFlags)
+{
+    FIXME("%p %s %x\n", hCatAdmin, debugstr_w(pwszCatalogFile), dwFlags);
+    return DeleteFileW(pwszCatalogFile);
 }
 
 /***********************************************************************

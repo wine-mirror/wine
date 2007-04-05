@@ -7,7 +7,7 @@
 @ stub CryptCATAdminPauseServiceForBackup
 @ stub CryptCATAdminReleaseCatalogContext
 @ stdcall CryptCATAdminReleaseContext(long long)
-@ stub CryptCATAdminRemoveCatalog
+@ stdcall CryptCATAdminRemoveCatalog(ptr wstr long)
 @ stub CryptCATAdminResolveCatalogPath
 @ stub CryptCATCDFClose
 @ stub CryptCATCDFEnumAttributes
