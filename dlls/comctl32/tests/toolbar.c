@@ -864,6 +864,28 @@ static void test_sizes(void)
     DestroyWindow(hToolbar);
 }
 
+static void test_getbuttoninfo(void)
+{
+    HWND hToolbar = NULL;
+    int i;
+
+    rebuild_toolbar_with_buttons(&hToolbar);
+    for (i = 0; i < 128; i++)
+    {
+        TBBUTTONINFO tbi;
+        int ret;
+
+        tbi.cbSize = i;
+        tbi.dwMask = TBIF_BYINDEX | TBIF_COMMAND;
+        ret = (int)SendMessage(hToolbar, TB_GETBUTTONINFO, 0, (LPARAM)&tbi);
+        if (i == sizeof(TBBUTTONINFO)) {
+            compare(ret, 0, "%d");
+        } else {
+            compare(ret, -1, "%d");
+        }
+    }
+    DestroyWindow(hToolbar);
+}
 
 static void test_createtoolbarex()
 {
@@ -933,6 +955,7 @@ START_TEST(toolbar)
     test_add_string();
     test_hotitem();
     test_sizes();
+    test_getbuttoninfo();
     test_createtoolbarex();
 
     PostQuitMessage(0);

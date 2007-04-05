@@ -3364,8 +3364,16 @@ TOOLBAR_GetButtonInfoT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL bUnicode)
 
     if (lpTbInfo == NULL)
 	return -1;
-    if (lpTbInfo->cbSize < sizeof(TBBUTTONINFOA))
+
+    /* MSDN documents a iImageLabel field added in Vista but it is not present in
+     * the headers and tests shows that even with comctl 6 Vista accepts only the
+     * original TBBUTTONINFO size
+     */
+    if (lpTbInfo->cbSize != sizeof(TBBUTTONINFOW))
+    {
+        WARN("Invalid button size\n");
 	return -1;
+    }
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam,
 				     lpTbInfo->dwMask & 0x80000000);
