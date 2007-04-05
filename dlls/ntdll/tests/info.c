@@ -24,34 +24,33 @@ static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, P
 static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 
-static HMODULE hntdll = 0;
-
 /* one_before_last_pid is used to be able to compare values of a still running process
    with the output of the test_query_process_times and test_query_process_handlecount tests.
 */
 static DWORD one_before_last_pid = 0;
 
-#define NTDLL_GET_PROC(func) \
+#define NTDLL_GET_PROC(func) do {                     \
     p ## func = (void*)GetProcAddress(hntdll, #func); \
     if(!p ## func) { \
       trace("GetProcAddress(%s) failed\n", #func); \
-      FreeLibrary(hntdll); \
       return FALSE; \
-    }
+    } \
+  } while(0)
 
 static BOOL InitFunctionPtrs(void)
 {
-    hntdll = LoadLibraryA("ntdll.dll");
-    if(!hntdll) {
-      trace("Could not load ntdll.dll\n");
-      return FALSE;
-    }
-    if (hntdll)
+    /* All needed functions are NT based, so using GetModuleHandle is a good check */
+    HMODULE hntdll = GetModuleHandle("ntdll");
+    if (!hntdll)
     {
-      NTDLL_GET_PROC(NtQuerySystemInformation)
-      NTDLL_GET_PROC(NtQueryInformationProcess)
-      NTDLL_GET_PROC(NtReadVirtualMemory)
+        skip("Not running on NT\n");
+        return FALSE;
     }
+
+    NTDLL_GET_PROC(NtQuerySystemInformation);
+    NTDLL_GET_PROC(NtQueryInformationProcess);
+    NTDLL_GET_PROC(NtReadVirtualMemory);
+
     return TRUE;
 }
 
@@ -277,7 +276,7 @@ static void test_query_process(void)
 
     is_nt = ( spi->dwOffset - (sbi.NumberOfProcessors * sizeof(SYSTEM_THREAD_INFORMATION)) == 136);
 
-    if (is_nt) trace("Windows version is NT, we will skip thread tests\n");
+    if (is_nt) skip("Windows version is NT, we will skip thread tests\n");
 
     /* Check if we have some return values
      * 
@@ -629,7 +628,7 @@ static void test_query_process_io(void)
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessIoCounters, &pii, sizeof(pii), &ReturnLength);
     if (status == STATUS_NOT_SUPPORTED)
     {
-        trace("ProcessIoCounters information class not supported, skipping tests\n");
+        skip("ProcessIoCounters information class is not supported\n");
         return;
     }
  
@@ -892,6 +891,4 @@ START_TEST(info)
     /* belongs into it's own file */
     trace("Starting test_readvirtualmemory()\n");
     test_readvirtualmemory();
-
-    FreeLibrary(hntdll);
 }
