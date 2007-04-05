@@ -471,7 +471,7 @@ struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *s
 
     /* FIXME: find a cleaner way of identifying that we are creating an ifstub
      * for the remunknown interface */
-    if (IsEqualIID(iid, &IID_IRemUnknown))
+    if (flags & MSHLFLAGSP_REMUNKNOWN)
         stub->ipid = m->oxid_info.ipidRemUnknown;
     else
         generate_ipid(m, &stub->ipid);
@@ -763,7 +763,7 @@ HRESULT start_apartment_remote_unknown(void)
         {
             STDOBJREF stdobjref; /* dummy - not used */
             /* register it with the stub manager */
-            hr = marshal_object(apt, &stdobjref, &IID_IRemUnknown, (IUnknown *)pRemUnknown, MSHLFLAGS_NORMAL);
+            hr = marshal_object(apt, &stdobjref, &IID_IRemUnknown, (IUnknown *)pRemUnknown, MSHLFLAGS_NORMAL|MSHLFLAGSP_REMUNKNOWN);
             /* release our reference to the object as the stub manager will manage the life cycle for us */
             IRemUnknown_Release(pRemUnknown);
             if (hr == S_OK)

@@ -45,6 +45,9 @@ DEFINE_OLEGUID( CLSID_DfMarshal, 0x0000030b, 0, 0 );
 DEFINE_OLEGUID( CLSID_PSFactoryBuffer, 0x00000320, 0, 0 );
 DEFINE_OLEGUID( CLSID_InProcFreeMarshaler, 0x0000033a, 0, 0 );
 
+/* signal to stub manager that this is a rem unknown object */
+#define MSHLFLAGSP_REMUNKNOWN   0x80000000
+
 /* Thread-safety Annotation Legend:
  *
  * RO    - The value is read only. It never changes after creation, so no

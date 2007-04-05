@@ -2199,12 +2199,7 @@ static void test_client_security(void)
     CoTaskMemFree(pServerPrincName);
 
     IClassFactory_Release(pProxy);
-#if 0
-    /* FIXME: fix stub manager to not depend on the IID of the interface to
-     * determine whether it is really the rem unknown for the object before
-     * re-enabling this line */
     IUnknown_Release(pProxy2);
-#endif
     IUnknown_Release(pUnknown1);
     IUnknown_Release(pUnknown2);
     IMarshal_Release(pMarshal);
