@@ -3354,10 +3354,11 @@ TOOLBAR_GetButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_GetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_GetButtonInfoT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL bUnicode)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    LPTBBUTTONINFOA lpTbInfo = (LPTBBUTTONINFOA)lParam;
+    /* TBBUTTONINFOW and TBBUTTONINFOA have the same layout*/
+    LPTBBUTTONINFOW lpTbInfo = (LPTBBUTTONINFOW)lParam;
     TBUTTON_INFO *btnPtr;
     INT nIndex;
 
@@ -3388,63 +3389,15 @@ TOOLBAR_GetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lpTbInfo->dwMask & TBIF_TEXT) {
         /* TB_GETBUTTONINFO doesn't retrieve text from the string list, so we
            can't use TOOLBAR_GetText here */
-        LPWSTR lpText;
         if (HIWORD(btnPtr->iString) && (btnPtr->iString != -1)) {
-            lpText = (LPWSTR)btnPtr->iString;
-            Str_GetPtrWtoA (lpText, lpTbInfo->pszText,lpTbInfo->cchText);
+            LPWSTR lpText = (LPWSTR)btnPtr->iString;
+            if (bUnicode)
+                Str_GetPtrW(lpText, lpTbInfo->pszText, lpTbInfo->cchText);
+            else
+                Str_GetPtrWtoA(lpText, (LPSTR)lpTbInfo->pszText, lpTbInfo->cchText);
         } else
             lpTbInfo->pszText[0] = '\0';
     }
-    return nIndex;
-}
-
-
-static LRESULT
-TOOLBAR_GetButtonInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
-{
-    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    LPTBBUTTONINFOW lpTbInfo = (LPTBBUTTONINFOW)lParam;
-    TBUTTON_INFO *btnPtr;
-    INT nIndex;
-
-    if (lpTbInfo == NULL)
-	return -1;
-    if (lpTbInfo->cbSize < sizeof(TBBUTTONINFOW))
-	return -1;
-
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam,
-				     lpTbInfo->dwMask & 0x80000000);
-    if (nIndex == -1)
-	return -1;
-
-    btnPtr = &infoPtr->buttons[nIndex];
-
-    if(!btnPtr)
-        return -1;
-
-    if (lpTbInfo->dwMask & TBIF_COMMAND)
-	lpTbInfo->idCommand = btnPtr->idCommand;
-    if (lpTbInfo->dwMask & TBIF_IMAGE)
-	lpTbInfo->iImage = btnPtr->iBitmap;
-    if (lpTbInfo->dwMask & TBIF_LPARAM)
-	lpTbInfo->lParam = btnPtr->dwData;
-    if (lpTbInfo->dwMask & TBIF_SIZE)
-	lpTbInfo->cx = (WORD)(btnPtr->rect.right - btnPtr->rect.left);
-    if (lpTbInfo->dwMask & TBIF_STATE)
-	lpTbInfo->fsState = btnPtr->fsState;
-    if (lpTbInfo->dwMask & TBIF_STYLE)
-	lpTbInfo->fsStyle = btnPtr->fsStyle;
-    if (lpTbInfo->dwMask & TBIF_TEXT) {
-        /* TB_GETBUTTONINFO doesn't retrieve text from the string list, so we
-           can't use TOOLBAR_GetText here */
-        LPWSTR lpText;
-        if (HIWORD(btnPtr->iString) && (btnPtr->iString != -1)) {
-            lpText = (LPWSTR)btnPtr->iString;
-            Str_GetPtrW (lpText,lpTbInfo->pszText,lpTbInfo->cchText);
-        } else
-            lpTbInfo->pszText[0] = '\0';
-    }
-
     return nIndex;
 }
 
@@ -6663,10 +6616,10 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_GetButton (hwnd, wParam, lParam);
 
 	case TB_GETBUTTONINFOA:
-	    return TOOLBAR_GetButtonInfoA (hwnd, wParam, lParam);
+	    return TOOLBAR_GetButtonInfoT(hwnd, wParam, lParam, FALSE);
 
 	case TB_GETBUTTONINFOW:
-	    return TOOLBAR_GetButtonInfoW (hwnd, wParam, lParam);
+	    return TOOLBAR_GetButtonInfoT(hwnd, wParam, lParam, TRUE);
 
 	case TB_GETBUTTONSIZE:
 	    return TOOLBAR_GetButtonSize (hwnd);
