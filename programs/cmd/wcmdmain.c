@@ -34,7 +34,7 @@ const char * const inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", 
 		"DATE", "DEL", "DIR", "ECHO", "ERASE", "FOR", "GOTO",
 		"HELP", "IF", "LABEL", "MD", "MKDIR", "MOVE", "PATH", "PAUSE",
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
-                "TIME", "TITLE", "TYPE", "VERIFY", "VER", "VOL", 
+                "TIME", "TITLE", "TYPE", "VERIFY", "VER", "VOL",
                 "ENDLOCAL", "SETLOCAL", "PUSHD", "POPD", "ASSOC", "COLOR", "FTYPE",
                 "EXIT" };
 
@@ -877,8 +877,11 @@ void WCMD_run_program (char *command, int called) {
     strcat(thisDir, stemofsearch);
     pos = &thisDir[strlen(thisDir)]; /* Pos = end of name */
 
-    if (GetFileAttributes(thisDir) != INVALID_FILE_ATTRIBUTES) {
-      found = TRUE;
+    /* 1. If extension supplied, see if that file exists */
+    if (extensionsupplied) {
+      if (GetFileAttributes(thisDir) != INVALID_FILE_ATTRIBUTES) {
+        found = TRUE;
+      }
     }
 
     /* 2. Any .* matches? */
@@ -1227,7 +1230,7 @@ void WCMD_output_asis (const char *message) {
   if (paged_mode) {
     do {
       if ((ptr = strchr(message, '\n')) != NULL) ptr++;
-      WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), message, 
+      WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), message,
                  (ptr) ? ptr - message : lstrlen(message), &count, NULL);
       if (ptr) {
         if (++line_count >= max_height - 1) {
