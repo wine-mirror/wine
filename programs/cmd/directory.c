@@ -33,7 +33,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 int WCMD_dir_sort (const void *a, const void *b);
-static void WCMD_list_directory (DIRECTORY_STACK *parms, int level);
 char * WCMD_filesize64 (ULONGLONG free);
 char * WCMD_strrev (char *buff);
 static void WCMD_getfileowner(char *filename, char *owner, int ownerlen);
@@ -65,6 +64,7 @@ typedef struct _DIRECTORY_STACK
   char  *fileName;
 } DIRECTORY_STACK;
 
+static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *parms, int level);
 static int file_total, dir_total, recurse, wide, bare, max_width, lower;
 static int shortname, usernames;
 static ULONGLONG byte_total;
@@ -406,11 +406,8 @@ void WCMD_directory (char *cmd) {
 
     /* Clear any errors from previous invocations, and process it */
     errorlevel = 0;
-    WCMD_list_directory (thisEntry, 0);
-
-    /* Step to next parm */
     prevEntry = thisEntry;
-    thisEntry = thisEntry->next;
+    thisEntry = WCMD_list_directory (thisEntry, 0);
   }
 
   /* Trailer Information */
@@ -440,7 +437,7 @@ exit:
  * FIXME: Assumes 24-line display for the /P qualifier.
  */
 
-static void WCMD_list_directory (DIRECTORY_STACK *parms, int level) {
+static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int level) {
 
   char string[1024], datestring[32], timestring[32];
   char real_path[MAX_PATH];
@@ -452,6 +449,10 @@ static void WCMD_list_directory (DIRECTORY_STACK *parms, int level) {
   int numCols, numRows;
   int rows, cols;
   ULARGE_INTEGER byte_count, file_size;
+  DIRECTORY_STACK *parms;
+  int concurrentDirs = 0;
+  BOOL done_header = FALSE;
+
 
   dir_count = 0;
   file_count = 0;
@@ -460,49 +461,61 @@ static void WCMD_list_directory (DIRECTORY_STACK *parms, int level) {
   widest = 0;
   cur_width = 0;
 
-  /* Work out the full path + filename */
-  strcpy(real_path, parms->dirName);
-  strcat(real_path, parms->fileName);
-
-  /* Load all files into an in memory structure */
+  /* Loop merging all the files from consecutive parms which relate to the
+     same directory. Note issuing a directory header with no contents
+     mirrors what windows does                                            */
+  parms = inputparms;
   fd = HeapAlloc(GetProcessHeap(),0,sizeof(WIN32_FIND_DATA));
-  WINE_TRACE("Looking for matches to '%s'\n", real_path);
-  hff = FindFirstFile (real_path, fd);
-  if (hff == INVALID_HANDLE_VALUE) {
-    entry_count = 0;
-  } else {
-    do {
-      /* Skip any which are filtered out by attribute */
-      if (((fd+entry_count)->dwFileAttributes & attrsbits) != showattrs) continue;
+  while (parms && strcmp(inputparms->dirName, parms->dirName) == 0) {
+    concurrentDirs++;
 
-      entry_count++;
+    /* Work out the full path + filename */
+    strcpy(real_path, parms->dirName);
+    strcat(real_path, parms->fileName);
 
-      /* Keep running track of longest filename for wide output */
-      if (wide || orderByCol) {
-         int tmpLen = strlen((fd+(entry_count-1))->cFileName) + 3;
-         if ((fd+(entry_count-1))->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) tmpLen = tmpLen + 2;
-         if (tmpLen > widest) widest = tmpLen;
-      }
+    /* Load all files into an in memory structure */
+    WINE_TRACE("Looking for matches to '%s'\n", real_path);
+    hff = FindFirstFile (real_path, (fd+entry_count));
+    if (hff != INVALID_HANDLE_VALUE) {
+      do {
+        /* Skip any which are filtered out by attribute */
+        if (((fd+entry_count)->dwFileAttributes & attrsbits) != showattrs) continue;
 
-      fd = HeapReAlloc(GetProcessHeap(),0,fd,(entry_count+1)*sizeof(WIN32_FIND_DATA));
-      if (fd == NULL) {
-        FindClose (hff);
-        WCMD_output ("Memory Allocation Error");
-        errorlevel = 1;
-        return;
-      }
-    } while (FindNextFile(hff, (fd+entry_count)) != 0);
-    FindClose (hff);
-  }
+        entry_count++;
 
-  /* Work out the actual current directory name without a trailing \ */
-  strcpy(real_path, parms->dirName);
-  real_path[strlen(parms->dirName)-1] = 0x00;
+        /* Keep running track of longest filename for wide output */
+        if (wide || orderByCol) {
+           int tmpLen = strlen((fd+(entry_count-1))->cFileName) + 3;
+           if ((fd+(entry_count-1))->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) tmpLen = tmpLen + 2;
+           if (tmpLen > widest) widest = tmpLen;
+        }
 
-  /* Output the results */
-  if (!bare) {
-     if (level != 0 && (entry_count > 0)) WCMD_output ("\n");
-     if ((entry_count > 0) || (!recurse && level == 0)) WCMD_output ("Directory of %s\n\n", real_path);
+        fd = HeapReAlloc(GetProcessHeap(),0,fd,(entry_count+1)*sizeof(WIN32_FIND_DATA));
+        if (fd == NULL) {
+          FindClose (hff);
+          WCMD_output ("Memory Allocation Error");
+          errorlevel = 1;
+          return parms->next;
+        }
+      } while (FindNextFile(hff, (fd+entry_count)) != 0);
+      FindClose (hff);
+    }
+
+    /* Work out the actual current directory name without a trailing \ */
+    strcpy(real_path, parms->dirName);
+    real_path[strlen(parms->dirName)-1] = 0x00;
+
+    /* Output the results */
+    if (!bare) {
+       if (level != 0 && (entry_count > 0)) WCMD_output ("\n");
+       if (!recurse || ((entry_count > 0) && done_header==FALSE)) {
+           WCMD_output ("Directory of %s\n\n", real_path);
+           done_header = TRUE;
+       }
+    }
+
+    /* Move to next parm */
+    parms = parms->next;
   }
 
   /* Handle case where everything is filtered out */
@@ -545,7 +558,7 @@ static void WCMD_list_directory (DIRECTORY_STACK *parms, int level) {
 
       /* /Q gets file ownership information */
       if (usernames) {
-          lstrcpy (string, parms->dirName);
+          lstrcpy (string, inputparms->dirName);
           lstrcat (string, (fd+i)->cFileName);
           WCMD_getfileowner(string, username, sizeof(username));
       }
@@ -597,7 +610,7 @@ static void WCMD_list_directory (DIRECTORY_STACK *parms, int level) {
         } else {
            if (!((strcmp((fd+i)->cFileName, ".") == 0) ||
                  (strcmp((fd+i)->cFileName, "..") == 0))) {
-              WCMD_output ("%s%s", recurse?parms->dirName:"", (fd+i)->cFileName);
+              WCMD_output ("%s%s", recurse?inputparms->dirName:"", (fd+i)->cFileName);
            } else {
               addNewLine = FALSE;
            }
@@ -615,7 +628,7 @@ static void WCMD_list_directory (DIRECTORY_STACK *parms, int level) {
            if (usernames) WCMD_output ("%-23s", username);
            WCMD_output("%s",(fd+i)->cFileName);
         } else {
-           WCMD_output ("%s%s", recurse?parms->dirName:"", (fd+i)->cFileName);
+           WCMD_output ("%s%s", recurse?inputparms->dirName:"", (fd+i)->cFileName);
         }
       }
      }
@@ -649,7 +662,7 @@ static void WCMD_list_directory (DIRECTORY_STACK *parms, int level) {
     WIN32_FIND_DATA finddata;
 
     /* Build path to search */
-    strcpy(string, parms->dirName);
+    strcpy(string, inputparms->dirName);
     strcat(string, "*");
 
     WINE_TRACE("Recursive, looking for '%s'\n", string);
@@ -661,35 +674,45 @@ static void WCMD_list_directory (DIRECTORY_STACK *parms, int level) {
             (strcmp(finddata.cFileName, ".") != 0)) {
 
           DIRECTORY_STACK *thisDir;
+          int              dirsToCopy = concurrentDirs;
 
-          /* Work out search parameter in sub dir */
-          strcpy (string, parms->dirName);
-          strcat (string, finddata.cFileName);
-          strcat (string, "\\");
-          WINE_TRACE("Recursive, Adding to search list '%s'\n", string);
+          /* Loop creating list of subdirs for all concurrent entries */
+          parms = inputparms;
+          while (dirsToCopy > 0) {
+            dirsToCopy--;
 
-          /* Allocate memory, add to list */
-          thisDir = (DIRECTORY_STACK *) HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
-          if (dirStack == NULL) dirStack = thisDir;
-          if (lastEntry != NULL) lastEntry->next = thisDir;
-          lastEntry = thisDir;
-          thisDir->next = NULL;
-          thisDir->dirName = HeapAlloc(GetProcessHeap(),0,(strlen(string)+1));
-          strcpy(thisDir->dirName, string);
-          thisDir->fileName = HeapAlloc(GetProcessHeap(),0,(strlen(parms->fileName)+1));
-          strcpy(thisDir->fileName, parms->fileName);
+            /* Work out search parameter in sub dir */
+            strcpy (string, inputparms->dirName);
+            strcat (string, finddata.cFileName);
+            strcat (string, "\\");
+            WINE_TRACE("Recursive, Adding to search list '%s'\n", string);
+
+            /* Allocate memory, add to list */
+            thisDir = (DIRECTORY_STACK *) HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
+            if (dirStack == NULL) dirStack = thisDir;
+            if (lastEntry != NULL) lastEntry->next = thisDir;
+            lastEntry = thisDir;
+            thisDir->next = NULL;
+            thisDir->dirName = HeapAlloc(GetProcessHeap(),0,(strlen(string)+1));
+            strcpy(thisDir->dirName, string);
+            thisDir->fileName = HeapAlloc(GetProcessHeap(),0,(strlen(parms->fileName)+1));
+            strcpy(thisDir->fileName, parms->fileName);
+            parms = parms->next;
+          }
         }
       } while (FindNextFile(hff, &finddata) != 0);
       FindClose (hff);
 
       while (dirStack != NULL) {
         DIRECTORY_STACK *thisDir = dirStack;
-        dirStack = thisDir->next;
-
-        WCMD_list_directory (thisDir, 1);
-        HeapFree(GetProcessHeap(),0,thisDir->dirName);
-        HeapFree(GetProcessHeap(),0,thisDir->fileName);
-        HeapFree(GetProcessHeap(),0,thisDir);
+        dirStack = WCMD_list_directory (thisDir, 1);
+        while (thisDir != dirStack) {
+          DIRECTORY_STACK *tempDir = thisDir->next;
+          HeapFree(GetProcessHeap(),0,thisDir->dirName);
+          HeapFree(GetProcessHeap(),0,thisDir->fileName);
+          HeapFree(GetProcessHeap(),0,thisDir);
+          thisDir = tempDir;
+        }
       }
     }
   }
@@ -700,6 +723,8 @@ static void WCMD_list_directory (DIRECTORY_STACK *parms, int level) {
     WCMD_print_error ();
     errorlevel = 1;
   }
+
+  return parms;
 }
 
 /*****************************************************************************
