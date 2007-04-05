@@ -1980,7 +1980,7 @@ static void LISTVIEW_GetItemMetrics(const LISTVIEW_INFO *infoPtr, const LVITEMW 
                 (!lpColumnInfo || lpLVItem->iSubItem == 0 || (lpColumnInfo->fmt & LVCFMT_IMAGE) ||
                  ((infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES) && lpLVItem->iImage != I_IMAGECALLBACK)))
 		Icon.right += infoPtr->iconSize.cx;
-	    Icon.bottom = Icon.top + infoPtr->nItemHeight;
+	    Icon.bottom = Icon.top + infoPtr->iconSize.cy;
 	}
 	if(lprcIcon) *lprcIcon = Icon;
 	TRACE("    - icon=%s\n", wine_dbgstr_rect(&Icon));
