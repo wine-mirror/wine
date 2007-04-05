@@ -395,7 +395,8 @@ static SUBHEAP *HEAP_FindSubHeap(
     while (sub)
     {
         if (((const char *)ptr >= (const char *)sub) &&
-            ((const char *)ptr < (const char *)sub + sub->size)) return (SUBHEAP*)sub;
+            ((const char *)ptr < (const char *)sub + sub->size - sizeof(ARENA_INUSE)))
+            return (SUBHEAP *)sub;
         sub = sub->next;
     }
     return NULL;
@@ -783,7 +784,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
  *
  * Check that the pointer is inside the range possible for arenas.
  */
-static BOOL HEAP_IsValidArenaPtr( const HEAP *heap, const void *ptr )
+static BOOL HEAP_IsValidArenaPtr( const HEAP *heap, const ARENA_FREE *ptr )
 {
     int i;
     const SUBHEAP *subheap = HEAP_FindSubHeap( heap, ptr );
@@ -1003,13 +1004,12 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
     if (!(flags & HEAP_NO_SERIALIZE))
         RtlEnterCriticalSection( &heapPtr->critSection );
 
-    if (block)
+    if (block)  /* only check this single memory block */
     {
-        /* Only check this single memory block */
+        const ARENA_INUSE *arena = (const ARENA_INUSE *)block - 1;
 
-        if (!(subheap = HEAP_FindSubHeap( heapPtr, block )) ||
-            ((const char *)block < (char *)subheap + subheap->headerSize
-                                   + sizeof(ARENA_INUSE)))
+        if (!(subheap = HEAP_FindSubHeap( heapPtr, arena )) ||
+            ((const char *)arena < (char *)subheap + subheap->headerSize))
         {
             if (quiet == NOISY)
                 ERR("Heap %p: block %p is not inside heap\n", heapPtr, block );
@@ -1017,7 +1017,7 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
                 WARN("Heap %p: block %p is not inside heap\n", heapPtr, block );
             ret = FALSE;
         } else
-            ret = HEAP_ValidateInUseArena( subheap, (const ARENA_INUSE *)block - 1, quiet );
+            ret = HEAP_ValidateInUseArena( subheap, arena, quiet );
 
         if (!(flags & HEAP_NO_SERIALIZE))
             RtlLeaveCriticalSection( &heapPtr->critSection );
