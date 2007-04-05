@@ -190,6 +190,7 @@ typedef struct _IFilterGraphImpl {
     int EcCompleteCount;
     int HandleEcComplete;
     int HandleEcRepaint;
+    int HandleEcClockChanged;
     OAFilterState state;
     CRITICAL_SECTION cs;
     ITF_CACHE_ENTRY ItfCacheEntries[MAX_ITF_CACHE_ENTRIES];
@@ -4109,6 +4110,8 @@ static HRESULT WINAPI MediaEvent_CancelDefaultHandling(IMediaEventEx *iface,
 	This->HandleEcComplete = FALSE;
     else if (lEvCode == EC_REPAINT)
 	This->HandleEcRepaint = FALSE;
+    else if (lEvCode == EC_CLOCK_CHANGED)
+        This->HandleEcClockChanged = FALSE;
     else
 	return S_FALSE;
 
@@ -4125,6 +4128,8 @@ static HRESULT WINAPI MediaEvent_RestoreDefaultHandling(IMediaEventEx *iface,
 	This->HandleEcComplete = TRUE;
     else if (lEvCode == EC_REPAINT)
 	This->HandleEcRepaint = TRUE;
+    else if (lEvCode == EC_CLOCK_CHANGED)
+        This->HandleEcClockChanged = TRUE;
     else
 	return S_FALSE;
 
@@ -4293,6 +4298,19 @@ static HRESULT WINAPI MediaFilter_SetSyncSource(IMediaFilter *iface, IReferenceC
             This->refClock = pClock;
             if (This->refClock)
                 IReferenceClock_AddRef(This->refClock);
+
+            if (This->HandleEcClockChanged)
+            {
+                IMediaEventSink *pEventSink;
+                HRESULT eshr;
+
+                eshr = IMediaFilter_QueryInterface(iface, &IID_IMediaEventSink, (LPVOID)&pEventSink);
+                if (SUCCEEDED(eshr))
+                {
+                    IMediaEventSink_Notify(pEventSink, EC_CLOCK_CHANGED, 0, 0);
+                    IMediaEventSink_Release(pEventSink);
+                }
+            }
         }
     }
     LeaveCriticalSection(&This->cs);
@@ -4594,6 +4612,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->hEventCompletion = CreateEventW(0, TRUE, FALSE, 0);
     fimpl->HandleEcComplete = TRUE;
     fimpl->HandleEcRepaint = TRUE;
+    fimpl->HandleEcClockChanged = TRUE;
     fimpl->notif.hWnd = 0;
     fimpl->notif.disabled = FALSE;
     fimpl->nRenderers = 0;
