@@ -364,6 +364,15 @@ typedef void (APIENTRY * PGLFNGLFRAMEBUFFERTEXTURE3DEXTPROC)(GLenum target, GLen
 typedef void (APIENTRY * PGLFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
 typedef void (APIENTRY * PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC)(GLenum target, GLenum attachment, GLenum pname, GLint *params);
 typedef void (APIENTRY * PGLFNGLGENERATEMIPMAPEXTPROC)(GLenum target);
+/* GL_EXT_framebuffer_blit */
+#ifndef GL_EXT_framebuffer_blit
+#define GL_EXT_framebuffer_blit 1
+#define GL_READ_FRAMEBUFFER_EXT                0x8CA8
+#define GL_DRAW_FRAMEBUFFER_EXT                0x8CA9
+#define GL_DRAW_FRAMEBUFFER_BINDING_EXT        0x8CA6
+#define GL_READ_FRAMEBUFFER_BINDING_EXT        0x8CAA
+#endif
+typedef void (APIENTRY * PGLFNGLBLITFRAMEBUFFEREXTPROC) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 /* GL_EXT_secondary_color */
 #ifndef GL_EXT_secondary_color
 #define GL_EXT_secondary_color 1
@@ -1508,6 +1517,7 @@ typedef enum _GL_SupportedExt {
   EXT_BLEND_MINMAX,
   EXT_FOG_COORD,
   EXT_FRAMEBUFFER_OBJECT,
+  EXT_FRAMEBUFFER_BLIT,
   EXT_PALETTED_TEXTURE,
   EXT_PIXEL_BUFFER_OBJECT,
   EXT_POINT_PARAMETERS,
@@ -1622,6 +1632,8 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNGLGENERATEMIPMAPEXTPROC,          glGenerateMipmapEXT); \
     USE_GL_FUNC(PGLFNGLGETRENDERBUFFERPARAMETERIVEXTPROC, glGetRenderbufferParameterivEXT); \
     USE_GL_FUNC(PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC, glGetFramebufferAttachmentParameterivEXT); \
+    /* GL_EXT_framebuffer_blit */ \
+    USE_GL_FUNC(PGLFNGLBLITFRAMEBUFFEREXTPROC, glBlitFramebufferEXT); \
     /* GL_EXT_paletted_texture */ \
     USE_GL_FUNC(PGLFNGLCOLORTABLEEXTPROC,             glColorTableEXT); \
     /* GL_EXT_point_parameters */ \

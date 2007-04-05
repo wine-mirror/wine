@@ -679,6 +679,9 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
             } else if (strcmp(ThisExtn, "GL_EXT_framebuffer_object") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT Frame Buffer Object support\n");
                 gl_info->supported[EXT_FRAMEBUFFER_OBJECT] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_EXT_framebuffer_blit") == 0) {
+                TRACE_(d3d_caps)(" FOUND: EXT Frame Buffer Blit support\n");
+                gl_info->supported[EXT_FRAMEBUFFER_BLIT] = TRUE;
             } else if (strcmp(ThisExtn, "GL_EXT_blend_minmax") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT Blend minmax support\n");
                 gl_info->supported[EXT_BLEND_MINMAX] = TRUE;
