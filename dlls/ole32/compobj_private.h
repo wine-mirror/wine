@@ -242,6 +242,8 @@ HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void);
 /* This function decomposes a String path to a String Table containing all the elements ("\" or "subDirectory" or "Directory" or "FileName") of the path */
 int FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable);
 
+/* Drag and drop */
+void OLEDD_UnInitialize(void);
 
 /* Apartment Functions */
 

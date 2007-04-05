@@ -147,7 +147,6 @@ extern void OLEClipbrd_Initialize(void);
  * These are the prototypes of the utility methods used for OLE Drag n Drop
  */
 static void            OLEDD_Initialize(void);
-static void            OLEDD_UnInitialize(void);
 static DropTargetNode* OLEDD_FindDropTarget(
                          HWND hwndOfTarget);
 static void            OLEDD_FreeDropTarget(DropTargetNode*);
@@ -252,11 +251,6 @@ void WINAPI OleUninitialize(void)
      * OLE Clipboard
      */
     OLEClipbrd_UnInitialize();
-
-    /*
-     * Drag and Drop
-     */
-    OLEDD_UnInitialize();
 
     /*
      * OLE shared menu
@@ -1915,7 +1909,7 @@ static void OLEDD_FreeDropTarget(DropTargetNode *dropTargetInfo)
  *
  * Releases the OLE drag and drop data structures.
  */
-static void OLEDD_UnInitialize(void)
+void OLEDD_UnInitialize(void)
 {
   /*
    * Simply empty the list.

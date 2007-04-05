@@ -136,11 +136,9 @@ START_TEST(dragdrop)
 
     ok(droptarget_release_called == 0, "DropTarget_Release shouldn't have been called\n");
     OleUninitialize();
-    todo_wine
     ok(droptarget_release_called == 0, "DropTarget_Release shouldn't have been called\n");
 
     hr = RevokeDragDrop(GetDesktopWindow());
-    todo_wine
     ok_ole_success(hr, "RevokeDragDrop");
     ok(droptarget_release_called == 1, "DropTarget_Release should have been called once, not %d times\n", droptarget_release_called);
 
