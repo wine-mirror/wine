@@ -686,12 +686,13 @@ CreateToolbarEx (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
 
        /* set bitmap and button size */
        /*If CreateToolbarEx receives 0, windows sets default values*/
-       if (dxBitmap <= 0)
+       if (dxBitmap < 0)
            dxBitmap = 16;
-       if (dyBitmap <= 0)
-           dyBitmap = 15;
-       SendMessageW (hwndTB, TB_SETBITMAPSIZE, 0,
-                     MAKELPARAM((WORD)dxBitmap, (WORD)dyBitmap));
+       if (dyBitmap < 0)
+           dyBitmap = 16;
+       if (dxBitmap == 0 || dyBitmap == 0)
+           dxBitmap = dyBitmap = 16;
+       SendMessageW(hwndTB, TB_SETBITMAPSIZE, 0, MAKELPARAM(dxBitmap, dyBitmap));
 
        if (dxButton < 0)
            dxButton = dxBitmap;

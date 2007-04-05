@@ -807,7 +807,7 @@ static void test_sizes(void)
     SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(3, 3));
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(23, 22), "Unexpected button size\n");
     check_sizes();
-    /* except for the first size, the default size is bitmap size + padding */
+    /* the default size is bitmap size + padding */
     SendMessageA(hToolbar, TB_SETPADDING, 0, MAKELONG(1, 1));
     SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(3, 3));
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(17, 17), "Unexpected button size\n");
@@ -921,6 +921,18 @@ static void test_createtoolbarex()
         3, -1, 8, -1, 12, sizeof(TBBUTTON));
     CHECK_IMAGELIST(16, 16, 8);
     compare((int)SendMessage(hToolbar, TB_GETBUTTONSIZE, 0, 0), 0xe0017, "%x");
+    DestroyWindow(hToolbar);
+
+    hToolbar = CreateToolbarEx(hMainWnd, WS_VISIBLE, 1, 16, GetModuleHandle(NULL), IDB_BITMAP_128x15, btns,
+        3, 0, 0, 12, -1, sizeof(TBBUTTON));
+    CHECK_IMAGELIST(16, 12, 16);
+    compare((int)SendMessage(hToolbar, TB_GETBUTTONSIZE, 0, 0), 0x160013, "%x");
+    DestroyWindow(hToolbar);
+
+    hToolbar = CreateToolbarEx(hMainWnd, WS_VISIBLE, 1, 16, GetModuleHandle(NULL), IDB_BITMAP_128x15, btns,
+        3, 0, 0, 0, 12, sizeof(TBBUTTON));
+    CHECK_IMAGELIST(16, 16, 16);
+    compare((int)SendMessage(hToolbar, TB_GETBUTTONSIZE, 0, 0), 0x160017, "%x");
     DestroyWindow(hToolbar);
 }
 
