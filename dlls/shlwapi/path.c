@@ -131,23 +131,31 @@ BOOL WINAPI PathAppendW(LPWSTR lpszPath, LPCWSTR lpszAppend)
  */
 LPSTR WINAPI PathCombineA(LPSTR lpszDest, LPCSTR lpszDir, LPCSTR lpszFile)
 {
+  WCHAR szDest[MAX_PATH];
+  WCHAR szDir[MAX_PATH];
+  WCHAR szFile[MAX_PATH];
   TRACE("(%p,%s,%s)\n", lpszDest, debugstr_a(lpszDir), debugstr_a(lpszFile));
 
-  if (!lpszDest || (!lpszDir && !lpszFile))
-    return NULL; /* Invalid parameters */
-  else
+  /* Invalid parameters */
+  if (!lpszDest)
+    return NULL;
+  if (!lpszDir && !lpszFile)
   {
-    WCHAR szDest[MAX_PATH];
-    WCHAR szDir[MAX_PATH];
-    WCHAR szFile[MAX_PATH];
-    if (lpszDir)
-      MultiByteToWideChar(CP_ACP,0,lpszDir,-1,szDir,MAX_PATH);
-    if (lpszFile)
-      MultiByteToWideChar(CP_ACP,0,lpszFile,-1,szFile,MAX_PATH);
-    PathCombineW(szDest, lpszDir ? szDir : NULL, lpszFile ? szFile : NULL);
-    WideCharToMultiByte(CP_ACP,0,szDest,-1,lpszDest,MAX_PATH,0,0);
+    lpszDest[0] = 0;
+    return NULL;
   }
-  return lpszDest;
+
+  if (lpszDir)
+    MultiByteToWideChar(CP_ACP,0,lpszDir,-1,szDir,MAX_PATH);
+  if (lpszFile)
+    MultiByteToWideChar(CP_ACP,0,lpszFile,-1,szFile,MAX_PATH);
+
+  if (PathCombineW(szDest, lpszDir ? szDir : NULL, lpszFile ? szFile : NULL))
+    if (WideCharToMultiByte(CP_ACP,0,szDest,-1,lpszDest,MAX_PATH,0,0))
+      return lpszDest;
+
+  lpszDest[0] = 0;
+  return NULL;
 }
 
 /*************************************************************************
@@ -162,8 +170,14 @@ LPWSTR WINAPI PathCombineW(LPWSTR lpszDest, LPCWSTR lpszDir, LPCWSTR lpszFile)
 
   TRACE("(%p,%s,%s)\n", lpszDest, debugstr_w(lpszDir), debugstr_w(lpszFile));
 
-  if (!lpszDest || (!lpszDir && !lpszFile))
-    return NULL; /* Invalid parameters */
+  /* Invalid parameters */
+  if (!lpszDest)
+    return NULL;
+  if (!lpszDir && !lpszFile)
+  {
+    lpszDest[0] = 0;
+    return NULL;
+  }
 
   if ((!lpszFile || !*lpszFile) && lpszDir)
   {
@@ -194,10 +208,11 @@ LPWSTR WINAPI PathCombineW(LPWSTR lpszDest, LPCWSTR lpszDir, LPCWSTR lpszFile)
       PathStripToRootW(szTemp);
       lpszFile++; /* Skip '\' */
     }
-    if (!PathAddBackslashW(szTemp))
+    if (!PathAddBackslashW(szTemp) || strlenW(szTemp) + strlenW(lpszFile) >= MAX_PATH)
+    {
+      lpszDest[0] = 0;
       return NULL;
-    if (strlenW(szTemp) + strlenW(lpszFile) >= MAX_PATH)
-      return NULL;
+    }
     strcatW(szTemp, lpszFile);
   }
 

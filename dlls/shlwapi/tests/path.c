@@ -952,6 +952,9 @@ static void test_PathMatchSpec(void)
 static void test_PathCombineW(void)
 {
     LPWSTR wszString, wszString2;
+    WCHAR wbuf[MAX_PATH+1], wstr1[MAX_PATH] = {'C',':','\\',0}, wstr2[MAX_PATH];
+    static const WCHAR expout[] = {'C',':','\\','A','A',0};
+    int i;
    
     wszString2 = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR));
 
@@ -960,11 +963,31 @@ static void test_PathCombineW(void)
     ok (wszString == NULL, "Expected a NULL return\n");
 
     /* Some NULL */
+    wszString2[0] = 'a';
     wszString = pPathCombineW(wszString2, NULL, NULL);
     ok (wszString == NULL, "Expected a NULL return\n");
- 
+    ok (wszString2[0] == 0, "Destination string not empty\n");
+
     HeapFree(GetProcessHeap(), 0, wszString2);
+
+    /* overflow test */
+    wstr2[0] = wstr2[1] = wstr2[2] = 'A';
+    for (i=3; i<MAX_PATH/2; i++)
+        wstr1[i] = wstr2[i] = 'A';
+    wstr1[(MAX_PATH/2) - 1] = wstr2[MAX_PATH/2] = 0;
+    memset(wbuf, 0xbf, sizeof(wbuf));
+
+    wszString = pPathCombineW(wbuf, wstr1, wstr2);
+    ok(wszString == NULL, "Expected a NULL return\n");
+    ok(wbuf[0] == 0, "Buffer contains data\n");
+
+    /* PathCombineW can be used in place */
+    wstr1[3] = 0;
+    wstr2[2] = 0;
+    ok(PathCombineW(wstr1, wstr1, wstr2) == wstr1, "Expected a wstr1 return\n");
+    ok(StrCmpW(wstr1, expout) == 0, "Unexpected PathCombine output\n");
 }
+
 
 #define LONG_LEN (MAX_PATH * 2)
 #define HALF_LEN (MAX_PATH / 2 + 1)
@@ -1039,10 +1062,7 @@ static void test_PathCombineA(void)
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, NULL, NULL);
     ok(str == NULL, "Expected str == NULL, got %p\n", str);
-    todo_wine
-    {
-        ok(lstrlenA(dest) == 0, "Expected 0 length, got %i\n", lstrlenA(dest));
-    }
+    ok(lstrlenA(dest) == 0, "Expected 0 length, got %i\n", lstrlenA(dest));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try directory without backslash */
@@ -1125,23 +1145,17 @@ static void test_PathCombineA(void)
     SetLastError(0xdeadbeef);
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "C:\\", too_long);
-    todo_wine
-    {
-        ok(str == NULL, "Expected str == NULL, got %p\n", str);
-        ok(lstrlenA(dest) == 0, "Expected 0 length, got %i\n", lstrlenA(dest));
-        ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    }
+    ok(str == NULL, "Expected str == NULL, got %p\n", str);
+    ok(lstrlenA(dest) == 0, "Expected 0 length, got %i\n", lstrlenA(dest));
+    todo_wine ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* try a directory longer than MAX_PATH */
     SetLastError(0xdeadbeef);
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, too_long, "one\\two\\three");
-    todo_wine
-    {
-        ok(str == NULL, "Expected str == NULL, got %p\n", str);
-        ok(lstrlenA(dest) == 0, "Expected 0 length, got %i\n", lstrlenA(dest));
-        ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    }
+    ok(str == NULL, "Expected str == NULL, got %p\n", str);
+    ok(lstrlenA(dest) == 0, "Expected 0 length, got %i\n", lstrlenA(dest));
+    todo_wine ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
     memset(one, 'b', HALF_LEN);
     memset(two, 'c', HALF_LEN);
@@ -1152,11 +1166,8 @@ static void test_PathCombineA(void)
     SetLastError(0xdeadbeef);
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, one, two);
-    todo_wine
-    {
-        ok(str == NULL, "Expected str == NULL, got %p\n", str);
-        ok(lstrlenA(dest) == 0, "Expected 0 length, got %i\n", lstrlenA(dest));
-    }
+    ok(str == NULL, "Expected str == NULL, got %p\n", str);
+    ok(lstrlenA(dest) == 0, "Expected 0 length, got %i\n", lstrlenA(dest));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 }
 
@@ -1320,12 +1331,9 @@ static void test_PathAppendA(void)
     too_long[LONG_LEN - 1] = '\0';
     SetLastError(0xdeadbeef);
     res = PathAppendA(too_long, "two\\three");
-    todo_wine
-    {
-        ok(!res, "Expected failure\n");
-        ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-        ok(lstrlen(too_long) == 0, "Expected length of too_long to be zero, got %i\n", lstrlen(too_long));
-    }
+    ok(!res, "Expected failure\n");
+    todo_wine ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(lstrlen(too_long) == 0, "Expected length of too_long to be zero, got %i\n", lstrlen(too_long));
 
     /* pszMore is too long */
     lstrcpy(path, "C:\\one");
@@ -1333,12 +1341,9 @@ static void test_PathAppendA(void)
     too_long[LONG_LEN - 1] = '\0';
     SetLastError(0xdeadbeef);
     res = PathAppendA(path, too_long);
-    todo_wine
-    {
-        ok(!res, "Expected failure\n");
-        ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-        ok(lstrlen(path) == 0, "Expected length of path to be zero, got %i\n", lstrlen(path));
-    }
+    ok(!res, "Expected failure\n");
+    todo_wine ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(lstrlen(path) == 0, "Expected length of path to be zero, got %i\n", lstrlen(path));
 
     /* both params combined are too long */
     memset(one, 'a', HALF_LEN);
@@ -1347,11 +1352,8 @@ static void test_PathAppendA(void)
     two[HALF_LEN - 1] = '\0';
     SetLastError(0xdeadbeef);
     res = PathAppendA(one, two);
-    todo_wine
-    {
-        ok(!res, "Expected failure\n");
-        ok(lstrlen(one) == 0, "Expected length of one to be zero, got %i\n", lstrlen(one));
-    }
+    ok(!res, "Expected failure\n");
+    ok(lstrlen(one) == 0, "Expected length of one to be zero, got %i\n", lstrlen(one));
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 }
 
