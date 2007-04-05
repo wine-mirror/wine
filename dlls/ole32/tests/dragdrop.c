@@ -145,6 +145,5 @@ START_TEST(dragdrop)
     ok(droptarget_release_called == 1, "DropTarget_Release should have been called once, not %d times\n", droptarget_release_called);
 
     hr = RevokeDragDrop(NULL);
-    todo_wine
     ok(hr == DRAGDROP_E_INVALIDHWND, "RevokeDragDrop with NULL hwnd should return DRAGDROP_E_INVALIDHWND instead of 0x%08x\n", hr);
 }

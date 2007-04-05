@@ -299,7 +299,10 @@ HRESULT WINAPI RegisterDragDrop(
     return E_INVALIDARG;
 
   if (!IsWindow(hwnd))
+  {
+    ERR("invalid hwnd %p\n", hwnd);
     return DRAGDROP_E_INVALIDHWND;
+  }
 
   /*
    * First, check if the window is already registered.
@@ -340,6 +343,12 @@ HRESULT WINAPI RevokeDragDrop(
   DropTargetNode* dropTargetInfo;
 
   TRACE("(%p)\n", hwnd);
+
+  if (!IsWindow(hwnd))
+  {
+    ERR("invalid hwnd %p\n", hwnd);
+    return DRAGDROP_E_INVALIDHWND;
+  }
 
   /*
    * First, check if the window is already registered.
