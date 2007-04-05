@@ -427,6 +427,35 @@ static char* get_literal_string(struct parsed_symbol* sym)
 }
 
 /******************************************************************
+ *		get_template_name
+ * Parses a name with a template argument list and returns it as
+ * a string.
+ * In a template argument list the back reference to the names
+ * table is separately created. '0' points to the class component
+ * name with the template arguments.  We use the same stack array
+ * to hold the names but save/restore the stack state before/after
+ * parsing the template argument list.
+ */
+static char* get_template_name(struct parsed_symbol* sym)
+{
+    char *name, *args;
+    unsigned num_mark = sym->names.num;
+    unsigned start_mark = sym->names.start;
+    unsigned stack_mark = sym->stack.num;
+
+    sym->names.start = sym->names.num;
+    if (!(name = get_literal_string(sym)))
+        return FALSE;
+    args = get_args(sym, NULL, FALSE, '<', '>');
+    if (args != NULL)
+        name = str_printf(sym, "%s%s", name, args);
+    sym->names.num = num_mark;
+    sym->names.start = start_mark;
+    sym->stack.num = stack_mark;
+    return name;
+}
+
+/******************************************************************
  *		get_class
  * Parses class as a list of parent-classes, terminated by '@' and stores the
  * result in 'a' array. Each parent-classes, as well as the inner element
@@ -457,29 +486,8 @@ static BOOL get_class(struct parsed_symbol* sym)
         case '?':
             if (*++sym->current == '$') 
             {
-                /* In a template argument list the back reference to names
-                   table is separately created. '0' points to the class
-                   component name with the template arguments. We use the same
-                   stack array to hold the names but save/restore the stack
-                   state before/after parsing the template argument list. */
-                char*           args = NULL;
-                unsigned        num_mark = sym->names.num;
-                unsigned        start_mark = sym->names.start;
-                unsigned        stack_mark = sym->stack.num;
-
-                sym->names.start = sym->names.num;
                 sym->current++;
-                if (!(name = get_literal_string(sym)))
-                    return FALSE;
-                args = get_args(sym, NULL, FALSE, '<', '>');
-                if (args != NULL)
-                    name = str_printf(sym, "%s%s", name, args);
-                sym->names.num = num_mark;
-                sym->names.start = start_mark;
-                sym->stack.num = stack_mark;
-                /* Now that we are back to the standard name scope push
-                   the class component with all its template arguments
-                   to the names array for back reference. */
+                name = get_template_name(sym);
                 str_array_push(sym, name, -1, &sym->names);
             }
             break;
