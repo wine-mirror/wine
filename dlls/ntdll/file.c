@@ -247,7 +247,6 @@ typedef struct async_fileio
     char*               buffer;
     unsigned int        already;
     unsigned int        count;
-    int                 queue_apc_on_error;
     BOOL                avail_mode;
     HANDLE              event;
 } async_fileio;
@@ -258,10 +257,6 @@ static void fileio_terminate(async_fileio *fileio, IO_STATUS_BLOCK* iosb, NTSTAT
 
     iosb->u.Status = status;
     iosb->Information = fileio->already;
-
-    if (fileio->apc && (status == STATUS_SUCCESS || fileio->queue_apc_on_error))
-        fileio->apc( fileio->apc_user, iosb, 0 );
-
     RtlFreeHeap( GetProcessHeap(), 0, fileio );
 }
 
@@ -278,6 +273,8 @@ static ULONG fileio_queue_async(async_fileio* fileio, IO_STATUS_BLOCK* iosb,
         req->async.callback = apc;
         req->async.iosb     = iosb;
         req->async.arg      = fileio;
+        req->async.apc      = fileio->apc;
+        req->async.apc_arg  = fileio->apc_user;
         req->async.event    = fileio->event;
         req->type = do_read ? ASYNC_TYPE_READ : ASYNC_TYPE_WRITE;
         req->count = (fileio->count < fileio->already) ? 0 : fileio->count - fileio->already;
@@ -606,7 +603,6 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             fileio->apc = apc;
             fileio->apc_user = apc_user;
             fileio->buffer = buffer;
-            fileio->queue_apc_on_error = 1;
             fileio->avail_mode = (flags & FD_FLAG_AVAILABLE);
             fileio->event = hEvent;
             status = fileio_queue_async(fileio, io_status, TRUE);
@@ -811,7 +807,6 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             fileio->apc = apc;
             fileio->apc_user = apc_user;
             fileio->buffer = (void*)buffer;
-            fileio->queue_apc_on_error = 1;
             fileio->event = hEvent;
             status = fileio_queue_async(fileio, io_status, FALSE);
             goto done;
