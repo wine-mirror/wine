@@ -738,8 +738,10 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                             const void* buffer, ULONG length,
                             PLARGE_INTEGER offset, PULONG key)
 {
-    int result, unix_handle, needs_close, flags;
+    int result, unix_handle, needs_close, flags, timeout_init_done = 0;
+    struct io_timeouts timeouts;
     NTSTATUS status;
+    ULONG total = 0;
     enum server_fd_type type;
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p)!\n",
@@ -751,127 +753,117 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                                  &needs_close, &type, &flags );
     if (status) return status;
 
-    if (type == FD_TYPE_FILE && offset)
+    if (type == FD_TYPE_FILE && offset && offset->QuadPart != (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */ )
     {
-        if (flags & FD_FLAG_OVERLAPPED)
+        /* async I/O doesn't make sense on regular files */
+        while ((result = pwrite( unix_handle, buffer, length, offset->QuadPart )) == -1)
         {
-            /* async I/O doesn't make sense on regular files */
-            while ((result = pwrite( unix_handle, buffer, length, offset->QuadPart )) == -1)
+            if (errno != EINTR)
             {
-                if (errno == EINTR) continue;
-                if (errno == EAGAIN || errno == ESPIPE)
-                {
-                    status = STATUS_PENDING;
-                    break;
-                }
-                result = 0;
                 if (errno == EFAULT) status = STATUS_INVALID_USER_BUFFER;
                 else status = FILE_GetNtStatus();
                 goto done;
             }
-            if (result >= 0)
+        }
+
+        if (!(flags & FD_FLAG_OVERLAPPED))  /* update file pointer position */
+            lseek( unix_handle, offset->QuadPart + result, SEEK_SET );
+
+        total = result;
+        status = STATUS_SUCCESS;
+        goto done;
+    }
+
+    for (;;)
+    {
+        if ((result = write( unix_handle, (const char *)buffer + total, length - total )) >= 0)
+        {
+            total += result;
+            if (total == length)
             {
-                io_status->Information = result;
                 status = STATUS_SUCCESS;
-                if (hEvent) NtSetEvent( hEvent, NULL );
                 goto done;
             }
         }
         else
         {
-            if (lseek( unix_handle, offset->QuadPart, SEEK_SET ) == (off_t)-1)
+            if (errno == EINTR) continue;
+            if (errno != EAGAIN)
+            {
+                if (errno == EFAULT) status = STATUS_INVALID_USER_BUFFER;
+                else status = FILE_GetNtStatus();
+                goto done;
+            }
+        }
+
+        if (flags & FD_FLAG_OVERLAPPED)
+        {
+            async_fileio *fileio;
+
+            if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(async_fileio))))
+            {
+                status = STATUS_NO_MEMORY;
+                goto done;
+            }
+            fileio->handle = hFile;
+            fileio->already = total;
+            fileio->count = length;
+            fileio->apc = apc;
+            fileio->apc_user = apc_user;
+            fileio->buffer = (void*)buffer;
+            fileio->queue_apc_on_error = 1;
+            fileio->event = hEvent;
+            status = fileio_queue_async(fileio, io_status, FALSE);
+            goto done;
+        }
+        else  /* synchronous write, wait for the fd to become ready */
+        {
+            struct pollfd pfd;
+            int ret, timeout;
+
+            if (!timeout_init_done)
+            {
+                timeout_init_done = 1;
+                if ((status = get_io_timeouts( hFile, type, length, FALSE, &timeouts )))
+                    goto done;
+                if (hEvent) NtResetEvent( hEvent, NULL );
+            }
+            timeout = get_next_io_timeout( &timeouts, total );
+
+            pfd.fd = unix_handle;
+            pfd.events = POLLIN;
+
+            if (!timeout || !(ret = poll( &pfd, 1, timeout )))
+            {
+                /* return with what we got so far */
+                status = total ? STATUS_SUCCESS : STATUS_TIMEOUT;
+                goto done;
+            }
+            if (ret == -1 && errno != EINTR)
             {
                 status = FILE_GetNtStatus();
                 goto done;
             }
+            /* will now restart the write */
         }
     }
 
-    if (flags & FD_FLAG_SEND_SHUTDOWN)
-    {
-        status = STATUS_PIPE_DISCONNECTED;
-        goto done;
-    }
-
-    if (flags & FD_FLAG_TIMEOUT)
-    {
-        if (hEvent)
-        {
-            /* this shouldn't happen, but check it */
-            FIXME("NIY-hEvent\n");
-            status = STATUS_NOT_IMPLEMENTED;
-            goto done;
-        }
-        status = NtCreateEvent(&hEvent, EVENT_ALL_ACCESS, NULL, 0, 0);
-        if (status) goto done;
-    }
-
-    if (flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT))
-    {
-        async_fileio*   fileio;
-
-        if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(async_fileio))))
-        {
-            if (flags & FD_FLAG_TIMEOUT) NtClose(hEvent);
-            status = STATUS_NO_MEMORY;
-            goto done;
-        }
-        fileio->handle = hFile;
-        fileio->already = 0;
-        fileio->count = length;
-        fileio->apc = apc;
-        fileio->apc_user = apc_user;
-        fileio->buffer = (void*)buffer;
-        fileio->queue_apc_on_error = 0;
-        fileio->avail_mode = (flags & FD_FLAG_AVAILABLE);
-        fileio->event = hEvent;
-
-        io_status->u.Status = STATUS_PENDING;
-        status = fileio_queue_async(fileio, io_status, FALSE);
-        if (status != STATUS_PENDING)
-        {
-            if (flags & FD_FLAG_TIMEOUT) NtClose(hEvent);
-            goto done;
-        }
-        if (needs_close) close( unix_handle );
-        if (flags & FD_FLAG_TIMEOUT)
-        {
-            while (NtWaitForSingleObject(hEvent, TRUE, NULL) == STATUS_USER_APC) /* nothing */ ;
-            NtClose(hEvent);
-        }
-        else
-        {
-            LARGE_INTEGER   timeout;
-
-            /* let some APC be run, this will write as much data as possible */
-            timeout.u.LowPart = timeout.u.HighPart = 0;
-            status = NtDelayExecution( TRUE, &timeout );
-            /* the apc didn't run and therefore the completion routine now
-             * needs to be sent errors.
-             * Note that there is no race between setting this flag and
-             * returning errors because apc's are run only during alertable
-             * waits */
-            if (status != STATUS_USER_APC)
-                fileio->queue_apc_on_error = 1;
-        }
-        return io_status->u.Status;
-    }
-
-    /* synchronous file write */
-    status = STATUS_SUCCESS;
-    while ((result = write( unix_handle, buffer, length )) == -1)
-    {
-        if ((errno == EAGAIN) || (errno == EINTR)) continue;
-        result = 0;
-        if (errno == EFAULT) status = STATUS_INVALID_USER_BUFFER;
-        else status = FILE_GetNtStatus();
-        break;
-    }
-    io_status->Information = result;
 done:
     if (needs_close) close( unix_handle );
-    if (status != STATUS_PENDING) io_status->u.Status = status;
-    if (apc && !status) apc( apc_user, io_status, 0 );
+    if (status == STATUS_SUCCESS)
+    {
+        io_status->u.Status = status;
+        io_status->Information = total;
+        TRACE("= SUCCESS (%u)\n", total);
+        if (hEvent) NtSetEvent( hEvent, NULL );
+        if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
+                                   (ULONG_PTR)apc_user, (ULONG_PTR)io_status, 0 );
+    }
+    else
+    {
+        TRACE("= 0x%08x\n", status);
+        if (status != STATUS_PENDING && hEvent) NtResetEvent( hEvent, NULL );
+    }
     return status;
 }
 
