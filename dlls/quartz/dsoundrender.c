@@ -46,11 +46,13 @@ static const IBaseFilterVtbl DSoundRender_Vtbl;
 static const IPinVtbl DSoundRender_InputPin_Vtbl;
 static const IMemInputPinVtbl MemInputPin_Vtbl; 
 static const IBasicAudioVtbl IBasicAudio_Vtbl;
+static const IReferenceClockVtbl IReferenceClock_Vtbl;
 
 typedef struct DSoundRenderImpl
 {
     const IBaseFilterVtbl * lpVtbl;
     const IBasicAudioVtbl *IBasicAudio_vtbl;
+    const IReferenceClockVtbl *IReferenceClock_vtbl;
 
     LONG refCount;
     CRITICAL_SECTION csFilter;
@@ -66,7 +68,12 @@ typedef struct DSoundRenderImpl
     LPDIRECTSOUNDBUFFER dsbuffer;
     DWORD buf_size;
     DWORD write_pos;
+    DWORD write_loops;
     BOOL init;
+
+    DWORD last_play_pos;
+    DWORD play_loops;
+    REFERENCE_TIME play_time;
 
     long volume;
     long pan;
@@ -188,6 +195,47 @@ getout:
     return hr;
 }
 
+static inline HRESULT DSoundRender_GetPos(DSoundRenderImpl *This, DWORD *pPlayPos, DWORD *pWritePos, REFERENCE_TIME *pRefTime)
+{
+    HRESULT hr;
+
+    EnterCriticalSection(&This->csFilter);
+    {
+        hr = IDirectSoundBuffer_GetCurrentPosition(This->dsbuffer, pPlayPos, pWritePos);
+        if (hr == DS_OK)
+        {
+            DWORD play_pos = *pPlayPos;
+
+            if (play_pos < This->last_play_pos)
+                This->play_loops++;
+            This->last_play_pos = play_pos;
+
+            /* If we're really falling behind, kick the play time back */
+            if ((This->play_loops*This->buf_size)+play_pos >=
+                (This->write_loops*This->buf_size)+This->write_pos)
+                This->play_loops--;
+
+            if (pRefTime)
+            {
+                REFERENCE_TIME play_time;
+                play_time = ((REFERENCE_TIME)This->play_loops*10000000) +
+                            ((REFERENCE_TIME)play_pos*10000000/This->buf_size);
+
+                /* Don't let time run backwards */
+                if(play_time-This->play_time > 0)
+                    This->play_time = play_time;
+                else
+                    hr = S_FALSE;
+
+                *pRefTime = This->play_time;
+            }
+        }
+    }
+    LeaveCriticalSection(&This->csFilter);
+
+    return hr;
+}
+
 static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, DWORD size)
 {
     HRESULT hr;
@@ -199,10 +247,10 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
     DWORD play_pos,buf_free;
 
     do {
-        hr = IDirectSoundBuffer_GetCurrentPosition(This->dsbuffer, &play_pos, NULL);
+        hr = DSoundRender_GetPos(This, &play_pos, NULL, NULL);
         if (hr != DS_OK)
         {
-            ERR("Error GetCurrentPosition: %x\n", hr);
+            ERR("GetPos returned error: %x\n", hr);
             break;
         }
         if (This->write_pos <= play_pos)
@@ -235,7 +283,12 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
 
         size -= dwsize1 + dwsize2;
         data += dwsize1 + dwsize2;
-        This->write_pos = (This->write_pos + dwsize1 + dwsize2) % This->buf_size;
+        This->write_pos += dwsize1 + dwsize2;
+        if (This->write_pos >= This->buf_size)
+        {
+            This->write_pos -= This->buf_size;
+            This->write_loops++;
+        }
     } while (size && This->state == State_Running);
 
     return hr;
@@ -334,6 +387,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     pDSoundRender->lpVtbl = &DSoundRender_Vtbl;
     pDSoundRender->IBasicAudio_vtbl = &IBasicAudio_Vtbl;
+    pDSoundRender->IReferenceClock_vtbl = &IReferenceClock_Vtbl;
     pDSoundRender->refCount = 1;
     InitializeCriticalSection(&pDSoundRender->csFilter);
     pDSoundRender->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter");
@@ -387,6 +441,8 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
         *ppv = (LPVOID)This;
     else if (IsEqualIID(riid, &IID_IBasicAudio))
         *ppv = (LPVOID)&(This->IBasicAudio_vtbl);
+    else if (IsEqualIID(riid, &IID_IReferenceClock))
+        *ppv = (LPVOID)&(This->IReferenceClock_vtbl);
 
     if (*ppv)
     {
@@ -894,4 +950,100 @@ static const IBasicAudioVtbl IBasicAudio_Vtbl =
     Basicaudio_get_Volume,
     Basicaudio_put_Balance,
     Basicaudio_get_Balance
+};
+
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI ReferenceClock_QueryInterface(IReferenceClock *iface,
+						REFIID riid,
+						LPVOID*ppvObj)
+{
+    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+
+    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
+
+    return DSoundRender_QueryInterface((IBaseFilter*)This, riid, ppvObj);
+}
+
+static ULONG WINAPI ReferenceClock_AddRef(IReferenceClock *iface)
+{
+    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    return DSoundRender_AddRef((IBaseFilter*)This);
+}
+
+static ULONG WINAPI ReferenceClock_Release(IReferenceClock *iface)
+{
+    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    return DSoundRender_Release((IBaseFilter*)This);
+}
+
+/*** IReferenceClock methods ***/
+static HRESULT WINAPI ReferenceClock_GetTime(IReferenceClock *iface,
+                                             REFERENCE_TIME *pTime)
+{
+    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+    HRESULT hr = E_FAIL;
+    DWORD play_pos;
+
+    TRACE("(%p/%p)->(%p)\n", This, iface, pTime);
+
+    if (This->dsbuffer)
+        hr = DSoundRender_GetPos(This, &play_pos, NULL, pTime);
+    if (FAILED(hr))
+        ERR("Could not get refreence time (%x)!\n", hr);
+
+    return hr;
+}
+
+static HRESULT WINAPI ReferenceClock_AdviseTime(IReferenceClock *iface,
+                                                REFERENCE_TIME rtBaseTime,
+                                                REFERENCE_TIME rtStreamTime,
+                                                HEVENT hEvent,
+                                                DWORD_PTR *pdwAdviseCookie)
+{
+    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+
+    FIXME("(%p/%p)->(%s, %s, %p, %p): stub!\n", This, iface, wine_dbgstr_longlong(rtBaseTime), wine_dbgstr_longlong(rtStreamTime), (void*)hEvent, pdwAdviseCookie);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ReferenceClock_AdvisePeriodic(IReferenceClock *iface,
+                                                    REFERENCE_TIME rtBaseTime,
+                                                    REFERENCE_TIME rtStreamTime,
+                                                    HSEMAPHORE hSemaphore,
+                                                    DWORD_PTR *pdwAdviseCookie)
+{
+    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+
+    FIXME("(%p/%p)->(%s, %s, %p, %p): stub!\n", This, iface, wine_dbgstr_longlong(rtBaseTime), wine_dbgstr_longlong(rtStreamTime), (void*)hSemaphore, pdwAdviseCookie);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ReferenceClock_Unadvise(IReferenceClock *iface,
+                                              DWORD_PTR dwAdviseCookie)
+{
+    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+
+    FIXME("(%p/%p)->(%p): stub!\n", This, iface, (void*)dwAdviseCookie);
+
+    return S_FALSE;
+}
+
+static const IReferenceClockVtbl IReferenceClock_Vtbl =
+{
+    ReferenceClock_QueryInterface,
+    ReferenceClock_AddRef,
+    ReferenceClock_Release,
+    ReferenceClock_GetTime,
+    ReferenceClock_AdviseTime,
+    ReferenceClock_AdvisePeriodic,
+    ReferenceClock_Unadvise
 };
