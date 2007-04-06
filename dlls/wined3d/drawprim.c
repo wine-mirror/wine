@@ -449,8 +449,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
     unsigned int               textureNo    = 0;
     unsigned int               texture_idx  = 0;
-    const short               *pIdxBufS     = NULL;
-    const long                *pIdxBufL     = NULL;
+    const WORD                *pIdxBufS     = NULL;
+    const DWORD               *pIdxBufL     = NULL;
     LONG                       vx_index;
     float x  = 0.0f, y  = 0.0f, z = 0.0f;  /* x,y,z coordinates          */
     float rhw = 0.0f;                      /* rhw                        */
@@ -458,7 +458,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     DWORD specularColor = 0;               /* Specular Color             */
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     UINT *streamOffset = This->stateBlock->streamOffset;
-    LONG                       SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
+    DWORD                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
 
     BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
     BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
@@ -475,8 +475,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
             idxData = ((IWineD3DIndexBufferImpl *) This->stateBlock->pIndexData)->resource.allocatedMemory;
         }
 
-        if (idxSize == 2) pIdxBufS = (const short *) idxData;
-        else pIdxBufL = (const long *) idxData;
+        if (idxSize == 2) pIdxBufS = (const WORD *) idxData;
+        else pIdxBufL = (const DWORD *) idxData;
     }
 
     /* Adding the stream offset once is cheaper than doing it every iteration. Do not modify the strided data, it is a pointer
