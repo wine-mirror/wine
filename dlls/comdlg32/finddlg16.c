@@ -228,7 +228,7 @@ HWND16 WINAPI ReplaceText16( SEGPTR find )
  *                              FINDDLG_WMInitDialog            [internal]
  */
 static LRESULT FINDDLG_WMInitDialog(HWND hWnd, LPARAM lParam, LPDWORD lpFlags,
-                                    LPSTR lpstrFindWhat, BOOL fUnicode)
+                                    LPCSTR lpstrFindWhat, BOOL fUnicode)
 {
     SetWindowLongPtrW(hWnd, DWLP_USER, lParam);
     *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
@@ -237,7 +237,7 @@ static LRESULT FINDDLG_WMInitDialog(HWND hWnd, LPARAM lParam, LPDWORD lpFlags,
      * FindNext (IDOK) button.  Only after typing some text, the button should be
      * enabled.
      */
-    if (fUnicode) SetDlgItemTextW(hWnd, edt1, (LPWSTR)lpstrFindWhat);
+    if (fUnicode) SetDlgItemTextW(hWnd, edt1, (LPCWSTR)lpstrFindWhat);
 	else SetDlgItemTextA(hWnd, edt1, lpstrFindWhat);
     CheckRadioButton(hWnd, rad1, rad2, (*lpFlags & FR_DOWN) ? rad2 : rad1);
     if (*lpFlags & (FR_HIDEUPDOWN | FR_NOUPDOWN)) {
@@ -341,8 +341,8 @@ BOOL16 CALLBACK FindTextDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
  *                              REPLACEDLG_WMInitDialog         [internal]
  */
 static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, LPARAM lParam,
-		    LPDWORD lpFlags, LPSTR lpstrFindWhat,
-		    LPSTR lpstrReplaceWith, BOOL fUnicode)
+		    LPDWORD lpFlags, LPCSTR lpstrFindWhat,
+		    LPCSTR lpstrReplaceWith, BOOL fUnicode)
 {
     SetWindowLongPtrW(hWnd, DWLP_USER, lParam);
     *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
@@ -353,8 +353,8 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, LPARAM lParam,
      */
     if (fUnicode)
     {
-	SetDlgItemTextW(hWnd, edt1, (LPWSTR)lpstrFindWhat);
-	SetDlgItemTextW(hWnd, edt2, (LPWSTR)lpstrReplaceWith);
+	SetDlgItemTextW(hWnd, edt1, (LPCWSTR)lpstrFindWhat);
+	SetDlgItemTextW(hWnd, edt2, (LPCWSTR)lpstrReplaceWith);
     } else
     {
 	SetDlgItemTextA(hWnd, edt1, lpstrFindWhat);

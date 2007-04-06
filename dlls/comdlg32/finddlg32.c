@@ -299,8 +299,8 @@ static INT_PTR CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPA
  *		FALSE: Failure
  */
 static BOOL COMDLG32_FR_CheckPartial(
-	LPFINDREPLACEA pfr,	/* [in] Find structure */
-        BOOL Replace		/* [in] True if called as replace */
+	const FINDREPLACEA *pfr,	/* [in] Find structure */
+	BOOL Replace			/* [in] True if called as replace */
 ) {
 	if(!pfr)
         {
