@@ -754,7 +754,7 @@ void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, BOOL op
  *                              FD31_FreeOfnW          [internal]
  *      Undo all allocations done by FD31_MapOfnStructA
  */
-void FD31_FreeOfnW(const OPENFILENAMEW *ofnW)
+void FD31_FreeOfnW(OPENFILENAMEW *ofnW)
 {
    HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrFilter);
    HeapFree(GetProcessHeap(), 0, ofnW->lpstrCustomFilter);

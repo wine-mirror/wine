@@ -55,7 +55,7 @@ extern PFD31_DATA FD31_AllocPrivate(LPARAM lParam, UINT dlgType,
                                     PFD31_CALLBACKS callbacks, DWORD data);
 extern void FD31_DestroyPrivate(PFD31_DATA lfs);
 extern void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, BOOL open);
-extern void FD31_FreeOfnW(const OPENFILENAMEW *ofnW);
+extern void FD31_FreeOfnW(OPENFILENAMEW *ofnW);
 extern BOOL FD31_CallWindowProc(const FD31_DATA *lfs, UINT wMsg, WPARAM wParam,
                                 LPARAM lParam);
 extern LONG FD31_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam);
