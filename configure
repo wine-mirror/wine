@@ -20396,6 +20396,8 @@ ac_config_files="$ac_config_files dlls/localspl/Makefile"
 
 ac_config_files="$ac_config_files dlls/localspl/tests/Makefile"
 
+ac_config_files="$ac_config_files dlls/localui/Makefile"
+
 ac_config_files="$ac_config_files dlls/lz32/Makefile"
 
 ac_config_files="$ac_config_files dlls/lz32/tests/Makefile"
@@ -21514,6 +21516,7 @@ do
     "dlls/kernel32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/tests/Makefile" ;;
     "dlls/localspl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localspl/Makefile" ;;
     "dlls/localspl/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localspl/tests/Makefile" ;;
+    "dlls/localui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localui/Makefile" ;;
     "dlls/lz32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/lz32/Makefile" ;;
     "dlls/lz32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/lz32/tests/Makefile" ;;
     "dlls/mapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mapi32/Makefile" ;;

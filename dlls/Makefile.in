@@ -87,6 +87,7 @@ BASEDIRS = \
 	itss \
 	kernel32 \
 	localspl \
+	localui \
 	lz32 \
 	mapi32 \
 	mciavi32 \
