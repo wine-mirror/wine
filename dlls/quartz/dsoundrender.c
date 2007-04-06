@@ -154,7 +154,8 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
 
     memset(&buf_desc,0,sizeof(DSBUFFERDESC));
     buf_desc.dwSize = sizeof(DSBUFFERDESC);
-    buf_desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY;
+    buf_desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN |
+                       DSBCAPS_CTRLFREQUENCY | DSBCAPS_GETCURRENTPOSITION2;
     buf_desc.dwBufferBytes = This->buf_size;
     buf_desc.lpwfxFormat = &wav_fmt;
     hr = IDirectSound_CreateSoundBuffer(This->dsound, &buf_desc, &This->dsbuffer, NULL);
