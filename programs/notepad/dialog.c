@@ -4,6 +4,7 @@
  *  Copyright 1998,99 Marcel Baur <mbaur@g26.ethz.ch>
  *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *  Copyright 2002 Andriy Palamarchuk
+ *  Copyright 2007 Rolf Kalbermatter
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,7 +33,7 @@
 #include "dialog.h"
 
 #define SPACES_IN_TAB 8
-#define PRINT_LEN_MAX 120
+#define PRINT_LEN_MAX 500
 
 static const WCHAR helpfileW[] = { 'n','o','t','e','p','a','d','.','h','l','p',0 };
 
@@ -367,40 +368,139 @@ VOID DIALOG_FileSaveAs(VOID)
     }
 }
 
+typedef struct {
+    LPWSTR mptr;
+    LPWSTR mend;
+    LPWSTR lptr;
+    DWORD len;
+} TEXTINFO, *LPTEXTINFO;
+
+static int notepad_print_header(HDC hdc, RECT *rc, BOOL dopage, BOOL header, int page, LPWSTR text)
+{
+    SIZE szMetric;
+
+    if (*text)
+    {
+        /* Write the header or footer */
+        GetTextExtentPoint32(hdc, text, lstrlen(text), &szMetric);
+        if (dopage)
+            ExtTextOut(hdc, (rc->left + rc->right - szMetric.cx) / 2,
+                       header ? rc->top : rc->bottom - szMetric.cy,
+                       ETO_CLIPPED, rc, text, lstrlen(text), NULL);
+        return 1;
+    }
+    return 0;
+}
+
+static BOOL notepad_print_page(HDC hdc, RECT *rc, BOOL dopage, int page, LPTEXTINFO tInfo)
+{
+    int b, y;
+    TEXTMETRIC tm;
+    SIZE szMetrics;
+
+    if (dopage)
+    {
+        if (StartPage(hdc) <= 0)
+        {
+            static const WCHAR failedW[] = { 'S','t','a','r','t','P','a','g','e',' ','f','a','i','l','e','d',0 };
+            static const WCHAR errorW[] = { 'P','r','i','n','t',' ','E','r','r','o','r',0 };
+            MessageBox(Globals.hMainWnd, failedW, errorW, MB_ICONEXCLAMATION);
+            return FALSE;
+        }
+    }
+
+    GetTextMetrics(hdc, &tm);
+    y = rc->top + notepad_print_header(hdc, rc, dopage, TRUE, page, Globals.szFileName) * tm.tmHeight;
+    b = rc->bottom - 2 * notepad_print_header(hdc, rc, FALSE, FALSE, page, Globals.szFooter) * tm.tmHeight;
+
+    do {
+        INT m, n;
+
+        if (!tInfo->len)
+        {
+            /* find the end of the line */
+            while (tInfo->mptr < tInfo->mend && *tInfo->mptr != '\n' && *tInfo->mptr != '\r')
+            {
+                if (*tInfo->mptr == '\t')
+                {
+                    /* replace tabs with spaces */
+                    for (m = 0; m < SPACES_IN_TAB; m++)
+                    {
+                        if (tInfo->len < PRINT_LEN_MAX)
+                            tInfo->lptr[tInfo->len++] = ' ';
+                        else if (Globals.bWrapLongLines)
+                            break;
+                    }
+                }
+                else if (tInfo->len < PRINT_LEN_MAX)
+                    tInfo->lptr[tInfo->len++] = *tInfo->mptr;
+
+                if (tInfo->len >= PRINT_LEN_MAX && Globals.bWrapLongLines)
+                     break;
+
+                tInfo->mptr++;
+            }
+        }
+
+        /* Find out how much we should print if line wrapping is enabled */
+        if (Globals.bWrapLongLines)
+        {
+            GetTextExtentExPoint(hdc, tInfo->lptr, tInfo->len, rc->right - rc->left, &n, NULL, &szMetrics);
+            if (n < tInfo->len && tInfo->lptr[n] != ' ')
+            {
+                m = n;
+                /* Don't wrap words unless it's a single word over the entire line */
+                while (m  && tInfo->lptr[m] != ' ') m--;
+                if (m > 0) n = m + 1;
+            }
+        }
+        else
+            n = tInfo->len;
+
+        if (dopage)
+            ExtTextOut(hdc, rc->left, y, ETO_CLIPPED, rc, tInfo->lptr, n, NULL);
+
+        tInfo->len -= n;
+
+        if (tInfo->len)
+        {
+            memcpy(tInfo->lptr, tInfo->lptr + n, tInfo->len * sizeof(WCHAR));
+            y += tm.tmHeight + tm.tmExternalLeading;
+        }
+        else
+        {
+            /* find the next line */
+            while (tInfo->mptr < tInfo->mend && y < b && (*tInfo->mptr == '\n' || *tInfo->mptr == '\r'))
+            {
+                if (*tInfo->mptr == '\n')
+                    y += tm.tmHeight + tm.tmExternalLeading;
+                tInfo->mptr++;
+            }
+        }
+    } while (tInfo->mptr < tInfo->mend && y < b);
+
+    notepad_print_header(hdc, rc, dopage, FALSE, page, Globals.szFooter);
+    if (dopage)
+    {
+        EndPage(hdc);
+    }
+    return TRUE;
+}
+
 VOID DIALOG_FilePrint(VOID)
 {
     DOCINFO di;
     PRINTDLG printer;
-    SIZE szMetric;
-    int cWidthPels, cHeightPels, border;
-    int xLeft, yTop, pagecount, dopage, copycount;
-    unsigned int i;
-    LOGFONT hdrFont;
-    HFONT font, old_font=0;
+    int page, dopage, copy;
+    LOGFONT lfFont;
+    HFONT hTextFont, old_font = 0;
     DWORD size;
+    BOOL ret = FALSE;
+    RECT rc;
     LPWSTR pTemp;
+    TEXTINFO tInfo;
     WCHAR cTemp[PRINT_LEN_MAX];
-    static const WCHAR print_fontW[] = { 'C','o','u','r','i','e','r',0 };
-    static const WCHAR letterM[] = { 'M',0 };
 
-    /* Get a small font and print some header info on each page */
-    hdrFont.lfHeight = -35;
-    hdrFont.lfWidth = 0;
-    hdrFont.lfEscapement = 0;
-    hdrFont.lfOrientation = 0;
-    hdrFont.lfWeight = FW_BOLD;
-    hdrFont.lfItalic = 0;
-    hdrFont.lfUnderline = 0;
-    hdrFont.lfStrikeOut = 0;
-    hdrFont.lfCharSet = ANSI_CHARSET;
-    hdrFont.lfOutPrecision = OUT_DEFAULT_PRECIS;
-    hdrFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-    hdrFont.lfQuality = PROOF_QUALITY;
-    hdrFont.lfPitchAndFamily = VARIABLE_PITCH | FF_ROMAN;
-    lstrcpy(hdrFont.lfFaceName, print_fontW);
-    
-    font = CreateFontIndirect(&hdrFont);
-    
     /* Get Current Settings */
     ZeroMemory(&printer, sizeof(printer));
     printer.lStructSize           = sizeof(printer);
@@ -408,7 +508,7 @@ VOID DIALOG_FilePrint(VOID)
     printer.hDevMode              = Globals.hDevMode;
     printer.hDevNames             = Globals.hDevNames;
     printer.hInstance             = Globals.hInstance;
-    
+
     /* Set some default flags */
     printer.Flags                 = PD_RETURNDC | PD_NOSELECTION;
     printer.nFromPage             = 0;
@@ -424,7 +524,7 @@ VOID DIALOG_FilePrint(VOID)
     Globals.hDevMode = printer.hDevMode;
     Globals.hDevNames = printer.hDevNames;
 
-    assert(printer.hDC != 0);
+    SetMapMode(printer.hDC, MM_TEXT);
 
     /* initialize DOCINFO */
     di.cbSize = sizeof(DOCINFO);
@@ -433,94 +533,72 @@ VOID DIALOG_FilePrint(VOID)
     di.lpszDatatype = NULL;
     di.fwType = 0; 
 
-    if (StartDoc(printer.hDC, &di) <= 0) return;
-    
-    /* Get the page dimensions in pixels. */
-    cWidthPels = GetDeviceCaps(printer.hDC, HORZRES);
-    cHeightPels = GetDeviceCaps(printer.hDC, VERTRES);
-
     /* Get the file text */
     size = GetWindowTextLength(Globals.hEdit) + 1;
     pTemp = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
     if (!pTemp)
     {
-        ShowLastError();
-        return;
+       DeleteDC(printer.hDC);
+       ShowLastError();
+       return;
     }
     size = GetWindowText(Globals.hEdit, pTemp, size);
-    
-    border = 150;
-    old_font = SelectObject(printer.hDC, Globals.hFont);
-    GetTextExtentPoint32(printer.hDC, letterM, 1, &szMetric);
-    for (copycount=1; copycount <= printer.nCopies; copycount++) {
-        i = 0;
-        pagecount = 1;
-        do {
-            if (printer.Flags & PD_PAGENUMS) {
-                /* a specific range of pages is selected, so
-                 * skip pages that are not to be printed 
-                 */
-                if (pagecount > printer.nToPage)
-                    break;
-                else if (pagecount >= printer.nFromPage)
-                    dopage = 1;
-                else
-                    dopage = 0;
-            }
-            else
-                dopage = 1;
-                
-            if (dopage) {
-                if (StartPage(printer.hDC) <= 0) {
-                    static const WCHAR failedW[] = { 'S','t','a','r','t','P','a','g','e',' ','f','a','i','l','e','d',0 };
-                    static const WCHAR errorW[] = { 'P','r','i','n','t',' ','E','r','r','o','r',0 };
-                    MessageBox(Globals.hMainWnd, failedW, errorW, MB_ICONEXCLAMATION);
-                    return;
-                }
-                /* Write a rectangle and header at the top of each page */
-                SelectObject(printer.hDC, font);
-                Rectangle(printer.hDC, border, border, cWidthPels-border, border+szMetric.cy*2);
-                TextOut(printer.hDC, border*2, border+szMetric.cy/2, Globals.szFileTitle, lstrlen(Globals.szFileTitle));
-            }
-            
-            SelectObject(printer.hDC, Globals.hFont);
-            /* The starting point for the main text */
-            xLeft = border;
-            yTop = border+szMetric.cy*4;
-            
-            do {
-                int k=0, m;
-                /* find the end of the line */
-                while (i < size && pTemp[i] != '\n' && pTemp[i] != '\r') {
-                    if (pTemp[i] == '\t') {
-                        /* replace tabs with spaces */
-                        for (m=0; m<SPACES_IN_TAB; m++) {
-                            if (k <  PRINT_LEN_MAX)
-                                cTemp[k++] = ' ';
-                        }
-                    }
-                    else if (k <  PRINT_LEN_MAX)
-                        cTemp[k++] = pTemp[i];
-                    i++;
-                }
-                if (dopage)
-                    TextOut(printer.hDC, xLeft, yTop, cTemp, k);
-                /* find the next line */
-                while (i < size && (pTemp[i] == '\n' || pTemp[i] == '\r')) {
-                    if (pTemp[i] == '\n')
-                        yTop += szMetric.cy;
-                    i++;
-                }
-            } while (i<size && yTop<(cHeightPels-border*2));
-                
-            if (dopage)
-                EndPage(printer.hDC);
-            pagecount++;
-        } while (i<size);
-    }
-    SelectObject(printer.hDC, old_font);
 
-    EndDoc(printer.hDC);
+    if (StartDoc(printer.hDC, &di) > 0)
+    {
+        /* Get the page margins in pixels. */
+        rc.top =    MulDiv(Globals.iMarginTop, GetDeviceCaps(printer.hDC, LOGPIXELSY), 2540) -
+                    GetDeviceCaps(printer.hDC, PHYSICALOFFSETY);
+        rc.bottom = GetDeviceCaps(printer.hDC, PHYSICALHEIGHT) -
+                    MulDiv(Globals.iMarginBottom, GetDeviceCaps(printer.hDC, LOGPIXELSY), 2540);
+        rc.left =   MulDiv(Globals.iMarginLeft, GetDeviceCaps(printer.hDC, LOGPIXELSX), 2540) -
+                    GetDeviceCaps(printer.hDC, PHYSICALOFFSETX);
+        rc.right =  GetDeviceCaps(printer.hDC, PHYSICALWIDTH) -
+                    MulDiv(Globals.iMarginRight, GetDeviceCaps(printer.hDC, LOGPIXELSX), 2540);
+
+        /* Create a font for the printer resolution */
+        lfFont = Globals.lfFont;
+        lfFont.lfHeight = MulDiv(lfFont.lfHeight, GetDeviceCaps(printer.hDC, LOGPIXELSY), get_dpi());
+        /* Make the font a bit lighter */
+        lfFont.lfWeight -= 100;
+        hTextFont = CreateFontIndirect(&lfFont);
+        old_font = SelectObject(printer.hDC, hTextFont);
+
+        for (copy = 1; copy <= printer.nCopies; copy++)
+        {
+            page = 1;
+
+            tInfo.mptr = pTemp;
+            tInfo.mend = pTemp + size;
+            tInfo.lptr = cTemp;
+            tInfo.len = 0;
+
+            do {
+                if (printer.Flags & PD_PAGENUMS)
+                {
+                    /* a specific range of pages is selected, so
+                     * skip pages that are not to be printed
+                     */
+                    if (page > printer.nToPage)
+                        break;
+                    else if (page >= printer.nFromPage)
+                        dopage = 1;
+                    else
+                        dopage = 0;
+                }
+                else
+                    dopage = 1;
+
+                ret = notepad_print_page(printer.hDC, &rc, dopage, page, &tInfo);
+                page++;
+            } while (ret && tInfo.mptr < tInfo.mend);
+
+            if (!ret) break;
+        }
+        EndDoc(printer.hDC);
+        SelectObject(printer.hDC, old_font);
+        DeleteObject(hTextFont);
+    }
     DeleteDC(printer.hDC);
     HeapFree(GetProcessHeap(), 0, pTemp);
 }

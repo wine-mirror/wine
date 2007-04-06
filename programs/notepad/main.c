@@ -81,7 +81,7 @@ VOID SetFileName(LPCWSTR szFileName)
  *
  * Get the dpi from registry HKCC\Software\Fonts\LogPixels.
  */
-static DWORD get_dpi(void)
+DWORD get_dpi(void)
 {
     static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
     static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};

@@ -55,3 +55,4 @@ extern NOTEPAD_GLOBALS Globals;
 
 VOID SetFileName(LPCWSTR szFileName);
 void NOTEPAD_DoFind(FINDREPLACE *fr);
+DWORD get_dpi(void);
