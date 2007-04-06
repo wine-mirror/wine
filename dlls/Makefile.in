@@ -244,6 +244,7 @@ TESTSUBDIRS = \
 	itss/tests \
 	kernel32/tests \
 	localspl/tests \
+	localui/tests \
 	lz32/tests \
 	mapi32/tests \
 	mlang/tests \

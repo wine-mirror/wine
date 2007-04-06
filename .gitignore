@@ -282,6 +282,9 @@ dlls/localspl/localspl.res
 dlls/localspl/tests/*.ok
 dlls/localspl/tests/localspl_crosstest.exe
 dlls/localspl/tests/testlist.c
+dlls/localui/tests/*.ok
+dlls/localui/tests/localui_crosstest.exe
+dlls/localui/tests/testlist.c
 dlls/lz32/liblz32.def
 dlls/lz32/tests/*.ok
 dlls/lz32/tests/lz32_crosstest.exe
@@ -826,6 +829,7 @@ programs/winetest/iphlpapi_test.exe
 programs/winetest/itss_test.exe
 programs/winetest/kernel32_test.exe
 programs/winetest/localspl_test.exe
+programs/winetest/localui_test.exe
 programs/winetest/lz32_test.exe
 programs/winetest/mapi32_test.exe
 programs/winetest/mlang_test.exe

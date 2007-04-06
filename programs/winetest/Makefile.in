@@ -45,6 +45,7 @@ TESTBINS = \
 	itss_test.exe \
 	kernel32_test.exe \
 	localspl_test.exe \
+	localui_test.exe \
 	lz32_test.exe \
 	mapi32_test.exe \
 	mlang_test.exe \
@@ -128,6 +129,8 @@ kernel32_test.exe: $(DLLDIR)/kernel32/tests/kernel32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/kernel32/tests/kernel32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 localspl_test.exe: $(DLLDIR)/localspl/tests/localspl_test.exe$(DLLEXT)
 	cp $(DLLDIR)/localspl/tests/localspl_test.exe$(DLLEXT) $@ && $(STRIP) $@
+localui_test.exe: $(DLLDIR)/localui/tests/localui_test.exe$(DLLEXT)
+	cp $(DLLDIR)/localui/tests/localui_test.exe$(DLLEXT) $@ && $(STRIP) $@
 lz32_test.exe: $(DLLDIR)/lz32/tests/lz32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/lz32/tests/lz32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 mapi32_test.exe: $(DLLDIR)/mapi32/tests/mapi32_test.exe$(DLLEXT)
