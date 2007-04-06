@@ -185,8 +185,8 @@ static INT PRINTDLG_SetUpPrinterListComboW(HWND hDlg, UINT id, LPCWSTR name)
  *
  *  (NB. when we handle unicode the offsets will be in wchars).
  */
-static BOOL PRINTDLG_CreateDevNames(HGLOBAL *hmem, char* DeviceDriverName,
-				    char* DeviceName, char* OutputPort)
+static BOOL PRINTDLG_CreateDevNames(HGLOBAL *hmem, const char* DeviceDriverName,
+				    const char* DeviceName, const char* OutputPort)
 {
     long size;
     char*   pDevNamesSpace;
@@ -673,8 +673,8 @@ static BOOL PRINTDLG_SetUpPaperComboBoxA(HWND hDlg,
 
 static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
 					int   nIDComboBox,
-					WCHAR* PrinterName,
-					WCHAR* PortName,
+					const WCHAR* PrinterName,
+					const WCHAR* PortName,
 					LPDEVMODEW dm)
 {
     int     i;
@@ -785,7 +785,7 @@ static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
 /***********************************************************************
  *               PRINTDLG_UpdatePrinterInfoTexts               [internal]
  */
-static void PRINTDLG_UpdatePrinterInfoTextsA(HWND hDlg, LPPRINTER_INFO_2A pi)
+static void PRINTDLG_UpdatePrinterInfoTextsA(HWND hDlg, const PRINTER_INFO_2A *pi)
 {
     char   StatusMsg[256];
     char   ResourceString[256];
@@ -821,7 +821,7 @@ static void PRINTDLG_UpdatePrinterInfoTextsA(HWND hDlg, LPPRINTER_INFO_2A pi)
     return;
 }
 
-static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, LPPRINTER_INFO_2W pi)
+static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, const PRINTER_INFO_2W *pi)
 {
     WCHAR   StatusMsg[256];
     WCHAR   ResourceString[256];
@@ -1857,7 +1857,7 @@ static INT_PTR CALLBACK PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
  *      PRINTDLG_GetDlgTemplate
  *
  */
-static HGLOBAL PRINTDLG_GetDlgTemplateA(PRINTDLGA *lppd)
+static HGLOBAL PRINTDLG_GetDlgTemplateA(const PRINTDLGA *lppd)
 {
     HRSRC hResInfo;
     HGLOBAL hDlgTmpl;
@@ -1891,7 +1891,7 @@ static HGLOBAL PRINTDLG_GetDlgTemplateA(PRINTDLGA *lppd)
     return hDlgTmpl;
 }
 
-static HGLOBAL PRINTDLG_GetDlgTemplateW(PRINTDLGW *lppd)
+static HGLOBAL PRINTDLG_GetDlgTemplateW(const PRINTDLGW *lppd)
 {
     HRSRC hResInfo;
     HGLOBAL hDlgTmpl;
@@ -2325,7 +2325,7 @@ typedef struct {
 } PageSetupDataW;
 
 
-static HGLOBAL PRINTDLG_GetPGSTemplateA(PAGESETUPDLGA *lppd)
+static HGLOBAL PRINTDLG_GetPGSTemplateA(const PAGESETUPDLGA *lppd)
 {
     HRSRC hResInfo;
     HGLOBAL hDlgTmpl;
@@ -2343,7 +2343,7 @@ static HGLOBAL PRINTDLG_GetPGSTemplateA(PAGESETUPDLGA *lppd)
     return hDlgTmpl;
 }
 
-static HGLOBAL PRINTDLG_GetPGSTemplateW(PAGESETUPDLGW *lppd)
+static HGLOBAL PRINTDLG_GetPGSTemplateW(const PAGESETUPDLGW *lppd)
 {
     HRSRC hResInfo;
     HGLOBAL hDlgTmpl;
@@ -2421,7 +2421,7 @@ _c_size2strW(PageSetupDataW *pda,DWORD size,LPWSTR strout) {
 }
 
 static DWORD
-_c_str2sizeA(PAGESETUPDLGA *dlga,LPCSTR strin) {
+_c_str2sizeA(const PAGESETUPDLGA *dlga, LPCSTR strin) {
     float	val;
     char	rest[200];
 
@@ -2461,13 +2461,13 @@ _c_str2sizeA(PAGESETUPDLGA *dlga,LPCSTR strin) {
 
 
 static DWORD
-_c_str2sizeW(PAGESETUPDLGW *dlga, LPCWSTR strin) {
+_c_str2sizeW(const PAGESETUPDLGW *dlga, LPCWSTR strin) {
     char	buf[200];
 
     /* this W -> A transition is OK */
     /* we need a unicode version of sscanf to avoid it */
     WideCharToMultiByte(CP_ACP, 0, strin, -1, buf, sizeof(buf), NULL, NULL);
-    return _c_str2sizeA((PAGESETUPDLGA *)dlga, buf);
+    return _c_str2sizeA((const PAGESETUPDLGA *)dlga, buf);
 }
 
 
@@ -2685,7 +2685,7 @@ PRINTDLG_PS_ChangePrinterW(HWND hDlg, PageSetupDataW *pda) {
  *  always - TRUE
  */
 static BOOL 
-PRINTDLG_PS_ChangePaperPrev(PageSetupDataA *pda)
+PRINTDLG_PS_ChangePaperPrev(const PageSetupDataA *pda)
 {
     LONG width, height, x, y;
     RECT rtTmp;
@@ -2913,7 +2913,8 @@ PRINTDLG_PS_WMCommandW(
 */
 
 static UINT_PTR
-PRINTDLG_DefaultPagePaintHook(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam, PageSetupDataA *pda)
+PRINTDLG_DefaultPagePaintHook(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam,
+                              const PageSetupDataA *pda)
 {
     LPRECT lprc = (LPRECT) lParam;
     HDC hdc = (HDC) wParam;

@@ -56,8 +56,8 @@ typedef struct
 
 /* Internal Functions */
 
-static BOOL PRINTDLG_CreateDevNames16(HGLOBAL16 *hmem, char* DeviceDriverName,
-				      char* DeviceName, char* OutputPort)
+static BOOL PRINTDLG_CreateDevNames16(HGLOBAL16 *hmem, const char* DeviceDriverName,
+				      const char* DeviceName, const char* OutputPort)
 {
     long size;
     char*   pDevNamesSpace;
@@ -291,7 +291,7 @@ static BOOL PRINTDLG_CreateDC16(LPPRINTDLG16 lppd)
  *      PRINTDLG_GetDlgTemplate
  *
  */
-static HGLOBAL16 PRINTDLG_GetDlgTemplate16(PRINTDLG16 *lppd)
+static HGLOBAL16 PRINTDLG_GetDlgTemplate16(const PRINTDLG16 *lppd)
 {
     HGLOBAL16 hDlgTmpl, hResInfo;
 
