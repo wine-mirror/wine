@@ -979,6 +979,7 @@ HEADER_CreateDragImage (HWND hwnd, WPARAM wParam)
     HDC hMemoryDC;
     HDC hDeviceDC;
     int height, width;
+    HFONT hFont;
     
     if (wParam < 0 || wParam >= infoPtr->uNumItem)
         return FALSE;
@@ -996,6 +997,8 @@ HEADER_CreateDragImage (HWND hwnd, WPARAM wParam)
     ReleaseDC(NULL, hDeviceDC);
     hOldBitmap = SelectObject(hMemoryDC, hMemory);
     SetViewportOrgEx(hMemoryDC, -lpItem->rect.left, -lpItem->rect.top, NULL);
+    hFont = infoPtr->hFont ? infoPtr->hFont : GetStockObject(SYSTEM_FONT);
+    SelectObject(hMemoryDC, hFont);
 
     GetClientRect(hwnd, &rc);
     lCDFlags = HEADER_SendCtrlCustomDraw(hwnd, CDDS_PREPAINT, hMemoryDC, &rc);
