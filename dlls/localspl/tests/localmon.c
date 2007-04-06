@@ -58,13 +58,6 @@ static BOOL  (WINAPI *pXcvOpenPort)(LPCWSTR, ACCESS_MASK, PHANDLE phXcv);
 static DWORD (WINAPI *pXcvDataPort)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD);
 static BOOL  (WINAPI *pXcvClosePort)(HANDLE);
 
-static HMODULE  hlocalui;
-static PMONITORUI (WINAPI *pInitializePrintMonitorUI)(VOID);
-static PMONITORUI pui;
-static BOOL  (WINAPI *pAddPortUI)(PCWSTR, HWND, PCWSTR, PWSTR *);
-static BOOL  (WINAPI *pConfigurePortUI)(PCWSTR, HWND, PCWSTR);
-static BOOL  (WINAPI *pDeletePortUI)(PCWSTR, HWND, PCWSTR);
-
 static HANDLE hXcv;
 static HANDLE hXcv_noaccess;
 
@@ -975,7 +968,6 @@ START_TEST(localmon)
     ok(res != 0, "with %u\n", GetLastError());
 
     pInitializePrintMonitor = (void *) GetProcAddress(hdll, "InitializePrintMonitor");
-    pInitializePrintMonitorUI = (void *) GetProcAddress(hdll, "InitializePrintMonitorUI");
 
     if (!pInitializePrintMonitor) {
         /* The Monitor for "Local Ports" was in a seperate dll before w2k */
@@ -1023,31 +1015,6 @@ START_TEST(localmon)
             SetLastError(0xdeadbeef);
             res = pXcvOpenPort(emptyW, 0, &hXcv_noaccess);
             ok(res, "hXcv_noaccess: %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv_noaccess);
-        }
-    }
-
-    if ((!pInitializePrintMonitorUI) && (hXcv)) {
-        /* The user interface for "Local Ports" is in a separate dll since w2k */
-        BYTE    buffer[MAX_PATH];
-        DWORD   len;
-
-        res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, buffer, MAX_PATH, &len);
-        if (res == ERROR_SUCCESS) hlocalui = LoadLibraryW( (LPWSTR) buffer);
-        if (hlocalui) pInitializePrintMonitorUI = (void *) GetProcAddress(hlocalui, "InitializePrintMonitorUI");
-    }
-
-    if (pInitializePrintMonitorUI) {
-        pui = pInitializePrintMonitorUI();
-        if (pui) {
-            numentries = (pui->dwMonitorUISize - sizeof(DWORD)) / sizeof(VOID *);
-            ok( numentries == 3,
-                "dwMonitorUISize (%d) => %d Functions\n", pui->dwMonitorUISize, numentries);
-
-            if (numentries > 2) {
-                pAddPortUI = pui->pfnAddPortUI;
-                pConfigurePortUI = pui->pfnConfigurePortUI;
-                pDeletePortUI = pui->pfnDeletePortUI;
-            }
         }
     }
 
