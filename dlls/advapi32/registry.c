@@ -566,7 +566,7 @@ LONG WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len,
 /******************************************************************************
  * RegEnumKeyW   [ADVAPI32.@]
  *
- * Enumerates subkyes of the specified open reg key.
+ * Enumerates subkeys of the specified open reg key.
  *
  * PARAMS
  *  hKey    [I] Handle to an open key.
@@ -805,7 +805,7 @@ LONG WINAPI RegQueryMultipleValuesW( HKEY hkey, PVALENTW val_list, DWORD num_val
  *  lpcMaxValueNameLen     [O] Size of the key's longest value name in TCHARS.
  *  lpcMaxValueLen         [O] Longest data component among the key's values
  *  lpcbSecurityDescriptor [O] Size of the key's security descriptor.
- *  lpftLastWriteTime      [O] FILETIME strucutre that is the last write time.
+ *  lpftLastWriteTime      [O] FILETIME structure that is the last write time.
  *
  *  RETURNS
  *   Success: ERROR_SUCCESS
@@ -2264,7 +2264,7 @@ LONG WINAPI RegFlushKey( HKEY hkey )
 /******************************************************************************
  * RegConnectRegistryW [ADVAPI32.@]
  *
- * Establishe a connection to a predefined registry key on another computer.
+ * Establish a connection to a predefined registry key on another computer.
  *
  * PARAMS
  *  lpMachineName [I] Address of name of remote computer
@@ -2373,7 +2373,7 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
  *
  * PARAMS
  *  hToken     [I] Handle of token representing the user
- *  dwOptions  [I] Reserved, nust be 0
+ *  dwOptions  [I] Reserved, must be 0
  *  samDesired [I] Desired access rights
  *  phkResult  [O] Destination for the resulting key handle
  *

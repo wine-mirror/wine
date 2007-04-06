@@ -987,7 +987,7 @@ BOOL WINAPI CryptDuplicateKey (HCRYPTKEY hKey, DWORD *pdwReserved, DWORD dwFlags
  * Encrypts data.
  *
  * PARAMS
- *  hKey       [I] Handle to the enryption key.
+ *  hKey       [I] Handle to the encryption key.
  *  hHash      [I] Handle to a hash object.
  *  Final      [I] TRUE if this is the last section to encrypt.
  *  dwFlags    [I] Can be CRYPT_OAEP.
@@ -1027,7 +1027,7 @@ BOOL WINAPI CryptEncrypt (HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final,
 /******************************************************************************
  * CryptEnumProvidersW (ADVAPI32.@)
  *
- * Returns the next availabe CSP.
+ * Returns the next available CSP.
  *
  * PARAMS
  *  dwIndex     [I] Index of the next provider to be enumerated.
