@@ -72,7 +72,7 @@ static void FONT_Metrics16To32W( const TEXTMETRIC16 *pm16,
     pnm32w->ntmTm.tmExternalLeading = pm16->tmExternalLeading;
 }
 
-static void CFn_CHOOSEFONT16to32W(LPCHOOSEFONT16 chf16, LPCHOOSEFONTW chf32w)
+static void CFn_CHOOSEFONT16to32W(const CHOOSEFONT16 *chf16, LPCHOOSEFONTW chf32w)
 {
   int len;
   if (chf16->Flags & CF_ENABLETEMPLATE)
@@ -106,7 +106,7 @@ static void CFn_CHOOSEFONT16to32W(LPCHOOSEFONT16 chf16, LPCHOOSEFONTW chf32w)
 /***********************************************************************
  *                          CFn_HookCallChk                 [internal]
  */
-static BOOL CFn_HookCallChk(LPCHOOSEFONT16 lpcf)
+static BOOL CFn_HookCallChk(const CHOOSEFONT16 *lpcf)
 {
  if (lpcf)
   if(lpcf->Flags & CF_ENABLEHOOK)

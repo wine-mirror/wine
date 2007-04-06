@@ -213,10 +213,10 @@ typedef struct
 } CFn_ENUMSTRUCT, *LPCFn_ENUMSTRUCT;
 
 INT AddFontFamily(const ENUMLOGFONTEXW *lpElfex, const NEWTEXTMETRICEXW *lpNTM,
-                  UINT nFontType, LPCHOOSEFONTW lpcf, HWND hwnd,
+                  UINT nFontType, const CHOOSEFONTW *lpcf, HWND hwnd,
                   LPCFn_ENUMSTRUCT e);
 INT AddFontStyle(const ENUMLOGFONTEXW *lpElfex, const NEWTEXTMETRICEXW *metrics,
-                 UINT nFontType, LPCHOOSEFONTW lpcf, HWND hcmb2, HWND hcmb3,
+                 UINT nFontType, const CHOOSEFONTW *lpcf, HWND hcmb2, HWND hcmb3,
                  HWND hDlg, BOOL iswin16);
 void _dump_cf_flags(DWORD cflags);
 
@@ -227,6 +227,6 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam);
 LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
                       LPCHOOSEFONTW lpcf);
 LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam,
-                      LPCHOOSEFONTW lpcf);
+                      const CHOOSEFONTW *lpcf);
 
 #endif /* _WINE_DLL_CDLG_H */

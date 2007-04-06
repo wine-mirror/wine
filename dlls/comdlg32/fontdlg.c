@@ -287,7 +287,7 @@ static const COLORREF textcolors[TEXT_COLORS]=
 /***********************************************************************
  *                          CFn_HookCallChk32                 [internal]
  */
-static BOOL CFn_HookCallChk32(LPCHOOSEFONTW lpcf)
+static BOOL CFn_HookCallChk32(const CHOOSEFONTW *lpcf)
 {
     if (lpcf)
         if(lpcf->Flags & CF_ENABLEHOOK)
@@ -300,7 +300,7 @@ static BOOL CFn_HookCallChk32(LPCHOOSEFONTW lpcf)
  *              AddFontFamily                               [internal]
  */
 INT AddFontFamily(const ENUMLOGFONTEXW *lpElfex, const NEWTEXTMETRICEXW *lpNTM,
-        UINT nFontType, LPCHOOSEFONTW lpcf, HWND hwnd, LPCFn_ENUMSTRUCT e)
+        UINT nFontType, const CHOOSEFONTW *lpcf, HWND hwnd, LPCFn_ENUMSTRUCT e)
 {
     int i;
     WORD w;
@@ -403,7 +403,7 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, const LOGFONTW *lplf)
 /*************************************************************************
  *              AddFontSizeToCombo3                           [internal]
  */
-static int AddFontSizeToCombo3(HWND hwnd, UINT h, LPCHOOSEFONTW lpcf)
+static int AddFontSizeToCombo3(HWND hwnd, UINT h, const CHOOSEFONTW *lpcf)
 {
     int j;
     WCHAR buffer[20];
@@ -427,7 +427,7 @@ static int AddFontSizeToCombo3(HWND hwnd, UINT h, LPCHOOSEFONTW lpcf)
 /*************************************************************************
  *              SetFontSizesToCombo3                           [internal]
  */
-static int SetFontSizesToCombo3(HWND hwnd, LPCHOOSEFONTW lpcf)
+static int SetFontSizesToCombo3(HWND hwnd, const CHOOSEFONTW *lpcf)
 {
     static const BYTE sizes[]={6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
     int i;
@@ -440,7 +440,7 @@ static int SetFontSizesToCombo3(HWND hwnd, LPCHOOSEFONTW lpcf)
 /*************************************************************************
  *              CFn_GetDC                           [internal]
  */
-static inline HDC CFn_GetDC(LPCHOOSEFONTW lpcf)
+static inline HDC CFn_GetDC(const CHOOSEFONTW *lpcf)
 {
     HDC ret = ((lpcf->Flags & CF_PRINTERFONTS) && lpcf->hDC) ?
         lpcf->hDC :
@@ -452,7 +452,7 @@ static inline HDC CFn_GetDC(LPCHOOSEFONTW lpcf)
 /*************************************************************************
  *              CFn_ReleaseDC                           [internal]
  */
-static inline void CFn_ReleaseDC(LPCHOOSEFONTW lpcf, HDC hdc)
+static inline void CFn_ReleaseDC(const CHOOSEFONTW *lpcf, HDC hdc)
 {
         if(!((lpcf->Flags & CF_PRINTERFONTS) && lpcf->hDC))
             ReleaseDC(0, hdc);
@@ -462,7 +462,7 @@ static inline void CFn_ReleaseDC(LPCHOOSEFONTW lpcf, HDC hdc)
  *                 AddFontStyle                          [internal]
  */
 INT AddFontStyle( const ENUMLOGFONTEXW *lpElfex, const NEWTEXTMETRICEXW *lpNTM,
-                UINT nFontType, LPCHOOSEFONTW lpcf, HWND hcmb2, HWND hcmb3,
+                UINT nFontType, const CHOOSEFONTW *lpcf, HWND hcmb2, HWND hcmb3,
                 HWND hDlg, BOOL iswin16)
 {
     int i;
@@ -1075,7 +1075,7 @@ static LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
     return TRUE;
 }
 
-LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFONTW lpcf)
+LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam, const CHOOSEFONTW *lpcf)
 {
     WINDOWINFO info;
 
