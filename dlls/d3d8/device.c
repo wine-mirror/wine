@@ -758,6 +758,8 @@ static HRESULT  WINAPI  IDirect3DDevice8Impl_GetDepthStencilSurface(LPDIRECT3DDE
 
 static HRESULT WINAPI IDirect3DDevice8Impl_BeginScene(LPDIRECT3DDEVICE8 iface) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
+    TRACE("(%p) Relay\n" , This);
+
     return IWineD3DDevice_BeginScene(This->WineD3DDevice);
 }
 
