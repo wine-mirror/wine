@@ -301,6 +301,19 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     return hr;
 }
 
+static HRESULT WAVEParser_Cleanup(LPVOID iface)
+{
+    WAVEParserImpl *This = (WAVEParserImpl*)iface;
+
+    TRACE("(%p)->()\n", This);
+
+    if (This->pCurrentSample)
+        IMediaSample_Release(This->pCurrentSample);
+    This->pCurrentSample = NULL;
+
+    return S_OK;
+}
+
 HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -318,7 +331,7 @@ HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     This->pCurrentSample = NULL;
 
-    hr = Parser_Create(&(This->Parser), &CLSID_WAVEParser, WAVEParser_Sample, WAVEParser_QueryAccept, WAVEParser_InputPin_PreConnect, NULL);
+    hr = Parser_Create(&(This->Parser), &CLSID_WAVEParser, WAVEParser_Sample, WAVEParser_QueryAccept, WAVEParser_InputPin_PreConnect, WAVEParser_Cleanup);
 
     if (FAILED(hr))
         return hr;

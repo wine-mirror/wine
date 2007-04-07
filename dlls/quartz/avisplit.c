@@ -577,6 +577,19 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     return hr;
 }
 
+static HRESULT AVISplitter_Cleanup(LPVOID iface)
+{
+    AVISplitterImpl *This = (AVISplitterImpl*)iface;
+
+    TRACE("(%p)->()\n", This);
+
+    if (This->pCurrentSample)
+        IMediaSample_Release(This->pCurrentSample);
+    This->pCurrentSample = NULL;
+
+    return S_OK;
+}
+
 HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -594,7 +607,7 @@ HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     This->pCurrentSample = NULL;
 
-    hr = Parser_Create(&(This->Parser), &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect, NULL);
+    hr = Parser_Create(&(This->Parser), &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect, AVISplitter_Cleanup);
 
     if (FAILED(hr))
         return hr;
