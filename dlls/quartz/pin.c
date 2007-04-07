@@ -34,8 +34,8 @@ static const IPinVtbl OutputPin_Vtbl;
 static const IMemInputPinVtbl MemInputPin_Vtbl;
 static const IPinVtbl PullPin_Vtbl;
 
-#define ALIGNDOWN(value,boundary) ((value) & ~(boundary-1))
-#define ALIGNUP(value,boundary) (ALIGNDOWN(value - 1, boundary) + boundary)
+#define ALIGNDOWN(value,boundary) ((value)/(boundary)*(boundary))
+#define ALIGNUP(value,boundary) (ALIGNDOWN((value)+(boundary)-1, (boundary)))
 
 static inline InputPin *impl_from_IMemInputPin( IMemInputPin *iface )
 {
