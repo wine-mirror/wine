@@ -202,6 +202,10 @@ static ULONG WINAPI IDirect3DVertexDeclaration9Impl_AddRef(LPDIRECT3DVERTEXDECLA
 
     TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
+    if(ref == 1) {
+        IUnknown_AddRef(This->parentDevice);
+    }
+
     return ref;
 }
 
@@ -324,7 +328,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
     }
 
     object->lpVtbl = &Direct3DVertexDeclaration9_Vtbl;
-    object->ref = 1;
+    object->ref = 0;
 
     object->elements = HeapAlloc(GetProcessHeap(), 0, element_count * sizeof(D3DVERTEXELEMENT9));
     if (!object->elements) {
@@ -347,9 +351,9 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
         HeapFree(GetProcessHeap(), 0, object->elements);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
-        IUnknown_AddRef(iface);
         object->parentDevice = iface;
         *ppDecl = (LPDIRECT3DVERTEXDECLARATION9) object;
+        IUnknown_AddRef(*ppDecl);
          TRACE("(%p) : Created vertex declaration %p\n", This, object);
     }
     return hr;
