@@ -157,22 +157,22 @@ static int change_channel_CB(HANDLE hProcess, void* addr, struct __wine_debug_ch
     return 1;
 }
 
-static void* get_symbol(HANDLE hProcess, const char* name, const char* lib)
+static void* get_symbol(HANDLE hProcess, const char* name)
 {
     char                buffer[sizeof(IMAGEHLP_SYMBOL) + 256];
     SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
     void*               ret = NULL;
 
-    pSymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_PUBLICS_ONLY);
-    /* FIXME: the TRUE option is due to the face that dbghelp requires it
+    /* also ask for wine extensions (loading symbols from ELF files) */
+    pSymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_PUBLICS_ONLY | 0x40000000);
+    /* FIXME: the TRUE option is due to the fact that dbghelp requires it
      * when loading an ELF module
      */
     if (pSymInitialize(hProcess, NULL, TRUE))
     {
         si->SizeOfStruct = sizeof(*si);
         si->MaxNameLen = sizeof(buffer) - sizeof(IMAGEHLP_SYMBOL);
-        if (pSymLoadModule(hProcess, NULL, lib, NULL, 0, 0) &&
-            pSymFromName(hProcess, name, si))
+        if (pSymFromName(hProcess, name, si))
             ret = (void*)(ULONG_PTR)si->Address;
         pSymCleanup(hProcess);
     }
@@ -193,7 +193,7 @@ static int enum_channel(HANDLE hProcess, EnumChannelCB ce, void* user)
     int                         ret = 1;
     void*                       addr;
 
-    if (!(addr = get_symbol(hProcess, "debug_options", "libwine.so"))) return -1;
+    if (!(addr = get_symbol(hProcess, "libwine.so.1!debug_options"))) return -1;
 
     while (ret && addr && ReadProcessMemory(hProcess, addr, &channel, sizeof(channel), NULL))
     {
