@@ -60,7 +60,7 @@ static inline Parser_OutputPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
 }
 
 
-HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect)
+HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect, PFN_CLEANUP fnCleanup)
 {
     HRESULT hr;
     PIN_INFO piInput;
@@ -74,6 +74,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMP
     pParser->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ParserImpl.csFilter");
     pParser->state = State_Stopped;
     pParser->pClock = NULL;
+    pParser->fnCleanup = fnCleanup;
     ZeroMemory(&pParser->filterInfo, sizeof(FILTER_INFO));
 
     pParser->cStreams = 0;
@@ -186,6 +187,9 @@ static ULONG WINAPI Parser_Release(IBaseFilter * iface)
     if (!refCount)
     {
         ULONG i;
+
+        if (This->fnCleanup)
+            This->fnCleanup(This);
 
         if (This->pClock)
             IReferenceClock_Release(This->pClock);

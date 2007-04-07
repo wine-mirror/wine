@@ -23,6 +23,7 @@ typedef struct ParserImpl ParserImpl;
 typedef HRESULT (*PFN_PROCESS_SAMPLE) (LPVOID iface, IMediaSample * pSample);
 typedef HRESULT (*PFN_QUERY_ACCEPT) (LPVOID iface, const AM_MEDIA_TYPE * pmt);
 typedef HRESULT (*PFN_PRE_CONNECT) (IPin * iface, IPin * pConnectPin);
+typedef HRESULT (*PFN_CLEANUP) (LPVOID iface);
 
 struct ParserImpl
 {
@@ -33,6 +34,7 @@ struct ParserImpl
     FILTER_STATE state;
     REFERENCE_TIME rtStreamStart;
     IReferenceClock * pClock;
+    PFN_CLEANUP fnCleanup;
     FILTER_INFO filterInfo;
     CLSID clsid;
 
@@ -54,4 +56,4 @@ typedef struct Parser_OutputPin
 } Parser_OutputPin;
 
 HRESULT Parser_AddPin(ParserImpl * This, PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, AM_MEDIA_TYPE * amt, float fSamplesPerSec, DWORD dwSampleSize, DWORD dwLength);
-HRESULT Parser_Create(ParserImpl*, const CLSID*, PFN_PROCESS_SAMPLE, PFN_QUERY_ACCEPT, PFN_PRE_CONNECT);
+HRESULT Parser_Create(ParserImpl*, const CLSID*, PFN_PROCESS_SAMPLE, PFN_QUERY_ACCEPT, PFN_PRE_CONNECT, PFN_CLEANUP);

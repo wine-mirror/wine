@@ -318,7 +318,7 @@ HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     This->pCurrentSample = NULL;
 
-    hr = Parser_Create(&(This->Parser), &CLSID_WAVEParser, WAVEParser_Sample, WAVEParser_QueryAccept, WAVEParser_InputPin_PreConnect);
+    hr = Parser_Create(&(This->Parser), &CLSID_WAVEParser, WAVEParser_Sample, WAVEParser_QueryAccept, WAVEParser_InputPin_PreConnect, NULL);
 
     if (FAILED(hr))
         return hr;
