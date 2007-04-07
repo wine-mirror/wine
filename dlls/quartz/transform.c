@@ -57,42 +57,10 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl;
 static HRESULT TransformFilter_Sample(LPVOID iface, IMediaSample * pSample)
 {
     TransformFilterImpl *This = (TransformFilterImpl *)iface;
-    LPBYTE pbSrcStream = NULL;
-    long cbSrcStream = 0;
-    REFERENCE_TIME tStart, tStop;
-    HRESULT hr;
 
     TRACE("%p %p\n", iface, pSample);
 
-    hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
-    if (FAILED(hr))
-    {
-        ERR("Cannot get pointer to sample data (%x)\n", hr);
-	return hr;
-    }
-
-    hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
-    if (FAILED(hr))
-        ERR("Cannot get sample time (%x)\n", hr);
-
-    cbSrcStream = IMediaSample_GetActualDataLength(pSample);
-
-    TRACE("Sample data ptr = %p, size = %ld\n", pbSrcStream, cbSrcStream);
-
-#if 0 /* For debugging purpose */
-    {
-        int i;
-        for(i = 0; i < cbSrcStream; i++)
-        {
-	    if ((i!=0) && !(i%16))
-                TRACE("\n");
-            TRACE("%02x ", pbSrcStream[i]);
-        }
-        TRACE("\n");
-    }
-#endif
-
-    return This->pFuncsTable->pfnProcessSampleData(This, pbSrcStream, cbSrcStream);
+    return This->pFuncsTable->pfnProcessSampleData(This, pSample);
 }
 
 static HRESULT TransformFilter_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)

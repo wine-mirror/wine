@@ -59,21 +59,32 @@ typedef struct ACMWrapperImpl
     BOOL reinit_codec; /* FIXME: Should use sync points instead */
 } ACMWrapperImpl;
 
-static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilter, LPBYTE data, DWORD size)
+static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilter, IMediaSample *pSample)
 {
     ACMWrapperImpl* This = (ACMWrapperImpl*)pTransformFilter;
     AM_MEDIA_TYPE amt;
-    HRESULT hr;
-    IMediaSample* pSample = NULL;
+    IMediaSample* pOutSample = NULL;
     DWORD cbDstStream;
     LPBYTE pbDstStream;
+    DWORD cbSrcStream = 0;
+    LPBYTE pbSrcStream = NULL;
     ACMSTREAMHEADER ash;
     DWORD offset = 0;
     BOOL stop = FALSE;
     BOOL unprepare_header = FALSE;
     MMRESULT res;
+    HRESULT hr;
 
-    TRACE("(%p)->(%p,%d)\n", This, data, size);
+    hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
+    if (FAILED(hr))
+    {
+        ERR("Cannot get pointer to sample data (%x)\n", hr);
+	return hr;
+    }
+
+    cbSrcStream = IMediaSample_GetActualDataLength(pSample);
+
+    TRACE("Sample data ptr = %p, size = %ld\n", pbSrcStream, (long)cbSrcStream);
 
     hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
     if (FAILED(hr)) {
@@ -84,33 +95,33 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
     while(hr == S_OK && !stop)
     {
 	DWORD rem_buf = This->max_size - This->current_size;
-	DWORD rem_smp = size - offset;
+	DWORD rem_smp = cbSrcStream - offset;
 	DWORD copy_size = min(rem_buf, rem_smp);
 
-	memcpy(This->buffer + This->current_size, data + offset, copy_size);
+	memcpy(This->buffer + This->current_size, pbSrcStream + offset, copy_size);
 	This->current_size += copy_size;
 	offset += copy_size;
 
-	if (offset >= size)
+	if (offset >= cbSrcStream)
 	    stop = TRUE;
 	if (This->current_size < This->max_size)
 	    break;
   
-	hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pSample, NULL, NULL, 0);
+	hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
 	if (FAILED(hr)) {
 	    ERR("Unable to get delivery buffer (%x)\n", hr);
 	    return hr;
 	}
 
-	hr = IMediaSample_SetActualDataLength(pSample, 0);
+	hr = IMediaSample_SetActualDataLength(pOutSample, 0);
 	assert(hr == S_OK);
 
-	hr = IMediaSample_GetPointer(pSample, &pbDstStream);
+	hr = IMediaSample_GetPointer(pOutSample, &pbDstStream);
 	if (FAILED(hr)) {
 	    ERR("Unable to get pointer to buffer (%x)\n", hr);
 	    goto error;
 	}
-	cbDstStream = IMediaSample_GetSize(pSample);
+	cbDstStream = IMediaSample_GetSize(pOutSample);
 
 	ash.cbStruct = sizeof(ash);
 	ash.fdwStatus = 0;
@@ -135,7 +146,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 
 	TRACE("used in %u, used out %u\n", ash.cbSrcLengthUsed, ash.cbDstLengthUsed);
 
-	hr = IMediaSample_SetActualDataLength(pSample, ash.cbDstLengthUsed);
+	hr = IMediaSample_SetActualDataLength(pOutSample, ash.cbDstLengthUsed);
 	assert(hr == S_OK);
 
 	if (ash.cbSrcLengthUsed < ash.cbSrcLength) {
@@ -145,7 +156,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 	else
 	    This->current_size = 0;
 
-	hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pSample);
+	hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
 	if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
 	    ERR("Error sending sample (%x)\n", hr);
 	    goto error;
@@ -156,9 +167,9 @@ error:
             ERR("Cannot unprepare header %d\n", res);
         unprepare_header = FALSE;
 
-        if (pSample)
-            IMediaSample_Release(pSample);
-        pSample = NULL;
+        if (pOutSample)
+            IMediaSample_Release(pOutSample);
+        pOutSample = NULL;
     }
 
     return hr;

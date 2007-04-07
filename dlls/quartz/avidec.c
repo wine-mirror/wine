@@ -72,19 +72,30 @@ static HRESULT AVIDec_ProcessBegin(TransformFilterImpl* pTransformFilter)
     return S_OK;
 }
 
-static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, LPBYTE data, DWORD size)
+static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, IMediaSample *pSample)
 {
     AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
     VIDEOINFOHEADER* format;
     AM_MEDIA_TYPE amt;
     HRESULT hr;
     DWORD res;
-    IMediaSample* pSample = NULL;
+    IMediaSample* pOutSample = NULL;
     DWORD cbDstStream;
     LPBYTE pbDstStream;
+    DWORD cbSrcStream;
+    LPBYTE pbSrcStream;
 
-    TRACE("(%p)->(%p,%d)\n", This, data, size);
-    
+    hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
+    if (FAILED(hr))
+    {
+        ERR("Cannot get pointer to sample data (%x)\n", hr);
+	return hr;
+    }
+
+    cbSrcStream = IMediaSample_GetActualDataLength(pSample);
+
+    TRACE("Sample data ptr = %p, size = %ld\n", pbSrcStream, (long)cbSrcStream);
+
     hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
     if (FAILED(hr)) {
 	ERR("Unable to retrieve media type\n");
@@ -93,42 +104,42 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, L
     format = (VIDEOINFOHEADER*)amt.pbFormat;
 
     /* Update input size to match sample size */
-    This->pBihIn->biSizeImage = size;
+    This->pBihIn->biSizeImage = cbSrcStream;
 
-    hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pSample, NULL, NULL, 0);
+    hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
     if (FAILED(hr)) {
 	ERR("Unable to get delivery buffer (%x)\n", hr);
 	goto error;
     }
 
-    hr = IMediaSample_SetActualDataLength(pSample, 0);
+    hr = IMediaSample_SetActualDataLength(pOutSample, 0);
     assert(hr == S_OK);
 
-    hr = IMediaSample_GetPointer(pSample, &pbDstStream);
+    hr = IMediaSample_GetPointer(pOutSample, &pbDstStream);
     if (FAILED(hr)) {
 	ERR("Unable to get pointer to buffer (%x)\n", hr);
 	goto error;
     }
-    cbDstStream = IMediaSample_GetSize(pSample);
+    cbDstStream = IMediaSample_GetSize(pOutSample);
     if (cbDstStream < This->pBihOut->biSizeImage) {
         ERR("Sample size is too small %d < %d\n", cbDstStream, This->pBihOut->biSizeImage);
 	hr = E_FAIL;
 	goto error;
     }
 
-    res = ICDecompress(This->hvid, 0, This->pBihIn, data, This->pBihOut, pbDstStream);
+    res = ICDecompress(This->hvid, 0, This->pBihIn, pbSrcStream, This->pBihOut, pbDstStream);
     if (res != ICERR_OK)
         ERR("Error occurred during the decompression (%x)\n", res);
 
-    hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pSample);
+    hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
         ERR("Error sending sample (%x)\n", hr);
 	goto error;
     }
 
 error:
-    if (pSample)
-        IMediaSample_Release(pSample);
+    if (pOutSample)
+        IMediaSample_Release(pOutSample);
 
     return hr;
 }
