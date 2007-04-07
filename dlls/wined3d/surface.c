@@ -1788,6 +1788,7 @@ static BOOL palette9_changed(IWineD3DSurfaceImpl *This) {
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     GLenum format, internal, type;
     CONVERT_TYPES convert;
     int bpp;
@@ -1862,7 +1863,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             TRACE("Updated target %d\n", This->glDescription.target);
         }
         return WINED3D_OK;
-    }
+    } else
+        /* The only place where LoadTexture() might get called when isInDraw=1
+         * is ActivateContext where lastActiveRenderTarget is preloaded.
+         */
+        if(iface == device->lastActiveRenderTarget && device->isInDraw)
+            ERR("Reading back render target but SFLAG_INDRAWABLE not set\n");
+
     /* Otherwise: System memory copy must be most up to date */
 
     if(This->CKeyFlags & DDSD_CKSRCBLT) {
