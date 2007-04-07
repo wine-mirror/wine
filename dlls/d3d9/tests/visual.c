@@ -259,11 +259,6 @@ static void lighting_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
-
-    /* Hack for a bug in d3d9: SetFVF creates a converted vertex declaration, with a circular refcount.
-     * This prevents the screen resolution from being restored correctly on device release. Unset the vdecl
-     */
-    IDirect3DDevice9_SetVertexDeclaration(device, NULL);
 }
 
 static void clear_test(IDirect3DDevice9 *device)
@@ -547,8 +542,6 @@ static void fog_test(IDirect3DDevice9 *device)
     /* Turn off the fog master switch to avoid confusing other tests */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
     ok(hr == D3D_OK, "Turning off fog calculations returned %s\n", DXGetErrorString9(hr));
-
-    IDirect3DDevice9_SetVertexDeclaration(device, NULL);
 }
 
 /* This test verifies the behaviour of cube maps wrt. texture wrapping.
