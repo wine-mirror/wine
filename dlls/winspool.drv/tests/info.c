@@ -19,16 +19,21 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
-#include "wine/test.h"
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "wingdi.h"
-#include <winnls.h>
+#include "winnls.h"
 #include "winuser.h"
 #include "winreg.h"
 #include "winspool.h"
+#include "commdlg.h"
+#include "wine/test.h"
 
 #define MAGIC_DEAD  0xdeadbeef
 #define DEFAULT_PRINTER_SIZE 1000
@@ -1990,6 +1995,118 @@ static void test_EnumPrinters(void)
     ok(neededA == neededW, "neededA %d neededW %d\n", neededA, neededW);
 }
 
+static void test_DeviceCapabilities(void)
+{
+    HANDLE hComdlg32;
+    BOOL (WINAPI *pPrintDlgA)(PRINTDLGA *);
+    PRINTDLGA prn_dlg;
+    DEVMODE *dm;
+    DEVNAMES *dn;
+    const char *driver, *device, *port;
+    WORD *papers;
+    POINT *paper_size;
+    POINTS ext;
+    struct
+    {
+        char name[64];
+    } *paper_name;
+    INT n_papers, n_paper_size, n_paper_names, n_copies, ret;
+    DWORD fields;
+
+    hComdlg32 = LoadLibrary("comdlg32.dll");
+    assert(hComdlg32);
+    pPrintDlgA = GetProcAddress(hComdlg32, "PrintDlgA");
+    assert(pPrintDlgA);
+
+    memset(&prn_dlg, 0, sizeof(prn_dlg));
+    prn_dlg.lStructSize = sizeof(prn_dlg);
+    prn_dlg.Flags = PD_RETURNDEFAULT;
+    ret = pPrintDlgA(&prn_dlg);
+    FreeLibrary(hComdlg32);
+    if (!ret)
+    {
+        skip("PrintDlg returned no default printer\n");
+        return;
+    }
+    ok(prn_dlg.hDevMode != 0, "PrintDlg returned hDevMode == NULL\n");
+    ok(prn_dlg.hDevNames != 0, "PrintDlg returned hDevNames == NULL\n");
+
+    dm = GlobalLock(prn_dlg.hDevMode);
+    ok(dm != NULL, "GlobalLock(prn_dlg.hDevMode) failed\n");
+    trace("dmDeviceName \"%s\"\n", dm->dmDeviceName);
+
+    dn = GlobalLock(prn_dlg.hDevNames);
+    ok(dn != NULL, "GlobalLock(prn_dlg.hDevNames) failed\n");
+    ok(dn->wDriverOffset, "expected not 0 wDriverOffset\n");
+    ok(dn->wDeviceOffset, "expected not 0 wDeviceOffset\n");
+    ok(dn->wOutputOffset, "expected not 0 wOutputOffset\n");
+    ok(dn->wDefault == DN_DEFAULTPRN, "expected DN_DEFAULTPRN got %x\n", dn->wDefault);
+    driver = (const char *)dn + dn->wDriverOffset;
+    device = (const char *)dn + dn->wDeviceOffset;
+    port = (const char *)dn + dn->wOutputOffset;
+    trace("driver \"%s\" device \"%s\" port \"%s\"\n", driver, device, port);
+
+    test_DEVMODE(dm, dm->dmSize + dm->dmDriverExtra, device);
+
+    n_papers = DeviceCapabilities(device, port, DC_PAPERS, NULL, NULL);
+    ok(n_papers > 0, "DeviceCapabilities DC_PAPERS failed\n");
+    papers = HeapAlloc(GetProcessHeap(), 0, sizeof(*papers) * n_papers);
+    ret = DeviceCapabilities(device, port, DC_PAPERS, (LPSTR)papers, NULL);
+    ok(ret == n_papers, "expected %d, got %d\n", n_papers, ret);
+#if VERBOSE
+    for (ret = 0; ret < n_papers; ret++)
+        trace("papers[%d] = %d\n", ret, papers[ret]);
+#endif
+    HeapFree(GetProcessHeap(), 0, papers);
+
+    n_paper_size = DeviceCapabilities(device, port, DC_PAPERSIZE, NULL, NULL);
+    ok(n_paper_size > 0, "DeviceCapabilities DC_PAPERSIZE failed\n");
+    ok(n_paper_size == n_papers, "n_paper_size %d != n_papers %d\n", n_paper_size, n_papers);
+    paper_size = HeapAlloc(GetProcessHeap(), 0, sizeof(*paper_size) * n_paper_size);
+    ret = DeviceCapabilities(device, port, DC_PAPERSIZE, (LPSTR)paper_size, NULL);
+    ok(ret == n_paper_size, "expected %d, got %d\n", n_paper_size, ret);
+#if VERBOSE
+    for (ret = 0; ret < n_paper_size; ret++)
+        trace("paper_size[%d] = %d x %d\n", ret, paper_size[ret].x, paper_size[ret].y);
+#endif
+    HeapFree(GetProcessHeap(), 0, paper_size);
+
+    n_paper_names = DeviceCapabilities(device, port, DC_PAPERNAMES, NULL, NULL);
+    ok(n_paper_names > 0, "DeviceCapabilities DC_PAPERNAMES failed\n");
+    ok(n_paper_names == n_papers, "n_paper_names %d != n_papers %d\n", n_paper_names, n_papers);
+    paper_name = HeapAlloc(GetProcessHeap(), 0, sizeof(*paper_name) * n_paper_names);
+    ret = DeviceCapabilities(device, port, DC_PAPERNAMES, (LPSTR)paper_name, NULL);
+    ok(ret == n_paper_names, "expected %d, got %d\n", n_paper_names, ret);
+#if VERBOSE
+    for (ret = 0; ret < n_paper_names; ret++)
+        trace("paper_name[%u] = %s\n", ret, paper_name[ret].name);
+#endif
+    HeapFree(GetProcessHeap(), 0, paper_name);
+
+    n_copies = DeviceCapabilities(device, port, DC_COPIES, NULL, dm);
+    ok(n_copies > 0, "DeviceCapabilities DC_COPIES failed\n");
+    trace("n_copies = %d\n", n_copies);
+
+    ret = DeviceCapabilities(device, port, DC_MAXEXTENT, NULL, NULL);
+    ok(ret != -1, "DeviceCapabilities DC_MAXEXTENT failed\n");
+    ext = MAKEPOINTS(ret);
+    trace("max ext = %d x %d\n", ext.x, ext.y);
+
+    ret = DeviceCapabilities(device, port, DC_MINEXTENT, NULL, NULL);
+    ok(ret != -1, "DeviceCapabilities DC_MINEXTENT failed\n");
+    ext = MAKEPOINTS(ret);
+    trace("min ext = %d x %d\n", ext.x, ext.y);
+
+    fields = DeviceCapabilities(device, port, DC_FIELDS, NULL, NULL);
+    ok(fields != (DWORD)-1, "DeviceCapabilities DC_FIELDS failed\n");
+    ok(fields == dm->dmFields, "fields %x != dm->dmFields %x\n", fields, dm->dmFields);
+
+    GlobalUnlock(prn_dlg.hDevMode);
+    GlobalFree(prn_dlg.hDevMode);
+    GlobalUnlock(prn_dlg.hDevNames);
+    GlobalFree(prn_dlg.hDevNames);
+}
+
 START_TEST(info)
 {
     hwinspool = GetModuleHandleA("winspool.drv");
@@ -2006,6 +2123,7 @@ START_TEST(info)
     test_ConfigurePort();
     test_DeleteMonitor();
     test_DeletePort();
+    test_DeviceCapabilities();
     test_DocumentProperties();
     test_EnumForms(NULL);
     if (default_printer) test_EnumForms(default_printer);

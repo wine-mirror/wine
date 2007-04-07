@@ -447,14 +447,14 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
   DWORD ret;
   pi = PSDRV_FindPrinterInfo(lpszDevice);
 
-  TRACE("Cap=%d. Got PrinterInfo = %p\n", fwCapability, pi);
-
+  TRACE("%s %s %s, %u, %p, %p\n", debugstr_a(lpszDriver), debugstr_a(lpszDevice),
+        debugstr_a(lpszPort), fwCapability, lpszOutput, lpDevMode);
 
   if (!pi) {
-	  ERR("no printerinfo for %s, return 0!\n",lpszDevice);
-	  return 0;
+      ERR("no printer info for %s %s, return 0!\n",
+          debugstr_a(lpszDriver), debugstr_a(lpszDevice));
+      return 0;
   }
-
 
   lpdm = lpDevMode ? lpDevMode : (DEVMODEA *)pi->Devmode;
 
@@ -468,6 +468,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
+        TRACE("DC_PAPERS: %u\n", ps->WinPage);
         i++;
 	if(lpszOutput != NULL)
 	  *wp++ = ps->WinPage;
@@ -483,6 +484,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
+        TRACE("DC_PAPERSIZE: %f x %f\n", ps->PaperDimension->x, ps->PaperDimension->y);
         i++;
 	if(lpszOutput != NULL) {
 	  pt->x = ps->PaperDimension->x * 254.0 / 72.0;
@@ -501,6 +503,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
+        TRACE("DC_PAPERNAMES: %s\n", debugstr_a(ps->FullName));
         i++;
 	if(lpszOutput != NULL) {
 	  lstrcpynA(cp, ps->FullName, 64);
@@ -593,9 +596,6 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       POINT ptMax;
       ptMax.x = ptMax.y = 0;
 
-      if(lpszOutput == NULL)
-	return -1;
-
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
 	if(ps->PaperDimension->x > ptMax.x)
@@ -611,9 +611,6 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       PAGESIZE *ps;
       POINT ptMin;
       ptMin.x = ptMin.y = -1;
-
-      if(lpszOutput == NULL)
-	return -1;
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
