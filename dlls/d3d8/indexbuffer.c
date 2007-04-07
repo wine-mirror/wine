@@ -103,7 +103,7 @@ static DWORD WINAPI IDirect3DIndexBuffer8Impl_GetPriority(LPDIRECT3DINDEXBUFFER8
 static void WINAPI IDirect3DIndexBuffer8Impl_PreLoad(LPDIRECT3DINDEXBUFFER8 iface) {
     IDirect3DIndexBuffer8Impl *This = (IDirect3DIndexBuffer8Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DIndexBuffer_PreLoad(This->wineD3DIndexBuffer);
+    IWineD3DIndexBuffer_PreLoad(This->wineD3DIndexBuffer);
 }
 
 static D3DRESOURCETYPE WINAPI IDirect3DIndexBuffer8Impl_GetType(LPDIRECT3DINDEXBUFFER8 iface) {

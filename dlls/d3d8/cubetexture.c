@@ -104,7 +104,7 @@ static DWORD WINAPI IDirect3DCubeTexture8Impl_GetPriority(LPDIRECT3DCUBETEXTURE8
 static void WINAPI IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 iface) {
     IDirect3DCubeTexture8Impl *This = (IDirect3DCubeTexture8Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DCubeTexture_PreLoad(This->wineD3DCubeTexture);
+    IWineD3DCubeTexture_PreLoad(This->wineD3DCubeTexture);
 }
 
 static D3DRESOURCETYPE WINAPI IDirect3DCubeTexture8Impl_GetType(LPDIRECT3DCUBETEXTURE8 iface) {

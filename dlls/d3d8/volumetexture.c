@@ -104,7 +104,7 @@ static DWORD WINAPI IDirect3DVolumeTexture8Impl_GetPriority(LPDIRECT3DVOLUMETEXT
 static void WINAPI IDirect3DVolumeTexture8Impl_PreLoad(LPDIRECT3DVOLUMETEXTURE8 iface) {
     IDirect3DVolumeTexture8Impl *This = (IDirect3DVolumeTexture8Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DVolumeTexture_PreLoad(This->wineD3DVolumeTexture);
+    IWineD3DVolumeTexture_PreLoad(This->wineD3DVolumeTexture);
 }
 
 static D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture8Impl_GetType(LPDIRECT3DVOLUMETEXTURE8 iface) {
