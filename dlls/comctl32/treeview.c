@@ -4829,6 +4829,46 @@ TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 
 /* Create/Destroy *******************************************************/
 
+static void
+initialize_checkboxes(TREEVIEW_INFO *infoPtr)
+{
+    RECT rc;
+    HBITMAP hbm, hbmOld;
+    HDC hdc, hdcScreen;
+    int nIndex;
+
+    infoPtr->himlState = ImageList_Create(16, 16, ILC_COLOR | ILC_MASK, 3, 0);
+
+    hdcScreen = GetDC(0);
+
+    hdc = CreateCompatibleDC(hdcScreen);
+    hbm = CreateCompatibleBitmap(hdcScreen, 48, 16);
+    hbmOld = SelectObject(hdc, hbm);
+
+    SetRect(&rc, 0, 0, 48, 16);
+    FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOW+1));
+
+    SetRect(&rc, 18, 2, 30, 14);
+    DrawFrameControl(hdc, &rc, DFC_BUTTON,
+                     DFCS_BUTTONCHECK|DFCS_FLAT);
+
+    SetRect(&rc, 34, 2, 46, 14);
+    DrawFrameControl(hdc, &rc, DFC_BUTTON,
+                     DFCS_BUTTONCHECK|DFCS_FLAT|DFCS_CHECKED);
+
+    SelectObject(hdc, hbmOld);
+    nIndex = ImageList_AddMasked(infoPtr->himlState, hbm,
+                                 GetSysColor(COLOR_WINDOW));
+    TRACE("checkbox index %d\n", nIndex);
+
+    DeleteObject(hbm);
+    DeleteDC(hdc);
+    ReleaseDC(0, hdcScreen);
+
+    infoPtr->stateImageWidth = 16;
+    infoPtr->stateImageHeight = 16;
+}
+
 static LRESULT
 TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 {
@@ -4930,48 +4970,7 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 	infoPtr->hwndToolTip = COMCTL32_CreateToolTip(hwnd);
 
     if (infoPtr->dwStyle & TVS_CHECKBOXES)
-    {
-	RECT rc;
-	HBITMAP hbm, hbmOld;
-	HDC hdc,hdcScreen;
-	int nIndex;
-
-	infoPtr->himlState =
-	    ImageList_Create(16, 16, ILC_COLOR | ILC_MASK, 3, 0);
-
-	hdcScreen = GetDC(0);
-
-	/* Create a coloured bitmap compatible with the screen depth
-	   because checkboxes are not black&white */
-	hdc = CreateCompatibleDC(hdcScreen);
-	hbm = CreateCompatibleBitmap(hdcScreen, 48, 16);
-	hbmOld = SelectObject(hdc, hbm);
-
-	rc.left  = 0;   rc.top    = 0;
-	rc.right = 48;  rc.bottom = 16;
-	FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOW+1));
-
-	rc.left  = 18;   rc.top    = 2;
-	rc.right = 30;   rc.bottom = 14;
-	DrawFrameControl(hdc, &rc, DFC_BUTTON,
-	                  DFCS_BUTTONCHECK|DFCS_FLAT);
-
-	rc.left  = 34;   rc.right  = 46;
-	DrawFrameControl(hdc, &rc, DFC_BUTTON,
-	                  DFCS_BUTTONCHECK|DFCS_FLAT|DFCS_CHECKED);
-
-	SelectObject(hdc, hbmOld);
-	nIndex = ImageList_AddMasked(infoPtr->himlState, hbm,
-	                              GetSysColor(COLOR_WINDOW));
-	TRACE("checkbox index %d\n", nIndex);
-
-	DeleteObject(hbm);
-	DeleteDC(hdc);
-	ReleaseDC(0, hdcScreen);
-
-	infoPtr->stateImageWidth = 16;
-	infoPtr->stateImageHeight = 16;
-    }
+        initialize_checkboxes(infoPtr);
 
     /* Make sure actual scrollbar state is consistent with uInternalStatus */
     ShowScrollBar(hwnd, SB_VERT, FALSE);
@@ -5333,24 +5332,37 @@ TREEVIEW_StyleChanged(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     if (wParam == GWL_STYLE)
     {
-       DWORD dwNewStyle = ((LPSTYLESTRUCT)lParam)->styleNew;
+        DWORD dwNewStyle = ((LPSTYLESTRUCT)lParam)->styleNew;
 
-       /* we have to take special care about tooltips */
-       if ((infoPtr->dwStyle ^ dwNewStyle) & TVS_NOTOOLTIPS)
-       {
-          if (infoPtr->dwStyle & TVS_NOTOOLTIPS)
-          {
-              infoPtr->hwndToolTip = COMCTL32_CreateToolTip(infoPtr->hwnd);
-              TRACE("\n");
-          }
-          else
-          {
-             DestroyWindow(infoPtr->hwndToolTip);
-             infoPtr->hwndToolTip = 0;
-          }
-       }
+        if ((infoPtr->dwStyle ^ dwNewStyle) & TVS_CHECKBOXES)
+        {
+            if (dwNewStyle & TVS_CHECKBOXES)
+            {
+                initialize_checkboxes(infoPtr);
+                TRACE("checkboxes enabled\n");
+            }
+            else
+            {
+                FIXME("tried to disable checkboxes\n");
+            }
+        }
 
-       infoPtr->dwStyle = dwNewStyle;
+        if ((infoPtr->dwStyle ^ dwNewStyle) & TVS_NOTOOLTIPS)
+        {
+            if (infoPtr->dwStyle & TVS_NOTOOLTIPS)
+            {
+                infoPtr->hwndToolTip = COMCTL32_CreateToolTip(infoPtr->hwnd);
+                TRACE("tooltips enabled\n");
+            }
+            else
+            {
+                DestroyWindow(infoPtr->hwndToolTip);
+                infoPtr->hwndToolTip = 0;
+                TRACE("tooltips disabled\n");
+            }
+        }
+
+        infoPtr->dwStyle = dwNewStyle;
     }
 
     TREEVIEW_UpdateSubTree(infoPtr, infoPtr->root);
