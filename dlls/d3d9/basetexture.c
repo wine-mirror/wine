@@ -147,7 +147,7 @@ static D3DTEXTUREFILTERTYPE WINAPI IDirect3DBaseTexture9Impl_GetAutoGenFilterTyp
 static void WINAPI IDirect3DBaseTexture9Impl_GenerateMipSubLevels(LPDIRECT3DBASETEXTURE9 iface) {
     IDirect3DBaseTexture9Impl *This = (IDirect3DBaseTexture9Impl *)iface;
     TRACE("(%p) Relay\n" , This);
-    return IWineD3DBaseTexture_GenerateMipSubLevels(This->wineD3DBaseTexture);
+    IWineD3DBaseTexture_GenerateMipSubLevels(This->wineD3DBaseTexture);
 }
 
 const IDirect3DBaseTexture9Vtbl Direct3DBaseTexture9_Vtbl =

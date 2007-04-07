@@ -106,7 +106,7 @@ static DWORD WINAPI IDirect3DTexture9Impl_GetPriority(LPDIRECT3DTEXTURE9 iface) 
 static void WINAPI IDirect3DTexture9Impl_PreLoad(LPDIRECT3DTEXTURE9 iface) {
     IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DTexture_PreLoad(This->wineD3DTexture);
+    IWineD3DTexture_PreLoad(This->wineD3DTexture);
 }
 
 static D3DRESOURCETYPE WINAPI IDirect3DTexture9Impl_GetType(LPDIRECT3DTEXTURE9 iface) {
@@ -149,7 +149,7 @@ static D3DTEXTUREFILTERTYPE WINAPI IDirect3DTexture9Impl_GetAutoGenFilterType(LP
 static void WINAPI IDirect3DTexture9Impl_GenerateMipSubLevels(LPDIRECT3DTEXTURE9 iface) {
     IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DTexture_GenerateMipSubLevels(This->wineD3DTexture);
+    IWineD3DTexture_GenerateMipSubLevels(This->wineD3DTexture);
 }
 
 /* IDirect3DTexture9 Interface follow: */
