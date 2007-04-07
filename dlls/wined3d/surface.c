@@ -1825,6 +1825,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         return WINED3DERR_INVALIDCALL;
     }
 
+    d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp);
+
     if (This->Flags & SFLAG_INDRAWABLE) {
         if (This->glDescription.level != 0)
             FIXME("Surface in texture is only supported for level 0\n");
@@ -1842,16 +1844,16 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             glReadBuffer(This->resource.wineD3DDevice->offscreenBuffer);
             vcheckGLcall("glReadBuffer");
 
-            glCopyTexImage2D(This->glDescription.target,
-                             This->glDescription.level,
-                             This->glDescription.glFormatInternal,
-                             0,
-                             0,
-                             This->currentDesc.Width,
-                             This->currentDesc.Height,
-                             0);
+            surface_allocate_surface(This, internal, This->pow2Width,
+                                     This->pow2Height, format, type);
 
-            checkGLcall("glCopyTexImage2D");
+            glCopyTexSubImage2D(This->glDescription.target,
+                                This->glDescription.level,
+                                0, 0, 0, 0,
+                                This->currentDesc.Width,
+                                This->currentDesc.Height);
+            checkGLcall("glCopyTexSubImage2D");
+
             glReadBuffer(prevRead);
             vcheckGLcall("glReadBuffer");
 
@@ -1868,8 +1870,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         This->glCKey = This->SrcBltCKey;
     }
     else This->Flags &= ~SFLAG_GLCKEY;
-
-    d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp);
 
     /* The width is in 'length' not in bytes */
     width = This->currentDesc.Width;
