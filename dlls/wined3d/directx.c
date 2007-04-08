@@ -1672,14 +1672,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 return WINED3D_OK;
             case WINED3DFMT_R16F:
             case WINED3DFMT_A16B16G16R16F:
-                if (!GL_SUPPORT(ARB_HALF_FLOAT_PIXEL)) {
-                    TRACE_(d3d_caps)("[FAILED]\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                /* Fall through, support not fully determined yet. */
-            case WINED3DFMT_R32F:
-            case WINED3DFMT_A32B32G32R32F:
-                if (!GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
+                if (!GL_SUPPORT(ARB_HALF_FLOAT_PIXEL) || !GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
                     TRACE_(d3d_caps)("[FAILED]\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
