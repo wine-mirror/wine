@@ -712,6 +712,13 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                     break;
             }
 
+            if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) {
+                /* Make sure we have a OpenGL texture name so the PreLoad() used to read the buffer
+                 * back when we are done won't mark us dirty.
+                 */
+                IWineD3DSurface_PreLoad(target);
+            }
+
             if(!oldRenderOffscreen) {
                 Context_MarkStateDirty(context, WINED3DRS_CULLMODE);
                 Context_MarkStateDirty(context, WINED3DTS_PROJECTION);
