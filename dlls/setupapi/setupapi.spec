@@ -257,8 +257,8 @@
 @ stdcall SetupCopyOEMInfW(wstr wstr long long ptr long ptr ptr)
 @ stdcall SetupCreateDiskSpaceListA(ptr long long)
 @ stdcall SetupCreateDiskSpaceListW(ptr long long)
-@ stub SetupDecompressOrCopyFileA
-@ stub SetupDecompressOrCopyFileW
+@ stdcall SetupDecompressOrCopyFileA(str str ptr)
+@ stdcall SetupDecompressOrCopyFileW(wstr wstr ptr)
 @ stub SetupDefaultQueueCallback
 @ stdcall SetupDefaultQueueCallbackA(ptr long long long)
 @ stdcall SetupDefaultQueueCallbackW(ptr long long long)

@@ -1210,3 +1210,139 @@ BOOL WINAPI SetupGetFileCompressionInfoExW( PCWSTR source, PWSTR name, DWORD len
     }
     return ret;
 }
+
+static DWORD decompress_file_lz( LPCWSTR source, LPCWSTR target )
+{
+    DWORD ret;
+    LONG error;
+    INT src, dst;
+    OFSTRUCT sof, dof;
+
+    if ((src = LZOpenFileW( (LPWSTR)source, &sof, OF_READ )) < 0)
+    {
+        ERR("cannot open source file for reading\n");
+        return ERROR_FILE_NOT_FOUND;
+    }
+    if ((dst = LZOpenFileW( (LPWSTR)target, &dof, OF_CREATE )) < 0)
+    {
+        ERR("cannot open target file for writing\n");
+        LZClose( src );
+        return ERROR_FILE_NOT_FOUND;
+    }
+    if ((error = LZCopy( src, dst )) >= 0) ret = ERROR_SUCCESS;
+    else
+    {
+        WARN("failed to decompress file %d\n", error);
+        ret = ERROR_INVALID_DATA;
+    }
+
+    LZClose( src );
+    LZClose( dst );
+    return ret;
+}
+
+static UINT CALLBACK decompress_or_copy_callback( PVOID context, UINT notification, UINT_PTR param1, UINT_PTR param2 )
+{
+    FILE_IN_CABINET_INFO_W *info = (FILE_IN_CABINET_INFO_W *)param1;
+
+    switch (notification)
+    {
+    case SPFILENOTIFY_FILEINCABINET:
+    {
+        LPCWSTR filename, targetname = context;
+        WCHAR *p;
+
+        if ((p = strrchrW( targetname, '\\' ))) filename = p + 1;
+        else filename = targetname;
+
+        if (!lstrcmpiW( filename, info->NameInCabinet ))
+        {
+            strcpyW( info->FullTargetName, targetname );
+            return FILEOP_DOIT;
+        }
+        return FILEOP_SKIP;
+    }
+    default: return NO_ERROR;
+    }
+}
+
+static DWORD decompress_file_cab( LPCWSTR source, LPCWSTR target )
+{
+    BOOL ret;
+
+    ret = SetupIterateCabinetW( source, 0, decompress_or_copy_callback, (PVOID)target );
+
+    if (ret) return ERROR_SUCCESS;
+    else return GetLastError();
+}
+
+/***********************************************************************
+ *      SetupDecompressOrCopyFileA  (SETUPAPI.@)
+ *
+ * See SetupDecompressOrCopyFileW.
+ */
+DWORD WINAPI SetupDecompressOrCopyFileA( PCSTR source, PCSTR target, PUINT type )
+{
+    DWORD ret = FALSE;
+    WCHAR *sourceW = NULL, *targetW = NULL;
+
+    if (source && !(sourceW = MultiByteToUnicode( source, CP_ACP ))) return FALSE;
+    if (target && !(targetW = MultiByteToUnicode( target, CP_ACP )))
+    {
+        MyFree( sourceW );
+        return ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    ret = SetupDecompressOrCopyFileW( sourceW, targetW, type );
+
+    MyFree( sourceW );
+    MyFree( targetW );
+
+    return ret;
+}
+
+/***********************************************************************
+ *      SetupDecompressOrCopyFileW  (SETUPAPI.@)
+ *
+ * Copy a file and decompress it if needed.
+ *
+ * PARAMS
+ *  source [I] File to copy.
+ *  target [I] Filename of the copy.
+ *  type   [I] Compression type.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: Win32 error code.
+ */
+DWORD WINAPI SetupDecompressOrCopyFileW( PCWSTR source, PCWSTR target, PUINT type )
+{
+    UINT comp;
+    DWORD ret = ERROR_INVALID_PARAMETER;
+
+    if (!source || !target) return ERROR_INVALID_PARAMETER;
+
+    if (!type) comp = detect_compression_type( source );
+    else comp = *type;
+
+    switch (comp)
+    {
+    case FILE_COMPRESSION_NONE:
+        if (CopyFileW( source, target, FALSE )) ret = ERROR_SUCCESS;
+        else ret = GetLastError();
+        break;
+    case FILE_COMPRESSION_WINLZA:
+        ret = decompress_file_lz( source, target );
+        break;
+    case FILE_COMPRESSION_NTCAB:
+    case FILE_COMPRESSION_MSZIP:
+        ret = decompress_file_cab( source, target );
+        break;
+    default:
+        WARN("unknown compression type %d\n", comp);
+        break;
+    }
+
+    TRACE("%s -> %s %d\n", debugstr_w(source), debugstr_w(target), comp);
+    return ret;
+}

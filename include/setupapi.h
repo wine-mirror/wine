@@ -736,6 +736,9 @@ UINT     WINAPI SetupCopyErrorW( HWND, PCWSTR, PCWSTR, PCWSTR, PCWSTR, PCWSTR, U
 BOOL     WINAPI SetupCopyOEMInfA( PCSTR, PCSTR, DWORD, DWORD, PSTR, DWORD, PDWORD, PSTR * );
 BOOL     WINAPI SetupCopyOEMInfW( PCWSTR, PCWSTR, DWORD, DWORD, PWSTR, DWORD, PDWORD, PWSTR * );
 #define         SetupCopyOEMInf WINELIB_NAME_AW(SetupCopyOEMInf)
+DWORD    WINAPI SetupDecompressOrCopyFileA( PCSTR, PCSTR, PUINT );
+DWORD    WINAPI SetupDecompressOrCopyFileW( PCWSTR, PCWSTR, PUINT );
+#define         SetupDecompressOrCopyFile WINELIB_NAME_AW(SetupDecompressOrCopyFile)
 UINT     WINAPI SetupDefaultQueueCallbackA( PVOID, UINT, UINT_PTR, UINT_PTR );
 UINT     WINAPI SetupDefaultQueueCallbackW( PVOID, UINT, UINT_PTR, UINT_PTR );
 #define         SetupDefaultQueueCallback WINELIB_NAME_AW(SetupDefaultQueueCallback)
