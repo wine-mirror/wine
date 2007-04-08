@@ -4407,6 +4407,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
 
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
     This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
+    This->stateBlock->streamOffset[0] = 0;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
     This->stateBlock->streamIsUP = TRUE;
     This->stateBlock->loadBaseVertexIndex = 0;
@@ -4449,6 +4450,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
     This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
     This->stateBlock->streamIsUP = TRUE;
+    This->stateBlock->streamOffset[0] = 0;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
 
     /* Set to 0 as per msdn. Do it now due to the stream source loading during drawPrimitive */
