@@ -8,6 +8,7 @@
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Stefan Dösinger for CodeWeavers
+ * Copyright 2007 Henri Verbeet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -237,6 +238,56 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
     LEAVE_GL();
 }
 
+/* In D3D the depth stencil dimensions have to be greater than or equal to the
+ * render target dimensions. With FBOs, the dimensions have to be an exact match. */
+/* TODO: We should synchronize the renderbuffer's content with the texture's content. */
+void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    renderbuffer_entry_t *entry;
+    GLuint renderbuffer = 0;
+    unsigned int src_width, src_height;
+
+    src_width = This->pow2Width;
+    src_height = This->pow2Height;
+
+    /* A depth stencil smaller than the render target is not valid */
+    if (width > src_width || height > src_height) return;
+
+    /* Remove any renderbuffer set if the sizes match */
+    if (width == src_width && height == src_height) {
+        This->current_renderbuffer = NULL;
+        return;
+    }
+
+    /* Look if we've already got a renderbuffer of the correct dimensions */
+    LIST_FOR_EACH_ENTRY(entry, &This->renderbuffers, renderbuffer_entry_t, entry) {
+        if (entry->width == width && entry->height == height) {
+            renderbuffer = entry->id;
+            This->current_renderbuffer = entry;
+            break;
+        }
+    }
+
+    if (!renderbuffer) {
+        const PixelFormatDesc *format_entry = getFormatDescEntry(This->resource.format);
+
+        GL_EXTCALL(glGenRenderbuffersEXT(1, &renderbuffer));
+        GL_EXTCALL(glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, renderbuffer));
+        GL_EXTCALL(glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, format_entry->glFormat, width, height));
+
+        entry = HeapAlloc(GetProcessHeap(), 0, sizeof(renderbuffer_entry_t));
+        entry->width = width;
+        entry->height = height;
+        entry->id = renderbuffer;
+        list_add_head(&This->renderbuffers, &entry->entry);
+
+        This->current_renderbuffer = entry;
+    }
+
+    checkGLcall("set_compatible_renderbuffer");
+}
+
+
 /* *******************************************
    IWineD3DSurface IUnknown parts follow
    ******************************************* */
@@ -271,6 +322,7 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
     TRACE("(%p) : Releasing from %d\n", This, ref + 1);
     if (ref == 0) {
         IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->resource.wineD3DDevice;
+        renderbuffer_entry_t *entry, *entry2;
         TRACE("(%p) : cleaning up\n", This);
 
         if(iface == device->lastActiveRenderTarget) {
@@ -338,6 +390,11 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         if(iface == device->ddraw_primary)
             device->ddraw_primary = NULL;
+
+        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry) {
+            GL_EXTCALL(glDeleteRenderbuffersEXT(1, &entry->id));
+            HeapFree(GetProcessHeap(), 0, entry);
+        }
 
         TRACE("(%p) Released\n", This);
         HeapFree(GetProcessHeap(), 0, This);

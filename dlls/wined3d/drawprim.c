@@ -804,6 +804,11 @@ static void depth_copy(IWineD3DDevice *iface) {
     /* TODO: Make this work for modes other than FBO */
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) return;
 
+    if (depth_stencil->current_renderbuffer) {
+        FIXME("Not supported with fixed up depth stencil\n");
+        return;
+    }
+
     if (This->render_offscreen) {
         static GLuint tmp_texture = 0;
         GLint old_binding = 0;

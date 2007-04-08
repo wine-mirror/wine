@@ -768,6 +768,8 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
             return WINED3DERR_INVALIDCALL;
     }
 
+    list_init(&object->renderbuffers);
+
     /* Call the private setup routine */
     return IWineD3DSurface_PrivateSetup( (IWineD3DSurface *) object );
 
@@ -5110,22 +5112,27 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
     TRACE("Set depth stencil to %p\n", depth_stencil);
 
     if (depth_stencil_impl) {
-        GLenum texttarget, target;
-        GLint old_binding = 0;
+        if (depth_stencil_impl->current_renderbuffer) {
+            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, depth_stencil_impl->current_renderbuffer->id));
+            checkGLcall("glFramebufferRenderbufferEXT()");
+        } else {
+            GLenum texttarget, target;
+            GLint old_binding = 0;
 
-        texttarget = depth_stencil_impl->glDescription.target;
-        target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
-        glGetIntegerv(texttarget == GL_TEXTURE_2D ? GL_TEXTURE_BINDING_2D : GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
+            texttarget = depth_stencil_impl->glDescription.target;
+            target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
+            glGetIntegerv(texttarget == GL_TEXTURE_2D ? GL_TEXTURE_BINDING_2D : GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
 
-        IWineD3DSurface_PreLoad(depth_stencil);
+            IWineD3DSurface_PreLoad(depth_stencil);
 
-        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-        glBindTexture(target, old_binding);
+            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+            glBindTexture(target, old_binding);
 
-        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, texttarget, depth_stencil_impl->glDescription.textureName, 0));
-        checkGLcall("glFramebufferTexture2DEXT()");
+            GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, texttarget, depth_stencil_impl->glDescription.textureName, 0));
+            checkGLcall("glFramebufferTexture2DEXT()");
+        }
     } else {
         GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
@@ -5175,6 +5182,22 @@ static void check_fbo_status(IWineD3DDevice *iface) {
     }
 }
 
+static BOOL depth_mismatch_fbo(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSurfaceImpl *rt_impl = (IWineD3DSurfaceImpl *)This->render_targets[0];
+    IWineD3DSurfaceImpl *ds_impl = (IWineD3DSurfaceImpl *)This->stencilBufferTarget;
+
+    if (!ds_impl) return FALSE;
+
+    if (ds_impl->current_renderbuffer) {
+        return (rt_impl->pow2Width != ds_impl->current_renderbuffer->width ||
+                rt_impl->pow2Height != ds_impl->current_renderbuffer->height);
+    }
+
+    return (rt_impl->pow2Width != ds_impl->pow2Width ||
+            rt_impl->pow2Height != ds_impl->pow2Height);
+}
+
 void apply_fbo_state(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     unsigned int i;
@@ -5192,7 +5215,13 @@ void apply_fbo_state(IWineD3DDevice *iface) {
         }
 
         /* Apply depth targets */
-        if (This->fbo_depth_attachment != This->stencilBufferTarget) {
+        if (This->fbo_depth_attachment != This->stencilBufferTarget || depth_mismatch_fbo(iface)) {
+            unsigned int w = ((IWineD3DSurfaceImpl *)This->render_targets[0])->pow2Width;
+            unsigned int h = ((IWineD3DSurfaceImpl *)This->render_targets[0])->pow2Height;
+
+            if (This->stencilBufferTarget) {
+                surface_set_compatible_renderbuffer(This->stencilBufferTarget, w, h);
+            }
             set_depth_stencil_fbo(iface, This->stencilBufferTarget);
             This->fbo_depth_attachment = This->stencilBufferTarget;
         }

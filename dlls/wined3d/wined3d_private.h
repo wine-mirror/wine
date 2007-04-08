@@ -1003,6 +1003,13 @@ typedef struct wineD3DSurface_DIB {
     BOOL client_memory;
 } wineD3DSurface_DIB;
 
+typedef struct {
+    struct list entry;
+    GLuint id;
+    UINT width;
+    UINT height;
+} renderbuffer_entry_t;
+
 /*****************************************************************************
  * IWineD3DSurface implementation structure
  */
@@ -1054,6 +1061,9 @@ struct IWineD3DSurfaceImpl
     DWORD                     CKeyFlags;
 
     DDCOLORKEY                glCKey;
+
+    struct list               renderbuffers;
+    renderbuffer_entry_t      *current_renderbuffer;
 };
 
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
@@ -1397,6 +1407,8 @@ GLenum CompareFunc(DWORD func);
 void   set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
 void   set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx);
 void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords);
+
+void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height);
 
 int D3DFmtMakeGlCfg(WINED3DFORMAT BackBufferFormat, WINED3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate);
 
