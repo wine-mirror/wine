@@ -334,7 +334,7 @@
 334 stdcall -noname SHGetPathFromIDListWrapW(ptr ptr)
 335 stdcall -noname ShellExecuteExWrapW(ptr)
 336 stdcall -noname SHFileOperationWrapW(ptr)
-337 stdcall @(wstr long ptr ptr long) user32.ExtractIconExW
+337 stdcall @(wstr long ptr ptr long) user32.PrivateExtractIconExW
 338 stdcall @(wstr long) kernel32.SetFileAttributesW
 339 stdcall @(long long wstr ptr ptr long) kernel32.GetNumberFormatW
 340 stdcall @(long wstr wstr long) user32.MessageBoxW
