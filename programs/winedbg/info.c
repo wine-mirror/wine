@@ -153,7 +153,7 @@ struct info_module
 
 static void module_print_info(const IMAGEHLP_MODULE64* mi, BOOL is_embedded)
 {
-    dbg_printf("%s-%s\t%-16s%s\n",
+    dbg_printf("%8s-%8s\t%-16s%s\n",
                wine_dbgstr_longlong(mi->BaseOfImage),
                wine_dbgstr_longlong(mi->BaseOfImage + mi->ImageSize),
                is_embedded ? "\\" : get_symtype_str(mi), mi->ModuleName);
