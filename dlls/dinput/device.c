@@ -522,6 +522,9 @@ void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, D
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
     int next_pos;
 
+    /* Event is being set regardless of the queue state */
+    if (This->hEvent) SetEvent(This->hEvent);
+
     if (!This->queue_len || This->overflow || ofs < 0) return;
 
     next_pos = (This->queue_head + 1) % This->queue_len;
@@ -541,7 +544,6 @@ void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, D
     This->data_queue[This->queue_head].dwSequence  = seq;
     This->queue_head = next_pos;
     /* Send event if asked */
-    if (This->hEvent) SetEvent(This->hEvent);
 }
 
 /******************************************************************************
