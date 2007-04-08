@@ -2332,7 +2332,10 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         *pCaps->NumSimultaneousRTs = GL_LIMITS(buffers);
 
             
-        *pCaps->StretchRectFilterCaps             = 0;
+        *pCaps->StretchRectFilterCaps             = WINED3DPTFILTERCAPS_MINFPOINT  |
+                                                    WINED3DPTFILTERCAPS_MAGFPOINT  |
+                                                    WINED3DPTFILTERCAPS_MINFLINEAR |
+                                                    WINED3DPTFILTERCAPS_MAGFLINEAR;
         *pCaps->VertexTextureFilterCaps           = 0;
         
         if(*pCaps->VertexShaderVersion == WINED3DVS_VERSION(3,0)) {
