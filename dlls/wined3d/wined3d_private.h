@@ -674,6 +674,8 @@ struct IWineD3DDeviceImpl
     BOOL                    render_offscreen;
     WINED3D_DEPTHCOPYSTATE  depth_copy_state;
     GLuint                  fbo;
+    GLuint                  src_fbo;
+    GLuint                  dst_fbo;
     GLenum                  *draw_buffers;
 
     /* Cursor management */
@@ -1968,5 +1970,8 @@ static inline BOOL use_ps(IWineD3DDeviceImpl *device) {
             && device->stateBlock->pixelShader
             && ((IWineD3DPixelShaderImpl *)device->stateBlock->pixelShader)->baseShader.function);
 }
+
+void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const WINED3DRECT *src_rect,
+        IWineD3DSurface *dst_surface, const WINED3DRECT *dst_rect, WINED3DTEXTUREFILTERTYPE filter, BOOL flip);
 
 #endif

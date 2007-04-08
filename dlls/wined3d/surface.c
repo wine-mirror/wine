@@ -2759,8 +2759,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         }
 
         /* Blt is a pretty powerful call, while glCopyTexSubImage2D is not. glCopyTexSubImage cannot
-         * flip the image nor scale it. If GL_EXT_framebuffer_blit is available it can be used(hopefully,
-         * not implemented by now). Otherwise:
+         * flip the image nor scale it.
          *
          * -> If the app asks for a unscaled, upside down copy, just perform one glCopyTexSubImage2D call
          * -> If the app wants a image width an unscaled width, copy it line per line
@@ -2769,9 +2768,14 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
          *    back buffer. This is slower than reading line per line, thus not used for flipping
          * -> If the app wants a scaled image with a dest rect that is bigger than the fb, it has to be copied
          *    pixel by pixel
+         *
+         * If EXT_framebuffer_blit is supported that can be used instead. Note that EXT_framebuffer_blit implies
+         * FBO support, so it doesn't really make sense to try and make it work with different offscreen rendering
+         * backends.
          */
-        if(FALSE /* GL_SUPPORT(EXT_FRAMEBUFFER_BLIT) */) {
-            TRACE("Using GL_EXT_framebuffer_blit for copying\n");
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && GL_SUPPORT(EXT_FRAMEBUFFER_BLIT)) {
+            stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &srect,
+                    (IWineD3DSurface *)This, &rect, Filter, upsideDown);
         } else if((!stretchx) || rect.x2 - rect.x1 > Src->currentDesc.Width ||
                                     rect.y2 - rect.y1 > Src->currentDesc.Height) {
             TRACE("No stretching in x direction, using direct framebuffer -> texture copy\n");

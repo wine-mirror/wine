@@ -181,6 +181,12 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         if (This->fbo) {
             GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->fbo));
         }
+        if (This->src_fbo) {
+            GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->src_fbo));
+        }
+        if (This->dst_fbo) {
+            GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->dst_fbo));
+        }
 
         HeapFree(GetProcessHeap(), 0, This->render_targets);
         HeapFree(GetProcessHeap(), 0, This->fbo_color_attachments);
@@ -5240,6 +5246,77 @@ void apply_fbo_state(IWineD3DDevice *iface) {
     }
 
     check_fbo_status(iface);
+}
+
+static BOOL is_onscreen(IWineD3DSurface *target) {
+    HRESULT hr;
+    void *tmp;
+
+    hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, &tmp);
+    if (SUCCEEDED(hr)) {
+        IWineD3DSwapChain_Release((IUnknown *)tmp);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const WINED3DRECT *src_rect,
+        IWineD3DSurface *dst_surface, const WINED3DRECT *dst_rect, const WINED3DTEXTUREFILTERTYPE filter, BOOL flip) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    GLbitfield mask = GL_COLOR_BUFFER_BIT; /* TODO: Support blitting depth/stencil surfaces */
+    GLenum gl_filter;
+
+    TRACE("(%p) : src_surface %p, src_rect %p, dst_surface %p, dst_rect %p, filter %s (0x%08x)\n",
+            This, src_surface, src_rect, dst_surface, dst_rect, debug_d3dtexturefiltertype(filter), filter);
+
+    switch (filter) {
+        case WINED3DTEXF_LINEAR:
+            gl_filter = GL_LINEAR;
+            break;
+
+        default:
+            FIXME("Unsupported filter mode %s (0x%08x)\n", debug_d3dtexturefiltertype(filter), filter);
+        case WINED3DTEXF_NONE:
+        case WINED3DTEXF_POINT:
+            gl_filter = GL_NEAREST;
+            break;
+    }
+
+    /* Attach src surface to src fbo */
+    if (is_onscreen(src_surface)) {
+        GL_EXTCALL(glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0));
+        flip = !flip;
+    } else {
+        IWineD3DSurface_PreLoad(src_surface);
+        bind_fbo(iface, GL_READ_FRAMEBUFFER_EXT, &This->src_fbo);
+        attach_surface_fbo(This, GL_READ_FRAMEBUFFER_EXT, 0, src_surface);
+    }
+
+    /* Attach dst surface to dst fbo */
+    if (is_onscreen(dst_surface)) {
+        GL_EXTCALL(glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0));
+        flip = !flip;
+    } else {
+        IWineD3DSurface_PreLoad(dst_surface);
+        bind_fbo(iface, GL_DRAW_FRAMEBUFFER_EXT, &This->dst_fbo);
+        attach_surface_fbo(This, GL_DRAW_FRAMEBUFFER_EXT, 0, dst_surface);
+    }
+
+    if (flip) {
+        GL_EXTCALL(glBlitFramebufferEXT(src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2,
+                dst_rect->x1, dst_rect->y2, dst_rect->x2, dst_rect->y1, mask, gl_filter));
+    } else {
+        GL_EXTCALL(glBlitFramebufferEXT(src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2,
+                dst_rect->x1, dst_rect->y1, dst_rect->x2, dst_rect->y2, mask, gl_filter));
+    }
+
+    if (This->render_offscreen) {
+        bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->fbo);
+    } else {
+        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+        checkGLcall("glBindFramebuffer()");
+    }
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD RenderTargetIndex, IWineD3DSurface *pRenderTarget) {
