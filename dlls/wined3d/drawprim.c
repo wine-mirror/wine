@@ -756,16 +756,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     checkGLcall("glEnd and previous calls");
 }
 
-static void check_fbo_status(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    GLenum status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
-    switch(status) {
-        case GL_FRAMEBUFFER_COMPLETE_EXT: TRACE("FBO complete.\n"); break;
-        default: TRACE("FBO status %#x.\n", status); break;
-    }
-}
-
 static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLint old_binding = 0;
@@ -1184,11 +1174,11 @@ void drawPrimitive(IWineD3DDevice *iface,
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
 
-    ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
-
-    if (TRACE_ON(d3d_draw) && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        check_fbo_status(iface);
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        apply_fbo_state(iface);
     }
+
+    ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
 
     if (This->depth_copy_state == WINED3D_DCS_COPY) {
         depth_copy(iface);

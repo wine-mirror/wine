@@ -534,7 +534,7 @@ typedef enum ContextUsage {
 void ActivateContext(IWineD3DDeviceImpl *device, IWineD3DSurface *target, ContextUsage usage);
 WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, Display *display, Window win);
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
-void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurface *render_target);
+void apply_fbo_state(IWineD3DDevice *iface);
 
 /* Routine to fill gl caps for swapchains and IWineD3D */
 BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display);
@@ -657,6 +657,8 @@ struct IWineD3DDeviceImpl
     /* Render Target Support */
     IWineD3DSurface       **render_targets;
     IWineD3DSurface        *depthStencilBuffer;
+    IWineD3DSurface       **fbo_color_attachments;
+    IWineD3DSurface        *fbo_depth_attachment;
 
     IWineD3DSurface        *stencilBufferTarget;
 

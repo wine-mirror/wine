@@ -631,9 +631,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
              * rendering. No context change is needed in that case
              */
 
-            if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && oldRenderOffscreen) {
-                set_render_target_fbo((IWineD3DDevice *) This, 0, target);
-            } else if(wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER) {
+            if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER) {
                 if(((IWineD3DSwapChainImpl *) swapchain)->backBuffer) {
                     glDrawBuffer(GL_BACK);
                     checkGLcall("glDrawBuffer(GL_BACK)");
@@ -665,7 +663,6 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                          */
                         context = ((IWineD3DSwapChainImpl *) This->swapchains[0])->context[0];
                     }
-                    set_render_target_fbo((IWineD3DDevice *) This, 0, target);
                     break;
 
                 case ORM_PBUFFER:
