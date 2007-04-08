@@ -192,7 +192,7 @@ void WINAPI __regs_LogApiThkLSF( LPSTR func, CONTEXT86 *context )
     TRACE( "%s\n", debugstr_a(func) );
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( LogApiThkLSF, 4, 4 );
+DEFINE_REGS_ENTRYPOINT( LogApiThkLSF, 4, 4 )
 #endif
 
 /***********************************************************************
@@ -205,7 +205,7 @@ void WINAPI __regs_LogApiThkSL( LPSTR func, CONTEXT86 *context )
     TRACE( "%s\n", debugstr_a(func) );
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( LogApiThkSL, 4, 4 );
+DEFINE_REGS_ENTRYPOINT( LogApiThkSL, 4, 4 )
 #endif
 
 /***********************************************************************
@@ -218,7 +218,7 @@ void WINAPI __regs_LogCBThkSL( LPSTR func, CONTEXT86 *context )
     TRACE( "%s\n", debugstr_a(func) );
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( LogCBThkSL, 4, 4 );
+DEFINE_REGS_ENTRYPOINT( LogCBThkSL, 4, 4 )
 #endif
 
 /***********************************************************************
@@ -487,7 +487,7 @@ void WINAPI __regs_QT_Thunk( CONTEXT86 *context )
                         ( OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize );
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( QT_Thunk, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( QT_Thunk, 0, 0 )
 #endif
 
 
@@ -555,7 +555,7 @@ void WINAPI __regs_FT_Prolog( CONTEXT86 *context )
     *(DWORD *)(context->Ebp - 52) = context->Edx;
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( FT_Prolog, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( FT_Prolog, 0, 0 )
 #endif
 
 /**********************************************************************
@@ -623,7 +623,7 @@ void WINAPI __regs_FT_Thunk( CONTEXT86 *context )
     memcpy( oldstack, newstack, argsize );
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( FT_Thunk, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( FT_Thunk, 0, 0 )
 #endif
 
 #ifdef __i386__
@@ -779,7 +779,7 @@ void WINAPI __regs_Common32ThkLS( CONTEXT86 *context )
     context->Esp += LOBYTE(context16.Ebx);
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( Common32ThkLS, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( Common32ThkLS, 0, 0 )
 #endif
 
 /***********************************************************************
@@ -836,7 +836,7 @@ void WINAPI __regs_OT_32ThkLSF( CONTEXT86 *context )
                         ( OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize );
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( OT_32ThkLSF, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( OT_32ThkLSF, 0, 0 )
 #endif
 
 /***********************************************************************
@@ -938,7 +938,7 @@ void WINAPI __regs_FT_PrologPrime( CONTEXT86 *context )
     context->Eip = (DWORD)relayCode;
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( FT_PrologPrime, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( FT_PrologPrime, 0, 0 )
 #endif
 
 /***********************************************************************
@@ -970,7 +970,7 @@ void WINAPI __regs_QT_ThunkPrime( CONTEXT86 *context )
     context->Eip = (DWORD)relayCode;
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( QT_ThunkPrime, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( QT_ThunkPrime, 0, 0 )
 #endif
 
 /***********************************************************************
@@ -1113,7 +1113,7 @@ void WINAPI __regs_W32S_BackTo32( CONTEXT86 *context )
     context->Eip = stack32_pop(context);
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( W32S_BackTo32, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( W32S_BackTo32, 0, 0 )
 #endif
 
 /**********************************************************************
@@ -1291,7 +1291,7 @@ void WINAPI __regs_K32Thk1632Prolog( CONTEXT86 *context )
    ReleaseThunkLock(&CURRENT_STACK16->entry_point);
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( K32Thk1632Prolog, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( K32Thk1632Prolog, 0, 0 )
 #endif
 
 /***********************************************************************
@@ -1328,7 +1328,7 @@ void WINAPI __regs_K32Thk1632Epilog( CONTEXT86 *context )
    }
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( K32Thk1632Epilog, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( K32Thk1632Epilog, 0, 0 )
 #endif
 
 /*********************************************************************
@@ -2140,7 +2140,7 @@ void WINAPI __regs_CommonUnimpStub( CONTEXT86 *context )
     context->Esp += (context->Ecx & 0x0f) * 4;
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( CommonUnimpStub, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( CommonUnimpStub, 0, 0 )
 #endif
 
 /**********************************************************************

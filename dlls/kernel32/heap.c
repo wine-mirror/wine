@@ -1155,7 +1155,7 @@ void WINAPI __regs_AllocMappedBuffer(
     }
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( AllocMappedBuffer, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( AllocMappedBuffer, 0, 0 )
 #endif
 
 /**********************************************************************
@@ -1180,7 +1180,7 @@ void WINAPI __regs_FreeMappedBuffer(
     }
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( FreeMappedBuffer, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( FreeMappedBuffer, 0, 0 )
 #endif
 
 /***********************************************************************

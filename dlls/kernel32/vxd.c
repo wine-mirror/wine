@@ -294,7 +294,7 @@ void WINAPI __regs_VxDCall( DWORD service, CONTEXT86 *context )
     }
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( VxDCall, 4, 4 );
+DEFINE_REGS_ENTRYPOINT( VxDCall, 4, 4 )
 #endif
 
 
