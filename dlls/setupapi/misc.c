@@ -2,6 +2,7 @@
  * Setupapi miscellaneous functions
  *
  * Copyright 2005 Eric Kohl
+ * Copyright 2007 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,6 +27,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "setupapi.h"
+#include "lzexpand.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -993,4 +995,218 @@ DWORD WINAPI InstallCatalog( LPCSTR catalog, LPCSTR basename, LPSTR fullname )
 {
     FIXME("%s, %s, %p\n", debugstr_a(catalog), debugstr_a(basename), fullname);
     return 0;
+}
+
+static UINT detect_compression_type( LPCWSTR file )
+{
+    DWORD size;
+    HANDLE handle;
+    UINT type = FILE_COMPRESSION_NONE;
+    static const BYTE LZ_MAGIC[] = { 0x53, 0x5a, 0x44, 0x44, 0x88, 0xf0, 0x27, 0x33 };
+    static const BYTE MSZIP_MAGIC[] = { 0x4b, 0x57, 0x41, 0x4a };
+    static const BYTE NTCAB_MAGIC[] = { 0x4d, 0x53, 0x43, 0x46 };
+    BYTE buffer[8];
+
+    handle = CreateFileW( file, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL );
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        ERR("cannot open file %s\n", debugstr_w(file));
+        return FILE_COMPRESSION_NONE;
+    }
+    if (!ReadFile( handle, buffer, sizeof(buffer), &size, NULL ) || size != sizeof(buffer))
+    {
+        CloseHandle( handle );
+        return FILE_COMPRESSION_NONE;
+    }
+    if (!memcmp( buffer, LZ_MAGIC, sizeof(LZ_MAGIC) )) type = FILE_COMPRESSION_WINLZA;
+    else if (!memcmp( buffer, MSZIP_MAGIC, sizeof(MSZIP_MAGIC) )) type = FILE_COMPRESSION_MSZIP;
+    else if (!memcmp( buffer, NTCAB_MAGIC, sizeof(NTCAB_MAGIC) )) type = FILE_COMPRESSION_MSZIP; /* not a typo */
+
+    CloseHandle( handle );
+    return type;
+}
+
+static BOOL get_file_size( LPCWSTR file, DWORD *size )
+{
+    HANDLE handle;
+
+    handle = CreateFileW( file, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL );
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        ERR("cannot open file %s\n", debugstr_w(file));
+        return FALSE;
+    }
+    *size = GetFileSize( handle, NULL );
+    CloseHandle( handle );
+    return TRUE;
+}
+
+static BOOL get_file_sizes_none( LPCWSTR source, DWORD *source_size, DWORD *target_size )
+{
+    DWORD size;
+
+    if (!get_file_size( source, &size )) return FALSE;
+    if (source_size) *source_size = size;
+    if (target_size) *target_size = size;
+    return TRUE;
+}
+
+static BOOL get_file_sizes_lz( LPCWSTR source, DWORD *source_size, DWORD *target_size )
+{
+    DWORD size;
+    BOOL ret = TRUE;
+
+    if (source_size)
+    {
+        if (!get_file_size( source, &size )) ret = FALSE;
+        else *source_size = size;
+    }
+    if (target_size)
+    {
+        INT file;
+        OFSTRUCT of;
+
+        if ((file = LZOpenFileW( (LPWSTR)source, &of, OF_READ )) < 0)
+        {
+            ERR("cannot open source file for reading\n");
+            return FALSE;
+        }
+        *target_size = LZSeek( file, 0, 2 );
+        LZClose( file );
+    }
+    return ret;
+}
+
+static UINT CALLBACK file_compression_info_callback( PVOID context, UINT notification, UINT_PTR param1, UINT_PTR param2 )
+{
+    DWORD *size = context;
+    FILE_IN_CABINET_INFO_W *info = (FILE_IN_CABINET_INFO_W *)param1;
+
+    switch (notification)
+    {
+    case SPFILENOTIFY_FILEINCABINET:
+    {
+        *size = info->FileSize;
+        return FILEOP_SKIP;
+    }
+    default: return NO_ERROR;
+    }
+}
+
+static BOOL get_file_sizes_cab( LPCWSTR source, DWORD *source_size, DWORD *target_size )
+{
+    DWORD size;
+    BOOL ret = TRUE;
+
+    if (source_size)
+    {
+        if (!get_file_size( source, &size )) ret = FALSE;
+        else *source_size = size;
+    }
+    if (target_size)
+    {
+        ret = SetupIterateCabinetW( source, 0, file_compression_info_callback, target_size );
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *      SetupGetFileCompressionInfoExA  (SETUPAPI.@)
+ *
+ * See SetupGetFileCompressionInfoExW.
+ */
+BOOL WINAPI SetupGetFileCompressionInfoExA( PCSTR source, PSTR name, DWORD len, PDWORD required,
+                                            PDWORD source_size, PDWORD target_size, PUINT type )
+{
+    BOOL ret;
+    WCHAR *nameW = NULL, *sourceW = NULL;
+    DWORD nb_chars = 0;
+    LPSTR nameA;
+
+    TRACE("%s, %p, %d, %p, %p, %p, %p\n", debugstr_a(source), name, len, required,
+          source_size, target_size, type);
+
+    if (!source || !(sourceW = MultiByteToUnicode( source, CP_ACP ))) return FALSE;
+
+    if (name)
+    {
+        ret = SetupGetFileCompressionInfoExW( sourceW, NULL, 0, &nb_chars, NULL, NULL, NULL );
+        if (!(nameW = HeapAlloc( GetProcessHeap(), 0, nb_chars * sizeof(WCHAR) )))
+        {
+            MyFree( sourceW );
+            return FALSE;
+        }
+    }
+    ret = SetupGetFileCompressionInfoExW( sourceW, nameW, nb_chars, &nb_chars, source_size, target_size, type );
+    if (ret)
+    {
+        if ((nameA = UnicodeToMultiByte( nameW, CP_ACP )))
+        {
+            if (name && len >= nb_chars) lstrcpyA( name, nameA );
+            else
+            {
+                SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                ret = FALSE;
+            }
+            MyFree( nameA );
+        }
+    }
+    if (required) *required = nb_chars;
+    HeapFree( GetProcessHeap(), 0, nameW );
+    MyFree( sourceW );
+
+    return ret;
+}
+
+/***********************************************************************
+ *      SetupGetFileCompressionInfoExW  (SETUPAPI.@)
+ *
+ * Get compression type and compressed/uncompressed sizes of a given file.
+ *
+ * PARAMS
+ *  source      [I] File to examine.
+ *  name        [O] Actual filename used.
+ *  len         [I] Length in characters of 'name' buffer.
+ *  required    [O] Number of characters written to 'name'.
+ *  source_size [O] Size of compressed file.
+ *  target_size [O] Size of uncompressed file.
+ *  type        [O] Compression type.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
+BOOL WINAPI SetupGetFileCompressionInfoExW( PCWSTR source, PWSTR name, DWORD len, PDWORD required,
+                                            PDWORD source_size, PDWORD target_size, PUINT type )
+{
+    UINT comp;
+    BOOL ret = FALSE;
+    DWORD source_len;
+
+    TRACE("%s, %p, %d, %p, %p, %p, %p\n", debugstr_w(source), name, len, required,
+          source_size, target_size, type);
+
+    if (!source) return FALSE;
+
+    source_len = lstrlenW( source ) + 1;
+    if (required) *required = source_len;
+    if (name && len >= source_len)
+    {
+        lstrcpyW( name, source );
+        ret = TRUE;
+    }
+    else return FALSE;
+
+    comp = detect_compression_type( source );
+    if (type) *type = comp;
+
+    switch (comp)
+    {
+    case FILE_COMPRESSION_MSZIP:
+    case FILE_COMPRESSION_NTCAB:  ret = get_file_sizes_cab( source, source_size, target_size ); break;
+    case FILE_COMPRESSION_NONE:   ret = get_file_sizes_none( source, source_size, target_size ); break;
+    case FILE_COMPRESSION_WINLZA: ret = get_file_sizes_lz( source, source_size, target_size ); break;
+    default: break;
+    }
+    return ret;
 }

@@ -701,6 +701,11 @@ DECL_WINELIB_SETUPAPI_TYPE_AW(PFILEPATHS)
 #define SRCINFO_TAGFILE        2
 #define SRCINFO_DESCRIPTION    3
 
+#define FILE_COMPRESSION_NONE       0
+#define FILE_COMPRESSION_WINLZA     1
+#define FILE_COMPRESSION_MSZIP      2
+#define FILE_COMPRESSION_NTCAB      3
+
 LONG     WINAPI AddTagToGroupOrderList(PCWSTR lpGroupName, DWORD dwUnknown2, DWORD dwUnknown3);
 DWORD    WINAPI CaptureAndConvertAnsiArg(PCSTR lpSrc, PWSTR *lpDst);
 DWORD    WINAPI CaptureStringArg(PCWSTR lpSrc, PWSTR *lpDst);
@@ -811,6 +816,9 @@ BOOL     WINAPI SetupFindNextMatchLineW( PINFCONTEXT context_in, PCWSTR key, PIN
 #define         SetupFindNextMatchLine WINELIB_NAME_AW(SetupFindNextMatchLine)
 BOOL     WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer, DWORD size, LPDWORD required );
 DWORD    WINAPI SetupGetFieldCount( PINFCONTEXT context );
+BOOL     WINAPI SetupGetFileCompressionInfoExA(PCSTR, PSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
+BOOL     WINAPI SetupGetFileCompressionInfoExW(PCWSTR, PWSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
+#define         SetupGetFileCompressionInfoEx WINELIB_NAME_AW(SetupGetFileCompressionInfoEx)
 BOOL     WINAPI SetupGetFileQueueCount( HSPFILEQ, UINT, PUINT );
 BOOL     WINAPI SetupGetFileQueueFlags( HSPFILEQ, PDWORD );
 BOOL     WINAPI SetupGetInfInformationA( LPCVOID, DWORD, PSP_INF_INFORMATION, DWORD, PDWORD);
