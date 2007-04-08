@@ -3718,8 +3718,36 @@ static void test_IsWindowUnicode(void)
     DestroyWindow(hwnd);
 }
 
+static LRESULT CALLBACK minmax_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    MINMAXINFO *minmax;
+
+    if (msg != WM_GETMINMAXINFO)
+        return DefWindowProc(hwnd, msg, wp, lp);
+
+    minmax = (MINMAXINFO *)lp;
+
+    if ((GetWindowLong(hwnd, GWL_STYLE) & WS_CHILD))
+    {
+        minmax->ptReserved.x = 0;
+        minmax->ptReserved.y = 0;
+        minmax->ptMaxSize.x = 400;
+        minmax->ptMaxSize.y = 400;
+        minmax->ptMaxPosition.x = 300;
+        minmax->ptMaxPosition.y = 300;
+        minmax->ptMaxTrackSize.x = 200;
+        minmax->ptMaxTrackSize.y = 200;
+        minmax->ptMinTrackSize.x = 100;
+        minmax->ptMinTrackSize.y = 100;
+    }
+    else
+        DefWindowProc(hwnd, msg, wp, lp);
+    return 1;
+}
+
 static void test_CreateWindow(void)
 {
+    WNDCLASS cls;
     HWND hwnd, parent;
     HMENU hmenu;
     RECT rc, rc_minmax;
@@ -3917,8 +3945,20 @@ static void test_CreateWindow(void)
     ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
 
     /* test child window sizing */
+    cls.style = 0;
+    cls.lpfnWndProc = minmax_wnd_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandle(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "MinMax_WndClass";
+    RegisterClass(&cls);
+
     SetLastError(0xdeadbeef);
-    parent = CreateWindowEx(0, "static", NULL, WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
+    parent = CreateWindowEx(0, "MinMax_WndClass", NULL, WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
                            0, 0, 100, 100, 0, 0, 0, NULL);
     ok(parent != 0, "CreateWindowEx error %d\n", GetLastError());
     expect_menu(parent, 0);
@@ -3928,19 +3968,20 @@ static void test_CreateWindow(void)
     memset(&minmax, 0, sizeof(minmax));
     SendMessage(parent, WM_GETMINMAXINFO, 0, (LPARAM)&minmax);
     SetRect(&rc_minmax, 0, 0, minmax.ptMaxSize.x, minmax.ptMaxSize.y);
-    ok(IsRectEmpty(&rc_minmax), "rc_minmax is not empty\n");
+    ok(IsRectEmpty(&rc_minmax), "ptMaxSize is not empty\n");
+    SetRect(&rc_minmax, 0, 0, minmax.ptMaxTrackSize.x, minmax.ptMaxTrackSize.y);
+    ok(IsRectEmpty(&rc_minmax), "ptMaxTrackSize is not empty\n");
 
+    GetWindowRect(parent, &rc);
+    ok(!IsRectEmpty(&rc), "parent window rect is empty\n");
     GetClientRect(parent, &rc);
-    ok(rc_minmax.left >= rc.left && rc_minmax.top >= rc.top &&
-       rc_minmax.right <= rc.right && rc_minmax.bottom <= rc.bottom,
-       "rc_minmax (%d,%d-%d,%d) is not within of parent client rect (%d,%d-%d,%d)\n",
-       rc_minmax.left, rc_minmax.top, rc_minmax.right, rc_minmax.bottom,
-       rc.left, rc.top, rc.right, rc.bottom);
+    ok(!IsRectEmpty(&rc), "parent client rect is empty\n");
+
     InflateRect(&rc, 200, 200);
     trace("creating child with rect (%d,%d-%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
 
     SetLastError(0xdeadbeef);
-    hwnd = CreateWindowEx(0, "static", NULL, WS_CHILD | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
+    hwnd = CreateWindowEx(0, "MinMax_WndClass", NULL, WS_CHILD | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
                           rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
                           parent, (HMENU)1, 0, NULL);
     ok(hwnd != 0, "CreateWindowEx error %d\n", GetLastError());
@@ -3948,16 +3989,20 @@ static void test_CreateWindow(void)
     expect_style(hwnd, WS_CHILD | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME);
     expect_ex_style(hwnd, WS_EX_WINDOWEDGE);
 
-    OffsetRect(&rc, -rc.left, -rc.top);
+    memset(&minmax, 0, sizeof(minmax));
+    SendMessage(hwnd, WM_GETMINMAXINFO, 0, (LPARAM)&minmax);
+    SetRect(&rc_minmax, 0, 0, minmax.ptMaxTrackSize.x, minmax.ptMaxTrackSize.y);
 
-    GetWindowRect(hwnd, &rc_minmax);
-    OffsetRect(&rc_minmax, -rc_minmax.left, -rc_minmax.top);
+    GetWindowRect(hwnd, &rc);
+    OffsetRect(&rc, -rc.left, -rc.top);
     ok(EqualRect(&rc, &rc_minmax), "rects don't match: (%d,%d-%d,%d) and (%d,%d-%d,%d)\n",
        rc.left, rc.top, rc.right, rc.bottom,
        rc_minmax.left, rc_minmax.top, rc_minmax.right, rc_minmax.bottom);
 
     DestroyWindow(hwnd);
     DestroyWindow(parent);
+
+    UnregisterClass("MinMax_WndClass", GetModuleHandle(0));
 
 #undef expect_menu
 #undef expect_style

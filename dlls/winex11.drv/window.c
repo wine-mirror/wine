@@ -1078,10 +1078,15 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
     {
         POINT maxSize, maxPos, minTrack, maxTrack;
-        /* Although Windows sends WM_GETMINMAXINFO at the window creation time,
-         * it doesn't use returned values to set window size.
-         */
+
         WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack);
+        if (maxTrack.x < cs->cx) cs->cx = maxTrack.x;
+        if (maxTrack.y < cs->cy) cs->cy = maxTrack.y;
+        if (cs->cx < 0) cs->cx = 0;
+        if (cs->cy < 0) cs->cy = 0;
+
+        SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
+        if (!X11DRV_SetWindowPos( hwnd, 0, &rect, &rect, SWP_NOZORDER, NULL )) return FALSE;
     }
 
     /* send WM_NCCREATE */
