@@ -1397,6 +1397,7 @@ const char* debug_d3ddeclusage(BYTE usage);
 const char* debug_d3dprimitivetype(WINED3DPRIMITIVETYPE PrimitiveType);
 const char* debug_d3drenderstate(DWORD state);
 const char* debug_d3dsamplerstate(DWORD state);
+const char* debug_d3dtexturefiltertype(WINED3DTEXTUREFILTERTYPE filter_type);
 const char* debug_d3dtexturestate(DWORD state);
 const char* debug_d3dtstype(WINED3DTRANSFORMSTATETYPE tstype);
 const char* debug_d3dpool(WINED3DPOOL pool);

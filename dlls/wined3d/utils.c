@@ -571,6 +571,24 @@ const char* debug_d3dsamplerstate(DWORD state) {
   }
 }
 
+const char *debug_d3dtexturefiltertype(WINED3DTEXTUREFILTERTYPE filter_type) {
+    switch (filter_type) {
+#define D3DTEXTUREFILTERTYPE_TO_STR(u) case u: return #u
+        D3DTEXTUREFILTERTYPE_TO_STR(WINED3DTEXF_NONE);
+        D3DTEXTUREFILTERTYPE_TO_STR(WINED3DTEXF_POINT);
+        D3DTEXTUREFILTERTYPE_TO_STR(WINED3DTEXF_LINEAR);
+        D3DTEXTUREFILTERTYPE_TO_STR(WINED3DTEXF_ANISOTROPIC);
+        D3DTEXTUREFILTERTYPE_TO_STR(WINED3DTEXF_FLATCUBIC);
+        D3DTEXTUREFILTERTYPE_TO_STR(WINED3DTEXF_GAUSSIANCUBIC);
+        D3DTEXTUREFILTERTYPE_TO_STR(WINED3DTEXF_PYRAMIDALQUAD);
+        D3DTEXTUREFILTERTYPE_TO_STR(WINED3DTEXF_GAUSSIANQUAD);
+#undef D3DTEXTUREFILTERTYPE_TO_STR
+        default:
+            FIXME("Unrecognied texture filter type 0x%08x\n", filter_type);
+            return "unrecognized";
+    }
+}
+
 const char* debug_d3dtexturestate(DWORD state) {
   switch (state) {
 #define D3DSTATE_TO_STR(u) case u: return #u
