@@ -5139,6 +5139,26 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
     }
 }
 
+static void attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface) {
+    const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
+    GLenum texttarget, target;
+    GLint old_binding;
+
+    texttarget = surface_impl->glDescription.target;
+    target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
+    glGetIntegerv(texttarget == GL_TEXTURE_2D ? GL_TEXTURE_BINDING_2D : GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
+
+    IWineD3DSurface_PreLoad(surface);
+
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(target, old_binding);
+
+    GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, texttarget, surface_impl->glDescription.textureName, 0));
+
+    checkGLcall("attach_surface_fbo");
+}
+
 static void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurface *render_target) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl *rtimpl = (IWineD3DSurfaceImpl *)render_target;
@@ -5146,22 +5166,7 @@ static void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurf
     TRACE("Set render target %u to %p\n", idx, render_target);
 
     if (rtimpl) {
-        GLenum texttarget, target;
-        GLint old_binding = 0;
-
-        texttarget = rtimpl->glDescription.target;
-        target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
-        glGetIntegerv(texttarget == GL_TEXTURE_2D ? GL_TEXTURE_BINDING_2D : GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
-
-        IWineD3DSurface_PreLoad(render_target);
-
-        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glBindTexture(target, old_binding);
-
-        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + idx, texttarget, rtimpl->glDescription.textureName, 0));
-        checkGLcall("glFramebufferTexture2DEXT()");
-
+        attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, idx, render_target);
         This->draw_buffers[idx] = GL_COLOR_ATTACHMENT0_EXT + idx;
     } else {
         GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + idx, GL_TEXTURE_2D, 0, 0));
