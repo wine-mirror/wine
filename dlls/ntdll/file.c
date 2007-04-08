@@ -2119,8 +2119,8 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
     SERVER_START_REQ( create_named_pipe )
     {
         req->access  = access;
-        req->attributes = (attr) ? attr->Attributes : 0;
-        req->rootdir = attr ? attr->RootDirectory : 0;
+        req->attributes = attr->Attributes;
+        req->rootdir = attr->RootDirectory;
         req->options = options;
         req->flags = 
             (pipe_type) ? NAMED_PIPE_MESSAGE_STREAM_WRITE : 0 |
