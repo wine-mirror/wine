@@ -258,6 +258,25 @@ static void create_source_file(LPSTR filename, const BYTE *data, DWORD size)
     CloseHandle(handle);
 }
 
+static BOOL compare_file_data(LPSTR file, const BYTE *data, DWORD size)
+{
+    DWORD read;
+    HANDLE handle;
+    BOOL ret = FALSE;
+    LPBYTE buffer;
+
+    handle = CreateFileA(file, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    if (buffer)
+    {
+        ReadFile(handle, buffer, size, &read, NULL);
+        if (read == size && !memcmp(data, buffer, size)) ret = TRUE;
+        HeapFree(GetProcessHeap(), 0, buffer);
+    }
+    CloseHandle(handle);
+    return ret;
+}
+
 static const BYTE uncompressed[] = {
     'u','n','c','o','m','p','r','e','s','s','e','d','\r','\n'
 };
@@ -360,10 +379,112 @@ static void test_SetupGetFileCompressionInfoEx(void)
     DeleteFileA(source);
 }
 
+static void test_SetupDecompressOrCopyFile(void)
+{
+    DWORD ret;
+    char source[MAX_PATH], target[MAX_PATH], temp[MAX_PATH], *p;
+    UINT type;
+
+    GetTempPathA(sizeof(temp), temp);
+    GetTempFileNameA(temp, "doc", 0, source);
+    GetTempFileNameA(temp, "doc", 0, target);
+
+    /* parameter tests */
+
+    create_source_file(source, uncompressed, sizeof(uncompressed));
+
+    ret = SetupDecompressOrCopyFileA(NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "SetupDecompressOrCopyFile failed unexpectedly\n");
+
+    type = FILE_COMPRESSION_NONE;
+    ret = SetupDecompressOrCopyFileA(NULL, target, &type);
+    ok(ret == ERROR_INVALID_PARAMETER, "SetupDecompressOrCopyFile failed unexpectedly\n");
+
+    ret = SetupDecompressOrCopyFileA(source, NULL, &type);
+    ok(ret == ERROR_INVALID_PARAMETER, "SetupDecompressOrCopyFile failed unexpectedly\n");
+
+    type = 5; /* try an invalid compression type */
+    ret = SetupDecompressOrCopyFileA(source, target, &type);
+    ok(ret == ERROR_INVALID_PARAMETER, "SetupDecompressOrCopyFile failed unexpectedly\n");
+
+    DeleteFileA(target);
+
+    /* no compression tests */
+
+    ret = SetupDecompressOrCopyFileA(source, target, NULL);
+    ok(!ret, "SetupDecompressOrCopyFile failed unexpectedly: %d\n", ret);
+    ok(compare_file_data(target, uncompressed, sizeof(uncompressed)), "incorrect target file\n");
+
+    /* try overwriting existing file */
+    ret = SetupDecompressOrCopyFileA(source, target, NULL);
+    ok(!ret, "SetupDecompressOrCopyFile failed unexpectedly: %d\n", ret);
+    DeleteFileA(target);
+
+    type = FILE_COMPRESSION_NONE;
+    ret = SetupDecompressOrCopyFileA(source, target, &type);
+    ok(!ret, "SetupDecompressOrCopyFile failed unexpectedly: %d\n", ret);
+    ok(compare_file_data(target, uncompressed, sizeof(uncompressed)), "incorrect target file\n");
+    DeleteFileA(target);
+
+    type = FILE_COMPRESSION_WINLZA;
+    ret = SetupDecompressOrCopyFileA(source, target, &type);
+    ok(!ret, "SetupDecompressOrCopyFile failed unexpectedly: %d\n", ret);
+    ok(compare_file_data(target, uncompressed, sizeof(uncompressed)), "incorrect target file\n");
+    DeleteFileA(target);
+
+    /* lz compression tests */
+
+    create_source_file(source, comp_lzx, sizeof(comp_lzx));
+
+    ret = SetupDecompressOrCopyFileA(source, target, NULL);
+    ok(!ret, "SetupDecompressOrCopyFile failed unexpectedly: %d\n", ret);
+    DeleteFileA(target);
+
+    /* zip compression tests */
+
+    create_source_file(source, comp_zip, sizeof(comp_zip));
+
+    ret = SetupDecompressOrCopyFileA(source, target, NULL);
+    ok(!ret, "SetupDecompressOrCopyFile failed unexpectedly: %d\n", ret);
+    ok(compare_file_data(target, comp_zip, sizeof(comp_zip)), "incorrect target file\n");
+    DeleteFileA(target);
+
+    /* cabinet compression tests */
+
+    create_source_file(source, comp_cab_zip, sizeof(comp_cab_zip));
+
+    p = strrchr(target, '\\');
+    lstrcpyA(p + 1, "wine");
+
+    ret = SetupDecompressOrCopyFileA(source, target, NULL);
+    ok(!ret, "SetupDecompressOrCopyFile failed unexpectedly: %d\n", ret);
+    ok(compare_file_data(target, uncompressed, sizeof(uncompressed)), "incorrect target file\n");
+
+    /* try overwriting existing file */
+    ret = SetupDecompressOrCopyFileA(source, target, NULL);
+    ok(!ret, "SetupDecompressOrCopyFile failed unexpectedly: %d\n", ret);
+
+    /* try zip compression */
+    type = FILE_COMPRESSION_MSZIP;
+    ret = SetupDecompressOrCopyFileA(source, target, &type);
+    ok(!ret, "SetupDecompressOrCopyFile failed unexpectedly: %d\n", ret);
+    ok(compare_file_data(target, uncompressed, sizeof(uncompressed)), "incorrect target file\n");
+
+    /* try no compression */
+    type = FILE_COMPRESSION_NONE;
+    ret = SetupDecompressOrCopyFileA(source, target, &type);
+    ok(!ret, "SetupDecompressOrCopyFile failed unexpectedly: %d\n", ret);
+    ok(compare_file_data(target, comp_cab_zip, sizeof(comp_cab_zip)), "incorrect target file\n");
+
+    DeleteFileA(target);
+    DeleteFileA(source);
+}
+
 START_TEST(misc)
 {
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
     test_SetupCopyOEMInf();
     test_SetupGetFileCompressionInfoEx();
+    test_SetupDecompressOrCopyFile();
 }
