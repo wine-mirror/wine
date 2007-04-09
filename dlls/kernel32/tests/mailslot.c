@@ -258,8 +258,8 @@ static int mailslot_test(void)
     dwNext = dwMsgCount = 0;
     ok( GetMailslotInfo( hSlot, NULL, &dwNext, &dwMsgCount, NULL ),
         "getmailslotinfo failed\n");
-    todo_wine {
     ok( dwNext == 0, "dwNext incorrect\n");
+    todo_wine {
     ok( dwMsgCount == 1, "dwMsgCount incorrect\n");
     }
 

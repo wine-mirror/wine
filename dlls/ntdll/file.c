@@ -668,6 +668,7 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
 {
     async_fileio *fileio = (async_fileio *) ovp;
     int result, fd, needs_close;
+    enum server_fd_type type;
 
     TRACE("(%p %p 0x%x)\n",iosb, fileio->buffer, status);
 
@@ -676,12 +677,16 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
     case STATUS_ALERTED:
         /* write some data (non-blocking) */
         if ((status = server_get_unix_fd( fileio->handle, FILE_WRITE_DATA, &fd,
-                                          &needs_close, NULL, NULL )))
+                                          &needs_close, &type, NULL )))
         {
             fileio_terminate(fileio, iosb, status);
             break;
         }
-        result = write(fd, &fileio->buffer[fileio->already], fileio->count - fileio->already);
+        if (!fileio->count && (type == FD_TYPE_MAILSLOT || type == FD_TYPE_PIPE || type == FD_TYPE_SOCKET))
+            result = send( fd, fileio->buffer, 0, 0 );
+        else
+            result = write( fd, &fileio->buffer[fileio->already], fileio->count - fileio->already );
+
         if (needs_close) close( fd );
 
         if (result < 0)
@@ -772,7 +777,13 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
     for (;;)
     {
-        if ((result = write( unix_handle, (const char *)buffer + total, length - total )) >= 0)
+        /* zero-length writes on sockets may not work with plain write(2) */
+        if (!length && (type == FD_TYPE_MAILSLOT || type == FD_TYPE_PIPE || type == FD_TYPE_SOCKET))
+            result = send( unix_handle, buffer, 0, 0 );
+        else
+            result = write( unix_handle, (const char *)buffer + total, length - total );
+
+        if (result >= 0)
         {
             total += result;
             if (total == length)
