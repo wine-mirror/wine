@@ -473,7 +473,7 @@ BOOL WINAPI CertIsValidCRLForCertificate(PCCERT_CONTEXT pCert,
     return TRUE;
 }
 
-static PCRL_ENTRY CRYPT_FindCertificateInCRL(PCERT_INFO cert, PCRL_INFO crl)
+static PCRL_ENTRY CRYPT_FindCertificateInCRL(PCERT_INFO cert, const CRL_INFO *crl)
 {
     DWORD i;
     PCRL_ENTRY entry = NULL;

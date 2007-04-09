@@ -731,7 +731,7 @@ BOOL WINAPI CertCompareCertificateName(DWORD dwCertEncodingType,
  * insignificant if it's a leading 0 for positive numbers or a leading 0xff
  * for negative numbers.  pInt is assumed to be little-endian.
  */
-static DWORD CRYPT_significantBytes(PCRYPT_INTEGER_BLOB pInt)
+static DWORD CRYPT_significantBytes(const CRYPT_INTEGER_BLOB *pInt)
 {
     DWORD ret = pInt->cbData;
 
@@ -1350,7 +1350,7 @@ BOOL WINAPI CryptVerifyCertificateSignature(HCRYPTPROV hCryptProv,
 
 static BOOL CRYPT_VerifyCertSignatureFromPublicKeyInfo(HCRYPTPROV hCryptProv,
  DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pubKeyInfo,
- PCERT_SIGNED_CONTENT_INFO signedCert)
+ const CERT_SIGNED_CONTENT_INFO *signedCert)
 {
     BOOL ret;
     HCRYPTKEY key;
@@ -1911,7 +1911,7 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
  * pInfo is NULL, from the attributes of hProv.
  */
 static void CertContext_SetKeyProvInfo(PCCERT_CONTEXT context,
- PCRYPT_KEY_PROV_INFO pInfo, HCRYPTPROV hProv)
+ const CRYPT_KEY_PROV_INFO *pInfo, HCRYPTPROV hProv)
 {
     CRYPT_KEY_PROV_INFO info = { 0 };
     BOOL ret;
@@ -1995,7 +1995,7 @@ static void CertContext_SetKeyProvInfo(PCCERT_CONTEXT context,
 /* Creates a signed certificate context from the unsigned, encoded certificate
  * in blob, using the crypto provider hProv and the signature algorithm sigAlgo.
  */
-static PCCERT_CONTEXT CRYPT_CreateSignedCert(PCRYPT_DER_BLOB blob,
+static PCCERT_CONTEXT CRYPT_CreateSignedCert(const CRYPT_DER_BLOB *blob,
  HCRYPTPROV hProv, PCRYPT_ALGORITHM_IDENTIFIER sigAlgo)
 {
     PCCERT_CONTEXT context = NULL;
@@ -2050,11 +2050,11 @@ static PCCERT_CONTEXT CRYPT_CreateSignedCert(PCRYPT_DER_BLOB blob,
  * pubKey: The public key of the certificate.  Must not be NULL.
  * pExtensions: Extensions to be included with the certificate.  Optional.
  */
-static void CRYPT_MakeCertInfo(PCERT_INFO info, PCRYPT_DATA_BLOB pSerialNumber,
- PCERT_NAME_BLOB pSubjectIssuerBlob,
- PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm, PSYSTEMTIME pStartTime,
- PSYSTEMTIME pEndTime, PCERT_PUBLIC_KEY_INFO pubKey,
- PCERT_EXTENSIONS pExtensions)
+static void CRYPT_MakeCertInfo(PCERT_INFO info, const CRYPT_DATA_BLOB *pSerialNumber,
+ const CERT_NAME_BLOB *pSubjectIssuerBlob,
+ const CRYPT_ALGORITHM_IDENTIFIER *pSignatureAlgorithm, const SYSTEMTIME *pStartTime,
+ const SYSTEMTIME *pEndTime, const CERT_PUBLIC_KEY_INFO *pubKey,
+ const CERT_EXTENSIONS *pExtensions)
 {
     static CHAR oid[] = szOID_RSA_SHA1RSA;
 
