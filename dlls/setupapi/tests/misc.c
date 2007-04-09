@@ -340,8 +340,8 @@ static void test_SetupGetFileCompressionInfoEx(void)
     ok(ret, "SetupGetFileCompressionInfoEx failed unexpectedly: %d\n", ret);
     ok(!lstrcmpA(name, source), "got %s, expected %s\n", name, source);
     ok(required_len == lstrlenA(source) + 1, "got %d, expected %d\n", required_len, lstrlenA(source) + 1);
-    ok(source_size == sizeof(comp_lzx), "got %d, expected %d\n", source_size, sizeof(comp_lzx));
-    ok(target_size == sizeof(uncompressed), "got %d, expected %d\n", target_size, sizeof(uncompressed));
+    ok(source_size == sizeof(comp_lzx), "got %d\n", source_size);
+    ok(target_size == sizeof(uncompressed), "got %d\n", target_size);
     ok(type == FILE_COMPRESSION_WINLZA, "got %d, expected FILE_COMPRESSION_WINLZA\n", type);
     DeleteFileA(source);
 
@@ -351,8 +351,8 @@ static void test_SetupGetFileCompressionInfoEx(void)
     ok(ret, "SetupGetFileCompressionInfoEx failed unexpectedly: %d\n", ret);
     ok(!lstrcmpA(name, source), "got %s, expected %s\n", name, source);
     ok(required_len == lstrlenA(source) + 1, "got %d, expected %d\n", required_len, lstrlenA(source) + 1);
-    ok(source_size == sizeof(comp_zip), "got %d, expected %d\n", source_size, sizeof(comp_zip));
-    ok(target_size == sizeof(comp_zip), "got %d, expected %d\n", target_size, sizeof(comp_zip));
+    ok(source_size == sizeof(comp_zip), "got %d\n", source_size);
+    ok(target_size == sizeof(comp_zip), "got %d\n", target_size);
     ok(type == FILE_COMPRESSION_NONE, "got %d, expected FILE_COMPRESSION_NONE\n", type);
     DeleteFileA(source);
 
@@ -362,8 +362,8 @@ static void test_SetupGetFileCompressionInfoEx(void)
     ok(ret, "SetupGetFileCompressionInfoEx failed unexpectedly: %d\n", ret);
     ok(!lstrcmpA(name, source), "got %s, expected %s\n", name, source);
     ok(required_len == lstrlenA(source) + 1, "got %d, expected %d\n", required_len, lstrlenA(source) + 1);
-    ok(source_size == sizeof(comp_cab_lzx), "got %d, expected %d\n", source_size, sizeof(comp_cab_lzx));
-    ok(target_size == sizeof(uncompressed), "got %d, expected %d\n", target_size, sizeof(uncompressed));
+    ok(source_size == sizeof(comp_cab_lzx), "got %d\n", source_size);
+    ok(target_size == sizeof(uncompressed), "got %d\n", target_size);
     ok(type == FILE_COMPRESSION_MSZIP, "got %d, expected FILE_COMPRESSION_MSZIP\n", type);
     DeleteFileA(source);
 
@@ -373,8 +373,8 @@ static void test_SetupGetFileCompressionInfoEx(void)
     ok(ret, "SetupGetFileCompressionInfoEx failed unexpectedly: %d\n", ret);
     ok(!lstrcmpA(name, source), "got %s, expected %s\n", name, source);
     ok(required_len == lstrlenA(source) + 1, "got %d, expected %d\n", required_len, lstrlenA(source) + 1);
-    ok(source_size == sizeof(comp_cab_zip), "got %d, expected %d\n", source_size, sizeof(comp_cab_zip));
-    ok(target_size == sizeof(uncompressed), "got %d, expected %d\n", target_size, sizeof(uncompressed));
+    ok(source_size == sizeof(comp_cab_zip), "got %d\n", source_size);
+    ok(target_size == sizeof(uncompressed), "got %d\n", target_size);
     ok(type == FILE_COMPRESSION_MSZIP, "got %d, expected FILE_COMPRESSION_MSZIP\n", type);
     DeleteFileA(source);
 }
