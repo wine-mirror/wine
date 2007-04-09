@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = w32skrnl.dll
-IMPORTS   = kernel32
+IMPORTS   = kernel32 ntdll
 
 C_SRCS = \
 	w32skernel.c \

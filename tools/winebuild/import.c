@@ -429,6 +429,42 @@ static int check_unused( const struct import* imp, const DLLSPEC *spec )
     return 1;
 }
 
+/* check if a given forward does exist in one of the imported dlls */
+static void check_undefined_forward( DLLSPEC *spec, ORDDEF *odp )
+{
+    char *link_name, *api_name, *dll_name, *p;
+    int i, found = 0;
+
+    assert( odp->flags & FLAG_FORWARD );
+
+    link_name = xstrdup( odp->link_name );
+    p = strrchr( link_name, '.' );
+    *p = 0;
+    api_name = p + 1;
+    dll_name = get_dll_name( link_name, NULL );
+
+    for (i = 0; i < nb_imports; i++)
+    {
+        struct import *imp = dll_imports[i];
+
+        if (!strcasecmp( imp->spec->file_name, dll_name ))
+        {
+            if (find_export( api_name, imp->exports, imp->nb_exports ))
+            {
+                found = 1;
+                break;
+            }
+        }
+    }
+
+    free( link_name );
+    free( dll_name );
+
+    if (!found)
+        warning( "%s:%d: forward '%s' not found in the imported dll list\n",
+                 spec->src_name, odp->lineno, odp->link_name );
+}
+
 /* flag the dll exports that link to an undefined symbol */
 static void check_undefined_exports( DLLSPEC *spec )
 {
@@ -438,7 +474,11 @@ static void check_undefined_exports( DLLSPEC *spec )
     {
         ORDDEF *odp = &spec->entry_points[i];
         if (odp->type == TYPE_STUB) continue;
-        if (odp->flags & FLAG_FORWARD) continue;
+        if (odp->flags & FLAG_FORWARD)
+        {
+            check_undefined_forward( spec, odp );
+            continue;
+        }
         if (find_name( odp->link_name, &undef_symbols ))
         {
             switch(odp->type)
