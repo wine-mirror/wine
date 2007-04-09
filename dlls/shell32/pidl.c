@@ -1642,6 +1642,7 @@ DWORD _ILGetDrive(LPCITEMIDLIST pidl,LPSTR pOut, UINT uSize)
  *    ### 2. section testing pidls ###
  *
  **************************************************************************
+ *  _ILIsUnicode()
  *  _ILIsDesktop()
  *  _ILIsMyComputer()
  *  _ILIsSpecialFolder()
@@ -1650,6 +1651,15 @@ DWORD _ILGetDrive(LPCITEMIDLIST pidl,LPSTR pOut, UINT uSize)
  *  _ILIsValue()
  *  _ILIsPidlSimple()
  */
+BOOL _ILIsUnicode(LPCITEMIDLIST pidl)
+{
+    LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
+
+    TRACE("(%p)\n",pidl);
+
+    return (pidl && lpPData && PT_VALUEW == lpPData->type);
+}
+
 BOOL _ILIsDesktop(LPCITEMIDLIST pidl)
 {
     TRACE("(%p)\n",pidl);

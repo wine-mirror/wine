@@ -201,6 +201,7 @@ DWORD	_ILGetDrive		(LPCITEMIDLIST, LPSTR, UINT);
 /*
  * testing simple pidls
  */
+BOOL	_ILIsUnicode		(LPCITEMIDLIST pidl);
 BOOL	_ILIsDesktop		(LPCITEMIDLIST pidl);
 BOOL	_ILIsMyComputer		(LPCITEMIDLIST pidl);
 BOOL	_ILIsDrive		(LPCITEMIDLIST pidl);
