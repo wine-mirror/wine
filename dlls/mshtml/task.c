@@ -227,13 +227,17 @@ static void process_task(task_t *task)
 {
     switch(task->task_id) {
     case TASK_SETDOWNLOADSTATE:
-        return set_downloading(task->doc);
+        set_downloading(task->doc);
+        break;
     case TASK_PARSECOMPLETE:
-        return set_parsecomplete(task->doc);
+        set_parsecomplete(task->doc);
+        break;
     case TASK_SETPROGRESS:
-        return set_progress(task->doc);
+        set_progress(task->doc);
+        break;
     case TASK_START_BINDING:
-        return task_start_binding(task->bscallback);
+        task_start_binding(task->bscallback);
+        break;
     default:
         ERR("Wrong task_id %d\n", task->task_id);
     }
