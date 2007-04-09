@@ -1754,6 +1754,7 @@ DWORD _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 {
     DWORD        dwReturn=0;
     LPSTR        szSrc;
+    LPWSTR       szSrcW;
     GUID const * riid;
     char szTemp[MAX_PATH];
 
@@ -1783,6 +1784,16 @@ DWORD _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
             lstrcpynA(szOut, szSrc, uOutSize);
 
         dwReturn = strlen(szSrc);
+    }
+    else if (( szSrcW = _ILGetTextPointerW(pidl) ))
+    {
+        /* unicode filesystem */
+        WideCharToMultiByte(CP_ACP,0,szSrcW, -1, szTemp, MAX_PATH, NULL, NULL);
+
+        if (szOut)
+            lstrcpynA(szOut, szTemp, uOutSize);
+
+        dwReturn = strlen (szTemp);
     }
     else if (( riid = _ILGetGUIDPointer(pidl) ))
     {
@@ -1814,7 +1825,6 @@ DWORD _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 DWORD _ILSimpleGetTextW (LPCITEMIDLIST pidl, LPWSTR szOut, UINT uOutSize)
 {
     DWORD   dwReturn;
-    char    szTemp[MAX_PATH];
     FileStructW *pFileStructW = _ILGetFileStructW(pidl);
 
     TRACE("(%p %p %x)\n",pidl,szOut,uOutSize);
@@ -1823,10 +1833,62 @@ DWORD _ILSimpleGetTextW (LPCITEMIDLIST pidl, LPWSTR szOut, UINT uOutSize)
         lstrcpynW(szOut, pFileStructW->wszName, uOutSize);
         dwReturn = lstrlenW(pFileStructW->wszName);
     } else {
-        dwReturn = _ILSimpleGetText(pidl, szTemp, MAX_PATH);
+        GUID const * riid;
+        WCHAR szTemp[MAX_PATH];
+        LPSTR szSrc;
+        LPWSTR szSrcW;
+        dwReturn=0;
 
-        if (!MultiByteToWideChar(CP_ACP, 0, szTemp, -1, szOut, uOutSize))
+        if (!pidl)
+            return 0;
+
+        if (szOut)
             *szOut = 0;
+
+        if (_ILIsDesktop(pidl))
+        {
+            /* desktop */
+            if (HCR_GetClassNameW(&CLSID_ShellDesktop, szTemp, MAX_PATH))
+            {
+                if (szOut)
+                    lstrcpynW(szOut, szTemp, uOutSize);
+
+                dwReturn = lstrlenW (szTemp);
+            }
+        }
+        else if (( szSrcW = _ILGetTextPointerW(pidl) ))
+        {
+            /* unicode filesystem */
+            if (szOut)
+                lstrcpynW(szOut, szSrcW, uOutSize);
+
+            dwReturn = lstrlenW(szSrcW);
+        }
+        else if (( szSrc = _ILGetTextPointer(pidl) ))
+        {
+            /* filesystem */
+            MultiByteToWideChar(CP_ACP, 0, szSrc, -1, szTemp, MAX_PATH);
+
+            if (szOut)
+                lstrcpynW(szOut, szTemp, uOutSize);
+
+            dwReturn = lstrlenW (szTemp);
+        }
+        else if (( riid = _ILGetGUIDPointer(pidl) ))
+        {
+            /* special folder */
+            if ( HCR_GetClassNameW(riid, szTemp, MAX_PATH) )
+            {
+                if (szOut)
+                    lstrcpynW(szOut, szTemp, uOutSize);
+
+                dwReturn = lstrlenW (szTemp);
+            }
+        }
+        else
+        {
+            ERR("-- no text\n");
+        }
     }
 
     TRACE("-- (%p=%s 0x%08x)\n",szOut,debugstr_w(szOut),dwReturn);
@@ -1846,6 +1908,56 @@ LPPIDLDATA _ILGetDataPointer(LPCITEMIDLIST pidl)
         return (LPPIDLDATA) &(pidl->mkid.abID);
     return NULL;
 }
+
+/**************************************************************************
+ *  _ILGetTextPointerW()
+ * gets a pointer to the unicode long filename string stored in the pidl
+ */
+LPWSTR _ILGetTextPointerW(LPCITEMIDLIST pidl)
+{
+    /* TRACE(pidl,"(pidl%p)\n", pidl);*/
+
+    LPPIDLDATA pdata = _ILGetDataPointer(pidl);
+
+    if (!pdata)
+        return NULL;
+
+    switch (pdata->type)
+    {
+    case PT_GUID:
+    case PT_SHELLEXT:
+    case PT_YAGUID:
+        return NULL;
+
+    case PT_DRIVE:
+    case PT_DRIVE1:
+    case PT_DRIVE2:
+    case PT_DRIVE3:
+        /*return (LPSTR)&(pdata->u.drive.szDriveName);*/
+        return NULL;
+
+    case PT_FOLDER:
+    case PT_FOLDER1:
+    case PT_VALUE:
+    case PT_IESPECIAL1:
+    case PT_IESPECIAL2:
+        /*return (LPSTR)&(pdata->u.file.szNames);*/
+        return NULL;
+
+    case PT_WORKGRP:
+    case PT_COMP:
+    case PT_NETWORK:
+    case PT_NETPROVIDER:
+    case PT_SHARE:
+        /*return (LPSTR)&(pdata->u.network.szNames);*/
+        return NULL;
+
+    case PT_VALUEW:
+        return (LPWSTR)&(pdata->u.file.szNames);
+    }
+    return NULL;
+}
+
 
 /**************************************************************************
  *  _ILGetTextPointer()

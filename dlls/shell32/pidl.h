@@ -261,6 +261,7 @@ LPITEMIDLIST	_ILCreateDrive		(LPCWSTR);
  */
 LPPIDLDATA	_ILGetDataPointer	(LPCITEMIDLIST);
 LPSTR		_ILGetTextPointer	(LPCITEMIDLIST);
+LPWSTR		_ILGetTextPointerW	(LPCITEMIDLIST);
 LPSTR		_ILGetSTextPointer	(LPCITEMIDLIST);
 IID		*_ILGetGUIDPointer	(LPCITEMIDLIST pidl);
 FileStructW     *_ILGetFileStructW      (LPCITEMIDLIST pidl);
