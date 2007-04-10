@@ -1725,8 +1725,7 @@ end:
         closesocket(dst);
     if (hThread != NULL)
         CloseHandle(hThread);
-    if (buffer != NULL)
-        HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, buffer);
 }
 
 static void test_write_events(void)
