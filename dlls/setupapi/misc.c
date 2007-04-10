@@ -1201,6 +1201,81 @@ BOOL WINAPI SetupGetFileCompressionInfoExW( PCWSTR source, PWSTR name, DWORD len
     return ret;
 }
 
+/***********************************************************************
+ *      SetupGetFileCompressionInfoA  (SETUPAPI.@)
+ *
+ * See SetupGetFileCompressionInfoW.
+ */
+DWORD WINAPI SetupGetFileCompressionInfoA( PCSTR source, PSTR *name, PDWORD source_size,
+                                           PDWORD target_size, PUINT type )
+{
+    BOOL ret;
+    DWORD error, required;
+    LPSTR actual_name;
+
+    TRACE("%s, %p, %p, %p, %p\n", debugstr_a(source), name, source_size, target_size, type);
+
+    if (!source || !name || !source_size || !target_size || !type)
+        return ERROR_INVALID_PARAMETER;
+
+    ret = SetupGetFileCompressionInfoExA( source, NULL, 0, &required, NULL, NULL, NULL );
+    if (!(actual_name = MyMalloc( required ))) return ERROR_NOT_ENOUGH_MEMORY;
+
+    ret = SetupGetFileCompressionInfoExA( source, actual_name, required, &required,
+                                          source_size, target_size, type );
+    if (!ret)
+    {
+        error = GetLastError();
+        MyFree( actual_name );
+        return error;
+    }
+    *name = actual_name;
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *      SetupGetFileCompressionInfoW  (SETUPAPI.@)
+ *
+ * Get compression type and compressed/uncompressed sizes of a given file.
+ *
+ * PARAMS
+ *  source      [I] File to examine.
+ *  name        [O] Actual filename used.
+ *  source_size [O] Size of compressed file.
+ *  target_size [O] Size of uncompressed file.
+ *  type        [O] Compression type.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: Win32 error code.
+ */
+DWORD WINAPI SetupGetFileCompressionInfoW( PCWSTR source, PWSTR *name, PDWORD source_size,
+                                           PDWORD target_size, PUINT type )
+{
+    BOOL ret;
+    DWORD error, required;
+    LPWSTR actual_name;
+
+    TRACE("%s, %p, %p, %p, %p\n", debugstr_w(source), name, source_size, target_size, type);
+
+    if (!source || !name || !source_size || !target_size || !type)
+        return ERROR_INVALID_PARAMETER;
+
+    ret = SetupGetFileCompressionInfoExW( source, NULL, 0, &required, NULL, NULL, NULL );
+    if (!(actual_name = MyMalloc( required ))) return ERROR_NOT_ENOUGH_MEMORY;
+
+    ret = SetupGetFileCompressionInfoExW( source, actual_name, required, &required,
+                                          source_size, target_size, type );
+    if (!ret)
+    {
+        error = GetLastError();
+        MyFree( actual_name );
+        return error;
+    }
+    *name = actual_name;
+    return ERROR_SUCCESS;
+}
+
 static DWORD decompress_file_lz( LPCWSTR source, LPCWSTR target )
 {
     DWORD ret;

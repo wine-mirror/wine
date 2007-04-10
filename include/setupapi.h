@@ -819,6 +819,9 @@ BOOL     WINAPI SetupFindNextMatchLineW( PINFCONTEXT context_in, PCWSTR key, PIN
 #define         SetupFindNextMatchLine WINELIB_NAME_AW(SetupFindNextMatchLine)
 BOOL     WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer, DWORD size, LPDWORD required );
 DWORD    WINAPI SetupGetFieldCount( PINFCONTEXT context );
+DWORD    WINAPI SetupGetFileCompressionInfoA(PCSTR, PSTR *, PDWORD, PDWORD, PUINT);
+DWORD    WINAPI SetupGetFileCompressionInfoW(PCWSTR, PWSTR *, PDWORD, PDWORD, PUINT);
+#define         SetupGetFileCompressionInfo WINELIB_NAME_AW(SetupGetFileCompressionInfo)
 BOOL     WINAPI SetupGetFileCompressionInfoExA(PCSTR, PSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
 BOOL     WINAPI SetupGetFileCompressionInfoExW(PCWSTR, PWSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
 #define         SetupGetFileCompressionInfoEx WINELIB_NAME_AW(SetupGetFileCompressionInfoEx)

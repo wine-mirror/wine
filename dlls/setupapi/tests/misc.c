@@ -316,6 +316,46 @@ static const BYTE comp_cab_zip[] =  {
     0x2d, 0x28, 0x4a, 0x2d, 0x2e, 0x4e, 0x4d, 0xe1, 0xe5, 0x02, 0x00
 };
 
+static void test_SetupGetFileCompressionInfo(void)
+{
+    DWORD ret, source_size, target_size;
+    char source[MAX_PATH], temp[MAX_PATH], *name;
+    UINT type;
+
+    GetTempPathA(sizeof(temp), temp);
+    GetTempFileNameA(temp, "fci", 0, source);
+
+    create_source_file(source, uncompressed, sizeof(uncompressed));
+
+    ret = SetupGetFileCompressionInfoA(NULL, NULL, NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "SetupGetFileCompressionInfo failed unexpectedly\n");
+
+    ret = SetupGetFileCompressionInfoA(source, NULL, NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "SetupGetFileCompressionInfo failed unexpectedly\n");
+
+    ret = SetupGetFileCompressionInfoA(source, &name, NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "SetupGetFileCompressionInfo failed unexpectedly\n");
+
+    ret = SetupGetFileCompressionInfoA(source, &name, &source_size, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "SetupGetFileCompressionInfo failed unexpectedly\n");
+
+    ret = SetupGetFileCompressionInfoA(source, &name, &source_size, &target_size, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "SetupGetFileCompressionInfo failed unexpectedly\n");
+
+    name = NULL;
+    source_size = target_size = 0;
+    type = 5;
+
+    ret = SetupGetFileCompressionInfoA(source, &name, &source_size, &target_size, &type);
+    ok(!ret, "SetupGetFileCompressionInfo failed unexpectedly\n");
+    ok(name && !lstrcmpA(name, source), "got %s, expected %s\n", name, source);
+    ok(source_size == sizeof(uncompressed), "got %d\n", source_size);
+    ok(target_size == sizeof(uncompressed), "got %d\n", target_size);
+    ok(type == FILE_COMPRESSION_NONE, "got %d, expected FILE_COMPRESSION_NONE\n", type);
+
+    DeleteFileA(source);
+}
+
 static void test_SetupGetFileCompressionInfoEx(void)
 {
     BOOL ret;
@@ -491,6 +531,7 @@ START_TEST(misc)
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
     test_SetupCopyOEMInf();
+    test_SetupGetFileCompressionInfo();
 
     if (pSetupGetFileCompressionInfoExA)
         test_SetupGetFileCompressionInfoEx();

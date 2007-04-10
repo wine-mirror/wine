@@ -395,10 +395,10 @@
 @ stub SetupGetBackupInformationW
 @ stdcall SetupGetBinaryField(ptr long ptr long ptr)
 @ stdcall SetupGetFieldCount(ptr)
-@ stub SetupGetFileCompressionInfoA
+@ stdcall SetupGetFileCompressionInfoA(str ptr ptr ptr ptr)
 @ stdcall SetupGetFileCompressionInfoExA(str ptr long ptr ptr ptr ptr)
 @ stdcall SetupGetFileCompressionInfoExW(wstr ptr long ptr ptr ptr ptr)
-@ stub SetupGetFileCompressionInfoW
+@ stdcall SetupGetFileCompressionInfoW(wstr ptr ptr ptr ptr)
 @ stdcall SetupGetFileQueueCount(long long ptr)
 @ stdcall SetupGetFileQueueFlags(long ptr)
 @ stub SetupGetInfFileListA
