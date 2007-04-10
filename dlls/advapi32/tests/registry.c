@@ -657,10 +657,22 @@ static void test_reg_delete_key(void)
     DWORD ret;
 
     ret = RegDeleteKey(hkey_main, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER ||
-       ret == ERROR_ACCESS_DENIED ||
-       ret == ERROR_BADKEY, /* Win95 */
-       "ret=%d\n", ret);
+
+    /* There is a bug in NT4 and W2K that doesn't check if the subkey is NULL. If
+     * there are also no subkeys available it will delete the key pointed to by hkey_main.
+     * Not re-creating will make some next tests fail.
+     */
+    if (ret == ERROR_SUCCESS)
+    {
+        trace("We are probably running on NT4 or W2K as the main key is deleted,"
+            " re-creating the main key\n");
+        setup_main_key();
+    }
+    else
+        ok(ret == ERROR_INVALID_PARAMETER ||
+           ret == ERROR_ACCESS_DENIED ||
+           ret == ERROR_BADKEY, /* Win95 */
+           "ret=%d\n", ret);
 }
 
 static void test_reg_save_key(void)
