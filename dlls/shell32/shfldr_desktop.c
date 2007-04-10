@@ -558,7 +558,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
 {
     IGenericSFImpl *This = (IGenericSFImpl *)iface;
     HRESULT hr = S_OK;
-    WCHAR wszPath[MAX_PATH];
+    LPWSTR pszPath;
 
     TRACE ("(%p)->(pidl=%p,0x%08x,%p)\n", This, pidl, dwFlags, strRet);
     pdump (pidl);
@@ -566,13 +566,17 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
     if (!strRet)
         return E_INVALIDARG;
 
+    pszPath = CoTaskMemAlloc((MAX_PATH +1) * sizeof(WCHAR));
+    if (!pszPath)
+        return E_OUTOFMEMORY;
+
     if (_ILIsDesktop (pidl))
     {
         if ((GET_SHGDN_RELATION (dwFlags) == SHGDN_NORMAL) &&
             (GET_SHGDN_FOR (dwFlags) & SHGDN_FORPARSING))
-            strcpyW(wszPath, This->sPathTarget);
+            strcpyW(pszPath, This->sPathTarget);
         else
-            HCR_GetClassNameW(&CLSID_ShellDesktop, wszPath, MAX_PATH);
+            HCR_GetClassNameW(&CLSID_ShellDesktop, pszPath, MAX_PATH);
     }
     else if (_ILIsPidlSimple (pidl))
     {
@@ -627,21 +631,21 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
                      * Only the folder itself can know it
                      */
                     hr = SHELL32_GetDisplayNameOfChild (iface, pidl, dwFlags,
-                                                        wszPath,
+                                                        pszPath,
                                                         MAX_PATH);
                 }
                 else
                 {
                     /* parsing name like ::{...} */
-                    wszPath[0] = ':';
-                    wszPath[1] = ':';
-                    SHELL32_GUIDToStringW (clsid, &wszPath[2]);
+                    pszPath[0] = ':';
+                    pszPath[1] = ':';
+                    SHELL32_GUIDToStringW (clsid, &pszPath[2]);
                 }
             }
             else
             {
                 /* user friendly name */
-                HCR_GetClassNameW (clsid, wszPath, MAX_PATH);
+                HCR_GetClassNameW (clsid, pszPath, MAX_PATH);
             }
         }
         else
@@ -652,44 +656,43 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
             if ((GET_SHGDN_FOR(dwFlags) == SHGDN_FORPARSING) &&
                 (GET_SHGDN_RELATION(dwFlags) != SHGDN_INFOLDER))
             {
-                lstrcpynW(wszPath, This->sPathTarget, MAX_PATH - 1);
-                PathAddBackslashW(wszPath);
-                cLen = lstrlenW(wszPath);
+                lstrcpynW(pszPath, This->sPathTarget, MAX_PATH - 1);
+                PathAddBackslashW(pszPath);
+                cLen = lstrlenW(pszPath);
             }
 
-            _ILSimpleGetTextW(pidl, wszPath + cLen, MAX_PATH - cLen);
+            _ILSimpleGetTextW(pidl, pszPath + cLen, MAX_PATH - cLen);
 
             if (!_ILIsFolder(pidl))
-                SHELL_FS_ProcessDisplayFilename(wszPath, dwFlags);
+                SHELL_FS_ProcessDisplayFilename(pszPath, dwFlags);
         }
     }
     else
     {
         /* a complex pidl, let the subfolder do the work */
         hr = SHELL32_GetDisplayNameOfChild (iface, pidl, dwFlags,
-                                            wszPath, MAX_PATH);
+                                            pszPath, MAX_PATH);
     }
 
     if (SUCCEEDED(hr))
     {
-        BOOL defCharUsed;
-        strRet->uType = STRRET_CSTR;
-        if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, strRet->u.cStr, MAX_PATH,
-                                 NULL, &defCharUsed))
-            strRet->u.cStr[0] = '\0';
-        if (defCharUsed)
+        /* Win9x always returns ANSI strings, NT always returns Unicode strings */
+        if (GetVersion() & 0x80000000)
         {
-            strRet->u.pOleStr = SHAlloc((lstrlenW(This->sPathTarget)+1) *
-             sizeof(WCHAR));
-            if (!strRet->u.pOleStr)
-                hr = E_OUTOFMEMORY;
-            else
-            {
-                strcpyW(strRet->u.pOleStr, This->sPathTarget);
-                strRet->uType = STRRET_WSTR;
-            }
+            strRet->uType = STRRET_CSTR;
+            if (!WideCharToMultiByte(CP_ACP, 0, pszPath, -1, strRet->u.cStr, MAX_PATH,
+                                     NULL, NULL))
+                strRet->u.cStr[0] = '\0';
+            CoTaskMemFree(pszPath);
+        }
+        else
+        {
+            strRet->uType = STRRET_WSTR;
+            strRet->u.pOleStr = pszPath;
         }
     }
+    else
+        CoTaskMemFree(pszPath);
 
     TRACE ("-- (%p)->(%s,0x%08x)\n", This,
      strRet->uType == STRRET_CSTR ? strRet->u.cStr :

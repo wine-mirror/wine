@@ -771,7 +771,7 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
                                  DWORD dwFlags, LPSTRRET strRet)
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
-    WCHAR wszPath[MAX_PATH+1];
+    LPWSTR pszPath;
 
     HRESULT hr = S_OK;
     int len = 0;
@@ -782,12 +782,16 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
     if (!pidl || !strRet)
         return E_INVALIDARG;
 
+    pszPath = CoTaskMemAlloc((MAX_PATH +1) * sizeof(WCHAR));
+    if (!pszPath)
+        return E_OUTOFMEMORY;
+
     if (_ILIsDesktop(pidl)) { /* empty pidl */
         if ((GET_SHGDN_FOR(dwFlags) & SHGDN_FORPARSING) &&
             (GET_SHGDN_RELATION(dwFlags) != SHGDN_INFOLDER)) 
         {
             if (This->sPathTarget)
-                lstrcpynW(wszPath, This->sPathTarget, MAX_PATH);
+                lstrcpynW(pszPath, This->sPathTarget, MAX_PATH);
         } else {
             /* pidl has to contain exactly one non null SHITEMID */
             hr = E_INVALIDARG;
@@ -797,24 +801,32 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
             (GET_SHGDN_RELATION(dwFlags) != SHGDN_INFOLDER) && 
             This->sPathTarget) 
         {
-            lstrcpynW(wszPath, This->sPathTarget, MAX_PATH);
-            PathAddBackslashW(wszPath);
-            len = lstrlenW(wszPath);
+            lstrcpynW(pszPath, This->sPathTarget, MAX_PATH);
+            PathAddBackslashW(pszPath);
+            len = lstrlenW(pszPath);
         }
-        _ILSimpleGetTextW(pidl, wszPath + len, MAX_PATH + 1 - len);
-        if (!_ILIsFolder(pidl)) SHELL_FS_ProcessDisplayFilename(wszPath, dwFlags);
+        _ILSimpleGetTextW(pidl, pszPath + len, MAX_PATH + 1 - len);
+        if (!_ILIsFolder(pidl)) SHELL_FS_ProcessDisplayFilename(pszPath, dwFlags);
     } else {
-        hr = SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags, wszPath, MAX_PATH);
+        hr = SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags, pszPath, MAX_PATH);
     }
 
     if (SUCCEEDED(hr)) {
-        strRet->uType = STRRET_CSTR;
-        if (!WideCharToMultiByte(CP_ACP, 0, wszPath, -1, strRet->u.cStr, MAX_PATH,
-             NULL, NULL))
-            strRet->u.cStr[0] = '\0';
-    }
+        /* Win9x always returns ANSI strings, NT always returns Unicode strings */
+        if (GetVersion() & 0x80000000) {
+            strRet->uType = STRRET_CSTR;
+            if (!WideCharToMultiByte(CP_ACP, 0, pszPath, -1, strRet->u.cStr, MAX_PATH,
+                 NULL, NULL))
+                strRet->u.cStr[0] = '\0';
+            CoTaskMemFree(pszPath);
+        } else {
+            strRet->uType = STRRET_WSTR;
+            strRet->u.pOleStr = pszPath;
+        }
+    } else
+        CoTaskMemFree(pszPath);
 
-    TRACE ("-- (%p)->(%s)\n", This, strRet->u.cStr);
+    TRACE ("-- (%p)->(%s)\n", This, strRet->uType == STRRET_CSTR ? strRet->u.cStr : debugstr_w(strRet->u.pOleStr));
     return hr;
 }
 
