@@ -95,7 +95,7 @@ static void sock_destroy( struct object *obj );
 
 static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
-static enum server_fd_type sock_get_info( struct fd *fd, int *flags );
+static enum server_fd_type sock_get_fd_type( struct fd *fd );
 static void sock_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 static void sock_cancel_async( struct fd *fd );
@@ -125,7 +125,7 @@ static const struct fd_ops sock_fd_ops =
     sock_get_poll_events,         /* get_poll_events */
     sock_poll_event,              /* poll_event */
     no_flush,                     /* flush */
-    sock_get_info,                /* get_file_info */
+    sock_get_fd_type,             /* get_file_info */
     sock_queue_async,             /* queue_async */
     sock_reselect_async,          /* reselect_async */
     sock_cancel_async             /* cancel_async */
@@ -491,17 +491,8 @@ static int sock_get_poll_events( struct fd *fd )
     return ev;
 }
 
-static enum server_fd_type sock_get_info( struct fd *fd, int *flags )
+static enum server_fd_type sock_get_fd_type( struct fd *fd )
 {
-    struct sock *sock = get_fd_user( fd );
-    assert( sock->obj.ops == &sock_ops );
-
-    *flags = 0;
-    if ( sock->type != SOCK_STREAM || sock->state & FD_WINE_CONNECTED )
-    {
-        if ( !(sock->state & FD_READ  ) ) *flags |= FD_FLAG_RECV_SHUTDOWN;
-        if ( !(sock->state & FD_WRITE ) ) *flags |= FD_FLAG_SEND_SHUTDOWN;
-    }
     return FD_TYPE_SOCKET;
 }
 

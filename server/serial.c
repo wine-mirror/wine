@@ -61,7 +61,7 @@ static struct fd *serial_get_fd( struct object *obj );
 static unsigned int serial_map_access( struct object *obj, unsigned int access );
 static void serial_destroy(struct object *obj);
 
-static enum server_fd_type serial_get_info( struct fd *fd, int *flags );
+static enum server_fd_type serial_get_fd_type( struct fd *fd );
 static void serial_flush( struct fd *fd, struct event **event );
 static void serial_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 
@@ -106,7 +106,7 @@ static const struct fd_ops serial_fd_ops =
     default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
     serial_flush,                 /* flush */
-    serial_get_info,              /* get_file_info */
+    serial_get_fd_type,           /* get_file_info */
     serial_queue_async,           /* queue_async */
     default_fd_reselect_async,    /* reselect_async */
     default_fd_cancel_async       /* cancel_async */
@@ -171,12 +171,8 @@ static struct serial *get_serial_obj( struct process *process, obj_handle_t hand
     return (struct serial *)get_handle_obj( process, handle, access, &serial_ops );
 }
 
-static enum server_fd_type serial_get_info( struct fd *fd, int *flags )
+static enum server_fd_type serial_get_fd_type( struct fd *fd )
 {
-    struct serial *serial = get_fd_user( fd );
-    assert( serial->obj.ops == &serial_ops );
-
-    *flags = 0;
     return FD_TYPE_SERIAL;
 }
 

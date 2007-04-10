@@ -179,14 +179,14 @@ static const struct object_ops dir_ops =
 };
 
 static int dir_get_poll_events( struct fd *fd );
-static enum server_fd_type dir_get_info( struct fd *fd, int *flags );
+static enum server_fd_type dir_get_fd_type( struct fd *fd );
 
 static const struct fd_ops dir_fd_ops =
 {
     dir_get_poll_events,         /* get_poll_events */
     default_poll_event,          /* poll_event */
     no_flush,                    /* flush */
-    dir_get_info,                /* get_file_info */
+    dir_get_fd_type,             /* get_fd_type */
     default_fd_queue_async,      /* queue_async */
     default_fd_reselect_async,   /* reselect_async */
     default_fd_cancel_async      /* cancel_async */
@@ -342,9 +342,8 @@ static int dir_get_poll_events( struct fd *fd )
     return 0;
 }
 
-static enum server_fd_type dir_get_info( struct fd *fd, int *flags )
+static enum server_fd_type dir_get_fd_type( struct fd *fd )
 {
-    *flags = 0;
     return FD_TYPE_DIR;
 }
 
@@ -520,7 +519,7 @@ static const struct fd_ops inotify_fd_ops =
     inotify_get_poll_events,     /* get_poll_events */
     inotify_poll_event,          /* poll_event */
     no_flush,                    /* flush */
-    no_get_file_info,            /* get_file_info */
+    no_get_fd_type,              /* get_fd_type */
     default_fd_queue_async,      /* queue_async */
     default_fd_reselect_async,   /* reselect_async */
     default_fd_cancel_async,     /* cancel_async */

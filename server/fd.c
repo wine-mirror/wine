@@ -1779,10 +1779,9 @@ void no_flush( struct fd *fd, struct event **event )
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
 }
 
-/* default get_file_info() routine */
-enum server_fd_type no_get_file_info( struct fd *fd, int *flags )
+/* default get_fd_type() routine */
+enum server_fd_type no_get_fd_type( struct fd *fd )
 {
-    *flags = 0;
     return FD_TYPE_INVALID;
 }
 
@@ -1908,7 +1907,8 @@ DECL_HANDLER(get_handle_fd)
 
     if ((fd = get_handle_fd_obj( current->process, req->handle, req->access )))
     {
-        reply->type = fd->fd_ops->get_file_info( fd, &reply->flags );
+        reply->flags = 0;
+        reply->type = fd->fd_ops->get_fd_type( fd );
         if (reply->type != FD_TYPE_INVALID)
         {
             if (!(fd->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))

@@ -137,7 +137,7 @@ static void pipe_server_dump( struct object *obj, int verbose );
 static struct fd *pipe_server_get_fd( struct object *obj );
 static void pipe_server_destroy( struct object *obj);
 static void pipe_server_flush( struct fd *fd, struct event **event );
-static enum server_fd_type pipe_server_get_info( struct fd *fd, int *flags );
+static enum server_fd_type pipe_server_get_fd_type( struct fd *fd );
 
 static const struct object_ops pipe_server_ops =
 {
@@ -161,7 +161,7 @@ static const struct fd_ops pipe_server_fd_ops =
     default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
     pipe_server_flush,            /* flush */
-    pipe_server_get_info,         /* get_file_info */
+    pipe_server_get_fd_type,      /* get_fd_type */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async,    /* reselect_async */
     default_fd_cancel_async,      /* cancel_async */
@@ -172,7 +172,7 @@ static void pipe_client_dump( struct object *obj, int verbose );
 static struct fd *pipe_client_get_fd( struct object *obj );
 static void pipe_client_destroy( struct object *obj );
 static void pipe_client_flush( struct fd *fd, struct event **event );
-static enum server_fd_type pipe_client_get_info( struct fd *fd, int *flags );
+static enum server_fd_type pipe_client_get_fd_type( struct fd *fd );
 
 static const struct object_ops pipe_client_ops =
 {
@@ -196,7 +196,7 @@ static const struct fd_ops pipe_client_fd_ops =
     default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
     pipe_client_flush,            /* flush */
-    pipe_client_get_info,         /* get_file_info */
+    pipe_client_get_fd_type,      /* get_fd_type */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async,    /* reselect_async */
     default_fd_cancel_async       /* cancel_async */
@@ -209,7 +209,7 @@ static struct object *named_pipe_device_lookup_name( struct object *obj,
 static struct object *named_pipe_device_open_file( struct object *obj, unsigned int access,
                                                    unsigned int sharing, unsigned int options );
 static void named_pipe_device_destroy( struct object *obj );
-static enum server_fd_type named_pipe_device_get_file_info( struct fd *fd, int *flags );
+static enum server_fd_type named_pipe_device_get_fd_type( struct fd *fd );
 
 static const struct object_ops named_pipe_device_ops =
 {
@@ -233,7 +233,7 @@ static const struct fd_ops named_pipe_device_fd_ops =
     default_fd_get_poll_events,       /* get_poll_events */
     default_poll_event,               /* poll_event */
     no_flush,                         /* flush */
-    named_pipe_device_get_file_info,  /* get_file_info */
+    named_pipe_device_get_fd_type,    /* get_fd_type */
     default_fd_queue_async,           /* queue_async */
     default_fd_reselect_async,        /* reselect_async */
     default_fd_cancel_async           /* cancel_async */
@@ -456,9 +456,8 @@ static void named_pipe_device_destroy( struct object *obj )
     free( device->pipes );
 }
 
-static enum server_fd_type named_pipe_device_get_file_info( struct fd *fd, int *flags )
+static enum server_fd_type named_pipe_device_get_fd_type( struct fd *fd )
 {
-    *flags = 0;
     return FD_TYPE_DEVICE;
 }
 
@@ -555,15 +554,13 @@ static inline int is_overlapped( unsigned int options )
     return !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
 }
 
-static enum server_fd_type pipe_server_get_info( struct fd *fd, int *flags )
+static enum server_fd_type pipe_server_get_fd_type( struct fd *fd )
 {
-    *flags = 0;
     return FD_TYPE_PIPE;
 }
 
-static enum server_fd_type pipe_client_get_info( struct fd *fd, int *flags )
+static enum server_fd_type pipe_client_get_fd_type( struct fd *fd )
 {
-    *flags = 0;
     return FD_TYPE_PIPE;
 }
 

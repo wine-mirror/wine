@@ -87,7 +87,7 @@ static const struct object_ops mailslot_ops =
     mailslot_destroy           /* destroy */
 };
 
-static enum server_fd_type mailslot_get_info( struct fd *fd, int *flags );
+static enum server_fd_type mailslot_get_fd_type( struct fd *fd );
 static void mailslot_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 
 static const struct fd_ops mailslot_fd_ops =
@@ -95,7 +95,7 @@ static const struct fd_ops mailslot_fd_ops =
     default_fd_get_poll_events, /* get_poll_events */
     default_poll_event,         /* poll_event */
     no_flush,                   /* flush */
-    mailslot_get_info,          /* get_file_info */
+    mailslot_get_fd_type,       /* get_fd_type */
     mailslot_queue_async,       /* queue_async */
     default_fd_reselect_async,  /* reselect_async */
     default_fd_cancel_async     /* cancel_async */
@@ -133,14 +133,14 @@ static const struct object_ops mail_writer_ops =
     mail_writer_destroy         /* destroy */
 };
 
-static enum server_fd_type mail_writer_get_info( struct fd *fd, int *flags );
+static enum server_fd_type mail_writer_get_fd_type( struct fd *fd );
 
 static const struct fd_ops mail_writer_fd_ops =
 {
     NULL,                        /* get_poll_events */
     NULL,                        /* poll_event */
     no_flush,                    /* flush */
-    mail_writer_get_info,        /* get_file_info */
+    mail_writer_get_fd_type,     /* get_fd_type */
     no_queue_async,              /* queue_async */
     NULL                         /* cancel_async */
 };
@@ -160,7 +160,7 @@ static struct object *mailslot_device_lookup_name( struct object *obj, struct un
 static struct object *mailslot_device_open_file( struct object *obj, unsigned int access,
                                                  unsigned int sharing, unsigned int options );
 static void mailslot_device_destroy( struct object *obj );
-static enum server_fd_type mailslot_device_get_file_info( struct fd *fd, int *flags );
+static enum server_fd_type mailslot_device_get_fd_type( struct fd *fd );
 
 static const struct object_ops mailslot_device_ops =
 {
@@ -184,7 +184,7 @@ static const struct fd_ops mailslot_device_fd_ops =
     default_fd_get_poll_events,     /* get_poll_events */
     default_poll_event,             /* poll_event */
     no_flush,                       /* flush */
-    mailslot_device_get_file_info,  /* get_file_info */
+    mailslot_device_get_fd_type,    /* get_fd_type */
     default_fd_queue_async,         /* queue_async */
     default_fd_reselect_async,      /* reselect_async */
     default_fd_cancel_async         /* cancel_async */
@@ -211,11 +211,8 @@ static void mailslot_dump( struct object *obj, int verbose )
              mailslot->max_msgsize, mailslot->read_timeout );
 }
 
-static enum server_fd_type mailslot_get_info( struct fd *fd, int *flags )
+static enum server_fd_type mailslot_get_fd_type( struct fd *fd )
 {
-    struct mailslot *mailslot = get_fd_user( fd );
-    assert( mailslot->obj.ops == &mailslot_ops );
-    *flags = 0;
     return FD_TYPE_MAILSLOT;
 }
 
@@ -331,9 +328,8 @@ static void mailslot_device_destroy( struct object *obj )
     free( device->mailslots );
 }
 
-static enum server_fd_type mailslot_device_get_file_info( struct fd *fd, int *flags )
+static enum server_fd_type mailslot_device_get_fd_type( struct fd *fd )
 {
-    *flags = 0;
     return FD_TYPE_DEVICE;
 }
 
@@ -435,9 +431,8 @@ static void mail_writer_destroy( struct object *obj)
     release_object( writer->mailslot );
 }
 
-static enum server_fd_type mail_writer_get_info( struct fd *fd, int *flags )
+static enum server_fd_type mail_writer_get_fd_type( struct fd *fd )
 {
-    *flags = 0;
     return FD_TYPE_MAILSLOT;
 }
 

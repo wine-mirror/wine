@@ -69,7 +69,7 @@ static void file_destroy( struct object *obj );
 
 static int file_get_poll_events( struct fd *fd );
 static void file_flush( struct fd *fd, struct event **event );
-static enum server_fd_type file_get_info( struct fd *fd, int *flags );
+static enum server_fd_type file_get_fd_type( struct fd *fd );
 
 static const struct object_ops file_ops =
 {
@@ -93,7 +93,7 @@ static const struct fd_ops file_fd_ops =
     file_get_poll_events,         /* get_poll_events */
     default_poll_event,           /* poll_event */
     file_flush,                   /* flush */
-    file_get_info,                /* get_file_info */
+    file_get_fd_type,             /* get_fd_type */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async,    /* reselect_async */
     default_fd_cancel_async       /* cancel_async */
@@ -232,9 +232,8 @@ static void file_flush( struct fd *fd, struct event **event )
     if (unix_fd != -1 && fsync( unix_fd ) == -1) file_set_error();
 }
 
-static enum server_fd_type file_get_info( struct fd *fd, int *flags )
+static enum server_fd_type file_get_fd_type( struct fd *fd )
 {
-    *flags = 0;
     return FD_TYPE_FILE;
 }
 
