@@ -222,13 +222,10 @@ static HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot, LPCWSTR pathRoot,
 	    }
 
 	    if (pidlChild) {
-		LPCSTR pszChild = _ILGetTextPointer(pidlChild);
                 int len = lstrlenW(ppfti.szTargetParsingName);
 
-		if (pszChild)
-		    MultiByteToWideChar (CP_ACP, 0, pszChild, -1, ppfti.szTargetParsingName + len, MAX_PATH - len);
-		else
-		    hr = E_INVALIDARG;
+		if (!_ILSimpleGetTextW(pidlChild, ppfti.szTargetParsingName + len, MAX_PATH - len))
+			hr = E_INVALIDARG;
 	    }
 
 	    IPersistFolder3_InitializeEx (ppf, NULL, pidlAbsolute, &ppfti);
@@ -290,7 +287,9 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
             lstrcpynW(wszFolderPath, pathRoot, MAX_PATH);
             pwszPathTail = PathAddBackslashW(wszFolderPath);
         }
-        MultiByteToWideChar(CP_ACP, 0, _ILGetTextPointer(pidlChild), -1, pwszPathTail, MAX_PATH - (int)(pwszPathTail - wszFolderPath));
+
+        _ILSimpleGetTextW(pidlChild,pwszPathTail,MAX_PATH - (int)(pwszPathTail - wszFolderPath));
+
         if (SHELL32_GetCustomFolderAttributeFromPath (wszFolderPath,
             wszDotShellClassInfo, wszCLSID, wszCLSIDValue, CHARS_IN_GUID))
             CLSIDFromString (wszCLSIDValue, &clsidFolder);
