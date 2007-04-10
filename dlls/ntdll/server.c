@@ -464,7 +464,9 @@ static int receive_fd( obj_handle_t *handle )
 struct fd_cache_entry
 {
     int fd;
-    enum server_fd_type type;
+    enum server_fd_type type : 6;
+    unsigned int        access : 2;
+    unsigned int        options : 24;
 };
 
 #define FD_CACHE_BLOCK_SIZE  (65536 / sizeof(struct fd_cache_entry))
@@ -486,7 +488,8 @@ static inline unsigned int handle_to_index( obj_handle_t handle, unsigned int *e
  *
  * Caller must hold fd_cache_section.
  */
-static int add_fd_to_cache( obj_handle_t handle, int fd, enum server_fd_type type )
+static int add_fd_to_cache( obj_handle_t handle, int fd, enum server_fd_type type,
+                            unsigned int access, unsigned int options )
 {
     unsigned int entry, idx = handle_to_index( handle, &entry );
     int prev_fd;
@@ -511,6 +514,8 @@ static int add_fd_to_cache( obj_handle_t handle, int fd, enum server_fd_type typ
     /* store fd+1 so that 0 can be used as the unset value */
     prev_fd = interlocked_xchg( &fd_cache[entry][idx].fd, fd + 1 ) - 1;
     fd_cache[entry][idx].type = type;
+    fd_cache[entry][idx].access = access;
+    fd_cache[entry][idx].options = options;
     if (prev_fd != -1) close( prev_fd );
     return 1;
 }
@@ -521,7 +526,8 @@ static int add_fd_to_cache( obj_handle_t handle, int fd, enum server_fd_type typ
  *
  * Caller must hold fd_cache_section.
  */
-static inline int get_cached_fd( obj_handle_t handle, enum server_fd_type *type )
+static inline int get_cached_fd( obj_handle_t handle, enum server_fd_type *type,
+                                 unsigned int *access, unsigned int *options )
 {
     unsigned int entry, idx = handle_to_index( handle, &entry );
     int fd = -1;
@@ -530,6 +536,8 @@ static inline int get_cached_fd( obj_handle_t handle, enum server_fd_type *type 
     {
         fd = fd_cache[entry][idx].fd - 1;
         if (type) *type = fd_cache[entry][idx].type;
+        if (access) *access = fd_cache[entry][idx].access;
+        if (options) *options = fd_cache[entry][idx].options;
     }
     return fd;
 }
@@ -555,46 +563,50 @@ int server_remove_fd_from_cache( obj_handle_t handle )
  *
  * The returned unix_fd should be closed iff needs_close is non-zero.
  */
-int server_get_unix_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
-                        int *needs_close, enum server_fd_type *type, int *flags )
+int server_get_unix_fd( obj_handle_t handle, unsigned int wanted_access, int *unix_fd,
+                        int *needs_close, enum server_fd_type *type, unsigned int *options )
 {
     sigset_t sigset;
     obj_handle_t fd_handle;
-    int ret = 0, removable = 0, fd;
+    int ret = 0, fd;
+    unsigned int access;
 
     *unix_fd = -1;
     *needs_close = 0;
+    wanted_access &= FILE_READ_DATA | FILE_WRITE_DATA;
 
     server_enter_uninterrupted_section( &fd_cache_section, &sigset );
 
-    fd = get_cached_fd( handle, type );
-    if (fd != -1 && !flags) goto done;
+    fd = get_cached_fd( handle, type, &access, options );
+    if (fd != -1) goto done;
 
     SERVER_START_REQ( get_handle_fd )
     {
         req->handle = handle;
-        req->access = access;
-        req->cached = (fd != -1);
         if (!(ret = wine_server_call( req )))
         {
-            removable = reply->flags & FD_FLAG_REMOVABLE;
             if (type) *type = reply->type;
-            if (flags) *flags = reply->flags;
-            if (fd == -1)
+            if (options) *options = reply->options;
+            access = reply->access;
+            if ((fd = receive_fd( &fd_handle )) != -1)
             {
-                if ((fd = receive_fd( &fd_handle )) != -1)
-                {
-                    assert( fd_handle == handle );
-                    *needs_close = removable || !add_fd_to_cache( handle, fd, reply->type );
-                }
-                else ret = STATUS_TOO_MANY_OPENED_FILES;
+                assert( fd_handle == handle );
+                *needs_close = (reply->removable ||
+                                !add_fd_to_cache( handle, fd, reply->type,
+                                                  reply->access, reply->options ));
             }
+            else ret = STATUS_TOO_MANY_OPENED_FILES;
         }
     }
     SERVER_END_REQ;
 
 done:
     server_leave_uninterrupted_section( &fd_cache_section, &sigset );
+    if (!ret && ((access & wanted_access) != wanted_access))
+    {
+        ret = STATUS_ACCESS_DENIED;
+        if (*needs_close) close( fd );
+    }
     if (!ret) *unix_fd = fd;
     return ret;
 }
@@ -642,14 +654,15 @@ int wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attribut
  *     handle  [I] Wine file handle.
  *     access  [I] Win32 file access rights requested.
  *     unix_fd [O] Address where Unix file descriptor will be stored.
- *     flags   [O] Address where the Unix flags associated with file will be stored. Optional.
+ *     options [O] Address where the file open options will be stored. Optional.
  *
  * RETURNS
  *     NTSTATUS code
  */
-int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd, int *flags )
+int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
+                              unsigned int *options )
 {
-    int needs_close, ret = server_get_unix_fd( handle, access, unix_fd, &needs_close, NULL, flags );
+    int needs_close, ret = server_get_unix_fd( handle, access, unix_fd, &needs_close, NULL, options );
 
     if (!ret && !needs_close)
     {

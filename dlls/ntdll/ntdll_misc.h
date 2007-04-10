@@ -69,7 +69,7 @@ extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset
 extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset );
 extern int server_remove_fd_from_cache( obj_handle_t handle );
 extern int server_get_unix_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
-                               int *needs_close, enum server_fd_type *type, int *flags );
+                               int *needs_close, enum server_fd_type *type, unsigned int *options );
 
 /* module handling */
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );

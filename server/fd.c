@@ -1905,19 +1905,18 @@ DECL_HANDLER(get_handle_fd)
 {
     struct fd *fd;
 
-    if ((fd = get_handle_fd_obj( current->process, req->handle, req->access )))
+    if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
     {
-        reply->flags = 0;
         reply->type = fd->fd_ops->get_fd_type( fd );
         if (reply->type != FD_TYPE_INVALID)
         {
-            if (!(fd->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
-                reply->flags |= FD_FLAG_OVERLAPPED;
-            if (is_fd_removable(fd)) reply->flags |= FD_FLAG_REMOVABLE;
-            if (!req->cached)
+            int unix_fd = get_unix_fd( fd );
+            if (unix_fd != -1)
             {
-                int unix_fd = get_unix_fd( fd );
-                if (unix_fd != -1) send_client_fd( current->process, unix_fd, req->handle );
+                send_client_fd( current->process, unix_fd, req->handle );
+                reply->removable = is_fd_removable(fd);
+                reply->options = fd->options;
+                reply->access = get_handle_access( current->process, req->handle );
             }
         }
         else set_error( STATUS_OBJECT_TYPE_MISMATCH );

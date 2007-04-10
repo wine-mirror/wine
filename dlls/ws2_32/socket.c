@@ -384,10 +384,10 @@ static inline unsigned int set_error( unsigned int err )
     return err;
 }
 
-static inline int get_sock_fd( SOCKET s, DWORD access, int *flags )
+static inline int get_sock_fd( SOCKET s, DWORD access, unsigned int *options )
 {
     int fd;
-    if (set_error( wine_server_handle_to_fd( SOCKET2HANDLE(s), access, &fd, flags ) ))
+    if (set_error( wine_server_handle_to_fd( SOCKET2HANDLE(s), access, &fd, options ) ))
         return -1;
     return fd;
 }
@@ -2754,8 +2754,8 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                       LPWSAOVERLAPPED lpOverlapped,
                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 {
-    unsigned int i;
-    int n, fd, err = WSAENOTSOCK, flags, ret;
+    unsigned int i, options;
+    int n, fd, err = WSAENOTSOCK, ret;
     struct iovec* iovec;
     struct ws2_async *wsa;
     IO_STATUS_BLOCK* iosb;
@@ -2764,16 +2764,10 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
           s, lpBuffers, dwBufferCount, dwFlags,
           to, tolen, lpOverlapped, lpCompletionRoutine);
 
-    fd = get_sock_fd( s, FILE_WRITE_DATA, &flags );
-    TRACE( "fd=%d, flags=%x\n", fd, flags );
+    fd = get_sock_fd( s, FILE_WRITE_DATA, &options );
+    TRACE( "fd=%d, options=%x\n", fd, options );
 
     if ( fd == -1 ) return SOCKET_ERROR;
-
-    if (flags & FD_FLAG_SEND_SHUTDOWN)
-    {
-        WSASetLastError( WSAESHUTDOWN );
-        goto err_close;
-    }
 
     if ( !lpNumberOfBytesSent )
     {
@@ -2795,7 +2789,8 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         iovec[i].iov_len  = lpBuffers[i].len;
     }
 
-    if ( (lpOverlapped || lpCompletionRoutine) && flags & FD_FLAG_OVERLAPPED )
+    if ( (lpOverlapped || lpCompletionRoutine) &&
+         !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
     {
         wsa = WS2_make_async( s, ws2m_write, iovec, dwBufferCount,
                               &dwFlags, (struct WS_sockaddr*) to, &tolen,
@@ -3175,11 +3170,11 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
  */
 int WINAPI WS_shutdown(SOCKET s, int how)
 {
-    int fd, flags, err = WSAENOTSOCK;
-    unsigned int clear_flags = 0;
+    int fd, err = WSAENOTSOCK;
+    unsigned int options, clear_flags = 0;
 
-    fd = get_sock_fd( s, 0, &flags );
-    TRACE("socket %04x, how %i %x\n", s, how, flags );
+    fd = get_sock_fd( s, 0, &options );
+    TRACE("socket %04x, how %i %x\n", s, how, options );
 
     if (fd == -1)
         return SOCKET_ERROR;
@@ -3198,8 +3193,8 @@ int WINAPI WS_shutdown(SOCKET s, int how)
         clear_flags |= FD_WINE_LISTENING;
     }
 
-    if ( flags & FD_FLAG_OVERLAPPED ) {
-
+    if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
+    {
         switch ( how )
         {
         case SD_RECEIVE:
@@ -4265,8 +4260,8 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                         LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 
 {
-    unsigned int i;
-    int n, fd, err = WSAENOTSOCK, flags, ret;
+    unsigned int i, options;
+    int n, fd, err = WSAENOTSOCK, ret;
     struct iovec* iovec;
     struct ws2_async *wsa;
     IO_STATUS_BLOCK* iosb;
@@ -4276,16 +4271,10 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
           (lpFromlen ? *lpFromlen : -1),
           lpOverlapped, lpCompletionRoutine);
 
-    fd = get_sock_fd( s, FILE_READ_DATA, &flags );
-    TRACE( "fd=%d, flags=%x\n", fd, flags );
+    fd = get_sock_fd( s, FILE_READ_DATA, &options );
+    TRACE( "fd=%d, options=%x\n", fd, options );
 
     if (fd == -1) return SOCKET_ERROR;
-
-    if (flags & FD_FLAG_RECV_SHUTDOWN)
-    {
-        WSASetLastError( WSAESHUTDOWN );
-        goto err_close;
-    }
 
     iovec = HeapAlloc( GetProcessHeap(), 0, dwBufferCount * sizeof (struct iovec) );
     if ( !iovec )
@@ -4300,7 +4289,8 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         iovec[i].iov_len  = lpBuffers[i].len;
     }
 
-    if ( (lpOverlapped || lpCompletionRoutine) && flags & FD_FLAG_OVERLAPPED )
+    if ( (lpOverlapped || lpCompletionRoutine) &&
+        !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
     {
         wsa = WS2_make_async( s, ws2m_read, iovec, dwBufferCount,
                               lpFlags, lpFrom, lpFromlen,

@@ -883,11 +883,11 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Get a Unix fd to access a file */
 @REQ(get_handle_fd)
     obj_handle_t handle;        /* handle to the file */
-    unsigned int access;        /* wanted access rights */
-    int          cached;        /* is it cached on the client already? */
 @REPLY
     int          type;          /* file type (see below) */
-    int          flags;         /* file read/write flags (see below) */
+    int          removable;     /* is file removable? */
+    unsigned int access;        /* file access rights */
+    unsigned int options;       /* file open options */
 @END
 enum server_fd_type
 {
@@ -901,13 +901,7 @@ enum server_fd_type
     FD_TYPE_DEVICE,   /* Windows device file */
     FD_TYPE_NB_TYPES
 };
-#define FD_FLAG_OVERLAPPED         0x01 /* fd opened in overlapped mode */
-#define FD_FLAG_TIMEOUT            0x02 /* read/write is synchronous */
-#define FD_FLAG_RECV_SHUTDOWN      0x04
-#define FD_FLAG_SEND_SHUTDOWN      0x08
-#define FD_FLAG_AVAILABLE          0x10 /* in overlap read/write operation, 
-                                         * only handle available data (don't wait) */
-#define FD_FLAG_REMOVABLE          0x20 /* is it on a removable device? */
+
 
 /* Flush a file buffers */
 @REQ(flush_file)

@@ -526,7 +526,8 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                            PIO_STATUS_BLOCK io_status, void* buffer, ULONG length,
                            PLARGE_INTEGER offset, PULONG key)
 {
-    int result, unix_handle, needs_close, flags, timeout_init_done = 0;
+    int result, unix_handle, needs_close, timeout_init_done = 0;
+    unsigned int options;
     struct io_timeouts timeouts;
     NTSTATUS status;
     ULONG total = 0;
@@ -538,7 +539,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
     status = server_get_unix_fd( hFile, FILE_READ_DATA, &unix_handle,
-                                 &needs_close, &type, &flags );
+                                 &needs_close, &type, &options );
     if (status) return status;
 
     if (type == FD_TYPE_FILE && offset && offset->QuadPart != (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */ )
@@ -552,7 +553,8 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 goto done;
             }
         }
-        if (!(flags & FD_FLAG_OVERLAPPED))  /* update file pointer position */
+        if (options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT))
+            /* update file pointer position */
             lseek( unix_handle, offset->QuadPart + result, SEEK_SET );
 
         total = result;
@@ -584,7 +586,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             }
         }
 
-        if (flags & FD_FLAG_OVERLAPPED)
+        if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
         {
             async_fileio_read *fileio;
             BOOL avail_mode;
@@ -761,7 +763,8 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                             const void* buffer, ULONG length,
                             PLARGE_INTEGER offset, PULONG key)
 {
-    int result, unix_handle, needs_close, flags, timeout_init_done = 0;
+    int result, unix_handle, needs_close, timeout_init_done = 0;
+    unsigned int options;
     struct io_timeouts timeouts;
     NTSTATUS status;
     ULONG total = 0;
@@ -773,7 +776,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
     status = server_get_unix_fd( hFile, FILE_WRITE_DATA, &unix_handle,
-                                 &needs_close, &type, &flags );
+                                 &needs_close, &type, &options );
     if (status) return status;
 
     if (type == FD_TYPE_FILE && offset && offset->QuadPart != (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */ )
@@ -789,7 +792,8 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             }
         }
 
-        if (!(flags & FD_FLAG_OVERLAPPED))  /* update file pointer position */
+        if (options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT))
+            /* update file pointer position */
             lseek( unix_handle, offset->QuadPart + result, SEEK_SET );
 
         total = result;
@@ -825,7 +829,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             }
         }
 
-        if (flags & FD_FLAG_OVERLAPPED)
+        if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
         {
             async_fileio_write *fileio;
 
@@ -1089,7 +1093,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
     case FSCTL_PIPE_PEEK:
         {
             FILE_PIPE_PEEK_BUFFER *buffer = out_buffer;
-            int avail = 0, fd, needs_close, flags;
+            int avail = 0, fd, needs_close;
 
             if (out_size < FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data ))
             {
@@ -1097,15 +1101,8 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
                 break;
             }
 
-            if ((status = server_get_unix_fd( handle, FILE_READ_DATA, &fd, &needs_close, NULL, &flags )))
+            if ((status = server_get_unix_fd( handle, FILE_READ_DATA, &fd, &needs_close, NULL, NULL )))
                 break;
-
-            if (flags & FD_FLAG_RECV_SHUTDOWN)
-            {
-                if (needs_close) close( fd );
-                status = STATUS_PIPE_DISCONNECTED;
-                break;
-            }
 
 #ifdef FIONREAD
             if (ioctl( fd, FIONREAD, &avail ) != 0)

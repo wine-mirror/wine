@@ -1274,15 +1274,15 @@ static void dump_alloc_file_handle_reply( const struct alloc_file_handle_reply *
 
 static void dump_get_handle_fd_request( const struct get_handle_fd_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " access=%08x,", req->access );
-    fprintf( stderr, " cached=%d", req->cached );
+    fprintf( stderr, " handle=%p", req->handle );
 }
 
 static void dump_get_handle_fd_reply( const struct get_handle_fd_reply *req )
 {
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " flags=%d", req->flags );
+    fprintf( stderr, " removable=%d,", req->removable );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " options=%08x", req->options );
 }
 
 static void dump_flush_file_request( const struct flush_file_request *req )

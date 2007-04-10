@@ -1067,14 +1067,14 @@ struct get_handle_fd_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    unsigned int access;
-    int          cached;
 };
 struct get_handle_fd_reply
 {
     struct reply_header __header;
     int          type;
-    int          flags;
+    int          removable;
+    unsigned int access;
+    unsigned int options;
 };
 enum server_fd_type
 {
@@ -1088,13 +1088,7 @@ enum server_fd_type
     FD_TYPE_DEVICE,
     FD_TYPE_NB_TYPES
 };
-#define FD_FLAG_OVERLAPPED         0x01
-#define FD_FLAG_TIMEOUT            0x02
-#define FD_FLAG_RECV_SHUTDOWN      0x04
-#define FD_FLAG_SEND_SHUTDOWN      0x08
-#define FD_FLAG_AVAILABLE          0x10 /* in overlap read/write operation,
-                                         * only handle available data (don't wait) */
-#define FD_FLAG_REMOVABLE          0x20
+
 
 
 struct flush_file_request
@@ -4677,6 +4671,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 291
+#define SERVER_PROTOCOL_VERSION 292
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
