@@ -637,17 +637,17 @@ void * __stdcall MSVCRT_type_info_vector_dtor(type_info * _this, unsigned int fl
             funcs "\n\t.text");
 
 #define __ASM_EXCEPTION_VTABLE(name) \
-    __ASM_VTABLE(name, "\t.long " THISCALL_NAME(MSVCRT_what_exception) );
+    __ASM_VTABLE(name, "\t.long " THISCALL_NAME(MSVCRT_what_exception) )
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
 
-__ASM_VTABLE(type_info,"");
-__ASM_EXCEPTION_VTABLE(exception);
-__ASM_EXCEPTION_VTABLE(bad_typeid);
-__ASM_EXCEPTION_VTABLE(bad_cast);
-__ASM_EXCEPTION_VTABLE(__non_rtti_object);
+__ASM_VTABLE(type_info,"")
+__ASM_EXCEPTION_VTABLE(exception)
+__ASM_EXCEPTION_VTABLE(bad_typeid)
+__ASM_EXCEPTION_VTABLE(bad_cast)
+__ASM_EXCEPTION_VTABLE(__non_rtti_object)
 
 #ifndef __GNUC__
 }
