@@ -42,6 +42,8 @@ static CHAR CURR_DIR[MAX_PATH];
  *  - copy styles
  */
 
+static BOOL (WINAPI *pSetupGetFileCompressionInfoExA)(PCSTR, PSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
+
 static void append_str(char **str, const char *data)
 {
     sprintf(*str, data);
@@ -324,19 +326,19 @@ static void test_SetupGetFileCompressionInfoEx(void)
     GetTempPathA(sizeof(temp), temp);
     GetTempFileNameA(temp, "doc", 0, source);
 
-    ret = SetupGetFileCompressionInfoExA(NULL, NULL, 0, NULL, NULL, NULL, NULL);
+    ret = pSetupGetFileCompressionInfoExA(NULL, NULL, 0, NULL, NULL, NULL, NULL);
     ok(!ret, "SetupGetFileCompressionInfoEx succeeded unexpectedly\n");
 
-    ret = SetupGetFileCompressionInfoExA(source, NULL, 0, NULL, NULL, NULL, NULL);
+    ret = pSetupGetFileCompressionInfoExA(source, NULL, 0, NULL, NULL, NULL, NULL);
     ok(!ret, "SetupGetFileCompressionInfoEx succeeded unexpectedly\n");
 
-    ret = SetupGetFileCompressionInfoExA(source, NULL, 0, &required_len, NULL, NULL, NULL);
+    ret = pSetupGetFileCompressionInfoExA(source, NULL, 0, &required_len, NULL, NULL, NULL);
     ok(!ret, "SetupGetFileCompressionInfoEx succeeded unexpectedly\n");
     ok(required_len == lstrlenA(source) + 1, "got %d, expected %d\n", required_len, lstrlenA(source) + 1);
 
     create_source_file(source, comp_lzx, sizeof(comp_lzx));
 
-    ret = SetupGetFileCompressionInfoExA(source, name, sizeof(name), &required_len, &source_size, &target_size, &type);
+    ret = pSetupGetFileCompressionInfoExA(source, name, sizeof(name), &required_len, &source_size, &target_size, &type);
     ok(ret, "SetupGetFileCompressionInfoEx failed unexpectedly: %d\n", ret);
     ok(!lstrcmpA(name, source), "got %s, expected %s\n", name, source);
     ok(required_len == lstrlenA(source) + 1, "got %d, expected %d\n", required_len, lstrlenA(source) + 1);
@@ -347,7 +349,7 @@ static void test_SetupGetFileCompressionInfoEx(void)
 
     create_source_file(source, comp_zip, sizeof(comp_zip));
 
-    ret = SetupGetFileCompressionInfoExA(source, name, sizeof(name), &required_len, &source_size, &target_size, &type);
+    ret = pSetupGetFileCompressionInfoExA(source, name, sizeof(name), &required_len, &source_size, &target_size, &type);
     ok(ret, "SetupGetFileCompressionInfoEx failed unexpectedly: %d\n", ret);
     ok(!lstrcmpA(name, source), "got %s, expected %s\n", name, source);
     ok(required_len == lstrlenA(source) + 1, "got %d, expected %d\n", required_len, lstrlenA(source) + 1);
@@ -358,7 +360,7 @@ static void test_SetupGetFileCompressionInfoEx(void)
 
     create_source_file(source, comp_cab_lzx, sizeof(comp_cab_lzx));
 
-    ret = SetupGetFileCompressionInfoExA(source, name, sizeof(name), &required_len, &source_size, &target_size, &type);
+    ret = pSetupGetFileCompressionInfoExA(source, name, sizeof(name), &required_len, &source_size, &target_size, &type);
     ok(ret, "SetupGetFileCompressionInfoEx failed unexpectedly: %d\n", ret);
     ok(!lstrcmpA(name, source), "got %s, expected %s\n", name, source);
     ok(required_len == lstrlenA(source) + 1, "got %d, expected %d\n", required_len, lstrlenA(source) + 1);
@@ -369,7 +371,7 @@ static void test_SetupGetFileCompressionInfoEx(void)
 
     create_source_file(source, comp_cab_zip, sizeof(comp_cab_zip));
 
-    ret = SetupGetFileCompressionInfoExA(source, name, sizeof(name), &required_len, &source_size, &target_size, &type);
+    ret = pSetupGetFileCompressionInfoExA(source, name, sizeof(name), &required_len, &source_size, &target_size, &type);
     ok(ret, "SetupGetFileCompressionInfoEx failed unexpectedly: %d\n", ret);
     ok(!lstrcmpA(name, source), "got %s, expected %s\n", name, source);
     ok(required_len == lstrlenA(source) + 1, "got %d, expected %d\n", required_len, lstrlenA(source) + 1);
@@ -482,9 +484,18 @@ static void test_SetupDecompressOrCopyFile(void)
 
 START_TEST(misc)
 {
+    HMODULE hsetupapi = GetModuleHandle("setupapi.dll");
+
+    pSetupGetFileCompressionInfoExA = (void*)GetProcAddress(hsetupapi, "SetupGetFileCompressionInfoExA");
+
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
     test_SetupCopyOEMInf();
-    test_SetupGetFileCompressionInfoEx();
+
+    if (pSetupGetFileCompressionInfoExA)
+        test_SetupGetFileCompressionInfoEx();
+    else
+        skip("SetupGetFileCompressionInfoExA is not available\n");
+
     test_SetupDecompressOrCopyFile();
 }
