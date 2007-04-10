@@ -5271,8 +5271,10 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
     GLbitfield mask = GL_COLOR_BUFFER_BIT; /* TODO: Support blitting depth/stencil surfaces */
     GLenum gl_filter;
 
-    TRACE("(%p) : src_surface %p, src_rect %p, dst_surface %p, dst_rect %p, filter %s (0x%08x)\n",
-            This, src_surface, src_rect, dst_surface, dst_rect, debug_d3dtexturefiltertype(filter), filter);
+    TRACE("(%p) : src_surface %p, src_rect %p, dst_surface %p, dst_rect %p, filter %s (0x%08x), flip %u\n",
+            This, src_surface, src_rect, dst_surface, dst_rect, debug_d3dtexturefiltertype(filter), filter, flip);
+    TRACE("src_rect [%u, %u]->[%u, %u]\n", src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2);
+    TRACE("dst_rect [%u, %u]->[%u, %u]\n", dst_rect->x1, dst_rect->y1, dst_rect->x2, dst_rect->y2);
 
     switch (filter) {
         case WINED3DTEXF_LINEAR:
@@ -5289,9 +5291,11 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
 
     /* Attach src surface to src fbo */
     if (is_onscreen(src_surface)) {
+        TRACE("Source surface %p is onscreen\n", src_surface);
         GL_EXTCALL(glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0));
         flip = !flip;
     } else {
+        TRACE("Source surface %p is offscreen\n", src_surface);
         IWineD3DSurface_PreLoad(src_surface);
         bind_fbo(iface, GL_READ_FRAMEBUFFER_EXT, &This->src_fbo);
         attach_surface_fbo(This, GL_READ_FRAMEBUFFER_EXT, 0, src_surface);
@@ -5299,9 +5303,11 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
 
     /* Attach dst surface to dst fbo */
     if (is_onscreen(dst_surface)) {
+        TRACE("Destination surface %p is onscreen\n", dst_surface);
         GL_EXTCALL(glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0));
         flip = !flip;
     } else {
+        TRACE("Destination surface %p is offscreen\n", dst_surface);
         IWineD3DSurface_PreLoad(dst_surface);
         bind_fbo(iface, GL_DRAW_FRAMEBUFFER_EXT, &This->dst_fbo);
         attach_surface_fbo(This, GL_DRAW_FRAMEBUFFER_EXT, 0, dst_surface);
