@@ -5296,7 +5296,6 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
         flip = !flip;
     } else {
         TRACE("Source surface %p is offscreen\n", src_surface);
-        IWineD3DSurface_PreLoad(src_surface);
         bind_fbo(iface, GL_READ_FRAMEBUFFER_EXT, &This->src_fbo);
         attach_surface_fbo(This, GL_READ_FRAMEBUFFER_EXT, 0, src_surface);
     }
@@ -5308,7 +5307,6 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
         flip = !flip;
     } else {
         TRACE("Destination surface %p is offscreen\n", dst_surface);
-        IWineD3DSurface_PreLoad(dst_surface);
         bind_fbo(iface, GL_DRAW_FRAMEBUFFER_EXT, &This->dst_fbo);
         attach_surface_fbo(This, GL_DRAW_FRAMEBUFFER_EXT, 0, dst_surface);
     }
