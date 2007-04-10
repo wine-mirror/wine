@@ -197,6 +197,7 @@ static void mailslot_destroy( struct object *obj)
     assert( mailslot->fd );
     assert( mailslot->write_fd );
 
+    shutdown( get_unix_fd( mailslot->fd ), SHUT_RDWR );
     release_object( mailslot->fd );
     release_object( mailslot->write_fd );
 }
@@ -408,6 +409,7 @@ static struct mailslot *create_mailslot( struct directory *root,
     {
         fcntl( fds[0], F_SETFL, O_NONBLOCK );
         fcntl( fds[1], F_SETFL, O_NONBLOCK );
+        shutdown( fds[0], SHUT_RD );
         mailslot->fd = create_anonymous_fd( &mailslot_fd_ops,
                                 fds[1], &mailslot->obj );
         mailslot->write_fd = create_anonymous_fd( &mail_writer_fd_ops,

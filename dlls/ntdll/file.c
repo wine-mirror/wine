@@ -282,7 +282,7 @@ NTSTATUS FILE_GetNtStatus(void)
     case ENFILE:    return STATUS_TOO_MANY_OPENED_FILES;
     case EINVAL:    return STATUS_INVALID_PARAMETER;
     case ENOTEMPTY: return STATUS_DIRECTORY_NOT_EMPTY;
-    case EPIPE:     return STATUS_PIPE_BROKEN;
+    case EPIPE:     return STATUS_PIPE_DISCONNECTED;
     case EIO:       return STATUS_DEVICE_NOT_READY;
 #ifdef ENOMEDIUM
     case ENOMEDIUM: return STATUS_NO_MEDIA_IN_DEVICE;

@@ -338,6 +338,7 @@ static void do_disconnect( struct pipe_server *server )
         server->client->fd = NULL;
     }
     assert( server->fd );
+    shutdown( get_unix_fd( server->fd ), SHUT_RDWR );
     release_object( server->fd );
     server->fd = NULL;
 }
