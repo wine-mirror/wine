@@ -765,6 +765,7 @@ static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     glDisable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glDisable(GL_ALPHA_TEST);
+    glDisable(GL_SCISSOR_TEST);
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_ALWAYS);
