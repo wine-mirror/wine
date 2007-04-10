@@ -94,6 +94,7 @@ typedef struct
                         /* control moves when user clicks a scroll button */
     int		visible;	/* # of months visible */
     int		firstDay;	/* Start month calendar with firstDay's day */
+    int		firstDayHighWord;    /* High word only used externally */
     int		monthRange;
     MONTHDAYSTATE *monthdayState;
     SYSTEMTIME	todaysDate;
@@ -885,7 +886,7 @@ MONTHCAL_SetMonthDelta(MONTHCAL_INFO *infoPtr, WPARAM wParam)
 static LRESULT
 MONTHCAL_GetFirstDayOfWeek(const MONTHCAL_INFO *infoPtr)
 {
-  return infoPtr->firstDay;
+  return MAKELONG(infoPtr->firstDay, infoPtr->firstDayHighWord);
 }
 
 
@@ -896,7 +897,7 @@ MONTHCAL_GetFirstDayOfWeek(const MONTHCAL_INFO *infoPtr)
 static LRESULT
 MONTHCAL_SetFirstDayOfWeek(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 {
-  int prev = infoPtr->firstDay;
+  int prev = MAKELONG(infoPtr->firstDay, infoPtr->firstDayHighWord);
   int localFirstDay;
   WCHAR buf[40];
 
@@ -908,11 +909,20 @@ MONTHCAL_SetFirstDayOfWeek(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   localFirstDay = atoiW(buf);
 
   if(lParam == -1)
-    infoPtr->firstDay = MAKELONG(localFirstDay, FALSE);
+  {
+    infoPtr->firstDay = localFirstDay;
+    infoPtr->firstDayHighWord = FALSE;
+  }
   else if(lParam >= 7)
-    infoPtr->firstDay = MAKELONG(localFirstDay, TRUE);
+  {
+    infoPtr->firstDay = localFirstDay;
+    infoPtr->firstDayHighWord = TRUE;
+  }
   else
-    infoPtr->firstDay = MAKELONG(lParam, TRUE);
+  {
+    infoPtr->firstDay = lParam;
+    infoPtr->firstDayHighWord = TRUE;
+  }
 
   return prev;
 }
@@ -1879,6 +1889,7 @@ MONTHCAL_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
   /* FIXME: calculate systemtime ->> localtime(substract timezoneinfo) */
 
   GetLocalTime(&infoPtr->todaysDate);
+  infoPtr->firstDayHighWord = FALSE;
   MONTHCAL_SetFirstDayOfWeek(infoPtr, (LPARAM)-1);
   infoPtr->currentMonth = infoPtr->todaysDate.wMonth;
   infoPtr->currentYear = infoPtr->todaysDate.wYear;
