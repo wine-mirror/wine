@@ -236,57 +236,24 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
 /***********************************************************************
  *                  Asynchronous file I/O                              *
  */
-static NTSTATUS FILE_AsyncReadService(void*, PIO_STATUS_BLOCK, NTSTATUS);
-static NTSTATUS FILE_AsyncWriteService(void*, PIO_STATUS_BLOCK, NTSTATUS);
 
-typedef struct async_fileio
+typedef struct
 {
     HANDLE              handle;
-    PIO_APC_ROUTINE     apc;
-    void*               apc_user;
     char*               buffer;
     unsigned int        already;
     unsigned int        count;
     BOOL                avail_mode;
-    HANDLE              event;
-} async_fileio;
+} async_fileio_read;
 
-static void fileio_terminate(async_fileio *fileio, IO_STATUS_BLOCK* iosb, NTSTATUS status)
+typedef struct
 {
-    TRACE("data: %p\n", fileio);
+    HANDLE              handle;
+    const char         *buffer;
+    unsigned int        already;
+    unsigned int        count;
+} async_fileio_write;
 
-    iosb->u.Status = status;
-    iosb->Information = fileio->already;
-    RtlFreeHeap( GetProcessHeap(), 0, fileio );
-}
-
-
-static ULONG fileio_queue_async(async_fileio* fileio, IO_STATUS_BLOCK* iosb, 
-                                BOOL do_read)
-{
-    NTSTATUS status;
-
-    SERVER_START_REQ( register_async )
-    {
-        req->handle = fileio->handle;
-        req->async.callback = do_read ? FILE_AsyncReadService : FILE_AsyncWriteService;
-        req->async.iosb     = iosb;
-        req->async.arg      = fileio;
-        req->async.apc      = fileio->apc;
-        req->async.apc_arg  = fileio->apc_user;
-        req->async.event    = fileio->event;
-        req->type = do_read ? ASYNC_TYPE_READ : ASYNC_TYPE_WRITE;
-        req->count = (fileio->count < fileio->already) ? 0 : fileio->count - fileio->already;
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    if (status != STATUS_PENDING)
-        fileio_terminate( fileio, iosb, status );
-    else
-        NtCurrentTeb()->num_async_io++;
-    return status;
-}
 
 /***********************************************************************
  *           FILE_GetNtStatus(void)
@@ -339,7 +306,7 @@ NTSTATUS FILE_GetNtStatus(void)
  */
 static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status)
 {
-    async_fileio *fileio = (async_fileio*)user;
+    async_fileio_read *fileio = user;
     int fd, needs_close, result;
 
     TRACE("%p %p 0x%x\n", iosb, fileio->buffer, status);
@@ -394,7 +361,12 @@ static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATU
         if (fileio->already) status = STATUS_SUCCESS;
         break;
     }
-    if (status != STATUS_PENDING) fileio_terminate(fileio, iosb, status);
+    if (status != STATUS_PENDING)
+    {
+        iosb->u.Status = status;
+        iosb->Information = fileio->already;
+        RtlFreeHeap( GetProcessHeap(), 0, fileio );
+    }
     return status;
 }
 
@@ -580,7 +552,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
         if (flags & FD_FLAG_OVERLAPPED)
         {
-            async_fileio *fileio;
+            async_fileio_read *fileio;
 
             if (total && (flags & FD_FLAG_AVAILABLE))
             {
@@ -588,7 +560,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 goto done;
             }
 
-            if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(async_fileio))))
+            if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*fileio))))
             {
                 status = STATUS_NO_MEMORY;
                 goto done;
@@ -596,12 +568,26 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             fileio->handle = hFile;
             fileio->already = total;
             fileio->count = length;
-            fileio->apc = apc;
-            fileio->apc_user = apc_user;
             fileio->buffer = buffer;
             fileio->avail_mode = (flags & FD_FLAG_AVAILABLE);
-            fileio->event = hEvent;
-            status = fileio_queue_async(fileio, io_status, TRUE);
+
+            SERVER_START_REQ( register_async )
+            {
+                req->handle = hFile;
+                req->type   = ASYNC_TYPE_READ;
+                req->count  = length;
+                req->async.callback = FILE_AsyncReadService;
+                req->async.iosb     = io_status;
+                req->async.arg      = fileio;
+                req->async.apc      = apc;
+                req->async.apc_arg  = apc_user;
+                req->async.event    = hEvent;
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+
+            if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
+            else NtCurrentTeb()->num_async_io++;
             goto done;
         }
         else  /* synchronous read, wait for the fd to become ready */
@@ -662,7 +648,7 @@ done:
  */
 static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status)
 {
-    async_fileio *fileio = user;
+    async_fileio_write *fileio = user;
     int result, fd, needs_close;
     enum server_fd_type type;
 
@@ -701,7 +687,12 @@ static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTAT
         if (fileio->already) status = STATUS_SUCCESS;
         break;
     }
-    if (status != STATUS_PENDING) fileio_terminate(fileio, iosb, status);
+    if (status != STATUS_PENDING)
+    {
+        iosb->u.Status = status;
+        iosb->Information = fileio->already;
+        RtlFreeHeap( GetProcessHeap(), 0, fileio );
+    }
     return status;
 }
 
@@ -799,9 +790,9 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
         if (flags & FD_FLAG_OVERLAPPED)
         {
-            async_fileio *fileio;
+            async_fileio_write *fileio;
 
-            if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(async_fileio))))
+            if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*fileio))))
             {
                 status = STATUS_NO_MEMORY;
                 goto done;
@@ -809,11 +800,25 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             fileio->handle = hFile;
             fileio->already = total;
             fileio->count = length;
-            fileio->apc = apc;
-            fileio->apc_user = apc_user;
-            fileio->buffer = (void*)buffer;
-            fileio->event = hEvent;
-            status = fileio_queue_async(fileio, io_status, FALSE);
+            fileio->buffer = buffer;
+
+            SERVER_START_REQ( register_async )
+            {
+                req->handle = hFile;
+                req->type   = ASYNC_TYPE_WRITE;
+                req->count  = length;
+                req->async.callback = FILE_AsyncWriteService;
+                req->async.iosb     = io_status;
+                req->async.arg      = fileio;
+                req->async.apc      = apc;
+                req->async.apc_arg  = apc_user;
+                req->async.event    = hEvent;
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+
+            if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
+            else NtCurrentTeb()->num_async_io++;
             goto done;
         }
         else  /* synchronous write, wait for the fd to become ready */
