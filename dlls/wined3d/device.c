@@ -5276,6 +5276,9 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
     TRACE("src_rect [%u, %u]->[%u, %u]\n", src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2);
     TRACE("dst_rect [%u, %u]->[%u, %u]\n", dst_rect->x1, dst_rect->y1, dst_rect->x2, dst_rect->y2);
 
+    glDisable(GL_SCISSOR_TEST);
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+
     switch (filter) {
         case WINED3DTEXF_LINEAR:
             gl_filter = GL_LINEAR;
