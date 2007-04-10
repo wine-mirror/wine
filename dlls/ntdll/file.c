@@ -465,6 +465,40 @@ static inline int get_next_io_timeout( struct io_timeouts *timeouts, ULONG alrea
 }
 
 
+/* retrieve the avail_mode flag for async reads */
+static NTSTATUS get_io_avail_mode( HANDLE handle, enum server_fd_type type, BOOL *avail_mode )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    switch(type)
+    {
+    case FD_TYPE_SERIAL:
+        {
+            /* GetCommTimeouts */
+            SERIAL_TIMEOUTS st;
+            IO_STATUS_BLOCK io;
+
+            status = NtDeviceIoControlFile( handle, NULL, NULL, NULL, &io,
+                                            IOCTL_SERIAL_GET_TIMEOUTS, NULL, 0, &st, sizeof(st) );
+            if (status) break;
+            *avail_mode = (!st.ReadTotalTimeoutMultiplier &&
+                           !st.ReadTotalTimeoutConstant &&
+                           st.ReadIntervalTimeout == MAXDWORD);
+        }
+        break;
+    case FD_TYPE_MAILSLOT:
+    case FD_TYPE_SOCKET:
+    case FD_TYPE_PIPE:
+        *avail_mode = TRUE;
+        break;
+    default:
+        *avail_mode = FALSE;
+        break;
+    }
+    return status;
+}
+
+
 /******************************************************************************
  *  NtReadFile					[NTDLL.@]
  *  ZwReadFile					[NTDLL.@]
@@ -553,8 +587,11 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         if (flags & FD_FLAG_OVERLAPPED)
         {
             async_fileio_read *fileio;
+            BOOL avail_mode;
 
-            if (total && (flags & FD_FLAG_AVAILABLE))
+            if ((status = get_io_avail_mode( hFile, type, &avail_mode )))
+                goto done;
+            if (total && avail_mode)
             {
                 status = STATUS_SUCCESS;
                 goto done;
@@ -569,7 +606,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             fileio->already = total;
             fileio->count = length;
             fileio->buffer = buffer;
-            fileio->avail_mode = (flags & FD_FLAG_AVAILABLE);
+            fileio->avail_mode = avail_mode;
 
             SERVER_START_REQ( register_async )
             {
