@@ -2717,6 +2717,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         }
 
         /* Call preload for the surface to make sure it isn't dirty */
+        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+            checkGLcall("glActiveTextureARB");
+        }
+        IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
         IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
         /* Make sure that the top pixel is always above the bottom pixel, and keep a seperate upside down flag
