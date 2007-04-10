@@ -158,11 +158,12 @@ static const struct object_ops pipe_server_ops =
 
 static const struct fd_ops pipe_server_fd_ops =
 {
-    default_fd_get_poll_events,     /* get_poll_events */
+    default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
     pipe_server_flush,            /* flush */
     pipe_server_get_info,         /* get_file_info */
     default_fd_queue_async,       /* queue_async */
+    default_fd_reselect_async,    /* reselect_async */
     default_fd_cancel_async,      /* cancel_async */
 };
 
@@ -197,6 +198,7 @@ static const struct fd_ops pipe_client_fd_ops =
     pipe_client_flush,            /* flush */
     pipe_client_get_info,         /* get_file_info */
     default_fd_queue_async,       /* queue_async */
+    default_fd_reselect_async,    /* reselect_async */
     default_fd_cancel_async       /* cancel_async */
 };
 
@@ -233,6 +235,7 @@ static const struct fd_ops named_pipe_device_fd_ops =
     no_flush,                         /* flush */
     named_pipe_device_get_file_info,  /* get_file_info */
     default_fd_queue_async,           /* queue_async */
+    default_fd_reselect_async,        /* reselect_async */
     default_fd_cancel_async           /* cancel_async */
 };
 

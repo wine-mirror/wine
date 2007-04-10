@@ -236,8 +236,8 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
 /***********************************************************************
  *                  Asynchronous file I/O                              *
  */
-static void WINAPI FILE_AsyncReadService(void*, PIO_STATUS_BLOCK, ULONG);
-static void WINAPI FILE_AsyncWriteService(void*, PIO_STATUS_BLOCK, ULONG);
+static NTSTATUS FILE_AsyncReadService(void*, PIO_STATUS_BLOCK, NTSTATUS);
+static NTSTATUS FILE_AsyncWriteService(void*, PIO_STATUS_BLOCK, NTSTATUS);
 
 typedef struct async_fileio
 {
@@ -264,13 +264,12 @@ static void fileio_terminate(async_fileio *fileio, IO_STATUS_BLOCK* iosb, NTSTAT
 static ULONG fileio_queue_async(async_fileio* fileio, IO_STATUS_BLOCK* iosb, 
                                 BOOL do_read)
 {
-    PIO_APC_ROUTINE     apc = do_read ? FILE_AsyncReadService : FILE_AsyncWriteService;
-    NTSTATUS            status;
+    NTSTATUS status;
 
     SERVER_START_REQ( register_async )
     {
         req->handle = fileio->handle;
-        req->async.callback = apc;
+        req->async.callback = do_read ? FILE_AsyncReadService : FILE_AsyncWriteService;
         req->async.iosb     = iosb;
         req->async.arg      = fileio;
         req->async.apc      = fileio->apc;
@@ -338,7 +337,7 @@ NTSTATUS FILE_GetNtStatus(void)
 /***********************************************************************
  *             FILE_AsyncReadService      (INTERNAL)
  */
-static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULONG status)
+static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status)
 {
     async_fileio *fileio = (async_fileio*)user;
     int fd, needs_close, result;
@@ -351,10 +350,8 @@ static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULON
         /* check to see if the data is ready (non-blocking) */
         if ((status = server_get_unix_fd( fileio->handle, FILE_READ_DATA, &fd,
                                           &needs_close, NULL, NULL )))
-        {
-            fileio_terminate(fileio, iosb, status);
             break;
-        }
+
         result = read(fd, &fileio->buffer[fileio->already], fileio->count - fileio->already);
         if (needs_close) close( fd );
 
@@ -390,16 +387,15 @@ static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULON
                   result, fileio->already, fileio->count,
                   (status == STATUS_SUCCESS) ? "success" : "pending");
         }
-        /* queue another async operation ? */
-        if (status == STATUS_PENDING)
-            fileio_queue_async(fileio, iosb, TRUE);
-        else
-            fileio_terminate(fileio, iosb, status);
         break;
-    default:
-        fileio_terminate(fileio, iosb, status);
+
+    case STATUS_TIMEOUT:
+    case STATUS_IO_TIMEOUT:
+        if (fileio->already) status = STATUS_SUCCESS;
         break;
     }
+    if (status != STATUS_PENDING) fileio_terminate(fileio, iosb, status);
+    return status;
 }
 
 struct io_timeouts
@@ -664,9 +660,9 @@ done:
 /***********************************************************************
  *             FILE_AsyncWriteService      (INTERNAL)
  */
-static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULONG status)
+static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status)
 {
-    async_fileio *fileio = (async_fileio *) ovp;
+    async_fileio *fileio = user;
     int result, fd, needs_close;
     enum server_fd_type type;
 
@@ -678,10 +674,8 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
         /* write some data (non-blocking) */
         if ((status = server_get_unix_fd( fileio->handle, FILE_WRITE_DATA, &fd,
                                           &needs_close, &type, NULL )))
-        {
-            fileio_terminate(fileio, iosb, status);
             break;
-        }
+
         if (!fileio->count && (type == FD_TYPE_MAILSLOT || type == FD_TYPE_PIPE || type == FD_TYPE_SOCKET))
             result = send( fd, fileio->buffer, 0, 0 );
         else
@@ -700,15 +694,15 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
             status = (fileio->already < fileio->count) ? STATUS_PENDING : STATUS_SUCCESS;
             TRACE("wrote %d more bytes %u/%u so far\n", result, fileio->already, fileio->count);
         }
-        if (status == STATUS_PENDING)
-            fileio_queue_async(fileio, iosb, FALSE);
-        else
-            fileio_terminate(fileio, iosb, status);
         break;
-    default:
-        fileio_terminate(fileio, iosb, status);
+
+    case STATUS_TIMEOUT:
+    case STATUS_IO_TIMEOUT:
+        if (fileio->already) status = STATUS_SUCCESS;
         break;
     }
+    if (status != STATUS_PENDING) fileio_terminate(fileio, iosb, status);
+    return status;
 }
 
 /******************************************************************************
@@ -937,10 +931,11 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
 /***********************************************************************
  *           pipe_completion_wait   (Internal)
  */
-static void CALLBACK pipe_completion_wait(void *arg, PIO_STATUS_BLOCK iosb, ULONG status)
+static NTSTATUS pipe_completion_wait(void *arg, PIO_STATUS_BLOCK iosb, NTSTATUS status)
 {
     TRACE("for %p, status=%08x\n", iosb, status);
     iosb->u.Status = status;
+    return status;
 }
 
 /**************************************************************************

@@ -279,7 +279,7 @@ typedef union
     struct
     {
         enum apc_type    type;     /* APC_ASYNC_IO */
-        void (__stdcall *func)(void*, void*, unsigned int);
+        unsigned int   (*func)(void*, void*, unsigned int);
         void            *user;     /* user pointer */
         void            *sb;       /* status block */
         unsigned int     status;   /* I/O status */

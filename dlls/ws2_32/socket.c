@@ -1072,9 +1072,9 @@ static void ws2_async_terminate(ws2_async* as, IO_STATUS_BLOCK* iosb, NTSTATUS s
  *              WS2_make_async          (INTERNAL)
  */
 
-static void WINAPI WS2_async_recv(void*, IO_STATUS_BLOCK*, ULONG);
-static void WINAPI WS2_async_send(void*, IO_STATUS_BLOCK*, ULONG);
-static void WINAPI WS2_async_shutdown( void*, IO_STATUS_BLOCK*, ULONG);
+static NTSTATUS WS2_async_recv(void*, IO_STATUS_BLOCK*, NTSTATUS);
+static NTSTATUS WS2_async_send(void*, IO_STATUS_BLOCK*, NTSTATUS);
+static NTSTATUS WS2_async_shutdown( void*, IO_STATUS_BLOCK*, NTSTATUS);
 
 static inline struct ws2_async*
 WS2_make_async(SOCKET s, enum ws2_mode mode, struct iovec *iovec, DWORD dwBufferCount,
@@ -1137,7 +1137,7 @@ error:
 
 static ULONG ws2_queue_async(struct ws2_async* wsa, IO_STATUS_BLOCK* iosb)
 {
-    PIO_APC_ROUTINE     apc;
+    NTSTATUS (*apc)(void *, IO_STATUS_BLOCK *, NTSTATUS);
     int                 type;
     NTSTATUS            status;
 
@@ -1239,10 +1239,10 @@ out:
  *
  * Handler for overlapped recv() operations.
  */
-static void WINAPI WS2_async_recv( void* ovp, IO_STATUS_BLOCK* iosb, ULONG status)
+static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status)
 {
-    ws2_async* wsa = (ws2_async*) ovp;
-    int result, fd, err;
+    ws2_async* wsa = user;
+    int result = 0, fd, err;
 
     TRACE( "(%p %p %x)\n", wsa, iosb, status );
 
@@ -1250,10 +1250,8 @@ static void WINAPI WS2_async_recv( void* ovp, IO_STATUS_BLOCK* iosb, ULONG statu
     {
     case STATUS_ALERTED:
         if ((status = wine_server_handle_to_fd( wsa->hSocket, FILE_READ_DATA, &fd, NULL ) ))
-        {
-            ws2_async_terminate(wsa, iosb, status, 0);
             break;
-        }
+
         result = WS2_recv( fd, wsa->iovec, wsa->n_iovecs,
                            wsa->addr, wsa->addrlen.ptr, &wsa->flags );
         wine_server_release_fd( wsa->hSocket, fd );
@@ -1279,15 +1277,10 @@ static void WINAPI WS2_async_recv( void* ovp, IO_STATUS_BLOCK* iosb, ULONG statu
                 TRACE( "Error: %x\n", err );
             }
         }
-        if (status == STATUS_PENDING)
-            ws2_queue_async(wsa, iosb);
-        else
-            ws2_async_terminate(wsa, iosb, status, result);
-        break;
-    default:
-        ws2_async_terminate(wsa, iosb, status, 0);
         break;
     }
+    if (status != STATUS_PENDING) ws2_async_terminate(wsa, iosb, status, result);
+    return status;
 }
 
 /***********************************************************************
@@ -1364,10 +1357,10 @@ out:
  *
  * Handler for overlapped send() operations.
  */
-static void WINAPI WS2_async_send(void* as, IO_STATUS_BLOCK* iosb, ULONG status)
+static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status)
 {
-    ws2_async* wsa = (ws2_async*) as;
-    int result, fd;
+    ws2_async* wsa = user;
+    int result = 0, fd;
 
     TRACE( "(%p %p %x)\n", wsa, iosb, status );
 
@@ -1375,10 +1368,8 @@ static void WINAPI WS2_async_send(void* as, IO_STATUS_BLOCK* iosb, ULONG status)
     {
     case STATUS_ALERTED:
         if ((status = wine_server_handle_to_fd( wsa->hSocket, FILE_WRITE_DATA, &fd, NULL ) ))
-        {
-            ws2_async_terminate(wsa, iosb, status, 0);
             break;
-        }
+
         /* check to see if the data is ready (non-blocking) */
         result = WS2_send( fd, wsa->iovec, wsa->n_iovecs, wsa->addr, wsa->addrlen.val, wsa->flags );
         wine_server_release_fd( wsa->hSocket, fd );
@@ -1407,16 +1398,10 @@ static void WINAPI WS2_async_send(void* as, IO_STATUS_BLOCK* iosb, ULONG status)
                 TRACE( "Error: %x\n", err );
             }
         }
-        if (status == STATUS_PENDING)
-            ws2_queue_async(wsa, iosb);
-        else
-            ws2_async_terminate(wsa, iosb, status, result);
-        break;
-    default:
-        ws2_async_terminate(wsa, iosb, status, 0);
         break;
     }
-
+    if (status != STATUS_PENDING) ws2_async_terminate(wsa, iosb, status, result);
+    return status;
 }
 
 /***********************************************************************
@@ -1424,9 +1409,9 @@ static void WINAPI WS2_async_send(void* as, IO_STATUS_BLOCK* iosb, ULONG status)
  *
  * Handler for shutdown() operations on overlapped sockets.
  */
-static void WINAPI WS2_async_shutdown( void* as, PIO_STATUS_BLOCK iosb, ULONG status )
+static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS status )
 {
-    ws2_async* wsa = (ws2_async*) as;
+    ws2_async* wsa = user;
     int fd, err = 1;
 
     TRACE( "async %p %d\n", wsa, wsa->mode );
@@ -1434,10 +1419,8 @@ static void WINAPI WS2_async_shutdown( void* as, PIO_STATUS_BLOCK iosb, ULONG st
     {
     case STATUS_ALERTED:
         if ((status = wine_server_handle_to_fd( wsa->hSocket, 0, &fd, NULL ) ))
-        {
-            ws2_async_terminate(wsa, iosb, status, 0);
             break;
-        }
+
         switch ( wsa->mode )
         {
         case ws2m_sd_read:   err = shutdown( fd, 0 );  break;
@@ -1446,13 +1429,10 @@ static void WINAPI WS2_async_shutdown( void* as, PIO_STATUS_BLOCK iosb, ULONG st
         }
         wine_server_release_fd( wsa->hSocket, fd );
         status = err ? wsaErrno() : STATUS_SUCCESS;
-        ws2_async_terminate(wsa, iosb, status, 0);
-        break;
-    default:
-        ws2_async_terminate(wsa, iosb, status, 0);
         break;
     }
-
+    ws2_async_terminate(wsa, iosb, status, 0);
+    return status;
 }
 
 /***********************************************************************

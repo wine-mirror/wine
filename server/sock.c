@@ -97,6 +97,7 @@ static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
 static enum server_fd_type sock_get_info( struct fd *fd, int *flags );
 static void sock_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
+static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 static void sock_cancel_async( struct fd *fd );
 
 static int sock_get_error( int err );
@@ -126,6 +127,7 @@ static const struct fd_ops sock_fd_ops =
     no_flush,                     /* flush */
     sock_get_info,                /* get_file_info */
     sock_queue_async,             /* queue_async */
+    sock_reselect_async,          /* reselect_async */
     sock_cancel_async             /* cancel_async */
 };
 
@@ -554,6 +556,13 @@ static void sock_queue_async( struct fd *fd, const async_data_t *data, int type,
 
     pollev = sock_reselect( sock );
     if ( pollev ) sock_try_event( sock, pollev );
+}
+
+static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
+{
+    struct sock *sock = get_fd_user( fd );
+    int events = sock_reselect( sock );
+    if (events) sock_try_event( sock, events );
 }
 
 static void sock_cancel_async( struct fd *fd )

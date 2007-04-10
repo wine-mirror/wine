@@ -41,6 +41,8 @@ struct fd_ops
     enum server_fd_type (*get_file_info)(struct fd *fd, int *flags);
     /* queue an async operation */
     void (*queue_async)(struct fd *, const async_data_t *data, int type, int count);
+    /* selected events for async i/o need an update */
+    void (*reselect_async)( struct fd *, struct async_queue *queue );
     /* cancel an async operation */
     void (*cancel_async)(struct fd *);
 };
@@ -70,7 +72,9 @@ extern int default_fd_get_poll_events( struct fd *fd );
 extern void default_poll_event( struct fd *fd, int event );
 extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
+extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
+extern void default_fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern void default_fd_cancel_async( struct fd *fd );
 extern void no_flush( struct fd *fd, struct event **event );
 extern enum server_fd_type no_get_file_info( struct fd *fd, int *flags );

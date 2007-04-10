@@ -680,10 +680,12 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         break;
     }
     case APC_ASYNC_IO:
-        NtCurrentTeb()->num_async_io--;
-        call->async_io.func( call->async_io.user, call->async_io.sb, call->async_io.status );
         result->type = call->type;
-        result->async_io.status = ((IO_STATUS_BLOCK *)call->async_io.sb)->u.Status;
+        result->async_io.status = call->async_io.func( call->async_io.user,
+                                                       call->async_io.sb,
+                                                       call->async_io.status );
+        if (result->async_io.status != STATUS_PENDING)
+            NtCurrentTeb()->num_async_io--;
         break;
     case APC_VIRTUAL_ALLOC:
         result->type = call->type;

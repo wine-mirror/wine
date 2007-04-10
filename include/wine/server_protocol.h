@@ -263,7 +263,7 @@ typedef union
     struct
     {
         enum apc_type    type;
-        void (__stdcall *func)(void*, void*, unsigned int);
+        unsigned int   (*func)(void*, void*, unsigned int);
         void            *user;
         void            *sb;
         unsigned int     status;
@@ -4677,6 +4677,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 290
+#define SERVER_PROTOCOL_VERSION 291
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

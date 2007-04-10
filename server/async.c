@@ -38,6 +38,7 @@ struct async
     struct thread       *thread;          /* owning thread */
     struct list          queue_entry;     /* entry in async queue list */
     struct async_queue  *queue;           /* queue containing this async */
+    unsigned int         status;          /* current status */
     struct timeout_user *timeout;
     unsigned int         timeout_status;  /* status to report upon timeout */
     struct event        *event;
@@ -92,6 +93,11 @@ static const struct object_ops async_queue_ops =
 };
 
 
+static inline void async_reselect( struct async *async )
+{
+    if (async->queue->fd) fd_reselect_async( async->queue->fd, async->queue );
+}
+
 static void async_dump( struct object *obj, int verbose )
 {
     struct async *async = (struct async *)obj;
@@ -104,10 +110,12 @@ static void async_destroy( struct object *obj )
     struct async *async = (struct async *)obj;
     assert( obj->ops == &async_ops );
 
+    list_remove( &async->queue_entry );
+    async_reselect( async );
+
     if (async->timeout) remove_timeout_user( async->timeout );
     if (async->event) release_object( async->event );
     release_object( async->queue );
-    async->queue = NULL;
     release_object( async->thread );
 }
 
@@ -119,10 +127,18 @@ static void async_queue_dump( struct object *obj, int verbose )
 }
 
 /* notifies client thread of new status of its async request */
-/* destroys the server side of it */
 static void async_terminate( struct async *async, unsigned int status )
 {
     apc_call_t data;
+
+    assert( status != STATUS_PENDING );
+
+    if (async->status != STATUS_PENDING)
+    {
+        /* already terminated, just update status */
+        async->status = status;
+        return;
+    }
 
     memset( &data, 0, sizeof(data) );
     data.type            = APC_ASYNC_IO;
@@ -131,11 +147,9 @@ static void async_terminate( struct async *async, unsigned int status )
     data.async_io.sb     = async->data.iosb;
     data.async_io.status = status;
     thread_queue_apc( async->thread, &async->obj, &data );
-
-    if (async->timeout) remove_timeout_user( async->timeout );
-    async->timeout = NULL;
-    list_remove( &async->queue_entry );
-    release_object( async );
+    async->status = status;
+    async_reselect( async );
+    release_object( async );  /* so that it gets destroyed when the async is done */
 }
 
 /* callback for timeout on an async request */
@@ -184,11 +198,12 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
         return NULL;
     }
 
-    async->thread = (struct thread *)grab_object( thread );
-    async->event = event;
-    async->data = *data;
+    async->thread  = (struct thread *)grab_object( thread );
+    async->event   = event;
+    async->status  = STATUS_PENDING;
+    async->data    = *data;
     async->timeout = NULL;
-    async->queue = (struct async_queue *)grab_object( queue );
+    async->queue   = (struct async_queue *)grab_object( queue );
 
     list_add_tail( &queue->queue, &async->queue_entry );
     grab_object( async );
@@ -214,12 +229,24 @@ void async_set_result( struct object *obj, unsigned int status )
 
     if (obj->ops != &async_ops) return;  /* in case the client messed up the APC results */
 
-    if (status == STATUS_PENDING)
+    assert( async->status != STATUS_PENDING );  /* it must have been woken up if we get a result */
+
+    if (status == STATUS_PENDING)  /* restart it */
     {
-        /* FIXME: restart the async operation */
+        status = async->status;
+        async->status = STATUS_PENDING;
+        grab_object( async );
+
+        if (status != STATUS_ALERTED)  /* it was terminated in the meantime */
+            async_terminate( async, status );
+        else
+            async_reselect( async );
     }
     else
     {
+        if (async->timeout) remove_timeout_user( async->timeout );
+        async->timeout = NULL;
+        async->status = status;
         if (async->data.apc)
         {
             apc_call_t data;
@@ -238,7 +265,13 @@ void async_set_result( struct object *obj, unsigned int status )
 /* check if an async operation is waiting to be alerted */
 int async_waiting( struct async_queue *queue )
 {
-    return queue && !list_empty( &queue->queue );
+    struct list *ptr;
+    struct async *async;
+
+    if (!queue) return 0;
+    if (!(ptr = list_head( &queue->queue ))) return 0;
+    async = LIST_ENTRY( ptr, struct async, queue_entry );
+    return async->status == STATUS_PENDING;
 }
 
 /* wake up async operations on the queue */

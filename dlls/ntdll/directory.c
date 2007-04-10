@@ -2169,7 +2169,7 @@ struct read_changes_info
     ULONG BufferSize;
 };
 
-static void WINAPI read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, ULONG status )
+static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status )
 {
     struct read_changes_info *info = user;
     char path[PATH_MAX];
@@ -2222,6 +2222,7 @@ static void WINAPI read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, ULONG st
     iosb->Information = len;
 
     RtlFreeHeap( GetProcessHeap(), 0, info );
+    return ret;
 }
 
 #define FILE_NOTIFY_ALL        (  \

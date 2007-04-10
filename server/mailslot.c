@@ -97,6 +97,7 @@ static const struct fd_ops mailslot_fd_ops =
     no_flush,                   /* flush */
     mailslot_get_info,          /* get_file_info */
     mailslot_queue_async,       /* queue_async */
+    default_fd_reselect_async,  /* reselect_async */
     default_fd_cancel_async     /* cancel_async */
 };
 
@@ -185,6 +186,7 @@ static const struct fd_ops mailslot_device_fd_ops =
     no_flush,                       /* flush */
     mailslot_device_get_file_info,  /* get_file_info */
     default_fd_queue_async,         /* queue_async */
+    default_fd_reselect_async,      /* reselect_async */
     default_fd_cancel_async         /* cancel_async */
 };
 
