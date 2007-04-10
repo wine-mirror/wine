@@ -53,9 +53,10 @@ extern struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct obje
 extern struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int access,
                            unsigned int sharing, unsigned int options );
 extern struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops,
-                                       int unix_fd, struct object *user );
+                                       int unix_fd, struct object *user, unsigned int options );
 extern void *get_fd_user( struct fd *fd );
 extern void set_fd_user( struct fd *fd, const struct fd_ops *ops, struct object *user );
+extern unsigned int get_fd_options( struct fd *fd );
 extern int get_unix_fd( struct fd *fd );
 extern int is_same_file_fd( struct fd *fd1, struct fd *fd2 );
 extern int is_fd_removable( struct fd *fd );
@@ -123,7 +124,7 @@ extern struct object *create_dir_obj( struct fd *fd );
 /* serial port functions */
 
 extern int is_serial_fd( struct fd *fd );
-extern struct object *create_serial( struct fd *fd, unsigned int options );
+extern struct object *create_serial( struct fd *fd );
 
 /* async I/O functions */
 extern struct async_queue *create_async_queue( struct fd *fd );

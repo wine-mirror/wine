@@ -793,7 +793,7 @@ static inline struct fd *create_inotify_fd( void )
     unix_fd = inotify_init();
     if (unix_fd<0)
         return NULL;
-    return create_anonymous_fd( &inotify_fd_ops, unix_fd, NULL );
+    return create_anonymous_fd( &inotify_fd_ops, unix_fd, NULL, 0 );
 }
 
 static int map_flags( unsigned int filter )

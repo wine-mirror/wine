@@ -114,7 +114,7 @@ static struct handler *create_handler( signal_callback callback )
     handler->pending    = 0;
     handler->callback   = callback;
 
-    if (!(handler->fd = create_anonymous_fd( &handler_fd_ops, fd[0], &handler->obj )))
+    if (!(handler->fd = create_anonymous_fd( &handler_fd_ops, fd[0], &handler->obj, 0 )))
     {
         release_object( handler );
         return NULL;

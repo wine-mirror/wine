@@ -1580,7 +1580,7 @@ DECL_HANDLER(set_queue_fd)
     if ((unix_fd = get_file_unix_fd( file )) != -1)
     {
         if ((unix_fd = dup( unix_fd )) != -1)
-            queue->fd = create_anonymous_fd( &msg_queue_fd_ops, unix_fd, &queue->obj );
+            queue->fd = create_anonymous_fd( &msg_queue_fd_ops, unix_fd, &queue->obj, 0 );
         else
             file_set_error();
     }

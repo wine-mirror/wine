@@ -166,6 +166,7 @@ struct fd
     struct object       *user;        /* object using this file descriptor */
     struct list          locks;       /* list of locks on this fd */
     unsigned int         access;      /* file access (FILE_READ_DATA etc.) */
+    unsigned int         options;     /* file options (FILE_DELETE_ON_CLOSE, FILE_SYNCHRONOUS...) */
     unsigned int         sharing;     /* file sharing mode */
     int                  unix_fd;     /* unix file descriptor */
     int                  signaled :1; /* is the fd signaled? */
@@ -1278,7 +1279,7 @@ void unlock_fd( struct fd *fd, file_pos_t start, file_pos_t count )
 static void fd_dump( struct object *obj, int verbose )
 {
     struct fd *fd = (struct fd *)obj;
-    fprintf( stderr, "Fd unix_fd=%d user=%p", fd->unix_fd, fd->user );
+    fprintf( stderr, "Fd unix_fd=%d user=%p options=%08x", fd->unix_fd, fd->user, fd->options );
     if (fd->inode) fprintf( stderr, " inode=%p unlink='%s'", fd->inode, fd->closed->unlink );
     fprintf( stderr, "\n" );
 }
@@ -1359,6 +1360,7 @@ static struct fd *alloc_fd_object(void)
     fd->inode      = NULL;
     fd->closed     = NULL;
     fd->access     = 0;
+    fd->options    = 0;
     fd->sharing    = 0;
     fd->unix_fd    = -1;
     fd->signaled   = 1;
@@ -1463,6 +1465,7 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
 
     if (!(fd = alloc_fd_object())) return NULL;
 
+    fd->options = options;
     if (options & FILE_DELETE_ON_CLOSE) unlink_name = name;
     if (!(closed_fd = mem_alloc( sizeof(*closed_fd) + strlen(unlink_name) )))
     {
@@ -1570,7 +1573,8 @@ error:
 
 /* create an fd for an anonymous file */
 /* if the function fails the unix fd is closed */
-struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops, int unix_fd, struct object *user )
+struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops, int unix_fd, struct object *user,
+                                unsigned int options )
 {
     struct fd *fd = alloc_fd_object();
 
@@ -1578,6 +1582,7 @@ struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops, int unix_fd, s
     {
         set_fd_user( fd, fd_user_ops, user );
         fd->unix_fd = unix_fd;
+        fd->options = options;
         return fd;
     }
     close( unix_fd );
@@ -1588,6 +1593,12 @@ struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops, int unix_fd, s
 void *get_fd_user( struct fd *fd )
 {
     return fd->user;
+}
+
+/* retrieve the opening options for the fd */
+unsigned int get_fd_options( struct fd *fd )
+{
+    return fd->options;
 }
 
 /* retrieve the unix fd for an object */
@@ -1733,15 +1744,8 @@ void fd_reselect_async( struct fd *fd, struct async_queue *queue )
 
 void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
-    int flags;
     struct async *async;
 
-    fd->fd_ops->get_file_info( fd, &flags );
-    if (!(flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT)))
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        return;
-    }
     if ((async = fd_queue_async( fd, data, type, count )))
     {
         release_object( async );
@@ -1907,6 +1911,8 @@ DECL_HANDLER(get_handle_fd)
         reply->type = fd->fd_ops->get_file_info( fd, &reply->flags );
         if (reply->type != FD_TYPE_INVALID)
         {
+            if (!(fd->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
+                reply->flags |= FD_FLAG_OVERLAPPED;
             if (is_fd_removable(fd)) reply->flags |= FD_FLAG_REMOVABLE;
             if (!req->cached)
             {

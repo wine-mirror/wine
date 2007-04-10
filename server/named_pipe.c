@@ -557,19 +557,13 @@ static inline int is_overlapped( unsigned int options )
 
 static enum server_fd_type pipe_server_get_info( struct fd *fd, int *flags )
 {
-    struct pipe_server *server = get_fd_user( fd );
-
-    *flags = FD_FLAG_AVAILABLE;
-    if (is_overlapped( server->options )) *flags |= FD_FLAG_OVERLAPPED;
+    *flags = 0;
     return FD_TYPE_PIPE;
 }
 
 static enum server_fd_type pipe_client_get_info( struct fd *fd, int *flags )
 {
-    struct pipe_client *client = get_fd_user( fd );
-
-    *flags = FD_FLAG_AVAILABLE;
-    if (is_overlapped( client->flags )) *flags |= FD_FLAG_OVERLAPPED;
+    *flags = 0;
     return FD_TYPE_PIPE;
 }
 
@@ -715,10 +709,8 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
                 setsockopt( fds[1], SOL_SOCKET, SO_SNDBUF, &pipe->outsize, sizeof(pipe->outsize) );
             }
 
-            client->fd = create_anonymous_fd( &pipe_client_fd_ops,
-                                            fds[1], &client->obj );
-            server->fd = create_anonymous_fd( &pipe_server_fd_ops,
-                                            fds[0], &server->obj );
+            client->fd = create_anonymous_fd( &pipe_client_fd_ops, fds[1], &client->obj, options );
+            server->fd = create_anonymous_fd( &pipe_server_fd_ops, fds[0], &server->obj, server->options );
             if (client->fd && server->fd && res != 1)
             {
                 if (server->state == ps_wait_open)

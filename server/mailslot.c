@@ -215,7 +215,7 @@ static enum server_fd_type mailslot_get_info( struct fd *fd, int *flags )
 {
     struct mailslot *mailslot = get_fd_user( fd );
     assert( mailslot->obj.ops == &mailslot_ops );
-    *flags = FD_FLAG_TIMEOUT | FD_FLAG_AVAILABLE;
+    *flags = 0;
     return FD_TYPE_MAILSLOT;
 }
 
@@ -410,10 +410,10 @@ static struct mailslot *create_mailslot( struct directory *root,
         fcntl( fds[0], F_SETFL, O_NONBLOCK );
         fcntl( fds[1], F_SETFL, O_NONBLOCK );
         shutdown( fds[0], SHUT_RD );
-        mailslot->fd = create_anonymous_fd( &mailslot_fd_ops,
-                                fds[1], &mailslot->obj );
-        mailslot->write_fd = create_anonymous_fd( &mail_writer_fd_ops,
-                                fds[0], &mailslot->obj );
+        mailslot->fd = create_anonymous_fd( &mailslot_fd_ops, fds[1], &mailslot->obj,
+                                            FILE_SYNCHRONOUS_IO_NONALERT );
+        mailslot->write_fd = create_anonymous_fd( &mail_writer_fd_ops, fds[0], &mailslot->obj,
+                                                  FILE_SYNCHRONOUS_IO_NONALERT );
         if (mailslot->fd && mailslot->write_fd) return mailslot;
     }
     else file_set_error();

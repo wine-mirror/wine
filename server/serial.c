@@ -69,7 +69,6 @@ struct serial
 {
     struct object       obj;
     struct fd          *fd;
-    unsigned int        options;
 
     /* timeout values */
     unsigned int        readinterval;
@@ -122,18 +121,12 @@ int is_serial_fd( struct fd *fd )
 }
 
 /* create a serial object for a given fd */
-struct object *create_serial( struct fd *fd, unsigned int options )
+struct object *create_serial( struct fd *fd )
 {
     struct serial *serial;
-    int unix_fd = get_unix_fd( fd );
-
-    /* set the fd back to blocking if necessary */
-    if (options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT))
-        fcntl( unix_fd, F_SETFL, 0 );
 
     if (!(serial = alloc_object( &serial_ops ))) return NULL;
 
-    serial->options      = options;
     serial->readinterval = 0;
     serial->readmult     = 0;
     serial->readconst    = 0;
@@ -184,15 +177,6 @@ static enum server_fd_type serial_get_info( struct fd *fd, int *flags )
     assert( serial->obj.ops == &serial_ops );
 
     *flags = 0;
-    if (!(serial->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
-        *flags |= FD_FLAG_OVERLAPPED;
-    else if (!(serial->readinterval == MAXDWORD &&
-               serial->readmult == 0 && serial->readconst == 0))
-        *flags |= FD_FLAG_TIMEOUT;
-    if (serial->readinterval == MAXDWORD &&
-        serial->readmult == 0 && serial->readconst == 0)
-        *flags |= FD_FLAG_AVAILABLE;
-
     return FD_TYPE_SERIAL;
 }
 
