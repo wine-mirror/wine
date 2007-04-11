@@ -433,6 +433,14 @@ HWND WINAPI ChildWindowFromPoint( HWND hwndParent, POINT pt )
 }
 
 /*******************************************************************
+ *		RealChildWindowFromPoint (USER32.@)
+ */
+HWND WINAPI RealChildWindowFromPoint( HWND hwndParent, POINT pt )
+{
+    return ChildWindowFromPointEx( hwndParent, pt, CWP_SKIPTRANSPARENT );
+}
+
+/*******************************************************************
  *		ChildWindowFromPointEx (USER32.@)
  */
 HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt, UINT uFlags)
