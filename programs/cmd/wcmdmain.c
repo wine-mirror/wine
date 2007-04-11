@@ -837,8 +837,8 @@ void WCMD_run_program (char *command, int called) {
     /* Convert eg. ..\fred to include a directory by removing file part */
     GetFullPathName(param1, sizeof(pathtosearch), pathtosearch, NULL);
     lastSlash = strrchr(pathtosearch, '\\');
+    if (lastSlash && strchr(lastSlash, '.') != NULL) extensionsupplied = TRUE;
     if (lastSlash) *lastSlash = 0x00;
-    if (strchr(lastSlash, '.') != NULL) extensionsupplied = TRUE;
     strcpy(stemofsearch, lastSlash+1);
   }
 
