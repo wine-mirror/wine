@@ -440,4 +440,5 @@ Digite HELP <comando> para mais informações sobre alguns dos comandos acima\n"
   WCMD_NO, "N"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
+  WCMD_OVERWRITE, "Overwrite"
 }

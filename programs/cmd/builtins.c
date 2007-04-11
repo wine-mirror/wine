@@ -783,7 +783,51 @@ void WCMD_move (void) {
       SetLastError(ERROR_ACCESS_DENIED);
       status = 0;
     } else {
-      status = MoveFile (src, dest);
+      BOOL ok = TRUE;
+
+      /* If destination exists, prompt unless /Y supplied */
+      if (GetFileAttributesA(dest) != INVALID_FILE_ATTRIBUTES) {
+        BOOL force = FALSE;
+        char copycmd[MAXSTRING];
+        int len;
+
+        /* /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
+        if (strstr (quals, "/-Y"))
+          force = FALSE;
+        else if (strstr (quals, "/Y"))
+          force = TRUE;
+        else {
+          len = GetEnvironmentVariable ("COPYCMD", copycmd, sizeof(copycmd));
+          force = (len && len < sizeof(copycmd) && ! lstrcmpi (copycmd, "/Y"));
+        }
+
+        /* Prompt if overwriting */
+        if (!force) {
+          char  question[MAXSTRING];
+          char  overwrite[MAXSTRING];
+
+          LoadString (hinst, WCMD_OVERWRITE, overwrite, sizeof(overwrite));
+
+          /* Ask for confirmation */
+          sprintf(question, "%s %s? ", overwrite, dest);
+          ok = WCMD_ask_confirm(question, TRUE);
+
+          /* So delete the destination prior to the move */
+          if (ok) {
+            if (!DeleteFile (dest)) {
+              WCMD_print_error ();
+              errorlevel = 1;
+              ok = FALSE;
+            }
+          }
+        }
+      }
+
+      if (ok) {
+        status = MoveFile (src, dest);
+      } else {
+        status = 1; /* Anything other than 0 to prevent error msg below */
+      }
     }
 
     if (!status) {

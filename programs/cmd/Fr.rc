@@ -230,4 +230,5 @@ Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
   WCMD_NO, "N"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
+  WCMD_OVERWRITE, "Overwrite"
 }

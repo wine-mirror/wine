@@ -179,6 +179,7 @@ extern const char anykey[];
 #define WCMD_NO       1003
 #define WCMD_NOASSOC  1004
 #define WCMD_NOFTYPE  1005
+#define WCMD_OVERWRITE 1006
 
 /* msdn specified max for Win XP */
 #define MAXSTRING 8192

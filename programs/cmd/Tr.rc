@@ -234,4 +234,5 @@ Yukarýdaki komutlar hakkýnda daha fazla bilgi için HELP <komut> girin\n"
   WCMD_NO, "N"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
+  WCMD_OVERWRITE, "Overwrite"
 }

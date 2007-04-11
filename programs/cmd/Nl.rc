@@ -233,4 +233,5 @@ type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
   WCMD_NO, "N"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
+  WCMD_OVERWRITE, "Overwrite"
 }
