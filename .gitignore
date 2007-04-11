@@ -282,6 +282,7 @@ dlls/localspl/localspl.res
 dlls/localspl/tests/*.ok
 dlls/localspl/tests/localspl_crosstest.exe
 dlls/localspl/tests/testlist.c
+dlls/localui/localui.res
 dlls/localui/tests/*.ok
 dlls/localui/tests/localui_crosstest.exe
 dlls/localui/tests/testlist.c
