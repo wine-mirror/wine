@@ -242,9 +242,7 @@ LPITEMIDLIST	_ILCreateGuidFromStrW(LPCWSTR szGUID);
 
 /* Commonly used PIDLs representing file system objects. */
 LPITEMIDLIST	_ILCreateDesktop	(void);
-LPITEMIDLIST	_ILCreateFromFindDataA(WIN32_FIND_DATAA *stffile);
-LPITEMIDLIST	_ILCreateFromFindDataW(WIN32_FIND_DATAW *stffile);
-HRESULT		_ILCreateFromPathA	(LPCSTR szPath, LPITEMIDLIST* ppidl);
+LPITEMIDLIST	_ILCreateFromFindDataW(const WIN32_FIND_DATAW *stffile);
 HRESULT		_ILCreateFromPathW	(LPCWSTR szPath, LPITEMIDLIST* ppidl);
 
 /* Other helpers */

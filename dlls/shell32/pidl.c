@@ -1484,95 +1484,52 @@ LPITEMIDLIST _ILCreateGuidFromStrW(LPCWSTR szGUID)
     return _ILCreateGuid(PT_GUID, &iid);
 }
 
-LPITEMIDLIST _ILCreateFromFindDataW( WIN32_FIND_DATAW *wfd )
-{
-    /* FIXME: should make unicode PIDLs */
-    WIN32_FIND_DATAA fda;
-
-    memset( &fda, 0, sizeof fda );
-    fda.dwFileAttributes = wfd->dwFileAttributes;
-    fda.ftCreationTime = wfd->ftCreationTime;
-    fda.ftLastAccessTime = wfd->ftLastAccessTime;
-    fda.ftLastWriteTime = wfd->ftLastWriteTime;
-    fda.nFileSizeHigh = wfd->nFileSizeHigh;
-    fda.nFileSizeLow = wfd->nFileSizeLow;
-    fda.dwReserved0 = wfd->dwReserved0;
-    fda.dwReserved1 = wfd->dwReserved1;
-    WideCharToMultiByte( CP_ACP, 0, wfd->cFileName, -1,
-                         fda.cFileName, MAX_PATH, NULL, NULL );
-    return _ILCreateFromFindDataA( &fda );
-}
-
-LPITEMIDLIST _ILCreateFromFindDataA(WIN32_FIND_DATAA * stffile )
+LPITEMIDLIST _ILCreateFromFindDataW( const WIN32_FIND_DATAW *wfd )
 {
     char    buff[MAX_PATH + 14 +1]; /* see WIN32_FIND_DATA */
-    char *  pbuff = buff;
-    size_t  len, len1;
+    DWORD   len, len1, wlen, alen;
     LPITEMIDLIST pidl;
     PIDLTYPE type;
 
-    if (!stffile)
+    if (!wfd)
         return NULL;
 
-    TRACE("(%s, %s)\n",stffile->cAlternateFileName, stffile->cFileName);
+    TRACE("(%s, %s)\n",debugstr_w(wfd->cAlternateFileName), debugstr_w(wfd->cFileName));
 
     /* prepare buffer with both names */
-    len = strlen (stffile->cFileName) + 1;
-    memcpy (pbuff, stffile->cFileName, len);
-    pbuff += len;
+    len = WideCharToMultiByte(CP_ACP,0,wfd->cFileName,-1,buff,MAX_PATH,NULL,NULL);
+    len1 = WideCharToMultiByte(CP_ACP,0,wfd->cAlternateFileName,-1, buff+len, sizeof(buff)-len, NULL, NULL);
+    alen = len + len1;
 
-    len1 = strlen (stffile->cAlternateFileName)+1;
-    memcpy (pbuff, stffile->cAlternateFileName, len1);
+    type = (wfd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? PT_FOLDER : PT_VALUE;
 
-    type = (stffile->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? PT_FOLDER : PT_VALUE;
-
-    /*
-     * FileStruct already has one byte for the first name, so use len - 1 in
-     * size calculation
-     */
-    pidl = _ILAlloc(type, sizeof(FileStruct) + (len - 1) + len1);
+    wlen = lstrlenW(wfd->cFileName) + 1;
+    pidl = _ILAlloc(type, FIELD_OFFSET(FileStruct, szNames[alen + (alen & 1)]) +
+                    FIELD_OFFSET(FileStructW, wszName[wlen]) + sizeof(WORD));
     if (pidl)
     {
-        LPPIDLDATA pData;
-        LPSTR pszDest;
+        LPPIDLDATA pData = _ILGetDataPointer(pidl);
+        FileStruct *fs = &pData->u.file;
+        FileStructW *fsw;
+        WORD *pOffsetW;
 
-        /* set attributes */
-        pData = _ILGetDataPointer(pidl);
-        if (pData)
-        {
-            pData->type = type;
-            FileTimeToDosDateTime( &(stffile->ftLastWriteTime),
-                          &pData->u.file.uFileDate, &pData->u.file.uFileTime);
-            pData->u.file.dwFileSize = stffile->nFileSizeLow;
-            pData->u.file.uFileAttribs = (WORD)stffile->dwFileAttributes;
-        }
-        pszDest = _ILGetTextPointer(pidl);
-        if (pszDest)
-        {
-            memcpy(pszDest, buff, len + len1);
-            TRACE("-- create Value: %s\n",debugstr_a(pszDest));
-        }
+        FileTimeToDosDateTime( &wfd->ftLastWriteTime, &fs->uFileDate, &fs->uFileTime);
+        fs->dwFileSize = wfd->nFileSizeLow;
+        fs->uFileAttribs = wfd->dwFileAttributes;
+        memcpy(fs->szNames, buff, alen);
+
+        fsw = (FileStructW*)(pData->u.file.szNames + alen + (alen & 0x1));
+        fsw->cbLen = FIELD_OFFSET(FileStructW, wszName[wlen]) + sizeof(WORD);
+        FileTimeToDosDateTime( &wfd->ftCreationTime, &fsw->uCreationDate, &fsw->uCreationTime);
+        FileTimeToDosDateTime( &wfd->ftLastAccessTime, &fsw->uLastAccessDate, &fsw->uLastAccessTime);
+        memcpy(fsw->wszName, wfd->cFileName, wlen * sizeof(WCHAR));
+
+        pOffsetW = (WORD*)((LPBYTE)pidl + pidl->mkid.cb - sizeof(WORD));
+        *pOffsetW = (LPBYTE)fsw - (LPBYTE)pidl;
+        TRACE("-- Set Value: %s\n",debugstr_w(fsw->wszName));
     }
     return pidl;
-}
 
-HRESULT _ILCreateFromPathA(LPCSTR szPath, LPITEMIDLIST* ppidl)
-{
-    HANDLE hFile;
-    WIN32_FIND_DATAA stffile;
-
-    if (!ppidl)
-        return E_INVALIDARG;
-
-    hFile = FindFirstFileA(szPath, &stffile);
-    if (hFile == INVALID_HANDLE_VALUE)
-        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
-
-    FindClose(hFile);
-
-    *ppidl = _ILCreateFromFindDataA(&stffile);
-
-    return *ppidl ? S_OK : E_OUTOFMEMORY;
 }
 
 HRESULT _ILCreateFromPathW(LPCWSTR szPath, LPITEMIDLIST* ppidl)
