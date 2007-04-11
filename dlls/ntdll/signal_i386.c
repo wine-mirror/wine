@@ -732,7 +732,7 @@ void WINAPI __regs_get_cpu_context( CONTEXT *context, CONTEXT *regs )
     *context = *regs;
     save_fpu( context );
 }
-DEFINE_REGS_ENTRYPOINT( get_cpu_context, 4, 4 );
+DEFINE_REGS_ENTRYPOINT( get_cpu_context, 4, 4 )
 
 
 /***********************************************************************

@@ -472,7 +472,7 @@ void WINAPI __regs_relay_call_from_32_regs( struct relay_descr *descr, unsigned 
     }
 }
 extern void WINAPI relay_call_from_32_regs(void);
-DEFINE_REGS_ENTRYPOINT( relay_call_from_32_regs, 16, 16 );
+DEFINE_REGS_ENTRYPOINT( relay_call_from_32_regs, 16, 16 )
 
 
 /***********************************************************************
@@ -945,8 +945,8 @@ void WINAPI __regs_SNOOP_Return( CONTEXT86 *context )
 }
 
 /* assembly wrappers that save the context */
-DEFINE_REGS_ENTRYPOINT( SNOOP_Entry, 0, 0 );
-DEFINE_REGS_ENTRYPOINT( SNOOP_Return, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( SNOOP_Entry, 0, 0 )
+DEFINE_REGS_ENTRYPOINT( SNOOP_Return, 0, 0 )
 
 #else  /* __i386__ */
 

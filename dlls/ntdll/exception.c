@@ -391,7 +391,7 @@ void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 /**********************************************************************/
 
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 4, 4 );
+DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 4, 4 )
 #else
 void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
 {
@@ -483,7 +483,7 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID un
 /**********************************************************************/
 
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( RtlUnwind, 16, 16 );
+DEFINE_REGS_ENTRYPOINT( RtlUnwind, 16, 16 )
 #else
 void WINAPI RtlUnwind( PVOID pEndFrame, PVOID unusedEip,
                        PEXCEPTION_RECORD pRecord, PVOID returnEax )
