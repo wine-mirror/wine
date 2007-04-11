@@ -1613,7 +1613,19 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
             goto HW_end;
         }
 
-        ptr += entry->cbData; /* point to next arena */
+        if (((ARENA_INUSE *)ptr - 1)->magic == ARENA_INUSE_MAGIC)
+        {
+            ARENA_INUSE *pArena = (ARENA_INUSE *)ptr - 1;
+            ptr += pArena->size & ARENA_SIZE_MASK;
+        }
+        else if (((ARENA_FREE *)ptr - 1)->magic == ARENA_FREE_MAGIC)
+        {
+            ARENA_FREE *pArena = (ARENA_FREE *)ptr - 1;
+            ptr += pArena->size & ARENA_SIZE_MASK;
+        }
+        else
+            ptr += entry->cbData; /* point to next arena */
+
         if (ptr > (char *)currentheap + currentheap->size - 1)
         {   /* proceed with next subheap */
             if (!(currentheap = currentheap->next))
