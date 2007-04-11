@@ -481,6 +481,7 @@ static void initAudioDeviceTree(HWND hDlg)
                     }
                 }
             }
+            CloseDriver(hdrv, 0, 0);
         }
     }
 
