@@ -1484,7 +1484,7 @@ static void test_text_metrics(const LOGFONTA *lf)
     hfont_old = SelectObject(hdc, hfont);
 
     if(lf->lfWidth > 0) {
-        HFONT hfont2;
+        HFONT hfont2, hfont_prev;
         GLYPHMETRICS gm1, gm2;
         LOGFONTA lf2 = *lf;
         MAT2 mat2 = { {0,1}, {0,0}, {0,0}, {0,1} };
@@ -1494,15 +1494,15 @@ static void test_text_metrics(const LOGFONTA *lf)
 
         SetLastError(0xdeadbeef);
         hfont2 = CreateFontIndirectA(&lf2);
-        ok(hfont != 0, "CreateFontIndirect error %u\n", GetLastError());
-        SelectObject(hdc, hfont2);
+        ok(hfont2 != 0, "CreateFontIndirect error %u\n", GetLastError());
+        hfont_prev = SelectObject(hdc, hfont2);
 
         memset(&gm1, 0xaa, sizeof(gm1));
         SetLastError(0xdeadbeef);
         ret = GetGlyphOutlineA(hdc, 'x', GGO_METRICS, &gm1, 0, NULL, &mat2);
         ok(ret != GDI_ERROR, "GetGlyphOutline error 0x%x\n", GetLastError());
 
-        SelectObject(hdc, hfont);
+        SelectObject(hdc, hfont_prev);
         DeleteObject(hfont2);
 
         memset(&gm2, 0xbb, sizeof(gm2));
