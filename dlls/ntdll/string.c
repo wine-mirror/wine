@@ -98,7 +98,7 @@ void * __cdecl NTDLL_bsearch( const void *key, const void *base, size_t nmemb,
 void __cdecl NTDLL_qsort( void *base, size_t nmemb, size_t size,
                           int(*compar)(const void *, const void *) )
 {
-    return qsort( base, nmemb, size, compar );
+    qsort( base, nmemb, size, compar );
 }
 
 
