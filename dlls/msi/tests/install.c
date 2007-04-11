@@ -285,6 +285,37 @@ static const CHAR sdp_custom_action_dat[] = "Action\tType\tSource\tTarget\tISCom
                                             "CustomAction\tAction\n"
                                             "SetDirProperty\t51\tMSITESTDIR\t[CommonFilesFolder]msitest\\\t\n";
 
+static const CHAR cie_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "maximus\t\tMSITESTDIR\t0\t1\tmaximus\n"
+                                        "augustus\t\tMSITESTDIR\t0\t1\taugustus\n"
+                                        "caesar\t\tMSITESTDIR\t0\t1\tcaesar\n"
+                                        "gaius\t\tMSITESTDIR\t0\t1\tgaius\n";
+
+static const CHAR cie_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                           "s38\ts72\n"
+                                           "FeatureComponents\tFeature_\tComponent_\n"
+                                           "feature\tmaximus\n"
+                                           "feature\taugustus\n"
+                                           "feature\tcaesar\n"
+                                           "feature\tgaius";
+
+static const CHAR cie_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                   "File\tFile\n"
+                                   "maximus\tmaximus\tmaximus\t500\t\t\t16384\t1\n"
+                                   "augustus\taugustus\taugustus\t50000\t\t\t16384\t2\n"
+                                   "caesar\tcaesar\tcaesar\t500\t\t\t16384\t12\n"
+                                   "gaius\tgaius\tgaius\t500\t\t\t8192\t11";
+
+static const CHAR cie_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                    "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                    "Media\tDiskId\n"
+                                    "1\t1\t\ttest1.cab\tDISK1\t\n"
+                                    "2\t2\t\ttest2.cab\tDISK2\t\n"
+                                    "3\t12\t\ttest3.cab\tDISK3\t\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -405,6 +436,18 @@ static const msi_table sdp_tables[] =
     ADD_TABLE(sdp_install_exec_seq),
     ADD_TABLE(sdp_custom_action),
     ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table cie_tables[] =
+{
+    ADD_TABLE(cie_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(cc_feature),
+    ADD_TABLE(cie_feature_comp),
+    ADD_TABLE(cie_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(cie_media),
     ADD_TABLE(property),
 };
 
@@ -1261,6 +1304,40 @@ static void test_setdirproperty(void)
     DeleteFile(msifile);
 }
 
+static void test_cabisextracted(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\gaius", 500);
+    create_file("maximus", 500);
+    create_file("augustus", 500);
+    create_file("caesar", 500);
+
+    create_database(msifile, mm_tables, sizeof(mm_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    create_cab_file("test1.cab", MEDIA_SIZE, "maximus\0");
+    create_cab_file("test2.cab", MEDIA_SIZE, "augustus\0");
+    create_cab_file("test3.cab", MEDIA_SIZE, "caesar\0");
+
+    create_database(msifile, cie_tables, sizeof(cie_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\gaius", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    delete_cab_files();
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -1288,6 +1365,7 @@ START_TEST(install)
     test_uiLevelFlags();
     test_readonlyfile();
     test_setdirproperty();
+    test_cabisextracted();
 
     SetCurrentDirectoryA(prev_path);
 }
