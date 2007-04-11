@@ -754,8 +754,8 @@ static void test_regconnectregistry( void)
     LONG retl;
     HKEY hkey;
     SC_HANDLE schnd;
-    DWORD GLE;
 
+    SetLastError(0xdeadbeef);
     ret = GetComputerNameA(compName, &len);
     ok( ret, "GetComputerName failed err = %d\n", GetLastError());
     if( !ret) return;
@@ -771,16 +771,20 @@ static void test_regconnectregistry( void)
     ok( !retl || retl == ERROR_DLL_INIT_FAILED, "RegConnectRegistryA failed err = %d\n", retl);
     if( !retl) RegCloseKey( hkey);
 
+    SetLastError(0xdeadbeef);
     schnd = OpenSCManagerA( compName, NULL, GENERIC_READ); 
-    GLE = GetLastError();
-    ok( schnd != NULL || GLE==ERROR_CALL_NOT_IMPLEMENTED, 
-        "OpenSCManagerA failed err = %d\n", GLE);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("OpenSCManagerA is not implemented\n");
+        return;
+    }
+
+    ok( schnd != NULL, "OpenSCManagerA failed err = %d\n", GetLastError());
     CloseServiceHandle( schnd);
 
+    SetLastError(0xdeadbeef);
     schnd = OpenSCManagerA( netwName, NULL, GENERIC_READ); 
-    GLE = GetLastError();
-    ok( schnd != NULL || GLE==ERROR_CALL_NOT_IMPLEMENTED, 
-        "OpenSCManagerA failed err = %d\n", GLE);
+    ok( schnd != NULL, "OpenSCManagerA failed err = %d\n", GetLastError());
     CloseServiceHandle( schnd);
 
 }
