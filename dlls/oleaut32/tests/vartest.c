@@ -1392,10 +1392,10 @@ static const char *szFailOk = "Call failed, hres = %08x\n";
   ok(V_CY(&vOut).int64 == (LONG64)(val * CY_MULTIPLIER), "Expected r8 = 0x%x%08x, got 0x%x%08x\n", \
       (DWORD)((LONG64)val >> 23), (DWORD)(LONG64)val, (DWORD)(V_CY(&vOut).int64 >>32), (DWORD)V_CY(&vOut).int64); }
 #define EXPECT_DECIMAL(valHi, valMid, valLo) EXPECT_OK { EXPECT_TYPE(VT_DECIMAL); \
-  ok((V_DECIMAL(&vOut).Hi32 == valHi) && (V_DECIMAL(&vOut).Mid32 == valMid) && \
-  (V_DECIMAL(&vOut).Lo32 == valLo), \
+      ok((V_DECIMAL(&vOut).Hi32 == valHi) && (S1(U1(V_DECIMAL(&vOut))).Mid32 == valMid) && \
+      (S1(U1(V_DECIMAL(&vOut))).Lo32 == valLo),                      \
   "Expected decimal = %x/0x%x%08x, got %x/0x%x%08x\n", valHi, valMid, valLo, \
-  V_DECIMAL(&vOut).Hi32, V_DECIMAL(&vOut).Mid32, V_DECIMAL(&vOut).Lo32); }
+      V_DECIMAL(&vOut).Hi32, S1(U1(V_DECIMAL(&vOut))).Mid32, S1(U1(V_DECIMAL(&vOut))).Lo32); }
 
 static void test_VarNumFromParseNum(void)
 {
