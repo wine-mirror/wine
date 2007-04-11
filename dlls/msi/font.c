@@ -216,8 +216,8 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
 
     if (name)
     {
-        msi_reg_set_val_str( hkey1, name, file->FileName );
-        msi_reg_set_val_str( hkey2, name, file->FileName );
+        msi_reg_set_val_str( hkey1, name, file->TargetPath);
+        msi_reg_set_val_str( hkey2, name, file->TargetPath);
     }
 
     msi_free(name);
