@@ -843,18 +843,107 @@ void WCMD_remove_dir (char *command) {
 
 void WCMD_rename (void) {
 
-  int status;
+  int             status;
+  HANDLE          hff;
+  WIN32_FIND_DATA fd;
+  char            input[MAX_PATH];
+  char           *dotDst = NULL;
+  char            drive[10];
+  char            dir[MAX_PATH];
+  char            fname[MAX_PATH];
+  char            ext[MAX_PATH];
+  DWORD           attribs;
 
+  errorlevel = 0;
+
+  /* Must be at least two args */
   if (param1[0] == 0x00 || param2[0] == 0x00) {
     WCMD_output ("Argument missing\n");
+    errorlevel = 1;
     return;
   }
-  if ((strchr(param1,'*') != NULL) || (strchr(param1,'%') != NULL)) {
-    WCMD_output ("Wildcards not yet supported\n");
-    return;
+
+  /* Destination cannot contain a drive letter or directory separator */
+  if ((strchr(param1,':') != NULL) || (strchr(param1,'\\') != NULL)) {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      WCMD_print_error();
+      errorlevel = 1;
+      return;
   }
-  status = MoveFile (param1, param2);
-  if (!status) WCMD_print_error ();
+
+  /* Convert partial path to full path */
+  GetFullPathName (param1, sizeof(input), input, NULL);
+  WINE_TRACE("Rename from '%s'('%s') to '%s'\n", input, param1, param2);
+  dotDst = strchr(param2, '.');
+
+  /* Split into components */
+  WCMD_splitpath(input, drive, dir, fname, ext);
+
+  hff = FindFirstFile (input, &fd);
+  while (hff != INVALID_HANDLE_VALUE) {
+    char  dest[MAX_PATH];
+    char  src[MAX_PATH];
+    char *dotSrc = NULL;
+    int   dirLen;
+
+    WINE_TRACE("Processing file '%s'\n", fd.cFileName);
+
+    /* FIXME: If dest name or extension is *, replace with filename/ext
+       part otherwise use supplied name. This supports:
+          ren *.fred *.jim
+          ren jim.* fred.* etc
+       However, windows has a more complex algorithum supporting eg
+          ?'s and *'s mid name                                         */
+    dotSrc = strchr(fd.cFileName, '.');
+
+    /* Build src & dest name */
+    strcpy(src, drive);
+    strcat(src, dir);
+    strcpy(dest, src);
+    dirLen = strlen(src);
+    strcat(src, fd.cFileName);
+
+    /* Build name */
+    if (param2[0] == '*') {
+      strcat(dest, fd.cFileName);
+      if (dotSrc) dest[dirLen + (dotSrc - fd.cFileName)] = 0x00;
+    } else {
+      strcat(dest, param2);
+      if (dotDst) dest[dirLen + (dotDst - param2)] = 0x00;
+    }
+
+    /* Build Extension */
+    if (dotDst && (*(dotDst+1)=='*')) {
+      if (dotSrc) strcat(dest, dotSrc);
+    } else if (dotDst) {
+      if (dotDst) strcat(dest, dotDst);
+    }
+
+    WINE_TRACE("Source '%s'\n", src);
+    WINE_TRACE("Dest   '%s'\n", dest);
+
+    /* Check if file is read only, otherwise move it */
+    attribs = GetFileAttributesA(src);
+    if ((attribs != INVALID_FILE_ATTRIBUTES) &&
+        (attribs & FILE_ATTRIBUTE_READONLY)) {
+      SetLastError(ERROR_ACCESS_DENIED);
+      status = 0;
+    } else {
+      status = MoveFile (src, dest);
+    }
+
+    if (!status) {
+      WCMD_print_error ();
+      errorlevel = 1;
+    }
+
+    /* Step on to next match */
+    if (FindNextFile(hff, &fd) == 0) {
+      FindClose(hff);
+      hff = INVALID_HANDLE_VALUE;
+      break;
+    }
+  }
 }
 
 /*****************************************************************************
