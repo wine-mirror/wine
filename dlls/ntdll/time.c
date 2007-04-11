@@ -1054,23 +1054,9 @@ NTSTATUS WINAPI RtlQueryTimeZoneInformation(RTL_TIME_ZONE_INFORMATION *tzinfo)
  *   Success: STATUS_SUCCESS.
  *   Failure: An NTSTATUS error code indicating the problem.
  *
- * BUGS
- *   Uses the obsolete unix timezone structure and tz_dsttime member.
  */
 NTSTATUS WINAPI RtlSetTimeZoneInformation( const RTL_TIME_ZONE_INFORMATION *tzinfo )
 {
-#ifdef HAVE_SETTIMEOFDAY
-    struct timezone tz;
-
-    tz.tz_minuteswest = tzinfo->Bias;
-#ifdef DST_NONE
-    tz.tz_dsttime = DST_NONE;
-#else
-    tz.tz_dsttime = 0;
-#endif
-    if(!settimeofday(NULL, &tz))
-        return STATUS_SUCCESS;
-#endif
     return STATUS_PRIVILEGE_NOT_HELD;
 }
 
