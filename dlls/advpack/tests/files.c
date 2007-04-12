@@ -131,6 +131,7 @@ static void test_AddDelBackupEntry(void)
 {
     HRESULT res;
     CHAR path[MAX_PATH];
+    CHAR windir[MAX_PATH];
 
     lstrcpyA(path, CURR_DIR);
     lstrcatA(path, "\\backup\\basename.INI");
@@ -187,9 +188,10 @@ static void test_AddDelBackupEntry(void)
     ok(DeleteFileA(path), "Expected path to exist\n");
     RemoveDirectoryA("backup");
 
-    lstrcpyA(path, "c:\\windows\\basename.INI");
+    GetWindowsDirectoryA(windir, sizeof(windir));
+    sprintf(path, "%s\\basename.INI", windir);
 
-    /* try a NULL backup dir, INI is created in c:\windows */
+    /* try a NULL backup dir, INI is created in the windows directory */
     res = pAddDelBackupEntry("one\0two\0three\0", NULL, "basename", AADBE_ADD_ENTRY);
     ok(res == S_OK, "Expected S_OK, got %d\n", res);
     ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
