@@ -3615,6 +3615,63 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
 }
 
 /*********************************************************************
+ *    WINSPOOL_GetPrinter_1
+ *
+ * Fills out a PRINTER_INFO_1A|W struct storing the strings in buf.
+ * The strings are either stored as unicode or ascii.
+ */
+static BOOL WINSPOOL_GetPrinter_1(HKEY hkeyPrinter, PRINTER_INFO_1W *pi1,
+				  LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded,
+				  BOOL unicode)
+{
+    DWORD size, left = cbBuf;
+    BOOL space = (cbBuf > 0);
+    LPBYTE ptr = buf;
+
+    *pcbNeeded = 0;
+
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
+				 unicode)) {
+        if(space && size <= left) {
+	    pi1->pName = (LPWSTR)ptr;
+	    ptr += size;
+	    left -= size;
+	} else
+	    space = FALSE;
+	*pcbNeeded += size;
+    }
+
+    /* FIXME: pDescription should be something like "Name,Driver_Name,". */
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, NameW, ptr, left, &size,
+				 unicode)) {
+        if(space && size <= left) {
+	    pi1->pDescription = (LPWSTR)ptr;
+	    ptr += size;
+	    left -= size;
+	} else
+	    space = FALSE;
+	*pcbNeeded += size;
+    }
+
+    if(WINSPOOL_GetStringFromReg(hkeyPrinter, DescriptionW, ptr, left, &size,
+				 unicode)) {
+        if(space && size <= left) {
+	    pi1->pComment = (LPWSTR)ptr;
+	    ptr += size;
+	    left -= size;
+	} else
+	    space = FALSE;
+	*pcbNeeded += size;
+    }
+
+    if(pi1) pi1->Flags = PRINTER_ENUM_ICON8; /* We're a printer */
+
+    if(!space && pi1) /* zero out pi1 if we can't completely fill buf */
+        memset(pi1, 0, sizeof(*pi1));
+
+    return space;
+}
+/*********************************************************************
  *    WINSPOOL_GetPrinter_2
  *
  * Fills out a PRINTER_INFO_2A|W struct storing the strings in buf.
@@ -4046,11 +4103,8 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
 
     switch(dwLevel) {
     case 1:
-        RegCloseKey(hkeyPrinters);
-	if (lpdwReturned)
-	    *lpdwReturned = number;
-	return TRUE;
-
+        used = number * sizeof(PRINTER_INFO_1W);
+        break;
     case 2:
         used = number * sizeof(PRINTER_INFO_2W);
 	break;
@@ -4092,6 +4146,12 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
 	}
 
 	switch(dwLevel) {
+	case 1:
+	    WINSPOOL_GetPrinter_1(hkeyPrinter, (PRINTER_INFO_1W *)pi, buf,
+				  left, &needed, unicode);
+	    used += needed;
+	    if(pi) pi += sizeof(PRINTER_INFO_1W);
+	    break;
 	case 2:
 	    WINSPOOL_GetPrinter_2(hkeyPrinter, (PRINTER_INFO_2W *)pi, buf,
 				  left, &needed, unicode);
@@ -4145,8 +4205,8 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
  * RETURNS:
  *
  *    If level is set to 1:
- *      Not implemented yet!
- *      Returns TRUE with an empty list.
+ *      Returns an array of PRINTER_INFO_1 data structures in the
+ *      lpbPrinters buffer.
  *
  *    If level is set to 2:
  *		Possible flags: PRINTER_ENUM_CONNECTIONS, PRINTER_ENUM_LOCAL.
