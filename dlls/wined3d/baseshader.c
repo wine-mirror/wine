@@ -253,6 +253,8 @@ HRESULT shader_get_registers_used(
                 reg_maps->packed_output[regnum] = 1;
                 semantics_out[regnum].usage = usage;
                 semantics_out[regnum].reg = param;
+                if (usage & (WINED3DDECLUSAGE_FOG << WINED3DSP_DCL_USAGE_SHIFT))
+                    reg_maps->fog = 1;
 
             /* Save sampler usage token */
             } else if (WINED3DSPR_SAMPLER == regtype)
