@@ -50,6 +50,7 @@ typedef enum
     NT2K,    /* Windows 2000 */
     WINXP,   /* Windows XP */
     WIN2K3,  /* Windows 2003 */
+    WINVISTA,/* Windows Vista */
     NB_WINDOWS_VERSIONS
 } WINDOWS_VERSION;
 
@@ -135,6 +136,12 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
         sizeof(RTL_OSVERSIONINFOEXW), 5, 2, 0xECE, VER_PLATFORM_WIN32_NT,
         {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','1',0},
         1, 0, VER_SUITE_SINGLEUSERTS, VER_NT_SERVER, 0
+    },
+    /* WINVISTA */
+    {
+        sizeof(RTL_OSVERSIONINFOEXW), 6, 0, 0x1770, VER_PLATFORM_WIN32_NT,
+        {' ',0},
+        0, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 0
     }
 };
 
@@ -150,7 +157,8 @@ static const char * const WinVersionNames[NB_WINDOWS_VERSIONS] =
     "nt40",                       /* NT40 */
     "win2000,win2k,nt2k,nt2000",  /* NT2K */
     "winxp",                      /* WINXP */
-    "win2003,win2k3"              /* WIN2K3 */
+    "win2003,win2k3",             /* WIN2K3 */
+    "vista,winvista"              /* WINVISTA*/
 };
 
 
