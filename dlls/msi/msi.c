@@ -1562,15 +1562,29 @@ static USERINFOSTATE WINAPI MSI_GetUserInfo(LPCWSTR szProduct,
 
     state = USERINFOSTATE_PRESENT;
 
-    r = msi_strcpy_to_awstring( user, lpUserNameBuf, pcchUserNameBuf );
-    if (r == ERROR_MORE_DATA)
-        state = USERINFOSTATE_MOREDATA;
-    r = msi_strcpy_to_awstring( org, lpOrgNameBuf, pcchOrgNameBuf );
-    if (r == ERROR_MORE_DATA)
-        state = USERINFOSTATE_MOREDATA;
-    r = msi_strcpy_to_awstring( serial, lpSerialBuf, pcchSerialBuf );
-    if (r == ERROR_MORE_DATA)
-        state = USERINFOSTATE_MOREDATA;
+    if (user)
+    {
+        r = msi_strcpy_to_awstring( user, lpUserNameBuf, pcchUserNameBuf );
+        if (r == ERROR_MORE_DATA)
+            state = USERINFOSTATE_MOREDATA;
+    }
+    else
+        state = USERINFOSTATE_ABSENT;
+    if (org)
+    {
+        r = msi_strcpy_to_awstring( org, lpOrgNameBuf, pcchOrgNameBuf );
+        if (r == ERROR_MORE_DATA && state == USERINFOSTATE_PRESENT)
+            state = USERINFOSTATE_MOREDATA;
+    }
+    /* msdn states: The user information is considered to be present even in the absence of a company name. */
+    if (serial)
+    {
+        r = msi_strcpy_to_awstring( serial, lpSerialBuf, pcchSerialBuf );
+        if (r == ERROR_MORE_DATA && state == USERINFOSTATE_PRESENT)
+            state = USERINFOSTATE_MOREDATA;
+    }
+    else
+        state = USERINFOSTATE_ABSENT;
 
     msi_free( user );
     msi_free( org );
