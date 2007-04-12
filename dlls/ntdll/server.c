@@ -569,7 +569,7 @@ int server_get_unix_fd( obj_handle_t handle, unsigned int wanted_access, int *un
     sigset_t sigset;
     obj_handle_t fd_handle;
     int ret = 0, fd;
-    unsigned int access;
+    unsigned int access = 0;
 
     *unix_fd = -1;
     *needs_close = 0;
