@@ -329,6 +329,26 @@ static const struct message WmShowMaxOverlappedSeq[] = {
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
+/* ShowWindow(SW_SHOWMINIMIZED) for a not visible overlapped window */
+static const struct message WmShowMinOverlappedSeq[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOCOPYBITS|SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_STATECHANGED },
+    { WM_GETMINMAXINFO, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { WM_NCPAINT, sent },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc|wparam, SIZE_MINIMIZED },
+    { WM_NCCALCSIZE, sent|optional },
+    { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ACTIVATE, sent },
+    { WM_ACTIVATEAPP, sent|wparam, 0 },
+    { 0 }
+};
 /* ShowWindow(SW_HIDE) for a visible overlapped window */
 static const struct message WmHideOverlappedSeq[] = {
     { WM_SHOWWINDOW, sent|wparam, 0 },
@@ -3707,6 +3727,14 @@ static void test_messages(void)
 
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     ok_sequence(WmShowMaxOverlappedSeq, "ShowWindow(SW_SHOWMAXIMIZED):overlapped", TRUE);
+
+    ShowWindow(hwnd, SW_RESTORE);
+    /* FIXME: add ok_sequence() here */
+    flush_sequence();
+
+    ShowWindow(hwnd, SW_MINIMIZE);
+    ok_sequence(WmShowMinOverlappedSeq, "ShowWindow(SW_SHOWMINIMIZED):overlapped", TRUE);
+    flush_sequence();
 
     ShowWindow(hwnd, SW_RESTORE);
     /* FIXME: add ok_sequence() here */
@@ -8444,7 +8472,7 @@ static const struct message WmSetWindowRgn_no_redraw[] = {
 };
 
 static const struct message WmSetWindowRgn_clear[] = {
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE }, /* some versions of 2000/XP also has SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE in wparam */
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent }, /* wparam != 1 */
     { WM_GETTEXT, sent|defwinproc|optional },
