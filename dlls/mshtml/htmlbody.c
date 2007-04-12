@@ -145,8 +145,27 @@ static HRESULT WINAPI HTMLBodyElement_put_background(IHTMLBodyElement *iface, BS
 static HRESULT WINAPI HTMLBodyElement_get_background(IHTMLBodyElement *iface, BSTR *p)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString background_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&background_str, NULL);
+
+    nsres = nsIDOMHTMLBodyElement_GetBackground(This->nsbody, &background_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *background;
+        nsAString_GetData(&background_str, &background, NULL);
+        *p = SysAllocString(background);
+    }else {
+        ERR("GetBackground failed: %08x\n", nsres);
+        *p = NULL;
+    }
+
+    nsAString_Finish(&background_str);
+
+    TRACE("*p = %s\n", debugstr_w(*p));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_bgProperties(IHTMLBodyElement *iface, BSTR v)
