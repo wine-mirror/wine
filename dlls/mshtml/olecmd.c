@@ -911,6 +911,24 @@ static HRESULT exec_outdent(HTMLDocument *This)
     return S_OK;
 }
 
+static HRESULT exec_htmleditmode(HTMLDocument *This)
+{
+    FIXME("(%p)\n", This);
+    return S_OK;
+}
+
+static HRESULT exec_composesettings(HTMLDocument *This, VARIANT *in)
+{
+    if(!in || V_VT(in) != VT_BSTR) {
+        WARN("invalid arg\n");
+        return E_INVALIDARG;
+    }
+
+    FIXME("%s\n", debugstr_w(V_BSTR(in)));
+
+    return S_OK;
+}
+
 static const struct {
     OLECMDF cmdf;
     HRESULT (*func)(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
@@ -1206,6 +1224,14 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_outdent(This);
+        case IDM_HTMLEDITMODE:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_htmleditmode(This);
+        case IDM_COMPOSESETTINGS:
+            if(pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_composesettings(This, pvaIn);
         default:
             FIXME("unsupported nCmdID %d of CGID_MSHTML group\n", nCmdID);
             return OLECMDERR_E_NOTSUPPORTED;
