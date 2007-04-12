@@ -39,6 +39,48 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static HRESULT get_doc_string(HTMLDocument *This, char **str, DWORD *len)
+{
+    nsIDOMDocument *nsdoc;
+    nsIDOMNode *nsnode;
+    LPCWSTR strw;
+    nsAString nsstr;
+    nsresult nsres;
+
+    if(!This->nscontainer) {
+        WARN("no nscontainer, returning NULL\n");
+        return S_OK;
+    }
+
+    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMNode, (void**)&nsnode);
+    nsIDOMDocument_Release(nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNode failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsAString_Init(&nsstr, NULL);
+    nsnode_to_nsstring(nsnode, &nsstr);
+    nsIDOMNode_Release(nsnode);
+
+    nsAString_GetData(&nsstr, &strw, NULL);
+    TRACE("%s\n", debugstr_w(strw));
+
+    *len = WideCharToMultiByte(CP_ACP, 0, strw, -1, NULL, 0, NULL, NULL);
+    *str = mshtml_alloc(*len);
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, *str, *len, NULL, NULL);
+
+    nsAString_Finish(&nsstr);
+
+    return S_OK;
+}
+
 /**********************************************************
  * IPersistMoniker implementation
  */
@@ -420,8 +462,27 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *iface, LPCOLESTR pszFileNam
 static HRESULT WINAPI PersistFile_Save(IPersistFile *iface, LPCOLESTR pszFileName, BOOL fRemember)
 {
     HTMLDocument *This = PERSISTFILE_THIS(iface);
-    FIXME("(%p)->(%s %x)\n", This, debugstr_w(pszFileName), fRemember);
-    return E_NOTIMPL;
+    char *str;
+    DWORD len, written=0;
+    HANDLE file;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %x)\n", This, debugstr_w(pszFileName), fRemember);
+
+    file = CreateFileW(pszFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    if(file == INVALID_HANDLE_VALUE) {
+        WARN("Could not create file: %u\n", GetLastError());
+        return E_FAIL;
+    }
+
+    hres = get_doc_string(This, &str, &len);
+    if(FAILED(hres))
+        return hres;
+
+    WriteFile(file, str, len, &written, NULL);
+    CloseHandle(file);
+    return S_OK;
 }
 
 static HRESULT WINAPI PersistFile_SaveCompleted(IPersistFile *iface, LPCOLESTR pszFileName)
@@ -495,53 +556,22 @@ static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM
                                              BOOL fClearDirty)
 {
     HTMLDocument *This = PERSTRINIT_THIS(iface);
-    nsIDOMDocument *nsdoc;
-    nsIDOMNode *nsnode;
-    nsAString nsstr;
-    LPCWSTR strw;
     char *str;
     DWORD len, written=0;
-    nsresult nsres;
     HRESULT hres;
 
     WARN("(%p)->(%p %x) needs more work\n", This, pStm, fClearDirty);
 
-    if(!This->nscontainer)
-        return S_OK;
+    hres = get_doc_string(This, &str, &len);
+    if(FAILED(hres))
+        return hres;
 
-    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMNode, (void**)&nsnode);
-    nsIDOMDocument_Release(nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNode failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsAString_Init(&nsstr, NULL);
-    nsnode_to_nsstring(nsnode, &nsstr);
-    nsIDOMNode_Release(nsnode);
-
-    nsAString_GetData(&nsstr, &strw, NULL);
-
-    len = WideCharToMultiByte(CP_ACP, 0, strw, -1, NULL, 0, NULL, NULL);
-    str = mshtml_alloc(len);
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, str, len, NULL, NULL);
-
-    nsAString_Finish(&nsstr);
-
-    TRACE("%s\n", debugstr_a(str));
 
     hres = IStream_Write(pStm, str, len, &written);
     if(FAILED(hres))
         FIXME("Write failed: %08x\n", hres);
 
     mshtml_free(str);
-
     return S_OK;
 }
 
