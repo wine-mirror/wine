@@ -1302,6 +1302,7 @@ then
    	wine_cv_linux_joystick_22_api,
 	AC_TRY_COMPILE([
 	#include <sys/ioctl.h>
+	#include <sys/types.h>
 	#include <linux/joystick.h>
 
 	struct js_event blub;
