@@ -204,6 +204,20 @@ static const struct message monthcal_hit_test_seq[] = {
     { MCM_HITTEST, sent|wparam, 0},
     { MCM_HITTEST, sent|wparam, 0},
     { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
+    { MCM_HITTEST, sent|wparam, 0},
     { 0 }
 };
 
@@ -725,13 +739,140 @@ static void test_monthcal_HitTest(HWND hwnd)
     expect(mchit.uHit, res);
     todo_wine {expect(MCHT_NOWHERE, res);}
 
-    /* (150, 200) is in active area */
+    /* (150, 200) is in active area - calendar background */
     mchit.pt.x = 150;
     mchit.pt.y = 200;
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
     expect(150, mchit.pt.x);
     expect(200, mchit.pt.y);
     expect(mchit.uHit, res);
+    expect(MCHT_CALENDARBK, res);
+
+    /* (70, 20) is in active area - previous month button */
+    mchit.pt.x = 70;
+    mchit.pt.y = 20;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(70, mchit.pt.x);
+    expect(20, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_TITLEBTNPREV, res);}
+
+    /* (90, 20) is in active area - background section of the title */
+    mchit.pt.x = 90;
+    mchit.pt.y = 20;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(90, mchit.pt.x);
+    expect(20, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_TITLE, res);}
+
+    /* (150, 20) is in active area - month section of the title */
+    mchit.pt.x = 150;
+    mchit.pt.y = 20;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(150, mchit.pt.x);
+    expect(20, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_TITLEMONTH, res);}
+
+    /* (230, 20) is in active area - previous month button */
+    mchit.pt.x = 230;
+    mchit.pt.y = 20;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(230, mchit.pt.x);
+    expect(20, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_TITLEBTNNEXT, res);}
+
+    /* (70, 40) is in active area - day of the week */
+    mchit.pt.x = 70;
+    mchit.pt.y = 40;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(70, mchit.pt.x);
+    expect(40, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_CALENDARDAY, res);}
+
+    /* (70, 55) is in active area - date from prev month */
+    mchit.pt.x = 70;
+    mchit.pt.y = 55;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(70, mchit.pt.x);
+    expect(55, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_CALENDARDATEPREV, res);}
+
+    /* (125, 115) is in active area - date from this month */
+    mchit.pt.x = 125;
+    mchit.pt.y = 115;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(125, mchit.pt.x);
+    expect(115, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_CALENDARDATE, res);}
+
+    /* (80, 160) is in active area - background section of the title */
+    mchit.pt.x = 80;
+    mchit.pt.y = 160;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(80, mchit.pt.x);
+    expect(160, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_TITLEBK, res);}
+
+    /* (150, 160) is in active area - month section of the title */
+    mchit.pt.x = 150;
+    mchit.pt.y = 160;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(150, mchit.pt.x);
+    expect(160, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_TITLEMONTH, res);}
+
+    /* (170, 160) is in active area - year section of the title */
+    mchit.pt.x = 170;
+    mchit.pt.y = 160;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(170, mchit.pt.x);
+    expect(160, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_TITLEYEAR, res);}
+
+    /* (150, 240) is in active area - date from this month */
+    mchit.pt.x = 150;
+    mchit.pt.y = 240;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(150, mchit.pt.x);
+    expect(240, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_CALENDARDATE, res);}
+
+    /* (150, 270) is in active area - date from next month */
+    mchit.pt.x = 150;
+    mchit.pt.y = 270;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(150, mchit.pt.x);
+    expect(270, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_CALENDARDATENEXT, res);}
+
+    /* (150, 290) is in active area - today link */
+    mchit.pt.x = 150;
+    mchit.pt.y = 290;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(150, mchit.pt.x);
+    expect(290, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_TODAYLINK, res);}
+
+    /* (70, 290) is in active area - today link */
+    mchit.pt.x = 70;
+    mchit.pt.y = 290;
+    res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM) & mchit);
+    expect(70, mchit.pt.x);
+    expect(290, mchit.pt.y);
+    expect(mchit.uHit, res);
+    todo_wine {expect(MCHT_TODAYLINK, res);}
 
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_hit_test_seq, "monthcal hit test", FALSE);
 }
