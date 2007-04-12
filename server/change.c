@@ -518,11 +518,11 @@ static const struct fd_ops inotify_fd_ops =
 {
     inotify_get_poll_events,     /* get_poll_events */
     inotify_poll_event,          /* poll_event */
-    no_flush,                    /* flush */
-    no_get_fd_type,              /* get_fd_type */
-    default_fd_queue_async,      /* queue_async */
-    default_fd_reselect_async,   /* reselect_async */
-    default_fd_cancel_async,     /* cancel_async */
+    NULL,                        /* flush */
+    NULL,                        /* get_fd_type */
+    NULL,                        /* queue_async */
+    NULL,                        /* reselect_async */
+    NULL,                        /* cancel_async */
 };
 
 static int inotify_get_poll_events( struct fd *fd )

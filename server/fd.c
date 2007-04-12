@@ -1779,24 +1779,6 @@ void no_flush( struct fd *fd, struct event **event )
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
 }
 
-/* default get_fd_type() routine */
-enum server_fd_type no_get_fd_type( struct fd *fd )
-{
-    return FD_TYPE_INVALID;
-}
-
-/* default queue_async() routine */
-void no_queue_async( struct fd *fd, const async_data_t *data, int type, int count)
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-}
-
-/* default cancel_async() routine */
-void no_cancel_async( struct fd *fd )
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-}
-
 static inline int is_valid_mounted_device( struct stat *st )
 {
 #if defined(linux) || defined(__sun__)

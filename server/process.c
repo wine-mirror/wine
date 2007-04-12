@@ -84,11 +84,11 @@ static const struct fd_ops process_fd_ops =
 {
     NULL,                        /* get_poll_events */
     process_poll_event,          /* poll_event */
-    no_flush,                    /* flush */
-    no_get_fd_type,              /* get_fd_type */
-    no_queue_async,              /* queue_async */
+    NULL,                        /* flush */
+    NULL,                        /* get_fd_type */
+    NULL,                        /* queue_async */
     NULL,                        /* reselect_async */
-    no_cancel_async              /* cancel async */
+    NULL                         /* cancel async */
 };
 
 /* process startup info */

@@ -82,11 +82,11 @@ static const struct fd_ops handler_fd_ops =
 {
     NULL,                     /* get_poll_events */
     handler_poll_event,       /* poll_event */
-    no_flush,                 /* flush */
-    no_get_fd_type,           /* get_fd_type */
-    no_queue_async,           /* queue_async */
+    NULL,                     /* flush */
+    NULL,                     /* get_fd_type */
+    NULL,                     /* queue_async */
     NULL,                     /* reselect_async */
-    no_cancel_async           /* cancel_async */
+    NULL                      /* cancel_async */
 };
 
 static struct handler *handler_sighup;

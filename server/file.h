@@ -78,9 +78,6 @@ extern void default_fd_queue_async( struct fd *fd, const async_data_t *data, int
 extern void default_fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern void default_fd_cancel_async( struct fd *fd );
 extern void no_flush( struct fd *fd, struct event **event );
-extern enum server_fd_type no_get_fd_type( struct fd *fd );
-extern void no_queue_async( struct fd *fd, const async_data_t *data, int type, int count);
-extern void no_cancel_async( struct fd *fd );
 extern void main_loop(void);
 extern void remove_process_locks( struct process *process );
 
