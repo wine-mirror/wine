@@ -703,11 +703,8 @@ static void shader_glsl_get_register_name(
 static DWORD shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
     char *ptr = write_mask;
     DWORD mask = param & WINED3DSP_WRITEMASK_ALL;
-    DWORD reg_type = shader_get_regtype(param);
 
-    /* gl_FogFragCoord, gl_PointSize and gl_FragDepth are floats, fixup the write mask. */
-    if (((reg_type == WINED3DSPR_RASTOUT) && ((param & WINED3DSP_REGNUM_MASK) != 0))
-            || reg_type == WINED3DSPR_DEPTHOUT) {
+    if (shader_is_scalar(param)) {
         mask = WINED3DSP_WRITEMASK_0;
     } else {
         *ptr++ = '.';
@@ -741,12 +738,14 @@ static void shader_glsl_get_swizzle(const DWORD param, BOOL fixup, DWORD mask, c
     const char *swizzle_chars = fixup ? "zyxw" : "xyzw";
     char *ptr = swizzle_str;
 
-    *ptr++ = '.';
-    /* swizzle bits fields: wwzzyyxx */
-    if (mask & WINED3DSP_WRITEMASK_0) *ptr++ = swizzle_chars[swizzle & 0x03];
-    if (mask & WINED3DSP_WRITEMASK_1) *ptr++ = swizzle_chars[(swizzle >> 2) & 0x03];
-    if (mask & WINED3DSP_WRITEMASK_2) *ptr++ = swizzle_chars[(swizzle >> 4) & 0x03];
-    if (mask & WINED3DSP_WRITEMASK_3) *ptr++ = swizzle_chars[(swizzle >> 6) & 0x03];
+    if (!shader_is_scalar(param)) {
+        *ptr++ = '.';
+        /* swizzle bits fields: wwzzyyxx */
+        if (mask & WINED3DSP_WRITEMASK_0) *ptr++ = swizzle_chars[swizzle & 0x03];
+        if (mask & WINED3DSP_WRITEMASK_1) *ptr++ = swizzle_chars[(swizzle >> 2) & 0x03];
+        if (mask & WINED3DSP_WRITEMASK_2) *ptr++ = swizzle_chars[(swizzle >> 4) & 0x03];
+        if (mask & WINED3DSP_WRITEMASK_3) *ptr++ = swizzle_chars[(swizzle >> 6) & 0x03];
+    }
 
     *ptr = '\0';
 }

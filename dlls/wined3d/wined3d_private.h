@@ -1847,6 +1847,30 @@ static inline BOOL shader_is_comment(DWORD token) {
     return WINED3DSIO_COMMENT == (token & WINED3DSI_OPCODE_MASK);
 }
 
+/* TODO: vFace (ps_3_0) */
+static inline BOOL shader_is_scalar(DWORD param) {
+    DWORD reg_type = shader_get_regtype(param);
+
+    switch (reg_type) {
+        case WINED3DSPR_RASTOUT:
+            if ((param & WINED3DSP_REGNUM_MASK) != 0) {
+                /* oFog & oPts */
+                return TRUE;
+            }
+            /* oPos */
+            return FALSE;
+
+        case WINED3DSPR_DEPTHOUT:   /* oDepth */
+        case WINED3DSPR_CONSTBOOL:  /* b# */
+        case WINED3DSPR_LOOP:       /* aL */
+        case WINED3DSPR_PREDICATE:  /* p0 */
+            return TRUE;
+
+        default:
+            return FALSE;
+    }
+}
+
 /* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
  * so upload them above that
  */
