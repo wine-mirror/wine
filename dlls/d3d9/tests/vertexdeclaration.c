@@ -686,7 +686,7 @@ static void test_fvf_decl_management(
     ok(SUCCEEDED(hr), "SetFVF returned %#x, expected %#x\n", hr, D3D_OK);
     if (FAILED(hr)) return;
 
-    /* The contents should correspond to the second conversion */
+    /* The contents should correspond to the first conversion */
     VDECL_CHECK(compare_elements(result_decl1, test_elements1));
 
     /* Get converted decl (#3) */
@@ -700,6 +700,8 @@ static void test_fvf_decl_management(
 
     /* The contents should correspond to the second conversion */
     VDECL_CHECK(compare_elements(result_decl3, test_elements2));
+    /* Re-Check if the first decl was overwritten by the new Get() */
+    VDECL_CHECK(compare_elements(result_decl1, test_elements1));
 
     /* The refcounts should all be 1 */
     ref1 = get_refcount((IUnknown*) result_decl1);
