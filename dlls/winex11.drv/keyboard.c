@@ -1827,7 +1827,8 @@ SHORT X11DRV_GetAsyncKeyState(INT key)
 {
     SHORT retval;
 
-    X11DRV_MsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_KEY, 0 );
+    /* Photoshop livelocks unless mouse events are included here */
+    X11DRV_MsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_KEY | QS_MOUSE, 0 );
 
     retval = ((key_state_table[key] & 0x40) ? 0x0001 : 0) |
              ((key_state_table[key] & 0x80) ? 0x8000 : 0);
