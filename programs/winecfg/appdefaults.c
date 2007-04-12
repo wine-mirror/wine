@@ -48,6 +48,7 @@ static const struct
     const char *szProductType;
 } win_versions[] =
 {
+    { "vista",   "Windows Vista",  6,  0, 0x1770,VER_PLATFORM_WIN32_NT, " ", 0, 0, "WinNT"},
     { "win2003", "Windows 2003",   5,  2, 0xECE, VER_PLATFORM_WIN32_NT, "Service Pack 1", 1, 0, "ServerNT"},
     { "winxp",   "Windows XP",     5,  1, 0xA28, VER_PLATFORM_WIN32_NT, "Service Pack 2", 2, 0, "WinNT"},
     { "win2k",   "Windows 2000",   5,  0, 0x893, VER_PLATFORM_WIN32_NT, "Service Pack 4", 4, 0, "WinNT"},
