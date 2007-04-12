@@ -221,6 +221,7 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
         if(This->original_uri)
             nsIURI_Release(This->original_uri);
         mshtml_free(This->content);
+        mshtml_free(This->charset);
         mshtml_free(This);
     }
 
@@ -512,11 +513,20 @@ static nsresult NSAPI nsChannel_GetContentCharset(nsIHttpChannel *iface,
 
     TRACE("(%p)->(%p)\n", This, aContentCharset);
 
-    if(This->channel)
-        return nsIChannel_GetContentCharset(This->channel, aContentCharset);
+    if(This->charset) {
+        nsACString_SetData(aContentCharset, This->charset);
+        return NS_OK;
+    }
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if(This->channel) {
+        nsresult nsres = nsIChannel_GetContentCharset(This->channel, aContentCharset);
+        const char *ch;
+        nsACString_GetData(aContentCharset, &ch, NULL);
+        return nsres;
+    }
+
+    nsACString_SetData(aContentCharset, "");
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_SetContentCharset(nsIHttpChannel *iface,
@@ -1871,6 +1881,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     ret->notif_callback = NULL;
     ret->load_flags = 0;
     ret->content = NULL;
+    ret->charset = NULL;
 
     nsIURI_AddRef(aURI);
     ret->original_uri = aURI;

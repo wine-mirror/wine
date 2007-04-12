@@ -37,6 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define CONTENT_LENGTH "Content-Length"
+#define UTF16_STR "utf-16"
 
 #define NSINSTREAM(x) ((nsIInputStream*) &(x)->lpInputStreamVtbl)
 
@@ -399,14 +400,8 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
     TRACE("(%p)->(%08x %d %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
 
     if(This->nslistener) {
-        if(!This->nsstream) {
+        if(!This->nsstream)
             This->nsstream = create_nsprotocol_stream(pstgmed->u.pstm);
-
-            nsres = nsIStreamListener_OnStartRequest(This->nslistener,
-                    (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
-            if(NS_FAILED(nsres))
-                FIXME("OnStartRequest failed: %08x\n", nsres);
-        }
 
         do {
             hres = IStream_Read(pstgmed->u.pstm, This->nsstream->buf, sizeof(This->nsstream->buf),
@@ -414,16 +409,28 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
             if(!This->nsstream->buf_size)
                 break;
 
+            if(!This->readed && This->nsstream->buf_size >= 2 && *(WORD*)This->nsstream->buf == 0xfeff) {
+                This->nschannel->charset = mshtml_alloc(sizeof(UTF16_STR));
+                memcpy(This->nschannel->charset, UTF16_STR, sizeof(UTF16_STR));
+            }
+
+            if(!This->readed) {
+                nsres = nsIStreamListener_OnStartRequest(This->nslistener,
+                        (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
+                if(NS_FAILED(nsres))
+                    FIXME("OnStartRequest failed: %08x\n", nsres);
+            }
+
+            This->readed += This->nsstream->buf_size;
+
             nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
                     (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext,
                     NSINSTREAM(This->nsstream), This->readed, This->nsstream->buf_size);
             if(NS_FAILED(nsres))
-                FIXME("OnDataAvailable failed: %08x\n", nsres);
+                ERR("OnDataAvailable failed: %08x\n", nsres);
 
             if(This->nsstream->buf_size)
                 FIXME("buffer is not empty!\n");
-
-            This->readed += This->nsstream->buf_size;
         }while(hres == S_OK);
     }else {
         BYTE buf[1024];

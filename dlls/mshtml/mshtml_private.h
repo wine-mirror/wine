@@ -165,6 +165,7 @@ typedef struct {
     nsLoadFlags load_flags;
     nsIURI *original_uri;
     char *content;
+    char *charset;
 } nsChannel;
 
 typedef struct {
