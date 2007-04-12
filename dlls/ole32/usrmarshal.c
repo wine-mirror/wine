@@ -321,7 +321,7 @@ static void __RPC_USER handle_UserFree(ULONG *pFlags, HANDLE *phMenu)
     void __RPC_USER type##_UserFree(ULONG *pFlags, type *handle) \
     { \
         TRACE("(%s, &%p\n", debugstr_user_flags(pFlags), *handle); \
-        return handle_UserFree(pFlags, (HANDLE *)handle); \
+        handle_UserFree(pFlags, (HANDLE *)handle); \
     }
 
 IMPL_WIREM_HANDLE(HACCEL)

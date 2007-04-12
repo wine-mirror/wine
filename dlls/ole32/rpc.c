@@ -1352,7 +1352,11 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
     TRACE("ipid = %s, iMethod = %d\n", debugstr_guid(&ipid), msg->ProcNum);
 
     params = HeapAlloc(GetProcessHeap(), 0, sizeof(*params));
-    if (!params) return RpcRaiseException(E_OUTOFMEMORY);
+    if (!params)
+    {
+        RpcRaiseException(E_OUTOFMEMORY);
+        return;
+    }
 
     hr = ipid_get_dispatch_params(&ipid, &apt, &params->stub, &params->chan,
                                   &params->iid, &params->iface);
@@ -1360,7 +1364,8 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
     {
         ERR("no apartment found for ipid %s\n", debugstr_guid(&ipid));
         HeapFree(GetProcessHeap(), 0, params);
-        return RpcRaiseException(hr);
+        RpcRaiseException(hr);
+        return;
     }
 
     params->msg = (RPCOLEMESSAGE *)msg;
