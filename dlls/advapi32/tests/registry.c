@@ -79,38 +79,87 @@ static void setup_main_key(void)
     assert (!RegCreateKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkey_main ));
 }
 
-static void test_hkey_main_Value_A(LPCSTR name, LPCSTR string)
+static void test_hkey_main_Value_A(LPCSTR name, LPCSTR string,
+                                   DWORD full_byte_len)
 {
     DWORD ret, type, cbData;
-    DWORD str_byte_len, full_byte_len;
+    DWORD str_byte_len;
+    LPSTR value;
+    static const char nA[]={'N', 0};
 
+    type=0xdeadbeef;
+    cbData=0xdeadbeef;
+    /* When successful RegQueryValueExA() leaves GLE as is,
+     * so we must reset it to detect unimplemented functions.
+     */
+    SetLastError(0xdeadbeef);
     ret = RegQueryValueExA(hkey_main, name, NULL, &type, NULL, &cbData);
     GLE = GetLastError();
     ok(ret == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%d\n", ret, GLE);
+    /* It is wrong for the Ansi version to not be implemented */
+    ok(GLE == 0xdeadbeef, "RegQueryValueExA set GLE = %u\n", GLE);
     if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return;
 
-    str_byte_len = lstrlenA(string) + 1;
-    full_byte_len = sizeof(string);
+    str_byte_len = (string ? lstrlenA(string) : 0) + 1;
     ok(type == REG_SZ, "RegQueryValueExA returned type %d\n", type);
-    ok(cbData == full_byte_len || cbData == str_byte_len,
+    ok(cbData == full_byte_len || cbData == str_byte_len /* Win9x */,
         "cbData=%d instead of %d or %d\n", cbData, full_byte_len, str_byte_len);
+
+    value = HeapAlloc(GetProcessHeap(), 0, (cbData+2)*sizeof(*value));
+    strcpy(value, nA);
+    type=0xdeadbeef;
+    ret = RegQueryValueExA(hkey_main, name, NULL, &type, (BYTE*)value, &cbData);
+    GLE = GetLastError();
+    ok(ret == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%d\n", ret, GLE);
+    if (!string)
+    {
+        /* When cbData == 0, RegQueryValueExA() should not modify the buffer */
+        ok(strcmp(value, nA) == 0 || (cbData == 1 && *value == '\0') /* Win9x */,
+           "RegQueryValueExA failed: '%s' != '%s'\n", value, string);
+    }
+    else
+    {
+        ok(strcmp(value, string) == 0, "RegQueryValueExA failed: '%s' != '%s'\n",
+           value, string);
+    }
+    HeapFree(GetProcessHeap(), 0, value);
 }
 
-static void test_hkey_main_Value_W(LPCWSTR name, LPCWSTR string)
+static void test_hkey_main_Value_W(LPCWSTR name, LPCWSTR string,
+                                   DWORD full_byte_len)
 {
     DWORD ret, type, cbData;
-    DWORD str_byte_len, full_byte_len;
+    LPWSTR value;
+    static const WCHAR nW[]={'N', 0};
 
+    type=0xdeadbeef;
+    cbData=0xdeadbeef;
+    /* When successful RegQueryValueExW() leaves GLE as is,
+     * so we must reset it to detect unimplemented functions.
+     */
+    SetLastError(0xdeadbeef);
     ret = RegQueryValueExW(hkey_main, name, NULL, &type, NULL, &cbData);
     GLE = GetLastError();
     ok(ret == ERROR_SUCCESS, "RegQueryValueExW failed: %d, GLE=%d\n", ret, GLE);
     if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return;
 
-    str_byte_len = (lstrlenW(string) + 1) * sizeof(WCHAR);
-    full_byte_len = sizeof(string);
     ok(type == REG_SZ, "RegQueryValueExW returned type %d\n", type);
-    ok(cbData == full_byte_len || cbData == str_byte_len,
-        "cbData=%d instead of %d or %d\n", cbData, full_byte_len, str_byte_len);
+    ok(cbData == full_byte_len,
+        "cbData=%d instead of %d\n", cbData, full_byte_len);
+
+    value = HeapAlloc(GetProcessHeap(), 0, (cbData+2)*sizeof(*value));
+    lstrcpyW(value, nW);
+    type=0xdeadbeef;
+    ret = RegQueryValueExW(hkey_main, name, NULL, &type, (BYTE*)value, &cbData);
+    GLE = GetLastError();
+    ok(ret == ERROR_SUCCESS, "RegQueryValueExW failed: %d, GLE=%d\n", ret, GLE);
+    if (!string)
+    {
+        /* When cbData == 0, RegQueryValueExW() should not modify the buffer */
+        string=nW;
+    }
+    ok(lstrcmpW(value, string) == 0, "the string RegQueryValueExW is wrong\n");
+    HeapFree(GetProcessHeap(), 0, value);
 }
 
 static void test_set_value(void)
@@ -119,25 +168,44 @@ static void test_set_value(void)
 
     static const WCHAR name1W[] =   {'C','l','e','a','n','S','i','n','g','l','e','S','t','r','i','n','g', 0};
     static const WCHAR name2W[] =   {'S','o','m','e','I','n','t','r','a','Z','e','r','o','e','d','S','t','r','i','n','g', 0};
+    static const WCHAR emptyW[] = {0};
     static const WCHAR string1W[] = {'T','h','i','s','N','e','v','e','r','B','r','e','a','k','s', 0};
     static const WCHAR string2W[] = {'T','h','i','s', 0 ,'B','r','e','a','k','s', 0 , 0 ,'A', 0 , 0 , 0 , 0 ,'L','o','t', 0 , 0 , 0 , 0};
 
     static const char name1A[] =   "CleanSingleString";
     static const char name2A[] =   "SomeIntraZeroedString";
+    static const char emptyA[] = "";
     static const char string1A[] = "ThisNeverBreaks";
     static const char string2A[] = "This\0Breaks\0\0A\0\0\0Lot\0\0\0\0";
+
+    /* Test RegSetValueExA with a 'zero-byte' string (as Office 2003 does).
+     * Surprisingly enough we're supposed to get zero bytes out of it.
+     * FIXME: Wine's on-disk file format does not differentiate this with
+     *        regular empty strings but there's no way to test as it requires
+     *        stopping the wineserver.
+     */
+    ret = RegSetValueExA(hkey_main, name1A, 0, REG_SZ, (const BYTE *)emptyA, 0);
+    ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%d\n", ret, GetLastError());
+    test_hkey_main_Value_A(name1A, NULL, 0);
+    test_hkey_main_Value_W(name1W, NULL, 0);
+
+    /* test RegSetValueExA with an empty string */
+    ret = RegSetValueExA(hkey_main, name1A, 0, REG_SZ, (const BYTE *)emptyA, sizeof(emptyA));
+    ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%d\n", ret, GetLastError());
+    test_hkey_main_Value_A(name1A, emptyA, sizeof(emptyA));
+    test_hkey_main_Value_W(name1W, emptyW, sizeof(emptyW));
 
     /* test RegSetValueExA with normal string */
     ret = RegSetValueExA(hkey_main, name1A, 0, REG_SZ, (const BYTE *)string1A, sizeof(string1A));
     ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%d\n", ret, GetLastError());
-    test_hkey_main_Value_A(name1A, string1A);
-    test_hkey_main_Value_W(name1W, string1W);
+    test_hkey_main_Value_A(name1A, string1A, sizeof(string1A));
+    test_hkey_main_Value_W(name1W, string1W, sizeof(string1W));
 
     /* test RegSetValueExA with intrazeroed string */
     ret = RegSetValueExA(hkey_main, name2A, 0, REG_SZ, (const BYTE *)string2A, sizeof(string2A));
     ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%d\n", ret, GetLastError());
-    test_hkey_main_Value_A(name1A, string1A);
-    test_hkey_main_Value_W(name1W, string1W);
+    test_hkey_main_Value_A(name2A, string2A, sizeof(string2A));
+    test_hkey_main_Value_W(name2W, string2W, sizeof(string2W));
 
     /* 9x doesn't support W-calls, so don't test them then */
     if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return; 
@@ -145,14 +213,14 @@ static void test_set_value(void)
     /* test RegSetValueExW with normal string */
     ret = RegSetValueExW(hkey_main, name1W, 0, REG_SZ, (const BYTE *)string1W, sizeof(string1W));
     ok(ret == ERROR_SUCCESS, "RegSetValueExW failed: %d, GLE=%d\n", ret, GetLastError());
-    test_hkey_main_Value_A(name1A, string1A);
-    test_hkey_main_Value_W(name1W, string1W);
+    test_hkey_main_Value_A(name1A, string1A, sizeof(string1A));
+    test_hkey_main_Value_W(name1W, string1W, sizeof(string1W));
 
     /* test RegSetValueExW with intrazeroed string */
     ret = RegSetValueExW(hkey_main, name2W, 0, REG_SZ, (const BYTE *)string2W, sizeof(string2W));
     ok(ret == ERROR_SUCCESS, "RegSetValueExW failed: %d, GLE=%d\n", ret, GetLastError());
-    test_hkey_main_Value_A(name1A, string1A);
-    test_hkey_main_Value_W(name1W, string1W);
+    test_hkey_main_Value_A(name2A, string2A, sizeof(string2A));
+    test_hkey_main_Value_W(name2W, string2W, sizeof(string2W));
 }
 
 static void create_test_entries(void)
