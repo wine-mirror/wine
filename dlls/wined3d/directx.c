@@ -1117,6 +1117,7 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
                 switch (Format)
                 {
                     case WINED3DFMT_UNKNOWN:
+                        /* This is for D3D8, do not enumerate P8 here */
                         if (DevModeW.dmBitsPerPel == 32 ||
                             DevModeW.dmBitsPerPel == 16) i++;
                         break;
@@ -1125,6 +1126,9 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
                         break;
                     case WINED3DFMT_R5G6B5:
                         if (DevModeW.dmBitsPerPel == 16) i++;
+                        break;
+                    case WINED3DFMT_P8:
+                        if (DevModeW.dmBitsPerPel == 8) i++;
                         break;
                     default:
                         /* Skip other modes as they do not match the requested format */
@@ -1169,6 +1173,7 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
             switch (Format)
             {
                 case WINED3DFMT_UNKNOWN:
+                    /* This is D3D8. Do not enumerate P8 here */
                     if (DevModeW.dmBitsPerPel == 32 ||
                         DevModeW.dmBitsPerPel == 16) i++;
                     break;
@@ -1177,6 +1182,9 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
                     break;
                 case WINED3DFMT_R5G6B5:
                     if (DevModeW.dmBitsPerPel == 16) i++;
+                    break;
+                case WINED3DFMT_P8:
+                    if (DevModeW.dmBitsPerPel == 8) i++;
                     break;
                 default:
                     /* Modes that don't match what we support can get an early-out */
@@ -1203,6 +1211,9 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
             {
                 switch (DevModeW.dmBitsPerPel)
                 {
+                    case 8:
+                        pMode->Format = WINED3DFMT_P8;
+                        break;
                     case 16:
                         pMode->Format = WINED3DFMT_R5G6B5;
                         break;

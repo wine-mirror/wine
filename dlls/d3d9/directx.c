@@ -98,14 +98,20 @@ static HRESULT WINAPI IDirect3D9Impl_GetAdapterIdentifier(LPDIRECT3D9 iface, UIN
 
 static UINT WINAPI IDirect3D9Impl_GetAdapterModeCount(LPDIRECT3D9 iface, UINT Adapter, D3DFORMAT Format) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
+
+    /* Others than that not supported by d3d9, but reported by wined3d for ddraw. Filter them out */
+    if(Format != D3DFMT_X8R8G8B8 && Format != D3DFMT_R5G6B5 && Format != D3DFMT_UNKNOWN) {
+        return 0;
+    }
+
     return IWineD3D_GetAdapterModeCount(This->WineD3D, Adapter, Format);
 }
 
 static HRESULT WINAPI IDirect3D9Impl_EnumAdapterModes(LPDIRECT3D9 iface, UINT Adapter, D3DFORMAT Format, UINT Mode, D3DDISPLAYMODE* pMode) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    /* We can't pass this to WineD3D, otherwise it'll think it came from D3D8.
+    /* We can't pass this to WineD3D, otherwise it'll think it came from D3D8 or DDraw.
        It's supposed to fail anyway, so no harm returning failure. */
-    if(Format == D3DFMT_UNKNOWN)
+    if(Format != WINED3DFMT_X8R8G8B8 && Format != WINED3DFMT_R5G6B5)
         return D3DERR_INVALIDCALL;
     return IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, Format, Mode, (WINED3DDISPLAYMODE *) pMode);
 }

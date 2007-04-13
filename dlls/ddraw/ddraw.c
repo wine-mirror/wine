@@ -1166,10 +1166,30 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
                                  LPDDENUMMODESCALLBACK2 cb)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
-    unsigned int modenum = 0;
+    unsigned int modenum, fmt;
     WINED3DFORMAT pixelformat = WINED3DFMT_UNKNOWN;
     WINED3DDISPLAYMODE mode;
     DDSURFACEDESC2 callback_sd;
+
+    WINED3DFORMAT checkFormatList[] =
+    {
+        WINED3DFMT_R8G8B8,
+        WINED3DFMT_A8R8G8B8,
+        WINED3DFMT_X8R8G8B8,
+        WINED3DFMT_R5G6B5,
+        WINED3DFMT_X1R5G5B5,
+        WINED3DFMT_A1R5G5B5,
+        WINED3DFMT_A4R4G4B4,
+        WINED3DFMT_R3G3B2,
+        WINED3DFMT_A8R3G3B2,
+        WINED3DFMT_X4R4G4B4,
+        WINED3DFMT_A2B10G10R10,
+        WINED3DFMT_A8B8G8R8,
+        WINED3DFMT_X8B8G8R8,
+        WINED3DFMT_A2R10G10B10,
+        WINED3DFMT_A8P8,
+        WINED3DFMT_P8
+    };
 
     TRACE("(%p)->(%p,%p,%p): Relay\n", This, DDSD, Context, cb);
 
@@ -1182,41 +1202,52 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
             pixelformat = PixelFormat_DD2WineD3D(&DDSD->u4.ddpfPixelFormat);
     }
 
-    while(IWineD3D_EnumAdapterModes(This->wineD3D,
-                                    WINED3DADAPTER_DEFAULT,
-                                    pixelformat,
-                                    modenum++,
-                                    &mode) == WINED3D_OK) {
-        if(DDSD)
+    for(fmt = 0; fmt < (sizeof(checkFormatList) / sizeof(checkFormatList[0])); fmt++)
+    {
+        if(pixelformat != WINED3DFMT_UNKNOWN && checkFormatList[fmt] != pixelformat)
         {
-            if(DDSD->dwFlags & DDSD_WIDTH && mode.Width != DDSD->dwWidth) continue;
-            if(DDSD->dwFlags & DDSD_HEIGHT && mode.Height != DDSD->dwHeight) continue;
+            continue;
         }
 
-        memset(&callback_sd, 0, sizeof(callback_sd));
-        callback_sd.dwSize = sizeof(callback_sd);
-        callback_sd.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
-
-        callback_sd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH;
-        if(Flags & DDEDM_REFRESHRATES)
+        modenum = 0;
+        while(IWineD3D_EnumAdapterModes(This->wineD3D,
+                                        WINED3DADAPTER_DEFAULT,
+                                        checkFormatList[fmt],
+                                        modenum++,
+                                        &mode) == WINED3D_OK)
         {
-            callback_sd.dwFlags |= DDSD_REFRESHRATE;
-            callback_sd.u2.dwRefreshRate = mode.RefreshRate;
-        }
+            if(DDSD)
+            {
+                if(DDSD->dwFlags & DDSD_WIDTH && mode.Width != DDSD->dwWidth) continue;
+                if(DDSD->dwFlags & DDSD_HEIGHT && mode.Height != DDSD->dwHeight) continue;
+            }
 
-        callback_sd.dwWidth = mode.Width;
-        callback_sd.dwHeight = mode.Height;
+            memset(&callback_sd, 0, sizeof(callback_sd));
+            callback_sd.dwSize = sizeof(callback_sd);
+            callback_sd.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
 
-        PixelFormat_WineD3DtoDD(&callback_sd.u4.ddpfPixelFormat, mode.Format);
+            callback_sd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH;
+            if(Flags & DDEDM_REFRESHRATES)
+            {
+                callback_sd.dwFlags |= DDSD_REFRESHRATE;
+                callback_sd.u2.dwRefreshRate = mode.RefreshRate;
+            }
 
-        TRACE("Enumerating %dx%d@%d\n", callback_sd.dwWidth, callback_sd.dwHeight, callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount);
+            callback_sd.dwWidth = mode.Width;
+            callback_sd.dwHeight = mode.Height;
 
-        if(cb(&callback_sd, Context) == DDENUMRET_CANCEL)
-        {
-            TRACE("Application asked to terminate the enumeration\n");
-            return DD_OK;
+            PixelFormat_WineD3DtoDD(&callback_sd.u4.ddpfPixelFormat, mode.Format);
+
+            TRACE("Enumerating %dx%d@%d\n", callback_sd.dwWidth, callback_sd.dwHeight, callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount);
+
+            if(cb(&callback_sd, Context) == DDENUMRET_CANCEL)
+            {
+                TRACE("Application asked to terminate the enumeration\n");
+                return DD_OK;
+            }
         }
     }
+
     TRACE("End of enumeration\n");
     return DD_OK;
 }
