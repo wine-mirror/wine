@@ -161,7 +161,7 @@ BOOL WINAPI ImageEnumerateCertificates(
     HANDLE handle, WORD TypeFilter, PDWORD CertificateCount,
     PDWORD Indices, DWORD IndexCount)
 {
-    DWORD size, count, offset, sd_VirtualAddr;
+    DWORD size, count, offset, sd_VirtualAddr, index;
     WIN_CERTIFICATE hdr;
     const size_t cert_hdr_size = sizeof hdr - sizeof hdr.bCertificate;
     BOOL r;
@@ -169,17 +169,12 @@ BOOL WINAPI ImageEnumerateCertificates(
     TRACE("%p %hd %p %p %d\n",
            handle, TypeFilter, CertificateCount, Indices, IndexCount);
 
-    if( Indices )
-    {
-        FIXME("Indices not handled!\n");
-        return FALSE;
-    }
-
     r = IMAGEHLP_GetSecurityDirOffset( handle, &sd_VirtualAddr, &size );
     if( !r )
         return FALSE;
 
     offset = 0;
+    index = 0;
     *CertificateCount = 0;
     while( offset < size )
     {
@@ -207,10 +202,13 @@ BOOL WINAPI ImageEnumerateCertificates(
             (TypeFilter == hdr.wCertificateType) )
         {
             (*CertificateCount)++;
+            if(Indices && *CertificateCount <= IndexCount)
+                *Indices++ = index;
         }
 
         /* next certificate */
         offset += hdr.dwLength;
+        index++;
     }
 
     return TRUE;
