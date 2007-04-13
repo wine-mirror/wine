@@ -175,17 +175,108 @@ static void TestDceErrorInqText (void)
         ok (0, "Cannot set up for DceErrorInqText\n");
 }
 
+static RPC_DISPATCH_FUNCTION IFoo_table[] =
+{
+    0
+};
+
+RPC_DISPATCH_TABLE IFoo_v0_0_DispatchTable =
+{
+    0,
+    IFoo_table
+};
+
+static const RPC_SERVER_INTERFACE IFoo___RpcServerInterface =
+{
+    sizeof(RPC_SERVER_INTERFACE),
+    {{0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x12,0x34}},{0,0}},
+    {{0x8a885d04,0x1ceb,0x11c9,{0x9f,0xe8,0x08,0x00,0x2b,0x10,0x48,0x60}},{2,0}},
+    &IFoo_v0_0_DispatchTable,
+    0,
+    0,
+    0,
+    0,
+    0,
+};
+
+RPC_IF_HANDLE IFoo_v0_0_s_ifspec = (RPC_IF_HANDLE)& IFoo___RpcServerInterface;
+
 static void test_rpc_ncacn_ip_tcp(void)
 {
     RPC_STATUS status;
+    unsigned char *binding;
+    handle_t IFoo_IfHandle;
     static unsigned char foo[] = "foo";
     static unsigned char ncacn_ip_tcp[] = "ncacn_ip_tcp";
+    static unsigned char address[] = "127.0.0.1";
+    static unsigned char endpoint[] = "4114";
 
     status = RpcNetworkIsProtseqValid(foo);
     ok(status == RPC_S_INVALID_RPC_PROTSEQ, "return wrong\n");
 
     status = RpcNetworkIsProtseqValid(ncacn_ip_tcp);
     ok(status == RPC_S_OK, "return wrong\n");
+
+    status = RpcMgmtStopServerListening(NULL);
+todo_wine {
+    ok(status == RPC_S_NOT_LISTENING,
+       "wrong RpcMgmtStopServerListening error (%lu)\n", status);
+}
+
+    status = RpcMgmtWaitServerListen();
+    ok(status == RPC_S_NOT_LISTENING,
+       "wrong RpcMgmtWaitServerListen error status (%lu)\n", status);
+
+    status = RpcServerListen(1, 20, FALSE);
+    ok(status == RPC_S_NO_PROTSEQS_REGISTERED,
+       "wrong RpcServerListen error (%lu)\n", status);
+
+    status = RpcServerUseProtseqEp(ncacn_ip_tcp, 20, endpoint, NULL);
+    ok(status == RPC_S_OK, "RpcServerUseProtseqEp failed (%lu)\n", status);
+
+    status = RpcServerRegisterIf(IFoo_v0_0_s_ifspec, NULL, NULL);
+    ok(status == RPC_S_OK, "RpcServerRegisterIf failed (%lu)\n", status);
+
+    status = RpcServerListen(1, 20, TRUE);
+todo_wine {
+    ok(status == RPC_S_OK, "RpcServerListen failed (%lu)\n", status);
+}
+
+    status = RpcServerListen(1, 20, TRUE);
+todo_wine {
+    ok(status == RPC_S_ALREADY_LISTENING,
+       "wrong RpcServerListen error (%lu)\n", status);
+}
+
+    status = RpcStringBindingCompose(NULL, ncacn_ip_tcp, address,
+                                     endpoint, NULL, &binding);
+    ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%lu)\n", status);
+
+    status = RpcBindingFromStringBinding(binding, &IFoo_IfHandle);
+    ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%lu)\n",
+       status);
+
+    status = RpcMgmtStopServerListening(NULL);
+    ok(status == RPC_S_OK, "RpcMgmtStopServerListening failed (%lu)\n",
+       status);
+
+    status = RpcMgmtStopServerListening(NULL);
+    ok(status == RPC_S_OK, "RpcMgmtStopServerListening failed (%lu)\n",
+       status);
+
+    status = RpcServerUnregisterIf(NULL, NULL, FALSE);
+    ok(status == RPC_S_OK, "RpcServerUnregisterIf failed (%lu)\n", status);
+
+    status = RpcMgmtWaitServerListen();
+todo_wine {
+    ok(status == RPC_S_OK, "RpcMgmtWaitServerListen failed (%lu)\n", status);
+}
+
+    status = RpcStringFree(&binding);
+    ok(status == RPC_S_OK, "RpcStringFree failed (%lu)\n", status);
+
+    status = RpcBindingFree(&IFoo_IfHandle);
+    ok(status == RPC_S_OK, "RpcBindingFree failed (%lu)\n", status);
 }
 
 /* this is what's generated with MS/RPC - it includes an extra 2
