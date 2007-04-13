@@ -232,5 +232,5 @@ HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
   WCMD_NO, "아니오"
   WCMD_NOASSOC, "이 파일확장자 %s에 연결된 풀그림이 없습니다. \n"
   WCMD_NOFTYPE, "이 파일 형식 '%s'과 연결된 어떠한 명령도 없습니다.'\n"
-  WCMD_OVERWRITE, "Overwrite"
+  WCMD_OVERWRITE, "덮어쓰기"
 }
