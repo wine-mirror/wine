@@ -198,6 +198,8 @@ Doðrulama bayraðýnýn Wine'da bir iþlevi yoktur.\n"
 
   WCMD_VOL,    "VOL hakkýnda yardým\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT geçerli komut oturumunu sonlandýrýr ve cmd'yi çaðýrdýðýnýz\n\
 yerden iþletim sistemine döner.\n"
@@ -215,6 +217,7 @@ DIR\t\tDizin içeriðini listele\n\
 ECHO\t\tMetni doðrudan konsol çýkýþýna kopyala\n\
 HELP\t\tBir konu üzerinde özet yardým göster\n\
 MD (MKDIR)\tAlt dizin oluþtur\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tBir veya daha fazla dosyayý ya da dizin aðacýný taþý\n\
 PATH\t\tArama yolunu düzenle veya göster\n\
 PROMPT\t\tKomut istemini deðiþtir\n\
@@ -235,4 +238,5 @@ Yukarýdaki komutlar hakkýnda daha fazla bilgi için HELP <komut> girin\n"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
+  WCMD_MORESTR, "More..."
 }

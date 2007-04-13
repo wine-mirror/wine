@@ -1689,6 +1689,115 @@ void WCMD_type (char *command) {
 }
 
 /****************************************************************************
+ * WCMD_more
+ *
+ * Output either a file or stdin to screen in pages
+ */
+
+void WCMD_more (char *command) {
+
+  int   argno         = 0;
+  char *argN          = command;
+  BOOL  useinput      = FALSE;
+  char  moreStr[100];
+  char  moreStrPage[100];
+  char  buffer[512];
+  DWORD count;
+
+  /* Prefix the NLS more with '-- ', then load the text */
+  errorlevel = 0;
+  strcpy(moreStr, "-- ");
+  LoadString (hinst, WCMD_MORESTR, &moreStr[3], sizeof(moreStr)-3);
+
+  if (param1[0] == 0x00) {
+
+    /* Wine implements pipes via temporary files, and hence stdin is
+       effectively reading from the file. This means the prompts for
+       more are satistied by the next line from the input (file). To
+       avoid this, ensure stdin is to the console                    */
+    HANDLE hstdin  = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE hConIn = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+                         FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                         FILE_ATTRIBUTE_NORMAL, 0);
+    SetStdHandle(STD_INPUT_HANDLE, hConIn);
+
+    /* Warning: No easy way of ending the stream (ctrl+z on windows) so
+       once you get in this bit unless due to a pipe, its going to end badly...  */
+    useinput = TRUE;
+    sprintf(moreStrPage, "%s --\n", moreStr);
+
+    WCMD_enter_paged_mode(moreStrPage);
+    while (ReadFile (hstdin, buffer, sizeof(buffer)-1, &count, NULL)) {
+      if (count == 0) break;	/* ReadFile reports success on EOF! */
+      buffer[count] = 0;
+      WCMD_output_asis (buffer);
+    }
+    WCMD_leave_paged_mode();
+
+    /* Restore stdin to what it was */
+    SetStdHandle(STD_INPUT_HANDLE, hstdin);
+    CloseHandle(hConIn);
+
+    return;
+  } else {
+    BOOL needsPause = FALSE;
+
+    /* Loop through all args */
+    WCMD_enter_paged_mode(moreStrPage);
+
+    while (argN) {
+      char *thisArg = WCMD_parameter (command, argno++, &argN);
+      HANDLE h;
+
+      if (!argN) break;
+
+      if (needsPause) {
+
+        /* Wait */
+        sprintf(moreStrPage, "%s (100%%) --\n", moreStr);
+        WCMD_leave_paged_mode();
+        WCMD_output_asis(moreStrPage);
+        ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer), &count, NULL);
+        WCMD_enter_paged_mode(moreStrPage);
+      }
+
+
+      WINE_TRACE("more: Processing arg '%s'\n", thisArg);
+      h = CreateFile (thisArg, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL, NULL);
+      if (h == INVALID_HANDLE_VALUE) {
+        WCMD_print_error ();
+        WCMD_output ("%s :Failed\n", thisArg);
+        errorlevel = 1;
+      } else {
+        ULONG64 curPos  = 0;
+        ULONG64 fileLen = 0;
+        WIN32_FILE_ATTRIBUTE_DATA   fileInfo;
+
+        /* Get the file size */
+        GetFileAttributesEx(thisArg, GetFileExInfoStandard, (void*)&fileInfo);
+        fileLen = (((ULONG64)fileInfo.nFileSizeHigh) << 32) + fileInfo.nFileSizeLow;
+
+        needsPause = TRUE;
+        while (ReadFile (h, buffer, sizeof(buffer), &count, NULL)) {
+          if (count == 0) break;	/* ReadFile reports success on EOF! */
+          buffer[count] = 0;
+          curPos += count;
+
+          /* Update % count (would be used in WCMD_output_asis as prompt) */
+          sprintf(moreStrPage, "%s (%2.2d%%) --\n", moreStr, (int) min(99, (curPos * 100)/fileLen));
+
+          WCMD_output_asis (buffer);
+        }
+        CloseHandle (h);
+      }
+    }
+
+    WCMD_leave_paged_mode();
+  }
+}
+
+/****************************************************************************
  * WCMD_verify
  *
  * Display verify flag.

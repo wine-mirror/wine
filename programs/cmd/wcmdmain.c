@@ -36,7 +36,7 @@ const char * const inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", 
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
                 "TIME", "TITLE", "TYPE", "VERIFY", "VER", "VOL",
                 "ENDLOCAL", "SETLOCAL", "PUSHD", "POPD", "ASSOC", "COLOR", "FTYPE",
-                "EXIT" };
+                "MORE", "EXIT" };
 
 HINSTANCE hinst;
 DWORD errorlevel;
@@ -49,6 +49,7 @@ const char anykey[] = "Press Return key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
 extern struct env_stack *pushd_directories;
+static const char *pagedMessage = NULL;
 
 static char *WCMD_expand_envvar(char *start);
 
@@ -714,6 +715,9 @@ void WCMD_process_command (char *command)
       case WCMD_FTYPE:
         WCMD_assoc(p, FALSE);
         break;
+      case WCMD_MORE:
+        WCMD_more(p);
+        break;
       case WCMD_EXIT:
         WCMD_exit ();
         break;
@@ -1215,7 +1219,7 @@ static int line_count;
 static int max_height;
 static BOOL paged_mode;
 
-void WCMD_enter_paged_mode(void)
+void WCMD_enter_paged_mode(const char *msg)
 {
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
@@ -1224,12 +1228,14 @@ void WCMD_enter_paged_mode(void)
   else
     max_height = 25;
   paged_mode = TRUE;
-  line_count = 5; /* keep 5 lines from previous output */
+  line_count = 0;
+  pagedMessage = (msg==NULL)? anykey : msg;
 }
 
 void WCMD_leave_paged_mode(void)
 {
   paged_mode = FALSE;
+  pagedMessage = NULL;
 }
 
 /*******************************************************************
@@ -1250,7 +1256,7 @@ void WCMD_output_asis (const char *message) {
       if (ptr) {
         if (++line_count >= max_height - 1) {
           line_count = 0;
-          WCMD_output_asis (anykey);
+          WCMD_output_asis (pagedMessage);
           ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
         }
       }

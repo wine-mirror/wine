@@ -202,6 +202,8 @@ stack, and then changes the current directory to the supplied one.\n"
   WCMD_POPD,   "POPD changes current directory to the last one saved with\n\
 PUSHD.\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT terminates the current command session and returns\n\
 to the operating system or shell from which you invoked cmd.\n"
@@ -219,6 +221,7 @@ DIR\t\tList the contents of a directory\n\
 ECHO\t\tCopy text directly to the console output\n\
 HELP\t\tShow brief help details on a topic\n\
 MD (MKDIR)\tCreate a subdirectory\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tMove a file, set of files or directory tree\n\
 PATH\t\tSet or show the search path\n\
 POPD\t\tRestores the directory to the last one saved with PUSHD\n\
@@ -241,4 +244,5 @@ Enter HELP <command> for further information on any of the above commands\n"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
+  WCMD_MORESTR, "More..."
 }

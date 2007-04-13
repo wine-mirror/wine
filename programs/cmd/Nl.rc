@@ -197,6 +197,8 @@ De verify-schakelaar heeft geen functie binnen Wine.\n"
 
   WCMD_VOL,    "Uitleg bij VOL\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT beëindigt de lopende sessie en keert terug\n\
 naar het besturingssysteem of de schil van waaruit cmd werd gestart.\n"
@@ -214,6 +216,7 @@ DIR\t\tToon de inhoud van een directory\n\
 ECHO\t\tKopiëer tekst direct naar het uitvoerapparaat\n\
 HELP\t\tToon een korte uitleg over een onderwerp\n\
 MD (MKDIR)\tMaak een directory\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tVerplaats een bestand, een verzameling bestanden of een directory\n\
 PATH\t\tWijzig of toon het zoekpad\n\
 PROMPT\t\tWijzig de prompt\n\
@@ -234,4 +237,5 @@ type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
+  WCMD_MORESTR, "More..."
 }

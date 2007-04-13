@@ -194,6 +194,8 @@ Le flag de verification n'a pas de fonction dans Wine.\n"
 
   WCMD_VOL, "\t\tAffiche le nom de volume d'un lecteur de disque\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT termine la session de ligne de commande et retourne\n\
 au système d'exploitation ou au shell où vous avez invoqué cmd.\n"
@@ -211,6 +213,7 @@ DIR\t\tListe le contenu d'un répertoire\n\
 ECHO\t\tAffiche du texte sur la console\n\
 HELP\t\tAffiche de brefs détails sur l'utilisation d'une commande\n\
 MD (MKDIR)\tCrée un répertoire\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tDéplace un fichier, un groupe de fichiers ou un répertoire\n\
 PATH\t\tRègle ou affiche le chemin de recherche\n\
 PROMPT\t\tChange l'invite de commande\n\
@@ -231,4 +234,5 @@ Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
+  WCMD_MORESTR, "More..."
 }

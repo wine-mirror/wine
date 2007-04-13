@@ -199,6 +199,8 @@ Pøíznak verify nemá ve Wine žádnou funkci.\n"
 
   WCMD_VOL,    "Nápovìda k VOL\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT ukonèí bìžící sezení a vrátí kontrolu\n\
 operaènímu systému nebo pøíkazovému interpretu,\n\
@@ -217,6 +219,7 @@ DIR\t\tVypíše obsah adresáøe\n\
 ECHO\t\tVypíše text na terminál\n\
 HELP\t\tZobrazí detailní nápovìdu k tématu\n\
 MD (MKDIR)\tVytvoøí adresáø\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tPøesune soubor, skupinu souborù nebo adresáøový strom\n\
 PATH\t\tNastaví nebo ukáže prohledávané cesty\n\
 PROMPT\t\tZmìní výzvu pøíkazového øádku\n\
@@ -237,4 +240,5 @@ Zadejte HELP <pøíkaz> pro podrobnìjší informace o nìkterém z výše uvedených pøík
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
+  WCMD_MORESTR, "More..."
 }

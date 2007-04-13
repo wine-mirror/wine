@@ -199,6 +199,8 @@ Wine環境ではverifyフラグは意味を持ちません。\n"
 
   WCMD_VOL,    "VOLのヘルプ\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT は現在のコマンドセッションを終了してcmdを呼び出したOSまたはシェルに戻します。\n"
 
@@ -215,6 +217,7 @@ DIR\t\tディレクトリの内容を表示\n\
 ECHO\t\t文字列を直接コンソール出力にコピー\n\
 HELP\t\tトピックの詳細なヘルプを表示\n\
 MD (MKDIR)\tサブディレクトリを作成\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tファイルまたはディレクトリツリーを移動\n\
 PATH\t\tパスを表示又は設定\n\
 PROMPT\t\tコマンドプロンプトを変更\n\
@@ -235,4 +238,5 @@ EXIT\t\tCMDを終了\n\n\
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
+  WCMD_MORESTR, "More..."
 }

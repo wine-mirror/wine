@@ -212,6 +212,8 @@ La bandera de verificación no tiene funcionalidad en Wine.\n"
 
   WCMD_VOL,    "Ayuda sobre VOL\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT termina la sesión de comandos actual y regresa al sistema\n\
 operativo o intérprete de comandos desde el que invocó cmd.\n"
@@ -229,6 +231,7 @@ DIR\t\tListar el contenido de un directorio\n\
 ECHO\t\tCopiar texto directamente a la salida de consola\n\
 HELP\t\tMostrar detalles breves de ayuda sobre un tema\n\
 MD (MKDIR)\tCrear un subdirectorio\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tMover un archivo, conjunto de archivos o árbol de directorio\n\
 PATH\t\tAjustar o cambiar la ruta de búsqueda\n\
 PROMPT\t\tCambiar el prompt de comandos\n\
@@ -249,4 +252,5 @@ Introduzca HELP <comando> para más información sobre cualquiera de los comandos\
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
+  WCMD_MORESTR, "More..."
 }

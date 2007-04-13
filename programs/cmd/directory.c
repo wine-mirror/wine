@@ -277,7 +277,7 @@ void WCMD_directory (char *cmd) {
           max_width = 80;
   }
   if (paged_mode) {
-     WCMD_enter_paged_mode();
+     WCMD_enter_paged_mode(NULL);
   }
 
   argno         = 0;

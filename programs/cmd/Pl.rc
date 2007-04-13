@@ -197,6 +197,8 @@ Ustawienia flagi nic nie zmieniaj¹ pod Wine'em.\n"
   WCMD_POPD, "POPD ustala aktualny katalog na ostatni katalog zapamiêtany przez\n\
               PUSHD\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT koñczy bierz¹c¹ sesjê cmd i powraca do systemu operacyjnego\n\
 lub pow³oki, w której uruchomiono cmd.\n"
@@ -214,6 +216,7 @@ DIR\t\tWyœwietla zawartoœæ katalogu\n\
 ECHO\t\tKopiuje tekst na wyjœcie konsoli\n\
 HELP\t\tWyœwietla dok³adniejsz¹ pomoc o komendzie\n\
 MD (MKDIR)\tTworzy katalog\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tPrzenosi katalog lub pliki\n\
 PATH\t\tUstawia lub wyœwietla œcie¿kê przeszukiwania\n\
 POPD\t\tWraca do katalogu zapamiêtanego przez PUSHD\n\
@@ -236,4 +239,5 @@ Wpisz HELP <komenda> dla dok³adniejszych informacji o komendzie\n"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
+  WCMD_MORESTR, "More..."
 }

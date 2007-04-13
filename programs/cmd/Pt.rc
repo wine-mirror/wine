@@ -196,6 +196,8 @@ O flag de verificação não tem função no Wine.\n"
 
   WCMD_VOL,    "Ajuda do comando VOL\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT termina a sessão de comando atual e retorna ao sistema operacional\n\
 ou shell que tenha invocado o cmd.\n"
@@ -213,6 +215,7 @@ DIR\t\tMostra o conteúdo de um diretórios\n\
 ECHO\t\tCopia texto diretamente na saída do console\n\
 HELP\t\tMostra breves detalhes de um tópico\n\
 MD (MKDIR)\tCria um subdiretório\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tMove um arquivo, conjunto de arquivos ou uma árvore de diretórios\n\
 PATH\t\tConfigira o caminho de procura\n\
 PROMPT\t\tMuda o 'prompt' de comando\n\
@@ -404,6 +407,8 @@ O flag de verificação não tem função no Wine.\n"
 
   WCMD_VOL,    "Ajuda do comando VOL\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT termina a sessão de comando actual e retorna ao sistema operacional\n\
 ou shell que tenha invocado o cmd.\n"
@@ -421,6 +426,7 @@ DIR\t\tMostra o conteúdo de um directório\n\
 ECHO\t\tCopia o texto diretamente na saída da consola\n\
 HELP\t\tMostra breves detalhes de um tópico\n\
 MD (MKDIR)\tCria um subdirectório\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tMove um ficheiro, conjunto de ficheiros ou uma árvore de directórios\n\
 PATH\t\tConfigura o caminho de procura\n\
 PROMPT\t\tMuda a 'prompt' de comando\n\
@@ -441,4 +447,5 @@ Digite HELP <comando> para mais informações sobre alguns dos comandos acima\n"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
+  WCMD_MORESTR, "More..."
 }

@@ -195,6 +195,8 @@ VERIFY		Viser ON hvis på ellerr OFF hvis av.\n\
 
   WCMD_VOL,    "Hjelp til VOL\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT avslutter gjeldende kommandoøkt og returnerer til operativsystemet\n\
 eller skallet CMD ble startet fra.\n"
@@ -212,6 +214,7 @@ DIR\t\tViser innholdet i en katalgo\n\
 ECHO\t\tKopierer tekst direkte til konsoll-utdataen\n\
 HELP\t\tViser en kort hjelpebeskrivelse om et emne\n\
 MD (MKDIR)\tLager en underkatalog\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tFlytter en eller flere filer, eller en katalogtre\n\
 PATH\t\tEndrer eller viser søkestien\n\
 PROMPT\t\tEndrer kommando-klartegnet\n\
@@ -232,4 +235,5 @@ Skriv «HELP <kommando>» for mer informasjon om kommandoene ovenfor\n"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
+  WCMD_MORESTR, "More..."
 }

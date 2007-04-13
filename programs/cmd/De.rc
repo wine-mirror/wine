@@ -215,6 +215,8 @@ Das Verify Flag hat keine Funktion in Wine.\n"
 
   WCMD_VOL,    "Hilfe für VOL\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT beendet die aktuelle Befehlssitzung und kehrt zum\n\
 Betriebssystem oder der Shell zurück, von der CMD gestart wurde.\n"
@@ -233,6 +235,7 @@ DIR\t\tListet den Inhalt eines Verzeichnisses\n\
 ECHO\t\tKopiert den Text direkt zur Konsolenausgabe\n\
 HELP\t\tZeigt detalierte Informationen zu einen Thema\n\
 MD (MKDIR)\tErzeugt ein Unterverzeichnis\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\tBewegt eine oder mehrere Dateien oder einen Verzeichnisbaum\n\
 PATH\t\tSetzt oder zeigt den Suchpfad an\n\
 PROMPT\t\tÄndert den Befehlszeilenprompt\n\
@@ -254,4 +257,5 @@ obigen Befehle erhalten.\n"
   WCMD_NOASSOC, "File association missing for extension %s\n"
   WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
+  WCMD_MORESTR, "More..."
 }

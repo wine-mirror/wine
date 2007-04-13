@@ -194,6 +194,8 @@ verify 플래그는 Wine에서는 어떤 일도 안합니다.\n"
 
   WCMD_POPD,   "POPD는 현재 디렉토리를 PUSH로 마지막으로 저장했던 것으로 바꾼다.\n"
 
+  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+
   WCMD_EXIT,
 "EXIT는 현재 명령 세션을 중단시키고 운영체제로 돌아가거나 cmd를\n\
 호출한 셀로 돌아갑니다.\n"
@@ -211,6 +213,7 @@ DIR\t\t디렉토리 내용 보여주기\n\
 ECHO\t\t문자를 바로 화면 출력으로 복사\n\
 HELP\t\t 목차의 짤막한 도움말 항목 보여줌\n\
 MD (MKDIR)\t하위 디렉토리 만들기\n\
+MORE\t\tDisplay output in pages\n\
 MOVE\t\t파일 이나 여러 파일,그리고 디렉토리 구조 이동\n\
 PATH\t\t탐색 경로 보여주거나 설정하기\n\
 POPD\t\tPUSHD로 마지막으로 저장했던 디렉토리로 돌아가기\n\
@@ -233,4 +236,5 @@ HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
   WCMD_NOASSOC, "이 파일확장자 %s에 연결된 풀그림이 없습니다. \n"
   WCMD_NOFTYPE, "이 파일 형식 '%s'과 연결된 어떠한 명령도 없습니다.'\n"
   WCMD_OVERWRITE, "덮어쓰기"
+  WCMD_MORESTR, "More..."
 }

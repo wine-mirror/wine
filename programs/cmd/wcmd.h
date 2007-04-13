@@ -39,13 +39,14 @@ void WCMD_delete (char *);
 void WCMD_directory (char *);
 void WCMD_echo (const char *);
 void WCMD_endlocal (void);
-void WCMD_enter_paged_mode(void);
+void WCMD_enter_paged_mode(const char *);
 void WCMD_exit (void);
 void WCMD_for (char *);
 void WCMD_give_help (char *command);
 void WCMD_goto (void);
 void WCMD_if (char *);
 void WCMD_leave_paged_mode(void);
+void WCMD_more (char *);
 void WCMD_move (void);
 void WCMD_output (const char *format, ...);
 void WCMD_output_asis (const char *message);
@@ -163,9 +164,10 @@ struct env_stack
 #define WCMD_ASSOC  40
 #define WCMD_COLOR  41
 #define WCMD_FTYPE  42
+#define WCMD_MORE   43
 
 /* Must be last in list */
-#define WCMD_EXIT   43
+#define WCMD_EXIT   44
 
 /* Some standard messages */
 extern const char nyi[];
@@ -180,6 +182,7 @@ extern const char anykey[];
 #define WCMD_NOASSOC  1004
 #define WCMD_NOFTYPE  1005
 #define WCMD_OVERWRITE 1006
+#define WCMD_MORESTR  1007
 
 /* msdn specified max for Win XP */
 #define MAXSTRING 8192
