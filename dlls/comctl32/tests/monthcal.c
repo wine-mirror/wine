@@ -244,6 +244,12 @@ static const struct message monthcal_scroll_seq[] = {
     { 0 }
 };
 
+static const struct message monthcal_monthrange_seq[] = {
+    { MCM_GETMONTHRANGE, sent|wparam, GMR_VISIBLE},
+    { MCM_GETMONTHRANGE, sent|wparam, GMR_DAYSTATE},
+    { 0 }
+};
+
 static const struct message monthcal_max_sel_day_seq[] = {
     { MCM_SETMAXSELCOUNT, sent|wparam|lparam, 5, 0},
     { MCM_GETMAXSELCOUNT, sent|wparam|lparam, 0, 0},
@@ -959,6 +965,41 @@ static void test_monthcal_scroll(HWND hwnd)
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_scroll_seq, "monthcal scroll", FALSE);
 }
 
+static void test_monthcal_monthrange(HWND hwnd)
+{
+    int res;
+    SYSTEMTIME st_visible[2], st_daystate[2];
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    st_visible[0].wYear = 0;
+    st_visible[0].wMonth = 0;
+    st_visible[0].wDay = 0;
+    st_daystate[1] = st_daystate[0] = st_visible[1] = st_visible[0];
+
+    res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_VISIBLE, (LPARAM)st_visible);
+    todo_wine {
+        expect(2, res);
+        expect(2000, st_visible[0].wYear);
+        expect(11, st_visible[0].wMonth);
+        expect(1, st_visible[0].wDay);
+        expect(2000, st_visible[1].wYear);
+        expect(12, st_visible[1].wMonth);
+        expect(31, st_visible[1].wDay);
+    }
+    res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_DAYSTATE, (LPARAM)st_daystate);
+    todo_wine {
+        expect(4, res);
+        expect(2000, st_daystate[0].wYear);
+        expect(10, st_daystate[0].wMonth);
+        expect(29, st_daystate[0].wDay);
+        expect(2001, st_daystate[1].wYear);
+        expect(1, st_daystate[1].wMonth);
+        expect(6, st_daystate[1].wDay);
+    }
+
+    ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_monthrange_seq, "monthcal monthrange", FALSE);
+}
+
 static void test_monthcal_MaxSelDay(HWND hwnd)
 {
     int res;
@@ -1006,6 +1047,7 @@ START_TEST(monthcal)
     test_monthcal_HitTest(hwnd);
     test_monthcal_today(hwnd);
     test_monthcal_scroll(hwnd);
+    test_monthcal_monthrange(hwnd);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     DestroyWindow(hwnd);
