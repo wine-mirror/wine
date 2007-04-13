@@ -762,6 +762,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
         if (!file->IsCompressed)
         {
+            msi_file_update_ui(package, file, szInstallFiles);
             rc = copy_install_file(file);
             if (rc != ERROR_SUCCESS)
             {
