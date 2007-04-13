@@ -306,6 +306,16 @@ UINT WINAPI mixerGetDevCapsW(UINT_PTR uDeviceID, LPMIXERCAPSW lpCaps, UINT uSize
     return MMDRV_Message(wmld, MXDM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize, TRUE);
 }
 
+static void CALLBACK MIXER_WCallback(HMIXEROBJ hmx, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam, DWORD_PTR param2)
+{
+    HWND hWnd = (HWND)dwInstance;
+
+    if (!dwInstance)
+        return;
+
+    PostMessageW(hWnd, MM_MIXM_CONTROL_CHANGE, (WPARAM)hmx, (LPARAM)dwParam);
+}
+
 UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
                  DWORD_PTR dwInstance, DWORD fdwOpen, BOOL bFrom32)
 {
@@ -317,15 +327,36 @@ UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
     TRACE("(%p, %d, %08lx, %08lx, %08x)\n",
 	  lphMix, uDeviceID, dwCallback, dwInstance, fdwOpen);
 
+    mod.dwCallback = (DWORD_PTR)MIXER_WCallback;
+    mod.dwInstance = 0;
+
+/* If callback is a function,
+ * dwCallback contains function pointer
+ * dwInstance private data
+ *
+ * if callback is a window
+ * dwCallback contains a window handle
+ */
+    switch (fdwOpen & CALLBACK_TYPEMASK) {
+    default:
+        return MMSYSERR_INVALFLAG;
+
+    case CALLBACK_NULL:
+        break;
+
+    case CALLBACK_WINDOW:
+        mod.dwInstance = dwCallback;
+        if (!IsWindow((HWND)dwCallback))
+            return MMSYSERR_INVALPARAM;
+        break;
+    }
+
     wmld = MMDRV_Alloc(sizeof(WINE_MIXER), MMDRV_MIXER, &hMix, &fdwOpen,
 		       &dwCallback, &dwInstance, bFrom32);
-
     wmld->uDeviceID = uDeviceID;
     mod.hmx = (HMIXEROBJ)hMix;
-    mod.dwCallback = dwCallback;
-    mod.dwInstance = dwInstance;
 
-    dwRet = MMDRV_Open(wmld, MXDM_OPEN, (DWORD)&mod, fdwOpen);
+    dwRet = MMDRV_Open(wmld, MXDM_OPEN, (DWORD)&mod, CALLBACK_FUNCTION);
 
     if (dwRet != MMSYSERR_NOERROR) {
 	MMDRV_Free(hMix, wmld);

@@ -378,8 +378,18 @@ static void mixer_test_deviceA(int device)
 
     rc=mixerOpen(&mix, device, 0, 0, 0);
     ok(rc==MMSYSERR_NOERROR,
-       "mixerOpen: MMSYSERR_BADDEVICEID expected, got %s\n",mmsys_error(rc));
+       "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",mmsys_error(rc));
     if (rc==MMSYSERR_NOERROR) {
+        rc=mixerOpen(&mix, device, 0, 0, CALLBACK_FUNCTION);
+        ok(rc==MMSYSERR_INVALFLAG,
+           "mixerOpen: MMSYSERR_INVALFLAG expected, got %s\n", mmsys_error(rc));
+
+        /* Shouldn't open without a valid HWND */
+        rc=mixerOpen(&mix, device, 0, 0, CALLBACK_WINDOW);
+        ok(rc==MMSYSERR_INVALPARAM,
+           "mixerOpen: MMSYSERR_INVALPARAM expected, got %s\n", mmsys_error(rc));
+
+
         for (d=0;d<capsA.cDestinations;d++) {
             MIXERLINEA mixerlineA;
             mixerlineA.cbStruct = 0;
@@ -757,10 +767,21 @@ static void mixer_test_deviceW(int device)
               szPname, capsW.vDriverVersion >> 8,
               capsW.vDriverVersion & 0xff,capsW.wMid,capsW.wPid);
     }
+
+
     rc=mixerOpen(&mix, device, 0, 0, 0);
     ok(rc==MMSYSERR_NOERROR,
        "mixerOpen: MMSYSERR_BADDEVICEID expected, got %s\n",mmsys_error(rc));
     if (rc==MMSYSERR_NOERROR) {
+        rc=mixerOpen(&mix, device, 0, 0, CALLBACK_FUNCTION);
+        ok(rc==MMSYSERR_INVALFLAG,
+           "mixerOpen: MMSYSERR_INVALFLAG expected, got %s\n", mmsys_error(rc));
+
+        /* Shouldn't open without a valid HWND */
+        rc=mixerOpen(&mix, device, 0, 0, CALLBACK_WINDOW);
+        ok(rc==MMSYSERR_INVALPARAM,
+           "mixerOpen: MMSYSERR_INVALPARAM expected, got %s\n", mmsys_error(rc));
+
         for (d=0;d<capsW.cDestinations;d++) {
             MIXERLINEW mixerlineW;
             mixerlineW.cbStruct = 0;
