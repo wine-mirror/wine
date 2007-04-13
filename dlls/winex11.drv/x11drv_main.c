@@ -378,6 +378,7 @@ static BOOL process_attach(void)
 {
     Display *display;
     XVisualInfo *desktop_vi = NULL;
+    const char *env;
 
     setup_options();
 
@@ -385,7 +386,8 @@ static BOOL process_attach(void)
 
     /* Open display */
 
-    if (!XInitThreads()) ERR( "XInitThreads failed, trouble ahead\n" );
+    if (!(env = getenv("XMODIFIERS")) || !*env)  /* try to avoid the Xlib XIM locking bug */
+        if (!XInitThreads()) ERR( "XInitThreads failed, trouble ahead\n" );
 
     if (!(display = XOpenDisplay( NULL ))) return FALSE;
 
