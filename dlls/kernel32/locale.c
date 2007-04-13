@@ -325,8 +325,8 @@ done:
  */
 static void parse_locale_name( const WCHAR *str, struct locale_name *name )
 {
-    static const WCHAR sepW[] = {'-','_','.','@'};
-    static const WCHAR winsepW[] = {'-','_'};
+    static const WCHAR sepW[] = {'-','_','.','@',0};
+    static const WCHAR winsepW[] = {'-','_',0};
     static const WCHAR posixW[] = {'P','O','S','I','X',0};
     static const WCHAR cW[] = {'C',0};
     static const WCHAR latinW[] = {'l','a','t','i','n',0};
