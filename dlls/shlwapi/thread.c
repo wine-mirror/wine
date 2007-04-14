@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 extern DWORD SHLWAPI_ThreadRef_index;  /* Initialised in shlwapi_main.c */
 
-DWORD WINAPI SHStringFromGUIDA(REFGUID,LPSTR,INT);
+INT WINAPI SHStringFromGUIDA(REFGUID,LPSTR,INT);
 
 /**************************************************************************
  *      _CreateAllAccessSecurityAttributes       [SHLWAPI.356]
