@@ -76,7 +76,7 @@ static void CRYPT_guid2wstr( const GUID *guid, LPWSTR wstr )
  *
  * Helper function for CryptSIPRemoveProvider
  */
-static LONG CRYPT_SIPDeleteFunction( LPGUID guid, LPCWSTR szKey )
+static LONG CRYPT_SIPDeleteFunction( const GUID *guid, LPCWSTR szKey )
 {
     WCHAR szFullKey[ 0x100 ];
     LONG r = ERROR_SUCCESS;
@@ -150,7 +150,7 @@ BOOL WINAPI CryptSIPRemoveProvider(GUID *pgProv)
  * Add a registry key containing a dll name and function under
  *  "Software\\Microsoft\\Cryptography\\OID\\EncodingType 0\\<func>\\<guid>"
  */
-static LONG CRYPT_SIPWriteFunction( LPGUID guid, LPCWSTR szKey, 
+static LONG CRYPT_SIPWriteFunction( const GUID *guid, LPCWSTR szKey,
               LPCWSTR szDll, LPCWSTR szFunction )
 {
     WCHAR szFullKey[ 0x100 ];

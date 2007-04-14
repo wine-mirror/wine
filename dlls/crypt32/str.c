@@ -482,7 +482,7 @@ struct X500TokenW
 };
 
 static void CRYPT_KeynameKeeperFromTokenW(struct KeynameKeeper *keeper,
- struct X500TokenW *key)
+ const struct X500TokenW *key)
 {
     DWORD len = key->end - key->start;
 
@@ -593,7 +593,7 @@ static DWORD CRYPT_GetNextValueW(LPCWSTR str, DWORD dwFlags, LPCWSTR separators,
  * output's pbData must be freed with LocalFree.
  */
 static BOOL CRYPT_EncodeValueWithType(DWORD dwCertEncodingType,
- struct X500TokenW *value, PCERT_NAME_BLOB output, DWORD type,
+ const struct X500TokenW *value, PCERT_NAME_BLOB output, DWORD type,
  LPCWSTR *ppszError)
 {
     CERT_NAME_VALUE nameValue = { type, { 0, NULL } };
@@ -634,7 +634,7 @@ static BOOL CRYPT_EncodeValueWithType(DWORD dwCertEncodingType,
 }
 
 static BOOL CRYPT_EncodeValue(DWORD dwCertEncodingType,
- struct X500TokenW *value, PCERT_NAME_BLOB output, const DWORD *types,
+ const struct X500TokenW *value, PCERT_NAME_BLOB output, const DWORD *types,
  LPCWSTR *ppszError)
 {
     DWORD i;

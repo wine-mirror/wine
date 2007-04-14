@@ -838,7 +838,7 @@ static BOOL WINAPI CRYPT_ProvControl(HCERTSTORE hCertStore, DWORD dwFlags,
 }
 
 static PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(HCRYPTPROV hCryptProv,
- DWORD dwFlags, PWINECRYPT_CERTSTORE memStore, PCERT_STORE_PROV_INFO pProvInfo)
+ DWORD dwFlags, PWINECRYPT_CERTSTORE memStore, const CERT_STORE_PROV_INFO *pProvInfo)
 {
     PWINE_PROVIDERSTORE ret = (PWINE_PROVIDERSTORE)CryptMemAlloc(
      sizeof(WINE_PROVIDERSTORE));
@@ -946,7 +946,7 @@ static PWINECRYPT_CERTSTORE CRYPT_ProvOpenStore(LPCSTR lpszStoreProvider,
     return ret;
 }
 
-static void CRYPT_HashToStr(LPBYTE hash, LPWSTR asciiHash)
+static void CRYPT_HashToStr(const BYTE *hash, LPWSTR asciiHash)
 {
     static const WCHAR fmt[] = { '%','0','2','X',0 };
     DWORD i;
@@ -964,7 +964,7 @@ static const WCHAR CRLsW[] = { 'C','R','L','s',0 };
 static const WCHAR CTLsW[] = { 'C','T','L','s',0 };
 static const WCHAR BlobW[] = { 'B','l','o','b',0 };
 
-static void CRYPT_RegReadSerializedFromReg(PWINE_REGSTOREINFO store, HKEY key,
+static void CRYPT_RegReadSerializedFromReg(const WINE_REGSTOREINFO *store, HKEY key,
  DWORD contextType)
 {
     LONG rc;
@@ -1057,7 +1057,7 @@ static void CRYPT_RegReadSerializedFromReg(PWINE_REGSTOREINFO store, HKEY key,
     } while (!rc);
 }
 
-static void CRYPT_RegReadFromReg(PWINE_REGSTOREINFO store)
+static void CRYPT_RegReadFromReg(const WINE_REGSTOREINFO *store)
 {
     static const WCHAR * const subKeys[] = { CertsW, CRLsW, CTLsW };
     static const DWORD contextFlags[] = { CERT_STORE_CERTIFICATE_CONTEXT_FLAG,
@@ -1080,7 +1080,7 @@ static void CRYPT_RegReadFromReg(PWINE_REGSTOREINFO store)
 }
 
 /* Hash is assumed to be 20 bytes in length (a SHA-1 hash) */
-static BOOL CRYPT_WriteSerializedToReg(HKEY key, LPBYTE hash, LPBYTE buf,
+static BOOL CRYPT_WriteSerializedToReg(HKEY key, const BYTE *hash, const BYTE *buf,
  DWORD len)
 {
     WCHAR asciiHash[20 * 2 + 1];
