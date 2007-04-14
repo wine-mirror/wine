@@ -162,8 +162,8 @@ WORD WINAPI WNetUnlockQueueData16( LPSTR szQueue )
  * Redirects a local device (either a disk drive or printer port)
  * to a shared device on a remote server.
  */
-WORD WINAPI WNetAddConnection16( LPSTR lpNetPath, LPSTR lpPassWord,
-                                 LPSTR lpLocalName )
+WORD WINAPI WNetAddConnection16( LPCSTR lpNetPath, LPCSTR lpPassWord,
+                                 LPCSTR lpLocalName )
 {
     FIXME( "(%s, %p, %s): stub\n",
            debugstr_a(lpNetPath), lpPassWord, debugstr_a(lpLocalName) );
