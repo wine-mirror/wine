@@ -111,7 +111,7 @@ static const char crypt_magic_str[] = "Wine Crypt32 ok";
 
 /* debugging tool to print strings of hex chars */
 static const char *
-hex_str(unsigned char *p, int n)
+hex_str(const unsigned char *p, int n)
 {
     const char * ptr;
     char report[80];
@@ -146,7 +146,7 @@ void serialize_dword(DWORD value,BYTE ** ptr)
 }
 
 static
-void serialize_string(BYTE * str,BYTE ** ptr,DWORD len, DWORD width,
+void serialize_string(const BYTE *str, BYTE **ptr, DWORD len, DWORD width,
                       BOOL prepend_len)
 {
     /*TRACE("called %ux%u\n",(unsigned int)len,(unsigned int)width);*/
@@ -160,7 +160,7 @@ void serialize_string(BYTE * str,BYTE ** ptr,DWORD len, DWORD width,
 }
 
 static
-BOOL unserialize_dword(BYTE * ptr, DWORD *index, DWORD size, DWORD * value)
+BOOL unserialize_dword(const BYTE *ptr, DWORD *index, DWORD size, DWORD *value)
 {
     /*TRACE("called\n");*/
 
@@ -178,7 +178,7 @@ BOOL unserialize_dword(BYTE * ptr, DWORD *index, DWORD size, DWORD * value)
 }
 
 static
-BOOL unserialize_string(BYTE * ptr, DWORD *index, DWORD size,
+BOOL unserialize_string(const BYTE *ptr, DWORD *index, DWORD size,
                         DWORD len, DWORD width, BOOL inline_len,
                         BYTE ** data, DWORD * stored)
 {
@@ -212,7 +212,7 @@ BOOL unserialize_string(BYTE * ptr, DWORD *index, DWORD size,
 }
 
 static
-BOOL serialize(struct protect_data_t * pInfo, DATA_BLOB * pSerial)
+BOOL serialize(const struct protect_data_t *pInfo, DATA_BLOB *pSerial)
 {
     BYTE * ptr;
     DWORD dwStrLen;
@@ -340,7 +340,7 @@ BOOL serialize(struct protect_data_t * pInfo, DATA_BLOB * pSerial)
 }
 
 static
-BOOL unserialize(DATA_BLOB * pSerial, struct protect_data_t * pInfo)
+BOOL unserialize(const DATA_BLOB *pSerial, struct protect_data_t *pInfo)
 {
     BYTE * ptr;
     DWORD index;
@@ -484,7 +484,7 @@ BOOL unserialize(DATA_BLOB * pSerial, struct protect_data_t * pInfo)
 
 /* perform sanity checks */
 static
-BOOL valid_protect_data(struct protect_data_t * pInfo)
+BOOL valid_protect_data(const struct protect_data_t *pInfo)
 {
     BOOL status=TRUE;
 
@@ -681,7 +681,7 @@ BOOL convert_hash_to_blob(HCRYPTHASH hHash, DATA_BLOB * blob)
 
 /* test that a given hash matches an exported-to-blob hash value */
 static
-BOOL hash_matches_blob(HCRYPTHASH hHash, DATA_BLOB * two)
+BOOL hash_matches_blob(HCRYPTHASH hHash, const DATA_BLOB *two)
 {
     BOOL rc = FALSE;
     DATA_BLOB one;
@@ -704,8 +704,8 @@ BOOL hash_matches_blob(HCRYPTHASH hHash, DATA_BLOB * two)
 
 /* create an encryption key from a given salt and optional entropy */
 static
-BOOL load_encryption_key(HCRYPTPROV hProv, DATA_BLOB * salt,
-                         DATA_BLOB * pOptionalEntropy, HCRYPTKEY * phKey)
+BOOL load_encryption_key(HCRYPTPROV hProv, const DATA_BLOB *salt,
+                         const DATA_BLOB *pOptionalEntropy, HCRYPTKEY *phKey)
 {
     BOOL rc = TRUE;
     HCRYPTHASH hSaltHash;
@@ -768,7 +768,7 @@ BOOL load_encryption_key(HCRYPTPROV hProv, DATA_BLOB * salt,
 
 /* debugging tool to print the structures of a ProtectData call */
 static void
-report(DATA_BLOB* pDataIn, DATA_BLOB* pOptionalEntropy,
+report(const DATA_BLOB* pDataIn, const DATA_BLOB* pOptionalEntropy,
        CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags)
 {
     TRACE("pPromptStruct: %p\n", pPromptStruct);
