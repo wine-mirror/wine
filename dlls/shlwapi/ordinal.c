@@ -3266,13 +3266,13 @@ HICON WINAPI ExtractIconWrapW(HINSTANCE hInstance, LPCWSTR lpszExeFileName,
  * PARAMS
  *  new_mod        [I] Library name
  *  inst_hwnd      [I] Module whose directory is to be used
- *  bCrossCodePage [I] Should be FALSE (currently ignored)
+ *  dwCrossCodePage [I] Should be FALSE (currently ignored)
  *
  * RETURNS
  *  Success: A handle to the loaded module
  *  Failure: A NULL handle.
  */
-HMODULE WINAPI MLLoadLibraryA(LPCSTR new_mod, HMODULE inst_hwnd, BOOL bCrossCodePage)
+HMODULE WINAPI MLLoadLibraryA(LPCSTR new_mod, HMODULE inst_hwnd, DWORD dwCrossCodePage)
 {
   /* FIXME: Native appears to do DPA_Create and a DPA_InsertPtr for
    *        each call here.
@@ -3296,7 +3296,7 @@ HMODULE WINAPI MLLoadLibraryA(LPCSTR new_mod, HMODULE inst_hwnd, BOOL bCrossCode
     LPSTR ptr;
     DWORD len;
 
-    FIXME("(%s,%p,%d) semi-stub!\n", debugstr_a(new_mod), inst_hwnd, bCrossCodePage);
+    FIXME("(%s,%p,%d) semi-stub!\n", debugstr_a(new_mod), inst_hwnd, dwCrossCodePage);
     len = GetModuleFileNameA(inst_hwnd, mod_path, sizeof(mod_path));
     if (!len || len >= sizeof(mod_path)) return NULL;
 
@@ -3314,13 +3314,13 @@ HMODULE WINAPI MLLoadLibraryA(LPCSTR new_mod, HMODULE inst_hwnd, BOOL bCrossCode
  *
  * Unicode version of MLLoadLibraryA.
  */
-HMODULE WINAPI MLLoadLibraryW(LPCWSTR new_mod, HMODULE inst_hwnd, BOOL bCrossCodePage)
+HMODULE WINAPI MLLoadLibraryW(LPCWSTR new_mod, HMODULE inst_hwnd, DWORD dwCrossCodePage)
 {
     WCHAR mod_path[2*MAX_PATH];
     LPWSTR ptr;
     DWORD len;
 
-    FIXME("(%s,%p,%d) semi-stub!\n", debugstr_w(new_mod), inst_hwnd, bCrossCodePage);
+    FIXME("(%s,%p,%d) semi-stub!\n", debugstr_w(new_mod), inst_hwnd, dwCrossCodePage);
     len = GetModuleFileNameW(inst_hwnd, mod_path, sizeof(mod_path) / sizeof(WCHAR));
     if (!len || len >= sizeof(mod_path) / sizeof(WCHAR)) return NULL;
 
