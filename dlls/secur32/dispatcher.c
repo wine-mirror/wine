@@ -39,7 +39,7 @@
 
 #define INITIAL_BUFFER_SIZE 200
 
-WINE_DEFAULT_DEBUG_CHANNEL(secur32);
+WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 
 SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
         char* const argv[])

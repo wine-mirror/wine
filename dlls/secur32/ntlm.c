@@ -31,7 +31,7 @@
 #include "hmac_md5.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(secur32);
+WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 
 #define NTLM_MAX_BUF 1904
 #define MIN_NTLM_AUTH_MAJOR_VERSION 3

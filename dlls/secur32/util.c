@@ -28,7 +28,7 @@
 #include "secur32_priv.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(secur32);
+WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 
 /* The CRC32 code is copyright (C) 1986 Gary S. Brown and was placed in the
  * public domain.

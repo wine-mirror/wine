@@ -23,7 +23,7 @@
 #include "sspi.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(secur32);
+WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 
 static const char b64[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
