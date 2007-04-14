@@ -661,17 +661,17 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, ID
 
     /* Quick if complete copy ... */
     if (cRects == 0 && pSourceRects == NULL && pDestPoints == NULL) {
-        IWineD3DSurface_BltFast(Dest->wineD3DSurface, 0, 0, Source->wineD3DSurface, NULL, DDBLTFAST_NOCOLORKEY);
+        IWineD3DSurface_BltFast(Dest->wineD3DSurface, 0, 0, Source->wineD3DSurface, NULL, WINEDDBLTFAST_NOCOLORKEY);
     } else {
         unsigned int i;
         /* Copy rect by rect */
         if (NULL != pSourceRects && NULL != pDestPoints) {
             for (i = 0; i < cRects; ++i) {
-                IWineD3DSurface_BltFast(Dest->wineD3DSurface, pDestPoints[i].x, pDestPoints[i].y, Source->wineD3DSurface, (RECT *) &pSourceRects[i], DDBLTFAST_NOCOLORKEY);
+                IWineD3DSurface_BltFast(Dest->wineD3DSurface, pDestPoints[i].x, pDestPoints[i].y, Source->wineD3DSurface, (RECT *) &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
             }
         } else {
             for (i = 0; i < cRects; ++i) {
-                IWineD3DSurface_BltFast(Dest->wineD3DSurface, 0, 0, Source->wineD3DSurface, (RECT *) &pSourceRects[i], DDBLTFAST_NOCOLORKEY);
+                IWineD3DSurface_BltFast(Dest->wineD3DSurface, 0, 0, Source->wineD3DSurface, (RECT *) &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
             }
         }
     }

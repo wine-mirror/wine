@@ -1916,7 +1916,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
             ret = ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL) != DISP_CHANGE_SUCCESSFUL;
         }
         if(ret != DISP_CHANGE_SUCCESSFUL) {
-            return DDERR_INVALIDMODE;
+            return WINED3DERR_NOTAVAILABLE;
         }
     }
 
@@ -4972,7 +4972,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
 static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurface *pSurface, CONST WINED3DRECT* pRect, WINED3DCOLOR color) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *) pSurface;
-    DDBLTFX BltFx;
+    WINEDDBLTFX BltFx;
     TRACE("(%p) Colour fill Surface: %p rect: %p color: %d\n", This, pSurface, pRect, color);
 
     if (surface->resource.pool != WINED3DPOOL_DEFAULT && surface->resource.pool != WINED3DPOOL_SYSTEMMEM) {
@@ -4984,7 +4984,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
     memset(&BltFx, 0, sizeof(BltFx));
     BltFx.dwSize = sizeof(BltFx);
     BltFx.u5.dwFillColor = color;
-    return IWineD3DSurface_Blt(pSurface, (RECT *) pRect, NULL, NULL, DDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
+    return IWineD3DSurface_Blt(pSurface, (RECT *) pRect, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
 }
 
 /* rendertarget and deptth stencil functions */

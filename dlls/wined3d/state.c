@@ -348,7 +348,7 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     if(stateblock->textures[0] && stateblock->textureDimensions[0] == GL_TEXTURE_2D) {
         surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)stateblock->textures[0])->surfaces[0];
 
-        if(surf->CKeyFlags & DDSD_CKSRCBLT) {
+        if(surf->CKeyFlags & WINEDDSD_CKSRCBLT) {
             const PixelFormatDesc *fmt = getFormatDescEntry(surf->resource.format);
             /* The surface conversion does not do color keying conversion for surfaces that have an alpha
              * channel on their own. Likewise, the alpha test shouldn't be set up for color keying if the
@@ -1711,7 +1711,7 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
        stateblock->textures[0] && stateblock->textureDimensions[0] == GL_TEXTURE_2D) {
         IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *) stateblock->textures[0])->surfaces[0];
 
-        if(surf->CKeyFlags & DDSD_CKSRCBLT &&
+        if(surf->CKeyFlags & WINEDDSD_CKSRCBLT &&
            getFormatDescEntry(surf->resource.format)->alphaMask == 0x00000000) {
 
             /* Color keying needs to pass alpha values from the texture through to have the alpha test work properly.

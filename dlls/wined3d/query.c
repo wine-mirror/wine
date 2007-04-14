@@ -125,7 +125,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
 
         WINED3DDEVINFO_VCACHE *data = (WINED3DDEVINFO_VCACHE *)pData;
         FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_VCACHE\n", This);
-        data->Pattern     = MAKEFOURCC('C','A','C','H');
+        data->Pattern     = WINEMAKEFOURCC('C','A','C','H');
         data->OptMethod   = 0; /*0 get longest strips, 1 optimize vertex cache*/
         data->CacheSize   = 0; /*cache size, only required if OptMethod == 1*/
         data->MagicNumber = 0; /*only required if OptMethod == 1 (used internally)*/

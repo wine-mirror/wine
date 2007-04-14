@@ -1273,12 +1273,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
 
     if(This->Flags & SFLAG_USERPTR) {
         ERR("Not supported on surfaces with an application-provided surfaces\n");
-        return DDERR_NODC;
+        return WINEDDERR_NODC;
     }
 
     /* Give more detailed info for ddraw */
     if (This->Flags & SFLAG_DCINUSE)
-        return DDERR_DCALREADYCREATED;
+        return WINEDDERR_DCALREADYCREATED;
 
     /* Can't GetDC if the surface is locked */
     if (This->Flags & SFLAG_LOCKED)
@@ -1486,7 +1486,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
    ****************************************************** */
 
 static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp) {
-    BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & DDSD_CKSRCBLT);
+    BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
     const PixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format);
 
     /* Default values: From the surface */
@@ -1855,11 +1855,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     if (!(This->Flags & SFLAG_INTEXTURE)) {
         TRACE("Reloading because surface is dirty\n");
     } else if(/* Reload: gl texture has ck, now no ckey is set OR */
-              ((This->Flags & SFLAG_GLCKEY) && (!(This->CKeyFlags & DDSD_CKSRCBLT))) ||
+              ((This->Flags & SFLAG_GLCKEY) && (!(This->CKeyFlags & WINEDDSD_CKSRCBLT))) ||
               /* Reload: vice versa  OR */
-              ((!(This->Flags & SFLAG_GLCKEY)) && (This->CKeyFlags & DDSD_CKSRCBLT)) ||
+              ((!(This->Flags & SFLAG_GLCKEY)) && (This->CKeyFlags & WINEDDSD_CKSRCBLT)) ||
               /* Also reload: Color key is active AND the color key has changed */
-              ((This->CKeyFlags & DDSD_CKSRCBLT) && (
+              ((This->CKeyFlags & WINEDDSD_CKSRCBLT) && (
                 (This->glCKey.dwColorSpaceLowValue != This->SrcBltCKey.dwColorSpaceLowValue) ||
                 (This->glCKey.dwColorSpaceHighValue != This->SrcBltCKey.dwColorSpaceHighValue)))) {
         TRACE("Reloading because of color keying\n");
@@ -1929,7 +1929,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
 
     /* Otherwise: System memory copy must be most up to date */
 
-    if(This->CKeyFlags & DDSD_CKSRCBLT) {
+    if(This->CKeyFlags & WINEDDSD_CKSRCBLT) {
         This->Flags |= SFLAG_GLCKEY;
         This->glCKey = This->SrcBltCKey;
     }
@@ -2315,7 +2315,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
     TRACE("(%p)->(%p,%x)\n", This, override, Flags);
 
     /* Flipping is only supported on RenderTargets */
-    if( !(This->resource.usage & WINED3DUSAGE_RENDERTARGET) ) return DDERR_NOTFLIPPABLE;
+    if( !(This->resource.usage & WINED3DUSAGE_RENDERTARGET) ) return WINEDDERR_NOTFLIPPABLE;
 
     if(override) {
         /* DDraw sets this for the X11 surfaces, so don't confuse the user 
@@ -2599,7 +2599,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 }
 
 /* Not called from the VTable */
-static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter) {
+static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter) {
     WINED3DRECT rect;
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *srcSwapchain = NULL, *dstSwapchain = NULL;
@@ -2624,7 +2624,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
     }
 
     /* No destination color keying supported */
-    if(Flags & (DDBLT_KEYDEST | DDBLT_KEYDESTOVERRIDE)) {
+    if(Flags & (WINEDDBLT_KEYDEST | WINEDDBLT_KEYDESTOVERRIDE)) {
         /* Can we support that with glBlendFunc if blitting to the frame buffer? */
         TRACE("Destination color key not supported in accelerated Blit, falling back to software\n");
         return WINED3DERR_INVALIDCALL;
@@ -2666,7 +2666,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
            (This->currentDesc.Height == Src->currentDesc.Height)) {
             /* These flags are unimportant for the flag check, remove them */
 
-            if((Flags & ~(DDBLT_DONOTWAIT | DDBLT_WAIT)) == 0) {
+            if((Flags & ~(WINEDDBLT_DONOTWAIT | WINEDDBLT_WAIT)) == 0) {
                 if( dstSwapchain->backBuffer && ((IWineD3DSurface *) This == dstSwapchain->frontBuffer) &&
                     SrcSurface == dstSwapchain->backBuffer[0] ) {
 
@@ -2710,7 +2710,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         WINED3DRECT srect;
         BOOL upsideDown, stretchx;
 
-        if(Flags & (DDBLT_KEYSRC | DDBLT_KEYSRCOVERRIDE)) {
+        if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
             TRACE("Color keying not supported by frame buffer to texture blit\n");
             return WINED3DERR_INVALIDCALL;
             /* Destination color key is checked above */
@@ -2806,7 +2806,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         /* Blit from offscreen surface to render target */
         float glTexCoord[4];
         DWORD oldCKeyFlags = Src->CKeyFlags;
-        DDCOLORKEY oldBltCKey = This->SrcBltCKey;
+        WINEDDCOLORKEY oldBltCKey = This->SrcBltCKey;
         RECT SourceRectangle;
 
         TRACE("Blt from surface %p to rendertarget %p\n", Src, This);
@@ -2838,15 +2838,15 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
          * The surface keeps track of the color key last used to load the opengl surface.
          * PreLoad will catch the change to the flags and color key and reload if neccessary.
          */
-        if(Flags & DDBLT_KEYSRC) {
+        if(Flags & WINEDDBLT_KEYSRC) {
             /* Use color key from surface */
-        } else if(Flags & DDBLT_KEYSRCOVERRIDE) {
+        } else if(Flags & WINEDDBLT_KEYSRCOVERRIDE) {
             /* Use color key from DDBltFx */
-            Src->CKeyFlags |= DDSD_CKSRCBLT;
+            Src->CKeyFlags |= WINEDDSD_CKSRCBLT;
             This->SrcBltCKey = DDBltFx->ddckSrcColorkey;
         } else {
             /* Do not use color key */
-            Src->CKeyFlags &= ~DDSD_CKSRCBLT;
+            Src->CKeyFlags &= ~WINEDDSD_CKSRCBLT;
         }
 
         /* Now load the surface */
@@ -2887,7 +2887,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         checkGLcall("glTexEnvi");
 
         /* This is for color keying */
-        if(Flags & (DDBLT_KEYSRC | DDBLT_KEYSRCOVERRIDE)) {
+        if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
             glEnable(GL_ALPHA_TEST);
             checkGLcall("glEnable GL_ALPHA_TEST");
             glAlphaFunc(GL_NOTEQUAL, 0.0);
@@ -2922,7 +2922,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         glEnd();
         checkGLcall("glEnd");
 
-        if(Flags & (DDBLT_KEYSRC | DDBLT_KEYSRCOVERRIDE)) {
+        if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
             glDisable(GL_ALPHA_TEST);
             checkGLcall("glDisable(GL_ALPHA_TEST)");
         }
@@ -2958,7 +2958,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         return WINED3D_OK;
     } else {
         /* Source-Less Blit to render target */
-        if (Flags & DDBLT_COLORFILL) {
+        if (Flags & WINEDDBLT_COLORFILL) {
             /* This is easy to handle for the D3D Device... */
             DWORD color;
 
@@ -3041,7 +3041,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
     return WINED3DERR_INVALIDCALL;
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter) {
+static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
@@ -3075,12 +3075,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD Fl
 
     switch (Flags)
     {
-    case DDGBS_CANBLT:
-    case DDGBS_ISBLTDONE:
-        return DD_OK;
+    case WINEDDGBS_CANBLT:
+    case WINEDDGBS_ISBLTDONE:
+        return WINED3D_OK;
 
     default:
-        return DDERR_INVALIDPARAMS;
+        return WINED3DERR_INVALIDCALL;
     }
 }
 
@@ -3089,12 +3089,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD F
 
     TRACE("(%p)->(%08x)\n",iface,Flags);
     switch (Flags) {
-    case DDGFS_CANFLIP:
-    case DDGFS_ISFLIPDONE:
-        return DD_OK;
+    case WINEDDGFS_CANFLIP:
+    case WINEDDGFS_ISFLIPDONE:
+        return WINED3D_OK;
 
     default:
-        return DDERR_INVALIDPARAMS;
+        return WINED3DERR_INVALIDCALL;
     }
 }
 
@@ -3102,7 +3102,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_IsLost(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     TRACE("(%p)\n", This);
 
-    return This->Flags & SFLAG_LOST ? DDERR_SURFACELOST : WINED3D_OK;
+    /* D3D8 and 9 loose full devices, ddraw only surfaces */
+    return This->Flags & SFLAG_LOST ? WINED3DERR_DEVICELOST : WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_Restore(IWineD3DSurface *iface) {
@@ -3152,14 +3153,14 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, D
         DstRect.bottom = dsty + SrcRect.bottom - SrcRect.top;
 
         /* Convert BltFast flags into Btl ones because it is called from SurfaceImpl_Blt as well */
-        if(trans & DDBLTFAST_SRCCOLORKEY)
-            Flags |= DDBLT_KEYSRC;
-        if(trans & DDBLTFAST_DESTCOLORKEY)
-            Flags |= DDBLT_KEYDEST;
-        if(trans & DDBLTFAST_WAIT)
-            Flags |= DDBLT_WAIT;
-        if(trans & DDBLTFAST_DONOTWAIT)
-            Flags |= DDBLT_DONOTWAIT;
+        if(trans & WINEDDBLTFAST_SRCCOLORKEY)
+            Flags |= WINEDDBLT_KEYSRC;
+        if(trans & WINEDDBLTFAST_DESTCOLORKEY)
+            Flags |= WINEDDBLT_KEYDEST;
+        if(trans & WINEDDBLTFAST_WAIT)
+            Flags |= WINEDDBLT_WAIT;
+        if(trans & WINEDDBLTFAST_DONOTWAIT)
+            Flags |= WINEDDBLT_DONOTWAIT;
 
         if(IWineD3DSurfaceImpl_BltOverride(This, &DstRect, Source, &SrcRect, Flags, NULL, WINED3DTEXF_NONE) == WINED3D_OK) return WINED3D_OK;
     }
@@ -3173,7 +3174,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD3DPa
     TRACE("(%p)->(%p)\n", This, Pal);
 
     *Pal = (IWineD3DPalette *) This->palette;
-    return DD_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
@@ -3222,14 +3223,14 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPa
 
     if(This->palette != NULL) 
         if(This->resource.usage & WINED3DUSAGE_RENDERTARGET)
-            This->palette->Flags &= ~DDPCAPS_PRIMARYSURFACE;
+            This->palette->Flags &= ~WINEDDPCAPS_PRIMARYSURFACE;
 
     if(PalImpl != NULL) {
         if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
             /* Set the device's main palette if the palette
              * wasn't a primary palette before
              */
-            if(!(PalImpl->Flags & DDPCAPS_PRIMARYSURFACE)) {
+            if(!(PalImpl->Flags & WINEDDPCAPS_PRIMARYSURFACE)) {
                 IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
                 unsigned int i;
 
@@ -3238,7 +3239,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPa
                 }
             }
 
-            (PalImpl)->Flags |= DDPCAPS_PRIMARYSURFACE;
+            (PalImpl)->Flags |= WINEDDPCAPS_PRIMARYSURFACE;
         }
     }
     This->palette = PalImpl;
@@ -3246,55 +3247,55 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPa
     return IWineD3DSurface_RealizePalette(iface);
 }
 
-HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, DDCOLORKEY *CKey) {
+HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, WINEDDCOLORKEY *CKey) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     TRACE("(%p)->(%08x,%p)\n", This, Flags, CKey);
 
-    if ((Flags & DDCKEY_COLORSPACE) != 0) {
+    if ((Flags & WINEDDCKEY_COLORSPACE) != 0) {
         FIXME(" colorkey value not supported (%08x) !\n", Flags);
-        return DDERR_INVALIDPARAMS;
+        return WINED3DERR_INVALIDCALL;
     }
 
     /* Dirtify the surface, but only if a key was changed */
     if(CKey) {
-        switch (Flags & ~DDCKEY_COLORSPACE) {
-            case DDCKEY_DESTBLT:
+        switch (Flags & ~WINEDDCKEY_COLORSPACE) {
+            case WINEDDCKEY_DESTBLT:
                 This->DestBltCKey = *CKey;
-                This->CKeyFlags |= DDSD_CKDESTBLT;
+                This->CKeyFlags |= WINEDDSD_CKDESTBLT;
                 break;
 
-            case DDCKEY_DESTOVERLAY:
+            case WINEDDCKEY_DESTOVERLAY:
                 This->DestOverlayCKey = *CKey;
-                This->CKeyFlags |= DDSD_CKDESTOVERLAY;
+                This->CKeyFlags |= WINEDDSD_CKDESTOVERLAY;
                 break;
 
-            case DDCKEY_SRCOVERLAY:
+            case WINEDDCKEY_SRCOVERLAY:
                 This->SrcOverlayCKey = *CKey;
-                This->CKeyFlags |= DDSD_CKSRCOVERLAY;
+                This->CKeyFlags |= WINEDDSD_CKSRCOVERLAY;
                 break;
 
-            case DDCKEY_SRCBLT:
+            case WINEDDCKEY_SRCBLT:
                 This->SrcBltCKey = *CKey;
-                This->CKeyFlags |= DDSD_CKSRCBLT;
+                This->CKeyFlags |= WINEDDSD_CKSRCBLT;
                 break;
         }
     }
     else {
-        switch (Flags & ~DDCKEY_COLORSPACE) {
-            case DDCKEY_DESTBLT:
-                This->CKeyFlags &= ~DDSD_CKDESTBLT;
+        switch (Flags & ~WINEDDCKEY_COLORSPACE) {
+            case WINEDDCKEY_DESTBLT:
+                This->CKeyFlags &= ~WINEDDSD_CKDESTBLT;
                 break;
 
-            case DDCKEY_DESTOVERLAY:
-                This->CKeyFlags &= ~DDSD_CKDESTOVERLAY;
+            case WINEDDCKEY_DESTOVERLAY:
+                This->CKeyFlags &= ~WINEDDSD_CKDESTOVERLAY;
                 break;
 
-            case DDCKEY_SRCOVERLAY:
-                This->CKeyFlags &= ~DDSD_CKSRCOVERLAY;
+            case WINEDDCKEY_SRCOVERLAY:
+                This->CKeyFlags &= ~WINEDDSD_CKSRCOVERLAY;
                 break;
 
-            case DDCKEY_SRCBLT:
-                This->CKeyFlags &= ~DDSD_CKSRCBLT;
+            case WINEDDCKEY_SRCBLT:
+                This->CKeyFlags &= ~WINEDDSD_CKSRCBLT;
                 break;
         }
     }
@@ -3371,7 +3372,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface, LO
     if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
     {
         TRACE("(%p): Not an overlay surface\n", This);
-        return DDERR_NOTAOVERLAYSURFACE;
+        return WINEDDERR_NOTAOVERLAYSURFACE;
     }
 
     return WINED3D_OK;
@@ -3385,7 +3386,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface, LO
     if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
     {
         TRACE("(%p): Not an overlay surface\n", This);
-        return DDERR_NOTAOVERLAYSURFACE;
+        return WINEDDERR_NOTAOVERLAYSURFACE;
     }
 
     return WINED3D_OK;
@@ -3400,7 +3401,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *iface, D
     if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
     {
         TRACE("(%p): Not an overlay surface\n", This);
-        return DDERR_NOTAOVERLAYSURFACE;
+        return WINEDDERR_NOTAOVERLAYSURFACE;
     }
 
     return WINED3D_OK;
@@ -3414,7 +3415,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
     if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
     {
         TRACE("(%p): Not an overlay surface\n", This);
-        return DDERR_NOTAOVERLAYSURFACE;
+        return WINEDDERR_NOTAOVERLAYSURFACE;
     }
 
     return WINED3D_OK;

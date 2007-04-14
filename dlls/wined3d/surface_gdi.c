@@ -459,7 +459,7 @@ _Blt_ColorFill(BYTE *buf,
         case 4: COLORFILL_ROW(DWORD)
         default:
             FIXME("Color fill not implemented for bpp %d!\n", bpp*8);
-            return DDERR_UNSUPPORTED;
+            return WINED3DERR_NOTAVAILABLE;
     }
 
 #undef COLORFILL_ROW
@@ -471,7 +471,7 @@ _Blt_ColorFill(BYTE *buf,
         buf += lPitch;
         memcpy(buf, first, width * bpp);
     }
-    return DD_OK;
+    return WINED3D_OK;
 }
 
 /*****************************************************************************
@@ -491,13 +491,13 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
                         IWineD3DSurface *SrcSurface,
                         RECT *SrcRect,
                         DWORD Flags,
-                        DDBLTFX *DDBltFx,
+                        WINEDDBLTFX *DDBltFx,
                         WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     RECT		xdst,xsrc;
-    HRESULT		ret = DD_OK;
+    HRESULT		ret = WINED3D_OK;
     WINED3DLOCKED_RECT  dlock, slock;
     WINED3DFORMAT       dfmt = WINED3DFMT_UNKNOWN, sfmt = WINED3DFMT_UNKNOWN;
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
@@ -515,7 +515,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
 #if 0
         TRACE("\tflags: ");
         DDRAW_dump_DDBLT(Flags);
-        if (Flags & DDBLT_DDFX)
+        if (Flags & WINEDDBLT_DDFX)
         {
             TRACE("\tblitfx: ");
             DDRAW_dump_DDBLTFX(DDBltFx->dwDDFX);
@@ -526,7 +526,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
     if ( (This->Flags & SFLAG_LOCKED) || ((Src != NULL) && (Src->Flags & SFLAG_LOCKED)))
     {
         WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
-        return DDERR_SURFACEBUSY;
+        return WINEDDERR_SURFACEBUSY;
     }
 
     if(Filter != WINED3DTEXF_NONE) {
@@ -556,14 +556,14 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
         IWineD3DSurface_LockRect(iface, &dlock,NULL,0);
     }
 
-    if (!DDBltFx || !(DDBltFx->dwDDFX)) Flags &= ~DDBLT_DDFX;
+    if (!DDBltFx || !(DDBltFx->dwDDFX)) Flags &= ~WINEDDBLT_DDFX;
 
     if (sEntry->isFourcc && dEntry->isFourcc)
     {
         if (sfmt != dfmt)
         {
             FIXME("FOURCC->FOURCC copy only supported for the same type of surface\n");
-            ret = DDERR_INVALIDPIXELFORMAT;
+            ret = WINED3DERR_WRONGTEXTUREFORMAT;
             goto release;
         }
         TRACE("Fourcc->Fourcc copy)\n");
@@ -619,7 +619,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
         (xsrc.right   < xsrc.left)               || (xsrc.bottom < xsrc.top)))
     {
         WARN("Application gave us bad source rectangle for Blt.\n");
-        ret = DDERR_INVALIDRECT;
+        ret = WINEDDERR_INVALIDRECT;
         goto release;
     }
     /* For the Destination rect, it can be out of bounds on the condition that a clipper
@@ -633,7 +633,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
         (xdst.right    < xdst.left)                || (xdst.bottom < xdst.top)))
     {
         WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
-        ret = DDERR_INVALIDRECT;
+        ret = WINEDDERR_INVALIDRECT;
         goto release;
     }
 
@@ -677,7 +677,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
             /* Now check if this is a special case or not... */
             if ((((xdst.bottom - xdst.top ) != (xsrc.bottom - xsrc.top )) && clip_vert ) ||
                 (((xdst.right  - xdst.left) != (xsrc.right  - xsrc.left)) && clip_horiz) ||
-                (Flags & DDBLT_DDFX))
+                (Flags & WINEDDBLT_DDFX))
             {
                 WARN("Out of screen rectangle in special case. Not handled right now.\n");
                 goto release;
@@ -730,41 +730,41 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
 
     dbuf = (BYTE*)dlock.pBits+(xdst.top*dlock.Pitch)+(xdst.left*bpp);
 
-    if (Flags & DDBLT_WAIT)
+    if (Flags & WINEDDBLT_WAIT)
     {
-        Flags &= ~DDBLT_WAIT;
+        Flags &= ~WINEDDBLT_WAIT;
     }
-    if (Flags & DDBLT_ASYNC)
+    if (Flags & WINEDDBLT_ASYNC)
     {
         static BOOL displayed = FALSE;
         if (!displayed)
-            FIXME("Can't handle DDBLT_ASYNC flag right now.\n");
+            FIXME("Can't handle WINEDDBLT_ASYNC flag right now.\n");
         displayed = TRUE;
-        Flags &= ~DDBLT_ASYNC;
+        Flags &= ~WINEDDBLT_ASYNC;
     }
-    if (Flags & DDBLT_DONOTWAIT)
+    if (Flags & WINEDDBLT_DONOTWAIT)
     {
-        /* DDBLT_DONOTWAIT appeared in DX7 */
+        /* WINEDDBLT_DONOTWAIT appeared in DX7 */
         static BOOL displayed = FALSE;
         if (!displayed)
-            FIXME("Can't handle DDBLT_DONOTWAIT flag right now.\n");
+            FIXME("Can't handle WINEDDBLT_DONOTWAIT flag right now.\n");
         displayed = TRUE;
-        Flags &= ~DDBLT_DONOTWAIT;
+        Flags &= ~WINEDDBLT_DONOTWAIT;
     }
 
     /* First, all the 'source-less' blits */
-    if (Flags & DDBLT_COLORFILL)
+    if (Flags & WINEDDBLT_COLORFILL)
     {
         ret = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp,
                             dlock.Pitch, DDBltFx->u5.dwFillColor);
-        Flags &= ~DDBLT_COLORFILL;
+        Flags &= ~WINEDDBLT_COLORFILL;
     }
 
-    if (Flags & DDBLT_DEPTHFILL)
+    if (Flags & WINEDDBLT_DEPTHFILL)
     {
         FIXME("DDBLT_DEPTHFILL needs to be implemented!\n");
     }
-    if (Flags & DDBLT_ROP)
+    if (Flags & WINEDDBLT_ROP)
     {
         /* Catch some degenerate cases here */
         switch(DDBltFx->dwROP)
@@ -783,9 +783,9 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
                 FIXME("Unsupported raster op: %08x  Pattern: %p\n", DDBltFx->dwROP, DDBltFx->u5.lpDDSPattern);
                 goto error;
         }
-        Flags &= ~DDBLT_ROP;
+        Flags &= ~WINEDDBLT_ROP;
     }
-    if (Flags & DDBLT_DDROPS)
+    if (Flags & WINEDDBLT_DDROPS)
     {
         FIXME("\tDdraw Raster Ops: %08x  Pattern: %p\n", DDBltFx->dwDDROP, DDBltFx->u5.lpDDSPattern);
     }
@@ -899,7 +899,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
                     }
                     default:
                         FIXME("Stretched blit not implemented for bpp %d!\n", bpp*8);
-                        ret = DDERR_UNSUPPORTED;
+                        ret = WINED3DERR_NOTAVAILABLE;
                         goto error;
                     }
 #undef STRETCH_ROW
@@ -914,27 +914,27 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
           LONG dstyinc = dlock.Pitch, dstxinc = bpp;
           DWORD keylow = 0xFFFFFFFF, keyhigh = 0, keymask = 0xFFFFFFFF;
           DWORD destkeylow = 0x0, destkeyhigh = 0xFFFFFFFF, destkeymask = 0xFFFFFFFF;
-          if (Flags & (DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE))
+          if (Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE))
           {
               /* The color keying flags are checked for correctness in ddraw */
-              if (Flags & DDBLT_KEYSRC)
+              if (Flags & WINEDDBLT_KEYSRC)
               {
                 keylow  = Src->SrcBltCKey.dwColorSpaceLowValue;
                 keyhigh = Src->SrcBltCKey.dwColorSpaceHighValue;
               }
-              else  if (Flags & DDBLT_KEYSRCOVERRIDE)
+              else  if (Flags & WINEDDBLT_KEYSRCOVERRIDE)
               {
                 keylow  = DDBltFx->ddckSrcColorkey.dwColorSpaceLowValue;
                 keyhigh = DDBltFx->ddckSrcColorkey.dwColorSpaceHighValue;
               }
 
-              if (Flags & DDBLT_KEYDEST)
+              if (Flags & WINEDDBLT_KEYDEST)
               {
                 /* Destination color keys are taken from the source surface ! */
                 destkeylow  = Src->DestBltCKey.dwColorSpaceLowValue;
                 destkeyhigh = Src->DestBltCKey.dwColorSpaceHighValue;
               }
-              else if (Flags & DDBLT_KEYDESTOVERRIDE)
+              else if (Flags & WINEDDBLT_KEYDESTOVERRIDE)
               {
                 destkeylow  = DDBltFx->ddckDestColorkey.dwColorSpaceLowValue;
                 destkeyhigh = DDBltFx->ddckDestColorkey.dwColorSpaceHighValue;
@@ -950,10 +950,10 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
                             sEntry->greenMask |
                             sEntry->blueMask;
               }
-              Flags &= ~(DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE);
+              Flags &= ~(WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE);
           }
 
-          if (Flags & DDBLT_DDFX)
+          if (Flags & WINEDDBLT_DDFX)
           {
               LPBYTE dTopLeft, dTopRight, dBottomLeft, dBottomRight, tmp;
               LONG tmpxy;
@@ -962,12 +962,12 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
               dBottomLeft  = dTopLeft+((dstheight-1)*dlock.Pitch);
               dBottomRight = dBottomLeft+((dstwidth-1)*bpp);
 
-              if (DDBltFx->dwDDFX & DDBLTFX_ARITHSTRETCHY)
+              if (DDBltFx->dwDDFX & WINEDDBLTFX_ARITHSTRETCHY)
               {
                 /* I don't think we need to do anything about this flag */
-                WARN("Flags=DDBLT_DDFX nothing done for DDBLTFX_ARITHSTRETCHY\n");
+                WARN("Flags=DDBLT_DDFX nothing done for WINEDDBLTFX_ARITHSTRETCHY\n");
               }
-              if (DDBltFx->dwDDFX & DDBLTFX_MIRRORLEFTRIGHT)
+              if (DDBltFx->dwDDFX & WINEDDBLTFX_MIRRORLEFTRIGHT)
               {
                 tmp          = dTopRight;
                 dTopRight    = dTopLeft;
@@ -977,7 +977,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
                 dBottomLeft  = tmp;
                 dstxinc = dstxinc *-1;
               }
-              if (DDBltFx->dwDDFX & DDBLTFX_MIRRORUPDOWN)
+              if (DDBltFx->dwDDFX & WINEDDBLTFX_MIRRORUPDOWN)
               {
                 tmp          = dTopLeft;
                 dTopLeft     = dBottomLeft;
@@ -987,12 +987,12 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
                 dBottomRight = tmp;
                 dstyinc = dstyinc *-1;
               }
-              if (DDBltFx->dwDDFX & DDBLTFX_NOTEARING)
+              if (DDBltFx->dwDDFX & WINEDDBLTFX_NOTEARING)
               {
                 /* I don't think we need to do anything about this flag */
-                WARN("Flags=DDBLT_DDFX nothing done for DDBLTFX_NOTEARING\n");
+                WARN("Flags=DDBLT_DDFX nothing done for WINEDDBLTFX_NOTEARING\n");
               }
-              if (DDBltFx->dwDDFX & DDBLTFX_ROTATE180)
+              if (DDBltFx->dwDDFX & WINEDDBLTFX_ROTATE180)
               {
                 tmp          = dBottomRight;
                 dBottomRight = dTopLeft;
@@ -1003,7 +1003,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
                 dstxinc = dstxinc * -1;
                 dstyinc = dstyinc * -1;
               }
-              if (DDBltFx->dwDDFX & DDBLTFX_ROTATE270)
+              if (DDBltFx->dwDDFX & WINEDDBLTFX_ROTATE270)
               {
                 tmp          = dTopLeft;
                 dTopLeft     = dBottomLeft;
@@ -1015,7 +1015,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
                 dstyinc = tmpxy;
                 dstxinc = dstxinc * -1;
               }
-              if (DDBltFx->dwDDFX & DDBLTFX_ROTATE90)
+              if (DDBltFx->dwDDFX & WINEDDBLTFX_ROTATE90)
               {
                 tmp          = dTopLeft;
                 dTopLeft     = dTopRight;
@@ -1027,13 +1027,13 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
                 dstyinc = tmpxy;
                 dstyinc = dstyinc * -1;
               }
-              if (DDBltFx->dwDDFX & DDBLTFX_ZBUFFERBASEDEST)
+              if (DDBltFx->dwDDFX & WINEDDBLTFX_ZBUFFERBASEDEST)
               {
                 /* I don't think we need to do anything about this flag */
-                WARN("Flags=DDBLT_DDFX nothing done for DDBLTFX_ZBUFFERBASEDEST\n");
+                WARN("Flags=WINEDDBLT_DDFX nothing done for WINEDDBLTFX_ZBUFFERBASEDEST\n");
               }
               dbuf = dTopLeft;
-              Flags &= ~(DDBLT_DDFX);
+              Flags &= ~(WINEDDBLT_DDFX);
           }
 
 #define COPY_COLORKEY_FX(type) { \
@@ -1085,8 +1085,8 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
             }
             default:
               FIXME("%s color-keyed blit not implemented for bpp %d!\n",
-                  (Flags & DDBLT_KEYSRC) ? "Source" : "Destination", bpp*8);
-                  ret = DDERR_UNSUPPORTED;
+                  (Flags & WINEDDBLT_KEYSRC) ? "Source" : "Destination", bpp*8);
+                  ret = WINED3DERR_NOTAVAILABLE;
                   goto error;
 #undef COPY_COLORKEY_FX
             }
@@ -1136,7 +1136,7 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
 
     int                 bpp, w, h, x, y;
     WINED3DLOCKED_RECT  dlock,slock;
-    HRESULT             ret = DD_OK;
+    HRESULT             ret = WINED3D_OK;
     RECT                rsrc2;
     RECT                lock_src, lock_dst, lock_union;
     BYTE                *sbuf, *dbuf;
@@ -1161,7 +1161,7 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
         ((Src != NULL) && (Src->Flags & SFLAG_LOCKED)))
     {
         WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
-        return DDERR_SURFACEBUSY;
+        return WINEDDERR_SURFACEBUSY;
     }
 
     if (!rsrc)
@@ -1182,18 +1182,18 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
         (rsrc->right  < rsrc->left)              || (rsrc->bottom < rsrc->top))
     {
         WARN("Application gave us bad source rectangle for BltFast.\n");
-        return DDERR_INVALIDRECT;
+        return WINEDDERR_INVALIDRECT;
     }
 
     h = rsrc->bottom - rsrc->top;
     if (h > This->currentDesc.Height-dsty) h = This->currentDesc.Height-dsty;
     if (h > Src->currentDesc.Height-rsrc->top) h=Src->currentDesc.Height-rsrc->top;
-    if (h <= 0) return DDERR_INVALIDRECT;
+    if (h <= 0) return WINEDDERR_INVALIDRECT;
 
     w = rsrc->right - rsrc->left;
     if (w > This->currentDesc.Width-dstx) w = This->currentDesc.Width-dstx;
     if (w > Src->currentDesc.Width-rsrc->left) w = Src->currentDesc.Width-rsrc->left;
-    if (w <= 0) return DDERR_INVALIDRECT;
+    if (w <= 0) return WINEDDERR_INVALIDRECT;
 
     /* Now compute the locking rectangle... */
     lock_src.left = rsrc->left;
@@ -1255,7 +1255,7 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
         if (Src->resource.format != This->resource.format)
         {
             FIXME("FOURCC->FOURCC copy only supported for the same type of surface\n");
-            ret = DDERR_INVALIDPIXELFORMAT;
+            ret = WINED3DERR_WRONGTEXTUREFORMAT;
             goto error;
         }
         /* FIXME: Watch out that the size is correct for FOURCC surfaces */
@@ -1271,11 +1271,11 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
         goto error;
     }
 
-    if (trans & (DDBLTFAST_SRCCOLORKEY | DDBLTFAST_DESTCOLORKEY))
+    if (trans & (WINEDDBLTFAST_SRCCOLORKEY | WINEDDBLTFAST_DESTCOLORKEY))
     {
         DWORD keylow, keyhigh;
         TRACE("Color keyed copy\n");
-        if (trans & DDBLTFAST_SRCCOLORKEY)
+        if (trans & WINEDDBLTFAST_SRCCOLORKEY)
         {
             keylow  = Src->SrcBltCKey.dwColorSpaceLowValue;
             keyhigh = Src->SrcBltCKey.dwColorSpaceHighValue;
@@ -1283,7 +1283,7 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
         else
         {
             /* I'm not sure if this is correct */
-            FIXME("DDBLTFAST_DESTCOLORKEY not fully supported yet.\n");
+            FIXME("WINEDDBLTFAST_DESTCOLORKEY not fully supported yet.\n");
             keylow  = This->DestBltCKey.dwColorSpaceLowValue;
             keyhigh = This->DestBltCKey.dwColorSpaceHighValue;
         }
@@ -1332,7 +1332,7 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
             }
             default:
                 FIXME("Source color key blitting not supported for bpp %d\n",bpp*8);
-                ret = DDERR_UNSUPPORTED;
+                ret = WINED3DERR_NOTAVAILABLE;
                 goto error;
         }
 #undef COPYBOX_COLORKEY

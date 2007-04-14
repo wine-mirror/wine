@@ -557,6 +557,7 @@ IDirectDrawImpl_SetDisplayMode(IDirectDraw7 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
     WINED3DDISPLAYMODE Mode;
+    HRESULT hr;
     TRACE("(%p)->(%d,%d,%d,%d,%x: Relay!\n", This, Width, Height, BPP, RefreshRate, Flags);
 
     if( !Width || !Height )
@@ -593,10 +594,14 @@ IDirectDrawImpl_SetDisplayMode(IDirectDraw7 *iface,
      */
 
     /* TODO: Lose the primary surface */
-    return IWineD3DDevice_SetDisplayMode(This->wineD3DDevice,
-                                         0, /* First swapchain */
-                                         &Mode);
-
+    hr = IWineD3DDevice_SetDisplayMode(This->wineD3DDevice,
+                                       0, /* First swapchain */
+                                       &Mode);
+    switch(hr)
+    {
+        case WINED3DERR_NOTAVAILABLE:       return DDERR_INVALIDMODE;
+        default:                            return hr;
+    };
 }
 
 /*****************************************************************************
@@ -1895,25 +1900,25 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     {
         IWineD3DSurface_SetColorKey((*ppSurf)->WineD3DSurface,
                                     DDCKEY_DESTOVERLAY,
-                                    &pDDSD->u3.ddckCKDestOverlay);
+                                    (WINEDDCOLORKEY *) &pDDSD->u3.ddckCKDestOverlay);
     }
     if(pDDSD->dwFlags & DDSD_CKDESTBLT)
     {
         IWineD3DSurface_SetColorKey((*ppSurf)->WineD3DSurface,
                                     DDCKEY_DESTBLT,
-                                    &pDDSD->ddckCKDestBlt);
+                                    (WINEDDCOLORKEY *) &pDDSD->ddckCKDestBlt);
     }
     if(pDDSD->dwFlags & DDSD_CKSRCOVERLAY)
     {
         IWineD3DSurface_SetColorKey((*ppSurf)->WineD3DSurface,
                                     DDCKEY_SRCOVERLAY,
-                                    &pDDSD->ddckCKSrcOverlay);
+                                    (WINEDDCOLORKEY *) &pDDSD->ddckCKSrcOverlay);
     }
     if(pDDSD->dwFlags & DDSD_CKSRCBLT)
     {
         IWineD3DSurface_SetColorKey((*ppSurf)->WineD3DSurface,
                                     DDCKEY_SRCBLT,
-                                    &pDDSD->ddckCKSrcBlt);
+                                    (WINEDDCOLORKEY *) &pDDSD->ddckCKSrcBlt);
     }
     if ( pDDSD->dwFlags & DDSD_LPSURFACE)
     {

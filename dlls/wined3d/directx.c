@@ -1836,7 +1836,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          *
          * With Shader Model 3.0 capable cards Instancing 'just works' in Windows.
          */
-        case MAKEFOURCC('I','N','S','T'):
+        case WINEMAKEFOURCC('I','N','S','T'):
             TRACE("ATI Instancing check hack\n");
             if(GL_SUPPORT(ARB_VERTEX_PROGRAM) || GL_SUPPORT(ARB_VERTEX_SHADER)) {
                 TRACE_(d3d_caps)("[OK]\n");

@@ -33,7 +33,6 @@
 #include "wingdi.h"
 #include "wine/debug.h"
 #include "d3d8.h"
-#include "ddraw.h"
 #include "wine/wined3d_interface.h"
 
 /* Device caps */

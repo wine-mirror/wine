@@ -29,7 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-#define SIZE_BITS (DDPCAPS_1BIT | DDPCAPS_2BIT | DDPCAPS_4BIT | DDPCAPS_8BIT)
+#define SIZE_BITS (WINEDDPCAPS_1BIT | WINEDDPCAPS_2BIT | WINEDDPCAPS_4BIT | WINEDDPCAPS_8BIT)
 
 static HRESULT  WINAPI IWineD3DPaletteImpl_QueryInterface(IWineD3DPalette *iface, REFIID refiid, void **obj) {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
@@ -73,10 +73,10 @@ static ULONG  WINAPI IWineD3DPaletteImpl_Release(IWineD3DPalette *iface) {
 /* Not called from the vtable */
 DWORD IWineD3DPaletteImpl_Size(DWORD dwFlags) {
     switch (dwFlags & SIZE_BITS) {
-        case DDPCAPS_1BIT: return 2;
-        case DDPCAPS_2BIT: return 4;
-        case DDPCAPS_4BIT: return 16;
-        case DDPCAPS_8BIT: return 256;
+        case WINEDDPCAPS_1BIT: return 2;
+        case WINEDDPCAPS_2BIT: return 4;
+        case WINEDDPCAPS_4BIT: return 16;
+        case WINEDDPCAPS_8BIT: return 256;
         default: assert(0); return 256;
     }
 }
@@ -90,7 +90,7 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface, DW
     if (Start + Count > IWineD3DPaletteImpl_Size(This->Flags))
         return WINED3DERR_INVALIDCALL;
 
-    if (This->Flags & DDPCAPS_8BITENTRIES)
+    if (This->Flags & WINEDDPCAPS_8BITENTRIES)
     {
         unsigned int i;
         LPBYTE entry = (LPBYTE)PalEnt;
@@ -111,7 +111,7 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface, DW
 
     TRACE("(%p)->(%08x,%d,%d,%p)\n",This,Flags,Start,Count,PalEnt);
 
-    if (This->Flags & DDPCAPS_8BITENTRIES) {
+    if (This->Flags & WINEDDPCAPS_8BITENTRIES) {
         unsigned int i;
         const BYTE* entry = (const BYTE*)PalEnt;
 
@@ -143,7 +143,7 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface, DW
     }
 
     /* If the palette is the primary palette, set the entries to the device */
-    if(This->Flags & DDPCAPS_PRIMARYSURFACE) {
+    if(This->Flags & WINEDDPCAPS_PRIMARYSURFACE) {
         unsigned int i;
         IWineD3DDeviceImpl *device = This->wineD3DDevice;
         PALETTEENTRY *entry = PalEnt;

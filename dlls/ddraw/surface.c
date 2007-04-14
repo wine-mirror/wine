@@ -693,6 +693,7 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
                            DDBLTFX *DDBltFx)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
+    HRESULT hr;
     IDirectDrawSurfaceImpl *Src = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, SrcSurface);
     TRACE("(%p)->(%p,%p,%p,%x,%p)\n", This, DestRect, Src, SrcRect, Flags, DDBltFx);
 
@@ -714,13 +715,23 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
         return DDERR_INVALIDPARAMS;
     }
 
-    return IWineD3DSurface_Blt(This->WineD3DSurface,
-                               DestRect,
-                               Src ? Src->WineD3DSurface : NULL,
-                               SrcRect,
-                               Flags,
-                               DDBltFx,
-                               WINED3DTEXF_NONE);
+    /* TODO: Check if the DDBltFx contains any ddraw surface pointers. If it does, copy the struct,
+     * and replace the ddraw surfaces with the wined3d surfaces
+     * So far no blitting operations using surfaces in the bltfx struct are supported anyway.
+     */
+    hr = IWineD3DSurface_Blt(This->WineD3DSurface,
+                             DestRect,
+                             Src ? Src->WineD3DSurface : NULL,
+                             SrcRect,
+                             Flags,
+                             (WINEDDBLTFX *) DDBltFx,
+                             WINED3DTEXF_NONE);
+    switch(hr)
+    {
+        case WINED3DERR_NOTAVAILABLE:       return DDERR_UNSUPPORTED;
+        case WINED3DERR_WRONGTEXTUREFORMAT: return DDERR_INVALIDPIXELFORMAT;
+        default:                            return hr;
+    }
 }
 
 /*****************************************************************************
@@ -1283,9 +1294,15 @@ IDirectDrawSurfaceImpl_GetBltStatus(IDirectDrawSurface7 *iface,
                                     DWORD Flags)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
+    HRESULT hr;
     TRACE("(%p)->(%x): Relay\n", This, Flags);
 
-    return IWineD3DSurface_GetBltStatus(This->WineD3DSurface, Flags);
+    hr = IWineD3DSurface_GetBltStatus(This->WineD3DSurface, Flags);
+    switch(hr)
+    {
+        case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
+        default:                            return hr;
+    }
 }
 
 /*****************************************************************************
@@ -1358,9 +1375,15 @@ IDirectDrawSurfaceImpl_GetFlipStatus(IDirectDrawSurface7 *iface,
                                      DWORD Flags)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
+    HRESULT hr;
     TRACE("(%p)->(%x): Relay\n", This, Flags);
 
-    return IWineD3DSurface_GetFlipStatus(This->WineD3DSurface, Flags);
+    hr = IWineD3DSurface_GetFlipStatus(This->WineD3DSurface, Flags);
+    switch(hr)
+    {
+        case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
+        default:                            return hr;
+    }
 }
 
 /*****************************************************************************
@@ -1497,6 +1520,7 @@ static HRESULT WINAPI
 IDirectDrawSurfaceImpl_IsLost(IDirectDrawSurface7 *iface)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
+    HRESULT hr;
     TRACE("(%p)\n", This);
 
     /* We lose the surface if the implementation was changed */
@@ -1510,7 +1534,15 @@ IDirectDrawSurfaceImpl_IsLost(IDirectDrawSurface7 *iface)
         return DDERR_SURFACELOST;
     }
 
-    return IWineD3DSurface_IsLost(This->WineD3DSurface);
+    hr = IWineD3DSurface_IsLost(This->WineD3DSurface);
+    switch(hr)
+    {
+        /* D3D8 and 9 loose full devices, thus there's only a DEVICELOST error.
+         * WineD3D uses the same error for surfaces
+         */
+        case WINED3DERR_DEVICELOST:         return DDERR_SURFACELOST;
+        default:                            return hr;
+    }
 }
 
 /*****************************************************************************
@@ -1825,14 +1857,21 @@ IDirectDrawSurfaceImpl_BltFast(IDirectDrawSurface7 *iface,
                                DWORD trans)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
+    HRESULT hr;
     IDirectDrawSurfaceImpl *src = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, Source);
     TRACE("(%p)->(%d,%d,%p,%p,%d): Relay\n", This, dstx, dsty, Source, rsrc, trans);
 
-    return IWineD3DSurface_BltFast(This->WineD3DSurface,
-                                   dstx, dsty,
-                                   src ? src->WineD3DSurface : NULL,
-                                   rsrc,
-                                   trans);
+    hr = IWineD3DSurface_BltFast(This->WineD3DSurface,
+                                 dstx, dsty,
+                                 src ? src->WineD3DSurface : NULL,
+                                 rsrc,
+                                 trans);
+    switch(hr)
+    {
+        case WINED3DERR_NOTAVAILABLE:           return DDERR_UNSUPPORTED;
+        case WINED3DERR_WRONGTEXTUREFORMAT:     return DDERR_INVALIDPIXELFORMAT;
+        default:                                return hr;
+    }
 }
 
 /*****************************************************************************
@@ -1956,25 +1995,25 @@ IDirectDrawSurfaceImpl_SetSurfaceDesc(IDirectDrawSurface7 *iface,
     {
         IWineD3DSurface_SetColorKey(This->WineD3DSurface,
                                     DDCKEY_DESTOVERLAY,
-                                    &DDSD->u3.ddckCKDestOverlay);
+                                    (WINEDDCOLORKEY *) &DDSD->u3.ddckCKDestOverlay);
     }
     if (DDSD->dwFlags & DDSD_CKDESTBLT)
     {
         IWineD3DSurface_SetColorKey(This->WineD3DSurface,
                                     DDCKEY_DESTBLT,
-                                    &DDSD->ddckCKDestBlt);
+                                    (WINEDDCOLORKEY *) &DDSD->ddckCKDestBlt);
     }
     if (DDSD->dwFlags & DDSD_CKSRCOVERLAY)
     {
         IWineD3DSurface_SetColorKey(This->WineD3DSurface,
                                     DDCKEY_SRCOVERLAY,
-                                    &DDSD->ddckCKSrcOverlay);
+                                    (WINEDDCOLORKEY *) &DDSD->ddckCKSrcOverlay);
     }
     if (DDSD->dwFlags & DDSD_CKSRCBLT)
     {
         IWineD3DSurface_SetColorKey(This->WineD3DSurface,
                                     DDCKEY_SRCBLT,
-                                    &DDSD->ddckCKSrcBlt);
+                                    (WINEDDCOLORKEY *) &DDSD->ddckCKSrcBlt);
     }
     if (DDSD->dwFlags & DDSD_LPSURFACE)
     {
@@ -2115,12 +2154,16 @@ IDirectDrawSurfaceImpl_SetColorKey(IDirectDrawSurface7 *iface,
     {
         hr = IWineD3DSurface_SetColorKey(surf->WineD3DSurface,
                                          Flags,
-                                         CKey);
+                                         (WINEDDCOLORKEY *) CKey);
         if(FAILED(hr))
         {
             WARN("IWineD3DSurface::SetColorKey for surface %p failed with hr=%08x\n",
                  surf->WineD3DSurface, hr);
-            return hr;
+            switch(hr)
+            {
+                case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
+                default:                            return hr;
+            }
         }
     }
     return DD_OK;

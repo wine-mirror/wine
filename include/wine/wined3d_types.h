@@ -223,6 +223,10 @@ typedef enum _WINED3DDEGREETYPE {
     WINED3DDEGREE_FORCE_DWORD   = 0x7fffffff
 } WINED3DDEGREETYPE;
 
+#define WINEMAKEFOURCC(ch0, ch1, ch2, ch3)  \
+    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) |  \
+    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
+
 typedef enum _WINED3DFORMAT {
     WINED3DFMT_UNKNOWN              =   0,
 
@@ -260,16 +264,16 @@ typedef enum _WINED3DFORMAT {
     WINED3DFMT_W11V11U10            =  65,
     WINED3DFMT_A2W10V10U10          =  67,
 
-    WINED3DFMT_UYVY                 =  MAKEFOURCC('U', 'Y', 'V', 'Y'),
-    WINED3DFMT_YUY2                 =  MAKEFOURCC('Y', 'U', 'Y', '2'),
-    WINED3DFMT_DXT1                 =  MAKEFOURCC('D', 'X', 'T', '1'),
-    WINED3DFMT_DXT2                 =  MAKEFOURCC('D', 'X', 'T', '2'),
-    WINED3DFMT_DXT3                 =  MAKEFOURCC('D', 'X', 'T', '3'),
-    WINED3DFMT_DXT4                 =  MAKEFOURCC('D', 'X', 'T', '4'),
-    WINED3DFMT_DXT5                 =  MAKEFOURCC('D', 'X', 'T', '5'),
-    WINED3DFMT_MULTI2_ARGB8         =  MAKEFOURCC('M', 'E', 'T', '1'),
-    WINED3DFMT_G8R8_G8B8            =  MAKEFOURCC('G', 'R', 'G', 'B'),
-    WINED3DFMT_R8G8_B8G8            =  MAKEFOURCC('R', 'G', 'B', 'G'),
+    WINED3DFMT_UYVY                 =  WINEMAKEFOURCC('U', 'Y', 'V', 'Y'),
+    WINED3DFMT_YUY2                 =  WINEMAKEFOURCC('Y', 'U', 'Y', '2'),
+    WINED3DFMT_DXT1                 =  WINEMAKEFOURCC('D', 'X', 'T', '1'),
+    WINED3DFMT_DXT2                 =  WINEMAKEFOURCC('D', 'X', 'T', '2'),
+    WINED3DFMT_DXT3                 =  WINEMAKEFOURCC('D', 'X', 'T', '3'),
+    WINED3DFMT_DXT4                 =  WINEMAKEFOURCC('D', 'X', 'T', '4'),
+    WINED3DFMT_DXT5                 =  WINEMAKEFOURCC('D', 'X', 'T', '5'),
+    WINED3DFMT_MULTI2_ARGB8         =  WINEMAKEFOURCC('M', 'E', 'T', '1'),
+    WINED3DFMT_G8R8_G8B8            =  WINEMAKEFOURCC('G', 'R', 'G', 'B'),
+    WINED3DFMT_R8G8_B8G8            =  WINEMAKEFOURCC('R', 'G', 'B', 'G'),
 
     WINED3DFMT_D16_LOCKABLE         =  70,
     WINED3DFMT_D32                  =  71,
@@ -1290,30 +1294,6 @@ typedef struct WineDirect3DVertexStridedData {
     } u;
 } WineDirect3DVertexStridedData;
 
-typedef struct _WINEDDOVERLAYFX
-{
-    DWORD       dwSize;                         /* size of structure */
-    DWORD       dwAlphaEdgeBlendBitDepth;       /* Bit depth used to specify constant for alpha edge blend */
-    DWORD       dwAlphaEdgeBlend;               /* Constant to use as alpha for edge blend */
-    DWORD       dwReserved;
-    DWORD       dwAlphaDestConstBitDepth;       /* Bit depth used to specify alpha constant for destination */
-    union
-    {
-        DWORD   dwAlphaDestConst;               /* Constant to use as alpha channel for dest */
-        LPDIRECTDRAWSURFACE lpDDSAlphaDest;     /* Surface to use as alpha channel for dest */
-    } DUMMYUNIONNAME1;
-    DWORD       dwAlphaSrcConstBitDepth;        /* Bit depth used to specify alpha constant for source */
-    union
-    {
-        DWORD   dwAlphaSrcConst;                /* Constant to use as alpha channel for src */
-        LPDIRECTDRAWSURFACE lpDDSAlphaSrc;      /* Surface to use as alpha channel for src */
-    } DUMMYUNIONNAME2;
-    DDCOLORKEY  dckDestColorkey;                /* DestColorkey override */
-    DDCOLORKEY  dckSrcColorkey;                 /* DestColorkey override */
-    DWORD       dwDDFX;                         /* Overlay FX */
-    DWORD       dwFlags;                        /* flags */
-} WINEDDOVERLAYFX;
-
 typedef enum {
     WINED3DDECLUSAGE_POSITION     = 0,
     WINED3DDECLUSAGE_BLENDWEIGHT  = 1,
@@ -1575,5 +1555,196 @@ typedef enum _WINED3DSURFTYPE {
 #define WINED3DCREATE_MIXED_VERTEXPROCESSING        0x00000080
 #define WINED3DCREATE_DISABLE_DRIVER_MANAGEMENT     0x00000100
 #define WINED3DCREATE_ADAPTERGROUP_DEVICE           0x00000200
+
+/* DirectDraw types */
+
+typedef struct _WINEDDCOLORKEY
+{
+    DWORD       dwColorSpaceLowValue;           /* low boundary of color space that is to
+                                                 * be treated as Color Key, inclusive
+                                                 */
+    DWORD       dwColorSpaceHighValue;          /* high boundary of color space that is
+                                                 * to be treated as Color Key, inclusive
+                                                 */
+} WINEDDCOLORKEY,*LPWINEDDCOLORKEY;
+
+typedef struct _WINEDDBLTFX
+{
+    DWORD       dwSize;                         /* size of structure */
+    DWORD       dwDDFX;                         /* FX operations */
+    DWORD       dwROP;                          /* Win32 raster operations */
+    DWORD       dwDDROP;                        /* Raster operations new for DirectDraw */
+    DWORD       dwRotationAngle;                /* Rotation angle for blt */
+    DWORD       dwZBufferOpCode;                /* ZBuffer compares */
+    DWORD       dwZBufferLow;                   /* Low limit of Z buffer */
+    DWORD       dwZBufferHigh;                  /* High limit of Z buffer */
+    DWORD       dwZBufferBaseDest;              /* Destination base value */
+    DWORD       dwZDestConstBitDepth;           /* Bit depth used to specify Z constant for destination */
+    union
+    {
+        DWORD   dwZDestConst;                   /* Constant to use as Z buffer for dest */
+        struct IWineD3DSurface *lpDDSZBufferDest;      /* Surface to use as Z buffer for dest */
+    } DUMMYUNIONNAME1;
+    DWORD       dwZSrcConstBitDepth;            /* Bit depth used to specify Z constant for source */
+    union
+    {
+        DWORD   dwZSrcConst;                    /* Constant to use as Z buffer for src */
+        struct IWineD3DSurface *lpDDSZBufferSrc;/* Surface to use as Z buffer for src */
+    } DUMMYUNIONNAME2;
+    DWORD       dwAlphaEdgeBlendBitDepth;       /* Bit depth used to specify constant for alpha edge blend */
+    DWORD       dwAlphaEdgeBlend;               /* Alpha for edge blending */
+    DWORD       dwReserved;
+    DWORD       dwAlphaDestConstBitDepth;       /* Bit depth used to specify alpha constant for destination */
+    union
+    {
+        DWORD   dwAlphaDestConst;               /* Constant to use as Alpha Channel */
+        struct IWineD3DSurface *lpDDSAlphaDest; /* Surface to use as Alpha Channel */
+    } DUMMYUNIONNAME3;
+    DWORD       dwAlphaSrcConstBitDepth;        /* Bit depth used to specify alpha constant for source */
+    union
+    {
+        DWORD   dwAlphaSrcConst;                /* Constant to use as Alpha Channel */
+        struct IWineD3DSurface *lpDDSAlphaSrc;  /* Surface to use as Alpha Channel */
+    } DUMMYUNIONNAME4;
+    union
+    {
+        DWORD   dwFillColor;                    /* color in RGB or Palettized */
+        DWORD   dwFillDepth;                    /* depth value for z-buffer */
+	DWORD   dwFillPixel;			/* pixel val for RGBA or RGBZ */
+        struct IWineD3DSurface *lpDDSPattern;   /* Surface to use as pattern */
+    } DUMMYUNIONNAME5;
+    WINEDDCOLORKEY  ddckDestColorkey;          /* DestColorkey override */
+    WINEDDCOLORKEY  ddckSrcColorkey;           /* SrcColorkey override */
+} WINEDDBLTFX,*LPWINEDDBLTFX;
+
+typedef struct _WINEDDOVERLAYFX
+{
+    DWORD       dwSize;                         /* size of structure */
+    DWORD       dwAlphaEdgeBlendBitDepth;       /* Bit depth used to specify constant for alpha edge blend */
+    DWORD       dwAlphaEdgeBlend;               /* Constant to use as alpha for edge blend */
+    DWORD       dwReserved;
+    DWORD       dwAlphaDestConstBitDepth;       /* Bit depth used to specify alpha constant for destination */
+    union
+    {
+        DWORD   dwAlphaDestConst;               /* Constant to use as alpha channel for dest */
+        struct IWineD3DSurface *lpDDSAlphaDest; /* Surface to use as alpha channel for dest */
+    } DUMMYUNIONNAME1;
+    DWORD       dwAlphaSrcConstBitDepth;        /* Bit depth used to specify alpha constant for source */
+    union
+    {
+        DWORD   dwAlphaSrcConst;                /* Constant to use as alpha channel for src */
+        struct IWineD3DSurface *lpDDSAlphaSrc;  /* Surface to use as alpha channel for src */
+    } DUMMYUNIONNAME2;
+    WINEDDCOLORKEY  dckDestColorkey;            /* DestColorkey override */
+    WINEDDCOLORKEY  dckSrcColorkey;             /* DestColorkey override */
+    DWORD       dwDDFX;                         /* Overlay FX */
+    DWORD       dwFlags;                        /* flags */
+} WINEDDOVERLAYFX;
+
+/* dwDDFX */
+/* arithmetic stretching along y axis */
+#define WINEDDBLTFX_ARITHSTRETCHY               0x00000001
+/* mirror on y axis */
+#define WINEDDBLTFX_MIRRORLEFTRIGHT             0x00000002
+/* mirror on x axis */
+#define WINEDDBLTFX_MIRRORUPDOWN                0x00000004
+/* do not tear */
+#define WINEDDBLTFX_NOTEARING                   0x00000008
+/* 180 degrees clockwise rotation */
+#define WINEDDBLTFX_ROTATE180                   0x00000010
+/* 270 degrees clockwise rotation */
+#define WINEDDBLTFX_ROTATE270                   0x00000020
+/* 90 degrees clockwise rotation */
+#define WINEDDBLTFX_ROTATE90                    0x00000040
+/* dwZBufferLow and dwZBufferHigh specify limits to the copied Z values */
+#define WINEDDBLTFX_ZBUFFERRANGE                0x00000080
+/* add dwZBufferBaseDest to every source z value before compare */
+#define WINEDDBLTFX_ZBUFFERBASEDEST             0x00000100
+
+/* dwFlags for Blt* */
+#define WINEDDBLT_ALPHADEST                     0x00000001
+#define WINEDDBLT_ALPHADESTCONSTOVERRIDE        0x00000002
+#define WINEDDBLT_ALPHADESTNEG                  0x00000004
+#define WINEDDBLT_ALPHADESTSURFACEOVERRIDE      0x00000008
+#define WINEDDBLT_ALPHAEDGEBLEND                0x00000010
+#define WINEDDBLT_ALPHASRC                      0x00000020
+#define WINEDDBLT_ALPHASRCCONSTOVERRIDE         0x00000040
+#define WINEDDBLT_ALPHASRCNEG                   0x00000080
+#define WINEDDBLT_ALPHASRCSURFACEOVERRIDE       0x00000100
+#define WINEDDBLT_ASYNC                         0x00000200
+#define WINEDDBLT_COLORFILL                     0x00000400
+#define WINEDDBLT_DDFX                          0x00000800
+#define WINEDDBLT_DDROPS                        0x00001000
+#define WINEDDBLT_KEYDEST                       0x00002000
+#define WINEDDBLT_KEYDESTOVERRIDE               0x00004000
+#define WINEDDBLT_KEYSRC                        0x00008000
+#define WINEDDBLT_KEYSRCOVERRIDE                0x00010000
+#define WINEDDBLT_ROP                           0x00020000
+#define WINEDDBLT_ROTATIONANGLE                 0x00040000
+#define WINEDDBLT_ZBUFFER                       0x00080000
+#define WINEDDBLT_ZBUFFERDESTCONSTOVERRIDE      0x00100000
+#define WINEDDBLT_ZBUFFERDESTOVERRIDE           0x00200000
+#define WINEDDBLT_ZBUFFERSRCCONSTOVERRIDE       0x00400000
+#define WINEDDBLT_ZBUFFERSRCOVERRIDE            0x00800000
+#define WINEDDBLT_WAIT                          0x01000000
+#define WINEDDBLT_DEPTHFILL                     0x02000000
+#define WINEDDBLT_DONOTWAIT                     0x08000000
+
+/* dwTrans for BltFast */
+#define WINEDDBLTFAST_NOCOLORKEY                0x00000000
+#define WINEDDBLTFAST_SRCCOLORKEY               0x00000001
+#define WINEDDBLTFAST_DESTCOLORKEY              0x00000002
+#define WINEDDBLTFAST_WAIT                      0x00000010
+#define WINEDDBLTFAST_DONOTWAIT                 0x00000020
+
+/* DDCAPS.dwPalCaps */
+#define WINEDDPCAPS_4BIT                        0x00000001
+#define WINEDDPCAPS_8BITENTRIES                 0x00000002
+#define WINEDDPCAPS_8BIT                        0x00000004
+#define WINEDDPCAPS_INITIALIZE                  0x00000008
+#define WINEDDPCAPS_PRIMARYSURFACE              0x00000010
+#define WINEDDPCAPS_PRIMARYSURFACELEFT          0x00000020
+#define WINEDDPCAPS_ALLOW256                    0x00000040
+#define WINEDDPCAPS_VSYNC                       0x00000080
+#define WINEDDPCAPS_1BIT                        0x00000100
+#define WINEDDPCAPS_2BIT                        0x00000200
+#define WINEDDPCAPS_ALPHA                       0x00000400
+
+/* DDSURFACEDESC.dwFlags */
+#define WINEDDSD_CAPS                           0x00000001
+#define WINEDDSD_HEIGHT                         0x00000002
+#define WINEDDSD_WIDTH                          0x00000004
+#define WINEDDSD_PITCH                          0x00000008
+#define WINEDDSD_BACKBUFFERCOUNT                0x00000020
+#define WINEDDSD_ZBUFFERBITDEPTH                0x00000040
+#define WINEDDSD_ALPHABITDEPTH                  0x00000080
+#define WINEDDSD_LPSURFACE                      0x00000800
+#define WINEDDSD_PIXELFORMAT                    0x00001000
+#define WINEDDSD_CKDESTOVERLAY                  0x00002000
+#define WINEDDSD_CKDESTBLT                      0x00004000
+#define WINEDDSD_CKSRCOVERLAY                   0x00008000
+#define WINEDDSD_CKSRCBLT                       0x00010000
+#define WINEDDSD_MIPMAPCOUNT                    0x00020000
+#define WINEDDSD_REFRESHRATE                    0x00040000
+#define WINEDDSD_LINEARSIZE                     0x00080000
+#define WINEDDSD_TEXTURESTAGE                   0x00100000
+#define WINEDDSD_FVF                            0x00200000
+#define WINEDDSD_SRCVBHANDLE                    0x00400000
+#define WINEDDSD_ALL                            0x007ff9ee
+
+/* Set/Get Colour Key Flags */
+#define WINEDDCKEY_COLORSPACE                   0x00000001  /* Struct is single colour space */
+#define WINEDDCKEY_DESTBLT                      0x00000002  /* To be used as dest for blt */
+#define WINEDDCKEY_DESTOVERLAY                  0x00000004  /* To be used as dest for CK overlays */
+#define WINEDDCKEY_SRCBLT                       0x00000008  /* To be used as src for blt */
+#define WINEDDCKEY_SRCOVERLAY                   0x00000010  /* To be used as src for CK overlays */
+
+/* dwFlags for GetBltStatus */
+#define WINEDDGBS_CANBLT                        0x00000001
+#define WINEDDGBS_ISBLTDONE                     0x00000002
+
+/* dwFlags for GetFlipStatus */
+#define WINEDDGFS_CANFLIP                       1L
+#define WINEDDGFS_ISFLIPDONE                    2L
 
 #endif

@@ -38,7 +38,6 @@
 #include "wine/unicode.h"
 
 #include "wined3d_private_types.h"
-#include "ddraw.h"
 #include "wine/wined3d_interface.h"
 #include "wine/wined3d_caps.h"
 #include "wine/wined3d_gl.h"
@@ -1056,13 +1055,13 @@ struct IWineD3DSurfaceImpl
     HDC                       hDC;
 
     /* Color keys for DDraw */
-    DDCOLORKEY                DestBltCKey;
-    DDCOLORKEY                DestOverlayCKey;
-    DDCOLORKEY                SrcOverlayCKey;
-    DDCOLORKEY                SrcBltCKey;
+    WINEDDCOLORKEY            DestBltCKey;
+    WINEDDCOLORKEY            DestOverlayCKey;
+    WINEDDCOLORKEY            SrcOverlayCKey;
+    WINEDDCOLORKEY            SrcBltCKey;
     DWORD                     CKeyFlags;
 
-    DDCOLORKEY                glCKey;
+    WINEDDCOLORKEY            glCKey;
 
     struct list               renderbuffers;
     renderbuffer_entry_t      *current_renderbuffer;
@@ -1093,7 +1092,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_Restore(IWineD3DSurface *iface);
 HRESULT WINAPI IWineD3DSurfaceImpl_SetPixelFormat(IWineD3DSurface *iface, WINED3DFORMAT Format, BYTE *Surface, DWORD Size);
 HRESULT WINAPI IWineD3DSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD3DPalette **Pal);
 HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPalette *Pal);
-HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, DDCOLORKEY *CKey);
+HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, WINEDDCOLORKEY *CKey);
 HRESULT WINAPI IWineD3DSurfaceImpl_CleanDirtyRect(IWineD3DSurface *iface);
 extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RECT* pDirtyRect);
 HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3DBase *container);
@@ -1101,7 +1100,7 @@ void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT te
 void WINAPI IWineD3DSurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription);
 const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface);
 HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format);
-HRESULT WINAPI IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter);
+HRESULT WINAPI IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter);
 HRESULT WINAPI IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty, IWineD3DSurface *Source, RECT *rsrc, DWORD trans);
 HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPalette *Pal);
 HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC);
