@@ -510,10 +510,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     if (sd->u.s.normal.lpData == NULL) {
         glNormal3f(0, 0, 1);
     }
-    if(sd->u.s.diffuse.lpData != NULL) {
+    if(sd->u.s.diffuse.lpData == NULL) {
         glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     }
-    if(sd->u.s.specular.lpData != NULL) {
+    if(sd->u.s.specular.lpData == NULL) {
         if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
             GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
         }
