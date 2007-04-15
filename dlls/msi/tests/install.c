@@ -316,6 +316,45 @@ static const CHAR cie_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\t
                                     "2\t2\t\ttest2.cab\tDISK2\t\n"
                                     "3\t12\t\ttest3.cab\tDISK3\t\n";
 
+static const CHAR ci_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                              "s72\tS255\tI2\n"
+                                              "InstallExecuteSequence\tAction\n"
+                                              "CostFinalize\t\t1000\n"
+                                              "CostInitialize\t\t800\n"
+                                              "FileCost\t\t900\n"
+                                              "InstallFiles\t\t4000\n"
+                                              "InstallServices\t\t5000\n"
+                                              "InstallFinalize\t\t6600\n"
+                                              "InstallInitialize\t\t1500\n"
+                                              "RunInstall\t\t1600\n"
+                                              "InstallValidate\t\t1400\n"
+                                              "LaunchConditions\t\t100";
+
+static const CHAR ci_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComments\n"
+                                            "s72\ti2\tS64\tS0\tS255\n"
+                                            "CustomAction\tAction\n"
+                                            "RunInstall\t23\tmsitest\\concurrent.msi\tMYPROP=[UILevel]\t\n";
+
+static const CHAR ci_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                       "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                       "Component\tComponent\n"
+                                       "maximus\t\tMSITESTDIR\t0\tUILevel=5\tmaximus\n";
+
+static const CHAR ci2_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "augustus\t\tMSITESTDIR\t0\tUILevel=3 AND MYPROP=5\taugustus\n";
+
+static const CHAR ci2_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                           "s38\ts72\n"
+                                           "FeatureComponents\tFeature_\tComponent_\n"
+                                           "feature\taugustus";
+
+static const CHAR ci2_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                   "File\tFile\n"
+                                   "augustus\taugustus\taugustus\t500\t\t\t8192\t1";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -448,6 +487,31 @@ static const msi_table cie_tables[] =
     ADD_TABLE(cie_file),
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(cie_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table ci_tables[] =
+{
+    ADD_TABLE(ci_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rof_file),
+    ADD_TABLE(ci_install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+    ADD_TABLE(ci_custom_action),
+};
+
+static const msi_table ci2_tables[] =
+{
+    ADD_TABLE(ci2_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(ci2_feature_comp),
+    ADD_TABLE(ci2_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
     ADD_TABLE(property),
 };
 
@@ -1314,10 +1378,6 @@ static void test_cabisextracted(void)
     create_file("augustus", 500);
     create_file("caesar", 500);
 
-    create_database(msifile, mm_tables, sizeof(mm_tables) / sizeof(msi_table));
-
-    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
-
     create_cab_file("test1.cab", MEDIA_SIZE, "maximus\0");
     create_cab_file("test2.cab", MEDIA_SIZE, "augustus\0");
     create_cab_file("test3.cab", MEDIA_SIZE, "caesar\0");
@@ -1335,6 +1395,36 @@ static void test_cabisextracted(void)
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     delete_cab_files();
+    DeleteFile(msifile);
+}
+
+static void test_concurrentinstall(void)
+{
+    UINT r;
+    CHAR path[MAX_PATH];
+
+    CreateDirectoryA("msitest", NULL);
+    CreateDirectoryA("msitest\\msitest", NULL);
+    create_file("msitest\\maximus", 500);
+    create_file("msitest\\msitest\\augustus", 500);
+
+    create_database(msifile, ci_tables, sizeof(ci_tables) / sizeof(msi_table));
+
+    lstrcpyA(path, CURR_DIR);
+    lstrcatA(path, "\\msitest\\concurrent.msi");
+    create_database(path, ci2_tables, sizeof(ci2_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+        ok(delete_pf("msitest", FALSE), "File not installed\n");
+    }
+
     DeleteFile(msifile);
 }
 
@@ -1366,6 +1456,7 @@ START_TEST(install)
     test_readonlyfile();
     test_setdirproperty();
     test_cabisextracted();
+    test_concurrentinstall();
 
     SetCurrentDirectoryA(prev_path);
 }
