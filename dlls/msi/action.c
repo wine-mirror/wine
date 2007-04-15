@@ -3679,14 +3679,15 @@ static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
 
     msiFilePath = msi_dup_property( package, szOriginalDatabase );
     r = CopyFileW( msiFilePath, packagefile, FALSE);
-    msi_free( msiFilePath );
 
     if (!r)
     {
         ERR("Unable to copy package (%s -> %s) (error %d)\n",
             debugstr_w(msiFilePath), debugstr_w(packagefile), GetLastError());
+        msi_free( msiFilePath );
         return ERROR_FUNCTION_FAILED;
     }
+    msi_free( msiFilePath );
 
     /* FIXME: maybe set this key in ACTION_RegisterProduct instead */
     msi_reg_set_val_str( hkey, INSTALLPROPERTY_LOCALPACKAGEW, packagefile );
