@@ -1417,13 +1417,10 @@ static void test_concurrentinstall(void)
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-        ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
-        ok(delete_pf("msitest", FALSE), "File not installed\n");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     DeleteFile(msifile);
 }

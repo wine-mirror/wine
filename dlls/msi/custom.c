@@ -54,6 +54,8 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
                                 LPCWSTR target, const INT type, LPCWSTR action);
 static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
                                 LPCWSTR target, const INT type, LPCWSTR action);
+static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
+                                LPCWSTR target, const INT type, LPCWSTR action);
 static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
                                 LPCWSTR target, const INT type, LPCWSTR action);
 static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
@@ -249,6 +251,10 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
             break;
         case 17:
             rc = HANDLE_CustomType17(package,source,target,type,action);
+            break;
+        case 23: /* installs another package in the source tree */
+            deformat_string(package,target,&deformated);
+            rc = HANDLE_CustomType23(package,source,deformated,type,action);
             break;
         case 50: /*EXE file specified by a property value */
             rc = HANDLE_CustomType50(package,source,target,type,action);
@@ -548,6 +554,41 @@ static DWORD WINAPI DllThread( LPVOID arg )
     return rc;
 }
 
+static DWORD WINAPI ACTION_CAInstallPackage(const GUID *guid)
+{
+    msi_custom_action_info *info;
+    UINT r = ERROR_FUNCTION_FAILED;
+    INSTALLUILEVEL old_level;
+
+    info = find_action_by_guid(guid);
+    if (!info)
+    {
+        ERR("failed to find action %s\n", debugstr_guid(guid));
+        return r;
+    }
+
+    old_level = MsiSetInternalUI(INSTALLUILEVEL_BASIC, NULL);
+    r = MsiInstallProductW(info->source, info->target);
+    MsiSetInternalUI(old_level, NULL);
+
+    return r;
+}
+
+static DWORD WINAPI ConcurrentInstallThread(LPVOID arg)
+{
+    LPGUID guid = arg;
+    DWORD rc;
+
+    TRACE("concurrent installation (%x) started\n", GetCurrentThreadId());
+
+    rc = ACTION_CAInstallPackage(guid);
+
+    TRACE("concurrent installation (%x) returned %i\n", GetCurrentThreadId(), rc);
+
+    MsiCloseAllHandles();
+    return rc;
+}
+
 static msi_custom_action_info *do_msidbCustomActionTypeDll(
     MSIPACKAGE *package, INT type, LPCWSTR source, LPCWSTR target, LPCWSTR action )
 {
@@ -577,6 +618,63 @@ static msi_custom_action_info *do_msidbCustomActionTypeDll(
     }
 
     return info;
+}
+
+static msi_custom_action_info *do_msidbCAConcurrentInstall(
+    MSIPACKAGE *package, INT type, LPCWSTR source, LPCWSTR target, LPCWSTR action)
+{
+    msi_custom_action_info *info;
+
+    info = msi_alloc( sizeof *info );
+    if (!info)
+        return NULL;
+
+    msiobj_addref( &package->hdr );
+    info->package = package;
+    info->type = type;
+    info->target = strdupW( target );
+    info->source = strdupW( source );
+    info->action = strdupW( action );
+    CoCreateGuid( &info->guid );
+
+    EnterCriticalSection( &msi_custom_action_cs );
+    list_add_tail( &msi_pending_custom_actions, &info->entry );
+    LeaveCriticalSection( &msi_custom_action_cs );
+
+    info->handle = CreateThread( NULL, 0, ConcurrentInstallThread, &info->guid, 0, NULL );
+    if (!info->handle)
+    {
+        free_custom_action_data( info );
+        return NULL;
+    }
+
+    return info;
+}
+
+static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
+                                LPCWSTR target, const INT type, LPCWSTR action)
+{
+    msi_custom_action_info *info;
+    WCHAR package_path[MAX_PATH];
+    DWORD size;
+
+    static const WCHAR backslash[] = {'\\',0};
+
+    MSI_GetPropertyW(package, cszSourceDir, package_path, &size);
+    lstrcatW(package_path, backslash);
+    lstrcatW(package_path, source);
+
+    if (GetFileAttributesW(package_path) == INVALID_FILE_ATTRIBUTES)
+    {
+        ERR("Source package does not exist: %s\n", debugstr_w(package_path));
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    TRACE("Installing package %s concurrently\n", debugstr_w(package_path));
+
+    info = do_msidbCAConcurrentInstall(package, type, package_path, target, action);
+
+    return wait_thread_handle(info);
 }
 
 static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
