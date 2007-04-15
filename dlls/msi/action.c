@@ -584,6 +584,30 @@ static UINT msi_apply_transforms( MSIPACKAGE *package )
     return r;
 }
 
+BOOL ui_sequence_exists( MSIPACKAGE *package )
+{
+    MSIQUERY *view;
+    UINT rc;
+
+    static const WCHAR ExecSeqQuery [] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','I','n','s','t','a','l','l',
+         'U','I','S','e','q','u','e','n','c','e','`',
+         ' ','W','H','E','R','E',' ',
+         '`','S','e','q','u','e','n','c','e','`',' ',
+         '>',' ','0',' ','O','R','D','E','R',' ','B','Y',' ',
+         '`','S','e','q','u','e','n','c','e','`',0};
+
+    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    if (rc == ERROR_SUCCESS)
+    {
+        msiobj_release(&view->hdr);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 /****************************************************
  * TOP level entry points 
  *****************************************************/
@@ -592,7 +616,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
                          LPCWSTR szCommandLine )
 {
     UINT rc;
-    BOOL ui = FALSE;
+    BOOL ui = FALSE, ui_exists;
     static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
@@ -647,10 +671,11 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
         package->script->InWhatSequence |= SEQUENCE_UI;
         rc = ACTION_ProcessUISequence(package);
         ui = TRUE;
-        if (rc == ERROR_SUCCESS)
+        ui_exists = ui_sequence_exists(package);
+        if (rc == ERROR_SUCCESS || !ui_exists)
         {
             package->script->InWhatSequence |= SEQUENCE_EXEC;
-            rc = ACTION_ProcessExecSequence(package,TRUE);
+            rc = ACTION_ProcessExecSequence(package,ui_exists);
         }
     }
     else
