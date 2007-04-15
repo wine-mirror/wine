@@ -1389,6 +1389,10 @@ LPSTR WINAPI StartDocDlgA(HANDLE hPrinter, DOCINFOA *doc);
 LPWSTR WINAPI StartDocDlgW(HANDLE hPrinter, DOCINFOW *doc);
 #define StartDocDlg WINELIB_NAME_AW(StartDocDlg)
 
+BOOL WINAPI XcvDataW(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
+    DWORD cbInputData, PBYTE pOutputData, DWORD cbOutputData,
+    PDWORD pcbOutputNeeded, PDWORD pdwStatus);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
