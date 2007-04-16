@@ -1796,6 +1796,8 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
            iconinfo->hbmColor, iconinfo->hbmMask,
            iconinfo->xHotspot, iconinfo->yHotspot, iconinfo->fIcon);
 
+    if (!iconinfo->hbmMask) return 0;
+
     if (iconinfo->hbmColor)
     {
         GetObjectW( iconinfo->hbmColor, sizeof(bmpXor), &bmpXor );
