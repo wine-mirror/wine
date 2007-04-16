@@ -5280,23 +5280,24 @@ void apply_fbo_state(IWineD3DDevice *iface) {
     check_fbo_status(iface);
 }
 
-static BOOL is_onscreen(IWineD3DSurface *target) {
+static IWineD3DSwapChain *get_swapchain(IWineD3DSurface *target) {
     HRESULT hr;
-    void *tmp;
+    IWineD3DSwapChain *swapchain;
 
-    hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, &tmp);
+    hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain);
     if (SUCCEEDED(hr)) {
-        IWineD3DSwapChain_Release((IUnknown *)tmp);
-        return TRUE;
+        IWineD3DSwapChain_Release((IUnknown *)swapchain);
+        return swapchain;
     }
 
-    return FALSE;
+    return NULL;
 }
 
 void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const WINED3DRECT *src_rect,
         IWineD3DSurface *dst_surface, const WINED3DRECT *dst_rect, const WINED3DTEXTUREFILTERTYPE filter, BOOL flip) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLbitfield mask = GL_COLOR_BUFFER_BIT; /* TODO: Support blitting depth/stencil surfaces */
+    IWineD3DSwapChain *src_swapchain, *dst_swapchain;
     GLenum gl_filter;
 
     TRACE("(%p) : src_surface %p, src_rect %p, dst_surface %p, dst_rect %p, filter %s (0x%08x), flip %u\n",
@@ -5321,25 +5322,45 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
     }
 
     /* Attach src surface to src fbo */
-    if (is_onscreen(src_surface)) {
+    src_swapchain = get_swapchain(src_surface);
+    if (src_swapchain) {
+        GLenum buffer;
+
         TRACE("Source surface %p is onscreen\n", src_surface);
+
         GL_EXTCALL(glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0));
+        buffer = surface_get_gl_buffer(src_surface, src_swapchain);
+        glReadBuffer(buffer);
+        checkGLcall("glReadBuffer()");
+
         flip = !flip;
     } else {
         TRACE("Source surface %p is offscreen\n", src_surface);
         bind_fbo(iface, GL_READ_FRAMEBUFFER_EXT, &This->src_fbo);
         attach_surface_fbo(This, GL_READ_FRAMEBUFFER_EXT, 0, src_surface);
+        glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        checkGLcall("glReadBuffer()");
     }
 
     /* Attach dst surface to dst fbo */
-    if (is_onscreen(dst_surface)) {
+    dst_swapchain = get_swapchain(dst_surface);
+    if (dst_swapchain) {
+        GLenum buffer;
+
         TRACE("Destination surface %p is onscreen\n", dst_surface);
+
         GL_EXTCALL(glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0));
+        buffer = surface_get_gl_buffer(dst_surface, dst_swapchain);
+        glDrawBuffer(buffer);
+        checkGLcall("glDrawBuffer()");
+
         flip = !flip;
     } else {
         TRACE("Destination surface %p is offscreen\n", dst_surface);
         bind_fbo(iface, GL_DRAW_FRAMEBUFFER_EXT, &This->dst_fbo);
         attach_surface_fbo(This, GL_DRAW_FRAMEBUFFER_EXT, 0, dst_surface);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        checkGLcall("glDrawBuffer()");
     }
 
     if (flip) {
@@ -5355,6 +5376,13 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const
     } else {
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
         checkGLcall("glBindFramebuffer()");
+    }
+
+    /* If we switched from GL_BACK to GL_FRONT above, we need to switch back here */
+    if (dst_swapchain && dst_surface == ((IWineD3DSwapChainImpl *)dst_swapchain)->frontBuffer
+            && ((IWineD3DSwapChainImpl *)dst_swapchain)->backBuffer) {
+        glDrawBuffer(GL_BACK);
+        checkGLcall("glDrawBuffer()");
     }
 }
 
