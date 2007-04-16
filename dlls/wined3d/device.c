@@ -3774,6 +3774,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
 
     TRACE("(%p) : Stage=%d, Type=%s(%d), Value=%d\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
 
+    if (Stage >= MAX_TEXTURES) {
+        WARN("Attempting to set stage %u which is higher than the max stage %u, ignoring\n", Stage, MAX_TEXTURES - 1);
+        return WINED3D_OK;
+    }
+
     This->updateStateBlock->changed.textureState[Stage][Type] = TRUE;
     This->updateStateBlock->set.textureState[Stage][Type]     = TRUE;
     This->updateStateBlock->textureState[Stage][Type]         = Value;
