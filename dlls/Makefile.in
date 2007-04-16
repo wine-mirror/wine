@@ -16,6 +16,7 @@ EXTRADIRS = @GLU32FILES@ @OPENGLFILES@ @QUARTZFILES@ @XFILES@
 # Subdir list
 
 BASEDIRS = \
+	acledit \
 	activeds \
 	advapi32 \
 	advpack \

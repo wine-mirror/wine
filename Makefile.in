@@ -157,6 +157,7 @@ ALL_MAKEFILES = \
 	dlls/Maketest.rules \
 	programs/Makeprog.rules \
 	dlls/Makefile \
+	dlls/acledit/Makefile \
 	dlls/activeds/Makefile \
 	dlls/advapi32/Makefile \
 	dlls/advapi32/tests/Makefile \
@@ -498,6 +499,7 @@ dlls/Maketest.rules: dlls/Maketest.rules.in Make.rules
 programs/Makeprog.rules: programs/Makeprog.rules.in Make.rules
 Makefile: Makefile.in Make.rules
 dlls/Makefile: dlls/Makefile.in Make.rules
+dlls/acledit/Makefile: dlls/acledit/Makefile.in dlls/Makedll.rules
 dlls/activeds/Makefile: dlls/activeds/Makefile.in dlls/Makedll.rules
 dlls/advapi32/Makefile: dlls/advapi32/Makefile.in dlls/Makedll.rules
 dlls/advapi32/tests/Makefile: dlls/advapi32/tests/Makefile.in dlls/Maketest.rules

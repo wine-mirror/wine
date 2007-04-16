@@ -20203,6 +20203,8 @@ ac_config_files="$ac_config_files Makefile"
 
 ac_config_files="$ac_config_files dlls/Makefile"
 
+ac_config_files="$ac_config_files dlls/acledit/Makefile"
+
 ac_config_files="$ac_config_files dlls/activeds/Makefile"
 
 ac_config_files="$ac_config_files dlls/advapi32/Makefile"
@@ -21422,6 +21424,7 @@ do
     "programs/Makeprog.rules") CONFIG_FILES="$CONFIG_FILES programs/Makeprog.rules" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "dlls/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/Makefile" ;;
+    "dlls/acledit/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/acledit/Makefile" ;;
     "dlls/activeds/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/activeds/Makefile" ;;
     "dlls/advapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/advapi32/Makefile" ;;
     "dlls/advapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/advapi32/tests/Makefile" ;;
