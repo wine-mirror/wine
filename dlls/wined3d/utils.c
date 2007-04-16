@@ -696,6 +696,25 @@ const char* debug_d3dpool(WINED3DPOOL Pool) {
   }
 }
 
+const char *debug_fbostatus(GLenum status) {
+    switch(status) {
+#define FBOSTATUS_TO_STR(u) case u: return #u
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_COMPLETE_EXT);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT);
+        FBOSTATUS_TO_STR(GL_FRAMEBUFFER_UNSUPPORTED_EXT);
+#undef FBOSTATUS_TO_STR
+        default:
+            FIXME("Unrecognied FBO status 0x%08x\n", status);
+            return "unrecognized";
+    }
+}
+
 /*****************************************************************************
  * Useful functions mapping GL <-> D3D values
  */

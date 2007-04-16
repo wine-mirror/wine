@@ -1402,6 +1402,7 @@ const char* debug_d3dtexturefiltertype(WINED3DTEXTUREFILTERTYPE filter_type);
 const char* debug_d3dtexturestate(DWORD state);
 const char* debug_d3dtstype(WINED3DTRANSFORMSTATETYPE tstype);
 const char* debug_d3dpool(WINED3DPOOL pool);
+const char *debug_fbostatus(GLenum status);
 
 /* Routines for GL <-> D3D values */
 GLenum StencilOp(DWORD op);

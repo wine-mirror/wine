@@ -5193,7 +5193,7 @@ static void check_fbo_status(IWineD3DDevice *iface) {
     status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
     switch(status) {
         case GL_FRAMEBUFFER_COMPLETE_EXT: TRACE("FBO complete.\n"); break;
-        default: FIXME("FBO status %#x.\n", status); break;
+        default: FIXME("FBO status %s (%#x)\n", debug_fbostatus(status), status); break;
     }
 }
 
