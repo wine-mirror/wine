@@ -287,6 +287,23 @@ void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int wi
     checkGLcall("set_compatible_renderbuffer");
 }
 
+GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DSwapChainImpl *swapchain_impl = (IWineD3DSwapChainImpl *)swapchain;
+
+    TRACE("(%p) : swapchain %p\n", This, swapchain);
+
+    if (swapchain_impl->backBuffer && swapchain_impl->backBuffer[0] == iface) {
+        TRACE("Returning GL_BACK\n");
+        return GL_BACK;
+    } else if (swapchain_impl->frontBuffer == iface) {
+        TRACE("Returning GL_FRONT\n");
+        return GL_FRONT;
+    }
+
+    FIXME("Higher back buffer, returning GL_BACK\n");
+    return GL_BACK;
+}
 
 /* *******************************************
    IWineD3DSurface IUnknown parts follow
