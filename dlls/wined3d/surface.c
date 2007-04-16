@@ -809,19 +809,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             glReadBuffer(myDevice->offscreenBuffer);
             srcIsUpsideDown = TRUE;
         } else {
-            if(iface == swapchain->frontBuffer) {
-                TRACE("Locking the front buffer\n");
-                glReadBuffer(GL_FRONT);
-            } else if(swapchain->backBuffer && iface == swapchain->backBuffer[0]) {
-                TRACE("Locking the back buffer\n");
-                glReadBuffer(GL_BACK);
-            } else {
-                /* Ok, there is an issue: OpenGL does not guarant any back buffer number, so all we can do is to read GL_BACK
-                 * and hope it gives what the app wants
-                 */
-                FIXME("Application is locking a 2nd or higher back buffer\n");
-                glReadBuffer(GL_BACK);
-            }
+            GLenum buffer = surface_get_gl_buffer(iface, (IWineD3DSwapChain *)swapchain);
+            TRACE("Locking %#x buffer\n", buffer);
+            glReadBuffer(buffer);
+            checkGLcall("glReadBuffer");
+
             IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
             srcIsUpsideDown = FALSE;
         }
@@ -1207,19 +1199,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             glDrawBuffer(myDevice->offscreenBuffer);
             checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
         } else {
-            if(iface == swapchain->frontBuffer) {
-                TRACE("Onscreen front buffer\n");
-                glDrawBuffer(GL_FRONT);
-                checkGLcall("glDrawBuffer(GL_FRONT)");
-            } else if(iface == swapchain->backBuffer[0]) {
-                TRACE("Onscreen back buffer\n");
-                glDrawBuffer(GL_BACK);
-                checkGLcall("glDrawBuffer(GL_BACK)");
-            } else {
-                FIXME("Unlocking a higher back buffer\n");
-                glDrawBuffer(GL_BACK);
-                checkGLcall("glDrawBuffer(GL_BACK)");
-            }
+            GLenum buffer = surface_get_gl_buffer(iface, (IWineD3DSwapChain *)swapchain);
+            TRACE("Unlocking %#x buffer\n", buffer);
+            glDrawBuffer(buffer);
+            checkGLcall("glDrawBuffer");
+
             IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
         }
 
@@ -2364,10 +2348,9 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     checkGLcall("glBindTexture");
     if(!swapchain) {
         glReadBuffer(myDevice->offscreenBuffer);
-    } else if(swapchain->backBuffer && SrcSurface == swapchain->backBuffer[0]) {
-        glReadBuffer(GL_BACK);
     } else {
-        glReadBuffer(GL_FRONT);
+        GLenum buffer = surface_get_gl_buffer(SrcSurface, (IWineD3DSwapChain *)swapchain);
+        glReadBuffer(buffer);
     }
     checkGLcall("glReadBuffer");
 
@@ -2877,14 +2860,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         if(!dstSwapchain) {
             TRACE("Drawing to offscreen buffer\n");
             glDrawBuffer(myDevice->offscreenBuffer);
-        } else if(This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer) {
-            TRACE("Drawing to front buffer\n");
-            glDrawBuffer(GL_FRONT);
-            checkGLcall("glDrawBuffer GL_FRONT");
         } else {
-            TRACE("Drawing to back buffer\n");
-            glDrawBuffer(GL_BACK);
-            checkGLcall("glDrawBuffer GL_BACK");
+            GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This, (IWineD3DSwapChain *)dstSwapchain);
+            TRACE("Drawing to %#x buffer\n", buffer);
+            glDrawBuffer(buffer);
+            checkGLcall("glDrawBuffer");
         }
 
         /* Bind the texture */
