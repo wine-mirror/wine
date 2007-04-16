@@ -640,7 +640,7 @@ static VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT
 
     while ((char *)child < (char *)info + info->wLength )
     {
-        if ( !strncasecmp( child->szKey, szKey, cbKey ) )
+        if (!strncasecmp( child->szKey, szKey, cbKey ) && !child->szKey[cbKey])
             return child;
 
 	if (!(child->wLength)) return NULL;
@@ -660,7 +660,7 @@ static VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT
 
     while ((char *)child < (char *)info + info->wLength )
     {
-        if ( !strncmpiW( child->szKey, szKey, cbKey ) )
+        if (!strncmpiW( child->szKey, szKey, cbKey ) && !child->szKey[cbKey])
             return child;
 
         child = VersionInfo32_Next( child );
@@ -694,7 +694,12 @@ static BOOL WINAPI VersionInfo16_QueryValue( VS_VERSION_INFO_STRUCT16 *info, LPC
 
         /* We have a non-empty component: search info for key */
         info = VersionInfo16_FindChild( info, lpSubBlock, lpNextSlash-lpSubBlock );
-        if ( !info ) return FALSE;
+        if ( !info )
+        {
+            if (puLen) *puLen = 0 ;
+            SetLastError( ERROR_RESOURCE_TYPE_NOT_FOUND );
+            return FALSE;
+        }
 
         /* Skip path component */
         lpSubBlock = lpNextSlash;
@@ -735,7 +740,12 @@ static BOOL WINAPI VersionInfo32_QueryValue( VS_VERSION_INFO_STRUCT32 *info, LPC
 
         /* We have a non-empty component: search info for key */
         info = VersionInfo32_FindChild( info, lpSubBlock, lpNextSlash-lpSubBlock );
-        if ( !info ) return FALSE;
+        if ( !info )
+        {
+            if (puLen) *puLen = 0 ;
+            SetLastError( ERROR_RESOURCE_TYPE_NOT_FOUND );
+            return FALSE;
+        }
 
         /* Skip path component */
         lpSubBlock = lpNextSlash;
