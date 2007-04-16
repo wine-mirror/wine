@@ -4974,6 +4974,105 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
     return WINED3D_OK;
 }
 
+static IWineD3DSwapChain *get_swapchain(IWineD3DSurface *target) {
+    HRESULT hr;
+    IWineD3DSwapChain *swapchain;
+
+    hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain);
+    if (SUCCEEDED(hr)) {
+        IWineD3DSwapChain_Release((IUnknown *)swapchain);
+        return swapchain;
+    }
+
+    return NULL;
+}
+
+static void bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    if (!*fbo) {
+        GL_EXTCALL(glGenFramebuffersEXT(1, fbo));
+        checkGLcall("glGenFramebuffersEXT()");
+    }
+    GL_EXTCALL(glBindFramebufferEXT(target, *fbo));
+    checkGLcall("glBindFramebuffer()");
+}
+
+static void attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface) {
+    const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
+    GLenum texttarget, target;
+    GLint old_binding;
+
+    texttarget = surface_impl->glDescription.target;
+    target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
+    glGetIntegerv(texttarget == GL_TEXTURE_2D ? GL_TEXTURE_BINDING_2D : GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
+
+    IWineD3DSurface_PreLoad(surface);
+
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(target, old_binding);
+
+    GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, texttarget, surface_impl->glDescription.textureName, 0));
+
+    checkGLcall("attach_surface_fbo");
+}
+
+static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface, CONST WINED3DRECT *rect, WINED3DCOLOR color) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DSwapChain *swapchain;
+
+    swapchain = get_swapchain(surface);
+    if (swapchain) {
+        GLenum buffer;
+
+        TRACE("Surface %p is onscreen\n", surface);
+
+        GL_EXTCALL(glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0));
+        buffer = surface_get_gl_buffer(surface, swapchain);
+        glDrawBuffer(buffer);
+        checkGLcall("glDrawBuffer()");
+    } else {
+        TRACE("Surface %p is offscreen\n", surface);
+        bind_fbo(iface, GL_DRAW_FRAMEBUFFER_EXT, &This->dst_fbo);
+        attach_surface_fbo(This, GL_DRAW_FRAMEBUFFER_EXT, 0, surface);
+    }
+
+    if (rect) {
+        glEnable(GL_SCISSOR_TEST);
+        if(!swapchain) {
+            glScissor(rect->x1, rect->y1, rect->x2 - rect->x1, rect->y2 - rect->y1);
+        } else {
+            glScissor(rect->x1, ((IWineD3DSurfaceImpl *)surface)->currentDesc.Height - rect->y2,
+                    rect->x2 - rect->x1, rect->y2 - rect->y1);
+        }
+        checkGLcall("glScissor");
+    } else {
+        glDisable(GL_SCISSOR_TEST);
+    }
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+
+    glClearColor(D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color));
+    glClear(GL_COLOR_BUFFER_BIT);
+    checkGLcall("glClear");
+
+    if (This->render_offscreen) {
+        bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->fbo);
+    } else {
+        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+        checkGLcall("glBindFramebuffer()");
+    }
+
+    if (swapchain && surface == ((IWineD3DSwapChainImpl *)swapchain)->frontBuffer
+            && ((IWineD3DSwapChainImpl *)swapchain)->backBuffer) {
+        glDrawBuffer(GL_BACK);
+        checkGLcall("glDrawBuffer()");
+    }
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurface *pSurface, CONST WINED3DRECT* pRect, WINED3DCOLOR color) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *) pSurface;
@@ -4985,11 +5084,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* Just forward this to the DirectDraw blitting engine */
-    memset(&BltFx, 0, sizeof(BltFx));
-    BltFx.dwSize = sizeof(BltFx);
-    BltFx.u5.dwFillColor = color;
-    return IWineD3DSurface_Blt(pSurface, (RECT *) pRect, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        color_fill_fbo(iface, pSurface, pRect, color);
+        return WINED3DERR_INVALIDCALL;
+    } else {
+        /* Just forward this to the DirectDraw blitting engine */
+        memset(&BltFx, 0, sizeof(BltFx));
+        BltFx.dwSize = sizeof(BltFx);
+        BltFx.u5.dwFillColor = color;
+        return IWineD3DSurface_Blt(pSurface, (RECT *) pRect, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
+    }
 }
 
 /* rendertarget and deptth stencil functions */
@@ -5108,17 +5212,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice
     return WINED3D_OK;
 }
 
-static void bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    if (!*fbo) {
-        GL_EXTCALL(glGenFramebuffersEXT(1, fbo));
-        checkGLcall("glGenFramebuffersEXT()");
-    }
-    GL_EXTCALL(glBindFramebufferEXT(target, *fbo));
-    checkGLcall("glBindFramebuffer()");
-}
-
 /* TODO: Handle stencil attachments */
 static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_stencil) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -5152,26 +5245,6 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
         GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
     }
-}
-
-static void attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface) {
-    const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
-    GLenum texttarget, target;
-    GLint old_binding;
-
-    texttarget = surface_impl->glDescription.target;
-    target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
-    glGetIntegerv(texttarget == GL_TEXTURE_2D ? GL_TEXTURE_BINDING_2D : GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
-
-    IWineD3DSurface_PreLoad(surface);
-
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(target, old_binding);
-
-    GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, texttarget, surface_impl->glDescription.textureName, 0));
-
-    checkGLcall("attach_surface_fbo");
 }
 
 static void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurface *render_target) {
@@ -5278,19 +5351,6 @@ void apply_fbo_state(IWineD3DDevice *iface) {
     }
 
     check_fbo_status(iface);
-}
-
-static IWineD3DSwapChain *get_swapchain(IWineD3DSurface *target) {
-    HRESULT hr;
-    IWineD3DSwapChain *swapchain;
-
-    hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain);
-    if (SUCCEEDED(hr)) {
-        IWineD3DSwapChain_Release((IUnknown *)swapchain);
-        return swapchain;
-    }
-
-    return NULL;
 }
 
 void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const WINED3DRECT *src_rect,
