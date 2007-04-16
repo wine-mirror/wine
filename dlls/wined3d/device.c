@@ -5269,6 +5269,9 @@ void apply_fbo_state(IWineD3DDevice *iface) {
         if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
             GL_EXTCALL(glDrawBuffersARB(GL_LIMITS(buffers), This->draw_buffers));
             checkGLcall("glDrawBuffers()");
+        } else {
+            glDrawBuffer(This->draw_buffers[0]);
+            checkGLcall("glDrawBuffer()");
         }
     } else {
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
