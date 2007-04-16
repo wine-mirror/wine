@@ -5807,9 +5807,6 @@ static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3
     ResourceList* resourceList;
 
     TRACE("(%p) : resource %p\n", This, resource);
-#if 0
-    EnterCriticalSection(&resourceStoreCriticalSection);
-#endif
     /* add a new texture to the frot of the linked list */
     resourceList = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ResourceList));
     resourceList->resource = resource;
@@ -5820,9 +5817,6 @@ static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3
     This->resources = resourceList;
     TRACE("Added resource %p with element %p pointing to %p\n", resource, resourceList, resourceList->next);
 
-#if 0
-    LeaveCriticalSection(&resourceStoreCriticalSection);
-#endif
     return;
 }
 
@@ -5833,9 +5827,6 @@ static void WINAPI IWineD3DDeviceImpl_RemoveResource(IWineD3DDevice *iface, IWin
     
     TRACE("(%p) : resource %p\n", This, resource);
 
-#if 0
-    EnterCriticalSection(&resourceStoreCriticalSection);
-#endif
     resourceList = This->resources;
 
     while (resourceList != NULL) {
@@ -5846,9 +5837,6 @@ static void WINAPI IWineD3DDeviceImpl_RemoveResource(IWineD3DDevice *iface, IWin
 
     if (resourceList == NULL) {
         FIXME("Attempted to remove resource %p that hasn't been stored\n", resource);
-#if 0
-        LeaveCriticalSection(&resourceStoreCriticalSection);
-#endif
         return;
     } else {
             TRACE("Found resource  %p with element %p pointing to %p (previous %p)\n", resourceList->resource, resourceList, resourceList->next, previousResourceList);
@@ -5860,9 +5848,6 @@ static void WINAPI IWineD3DDeviceImpl_RemoveResource(IWineD3DDevice *iface, IWin
         This->resources = resourceList->next;
     }
 
-#if 0
-    LeaveCriticalSection(&resourceStoreCriticalSection);
-#endif
     return;
 }
 

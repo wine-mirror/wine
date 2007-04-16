@@ -46,17 +46,14 @@ wined3d_settings_t wined3d_settings =
 };
 
 WineD3DGlobalStatistics *wineD3DGlobalStatistics = NULL;
-CRITICAL_SECTION resourceStoreCriticalSection;
 
 long globalChangeGlRam(long glram){
     /* FIXME: replace this function with object tracking */
     int result;
 
-    EnterCriticalSection(&resourceStoreCriticalSection); /* this is overkill really, but I suppose it should be thread safe */
     wineD3DGlobalStatistics->glsurfaceram     += glram;
     TRACE("Adjusted gl ram by %ld to %d\n", glram, wineD3DGlobalStatistics->glsurfaceram);
     result = wineD3DGlobalStatistics->glsurfaceram;
-    LeaveCriticalSection(&resourceStoreCriticalSection);
     return result;
 
 }
@@ -67,10 +64,6 @@ IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *p
     object->dxVersion = dxVersion;
     object->ref = 1;
     object->parent = parent;
-
-    /* TODO: Move this off to device and possibly x11drv */
-    /* Create a critical section for a dll global data store */
-    InitializeCriticalSectionAndSpinCount(&resourceStoreCriticalSection, 0x80000400);
 
     /*Create a structure for storing global data in*/
     if(wineD3DGlobalStatistics == NULL){
