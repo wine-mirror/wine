@@ -46,6 +46,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "winioctl.h"
 
 #include "file.h"
 #include "handle.h"
@@ -138,6 +139,8 @@ static struct fd *pipe_server_get_fd( struct object *obj );
 static void pipe_server_destroy( struct object *obj);
 static void pipe_server_flush( struct fd *fd, struct event **event );
 static enum server_fd_type pipe_server_get_fd_type( struct fd *fd );
+static void pipe_server_ioctl( struct fd *fd, unsigned int code, const async_data_t *async,
+                               const void *data, data_size_t size );
 
 static const struct object_ops pipe_server_ops =
 {
@@ -162,7 +165,7 @@ static const struct fd_ops pipe_server_fd_ops =
     default_poll_event,           /* poll_event */
     pipe_server_flush,            /* flush */
     pipe_server_get_fd_type,      /* get_fd_type */
-    default_fd_ioctl,             /* ioctl */
+    pipe_server_ioctl,            /* ioctl */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async,    /* reselect_async */
     default_fd_cancel_async,      /* cancel_async */
@@ -567,6 +570,46 @@ static enum server_fd_type pipe_client_get_fd_type( struct fd *fd )
     return FD_TYPE_PIPE;
 }
 
+static void pipe_server_ioctl( struct fd *fd, unsigned int code, const async_data_t *async,
+                               const void *data, data_size_t size )
+{
+    struct pipe_server *server = get_fd_user( fd );
+
+    switch(code)
+    {
+    case FSCTL_PIPE_DISCONNECT:
+        switch(server->state)
+        {
+        case ps_connected_server:
+            assert( server->client );
+            assert( server->client->fd );
+
+            notify_empty( server );
+
+            /* dump the client and server fds, but keep the pointers
+               around - client loses all waiting data */
+            server->state = ps_disconnected_server;
+            do_disconnect( server );
+            break;
+        case ps_wait_disconnect:
+            assert( !server->client );
+            do_disconnect( server );
+            server->state = ps_wait_connect;
+            break;
+        case ps_idle_server:
+        case ps_wait_open:
+        case ps_disconnected_server:
+        case ps_wait_connect:
+            assert(0);  /* shouldn't even get an fd */
+            break;
+        }
+        break;
+    default:
+        default_fd_ioctl( fd, code, async, data, size );
+        break;
+    }
+}
+
 static struct named_pipe *create_named_pipe( struct directory *root, const struct unicode_str *name,
                                              unsigned int attr )
 {
@@ -872,45 +915,6 @@ DECL_HANDLER(wait_named_pipe)
     else release_object( server );
 
     release_object( pipe );
-}
-
-DECL_HANDLER(disconnect_named_pipe)
-{
-    struct pipe_server *server;
-
-    server = get_pipe_server_obj( current->process, req->handle, 0 );
-    if (!server)
-        return;
-    switch(server->state)
-    {
-    case ps_connected_server:
-        assert( server->fd );
-        assert( server->client );
-        assert( server->client->fd );
-
-        notify_empty( server );
-
-        /* Dump the client and server fds, but keep the pointers
-           around - client loses all waiting data */
-        server->state = ps_disconnected_server;
-        do_disconnect( server );
-        break;
-
-    case ps_wait_disconnect:
-        assert( !server->client );
-        assert( server->fd );
-        do_disconnect( server );
-        server->state = ps_wait_connect;
-        break;
-
-    case ps_idle_server:
-    case ps_wait_open:
-    case ps_disconnected_server:
-    case ps_wait_connect:
-        set_error( STATUS_PIPE_DISCONNECTED );
-        break;
-    }
-    release_object( server );
 }
 
 DECL_HANDLER(get_named_pipe_info)

@@ -2021,12 +2021,6 @@ enum message_type
 @END
 
 
-/* Disconnect a named pipe */
-@REQ(disconnect_named_pipe)
-    obj_handle_t   handle;
-@END
-
-
 @REQ(get_named_pipe_info)
     obj_handle_t   handle;
 @REPLY

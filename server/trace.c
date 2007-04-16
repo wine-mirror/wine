@@ -2456,11 +2456,6 @@ static void dump_wait_named_pipe_request( const struct wait_named_pipe_request *
     dump_varargs_unicode_str( cur_size );
 }
 
-static void dump_disconnect_named_pipe_request( const struct disconnect_named_pipe_request *req )
-{
-    fprintf( stderr, " handle=%p", req->handle );
-}
-
 static void dump_get_named_pipe_info_request( const struct get_named_pipe_info_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -3611,7 +3606,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_named_pipe_request,
     (dump_func)dump_connect_named_pipe_request,
     (dump_func)dump_wait_named_pipe_request,
-    (dump_func)dump_disconnect_named_pipe_request,
     (dump_func)dump_get_named_pipe_info_request,
     (dump_func)dump_create_window_request,
     (dump_func)dump_destroy_window_request,
@@ -3830,7 +3824,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_ioctl_reply,
     (dump_func)dump_create_named_pipe_reply,
-    (dump_func)0,
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_named_pipe_info_reply,
@@ -4053,7 +4046,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_named_pipe",
     "connect_named_pipe",
     "wait_named_pipe",
-    "disconnect_named_pipe",
     "get_named_pipe_info",
     "create_window",
     "destroy_window",

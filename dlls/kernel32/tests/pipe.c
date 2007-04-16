@@ -744,6 +744,8 @@ static int test_DisconnectNamedPipe(void)
         ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL) == 0
             && GetLastError() == ERROR_PIPE_NOT_CONNECTED,
             "ReadFile from disconnected pipe with bytes waiting\n");
+        ok(!DisconnectNamedPipe(hnp) && GetLastError() == ERROR_PIPE_NOT_CONNECTED,
+           "DisconnectNamedPipe worked twice\n");
         ok(CloseHandle(hFile), "CloseHandle\n");
     }
 

@@ -2749,18 +2749,6 @@ struct wait_named_pipe_reply
 };
 
 
-
-struct disconnect_named_pipe_request
-{
-    struct request_header __header;
-    obj_handle_t   handle;
-};
-struct disconnect_named_pipe_reply
-{
-    struct reply_header __header;
-};
-
-
 struct get_named_pipe_info_request
 {
     struct request_header __header;
@@ -4161,7 +4149,6 @@ enum request
     REQ_create_named_pipe,
     REQ_connect_named_pipe,
     REQ_wait_named_pipe,
-    REQ_disconnect_named_pipe,
     REQ_get_named_pipe_info,
     REQ_create_window,
     REQ_destroy_window,
@@ -4386,7 +4373,6 @@ union generic_request
     struct create_named_pipe_request create_named_pipe_request;
     struct connect_named_pipe_request connect_named_pipe_request;
     struct wait_named_pipe_request wait_named_pipe_request;
-    struct disconnect_named_pipe_request disconnect_named_pipe_request;
     struct get_named_pipe_info_request get_named_pipe_info_request;
     struct create_window_request create_window_request;
     struct destroy_window_request destroy_window_request;
@@ -4609,7 +4595,6 @@ union generic_reply
     struct create_named_pipe_reply create_named_pipe_reply;
     struct connect_named_pipe_reply connect_named_pipe_reply;
     struct wait_named_pipe_reply wait_named_pipe_reply;
-    struct disconnect_named_pipe_reply disconnect_named_pipe_reply;
     struct get_named_pipe_info_reply get_named_pipe_info_reply;
     struct create_window_reply create_window_reply;
     struct destroy_window_reply destroy_window_reply;
@@ -4690,6 +4675,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 293
+#define SERVER_PROTOCOL_VERSION 294
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1192,17 +1192,13 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         break;
 
     case FSCTL_PIPE_DISCONNECT:
-        SERVER_START_REQ(disconnect_named_pipe)
+        status = server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                    in_buffer, in_size, out_buffer, out_size );
+        if (!status)
         {
-            req->handle = handle;
-            status = wine_server_call(req);
-            if (!status)
-            {
-                int fd = server_remove_fd_from_cache( handle );
-                if (fd != -1) close( fd );
-            }
+            int fd = server_remove_fd_from_cache( handle );
+            if (fd != -1) close( fd );
         }
-        SERVER_END_REQ;
         break;
 
     case FSCTL_LOCK_VOLUME:
