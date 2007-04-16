@@ -1114,7 +1114,7 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
     HANDLE handle;
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
-    DWORD options;
+    DWORD access, options;
     BOOLEAN pipe_type, read_mode, non_block;
     NTSTATUS status;
     IO_STATUS_BLOCK iosb;
@@ -1144,13 +1144,27 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
 
-    options = 0;
+    switch(dwOpenMode & 3)
+    {
+    case PIPE_ACCESS_INBOUND:
+        options = FILE_PIPE_INBOUND;
+        access  = GENERIC_READ;
+        break;
+    case PIPE_ACCESS_OUTBOUND:
+        options = FILE_PIPE_OUTBOUND;
+        access  = GENERIC_WRITE;
+        break;
+    case PIPE_ACCESS_DUPLEX:
+        options = FILE_PIPE_FULL_DUPLEX;
+        access  = GENERIC_READ | GENERIC_WRITE;
+        break;
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return INVALID_HANDLE_VALUE;
+    }
+    access |= SYNCHRONIZE;
     if (dwOpenMode & FILE_FLAG_WRITE_THROUGH) options |= FILE_WRITE_THROUGH;
     if (!(dwOpenMode & FILE_FLAG_OVERLAPPED)) options |= FILE_SYNCHRONOUS_IO_ALERT;
-    if ((dwOpenMode & PIPE_ACCESS_DUPLEX) == PIPE_ACCESS_DUPLEX)
-        options |= FILE_PIPE_FULL_DUPLEX;
-    else if (dwOpenMode & PIPE_ACCESS_INBOUND) options |= FILE_PIPE_INBOUND;
-    else if (dwOpenMode & PIPE_ACCESS_OUTBOUND) options |= FILE_PIPE_OUTBOUND;
     pipe_type = (dwPipeMode & PIPE_TYPE_MESSAGE) ? TRUE : FALSE;
     read_mode = (dwPipeMode & PIPE_READMODE_MESSAGE) ? TRUE : FALSE;
     non_block = (dwPipeMode & PIPE_NOWAIT) ? TRUE : FALSE;
@@ -1159,9 +1173,9 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
     timeout.QuadPart = (ULONGLONG)nDefaultTimeOut * -10000;
 
     SetLastError(0);
-        
-    status = NtCreateNamedPipeFile(&handle, GENERIC_READ|GENERIC_WRITE, &attr, &iosb,
-                                   0, FILE_OVERWRITE_IF, options, pipe_type,
+
+    status = NtCreateNamedPipeFile(&handle, access, &attr, &iosb, 0,
+                                   FILE_OVERWRITE_IF, options, pipe_type,
                                    read_mode, non_block, nMaxInstances,
                                    nInBufferSize, nOutBufferSize, &timeout);
 
