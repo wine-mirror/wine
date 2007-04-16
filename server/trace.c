@@ -1321,11 +1321,6 @@ static void dump_unlock_file_request( const struct unlock_file_request *req )
     fprintf( stderr, " count_high=%08x", req->count_high );
 }
 
-static void dump_unmount_device_request( const struct unmount_device_request *req )
-{
-    fprintf( stderr, " handle=%p", req->handle );
-}
-
 static void dump_create_socket_request( const struct create_socket_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
@@ -3509,7 +3504,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_flush_file_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
-    (dump_func)dump_unmount_device_request,
     (dump_func)dump_create_socket_request,
     (dump_func)dump_accept_socket_request,
     (dump_func)dump_set_socket_event_request,
@@ -3728,7 +3722,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_handle_fd_reply,
     (dump_func)dump_flush_file_reply,
     (dump_func)dump_lock_file_reply,
-    (dump_func)0,
     (dump_func)0,
     (dump_func)dump_create_socket_reply,
     (dump_func)dump_accept_socket_reply,
@@ -3949,7 +3942,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "flush_file",
     "lock_file",
     "unlock_file",
-    "unmount_device",
     "create_socket",
     "accept_socket",
     "set_socket_event",

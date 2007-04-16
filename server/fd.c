@@ -77,6 +77,7 @@
 #include "request.h"
 
 #include "winternl.h"
+#include "winioctl.h"
 
 #if defined(HAVE_SYS_EPOLL_H) && defined(HAVE_EPOLL_CREATE)
 # include <sys/epoll.h>
@@ -1686,13 +1687,6 @@ void default_poll_event( struct fd *fd, int event )
     else if (!fd->inode) set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
 }
 
-/* default ioctl() routine */
-void default_fd_ioctl( struct fd *fd, unsigned int code, const async_data_t *async,
-                       const void *data, data_size_t size )
-{
-    set_error( STATUS_NOT_SUPPORTED );
-}
-
 struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     struct async_queue *queue;
@@ -1833,6 +1827,21 @@ static void unmount_device( struct fd *device_fd )
     release_object( device );
 }
 
+/* default ioctl() routine */
+void default_fd_ioctl( struct fd *fd, unsigned int code, const async_data_t *async,
+                       const void *data, data_size_t size )
+{
+    switch(code)
+    {
+    case FSCTL_DISMOUNT_VOLUME:
+        unmount_device( fd );
+        break;
+    default:
+        set_error( STATUS_NOT_SUPPORTED );
+        break;
+    }
+}
+
 /* same as get_handle_obj but retrieve the struct fd associated to the object */
 static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handle,
                                      unsigned int access )
@@ -1909,18 +1918,6 @@ DECL_HANDLER(get_handle_fd)
             }
         }
         else set_error( STATUS_OBJECT_TYPE_MISMATCH );
-        release_object( fd );
-    }
-}
-
-/* get ready to unmount a Unix device */
-DECL_HANDLER(unmount_device)
-{
-    struct fd *fd;
-
-    if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
-    {
-        unmount_device( fd );
         release_object( fd );
     }
 }

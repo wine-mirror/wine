@@ -2034,14 +2034,6 @@ NTSTATUS DIR_unmount_device( HANDLE handle )
     NTSTATUS status;
     int unix_fd, needs_close;
 
-    SERVER_START_REQ( unmount_device )
-    {
-        req->handle = handle;
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    if (status) return status;
-
     if (!(status = server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL, NULL )))
     {
         struct stat st;

@@ -152,7 +152,6 @@ DECL_HANDLER(get_handle_fd);
 DECL_HANDLER(flush_file);
 DECL_HANDLER(lock_file);
 DECL_HANDLER(unlock_file);
-DECL_HANDLER(unmount_device);
 DECL_HANDLER(create_socket);
 DECL_HANDLER(accept_socket);
 DECL_HANDLER(set_socket_event);
@@ -375,7 +374,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_flush_file,
     (req_handler)req_lock_file,
     (req_handler)req_unlock_file,
-    (req_handler)req_unmount_device,
     (req_handler)req_create_socket,
     (req_handler)req_accept_socket,
     (req_handler)req_set_socket_event,

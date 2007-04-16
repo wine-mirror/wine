@@ -1064,7 +1064,9 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
     switch(code)
     {
     case FSCTL_DISMOUNT_VOLUME:
-        status = DIR_unmount_device( handle );
+        status = server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                    in_buffer, in_size, out_buffer, out_size );
+        if (!status) status = DIR_unmount_device( handle );
         break;
 
     case FSCTL_PIPE_LISTEN:
