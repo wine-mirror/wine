@@ -245,6 +245,7 @@ DECL_HANDLER(get_serial_info);
 DECL_HANDLER(set_serial_info);
 DECL_HANDLER(register_async);
 DECL_HANDLER(cancel_async);
+DECL_HANDLER(ioctl);
 DECL_HANDLER(create_named_pipe);
 DECL_HANDLER(connect_named_pipe);
 DECL_HANDLER(wait_named_pipe);
@@ -468,6 +469,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_serial_info,
     (req_handler)req_register_async,
     (req_handler)req_cancel_async,
+    (req_handler)req_ioctl,
     (req_handler)req_create_named_pipe,
     (req_handler)req_connect_named_pipe,
     (req_handler)req_wait_named_pipe,

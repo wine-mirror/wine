@@ -107,6 +107,7 @@ static const struct fd_ops serial_fd_ops =
     default_poll_event,           /* poll_event */
     serial_flush,                 /* flush */
     serial_get_fd_type,           /* get_file_info */
+    default_fd_ioctl,             /* ioctl */
     serial_queue_async,           /* queue_async */
     default_fd_reselect_async,    /* reselect_async */
     default_fd_cancel_async       /* cancel_async */

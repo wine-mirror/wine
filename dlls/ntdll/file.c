@@ -913,6 +913,48 @@ done:
     return status;
 }
 
+
+/* callback for ioctl async I/O completion */
+static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS status )
+{
+    io->u.Status = status;
+    return status;
+}
+
+/* do a ioctl call through the server */
+static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
+                                   PIO_APC_ROUTINE apc, PVOID apc_context,
+                                   IO_STATUS_BLOCK *io, ULONG code,
+                                   PVOID in_buffer, ULONG in_size,
+                                   PVOID out_buffer, ULONG out_size )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( ioctl )
+    {
+        req->handle         = handle;
+        req->code           = code;
+        req->async.callback = ioctl_completion;
+        req->async.iosb     = io;
+        req->async.arg      = NULL;
+        req->async.apc      = apc;
+        req->async.apc_arg  = apc_context;
+        req->async.event    = event;
+        wine_server_add_data( req, in_buffer, in_size );
+        wine_server_set_reply( req, out_buffer, out_size );
+        if (!(status = wine_server_call( req )))
+            io->Information = wine_server_reply_size( reply );
+    }
+    SERVER_END_REQ;
+
+    if (status == STATUS_NOT_SUPPORTED)
+        FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
+              code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+
+    return status;
+}
+
+
 /**************************************************************************
  *		NtDeviceIoControlFile			[NTDLL.@]
  *		ZwDeviceIoControlFile			[NTDLL.@]
@@ -942,6 +984,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
                                       PVOID out_buffer, ULONG out_size)
 {
     ULONG device = (code >> 16);
+    NTSTATUS status;
 
     TRACE("(%p,%p,%p,%p,%p,0x%08x,%p,0x%08x,%p,0x%08x)\n",
           handle, event, apc, apc_context, io, code,
@@ -954,24 +997,24 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
     case FILE_DEVICE_DVD:
     case FILE_DEVICE_CONTROLLER:
     case FILE_DEVICE_MASS_STORAGE:
-        io->u.Status = CDROM_DeviceIoControl(handle, event, apc, apc_context, io, code,
-                                             in_buffer, in_size, out_buffer, out_size);
+        status = CDROM_DeviceIoControl(handle, event, apc, apc_context, io, code,
+                                       in_buffer, in_size, out_buffer, out_size);
         break;
     case FILE_DEVICE_SERIAL_PORT:
-        io->u.Status = COMM_DeviceIoControl(handle, event, apc, apc_context, io, code,
-                                            in_buffer, in_size, out_buffer, out_size);
+        status = COMM_DeviceIoControl(handle, event, apc, apc_context, io, code,
+                                      in_buffer, in_size, out_buffer, out_size);
         break;
     case FILE_DEVICE_TAPE:
-        io->u.Status = TAPE_DeviceIoControl(handle, event, apc, apc_context, io, code,
-                                            in_buffer, in_size, out_buffer, out_size);
+        status = TAPE_DeviceIoControl(handle, event, apc, apc_context, io, code,
+                                      in_buffer, in_size, out_buffer, out_size);
         break;
     default:
-        FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
-              code, device, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
-        io->u.Status = STATUS_NOT_SUPPORTED;
+        status = server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                    in_buffer, in_size, out_buffer, out_size );
         break;
     }
-    return io->u.Status;
+    if (status != STATUS_PENDING) io->u.Status = status;
+    return status;
 }
 
 /***********************************************************************
@@ -1170,9 +1213,8 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         break;
 
     default:
-        FIXME("Unsupported fsctl %x (device=%x access=%x func=%x method=%x)\n",
-              code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
-        status = STATUS_NOT_SUPPORTED;
+        status = server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                    in_buffer, in_size, out_buffer, out_size );
         break;
     }
 

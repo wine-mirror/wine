@@ -1972,6 +1972,17 @@ enum message_type
 @END
 
 
+/* Perform an ioctl on a file */
+@REQ(ioctl)
+    obj_handle_t   handle;        /* handle to the device */
+    unsigned int   code;          /* ioctl code */
+    async_data_t   async;         /* async I/O parameters */
+    VARARG(in_data,bytes);        /* ioctl input data */
+@REPLY
+    VARARG(out_data,bytes);       /* ioctl output data */
+@END
+
+
 /* Create a named pipe */
 @REQ(create_named_pipe)
     unsigned int   access;

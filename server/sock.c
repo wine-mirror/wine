@@ -126,6 +126,7 @@ static const struct fd_ops sock_fd_ops =
     sock_poll_event,              /* poll_event */
     no_flush,                     /* flush */
     sock_get_fd_type,             /* get_file_info */
+    default_fd_ioctl,             /* ioctl */
     sock_queue_async,             /* queue_async */
     sock_reselect_async,          /* reselect_async */
     sock_cancel_async             /* cancel_async */

@@ -2401,6 +2401,23 @@ static void dump_cancel_async_request( const struct cancel_async_request *req )
     fprintf( stderr, " handle=%p", req->handle );
 }
 
+static void dump_ioctl_request( const struct ioctl_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " code=%08x,", req->code );
+    fprintf( stderr, " async=" );
+    dump_async_data( &req->async );
+    fprintf( stderr, "," );
+    fprintf( stderr, " in_data=" );
+    dump_varargs_bytes( cur_size );
+}
+
+static void dump_ioctl_reply( const struct ioctl_reply *req )
+{
+    fprintf( stderr, " out_data=" );
+    dump_varargs_bytes( cur_size );
+}
+
 static void dump_create_named_pipe_request( const struct create_named_pipe_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
@@ -3590,6 +3607,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_serial_info_request,
     (dump_func)dump_register_async_request,
     (dump_func)dump_cancel_async_request,
+    (dump_func)dump_ioctl_request,
     (dump_func)dump_create_named_pipe_request,
     (dump_func)dump_connect_named_pipe_request,
     (dump_func)dump_wait_named_pipe_request,
@@ -3810,6 +3828,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)0,
+    (dump_func)dump_ioctl_reply,
     (dump_func)dump_create_named_pipe_reply,
     (dump_func)0,
     (dump_func)0,
@@ -4030,6 +4049,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_serial_info",
     "register_async",
     "cancel_async",
+    "ioctl",
     "create_named_pipe",
     "connect_named_pipe",
     "wait_named_pipe",
@@ -4166,6 +4186,7 @@ static const struct
     { "NOT_A_DIRECTORY",             STATUS_NOT_A_DIRECTORY },
     { "NOT_IMPLEMENTED",             STATUS_NOT_IMPLEMENTED },
     { "NOT_REGISTRY_FILE",           STATUS_NOT_REGISTRY_FILE },
+    { "NOT_SUPPORTED",               STATUS_NOT_SUPPORTED },
     { "NO_DATA_DETECTED",            STATUS_NO_DATA_DETECTED },
     { "NO_IMPERSONATION_TOKEN",      STATUS_NO_IMPERSONATION_TOKEN },
     { "NO_MEMORY",                   STATUS_NO_MEMORY },

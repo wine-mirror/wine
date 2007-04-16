@@ -84,6 +84,7 @@ static const struct fd_ops handler_fd_ops =
     handler_poll_event,       /* poll_event */
     NULL,                     /* flush */
     NULL,                     /* get_fd_type */
+    NULL,                     /* ioctl */
     NULL,                     /* queue_async */
     NULL,                     /* reselect_async */
     NULL                      /* cancel_async */

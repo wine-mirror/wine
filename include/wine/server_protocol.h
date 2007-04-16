@@ -2679,6 +2679,22 @@ struct cancel_async_reply
 
 
 
+struct ioctl_request
+{
+    struct request_header __header;
+    obj_handle_t   handle;
+    unsigned int   code;
+    async_data_t   async;
+    /* VARARG(in_data,bytes); */
+};
+struct ioctl_reply
+{
+    struct reply_header __header;
+    /* VARARG(out_data,bytes); */
+};
+
+
+
 struct create_named_pipe_request
 {
     struct request_header __header;
@@ -4141,6 +4157,7 @@ enum request
     REQ_set_serial_info,
     REQ_register_async,
     REQ_cancel_async,
+    REQ_ioctl,
     REQ_create_named_pipe,
     REQ_connect_named_pipe,
     REQ_wait_named_pipe,
@@ -4365,6 +4382,7 @@ union generic_request
     struct set_serial_info_request set_serial_info_request;
     struct register_async_request register_async_request;
     struct cancel_async_request cancel_async_request;
+    struct ioctl_request ioctl_request;
     struct create_named_pipe_request create_named_pipe_request;
     struct connect_named_pipe_request connect_named_pipe_request;
     struct wait_named_pipe_request wait_named_pipe_request;
@@ -4587,6 +4605,7 @@ union generic_reply
     struct set_serial_info_reply set_serial_info_reply;
     struct register_async_reply register_async_reply;
     struct cancel_async_reply cancel_async_reply;
+    struct ioctl_reply ioctl_reply;
     struct create_named_pipe_reply create_named_pipe_reply;
     struct connect_named_pipe_reply connect_named_pipe_reply;
     struct wait_named_pipe_reply wait_named_pipe_reply;
@@ -4671,6 +4690,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 292
+#define SERVER_PROTOCOL_VERSION 293
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

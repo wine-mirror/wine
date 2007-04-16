@@ -1686,6 +1686,13 @@ void default_poll_event( struct fd *fd, int event )
     else if (!fd->inode) set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
 }
 
+/* default ioctl() routine */
+void default_fd_ioctl( struct fd *fd, unsigned int code, const async_data_t *async,
+                       const void *data, data_size_t size )
+{
+    set_error( STATUS_NOT_SUPPORTED );
+}
+
 struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     struct async_queue *queue;
@@ -1914,6 +1921,19 @@ DECL_HANDLER(unmount_device)
     if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
     {
         unmount_device( fd );
+        release_object( fd );
+    }
+}
+
+/* perform an ioctl on a file */
+DECL_HANDLER(ioctl)
+{
+    unsigned int access = (req->code >> 14) & (FILE_READ_DATA|FILE_WRITE_DATA);
+    struct fd *fd = get_handle_fd_obj( current->process, req->handle, access );
+
+    if (fd)
+    {
+        fd->fd_ops->ioctl( fd, req->code, &req->async, get_req_data(), get_req_data_size() );
         release_object( fd );
     }
 }
