@@ -21,7 +21,7 @@
 @ stdcall BeginPath(long)
 @ stdcall BitBlt(long long long long long long long long long)
 @ stub ByeByeGDI
-@ stub CancelDC
+@ stdcall CancelDC(long)
 @ stub CheckColorsInGamut
 @ stdcall ChoosePixelFormat(long ptr)
 @ stdcall Chord(long long long long long long long long long)

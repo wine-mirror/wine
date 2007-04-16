@@ -2101,6 +2101,15 @@ COLORREF WINAPI SetDCPenColor(HDC hdc, COLORREF crColor)
 }
 
 /***********************************************************************
+ *           CancelDC    (GDI32.@)
+ */
+BOOL WINAPI CancelDC(HDC hdc)
+{
+    FIXME("stub\n");
+    return TRUE;
+}
+
+/***********************************************************************
  *           SetVirtualResolution   (GDI32.@)
  *
  * Undocumented on msdn.  Called when PowerPoint XP saves a file.
