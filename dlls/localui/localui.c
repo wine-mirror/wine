@@ -36,6 +36,50 @@ WINE_DEFAULT_DEBUG_CHANNEL(localui);
 
 static HINSTANCE LOCALUI_hInstance;
 
+static const WCHAR cmd_DeletePortW[] = {'D','e','l','e','t','e','P','o','r','t',0};
+static const WCHAR XcvPortW[] = {',','X','c','v','P','o','r','t',' ',0};
+
+/*****************************************************
+ *   strdupWW [internal]
+ */
+
+static LPWSTR strdupWW(LPCWSTR pPrefix, LPCWSTR pSuffix)
+{
+    LPWSTR  ptr;
+    DWORD   len;
+
+    len = lstrlenW(pPrefix) + lstrlenW(pSuffix) + 1;
+    ptr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (ptr) {
+        lstrcpyW(ptr, pPrefix);
+        lstrcatW(ptr, pSuffix);
+    }
+    return ptr;
+}
+
+/*****************************************************
+ *   open_monitor_by_name [internal]
+ *
+ */
+static BOOL open_monitor_by_name(LPCWSTR pPrefix, LPCWSTR pPort, HANDLE * phandle)
+{
+    PRINTER_DEFAULTSW pd;
+    LPWSTR  fullname;
+    BOOL    res;
+
+    * phandle = 0;
+    TRACE("(%s,%s)\n", debugstr_w(pPrefix),debugstr_w(pPort) );
+
+    fullname = strdupWW(pPrefix, pPort);
+    pd.pDatatype = NULL;
+    pd.pDevMode  = NULL;
+    pd.DesiredAccess = SERVER_ACCESS_ADMINISTER;
+
+    res = OpenPrinterW(fullname, phandle, &pd);
+    HeapFree(GetProcessHeap(), 0, fullname);
+    return res;
+}
+
 /*****************************************************
  *   localui_AddPortUI [exported through MONITORUI]
  *
@@ -94,11 +138,39 @@ static BOOL WINAPI localui_ConfigurePortUI(PCWSTR pName, HWND hWnd, PCWSTR pPort
  *  Success: TRUE
  *  Failure: FALSE
  *
+ * NOTES
+ *  Native localui does not allow to delete a COM / LPT - Port (ERROR_NOT_SUPPORTED)
+ *
  */
 static BOOL WINAPI localui_DeletePortUI(PCWSTR pName, HWND hWnd, PCWSTR pPortName)
 {
-    FIXME("(%s, %p, %s) stub\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
-    return TRUE;
+    HANDLE  hXcv;
+    DWORD   dummy;
+    DWORD   needed;
+    DWORD   status;
+
+    TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
+
+    if ((!pPortName) || (!pPortName[0])) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (open_monitor_by_name(XcvPortW, pPortName, &hXcv)) {
+        /* native localui tests here for LPT / COM - Ports and failed with
+           ERROR_NOT_SUPPORTED. */
+        if (XcvDataW(hXcv, cmd_DeletePortW, (LPBYTE) pPortName,
+            (lstrlenW(pPortName)+1) * sizeof(WCHAR), (LPBYTE) &dummy, 0, &needed, &status)) {
+
+            ClosePrinter(hXcv);
+            if (status != ERROR_SUCCESS) SetLastError(status);
+            return (status == ERROR_SUCCESS);
+        }
+        ClosePrinter(hXcv);
+        return FALSE;
+    }
+    SetLastError(ERROR_UNKNOWN_PORT);
+    return FALSE;
 }
 
 /*****************************************************

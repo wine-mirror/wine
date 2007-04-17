@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = localui.dll
-IMPORTS   = kernel32
+IMPORTS   = winspool kernel32
 
 C_SRCS = \
 	localui.c
