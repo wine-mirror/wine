@@ -1855,7 +1855,7 @@ static void unmount_device( struct fd *device_fd )
 }
 
 /* default ioctl() routine */
-void default_fd_ioctl( struct fd *fd, unsigned int code, const async_data_t *async,
+void default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
                        const void *data, data_size_t size )
 {
     switch(code)

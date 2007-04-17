@@ -139,7 +139,7 @@ static struct fd *pipe_server_get_fd( struct object *obj );
 static void pipe_server_destroy( struct object *obj);
 static void pipe_server_flush( struct fd *fd, struct event **event );
 static enum server_fd_type pipe_server_get_fd_type( struct fd *fd );
-static void pipe_server_ioctl( struct fd *fd, unsigned int code, const async_data_t *async,
+static void pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
                                const void *data, data_size_t size );
 
 static const struct object_ops pipe_server_ops =
@@ -565,7 +565,7 @@ static enum server_fd_type pipe_client_get_fd_type( struct fd *fd )
     return FD_TYPE_PIPE;
 }
 
-static void pipe_server_ioctl( struct fd *fd, unsigned int code, const async_data_t *async,
+static void pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
                                const void *data, data_size_t size )
 {
     struct pipe_server *server = get_fd_user( fd );

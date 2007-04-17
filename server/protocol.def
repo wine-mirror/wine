@@ -37,6 +37,7 @@ typedef unsigned short atom_t;
 typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
+typedef unsigned int ioctl_code_t;
 
 struct request_header
 {
@@ -1967,7 +1968,7 @@ enum message_type
 /* Perform an ioctl on a file */
 @REQ(ioctl)
     obj_handle_t   handle;        /* handle to the device */
-    unsigned int   code;          /* ioctl code */
+    ioctl_code_t   code;          /* ioctl code */
     async_data_t   async;         /* async I/O parameters */
     VARARG(in_data,bytes);        /* ioctl input data */
 @REPLY

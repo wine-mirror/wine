@@ -21,6 +21,7 @@ typedef unsigned short atom_t;
 typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
 typedef unsigned int data_size_t;
+typedef unsigned int ioctl_code_t;
 
 struct request_header
 {
@@ -2668,7 +2669,7 @@ struct ioctl_request
 {
     struct request_header __header;
     obj_handle_t   handle;
-    unsigned int   code;
+    ioctl_code_t   code;
     async_data_t   async;
     /* VARARG(in_data,bytes); */
 };

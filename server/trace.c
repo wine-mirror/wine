@@ -36,6 +36,7 @@
 #include "winbase.h"
 #include "wincon.h"
 #include "winternl.h"
+#include "winioctl.h"
 #include "file.h"
 #include "request.h"
 #include "unicode.h"
@@ -80,6 +81,18 @@ static void dump_char_info( const char_info_t *info )
     fprintf( stderr, "{'" );
     dump_strW( &info->ch, 1, stderr, "\'\'" );
     fprintf( stderr, "',%04x}", info->attr );
+}
+
+static void dump_ioctl_code( const ioctl_code_t *code )
+{
+    switch(*code)
+    {
+#define CASE(c) case c: fputs( #c, stderr ); break
+        CASE(FSCTL_DISMOUNT_VOLUME);
+        CASE(FSCTL_PIPE_DISCONNECT);
+        default: fprintf( stderr, "%08x", *code ); break;
+#undef CASE
+    }
 }
 
 static void dump_apc_call( const apc_call_t *call )
@@ -2391,7 +2404,9 @@ static void dump_cancel_async_request( const struct cancel_async_request *req )
 static void dump_ioctl_request( const struct ioctl_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " code=%08x,", req->code );
+    fprintf( stderr, " code=" );
+    dump_ioctl_code( &req->code );
+    fprintf( stderr, "," );
     fprintf( stderr, " async=" );
     dump_async_data( &req->async );
     fprintf( stderr, "," );

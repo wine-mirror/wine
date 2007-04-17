@@ -46,6 +46,7 @@ my %formats =
     "apc_result_t"  => "&dump_apc_result",
     "async_data_t"  => "&dump_async_data",
     "luid_t"        => "&dump_luid",
+    "ioctl_code_t"  => "&dump_ioctl_code",
 );
 
 my @requests = ();
