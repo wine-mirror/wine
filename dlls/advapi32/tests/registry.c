@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
@@ -36,6 +37,127 @@ static const char * sTestpath2 = "%FOO%\\subdir1";
 static HMODULE hadvapi32;
 static DWORD (WINAPI *pRegGetValueA)(HKEY,LPCSTR,LPCSTR,DWORD,LPDWORD,PVOID,LPDWORD);
 static DWORD (WINAPI *pRegDeleteTreeA)(HKEY,LPCSTR);
+
+
+
+/* Debugging functions from wine/libs/wine/debug.c */
+
+/* allocate some tmp string space */
+/* FIXME: this is not 100% thread-safe */
+static char *get_temp_buffer( int size )
+{
+    static char *list[32];
+    static long pos;
+    char *ret;
+    int idx;
+
+    idx = ++pos % (sizeof(list)/sizeof(list[0]));
+    if ((ret = realloc( list[idx], size ))) list[idx] = ret;
+    return ret;
+}
+
+/* default implementation of wine_dbgstr_an */
+static const char *wine_debugstr_an( const char *str, int n )
+{
+    static const char hex[16] = "0123456789abcdef";
+    char *dst, *res;
+    size_t size;
+
+    if (!((ULONG_PTR)str >> 16))
+    {
+        if (!str) return "(null)";
+        res = get_temp_buffer( 6 );
+        sprintf( res, "#%04x", LOWORD(str) );
+        return res;
+    }
+    if (n == -1) n = strlen(str);
+    if (n < 0) n = 0;
+    size = 10 + min( 300, n * 4 );
+    dst = res = get_temp_buffer( size );
+    *dst++ = '"';
+    while (n-- > 0 && dst <= res + size - 9)
+    {
+        unsigned char c = *str++;
+        switch (c)
+        {
+        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+        case '"':  *dst++ = '\\'; *dst++ = '"'; break;
+        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
+        default:
+            if (c >= ' ' && c <= 126)
+                *dst++ = c;
+            else
+            {
+                *dst++ = '\\';
+                *dst++ = 'x';
+                *dst++ = hex[(c >> 4) & 0x0f];
+                *dst++ = hex[c & 0x0f];
+            }
+        }
+    }
+    *dst++ = '"';
+    if (n > 0)
+    {
+        *dst++ = '.';
+        *dst++ = '.';
+        *dst++ = '.';
+    }
+    *dst++ = 0;
+    return res;
+}
+
+/* default implementation of wine_dbgstr_wn */
+static const char *wine_debugstr_wn( const WCHAR *str, int n )
+{
+    char *dst, *res;
+
+    if (!HIWORD(str))
+    {
+        if (!str) return "(null)";
+        res = get_temp_buffer( 6 );
+        sprintf( res, "#%04x", LOWORD(str) );
+        return res;
+    }
+    if (n == -1) n = lstrlenW(str);
+    if (n < 0) n = 0;
+    else if (n > 200) n = 200;
+    dst = res = get_temp_buffer( n * 5 + 7 );
+    *dst++ = 'L';
+    *dst++ = '"';
+    while (n-- > 0)
+    {
+        WCHAR c = *str++;
+        switch (c)
+        {
+        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+        case '"':  *dst++ = '\\'; *dst++ = '"'; break;
+        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
+        default:
+            if (c >= ' ' && c <= 126)
+                *dst++ = (char)c;
+            else
+            {
+                *dst++ = '\\';
+                sprintf(dst,"%04x",c);
+                dst+=4;
+            }
+        }
+    }
+    *dst++ = '"';
+    if (*str)
+    {
+        *dst++ = '.';
+        *dst++ = '.';
+        *dst++ = '.';
+    }
+    *dst = 0;
+    return res;
+}
+
 
 #define ADVAPI32_GET_PROC(func) \
     p ## func = (void*)GetProcAddress(hadvapi32, #func); \
@@ -119,8 +241,9 @@ static void test_hkey_main_Value_A(LPCSTR name, LPCSTR string,
     }
     else
     {
-        ok(strcmp(value, string) == 0, "RegQueryValueExA failed: '%s' != '%s'\n",
-           value, string);
+        ok(memcmp(value, string, cbData) == 0, "RegQueryValueExA failed: %s/%d != %s/%d\n",
+           wine_debugstr_an(value, cbData), cbData,
+           wine_debugstr_an(string, full_byte_len), full_byte_len);
     }
     HeapFree(GetProcessHeap(), 0, value);
 }
@@ -158,7 +281,9 @@ static void test_hkey_main_Value_W(LPCWSTR name, LPCWSTR string,
         /* When cbData == 0, RegQueryValueExW() should not modify the buffer */
         string=nW;
     }
-    ok(lstrcmpW(value, string) == 0, "the string RegQueryValueExW is wrong\n");
+    ok(memcmp(value, string, cbData) == 0, "RegQueryValueExW failed: %s/%d != %s/%d\n",
+       wine_debugstr_wn(value, cbData), cbData,
+       wine_debugstr_wn(string, full_byte_len), full_byte_len);
     HeapFree(GetProcessHeap(), 0, value);
 }
 
@@ -170,7 +295,7 @@ static void test_set_value(void)
     static const WCHAR name2W[] =   {'S','o','m','e','I','n','t','r','a','Z','e','r','o','e','d','S','t','r','i','n','g', 0};
     static const WCHAR emptyW[] = {0};
     static const WCHAR string1W[] = {'T','h','i','s','N','e','v','e','r','B','r','e','a','k','s', 0};
-    static const WCHAR string2W[] = {'T','h','i','s', 0 ,'B','r','e','a','k','s', 0 , 0 ,'A', 0 , 0 , 0 , 0 ,'L','o','t', 0 , 0 , 0 , 0};
+    static const WCHAR string2W[] = {'T','h','i','s', 0 ,'B','r','e','a','k','s', 0 , 0 ,'A', 0 , 0 , 0 , 'L','o','t', 0 , 0 , 0 , 0, 0};
 
     static const char name1A[] =   "CleanSingleString";
     static const char name2A[] =   "SomeIntraZeroedString";
