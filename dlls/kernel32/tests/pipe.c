@@ -99,6 +99,9 @@ static void test_CreateNamedPipe(int pipemode)
     hFile = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError());
 
+    ok(!WaitNamedPipeA(PIPENAME, 1000), "WaitNamedPipe succeeded\n");
+    ok(GetLastError() == ERROR_SEM_TIMEOUT, "wrong error %u\n", GetLastError());
+
     /* don't try to do i/o if one side couldn't be opened, as it hangs */
     if (hFile != INVALID_HANDLE_VALUE) {
         HANDLE hFile2;

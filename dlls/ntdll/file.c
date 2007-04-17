@@ -1105,27 +1105,15 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
     case FSCTL_PIPE_WAIT:
         {
             HANDLE internal_event = 0;
-            FILE_PIPE_WAIT_FOR_BUFFER *buff = in_buffer;
 
             if(!event && !apc)
             {
                 status = NtCreateEvent(&internal_event, EVENT_ALL_ACCESS, NULL, FALSE, FALSE);
                 if (status != STATUS_SUCCESS) break;
+                event = internal_event;
             }
-            SERVER_START_REQ(wait_named_pipe)
-            {
-                req->handle = handle;
-                req->timeout = buff->TimeoutSpecified ? buff->Timeout.QuadPart : 0;
-                req->async.callback = pipe_completion_wait;
-                req->async.iosb     = io;
-                req->async.arg      = NULL;
-                req->async.apc      = apc;
-                req->async.apc_arg  = apc_context;
-                req->async.event    = event ? event : internal_event;
-                wine_server_add_data( req, buff->Name, buff->NameLength );
-                status = wine_server_call( req );
-            }
-            SERVER_END_REQ;
+            status = server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                        in_buffer, in_size, out_buffer, out_size );
 
             if (internal_event && status == STATUS_PENDING)
             {

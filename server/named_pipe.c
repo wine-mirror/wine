@@ -215,6 +215,8 @@ static struct object *named_pipe_device_open_file( struct object *obj, unsigned 
                                                    unsigned int sharing, unsigned int options );
 static void named_pipe_device_destroy( struct object *obj );
 static enum server_fd_type named_pipe_device_get_fd_type( struct fd *fd );
+static void named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
+                                     const void *data, data_size_t size );
 
 static const struct object_ops named_pipe_device_ops =
 {
@@ -239,7 +241,7 @@ static const struct fd_ops named_pipe_device_fd_ops =
     default_poll_event,               /* poll_event */
     no_flush,                         /* flush */
     named_pipe_device_get_fd_type,    /* get_fd_type */
-    default_fd_ioctl,                 /* ioctl */
+    named_pipe_device_ioctl,          /* ioctl */
     default_fd_queue_async,           /* queue_async */
     default_fd_reselect_async,        /* reselect_async */
     default_fd_cancel_async           /* cancel_async */
@@ -765,6 +767,64 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
     return &client->obj;
 }
 
+static void named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
+                                     const void *data, data_size_t size )
+{
+    struct named_pipe_device *device = get_fd_user( fd );
+
+    switch(code)
+    {
+    case FSCTL_PIPE_WAIT:
+        {
+            const FILE_PIPE_WAIT_FOR_BUFFER *buffer = data;
+            struct named_pipe *pipe;
+            struct pipe_server *server;
+            struct unicode_str name;
+
+            if (size < sizeof(*buffer) ||
+                size < FIELD_OFFSET(FILE_PIPE_WAIT_FOR_BUFFER, Name[buffer->NameLength/sizeof(WCHAR)]))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                break;
+            }
+            name.str = buffer->Name;
+            name.len = (buffer->NameLength / sizeof(WCHAR)) * sizeof(WCHAR);
+            if (!(pipe = (struct named_pipe *)find_object( device->pipes, &name, OBJ_CASE_INSENSITIVE )))
+            {
+                set_error( STATUS_PIPE_NOT_AVAILABLE );
+                break;
+            }
+            if (!(server = find_available_server( pipe )))
+            {
+                struct async *async;
+
+                if (!pipe->waiters && !(pipe->waiters = create_async_queue( NULL )))
+                {
+                    release_object( pipe );
+                    break;
+                }
+
+                if ((async = create_async( current, pipe->waiters, async_data )))
+                {
+                    timeout_t when = buffer->TimeoutSpecified ? buffer->Timeout.QuadPart : pipe->timeout;
+                    async_set_timeout( async, when, STATUS_IO_TIMEOUT );
+                    release_object( async );
+                    set_error( STATUS_PENDING );
+                }
+            }
+            else release_object( server );
+
+            release_object( pipe );
+            break;
+        }
+
+    default:
+        default_fd_ioctl( fd, code, async_data, data, size );
+        break;
+    }
+}
+
+
 DECL_HANDLER(create_named_pipe)
 {
     struct named_pipe *pipe;
@@ -862,48 +922,6 @@ DECL_HANDLER(connect_named_pipe)
     }
 
     release_object(server);
-}
-
-DECL_HANDLER(wait_named_pipe)
-{
-    struct named_pipe_device *device;
-    struct named_pipe *pipe;
-    struct pipe_server *server;
-    struct unicode_str name;
-
-    device = (struct named_pipe_device *)get_handle_obj( current->process, req->handle,
-                                                         FILE_READ_ATTRIBUTES, &named_pipe_device_ops );
-    if (!device) return;
-
-    get_req_unicode_str( &name );
-    pipe = (struct named_pipe *)find_object( device->pipes, &name, OBJ_CASE_INSENSITIVE );
-    release_object( device );
-    if (!pipe)
-    {
-        set_error( STATUS_PIPE_NOT_AVAILABLE );
-        return;
-    }
-    server = find_available_server( pipe );
-    if (!server)
-    {
-        struct async *async;
-
-        if (!pipe->waiters && !(pipe->waiters = create_async_queue( NULL )))
-        {
-            release_object( pipe );
-            return;
-        }
-
-        if ((async = create_async( current, pipe->waiters, &req->async )))
-        {
-            async_set_timeout( async, req->timeout ? req->timeout : pipe->timeout, STATUS_TIMEOUT );
-            release_object( async );
-            set_error( STATUS_PENDING );
-        }
-    }
-    else release_object( server );
-
-    release_object( pipe );
 }
 
 DECL_HANDLER(get_named_pipe_info)
