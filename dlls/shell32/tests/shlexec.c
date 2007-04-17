@@ -480,6 +480,8 @@ static const char* testfiles[]=
     "%s\\test file.shl",
     "%s\\test file.shlfoo",
     "%s\\test file.sfe",
+    "%s\\masked file.shlexec",
+    "%s\\masked",
     NULL
 };
 
@@ -516,6 +518,9 @@ static filename_tests_t filename_tests[]=
 
     {"QuotedLowerL", "%s\\test file.shlexec",   0x0, 33},
     {"QuotedUpperL", "%s\\test file.shlexec",   0x0, 33},
+
+    /* Test file masked due to space */
+    {NULL,           "%s\\masked file.shlexec",   0x1, 33},
 
     {NULL, NULL, 0}
 };
