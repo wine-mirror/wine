@@ -1,0 +1,38 @@
+/*
+ * Spanish resources for winspool
+ *
+ * Copyright 2007  José Manuel Ferrer Ortiz
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
+
+FILENAME_DIALOG DIALOG LOADONCALL MOVEABLE DISCARDABLE 6, 18, 245, 47
+STYLE DS_CONTEXTHELP | DS_MODALFRAME | DS_SETFONT | DS_SETFOREGROUND | WS_POPUPWINDOW | WS_VISIBLE | WS_CAPTION
+CAPTION "Imprimir en archivo"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT "&Nombre del archivo:", -1, 7, 13, 194, 13, WS_VISIBLE
+    EDITTEXT EDITBOX, 6, 28, 174, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    DEFPUSHBUTTON "Aceptar", IDOK, 199, 10, 40, 14, WS_VISIBLE
+    PUSHBUTTON "Cancelar", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
+END
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_CAPTION "Puerto local"
+    IDS_FILE_EXISTS "El archivo de salida ya existe.  Pulse Aceptar para sobreescribir."
+    IDS_CANNOT_OPEN "Incapaz de crear el archivo de salida."
+}

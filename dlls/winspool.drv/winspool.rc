@@ -43,6 +43,7 @@
 #include "De.rc"
 #include "En.rc"
 #include "Eo.rc"
+#include "Es.rc"
 #include "Fi.rc"
 #include "Fr.rc"
 #include "It.rc"
