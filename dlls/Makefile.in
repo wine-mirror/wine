@@ -552,6 +552,7 @@ IMPORT_LIBS = \
 	shfolder/libshfolder.$(IMPLIBEXT) \
 	shlwapi/libshlwapi.$(IMPLIBEXT) \
 	snmpapi/libsnmpapi.$(IMPLIBEXT) \
+	spoolss/libspoolss.$(IMPLIBEXT) \
 	sti/libsti.$(IMPLIBEXT) \
 	tapi32/libtapi32.$(IMPLIBEXT) \
 	unicows/libunicows.$(IMPLIBEXT) \
@@ -868,6 +869,9 @@ shlwapi/libshlwapi.$(IMPLIBEXT): shlwapi/shlwapi.spec $(WINEBUILD)
 
 snmpapi/libsnmpapi.$(IMPLIBEXT): snmpapi/snmpapi.spec $(WINEBUILD)
 	@cd snmpapi && $(MAKE) libsnmpapi.$(IMPLIBEXT)
+
+spoolss/libspoolss.$(IMPLIBEXT): spoolss/spoolss.spec $(WINEBUILD)
+	@cd spoolss && $(MAKE) libspoolss.$(IMPLIBEXT)
 
 sti/libsti.$(IMPLIBEXT): sti/sti.spec $(WINEBUILD)
 	@cd sti && $(MAKE) libsti.$(IMPLIBEXT)

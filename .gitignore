@@ -510,6 +510,7 @@ dlls/snmpapi/tests/*.ok
 dlls/snmpapi/tests/snmpapi_crosstest.exe
 dlls/snmpapi/tests/testlist.c
 dlls/sound.drv16
+dlls/spoolss/libspoolss.def
 dlls/stdole2.tlb/rsrc.res
 dlls/stdole2.tlb/std_ole_v2.tlb
 dlls/stdole32.tlb/rsrc.res
