@@ -65,6 +65,7 @@ static struct list xcv_handles = LIST_INIT( xcv_handles );
 
 /* ############################### */
 
+static const WCHAR cmd_AddPortW[] = {'A','d','d','P','o','r','t',0};
 static const WCHAR cmd_DeletePortW[] = {'D','e','l','e','t','e','P','o','r','t',0};
 static const WCHAR cmd_ConfigureLPTPortCommandOKW[] = {'C','o','n','f','i','g','u','r','e',
                                     'L','P','T','P','o','r','t',
@@ -85,6 +86,7 @@ static const WCHAR cmd_SetDefaultCommConfigW[] = {'S','e','t',
                                     'C','o','m','m','C','o','n','f','i','g',0};
 
 static const WCHAR dllnameuiW[] = {'l','o','c','a','l','u','i','.','d','l','l',0};
+static const WCHAR emptyW[] = {0};
 
 static const WCHAR portname_LPT[]  = {'L','P','T',0};
 static const WCHAR portname_COM[]  = {'C','O','M',0};
@@ -123,6 +125,44 @@ static void dlg_nothingtoconfig(HWND hWnd)
     LoadStringW(LOCALSPL_hInstance, IDS_NOTHINGTOCONFIG, res_nothingW, IDS_NOTHINGTOCONFIG_MAXLEN);  
 
     MessageBoxW(hWnd, res_nothingW, res_PortW, MB_OK | MB_ICONINFORMATION);
+}
+
+/******************************************************************
+ * does_port_exist (internal)
+ *
+ * returns TRUE, when the Port already exists
+ *
+ */
+static BOOL does_port_exist(LPCWSTR myname)
+{
+
+    LPPORT_INFO_1W  pi;
+    DWORD   needed = 0;
+    DWORD   returned;
+    DWORD   id;
+
+    TRACE("(%s)\n", debugstr_w(myname));
+
+    id = EnumPortsW(NULL, 1, NULL, 0, &needed, &returned);
+    pi = spl_alloc(needed);
+    returned = 0;
+    if (pi)
+        id = EnumPortsW(NULL, 1, (LPBYTE) pi, needed, &needed, &returned);
+
+    if (id && returned > 0) {
+        /* we got a number of valid names. */
+        for (id = 0; id < returned; id++)
+        {
+            if (lstrcmpiW(myname, pi[id].pName) == 0) {
+                TRACE("(%u) found %s\n", id, debugstr_w(pi[id].pName));
+                spl_free(pi);
+                return TRUE;
+            }
+        }
+    }
+
+    spl_free(pi);
+    return FALSE;
 }
 
 /******************************************************************
@@ -459,8 +499,22 @@ DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInput
     TRACE("(%p, %s, %p, %d, %p, %d, %p)\n", hXcv, debugstr_w(pszDataName),
           pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
 
-    /* Native localspl.dll crashes on w2k and xp, when XcvDataPort is called
-       with "AddPort" as command. We do not need to implement this */
+    if (!lstrcmpW(pszDataName, cmd_AddPortW)) {
+        TRACE("InputData (%d): %s\n", cbInputData, debugstr_w( (LPWSTR) pInputData));
+        res = RegOpenKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_PortsW, &hroot);
+        if (res == ERROR_SUCCESS) {
+            if (does_port_exist((LPWSTR) pInputData)) {
+                RegCloseKey(hroot);
+                return ERROR_ALREADY_EXISTS;
+            }
+            res = RegSetValueExW(hroot, (LPWSTR) pInputData, 0, REG_SZ, (const BYTE *) emptyW, sizeof(emptyW));
+            RegCloseKey(hroot);
+            SetLastError(ERROR_SUCCESS);
+            return res;
+        }
+        return res;
+    }
+
 
     if (!lstrcmpW(pszDataName, cmd_ConfigureLPTPortCommandOKW)) {
         TRACE("InputData (%d): %s\n", cbInputData, debugstr_w( (LPWSTR) pInputData));
