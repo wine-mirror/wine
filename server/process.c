@@ -244,13 +244,9 @@ static void start_sigkill_timer( struct process *process )
 {
     grab_object( process );
     if (process->unix_pid != -1 && process->msg_fd)
-    {
-        struct timeval when = current_time;
-
-        add_timeout( &when, 1000 );
-        process->sigkill_timeout = add_timeout_user( &when, process_sigkill, process );
-    }
-    else process_died( process );
+        process->sigkill_timeout = add_timeout_user( -TICKS_PER_SEC, process_sigkill, process );
+    else
+        process_died( process );
 }
 
 /* create a new process and its main thread */
@@ -295,7 +291,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     list_init( &process->dlls );
 
     process->start_time = current_time;
-    process->end_time.tv_sec = process->end_time.tv_usec = 0;
+    process->end_time = 0;
     list_add_head( &process_list, &process->entry );
 
     if (!(process->id = process->group_id = alloc_ptid( process )))
@@ -1013,10 +1009,8 @@ DECL_HANDLER(get_process_info)
         reply->priority         = process->priority;
         reply->affinity         = process->affinity;
         reply->peb              = process->peb;
-        reply->start_time.sec   = process->start_time.tv_sec;
-        reply->start_time.usec  = process->start_time.tv_usec;
-        reply->end_time.sec     = process->end_time.tv_sec;
-        reply->end_time.usec    = process->end_time.tv_usec;
+        reply->start_time       = process->start_time;
+        reply->end_time         = process->end_time;
         release_object( process );
     }
 }

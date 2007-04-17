@@ -117,7 +117,7 @@ static const struct fd_ops master_socket_fd_ops =
 
 struct thread *current = NULL;  /* thread handling the current request */
 unsigned int global_error = 0;  /* global error code for when no thread is current */
-struct timeval server_start_time = { 0, 0 };  /* server startup time */
+timeout_t server_start_time = 0;  /* server startup time */
 
 static struct master_socket *master_socket;  /* the master socket object */
 static int force_shutdown;
@@ -468,8 +468,7 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
 /* get current tick count to return to client */
 unsigned int get_tick_count(void)
 {
-    return ((current_time.tv_sec - server_start_time.tv_sec) * 1000) +
-           ((current_time.tv_usec - server_start_time.tv_usec) / 1000);
+    return (current_time - server_start_time) / 10000;
 }
 
 static void master_socket_dump( struct object *obj, int verbose )
@@ -801,9 +800,6 @@ void open_master_socket(void)
     msghdr.msg_iov     = &myiovec;
     msghdr.msg_iovlen  = 1;
 
-    /* init startup time */
-    gettimeofday( &server_start_time, NULL );
-
     /* init the process tracing mechanism */
     init_tracing_mechanism();
 }
@@ -828,15 +824,12 @@ static void close_socket_timeout( void *arg )
 /* close the master socket and stop waiting for new clients */
 void close_master_socket(void)
 {
-    if (master_socket_timeout == -1) return;  /* just keep running forever */
+    if (master_socket_timeout == TIMEOUT_INFINITE) return;  /* just keep running forever */
 
     if (master_socket_timeout)
-    {
-        struct timeval when = current_time;
-        add_timeout( &when, master_socket_timeout * 1000 );
-        master_socket->timeout = add_timeout_user( &when, close_socket_timeout, NULL );
-    }
-    else close_socket_timeout( NULL );  /* close it right away */
+        master_socket->timeout = add_timeout_user( master_socket_timeout, close_socket_timeout, NULL );
+    else
+        close_socket_timeout( NULL );  /* close it right away */
 }
 
 /* forced shutdown, used for wineserver -k */

@@ -36,8 +36,8 @@
 
 /* command-line options */
 int debug_level = 0;
-int master_socket_timeout = 3;  /* master socket timeout in seconds, default is 3 s */
 int foreground = 0;
+timeout_t master_socket_timeout = 3 * -TICKS_PER_SEC;  /* master socket timeout, default is 3 seconds */
 const char *server_argv0;
 
 /* parse-line args */
@@ -84,8 +84,10 @@ static void parse_args( int argc, char *argv[] )
                 else ret = kill_lock_owner(-1);
                 exit( !ret );
             case 'p':
-                if (isdigit(argv[i][2])) master_socket_timeout = atoi( argv[i] + 2 );
-                else master_socket_timeout = -1;
+                if (isdigit(argv[i][2]))
+                    master_socket_timeout = (timeout_t)atoi( argv[i] + 2 ) * -TICKS_PER_SEC;
+                else
+                    master_socket_timeout = TIMEOUT_INFINITE;
                 break;
             case 'v':
                 fprintf( stderr, "%s\n", PACKAGE_STRING );

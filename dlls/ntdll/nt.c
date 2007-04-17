@@ -696,7 +696,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             memset(&sti, 0 , sizeof(sti));
 
             /* liKeSystemTime, liExpTimeZoneBias, uCurrentTimeZoneId */
-            NTDLL_from_server_abstime( &sti.liKeBootTime, &server_start_time );
+            sti.liKeBootTime.QuadPart = server_start_time;
 
             if (Length <= sizeof(sti))
             {

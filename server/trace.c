@@ -64,25 +64,9 @@ static void dump_uints( const int *ptr, int len )
     fputc( '}', stderr );
 }
 
-static void dump_abs_time( const abs_time_t *time )
+static void dump_timeout( const timeout_t *time )
 {
-    int secs, usecs;
-
-    if (!time->sec && !time->usec)
-    {
-        fprintf( stderr, "0" );
-        return;
-    }
-    secs = time->sec - current_time.tv_sec;
-    if ((usecs = time->usec - current_time.tv_usec) < 0)
-    {
-        usecs += 1000000;
-        secs--;
-    }
-    if (secs > 0 || (secs == 0 && usecs >= 0))
-        fprintf( stderr, "%d.%06d (+%d.%06d)", time->sec, time->usec, secs, usecs );
-    else
-        fprintf( stderr, "%d.%06d (-%d.%06d)", time->sec, time->usec, abs(secs+1), 1000000-usecs );
+    fprintf( stderr, get_timeout_str(*time) );
 }
 
 static void dump_rectangle( const rectangle_t *rect )
@@ -112,7 +96,7 @@ static void dump_apc_call( const apc_call_t *call )
         break;
     case APC_TIMER:
         fprintf( stderr, "APC_TIMER,time=" );
-        dump_abs_time( &call->timer.time );
+        dump_timeout( &call->timer.time );
         fprintf( stderr, ",arg=%p", call->timer.arg );
         break;
     case APC_ASYNC_IO:
@@ -862,7 +846,7 @@ static void dump_init_thread_reply( const struct init_thread_reply *req )
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " info_size=%u,", req->info_size );
     fprintf( stderr, " server_start=" );
-    dump_abs_time( &req->server_start );
+    dump_timeout( &req->server_start );
     fprintf( stderr, "," );
     fprintf( stderr, " version=%d", req->version );
 }
@@ -904,10 +888,10 @@ static void dump_get_process_info_reply( const struct get_process_info_reply *re
     fprintf( stderr, " affinity=%d,", req->affinity );
     fprintf( stderr, " peb=%p,", req->peb );
     fprintf( stderr, " start_time=" );
-    dump_abs_time( &req->start_time );
+    dump_timeout( &req->start_time );
     fprintf( stderr, "," );
     fprintf( stderr, " end_time=" );
-    dump_abs_time( &req->end_time );
+    dump_timeout( &req->end_time );
 }
 
 static void dump_set_process_info_request( const struct set_process_info_request *req )
@@ -933,10 +917,10 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, " priority=%d,", req->priority );
     fprintf( stderr, " affinity=%d,", req->affinity );
     fprintf( stderr, " creation_time=" );
-    dump_abs_time( &req->creation_time );
+    dump_timeout( &req->creation_time );
     fprintf( stderr, "," );
     fprintf( stderr, " exit_time=" );
-    dump_abs_time( &req->exit_time );
+    dump_timeout( &req->exit_time );
     fprintf( stderr, "," );
     fprintf( stderr, " last=%d", req->last );
 }
@@ -1105,10 +1089,16 @@ static void dump_select_request( const struct select_request *req )
     fprintf( stderr, " cookie=%p,", req->cookie );
     fprintf( stderr, " signal=%p,", req->signal );
     fprintf( stderr, " timeout=" );
-    dump_abs_time( &req->timeout );
+    dump_timeout( &req->timeout );
     fprintf( stderr, "," );
     fprintf( stderr, " handles=" );
     dump_varargs_handles( cur_size );
+}
+
+static void dump_select_reply( const struct select_reply *req )
+{
+    fprintf( stderr, " timeout=" );
+    dump_timeout( &req->timeout );
 }
 
 static void dump_create_event_request( const struct create_event_request *req )
@@ -2056,7 +2046,7 @@ static void dump_set_timer_request( const struct set_timer_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " expire=" );
-    dump_abs_time( &req->expire );
+    dump_timeout( &req->expire );
     fprintf( stderr, "," );
     fprintf( stderr, " period=%d,", req->period );
     fprintf( stderr, " callback=%p,", req->callback );
@@ -2086,7 +2076,7 @@ static void dump_get_timer_info_request( const struct get_timer_info_request *re
 static void dump_get_timer_info_reply( const struct get_timer_info_reply *req )
 {
     fprintf( stderr, " when=" );
-    dump_abs_time( &req->when );
+    dump_timeout( &req->when );
     fprintf( stderr, "," );
     fprintf( stderr, " signaled=%d", req->signaled );
 }
@@ -2257,7 +2247,9 @@ static void dump_send_message_request( const struct send_message_request *req )
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%lx,", req->wparam );
     fprintf( stderr, " lparam=%lx,", req->lparam );
-    fprintf( stderr, " timeout=%d,", req->timeout );
+    fprintf( stderr, " timeout=" );
+    dump_timeout( &req->timeout );
+    fprintf( stderr, "," );
     fprintf( stderr, " data=" );
     dump_varargs_message_data( cur_size );
 }
@@ -2423,7 +2415,9 @@ static void dump_create_named_pipe_request( const struct create_named_pipe_reque
     fprintf( stderr, " maxinstances=%08x,", req->maxinstances );
     fprintf( stderr, " outsize=%08x,", req->outsize );
     fprintf( stderr, " insize=%08x,", req->insize );
-    fprintf( stderr, " timeout=%08x,", req->timeout );
+    fprintf( stderr, " timeout=" );
+    dump_timeout( &req->timeout );
+    fprintf( stderr, "," );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -2446,7 +2440,9 @@ static void dump_wait_named_pipe_request( const struct wait_named_pipe_request *
     fprintf( stderr, " async=" );
     dump_async_data( &req->async );
     fprintf( stderr, "," );
-    fprintf( stderr, " timeout=%08x,", req->timeout );
+    fprintf( stderr, " timeout=" );
+    dump_timeout( &req->timeout );
+    fprintf( stderr, "," );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -3336,7 +3332,9 @@ static void dump_create_mailslot_request( const struct create_mailslot_request *
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " rootdir=%p,", req->rootdir );
     fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
-    fprintf( stderr, " read_timeout=%d,", req->read_timeout );
+    fprintf( stderr, " read_timeout=" );
+    dump_timeout( &req->read_timeout );
+    fprintf( stderr, "," );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -3350,13 +3348,15 @@ static void dump_set_mailslot_info_request( const struct set_mailslot_info_reque
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " read_timeout=%d", req->read_timeout );
+    fprintf( stderr, " read_timeout=" );
+    dump_timeout( &req->read_timeout );
 }
 
 static void dump_set_mailslot_info_reply( const struct set_mailslot_info_reply *req )
 {
     fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
-    fprintf( stderr, " read_timeout=%d", req->read_timeout );
+    fprintf( stderr, " read_timeout=" );
+    dump_timeout( &req->read_timeout );
 }
 
 static void dump_create_directory_request( const struct create_directory_request *req )
@@ -3706,7 +3706,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_dup_handle_reply,
     (dump_func)dump_open_process_reply,
     (dump_func)dump_open_thread_reply,
-    (dump_func)0,
+    (dump_func)dump_select_reply,
     (dump_func)dump_create_event_reply,
     (dump_func)0,
     (dump_func)dump_open_event_reply,

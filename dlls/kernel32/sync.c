@@ -1301,7 +1301,10 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
     }
 
     pipe_wait->TimeoutSpecified = !(nTimeOut == NMPWAIT_USE_DEFAULT_WAIT);
-    pipe_wait->Timeout.QuadPart = (ULONGLONG)nTimeOut * -10000;
+    if (nTimeOut == NMPWAIT_WAIT_FOREVER)
+        pipe_wait->Timeout.QuadPart = ((ULONGLONG)0x7fffffff << 32) | 0xffffffff;
+    else
+        pipe_wait->Timeout.QuadPart = (ULONGLONG)nTimeOut * -10000;
     pipe_wait->NameLength = nt_name.Length - sizeof(leadin);
     memcpy(pipe_wait->Name, nt_name.Buffer + sizeof(leadin)/sizeof(WCHAR),
            pipe_wait->NameLength);
@@ -1771,8 +1774,12 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
     if( lpMessageCount )
         *lpMessageCount = info.MessagesAvailable;
     if( lpReadTimeout )
-        *lpReadTimeout = info.ReadTimeout.QuadPart / -10000;
-
+    {
+        if (info.ReadTimeout.QuadPart == (((LONGLONG)0x7fffffff << 32) | 0xffffffff))
+            *lpReadTimeout = MAILSLOT_WAIT_FOREVER;
+        else
+            *lpReadTimeout = info.ReadTimeout.QuadPart / -10000;
+    }
     return TRUE;
 }
 
@@ -1798,7 +1805,10 @@ BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
 
     TRACE("%p %d\n", hMailslot, dwReadTimeout);
 
-    info.ReadTimeout.QuadPart = dwReadTimeout * -10000;
+    if (dwReadTimeout != MAILSLOT_WAIT_FOREVER)
+        info.ReadTimeout.QuadPart = (ULONGLONG)dwReadTimeout * -10000;
+    else
+        info.ReadTimeout.QuadPart = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
     status = NtSetInformationFile( hMailslot, &iosb, &info, sizeof info,
                                    FileMailslotSetInformation );
     if( status != STATUS_SUCCESS )

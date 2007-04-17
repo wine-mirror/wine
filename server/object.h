@@ -214,11 +214,11 @@ extern void create_mailslot_device( struct directory *root, const struct unicode
 
   /* command-line options */
 extern int debug_level;
-extern int master_socket_timeout;
 extern int foreground;
+extern timeout_t master_socket_timeout;
 extern const char *server_argv0;
 
   /* server start time used for GetTickCount() */
-extern struct timeval server_start_time;
+extern timeout_t server_start_time;
 
 #endif  /* __WINE_SERVER_OBJECT_H */

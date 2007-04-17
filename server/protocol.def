@@ -148,12 +148,9 @@ struct wake_up_reply
     int   signaled;  /* wait result */
 };
 
-/* structure for absolute timeouts */
-typedef struct
-{
-    int            sec;      /* seconds since Unix epoch */
-    int            usec;     /* microseconds */
-} abs_time_t;
+/* NT-style timeout, in 100ns units, negative means relative timeout */
+typedef __int64 timeout_t;
+#define TIMEOUT_INFINITE (((timeout_t)0x7fffffff) << 32 | 0xffffffff)
 
 /* structure returned in the list of window properties */
 typedef struct
@@ -273,7 +270,7 @@ typedef union
     {
         enum apc_type   type;     /* APC_TIMER */
         void (__stdcall *func)(void*, unsigned int, unsigned int);
-        abs_time_t       time;     /* absolute time of expiration */
+        timeout_t        time;     /* absolute time of expiration */
         void            *arg;      /* user argument */
     } timer;
     struct
@@ -525,7 +522,7 @@ typedef union
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */
     data_size_t  info_size;    /* total size of startup info */
-    abs_time_t   server_start; /* server start time */
+    timeout_t    server_start; /* server start time */
     int          version;      /* protocol version */
 @END
 
@@ -559,8 +556,8 @@ typedef union
     int          priority;         /* priority class */
     int          affinity;         /* process affinity mask */
     void*        peb;              /* PEB address in process address space */
-    abs_time_t   start_time;       /* process start time */
-    abs_time_t   end_time;         /* process end time */
+    timeout_t    start_time;       /* process start time */
+    timeout_t    end_time;         /* process end time */
 @END
 
 
@@ -586,8 +583,8 @@ typedef union
     int          exit_code;     /* thread exit code */
     int          priority;      /* thread priority level */
     int          affinity;      /* thread affinity mask */
-    abs_time_t   creation_time; /* thread creation time */
-    abs_time_t   exit_time;     /* thread exit time */
+    timeout_t    creation_time; /* thread creation time */
+    timeout_t    exit_time;     /* thread exit time */
     int          last;          /* last thread in process */
 @END
 
@@ -739,13 +736,14 @@ typedef union
     int          flags;        /* wait flags (see below) */
     void*        cookie;       /* magic cookie to return to client */
     obj_handle_t signal;       /* object to signal (0 if none) */
-    abs_time_t   timeout;      /* absolute timeout */
+    timeout_t    timeout;      /* timeout */
     VARARG(handles,handles);   /* handles to select on */
+@REPLY
+    timeout_t    timeout;      /* timeout converted to absolute */
 @END
 #define SELECT_ALL           1
 #define SELECT_ALERTABLE     2
 #define SELECT_INTERRUPTIBLE 4
-#define SELECT_TIMEOUT       8
 
 
 /* Create an event */
@@ -1647,7 +1645,7 @@ enum char_info_mode
 /* Set a waitable timer */
 @REQ(set_timer)
     obj_handle_t handle;        /* handle to the timer */
-    abs_time_t   expire;        /* next expiration absolute time */
+    timeout_t    expire;        /* next expiration absolute time */
     int          period;        /* timer period in ms */
     void*        callback;      /* callback function */
     void*        arg;           /* callback argument */
@@ -1666,7 +1664,7 @@ enum char_info_mode
 @REQ(get_timer_info)
     obj_handle_t handle;        /* handle to the timer */
 @REPLY
-    abs_time_t   when;          /* absolute time when the timer next expires */
+    timeout_t    when;          /* absolute time when the timer next expires */
     int          signaled;      /* is the timer signaled? */
 @END
 
@@ -1814,7 +1812,7 @@ enum char_info_mode
     unsigned int    msg;       /* message code */
     unsigned long   wparam;    /* parameters */
     unsigned long   lparam;    /* parameters */
-    int             timeout;   /* timeout for reply */
+    timeout_t       timeout;   /* timeout for reply */
     VARARG(data,message_data); /* message data for sent messages */
 @END
 
@@ -1987,7 +1985,7 @@ enum message_type
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;
-    unsigned int   timeout;
+    timeout_t      timeout;
     VARARG(name,unicode_str);    /* pipe name */
 @REPLY
     obj_handle_t   handle;       /* handle to the pipe */
@@ -2010,7 +2008,7 @@ enum message_type
 @REQ(wait_named_pipe)
     obj_handle_t   handle;
     async_data_t   async;        /* async I/O parameters */
-    unsigned int   timeout;
+    timeout_t      timeout;
     VARARG(name,unicode_str);    /* pipe name */
 @END
 
@@ -2774,7 +2772,7 @@ enum message_type
     unsigned int   attributes;    /* object attributes */
     obj_handle_t   rootdir;       /* root directory */
     unsigned int   max_msgsize;
-    int            read_timeout;
+    timeout_t      read_timeout;
     VARARG(name,unicode_str);     /* mailslot name */
 @REPLY
     obj_handle_t   handle;        /* handle to the mailslot */
@@ -2785,10 +2783,10 @@ enum message_type
 @REQ(set_mailslot_info)
     obj_handle_t   handle;        /* handle to the mailslot */
     unsigned int   flags;
-    int            read_timeout;
+    timeout_t      read_timeout;
 @REPLY
     unsigned int   max_msgsize;
-    int            read_timeout;
+    timeout_t      read_timeout;
 @END
 #define MAILSLOT_SET_READ_TIMEOUT  1
 

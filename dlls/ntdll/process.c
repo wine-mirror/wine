@@ -236,8 +236,8 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                       req->handle = ProcessHandle;
                       if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
                       {
-                          NTDLL_from_server_abstime(&pti.CreateTime, &reply->start_time);
-                          NTDLL_from_server_abstime(&pti.ExitTime, &reply->end_time);
+                          pti.CreateTime.QuadPart = reply->start_time;
+                          pti.ExitTime.QuadPart = reply->end_time;
                       }
                     }
                     SERVER_END_REQ;

@@ -1399,7 +1399,7 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
         req->msg     = info->msg;
         req->wparam  = info->wparam;
         req->lparam  = lp;
-        req->timeout = 0;
+        req->timeout = TIMEOUT_INFINITE;
         for (i = 0; i < data->count; i++)
             wine_server_add_data( req, data->data[i], data->size[i] );
         if ((res = wine_server_call( req )))
@@ -2201,7 +2201,8 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
     struct packed_message data;
     message_data_t msg_data;
     unsigned int res;
-    int i, timeout = 0;
+    int i;
+    timeout_t timeout = TIMEOUT_INFINITE;
 
     /* Check for INFINITE timeout for compatibility with Win9x,
      * although Windows >= NT does not do so
@@ -2209,8 +2210,12 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
     if (info->type != MSG_NOTIFY &&
         info->type != MSG_CALLBACK &&
         info->type != MSG_POSTED &&
+        info->timeout &&
         info->timeout != INFINITE)
-        timeout = info->timeout;
+    {
+        /* timeout is signed despite the prototype */
+        timeout = (timeout_t)max( 0, (int)info->timeout ) * -10000;
+    }
 
     data.count = 0;
     if (info->type == MSG_OTHER_PROCESS)

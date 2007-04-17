@@ -446,67 +446,6 @@ static inline int IsLeapYear(int Year)
 	return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0) ? 1 : 0;
 }
 
-/***********************************************************************
- *              NTDLL_get_server_abstime
- *
- * Convert a NTDLL time into an abs_time_t struct to send to the server.
- */
-void NTDLL_get_server_abstime( abs_time_t *when, const LARGE_INTEGER *timeout )
-{
-    UINT remainder;
-
-    if (!timeout)  /* infinite timeout */
-    {
-        when->sec = when->usec = 0;
-    }
-    else if (timeout->QuadPart <= 0)  /* relative timeout */
-    {
-        struct timeval tv;
-
-        if (-timeout->QuadPart > (LONGLONG)INT_MAX * TICKSPERSEC)
-            when->sec = when->usec = INT_MAX;
-        else
-        {
-            ULONG sec = RtlEnlargedUnsignedDivide( -timeout->QuadPart, TICKSPERSEC, &remainder );
-            gettimeofday( &tv, 0 );
-            when->sec = tv.tv_sec + sec;
-            if ((when->usec = tv.tv_usec + (remainder / 10)) >= 1000000)
-            {
-                when->usec -= 1000000;
-                when->sec++;
-            }
-            if (when->sec < tv.tv_sec)  /* overflow */
-                when->sec = when->usec = INT_MAX;
-        }
-    }
-    else  /* absolute time */
-    {
-        if (timeout->QuadPart < TICKS_1601_TO_1970)
-            when->sec = when->usec = 0;
-        else if (timeout->QuadPart > TICKS_1601_TO_UNIX_MAX)
-            when->sec = when->usec = INT_MAX;
-        else
-        {
-            when->sec = RtlEnlargedUnsignedDivide( timeout->QuadPart - TICKS_1601_TO_1970,
-                                                   TICKSPERSEC, &remainder );
-            when->usec = remainder / 10;
-        }
-    }
-}
-
-
-/***********************************************************************
- *              NTDLL_from_server_abstime
- *
- * Convert a timeval struct from the server into an NTDLL time.
- */
-void NTDLL_from_server_abstime( LARGE_INTEGER *time, const abs_time_t *when )
-{
-    time->QuadPart = when->sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-    time->QuadPart += when->usec * 10;
-}
-
-
 /******************************************************************************
  *       RtlTimeToTimeFields [NTDLL.@]
  *
@@ -878,16 +817,15 @@ NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER Time )
  */
 NTSTATUS WINAPI NtQueryPerformanceCounter( PLARGE_INTEGER Counter, PLARGE_INTEGER Frequency )
 {
-    struct timeval now;
+    LARGE_INTEGER now;
 
     if (!Counter) return STATUS_ACCESS_VIOLATION;
-    gettimeofday( &now, 0 );
-    /* convert a counter that increments at a rate of 1 MHz
+
+    /* convert a counter that increments at a rate of 10 MHz
      * to one of 1.193182 MHz, with some care for arithmetic
-     * overflow ( will not overflow for 5000 years ) and
-     * good accuracy ( 105/88 = 1.19318182) */
-    Counter->QuadPart = (((now.tv_sec - server_start_time.sec) * (ULONGLONG)1000000 +
-                          (now.tv_usec - server_start_time.usec)) * 105) / 88;
+     * overflow and good accuracy (21/176 = 0.11931818) */
+    NtQuerySystemTime( &now );
+    Counter->QuadPart = ((now.QuadPart - server_start_time) * 21) / 176;
     if (Frequency) Frequency->QuadPart = 1193182;
     return STATUS_SUCCESS;
 }
@@ -899,11 +837,10 @@ NTSTATUS WINAPI NtQueryPerformanceCounter( PLARGE_INTEGER Counter, PLARGE_INTEGE
  */
 ULONG WINAPI NtGetTickCount(void)
 {
-    struct timeval current_time;
+    LARGE_INTEGER now;
 
-    gettimeofday(&current_time, NULL);
-    return (current_time.tv_sec - server_start_time.sec) * 1000 +
-           (current_time.tv_usec - server_start_time.usec) / 1000;
+    NtQuerySystemTime( &now );
+    return (now.QuadPart - server_start_time) / 10000;
 }
 
 

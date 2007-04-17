@@ -478,16 +478,9 @@ NTSTATUS WINAPI NtSetTimer(IN HANDLE handle,
 
     SERVER_START_REQ( set_timer )
     {
-        if (!when->u.LowPart && !when->u.HighPart)
-        {
-            /* special case to start timeout on now+period without too many calculations */
-            req->expire.sec  = 0;
-            req->expire.usec = 0;
-        }
-        else NTDLL_get_server_abstime( &req->expire, when );
-
         req->handle   = handle;
         req->period   = period;
+        req->expire   = when->QuadPart;
         req->callback = callback;
         req->arg      = callback_arg;
         status = wine_server_call( req );
@@ -564,7 +557,7 @@ NTSTATUS WINAPI NtQueryTimer(
             status = wine_server_call(req);
 
             /* convert server time to absolute NTDLL time */
-            NTDLL_from_server_abstime(&basic_info->RemainingTime, &reply->when);
+            basic_info->RemainingTime.QuadPart = reply->when;
             basic_info->TimerState = reply->signaled;
         }
         SERVER_END_REQ;
@@ -670,15 +663,9 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         user_apc = TRUE;
         break;
     case APC_TIMER:
-    {
-        LARGE_INTEGER time;
-        /* convert sec/usec to NT time */
-        RtlSecondsSince1970ToTime( call->timer.time.sec, &time );
-        time.QuadPart += call->timer.time.usec * 10;
-        call->timer.func( call->timer.arg, time.u.LowPart, time.u.HighPart );
+        call->timer.func( call->timer.arg, (DWORD)call->timer.time, (DWORD)(call->timer.time >> 32) );
         user_apc = TRUE;
         break;
-    }
     case APC_ASYNC_IO:
         result->type = call->type;
         result->async_io.status = call->async_io.func( call->async_io.user,
@@ -895,10 +882,8 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
 {
     NTSTATUS ret;
     int cookie;
-    abs_time_t abs_timeout;
+    timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
 
-    NTDLL_get_server_abstime( &abs_timeout, timeout );
-    if (timeout) flags |= SELECT_TIMEOUT;
     for (;;)
     {
         SERVER_START_REQ( select )
@@ -909,6 +894,7 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
             req->timeout = abs_timeout;
             wine_server_add_data( req, handles, count * sizeof(HANDLE) );
             ret = wine_server_call( req );
+            abs_timeout = reply->timeout;
         }
         SERVER_END_REQ;
         if (ret == STATUS_PENDING) ret = wait_reply( &cookie );
@@ -995,32 +981,33 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
         return NTDLL_wait_for_multiple_objects( 0, NULL, flags, timeout, 0 );
     }
 
-    if (!timeout)  /* sleep forever */
+    if (!timeout || timeout->QuadPart == TIMEOUT_INFINITE)  /* sleep forever */
     {
         for (;;) select( 0, NULL, NULL, NULL, NULL );
     }
     else
     {
-        abs_time_t when;
+        LARGE_INTEGER now;
+        timeout_t when, diff;
 
-        NTDLL_get_server_abstime( &when, timeout );
+        if ((when = timeout->QuadPart) < 0)
+        {
+            NtQuerySystemTime( &now );
+            when = now.QuadPart - when;
+        }
 
         /* Note that we yield after establishing the desired timeout */
         NtYieldExecution();
+        if (!when) return STATUS_SUCCESS;
 
         for (;;)
         {
             struct timeval tv;
-            gettimeofday( &tv, 0 );
-            tv.tv_sec = when.sec - tv.tv_sec;
-            if ((tv.tv_usec = when.usec - tv.tv_usec) < 0)
-            {
-                tv.tv_usec += 1000000;
-                tv.tv_sec--;
-            }
-            /* if our yield already passed enough time, we're done */
-            if (tv.tv_sec < 0) break;
-
+            NtQuerySystemTime( &now );
+            diff = (when - now.QuadPart + 9) / 10;
+            if (diff <= 0) break;
+            tv.tv_sec  = diff / 1000000;
+            tv.tv_usec = diff % 1000000;
             if (select( 0, NULL, NULL, NULL, &tv ) != -1) break;
         }
     }

@@ -430,7 +430,9 @@ static NTSTATUS get_io_timeouts( HANDLE handle, enum server_fd_type type, ULONG 
             {
                 req->handle = handle;
                 req->flags = 0;
-                if (!(status = wine_server_call( req ))) timeouts->total = reply->read_timeout;
+                if (!(status = wine_server_call( req )) &&
+                    reply->read_timeout != TIMEOUT_INFINITE)
+                    timeouts->total = reply->read_timeout / -10000;
             }
             SERVER_END_REQ;
         }
@@ -1113,8 +1115,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
             SERVER_START_REQ(wait_named_pipe)
             {
                 req->handle = handle;
-                req->timeout = buff->TimeoutSpecified ? buff->Timeout.QuadPart / -10000L
-                               : NMPWAIT_USE_DEFAULT_WAIT;
+                req->timeout = buff->TimeoutSpecified ? buff->Timeout.QuadPart : 0;
                 req->async.callback = pipe_completion_wait;
                 req->async.iosb     = io;
                 req->async.arg      = NULL;
@@ -1467,7 +1468,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                     info->MailslotQuota = 0;
                     info->NextMessageSize = 0;
                     info->MessagesAvailable = 0;
-                    info->ReadTimeout.QuadPart = reply->read_timeout * -10000;
+                    info->ReadTimeout.QuadPart = reply->read_timeout;
                 }
             }
             SERVER_END_REQ;
@@ -1660,7 +1661,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             {
                 req->handle = handle;
                 req->flags = MAILSLOT_SET_READ_TIMEOUT;
-                req->read_timeout = info->ReadTimeout.QuadPart / -10000;
+                req->read_timeout = info->ReadTimeout.QuadPart;
                 io->u.Status = wine_server_call( req );
             }
             SERVER_END_REQ;
@@ -2186,8 +2187,8 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
           options, pipe_type, read_mode, completion_mode, max_inst, inbound_quota,
           outbound_quota, timeout);
 
-    /* assume we only get relative timeout, and storable in a DWORD as ms */
-    if (timeout->QuadPart > 0 || (timeout->QuadPart / -10000) >> 32)
+    /* assume we only get relative timeout */
+    if (timeout->QuadPart > 0)
         FIXME("Wrong time %s\n", wine_dbgstr_longlong(timeout->QuadPart));
 
     SERVER_START_REQ( create_named_pipe )
@@ -2203,7 +2204,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
         req->maxinstances = max_inst;
         req->outsize = outbound_quota;
         req->insize  = inbound_quota;
-        req->timeout = timeout->QuadPart / -10000;
+        req->timeout = timeout->QuadPart;
         wine_server_add_data( req, attr->ObjectName->Buffer,
                               attr->ObjectName->Length );
         status = wine_server_call( req );
@@ -2306,7 +2307,7 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
         req->attributes = attr->Attributes;
         req->rootdir = attr->RootDirectory;
         req->max_msgsize = MaxMessageSize;
-        req->read_timeout = (timeout.QuadPart <= 0) ? timeout.QuadPart / -10000 : -1;
+        req->read_timeout = timeout.QuadPart;
         wine_server_add_data( req, attr->ObjectName->Buffer,
                               attr->ObjectName->Length );
         ret = wine_server_call( req );

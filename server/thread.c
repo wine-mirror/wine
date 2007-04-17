@@ -59,7 +59,7 @@ struct thread_wait
     int                     count;      /* count of objects */
     int                     flags;
     void                   *cookie;     /* magic cookie to return to client */
-    struct timeval          timeout;
+    timeout_t               timeout;
     struct timeout_user    *user;
     struct wait_queue_entry queues[1];
 };
@@ -171,7 +171,7 @@ static inline void init_thread_structure( struct thread *thread )
     thread->token           = NULL;
 
     thread->creation_time = current_time;
-    thread->exit_time.tv_sec = thread->exit_time.tv_usec = 0;
+    thread->exit_time     = 0;
 
     list_init( &thread->mutex_list );
     list_init( &thread->system_apc );
@@ -461,24 +461,20 @@ static void end_wait( struct thread *thread )
 }
 
 /* build the thread wait structure */
-static int wait_on( int count, struct object *objects[], int flags, const abs_time_t *timeout )
+static int wait_on( unsigned int count, struct object *objects[], int flags, timeout_t timeout )
 {
     struct thread_wait *wait;
     struct wait_queue_entry *entry;
-    int i;
+    unsigned int i;
 
-    if (!(wait = mem_alloc( sizeof(*wait) + (count-1) * sizeof(*entry) ))) return 0;
+    if (!(wait = mem_alloc( FIELD_OFFSET(struct thread_wait, queues[count]) ))) return 0;
     wait->next    = current->wait;
     wait->thread  = current;
     wait->count   = count;
     wait->flags   = flags;
     wait->user    = NULL;
+    wait->timeout = timeout;
     current->wait = wait;
-    if (flags & SELECT_TIMEOUT)
-    {
-        wait->timeout.tv_sec  = timeout->sec;
-        wait->timeout.tv_usec = timeout->usec;
-    }
 
     for (i = 0, entry = wait->queues; i < count; i++, entry++)
     {
@@ -541,10 +537,7 @@ static int check_wait( struct thread *thread )
  other_checks:
     if ((wait->flags & SELECT_INTERRUPTIBLE) && !list_empty(&thread->system_apc)) return STATUS_USER_APC;
     if ((wait->flags & SELECT_ALERTABLE) && !list_empty(&thread->user_apc)) return STATUS_USER_APC;
-    if (wait->flags & SELECT_TIMEOUT)
-    {
-        if (!time_before( &current_time, &wait->timeout )) return STATUS_TIMEOUT;
-    }
+    if (wait->timeout <= current_time) return STATUS_TIMEOUT;
     return -1;
 }
 
@@ -623,16 +616,19 @@ static int signal_object( obj_handle_t handle )
 }
 
 /* select on a list of handles */
-static void select_on( int count, void *cookie, const obj_handle_t *handles,
-                       int flags, const abs_time_t *timeout, obj_handle_t signal_obj )
+static timeout_t select_on( unsigned int count, void *cookie, const obj_handle_t *handles,
+                            int flags, timeout_t timeout, obj_handle_t signal_obj )
 {
-    int ret, i;
+    int ret;
+    unsigned int i;
     struct object *objects[MAXIMUM_WAIT_OBJECTS];
 
-    if ((count < 0) || (count > MAXIMUM_WAIT_OBJECTS))
+    if (timeout <= 0) timeout = current_time - timeout;
+
+    if (count > MAXIMUM_WAIT_OBJECTS)
     {
         set_error( STATUS_INVALID_PARAMETER );
-        return;
+        return 0;
     }
     for (i = 0; i < count; i++)
     {
@@ -664,9 +660,9 @@ static void select_on( int count, void *cookie, const obj_handle_t *handles,
     }
 
     /* now we need to wait */
-    if (flags & SELECT_TIMEOUT)
+    if (current->wait->timeout != TIMEOUT_INFINITE)
     {
-        if (!(current->wait->user = add_timeout_user( &current->wait->timeout,
+        if (!(current->wait->user = add_timeout_user( current->wait->timeout,
                                                       thread_timeout, current->wait )))
         {
             end_wait( current );
@@ -677,7 +673,8 @@ static void select_on( int count, void *cookie, const obj_handle_t *handles,
     set_error( STATUS_PENDING );
 
 done:
-    while (--i >= 0) release_object( objects[i] );
+    while (i > 0) release_object( objects[--i] );
+    return timeout;
 }
 
 /* attempt to wake threads sleeping on the object wait queue */
@@ -1035,8 +1032,7 @@ DECL_HANDLER(init_thread)
     reply->pid     = get_process_id( process );
     reply->tid     = get_thread_id( current );
     reply->version = SERVER_PROTOCOL_VERSION;
-    reply->server_start.sec  = server_start_time.tv_sec;
-    reply->server_start.usec = server_start_time.tv_usec;
+    reply->server_start = server_start_time;
     return;
 
  error:
@@ -1094,10 +1090,8 @@ DECL_HANDLER(get_thread_info)
         reply->exit_code      = (thread->state == TERMINATED) ? thread->exit_code : STATUS_PENDING;
         reply->priority       = thread->priority;
         reply->affinity       = thread->affinity;
-        reply->creation_time.sec  = thread->creation_time.tv_sec;
-        reply->creation_time.usec = thread->creation_time.tv_usec;
-        reply->exit_time.sec  = thread->exit_time.tv_sec;
-        reply->exit_time.usec = thread->exit_time.tv_usec;
+        reply->creation_time  = thread->creation_time;
+        reply->exit_time      = thread->exit_time;
         reply->last           = thread->process->running_threads == 1;
 
         release_object( thread );
@@ -1145,8 +1139,8 @@ DECL_HANDLER(resume_thread)
 /* select on a handle list */
 DECL_HANDLER(select)
 {
-    int count = get_req_data_size() / sizeof(obj_handle_t);
-    select_on( count, req->cookie, get_req_data(), req->flags, &req->timeout, req->signal );
+    unsigned int count = get_req_data_size() / sizeof(obj_handle_t);
+    reply->timeout = select_on( count, req->cookie, get_req_data(), req->flags, req->timeout, req->signal );
 }
 
 /* queue an APC for a thread or process */

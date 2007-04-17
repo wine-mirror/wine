@@ -91,20 +91,15 @@ static inline struct fd *get_obj_fd( struct object *obj ) { return obj->ops->get
 /* timeout functions */
 
 struct timeout_user;
-extern struct timeval current_time;
+extern timeout_t current_time;
+
+#define TICKS_PER_SEC 10000000
 
 typedef void (*timeout_callback)( void *private );
 
-extern struct timeout_user *add_timeout_user( const struct timeval *when,
-                                              timeout_callback func, void *private );
+extern struct timeout_user *add_timeout_user( timeout_t when, timeout_callback func, void *private );
 extern void remove_timeout_user( struct timeout_user *user );
-extern void add_timeout( struct timeval *when, int timeout );
-/* return 1 if t1 is before t2 */
-static inline int time_before( const struct timeval *t1, const struct timeval *t2 )
-{
-    return ((t1->tv_sec < t2->tv_sec) ||
-            ((t1->tv_sec == t2->tv_sec) && (t1->tv_usec < t2->tv_usec)));
-}
+extern const char *get_timeout_str( timeout_t timeout );
 
 /* file functions */
 
@@ -133,8 +128,7 @@ extern struct async_queue *create_async_queue( struct fd *fd );
 extern void free_async_queue( struct async_queue *queue );
 extern struct async *create_async( struct thread *thread, struct async_queue *queue,
                                    const async_data_t *data );
-extern void async_set_timeout( struct async *async, const struct timeval *timeout,
-                               unsigned int status );
+extern void async_set_timeout( struct async *async, timeout_t timeout, unsigned int status );
 extern void async_set_result( struct object *obj, unsigned int status );
 extern int async_waiting( struct async_queue *queue );
 extern void async_wake_up( struct async_queue *queue, unsigned int status );

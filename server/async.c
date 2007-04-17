@@ -214,10 +214,10 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
 }
 
 /* set the timeout of an async operation */
-void async_set_timeout( struct async *async, const struct timeval *timeout, unsigned int status )
+void async_set_timeout( struct async *async, timeout_t timeout, unsigned int status )
 {
     if (async->timeout) remove_timeout_user( async->timeout );
-    if (timeout) async->timeout = add_timeout_user( timeout, async_timeout, async );
+    if (timeout != TIMEOUT_INFINITE) async->timeout = add_timeout_user( timeout, async_timeout, async );
     else async->timeout = NULL;
     async->timeout_status = status;
 }

@@ -85,7 +85,7 @@ struct cmsg_fd
 };
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
-abs_time_t server_start_time = { 0, 0 };  /* time of server startup */
+timeout_t server_start_time = 0;  /* time of server startup */
 
 extern struct wine_pthread_functions pthread_functions;
 

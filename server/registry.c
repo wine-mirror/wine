@@ -103,7 +103,7 @@ struct key_value
 /* the root of the registry tree */
 static struct key *root_key;
 
-static const int save_period = 30000;           /* delay between periodic saves (in ms) */
+static const timeout_t save_period = 30 * -TICKS_PER_SEC;  /* delay between periodic saves */
 static struct timeout_user *save_timeout_user;  /* saving timer */
 
 static void set_periodic_save_timer(void);
@@ -1683,11 +1683,8 @@ static void periodic_save( void *arg )
 /* start the periodic save timer */
 static void set_periodic_save_timer(void)
 {
-    struct timeval next = current_time;
-
-    add_timeout( &next, save_period );
     if (save_timeout_user) remove_timeout_user( save_timeout_user );
-    save_timeout_user = add_timeout_user( &next, periodic_save, NULL );
+    save_timeout_user = add_timeout_user( save_period, periodic_save, NULL );
 }
 
 /* save the modified registry branches to disk */

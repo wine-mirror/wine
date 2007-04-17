@@ -133,11 +133,8 @@ struct wake_up_reply
 };
 
 
-typedef struct
-{
-    int            sec;
-    int            usec;
-} abs_time_t;
+typedef __int64 timeout_t;
+#define TIMEOUT_INFINITE (((timeout_t)0x7fffffff) << 32 | 0xffffffff)
 
 
 typedef struct
@@ -257,7 +254,7 @@ typedef union
     {
         enum apc_type   type;
         void (__stdcall *func)(void*, unsigned int, unsigned int);
-        abs_time_t       time;
+        timeout_t        time;
         void            *arg;
     } timer;
     struct
@@ -540,7 +537,7 @@ struct init_thread_reply
     process_id_t pid;
     thread_id_t  tid;
     data_size_t  info_size;
-    abs_time_t   server_start;
+    timeout_t    server_start;
     int          version;
 };
 
@@ -589,8 +586,8 @@ struct get_process_info_reply
     int          priority;
     int          affinity;
     void*        peb;
-    abs_time_t   start_time;
-    abs_time_t   end_time;
+    timeout_t    start_time;
+    timeout_t    end_time;
 };
 
 
@@ -627,8 +624,8 @@ struct get_thread_info_reply
     int          exit_code;
     int          priority;
     int          affinity;
-    abs_time_t   creation_time;
-    abs_time_t   exit_time;
+    timeout_t    creation_time;
+    timeout_t    exit_time;
     int          last;
 };
 
@@ -856,17 +853,17 @@ struct select_request
     int          flags;
     void*        cookie;
     obj_handle_t signal;
-    abs_time_t   timeout;
+    timeout_t    timeout;
     /* VARARG(handles,handles); */
 };
 struct select_reply
 {
     struct reply_header __header;
+    timeout_t    timeout;
 };
 #define SELECT_ALL           1
 #define SELECT_ALERTABLE     2
 #define SELECT_INTERRUPTIBLE 4
-#define SELECT_TIMEOUT       8
 
 
 
@@ -2181,7 +2178,7 @@ struct set_timer_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    abs_time_t   expire;
+    timeout_t    expire;
     int          period;
     void*        callback;
     void*        arg;
@@ -2213,7 +2210,7 @@ struct get_timer_info_request
 struct get_timer_info_reply
 {
     struct reply_header __header;
-    abs_time_t   when;
+    timeout_t    when;
     int          signaled;
 };
 
@@ -2442,7 +2439,7 @@ struct send_message_request
     unsigned int    msg;
     unsigned long   wparam;
     unsigned long   lparam;
-    int             timeout;
+    timeout_t       timeout;
     /* VARARG(data,message_data); */
 };
 struct send_message_reply
@@ -2694,7 +2691,7 @@ struct create_named_pipe_request
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;
-    unsigned int   timeout;
+    timeout_t      timeout;
     /* VARARG(name,unicode_str); */
 };
 struct create_named_pipe_reply
@@ -2728,7 +2725,7 @@ struct wait_named_pipe_request
     struct request_header __header;
     obj_handle_t   handle;
     async_data_t   async;
-    unsigned int   timeout;
+    timeout_t      timeout;
     /* VARARG(name,unicode_str); */
 };
 struct wait_named_pipe_reply
@@ -3853,7 +3850,7 @@ struct create_mailslot_request
     unsigned int   attributes;
     obj_handle_t   rootdir;
     unsigned int   max_msgsize;
-    int            read_timeout;
+    timeout_t      read_timeout;
     /* VARARG(name,unicode_str); */
 };
 struct create_mailslot_reply
@@ -3869,13 +3866,13 @@ struct set_mailslot_info_request
     struct request_header __header;
     obj_handle_t   handle;
     unsigned int   flags;
-    int            read_timeout;
+    timeout_t      read_timeout;
 };
 struct set_mailslot_info_reply
 {
     struct reply_header __header;
     unsigned int   max_msgsize;
-    int            read_timeout;
+    timeout_t      read_timeout;
 };
 #define MAILSLOT_SET_READ_TIMEOUT  1
 
@@ -4660,6 +4657,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 295
+#define SERVER_PROTOCOL_VERSION 296
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

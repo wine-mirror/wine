@@ -180,7 +180,7 @@ static enum server_fd_type serial_get_fd_type( struct fd *fd )
 static void serial_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     struct serial *serial = get_fd_user( fd );
-    int timeout = 0;
+    timeout_t timeout = 0;
     struct async *async;
 
     assert(serial->obj.ops == &serial_ops);
@@ -188,21 +188,16 @@ static void serial_queue_async( struct fd *fd, const async_data_t *data, int typ
     switch (type)
     {
     case ASYNC_TYPE_READ:
-        timeout = serial->readconst + serial->readmult*count;
+        timeout = serial->readconst + (timeout_t)serial->readmult*count;
         break;
     case ASYNC_TYPE_WRITE:
-        timeout = serial->writeconst + serial->writemult*count;
+        timeout = serial->writeconst + (timeout_t)serial->writemult*count;
         break;
     }
 
     if ((async = fd_queue_async( fd, data, type, count )))
     {
-        if (timeout)
-        {
-            struct timeval when = current_time;
-            add_timeout( &when, timeout );
-            async_set_timeout( async, &when, STATUS_TIMEOUT );
-        }
+        if (timeout) async_set_timeout( async, timeout * -10000, STATUS_TIMEOUT );
         release_object( async );
         set_error( STATUS_PENDING );
     }

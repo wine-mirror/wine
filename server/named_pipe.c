@@ -94,8 +94,8 @@ struct named_pipe
     unsigned int        maxinstances;
     unsigned int        outsize;
     unsigned int        insize;
-    unsigned int        timeout;
     unsigned int        instances;
+    timeout_t           timeout;
     struct list         servers;     /* list of servers using this pipe */
     struct async_queue *waiters;     /* list of clients waiting to connect */
 };
@@ -512,9 +512,7 @@ static void check_flushed( void *arg )
     assert( server->event );
     if (pipe_data_remaining( server ))
     {
-        struct timeval tv = current_time;
-        add_timeout( &tv, 100 );
-        server->flush_poll = add_timeout_user( &tv, check_flushed, server );
+        server->flush_poll = add_timeout_user( -TICKS_PER_SEC / 10, check_flushed, server );
     }
     else
     {
@@ -538,14 +536,11 @@ static void pipe_server_flush( struct fd *fd, struct event **event )
 
     if (pipe_data_remaining( server ))
     {
-        struct timeval tv = current_time;
-
-        /* this kind of sux - 
+        /* this kind of sux -
            there's no unix way to be alerted when a pipe becomes empty */
         server->event = create_event( NULL, NULL, 0, 0, 0 );
         if (!server->event) return;
-        add_timeout( &tv, 100 );
-        server->flush_poll = add_timeout_user( &tv, check_flushed, server );
+        server->flush_poll = add_timeout_user( -TICKS_PER_SEC / 10, check_flushed, server );
         *event = server->event;
     }
 }
@@ -901,13 +896,7 @@ DECL_HANDLER(wait_named_pipe)
 
         if ((async = create_async( current, pipe->waiters, &req->async )))
         {
-            if (req->timeout != NMPWAIT_WAIT_FOREVER)
-            {
-                struct timeval when = current_time;
-                if (req->timeout == NMPWAIT_USE_DEFAULT_WAIT) add_timeout( &when, pipe->timeout );
-                else add_timeout( &when, req->timeout );
-                async_set_timeout( async, &when, STATUS_TIMEOUT );
-            }
+            async_set_timeout( async, req->timeout ? req->timeout : pipe->timeout, STATUS_TIMEOUT );
             release_object( async );
             set_error( STATUS_PENDING );
         }
