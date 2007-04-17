@@ -1295,6 +1295,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     WCHAR wcmd[1024];
     WCHAR buffer[MAX_PATH];
     BOOL done;
+    BOOL appKnownSingular = FALSE;
 
     /* make a local copy of the LPSHELLEXECUTEINFO structure and work with this from now on */
     memcpy(&sei_tmp, sei, sizeof(sei_tmp));
@@ -1322,6 +1323,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         memcpy(wszApplicationName, sei_tmp.lpFile+1, (l+1)*sizeof(WCHAR));
         if (wszApplicationName[l-1] == '\"')
             wszApplicationName[l-1] = '\0';
+        appKnownSingular = TRUE;
         TRACE("wszApplicationName=%s\n",debugstr_w(wszApplicationName));
     } else {
         DWORD l = strlenW(sei_tmp.lpFile)+1;
@@ -1370,6 +1372,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 	}
 
         SHGetPathFromIDListW(sei_tmp.lpIDList, wszApplicationName);
+        appKnownSingular = TRUE;
         TRACE("-- idlist=%p (%s)\n", sei_tmp.lpIDList, debugstr_w(wszApplicationName));
     }
 
@@ -1419,6 +1422,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 		/* open shell folder for the specified class GUID */
 		strcpyW(wszParameters, buffer);
 		strcpyW(wszApplicationName, wExplorer);
+		appKnownSingular = TRUE;
 
 		sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
 	    } else {
@@ -1438,6 +1442,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 		                  buffer, target, sei_tmp.lpIDList, NULL, &resultLen);
 		    if (resultLen > dwApplicationNameLen)
 			ERR("Argify buffer not large enough... truncating\n");
+		    appKnownSingular = FALSE;
 		}
 		sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
 	    }
@@ -1455,6 +1460,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         HeapFree(GetProcessHeap(), 0, wszApplicationName);
         dwApplicationNameLen = len+1;
         wszApplicationName = buf;
+        /* appKnownSingular unmodified */
 
         sei_tmp.lpFile = wszApplicationName;
     }
@@ -1495,7 +1501,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     TRACE("execute:%s,%s,%s\n", debugstr_w(wszApplicationName), debugstr_w(wszParameters), debugstr_w(wszDir));
 
     /* separate out command line arguments from executable file name */
-    if (!*sei_tmp.lpParameters) {
+    if (!*sei_tmp.lpParameters && !appKnownSingular) {
 	/* If the executable path is quoted, handle the rest of the command line as parameters. */
 	if (sei_tmp.lpFile[0] == '"') {
 	    LPWSTR src = wszApplicationName/*sei_tmp.lpFile*/ + 1;
