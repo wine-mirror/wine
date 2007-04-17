@@ -400,6 +400,11 @@ static HRESULT WINAPI IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapte
         *ppReturnedDeviceInterface = NULL;
     }
 
+    /* Initialize the converted declaration array. This creates a valid pointer and when adding decls HeapReAlloc
+     * can be used without further checking
+     */
+    object->convertedDecls = HeapAlloc(GetProcessHeap(), 0, 0);
+
     return hr;
 }
 

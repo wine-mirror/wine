@@ -61,8 +61,17 @@ static ULONG WINAPI IDirect3DDevice9Impl_Release(LPDIRECT3DDEVICE9 iface) {
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
+      int i;
       This->inDestruction = TRUE;
-      IDirect3DDevice9_SetVertexDeclaration(iface, NULL);
+
+      for(i = 0; i < This->numConvertedDecls; i++) {
+          /* Unless Wine is buggy or the app has a bug the refcount will be 0, because decls hold a reference to the
+           * device
+           */
+          IDirect3DVertexDeclaration9Impl_Destroy(This->convertedDecls[i]);
+      }
+      HeapFree(GetProcessHeap(), 0, This->convertedDecls);
+
       IWineD3DDevice_Uninit3D(This->WineD3DDevice, D3D9CB_DestroyDepthStencilSurface, D3D9CB_DestroySwapChain);
       IWineD3DDevice_Release(This->WineD3DDevice);
       HeapFree(GetProcessHeap(), 0, This);
@@ -769,29 +778,77 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ProcessVertices(LPDIRECT3DDEVICE9 i
     return IWineD3DDevice_ProcessVertices(This->WineD3DDevice,SrcStartIndex, DestIndex, VertexCount, ((IDirect3DVertexBuffer9Impl *)pDestBuffer)->wineD3DVertexBuffer, ((IDirect3DVertexBuffer9Impl *)pVertexDecl)->wineD3DVertexBuffer, Flags);       
 }
 
+IDirect3DVertexDeclaration9 *getConvertedDecl(IDirect3DDevice9Impl *This, DWORD fvf) {
+    HRESULT hr;
+    D3DVERTEXELEMENT9* elements = NULL;
+    IDirect3DVertexDeclaration9* pDecl = NULL;
+    int p, low, high; /* deliberately signed */
+    IDirect3DVertexDeclaration9  **convertedDecls = This->convertedDecls;
+
+    TRACE("Searching for declaration for fvf %08x... ", fvf);
+
+    low = 0;
+    high = This->numConvertedDecls - 1;
+    while(low <= high) {
+        p = (low + high) >> 1;
+        TRACE("%d ", p);
+        if(((IDirect3DVertexDeclaration9Impl *) convertedDecls[p])->convFVF == fvf) {
+            TRACE("found %p\n", convertedDecls[p]);
+            return convertedDecls[p];
+        } else if(((IDirect3DVertexDeclaration9Impl *) convertedDecls[p])->convFVF < fvf) {
+            low = p + 1;
+        } else {
+            high = p - 1;
+        }
+    }
+    TRACE("not found. Creating and inserting at position %d.\n", low);
+
+    hr = vdecl_convert_fvf(fvf, &elements);
+    if (hr != S_OK) return NULL;
+
+    hr = IDirect3DDevice9Impl_CreateVertexDeclaration((IDirect3DDevice9 *) This, elements, &pDecl);
+    if (hr != S_OK) return NULL;
+
+    if(This->declArraySize == This->numConvertedDecls) {
+        int grow = max(This->declArraySize / 2, 8);
+        convertedDecls = HeapReAlloc(GetProcessHeap(), 0, convertedDecls,
+                                     sizeof(convertedDecls[0]) * (This->numConvertedDecls + grow));
+        if(!convertedDecls) {
+            /* This will destroy it */
+            IDirect3DVertexDeclaration9_Release(pDecl);
+            return NULL;
+        }
+        This->convertedDecls = convertedDecls;
+        This->declArraySize += grow;
+    }
+
+    memmove(convertedDecls + low + 1, convertedDecls + low, sizeof(IDirect3DVertexDeclaration9Impl *) * (This->numConvertedDecls - low));
+    convertedDecls[low] = pDecl;
+    This->numConvertedDecls++;
+
+    /* Will prevent the decl from beeing destroyed */
+    ((IDirect3DVertexDeclaration9Impl *) pDecl)->convFVF = fvf;
+    IDirect3DVertexDeclaration9_Release(pDecl); /* Does not destroy now */
+
+    TRACE("Returning %p. %d decls in array\n", pDecl, This->numConvertedDecls);
+    return pDecl;
+}
+
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetFVF(LPDIRECT3DDEVICE9 iface, DWORD FVF) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
     if (0 != FVF) {
          HRESULT hr;
-         D3DVERTEXELEMENT9* elements = NULL;
-         IDirect3DVertexDeclaration9* pDecl = NULL;
+         IDirect3DVertexDeclaration9* pDecl = getConvertedDecl(This, FVF);
 
-         hr = vdecl_convert_fvf(FVF, &elements);
-         if (hr != S_OK) goto exit;
-
-         hr = IDirect3DDevice9Impl_CreateVertexDeclaration(iface, elements, &pDecl);
-         if (hr != S_OK) goto exit;
+         if(!pDecl) {
+             /* Any situation when this should happen, except out of memory? */
+             ERR("Failed to create a converted vertex declaration\n");
+             return D3DERR_DRIVERINTERNALERROR;
+         }
 
          hr = IDirect3DDevice9Impl_SetVertexDeclaration(iface, pDecl);
-         if (hr != S_OK) goto exit;
-         This->convertedDecl = pDecl;
-
-         exit:
-         HeapFree(GetProcessHeap(), 0, elements);
-         /* If allocated and set correctly, this will reduce the refcount to 0, but not destroy the declaration */
-         if (pDecl) IUnknown_Release(pDecl);
          if (hr != S_OK) return hr;
     }
 

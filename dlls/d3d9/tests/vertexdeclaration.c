@@ -652,7 +652,8 @@ static void test_fvf_decl_management(
     IDirect3DVertexDeclaration9* result_decl1 = NULL;
     IDirect3DVertexDeclaration9* result_decl2 = NULL;
     IDirect3DVertexDeclaration9* result_decl3 = NULL;
-    int ref1, ref2, ref3;
+    IDirect3DVertexDeclaration9* result_decl4 = NULL;
+    int ref1, ref2, ref3, ref4;
 
     DWORD test_fvf1 = D3DFVF_XYZRHW;
     DWORD test_fvf2 = D3DFVF_NORMAL;
@@ -703,18 +704,34 @@ static void test_fvf_decl_management(
     /* Re-Check if the first decl was overwritten by the new Get() */
     VDECL_CHECK(compare_elements(result_decl1, test_elements1));
 
-    /* The refcounts should all be 1 */
+    hr = IDirect3DDevice9_SetFVF( device, test_fvf1);
+    ok(SUCCEEDED(hr), "SetFVF returned %#x, expected %#x\n", hr, D3D_OK);
+    if (FAILED(hr)) return;
+
+    hr = IDirect3DDevice9_GetVertexDeclaration ( device, &result_decl4);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
+    if (FAILED(hr)) return;
+
+    ok(result_decl4 == result_decl1, "Setting an already used FVF over results in a different vertexdeclaration\n");
+
     ref1 = get_refcount((IUnknown*) result_decl1);
     ref2 = get_refcount((IUnknown*) result_decl2);
     ref3 = get_refcount((IUnknown*) result_decl3);
-    ok (ref1 == 2, "Refcount #1 is %d, expected 2\n", ref1);
-    ok (ref2 == 2, "Refcount #2 is %d, expected 2\n", ref2);
+    ref4 = get_refcount((IUnknown*) result_decl4);
+    ok (ref1 == 3, "Refcount #1 is %d, expected 3\n", ref1);
+    ok (ref2 == 3, "Refcount #2 is %d, expected 3\n", ref2);
     ok (ref3 == 1, "Refcount #3 is %d, expected 1\n", ref3);
+    ok (ref4 == 3, "Refcount #4 is %d, expected 3\n", ref4);
 
     /* Clear down any current vertex declaration */
     hr = IDirect3DDevice9_SetVertexDeclaration ( device, NULL );
     ok (SUCCEEDED(hr), "SetVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
     if (FAILED(hr)) return;
+
+    IDirect3DVertexDeclaration9_Release(result_decl1);
+    IDirect3DVertexDeclaration9_Release(result_decl2);
+    IDirect3DVertexDeclaration9_Release(result_decl3);
+    IDirect3DVertexDeclaration9_Release(result_decl4);
 
     return;
 }

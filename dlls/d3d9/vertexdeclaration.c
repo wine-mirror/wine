@@ -209,6 +209,18 @@ static ULONG WINAPI IDirect3DVertexDeclaration9Impl_AddRef(LPDIRECT3DVERTEXDECLA
     return ref;
 }
 
+void IDirect3DVertexDeclaration9Impl_Destroy(LPDIRECT3DVERTEXDECLARATION9 iface) {
+    IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
+
+    if(This->ref != 0) {
+        /* Should not happen unless wine has a bug or the application releases references it does not own */
+        ERR("Destroying vdecl with ref != 0\n");
+    }
+    IWineD3DVertexDeclaration_Release(This->wineD3DVertexDeclaration);
+    HeapFree(GetProcessHeap(), 0, This->elements);
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
 static ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECLARATION9 iface) {
     IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -217,12 +229,9 @@ static ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECL
 
     if (ref == 0) {
         IDirect3DDevice9 *parentDevice = This->parentDevice;
-        BOOL converted = ((IDirect3DDevice9Impl *) parentDevice)->convertedDecl == iface;
 
-        if(!converted) {
-            IWineD3DVertexDeclaration_Release(This->wineD3DVertexDeclaration);
-            HeapFree(GetProcessHeap(), 0, This->elements);
-            HeapFree(GetProcessHeap(), 0, This);
+        if(!This->convFVF) {
+            IDirect3DVertexDeclaration9Impl_Release(iface);
         }
         IUnknown_Release(parentDevice);
     }
@@ -370,17 +379,6 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_SetVertexDeclaration(LPDIRECT3DDEVICE9 ifa
     HRESULT hr = D3D_OK;
 
     TRACE("(%p) : Relay\n", iface);
-
-    if (This->convertedDecl && This->convertedDecl != pDecl) {
-        IDirect3DVertexDeclaration9Impl *iDecl = (IDirect3DVertexDeclaration9Impl *) This->convertedDecl;
-
-        /* Will need locking once we claim to be thread safe */
-        if(iDecl->ref == 0) {
-            IUnknown_AddRef(This->convertedDecl);
-            IUnknown_Release(This->convertedDecl);
-        }
-        This->convertedDecl = NULL;
-    }
 
     hr = IWineD3DDevice_SetVertexDeclaration(This->WineD3DDevice, pDeclImpl == NULL ? NULL : pDeclImpl->wineD3DVertexDeclaration);
     return hr;
