@@ -100,7 +100,7 @@ static UINT WINAPI IDirect3D9Impl_GetAdapterModeCount(LPDIRECT3D9 iface, UINT Ad
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
 
     /* Others than that not supported by d3d9, but reported by wined3d for ddraw. Filter them out */
-    if(Format != D3DFMT_X8R8G8B8 && Format != D3DFMT_R5G6B5 && Format != D3DFMT_UNKNOWN) {
+    if(Format != D3DFMT_X8R8G8B8 && Format != D3DFMT_R5G6B5) {
         return 0;
     }
 
