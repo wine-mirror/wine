@@ -112,7 +112,7 @@ static BOOL fetch_process_info(struct dump_context* dc)
     return FALSE;
 }
 
-static void fetch_thread_stack(struct dump_context* dc, void* teb_addr,
+static void fetch_thread_stack(struct dump_context* dc, const void* teb_addr,
                                const CONTEXT* ctx, MINIDUMP_MEMORY_DESCRIPTOR* mmd)
 {
     NT_TIB      tib;
@@ -327,7 +327,7 @@ static void add_memory_block(struct dump_context* dc, ULONG64 base, ULONG size, 
  *
  * Writes a chunk of data at a given position in the minidump
  */
-static void writeat(struct dump_context* dc, RVA rva, void* data, unsigned size)
+static void writeat(struct dump_context* dc, RVA rva, const void* data, unsigned size)
 {
     DWORD       written;
 

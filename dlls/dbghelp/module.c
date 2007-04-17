@@ -368,7 +368,7 @@ struct module* module_find_by_addr(const struct process* pcs, unsigned long addr
  * checks whether the ELF container, for a (supposed) PE builtin is
  * already loaded
  */
-static BOOL module_is_elf_container_loaded(struct process* pcs,
+static BOOL module_is_elf_container_loaded(const struct process* pcs,
                                            const WCHAR* ImageName, DWORD base)
 {
     size_t              len;

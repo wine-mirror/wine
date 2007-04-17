@@ -342,7 +342,7 @@ static const char* dwarf2_debug_di(const dwarf2_debug_info_t* di)
 }
 
 static dwarf2_abbrev_entry_t*
-dwarf2_abbrev_table_find_entry(struct sparse_array* abbrev_table,
+dwarf2_abbrev_table_find_entry(const struct sparse_array* abbrev_table,
                                unsigned long entry_code)
 {
     assert( NULL != abbrev_table );
@@ -782,7 +782,7 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
 }
 
 static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
-                                         dwarf2_debug_info_t* di,
+                                         const dwarf2_debug_info_t* di,
                                          unsigned long dw,
                                          struct location* loc,
                                          const struct location* frame)
@@ -1095,7 +1095,7 @@ static struct symt* dwarf2_parse_reference_type(dwarf2_parse_context_t* ctx,
 }
 
 static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
-                                    dwarf2_debug_info_t* di,
+                                    const dwarf2_debug_info_t* di,
                                     struct symt_udt* parent)
 {
     struct symt* elt_type;
@@ -1197,7 +1197,7 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
 }
 
 static void dwarf2_parse_enumerator(dwarf2_parse_context_t* ctx,
-                                    dwarf2_debug_info_t* di,
+                                    const dwarf2_debug_info_t* di,
                                     struct symt_enum* parent)
 {
     struct attribute    name;
@@ -1372,7 +1372,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
 }
 
 static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
-                                          dwarf2_debug_info_t* di)
+                                          const dwarf2_debug_info_t* di)
 {
     struct attribute    name;
     struct attribute    low_pc;
@@ -1392,11 +1392,11 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
 
 static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
                                           struct symt_block* parent_block,
-					  dwarf2_debug_info_t* di);
+					  const dwarf2_debug_info_t* di);
 
 static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                             struct symt_block* parent_block,
-                                            dwarf2_debug_info_t* di)
+                                            const dwarf2_debug_info_t* di)
 {
     struct symt_block*  block;
     struct attribute    low_pc;
@@ -1447,7 +1447,7 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
 
 static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm, 
                                           struct symt_block* parent_block,
-					  dwarf2_debug_info_t* di)
+					  const dwarf2_debug_info_t* di)
 {
     struct symt_block*  block;
     struct attribute    low_pc;
@@ -1743,7 +1743,7 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
 }
 
 static void dwarf2_set_line_number(struct module* module, unsigned long address,
-                                   struct vector* v, unsigned file, unsigned line)
+                                   const struct vector* v, unsigned file, unsigned line)
 {
     struct symt_function*       func;
     struct symt_ht*             symt;
