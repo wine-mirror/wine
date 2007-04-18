@@ -246,7 +246,6 @@ DECL_HANDLER(register_async);
 DECL_HANDLER(cancel_async);
 DECL_HANDLER(ioctl);
 DECL_HANDLER(create_named_pipe);
-DECL_HANDLER(connect_named_pipe);
 DECL_HANDLER(get_named_pipe_info);
 DECL_HANDLER(create_window);
 DECL_HANDLER(destroy_window);
@@ -467,7 +466,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_cancel_async,
     (req_handler)req_ioctl,
     (req_handler)req_create_named_pipe,
-    (req_handler)req_connect_named_pipe,
     (req_handler)req_get_named_pipe_info,
     (req_handler)req_create_window,
     (req_handler)req_destroy_window,

@@ -1998,12 +1998,6 @@ enum message_type
 #define NAMED_PIPE_NONBLOCKING_MODE     0x0004
 #define NAMED_PIPE_SERVER_END           0x8000
 
-/* Connect to a named pipe */
-@REQ(connect_named_pipe)
-    obj_handle_t   handle;
-    async_data_t   async;       /* async I/O parameters */
-@END
-
 
 @REQ(get_named_pipe_info)
     obj_handle_t   handle;

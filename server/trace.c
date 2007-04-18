@@ -90,6 +90,7 @@ static void dump_ioctl_code( const ioctl_code_t *code )
 #define CASE(c) case c: fputs( #c, stderr ); break
         CASE(FSCTL_DISMOUNT_VOLUME);
         CASE(FSCTL_PIPE_DISCONNECT);
+        CASE(FSCTL_PIPE_LISTEN);
         CASE(FSCTL_PIPE_WAIT);
         default: fprintf( stderr, "%08x", *code ); break;
 #undef CASE
@@ -2443,13 +2444,6 @@ static void dump_create_named_pipe_reply( const struct create_named_pipe_reply *
     fprintf( stderr, " handle=%p", req->handle );
 }
 
-static void dump_connect_named_pipe_request( const struct connect_named_pipe_request *req )
-{
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " async=" );
-    dump_async_data( &req->async );
-}
-
 static void dump_get_named_pipe_info_request( const struct get_named_pipe_info_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -3601,7 +3595,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_cancel_async_request,
     (dump_func)dump_ioctl_request,
     (dump_func)dump_create_named_pipe_request,
-    (dump_func)dump_connect_named_pipe_request,
     (dump_func)dump_get_named_pipe_info_request,
     (dump_func)dump_create_window_request,
     (dump_func)dump_destroy_window_request,
@@ -3819,7 +3812,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_ioctl_reply,
     (dump_func)dump_create_named_pipe_reply,
-    (dump_func)0,
     (dump_func)dump_get_named_pipe_info_reply,
     (dump_func)dump_create_window_reply,
     (dump_func)0,
@@ -4037,7 +4029,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "cancel_async",
     "ioctl",
     "create_named_pipe",
-    "connect_named_pipe",
     "get_named_pipe_info",
     "create_window",
     "destroy_window",

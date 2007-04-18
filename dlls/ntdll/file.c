@@ -1019,15 +1019,6 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
     return status;
 }
 
-/***********************************************************************
- *           pipe_completion_wait   (Internal)
- */
-static NTSTATUS pipe_completion_wait(void *arg, PIO_STATUS_BLOCK iosb, NTSTATUS status)
-{
-    TRACE("for %p, status=%08x\n", iosb, status);
-    iosb->u.Status = status;
-    return status;
-}
 
 /**************************************************************************
  *              NtFsControlFile                 [NTDLL.@]
@@ -1072,36 +1063,6 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         break;
 
     case FSCTL_PIPE_LISTEN:
-        {
-            HANDLE internal_event = 0;
-
-            if(!event && !apc)
-            {
-                status = NtCreateEvent(&internal_event, EVENT_ALL_ACCESS, NULL, FALSE, FALSE);
-                if (status != STATUS_SUCCESS) break;
-            }
-            SERVER_START_REQ(connect_named_pipe)
-            {
-                req->handle  = handle;
-                req->async.callback = pipe_completion_wait;
-                req->async.iosb     = io;
-                req->async.arg      = NULL;
-                req->async.apc      = apc;
-                req->async.apc_arg  = apc_context;
-                req->async.event    = event ? event : internal_event;
-                status = wine_server_call(req);
-            }
-            SERVER_END_REQ;
-
-            if (internal_event && status == STATUS_PENDING)
-            {
-                while (NtWaitForSingleObject(internal_event, TRUE, NULL) == STATUS_USER_APC) /*nothing*/ ;
-                status = io->u.Status;
-            }
-            if (internal_event) NtClose(internal_event);
-        }
-        break;
-
     case FSCTL_PIPE_WAIT:
         {
             HANDLE internal_event = 0;
