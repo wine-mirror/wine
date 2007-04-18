@@ -1762,3 +1762,19 @@ HINSTANCE WINAPI ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
     SHELL_execute( &sei, SHELL_ExecuteW );
     return sei.hInstApp;
 }
+
+/*************************************************************************
+ * OpenAs_RunDLLA          [SHELL32.@]
+ */
+void WINAPI OpenAs_RunDLLA(HWND hwnd, HINSTANCE hinst, LPCSTR cmdline, int cmdshow)
+{
+    FIXME("%p, %p, %s, %d\n", hwnd, hinst, debugstr_a(cmdline), cmdshow);
+}
+
+/*************************************************************************
+ * OpenAs_RunDLLW          [SHELL32.@]
+ */
+void WINAPI OpenAs_RunDLLW(HWND hwnd, HINSTANCE hinst, LPCWSTR cmdline, int cmdshow)
+{
+    FIXME("%p, %p, %s, %d\n", hwnd, hinst, debugstr_w(cmdline), cmdshow);
+}
