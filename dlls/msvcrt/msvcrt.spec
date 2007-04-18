@@ -335,7 +335,7 @@
 @ cdecl -ret64 _lseeki64(long double long)
 @ cdecl _ltoa(long ptr long) ntdll._ltoa
 @ cdecl _ltow(long ptr long) ntdll._ltow
-@ cdecl _makepath(str str str str str)
+@ cdecl _makepath(ptr str str str str)
 @ cdecl _matherr(ptr) MSVCRT__matherr
 @ cdecl _mbbtombc(long)
 @ cdecl _mbbtype(long long)
