@@ -321,7 +321,7 @@ struct codeview_type_parse
     DWORD               num;
 };
 
-static inline const void* codeview_jump_to_type(struct codeview_type_parse* ctp, DWORD idx)
+static inline const void* codeview_jump_to_type(const struct codeview_type_parse* ctp, DWORD idx)
 {
     if (idx < FIRST_DEFINABLE_TYPE) return NULL;
     idx -= FIRST_DEFINABLE_TYPE;
@@ -1926,7 +1926,7 @@ static HANDLE open_pdb_file(const struct process* pcs,
 }
 
 static void pdb_process_types(const struct msc_debug_info* msc_dbg, 
-                              const char* image, struct pdb_lookup* pdb_lookup)
+                              const char* image, const struct pdb_lookup* pdb_lookup)
 {
     BYTE*       types_image = NULL;
 
@@ -2098,9 +2098,10 @@ static BOOL pdb_process_internal(const struct process* pcs,
 
 static void pdb_process_symbol_imports(const struct process* pcs, 
                                        const struct msc_debug_info* msc_dbg,
-                                       PDB_SYMBOLS* symbols, 
+                                       const PDB_SYMBOLS* symbols,
                                        const void* symbols_image,
-                                       char* image, struct pdb_lookup* pdb_lookup,
+                                       const char* image,
+                                       const struct pdb_lookup* pdb_lookup,
                                        unsigned module_index)
 {
     if (module_index == -1 && symbols && symbols->pdbimport_size)
