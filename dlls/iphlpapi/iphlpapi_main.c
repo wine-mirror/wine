@@ -50,6 +50,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 #define INADDR_NONE ~0UL
 #endif
 
+static int resolver_initialised;
+
+/* call res_init() just once because of a bug in Mac OSX 10.4 */
+static void initialise_resolver(void)
+{
+    if (!resolver_initialised)
+    {
+        res_init();
+        resolver_initialised = 1;
+    }
+}
+
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
   switch (fdwReason) {
@@ -1340,7 +1352,7 @@ DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
   if (!pOutBufLen)
     return ERROR_INVALID_PARAMETER;
 
-  res_init();
+  initialise_resolver();
   size = sizeof(FIXED_INFO) + (_res.nscount > 0 ? (_res.nscount  - 1) *
    sizeof(IP_ADDR_STRING) : 0);
   if (!pFixedInfo || *pOutBufLen < size) {

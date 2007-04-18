@@ -65,6 +65,17 @@ static CRITICAL_SECTION resolver_cs = { &resolver_cs_debug, -1, 0, 0, 0, 0 };
 #define LOCK_RESOLVER()     do { EnterCriticalSection( &resolver_cs ); } while (0)
 #define UNLOCK_RESOLVER()   do { LeaveCriticalSection( &resolver_cs ); } while (0)
 
+static int resolver_initialised;
+
+/* call res_init() just once because of a bug in Mac OSX 10.4 */
+static void initialise_resolver( void )
+{
+    if (!resolver_initialised)
+    {
+        res_init();
+        resolver_initialised = 1;
+    }
+}
 
 static const char *dns_section_to_str( ns_sect section )
 {
@@ -699,7 +710,7 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PIP4_ARRA
 
     LOCK_RESOLVER();
 
-    res_init();
+    initialise_resolver();
     _res.options |= dns_map_options( options );
 
     if (servers && (ret = dns_set_serverlist( servers )))
@@ -817,7 +828,7 @@ DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PWSTR adap
 #ifdef HAVE_RESOLV
         LOCK_RESOLVER();
 
-        res_init();
+        initialise_resolver();
         ret = dns_get_serverlist( buffer, len );
 
         UNLOCK_RESOLVER();
