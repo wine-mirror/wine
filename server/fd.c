@@ -1738,12 +1738,12 @@ struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type,
         assert(0);
     }
 
-    if ((async = create_async( current, queue, data )))
+    if ((async = create_async( current, queue, data )) && type != ASYNC_TYPE_WAIT)
     {
         if (!fd->inode)
             set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
         else  /* regular files are always ready for read and write */
-            if (type != ASYNC_TYPE_WAIT) async_wake_up( queue, STATUS_ALERTED );
+            async_wake_up( queue, STATUS_ALERTED );
     }
     return async;
 }

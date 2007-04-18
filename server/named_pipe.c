@@ -76,7 +76,6 @@ struct pipe_server
     struct named_pipe   *pipe;
     struct timeout_user *flush_poll;
     struct event        *event;
-    struct async_queue  *wait_q;     /* only a single one can be queued */
     unsigned int         options;    /* pipe options */
 };
 
@@ -385,8 +384,6 @@ static void pipe_server_destroy( struct object *obj)
         server->client = NULL;
     }
 
-    free_async_queue( server->wait_q );
-
     assert( server->pipe->instances );
     server->pipe->instances--;
 
@@ -587,7 +584,7 @@ static void pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const async_dat
         case ps_idle_server:
         case ps_wait_connect:
             set_server_state( server, ps_wait_open );
-            if ((async = create_async( current, server->wait_q, async_data )))
+            if ((async = fd_queue_async( server->ioctl_fd, async_data, ASYNC_TYPE_WAIT, 0 )))
             {
                 if (server->pipe->waiters) async_wake_up( server->pipe->waiters, STATUS_SUCCESS );
                 release_object( async );
@@ -709,7 +706,6 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     server->client = NULL;
     server->flush_poll = NULL;
     server->options = options;
-    server->wait_q = create_async_queue( NULL );
 
     list_add_head( &pipe->servers, &server->entry );
     grab_object( pipe );
@@ -791,7 +787,7 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
             if (client->fd && server->fd)
             {
                 if (server->state == ps_wait_open)
-                    async_wake_up( server->wait_q, STATUS_SUCCESS );
+                    fd_async_wake_up( server->ioctl_fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
                 set_server_state( server, ps_connected_server );
                 server->client = client;
                 client->server = server;
