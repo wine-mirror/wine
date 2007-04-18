@@ -342,39 +342,6 @@ BOOL WINAPI localmon_ConfigurePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
 }
 
 /*****************************************************
- *   localmon_DeletePortW [exported through MONITOREX]
- *
- * Delete a specific Port
- *
- * PARAMS
- *  pName     [I] Servername or NULL (local Computer)
- *  hWnd      [I] Handle to parent Window
- *  pPortName [I] Name of the Port, that should be deleted
- *
- * RETURNS
- *  Success: TRUE
- *  Failure: FALSE
- *
- */
-BOOL WINAPI localmon_DeletePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
-{
-    DWORD   res;
-    HKEY    hroot;
-
-    TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
-
-    if ((!pPortName) || (!pPortName[0])) return FALSE;
-
-    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_PortsW, &hroot);
-    if (res == ERROR_SUCCESS) {
-        res = RegDeleteValueW(hroot, pPortName);
-        RegCloseKey(hroot);
-    }
-    TRACE("=> %d\n", (res == ERROR_SUCCESS));
-    return (res == ERROR_SUCCESS);
-}
-
-/*****************************************************
  *   localmon_EnumPortsW [exported through MONITOREX]
  *
  * Enumerate all local Ports
@@ -685,7 +652,7 @@ LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR regroot)
             NULL,       /* localmon_AddPortW */
             NULL,       /* localmon_AddPortExW */
             localmon_ConfigurePortW,
-            localmon_DeletePortW,
+            NULL,       /* Use DeletePortUI in localui.dll */
             NULL,       /* localmon_GetPrinterDataFromPort */
             NULL,       /* localmon_SetPortTimeOuts */
             localmon_XcvOpenPort,
