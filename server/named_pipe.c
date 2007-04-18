@@ -228,7 +228,7 @@ static const struct object_ops named_pipe_device_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     named_pipe_device_get_fd,         /* get_fd */
-    pipe_map_access,                  /* map_access */
+    no_map_access,                    /* map_access */
     named_pipe_device_lookup_name,    /* lookup_name */
     named_pipe_device_open_file,      /* open_file */
     fd_close_handle,                  /* close_handle */
