@@ -33,7 +33,7 @@
 void VectorTest(void)
 {
     D3DVALUE mod,par;
-    D3DVECTOR e,r,u,v;
+    D3DVECTOR e,r,u,v,casnul;
 
     u.x=2.0;u.y=2.0;u.z=1.0;
     v.x=4.0;v.y=4.0;v.z=0.0;
@@ -60,6 +60,18 @@ void VectorTest(void)
 /*_______________________VectorModulus_____________________________*/
     mod=D3DRMVectorModulus(&u);
     ok((mod == 3.0), "Expected 3.0, Got %f",mod);
+
+/*_______________________VectorNormalize___________________________*/
+    D3DRMVectorNormalize(&u);
+    e.x=2.0/3.0;e.y=2.0/3.0;e.z=1.0/3.0;
+    expect_vec(e,u);
+
+/* If u is the NULL vector, MSDN says that the return vector is NULL. In fact, the returned vector is (1,0,0). The following test case prove it. */
+
+    casnul.x=0.0; casnul.y=0.0; casnul.z=0.0;
+    D3DRMVectorNormalize(&casnul);
+    e.x=1.0; e.y=0.0; e.z=0.0;
+    expect_vec(e,casnul);
 
 /*_______________________VectorScale__________________________*/
     par=2.5;

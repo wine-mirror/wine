@@ -12,7 +12,7 @@
 @ stdcall D3DRMVectorCrossProduct(ptr ptr ptr)
 @ stdcall D3DRMVectorDotProduct(ptr ptr)
 @ stdcall D3DRMVectorModulus(ptr)
-@ stub D3DRMVectorNormalize
+@ stdcall D3DRMVectorNormalize(ptr)
 @ stub D3DRMVectorRandom
 @ stub D3DRMVectorReflect
 @ stub D3DRMVectorRotate

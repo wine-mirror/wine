@@ -75,6 +75,23 @@ D3DVALUE WINAPI D3DRMVectorModulus(LPD3DVECTOR v)
     return result;
 }
 
+/* Normalize a vector.  Returns (1,0,0) if INPUT is the NULL vector. */
+LPD3DVECTOR WINAPI D3DRMVectorNormalize(LPD3DVECTOR u)
+{
+    D3DVALUE modulus = D3DRMVectorModulus(u);
+    if(modulus)
+    {
+        D3DRMVectorScale(u,u,1.0/modulus);
+    }
+    else
+    {
+        u->x=1.0;
+        u->y=0.0;
+        u->z=0.0;
+    }
+    return u;
+}
+
 /* Scale a vector */
 LPD3DVECTOR WINAPI D3DRMVectorScale(LPD3DVECTOR d, LPD3DVECTOR s, D3DVALUE factor)
 {
