@@ -6,7 +6,9 @@ MODULE    = d3drm.dll
 IMPORTLIB = libd3drm.$(IMPLIBEXT)
 IMPORTS   = kernel32
 
-C_SRCS = d3drm_main.c
+C_SRCS = \
+	d3drm_main.c \
+	math.c
 
 RC_SRCS = version.rc
 

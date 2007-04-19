@@ -20395,6 +20395,8 @@ ac_config_files="$ac_config_files dlls/d3dim/Makefile"
 
 ac_config_files="$ac_config_files dlls/d3drm/Makefile"
 
+ac_config_files="$ac_config_files dlls/d3drm/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/d3dx8/Makefile"
 
 ac_config_files="$ac_config_files dlls/d3dxof/Makefile"
@@ -21580,6 +21582,7 @@ do
     "dlls/d3d9/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d9/tests/Makefile" ;;
     "dlls/d3dim/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dim/Makefile" ;;
     "dlls/d3drm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3drm/Makefile" ;;
+    "dlls/d3drm/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3drm/tests/Makefile" ;;
     "dlls/d3dx8/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx8/Makefile" ;;
     "dlls/d3dxof/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dxof/Makefile" ;;
     "dlls/dbghelp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dbghelp/Makefile" ;;

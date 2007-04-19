@@ -234,6 +234,7 @@ TESTSUBDIRS = \
 	crypt32/tests \
 	d3d8/tests \
 	d3d9/tests \
+	d3drm/tests \
 	ddraw/tests \
 	dinput/tests \
 	dnsapi/tests \

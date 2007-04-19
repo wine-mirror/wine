@@ -8,7 +8,7 @@
 @ stub D3DRMQuaternionFromRotation
 @ stub D3DRMQuaternionMultiply
 @ stub D3DRMQuaternionSlerp
-@ stub D3DRMVectorAdd
+@ stdcall D3DRMVectorAdd(ptr ptr ptr)
 @ stub D3DRMVectorCrossProduct
 @ stub D3DRMVectorDotProduct
 @ stub D3DRMVectorModulus

@@ -175,6 +175,9 @@ dlls/d3d9/version.res
 dlls/d3dim/libd3dim.def
 dlls/d3dim/version.res
 dlls/d3drm/libd3drm.def
+dlls/d3drm/tests/*.ok
+dlls/d3drm/tests/d3drm_crosstest.exe
+dlls/d3drm/tests/testlist.c
 dlls/d3drm/version.res
 dlls/d3dx8/libd3dx8.def
 dlls/d3dxof/libd3dxof.def
@@ -819,6 +822,7 @@ programs/winetest/comdlg32_test.exe
 programs/winetest/crypt32_test.exe
 programs/winetest/d3d8_test.exe
 programs/winetest/d3d9_test.exe
+programs/winetest/d3drm_test.exe
 programs/winetest/ddraw_test.exe
 programs/winetest/dinput_test.exe
 programs/winetest/dnsapi_test.exe
