@@ -6,7 +6,7 @@
 @ stub D3DRMCreateColorRGBA
 @ stub D3DRMMatrixFromQuaternion
 @ stub D3DRMQuaternionFromRotation
-@ stub D3DRMQuaternionMultiply
+@ stdcall D3DRMQuaternionMultiply(ptr ptr ptr)
 @ stub D3DRMQuaternionSlerp
 @ stdcall D3DRMVectorAdd(ptr ptr ptr)
 @ stdcall D3DRMVectorCrossProduct(ptr ptr ptr)

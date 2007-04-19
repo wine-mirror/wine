@@ -32,6 +32,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
+/* Product of 2 quaternions */
+LPD3DRMQUATERNION WINAPI D3DRMQuaternionMultiply(LPD3DRMQUATERNION q, LPD3DRMQUATERNION a, LPD3DRMQUATERNION b)
+{
+    D3DVECTOR cross_product;
+    D3DRMVectorCrossProduct(&cross_product, &a->v, &b->v);
+    q->s = a->s * b->s - D3DRMVectorDotProduct(&a->v, &b->v);
+    q->v.x = a->s * b->v.x + b->s * a->v.x + cross_product.x;
+    q->v.y = a->s * b->v.y + b->s * a->v.y + cross_product.y;
+    q->v.z = a->s * b->v.z + b->s * a->v.z + cross_product.z;
+    return q;
+}
+
 /* Add Two Vectors */
 LPD3DVECTOR WINAPI D3DRMVectorAdd(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
 {
