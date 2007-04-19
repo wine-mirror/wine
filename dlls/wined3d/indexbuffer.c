@@ -155,7 +155,7 @@ static HRESULT WINAPI IWineD3DIndexBufferImpl_Unlock(IWineD3DIndexBuffer *iface)
     TRACE("(%p)\n", This);
 
     /* For now load in unlock */
-    if(locks == 0 && This->vbo) {
+    if(locks == 0 && This->vbo && (This->dirtyend - This->dirtystart) > 0) {
         IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
         ENTER_GL();
 
