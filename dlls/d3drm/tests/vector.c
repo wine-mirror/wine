@@ -33,7 +33,7 @@
 void VectorTest(void)
 {
     D3DVALUE mod,par;
-    D3DVECTOR e,r,u,v,casnul;
+    D3DVECTOR e,r,u,v,casnul,norm,ray;
 
     u.x=2.0;u.y=2.0;u.z=1.0;
     v.x=4.0;v.y=4.0;v.z=0.0;
@@ -72,6 +72,13 @@ void VectorTest(void)
     D3DRMVectorNormalize(&casnul);
     e.x=1.0; e.y=0.0; e.z=0.0;
     expect_vec(e,casnul);
+
+/*____________________VectorReflect_________________________________*/
+    ray.x=3.0; ray.y=-4.0; ray.z=5.0;
+    norm.x=1.0; norm.y=-2.0; norm.z=6.0;
+    e.x=79.0; e.y=-160.0; e.z=487.0;
+    D3DRMVectorReflect(&r,&ray,&norm);
+    expect_vec(e,r);
 
 /*_______________________VectorScale__________________________*/
     par=2.5;

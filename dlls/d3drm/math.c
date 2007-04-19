@@ -102,6 +102,14 @@ LPD3DVECTOR WINAPI D3DRMVectorRandom(LPD3DVECTOR d)
     return d;
 }
 
+/* Reflection of a vector on a surface */
+LPD3DVECTOR WINAPI D3DRMVectorReflect(LPD3DVECTOR r, LPD3DVECTOR ray, LPD3DVECTOR norm)
+{
+    D3DVECTOR sca;
+    D3DRMVectorSubtract(r, D3DRMVectorScale(&sca, norm, 2.0*D3DRMVectorDotProduct(ray,norm)), ray);
+    return r;
+}
+
 /* Scale a vector */
 LPD3DVECTOR WINAPI D3DRMVectorScale(LPD3DVECTOR d, LPD3DVECTOR s, D3DVALUE factor)
 {
