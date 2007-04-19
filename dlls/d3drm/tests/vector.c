@@ -153,14 +153,45 @@ static void MatrixTest(void)
 static void QuaternionTest(void)
 {
     D3DVECTOR axis;
-    D3DVALUE theta;
-    D3DRMQUATERNION q,r;
+    D3DVALUE g,h,epsilon,par,theta;
+    D3DRMQUATERNION q,q1,q2,r;
 
 /*_________________QuaternionFromRotation___________________*/
     axis.x=1.0;axis.y=1.0;axis.z=1.0;
     theta=2.0*PI/3.0;
     D3DRMQuaternionFromRotation(&r,&axis,theta);
     q.s=0.5;q.v.x=0.5;q.v.y=0.5;q.v.z=0.5;
+    expect_quat(q,r);
+
+/*_________________QuaternionSlerp_________________________*/
+/* Interpolation slerp is in fact a linear interpolation, not a spherical linear
+ * interpolation. Moreover, if the angle of the two quaternions is in ]PI/2;3PI/2[, QuaternionSlerp
+ * interpolates between the first quaternion and the opposite of the second one. The test proves
+ * these two facts. */
+    par=0.31;
+    q1.s=1.0; q1.v.x=2.0; q1.v.y=3.0; q1.v.z=50.0;
+    q2.s=-4.0; q2.v.x=6.0; q2.v.y=7.0; q2.v.z=8.0;
+/* The angle between q1 and q2 is in [-PI/2,PI/2]. So, one interpolates between q1 and q2. */
+    epsilon=1.0;
+    g=1.0-par; h=epsilon*par;
+/* Part of the test proving that the interpolation is linear. */
+    q.s=g*q1.s+h*q2.s;
+    q.v.x=g*q1.v.x+h*q2.v.x;
+    q.v.y=g*q1.v.y+h*q2.v.y;
+    q.v.z=g*q1.v.z+h*q2.v.z;
+    D3DRMQuaternionSlerp(&r,&q1,&q2,par);
+    expect_quat(q,r);
+
+    q1.s=1.0; q1.v.x=2.0; q1.v.y=3.0; q1.v.z=50.0;
+    q2.s=-94.0; q2.v.x=6.0; q2.v.y=7.0; q2.v.z=-8.0;
+/* The angle between q1 and q2 is not in [-PI/2,PI/2]. So, one interpolates between q1 and -q2. */
+    epsilon=-1.0;
+    g=1.0-par; h=epsilon*par;
+    q.s=g*q1.s+h*q2.s;
+    q.v.x=g*q1.v.x+h*q2.v.x;
+    q.v.y=g*q1.v.y+h*q2.v.y;
+    q.v.z=g*q1.v.z+h*q2.v.z;
+    D3DRMQuaternionSlerp(&r,&q1,&q2,par);
     expect_quat(q,r);
 }
 

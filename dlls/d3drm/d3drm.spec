@@ -7,7 +7,7 @@
 @ stdcall D3DRMMatrixFromQuaternion(ptr ptr)
 @ stdcall D3DRMQuaternionFromRotation(ptr ptr long)
 @ stdcall D3DRMQuaternionMultiply(ptr ptr ptr)
-@ stub D3DRMQuaternionSlerp
+@ stdcall D3DRMQuaternionSlerp(ptr ptr ptr long)
 @ stdcall D3DRMVectorAdd(ptr ptr ptr)
 @ stdcall D3DRMVectorCrossProduct(ptr ptr ptr)
 @ stdcall D3DRMVectorDotProduct(ptr ptr)

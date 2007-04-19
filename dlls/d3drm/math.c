@@ -78,6 +78,18 @@ LPD3DRMQUATERNION WINAPI D3DRMQuaternionFromRotation(LPD3DRMQUATERNION q, LPD3DV
     return q;
 }
 
+/* Interpolation between two quaternions */
+LPD3DRMQUATERNION WINAPI D3DRMQuaternionSlerp(LPD3DRMQUATERNION q, LPD3DRMQUATERNION a, LPD3DRMQUATERNION b, D3DVALUE alpha)
+{
+    D3DVALUE epsilon=1.0;
+    D3DVECTOR sca1,sca2;
+    if (a->s * b->s + D3DRMVectorDotProduct(&a->v, &b->v) < 0.0) epsilon = -1.0;
+    q->s = (1.0 - alpha) * a->s + epsilon * alpha * b->s;
+    D3DRMVectorAdd(&q->v, D3DRMVectorScale(&sca1, &a->v, 1.0 - alpha),
+                   D3DRMVectorScale(&sca2, &b->v, epsilon * alpha));
+    return q;
+}
+
 /* Add Two Vectors */
 LPD3DVECTOR WINAPI D3DRMVectorAdd(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
 {
