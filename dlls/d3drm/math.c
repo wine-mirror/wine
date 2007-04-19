@@ -122,6 +122,25 @@ LPD3DVECTOR WINAPI D3DRMVectorReflect(LPD3DVECTOR r, LPD3DVECTOR ray, LPD3DVECTO
     return r;
 }
 
+/* Rotation of a vector */
+LPD3DVECTOR WINAPI D3DRMVectorRotate(LPD3DVECTOR r, LPD3DVECTOR v, LPD3DVECTOR axis, D3DVALUE theta)
+{
+    D3DRMQUATERNION quaternion,quaternion1, quaternion2, quaternion3, resultq;
+    D3DVECTOR NORM;
+
+    quaternion1.s = cos(theta*.5);
+    quaternion2.s = cos(theta*.5);
+    NORM = *D3DRMVectorNormalize(axis);
+    D3DRMVectorScale(&quaternion1.v, &NORM, sin(theta * .5));
+    D3DRMVectorScale(&quaternion2.v, &NORM, -sin(theta * .5));
+    quaternion3.s = 0.0;
+    quaternion3.v = *v;
+    D3DRMQuaternionMultiply(&quaternion, &quaternion1, &quaternion3);
+    D3DRMQuaternionMultiply(&resultq, &quaternion, &quaternion2);
+    *r = *D3DRMVectorNormalize(&resultq.v);
+    return r;
+}
+
 /* Scale a vector */
 LPD3DVECTOR WINAPI D3DRMVectorScale(LPD3DVECTOR d, LPD3DVECTOR s, D3DVALUE factor)
 {

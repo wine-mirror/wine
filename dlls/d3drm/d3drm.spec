@@ -15,7 +15,7 @@
 @ stdcall D3DRMVectorNormalize(ptr)
 @ stdcall D3DRMVectorRandom(ptr)
 @ stdcall D3DRMVectorReflect(ptr ptr ptr)
-@ stub D3DRMVectorRotate
+@ stdcall D3DRMVectorRotate(ptr ptr ptr long)
 @ stdcall D3DRMVectorScale(ptr ptr long)
 @ stdcall D3DRMVectorSubtract(ptr ptr ptr)
 @ stub Direct3DRMCreate

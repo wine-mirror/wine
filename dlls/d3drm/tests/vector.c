@@ -32,8 +32,8 @@
 
 void VectorTest(void)
 {
-    D3DVALUE mod,par;
-    D3DVECTOR e,r,u,v,casnul,norm,ray;
+    D3DVALUE mod,par,theta;
+    D3DVECTOR e,r,u,v,w,axis,casnul,norm,ray;
 
     u.x=2.0;u.y=2.0;u.z=1.0;
     v.x=4.0;v.y=4.0;v.z=0.0;
@@ -78,6 +78,20 @@ void VectorTest(void)
     norm.x=1.0; norm.y=-2.0; norm.z=6.0;
     e.x=79.0; e.y=-160.0; e.z=487.0;
     D3DRMVectorReflect(&r,&ray,&norm);
+    expect_vec(e,r);
+
+/*_______________________VectorRotate_______________________________*/
+    w.x=3.0;w.y=4.0;w.z=0.0;
+    axis.x=0.0;axis.y=0.0;axis.z=1.0;
+    theta=2.0*PI/3.0;
+    D3DRMVectorRotate(&r,&w,&axis,theta);
+    e.x=-0.3-0.4*sqrt(3.0); e.y=0.3*sqrt(3.0)-0.4; e.z=0.0;
+    expect_vec(e,r);
+
+/* The same formula gives D3DRMVectorRotate, for theta in [-PI/2;+PI/2] or not. The following test proves this fact.*/
+    theta=-PI/4.0;
+    D3DRMVectorRotate(&r,&w,&axis,-PI/4);
+    e.x=1.4/sqrt(2.0); e.y=0.2/sqrt(2.0); e.z=0.0;
     expect_vec(e,r);
 
 /*_______________________VectorScale__________________________*/
