@@ -5602,6 +5602,12 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
                 memcpy(&mem[width * bpp * i], &bits[rect.Pitch * i], width * bpp);
             IWineD3DSurface_UnlockRect(pCursorBitmap);
             ENTER_GL();
+
+            if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+                checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
+            }
+
             /* Make sure that a proper texture unit is selected */
             if (GL_SUPPORT(ARB_MULTITEXTURE)) {
                 GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
@@ -5617,6 +5623,12 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
             glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, format, type, mem);
             HeapFree(GetProcessHeap(), 0, mem);
             checkGLcall("glTexImage2D");
+
+            if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+                checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
+            }
+
             LEAVE_GL();
         }
         else
