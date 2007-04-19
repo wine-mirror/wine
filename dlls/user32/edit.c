@@ -83,7 +83,8 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 #define EF_AFTER_WRAP		0x0080	/* the caret is displayed after the last character of a
 					   wrapped line, instead of in front of the next character */
 #define EF_USE_SOFTBRK		0x0100	/* Enable soft breaks in text. */
-
+#define EF_APP_HAS_HANDLE       0x0200  /* Set when an app sends EM_[G|S]ETHANDLE.  We are in sole control of
+                                           the text buffer if this is clear. */
 typedef enum
 {
 	END_0 = 0,			/* line ends with terminating '\0' character */
@@ -2713,6 +2714,7 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 	    hLocal = es->hloc32A;
 	}
 
+        es->flags |= EF_APP_HAS_HANDLE;
 	TRACE("Returning %p, LocalSize() = %ld\n", hLocal, LocalSize(hLocal));
 	return hLocal;
 }
@@ -2777,6 +2779,7 @@ static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
 
 	WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, countA, NULL, NULL);
 	LocalUnlock16(es->hloc16);
+        es->flags |= EF_APP_HAS_HANDLE;
 
 	TRACE("Returning %04X, LocalSize() = %d\n", es->hloc16, LocalSize16(es->hloc16));
 
@@ -3534,6 +3537,7 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 
 	es->buffer_size = LocalSize(es->hloc32W)/sizeof(WCHAR) - 1;
 
+        es->flags |= EF_APP_HAS_HANDLE;
 	EDIT_LockBuffer(es);
 
 	es->x_offset = es->y_offset = 0;
@@ -3605,6 +3609,7 @@ static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc)
 
 	es->buffer_size = LocalSize(es->hloc32W)/sizeof(WCHAR) - 1;
 
+        es->flags |= EF_APP_HAS_HANDLE;
 	EDIT_LockBuffer(es);
 
 	es->x_offset = es->y_offset = 0;
