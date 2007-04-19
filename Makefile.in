@@ -369,6 +369,7 @@ ALL_MAKEFILES = \
 	dlls/sti/Makefile \
 	dlls/strmiids/Makefile \
 	dlls/svrapi/Makefile \
+	dlls/sxs/Makefile \
 	dlls/tapi32/Makefile \
 	dlls/twain_32/Makefile \
 	dlls/unicows/Makefile \
@@ -711,6 +712,7 @@ dlls/stdole32.tlb/Makefile: dlls/stdole32.tlb/Makefile.in dlls/Makedll.rules
 dlls/sti/Makefile: dlls/sti/Makefile.in dlls/Makedll.rules
 dlls/strmiids/Makefile: dlls/strmiids/Makefile.in dlls/Makeimplib.rules
 dlls/svrapi/Makefile: dlls/svrapi/Makefile.in dlls/Makedll.rules
+dlls/sxs/Makefile: dlls/sxs/Makefile.in dlls/Makedll.rules
 dlls/tapi32/Makefile: dlls/tapi32/Makefile.in dlls/Makedll.rules
 dlls/twain_32/Makefile: dlls/twain_32/Makefile.in dlls/Makedll.rules
 dlls/unicows/Makefile: dlls/unicows/Makefile.in dlls/Makedll.rules

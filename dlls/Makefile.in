@@ -171,6 +171,7 @@ BASEDIRS = \
 	stdole32.tlb \
 	sti \
 	svrapi \
+	sxs \
 	tapi32 \
 	twain_32 \
 	unicows \

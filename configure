@@ -20627,6 +20627,8 @@ ac_config_files="$ac_config_files dlls/strmiids/Makefile"
 
 ac_config_files="$ac_config_files dlls/svrapi/Makefile"
 
+ac_config_files="$ac_config_files dlls/sxs/Makefile"
+
 ac_config_files="$ac_config_files dlls/tapi32/Makefile"
 
 ac_config_files="$ac_config_files dlls/twain_32/Makefile"
@@ -21636,6 +21638,7 @@ do
     "dlls/sti/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sti/Makefile" ;;
     "dlls/strmiids/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/strmiids/Makefile" ;;
     "dlls/svrapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/svrapi/Makefile" ;;
+    "dlls/sxs/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sxs/Makefile" ;;
     "dlls/tapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/tapi32/Makefile" ;;
     "dlls/twain_32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/twain_32/Makefile" ;;
     "dlls/unicows/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/unicows/Makefile" ;;
