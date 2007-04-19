@@ -1031,7 +1031,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, const WCHAR *
         if (target_family)
         {
             localised_family = get_familyname(ft_face);
-            if (localised_family && lstrcmpW(localised_family,target_family)!=0)
+            if (localised_family && strcmpiW(localised_family,target_family)!=0)
             {
                 TRACE("Skipping Index %i: Incorrect Family name for replacement\n",(INT)face_index);
                 HeapFree(GetProcessHeap(), 0, localised_family);
@@ -2767,7 +2767,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
          */
         LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
         {
-            if(!strcmpW(font_link->font_name, lf.lfFaceName))
+            if(!strcmpiW(font_link->font_name, lf.lfFaceName))
             {
                 TRACE("found entry in system list\n");
                 LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
@@ -2778,7 +2778,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
                     {
                         family = face->family;
                         if(csi.fs.fsCsb[0] &
-                            (face->fs.fsCsb[0] | face->fs_links.fsCsb[0]))
+                            (face->fs.fsCsb[0] | face->fs_links.fsCsb[0]) || !csi.fs.fsCsb[0])
                         {
                             if(face->scalable || can_use_bitmap)
                                 goto found;
