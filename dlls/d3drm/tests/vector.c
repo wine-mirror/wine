@@ -46,6 +46,11 @@ void VectorTest(void)
     D3DRMVectorSubtract(&r,&u,&v);
     e.x=-2.0;e.y=-2.0;e.z=1.0;
     expect_vec(e,r);
+
+/*_______________________VectorCrossProduct_______________________*/
+    D3DRMVectorCrossProduct(&r,&u,&v);
+    e.x=-4.0;e.y=4.0;e.z=0.0;
+    expect_vec(e,r);
 }
 
 START_TEST(vector)

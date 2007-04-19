@@ -49,3 +49,12 @@ LPD3DVECTOR WINAPI D3DRMVectorSubtract(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTO
     d->z=s1->z - s2->z;
     return d;
 }
+
+/* Cross Product of Two Vectors */
+LPD3DVECTOR WINAPI D3DRMVectorCrossProduct(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
+{
+    d->x=s1->y * s2->z - s1->z * s2->y;
+    d->y=s1->z * s2->x - s1->x * s2->z;
+    d->z=s1->x * s2->y - s1->y * s2->x;
+    return d;
+}
