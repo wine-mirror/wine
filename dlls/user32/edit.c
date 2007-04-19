@@ -107,6 +107,7 @@ typedef struct
 {
 	BOOL is_unicode;		/* how the control was created */
 	LPWSTR text;			/* the actual contents of the control */
+        UINT text_length;               /* cached length of text buffer (in WCHARs) - use get_text_length() to retrieve */
 	UINT buffer_size;		/* the size of the buffer in characters */
 	UINT buffer_limit;		/* the maximum size to which the buffer may grow in characters */
 	HFONT font;			/* NULL means standard system font */
@@ -396,7 +397,14 @@ static DWORD get_app_version(void)
 
 static inline UINT get_text_length(EDITSTATE *es)
 {
-    return strlenW(es->text);
+    if(es->text_length == (UINT)-1)
+        es->text_length = strlenW(es->text);
+    return es->text_length;
+}
+
+static inline void text_buffer_changed(EDITSTATE *es)
+{
+    es->text_length = (UINT)-1;
 }
 
 static HBRUSH EDIT_NotifyCtlColor(EDITSTATE *es, HDC hdc)
@@ -1748,6 +1756,7 @@ static void EDIT_LockBuffer(EDITSTATE *es)
 		    LocalUnlock(es->hloc32A);
 	    }
 	}
+        if(es->flags & EF_APP_HAS_HANDLE) text_buffer_changed(es);
 	es->lock_count++;
 }
 
@@ -3208,6 +3217,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 		buf[bufl] = 0; /* ensure 0 termination */
 		/* now delete */
 		strcpyW(es->text + s, es->text + e);
+                text_buffer_changed(es);
 	}
 	if (strl) {
 		/* there is an insertion */
@@ -3221,6 +3231,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 			CharUpperBuffW(p, strl);
 		else if(es->style & ES_LOWERCASE)
 			CharLowerBuffW(p, strl);
+                text_buffer_changed(es);
 	}
 	if (es->style & ES_MULTILINE)
 	{
@@ -3237,6 +3248,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 			if (e != s)
 				for (i = 0 , p = es->text ; i < e - s ; i++)
 					p[i + s] = buf[i];
+                        text_buffer_changed(es);
 			EDIT_BuildLineDefs_ML(es, s, e, 
 				abs(es->selection_end - es->selection_start) - strl, hrgn);
 			strl = 0;
@@ -3255,6 +3267,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 				strl--;
 				EDIT_CalcLineWidth_SL(es);
 			}
+                        text_buffer_changed(es);
 			EDIT_NOTIFY_PARENT(es, EN_MAXTEXT);
 		}
 	}
