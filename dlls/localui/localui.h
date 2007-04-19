@@ -1,5 +1,5 @@
 /*
- * Top level resource file for localui
+ * internal include file of the Local Printmonitor User Interface
  *
  * Copyright 2007 Detlef Riekenberg
  *
@@ -16,25 +16,19 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winver.h"
-#include "localui.h"
-
-#define WINE_FILENAME_STR "localui.dll"
-#define WINE_FILEDESCRIPTION_STR "User Interface for the Local Monitor"
-
-/* Same Version as WinXP_sp2 */
-#define WINE_FILEVERSION      5,1,2600,2180
-#define WINE_FILEVERSION_STR "5.1.2600.2180"
-
-#define WINE_PRODUCTVERSION      5,1,2600,2180
-#define WINE_PRODUCTVERSION_STR "5.1.2600.2180"
-
-#include "wine/wine_common_ver.rc"
+#ifndef __WINE_LOCALUI__
+#define __WINE_LOCALUI__
 
 
-#include "ui_En.rc"
+/* ## Resource-ID ## */
+#define IDS_LOCALPORT       300
+#define IDS_NOTHINGTOCONFIG 303
+
+/* ## Reserved memorysize for the strings (in WCHAR) ## */
+#define IDS_LOCALPORT_MAXLEN 32
+#define IDS_NOTHINGTOCONFIG_MAXLEN 80
+
+
+#endif /* __WINE_LOCALUI__ */

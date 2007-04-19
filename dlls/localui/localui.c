@@ -26,11 +26,13 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winreg.h"
+#include "winuser.h"
 
 #include "winspool.h"
 #include "ddk/winsplp.h"
 
 #include "wine/debug.h"
+#include "localui.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(localui);
 
@@ -55,6 +57,24 @@ static LPWSTR strdupWW(LPCWSTR pPrefix, LPCWSTR pSuffix)
         lstrcatW(ptr, pSuffix);
     }
     return ptr;
+}
+
+/******************************************************************
+ * display the Dialog "Nothing to configure"
+ *
+ */
+
+static void dlg_nothingtoconfig(HWND hWnd)
+{
+    WCHAR res_PortW[IDS_LOCALPORT_MAXLEN];
+    WCHAR res_nothingW[IDS_NOTHINGTOCONFIG_MAXLEN];
+
+    res_PortW[0] = '\0';
+    res_nothingW[0] = '\0';
+    LoadStringW(LOCALUI_hInstance, IDS_LOCALPORT, res_PortW, IDS_LOCALPORT_MAXLEN);
+    LoadStringW(LOCALUI_hInstance, IDS_NOTHINGTOCONFIG, res_nothingW, IDS_NOTHINGTOCONFIG_MAXLEN);
+
+    MessageBoxW(hWnd, res_nothingW, res_PortW, MB_OK | MB_ICONINFORMATION);
 }
 
 /*****************************************************
@@ -120,8 +140,19 @@ static BOOL WINAPI localui_AddPortUI(PCWSTR pName, HWND hWnd, PCWSTR pMonitorNam
  */
 static BOOL WINAPI localui_ConfigurePortUI(PCWSTR pName, HWND hWnd, PCWSTR pPortName)
 {
-    FIXME("(%s, %p, %s) stub\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
-    return TRUE;
+    HANDLE  hXcv;
+
+    TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
+    if (open_monitor_by_name(XcvPortW, pPortName, &hXcv)) {
+
+        dlg_nothingtoconfig(hWnd);
+
+        ClosePrinter(hXcv);
+        return TRUE;
+    }
+    SetLastError(ERROR_UNKNOWN_PORT);
+    return FALSE;
+
 }
 
 /*****************************************************
