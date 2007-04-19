@@ -32,6 +32,7 @@
 
 void VectorTest(void)
 {
+    D3DVALUE mod;
     D3DVECTOR e,r,u,v;
 
     u.x=2.0;u.y=2.0;u.z=1.0;
@@ -51,6 +52,10 @@ void VectorTest(void)
     D3DRMVectorCrossProduct(&r,&u,&v);
     e.x=-4.0;e.y=4.0;e.z=0.0;
     expect_vec(e,r);
+
+/*_______________________VectorDotProduct__________________________*/
+    mod=D3DRMVectorDotProduct(&u,&v);
+    ok((mod == 16.0), "Expected 16.0, Got %f",mod);
 }
 
 START_TEST(vector)

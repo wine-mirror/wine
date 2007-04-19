@@ -58,3 +58,11 @@ LPD3DVECTOR WINAPI D3DRMVectorCrossProduct(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DV
     d->z=s1->x * s2->y - s1->y * s2->x;
     return d;
 }
+
+/* Dot Product of Two vectors */
+D3DVALUE WINAPI D3DRMVectorDotProduct(LPD3DVECTOR s1, LPD3DVECTOR s2)
+{
+    D3DVALUE dot_product;
+    dot_product=s1->x * s2->x + s1->y * s2->y + s1->z * s2->z;
+    return dot_product;
+}
