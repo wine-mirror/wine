@@ -92,6 +92,16 @@ LPD3DVECTOR WINAPI D3DRMVectorNormalize(LPD3DVECTOR u)
     return u;
 }
 
+/* Returns a random unit vector */
+LPD3DVECTOR WINAPI D3DRMVectorRandom(LPD3DVECTOR d)
+{
+    d->x = rand();
+    d->y = rand();
+    d->z = rand();
+    D3DRMVectorNormalize(d);
+    return d;
+}
+
 /* Scale a vector */
 LPD3DVECTOR WINAPI D3DRMVectorScale(LPD3DVECTOR d, LPD3DVECTOR s, D3DVALUE factor)
 {

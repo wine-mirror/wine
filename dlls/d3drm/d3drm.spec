@@ -13,7 +13,7 @@
 @ stdcall D3DRMVectorDotProduct(ptr ptr)
 @ stdcall D3DRMVectorModulus(ptr)
 @ stdcall D3DRMVectorNormalize(ptr)
-@ stub D3DRMVectorRandom
+@ stdcall D3DRMVectorRandom(ptr)
 @ stub D3DRMVectorReflect
 @ stub D3DRMVectorRotate
 @ stdcall D3DRMVectorScale(ptr ptr long)
