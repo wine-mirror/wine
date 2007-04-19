@@ -100,7 +100,7 @@ const char* symt_get_name(const struct symt* sym)
     }
 }
 
-static struct symt* symt_find_type_by_name(struct module* module, 
+static struct symt* symt_find_type_by_name(const struct module* module,
                                            enum SymTagEnum sym_tag, 
                                            const char* typename)
 {

@@ -612,7 +612,7 @@ struct sym_enum
     char                                buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
 };
 
-static BOOL send_symbol(const struct sym_enum* se, struct module_pair* pair,
+static BOOL send_symbol(const struct sym_enum* se, const struct module_pair* pair,
                         const struct symt_function* func, const struct symt* sym)
 {
     symt_fill_sym_info(pair, func, sym, se->sym_info);
@@ -622,7 +622,7 @@ static BOOL send_symbol(const struct sym_enum* se, struct module_pair* pair,
     return !se->cb(se->sym_info, se->sym_info->Size, se->user);
 }
 
-static BOOL symt_enum_module(struct module_pair* pair, regex_t* regex,
+static BOOL symt_enum_module(struct module_pair* pair, const regex_t* regex,
                              const struct sym_enum* se)
 {
     void*                       ptr;
@@ -752,7 +752,7 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
 
 static BOOL symt_enum_locals_helper(struct module_pair* pair,
                                     regex_t* preg, const struct sym_enum* se,
-                                    struct symt_function* func, struct vector* v)
+                                    struct symt_function* func, const struct vector* v)
 {
     struct symt**       plsym = NULL;
     struct symt*        lsym = NULL;
@@ -1223,7 +1223,7 @@ BOOL WINAPI SymGetSymFromName(HANDLE hProcess, PCSTR Name, PIMAGEHLP_SYMBOL Symb
  *
  * fills information about a file
  */
-BOOL symt_fill_func_line_info(struct module* module, struct symt_function* func, 
+BOOL symt_fill_func_line_info(const struct module* module, const struct symt_function* func,
                               DWORD addr, IMAGEHLP_LINE* line)
 {
     struct line_info*   dli = NULL;
@@ -1450,7 +1450,7 @@ BOOL WINAPI SymGetLinePrev64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
     return TRUE;
 }
     
-BOOL symt_get_func_line_next(struct module* module, PIMAGEHLP_LINE line)
+BOOL symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE line)
 {
     struct line_info*   li;
 

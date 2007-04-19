@@ -101,13 +101,13 @@ void* pool_alloc(struct pool* pool, unsigned len)
     return ret;
 }
 
-static struct pool_arena* pool_is_last(struct pool* pool, void* p, unsigned old_size)
+static struct pool_arena* pool_is_last(const struct pool* pool, const void* p, unsigned old_size)
 {
     struct pool_arena*  arena;
 
     for (arena = pool->first; arena; arena = arena->next)
     {
-        if (arena->current == (char*)p + old_size) return arena;
+        if (arena->current == (const char*)p + old_size) return arena;
     }
     return NULL;
 }
@@ -206,7 +206,7 @@ static unsigned vector_position(const struct vector* v, const void* elt)
     return 0;
 }
 
-void* vector_iter_up(const struct vector* v, void* elt)
+void* vector_iter_up(const struct vector* v, const void* elt)
 {
     unsigned    pos;
 
@@ -216,7 +216,7 @@ void* vector_iter_up(const struct vector* v, void* elt)
     return vector_at(v, pos);
 }
 
-void* vector_iter_down(const struct vector* v, void* elt)
+void* vector_iter_down(const struct vector* v, const void* elt)
 {
     unsigned    pos;
     if (!elt) return vector_at(v, vector_length(v) - 1);

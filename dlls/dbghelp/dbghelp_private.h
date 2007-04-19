@@ -62,8 +62,8 @@ unsigned vector_length(const struct vector* v);
 void*    vector_at(const struct vector* v, unsigned pos);
 void*    vector_add(struct vector* v, struct pool* pool);
 /*void     vector_pool_normalize(struct vector* v, struct pool* pool); */
-void*    vector_iter_up(const struct vector* v, void* elt);
-void*    vector_iter_down(const struct vector* v, void* elt);
+void*    vector_iter_up(const struct vector* v, const void* elt);
+void*    vector_iter_down(const struct vector* v, const void* elt);
 
 struct sparse_array
 {
@@ -557,10 +557,10 @@ extern struct symt_function_point*
                                             enum SymTagEnum point, 
                                             const struct location* loc,
                                             const char* name);
-extern BOOL         symt_fill_func_line_info(struct module* module,
-                                             struct symt_function* func, 
+extern BOOL         symt_fill_func_line_info(const struct module* module,
+                                             const struct symt_function* func,
                                              DWORD addr, IMAGEHLP_LINE* line);
-extern BOOL         symt_get_func_line_next(struct module* module, PIMAGEHLP_LINE line);
+extern BOOL         symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE line);
 extern struct symt_thunk*
                     symt_new_thunk(struct module* module, 
                                    struct symt_compiland* parent,
