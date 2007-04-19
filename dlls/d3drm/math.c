@@ -44,6 +44,32 @@ LPD3DRMQUATERNION WINAPI D3DRMQuaternionMultiply(LPD3DRMQUATERNION q, LPD3DRMQUA
     return q;
 }
 
+/* Matrix for the Rotation that a unit quaternion represents */
+void WINAPI D3DRMMatrixFromQuaternion(D3DRMMATRIX4D m, LPD3DRMQUATERNION q)
+{
+    D3DVALUE w,x,y,z;
+    w = q->s;
+    x = q->v.x;
+    y = q->v.y;
+    z = q->v.z;
+    m[0][0] = 1.0-2.0*(y*y+z*z);
+    m[1][1] = 1.0-2.0*(x*x+z*z);
+    m[2][2] = 1.0-2.0*(x*x+y*y);
+    m[1][0] = 2.0*(x*y+z*w);
+    m[0][1] = 2.0*(x*y-z*w);
+    m[2][0] = 2.0*(x*z-y*w);
+    m[0][2] = 2.0*(x*z+y*w);
+    m[2][1] = 2.0*(y*z+x*w);
+    m[1][2] = 2.0*(y*z-x*w);
+    m[3][0] = 0.0;
+    m[3][1] = 0.0;
+    m[3][2] = 0.0;
+    m[0][3] = 0.0;
+    m[1][3] = 0.0;
+    m[2][3] = 0.0;
+    m[3][3] = 1.0;
+}
+
 /* Add Two Vectors */
 LPD3DVECTOR WINAPI D3DRMVectorAdd(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
 {

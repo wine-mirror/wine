@@ -4,7 +4,7 @@
 @ stub D3DRMColorGetRed
 @ stub D3DRMCreateColorRGB
 @ stub D3DRMCreateColorRGBA
-@ stub D3DRMMatrixFromQuaternion
+@ stdcall D3DRMMatrixFromQuaternion(ptr ptr)
 @ stub D3DRMQuaternionFromRotation
 @ stdcall D3DRMQuaternionMultiply(ptr ptr ptr)
 @ stub D3DRMQuaternionSlerp

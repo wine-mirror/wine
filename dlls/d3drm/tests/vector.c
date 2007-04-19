@@ -25,12 +25,37 @@
 #define PI (4*atan(1.0))
 #define admit_error 0.000001
 
+#define expect_mat( expectedmat, gotmat)\
+{ \
+    int i,j,equal=1; \
+    for (i=0; i<4; i++)\
+        {\
+         for (j=0; j<4; j++)\
+             {\
+              if (fabs(expectedmat[i][j]-gotmat[i][j])>admit_error)\
+                 {\
+                  equal=0;\
+                 }\
+             }\
+        }\
+    ok(equal, "Expected matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n)\n\n" \
+       "Got matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f)\n", \
+       expectedmat[0][0],expectedmat[0][1],expectedmat[0][2],expectedmat[0][3], \
+       expectedmat[1][0],expectedmat[1][1],expectedmat[1][2],expectedmat[1][3], \
+       expectedmat[2][0],expectedmat[2][1],expectedmat[2][2],expectedmat[2][3], \
+       expectedmat[3][0],expectedmat[3][1],expectedmat[3][2],expectedmat[3][3], \
+       gotmat[0][0],gotmat[0][1],gotmat[0][2],gotmat[0][3], \
+       gotmat[1][0],gotmat[1][1],gotmat[1][2],gotmat[1][3], \
+       gotmat[2][0],gotmat[2][1],gotmat[2][2],gotmat[2][3], \
+       gotmat[3][0],gotmat[3][1],gotmat[3][2],gotmat[3][3] ); \
+}
+
 #define expect_vec(expectedvec,gotvec) \
   ok( ((fabs(expectedvec.x-gotvec.x)<admit_error)&&(fabs(expectedvec.y-gotvec.y)<admit_error)&&(fabs(expectedvec.z-gotvec.z)<admit_error)), \
   "Expected Vector= (%f, %f, %f)\n , Got Vector= (%f, %f, %f)\n", \
   expectedvec.x,expectedvec.y,expectedvec.z, gotvec.x, gotvec.y, gotvec.z);
 
-void VectorTest(void)
+static void VectorTest(void)
 {
     D3DVALUE mod,par,theta;
     D3DVECTOR e,r,u,v,w,axis,casnul,norm,ray;
@@ -101,7 +126,23 @@ void VectorTest(void)
     expect_vec(e,r);
 }
 
+static void MatrixTest(void)
+{
+    D3DRMQUATERNION q;
+    D3DRMMATRIX4D exp,mat;
+
+    exp[0][0]=-49.0; exp[0][1]=4.0;   exp[0][2]=22.0;  exp[0][3]=0.0;
+    exp[1][0]=20.0;  exp[1][1]=-39.0; exp[1][2]=20.0;  exp[1][3]=0.0;
+    exp[2][0]=10.0;  exp[2][1]=28.0;  exp[2][2]=-25.0; exp[2][3]=0.0;
+    exp[3][0]=0.0;   exp[3][1]=0.0;   exp[3][2]=0.0;   exp[3][3]=1.0;
+    q.s=1.0; q.v.x=2.0; q.v.y=3.0; q.v.z=4.0;
+
+   D3DRMMatrixFromQuaternion(mat,&q);
+   expect_mat(exp,mat);
+}
+
 START_TEST(vector)
 {
     VectorTest();
+    MatrixTest();
 }
