@@ -32,7 +32,7 @@
 
 void VectorTest(void)
 {
-    D3DVALUE mod;
+    D3DVALUE mod,par;
     D3DVECTOR e,r,u,v;
 
     u.x=2.0;u.y=2.0;u.z=1.0;
@@ -60,6 +60,12 @@ void VectorTest(void)
 /*_______________________VectorModulus_____________________________*/
     mod=D3DRMVectorModulus(&u);
     ok((mod == 3.0), "Expected 3.0, Got %f",mod);
+
+/*_______________________VectorScale__________________________*/
+    par=2.5;
+    D3DRMVectorScale(&r,&v,par);
+    e.x=10.0; e.y=10.0; e.z=0.0;
+    expect_vec(e,r);
 }
 
 START_TEST(vector)

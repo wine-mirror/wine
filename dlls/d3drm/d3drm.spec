@@ -16,7 +16,7 @@
 @ stub D3DRMVectorRandom
 @ stub D3DRMVectorReflect
 @ stub D3DRMVectorRotate
-@ stub D3DRMVectorScale
+@ stdcall D3DRMVectorScale(ptr ptr long)
 @ stdcall D3DRMVectorSubtract(ptr ptr ptr)
 @ stub Direct3DRMCreate
 @ stub DllCanUnloadNow

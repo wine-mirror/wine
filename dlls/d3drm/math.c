@@ -74,3 +74,12 @@ D3DVALUE WINAPI D3DRMVectorModulus(LPD3DVECTOR v)
     result=sqrt(v->x * v->x + v->y * v->y + v->z * v->z);
     return result;
 }
+
+/* Scale a vector */
+LPD3DVECTOR WINAPI D3DRMVectorScale(LPD3DVECTOR d, LPD3DVECTOR s, D3DVALUE factor)
+{
+    d->x=factor * s->x;
+    d->y=factor * s->y;
+    d->z=factor * s->z;
+    return d;
+}
