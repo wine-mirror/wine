@@ -92,6 +92,7 @@ SRCDIR_INCLUDES = \
 	d3dcaps.h \
 	d3dhal.h \
 	d3drm.h \
+	d3drmdef.h \
 	d3dtypes.h \
 	d3dvec.inl \
 	d3dx8core.h \
