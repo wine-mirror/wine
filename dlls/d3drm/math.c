@@ -70,6 +70,14 @@ void WINAPI D3DRMMatrixFromQuaternion(D3DRMMATRIX4D m, LPD3DRMQUATERNION q)
     m[3][3] = 1.0;
 }
 
+/* Return a unit quaternion that represents a rotation of an angle around an axis */
+LPD3DRMQUATERNION WINAPI D3DRMQuaternionFromRotation(LPD3DRMQUATERNION q, LPD3DVECTOR v, D3DVALUE theta)
+{
+    q->s = cos(theta/2.0);
+    D3DRMVectorScale(&q->v, D3DRMVectorNormalize(v), sin(theta/2.0));
+    return q;
+}
+
 /* Add Two Vectors */
 LPD3DVECTOR WINAPI D3DRMVectorAdd(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
 {

@@ -50,6 +50,15 @@
        gotmat[3][0],gotmat[3][1],gotmat[3][2],gotmat[3][3] ); \
 }
 
+#define expect_quat(expectedquat,gotquat) \
+  ok( (fabs(expectedquat.v.x-gotquat.v.x)<admit_error) && \
+      (fabs(expectedquat.v.y-gotquat.v.y)<admit_error) && \
+      (fabs(expectedquat.v.z-gotquat.v.z)<admit_error) && \
+      (fabs(expectedquat.s-gotquat.s)<admit_error), \
+  "Expected Quaternion %f %f %f %f , Got Quaternion %f %f %f %f\n", \
+  expectedquat.s,expectedquat.v.x,expectedquat.v.y,expectedquat.v.z, \
+  gotquat.s,gotquat.v.x,gotquat.v.y,gotquat.v.z);
+
 #define expect_vec(expectedvec,gotvec) \
   ok( ((fabs(expectedvec.x-gotvec.x)<admit_error)&&(fabs(expectedvec.y-gotvec.y)<admit_error)&&(fabs(expectedvec.z-gotvec.z)<admit_error)), \
   "Expected Vector= (%f, %f, %f)\n , Got Vector= (%f, %f, %f)\n", \
@@ -141,8 +150,23 @@ static void MatrixTest(void)
    expect_mat(exp,mat);
 }
 
+static void QuaternionTest(void)
+{
+    D3DVECTOR axis;
+    D3DVALUE theta;
+    D3DRMQUATERNION q,r;
+
+/*_________________QuaternionFromRotation___________________*/
+    axis.x=1.0;axis.y=1.0;axis.z=1.0;
+    theta=2.0*PI/3.0;
+    D3DRMQuaternionFromRotation(&r,&axis,theta);
+    q.s=0.5;q.v.x=0.5;q.v.y=0.5;q.v.z=0.5;
+    expect_quat(q,r);
+}
+
 START_TEST(vector)
 {
     VectorTest();
     MatrixTest();
+    QuaternionTest();
 }
