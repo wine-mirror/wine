@@ -41,6 +41,11 @@ void VectorTest(void)
     D3DRMVectorAdd(&r,&u,&v);
     e.x=6.0;e.y=6.0;e.z=1.0;
     expect_vec(e,r);
+
+/*_______________________VectorSubtract__________________________*/
+    D3DRMVectorSubtract(&r,&u,&v);
+    e.x=-2.0;e.y=-2.0;e.z=1.0;
+    expect_vec(e,r);
 }
 
 START_TEST(vector)

@@ -40,3 +40,12 @@ LPD3DVECTOR WINAPI D3DRMVectorAdd(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
     d->z=s1->z + s2->z;
     return d;
 }
+
+/* Subtract Two Vectors */
+LPD3DVECTOR WINAPI D3DRMVectorSubtract(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
+{
+    d->x=s1->x - s2->x;
+    d->y=s1->y - s2->y;
+    d->z=s1->z - s2->z;
+    return d;
+}
