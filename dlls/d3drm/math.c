@@ -66,3 +66,11 @@ D3DVALUE WINAPI D3DRMVectorDotProduct(LPD3DVECTOR s1, LPD3DVECTOR s2)
     dot_product=s1->x * s2->x + s1->y * s2->y + s1->z * s2->z;
     return dot_product;
 }
+
+/* Norm of a vector */
+D3DVALUE WINAPI D3DRMVectorModulus(LPD3DVECTOR v)
+{
+    D3DVALUE result;
+    result=sqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+    return result;
+}

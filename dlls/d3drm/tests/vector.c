@@ -56,6 +56,10 @@ void VectorTest(void)
 /*_______________________VectorDotProduct__________________________*/
     mod=D3DRMVectorDotProduct(&u,&v);
     ok((mod == 16.0), "Expected 16.0, Got %f",mod);
+
+/*_______________________VectorModulus_____________________________*/
+    mod=D3DRMVectorModulus(&u);
+    ok((mod == 3.0), "Expected 3.0, Got %f",mod);
 }
 
 START_TEST(vector)

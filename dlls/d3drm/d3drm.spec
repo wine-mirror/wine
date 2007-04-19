@@ -11,7 +11,7 @@
 @ stdcall D3DRMVectorAdd(ptr ptr ptr)
 @ stdcall D3DRMVectorCrossProduct(ptr ptr ptr)
 @ stdcall D3DRMVectorDotProduct(ptr ptr)
-@ stub D3DRMVectorModulus
+@ stdcall D3DRMVectorModulus(ptr)
 @ stub D3DRMVectorNormalize
 @ stub D3DRMVectorRandom
 @ stub D3DRMVectorReflect
