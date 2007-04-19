@@ -26,5 +26,4 @@ STRINGTABLE DISCARDABLE
 {
     IDS_LOCALPORT "지역 포트"
     IDS_LOCALMONITOR "지역 모니터"
-    IDS_NOTHINGTOCONFIG "This port has no options to configure"
 }

@@ -109,23 +109,6 @@ static const WCHAR WinNT_CV_WindowsW[] = {'S','o','f','t','w','a','r','e','\\',
                                         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                         'W','i','n','d','o','w','s',0};
 
-/******************************************************************
- * display the Dialog "Nothing to configure"
- * 
- */
-
-static void dlg_nothingtoconfig(HWND hWnd)
-{
-    WCHAR res_PortW[IDS_LOCALPORT_MAXLEN];
-    WCHAR res_nothingW[IDS_NOTHINGTOCONFIG_MAXLEN];
-
-    res_PortW[0] = '\0';
-    res_nothingW[0] = '\0';
-    LoadStringW(LOCALSPL_hInstance, IDS_LOCALPORT, res_PortW, IDS_LOCALPORT_MAXLEN);  
-    LoadStringW(LOCALSPL_hInstance, IDS_NOTHINGTOCONFIG, res_nothingW, IDS_NOTHINGTOCONFIG_MAXLEN);  
-
-    MessageBoxW(hWnd, res_nothingW, res_PortW, MB_OK | MB_ICONINFORMATION);
-}
 
 /******************************************************************
  * does_port_exist (internal)
@@ -315,30 +298,6 @@ static DWORD get_type_from_name(LPCWSTR name)
     }
     /* We can't use the name. use GetLastError() for the reason */
     return PORT_IS_UNKNOWN;
-}
-
-/*****************************************************
- *   localmon_ConfigurePortW [exported through MONITOREX]
- *
- * Display the Configuration-Dialog for a specific Port
- *
- * PARAMS
- *  pName     [I] Servername or NULL (local Computer)
- *  hWnd      [I] Handle to parent Window for the Dialog-Box
- *  pPortName [I] Name of the Port, that should be configured
- *
- * RETURNS
- *  Success: TRUE
- *  Failure: FALSE
- *
- */
-BOOL WINAPI localmon_ConfigurePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
-{
-    TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
-    /* ToDo: Dialogs by Portname ("LPTx:", "COMx:") */
-
-    dlg_nothingtoconfig(hWnd);
-    return ROUTER_SUCCESS;
 }
 
 /*****************************************************
@@ -651,7 +610,7 @@ LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR regroot)
             NULL,       /* localmon_ClosePortW */
             NULL,       /* localmon_AddPortW */
             NULL,       /* localmon_AddPortExW */
-            localmon_ConfigurePortW,
+            NULL,       /* Use ConfigurePortUI in localui.dll */
             NULL,       /* Use DeletePortUI in localui.dll */
             NULL,       /* localmon_GetPrinterDataFromPort */
             NULL,       /* localmon_SetPortTimeOuts */

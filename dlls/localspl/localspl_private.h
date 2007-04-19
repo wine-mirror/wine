@@ -28,12 +28,10 @@ extern HINSTANCE LOCALSPL_hInstance;
 /* ## Resource-ID ## */
 #define IDS_LOCALPORT       500
 #define IDS_LOCALMONITOR    507
-#define IDS_NOTHINGTOCONFIG 508
 
 /* ## Reserved memorysize for the strings (in WCHAR) ## */
 #define IDS_LOCALMONITOR_MAXLEN 64
 #define IDS_LOCALPORT_MAXLEN 32
-#define IDS_NOTHINGTOCONFIG_MAXLEN 80
 
 /* ## Type of Ports ## */
 /* windows types */

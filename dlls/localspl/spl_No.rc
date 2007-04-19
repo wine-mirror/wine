@@ -24,5 +24,4 @@ STRINGTABLE DISCARDABLE
 {
     IDS_LOCALPORT "Lokal port"
     IDS_LOCALMONITOR "Lokal overvåker"
-    IDS_NOTHINGTOCONFIG "Denne porten har ingen innstillinger"
 }

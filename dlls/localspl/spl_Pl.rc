@@ -26,5 +26,4 @@ STRINGTABLE DISCARDABLE
 {
     IDS_LOCALPORT "Port lokalny"
     IDS_LOCALMONITOR "Monitor lokalny"
-    IDS_NOTHINGTOCONFIG "Ten port nie ma opcji do skonfigurowania"
 }
