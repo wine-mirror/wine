@@ -4,6 +4,7 @@
  *
  * Copyright 2004 Rein Klazes
  * Copyright 2005-2006 Paul Vriens
+ * Copyright 2007 Maarten Lankhorst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,7 +28,7 @@ IDR_WINECFG MENU DISCARDABLE
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "Configure", IDC_AUDIO_CONFIGURE
+        MENUITEM "Instellen", IDC_AUDIO_CONFIGURE
     END
 END
 
@@ -159,10 +160,11 @@ IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Stuurprograma selectie ",IDC_STATIC,8,4,244,195
+    GROUPBOX        " Stuurprogramma selectie ",IDC_STATIC,8,4,244,195
     LTEXT           "Selecteer een geluids-stuurprogramma door het aanvinken van het gewenste stuurprogramma. Zet het geluid uit door geen stuurprogramma te selecteren. Het selecteren van meerdere stuurprogramma's wordt niet aanbevolen. Configureer een stuurprogramma d.m.v. een rechter muisklik hierop.",IDC_STATIC,15,20,227,45
     CONTROL         "Apparaten",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,65,140,125
     PUSHBUTTON	    "Configuratiescherm",IDC_AUDIO_CONTROL_PANEL,170,65,79,14
+    PUSHBUTTON      "Geluidstest",IDC_AUDIO_TEST,170,85,79,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Hardwareversnelling: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -211,17 +213,17 @@ BEGIN
     IDS_HIDE_ADVANCED       "Verberg uitgebreid"
     IDS_SHOW_ADVANCED       "Toon uitgebreid"
     IDS_NOTHEME             "(Geen Thema)"
-    IDS_TAB_GRAPHICS        "Graphics" /* FIXME */
+    IDS_TAB_GRAPHICS        "Grafisch"
     IDS_TAB_DESKTOP_INTEGRATION "Desktop Integratie"
-    IDS_TAB_AUDIO           "Audio"
-    IDS_TAB_ABOUT           "Info"
+    IDS_TAB_AUDIO           "Geluid"
+    IDS_TAB_ABOUT           "Over wine"
     IDS_WINECFG_TITLE       "Wine configuratie"
     IDS_WINECFG_TITLE_APP   "Wine configuratie voor %s"
     IDS_THEMEFILE           "Thema-bestanden"
     IDS_THEMEFILE_SELECT    "Thema-bestanden kiezen"
-    IDS_AUDIO_MISSING       "Op dit moment is er geen audio stuurbestand gespecificeerd in de registry.\n\nEen aanbevolen stuurbestand is voor u geselecteerd.\nU kunt dit stuurbestand gebruiken of (indien beschikbaar) een ander selecteren.\n\nKlik op 'Toepassen' om deze selectie te activeren."
-    IDS_SHELL_FOLDER        "Shell Folder"
-    IDS_LINKS_TO            "Links to"
+    IDS_AUDIO_MISSING       "Op dit moment is er geen stuurprogramma voor geluid gespecificeerd in de registry.\n\nEen aanbevolen stuurbestand is voor u geselecteerd.\nU kunt dit stuurbestand gebruiken of (indien beschikbaar) een ander selecteren.\n\nKlik op 'Toepassen' om deze selectie te activeren."
+    IDS_SHELL_FOLDER        "Persoonlijke map"
+    IDS_LINKS_TO            "Verwijst naar"
 END
 
 STRINGTABLE DISCARDABLE
@@ -250,7 +252,7 @@ BEGIN
     IDS_DRIVE_UNKNOWN           "Automatisch detecteren"
     IDS_DRIVE_FIXED             "Lokaal station"
     IDS_DRIVE_REMOTE            "Netwerkverbinding"
-    IDS_DRIVE_REMOVABLE         "Floppy disk"
+    IDS_DRIVE_REMOVABLE         "Diskettestation"
     IDS_DRIVE_CDROM             "CD-ROM"
     IDS_DRIVE_LETTERS_EXCEEDED  "U kunt geen stations meer toevoegen.\n\nElk station moet een letter, van A tot Z, hebben zodat er niet meer dan 26 kunnen zijn"
     IDS_SYSTEM_DRIVE_LABEL      "Systeem station"
