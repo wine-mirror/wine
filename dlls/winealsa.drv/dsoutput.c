@@ -218,12 +218,12 @@ static DWORD CALLBACK DBSB_MMAPLoop(LPVOID data)
 
         case WINE_WM_STOPPING:
             state = WINE_WS_STOPPED;
-            snd_pcm_drain(wwo->pcm);
+            snd_pcm_drop(wwo->pcm);
             break;
 
         case WINE_WM_CLOSING:
             if (wwo->pcm != NULL)
-                snd_pcm_drain(wwo->pcm);
+                snd_pcm_drop(wwo->pcm);
             pdbi->mmap_thread = NULL;
             SetEvent(hEvent);
             goto out;
