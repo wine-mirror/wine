@@ -313,7 +313,7 @@ static void CALLBACK MIXER_WCallback(HMIXEROBJ hmx, UINT uMsg, DWORD_PTR dwInsta
     if (!dwInstance)
         return;
 
-    PostMessageW(hWnd, MM_MIXM_CONTROL_CHANGE, (WPARAM)hmx, (LPARAM)dwParam);
+    PostMessageW(hWnd, uMsg, (WPARAM)hmx, (LPARAM)dwParam);
 }
 
 UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
