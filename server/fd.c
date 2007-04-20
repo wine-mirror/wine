@@ -1735,6 +1735,7 @@ struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type,
         queue = fd->wait_q;
         break;
     default:
+        queue = NULL;
         assert(0);
     }
 
