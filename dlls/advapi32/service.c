@@ -1566,54 +1566,24 @@ BOOL WINAPI StartServiceW(SC_HANDLE hService, DWORD dwNumServiceArgs,
  * QueryServiceStatus [ADVAPI32.@]
  *
  * PARAMS
- *   hService        []
- *   lpservicestatus []
+ *   hService        [I] Handle to service to get information about
+ *   lpservicestatus [O] buffer to receive the status information for the service
  *
  */
 BOOL WINAPI QueryServiceStatus(SC_HANDLE hService,
                                LPSERVICE_STATUS lpservicestatus)
 {
-    struct sc_service *hsvc;
-    DWORD size, type, val;
-    HANDLE pipe;
-    LONG r;
+    SERVICE_STATUS_PROCESS SvcStatusData;
+    BOOL ret;
 
     TRACE("%p %p\n", hService, lpservicestatus);
 
-    hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
-    if (!hsvc)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
-
-    pipe = service_open_pipe(hsvc->name);
-    if (pipe != INVALID_HANDLE_VALUE)
-    {
-        r = service_get_status(pipe, lpservicestatus);
-        CloseHandle(pipe);
-        if (r)
-            return TRUE;
-    }
-
-    TRACE("Failed to read service status\n");
-
-    /* read the service type from the registry */
-    size = sizeof(val);
-    r = RegQueryValueExA(hsvc->hkey, "Type", NULL, &type, (LPBYTE)&val, &size);
-    if(r!=ERROR_SUCCESS || type!=REG_DWORD)
-        val = 0;
-
-    lpservicestatus->dwServiceType = val;
-    lpservicestatus->dwCurrentState            = SERVICE_STOPPED;  /* stopped */
-    lpservicestatus->dwControlsAccepted        = 0;
-    lpservicestatus->dwWin32ExitCode           = ERROR_SERVICE_NEVER_STARTED;
-    lpservicestatus->dwServiceSpecificExitCode = 0;
-    lpservicestatus->dwCheckPoint              = 0;
-    lpservicestatus->dwWaitHint                = 0;
-
-    return TRUE;
+    ret = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, (LPBYTE)&SvcStatusData,
+                                sizeof(SERVICE_STATUS_PROCESS), NULL);
+    if (ret) *lpservicestatus = SvcStatusData.status;
+    return ret;
 }
+
 
 /******************************************************************************
  * QueryServiceStatusEx [ADVAPI32.@]
