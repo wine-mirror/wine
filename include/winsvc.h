@@ -131,6 +131,15 @@ typedef struct _SERVICE_STATUS {
   DWORD dwWaitHint;
 } SERVICE_STATUS, *LPSERVICE_STATUS;
 
+/* Service status process structure */
+
+typedef struct _SERVICE_STATUS_PROCESS
+{
+  SERVICE_STATUS status;
+  DWORD dwProcessId;
+  DWORD dwServiceFlags;
+} SERVICE_STATUS_PROCESS, *LPSERVICE_STATUS_PROCESS;
+
 typedef enum _SC_STATUS_TYPE {
   SC_STATUS_PROCESS_INFO      = 0
 } SC_STATUS_TYPE;

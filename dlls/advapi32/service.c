@@ -1635,9 +1635,74 @@ BOOL WINAPI QueryServiceStatusEx(SC_HANDLE hService, SC_STATUS_TYPE InfoLevel,
                         LPBYTE lpBuffer, DWORD cbBufSize,
                         LPDWORD pcbBytesNeeded)
 {
-    FIXME("stub\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    struct sc_service *hsvc;
+    DWORD size, type, val;
+    HANDLE pipe;
+    LONG r;
+    LPSERVICE_STATUS_PROCESS pSvcStatusData;
+
+    TRACE("%p %d %p %d %p\n", hService, InfoLevel, lpBuffer, cbBufSize, pcbBytesNeeded);
+
+    if (InfoLevel != SC_STATUS_PROCESS_INFO)
+    {
+        SetLastError( ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    pSvcStatusData = (LPSERVICE_STATUS_PROCESS) lpBuffer;
+    if (pSvcStatusData == NULL)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (cbBufSize < sizeof(SERVICE_STATUS_PROCESS))
+    {
+        if( pcbBytesNeeded != NULL)
+            *pcbBytesNeeded = sizeof(SERVICE_STATUS_PROCESS);
+
+        SetLastError( ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
+    if (!hsvc)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    /* FIXME: this would be the pid from service_start_process() */
+    pSvcStatusData->dwProcessId = 0;
+    /* service is running in a process that is not a system process */
+    pSvcStatusData->dwServiceFlags = 0;
+
+    pipe = service_open_pipe(hsvc->name);
+    if (pipe != INVALID_HANDLE_VALUE)
+    {
+        r = service_get_status(pipe, &pSvcStatusData->status);
+        CloseHandle(pipe);
+        if (r)
+            return TRUE;
+    }
+
+    TRACE("Failed to read service status\n");
+
+    /* read the service type from the registry */
+    size = sizeof(val);
+    r = RegQueryValueExA(hsvc->hkey, "Type", NULL, &type, (LPBYTE)&val, &size);
+    if (r != ERROR_SUCCESS || type != REG_DWORD)
+        val = 0;
+
+    pSvcStatusData->status.dwServiceType = val;
+    pSvcStatusData->status.dwCurrentState            = SERVICE_STOPPED;  /* stopped */
+    pSvcStatusData->status.dwControlsAccepted        = 0;
+    pSvcStatusData->status.dwWin32ExitCode           = ERROR_SERVICE_NEVER_STARTED;
+    pSvcStatusData->status.dwServiceSpecificExitCode = 0;
+    pSvcStatusData->status.dwCheckPoint              = 0;
+    pSvcStatusData->status.dwWaitHint                = 0;
+
+    return TRUE;
 }
 
 /******************************************************************************
