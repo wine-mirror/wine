@@ -220,7 +220,13 @@ if [ $mode = "menu" ] ; then
     desktop_entry > "$xdg_data_dir/applications/wine/$link.desktop"
     write_menu_file "wine$linkpath" "wine$linkpath/$linkname.desktop"
 else
-    desktop_entry > "$HOME/Desktop/$linkname.desktop"
+    if [ -d "$HOME/Desktop" ]
+    then
+      desktop_target="$HOME/Desktop/$linkname.desktop"
+    else
+      desktop_target="$HOME/$linkname.desktop"
+    fi
+    desktop_entry > "$desktop_target"
 fi
 
 exit 0
