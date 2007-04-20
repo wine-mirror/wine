@@ -111,7 +111,7 @@ BOOL WINAPI GetProfilesDirectoryW( LPWSTR lpProfilesDir, LPDWORD lpcchSize )
 BOOL WINAPI GetProfileType( LPDWORD pdwFlags )
 {
     FIXME("%p\n", pdwFlags );
-    *pdwFlags = PT_MANDATORY | PT_ROAMING | PT_TEMPORARY;
+    *pdwFlags = 0;
     return TRUE;
 }
 
