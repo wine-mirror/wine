@@ -765,7 +765,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     }
 
     if (use_vs(stateblock->wineD3DDevice)
-            && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog) {
+            && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.reg_maps.fog) {
         if( stateblock->renderState[WINED3DRS_FOGTABLEMODE] != WINED3DFOG_NONE ) {
             if(!is_ps3) FIXME("Implement table fog for foggy vertex shader\n");
             /* Disable fog */
@@ -3018,7 +3018,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
        ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL) {
         useVertexShaderFunction = TRUE;
 
-        if(((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog != context->last_was_foggy_shader) {
+        if(((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.reg_maps.fog != context->last_was_foggy_shader) {
             updateFog = TRUE;
         }
     } else if(context->last_was_foggy_shader) {

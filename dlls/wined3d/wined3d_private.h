@@ -1892,7 +1892,6 @@ typedef struct IWineD3DVertexShaderImpl {
     /* IWineD3DVertexShaderImpl */
     IUnknown                    *parent;
 
-    char                        usesFog;
     DWORD                       usage;
 
     /* Vertex shader input and output semantics */

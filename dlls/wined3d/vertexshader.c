@@ -337,9 +337,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
             vshader_glsl_output_unpack(&buffer, This->semantics_out);
 
         /* If this shader doesn't use fog copy the z coord to the fog coord so that we can use table fog */
-        if (reg_maps->fog)
-            This->usesFog = 1;
-        else
+        if (!reg_maps->fog)
             shader_addline(&buffer, "gl_FogFragCoord = gl_Position.z;\n");
         
         /* Write the final position.
@@ -386,9 +384,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 
         /* If this shader doesn't use fog copy the z coord to the fog coord so that we can use table fog */
-        if (reg_maps->fog)
-            This->usesFog = 1;
-        else
+        if (!reg_maps->fog)
             shader_addline(&buffer, "MOV result.fogcoord, TMP_OUT.z;\n");
 
         /* Write the final position.
