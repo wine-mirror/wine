@@ -213,6 +213,8 @@ HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device)
 {
 	TRACE("(%p)\n", device);
 
+        EnterCriticalSection(&(device->mixlock));
+
 	DSOUND_PrimaryClose(device);
 	if (device->driver) {
 		if (device->hwbuf) {
@@ -227,6 +229,7 @@ HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device)
 	}
         HeapFree(GetProcessHeap(),0,device->pwfx);
         device->pwfx=NULL;
+        LeaveCriticalSection(&(device->mixlock));
 	return DS_OK;
 }
 
@@ -253,6 +256,7 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 	HRESULT err = DS_OK;
 	TRACE("(%p)\n", device);
 
+	EnterCriticalSection(&(device->mixlock));
 	if (device->hwbuf) {
 		err = IDsDriverBuffer_Stop(device->hwbuf);
 		if (err == DSERR_BUFFERLOST) {
@@ -285,6 +289,7 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 		if (err != DS_OK)
 			WARN("waveOutPause failed\n");
 	}
+	LeaveCriticalSection(&(device->mixlock));
 	return err;
 }
 
