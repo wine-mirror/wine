@@ -781,7 +781,7 @@ struct _CERT_CHAIN_CONTEXT {
     DWORD                 cChain;
     PCERT_SIMPLE_CHAIN   *rgpChain;
     DWORD                 cLowerQualityChainContext;
-    PCCERT_CHAIN_CONTEXT *rgbLowerQualityChainContext;
+    PCCERT_CHAIN_CONTEXT *rgpLowerQualityChainContext;
     BOOL                  fHasRevocationFreshnessTime;
     DWORD                 dwRevocationFreshnessTime;
 };
