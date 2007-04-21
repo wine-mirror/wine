@@ -261,6 +261,7 @@ SRCDIR_INCLUDES = \
 	ntdsapi.h \
 	ntquery.h \
 	ntsecapi.h \
+	ntsecpkg.h \
 	ntstatus.h \
 	objbase.h \
 	objsel.h \
