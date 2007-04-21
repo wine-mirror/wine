@@ -1746,64 +1746,18 @@ GetFileSecurityW( LPCWSTR lpFileName,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor,
                     DWORD nLength, LPDWORD lpnLengthNeeded )
 {
-    DWORD		nNeeded;
-    LPBYTE	pBuffer;
-    DWORD		iLocNow;
-    SECURITY_DESCRIPTOR_RELATIVE *pSDRelative;
+    HANDLE hfile;
+    NTSTATUS status;
 
-    if(INVALID_FILE_ATTRIBUTES == GetFileAttributesW(lpFileName))
+    hfile = CreateFileW( lpFileName, GENERIC_READ, FILE_SHARE_READ,
+                         NULL, OPEN_EXISTING, 0, 0 );
+    if ( hfile == INVALID_HANDLE_VALUE )
         return FALSE;
 
-    FIXME("(%s) : returns fake SECURITY_DESCRIPTOR\n", debugstr_w(lpFileName) );
-
-    nNeeded = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
-    if (RequestedInformation & OWNER_SECURITY_INFORMATION)
-	nNeeded += sizeof(sidWorld);
-    if (RequestedInformation & GROUP_SECURITY_INFORMATION)
-	nNeeded += sizeof(sidWorld);
-    if (RequestedInformation & DACL_SECURITY_INFORMATION)
-	nNeeded += WINE_SIZE_OF_WORLD_ACCESS_ACL;
-    if (RequestedInformation & SACL_SECURITY_INFORMATION)
-	nNeeded += WINE_SIZE_OF_WORLD_ACCESS_ACL;
-
-    *lpnLengthNeeded = nNeeded;
-
-    if (nNeeded > nLength)
-	    return TRUE;
-
-    if (!InitializeSecurityDescriptor(pSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION))
-	return FALSE;
-
-    pSDRelative = (PISECURITY_DESCRIPTOR_RELATIVE) pSecurityDescriptor;
-    pSDRelative->Control |= SE_SELF_RELATIVE;
-    pBuffer = (LPBYTE) pSDRelative;
-    iLocNow = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
-
-    if (RequestedInformation & OWNER_SECURITY_INFORMATION)
-    {
-	memcpy(pBuffer + iLocNow, &sidWorld, sizeof(sidWorld));
-	pSDRelative->Owner = iLocNow;
-	iLocNow += sizeof(sidWorld);
-    }
-    if (RequestedInformation & GROUP_SECURITY_INFORMATION)
-    {
-	memcpy(pBuffer + iLocNow, &sidWorld, sizeof(sidWorld));
-	pSDRelative->Group = iLocNow;
-	iLocNow += sizeof(sidWorld);
-    }
-    if (RequestedInformation & DACL_SECURITY_INFORMATION)
-    {
-	GetWorldAccessACL((PACL) (pBuffer + iLocNow));
-	pSDRelative->Dacl = iLocNow;
-	iLocNow += WINE_SIZE_OF_WORLD_ACCESS_ACL;
-    }
-    if (RequestedInformation & SACL_SECURITY_INFORMATION)
-    {
-	GetWorldAccessACL((PACL) (pBuffer + iLocNow));
-	pSDRelative->Sacl = iLocNow;
-	/* iLocNow += WINE_SIZE_OF_WORLD_ACCESS_ACL; */
-    }
-    return TRUE;
+    status = NtQuerySecurityObject( hfile, RequestedInformation, pSecurityDescriptor,
+                                    nLength, lpnLengthNeeded );
+    CloseHandle( hfile );
+    return set_ntstatus( status );
 }
 
 
