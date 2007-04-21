@@ -23,9 +23,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "winreg.h"
-#include "winver.h"
-#include "winnls.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
