@@ -47,8 +47,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-static void msi_free_properties( MSIPACKAGE *package );
-
 static void MSI_FreePackage( MSIOBJECTHDR *arg)
 {
     MSIPACKAGE *package= (MSIPACKAGE*) arg;
@@ -58,36 +56,78 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
 
     msiobj_release( &package->db->hdr );
     ACTION_free_package_structures(package);
-    msi_free_properties( package );
 }
 
-static UINT iterate_clone_props(MSIRECORD *row, LPVOID param)
+static UINT clone_properties(MSIPACKAGE *package)
 {
-    MSIPACKAGE *package = param;
-    LPCWSTR name, value;
-
-    name = MSI_RecordGetString( row, 1 );
-    value = MSI_RecordGetString( row, 2 );
-    MSI_SetPropertyW( package, name, value );
-
-    return ERROR_SUCCESS;
-}
-
-static UINT clone_properties( MSIPACKAGE *package )
-{
+    MSIQUERY * view = NULL;
+    UINT rc;
+    static const WCHAR CreateSql[] = {
+       'C','R','E','A','T','E',' ','T','A','B','L','E',' ','`','_','P','r','o',
+       'p','e','r','t','y','`',' ','(',' ','`','_','P','r','o','p','e','r','t',
+       'y','`',' ','C','H','A','R','(','5','6',')',' ','N','O','T',' ','N','U',
+       'L','L',',',' ','`','V','a','l','u','e','`',' ','C','H','A','R','(','9',
+       '8',')',' ','N','O','T',' ','N','U','L','L',' ','P','R','I','M','A','R',
+       'Y',' ','K','E','Y',' ','`','_','P','r','o','p','e','r','t','y','`',')',0};
     static const WCHAR Query[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','`','P','r','o','p','e','r','t','y','`',0};
-    MSIQUERY *view = NULL;
-    UINT r;
+       'S','E','L','E','C','T',' ','*',' ',
+       'F','R','O','M',' ','`','P','r','o','p','e','r','t','y','`',0};
+    static const WCHAR Insert[] = {
+       'I','N','S','E','R','T',' ','i','n','t','o',' ',
+       '`','_','P','r','o','p','e','r','t','y','`',' ',
+       '(','`','_','P','r','o','p','e','r','t','y','`',',',
+       '`','V','a','l','u','e','`',')',' ',
+       'V','A','L','U','E','S',' ','(','?',',','?',')',0};
 
-    r = MSI_OpenQuery( package->db, &view, Query );
-    if (r == ERROR_SUCCESS)
+    /* create the temporary properties table */
+    rc = MSI_DatabaseOpenViewW(package->db, CreateSql, &view);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MSI_ViewExecute(view, 0);
+    MSI_ViewClose(view);
+    msiobj_release(&view->hdr);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    /* clone the existing properties */
+    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MSI_ViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
     {
-        r = MSI_IterateRecords( view, NULL, iterate_clone_props, package );
+        MSI_ViewClose(view);
         msiobj_release(&view->hdr);
+        return rc;
     }
-    return r;
+
+    while (1)
+    {
+        MSIRECORD *row;
+        MSIQUERY *view2;
+
+        rc = MSI_ViewFetch(view, &row);
+        if (rc != ERROR_SUCCESS)
+            break;
+
+        rc = MSI_DatabaseOpenViewW(package->db, Insert, &view2);
+        if (rc!= ERROR_SUCCESS)
+            continue;
+
+        rc = MSI_ViewExecute(view2, row);
+        MSI_ViewClose(view2);
+        msiobj_release(&view2->hdr);
+
+        if (rc == ERROR_SUCCESS)
+            msiobj_release(&row->hdr);
+    }
+
+    MSI_ViewClose(view);
+    msiobj_release(&view->hdr);
+
+    return rc;
 }
 
 /*
@@ -516,7 +556,6 @@ static UINT msi_load_summary_properties( MSIPACKAGE *package )
 static MSIPACKAGE *msi_alloc_package( void )
 {
     MSIPACKAGE *package;
-    int i;
 
     package = alloc_msiobject( MSIHANDLETYPE_PACKAGE, sizeof (MSIPACKAGE),
                                MSI_FreePackage );
@@ -534,9 +573,6 @@ static MSIPACKAGE *msi_alloc_package( void )
         list_init( &package->extensions );
         list_init( &package->progids );
         list_init( &package->RunningActions );
-
-        for (i=0; i<PROPERTY_HASH_SIZE; i++)
-            list_init( &package->props[i] );
 
         package->ActionFormat = NULL;
         package->LastAction = NULL;
@@ -987,78 +1023,6 @@ out:
 
 /* property code */
 
-typedef struct msi_property {
-    struct list entry;
-    LPWSTR key;
-    LPWSTR value;
-} msi_property;
-
-static UINT msi_prop_makehash( const WCHAR *str )
-{
-    UINT hash = 0;
-
-    if (str==NULL)
-        return hash;
-
-    while( *str )
-    {
-        hash ^= *str++;
-        hash *= 53;
-        hash = (hash<<5) | (hash>>27);
-    }
-    return hash % PROPERTY_HASH_SIZE;
-}
-
-static msi_property *msi_prop_find( MSIPACKAGE *package, LPCWSTR key )
-{
-    UINT hash = msi_prop_makehash( key );
-    msi_property *prop;
-
-    LIST_FOR_EACH_ENTRY( prop, &package->props[hash], msi_property, entry )
-        if (!lstrcmpW( prop->key, key ))
-            return prop;
-    return NULL;
-}
-
-static msi_property *msi_prop_add( MSIPACKAGE *package, LPCWSTR key )
-{
-    UINT hash = msi_prop_makehash( key );
-    msi_property *prop;
-
-    prop = msi_alloc( sizeof *prop );
-    if (prop)
-    {
-        prop->key = strdupW( key );
-        prop->value = NULL;
-        list_add_head( &package->props[hash], &prop->entry );
-    }
-    return prop;
-}
-
-static void msi_delete_property( msi_property *prop )
-{
-    list_remove( &prop->entry );
-    msi_free( prop->key );
-    msi_free( prop->value );
-    msi_free( prop );
-}
-
-static void msi_free_properties( MSIPACKAGE *package )
-{
-    int i;
-
-    for ( i=0; i<PROPERTY_HASH_SIZE; i++ )
-    {
-        while ( !list_empty(&package->props[i]) )
-        {
-            msi_property *prop;
-            prop = LIST_ENTRY( list_head( &package->props[i] ),
-                               msi_property, entry );
-            msi_delete_property( prop );
-        }
-    }
-}
-
 UINT WINAPI MsiSetPropertyA( MSIHANDLE hInstall, LPCSTR szName, LPCSTR szValue )
 {
     LPWSTR szwName = NULL, szwValue = NULL;
@@ -1083,7 +1047,27 @@ end:
 
 UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
 {
-    msi_property *prop;
+    MSIQUERY *view;
+    MSIRECORD *row = NULL;
+    UINT rc;
+    DWORD sz = 0;
+    WCHAR Query[1024];
+
+    static const WCHAR Insert[] = {
+        'I','N','S','E','R','T',' ','i','n','t','o',' ',
+        '`','_','P','r','o','p','e','r','t','y','`',' ','(',
+        '`','_','P','r','o','p','e','r','t','y','`',',',
+        '`','V','a','l','u','e','`',')',' ','V','A','L','U','E','S'
+        ,' ','(','?',',','?',')',0};
+    static const WCHAR Update[] = {
+        'U','P','D','A','T','E',' ','`','_','P','r','o','p','e','r','t','y','`',
+        ' ','s','e','t',' ','`','V','a','l','u','e','`',' ','=',' ','?',' ',
+        'w','h','e','r','e',' ','`','_','P','r','o','p','e','r','t','y','`',
+        ' ','=',' ','\'','%','s','\'',0};
+    static const WCHAR Delete[] = {
+        'D','E','L','E','T','E',' ','F','R','O','M',' ',
+        '`','_','P','r','o','p','e','r','t','y','`',' ','W','H','E','R','E',' ',
+        '`','_','P','r','o','p','e','r','t','y','`',' ','=',' ','\'','%','s','\'',0};
 
     TRACE("%p %s %s\n", package, debugstr_w(szName), debugstr_w(szValue));
 
@@ -1094,22 +1078,40 @@ UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
     if (!szName[0])
         return szValue ? ERROR_FUNCTION_FAILED : ERROR_SUCCESS;
 
-    prop = msi_prop_find( package, szName );
-    if (!prop)
-        prop = msi_prop_add( package, szName );
-
-    if (!prop)
-        return ERROR_OUTOFMEMORY;
-
-    if (szValue)
+    rc = MSI_GetPropertyW(package, szName, 0, &sz);
+    if (!szValue || !*szValue)
     {
-        msi_free( prop->value );
-        prop->value = strdupW( szValue );
+        sprintfW(Query, Delete, szName);
+    }
+    else if (rc == ERROR_MORE_DATA || rc == ERROR_SUCCESS)
+    {
+        sprintfW(Query, Update, szName);
+
+        row = MSI_CreateRecord(1);
+        MSI_RecordSetStringW(row, 1, szValue);
     }
     else
-        msi_delete_property( prop );
+    {
+        strcpyW(Query, Insert);
 
-    return ERROR_SUCCESS;
+        row = MSI_CreateRecord(2);
+        MSI_RecordSetStringW(row, 1, szName);
+        MSI_RecordSetStringW(row, 2, szValue);
+    }
+
+    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_ViewExecute(view, row);
+        if (rc != ERROR_SUCCESS) printf("MSI_ViewExecute failed: %d\n", rc);
+
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
+    }
+    else printf("MSI_DatabaseOpenView failed: %d\n", rc);
+    msiobj_release(&row->hdr);
+
+    return rc;
 }
 
 UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue)
@@ -1125,79 +1127,89 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
     return ret;
 }
 
+static MSIRECORD *MSI_GetPropertyRow( MSIPACKAGE *package, LPCWSTR name )
+{
+    static const WCHAR query[]= {
+        'S','E','L','E','C','T',' ','`','V','a','l','u','e','`',' ',
+        'F','R','O','M',' ' ,'`','_','P','r','o','p','e','r','t','y','`',
+        ' ','W','H','E','R','E',' ' ,'`','_','P','r','o','p','e','r','t','y','`',
+        '=','\'','%','s','\'',0};
+
+    if (!name || !*name)
+        return NULL;
+
+    return MSI_QueryGetRecord( package->db, query, name );
+}
+
 /* internal function, not compatible with MsiGetPropertyW */
 UINT MSI_GetPropertyW( MSIPACKAGE *package, LPCWSTR szName, 
                        LPWSTR szValueBuf, DWORD* pchValueBuf )
 {
-    msi_property *prop;
-    UINT r, len;
+    MSIRECORD *row;
+    UINT rc = ERROR_FUNCTION_FAILED;
+
+    row = MSI_GetPropertyRow( package, szName );
 
     if (*pchValueBuf > 0)
         szValueBuf[0] = 0;
 
-    prop = msi_prop_find( package, szName );
-    if (!prop)
+    if (row)
+    {
+        rc = MSI_RecordGetStringW(row, 1, szValueBuf, pchValueBuf);
+        msiobj_release(&row->hdr);
+    }
+
+    if (rc == ERROR_SUCCESS)
+        TRACE("returning %s for property %s\n", debugstr_w(szValueBuf),
+            debugstr_w(szName));
+    else if (rc == ERROR_MORE_DATA)
+        TRACE("need %d sized buffer for %s\n", *pchValueBuf,
+            debugstr_w(szName));
+    else
     {
         *pchValueBuf = 0;
         TRACE("property %s not found\n", debugstr_w(szName));
-        return ERROR_FUNCTION_FAILED;
     }
 
-    if (prop->value)
-    {
-        len = lstrlenW( prop->value );
-        lstrcpynW(szValueBuf, prop->value, *pchValueBuf);
-    }
-    else
-    {
-        len = 1;
-        if( *pchValueBuf > 0 )
-            szValueBuf[0] = 0;
-    }
-
-    TRACE("%s -> %s\n", debugstr_w(szName), debugstr_w(szValueBuf));
-
-    if ( *pchValueBuf <= len )
-    {
-        TRACE("have %u, need %u -> ERROR_MORE_DATA\n", *pchValueBuf, len);
-        r = ERROR_MORE_DATA;
-    }
-    else
-        r = ERROR_SUCCESS;
-
-    *pchValueBuf = len;
-
-    return r;
+    return rc;
 }
 
-LPWSTR msi_dup_property( MSIPACKAGE *package, LPCWSTR szName )
+LPWSTR msi_dup_property(MSIPACKAGE *package, LPCWSTR prop)
 {
-    msi_property *prop;
-    LPWSTR value = NULL;
+    DWORD sz = 0;
+    LPWSTR str;
+    UINT r;
 
-    prop = msi_prop_find( package, szName );
-    if (prop)
-        value = strdupW( prop->value );
+    r = MSI_GetPropertyW(package, prop, NULL, &sz);
+    if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA)
+        return NULL;
 
-    return value;
+    sz++;
+    str = msi_alloc(sz * sizeof(WCHAR));
+    r = MSI_GetPropertyW(package, prop, str, &sz);
+    if (r != ERROR_SUCCESS)
+    {
+        msi_free(str);
+        str = NULL;
+    }
+
+    return str;
 }
 
-int msi_get_property_int( MSIPACKAGE *package, LPCWSTR name, int value )
+int msi_get_property_int(MSIPACKAGE *package, LPCWSTR prop, int def)
 {
-    msi_property *prop;
-
-    prop = msi_prop_find( package, name );
-    if (prop)
-        value = atoiW( prop->value );
-    return value;
+    LPWSTR str = msi_dup_property(package, prop);
+    int val = str ? atoiW(str) : def;
+    msi_free(str);
+    return val;
 }
 
 static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
                              awstring *szValueBuf, DWORD* pchValueBuf )
 {
     static const WCHAR empty[] = {0};
-    msi_property *prop;
     MSIPACKAGE *package;
+    MSIRECORD *row = NULL;
     UINT r;
     LPCWSTR val = NULL;
 
@@ -1211,15 +1223,17 @@ static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    prop = msi_prop_find( package, name );
-    if (prop)
-        val = prop->value;
+    row = MSI_GetPropertyRow( package, name );
+    if (row)
+        val = MSI_RecordGetString( row, 1 );
 
     if (!val)
         val = empty;
 
     r = msi_strcpy_to_awstring( val, szValueBuf, pchValueBuf );
 
+    if (row)
+        msiobj_release( &row->hdr );
     msiobj_release( &package->hdr );
 
     return r;

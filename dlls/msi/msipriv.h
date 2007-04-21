@@ -207,8 +207,6 @@ struct tagMSIVIEW
 struct msi_dialog_tag;
 typedef struct msi_dialog_tag msi_dialog;
 
-#define PROPERTY_HASH_SIZE 67
-
 typedef struct tagMSIPACKAGE
 {
     MSIOBJECTHDR hdr;
@@ -242,8 +240,6 @@ typedef struct tagMSIPACKAGE
     float center_y;
 
     UINT WordCount;
-
-    struct list props[PROPERTY_HASH_SIZE];
 
     struct list subscriptions;
 } MSIPACKAGE;

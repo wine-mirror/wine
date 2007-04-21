@@ -1500,6 +1500,22 @@ static void test_props(void)
     ok( r == ERROR_MORE_DATA, "return wrong\n");
     ok( !strcmp(buffer,"Photoshop.dl"), "buffer wrong\n");
 
+    r = MsiSetProperty(hpkg, "property", "value");
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    sz = 6;
+    r = MsiGetProperty(hpkg, "property", buffer, &sz);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok( !strcmp(buffer, "value"), "Expected value, got %s\n", buffer);
+
+    r = MsiSetProperty(hpkg, "property", NULL);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    sz = 6;
+    r = MsiGetProperty(hpkg, "property", buffer, &sz);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok( !strlen(buffer), "Expected empty string, got %s\n", buffer);
+
     MsiCloseHandle( hpkg );
     DeleteFile(msifile);
 }

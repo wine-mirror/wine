@@ -1943,11 +1943,8 @@ static void test_formatrecord_package(void)
     MsiRecordSetString(hrec, 0, "{a[one]bc[bad]de[two]f}");
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed\n");
-    todo_wine
-    {
-        ok( sz == 0, "size wrong(%i)\n",sz);
-        ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
-    }
+    ok( sz == 0, "size wrong(%i)\n",sz);
+    ok( 0 == strcmp(buffer,""), "wrong output (%s)\n",buffer);
 
     MsiSetProperty(package, "bad", "");
     sz = sizeof buffer;
