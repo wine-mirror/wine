@@ -563,7 +563,7 @@ extern const WCHAR *msi_string_lookup_id( string_table *st, UINT id );
 extern UINT msi_string_get_codepage( string_table *st );
 
 
-extern BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name );
+extern BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name );
 extern MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table );
 
 extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,

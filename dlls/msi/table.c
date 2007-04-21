@@ -1027,7 +1027,7 @@ static UINT get_tablecolumns( MSIDATABASE *db,
 }
 
 /* try to find the table name in the _Tables table */
-BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name )
+BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name )
 {
     UINT r, table_id = 0, i, count;
     MSITABLE *table = NULL;
@@ -1715,6 +1715,9 @@ MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table )
 {
     if (!table)
         return MSICONDITION_ERROR;
+
+    if (!TABLE_Exists( db, table ))
+        return MSICONDITION_NONE;
 
     return MSICONDITION_FALSE;
 }
