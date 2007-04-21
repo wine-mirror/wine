@@ -50,7 +50,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "vfw.h"
-#include "winreg.h"
 #include "winnls.h"
 #include "winternl.h"
 #include "wine/debug.h"
