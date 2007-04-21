@@ -463,10 +463,6 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi->pcm = 0;
     flags = SND_PCM_NONBLOCK;
-#if 0
-    if ( dwFlags & WAVE_DIRECTSOUND )
-	flags |= SND_PCM_ASYNC;
-#endif
 
     if ( (err=snd_pcm_open(&pcm, wwi->pcmname, SND_PCM_STREAM_CAPTURE, flags)) < 0 )
     {

@@ -647,12 +647,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     flags = SND_PCM_NONBLOCK;
 
-    /* FIXME - why is this ifdefed? */
-#if 0
-    if ( dwFlags & WAVE_DIRECTSOUND )
-	flags |= SND_PCM_ASYNC;
-#endif
-
     if ( (err = snd_pcm_open(&pcm, wwo->pcmname, SND_PCM_STREAM_PLAYBACK, flags)) < 0)
     {
         ERR("Error open: %s\n", snd_strerror(err));
