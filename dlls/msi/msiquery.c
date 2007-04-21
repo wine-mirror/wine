@@ -552,10 +552,23 @@ UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE hView, MSICOLINFO info, MSIHANDLE *hR
     return r;
 }
 
+UINT MSI_ViewModify( MSIQUERY *query, MSIMODIFY mode, MSIRECORD *rec )
+{
+    MSIVIEW *view = NULL;
+
+    if ( !query || !rec )
+        return ERROR_INVALID_HANDLE;
+
+    view = query->view;
+    if ( !view  || !view->ops->modify)
+        return ERROR_FUNCTION_FAILED;
+
+    return view->ops->modify( view, mode, rec );
+}
+
 UINT WINAPI MsiViewModify( MSIHANDLE hView, MSIMODIFY eModifyMode,
                 MSIHANDLE hRecord)
 {
-    MSIVIEW *view = NULL;
     MSIQUERY *query = NULL;
     MSIRECORD *rec = NULL;
     UINT r = ERROR_FUNCTION_FAILED;
@@ -566,23 +579,9 @@ UINT WINAPI MsiViewModify( MSIHANDLE hView, MSIMODIFY eModifyMode,
     if( !query )
         return ERROR_INVALID_HANDLE;
 
-    view = query->view;
-    if( !view )
-        goto out;
-
-    if( !view->ops->modify )
-        goto out;
-
     rec = msihandle2msiinfo( hRecord, MSIHANDLETYPE_RECORD );
-    if( !rec )
-    {
-        r = ERROR_INVALID_HANDLE;
-        goto out;
-    }
+    r = MSI_ViewModify( query, eModifyMode, rec );
 
-    r = view->ops->modify( view, eModifyMode, rec );
-
-out:
     msiobj_release( &query->hdr );
     if( rec )
         msiobj_release( &rec->hdr );

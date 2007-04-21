@@ -619,6 +619,7 @@ extern UINT MSI_ViewExecute( MSIQUERY*, MSIRECORD * );
 extern UINT MSI_ViewFetch( MSIQUERY*, MSIRECORD ** );
 extern UINT MSI_ViewClose( MSIQUERY* );
 extern UINT MSI_ViewGetColumnInfo(MSIQUERY *, MSICOLINFO, MSIRECORD **);
+extern UINT MSI_ViewModify( MSIQUERY *, MSIMODIFY, MSIRECORD * );
 extern UINT VIEW_find_column( MSIVIEW *, LPCWSTR, UINT * );
 
 
