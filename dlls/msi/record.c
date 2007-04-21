@@ -649,7 +649,19 @@ static UINT RECORD_StreamFromFile(LPCWSTR szFile, IStream **pstm)
     return ERROR_SUCCESS;
 }
 
-UINT MSI_RecordSetStreamW(MSIRECORD *rec, unsigned int iField, LPCWSTR szFilename)
+UINT MSI_RecordSetStream(MSIRECORD *rec, unsigned int iField, IStream *stream)
+{
+    if ( (iField == 0) || (iField > rec->count) )
+        return ERROR_INVALID_PARAMETER;
+
+    MSI_FreeField( &rec->fields[iField] );
+    rec->fields[iField].type = MSIFIELD_STREAM;
+    rec->fields[iField].u.stream = stream;
+
+    return ERROR_SUCCESS;
+}
+
+UINT MSI_RecordSetStreamFromFileW(MSIRECORD *rec, unsigned int iField, LPCWSTR szFilename)
 {
     IStream *stm = NULL;
     HRESULT r;
@@ -683,9 +695,7 @@ UINT MSI_RecordSetStreamW(MSIRECORD *rec, unsigned int iField, LPCWSTR szFilenam
             return r;
 
         /* if all's good, store it in the record */
-        MSI_FreeField( &rec->fields[iField] );
-        rec->fields[iField].type = MSIFIELD_STREAM;
-        rec->fields[iField].u.stream = stm;
+        MSI_RecordSetStream(rec, iField, stm);
     }
 
     return ERROR_SUCCESS;
@@ -722,7 +732,7 @@ UINT WINAPI MsiRecordSetStreamW(MSIHANDLE handle, unsigned int iField, LPCWSTR s
         return ERROR_INVALID_HANDLE;
 
     msiobj_lock( &rec->hdr );
-    ret = MSI_RecordSetStreamW( rec, iField, szFilename );
+    ret = MSI_RecordSetStreamFromFileW( rec, iField, szFilename );
     msiobj_unlock( &rec->hdr );
     msiobj_release( &rec->hdr );
     return ret;
