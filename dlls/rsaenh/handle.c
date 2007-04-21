@@ -96,12 +96,12 @@ void destroy_handle_table(HANDLETABLE *lpTable)
  *  non zero,  if handle is valid.
  *  zero,      if handle is not valid.
  */
-int is_valid_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType)
+int is_valid_handle(HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType)
 {
     unsigned int index = HANDLE2INDEX(handle);
     int ret = 0;
 
-    TRACE("(lpTable=%p, handle=%d)\n", lpTable, handle);
+    TRACE("(lpTable=%p, handle=%ld)\n", lpTable, handle);
     
     EnterCriticalSection(&lpTable->mutex);
         
@@ -259,7 +259,7 @@ static int grow_handle_table(HANDLETABLE *lpTable)
  *  non zero,  if successful
  *  zero,      if not successful (no free handle)
  */
-static int alloc_handle(HANDLETABLE *lpTable, OBJECTHDR *lpObject, unsigned int *lpHandle)
+static int alloc_handle(HANDLETABLE *lpTable, OBJECTHDR *lpObject, HCRYPTKEY *lpHandle)
 {
     int ret = 0;
 
@@ -269,7 +269,7 @@ static int alloc_handle(HANDLETABLE *lpTable, OBJECTHDR *lpObject, unsigned int 
     if (lpTable->iFirstFree >= lpTable->iEntries) 
         if (!grow_handle_table(lpTable))
         {
-            *lpHandle = (unsigned int)INVALID_HANDLE_VALUE;
+            *lpHandle = (HCRYPTKEY)INVALID_HANDLE_VALUE;
             goto exit;
         }
 
@@ -306,13 +306,13 @@ exit:
  *  non zero,  if successful
  *  zero,      if not successful (invalid handle)
  */
-int release_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType)
+int release_handle(HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType)
 {
     unsigned int index = HANDLE2INDEX(handle);
     OBJECTHDR *pObject;
     int ret = 0;
 
-    TRACE("(lpTable=%p, hande=%d)\n", lpTable, handle);
+    TRACE("(lpTable=%p, handle=%ld)\n", lpTable, handle);
     
     EnterCriticalSection(&lpTable->mutex);
     
@@ -322,7 +322,7 @@ int release_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType)
     pObject = lpTable->paEntries[index].pObject;
     if (InterlockedDecrement(&pObject->refcount) == 0)
     {
-        TRACE("destroying handle %d\n", handle);
+        TRACE("destroying handle %ld\n", handle);
         if (pObject->destructor)
             pObject->destructor(pObject);
     }
@@ -351,11 +351,11 @@ exit:
  *  non zero,  if successful
  *  zero,      if not successful (invalid handle)
  */
-int lookup_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType, OBJECTHDR **lplpObject)
+int lookup_handle(HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType, OBJECTHDR **lplpObject)
 {
     int ret = 0;
     
-    TRACE("(lpTable=%p, handle=%d, lplpObject=%p)\n", lpTable, handle, lplpObject);
+    TRACE("(lpTable=%p, handle=%ld, lplpObject=%p)\n", lpTable, handle, lplpObject);
     
     EnterCriticalSection(&lpTable->mutex);
     if (!is_valid_handle(lpTable, handle, dwType)) 
@@ -386,17 +386,17 @@ exit:
  *  non zero,  if successful
  *  zero,      if not successful (invalid handle or out of memory)
  */
-int copy_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType, unsigned int *copy)
+int copy_handle(HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType, HCRYPTKEY *copy)
 {
     OBJECTHDR *pObject;
     int ret;
         
-    TRACE("(lpTable=%p, handle=%d, copy=%p)\n", lpTable, handle, copy);
+    TRACE("(lpTable=%p, handle=%ld, copy=%p)\n", lpTable, handle, copy);
 
     EnterCriticalSection(&lpTable->mutex);
     if (!lookup_handle(lpTable, handle, dwType, &pObject)) 
     {
-        *copy = (unsigned int)INVALID_HANDLE_VALUE;
+        *copy = (HCRYPTKEY)INVALID_HANDLE_VALUE;
         LeaveCriticalSection(&lpTable->mutex);
         return 0;
     }
@@ -429,18 +429,18 @@ int copy_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType, unsigne
  *  INVALID_HANDLE_VALUE,        if something went wrong.
  *  a handle to the new object,  if successful. 
  */
-unsigned int new_object(HANDLETABLE *lpTable, size_t cbSize, DWORD dwType, DESTRUCTOR destructor, 
+HCRYPTKEY new_object(HANDLETABLE *lpTable, size_t cbSize, DWORD dwType, DESTRUCTOR destructor,
                         OBJECTHDR **ppObject)
 {
     OBJECTHDR *pObject;
-    unsigned int hObject;
+    HCRYPTKEY hObject;
 
     if (ppObject)
         *ppObject = NULL;
 
     pObject = HeapAlloc(GetProcessHeap(), 0, cbSize);
     if (!pObject)
-        return (unsigned int)INVALID_HANDLE_VALUE;
+        return (HCRYPTKEY)INVALID_HANDLE_VALUE;
 
     pObject->dwType = dwType;
     pObject->refcount = 0;

@@ -24,6 +24,8 @@
 #ifndef __WINE_HANDLE_H
 #define __WINE_HANDLE_H
 
+#include "wincrypt.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,12 +60,12 @@ int  alloc_handle_table  (HANDLETABLE **lplpTable);
 void init_handle_table   (HANDLETABLE *lpTable);
 int  release_handle_table(HANDLETABLE *lpTable);
 void destroy_handle_table(HANDLETABLE *lpTable);
-int  release_handle      (HANDLETABLE *lpTable, unsigned int handle, DWORD dwType);
-int  copy_handle         (HANDLETABLE *lpTable, unsigned int handle, DWORD dwType, unsigned int *copy);
-int  lookup_handle       (HANDLETABLE *lpTable, unsigned int handle, DWORD dwType, OBJECTHDR **lplpObject);
-int  is_valid_handle     (HANDLETABLE *lpTable, unsigned int handle, DWORD dwType);
+int  release_handle      (HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType);
+int  copy_handle         (HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType, HCRYPTKEY *copy);
+int  lookup_handle       (HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType, OBJECTHDR **lplpObject);
+int  is_valid_handle     (HANDLETABLE *lpTable, HCRYPTKEY handle, DWORD dwType);
 
-unsigned int new_object   (HANDLETABLE *lpTable, size_t cbSize, DWORD dwType, DESTRUCTOR destructor,
+HCRYPTKEY new_object     (HANDLETABLE *lpTable, size_t cbSize, DWORD dwType, DESTRUCTOR destructor,
                            OBJECTHDR **ppObject);
         
 #ifdef __cplusplus
