@@ -504,6 +504,12 @@ static int ALSA_AddCaptureDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pcm
     wwi.incaps.wPid = MM_CREATIVE_SBP16_WAVEOUT;
     wwi.incaps.vDriverVersion = 0x0100;
 
+    if (wwi.ds_caps.dwFlags & WAVECAPS_DIRECTSOUND)
+    {
+        FIXME("Add support for DSCapture\n");
+        wwi.ds_caps.dwFlags &= ~WAVECAPS_DIRECTSOUND;
+    }
+
     rc = ALSA_ComputeCaps(ctl, pcm, &wwi.incaps.wChannels, &wwi.ds_caps.dwFlags,
             &wwi.incaps.dwFormats, &wwi.dwSupport);
     if (rc)
