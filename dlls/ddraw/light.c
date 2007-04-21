@@ -158,7 +158,7 @@ IDirect3DLightImpl_Initialize(IDirect3DLight *iface,
  *  DDERR_INVALIDPARAMS if Light is NULL
  *
  *****************************************************************************/
-static void dump_light(LPD3DLIGHT2 light)
+static void dump_light(const D3DLIGHT2 *light)
 {
     DPRINTF("    - dwSize : %d\n", light->dwSize);
 }

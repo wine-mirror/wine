@@ -598,10 +598,10 @@ const IDirect3DVertexBufferVtbl IDirect3DVertexBuffer1_Vtbl;
     (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
 
 void PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat, WINED3DFORMAT WineD3DFormat);
-WINED3DFORMAT PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat);
+WINED3DFORMAT PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat);
 void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd);
 void DDRAW_dump_pixelformat(const DDPIXELFORMAT *PixelFormat);
-void dump_D3DMATRIX(D3DMATRIX *mat);
+void dump_D3DMATRIX(const D3DMATRIX *mat);
 void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps);
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in);
@@ -609,7 +609,7 @@ void DDRAW_dump_cooperativelevel(DWORD cooplevel);
 
 /* This only needs to be here as long the processvertices functionality of
  * IDirect3DExecuteBuffer isn't in WineD3D */
-void multiply_matrix(LPD3DMATRIX dest, LPD3DMATRIX src1, LPD3DMATRIX src2);
+void multiply_matrix(LPD3DMATRIX dest, const D3DMATRIX *src1, const D3DMATRIX *src2);
 
 /* Used for generic dumping */
 typedef struct

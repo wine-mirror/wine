@@ -47,7 +47,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d7);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw_thunk);
 
-static void dump_material(LPD3DMATERIAL mat)
+static void dump_material(const D3DMATERIAL *mat)
 {
     DPRINTF("  dwSize : %d\n", mat->dwSize);
 }

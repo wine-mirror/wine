@@ -95,7 +95,7 @@ static CRITICAL_SECTION ddraw_list_cs = { &ddraw_list_cs_debug, -1, 0, 0, 0, 0 }
  *
  ***********************************************************************/
 static HRESULT
-DDRAW_Create(GUID *guid,
+DDRAW_Create(const GUID *guid,
              void **DD,
              IUnknown *UnkOuter,
              REFIID iid)

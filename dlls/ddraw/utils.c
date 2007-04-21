@@ -337,7 +337,7 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
  *  WINED3DFMT_UNKNOWN if a matching format wasn't found
  *****************************************************************************/
 WINED3DFORMAT
-PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat)
+PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
 {
     TRACE("Convert a DirectDraw Pixelformat to a WineD3D Pixelformat\n");    
     if(TRACE_ON(ddraw))
@@ -874,7 +874,7 @@ void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd)
 }
 
 void
-dump_D3DMATRIX(D3DMATRIX *mat)
+dump_D3DMATRIX(const D3DMATRIX *mat)
 {
     DPRINTF("  %f %f %f %f\n", mat->_11, mat->_12, mat->_13, mat->_14);
     DPRINTF("  %f %f %f %f\n", mat->_21, mat->_22, mat->_23, mat->_24);
@@ -1129,8 +1129,8 @@ void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps)
  *****************************************************************************/
 void
 multiply_matrix(D3DMATRIX *dest,
-                D3DMATRIX *src1,
-                D3DMATRIX *src2)
+                const D3DMATRIX *src1,
+                const D3DMATRIX *src2)
 {
     D3DMATRIX temp;
 

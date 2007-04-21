@@ -95,7 +95,7 @@ void viewport_activate(IDirect3DViewportImpl* This) {
  * Writes viewport information to TRACE
  *
  *****************************************************************************/
-static void _dump_D3DVIEWPORT(D3DVIEWPORT *lpvp)
+static void _dump_D3DVIEWPORT(const D3DVIEWPORT *lpvp)
 {
     TRACE("    - dwSize = %d   dwX = %d   dwY = %d\n",
 	  lpvp->dwSize, lpvp->dwX, lpvp->dwY);
@@ -109,7 +109,7 @@ static void _dump_D3DVIEWPORT(D3DVIEWPORT *lpvp)
 	  lpvp->dvMinZ, lpvp->dvMaxZ);
 }
 
-static void _dump_D3DVIEWPORT2(D3DVIEWPORT2 *lpvp)
+static void _dump_D3DVIEWPORT2(const D3DVIEWPORT2 *lpvp)
 {
     TRACE("    - dwSize = %d   dwX = %d   dwY = %d\n",
 	  lpvp->dwSize, lpvp->dwX, lpvp->dwY);
