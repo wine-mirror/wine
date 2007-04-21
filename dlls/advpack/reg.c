@@ -25,7 +25,6 @@
 #include "winerror.h"
 #include "winuser.h"
 #include "winternl.h"
-#include "setupapi.h"
 #include "advpub.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
