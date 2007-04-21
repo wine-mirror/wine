@@ -29,11 +29,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "winreg.h"
 #include "winerror.h"
 
 #include "ole2.h"
-#include "uuids.h"
 
 #include "amstream_private.h"
 #include "amstream.h"

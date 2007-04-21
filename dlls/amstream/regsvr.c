@@ -29,7 +29,6 @@
 #include "winerror.h"
 
 #include "ole2.h"
-#include "uuids.h"
 
 #include "amstream.h"
 
