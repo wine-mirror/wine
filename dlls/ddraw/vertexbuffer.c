@@ -189,7 +189,7 @@ IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
             IWineD3DVertexBuffer_Release(curVB); /* For the GetStreamSource */
         }
 
-
+        IWineD3DVertexDeclaration_Release(This->wineD3DVertexDeclaration);
         IWineD3DVertexBuffer_Release(This->wineD3DVertexBuffer);
         HeapFree(GetProcessHeap(), 0, This);
         return 0;

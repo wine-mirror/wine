@@ -322,6 +322,13 @@ DDRAW_Create(const GUID *guid,
     list_add_head(&global_ddraw_list, &This->ddraw_list_entry);
     LeaveCriticalSection(&ddraw_list_cs);
 
+    This->decls = HeapAlloc(GetProcessHeap(), 0, 0);
+    if(!This->decls)
+    {
+        ERR("Error allocating an empty array for the converted vertex decls\n");
+        goto err_out;
+    }
+
     /* Call QueryInterface to get the pointer to the requested interface. This also initializes
      * The required refcount
      */
@@ -332,6 +339,7 @@ err_out:
     /* Let's hope we never need this ;) */
     if(wineD3DDevice) IWineD3DDevice_Release(wineD3DDevice);
     if(wineD3D) IWineD3D_Release(wineD3D);
+    if(This) HeapFree(GetProcessHeap(), 0, This->decls);
     HeapFree(GetProcessHeap(), 0, This);
     return hr;
 }

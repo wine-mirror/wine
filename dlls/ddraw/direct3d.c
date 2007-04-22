@@ -1021,6 +1021,17 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
             return hr;
     }
 
+    object->wineD3DVertexDeclaration = IDirectDrawImpl_FindDecl(This,
+                                                                Desc->dwFVF);
+    if(!object->wineD3DVertexDeclaration)
+    {
+        ERR("Cannot find the vertex declaration for fvf %08x\n", Desc->dwFVF);
+        IWineD3DVertexBuffer_Release(object->wineD3DVertexBuffer);
+        HeapFree(GetProcessHeap(), 0, object);
+        return DDERR_INVALIDPARAMS;
+    }
+    IWineD3DVertexDeclaration_AddRef(object->wineD3DVertexDeclaration);
+
     /* Return the interface */
     *VertexBuffer = ICOM_INTERFACE(object, IDirect3DVertexBuffer7);
 

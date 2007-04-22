@@ -83,6 +83,11 @@ extern ULONG WINAPI D3D7CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface)
 /*****************************************************************************
  * IDirectDraw implementation structure
  *****************************************************************************/
+struct FvfToDecl
+{
+    DWORD fvf;
+    IWineD3DVertexDeclaration *decl;
+};
 
 struct IDirectDrawImpl
 {
@@ -149,6 +154,10 @@ struct IDirectDrawImpl
      */
     struct list surface_list;
     LONG surfaces;
+
+    /* FVF management */
+    struct FvfToDecl       *decls;
+    UINT                    numConvertedDecls, declArraySize;
 };
 
 /* Declare the VTables. They can be found ddraw.c */
@@ -187,6 +196,10 @@ HRESULT WINAPI
 IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
                                          DDSURFACEDESC2 *desc,
                                          void *Context);
+IWineD3DVertexDeclaration *
+IDirectDrawImpl_FindDecl(IDirectDrawImpl *This,
+                         DWORD fvf);
+
 void
 remove_ddraw_object(IDirectDrawImpl *ddraw);
 
@@ -577,6 +590,7 @@ struct IDirect3DVertexBufferImpl
 
     /*** WineD3D and ddraw links ***/
     IWineD3DVertexBuffer *wineD3DVertexBuffer;
+    IWineD3DVertexDeclaration *wineD3DVertexDeclaration;
     IDirectDrawImpl *ddraw;
 
     /*** Storage for D3D7 specific things ***/

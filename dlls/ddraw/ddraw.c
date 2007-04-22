@@ -246,6 +246,14 @@ IDirectDrawImpl_AddRef(IDirectDraw7 *iface)
 void
 IDirectDrawImpl_Destroy(IDirectDrawImpl *This)
 {
+    int i;
+
+    for(i = 0; i < This->numConvertedDecls; i++)
+    {
+        IWineD3DVertexDeclaration_Release(This->decls[i].decl);
+    }
+    HeapFree(GetProcessHeap(), 0, This->decls);
+
     /* Clear the cooplevel to restore window and display mode */
     IDirectDraw7_SetCooperativeLevel(ICOM_INTERFACE(This, IDirectDraw7),
                                         NULL,
@@ -3014,3 +3022,78 @@ const IDirectDraw7Vtbl IDirectDraw7_Vtbl =
     IDirectDrawImpl_StartModeTest,
     IDirectDrawImpl_EvaluateMode
 };
+
+/*****************************************************************************
+ * IDirectDrawImpl_FindDecl
+ *
+ * Finds the WineD3D vertex declaration for a specific fvf, and creates one
+ * if none was found.
+ *
+ * This function is in ddraw.c and the DDraw object space because D3D7
+ * vertex buffers are created using the IDirect3D interface to the ddraw
+ * object, so they can be valid accross D3D devices(theoretically. The ddraw
+ * object also owns the wined3d device
+ *
+ * Parameters:
+ *  This: Device
+ *  fvf: Fvf to find the decl for
+ *
+ * Returns:
+ *  NULL in case of an error, the IWineD3DVertexDeclaration interface for the
+ *  fvf otherwise.
+ *
+ *****************************************************************************/
+IWineD3DVertexDeclaration *
+IDirectDrawImpl_FindDecl(IDirectDrawImpl *This,
+                         DWORD fvf)
+{
+    HRESULT hr;
+    IWineD3DVertexDeclaration* pDecl = NULL;
+    int p, low, high; /* deliberately signed */
+    struct FvfToDecl *convertedDecls = This->decls;
+
+    TRACE("Searching for declaration for fvf %08x... ", fvf);
+
+    low = 0;
+    high = This->numConvertedDecls - 1;
+    while(low <= high) {
+        p = (low + high) >> 1;
+        TRACE("%d ", p);
+        if(convertedDecls[p].fvf == fvf) {
+            TRACE("found %p\n", convertedDecls[p].decl);
+            return convertedDecls[p].decl;
+        } else if(convertedDecls[p].fvf < fvf) {
+            low = p + 1;
+        } else {
+            high = p - 1;
+        }
+    }
+    TRACE("not found. Creating and inserting at position %d.\n", low);
+
+    hr = IWineD3DDevice_CreateVertexDeclarationFromFVF(This->wineD3DDevice,
+                                                       &pDecl,
+                                                       (IUnknown *) ICOM_INTERFACE(This, IDirectDraw7),
+                                                       fvf);
+    if (hr != S_OK) return NULL;
+
+    if(This->declArraySize == This->numConvertedDecls) {
+        int grow = max(This->declArraySize / 2, 8);
+        convertedDecls = HeapReAlloc(GetProcessHeap(), 0, convertedDecls,
+                                     sizeof(convertedDecls[0]) * (This->numConvertedDecls + grow));
+        if(!convertedDecls) {
+            /* This will destroy it */
+            IWineD3DVertexDeclaration_Release(pDecl);
+            return NULL;
+        }
+        This->decls = convertedDecls;
+        This->declArraySize += grow;
+    }
+
+    memmove(convertedDecls + low + 1, convertedDecls + low, sizeof(convertedDecls[0]) * (This->numConvertedDecls - low));
+    convertedDecls[low].decl = pDecl;
+    convertedDecls[low].fvf = fvf;
+    This->numConvertedDecls++;
+
+    TRACE("Returning %p. %d decls in array\n", pDecl, This->numConvertedDecls);
+    return pDecl;
+}

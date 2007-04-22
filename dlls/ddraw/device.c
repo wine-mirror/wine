@@ -2963,7 +2963,8 @@ IDirect3DDeviceImpl_7_DrawPrimitive(IDirect3DDevice7 *iface,
     stride = get_flexible_vertex_size(VertexType);
 
     /* Set the FVF */
-    hr = IWineD3DDevice_SetFVF(This->wineD3DDevice, VertexType);
+    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice,
+                                             IDirectDrawImpl_FindDecl(This->ddraw, VertexType));
     if(hr != D3D_OK) return hr;
 
     /* This method translates to the user pointer draw of WineD3D */
@@ -3091,7 +3092,8 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     }
 
     /* Set the D3DDevice's FVF */
-    hr = IWineD3DDevice_SetFVF(This->wineD3DDevice, VertexType);
+    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice,
+                                             IDirectDrawImpl_FindDecl(This->ddraw, VertexType));
     if(FAILED(hr))
     {
         ERR(" (%p) Setting the FVF failed, hr = %x!\n", This, hr);
@@ -3381,9 +3383,7 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
         default: return DDERR_INVALIDPARAMS;
     }
 
-    IWineD3DDevice_SetFVF(This->wineD3DDevice,
-                          VertexType);
-
+    /* WineD3D doesn't need the FVF here */
     return IWineD3DDevice_DrawPrimitiveStrided(This->wineD3DDevice,
                                                PrimitiveType,
                                                PrimitiveCount,
@@ -3549,7 +3549,8 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
     }
     stride = get_flexible_vertex_size(Desc.FVF);
 
-    hr = IWineD3DDevice_SetFVF(This->wineD3DDevice, Desc.FVF);
+    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice,
+                                             vb->wineD3DVertexDeclaration);
     if(FAILED(hr))
     {
         ERR(" (%p) Setting the FVF failed, hr = %x!\n", This, hr);
@@ -3681,7 +3682,8 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     stride = get_flexible_vertex_size(Desc.FVF);
     TRACE("Vertex buffer FVF = %08x, stride=%d\n", Desc.FVF, stride);
 
-    hr = IWineD3DDevice_SetFVF(This->wineD3DDevice, Desc.FVF);
+    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice,
+                                             vb->wineD3DVertexDeclaration);
     if(FAILED(hr))
     {
         ERR(" (%p) Setting the FVF failed, hr = %x!\n", This, hr);
