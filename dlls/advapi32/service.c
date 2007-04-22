@@ -1918,6 +1918,36 @@ EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
 }
 
 /******************************************************************************
+ * EnumServicesStatusExA [ADVAPI32.@]
+ */
+BOOL WINAPI
+EnumServicesStatusExA(SC_HANDLE hSCManager, SC_ENUM_TYPE InfoLevel, DWORD dwServiceType,
+                      DWORD dwServiceState, LPBYTE lpServices, DWORD cbBufSize, LPDWORD pcbBytesNeeded,
+                      LPDWORD lpServicesReturned, LPDWORD lpResumeHandle, LPCSTR pszGroupName)
+{
+    FIXME("%p level=%d type=%x state=%x %p %x %p %p %p %s\n", hSCManager, InfoLevel,
+          dwServiceType, dwServiceState, lpServices, cbBufSize,
+          pcbBytesNeeded, lpServicesReturned,  lpResumeHandle, debugstr_a(pszGroupName));
+    SetLastError (ERROR_ACCESS_DENIED);
+    return FALSE;
+}
+
+/******************************************************************************
+ * EnumServicesStatusExW [ADVAPI32.@]
+ */
+BOOL WINAPI
+EnumServicesStatusExW(SC_HANDLE hSCManager, SC_ENUM_TYPE InfoLevel, DWORD dwServiceType,
+                      DWORD dwServiceState, LPBYTE lpServices, DWORD cbBufSize, LPDWORD pcbBytesNeeded,
+                      LPDWORD lpServicesReturned, LPDWORD lpResumeHandle, LPCWSTR pszGroupName)
+{
+    FIXME("%p level=%d type=%x state=%x %p %x %p %p %p %s\n", hSCManager, InfoLevel,
+          dwServiceType, dwServiceState, lpServices, cbBufSize,
+          pcbBytesNeeded, lpServicesReturned,  lpResumeHandle, debugstr_w(pszGroupName));
+    SetLastError (ERROR_ACCESS_DENIED);
+    return FALSE;
+}
+
+/******************************************************************************
  * GetServiceKeyNameA [ADVAPI32.@]
  */
 BOOL WINAPI GetServiceKeyNameA( SC_HANDLE hSCManager, LPCSTR lpDisplayName,
