@@ -1149,7 +1149,7 @@ HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
 
 
 /***********************************************************************
- *           CreateURLMoniker (URLMON.@)
+ *           CreateURLMonikerEx (URLMON.@)
  *
  * Create a url moniker.
  *
@@ -1157,19 +1157,22 @@ HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
  *    pmkContext [I] Context
  *    szURL      [I] Url to create the moniker for
  *    ppmk       [O] Destination for created moniker.
+ *    dwFlags    [I] Flags.
  *
  * RETURNS
  *    Success: S_OK. ppmk contains the created IMoniker object.
  *    Failure: MK_E_SYNTAX if szURL is not a valid url, or
  *             E_OUTOFMEMORY if memory allocation fails.
  */
-HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **ppmk)
+HRESULT WINAPI CreateURLMonikerEx(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **ppmk, DWORD dwFlags)
 {
     URLMonikerImpl *obj;
     HRESULT hres;
     LPOLESTR lefturl = NULL;
 
-    TRACE("(%p, %s, %p)\n", pmkContext, debugstr_w(szURL), ppmk);
+    TRACE("(%p, %s, %p, %08x)\n", pmkContext, debugstr_w(szURL), ppmk, dwFlags);
+
+    if (dwFlags & URL_MK_UNIFORM) FIXME("ignoring flag URL_MK_UNIFORM\n");
 
     if(!(obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj))))
 	return E_OUTOFMEMORY;
@@ -1192,6 +1195,26 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **
     else
 	HeapFree(GetProcessHeap(), 0, obj);
     return hres;
+}
+
+/**********************************************************************
+ *           CreateURLMoniker (URLMON.@)
+ *
+ * Create a url moniker.
+ *
+ * PARAMS
+ *    pmkContext [I] Context
+ *    szURL      [I] Url to create the moniker for
+ *    ppmk       [O] Destination for created moniker.
+ *
+ * RETURNS
+ *    Success: S_OK. ppmk contains the created IMoniker object.
+ *    Failure: MK_E_SYNTAX if szURL is not a valid url, or
+ *             E_OUTOFMEMORY if memory allocation fails.
+ */
+HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **ppmk)
+{
+    return CreateURLMonikerEx(pmkContext, szURL, ppmk, URL_MK_LEGACY);
 }
 
 /***********************************************************************

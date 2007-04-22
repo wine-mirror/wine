@@ -26,6 +26,7 @@
 @ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long)
 @ stdcall CreateFormatEnumerator(long ptr ptr)
 @ stdcall CreateURLMoniker(ptr wstr ptr)
+@ stdcall CreateURLMonikerEx(ptr wstr ptr long)
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllInstall(long wstr)
