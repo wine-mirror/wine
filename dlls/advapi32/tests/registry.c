@@ -1151,15 +1151,33 @@ static void test_reg_delete_tree(void)
     ok(!RegQueryValueA(subkey, NULL, buffer, &size),
         "Default value of subkey not longer present\n");
 
+    ret = RegCreateKeyA(subkey, "subkey2", &subkey2);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ret = RegCloseKey(subkey2);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ret = RegCreateKeyA(subkey, "subkey3", &subkey2);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ret = RegCloseKey(subkey2);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ret = RegSetValueA(subkey, "value", REG_SZ, "data2", 5);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
     ret = pRegDeleteTreeA(subkey, NULL);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
     ok(!RegOpenKeyA(hkey_main, "subkey", &subkey),
         "subkey was deleted\n");
+    ok(RegOpenKeyA(subkey, "subkey2", &subkey2),
+        "subkey2 was not deleted\n");
+    ok(RegOpenKeyA(subkey, "subkey3", &subkey2),
+        "subkey3 was not deleted\n");
+    size = MAX_PATH;
     ret = RegQueryValueA(subkey, NULL, buffer, &size);
     ok(ret == ERROR_SUCCESS,
         "Default value of subkey is not present\n");
     ok(!lstrlenA(buffer),
         "Expected length 0 got length %u(%s)\n", lstrlenA(buffer), buffer);
+    size = MAX_PATH;
+    ok(RegQueryValueA(subkey, "value", buffer, &size),
+        "Value is still present\n");
 
     ret = pRegDeleteTreeA(hkey_main, "not-here");
     ok(ret == ERROR_FILE_NOT_FOUND,
