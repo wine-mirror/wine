@@ -1577,6 +1577,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice*
     return hr;
 }
 
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3DDevice* iface, IWineD3DVertexDeclaration** ppVertexDeclaration, IUnknown *Parent, DWORD Fvf) {
+    return E_NOTIMPL;
+}
+
 /* http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/programmable/vertexshaders/vscreate.asp */
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface, IWineD3DVertexDeclaration *vertex_declaration, CONST DWORD *pFunction, IWineD3DVertexShader **ppVertexShader, IUnknown *parent) {
     IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
@@ -6109,6 +6113,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_CreateQuery,
     IWineD3DDeviceImpl_CreateAdditionalSwapChain,
     IWineD3DDeviceImpl_CreateVertexDeclaration,
+    IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF,
     IWineD3DDeviceImpl_CreateVertexShader,
     IWineD3DDeviceImpl_CreatePixelShader,
     IWineD3DDeviceImpl_CreatePalette,

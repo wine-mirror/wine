@@ -357,6 +357,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(CreateQuery)(THIS_ WINED3DQUERYTYPE Type, struct IWineD3DQuery **ppQuery, IUnknown *pParent);
     STDMETHOD(CreateAdditionalSwapChain)(THIS_ WINED3DPRESENT_PARAMETERS *pPresentationParameters, struct IWineD3DSwapChain **pSwapChain, IUnknown *pParent, D3DCB_CREATERENDERTARGETFN pFn, D3DCB_CREATEDEPTHSTENCILSURFACEFN pFn2);
     STDMETHOD(CreateVertexDeclaration)(THIS_ struct IWineD3DVertexDeclaration** ppDecl, IUnknown* pParent, const WINED3DVERTEXELEMENT *elements, size_t element_count) PURE;
+    STDMETHOD(CreateVertexDeclarationFromFVF)(THIS_ struct IWineD3DVertexDeclaration** ppDecl, IUnknown* pParent, DWORD Fvf) PURE;
     STDMETHOD(CreateVertexShader)(THIS_ struct IWineD3DVertexDeclaration *vertex_declaration, CONST DWORD* pFunction, struct IWineD3DVertexShader** ppShader, IUnknown *pParent) PURE;
     STDMETHOD(CreatePixelShader)(THIS_ CONST DWORD* pFunction, struct IWineD3DPixelShader** ppShader, IUnknown *pParent) PURE;
     STDMETHOD_(HRESULT,CreatePalette)(THIS_ DWORD Flags, PALETTEENTRY *PalEnt, struct IWineD3DPalette **Palette, IUnknown *Parent);
@@ -494,6 +495,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_CreateQuery(p,a,b,c)                     (p)->lpVtbl->CreateQuery(p,a,b,c)
 #define IWineD3DDevice_CreateAdditionalSwapChain(p,a,b,c,d,e)   (p)->lpVtbl->CreateAdditionalSwapChain(p,a,b,c,d,e)
 #define IWineD3DDevice_CreateVertexDeclaration(p,a,b,c,d)       (p)->lpVtbl->CreateVertexDeclaration(p,a,b,c,d)
+#define IWineD3DDevice_CreateVertexDeclarationFromFVF(p,a,b,c)  (p)->lpVtbl->CreateVertexDeclarationFromFVF(p,a,b,c)
 #define IWineD3DDevice_CreateVertexShader(p,a,b,c,d)            (p)->lpVtbl->CreateVertexShader(p,a,b,c,d)
 #define IWineD3DDevice_CreatePixelShader(p,a,b,c)               (p)->lpVtbl->CreatePixelShader(p,a,b,c)
 #define IWineD3DDevice_CreatePalette(p, a, b, c, d)             (p)->lpVtbl->CreatePalette(p, a, b, c, d)
