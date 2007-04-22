@@ -34,6 +34,14 @@ extern "C" {
 #define ODBC_CONFIG_DRIVER	3
 #define ODBC_CONFIG_DRIVER_MAX  100
 
+#define ODBC_ADD_DSN            1
+#define ODBC_CONFIG_DSN         2
+#define ODBC_REMOVE_DSN         3
+#define ODBC_ADD_SYS_DSN        4
+#define ODBC_CONFIG_SYS_DSN     5
+#define ODBC_REMOVE_SYS_DSN     6
+#define ODBC_REMOVE_DEFAULT_DSN 7
+
 /* Mode values for SQLSetConfigMode/SQLGetConfigMode */
 #define ODBC_BOTH_DSN 0
 #define ODBC_USER_DSN 1

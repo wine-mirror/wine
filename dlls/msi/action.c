@@ -4483,6 +4483,44 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
     return r;
 }
 
+static UINT ITERATE_InstallODBCDataSource( MSIRECORD *rec, LPVOID param )
+{
+    LPWSTR attrs;
+    LPCWSTR desc, driver;
+    WORD request = ODBC_ADD_SYS_DSN;
+    INT registration;
+    DWORD len;
+    UINT r = ERROR_SUCCESS;
+
+    static const WCHAR attrs_fmt[] = {
+        'D','S','N','=','%','s',0 };
+
+    desc = MSI_RecordGetString(rec, 3);
+    driver = MSI_RecordGetString(rec, 4);
+    registration = MSI_RecordGetInteger(rec, 5);
+
+    if (registration == msidbODBCDataSourceRegistrationPerMachine) request = ODBC_ADD_SYS_DSN;
+    else if (registration == msidbODBCDataSourceRegistrationPerUser) request = ODBC_ADD_DSN;
+
+    len = lstrlenW(attrs_fmt) + lstrlenW(desc) + 1 + 1;
+    attrs = msi_alloc(len * sizeof(WCHAR));
+    if (!attrs)
+        return ERROR_OUTOFMEMORY;
+
+    sprintfW(attrs, attrs_fmt, desc);
+    attrs[len - 1] = '\0';
+
+    if (!SQLConfigDataSourceW(NULL, request, driver, attrs))
+    {
+        ERR("Failed to install SQL data source!\n");
+        r = ERROR_FUNCTION_FAILED;
+    }
+
+    msi_free(attrs);
+
+    return r;
+}
+
 static UINT ACTION_InstallODBC( MSIPACKAGE *package )
 {
     UINT rc;
@@ -4496,6 +4534,10 @@ static UINT ACTION_InstallODBC( MSIPACKAGE *package )
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         'O','D','B','C','T','r','a','n','s','l','a','t','o','r',0 };
 
+    static const WCHAR source_query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'O','D','B','C','D','a','t','a','S','o','u','r','c','e',0 };
+
     rc = MSI_DatabaseOpenViewW(package->db, driver_query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
@@ -4508,6 +4550,13 @@ static UINT ACTION_InstallODBC( MSIPACKAGE *package )
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCTranslator, package);
+    msiobj_release(&view->hdr);
+
+    rc = MSI_DatabaseOpenViewW(package->db, source_query, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCDataSource, package);
     msiobj_release(&view->hdr);
 
     return rc;
