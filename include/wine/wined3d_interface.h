@@ -452,7 +452,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(GetViewport)(THIS_ WINED3DVIEWPORT * pViewport) PURE;
     STDMETHOD(MultiplyTransform)(THIS_ WINED3DTRANSFORMSTATETYPE  State, CONST WINED3DMATRIX * pMatrix) PURE;
     STDMETHOD(ValidateDevice)(THIS_ DWORD* pNumPasses) PURE;
-    STDMETHOD(ProcessVertices)(THIS_ UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, struct IWineD3DVertexBuffer* pDestBuffer, struct IWineD3DVertexBuffer* pVertexDecl, DWORD Flags) PURE;
+    STDMETHOD(ProcessVertices)(THIS_ UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, struct IWineD3DVertexBuffer* pDestBuffer, struct IWineD3DVertexDeclaration* pVertexDecl, DWORD Flags) PURE;
     STDMETHOD(BeginStateBlock)(THIS) PURE;
     STDMETHOD(EndStateBlock)(THIS_ struct IWineD3DStateBlock** ppStateBlock) PURE;
     STDMETHOD(BeginScene)(THIS) PURE;

@@ -341,6 +341,7 @@ IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexBuffer7 *iface,
     IDirect3DDeviceImpl *D3D = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice7, D3DDevice);
     BOOL oldClip, doClip;
     HRESULT hr;
+    WINED3DVERTEXBUFFER_DESC Desc;
 
     TRACE("(%p)->(%08x,%d,%d,%p,%d,%p,%08x)\n", This, VertexOp, DestIndex, Count, Src, SrcIndex, D3D, Flags);
 
@@ -371,13 +372,21 @@ IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexBuffer7 *iface,
                                       doClip);
     }
 
-
+    IWineD3DVertexBuffer_GetDesc(Src->wineD3DVertexBuffer,
+                                 &Desc);
+    IWineD3DDevice_SetStreamSource(D3D->wineD3DDevice,
+                                   0, /* Stream No */
+                                   Src->wineD3DVertexBuffer,
+                                   0, /* Offset */
+                                   get_flexible_vertex_size(Desc.FVF));
+    IWineD3DDevice_SetVertexDeclaration(D3D->wineD3DDevice,
+                                        Src->wineD3DVertexDeclaration);
     hr = IWineD3DDevice_ProcessVertices(D3D->wineD3DDevice,
                                         SrcIndex,
                                         DestIndex,
                                         Count,
                                         This->wineD3DVertexBuffer,
-                                        Src->wineD3DVertexBuffer,
+                                        NULL /* Output vdecl */,
                                         Flags);
 
     /* Restore the states if needed */

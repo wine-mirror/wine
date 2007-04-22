@@ -3489,7 +3489,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
 
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT
-process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCount, WineDirect3DVertexStridedData *lpStrideData, DWORD SrcFVF, IWineD3DVertexBufferImpl *dest, DWORD dwFlags) {
+process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCount, WineDirect3DVertexStridedData *lpStrideData, IWineD3DVertexBufferImpl *dest, DWORD dwFlags) {
     char *dest_ptr, *dest_conv = NULL, *dest_conv_addr = NULL;
     unsigned int i;
     DWORD DestFVF = dest->fvf;
@@ -3498,11 +3498,11 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
     BOOL doClip;
     int numTextures;
 
-    if (SrcFVF & WINED3DFVF_NORMAL) {
+    if (lpStrideData->u.s.normal.lpData) {
         WARN(" lighting state not saved yet... Some strange stuff may happen !\n");
     }
 
-    if ( (SrcFVF & WINED3DFVF_POSITION_MASK) != WINED3DFVF_XYZ) {
+    if (lpStrideData->u.s.position.lpData == NULL) {
         ERR("Source has no position mask\n");
         return WINED3DERR_INVALIDCALL;
     }
@@ -3837,15 +3837,14 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
 }
 #undef copy_and_next
 
-static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IWineD3DVertexBuffer* pDestBuffer, IWineD3DVertexBuffer* pVertexDecl, DWORD Flags) {
+static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IWineD3DVertexBuffer* pDestBuffer, IWineD3DVertexDeclaration* pVertexDecl, DWORD Flags) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexBufferImpl *SrcImpl = (IWineD3DVertexBufferImpl *) pVertexDecl;
     WineDirect3DVertexStridedData strided;
+    BOOL vbo = FALSE;
     TRACE("(%p)->(%d,%d,%d,%p,%p,%d\n", This, SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, Flags);
 
-    if (!SrcImpl) {
-        WARN("NULL source vertex buffer\n");
-        return WINED3DERR_INVALIDCALL;
+    if(pVertexDecl) {
+        ERR("Output vertex declaration not implemented yet\n");
     }
 
     /* Need any context to write to the vbo. In a non-multithreaded environment a context is there anyway,
@@ -3857,50 +3856,42 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
         LEAVE_GL();
     }
 
-    /* We don't need the source vbo because this buffer is only used as
-     * a source for ProcessVertices. Avoid wasting resources by converting the
-     * buffer and loading the VBO
-     */
-    if(SrcImpl->vbo) {
-        TRACE("Releasing the source vbo, it won't be needed\n");
-
-        if(!SrcImpl->resource.allocatedMemory) {
-            /* Rescue the data from the buffer */
-            void *src;
-            SrcImpl->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), 0, SrcImpl->resource.size);
-            if(!SrcImpl->resource.allocatedMemory) {
-                ERR("Out of memory\n");
-                return E_OUTOFMEMORY;
-            }
-
-            ENTER_GL();
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, SrcImpl->vbo));
-            checkGLcall("glBindBufferARB");
-
-            src = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_READ_ONLY_ARB));
-            if(src) {
-                memcpy(SrcImpl->resource.allocatedMemory, src, SrcImpl->resource.size);
-            }
-
-            GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
-            checkGLcall("glUnmapBufferARB");
-        } else {
-            ENTER_GL();
-        }
-
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0));
-        checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glDeleteBuffersARB(1, &SrcImpl->vbo));
-        checkGLcall("glDeleteBuffersARB");
-        LEAVE_GL();
-
-        SrcImpl->vbo = 0;
+    memset(&strided, 0, sizeof(strided));
+    if(This->stateBlock->vertexDecl) {
+        primitiveDeclarationConvertToStridedData(iface, FALSE, &strided, &vbo);
+    } else {
+        primitiveConvertToStridedData(iface, &strided, &vbo);
     }
 
-    memset(&strided, 0, sizeof(strided));
-    primitiveConvertFVFtoOffset(SrcImpl->fvf, get_flexible_vertex_size(SrcImpl->fvf), SrcImpl->resource.allocatedMemory + get_flexible_vertex_size(SrcImpl->fvf) * SrcStartIndex, &strided, 0, 0);
+    if(vbo || SrcStartIndex) {
+        unsigned int i;
+        /* ProcessVertices can't convert FROM a vbo, and vertex buffers used to source into ProcesVerticse are
+         * unlikely to ever be used for drawing. Release vbos in those buffers and fix up the strided structure
+         *
+         * Also get the start index in, but only loop over all elements if there's something to add at all.
+         */
+        for(i=0; i < 16; i++) {
+            if(strided.u.input[i].VBO) {
+                IWineD3DVertexBufferImpl *vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[strided.u.input[i].streamNo];
 
-    return process_vertices_strided(This, DestIndex, VertexCount, &strided, SrcImpl->fvf, (IWineD3DVertexBufferImpl *) pDestBuffer, Flags);
+                /* The vertex buffer is supposed to have a system memory copy */
+                strided.u.input[i].VBO = 0;
+                strided.u.input[i].lpData = (BYTE *) ((unsigned long) strided.u.input[i].lpData + (unsigned long) vb->resource.allocatedMemory);
+                ENTER_GL();
+                GL_EXTCALL(glDeleteBuffersARB(1, &vb->vbo));
+                vb->vbo = 0;
+                LEAVE_GL();
+
+                /* To be safe. An app could technically draw, then call ProcessVertices, then draw again without ever changing the stream sources */
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
+            }
+            if(strided.u.input[i].lpData) {
+                strided.u.input[i].lpData += strided.u.input[i].dwStride * SrcStartIndex;
+            }
+        }
+    }
+
+    return process_vertices_strided(This, DestIndex, VertexCount, &strided, (IWineD3DVertexBufferImpl *) pDestBuffer, Flags);
 }
 
 /*****
