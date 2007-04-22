@@ -2073,6 +2073,45 @@ IDirectDrawSurfaceImpl_GetPalette(IDirectDrawSurface7 *iface,
 }
 
 /*****************************************************************************
+ * SetColorKeyEnum
+ *
+ * EnumAttachedSurface callback for SetColorKey. Used to set color keys
+ * recursively in the surface tree
+ *
+ *****************************************************************************/
+struct SCKContext
+{
+    HRESULT ret;
+    WINEDDCOLORKEY *CKey;
+    DWORD Flags;
+};
+
+static HRESULT WINAPI
+SetColorKeyEnum(IDirectDrawSurface7 *surface,
+                DDSURFACEDESC2 *desc,
+                void *context)
+{
+    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, surface);
+    struct SCKContext *ctx = context;
+    HRESULT hr;
+
+    hr = IWineD3DSurface_SetColorKey(This->WineD3DSurface,
+                                     ctx->Flags,
+                                     ctx->CKey);
+    if(hr != DD_OK)
+    {
+        WARN("IWineD3DSurface_SetColorKey failed, hr = %08x\n", hr);
+        ctx->ret = hr;
+    }
+
+    IDirectDrawSurface7_EnumAttachedSurfaces(surface,
+                                             context,
+                                             SetColorKeyEnum);
+    IDirectDrawSurface7_Release(surface);
+    return DDENUMRET_OK;
+}
+
+/*****************************************************************************
  * IDirectDrawSurface7::SetColorKey
  *
  * Sets the color keying options for the surface. Observations showed that
@@ -2094,8 +2133,7 @@ IDirectDrawSurfaceImpl_SetColorKey(IDirectDrawSurface7 *iface,
                                    DDCOLORKEY *CKey)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
-    IDirectDrawSurfaceImpl *surf;
-    HRESULT hr;
+    struct SCKContext ctx = { DD_OK, (WINEDDCOLORKEY *) CKey, Flags };
     TRACE("(%p)->(%x,%p)\n", This, Flags, CKey);
 
     if (CKey)
@@ -2150,23 +2188,17 @@ IDirectDrawSurfaceImpl_SetColorKey(IDirectDrawSurface7 *iface,
             return DDERR_INVALIDPARAMS;
         }
     }
-    for(surf = This->first_complex; surf; surf = surf->next_complex)
+    ctx.ret = IWineD3DSurface_SetColorKey(This->WineD3DSurface,
+                                          Flags,
+                                          ctx.CKey);
+    IDirectDrawSurface7_EnumAttachedSurfaces(iface,
+                                             (void *) &ctx,
+                                             SetColorKeyEnum);
+    switch(ctx.ret)
     {
-        hr = IWineD3DSurface_SetColorKey(surf->WineD3DSurface,
-                                         Flags,
-                                         (WINEDDCOLORKEY *) CKey);
-        if(FAILED(hr))
-        {
-            WARN("IWineD3DSurface::SetColorKey for surface %p failed with hr=%08x\n",
-                 surf->WineD3DSurface, hr);
-            switch(hr)
-            {
-                case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
-                default:                            return hr;
-            }
-        }
+        case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
+        default:                            return ctx.ret;
     }
-    return DD_OK;
 }
 
 /*****************************************************************************
