@@ -2574,6 +2574,28 @@ IDirectDrawImpl_EnumSurfaces(IDirectDraw7 *iface,
     return DD_OK;
 }
 
+static HRESULT WINAPI
+findRenderTarget(IDirectDrawSurface7 *surface,
+                 DDSURFACEDESC2 *desc,
+                 void *ctx)
+{
+    IDirectDrawSurfaceImpl *surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, surface);
+    IDirectDrawSurfaceImpl **target = (IDirectDrawSurfaceImpl **) ctx;
+
+    if(!surf->isRenderTarget) {
+        *target = surf;
+        IDirectDrawSurface7_Release(surface);
+        return DDENUMRET_CANCEL;
+    }
+
+    /* Recurse into the surface tree */
+    IDirectDrawSurface7_EnumAttachedSurfaces(surface, ctx, findRenderTarget);
+
+    IDirectDrawSurface7_Release(surface);
+    if(*target) return DDENUMRET_CANCEL;
+    else return DDENUMRET_OK; /* Continue with the next neighbor surface */
+}
+
 /*****************************************************************************
  * D3D7CB_CreateRenderTarget
  *
@@ -2606,25 +2628,29 @@ D3D7CB_CreateRenderTarget(IUnknown *device, IUnknown *pSuperior,
                           HANDLE* pSharedHandle)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, device);
-    IDirectDrawSurfaceImpl *d3dSurface = (IDirectDrawSurfaceImpl *) This->d3d_target->first_complex;
+    IDirectDrawSurfaceImpl *d3dSurface = This->d3d_target->first_complex, *target = NULL;
     TRACE("(%p) call back\n", device);
 
-    /* Loop through the complex chain and try to find unused primary surfaces */
-    while(d3dSurface->isRenderTarget)
+    if(d3dSurface->isRenderTarget)
     {
-        d3dSurface = d3dSurface->next_complex;
-        if(!d3dSurface) break;
+        IDirectDrawSurface7_EnumAttachedSurfaces(ICOM_INTERFACE(d3dSurface, IDirectDrawSurface7),
+                                                 &target, findRenderTarget);
     }
-    if(!d3dSurface)
+    else
     {
-        d3dSurface = This->d3d_target;
+        target = d3dSurface;
+    }
+
+    if(!target)
+    {
+        target = This->d3d_target;
         ERR(" (%p) : No DirectDrawSurface found to create the back buffer. Using the front buffer as back buffer. Uncertain consequences\n", This);
     }
 
     /* TODO: Return failure if the dimensions do not match, but this shouldn't happen */
 
-    *ppSurface = d3dSurface->WineD3DSurface;
-    d3dSurface->isRenderTarget = TRUE;
+    *ppSurface = target->WineD3DSurface;
+    target->isRenderTarget = TRUE;
     TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *ppSurface, d3dSurface);
     return D3D_OK;
 }
