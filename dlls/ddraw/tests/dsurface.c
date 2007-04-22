@@ -885,6 +885,64 @@ static void GetDDInterface_7(void)
     IDirectDrawSurface7_Release(dsurface7);
 }
 
+#define MAXEXPECTED 8  /* Can match up to 8 expected surfaces */
+struct enumstruct
+{
+    IDirectDrawSurface *expected[MAXEXPECTED];
+    UINT count;
+};
+
+static HRESULT WINAPI enumCB(IDirectDrawSurface *surf, DDSURFACEDESC *desc, void *ctx)
+{
+    int i;
+    BOOL found = FALSE;
+
+    for(i = 0; i < MAXEXPECTED; i++)
+    {
+        if(((struct enumstruct *)ctx)->expected[i] == surf) found = TRUE;
+    }
+
+    ok(found, "Unexpected surface %p enumerated\n", surf);
+    ((struct enumstruct *)ctx)->count++;
+    IDirectDrawSurface_Release(surf);
+    return DDENUMRET_OK;
+}
+
+static void EnumTest(void)
+{
+    HRESULT rc;
+    DDSURFACEDESC ddsd;
+    IDirectDrawSurface *surface;
+    struct enumstruct ctx;
+
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_MIPMAPCOUNT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+    U2(ddsd).dwMipMapCount = 3;
+    ddsd.dwWidth = 32;
+    ddsd.dwHeight = 32;
+    rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
+    ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.expected[0] = surface;
+    rc = IDirectDrawSurface_GetAttachedSurface(ctx.expected[0], &ddsd.ddsCaps, &ctx.expected[1]);
+    ok(rc == DD_OK, "GetAttachedSurface returned %08x\n", rc);
+    rc = IDirectDrawSurface_GetAttachedSurface(ctx.expected[1], &ddsd.ddsCaps, &ctx.expected[2]);
+    ok(rc == DD_OK, "GetAttachedSurface returned %08x\n", rc);
+    rc = IDirectDrawSurface_GetAttachedSurface(ctx.expected[2], &ddsd.ddsCaps, &ctx.expected[3]);
+    ok(rc == DDERR_NOTFOUND, "GetAttachedSurface returned %08x\n", rc);
+    ctx.count = 0;
+
+    rc = IDirectDraw_EnumSurfaces(lpDD, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL, &ddsd, (void *) &ctx, enumCB);
+    ok(rc == DD_OK, "IDirectDraw_EnumSurfaces returned %08x\n", rc);
+    ok(ctx.count == 3, "%d surfaces enumerated, expected 3\n", ctx.count);
+
+    IDirectDrawSurface_Release(ctx.expected[2]);
+    IDirectDrawSurface_Release(ctx.expected[1]);
+    IDirectDrawSurface_Release(surface);
+}
+
 START_TEST(dsurface)
 {
     if (!CreateDirectDraw())
@@ -896,5 +954,6 @@ START_TEST(dsurface)
     GetDDInterface_2();
     GetDDInterface_4();
     GetDDInterface_7();
+    EnumTest();
     ReleaseDirectDraw();
 }
