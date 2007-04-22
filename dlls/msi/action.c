@@ -4423,20 +4423,91 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     return r;
 }
 
+static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
+{
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    LPWSTR translator, translator_path, ptr;
+    WCHAR outpath[MAX_PATH];
+    MSIFILE *translator_file, *setup_file;
+    LPCWSTR desc;
+    DWORD len, usage;
+    UINT r = ERROR_SUCCESS;
+
+    static const WCHAR translator_fmt[] = {
+        'T','r','a','n','s','l','a','t','o','r','=','%','s',0};
+    static const WCHAR setup_fmt[] = {
+        'S','e','t','u','p','=','%','s',0};
+
+    desc = MSI_RecordGetString(rec, 3);
+
+    translator_file = msi_find_file(package, MSI_RecordGetString(rec, 4));
+    setup_file = msi_find_file(package, MSI_RecordGetString(rec, 5));
+
+    if (!translator_file || !setup_file)
+    {
+        ERR("ODBC Translator entry not found!\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    len = lstrlenW(desc) + lstrlenW(translator_fmt) + lstrlenW(translator_file->FileName) +
+          lstrlenW(setup_fmt) + lstrlenW(setup_file->FileName) + 1;
+    translator = msi_alloc(len * sizeof(WCHAR));
+    if (!translator)
+        return ERROR_OUTOFMEMORY;
+
+    ptr = translator;
+    lstrcpyW(ptr, desc);
+    ptr += lstrlenW(ptr) + 1;
+
+    sprintfW(ptr, translator_fmt, translator_file->FileName);
+    ptr += lstrlenW(ptr) + 1;
+
+    sprintfW(ptr, setup_fmt, setup_file->FileName);
+    ptr += lstrlenW(ptr) + 1;
+    *ptr = '\0';
+
+    translator_path = strdupW(translator_file->TargetPath);
+    ptr = strrchrW(translator_path, '\\');
+    if (ptr) *ptr = '\0';
+
+    if (!SQLInstallTranslatorExW(translator, translator_path, outpath, MAX_PATH,
+                                 NULL, ODBC_INSTALL_COMPLETE, &usage))
+    {
+        ERR("Failed to install SQL translator!\n");
+        r = ERROR_FUNCTION_FAILED;
+    }
+
+    msi_free(translator);
+    msi_free(translator_path);
+
+    return r;
+}
+
 static UINT ACTION_InstallODBC( MSIPACKAGE *package )
 {
     UINT rc;
     MSIQUERY *view;
 
-    static const WCHAR query[] = {
+    static const WCHAR driver_query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         'O','D','B','C','D','r','i','v','e','r',0 };
 
-    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
+    static const WCHAR translator_query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'O','D','B','C','T','r','a','n','s','l','a','t','o','r',0 };
+
+    rc = MSI_DatabaseOpenViewW(package->db, driver_query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCDriver, package);
+    msiobj_release(&view->hdr);
+
+    rc = MSI_DatabaseOpenViewW(package->db, translator_query, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCTranslator, package);
     msiobj_release(&view->hdr);
 
     return rc;
