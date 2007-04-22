@@ -1131,6 +1131,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
 #define SFLAG_USERPTR     0x00004000 /* The application allocated the memory for this surface */
 #define SFLAG_GLCKEY      0x00008000 /* The gl texture was created with a color key */
 #define SFLAG_CLIENT      0x00010000 /* GL_APPLE_client_storage is used on that texture */
+#define SFLAG_ALLOCATED   0x00020000 /* A gl texture is allocated for this surface */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL

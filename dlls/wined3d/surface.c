@@ -236,6 +236,8 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
         checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
     }
     LEAVE_GL();
+
+    This->Flags |= SFLAG_ALLOCATED;
 }
 
 /* In D3D the depth stencil dimensions have to be greater than or equal to the
@@ -556,6 +558,7 @@ void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT te
     }
     This->glDescription.textureName = textureName;
     This->glDescription.target      = target;
+    This->Flags &= ~SFLAG_ALLOCATED;
 }
 
 void WINAPI IWineD3DSurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription) {
@@ -1903,8 +1906,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             glReadBuffer(This->resource.wineD3DDevice->offscreenBuffer);
             vcheckGLcall("glReadBuffer");
 
-            surface_allocate_surface(This, internal, This->pow2Width,
-                                     This->pow2Height, format, type);
+            if(!(This->Flags & SFLAG_ALLOCATED)) {
+                surface_allocate_surface(This, internal, This->pow2Width,
+                                         This->pow2Height, format, type);
+            }
 
             glCopyTexSubImage2D(This->glDescription.target,
                                 This->glDescription.level,
@@ -1969,7 +1974,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
 
     if ((This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE)) {
         TRACE("non power of two support\n");
-        surface_allocate_surface(This, internal, This->pow2Width, This->pow2Height, format, type);
+        if(!(This->Flags & SFLAG_ALLOCATED)) {
+            surface_allocate_surface(This, internal, This->pow2Width, This->pow2Height, format, type);
+        }
         if (mem) {
             surface_upload_data(This, This->currentDesc.Width, This->currentDesc.Height, format, type, mem);
         }
@@ -1977,7 +1984,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         /* When making the realloc conditional, keep in mind that GL_APPLE_client_storage may be in use, and This->resource.allocatedMemory
          * changed. So also keep track of memory changes. In this case the texture has to be reallocated
          */
-        surface_allocate_surface(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type);
+        if(!(This->Flags & SFLAG_ALLOCATED)) {
+            surface_allocate_surface(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type);
+        }
         if (mem) {
             surface_upload_data(This, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type, mem);
         }
@@ -2241,6 +2250,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
     }
 
     This->Flags |= (WINED3DFMT_D16_LOCKABLE == format) ? SFLAG_LOCKABLE : 0;
+    This->Flags &= ~SFLAG_ALLOCATED;
 
     This->resource.format = format;
 
@@ -2291,6 +2301,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
 
         /* For client textures opengl has to be notified */
         if(This->Flags & SFLAG_CLIENT) {
+            This->Flags &= ~SFLAG_ALLOCATED;
             IWineD3DSurface_PreLoad(iface);
             /* And hope that the app behaves correctly and did not free the old surface memory before setting a new pointer */
         }
@@ -2303,6 +2314,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
         This->Flags &= ~SFLAG_USERPTR;
 
         if(This->Flags & SFLAG_CLIENT) {
+            This->Flags &= ~SFLAG_ALLOCATED;
             /* This respecifies an empty texture and opengl knows that the old memory is gone */
             IWineD3DSurface_PreLoad(iface);
         }
