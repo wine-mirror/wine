@@ -1598,12 +1598,20 @@ D3D7CB_CreateSurface(IUnknown *device,
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, device);
     IDirectDrawSurfaceImpl *surf = This->tex_root;
-    int i;
+    int i = 0;
     TRACE("(%p) call back. surf=%p\n", device, surf);
 
     /* Find the wanted mipmap. There are enough mipmaps in the chain */
-    for(i = 0; i < level; i++)
-        surf = surf->next_complex;
+    while(i < level)
+    {
+        IDirectDrawSurface7 *attached;
+        IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(surf, IDirectDrawSurface7),
+                                               &This->tex_root->surface_desc.ddsCaps,
+                                               &attached);
+        surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, attached);
+        IDirectDrawSurface7_Release(attached);
+        i++;
+    }
 
     /* Return the surface */
     *Surface = surf->WineD3DSurface;
