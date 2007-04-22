@@ -200,9 +200,9 @@ static void KeyShiftRight( unsigned char *key, const int numbits )
     {
         int j;
 
-        for (j = 7; j >= 0; j--)
+        for (j = 6; j >= 0; j--)
         {
-            if (j!=7 && (key[j] & 0x01))
+            if (j!=6 && (key[j] & 0x01))
                 key[j+1] |=  0x80;
             key[j] >>= 1;
         }
