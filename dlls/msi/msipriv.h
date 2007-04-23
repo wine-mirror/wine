@@ -145,7 +145,7 @@ typedef struct tagMSIVIEWOPS
     /*
      * Inserts a new row into the database from the records contents
      */
-    UINT (*insert_row)( struct tagMSIVIEW *, MSIRECORD * );
+    UINT (*insert_row)( struct tagMSIVIEW *, MSIRECORD *, BOOL temporary );
 
     /*
      * execute - loads the underlying data into memory so it can be read

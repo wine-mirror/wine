@@ -132,7 +132,7 @@ static UINT INSERT_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     if( !values )
         goto err;
 
-    r = sv->ops->insert_row( sv, values );
+    r = sv->ops->insert_row( sv, values, iv->bIsTemp );
 
 err:
     if( values )
