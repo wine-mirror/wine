@@ -1165,22 +1165,15 @@ AC_CHECK_FUNCS(\
 	ftruncate \
 	futimes \
 	futimesat \
-	getaddrinfo \
 	getdirentries \
 	gethostbyname \
-	getnameinfo \
-	getnetbyname \
 	getopt_long \
 	getpagesize \
-	getprotobyname \
-	getprotobynumber \
 	getpwuid \
-	getservbyport \
 	gettid \
 	gettimeofday \
 	getuid \
 	inet_aton \
-	inet_network \
 	kqueue \
 	lstat \
 	memmove \
@@ -1195,7 +1188,6 @@ AC_CHECK_FUNCS(\
 	rfork \
 	sched_yield \
 	select \
-	sendmsg \
 	setrlimit \
 	settimeofday \
 	sigaltstack \
@@ -1246,6 +1238,18 @@ if test "$ac_cv_func_inet_aton" = no
 then
     AC_CHECK_LIB(resolv,inet_aton)
 fi
+
+dnl **** Check for functions which may rely on -lsocket on Solaris.
+AC_CHECK_FUNCS(\
+	getaddrinfo \
+	getnameinfo \
+	getnetbyname \
+	getprotobyname \
+	getprotobynumber \
+	getservbyport \
+	inet_network \
+	sendmsg \
+)
 
 dnl **** Check for types ****
 
