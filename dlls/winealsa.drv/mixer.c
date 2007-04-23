@@ -342,6 +342,7 @@ static void ALSA_MixerInit(void)
         snd_ctl_card_info_alloca(&info);
         mixdev[mixnum].lines = NULL;
         mixdev[mixnum].callback = 0;
+        mixdev[mixnum].controls = NULL;
 
         snprintf(cardind, sizeof(cardind), "%d", x);
         card = snd_card_get_index(cardind);
@@ -748,6 +749,20 @@ static DWORD MIX_GetDevCaps(UINT wDevID, LPMIXERCAPS2W caps, DWORD_PTR parm2)
     return MMSYSERR_NOERROR;
 }
 
+/* convert win32 volume to alsa volume, and vice versa */
+static INT normalized(INT value, INT prevmax, INT nextmax)
+{
+    int ret = MulDiv(value, nextmax, prevmax);
+
+    /* Have to stay in range */
+    TRACE("%d/%d -> %d/%d\n", value, prevmax, ret, nextmax);
+    if (ret > nextmax)
+        ret = nextmax;
+    else if (ret < 0)
+        ret = 0;
+
+    return ret;
+}
 
 /* get amount of sources for dest */
 static int getsrccntfromchan(mixer *mmixer, int dad)
@@ -795,6 +810,422 @@ static int getsrcfromline(mixer *mmixer, int line)
     return 0;
 }
 
+/* Get volume/muted/capture channel */
+static DWORD MIX_GetControlDetails(UINT wDevID, LPMIXERCONTROLDETAILS mctrld, DWORD_PTR flags)
+{
+    mixer *mmixer = MIX_GetMix(wDevID);
+    DWORD ctrl;
+    DWORD line;
+    control *ct;
+
+    if (!mctrld)
+        return MMSYSERR_INVALPARAM;
+
+    ctrl = mctrld->dwControlID;
+    line = ctrl/CONTROLSPERLINE;
+
+    if (mctrld->cbStruct != sizeof(*mctrld))
+        return MMSYSERR_INVALPARAM;
+
+    if (!mmixer)
+        return MMSYSERR_BADDEVICEID;
+
+    if (line < 0 || line >= mmixer->chans || !mmixer->controls[ctrl].enabled)
+        return MIXERR_INVALCONTROL;
+
+    ct = &mmixer->controls[ctrl];
+
+    flags &= MIXER_GETCONTROLDETAILSF_QUERYMASK;
+
+    switch (flags) {
+    case MIXER_GETCONTROLDETAILSF_VALUE:
+        TRACE("MIXER_GETCONTROLDETAILSF_VALUE (%d/%d)\n", ctrl, line);
+        switch (ct->c.dwControlType)
+        {
+        case MIXERCONTROL_CONTROLTYPE_VOLUME:
+        {
+            long min = 0, max = 0, vol = 0;
+            int chn;
+            LPMIXERCONTROLDETAILS_UNSIGNED mcdu;
+            snd_mixer_elem_t * elem = mmixer->lines[line].elem;
+
+            if (mctrld->cbDetails != sizeof(MIXERCONTROLDETAILS_UNSIGNED))
+            {
+                WARN("invalid parameter: cbDetails %d\n", mctrld->cbDetails);
+                return MMSYSERR_INVALPARAM;
+            }
+
+            TRACE("%s MIXERCONTROLDETAILS_UNSIGNED[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
+
+            mcdu = (LPMIXERCONTROLDETAILS_UNSIGNED)mctrld->paDetails;
+
+            if (mctrld->cChannels != 1 && mmixer->lines[line].chans != mctrld->cChannels)
+            {
+                WARN("Unsupported cChannels (%d instead of %d)\n", mctrld->cChannels, mmixer->lines[line].chans);
+                return MMSYSERR_INVALPARAM;
+            }
+
+            if (mmixer->lines[line].capt && snd_mixer_selem_has_capture_volume(elem)) {
+                snd_mixer_selem_get_capture_volume_range(elem, &min, &max);
+                for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
+                    if (snd_mixer_selem_has_capture_channel(elem, chn))
+                    {
+                        snd_mixer_selem_get_capture_volume(elem, chn, &vol);
+                        mcdu->dwValue = normalized(vol - min, max, 65535);
+                        if (mctrld->cChannels == 1)
+                            break;
+                        ++mcdu;
+                    }
+            } else {
+                snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+
+                for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
+                    if (snd_mixer_selem_has_playback_channel(elem, chn))
+                    {
+                        snd_mixer_selem_get_playback_volume(elem, chn, &vol);
+                        mcdu->dwValue = normalized(vol - min, max, 65535);
+                        if (mctrld->cChannels == 1)
+                            break;
+                        ++mcdu;
+                    }
+            }
+
+            return MMSYSERR_NOERROR;
+        }
+
+        case MIXERCONTROL_CONTROLTYPE_ONOFF:
+        case MIXERCONTROL_CONTROLTYPE_MUTE:
+        {
+            LPMIXERCONTROLDETAILS_BOOLEAN mcdb;
+            int chn, ival;
+            snd_mixer_elem_t * elem = mmixer->lines[line].elem;
+
+            if (mctrld->cbDetails != sizeof(MIXERCONTROLDETAILS_BOOLEAN))
+            {
+                WARN("invalid parameter: cbDetails %d\n", mctrld->cbDetails);
+                return MMSYSERR_INVALPARAM;
+            }
+
+            TRACE("%s MIXERCONTROLDETAILS_BOOLEAN[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
+
+            mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)mctrld->paDetails;
+
+            if (line == 1)
+                for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
+                {
+                    if (!snd_mixer_selem_has_capture_channel(elem, chn))
+                        continue;
+                    snd_mixer_selem_get_capture_switch(elem, chn, &ival);
+                    break;
+                }
+            else
+                for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
+                {
+                    if (!snd_mixer_selem_has_playback_channel(elem, chn))
+                        continue;
+                    snd_mixer_selem_get_playback_switch(elem, chn, &ival);
+                    break;
+                }
+
+            mcdb->fValue = !ival;
+            TRACE("=> %s\n", mcdb->fValue ? "on" : "off");
+            return MMSYSERR_NOERROR;
+        }
+        case MIXERCONTROL_CONTROLTYPE_MIXER:
+        case MIXERCONTROL_CONTROLTYPE_MUX:
+        {
+            LPMIXERCONTROLDETAILS_BOOLEAN mcdb;
+            int x, i=0, ival = 0, chn;
+
+            if (mctrld->cbDetails != sizeof(MIXERCONTROLDETAILS_BOOLEAN))
+            {
+                WARN("invalid parameter: cbDetails %d\n", mctrld->cbDetails);
+                return MMSYSERR_INVALPARAM;
+            }
+
+            TRACE("%s MIXERCONTROLDETAILS_BOOLEAN[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
+
+            mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)mctrld->paDetails;
+
+            for (x = 0; x<mmixer->chans; ++x)
+                if (line != x && mmixer->lines[x].dst == line)
+                {
+                    ival = 0;
+                    for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
+                    {
+                        if (!snd_mixer_selem_has_capture_channel(mmixer->lines[x].elem, chn))
+                            continue;
+                        snd_mixer_selem_get_capture_switch(mmixer->lines[x].elem, chn, &ival);
+                        if (ival)
+                            break;
+                    }
+                    if (i >= mctrld->u.cMultipleItems)
+                    {
+                        TRACE("overflow\n");
+                        return MMSYSERR_INVALPARAM;
+                    }
+                    TRACE("fVal[%i] = %sselected\n", i, (!ival ? "un" : ""));
+                    mcdb[i++].fValue = ival;
+                }
+            break;
+        }
+        default:
+
+            FIXME("Unhandled controltype %s\n", getControlType(ct->c.dwControlType));
+            return MMSYSERR_INVALPARAM;
+        }
+        return MMSYSERR_NOERROR;
+
+    case MIXER_GETCONTROLDETAILSF_LISTTEXT:
+        TRACE("MIXER_GETCONTROLDETAILSF_LISTTEXT (%d)\n", ctrl);
+
+        if (ct->c.dwControlType == MIXERCONTROL_CONTROLTYPE_MUX || ct->c.dwControlType == MIXERCONTROL_CONTROLTYPE_MIXER)
+        {
+            LPMIXERCONTROLDETAILS_LISTTEXTW mcdlt = (LPMIXERCONTROLDETAILS_LISTTEXTW)mctrld->paDetails;
+            int i, j;
+
+            for (i = j = 0; j < mmixer->chans; ++j)
+                if (j != line && mmixer->lines[j].dst == line)
+                {
+                    if (i > mctrld->u.cMultipleItems)
+                        return MMSYSERR_INVALPARAM;
+                    mcdlt->dwParam1 = j;
+                    mcdlt->dwParam2 = mmixer->lines[j].component;
+                    lstrcpynW(mcdlt->szName, mmixer->lines[j].name, sizeof(mcdlt->szName) / sizeof(WCHAR));
+                    TRACE("Adding %i as %s\n", j, debugstr_w(mcdlt->szName));
+                    ++i; ++mcdlt;
+                }
+            if (i < mctrld->u.cMultipleItems)
+                return MMSYSERR_INVALPARAM;
+            return MMSYSERR_NOERROR;
+        }
+        FIXME ("Imagine this code being horribly broken and incomplete, introducing: reality\n");
+        return MMSYSERR_INVALPARAM;
+
+    default:
+        WARN("Unknown flag (%08lx)\n", flags);
+        return MMSYSERR_INVALPARAM;
+    }
+}
+
+/* Set volume/capture channel/muted for control */
+static DWORD MIX_SetControlDetails(UINT wDevID, LPMIXERCONTROLDETAILS mctrld, DWORD_PTR flags)
+{
+    mixer *mmixer = MIX_GetMix(wDevID);
+    DWORD ctrl, line, i;
+    control *ct;
+    snd_mixer_elem_t * elem;
+
+    if (!mctrld)
+        return MMSYSERR_INVALPARAM;
+
+    ctrl = mctrld->dwControlID;
+    line = ctrl/CONTROLSPERLINE;
+
+    if (mctrld->cbStruct != sizeof(*mctrld))
+    {
+        WARN("Invalid size of mctrld %d\n", mctrld->cbStruct);
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if (!mmixer)
+        return MMSYSERR_BADDEVICEID;
+
+    if (line < 0 || line >= mmixer->chans)
+    {
+        WARN("Invalid line id: %d not in range of 0-%d\n", line, mmixer->chans-1);
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if (!mmixer->controls[ctrl].enabled)
+    {
+        WARN("Control %d not enabled\n", ctrl);
+        return MIXERR_INVALCONTROL;
+    }
+
+    ct = &mmixer->controls[ctrl];
+    elem = mmixer->lines[line].elem;
+    flags &= MIXER_SETCONTROLDETAILSF_QUERYMASK;
+
+    switch (flags) {
+    case MIXER_SETCONTROLDETAILSF_VALUE:
+        TRACE("MIXER_SETCONTROLDETAILSF_VALUE (%d)\n", ctrl);
+        break;
+
+    default:
+        WARN("Unknown flag (%08lx)\n", flags);
+        return MMSYSERR_INVALPARAM;
+    }
+
+    switch (ct->c.dwControlType)
+    {
+    case MIXERCONTROL_CONTROLTYPE_VOLUME:
+    {
+        long min = 0, max = 0;
+        int chn;
+        LPMIXERCONTROLDETAILS_UNSIGNED mcdu;
+        snd_mixer_elem_t * elem = mmixer->lines[line].elem;
+
+        if (mctrld->cbDetails != sizeof(MIXERCONTROLDETAILS_UNSIGNED))
+        {
+            WARN("invalid parameter: cbDetails %d\n", mctrld->cbDetails);
+            return MMSYSERR_INVALPARAM;
+        }
+
+        if (mctrld->cChannels != 1 && mmixer->lines[line].chans != mctrld->cChannels)
+        {
+            WARN("Unsupported cChannels (%d instead of %d)\n", mctrld->cChannels, mmixer->lines[line].chans);
+            return MMSYSERR_INVALPARAM;
+        }
+
+        TRACE("%s MIXERCONTROLDETAILS_UNSIGNED[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
+        mcdu = (LPMIXERCONTROLDETAILS_UNSIGNED)mctrld->paDetails;
+
+        for (chn=0; chn<mctrld->cChannels;++chn)
+        {
+            TRACE("Chan %d value %d\n", chn, mcdu[chn].dwValue);
+        }
+
+        /* There isn't always a capture volume, so in that case change playback volume */
+        if (mmixer->lines[line].capt && snd_mixer_selem_has_capture_volume(elem))
+        {
+            snd_mixer_selem_get_capture_volume_range(elem, &min, &max);
+
+            for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
+                if (snd_mixer_selem_has_capture_channel(elem, chn))
+                {
+                    snd_mixer_selem_set_capture_volume(elem, chn, min + normalized(mcdu->dwValue, 65535, max));
+                    if (mctrld->cChannels != 1)
+                        mcdu++;
+                }
+        }
+        else
+        {
+            snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+
+            for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
+                if (snd_mixer_selem_has_playback_channel(elem, chn))
+                {
+                    snd_mixer_selem_set_playback_volume(elem, chn, min + normalized(mcdu->dwValue, 65535, max));
+                    if (mctrld->cChannels != 1)
+                        mcdu++;
+                }
+        }
+
+        break;
+    }
+    case MIXERCONTROL_CONTROLTYPE_MUTE:
+    case MIXERCONTROL_CONTROLTYPE_ONOFF:
+    {
+        LPMIXERCONTROLDETAILS_BOOLEAN	mcdb;
+
+        if (mctrld->cbDetails != sizeof(MIXERCONTROLDETAILS_BOOLEAN))
+        {
+            WARN("invalid parameter: cbDetails %d\n", mctrld->cbDetails);
+            return MMSYSERR_INVALPARAM;
+        }
+
+        TRACE("%s MIXERCONTROLDETAILS_BOOLEAN[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
+
+        mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)mctrld->paDetails;
+        if (line == 1) /* Mute/unmute capturing */
+            for (i = 0; i <= SND_MIXER_SCHN_LAST; ++i)
+            {
+                if (snd_mixer_selem_has_capture_channel(elem, i))
+                    snd_mixer_selem_set_capture_switch(elem, i, !mcdb->fValue);
+            }
+        else
+            for (i = 0; i <= SND_MIXER_SCHN_LAST; ++i)
+                if (snd_mixer_selem_has_playback_channel(elem, i))
+                    snd_mixer_selem_set_playback_switch(elem, i, !mcdb->fValue);
+        break;
+    }
+
+    case MIXERCONTROL_CONTROLTYPE_MIXER:
+    case MIXERCONTROL_CONTROLTYPE_MUX:
+    {
+        LPMIXERCONTROLDETAILS_BOOLEAN mcdb;
+        int x, i=0, chn;
+        int didone = 0, canone = (ct->c.dwControlType == MIXERCONTROL_CONTROLTYPE_MUX);
+
+        if (mctrld->cbDetails != sizeof(MIXERCONTROLDETAILS_BOOLEAN))
+        {
+            WARN("invalid parameter: cbDetails %d\n", mctrld->cbDetails);
+            return MMSYSERR_INVALPARAM;
+        }
+
+        TRACE("%s MIXERCONTROLDETAILS_BOOLEAN[%u]\n", getControlType(ct->c.dwControlType), mctrld->cChannels);
+        mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)mctrld->paDetails;
+
+        for (x=i=0; x < mmixer->chans; ++x)
+            if (line != x && mmixer->lines[x].dst == line)
+            {
+                TRACE("fVal[%i] (%s) = %i\n", i, debugstr_w(mmixer->lines[x].name), mcdb[i].fValue);
+                if (i >= mctrld->u.cMultipleItems)
+                {
+                    TRACE("Too many items to fit, overflowing\n");
+                    return MIXERR_INVALVALUE;
+                }
+                if (mcdb[i].fValue && canone && didone)
+                {
+                    TRACE("Nice try, but it's not going to work\n");
+                    elem_callback(mmixer->lines[1].elem, SND_CTL_EVENT_MASK_VALUE);
+                    return MIXERR_INVALVALUE;
+                }
+                if (mcdb[i].fValue)
+                    didone = 1;
+                ++i;
+            }
+
+        if (canone && !didone)
+        {
+            TRACE("Nice try, this is not going to work either\n");
+            elem_callback(mmixer->lines[1].elem, SND_CTL_EVENT_MASK_VALUE);
+            return MIXERR_INVALVALUE;
+        }
+
+        for (x = i = 0; x<mmixer->chans; ++x)
+            if (line != x && mmixer->lines[x].dst == line)
+            {
+                if (mcdb[i].fValue)
+                    for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
+                    {
+                        if (!snd_mixer_selem_has_capture_channel(mmixer->lines[x].elem, chn))
+                            continue;
+                        snd_mixer_selem_set_capture_switch(mmixer->lines[x].elem, chn, mcdb[i].fValue);
+                    }
+                ++i;
+            }
+
+        /* If it's a MUX, it means that only 1 channel can be selected
+         * and the other channels are unselected
+         *
+         * For MIXER multiple sources are allowed, so unselect here
+         */
+        if (canone)
+            break;
+
+        for (x = i = 0; x<mmixer->chans; ++x)
+            if (line != x && mmixer->lines[x].dst == line)
+            {
+                if (!mcdb[i].fValue)
+                    for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
+                    {
+                        if (!snd_mixer_selem_has_capture_channel(mmixer->lines[x].elem, chn))
+                            continue;
+                        snd_mixer_selem_set_capture_switch(mmixer->lines[x].elem, chn, mcdb[i].fValue);
+                    }
+                ++i;
+            }
+        break;
+    }
+    default:
+        FIXME("Unhandled type %s\n", getControlType(ct->c.dwControlType));
+        return MMSYSERR_INVALPARAM;
+    }
+    return MMSYSERR_NOERROR;
+}
+
 /* Here we give info over the source/dest line given by dwSource+dwDest or dwDest, respectively
  * It is also possible that a line is found by componenttype or target type, latter is not implemented yet
  * Most important values returned in struct:
@@ -824,7 +1255,7 @@ static DWORD MIX_GetLineInfo(UINT wDevID, LPMIXERLINEW Ml, DWORD_PTR flags)
 
     if (Ml->cbStruct != sizeof(*Ml))
     {
-        WARN("invalid parameter: Ml->cbStruct = %d != %d\n", Ml->cbStruct, sizeof(*Ml));
+        WARN("invalid parameter: Ml->cbStruct = %d\n", Ml->cbStruct);
         return MMSYSERR_INVALPARAM;
     }
 
@@ -1059,6 +1490,12 @@ DWORD WINAPI ALSA_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 
     case MXDM_GETLINECONTROLS:
         ret = MIX_GetLineControls(wDevID, (LPMIXERLINECONTROLSW)dwParam1, dwParam2); break;
+
+    case MXDM_GETCONTROLDETAILS:
+        ret = MIX_GetControlDetails(wDevID, (LPMIXERCONTROLDETAILS)dwParam1, dwParam2); break;
+
+    case MXDM_SETCONTROLDETAILS:
+        ret = MIX_SetControlDetails(wDevID, (LPMIXERCONTROLDETAILS)dwParam1, dwParam2); break;
 
     case MXDM_GETNUMDEVS:
         ret = cards; break;
