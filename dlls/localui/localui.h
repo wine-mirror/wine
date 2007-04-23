@@ -30,5 +30,20 @@
 #define IDS_LOCALPORT_MAXLEN 32
 #define IDS_NOTHINGTOCONFIG_MAXLEN 80
 
+/* ## Type of Ports ## */
+/* windows types */
+#define PORT_IS_UNKNOWN  0
+#define PORT_IS_LPT      1
+#define PORT_IS_COM      2
+#define PORT_IS_FILE     3
+#define PORT_IS_FILENAME 4
+
+/* wine extensions */
+#define PORT_IS_WINE     5
+#define PORT_IS_UNIXNAME 5
+#define PORT_IS_PIPE     6
+#define PORT_IS_CUPS     7
+#define PORT_IS_LPR      8
+
 
 #endif /* __WINE_LOCALUI__ */

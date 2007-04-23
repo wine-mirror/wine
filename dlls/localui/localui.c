@@ -32,14 +32,31 @@
 #include "ddk/winsplp.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "localui.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(localui);
 
+/*****************************************************/
+
 static HINSTANCE LOCALUI_hInstance;
 
 static const WCHAR cmd_DeletePortW[] = {'D','e','l','e','t','e','P','o','r','t',0};
+static const WCHAR cmd_GetDefaultCommConfigW[] = {'G','e','t',
+                                    'D','e','f','a','u','l','t',
+                                    'C','o','m','m','C','o','n','f','i','g',0};
+static const WCHAR cmd_SetDefaultCommConfigW[] = {'S','e','t',
+                                    'D','e','f','a','u','l','t',
+                                    'C','o','m','m','C','o','n','f','i','g',0};
+
+static const WCHAR portname_LPT[]  = {'L','P','T',0};
+static const WCHAR portname_COM[]  = {'C','O','M',0};
+static const WCHAR portname_FILE[] = {'F','I','L','E',':',0};
+static const WCHAR portname_CUPS[] = {'C','U','P','S',':',0};
+static const WCHAR portname_LPR[]  = {'L','P','R',':',0};
+
 static const WCHAR XcvPortW[] = {',','X','c','v','P','o','r','t',' ',0};
+
 
 /*****************************************************
  *   strdupWW [internal]
@@ -59,6 +76,52 @@ static LPWSTR strdupWW(LPCWSTR pPrefix, LPCWSTR pSuffix)
     return ptr;
 }
 
+/*****************************************************
+ *   dlg_configure_com [internal]
+ *
+ */
+
+static BOOL dlg_configure_com(HANDLE hXcv, HWND hWnd, PCWSTR pPortName)
+{
+    COMMCONFIG cfg;
+    LPWSTR shortname;
+    DWORD status;
+    DWORD dummy;
+    DWORD len;
+    BOOL  res;
+
+    /* strip the colon (pPortName is never empty here) */
+    len = lstrlenW(pPortName);
+    shortname = HeapAlloc(GetProcessHeap(), 0, len  * sizeof(WCHAR));
+    if (shortname) {
+        memcpy(shortname, pPortName, (len -1) * sizeof(WCHAR));
+        shortname[len-1] = '\0';
+
+        /* get current settings */
+        len = sizeof(cfg);
+        status = ERROR_SUCCESS;
+        res = XcvDataW( hXcv, cmd_GetDefaultCommConfigW,
+                        (PBYTE) shortname,
+                        (lstrlenW(shortname) +1) * sizeof(WCHAR),
+                        (PBYTE) &cfg, len, &len, &status);
+
+        if (res && (status == ERROR_SUCCESS)) {
+            /* display the Dialog */
+            res = CommConfigDialogW(pPortName, hWnd, &cfg);
+            if (res) {
+                status = ERROR_SUCCESS;
+                /* set new settings */
+                res = XcvDataW(hXcv, cmd_SetDefaultCommConfigW,
+                               (PBYTE) &cfg, len,
+                               (PBYTE) &dummy, 0, &len, &status);
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, shortname);
+        return res;
+    }
+    return FALSE;
+}
+
 /******************************************************************
  * display the Dialog "Nothing to configure"
  *
@@ -75,6 +138,52 @@ static void dlg_nothingtoconfig(HWND hWnd)
     LoadStringW(LOCALUI_hInstance, IDS_NOTHINGTOCONFIG, res_nothingW, IDS_NOTHINGTOCONFIG_MAXLEN);
 
     MessageBoxW(hWnd, res_nothingW, res_PortW, MB_OK | MB_ICONINFORMATION);
+}
+
+/*****************************************************
+ * get_type_from_name (internal)
+ *
+ */
+
+static DWORD get_type_from_name(LPCWSTR name)
+{
+    HANDLE  hfile;
+
+    if (!strncmpiW(name, portname_LPT, sizeof(portname_LPT) / sizeof(WCHAR) -1))
+        return PORT_IS_LPT;
+
+    if (!strncmpiW(name, portname_COM, sizeof(portname_COM) / sizeof(WCHAR) -1))
+        return PORT_IS_COM;
+
+    if (!strcmpiW(name, portname_FILE))
+        return PORT_IS_FILE;
+
+    if (name[0] == '/')
+        return PORT_IS_UNIXNAME;
+
+    if (name[0] == '|')
+        return PORT_IS_PIPE;
+
+    if (!strncmpW(name, portname_CUPS, sizeof(portname_CUPS) / sizeof(WCHAR) -1))
+        return PORT_IS_CUPS;
+
+    if (!strncmpW(name, portname_LPR, sizeof(portname_LPR) / sizeof(WCHAR) -1))
+        return PORT_IS_LPR;
+
+    /* Must be a file or a directory. Does the file exist ? */
+    hfile = CreateFileW(name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    TRACE("%p for OPEN_EXISTING on %s\n", hfile, debugstr_w(name));
+    if (hfile == INVALID_HANDLE_VALUE) {
+        /* Can we create the file? */
+        hfile = CreateFileW(name, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+        TRACE("%p for OPEN_ALWAYS\n", hfile);
+    }
+    if (hfile != INVALID_HANDLE_VALUE) {
+        CloseHandle(hfile);
+        return PORT_IS_FILENAME;
+    }
+    /* We can't use the name. use GetLastError() for the reason */
+    return PORT_IS_UNKNOWN;
 }
 
 /*****************************************************
@@ -141,16 +250,28 @@ static BOOL WINAPI localui_AddPortUI(PCWSTR pName, HWND hWnd, PCWSTR pMonitorNam
 static BOOL WINAPI localui_ConfigurePortUI(PCWSTR pName, HWND hWnd, PCWSTR pPortName)
 {
     HANDLE  hXcv;
+    DWORD   res;
 
     TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
     if (open_monitor_by_name(XcvPortW, pPortName, &hXcv)) {
 
-        dlg_nothingtoconfig(hWnd);
+        res = get_type_from_name(pPortName);
+        switch(res)
+        {
+
+        case PORT_IS_COM:
+            res = dlg_configure_com(hXcv, hWnd, pPortName);
+            break;
+
+        default:
+            dlg_nothingtoconfig(hWnd);
+            SetLastError(ERROR_CANCELLED);
+            res = FALSE;
+        }
 
         ClosePrinter(hXcv);
-        return TRUE;
+        return res;
     }
-    SetLastError(ERROR_UNKNOWN_PORT);
     return FALSE;
 
 }
