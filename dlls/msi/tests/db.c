@@ -2664,10 +2664,8 @@ static void test_temporary_table(void)
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "failed to add table\n");
 
-    todo_wine {
     cond = MsiDatabaseIsTablePersistent(hdb, "P2");
     ok( cond == MSICONDITION_TRUE, "wrong return condition\n");
-    }
 
     query = "CREATE TABLE `T` ( `B` SHORT NOT NULL TEMPORARY, `C` CHAR(255) TEMPORARY PRIMARY KEY `C`) HOLD";
     r = run_query(hdb, 0, query);

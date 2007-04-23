@@ -66,6 +66,7 @@ typedef struct _column_info
     LPCWSTR table;
     LPCWSTR column;
     UINT   type;
+    BOOL   temporary;
     struct expr *val;
     struct _column_info *next;
 } column_info;
@@ -108,7 +109,7 @@ UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
                        struct expr *cond );
 
 UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
-                        column_info *col_info, BOOL temp );
+                        column_info *col_info, BOOL hold );
 
 UINT INSERT_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
                         column_info *columns, column_info *values, BOOL temp );

@@ -146,10 +146,12 @@ static UINT check_columns( column_info *col_info )
 }
 
 UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
-                        column_info *col_info, BOOL temp )
+                        column_info *col_info, BOOL hold )
 {
     MSICREATEVIEW *cv = NULL;
     UINT r;
+    const column_info *col;
+    BOOL temp = TRUE;
 
     TRACE("%p\n", cv );
 
@@ -160,6 +162,13 @@ UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
     cv = msi_alloc_zero( sizeof *cv );
     if( !cv )
         return ERROR_FUNCTION_FAILED;
+
+    for( col = col_info; col; col = col->next )
+        if( !col->temporary )
+        {
+            temp = FALSE;
+            break;
+        }
 
     /* fill the structure */
     cv->view.ops = &create_ops;
