@@ -3,9 +3,10 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = comdlg32.dll
-IMPORTS   = comdlg32 kernel32
+IMPORTS   = comdlg32 user32 kernel32
 
 CTESTS = \
+	filedlg.c \
 	printdlg.c
 
 @MAKE_TEST_RULES@

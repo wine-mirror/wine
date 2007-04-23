@@ -323,6 +323,9 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
   LPWSTR filter = NULL;
   LPWSTR customfilter = NULL;
 
+  /* Initialize CommDlgExtendedError() */
+  COMDLG32_SetCommDlgExtendedError(0);
+
   /* Initialize FileOpenDlgInfos structure */
   ZeroMemory(&fodInfos, sizeof(FileOpenDlgInfos));
 
@@ -452,6 +455,9 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   BOOL ret;
   FileOpenDlgInfos fodInfos;
   LPWSTR lpstrSavDir = NULL;
+
+  /* Initialize CommDlgExtendedError() */
+  COMDLG32_SetCommDlgExtendedError(0);
 
   /* Initialize FileOpenDlgInfos structure */
   ZeroMemory(&fodInfos, sizeof(FileOpenDlgInfos));
