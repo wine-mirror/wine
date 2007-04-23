@@ -264,7 +264,10 @@ static HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IWi
 
 static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_level) {
     IWineD3DVolumeImpl *This     = (IWineD3DVolumeImpl *)iface;
-    const PixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format);
+    WINED3DFORMAT format = This->resource.format;
+    const PixelFormatDesc *formatEntry = getFormatDescEntry(format);
+
+    TRACE("(%p) : level %u, format %s (0x%08x)\n", This, gl_level, debug_d3dformat(format), format);
 
     if(GL_SUPPORT(EXT_TEXTURE3D)) {
         TRACE("Calling glTexImage3D %x level=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
