@@ -55,6 +55,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(mixer);
 
 #ifdef HAVE_ALSA
 
+#define	WINE_MIXER_MANUF_ID      0xAA
+#define	WINE_MIXER_PRODUCT_ID    0x55
+#define	WINE_MIXER_VERSION       0x0100
+
 /* Generic notes:
  * In windows it seems to be required for all controls to have a volume switch
  * In alsa that's optional
@@ -96,6 +100,20 @@ static const char * getMessage(UINT uMsg)
     return str;
 }
 
+/* A simple declaration of a line control
+ * These are each of the channels that show up
+ */
+typedef struct line {
+    /* Name we present to outside world */
+    WCHAR name[MAXPNAMELEN];
+
+    DWORD component;
+    DWORD dst;
+    DWORD capt;
+    DWORD chans;
+    snd_mixer_elem_t *elem;
+} line;
+
 /* Mixer device */
 typedef struct mixer
 {
@@ -103,12 +121,58 @@ typedef struct mixer
     WCHAR mixername[MAXPNAMELEN];
 
     int chans, dests;
+    LPDRVCALLBACK callback;
+    DWORD_PTR callbackpriv;
+    HDRVR hmx;
+
+    line *lines;
 } mixer;
 
 #define MAX_MIXERS 32
 
 static int cards = 0;
 static mixer mixdev[MAX_MIXERS];
+static HANDLE thread;
+static int elem_callback(snd_mixer_elem_t *elem, unsigned int mask);
+static DWORD WINAPI ALSA_MixerPollThread(LPVOID lParam);
+static CRITICAL_SECTION elem_crst;
+static int msg_pipe[2];
+static LONG refcnt;
+
+/* found channel names in alsa lib, alsa api doesn't have another way for this
+ * map name -> componenttype, worst case we get a wrong componenttype which is
+ * mostly harmless
+ */
+
+static const struct mixerlinetype {
+    const char *name;  DWORD cmpt;
+} converttable[] = {
+    { "Master",     MIXERLINE_COMPONENTTYPE_DST_SPEAKERS,    },
+    { "Capture",    MIXERLINE_COMPONENTTYPE_DST_WAVEIN,      },
+    { "PCM",        MIXERLINE_COMPONENTTYPE_SRC_WAVEOUT,     },
+    { "PC Speaker", MIXERLINE_COMPONENTTYPE_SRC_PCSPEAKER,   },
+    { "Synth",      MIXERLINE_COMPONENTTYPE_SRC_SYNTHESIZER, },
+    { "Headphone",  MIXERLINE_COMPONENTTYPE_DST_HEADPHONES,  },
+    { "Mic",        MIXERLINE_COMPONENTTYPE_SRC_MICROPHONE,  },
+    { "Aux",        MIXERLINE_COMPONENTTYPE_SRC_UNDEFINED,   },
+    { "CD",         MIXERLINE_COMPONENTTYPE_SRC_COMPACTDISC, },
+    { "Line",       MIXERLINE_COMPONENTTYPE_SRC_LINE,        },
+    { "Phone",      MIXERLINE_COMPONENTTYPE_SRC_TELEPHONE,   },
+};
+
+/* Map name to MIXERLINE_COMPONENTTYPE_XXX */
+static int getcomponenttype(const char *name)
+{
+    int x;
+    for (x=0; x< sizeof(converttable)/sizeof(converttable[0]); ++x)
+        if (!strcasecmp(name, converttable[x].name))
+        {
+            TRACE("%d -> %s\n", x, name);
+            return converttable[x].cmpt;
+        }
+    WARN("Unknown mixer name %s, probably harmless\n", name);
+    return MIXERLINE_COMPONENTTYPE_SRC_UNDEFINED;
+}
 
 /* Is this control suited for showing up? */
 static int blacklisted(snd_mixer_elem_t *elem)
@@ -125,24 +189,48 @@ static int blacklisted(snd_mixer_elem_t *elem)
     return blisted;
 }
 
+/* get amount of channels for elem */
+/* Officially we should keep capture/playback seperated,
+ * but that's not going to work in the alsa api */
+static int chans(mixer *mmixer, snd_mixer_elem_t * elem, DWORD capt)
+{
+    int ret=0, chn;
+
+    if (capt && snd_mixer_selem_has_capture_volume(elem)) {
+        for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
+            if (snd_mixer_selem_has_capture_channel(elem, chn))
+                ++ret;
+    } else {
+        for (chn = 0; chn <= SND_MIXER_SCHN_LAST; ++chn)
+            if (snd_mixer_selem_has_playback_channel(elem, chn))
+                ++ret;
+    }
+    if (!ret)
+        FIXME("Mixer channel %s was found for %s, but no channels were found? Wrong selection!\n", snd_mixer_selem_get_name(elem), (snd_mixer_selem_has_playback_volume(elem) ? "playback" : "capture"));
+    return ret;
+}
+
 static void ALSA_MixerInit(void)
 {
     int x, mixnum = 0;
 
     for (x = 0; x < MAX_MIXERS; ++x)
     {
-        int card, err;
+        int card, err, y;
         char cardind[6], cardname[10];
         BOOL hascapt=0, hasmast=0;
+        line *mline;
 
         snd_ctl_t *ctl;
         snd_mixer_elem_t *elem, *mastelem = NULL, *captelem = NULL;
         snd_ctl_card_info_t *info = NULL;
         snd_ctl_card_info_alloca(&info);
+        mixdev[mixnum].lines = NULL;
+        mixdev[mixnum].callback = 0;
 
         snprintf(cardind, sizeof(cardind), "%d", x);
         card = snd_card_get_index(cardind);
-        if (card < 0 || card > MAX_MIXERS - 1)
+        if (card < 0)
             continue;
         snprintf(cardname, sizeof(cardname), "hw:%d", card);
 
@@ -227,6 +315,70 @@ static void ALSA_MixerInit(void)
         }
 
         mixdev[mixnum].chans += 2; /* Capture/Master */
+        mixdev[mixnum].lines = calloc(sizeof(MIXERLINEW), mixdev[mixnum].chans);
+        err = -ENOMEM;
+        if (!mixdev[mixnum].lines)
+            goto eclose;
+
+        /* Master control */
+        mline = &mixdev[mixnum].lines[0];
+        MultiByteToWideChar(CP_UNIXCP, 0, snd_mixer_selem_get_name(mastelem), -1, mline->name, sizeof(mline->name)/sizeof(WCHAR));
+        mline->component = getcomponenttype("Master");
+        mline->dst = 0;
+        mline->capt = 0;
+        mline->elem = mastelem;
+        mline->chans = chans(&mixdev[mixnum], mastelem, 0);
+
+        /* Capture control
+         * Note: since mmixer->dests = 1, it means only playback control is visible
+         * This makes sense, because if there are no capture sources capture control
+         * can't do anything and should be invisible */
+
+        mline++;
+        MultiByteToWideChar(CP_UNIXCP, 0, snd_mixer_selem_get_name(captelem), -1, mline->name, sizeof(mline->name)/sizeof(WCHAR));
+        mline->component = getcomponenttype("Capture");
+        mline->dst = 1;
+        mline->capt = 1;
+        mline->elem = captelem;
+        mline->chans = chans(&mixdev[mixnum], captelem, 1);
+
+        snd_mixer_elem_set_callback(mastelem, &elem_callback);
+        snd_mixer_elem_set_callback_private(mastelem, &mixdev[mixnum]);
+
+        if (mixdev[mixnum].dests == 2)
+        {
+            snd_mixer_elem_set_callback(captelem, &elem_callback);
+            snd_mixer_elem_set_callback_private(captelem, &mixdev[mixnum]);
+        }
+
+        y=2;
+        for (elem = snd_mixer_first_elem(mixdev[mixnum].mix); elem; elem = snd_mixer_elem_next(elem))
+            if (elem != mastelem && elem != captelem && !blacklisted(elem))
+            {
+                const char * name = snd_mixer_selem_get_name(elem);
+                DWORD comp = getcomponenttype(name);
+                snd_mixer_elem_set_callback(elem, &elem_callback);
+                snd_mixer_elem_set_callback_private(elem, &mixdev[mixnum]);
+
+                if (snd_mixer_selem_has_playback_volume(elem))
+                {
+                    mline = &mixdev[mixnum].lines[y++];
+                    mline->component = comp;
+                    MultiByteToWideChar(CP_UNIXCP, 0, name, -1, mline->name, MAXPNAMELEN);
+                    mline->capt = mline->dst = 0;
+                    mline->elem = elem;
+                    mline->chans = chans(&mixdev[mixnum], elem, 0);
+                }
+                if (snd_mixer_selem_has_capture_switch(elem))
+                {
+                    mline = &mixdev[mixnum].lines[y++];
+                    mline->component = comp;
+                    MultiByteToWideChar(CP_UNIXCP, 0, name, -1, mline->name, MAXPNAMELEN);
+                    mline->capt = mline->dst = 1;
+                    mline->elem = elem;
+                    mline->chans = chans(&mixdev[mixnum], elem, 1);
+                }
+            }
 
         TRACE("%s: Amount of controls: %i/%i, name: %s\n", cardname, mixdev[mixnum].dests, mixdev[mixnum].chans, debugstr_w(mixdev[mixnum].mixername));
         mixnum++;
@@ -234,20 +386,234 @@ static void ALSA_MixerInit(void)
 
         eclose:
         WARN("Error occured initialising mixer: %s\n", snd_strerror(err));
+        if (mixdev[mixnum].lines)
+            free(mixdev[mixnum].lines);
         snd_mixer_close(mixdev[mixnum].mix);
     }
     cards = mixnum;
+
+    InitializeCriticalSection(&elem_crst);
+    elem_crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ALSA_MIXER.elem_crst");
     TRACE("\n");
 }
 
 static void ALSA_MixerExit(void)
 {
     int x;
-    TRACE("\n");
+
+    if (refcnt)
+    {
+        WARN("Callback thread still alive, terminating uncleanly, refcnt: %d\n", refcnt);
+        /* Least we can do is making sure we're not in 'foreign' code */
+        EnterCriticalSection(&elem_crst);
+        TerminateThread(thread, 1);
+        refcnt = 0;
+    }
+
+    TRACE("Cleaning up\n");
+
+    elem_crst.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&elem_crst);
+    for (x = 0; x < cards; ++x)
+    {
+        snd_mixer_close(mixdev[x].mix);
+        free(mixdev[x].lines);
+    }
+    cards = 0;
+}
+
+static mixer* MIX_GetMix(UINT wDevID)
+{
+    mixer *mmixer;
+
+    if (wDevID < 0 || wDevID >= cards)
+    {
+        WARN("Invalid mixer id: %d\n", wDevID);
+        return NULL;
+    }
+
+    mmixer = &mixdev[wDevID];
+    return mmixer;
+}
+
+/* Since alsa doesn't tell what exactly changed, just assume all affected controls changed */
+static int elem_callback(snd_mixer_elem_t *elem, unsigned int type)
+{
+    mixer *mmixer = snd_mixer_elem_get_callback_private(elem);
+    int x;
+
+    if (type != SND_CTL_EVENT_MASK_VALUE)
+        return 0;
+
+    assert(mmixer);
+
+    EnterCriticalSection(&elem_crst);
+
+    if (!mmixer->callback)
+        goto out;
+
+    for (x=0; x<mmixer->chans; ++x)
+    {
+        if (elem != mmixer->lines[x].elem)
+            continue;
+
+        TRACE("Found changed control %s\n", debugstr_w(mmixer->lines[x].name));
+        mmixer->callback(mmixer->hmx, MM_MIXM_LINE_CHANGE, mmixer->callbackpriv, x, 0);
+    }
+
+    out:
+    LeaveCriticalSection(&elem_crst);
+
+    return 0;
+}
+
+static DWORD WINAPI ALSA_MixerPollThread(LPVOID lParam)
+{
+    struct pollfd *pfds = NULL;
+    int x, y, err, mcnt, count = 1;
+
+    TRACE("%p\n", lParam);
 
     for (x = 0; x < cards; ++x)
-        snd_mixer_close(mixdev[x].mix);
-    cards = 0;
+        count += snd_mixer_poll_descriptors_count(mixdev[x].mix);
+
+    TRACE("Counted %d descriptors\n", count);
+    pfds = HeapAlloc(GetProcessHeap(), 0, count * sizeof(struct pollfd));
+
+    if (!pfds)
+    {
+        WARN("Out of memory\n");
+        goto die;
+    }
+
+    pfds[0].fd = msg_pipe[0];
+    pfds[0].events = POLLIN;
+
+    y = 1;
+    for (x = 0; x < cards; ++x)
+        y += snd_mixer_poll_descriptors(mixdev[x].mix, &pfds[y], count - y);
+
+    while ((err = poll(pfds, (unsigned int) count, -1)) >= 0 || errno == EINTR || errno == EAGAIN)
+    {
+        if (pfds[0].revents & POLLIN)
+            break;
+
+        mcnt = 1;
+        for (x = y = 0; x < cards; ++x)
+        {
+            int j, max = snd_mixer_poll_descriptors_count(mixdev[x].mix);
+            for (j = 0; j < max; ++j)
+                if (pfds[mcnt+j].revents)
+                {
+                    y += snd_mixer_handle_events(mixdev[x].mix);
+                    break;
+                }
+            mcnt += max;
+        }
+        if (y)
+            TRACE("Handled %d events\n", y);
+    }
+
+    die:
+    TRACE("Shutting down\n");
+    if (pfds)
+        HeapFree(GetProcessHeap(), 0, pfds);
+
+    y = read(msg_pipe[0], &x, sizeof(x));
+    close(msg_pipe[1]);
+    close(msg_pipe[0]);
+    return 0;
+}
+
+static DWORD MIX_Open(UINT wDevID, LPMIXEROPENDESC desc, DWORD_PTR flags)
+{
+    mixer *mmixer = MIX_GetMix(wDevID);
+    if (!mmixer)
+        return MMSYSERR_BADDEVICEID;
+
+    flags &= CALLBACK_TYPEMASK;
+    switch (flags)
+    {
+    case CALLBACK_NULL:
+        goto done;
+
+    case CALLBACK_FUNCTION:
+        break;
+
+    default:
+        FIXME("Unhandled callback type: %08lx\n", flags & CALLBACK_TYPEMASK);
+        return MIXERR_INVALVALUE;
+    }
+
+    mmixer->callback = (LPDRVCALLBACK)desc->dwCallback;
+    mmixer->callbackpriv = desc->dwInstance;
+    mmixer->hmx = (HDRVR)desc->hmx;
+
+    done:
+    if (InterlockedIncrement(&refcnt) == 1)
+    {
+        if (pipe(msg_pipe) >= 0)
+        {
+            thread = CreateThread(NULL, 0, ALSA_MixerPollThread, NULL, 0, NULL);
+            if (!thread)
+            {
+                close(msg_pipe[0]);
+                close(msg_pipe[1]);
+                msg_pipe[0] = msg_pipe[1] = -1;
+            }
+        }
+        else
+            msg_pipe[0] = msg_pipe[1] = -1;
+    }
+
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD MIX_Close(UINT wDevID)
+{
+    int x;
+    mixer *mmixer = MIX_GetMix(wDevID);
+    if (!mmixer)
+        return MMSYSERR_BADDEVICEID;
+
+    EnterCriticalSection(&elem_crst);
+    mmixer->callback = 0;
+    LeaveCriticalSection(&elem_crst);
+
+    if (!InterlockedDecrement(&refcnt))
+    {
+        if (write(msg_pipe[1], &x, sizeof(x)) > 0)
+        {
+            TRACE("Shutting down thread...\n");
+            WaitForSingleObject(thread, INFINITE);
+            TRACE("Done\n");
+        }
+    }
+
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD MIX_GetDevCaps(UINT wDevID, LPMIXERCAPS2W caps, DWORD_PTR parm2)
+{
+    mixer *mmixer = MIX_GetMix(wDevID);
+    MIXERCAPS2W capsW;
+
+    if (!caps)
+        return MMSYSERR_INVALPARAM;
+
+    if (!mmixer)
+        return MMSYSERR_BADDEVICEID;
+
+    memset(&capsW, 0, sizeof(MIXERCAPS2W));
+
+    capsW.wMid = WINE_MIXER_MANUF_ID;
+    capsW.wPid = WINE_MIXER_PRODUCT_ID;
+    capsW.vDriverVersion = WINE_MIXER_VERSION;
+
+    lstrcpynW(capsW.szPname, mmixer->mixername, sizeof(capsW.szPname)/sizeof(WCHAR));
+    capsW.cDestinations = mmixer->dests;
+    memcpy(caps, &capsW, min(parm2, sizeof(capsW)));
+    return MMSYSERR_NOERROR;
 }
 
 #endif /*HAVE_ALSA*/
@@ -272,6 +638,15 @@ DWORD WINAPI ALSA_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     case DRVM_ENABLE:
     case DRVM_DISABLE:
         ret = MMSYSERR_NOERROR; break;
+
+    case MXDM_OPEN:
+        ret = MIX_Open(wDevID, (LPMIXEROPENDESC) dwParam1, dwParam2); break;
+
+    case MXDM_CLOSE:
+        ret = MIX_Close(wDevID); break;
+
+    case MXDM_GETDEVCAPS:
+        ret = MIX_GetDevCaps(wDevID, (LPMIXERCAPS2W)dwParam1, dwParam2); break;
 
     case MXDM_GETNUMDEVS:
         ret = cards; break;
