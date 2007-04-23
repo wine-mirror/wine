@@ -593,6 +593,106 @@ static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name, MSICOLUMNINFO 
     return r;
 }
 
+static UINT get_table( MSIDATABASE *db, LPCWSTR name, MSITABLE **table_ret );
+
+UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
+                       BOOL persistent, MSITABLE **table_ret)
+{
+    UINT r, nField;
+    MSIVIEW *tv = NULL;
+    MSIRECORD *rec = NULL;
+    column_info *col;
+
+    /* only add tables that don't exist already */
+    if( TABLE_Exists(db, name ) )
+        return ERROR_BAD_QUERY_SYNTAX;
+
+    r = TABLE_CreateView( db, szTables, &tv );
+    TRACE("CreateView returned %x\n", r);
+    if( r )
+        return r;
+
+    r = tv->ops->execute( tv, 0 );
+    TRACE("tv execute returned %x\n", r);
+    if( r )
+        goto err;
+
+    rec = MSI_CreateRecord( 1 );
+    if( !rec )
+        goto err;
+
+    r = MSI_RecordSetStringW( rec, 1, name );
+    if( r )
+        goto err;
+
+    r = tv->ops->insert_row( tv, rec );
+    TRACE("insert_row returned %x\n", r);
+    if( r )
+        goto err;
+
+    tv->ops->delete( tv );
+    tv = NULL;
+
+    msiobj_release( &rec->hdr );
+
+    /* add each column to the _Columns table */
+    r = TABLE_CreateView( db, szColumns, &tv );
+    if( r )
+        return r;
+
+    r = tv->ops->execute( tv, 0 );
+    TRACE("tv execute returned %x\n", r);
+    if( r )
+        goto err;
+
+    rec = MSI_CreateRecord( 4 );
+    if( !rec )
+        goto err;
+
+    r = MSI_RecordSetStringW( rec, 1, name );
+    if( r )
+        goto err;
+
+    /*
+     * need to set the table, column number, col name and type
+     * for each column we enter in the table
+     */
+    nField = 1;
+    for( col = col_info; col; col = col->next )
+    {
+        r = MSI_RecordSetInteger( rec, 2, nField );
+        if( r )
+            goto err;
+
+        r = MSI_RecordSetStringW( rec, 3, col->column );
+        if( r )
+            goto err;
+
+        r = MSI_RecordSetInteger( rec, 4, col->type );
+        if( r )
+            goto err;
+
+        r = tv->ops->insert_row( tv, rec );
+        if( r )
+            goto err;
+
+        nField++;
+    }
+    if( !col )
+        r = ERROR_SUCCESS;
+
+err:
+    if (rec)
+        msiobj_release( &rec->hdr );
+    /* FIXME: remove values from the string table on error */
+    if( tv )
+        tv->ops->delete( tv );
+
+    if (r == ERROR_SUCCESS)
+        r = get_table( db, name, table_ret );
+    return r;
+}
+
 static UINT get_table( MSIDATABASE *db, LPCWSTR name, MSITABLE **table_ret )
 {
     MSITABLE *table;

@@ -127,4 +127,7 @@ int sqliteGetToken(const WCHAR *z, int *tokenType);
 
 MSIRECORD *msi_query_merge_record( UINT fields, column_info *vl, MSIRECORD *rec );
 
+UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
+                       BOOL persistent, MSITABLE **table_ret);
+
 #endif /* __WINE_MSI_QUERY_H */
