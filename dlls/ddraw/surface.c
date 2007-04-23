@@ -2238,13 +2238,30 @@ IDirectDrawSurfaceImpl_SetPalette(IDirectDrawSurface7 *iface,
     /* Release the old palette */
     if(oldPal) IDirectDrawPalette_Release(oldPal);
 
-    /* If this is a front buffer, also update the back buffers */
+    /* If this is a front buffer, also update the back buffers
+     * TODO: How do things work for palettized cube textures?
+     */
     if(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
     {
-        for(surf = This->next_complex; surf != NULL; surf = surf->next_complex)
+        /* For primary surfaces the tree is just a list, so the simpler scheme fits too */
+        DDSCAPS2 caps2 = { DDSCAPS_PRIMARYSURFACE, 0, 0, 0 };
+
+        surf = This;
+        while(1)
         {
-            IDirectDrawSurface7_SetPalette(ICOM_INTERFACE(surf, IDirectDrawSurface7),
+            IDirectDrawSurface7 *attach;
+            HRESULT hr;
+            hr = IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(surf, IDirectDrawSurface7),
+                                                        &caps2, &attach);
+            if(hr != DD_OK)
+            {
+                break;
+            }
+
+            IDirectDrawSurface7_SetPalette(attach,
                                            Pal);
+            surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, attach);
+            IDirectDrawSurface7_Release(attach);
         }
     }
 
