@@ -536,9 +536,7 @@ extern void msi_free_handle_table(void);
 
 extern void free_cached_tables( MSIDATABASE *db );
 extern void msi_free_transforms( MSIDATABASE *db );
-extern string_table *load_string_table( IStorage *stg );
 extern UINT MSI_CommitTables( MSIDATABASE *db );
-extern HRESULT init_string_table( IStorage *stg );
 
 
 /* string table functions */
@@ -563,13 +561,20 @@ extern UINT msi_string_totalsize( string_table *st, UINT *datasize, UINT *poolsi
 extern UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res );
 extern const WCHAR *msi_string_lookup_id( string_table *st, UINT id );
 extern UINT msi_string_get_codepage( string_table *st );
+extern HRESULT msi_init_string_table( IStorage *stg );
+extern string_table *msi_load_string_table( IStorage *stg );
+extern UINT msi_save_string_table( string_table *st, IStorage *storage );
 
 
 extern BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name );
 extern MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table );
 
 extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
+                                  USHORT **pdata, UINT *psz );
+extern UINT read_stream_data( IStorage *stg, LPCWSTR stname,
                               USHORT **pdata, UINT *psz );
+extern UINT write_stream_data( IStorage *stg, LPCWSTR stname,
+                               LPVOID data, UINT sz );
 
 /* transform functions */
 extern UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg );

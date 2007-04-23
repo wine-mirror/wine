@@ -114,7 +114,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
         if( r == ERROR_SUCCESS )
         {
             IStorage_SetClass( stg, &CLSID_MsiDatabase );
-            r = init_string_table( stg );
+            r = msi_init_string_table( stg );
         }
         created = TRUE;
     }
@@ -188,7 +188,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     list_init( &db->tables );
     list_init( &db->transforms );
 
-    db->strings = load_string_table( stg );
+    db->strings = msi_load_string_table( stg );
     if( !db->strings )
         goto end;
 

@@ -223,8 +223,8 @@ void enum_stream_names( IStorage *stg )
     IEnumSTATSTG_Release( stgenum );
 }
 
-static UINT read_stream_data( IStorage *stg, LPCWSTR stname,
-                              USHORT **pdata, UINT *psz )
+UINT read_stream_data( IStorage *stg, LPCWSTR stname,
+                       USHORT **pdata, UINT *psz )
 {
     HRESULT r;
     UINT ret = ERROR_FUNCTION_FAILED;
@@ -370,8 +370,8 @@ end:
     return ret;
 }
 
-static UINT write_stream_data( IStorage *stg, LPCWSTR stname,
-                               LPVOID data, UINT sz )
+UINT write_stream_data( IStorage *stg, LPCWSTR stname,
+                        LPVOID data, UINT sz )
 {
     HRESULT r;
     UINT ret = ERROR_FUNCTION_FAILED;
@@ -412,11 +412,14 @@ static UINT write_stream_data( IStorage *stg, LPCWSTR stname,
         goto end;
     }
 
-    r = IStream_Write(stm, data, sz, &count );
-    if( FAILED( r ) || ( count != sz ) )
+    if (sz)
     {
-        WARN("Failed to Write\n");
-        goto end;
+        r = IStream_Write(stm, data, sz, &count );
+        if( FAILED( r ) || ( count != sz ) )
+        {
+            WARN("Failed to Write\n");
+            goto end;
+        }
     }
 
     ret = ERROR_SUCCESS;
@@ -637,225 +640,6 @@ err:
     msi_free( rawdata );
 
     return r;
-}
-
-HRESULT init_string_table( IStorage *stg )
-{
-    HRESULT r;
-    USHORT zero[2] = { 0, 0 };
-    ULONG count = 0;
-    IStream *stm = NULL;
-    LPWSTR encname;
-
-    encname = encode_streamname(TRUE, szStringPool );
-
-    /* create the StringPool stream... add the zero string to it*/
-    r = IStorage_CreateStream( stg, encname,
-            STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
-    msi_free( encname );
-    if( r ) 
-    {
-        TRACE("Failed\n");
-        return r;
-    }
-
-    r = IStream_Write(stm, zero, sizeof zero, &count );
-    IStream_Release( stm );
-
-    if( FAILED( r ) || ( count != sizeof zero ) )
-    {
-        TRACE("Failed\n");
-        return E_FAIL;
-    }
-
-    /* create the StringData stream... make it zero length */
-    encname = encode_streamname(TRUE, szStringData );
-    r = IStorage_CreateStream( stg, encname,
-            STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
-    msi_free( encname );
-    if( r ) 
-    {
-        TRACE("Failed\n");
-        return E_FAIL;
-    }
-    IStream_Release( stm );
-
-    return r;
-}
-
-string_table *load_string_table( IStorage *stg )
-{
-    string_table *st = NULL;
-    CHAR *data = NULL;
-    USHORT *pool = NULL;
-    UINT r, datasize = 0, poolsize = 0, codepage;
-    DWORD i, count, offset, len, n, refs;
-
-    r = read_stream_data( stg, szStringPool, &pool, &poolsize );
-    if( r != ERROR_SUCCESS)
-        goto end;
-    r = read_stream_data( stg, szStringData, (USHORT**)&data, &datasize );
-    if( r != ERROR_SUCCESS)
-        goto end;
-
-    count = poolsize/4;
-    if( poolsize > 4 )
-        codepage = pool[0] | ( pool[1] << 16 );
-    else
-        codepage = CP_ACP;
-    st = msi_init_stringtable( count, codepage );
-
-    offset = 0;
-    n = 1;
-    i = 1;
-    while( i<count )
-    {
-        /* the string reference count is always the second word */
-        refs = pool[i*2+1];
-
-        /* empty entries have two zeros, still have a string id */
-        if (pool[i*2] == 0 && refs == 0)
-        {
-            i++;
-            n++;
-            continue;
-        }
-
-        /*
-         * If a string is over 64k, the previous string entry is made null
-         * and its the high word of the length is inserted in the null string's
-         * reference count field.
-         */
-        if( pool[i*2] == 0)
-        {
-            len = (pool[i*2+3] << 16) + pool[i*2+2];
-            i += 2;
-        }
-        else
-        {
-            len = pool[i*2];
-            i += 1;
-        }
-
-        if ( (offset + len) > datasize )
-        {
-            ERR("string table corrupt?\n");
-            break;
-        }
-
-        r = msi_addstring( st, n, data+offset, len, refs, StringPersistent );
-        if( r != n )
-            ERR("Failed to add string %d\n", n );
-        n++;
-        offset += len;
-    }
-
-    if ( datasize != offset )
-        ERR("string table load failed! (%08x != %08x), please report\n", datasize, offset );
-
-    TRACE("Loaded %d strings\n", count);
-
-end:
-    msi_free( pool );
-    msi_free( data );
-
-    return st;
-}
-
-static UINT save_string_table( MSIDATABASE *db )
-{
-    UINT i, count, datasize = 0, poolsize = 0, sz, used, r, codepage, n;
-    UINT ret = ERROR_FUNCTION_FAILED;
-    CHAR *data = NULL;
-    USHORT *pool = NULL;
-
-    TRACE("\n");
-
-    /* construct the new table in memory first */
-    count = msi_string_totalsize( db->strings, &datasize, &poolsize );
-
-    TRACE("%u %u %u\n", count, datasize, poolsize );
-
-    pool = msi_alloc( poolsize );
-    if( ! pool )
-    {
-        WARN("Failed to alloc pool %d bytes\n", poolsize );
-        goto err;
-    }
-    data = msi_alloc( datasize );
-    if( ! data )
-    {
-        WARN("Failed to alloc data %d bytes\n", poolsize );
-        goto err;
-    }
-
-    used = 0;
-    codepage = msi_string_get_codepage( db->strings );
-    pool[0]=codepage&0xffff;
-    pool[1]=(codepage>>16);
-    n = 1;
-    for( i=1; i<count; i++ )
-    {
-        UINT refcount = msi_id_persistent_refcount( db->strings, i );
-        if( !refcount )
-            continue;
-        sz = datasize - used;
-        r = msi_id2stringA( db->strings, i, data+used, &sz );
-        if( r != ERROR_SUCCESS )
-        {
-            ERR("failed to fetch string\n");
-            sz = 0;
-        }
-        if( sz && (sz < (datasize - used ) ) )
-            sz--;
-
-        if (sz)
-            pool[ n*2 + 1 ] = refcount;
-        else
-            pool[ n*2 + 1 ] = 0;
-        if (sz < 0x10000)
-        {
-            pool[ n*2 ] = sz;
-            n++;
-        }
-        else
-        {
-            pool[ n*2 ] = 0;
-            pool[ n*2 + 2 ] = sz&0xffff;
-            pool[ n*2 + 3 ] = (sz>>16);
-            n += 2;
-        }
-        used += sz;
-        if( used > datasize  )
-        {
-            ERR("oops overran %d >= %d\n", used, datasize);
-            goto err;
-        }
-    }
-
-    if( used != datasize )
-    {
-        ERR("oops used %d != datasize %d\n", used, datasize);
-        goto err;
-    }
-
-    /* write the streams */
-    r = write_stream_data( db->storage, szStringData, data, datasize );
-    TRACE("Wrote StringData r=%08x\n", r);
-    if( r )
-        goto err;
-    r = write_stream_data( db->storage, szStringPool, pool, poolsize );
-    TRACE("Wrote StringPool r=%08x\n", r);
-    if( r )
-        goto err;
-
-    ret = ERROR_SUCCESS;
-
-err:
-    msi_free( data );
-    msi_free( pool );
-
-    return ret;
 }
 
 /* information for default tables */
@@ -1690,7 +1474,7 @@ UINT MSI_CommitTables( MSIDATABASE *db )
 
     TRACE("%p\n",db);
 
-    r = save_string_table( db );
+    r = msi_save_string_table( db->strings, db->storage );
     if( r != ERROR_SUCCESS )
     {
         WARN("failed to save string table r=%08x\n",r);
@@ -2068,7 +1852,7 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
 
     TRACE("%p %p\n", db, stg );
 
-    strings = load_string_table( stg );
+    strings = msi_load_string_table( stg );
     if( !strings )
         goto end;
 
