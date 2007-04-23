@@ -1083,6 +1083,7 @@ enum server_fd_type
     FD_TYPE_SERIAL,
     FD_TYPE_PIPE,
     FD_TYPE_MAILSLOT,
+    FD_TYPE_CHAR,
     FD_TYPE_DEVICE,
     FD_TYPE_NB_TYPES
 };
@@ -4625,6 +4626,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 298
+#define SERVER_PROTOCOL_VERSION 299
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

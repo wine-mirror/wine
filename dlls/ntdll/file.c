@@ -439,6 +439,7 @@ static NTSTATUS get_io_timeouts( HANDLE handle, enum server_fd_type type, ULONG 
         break;
     case FD_TYPE_SOCKET:
     case FD_TYPE_PIPE:
+    case FD_TYPE_CHAR:
         if (is_read) timeouts->interval = 0;  /* return as soon as we got something */
         break;
     default:
@@ -491,6 +492,7 @@ static NTSTATUS get_io_avail_mode( HANDLE handle, enum server_fd_type type, BOOL
     case FD_TYPE_MAILSLOT:
     case FD_TYPE_SOCKET:
     case FD_TYPE_PIPE:
+    case FD_TYPE_CHAR:
         *avail_mode = TRUE;
         break;
     default:

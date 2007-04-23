@@ -58,6 +58,7 @@ struct file
     struct object       obj;        /* object header */
     struct fd          *fd;         /* file descriptor for this file */
     unsigned int        access;     /* file access (FILE_READ_DATA etc.) */
+    mode_t              mode;       /* file stat.st_mode */
 };
 
 static unsigned int generic_file_map_access( unsigned int access );
@@ -110,9 +111,17 @@ static inline int is_overlapped( const struct file *file )
 static struct file *create_file_for_fd( int fd, unsigned int access, unsigned int sharing )
 {
     struct file *file;
+    struct stat st;
+
+    if (fstat( fd, &st ) == -1)
+    {
+        file_set_error();
+        return NULL;
+    }
 
     if ((file = alloc_object( &file_ops )))
     {
+        file->mode = st.st_mode;
         file->access = file_map_access( &file->obj, access );
         if (!(file->fd = create_anonymous_fd( &file_fd_ops, fd, &file->obj,
                                               FILE_SYNCHRONOUS_IO_NONALERT )))
@@ -124,12 +133,13 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
     return file;
 }
 
-static struct object *create_file_obj( struct fd *fd, unsigned int access )
+static struct object *create_file_obj( struct fd *fd, unsigned int access, mode_t mode )
 {
     struct file *file = alloc_object( &file_ops );
 
     if (!file) return NULL;
     file->access  = access;
+    file->mode    = mode;
     file->fd      = fd;
     grab_object( fd );
     set_fd_user( fd, &file_fd_ops, &file->obj );
@@ -178,7 +188,7 @@ static struct object *create_file( const char *nameptr, data_size_t len, unsigne
     else if (S_ISCHR(mode) && is_serial_fd( fd ))
         obj = create_serial( fd );
     else
-        obj = create_file_obj( fd, access );
+        obj = create_file_obj( fd, access, mode );
 
     release_object( fd );
 
@@ -235,7 +245,11 @@ static void file_flush( struct fd *fd, struct event **event )
 
 static enum server_fd_type file_get_fd_type( struct fd *fd )
 {
-    return FD_TYPE_FILE;
+    struct file *file = get_fd_user( fd );
+
+    if (S_ISREG(file->mode) || S_ISBLK(file->mode)) return FD_TYPE_FILE;
+    if (S_ISDIR(file->mode)) return FD_TYPE_DIR;
+    return FD_TYPE_CHAR;
 }
 
 static struct fd *file_get_fd( struct object *obj )
