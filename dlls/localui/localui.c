@@ -50,11 +50,11 @@ static LPWSTR strdupWW(LPCWSTR pPrefix, LPCWSTR pSuffix)
     LPWSTR  ptr;
     DWORD   len;
 
-    len = lstrlenW(pPrefix) + lstrlenW(pSuffix) + 1;
+    len = lstrlenW(pPrefix) + (pSuffix ? lstrlenW(pSuffix) : 0) + 1;
     ptr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     if (ptr) {
         lstrcpyW(ptr, pPrefix);
-        lstrcatW(ptr, pSuffix);
+        if (pSuffix) lstrcatW(ptr, pSuffix);
     }
     return ptr;
 }
