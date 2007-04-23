@@ -42,7 +42,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msidb);
 typedef struct _msistring
 {
     int hash_next;
-    UINT refcount;
+    UINT persistent_refcount;
+    UINT nonpersistent_refcount;
     LPWSTR str;
 } msistring;
 
@@ -103,7 +104,8 @@ VOID msi_destroy_stringtable( string_table *st )
 
     for( i=0; i<st->maxcount; i++ )
     {
-        if( st->strings[i].refcount )
+        if( st->strings[i].persistent_refcount ||
+            st->strings[i].nonpersistent_refcount )
             msi_free( st->strings[i].str );
     }
     msi_free( st->strings );
@@ -120,11 +122,13 @@ static int st_find_free_entry( string_table *st )
     if( st->freeslot )
     {
         for( i = st->freeslot; i < st->maxcount; i++ )
-            if( !st->strings[i].refcount )
+            if( !st->strings[i].persistent_refcount &&
+                !st->strings[i].nonpersistent_refcount )
                 return i;
     }
     for( i = 1; i < st->maxcount; i++ )
-        if( !st->strings[i].refcount )
+        if( !st->strings[i].persistent_refcount &&
+            !st->strings[i].nonpersistent_refcount )
             return i;
 
     /* dynamically resize */
@@ -135,16 +139,27 @@ static int st_find_free_entry( string_table *st )
     st->strings = p;
     st->freeslot = st->maxcount;
     st->maxcount = sz;
-    if( st->strings[st->freeslot].refcount )
+    if( st->strings[st->freeslot].persistent_refcount ||
+        st->strings[st->freeslot].nonpersistent_refcount )
         ERR("oops. expected freeslot to be free...\n");
     return st->freeslot;
 }
 
-static void set_st_entry( string_table *st, UINT n, LPWSTR str )
+static void set_st_entry( string_table *st, UINT n, LPWSTR str, UINT refcount, enum StringPersistence persistence )
 {
     UINT hash = msistring_makehash( str );
 
-    st->strings[n].refcount = 1;
+    if (persistence == StringPersistent)
+    {
+        st->strings[n].persistent_refcount = refcount;
+        st->strings[n].nonpersistent_refcount = 0;
+    }
+    else
+    {
+        st->strings[n].persistent_refcount = 0;
+        st->strings[n].nonpersistent_refcount = refcount;
+    }
+
     st->strings[n].str = str;
 
     st->strings[n].hash_next = st->hash[hash];
@@ -154,7 +169,7 @@ static void set_st_entry( string_table *st, UINT n, LPWSTR str )
         st->freeslot = n + 1;
 }
 
-int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, UINT refcount )
+int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, UINT refcount, enum StringPersistence persistence )
 {
     LPWSTR str;
     int sz;
@@ -165,14 +180,18 @@ int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, UINT ref
         return 0;
     if( n > 0 )
     {
-        if( st->strings[n].refcount )
+        if( st->strings[n].persistent_refcount ||
+            st->strings[n].nonpersistent_refcount )
             return -1;
     }
     else
     {
         if( ERROR_SUCCESS == msi_string2idA( st, data, &n ) )
         {
-            st->strings[n].refcount++;
+            if (persistence == StringPersistent)
+                st->strings[n].persistent_refcount += refcount;
+            else
+                st->strings[n].nonpersistent_refcount += refcount;
             return n;
         }
         n = st_find_free_entry( st );
@@ -196,12 +215,12 @@ int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, UINT ref
     MultiByteToWideChar( st->codepage, 0, data, len, str, sz );
     str[sz] = 0;
 
-    set_st_entry( st, n, str );
+    set_st_entry( st, n, str, refcount, persistence );
 
     return n;
 }
 
-int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, UINT refcount )
+int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, UINT refcount, enum StringPersistence persistence )
 {
     LPWSTR str;
 
@@ -213,14 +232,18 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, UINT r
         return 0;
     if( n > 0 )
     {
-        if( st->strings[n].refcount )
+        if( st->strings[n].persistent_refcount ||
+            st->strings[n].nonpersistent_refcount )
             return -1;
     }
     else
     {
         if( ERROR_SUCCESS == msi_string2idW( st, data, &n ) )
         {
-            st->strings[n].refcount++;
+            if (persistence == StringPersistent)
+                st->strings[n].persistent_refcount += refcount;
+            else
+                st->strings[n].nonpersistent_refcount += refcount;
             return n;
         }
         n = st_find_free_entry( st );
@@ -246,7 +269,7 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, UINT r
     memcpy( str, data, len*sizeof(WCHAR) );
     str[len] = 0;
 
-    set_st_entry( st, n, str );
+    set_st_entry( st, n, str, refcount, persistence );
 
     return n;
 }
@@ -261,7 +284,7 @@ const WCHAR *msi_string_lookup_id( string_table *st, UINT id )
     if( id >= st->maxcount )
         return NULL;
 
-    if( id && !st->strings[id].refcount )
+    if( id && !st->strings[id].persistent_refcount && !st->strings[id].nonpersistent_refcount)
         return NULL;
 
     return st->strings[id].str;
@@ -428,18 +451,18 @@ UINT msi_string_count( string_table *st )
     return st->maxcount;
 }
 
-UINT msi_id_refcount( string_table *st, UINT i )
+UINT msi_id_persistent_refcount( string_table *st, UINT i )
 {
     if( i >= st->maxcount )
         return 0;
-    return st->strings[i].refcount;
+    return st->strings[i].persistent_refcount;
 }
 
 UINT msi_string_totalsize( string_table *st, UINT *datasize, UINT *poolsize )
 {
     UINT i, len, max, holesize;
 
-    if( st->strings[0].str || st->strings[0].refcount )
+    if( st->strings[0].str || st->strings[0].persistent_refcount || st->strings[0].nonpersistent_refcount)
         ERR("oops. element 0 has a string\n");
 
     *poolsize = 4;
@@ -448,6 +471,8 @@ UINT msi_string_totalsize( string_table *st, UINT *datasize, UINT *poolsize )
     holesize = 0;
     for( i=1; i<st->maxcount; i++ )
     {
+        if( !st->strings[i].persistent_refcount )
+            continue;
         if( st->strings[i].str )
         {
             TRACE("[%u] = %s\n", i, debugstr_w(st->strings[i].str));

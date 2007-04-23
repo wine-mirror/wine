@@ -743,7 +743,7 @@ string_table *load_string_table( IStorage *stg )
             break;
         }
 
-        r = msi_addstring( st, n, data+offset, len, refs );
+        r = msi_addstring( st, n, data+offset, len, refs, StringPersistent );
         if( r != n )
             ERR("Failed to add string %d\n", n );
         n++;
@@ -796,6 +796,9 @@ static UINT save_string_table( MSIDATABASE *db )
     n = 1;
     for( i=1; i<count; i++ )
     {
+        UINT refcount = msi_id_persistent_refcount( db->strings, i );
+        if( !refcount )
+            continue;
         sz = datasize - used;
         r = msi_id2stringA( db->strings, i, data+used, &sz );
         if( r != ERROR_SUCCESS )
@@ -807,7 +810,7 @@ static UINT save_string_table( MSIDATABASE *db )
             sz--;
 
         if (sz)
-            pool[ n*2 + 1 ] = msi_id_refcount( db->strings, i );
+            pool[ n*2 + 1 ] = refcount;
         else
             pool[ n*2 + 1 ] = 0;
         if (sz < 0x10000)
@@ -1258,7 +1261,7 @@ static UINT TABLE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UI
             else if ( tv->columns[i].type & MSITYPE_STRING )
             {
                 LPCWSTR sval = MSI_RecordGetString( rec, i + 1 );
-                val = msi_addstringW( tv->db->strings, 0, sval, -1, 1 );
+                val = msi_addstringW( tv->db->strings, 0, sval, -1, 1, StringPersistent );
             }
             else if ( 2 == bytes_per_column( &tv->columns[ i ] ) )
             {

@@ -542,8 +542,14 @@ extern HRESULT init_string_table( IStorage *stg );
 
 
 /* string table functions */
-extern BOOL msi_addstring( string_table *st, UINT string_no, const CHAR *data, int len, UINT refcount );
-extern BOOL msi_addstringW( string_table *st, UINT string_no, const WCHAR *data, int len, UINT refcount );
+enum StringPersistence
+{
+    StringPersistent = 0,
+    StringNonPersistent = 1
+};
+
+extern BOOL msi_addstring( string_table *st, UINT string_no, const CHAR *data, int len, UINT refcount, enum StringPersistence persistence );
+extern BOOL msi_addstringW( string_table *st, UINT string_no, const WCHAR *data, int len, UINT refcount, enum StringPersistence persistence );
 extern UINT msi_id2stringW( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz );
 extern UINT msi_id2stringA( string_table *st, UINT string_no, LPSTR buffer, UINT *sz );
 
@@ -552,7 +558,7 @@ extern UINT msi_string2idA( string_table *st, LPCSTR str, UINT *id );
 extern string_table *msi_init_stringtable( int entries, UINT codepage );
 extern VOID msi_destroy_stringtable( string_table *st );
 extern UINT msi_string_count( string_table *st );
-extern UINT msi_id_refcount( string_table *st, UINT i );
+extern UINT msi_id_persistent_refcount( string_table *st, UINT i );
 extern UINT msi_string_totalsize( string_table *st, UINT *datasize, UINT *poolsize );
 extern UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res );
 extern const WCHAR *msi_string_lookup_id( string_table *st, UINT id );
