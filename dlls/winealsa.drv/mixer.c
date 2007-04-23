@@ -114,6 +114,14 @@ typedef struct line {
     snd_mixer_elem_t *elem;
 } line;
 
+/* A control structure, with toggle enabled switch
+ * Control structures control volume, muted, which capture source
+ */
+typedef struct control {
+    BOOL enabled;
+    MIXERCONTROLW c;
+} control;
+
 /* Mixer device */
 typedef struct mixer
 {
@@ -126,9 +134,13 @@ typedef struct mixer
     HDRVR hmx;
 
     line *lines;
+    control *controls;
 } mixer;
 
 #define MAX_MIXERS 32
+#define CONTROLSPERLINE 3
+#define OFS_MUTE 2
+#define OFS_MUX 1
 
 static int cards = 0;
 static mixer mixdev[MAX_MIXERS];
@@ -187,6 +199,69 @@ static int blacklisted(snd_mixer_elem_t *elem)
 
     TRACE("%s: %x\n", name, blisted);
     return blisted;
+}
+
+static void fillcontrols(mixer *mmixer)
+{
+    int id;
+    for (id = 0; id < mmixer->chans; ++id)
+    {
+        line *mline = &mmixer->lines[id];
+        int ofs = CONTROLSPERLINE * id;
+        int x;
+        long min, max;
+
+        if (mline->capt && snd_mixer_selem_has_capture_volume(mline->elem))
+            snd_mixer_selem_get_capture_volume_range(mline->elem, &min, &max);
+        else
+            snd_mixer_selem_get_playback_volume_range(mline->elem, &min, &max);
+
+        /* (!snd_mixer_selem_has_playback_volume(elem) || snd_mixer_selem_has_capture_volume(elem)) */
+        /* Volume, always enabled by definition of blacklisted channels */
+        mmixer->controls[ofs].enabled = 1;
+        mmixer->controls[ofs].c.cbStruct = sizeof(mmixer->controls[ofs].c);
+        mmixer->controls[ofs].c.dwControlType = MIXERCONTROL_CONTROLTYPE_VOLUME;
+        mmixer->controls[ofs].c.dwControlID = ofs;
+        mmixer->controls[ofs].c.Bounds.s1.dwMinimum = 0;
+        mmixer->controls[ofs].c.Bounds.s1.dwMaximum = 65535;
+        mmixer->controls[ofs].c.Metrics.cSteps = 65536/(max-min);
+
+        if ((id == 1 && snd_mixer_selem_has_capture_switch(mline->elem)) ||
+            (!mline->capt && snd_mixer_selem_has_playback_switch(mline->elem)))
+        { /* MUTE button optional, main capture channel should have one too */
+            mmixer->controls[ofs+OFS_MUTE].enabled = 1;
+            mmixer->controls[ofs+OFS_MUTE].c.cbStruct = sizeof(mmixer->controls[ofs].c);
+            mmixer->controls[ofs+OFS_MUTE].c.dwControlType = MIXERCONTROL_CONTROLTYPE_MUTE;
+            mmixer->controls[ofs+OFS_MUTE].c.dwControlID = ofs+OFS_MUTE;
+            mmixer->controls[ofs+OFS_MUTE].c.Bounds.s1.dwMaximum = 1;
+        }
+
+        if (mline->capt && snd_mixer_selem_has_capture_switch_exclusive(mline->elem))
+            mmixer->controls[CONTROLSPERLINE+OFS_MUX].c.dwControlType = MIXERCONTROL_CONTROLTYPE_MUX;
+
+        if (id == 1)
+        { /* Capture select, in case cMultipleItems is 0, it means capture is disabled anyway */
+            mmixer->controls[ofs+OFS_MUX].enabled = 1;
+            mmixer->controls[ofs+OFS_MUX].c.cbStruct = sizeof(mmixer->controls[ofs].c);
+            mmixer->controls[ofs+OFS_MUX].c.dwControlType = MIXERCONTROL_CONTROLTYPE_MIXER;
+            mmixer->controls[ofs+OFS_MUX].c.dwControlID = ofs+OFS_MUX;
+            mmixer->controls[ofs+OFS_MUX].c.fdwControl = MIXERCONTROL_CONTROLF_MULTIPLE;
+
+            for (x = 0; x<mmixer->chans; ++x)
+                if (x != id && mmixer->lines[x].dst == id)
+                    ++(mmixer->controls[ofs+OFS_MUX].c.cMultipleItems);
+            if (!mmixer->controls[ofs+OFS_MUX].c.cMultipleItems)
+                mmixer->controls[ofs+OFS_MUX].enabled = 0;
+
+            mmixer->controls[ofs+OFS_MUX].c.Bounds.s1.dwMaximum = mmixer->controls[ofs+OFS_MUX].c.cMultipleItems - 1;
+            mmixer->controls[ofs+OFS_MUX].c.Metrics.cSteps = mmixer->controls[ofs+OFS_MUX].c.cMultipleItems;
+        }
+        for (x=0; x<CONTROLSPERLINE; ++x)
+        {
+            lstrcpynW(mmixer->controls[ofs+x].c.szShortName, mline->name, sizeof(mmixer->controls[ofs+x].c.szShortName)/sizeof(WCHAR));
+            lstrcpynW(mmixer->controls[ofs+x].c.szName, mline->name, sizeof(mmixer->controls[ofs+x].c.szName)/sizeof(WCHAR));
+        }
+    }
 }
 
 /* get amount of channels for elem */
@@ -315,9 +390,10 @@ static void ALSA_MixerInit(void)
         }
 
         mixdev[mixnum].chans += 2; /* Capture/Master */
-        mixdev[mixnum].lines = calloc(sizeof(MIXERLINEW), mixdev[mixnum].chans);
+        mixdev[mixnum].lines = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(line) * mixdev[mixnum].chans);
+        mixdev[mixnum].controls = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(control) * CONTROLSPERLINE*mixdev[mixnum].chans);
         err = -ENOMEM;
-        if (!mixdev[mixnum].lines)
+        if (!mixdev[mixnum].lines || !mixdev[mixnum].controls)
             goto eclose;
 
         /* Master control */
@@ -380,6 +456,8 @@ static void ALSA_MixerInit(void)
                 }
             }
 
+        fillcontrols(&mixdev[mixnum]);
+
         TRACE("%s: Amount of controls: %i/%i, name: %s\n", cardname, mixdev[mixnum].dests, mixdev[mixnum].chans, debugstr_w(mixdev[mixnum].mixername));
         mixnum++;
         continue;
@@ -387,7 +465,9 @@ static void ALSA_MixerInit(void)
         eclose:
         WARN("Error occured initialising mixer: %s\n", snd_strerror(err));
         if (mixdev[mixnum].lines)
-            free(mixdev[mixnum].lines);
+            HeapFree(GetProcessHeap(), 0, mixdev[mixnum].lines);
+        if (mixdev[mixnum].controls)
+            HeapFree(GetProcessHeap(), 0, mixdev[mixnum].controls);
         snd_mixer_close(mixdev[mixnum].mix);
     }
     cards = mixnum;
@@ -417,7 +497,8 @@ static void ALSA_MixerExit(void)
     for (x = 0; x < cards; ++x)
     {
         snd_mixer_close(mixdev[x].mix);
-        free(mixdev[x].lines);
+        HeapFree(GetProcessHeap(), 0, mixdev[x].lines);
+        HeapFree(GetProcessHeap(), 0, mixdev[x].controls);
     }
     cards = 0;
 }
@@ -441,6 +522,7 @@ static int elem_callback(snd_mixer_elem_t *elem, unsigned int type)
 {
     mixer *mmixer = snd_mixer_elem_get_callback_private(elem);
     int x;
+    BOOL captchanged = 0;
 
     if (type != SND_CTL_EVENT_MASK_VALUE)
         return 0;
@@ -454,12 +536,22 @@ static int elem_callback(snd_mixer_elem_t *elem, unsigned int type)
 
     for (x=0; x<mmixer->chans; ++x)
     {
+        const int ofs = CONTROLSPERLINE*x;
         if (elem != mmixer->lines[x].elem)
             continue;
 
+        if (mmixer->lines[x].capt)
+            ++captchanged;
+
         TRACE("Found changed control %s\n", debugstr_w(mmixer->lines[x].name));
         mmixer->callback(mmixer->hmx, MM_MIXM_LINE_CHANGE, mmixer->callbackpriv, x, 0);
+        mmixer->callback(mmixer->hmx, MM_MIXM_CONTROL_CHANGE, mmixer->callbackpriv, ofs, 0);
+
+        if (mmixer->controls[ofs+OFS_MUTE].enabled)
+            mmixer->callback(mmixer->hmx, MM_MIXM_CONTROL_CHANGE, mmixer->callbackpriv, ofs+OFS_MUTE, 0);
     }
+    if (captchanged)
+        mmixer->callback(mmixer->hmx, MM_MIXM_CONTROL_CHANGE, mmixer->callbackpriv, CONTROLSPERLINE+OFS_MUX, 0);
 
     out:
     LeaveCriticalSection(&elem_crst);
@@ -616,6 +708,189 @@ static DWORD MIX_GetDevCaps(UINT wDevID, LPMIXERCAPS2W caps, DWORD_PTR parm2)
     return MMSYSERR_NOERROR;
 }
 
+
+/* get amount of sources for dest */
+static int getsrccntfromchan(mixer *mmixer, int dad)
+{
+    int i, j=0;
+
+    for (i=0; i<mmixer->chans; ++i)
+        if (i != dad && mmixer->lines[i].dst == dad)
+        {
+            ++j;
+        }
+    if (!j)
+        FIXME("No src found for %i (%s)?\n", dad, debugstr_w(mmixer->lines[dad].name));
+    return j;
+}
+
+/* find lineid for source 'num' with dest 'dad' */
+static int getsrclinefromchan(mixer *mmixer, int dad, int num)
+{
+    int i, j=0;
+    for (i=0; i<mmixer->chans; ++i)
+        if (i != dad && mmixer->lines[i].dst == dad)
+        {
+            if (num == j)
+                return i;
+            ++j;
+        }
+    WARN("No src found for src %i from dest %i\n", num, dad);
+    return 0;
+}
+
+/* get the source number belonging to line */
+static int getsrcfromline(mixer *mmixer, int line)
+{
+    int i, j=0, dad = mmixer->lines[line].dst;
+
+    for (i=0; i<mmixer->chans; ++i)
+        if (i != dad && mmixer->lines[i].dst == dad)
+        {
+            if (line == i)
+                return j;
+            ++j;
+        }
+    WARN("No src found for line %i with dad %i\n", line, dad);
+    return 0;
+}
+
+/* Here we give info over the source/dest line given by dwSource+dwDest or dwDest, respectively
+ * It is also possible that a line is found by componenttype or target type, latter is not implemented yet
+ * Most important values returned in struct:
+ * dwLineID
+ * sz(Short)Name
+ * line control count
+ * amount of channels
+ */
+static DWORD MIX_GetLineInfo(UINT wDevID, LPMIXERLINEW Ml, DWORD_PTR flags)
+{
+    DWORD_PTR qf = flags & MIXER_GETLINEINFOF_QUERYMASK;
+    mixer *mmixer = MIX_GetMix(wDevID);
+    line *mline;
+    int idx, i;
+
+    if (!Ml)
+    {
+        WARN("No Ml\n");
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if (!mmixer)
+    {
+        WARN("Device %u not found\n", wDevID);
+        return MMSYSERR_BADDEVICEID;
+    }
+
+    if (Ml->cbStruct != sizeof(*Ml))
+    {
+        WARN("invalid parameter: Ml->cbStruct = %d != %d\n", Ml->cbStruct, sizeof(*Ml));
+        return MMSYSERR_INVALPARAM;
+    }
+
+    Ml->fdwLine = MIXERLINE_LINEF_ACTIVE;
+    Ml->dwUser  = 0;
+
+    switch (qf)
+    {
+    case MIXER_GETLINEINFOF_COMPONENTTYPE:
+    {
+        Ml->dwLineID = 0xFFFF;
+        for (idx = 0; idx < mmixer->chans; ++idx)
+            if (mmixer->lines[idx].component == Ml->dwComponentType)
+            {
+                Ml->dwLineID = idx;
+                break;
+            }
+        if (Ml->dwLineID == 0xFFFF)
+            return MMSYSERR_KEYNOTFOUND;
+        /* Now that we have lineid, fallback to lineid*/
+    }
+
+    case MIXER_GETLINEINFOF_LINEID:
+        if (Ml->dwLineID < 0 || Ml->dwLineID >= mmixer->chans)
+            return MIXERR_INVALLINE;
+
+        TRACE("MIXER_GETLINEINFOF_LINEID %d\n", Ml->dwLineID);
+        Ml->dwDestination = mmixer->lines[Ml->dwLineID].dst;
+
+        if (Ml->dwDestination != Ml->dwLineID)
+        {
+            Ml->dwSource = getsrcfromline(mmixer, Ml->dwLineID);
+            Ml->cConnections = 1;
+        }
+        else
+        {
+            Ml->cConnections = getsrccntfromchan(mmixer, Ml->dwLineID);
+            Ml->dwSource = 0xFFFFFFFF;
+        }
+        TRACE("Connections %d, source %d\n", Ml->cConnections, Ml->dwSource);
+        break;
+
+    case MIXER_GETLINEINFOF_DESTINATION:
+        if (Ml->dwDestination < 0 || Ml->dwDestination >= mmixer->dests)
+        {
+            WARN("dest %d out of bounds\n", Ml->dwDestination);
+            return MIXERR_INVALLINE;
+        }
+
+        Ml->dwLineID = Ml->dwDestination;
+        Ml->cConnections = getsrccntfromchan(mmixer, Ml->dwLineID);
+        Ml->dwSource = 0xFFFFFFFF;
+        break;
+
+    case MIXER_GETLINEINFOF_SOURCE:
+        if (Ml->dwDestination < 0 || Ml->dwDestination >= mmixer->dests)
+        {
+            WARN("dest %d for source out of bounds\n", Ml->dwDestination);
+            return MIXERR_INVALLINE;
+        }
+
+        if (Ml->dwSource < 0 || Ml->dwSource >= getsrccntfromchan(mmixer, Ml->dwDestination))
+        {
+            WARN("src %d out of bounds\n", Ml->dwSource);
+            return MIXERR_INVALLINE;
+        }
+
+        Ml->dwLineID = getsrclinefromchan(mmixer, Ml->dwDestination, Ml->dwSource);
+        Ml->cConnections = 1;
+        break;
+
+    case MIXER_GETLINEINFOF_TARGETTYPE:
+        FIXME("TODO: TARGETTYPE, stub\n");
+        return MMSYSERR_INVALPARAM;
+
+    default:
+        FIXME("Unknown query flag: %08lx\n", qf);
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if (Ml->dwLineID >= mmixer->dests)
+        Ml->fdwLine |= MIXERLINE_LINEF_SOURCE;
+
+    mline = &mmixer->lines[Ml->dwLineID];
+    Ml->dwComponentType = mline->component;
+    Ml->cChannels = mmixer->lines[Ml->dwLineID].chans;
+    Ml->cControls = 0;
+
+    for (i=CONTROLSPERLINE*Ml->dwLineID;i<CONTROLSPERLINE*(Ml->dwLineID+1); ++i)
+        if (mmixer->controls[i].enabled)
+            ++(Ml->cControls);
+
+    lstrcpynW(Ml->szShortName, mmixer->lines[Ml->dwLineID].name, sizeof(Ml->szShortName)/sizeof(WCHAR));
+    lstrcpynW(Ml->szName, mmixer->lines[Ml->dwLineID].name, sizeof(Ml->szName)/sizeof(WCHAR));
+    if (mline->capt)
+        Ml->Target.dwType = MIXERLINE_TARGETTYPE_WAVEIN;
+    else
+        Ml->Target.dwType = MIXERLINE_TARGETTYPE_WAVEOUT;
+    Ml->Target.dwDeviceID = 0xFFFFFFFF;
+    Ml->Target.wMid = WINE_MIXER_MANUF_ID;
+    Ml->Target.wPid = WINE_MIXER_PRODUCT_ID;
+    Ml->Target.vDriverVersion = WINE_MIXER_VERSION;
+    lstrcpynW(Ml->Target.szPname, mmixer->mixername, sizeof(Ml->Target.szPname)/sizeof(WCHAR));
+    return MMSYSERR_NOERROR;
+}
+
 #endif /*HAVE_ALSA*/
 
 /**************************************************************************
@@ -647,6 +922,9 @@ DWORD WINAPI ALSA_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 
     case MXDM_GETDEVCAPS:
         ret = MIX_GetDevCaps(wDevID, (LPMIXERCAPS2W)dwParam1, dwParam2); break;
+
+    case MXDM_GETLINEINFO:
+        ret = MIX_GetLineInfo(wDevID, (LPMIXERLINEW)dwParam1, dwParam2); break;
 
     case MXDM_GETNUMDEVS:
         ret = cards; break;
