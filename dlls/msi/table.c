@@ -1250,10 +1250,14 @@ static UINT TABLE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UI
 
     for ( i = 0; i < tv->num_cols; i++ )
     {
+        BOOL persistent;
+
         /* only update the fields specified in the mask */
         if ( !(mask&(1<<i)) )
             continue;
 
+        /* if row >= tv->table->row_count then it is a non-persistent row */
+        persistent = tv->table->persistent && (row < tv->table->row_count);
         /* FIXME: should we allow updating keys? */
 
         val = 0;
@@ -1266,7 +1270,8 @@ static UINT TABLE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UI
             else if ( tv->columns[i].type & MSITYPE_STRING )
             {
                 LPCWSTR sval = MSI_RecordGetString( rec, i + 1 );
-                val = msi_addstringW( tv->db->strings, 0, sval, -1, 1, StringPersistent );
+                val = msi_addstringW( tv->db->strings, 0, sval, -1, 1,
+                                      persistent ? StringPersistent : StringNonPersistent );
             }
             else if ( 2 == bytes_per_column( &tv->columns[ i ] ) )
             {
