@@ -1153,7 +1153,6 @@ AC_CHECK_FUNCS(\
 	asctime_r \
 	chsize \
 	clone \
-	connect \
 	dlopen \
 	epoll_create \
 	ffs \
@@ -1166,14 +1165,12 @@ AC_CHECK_FUNCS(\
 	futimes \
 	futimesat \
 	getdirentries \
-	gethostbyname \
 	getopt_long \
 	getpagesize \
 	getpwuid \
 	gettid \
 	gettimeofday \
 	getuid \
-	inet_aton \
 	kqueue \
 	lstat \
 	memmove \
@@ -1222,22 +1219,13 @@ then
 fi
 
 dnl Check for -lnsl for Solaris
-if test "$ac_cv_func_gethostbyname" = no
-then
-    AC_CHECK_LIB(nsl,gethostbyname)
-fi
+AC_SEARCH_LIBS(gethostbyname, nsl)
 
 dnl Check for -lsocket for Solaris
-if test "$ac_cv_func_connect" = no
-then
-    AC_CHECK_LIB(socket,connect)
-fi
+AC_SEARCH_LIBS(connect, socket)
 
 dnl Check for -lresolv for Solaris
-if test "$ac_cv_func_inet_aton" = no
-then
-    AC_CHECK_LIB(resolv,inet_aton)
-fi
+AC_SEARCH_LIBS(inet_aton, resolv)
 
 dnl **** Check for functions which may rely on -lsocket on Solaris.
 AC_CHECK_FUNCS(\

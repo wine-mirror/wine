@@ -47,9 +47,6 @@
 /* Define to 1 if you have the `clone' function. */
 #undef HAVE_CLONE
 
-/* Define to 1 if you have the `connect' function. */
-#undef HAVE_CONNECT
-
 /* Define to 1 if you have the <CoreAudio/CoreAudio.h> header file. */
 #undef HAVE_COREAUDIO_COREAUDIO_H
 
@@ -180,9 +177,6 @@
 /* Define to 1 if you have the `getdirentries' function. */
 #undef HAVE_GETDIRENTRIES
 
-/* Define to 1 if you have the `gethostbyname' function. */
-#undef HAVE_GETHOSTBYNAME
-
 /* Define to 1 if you have the `getnameinfo' function. */
 #undef HAVE_GETNAMEINFO
 
@@ -242,9 +236,6 @@
 
 /* Define to 1 if you have the <ieeefp.h> header file. */
 #undef HAVE_IEEEFP_H
-
-/* Define to 1 if you have the `inet_aton' function. */
-#undef HAVE_INET_ATON
 
 /* Define to 1 if you have the `inet_network' function. */
 #undef HAVE_INET_NETWORK
@@ -309,17 +300,8 @@
 /* Define to 1 if you have the `i386' library (-li386). */
 #undef HAVE_LIBI386
 
-/* Define to 1 if you have the `nsl' library (-lnsl). */
-#undef HAVE_LIBNSL
-
 /* Define to 1 if you have the `ossaudio' library (-lossaudio). */
 #undef HAVE_LIBOSSAUDIO
-
-/* Define to 1 if you have the `resolv' library (-lresolv). */
-#undef HAVE_LIBRESOLV
-
-/* Define to 1 if you have the `socket' library (-lsocket). */
-#undef HAVE_LIBSOCKET
 
 /* Define if you have the Xinerama library */
 #undef HAVE_LIBXINERAMA
