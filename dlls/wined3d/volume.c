@@ -262,7 +262,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IWi
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_level) {
+static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, int gl_level) {
     IWineD3DVolumeImpl *This     = (IWineD3DVolumeImpl *)iface;
     WINED3DFORMAT format = This->resource.format;
     const PixelFormatDesc *formatEntry = getFormatDescEntry(format);

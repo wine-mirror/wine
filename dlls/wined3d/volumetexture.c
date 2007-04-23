@@ -92,7 +92,7 @@ static DWORD WINAPI IWineD3DVolumeTextureImpl_GetPriority(IWineD3DVolumeTexture 
 
 static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface) {
     /* Overrider the IWineD3DResource Preload method */
-    UINT i;
+    int i;
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 

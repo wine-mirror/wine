@@ -1209,7 +1209,7 @@ DECLARE_INTERFACE_(IWineD3DVolume,IWineD3DResource)
     STDMETHOD(UnlockBox)(THIS) PURE;
     STDMETHOD(AddDirtyBox)(THIS_ CONST WINED3DBOX* pDirtyBox) PURE;
     STDMETHOD(CleanDirtyBox)(THIS) PURE;
-    STDMETHOD(LoadTexture)(THIS_ UINT gl_level) PURE;
+    STDMETHOD(LoadTexture)(THIS_ int gl_level) PURE;
     STDMETHOD(SetContainer)(THIS_ IWineD3DBase *container) PURE;
 };
 #undef INTERFACE
