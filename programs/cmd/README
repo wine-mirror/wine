@@ -11,7 +11,6 @@ WHAT'S INCLUDED
 
 WHAT'S MISSING
 - Command-line qualifiers for most builtin commands
-- Wildcards and relative paths in COPY, MOVE and RENAME
 - Set functionality in DATE, TIME, ATTRIB, LABEL
 - Full internationalisation of the text (and commands?).
 
@@ -26,11 +25,6 @@ US date-time format is used. Set eg "LANG=en_GB" for DD/MM/YY dates and 24-hour
 times.
 - Line editing and command recall doesn't work due to missing functionality in
 Wine.
-- DIR/S only works if no file specification is given, ie "DIR C:\TEMP /S" works
-but "DIR C:\TEMP\*.C" doesn't work if a matching file exists in a lower
-directory.
-- Copy, rename, move, need the source and destination to be specified fully
-with an absolute or relative path but no wildcards or partial filenames.
 - Redirection is implemented as a command line is parsed. This means that ">"
 and "<" symbols cannot appear in command arguments even within quotes.
 - In many cases parsing and syntax checking is less rigorous than DOS. Thus an
@@ -43,4 +37,3 @@ image. The Wine binary is simpler to invoke from the U**x command line or from
 a GUI such as KDE, however it is not possible to invoke a second shell using the
 "CMD /C filename" syntax. Conversely a Win32 application can be invoked from a
 Win32 GUI such as Program Manager but that needs starting under Wine first.
-

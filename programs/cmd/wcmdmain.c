@@ -620,7 +620,7 @@ void WCMD_process_command (char *command)
 	break;
       case WCMD_DEL:
       case WCMD_ERASE:
-        WCMD_delete (p);
+        WCMD_delete (p, TRUE);
         break;
       case WCMD_DIR:
         WCMD_directory (p);

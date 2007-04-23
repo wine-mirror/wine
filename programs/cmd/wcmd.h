@@ -35,7 +35,7 @@ void WCMD_clear_screen (void);
 void WCMD_color (void);
 void WCMD_copy (void);
 void WCMD_create_dir (void);
-void WCMD_delete (char *);
+BOOL WCMD_delete (char *, BOOL);
 void WCMD_directory (char *);
 void WCMD_echo (const char *);
 void WCMD_endlocal (void);
@@ -108,6 +108,15 @@ struct env_stack
   } u;
   WCHAR *strings;
 };
+
+/* Data structure to handle building lists during recursive calls */
+
+typedef struct _DIRECTORY_STACK
+{
+  struct _DIRECTORY_STACK *next;
+  char  *dirName;
+  char  *fileName;
+} DIRECTORY_STACK;
 
 #endif /* !RC_INVOKED */
 

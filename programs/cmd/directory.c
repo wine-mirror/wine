@@ -57,13 +57,6 @@ typedef enum _DISPLAYORDER
     Date
 } DISPLAYORDER;
 
-typedef struct _DIRECTORY_STACK
-{
-  struct _DIRECTORY_STACK *next;
-  char  *dirName;
-  char  *fileName;
-} DIRECTORY_STACK;
-
 static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *parms, int level);
 static int file_total, dir_total, recurse, wide, bare, max_width, lower;
 static int shortname, usernames;
