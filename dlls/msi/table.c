@@ -996,6 +996,9 @@ static UINT TABLE_set_int( MSITABLEVIEW *tv, UINT row, UINT col, UINT val )
         return ERROR_FUNCTION_FAILED;
     }
 
+    msi_free( tv->columns[col-1].hash_table );
+    tv->columns[col-1].hash_table = NULL;
+
     n = bytes_per_column( &tv->columns[col-1] );
     switch( n )
     {
