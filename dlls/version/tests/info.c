@@ -505,8 +505,7 @@ todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
         SetLastError(0xdeadbeef);
         ret = VerQueryValue(ver, buf, (LPVOID*)&p, &len);
         ok(ret, "VerQueryValue(%s) error %u\n", buf, GetLastError());
-        ok(len == strlen(value_name[i]) + 1, "VerQueryValue returned %u, expected %u\n",
-           len, strlen(value_name[i]) + 1);
+        ok(len == strlen(value_name[i]) + 1, "VerQueryValue returned %u\n", len);
         ok(!strcmp(value_name[i], p), "expected \"%s\", got \"%s\"\n",
            value_name[i], p);
 
