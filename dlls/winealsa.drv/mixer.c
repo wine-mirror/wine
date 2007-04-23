@@ -100,6 +100,46 @@ static const char * getMessage(UINT uMsg)
     return str;
 }
 
+static const char * getControlType(DWORD dwControlType)
+{
+#define TYPE_TO_STR(x) case x: return #x;
+    switch (dwControlType) {
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_CUSTOM);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_BOOLEANMETER);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_SIGNEDMETER);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_PEAKMETER);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_UNSIGNEDMETER);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_BOOLEAN);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_ONOFF);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_MUTE);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_MONO);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_LOUDNESS);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_STEREOENH);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_BASS_BOOST);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_BUTTON);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_DECIBELS);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_SIGNED);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_UNSIGNED);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_PERCENT);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_SLIDER);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_PAN);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_QSOUNDPAN);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_FADER);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_VOLUME);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_BASS);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_TREBLE);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_EQUALIZER);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_SINGLESELECT);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_MUX);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_MULTIPLESELECT);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_MIXER);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_MICROTIME);
+    TYPE_TO_STR(MIXERCONTROL_CONTROLTYPE_MILLITIME);
+    }
+#undef TYPE_TO_STR
+    return wine_dbg_sprintf("UNKNOWN(%08x)", dwControlType);
+}
+
 /* A simple declaration of a line control
  * These are each of the channels that show up
  */
@@ -891,6 +931,97 @@ static DWORD MIX_GetLineInfo(UINT wDevID, LPMIXERLINEW Ml, DWORD_PTR flags)
     return MMSYSERR_NOERROR;
 }
 
+/* Get the controls that belong to a certain line, either all or 1 */
+static DWORD MIX_GetLineControls(UINT wDevID, LPMIXERLINECONTROLSW mlc, DWORD_PTR flags)
+{
+    mixer *mmixer = MIX_GetMix(wDevID);
+    int i,j = 0;
+    DWORD ct;
+
+    if (!mlc || mlc->cbStruct != sizeof(*mlc))
+    {
+        WARN("Invalid mlc %p, cbStruct: %d\n", mlc, (!mlc ? -1 : mlc->cbStruct));
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if (mlc->cbmxctrl != sizeof(MIXERCONTROLW))
+    {
+        WARN("cbmxctrl %d\n", mlc->cbmxctrl);
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if (!mmixer)
+        return MMSYSERR_BADDEVICEID;
+
+    flags &= MIXER_GETLINECONTROLSF_QUERYMASK;
+
+    if (flags == MIXER_GETLINECONTROLSF_ONEBYID)
+        mlc->dwLineID = mlc->u.dwControlID / CONTROLSPERLINE;
+
+    if (mlc->dwLineID < 0 || mlc->dwLineID >= mmixer->chans)
+    {
+        TRACE("Invalid dwLineID %d\n", mlc->dwLineID);
+        return MIXERR_INVALLINE;
+    }
+
+    switch (flags)
+    {
+    case MIXER_GETLINECONTROLSF_ALL:
+       TRACE("line=%08x MIXER_GETLINECONTROLSF_ALL (%d)\n", mlc->dwLineID, mlc->cControls);
+       for (i = 0; i < CONTROLSPERLINE; ++i)
+           if (mmixer->controls[i+mlc->dwLineID * CONTROLSPERLINE].enabled)
+           {
+               memcpy(&mlc->pamxctrl[j], &mmixer->controls[i+mlc->dwLineID * CONTROLSPERLINE].c, sizeof(MIXERCONTROLW));
+               TRACE("Added %s (%s)\n", debugstr_w(mlc->pamxctrl[j].szShortName), debugstr_w(mlc->pamxctrl[j].szName));
+               ++j;
+               if (j > mlc->cControls)
+               {
+                   WARN("invalid parameter\n");
+                   return MMSYSERR_INVALPARAM;
+               }
+           }
+
+        if (!j || mlc->cControls > j)
+        {
+            WARN("invalid parameter\n");
+            return MMSYSERR_INVALPARAM;
+        }
+        break;
+    case MIXER_GETLINECONTROLSF_ONEBYID:
+        TRACE("line=%08x MIXER_GETLINECONTROLSF_ONEBYID (%x)\n", mlc->dwLineID, mlc->u.dwControlID);
+
+        if (!mmixer->controls[mlc->u.dwControlID].enabled)
+           return MIXERR_INVALCONTROL;
+
+        mlc->pamxctrl[0] = mmixer->controls[mlc->u.dwControlID].c;
+        break;
+    case MIXER_GETLINECONTROLSF_ONEBYTYPE:
+        TRACE("line=%08x MIXER_GETLINECONTROLSF_ONEBYTYPE (%s)\n", mlc->dwLineID, getControlType(mlc->u.dwControlType));
+
+        ct = mlc->u.dwControlType & MIXERCONTROL_CT_CLASS_MASK;
+        for (i = 0; i <= CONTROLSPERLINE; ++i)
+        {
+            const int ofs = i+mlc->dwLineID*CONTROLSPERLINE;
+            if (i == CONTROLSPERLINE)
+            {
+                WARN("invalid parameter: control %s not found\n", getControlType(mlc->u.dwControlType));
+                return MIXERR_INVALCONTROL;
+            }
+            if (mmixer->controls[ofs].enabled && (mmixer->controls[ofs].c.dwControlType & MIXERCONTROL_CT_CLASS_MASK) == ct)
+            {
+                mlc->pamxctrl[0] = mmixer->controls[ofs].c;
+                break;
+            }
+        }
+    break;
+    default:
+        FIXME("Unknown flag %08lx\n", flags & MIXER_GETLINECONTROLSF_QUERYMASK);
+        return MMSYSERR_INVALPARAM;
+    }
+
+    return MMSYSERR_NOERROR;
+}
+
 #endif /*HAVE_ALSA*/
 
 /**************************************************************************
@@ -925,6 +1056,9 @@ DWORD WINAPI ALSA_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 
     case MXDM_GETLINEINFO:
         ret = MIX_GetLineInfo(wDevID, (LPMIXERLINEW)dwParam1, dwParam2); break;
+
+    case MXDM_GETLINECONTROLS:
+        ret = MIX_GetLineControls(wDevID, (LPMIXERLINECONTROLSW)dwParam1, dwParam2); break;
 
     case MXDM_GETNUMDEVS:
         ret = cards; break;
