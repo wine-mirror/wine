@@ -930,7 +930,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     {
         HRESULT hr;
         /* Create the volume */
-        hr = D3DCB_CreateVolume(This->parent, parent, Width, Height, Depth, Format, Pool, Usage,
+        hr = D3DCB_CreateVolume(This->parent, parent, tmpW, tmpH, tmpD, Format, Pool, Usage,
                                 (IWineD3DVolume **)&object->volumes[i], pSharedHandle);
 
         if(FAILED(hr)) {
