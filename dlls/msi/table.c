@@ -102,6 +102,7 @@ static const MSICOLUMNINFO _Tables_cols[1] = {
 
 static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name,
        MSICOLUMNINFO **pcols, UINT *pcount );
+static void table_calc_column_offsets( MSICOLUMNINFO *colinfo, DWORD count );
 static UINT get_tablecolumns( MSIDATABASE *db,
        LPCWSTR szTableName, MSICOLUMNINFO *colinfo, UINT *sz);
 static void msi_free_colinfo( MSICOLUMNINFO *colinfo, UINT count );
@@ -593,8 +594,6 @@ static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name, MSICOLUMNINFO 
     return r;
 }
 
-static UINT get_table( MSIDATABASE *db, LPCWSTR name, MSITABLE **table_ret );
-
 UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
                        BOOL persistent, MSITABLE **table_ret)
 {
@@ -602,15 +601,51 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
     MSIVIEW *tv = NULL;
     MSIRECORD *rec = NULL;
     column_info *col;
+    MSITABLE *table;
+    UINT i;
 
     /* only add tables that don't exist already */
     if( TABLE_Exists(db, name ) )
         return ERROR_BAD_QUERY_SYNTAX;
 
+    table = msi_alloc( sizeof (MSITABLE) + lstrlenW(name)*sizeof (WCHAR) );
+    if( !table )
+        return ERROR_FUNCTION_FAILED;
+
+    table->row_count = 0;
+    table->data = NULL;
+    table->colinfo = NULL;
+    table->col_count = 0;
+    lstrcpyW( table->name, name );
+
+    for( col = col_info; col; col = col->next )
+        table->col_count++;
+
+    table->colinfo = msi_alloc( table->col_count * sizeof(MSICOLUMNINFO) );
+    if (!table->colinfo)
+    {
+        free_table( table );
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    for( i = 0, col = col_info; col; i++, col = col->next )
+    {
+        table->colinfo[ i ].tablename = strdupW( col->table );
+        table->colinfo[ i ].number = i + 1;
+        table->colinfo[ i ].colname = strdupW( col->column );
+        table->colinfo[ i ].type = col->type;
+        table->colinfo[ i ].offset = 0;
+        table->colinfo[ i ].hash_table = NULL;
+    }
+    table_calc_column_offsets( table->colinfo, table->col_count);
+
     r = TABLE_CreateView( db, szTables, &tv );
     TRACE("CreateView returned %x\n", r);
     if( r )
+    {
+        free_table( table );
         return r;
+    }
 
     r = tv->ops->execute( tv, 0 );
     TRACE("tv execute returned %x\n", r);
@@ -689,7 +724,13 @@ err:
         tv->ops->delete( tv );
 
     if (r == ERROR_SUCCESS)
-        r = get_table( db, name, table_ret );
+    {
+        list_add_head( &db->tables, &table->entry );
+        *table_ret = table;
+    }
+    else
+        free_table( table );
+
     return r;
 }
 
