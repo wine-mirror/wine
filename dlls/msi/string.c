@@ -1,7 +1,8 @@
 /*
- * Implementation of the Microsoft Installer (msi.dll)
+ * String Table Functions
  *
  * Copyright 2002-2004, Mike McCormack for CodeWeavers
+ * Copyright 2007 Robert Shearman for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -74,7 +75,7 @@ static UINT msistring_makehash( const WCHAR *str )
     return hash % HASH_SIZE;
 }
 
-string_table *msi_init_stringtable( int entries, UINT codepage )
+static string_table *init_stringtable( int entries, UINT codepage )
 {
     string_table *st;
     int i;
@@ -171,7 +172,7 @@ static void set_st_entry( string_table *st, UINT n, LPWSTR str, UINT refcount, e
         st->freeslot = n + 1;
 }
 
-int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, UINT refcount, enum StringPersistence persistence )
+static int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, UINT refcount, enum StringPersistence persistence )
 {
     LPWSTR str;
     int sz;
@@ -448,19 +449,7 @@ UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res )
     return ERROR_SUCCESS;
 }
 
-UINT msi_string_count( string_table *st )
-{
-    return st->maxcount;
-}
-
-UINT msi_id_persistent_refcount( string_table *st, UINT i )
-{
-    if( i >= st->maxcount )
-        return 0;
-    return st->strings[i].persistent_refcount;
-}
-
-UINT msi_string_totalsize( string_table *st, UINT *datasize, UINT *poolsize )
+static void string_totalsize( string_table *st, UINT *datasize, UINT *poolsize )
 {
     UINT i, len, max, holesize;
 
@@ -493,12 +482,6 @@ UINT msi_string_totalsize( string_table *st, UINT *datasize, UINT *poolsize )
             holesize += 4;
     }
     TRACE("data %u pool %u codepage %x\n", *datasize, *poolsize, st->codepage );
-    return max;
-}
-
-UINT msi_string_get_codepage( string_table *st )
-{
-    return st->codepage;
 }
 
 static const WCHAR szStringData[] = {
@@ -544,7 +527,7 @@ string_table *msi_load_string_table( IStorage *stg )
         codepage = pool[0] | ( pool[1] << 16 );
     else
         codepage = CP_ACP;
-    st = msi_init_stringtable( count, codepage );
+    st = init_stringtable( count, codepage );
 
     offset = 0;
     n = 1;
@@ -605,7 +588,7 @@ end:
 
 UINT msi_save_string_table( string_table *st, IStorage *storage )
 {
-    UINT i, count, datasize = 0, poolsize = 0, sz, used, r, codepage, n;
+    UINT i, datasize = 0, poolsize = 0, sz, used, r, codepage, n;
     UINT ret = ERROR_FUNCTION_FAILED;
     CHAR *data = NULL;
     USHORT *pool = NULL;
@@ -613,9 +596,9 @@ UINT msi_save_string_table( string_table *st, IStorage *storage )
     TRACE("\n");
 
     /* construct the new table in memory first */
-    count = msi_string_totalsize( st, &datasize, &poolsize );
+    string_totalsize( st, &datasize, &poolsize );
 
-    TRACE("%u %u %u\n", count, datasize, poolsize );
+    TRACE("%u %u %u\n", st->maxcount, datasize, poolsize );
 
     pool = msi_alloc( poolsize );
     if( ! pool )
@@ -631,14 +614,13 @@ UINT msi_save_string_table( string_table *st, IStorage *storage )
     }
 
     used = 0;
-    codepage = msi_string_get_codepage( st );
+    codepage = st->codepage;
     pool[0]=codepage&0xffff;
     pool[1]=(codepage>>16);
     n = 1;
-    for( i=1; i<count; i++ )
+    for( i=1; i<st->maxcount; i++ )
     {
-        UINT refcount = msi_id_persistent_refcount( st, i );
-        if( !refcount )
+        if( !st->strings[i].persistent_refcount )
             continue;
         sz = datasize - used;
         r = msi_id2stringA( st, i, data+used, &sz );
@@ -651,7 +633,7 @@ UINT msi_save_string_table( string_table *st, IStorage *storage )
             sz--;
 
         if (sz)
-            pool[ n*2 + 1 ] = refcount;
+            pool[ n*2 + 1 ] = st->strings[i].persistent_refcount;
         else
             pool[ n*2 + 1 ] = 0;
         if (sz < 0x10000)
