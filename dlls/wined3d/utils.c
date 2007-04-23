@@ -714,6 +714,24 @@ const char *debug_fbostatus(GLenum status) {
     }
 }
 
+const char *debug_glerror(GLenum error) {
+    switch(error) {
+#define GLERROR_TO_STR(u) case u: return #u
+        GLERROR_TO_STR(GL_NO_ERROR);
+        GLERROR_TO_STR(GL_INVALID_ENUM);
+        GLERROR_TO_STR(GL_INVALID_VALUE);
+        GLERROR_TO_STR(GL_INVALID_OPERATION);
+        GLERROR_TO_STR(GL_STACK_OVERFLOW);
+        GLERROR_TO_STR(GL_STACK_UNDERFLOW);
+        GLERROR_TO_STR(GL_OUT_OF_MEMORY);
+        GLERROR_TO_STR(GL_INVALID_FRAMEBUFFER_OPERATION_EXT);
+#undef GLERROR_TO_STR
+        default:
+            FIXME("Unrecognied GL error 0x%08x\n", error);
+            return "unrecognized";
+    }
+}
+
 /*****************************************************************************
  * Useful functions mapping GL <-> D3D values
  */

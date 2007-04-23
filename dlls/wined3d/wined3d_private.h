@@ -272,8 +272,8 @@ extern int num_lock;
        TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__);    \
                                                                 \
     } else do {                                                 \
-       FIXME(">>>>>>>>>>>>>>>>> %#x from %s @ %s / %d\n",       \
-        err, A, __FILE__, __LINE__);                            \
+        FIXME(">>>>>>>>>>>>>>>>> %s (%#x) from %s @ %s / %d\n", \
+            debug_glerror(err), err, A, __FILE__, __LINE__);    \
        err = glGetError();                                      \
     } while (err != GL_NO_ERROR);                               \
 } 
@@ -357,8 +357,8 @@ extern const float identity[16];
        VTRACE(("%s call ok %s / %d\n", A, __FILE__, __LINE__)); \
                                                                 \
     } else do {                                                 \
-       FIXME(">>>>>>>>>>>>>>>>> %#x from %s @ %s / %d\n",       \
-                err, A, __FILE__, __LINE__);                    \
+        FIXME(">>>>>>>>>>>>>>>>> %s (%#x) from %s @ %s / %d\n", \
+            debug_glerror(err), err, A, __FILE__, __LINE__);    \
        err = glGetError();                                      \
     } while (err != GL_NO_ERROR);                               \
 }
@@ -1403,6 +1403,7 @@ const char* debug_d3dtexturestate(DWORD state);
 const char* debug_d3dtstype(WINED3DTRANSFORMSTATETYPE tstype);
 const char* debug_d3dpool(WINED3DPOOL pool);
 const char *debug_fbostatus(GLenum status);
+const char *debug_glerror(GLenum error);
 
 /* Routines for GL <-> D3D values */
 GLenum StencilOp(DWORD op);
