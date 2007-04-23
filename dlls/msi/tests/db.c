@@ -2730,7 +2730,6 @@ static void test_temporary_table(void)
     ok( r == ERROR_SUCCESS, "temporary table exists in _Tables\n");
     MsiCloseHandle( rec );
 
-    todo_wine {
     /* query the column data */
     rec = 0;
     r = do_query(hdb, "select * from `_Columns` where `Table` = 'T' AND `Name` = 'B'", &rec);
@@ -2740,7 +2739,6 @@ static void test_temporary_table(void)
     r = do_query(hdb, "select * from `_Columns` where `Table` = 'T' AND `Name` = 'C'", &rec);
     ok( r == ERROR_NO_MORE_ITEMS, "temporary table exists in _Columns\n");
     if (rec) MsiCloseHandle( rec );
-    }
 
     MsiCloseHandle( hdb );
 

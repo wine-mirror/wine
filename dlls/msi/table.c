@@ -670,7 +670,7 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
     if( r )
         goto err;
 
-    r = tv->ops->insert_row( tv, rec, FALSE );
+    r = tv->ops->insert_row( tv, rec, !persistent );
     TRACE("insert_row returned %x\n", r);
     if( r )
         goto err;
@@ -680,51 +680,54 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
 
     msiobj_release( &rec->hdr );
 
-    /* add each column to the _Columns table */
-    r = TABLE_CreateView( db, szColumns, &tv );
-    if( r )
-        return r;
-
-    r = tv->ops->execute( tv, 0 );
-    TRACE("tv execute returned %x\n", r);
-    if( r )
-        goto err;
-
-    rec = MSI_CreateRecord( 4 );
-    if( !rec )
-        goto err;
-
-    r = MSI_RecordSetStringW( rec, 1, name );
-    if( r )
-        goto err;
-
-    /*
-     * need to set the table, column number, col name and type
-     * for each column we enter in the table
-     */
-    nField = 1;
-    for( col = col_info; col; col = col->next )
+    if( persistent )
     {
-        r = MSI_RecordSetInteger( rec, 2, nField );
+        /* add each column to the _Columns table */
+        r = TABLE_CreateView( db, szColumns, &tv );
+        if( r )
+            return r;
+
+        r = tv->ops->execute( tv, 0 );
+        TRACE("tv execute returned %x\n", r);
         if( r )
             goto err;
 
-        r = MSI_RecordSetStringW( rec, 3, col->column );
+        rec = MSI_CreateRecord( 4 );
+        if( !rec )
+            goto err;
+
+        r = MSI_RecordSetStringW( rec, 1, name );
         if( r )
             goto err;
 
-        r = MSI_RecordSetInteger( rec, 4, col->type );
-        if( r )
-            goto err;
+        /*
+         * need to set the table, column number, col name and type
+         * for each column we enter in the table
+         */
+        nField = 1;
+        for( col = col_info; col; col = col->next )
+        {
+            r = MSI_RecordSetInteger( rec, 2, nField );
+            if( r )
+                goto err;
 
-        r = tv->ops->insert_row( tv, rec, !persistent );
-        if( r )
-            goto err;
+            r = MSI_RecordSetStringW( rec, 3, col->column );
+            if( r )
+                goto err;
 
-        nField++;
+            r = MSI_RecordSetInteger( rec, 4, col->type );
+            if( r )
+                goto err;
+
+            r = tv->ops->insert_row( tv, rec, FALSE );
+            if( r )
+                goto err;
+
+            nField++;
+        }
+        if( !col )
+            r = ERROR_SUCCESS;
     }
-    if( !col )
-        r = ERROR_SUCCESS;
 
 err:
     if (rec)
