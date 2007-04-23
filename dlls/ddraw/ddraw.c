@@ -2341,7 +2341,8 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         LIST_FOR_EACH(entry, &This->surface_list)
         {
             surface = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
-            if(surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+            if((surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER)) ==
+               (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
             {
                 /* found */
                 target = surface;
@@ -2351,7 +2352,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         }
 
         TRACE("(%p) Attaching a D3DDevice, rendertarget = %p\n", This, target);
-        hr = IDirectDrawImpl_AttachD3DDevice(This, target->first_complex);
+        hr = IDirectDrawImpl_AttachD3DDevice(This, target);
         if(hr != D3D_OK)
         {
             ERR("IDirectDrawImpl_AttachD3DDevice failed, hr = %x\n", hr);
@@ -2636,7 +2637,7 @@ D3D7CB_CreateRenderTarget(IUnknown *device, IUnknown *pSuperior,
                           HANDLE* pSharedHandle)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, device);
-    IDirectDrawSurfaceImpl *d3dSurface = This->d3d_target->first_complex, *target = NULL;
+    IDirectDrawSurfaceImpl *d3dSurface = This->d3d_target, *target = NULL;
     TRACE("(%p) call back\n", device);
 
     if(d3dSurface->isRenderTarget)
