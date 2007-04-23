@@ -1950,6 +1950,54 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     return DD_OK;
 }
 
+static HRESULT
+CreateAdditionalSurfaces(IDirectDrawImpl *This,
+                         IDirectDrawSurfaceImpl *root,
+                         UINT count,
+                         DDSURFACEDESC2 *DDSD)
+{
+    UINT i, level = 0;
+    HRESULT hr;
+    for(i = 0; i < count; i++)
+    {
+        IDirectDrawSurfaceImpl *object2 = NULL;
+        IDirectDrawSurfaceImpl *iterator;
+
+        /* increase the mipmap level, but only if a mipmap is created
+         * In this case, also halve the size
+         */
+        if(DDSD->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
+        {
+            level++;
+            if(DDSD->dwWidth > 1) DDSD->dwWidth /= 2;
+            if(DDSD->dwHeight > 1) DDSD->dwHeight /= 2;
+        }
+
+        hr = IDirectDrawImpl_CreateNewSurface(This,
+                                              DDSD,
+                                              &object2,
+                                              level);
+        if(hr != DD_OK)
+        {
+            return hr;
+        }
+
+        /* Add the new surface to the complex attachment list */
+        object2->first_complex = root;
+        object2->next_complex = NULL;
+        iterator = root;
+        while(iterator->next_complex) iterator = iterator->next_complex;
+        iterator->next_complex = object2;
+
+        /* Remove the (possible) back buffer cap from the new surface description,
+         * because only one surface in the flipping chain is a back buffer, one
+         * is a front buffer, the others are just primary surfaces.
+         */
+        DDSD->ddsCaps.dwCaps &= ~DDSCAPS_BACKBUFFER;
+    }
+    return DD_OK;
+}
+
 /*****************************************************************************
  * IDirectDraw7::CreateSurface
  *
@@ -2036,9 +2084,8 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
     IDirectDrawSurfaceImpl *object = NULL;
     HRESULT hr;
-    LONG extra_surfaces = 0, i;
+    LONG extra_surfaces = 0;
     DDSURFACEDESC2 desc2;
-    UINT level = 0;
     WINED3DDISPLAYMODE Mode;
 
     TRACE("(%p)->(%p,%p,%p)\n", This, DDSD, Surf, UnkOuter);
@@ -2279,44 +2326,12 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         desc2.ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
     }
 
-    for(i = 0; i < extra_surfaces; i++)
+    hr = CreateAdditionalSurfaces(This, object, extra_surfaces, &desc2);
+    if(hr != DD_OK)
     {
-        IDirectDrawSurfaceImpl *object2 = NULL;
-        IDirectDrawSurfaceImpl *iterator;
-
-        /* increase the mipmap level, but only if a mipmap is created
-         * In this case, also halve the size
-         */
-        if(DDSD->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
-        {
-            level++;
-            if(desc2.dwWidth > 1) desc2.dwWidth /= 2;
-            if(desc2.dwHeight > 1) desc2.dwHeight /= 2;
-        }
-
-        hr = IDirectDrawImpl_CreateNewSurface(This,
-                                              &desc2,
-                                              &object2,
-                                              level);
-        if(hr != DD_OK)
-        {
-            /* This destroys and possibly created surfaces too */
-            IDirectDrawSurface_Release( ICOM_INTERFACE(object, IDirectDrawSurface7) );
-            return hr;
-        }
-
-        /* Add the new surface to the complex attachment list */
-        object2->first_complex = object;
-        object2->next_complex = NULL;
-        iterator = object;
-        while(iterator->next_complex) iterator = iterator->next_complex;
-        iterator->next_complex = object2;
-
-        /* Remove the (possible) back buffer cap from the new surface description,
-         * because only one surface in the flipping chain is a back buffer, one
-         * is a front buffer, the others are just primary surfaces.
-         */
-        desc2.ddsCaps.dwCaps &= ~DDSCAPS_BACKBUFFER;
+        /* This destroys and possibly created surfaces too */
+        IDirectDrawSurface_Release( ICOM_INTERFACE(object, IDirectDrawSurface7) );
+        return hr;
     }
 
     /* Addref the ddraw interface to keep an reference for each surface */
