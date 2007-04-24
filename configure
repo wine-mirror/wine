@@ -13173,7 +13173,7 @@ fi
     fi
     if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
     then
-                COREAUDIO="-framework CoreAudio -framework AudioUnit -framework CoreServices"
+                COREAUDIO="-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI"
 
     fi
     case $host_cpu in

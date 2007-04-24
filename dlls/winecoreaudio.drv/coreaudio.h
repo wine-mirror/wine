@@ -23,6 +23,7 @@
 extern LONG CoreAudio_WaveInit(void);
 extern void CoreAudio_WaveRelease(void);
 
-/* extern BOOL CoreAudio_MidiInit(void); */
+extern LONG CoreAudio_MIDIInit(void);
+extern void CoreAudio_MIDIRelease(void);
 
 #endif /* __WINE_COREAUDIO_H */

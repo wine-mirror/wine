@@ -43,6 +43,8 @@ static LRESULT CoreAudio_drvLoad(void)
 {
     TRACE("()\n");
     CoreAudio_WaveInit();
+    CoreAudio_MIDIInit();
+
     return 1;
 }
 
@@ -53,6 +55,8 @@ static LRESULT CoreAudio_drvFree(void)
 {
     TRACE("()\n");
     CoreAudio_WaveRelease();
+    CoreAudio_MIDIRelease();
+
     return 1;
 }
 

@@ -9,7 +9,9 @@ EXTRALIBS = $(LIBUUID) @COREAUDIO@
 C_SRCS = \
 	audio.c \
 	audiounit.c \
-	coreaudio.c
+	coreaudio.c \
+	coremidi.c \
+	midi.c
 
 @MAKE_DLL_RULES@
 

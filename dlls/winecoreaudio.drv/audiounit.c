@@ -25,6 +25,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
 #ifdef HAVE_AUDIOUNIT_AUDIOUNIT_H
 #include <AudioUnit/AudioUnit.h>
+#include <AudioToolbox/AudioToolbox.h>
+
+WINE_DECLARE_DEBUG_CHANNEL(midi);
 
 extern OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon, 
 				AudioUnitRenderActionFlags *ioActionFlags, 
@@ -310,6 +313,117 @@ error:
     if (au)
         CloseComponent(au);
     return 0;
+}
+
+/*
+ *  MIDI Synth Unit
+ */
+int SynthUnit_CreateDefaultSynthUnit(AUGraph *graph, AudioUnit *synth)
+{
+    OSStatus err;
+    ComponentDescription desc;
+    AUNode synthNode;
+    AUNode outNode;
+
+    err = NewAUGraph(graph);
+    if (err != noErr)
+    {
+        ERR_(midi)("NewAUGraph return %c%c%c%c\n", (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+        return 0;
+    }
+
+    desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+    desc.componentFlags = 0;
+    desc.componentFlagsMask = 0;
+
+    /* create synth node */
+    desc.componentType = kAudioUnitType_MusicDevice;
+    desc.componentSubType = kAudioUnitSubType_DLSSynth;
+
+    err = AUGraphNewNode(*graph, &desc, 0, NULL, &synthNode);
+    if (err != noErr)
+    {
+        ERR_(midi)("AUGraphNewNode cannot create synthNode : %c%c%c%c\n", (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+        return 0;
+    }
+
+    /* create out node */
+    desc.componentType = kAudioUnitType_Output;
+    desc.componentSubType = kAudioUnitSubType_DefaultOutput;
+
+    err = AUGraphNewNode(*graph, &desc, 0, NULL, &outNode);
+    if (err != noErr)
+    {
+        ERR_(midi)("AUGraphNewNode cannot create outNode %c%c%c%c\n", (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+        return 0;
+    }
+
+    err = AUGraphOpen(*graph);
+    if (err != noErr)
+    {
+        ERR_(midi)("AUGraphOpen return %c%c%c%c\n", (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+        return 0;
+    }
+
+    /* connecting the nodes */
+    err = AUGraphConnectNodeInput(*graph, synthNode, 0, outNode, 0);
+    if (err != noErr)
+    {
+        ERR_(midi)("AUGraphConnectNodeInput cannot connect synthNode to outNode : %c%c%c%c\n", (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+        return 0;
+    }
+
+    /* Get the synth unit */
+    err = AUGraphGetNodeInfo(*graph, synthNode, 0, 0, 0, synth);
+    if (err != noErr)
+    {
+        ERR_(midi)("AUGraphGetNodeInfo return %c%c%c%c\n", (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+        return 0;
+    }
+
+    return 1;
+}
+
+int SynthUnit_Initialize(AudioUnit synth, AUGraph graph)
+{
+    OSStatus err = noErr;
+
+    err = AUGraphInitialize(graph);
+    if (err != noErr)
+    {
+        ERR_(midi)("AUGraphInitialize(%p) return %c%c%c%c\n", graph, (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+        return 0;
+    }
+
+    err = AUGraphStart(graph);
+    if (err != noErr)
+    {
+        ERR_(midi)("AUGraphStart(%p) return %c%c%c%c\n", graph, (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+        return 0;
+    }
+
+    return 1;
+}
+
+int SynthUnit_Close(AUGraph graph)
+{
+    OSStatus err = noErr;
+
+    err = AUGraphStop(graph);
+    if (err != noErr)
+    {
+        ERR_(midi)("AUGraphStop(%p) return %c%c%c%c\n", graph, (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+        return 0;
+    }
+
+    err = DisposeAUGraph(graph);
+    if (err != noErr)
+    {
+        ERR_(midi)("DisposeAUGraph(%p) return %c%c%c%c\n", graph, (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+        return 0;
+    }
+
+    return 1;
 }
 
 #endif
