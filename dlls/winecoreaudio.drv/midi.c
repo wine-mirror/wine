@@ -265,6 +265,36 @@ static DWORD MIDIOut_Close(WORD wDevID)
     return ret;
 }
 
+static DWORD MIDIOut_Data(WORD wDevID, DWORD dwParam)
+{
+    WORD evt = LOBYTE(LOWORD(dwParam));
+    WORD d1  = HIBYTE(LOWORD(dwParam));
+    WORD d2  = LOBYTE(HIWORD(dwParam));
+    UInt8 chn = (evt & 0x0F);
+    OSStatus err = noErr;
+
+    TRACE("wDevID=%d dwParam=%08X\n", wDevID, dwParam);
+
+    if (wDevID >= MIDIOut_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    TRACE("evt=%08x d1=%04x d2=%04x (evt & 0xF0)=%04x chn=%d\n", evt, d1, d2, (evt & 0xF0), chn);
+
+    if (destinations[wDevID].caps.wTechnology == MOD_SYNTH)
+    {
+        err = MusicDeviceMIDIEvent(destinations[wDevID].synth, (evt & 0xF0) | chn, d1, d2, 0);
+        if (err != noErr)
+        {
+            ERR("MusicDeviceMIDIEvent(%p, %04x, %04x, %04x, %d) return %c%c%c%c\n", destinations[wDevID].synth, (evt & 0xF0) | chn, d1, d2, 0, (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+            return MMSYSERR_ERROR;
+        }
+    }
+    else FIXME("MOD_MIDIPORT\n");
+
+    return MMSYSERR_NOERROR;
+}
 
 /**************************************************************************
  * 			MIDIOut_Prepare				[internal]
@@ -358,6 +388,7 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
         case MODM_CLOSE:
             return MIDIOut_Close(wDevID);
         case MODM_DATA:
+            return MIDIOut_Data(wDevID, dwParam1);
         case MODM_LONGDATA:
             TRACE("Unsupported message (08%x)\n", wMsg);
             return MMSYSERR_NOTSUPPORTED;
@@ -377,8 +408,6 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
     }
     return MMSYSERR_NOTSUPPORTED;
 }
-
-
 
 #else
 

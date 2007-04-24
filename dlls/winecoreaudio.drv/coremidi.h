@@ -52,6 +52,9 @@ extern OSStatus MIDIObjectGetProperties(MIDIObjectRef obj, CFPropertyListRef *ou
 typedef void *AudioUnit;
 typedef void *AUGraph;
 
+extern OSStatus MusicDeviceMIDIEvent(AudioUnit au, UInt32 inStatus, UInt32 inData1, UInt32 inData2, UInt32 inOffsetSampleFrame);
+extern OSStatus MusicDeviceSysEx(AudioUnit au, const UInt8 *inData, UInt32 inLength);
+
 #endif
 
 /* coremidi.c */
