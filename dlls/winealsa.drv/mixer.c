@@ -505,10 +505,8 @@ static void ALSA_MixerInit(void)
 
         eclose:
         WARN("Error occured initialising mixer: %s\n", snd_strerror(err));
-        if (mixdev[mixnum].lines)
-            HeapFree(GetProcessHeap(), 0, mixdev[mixnum].lines);
-        if (mixdev[mixnum].controls)
-            HeapFree(GetProcessHeap(), 0, mixdev[mixnum].controls);
+        HeapFree(GetProcessHeap(), 0, mixdev[mixnum].lines);
+        HeapFree(GetProcessHeap(), 0, mixdev[mixnum].controls);
         snd_mixer_close(mixdev[mixnum].mix);
     }
     cards = mixnum;
@@ -649,8 +647,7 @@ static DWORD WINAPI ALSA_MixerPollThread(LPVOID lParam)
 
     die:
     TRACE("Shutting down\n");
-    if (pfds)
-        HeapFree(GetProcessHeap(), 0, pfds);
+    HeapFree(GetProcessHeap(), 0, pfds);
 
     y = read(msg_pipe[0], &x, sizeof(x));
     close(msg_pipe[1]);
