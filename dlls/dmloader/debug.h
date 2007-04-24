@@ -50,9 +50,9 @@ extern const char *resolve_STREAM_SEEK (DWORD flag);
 /* FOURCC to string conversion for debug messages */
 extern const char *debugstr_fourcc (DWORD fourcc);
 /* DMUS_VERSION struct to string conversion for debug messages */
-extern const char *debugstr_dmversion (LPDMUS_VERSION version);
+extern const char *debugstr_dmversion (const DMUS_VERSION *version);
 /* FILETIME struct to string conversion for debug messages */
-extern const char *debugstr_filetime (LPFILETIME time);
+extern const char *debugstr_filetime (const FILETIME *time);
 /* returns name of given GUID */
 extern const char *debugstr_dmguid (const GUID *id);
 /* returns name of given error code */
