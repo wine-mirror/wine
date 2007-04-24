@@ -41,8 +41,7 @@ static LPARAM CreateITEM_INFO(INT flag, const WCHAR *info, const WCHAR *clsid, c
 {
     ITEM_INFO *reg;
 
-    reg = HeapAlloc(GetProcessHeap(), 0, sizeof(ITEM_INFO));
-    memset(reg, 0, sizeof(ITEM_INFO));
+    reg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ITEM_INFO));
 
     reg->cFlag = flag;
     lstrcpyW(reg->info, info);

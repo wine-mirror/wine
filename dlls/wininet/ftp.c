@@ -2673,8 +2673,7 @@ static BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFi
     CHAR *lpszBuffer;
 
     TRACE("\n");
-    lpszBuffer = HeapAlloc(GetProcessHeap(), 0, sizeof(CHAR)*DATA_PACKET_SIZE);
-    memset(lpszBuffer, 0, sizeof(CHAR)*DATA_PACKET_SIZE);
+    lpszBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CHAR)*DATA_PACKET_SIZE);
 
     /* Get the size of the file. */
     GetFileInformationByHandle(hFile, &fi);

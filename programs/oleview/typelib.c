@@ -258,9 +258,8 @@ static TYPELIB_DATA *InitializeTLData(void)
 {
     TYPELIB_DATA *pTLData;
 
-    pTLData = HeapAlloc(GetProcessHeap(), 0, sizeof(TYPELIB_DATA));
+    pTLData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TYPELIB_DATA));
 
-    memset(pTLData, 0, sizeof(TYPELIB_DATA));
     pTLData->idl = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR));
     pTLData->idl[0] = '\0';
 

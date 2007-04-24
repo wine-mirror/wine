@@ -129,10 +129,8 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     struct module*      module;
 
     assert(type == DMT_ELF || type == DMT_PE);
-    if (!(module = HeapAlloc(GetProcessHeap(), 0, sizeof(*module))))
+    if (!(module = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*module))))
 	return NULL;
-
-    memset(module, 0, sizeof(*module));
 
     module->next = pcs->lmodules;
     pcs->lmodules = module;

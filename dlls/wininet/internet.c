@@ -467,14 +467,13 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
-    lpwai = HeapAlloc(GetProcessHeap(), 0, sizeof(WININETAPPINFOW));
+    lpwai = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETAPPINFOW));
     if (NULL == lpwai)
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
 	goto lend;
     }
- 
-    memset(lpwai, 0, sizeof(WININETAPPINFOW));
+
     lpwai->hdr.htype = WH_HINIT;
     lpwai->hdr.dwFlags = dwFlags;
     lpwai->hdr.dwRefCount = 1;

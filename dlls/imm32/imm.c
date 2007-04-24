@@ -313,8 +313,7 @@ HIMC WINAPI ImmCreateContext(void)
 {
     InputContextData *new_context;
 
-    new_context = HeapAlloc(GetProcessHeap(),0,sizeof(InputContextData));
-    ZeroMemory(new_context,sizeof(InputContextData));
+    new_context = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(InputContextData));
 
     return (HIMC)new_context;
 }

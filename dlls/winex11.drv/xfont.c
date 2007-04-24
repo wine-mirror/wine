@@ -2035,13 +2035,10 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	if( !fr ) /* add new family */
 	{
 	    n_ff++;
-	    fr = HeapAlloc(GetProcessHeap(), 0, sizeof(fontResource));
+	    fr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(fontResource));
 	    if (fr)
 	    {
-		memset(fr, 0, sizeof(fontResource));
-
-		fr->resource = HeapAlloc(GetProcessHeap(), 0, sizeof(LFD));
-		memset(fr->resource, 0, sizeof(LFD));
+		fr->resource = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LFD));
 
 		TRACE("family: -%s-%s-\n", lfd.foundry, lfd.family );
 		fr->resource->foundry = HeapAlloc(GetProcessHeap(), 0, strlen(lfd.foundry)+1);

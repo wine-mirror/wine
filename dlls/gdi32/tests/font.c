@@ -482,8 +482,7 @@ static void test_text_extents(void)
     }
 
     len = lstrlenW(wt);
-    extents = HeapAlloc(GetProcessHeap(), 0, len * sizeof extents[0]);
-    memset(extents, 0, len * sizeof extents[0]);
+    extents = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len * sizeof extents[0]);
     extents[0] = 1;         /* So that the increasing sequence test will fail
                                if the extents array is untouched.  */
     GetTextExtentExPointW(hdc, wt, len, 32767, &fit1, extents, &sz1);

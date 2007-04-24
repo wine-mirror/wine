@@ -4223,16 +4223,13 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
   /*
    * Allocate space for the new storage object
    */
-  newStorage = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageInternalImpl));
+  newStorage = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(StorageInternalImpl));
 
   if (newStorage!=0)
   {
-    memset(newStorage, 0, sizeof(StorageInternalImpl));
-
     /*
      * Initialize the stream list
      */
-
     list_init(&newStorage->base.strmHead);
 
     /*

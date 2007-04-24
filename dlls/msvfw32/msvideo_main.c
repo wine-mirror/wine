@@ -1294,10 +1294,9 @@ HANDLE VFWAPI ICImageDecompress(
 		cbHdr = ICDecompressGetFormatSize(hic,lpbiIn);
 		if ( cbHdr < sizeof(BITMAPINFOHEADER) )
 			goto err;
-		pHdr = HeapAlloc(GetProcessHeap(),0,cbHdr+sizeof(RGBQUAD)*256);
+		pHdr = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,cbHdr+sizeof(RGBQUAD)*256);
 		if ( pHdr == NULL )
 			goto err;
-		ZeroMemory( pHdr, cbHdr+sizeof(RGBQUAD)*256 );
 		if ( ICDecompressGetFormat( hic, lpbiIn, (BITMAPINFO*)pHdr ) != ICERR_OK )
 			goto err;
 		lpbiOut = (BITMAPINFO*)pHdr;

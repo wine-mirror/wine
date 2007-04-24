@@ -199,10 +199,9 @@ static DWORD WINAPI test_ports_client(LPVOID arg)
     ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %d\n", status);
 
     size = FIELD_OFFSET(LPC_MESSAGE, Data) + MAX_MESSAGE_LEN;
-    LpcMessage = HeapAlloc(GetProcessHeap(), 0, size);
+    LpcMessage = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     out = HeapAlloc(GetProcessHeap(), 0, size);
 
-    memset(LpcMessage, 0, size);
     LpcMessage->DataSize = lstrlen(REQUEST1) + 1;
     LpcMessage->MessageSize = FIELD_OFFSET(LPC_MESSAGE, Data) + LpcMessage->DataSize;
     lstrcpy((LPSTR)LpcMessage->Data, REQUEST1);
@@ -252,8 +251,7 @@ static void test_ports_server(void)
     if (status != STATUS_SUCCESS) return;
 
     size = FIELD_OFFSET(LPC_MESSAGE, Data) + MAX_MESSAGE_LEN;
-    LpcMessage = HeapAlloc(GetProcessHeap(), 0, size);
-    memset(LpcMessage, 0, size);
+    LpcMessage = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 
     while (TRUE)
     {

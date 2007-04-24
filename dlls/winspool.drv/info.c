@@ -2876,10 +2876,9 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     }
     if(pi->pDevMode)
         dmW = pi->pDevMode;
-    else 
+    else
     {
-        dmW = HeapAlloc(GetProcessHeap(), 0, size);
-        ZeroMemory(dmW,size);
+        dmW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
         dmW->dmSize = size;
         if (0>DocumentPropertiesW(0,0,pi->pPrinterName,dmW,NULL,DM_OUT_BUFFER))
         {
