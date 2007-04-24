@@ -1436,7 +1436,7 @@ BOOL WINAPI StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
 /******************************************************************************
  * service_start_process    [INTERNAL]
  */
-static DWORD service_start_process(struct sc_service *hsvc)
+static DWORD service_start_process(struct sc_service *hsvc, LPDWORD ppid)
 {
     static const WCHAR _ImagePathW[] = {'I','m','a','g','e','P','a','t','h',0};
     PROCESS_INFORMATION pi;
@@ -1470,7 +1470,7 @@ static DWORD service_start_process(struct sc_service *hsvc)
     r = CreateProcessW(NULL, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     if (r)
     {
-        /* FIXME: Put the pid into the service struct */
+        if (ppid) *ppid = pi.dwProcessId;
 
         handles[1] = pi.hProcess;
         ret = WaitForMultipleObjectsEx(2, handles, FALSE, 30000, FALSE);
@@ -1523,6 +1523,7 @@ BOOL WINAPI StartServiceW(SC_HANDLE hService, DWORD dwNumServiceArgs,
 {
     struct sc_service *hsvc;
     BOOL r = FALSE;
+    DWORD pid;
     SC_LOCK hLock;
     HANDLE handle = INVALID_HANDLE_VALUE;
 
@@ -1543,7 +1544,7 @@ BOOL WINAPI StartServiceW(SC_HANDLE hService, DWORD dwNumServiceArgs,
     if (handle==INVALID_HANDLE_VALUE)
     {
         /* start the service process */
-        if (service_start_process(hsvc))
+        if (service_start_process(hsvc, &pid))
             handle = service_open_pipe(hsvc->name);
     }
 
