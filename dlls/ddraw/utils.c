@@ -894,9 +894,14 @@ get_flexible_vertex_size(DWORD d3dvtVertexType)
     if (d3dvtVertexType & D3DFVF_RESERVED1) size += sizeof(DWORD);
     switch (d3dvtVertexType & D3DFVF_POSITION_MASK)
     {
-        case D3DFVF_XYZ: size += 3 * sizeof(D3DVALUE); break;
+        case D3DFVF_XYZ:    size += 3 * sizeof(D3DVALUE); break;
         case D3DFVF_XYZRHW: size += 4 * sizeof(D3DVALUE); break;
-        default: TRACE(" matrix weighting not handled yet...\n");
+        case D3DFVF_XYZB1:  size += 4 * sizeof(D3DVALUE); break;
+        case D3DFVF_XYZB2:  size += 5 * sizeof(D3DVALUE); break;
+        case D3DFVF_XYZB3:  size += 6 * sizeof(D3DVALUE); break;
+        case D3DFVF_XYZB4:  size += 7 * sizeof(D3DVALUE); break;
+        case D3DFVF_XYZB5:  size += 8 * sizeof(D3DVALUE); break;
+        default: ERR("Unexpected position mask\n");
     }
     for (i = 0; i < GET_TEXCOUNT_FROM_FVF(d3dvtVertexType); i++)
     {
