@@ -351,17 +351,19 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 			LPBYTE ptr = (BYTE*) ev->data.ext.ptr;
 			LPMIDIHDR lpMidiHdr;
 
-			/* FIXME: Should handle sysex greater that a single buffer */
+			/* FIXME: Should handle sysex greater than lpMidiHdr->dwBufferLength */
 			EnterCriticalSection(&crit_sect);
 			if ((lpMidiHdr = MidiInDev[wDevID].lpQueueHdr) != NULL) {
-			    if (len <= lpMidiHdr->dwBufferLength) {
-				lpMidiHdr->dwBytesRecorded = len;
-				memcpy(lpMidiHdr->lpData, ptr, len);
-				lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
-				lpMidiHdr->dwFlags |= MHDR_DONE;
-				MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)lpMidiHdr->lpNext;
-				if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)lpMidiHdr, dwTime) != MMSYSERR_NOERROR)
-				    WARN("Couldn't notify client\n");
+			    if (lpMidiHdr->dwBytesRecorded + len <= lpMidiHdr->dwBufferLength) {
+				memcpy(lpMidiHdr->lpData + lpMidiHdr->dwBytesRecorded, ptr, len);
+				lpMidiHdr->dwBytesRecorded += len;
+				if (*(ptr + (len-1)) == 0xF7) {
+				    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+				    lpMidiHdr->dwFlags |= MHDR_DONE;
+				    MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)lpMidiHdr->lpNext;
+				    if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)lpMidiHdr, dwTime) != MMSYSERR_NOERROR)
+					WARN("Couldn't notify client\n");
+				}
 			    } else
 				FIXME("No enough space in the buffer to store sysex!\n");
 			} else
