@@ -146,6 +146,125 @@ LONG CoreAudio_MIDIRelease(void)
     return 1;
 }
 
+
+/**************************************************************************
+ * 			MIDI_NotifyClient			[internal]
+ */
+static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+{
+    DWORD 		dwCallBack;
+    UINT 		uFlags;
+    HANDLE		hDev;
+    DWORD 		dwInstance;
+
+    TRACE("wDevID=%d wMsg=%d dwParm1=%04X dwParam2=%04X\n", wDevID, wMsg, dwParam1, dwParam2);
+
+    switch (wMsg) {
+    case MOM_OPEN:
+    case MOM_CLOSE:
+    case MOM_DONE:
+    case MOM_POSITIONCB:
+	dwCallBack = destinations[wDevID].midiDesc.dwCallback;
+	uFlags = destinations[wDevID].wFlags;
+	hDev = destinations[wDevID].midiDesc.hMidi;
+	dwInstance = destinations[wDevID].midiDesc.dwInstance;
+	break;
+
+    case MIM_OPEN:
+    case MIM_CLOSE:
+    case MIM_DATA:
+    case MIM_LONGDATA:
+    case MIM_ERROR:
+    case MIM_LONGERROR:
+    case MIM_MOREDATA:
+    default:
+	WARN("Unsupported MSW-MIDI message %u\n", wMsg);
+	return MMSYSERR_ERROR;
+    }
+
+    return DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2) ?
+        MMSYSERR_NOERROR : MMSYSERR_ERROR;
+}
+
+static DWORD MIDIOut_Open(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
+{
+    MIDIDestination *dest;
+
+    TRACE("wDevID=%d lpDesc=%p dwFlags=%08x\n", wDevID, lpDesc, dwFlags);
+
+    if (lpDesc == NULL) {
+	WARN("Invalid Parameter\n");
+	return MMSYSERR_INVALPARAM;
+    }
+
+    if (wDevID >= MIDIOut_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (destinations[wDevID].midiDesc.hMidi != 0) {
+	WARN("device already open !\n");
+	return MMSYSERR_ALLOCATED;
+    }
+
+    if ((dwFlags & ~CALLBACK_TYPEMASK) != 0) {
+	WARN("bad dwFlags\n");
+	return MMSYSERR_INVALFLAG;
+    }
+    dest = &destinations[wDevID];
+
+    if (dest->caps.wTechnology == MOD_SYNTH)
+    {
+        if (!SynthUnit_CreateDefaultSynthUnit(&dest->graph, &dest->synth))
+        {
+            ERR("SynthUnit_CreateDefaultSynthUnit dest=%p failed\n", dest);
+            return MMSYSERR_ERROR;
+        }
+
+        if (!SynthUnit_Initialize(dest->synth, dest->graph))
+        {
+            ERR("SynthUnit_Initialise dest=%p failed\n", dest);
+            return MMSYSERR_ERROR;
+        }
+    }
+    else
+    {
+        FIXME("MOD_MIDIPORT\n");
+    }
+    dest->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
+    dest->midiDesc = *lpDesc;
+
+    return MIDI_NotifyClient(wDevID, MOM_OPEN, 0L, 0L);
+}
+
+static DWORD MIDIOut_Close(WORD wDevID)
+{
+    DWORD ret = MMSYSERR_NOERROR;
+
+    TRACE("wDevID=%d\n", wDevID);
+
+    if (wDevID >= MIDIOut_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (destinations[wDevID].caps.wTechnology == MOD_SYNTH)
+        SynthUnit_Close(destinations[wDevID].graph);
+    else
+        FIXME("MOD_MIDIPORT\n");
+
+    destinations[wDevID].graph = 0;
+    destinations[wDevID].synth = 0;
+
+    if (MIDI_NotifyClient(wDevID, MOM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
+	WARN("can't notify client !\n");
+	ret = MMSYSERR_INVALPARAM;
+    }
+    destinations[wDevID].midiDesc.hMidi = 0;
+
+    return ret;
+}
+
 /**************************************************************************
 * 				modMessage
 */
@@ -160,7 +279,9 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
         case DRVM_DISABLE:
             return 0;
         case MODM_OPEN:
+            return MIDIOut_Open(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
         case MODM_CLOSE:
+            return MIDIOut_Close(wDevID);
         case MODM_DATA:
         case MODM_LONGDATA:
         case MODM_PREPARE:
