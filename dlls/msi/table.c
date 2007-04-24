@@ -681,6 +681,7 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
     tv = NULL;
 
     msiobj_release( &rec->hdr );
+    rec = NULL;
 
     if( persistent )
     {
