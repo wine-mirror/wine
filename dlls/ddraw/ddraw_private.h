@@ -227,7 +227,7 @@ struct IDirectDrawSurfaceImpl
     /* Connections to other Objects */
     IDirectDrawImpl         *ddraw;
     IWineD3DSurface         *WineD3DSurface;
-    IWineD3DTexture         *wineD3DTexture;
+    IWineD3DBaseTexture     *wineD3DTexture;
 
     /* This implementation handles attaching surfaces to other surfaces */
     IDirectDrawSurfaceImpl  *next_attached;

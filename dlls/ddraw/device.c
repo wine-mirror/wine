@@ -2295,7 +2295,7 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
                 IDirectDrawSurfaceImpl *surf = (IDirectDrawSurfaceImpl *) This->Handles[Value - 1].ptr;
                 return IWineD3DDevice_SetTexture(This->wineD3DDevice,
                                                  0,
-                                                 (IWineD3DBaseTexture *) surf->wineD3DTexture);
+                                                 surf->wineD3DTexture);
             }
         }
 
@@ -3946,7 +3946,7 @@ IDirect3DDeviceImpl_7_SetTexture(IDirect3DDevice7 *iface,
     /* Texture may be NULL here */
     return IWineD3DDevice_SetTexture(This->wineD3DDevice,
                                      Stage,
-                                     surf ? (IWineD3DBaseTexture * ) surf->wineD3DTexture : NULL);
+                                     surf ? surf->wineD3DTexture : NULL);
 }
 
 static HRESULT WINAPI

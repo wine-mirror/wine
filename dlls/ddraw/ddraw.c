@@ -2406,7 +2406,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
                                            0, /* usage */
                                            Format,
                                            Pool,
-                                           &object->wineD3DTexture,
+                                           (IWineD3DTexture **) &object->wineD3DTexture,
                                            0, /* SharedHandle */
                                            (IUnknown *) ICOM_INTERFACE(object, IDirectDrawSurface7),
                                            D3D7CB_CreateSurface );

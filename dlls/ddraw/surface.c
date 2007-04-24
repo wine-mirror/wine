@@ -301,7 +301,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
          */
         if(This->wineD3DTexture)
         {
-            IWineD3DTexture_Release(This->wineD3DTexture);
+            IWineD3DBaseTexture_Release(This->wineD3DTexture);
         }
         /* If it's the RenderTarget, destroy the d3ddevice */
         else if( (ddraw->d3d_initialized) && (This == ddraw->d3d_target))
@@ -1815,8 +1815,8 @@ IDirectDrawSurfaceImpl_SetLOD(IDirectDrawSurface7 *iface,
         return DDERR_INVALIDOBJECT;
     }
 
-    return IWineD3DTexture_SetLOD(This->wineD3DTexture,
-                                  MaxLOD);
+    return IWineD3DBaseTexture_SetLOD(This->wineD3DTexture,
+                                      MaxLOD);
 }
 
 /*****************************************************************************
@@ -1846,7 +1846,7 @@ IDirectDrawSurfaceImpl_GetLOD(IDirectDrawSurface7 *iface,
     if (!(This->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE))
         return DDERR_INVALIDOBJECT;
 
-    *MaxLOD = IWineD3DTexture_GetLOD(This->wineD3DTexture);
+    *MaxLOD = IWineD3DBaseTexture_GetLOD(This->wineD3DTexture);
     return DD_OK;
 }
 
