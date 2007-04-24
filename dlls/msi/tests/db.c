@@ -2658,14 +2658,14 @@ static void test_temporary_table(void)
     ok(r == ERROR_SUCCESS, "failed to add table\n");
 
     cond = MsiDatabaseIsTablePersistent(hdb, "P");
-    todo_wine ok( cond == MSICONDITION_TRUE, "wrong return condition\n");
+    ok( cond == MSICONDITION_TRUE, "wrong return condition\n");
 
     query = "CREATE TABLE `P2` ( `B` SHORT NOT NULL, `C` CHAR(255) PRIMARY KEY `C`) HOLD";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "failed to add table\n");
 
     todo_wine {
-    cond = MsiDatabaseIsTablePersistent(hdb, "P");
+    cond = MsiDatabaseIsTablePersistent(hdb, "P2");
     ok( cond == MSICONDITION_TRUE, "wrong return condition\n");
     }
 
@@ -2689,10 +2689,10 @@ static void test_temporary_table(void)
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "failed to add table\n");
 
-    todo_wine {
     cond = MsiDatabaseIsTablePersistent(hdb, "T3");
     ok( cond == MSICONDITION_TRUE, "wrong return condition\n");
 
+    todo_wine {
     query = "CREATE TABLE `T4` ( `B` SHORT NOT NULL, `C` CHAR(255) TEMPORARY PRIMARY KEY `C`)";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_FUNCTION_FAILED, "failed to add table\n");

@@ -69,6 +69,7 @@ struct tagMSITABLE
     struct list entry;
     MSICOLUMNINFO *colinfo;
     UINT col_count;
+    BOOL persistent;
     WCHAR name[1];
 };
 
@@ -626,6 +627,7 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
     table->nonpersistent_data = NULL;
     table->colinfo = NULL;
     table->col_count = 0;
+    table->persistent = persistent;
     lstrcpyW( table->name, name );
 
     for( col = col_info; col; col = col->next )
@@ -771,6 +773,7 @@ static UINT get_table( MSIDATABASE *db, LPCWSTR name, MSITABLE **table_ret )
     table->nonpersistent_data = NULL;
     table->colinfo = NULL;
     table->col_count = 0;
+    table->persistent = TRUE;
     lstrcpyW( table->name, name );
 
     /* these two tables are special - we know the column types already */
@@ -810,6 +813,10 @@ static UINT save_table( MSIDATABASE *db, MSITABLE *t )
 {
     USHORT *rawdata = NULL, *p;
     UINT rawsize, r, i, j, row_size;
+
+    /* Nothing to do for non-persistent tables */
+    if( !t->persistent )
+        return ERROR_SUCCESS;
 
     TRACE("Saving %s\n", debugstr_w( t->name ) );
 
@@ -1694,13 +1701,22 @@ UINT MSI_CommitTables( MSIDATABASE *db )
 
 MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table )
 {
+    MSITABLE *t;
+    UINT r;
+
+    TRACE("%p %s\n", db, debugstr_w(table));
+
     if (!table)
         return MSICONDITION_ERROR;
 
-    if (!TABLE_Exists( db, table ))
+    r = get_table( db, table, &t );
+    if (r != ERROR_SUCCESS)
         return MSICONDITION_NONE;
 
-    return MSICONDITION_FALSE;
+    if (t->persistent)
+        return MSICONDITION_TRUE;
+    else
+        return MSICONDITION_FALSE;
 }
 
 static MSIRECORD *msi_get_transform_record( MSITABLEVIEW *tv, string_table *st, USHORT *rawdata )
