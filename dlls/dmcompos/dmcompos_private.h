@@ -157,7 +157,7 @@ extern int even_or_odd (DWORD number);
 /* FOURCC to string conversion for debug messages */
 extern const char *debugstr_fourcc (DWORD fourcc);
 /* DMUS_VERSION struct to string conversion for debug messages */
-extern const char *debugstr_dmversion (LPDMUS_VERSION version);
+extern const char *debugstr_dmversion (const DMUS_VERSION *version);
 /* returns name of given GUID */
 extern const char *debugstr_dmguid (const GUID *id);
 /* returns name of given error code */
