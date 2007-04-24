@@ -552,7 +552,8 @@ typedef struct IDirect3DQuery9Impl {
 /* Callbacks */
 extern HRESULT WINAPI D3D9CB_CreateSurface(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,
                                          WINED3DFORMAT Format, DWORD Usage, WINED3DPOOL Pool, UINT Level,
-                                         IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
+                                         WINED3DCUBEMAP_FACES Face, IWineD3DSurface** ppSurface,
+                                         HANDLE* pSharedHandle);
 
 extern HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, IUnknown *pSuperior, UINT Width, UINT Height, UINT Depth,
                                           WINED3DFORMAT  Format, WINED3DPOOL Pool, DWORD Usage,

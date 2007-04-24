@@ -209,6 +209,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATESURFACEFN) (IUnknown *pDevice,
                                                DWORD      Usage,
                                                WINED3DPOOL Pool,            
                                                UINT       Level,
+                                               WINED3DCUBEMAP_FACES Face,
                                                struct IWineD3DSurface **ppSurface,
                                                HANDLE    *pSharedHandle);
 

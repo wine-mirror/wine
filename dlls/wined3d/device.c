@@ -851,7 +851,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     for (i = 0; i < object->baseTexture.levels; i++)
     {
         /* use the callback to create the texture surface */
-        hr = D3DCB_CreateSurface(This->parent, parent, tmpW, tmpH, Format, Usage, Pool, i, &object->surfaces[i],NULL);
+        hr = D3DCB_CreateSurface(This->parent, parent, tmpW, tmpH, Format, Usage, Pool, i, WINED3DCUBEMAP_FACE_POSITIVE_X, &object->surfaces[i],NULL);
         if (hr!= WINED3D_OK || ( (IWineD3DSurfaceImpl *) object->surfaces[i])->Flags & SFLAG_OVERSIZE) {
             FIXME("Failed to create surface  %p\n", object);
             /* clean up */
@@ -1046,7 +1046,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         for (j = 0; j < 6; j++) {
 
             hr=D3DCB_CreateSurface(This->parent, parent, tmpW, tmpW, Format, Usage, Pool,
-                                   i /* Level */, &object->surfaces[j][i],pSharedHandle);
+                                   i /* Level */, j, &object->surfaces[j][i],pSharedHandle);
 
             if(hr!= WINED3D_OK) {
                 /* clean up */

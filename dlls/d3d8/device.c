@@ -1769,7 +1769,8 @@ const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl =
 /* Internal function called back during the CreateDevice to create a render target  */
 HRESULT WINAPI D3D8CB_CreateSurface(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,
                                          WINED3DFORMAT Format, DWORD Usage, WINED3DPOOL Pool, UINT Level,
-                                         IWineD3DSurface **ppSurface, HANDLE *pSharedHandle) {
+                                         WINED3DCUBEMAP_FACES Face, IWineD3DSurface **ppSurface,
+                                         HANDLE *pSharedHandle) {
 
     HRESULT res = D3D_OK;
     IDirect3DSurface8Impl *d3dSurface = NULL;

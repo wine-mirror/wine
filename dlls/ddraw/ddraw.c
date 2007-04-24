@@ -1578,6 +1578,7 @@ IDirectDrawImpl_RecreateAllSurfaces(IDirectDrawImpl *This)
  *  Format: The requested format
  *  Usage, Pool: D3DUSAGE and D3DPOOL of the surface
  *  level: The mipmap level
+ *  Face: The cube map face type
  *  Surface: Pointer to pass the created surface back at
  *  SharedHandle: NULL
  *
@@ -1591,6 +1592,7 @@ D3D7CB_CreateSurface(IUnknown *device,
                      UINT Width, UINT Height,
                      WINED3DFORMAT Format,
                      DWORD Usage, WINED3DPOOL Pool, UINT level,
+                     WINED3DCUBEMAP_FACES Face,
                      IWineD3DSurface **Surface,
                      HANDLE *SharedHandle)
 {
