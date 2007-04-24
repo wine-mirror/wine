@@ -2070,7 +2070,7 @@ ImageList_Remove (HIMAGELIST himl, INT i)
 	    return TRUE;
 	}
 
-        himl->cMaxImage = himl->cInitial + 1;
+        himl->cMaxImage = himl->cInitial + himl->cGrow - 1;
         himl->cCurImage = 0;
         for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
              himl->nOvlIdx[nCount] = -1;

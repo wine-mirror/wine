@@ -897,7 +897,15 @@ static void image_list_init(HIMAGELIST himl)
 static void check_iml_data(HIMAGELIST himl, INT cx, INT cy, INT cur, INT max,
                            INT width, INT height, INT bpp, const char *comment)
 {
-    BOOL ret;
+    INT ret, cxx, cyy;
+
+    ret = ImageList_GetImageCount(himl);
+    ok(ret == cur, "expected cur %d got %d\n", cur, ret);
+
+    ret = ImageList_GetIconSize(himl, &cxx, &cyy);
+    ok(ret, "ImageList_GetIconSize failed\n");
+    ok(cxx == cx, "wrong cx %d (expected %d)\n", cxx, cx);
+    ok(cyy == cy, "wrong cy %d (expected %d)\n", cyy, cy);
 
     iml_clear_stream_data();
     ret = ImageList_Write(himl, &Test_Stream.is);
@@ -940,6 +948,18 @@ static void test_imagelist_storage(void)
     ret = ImageList_Remove(himl, 7);
     ok(ret, "ImageList_Remove failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 20, 27, BMP_CX * 4, BMP_CX * 7, 24, "4");
+
+    ret = ImageList_Remove(himl, -2);
+    ok(!ret, "ImageList_Remove(-2) should fail\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 20, 27, BMP_CX * 4, BMP_CX * 7, 24, "5");
+
+    ret = ImageList_Remove(himl, 20);
+    ok(!ret, "ImageList_Remove(20) should fail\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 20, 27, BMP_CX * 4, BMP_CX * 7, 24, "6");
+
+    ret = ImageList_Remove(himl, -1);
+    ok(ret, "ImageList_Remove(-1) failed\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 0, 4, BMP_CX * 4, BMP_CX * 1, 24, "7");
 
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
