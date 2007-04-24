@@ -901,6 +901,12 @@ static struct regsvr_coclass const coclass_list[] = {
 	"quartz.dll",
 	"Both"
     },
+    {   &CLSID_MPEG1Splitter,
+        "MPEG-I Stream Splitter",
+        NULL,
+        "quartz.dll",
+        "Both"
+    },
     {   &CLSID_AVIDec,
 	"AVI Decompressor",
 	NULL,
@@ -1093,6 +1099,33 @@ static struct regsvr_filter const filter_list[] = {
 	    },
 	    { 0xFFFFFFFF },
 	}
+    },
+    {   &CLSID_MPEG1Splitter,
+        &CLSID_LegacyAmFilterCategory,
+        {'M','P','E','G','-','I',' ','S','t','r','e','a','m',' ','S','p','l','i','t','t','e','r',0},
+        0x600000,
+        {   {   0,
+                {   { &MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1Audio },
+                    { &MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1Video },
+                    { &MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1System },
+                    { &MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1VideoCD },
+                    { NULL }
+                },
+            },
+            {   REG_PINFLAG_B_OUTPUT,
+                {   { &MEDIATYPE_Audio, &MEDIASUBTYPE_MPEG1Packet },
+                    { &MEDIATYPE_Audio, &MEDIASUBTYPE_MPEG1AudioPayload },
+                    { NULL }
+                },
+            },
+            {   REG_PINFLAG_B_OUTPUT,
+                {   { &MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Packet },
+                    { &MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Payload },
+                    { NULL }
+                },
+            },
+            { 0xFFFFFFFF },
+        }
     },
     {   &CLSID_VideoRenderer,
 	&CLSID_LegacyAmFilterCategory,

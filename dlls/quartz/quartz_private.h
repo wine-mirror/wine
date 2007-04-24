@@ -48,6 +48,7 @@ HRESULT FilterMapper_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT StdMemAllocator_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv);
+HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv);
