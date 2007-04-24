@@ -352,7 +352,7 @@ static void on_remove_click(HWND dialog)
 
     drive = (struct drive *) item.lParam;
 
-    WINE_ERR("unixpath: %s\n", drive->unixpath);
+    WINE_TRACE("unixpath: %s\n", drive->unixpath);
 
     if (drive->letter == 'C')
     {
