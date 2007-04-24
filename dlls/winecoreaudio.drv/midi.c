@@ -296,6 +296,85 @@ static DWORD MIDIOut_Data(WORD wDevID, DWORD dwParam)
     return MMSYSERR_NOERROR;
 }
 
+static DWORD MIDIOut_LongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
+{
+    LPBYTE lpData;
+    OSStatus err = noErr;
+
+    TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
+
+    /* Note: MS doc does not say much about the dwBytesRecorded member of the MIDIHDR structure
+     * but it seems to be used only for midi input.
+     * Taking a look at the WAVEHDR structure (which is quite similar) confirms this assumption.
+     */
+
+    if (wDevID >= MIDIOut_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (lpMidiHdr == NULL) {
+	WARN("Invalid Parameter\n");
+	return MMSYSERR_INVALPARAM;
+    }
+
+    lpData = (LPBYTE) lpMidiHdr->lpData;
+
+    if (lpData == NULL)
+	return MIDIERR_UNPREPARED;
+    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
+	return MIDIERR_UNPREPARED;
+    if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
+	return MIDIERR_STILLPLAYING;
+    lpMidiHdr->dwFlags &= ~MHDR_DONE;
+    lpMidiHdr->dwFlags |= MHDR_INQUEUE;
+
+    /* FIXME: MS doc is not 100% clear. Will lpData only contain system exclusive
+     * data, or can it also contain raw MIDI data, to be split up and sent to
+     * modShortData() ?
+     * If the latest is true, then the following WARNing will fire up
+     */
+    if (lpData[0] != 0xF0 || lpData[lpMidiHdr->dwBufferLength - 1] != 0xF7) {
+	WARN("Alledged system exclusive buffer is not correct\n\tPlease report with MIDI file\n");
+    }
+
+    TRACE("dwBufferLength=%u !\n", lpMidiHdr->dwBufferLength);
+    TRACE("                 %02X %02X %02X ... %02X %02X %02X\n",
+	  lpData[0], lpData[1], lpData[2], lpData[lpMidiHdr->dwBufferLength-3],
+	  lpData[lpMidiHdr->dwBufferLength-2], lpData[lpMidiHdr->dwBufferLength-1]);
+
+
+    if (lpData[0] != 0xF0) {
+        /* System Exclusive */
+        ERR("Add missing 0xF0 marker at the beginning of system exclusive byte stream\n");
+    }
+    if (lpData[lpMidiHdr->dwBufferLength - 1] != 0xF7) {
+        /* Send end of System Exclusive */
+        ERR("Add missing 0xF7 marker at the end of system exclusive byte stream\n");
+    }
+    if (destinations[wDevID].caps.wTechnology == MOD_SYNTH) /* FIXME */
+    {
+        err = MusicDeviceSysEx(destinations[wDevID].synth, (const UInt8 *) lpData, lpMidiHdr->dwBufferLength);
+        if (err != noErr)
+        {
+            ERR("MusicDeviceSysEx(%p, %p, %d) return %c%c%c%c\n", destinations[wDevID].synth, lpData, lpMidiHdr->dwBufferLength, (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
+            return MMSYSERR_ERROR;
+        }
+    }
+    else
+    {
+        FIXME("MOD_MIDIPORT\n");
+    }
+
+    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+    lpMidiHdr->dwFlags |= MHDR_DONE;
+    if (MIDI_NotifyClient(wDevID, MOM_DONE, (DWORD)lpMidiHdr, 0L) != MMSYSERR_NOERROR) {
+	WARN("can't notify client !\n");
+	return MMSYSERR_INVALPARAM;
+    }
+    return MMSYSERR_NOERROR;
+}
+
 /**************************************************************************
  * 			MIDIOut_Prepare				[internal]
  */
@@ -390,8 +469,7 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
         case MODM_DATA:
             return MIDIOut_Data(wDevID, dwParam1);
         case MODM_LONGDATA:
-            TRACE("Unsupported message (08%x)\n", wMsg);
-            return MMSYSERR_NOTSUPPORTED;
+            return MIDIOut_LongData(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
         case MODM_PREPARE:
             return MIDIOut_Prepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
         case MODM_UNPREPARE:
