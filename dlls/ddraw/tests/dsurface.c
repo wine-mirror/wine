@@ -943,6 +943,105 @@ static void EnumTest(void)
     IDirectDrawSurface_Release(surface);
 }
 
+HRESULT WINAPI SurfaceCounter(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
+{
+    UINT *num = context;
+    (*num)++;
+    IDirectDrawSurface_Release(surface);
+    return DDENUMRET_OK;
+}
+
+static void AttachmentTest(void)
+{
+    HRESULT hr;
+    IDirectDraw7 *dd7;
+    IDirectDrawSurface7 *surface1, *surface2, *surface3;
+    DDSURFACEDESC2 ddsd;
+    UINT num;
+    DDSCAPS2 caps = {DDSCAPS_TEXTURE, 0, 0, 0};
+    HWND window = CreateWindow( "static", "ddraw_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+
+    hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
+    ok(hr == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_MIPMAPCOUNT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+    U2(ddsd).dwMipMapCount = 3; /* Will create 128x128, 64x64, 32x32 */
+    ddsd.dwWidth = 128;
+    ddsd.dwHeight = 128;
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface1, NULL);
+    ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
+
+    /* ROOT */
+    num = 0;
+    IDirectDrawSurface7_EnumAttachedSurfaces(surface1, &num, SurfaceCounter);
+    ok(num == 1, "Mipmap root has %d surfaces attached, expected 1\n", num);
+    /* DONE ROOT */
+
+    /* LEVEL 1 */
+    hr = IDirectDrawSurface7_GetAttachedSurface(surface1, &caps, &surface2);
+    ok(hr == DD_OK, "GetAttachedSurface returned %08x\n", hr);
+    num = 0;
+    IDirectDrawSurface7_EnumAttachedSurfaces(surface2, &num, SurfaceCounter);
+    ok(num == 1, "First mip level has %d surfaces attached, expected 1\n", num);
+    /* DONE LEVEL 1 */
+
+    /* LEVEL 2 */
+    hr = IDirectDrawSurface7_GetAttachedSurface(surface2, &caps, &surface3);
+    ok(hr == DD_OK, "GetAttachedSurface returned %08x\n", hr);
+    IDirectDrawSurface7_Release(surface2);
+    num = 0;
+    IDirectDrawSurface7_EnumAttachedSurfaces(surface3, &num, SurfaceCounter);
+    ok(num == 0, "Secound mip level has %d surfaces attached, expected 1\n", num);
+    /* Done level 2 */
+    /* Mip level 3 is still needed */
+
+    /* Try to attach a 16x16 miplevel - Should not work as far I can see */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    ddsd.dwWidth = 16;
+    ddsd.dwHeight = 16;
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface2, NULL);
+    ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
+
+    hr = IDirectDrawSurface7_AddAttachedSurface(surface1, surface2);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Attaching a 16x16 surface to a 128x128 texture root returned %08x\n", hr);
+    hr = IDirectDrawSurface7_AddAttachedSurface(surface2, surface1);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Attaching a 128x128 texture root to a 16x16 texture returned %08x\n", hr);
+    hr = IDirectDrawSurface7_AddAttachedSurface(surface3, surface2);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Attaching a 16x16 surface to a 32x32 texture mip level returned %08x\n", hr);
+    hr = IDirectDrawSurface7_AddAttachedSurface(surface2, surface3);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Attaching a 32x32 texture mip level to a 16x16 surface returned %08x\n", hr);
+
+    IDirectDrawSurface7_Release(surface3);
+    IDirectDrawSurface7_Release(surface2);
+    IDirectDrawSurface7_Release(surface1);
+
+    hr = IDirectDraw7_SetCooperativeLevel(dd7, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(hr == DD_OK, "SetCooperativeLevel returned %08x\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_BACKBUFFERCOUNT | DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
+    U2(ddsd).dwBackBufferCount = 2;
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface1, NULL);
+    ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
+
+    num = 0;
+    IDirectDrawSurface7_EnumAttachedSurfaces(surface1, &num, SurfaceCounter);
+    ok(num == 1, "Primary surface has %d surfaces attached, expected 1\n", num);
+    IDirectDrawSurface7_Release(surface1);
+
+    hr =IDirectDraw7_SetCooperativeLevel(dd7, NULL, DDSCL_NORMAL);
+    ok(hr == DD_OK, "SetCooperativeLevel returned %08x\n", hr);
+    IDirectDraw7_Release(dd7);
+}
+
 START_TEST(dsurface)
 {
     if (!CreateDirectDraw())
@@ -955,5 +1054,6 @@ START_TEST(dsurface)
     GetDDInterface_4();
     GetDDInterface_7();
     EnumTest();
+    AttachmentTest();
     ReleaseDirectDraw();
 }

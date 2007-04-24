@@ -794,8 +794,16 @@ IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurface7 *iface,
     if(Surf == This)
         return DDERR_CANNOTATTACHSURFACE; /* unchecked */
 
-    /* TODO MSDN: "You can attach only z-buffer surfaces with this method."
-     * But apparently backbuffers and mipmaps can be attached too. */
+    /* MSDN: Only Z buffer surfaces can be attached. An old comment said that apparently
+     * mipmaps and back buffers can be attached too, although our tests say no.
+     */
+    if(!(Surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
+    {
+        /* Write a fixme until we know for sure what is going on */
+        FIXME("Application tries to attach a non Z buffer surface. caps %08x\n",
+              Surf->surface_desc.ddsCaps.dwCaps);
+        return DDERR_CANNOTATTACHSURFACE;
+    }
 
     /* Set MIPMAPSUBLEVEL if this seems to be one */
     if (This->surface_desc.ddsCaps.dwCaps &
