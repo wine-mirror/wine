@@ -1309,8 +1309,8 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
      *   to get the correct ABC widths.   */
 
      if (!(lpABC = usp_zero_alloc(sizeof(ABC) * cGlyphs))) return E_OUTOFMEMORY;
-
-     memset(pABC, 0, sizeof(ABC));
+     if (pABC)
+        memset(pABC, 0, sizeof(ABC));
 
     /* FIXME: set pGoffset to more reasonable values */
      if (!GetCharABCWidthsI(get_cache_hdc(psc), 0, cGlyphs, (WORD *) pwGlyphs, lpABC ))
@@ -1330,15 +1330,19 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
                                   lpABC[wcnt].abcA,
                                   lpABC[wcnt].abcB,
                                   lpABC[wcnt].abcC, wcnt);
-             pABC->abcA += lpABC[wcnt].abcA;
-             pABC->abcB += lpABC[wcnt].abcB;
-             pABC->abcC += lpABC[wcnt].abcC;
+             if (pABC)
+             {
+                pABC->abcA += lpABC[wcnt].abcA;
+                pABC->abcB += lpABC[wcnt].abcB;
+                pABC->abcC += lpABC[wcnt].abcC;
+             }
              piAdvance[wcnt] = lpABC[wcnt].abcA + lpABC[wcnt].abcB + lpABC[wcnt].abcC;
              pGoffset[wcnt].du = 0;
              pGoffset[wcnt].dv = 0;
          }
      }
-     TRACE("Total for run:   abcA=%d,  abcB=%d,  abcC=%d\n", pABC->abcA, pABC->abcB, pABC->abcC);
+     if (pABC)
+        TRACE("Total for run:   abcA=%d,  abcB=%d,  abcC=%d\n", pABC->abcA, pABC->abcB, pABC->abcC);
 
      usp_free(lpABC);
      return S_OK;
