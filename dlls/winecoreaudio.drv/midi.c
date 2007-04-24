@@ -265,6 +265,58 @@ static DWORD MIDIOut_Close(WORD wDevID)
     return ret;
 }
 
+
+/**************************************************************************
+ * 			MIDIOut_Prepare				[internal]
+ */
+static DWORD MIDIOut_Prepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
+{
+    TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
+
+    if (wDevID >= MIDIOut_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    /* MS doc says that dwFlags must be set to zero, but (kinda funny) MS mciseq drivers
+     * asks to prepare MIDIHDR which dwFlags != 0.
+     * So at least check for the inqueue flag
+     */
+    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
+	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0 ||
+	lpMidiHdr->dwBufferLength >= 0x10000ul) {
+	WARN("%p %p %08x %lu/%d\n", lpMidiHdr, lpMidiHdr->lpData,
+	           lpMidiHdr->dwFlags, sizeof(MIDIHDR), dwSize);
+	return MMSYSERR_INVALPARAM;
+    }
+
+    lpMidiHdr->lpNext = 0;
+    lpMidiHdr->dwFlags |= MHDR_PREPARED;
+    lpMidiHdr->dwFlags &= ~MHDR_DONE;
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				MIDIOut_Unprepare			[internal]
+ */
+static DWORD MIDIOut_Unprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
+{
+    TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
+
+    if (wDevID >= MIDIOut_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+    if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0)
+	return MMSYSERR_INVALPARAM;
+    if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
+	return MIDIERR_STILLPLAYING;
+
+    lpMidiHdr->dwFlags &= ~MHDR_PREPARED;
+
+    return MMSYSERR_NOERROR;
+}
+
 static DWORD MIDIOut_GetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("wDevID=%d lpCaps=%p dwSize=%d\n", wDevID, lpCaps, dwSize);
@@ -307,15 +359,16 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
             return MIDIOut_Close(wDevID);
         case MODM_DATA:
         case MODM_LONGDATA:
+            TRACE("Unsupported message (08%x)\n", wMsg);
+            return MMSYSERR_NOTSUPPORTED;
         case MODM_PREPARE:
+            return MIDIOut_Prepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
         case MODM_UNPREPARE:
-                TRACE("Unsupported message (08%x)\n", wMsg);
-                return MMSYSERR_NOTSUPPORTED;
+            return MIDIOut_Unprepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
         case MODM_GETDEVCAPS:
             return MIDIOut_GetDevCaps(wDevID, (LPMIDIOUTCAPSW) dwParam1, dwParam2);
         case MODM_GETNUMDEVS:
             return MIDIOut_GetNumDevs();
-
         case MODM_GETVOLUME:
         case MODM_SETVOLUME:
         case MODM_RESET:
