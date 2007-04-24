@@ -30,6 +30,11 @@ extern "C" {
 #define SECPKG_STATE_WORKSTATION                        0x08
 #define SECPKG_STATE_STANDALONE                         0x10
 
+/* Version magics as passed to or returned from Sp[Lsa,Mode]ModeInitialize */
+#define SECPKG_INTERFACE_VERSION                     0x10000
+#define SECPKG_INTERFACE_VERSION_2                   0x20000
+#define SECPKG_INTERFACE_VERSION_3                   0x40000
+
 /* enum definitions for Secure Service Provider/Authentication Packages */
 typedef enum _LSA_TOKEN_INFORMATION_TYPE {
     LsaTokenInformationNull,
@@ -336,6 +341,10 @@ typedef NTSTATUS (NTAPI SpAddCredentialsFn)(LSA_SEC_HANDLE, PUNICODE_STRING,
  PUNICODE_STRING, ULONG, PVOID, PVOID, PVOID, PTimeStamp);
 typedef NTSTATUS (NTAPI SpSetExtendedInformationFn)(
  SECPKG_EXTENDED_INFORMATION_CLASS, PSECPKG_EXTENDED_INFORMATION);
+typedef NTSTATUS (NTAPI SpSetContextAttributesFn)(LSA_SEC_HANDLE, ULONG, PVOID,
+ ULONG);
+typedef NTSTATUS (NTAPI SpSetCredentialsAttributesFn)(LSA_SEC_HANDLE, ULONG,
+ PVOID, ULONG);
 
 /* User-mode functions implemented by SSP/AP obtainable by a dispatch table */
 typedef NTSTATUS (NTAPI SpInstanceInitFn)(ULONG, PSECPKG_DLL_FUNCTIONS,
@@ -388,8 +397,20 @@ typedef struct SECPKG_FUNCTION_TABLE {
     SpQueryContextAttributesFn *SpQueryContextAttributes;
     SpAddCredentialsFn *SpAddCredentials;
     SpSetExtendedInformationFn *SetExtendedInformation;
+    /* Packages with version SECPKG_INTERFACE_VERSION end here */
+    SpSetContextAttributesFn *SpSetContextAttributes;
+    /* Packages with version SECPKG_INTERFACE_VERSION_2 end here */
+    SpSetCredentialsAttributesFn *SetCredentialsAttributes;
+    /* Packages with version SECPKG_INTERFACE_VERSION_3 end here */
 } SECPKG_FUNCTION_TABLE,
  *PSECPKG_FUNCTION_TABLE;
+
+/* Helper macros to find the size of SECPKG_FUNCTION_TABLE */
+#define SECPKG_FUNCTION_TABLE_SIZE_1 offsetof(SECPKG_FUNCTION_TABLE, \
+    SpSetContextAttributes)
+#define SECPKG_FUNCTION_TABLE_SIZE_2 offsetof(SECPKG_FUNCTION_TABLE, \
+    SetCredentialsAttributes)
+#define SECPKG_FUNCTION_TABLE_SIZE_3 sizeof(SECPKG_FUNCTION_TABLE)
 
 /* dispatch tables of user-mode functions implemented by SSP/AP */
 typedef struct SECPKG_USER_FUNCTION_TABLE {
