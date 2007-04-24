@@ -499,6 +499,31 @@ static DWORD MIDIOut_SetVolume(WORD wDevID, DWORD dwVolume)
     return MMSYSERR_NOTSUPPORTED;
 }
 
+static DWORD MIDIOut_Reset(WORD wDevID)
+{
+    unsigned chn;
+
+    TRACE("%d\n", wDevID);
+
+    if (wDevID >= MIDIOut_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+    if (destinations[wDevID].caps.wTechnology == MOD_SYNTH)
+    {
+        for (chn = 0; chn < 16; chn++) {
+            /* turn off every note */
+            MusicDeviceMIDIEvent(destinations[wDevID].synth, 0xB0 | chn, 0x7B, 0, 0);
+            /* remove sustain on channel */
+            MusicDeviceMIDIEvent(destinations[wDevID].synth, 0xB0 | chn, 0x40, 0, 0);
+        }
+    }
+    else FIXME("MOD_MIDIPORT\n");
+
+    /* FIXME: the LongData buffers must also be returned to the app */
+    return MMSYSERR_NOERROR;
+}
+
 /**************************************************************************
 * 				modMessage
 */
@@ -533,6 +558,7 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
         case MODM_SETVOLUME:
             return MIDIOut_SetVolume(wDevID, dwParam1);
         case MODM_RESET:
+            return MIDIOut_Reset(wDevID);
         default:
             TRACE("Unsupported message (08%x)\n", wMsg);
     }
