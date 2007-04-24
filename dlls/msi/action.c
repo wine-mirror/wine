@@ -3498,8 +3498,8 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
     uipath = strdupW( file->TargetPath );
     p = strrchrW(uipath,'\\');
     if (p)
-        p[1]=0;
-    MSI_RecordSetStringW( uirow, 1, &p[2] );
+        p[0]=0;
+    MSI_RecordSetStringW( uirow, 1, &p[1] );
     MSI_RecordSetStringW( uirow, 2, uipath);
     ui_actiondata( package, szSelfRegModules, uirow);
     msiobj_release( &uirow->hdr );
