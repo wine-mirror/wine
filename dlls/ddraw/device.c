@@ -1742,13 +1742,23 @@ IDirect3DDeviceImpl_7_SetRenderTarget(IDirect3DDevice7 *iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     IDirectDrawSurfaceImpl *Target = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, NewTarget);
+    HRESULT hr;
     TRACE("(%p)->(%p,%08x): Relay\n", This, NewTarget, Flags);
 
     /* Flags: Not used */
 
-    return IWineD3DDevice_SetRenderTarget(This->wineD3DDevice,
-                                          0,
-                                          Target ? Target->WineD3DSurface : NULL);
+    hr = IWineD3DDevice_SetRenderTarget(This->wineD3DDevice,
+                                        0,
+                                        Target ? Target->WineD3DSurface : NULL);
+    if(hr != D3D_OK)
+    {
+        return hr;
+    }
+    IDirectDrawSurface7_AddRef(NewTarget);
+    IDirectDrawSurface7_Release(ICOM_INTERFACE(This->target, IDirectDrawSurface7));
+    This->target = Target;
+    IDirect3DDeviceImpl_UpdateDepthStencil(This);
+    return D3D_OK;
 }
 
 static HRESULT WINAPI
@@ -5134,4 +5144,41 @@ IDirect3DDeviceImpl_CreateHandle(IDirect3DDeviceImpl *This)
 
     TRACE("Returning %d\n", This->numHandles);
     return This->numHandles;
+}
+
+/*****************************************************************************
+ * IDirect3DDeviceImpl_UpdateDepthStencil
+ *
+ * Checks the current render target for attached depth stencils and sets the
+ * WineD3D depth stencil accordingly.
+ *
+ * Returns:
+ *  The depth stencil state to set if creating the device
+ *
+ *****************************************************************************/
+WINED3DZBUFFERTYPE
+IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
+{
+    IDirectDrawSurface7 *depthStencil = NULL;
+    IDirectDrawSurfaceImpl *dsi;
+    static DDSCAPS2 depthcaps = { DDSCAPS_ZBUFFER, 0, 0, 0 };
+
+    IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(This->target, IDirectDrawSurface7),
+                                           &depthcaps,
+                                           &depthStencil);
+    if(!depthStencil)
+    {
+        TRACE("Setting wined3d depth stencil to NULL\n");
+        IWineD3DDevice_SetDepthStencilSurface(This->wineD3DDevice,
+                                              NULL);
+        return WINED3DZB_FALSE;
+    }
+
+    dsi = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, depthStencil);
+    TRACE("Setting wined3d depth stencil to %p (wined3d %p)\n", dsi, dsi->WineD3DSurface);
+    IWineD3DDevice_SetDepthStencilSurface(This->wineD3DDevice,
+                                          dsi->WineD3DSurface);
+
+    IDirectDrawSurface7_Release(depthStencil);
+    return WINED3DZB_TRUE;
 }

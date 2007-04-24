@@ -825,12 +825,10 @@ IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurface7 *iface,
     Surf->first_attached = This->first_attached;
     This->next_attached = Surf;
 
-    /* Check if we attach a back buffer to the primary */
-    if(Surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER &&
-       This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    /* Check if the WineD3D depth stencil needs updating */
+    if(This->ddraw->d3ddevice)
     {
-        IWineD3DDevice_SetDepthStencilSurface(This->ddraw->wineD3DDevice,
-                                              Surf->WineD3DSurface);
+        IDirect3DDeviceImpl_UpdateDepthStencil(This->ddraw->d3ddevice);
     }
 
     /* MSDN: 
@@ -892,12 +890,10 @@ IDirectDrawSurfaceImpl_DeleteAttachedSurface(IDirectDrawSurface7 *iface,
     Surf->next_attached = NULL;
     Surf->first_attached = Surf;
 
-    /* Check if we attach a back buffer to the primary */
-    if(Surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER &&
-       This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    /* Check if the WineD3D depth stencil needs updating */
+    if(This->ddraw->d3ddevice)
     {
-        IWineD3DDevice_SetDepthStencilSurface(This->ddraw->wineD3DDevice,
-                                              NULL);
+        IDirect3DDeviceImpl_UpdateDepthStencil(This->ddraw->d3ddevice);
     }
 
     IDirectDrawSurface7_Release(Attach);

@@ -360,6 +360,7 @@ const GUID IID_D3DDEVICE_WineD3D;
 /* Helper functions */
 HRESULT IDirect3DImpl_GetCaps(IWineD3D *WineD3D, D3DDEVICEDESC *Desc123, D3DDEVICEDESC7 *Desc7);
 DWORD IDirect3DDeviceImpl_CreateHandle(IDirect3DDeviceImpl *This);
+WINED3DZBUFFERTYPE IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This);
 
 /* Structures */
 struct EnumTextureFormatsCBS
