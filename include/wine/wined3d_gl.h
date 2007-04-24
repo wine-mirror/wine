@@ -283,6 +283,15 @@ typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFVARBPROC) (GLenum pname, const GL
 #define GL_MODELVIEW31_ARB                0x873F
 #endif
 typedef void (APIENTRY * PGLFNGLWEIGHTPOINTERARB) (GLint size, GLenum type, GLsizei stride, GLvoid* pointer);
+typedef void (APIENTRY * PGLFNGLWEIGHTBV) (GLint size, const GLbyte *weights);
+typedef void (APIENTRY * PGLFNGLWEIGHTSV) (GLint size, const GLshort *weights);
+typedef void (APIENTRY * PGLFNGLWEIGHTIV) (GLint size, const GLint *weights);
+typedef void (APIENTRY * PGLFNGLWEIGHTFV) (GLint size, const GLfloat *weights);
+typedef void (APIENTRY * PGLFNGLWEIGHTDV) (GLint size, const GLdouble *weights);
+typedef void (APIENTRY * PGLFNGLWEIGHTUBV) (GLint size, const GLubyte *weights);
+typedef void (APIENTRY * PGLFNGLWEIGHTUSV) (GLint size, const GLushort *weights);
+typedef void (APIENTRY * PGLFNGLWEIGHTUIV) (GLint size, const GLuint *weights);
+typedef void (APIENTRY * PGLFNGLVERTEXBLENDARB) (GLint count);
 /* GL_ARB_pixel_buffer_object */
 #ifndef GL_ARB_pixel_buffer_object
 #define GL_ARB_pixel_buffer_object 1
@@ -1595,6 +1604,15 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNGETCOMPRESSEDTEXIMAGEPROC,      glGetCompressedTexImageARB); \
     /* GL_ARB_vertex_blend */ \
     USE_GL_FUNC(PGLFNGLWEIGHTPOINTERARB,             glWeightPointerARB); \
+    USE_GL_FUNC(PGLFNGLWEIGHTBV,                     glWeightbvARB); \
+    USE_GL_FUNC(PGLFNGLWEIGHTSV,                     glWeightsvARB); \
+    USE_GL_FUNC(PGLFNGLWEIGHTIV,                     glWeightivARB); \
+    USE_GL_FUNC(PGLFNGLWEIGHTFV,                     glWeightfvARB); \
+    USE_GL_FUNC(PGLFNGLWEIGHTDV,                     glWeightdvARB); \
+    USE_GL_FUNC(PGLFNGLWEIGHTUBV,                    glWeightubvARB); \
+    USE_GL_FUNC(PGLFNGLWEIGHTUSV,                    glWeightusvARB); \
+    USE_GL_FUNC(PGLFNGLWEIGHTUIV,                    glWeightuivARB); \
+    USE_GL_FUNC(PGLFNGLVERTEXBLENDARB,               glVertexBlendARB); \
     /* GL_ARB_vertex_buffer_object */ \
     USE_GL_FUNC(PGLFNBINDBUFFERARBPROC,              glBindBufferARB); \
     USE_GL_FUNC(PGLFNDELETEBUFFERSARBPROC,           glDeleteBuffersARB); \
