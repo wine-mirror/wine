@@ -1042,6 +1042,202 @@ static void AttachmentTest(void)
     IDirectDraw7_Release(dd7);
 }
 
+struct compare
+{
+    DWORD width, height;
+    DWORD caps, caps2;
+    UINT mips;
+};
+
+HRESULT WINAPI CubeTestLvl2Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
+{
+    UINT *mips = context;
+
+    (*mips)++;
+    IDirectDrawSurface7_EnumAttachedSurfaces(surface,
+                                             context,
+                                             CubeTestLvl2Enum);
+
+    return DDENUMRET_OK;
+}
+
+HRESULT WINAPI CubeTestLvl1Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
+{
+    UINT mips = 0;
+    UINT *num = (UINT *) context;
+    static const struct compare expected[] =
+    {
+        {
+            128, 128,
+            DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX,
+            DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEZ,
+            7
+        },
+        {
+            128, 128,
+            DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX,
+            DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEZ,
+            7
+        },
+        {
+            128, 128,
+            DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX,
+            DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEY,
+            7
+        },
+        {
+            128, 128,
+            DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX,
+            DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEY,
+            7
+        },
+        {
+            128, 128,
+            DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX,
+            DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEX,
+            7
+        },
+        {
+            64, 64, /* This is the first mipmap */
+            DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX,
+            DDSCAPS2_MIPMAPSUBLEVEL | DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEX,
+            6
+        },
+    };
+
+    mips = 0;
+    IDirectDrawSurface7_EnumAttachedSurfaces(surface,
+                                             &mips,
+                                             CubeTestLvl2Enum);
+
+    ok(desc->dwWidth == expected[*num].width, "Surface width is %d expected %d\n", desc->dwWidth, expected[*num].width);
+    ok(desc->dwHeight == expected[*num].height, "Surface height is %d expected %d\n", desc->dwHeight, expected[*num].height);
+    ok(desc->ddsCaps.dwCaps == expected[*num].caps, "Surface caps are %08x expected %08x\n", desc->ddsCaps.dwCaps, expected[*num].caps);
+    ok(desc->ddsCaps.dwCaps2 == expected[*num].caps2, "Surface caps2 are %08x expected %08x\n", desc->ddsCaps.dwCaps2, expected[*num].caps2);
+    ok(mips == expected[*num].mips, "Surface has %d mipmaps, expected %d\n", mips, expected[*num].mips);
+
+    (*num)++;
+
+    IDirectDrawSurface7_Release(surface);
+
+    return DDENUMRET_OK;
+}
+
+static void CubeMapTest(void)
+{
+    IDirectDraw7 *dd7 = NULL;
+    IDirectDrawSurface7 *cubemap;
+    DDSURFACEDESC2 ddsd;
+    HRESULT hr;
+    UINT num = 0;
+    struct enumstruct ctx;
+
+    hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
+    ok(hr == DD_OK, "IDirectDraw::QueryInterface returned %08x\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+    ddsd.dwWidth = 128;
+    ddsd.dwHeight = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP | DDSCAPS_SYSTEMMEMORY;
+    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
+
+    /* D3DFMT_R5G6B5 */
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0xF800;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x07E0;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x001F;
+
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &cubemap, NULL);
+    ok(hr == DD_OK, "IDirectDraw7::CreateSurface returned %08x\n", hr);
+
+    hr = IDirectDrawSurface7_GetSurfaceDesc(cubemap, &ddsd);
+    ok(hr == DD_OK, "IDirectDrawSurface7_GetSurfaceDesc returned %08x\n", hr);
+    ok(ddsd.ddsCaps.dwCaps == (DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX),
+       "Root Caps are %08x\n", ddsd.ddsCaps.dwCaps);
+    ok(ddsd.ddsCaps.dwCaps2 == (DDSCAPS2_CUBEMAP_POSITIVEX | DDSCAPS2_CUBEMAP),
+       "Root Caps2 are %08x\n", ddsd.ddsCaps.dwCaps2);
+
+    IDirectDrawSurface7_EnumAttachedSurfaces(cubemap,
+                                             &num,
+                                             CubeTestLvl1Enum);
+    trace("Enumerated %d surfaces in total\n", num);
+    ok(num == 6, "Surface has %d attachments\n", num);
+    IDirectDrawSurface7_Release(cubemap);
+
+    /* What happens if I do not specify any faces? */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+    ddsd.dwWidth = 128;
+    ddsd.dwHeight = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP | DDSCAPS_SYSTEMMEMORY;
+    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP;
+
+    /* D3DFMT_R5G6B5 */
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0xF800;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x07E0;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x001F;
+
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &cubemap, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw7::CreateSurface asking for a cube map without faces returned %08x\n", hr);
+
+    /* Cube map faces without a cube map? */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+    ddsd.dwWidth = 128;
+    ddsd.dwHeight = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP | DDSCAPS_SYSTEMMEMORY;
+    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP_ALLFACES;
+
+    /* D3DFMT_R5G6B5 */
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0xF800;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x07E0;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x001F;
+
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &cubemap, NULL);
+    ok(hr == DDERR_INVALIDCAPS, "IDirectDraw7::CreateSurface returned %08x\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+    ddsd.dwWidth = 128;
+    ddsd.dwHeight = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP | DDSCAPS_SYSTEMMEMORY;
+    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP_POSITIVEX;
+
+    /* D3DFMT_R5G6B5 */
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0xF800;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x07E0;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x001F;
+
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &cubemap, NULL);
+    ok(hr == DDERR_INVALIDCAPS, "IDirectDraw7::CreateSurface returned %08x\n", hr);
+
+    /* Make sure everything is cleaned up properly. Use the enumSurfaces test infrastructure */
+    memset(&ctx, 0, sizeof(ctx));
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(DDSURFACEDESC);
+    hr = IDirectDraw_EnumSurfaces(lpDD, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL, (DDSURFACEDESC *) &ddsd, (void *) &ctx, enumCB);
+    ok(hr == DD_OK, "IDirectDraw_EnumSurfaces returned %08x\n", hr);
+    ok(ctx.count == 0, "%d surfaces enumerated, expected 0\n", ctx.count);
+
+    IDirectDraw7_Release(dd7);
+}
+
 START_TEST(dsurface)
 {
     if (!CreateDirectDraw())
@@ -1055,5 +1251,6 @@ START_TEST(dsurface)
     GetDDInterface_7();
     EnumTest();
     AttachmentTest();
+    CubeMapTest();
     ReleaseDirectDraw();
 }
