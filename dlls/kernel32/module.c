@@ -678,6 +678,24 @@ static const WCHAR *get_dll_system_path(void)
     return cached_path;
 }
 
+/******************************************************************
+ *		get_module_path_end
+ *
+ * Returns the end of the directory component of the module path.
+ */
+static inline const WCHAR *get_module_path_end(const WCHAR *module)
+{
+    const WCHAR *p;
+    const WCHAR *mod_end = module;
+    if (!module) return mod_end;
+
+    if ((p = strrchrW( mod_end, '\\' ))) mod_end = p;
+    if ((p = strrchrW( mod_end, '/' ))) mod_end = p;
+    if (mod_end == module + 2 && module[1] == ':') mod_end++;
+    if (mod_end == module && module[0] && module[1] == ':') mod_end += 2;
+
+    return mod_end;
+}
 
 /******************************************************************
  *		MODULE_get_dll_load_path
@@ -697,16 +715,17 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
 
     /* adjust length for module name */
 
-    if (!module) module = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
     if (module)
+        mod_end = get_module_path_end( module );
+    /* if module is NULL or doesn't contain a path, fall back to directory
+     * process was loaded from */
+    if (module == mod_end)
     {
-        mod_end = module;
-        if ((p = strrchrW( mod_end, '\\' ))) mod_end = p;
-        if ((p = strrchrW( mod_end, '/' ))) mod_end = p;
-        if (mod_end == module + 2 && module[1] == ':') mod_end++;
-        if (mod_end == module && module[0] && module[1] == ':') mod_end += 2;
-        len += (mod_end - module) + 1;
+        module = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+        mod_end = get_module_path_end( module );
     }
+    len += (mod_end - module) + 1;
+
     len += strlenW( system_path ) + 2;
 
     /* get the PATH variable */
