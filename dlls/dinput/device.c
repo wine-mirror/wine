@@ -124,14 +124,14 @@ void _dump_DIPROPHEADER(LPCDIPROPHEADER diph) {
     }
 }
 
-void _dump_OBJECTINSTANCEA(DIDEVICEOBJECTINSTANCEA *ddoi) {
+void _dump_OBJECTINSTANCEA(const DIDEVICEOBJECTINSTANCEA *ddoi) {
     if (TRACE_ON(dinput)) {
         DPRINTF("    - enumerating : %s ('%s') - %2d - 0x%08x - %s\n",
 		debugstr_guid(&ddoi->guidType), _dump_dinput_GUID(&ddoi->guidType), ddoi->dwOfs, ddoi->dwType, ddoi->tszName);
     }
 }
 
-void _dump_OBJECTINSTANCEW(DIDEVICEOBJECTINSTANCEW *ddoi) {
+void _dump_OBJECTINSTANCEW(const DIDEVICEOBJECTINSTANCEW *ddoi) {
     if (TRACE_ON(dinput)) {
         DPRINTF("    - enumerating : %s ('%s'), - %2d - 0x%08x - %s\n",
 		debugstr_guid(&ddoi->guidType), _dump_dinput_GUID(&ddoi->guidType), ddoi->dwOfs, ddoi->dwType, debugstr_w(ddoi->tszName));
@@ -217,7 +217,7 @@ void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) {
 }
 
 /* Conversion between internal data buffer and external data buffer */
-void fill_DataFormat(void *out, const void *in, DataFormat *df) {
+void fill_DataFormat(void *out, const void *in, const DataFormat *df) {
     int i;
     const char *in_c = in;
     char *out_c = (char *) out;
@@ -436,7 +436,7 @@ failed:
 }
 
 /* find an object by it's offset in a data format */
-static int offset_to_object(DataFormat *df, int offset)
+static int offset_to_object(const DataFormat *df, int offset)
 {
     int i;
 
@@ -460,14 +460,14 @@ static int id_to_object(LPCDIDATAFORMAT df, int id)
     return -1;
 }
 
-int id_to_offset(DataFormat *df, int id)
+int id_to_offset(const DataFormat *df, int id)
 {
     int obj = id_to_object(df->wine_df, id);
 
     return obj >= 0 && df->offsets ? df->offsets[obj] : -1;
 }
 
-int find_property(DataFormat *df, LPCDIPROPHEADER ph)
+int find_property(const DataFormat *df, LPCDIPROPHEADER ph)
 {
     switch (ph->dwHow)
     {

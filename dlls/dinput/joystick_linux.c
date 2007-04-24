@@ -120,7 +120,7 @@ static const GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903
   {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
 };
 
-static void _dump_DIDEVCAPS(LPDIDEVCAPS lpDIDevCaps)
+static void _dump_DIDEVCAPS(const DIDEVCAPS *lpDIDevCaps)
 {
     TRACE("dwSize: %d\n", lpDIDevCaps->dwSize);
     TRACE("dwFlags: %08x\n", lpDIDevCaps->dwFlags);

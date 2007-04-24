@@ -118,7 +118,7 @@ static void _dump_DIEFFECT_flags(DWORD dwFlags)
     }       
 }
 
-static void _dump_DIENVELOPE(LPDIENVELOPE env)
+static void _dump_DIENVELOPE(LPCDIENVELOPE env)
 {
     if (env->dwSize != sizeof(DIENVELOPE)) {
         WARN("Non-standard DIENVELOPE structure size (%d instead of %d).\n",
@@ -128,31 +128,31 @@ static void _dump_DIENVELOPE(LPDIENVELOPE env)
 	  env->dwAttackLevel, env->dwAttackTime, env->dwFadeLevel, env->dwFadeTime);
 } 
 
-static void _dump_DICONSTANTFORCE(LPDICONSTANTFORCE frc)
+static void _dump_DICONSTANTFORCE(LPCDICONSTANTFORCE frc)
 {
     TRACE("Constant force has magnitude %d\n", frc->lMagnitude);
 }
 
-static void _dump_DIPERIODIC(LPDIPERIODIC frc)
+static void _dump_DIPERIODIC(LPCDIPERIODIC frc)
 {
     TRACE("Periodic force has magnitude %d, offset %d, phase %d, period %d\n",
 	  frc->dwMagnitude, frc->lOffset, frc->dwPhase, frc->dwPeriod);
 }
 
-static void _dump_DIRAMPFORCE(LPDIRAMPFORCE frc)
+static void _dump_DIRAMPFORCE(LPCDIRAMPFORCE frc)
 {
     TRACE("Ramp force has start %d, end %d\n",
 	  frc->lStart, frc->lEnd);
 }
 
-static void _dump_DICONDITION(LPDICONDITION frc)
+static void _dump_DICONDITION(LPCDICONDITION frc)
 {
     TRACE("Condition has offset %d, pos/neg coefficients %d and %d, pos/neg saturations %d and %d, deadband %d\n",
 	  frc->lOffset, frc->lPositiveCoefficient, frc->lNegativeCoefficient,
 	  frc->dwPositiveSaturation, frc->dwNegativeSaturation, frc->lDeadBand);
 }
 
-static void _dump_DICUSTOMFORCE(LPDICUSTOMFORCE frc)
+static void _dump_DICUSTOMFORCE(LPCDICUSTOMFORCE frc)
 {
     unsigned int i;
     TRACE("Custom force uses %d channels, sample period %d.  Has %d samples at %p.\n",

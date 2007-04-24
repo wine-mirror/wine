@@ -68,13 +68,13 @@ struct IDirectInputDevice2AImpl
 };
 
 /* Routines to do DataFormat / WineFormat conversions */
-extern void fill_DataFormat(void *out, const void *in, DataFormat *df) ;
+extern void fill_DataFormat(void *out, const void *in, const DataFormat *df) ;
 extern HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *format);
 extern void release_DataFormat(DataFormat *df) ;
 extern void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, DWORD seq);
 /* Helper functions to work with data format */
-extern int id_to_offset(DataFormat *df, int id);
-extern int find_property(DataFormat *df, LPCDIPROPHEADER ph);
+extern int id_to_offset(const DataFormat *df, int id);
+extern int find_property(const DataFormat *df, LPCDIPROPHEADER ph);
 
 /**
  * Callback Data used by specific callback 
@@ -92,8 +92,8 @@ extern BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA, LPVOID);
 extern void _dump_cooperativelevel_DI(DWORD dwFlags) ;
 extern void _dump_EnumObjects_flags(DWORD dwFlags) ;
 extern void _dump_DIPROPHEADER(LPCDIPROPHEADER diph) ;
-extern void _dump_OBJECTINSTANCEA(DIDEVICEOBJECTINSTANCEA *ddoi) ;
-extern void _dump_OBJECTINSTANCEW(DIDEVICEOBJECTINSTANCEW *ddoi) ;
+extern void _dump_OBJECTINSTANCEA(const DIDEVICEOBJECTINSTANCEA *ddoi) ;
+extern void _dump_OBJECTINSTANCEW(const DIDEVICEOBJECTINSTANCEW *ddoi) ;
 extern void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) ;
 extern const char *_dump_dinput_GUID(const GUID *guid) ;
 
