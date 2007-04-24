@@ -265,6 +265,29 @@ static DWORD MIDIOut_Close(WORD wDevID)
     return ret;
 }
 
+static DWORD MIDIOut_GetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
+{
+    TRACE("wDevID=%d lpCaps=%p dwSize=%d\n", wDevID, lpCaps, dwSize);
+
+    if (lpCaps == NULL) {
+	WARN("Invalid Parameter\n");
+	return MMSYSERR_INVALPARAM;
+    }
+
+    if (wDevID >= MIDIOut_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+    memcpy(lpCaps, &destinations[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD MIDIOut_GetNumDevs(void)
+{
+    TRACE("\n");
+    return MIDIOut_NumDevs;
+}
+
 /**************************************************************************
 * 				modMessage
 */
@@ -286,8 +309,13 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
         case MODM_LONGDATA:
         case MODM_PREPARE:
         case MODM_UNPREPARE:
+                TRACE("Unsupported message (08%x)\n", wMsg);
+                return MMSYSERR_NOTSUPPORTED;
         case MODM_GETDEVCAPS:
+            return MIDIOut_GetDevCaps(wDevID, (LPMIDIOUTCAPSW) dwParam1, dwParam2);
         case MODM_GETNUMDEVS:
+            return MIDIOut_GetNumDevs();
+
         case MODM_GETVOLUME:
         case MODM_SETVOLUME:
         case MODM_RESET:
