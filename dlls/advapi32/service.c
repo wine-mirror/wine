@@ -62,7 +62,7 @@ typedef struct service_data_t
         LPHANDLER_FUNCTION_EX handler_ex;
     } handler;
     LPVOID context;
-    SERVICE_STATUS status;
+    SERVICE_STATUS_PROCESS status;
     HANDLE thread;
     BOOL unicode : 1;
     BOOL extended : 1; /* uses handler_ex instead of handler? */
@@ -499,7 +499,7 @@ static BOOL service_handle_get_status(HANDLE pipe, const service_data *service)
 /******************************************************************************
  * service_get_status
  */
-static BOOL service_get_status(HANDLE pipe, LPSERVICE_STATUS status)
+static BOOL service_get_status(HANDLE pipe, LPSERVICE_STATUS_PROCESS status)
 {
     DWORD cmd[2], count = 0;
     BOOL r;
@@ -1470,6 +1470,8 @@ static DWORD service_start_process(struct sc_service *hsvc)
     r = CreateProcessW(NULL, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     if (r)
     {
+        /* FIXME: Put the pid into the service struct */
+
         handles[1] = pi.hProcess;
         ret = WaitForMultipleObjectsEx(2, handles, FALSE, 30000, FALSE);
         if(ret != WAIT_OBJECT_0)
@@ -1645,16 +1647,11 @@ BOOL WINAPI QueryServiceStatusEx(SC_HANDLE hService, SC_STATUS_TYPE InfoLevel,
     pipe = service_open_pipe(hsvc->name);
     if (pipe != INVALID_HANDLE_VALUE)
     {
-        r = service_get_status(pipe, (LPSERVICE_STATUS)&pSvcStatusData);
+        r = service_get_status(pipe, pSvcStatusData);
         CloseHandle(pipe);
         if (r)
             return TRUE;
     }
-
-    /* FIXME: this would be the pid from service_start_process() */
-    pSvcStatusData->dwProcessId = 0;
-    /* service is running in a process that is not a system process */
-    pSvcStatusData->dwServiceFlags = 0;
 
     TRACE("Failed to read service status\n");
 
