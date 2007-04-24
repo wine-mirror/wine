@@ -449,6 +449,56 @@ static DWORD MIDIOut_GetNumDevs(void)
     return MIDIOut_NumDevs;
 }
 
+static DWORD MIDIOut_GetVolume(WORD wDevID, DWORD *lpdwVolume)
+{
+    TRACE("%d\n", wDevID);
+
+    if (wDevID >= MIDIOut_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+    if (lpdwVolume == NULL) {
+	WARN("Invalid Parameter\n");
+	return MMSYSERR_INVALPARAM;
+    }
+
+    if (destinations[wDevID].caps.wTechnology == MOD_SYNTH)
+    {
+        float left;
+        float right;
+        AudioUnit_GetVolume(destinations[wDevID].synth, &left, &right);
+
+        *lpdwVolume = ((WORD) left * 0xFFFFl) + (((WORD) right * 0xFFFFl) << 16);
+
+        return MMSYSERR_NOERROR;
+    }
+
+    return MMSYSERR_NOTSUPPORTED;
+}
+
+static DWORD MIDIOut_SetVolume(WORD wDevID, DWORD dwVolume)
+{
+    TRACE("%d\n", wDevID);
+
+    if (wDevID >= MIDIOut_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+    if (destinations[wDevID].caps.wTechnology == MOD_SYNTH)
+    {
+        float left;
+        float right;
+
+        left  = LOWORD(dwVolume) / 65535.0f;
+        right = HIWORD(dwVolume) / 65535.0f;
+        AudioUnit_SetVolume(destinations[wDevID].synth, left, right);
+
+        return MMSYSERR_NOERROR;
+    }
+
+    return MMSYSERR_NOTSUPPORTED;
+}
+
 /**************************************************************************
 * 				modMessage
 */
@@ -479,7 +529,9 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
         case MODM_GETNUMDEVS:
             return MIDIOut_GetNumDevs();
         case MODM_GETVOLUME:
+            return MIDIOut_GetVolume(wDevID, (DWORD*)dwParam1);
         case MODM_SETVOLUME:
+            return MIDIOut_SetVolume(wDevID, dwParam1);
         case MODM_RESET:
         default:
             TRACE("Unsupported message (08%x)\n", wMsg);
