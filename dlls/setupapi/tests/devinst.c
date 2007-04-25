@@ -62,6 +62,11 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
     devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, notnull);
 
     error = GetLastError();
+    if (error == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("SetupDiCreateDeviceInfoListExW is not implemented\n");
+        return;
+    }
     ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
     ok(error == ERROR_INVALID_PARAMETER, "GetLastError returned wrong value : %d, (expected %d)\n", error, ERROR_INVALID_PARAMETER);
 
