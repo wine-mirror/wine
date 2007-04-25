@@ -1177,14 +1177,14 @@ static void output_external_link_imports( DLLSPEC *spec )
 void output_stubs( DLLSPEC *spec )
 {
     const char *name, *exp_name;
-    int i, pos;
+    int i, count;
 
     if (!has_stubs( spec )) return;
 
     output( "\n/* stub functions */\n\n" );
     output( "\t.text\n" );
 
-    for (i = pos = 0; i < spec->nb_entry_points; i++)
+    for (i = count = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *odp = &spec->entry_points[i];
         if (odp->type != TYPE_STUB) continue;
@@ -1202,9 +1202,9 @@ void output_stubs( DLLSPEC *spec )
             output( "1:" );
             if (exp_name)
             {
-                output( "\tleal .L__wine_stub_strings+%d-1b(%%eax),%%ecx\n", pos );
+                output( "\tleal .L%s_string-1b(%%eax),%%ecx\n", name );
                 output( "\tpushl %%ecx\n" );
-                pos += strlen(exp_name) + 1;
+                count++;
             }
             else
                 output( "\tpushl $%d\n", odp->ordinal );
@@ -1215,8 +1215,8 @@ void output_stubs( DLLSPEC *spec )
         {
             if (exp_name)
             {
-                output( "\tpushl $.L__wine_stub_strings+%d\n", pos );
-                pos += strlen(exp_name) + 1;
+                output( "\tpushl $.L%s_string\n", name );
+                count++;
             }
             else
                 output( "\tpushl $%d\n", odp->ordinal );
@@ -1226,17 +1226,20 @@ void output_stubs( DLLSPEC *spec )
         output_function_size( name );
     }
 
-    if (pos)
+    if (count)
     {
         output( "\t%s\n", get_asm_string_section() );
-        output( ".L__wine_stub_strings:\n" );
         for (i = 0; i < spec->nb_entry_points; i++)
         {
             ORDDEF *odp = &spec->entry_points[i];
             if (odp->type != TYPE_STUB) continue;
             exp_name = odp->name ? odp->name : odp->export_name;
             if (exp_name)
+            {
+                name = get_stub_name( odp, spec );
+                output( ".L%s_string:\n", name );
                 output( "\t%s \"%s\"\n", get_asm_string_keyword(), exp_name );
+            }
         }
     }
 }
