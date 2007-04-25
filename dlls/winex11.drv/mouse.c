@@ -560,9 +560,11 @@ static Cursor create_xcursor_cursor( Display *display, CURSORICONINFO *ptr )
  */
 static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
 {
-    Pixmap pixmapBits, pixmapMask, pixmapMaskInv, pixmapAll;
+    Pixmap pixmapBits, pixmapMask, pixmapMaskInv = 0, pixmapAll;
     XColor fg, bg;
     Cursor cursor = None;
+    POINT hotspot;
+    char *bitMask32 = NULL;
 
 #ifdef HAVE_X11_XCURSOR_XCURSOR_H
     if (pXcursorImageLoadCursor) return create_xcursor_cursor( display, ptr );
@@ -589,6 +591,7 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
         TRACE("Bitmap %dx%d planes=%d bpp=%d bytesperline=%d\n",
             ptr->nWidth, ptr->nHeight, ptr->bPlanes, ptr->bBitsPerPixel,
             ptr->nWidthBytes);
+
         /* Create a pixmap and transfer all the bits to it */
 
         /* NOTE: Following hack works, but only because XFree depth
@@ -635,6 +638,10 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
 
             switch (ptr->bBitsPerPixel)
             {
+            case 32:
+                bitMask32 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                       ptr->nWidth * ptr->nHeight / 8 );
+                /* Fallthrough */
             case 24:
                 rbits = 8;
                 gbits = 8;
@@ -683,6 +690,20 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
                    	red = green = blue = 0;
                    	switch (ptr->bBitsPerPixel)
                    	{
+			case 32:
+			    theChar = theImage[byteIndex++];
+			    blue = theChar;
+			    theChar = theImage[byteIndex++];
+			    green = theChar;
+			    theChar = theImage[byteIndex++];
+			    red = theChar;
+			    theChar = theImage[byteIndex++];
+                            /* If the alpha channel is >5% transparent,
+                             * assume that we can add it to the bitMask32.
+                             */
+                            if (theChar > 0x0D)
+                                *(bitMask32 + (y*xmax+x)/8) |= 1 << (x & 7);
+			    break;
                    	case 24:
                    	    theChar = theImage[byteIndex++];
                    	    blue = theChar;
@@ -767,73 +788,82 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
         /* Now create the 2 pixmaps for bits and mask */
 
         pixmapBits = XCreatePixmap( display, root_window, ptr->nWidth, ptr->nHeight, 1 );
-        pixmapMask = XCreatePixmap( display, root_window, ptr->nWidth, ptr->nHeight, 1 );
-        pixmapMaskInv = XCreatePixmap( display, root_window, ptr->nWidth, ptr->nHeight, 1 );
-
-        /* Make sure everything went OK so far */
-
-        if (pixmapBits && pixmapMask && pixmapMaskInv)
+        if (ptr->bBitsPerPixel != 32)
         {
-            POINT hotspot;
+            pixmapMaskInv = XCreatePixmap( display, root_window, ptr->nWidth, ptr->nHeight, 1 );
+            pixmapMask = XCreatePixmap( display, root_window, ptr->nWidth, ptr->nHeight, 1 );
 
-            /* We have to do some magic here, as cursors are not fully
-             * compatible between Windows and X11. Under X11, there
-             * are only 3 possible color cursor: black, white and
-             * masked. So we map the 4th Windows color (invert the
-             * bits on the screen) to black and an additional white bit on
-             * an other place (+1,+1). This require some boolean arithmetic:
-             *
-             *         Windows          |          X11
-             * And    Xor      Result   |   Bits     Mask     Result
-             *  0      0     black      |    0        1     background
-             *  0      1     white      |    1        1     foreground
-             *  1      0     no change  |    X        0     no change
-             *  1      1     inverted   |    0        1     background
-             *
-             * which gives:
-             *  Bits = not 'And' and 'Xor' or 'And2' and 'Xor2'
-             *  Mask = not 'And' or 'Xor' or 'And2' and 'Xor2'
-             *
-             * FIXME: apparently some servers do support 'inverted' color.
-             * I don't know if it's correct per the X spec, but maybe
-             * we ought to take advantage of it.  -- AJ
-             */
-            XSetFunction( display, gc, GXcopy );
-            XCopyArea( display, pixmapAll, pixmapBits, gc,
-                       0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XCopyArea( display, pixmapAll, pixmapMask, gc,
-                       0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XCopyArea( display, pixmapAll, pixmapMaskInv, gc,
-                       0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, gc, GXand );
-            XCopyArea( display, pixmapAll, pixmapMaskInv, gc,
-                       0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, gc, GXandReverse );
-            XCopyArea( display, pixmapAll, pixmapBits, gc,
-                       0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, gc, GXorReverse );
-            XCopyArea( display, pixmapAll, pixmapMask, gc,
-                       0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-            /* Additional white */
-            XSetFunction( display, gc, GXor );
-            XCopyArea( display, pixmapMaskInv, pixmapMask, gc,
-                       0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
-            XCopyArea( display, pixmapMaskInv, pixmapBits, gc,
-                       0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
-            XSetFunction( display, gc, GXcopy );
-
-            /* Make sure hotspot is valid */
-            hotspot.x = ptr->ptHotSpot.x;
-            hotspot.y = ptr->ptHotSpot.y;
-            if (hotspot.x < 0 || hotspot.x >= ptr->nWidth ||
-                hotspot.y < 0 || hotspot.y >= ptr->nHeight)
+            /* Make sure everything went OK so far */
+            if (pixmapBits && pixmapMask && pixmapMaskInv)
             {
-                hotspot.x = ptr->nWidth / 2;
-                hotspot.y = ptr->nHeight / 2;
+                /* We have to do some magic here, as cursors are not fully
+                 * compatible between Windows and X11. Under X11, there are
+                 * only 3 possible color cursor: black, white and masked. So
+                 * we map the 4th Windows color (invert the bits on the screen)
+                 * to black and an additional white bit on an other place
+                 * (+1,+1). This require some boolean arithmetic:
+                 *
+                 *         Windows          |          X11
+                 * And    Xor      Result   |   Bits     Mask     Result
+                 *  0      0     black      |    0        1     background
+                 *  0      1     white      |    1        1     foreground
+                 *  1      0     no change  |    X        0     no change
+                 *  1      1     inverted   |    0        1     background
+                 *
+                 * which gives:
+                 *  Bits = not 'And' and 'Xor' or 'And2' and 'Xor2'
+                 *  Mask = not 'And' or 'Xor' or 'And2' and 'Xor2'
+                 *
+                 * FIXME: apparently some servers do support 'inverted' color.
+                 * I don't know if it's correct per the X spec, but maybe we
+                 * ought to take advantage of it.  -- AJ
+                 */
+                XSetFunction( display, gc, GXcopy );
+                XCopyArea( display, pixmapAll, pixmapBits, gc,
+                           0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
+                XCopyArea( display, pixmapAll, pixmapMask, gc,
+                           0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
+                XCopyArea( display, pixmapAll, pixmapMaskInv, gc,
+                           0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
+                XSetFunction( display, gc, GXand );
+                XCopyArea( display, pixmapAll, pixmapMaskInv, gc,
+                           0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
+                XSetFunction( display, gc, GXandReverse );
+                XCopyArea( display, pixmapAll, pixmapBits, gc,
+                           0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
+                XSetFunction( display, gc, GXorReverse );
+                XCopyArea( display, pixmapAll, pixmapMask, gc,
+                           0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
+                /* Additional white */
+                XSetFunction( display, gc, GXor );
+                XCopyArea( display, pixmapMaskInv, pixmapMask, gc,
+                           0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
+                XCopyArea( display, pixmapMaskInv, pixmapBits, gc,
+                           0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
+                XSetFunction( display, gc, GXcopy );
             }
+        }
+        else
+        {
+            pixmapMask = XCreateBitmapFromData( display, root_window,
+                                                bitMask32, ptr->nWidth,
+                                                ptr->nHeight );
+            HeapFree( GetProcessHeap(), 0, bitMask32 );
+        }
+
+        /* Make sure hotspot is valid */
+        hotspot.x = ptr->ptHotSpot.x;
+        hotspot.y = ptr->ptHotSpot.y;
+        if (hotspot.x < 0 || hotspot.x >= ptr->nWidth ||
+            hotspot.y < 0 || hotspot.y >= ptr->nHeight)
+        {
+            hotspot.x = ptr->nWidth / 2;
+            hotspot.y = ptr->nHeight / 2;
+        }
+
+        if (pixmapBits && pixmapMask)
             cursor = XCreatePixmapCursor( display, pixmapBits, pixmapMask,
                                           &fg, &bg, hotspot.x, hotspot.y );
-        }
 
         /* Now free everything */
 
