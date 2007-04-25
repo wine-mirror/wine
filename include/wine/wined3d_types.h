@@ -1255,6 +1255,8 @@ typedef enum _WINED3DDECLTYPE {
   WINED3DDECLTYPE_UNUSED    = 17,
 } WINED3DDECLTYPE;
 
+#define WINED3DDECL_END() {0xFF,0,WINED3DDECLTYPE_UNUSED,0,0,0,-1}
+
 typedef struct WineDirect3DStridedData {
     BYTE     *lpData;        /* Pointer to start of data               */
     DWORD     dwStride;      /* Stride between occurances of this data */

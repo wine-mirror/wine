@@ -1577,8 +1577,145 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice*
     return hr;
 }
 
+static size_t ConvertFvfToDeclaration(DWORD fvf, WINED3DVERTEXELEMENT** ppVertexElements) {
+
+    unsigned int idx, idx2;
+    unsigned int offset;
+    BOOL has_pos = (fvf & WINED3DFVF_POSITION_MASK) != 0;
+    BOOL has_blend = (fvf & WINED3DFVF_XYZB5) > WINED3DFVF_XYZRHW;
+    BOOL has_blend_idx = has_blend &&
+       (((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB5) ||
+        (fvf & WINED3DFVF_LASTBETA_D3DCOLOR) ||
+        (fvf & WINED3DFVF_LASTBETA_UBYTE4));
+    BOOL has_normal = (fvf & WINED3DFVF_NORMAL) != 0;
+    BOOL has_psize = (fvf & WINED3DFVF_PSIZE) != 0;
+    BOOL has_diffuse = (fvf & WINED3DFVF_DIFFUSE) != 0;
+    BOOL has_specular = (fvf & WINED3DFVF_SPECULAR) !=0;
+
+    DWORD num_textures = (fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
+    DWORD texcoords = (fvf & 0x00FF0000) >> 16;
+
+    WINED3DVERTEXELEMENT end_element = WINED3DDECL_END();
+    WINED3DVERTEXELEMENT *elements = NULL;
+
+    unsigned int size;
+    DWORD num_blends = 1 + (((fvf & WINED3DFVF_XYZB5) - WINED3DFVF_XYZB1) >> 1);
+    if (has_blend_idx) num_blends--;
+
+    /* Compute declaration size */
+    size = has_pos + (has_blend && num_blends > 0) + has_blend_idx + has_normal +
+           has_psize + has_diffuse + has_specular + num_textures + 1;
+
+    /* convert the declaration */
+    elements = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WINED3DVERTEXELEMENT));
+    if (!elements)
+        return 0;
+
+    memcpy(&elements[size-1], &end_element, sizeof(WINED3DVERTEXELEMENT));
+    idx = 0;
+    if (has_pos) {
+        if (!has_blend && (fvf & WINED3DFVF_XYZRHW)) {
+            elements[idx].Type = WINED3DDECLTYPE_FLOAT4;
+            elements[idx].Usage = WINED3DDECLUSAGE_POSITIONT;
+        }
+        else {
+            elements[idx].Type = WINED3DDECLTYPE_FLOAT3;
+            elements[idx].Usage = WINED3DDECLUSAGE_POSITION;
+        }
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_blend && (num_blends > 0)) {
+        if (((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2) && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR))
+            elements[idx].Type = WINED3DDECLTYPE_D3DCOLOR;
+        else
+            elements[idx].Type = WINED3DDECLTYPE_FLOAT1 + num_blends - 1;
+        elements[idx].Usage = WINED3DDECLUSAGE_BLENDWEIGHT;
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_blend_idx) {
+        if (fvf & WINED3DFVF_LASTBETA_UBYTE4 ||
+            (((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2) && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)))
+            elements[idx].Type = WINED3DDECLTYPE_UBYTE4;
+        else if (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)
+            elements[idx].Type = WINED3DDECLTYPE_D3DCOLOR;
+        else
+            elements[idx].Type = WINED3DDECLTYPE_FLOAT1;
+        elements[idx].Usage = WINED3DDECLUSAGE_BLENDINDICES;
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_normal) {
+        elements[idx].Type = WINED3DDECLTYPE_FLOAT3;
+        elements[idx].Usage = WINED3DDECLUSAGE_NORMAL;
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_psize) {
+        elements[idx].Type = WINED3DDECLTYPE_FLOAT1;
+        elements[idx].Usage = WINED3DDECLUSAGE_PSIZE;
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_diffuse) {
+        elements[idx].Type = WINED3DDECLTYPE_D3DCOLOR;
+        elements[idx].Usage = WINED3DDECLUSAGE_COLOR;
+        elements[idx].UsageIndex = 0;
+        idx++;
+    }
+    if (has_specular) {
+        elements[idx].Type = WINED3DDECLTYPE_D3DCOLOR;
+        elements[idx].Usage = WINED3DDECLUSAGE_COLOR;
+        elements[idx].UsageIndex = 1;
+        idx++;
+    }
+    for (idx2 = 0; idx2 < num_textures; idx2++) {
+        unsigned int numcoords = (texcoords >> (idx2*2)) & 0x03;
+        switch (numcoords) {
+            case WINED3DFVF_TEXTUREFORMAT1:
+                elements[idx].Type = WINED3DDECLTYPE_FLOAT1;
+                break;
+            case WINED3DFVF_TEXTUREFORMAT2:
+                elements[idx].Type = WINED3DDECLTYPE_FLOAT2;
+                break;
+            case WINED3DFVF_TEXTUREFORMAT3:
+                elements[idx].Type = WINED3DDECLTYPE_FLOAT3;
+                break;
+            case WINED3DFVF_TEXTUREFORMAT4:
+                elements[idx].Type = WINED3DDECLTYPE_FLOAT4;
+                break;
+        }
+        elements[idx].Usage = WINED3DDECLUSAGE_TEXCOORD;
+        elements[idx].UsageIndex = idx2;
+        idx++;
+    }
+
+    /* Now compute offsets, and initialize the rest of the fields */
+    for (idx = 0, offset = 0; idx < size-1; idx++) {
+        elements[idx].Stream = 0;
+        elements[idx].Method = WINED3DDECLMETHOD_DEFAULT;
+        elements[idx].Offset = offset;
+        offset += WINED3D_ATR_SIZE(elements[idx].Type) * WINED3D_ATR_TYPESIZE(elements[idx].Type);
+    }
+
+    *ppVertexElements = elements;
+    return size;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3DDevice* iface, IWineD3DVertexDeclaration** ppVertexDeclaration, IUnknown *Parent, DWORD Fvf) {
-    return E_NOTIMPL;
+    WINED3DVERTEXELEMENT* elements = NULL;
+    size_t size;
+    DWORD hr;
+
+    size = ConvertFvfToDeclaration(Fvf, &elements);
+    if (size == 0) return WINED3DERR_OUTOFVIDEOMEMORY;
+
+    hr = IWineD3DDevice_CreateVertexDeclaration(iface, ppVertexDeclaration, Parent, elements, size);
+    HeapFree(GetProcessHeap(), 0, elements);
+    if (hr != S_OK) return hr;
+
+    return WINED3D_OK;
 }
 
 /* http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/programmable/vertexshaders/vscreate.asp */
