@@ -241,8 +241,14 @@ static VOID test_CreateRemoteThread(void)
     ok(ret != 0, "DuplicateHandle failed, err=%u\n", GetLastError());
 
     /* create suspended remote thread with entry point SetEvent() */
+    SetLastError(0xdeadbeef);
     hThread = CreateRemoteThread(hProcess, NULL, 0, threadFunc_SetEvent,
                                  hRemoteEvent, CREATE_SUSPENDED, &tid);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("CreateRemoteThread is not implemented\n");
+        goto cleanup;
+    }
     ok(hThread != NULL, "CreateRemoteThread failed, err=%u\n", GetLastError());
     ok(tid != 0, "null tid\n");
     ret = SuspendThread(hThread);
@@ -291,6 +297,7 @@ static VOID test_CreateRemoteThread(void)
     if (ret) ok(exitcode == 0, "SetEvent succeeded, expected to fail\n");
     CloseHandle(hThread);
 
+cleanup:
     TerminateProcess(hProcess, 0);
     CloseHandle(hEvent);
     CloseHandle(hProcess);
