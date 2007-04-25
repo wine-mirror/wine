@@ -1356,6 +1356,7 @@ static void test_select(void)
     struct timeval select_timeout;
     select_thread_params thread_params;
     HANDLE thread_handle;
+    DWORD id;
 
     fdRead = socket(AF_INET, SOCK_STREAM, 0);
     ok( (fdRead != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
@@ -1395,7 +1396,7 @@ static void test_select(void)
     thread_params.s = fdRead;
     thread_params.ReadKilled = FALSE;
     server_ready = CreateEventW(NULL, TRUE, FALSE, NULL);
-    thread_handle = CreateThread (NULL, 0, (LPTHREAD_START_ROUTINE) &SelectReadThread, &thread_params, 0, NULL );
+    thread_handle = CreateThread (NULL, 0, (LPTHREAD_START_ROUTINE) &SelectReadThread, &thread_params, 0, &id );
     ok ( (thread_handle != NULL), "CreateThread failed unexpectedly: %d\n", GetLastError());
 
     WaitForSingleObject (server_ready, INFINITE);
@@ -1429,6 +1430,7 @@ static void test_accept(void)
     struct sockaddr_in address;
     select_thread_params thread_params;
     HANDLE thread_handle = NULL;
+    DWORD id;
 
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == INVALID_SOCKET)
@@ -1463,7 +1465,7 @@ static void test_accept(void)
     thread_params.s = server_socket;
     thread_params.ReadKilled = FALSE;
     thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) AcceptKillThread,
-        &thread_params, 0, NULL);
+        &thread_params, 0, &id);
     if (thread_handle == NULL)
     {
         trace("error creating thread: %d\n", GetLastError());
@@ -1641,6 +1643,7 @@ static void test_send(void)
     const int buflen = 1024*1024;
     char *buffer = NULL;
     int ret;
+    DWORD id;
 
     src = socket(AF_INET, SOCK_STREAM, 0);
     if (src == INVALID_SOCKET)
@@ -1696,7 +1699,7 @@ static void test_send(void)
         goto end;
     }
 
-    hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, NULL);
+    hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
     if (hThread == NULL)
     {
         ok(0, "CreateThread failed, error %d\n", GetLastError());
@@ -1739,6 +1742,7 @@ static void test_write_events(void)
     int len;
     u_long one = 1;
     int ret;
+    DWORD id;
 
     src = socket(AF_INET, SOCK_STREAM, 0);
     if (src == INVALID_SOCKET)
@@ -1794,7 +1798,7 @@ static void test_write_events(void)
         goto end;
     }
 
-    hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, NULL);
+    hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
     if (hThread == NULL)
     {
         ok(0, "CreateThread failed, error %d\n", GetLastError());
