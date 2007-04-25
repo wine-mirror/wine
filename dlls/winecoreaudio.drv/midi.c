@@ -52,6 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 static MIDIClientRef wineMIDIClient = NULL;
 
 static DWORD MIDIOut_NumDevs = 0;
+static DWORD MIDIIn_NumDevs = 0;
 
 typedef struct tagMIDIDestination {
     /* graph and synth are only used for MIDI Synth */
@@ -64,9 +65,22 @@ typedef struct tagMIDIDestination {
     WORD wFlags;
 } MIDIDestination;
 
+typedef struct tagMIDISource {
+    MIDIPortRef port;
+    WORD wDevID;
+    int state; /* 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
+    MIDIINCAPSW caps;
+    MIDIOPENDESC midiDesc;
+    LPMIDIHDR lpQueueHdr;
+    WORD wFlags;
+    DWORD startTime;
+} MIDISource;
+
+
 #define MAX_MIDI_SYNTHS 1
 
 MIDIDestination *destinations;
+MIDISource *sources;
 
 extern int SynthUnit_CreateDefaultSynthUnit(AUGraph *graph, AudioUnit *synth);
 extern int SynthUnit_Initialize(AudioUnit synth, AUGraph graph);
@@ -93,9 +107,36 @@ LONG CoreAudio_MIDIInit(void)
     MIDIOut_NumDevs = MAX_MIDI_SYNTHS;
     MIDIOut_NumDevs += numDest;
 
-    TRACE("MIDIOut_NumDevs %d\n", MIDIOut_NumDevs);
+    MIDIIn_NumDevs = MIDIGetNumberOfSources();
+
+    TRACE("MIDIOut_NumDevs %d MIDIIn_NumDevs %d\n", MIDIOut_NumDevs, MIDIIn_NumDevs);
 
     destinations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MIDIOut_NumDevs * sizeof(MIDIDestination));
+    sources = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MIDIIn_NumDevs * sizeof(MIDISource));
+
+    /* initialize sources */
+    for (i = 0; i < MIDIIn_NumDevs; i++)
+    {
+        MIDIEndpointRef endpoint = MIDIGetSource(i);
+
+        sources[i].wDevID = i;
+
+        CoreMIDI_GetObjectName(endpoint, szPname, sizeof(szPname));
+        MultiByteToWideChar(CP_ACP, 0, szPname, -1, sources[i].caps.szPname, sizeof(sources[i].caps.szPname)/sizeof(WCHAR));
+
+        name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("WineInputPort.%d.%u"), i, getpid());
+        MIDIInputPortCreate(wineMIDIClient, name, MIDIIn_ReadProc, &sources[i].wDevID, &sources[i].port);
+        CFRelease(name);
+
+        MIDIPortConnectSource(sources[i].port, endpoint, NULL);
+
+        sources[i].state = 0;
+        /* FIXME */
+        sources[i].caps.wMid = 0x00FF; 	/* Manufac ID */
+        sources[i].caps.wPid = 0x0001; 	/* Product ID */
+        sources[i].caps.vDriverVersion = 0x0001;
+        sources[i].caps.dwSupport = 0;
+    }
 
     /* initialise MIDI synths */
     for (i = 0; i < MAX_MIDI_SYNTHS; i++)
@@ -142,6 +183,8 @@ LONG CoreAudio_MIDIRelease(void)
 {
     TRACE("\n");
     if (wineMIDIClient) MIDIClientDispose(wineMIDIClient); /* MIDIClientDispose will close all ports */
+
+    HeapFree(GetProcessHeap(), 0, sources);
     HeapFree(GetProcessHeap(), 0, destinations);
     return 1;
 }
@@ -565,6 +608,33 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
     return MMSYSERR_NOTSUPPORTED;
 }
 
+/**************************************************************************
+* 			midMessage
+*/
+DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2)
+{
+    TRACE("%d %08x %08x %08x %08x\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    switch (wMsg) {
+        case DRVM_INIT:
+        case DRVM_EXIT:
+        case DRVM_ENABLE:
+        case DRVM_DISABLE:
+            return 0;
+        case MIDM_OPEN:
+        case MIDM_CLOSE:
+        case MIDM_ADDBUFFER:
+        case MIDM_PREPARE:
+        case MIDM_UNPREPARE:
+        case MIDM_GETDEVCAPS:
+        case MIDM_GETNUMDEVS:
+        case MIDM_START:
+        case MIDM_STOP:
+        case MIDM_RESET:
+        default:
+            TRACE("Unsupported message\n");
+    }
+    return MMSYSERR_NOTSUPPORTED;
+}
 #else
 
 DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2)
@@ -573,4 +643,10 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
     return MMSYSERR_NOTENABLED;
 }
 
+DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
+                                  DWORD dwParam1, DWORD dwParam2)
+{
+    TRACE("%08x, %08x, %08x, %08x, %08x\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    return MMSYSERR_NOTENABLED;
+}
 #endif

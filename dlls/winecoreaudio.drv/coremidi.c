@@ -52,4 +52,24 @@ void CoreMIDI_GetObjectName(MIDIObjectRef obj, char *name, int size)
     }
 }
 
+/*
+ *  CoreMIDI IO threaded callback,
+ *  we can't call Wine debug channels, critical section or anything using NtCurrentTeb here.
+ */
+void MIDIIn_ReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon)
+{
+    unsigned int i;
+    MIDIMessage msg;
+
+    MIDIPacket *packet = (MIDIPacket *)pktlist->packet;
+    for (i = 0; i < pktlist->numPackets; ++i) {
+        msg.devID = *((UInt16 *)refCon);
+        msg.length = packet->length;
+        memcpy(msg.data, packet->data, sizeof(packet->data));
+
+        /* send message to Wine */
+
+        packet = MIDIPacketNext(packet);
+    }
+}
 #endif /* HAVE_COREAUDIO_COREAUDIO_H */

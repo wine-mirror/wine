@@ -44,7 +44,12 @@ extern unsigned MIDIGetNumberOfSources(void);
 extern MIDIEndpointRef MIDIGetSource(unsigned i);
 extern OSStatus MIDIOutputPortCreate(MIDIClientRef client, CFStringRef portName, MIDIPortRef *outPort);
 
+typedef void (*MIDIReadProc)(const MIDIPacketList *pktlist, void *readProcRefCon, void *srcConnRefCon);
+extern OSStatus MIDIInputPortCreate(MIDIClientRef client, CFStringRef portName, MIDIReadProc readProc, void *refCon, MIDIPortRef *outPort);
+
 extern OSStatus MIDIObjectGetProperties(MIDIObjectRef obj, CFPropertyListRef *outProperties, Boolean deep);
+
+extern OSStatus MIDIPortConnectSource(MIDIPortRef port, MIDIEndpointRef source, void *connRefCon);
 
 /*
  * Due to AudioUnit headers conflict redefine some types.
@@ -60,8 +65,15 @@ extern int AudioUnit_SetVolume(AudioUnit au, float left, float right);
 extern int AudioUnit_GetVolume(AudioUnit au, float *left, float *right);
 #endif
 
+typedef struct {
+    UInt16 devID;
+    UInt16 length;
+    Byte data[256];
+} MIDIMessage;
+
 /* coremidi.c */
 extern MIDIClientRef CoreMIDI_CreateClient(CFStringRef name);
 extern void CoreMIDI_GetObjectName(MIDIObjectRef obj, char *name, int size);
+extern void MIDIIn_ReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon);
 
 #endif
