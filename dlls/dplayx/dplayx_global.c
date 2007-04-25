@@ -798,8 +798,8 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     /* Session names may or may not exist */
     if( src->lpSessionDesc->u1.lpszSessionName )
     {
-      strcpyW( (LPWSTR)lpStartOfFreeSpace, dest->lpSessionDesc->u1.lpszSessionName );
-      src->lpSessionDesc->u1.lpszSessionName = (LPWSTR)lpStartOfFreeSpace;
+      strcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpSessionDesc->u1.lpszSessionName );
+      dest->lpSessionDesc->u1.lpszSessionName = (LPWSTR)lpStartOfFreeSpace;
       lpStartOfFreeSpace +=  sizeof(WCHAR) *
         ( strlenW( (LPWSTR)dest->lpSessionDesc->u1.lpszSessionName ) + 1 );
     }
