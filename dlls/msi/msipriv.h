@@ -568,7 +568,7 @@ extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
 extern UINT read_stream_data( IStorage *stg, LPCWSTR stname,
                               USHORT **pdata, UINT *psz );
 extern UINT write_stream_data( IStorage *stg, LPCWSTR stname,
-                               LPVOID data, UINT sz );
+                               LPVOID data, UINT sz, BOOL bTable );
 
 /* transform functions */
 extern UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg );
@@ -606,6 +606,8 @@ extern UINT MSI_RecordCopyField( MSIRECORD *, unsigned int, MSIRECORD *, unsigne
 extern UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm );
 extern UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm );
 extern void enum_stream_names( IStorage *stg );
+extern BOOL decode_streamname(LPWSTR in, LPWSTR out);
+extern LPWSTR encode_streamname(BOOL bTable, LPCWSTR in);
 
 /* database internals */
 extern UINT MSI_OpenDatabaseW( LPCWSTR, LPCWSTR, MSIDATABASE ** );

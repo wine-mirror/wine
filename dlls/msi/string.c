@@ -495,12 +495,12 @@ HRESULT msi_init_string_table( IStorage *stg )
     UINT ret;
 
     /* create the StringPool stream... add the zero string to it*/
-    ret = write_stream_data(stg, szStringPool, zero, sizeof zero);
+    ret = write_stream_data(stg, szStringPool, zero, sizeof zero, TRUE);
     if (ret != ERROR_SUCCESS)
         return E_FAIL;
 
     /* create the StringData stream... make it zero length */
-    ret = write_stream_data(stg, szStringData, NULL, 0);
+    ret = write_stream_data(stg, szStringData, NULL, 0, TRUE);
     if (ret != ERROR_SUCCESS)
         return E_FAIL;
 
@@ -663,11 +663,11 @@ UINT msi_save_string_table( string_table *st, IStorage *storage )
     }
 
     /* write the streams */
-    r = write_stream_data( storage, szStringData, data, datasize );
+    r = write_stream_data( storage, szStringData, data, datasize, TRUE );
     TRACE("Wrote StringData r=%08x\n", r);
     if( r )
         goto err;
-    r = write_stream_data( storage, szStringPool, pool, poolsize );
+    r = write_stream_data( storage, szStringPool, pool, poolsize, TRUE );
     TRACE("Wrote StringPool r=%08x\n", r);
     if( r )
         goto err;

@@ -1194,14 +1194,25 @@ static void test_streamtable(void)
             "( `Property` CHAR(255), `Value` CHAR(1)  PRIMARY KEY `Property`)" );
     ok( r == ERROR_SUCCESS , "Failed to create table\n" );
 
+    r = run_query( hdb, 0,
+            "INSERT INTO `Properties` "
+            "( `Value`, `Property` ) VALUES ( 'Prop', 'value' )" );
+    ok( r == ERROR_SUCCESS, "Failed to add to table\n" );
+
+    r = MsiDatabaseCommit( hdb );
+    ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
+
+    MsiCloseHandle( hdb );
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_TRANSACT, &hdb );
+    ok( r == ERROR_SUCCESS , "Failed to open database\n" );
+
     /* check the column types */
     rec = get_column_info( hdb, "select * from `_Streams`", MSICOLINFO_TYPES );
     ok( rec, "failed to get column info record\n" );
 
-    todo_wine {
     ok( check_record( rec, 1, "s62"), "wrong record type\n");
     ok( check_record( rec, 2, "V0"), "wrong record type\n");
-    }
 
     MsiCloseHandle( rec );
 
@@ -1209,10 +1220,8 @@ static void test_streamtable(void)
     rec = get_column_info( hdb, "select * from `_Streams`", MSICOLINFO_NAMES );
     ok( rec, "failed to get column info record\n" );
 
-    todo_wine {
     ok( check_record( rec, 1, "Name"), "wrong record type\n");
     ok( check_record( rec, 2, "Data"), "wrong record type\n");
-    }
 
     MsiCloseHandle( rec );
 
@@ -1229,63 +1238,39 @@ static void test_streamtable(void)
 
     r = MsiDatabaseOpenView( hdb,
             "INSERT INTO `_Streams` ( `Name`, `Data` ) VALUES ( ?, ? )", &view );
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "Failed to open database view: %d\n", r);
-    }
+    ok( r == ERROR_SUCCESS, "Failed to open database view: %d\n", r);
 
     r = MsiViewExecute( view, rec );
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "Failed to execute view: %d\n", r);
-    }
+    ok( r == ERROR_SUCCESS, "Failed to execute view: %d\n", r);
 
     MsiCloseHandle( rec );
     MsiCloseHandle( view );
 
     r = MsiDatabaseOpenView( hdb,
             "SELECT `Name`, `Data` FROM `_Streams`", &view );
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "Failed to open database view: %d\n", r);
-    }
+    ok( r == ERROR_SUCCESS, "Failed to open database view: %d\n", r);
 
     r = MsiViewExecute( view, 0 );
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "Failed to execute view: %d\n", r);
-    }
+    ok( r == ERROR_SUCCESS, "Failed to execute view: %d\n", r);
 
     r = MsiViewFetch( view, &rec );
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "Failed to fetch record: %d\n", r);
-    }
+    ok( r == ERROR_SUCCESS, "Failed to fetch record: %d\n", r);
 
     size = MAX_PATH;
     r = MsiRecordGetString( rec, 1, file, &size );
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "Failed to get string: %d\n", r);
-        ok( !lstrcmp(file, "data"), "Expected 'data', got %s\n", file);
-    }
+    ok( r == ERROR_SUCCESS, "Failed to get string: %d\n", r);
+    ok( !lstrcmp(file, "data"), "Expected 'data', got %s\n", file);
 
     size = MAX_PATH;
     memset(buf, 0, MAX_PATH);
     r = MsiRecordReadStream( rec, 2, buf, &size );
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "Failed to get stream: %d\n", r);
-        ok( !lstrcmp(buf, "test.txt\n"), "Expected 'test.txt\\n', got %s\n", buf);
-    }
+    ok( r == ERROR_SUCCESS, "Failed to get stream: %d\n", r);
+    ok( !lstrcmp(buf, "test.txt\n"), "Expected 'test.txt\\n', got %s", buf);
 
     MsiCloseHandle( rec );
 
     r = MsiViewFetch( view, &rec );
-    todo_wine
-    {
-        ok( r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
-    }
+    ok( r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
     MsiCloseHandle( view );
     MsiCloseHandle( hdb );

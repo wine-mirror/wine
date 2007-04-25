@@ -39,6 +39,7 @@ C_SRCS = \
 	regsvr.c \
 	select.c \
 	source.c \
+	streams.c \
 	string.c \
 	suminfo.c \
 	table.c \

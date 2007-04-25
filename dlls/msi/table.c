@@ -134,7 +134,7 @@ static int utf2mime(int x)
     return -1;
 }
 
-static LPWSTR encode_streamname(BOOL bTable, LPCWSTR in)
+LPWSTR encode_streamname(BOOL bTable, LPCWSTR in)
 {
     DWORD count = MAX_STREAM_NAME;
     DWORD ch, next;
@@ -193,7 +193,7 @@ static int mime2utf(int x)
     return '_';
 }
 
-static BOOL decode_streamname(LPWSTR in, LPWSTR out)
+BOOL decode_streamname(LPWSTR in, LPWSTR out)
 {
     WCHAR ch;
     DWORD count = 0;
@@ -395,7 +395,7 @@ end:
 }
 
 UINT write_stream_data( IStorage *stg, LPCWSTR stname,
-                        LPVOID data, UINT sz )
+                        LPVOID data, UINT sz, BOOL bTable )
 {
     HRESULT r;
     UINT ret = ERROR_FUNCTION_FAILED;
@@ -405,7 +405,7 @@ UINT write_stream_data( IStorage *stg, LPCWSTR stname,
     LARGE_INTEGER pos;
     LPWSTR encname;
 
-    encname = encode_streamname(TRUE, stname );
+    encname = encode_streamname(bTable, stname );
     r = IStorage_OpenStream( stg, encname, NULL, 
             STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, &stm);
     if( FAILED(r) )
@@ -845,7 +845,7 @@ static UINT save_table( MSIDATABASE *db, MSITABLE *t )
     }
 
     TRACE("writing %d bytes\n", rawsize);
-    r = write_stream_data( db->storage, t->name, rawdata, rawsize );
+    r = write_stream_data( db->storage, t->name, rawdata, rawsize, TRUE );
 
 err:
     msi_free( rawdata );
@@ -1642,7 +1642,12 @@ UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view )
     MSITABLEVIEW *tv ;
     UINT r, sz;
 
+    static const WCHAR Streams[] = {'_','S','t','r','e','a','m','s',0};
+
     TRACE("%p %s %p\n", db, debugstr_w(name), view );
+
+    if ( !lstrcmpW( name, Streams ) )
+        return STREAMS_CreateView( db, view );
 
     sz = sizeof *tv + lstrlenW(name)*sizeof name[0] ;
     tv = msi_alloc_zero( sz );
