@@ -1322,6 +1322,14 @@ static void test_EM_GETMODIFY(void)
   result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
   ok (result != 0,
       "EM_GETMODIFY returned zero, instead of non-zero for WM_CHAR\n");
+
+  /* press del */
+  SendMessage(hwndRichEdit, WM_CHAR, 'A', 0);
+  SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
+  SendMessage(hwndRichEdit, WM_KEYDOWN, VK_BACK, 0);
+  result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok (result != 0,
+      "EM_GETMODIFY returned zero, instead of non-zero for backspace\n");
   
   /* set char format */
   SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);

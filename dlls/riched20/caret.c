@@ -366,6 +366,8 @@ void ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor,
   int nChars)
 {  
   assert(nCursor>=0 && nCursor<editor->nCursors);
+  /* text operations set modified state */
+  editor->nModifyStep = 1;
   ME_InternalDeleteText(editor, ME_GetCursorOfs(editor, nCursor), nChars);
 }
 
