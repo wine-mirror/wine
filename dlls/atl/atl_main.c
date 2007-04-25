@@ -213,19 +213,19 @@ HRESULT WINAPI AtlInternalQueryInterface(void* this, const _ATL_INTMAP_ENTRY* pE
 {
     int i = 0;
     HRESULT rc = E_NOINTERFACE;
-    TRACE("(%p, %p, %p, %p)\n",this, pEntries, iid, ppvObject);
+    TRACE("(%p, %p, %s, %p)\n",this, pEntries, debugstr_guid(iid), ppvObject);
 
     if (IsEqualGUID(iid,&IID_IUnknown))
     {
         TRACE("Returning IUnknown\n");
-        *ppvObject = this;
-        IUnknown_AddRef((IUnknown*)this);
+        *ppvObject = ((LPSTR)this+pEntries[0].dw);
+        IUnknown_AddRef((IUnknown*)*ppvObject);
         return S_OK;
     }
 
     while (pEntries[i].pFunc != 0)
     {
-        TRACE("Trying entry %i (%p %i %p)\n",i,pEntries[i].piid,
+        TRACE("Trying entry %i (%s %i %p)\n",i,debugstr_guid(pEntries[i].piid),
               pEntries[i].dw, pEntries[i].pFunc);
 
         if (pEntries[i].piid && IsEqualGUID(iid,pEntries[i].piid))
