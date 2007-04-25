@@ -1326,38 +1326,20 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
             isGLInfoValid = IWineD3DImpl_FillGLCaps(iface, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
         }
 
-        /* If it worked, return the information requested */
-        if (isGLInfoValid) {
-          TRACE_(d3d_caps)("device/Vendor Name and Version detection using FillGLCaps\n");
-          strcpy(pIdentifier->Driver, "Display");
-          strcpy(pIdentifier->Description, "Direct3D HAL");
+        /* Return the information requested */
+        TRACE_(d3d_caps)("device/Vendor Name and Version detection using FillGLCaps\n");
+        strcpy(pIdentifier->Driver, "Display");
+        strcpy(pIdentifier->Description, "Direct3D HAL");
 
-          /* Note dx8 doesn't supply a DeviceName */
-          if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY"); /* FIXME: May depend on desktop? */
-          /* Current Windows drivers have versions like 6.14.... (some older have an earlier version) */
-          pIdentifier->DriverVersion->u.HighPart = MAKEDWORD_VERSION(6, 14);
-          pIdentifier->DriverVersion->u.LowPart = This->gl_info.gl_driver_version;
-          *(pIdentifier->VendorId) = This->gl_info.gl_vendor;
-          *(pIdentifier->DeviceId) = This->gl_info.gl_card;
-          *(pIdentifier->SubSysId) = 0;
-          *(pIdentifier->Revision) = 0;
-
-        } else {
-
-          /* If it failed, return dummy values from an NVidia driver */
-          WARN_(d3d_caps)("Cannot get GLCaps for device/Vendor Name and Version detection using FillGLCaps, currently using NVIDIA identifiers\n");
-          strcpy(pIdentifier->Driver, "Display");
-          strcpy(pIdentifier->Description, "Direct3D HAL");
-          if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY"); /* FIXME: May depend on desktop? */
-          /* Current Windows Nvidia drivers have versions like e.g. 6.14.10.5672 */
-          pIdentifier->DriverVersion->u.HighPart = MAKEDWORD_VERSION(6, 14);
-          /* 71.74 is a current Linux Nvidia driver version */
-          pIdentifier->DriverVersion->u.LowPart = MAKEDWORD_VERSION(10, (71*100+74));
-          *(pIdentifier->VendorId) = VENDOR_NVIDIA;
-          *(pIdentifier->DeviceId) = CARD_NVIDIA_GEFORCE4_TI4200;
-          *(pIdentifier->SubSysId) = 0;
-          *(pIdentifier->Revision) = 0;
-        }
+        /* Note dx8 doesn't supply a DeviceName */
+        if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY"); /* FIXME: May depend on desktop? */
+        /* Current Windows drivers have versions like 6.14.... (some older have an earlier version) */
+        pIdentifier->DriverVersion->u.HighPart = MAKEDWORD_VERSION(6, 14);
+        pIdentifier->DriverVersion->u.LowPart = This->gl_info.gl_driver_version;
+        *(pIdentifier->VendorId) = This->gl_info.gl_vendor;
+        *(pIdentifier->DeviceId) = This->gl_info.gl_card;
+        *(pIdentifier->SubSysId) = 0;
+        *(pIdentifier->Revision) = 0;
 
         /*FIXME: memcpy(&pIdentifier->DeviceIdentifier, ??, sizeof(??GUID)); */
         if (Flags & WINED3DENUM_NO_WHQL_LEVEL) {
