@@ -1289,7 +1289,6 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
     hres = _get_funcdesc(tpinfo->tinfo,method,&tinfo,&fdesc,&iname,&fname);
     if (hres) {
         ERR("Did not find typeinfo/funcdesc entry for method %d!\n",method);
-        ITypeInfo_Release(tinfo);
         LeaveCriticalSection(&tpinfo->crit);
         return E_FAIL;
     }
@@ -1702,11 +1701,11 @@ PSFacBuf_CreateProxy(
 		int nrofargs;
                 ITypeInfo *tinfo2;
 		hres = _get_funcdesc(tinfo,i,&tinfo2,&fdesc,NULL,NULL);
-                ITypeInfo_Release(tinfo2);
 		if (hres) {
 		    ERR("GetFuncDesc %x should not fail here.\n",hres);
 		    return hres;
 		}
+                ITypeInfo_Release(tinfo2);
 		/* some args take more than 4 byte on the stack */
 		nrofargs = 0;
 		for (j=0;j<fdesc->cParams;j++)
