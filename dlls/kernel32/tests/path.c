@@ -941,6 +941,11 @@ static void test_GetLongPathNameW(void)
     {
     SetLastError(0xdeadbeef); 
     length = pGetLongPathNameW(NULL,NULL,0);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("GetLongPathNameW is not implemented\n");
+        return;
+    }
     ok(0==length,"GetLongPathNameW returned %d but expected 0\n",length);
     ok(GetLastError()==ERROR_INVALID_PARAMETER,"GetLastError returned %d but expected ERROR_INVALID_PARAMETER\n",GetLastError());
 
