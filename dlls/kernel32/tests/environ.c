@@ -265,16 +265,22 @@ static void test_GetComputerName(void)
     HeapFree(GetProcessHeap(), 0, name);
 
     size = 0;
+    SetLastError(0xdeadbeef);
     ret = GetComputerNameW((LPWSTR)0xdeadbeef, &size);
     error = GetLastError();
-    todo_wine
-    ok(!ret && error == ERROR_BUFFER_OVERFLOW, "GetComputerNameW should have failed with ERROR_BUFFER_OVERFLOW instead of %d\n", error);
-    size++; /* nul terminating character */
-    nameW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(nameW[0]));
-    ok(nameW != NULL, "HeapAlloc failed with error %d\n", GetLastError());
-    ret = GetComputerNameW(nameW, &size);
-    ok(ret, "GetComputerNameW failed with error %d\n", GetLastError());
-    HeapFree(GetProcessHeap(), 0, nameW);
+    if (error == ERROR_CALL_NOT_IMPLEMENTED)
+        skip("GetComputerNameW is not implemented\n");
+    else
+    {
+        todo_wine
+        ok(!ret && error == ERROR_BUFFER_OVERFLOW, "GetComputerNameW should have failed with ERROR_BUFFER_OVERFLOW instead of %d\n", error);
+        size++; /* nul terminating character */
+        nameW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(nameW[0]));
+        ok(nameW != NULL, "HeapAlloc failed with error %d\n", GetLastError());
+        ret = GetComputerNameW(nameW, &size);
+        ok(ret, "GetComputerNameW failed with error %d\n", GetLastError());
+        HeapFree(GetProcessHeap(), 0, nameW);
+    }
 
     pGetComputerNameExA = GetProcAddress(GetModuleHandle("kernel32.dll"), "GetComputerNameExA");
     if (!pGetComputerNameExA)
