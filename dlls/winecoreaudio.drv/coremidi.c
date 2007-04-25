@@ -67,7 +67,7 @@ void MIDIIn_ReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefC
         msg.length = packet->length;
         memcpy(msg.data, packet->data, sizeof(packet->data));
 
-        /* send message to Wine */
+        MIDIIn_SendMessage(msg);
 
         packet = MIDIPacketNext(packet);
     }

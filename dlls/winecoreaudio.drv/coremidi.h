@@ -76,4 +76,7 @@ extern MIDIClientRef CoreMIDI_CreateClient(CFStringRef name);
 extern void CoreMIDI_GetObjectName(MIDIObjectRef obj, char *name, int size);
 extern void MIDIIn_ReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon);
 
+/* midi.c */
+void MIDIIn_SendMessage(MIDIMessage msg);
+
 #endif

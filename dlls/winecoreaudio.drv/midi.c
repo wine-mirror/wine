@@ -76,6 +76,10 @@ typedef struct tagMIDISource {
     DWORD startTime;
 } MIDISource;
 
+static CRITICAL_SECTION midiInLock; /* Critical section for MIDI In */
+static CFStringRef MIDIInThreadPortName = NULL;
+
+static DWORD WINAPI MIDIIn_MessageThread(LPVOID p);
 
 #define MAX_MIDI_SYNTHS 1
 
@@ -113,6 +117,13 @@ LONG CoreAudio_MIDIInit(void)
 
     destinations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MIDIOut_NumDevs * sizeof(MIDIDestination));
     sources = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MIDIIn_NumDevs * sizeof(MIDISource));
+
+    if (MIDIIn_NumDevs > 0)
+    {
+        InitializeCriticalSection(&midiInLock);
+        MIDIInThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("MIDIInThreadPortName.%u"), getpid());
+        CreateThread(NULL, 0, MIDIIn_MessageThread, NULL, 0, NULL);
+    }
 
     /* initialize sources */
     for (i = 0; i < MIDIIn_NumDevs; i++)
@@ -182,6 +193,17 @@ LONG CoreAudio_MIDIInit(void)
 LONG CoreAudio_MIDIRelease(void)
 {
     TRACE("\n");
+    if (MIDIIn_NumDevs > 0)
+    {
+        CFMessagePortRef messagePort;
+        /* Stop CFRunLoop in MIDIIn_MessageThread */
+        messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, MIDIInThreadPortName);
+        CFMessagePortSendRequest(messagePort, 1, NULL, 0.0, 0.0, NULL, NULL);
+        CFRelease(messagePort);
+
+        DeleteCriticalSection(&midiInLock);
+    }
+
     if (wineMIDIClient) MIDIClientDispose(wineMIDIClient); /* MIDIClientDispose will close all ports */
 
     HeapFree(GetProcessHeap(), 0, sources);
@@ -565,6 +587,75 @@ static DWORD MIDIOut_Reset(WORD wDevID)
 
     /* FIXME: the LongData buffers must also be returned to the app */
     return MMSYSERR_NOERROR;
+}
+
+/*
+ * MIDI In Mach message handling
+ */
+
+/*
+ *  Call from CoreMIDI IO threaded callback,
+ *  we can't call Wine debug channels, critical section or anything using NtCurrentTeb here.
+ */
+void MIDIIn_SendMessage(MIDIMessage msg)
+{
+    CFDataRef data;
+
+    CFMessagePortRef messagePort;
+    messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, MIDIInThreadPortName);
+
+    data = CFDataCreate(kCFAllocatorDefault, (UInt8 *) &msg, sizeof(msg));
+    if (data)
+    {
+        CFMessagePortSendRequest(messagePort, 0, data, 0.0, 0.0, NULL, NULL);
+        CFRelease(data);
+        CFRelease(messagePort);
+    }
+}
+
+static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFDataRef data, void *info)
+{
+    MIDIMessage *msg = NULL;
+    int i = 0;
+    FIXME("\n");
+
+    switch (msgid)
+    {
+        case 0:
+            msg = (MIDIMessage *) CFDataGetBytePtr(data);
+            TRACE("devID=%d\n", msg->devID);
+             for (i = 0; i < msg->length; ++i) {
+                TRACE("%02X ", msg->data[i]);
+            }
+            TRACE("\n");
+            break;
+        default:
+            CFRunLoopStop(CFRunLoopGetCurrent());
+            break;
+    }
+    return NULL;
+}
+
+static DWORD WINAPI MIDIIn_MessageThread(LPVOID p)
+{
+    CFMessagePortRef local;
+    CFRunLoopSourceRef source;
+    Boolean info;
+
+    local = CFMessagePortCreateLocal(kCFAllocatorDefault, MIDIInThreadPortName, &MIDIIn_MessageHandler, NULL, &info);
+
+    source = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, local, (CFIndex)0);
+    CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopDefaultMode);
+
+    CFRunLoopRun();
+
+    CFRunLoopSourceInvalidate(source);
+    CFRelease(source);
+    CFRelease(local);
+    CFRelease(MIDIInThreadPortName);
+    MIDIInThreadPortName = NULL;
+
+    return 0;
 }
 
 /**************************************************************************
