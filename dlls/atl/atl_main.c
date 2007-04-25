@@ -340,6 +340,7 @@ HRESULT WINAPI AtlModuleGetClassObject(_ATL_MODULEW *pm, REFCLSID rclsid,
                                        REFIID riid, LPVOID *ppv)
 {
     int i;
+    HRESULT hres = CLASS_E_CLASSNOTAVAILABLE;
 
     TRACE("%p %s %s %p\n", pm, debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
@@ -354,13 +355,21 @@ HRESULT WINAPI AtlModuleGetClassObject(_ATL_MODULEW *pm, REFCLSID rclsid,
 
             TRACE("found object %i\n", i);
             if (obj->pfnGetClassObject)
-                return obj->pfnGetClassObject(obj->pfnCreateInstance, riid, ppv);
+            {
+                if (!obj->pCF)
+                    hres = obj->pfnGetClassObject(obj->pfnCreateInstance,
+                                                  &IID_IUnknown,
+                                                  (void **)&obj->pCF);
+                if (obj->pCF)
+                    hres = IUnknown_QueryInterface(obj->pCF, riid, ppv);
+                break;
+            }
         }
     }
 
     WARN("no class object found for %s\n", debugstr_guid(rclsid));
 
-    return E_FAIL;
+    return hres;
 }
 
 /***********************************************************************
