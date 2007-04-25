@@ -24,7 +24,7 @@
 @ stdcall RevertSecurityContext(ptr) secur32.RevertSecurityContext
 @ stdcall SealMessage(ptr long ptr long) secur32.SealMessage
 @ stdcall SpLsaModeInitialize(long ptr ptr ptr)
-@ stub SpUserModeInitialize
+@ stdcall SpUserModeInitialize(long ptr ptr ptr)
 @ stub SslCrackCertificate
 @ stub SslEmptyCacheA
 @ stub SslEmptyCacheW
