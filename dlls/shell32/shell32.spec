@@ -136,6 +136,7 @@
  145 stdcall -noname PathFindOnPath(ptr ptr) PathFindOnPathAW
  146 stdcall -noname RLBuildListOfPaths()
  147 stdcall -noname SHCLSIDFromString(long long) SHCLSIDFromStringAW
+ 148 stdcall -noname SHMapIDListToImageListIndexAsync(ptr ptr ptr long ptr ptr ptr ptr ptr)
  149 stdcall -noname SHFind_InitMenuPopup(long long long long)
 
  151 stdcall -noname SHLoadOLE(long)

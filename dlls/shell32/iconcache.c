@@ -617,6 +617,19 @@ int WINAPI SHMapPIDLToSystemImageListIndex(
 }
 
 /*************************************************************************
+ * SHMapIDListToImageListIndexAsync  [SHELL32.148]
+ */
+HRESULT WINAPI SHMapIDListToImageListIndexAsync(IUnknown *pts, IShellFolder *psf,
+                                                LPCITEMIDLIST pidl, UINT flags,
+                                                void *pfn, void *pvData, void *pvHint,
+                                                int *piIndex, int *piIndexSel)
+{
+    FIXME("(%p, %p, %p, 0x%08x, %p, %p, %p, %p, %p)\n",
+            pts, psf, pidl, flags, pfn, pvData, pvHint, piIndex, piIndexSel);
+    return E_FAIL;
+}
+
+/*************************************************************************
  * Shell_GetCachedImageIndex		[SHELL32.72]
  *
  */
