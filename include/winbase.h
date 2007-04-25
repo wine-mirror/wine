@@ -1839,6 +1839,9 @@ BOOL        WINAPI MoveFileWithProgressA(LPCSTR,LPCSTR,LPPROGRESS_ROUTINE,LPVOID
 BOOL        WINAPI MoveFileWithProgressW(LPCWSTR,LPCWSTR,LPPROGRESS_ROUTINE,LPVOID,DWORD);
 #define     MoveFileWithProgress WINELIB_NAME_AW(MoveFileWithProgress)
 INT         WINAPI MulDiv(INT,INT,INT);
+BOOL        WINAPI NeedCurrentDirectoryForExePathA(LPCSTR);
+BOOL        WINAPI NeedCurrentDirectoryForExePathW(LPCWSTR);
+#define     NeedCurrentDirectoryForExePath WINELIB_NAME_AW(NeedCurrentDirectoryForExePath)
 BOOL        WINAPI NotifyChangeEventLog(HANDLE,HANDLE);
 BOOL        WINAPI ObjectCloseAuditAlarmA(LPCSTR,LPVOID,BOOL);
 BOOL        WINAPI ObjectCloseAuditAlarmW(LPCWSTR,LPVOID,BOOL);

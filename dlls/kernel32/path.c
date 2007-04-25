@@ -1511,6 +1511,43 @@ UINT WINAPI GetSystemWow64DirectoryA( LPSTR lpBuffer, UINT uSize )
 
 
 /***********************************************************************
+ *           NeedCurrentDirectoryForExePathW   (KERNEL32.@)
+ */
+BOOL WINAPI NeedCurrentDirectoryForExePathW( LPCWSTR name )
+{
+    static const WCHAR env_name[] = {'N','o','D','e','f','a','u','l','t',
+                                     'C','u','r','r','e','n','t',
+                                     'D','i','r','e','c','t','o','r','y',
+                                     'I','n','E','x','e','P','a','t','h',0};
+    WCHAR env_val;
+
+    /* MSDN mentions some 'registry location'. We do not use registry. */
+    FIXME("(%s): partial stub\n", debugstr_w(name));
+
+    if (strchrW(name, '\\'))
+        return TRUE;
+
+    /* Check the existence of the variable, not value */
+    if (!GetEnvironmentVariableW( env_name, &env_val, 1 ))
+        return TRUE;
+
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           NeedCurrentDirectoryForExePathA   (KERNEL32.@)
+ */
+BOOL WINAPI NeedCurrentDirectoryForExePathA( LPCSTR name )
+{
+    WCHAR *nameW;
+
+    if (!(nameW = FILE_name_AtoW( name, FALSE ))) return TRUE;
+    return NeedCurrentDirectoryForExePathW( nameW );
+}
+
+
+/***********************************************************************
  *           wine_get_unix_file_name (KERNEL32.@) Not a Windows API
  *
  * Return the full Unix file name for a given path.

@@ -799,6 +799,8 @@
 @ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long)
 @ stdcall MulDiv(long long long)
 @ stdcall MultiByteToWideChar(long long str long ptr long)
+@ stdcall NeedCurrentDirectoryForExePathA(str)
+@ stdcall NeedCurrentDirectoryForExePathW(wstr)
 # @ stub NlsConvertIntegerToString
 # @ stub NlsGetCacheUpdateCount
 # @ stub NlsResetProcessLocale
