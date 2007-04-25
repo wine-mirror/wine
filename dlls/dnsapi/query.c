@@ -199,7 +199,7 @@ static char *dns_str_from_rdata( const unsigned char *rdata )
     return str;
 }
 
-static unsigned int dns_get_record_size( ns_rr *rr )
+static unsigned int dns_get_record_size( const ns_rr *rr )
 {
     const unsigned char *pos = rr->rdata;
     unsigned int num = 0, size = sizeof(DNS_RECORDA);
@@ -250,7 +250,7 @@ static unsigned int dns_get_record_size( ns_rr *rr )
     return size;
 }
 
-static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *dlen )
+static DNS_STATUS dns_copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, WORD *dlen )
 {
     DNS_STATUS ret = ERROR_SUCCESS;
     const unsigned char *pos = rr->rdata;
@@ -560,7 +560,7 @@ exit:
 /*  The resolver lock must be held and res_init() must have been
  *  called before calling these three functions.
  */
-static DNS_STATUS dns_set_serverlist( PIP4_ARRAY addrs )
+static DNS_STATUS dns_set_serverlist( const IP4_ARRAY *addrs )
 {
     unsigned int i;
 
