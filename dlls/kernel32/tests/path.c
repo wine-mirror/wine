@@ -53,6 +53,10 @@ static const CHAR is_char_ok[] ="11111110111111111011";
 static DWORD (WINAPI *pGetLongPathNameA)(LPCSTR,LPSTR,DWORD);
 static DWORD (WINAPI *pGetLongPathNameW)(LPWSTR,LPWSTR,DWORD);
 
+/* Present in Win2003+ */
+static BOOL  (WINAPI *pNeedCurrentDirectoryForExePathA)(LPCSTR);
+static BOOL  (WINAPI *pNeedCurrentDirectoryForExePathW)(LPCWSTR);
+
 /* a structure to deal with wine todos somewhat cleanly */
 typedef struct {
   DWORD shortlen;
@@ -1074,6 +1078,44 @@ static void test_GetWindowsDirectory(void)
         res, GetLastError(), buffer, total);
 }
 
+static void test_NeedCurrentDirectoryForExePathA(void)
+{
+    /* Crashes in Windows */
+    if (0)
+        ok(pNeedCurrentDirectoryForExePathA(NULL), "returned FALSE for NULL\n");
+
+    SetEnvironmentVariableA("NoDefaultCurrentDirectoryInExePath", NULL);
+    ok(pNeedCurrentDirectoryForExePathA("."), "returned FALSE for \".\"\n");
+    ok(pNeedCurrentDirectoryForExePathA("c:\\"), "returned FALSE for \"c:\\\"\n");
+    ok(pNeedCurrentDirectoryForExePathA("cmd.exe"), "returned FALSE for \"cmd.exe\"\n");
+
+    SetEnvironmentVariableA("NoDefaultCurrentDirectoryInExePath", "nya");
+    ok(!pNeedCurrentDirectoryForExePathA("."), "returned TRUE for \".\"\n");
+    ok(pNeedCurrentDirectoryForExePathA("c:\\"), "returned FALSE for \"c:\\\"\n");
+    ok(!pNeedCurrentDirectoryForExePathA("cmd.exe"), "returned TRUE for \"cmd.exe\"\n");
+}
+
+static void test_NeedCurrentDirectoryForExePathW(void)
+{
+    const WCHAR thispath[] = {'.', 0};
+    const WCHAR fullpath[] = {'c', ':', '\\', 0};
+    const WCHAR cmdname[] = {'c', 'm', 'd', '.', 'e', 'x', 'e', 0};
+
+    /* Crashes in Windows */
+    if (0)
+        ok(pNeedCurrentDirectoryForExePathW(NULL), "returned FALSE for NULL\n");
+
+    SetEnvironmentVariableA("NoDefaultCurrentDirectoryInExePath", NULL);
+    ok(pNeedCurrentDirectoryForExePathW(thispath), "returned FALSE for \".\"\n");
+    ok(pNeedCurrentDirectoryForExePathW(fullpath), "returned FALSE for \"c:\\\"\n");
+    ok(pNeedCurrentDirectoryForExePathW(cmdname), "returned FALSE for \"cmd.exe\"\n");
+
+    SetEnvironmentVariableA("NoDefaultCurrentDirectoryInExePath", "nya");
+    ok(!pNeedCurrentDirectoryForExePathW(thispath), "returned TRUE for \".\"\n");
+    ok(pNeedCurrentDirectoryForExePathW(fullpath), "returned FALSE for \"c:\\\"\n");
+    ok(!pNeedCurrentDirectoryForExePathW(cmdname), "returned TRUE for \"cmd.exe\"\n");
+}
+
 START_TEST(path)
 {
     CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
@@ -1081,6 +1123,13 @@ START_TEST(path)
                                                "GetLongPathNameA" );
     pGetLongPathNameW = (void*)GetProcAddress(GetModuleHandleA("kernel32.dll") ,
                                                "GetLongPathNameW" );
+    pNeedCurrentDirectoryForExePathA =
+        (void*)GetProcAddress( GetModuleHandleA("kernel32.dll"),
+                               "NeedCurrentDirectoryForExePathA" );
+    pNeedCurrentDirectoryForExePathW =
+        (void*)GetProcAddress( GetModuleHandleA("kernel32.dll"),
+                               "NeedCurrentDirectoryForExePathW" );
+
     test_InitPathA(curdir, &curDrive, &otherDrive);
     test_CurrentDirectoryA(origdir,curdir);
     test_PathNameA(curdir, curDrive, otherDrive);
@@ -1089,4 +1138,12 @@ START_TEST(path)
     test_GetLongPathNameW();
     test_GetSystemDirectory();
     test_GetWindowsDirectory();
+    if (pNeedCurrentDirectoryForExePathA)
+    {
+        test_NeedCurrentDirectoryForExePathA();
+    }
+    if (pNeedCurrentDirectoryForExePathW)
+    {
+        test_NeedCurrentDirectoryForExePathW();
+    }
 }
