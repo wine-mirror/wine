@@ -238,8 +238,8 @@
 242 stub MsiExtractPatchXMLDataW
 243 stub MsiGetPatchInfoExA
 244 stub MsiGetPatchInfoExW
-245 stub MsiEnumProductsExA
-246 stub MsiEnumProductsExW
+245 stdcall MsiEnumProductsExA(str str long long ptr ptr ptr ptr)
+246 stdcall MsiEnumProductsExW(wstr wstr long long ptr ptr ptr ptr)
 247 stub MsiGetProductInfoExA
 248 stub MsiGetProductInfoExW
 249 stub MsiQueryComponentStateA

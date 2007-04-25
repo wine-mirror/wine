@@ -1068,3 +1068,23 @@ UINT WINAPI MsiEnumPatchesW( LPCWSTR szProduct, DWORD iPatchIndex,
           iPatchIndex, lpPatchBuf, lpTransformsBuf, pcchTransformsBuf);
     return ERROR_NO_MORE_ITEMS;
 }
+
+UINT WINAPI MsiEnumProductsExA( LPCSTR szProductCode, LPCSTR szUserSid,
+        DWORD dwContext, DWORD dwIndex, LPSTR szInstalledProductCode,
+        MSIINSTALLCONTEXT* pdwInstalledContext, LPSTR szSid, LPDWORD pcchSid)
+{
+    FIXME("%s %s %d %d %p %p %p %p\n", debugstr_a(szProductCode), debugstr_a(szUserSid),
+          dwContext, dwIndex, szInstalledProductCode, pdwInstalledContext,
+          szSid, pcchSid);
+    return ERROR_NO_MORE_ITEMS;
+}
+
+UINT WINAPI MsiEnumProductsExW( LPCWSTR szProductCode, LPCWSTR szUserSid,
+        DWORD dwContext, DWORD dwIndex, LPWSTR szInstalledProductCode,
+        MSIINSTALLCONTEXT* pdwInstalledContext, LPWSTR szSid, LPDWORD pcchSid)
+{
+    FIXME("%s %s %d %d %p %p %p %p\n", debugstr_w(szProductCode), debugstr_w(szUserSid),
+          dwContext, dwIndex, szInstalledProductCode, pdwInstalledContext,
+          szSid, pcchSid);
+    return ERROR_NO_MORE_ITEMS;
+}
