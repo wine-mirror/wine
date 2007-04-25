@@ -23,7 +23,7 @@
 @ stdcall QuerySecurityPackageInfoW(wstr ptr) secur32.QuerySecurityPackageInfoW
 @ stdcall RevertSecurityContext(ptr) secur32.RevertSecurityContext
 @ stdcall SealMessage(ptr long ptr long) secur32.SealMessage
-@ stub SpLsaModeInitialize
+@ stdcall SpLsaModeInitialize(long ptr ptr ptr)
 @ stub SpUserModeInitialize
 @ stub SslCrackCertificate
 @ stub SslEmptyCacheA
