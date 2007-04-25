@@ -2721,18 +2721,14 @@ IDirect3DDeviceImpl_7_SetTransform(IDirect3DDevice7 *iface,
     if(!Matrix)
         return DDERR_INVALIDPARAMS;
 
-    /* D3DTRANSFORMSTATE_WORLD doesn't exist in WineD3D,
-     * use D3DTS_WORLDMATRIX(0) instead
-     * D3DTS_WORLDMATRIX(index) is (D3DTRANSFORMSTATETYPE)(index + 256)
-     */
-    if(TransformStateType == D3DTRANSFORMSTATE_WORLD)
-        type = (D3DTRANSFORMSTATETYPE)(0 + 256);
-
-    /* FIXME:
-       Unhandled: D3DTRANSFORMSTATE_WORLD1
-       Unhandled: D3DTRANSFORMSTATE_WORLD2
-       Unhandled: D3DTRANSFORMSTATE_WORLD3
-     */
+    switch(TransformStateType)
+    {
+        case D3DTRANSFORMSTATE_WORLD :  type = WINED3DTS_WORLDMATRIX(0); break;
+        case D3DTRANSFORMSTATE_WORLD1:  type = WINED3DTS_WORLDMATRIX(1); break;
+        case D3DTRANSFORMSTATE_WORLD2:  type = WINED3DTS_WORLDMATRIX(2); break;
+        case D3DTRANSFORMSTATE_WORLD3:  type = WINED3DTS_WORLDMATRIX(3); break;
+        default:                        type = TransformStateType;
+    }
 
     /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
     return IWineD3DDevice_SetTransform(This->wineD3DDevice,
@@ -2793,18 +2789,14 @@ IDirect3DDeviceImpl_7_GetTransform(IDirect3DDevice7 *iface,
     if(!Matrix)
         return DDERR_INVALIDPARAMS;
 
-    /* D3DTRANSFORMSTATE_WORLD doesn't exist in WineD3D,
-     * use D3DTS_WORLDMATRIX(0) instead
-     * D3DTS_WORLDMATRIX(index) is (D3DTRANSFORMSTATETYPE)(index + 256)
-     */
-    if(TransformStateType == D3DTRANSFORMSTATE_WORLD)
-        type = (D3DTRANSFORMSTATETYPE)(0 + 256);
-
-    /* FIXME:
-       Unhandled: D3DTRANSFORMSTATE_WORLD1
-       Unhandled: D3DTRANSFORMSTATE_WORLD2
-       Unhandled: D3DTRANSFORMSTATE_WORLD3
-     */
+    switch(TransformStateType)
+    {
+        case D3DTRANSFORMSTATE_WORLD :  type = WINED3DTS_WORLDMATRIX(0); break;
+        case D3DTRANSFORMSTATE_WORLD1:  type = WINED3DTS_WORLDMATRIX(1); break;
+        case D3DTRANSFORMSTATE_WORLD2:  type = WINED3DTS_WORLDMATRIX(2); break;
+        case D3DTRANSFORMSTATE_WORLD3:  type = WINED3DTS_WORLDMATRIX(3); break;
+        default:                        type = TransformStateType;
+    }
 
     /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
     return IWineD3DDevice_GetTransform(This->wineD3DDevice, type, (WINED3DMATRIX*) Matrix);
@@ -2858,24 +2850,21 @@ IDirect3DDeviceImpl_7_MultiplyTransform(IDirect3DDevice7 *iface,
                                         D3DMATRIX *D3DMatrix)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    D3DTRANSFORMSTATETYPE type;
     TRACE("(%p)->(%08x,%p): Relay\n", This, TransformStateType, D3DMatrix);
 
-    /* D3DTRANSFORMSTATE_WORLD doesn't exist in WineD3D,
-     * use D3DTS_WORLDMATRIX(0) instead
-     * D3DTS_WORLDMATRIX(index) is (D3DTRANSFORMSTATETYPE)(index + 256)
-     */
-    if(TransformStateType == D3DTRANSFORMSTATE_WORLD)
-        TransformStateType = (D3DTRANSFORMSTATETYPE)(0 + 256);
-
-    /* FIXME:
-       Unhandled: D3DTRANSFORMSTATE_WORLD1
-       Unhandled: D3DTRANSFORMSTATE_WORLD2
-       Unhandled: D3DTRANSFORMSTATE_WORLD3
-     */
+    switch(TransformStateType)
+    {
+        case D3DTRANSFORMSTATE_WORLD :  type = WINED3DTS_WORLDMATRIX(0); break;
+        case D3DTRANSFORMSTATE_WORLD1:  type = WINED3DTS_WORLDMATRIX(1); break;
+        case D3DTRANSFORMSTATE_WORLD2:  type = WINED3DTS_WORLDMATRIX(2); break;
+        case D3DTRANSFORMSTATE_WORLD3:  type = WINED3DTS_WORLDMATRIX(3); break;
+        default:                        type = TransformStateType;
+    }
 
     /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
     return IWineD3DDevice_MultiplyTransform(This->wineD3DDevice,
-                                            TransformStateType,
+                                            type,
                                             (WINED3DMATRIX*) D3DMatrix);
 }
 
