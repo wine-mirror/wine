@@ -68,6 +68,7 @@ TESTBINS = \
 	rpcrt4_test.exe \
 	rsabase_test.exe \
 	rsaenh_test.exe \
+	schannel_test.exe \
 	secur32_test.exe \
 	serialui_test.exe \
 	setupapi_test.exe \
@@ -176,6 +177,8 @@ rsabase_test.exe: $(DLLDIR)/rsabase/tests/rsabase_test.exe$(DLLEXT)
 	cp $(DLLDIR)/rsabase/tests/rsabase_test.exe$(DLLEXT) $@ && $(STRIP) $@
 rsaenh_test.exe: $(DLLDIR)/rsaenh/tests/rsaenh_test.exe$(DLLEXT)
 	cp $(DLLDIR)/rsaenh/tests/rsaenh_test.exe$(DLLEXT) $@ && $(STRIP) $@
+schannel_test.exe: $(DLLDIR)/schannel/tests/schannel_test.exe$(DLLEXT)
+	cp $(DLLDIR)/schannel/tests/schannel_test.exe$(DLLEXT) $@ && $(STRIP) $@
 secur32_test.exe: $(DLLDIR)/secur32/tests/secur32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/secur32/tests/secur32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 serialui_test.exe: $(DLLDIR)/serialui/tests/serialui_test.exe$(DLLEXT)

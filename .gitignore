@@ -455,6 +455,9 @@ dlls/rsaenh/tests/rsaenh_crosstest.exe
 dlls/rsaenh/tests/testlist.c
 dlls/rsaenh/version.res
 dlls/sane.ds/rsrc.res
+dlls/schannel/tests/*.ok
+dlls/schannel/tests/schannel_crosstest.exe
+dlls/schannel/tests/testlist.c
 dlls/secur32/libsecur32.def
 dlls/secur32/tests/*.ok
 dlls/secur32/tests/secur32_crosstest.exe
@@ -860,6 +863,7 @@ programs/winetest/riched20_test.exe
 programs/winetest/rpcrt4_test.exe
 programs/winetest/rsabase_test.exe
 programs/winetest/rsaenh_test.exe
+programs/winetest/schannel_test.exe
 programs/winetest/secur32_test.exe
 programs/winetest/serialui_test.exe
 programs/winetest/setupapi_test.exe

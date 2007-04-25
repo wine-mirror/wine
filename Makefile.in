@@ -344,6 +344,7 @@ ALL_MAKEFILES = \
 	dlls/rsaenh/tests/Makefile \
 	dlls/sane.ds/Makefile \
 	dlls/schannel/Makefile \
+	dlls/schannel/tests/Makefile \
 	dlls/secur32/Makefile \
 	dlls/secur32/tests/Makefile \
 	dlls/security/Makefile \
@@ -688,6 +689,7 @@ dlls/rsaenh/Makefile: dlls/rsaenh/Makefile.in dlls/Makedll.rules
 dlls/rsaenh/tests/Makefile: dlls/rsaenh/tests/Makefile.in dlls/Maketest.rules
 dlls/sane.ds/Makefile: dlls/sane.ds/Makefile.in dlls/Makedll.rules
 dlls/schannel/Makefile: dlls/schannel/Makefile.in dlls/Makedll.rules
+dlls/schannel/tests/Makefile: dlls/schannel/tests/Makefile.in dlls/Maketest.rules
 dlls/secur32/Makefile: dlls/secur32/Makefile.in dlls/Makedll.rules
 dlls/secur32/tests/Makefile: dlls/secur32/tests/Makefile.in dlls/Maketest.rules
 dlls/security/Makefile: dlls/security/Makefile.in dlls/Makedll.rules

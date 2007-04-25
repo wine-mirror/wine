@@ -269,6 +269,7 @@ TESTSUBDIRS = \
 	rpcrt4/tests \
 	rsabase/tests \
 	rsaenh/tests \
+	schannel/tests \
 	secur32/tests \
 	serialui/tests \
 	setupapi/tests \
