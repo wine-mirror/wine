@@ -242,6 +242,11 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD dwParam1, DWORD dwP
     case MIM_ERROR:
     case MIM_LONGERROR:
     case MIM_MOREDATA:
+        dwCallBack = sources[wDevID].midiDesc.dwCallback;
+	uFlags = sources[wDevID].wFlags;
+	hDev = sources[wDevID].midiDesc.hMidi;
+	dwInstance = sources[wDevID].midiDesc.dwInstance;
+        break;
     default:
 	WARN("Unsupported MSW-MIDI message %u\n", wMsg);
 	return MMSYSERR_ERROR;
