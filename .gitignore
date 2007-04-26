@@ -441,6 +441,10 @@ dlls/riched32/version.res
 dlls/rpcrt4/librpcrt4.def
 dlls/rpcrt4/tests/*.ok
 dlls/rpcrt4/tests/rpcrt4_crosstest.exe
+dlls/rpcrt4/tests/server.h
+dlls/rpcrt4/tests/server.h
+dlls/rpcrt4/tests/server_c.c
+dlls/rpcrt4/tests/server_s.c
 dlls/rpcrt4/tests/testlist.c
 dlls/rpcrt4/version.res
 dlls/rsabase/tests/*.ok
