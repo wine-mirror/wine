@@ -125,6 +125,12 @@ void write_name(FILE *h, const var_t *v)
   fprintf(h, "%s", v->name);
 }
 
+void write_prefix_name(FILE *h, const char *prefix, const var_t *v)
+{
+  fprintf(h, "%s", prefix);
+  write_name(h, v);
+}
+
 const char* get_name(const var_t *v)
 {
   return v->name;
@@ -709,12 +715,29 @@ static void write_method_proto(const type_t *iface)
   }
 }
 
-static void write_function_proto(const type_t *iface)
+static void write_function_proto(const type_t *iface, const func_t *fun, const char *prefix)
+{
+  var_t *def = fun->def;
+
+  /* FIXME: do we need to handle call_as? */
+  write_type(header, def->type, def, def->tname);
+  fprintf(header, " ");
+  write_prefix_name(header, prefix, def);
+  fprintf(header, "(\n");
+  if (fun->args)
+    write_args(header, fun->args, iface->name, 0, TRUE);
+  else
+    fprintf(header, "    void");
+  fprintf(header, ");\n");
+}
+
+static void write_function_protos(const type_t *iface)
 {
   const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
   int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
   const var_t* explicit_handle_var;
   const func_t *cur;
+  int prefixes_differ = strcmp(prefix_client, prefix_server);
 
   if (!iface->funcs) return;
   LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
@@ -735,16 +758,12 @@ static void write_function_proto(const type_t *iface)
       }
     }
 
-    /* FIXME: do we need to handle call_as? */
-    write_type(header, def->type, def, def->tname);
-    fprintf(header, " ");
-    write_name(header, def);
-    fprintf(header, "(\n");
-    if (cur->args)
-      write_args(header, cur->args, iface->name, 0, TRUE);
-    else
-      fprintf(header, "    void");
-    fprintf(header, ");\n");
+    if (prefixes_differ) {
+      fprintf(header, "/* client prototype */\n");
+      write_function_proto(iface, cur, prefix_client);
+      fprintf(header, "/* server prototype */\n");
+    }
+    write_function_proto(iface, cur, prefix_server);
   }
 }
 
@@ -868,15 +887,17 @@ static void write_rpc_interface(const type_t *iface)
     if (var) fprintf(header, "extern handle_t %s;\n", var);
     if (old_names)
     {
-        fprintf(header, "extern RPC_IF_HANDLE %s_ClientIfHandle;\n", iface->name);
-        fprintf(header, "extern RPC_IF_HANDLE %s_ServerIfHandle;\n", iface->name);
+        fprintf(header, "extern RPC_IF_HANDLE %s%s_ClientIfHandle;\n", prefix_client, iface->name);
+        fprintf(header, "extern RPC_IF_HANDLE %s%s_ServerIfHandle;\n", prefix_server, iface->name);
     }
     else
     {
-        fprintf(header, "extern RPC_IF_HANDLE %s_v%d_%d_c_ifspec;\n", iface->name, LOWORD(ver), HIWORD(ver));
-        fprintf(header, "extern RPC_IF_HANDLE %s_v%d_%d_s_ifspec;\n", iface->name, LOWORD(ver), HIWORD(ver));
+        fprintf(header, "extern RPC_IF_HANDLE %s%s_v%d_%d_c_ifspec;\n",
+                prefix_client, iface->name, LOWORD(ver), HIWORD(ver));
+        fprintf(header, "extern RPC_IF_HANDLE %s%s_v%d_%d_s_ifspec;\n",
+                prefix_server, iface->name, LOWORD(ver), HIWORD(ver));
     }
-    write_function_proto(iface);
+    write_function_protos(iface);
   }
   fprintf(header,"\n#endif  /* __%s_INTERFACE_DEFINED__ */\n\n", iface->name);
 

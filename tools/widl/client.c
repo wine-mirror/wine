@@ -115,7 +115,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
 
         write_type(client, def->type, def, def->tname);
         fprintf(client, " ");
-        write_name(client, def);
+        write_prefix_name(client, prefix_client, def);
         fprintf(client, "(\n");
         indent++;
         if (func->args)
@@ -363,8 +363,8 @@ static void write_clientinterfacedecl(type_t *iface)
         print_client("RPC_IF_HANDLE %s_ClientIfHandle = (RPC_IF_HANDLE)& %s___RpcClientInterface;\n",
                      iface->name, iface->name);
     else
-        print_client("RPC_IF_HANDLE %s_v%d_%d_c_ifspec = (RPC_IF_HANDLE)& %s___RpcClientInterface;\n",
-                     iface->name, LOWORD(ver), HIWORD(ver), iface->name);
+        print_client("RPC_IF_HANDLE %s%s_v%d_%d_c_ifspec = (RPC_IF_HANDLE)& %s___RpcClientInterface;\n",
+                     prefix_client, iface->name, LOWORD(ver), HIWORD(ver), iface->name);
     fprintf(client, "\n");
 }
 

@@ -196,7 +196,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             print_server("_RetVal = ");
         else
             print_server("");
-        write_name(server, def);
+        write_prefix_name(server, prefix_server, def);
 
         if (func->args)
         {
@@ -393,8 +393,8 @@ static void write_serverinterfacedecl(type_t *iface)
         print_server("RPC_IF_HANDLE %s_ServerIfHandle = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
                      iface->name, iface->name);
     else
-        print_server("RPC_IF_HANDLE %s_v%d_%d_s_ifspec = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
-                     iface->name, LOWORD(ver), HIWORD(ver), iface->name);
+        print_server("RPC_IF_HANDLE %s%s_v%d_%d_s_ifspec = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
+                     prefix_server, iface->name, LOWORD(ver), HIWORD(ver), iface->name);
     fprintf(server, "\n");
 }
 
