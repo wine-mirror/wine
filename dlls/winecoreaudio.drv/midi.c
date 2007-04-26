@@ -594,6 +594,65 @@ static DWORD MIDIOut_Reset(WORD wDevID)
     return MMSYSERR_NOERROR;
 }
 
+static DWORD MIDIIn_Open(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
+{
+    TRACE("wDevID=%d lpDesc=%p dwFlags=%08x\n", wDevID, lpDesc, dwFlags);
+
+    if (lpDesc == NULL) {
+	WARN("Invalid Parameter\n");
+	return MMSYSERR_INVALPARAM;
+    }
+    if (wDevID >= MIDIIn_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+    if (sources[wDevID].midiDesc.hMidi != 0) {
+	WARN("device already open !\n");
+	return MMSYSERR_ALLOCATED;
+    }
+    if ((dwFlags & MIDI_IO_STATUS) != 0) {
+	WARN("No support for MIDI_IO_STATUS in dwFlags yet, ignoring it\n");
+	dwFlags &= ~MIDI_IO_STATUS;
+    }
+    if ((dwFlags & ~CALLBACK_TYPEMASK) != 0) {
+	FIXME("Bad dwFlags\n");
+	return MMSYSERR_INVALFLAG;
+    }
+
+    sources[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
+    sources[wDevID].lpQueueHdr = NULL;
+    sources[wDevID].midiDesc = *lpDesc;
+    sources[wDevID].startTime = 0;
+    sources[wDevID].state = 0;
+
+    return MIDI_NotifyClient(wDevID, MIM_OPEN, 0L, 0L);
+}
+
+static DWORD MIDIIn_Close(WORD wDevID)
+{
+    DWORD ret = MMSYSERR_NOERROR;
+
+    TRACE("wDevID=%d\n", wDevID);
+
+    if (wDevID >= MIDIIn_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (sources[wDevID].midiDesc.hMidi == 0) {
+	WARN("device not opened !\n");
+	return MMSYSERR_ERROR;
+    }
+    if (sources[wDevID].lpQueueHdr != 0) {
+	return MIDIERR_STILLPLAYING;
+    }
+
+    ret = MIDI_NotifyClient(wDevID, MIM_CLOSE, 0L, 0L);
+    sources[wDevID].midiDesc.hMidi = 0;
+    return ret;
+}
+
+
 /*
  * MIDI In Mach message handling
  */
@@ -717,7 +776,9 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
         case DRVM_DISABLE:
             return 0;
         case MIDM_OPEN:
+            return MIDIIn_Open(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
         case MIDM_CLOSE:
+            return MIDIIn_Close(wDevID);
         case MIDM_ADDBUFFER:
         case MIDM_PREPARE:
         case MIDM_UNPREPARE:
