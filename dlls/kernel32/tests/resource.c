@@ -24,6 +24,7 @@
 #include "wine/test.h"
 
 static const char filename[] = "test_.exe";
+static DWORD GLE;
 
 static int build_exe( void )
 {
@@ -107,7 +108,9 @@ static void update_missing_exe( void )
 {
     HANDLE res;
 
+    SetLastError(0xdeadbeef);
     res = BeginUpdateResource( filename, TRUE );
+    GLE = GetLastError();
     ok( res == NULL, "BeginUpdateResource should fail\n");
 }
 
@@ -264,6 +267,13 @@ START_TEST(resource)
 {
     DeleteFile( filename );
     update_missing_exe();
+
+    if (GLE == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("Resource calls are not implemented\n");
+        return;
+    }
+
     update_empty_exe();
     build_exe();
     update_resources_none();
