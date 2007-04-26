@@ -2690,6 +2690,7 @@ BOOL __cdecl FDICopy(
         PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
         PFDI_INT(hfdi)->perf->erfType = 0;
         PFDI_INT(hfdi)->perf->fError = TRUE;
+        filehf = 0;
         goto bail_and_fail;
       }
     }
