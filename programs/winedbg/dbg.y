@@ -472,7 +472,8 @@ int      input_fetch_entire_line(const char* pfx, char** line)
     do
     {
         if (!ReadFile(dbg_parser_input, &ch, 1, &nread, NULL) || nread == 0)
-            break;
+            return -1;
+
         if (len + 2 > alloc)
         {
             while (len + 2 > alloc) alloc *= 2;
@@ -489,9 +490,9 @@ int      input_fetch_entire_line(const char* pfx, char** line)
 int input_read_line(const char* pfx, char* buf, int size)
 {
     char*       line = NULL;
-    size_t      len = 0;
 
-    len = input_fetch_entire_line(pfx, &line);
+    int len = input_fetch_entire_line(pfx, &line);
+    if (len < 0) return 0;
     /* remove trailing \n */
     if (len > 0 && line[len - 1] == '\n') len--;
     len = min(size - 1, len);

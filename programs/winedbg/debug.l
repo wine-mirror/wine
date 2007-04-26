@@ -33,9 +33,9 @@
 
 static int read_input(const char* pfx, char* buf, int size)
 {
-    size_t      len;
-static char*  last_line = NULL;
-static size_t last_line_idx = 0;
+    int len;
+    static char*  last_line = NULL;
+    static size_t last_line_idx = 0;
 
     /* try first to fetch the remaining of an existing line */
     if (last_line_idx == 0)
@@ -44,6 +44,7 @@ static size_t last_line_idx = 0;
         /* no remaining chars to be read from last line, grab a brand new line up to '\n' */
         lexeme_flush();
         len = input_fetch_entire_line(pfx, &tmp);
+        if (len < 0) return 0;  /* eof */
         /* FIXME: should have a pair of buffers, and switch between the two, instead of
          * reallocating a new one for each line
          */

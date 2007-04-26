@@ -360,6 +360,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
                     if (i < 1 || i > sgv.num)
                         dbg_printf("Invalid choice %d\n", i);
                 }
+                else return sglv_aborted;
             } while (i < 1 || i > sgv.num);
 
             /* The array is 0-based, but the choices are 1..n, 
