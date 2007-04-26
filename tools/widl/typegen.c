@@ -2302,7 +2302,12 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
         print_file(file, indent, "");
         write_type(file, var->type, var, var->tname);
         fprintf(file, " ");
-        write_name(file, var);
+        if (var->array) {
+            fprintf(file, "( *");
+            write_name(file, var);
+            fprintf(file, " )");
+        } else
+            write_name(file, var);
         write_array(file, var->array, 0);
         fprintf(file, ";\n");
     }

@@ -416,6 +416,8 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
       LIST_FOR_EACH_ENTRY( arg, cur->args, const var_t, entry )
       {
           fprintf(proxy, ", ");
+          if (arg->array)
+              fprintf(proxy, "*");
           write_name(proxy, arg);
       }
   }
