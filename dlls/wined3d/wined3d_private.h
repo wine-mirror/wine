@@ -636,6 +636,7 @@ struct IWineD3DDeviceImpl
     /* To store */
     BOOL                    view_ident;        /* true iff view matrix is identity                */
     BOOL                    untransformed;
+    BOOL                    vertexBlendUsed;   /* To avoid needless setting of the blend matrices */
 
     /* State block related */
     BOOL                    isRecordingState;

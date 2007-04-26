@@ -2217,6 +2217,96 @@ static void clipplane(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     glPopMatrix();
 }
 
+static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    UINT matrix = state - STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0));
+    GLenum glMat;
+    TRACE("Setting world matrix %d\n", matrix);
+
+    if(matrix >= GL_LIMITS(blends)) {
+        WARN("Unsupported blend matrix set\n");
+        return;
+    } else if(isStateDirty(context, STATE_TRANSFORM(WINED3DTS_VIEW))) {
+        return;
+    }
+
+    /* GL_MODELVIEW0_ARB:  0x1700
+     * GL_MODELVIEW1_ARB:  0x0x850a
+     * GL_MODELVIEW2_ARB:  0x8722
+     * GL_MODELVIEW3_ARB:  0x8723
+     * etc
+     * GL_MODELVIEW31_ARB: 0x873F
+     */
+    if(matrix == 1) glMat = GL_MODELVIEW1_ARB;
+    else glMat = GL_MODELVIEW2_ARB - 2 + matrix;
+
+    glMatrixMode(glMat);
+    checkGLcall("glMatrixMode(glMat)");
+
+    /* World matrix 0 is multiplied with the view matrix because d3d uses 3 matrices while gl uses only 2. To avoid
+     * weighting the view matrix incorrectly it has to be multiplied into every gl modelview matrix
+     */
+    if(stateblock->wineD3DDevice->view_ident) {
+        glLoadMatrixf(&stateblock->transforms[WINED3DTS_WORLDMATRIX(matrix)].u.m[0][0]);
+        checkGLcall("glLoadMatrixf")
+    } else {
+        glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+        checkGLcall("glLoadMatrixf")
+        glMultMatrixf(&stateblock->transforms[WINED3DTS_WORLDMATRIX(matrix)].u.m[0][0]);
+        checkGLcall("glMultMatrixf")
+    }
+}
+
+static void state_vertexblend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    WINED3DVERTEXBLENDFLAGS val = stateblock->renderState[WINED3DRS_VERTEXBLEND];
+
+    switch(val) {
+        case WINED3DVBF_1WEIGHTS:
+        case WINED3DVBF_2WEIGHTS:
+        case WINED3DVBF_3WEIGHTS:
+            if(GL_SUPPORT(ARB_VERTEX_BLEND)) {
+                glEnable(GL_VERTEX_BLEND_ARB);
+                checkGLcall("glEnable(GL_VERTEX_BLEND_ARB)");
+
+                /* D3D adds one more matrix which has weight (1 - sum(weights)). This is enabled at context
+                 * creation with enabling GL_WEIGHT_SUM_UNITY_ARB.
+                 */
+                GL_EXTCALL(glVertexBlendARB(stateblock->renderState[WINED3DRS_VERTEXBLEND] + 1));
+
+                if(!stateblock->wineD3DDevice->vertexBlendUsed) {
+                    int i;
+                    for(i = 1; i < GL_LIMITS(blends); i++) {
+                        if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(i)))) {
+                            transform_worldex(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(i)), stateblock, context);
+                        }
+                    }
+                    stateblock->wineD3DDevice->vertexBlendUsed = TRUE;
+                }
+            } else {
+                /* TODO: Implement vertex blending in drawStridedSlow */
+                FIXME("Vertex blending enabled, but not supported by hardware\n");
+            }
+            break;
+
+        case WINED3DVBF_DISABLE:
+        case WINED3DVBF_0WEIGHTS: /* for Indexed vertex blending - not supported */
+            if(GL_SUPPORT(ARB_VERTEX_BLEND)) {
+                glDisable(GL_VERTEX_BLEND_ARB);
+                checkGLcall("glDisable(GL_VERTEX_BLEND_ARB)");
+            } else {
+                TRACE("Vertex blending disabled\n");
+            }
+            break;
+
+        case WINED3DVBF_TWEENING:
+            /* Just set the vertex weight for weight 0, enable vertex blending and hope the app doesn't have
+             * vertex weights in the vertices?
+             * For now we don't report that as supported, so a warn should suffice
+             */
+            WARN("Tweening not supported yet\n");
+            break;
+    }
+}
+
 static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     unsigned int k;
 
@@ -2263,10 +2353,15 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)))) {
         transform_world(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), stateblock, context);
     }
-}
 
-static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    WARN("World matrix 1 - 255 not supported yet\n");
+    /* Avoid looping over a number of matrices if the app never used the functionality */
+    if(stateblock->wineD3DDevice->vertexBlendUsed) {
+        for(k = 1; k < GL_LIMITS(blends); k++) {
+            if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(k)))) {
+                transform_worldex(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(k)), stateblock, context);
+            }
+        }
+    }
 }
 
 static const GLfloat invymat[16] = {
@@ -2528,26 +2623,14 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
     if( (sd->u.s.blendWeights.lpData) || (sd->u.s.blendWeights.VBO) ||
         (sd->u.s.blendMatrixIndices.lpData) || (sd->u.s.blendMatrixIndices.VBO) ) {
 
-
         if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
-
-#if 1
-            glEnableClientState(GL_WEIGHT_ARRAY_ARB);
-            checkGLcall("glEnableClientState(GL_WEIGHT_ARRAY_ARB)");
-#endif
-
             TRACE("Blend %d %p %d\n", WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
                 sd->u.s.blendWeights.lpData + stateblock->loadBaseVertexIndex * sd->u.s.blendWeights.dwStride, sd->u.s.blendWeights.dwStride + offset[sd->u.s.blendWeights.streamNo]);
-            /* FIXME("TODO\n");*/
-            /* Note dwType == float3 or float4 == 2 or 3 */
 
-#if 0
-            /* with this on, the normals appear to be being modified,
-               but the vertices aren't being translated as they should be
-               Maybe the world matrix aren't being setup properly? */
-            glVertexBlendARB(WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType) + 1);
-#endif
+            glEnableClientState(GL_WEIGHT_ARRAY_ARB);
+            checkGLcall("glEnableClientState(GL_WEIGHT_ARRAY_ARB)");
 
+            GL_EXTCALL(glVertexBlendARB(WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType) + 1));
 
             VTRACE(("glWeightPointerARB(%d, GL_FLOAT, %d, %p)\n",
                 WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType) ,
@@ -2575,7 +2658,6 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
                     showfixme = FALSE;
                 }
             }
-
         } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
             /* FIXME("TODO\n");*/
 #if 0
@@ -2598,10 +2680,11 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
         }
     } else {
         if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
-#if 0    /* TODO: Vertex blending */
-            glDisable(GL_VERTEX_BLEND_ARB);
-#endif
-            TRACE("ARB_VERTEX_BLEND\n");
+            static const GLbyte one = 1;
+            glDisableClientState(GL_WEIGHT_ARRAY_ARB);
+            checkGLcall("glEnableClientState(GL_WEIGHT_ARRAY_ARB)");
+            GL_EXTCALL(glWeightbvARB(1, &one));
+            checkGLcall("glWeightivARB(GL_LIMITS(blends), weights)");
         } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
             TRACE(" EXT_VERTEX_WEIGHTING\n");
             glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
@@ -2984,12 +3067,6 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
 /* Generate some fixme's if unsupported functionality is being used */
 #define BUFFER_OR_DATA(_attribute) dataLocations->u.s._attribute.lpData
     /* TODO: Either support missing functionality in fixupVertices or by creating a shader to replace the pipeline. */
-    if (!useVertexShaderFunction &&
-        stateblock->renderState[WINED3DRS_VERTEXBLEND] &&
-        (BUFFER_OR_DATA(blendMatrixIndices) || BUFFER_OR_DATA(blendWeights))) {
-        FIXME("Vertex Blending is not implemented yet %p %p\n",dataLocations->u.s.blendWeights.lpData,dataLocations->u.s.blendWeights.lpData);
-        /* TODO: Implement it using GL_ARB_vertex_blend or software emulation in drawStridedSlow */
-    }
     if (!useVertexShaderFunction && (BUFFER_OR_DATA(position2) || BUFFER_OR_DATA(normal2))) {
         FIXME("Tweening is only valid with vertex shaders\n");
     }
@@ -3461,7 +3538,7 @@ const struct StateEntry StateTable[] =
     { /*148, WINED3DRS_EMISSIVEMATERIALSOURCE       */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
     { /*149, Undefined                              */      0,                                                  state_undefined     },
     { /*150, Undefined                              */      0,                                                  state_undefined     },
-    { /*151, WINED3DRS_VERTEXBLEND                  */      0,                                                  state_nogl          },
+    { /*151, WINED3DRS_VERTEXBLEND                  */      STATE_RENDER(WINED3DRS_VERTEXBLEND),                state_vertexblend   },
     { /*152, WINED3DRS_CLIPPLANEENABLE              */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      },
     { /*153, WINED3DRS_SOFTWAREVERTEXPROCESSING     */      0,                                                  state_nogl          },
     { /*154, WINED3DRS_POINTSIZE                    */      STATE_RENDER(WINED3DRS_POINTSIZE),                  state_psize         },

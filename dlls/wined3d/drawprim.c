@@ -261,7 +261,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
         strided->u.s.position.VBO       = streamVBO;
         strided->u.s.position.streamNo  = streamNo;
         data += 3 * sizeof(float);
-        if (thisFVF & WINED3DFVF_XYZRHW) {
+        if ((thisFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW) {
             strided->u.s.position.dwType = WINED3DDECLTYPE_FLOAT4;
             strided->u.s.position_transformed = TRUE;
             data += sizeof(float);
@@ -274,7 +274,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     numBlends = 1 + (((thisFVF & WINED3DFVF_XYZB5) - WINED3DFVF_XYZB1) >> 1);
     if(thisFVF & WINED3DFVF_LASTBETA_UBYTE4) numBlends--;
 
-    if ((thisFVF & WINED3DFVF_XYZB5 ) > WINED3DFVF_XYZRHW) {
+    if ((thisFVF & WINED3DFVF_POSITION_MASK ) > WINED3DFVF_XYZRHW) {
         TRACE("Setting blend Weights to %p\n", data);
         strided->u.s.blendWeights.lpData    = data;
         strided->u.s.blendWeights.dwType    = WINED3DDECLTYPE_FLOAT1 + numBlends - 1;

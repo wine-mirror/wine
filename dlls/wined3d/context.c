@@ -359,6 +359,14 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
         checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
     }
+    if(GL_SUPPORT(ARB_VERTEX_BLEND)) {
+        /* Direct3D always uses n-1 weights for n world matrices and uses 1 - sum for the last one
+         * this is equal to GL_WEIGHT_SUM_UNITY_ARB. Enabling it doesn't do anything unless
+         * GL_VERTEX_BLEND_ARB isn't enabled too
+         */
+        glEnable(GL_WEIGHT_SUM_UNITY_ARB);
+        checkGLcall("glEnable(GL_WEIGHT_SUM_UNITY_ARB)");
+    }
 
     if(oldDrawable && oldCtx) {
         glXMakeCurrent(display, oldDrawable, oldCtx);

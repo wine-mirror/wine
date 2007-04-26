@@ -2218,14 +2218,8 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     *pCaps->MaxUserClipPlanes       = GL_LIMITS(clipplanes);
     *pCaps->MaxActiveLights         = GL_LIMITS(lights);
 
-
-
-#if 0 /* TODO: Blends support in drawprim */
     *pCaps->MaxVertexBlendMatrices      = GL_LIMITS(blends);
-#else
-    *pCaps->MaxVertexBlendMatrices      = 0;
-#endif
-    *pCaps->MaxVertexBlendMatrixIndex   = 1;
+    *pCaps->MaxVertexBlendMatrixIndex   = 0;
 
     *pCaps->MaxAnisotropy   = GL_LIMITS(anisotropy);
     *pCaps->MaxPointSize    = GL_LIMITS(pointsize);
