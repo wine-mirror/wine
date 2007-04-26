@@ -91,13 +91,16 @@ static const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
 static const WCHAR szNumber[]  = { 'N','u','m','b','e','r',0 };
 static const WCHAR szType[]    = { 'T','y','p','e',0 };
 
-static const MSICOLUMNINFO _Columns_cols[4] = {
+/* These tables are written into (the .hash_table part).
+ * Do not mark them const.
+ */
+static MSICOLUMNINFO _Columns_cols[4] = {
     { szColumns, 1, szTable,  MSITYPE_VALID | MSITYPE_STRING | 64, 0 },
     { szColumns, 2, szNumber, MSITYPE_VALID | 2,                   2 },
     { szColumns, 3, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 4 },
     { szColumns, 4, szType,   MSITYPE_VALID | 2,                   6 },
 };
-static const MSICOLUMNINFO _Tables_cols[1] = {
+static MSICOLUMNINFO _Tables_cols[1] = {
     { szTables,  1, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 0 },
 };
 
@@ -780,12 +783,12 @@ static UINT get_table( MSIDATABASE *db, LPCWSTR name, MSITABLE **table_ret )
     /* these two tables are special - we know the column types already */
     if( !lstrcmpW( name, szColumns ) )
     {
-        table->colinfo = (MSICOLUMNINFO *)_Columns_cols;
+        table->colinfo = _Columns_cols;
         table->col_count = sizeof(_Columns_cols)/sizeof(_Columns_cols[0]);
     }
     else if( !lstrcmpW( name, szTables ) )
     {
-        table->colinfo = (MSICOLUMNINFO *)_Tables_cols;
+        table->colinfo = _Tables_cols;
         table->col_count = sizeof(_Tables_cols)/sizeof(_Tables_cols[0]);
     }
     else
