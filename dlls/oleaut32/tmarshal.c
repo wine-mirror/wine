@@ -1198,63 +1198,68 @@ deserialize_param(
     }
 }
 
-/* Searches function, also in inherited interfaces */
-static HRESULT
-_get_funcdesc(
-    ITypeInfo *tinfo, int iMethod, ITypeInfo **tactual, const FUNCDESC **fdesc, BSTR *iname, BSTR *fname)
+/* Retrieves a function's funcdesc, searching back into inherited interfaces. */
+static HRESULT get_funcdesc(ITypeInfo *tinfo, int iMethod, ITypeInfo **tactual, const FUNCDESC **fdesc,
+                            BSTR *iname, BSTR *fname, UINT *num)
 {
-    int i = 0, j = 0;
-    HRESULT hres;
+    HRESULT hr;
+    UINT i, impl_types;
+    UINT inherited_funcs = 0;
+    TYPEATTR *attr;
 
     if (fname) *fname = NULL;
     if (iname) *iname = NULL;
+    if (num) *num = 0;
+    *tactual = NULL;
 
-    while (1) {
-	hres = ITypeInfoImpl_GetInternalFuncDesc(tinfo, i, fdesc);
-
-	if (hres) {
-	    ITypeInfo	*tinfo2;
-	    HREFTYPE	href;
-	    TYPEATTR	*attr;
-
-	    hres = ITypeInfo_GetTypeAttr(tinfo, &attr);
-	    if (hres) {
-		ERR("GetTypeAttr failed with %x\n",hres);
-		return hres;
-	    }
-	    /* Not found, so look in inherited ifaces. */
-	    for (j=0;j<attr->cImplTypes;j++) {
-		hres = ITypeInfo_GetRefTypeOfImplType(tinfo, j, &href);
-		if (hres) {
-		    ERR("Did not find a reftype for interface offset %d?\n",j);
-		    break;
-		}
-		hres = ITypeInfo_GetRefTypeInfo(tinfo, href, &tinfo2);
-		if (hres) {
-		    ERR("Did not find a typeinfo for reftype %d?\n",href);
-		    continue;
-		}
-		hres = _get_funcdesc(tinfo2,iMethod,tactual,fdesc,iname,fname);
-		ITypeInfo_Release(tinfo2);
-		if (!hres) {
-		    ITypeInfo_ReleaseTypeAttr(tinfo, attr);
-		    return S_OK;
-                }
-	    }
-	    ITypeInfo_ReleaseTypeAttr(tinfo, attr);
-	    return hres;
-	}
-	if (((*fdesc)->oVft/4) == iMethod) {
-	    if (fname)
-		ITypeInfo_GetDocumentation(tinfo,(*fdesc)->memid,fname,NULL,NULL,NULL);
-	    if (iname)
-		ITypeInfo_GetDocumentation(tinfo,-1,iname,NULL,NULL,NULL);
-	    *tactual = tinfo;
-	    ITypeInfo_AddRef(*tactual);
-	    return S_OK;
-	}
-	i++;
+    hr = ITypeInfo_GetTypeAttr(tinfo, &attr);
+    if (FAILED(hr))
+    {
+        ERR("GetTypeAttr failed with %x\n",hr);
+        return hr;
     }
+    impl_types = attr->cImplTypes;
+    ITypeInfo_ReleaseTypeAttr(tinfo, attr);
+
+    for (i = 0; i < impl_types; i++)
+    {
+        HREFTYPE href;
+        ITypeInfo *pSubTypeInfo;
+        UINT sub_funcs;
+
+        hr = ITypeInfo_GetRefTypeOfImplType(tinfo, i, &href);
+        if (FAILED(hr)) return hr;
+        hr = ITypeInfo_GetRefTypeInfo(tinfo, href, &pSubTypeInfo);
+        if (FAILED(hr)) return hr;
+
+        hr = get_funcdesc(pSubTypeInfo, iMethod, tactual, fdesc, iname, fname, &sub_funcs);
+        inherited_funcs += sub_funcs;
+        ITypeInfo_Release(pSubTypeInfo);
+        if(SUCCEEDED(hr)) return hr;
+    }
+    if(iMethod < inherited_funcs)
+    {
+        ERR("shouldn't be here\n");
+        return E_INVALIDARG;
+    }
+
+    for(i = inherited_funcs; i <= iMethod; i++)
+    {
+        hr = ITypeInfoImpl_GetInternalFuncDesc(tinfo, i - inherited_funcs, fdesc);
+        if(FAILED(hr))
+        {
+            if(num) *num = i;
+            return hr;
+        }
+    }
+
+    /* found it. We don't care about num so zero it */
+    if(num) *num = 0;
+    *tactual = tinfo;
+    ITypeInfo_AddRef(*tactual);
+    if (fname) ITypeInfo_GetDocumentation(tinfo,(*fdesc)->memid,fname,NULL,NULL,NULL);
+    if (iname) ITypeInfo_GetDocumentation(tinfo,-1,iname,NULL,NULL,NULL);
+    return S_OK;
 }
 
 static inline BOOL is_in_elem(const ELEMDESC *elem)
@@ -1286,7 +1291,7 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
 
     EnterCriticalSection(&tpinfo->crit);
 
-    hres = _get_funcdesc(tpinfo->tinfo,method,&tinfo,&fdesc,&iname,&fname);
+    hres = get_funcdesc(tpinfo->tinfo,method,&tinfo,&fdesc,&iname,&fname,NULL);
     if (hres) {
         ERR("Did not find typeinfo/funcdesc entry for method %d!\n",method);
         LeaveCriticalSection(&tpinfo->crit);
@@ -1700,7 +1705,7 @@ PSFacBuf_CreateProxy(
 		/* nrofargs without This */
 		int nrofargs;
                 ITypeInfo *tinfo2;
-		hres = _get_funcdesc(tinfo,i,&tinfo2,&fdesc,NULL,NULL);
+		hres = get_funcdesc(tinfo,i,&tinfo2,&fdesc,NULL,NULL,NULL);
 		if (hres) {
 		    ERR("GetFuncDesc %x should not fail here.\n",hres);
 		    return hres;
@@ -1916,7 +1921,7 @@ TMStubImpl_Invoke(
     memcpy(buf.base, xmsg->Buffer, xmsg->cbBuffer);
     buf.curoff	= 0;
 
-    hres = _get_funcdesc(This->tinfo,xmsg->iMethod,&tinfo,&fdesc,&iname,NULL);
+    hres = get_funcdesc(This->tinfo,xmsg->iMethod,&tinfo,&fdesc,&iname,NULL,NULL);
     if (hres) {
 	ERR("GetFuncDesc on method %d failed with %x\n",xmsg->iMethod,hres);
 	return hres;
