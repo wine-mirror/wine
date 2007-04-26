@@ -675,6 +675,30 @@ static DWORD MIDIIn_GetNumDevs(void)
     return MIDIIn_NumDevs;
 }
 
+static DWORD MIDIIn_Start(WORD wDevID)
+{
+    TRACE("%d\n", wDevID);
+
+    if (wDevID >= MIDIIn_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+    sources[wDevID].state = 1;
+    sources[wDevID].startTime = GetTickCount();
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD MIDIIn_Stop(WORD wDevID)
+{
+    TRACE("%d\n", wDevID);
+    if (wDevID >= MIDIIn_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+    sources[wDevID].state = 0;
+    return MMSYSERR_NOERROR;
+}
+
 /*
  * MIDI In Mach message handling
  */
@@ -811,9 +835,11 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
             return MIDIIn_GetDevCaps(wDevID, (LPMIDIINCAPSW) dwParam1, dwParam2);
         case MIDM_GETNUMDEVS:
             return MIDIIn_GetNumDevs();
-
         case MIDM_START:
+            return MIDIIn_Start(wDevID);
         case MIDM_STOP:
+            return MIDIIn_Stop(wDevID);
+
         case MIDM_RESET:
         default:
             TRACE("Unsupported message\n");
