@@ -43,6 +43,8 @@ static CHAR CURR_DIR[MAX_PATH];
  */
 
 static BOOL (WINAPI *pSetupGetFileCompressionInfoExA)(PCSTR, PSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
+static BOOL (WINAPI *pSetupCopyOEMInfA)(PCSTR, PCSTR, DWORD, DWORD, PSTR, DWORD, PDWORD, PSTR *);
+
 
 static void append_str(char **str, const char *data)
 {
@@ -112,21 +114,21 @@ static void test_SetupCopyOEMInf(void)
 
     /* try NULL SourceInfFileName */
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(NULL, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    res = pSetupCopyOEMInfA(NULL, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* try empty SourceInfFileName */
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf("", NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    res = pSetupCopyOEMInfA("", NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND,
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
     /* try a relative nonexistent SourceInfFileName */
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf("nonexistent", NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    res = pSetupCopyOEMInfA("nonexistent", NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND,
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
@@ -135,7 +137,7 @@ static void test_SetupCopyOEMInf(void)
     lstrcpy(path, CURR_DIR);
     lstrcat(path, "\\nonexistent");
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(path, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    res = pSetupCopyOEMInfA(path, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND,
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
@@ -144,7 +146,7 @@ static void test_SetupCopyOEMInf(void)
     memset(toolong, 'a', MAX_PATH * 2);
     toolong[MAX_PATH * 2 - 1] = '\0';
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(toolong, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    res = pSetupCopyOEMInfA(toolong, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND,
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
@@ -154,7 +156,7 @@ static void test_SetupCopyOEMInf(void)
 
     /* try a relative SourceInfFileName */
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(tmpfile, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    res = pSetupCopyOEMInfA(tmpfile, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND,
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
@@ -162,7 +164,7 @@ static void test_SetupCopyOEMInf(void)
 
     /* try SP_COPY_REPLACEONLY, dest does not exist */
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(path, NULL, SPOST_NONE, SP_COPY_REPLACEONLY, NULL, 0, NULL, NULL);
+    res = pSetupCopyOEMInfA(path, NULL, SPOST_NONE, SP_COPY_REPLACEONLY, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND,
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
@@ -173,28 +175,28 @@ static void test_SetupCopyOEMInf(void)
     lstrcat(path, "\\");
     lstrcat(path, tmpfile);
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(path, NULL, SPOST_NONE, 0, NULL, 0, NULL, NULL);
+    res = pSetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, NULL, 0, NULL, NULL);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(file_exists(path), "Expected source inf to exist\n");
 
     /* try SP_COPY_REPLACEONLY, dest exists */
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(path, NULL, SPOST_NONE, SP_COPY_REPLACEONLY, NULL, 0, NULL, NULL);
+    res = pSetupCopyOEMInfA(path, NULL, SPOST_NONE, SP_COPY_REPLACEONLY, NULL, 0, NULL, NULL);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(file_exists(path), "Expected source inf to exist\n");
 
     /* try SP_COPY_NOOVERWRITE */
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(path, NULL, SPOST_NONE, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    res = pSetupCopyOEMInfA(path, NULL, SPOST_NONE, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
     ok(GetLastError() == ERROR_FILE_EXISTS,
        "Expected ERROR_FILE_EXISTS, got %d\n", GetLastError());
 
     /* get the DestinationInfFileName */
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(path, NULL, SPOST_NONE, 0, dest, MAX_PATH, NULL, NULL);
+    res = pSetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, MAX_PATH, NULL, NULL);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(lstrlen(dest) != 0, "Expected a non-zero length string\n");
@@ -211,7 +213,7 @@ static void test_SetupCopyOEMInf(void)
     lstrcpy(dest, "aaa");
     size = 0;
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(path, NULL, SPOST_NONE, 0, dest, 5, &size, NULL);
+    res = pSetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, 5, &size, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
@@ -222,7 +224,7 @@ static void test_SetupCopyOEMInf(void)
 
     /* get the DestinationInfFileName and DestinationInfFileNameSize */
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(path, NULL, SPOST_NONE, 0, dest, MAX_PATH, &size, NULL);
+    res = pSetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, MAX_PATH, &size, NULL);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(lstrlen(dest) + 1 == size, "Expected sizes to match, got (%d, %d)\n", lstrlen(dest), size);
@@ -233,7 +235,7 @@ static void test_SetupCopyOEMInf(void)
 
     /* get the DestinationInfFileName, DestinationInfFileNameSize, and DestinationInfFileNameComponent */
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(path, NULL, SPOST_NONE, 0, dest, MAX_PATH, &size, &inf);
+    res = pSetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, MAX_PATH, &size, &inf);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(lstrlen(dest) + 1 == size, "Expected sizes to match, got (%d, %d)\n", lstrlen(dest), size);
@@ -244,7 +246,7 @@ static void test_SetupCopyOEMInf(void)
 
     /* try SP_COPY_DELETESOURCE */
     SetLastError(0xdeadbeef);
-    res = SetupCopyOEMInf(path, NULL, SPOST_NONE, SP_COPY_DELETESOURCE, NULL, 0, NULL, NULL);
+    res = pSetupCopyOEMInfA(path, NULL, SPOST_NONE, SP_COPY_DELETESOURCE, NULL, 0, NULL, NULL);
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     ok(!file_exists(path), "Expected source inf to not exist\n");
@@ -527,10 +529,15 @@ START_TEST(misc)
     HMODULE hsetupapi = GetModuleHandle("setupapi.dll");
 
     pSetupGetFileCompressionInfoExA = (void*)GetProcAddress(hsetupapi, "SetupGetFileCompressionInfoExA");
+    pSetupCopyOEMInfA = (void*)GetProcAddress(hsetupapi, "SetupCopyOEMInfA");
 
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
-    test_SetupCopyOEMInf();
+    if (pSetupCopyOEMInfA)
+        test_SetupCopyOEMInf();
+    else
+        skip("SetupCopyOEMInfA is not available\n");
+
     test_SetupGetFileCompressionInfo();
 
     if (pSetupGetFileCompressionInfoExA)
