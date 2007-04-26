@@ -60,6 +60,7 @@ static BOOL XCOPY_ProcessExcludeList(WCHAR* parms);
 static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName);
 static WCHAR *XCOPY_LoadMessage(UINT id);
 static void XCOPY_FailMessage(DWORD err);
+static int XCOPY_wprintf(const WCHAR *format, ...);
 
 /* Typedefs */
 typedef struct _EXCLUDELIST
@@ -118,7 +119,7 @@ int main (int argc, char *argv[])
 
     /* Confirm at least one parameter */
     if (argc < 2) {
-        wprintf(XCOPY_LoadMessage(STRING_INVPARMS));
+        XCOPY_wprintf(XCOPY_LoadMessage(STRING_INVPARMS));
         return RC_INITERROR;
     }
 
@@ -152,7 +153,7 @@ int main (int argc, char *argv[])
             } else if (supplieddestination[0] == 0x00) {
                 lstrcpyW(supplieddestination, *argvW);
             } else {
-                wprintf(XCOPY_LoadMessage(STRING_INVPARMS));
+                XCOPY_wprintf(XCOPY_LoadMessage(STRING_INVPARMS));
                 return RC_INITERROR;
             }
         } else {
@@ -242,11 +243,11 @@ int main (int argc, char *argv[])
 
             case '-': if (toupper(argvW[0][2])=='Y')
                           flags &= ~OPT_NOPROMPT; break;
-            case '?': wprintf(XCOPY_LoadMessage(STRING_HELP));
+            case '?': XCOPY_wprintf(XCOPY_LoadMessage(STRING_HELP));
                       return RC_OK;
             default:
                 WINE_TRACE("Unhandled parameter '%s'\n", wine_dbgstr_w(*argvW));
-                wprintf(XCOPY_LoadMessage(STRING_INVPARM), *argvW);
+                XCOPY_wprintf(XCOPY_LoadMessage(STRING_INVPARM), *argvW);
                 return RC_INITERROR;
             }
         }
@@ -281,7 +282,7 @@ int main (int argc, char *argv[])
         DWORD count;
         char pausestr[10];
 
-        wprintf(XCOPY_LoadMessage(STRING_PAUSE));
+        XCOPY_wprintf(XCOPY_LoadMessage(STRING_PAUSE));
         ReadFile (GetStdHandle(STD_INPUT_HANDLE), pausestr, sizeof(pausestr),
                   &count, NULL);
     }
@@ -301,9 +302,9 @@ int main (int argc, char *argv[])
 
     /* Finished - print trailer and exit */
     if (flags & OPT_SIMULATE) {
-        wprintf(XCOPY_LoadMessage(STRING_SIMCOPY), filesCopied);
+        XCOPY_wprintf(XCOPY_LoadMessage(STRING_SIMCOPY), filesCopied);
     } else if (!(flags & OPT_NOCOPY)) {
-        wprintf(XCOPY_LoadMessage(STRING_COPY), filesCopied);
+        XCOPY_wprintf(XCOPY_LoadMessage(STRING_COPY), filesCopied);
     }
     if (rc == RC_OK && filesCopied == 0) rc = RC_NOFILES;
     return rc;
@@ -448,7 +449,7 @@ static int XCOPY_ProcessDestParm(WCHAR *supplieddestination, WCHAR *stem, WCHAR 
             wcscpy(dirChar, XCOPY_LoadMessage(STRING_DIR_CHAR));
 
             while (answer[0] != fileChar[0] && answer[0] != dirChar[0]) {
-                wprintf(XCOPY_LoadMessage(STRING_QISDIR), supplieddestination);
+                XCOPY_wprintf(XCOPY_LoadMessage(STRING_QISDIR), supplieddestination);
 
                 ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer), &count, NULL);
                 WINE_TRACE("User answer %c\n", answer[0]);
@@ -641,7 +642,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 wcscpy(noChar, XCOPY_LoadMessage(STRING_NO_CHAR));
 
                 while (!answered) {
-                    wprintf(XCOPY_LoadMessage(STRING_SRCPROMPT), copyFrom);
+                    XCOPY_wprintf(XCOPY_LoadMessage(STRING_SRCPROMPT), copyFrom);
                     ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer),
                               &count, NULL);
 
@@ -668,7 +669,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 wcscpy(noChar, XCOPY_LoadMessage(STRING_NO_CHAR));
 
                 while (!answered) {
-                    wprintf(XCOPY_LoadMessage(STRING_OVERWRITE), copyTo);
+                    XCOPY_wprintf(XCOPY_LoadMessage(STRING_OVERWRITE), copyTo);
                     ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer),
                               &count, NULL);
 
@@ -692,9 +693,13 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 if (flags & OPT_QUIET) {
                     /* Skip message */
                 } else if (flags & OPT_FULL) {
-                    printf("%S -> %S\n", copyFrom, copyTo);
+                    const WCHAR infostr[]   = {'%', 's', ' ', '-', '>', ' ',
+                                               '%', 's', '\n', 0};
+
+                    XCOPY_wprintf(infostr, copyFrom, copyTo);
                 } else {
-                    printf("%S\n", copyFrom);
+                    const WCHAR infostr[] = {'%', 's', '\n', 0};
+                    XCOPY_wprintf(infostr, copyFrom);
                 }
 
                 /* If allowing overwriting of read only files, remove any
@@ -710,7 +715,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 } else if (CopyFile(copyFrom, copyTo, FALSE) == 0) {
 
                     DWORD error = GetLastError();
-                    wprintf(XCOPY_LoadMessage(STRING_COPYFAIL),
+                    XCOPY_wprintf(XCOPY_LoadMessage(STRING_COPYFAIL),
                            copyFrom, copyTo, error);
                     XCOPY_FailMessage(error);
 
@@ -888,7 +893,7 @@ static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName) {
     /* Open the file */
     inFile = _wfopen(filename, readTextMode);
     if (inFile == NULL) {
-        wprintf(XCOPY_LoadMessage(STRING_OPENFAIL), filename);
+        XCOPY_wprintf(XCOPY_LoadMessage(STRING_OPENFAIL), filename);
         *endOfName = endChar;
         return TRUE;
     }
@@ -916,7 +921,7 @@ static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName) {
 
     /* See if EOF or error occurred */
     if (!feof(inFile)) {
-        wprintf(XCOPY_LoadMessage(STRING_READFAIL), filename);
+        XCOPY_wprintf(XCOPY_LoadMessage(STRING_READFAIL), filename);
         *endOfName = endChar;
         return TRUE;
     }
@@ -932,7 +937,7 @@ static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName) {
  * Returns string retrieved from resource file
  * ========================================================================= */
 static WCHAR *XCOPY_LoadMessage(UINT id) {
-    static WCHAR msg[2048];
+    static WCHAR msg[MAXSTRING];
     const WCHAR failedMsg[]  = {'F', 'a', 'i', 'l', 'e', 'd', '!', 0};
 
     if (!LoadString(GetModuleHandle(NULL), id, msg, sizeof(msg))) {
@@ -958,7 +963,83 @@ static void XCOPY_FailMessage(DWORD err) {
       WINE_FIXME("FIXME: Cannot display message for error %d, status %d\n",
                  err, GetLastError());
     } else {
-      printf("%S\n", lpMsgBuf);
+      const WCHAR infostr[] = {'%', 's', '\n', 0};
+      XCOPY_wprintf(infostr, lpMsgBuf);
       LocalFree ((HLOCAL)lpMsgBuf);
     }
+}
+
+/* =========================================================================
+ * Output a formatted unicode string. Ideally this will go to the console
+ *  and hence required WriteConsoleW to output it, however if file i/o is
+ *  redirected, it needs to be WriteFile'd using OEM (not ANSI) format
+ * ========================================================================= */
+int XCOPY_wprintf(const WCHAR *format, ...) {
+
+    static WCHAR *output_bufW = NULL;
+    static char  *output_bufA = NULL;
+    static BOOL  toConsole    = TRUE;
+    static BOOL  traceOutput  = FALSE;
+#define MAX_WRITECONSOLE_SIZE 65535
+
+    va_list parms;
+    DWORD   len, nOut;
+    DWORD   res = 0;
+
+    /*
+     * Allocate buffer to use when writing to console
+     * Note: Not freed - memory will be allocated once and released when
+     *         xcopy ends
+     */
+
+    if (!output_bufW) output_bufW = HeapAlloc(GetProcessHeap(), 0,
+                                              MAX_WRITECONSOLE_SIZE);
+    if (!output_bufW) {
+      WINE_FIXME("Out of memory - could not allocate 2 x 64K buffers\n");
+      return 0;
+    }
+
+    /* Use wvsprintf to store output into unicode buffer */
+    va_start(parms, format);
+    len = vswprintf(output_bufW, format, parms);
+    va_end(parms);
+
+    /* Try to write as unicode all the time we think its a console */
+    if (toConsole) {
+      res = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE),
+                          output_bufW, len, &nOut, NULL);
+    }
+
+    /* If writing to console has failed (ever) we assume its file
+       i/o so convert to OEM codepage and output                  */
+    if (!res) {
+      BOOL usedDefaultChar = FALSE;
+      DWORD convertedChars;
+
+      toConsole = FALSE;
+
+      /*
+       * Allocate buffer to use when writing to file. Not freed, as above
+       */
+      if (!output_bufA) output_bufA = HeapAlloc(GetProcessHeap(), 0,
+                                                MAX_WRITECONSOLE_SIZE);
+      if (!output_bufA) {
+        WINE_FIXME("Out of memory - could not allocate 2 x 64K buffers\n");
+        return 0;
+      }
+
+      /* Convert to OEM, then output */
+      convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, output_bufW,
+                          len, output_bufA, MAX_WRITECONSOLE_SIZE,
+                          "?", &usedDefaultChar);
+      WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), output_bufA, convertedChars,
+                &nOut, FALSE);
+    }
+
+    /* Trace whether screen or console */
+    if (!traceOutput) {
+      WINE_TRACE("Writing to console? (%d)\n", toConsole);
+      traceOutput = TRUE;
+    }
+    return nOut;
 }
