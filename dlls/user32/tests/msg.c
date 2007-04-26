@@ -192,12 +192,28 @@ static const struct message WmSWP_ResizePopupSeq[] = {
  */
 static const struct message WmSWP_MoveSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_NOSIZE },
-    { WM_NCPAINT, sent|optional },
-    { WM_GETTEXT, sent|defwinproc|optional },
-    { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOCLIENTSIZE },
     { WM_MOVE, sent|defwinproc|wparam, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { 0 }
+};
+/* Resize with SetWindowPos(SWP_NOZORDER)
+ * for a visible overlapped window
+ * SWP_NOZORDER is stripped by the logging code
+ */
+static const struct message WmSWP_ResizeNoZOrder[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0/*SWP_NOZORDER*/ },
+    { WM_GETMINMAXINFO, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_NCPAINT, sent },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|parent|optional }, /* FIXME: remove optional once Wine is fixed */
+    { WM_WINDOWPOSCHANGED, sent|wparam, /*SWP_NOZORDER|*/SWP_NOMOVE|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent|defwinproc|wparam, 0 },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 }, /* Win9x doesn't send it */
+    { WM_NCPAINT, sent|optional }, /* Win9x doesn't send it */
+    { WM_GETTEXT, sent|defwinproc|optional }, /* Win9x doesn't send it */
+    { WM_ERASEBKGND, sent|optional }, /* Win9x doesn't send it */
     { 0 }
 };
 
@@ -334,6 +350,9 @@ static const struct message WmShowMinOverlappedSeq[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
     { HCBT_SETFOCUS, hook },
     { WM_KILLFOCUS, sent },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_NOTIFY, sent|wparam|optional|defwinproc, 1 },
+    { WM_GETTEXT, sent|optional },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOCOPYBITS|SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_STATECHANGED },
     { WM_GETMINMAXINFO, sent|defwinproc },
     { WM_NCCALCSIZE, sent|wparam, TRUE },
@@ -3760,8 +3779,16 @@ static void test_messages(void)
     /* test resizing and moving */
     SetWindowPos( hwnd, 0, 0, 0, 300, 300, SWP_NOMOVE|SWP_NOACTIVATE );
     ok_sequence(WmSWP_ResizeSeq, "SetWindowPos:Resize", FALSE );
+    flush_events();
+    flush_sequence();
     SetWindowPos( hwnd, 0, 200, 200, 0, 0, SWP_NOSIZE|SWP_NOACTIVATE );
     ok_sequence(WmSWP_MoveSeq, "SetWindowPos:Move", FALSE );
+    flush_events();
+    flush_sequence();
+    SetWindowPos( hwnd, 0, 200, 200, 250, 250, SWP_NOZORDER );
+    ok_sequence(WmSWP_ResizeNoZOrder, "SetWindowPos:WmSWP_ResizeNoZOrder", FALSE );
+    flush_events();
+    flush_sequence();
 
     /* popups don't get WM_GETMINMAXINFO */
     SetWindowLongW( hwnd, GWL_STYLE, WS_VISIBLE|WS_POPUP );

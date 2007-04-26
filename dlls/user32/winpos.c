@@ -40,6 +40,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
+#define SWP_AGG_NOGEOMETRYCHANGE \
+    (SWP_NOSIZE | SWP_NOCLIENTSIZE | SWP_NOZORDER)
 #define SWP_AGG_NOPOSCHANGE \
     (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER)
 #define SWP_AGG_STATUSFLAGS \
@@ -1602,7 +1604,9 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
                             &newWindowRect, &newClientRect, orig_flags, valid_rects ))
         return FALSE;
 
-    if (!(orig_flags & SWP_SHOWWINDOW))
+    /* Windows doesn't redraw a window if it is being just moved */
+    if (!(orig_flags & SWP_SHOWWINDOW) &&
+        (winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOGEOMETRYCHANGE)
     {
         UINT rdw_flags = RDW_FRAME | RDW_ERASE;
         if ( !(orig_flags & SWP_DEFERERASE) ) rdw_flags |= RDW_ERASENOW;
