@@ -652,6 +652,28 @@ static DWORD MIDIIn_Close(WORD wDevID)
     return ret;
 }
 
+static DWORD MIDIIn_GetDevCaps(WORD wDevID, LPMIDIINCAPSW lpCaps, DWORD dwSize)
+{
+    TRACE("wDevID=%d lpCaps=%p dwSize=%d\n", wDevID, lpCaps, dwSize);
+
+    if (lpCaps == NULL) {
+	WARN("Invalid Parameter\n");
+	return MMSYSERR_INVALPARAM;
+    }
+
+    if (wDevID >= MIDIIn_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+    memcpy(lpCaps, &sources[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD MIDIIn_GetNumDevs(void)
+{
+    TRACE("\n");
+    return MIDIIn_NumDevs;
+}
 
 /*
  * MIDI In Mach message handling
@@ -782,8 +804,14 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
         case MIDM_ADDBUFFER:
         case MIDM_PREPARE:
         case MIDM_UNPREPARE:
+            TRACE("Unsupported message\n");
+            return MMSYSERR_NOTSUPPORTED;
+
         case MIDM_GETDEVCAPS:
+            return MIDIIn_GetDevCaps(wDevID, (LPMIDIINCAPSW) dwParam1, dwParam2);
         case MIDM_GETNUMDEVS:
+            return MIDIIn_GetNumDevs();
+
         case MIDM_START:
         case MIDM_STOP:
         case MIDM_RESET:
