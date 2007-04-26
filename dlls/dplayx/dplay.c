@@ -54,12 +54,12 @@ static lpPlayerList DP_FindPlayer( IDirectPlay2AImpl* This, DPID dpid );
 static lpPlayerData DP_CreatePlayer( IDirectPlay2Impl* iface, LPDPID lpid,
                                      LPDPNAME lpName, DWORD dwFlags,
                                      HANDLE hEvent, BOOL bAnsi );
-static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, LPDPNAME lpSrc, BOOL bAnsi );
+static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, const DPNAME *lpSrc, BOOL bAnsi );
 static void DP_SetPlayerData( lpPlayerData lpPData, DWORD dwFlags,
                               LPVOID lpData, DWORD dwDataSize );
 
-static lpGroupData DP_CreateGroup( IDirectPlay2AImpl* iface, LPDPID lpid,
-                                   LPDPNAME lpName, DWORD dwFlags,
+static lpGroupData DP_CreateGroup( IDirectPlay2AImpl* iface, const DPID *lpid,
+                                   const DPNAME *lpName, DWORD dwFlags,
                                    DPID idParent, BOOL bAnsi );
 static void DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
                              LPVOID lpData, DWORD dwDataSize );
@@ -919,8 +919,8 @@ static HRESULT WINAPI DirectPlay2WImpl_Close
 }
 
 static
-lpGroupData DP_CreateGroup( IDirectPlay2AImpl* This, LPDPID lpid,
-                            LPDPNAME lpName, DWORD dwFlags,
+lpGroupData DP_CreateGroup( IDirectPlay2AImpl* This, const DPID *lpid,
+                            const DPNAME *lpName, DWORD dwFlags,
                             DPID idParent, BOOL bAnsi )
 {
   lpGroupData lpGData;
@@ -1290,7 +1290,7 @@ static lpPlayerList DP_FindPlayer( IDirectPlay2AImpl* This, DPID dpid )
 }
 
 /* Basic area for Dst must already be allocated */
-static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, LPDPNAME lpSrc, BOOL bAnsi )
+static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, const DPNAME *lpSrc, BOOL bAnsi )
 {
   if( lpSrc == NULL )
   {

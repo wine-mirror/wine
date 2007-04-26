@@ -211,7 +211,7 @@ void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize )
  */
 HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
                                         DWORD dwFlags,
-                                        LPSPINITDATA lpSpData )
+                                        const SPINITDATA *lpSpData )
 
 {
   DPSP_ENUMSESSIONSDATA data;
