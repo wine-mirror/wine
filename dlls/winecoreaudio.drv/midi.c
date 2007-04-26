@@ -652,6 +652,50 @@ static DWORD MIDIIn_Close(WORD wDevID)
     return ret;
 }
 
+static DWORD MIDIIn_AddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
+{
+    TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
+
+    if (wDevID >= MIDIIn_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+    if (lpMidiHdr == NULL) {
+	WARN("Invalid Parameter\n");
+	return MMSYSERR_INVALPARAM;
+    }
+    if (sizeof(MIDIHDR) > dwSize) {
+	WARN("Invalid Parameter\n");
+	return MMSYSERR_INVALPARAM;
+    }
+    if (lpMidiHdr->dwBufferLength == 0) {
+	WARN("Invalid Parameter\n");
+	return MMSYSERR_INVALPARAM;
+    }
+    if (lpMidiHdr->dwFlags & MHDR_INQUEUE) {
+	WARN("Still playing\n");
+	return MIDIERR_STILLPLAYING;
+    }
+    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED)) {
+	WARN("Unprepared\n");
+	return MIDIERR_UNPREPARED;
+    }
+
+    EnterCriticalSection(&midiInLock);
+    if (sources[wDevID].lpQueueHdr == 0) {
+	sources[wDevID].lpQueueHdr = lpMidiHdr;
+    } else {
+	LPMIDIHDR ptr;
+	for (ptr = sources[wDevID].lpQueueHdr;
+	     ptr->lpNext != 0;
+	     ptr = (LPMIDIHDR)ptr->lpNext);
+	ptr->lpNext = (struct midihdr_tag*)lpMidiHdr;
+    }
+    LeaveCriticalSection(&midiInLock);
+
+    return MMSYSERR_NOERROR;
+}
+
 static DWORD MIDIIn_GetDevCaps(WORD wDevID, LPMIDIINCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("wDevID=%d lpCaps=%p dwSize=%d\n", wDevID, lpCaps, dwSize);
@@ -851,6 +895,7 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
         case MIDM_CLOSE:
             return MIDIIn_Close(wDevID);
         case MIDM_ADDBUFFER:
+            return MIDIIn_AddBuffer(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
         case MIDM_PREPARE:
         case MIDM_UNPREPARE:
             TRACE("Unsupported message\n");
