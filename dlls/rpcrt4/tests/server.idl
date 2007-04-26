@@ -41,5 +41,6 @@ interface IServer
   double square_half(double x, [out] double *y);
   float square_half_float(float x, [out] float *y);
   long square_half_long(long x, [out] long *y);
+  int sum_fixed_array(int a[5]);
   void stop(void);
 }

@@ -108,6 +108,12 @@ s_square_half_long(long x, long *y)
   return x * x;
 }
 
+int
+s_sum_fixed_array(int a[5])
+{
+  return a[0] + a[1] + a[2] + a[3] + a[4];
+}
+
 void
 s_stop(void)
 {
@@ -147,6 +153,7 @@ static void
 basic_tests(void)
 {
   static char string[] = "I am a string";
+  static int f[5] = {1, 3, 0, -2, -4};
   static vector_t a = {1, 3, 7};
   double u, v;
   float s, t;
@@ -183,6 +190,8 @@ basic_tests(void)
   q = square_half_long(3, &r);
   ok(q == 9, "RPC square_half_long\n");
   ok(r == 1, "RPC square_half_long\n");
+
+  ok(sum_fixed_array(f) == -2, "RPC sum_fixed_array\n");
 }
 
 static void
