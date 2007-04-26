@@ -699,6 +699,31 @@ static DWORD MIDIIn_Stop(WORD wDevID)
     return MMSYSERR_NOERROR;
 }
 
+static DWORD MIDIIn_Reset(WORD wDevID)
+{
+    DWORD dwTime = GetTickCount();
+
+    TRACE("%d\n", wDevID);
+    if (wDevID >= MIDIIn_NumDevs) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    EnterCriticalSection(&midiInLock);
+    while (sources[wDevID].lpQueueHdr) {
+	sources[wDevID].lpQueueHdr->dwFlags &= ~MHDR_INQUEUE;
+	sources[wDevID].lpQueueHdr->dwFlags |= MHDR_DONE;
+	/* FIXME: when called from 16 bit, lpQueueHdr needs to be a segmented ptr */
+	if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)sources[wDevID].lpQueueHdr, dwTime) != MMSYSERR_NOERROR) {
+	    WARN("Couldn't notify client\n");
+	}
+	sources[wDevID].lpQueueHdr = (LPMIDIHDR)sources[wDevID].lpQueueHdr->lpNext;
+    }
+    LeaveCriticalSection(&midiInLock);
+
+    return MMSYSERR_NOERROR;
+}
+
 /*
  * MIDI In Mach message handling
  */
@@ -839,8 +864,8 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
             return MIDIIn_Start(wDevID);
         case MIDM_STOP:
             return MIDIIn_Stop(wDevID);
-
         case MIDM_RESET:
+            return MIDIIn_Reset(wDevID);
         default:
             TRACE("Unsupported message\n");
     }
