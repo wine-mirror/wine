@@ -1515,7 +1515,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         if( menuBar && !(lpitem->hbmpItem == HBMMENU_CALLBACK))
             bmprc.top = 0;
         else
-            bmprc.top = (lpitem->rect.bottom - lpitem->rect.top -
+            bmprc.top = (rect.bottom - rect.top -
                     lpitem->bmpsize.cy) / 2; 
         bmprc.bottom =  bmprc.top + lpitem->bmpsize.cy;
     }
@@ -1570,7 +1570,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
                 !( checked && (menu->dwStyle & MNS_CHECKORBMP))) {
             POINT origorg;
             /* some applications make this assumption on the DC's origin */
-            SetViewportOrgEx( hdc, lpitem->rect.left, lpitem->rect.top, &origorg);
+            SetViewportOrgEx( hdc, rect.left, rect.top, &origorg);
             MENU_DrawBitmapItem(hdc, lpitem, &bmprc, hmenu, hwndOwner,
                     odaction, FALSE);
             SetViewportOrgEx( hdc, origorg.x, origorg.y, NULL);
@@ -1588,7 +1588,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     {   /* Draw the bitmap */
         POINT origorg;
         
-        SetViewportOrgEx( hdc, lpitem->rect.left, lpitem->rect.top, &origorg);
+        SetViewportOrgEx( hdc, rect.left, rect.top, &origorg);
         MENU_DrawBitmapItem( hdc, lpitem, &bmprc, hmenu, hwndOwner,
                 odaction, menuBar);
         SetViewportOrgEx( hdc, origorg.x, origorg.y, NULL);
