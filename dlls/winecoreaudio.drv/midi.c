@@ -842,8 +842,10 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
 {
     MIDIMessage *msg = NULL;
     int i = 0;
-    FIXME("\n");
+    MIDISource *src = NULL;
+    DWORD sendData = 0;
 
+    TRACE("\n");
     switch (msgid)
     {
         case 0:
@@ -853,11 +855,58 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
                 TRACE("%02X ", msg->data[i]);
             }
             TRACE("\n");
+            src = &sources[msg->devID];
+            if (src->state < 1)
+            {
+                TRACE("input not started, thrown away\n");
+                goto done;
+            }
+            /* FIXME skipping SysEx */
+            if (msg->data[0] == 0xF0)
+            {
+                FIXME("Starting System Exclusive\n");
+                src->state |= 2;
+                for (i = 0; i < msg->length; ++i)
+                {
+                    if (msg->data[i] == 0xF7)
+                    {
+                        FIXME("Ending System Exclusive\n");
+                        src->state &= ~2;
+                    }
+                }
+                goto done;
+            }
+            if (src->state & 2)
+            {
+                for (i = 0; i < msg->length; ++i)
+                {
+                    if (msg->data[i] == 0xF7)
+                    {
+                        FIXME("Ending System Exclusive\n");
+                        src->state &= ~2;
+                    }
+                }
+                goto done;
+            }
+            EnterCriticalSection(&midiInLock);
+            if (msg->length == 3)
+            {
+                sendData = (msg->data[2] << 16) |
+                            (msg->data[1] <<  8) |
+                            (msg->data[0] <<  0);
+            }
+            if (msg->length == 2)
+            {
+                sendData = (msg->data[1] <<  8) | (msg->data[0] <<  0);
+            }
+            MIDI_NotifyClient(msg->devID, MIM_DATA, sendData, GetTickCount() - src->startTime);
+            LeaveCriticalSection(&midiInLock);
             break;
         default:
             CFRunLoopStop(CFRunLoopGetCurrent());
             break;
     }
+done:
     return NULL;
 }
 
