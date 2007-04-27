@@ -83,22 +83,13 @@ static int open_http_url( const char *url )
 
     length = sizeof(browsers);
     /* @@ Wine registry key: HKCU\Software\Wine\WineBrowser */
-    if  (RegCreateKeyEx( HKEY_CURRENT_USER, "Software\\Wine\\WineBrowser", 0, NULL,
-                         REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL))
+    if  (!(r = RegOpenKey( HKEY_CURRENT_USER, "Software\\Wine\\WineBrowser", &key )))
     {
-        fprintf( stderr, "winebrowser: cannot create config key\n" );
-        return 1;
+        r = RegQueryValueExA( key, "Browsers", 0, &type, (LPBYTE)browsers, &length );
+        RegCloseKey( key );
     }
-
-    r = RegQueryValueExA( key, "Browsers", 0, &type, (LPBYTE)browsers, &length );
     if (r != ERROR_SUCCESS)
-    {
-        /* set value to the default */
-        RegSetValueExA( key, "Browsers", 0, REG_SZ, (const BYTE *)defaultbrowsers,
-                        lstrlen( defaultbrowsers ) + 1 );
         strcpy( browsers, defaultbrowsers );
-    }
-    RegCloseKey( key );
 
     return launch_app( browsers, url );
 }
@@ -115,22 +106,13 @@ static int open_mailto_url( const char *url )
 
     length = sizeof(mailers);
     /* @@ Wine registry key: HKCU\Software\Wine\WineBrowser */
-    if (RegCreateKeyEx( HKEY_CURRENT_USER, "Software\\Wine\\WineBrowser", 0, NULL,
-                        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL ))
+    if (!(r = RegOpenKey( HKEY_CURRENT_USER, "Software\\Wine\\WineBrowser", &key )))
     {
-        fprintf( stderr, "winebrowser: cannot create config key\n" );
-        return 1;
+        r = RegQueryValueExA( key, "Mailers", 0, &type, (LPBYTE)mailers, &length );
+        RegCloseKey( key );
     }
-
-    r = RegQueryValueExA( key, "Mailers", 0, &type, (LPBYTE)mailers, &length );
     if (r != ERROR_SUCCESS)
-    {
-        /* set value to the default */
-        RegSetValueExA( key, "Mailers", 0, REG_SZ, (const BYTE *)defaultmailers,
-                        lstrlen( defaultmailers ) + 1 );
         strcpy( mailers, defaultmailers );
-    }
-    RegCloseKey( key );
 
     return launch_app( mailers, url );
 }
