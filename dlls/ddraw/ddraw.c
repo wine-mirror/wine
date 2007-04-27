@@ -1597,17 +1597,57 @@ D3D7CB_CreateSurface(IUnknown *device,
                      HANDLE *SharedHandle)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, device);
-    IDirectDrawSurfaceImpl *surf = This->tex_root;
+    IDirectDrawSurfaceImpl *surf = NULL;
     int i = 0;
-    TRACE("(%p) call back. surf=%p\n", device, surf);
+    DDSCAPS2 searchcaps = This->tex_root->surface_desc.ddsCaps;
+    TRACE("(%p) call back. surf=%p. Face %d level %d\n", device, This->tex_root, Face, level);
+
+    searchcaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
+    switch(Face)
+    {
+        case WINED3DCUBEMAP_FACE_POSITIVE_X:
+            TRACE("Asked for positive x\n");
+            if(searchcaps.dwCaps2 & DDSCAPS2_CUBEMAP) {
+                searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
+            }
+            surf = This->tex_root; break;
+        case WINED3DCUBEMAP_FACE_NEGATIVE_X:
+            TRACE("Asked for negative x\n");
+            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX; break;
+        case WINED3DCUBEMAP_FACE_POSITIVE_Y:
+            TRACE("Asked for positive y\n");
+            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEY; break;
+        case WINED3DCUBEMAP_FACE_NEGATIVE_Y:
+            TRACE("Asked for negative y\n");
+            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEY; break;
+        case WINED3DCUBEMAP_FACE_POSITIVE_Z:
+            TRACE("Asked for positive z\n");
+            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEZ; break;
+        case WINED3DCUBEMAP_FACE_NEGATIVE_Z:
+            TRACE("Asked for negative z\n");
+            searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEZ; break;
+        default: {ERR("Unexpected cube face\n");} /* Stupid compiler */
+    }
+
+    if(!surf)
+    {
+        IDirectDrawSurface7 *attached;
+        IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(This->tex_root, IDirectDrawSurface7),
+                                               &searchcaps,
+                                               &attached);
+        surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, attached);
+        IDirectDrawSurface7_Release(attached);
+    }
+    if(!surf) ERR("root search surface not found\n");
 
     /* Find the wanted mipmap. There are enough mipmaps in the chain */
     while(i < level)
     {
         IDirectDrawSurface7 *attached;
         IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(surf, IDirectDrawSurface7),
-                                               &This->tex_root->surface_desc.ddsCaps,
+                                               &searchcaps,
                                                &attached);
+        if(!attached) ERR("Surface not found\n");
         surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, attached);
         IDirectDrawSurface7_Release(attached);
         i++;
@@ -1728,7 +1768,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
             IDirectDrawImpl_RecreateAllSurfaces(This);
             TRACE("(%p) Done recreating all surfaces\n", This);
         }
-        else if(This->ImplType != SURFACE_OPENGL)
+        else if(This->ImplType != SURFACE_OPENGL && pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
         {
             WARN("The application requests a 3D capable surface, but a non-opengl surface was set in the registry\n");
             /* Do not fail surface creation, only fail 3D device creation */
@@ -1946,16 +1986,31 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
 
     return DD_OK;
 }
-
+/*****************************************************************************
+ * CreateAdditionalSurfaces
+ *
+ * Creates a new mipmap chain.
+ *
+ * Params:
+ *  root: Root surface to attach the newly created chain to
+ *  count: number of surfaces to create
+ *  DDSD: Description of the surface. Intentionally not a pointer to avoid side
+ *        effects on the caller
+ *  CubeFaceRoot: Wether the new surface is a root of a cube map face. This
+ *                creates an additional surface without the mipmapping flags
+ *
+ *****************************************************************************/
 static HRESULT
 CreateAdditionalSurfaces(IDirectDrawImpl *This,
                          IDirectDrawSurfaceImpl *root,
                          UINT count,
-                         DDSURFACEDESC2 *DDSD)
+                         DDSURFACEDESC2 DDSD,
+                         BOOL CubeFaceRoot)
 {
-    UINT i, level = 0;
+    UINT i, j, level = 0;
     HRESULT hr;
     IDirectDrawSurfaceImpl *last = root;
+
     for(i = 0; i < count; i++)
     {
         IDirectDrawSurfaceImpl *object2 = NULL;
@@ -1963,15 +2018,22 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
         /* increase the mipmap level, but only if a mipmap is created
          * In this case, also halve the size
          */
-        if(DDSD->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
+        if(DDSD.ddsCaps.dwCaps & DDSCAPS_MIPMAP && !CubeFaceRoot)
         {
             level++;
-            if(DDSD->dwWidth > 1) DDSD->dwWidth /= 2;
-            if(DDSD->dwHeight > 1) DDSD->dwHeight /= 2;
+            if(DDSD.dwWidth > 1) DDSD.dwWidth /= 2;
+            if(DDSD.dwHeight > 1) DDSD.dwHeight /= 2;
+            /* Set the mipmap sublevel flag according to msdn */
+            DDSD.ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
         }
+        else
+        {
+            DDSD.ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
+        }
+        CubeFaceRoot = FALSE;
 
         hr = IDirectDrawImpl_CreateNewSurface(This,
-                                              DDSD,
+                                              &DDSD,
                                               &object2,
                                               level);
         if(hr != DD_OK)
@@ -1980,14 +2042,19 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
         }
 
         /* Add the new surface to the complex attachment array */
-        last->complex_array[0] = object2;
+        for(j = 0; j < MAX_COMPLEX_ATTACHED; j++)
+        {
+            if(last->complex_array[j]) continue;
+            last->complex_array[j] = object2;
+            break;
+        }
         last = object2;
 
         /* Remove the (possible) back buffer cap from the new surface description,
          * because only one surface in the flipping chain is a back buffer, one
          * is a front buffer, the others are just primary surfaces.
          */
-        DDSD->ddsCaps.dwCaps &= ~DDSCAPS_BACKBUFFER;
+        DDSD.ddsCaps.dwCaps &= ~DDSCAPS_BACKBUFFER;
     }
     return DD_OK;
 }
@@ -2133,6 +2200,30 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
     {
         FIXME("(%p) You want to get back a surface? Don't give NULL ptrs!\n", This);
         return E_POINTER; /* unchecked */
+    }
+
+    /* Check cube maps but only if the size includes them */
+    if (DDSD->dwSize >= sizeof(DDSURFACEDESC2))
+    {
+        if(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES &&
+           !(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP))
+        {
+            WARN("Cube map faces requested without cube map flag\n");
+            return DDERR_INVALIDCAPS;
+        }
+        if(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP &&
+           (DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES) == 0)
+        {
+            WARN("Cube map without faces requested\n");
+            return DDERR_INVALIDPARAMS;
+        }
+
+        /* Quick tests confirm those can be created, but we don't do that yet */
+        if(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP &&
+           (DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES) != DDSCAPS2_CUBEMAP_ALLFACES)
+        {
+            FIXME("Partial cube maps not supported yet\n");
+        }
     }
 
     /* According to the msdn this flag is ignored by CreateSurface */
@@ -2293,6 +2384,13 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         desc2.ddsCaps.dwCaps |= DDSCAPS_FRONTBUFFER;
     }
 
+    /* The root surface in a cube map is positive x */
+    if(desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+    {
+        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
+        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEX;
+    }
+
     /* Create the first surface */
     hr = IDirectDrawImpl_CreateNewSurface(This, &desc2, &object, 0);
     if( hr != DD_OK)
@@ -2315,13 +2413,30 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         desc2.ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER; /* It's not a front buffer */
         desc2.ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
     }
-    /* Set the DDSCAPS2_MIPMAPSUBLEVEL flag on mipmap sublevels according to the msdn */
-    if(DDSD->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
+
+    hr = DD_OK;
+    if(desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
     {
-        desc2.ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
+        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
+        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEZ;
+        hr |= CreateAdditionalSurfaces(This, object, extra_surfaces + 1, desc2, TRUE);
+        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEZ;
+        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEZ;
+        hr |= CreateAdditionalSurfaces(This, object, extra_surfaces + 1, desc2, TRUE);
+        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_POSITIVEZ;
+        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEY;
+        hr |= CreateAdditionalSurfaces(This, object, extra_surfaces + 1, desc2, TRUE);
+        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEY;
+        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEY;
+        hr |= CreateAdditionalSurfaces(This, object, extra_surfaces + 1, desc2, TRUE);
+        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_POSITIVEY;
+        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEX;
+        hr |= CreateAdditionalSurfaces(This, object, extra_surfaces + 1, desc2, TRUE);
+        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEX;
+        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEX;
     }
 
-    hr = CreateAdditionalSurfaces(This, object, extra_surfaces, &desc2);
+    hr |= CreateAdditionalSurfaces(This, object, extra_surfaces, desc2, FALSE);
     if(hr != DD_OK)
     {
         /* This destroys and possibly created surfaces too */
@@ -2370,7 +2485,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
     }
 
     /* Create a WineD3DTexture if a texture was requested */
-    if(DDSD->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+    if(desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
     {
         UINT levels;
         WINED3DFORMAT Format;
@@ -2402,16 +2517,32 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         /* The surfaces are already created, the callback only
          * passes the IWineD3DSurface to WineD3D
          */
-        hr = IWineD3DDevice_CreateTexture( This->wineD3DDevice,
-                                           DDSD->dwWidth, DDSD->dwHeight,
-                                           levels, /* MipMapCount = Levels */
-                                           0, /* usage */
-                                           Format,
-                                           Pool,
-                                           (IWineD3DTexture **) &object->wineD3DTexture,
-                                           0, /* SharedHandle */
-                                           (IUnknown *) ICOM_INTERFACE(object, IDirectDrawSurface7),
-                                           D3D7CB_CreateSurface );
+        if(desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+        {
+            hr = IWineD3DDevice_CreateCubeTexture(This->wineD3DDevice,
+                                                  DDSD->dwWidth, /* Edgelength */
+                                                  levels,
+                                                  0, /* usage */
+                                                  Format,
+                                                  Pool,
+                                                  (IWineD3DCubeTexture **) &object->wineD3DTexture,
+                                                  0, /* SharedHandle */
+                                                  (IUnknown *) ICOM_INTERFACE(object, IDirectDrawSurface7),
+                                                  D3D7CB_CreateSurface);
+        }
+        else
+        {
+            hr = IWineD3DDevice_CreateTexture(This->wineD3DDevice,
+                                              DDSD->dwWidth, DDSD->dwHeight,
+                                              levels, /* MipMapCount = Levels */
+                                              0, /* usage */
+                                              Format,
+                                              Pool,
+                                              (IWineD3DTexture **) &object->wineD3DTexture,
+                                              0, /* SharedHandle */
+                                              (IUnknown *) ICOM_INTERFACE(object, IDirectDrawSurface7),
+                                              D3D7CB_CreateSurface );
+        }
         This->tex_root = NULL;
     }
 
