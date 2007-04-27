@@ -379,11 +379,13 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
 
         HeapFree(GetProcessHeap(), 0, This->Handles);
 
+        TRACE("Releasing target %p %p\n", This->target, This->ddraw->d3d_target);
         /* Release the render target and the WineD3D render target
          * (See IDirect3D7::CreateDevice for more comments on this)
          */
         IDirectDrawSurface7_Release(ICOM_INTERFACE(This->target, IDirectDrawSurface7));
         IDirectDrawSurface7_Release(ICOM_INTERFACE(This->ddraw->d3d_target,IDirectDrawSurface7));
+        TRACE("Target release done\n");
 
         This->ddraw->d3ddevice = NULL;
 
@@ -391,6 +393,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         HeapFree(GetProcessHeap(), 0, This);
     }
 
+    TRACE("Done\n");
     return ref;
 }
 

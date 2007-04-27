@@ -785,7 +785,7 @@ DestroyCallback(IDirectDrawSurface7 *surf,
      * part of a complex compound. They will get released when destroying
      * the root
      */
-    if( (Impl->first_complex != Impl) || (Impl->first_attached != Impl) )
+    if( (!Impl->is_complex_root) || (Impl->first_attached != Impl) )
         return DDENUMRET_OK;
     /* Skip our depth stencil surface, it will be released with the render target */
     if( Impl == ddraw->DepthStencilBuffer)

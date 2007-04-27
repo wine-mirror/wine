@@ -1797,9 +1797,6 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     (*ppSurf)->next_attached = NULL;
     (*ppSurf)->first_attached = *ppSurf;
 
-    (*ppSurf)->next_complex = NULL;
-    (*ppSurf)->first_complex = *ppSurf;
-
     /* Needed to re-create the surface on an implementation change */
     (*ppSurf)->ImplType = ImplType;
 
@@ -1958,10 +1955,10 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
 {
     UINT i, level = 0;
     HRESULT hr;
+    IDirectDrawSurfaceImpl *last = root;
     for(i = 0; i < count; i++)
     {
         IDirectDrawSurfaceImpl *object2 = NULL;
-        IDirectDrawSurfaceImpl *iterator;
 
         /* increase the mipmap level, but only if a mipmap is created
          * In this case, also halve the size
@@ -1982,12 +1979,9 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
             return hr;
         }
 
-        /* Add the new surface to the complex attachment list */
-        object2->first_complex = root;
-        object2->next_complex = NULL;
-        iterator = root;
-        while(iterator->next_complex) iterator = iterator->next_complex;
-        iterator->next_complex = object2;
+        /* Add the new surface to the complex attachment array */
+        last->complex_array[0] = object2;
+        last = object2;
 
         /* Remove the (possible) back buffer cap from the new surface description,
          * because only one surface in the flipping chain is a back buffer, one
@@ -2306,6 +2300,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         ERR("IDirectDrawImpl_CreateNewSurface failed with %08x\n", hr);
         return hr;
     }
+    object->is_complex_root = TRUE;
 
     *Surf = ICOM_INTERFACE(object, IDirectDrawSurface7);
 

@@ -232,8 +232,18 @@ struct IDirectDrawSurfaceImpl
     /* This implementation handles attaching surfaces to other surfaces */
     IDirectDrawSurfaceImpl  *next_attached;
     IDirectDrawSurfaceImpl  *first_attached;
-    IDirectDrawSurfaceImpl  *next_complex;
-    IDirectDrawSurfaceImpl  *first_complex;
+
+    /* Complex surfaces are organized in a tree, although the tree is degenerated to a list in most cases.
+     * In mipmap and primary surfaces each level has only one attachment, which is the next surface level.
+     * Only the cube texture root has 6 surfaces attached, which then have a normal mipmap chain attached
+     * to them. So hardcode the array to 6, a dynamic array or a list would be an overkill.
+     */
+#define MAX_COMPLEX_ATTACHED 6
+    IDirectDrawSurfaceImpl  *complex_array[MAX_COMPLEX_ATTACHED];
+    /* You can't traverse the tree upwards. Only a flag for Surface::Release because its needed there,
+     * but no pointer to prevent temptations to traverse it in the wrong direction.
+     */
+    BOOL                    is_complex_root;
 
     /* Surface description, for GetAttachedSurface */
     DDSURFACEDESC2          surface_desc;
