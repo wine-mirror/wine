@@ -286,14 +286,12 @@ _get_typeinfo_for_iid(REFIID riid, ITypeInfo**ti) {
 	ERR("No %s key found.\n",interfacekey);
        	return E_FAIL;
     }
-    type = (1<<REG_SZ);
     tlguidlen = sizeof(tlguid);
     if (RegQueryValueExA(ikey,NULL,NULL,&type,(LPBYTE)tlguid,&tlguidlen)) {
 	ERR("Getting typelib guid failed.\n");
 	RegCloseKey(ikey);
 	return E_FAIL;
     }
-    type = (1<<REG_SZ);
     verlen = sizeof(ver);
     if (RegQueryValueExA(ikey,"Version",NULL,&type,(LPBYTE)ver,&verlen)) {
 	ERR("Could not get version value?\n");
