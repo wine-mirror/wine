@@ -425,7 +425,8 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
 
             nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
                     (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext,
-                    NSINSTREAM(This->nsstream), This->readed, This->nsstream->buf_size);
+                    NSINSTREAM(This->nsstream), This->readed-This->nsstream->buf_size,
+                    This->nsstream->buf_size);
             if(NS_FAILED(nsres))
                 ERR("OnDataAvailable failed: %08x\n", nsres);
 
