@@ -172,7 +172,10 @@ DDRAW_Create(const GUID *guid,
     {
         hWineD3D = LoadLibraryA("wined3d");
         if (hWineD3D)
+        {
             pWineDirect3DCreate = (fnWineDirect3DCreate) GetProcAddress(hWineD3D, "WineDirect3DCreate");
+            pWineDirect3DCreateClipper = (fnWineDirect3DCreateClipper) GetProcAddress(hWineD3D, "WineDirect3DCreateClipper");
+        }
     }
 
     if (!hWineD3D)

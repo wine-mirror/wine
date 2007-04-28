@@ -398,15 +398,14 @@ struct IDirectDrawClipperImpl
     ICOM_VFIELD_MULTI(IDirectDrawClipper);
     LONG ref;
 
-    /* IDirectDrawClipper fields */
-    HWND hWnd;
-
-    IDirectDrawImpl* ddraw_owner;
-    struct IDirectDrawClipperImpl* prev_ddraw;
-    struct IDirectDrawClipperImpl* next_ddraw;
+    IWineD3DClipper           *wineD3DClipper;
+    IDirectDrawImpl           *ddraw_owner;
 };
 
 const IDirectDrawClipperVtbl IDirectDrawClipper_Vtbl;
+
+typedef IWineD3DClipper* (WINAPI *fnWineDirect3DCreateClipper)(IUnknown *);
+fnWineDirect3DCreateClipper pWineDirect3DCreateClipper;
 
 /*****************************************************************************
  * IDirectDrawPalette implementation structure

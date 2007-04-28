@@ -3419,6 +3419,25 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
     return WINED3D_OK;
 }
 
+HRESULT WINAPI IWineD3DSurfaceImpl_SetClipper(IWineD3DSurface *iface, IWineD3DClipper *clipper)
+{
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    TRACE("(%p)->(%p)\n", This, clipper);
+
+    This->clipper = clipper;
+    return WINED3D_OK;
+}
+
+HRESULT WINAPI IWineD3DSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DClipper **clipper)
+{
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    TRACE("(%p)->(%p)\n", This, clipper);
+
+    *clipper = This->clipper;
+    IWineD3DClipper_AddRef(*clipper);
+    return WINED3D_OK;
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -3459,6 +3478,8 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_GetOverlayPosition,
     IWineD3DSurfaceImpl_UpdateOverlayZOrder,
     IWineD3DSurfaceImpl_UpdateOverlay,
+    IWineD3DSurfaceImpl_SetClipper,
+    IWineD3DSurfaceImpl_GetClipper,
     /* Internal use: */
     IWineD3DSurfaceImpl_AddDirtyRect,
     IWineD3DSurfaceImpl_LoadTexture,

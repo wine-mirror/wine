@@ -79,6 +79,7 @@ struct IWineD3DSurface;
 #define WINEDDERR_NOTFLIPPABLE                      MAKE_WINED3DHRESULT(582)
 #define WINEDDERR_SURFACEBUSY                       MAKE_WINED3DHRESULT(430)
 #define WINEDDERR_INVALIDRECT                       MAKE_WINED3DHRESULT(150)
+#define WINEDDERR_NOCLIPLIST                        MAKE_WINED3DHRESULT(205)
 #define WINED3DOK_NOAUTOGEN                         MAKE_WINED3DSTATUS(2159)
 
  /*****************************************************************************
@@ -104,6 +105,7 @@ struct IWineD3DVertexShader;
 struct IWineD3DPixelShader;
 struct IWineD3DQuery;
 struct IWineD3DSwapChain;
+struct IWineD3DClipper;
 
 
 /* {108F9C44-6F30-11d9-C687-00046142C14F} */
@@ -186,6 +188,10 @@ DEFINE_GUID(IID_IWineD3DStateBlock,
 /* {905DDBAC-6F30-11d9-C687-00046142C14F} */
 DEFINE_GUID(IID_IWineD3DQuery, 
 0x905ddbac, 0x6f30, 0x11d9, 0xc6, 0x87, 0x0, 0x4, 0x61, 0x42, 0xc1, 0x4f);
+
+/* {8f2bceb1-d338-488c-ab7f-0ec980bf5d2d} */
+DEFINE_GUID(IID_IWineD3DClipper,
+0x8f2bceb1, 0xd338, 0x488c, 0xab, 0x7f, 0x0e, 0xc9, 0x80, 0xbf, 0x5d, 0x2d);
 
 /*****************************************************************************
  * Callback functions required for predefining surfaces / stencils
@@ -1119,6 +1125,8 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(GetOverlayPosition)(THIS_ LONG *X, LONG *Y) PURE;
     STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD Flags, IWineD3DSurface *Ref) PURE;
     STDMETHOD(UpdateOverlay)(THIS_ RECT *SrcRect, IWineD3DSurface *DstSurface, RECT *DstRect, DWORD Flags, WINEDDOVERLAYFX *FX);
+    STDMETHOD(SetClipper)(THIS_ struct IWineD3DClipper *clipper);
+    STDMETHOD(GetClipper)(THIS_ struct IWineD3DClipper **clipper);
     /* Internally used methods */
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pRect) PURE;
     STDMETHOD(LoadTexture)(THIS) PURE;
@@ -1172,6 +1180,8 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_GetOverlayPosition(p, a, b)  (p)->lpVtbl->GetOverlayPosition(p, a, b)
 #define IWineD3DSurface_UpdateOverlayZOrder(p, a, b) (p)->lpVtbl->UpdateOverlayZOrder(p, a, b)
 #define IWineD3DSurface_UpdateOverlay(p, a, b, c, d, e) (p)->lpVtbl->UpdateOverlay(p, a, b, c, d, e)
+#define IWineD3DSurface_SetClipper(p, a)             (p)->lpVtbl->SetClipper(p, a)
+#define IWineD3DSurface_GetClipper(p, a)             (p)->lpVtbl->GetClipper(p, a)
 /*** IWineD3DSurface (Internal, no d3d mapping) methods ***/
 #define IWineD3DSurface_AddDirtyRect(p,a)            (p)->lpVtbl->AddDirtyRect(p,a)
 #define IWineD3DSurface_LoadTexture(p)               (p)->lpVtbl->LoadTexture(p)
@@ -1531,6 +1541,54 @@ DECLARE_INTERFACE_(IWineD3DPalette,IUnknown)
 #define IWineD3DPalette_GetCaps(p, a)              (p)->lpVtbl->GetCaps(p, a)
 #define IWineD3DPalette_SetEntries(p, a, b, c, d)  (p)->lpVtbl->SetEntries(p, a, b, c, d)
 #endif
+
+/*****************************************************************************
+ * IDirectDrawClipper interface
+ */
+#define INTERFACE IWineD3DClipper
+DECLARE_INTERFACE_(IWineD3DClipper,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** WineD3DBase methods ***/
+    STDMETHOD_(HRESULT,GetParent)(THIS_ IUnknown **parent) PURE;
+    /*** IWineD3DClipper methods ***/
+    STDMETHOD(GetClipList)(THIS_ LPRECT lpRect, LPRGNDATA lpClipList, LPDWORD lpdwSize) PURE;
+    STDMETHOD(GetHWnd)(THIS_ HWND *lphWnd) PURE;
+    STDMETHOD(IsClipListChanged)(THIS_ BOOL *lpbChanged) PURE;
+    STDMETHOD(SetClipList)(THIS_ LPRGNDATA lpClipList, DWORD dwFlags) PURE;
+    STDMETHOD(SetHWnd)(THIS_ DWORD dwFlags, HWND hWnd) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DClipper_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DClipper_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IWineD3DClipper_Release(p)                 (p)->lpVtbl->Release(p)
+/*** IWineD3DClipper methods ***/
+#define IWineD3DClipper_GetClipList(p,a,b,c)       (p)->lpVtbl->GetClipList(p,a,b,c)
+#define IWineD3DClipper_GetHWnd(p,a)               (p)->lpVtbl->GetHWnd(p,a)
+#define IWineD3DClipper_IsClipListChanged(p,a)     (p)->lpVtbl->IsClipListChanged(p,a)
+#define IWineD3DClipper_SetClipList(p,a,b)         (p)->lpVtbl->SetClipList(p,a,b)
+#define IWineD3DClipper_SetHWnd(p,a,b)             (p)->lpVtbl->SetHWnd(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IWineD3DClipper_QueryInterface(p,a,b)      (p)->QueryInterface(a,b)
+#define IWineD3DClipper_AddRef(p)                  (p)->AddRef()
+#define IWineD3DClipper_Release(p)                 (p)->Release()
+/*** IWineD3DClipper methods ***/
+#define IWineD3DClipper_GetClipList(p,a,b,c)       (p)->GetClipList(a,b,c)
+#define IWineD3DClipper_GetHWnd(p,a)               (p)->GetHWnd(a)
+#define IWineD3DClipper_IsClipListChanged(p,a)     (p)->IsClipListChanged(a)
+#define IWineD3DClipper_SetClipList(p,a,b)         (p)->SetClipList(a,b)
+#define IWineD3DClipper_SetHWnd(p,a,b)             (p)->SetHWnd(a,b)
+#endif
+
+/* DDraw Clippers are not created from DDraw objects, they have a seperate creation function */
+IWineD3DClipper* WINAPI WineDirect3DCreateClipper(IUnknown *parent);
 
 #if 0 /* FIXME: During porting in from d3d8 - the following will be used */
 extern HRESULT WINAPI IDirect3DVertexShaderImpl_ParseProgram(IDirect3DVertexShaderImpl* This, CONST DWORD* pFunction);

@@ -1011,6 +1011,19 @@ typedef struct {
 } renderbuffer_entry_t;
 
 /*****************************************************************************
+ * IWineD3DClipp implementation structure
+ */
+typedef struct IWineD3DClipperImpl
+{
+    const IWineD3DClipperVtbl *lpVtbl;
+    LONG ref;
+
+    IUnknown *Parent;
+    HWND hWnd;
+} IWineD3DClipperImpl;
+
+
+/*****************************************************************************
  * IWineD3DSurface implementation structure
  */
 struct IWineD3DSurfaceImpl
@@ -1064,6 +1077,9 @@ struct IWineD3DSurfaceImpl
 
     struct list               renderbuffers;
     renderbuffer_entry_t      *current_renderbuffer;
+
+    /* DirectDraw clippers */
+    IWineD3DClipper           *clipper;
 };
 
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
@@ -1111,6 +1127,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface, LO
 HRESULT WINAPI IWineD3DSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface, LONG *X, LONG *Y);
 HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *iface, DWORD Flags, IWineD3DSurface *Ref);
 HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *SrcRect, IWineD3DSurface *DstSurface, RECT *DstRect, DWORD Flags, WINEDDOVERLAYFX *FX);
+HRESULT WINAPI IWineD3DSurfaceImpl_SetClipper(IWineD3DSurface *iface, IWineD3DClipper *clipper);
+HRESULT WINAPI IWineD3DSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DClipper **clipper);
 
 /* Surface flags: */
 #define SFLAG_OVERSIZE    0x00000001 /* Surface is bigger than gl size, blts only */

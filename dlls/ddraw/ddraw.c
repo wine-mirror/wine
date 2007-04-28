@@ -3037,8 +3037,12 @@ DirectDrawCreateClipper(DWORD Flags,
 
     ICOM_INIT_INTERFACE(object, IDirectDrawClipper, IDirectDrawClipper_Vtbl);
     object->ref = 1;
-    object->hWnd = 0;
-    object->ddraw_owner = NULL;
+    object->wineD3DClipper = pWineDirect3DCreateClipper((IUnknown *) object);
+    if(!object->wineD3DClipper)
+    {
+        HeapFree(GetProcessHeap(), 0, object);
+        return E_OUTOFMEMORY;
+    }
 
     *Clipper = (IDirectDrawClipper *) object;
     return DD_OK;
