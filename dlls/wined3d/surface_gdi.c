@@ -555,8 +555,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
             ret = WINED3DERR_WRONGTEXTUREFORMAT;
             goto release;
         }
-        TRACE("Fourcc->Fourcc copy)\n");
-        memcpy(dlock.pBits, slock.pBits, This->currentDesc.Height * dlock.Pitch);
+        memcpy(dlock.pBits, slock.pBits, This->resource.size);
         goto release;
     }
 
