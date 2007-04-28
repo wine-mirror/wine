@@ -306,6 +306,17 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         /* Restore the render targets */
         if(This->OffScreenTarget)
         {
+            WINED3DVIEWPORT vp;
+
+            vp.X = 0;
+            vp.Y = 0;
+            vp.Width = This->ddraw->d3d_target->surface_desc.dwWidth;
+            vp.Height = This->ddraw->d3d_target->surface_desc.dwHeight;
+            vp.MinZ = 0.0;
+            vp.MaxZ = 1.0;
+            IWineD3DDevice_SetViewport(This->wineD3DDevice,
+                                       &vp);
+
             /* Set the device up to render to the front buffer since the back buffer will
              * vanish soon.
              */

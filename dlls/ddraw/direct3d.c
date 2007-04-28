@@ -844,6 +844,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     if(!(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) &&
        (This->d3d_target != target))
     {
+        WINED3DVIEWPORT vp;
         TRACE("(%p) Using %p as front buffer, %p as back buffer\n", This, This->d3d_target, target);
         hr = IWineD3DDevice_SetFrontBackBuffers(This->wineD3DDevice,
                                                 This->d3d_target->WineD3DSurface,
@@ -854,6 +855,15 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
         /* Render to the back buffer */
         IWineD3DDevice_SetRenderTarget(This->wineD3DDevice, 0,
                                        target->WineD3DSurface);
+
+        vp.X = 0;
+        vp.Y = 0;
+        vp.Width = target->surface_desc.dwWidth;
+        vp.Height = target->surface_desc.dwHeight;
+        vp.MinZ = 0.0;
+        vp.MaxZ = 1.0;
+        IWineD3DDevice_SetViewport(This->wineD3DDevice,
+                                   &vp);
 
         object->OffScreenTarget = TRUE;
     }
