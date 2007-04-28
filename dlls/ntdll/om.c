@@ -247,7 +247,7 @@ NtQuerySecurityObject(
 	  pace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
 	  pace->Header.AceFlags = CONTAINER_INHERIT_ACE;
 	  pace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD) + RtlLengthRequiredSid(1);
-	  pace->Mask = DELETE | READ_CONTROL | WRITE_DAC | WRITE_OWNER  | 0x3f;
+          pace->Mask = STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
 	  pace->SidStart = BufferIndex;
 
 	  /* SID S-1-5-12 (System) */
@@ -267,7 +267,7 @@ NtQuerySecurityObject(
 	  pace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
 	  pace->Header.AceFlags = CONTAINER_INHERIT_ACE;
 	  pace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD) + RtlLengthRequiredSid(2);
-	  pace->Mask = DELETE | READ_CONTROL | WRITE_DAC | WRITE_OWNER  | 0x3f;
+          pace->Mask = STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
 	  pace->SidStart = BufferIndex;
 
 	  /* S-1-5-12 (Administrators) */
