@@ -346,7 +346,7 @@ static void set_registry_variables( HANDLE hkey, ULONG type )
         env_value.Buffer = (WCHAR *)(buffer + info->DataOffset);
         env_value.Length = env_value.MaximumLength = info->DataLength;
         if (env_value.Length && !env_value.Buffer[env_value.Length/sizeof(WCHAR)-1])
-            env_value.Length--;  /* don't count terminating null if any */
+            env_value.Length -= sizeof(WCHAR);  /* don't count terminating null if any */
         if (info->Type == REG_EXPAND_SZ)
         {
             WCHAR buf_expanded[1024];
