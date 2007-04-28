@@ -2328,43 +2328,22 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         }
     }
 
-    /* No Width or no Height? Use the current window size or
-     * the original screen size
+    /* No Width or no Height? Use the original screen size
      */
     if(!(desc2.dwFlags & DDSD_WIDTH) ||
        !(desc2.dwFlags & DDSD_HEIGHT) )
     {
-        HWND window;
+        /* Invalid for non-render targets */
+        if(!(desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
+        {
+            WARN("Creating a non-Primary surface without Width or Height info, returning DDERR_INVALIDPARAMS\n");
+            *Surf = NULL;
+            return DDERR_INVALIDPARAMS;
+        }
 
-        /* Fallback: From WineD3D / original mode */
         desc2.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT;
         desc2.dwWidth = Mode.Width;
         desc2.dwHeight = Mode.Height;
-
-        hr = IWineD3DDevice_GetHWND(This->wineD3DDevice,
-                                    &window);
-        if( (hr == D3D_OK) && (window != 0) )
-        {
-            RECT rect;
-            if(GetWindowRect(window, &rect) )
-            {
-                /* This is a hack until I find a better solution */
-                if( (rect.right - rect.left) <= 1 ||
-                    (rect.bottom - rect.top) <= 1 )
-                {
-                    FIXME("Wanted to get surface dimensions from window %p, but it has only "
-                           "a size of %dx%d. Using full screen dimensions\n",
-                           window, rect.right - rect.left, rect.bottom - rect.top);
-                }
-                else
-                {
-                    /* Not sure if this is correct */
-                    desc2.dwWidth = rect.right - rect.left;
-                    desc2.dwHeight = rect.bottom - rect.top;
-                    TRACE("Using window %p's dimensions: %dx%d\n", window, desc2.dwWidth, desc2.dwHeight);
-                }
-            }
-        }
     }
 
     /* Mipmap count fixes */

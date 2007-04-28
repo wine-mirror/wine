@@ -4,6 +4,7 @@
  * Copyright (C) 2005 Antoine Chavasse (a.chavasse@gmail.com)
  * Copyright (C) 2005 Christian Costa
  * Copyright 2005 Ivan Leo Puoti
+ * Copyright (C) 2007 Stefan Dösinger
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1724,6 +1725,99 @@ static void CompressedTest(void)
     IDirectDraw7_Release(dd7);
 }
 
+static void SizeTest(void)
+{
+    LPDIRECTDRAWSURFACE dsurface = NULL;
+    DDSURFACEDESC desc;
+    HRESULT ret;
+    HWND window = CreateWindow( "static", "ddraw_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+
+    /* Create an offscreen surface surface without a size */
+    ZeroMemory(&desc, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS;
+    desc.ddsCaps.dwCaps |= DDSCAPS_OFFSCREENPLAIN;
+    ret = IDirectDraw_CreateSurface(lpDD, &desc, &dsurface, NULL);
+    ok(ret == DDERR_INVALIDPARAMS, "Creating an offscreen plain surface without a size info returned %08x\n", ret);
+    if(dsurface)
+    {
+        trace("Surface at %p\n", dsurface);
+        IDirectDrawSurface_Release(dsurface);
+        dsurface = NULL;
+    }
+
+    /* Create an offscreen surface surface with only a width parameter */
+    ZeroMemory(&desc, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS | DDSD_WIDTH;
+    desc.ddsCaps.dwCaps |= DDSCAPS_OFFSCREENPLAIN;
+    desc.dwWidth = 128;
+    ret = IDirectDraw_CreateSurface(lpDD, &desc, &dsurface, NULL);
+    ok(ret == DDERR_INVALIDPARAMS, "Creating an offscreen plain surface without hight info returned %08x\n", ret);
+    if(dsurface)
+    {
+        IDirectDrawSurface_Release(dsurface);
+        dsurface = NULL;
+    }
+
+    /* Create an offscreen surface surface with only a height parameter */
+    ZeroMemory(&desc, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS | DDSD_HEIGHT;
+    desc.ddsCaps.dwCaps |= DDSCAPS_OFFSCREENPLAIN;
+    desc.dwHeight = 128;
+    ret = IDirectDraw_CreateSurface(lpDD, &desc, &dsurface, NULL);
+    ok(ret == DDERR_INVALIDPARAMS, "Creating an offscreen plain surface without width info returned %08x\n", ret);
+    if(dsurface)
+    {
+        IDirectDrawSurface_Release(dsurface);
+        dsurface = NULL;
+    }
+
+    /* Sanity check */
+    ZeroMemory(&desc, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+    desc.ddsCaps.dwCaps |= DDSCAPS_OFFSCREENPLAIN;
+    desc.dwHeight = 128;
+    desc.dwWidth = 128;
+    ret = IDirectDraw_CreateSurface(lpDD, &desc, &dsurface, NULL);
+    ok(ret == DD_OK, "Creating an offscreen plain surface with width and height info returned %08x\n", ret);
+    if(dsurface)
+    {
+        IDirectDrawSurface_Release(dsurface);
+        dsurface = NULL;
+    }
+
+    /* Test a primary surface size */
+    ret = IDirectDraw_SetCooperativeLevel(lpDD, window, DDSCL_NORMAL);
+    ok(ret == DD_OK, "SetCooperativeLevel failed with %08x\n", ret);
+
+    ZeroMemory(&desc, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS;
+    desc.ddsCaps.dwCaps |= DDSCAPS_PRIMARYSURFACE;
+    desc.dwHeight = 128; /* Keep them set to  check what happens */
+    desc.dwWidth = 128; /* Keep them set to  check what happens */
+    ret = IDirectDraw_CreateSurface(lpDD, &desc, &dsurface, NULL);
+    ok(ret == DD_OK, "Creating a primary surface without width and height info returned %08x\n", ret);
+    if(dsurface)
+    {
+        ret = IDirectDrawSurface_GetSurfaceDesc(dsurface, &desc);
+        ok(ret == DD_OK, "GetSurfaceDesc returned %x\n", ret);
+
+        IDirectDrawSurface_Release(dsurface);
+        dsurface = NULL;
+
+        ok(desc.dwFlags & DDSD_WIDTH, "Primary surface doesn't have width set\n");
+        ok(desc.dwFlags & DDSD_HEIGHT, "Primary surface doesn't have hight set\n");
+        ok(desc.dwWidth == GetSystemMetrics(SM_CXSCREEN), "Surface Width differs from screen Width\n");
+        ok(desc.dwHeight == GetSystemMetrics(SM_CYSCREEN), "Surface Width differs from screen Width\n");
+    }
+    ret = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL);
+    ok(ret == DD_OK, "SetCooperativeLevel failed with %08x\n", ret);
+}
+
 START_TEST(dsurface)
 {
     if (!CreateDirectDraw())
@@ -1740,5 +1834,6 @@ START_TEST(dsurface)
     CubeMapTest();
     test_lockrect_invalid();
     CompressedTest();
+    SizeTest();
     ReleaseDirectDraw();
 }
