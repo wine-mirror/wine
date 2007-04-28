@@ -32,7 +32,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "commdlg.h"
-#include "dlgs.h"
 #include "wine/debug.h"
 #include "cderr.h"
 

@@ -73,7 +73,6 @@
 #include "filedlg31.h"
 #include "cderr.h"
 #include "shellapi.h"
-#include "shlguid.h"
 #include "shlobj.h"
 #include "filedlgbrowser.h"
 #include "shlwapi.h"

@@ -40,7 +40,6 @@
 #include "wine/debug.h"
 #include "cderr.h"
 #include "winspool.h"
-#include "winerror.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
