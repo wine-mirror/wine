@@ -25,10 +25,7 @@
 #include "winbase.h"
 #include "wincrypt.h"
 #include "winreg.h"
-#include "winnls.h"
-#include "mssip.h"
 #include "winuser.h"
-#include "advpub.h"
 #include "crypt32_private.h"
 #include "wine/debug.h"
 

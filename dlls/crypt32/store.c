@@ -36,7 +36,6 @@
 #include "wincrypt.h"
 #include "wine/debug.h"
 #include "wine/list.h"
-#include "excpt.h"
 #include "wine/exception.h"
 #include "crypt32_private.h"
 

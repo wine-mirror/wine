@@ -20,7 +20,6 @@
 #include "winbase.h"
 #include "wincrypt.h"
 #include "wine/debug.h"
-#include "excpt.h"
 #include "wine/exception.h"
 #include "crypt32_private.h"
 

@@ -40,10 +40,8 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "excpt.h"
 #include "wincrypt.h"
 #include "winnls.h"
-#include "winreg.h"
 #include "snmp.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
