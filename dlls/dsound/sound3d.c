@@ -66,7 +66,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound3d);
  */
 
 /* scalar product (i believe it's called dot product in english) */
-static inline D3DVALUE ScalarProduct (LPD3DVECTOR a, LPD3DVECTOR b)
+static inline D3DVALUE ScalarProduct (const D3DVECTOR *a, const D3DVECTOR *b)
 {
 	D3DVALUE c;
 	c = (a->x*b->x) + (a->y*b->y) + (a->z*b->z);
@@ -76,7 +76,7 @@ static inline D3DVALUE ScalarProduct (LPD3DVECTOR a, LPD3DVECTOR b)
 }
 
 /* vector product (i believe it's called cross product in english */
-static inline D3DVECTOR VectorProduct (LPD3DVECTOR a, LPD3DVECTOR b)
+static inline D3DVECTOR VectorProduct (const D3DVECTOR *a, const D3DVECTOR *b)
 {
 	D3DVECTOR c;
 	c.x = (a->y*b->z) - (a->z*b->y);
@@ -88,7 +88,7 @@ static inline D3DVECTOR VectorProduct (LPD3DVECTOR a, LPD3DVECTOR b)
 }
 
 /* magnitude (length) of vector */
-static inline D3DVALUE VectorMagnitude (LPD3DVECTOR a)
+static inline D3DVALUE VectorMagnitude (const D3DVECTOR *a)
 {
 	D3DVALUE l;
 	l = sqrt (ScalarProduct (a, a));
@@ -106,7 +106,7 @@ static inline D3DVALUE RadToDeg (D3DVALUE angle)
 }
 
 /* angle between vectors - deg version */
-static inline D3DVALUE AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
+static inline D3DVALUE AngleBetweenVectorsDeg (const D3DVECTOR *a, const D3DVECTOR *b)
 {
 	D3DVALUE la, lb, product, angle, cos;
 	/* definition of scalar product: a*b = |a|*|b|*cos...therefore: */
@@ -123,7 +123,7 @@ static inline D3DVALUE AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
 }
 
 /* angle between vectors - rad version */
-static inline D3DVALUE AngleBetweenVectorsRad (LPD3DVECTOR a, LPD3DVECTOR b)
+static inline D3DVALUE AngleBetweenVectorsRad (const D3DVECTOR *a, const D3DVECTOR *b)
 {
 	D3DVALUE la, lb, product, angle, cos;
 	/* definition of scalar product: a*b = |a|*|b|*cos...therefore: */
@@ -138,7 +138,7 @@ static inline D3DVALUE AngleBetweenVectorsRad (LPD3DVECTOR a, LPD3DVECTOR b)
 }
 
 /* calculates vector between two points */
-static inline D3DVECTOR VectorBetweenTwoPoints (LPD3DVECTOR a, LPD3DVECTOR b)
+static inline D3DVECTOR VectorBetweenTwoPoints (const D3DVECTOR *a, const D3DVECTOR *b)
 {
 	D3DVECTOR c;
 	c.x = b->x - a->x;
@@ -150,7 +150,7 @@ static inline D3DVECTOR VectorBetweenTwoPoints (LPD3DVECTOR a, LPD3DVECTOR b)
 }
 
 /* calculates the length of vector's projection on another vector */
-static inline D3DVALUE ProjectVector (LPD3DVECTOR a, LPD3DVECTOR p)
+static inline D3DVALUE ProjectVector (const D3DVECTOR *a, const D3DVECTOR *p)
 {
 	D3DVALUE prod, result;
 	prod = ScalarProduct(a, p);

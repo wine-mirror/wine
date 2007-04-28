@@ -175,7 +175,7 @@ static inline BYTE cvtS16toU8(INT16 s)
  * Copy a single frame from the given input buffer to the given output buffer.
  * Translate 8 <-> 16 bits and mono <-> stereo
  */
-static inline void cp_fields(const IDirectSoundBufferImpl *dsb, BYTE *ibuf, BYTE *obuf )
+static inline void cp_fields(const IDirectSoundBufferImpl *dsb, const BYTE *ibuf, BYTE *obuf )
 {
 	DirectSoundDevice * device = dsb->device;
         INT fl,fr;
@@ -192,8 +192,8 @@ static inline void cp_fields(const IDirectSoundBufferImpl *dsb, BYTE *ibuf, BYTE
                 fl = cvtU8toS16(*ibuf);
                 fr = (dsb->pwfx->nChannels==2 ? cvtU8toS16(*(ibuf + 1)) : fl);
         } else {
-                fl = *((INT16 *)ibuf);
-                fr = (dsb->pwfx->nChannels==2 ? *(((INT16 *)ibuf) + 1)  : fl);
+                fl = *((const INT16 *)ibuf);
+                fr = (dsb->pwfx->nChannels==2 ? *(((const INT16 *)ibuf) + 1)  : fl);
         }
 
         if (device->pwfx->nChannels == 2) {
@@ -910,7 +910,8 @@ post_mix:
  *
  * Returns:  the length beyond the writepos that was mixed to.
  */
-static DWORD DSOUND_MixToPrimary(DirectSoundDevice *device, DWORD playpos, DWORD writepos, DWORD mixlen, BOOL recover)
+static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD playpos, DWORD writepos,
+                                 DWORD mixlen, BOOL recover)
 {
 	INT			i, len, maxlen = 0;
 	IDirectSoundBufferImpl	*dsb;
