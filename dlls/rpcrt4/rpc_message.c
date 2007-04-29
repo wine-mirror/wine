@@ -691,7 +691,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
     if (((*Header)->common.frag_len < hdr_length) ||
         ((*Header)->common.frag_len - hdr_length < header_auth_len)) {
       WARN("frag_len %d too small for hdr_length %d and auth_len %d\n",
-        common_hdr.frag_len, hdr_length, common_hdr.auth_len);
+        (*Header)->common.frag_len, hdr_length, header_auth_len);
       status = RPC_S_PROTOCOL_ERROR;
       goto fail;
     }
