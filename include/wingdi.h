@@ -3660,8 +3660,8 @@ BOOL      WINAPI UpdateICMRegKeyA(DWORD,LPSTR,LPSTR,UINT);
 BOOL      WINAPI UpdateICMRegKeyW(DWORD,LPWSTR,LPWSTR,UINT);
 #define     UpdateICMRegKey WINELIB_NAME_AW(UpdateICMRegKey)
 BOOL      WINAPI WidenPath(HDC);
-BOOL      WINAPI PolyTextOutA(HDC,PPOLYTEXTA,INT);
-BOOL      WINAPI PolyTextOutW(HDC,PPOLYTEXTW,INT);
+BOOL      WINAPI PolyTextOutA(HDC,const POLYTEXTA*,INT);
+BOOL      WINAPI PolyTextOutW(HDC,const POLYTEXTW*,INT);
 #define   PolyTextOut WINELIB_NAME_AW(PolyTextOut)
 
 /* These defines are used by wglSwapLayerBuffers */

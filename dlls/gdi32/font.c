@@ -2332,9 +2332,7 @@ BOOL WINAPI TextOutW(HDC hdc, INT x, INT y, LPCWSTR str, INT count)
  *
  * See PolyTextOutW.
  */
-BOOL WINAPI PolyTextOutA ( HDC hdc,               /* [in] Handle to device context */
-                           PPOLYTEXTA pptxt,      /* [in] Array of strings */
-                           INT cStrings )         /* [in] Number of strings in array */
+BOOL WINAPI PolyTextOutA( HDC hdc, const POLYTEXTA *pptxt, INT cStrings )
 {
     for (; cStrings>0; cStrings--, pptxt++)
         if (!ExtTextOutA( hdc, pptxt->x, pptxt->y, pptxt->uiFlags, &pptxt->rcl, pptxt->lpstr, pptxt->n, pptxt->pdx ))
@@ -2353,9 +2351,7 @@ BOOL WINAPI PolyTextOutA ( HDC hdc,               /* [in] Handle to device conte
  *  TRUE:  Success.
  *  FALSE: Failure.
  */
-BOOL WINAPI PolyTextOutW ( HDC hdc,               /* [in] Handle to device context */
-                           PPOLYTEXTW pptxt,      /* [in] Array of strings */
-                           INT cStrings )         /* [in] Number of strings in array */
+BOOL WINAPI PolyTextOutW( HDC hdc, const POLYTEXTW *pptxt, INT cStrings )
 {
     for (; cStrings>0; cStrings--, pptxt++)
         if (!ExtTextOutW( hdc, pptxt->x, pptxt->y, pptxt->uiFlags, &pptxt->rcl, pptxt->lpstr, pptxt->n, pptxt->pdx ))
