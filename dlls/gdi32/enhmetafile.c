@@ -516,7 +516,7 @@ typedef struct enum_emh_data
 
 #define IS_WIN9X() (GetVersion()&0x80000000)
 
-static void EMF_Update_MF_Xform(HDC hdc, enum_emh_data *info)
+static void EMF_Update_MF_Xform(HDC hdc, const enum_emh_data *info)
 {
     XFORM mapping_mode_trans, final_trans;
     FLOAT scaleX, scaleY;
