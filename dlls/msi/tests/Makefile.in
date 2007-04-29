@@ -3,10 +3,11 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = msi.dll
-IMPORTS   = cabinet msi shell32 ole32 advapi32 kernel32
+IMPORTS   = cabinet msi shell32 ole32 oleaut32 advapi32 kernel32
 EXTRALIBS = -luuid
 
 CTESTS = \
+	automation.c \
 	db.c \
 	format.c \
 	iface.c \

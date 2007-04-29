@@ -1,0 +1,924 @@
+/*
+ * Copyright (C) 2007 Misha Koshelev
+ *
+ * A test program for MSI OLE automation.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#define COBJMACROS
+
+#include <stdio.h>
+
+#include <windows.h>
+#include <msiquery.h>
+#include <msidefs.h>
+#include <msi.h>
+#include <fci.h>
+
+#include "wine/test.h"
+
+static const char *msifile = "winetest.msi";
+static const WCHAR szMsifile[] = {'w','i','n','e','t','e','s','t','.','m','s','i',0};
+CHAR CURR_DIR[MAX_PATH];
+EXCEPINFO excepinfo;
+
+/*
+ * OLE automation data
+ **/
+static const WCHAR szProgId[] = { 'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r','.','I','n','s','t','a','l','l','e','r',0 };
+
+/* Installer */
+static const WCHAR szOpenPackage[] = { 'O','p','e','n','P','a','c','k','a','g','e',0 };
+
+/* Session */
+static const WCHAR szProperty[] = { 'P','r','o','p','e','r','t','y',0 };
+static const WCHAR szLanguage[] = { 'L','a','n','g','u','a','g','e',0 };
+static const WCHAR szMode[] = { 'M','o','d','e',0 };
+static const WCHAR szDatabase[] = { 'D','a','t','a','b','a','s','e',0 };
+static const WCHAR szDoAction[] = { 'D','o','A','c','t','i','o','n',0 };
+static const WCHAR szSetInstallLevel[] = { 'S','e','t','I','n','s','t','a','l','l','L','e','v','e','l',0 };
+static const WCHAR szFeatureCurrentState[] = { 'F','e','a','t','u','r','e','C','u','r','r','e','n','t','S','t','a','t','e',0 };
+static const WCHAR szFeatureRequestState[] = { 'F','e','a','t','u','r','e','R','e','q','u','e','s','t','S','t','a','t','e',0 };
+
+/* Database */
+static const WCHAR szOpenView[] = { 'O','p','e','n','V','i','e','w',0 };
+
+/* View */
+static const WCHAR szExecute[] = { 'E','x','e','c','u','t','e',0 };
+static const WCHAR szFetch[] = { 'F','e','t','c','h',0 };
+static const WCHAR szClose[] = { 'C','l','o','s','e',0 };
+
+/* Record */
+static const WCHAR szStringData[] = { 'S','t','r','i','n','g','D','a','t','a',0 };
+
+static IDispatch *pInstaller;
+
+/* msi database data */
+
+static const CHAR component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                    "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                    "Component\tComponent\n"
+                                    "Five\t{8CC92E9D-14B2-4CA4-B2AA-B11D02078087}\tNEWDIR\t2\t\tfive.txt\n"
+                                    "Four\t{FD37B4EA-7209-45C0-8917-535F35A2F080}\tCABOUTDIR\t2\t\tfour.txt\n"
+                                    "One\t{783B242E-E185-4A56-AF86-C09815EC053C}\tMSITESTDIR\t2\t\tone.txt\n"
+                                    "Three\t{010B6ADD-B27D-4EDD-9B3D-34C4F7D61684}\tCHANGEDDIR\t2\t\tthree.txt\n"
+                                    "Two\t{BF03D1A6-20DA-4A65-82F3-6CAC995915CE}\tFIRSTDIR\t2\t\ttwo.txt\n"
+                                    "dangler\t{6091DF25-EF96-45F1-B8E9-A9B1420C7A3C}\tTARGETDIR\t4\t\tregdata\n"
+                                    "component\t\tMSITESTDIR\t0\t1\tfile\n"
+                                    "service_comp\t\tMSITESTDIR\t0\t1\tservice_file";
+
+static const CHAR directory_dat[] = "Directory\tDirectory_Parent\tDefaultDir\n"
+                                    "s72\tS72\tl255\n"
+                                    "Directory\tDirectory\n"
+                                    "CABOUTDIR\tMSITESTDIR\tcabout\n"
+                                    "CHANGEDDIR\tMSITESTDIR\tchanged:second\n"
+                                    "FIRSTDIR\tMSITESTDIR\tfirst\n"
+                                    "MSITESTDIR\tProgramFilesFolder\tmsitest\n"
+                                    "NEWDIR\tCABOUTDIR\tnew\n"
+                                    "ProgramFilesFolder\tTARGETDIR\t.\n"
+                                    "TARGETDIR\t\tSourceDir";
+
+static const CHAR feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                  "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                  "Feature\tFeature\n"
+                                  "Five\t\tFive\tThe Five Feature\t5\t3\tNEWDIR\t0\n"
+                                  "Four\t\tFour\tThe Four Feature\t4\t3\tCABOUTDIR\t0\n"
+                                  "One\t\tOne\tThe One Feature\t1\t3\tMSITESTDIR\t0\n"
+                                  "Three\tOne\tThree\tThe Three Feature\t3\t3\tCHANGEDDIR\t0\n"
+                                  "Two\tOne\tTwo\tThe Two Feature\t2\t3\tFIRSTDIR\t0\n"
+                                  "feature\t\t\t\t2\t1\tTARGETDIR\t0\n"
+                                  "service_feature\t\t\t\t2\t1\tTARGETDIR\t0";
+
+static const CHAR feature_comp_dat[] = "Feature_\tComponent_\n"
+                                       "s38\ts72\n"
+                                       "FeatureComponents\tFeature_\tComponent_\n"
+                                       "Five\tFive\n"
+                                       "Four\tFour\n"
+                                       "One\tOne\n"
+                                       "Three\tThree\n"
+                                       "Two\tTwo\n"
+                                       "feature\tcomponent\n"
+                                       "service_feature\tservice_comp\n";
+
+static const CHAR file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                               "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                               "File\tFile\n"
+                               "five.txt\tFive\tfive.txt\t1000\t\t\t16384\t5\n"
+                               "four.txt\tFour\tfour.txt\t1000\t\t\t16384\t4\n"
+                               "one.txt\tOne\tone.txt\t1000\t\t\t0\t1\n"
+                               "three.txt\tThree\tthree.txt\t1000\t\t\t0\t3\n"
+                               "two.txt\tTwo\ttwo.txt\t1000\t\t\t0\t2\n"
+                               "file\tcomponent\tfilename\t100\t\t\t8192\t1\n"
+                               "service_file\tservice_comp\tservice.exe\t100\t\t\t8192\t1";
+
+static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                           "s72\tS255\tI2\n"
+                                           "InstallExecuteSequence\tAction\n"
+                                           "AllocateRegistrySpace\tNOT Installed\t1550\n"
+                                           "CostFinalize\t\t1000\n"
+                                           "CostInitialize\t\t800\n"
+                                           "FileCost\t\t900\n"
+                                           "InstallFiles\t\t4000\n"
+                                           "InstallServices\t\t5000\n"
+                                           "InstallFinalize\t\t6600\n"
+                                           "InstallInitialize\t\t1500\n"
+                                           "InstallValidate\t\t1400\n"
+                                           "LaunchConditions\t\t100\n"
+                                           "WriteRegistryValues\tSourceDir And SOURCEDIR\t5000";
+
+static const CHAR media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                "Media\tDiskId\n"
+                                "1\t3\t\t\tDISK1\t\n"
+                                "2\t5\t\tmsitest.cab\tDISK2\t\n";
+
+static const CHAR property_dat[] = "Property\tValue\n"
+                                   "s72\tl0\n"
+                                   "Property\tProperty\n"
+                                   "DefaultUIFont\tDlgFont8\n"
+                                   "HASUIRUN\t0\n"
+                                   "INSTALLLEVEL\t3\n"
+                                   "InstallMode\tTypical\n"
+                                   "Manufacturer\tWine\n"
+                                   "PIDTemplate\t12345<###-%%%%%%%>@@@@@\n"
+                                   "ProductCode\t{F1C3AF50-8B56-4A69-A00C-00773FE42F30}\n"
+                                   "ProductID\tnone\n"
+                                   "ProductLanguage\t1033\n"
+                                   "ProductName\tMSITEST\n"
+                                   "ProductVersion\t1.1.1\n"
+                                   "PROMPTROLLBACKCOST\tP\n"
+                                   "Setup\tSetup\n"
+                                   "UpgradeCode\t{CE067E8D-2E1A-4367-B734-4EB2BDAD6565}";
+
+static const CHAR registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
+                                   "s72\ti2\tl255\tL255\tL0\ts72\n"
+                                   "Registry\tRegistry\n"
+                                   "Apples\t2\tSOFTWARE\\Wine\\msitest\tName\timaname\tOne\n"
+                                   "Oranges\t2\tSOFTWARE\\Wine\\msitest\tnumber\t#314\tTwo\n"
+                                   "regdata\t2\tSOFTWARE\\Wine\\msitest\tblah\tbad\tdangler\n"
+                                   "OrderTest\t2\tSOFTWARE\\Wine\\msitest\tOrderTestName\tOrderTestValue\tcomponent";
+
+static const CHAR service_install_dat[] = "ServiceInstall\tName\tDisplayName\tServiceType\tStartType\tErrorControl\t"
+                                          "LoadOrderGroup\tDependencies\tStartName\tPassword\tArguments\tComponent_\tDescription\n"
+                                          "s72\ts255\tL255\ti4\ti4\ti4\tS255\tS255\tS255\tS255\tS255\ts72\tL255\n"
+                                          "ServiceInstall\tServiceInstall\n"
+                                          "TestService\tTestService\tTestService\t2\t3\t0\t\t\tTestService\t\t\tservice_comp\t\t";
+
+static const CHAR service_control_dat[] = "ServiceControl\tName\tEvent\tArguments\tWait\tComponent_\n"
+                                          "s72\tl255\ti2\tL255\tI2\ts72\n"
+                                          "ServiceControl\tServiceControl\n"
+                                          "ServiceControl\tTestService\t8\t\t0\tservice_comp";
+
+typedef struct _msi_table
+{
+    const CHAR *filename;
+    const CHAR *data;
+    int size;
+} msi_table;
+
+#define ADD_TABLE(x) {#x".idt", x##_dat, sizeof(x##_dat)}
+
+static const msi_table tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property),
+    ADD_TABLE(registry),
+    ADD_TABLE(service_install),
+    ADD_TABLE(service_control)
+};
+
+/*
+ * Database Helpers
+ */
+
+static void write_file(const CHAR *filename, const char *data, int data_size)
+{
+    DWORD size;
+
+    HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
+                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    WriteFile(hf, data, data_size, &size, NULL);
+    CloseHandle(hf);
+}
+
+static void write_msi_summary_info(MSIHANDLE db)
+{
+    MSIHANDLE summary;
+    UINT r;
+
+    r = MsiGetSummaryInformationA(db, NULL, 4, &summary);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSummaryInfoSetPropertyA(summary, PID_TEMPLATE, VT_LPSTR, 0, NULL, ";1033");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSummaryInfoSetPropertyA(summary, PID_REVNUMBER, VT_LPSTR, 0, NULL,
+                                   "{004757CA-5092-49c2-AD20-28E1CE0DF5F2}");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSummaryInfoSetPropertyA(summary, PID_PAGECOUNT, VT_I4, 100, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSummaryInfoSetPropertyA(summary, PID_WORDCOUNT, VT_I4, 0, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    /* write the summary changes back to the stream */
+    r = MsiSummaryInfoPersist(summary);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    MsiCloseHandle(summary);
+}
+
+static void create_database(const CHAR *name, const msi_table *tables, int num_tables)
+{
+    MSIHANDLE db;
+    UINT r;
+    int j;
+
+    r = MsiOpenDatabaseA(name, MSIDBOPEN_CREATE, &db);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    /* import the tables into the database */
+    for (j = 0; j < num_tables; j++)
+    {
+        const msi_table *table = &tables[j];
+
+        write_file(table->filename, table->data, (table->size - 1) * sizeof(char));
+
+        r = MsiDatabaseImportA(db, CURR_DIR, table->filename);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+        DeleteFileA(table->filename);
+    }
+
+    write_msi_summary_info(db);
+
+    r = MsiDatabaseCommit(db);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    MsiCloseHandle(db);
+}
+
+/*
+ * Automation helpers and tests
+ */
+
+/* ok-like statement which takes two unicode strings as arguments */
+static CHAR string1[MAX_PATH], string2[MAX_PATH];
+static UINT len;
+
+#define ok_w2(format, szString1, szString2) \
+\
+    if (lstrcmpW(szString1, szString2) != 0) \
+    { \
+        len = WideCharToMultiByte(CP_ACP, 0, szString1, -1, string1, MAX_PATH, NULL, NULL); \
+        ok(len, "WideCharToMultiByteChar returned error %d\n", GetLastError()); \
+\
+        len = WideCharToMultiByte(CP_ACP, 0, szString2, -1, string2, MAX_PATH, NULL, NULL); \
+        ok(len, "WideCharToMultiByteChar returned error %d\n", GetLastError()); \
+\
+        ok(0, format, string1, string2); \
+    }
+
+/* exception checker */
+static WCHAR szSource[] = {'M','s','i',' ','A','P','I',' ','E','r','r','o','r',0};
+
+#define ok_exception(hr, szDescription)           \
+    if (hr == DISP_E_EXCEPTION) \
+    { \
+        /* Compare wtype, source, and destination */                    \
+        ok(excepinfo.wCode == 1000, "Exception info was %d, expected 1000\n", excepinfo.wCode); \
+\
+        ok(excepinfo.bstrSource != NULL, "Exception source was NULL\n"); \
+        if (excepinfo.bstrSource)                                       \
+            ok_w2("Exception source was \"%s\" but expected to be \"%s\"\n", excepinfo.bstrSource, szSource); \
+\
+        ok(excepinfo.bstrDescription != NULL, "Exception description was NULL\n"); \
+        if (excepinfo.bstrDescription)                                  \
+            ok_w2("Exception description was \"%s\" but expected to be \"%s\"\n", excepinfo.bstrDescription, szDescription); \
+    }
+
+/* Test basic IDispatch functions */
+static void test_dispatch(void)
+{
+    static WCHAR szOpenPackageException[] = {'O','p','e','n','P','a','c','k','a','g','e',',','P','a','c','k','a','g','e','P','a','t','h',',','O','p','t','i','o','n','s',0};
+    HRESULT hr;
+    DISPID dispid;
+    OLECHAR *name;
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+
+    /* Test getting ID of a function name that does not exist */
+    name = (WCHAR *)szMsifile;
+    hr = IDispatch_GetIDsOfNames(pInstaller, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
+    ok(hr == DISP_E_UNKNOWNNAME, "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
+
+    /* Test invoking this function */
+    hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, NULL, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "IDispatch::Invoke returned 0x%08x\n", hr);
+
+    /* Test getting ID of a function name that does exist */
+    name = (WCHAR *)szOpenPackage;
+    hr = IDispatch_GetIDsOfNames(pInstaller, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
+    ok(SUCCEEDED(hr), "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
+
+    /* Test invoking this function (without parameters passed) */
+    if (0) /* All of these crash MSI on Windows XP */
+    {
+        hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, NULL, NULL, NULL, NULL);
+        hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, NULL, NULL, &excepinfo, NULL);
+        VariantInit(&varresult);
+        hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, NULL, &varresult, &excepinfo, NULL);
+    }
+
+    /* Try with NULL params */
+    hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
+    ok(hr == DISP_E_TYPEMISMATCH, "IDispatch::Invoke returned 0x%08x\n", hr);
+
+    /* Try one empty parameter */
+    dispparams.rgvarg = vararg;
+    dispparams.cArgs = 1;
+    VariantInit(&vararg[0]);
+    hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
+    ok(hr == DISP_E_TYPEMISMATCH, "IDispatch::Invoke returned 0x%08x\n", hr);
+
+    /* Try one parameter, function requires two */
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szMsifile);
+    hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
+    VariantClear(&vararg[0]);
+
+    ok(hr == DISP_E_EXCEPTION, "IDispatch::Invoke returned 0x%08x\n", hr);
+    ok_exception(hr, szOpenPackageException);
+}
+
+/* invocation helper function */
+static HRESULT invoke(IDispatch *pDispatch, LPCWSTR szName, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, VARTYPE vtResult)
+{
+    OLECHAR *name = (WCHAR *)szName;
+    DISPID dispid;
+    HRESULT hr;
+    int i;
+
+    hr = IDispatch_GetIDsOfNames(pDispatch, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
+    ok(SUCCEEDED(hr), "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
+    if (!SUCCEEDED(hr)) return hr;
+
+    VariantInit(pVarResult);
+    memset(&excepinfo, 0, sizeof(excepinfo));
+    hr = IDispatch_Invoke(pDispatch, dispid, &IID_NULL, LOCALE_NEUTRAL, wFlags, pDispParams, pVarResult, &excepinfo, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        ok(V_VT(pVarResult) == vtResult, "Variant result type is %d, expected %d\n", V_VT(pVarResult), vtResult);
+        if (vtResult != VT_EMPTY)
+        {
+            hr = VariantChangeTypeEx(pVarResult, pVarResult, LOCALE_NEUTRAL, 0, vtResult);
+            ok(SUCCEEDED(hr), "VariantChangeTypeEx returned 0x%08x\n", hr);
+        }
+    }
+
+    for (i=0; i<pDispParams->cArgs; i++)
+        VariantClear(&pDispParams->rgvarg[i]);
+
+    return hr;
+}
+
+/* Object_Property helper functions */
+
+static HRESULT Installer_OpenPackage(LPCWSTR szPackagePath, int options, IDispatch **pSession)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_BSTR;
+    V_BSTR(&vararg[1]) = SysAllocString(szPackagePath);
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = options;
+
+    hr = invoke(pInstaller, szOpenPackage, DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
+    *pSession = V_DISPATCH(&varresult);
+    return hr;
+}
+
+static HRESULT Session_PropertyGet(IDispatch *pSession, LPCWSTR szName, LPCWSTR szReturn)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szName);
+
+    hr = invoke(pSession, szProperty, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
+    lstrcpyW((WCHAR *)szReturn, V_BSTR(&varresult));
+    VariantClear(&varresult);
+    return hr;
+}
+
+static HRESULT Session_PropertyPut(IDispatch *pSession, LPCWSTR szName, LPCWSTR szValue)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPID dispid = DISPID_PROPERTYPUT;
+    DISPPARAMS dispparams = {vararg, &dispid, sizeof(vararg)/sizeof(VARIANTARG), 1};
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_BSTR;
+    V_BSTR(&vararg[1]) = SysAllocString(szName);
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szValue);
+
+    return invoke(pSession, szProperty, DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
+}
+
+static HRESULT Session_LanguageGet(IDispatch *pSession, UINT *pLangId)
+{
+    VARIANT varresult;
+    DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+    HRESULT hr;
+
+    hr = invoke(pSession, szLanguage, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
+    *pLangId = V_I4(&varresult);
+    VariantClear(&varresult);
+    return hr;
+}
+
+static HRESULT Session_ModeGet(IDispatch *pSession, int iFlag, BOOL *pMode)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = iFlag;
+
+    hr = invoke(pSession, szMode, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BOOL);
+    *pMode = V_BOOL(&varresult);
+    VariantClear(&varresult);
+    return hr;
+}
+
+static HRESULT Session_ModePut(IDispatch *pSession, int iFlag, BOOL bMode)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPID dispid = DISPID_PROPERTYPUT;
+    DISPPARAMS dispparams = {vararg, &dispid, sizeof(vararg)/sizeof(VARIANTARG), 1};
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_I4;
+    V_I4(&vararg[1]) = iFlag;
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BOOL;
+    V_BOOL(&vararg[0]) = bMode;
+
+    return invoke(pSession, szMode, DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
+}
+
+static HRESULT Session_Database(IDispatch *pSession, IDispatch **pDatabase)
+{
+    VARIANT varresult;
+    DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+    HRESULT hr;
+
+    hr = invoke(pSession, szDatabase, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_DISPATCH);
+    *pDatabase = V_DISPATCH(&varresult);
+    return hr;
+}
+
+static HRESULT Session_DoAction(IDispatch *pSession, LPCWSTR szAction, int *iReturn)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szAction);
+
+    hr = invoke(pSession, szDoAction, DISPATCH_METHOD, &dispparams, &varresult, VT_I4);
+    *iReturn = V_I4(&varresult);
+    VariantClear(&varresult);
+    return hr;
+}
+
+static HRESULT Session_SetInstallLevel(IDispatch *pSession, long iInstallLevel)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = iInstallLevel;
+
+    return invoke(pSession, szSetInstallLevel, DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
+}
+
+static HRESULT Session_FeatureCurrentState(IDispatch *pSession, LPCWSTR szName, int *pState)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szName);
+
+    hr = invoke(pSession, szFeatureCurrentState, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
+    *pState = V_I4(&varresult);
+    VariantClear(&varresult);
+    return hr;
+}
+
+static HRESULT Session_FeatureRequestStateGet(IDispatch *pSession, LPCWSTR szName, int *pState)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szName);
+
+    hr = invoke(pSession, szFeatureRequestState, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
+    *pState = V_I4(&varresult);
+    VariantClear(&varresult);
+    return hr;
+}
+
+static HRESULT Session_FeatureRequestStatePut(IDispatch *pSession, LPCWSTR szName, int iState)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPID dispid = DISPID_PROPERTYPUT;
+    DISPPARAMS dispparams = {vararg, &dispid, sizeof(vararg)/sizeof(VARIANTARG), 1};
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_BSTR;
+    V_BSTR(&vararg[1]) = SysAllocString(szName);
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = iState;
+
+    return invoke(pSession, szFeatureRequestState, DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
+}
+
+static HRESULT Database_OpenView(IDispatch *pDatabase, LPCWSTR szSql, IDispatch **pView)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szSql);
+
+    hr = invoke(pDatabase, szOpenView, DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
+    *pView = V_DISPATCH(&varresult);
+    return hr;
+}
+
+static HRESULT View_Execute(IDispatch *pView, IDispatch *pRecord)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_DISPATCH;
+    V_DISPATCH(&vararg[0]) = pRecord;
+
+    return invoke(pView, szExecute, DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
+}
+
+static HRESULT View_Fetch(IDispatch *pView, IDispatch **ppRecord)
+{
+    VARIANT varresult;
+    DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+    HRESULT hr = invoke(pView, szFetch, DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
+    *ppRecord = V_DISPATCH(&varresult);
+    return hr;
+}
+
+static HRESULT View_Close(IDispatch *pView)
+{
+    VARIANT varresult;
+    DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+    return invoke(pView, szClose, DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
+}
+
+static HRESULT Record_StringDataGet(IDispatch *pRecord, int iField, LPCWSTR szString)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = iField;
+
+    hr = invoke(pRecord, szStringData, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
+    lstrcpyW((WCHAR *)szString, V_BSTR(&varresult));
+    VariantClear(&varresult);
+    return hr;
+}
+
+static HRESULT Record_StringDataPut(IDispatch *pRecord, int iField, LPCWSTR szString)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPID dispid = DISPID_PROPERTYPUT;
+    DISPPARAMS dispparams = {vararg, &dispid, sizeof(vararg)/sizeof(VARIANTARG), 1};
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_I4;
+    V_I4(&vararg[1]) = iField;
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szString);
+
+    return invoke(pRecord, szStringData, DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_BSTR);
+}
+
+/* Test the various objects */
+
+static void test_Database(IDispatch *pDatabase)
+{
+    static WCHAR szSql[] = { 'S','E','L','E','C','T',' ','`','F','e','a','t','u','r','e','`',' ','F','R','O','M',' ','`','F','e','a','t','u','r','e','`',' ','W','H','E','R','E',' ','`','F','e','a','t','u','r','e','_','P','a','r','e','n','t','`','=','\'','O','n','e','\'',0 };
+    static WCHAR szThree[] = { 'T','h','r','e','e',0 };
+    static WCHAR szTwo[] = { 'T','w','o',0 };
+    static WCHAR szStringDataField[] = { 'S','t','r','i','n','g','D','a','t','a',',','F','i','e','l','d',0 };
+    IDispatch *pView = NULL;
+    HRESULT hr;
+
+    hr = Database_OpenView(pDatabase, szSql, &pView);
+    ok(SUCCEEDED(hr), "Database_OpenView failed, hresult 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        IDispatch *pRecord = NULL;
+        WCHAR szString[MAX_PATH];
+
+        /* View::Execute */
+        hr = View_Execute(pView, NULL);
+        ok(SUCCEEDED(hr), "View_Execute failed, hresult 0x%08x\n", hr);
+
+        /* View::Fetch */
+        hr = View_Fetch(pView, &pRecord);
+        ok(SUCCEEDED(hr), "View_Fetch failed, hresult 0x%08x\n", hr);
+        ok(pRecord != NULL, "View_Fetch should not have returned NULL record\n");
+        if (pRecord)
+        {
+            /* Record::StringDataGet */
+            memset(szString, 0, sizeof(szString));
+            hr = Record_StringDataGet(pRecord, 1, szString);
+            ok(SUCCEEDED(hr), "Record_StringDataGet failed, hresult 0x%08x\n", hr);
+            ok_w2("Record_StringDataGet result was %s but expected %s\n", szString, szThree);
+
+            /* Record::StringDataPut with incorrect index */
+            hr = Record_StringDataPut(pRecord, -1, szString);
+            ok(hr == DISP_E_EXCEPTION, "Record_StringDataPut failed, hresult 0x%08x\n", hr);
+            ok_exception(hr, szStringDataField);
+
+            IDispatch_Release(pRecord);
+        }
+
+        /* View::Fetch */
+        hr = View_Fetch(pView, &pRecord);
+        ok(SUCCEEDED(hr), "View_Fetch failed, hresult 0x%08x\n", hr);
+        ok(pRecord != NULL, "View_Fetch should not have returned NULL record\n");
+        if (pRecord)
+        {
+            /* Record::StringDataGet */
+            memset(szString, 0, sizeof(szString));
+            hr = Record_StringDataGet(pRecord, 1, szString);
+            ok(SUCCEEDED(hr), "Record_StringDataGet failed, hresult 0x%08x\n", hr);
+            ok_w2("Record_StringDataGet result was %s but expected %s\n", szString, szTwo);
+
+            IDispatch_Release(pRecord);
+        }
+
+        /* View::Fetch */
+        hr = View_Fetch(pView, &pRecord);
+        ok(SUCCEEDED(hr), "View_Fetch failed, hresult 0x%08x\n", hr);
+        ok(pRecord == NULL, "View_Fetch should have returned NULL record\n");
+        if (pRecord)
+            IDispatch_Release(pRecord);
+
+        /* View::Close */
+        hr = View_Close(pView);
+        ok(SUCCEEDED(hr), "View_Close failed, hresult 0x%08x\n", hr);
+
+        IDispatch_Release(pView);
+    }
+}
+
+static void test_Session(IDispatch *pSession)
+{
+    static WCHAR szProductName[] = { 'P','r','o','d','u','c','t','N','a','m','e',0 };
+    static WCHAR szMSITEST[] = { 'M','S','I','T','E','S','T',0 };
+    static WCHAR szOne[] = { 'O','n','e',0 };
+    static WCHAR szCostInitialize[] = { 'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0 };
+    static WCHAR szEmpty[] = { 0 };
+    static WCHAR szEquals[] = { '=',0 };
+    static WCHAR szPropertyName[] = { 'P','r','o','p','e','r','t','y',',','N','a','m','e',0 };
+    WCHAR stringw[MAX_PATH];
+    CHAR string[MAX_PATH];
+    UINT len;
+    BOOL bool;
+    int myint;
+    IDispatch *pDatabase = NULL;
+    HRESULT hr;
+
+    /* Session::Property, get */
+    memset(stringw, 0, sizeof(stringw));
+    hr = Session_PropertyGet(pSession, szProductName, stringw);
+    ok(SUCCEEDED(hr), "Session_PropertyGet failed, hresult 0x%08x\n", hr);
+    if (lstrcmpW(stringw, szMSITEST) != 0)
+    {
+        len = WideCharToMultiByte(CP_ACP, 0, stringw, -1, string, MAX_PATH, NULL, NULL);
+        ok(len, "WideCharToMultiByteChar returned error %d\n", GetLastError());
+        ok(0, "Property \"ProductName\" expected to be \"MSITEST\" but was \"%s\"\n", string);
+    }
+
+    /* Session::Property, put */
+    hr = Session_PropertyPut(pSession, szProductName, szProductName);
+    ok(SUCCEEDED(hr), "Session_PropertyPut failed, hresult 0x%08x\n", hr);
+    memset(stringw, 0, sizeof(stringw));
+    hr = Session_PropertyGet(pSession, szProductName, stringw);
+    ok(SUCCEEDED(hr), "Session_PropertyGet failed, hresult 0x%08x\n", hr);
+    if (lstrcmpW(stringw, szProductName) != 0)
+    {
+        len = WideCharToMultiByte(CP_ACP, 0, stringw, -1, string, MAX_PATH, NULL, NULL);
+        ok(len, "WideCharToMultiByteChar returned error %d\n", GetLastError());
+        ok(0, "Property \"ProductName\" expected to be \"ProductName\" but was \"%s\"\n", string);
+    }
+
+    /* Try putting a property using empty property identifier */
+    hr = Session_PropertyPut(pSession, szEmpty, szProductName);
+    ok(hr == DISP_E_EXCEPTION, "Session_PropertyPut failed, hresult 0x%08x\n", hr);
+    ok_exception(hr, szPropertyName);
+
+    /* Try putting a property using illegal property identifier */
+    hr = Session_PropertyPut(pSession, szEquals, szProductName);
+    ok(SUCCEEDED(hr), "Session_PropertyPut failed, hresult 0x%08x\n", hr);
+
+    /* Session::Language, get */
+    hr = Session_LanguageGet(pSession, &len);
+    ok(SUCCEEDED(hr), "Session_LanguageGet failed, hresult 0x%08x\n", hr);
+    /* Not sure how to check the language is correct */
+
+    /* Session::Mode, get */
+    hr = Session_ModeGet(pSession, MSIRUNMODE_REBOOTATEND, &bool);
+    ok(SUCCEEDED(hr), "Session_ModeGet failed, hresult 0x%08x\n", hr);
+    ok(!bool, "Reboot at end session mode is %d\n", bool);
+
+    /* Session::Mode, put */
+    hr = Session_ModePut(pSession, MSIRUNMODE_REBOOTATEND, TRUE);
+    ok(SUCCEEDED(hr), "Session_ModePut failed, hresult 0x%08x\n", hr);
+    hr = Session_ModeGet(pSession, MSIRUNMODE_REBOOTATEND, &bool);
+    ok(SUCCEEDED(hr), "Session_ModeGet failed, hresult 0x%08x\n", hr);
+    ok(bool, "Reboot at end session mode is %d, expected 1\n", bool);
+    hr = Session_ModePut(pSession, MSIRUNMODE_REBOOTATEND, FALSE);  /* set it again so we don't reboot */
+    ok(SUCCEEDED(hr), "Session_ModePut failed, hresult 0x%08x\n", hr);
+
+    /* Session::Database, get */
+    hr = Session_Database(pSession, &pDatabase);
+    ok(SUCCEEDED(hr), "Session_Database failed, hresult 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        test_Database(pDatabase);
+        IDispatch_Release(pDatabase);
+    }
+
+    /* Session::DoAction(CostInitialize) must occur before the next statements */
+    hr = Session_DoAction(pSession, szCostInitialize, &myint);
+    ok(SUCCEEDED(hr), "Session_DoAction failed, hresult 0x%08x\n", hr);
+    ok(myint == IDOK, "DoAction(CostInitialize) returned %d, %d expected\n", myint, IDOK);
+
+    /* Session::SetInstallLevel */
+    hr = Session_SetInstallLevel(pSession, INSTALLLEVEL_MINIMUM);
+    ok(SUCCEEDED(hr), "Session_SetInstallLevel failed, hresult 0x%08x\n", hr);
+
+    /* Session::FeatureCurrentState, get */
+    hr = Session_FeatureCurrentState(pSession, szOne, &myint);
+    ok(SUCCEEDED(hr), "Session_FeatureCurrentState failed, hresult 0x%08x\n", hr);
+    ok(myint == INSTALLSTATE_UNKNOWN, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
+
+    /* Session::FeatureRequestState, put */
+    hr = Session_FeatureRequestStatePut(pSession, szOne, INSTALLSTATE_ADVERTISED);
+    ok(SUCCEEDED(hr), "Session_FeatureRequestStatePut failed, hresult 0x%08x\n", hr);
+    hr = Session_FeatureRequestStateGet(pSession, szOne, &myint);
+    ok(SUCCEEDED(hr), "Session_FeatureRequestStateGet failed, hresult 0x%08x\n", hr);
+    ok(myint == INSTALLSTATE_ADVERTISED, "Feature request state was %d but expected %d\n", myint, INSTALLSTATE_ADVERTISED);
+}
+
+static void test_Installer(void)
+{
+    static WCHAR szBackslash[] = { '\\',0 };
+    WCHAR szPath[MAX_PATH];
+    HRESULT hr;
+    UINT len;
+    IDispatch *pSession = NULL;
+
+    if (!pInstaller) return;
+
+    create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
+
+    len = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, CURR_DIR, -1, szPath, MAX_PATH);
+    ok(len, "MultiByteToWideChar returned error %d\n", GetLastError());
+    if (!len) return;
+
+    lstrcatW(szPath, szBackslash);
+    lstrcatW(szPath, szMsifile);
+
+    /* Installer::OpenPackage */
+    hr = Installer_OpenPackage(szPath, 0, &pSession);
+    ok(SUCCEEDED(hr), "Installer_OpenPackage failed, hresult 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        test_Session(pSession);
+        IDispatch_Release(pSession);
+    }
+
+    DeleteFileA(msifile);
+}
+
+START_TEST(automation)
+{
+    DWORD len;
+    char temp_path[MAX_PATH], prev_path[MAX_PATH];
+    HRESULT hr;
+    CLSID clsid;
+    IUnknown *pUnk;
+
+    GetCurrentDirectoryA(MAX_PATH, prev_path);
+    GetTempPath(MAX_PATH, temp_path);
+    SetCurrentDirectoryA(temp_path);
+
+    lstrcpyA(CURR_DIR, temp_path);
+    len = lstrlenA(CURR_DIR);
+
+    if(len && (CURR_DIR[len - 1] == '\\'))
+        CURR_DIR[len - 1] = 0;
+
+    hr = OleInitialize(NULL);
+    ok (SUCCEEDED(hr), "OleInitialize returned 0x%08x\n", hr);
+    hr = CLSIDFromProgID(szProgId, &clsid);
+    ok (SUCCEEDED(hr), "CLSIDFromProgID returned 0x%08x\n", hr);
+    hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
+    todo_wine ok(SUCCEEDED(hr), "CoCreateInstance returned 0x%08x\n", hr);
+
+    if (pUnk)
+    {
+        hr = IUnknown_QueryInterface(pUnk, &IID_IDispatch, (void **)&pInstaller);
+        ok (SUCCEEDED(hr), "IUnknown::QueryInterface returned 0x%08x\n", hr);
+
+        todo_wine test_dispatch();
+        todo_wine test_Installer();
+
+        hr = IUnknown_Release(pUnk);
+        ok (SUCCEEDED(hr), "IUnknown::Release returned 0x%08x\n", hr);
+    }
+
+    OleUninitialize();
+
+    SetCurrentDirectoryA(prev_path);
+}
