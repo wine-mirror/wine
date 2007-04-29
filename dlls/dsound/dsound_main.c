@@ -439,9 +439,17 @@ static HRESULT WINAPI
 DSCF_QueryInterface(LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    FIXME("(%p, %s, %p) stub!\n", This, debugstr_guid(riid), ppobj);
+    TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
     if (ppobj == NULL)
         return E_POINTER;
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IClassFactory))
+    {
+        *ppobj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 
