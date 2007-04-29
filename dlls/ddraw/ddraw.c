@@ -1445,6 +1445,7 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
     IWineD3DSurface *wineD3DSurface;
     HRESULT hr;
     void *tmp;
+    IWineD3DClipper *clipper = NULL;
 
     WINED3DSURFACE_DESC     Desc;
     WINED3DFORMAT           Format;
@@ -1480,6 +1481,8 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
         IWineD3DSurface_Release(wineD3DSurface);
     }
 
+    /* get the clipper */
+    IWineD3DSurface_GetClipper(wineD3DSurface, &clipper);
 
     /* Get the surface properties */
     Desc.Format = &Format;
@@ -1514,6 +1517,8 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
     if(hr != D3D_OK)
         return hr;
 
+    IWineD3DSurface_SetClipper(surfImpl->WineD3DSurface, clipper);
+
     /* Update the IParent if it exists */
     if(parImpl)
     {
@@ -1530,6 +1535,10 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
 
     surfImpl->ImplType = This->ImplType;
 
+    if(clipper)
+    {
+        IWineD3DClipper_Release(clipper);
+    }
     return DDENUMRET_OK;
 }
 

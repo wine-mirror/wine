@@ -2605,7 +2605,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *srcSwapchain = NULL, *dstSwapchain = NULL;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
-    BOOL SrcOK = TRUE;
 
     TRACE("(%p)->(%p,%p,%p,%08x,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
 
@@ -2644,58 +2643,102 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
     }
 
     /* The only case where both surfaces on a swapchain are supported is a back buffer -> front buffer blit on the same swapchain */
-    if(dstSwapchain && dstSwapchain == srcSwapchain) {
+    if(dstSwapchain && dstSwapchain == srcSwapchain && dstSwapchain->backBuffer &&
+       ((IWineD3DSurface *) This == dstSwapchain->frontBuffer) && SrcSurface == dstSwapchain->backBuffer[0]) {
         /* Half-life does a Blt from the back buffer to the front buffer,
          * Full surface size, no flags... Use present instead
+         *
+         * This path will only be entered for d3d7 and ddraw apps, because d3d8/9 offer no way to blit TO the front buffer
          */
 
         /* Check rects - IWineD3DDevice_Present doesn't handle them */
-        if( SrcRect ) {
-            if( (SrcRect->left == 0) && (SrcRect->top == 0) &&
-                (SrcRect->right == Src->currentDesc.Width) && (SrcRect->bottom == Src->currentDesc.Height) ) {
-                SrcOK = TRUE;
-            }
-        } else {
-            SrcOK = TRUE;
-        }
-
-        /* Check the Destination rect and the surface sizes */
-        if(SrcOK &&
-           (rect.x1 == 0) && (rect.y1 == 0) &&
-           (rect.x2 ==  This->currentDesc.Width) && (rect.y2 == This->currentDesc.Height) &&
-           (This->currentDesc.Width == Src->currentDesc.Width) &&
-           (This->currentDesc.Height == Src->currentDesc.Height)) {
-            /* These flags are unimportant for the flag check, remove them */
-
-            if((Flags & ~(WINEDDBLT_DONOTWAIT | WINEDDBLT_WAIT)) == 0) {
-                if( dstSwapchain->backBuffer && ((IWineD3DSurface *) This == dstSwapchain->frontBuffer) &&
-                    SrcSurface == dstSwapchain->backBuffer[0] ) {
-
-                    WINED3DSWAPEFFECT orig_swap = dstSwapchain->presentParms.SwapEffect;
-
-                    /* The idea behind this is that a glReadPixels and a glDrawPixels call
-                     * take very long, while a flip is fast.
-                     * This applies to Half-Life, which does such Blts every time it finished
-                     * a frame, and to Prince of Persia 3D, which uses this to draw at least the main
-                     * menu. This is also used by all apps when they do windowed rendering
-                     *
-                     * The problem is that flipping is not really the same as copying. After a
-                     * Blt the front buffer is a copy of the back buffer, and the back buffer is
-                     * untouched. Therefore it's necessary to override the swap effect
-                     * and to set it back after the flip.
-                     */
-
-                    dstSwapchain->presentParms.SwapEffect = WINED3DSWAPEFFECT_COPY;
-
-                    TRACE("Full screen back buffer -> front buffer blt, performing a flip instead\n");
-                    IWineD3DDevice_Present((IWineD3DDevice *) This->resource.wineD3DDevice,
-                                            NULL, NULL, 0, NULL);
-
-                    dstSwapchain->presentParms.SwapEffect = orig_swap;
-
-                    return WINED3D_OK;
+        while(1)
+        {
+            RECT mySrcRect;
+            TRACE("Looking if a Present can be done... ");
+            /* Source Rectangle must be full surface */
+            if( SrcRect ) {
+                if(SrcRect->left != 0 || SrcRect->top != 0 ||
+                   SrcRect->right != Src->currentDesc.Width || SrcRect->bottom != Src->currentDesc.Height) {
+                    TRACE("No, Source rectangle doesn't match\n");
+                    break;
                 }
             }
+            mySrcRect.left = 0;
+            mySrcRect.top = 0;
+            mySrcRect.right = Src->currentDesc.Width;
+            mySrcRect.bottom = Src->currentDesc.Height;
+
+            /* No stretching may occur */
+            if(mySrcRect.right != rect.x2 - rect.x1 ||
+               mySrcRect.bottom != rect.y2 - rect.y1) {
+                TRACE("No, stretching is done\n");
+                break;
+            }
+
+            /* Destination must be full surface or match the clipping rectangle */
+            if(This->clipper && ((IWineD3DClipperImpl *) This->clipper)->hWnd)
+            {
+                RECT cliprect;
+                POINT pos[2];
+                GetClientRect(((IWineD3DClipperImpl *) This->clipper)->hWnd, &cliprect);
+                pos[0].x = rect.x1;
+                pos[0].y = rect.y1;
+                pos[1].x = rect.x2;
+                pos[1].y = rect.y2;
+                MapWindowPoints(GetDesktopWindow(), ((IWineD3DClipperImpl *) This->clipper)->hWnd,
+                                pos, 2);
+
+                if(pos[0].x != cliprect.left  || pos[0].y != cliprect.top   ||
+                   pos[1].x != cliprect.right || pos[1].y != cliprect.bottom)
+                {
+                    TRACE("No, dest rectangle doesn't match(clipper)\n");
+                    TRACE("Clip rect at (%d,%d)-(%d,%d)\n", cliprect.left, cliprect.top, cliprect.right, cliprect.bottom);
+                    TRACE("Blt dest: (%d,%d)-(%d,%d)\n", rect.x1, rect.y1, rect.x2, rect.y2);
+                    break;
+                }
+            }
+            else
+            {
+                if(rect.x1 != 0 || rect.y1 != 0 ||
+                   rect.x2 != This->currentDesc.Width || rect.y2 != This->currentDesc.Height) {
+                    TRACE("No, dest rectangle doesn't match(surface size)\n");
+                    break;
+                }
+            }
+
+            TRACE("Yes\n");
+
+            /* These flags are unimportant for the flag check, remove them */
+            if((Flags & ~(WINEDDBLT_DONOTWAIT | WINEDDBLT_WAIT)) == 0) {
+                WINED3DSWAPEFFECT orig_swap = dstSwapchain->presentParms.SwapEffect;
+
+                /* The idea behind this is that a glReadPixels and a glDrawPixels call
+                    * take very long, while a flip is fast.
+                    * This applies to Half-Life, which does such Blts every time it finished
+                    * a frame, and to Prince of Persia 3D, which uses this to draw at least the main
+                    * menu. This is also used by all apps when they do windowed rendering
+                    *
+                    * The problem is that flipping is not really the same as copying. After a
+                    * Blt the front buffer is a copy of the back buffer, and the back buffer is
+                    * untouched. Therefore it's necessary to override the swap effect
+                    * and to set it back after the flip.
+                    *
+                    * Windowed Direct3D < 7 apps do the same. The D3D7 sdk demso are nice
+                    * testcases.
+                    */
+
+                dstSwapchain->presentParms.SwapEffect = WINED3DSWAPEFFECT_COPY;
+
+                TRACE("Full screen back buffer -> front buffer blt, performing a flip instead\n");
+                IWineD3DDevice_Present((IWineD3DDevice *) This->resource.wineD3DDevice,
+                                        NULL, NULL, 0, NULL);
+
+                dstSwapchain->presentParms.SwapEffect = orig_swap;
+
+                return WINED3D_OK;
+            }
+            break;
         }
 
         TRACE("Unsupported blit between buffers on the same swapchain\n");
