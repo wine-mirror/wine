@@ -3836,7 +3836,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
 static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IWineD3DVertexBuffer* pDestBuffer, IWineD3DVertexDeclaration* pVertexDecl, DWORD Flags) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineDirect3DVertexStridedData strided;
-    BOOL vbo = FALSE;
+    BOOL vbo = FALSE, streamWasUP = This->stateBlock->streamIsUP;
     TRACE("(%p)->(%d,%d,%d,%p,%p,%d\n", This, SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, Flags);
 
     if(pVertexDecl) {
@@ -3852,12 +3852,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
         LEAVE_GL();
     }
 
+    /* ProcessVertices reads from vertex buffers, which have to be assigned. DrawPrimitive and DrawPrimitiveUP
+     * control the streamIsUP flag, thus restore it afterwards.
+     */
+    This->stateBlock->streamIsUP = FALSE;
     memset(&strided, 0, sizeof(strided));
     if(This->stateBlock->vertexDecl) {
         primitiveDeclarationConvertToStridedData(iface, FALSE, &strided, &vbo);
     } else {
         primitiveConvertToStridedData(iface, &strided, &vbo);
     }
+    This->stateBlock->streamIsUP = streamWasUP;
 
     if(vbo || SrcStartIndex) {
         unsigned int i;
