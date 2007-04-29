@@ -4032,12 +4032,28 @@ IDirect3DDeviceImpl_7_GetTextureStageState(IDirect3DDevice7 *iface,
                                                   Stage,
                                                   WINED3DSAMP_MINFILTER,
                                                   State);
-        /* Same for MAGFILTER */
+        /* Magfilter has slightly different values */
         case D3DTSS_MAGFILTER:
-            return IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
-                                                  Stage,
-                                                  WINED3DSAMP_MAGFILTER,
-                                                  State);
+        {
+            HRESULT hr;
+            WINED3DTEXTUREFILTERTYPE wined3dfilter;
+            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
+                                                Stage,
+                                                WINED3DSAMP_MAGFILTER,
+                                                &wined3dfilter);
+            switch(wined3dfilter)
+            {
+                case WINED3DTEXF_POINT:             *State = D3DTFG_POINT;          break;
+                case WINED3DTEXF_LINEAR:            *State = D3DTFG_LINEAR;         break;
+                case WINED3DTEXF_ANISOTROPIC:       *State = D3DTFG_ANISOTROPIC;    break;
+                case WINED3DTEXF_FLATCUBIC:         *State = D3DTFG_FLATCUBIC;      break;
+                case WINED3DTEXF_GAUSSIANCUBIC:     *State = D3DTFG_GAUSSIANCUBIC;  break;
+                default:
+                    ERR("Unexpected wined3d mag filter value %d\n", wined3dfilter);
+                    *State = D3DTFG_POINT;
+            }
+            return hr;
+        }
 
         case D3DTSS_ADDRESS:
         case D3DTSS_ADDRESSU:
@@ -4126,12 +4142,26 @@ IDirect3DDeviceImpl_7_SetTextureStageState(IDirect3DDevice7 *iface,
                                                   Stage,
                                                   WINED3DSAMP_MINFILTER,
                                                   State);
-        /* Same for MAGFILTER */
+        /* Magfilter has slightly different values */
         case D3DTSS_MAGFILTER:
+        {
+            WINED3DTEXTUREFILTERTYPE wined3dfilter;
+            switch((D3DTEXTUREMAGFILTER) State)
+            {
+                case D3DTFG_POINT:          wined3dfilter = WINED3DTEXF_POINT;          break;
+                case D3DTFG_LINEAR:         wined3dfilter = WINED3DTEXF_LINEAR;         break;
+                case D3DTFG_FLATCUBIC:      wined3dfilter = WINED3DTEXF_FLATCUBIC;      break;
+                case D3DTFG_GAUSSIANCUBIC:  wined3dfilter = WINED3DTEXF_GAUSSIANCUBIC;  break;
+                case D3DTFG_ANISOTROPIC:    wined3dfilter = WINED3DTEXF_ANISOTROPIC;    break;
+                default:
+                    ERR("Unexpected d3d7 mag filter type %d\n", State);
+                    wined3dfilter = WINED3DTEXF_POINT;
+            }
             return IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
                                                   Stage,
                                                   WINED3DSAMP_MAGFILTER,
-                                                  State);
+                                                  wined3dfilter);
+        }
 
         case D3DTSS_ADDRESS:
                    IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
