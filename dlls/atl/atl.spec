@@ -23,7 +23,7 @@
 28 stdcall AtlPixelToHiMetric(ptr ptr)
 29 stub AtlDevModeW2A
 30 stdcall AtlComPtrAssign(ptr ptr)
-31 stub AtlComQIPtrAssign
+31 stdcall AtlComQIPtrAssign(ptr ptr ptr)
 32 stdcall AtlInternalQueryInterface(ptr ptr ptr ptr)
 34 stub AtlGetVersion
 35 stub AtlAxDialogBoxW

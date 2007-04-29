@@ -208,6 +208,18 @@ IUnknown* WINAPI AtlComPtrAssign(IUnknown** pp, IUnknown *p)
     return p;
 }
 
+IUnknown* WINAPI AtlComQIPtrAssign(IUnknown** pp, IUnknown *p, REFIID riid)
+{
+    IUnknown *new_p = NULL;
+
+    TRACE("(%p %p %s)\n", pp, p, debugstr_guid(riid));
+
+    if (p) IUnknown_QueryInterface(p, riid, (void **)&new_p);
+    if (*pp) IUnknown_Release(*pp);
+    *pp = new_p;
+    return new_p;
+}
+
 
 HRESULT WINAPI AtlInternalQueryInterface(void* this, const _ATL_INTMAP_ENTRY* pEntries,  REFIID iid, void** ppvObject)
 {
