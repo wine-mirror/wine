@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include <stdarg.h>
 
 #include "windef.h"
@@ -241,8 +242,14 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QueryInterface(
     IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IKsPropertySet)) {
+        *ppobj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
     *ppobj = NULL;
-    return DSERR_INVALIDPARAM;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI IKsPrivatePropertySetImpl_AddRef(LPKSPROPERTYSET iface)
