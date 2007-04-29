@@ -68,6 +68,13 @@ x11_copy_to_screen(IWineD3DSurfaceImpl *This,
             TRACE(" copying rect (%d,%d)->(%d,%d), offset (%d,%d)\n",
             rc->left, rc->top, rc->right, rc->bottom, offset.x, offset.y);
         }
+
+        /* Front buffer coordinates are screen coordinates. Map them to the destination
+         * window if not fullscreened
+         */
+        if(!This->resource.wineD3DDevice->ddraw_fullscreen) {
+            ClientToScreen(hDisplayWnd, &offset);
+        }
 #if 0
         /* FIXME: this doesn't work... if users really want to run
         * X in 8bpp, then we need to call directly into display.drv
@@ -88,7 +95,7 @@ x11_copy_to_screen(IWineD3DSurfaceImpl *This,
         if (This->clipper)
         {
             RECT xrc;
-            HWND hwnd = This->clipper->hWnd;
+            HWND hwnd = ((IWineD3DClipperImpl *) This->clipper)->hWnd;
             if (hwnd && GetClientRect(hwnd,&xrc))
             {
                 OffsetRect(&xrc,offset.x,offset.y);
