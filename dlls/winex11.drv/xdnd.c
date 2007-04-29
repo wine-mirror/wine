@@ -32,7 +32,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wownt32.h"
 
 #include "x11drv.h"
 #include "shlobj.h"  /* DROPFILES */
