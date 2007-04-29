@@ -41,8 +41,8 @@
 47 stdcall AtlAxGetControl(long ptr)
 48 stdcall AtlAxGetHost(long ptr)
 49 stub AtlRegisterClassCategoriesHelper
-50 stub AtlIPersistStreamInit_Load
-51 stub AtlIPersistStreamInit_Save
+50 stdcall AtlIPersistStreamInit_Load(ptr ptr ptr ptr)
+51 stdcall AtlIPersistStreamInit_Save(ptr long ptr ptr ptr)
 52 stub AtlIPersistPropertyBag_Load
 53 stub AtlIPersistPropertyBag_Save
 54 stub AtlGetObjectSourceInterface
