@@ -1662,6 +1662,8 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                           one often used by application to prevent the nice purple borders when bi-linear
                           filtering is on */
                         table[i][3] = 0x00;
+                    } else if(pal->Flags & WINEDDPCAPS_ALPHA) {
+                        table[i][3] = pal->palents[i].peFlags;
                     } else {
                         table[i][3] = 0xFF;
                     }
@@ -1807,6 +1809,8 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
                    one often used by application to prevent the nice purple borders when bi-linear
                    filtering is on */
                 table[i][3] = 0x00;
+            } else if(pal->Flags & WINEDDPCAPS_ALPHA) {
+                table[i][3] = pal->palents[i].peFlags;
             } else {
                 table[i][3] = 0xFF;
             }
