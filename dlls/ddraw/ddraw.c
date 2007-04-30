@@ -3076,7 +3076,7 @@ const IDirectDraw7Vtbl IDirectDraw7_Vtbl =
  *
  * This function is in ddraw.c and the DDraw object space because D3D7
  * vertex buffers are created using the IDirect3D interface to the ddraw
- * object, so they can be valid accross D3D devices(theoretically. The ddraw
+ * object, so they can be valid across D3D devices(theoretically. The ddraw
  * object also owns the wined3d device
  *
  * Parameters:

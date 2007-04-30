@@ -1,5 +1,5 @@
 /*
- * Sample MIDI Wine Driver for MacOSX (based on OSS midi driver)
+ * Sample MIDI Wine Driver for Mac OS X (based on OSS midi driver)
  *
  * Copyright 1994 	Martin Ayotte
  * Copyright 1998 	Luiz Otavio L. Zorzella (init procedures)

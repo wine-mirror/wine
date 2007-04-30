@@ -414,7 +414,7 @@ BOOL WCMD_delete (char *command, BOOL expectDir) {
           FindClose (hff);
         }
 
-        /* Now recurse into all subdirectories handling the paramater in the same way */
+        /* Now recurse into all subdirectories handling the parameter in the same way */
         if (strstr (quals, "/S") != NULL) {
 
           char thisDir[MAX_PATH];

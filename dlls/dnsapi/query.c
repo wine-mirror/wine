@@ -67,7 +67,7 @@ static CRITICAL_SECTION resolver_cs = { &resolver_cs_debug, -1, 0, 0, 0, 0 };
 
 static int resolver_initialised;
 
-/* call res_init() just once because of a bug in Mac OSX 10.4 */
+/* call res_init() just once because of a bug in Mac OS X 10.4 */
 static void initialise_resolver( void )
 {
     if (!resolver_initialised)

@@ -1,5 +1,5 @@
 /*
- * Wine Midi driver for MacOSX
+ * Wine Midi driver for Mac OS X
  *
  * Copyright 2006 Emmanuel Maillard
  *

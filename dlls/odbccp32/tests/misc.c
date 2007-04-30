@@ -120,7 +120,7 @@ static void test_SQLInstallDriverManager(void)
     sql_ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
     ok(bool_ret, "SQLInstallDriverManager unexpectedly failed\n");
     ok(sql_ret == SQL_NO_DATA, "Expected SQL_NO_DATA, got %d\n", sql_ret);
-    /* path_out should in practice be less then 0xcafe */
+    /* path_out should in practice be less than 0xcafe */
     ok(path_out != 0xcafe, "Expected path_out to show the correct amount of bytes\n");
 }
 

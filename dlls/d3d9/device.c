@@ -827,7 +827,7 @@ IDirect3DVertexDeclaration9 *getConvertedDecl(IDirect3DDevice9Impl *This, DWORD 
     convertedDecls[low] = pDecl;
     This->numConvertedDecls++;
 
-    /* Will prevent the decl from beeing destroyed */
+    /* Will prevent the decl from being destroyed */
     ((IDirect3DVertexDeclaration9Impl *) pDecl)->convFVF = fvf;
     IDirect3DVertexDeclaration9_Release(pDecl); /* Does not destroy now */
 

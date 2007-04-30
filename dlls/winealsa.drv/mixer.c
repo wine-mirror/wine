@@ -67,7 +67,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mixer);
  * Mute is optional
  *
  * For capture controls, it is needed that there is a capture switch and a volume switch,
- * It doesn't matter wether it is a playback volume switch or a capture volume switch.
+ * It doesn't matter whether it is a playback volume switch or a capture volume switch.
  * The code will first try to get/adjust capture volume, if that fails it tries playback volume
  * It is not pretty, but under my 3 test cards it seems that there is no other choice:
  * Most capture controls don't have a capture volume setting
@@ -305,7 +305,7 @@ static void fillcontrols(mixer *mmixer)
 }
 
 /* get amount of channels for elem */
-/* Officially we should keep capture/playback seperated,
+/* Officially we should keep capture/playback separated,
  * but that's not going to work in the alsa api */
 static int chans(mixer *mmixer, snd_mixer_elem_t * elem, DWORD capt)
 {
@@ -371,7 +371,7 @@ static void ALSA_MixerInit(void)
         err = snd_mixer_open(&mixdev[mixnum].mix,0);
         if (err < 0)
         {
-            WARN("Error occured opening mixer: %s\n", snd_strerror(err));
+            WARN("Error occurred opening mixer: %s\n", snd_strerror(err));
             continue;
         }
 
@@ -504,7 +504,7 @@ static void ALSA_MixerInit(void)
         continue;
 
         eclose:
-        WARN("Error occured initialising mixer: %s\n", snd_strerror(err));
+        WARN("Error occurred initialising mixer: %s\n", snd_strerror(err));
         HeapFree(GetProcessHeap(), 0, mixdev[mixnum].lines);
         HeapFree(GetProcessHeap(), 0, mixdev[mixnum].controls);
         snd_mixer_close(mixdev[mixnum].mix);
