@@ -845,7 +845,6 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
     MIDISource *src = NULL;
     DWORD sendData = 0;
 
-    TRACE("\n");
     switch (msgid)
     {
         case 0:
@@ -866,15 +865,6 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
             {
                 FIXME("Starting System Exclusive\n");
                 src->state |= 2;
-                for (i = 0; i < msg->length; ++i)
-                {
-                    if (msg->data[i] == 0xF7)
-                    {
-                        FIXME("Ending System Exclusive\n");
-                        src->state &= ~2;
-                    }
-                }
-                goto done;
             }
             if (src->state & 2)
             {
