@@ -28,7 +28,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winnls.h"
 #include "wine/debug.h"
 #include "dbghelp_private.h"

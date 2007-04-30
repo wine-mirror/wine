@@ -25,7 +25,6 @@
 
 #include "dbghelp_private.h"
 #include "winnls.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
 

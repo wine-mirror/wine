@@ -30,7 +30,6 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "dbghelp_private.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "wine/debug.h"

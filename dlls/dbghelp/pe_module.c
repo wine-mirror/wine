@@ -28,10 +28,8 @@
 #include <assert.h>
 
 #include "dbghelp_private.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
-#include "winnls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 

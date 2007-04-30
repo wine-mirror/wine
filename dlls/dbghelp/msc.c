@@ -49,12 +49,10 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winternl.h"
 
 #include "wine/exception.h"
 #include "wine/debug.h"
-#include "excpt.h"
 #include "dbghelp_private.h"
 #include "wine/mscvpdb.h"
 

@@ -44,8 +44,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
-#include "winnls.h"
 #include "winuser.h"
 #include "ole2.h"
 #include "oleauto.h"

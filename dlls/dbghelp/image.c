@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "dbghelp_private.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
 
