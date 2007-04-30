@@ -229,7 +229,8 @@ static TW_BOOL GPHOTO2_OneValueSet16 (pTW_CAPABILITY pCapability, TW_UINT16 valu
         return FALSE;
 }
 
-static TW_BOOL GPHOTO2_EnumSet16 (pTW_CAPABILITY pCapability, int nrofvalues, TW_UINT16 *values, int current, int def)
+static TW_BOOL GPHOTO2_EnumSet16 (pTW_CAPABILITY pCapability, int nrofvalues,
+                                  const TW_UINT16 *values, int current, int def)
 {
     pTW_ENUMERATION pVal;
     pCapability->hContainer = (TW_HANDLE)GlobalAlloc (0, sizeof(TW_ENUMERATION) + nrofvalues * sizeof(TW_UINT16));
