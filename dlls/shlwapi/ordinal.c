@@ -2856,17 +2856,61 @@ HRESULT WINAPI SHPackDispParams(LPVOID w, LPVOID x, LPVOID y, LPVOID z)
 }
 
 /*************************************************************************
+ *      SHLWAPI_InvokeByIID
+ *
+ *   This helper function calls IDispatch::Invoke for each sink
+ * which implements given iid or IDispatch.
+ *
+ */
+static HRESULT SHLWAPI_InvokeByIID(
+        IConnectionPoint* iCP,
+        REFIID iid,
+        DISPID dispId,
+        DISPPARAMS* dispParams)
+{
+  IEnumConnections *enumerator;
+  CONNECTDATA rgcd;
+
+  HRESULT result = IConnectionPoint_EnumConnections(iCP, &enumerator);
+  if (FAILED(result))
+    return result;
+
+  while(IEnumConnections_Next(enumerator, 1, &rgcd, NULL)==S_OK)
+  {
+    IDispatch *dispIface;
+    if (SUCCEEDED(IUnknown_QueryInterface(rgcd.pUnk, iid, (LPVOID*)&dispIface)) ||
+        SUCCEEDED(IUnknown_QueryInterface(rgcd.pUnk, &IID_IDispatch, (LPVOID*)&dispIface)))
+    {
+      IDispatch_Invoke(dispIface, dispId, &IID_NULL, 0, DISPATCH_METHOD, dispParams, NULL, NULL, NULL);
+      IDispatch_Release(dispIface);
+    }
+  }
+
+  IEnumConnections_Release(enumerator);
+
+  return S_OK;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.284]
  *
- * _IConnectionPoint_SimpleInvoke
+ *  IConnectionPoint_SimpleInvoke
  */
-DWORD WINAPI IConnectionPoint_SimpleInvoke(
-	LPVOID x,
-	LPVOID y,
-	LPVOID z)
+HRESULT WINAPI IConnectionPoint_SimpleInvoke(
+        IConnectionPoint* iCP,
+        DISPID dispId,
+        DISPPARAMS* dispParams)
 {
-        FIXME("(%p %p %p) stub\n",x,y,z);
-	return 0;
+  IID iid;
+  HRESULT result;
+
+  TRACE("(%p)->(0x%x %p)\n",iCP,dispId,dispParams);
+
+  result = IConnectionPoint_GetConnectionInterface(iCP, &iid);
+  if (SUCCEEDED(result))
+    result = SHLWAPI_InvokeByIID(iCP, &iid, dispId, dispParams);
+
+  return result;
 }
 
 /*************************************************************************
