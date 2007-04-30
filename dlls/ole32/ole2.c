@@ -1713,9 +1713,8 @@ BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* l
 	return FALSE;
     }
     if((lpMsg->message != WM_KEYDOWN &&
-	lpMsg->message != WM_KEYUP &&
 	lpMsg->message != WM_SYSKEYDOWN &&
-	lpMsg->message != WM_SYSKEYUP &&
+	lpMsg->message != WM_SYSCHAR &&
 	lpMsg->message != WM_CHAR)) return FALSE;
     lpAccelTbl = HeapAlloc(GetProcessHeap(), 0, cAccelEntries * sizeof(ACCEL));
     if (NULL == lpAccelTbl)
