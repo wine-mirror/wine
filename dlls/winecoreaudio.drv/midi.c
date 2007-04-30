@@ -303,10 +303,6 @@ static DWORD MIDIOut_Open(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
             return MMSYSERR_ERROR;
         }
     }
-    else
-    {
-        FIXME("MOD_MIDIPORT\n");
-    }
     dest->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
     dest->midiDesc = *lpDesc;
 
@@ -326,8 +322,6 @@ static DWORD MIDIOut_Close(WORD wDevID)
 
     if (destinations[wDevID].caps.wTechnology == MOD_SYNTH)
         SynthUnit_Close(destinations[wDevID].graph);
-    else
-        FIXME("MOD_MIDIPORT\n");
 
     destinations[wDevID].graph = 0;
     destinations[wDevID].synth = 0;
@@ -344,10 +338,7 @@ static DWORD MIDIOut_Close(WORD wDevID)
 static DWORD MIDIOut_Data(WORD wDevID, DWORD dwParam)
 {
     WORD evt = LOBYTE(LOWORD(dwParam));
-    WORD d1  = HIBYTE(LOWORD(dwParam));
-    WORD d2  = LOBYTE(HIWORD(dwParam));
     UInt8 chn = (evt & 0x0F);
-    OSStatus err = noErr;
 
     TRACE("wDevID=%d dwParam=%08X\n", wDevID, dwParam);
 
@@ -356,10 +347,12 @@ static DWORD MIDIOut_Data(WORD wDevID, DWORD dwParam)
 	return MMSYSERR_BADDEVICEID;
     }
 
-    TRACE("evt=%08x d1=%04x d2=%04x (evt & 0xF0)=%04x chn=%d\n", evt, d1, d2, (evt & 0xF0), chn);
-
     if (destinations[wDevID].caps.wTechnology == MOD_SYNTH)
     {
+        WORD d1  = HIBYTE(LOWORD(dwParam));
+        WORD d2  = LOBYTE(HIWORD(dwParam));
+        OSStatus err = noErr;
+
         err = MusicDeviceMIDIEvent(destinations[wDevID].synth, (evt & 0xF0) | chn, d1, d2, 0);
         if (err != noErr)
         {
@@ -367,7 +360,15 @@ static DWORD MIDIOut_Data(WORD wDevID, DWORD dwParam)
             return MMSYSERR_ERROR;
         }
     }
-    else FIXME("MOD_MIDIPORT\n");
+    else
+    {
+        UInt8 buffer[3];
+        buffer[0] = (evt & 0xF0) | chn;
+        buffer[1] = HIBYTE(LOWORD(dwParam));
+        buffer[2] = LOBYTE(HIWORD(dwParam));
+
+        MIDIOut_Send(MIDIOutPort, destinations[wDevID].dest, buffer, 3);
+    }
 
     return MMSYSERR_NOERROR;
 }
