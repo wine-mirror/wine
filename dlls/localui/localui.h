@@ -23,11 +23,18 @@
 
 
 /* ## Resource-ID ## */
+#define ADDPORT_DIALOG  100
+#define ADDPORT_EDIT    201
+
 #define IDS_LOCALPORT       300
+#define IDS_INVALIDNAME     301
+#define IDS_PORTEXISTS      302
 #define IDS_NOTHINGTOCONFIG 303
 
 /* ## Reserved memorysize for the strings (in WCHAR) ## */
 #define IDS_LOCALPORT_MAXLEN 32
+#define IDS_INVALIDNAME_MAXLEN 48
+#define IDS_PORTEXISTS_MAXLEN  48
 #define IDS_NOTHINGTOCONFIG_MAXLEN 80
 
 /* ## Type of Ports ## */

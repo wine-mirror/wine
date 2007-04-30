@@ -41,10 +41,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(localui);
 
 static HINSTANCE LOCALUI_hInstance;
 
+static const WCHAR cmd_AddPortW[] = {'A','d','d','P','o','r','t',0};
 static const WCHAR cmd_DeletePortW[] = {'D','e','l','e','t','e','P','o','r','t',0};
 static const WCHAR cmd_GetDefaultCommConfigW[] = {'G','e','t',
                                     'D','e','f','a','u','l','t',
                                     'C','o','m','m','C','o','n','f','i','g',0};
+static const WCHAR cmd_PortIsValidW[] = {'P','o','r','t','I','s','V','a','l','i','d',0};
 static const WCHAR cmd_SetDefaultCommConfigW[] = {'S','e','t',
                                     'D','e','f','a','u','l','t',
                                     'C','o','m','m','C','o','n','f','i','g',0};
@@ -55,8 +57,15 @@ static const WCHAR portname_FILE[] = {'F','I','L','E',':',0};
 static const WCHAR portname_CUPS[] = {'C','U','P','S',':',0};
 static const WCHAR portname_LPR[]  = {'L','P','R',':',0};
 
+static const WCHAR XcvMonitorW[] = {',','X','c','v','M','o','n','i','t','o','r',' ',0};
 static const WCHAR XcvPortW[] = {',','X','c','v','P','o','r','t',' ',0};
 
+/*****************************************************/
+
+typedef struct tag_addportui_t {
+    LPWSTR  portname;
+    HANDLE  hXcv;
+} addportui_t;
 
 /*****************************************************
  *   strdupWW [internal]
@@ -123,6 +132,58 @@ static BOOL dlg_configure_com(HANDLE hXcv, HWND hWnd, PCWSTR pPortName)
 }
 
 /******************************************************************
+ *  dlg_port_already_exists [internal]
+ */
+
+static void dlg_port_already_exists(HWND hWnd, LPCWSTR portname)
+{
+    WCHAR res_PortW[IDS_LOCALPORT_MAXLEN];
+    WCHAR res_PortExistsW[IDS_PORTEXISTS_MAXLEN];
+    LPWSTR  message;
+    DWORD   len;
+
+    res_PortW[0] = '\0';
+    res_PortExistsW[0] = '\0';
+    LoadStringW(LOCALUI_hInstance, IDS_LOCALPORT, res_PortW, IDS_LOCALPORT_MAXLEN);
+    LoadStringW(LOCALUI_hInstance, IDS_PORTEXISTS, res_PortExistsW, IDS_PORTEXISTS_MAXLEN);
+
+    len = lstrlenW(portname) + IDS_PORTEXISTS_MAXLEN + 1;
+    message = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (message) {
+        message[0] = '\0';
+        snprintfW(message, len, res_PortExistsW, portname);
+        MessageBoxW(hWnd, message, res_PortW, MB_OK | MB_ICONERROR);
+        HeapFree(GetProcessHeap(), 0, message);
+    }
+}
+
+/******************************************************************
+ *  dlg_invalid_portname [internal]
+ */
+
+static void dlg_invalid_portname(HWND hWnd, LPCWSTR portname)
+{
+    WCHAR res_PortW[IDS_LOCALPORT_MAXLEN];
+    WCHAR res_InvalidNameW[IDS_INVALIDNAME_MAXLEN];
+    LPWSTR  message;
+    DWORD   len;
+
+    res_PortW[0] = '\0';
+    res_InvalidNameW[0] = '\0';
+    LoadStringW(LOCALUI_hInstance, IDS_LOCALPORT, res_PortW, IDS_LOCALPORT_MAXLEN);
+    LoadStringW(LOCALUI_hInstance, IDS_INVALIDNAME, res_InvalidNameW, IDS_INVALIDNAME_MAXLEN);
+
+    len = lstrlenW(portname) + IDS_INVALIDNAME_MAXLEN;
+    message = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (message) {
+        message[0] = '\0';
+        snprintfW(message, len, res_InvalidNameW, portname);
+        MessageBoxW(hWnd, message, res_PortW, MB_OK | MB_ICONERROR);
+        HeapFree(GetProcessHeap(), 0, message);
+    }
+}
+
+/******************************************************************
  * display the Dialog "Nothing to configure"
  *
  */
@@ -138,6 +199,96 @@ static void dlg_nothingtoconfig(HWND hWnd)
     LoadStringW(LOCALUI_hInstance, IDS_NOTHINGTOCONFIG, res_nothingW, IDS_NOTHINGTOCONFIG_MAXLEN);
 
     MessageBoxW(hWnd, res_nothingW, res_PortW, MB_OK | MB_ICONINFORMATION);
+}
+
+/******************************************************************
+ *  dlg_win32error [internal]
+ */
+
+static void dlg_win32error(HWND hWnd, DWORD lasterror)
+{
+    WCHAR res_PortW[IDS_LOCALPORT_MAXLEN];
+    LPWSTR  message = NULL;
+    DWORD   res;
+
+    res_PortW[0] = '\0';
+    LoadStringW(LOCALUI_hInstance, IDS_LOCALPORT, res_PortW, IDS_LOCALPORT_MAXLEN);
+
+
+    res = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                        NULL, lasterror, 0, (LPWSTR) &message, 0, NULL);
+
+    if (res > 0) {
+        MessageBoxW(hWnd, message, res_PortW, MB_OK | MB_ICONERROR);
+        LocalFree(message);
+    }
+}
+
+/*****************************************************************************
+ *
+ */
+
+static INT_PTR CALLBACK dlgproc_addport(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    addportui_t * data;
+    DWORD   status;
+    DWORD   dummy;
+    DWORD   len;
+    DWORD   res;
+
+    switch(msg)
+    {
+    case WM_INITDIALOG:
+        SetWindowLongPtrW(hwnd, DWLP_USER, lparam);
+        return TRUE;
+
+    case WM_COMMAND:
+        if (wparam == MAKEWPARAM(IDOK, BN_CLICKED))
+        {
+            data = (addportui_t *) GetWindowLongPtrW(hwnd, DWLP_USER);
+            /* length in WCHAR, without the '\0' */
+            len = SendDlgItemMessageW(hwnd, ADDPORT_EDIT, WM_GETTEXTLENGTH, 0, 0);
+            data->portname = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+
+            if (!data->portname) {
+                EndDialog(hwnd, FALSE);
+                return TRUE;
+            }
+            /* length is in WCHAR, including the '\0' */
+            GetDlgItemTextW(hwnd, ADDPORT_EDIT, data->portname, len + 1);
+            status = ERROR_SUCCESS;
+            res = XcvDataW( data->hXcv, cmd_PortIsValidW, (PBYTE) data->portname,
+                            (lstrlenW(data->portname) + 1) * sizeof(WCHAR),
+                            (PBYTE) &dummy, 0, &len, &status);
+
+            TRACE("got %u with status %u\n", res, status);
+            if (res && (status == ERROR_SUCCESS)) {
+                /* The caller must free data->portname */
+                EndDialog(hwnd, TRUE);
+                return TRUE;
+            }
+
+            if (res && (status == ERROR_INVALID_NAME)) {
+                dlg_invalid_portname(hwnd, data->portname);
+                HeapFree(GetProcessHeap(), 0, data->portname);
+                data->portname = NULL;
+                return TRUE;
+            }
+
+            dlg_win32error(hwnd, status);
+            HeapFree(GetProcessHeap(), 0, data->portname);
+            data->portname = NULL;
+            return TRUE;
+        }
+
+        if (wparam == MAKEWPARAM(IDCANCEL, BN_CLICKED))
+        {
+            EndDialog(hwnd, FALSE);
+            return TRUE;
+        }
+        return FALSE;
+    }
+    return FALSE;
 }
 
 /*****************************************************
@@ -224,11 +375,68 @@ static BOOL open_monitor_by_name(LPCWSTR pPrefix, LPCWSTR pPort, HANDLE * phandl
  *  Success: TRUE
  *  Failure: FALSE
  *
+ * NOTES
+ * The caller must free the buffer (returned in ppPortName) with GlobalFree().
+ * Native localui.dll failed with ERROR_INVALID_PARAMETER, when the user tried
+ * to add a Port, that start with "COM" or "LPT".
+ *
  */
 static BOOL WINAPI localui_AddPortUI(PCWSTR pName, HWND hWnd, PCWSTR pMonitorName, PWSTR *ppPortName)
 {
-    FIXME("(%s, %p, %s, %p) stub\n", debugstr_w(pName), hWnd, debugstr_w(pMonitorName), ppPortName);
-    return TRUE;
+    addportui_t data;
+    HANDLE  hXcv;
+    LPWSTR  ptr = NULL;
+    DWORD   needed;
+    DWORD   dummy;
+    DWORD   status;
+    DWORD   res = FALSE;
+
+    TRACE(  "(%s, %p, %s, %p) (*ppPortName: %p)\n", debugstr_w(pName), hWnd,
+            debugstr_w(pMonitorName), ppPortName, ppPortName ? *ppPortName : NULL);
+
+    if (open_monitor_by_name(XcvMonitorW, pMonitorName, &hXcv)) {
+
+        ZeroMemory(&data, sizeof(addportui_t));
+        data.hXcv = hXcv;
+        res = DialogBoxParamW(LOCALUI_hInstance, MAKEINTRESOURCEW(ADDPORT_DIALOG), hWnd,
+                               dlgproc_addport, (LPARAM) &data);
+
+        TRACE("got %u with %u for %s\n", res, GetLastError(), debugstr_w(data.portname));
+
+        if (ppPortName) *ppPortName = NULL;
+
+        if (res) {
+            res = XcvDataW(hXcv, cmd_AddPortW, (PBYTE) data.portname,
+                            (lstrlenW(data.portname)+1) * sizeof(WCHAR),
+                            (PBYTE) &dummy, 0, &needed, &status);
+
+            TRACE("got %u with status %u\n", res, status);
+            if (res && (status == ERROR_SUCCESS)) {
+                /* Native localui uses GlobalAlloc also.
+                   The caller must GlobalFree the buffer */
+                ptr = GlobalAlloc(GPTR, (lstrlenW(data.portname)+1) * sizeof(WCHAR));
+                if (ptr) {
+                    lstrcpyW(ptr, data.portname);
+                    if (ppPortName) *ppPortName = ptr;
+                }
+            }
+
+            if (res && (status == ERROR_ALREADY_EXISTS)) {
+                dlg_port_already_exists(hWnd, data.portname);
+                /* Native localui also return "TRUE" from AddPortUI in this case */
+            }
+
+            HeapFree(GetProcessHeap(), 0, data.portname);
+        }
+        else
+        {
+            SetLastError(ERROR_CANCELLED);
+        }
+        ClosePrinter(hXcv);
+    }
+
+    TRACE("=> %u with %u\n", res, GetLastError());
+    return res;
 }
 
 

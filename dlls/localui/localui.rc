@@ -21,6 +21,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "winver.h"
 #include "localui.h"
 
