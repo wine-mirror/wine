@@ -1628,21 +1628,25 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         TRACE_(d3d_caps)("[FAILED]\n");
         return WINED3DERR_NOTAVAILABLE;     /* Enable when fully supported */
     }
-    
+
     if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
         switch (CheckFormat) {
-            case WINED3DFMT_D16_LOCKABLE:
-            case WINED3DFMT_D32:
-            case WINED3DFMT_D15S1:
+            /* In theory we could do all formats, just fetch them accordingly should the buffer be locked.
+             * Windows supports only those 3, and enumerating the other formats confuses applications
+             */
             case WINED3DFMT_D24S8:
             case WINED3DFMT_D24X8:
-            case WINED3DFMT_D24X4S4:
             case WINED3DFMT_D16:
-            case WINED3DFMT_L16:
-            case WINED3DFMT_D32F_LOCKABLE:
-            case WINED3DFMT_D24FS8:
                 TRACE_(d3d_caps)("[OK]\n");
                 return WINED3D_OK;
+            case WINED3DFMT_D16_LOCKABLE:
+            case WINED3DFMT_D24FS8:
+            case WINED3DFMT_D32F_LOCKABLE:
+            case WINED3DFMT_D24X4S4:
+            case WINED3DFMT_D15S1:
+            case WINED3DFMT_D32:
+                TRACE_(d3d_caps)("[FAILED]. Disabled because not enumerated on windows\n");
+                return WINED3DERR_NOTAVAILABLE;
             default:
                 TRACE_(d3d_caps)("[FAILED]\n");
                 return WINED3DERR_NOTAVAILABLE;
