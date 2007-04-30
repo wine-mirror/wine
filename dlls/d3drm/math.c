@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSUNION
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -38,9 +40,9 @@ LPD3DRMQUATERNION WINAPI D3DRMQuaternionMultiply(LPD3DRMQUATERNION q, LPD3DRMQUA
     D3DVECTOR cross_product;
     D3DRMVectorCrossProduct(&cross_product, &a->v, &b->v);
     q->s = a->s * b->s - D3DRMVectorDotProduct(&a->v, &b->v);
-    q->v.x = a->s * b->v.x + b->s * a->v.x + cross_product.x;
-    q->v.y = a->s * b->v.y + b->s * a->v.y + cross_product.y;
-    q->v.z = a->s * b->v.z + b->s * a->v.z + cross_product.z;
+    q->v.u1.x = a->s * b->v.u1.x + b->s * a->v.u1.x + cross_product.u1.x;
+    q->v.u2.y = a->s * b->v.u2.y + b->s * a->v.u2.y + cross_product.u2.y;
+    q->v.u3.z = a->s * b->v.u3.z + b->s * a->v.u3.z + cross_product.u3.z;
     return q;
 }
 
@@ -49,9 +51,9 @@ void WINAPI D3DRMMatrixFromQuaternion(D3DRMMATRIX4D m, LPD3DRMQUATERNION q)
 {
     D3DVALUE w,x,y,z;
     w = q->s;
-    x = q->v.x;
-    y = q->v.y;
-    z = q->v.z;
+    x = q->v.u1.x;
+    y = q->v.u2.y;
+    z = q->v.u3.z;
     m[0][0] = 1.0-2.0*(y*y+z*z);
     m[1][1] = 1.0-2.0*(x*x+z*z);
     m[2][2] = 1.0-2.0*(x*x+y*y);
@@ -93,27 +95,27 @@ LPD3DRMQUATERNION WINAPI D3DRMQuaternionSlerp(LPD3DRMQUATERNION q, LPD3DRMQUATER
 /* Add Two Vectors */
 LPD3DVECTOR WINAPI D3DRMVectorAdd(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
 {
-    d->x=s1->x + s2->x;
-    d->y=s1->y + s2->y;
-    d->z=s1->z + s2->z;
+    d->u1.x=s1->u1.x + s2->u1.x;
+    d->u2.y=s1->u2.y + s2->u2.y;
+    d->u3.z=s1->u3.z + s2->u3.z;
     return d;
 }
 
 /* Subtract Two Vectors */
 LPD3DVECTOR WINAPI D3DRMVectorSubtract(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
 {
-    d->x=s1->x - s2->x;
-    d->y=s1->y - s2->y;
-    d->z=s1->z - s2->z;
+    d->u1.x=s1->u1.x - s2->u1.x;
+    d->u2.y=s1->u2.y - s2->u2.y;
+    d->u3.z=s1->u3.z - s2->u3.z;
     return d;
 }
 
 /* Cross Product of Two Vectors */
 LPD3DVECTOR WINAPI D3DRMVectorCrossProduct(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DVECTOR s2)
 {
-    d->x=s1->y * s2->z - s1->z * s2->y;
-    d->y=s1->z * s2->x - s1->x * s2->z;
-    d->z=s1->x * s2->y - s1->y * s2->x;
+    d->u1.x=s1->u2.y * s2->u3.z - s1->u3.z * s2->u2.y;
+    d->u2.y=s1->u3.z * s2->u1.x - s1->u1.x * s2->u3.z;
+    d->u3.z=s1->u1.x * s2->u2.y - s1->u2.y * s2->u1.x;
     return d;
 }
 
@@ -121,7 +123,7 @@ LPD3DVECTOR WINAPI D3DRMVectorCrossProduct(LPD3DVECTOR d, LPD3DVECTOR s1, LPD3DV
 D3DVALUE WINAPI D3DRMVectorDotProduct(LPD3DVECTOR s1, LPD3DVECTOR s2)
 {
     D3DVALUE dot_product;
-    dot_product=s1->x * s2->x + s1->y * s2->y + s1->z * s2->z;
+    dot_product=s1->u1.x * s2->u1.x + s1->u2.y * s2->u2.y + s1->u3.z * s2->u3.z;
     return dot_product;
 }
 
@@ -129,7 +131,7 @@ D3DVALUE WINAPI D3DRMVectorDotProduct(LPD3DVECTOR s1, LPD3DVECTOR s2)
 D3DVALUE WINAPI D3DRMVectorModulus(LPD3DVECTOR v)
 {
     D3DVALUE result;
-    result=sqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+    result=sqrt(v->u1.x * v->u1.x + v->u2.y * v->u2.y + v->u3.z * v->u3.z);
     return result;
 }
 
@@ -143,9 +145,9 @@ LPD3DVECTOR WINAPI D3DRMVectorNormalize(LPD3DVECTOR u)
     }
     else
     {
-        u->x=1.0;
-        u->y=0.0;
-        u->z=0.0;
+        u->u1.x=1.0;
+        u->u2.y=0.0;
+        u->u3.z=0.0;
     }
     return u;
 }
@@ -153,9 +155,9 @@ LPD3DVECTOR WINAPI D3DRMVectorNormalize(LPD3DVECTOR u)
 /* Returns a random unit vector */
 LPD3DVECTOR WINAPI D3DRMVectorRandom(LPD3DVECTOR d)
 {
-    d->x = rand();
-    d->y = rand();
-    d->z = rand();
+    d->u1.x = rand();
+    d->u2.y = rand();
+    d->u3.z = rand();
     D3DRMVectorNormalize(d);
     return d;
 }
@@ -190,8 +192,8 @@ LPD3DVECTOR WINAPI D3DRMVectorRotate(LPD3DVECTOR r, LPD3DVECTOR v, LPD3DVECTOR a
 /* Scale a vector */
 LPD3DVECTOR WINAPI D3DRMVectorScale(LPD3DVECTOR d, LPD3DVECTOR s, D3DVALUE factor)
 {
-    d->x=factor * s->x;
-    d->y=factor * s->y;
-    d->z=factor * s->z;
+    d->u1.x=factor * s->u1.x;
+    d->u2.y=factor * s->u2.y;
+    d->u3.z=factor * s->u3.z;
     return d;
 }

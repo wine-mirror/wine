@@ -18,9 +18,10 @@
  */
 
 #include <assert.h>
-#include "wine/test.h"
 #include "d3drmdef.h"
 #include <math.h>
+
+#include "wine/test.h"
 
 #define PI (4*atan(1.0))
 #define admit_error 0.000001
@@ -51,40 +52,40 @@
 }
 
 #define expect_quat(expectedquat,gotquat) \
-  ok( (fabs(expectedquat.v.x-gotquat.v.x)<admit_error) && \
-      (fabs(expectedquat.v.y-gotquat.v.y)<admit_error) && \
-      (fabs(expectedquat.v.z-gotquat.v.z)<admit_error) && \
+  ok( (fabs(U1(expectedquat.v).x-U1(gotquat.v).x)<admit_error) &&     \
+      (fabs(U2(expectedquat.v).y-U2(gotquat.v).y)<admit_error) &&     \
+      (fabs(U3(expectedquat.v).z-U3(gotquat.v).z)<admit_error) &&     \
       (fabs(expectedquat.s-gotquat.s)<admit_error), \
   "Expected Quaternion %f %f %f %f , Got Quaternion %f %f %f %f\n", \
-  expectedquat.s,expectedquat.v.x,expectedquat.v.y,expectedquat.v.z, \
-  gotquat.s,gotquat.v.x,gotquat.v.y,gotquat.v.z);
+      expectedquat.s,U1(expectedquat.v).x,U2(expectedquat.v).y,U3(expectedquat.v).z, \
+      gotquat.s,U1(gotquat.v).x,U2(gotquat.v).y,U3(gotquat.v).z);
 
 #define expect_vec(expectedvec,gotvec) \
-  ok( ((fabs(expectedvec.x-gotvec.x)<admit_error)&&(fabs(expectedvec.y-gotvec.y)<admit_error)&&(fabs(expectedvec.z-gotvec.z)<admit_error)), \
+  ok( ((fabs(U1(expectedvec).x-U1(gotvec).x)<admit_error)&&(fabs(U2(expectedvec).y-U2(gotvec).y)<admit_error)&&(fabs(U3(expectedvec).z-U3(gotvec).z)<admit_error)), \
   "Expected Vector= (%f, %f, %f)\n , Got Vector= (%f, %f, %f)\n", \
-  expectedvec.x,expectedvec.y,expectedvec.z, gotvec.x, gotvec.y, gotvec.z);
+  U1(expectedvec).x,U2(expectedvec).y,U3(expectedvec).z, U1(gotvec).x, U2(gotvec).y, U3(gotvec).z);
 
 static void VectorTest(void)
 {
     D3DVALUE mod,par,theta;
     D3DVECTOR e,r,u,v,w,axis,casnul,norm,ray;
 
-    u.x=2.0;u.y=2.0;u.z=1.0;
-    v.x=4.0;v.y=4.0;v.z=0.0;
+    U1(u).x=2.0;U2(u).y=2.0;U3(u).z=1.0;
+    U1(v).x=4.0;U2(v).y=4.0;U3(v).z=0.0;
 
 /*______________________VectorAdd_________________________________*/
     D3DRMVectorAdd(&r,&u,&v);
-    e.x=6.0;e.y=6.0;e.z=1.0;
+    U1(e).x=6.0;U2(e).y=6.0;U3(e).z=1.0;
     expect_vec(e,r);
 
 /*_______________________VectorSubtract__________________________*/
     D3DRMVectorSubtract(&r,&u,&v);
-    e.x=-2.0;e.y=-2.0;e.z=1.0;
+    U1(e).x=-2.0;U2(e).y=-2.0;U3(e).z=1.0;
     expect_vec(e,r);
 
 /*_______________________VectorCrossProduct_______________________*/
     D3DRMVectorCrossProduct(&r,&u,&v);
-    e.x=-4.0;e.y=4.0;e.z=0.0;
+    U1(e).x=-4.0;U2(e).y=4.0;U3(e).z=0.0;
     expect_vec(e,r);
 
 /*_______________________VectorDotProduct__________________________*/
@@ -97,41 +98,41 @@ static void VectorTest(void)
 
 /*_______________________VectorNormalize___________________________*/
     D3DRMVectorNormalize(&u);
-    e.x=2.0/3.0;e.y=2.0/3.0;e.z=1.0/3.0;
+    U1(e).x=2.0/3.0;U2(e).y=2.0/3.0;U3(e).z=1.0/3.0;
     expect_vec(e,u);
 
 /* If u is the NULL vector, MSDN says that the return vector is NULL. In fact, the returned vector is (1,0,0). The following test case prove it. */
 
-    casnul.x=0.0; casnul.y=0.0; casnul.z=0.0;
+    U1(casnul).x=0.0; U2(casnul).y=0.0; U3(casnul).z=0.0;
     D3DRMVectorNormalize(&casnul);
-    e.x=1.0; e.y=0.0; e.z=0.0;
+    U1(e).x=1.0; U2(e).y=0.0; U3(e).z=0.0;
     expect_vec(e,casnul);
 
 /*____________________VectorReflect_________________________________*/
-    ray.x=3.0; ray.y=-4.0; ray.z=5.0;
-    norm.x=1.0; norm.y=-2.0; norm.z=6.0;
-    e.x=79.0; e.y=-160.0; e.z=487.0;
+    U1(ray).x=3.0; U2(ray).y=-4.0; U3(ray).z=5.0;
+    U1(norm).x=1.0; U2(norm).y=-2.0; U3(norm).z=6.0;
+    U1(e).x=79.0; U2(e).y=-160.0; U3(e).z=487.0;
     D3DRMVectorReflect(&r,&ray,&norm);
     expect_vec(e,r);
 
 /*_______________________VectorRotate_______________________________*/
-    w.x=3.0;w.y=4.0;w.z=0.0;
-    axis.x=0.0;axis.y=0.0;axis.z=1.0;
+    U1(w).x=3.0; U2(w).y=4.0; U3(w).z=0.0;
+    U1(axis).x=0.0; U2(axis).y=0.0; U3(axis).z=1.0;
     theta=2.0*PI/3.0;
     D3DRMVectorRotate(&r,&w,&axis,theta);
-    e.x=-0.3-0.4*sqrt(3.0); e.y=0.3*sqrt(3.0)-0.4; e.z=0.0;
+    U1(e).x=-0.3-0.4*sqrt(3.0); U2(e).y=0.3*sqrt(3.0)-0.4; U3(e).z=0.0;
     expect_vec(e,r);
 
 /* The same formula gives D3DRMVectorRotate, for theta in [-PI/2;+PI/2] or not. The following test proves this fact.*/
     theta=-PI/4.0;
     D3DRMVectorRotate(&r,&w,&axis,-PI/4);
-    e.x=1.4/sqrt(2.0); e.y=0.2/sqrt(2.0); e.z=0.0;
+    U1(e).x=1.4/sqrt(2.0); U2(e).y=0.2/sqrt(2.0); U3(e).z=0.0;
     expect_vec(e,r);
 
 /*_______________________VectorScale__________________________*/
     par=2.5;
     D3DRMVectorScale(&r,&v,par);
-    e.x=10.0; e.y=10.0; e.z=0.0;
+    U1(e).x=10.0; U2(e).y=10.0; U3(e).z=0.0;
     expect_vec(e,r);
 }
 
@@ -144,7 +145,7 @@ static void MatrixTest(void)
     exp[1][0]=20.0;  exp[1][1]=-39.0; exp[1][2]=20.0;  exp[1][3]=0.0;
     exp[2][0]=10.0;  exp[2][1]=28.0;  exp[2][2]=-25.0; exp[2][3]=0.0;
     exp[3][0]=0.0;   exp[3][1]=0.0;   exp[3][2]=0.0;   exp[3][3]=1.0;
-    q.s=1.0; q.v.x=2.0; q.v.y=3.0; q.v.z=4.0;
+    q.s=1.0; U1(q.v).x=2.0; U2(q.v).y=3.0; U3(q.v).z=4.0;
 
    D3DRMMatrixFromQuaternion(mat,&q);
    expect_mat(exp,mat);
@@ -157,10 +158,10 @@ static void QuaternionTest(void)
     D3DRMQUATERNION q,q1,q2,r;
 
 /*_________________QuaternionFromRotation___________________*/
-    axis.x=1.0;axis.y=1.0;axis.z=1.0;
+    U1(axis).x=1.0; U2(axis).y=1.0; U3(axis).z=1.0;
     theta=2.0*PI/3.0;
     D3DRMQuaternionFromRotation(&r,&axis,theta);
-    q.s=0.5;q.v.x=0.5;q.v.y=0.5;q.v.z=0.5;
+    q.s=0.5; U1(q.v).x=0.5; U2(q.v).y=0.5; U3(q.v).z=0.5;
     expect_quat(q,r);
 
 /*_________________QuaternionSlerp_________________________*/
@@ -169,28 +170,28 @@ static void QuaternionTest(void)
  * interpolates between the first quaternion and the opposite of the second one. The test proves
  * these two facts. */
     par=0.31;
-    q1.s=1.0; q1.v.x=2.0; q1.v.y=3.0; q1.v.z=50.0;
-    q2.s=-4.0; q2.v.x=6.0; q2.v.y=7.0; q2.v.z=8.0;
+    q1.s=1.0; U1(q1.v).x=2.0; U2(q1.v).y=3.0; U3(q1.v).z=50.0;
+    q2.s=-4.0; U1(q2.v).x=6.0; U2(q2.v).y=7.0; U3(q2.v).z=8.0;
 /* The angle between q1 and q2 is in [-PI/2,PI/2]. So, one interpolates between q1 and q2. */
     epsilon=1.0;
     g=1.0-par; h=epsilon*par;
 /* Part of the test proving that the interpolation is linear. */
     q.s=g*q1.s+h*q2.s;
-    q.v.x=g*q1.v.x+h*q2.v.x;
-    q.v.y=g*q1.v.y+h*q2.v.y;
-    q.v.z=g*q1.v.z+h*q2.v.z;
+    U1(q.v).x=g*U1(q1.v).x+h*U1(q2.v).x;
+    U2(q.v).y=g*U2(q1.v).y+h*U2(q2.v).y;
+    U3(q.v).z=g*U3(q1.v).z+h*U3(q2.v).z;
     D3DRMQuaternionSlerp(&r,&q1,&q2,par);
     expect_quat(q,r);
 
-    q1.s=1.0; q1.v.x=2.0; q1.v.y=3.0; q1.v.z=50.0;
-    q2.s=-94.0; q2.v.x=6.0; q2.v.y=7.0; q2.v.z=-8.0;
+    q1.s=1.0; U1(q1.v).x=2.0; U2(q1.v).y=3.0; U3(q1.v).z=50.0;
+    q2.s=-94.0; U1(q2.v).x=6.0; U2(q2.v).y=7.0; U3(q2.v).z=-8.0;
 /* The angle between q1 and q2 is not in [-PI/2,PI/2]. So, one interpolates between q1 and -q2. */
     epsilon=-1.0;
     g=1.0-par; h=epsilon*par;
     q.s=g*q1.s+h*q2.s;
-    q.v.x=g*q1.v.x+h*q2.v.x;
-    q.v.y=g*q1.v.y+h*q2.v.y;
-    q.v.z=g*q1.v.z+h*q2.v.z;
+    U1(q.v).x=g*U1(q1.v).x+h*U1(q2.v).x;
+    U2(q.v).y=g*U2(q1.v).y+h*U2(q2.v).y;
+    U3(q.v).z=g*U3(q1.v).z+h*U3(q2.v).z;
     D3DRMQuaternionSlerp(&r,&q1,&q2,par);
     expect_quat(q,r);
 }
