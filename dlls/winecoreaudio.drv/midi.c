@@ -59,14 +59,16 @@ typedef struct tagMIDIDestination {
     AUGraph graph;
     AudioUnit synth;
 
-    MIDIPortRef port;
+    MIDIEndpointRef dest;
+
     MIDIOUTCAPSW caps;
     MIDIOPENDESC midiDesc;
     WORD wFlags;
 } MIDIDestination;
 
 typedef struct tagMIDISource {
-    MIDIPortRef port;
+    MIDIEndpointRef source;
+
     WORD wDevID;
     int state; /* 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
     MIDIINCAPSW caps;
@@ -80,6 +82,9 @@ static CRITICAL_SECTION midiInLock; /* Critical section for MIDI In */
 static CFStringRef MIDIInThreadPortName = NULL;
 
 static DWORD WINAPI MIDIIn_MessageThread(LPVOID p);
+
+static MIDIPortRef MIDIInPort = NULL;
+static MIDIPortRef MIDIOutPort = NULL;
 
 #define MAX_MIDI_SYNTHS 1
 
@@ -123,23 +128,28 @@ LONG CoreAudio_MIDIInit(void)
         InitializeCriticalSection(&midiInLock);
         MIDIInThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("MIDIInThreadPortName.%u"), getpid());
         CreateThread(NULL, 0, MIDIIn_MessageThread, NULL, 0, NULL);
+
+        name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("WineInputPort.%u"), getpid());
+        MIDIInputPortCreate(wineMIDIClient, name, MIDIIn_ReadProc, NULL, &MIDIInPort);
+        CFRelease(name);
+    }
+    if (numDest > 0)
+    {
+        name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("WineOutputPort.%u"), getpid());
+        MIDIOutputPortCreate(wineMIDIClient, name, &MIDIOutPort);
+        CFRelease(name);
     }
 
     /* initialize sources */
     for (i = 0; i < MIDIIn_NumDevs; i++)
     {
-        MIDIEndpointRef endpoint = MIDIGetSource(i);
-
         sources[i].wDevID = i;
+        sources[i].source = MIDIGetSource(i);
 
-        CoreMIDI_GetObjectName(endpoint, szPname, sizeof(szPname));
+        CoreMIDI_GetObjectName(sources[i].source, szPname, sizeof(szPname));
         MultiByteToWideChar(CP_ACP, 0, szPname, -1, sources[i].caps.szPname, sizeof(sources[i].caps.szPname)/sizeof(WCHAR));
 
-        name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("WineInputPort.%d.%u"), i, getpid());
-        MIDIInputPortCreate(wineMIDIClient, name, MIDIIn_ReadProc, &sources[i].wDevID, &sources[i].port);
-        CFRelease(name);
-
-        MIDIPortConnectSource(sources[i].port, endpoint, NULL);
+        MIDIPortConnectSource(MIDIInPort, sources[i].source, &sources[i].wDevID);
 
         sources[i].state = 0;
         /* FIXME */
@@ -168,14 +178,10 @@ LONG CoreAudio_MIDIInit(void)
     /* initialise available destinations */
     for (i = MAX_MIDI_SYNTHS; i < numDest + MAX_MIDI_SYNTHS; i++)
     {
-        MIDIEndpointRef endpoint = MIDIGetDestination(i - MAX_MIDI_SYNTHS);
+        destinations[i].dest = MIDIGetDestination(i - MAX_MIDI_SYNTHS);
 
-        CoreMIDI_GetObjectName(endpoint, szPname, sizeof(szPname));
+        CoreMIDI_GetObjectName(destinations[i].dest, szPname, sizeof(szPname));
         MultiByteToWideChar(CP_ACP, 0, szPname, -1, destinations[i].caps.szPname, sizeof(destinations[i].caps.szPname)/sizeof(WCHAR));
-
-        name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("WineOutputPort.%d.%u"), i, getpid());
-        MIDIOutputPortCreate(wineMIDIClient, name, &destinations[i].port);
-        CFRelease(name);
 
         destinations[i].caps.wTechnology = MOD_MIDIPORT;
         destinations[i].caps.wChannelMask = 0xFFFF;

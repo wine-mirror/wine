@@ -63,7 +63,7 @@ void MIDIIn_ReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefC
 
     MIDIPacket *packet = (MIDIPacket *)pktlist->packet;
     for (i = 0; i < pktlist->numPackets; ++i) {
-        msg.devID = *((UInt16 *)refCon);
+        msg.devID = *((UInt16 *)connRefCon);
         msg.length = packet->length;
         memcpy(msg.data, packet->data, sizeof(packet->data));
 
