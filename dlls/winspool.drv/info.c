@@ -1441,7 +1441,9 @@ static HANDLE get_opened_printer_entry(LPCWSTR name, LPPRINTER_DEFAULTSW pDefaul
 
         if (printer->pm) {
             if ((printer->pm->monitor) && (printer->pm->monitor->pfnXcvOpenPort)) {
-                printer->pm->monitor->pfnXcvOpenPort(&printername[len], pDefault->DesiredAccess, &printer->hXcv);
+                printer->pm->monitor->pfnXcvOpenPort(&printername[len],
+                                                    pDefault ? pDefault->DesiredAccess : 0,
+                                                    &printer->hXcv);
             }
             if (printer->hXcv == NULL) {
                 SetLastError(ERROR_INVALID_PARAMETER);
