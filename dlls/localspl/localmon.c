@@ -401,7 +401,7 @@ BOOL WINAPI localmon_XcvClosePort(HANDLE hXcv)
  *
  * RETURNS
  *  Success: ERROR_SUCCESS
- *  Failure: win32 error code (same value is returned by GetLastError) 
+ *  Failure: win32 error code
  *
  * NOTES
  *
@@ -431,13 +431,13 @@ DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInput
         if (res == ERROR_SUCCESS) {
             if (does_port_exist((LPWSTR) pInputData)) {
                 RegCloseKey(hroot);
+                TRACE("=> %u\n", ERROR_ALREADY_EXISTS);
                 return ERROR_ALREADY_EXISTS;
             }
             res = RegSetValueExW(hroot, (LPWSTR) pInputData, 0, REG_SZ, (const BYTE *) emptyW, sizeof(emptyW));
             RegCloseKey(hroot);
-            SetLastError(ERROR_SUCCESS);
-            return res;
         }
+        TRACE("=> %u\n", res);
         return res;
     }
 
@@ -509,7 +509,8 @@ DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInput
         /* names, that we have recognized, are valid */
         if (res) return ERROR_SUCCESS;
 
-        /* ERROR_ACCESS_DENIED, ERROR_PATH_NOT_FOUND ore something else */
+        /* ERROR_ACCESS_DENIED, ERROR_PATH_NOT_FOUND or something else */
+        TRACE("=> %u\n", GetLastError());
         return GetLastError();
     }
 
