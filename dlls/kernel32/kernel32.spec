@@ -168,7 +168,7 @@
 @ stdcall Beep(long long)
 @ stdcall BeginUpdateResourceA(str long)
 @ stdcall BeginUpdateResourceW(wstr long)
-# @ stub BindIoCompletionCallback
+@ stdcall BindIoCompletionCallback(long ptr long)
 @ stdcall BuildCommDCBA(str ptr)
 @ stdcall BuildCommDCBAndTimeoutsA(str ptr ptr)
 @ stdcall BuildCommDCBAndTimeoutsW(wstr ptr ptr)

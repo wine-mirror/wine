@@ -1855,6 +1855,16 @@ BOOL WINAPI PostQueuedCompletionStatus( HANDLE CompletionPort, DWORD dwNumberOfB
 }
 
 /******************************************************************************
+ *		BindIoCompletionCallback (KERNEL32.@)
+ */
+BOOL WINAPI BindIoCompletionCallback( HANDLE FileHandle, LPOVERLAPPED_COMPLETION_ROUTINE Function, ULONG Flags)
+{
+    FIXME("%p, %p, %d, stub!\n", FileHandle, Function, Flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************************
  *		CreateJobObjectW (KERNEL32.@)
  */
 HANDLE WINAPI CreateJobObjectW( LPSECURITY_ATTRIBUTES attr, LPCWSTR name )
