@@ -31,9 +31,7 @@
 #include "winuser.h"
 
 #include "wine/debug.h"
-#include "wine/list.h"
 #include "wine/unicode.h"
-#include "winreg.h"
 #include "objbase.h"
 
 #include "dmusici.h"
