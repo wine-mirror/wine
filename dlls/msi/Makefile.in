@@ -12,6 +12,7 @@ C_SRCS = \
 	action.c \
 	alter.c \
 	appsearch.c \
+	automation.c \
 	classes.c \
 	create.c \
 	custom.c \
@@ -48,6 +49,8 @@ C_SRCS = \
 	upgrade.c \
 	where.c
 
+IDL_H_SRCS = msiserver.idl
+IDL_I_SRCS = msiserver.idl
 IDL_TLB_SRCS = msiserver.idl
 
 BISON_SRCS = \

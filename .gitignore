@@ -335,7 +335,9 @@ dlls/msi/instadvert.bmp
 dlls/msi/instlocal.bmp
 dlls/msi/libmsi.def
 dlls/msi/msi.res
+dlls/msi/msiserver.h
 dlls/msi/msiserver.tlb
+dlls/msi/msiserver_i.c
 dlls/msi/sql.tab.c
 dlls/msi/sql.tab.h
 dlls/msi/tests/*.ok
