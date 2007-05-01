@@ -604,3 +604,54 @@ static HRESULT WINAPI ViewImpl_Invoke(
 
     return S_OK;
 }
+
+static HRESULT WINAPI DatabaseImpl_Invoke(
+        AutomationObject* This,
+        DISPID dispIdMember,
+        REFIID riid,
+        LCID lcid,
+        WORD wFlags,
+        DISPPARAMS* pDispParams,
+        VARIANT* pVarResult,
+        EXCEPINFO* pExcepInfo,
+        UINT* puArgErr)
+{
+    MSIHANDLE msiHandle;
+    IDispatch *pDispatch = NULL;
+    UINT ret;
+    VARIANTARG varg0, varg1;
+    HRESULT hr;
+
+    VariantInit(&varg0);
+    VariantInit(&varg1);
+
+    switch (dispIdMember)
+    {
+	case DISPID_DATABASE_OPENVIEW:
+	    if (wFlags & DISPATCH_METHOD)
+	    {
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                V_VT(pVarResult) = VT_DISPATCH;
+                if ((ret = MsiDatabaseOpenViewW(This->msiHandle, V_BSTR(&varg0), &msiHandle)) == ERROR_SUCCESS)
+                {
+                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_View, ViewImpl_Invoke)))
+                    {
+                        IDispatch_AddRef(pDispatch);
+                        V_DISPATCH(pVarResult) = pDispatch;
+                    }
+                }
+		else
+                {
+                    ERR("MsiDatabaseOpenView returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+	    }
+	    break;
+
+         default:
+            return DISP_E_MEMBERNOTFOUND;
+    }
+
+    return S_OK;
+}
