@@ -136,7 +136,8 @@ then {
   fi
 
   # check whether wine binary still available
-  if [ -n "`which wine 2>/dev/null|grep '/wine'`" ]; then
+  if [ -n "`wine --version 2>/dev/null`" ]
+  then
     echo "Warning !! wine binary (still) found, which may indicate"
     echo "a (conflicting) previous installation."
     echo "You might want to abort and uninstall Wine first."
@@ -267,7 +268,7 @@ then {
 
       # see if wine is installed on the users system, if not prompt them
       # and then exit
-      if [ ! `which wine` ]
+      if [ -z "`wine --version 2>/dev/null`" ]
       then
         echo "Could not find wine on your system.  Run wineinstall as root to install wine"
         echo "before re-running wineinstall as a user."
