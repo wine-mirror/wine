@@ -914,3 +914,9 @@ static HRESULT WINAPI InstallerImpl_Invoke(
 
     return S_OK;
 }
+
+/* Wrapper around create_automation_object to create an installer object. */
+HRESULT create_msiserver(IUnknown *pOuter, LPVOID *ppObj)
+{
+    return create_automation_object(0, pOuter, ppObj, &DIID_Installer, InstallerImpl_Invoke);
+}

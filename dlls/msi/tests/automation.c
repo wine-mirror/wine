@@ -315,8 +315,19 @@ static WCHAR szSource[] = {'M','s','i',' ','A','P','I',' ','E','r','r','o','r',0
             ok_w2("Exception source was \"%s\" but expected to be \"%s\"\n", excepinfo.bstrSource, szSource); \
 \
         ok(excepinfo.bstrDescription != NULL, "Exception description was NULL\n"); \
-        if (excepinfo.bstrDescription)                                  \
-            ok_w2("Exception description was \"%s\" but expected to be \"%s\"\n", excepinfo.bstrDescription, szDescription); \
+        if (excepinfo.bstrDescription && lstrcmpW(excepinfo.bstrDescription, szDescription) != 0)                    \
+        {                                                               \
+            len = WideCharToMultiByte(CP_ACP, 0, excepinfo.bstrDescription, -1, string1, MAX_PATH, NULL, NULL); \
+            ok(len, "WideCharToMultiByteChar returned error %d\n", GetLastError()); \
+                                                                        \
+            len = WideCharToMultiByte(CP_ACP, 0, szDescription, -1, string2, MAX_PATH, NULL, NULL); \
+            ok(len, "WideCharToMultiByteChar returned error %d\n", GetLastError()); \
+                                                                        \
+            todo_wine {                                                 \
+                /* Our parameter names are different so the descriptions will not match */ \
+                ok(0, "Exception description was \"%s\" but expected to be \"%s\"\n", string1, string2);                        \
+            }                                                           \
+        }                                                               \
     }
 
 static DISPID get_dispid( IDispatch *disp, const char *name )
@@ -339,9 +350,10 @@ static DISPID get_dispid( IDispatch *disp, const char *name )
 
 static void test_dispid(void)
 {
+    ok( get_dispid( pInstaller, "OpenPackage" ) == 2, "dispid wrong\n");
+
     todo_wine {
     ok( get_dispid( pInstaller, "CreateRecord" ) == 1, "dispid wrong\n");
-    ok( get_dispid( pInstaller, "OpenPackage" ) == 2, "dispid wrong\n");
     ok( get_dispid( pInstaller, "OpenProduct" ) == 3, "dispid wrong\n");
     ok( get_dispid( pInstaller, "OpenDatabase" ) == 4, "dispid wrong\n");
     ok( get_dispid( pInstaller, "SummaryInformation" ) == 5, "dispid wrong\n");
@@ -514,14 +526,14 @@ static void test_dispatch(void)
 
     /* Try with NULL params */
     hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
-    ok(hr == DISP_E_TYPEMISMATCH, "IDispatch::Invoke returned 0x%08x\n", hr);
+    todo_wine ok(hr == DISP_E_TYPEMISMATCH, "IDispatch::Invoke returned 0x%08x\n", hr);
 
     /* Try one empty parameter */
     dispparams.rgvarg = vararg;
     dispparams.cArgs = 1;
     VariantInit(&vararg[0]);
     hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
-    ok(hr == DISP_E_TYPEMISMATCH, "IDispatch::Invoke returned 0x%08x\n", hr);
+    todo_wine ok(hr == DISP_E_TYPEMISMATCH, "IDispatch::Invoke returned 0x%08x\n", hr);
 
     /* Try one parameter, function requires two */
     VariantInit(&vararg[0]);
@@ -968,16 +980,16 @@ static void test_Session(IDispatch *pSession)
     /* Session::Mode, get */
     hr = Session_ModeGet(pSession, MSIRUNMODE_REBOOTATEND, &bool);
     ok(SUCCEEDED(hr), "Session_ModeGet failed, hresult 0x%08x\n", hr);
-    ok(!bool, "Reboot at end session mode is %d\n", bool);
+    todo_wine ok(!bool, "Reboot at end session mode is %d\n", bool);
 
     /* Session::Mode, put */
     hr = Session_ModePut(pSession, MSIRUNMODE_REBOOTATEND, TRUE);
-    ok(SUCCEEDED(hr), "Session_ModePut failed, hresult 0x%08x\n", hr);
+    todo_wine ok(SUCCEEDED(hr), "Session_ModePut failed, hresult 0x%08x\n", hr);
     hr = Session_ModeGet(pSession, MSIRUNMODE_REBOOTATEND, &bool);
     ok(SUCCEEDED(hr), "Session_ModeGet failed, hresult 0x%08x\n", hr);
     ok(bool, "Reboot at end session mode is %d, expected 1\n", bool);
     hr = Session_ModePut(pSession, MSIRUNMODE_REBOOTATEND, FALSE);  /* set it again so we don't reboot */
-    ok(SUCCEEDED(hr), "Session_ModePut failed, hresult 0x%08x\n", hr);
+    todo_wine ok(SUCCEEDED(hr), "Session_ModePut failed, hresult 0x%08x\n", hr);
 
     /* Session::Database, get */
     hr = Session_Database(pSession, &pDatabase);
@@ -1064,7 +1076,7 @@ START_TEST(automation)
     hr = CLSIDFromProgID(szProgId, &clsid);
     ok (SUCCEEDED(hr), "CLSIDFromProgID returned 0x%08x\n", hr);
     hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
-    todo_wine ok(SUCCEEDED(hr), "CoCreateInstance returned 0x%08x\n", hr);
+    ok(SUCCEEDED(hr), "CoCreateInstance returned 0x%08x\n", hr);
 
     if (pUnk)
     {
@@ -1073,8 +1085,8 @@ START_TEST(automation)
 
         test_dispid();
         test_createrecord_and_version();
-        todo_wine test_dispatch();
-        todo_wine test_Installer();
+        test_dispatch();
+        test_Installer();
 
         hr = IUnknown_Release(pUnk);
         ok (SUCCEEDED(hr), "IUnknown::Release returned 0x%08x\n", hr);

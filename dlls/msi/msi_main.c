@@ -115,12 +115,6 @@ ITypeLib *get_msi_typelib( LPWSTR *path )
     return msi_typelib;
 }
 
-static HRESULT create_msiserver( IUnknown *pOuter, LPVOID *ppObj )
-{
-    FIXME("\n");
-    return E_FAIL;
-}
-
 typedef struct tagIClassFactoryImpl {
     const IClassFactoryVtbl *lpVtbl;
     HRESULT (*create_object)( IUnknown*, LPVOID* );
