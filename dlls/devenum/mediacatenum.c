@@ -23,7 +23,6 @@
  */
 
 #include "devenum_private.h"
-#include "vfwmsgs.h"
 #include "oleauto.h"
 #include "ocidl.h"
 
