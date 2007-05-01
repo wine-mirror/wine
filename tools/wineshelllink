@@ -141,7 +141,8 @@ get_menu_entries()
         awk '
 BEGIN {  RS="<" }
 /^Filename/ {
-  if (match($0,/>/)) {
+  RSTART=index($0,">")
+  if (RSTART>0) {
      print substr($0,RSTART+1)
   }
 }' $tmp
@@ -182,7 +183,8 @@ write_menu_file()
 
         IFS="
 "
-        for i in $(get_menu_entries "$menu"); do
+        for i in `get_menu_entries "$menu"`
+        do
             test "$i" = "$filename" && continue
             echo "      <Filename>$i</Filename>"
         done
