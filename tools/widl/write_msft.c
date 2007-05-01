@@ -1068,7 +1068,8 @@ static int encode_var(
     if (!decoded_size) decoded_size = &scratch;
     *decoded_size = 0;
 
-    chat("encode_var: var %p var->tname %s var->type %p var->ptr_level %d var->type->ref %p\n", var, var->tname, var->type, var->ptr_level, var->type->ref);
+    chat("encode_var: var %p var->type %p var->type->name %s var->ptr_level %d var->type->ref %p\n",
+         var, var->type, var->type->name ? var->type->name : "NULL", var->ptr_level, var->type->ref);
     if(var->ptr_level) {
         int skip_ptr;
         var->ptr_level--;

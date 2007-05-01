@@ -215,10 +215,11 @@ unsigned short get_type_vt(type_t *t)
 unsigned short get_var_vt(var_t *v)
 {
   unsigned short vt;
+  const char *tname = v->type->name;
 
-  chat("get_var_vt: %p tname %s\n", v, v->tname);
-  if (v->tname) {
-    vt = builtin_vt(v->tname);
+  chat("get_var_vt: var %p type->name %s\n", v, tname ? tname : "NULL");
+  if (tname) {
+    vt = builtin_vt(tname);
     if (vt) return vt;
   }
 

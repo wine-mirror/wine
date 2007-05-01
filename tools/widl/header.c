@@ -159,7 +159,7 @@ static void write_field(FILE *h, var_t *v)
   if (!v) return;
   if (v->type) {
     indent(h, 0);
-    write_type(h, v->type, NULL, v->tname);
+    write_type(h, v->type, NULL);
     if (get_name(v)) {
       fprintf(h, " ");
       write_pident(h, v);
@@ -220,14 +220,13 @@ static int needs_space_after(type_t *t)
   return t->kind == TKIND_ALIAS || ! is_ptr(t);
 }
 
-void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
+void write_type(FILE *h, type_t *t, const var_t *v)
 {
   int c;
 
   if (t->is_const) fprintf(h, "const ");
 
-  if (n) fprintf(h, "%s", n);
-  else if (t->kind == TKIND_ALIAS) fprintf(h, "%s", t->name);
+  if (t->kind == TKIND_ALIAS) fprintf(h, "%s", t->name);
   else {
     if (t->sign > 0) fprintf(h, "signed ");
     else if (t->sign < 0) fprintf(h, "unsigned ");
@@ -279,7 +278,7 @@ void write_type(FILE *h, type_t *t, const var_t *v, const char *n)
       case RPC_FC_UP:
       case RPC_FC_FP:
       case RPC_FC_OP:
-        if (t->ref) write_type(h, t->ref, NULL, t->name);
+        if (t->ref) write_type(h, t->ref, NULL);
         fprintf(h, "%s*", needs_space_after(t->ref) ? " " : "");
         break;
       default:
@@ -359,7 +358,7 @@ void write_user_types(void)
 void write_typedef(type_t *type)
 {
   fprintf(header, "typedef ");
-  write_type(header, type->orig, NULL, NULL);
+  write_type(header, type->orig, NULL);
   fprintf(header, "%s%s;\n", needs_space_after(type->orig) ? " " : "", type->name);
 }
 
@@ -397,13 +396,13 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
     break;
   case EXPR_CAST:
     fprintf(h, "(");
-    write_type(h, e->u.tref, NULL, e->u.tref->name);
+    write_type(h, e->u.tref, NULL);
     fprintf(h, ")");
     write_expr(h, e->ref, 1);
     break;
   case EXPR_SIZEOF:
     fprintf(h, "sizeof(");
-    write_type(h, e->u.tref, NULL, e->u.tref->name);
+    write_type(h, e->u.tref, NULL);
     fprintf(h, ")");
     break;
   case EXPR_SHL:
@@ -452,7 +451,7 @@ void write_constdef(const var_t *v)
 void write_externdef(const var_t *v)
 {
   fprintf(header, "extern const ");
-  write_type(header, v->type, NULL, v->tname);
+  write_type(header, v->type, NULL);
   if (get_name(v)) {
     fprintf(header, " ");
     write_pident(header, v);
@@ -580,7 +579,7 @@ void write_args(FILE *h, const var_list_t *args, const char *name, int method, i
         }
         else fprintf(h, ",");
     }
-    write_type(h, arg->type, arg, arg->tname);
+    write_type(h, arg->type, arg);
     if (arg->args)
     {
       fprintf(h, " (STDMETHODCALLTYPE *");
@@ -613,7 +612,7 @@ static void write_cpp_method_def(const type_t *iface)
     if (!is_callas(def->attrs)) {
       indent(header, 0);
       fprintf(header, "virtual ");
-      write_type(header, def->type, def, def->tname);
+      write_type(header, def->type, def);
       fprintf(header, " STDMETHODCALLTYPE ");
       write_name(header, def);
       fprintf(header, "(\n");
@@ -638,7 +637,7 @@ static void do_write_c_method_def(const type_t *iface, const char *name)
     const var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
       indent(header, 0);
-      write_type(header, def->type, def, def->tname);
+      write_type(header, def->type, def);
       fprintf(header, " (STDMETHODCALLTYPE *");
       write_name(header, def);
       fprintf(header, ")(\n");
@@ -671,7 +670,7 @@ static void write_method_proto(const type_t *iface)
 
     if (!is_local(def->attrs)) {
       /* proxy prototype */
-      write_type(header, def->type, def, def->tname);
+      write_type(header, def->type, def);
       fprintf(header, " CALLBACK %s_", iface->name);
       write_name(header, def);
       fprintf(header, "_Proxy(\n");
@@ -694,14 +693,14 @@ static void write_method_proto(const type_t *iface)
       if (&m->entry != iface->funcs) {
         const var_t *mdef = m->def;
         /* proxy prototype - use local prototype */
-        write_type(header, mdef->type, mdef, mdef->tname);
+        write_type(header, mdef->type, mdef);
         fprintf(header, " CALLBACK %s_", iface->name);
         write_name(header, mdef);
         fprintf(header, "_Proxy(\n");
         write_args(header, m->args, iface->name, 1, TRUE);
         fprintf(header, ");\n");
         /* stub prototype - use remotable prototype */
-        write_type(header, def->type, def, def->tname);
+        write_type(header, def->type, def);
         fprintf(header, " __RPC_STUB %s_", iface->name);
         write_name(header, mdef);
         fprintf(header, "_Stub(\n");
@@ -720,7 +719,7 @@ static void write_function_proto(const type_t *iface, const func_t *fun, const c
   var_t *def = fun->def;
 
   /* FIXME: do we need to handle call_as? */
-  write_type(header, def->type, def, def->tname);
+  write_type(header, def->type, def);
   fprintf(header, " ");
   write_prefix_name(header, prefix, def);
   fprintf(header, "(\n");

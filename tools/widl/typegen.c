@@ -1842,7 +1842,7 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
     if (phase == PHASE_MARSHAL)
     {
         print_file(file, indent, "*(");
-        write_type(file, var->type, NULL, var->tname);
+        write_type(file, var->type, NULL);
         if (var->ptr_level)
             fprintf(file, " *)_StubMsg.Buffer = *");
         else
@@ -1861,12 +1861,12 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
             fprintf(file, " = (");
         else
             fprintf(file, " = *(");
-        write_type(file, var->type, NULL, var->tname);
+        write_type(file, var->type, NULL);
         fprintf(file, " *)_StubMsg.Buffer;\n");
     }
 
     print_file(file, indent, "_StubMsg.Buffer += sizeof(");
-    write_type(file, var->type, NULL, var->tname);
+    write_type(file, var->type, NULL);
     fprintf(file, ");\n");
 }
 
@@ -2214,13 +2214,13 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
             break;
         case EXPR_CAST:
             fprintf(h, "(");
-            write_type(h, e->u.tref, NULL, e->u.tref->name);
+            write_type(h, e->u.tref, NULL);
             fprintf(h, ")");
             write_struct_expr(h, e->ref, 1, fields, structvar);
             break;
         case EXPR_SIZEOF:
             fprintf(h, "sizeof(");
-            write_type(h, e->u.tref, NULL, e->u.tref->name);
+            write_type(h, e->u.tref, NULL);
             fprintf(h, ")");
             break;
         case EXPR_SHL:
@@ -2271,7 +2271,7 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
     if (!is_void(def->type, NULL))
     {
         print_file(file, indent, "");
-        write_type(file, def->type, def, def->tname);
+        write_type(file, def->type, def);
         fprintf(file, " _RetVal;\n");
     }
 
@@ -2293,14 +2293,14 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
         {
             int indirection;
             print_file(file, indent, "");
-            write_type(file, var->type, NULL, var->tname);
+            write_type(file, var->type, NULL);
             for (indirection = 0; indirection < var->ptr_level - 1; indirection++)
                 fprintf(file, "*");
             fprintf(file, " _W%u;\n", i++);
         }
 
         print_file(file, indent, "");
-        write_type(file, var->type, var, var->tname);
+        write_type(file, var->type, var);
         fprintf(file, " ");
         if (var->array) {
             fprintf(file, "( *");

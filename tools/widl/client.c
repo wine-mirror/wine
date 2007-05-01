@@ -113,7 +113,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             }
         }
 
-        write_type(client, def->type, def, def->tname);
+        write_type(client, def->type, def);
         fprintf(client, " ");
         write_prefix_name(client, prefix_client, def);
         fprintf(client, "(\n");
@@ -133,7 +133,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         if (!is_void(def->type, NULL))
         {
             print_client("");
-            write_type(client, def->type, def, def->tname);
+            write_type(client, def->type, def);
             fprintf(client, " _RetVal;\n");
         }
 

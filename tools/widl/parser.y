@@ -297,12 +297,12 @@ int_statements:					{ $$ = NULL; }
 statement: ';'					{}
 	| constdef ';'				{ if (!parse_only && do_header) { write_constdef($1); } }
 	| cppquote				{}
-	| enumdef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
+	| enumdef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL); fprintf(header, ";\n\n"); } }
 	| externdef ';'				{ if (!parse_only && do_header) { write_externdef($1); } }
 	| import				{}
-	| structdef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
+	| structdef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL); fprintf(header, ";\n\n"); } }
 	| typedef ';'				{}
-	| uniondef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
+	| uniondef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL); fprintf(header, ";\n\n"); } }
 	;
 
 cppquote: tCPPQUOTE '(' aSTRING ')'		{ if (!parse_only && do_header) fprintf(header, "%s\n", $3); }
@@ -1240,7 +1240,6 @@ static var_t *make_var(char *name)
   v->ptr_level = 0;
   v->type = NULL;
   v->args = NULL;
-  v->tname = NULL;
   v->attrs = NULL;
   v->array = NULL;
   v->eval = NULL;
