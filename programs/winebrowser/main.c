@@ -45,6 +45,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winebrowser);
 
 typedef LPSTR (*wine_get_unix_file_name_t)(LPCWSTR unixname);
 
@@ -61,8 +64,8 @@ static int launch_app( char *candidates, const char *argv1 )
         argv_new[1] = argv1;
         argv_new[2] = NULL;
 
-        fprintf( stderr, "Considering: %s\n", app );
-        fprintf( stderr, "argv[1]: %s\n", argv1 );
+        WINE_TRACE( "Considering: %s\n", app );
+        WINE_TRACE( "argv[1]: %s\n", argv1 );
 
         spawnvp( _P_OVERLAY, app, argv_new );  /* only returns on error */
         app = strtok( NULL, "," );  /* grab the next app */
@@ -173,8 +176,7 @@ int main(int argc, char *argv[])
 
     if (wine_get_unix_file_name_ptr == NULL)
     {
-        fprintf( stderr,
-            "winebrowser: cannot get the address of 'wine_get_unix_file_name'\n" );
+        WINE_ERR( "cannot get the address of 'wine_get_unix_file_name'\n" );
     }
     else
     {
