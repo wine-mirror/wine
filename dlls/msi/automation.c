@@ -655,3 +655,209 @@ static HRESULT WINAPI DatabaseImpl_Invoke(
 
     return S_OK;
 }
+
+static HRESULT WINAPI SessionImpl_Invoke(
+        AutomationObject* This,
+        DISPID dispIdMember,
+        REFIID riid,
+        LCID lcid,
+        WORD wFlags,
+        DISPPARAMS* pDispParams,
+        VARIANT* pVarResult,
+        EXCEPINFO* pExcepInfo,
+        UINT* puArgErr)
+{
+    WCHAR *szString;
+    DWORD dwLen;
+    IDispatch *pDispatch = NULL;
+    MSIHANDLE msiHandle;
+    LANGID langId;
+    UINT ret;
+    INSTALLSTATE iInstalled, iAction;
+    VARIANTARG varg0, varg1;
+    HRESULT hr;
+
+    VariantInit(&varg0);
+    VariantInit(&varg1);
+
+    switch (dispIdMember)
+    {
+	case DISPID_SESSION_PROPERTY:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                V_VT(pVarResult) = VT_BSTR;
+                V_BSTR(pVarResult) = NULL;
+		ret = MsiGetPropertyW(This->msiHandle, V_BSTR(&varg0), NULL, &dwLen);
+                if (ret == ERROR_SUCCESS)
+                {
+                    szString = msi_alloc((++dwLen)*sizeof(WCHAR));
+                    if (szString)
+                    {
+                        if ((ret = MsiGetPropertyW(This->msiHandle, V_BSTR(&varg0), szString, &dwLen)) == ERROR_SUCCESS)
+                            V_BSTR(pVarResult) = SysAllocString(szString);
+                        msi_free(szString);
+                    }
+                }
+                if (ret != ERROR_SUCCESS)
+		    ERR("MsiGetProperty returned %d\n", ret);
+	    } else if (wFlags & DISPATCH_PROPERTYPUT) {
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                hr = DispGetParam(pDispParams, DISPID_PROPERTYPUT, VT_BSTR, &varg1, puArgErr);
+                if (FAILED(hr)) {
+                    VariantClear(&varg0);
+                    return hr;
+                }
+		if ((ret = MsiSetPropertyW(This->msiHandle, V_BSTR(&varg0), V_BSTR(&varg1))) != ERROR_SUCCESS)
+                {
+                    ERR("MsiSetProperty returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+	    }
+	    break;
+
+	case DISPID_SESSION_LANGUAGE:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+		langId = MsiGetLanguage(This->msiHandle);
+                V_VT(pVarResult) = VT_I4;
+                V_I4(pVarResult) = langId;
+	    }
+	    break;
+
+	case DISPID_SESSION_MODE:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                V_VT(pVarResult) = VT_BOOL;
+		V_BOOL(pVarResult) = MsiGetMode(This->msiHandle, V_I4(&varg0));
+	    } else if (wFlags & DISPATCH_PROPERTYPUT) {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                hr = DispGetParam(pDispParams, DISPID_PROPERTYPUT, VT_BOOL, &varg1, puArgErr);
+                if (FAILED(hr)) return hr;
+		if ((ret = MsiSetMode(This->msiHandle, V_I4(&varg0), V_BOOL(&varg1))) != ERROR_SUCCESS)
+                {
+                    ERR("MsiSetMode returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+	    }
+	    break;
+
+	case DISPID_SESSION_DATABASE:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+                V_VT(pVarResult) = VT_DISPATCH;
+		if ((msiHandle = MsiGetActiveDatabase(This->msiHandle)))
+                {
+                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Database, DatabaseImpl_Invoke)))
+                    {
+                        IDispatch_AddRef(pDispatch);
+                        V_DISPATCH(pVarResult) = pDispatch;
+                    }
+                }
+		else
+                {
+                    ERR("MsiGetActiveDatabase failed\n");
+                    return DISP_E_EXCEPTION;
+                }
+	    }
+	    break;
+
+        case DISPID_SESSION_DOACTION:
+            if (wFlags & DISPATCH_METHOD) {
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                ret = MsiDoActionW(This->msiHandle, V_BSTR(&varg0));
+                V_VT(pVarResult) = VT_I4;
+                switch (ret)
+                {
+                    case ERROR_FUNCTION_NOT_CALLED:
+                        V_I4(pVarResult) = msiDoActionStatusNoAction;
+                        break;
+                    case ERROR_SUCCESS:
+                        V_I4(pVarResult) = msiDoActionStatusSuccess;
+                        break;
+                    case ERROR_INSTALL_USEREXIT:
+                        V_I4(pVarResult) = msiDoActionStatusUserExit;
+                        break;
+                    case ERROR_INSTALL_FAILURE:
+                        V_I4(pVarResult) = msiDoActionStatusFailure;
+                        break;
+                    case ERROR_INSTALL_SUSPEND:
+                        V_I4(pVarResult) = msiDoActionStatusSuspend;
+                        break;
+                    case ERROR_MORE_DATA:
+                        V_I4(pVarResult) = msiDoActionStatusFinished;
+                        break;
+                    case ERROR_INVALID_HANDLE_STATE:
+                        V_I4(pVarResult) = msiDoActionStatusWrongState;
+                        break;
+                    case ERROR_INVALID_DATA:
+                        V_I4(pVarResult) = msiDoActionStatusBadActionData;
+                        break;
+                    default:
+                        FIXME("MsiDoAction returned unhandled value %d\n", ret);
+                        return DISP_E_EXCEPTION;
+                }
+            }
+            break;
+
+        case DISPID_SESSION_SETINSTALLLEVEL:
+            hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+            if (FAILED(hr)) return hr;
+            if ((ret = MsiSetInstallLevel(This->msiHandle, V_I4(&varg0))) != ERROR_SUCCESS)
+            {
+                ERR("MsiSetInstallLevel returned %d\n", ret);
+                return DISP_E_EXCEPTION;
+            }
+            break;
+
+	case DISPID_SESSION_FEATURECURRENTSTATE:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                V_VT(pVarResult) = VT_I4;
+		if ((ret = MsiGetFeatureStateW(This->msiHandle, V_BSTR(&varg0), &iInstalled, &iAction)) == ERROR_SUCCESS)
+		    V_I4(pVarResult) = iInstalled;
+		else
+		{
+		    ERR("MsiGetFeatureState returned %d\n", ret);
+                    V_I4(pVarResult) = msiInstallStateUnknown;
+		}
+	    }
+	    break;
+
+	case DISPID_SESSION_FEATUREREQUESTSTATE:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                V_VT(pVarResult) = VT_I4;
+		if ((ret = MsiGetFeatureStateW(This->msiHandle, V_BSTR(&varg0), &iInstalled, &iAction)) == ERROR_SUCCESS)
+		    V_I4(pVarResult) = iAction;
+		else
+		{
+		    ERR("MsiGetFeatureState returned %d\n", ret);
+                    V_I4(pVarResult) = msiInstallStateUnknown;
+		}
+	    } else if (wFlags & DISPATCH_PROPERTYPUT) {
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                hr = DispGetParam(pDispParams, DISPID_PROPERTYPUT, VT_I4, &varg1, puArgErr);
+                if (FAILED(hr)) {
+                    VariantClear(&varg0);
+                    return hr;
+                }
+		if ((ret = MsiSetFeatureStateW(This->msiHandle, V_BSTR(&varg0), V_I4(&varg1))) != ERROR_SUCCESS)
+                {
+                    ERR("MsiSetFeatureState returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+	    }
+	    break;
+
+         default:
+            return DISP_E_MEMBERNOTFOUND;
+    }
+
+    return S_OK;
+}
