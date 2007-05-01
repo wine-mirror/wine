@@ -1568,9 +1568,6 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
         {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
     static const WCHAR szZero[] = { '0', 0 };
 
-    if ( 1 == msi_get_property_int( package, szCosting, 0 ) )
-        return ERROR_SUCCESS;
-
     MSI_SetPropertyW(package, szCosting, szZero);
     MSI_SetPropertyW(package, cszRootDrive, c_colon);
 

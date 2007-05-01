@@ -1479,12 +1479,8 @@ static void test_setpropertyfolder(void)
 
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    delete_pf("msitest\\maximus", TRUE); /* FIXME: remove when the tests pass */
-    todo_wine
-    {
-        ok(delete_pf("msitest\\added\\maximus", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\added", FALSE), "File not installed\n");
-    }
+    ok(delete_pf("msitest\\added\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\added", FALSE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     DeleteFile(msifile);
