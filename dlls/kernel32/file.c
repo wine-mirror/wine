@@ -71,6 +71,7 @@ typedef struct
 
 static BOOL oem_file_apis;
 
+static const WCHAR wildcardsW[] = { '*','?',0 };
 
 /***********************************************************************
  *              create_file_OF
@@ -1559,7 +1560,6 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
                                 LPVOID data, FINDEX_SEARCH_OPS search_op,
                                 LPVOID filter, DWORD flags)
 {
-    static const WCHAR wildcardsW[] = { '*','?',0 };
     WCHAR *mask, *p;
     FIND_FIRST_INFO *info = NULL;
     UNICODE_STRING nt_name;
@@ -1787,7 +1787,8 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
 
         /* check for dir symlink */
         if ((dir_info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-            (dir_info->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT))
+            (dir_info->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+            strpbrkW( info->mask.Buffer, wildcardsW ))
         {
             if (!check_dir_symlink( info, dir_info )) continue;
         }
