@@ -470,3 +470,68 @@ static const IProvideMultipleClassInfoVtbl AutomationObject_IProvideMultipleClas
     AutomationObject_GetMultiTypeInfoCount,
     AutomationObject_GetInfoOfIndex
 };
+
+/*
+ * Individual Object Invocation Functions
+ */
+
+static HRESULT WINAPI RecordImpl_Invoke(
+        AutomationObject* This,
+        DISPID dispIdMember,
+        REFIID riid,
+        LCID lcid,
+        WORD wFlags,
+        DISPPARAMS* pDispParams,
+        VARIANT* pVarResult,
+        EXCEPINFO* pExcepInfo,
+        UINT* puArgErr)
+{
+    WCHAR *szString;
+    DWORD dwLen;
+    UINT ret;
+    VARIANTARG varg0, varg1;
+    HRESULT hr;
+
+    VariantInit(&varg0);
+    VariantInit(&varg1);
+
+    switch (dispIdMember)
+    {
+	case DISPID_RECORD_STRINGDATA:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                V_VT(pVarResult) = VT_BSTR;
+                V_BSTR(pVarResult) = NULL;
+		ret = MsiRecordGetStringW(This->msiHandle, V_I4(&varg0), NULL, &dwLen);
+                if (ret == ERROR_SUCCESS)
+                {
+                    szString = msi_alloc((++dwLen)*sizeof(WCHAR));
+                    if (szString)
+                    {
+                        if ((ret = MsiRecordGetStringW(This->msiHandle, V_I4(&varg0), szString, &dwLen)) == ERROR_SUCCESS)
+                            V_BSTR(pVarResult) = SysAllocString(szString);
+                        msi_free(szString);
+                    }
+                }
+                if (ret != ERROR_SUCCESS)
+		    ERR("MsiRecordGetString returned %d\n", ret);
+	    } else if (wFlags & DISPATCH_PROPERTYPUT) {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                hr = DispGetParam(pDispParams, DISPID_PROPERTYPUT, VT_BSTR, &varg1, puArgErr);
+                if (FAILED(hr)) return hr;
+		if ((ret = MsiRecordSetStringW(This->msiHandle, V_I4(&varg0), V_BSTR(&varg1))) != ERROR_SUCCESS)
+                {
+                    ERR("MsiRecordSetString returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+	    }
+	    break;
+
+         default:
+            return DISP_E_MEMBERNOTFOUND;
+    }
+
+    return S_OK;
+}
