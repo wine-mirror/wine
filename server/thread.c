@@ -497,15 +497,14 @@ static int check_wait( struct thread *thread )
     struct thread_wait *wait = thread->wait;
     struct wait_queue_entry *entry = wait->queues;
 
-    /* Suspended threads may not acquire locks, but they can run system APCs */
-    if (thread->process->suspend + thread->suspend > 0)
-    {
-        if ((wait->flags & SELECT_INTERRUPTIBLE) && !list_empty( &thread->system_apc ))
-            return STATUS_USER_APC;
-        return -1;
-    }
-
     assert( wait );
+
+    if ((wait->flags & SELECT_INTERRUPTIBLE) && !list_empty( &thread->system_apc ))
+        return STATUS_USER_APC;
+
+    /* Suspended threads may not acquire locks, but they can run system APCs */
+    if (thread->process->suspend + thread->suspend > 0) return -1;
+
     if (wait->flags & SELECT_ALL)
     {
         int not_ok = 0;
@@ -535,7 +534,6 @@ static int check_wait( struct thread *thread )
     }
 
  other_checks:
-    if ((wait->flags & SELECT_INTERRUPTIBLE) && !list_empty(&thread->system_apc)) return STATUS_USER_APC;
     if ((wait->flags & SELECT_ALERTABLE) && !list_empty(&thread->user_apc)) return STATUS_USER_APC;
     if (wait->timeout <= current_time) return STATUS_TIMEOUT;
     return -1;
