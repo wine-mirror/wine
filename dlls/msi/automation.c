@@ -33,6 +33,7 @@
 #include "wine/unicode.h"
 
 #include "msiserver.h"
+#include "msiserver_dispids.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 

@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "msiserver_dispids.h"
 import "unknwn.idl";
 import "wtypes.idl";
 import "objidl.idl";
@@ -42,6 +43,10 @@ library WindowsInstaller
     {
     properties:
     methods:
+        [id(DISPID_INSTALLER_OPENPACKAGE)]
+            Session* OpenPackage(
+                [in] VARIANT Path,
+                [in, optional, defaultvalue(0)] long OptionalOption);
     }
 
     [ uuid(000C1093-0000-0000-C000-000000000046) ]
@@ -49,6 +54,12 @@ library WindowsInstaller
     {
     properties:
     methods:
+        [id(DISPID_RECORD_STRINGDATA), propget]
+            BSTR StringData([in] long FieldNumber);
+        [id(DISPID_RECORD_STRINGDATA), propput]
+            void StringData(
+                [in] long FieldNumber,
+                [in] BSTR rhs);
     }
 
     [ uuid(000C1095-0000-0000-C000-000000000046) ]
@@ -84,6 +95,12 @@ library WindowsInstaller
     {
         properties:
         methods:
+        [id(DISPID_VIEW_EXECUTE)]
+            void Execute([in, optional, defaultvalue(0)] Record *OptionalRecord);
+        [id(DISPID_VIEW_FETCH)]
+            Record* Fetch();
+        [id(DISPID_VIEW_CLOSE)]
+            void Close();
     }
 
     [ uuid(000C109D-0000-0000-C000-000000000046) ]
@@ -91,13 +108,89 @@ library WindowsInstaller
     {
         properties:
         methods:
+        [id(DISPID_DATABASE_OPENVIEW)]
+            View* OpenView([in] BSTR QueryString);
     }
+
+    typedef enum {
+        msiDoActionStatusNoAction = 0,
+        msiDoActionStatusSuccess = 1,
+        msiDoActionStatusUserExit = 2,
+        msiDoActionStatusFailure = 3,
+        msiDoActionStatusSuspend = 4,
+        msiDoActionStatusFinished = 5,
+        msiDoActionStatusWrongState = 6,
+        msiDoActionStatusBadActionData = 7
+    } MsiDoActionStatus;
+
+    typedef enum {
+        msiRunModeAdmin = 0,
+        msiRunModeAdvertise = 1,
+        msiRunModeMaintenance = 2,
+        msiRunModeRollbackEnabled = 3,
+        msiRunModeLogEnabled = 4,
+        msiRunModeOperations = 5,
+        msiRunModeRebootAtEnd = 6,
+        msiRunModeRebootNow = 7,
+        msiRunModeCabinet = 8,
+        msiRunModeSourceShortNames = 9,
+        msiRunModeTargetShortNames = 10,
+        msiRunModeWindows9x = 12,
+        msiRunModeZawEnabled = 13,
+        msiRunModeScheduled = 16,
+        msiRunModeRollback = 17,
+        msiRunModeCommit = 18
+    } MsiRunMode;
+
+    typedef enum {
+        msiInstallStateNotUsed = -7,
+        msiInstallStateBadConfig = -6,
+        msiInstallStateIncomplete = -5,
+        msiInstallStateSourceAbsent = -4,
+        msiInstallStateInvalidArg = -2,
+        msiInstallStateUnknown = -1,
+        msiInstallStateBroken = 0,
+        msiInstallStateAdvertised = 1,
+        msiInstallStateRemoved = 1,
+        msiInstallStateAbsent = 2,
+        msiInstallStateLocal = 3,
+        msiInstallStateSource = 4,
+        msiInstallStateDefault = 5
+    } MsiInstallState;
 
     [ uuid(000C109E-0000-0000-C000-000000000046) ]
     dispinterface Session
     {
     properties:
     methods:
+        [id(DISPID_SESSION_PROPERTY), propget]
+            BSTR Property([in] BSTR PropertyName);
+        [id(DISPID_SESSION_PROPERTY), propput]
+            void Property(
+                [in] BSTR PropertyName,
+                [in] BSTR rhs);
+        [id(DISPID_SESSION_LANGUAGE), propget]
+            long Language();
+        [id(DISPID_SESSION_MODE), propget]
+            VARIANT_BOOL Mode([in] MsiRunMode runMode);
+        [id(DISPID_SESSION_MODE), propput]
+            void Mode(
+                [in] MsiRunMode runMode,
+                [in] VARIANT_BOOL rhs);
+        [id(DISPID_SESSION_DATABASE), propget]
+            Database* Database();
+        [id(DISPID_SESSION_DOACTION)]
+            MsiDoActionStatus DoAction([in] BSTR ActionString);
+        [id(DISPID_SESSION_FEATURECURRENTSTATE), propget]
+            MsiInstallState FeatureCurrentState([in] BSTR FeatureName);
+        [id(DISPID_SESSION_FEATUREREQUESTSTATE), propget]
+            MsiInstallState FeatureRequestState([in] BSTR FeatureName);
+        [id(DISPID_SESSION_FEATUREREQUESTSTATE), propput]
+            void FeatureRequestState(
+                [in] BSTR FeatureName,
+                [in] MsiInstallState rhs);
+        [id(DISPID_SESSION_SETINSTALLLEVEL)]
+            void SetInstallLevel([in] long InstallLevel);
     }
 
     [ uuid(000C109F-0000-0000-C000-000000000046) ]
