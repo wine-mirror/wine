@@ -38,6 +38,7 @@ C_SRCS = \
 	record.c \
 	registry.c \
 	regsvr.c \
+	script.c \
 	select.c \
 	source.c \
 	streams.c \

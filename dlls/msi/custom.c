@@ -981,6 +981,7 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
 static DWORD WINAPI ACTION_CallScript( const LPGUID guid )
 {
     msi_custom_action_info *info;
+    MSIHANDLE hPackage;
     UINT r = ERROR_FUNCTION_FAILED;
 
     info = find_action_by_guid( guid );
@@ -990,7 +991,16 @@ static DWORD WINAPI ACTION_CallScript( const LPGUID guid )
         return r;
     }
 
-    FIXME("function %s, script %s\n", debugstr_w( info->target ), debugstr_w( info->source ) );
+    TRACE("function %s, script %s\n", debugstr_w( info->target ), debugstr_w( info->source ) );
+
+    hPackage = alloc_msihandle( &info->package->hdr );
+    if (hPackage)
+    {
+        r = call_script( hPackage, info->type, info->source, info->target, info->action );
+        MsiCloseHandle( hPackage );
+    }
+    else
+        ERR("failed to create handle for %p\n", info->package );
 
     if (info->type & msidbCustomActionTypeAsync &&
         info->type & msidbCustomActionTypeContinue)

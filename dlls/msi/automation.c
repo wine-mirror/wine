@@ -920,3 +920,9 @@ HRESULT create_msiserver(IUnknown *pOuter, LPVOID *ppObj)
 {
     return create_automation_object(0, pOuter, ppObj, &DIID_Installer, InstallerImpl_Invoke);
 }
+
+/* Wrapper around create_automation_object to create a session object. */
+HRESULT create_session(MSIHANDLE msiHandle, IDispatch **pDispatch)
+{
+    return create_automation_object(msiHandle, NULL, (LPVOID)pDispatch, &DIID_Session, SessionImpl_Invoke);
+}
