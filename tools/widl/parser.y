@@ -72,17 +72,14 @@ static attr_t *make_attrp(enum attr_type type, void *val);
 static expr_t *make_expr(enum expr_type type);
 static expr_t *make_exprl(enum expr_type type, long val);
 static expr_t *make_exprs(enum expr_type type, char *val);
-static expr_t *make_exprt(enum expr_type type, typeref_t *tref, expr_t *expr);
+static expr_t *make_exprt(enum expr_type type, type_t *tref, expr_t *expr);
 static expr_t *make_expr1(enum expr_type type, expr_t *expr);
 static expr_t *make_expr2(enum expr_type type, expr_t *exp1, expr_t *exp2);
 static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, expr_t *expr3);
 static type_t *make_type(unsigned char type, type_t *ref);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static array_dims_t *append_array(array_dims_t *list, expr_t *expr);
-static typeref_t *make_tref(char *name, type_t *ref);
-static typeref_t *uniq_tref(typeref_t *ref);
-static type_t *type_ref(typeref_t *ref);
-static void set_type(var_t *v, typeref_t *ref, array_dims_t *arr);
+static void set_type(var_t *v, type_t *type, array_dims_t *arr);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
 static var_list_t *append_var(var_list_t *list, var_t *var);
@@ -90,7 +87,7 @@ static var_t *make_var(char *name);
 static func_list_t *append_func(func_list_t *list, func_t *func);
 static func_t *make_func(var_t *def, var_list_t *args);
 static type_t *make_class(char *name);
-static type_t *make_safearray(typeref_t *tref);
+static type_t *make_safearray(type_t *type);
 static type_t *make_builtin(char *name);
 static type_t *make_int(int sign);
 
@@ -128,7 +125,6 @@ static void check_arg(var_t *arg);
 	expr_list_t *expr_list;
 	array_dims_t *array_dims;
 	type_t *type;
-	typeref_t *tref;
 	var_t *var;
 	var_list_t *var_list;
 	func_t *func;
@@ -234,9 +230,9 @@ static void check_arg(var_t *arg);
 %type <type> module modulehdr moduledef
 %type <type> base_type int_std
 %type <type> enumdef structdef uniondef
+%type <type> type
 %type <ifref> coclass_int
 %type <ifref_list> gbl_statements coclass_ints
-%type <tref> type
 %type <var> arg field s_field case enum constdef externdef
 %type <var_list> m_args no_args args fields cases enums enum_list pident_list dispint_props
 %type <var> m_ident t_ident ident p_ident pident
@@ -457,13 +453,13 @@ attribute:					{ $$ = NULL; }
 	| tSOURCE				{ $$ = make_attr(ATTR_SOURCE); }
 	| tSTRING				{ $$ = make_attr(ATTR_STRING); }
 	| tSWITCHIS '(' expr ')'		{ $$ = make_attrp(ATTR_SWITCHIS, $3); }
-	| tSWITCHTYPE '(' type ')'		{ $$ = make_attrp(ATTR_SWITCHTYPE, type_ref($3)); }
-	| tTRANSMITAS '(' type ')'		{ $$ = make_attrp(ATTR_TRANSMITAS, type_ref($3)); }
+	| tSWITCHTYPE '(' type ')'		{ $$ = make_attrp(ATTR_SWITCHTYPE, $3); }
+	| tTRANSMITAS '(' type ')'		{ $$ = make_attrp(ATTR_TRANSMITAS, $3); }
 	| tUUID '(' aUUID ')'			{ $$ = make_attrp(ATTR_UUID, $3); }
 	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
 	| tVARARG				{ $$ = make_attr(ATTR_VARARG); }
 	| tVERSION '(' version ')'		{ $$ = make_attrv(ATTR_VERSION, $3); }
-	| tWIREMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_WIREMARSHAL, type_ref($3)); }
+	| tWIREMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_WIREMARSHAL, $3); }
 	| pointer_type				{ $$ = make_attrv(ATTR_POINTERTYPE, $1); }
 	;
 
@@ -823,20 +819,20 @@ structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = get_typev(RPC_FC_STRUCT, $2, ts
                                                 }
 	;
 
-type:	  tVOID					{ $$ = make_tref(NULL, duptype(find_type("void", 0), 1)); }
-	| aKNOWNTYPE				{ $$ = make_tref($1, find_type($1, 0)); }
-	| base_type				{ $$ = make_tref(NULL, $1); }
-	| tCONST type				{ $$ = uniq_tref($2); $$->ref->is_const = TRUE; }
-	| enumdef				{ $$ = make_tref(NULL, $1); }
-	| tENUM aIDENTIFIER			{ $$ = make_tref(NULL, find_type2($2, tsENUM)); }
-	| structdef				{ $$ = make_tref(NULL, $1); }
-	| tSTRUCT aIDENTIFIER			{ $$ = make_tref(NULL, get_type(RPC_FC_STRUCT, $2, tsSTRUCT)); }
-	| uniondef				{ $$ = make_tref(NULL, $1); }
-	| tUNION aIDENTIFIER			{ $$ = make_tref(NULL, find_type2($2, tsUNION)); }
-	| tSAFEARRAY '(' type ')'		{ $$ = make_tref(NULL, make_safearray($3)); }
+type:	  tVOID					{ $$ = duptype(find_type("void", 0), 1); }
+	| aKNOWNTYPE				{ $$ = find_type($1, 0); }
+	| base_type				{ $$ = $1; }
+	| tCONST type				{ $$ = duptype($2, 1); $$->is_const = TRUE; }
+	| enumdef				{ $$ = $1; }
+	| tENUM aIDENTIFIER			{ $$ = find_type2($2, tsENUM); }
+	| structdef				{ $$ = $1; }
+	| tSTRUCT aIDENTIFIER			{ $$ = get_type(RPC_FC_STRUCT, $2, tsSTRUCT); }
+	| uniondef				{ $$ = $1; }
+	| tUNION aIDENTIFIER			{ $$ = find_type2($2, tsUNION); }
+	| tSAFEARRAY '(' type ')'		{ $$ = make_safearray($3); }
 	;
 
-typedef: tTYPEDEF m_attributes type pident_list	{ reg_typedefs(type_ref($3), $4, $2);
+typedef: tTYPEDEF m_attributes type pident_list	{ reg_typedefs($3, $4, $2);
 						  process_typedefs($4);
 						}
 	;
@@ -1014,7 +1010,7 @@ static expr_t *make_exprs(enum expr_type type, char *val)
   return e;
 }
 
-static expr_t *make_exprt(enum expr_type type, typeref_t *tref, expr_t *expr)
+static expr_t *make_exprt(enum expr_type type, type_t *tref, expr_t *expr)
 {
   expr_t *e;
   e = xmalloc(sizeof(expr_t));
@@ -1024,7 +1020,7 @@ static expr_t *make_exprt(enum expr_type type, typeref_t *tref, expr_t *expr)
   e->is_const = FALSE;
   /* check for cast of constant expression */
   if (type == EXPR_SIZEOF) {
-    switch (tref->ref->type) {
+    switch (tref->type) {
       case RPC_FC_BYTE:
       case RPC_FC_CHAR:
       case RPC_FC_SMALL:
@@ -1199,49 +1195,9 @@ static type_t *make_type(unsigned char type, type_t *ref)
   return t;
 }
 
-static typeref_t *make_tref(char *name, type_t *ref)
+static void set_type(var_t *v, type_t *type, array_dims_t *arr)
 {
-  typeref_t *t = xmalloc(sizeof(typeref_t));
-  t->name = name;
-  t->ref = ref;
-  t->uniq = ref ? 0 : 1;
-  return t;
-}
-
-static typeref_t *uniq_tref(typeref_t *ref)
-{
-  typeref_t *t = ref;
-  type_t *tp;
-  if (t->uniq) return t;
-
-  if (t->name)
-  {
-    tp = duptype(t->ref, 0);
-    tp->name = t->name;
-  }
-  else
-    tp = duptype(t->ref, 1);
-
-  t->name = NULL;
-  t->ref = tp;
-  t->uniq = 1;
-  return t;
-}
-
-static type_t *type_ref(typeref_t *ref)
-{
-  type_t *t = ref->ref;
-  free(ref->name);
-  free(ref);
-  return t;
-}
-
-static void set_type(var_t *v, typeref_t *ref, array_dims_t *arr)
-{
-  v->type = ref->ref;
-  v->tname = ref->name;
-  ref->name = NULL;
-  free(ref);
+  v->type = type;
   v->array = arr;
 }
 
@@ -1321,17 +1277,14 @@ static type_t *make_class(char *name)
   return c;
 }
 
-static type_t *make_safearray(typeref_t *tref)
+static type_t *make_safearray(type_t *type)
 {
-  const type_t *sa_orig = find_type("SAFEARRAY", 0);
-  type_t *sa = make_type(sa_orig->type, sa_orig->ref);
+  type_t *sa = duptype(find_type("SAFEARRAY", 0), 1);
   type_t *ptr;
 
-  if (sa_orig->name)
-    sa->name = strdup(sa_orig->name);
-  sa->ref = type_ref(tref);
+  sa->ref = type;
   ptr = make_type(RPC_FC_FP, sa);
-  ptr->name = strdup("SAFEARRAY");
+  ptr->name = xstrdup("SAFEARRAY");
 
   return ptr;
 }

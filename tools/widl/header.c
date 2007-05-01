@@ -397,13 +397,13 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
     break;
   case EXPR_CAST:
     fprintf(h, "(");
-    write_type(h, e->u.tref->ref, NULL, e->u.tref->name);
+    write_type(h, e->u.tref, NULL, e->u.tref->name);
     fprintf(h, ")");
     write_expr(h, e->ref, 1);
     break;
   case EXPR_SIZEOF:
     fprintf(h, "sizeof(");
-    write_type(h, e->u.tref->ref, NULL, e->u.tref->name);
+    write_type(h, e->u.tref, NULL, e->u.tref->name);
     fprintf(h, ")");
     break;
   case EXPR_SHL:

@@ -186,7 +186,7 @@ struct _expr_t {
     long lval;
     const char *sval;
     const expr_t *ext;
-    const typeref_t *tref;
+    type_t *tref;
   } u;
   const expr_t *ext2;
   int is_const;
@@ -208,12 +208,6 @@ struct _type_t {
   int ignore, is_const, sign;
   int defined, written, user_types_registered;
   int typelib_idx;
-};
-
-struct _typeref_t {
-  char *name;
-  type_t *ref;
-  int uniq;
 };
 
 struct _var_t {
