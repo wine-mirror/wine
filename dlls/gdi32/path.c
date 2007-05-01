@@ -1767,14 +1767,15 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     return ret;
 }
 
+#define round(x) ((int)((x)>0?(x)+0.5:(x)-0.5))
 
 static BOOL PATH_WidenPath(DC *dc)
 {
-    INT i, j, numStrokes, nLinePts, penWidth, penWidthIn, penWidthOut, size;
+    INT i, j, numStrokes, nLinePts, penWidth, penWidthIn, penWidthOut, size, penStyle;
     BOOL ret = FALSE;
     GdiPath *pPath, *pNewPath, **pStrokes, *pUpPath, *pDownPath;
     EXTLOGPEN *elp;
-    FLOAT fCos, fSin, nPente;
+    DWORD obj_type, joint, endcap, penType;
 
     pPath = &dc->path;
 
@@ -1786,21 +1787,45 @@ static BOOL PATH_WidenPath(DC *dc)
     PATH_FlattenPath(pPath);
 
     size = GetObjectW( dc->hPen, 0, NULL );
-    if (!size) return FALSE;
+    if (!size) {
+        SetLastError(ERROR_CAN_NOT_COMPLETE);
+        return FALSE;
+    }
 
     elp = HeapAlloc( GetProcessHeap(), 0, size );
-
     GetObjectW( dc->hPen, size, elp );
-    /* FIXME: add support for user style pens */
+
+    obj_type = GetObjectType(dc->hPen);
+    if(obj_type == OBJ_PEN) {
+        penStyle = ((LOGPEN*)elp)->lopnStyle;
+    }
+    else if(obj_type == OBJ_EXTPEN) {
+        penStyle = elp->elpPenStyle;
+    }
+    else {
+        SetLastError(ERROR_CAN_NOT_COMPLETE);
+        HeapFree( GetProcessHeap(), 0, elp );
+        return FALSE;
+    }
+
     penWidth = elp->elpWidth;
     HeapFree( GetProcessHeap(), 0, elp );
+
+    endcap = (PS_ENDCAP_MASK & penStyle);
+    joint = (PS_JOIN_MASK & penStyle);
+    penType = (PS_TYPE_MASK & penStyle);
+
+    /* The function cannot apply to cosmetic pens */
+    if(obj_type == OBJ_EXTPEN && penType == PS_COSMETIC) {
+        SetLastError(ERROR_CAN_NOT_COMPLETE);
+        return FALSE;
+    }
 
     /* pen width must be strictly higher than 1 */
     if(penWidth == 1) {
         return TRUE;
     }
 
-    /* FIXME : If extPen, use the shape on corners */
     penWidthIn = penWidth / 2;
     penWidthOut = penWidth / 2;
     if(penWidthIn + penWidthOut < penWidth)
@@ -1817,6 +1842,7 @@ static BOOL PATH_WidenPath(DC *dc)
     pStrokes[0]->numEntriesUsed = 0;
 
     for(i = 0, j = 0; i < pPath->numEntriesUsed; i++, j++) {
+        POINT point;
         if((i == 0 || (pPath->pFlags[i-1] & PT_CLOSEFIGURE)) &&
             (pPath->pFlags[i] != PT_MOVETO)) {
             ERR("Expected PT_MOVETO %s, got path flag %c\n",
@@ -1826,27 +1852,20 @@ static BOOL PATH_WidenPath(DC *dc)
         }
         switch(pPath->pFlags[i]) {
             case PT_MOVETO:
+                if(numStrokes > 0) {
+                    pStrokes[numStrokes - 1]->state = PATH_Closed;
+                }
                 numStrokes++;
                 j = 0;
                 pStrokes = HeapReAlloc(GetProcessHeap(), 0, pStrokes, numStrokes * sizeof(GdiPath*));
                 pStrokes[numStrokes - 1] = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
                 PATH_InitGdiPath(pStrokes[numStrokes - 1]);
-                pStrokes[numStrokes - 1]->pFlags = HeapAlloc(GetProcessHeap(), 0, pPath->numEntriesUsed * sizeof(INT));
-                pStrokes[numStrokes - 1]->pPoints = HeapAlloc(GetProcessHeap(), 0, pPath->numEntriesUsed * sizeof(POINT));
-                pStrokes[numStrokes - 1]->numEntriesUsed = 0;
-
-                pStrokes[numStrokes - 1]->pFlags[j] = pPath->pFlags[i];
-                pStrokes[numStrokes - 1]->pPoints[j].x = pPath->pPoints[i].x;
-                pStrokes[numStrokes - 1]->pPoints[j].y = pPath->pPoints[i].y;
-                pStrokes[numStrokes - 1]->numEntriesUsed++;
-
-                break;
+                pStrokes[numStrokes - 1]->state = PATH_Open;
             case PT_LINETO:
             case (PT_LINETO | PT_CLOSEFIGURE):
-                pStrokes[numStrokes - 1]->pFlags[j] = pPath->pFlags[i];
-                pStrokes[numStrokes - 1]->pPoints[j].x = pPath->pPoints[i].x;
-                pStrokes[numStrokes - 1]->pPoints[j].y = pPath->pPoints[i].y;
-                pStrokes[numStrokes - 1]->numEntriesUsed++;
+                point.x = pPath->pPoints[i].x;
+                point.y = pPath->pPoints[i].y;
+                PATH_AddEntry(pStrokes[numStrokes - 1], &point, pPath->pFlags[i]);
                 break;
             case PT_BEZIERTO:
                 /* should never happen because of the FlattenPath call */
@@ -1860,65 +1879,211 @@ static BOOL PATH_WidenPath(DC *dc)
 
     pNewPath = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
     PATH_InitGdiPath(pNewPath);
-    pNewPath->pFlags = HeapAlloc(GetProcessHeap(), 0, 4 * pPath->numEntriesUsed * sizeof(INT));
-    pNewPath->pPoints = HeapAlloc(GetProcessHeap(), 0, 4 * pPath->numEntriesUsed * sizeof(POINT));
-    pNewPath->numEntriesUsed = 0;
-    pNewPath->numEntriesAllocated = 4 * pPath->numEntriesUsed;
+    pNewPath->state = PATH_Open;
 
     for(i = 0; i < numStrokes; i++) {
         pUpPath = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
         PATH_InitGdiPath(pUpPath);
-        pUpPath->pFlags = HeapAlloc(GetProcessHeap(), 0, 2 * pStrokes[i]->numEntriesUsed * sizeof(INT));
-        pUpPath->pPoints = HeapAlloc(GetProcessHeap(), 0, 2 * pStrokes[i]->numEntriesUsed * sizeof(POINT));
-        pUpPath->numEntriesUsed = 0;
+        pUpPath->state = PATH_Open;
         pDownPath = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
         PATH_InitGdiPath(pDownPath);
-        pDownPath->pFlags = HeapAlloc(GetProcessHeap(), 0, 2 * pStrokes[i]->numEntriesUsed * sizeof(INT));
-        pDownPath->pPoints = HeapAlloc(GetProcessHeap(), 0, 2 * pStrokes[i]->numEntriesUsed * sizeof(POINT));
-        pDownPath->numEntriesUsed = 0;
-        for(j = 0; j < pStrokes[i]->numEntriesUsed - 1; j++) {
-            if(pStrokes[i]->pPoints[j+1].x != pStrokes[i]->pPoints[j].x) {
-                nPente = (pStrokes[i]->pPoints[j+1].y - pStrokes[i]->pPoints[j].y) / (pStrokes[i]->pPoints[j+1].x - pStrokes[i]->pPoints[j].x);
-                fCos = cos(atan(nPente));
-                fSin = sin(atan(nPente));
+        pDownPath->state = PATH_Open;
+
+        for(j = 0; j < pStrokes[i]->numEntriesUsed; j++) {
+            /* Beginning or end of the path if not closed */
+            if((!(pStrokes[i]->pFlags[pStrokes[i]->numEntriesUsed - 1] & PT_CLOSEFIGURE)) && (j == 0 || j == pStrokes[i]->numEntriesUsed - 1) ) {
+                /* Compute segment angle */
+                FLOAT xo, yo, xa, ya;
+                POINT pt;
+                FLOAT theta, scalarProduct;
+                FLOAT_POINT corners[2];
+                if(j == 0) {
+                    xo = pStrokes[i]->pPoints[j].x;
+                    yo = pStrokes[i]->pPoints[j].y;
+                    xa = pStrokes[i]->pPoints[1].x;
+                    ya = pStrokes[i]->pPoints[1].y;
+                }
+                else {
+                    xa = pStrokes[i]->pPoints[j - 1].x;
+                    ya = pStrokes[i]->pPoints[j - 1].y;
+                    xo = pStrokes[i]->pPoints[j].x;
+                    yo = pStrokes[i]->pPoints[j].y;
+                }
+                scalarProduct = (xa - xo) /sqrt(pow((xa - xo), 2) + pow((ya - yo), 2));
+                theta = acos(scalarProduct);
+                if( (ya - yo) < 0) {
+                    theta = -theta;
+                }
+                switch(endcap) {
+                    case PS_ENDCAP_SQUARE :
+                        pt.x = xo + round(sqrt(2) * penWidthOut * cos(M_PI_4 + theta));
+                        pt.y = yo + round(sqrt(2) * penWidthOut * sin(M_PI_4 + theta));
+                        PATH_AddEntry(pUpPath, &pt, (j == 0 ? PT_MOVETO : PT_LINETO) );
+                        pt.x = xo + round(sqrt(2) * penWidthIn * cos(- M_PI_4 + theta));
+                        pt.y = yo + round(sqrt(2) * penWidthIn * sin(- M_PI_4 + theta));
+                        PATH_AddEntry(pUpPath, &pt, PT_LINETO);
+                        break;
+                    case PS_ENDCAP_FLAT :
+                        pt.x = xo + round( penWidthOut * cos(theta + M_PI_2) );
+                        pt.y = yo + round( penWidthOut * sin(theta + M_PI_2) );
+                        PATH_AddEntry(pUpPath, &pt, (j == 0 ? PT_MOVETO : PT_LINETO));
+                        pt.x = xo - round( penWidthIn * cos(theta + M_PI_2) );
+                        pt.y = yo - round( penWidthIn * sin(theta + M_PI_2) );
+                        PATH_AddEntry(pUpPath, &pt, PT_LINETO);
+                        break;
+                    case PS_ENDCAP_ROUND :
+                    default :
+                        corners[0].x = xo - penWidthIn;
+                        corners[0].y = yo - penWidthIn;
+                        corners[1].x = xo + penWidthOut;
+                        corners[1].y = yo + penWidthOut;
+                        PATH_DoArcPart(pUpPath ,corners, theta + M_PI_2 , theta + 3 * M_PI_4, (j == 0 ? TRUE : FALSE));
+                        PATH_DoArcPart(pUpPath ,corners, theta + 3 * M_PI_4 , theta + M_PI, FALSE);
+                        PATH_DoArcPart(pUpPath ,corners, theta + M_PI, theta +  5 * M_PI_4, FALSE);
+                        PATH_DoArcPart(pUpPath ,corners, theta + 5 * M_PI_4 , theta + 3 * M_PI_2, FALSE);
+                        break;
+                }
             }
-            else if(pStrokes[i]->pPoints[j+1].y > pStrokes[i]->pPoints[j].y) {
-                fCos = 0;
-                fSin = -1;
-            }
+            /* Corpse of the path */
             else {
-                fCos = 0;
-                fSin = 1;
+                /* Compute angle */
+                INT previous, next;
+                FLOAT xa, ya, xb, yb, xo, yo;
+                FLOAT alpha, theta;
+                FLOAT scalarProduct, oa, ob, miterWidth;
+                DWORD _joint = joint;
+                POINT pt;
+		GdiPath *pInsidePath, *pOutsidePath;
+                if(j > 0 && j < pStrokes[i]->numEntriesUsed - 1) {
+                    previous = j - 1;
+                    next = j + 1;
+                }
+                else if (j == 0) {
+                    previous = pStrokes[i]->numEntriesUsed - 1;
+                    next = j + 1;
+                }
+                else {
+                    previous = j - 1;
+                    next = 0;
+                }
+                xo = pStrokes[i]->pPoints[j].x;
+                yo = pStrokes[i]->pPoints[j].y;
+                xa = pStrokes[i]->pPoints[previous].x;
+                ya = pStrokes[i]->pPoints[previous].y;
+                xb = pStrokes[i]->pPoints[next].x;
+                yb = pStrokes[i]->pPoints[next].y;
+                oa = sqrt(pow((xa - xo), 2) + pow((ya - yo), 2));
+                ob = sqrt(pow((xb - xo), 2) + pow((yb - yo), 2));
+                scalarProduct = ((xa - xo) * (xb - xo) + (ya - yo) * (yb - yo))/ (oa * ob);
+                alpha = acos(scalarProduct);
+                if(( (xa - xo) * (yb - yo) - (ya - yo) * (xb - xo) ) < 0) {
+                    alpha = -alpha;
+                }
+                scalarProduct = (xo - xa) / oa;
+                theta = acos(scalarProduct);
+                if( (yo - ya) < 0) {
+                    theta = -theta;
+                }
+                if(_joint == PS_JOIN_MITER && dc->miterLimit < fabs(1 / sin(alpha/2))) {
+                    _joint = PS_JOIN_BEVEL;
+                }
+                if(alpha > 0) {
+                    pInsidePath = pUpPath;
+                    pOutsidePath = pDownPath;
+                }
+                else if(alpha < 0) {
+                    pInsidePath = pDownPath;
+                    pOutsidePath = pUpPath;
+                }
+                else {
+                    continue;
+                }
+                /* Inside angle points */
+                if(alpha > 0) {
+                    pt.x = xo - round( penWidthIn * cos(theta + M_PI_2) );
+                    pt.y = yo - round( penWidthIn * sin(theta + M_PI_2) );
+                }
+                else {
+                    pt.x = xo + round( penWidthIn * cos(theta + M_PI_2) );
+                    pt.y = yo + round( penWidthIn * sin(theta + M_PI_2) );
+                }
+                PATH_AddEntry(pInsidePath, &pt, PT_LINETO);
+                if(alpha > 0) {
+                    pt.x = xo + round( penWidthIn * cos(M_PI_2 + alpha + theta) );
+                    pt.y = yo + round( penWidthIn * sin(M_PI_2 + alpha + theta) );
+                }
+                else {
+                    pt.x = xo - round( penWidthIn * cos(M_PI_2 + alpha + theta) );
+                    pt.y = yo - round( penWidthIn * sin(M_PI_2 + alpha + theta) );
+                }
+                PATH_AddEntry(pInsidePath, &pt, PT_LINETO);
+                /* Outside angle point */
+                switch(_joint) {
+                     case PS_JOIN_MITER :
+                        miterWidth = fabs(penWidthOut / cos(M_PI_2 - fabs(alpha) / 2));
+                        pt.x = xo + round( miterWidth * cos(theta + alpha / 2) );
+                        pt.y = yo + round( miterWidth * sin(theta + alpha / 2) );
+                        PATH_AddEntry(pOutsidePath, &pt, PT_LINETO);
+                        break;
+                    case PS_JOIN_BEVEL :
+                        if(alpha > 0) {
+                            pt.x = xo + round( penWidthOut * cos(theta + M_PI_2) );
+                            pt.y = yo + round( penWidthOut * sin(theta + M_PI_2) );
+                        }
+                        else {
+                            pt.x = xo - round( penWidthOut * cos(theta + M_PI_2) );
+                            pt.y = yo - round( penWidthOut * sin(theta + M_PI_2) );
+                        }
+                        PATH_AddEntry(pOutsidePath, &pt, PT_LINETO);
+                        if(alpha > 0) {
+                            pt.x = xo - round( penWidthOut * cos(M_PI_2 + alpha + theta) );
+                            pt.y = yo - round( penWidthOut * sin(M_PI_2 + alpha + theta) );
+                        }
+                        else {
+                            pt.x = xo + round( penWidthOut * cos(M_PI_2 + alpha + theta) );
+                            pt.y = yo + round( penWidthOut * sin(M_PI_2 + alpha + theta) );
+                        }
+                        PATH_AddEntry(pOutsidePath, &pt, PT_LINETO);
+                        break;
+                    case PS_JOIN_ROUND :
+                    default :
+                        if(alpha > 0) {
+                            pt.x = xo + round( penWidthOut * cos(theta + M_PI_2) );
+                            pt.y = yo + round( penWidthOut * sin(theta + M_PI_2) );
+                        }
+                        else {
+                            pt.x = xo - round( penWidthOut * cos(theta + M_PI_2) );
+                            pt.y = yo - round( penWidthOut * sin(theta + M_PI_2) );
+                        }
+                        PATH_AddEntry(pOutsidePath, &pt, PT_BEZIERTO);
+                        pt.x = xo + round( penWidthOut * cos(theta + alpha / 2) );
+                        pt.y = yo + round( penWidthOut * sin(theta + alpha / 2) );
+                        PATH_AddEntry(pOutsidePath, &pt, PT_BEZIERTO);
+                        if(alpha > 0) {
+                            pt.x = xo - round( penWidthOut * cos(M_PI_2 + alpha + theta) );
+                            pt.y = yo - round( penWidthOut * sin(M_PI_2 + alpha + theta) );
+                        }
+                        else {
+                            pt.x = xo + round( penWidthOut * cos(M_PI_2 + alpha + theta) );
+                            pt.y = yo + round( penWidthOut * sin(M_PI_2 + alpha + theta) );
+                        }
+                        PATH_AddEntry(pOutsidePath, &pt, PT_BEZIERTO);
+                        break;
+                }
             }
-
-            /* FIXME : Improve corners */
-            pUpPath->pPoints[2 * j].x = pStrokes[i]->pPoints[j].x + penWidthOut * fSin;
-            pUpPath->pPoints[2 * j].y = pStrokes[i]->pPoints[j].y + penWidthOut * fCos;
-            pUpPath->pFlags[2 * j] = pStrokes[i]->pFlags[j];
-            pUpPath->pPoints[2 * j + 1] .x = pStrokes[i]->pPoints[j+1].x + penWidthOut * fSin;
-            pUpPath->pPoints[2 * j + 1] .y = pStrokes[i]->pPoints[j+1].y + penWidthOut * fCos;
-            pUpPath->pFlags[2 * j + 1] = PT_LINETO;
-            pUpPath->numEntriesUsed = pUpPath->numEntriesUsed + 2;
-
-            pDownPath->pPoints[2 * j].x = pStrokes[i]->pPoints[j].x - penWidthIn * fSin;
-            pDownPath->pPoints[2 * j].y = pStrokes[i]->pPoints[j].y - penWidthIn * fCos;
-            pDownPath->pFlags[2 * j] = PT_LINETO;
-            pDownPath->pPoints[2 * j + 1] .x = pStrokes[i]->pPoints[j+1].x - penWidthIn * fSin;
-            pDownPath->pPoints[2 * j + 1] .y = pStrokes[i]->pPoints[j+1].y - penWidthIn * fCos;
-            pDownPath->pFlags[2 * j + 1] = PT_LINETO;
-            pDownPath->numEntriesUsed = pUpPath->numEntriesUsed;
         }
-
         for(j = 0; j < pUpPath->numEntriesUsed; j++) {
-            pNewPath->pPoints[pNewPath->numEntriesUsed + j].x = pUpPath->pPoints[j].x;
-            pNewPath->pPoints[pNewPath->numEntriesUsed + j].y = pUpPath->pPoints[j].y;
-            pNewPath->pFlags[pNewPath->numEntriesUsed + j] = pUpPath->pFlags[j];
-            pNewPath->pPoints[pNewPath->numEntriesUsed + pUpPath->numEntriesUsed + j].x = pDownPath->pPoints[pUpPath->numEntriesUsed - j - 1].x;
-            pNewPath->pPoints[pNewPath->numEntriesUsed + pUpPath->numEntriesUsed + j].y = pDownPath->pPoints[pUpPath->numEntriesUsed - j - 1].y;
-            pNewPath->pFlags[pNewPath->numEntriesUsed + pUpPath->numEntriesUsed + j] = pDownPath->pFlags[pUpPath->numEntriesUsed - j - 1];
+            POINT pt;
+            pt.x = pUpPath->pPoints[j].x;
+            pt.y = pUpPath->pPoints[j].y;
+            PATH_AddEntry(pNewPath, &pt, (j == 0 ? PT_MOVETO : PT_LINETO));
         }
-        pNewPath->numEntriesUsed += 2 * pUpPath->numEntriesUsed;
-        pNewPath->pFlags[pNewPath->numEntriesUsed - 1] = PT_CLOSEFIGURE | PT_LINETO;
+        for(j = 0; j < pDownPath->numEntriesUsed; j++) {
+            POINT pt;
+            pt.x = pDownPath->pPoints[pDownPath->numEntriesUsed - j - 1].x;
+            pt.y = pDownPath->pPoints[pDownPath->numEntriesUsed - j - 1].y;
+            PATH_AddEntry(pNewPath, &pt, ( (j == 0 && (pStrokes[i]->pFlags[pStrokes[i]->numEntriesUsed - 1] & PT_CLOSEFIGURE)) ? PT_MOVETO : PT_LINETO));
+        }
 
         PATH_DestroyGdiPath(pStrokes[i]);
         HeapFree(GetProcessHeap(), 0, pStrokes[i]);
@@ -2007,6 +2172,5 @@ BOOL WINAPI WidenPath(HDC hdc)
    else
       ret = PATH_WidenPath(dc);
    GDI_ReleaseObj( hdc );
-   FIXME("partially implemented\n");
    return ret;
 }
