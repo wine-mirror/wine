@@ -1918,8 +1918,16 @@ static UINT ITERATE_CostFinalizeDirectories(MSIRECORD *row, LPVOID param)
     MSIPACKAGE *package = (MSIPACKAGE*)param;
     LPCWSTR name;
     LPWSTR path;
+    MSIFOLDER *f;
 
     name = MSI_RecordGetString(row,1);
+
+    f = get_loaded_folder(package, name);
+    if (!f) return ERROR_SUCCESS;
+
+    /* reset the ResolvedTarget */
+    msi_free(f->ResolvedTarget);
+    f->ResolvedTarget = NULL;
 
     /* This helper function now does ALL the work */
     TRACE("Dir %s ...\n",debugstr_w(name));
