@@ -535,3 +535,72 @@ static HRESULT WINAPI RecordImpl_Invoke(
 
     return S_OK;
 }
+
+static HRESULT WINAPI ViewImpl_Invoke(
+        AutomationObject* This,
+        DISPID dispIdMember,
+        REFIID riid,
+        LCID lcid,
+        WORD wFlags,
+        DISPPARAMS* pDispParams,
+        VARIANT* pVarResult,
+        EXCEPINFO* pExcepInfo,
+        UINT* puArgErr)
+{
+    MSIHANDLE msiHandle;
+    IDispatch *pDispatch = NULL;
+    UINT ret;
+    VARIANTARG varg0, varg1;
+    HRESULT hr;
+
+    VariantInit(&varg0);
+    VariantInit(&varg1);
+
+    switch (dispIdMember)
+    {
+	case DISPID_VIEW_EXECUTE:
+	    if (wFlags & DISPATCH_METHOD)
+	    {
+                hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &varg0, puArgErr);
+                if (SUCCEEDED(hr) && V_DISPATCH(&varg0) != NULL)
+                    MsiViewExecute(This->msiHandle, ((AutomationObject *)V_DISPATCH(&varg0))->msiHandle);
+                else
+                    MsiViewExecute(This->msiHandle, 0);
+	    }
+	    break;
+
+	case DISPID_VIEW_FETCH:
+	    if (wFlags & DISPATCH_METHOD)
+	    {
+                V_VT(pVarResult) = VT_DISPATCH;
+                if ((ret = MsiViewFetch(This->msiHandle, &msiHandle)) == ERROR_SUCCESS)
+                {
+                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Record, RecordImpl_Invoke)))
+                    {
+                        IDispatch_AddRef(pDispatch);
+                        V_DISPATCH(pVarResult) = pDispatch;
+                    }
+                }
+		else if (ret == ERROR_NO_MORE_ITEMS)
+                    V_DISPATCH(pVarResult) = NULL;
+                else
+                {
+                    ERR("MsiViewFetch returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+	    }
+	    break;
+
+	case DISPID_VIEW_CLOSE:
+	    if (wFlags & DISPATCH_METHOD)
+	    {
+		MsiViewClose(This->msiHandle);
+	    }
+	    break;
+
+         default:
+            return DISP_E_MEMBERNOTFOUND;
+    }
+
+    return S_OK;
+}
