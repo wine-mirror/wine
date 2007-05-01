@@ -1,7 +1,8 @@
 /*
+ * Copyright (C) 2007 Mike McCormack for CodeWeavers
  * Copyright (C) 2007 Misha Koshelev
  *
- * A test program for MSI OLE automation.
+ * A test program for Microsoft Installer OLE automation functionality.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -317,6 +318,165 @@ static WCHAR szSource[] = {'M','s','i',' ','A','P','I',' ','E','r','r','o','r',0
         if (excepinfo.bstrDescription)                                  \
             ok_w2("Exception description was \"%s\" but expected to be \"%s\"\n", excepinfo.bstrDescription, szDescription); \
     }
+
+static DISPID get_dispid( IDispatch *disp, const char *name )
+{
+    LPOLESTR str;
+    UINT len;
+    DISPID id;
+    HRESULT r;
+
+    len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0 );
+    str = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR) );
+    len = MultiByteToWideChar(CP_ACP, 0, name, -1, str, len );
+
+    r = IDispatch_GetIDsOfNames( disp, &IID_NULL, &str, 1, 0, &id );
+    if (r != S_OK)
+        return -1;
+
+    return id;
+}
+
+static void test_dispid(void)
+{
+    todo_wine {
+    ok( get_dispid( pInstaller, "CreateRecord" ) == 1, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "OpenPackage" ) == 2, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "OpenProduct" ) == 3, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "OpenDatabase" ) == 4, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "SummaryInformation" ) == 5, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "UILevel" ) == 6, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "EnableLog" ) == 7, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "InstallProduct" ) == 8, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "Version" ) == 9, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "LastErrorRecord" ) == 10, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "RegistryValue" ) == 11, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "Environment" ) == 12, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "FileAttributes" ) == 13, "dispid wrong\n");
+
+    ok( get_dispid( pInstaller, "FileSize" ) == 15, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "FileVersion" ) == 16, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ProductState" ) == 17, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ProductInfo" ) == 18, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ConfigureProduct" ) == 19, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ReinstallProduct" ) == 20 , "dispid wrong\n");
+    ok( get_dispid( pInstaller, "CollectUserInfo" ) == 21, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ApplyPatch" ) == 22, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "FeatureParent" ) == 23, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "FeatureState" ) == 24, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "UseFeature" ) == 25, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "FeatureUsageCount" ) == 26, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "FeatureUsageDate" ) == 27, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ConfigureFeature" ) == 28, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ReinstallFeature" ) == 29, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ProvideComponent" ) == 30, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ComponentPath" ) == 31, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ProvideQualifiedComponent" ) == 32, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "QualifierDescription" ) == 33, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ComponentQualifiers" ) == 34, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "Products" ) == 35, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "Features" ) == 36, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "Components" ) == 37, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ComponentClients" ) == 38, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "Patches" ) == 39, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "RelatedProducts" ) == 40, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "PatchInfo" ) == 41, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "PatchTransforms" ) == 42, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "AddSource" ) == 43, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ClearSourceList" ) == 44, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ForceSourceListResolution" ) == 45, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ShortcutTarget" ) == 46, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "FileHash" ) == 47, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "FileSignatureInfo" ) == 48, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "RemovePatches" ) == 49, "dispid wrong\n");
+
+    ok( get_dispid( pInstaller, "ApplyMultiplePatches" ) == 51, "dispid wrong\n");
+    ok( get_dispid( pInstaller, "ProductsEx" ) ==  52, "dispid wrong\n");
+
+    ok( get_dispid( pInstaller, "PatchesEx" ) == 55, "dispid wrong\n");
+
+    ok( get_dispid( pInstaller, "ExtractPatchXMLData" ) == 57, "dispid wrong\n");
+    }
+
+    /* MSDN claims the following functions exist but IDispatch->GetIDsOfNames disagrees */
+    if (0)
+    {
+        get_dispid( pInstaller, "ProductElevated" );
+        get_dispid( pInstaller, "ProductInfoFromScript" );
+        get_dispid( pInstaller, "ProvideAssembly" );
+        get_dispid( pInstaller, "CreateAdvertiseScript" );
+        get_dispid( pInstaller, "AdvertiseProduct" );
+        get_dispid( pInstaller, "PatchFiles" );
+    }
+}
+
+/* FIXME: This should be integrated better into the rest of the tests */
+static void test_createrecord_and_version(void)
+{
+    IDispatch *record = NULL;
+    DISPPARAMS param;
+    VARIANTARG varg;
+    VARIANT result;
+    DISPID dispid;
+    DISPID arg;
+    HRESULT r;
+
+    arg = 0;
+
+    V_UINT(&varg) = 1;
+    V_VT(&varg) = VT_I4;
+
+    param.cArgs = 1;
+    param.cNamedArgs = 0;
+    param.rgvarg = &varg;
+    param.rgdispidNamedArgs = &arg;
+
+    dispid = get_dispid( pInstaller, "CreateRecord" );
+
+    r = IDispatch_Invoke( pInstaller, dispid, &IID_NULL, 0,
+                          DISPATCH_METHOD, &param, &result, NULL, NULL);
+    todo_wine ok( r == S_OK, "dispatch failed %08x\n", r);
+    if (SUCCEEDED(r))
+    {
+        ok( V_VT(&result) == VT_DISPATCH, "type wrong\n");
+
+        record = V_DISPATCH(&result);
+
+        memset( &result, 0, sizeof result );
+        dispid = get_dispid( record, "FieldCount" );
+
+        param.cArgs = 0;
+        param.cNamedArgs = 0;
+        param.rgvarg = &varg;
+        param.rgdispidNamedArgs = &arg;
+
+        r = IDispatch_Invoke( record, dispid, &IID_NULL, 0,
+                              DISPATCH_PROPERTYGET, &param, &result, NULL, NULL );
+        ok( r == S_OK, "dispatch failed %08x\n", r);
+
+        ok( V_VT(&result) == VT_I4, "type wrong\n");
+        ok( V_I4(&result) == 1, "field count wrong\n");
+
+        IDispatch_Release( record );
+    }
+    else
+        skip( "failed to create record\n");
+
+    memset( &result, 0, sizeof result );
+    dispid = get_dispid( pInstaller, "Version" );
+
+    param.cArgs = 0;
+    param.cNamedArgs = 0;
+    param.rgvarg = &varg;
+    param.rgdispidNamedArgs = &arg;
+
+    r = IDispatch_Invoke( pInstaller, dispid, &IID_NULL, 0,
+                          DISPATCH_PROPERTYGET, &param, &result, NULL, NULL );
+    todo_wine {
+    ok( r == S_OK, "dispatch failed %08x\n", r);
+    ok( V_VT(&result) == VT_BSTR, "type wrong %d\n", V_VT(&result));
+    }
+}
 
 /* Test basic IDispatch functions */
 static void test_dispatch(void)
@@ -911,6 +1071,8 @@ START_TEST(automation)
         hr = IUnknown_QueryInterface(pUnk, &IID_IDispatch, (void **)&pInstaller);
         ok (SUCCEEDED(hr), "IUnknown::QueryInterface returned 0x%08x\n", hr);
 
+        test_dispid();
+        test_createrecord_and_version();
         todo_wine test_dispatch();
         todo_wine test_Installer();
 

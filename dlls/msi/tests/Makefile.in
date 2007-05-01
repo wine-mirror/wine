@@ -10,7 +10,6 @@ CTESTS = \
 	automation.c \
 	db.c \
 	format.c \
-	iface.c \
 	install.c \
 	msi.c \
 	package.c \
