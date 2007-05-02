@@ -1724,28 +1724,18 @@ HRESULT WINAPI CoRegisterClassObject(
   *lpdwRegister = newClass->dwCookie;
 
   if (dwClsContext & CLSCTX_LOCAL_SERVER) {
-      IClassFactory *classfac;
-
-      hr = IUnknown_QueryInterface(newClass->classObject, &IID_IClassFactory,
-                                   (LPVOID*)&classfac);
-      if (hr) return hr;
-
       hr = CreateStreamOnHGlobal(0, TRUE, &newClass->pMarshaledData);
       if (hr) {
           FIXME("Failed to create stream on hglobal, %x\n", hr);
-          IUnknown_Release(classfac);
           return hr;
       }
       hr = CoMarshalInterface(newClass->pMarshaledData, &IID_IClassFactory,
-                              (LPVOID)classfac, MSHCTX_LOCAL, NULL,
+                              newClass->classObject, MSHCTX_LOCAL, NULL,
                               MSHLFLAGS_TABLESTRONG);
       if (hr) {
           FIXME("CoMarshalInterface failed, %x!\n",hr);
-          IUnknown_Release(classfac);
           return hr;
       }
-
-      IUnknown_Release(classfac);
 
       hr = RPC_StartLocalServer(&newClass->classIdentifier,
                                 newClass->pMarshaledData,
