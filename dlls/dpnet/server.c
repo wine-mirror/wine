@@ -27,7 +27,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winreg.h"
 #include "objbase.h"
 #include "wine/debug.h"
 
