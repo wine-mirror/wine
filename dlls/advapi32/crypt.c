@@ -1139,7 +1139,8 @@ BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
 	TRACE("(%d, %p, %08x, %p, %p, %p)\n", dwIndex, pdwReserved, dwFlags,
 			pdwProvType, pszProvName, pcbProvName);
 
-	CryptEnumProvidersW(dwIndex, pdwReserved, dwFlags, pdwProvType, NULL, &strlen);
+	if(!CryptEnumProvidersW(dwIndex, pdwReserved, dwFlags, pdwProvType, NULL, &strlen))
+		return FALSE;
 	if ( pszProvName && !(str = CRYPT_Alloc(strlen)) )
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -1267,7 +1268,8 @@ BOOL WINAPI CryptEnumProviderTypesA (DWORD dwIndex, DWORD *pdwReserved,
 	TRACE("(%d, %p, %08x, %p, %p, %p)\n", dwIndex, pdwReserved, dwFlags,
 			pdwProvType, pszTypeName, pcbTypeName);
 
-	CryptEnumProviderTypesW(dwIndex, pdwReserved, dwFlags, pdwProvType, NULL, &strlen);
+	if(!CryptEnumProviderTypesW(dwIndex, pdwReserved, dwFlags, pdwProvType, NULL, &strlen))
+		return FALSE;
 	if ( pszTypeName && !(str = CRYPT_Alloc(strlen)) )
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
