@@ -251,6 +251,10 @@ static void fillcontrols(mixer *mmixer)
         int x;
         long min, max;
 
+        TRACE("Filling control %d\n", id);
+        if (id == 1 && !mline->elem)
+            continue;
+
         if (mline->capt && snd_mixer_selem_has_capture_volume(mline->elem))
             snd_mixer_selem_get_capture_volume_range(mline->elem, &min, &max);
         else
@@ -325,29 +329,100 @@ static int chans(mixer *mmixer, snd_mixer_elem_t * elem, DWORD capt)
     return ret;
 }
 
+static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_t *captelem, int capt)
+{
+    snd_mixer_elem_t *elem;
+    line *mline = mmixer->lines;
+
+    /* Master control */
+    MultiByteToWideChar(CP_UNIXCP, 0, snd_mixer_selem_get_name(mastelem), -1, mline->name, sizeof(mline->name)/sizeof(WCHAR));
+    mline->component = getcomponenttype(snd_mixer_selem_get_name(mastelem));
+    mline->dst = 0;
+    mline->capt = 0;
+    mline->elem = mastelem;
+    mline->chans = chans(mmixer, mastelem, 0);
+
+    snd_mixer_elem_set_callback(mastelem, &elem_callback);
+    snd_mixer_elem_set_callback_private(mastelem, &mmixer);
+
+    /* Capture control
+     * Note: since mmixer->dests = 1, it means only playback control is visible
+     * This makes sense, because if there are no capture sources capture control
+     * can't do anything and should be invisible */
+
+    /* Control 1 is reserved for capture even when not enabled */
+    ++mline;
+    if (capt)
+    {
+        MultiByteToWideChar(CP_UNIXCP, 0, snd_mixer_selem_get_name(captelem), -1, mline->name, sizeof(mline->name)/sizeof(WCHAR));
+        mline->component = getcomponenttype(snd_mixer_selem_get_name(captelem));
+        mline->dst = 1;
+        mline->capt = 1;
+        mline->elem = captelem;
+        mline->chans = chans(mmixer, captelem, 1);
+
+        snd_mixer_elem_set_callback(captelem, &elem_callback);
+        snd_mixer_elem_set_callback_private(captelem, &mmixer);
+    }
+
+    for (elem = snd_mixer_first_elem(mmixer->mix); elem; elem = snd_mixer_elem_next(elem))
+        if (elem != mastelem && elem != captelem && !blacklisted(elem))
+        {
+            const char * name = snd_mixer_selem_get_name(elem);
+            DWORD comp = getcomponenttype(name);
+
+            if (snd_mixer_selem_has_playback_volume(elem))
+            {
+                (++mline)->component = comp;
+                MultiByteToWideChar(CP_UNIXCP, 0, name, -1, mline->name, MAXPNAMELEN);
+                mline->capt = mline->dst = 0;
+                mline->elem = elem;
+                mline->chans = chans(mmixer, elem, 0);
+            }
+            else if (!capt)
+                continue;
+
+            if (capt && snd_mixer_selem_has_capture_switch(elem))
+            {
+                (++mline)->component = comp;
+                MultiByteToWideChar(CP_UNIXCP, 0, name, -1, mline->name, MAXPNAMELEN);
+                mline->capt = mline->dst = 1;
+                mline->elem = elem;
+                mline->chans = chans(mmixer, elem, 1);
+            }
+
+            snd_mixer_elem_set_callback(elem, &elem_callback);
+            snd_mixer_elem_set_callback_private(elem, &mmixer);
+        }
+}
+
+/* Windows api wants to have a 'master' device to which all slaves are attached
+ * There are 2 ones in this code:
+ * - 'Master', fall back to 'Headphone' if unavailable, and if that's not available 'PCM'
+ * - 'Capture'
+ * Capture might not always be available, so should be prepared to be without if needed
+ */
+
 static void ALSA_MixerInit(void)
 {
     int x, mixnum = 0;
 
     for (x = 0; x < MAX_MIXERS; ++x)
     {
-        int card, err, y;
+        int card, err, capcontrols = 0;
         char cardind[6], cardname[10];
-        BOOL hascapt=0, hasmast=0;
-        line *mline;
 
         snd_ctl_t *ctl;
-        snd_mixer_elem_t *elem, *mastelem = NULL, *captelem = NULL;
+        snd_mixer_elem_t *elem, *mastelem = NULL, *headelem = NULL, *captelem = NULL, *pcmelem = NULL;
         snd_ctl_card_info_t *info = NULL;
         snd_ctl_card_info_alloca(&info);
-        mixdev[mixnum].lines = NULL;
-        mixdev[mixnum].callback = 0;
-        mixdev[mixnum].controls = NULL;
 
+        memset(&mixdev[mixnum], 0, sizeof(*mixdev));
         snprintf(cardind, sizeof(cardind), "%d", x);
         card = snd_card_get_index(cardind);
         if (card < 0)
             continue;
+
         snprintf(cardname, sizeof(cardname), "hw:%d", card);
 
         err = snd_ctl_open(&ctl, cardname, 0);
@@ -368,7 +443,7 @@ static void ALSA_MixerInit(void)
         MultiByteToWideChar(CP_UNIXCP, 0, snd_ctl_card_info_get_name(info), -1, mixdev[mixnum].mixername, sizeof(mixdev[mixnum].mixername)/sizeof(WCHAR));
         snd_ctl_close(ctl);
 
-        err = snd_mixer_open(&mixdev[mixnum].mix,0);
+        err = snd_mixer_open(&mixdev[mixnum].mix, 0);
         if (err < 0)
         {
             WARN("Error occurred opening mixer: %s\n", snd_strerror(err));
@@ -387,116 +462,84 @@ static void ALSA_MixerInit(void)
         if (err < 0)
             goto eclose;
 
-        mixdev[mixnum].chans = 0;
-        mixdev[mixnum].dests = 1; /* Master, Capture will be enabled if needed */
-
+        /* First, lets see what's available..
+         * If there are multiple Master or Captures, all except 1 will be added as slaves
+         */
         for (elem = snd_mixer_first_elem(mixdev[mixnum].mix); elem; elem = snd_mixer_elem_next(elem))
-            if (!strcasecmp(snd_mixer_selem_get_name(elem), "Master"))
-            {
+            if (!strcasecmp(snd_mixer_selem_get_name(elem), "Master") && !mastelem)
                 mastelem = elem;
-                ++hasmast;
-            }
-            else if (!strcasecmp(snd_mixer_selem_get_name(elem), "Capture"))
-            {
+            else if (!strcasecmp(snd_mixer_selem_get_name(elem), "Capture") && !captelem)
                 captelem = elem;
-                ++hascapt;
-            }
             else if (!blacklisted(elem))
             {
                 if (snd_mixer_selem_has_capture_switch(elem))
-                {
-                    ++mixdev[mixnum].chans;
-                    mixdev[mixnum].dests = 2;
-                }
+                    ++capcontrols;
                 if (snd_mixer_selem_has_playback_volume(elem))
-                    ++mixdev[mixnum].chans;
+                {
+                    if (!strcasecmp(snd_mixer_selem_get_name(elem), "Headphone") && !headelem)
+                        headelem = elem;
+                    else if (!strcasecmp(snd_mixer_selem_get_name(elem), "PCM") && !pcmelem)
+                        pcmelem = elem;
+                    else
+                        ++(mixdev[mixnum].chans);
+                }
             }
 
+        /* Add master channel, uncounted channels and an extra for capture  */
+        mixdev[mixnum].chans += !!mastelem + !!headelem + !!pcmelem + 1;
+
         /* If there is only 'Capture' and 'Master', this device is not worth it */
-        if (!mixdev[mixnum].chans)
+        if (mixdev[mixnum].chans == 2)
         {
             WARN("No channels found, skipping device!\n");
-            snd_mixer_close(mixdev[mixnum].mix);
-            continue;
+            goto close;
         }
 
-        /* If there are no 'Capture' and 'Master', something is wrong */
-        if (hasmast != 1 || hascapt != 1)
+        /* Master element can't have a capture control in this code, so
+         * if Headphone or PCM is promoted to master, unset its capture control */
+        if (headelem && !mastelem)
         {
-            if (hasmast != 1)
-                FIXME("Should have found 1 channel for 'Master', but instead found %d\n", hasmast);
-            if (hascapt != 1)
-                FIXME("Should have found 1 channel for 'Capture', but instead found %d\n", hascapt);
-            goto eclose;
+            /* Using 'Headphone' as master device */
+            mastelem = headelem;
+            capcontrols -= !!snd_mixer_selem_has_capture_switch(mastelem);
+        }
+        else if (pcmelem && !mastelem)
+        {
+            /* Use 'PCM' as master device */
+            mastelem = pcmelem;
+            capcontrols -= !!snd_mixer_selem_has_capture_switch(mastelem);
+        }
+        else if (!mastelem)
+        {
+            /* If there is nothing sensible that can act as 'Master' control, something is wrong */
+            FIXME("No master control found, disabling mixer\n");
+            goto close;
         }
 
-        mixdev[mixnum].chans += 2; /* Capture/Master */
+        if (!captelem || !capcontrols)
+        {
+            /* Can't enable capture, so disabling it
+             * Note: capture control will still exist because
+             * dwLineID 0 and 1 are reserved for Master and Capture
+             */
+            WARN("No use enabling capture part of mixer, capture control found: %s, amount of capture controls: %d\n",
+                 (!captelem ? "no" : "yes"), capcontrols);
+            capcontrols = 0;
+            mixdev[mixnum].dests = 1;
+        }
+        else
+        {
+            mixdev[mixnum].chans += capcontrols;
+            mixdev[mixnum].dests = 2;
+        }
+
         mixdev[mixnum].lines = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(line) * mixdev[mixnum].chans);
         mixdev[mixnum].controls = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(control) * CONTROLSPERLINE*mixdev[mixnum].chans);
         err = -ENOMEM;
         if (!mixdev[mixnum].lines || !mixdev[mixnum].controls)
-            goto eclose;
+            goto close;
 
-        /* Master control */
-        mline = &mixdev[mixnum].lines[0];
-        MultiByteToWideChar(CP_UNIXCP, 0, snd_mixer_selem_get_name(mastelem), -1, mline->name, sizeof(mline->name)/sizeof(WCHAR));
-        mline->component = getcomponenttype("Master");
-        mline->dst = 0;
-        mline->capt = 0;
-        mline->elem = mastelem;
-        mline->chans = chans(&mixdev[mixnum], mastelem, 0);
-
-        /* Capture control
-         * Note: since mmixer->dests = 1, it means only playback control is visible
-         * This makes sense, because if there are no capture sources capture control
-         * can't do anything and should be invisible */
-
-        mline++;
-        MultiByteToWideChar(CP_UNIXCP, 0, snd_mixer_selem_get_name(captelem), -1, mline->name, sizeof(mline->name)/sizeof(WCHAR));
-        mline->component = getcomponenttype("Capture");
-        mline->dst = 1;
-        mline->capt = 1;
-        mline->elem = captelem;
-        mline->chans = chans(&mixdev[mixnum], captelem, 1);
-
-        snd_mixer_elem_set_callback(mastelem, &elem_callback);
-        snd_mixer_elem_set_callback_private(mastelem, &mixdev[mixnum]);
-
-        if (mixdev[mixnum].dests == 2)
-        {
-            snd_mixer_elem_set_callback(captelem, &elem_callback);
-            snd_mixer_elem_set_callback_private(captelem, &mixdev[mixnum]);
-        }
-
-        y=2;
-        for (elem = snd_mixer_first_elem(mixdev[mixnum].mix); elem; elem = snd_mixer_elem_next(elem))
-            if (elem != mastelem && elem != captelem && !blacklisted(elem))
-            {
-                const char * name = snd_mixer_selem_get_name(elem);
-                DWORD comp = getcomponenttype(name);
-                snd_mixer_elem_set_callback(elem, &elem_callback);
-                snd_mixer_elem_set_callback_private(elem, &mixdev[mixnum]);
-
-                if (snd_mixer_selem_has_playback_volume(elem))
-                {
-                    mline = &mixdev[mixnum].lines[y++];
-                    mline->component = comp;
-                    MultiByteToWideChar(CP_UNIXCP, 0, name, -1, mline->name, MAXPNAMELEN);
-                    mline->capt = mline->dst = 0;
-                    mline->elem = elem;
-                    mline->chans = chans(&mixdev[mixnum], elem, 0);
-                }
-                if (snd_mixer_selem_has_capture_switch(elem))
-                {
-                    mline = &mixdev[mixnum].lines[y++];
-                    mline->component = comp;
-                    MultiByteToWideChar(CP_UNIXCP, 0, name, -1, mline->name, MAXPNAMELEN);
-                    mline->capt = mline->dst = 1;
-                    mline->elem = elem;
-                    mline->chans = chans(&mixdev[mixnum], elem, 1);
-                }
-            }
-
+        filllines(&mixdev[mixnum], mastelem, captelem, capcontrols);
         fillcontrols(&mixdev[mixnum]);
 
         TRACE("%s: Amount of controls: %i/%i, name: %s\n", cardname, mixdev[mixnum].dests, mixdev[mixnum].chans, debugstr_w(mixdev[mixnum].mixername));
@@ -505,12 +548,16 @@ static void ALSA_MixerInit(void)
 
         eclose:
         WARN("Error occurred initialising mixer: %s\n", snd_strerror(err));
+        close:
         HeapFree(GetProcessHeap(), 0, mixdev[mixnum].lines);
         HeapFree(GetProcessHeap(), 0, mixdev[mixnum].controls);
         snd_mixer_close(mixdev[mixnum].mix);
     }
     cards = mixnum;
 
+    /* There is no trouble with already assigning callbacks without initialising critsect:
+     * Callbacks only occur when snd_mixer_handle_events is called (only happens in thread)
+     */
     InitializeCriticalSection(&elem_crst);
     elem_crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ALSA_MIXER.elem_crst");
     TRACE("\n");
