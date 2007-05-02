@@ -78,6 +78,7 @@ static const char *command_to_string(UINT command)
         X( HH_SET_EXCLUSIVE_FILTER );
         X( HH_INITIALIZE );
         X( HH_UNINITIALIZE );
+        X( HH_SAFE_DISPLAY_TOPIC );
         X( HH_PRETRANSLATEMESSAGE );
         X( HH_SET_GLOBAL_PROPERTY );
     default: return "???";
@@ -88,9 +89,9 @@ static const char *command_to_string(UINT command)
 /******************************************************************
  *		HtmlHelpW (hhctrl.ocx.15)
  */
-HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
+HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR data)
 {
-    TRACE("(%p, %s, command=%s, data=%d)\n",
+    TRACE("(%p, %s, command=%s, data=%lx)\n",
           caller, debugstr_w( filename ),
           command_to_string( command ), data);
 
@@ -139,22 +140,64 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
 /******************************************************************
  *		HtmlHelpA (hhctrl.ocx.14)
  */
-HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
+HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD_PTR data)
 {
-    WCHAR *wfile = NULL;
+    WCHAR *wfile = NULL, *wdata = NULL;
+    DWORD len;
     HWND result;
 
     if (filename)
     {
-        DWORD len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
-
+        len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
         wfile = hhctrl_alloc(len*sizeof(WCHAR));
         MultiByteToWideChar( CP_ACP, 0, filename, -1, wfile, len );
     }
 
-    result = HtmlHelpW( caller, wfile, command, data );
+    if (data)
+    {
+        switch(command)
+        {
+        case HH_ALINK_LOOKUP:
+        case HH_DISPLAY_SEARCH:
+        case HH_DISPLAY_TEXT_POPUP:
+        case HH_GET_LAST_ERROR:
+        case HH_GET_WIN_TYPE:
+        case HH_KEYWORD_LOOKUP:
+        case HH_SET_WIN_TYPE:
+        case HH_SYNC:
+            FIXME("structures not handled yet\n");
+            break;
+
+        case HH_DISPLAY_INDEX:
+        case HH_DISPLAY_TOPIC:
+        case HH_DISPLAY_TOC:
+        case HH_GET_WIN_HANDLE:
+        case HH_SAFE_DISPLAY_TOPIC:
+            len = MultiByteToWideChar( CP_ACP, 0, (const char*)data, -1, NULL, 0 );
+            wdata = hhctrl_alloc(len*sizeof(WCHAR));
+            MultiByteToWideChar( CP_ACP, 0, (const char*)data, -1, wdata, len );
+            break;
+
+        case HH_CLOSE_ALL:
+        case HH_HELP_CONTEXT:
+        case HH_INITIALIZE:
+        case HH_PRETRANSLATEMESSAGE:
+        case HH_TP_HELP_CONTEXTMENU:
+        case HH_TP_HELP_WM_HELP:
+        case HH_UNINITIALIZE:
+            /* either scalar or pointer to scalar - do nothing */
+            break;
+
+        default:
+            FIXME("Unknown command: %s (%d)\n", command_to_string(command), command);
+            break;
+        }
+    }
+
+    result = HtmlHelpW( caller, wfile, command, wdata ? (DWORD_PTR)wdata : data );
 
     hhctrl_free(wfile);
+    hhctrl_free(wdata);
     return result;
 }
 
