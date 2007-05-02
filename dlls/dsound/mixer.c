@@ -29,7 +29,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "mmsystem.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
 #include "dsound.h"

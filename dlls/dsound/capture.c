@@ -34,7 +34,6 @@
 #include "winuser.h"
 #include "mmsystem.h"
 #include "mmddk.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "winnls.h"
 #include "wine/debug.h"

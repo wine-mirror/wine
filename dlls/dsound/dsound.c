@@ -28,7 +28,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "winreg.h"
 #include "mmsystem.h"
 #include "winternl.h"
 #include "mmddk.h"
