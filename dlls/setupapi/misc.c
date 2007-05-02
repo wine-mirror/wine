@@ -37,6 +37,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
+/* arbitrary limit not related to what native actually uses */
+#define OEM_INDEX_LIMIT 999
 
 /**************************************************************************
  * MyFree [SETUPAPI.@]
@@ -926,7 +928,7 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
 {
     BOOL ret = FALSE;
     WCHAR target[MAX_PATH], *p;
-    static const WCHAR inf_oem[] = { '\\','i','n','f','\\','O','E','M',0 };
+    static const WCHAR inf[] = { '\\','i','n','f','\\',0 };
     DWORD size;
 
     TRACE("%s, %s, %d, %d, %p, %d, %p, %p\n", debugstr_w(source), debugstr_w(location),
@@ -947,9 +949,37 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
 
     if (!GetWindowsDirectoryW( target, sizeof(target)/sizeof(WCHAR) )) return FALSE;
 
-    strcatW( target, inf_oem );
+    strcatW( target, inf );
     if ((p = strrchrW( source, '\\' )))
         strcatW( target, p + 1 );
+
+    /* does the file exist already? */
+    if ((GetFileAttributesW( target ) != INVALID_FILE_ATTRIBUTES) &&
+        !(style & SP_COPY_NOOVERWRITE))
+    {
+        static const WCHAR oem[] = { 'o','e','m',0 };
+        unsigned int i;
+
+        p = strrchrW( target, '\\' ) + 1;
+        memcpy( p, oem, sizeof(oem) );
+        p += sizeof(oem)/sizeof(oem[0]) - 1;
+
+        /* generate OEMnnn.inf ending */
+        for (i = 0; i < OEM_INDEX_LIMIT; i++)
+        {
+            static const WCHAR format[] = { '%','u','.','i','n','f',0 };
+            wsprintfW( p, format, i );
+            /* if we found a file name that doesn't exist then we're done */
+            if (GetFileAttributesW( target ) == INVALID_FILE_ATTRIBUTES)
+                break;
+        }
+
+        if (i == OEM_INDEX_LIMIT)
+        {
+            SetLastError( ERROR_FILENAME_EXCED_RANGE );
+            return FALSE;
+        }
+    }
 
     if (!(ret = CopyFileW( source, target, (style & SP_COPY_NOOVERWRITE) != 0 )))
         return ret;
