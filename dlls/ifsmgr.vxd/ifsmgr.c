@@ -60,7 +60,7 @@ struct win32apireq {
         unsigned short  ar_pad;
 };
 
-static void win32apieq_2_CONTEXT(struct win32apireq *pIn,CONTEXT86 *pCxt)
+static void win32apieq_2_CONTEXT(const struct win32apireq *pIn, CONTEXT86 *pCxt)
 {
         memset(pCxt,0,sizeof(*pCxt));
 
@@ -80,7 +80,7 @@ static void win32apieq_2_CONTEXT(struct win32apireq *pIn,CONTEXT86 *pCxt)
         /* FIXME: pIn->ar_pad ignored */
 }
 
-static void CONTEXT_2_win32apieq(CONTEXT86 *pCxt,struct win32apireq *pOut)
+static void CONTEXT_2_win32apieq(const CONTEXT86 *pCxt, struct win32apireq *pOut)
 {
         memset(pOut,0,sizeof(struct win32apireq));
 
