@@ -892,7 +892,7 @@ static void image_list_init(HIMAGELIST himl)
 #define iml_clear_stream_data() \
     HeapFree(GetProcessHeap(), 0, Test_Stream.iml_data); \
     Test_Stream.iml_data = NULL; \
-    Test_Stream.iml_data_size = 0; \
+    Test_Stream.iml_data_size = 0;
 
 static void check_iml_data(HIMAGELIST himl, INT cx, INT cy, INT cur, INT max,
                            INT width, INT height, INT bpp, const char *comment)
