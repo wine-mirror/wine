@@ -771,6 +771,88 @@ BOOL WINAPI WintrustAddDefaultForUsage(const char *pszUsageOID,
     return TRUE;
 }
 
+static FARPROC WINTRUST_ReadProviderFromReg(WCHAR *GuidString, const WCHAR *FunctionType)
+{
+    WCHAR ProvKey[MAX_PATH], DllName[MAX_PATH];
+    char FunctionName[MAX_PATH];
+    HKEY Key;
+    LONG Res = ERROR_SUCCESS;
+    DWORD Size;
+    HMODULE Lib;
+    FARPROC Func = NULL;
+
+    /* Create the needed key string */
+    ProvKey[0]='\0';
+    lstrcatW(ProvKey, Trust);
+    lstrcatW(ProvKey, FunctionType);
+    lstrcatW(ProvKey, GuidString);
+
+    Res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, ProvKey, 0, KEY_READ, &Key);
+    if (Res != ERROR_SUCCESS) goto error_close_key;
+
+    /* Read the $DLL entry */
+    Size = sizeof(DllName);
+    Res = RegQueryValueExW(Key, Dll, NULL, NULL, (LPBYTE)DllName, &Size);
+    if (Res != ERROR_SUCCESS) goto error_close_key;
+
+    /* Read the $Function entry */
+    Size = sizeof(FunctionName);
+    Res = RegQueryValueExA(Key, "$Function", NULL, NULL, (LPBYTE)FunctionName, &Size);
+    if (Res != ERROR_SUCCESS) goto error_close_key;
+
+    /* Load the library - there appears to be no way to close a provider, so
+     * just leak the module handle.
+     */
+    Lib = LoadLibraryW(DllName);
+    Func = GetProcAddress(Lib, FunctionName);
+
+error_close_key:
+    RegCloseKey(Key);
+
+    return Func;
+}
+
+/***********************************************************************
+ *              WintrustLoadFunctionPointers (WINTRUST.@)
+ */
+BOOL WINAPI WintrustLoadFunctionPointers( GUID* pgActionID,
+                                          CRYPT_PROVIDER_FUNCTIONS* pPfns )
+{
+    WCHAR GuidString[39];
+
+    TRACE("(%s %p)\n", debugstr_guid(pgActionID), pPfns);
+
+    if (!pPfns) return FALSE;
+    if (!pgActionID)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (pPfns->cbStruct != sizeof(CRYPT_PROVIDER_FUNCTIONS)) return FALSE;
+
+    /* Create this string only once, instead of in the helper function */
+    WINTRUST_Guid2Wstr( pgActionID, GuidString);
+
+    /* Get the function pointers from the registry, where applicable */
+    pPfns->pfnAlloc = NULL;
+    pPfns->pfnFree = NULL;
+    pPfns->pfnAddStore2Chain = NULL;
+    pPfns->pfnAddSgnr2Chain = NULL;
+    pPfns->pfnAddCert2Chain = NULL;
+    pPfns->pfnAddPrivData2Chain = NULL;
+    pPfns->psUIpfns = NULL;
+    pPfns->pfnInitialize = (PFN_PROVIDER_INIT_CALL)WINTRUST_ReadProviderFromReg(GuidString, Initialization);
+    pPfns->pfnObjectTrust = (PFN_PROVIDER_OBJTRUST_CALL)WINTRUST_ReadProviderFromReg(GuidString, Message);
+    pPfns->pfnSignatureTrust = (PFN_PROVIDER_SIGTRUST_CALL)WINTRUST_ReadProviderFromReg(GuidString, Signature);
+    pPfns->pfnCertificateTrust = (PFN_PROVIDER_CERTTRUST_CALL)WINTRUST_ReadProviderFromReg(GuidString, Certificate);
+    pPfns->pfnCertCheckPolicy = (PFN_PROVIDER_CERTCHKPOLICY_CALL)WINTRUST_ReadProviderFromReg(GuidString, CertCheck);
+    pPfns->pfnFinalPolicy = (PFN_PROVIDER_FINALPOLICY_CALL)WINTRUST_ReadProviderFromReg(GuidString, FinalPolicy);
+    pPfns->pfnTestFinalPolicy = (PFN_PROVIDER_TESTFINALPOLICY_CALL)WINTRUST_ReadProviderFromReg(GuidString, DiagnosticPolicy);
+    pPfns->pfnCleanupPolicy = (PFN_PROVIDER_CLEANUP_CALL)WINTRUST_ReadProviderFromReg(GuidString, Cleanup);
+
+    return TRUE;
+}
+
 /***********************************************************************
  *              WINTRUST_SIPPAddProvider
  *

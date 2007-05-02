@@ -31,6 +31,7 @@
 static BOOL (WINAPI * pWintrustAddActionID)(GUID*, DWORD, CRYPT_REGISTER_ACTIONID*);
 static BOOL (WINAPI * pWintrustAddDefaultForUsage)(const CHAR*,CRYPT_PROVIDER_REGDEFUSAGE*);
 static BOOL (WINAPI * pWintrustRemoveActionID)(GUID*);
+static BOOL (WINAPI * pWintrustLoadFunctionPointers)(GUID *, CRYPT_PROVIDER_FUNCTIONS *);
 
 static HMODULE hWintrust = 0;
 
@@ -55,6 +56,7 @@ static BOOL InitFunctionPtrs(void)
     WINTRUST_GET_PROC(WintrustAddActionID)
     WINTRUST_GET_PROC(WintrustAddDefaultForUsage)
     WINTRUST_GET_PROC(WintrustRemoveActionID)
+    WINTRUST_GET_PROC(WintrustLoadFunctionPointers)
 
     return TRUE;
 }
@@ -256,6 +258,34 @@ static void test_AddDefaultForUsage(void)
     }
 }
 
+static void test_LoadFunctionPointers(void)
+{
+    BOOL ret;
+    CRYPT_PROVIDER_FUNCTIONS funcs;
+    GUID action = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+
+    SetLastError(0xdeadbeef);
+    ret = pWintrustLoadFunctionPointers(NULL, NULL);
+    ok(!ret && GetLastError() == 0xdeadbeef, "Expected failure\n");
+    SetLastError(0xdeadbeef);
+    ret = pWintrustLoadFunctionPointers(&action, NULL);
+    ok(!ret && GetLastError() == 0xdeadbeef, "Expected failure\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pWintrustLoadFunctionPointers(NULL, &funcs);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    funcs.cbStruct = 0;
+    ret = pWintrustLoadFunctionPointers(&action, &funcs);
+    ok(!ret && GetLastError() == 0xdeadbeef, "Expected failure\n");
+    SetLastError(0xdeadbeef);
+    funcs.cbStruct = sizeof(funcs);
+    ret = pWintrustLoadFunctionPointers(&action, &funcs);
+    ok(ret, "WintrustLoadFunctionPointers failed: %d\n", GetLastError());
+}
+
 START_TEST(register)
 {
     if(!InitFunctionPtrs())
@@ -263,6 +293,7 @@ START_TEST(register)
 
     test_AddRem_ActionID();
     test_AddDefaultForUsage();
+    test_LoadFunctionPointers();
 
     FreeLibrary(hWintrust);
 }

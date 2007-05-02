@@ -119,17 +119,6 @@ CRYPT_PROVIDER_DATA * WINAPI WTHelperProvDataFromStateData(HANDLE hStateData)
 }
 
 /***********************************************************************
- *              WintrustLoadFunctionPointers (WINTRUST.@)
- */
-BOOL WINAPI WintrustLoadFunctionPointers( GUID* pgActionID,
-                                          CRYPT_PROVIDER_FUNCTIONS* pPfns )
-{
-    FIXME("%s %p\n", debugstr_guid(pgActionID), pPfns);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/***********************************************************************
  *		WintrustGetRegPolicyFlags (WINTRUST.@)
  */
 void WINAPI WintrustGetRegPolicyFlags( DWORD* pdwPolicyFlags )
