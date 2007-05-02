@@ -439,6 +439,7 @@ static BOOL have_installed_roman_font = FALSE; /* CreateFontInstance will fail i
 
 static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_','\0'};
 
+static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font, FT_UInt *glyph);
 
 /****************************************
  *   Notes on .fon files
@@ -3354,12 +3355,13 @@ DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
  * question rather than an HDC.
  *
  */
-DWORD WineEngGetGlyphOutline(GdiFont *font, UINT glyph, UINT format,
+DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 			     LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf,
 			     const MAT2* lpmat)
 {
     static const FT_Matrix identityMat = {(1 << 16), 0, 0, (1 << 16)};
-    FT_Face ft_face = font->ft_face;
+    FT_Face ft_face = incoming_font->ft_face;
+    GdiFont *font = incoming_font;
     FT_UInt glyph_index;
     DWORD width, height, pitch, needed = 0;
     FT_Bitmap ft_bitmap;
@@ -3378,8 +3380,10 @@ DWORD WineEngGetGlyphOutline(GdiFont *font, UINT glyph, UINT format,
     if(format & GGO_GLYPH_INDEX) {
         glyph_index = glyph;
 	format &= ~GGO_GLYPH_INDEX;
-    } else
-        glyph_index = get_glyph_index(font, glyph);
+    } else {
+        get_glyph_index_linked(incoming_font, glyph, &font, &glyph_index);
+        ft_face = font->ft_face;
+    }
 
     if(glyph_index >= font->gmsize) {
         font->gmsize = (glyph_index / INIT_GM_SIZE + 1) * INIT_GM_SIZE;
