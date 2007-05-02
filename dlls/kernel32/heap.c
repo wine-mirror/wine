@@ -287,7 +287,7 @@ LPVOID WINAPI HeapReAlloc( HANDLE heap, DWORD flags, LPVOID ptr, SIZE_T size )
     return RtlReAllocateHeap( heap, flags, ptr, size );
 }
 
-SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPVOID ptr )
+SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPCVOID ptr )
 {
     return RtlSizeHeap( heap, flags, ptr );
 }

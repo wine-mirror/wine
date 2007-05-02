@@ -1511,7 +1511,7 @@ BOOLEAN WINAPI RtlUnlockHeap( HANDLE heap )
  * NOTES
  *  The size may be bigger than what was passed to RtlAllocateHeap().
  */
-SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
+SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, const void *ptr )
 {
     SIZE_T ret;
     HEAP *heapPtr = HEAP_GetPtr( heap );
@@ -1531,7 +1531,7 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     }
     else
     {
-        ARENA_INUSE *pArena = (ARENA_INUSE *)ptr - 1;
+        const ARENA_INUSE *pArena = (const ARENA_INUSE *)ptr - 1;
         ret = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
     }
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
