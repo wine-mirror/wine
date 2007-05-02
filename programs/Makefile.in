@@ -17,6 +17,7 @@ SUBDIRS = \
 	icinfo \
 	iexplore \
 	msiexec \
+	net \
 	notepad \
 	oleview \
 	progman \
@@ -57,6 +58,7 @@ INSTALLSUBDIRS = \
 	icinfo \
 	iexplore \
 	msiexec \
+	net \
 	notepad \
 	oleview \
 	progman \

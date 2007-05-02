@@ -449,6 +449,7 @@ ALL_MAKEFILES = \
 	programs/icinfo/Makefile \
 	programs/iexplore/Makefile \
 	programs/msiexec/Makefile \
+	programs/net/Makefile \
 	programs/notepad/Makefile \
 	programs/oleview/Makefile \
 	programs/progman/Makefile \
@@ -794,6 +795,7 @@ programs/hh/Makefile: programs/hh/Makefile.in programs/Makeprog.rules
 programs/icinfo/Makefile: programs/icinfo/Makefile.in programs/Makeprog.rules
 programs/iexplore/Makefile: programs/iexplore/Makefile.in programs/Makeprog.rules
 programs/msiexec/Makefile: programs/msiexec/Makefile.in programs/Makeprog.rules
+programs/net/Makefile: programs/net/Makefile.in programs/Makeprog.rules
 programs/notepad/Makefile: programs/notepad/Makefile.in programs/Makeprog.rules
 programs/oleview/Makefile: programs/oleview/Makefile.in programs/Makeprog.rules
 programs/progman/Makefile: programs/progman/Makefile.in programs/Makeprog.rules

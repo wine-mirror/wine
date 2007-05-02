@@ -756,6 +756,7 @@ programs/iexplore/iexplore
 programs/msiexec/msiexec
 programs/msiexec/msiexec.ico
 programs/msiexec/rsrc.res
+programs/net/net
 programs/notepad/notepad
 programs/notepad/rsrc.res
 programs/oleview/oleview

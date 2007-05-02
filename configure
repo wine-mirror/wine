@@ -20903,6 +20903,8 @@ ac_config_files="$ac_config_files programs/iexplore/Makefile"
 
 ac_config_files="$ac_config_files programs/msiexec/Makefile"
 
+ac_config_files="$ac_config_files programs/net/Makefile"
+
 ac_config_files="$ac_config_files programs/notepad/Makefile"
 
 ac_config_files="$ac_config_files programs/oleview/Makefile"
@@ -21838,6 +21840,7 @@ do
     "programs/icinfo/Makefile") CONFIG_FILES="$CONFIG_FILES programs/icinfo/Makefile" ;;
     "programs/iexplore/Makefile") CONFIG_FILES="$CONFIG_FILES programs/iexplore/Makefile" ;;
     "programs/msiexec/Makefile") CONFIG_FILES="$CONFIG_FILES programs/msiexec/Makefile" ;;
+    "programs/net/Makefile") CONFIG_FILES="$CONFIG_FILES programs/net/Makefile" ;;
     "programs/notepad/Makefile") CONFIG_FILES="$CONFIG_FILES programs/notepad/Makefile" ;;
     "programs/oleview/Makefile") CONFIG_FILES="$CONFIG_FILES programs/oleview/Makefile" ;;
     "programs/progman/Makefile") CONFIG_FILES="$CONFIG_FILES programs/progman/Makefile" ;;
