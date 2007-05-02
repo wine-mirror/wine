@@ -107,9 +107,12 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
 
         info = CreateHelpViewer(filename);
 
-        res = NavigateToChm(info, info->pCHMInfo->szFile, info->WinType.pszFile);
-        if(!res)
-            ReleaseHelpViewer(info);
+        if (info)
+        {
+            res = NavigateToChm(info, info->pCHMInfo->szFile, info->WinType.pszFile);
+            if(!res)
+                ReleaseHelpViewer(info);
+        }
 
         return NULL; /* FIXME */
     }
