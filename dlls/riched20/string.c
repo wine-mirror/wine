@@ -347,6 +347,8 @@ ME_CallWordBreakProc(ME_TextEditor *editor, ME_String *str, INT start, INT code)
 
 LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz)
 {
+  assert(psz != NULL);
+
   if (unicode)
     return (LPWSTR)psz;
   else {

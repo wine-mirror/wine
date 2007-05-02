@@ -3,6 +3,7 @@
 *
 * Copyright 2006 Google (Thomas Kho)
 * Copyright 2007 Matt Finnicum
+* Copyright 2007 Dmitry Timoshkov
 *
 * This library is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -19,11 +20,16 @@
 * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include <wine/test.h>
-#include <windows.h>
+#include <stdarg.h>
+#include <assert.h>
+#include <windef.h>
+#include <winbase.h>
+#include <wingdi.h>
+#include <winuser.h>
+#include <winnls.h>
+#include <ole2.h>
 #include <richedit.h>
-#include <time.h>
-#include <stdio.h>
+#include <wine/test.h>
 
 static HMODULE hmoduleRichEdit;
 
@@ -1584,43 +1590,82 @@ static void test_EM_StreamIn_Undo(void)
 
 }
 
+static BOOL is_em_settextex_supported(HWND hwnd)
+{
+    SETTEXTEX stex = { ST_DEFAULT, CP_ACP };
+    return SendMessageA(hwnd, EM_SETTEXTEX, (WPARAM)&stex, 0) != 0;
+}
+
 static void test_unicode_conversions(void)
 {
+    static const WCHAR tW[] = {'t',0};
+    static const WCHAR teW[] = {'t','e',0};
     static const WCHAR textW[] = {'t','e','s','t',0};
     static const char textA[] = "test";
     char bufA[64];
     WCHAR bufW[64];
     HWND hwnd;
-    int is_win9x, ret;
+    int is_win9x, em_settextex_supported, ret;
 
     is_win9x = GetVersion() & 0x80000000;
 
-#define set_textA(hwnd, txt) \
+#define set_textA(hwnd, wm_set_text, txt) \
     do { \
-        ret = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)txt); \
-        ok(ret, "SendMessageA(WM_SETTEXT) error %u\n", GetLastError()); \
+        SETTEXTEX stex = { ST_DEFAULT, CP_ACP }; \
+        WPARAM wparam = (wm_set_text == WM_SETTEXT) ? 0 : (WPARAM)&stex; \
+        assert(wm_set_text == WM_SETTEXT || wm_set_text == EM_SETTEXTEX); \
+        ret = SendMessageA(hwnd, wm_set_text, wparam, (LPARAM)txt); \
+        ok(ret, "SendMessageA(%02x) error %u\n", wm_set_text, GetLastError()); \
     } while(0)
-#define expect_textA(hwnd, txt) \
+#define expect_textA(hwnd, wm_get_text, txt) \
     do { \
+        GETTEXTEX gtex = { 64, GT_DEFAULT, CP_ACP, NULL, NULL }; \
+        WPARAM wparam = (wm_get_text == WM_GETTEXT) ? 64 : (WPARAM)&gtex; \
+        assert(wm_get_text == WM_GETTEXT || wm_get_text == EM_GETTEXTEX); \
         memset(bufA, 0xAA, sizeof(bufA)); \
-        ret = SendMessageA(hwnd, WM_GETTEXT, 64, (LPARAM)bufA); \
-        ok(ret, "SendMessageA(WM_GETTEXT) error %u\n", GetLastError()); \
+        ret = SendMessageA(hwnd, wm_get_text, wparam, (LPARAM)bufA); \
+        ok(ret, "SendMessageA(%02x) error %u\n", wm_get_text, GetLastError()); \
         ret = lstrcmpA(bufA, txt); \
-        ok(!ret, "strings not match: expected %s got %s\n", txt, bufA); \
+        ok(!ret, "%02x: strings do not match: expected %s got %s\n", wm_get_text, txt, bufA); \
     } while(0)
 
-#define set_textW(hwnd, txt) \
+#define set_textW(hwnd, wm_set_text, txt) \
     do { \
-        ret = SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)txt); \
-        ok(ret, "SendMessageW(WM_SETTEXT) error %u\n", GetLastError()); \
+        SETTEXTEX stex = { ST_DEFAULT, 1200 }; \
+        WPARAM wparam = (wm_set_text == WM_SETTEXT) ? 0 : (WPARAM)&stex; \
+        assert(wm_set_text == WM_SETTEXT || wm_set_text == EM_SETTEXTEX); \
+        ret = SendMessageW(hwnd, wm_set_text, wparam, (LPARAM)txt); \
+        ok(ret, "SendMessageW(%02x) error %u\n", wm_set_text, GetLastError()); \
     } while(0)
-#define expect_textW(hwnd, txt) \
+#define expect_textW(hwnd, wm_get_text, txt) \
     do { \
+        GETTEXTEX gtex = { 64, GT_DEFAULT, 1200, NULL, NULL }; \
+        WPARAM wparam = (wm_get_text == WM_GETTEXT) ? 64 : (WPARAM)&gtex; \
+        assert(wm_get_text == WM_GETTEXT || wm_get_text == EM_GETTEXTEX); \
         memset(bufW, 0xAA, sizeof(bufW)); \
-        ret = SendMessageW(hwnd, WM_GETTEXT, 64, (LPARAM)bufW); \
-        ok(ret, "SendMessageW(WM_GETTEXT) error %u\n", GetLastError()); \
+        if (is_win9x) \
+        { \
+            assert(wm_get_text == EM_GETTEXTEX); \
+            ret = SendMessageA(hwnd, wm_get_text, wparam, (LPARAM)bufW); \
+            ok(ret, "SendMessageA(%02x) error %u\n", wm_get_text, GetLastError()); \
+        } \
+        else \
+        { \
+            ret = SendMessageW(hwnd, wm_get_text, wparam, (LPARAM)bufW); \
+            ok(ret, "SendMessageW(%02x) error %u\n", wm_get_text, GetLastError()); \
+        } \
         ret = lstrcmpW(bufW, txt); \
-        ok(!ret, "strings not match expected[0] %x got[0] %x\n", txt[0], bufW[0]); \
+        ok(!ret, "%02x: strings do not match: expected[0] %x got[0] %x\n", wm_get_text, txt[0], bufW[0]); \
+    } while(0)
+#define expect_empty(hwnd, wm_get_text) \
+    do { \
+        GETTEXTEX gtex = { 64, GT_DEFAULT, CP_ACP, NULL, NULL }; \
+        WPARAM wparam = (wm_get_text == WM_GETTEXT) ? 64 : (WPARAM)&gtex; \
+        assert(wm_get_text == WM_GETTEXT || wm_get_text == EM_GETTEXTEX); \
+        memset(bufA, 0xAA, sizeof(bufA)); \
+        ret = SendMessageA(hwnd, wm_get_text, wparam, (LPARAM)bufA); \
+        ok(!ret, "empty richedit should return 0, got %d\n", ret); \
+        ok(!*bufA, "empty richedit should return empty string, got %s\n", bufA); \
     } while(0)
 
     hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP,
@@ -1633,35 +1678,62 @@ static void test_unicode_conversions(void)
     else
         ok(ret, "RichEdit20W should be unicode under NT\n");
 
-    memset(bufA, 0xAA, sizeof(bufA));
-    ret = SendMessageA(hwnd, WM_GETTEXT, 64, (LPARAM)bufA);
-    ok(!ret, "empty richedit should return 0, got %d\n", ret);
-    ok(!*bufA, "empty richedit should return empty string, got %s\n", bufA);
+    /* EM_SETTEXTEX is supported starting from version 3.0 */
+    em_settextex_supported = is_em_settextex_supported(hwnd);
+    trace("EM_SETTEXTEX is %ssupported on this platform\n",
+          em_settextex_supported ? "" : "NOT ");
+
+    expect_empty(hwnd, WM_GETTEXT);
+    expect_empty(hwnd, EM_GETTEXTEX);
 
     ret = SendMessageA(hwnd, WM_CHAR, (WPARAM)textW[0], 0);
     ok(!ret, "SendMessageA(WM_CHAR) should return 0, got %d\n", ret);
-    expect_textA(hwnd, "t");
+    expect_textA(hwnd, WM_GETTEXT, "t");
+    expect_textA(hwnd, EM_GETTEXTEX, "t");
+    expect_textW(hwnd, EM_GETTEXTEX, tW);
 
     ret = SendMessageA(hwnd, WM_CHAR, (WPARAM)textA[1], 0);
     ok(!ret, "SendMessageA(WM_CHAR) should return 0, got %d\n", ret);
-    expect_textA(hwnd, "te");
+    expect_textA(hwnd, WM_GETTEXT, "te");
+    expect_textA(hwnd, EM_GETTEXTEX, "te");
+    expect_textW(hwnd, EM_GETTEXTEX, teW);
 
-    set_textA(hwnd, NULL);
-    memset(bufA, 0xAA, sizeof(bufA));
-    ret = SendMessageA(hwnd, WM_GETTEXT, 64, (LPARAM)bufA);
-    ok(!ret, "empty richedit should return 0, got %d\n", ret);
-    ok(!*bufA, "empty richedit should return empty string, got %s\n", bufA);
+    set_textA(hwnd, WM_SETTEXT, NULL);
+    expect_empty(hwnd, WM_GETTEXT);
+    expect_empty(hwnd, EM_GETTEXTEX);
 
     if (is_win9x)
-        set_textA(hwnd, textW);
+        set_textA(hwnd, WM_SETTEXT, textW);
     else
-        set_textA(hwnd, textA);
-    expect_textA(hwnd, textA);
+        set_textA(hwnd, WM_SETTEXT, textA);
+    expect_textA(hwnd, WM_GETTEXT, textA);
+    expect_textA(hwnd, EM_GETTEXTEX, textA);
+    expect_textW(hwnd, EM_GETTEXTEX, textW);
+
+    if (em_settextex_supported)
+    {
+        set_textA(hwnd, EM_SETTEXTEX, textA);
+        expect_textA(hwnd, WM_GETTEXT, textA);
+        expect_textA(hwnd, EM_GETTEXTEX, textA);
+        expect_textW(hwnd, EM_GETTEXTEX, textW);
+    }
 
     if (!is_win9x)
     {
-        set_textW(hwnd, textW);
-        expect_textW(hwnd, textW);
+        set_textW(hwnd, WM_SETTEXT, textW);
+        expect_textW(hwnd, WM_GETTEXT, textW);
+        expect_textA(hwnd, WM_GETTEXT, textA);
+        expect_textW(hwnd, EM_GETTEXTEX, textW);
+        expect_textA(hwnd, EM_GETTEXTEX, textA);
+
+        if (em_settextex_supported)
+        {
+            set_textW(hwnd, EM_SETTEXTEX, textW);
+            expect_textW(hwnd, WM_GETTEXT, textW);
+            expect_textA(hwnd, WM_GETTEXT, textA);
+            expect_textW(hwnd, EM_GETTEXTEX, textW);
+            expect_textA(hwnd, EM_GETTEXTEX, textA);
+        }
     }
     DestroyWindow(hwnd);
 
@@ -1672,13 +1744,35 @@ static void test_unicode_conversions(void)
     ret = IsWindowUnicode(hwnd);
     ok(!ret, "RichEdit20A should NOT be unicode\n");
 
-    set_textA(hwnd, textA);
-    expect_textA(hwnd, textA);
+    set_textA(hwnd, WM_SETTEXT, textA);
+    expect_textA(hwnd, WM_GETTEXT, textA);
+    expect_textA(hwnd, EM_GETTEXTEX, textA);
+    expect_textW(hwnd, EM_GETTEXTEX, textW);
+
+    if (em_settextex_supported)
+    {
+        set_textA(hwnd, EM_SETTEXTEX, textA);
+        expect_textA(hwnd, WM_GETTEXT, textA);
+        expect_textA(hwnd, EM_GETTEXTEX, textA);
+        expect_textW(hwnd, EM_GETTEXTEX, textW);
+    }
 
     if (!is_win9x)
     {
-        set_textW(hwnd, textW);
-        expect_textW(hwnd, textW);
+        set_textW(hwnd, WM_SETTEXT, textW);
+        expect_textW(hwnd, WM_GETTEXT, textW);
+        expect_textA(hwnd, WM_GETTEXT, textA);
+        expect_textW(hwnd, EM_GETTEXTEX, textW);
+        expect_textA(hwnd, EM_GETTEXTEX, textA);
+
+        if (em_settextex_supported)
+        {
+            set_textW(hwnd, EM_SETTEXTEX, textW);
+            expect_textW(hwnd, WM_GETTEXT, textW);
+            expect_textA(hwnd, WM_GETTEXT, textA);
+            expect_textW(hwnd, EM_GETTEXTEX, textW);
+            expect_textA(hwnd, EM_GETTEXTEX, textA);
+        }
     }
     DestroyWindow(hwnd);
 }

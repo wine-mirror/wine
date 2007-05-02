@@ -66,7 +66,7 @@
   + EM_GETSELTEXT (ANSI&Unicode)
   + EM_GETSCROLLPOS 3.0 (only Y value valid)
 ! - EM_GETTHUMB
-  - EM_GETTEXTEX 2.0
+  + EM_GETTEXTEX 2.0
   + EM_GETTEXTLENGTHEX (GTL_PRECISE unimplemented)
   - EM_GETTEXTMODE 2.0
 ? + EM_GETTEXTRANGE (ANSI&Unicode)
@@ -114,7 +114,7 @@
   + EM_SETSCROLLPOS 3.0
   - EM_SETTABSTOPS 3.0
   - EM_SETTARGETDEVICE
-  + EM_SETTEXTEX 3.0 (unicode only, no rich text insertion handling, proper style?)
+  + EM_SETTEXTEX 3.0 (no rich text insertion handling, proper style?)
   - EM_SETTEXTMODE 2.0
   - EM_SETTYPOGRAPHYOPTIONS 3.0
   + EM_SETUNDOLIMIT 2.0
@@ -1635,17 +1635,23 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   }
   case EM_SETTEXTEX:
   {
-    LPWSTR wszText = (LPWSTR)lParam;
+    LPWSTR wszText;
     SETTEXTEX *pStruct = (SETTEXTEX *)wParam;
-    size_t len = wszText ? lstrlenW(wszText) : 0;
+    size_t len;
     int from, to;
     ME_Style *style;
     int oldModify = editor->nModifyStep;
-    TRACE("EM_SETTEXTEX - %s, flags %d, cp %d\n", debugstr_w(wszText), (int)pStruct->flags, pStruct->codepage);
-    if (pStruct->codepage != 1200) {
-      FIXME("EM_SETTEXTEX only supports unicode right now!\n"); 
-      return 0;
-    }
+
+    if (!pStruct) return 0;
+
+    TRACE("EM_SETTEXTEX - %s, flags %d, cp %d\n",
+          pStruct->codepage == 1200 ? debugstr_w((LPCWSTR)lParam) : debugstr_a((LPCSTR)lParam),
+          pStruct->flags, pStruct->codepage);
+
+    /* FIXME: make use of pStruct->codepage in the to unicode translation */
+    wszText = lParam ? ME_ToUnicode(pStruct->codepage == 1200, (void *)lParam) : NULL;
+    len = wszText ? lstrlenW(wszText) : 0;
+
     /* FIXME: this should support RTF strings too, according to MSDN */
     if (pStruct->flags & ST_SELECTION) {
       ME_GetSelection(editor, &from, &to);
@@ -2001,7 +2007,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       nStart = 0;
       nCount = ex->cb - 1;
     }
-    if (ex->codepage == 1200 || unicode)
+    if (ex->codepage == 1200)
     {
       nCount = min(nCount, ex->cb / sizeof(WCHAR) - 1);
       return ME_GetTextW(editor, (LPWSTR)lParam, nStart, nCount, ex->flags & GT_USECRLF);
@@ -2018,6 +2024,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
 
       buflen = ME_GetTextW(editor, buffer, nStart, nCount, ex->flags & GT_USECRLF);
       rc = WideCharToMultiByte(ex->codepage, flags, buffer, -1, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefaultChar);
+      if (rc) rc--; /* do not count 0 terminator */
 
       richedit_free(buffer);
       return rc;
