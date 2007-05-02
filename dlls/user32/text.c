@@ -1248,8 +1248,8 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
     }
     else
     {
-        TEXTMETRICA tm;
-        GetTextMetricsA( hdc, &tm );
+        TEXTMETRICW tm;
+        GetTextMetricsW( hdc, &tm );
         defWidth = 8 * tm.tmAveCharWidth;
     }
 
@@ -1270,12 +1270,13 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
         /* and if there is a <tab>, calculate its position */
         if( i) {
             /* get x coordinate for the drawing of this string */
-            for (; cTabStops > i; lpTabPos++, cTabStops--)
+            for (; cTabStops >= i; lpTabPos++, cTabStops--)
             {
                 if( nTabOrg + abs( *lpTabPos) > x) {
                     if( lpTabPos[ i - 1] >= 0) {
                         /* a left aligned tab */
-                        x = nTabOrg + lpTabPos[ i-1] + extent.cx;
+                        x0 = nTabOrg + lpTabPos[i-1];
+                        x = x0 + extent.cx;
                         break;
                     }
                     else
@@ -1294,10 +1295,10 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
             }
             /* if we have run out of tab stops and we have a valid default tab
              * stop width then round x up to that width */
-            if ((cTabStops <= i) && (defWidth > 0)) {
+            if ((cTabStops < i) && (defWidth > 0)) {
                 x0 = nTabOrg + ((x - nTabOrg) / defWidth + i) * defWidth;
                 x = x0 + extent.cx;
-            } else if ((cTabStops <= i) && (defWidth < 0)) {
+            } else if ((cTabStops < i) && (defWidth < 0)) {
                 x = nTabOrg + ((x - nTabOrg + extent.cx) / -defWidth + i)
                     * -defWidth;
                 x0 = x - extent.cx;
