@@ -100,16 +100,34 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
     case HH_DISPLAY_TOPIC:
     case HH_DISPLAY_TOC:
     case HH_DISPLAY_SEARCH:{
+        static const WCHAR delimW[] = {':',':',0};
         HHInfo *info;
         BOOL res;
+        WCHAR chm_file[MAX_PATH];
+        const WCHAR *index;
 
         FIXME("Not all HH cases handled correctly\n");
+
+        index = strstrW(filename, delimW);
+        if (index)
+        {
+            memcpy(chm_file, filename, (index-filename)*sizeof(WCHAR));
+            chm_file[index-filename] = 0;
+            filename = chm_file;
+        }
+        else
+        {
+            if (command!=HH_DISPLAY_SEARCH) /* FIXME - use HH_FTS_QUERYW structure in data */
+                index = (const WCHAR*)data;
+        }
 
         info = CreateHelpViewer(filename);
 
         if (info)
         {
-            res = NavigateToChm(info, info->pCHMInfo->szFile, info->WinType.pszFile);
+            if (!index)
+                index = info->WinType.pszFile;
+            res = NavigateToChm(info, info->pCHMInfo->szFile, index);
             if(!res)
                 ReleaseHelpViewer(info);
         }
