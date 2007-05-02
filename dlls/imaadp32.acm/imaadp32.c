@@ -93,7 +93,7 @@ static const Format ADPCM_Formats[] =
 /***********************************************************************
  *           ADPCM_GetFormatIndex
  */
-static	DWORD	ADPCM_GetFormatIndex(LPWAVEFORMATEX wfx)
+static	DWORD	ADPCM_GetFormatIndex(const WAVEFORMATEX *wfx)
 {
     int             i, hi;
     const Format*   fmts;
@@ -773,7 +773,7 @@ static	LRESULT	ADPCM_StreamClose(PACMDRVSTREAMINSTANCE adsi)
  *           ADPCM_StreamSize
  *
  */
-static	LRESULT ADPCM_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE adss)
+static	LRESULT ADPCM_StreamSize(const ACMDRVSTREAMINSTANCE *adsi, PACMDRVSTREAMSIZE adss)
 {
     switch (adss->fdwSize)
     {
