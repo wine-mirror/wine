@@ -88,6 +88,9 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
     const var_t *var;
     int method_count = 0;
 
+    if (!implicit_handle)
+        print_client("static RPC_BINDING_HANDLE %s__MIDL_AutoBindHandle;\n\n", iface->name);
+
     if (iface->funcs) LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
     {
         const var_t *def = func->def;
@@ -269,13 +272,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
 }
 
 
-static void write_bindinghandledecl(type_t *iface)
-{
-    print_client("static RPC_BINDING_HANDLE %s__MIDL_AutoBindHandle;\n", iface->name);
-    fprintf(client, "\n");
-}
-
-
 static void write_stubdescdecl(type_t *iface)
 {
     print_client("static const MIDL_STUB_DESC %s_StubDesc;\n", iface->name);
@@ -433,8 +429,6 @@ void write_client(ifref_list_t *ifaces)
     
             write_clientinterfacedecl(iface->iface);
             write_stubdescdecl(iface->iface);
-            write_bindinghandledecl(iface->iface);
-    
             write_function_stubs(iface->iface, &proc_offset, &type_offset);
 
             print_client("#if !defined(__RPC_WIN32__)\n");
