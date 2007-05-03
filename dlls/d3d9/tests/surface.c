@@ -227,6 +227,65 @@ static void test_lockrect_offset(IDirect3DDevice9 *device)
     }
 }
 
+static void test_lockrect_invalid(IDirect3DDevice9 *device)
+{
+    IDirect3DSurface9 *surface = 0;
+    D3DLOCKED_RECT locked_rect;
+    unsigned int i;
+    BYTE *base;
+    HRESULT hr;
+
+    const RECT test_data[] = {
+        {60, 60, 68, 68},       /* Valid */
+        {60, 60, 60, 68},       /* 0 height */
+        {60, 60, 68, 60},       /* 0 width */
+        {68, 60, 60, 68},       /* left > right */
+        {60, 68, 68, 60},       /* top > bottom */
+        {-8, 60,  0, 68},       /* left < surface */
+        {60, -8, 68,  0},       /* top < surface */
+        {-16, 60, -8, 68},      /* right < surface */
+        {60, -16, 68, -8},      /* bottom < surface */
+        {60, 60, 136, 68},      /* right > surface */
+        {60, 60, 68, 136},      /* bottom > surface */
+        {136, 60, 144, 68},     /* left > surface */
+        {60, 136, 68, 144},     /* top > surface */
+    };
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 128, 128, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &surface, 0);
+    ok(SUCCEEDED(hr), "CreateOffscreenPlainSurface failed (0x%08x)\n", hr);
+
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
+
+    base = locked_rect.pBits;
+
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "UnlockRect failed (0x%08x)\n", hr);
+
+    for (i = 0; i < (sizeof(test_data) / sizeof(*test_data)); ++i)
+    {
+        unsigned int offset, expected_offset;
+        const RECT *rect = &test_data[i];
+
+        locked_rect.pBits = (BYTE *)0xdeadbeef;
+        locked_rect.Pitch = 0xdeadbeef;
+
+        hr = IDirect3DSurface9_LockRect(surface, &locked_rect, rect, 0);
+        ok(SUCCEEDED(hr), "LockRect failed (0x%08x) for rect [%d, %d]->[%d, %d]\n",
+                hr, rect->left, rect->top, rect->right, rect->bottom);
+
+        offset = (BYTE *)locked_rect.pBits - base;
+        expected_offset = rect->top * locked_rect.Pitch + rect->left * 4;
+        ok(offset == expected_offset, "Got offset %u, expected offset %u for rect [%d, %d]->[%d, %d]\n",
+                offset, expected_offset, rect->left, rect->top, rect->right, rect->bottom);
+
+        hr = IDirect3DSurface9_UnlockRect(surface);
+        ok(SUCCEEDED(hr), "UnlockRect failed (0x%08x)\n", hr);
+    }
+
+    IDirect3DSurface9_Release(surface);
+}
+
 START_TEST(surface)
 {
     HMODULE d3d9_handle;
@@ -245,4 +304,5 @@ START_TEST(surface)
     test_surface_get_container(device_ptr);
     test_surface_alignment(device_ptr);
     test_lockrect_offset(device_ptr);
+    test_lockrect_invalid(device_ptr);
 }
