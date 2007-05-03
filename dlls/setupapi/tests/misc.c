@@ -103,6 +103,42 @@ static BOOL check_format(LPSTR path, LPSTR inf)
     return (!inf) ? res : res && (inf == path + lstrlen(check) - 3);
 }
 
+static void test_original_file_name(LPCSTR original, LPCSTR dest)
+{
+    HINF hinf;
+    PSP_INF_INFORMATION pspii;
+    SP_ORIGINAL_FILE_INFO spofi;
+    BOOL res;
+    DWORD size;
+
+    hinf = SetupOpenInfFileA(dest, NULL, INF_STYLE_WIN4, NULL);
+    ok(hinf != NULL, "SetupOpenInfFileA failed with error %d\n", GetLastError());
+
+    res = SetupGetInfInformation(hinf, INFINFO_INF_SPEC_IS_HINF, NULL, 0, &size);
+    ok(res, "SetupGetInfInformation failed with error %d\n", GetLastError());
+
+    pspii = HeapAlloc(GetProcessHeap(), 0, size);
+
+    res = SetupGetInfInformation(hinf, INFINFO_INF_SPEC_IS_HINF, pspii, size, NULL);
+    ok(res, "SetupGetInfInformation failed with error %d\n", GetLastError());
+
+    spofi.cbSize = 0;
+    res = SetupQueryInfOriginalFileInformationA(pspii, 0, NULL, &spofi);
+    ok(!res && GetLastError() == ERROR_INVALID_USER_BUFFER,
+        "SetupQueryInfOriginalFileInformationA should have failed with ERROR_INVALID_USER_BUFFER instead of %d\n", GetLastError());
+
+    spofi.cbSize = sizeof(spofi);
+    res = SetupQueryInfOriginalFileInformationA(pspii, 0, NULL, &spofi);
+    ok(res, "SetupQueryInfOriginalFileInformationA failed with error %d\n", GetLastError());
+    ok(!spofi.OriginalCatalogName[0], "spofi.OriginalCatalogName should have been \"\" instead of \"%s\"\n", spofi.OriginalCatalogName);
+    todo_wine
+    ok(!strcmp(original, spofi.OriginalInfName), "spofi.OriginalInfName of %s didn't match real original name %s\n", spofi.OriginalInfName, original);
+
+    HeapFree(GetProcessHeap(), 0, pspii);
+
+    SetupCloseInfFile(hinf);
+}
+
 static void test_SetupCopyOEMInf(void)
 {
     CHAR toolong[MAX_PATH * 2];
@@ -232,6 +268,8 @@ static void test_SetupCopyOEMInf(void)
     ok(check_format(dest, NULL), "Expected %%windir%%\\inf\\OEMx.inf, got %s\n", dest);
     ok(file_exists(path), "Expected source inf to exist\n");
     ok(size == lstrlen(dest_save) + 1, "Expected size to be lstrlen(dest_save) + 1\n");
+
+    test_original_file_name(strrchr(path, '\\') + 1, dest);
 
     /* get the DestinationInfFileName, DestinationInfFileNameSize, and DestinationInfFileNameComponent */
     SetLastError(0xdeadbeef);

@@ -616,9 +616,31 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationA(
     PSP_ALTPLATFORM_INFO AlternativePlatformInfo,
     PSP_ORIGINAL_FILE_INFO_A OriginalFileInfo)
 {
-    FIXME("(%p, %d, %p, %p): stub\n", InfInformation, InfIndex,
+    BOOL ret;
+    SP_ORIGINAL_FILE_INFO_W OriginalFileInfoW;
+
+    TRACE("(%p, %d, %p, %p)\n", InfInformation, InfIndex,
         AlternativePlatformInfo, OriginalFileInfo);
-    return FALSE;
+
+    if (OriginalFileInfo->cbSize != sizeof(*OriginalFileInfo))
+    {
+        ERR("incorrect OriginalFileInfo->cbSize of %d\n", OriginalFileInfo->cbSize);
+        SetLastError( ERROR_INVALID_USER_BUFFER );
+        return FALSE;
+    }
+
+    OriginalFileInfoW.cbSize = sizeof(OriginalFileInfoW);
+    ret = SetupQueryInfOriginalFileInformationW(InfInformation, InfIndex,
+        AlternativePlatformInfo, &OriginalFileInfoW);
+    if (ret)
+    {
+        WideCharToMultiByte(CP_ACP, 0, OriginalFileInfoW.OriginalInfName, MAX_PATH,
+            OriginalFileInfo->OriginalInfName, MAX_PATH, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, OriginalFileInfoW.OriginalCatalogName, MAX_PATH,
+            OriginalFileInfo->OriginalCatalogName, MAX_PATH, NULL, NULL);
+    }
+
+    return ret;
 }
 
 /***********************************************************************
@@ -629,7 +651,31 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationW(
     PSP_ALTPLATFORM_INFO AlternativePlatformInfo,
     PSP_ORIGINAL_FILE_INFO_W OriginalFileInfo)
 {
+    LPCWSTR inf_name;
+
     FIXME("(%p, %d, %p, %p): stub\n", InfInformation, InfIndex,
         AlternativePlatformInfo, OriginalFileInfo);
-    return FALSE;
+
+    if (OriginalFileInfo->cbSize != sizeof(*OriginalFileInfo))
+    {
+        ERR("incorrect OriginalFileInfo->cbSize of %d\n", OriginalFileInfo->cbSize);
+        return ERROR_INVALID_USER_BUFFER;
+    }
+
+    /* FIXME: we should get OriginalCatalogName from CatalogFile line in
+     * the original inf file and cache it, but that would require building a
+     * .pnf file. */
+    OriginalFileInfo->OriginalCatalogName[0] = '\0';
+
+    /* FIXME: not quite correct as we just return the same file name as
+     * destination (copied) inf file, not the source (original) inf file.
+     * to fix it properly would require building a .pnf file */
+    /* file name is stored in VersionData field of InfInformation */
+    inf_name = strrchrW((LPWSTR)&InfInformation->VersionData[0], '\\');
+    if (inf_name) inf_name++;
+    else inf_name = (LPWSTR)&InfInformation->VersionData[0];
+
+    strcpyW(OriginalFileInfo->OriginalInfName, inf_name);
+
+    return TRUE;
 }
