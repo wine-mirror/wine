@@ -1998,7 +1998,7 @@ static inline BOOL use_ps(IWineD3DDeviceImpl *device) {
             && ((IWineD3DPixelShaderImpl *)device->stateBlock->pixelShader)->baseShader.function);
 }
 
-void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, const WINED3DRECT *src_rect,
-        IWineD3DSurface *dst_surface, const WINED3DRECT *dst_rect, WINED3DTEXTUREFILTERTYPE filter, BOOL flip);
+void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED3DRECT *src_rect,
+        IWineD3DSurface *dst_surface, WINED3DRECT *dst_rect, WINED3DTEXTUREFILTERTYPE filter, BOOL flip);
 
 #endif
