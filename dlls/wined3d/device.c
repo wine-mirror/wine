@@ -274,14 +274,14 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
     GL_EXTCALL(glGenBuffersARB(1, &object->vbo));
     error = glGetError();
     if(object->vbo == 0 || error != GL_NO_ERROR) {
-        WARN("Failed to create a VBO with error %d\n", error);
+        WARN("Failed to create a VBO with error %s (%#x)\n", debug_glerror(error), error);
         goto error;
     }
 
     GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, object->vbo));
     error = glGetError();
     if(error != GL_NO_ERROR) {
-        WARN("Failed to bind the VBO, error %d\n", error);
+        WARN("Failed to bind the VBO with error %s (%#x)\n", debug_glerror(error), error);
         goto error;
     }
 
@@ -309,7 +309,7 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
     GL_EXTCALL(glBufferDataARB(GL_ARRAY_BUFFER_ARB, object->resource.size, NULL, glUsage));
     error = glGetError();
     if(error != GL_NO_ERROR) {
-        WARN("glBufferDataARB failed with error %d\n", error);
+        WARN("glBufferDataARB failed with error %s (%#x)\n", debug_glerror(error), error);
         goto error;
     }
 
@@ -392,14 +392,14 @@ static void CreateIndexBufferVBO(IWineD3DDeviceImpl *This, IWineD3DIndexBufferIm
     GL_EXTCALL(glGenBuffersARB(1, &object->vbo));
     error = glGetError();
     if(error != GL_NO_ERROR || object->vbo == 0) {
-        ERR("Creating a vbo failed, continueing without vbo for this buffer\n");
+        ERR("Creating a vbo failed with error %s (%#x), continuing without vbo for this buffer\n", debug_glerror(error), error);
         goto out;
     }
 
     GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, object->vbo));
     error = glGetError();
     if(error != GL_NO_ERROR) {
-        ERR("Failed to bind index buffer, continueing without vbo for this buffer\n");
+        ERR("Failed to bind index buffer with error %s (%#x), continuing without vbo for this buffer\n", debug_glerror(error), error);
         goto out;
     }
 
@@ -410,7 +410,7 @@ static void CreateIndexBufferVBO(IWineD3DDeviceImpl *This, IWineD3DIndexBufferIm
     GL_EXTCALL(glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, object->resource.size, NULL, glUsage));
     error = glGetError();
     if(error != GL_NO_ERROR) {
-        ERR("Failed to initialize the index buffer\n");
+        ERR("Failed to initialize the index buffer with error %s (%#x)\n", debug_glerror(error), error);
         goto out;
     }
     LEAVE_GL();
