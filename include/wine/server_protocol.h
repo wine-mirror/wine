@@ -2677,6 +2677,8 @@ struct ioctl_request
 struct ioctl_reply
 {
     struct reply_header __header;
+    obj_handle_t   wait;
+    unsigned int   options;
     /* VARARG(out_data,bytes); */
 };
 
@@ -4626,6 +4628,6 @@ union generic_reply
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 299
+#define SERVER_PROTOCOL_VERSION 300
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

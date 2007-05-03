@@ -933,6 +933,8 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
                                    PVOID out_buffer, ULONG out_size )
 {
     NTSTATUS status;
+    HANDLE wait_handle;
+    ULONG options;
 
     SERVER_START_REQ( ioctl )
     {
@@ -948,12 +950,21 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         wine_server_set_reply( req, out_buffer, out_size );
         if (!(status = wine_server_call( req )))
             io->Information = wine_server_reply_size( reply );
+        wait_handle = reply->wait;
+        options     = reply->options;
     }
     SERVER_END_REQ;
 
     if (status == STATUS_NOT_SUPPORTED)
         FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+
+    if (wait_handle)
+    {
+        NtWaitForSingleObject( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT), NULL );
+        status = io->u.Status;
+        NtClose( wait_handle );
+    }
 
     return status;
 }

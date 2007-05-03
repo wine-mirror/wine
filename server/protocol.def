@@ -1973,6 +1973,8 @@ enum message_type
     async_data_t   async;         /* async I/O parameters */
     VARARG(in_data,bytes);        /* ioctl input data */
 @REPLY
+    obj_handle_t   wait;          /* handle to wait on for blocking ioctl */
+    unsigned int   options;       /* device open options */
     VARARG(out_data,bytes);       /* ioctl output data */
 @END
 

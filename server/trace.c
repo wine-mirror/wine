@@ -2418,6 +2418,8 @@ static void dump_ioctl_request( const struct ioctl_request *req )
 
 static void dump_ioctl_reply( const struct ioctl_reply *req )
 {
+    fprintf( stderr, " wait=%p,", req->wait );
+    fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " out_data=" );
     dump_varargs_bytes( cur_size );
 }

@@ -40,8 +40,8 @@ struct fd_ops
     /* get file information */
     enum server_fd_type (*get_fd_type)(struct fd *fd);
     /* perform an ioctl on the file */
-    void (*ioctl)(struct fd *fd, ioctl_code_t code, const async_data_t *async,
-                  const void *data, data_size_t size);
+    obj_handle_t (*ioctl)(struct fd *fd, ioctl_code_t code, const async_data_t *async,
+                          const void *data, data_size_t size);
     /* queue an async operation */
     void (*queue_async)(struct fd *, const async_data_t *data, int type, int count);
     /* selected events for async i/o need an update */
@@ -79,8 +79,8 @@ extern void default_poll_event( struct fd *fd, int event );
 extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
-extern void default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
-                              const void *data, data_size_t size );
+extern obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
+                                      const void *data, data_size_t size );
 extern void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 extern void default_fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern void default_fd_cancel_async( struct fd *fd );
