@@ -463,8 +463,8 @@
 @ stub SetupQueryFileLogW
 @ stdcall SetupQueryInfFileInformationA(ptr long str long ptr)
 @ stdcall SetupQueryInfFileInformationW(ptr long wstr long ptr)
-@ stub SetupQueryInfOriginalFileInformationA
-@ stub SetupQueryInfOriginalFileInformationW
+@ stdcall SetupQueryInfOriginalFileInformationA(ptr long ptr ptr)
+@ stdcall SetupQueryInfOriginalFileInformationW(ptr long ptr ptr)
 @ stub SetupQueryInfVersionInformationA
 @ stub SetupQueryInfVersionInformationW
 @ stub SetupQuerySourceListA

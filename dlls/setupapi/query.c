@@ -607,3 +607,29 @@ BOOL WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section,
     HeapFree( GetProcessHeap(), 0, dir );
     return TRUE;
 }
+
+/***********************************************************************
+ *            SetupQueryInfOriginalFileInformationA   (SETUPAPI.@)
+ */
+BOOL WINAPI SetupQueryInfOriginalFileInformationA(
+    PSP_INF_INFORMATION InfInformation, UINT InfIndex,
+    PSP_ALTPLATFORM_INFO AlternativePlatformInfo,
+    PSP_ORIGINAL_FILE_INFO_A OriginalFileInfo)
+{
+    FIXME("(%p, %d, %p, %p): stub\n", InfInformation, InfIndex,
+        AlternativePlatformInfo, OriginalFileInfo);
+    return FALSE;
+}
+
+/***********************************************************************
+ *            SetupQueryInfOriginalFileInformationW   (SETUPAPI.@)
+ */
+BOOL WINAPI SetupQueryInfOriginalFileInformationW(
+    PSP_INF_INFORMATION InfInformation, UINT InfIndex,
+    PSP_ALTPLATFORM_INFO AlternativePlatformInfo,
+    PSP_ORIGINAL_FILE_INFO_W OriginalFileInfo)
+{
+    FIXME("(%p, %d, %p, %p): stub\n", InfInformation, InfIndex,
+        AlternativePlatformInfo, OriginalFileInfo);
+    return FALSE;
+}
