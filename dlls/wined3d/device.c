@@ -5160,14 +5160,14 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface, CONS
 
         TRACE("Surface %p is onscreen\n", surface);
 
-        GL_EXTCALL(glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0));
+        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
         buffer = surface_get_gl_buffer(surface, swapchain);
         glDrawBuffer(buffer);
         checkGLcall("glDrawBuffer()");
     } else {
         TRACE("Surface %p is offscreen\n", surface);
-        bind_fbo(iface, GL_DRAW_FRAMEBUFFER_EXT, &This->dst_fbo);
-        attach_surface_fbo(This, GL_DRAW_FRAMEBUFFER_EXT, 0, surface);
+        bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->dst_fbo);
+        attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, 0, surface);
     }
 
     if (rect) {
