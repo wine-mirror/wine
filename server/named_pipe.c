@@ -846,6 +846,7 @@ static obj_handle_t named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, c
     case FSCTL_PIPE_WAIT:
         {
             const FILE_PIPE_WAIT_FOR_BUFFER *buffer = data;
+            obj_handle_t wait_handle = 0;
             struct named_pipe *pipe;
             struct pipe_server *server;
             struct unicode_str name;
@@ -867,13 +868,22 @@ static obj_handle_t named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, c
             {
                 struct async *async;
 
-                if (!pipe->waiters && !(pipe->waiters = create_async_queue( NULL )))
-                {
-                    release_object( pipe );
-                    return 0;
-                }
+                if (!pipe->waiters && !(pipe->waiters = create_async_queue( NULL ))) goto done;
 
-                if ((async = create_async( current, pipe->waiters, async_data )))
+                if (!async_data->event && !async_data->apc)
+                {
+                    async_data_t new_data = *async_data;
+                    if (!(wait_handle = alloc_wait_event( current->process ))) goto done;
+                    new_data.event = wait_handle;
+                    if (!(async = create_async( current, pipe->waiters, &new_data )))
+                    {
+                        close_handle( current->process, wait_handle );
+                        wait_handle = 0;
+                    }
+                }
+                else async = create_async( current, pipe->waiters, async_data );
+
+                if (async)
                 {
                     timeout_t when = buffer->TimeoutSpecified ? buffer->Timeout.QuadPart : pipe->timeout;
                     async_set_timeout( async, when, STATUS_IO_TIMEOUT );
@@ -883,8 +893,9 @@ static obj_handle_t named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, c
             }
             else release_object( server );
 
+        done:
             release_object( pipe );
-            return 0;
+            return wait_handle;
         }
 
     default:

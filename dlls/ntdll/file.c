@@ -1075,28 +1075,6 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         if (!status) status = DIR_unmount_device( handle );
         break;
 
-    case FSCTL_PIPE_WAIT:
-        {
-            HANDLE internal_event = 0;
-
-            if(!event && !apc)
-            {
-                status = NtCreateEvent(&internal_event, EVENT_ALL_ACCESS, NULL, FALSE, FALSE);
-                if (status != STATUS_SUCCESS) break;
-                event = internal_event;
-            }
-            status = server_ioctl_file( handle, event, apc, apc_context, io, code,
-                                        in_buffer, in_size, out_buffer, out_size );
-
-            if (internal_event && status == STATUS_PENDING)
-            {
-                while (NtWaitForSingleObject(internal_event, TRUE, NULL) == STATUS_USER_APC) /*nothing*/ ;
-                status = io->u.Status;
-            }
-            if (internal_event) NtClose(internal_event);
-        }
-        break;
-
     case FSCTL_PIPE_PEEK:
         {
             FILE_PIPE_PEEK_BUFFER *buffer = out_buffer;
@@ -1173,6 +1151,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         break;
 
     case FSCTL_PIPE_LISTEN:
+    case FSCTL_PIPE_WAIT:
     default:
         status = server_ioctl_file( handle, event, apc, apc_context, io, code,
                                     in_buffer, in_size, out_buffer, out_size );
