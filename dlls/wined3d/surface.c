@@ -720,17 +720,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     } else {
         TRACE("Lock Rect (%p) = l %d, t %d, r %d, b %d\n", pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
 
-        if ((pRect->top < 0) ||
-             (pRect->left < 0) ||
-             (pRect->left >= pRect->right) ||
-             (pRect->top >= pRect->bottom) ||
-             (pRect->right > This->currentDesc.Width) ||
-             (pRect->bottom > This->currentDesc.Height))
-        {
-            WARN(" Invalid values in pRect !!!\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-
         /* DXTn textures are based on compressed blocks of 4x4 pixels, each
          * 16 bytes large (8 bytes in case of DXT1). Because of that Pitch has
          * slightly different meaning compared to regular textures. For DXTn

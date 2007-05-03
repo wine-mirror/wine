@@ -147,6 +147,22 @@ static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     TRACE("(%p) calling IWineD3DSurface_LockRect %p %p %p %d\n", This, This->wineD3DSurface, pLockedRect, pRect, Flags);
+
+    if (pRect) {
+        D3DSURFACE_DESC desc;
+        IDirect3DSurface8_GetDesc(iface, &desc);
+
+        if ((pRect->left < 0)
+                || (pRect->top < 0)
+                || (pRect->left >= pRect->right)
+                || (pRect->top >= pRect->bottom)
+                || (pRect->right > desc.Width)
+                || (pRect->bottom > desc.Height)) {
+            WARN("Trying to lock an invalid rectangle, returning D3DERR_INVALIDCALL\n");
+            return D3DERR_INVALIDCALL;
+        }
+    }
+
     return IWineD3DSurface_LockRect(This->wineD3DSurface, (WINED3DLOCKED_RECT *) pLockedRect, pRect, Flags);
 }
 

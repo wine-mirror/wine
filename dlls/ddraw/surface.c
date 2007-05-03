@@ -549,6 +549,20 @@ IDirectDrawSurfaceImpl_Lock(IDirectDrawSurface7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%p,%p,%x,%p)\n", This, Rect, DDSD, Flags, h);
 
+    if (Rect)
+    {
+        if ((Rect->left < 0)
+                || (Rect->top < 0)
+                || (Rect->left > Rect->right)
+                || (Rect->top > Rect->bottom)
+                || (Rect->right > This->surface_desc.dwWidth)
+                || (Rect->bottom > This->surface_desc.dwHeight))
+        {
+            WARN("Trying to lock an invalid rectangle, returning DDERR_INVALIDPARAMS\n");
+            return DDERR_INVALIDPARAMS;
+        }
+    }
+
     if(!DDSD)
         return DDERR_INVALIDPARAMS;
 
