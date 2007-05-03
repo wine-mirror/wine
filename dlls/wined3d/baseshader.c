@@ -519,6 +519,7 @@ void shader_dump_param(
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     static const char * const rastout_reg_names[] = { "oPos", "oFog", "oPts" };
+    static const char * const misctype_reg_names[] = { "vPos", "vFace"};
     char swizzle_reg_chars[4];
 
     DWORD reg = param & WINED3DSP_REGNUM_MASK;
@@ -610,6 +611,13 @@ void shader_dump_param(
             break;
         case WINED3DSPR_SAMPLER:
             TRACE("s%u", reg);
+            break;
+        case WINED3DSPR_MISCTYPE:
+            if (reg > 1) {
+                FIXME("Unhandled misctype register %d\n", reg);
+            } else {
+                TRACE("%s", misctype_reg_names[reg]);
+            }
             break;
         case WINED3DSPR_PREDICATE:
             TRACE("p%u", reg);

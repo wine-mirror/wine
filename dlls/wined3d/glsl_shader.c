@@ -690,6 +690,18 @@ static void shader_glsl_get_register_name(
         else
             sprintf(tmpStr, "gl_TexCoord[%u]", reg);
     break;
+    case WINED3DSPR_MISCTYPE:
+        if (reg == 0) {
+            /* vPos */
+            sprintf(tmpStr, "gl_FragCoord");
+        } else {
+            /* gl_FrontFacing could be used for vFace, but note that
+             * gl_FrontFacing is a bool, while vFace is a float for
+             * which the sign determines front/back */
+            FIXME("Unhandled misctype register %d\n", reg);
+            sprintf(tmpStr, "unrecognized_register");
+        }
+        break;
     default:
         FIXME("Unhandled register name Type(%d)\n", regtype);
         sprintf(tmpStr, "unrecognized_register");
