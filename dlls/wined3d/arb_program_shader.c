@@ -419,7 +419,7 @@ static void shader_hw_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const ch
 
     /* Signedness correction */
     if(!GL_SUPPORT(NV_TEXTURE_SHADER3) /* Provides signed formats */ && texture) {
-        WINED3DFORMAT format = texture->baseTexture.format;
+        WINED3DFORMAT format = texture->resource.format;
 
         if((format == WINED3DFMT_V8U8 && !GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) ||
             format == WINED3DFMT_Q8W8V8U8 ||

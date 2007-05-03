@@ -874,8 +874,6 @@ typedef struct IWineD3DBaseTextureClass
 {
     UINT                    levels;
     BOOL                    dirty;
-    WINED3DFORMAT           format;
-    DWORD                   usage;
     UINT                    textureName;
     UINT                    LOD;
     WINED3DTEXTUREFILTERTYPE filterType;
