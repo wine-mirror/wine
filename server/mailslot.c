@@ -359,7 +359,7 @@ void create_mailslot_device( struct directory *root, const struct unicode_str *n
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         dev->mailslots = NULL;
-        if (!(dev->fd = alloc_pseudo_fd( &mailslot_device_fd_ops, &dev->obj )) ||
+        if (!(dev->fd = alloc_pseudo_fd( &mailslot_device_fd_ops, &dev->obj, 0 )) ||
             !(dev->mailslots = create_namespace( 7 )))
         {
             release_object( dev );

@@ -480,7 +480,7 @@ void create_named_pipe_device( struct directory *root, const struct unicode_str 
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         dev->pipes = NULL;
-        if (!(dev->fd = alloc_pseudo_fd( &named_pipe_device_fd_ops, &dev->obj )) ||
+        if (!(dev->fd = alloc_pseudo_fd( &named_pipe_device_fd_ops, &dev->obj, 0 )) ||
             !(dev->pipes = create_namespace( 7 )))
         {
             release_object( dev );
@@ -709,7 +709,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
 
     list_add_head( &pipe->servers, &server->entry );
     grab_object( pipe );
-    if (!(server->ioctl_fd = alloc_pseudo_fd( &pipe_server_fd_ops, &server->obj )))
+    if (!(server->ioctl_fd = alloc_pseudo_fd( &pipe_server_fd_ops, &server->obj, options )))
     {
         release_object( server );
         server = NULL;

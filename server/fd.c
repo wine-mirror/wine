@@ -1409,7 +1409,7 @@ static struct fd *alloc_fd_object(void)
 }
 
 /* allocate a pseudo fd object, for objects that need to behave like files but don't have a unix fd */
-struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *user )
+struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *user, unsigned int options )
 {
     struct fd *fd = alloc_object( &fd_ops );
 
@@ -1420,6 +1420,7 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     fd->inode      = NULL;
     fd->closed     = NULL;
     fd->access     = 0;
+    fd->options    = options;
     fd->sharing    = 0;
     fd->unix_fd    = -1;
     fd->signaled   = 0;
