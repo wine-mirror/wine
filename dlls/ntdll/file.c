@@ -881,7 +881,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             timeout = get_next_io_timeout( &timeouts, total );
 
             pfd.fd = unix_handle;
-            pfd.events = POLLIN;
+            pfd.events = POLLOUT;
 
             if (!timeout || !(ret = poll( &pfd, 1, timeout )))
             {
