@@ -1,6 +1,6 @@
 /*
  * Copyright 1998 Juergen Schmied
- * Copyright 2003,2004 José Manuel Ferrer Ortiz
+ * Copyright 2003,2004,2007 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -105,6 +105,19 @@ FONT 8, "MS Shell Dlg"
 	4, 40, 180, 120
 }
 
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Message"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Sí", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Sí a &todo", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&No", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Cancelar", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Acerca de %s"
@@ -115,7 +128,7 @@ FONT 10, "MS Shell Dlg"
  ICON "", 1088, 10, 10, 14, 16
  LTEXT "", 100, 30, 10, 137, 10
  LTEXT "", 101, 30, 22, 137, 10
- LTEXT "Wine está disponible gracias a:", 98, 8, 55, 137, 10
+ LTEXT "Wine le ha sido proporcionado por:", 98, 8, 55, 137, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -132,47 +145,9 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "&Examinar...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
 
-/*
-	special folders
-*/
 STRINGTABLE DISCARDABLE
 {
-	IDS_DESKTOP		"Escritorio"
-	IDS_MYCOMPUTER		"Mi PC"
-}
-
-/*
-	context menus
-*/
-STRINGTABLE DISCARDABLE
-{
-	IDS_VIEW_LARGE		"Iconos &grandes"
-	IDS_VIEW_SMALL		"Iconos &pequeños"
-	IDS_VIEW_LIST		"&Lista"
-	IDS_VIEW_DETAILS	"&Detalles"
-	IDS_SELECT		"Seleccionar"
-	IDS_OPEN		"Abrir"
-}
-
-STRINGTABLE DISCARDABLE
-{
-	IDS_CREATEFOLDER_DENIED "No se puede crear nueva carpeta: Permiso denegado."
-	IDS_CREATEFOLDER_CAPTION "Error durante la creación de una nueva carpeta"
-	IDS_DELETEITEM_CAPTION "Confirmar eliminación de archivo"
-	IDS_DELETEFOLDER_CAPTION "Confirmar eliminación de carpeta"
-	IDS_DELETEITEM_TEXT "¿Seguro que desea eliminar '%1'?"
-	IDS_DELETEMULTIPLE_TEXT "¿Seguro que desea eliminar estos %1 elementos?"
-	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
-	IDS_OVERWRITEFILE_CAPTION "Confirmar sobreescritura de archivo"
-	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
-	    "If the files in the destination folder have the same names as files in the\n"\
-	    "selected folder they will be replaced. Do you still want to move or copy\n"\
-	    "the folder?"
-}
-
-/*	columns in the shellview	*/
-STRINGTABLE
-BEGIN
+        /* columns in the shellview */
 	IDS_SHV_COLUMN1         "Archivo"
 	IDS_SHV_COLUMN2         "Tamaño"
 	IDS_SHV_COLUMN3         "Tipo"
@@ -182,20 +157,49 @@ BEGIN
 	IDS_SHV_COLUMN7         "Tamaño disponible"
 	IDS_SHV_COLUMN8         "Nombre"
 	IDS_SHV_COLUMN9         "Comentarios"
-END
+	IDS_SHV_COLUMN10        "Propietaro"
+	IDS_SHV_COLUMN11        "Grupo"
+	IDS_SHV_COLUMN_DELFROM  "Localización original"
+	IDS_SHV_COLUMN_DELDATE  "Fecha de borrado"
 
-/* message box strings */
-STRINGTABLE DISCARDABLE
-{
-	IDS_RESTART_TITLE	"Reiniciar"
-	IDS_RESTART_PROMPT	"¿Desea simular un reinicio de Windows?"
-	IDS_SHUTDOWN_TITLE	"Apagar"
-	IDS_SHUTDOWN_PROMPT	"¿Desea terminar su sesión Wine?"
-}
+        /* special folders */
+	IDS_DESKTOP		"Escritorio"
+	IDS_MYCOMPUTER		"Mi PC"
+        IDS_RECYCLEBIN_FOLDER_NAME "Papelera de reciclaje"
 
-/* shell folder path default values */
-STRINGTABLE DISCARDABLE
-{
+        /* context menus */
+	IDS_VIEW_LARGE		"Iconos &grandes"
+	IDS_VIEW_SMALL		"Iconos &pequeños"
+	IDS_VIEW_LIST		"&Lista"
+	IDS_VIEW_DETAILS	"&Detalles"
+	IDS_SELECT		"Seleccionar"
+	IDS_OPEN		"Abrir"
+
+	IDS_CREATEFOLDER_DENIED "No se puede crear nueva carpeta: Permiso denegado."
+	IDS_CREATEFOLDER_CAPTION "Error durante la creación de una nueva carpeta"
+	IDS_DELETEITEM_CAPTION "Confirmar eliminación de archivo"
+	IDS_DELETEFOLDER_CAPTION "Confirmar eliminación de carpeta"
+	IDS_DELETEITEM_TEXT "¿Seguro que desea eliminar '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "¿Seguro que desea eliminar estos %1 elementos?"
+	IDS_DELETESELECTED_TEXT "¿Seguro que desea eliminar el (los) elemento(s) seleccionado(s)?"
+	IDS_TRASHITEM_TEXT "¿Seguro que desea enviar '%1' a la papelera de reciclaje?"
+	IDS_TRASHFOLDER_TEXT "¿Seguro que desea enviar '%1' y todo su contenido a la papelera de reciclaje?"
+	IDS_TRASHMULTIPLE_TEXT "¿Seguro que desea enviar estos %1 elementos a la papelera de reciclaje?"
+	IDS_CANTTRASH_TEXT "El elemento '%1' no puede enviarse a la papelera de reciclaje. ¿Desea eliminarlo en su lugar?"
+	IDS_OVERWRITEFILE_TEXT "Esta carpeta ya contiene un archivo llamado '%1'.\n\n¿Desea reemplazarlo?"
+	IDS_OVERWRITEFILE_CAPTION "Confirmar sobreescritura de archivo"
+	IDS_OVERWRITEFOLDER_TEXT "Esta carpeta ya contiene una carpeta llamada '%1'.\n\n"\
+	    "Si los archivos de la carpeta de destino tienen los mismos nombres que los\n"\
+	    "de la carpeta seleccionada, éstos serán reemplazados. ¿Todavía desea mover\n"\
+	    "o copiar la carpeta?"
+
+        /* message box strings */
+        IDS_RESTART_TITLE	"Reiniciar"
+        IDS_RESTART_PROMPT	"¿Desea simular un reinicio de Windows?"
+        IDS_SHUTDOWN_TITLE	"Apagar"
+        IDS_SHUTDOWN_PROMPT	"¿Desea terminar su sesión de Wine?"
+
+        /* shell folder path default values */
 	IDS_PROGRAMS                "Menú Inicio\\Programas"
 	IDS_PERSONAL                "Mis documentos"
 	IDS_FAVORITES               "Favoritos"

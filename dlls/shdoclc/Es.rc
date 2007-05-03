@@ -1,7 +1,7 @@
 /*
  * Spanish resources for mshtml
  *
- * Copyright 2006 José Manuel Ferrer Ortiz
+ * Copyright 2006, 2007 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,17 @@
 
 
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_MESSAGE_BOX_TITLE, "Internet Explorer de Wine"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_PRINT_HEADER_TEMPLATE "&w&bPágina &p" /* FIXME: should be "&w&bPage &p of &P" */
+    IDS_PRINT_FOOTER_TEMPLATE "&u&b&d"
+}
 
 IDR_BROWSE_CONTEXT_MENU MENU
 {
@@ -190,22 +201,22 @@ IDR_BROWSE_CONTEXT_MENU MENU
 
     POPUP "Debug"
     {
-        MENUITEM "Trazar &etiquetas",         IDM_TRACETAGS
-        MENUITEM "Fallos de &recursos",       IDM_RESOURCEFAILURES
-        MENUITEM "Volcar Trac&king Info",     IDM_DUMPTRACKINGINFO
-        MENUITEM "Depurar &parada",           IDM_DEBUGBREAK
-        MENUITEM "Depurar &vista",            IDM_DEBUGVIEW
-        MENUITEM "Volcar &Tree",              IDM_DUMPTREE
-        MENUITEM "Volcar &Lines",             IDM_DUMPLINES
-        MENUITEM "Volcar &DisplayTree",       IDM_DUMPDISPLAYTREE
-        MENUITEM "Volcar &FormatCaches",      IDM_DUMPFORMATCACHES
-        MENUITEM "Volcar La&youtRects",       IDM_DUMPLAYOUTRECTS
-        MENUITEM "Monitor de &memoria",       IDM_MEMORYMONITOR
-        MENUITEM "Medidores de re&ndimiento", IDM_PERFORMANCEMETERS
-        MENUITEM "Guardar &HTML",             IDM_SAVEHTML
+        MENUITEM "Trazar &etiquetas",           IDM_TRACETAGS
+        MENUITEM "Fallos de &recursos",         IDM_RESOURCEFAILURES
+        MENUITEM "Volcar info de se&guimiento", IDM_DUMPTRACKINGINFO
+        MENUITEM "Depurar &parada",             IDM_DEBUGBREAK
+        MENUITEM "Depurar &vista",              IDM_DEBUGVIEW
+        MENUITEM "Volcar &Tree",                IDM_DUMPTREE
+        MENUITEM "Volcar &Lines",               IDM_DUMPLINES
+        MENUITEM "Volcar &DisplayTree",         IDM_DUMPDISPLAYTREE
+        MENUITEM "Volcar &FormatCaches",        IDM_DUMPFORMATCACHES
+        MENUITEM "Volcar La&youtRects",         IDM_DUMPLAYOUTRECTS
+        MENUITEM "Monitor de &memoria",         IDM_MEMORYMONITOR
+        MENUITEM "Medidores de re&ndimiento",   IDM_PERFORMANCEMETERS
+        MENUITEM "Guardar &HTML",               IDM_SAVEHTML
         MENUITEM SEPARATOR
-        MENUITEM "E&xaminar vista",           IDM_BROWSEMODE
-        MENUITEM "Ed&itar vista",             IDM_EDITMODE
+        MENUITEM "E&xaminar vista",             IDM_BROWSEMODE
+        MENUITEM "Ed&itar vista",               IDM_EDITMODE
     }
 
     POPUP "Vertical Scrollbar"
