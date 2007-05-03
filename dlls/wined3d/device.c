@@ -5209,7 +5209,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *) pSurface;
     WINEDDBLTFX BltFx;
-    TRACE("(%p) Colour fill Surface: %p rect: %p color: %d\n", This, pSurface, pRect, color);
+    TRACE("(%p) Colour fill Surface: %p rect: %p color: 0x%08x\n", This, pSurface, pRect, color);
 
     if (surface->resource.pool != WINED3DPOOL_DEFAULT && surface->resource.pool != WINED3DPOOL_SYSTEMMEM) {
         FIXME("call to colorfill with non WINED3DPOOL_DEFAULT or WINED3DPOOL_SYSTEMMEM surface\n");
