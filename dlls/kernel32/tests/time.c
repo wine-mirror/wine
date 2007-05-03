@@ -73,6 +73,23 @@
     (st).wSecond = 32; \
     (st).wMilliseconds = 123;
 
+#define SETUP_ZEROTIME(st) \
+    (st).wYear = 1601; \
+    (st).wMonth = 1; \
+    (st).wDay = 1; \
+    (st).wHour = 0; \
+    (st).wMinute = 0; \
+    (st).wSecond = 0; \
+    (st).wMilliseconds = 0;
+
+#define SETUP_EARLY(st) \
+    (st).wYear = 1600; \
+    (st).wMonth = 12; \
+    (st).wDay = 31; \
+    (st).wHour = 23; \
+    (st).wMinute = 59; \
+    (st).wSecond = 59; \
+    (st).wMilliseconds = 999;
 
 
 static void test_conversions(void)
@@ -81,6 +98,17 @@ static void test_conversions(void)
     SYSTEMTIME st;
 
     memset(&ft,0,sizeof ft);
+
+    SETUP_EARLY(st)
+    ok (!SystemTimeToFileTime(&st, &ft), "Conversion succeeded EARLY\n");
+    ok (GetLastError() == ERROR_INVALID_PARAMETER, "EARLY should be INVALID\n");
+
+    SETUP_ZEROTIME(st)
+    ok (SystemTimeToFileTime(&st, &ft), "Conversion failed ZERO_TIME\n");
+    ok( (!((ft.dwHighDateTime != 0) || (ft.dwLowDateTime != 0))),
+        "Wrong time for ATIME: %08x %08x (correct %08x %08x)\n",
+        ft.dwLowDateTime, ft.dwHighDateTime, 0, 0);
+
 
     SETUP_ATIME(st)
     ok (SystemTimeToFileTime(&st,&ft), "Conversion Failed ATIME\n");

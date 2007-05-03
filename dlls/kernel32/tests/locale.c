@@ -424,6 +424,34 @@ static void test_GetDateFormatW(void)
   STRINGSW("dddd d MMMM yyyy","Wednesday 23 October 2002"); /* Incorrect DOW and time */
   ret = GetDateFormatW (lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENW; EXPECT_EQW;
+
+  /* Limit tests */
+
+  curtime.wYear = 1601;
+  curtime.wMonth = 1;
+  curtime.wDay = 1;
+  curtime.wDayOfWeek = 0; /* Irrelevant */
+  curtime.wHour = 0;
+  curtime.wMinute = 0;
+  curtime.wSecond = 0;
+  curtime.wMilliseconds = 0;
+  STRINGSW("dddd d MMMM yyyy","Monday 1 January 1601");
+  SetLastError(0xdeadbeef);
+  ret = GetDateFormatW (lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENW; EXPECT_EQW;
+
+  curtime.wYear = 1600;
+  curtime.wMonth = 12;
+  curtime.wDay = 31;
+  curtime.wDayOfWeek = 0; /* Irrelevant */
+  curtime.wHour = 23;
+  curtime.wMinute = 59;
+  curtime.wSecond = 59;
+  curtime.wMilliseconds = 999;
+  STRINGSW("dddd d MMMM yyyy","Friday 31 December 1600");
+  SetLastError(0xdeadbeef);
+  ret = GetDateFormatW (lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_INVALID;
 }
 
 
