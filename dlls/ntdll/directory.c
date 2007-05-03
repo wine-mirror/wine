@@ -2013,12 +2013,21 @@ done:
 BOOLEAN WINAPI RtlDoesFileExists_U(LPCWSTR file_name)
 {
     UNICODE_STRING nt_name;
-    ANSI_STRING unix_name;
+    FILE_BASIC_INFORMATION basic_info;
+    OBJECT_ATTRIBUTES attr;
     BOOLEAN ret;
 
     if (!RtlDosPathNameToNtPathName_U( file_name, &nt_name, NULL, NULL )) return FALSE;
-    ret = (wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, FALSE ) == STATUS_SUCCESS);
-    if (ret) RtlFreeAnsiString( &unix_name );
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nt_name;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    ret = NtQueryAttributesFile(&attr, &basic_info) == STATUS_SUCCESS;
+
     RtlFreeUnicodeString( &nt_name );
     return ret;
 }
