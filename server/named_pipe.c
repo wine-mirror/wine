@@ -570,11 +570,25 @@ static enum server_fd_type pipe_client_get_fd_type( struct fd *fd )
     return FD_TYPE_PIPE;
 }
 
+static obj_handle_t alloc_wait_event( struct process *process )
+{
+    obj_handle_t handle = 0;
+    struct event *event = create_event( NULL, NULL, 0, 1, 0 );
+
+    if (event)
+    {
+        handle = alloc_handle( process, event, EVENT_ALL_ACCESS, 0 );
+        release_object( event );
+    }
+    return handle;
+}
+
 static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
                                        const void *data, data_size_t size )
 {
     struct pipe_server *server = get_fd_user( fd );
     struct async *async;
+    obj_handle_t wait_handle = 0;
 
     switch(code)
     {
@@ -583,12 +597,26 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const a
         {
         case ps_idle_server:
         case ps_wait_connect:
-            set_server_state( server, ps_wait_open );
-            if ((async = fd_queue_async( server->ioctl_fd, async_data, ASYNC_TYPE_WAIT, 0 )))
+            if (!async_data->event && !async_data->apc)
             {
+                async_data_t new_data = *async_data;
+                if (!(wait_handle = alloc_wait_event( current->process ))) break;
+                new_data.event = wait_handle;
+                if (!(async = fd_queue_async( server->ioctl_fd, &new_data, ASYNC_TYPE_WAIT, 0 )))
+                {
+                    close_handle( current->process, wait_handle );
+                    break;
+                }
+            }
+            else async = fd_queue_async( server->ioctl_fd, async_data, ASYNC_TYPE_WAIT, 0 );
+
+            if (async)
+            {
+                set_server_state( server, ps_wait_open );
                 if (server->pipe->waiters) async_wake_up( server->pipe->waiters, STATUS_SUCCESS );
                 release_object( async );
                 set_error( STATUS_PENDING );
+                return wait_handle;
             }
             break;
         case ps_connected_server:
