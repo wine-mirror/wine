@@ -1238,6 +1238,87 @@ static void CubeMapTest(void)
     IDirectDraw7_Release(dd7);
 }
 
+static void test_lockrect_invalid(void)
+{
+    unsigned int i, j;
+
+    RECT valid[] = {
+        {60, 60, 68, 68},
+        {60, 60, 60, 68},
+        {60, 60, 68, 60},
+        {120, 60, 128, 68},
+        {60, 120, 68, 128},
+    };
+
+    RECT invalid[] = {
+        {68, 60, 60, 68},       /* left > right */
+        {60, 68, 68, 60},       /* top > bottom */
+        {-8, 60,  0, 68},       /* left < surface */
+        {60, -8, 68,  0},       /* top < surface */
+        {-16, 60, -8, 68},      /* right < surface */
+        {60, -16, 68, -8},      /* bottom < surface */
+        {60, 60, 136, 68},      /* right > surface */
+        {60, 60, 68, 136},      /* bottom > surface */
+        {136, 60, 144, 68},     /* left > surface */
+        {60, 136, 68, 144},     /* top > surface */
+    };
+
+    const DWORD dds_caps[] = {
+        DDSCAPS_OFFSCREENPLAIN,
+        DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE,
+    };
+
+    for (j = 0; j < (sizeof(dds_caps) / sizeof(*dds_caps)); ++j)
+    {
+        IDirectDrawSurface *surface = 0;
+        DDSURFACEDESC surface_desc = {0};
+        DDSURFACEDESC locked_desc = {0};
+        HRESULT hr;
+
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+        surface_desc.ddsCaps.dwCaps = dds_caps[j];
+        surface_desc.dwWidth = 128;
+        surface_desc.dwHeight = 128;
+        surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+        U1(surface_desc.ddpfPixelFormat).dwRGBBitCount = 32;
+        U2(surface_desc.ddpfPixelFormat).dwRBitMask = 0xFF0000;
+        U3(surface_desc.ddpfPixelFormat).dwGBitMask = 0x00FF00;
+        U4(surface_desc.ddpfPixelFormat).dwBBitMask = 0x0000FF;
+
+        hr = IDirectDraw_CreateSurface(lpDD, &surface_desc, &surface, NULL);
+        ok(SUCCEEDED(hr), "CreateSurface failed (0x%08x)\n", hr);
+
+        for (i = 0; i < (sizeof(valid) / sizeof(*valid)); ++i)
+        {
+            RECT *rect = &valid[i];
+
+            memset(&locked_desc, 0, sizeof(locked_desc));
+            locked_desc.dwSize = sizeof(locked_desc);
+
+            hr = IDirectDrawSurface_Lock(surface, rect, &locked_desc, DDLOCK_WAIT, NULL);
+            ok(SUCCEEDED(hr), "Lock failed (0x%08x) for rect [%d, %d]->[%d, %d]\n",
+                    hr, rect->left, rect->top, rect->right, rect->bottom);
+
+            hr = IDirectDrawSurface_Unlock(surface, NULL);
+            ok(SUCCEEDED(hr), "Unlock failed (0x%08x)\n", hr);
+        }
+
+        for (i = 0; i < (sizeof(invalid) / sizeof(*invalid)); ++i)
+        {
+            RECT *rect = &invalid[i];
+
+            hr = IDirectDrawSurface_Lock(surface, rect, &locked_desc, DDLOCK_WAIT, NULL);
+            ok(hr == DDERR_INVALIDPARAMS, "Lock returned 0x%08x for rect [%d, %d]->[%d, %d]"
+                    ", expected DDERR_INVALIDPARAMS (0x%08x)\n", hr, rect->left, rect->top,
+                    rect->right, rect->bottom, DDERR_INVALIDPARAMS);
+        }
+
+        IDirectDrawSurface_Release(surface);
+    }
+}
+
 START_TEST(dsurface)
 {
     if (!CreateDirectDraw())
@@ -1252,5 +1333,6 @@ START_TEST(dsurface)
     EnumTest();
     AttachmentTest();
     CubeMapTest();
+    test_lockrect_invalid();
     ReleaseDirectDraw();
 }
