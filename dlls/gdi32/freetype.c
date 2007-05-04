@@ -953,7 +953,7 @@ static WCHAR *get_familyname(FT_Face ft_face)
 
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
-static BOOL AddFontFileToList(const char *file, char *fake_family, const WCHAR *target_family, DWORD flags)
+static INT AddFontFileToList(const char *file, char *fake_family, const WCHAR *target_family, DWORD flags)
 {
     FT_Face ft_face;
     TT_OS2 *pOS2;
@@ -987,7 +987,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, const WCHAR *
             }
             HeapFree(GetProcessHeap(), 0, mac_list);
             if(had_one)
-                return TRUE;
+                return 1;
         }
     }
 #endif /* HAVE_CARBON_CARBON_H */
@@ -998,20 +998,20 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, const WCHAR *
         TRACE("Loading font file %s index %ld\n", debugstr_a(file), face_index);
 	if((err = pFT_New_Face(library, file, face_index, &ft_face)) != 0) {
 	    WARN("Unable to load font file %s err = %x\n", debugstr_a(file), err);
-	    return FALSE;
+	    return 0;
 	}
 
 	if(!FT_IS_SFNT(ft_face) && (FT_IS_SCALABLE(ft_face) || !(flags & ADDFONT_FORCE_BITMAP))) { /* for now we'll accept TT/OT or bitmap fonts*/
 	    WARN("Ignoring font %s\n", debugstr_a(file));
 	    pFT_Done_Face(ft_face);
-	    return FALSE;
+	    return 0;
 	}
 
         /* There are too many bugs in FreeType < 2.1.9 for bitmap font support */
         if(!FT_IS_SCALABLE(ft_face) && FT_SimpleVersion < ((2 << 16) | (1 << 8) | (9 << 0))) {
 	    WARN("FreeType version < 2.1.9, skipping bitmap font %s\n", debugstr_a(file));
 	    pFT_Done_Face(ft_face);
-	    return FALSE;
+	    return 0;
 	}
 
 	if(FT_IS_SFNT(ft_face) && (!pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2) ||
@@ -1020,13 +1020,13 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, const WCHAR *
 	    TRACE("Font file %s lacks either an OS2, HHEA or HEAD table.\n"
 		  "Skipping this font.\n", debugstr_a(file));
 	    pFT_Done_Face(ft_face);
-	    return FALSE;
+	    return 0;
 	}
 
         if(!ft_face->family_name || !ft_face->style_name) {
             TRACE("Font file %s lacks either a family or style name\n", debugstr_a(file));
             pFT_Done_Face(ft_face);
-            return FALSE;
+            return 0;
         }
 
         if (target_family)
@@ -1140,13 +1140,13 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, const WCHAR *
                         TRACE("This font is a replacement but the original really exists, so we'll skip the replacement\n");
                         HeapFree(GetProcessHeap(), 0, StyleW);
                         pFT_Done_Face(ft_face);
-                        return FALSE;
+                        return 0;
                     }
                     if(!pHeader || pHeader->Font_Revision <= face->font_version) {
                         TRACE("Original font is newer so skipping this one\n");
                         HeapFree(GetProcessHeap(), 0, StyleW);
                         pFT_Done_Face(ft_face);
-                        return FALSE;
+                        return 0;
                     } else {
                         TRACE("Replacing original with this one\n");
                         list_remove(&face->entry);
@@ -1218,7 +1218,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, const WCHAR *
 	TRACE("Added font %s %s\n", debugstr_w(family->FamilyName),
 	      debugstr_w(StyleW));
     } while(num_faces > ++face_index);
-    return TRUE;
+    return num_faces;
 }
 
 static void DumpFontList(void)
