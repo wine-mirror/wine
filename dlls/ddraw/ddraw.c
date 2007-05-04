@@ -1798,7 +1798,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     {
         Usage |= WINED3DUSAGE_OVERLAY;
     }
-    if(This->depthstencil)
+    if(This->depthstencil || (pDDSD->ddsCaps.dwCaps & DDSCAPS_ZBUFFER) )
     {
         /* The depth stencil creation callback sets this flag.
          * Set the WineD3D usage to let it know that it's a depth
@@ -2198,6 +2198,12 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         return CLASS_E_NOAGGREGATION; /* unchecked */
     }
 
+    if (Surf == NULL)
+    {
+        FIXME("(%p) You want to get back a surface? Don't give NULL ptrs!\n", This);
+        return E_POINTER; /* unchecked */
+    }
+
     if (!(DDSD->dwFlags & DDSD_CAPS))
     {
         /* DVIDEO.DLL does forget the DDSD_CAPS flag ... *sigh* */
@@ -2230,12 +2236,10 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         return DDERR_NOEXCLUSIVEMODE;
     }
 
-    if (Surf == NULL)
-    {
-        FIXME("(%p) You want to get back a surface? Don't give NULL ptrs!\n", This);
-        return E_POINTER; /* unchecked */
+    if(DDSD->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER)) {
+        WARN("Application tried to create an explicit front or back buffer\n");
+        return DDERR_INVALIDCAPS;
     }
-
     /* Check cube maps but only if the size includes them */
     if (DDSD->dwSize >= sizeof(DDSURFACEDESC2))
     {

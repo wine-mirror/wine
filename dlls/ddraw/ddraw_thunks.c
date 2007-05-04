@@ -386,6 +386,10 @@ IDirectDrawImpl_CreateSurface(LPDIRECTDRAW This, LPDDSURFACEDESC pSDesc,
     IDirectDrawSurfaceImpl *impl;
     HRESULT hr;
 
+    /* Remove front buffer flag, this causes failure in v7, and its added to normal
+     * primaries anyway
+     */
+    pSDesc->ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER;
     /* the LPDDSURFACEDESC -> LPDDSURFACEDESC2 conversion should be ok,
      * since the data layout is the same */
     hr = IDirectDraw7_CreateSurface(COM_INTERFACE_CAST(IDirectDrawImpl,

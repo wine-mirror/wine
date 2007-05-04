@@ -780,10 +780,15 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
  *
  * So far only Z-Buffer attachments are tested, and they are activated in
  * WineD3D. Mipmaps could be tricky to activate in WineD3D.
- * Back buffers should work in 2D mode, but they are not tested(Not sure if
- * they can be attached at all). Rendering to the primary surface and
+ * Back buffers should work in 2D mode, but they are not tested(They can be
+ * attached in older iface versions). Rendering to the front buffer and
  * switching between that and double buffering is not yet implemented in
  * WineD3D, so for 3D it might have unexpected results.
+ *
+ * IDirectDrawSurfaceImpl_AddAttachedSurface is the real thing,
+ * IDirectDrawSurface7Impl_AddAttachedSurface is a wrapper around it that
+ * performs additional checks. Version 7 of this interface is much more restrictive
+ * than its predecessors.
  *
  * Params:
  *  Attach: Surface to attach to iface
@@ -793,45 +798,24 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
  *  DDERR_CANNOTATTACHSURFACE if the surface can't be attached for some reason
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurface7 *iface,
-                                          IDirectDrawSurface7 *Attach)
+HRESULT WINAPI
+IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurfaceImpl *This,
+                                          IDirectDrawSurfaceImpl *Surf)
 {
-    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
-    IDirectDrawSurfaceImpl *Surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, Attach);
     TRACE("(%p)->(%p)\n", This, Surf);
-
-    /* Should I make sure to add it to the first complex surface? */
 
     if(Surf == This)
         return DDERR_CANNOTATTACHSURFACE; /* unchecked */
-
-    /* MSDN: Only Z buffer surfaces can be attached. An old comment said that apparently
-     * mipmaps and back buffers can be attached too, although our tests say no.
-     */
-    if(!(Surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
-    {
-        /* Write a fixme until we know for sure what is going on */
-        FIXME("Application tries to attach a non Z buffer surface. caps %08x\n",
-              Surf->surface_desc.ddsCaps.dwCaps);
-        return DDERR_CANNOTATTACHSURFACE;
-    }
-
-    /* Set MIPMAPSUBLEVEL if this seems to be one */
-    if (This->surface_desc.ddsCaps.dwCaps &
-        Surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
-    {
-        Surf->surface_desc.ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
-        /* FIXME: we should probably also add to dwMipMapCount of this
-          * and all parent surfaces (update create_texture if you do) */
-    }
 
     /* Check if the surface is already attached somewhere */
     if( (Surf->next_attached != NULL) ||
         (Surf->first_attached != Surf) )
     {
-         ERR("(%p) The Surface %p is already attached somewhere else: next_attached = %p, first_attached = %p, can't handle by now\n", This, Surf, Surf->next_attached, Surf->first_attached);
-        return DDERR_CANNOTATTACHSURFACE;
+        /* TODO: Test for the structure of the manual attachment. Is it a chain or a list?
+         * What happens if one surface is attached to 2 different surfaces?
+         */
+        FIXME("(%p) The Surface %p is already attached somewhere else: next_attached = %p, first_attached = %p, can't handle by now\n", This, Surf, Surf->next_attached, Surf->first_attached);
+        return DDERR_SURFACEALREADYATTACHED;
     }
 
     /* This inserts the new surface at the 2nd position in the chain, right after the root surface */
@@ -848,10 +832,29 @@ IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurface7 *iface,
     /* MSDN: 
      * "This method increments the reference count of the surface being attached."
      */
-    IDirectDrawSurface7_AddRef(Attach);
+    IDirectDrawSurface7_AddRef(ICOM_INTERFACE(Surf, IDirectDrawSurface7));
     return DD_OK;
 }
 
+static HRESULT WINAPI
+IDirectDrawSurface7Impl_AddAttachedSurface(IDirectDrawSurface7 *iface,
+                                           IDirectDrawSurface7 *Attach)
+{
+    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
+    IDirectDrawSurfaceImpl *Surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, Attach);
+
+    /* Version 7 of this interface seems to refuse everything except z buffers, as per msdn */
+    if(!(Surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
+    {
+
+        WARN("Application tries to attach a non Z buffer surface. caps %08x\n",
+              Surf->surface_desc.ddsCaps.dwCaps);
+        return DDERR_CANNOTATTACHSURFACE;
+    }
+
+    return IDirectDrawSurfaceImpl_AddAttachedSurface(This,
+                                                     Surf);
+}
 /*****************************************************************************
  * IDirectDrawSurface7::DeleteAttachedSurface
  *
@@ -878,7 +881,7 @@ IDirectDrawSurfaceImpl_DeleteAttachedSurface(IDirectDrawSurface7 *iface,
     TRACE("(%p)->(%08x,%p)\n", This, Flags, Surf);
 
     if (!Surf || (Surf->first_attached != This) || (Surf == This) )
-        return DDERR_SURFACENOTATTACHED; /* unchecked */
+        return DDERR_CANNOTDETACHSURFACE;
 
     /* Remove MIPMAPSUBLEVEL if this seemed to be one */
     if (This->surface_desc.ddsCaps.dwCaps &
@@ -2309,7 +2312,7 @@ const IDirectDrawSurface7Vtbl IDirectDrawSurface7_Vtbl =
     IDirectDrawSurfaceImpl_AddRef,
     IDirectDrawSurfaceImpl_Release,
     /*** IDirectDrawSurface ***/
-    IDirectDrawSurfaceImpl_AddAttachedSurface,
+    IDirectDrawSurface7Impl_AddAttachedSurface,
     IDirectDrawSurfaceImpl_AddOverlayDirtyRect,
     IDirectDrawSurfaceImpl_Blt,
     IDirectDrawSurfaceImpl_BltBatch,

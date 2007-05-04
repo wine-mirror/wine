@@ -272,6 +272,8 @@ const IDirectDrawGammaControlVtbl IDirectDrawGammaControl_Vtbl;
 const IDirect3DTexture2Vtbl IDirect3DTexture2_Vtbl;
 const IDirect3DTextureVtbl IDirect3DTexture1_Vtbl;
 
+HRESULT WINAPI IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurfaceImpl *This, IDirectDrawSurfaceImpl *Surf);
+
 /* Get the number of bytes per pixel for a given surface */
 #define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:((pf.dwRGBBitCount+7)/8))
 #define GET_BPP(desc) PFGET_BPP(desc.ddpfPixelFormat)

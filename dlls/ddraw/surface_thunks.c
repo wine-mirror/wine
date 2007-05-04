@@ -64,11 +64,45 @@ IDirectDrawSurface3Impl_Release(LPDIRECTDRAWSURFACE3 iface)
 }
 
 static HRESULT WINAPI
-IDirectDrawSurface3Impl_AddAttachedSurface(LPDIRECTDRAWSURFACE3 This,
+IDirectDrawSurface3Impl_AddAttachedSurface(LPDIRECTDRAWSURFACE3 iface,
 					   LPDIRECTDRAWSURFACE3 pAttach)
 {
-    return IDirectDrawSurface7_AddAttachedSurface(CONVERT(This),
-						  CONVERT(pAttach));
+    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface3, iface);
+    IDirectDrawSurfaceImpl *Surf = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface3, pAttach);
+    TRACE("(%p)->(%p)\n", This, Surf);
+
+    /* Tests suggest that
+     * -> offscreen plain surfaces can be attached to other offscreen plain surfaces
+     * -> offscreen plain surfaces can be attached to primaries
+     * -> primaries can be attached to offscreen plain surfaces
+     * -> z buffers can be attached to primaries
+     *
+     */
+    if(This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN) &&
+       Surf->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN))
+    {
+        /* Sizes have to match */
+        if(Surf->surface_desc.dwWidth != This->surface_desc.dwWidth ||
+        Surf->surface_desc.dwHeight != This->surface_desc.dwHeight)
+        {
+            WARN("Surface sizes do not match\n");
+            return DDERR_CANNOTATTACHSURFACE;
+        }
+        /* OK */
+    }
+    else if(This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE) &&
+            Surf->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER))
+    {
+        /* OK */
+    }
+    else
+    {
+        WARN("Invalid attachment combination\n");
+        return DDERR_CANNOTATTACHSURFACE;
+    }
+
+    return IDirectDrawSurfaceImpl_AddAttachedSurface(This,
+                                                     Surf);
 }
 
 static HRESULT WINAPI
