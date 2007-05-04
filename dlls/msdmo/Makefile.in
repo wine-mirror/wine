@@ -9,8 +9,7 @@ EXTRALIBS = -luuid
 
 C_SRCS = \
 	dmoreg.c \
-	dmort.c \
-	msdmo_main.c
+	dmort.c
 
 RC_SRCS = \
 	rsrc.rc

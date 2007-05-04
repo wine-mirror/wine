@@ -6,8 +6,6 @@ MODULE    = dplay.dll
 IMPORTLIB = libdplay.$(IMPLIBEXT)
 IMPORTS   = dplayx kernel32
 
-C_SRCS = dplay_main.c
-
 RC_SRCS = version.rc
 
 @MAKE_DLL_RULES@
