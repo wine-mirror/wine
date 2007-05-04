@@ -29,6 +29,7 @@
 #include <winnls.h>
 #include <ole2.h>
 #include <richedit.h>
+#include <time.h>
 #include <wine/test.h>
 
 static HMODULE hmoduleRichEdit;
