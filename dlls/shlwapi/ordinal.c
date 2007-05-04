@@ -2962,6 +2962,83 @@ HRESULT WINAPI IConnectionPoint_OnChanged(IConnectionPoint* lpCP, DISPID dispID)
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.286]
+ *
+ *  IUnknown_CPContainerInvokeParam
+ */
+HRESULT WINAPIV IUnknown_CPContainerInvokeParam(
+        IUnknown *container,
+        REFIID riid,
+        DISPID dispId,
+        VARIANTARG* buffer,
+        DWORD cParams, ...)
+{
+  HRESULT result;
+  IConnectionPoint *iCP;
+  IConnectionPointContainer *iCPC;
+
+  if (!container)
+    return E_NOINTERFACE;
+
+  result = IUnknown_QueryInterface(container, &IID_IConnectionPointContainer,(LPVOID*) &iCPC);
+  if (SUCCEEDED(result))
+  {
+    result = IConnectionPointContainer_FindConnectionPoint(iCPC, riid, &iCP);
+    IConnectionPointContainer_Release(iCPC);
+  }
+
+  if (SUCCEEDED(result))
+  {
+    ULONG cnt;
+    VARIANTARG *curvar = buffer+cParams-1;
+    DISPPARAMS dispParams = {buffer, NULL, cParams, 0};
+    va_list valist;
+
+    va_start(valist, cParams);
+    for(cnt=cParams;cnt>0;cnt--,curvar--) /* backwards for some reason */
+    {
+      enum VARENUM vt = va_arg(valist, enum VARENUM);
+      memset(curvar, 0, sizeof(*curvar));
+      if (vt & VT_BYREF)
+      {
+        V_VT(curvar) = vt;
+        V_BYREF(curvar) = va_arg(valist, LPVOID);
+      } else
+        switch(vt)
+        {
+        case VT_BSTR:
+          V_VT(curvar) = vt;
+          V_BSTR(curvar) = va_arg(valist, BSTR);
+          break;
+        case VT_DISPATCH:
+          V_VT(curvar) = vt;
+          V_DISPATCH(curvar) = va_arg(valist, IDispatch*);
+          break;
+        case VT_BOOL:
+          V_VT(curvar) = vt;
+          V_BOOL(curvar) = va_arg(valist, int);
+          break;
+        case VT_UNKNOWN:
+          V_VT(curvar) = vt;
+          V_UNKNOWN(curvar) = va_arg(valist, IUnknown*);
+          break;
+        case VT_I4:
+        default:
+          V_VT(curvar) = VT_I4;
+          V_I4(curvar) = va_arg(valist, LONG);
+          break;
+        }
+    }
+    va_end(valist);
+
+    result = SHLWAPI_InvokeByIID(iCP, riid, dispId, &dispParams);
+    IConnectionPoint_Release(iCP);
+  }
+
+  return result;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.287]
  *
  * Notify an IConnectionPointContainer object of changes.
