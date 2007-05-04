@@ -334,16 +334,19 @@ static DISPID get_dispid( IDispatch *disp, const char *name )
 {
     LPOLESTR str;
     UINT len;
-    DISPID id;
+    DISPID id = -1;
     HRESULT r;
 
     len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0 );
     str = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR) );
-    len = MultiByteToWideChar(CP_ACP, 0, name, -1, str, len );
-
-    r = IDispatch_GetIDsOfNames( disp, &IID_NULL, &str, 1, 0, &id );
-    if (r != S_OK)
-        return -1;
+    if (str)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, name, -1, str, len );
+        r = IDispatch_GetIDsOfNames( disp, &IID_NULL, &str, 1, 0, &id );
+        HeapFree(GetProcessHeap(), 0, str);
+        if (r != S_OK)
+            return -1;
+    }
 
     return id;
 }
