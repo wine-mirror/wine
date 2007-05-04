@@ -40,31 +40,6 @@ EXCEPINFO excepinfo;
  * OLE automation data
  **/
 static const WCHAR szProgId[] = { 'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r','.','I','n','s','t','a','l','l','e','r',0 };
-
-/* Installer */
-static const WCHAR szOpenPackage[] = { 'O','p','e','n','P','a','c','k','a','g','e',0 };
-
-/* Session */
-static const WCHAR szProperty[] = { 'P','r','o','p','e','r','t','y',0 };
-static const WCHAR szLanguage[] = { 'L','a','n','g','u','a','g','e',0 };
-static const WCHAR szMode[] = { 'M','o','d','e',0 };
-static const WCHAR szDatabase[] = { 'D','a','t','a','b','a','s','e',0 };
-static const WCHAR szDoAction[] = { 'D','o','A','c','t','i','o','n',0 };
-static const WCHAR szSetInstallLevel[] = { 'S','e','t','I','n','s','t','a','l','l','L','e','v','e','l',0 };
-static const WCHAR szFeatureCurrentState[] = { 'F','e','a','t','u','r','e','C','u','r','r','e','n','t','S','t','a','t','e',0 };
-static const WCHAR szFeatureRequestState[] = { 'F','e','a','t','u','r','e','R','e','q','u','e','s','t','S','t','a','t','e',0 };
-
-/* Database */
-static const WCHAR szOpenView[] = { 'O','p','e','n','V','i','e','w',0 };
-
-/* View */
-static const WCHAR szExecute[] = { 'E','x','e','c','u','t','e',0 };
-static const WCHAR szFetch[] = { 'F','e','t','c','h',0 };
-static const WCHAR szClose[] = { 'C','l','o','s','e',0 };
-
-/* Record */
-static const WCHAR szStringData[] = { 'S','t','r','i','n','g','D','a','t','a',0 };
-
 static IDispatch *pInstaller;
 
 /* msi database data */
@@ -496,6 +471,7 @@ static void test_createrecord_and_version(void)
 /* Test basic IDispatch functions */
 static void test_dispatch(void)
 {
+    static WCHAR szOpenPackage[] = { 'O','p','e','n','P','a','c','k','a','g','e',0 };
     static WCHAR szOpenPackageException[] = {'O','p','e','n','P','a','c','k','a','g','e',',','P','a','c','k','a','g','e','P','a','t','h',',','O','p','t','i','o','n','s',0};
     HRESULT hr;
     DISPID dispid;
@@ -550,14 +526,20 @@ static void test_dispatch(void)
 }
 
 /* invocation helper function */
-static HRESULT invoke(IDispatch *pDispatch, LPCWSTR szName, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, VARTYPE vtResult)
+static HRESULT invoke(IDispatch *pDispatch, LPCSTR szName, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, VARTYPE vtResult)
 {
-    OLECHAR *name = (WCHAR *)szName;
+    OLECHAR *name = NULL;
     DISPID dispid;
     HRESULT hr;
     int i;
+    UINT len;
 
+    len = MultiByteToWideChar(CP_ACP, 0, szName, -1, NULL, 0 );
+    name = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR) );
+    if (!name) return E_FAIL;
+    len = MultiByteToWideChar(CP_ACP, 0, szName, -1, name, len );
     hr = IDispatch_GetIDsOfNames(pDispatch, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
+    HeapFree(GetProcessHeap(), 0, name);
     ok(SUCCEEDED(hr), "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
     if (!SUCCEEDED(hr)) return hr;
 
@@ -597,7 +579,7 @@ static HRESULT Installer_OpenPackage(LPCWSTR szPackagePath, int options, IDispat
     V_VT(&vararg[0]) = VT_I4;
     V_I4(&vararg[0]) = options;
 
-    hr = invoke(pInstaller, szOpenPackage, DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
+    hr = invoke(pInstaller, "OpenPackage", DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
     *pSession = V_DISPATCH(&varresult);
     return hr;
 }
@@ -613,7 +595,7 @@ static HRESULT Session_PropertyGet(IDispatch *pSession, LPCWSTR szName, LPCWSTR 
     V_VT(&vararg[0]) = VT_BSTR;
     V_BSTR(&vararg[0]) = SysAllocString(szName);
 
-    hr = invoke(pSession, szProperty, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
+    hr = invoke(pSession, "Property", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
     lstrcpyW((WCHAR *)szReturn, V_BSTR(&varresult));
     VariantClear(&varresult);
     return hr;
@@ -633,7 +615,7 @@ static HRESULT Session_PropertyPut(IDispatch *pSession, LPCWSTR szName, LPCWSTR 
     V_VT(&vararg[0]) = VT_BSTR;
     V_BSTR(&vararg[0]) = SysAllocString(szValue);
 
-    return invoke(pSession, szProperty, DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
+    return invoke(pSession, "Property", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
 }
 
 static HRESULT Session_LanguageGet(IDispatch *pSession, UINT *pLangId)
@@ -642,7 +624,7 @@ static HRESULT Session_LanguageGet(IDispatch *pSession, UINT *pLangId)
     DISPPARAMS dispparams = {NULL, NULL, 0, 0};
     HRESULT hr;
 
-    hr = invoke(pSession, szLanguage, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
+    hr = invoke(pSession, "Language", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
     *pLangId = V_I4(&varresult);
     VariantClear(&varresult);
     return hr;
@@ -659,7 +641,7 @@ static HRESULT Session_ModeGet(IDispatch *pSession, int iFlag, BOOL *pMode)
     V_VT(&vararg[0]) = VT_I4;
     V_I4(&vararg[0]) = iFlag;
 
-    hr = invoke(pSession, szMode, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BOOL);
+    hr = invoke(pSession, "Mode", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BOOL);
     *pMode = V_BOOL(&varresult);
     VariantClear(&varresult);
     return hr;
@@ -679,7 +661,7 @@ static HRESULT Session_ModePut(IDispatch *pSession, int iFlag, BOOL bMode)
     V_VT(&vararg[0]) = VT_BOOL;
     V_BOOL(&vararg[0]) = bMode;
 
-    return invoke(pSession, szMode, DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
+    return invoke(pSession, "Mode", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
 }
 
 static HRESULT Session_Database(IDispatch *pSession, IDispatch **pDatabase)
@@ -688,7 +670,7 @@ static HRESULT Session_Database(IDispatch *pSession, IDispatch **pDatabase)
     DISPPARAMS dispparams = {NULL, NULL, 0, 0};
     HRESULT hr;
 
-    hr = invoke(pSession, szDatabase, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_DISPATCH);
+    hr = invoke(pSession, "Database", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_DISPATCH);
     *pDatabase = V_DISPATCH(&varresult);
     return hr;
 }
@@ -704,7 +686,7 @@ static HRESULT Session_DoAction(IDispatch *pSession, LPCWSTR szAction, int *iRet
     V_VT(&vararg[0]) = VT_BSTR;
     V_BSTR(&vararg[0]) = SysAllocString(szAction);
 
-    hr = invoke(pSession, szDoAction, DISPATCH_METHOD, &dispparams, &varresult, VT_I4);
+    hr = invoke(pSession, "DoAction", DISPATCH_METHOD, &dispparams, &varresult, VT_I4);
     *iReturn = V_I4(&varresult);
     VariantClear(&varresult);
     return hr;
@@ -720,7 +702,7 @@ static HRESULT Session_SetInstallLevel(IDispatch *pSession, long iInstallLevel)
     V_VT(&vararg[0]) = VT_I4;
     V_I4(&vararg[0]) = iInstallLevel;
 
-    return invoke(pSession, szSetInstallLevel, DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
+    return invoke(pSession, "SetInstallLevel", DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
 }
 
 static HRESULT Session_FeatureCurrentState(IDispatch *pSession, LPCWSTR szName, int *pState)
@@ -734,7 +716,7 @@ static HRESULT Session_FeatureCurrentState(IDispatch *pSession, LPCWSTR szName, 
     V_VT(&vararg[0]) = VT_BSTR;
     V_BSTR(&vararg[0]) = SysAllocString(szName);
 
-    hr = invoke(pSession, szFeatureCurrentState, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
+    hr = invoke(pSession, "FeatureCurrentState", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
     *pState = V_I4(&varresult);
     VariantClear(&varresult);
     return hr;
@@ -751,7 +733,7 @@ static HRESULT Session_FeatureRequestStateGet(IDispatch *pSession, LPCWSTR szNam
     V_VT(&vararg[0]) = VT_BSTR;
     V_BSTR(&vararg[0]) = SysAllocString(szName);
 
-    hr = invoke(pSession, szFeatureRequestState, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
+    hr = invoke(pSession, "FeatureRequestState", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
     *pState = V_I4(&varresult);
     VariantClear(&varresult);
     return hr;
@@ -771,7 +753,7 @@ static HRESULT Session_FeatureRequestStatePut(IDispatch *pSession, LPCWSTR szNam
     V_VT(&vararg[0]) = VT_I4;
     V_I4(&vararg[0]) = iState;
 
-    return invoke(pSession, szFeatureRequestState, DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
+    return invoke(pSession, "FeatureRequestState", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
 }
 
 static HRESULT Database_OpenView(IDispatch *pDatabase, LPCWSTR szSql, IDispatch **pView)
@@ -785,7 +767,7 @@ static HRESULT Database_OpenView(IDispatch *pDatabase, LPCWSTR szSql, IDispatch 
     V_VT(&vararg[0]) = VT_BSTR;
     V_BSTR(&vararg[0]) = SysAllocString(szSql);
 
-    hr = invoke(pDatabase, szOpenView, DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
+    hr = invoke(pDatabase, "OpenView", DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
     *pView = V_DISPATCH(&varresult);
     return hr;
 }
@@ -800,14 +782,14 @@ static HRESULT View_Execute(IDispatch *pView, IDispatch *pRecord)
     V_VT(&vararg[0]) = VT_DISPATCH;
     V_DISPATCH(&vararg[0]) = pRecord;
 
-    return invoke(pView, szExecute, DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
+    return invoke(pView, "Execute", DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
 }
 
 static HRESULT View_Fetch(IDispatch *pView, IDispatch **ppRecord)
 {
     VARIANT varresult;
     DISPPARAMS dispparams = {NULL, NULL, 0, 0};
-    HRESULT hr = invoke(pView, szFetch, DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
+    HRESULT hr = invoke(pView, "Fetch", DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
     *ppRecord = V_DISPATCH(&varresult);
     return hr;
 }
@@ -816,7 +798,7 @@ static HRESULT View_Close(IDispatch *pView)
 {
     VARIANT varresult;
     DISPPARAMS dispparams = {NULL, NULL, 0, 0};
-    return invoke(pView, szClose, DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
+    return invoke(pView, "Close", DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
 }
 
 static HRESULT Record_StringDataGet(IDispatch *pRecord, int iField, LPCWSTR szString)
@@ -830,7 +812,7 @@ static HRESULT Record_StringDataGet(IDispatch *pRecord, int iField, LPCWSTR szSt
     V_VT(&vararg[0]) = VT_I4;
     V_I4(&vararg[0]) = iField;
 
-    hr = invoke(pRecord, szStringData, DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
+    hr = invoke(pRecord, "StringData", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
     lstrcpyW((WCHAR *)szString, V_BSTR(&varresult));
     VariantClear(&varresult);
     return hr;
@@ -850,7 +832,7 @@ static HRESULT Record_StringDataPut(IDispatch *pRecord, int iField, LPCWSTR szSt
     V_VT(&vararg[0]) = VT_BSTR;
     V_BSTR(&vararg[0]) = SysAllocString(szString);
 
-    return invoke(pRecord, szStringData, DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_BSTR);
+    return invoke(pRecord, "StringData", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_BSTR);
 }
 
 /* Test the various objects */
