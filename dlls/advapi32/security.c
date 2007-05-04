@@ -1749,7 +1749,7 @@ GetFileSecurityW( LPCWSTR lpFileName,
     NTSTATUS status;
 
     hfile = CreateFileW( lpFileName, GENERIC_READ, FILE_SHARE_READ,
-                         NULL, OPEN_EXISTING, 0, 0 );
+                         NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
     if ( hfile == INVALID_HANDLE_VALUE )
         return FALSE;
 
