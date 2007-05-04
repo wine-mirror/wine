@@ -2164,6 +2164,19 @@ static void tex_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
             shaderconstant(STATE_PIXELSHADERCONSTANT, stateblock, context);
         }
     }
+
+    if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+        if(stage >= GL_LIMITS(texture_stages)) {
+            WARN("Bump env matrix of unsupported stage set\n");
+        } else if(GL_SUPPORT(ARB_MULTITEXTURE)) {
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stage));
+            checkGLcall("GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stage))");
+        }
+        GL_EXTCALL(glTexBumpParameterfvATI(GL_BUMP_ROT_MATRIX_ATI,
+                   (float *) &(stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00])));
+        checkGLcall("glTexBumpParameterfvATI");
+    }
+    /* TODO: GL_NV_texture_shader */
 }
 
 static void transform_world(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {

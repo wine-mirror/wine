@@ -1119,6 +1119,16 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
         WINED3DFMT_DXT5,
     };
 
+    WINED3DFORMAT BumpFormatList[] = {
+        WINED3DFMT_V8U8,
+        WINED3DFMT_L6V5U5,
+        WINED3DFMT_X8L8V8U8,
+        WINED3DFMT_Q8W8V8U8,
+        WINED3DFMT_V16U16,
+        WINED3DFMT_W11V11U10,
+        WINED3DFMT_A2W10V10U10
+    };
+
     TRACE("(%p)->(%p,%p): Relay\n", This, Callback, Arg);
 
     if(!Callback)
@@ -1142,6 +1152,33 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
             PixelFormat_WineD3DtoDD(&pformat, FormatList[i]);
 
             TRACE("Enumerating WineD3DFormat %d\n", FormatList[i]);
+            hr = Callback(&pformat, Arg);
+            if(hr != DDENUMRET_OK)
+            {
+                TRACE("Format enumeration cancelled by application\n");
+                return D3D_OK;
+            }
+        }
+    }
+
+    for(i = 0; i < sizeof(BumpFormatList) / sizeof(WINED3DFORMAT); i++)
+    {
+        hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
+                                        0 /* Adapter */,
+                                        0 /* DeviceType */,
+                                        0 /* AdapterFormat */,
+                                        WINED3DUSAGE_QUERY_LEGACYBUMPMAP,
+                                        0 /* ResourceType */,
+                                        BumpFormatList[i]);
+        if(hr == D3D_OK)
+        {
+            DDPIXELFORMAT pformat;
+
+            memset(&pformat, 0, sizeof(pformat));
+            pformat.dwSize = sizeof(pformat);
+            PixelFormat_WineD3DtoDD(&pformat, BumpFormatList[i]);
+
+            TRACE("Enumerating WineD3DFormat %d\n", BumpFormatList[i]);
             hr = Callback(&pformat, Arg);
             if(hr != DDENUMRET_OK)
             {

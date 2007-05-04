@@ -2168,6 +2168,46 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
                 } else
                   Handled = FALSE;
                 break;
+        case WINED3DTOP_BUMPENVMAPLUMINANCE:
+                if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+                    /* Some apps use BUMPENVMAPLUMINANCE instead of D3DTOP_BUMPENVMAP, although
+                     * they check for the non-luminance cap flag. Well, give them what they asked
+                     * for :-)
+                     */
+                    WARN("Application uses WINED3DTOP_BUMPENVMAPLUMINANCE\n");
+                } else {
+                    Handled = FALSE;
+                    break;
+                }
+                /* Fall through */
+        case WINED3DTOP_BUMPENVMAP:
+                if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+                    TRACE("Using ati bumpmap on stage %d, target %d\n", Stage, Stage + 1);
+                    glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_BUMP_ENVMAP_ATI);
+                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_BUMP_ENVMAP_ATI)");
+                    glTexEnvi(GL_TEXTURE_ENV, GL_BUMP_TARGET_ATI, GL_TEXTURE0_ARB + Stage + 1);
+                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_BUMP_TARGET_ATI, GL_TEXTURE0_ARB + Stage + 1)");
+                    glTexEnvi(GL_TEXTURE_ENV, src0_target, src3);
+                    checkGLcall("GL_TEXTURE_ENV, src0_target, src3");
+                    glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr3);
+                    checkGLcall("GL_TEXTURE_ENV, opr0_target, opr3");
+                    glTexEnvi(GL_TEXTURE_ENV, src1_target, src1);
+                    checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
+                    glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr1);
+                    checkGLcall("GL_TEXTURE_ENV, opr1_target, opr1");
+                    glTexEnvi(GL_TEXTURE_ENV, src2_target, src2);
+                    checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
+                    glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr2);
+                    checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");
+
+                    Handled = TRUE;
+                } else {
+                    /* If GL_NV_TEXTURE_SHADER is supported insted the GL_NV_register_combiner path
+                     * will be taken instead
+                     */
+                    Handled = FALSE;
+                }
+                break;
         default:
                 Handled = FALSE;
         }

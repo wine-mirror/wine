@@ -1679,6 +1679,20 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 TRACE_(d3d_caps)("[FAILED]\n");
                 return WINED3DERR_NOTAVAILABLE;
         }
+    } else if(Usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP) {
+        if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+            switch (CheckFormat) {
+                case WINED3DFMT_V8U8:
+                    TRACE_(d3d_caps)("[OK]\n");
+                    return WINED3D_OK;
+                default:
+                    TRACE_(d3d_caps)("[FAILED]\n");
+                    return WINED3DERR_NOTAVAILABLE;
+            }
+            /* TODO: GL_NV_TEXTURE_SHADER */
+        }
+        TRACE_(d3d_caps)("[FAILED]\n");
+        return WINED3DERR_NOTAVAILABLE;
     }
 
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
@@ -2209,12 +2223,15 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                  WINED3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA;
     }
 
-
+    if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+        *pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAP;
+    } else if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+        /* TODO: environment bump mapping support with GL_NV_texture_shader */
+    }
 #if 0
-    *pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAP;
-                            /* FIXME: Add
-                            WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE
-                            WINED3DTEXOPCAPS_PREMODULATE */
+    /* FIXME: Add
+    *pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE
+                             WINED3DTEXOPCAPS_PREMODULATE */
 #endif
 
     *pCaps->MaxTextureBlendStages   = GL_LIMITS(texture_stages);
