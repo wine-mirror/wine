@@ -1730,11 +1730,12 @@ INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 
         if((unixname = wine_get_unix_file_name(file)))
         {
-            AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
+            INT ret = AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
             HeapFree(GetProcessHeap(), 0, unixname);
+            return ret;
         }
     }
-    return 1;
+    return 0;
 }
 
 /*************************************************************
