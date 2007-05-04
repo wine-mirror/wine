@@ -103,9 +103,9 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
     IUnknown_AddRef((IUnknown *)pActiveScriptSite->pSession);
 
     /* Create the scripting engine */
-    if (type & msidbCustomActionTypeJScript)
+    if ((type & 7) == msidbCustomActionTypeJScript)
 	hr = CLSIDFromProgID(szJScript, &clsid);
-    else if (type & msidbCustomActionTypeVBScript)
+    else if ((type & 7) == msidbCustomActionTypeVBScript)
 	hr = CLSIDFromProgID(szVBScript, &clsid);
     else {
 	ERR("Unknown script type %d\n", type);
