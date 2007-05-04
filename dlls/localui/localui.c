@@ -42,15 +42,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(localui);
 static HINSTANCE LOCALUI_hInstance;
 
 static const WCHAR cmd_AddPortW[] = {'A','d','d','P','o','r','t',0};
+static const WCHAR cmd_ConfigureLPTPortCommandOKW[] = {'C','o','n','f','i','g','u','r','e',
+                                    'L','P','T','P','o','r','t',
+                                    'C','o','m','m','a','n','d','O','K',0};
 static const WCHAR cmd_DeletePortW[] = {'D','e','l','e','t','e','P','o','r','t',0};
 static const WCHAR cmd_GetDefaultCommConfigW[] = {'G','e','t',
                                     'D','e','f','a','u','l','t',
                                     'C','o','m','m','C','o','n','f','i','g',0};
+static const WCHAR cmd_GetTransmissionRetryTimeoutW[] = {'G','e','t',
+                                    'T','r','a','n','s','m','i','s','s','i','o','n',
+                                    'R','e','t','r','y','T','i','m','e','o','u','t',0};
 static const WCHAR cmd_PortIsValidW[] = {'P','o','r','t','I','s','V','a','l','i','d',0};
 static const WCHAR cmd_SetDefaultCommConfigW[] = {'S','e','t',
                                     'D','e','f','a','u','l','t',
                                     'C','o','m','m','C','o','n','f','i','g',0};
 
+static const WCHAR fmt_uW[]  = {'%','u',0};
 static const WCHAR portname_LPT[]  = {'L','P','T',0};
 static const WCHAR portname_COM[]  = {'C','O','M',0};
 static const WCHAR portname_FILE[] = {'F','I','L','E',':',0};
@@ -66,6 +73,14 @@ typedef struct tag_addportui_t {
     LPWSTR  portname;
     HANDLE  hXcv;
 } addportui_t;
+
+typedef struct tag_lptconfig_t {
+    HANDLE  hXcv;
+    DWORD   value;
+} lptconfig_t;
+
+
+static INT_PTR CALLBACK dlgproc_lptconfig(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
 /*****************************************************
  *   strdupWW [internal]
@@ -129,6 +144,29 @@ static BOOL dlg_configure_com(HANDLE hXcv, HWND hWnd, PCWSTR pPortName)
         return res;
     }
     return FALSE;
+}
+
+
+/*****************************************************
+ *   dlg_configure_lpt [internal]
+ *
+ */
+
+static BOOL dlg_configure_lpt(HANDLE hXcv, HWND hWnd)
+{
+    lptconfig_t data;
+    BOOL  res;
+
+
+    data.hXcv = hXcv;
+
+    res = DialogBoxParamW(LOCALUI_hInstance, MAKEINTRESOURCEW(LPTCONFIG_DIALOG), hWnd,
+                               dlgproc_lptconfig, (LPARAM) &data);
+
+    TRACE("got %u with %u\n", res, GetLastError());
+
+    if (!res) SetLastError(ERROR_CANCELLED);
+    return res;
 }
 
 /******************************************************************
@@ -290,6 +328,86 @@ static INT_PTR CALLBACK dlgproc_addport(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     }
     return FALSE;
 }
+
+/*****************************************************************************
+ *   dlgproc_lptconfig  [internal]
+ *
+ * Our message-proc is simple, as the range-check is done only during the
+ * command "OK" and the dialog is set to the start-value at "out of range".
+ *
+ * Native localui.dll does the check during keyboard-input and set the dialog
+ * to the previous value.
+ *
+ */
+
+static INT_PTR CALLBACK dlgproc_lptconfig(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    lptconfig_t * data;
+    WCHAR   bufferW[16];
+    DWORD   status;
+    DWORD   dummy;
+    DWORD   len;
+    DWORD   res;
+
+
+    switch(msg)
+    {
+    case WM_INITDIALOG:
+        SetWindowLongPtrW(hwnd, DWLP_USER, lparam);
+        data = (lptconfig_t *) lparam;
+
+        /* Get current setting */
+        data->value = 45;
+        status = ERROR_SUCCESS;
+        res = XcvDataW( data->hXcv, cmd_GetTransmissionRetryTimeoutW,
+                        (PBYTE) &dummy, 0,
+                        (PBYTE) &data->value, sizeof(data->value), &len, &status);
+
+        TRACE("got %u with status %u\n", res, status);
+
+        /* Set current setting as the initial value in the Dialog */
+        SetDlgItemInt(hwnd, LPTCONFIG_EDIT, data->value, FALSE);
+        return TRUE;
+
+    case WM_COMMAND:
+        if (wparam == MAKEWPARAM(IDOK, BN_CLICKED))
+        {
+            data = (lptconfig_t *) GetWindowLongPtrW(hwnd, DWLP_USER);
+
+            status = FALSE;
+            res = GetDlgItemInt(hwnd, LPTCONFIG_EDIT, (BOOL *) &status, FALSE);
+            /* length is in WCHAR, including the '\0' */
+            GetDlgItemTextW(hwnd, LPTCONFIG_EDIT, bufferW, sizeof(bufferW) / sizeof(bufferW[0]));
+            TRACE("got %s and %u (translated: %u)\n", debugstr_w(bufferW), res, status);
+
+            /* native localui.dll use the same limits */
+            if ((res > 0) && (res < 1000000) && status) {
+                sprintfW(bufferW, fmt_uW, res);
+                res = XcvDataW( data->hXcv, cmd_ConfigureLPTPortCommandOKW,
+                        (PBYTE) bufferW,
+                        (lstrlenW(bufferW) +1) * sizeof(WCHAR),
+                        (PBYTE) &dummy, 0, &len, &status);
+
+                TRACE("got %u with status %u\n", res, status);
+                EndDialog(hwnd, TRUE);
+                return TRUE;
+            }
+
+            /* Set initial value and rerun the Dialog */
+            SetDlgItemInt(hwnd, LPTCONFIG_EDIT, data->value, FALSE);
+            return TRUE;
+        }
+
+        if (wparam == MAKEWPARAM(IDCANCEL, BN_CLICKED))
+        {
+            EndDialog(hwnd, FALSE);
+            return TRUE;
+        }
+        return FALSE;
+    }
+    return FALSE;
+}
+
 
 /*****************************************************
  * get_type_from_name (internal)
@@ -469,6 +587,10 @@ static BOOL WINAPI localui_ConfigurePortUI(PCWSTR pName, HWND hWnd, PCWSTR pPort
 
         case PORT_IS_COM:
             res = dlg_configure_com(hXcv, hWnd, pPortName);
+            break;
+
+        case PORT_IS_LPT:
+            res = dlg_configure_lpt(hXcv, hWnd);
             break;
 
         default:

@@ -24,7 +24,11 @@
 
 /* ## Resource-ID ## */
 #define ADDPORT_DIALOG  100
-#define ADDPORT_EDIT    201
+#define ADDPORT_EDIT    101
+
+#define LPTCONFIG_DIALOG 200
+#define LPTCONFIG_GROUP  201
+#define LPTCONFIG_EDIT   202
 
 #define IDS_LOCALPORT       300
 #define IDS_INVALIDNAME     301
