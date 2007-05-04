@@ -400,74 +400,6 @@ static void test_dispid(void)
     }
 }
 
-/* FIXME: This should be integrated better into the rest of the tests */
-static void test_createrecord_and_version(void)
-{
-    IDispatch *record = NULL;
-    DISPPARAMS param;
-    VARIANTARG varg;
-    VARIANT result;
-    DISPID dispid;
-    DISPID arg;
-    HRESULT r;
-
-    arg = 0;
-
-    V_UINT(&varg) = 1;
-    V_VT(&varg) = VT_I4;
-
-    param.cArgs = 1;
-    param.cNamedArgs = 0;
-    param.rgvarg = &varg;
-    param.rgdispidNamedArgs = &arg;
-
-    dispid = get_dispid( pInstaller, "CreateRecord" );
-
-    r = IDispatch_Invoke( pInstaller, dispid, &IID_NULL, 0,
-                          DISPATCH_METHOD, &param, &result, NULL, NULL);
-    todo_wine ok( r == S_OK, "dispatch failed %08x\n", r);
-    if (SUCCEEDED(r))
-    {
-        ok( V_VT(&result) == VT_DISPATCH, "type wrong\n");
-
-        record = V_DISPATCH(&result);
-
-        memset( &result, 0, sizeof result );
-        dispid = get_dispid( record, "FieldCount" );
-
-        param.cArgs = 0;
-        param.cNamedArgs = 0;
-        param.rgvarg = &varg;
-        param.rgdispidNamedArgs = &arg;
-
-        r = IDispatch_Invoke( record, dispid, &IID_NULL, 0,
-                              DISPATCH_PROPERTYGET, &param, &result, NULL, NULL );
-        ok( r == S_OK, "dispatch failed %08x\n", r);
-
-        ok( V_VT(&result) == VT_I4, "type wrong\n");
-        ok( V_I4(&result) == 1, "field count wrong\n");
-
-        IDispatch_Release( record );
-    }
-    else
-        skip( "failed to create record\n");
-
-    memset( &result, 0, sizeof result );
-    dispid = get_dispid( pInstaller, "Version" );
-
-    param.cArgs = 0;
-    param.cNamedArgs = 0;
-    param.rgvarg = &varg;
-    param.rgdispidNamedArgs = &arg;
-
-    r = IDispatch_Invoke( pInstaller, dispid, &IID_NULL, 0,
-                          DISPATCH_PROPERTYGET, &param, &result, NULL, NULL );
-    todo_wine {
-    ok( r == S_OK, "dispatch failed %08x\n", r);
-    ok( V_VT(&result) == VT_BSTR, "type wrong %d\n", V_VT(&result));
-    }
-}
-
 /* Test basic IDispatch functions */
 static void test_dispatch(void)
 {
@@ -534,6 +466,9 @@ static HRESULT invoke(IDispatch *pDispatch, LPCSTR szName, WORD wFlags, DISPPARA
     int i;
     UINT len;
 
+    memset(pVarResult, 0, sizeof(VARIANT));
+    VariantInit(pVarResult);
+
     len = MultiByteToWideChar(CP_ACP, 0, szName, -1, NULL, 0 );
     name = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR) );
     if (!name) return E_FAIL;
@@ -543,7 +478,6 @@ static HRESULT invoke(IDispatch *pDispatch, LPCSTR szName, WORD wFlags, DISPPARA
     ok(SUCCEEDED(hr), "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
     if (!SUCCEEDED(hr)) return hr;
 
-    VariantInit(pVarResult);
     memset(&excepinfo, 0, sizeof(excepinfo));
     hr = IDispatch_Invoke(pDispatch, dispid, &IID_NULL, LOCALE_NEUTRAL, wFlags, pDispParams, pVarResult, &excepinfo, NULL);
 
@@ -565,6 +499,22 @@ static HRESULT invoke(IDispatch *pDispatch, LPCSTR szName, WORD wFlags, DISPPARA
 
 /* Object_Property helper functions */
 
+static HRESULT Installer_CreateRecord(int count, IDispatch **pRecord)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = count;
+
+    hr = invoke(pInstaller, "CreateRecord", DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
+    *pRecord = V_DISPATCH(&varresult);
+    return hr;
+}
+
 static HRESULT Installer_OpenPackage(LPCWSTR szPackagePath, int options, IDispatch **pSession)
 {
     VARIANT varresult;
@@ -581,6 +531,18 @@ static HRESULT Installer_OpenPackage(LPCWSTR szPackagePath, int options, IDispat
 
     hr = invoke(pInstaller, "OpenPackage", DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
     *pSession = V_DISPATCH(&varresult);
+    return hr;
+}
+
+static HRESULT Installer_VersionGet(LPCWSTR szVersion)
+{
+    VARIANT varresult;
+    DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+    HRESULT hr;
+
+    hr = invoke(pInstaller, "Version", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
+    lstrcpyW((WCHAR *)szVersion, V_BSTR(&varresult));
+    VariantClear(&varresult);
     return hr;
 }
 
@@ -801,6 +763,16 @@ static HRESULT View_Close(IDispatch *pView)
     return invoke(pView, "Close", DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
 }
 
+static HRESULT Record_FieldCountGet(IDispatch *pRecord, int *pFieldCount)
+{
+    VARIANT varresult;
+    DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+    HRESULT hr = invoke(pRecord, "FieldCount", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
+    *pFieldCount = V_I4(&varresult);
+    VariantClear(&varresult);
+    return hr;
+}
+
 static HRESULT Record_StringDataGet(IDispatch *pRecord, int iField, LPCWSTR szString)
 {
     VARIANT varresult;
@@ -1013,10 +985,29 @@ static void test_Installer(void)
     WCHAR szPath[MAX_PATH];
     HRESULT hr;
     UINT len;
-    IDispatch *pSession = NULL;
+    IDispatch *pSession = NULL, *pRecord = NULL;
 
     if (!pInstaller) return;
 
+    /* Installer::CreateRecord */
+    todo_wine {
+        hr = Installer_CreateRecord(1, &pRecord);
+        ok(SUCCEEDED(hr), "Installer_CreateRecord failed, hresult 0x%08x\n", hr);
+        ok(pRecord != NULL, "Installer_CreateRecord should not have returned NULL record\n");
+    }
+    if (pRecord)
+    {
+        int iFieldCount = 0;
+
+        /* Record::FieldCountGet */
+        hr = Record_FieldCountGet(pRecord, &iFieldCount);
+        ok(SUCCEEDED(hr), "Record_FiledCountGet failed, hresult 0x%08x\n", hr);
+        ok(iFieldCount == 1, "Record_FieldCountGet result was %d but expected 1\n", iFieldCount);
+
+        IDispatch_Release(pRecord);
+    }
+
+    /* Prepare package */
     create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
 
     len = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, CURR_DIR, -1, szPath, MAX_PATH);
@@ -1036,6 +1027,13 @@ static void test_Installer(void)
     }
 
     DeleteFileA(msifile);
+
+    /* Installer::Version */
+    todo_wine {
+        memset(szPath, 0, sizeof(szPath));
+        hr = Installer_VersionGet(szPath);
+        ok(SUCCEEDED(hr), "Installer_VersionGet failed, hresult 0x%08x\n", hr);
+    }
 }
 
 START_TEST(automation)
@@ -1069,7 +1067,6 @@ START_TEST(automation)
         ok (SUCCEEDED(hr), "IUnknown::QueryInterface returned 0x%08x\n", hr);
 
         test_dispid();
-        test_createrecord_and_version();
         test_dispatch();
         test_Installer();
 
