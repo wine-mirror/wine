@@ -686,6 +686,14 @@ static HRESULT WINAPI SessionImpl_Invoke(
 
     switch (dispIdMember)
     {
+	case DISPID_SESSION_INSTALLER:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+                V_VT(pVarResult) = VT_DISPATCH;
+                IDispatch_AddRef(This->pInstaller);
+                V_DISPATCH(pVarResult) = This->pInstaller;
+	    }
+	    break;
+
 	case DISPID_SESSION_PROPERTY:
 	    if (wFlags & DISPATCH_PROPERTYGET) {
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);

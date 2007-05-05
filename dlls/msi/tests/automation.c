@@ -908,12 +908,10 @@ static void test_Session(IDispatch *pSession)
     HRESULT hr;
 
     /* Session::Installer */
-    todo_wine {
-        hr = Session_Installer(pSession, &pInst);
-        ok(SUCCEEDED(hr), "Session_Installer failed, hresult 0x%08x\n", hr);
-        ok(pInst != NULL, "Session_Installer returned NULL IDispatch pointer\n");
-        ok(pInst == pInstaller, "Session_Installer does not match Installer instance from CoCreateInstance\n");
-    }
+    hr = Session_Installer(pSession, &pInst);
+    ok(SUCCEEDED(hr), "Session_Installer failed, hresult 0x%08x\n", hr);
+    ok(pInst != NULL, "Session_Installer returned NULL IDispatch pointer\n");
+    ok(pInst == pInstaller, "Session_Installer does not match Installer instance from CoCreateInstance\n");
 
     /* Session::Property, get */
     memset(stringw, 0, sizeof(stringw));

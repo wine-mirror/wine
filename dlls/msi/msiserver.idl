@@ -163,6 +163,8 @@ library WindowsInstaller
     {
     properties:
     methods:
+        [id(DISPID_SESSION_INSTALLER), propget]
+            Installer *Installer();
         [id(DISPID_SESSION_PROPERTY), propget]
             BSTR Property([in] BSTR PropertyName);
         [id(DISPID_SESSION_PROPERTY), propput]
