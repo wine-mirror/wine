@@ -90,8 +90,11 @@ static const struct message DoFocusTestSeq[] = {
     { WM_PARENTNOTIFY, sent|wparam|defwinproc, 0x00000001 },
     { WM_KILLFOCUS, sent|defwinproc },
     { WM_PAINT, sent|defwinproc },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_COMMAND, sent|wparam|defwinproc, 0x01000000},
     { WM_ERASEBKGND, sent|defwinproc },
+    { WM_CTLCOLOREDIT, sent|defwinproc|optional },
+    { WM_CTLCOLOREDIT, sent|defwinproc|optional },
     { 0 }
 };
 
