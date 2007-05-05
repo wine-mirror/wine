@@ -61,6 +61,9 @@ interface AutomationObject {
     /* The MSI handle of the current object */
     MSIHANDLE msiHandle;
 
+    /* The parent Installer object (only used in the Session object) */
+    IDispatch *pInstaller;
+
     /* A function that is called from AutomationObject::Invoke, specific to this type of object. */
     HRESULT (STDMETHODCALLTYPE *funcInvoke)(
         AutomationObject* This,
@@ -134,6 +137,7 @@ HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, LPVOI
     object->msiHandle = msiHandle;
     object->clsid = (LPCLSID)clsid;
     object->funcInvoke = funcInvoke;
+    object->pInstaller = NULL;
 
     /* Load our TypeInfo so we don't have to process GetIDsOfNames */
     object->iTypeInfo = NULL;
@@ -894,7 +898,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
 		if ((ret = MsiOpenPackageExW(V_BSTR(&varg0), V_I4(&varg1), &msiHandle)) == ERROR_SUCCESS)
                 {
-                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Session, SessionImpl_Invoke)))
+                    if (SUCCEEDED(create_session(msiHandle, (IDispatch *)This, &pDispatch)))
                     {
                         IDispatch_AddRef(pDispatch);
                         V_DISPATCH(pVarResult) = pDispatch;
@@ -922,7 +926,10 @@ HRESULT create_msiserver(IUnknown *pOuter, LPVOID *ppObj)
 }
 
 /* Wrapper around create_automation_object to create a session object. */
-HRESULT create_session(MSIHANDLE msiHandle, IDispatch **pDispatch)
+HRESULT create_session(MSIHANDLE msiHandle, IDispatch *pInstaller, IDispatch **pDispatch)
 {
-    return create_automation_object(msiHandle, NULL, (LPVOID)pDispatch, &DIID_Session, SessionImpl_Invoke);
+    HRESULT hr = create_automation_object(msiHandle, NULL, (LPVOID)pDispatch, &DIID_Session, SessionImpl_Invoke);
+    if (SUCCEEDED(hr) && pDispatch && *pDispatch)
+        ((AutomationObject *)*pDispatch)->pInstaller = (IDispatch *)pInstaller;
+    return hr;
 }

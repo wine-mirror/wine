@@ -46,6 +46,7 @@ static const WCHAR szSession[] = {'S','e','s','s','i','o','n',0};
 
 typedef struct {
     IActiveScriptSite lpVtbl;
+    IDispatch *pInstaller;
     IDispatch *pSession;
     LONG ref;
 } MsiActiveScriptSite;
@@ -65,6 +66,7 @@ static HRESULT create_ActiveScriptSite(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     object->lpVtbl.lpVtbl = &ASS_Vtbl;
     object->ref = 1;
+    object->pInstaller = NULL;
     object->pSession = NULL;
 
     *ppObj = object;
@@ -97,8 +99,13 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
     hr = create_ActiveScriptSite(NULL, (void **)&pActiveScriptSite);
     if (hr != S_OK) goto done;
 
+    /* Create an installer object */
+    hr = create_msiserver(NULL, (LPVOID *)&pActiveScriptSite->pInstaller);
+    if (hr != S_OK) goto done;
+    IUnknown_AddRef((IUnknown *)pActiveScriptSite->pInstaller);
+
     /* Create a session object */
-    hr = create_session(hPackage, &pActiveScriptSite->pSession);
+    hr = create_session(hPackage, pActiveScriptSite->pInstaller, &pActiveScriptSite->pSession);
     if (hr != S_OK) goto done;
     IUnknown_AddRef((IUnknown *)pActiveScriptSite->pSession);
 
@@ -181,6 +188,8 @@ done:
     if (pActiveScript) IActiveScriptSite_Release(pActiveScript);
     if (pActiveScriptSite &&
 	pActiveScriptSite->pSession) IUnknown_Release((IUnknown *)pActiveScriptSite->pSession);
+    if (pActiveScriptSite &&
+	pActiveScriptSite->pInstaller) IUnknown_Release((IUnknown *)pActiveScriptSite->pInstaller);
     if (pActiveScriptSite) IUnknown_Release((IUnknown *)pActiveScriptSite);
 
     CoUninitialize();    /* must call even if CoInitialize failed */

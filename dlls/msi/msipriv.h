@@ -793,7 +793,7 @@ extern VOID ControlEvent_UnSubscribeToEvent( MSIPACKAGE *package, LPCWSTR event,
 
 /* OLE automation */
 extern HRESULT create_msiserver(IUnknown *pOuter, LPVOID *ppObj);
-extern HRESULT create_session(MSIHANDLE msiHandle, IDispatch **pDispatch);
+extern HRESULT create_session(MSIHANDLE msiHandle, IDispatch *pInstaller, IDispatch **pDispatch);
 extern HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsid, LCID lcid);
 
 /* Scripting */
