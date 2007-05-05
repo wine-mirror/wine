@@ -724,7 +724,9 @@ static int is_linker_arg(const char* arg)
 
     switch (arg[1]) 
     {
-	case 'l': 
+	case 'R':
+	case 'z':
+	case 'l':
 	case 'u':
 	    return 1;
         case 'W':
@@ -828,7 +830,7 @@ int main(int argc, char **argv)
 		case 'x': case 'o': case 'D': case 'U':
 		case 'I': case 'A': case 'l': case 'u':
 		case 'b': case 'V': case 'G': case 'L':
-		case 'B':
+		case 'B': case 'R': case 'z':
 		    if (argv[i][2]) option_arg = &argv[i][2];
 		    else next_is_arg = 1;
 		    break;
