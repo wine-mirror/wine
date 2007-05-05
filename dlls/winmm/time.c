@@ -44,8 +44,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmtime);
 
 static    HANDLE                TIME_hMMTimer;
 static    LPWINE_TIMERENTRY 	TIME_TimersList;
-static    HANDLE                TIME_hKillEvent;
 static    HANDLE                TIME_hWakeEvent;
+static    CRITICAL_SECTION      TIME_cbcrst;
 static    BOOL                  TIME_TimeToDie = TRUE;
 
 /*
@@ -200,11 +200,11 @@ static    LPWINE_TIMERENTRY		lpTimers;
 
         ptimer = next_ptimer;
     }
-    if (TIME_hKillEvent) ResetEvent(TIME_hKillEvent);
     LeaveCriticalSection(&iData->cs);
 
+    EnterCriticalSection(&TIME_cbcrst);
     while (idx > 0) TIME_TriggerCallBack(&lpTimers[--idx]);
-    if (TIME_hKillEvent) SetEvent(TIME_hKillEvent);
+    LeaveCriticalSection(&TIME_cbcrst);
 
     /* Finally, adjust the recommended wait time downward
        by the amount of time the processing routines 
@@ -266,6 +266,8 @@ void	TIME_MMTimeStart(void)
         TIME_TimeToDie = FALSE;
 	TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, &WINMM_IData, 0, NULL);
         SetThreadPriority(TIME_hMMTimer, THREAD_PRIORITY_TIME_CRITICAL);
+        InitializeCriticalSection(&TIME_cbcrst);
+        TIME_cbcrst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINMM.TIME_cbcrst");
     }
 }
 
@@ -285,6 +287,8 @@ void	TIME_MMTimeStop(void)
 	CloseHandle(TIME_hMMTimer);
 	CloseHandle(TIME_hWakeEvent);
 	TIME_hMMTimer = 0;
+        TIME_cbcrst.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&TIME_cbcrst);
         TIME_TimersList = NULL;
     }
 }
@@ -336,9 +340,6 @@ WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
     lpNewTimer->wFlags = wFlags;
 
     EnterCriticalSection(&WINMM_IData.cs);
-
-    if ((wFlags & TIME_KILL_SYNCHRONOUS) && !TIME_hKillEvent)
-        TIME_hKillEvent = CreateEventW(NULL, TRUE, TRUE, NULL);
 
     for (lpTimer = TIME_TimersList; lpTimer != NULL; lpTimer = lpTimer->lpNext) {
 	wNewID = max(wNewID, lpTimer->wTimerID);
@@ -397,8 +398,10 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
         return MMSYSERR_INVALPARAM;
     }
     if (lpSelf->wFlags & TIME_KILL_SYNCHRONOUS)
-        WaitForSingleObject(TIME_hKillEvent, INFINITE);
+        EnterCriticalSection(&TIME_cbcrst);
     HeapFree(GetProcessHeap(), 0, lpSelf);
+    if (lpSelf->wFlags & TIME_KILL_SYNCHRONOUS)
+        LeaveCriticalSection(&TIME_cbcrst);
     return TIMERR_NOERROR;
 }
 
