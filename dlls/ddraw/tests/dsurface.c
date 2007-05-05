@@ -1028,7 +1028,7 @@ static void AttachmentTest(void)
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_BACKBUFFERCOUNT | DDSD_CAPS;
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    U2(ddsd).dwBackBufferCount = 2;
+    ddsd.dwBackBufferCount = 2;
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface1, NULL);
     ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
 
@@ -1137,7 +1137,7 @@ static void CubeMapTest(void)
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
     ddsd.dwWidth = 128;
     ddsd.dwHeight = 128;
@@ -1145,11 +1145,11 @@ static void CubeMapTest(void)
     ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
 
     /* D3DFMT_R5G6B5 */
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
-    ddsd.ddpfPixelFormat.dwRBitMask = 0xF800;
-    ddsd.ddpfPixelFormat.dwGBitMask = 0x07E0;
-    ddsd.ddpfPixelFormat.dwBBitMask = 0x001F;
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0xF800;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x07E0;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001F;
 
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &cubemap, NULL);
     ok(hr == DD_OK, "IDirectDraw7::CreateSurface returned %08x\n", hr);
@@ -1171,7 +1171,7 @@ static void CubeMapTest(void)
     /* What happens if I do not specify any faces? */
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
     ddsd.dwWidth = 128;
     ddsd.dwHeight = 128;
@@ -1179,11 +1179,11 @@ static void CubeMapTest(void)
     ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP;
 
     /* D3DFMT_R5G6B5 */
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
-    ddsd.ddpfPixelFormat.dwRBitMask = 0xF800;
-    ddsd.ddpfPixelFormat.dwGBitMask = 0x07E0;
-    ddsd.ddpfPixelFormat.dwBBitMask = 0x001F;
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0xF800;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x07E0;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001F;
 
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &cubemap, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw7::CreateSurface asking for a cube map without faces returned %08x\n", hr);
@@ -1191,7 +1191,7 @@ static void CubeMapTest(void)
     /* Cube map faces without a cube map? */
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
     ddsd.dwWidth = 128;
     ddsd.dwHeight = 128;
@@ -1199,18 +1199,18 @@ static void CubeMapTest(void)
     ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP_ALLFACES;
 
     /* D3DFMT_R5G6B5 */
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
-    ddsd.ddpfPixelFormat.dwRBitMask = 0xF800;
-    ddsd.ddpfPixelFormat.dwGBitMask = 0x07E0;
-    ddsd.ddpfPixelFormat.dwBBitMask = 0x001F;
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0xF800;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x07E0;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001F;
 
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &cubemap, NULL);
     ok(hr == DDERR_INVALIDCAPS, "IDirectDraw7::CreateSurface returned %08x\n", hr);
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
     ddsd.dwWidth = 128;
     ddsd.dwHeight = 128;
@@ -1218,11 +1218,11 @@ static void CubeMapTest(void)
     ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP_POSITIVEX;
 
     /* D3DFMT_R5G6B5 */
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
-    ddsd.ddpfPixelFormat.dwRBitMask = 0xF800;
-    ddsd.ddpfPixelFormat.dwGBitMask = 0x07E0;
-    ddsd.ddpfPixelFormat.dwBBitMask = 0x001F;
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0xF800;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x07E0;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001F;
 
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &cubemap, NULL);
     ok(hr == DDERR_INVALIDCAPS, "IDirectDraw7::CreateSurface returned %08x\n", hr);
