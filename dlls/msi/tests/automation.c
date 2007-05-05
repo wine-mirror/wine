@@ -546,6 +546,17 @@ static HRESULT Installer_VersionGet(LPCWSTR szVersion)
     return hr;
 }
 
+static HRESULT Session_Installer(IDispatch *pSession, IDispatch **pInst)
+{
+    VARIANT varresult;
+    DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+    HRESULT hr;
+
+    hr = invoke(pSession, "Installer", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_DISPATCH);
+    *pInst = V_DISPATCH(&varresult);
+    return hr;
+}
+
 static HRESULT Session_PropertyGet(IDispatch *pSession, LPCWSTR szName, LPCWSTR szReturn)
 {
     VARIANT varresult;
@@ -893,8 +904,16 @@ static void test_Session(IDispatch *pSession)
     UINT len;
     BOOL bool;
     int myint;
-    IDispatch *pDatabase = NULL;
+    IDispatch *pDatabase = NULL, *pInst = NULL;
     HRESULT hr;
+
+    /* Session::Installer */
+    todo_wine {
+        hr = Session_Installer(pSession, &pInst);
+        ok(SUCCEEDED(hr), "Session_Installer failed, hresult 0x%08x\n", hr);
+        ok(pInst != NULL, "Session_Installer returned NULL IDispatch pointer\n");
+        ok(pInst == pInstaller, "Session_Installer does not match Installer instance from CoCreateInstance\n");
+    }
 
     /* Session::Property, get */
     memset(stringw, 0, sizeof(stringw));
