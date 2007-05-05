@@ -169,6 +169,8 @@ static const struct message TestGetSetTextColorSeq[] = {
 };
 
 static const struct message TestGetSetToolTipsSeq[] = {
+    { WM_COMMAND,       sent|wparam,            0x02000000 },
+    { WM_PARENTNOTIFY,  sent|wparam|defwinproc, 0x00020002 },
     { TVM_SETTOOLTIPS, sent|wparam|lparam, 0x00000000, 0x00000000 },
     { TVM_GETTOOLTIPS, sent|wparam|lparam, 0x00000000, 0x00000000 },
     { 0 }
@@ -470,6 +472,11 @@ static void TestGetSetTextColor(void)
 static void TestGetSetToolTips(void)
 {
     HWND hwndLastToolTip = NULL;
+    HWND hPopupTreeView;
+
+    /* show even WS_POPUP treeview don't send NM_TOOLTIPSCREATED */
+    hPopupTreeView = CreateWindow(WC_TREEVIEW, NULL, WS_POPUP|WS_VISIBLE, 0, 0, 100, 100, hMainWnd, NULL, NULL, NULL);
+    DestroyWindow(hPopupTreeView);
 
     /* Testing setting a NULL ToolTip */
     SendMessage( hTree, TVM_SETTOOLTIPS, 0, 0 );
@@ -552,7 +559,7 @@ static void TestGetSet(void)
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     TestGetSetToolTips();
     ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetToolTipsSeq,
-        "TestGetSetToolTips", FALSE);
+        "TestGetSetToolTips", TRUE);
 
     /* TVM_GETUNICODEFORMAT and TVM_SETUNICODEFORMAT */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
@@ -614,6 +621,7 @@ static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
     {
         NMHDR *pHdr = (NMHDR *)lParam;
     
+        ok(pHdr->code != NM_FIRST - 19, "Treeview should not send NM_TOOLTIPSCREATED\n");
         if (pHdr->idFrom == 100) {
             NMTREEVIEWA *pTreeView = (LPNMTREEVIEWA) lParam;
             switch(pHdr->code) {

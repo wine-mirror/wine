@@ -4967,7 +4967,9 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     TREEVIEW_NotifyFormat(infoPtr, infoPtr->hwndNotify, NF_REQUERY);
 
     if (!(infoPtr->dwStyle & TVS_NOTOOLTIPS))
-	infoPtr->hwndToolTip = COMCTL32_CreateToolTip(hwnd);
+        infoPtr->hwndToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, WS_POPUP,
+            CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+            hwnd, 0, 0, 0);
 
     if (infoPtr->dwStyle & TVS_CHECKBOXES)
         initialize_checkboxes(infoPtr);
