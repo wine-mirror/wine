@@ -2472,6 +2472,9 @@ static inline void unloadVertexData(IWineD3DStateBlockImpl *stateblock) {
     if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
         glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
     }
+    if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
+        glDisableClientState(GL_WEIGHT_ARRAY_ARB);
+    }
     for (texture_idx = 0; texture_idx < GL_LIMITS(textures); ++texture_idx) {
         GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
