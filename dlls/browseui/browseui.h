@@ -23,6 +23,10 @@
 
 extern LONG BROWSEUI_refCount;
 
+extern LONG module_ref;
+#define LOCK_MODULE()   InterlockedIncrement(&module_ref)
+#define UNLOCK_MODULE() InterlockedDecrement(&module_ref)
+
 HRESULT WINAPI ACLMulti_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
 
 #endif /* __WINE_SHDOCVW_H */

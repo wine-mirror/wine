@@ -43,6 +43,8 @@ LONG BROWSEUI_refCount = 0;
 
 HINSTANCE browseui_hinstance = 0;
 
+LONG module_ref = 0;
+
 typedef HRESULT (WINAPI *LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
 
 static const struct {
@@ -126,8 +128,16 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
 {
-    FIXME("(%p, %s) - not implemented\n", iface, (fLock ? "TRUE" : "FALSE"));
-    return E_NOTIMPL;
+    ClassFactory *This = (ClassFactory *)iface;
+
+    TRACE("(%p)->(%x)\n", This, fLock);
+
+    if(fLock)
+        LOCK_MODULE();
+    else
+        UNLOCK_MODULE();
+
+    return S_OK;
 }
 
 static const IClassFactoryVtbl ClassFactoryVtbl = {
