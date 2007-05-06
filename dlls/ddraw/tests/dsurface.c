@@ -202,7 +202,7 @@ static void SrcColorKey32BlitTest(void)
     ddsd.ddckCKSrcBlt.dwColorSpaceHighValue = 0xFF00FF;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpSrc, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
-    
+
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
     lpData = (LPDWORD)ddsd2.lpSurface;
@@ -215,6 +215,7 @@ static void SrcColorKey32BlitTest(void)
 
     rc = IDirectDrawSurface_Lock(lpSrc, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
     lpData[0] = 0x77010203;
     lpData[1] = 0x00010203;
@@ -227,6 +228,7 @@ static void SrcColorKey32BlitTest(void)
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
     ok((lpData[0]==0x77010203)&&(lpData[1]==0x00010203)&&(lpData[2]==0xCCCCCCCC)&&(lpData[3]==0xCCCCCCCC),
        "Destination data after blitting is not correct\n");
@@ -317,6 +319,7 @@ static void SrcColorKey32BlitTest(void)
 
     rc = IDirectDrawSurface_Lock(lpSrc, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
     lpData[0] = 0x000000FF; /* Applies to src blt key in src surface */
     lpData[1] = 0x00000000; /* Applies to dst blt key in src surface */
@@ -329,6 +332,7 @@ static void SrcColorKey32BlitTest(void)
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
     lpData[0] = 0x55555555;
     lpData[1] = 0x55555555;
@@ -345,6 +349,7 @@ static void SrcColorKey32BlitTest(void)
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
     /* Should have copied src data unmodified to dst */
     ok(lpData[0] == 0x000000FF &&
@@ -369,6 +374,7 @@ static void SrcColorKey32BlitTest(void)
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
 
     ok(lpData[0] == 0x55555555 && /* Here the src key applied */
@@ -393,6 +399,7 @@ static void SrcColorKey32BlitTest(void)
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
 
     ok(lpData[0] == 0x000000FF &&
@@ -419,6 +426,7 @@ static void SrcColorKey32BlitTest(void)
     /* Verify that the destination is unchanged */
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
 
     ok(lpData[0] == 0x55555555 &&
@@ -444,6 +452,7 @@ static void SrcColorKey32BlitTest(void)
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
 
     /* DirectDraw uses the dest blit key from the SOURCE surface ! */
@@ -470,6 +479,7 @@ static void SrcColorKey32BlitTest(void)
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
 
     ok(lpData[0] == 0x00FF0000 &&
@@ -496,6 +506,7 @@ static void SrcColorKey32BlitTest(void)
     /* Check for unchanged data */
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
 
     ok(lpData[0] == 0x00FF0000 &&
@@ -518,6 +529,7 @@ static void SrcColorKey32BlitTest(void)
     /* Modify the source data a bit to give some more conclusive results */
     rc = IDirectDrawSurface_Lock(lpSrc, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
     lpData[5] = 0x000000FF; /* Applies to src blt key in src surface */
     rc = IDirectDrawSurface_Unlock(lpSrc, NULL);
@@ -529,6 +541,7 @@ static void SrcColorKey32BlitTest(void)
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    ok((ddsd2.dwFlags & DDSD_LPSURFACE) == 0, "Surface desc has LPSURFACE Flags set\n");
     lpData = (LPDWORD)ddsd2.lpSurface;
 
     ok(lpData[0] == 0x00FF0000 && /* Masked by Destination key */
@@ -1319,6 +1332,398 @@ static void test_lockrect_invalid(void)
     }
 }
 
+static void CompressedTest(void)
+{
+    HRESULT hr;
+    IDirectDrawSurface7 *surface;
+    DDSURFACEDESC2 ddsd, ddsd2;
+    IDirectDraw7 *dd7 = NULL;
+    RECT r = { 0, 0, 128, 128 };
+    RECT r2 = { 32, 32, 64, 64 };
+
+    hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
+    ok(hr == DD_OK, "IDirectDraw::QueryInterface returned %08x\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+    ddsd.dwWidth = 128;
+    ddsd.dwHeight = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY;
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+    U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','1');
+
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
+    ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+    U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd2);
+    ok(hr == DD_OK, "GetSurfaceDesc returned %08x\n", hr);
+
+    ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+       "Surface desc flags: %08x\n", ddsd2.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+    ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+       "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+    ok(ddsd2.dwLinearSize == 8192, "Linear size is %d\n", ddsd2.dwLinearSize);
+    ok(ddsd2.ddsCaps.dwCaps2 == 0, "Caps2: %08x\n", ddsd2.ddsCaps.dwCaps2);
+    IDirectDrawSurface7_Release(surface);
+
+    U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','3');
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
+    ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+    U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd2);
+    ok(hr == DD_OK, "GetSurfaceDesc returned %08x\n", hr);
+
+    ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+       "Surface desc flags: %08x\n", ddsd2.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+    ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+       "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+    ok(ddsd2.dwLinearSize == 16384, "Linear size is %d\n", ddsd2.dwLinearSize);
+    IDirectDrawSurface7_Release(surface);
+
+    U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','5');
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
+    ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+    U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd2);
+    ok(hr == DD_OK, "GetSurfaceDesc returned %08x\n", hr);
+
+    ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+       "Surface desc flags: %08x\n", ddsd2.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+    ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+       "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+    ok(ddsd2.dwLinearSize == 16384, "Linear size is %d\n", ddsd2.dwLinearSize);
+    ok(ddsd2.lpSurface == 0, "Surface memory is at %p, expected NULL\n", ddsd2.lpSurface);
+
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+    U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+
+    /* Show that the description is not changed when locking the surface. What is really interesting
+     * about this is that DDSD_LPSURFACE isn't set.
+     */
+    hr = IDirectDrawSurface7_Lock(surface, NULL, &ddsd2, DDLOCK_READONLY, 0);
+    ok(hr == DD_OK, "Lock returned %08x\n", hr);
+
+    ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+       "Surface desc flags: %08x\n", ddsd2.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+    ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+       "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+    ok(ddsd2.dwLinearSize == 16384, "Linear size is %d\n", ddsd2.dwLinearSize);
+    ok(ddsd2.lpSurface != 0, "Surface memory is at NULL\n");
+
+    hr = IDirectDrawSurface7_Unlock(surface, NULL);
+    ok(hr == DD_OK, "Unlock returned %08x\n", hr);
+
+    /* Now what about a locking rect?  */
+    hr = IDirectDrawSurface7_Lock(surface, &r, &ddsd2, DDLOCK_READONLY, 0);
+    ok(hr == DD_OK, "Lock returned %08x\n", hr);
+
+    ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+       "Surface desc flags: %08x\n", ddsd2.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+    ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+       "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+    ok(ddsd2.dwLinearSize == 16384, "Linear size is %d\n", ddsd2.dwLinearSize);
+    ok(ddsd2.lpSurface != 0, "Surface memory is at NULL\n");
+
+    hr = IDirectDrawSurface7_Unlock(surface, &r);
+    ok(hr == DD_OK, "Unlock returned %08x\n", hr);
+
+    /* Now what about a different locking offset? */
+    hr = IDirectDrawSurface7_Lock(surface, &r2, &ddsd2, DDLOCK_READONLY, 0);
+    ok(hr == DD_OK, "Lock returned %08x\n", hr);
+
+    ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+       "Surface desc flags: %08x\n", ddsd2.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+    ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+    ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+       "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+    ok(ddsd2.dwLinearSize == 16384, "Linear size is %d\n", ddsd2.dwLinearSize);
+    ok(ddsd2.lpSurface != 0, "Surface memory is at NULL\n");
+
+    hr = IDirectDrawSurface7_Unlock(surface, &r2);
+    ok(hr == DD_OK, "Unlock returned %08x\n", hr);
+    IDirectDrawSurface7_Release(surface);
+
+    /* Try this with video memory. A kind of surprise. It still has the LINEARSIZE flag set,
+     * but seems to have a pitch instead.
+     */
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY;
+    U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','1');
+
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
+    ok(hr == DD_OK || hr == DDERR_NOTEXTUREHW, "CreateSurface returned %08x\n", hr);
+
+    /* Not supported everywhere */
+    if(SUCCEEDED(hr))
+    {
+        memset(&ddsd2, 0, sizeof(ddsd2));
+        ddsd2.dwSize = sizeof(ddsd2);
+        U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+        hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd2);
+        ok(hr == DD_OK, "GetSurfaceDesc returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        /* ATI drivers report a broken linear size, thus no need to clone the exact behaviour. nvidia reports the correct size */
+        ok(ddsd2.ddsCaps.dwCaps2 == 0, "Caps2: %08x\n", ddsd2.ddsCaps.dwCaps2);
+        IDirectDrawSurface7_Release(surface);
+
+        U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','3');
+        hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
+        ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+
+        memset(&ddsd2, 0, sizeof(ddsd2));
+        ddsd2.dwSize = sizeof(ddsd2);
+        U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+        hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd2);
+        ok(hr == DD_OK, "GetSurfaceDesc returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        /* ATI drivers report a broken linear size, thus no need to clone the exact behaviour. nvidia reports the correct size */
+        IDirectDrawSurface7_Release(surface);
+
+        U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','5');
+        hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
+        ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+
+        memset(&ddsd2, 0, sizeof(ddsd2));
+        ddsd2.dwSize = sizeof(ddsd2);
+        U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+        hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd2);
+        ok(hr == DD_OK, "GetSurfaceDesc returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        /* ATI drivers report a broken linear size, thus no need to clone the exact behaviour. nvidia reports the correct size */
+        ok(ddsd2.lpSurface == 0, "Surface memory is at %p, expected NULL\n", ddsd2.lpSurface);
+
+        memset(&ddsd2, 0, sizeof(ddsd2));
+        ddsd2.dwSize = sizeof(ddsd2);
+        U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+
+        /* Show that the description is not changed when locking the surface. What is really interesting
+        * about this is that DDSD_LPSURFACE isn't set.
+        */
+        hr = IDirectDrawSurface7_Lock(surface, NULL, &ddsd2, DDLOCK_READONLY, 0);
+        ok(hr == DD_OK, "Lock returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        /* ATI drivers report a broken linear size, thus no need to clone the exact behaviour. nvidia reports the correct size */
+        ok(ddsd2.lpSurface != 0, "Surface memory is at NULL\n");
+
+        hr = IDirectDrawSurface7_Unlock(surface, NULL);
+        ok(hr == DD_OK, "Unlock returned %08x\n", hr);
+
+        /* Now what about a locking rect?  */
+        hr = IDirectDrawSurface7_Lock(surface, &r, &ddsd2, DDLOCK_READONLY, 0);
+        ok(hr == DD_OK, "Lock returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        /* ATI drivers report a broken linear size, thus no need to clone the exact behaviour. nvidia reports the correct size */
+        ok(ddsd2.lpSurface != 0, "Surface memory is at NULL\n");
+
+        hr = IDirectDrawSurface7_Unlock(surface, &r);
+        ok(hr == DD_OK, "Unlock returned %08x\n", hr);
+
+        /* Now what about a different locking offset? */
+        hr = IDirectDrawSurface7_Lock(surface, &r2, &ddsd2, DDLOCK_READONLY, 0);
+        ok(hr == DD_OK, "Lock returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        /* ATI drivers report a broken linear size, thus no need to clone the exact behaviour. nvidia reports the correct size */
+        ok(ddsd2.lpSurface != 0, "Surface memory is at NULL\n");
+
+        hr = IDirectDrawSurface7_Unlock(surface, &r2);
+        ok(hr == DD_OK, "Unlock returned %08x\n", hr);
+
+        IDirectDrawSurface7_Release(surface);
+    }
+    else
+    {
+        skip("Hardware DXTN textures not supported\n");
+    }
+
+    /* What happens to managed textures? Interestingly, Windows reports them as beeing in system
+     * memory. The linear size fits again.
+     */
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_TEXTUREMANAGE;
+    U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','1');
+
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
+    ok(hr == DD_OK || hr == DDERR_NOTEXTUREHW, "CreateSurface returned %08x\n", hr);
+
+    /* Not supported everywhere */
+    if(SUCCEEDED(hr))
+    {
+        memset(&ddsd2, 0, sizeof(ddsd2));
+        ddsd2.dwSize = sizeof(ddsd2);
+        U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+        hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd2);
+        ok(hr == DD_OK, "GetSurfaceDesc returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        ok(ddsd2.dwLinearSize == 8192, "Linear size is %d\n", ddsd2.dwLinearSize);
+        ok(ddsd2.ddsCaps.dwCaps2 == DDSCAPS2_TEXTUREMANAGE, "Caps2: %08x\n", ddsd2.ddsCaps.dwCaps2);
+        IDirectDrawSurface7_Release(surface);
+
+        U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','3');
+        hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
+        ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+
+        memset(&ddsd2, 0, sizeof(ddsd2));
+        ddsd2.dwSize = sizeof(ddsd2);
+        U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+        hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd2);
+        ok(hr == DD_OK, "GetSurfaceDesc returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        ok(ddsd2.dwLinearSize == 16384, "Linear size is %d\n", ddsd2.dwLinearSize);
+        IDirectDrawSurface7_Release(surface);
+
+        U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','5');
+        hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
+        ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+
+        memset(&ddsd2, 0, sizeof(ddsd2));
+        ddsd2.dwSize = sizeof(ddsd2);
+        U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+        hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd2);
+        ok(hr == DD_OK, "GetSurfaceDesc returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        ok(ddsd2.dwLinearSize == 16384, "Linear size is %d\n", ddsd2.dwLinearSize);
+        ok(ddsd2.lpSurface == 0, "Surface memory is at %p, expected NULL\n", ddsd2.lpSurface);
+
+        memset(&ddsd2, 0, sizeof(ddsd2));
+        ddsd2.dwSize = sizeof(ddsd2);
+        U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+
+        /* Show that the description is not changed when locking the surface. What is really interesting
+        * about this is that DDSD_LPSURFACE isn't set.
+        */
+        hr = IDirectDrawSurface7_Lock(surface, NULL, &ddsd2, DDLOCK_READONLY, 0);
+        ok(hr == DD_OK, "Lock returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        ok(ddsd2.dwLinearSize == 16384, "Linear size is %d\n", ddsd2.dwLinearSize);
+        ok(ddsd2.lpSurface != 0, "Surface memory is at NULL\n");
+
+        hr = IDirectDrawSurface7_Unlock(surface, NULL);
+        ok(hr == DD_OK, "Unlock returned %08x\n", hr);
+
+        /* Now what about a locking rect?  */
+        hr = IDirectDrawSurface7_Lock(surface, &r, &ddsd2, DDLOCK_READONLY, 0);
+        ok(hr == DD_OK, "Lock returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        ok(ddsd2.dwLinearSize == 16384, "\"Linear\" size is %d\n", ddsd2.dwLinearSize);
+        ok(ddsd2.lpSurface != 0, "Surface memory is at NULL\n");
+
+        hr = IDirectDrawSurface7_Unlock(surface, &r);
+        ok(hr == DD_OK, "Unlock returned %08x\n", hr);
+
+        /* Now what about a different locking offset? */
+        hr = IDirectDrawSurface7_Lock(surface, &r2, &ddsd2, DDLOCK_READONLY, 0);
+        ok(hr == DD_OK, "Lock returned %08x\n", hr);
+
+        ok(ddsd2.dwFlags == (DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LINEARSIZE),
+        "Surface desc flags: %08x\n", ddsd2.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Pixel format flags: %08x\n", U4(ddsd2).ddpfPixelFormat.dwFlags);
+        ok(U4(ddsd2).ddpfPixelFormat.dwRGBBitCount == 0, "RGB bitcount: %08x\n", U4(ddsd2).ddpfPixelFormat.dwRGBBitCount);
+        ok(ddsd2.ddsCaps.dwCaps == (DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY),
+        "Surface caps flags: %08x\n", ddsd2.ddsCaps.dwCaps);
+        ok(ddsd2.dwLinearSize == 16384, "\"Linear\" size is %d\n", ddsd2.dwLinearSize);
+        ok(ddsd2.lpSurface != 0, "Surface memory is at NULL\n");
+
+        hr = IDirectDrawSurface7_Unlock(surface, &r2);
+        ok(hr == DD_OK, "Unlock returned %08x\n", hr);
+
+        IDirectDrawSurface7_Release(surface);
+    }
+    else
+    {
+        skip("Hardware DXTN textures not supported\n");
+    }
+
+    IDirectDraw7_Release(dd7);
+}
+
 START_TEST(dsurface)
 {
     if (!CreateDirectDraw())
@@ -1334,5 +1739,6 @@ START_TEST(dsurface)
     AttachmentTest();
     CubeMapTest();
     test_lockrect_invalid();
+    CompressedTest();
     ReleaseDirectDraw();
 }

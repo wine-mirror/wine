@@ -1783,8 +1783,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
         Usage |= WINED3DUSAGE_RENDERTARGET;
 
         pDDSD->ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY |
-                                 DDSCAPS_VISIBLE     |
-                                 DDSCAPS_LOCALVIDMEM;
+                                 DDSCAPS_VISIBLE;
     }
     if (pDDSD->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
     {
@@ -1805,6 +1804,15 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     else if(pDDSD->ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE)
     {
         Pool = WINED3DPOOL_MANAGED;
+        /* Managed textures have the system memory flag set */
+        pDDSD->ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
+    }
+    else if(pDDSD->ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY)
+    {
+        /* Videomemory adds localvidmem, this is mutually exclusive with systemmemory
+         * and texturemanage
+         */
+        pDDSD->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM;
     }
 
     Format = PixelFormat_DD2WineD3D(&pDDSD->u4.ddpfPixelFormat);
@@ -1943,10 +1951,27 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
 
     /* Anno 1602 stores the pitch right after surface creation, so make sure it's there.
      * I can't LockRect() the surface here because if OpenGL surfaces are in use, the
-     * WineD3DDevice might not be useable for 3D yet, so an extra method was created
+     * WineD3DDevice might not be useable for 3D yet, so an extra method was created.
+     * TODO: Test other fourcc formats
      */
-    (*ppSurf)->surface_desc.dwFlags |= DDSD_PITCH;
-    (*ppSurf)->surface_desc.u1.lPitch = IWineD3DSurface_GetPitch((*ppSurf)->WineD3DSurface);
+    if(Format == WINED3DFMT_DXT1 || Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
+       Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5)
+    {
+        (*ppSurf)->surface_desc.dwFlags |= DDSD_LINEARSIZE;
+        if(Format == WINED3DFMT_DXT1)
+        {
+            (*ppSurf)->surface_desc.u1.dwLinearSize = max(4, Width) * max(4, Height) / 2;
+        }
+        else
+        {
+            (*ppSurf)->surface_desc.u1.dwLinearSize = max(4, Width) * max(4, Height);
+        }
+    }
+    else
+    {
+        (*ppSurf)->surface_desc.dwFlags |= DDSD_PITCH;
+        (*ppSurf)->surface_desc.u1.lPitch = IWineD3DSurface_GetPitch((*ppSurf)->WineD3DSurface);
+    }
 
     /* Application passed a color key? Set it! */
     if(pDDSD->dwFlags & DDSD_CKDESTOVERLAY)

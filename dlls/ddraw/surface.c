@@ -592,11 +592,11 @@ IDirectDrawSurfaceImpl_Lock(IDirectDrawSurface7 *iface,
                                   Flags);
     if(hr != D3D_OK) return hr;
 
-    /* Override the memory area and the pitch */
-    DDSD->dwFlags |= DDSD_LPSURFACE;
+    /* Override the memory area. The pitch should be set already. Strangely windows
+     * does not set the LPSURFACE flag on locked surfaces !?!.
+     * DDSD->dwFlags |= DDSD_LPSURFACE;
+     */
     DDSD->lpSurface = LockedRect.pBits;
-    DDSD->dwFlags |= DDSD_PITCH;
-    DDSD->u1.lPitch = LockedRect.Pitch;
 
     TRACE("locked surface returning description :\n");
     if (TRACE_ON(ddraw)) DDRAW_dump_surface_desc(DDSD);
