@@ -3537,7 +3537,13 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
     }
 
     if(dest->vbo) {
-        dest_conv_addr = HeapAlloc(GetProcessHeap(), 0, dwCount * get_flexible_vertex_size(DestFVF));
+        unsigned char extrabytes = 0;
+        /* If the destination vertex buffer has D3DFVF_XYZ position(non-rhw), native d3d writes RHW position, where the RHW
+         * gets written into the 4 bytes after the Z position. In the case of a dest buffer that only has D3DFVF_XYZ data,
+         * this may write 4 extra bytes beyond the area that should be written
+         */
+        if(DestFVF == WINED3DFVF_XYZ) extrabytes = 4;
+        dest_conv_addr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwCount * get_flexible_vertex_size(DestFVF) + extrabytes);
         if(!dest_conv_addr) {
             ERR("Out of memory\n");
             /* Continue without storing converted vertices */
@@ -3871,25 +3877,38 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
          *
          * Also get the start index in, but only loop over all elements if there's something to add at all.
          */
-        for(i=0; i < 16; i++) {
-            if(strided.u.input[i].VBO) {
-                IWineD3DVertexBufferImpl *vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[strided.u.input[i].streamNo];
-
-                /* The vertex buffer is supposed to have a system memory copy */
-                strided.u.input[i].VBO = 0;
-                strided.u.input[i].lpData = (BYTE *) ((unsigned long) strided.u.input[i].lpData + (unsigned long) vb->resource.allocatedMemory);
-                ENTER_GL();
-                GL_EXTCALL(glDeleteBuffersARB(1, &vb->vbo));
-                vb->vbo = 0;
-                LEAVE_GL();
-
-                /* To be safe. An app could technically draw, then call ProcessVertices, then draw again without ever changing the stream sources */
-                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
-            }
-            if(strided.u.input[i].lpData) {
-                strided.u.input[i].lpData += strided.u.input[i].dwStride * SrcStartIndex;
-            }
+#define FIXSRC(type) \
+        if(strided.u.s.type.VBO) { \
+            IWineD3DVertexBufferImpl *vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[strided.u.s.type.streamNo]; \
+            strided.u.s.type.VBO = 0; \
+            strided.u.s.type.lpData = (BYTE *) ((unsigned long) strided.u.s.type.lpData + (unsigned long) vb->resource.allocatedMemory); \
+            ENTER_GL(); \
+            GL_EXTCALL(glDeleteBuffersARB(1, &vb->vbo)); \
+            vb->vbo = 0; \
+            LEAVE_GL(); \
+        } \
+        if(strided.u.s.type.lpData) { \
+            strided.u.s.type.lpData += strided.u.s.type.dwStride * SrcStartIndex; \
         }
+        FIXSRC(position);
+        FIXSRC(blendWeights);
+        FIXSRC(blendMatrixIndices);
+        FIXSRC(normal);
+        FIXSRC(pSize);
+        FIXSRC(diffuse);
+        FIXSRC(specular);
+        for(i = 0; i < WINED3DDP_MAXTEXCOORD; i++) {
+            FIXSRC(texCoords[i]);
+        }
+        FIXSRC(position2);
+        FIXSRC(normal2);
+        FIXSRC(tangent);
+        FIXSRC(binormal);
+        FIXSRC(tessFactor);
+        FIXSRC(fog);
+        FIXSRC(depth);
+        FIXSRC(sample);
+#undef FIXSRC
     }
 
     return process_vertices_strided(This, DestIndex, VertexCount, &strided, (IWineD3DVertexBufferImpl *) pDestBuffer, Flags);
