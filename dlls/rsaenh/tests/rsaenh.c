@@ -1603,6 +1603,26 @@ static void test_null_provider(void)
 
     CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
+
+
+    /* test for the bug in accessing the user key in a container
+     */
+    result = CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
+     CRYPT_NEWKEYSET);
+    ok(result, "CryptAcquireContext failed: %08x\n", GetLastError());
+    result = CryptGenKey(prov, AT_KEYEXCHANGE, 0, &key);
+    ok(result, "CryptGenKey with AT_KEYEXCHANGE failed with error %08x\n", GetLastError());
+    CryptDestroyKey(key);
+    CryptReleaseContext(prov,0);
+    result = CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,0);
+    ok(result, "CryptAcquireContext failed: 0x%08x\n", GetLastError());
+    result = CryptGetUserKey(prov, AT_KEYEXCHANGE, &key);
+    ok (result, "CryptGetUserKey failed with error %08x\n", GetLastError());
+    CryptDestroyKey(key);
+
+    CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+
 }
 
 START_TEST(rsaenh)
