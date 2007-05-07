@@ -2,6 +2,8 @@
  * Activation contexts
  *
  * Copyright 2004 Jon Griffiths
+ * Copyright 2007 Eric Pouech
+ * Copyright 2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winnls.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(actctx);
@@ -50,15 +53,74 @@ WINE_DEFAULT_DEBUG_CHANNEL(actctx);
  */
 HANDLE WINAPI CreateActCtxA(PCACTCTXA pActCtx)
 {
-  FIXME("%p %08x\n", pActCtx, pActCtx ? pActCtx->dwFlags : 0);
+    ACTCTXW     actw;
+    SIZE_T      len;
+    HANDLE      ret = INVALID_HANDLE_VALUE;
+    LPWSTR      src = NULL, assdir = NULL, resname = NULL, appname = NULL;
 
-  if (!pActCtx)
-    return INVALID_HANDLE_VALUE;
-  if (pActCtx->cbSize != sizeof *pActCtx)
-    return INVALID_HANDLE_VALUE;
-  if (pActCtx->dwFlags & ~ACTCTX_FLAGS_ALL)
-    return INVALID_HANDLE_VALUE;
-  return ACTCTX_FAKE_HANDLE;
+    TRACE("%p %08x\n", pActCtx, pActCtx ? pActCtx->dwFlags : 0);
+
+    if (!pActCtx || pActCtx->cbSize != sizeof(*pActCtx) ||
+        (pActCtx->dwFlags & ~ACTCTX_FLAGS_ALL))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    actw.cbSize = sizeof(actw);
+    actw.dwFlags = pActCtx->dwFlags;
+    if (pActCtx->lpSource)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, pActCtx->lpSource, -1, NULL, 0);
+        src = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!src) return INVALID_HANDLE_VALUE;
+        MultiByteToWideChar(CP_ACP, 0, pActCtx->lpSource, -1, src, len);
+    }
+    actw.lpSource = src;
+
+    if (actw.dwFlags & ACTCTX_FLAG_PROCESSOR_ARCHITECTURE_VALID)
+        actw.wProcessorArchitecture = pActCtx->wProcessorArchitecture;
+    if (actw.dwFlags & ACTCTX_FLAG_LANGID_VALID)
+        actw.wLangId = pActCtx->wLangId;
+    if (actw.dwFlags & ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, pActCtx->lpAssemblyDirectory, -1, NULL, 0);
+        assdir = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!assdir) goto done;
+        MultiByteToWideChar(CP_ACP, 0, pActCtx->lpAssemblyDirectory, -1, assdir, len);
+        actw.lpAssemblyDirectory = assdir;
+    }
+    if (actw.dwFlags & ACTCTX_FLAG_RESOURCE_NAME_VALID)
+    {
+        if (!((ULONG_PTR)pActCtx->lpResourceName >> 16))
+        {
+            len = MultiByteToWideChar(CP_ACP, 0, pActCtx->lpResourceName, -1, NULL, 0);
+            resname = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            if (!resname) goto done;
+            MultiByteToWideChar(CP_ACP, 0, pActCtx->lpResourceName, -1, resname, len);
+            actw.lpResourceName = resname;
+        }
+        else actw.lpResourceName = (LPWSTR)pActCtx->lpResourceName;
+    }
+    if (actw.dwFlags & ACTCTX_FLAG_APPLICATION_NAME_VALID)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, pActCtx->lpApplicationName, -1, NULL, 0);
+        appname = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!appname) goto done;
+        MultiByteToWideChar(CP_ACP, 0, pActCtx->lpApplicationName, -1, appname, len);
+        actw.lpApplicationName = appname;
+    }
+    if (actw.dwFlags & ACTCTX_FLAG_HMODULE_VALID)
+        actw.hModule = pActCtx->hModule;
+
+    ret = CreateActCtxW(&actw);
+
+done:
+    HeapFree(GetProcessHeap(), 0, src);
+    HeapFree(GetProcessHeap(), 0, assdir);
+    HeapFree(GetProcessHeap(), 0, resname);
+    HeapFree(GetProcessHeap(), 0, appname);
+    return ret;
 }
 
 /***********************************************************************
