@@ -364,6 +364,8 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
     INT ret;
     DC *dc;
 
+    if (!bits) return 0;
+
     if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
     if(dc->funcs->pSetDIBitsToDevice)
