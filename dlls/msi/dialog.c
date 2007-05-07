@@ -1146,7 +1146,7 @@ static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
     LPWSTR val;
 
     control = msi_dialog_add_control( dialog, rec, szEdit,
-                                      WS_BORDER | WS_TABSTOP );
+                                      WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL );
     control->handler = msi_dialog_edit_handler;
     prop = MSI_RecordGetString( rec, 9 );
     if( prop )
