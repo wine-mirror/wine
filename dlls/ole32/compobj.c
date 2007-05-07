@@ -2024,8 +2024,11 @@ HRESULT WINAPI CoGetClassObject(
         {
             if (hres == REGDB_E_CLASSNOTREG)
                 ERR("class %s not registered\n", debugstr_guid(rclsid));
-            else
+            else if (hres == REGDB_E_KEYMISSING)
+            {
                 WARN("class %s not registered as in-proc server\n", debugstr_guid(rclsid));
+                hres = REGDB_E_CLASSNOTREG;
+            }
         }
 
         if (SUCCEEDED(hres))
@@ -2051,8 +2054,11 @@ HRESULT WINAPI CoGetClassObject(
         {
             if (hres == REGDB_E_CLASSNOTREG)
                 ERR("class %s not registered\n", debugstr_guid(rclsid));
-            else
+            else if (hres == REGDB_E_KEYMISSING)
+            {
                 WARN("class %s not registered in-proc handler\n", debugstr_guid(rclsid));
+                hres = REGDB_E_CLASSNOTREG;
+            }
         }
 
         if (SUCCEEDED(hres))
