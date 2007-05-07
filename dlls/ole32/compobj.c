@@ -1646,6 +1646,11 @@ static HRESULT COM_GetRegisteredClassObject(
  * SEE ALSO
  *   CoRevokeClassObject, CoGetClassObject
  *
+ * NOTES
+ *  In-process objects are only registered for the current apartment.
+ *  CoGetClassObject() and CoCreateInstance() will not return objects registered
+ *  in other apartments.
+ *
  * BUGS
  *  MSDN claims that multiple interface registrations are legal, but we
  *  can't do that with our current implementation.
@@ -1800,6 +1805,10 @@ static void COM_RevokeAllClasses(struct apartment *apt)
  * RETURNS
  *  Success: S_OK.
  *  Failure: HRESULT code.
+ *
+ * NOTES
+ *  Must be called from the same apartment that called CoRegisterClassObject(),
+ *  otherwise it will fail with RPC_E_WRONG_THREAD.
  *
  * SEE ALSO
  *  CoRegisterClassObject
