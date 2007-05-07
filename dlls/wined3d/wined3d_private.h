@@ -516,6 +516,7 @@ struct WineD3DContext {
     BOOL                    lastWasPow2Texture[MAX_TEXTURES];
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */
     BOOL                    last_was_blit, last_was_ckey;
+    char                    texShaderBumpMap;
 
     /* The actual opengl context */
     GLXContext              glCtx;

@@ -367,6 +367,21 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         glEnable(GL_WEIGHT_SUM_UNITY_ARB);
         checkGLcall("glEnable(GL_WEIGHT_SUM_UNITY_ARB)");
     }
+    if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+        int s;
+
+        glEnable(GL_TEXTURE_SHADER_NV);
+        checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
+
+        /* Set up the previous texture input for all shader units. This applies to bump mapping, and in d3d
+         * the previous texture where to source the offset from is always unit - 1.
+         */
+        for(s = 1; s < GL_LIMITS(textures); s++) {
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
+            glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, GL_TEXTURE0_ARB + s - 1);
+            checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, ...\n");
+        }
+    }
 
     if(oldDrawable && oldCtx) {
         glXMakeCurrent(display, oldDrawable, oldCtx);
@@ -599,6 +614,11 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     glViewport(0, 0, width, height);
     checkGLcall("glViewport");
     Context_MarkStateDirty(context, STATE_VIEWPORT);
+
+    if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+        glDisable(GL_TEXTURE_SHADER_NV);
+        checkGLcall("glDisable(GL_TEXTURE_SHADER_NV)");
+    }
 }
 
 /*****************************************************************************
@@ -777,6 +797,10 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
         case CTXUSAGE_DRAWPRIM:
             /* This needs all dirty states applied */
+            if(context->last_was_blit && GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+                glEnable(GL_TEXTURE_SHADER_NV);
+                checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
+            }
             for(i=0; i < context->numDirtyEntries; i++) {
                 dirtyState = context->dirtyArray[i];
                 idx = dirtyState >> 5;

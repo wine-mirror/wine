@@ -866,7 +866,6 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
 
 
     /* This is called by a state handler which has the gl lock held and a context for the thread */
-
     switch(op)
     {
         case WINED3DTOP_DISABLE:
@@ -1129,6 +1128,23 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
             GL_EXTCALL(glCombinerOutputNV(target, portion, GL_DISCARD_NV, GL_DISCARD_NV,
                     GL_SPARE0_NV, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
             break;
+
+        case WINED3DTOP_BUMPENVMAPLUMINANCE:
+        case WINED3DTOP_BUMPENVMAP:
+            if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                /* The bump map stage itself isn't exciting, just read the texture. But tell the next stage to
+                 * perform bump mapping and source from the current stage. Pretty much a SELECTARG2.
+                 * ARG2 is passed through unmodified(apps will most likely use D3DTA_CURRENT for arg2, arg1
+                 * (which will most likely be D3DTA_TEXTURE) is available as a texture shader input for the next stage
+                 */
+                GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
+                        tex_op_args.input[1], tex_op_args.mapping[1], tex_op_args.component_usage[1]));
+                GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
+                        GL_ZERO, GL_UNSIGNED_INVERT_NV, portion));
+                GL_EXTCALL(glCombinerOutputNV(target, portion, GL_SPARE0_NV, GL_DISCARD_NV,
+                        GL_DISCARD_NV, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
+                break;
+            }
 
         default:
             FIXME("Unhandled WINED3DTOP: stage %d, is_alpha %d, op %s (%#x), arg1 %#x, arg2 %#x, arg3 %#x, texture_idx %d\n",
@@ -1727,6 +1743,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
             }
 
           case WINED3DTOP_BUMPENVMAPLUMINANCE:
+                FIXME("Implement bump environment mapping in GL_NV_texture_env_combine4 path\n");
 
           default:
             Handled = FALSE;
@@ -2201,12 +2218,13 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
                     checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");
 
                     Handled = TRUE;
-                } else {
-                    /* If GL_NV_TEXTURE_SHADER is supported insted the GL_NV_register_combiner path
-                     * will be taken instead
+                } else if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+                    /* Technically texture shader support without register combiners is possible, but not expected to occur
+                     * on real world cards, so for now a fixme should be enough
                      */
-                    Handled = FALSE;
+                    FIXME("Implement bump mapping with GL_NV_texture_shader in non register combiner path\n");
                 }
+                Handled = FALSE;
                 break;
         default:
                 Handled = FALSE;

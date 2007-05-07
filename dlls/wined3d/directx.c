@@ -762,6 +762,8 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
             } else if (strcmp(ThisExtn, "GL_NV_texture_shader2") == 0) {
                 TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Shader (2) support\n");
                 gl_info->supported[NV_TEXTURE_SHADER2] = TRUE;
+                /* Prevent both extensions to be used at the same time. I don't expect them to play nice together */
+                gl_info->supported[ATI_ENVMAP_BUMPMAP] = FALSE;
             } else if (strcmp(ThisExtn, "GL_NV_texture_shader3") == 0) {
                 TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Shader (3) support\n");
                 gl_info->supported[NV_TEXTURE_SHADER3] = TRUE;
@@ -803,7 +805,12 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
                 gl_info->supported[EXT_VERTEX_SHADER] = TRUE;
             } else if (strcmp(ThisExtn, "GL_ATI_envmap_bumpmap") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ATI Environment Bump Mapping support\n");
-                gl_info->supported[ATI_ENVMAP_BUMPMAP] = TRUE;
+                /* GL_ATI_envmap_bumpmap won't play nice with texture shaders, so disable it
+                 * Won't occur in any real world situation though
+                 */
+                if(!gl_info->supported[NV_TEXTURE_SHADER2]) {
+                    gl_info->supported[ATI_ENVMAP_BUMPMAP] = TRUE;
+                }
             /**
              * Apple
              */
@@ -1680,6 +1687,17 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 return WINED3DERR_NOTAVAILABLE;
         }
     } else if(Usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP) {
+        if(GL_SUPPORT(NV_REGISTER_COMBINERS) && GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+            switch (CheckFormat) {
+                case WINED3DFMT_V8U8:
+                    TRACE_(d3d_caps)("[OK]\n");
+                    return WINED3D_OK;
+                /* TODO: Other bump map formats */
+                default:
+                    TRACE_(d3d_caps)("[FAILED]\n");
+                    return WINED3DERR_NOTAVAILABLE;
+            }
+        }
         if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
             switch (CheckFormat) {
                 case WINED3DFMT_V8U8:
@@ -1689,7 +1707,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     TRACE_(d3d_caps)("[FAILED]\n");
                     return WINED3DERR_NOTAVAILABLE;
             }
-            /* TODO: GL_NV_TEXTURE_SHADER */
         }
         TRACE_(d3d_caps)("[FAILED]\n");
         return WINED3DERR_NOTAVAILABLE;
@@ -2225,8 +2242,14 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
     if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
         *pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAP;
-    } else if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
-        /* TODO: environment bump mapping support with GL_NV_texture_shader */
+    } else if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+        /* Bump mapping is supported already in NV_TEXTURE_SHADER, but that extension does
+         * not support 3D textures. This asks for trouble if an app uses both bump mapping
+         * and 3D textures. It also allows us to keep the code simpler by having texture
+         * shaders constantly enabled.
+         */
+        *pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAP;
+        /* TODO: Luminance bump map? */
     }
 #if 0
     /* FIXME: Add
