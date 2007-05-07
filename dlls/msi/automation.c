@@ -279,10 +279,21 @@ static HRESULT WINAPI AutomationObject_GetIDsOfNames(
         DISPID* rgDispId)
 {
     AutomationObject *This = (AutomationObject *)iface;
+    HRESULT hr;
     TRACE("(%p/%p)->(%p,%p,%d,%d,%p)\n", iface, This, riid, rgszNames, cNames, lcid, rgDispId);
 
     if (!IsEqualGUID(riid, &IID_NULL)) return E_INVALIDARG;
-    return ITypeInfo_GetIDsOfNames(This->iTypeInfo, rgszNames, cNames, rgDispId);
+    hr = ITypeInfo_GetIDsOfNames(This->iTypeInfo, rgszNames, cNames, rgDispId);
+    if (hr == DISP_E_UNKNOWNNAME)
+    {
+        int idx;
+        for (idx=0; idx<cNames; idx++)
+        {
+            if (rgDispId[idx] == DISPID_UNKNOWN)
+                FIXME("Unknown member %s, clsid %s\n", debugstr_w(rgszNames[idx]), debugstr_guid(This->clsid));
+        }
+    }
+    return hr;
 }
 
 /* Maximum number of allowed function parameters+1 */
