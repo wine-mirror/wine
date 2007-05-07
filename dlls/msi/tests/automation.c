@@ -261,7 +261,6 @@ static void create_database(const CHAR *name, const msi_table *tables, int num_t
 
 /* ok-like statement which takes two unicode strings as arguments */
 static CHAR string1[MAX_PATH], string2[MAX_PATH];
-static UINT len;
 
 #define ok_w2(format, szString1, szString2) \
 \
@@ -286,16 +285,8 @@ static WCHAR szSource[] = {'M','s','i',' ','A','P','I',' ','E','r','r','o','r',0
             ok_w2("Exception source was \"%s\" but expected to be \"%s\"\n", excepinfo.bstrSource, szSource); \
 \
         ok(excepinfo.bstrDescription != NULL, "Exception description was NULL\n"); \
-        if (excepinfo.bstrDescription && lstrcmpW(excepinfo.bstrDescription, szDescription) != 0)                    \
-        {                                                               \
-            len = WideCharToMultiByte(CP_ACP, 0, excepinfo.bstrDescription, -1, string1, MAX_PATH, NULL, NULL); \
-            ok(len, "WideCharToMultiByteChar returned error %d\n", GetLastError()); \
-                                                                        \
-            len = WideCharToMultiByte(CP_ACP, 0, szDescription, -1, string2, MAX_PATH, NULL, NULL); \
-            ok(len, "WideCharToMultiByteChar returned error %d\n", GetLastError()); \
-                                                                        \
-            ok(0, "Exception description was \"%s\" but expected to be \"%s\"\n", string1, string2); \
-        }                                                               \
+        if (excepinfo.bstrDescription) \
+            ok_w2("Exception description was \"%s\" but expected to be \"%s\"\n", excepinfo.bstrDescription, szDescription); \
     }
 
 static DISPID get_dispid( IDispatch *disp, const char *name )
