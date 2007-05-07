@@ -2001,12 +2001,6 @@ IDirectDrawSurfaceImpl_SetSurfaceDesc(IDirectDrawSurface7 *iface,
     if(!DDSD)
         return DDERR_INVALIDPARAMS;
 
-    if (DDSD->dwFlags & DDSD_LPSURFACE && DDSD->lpSurface)
-    {
-        ERR("Setting the surface memory isn't supported yet\n");
-        return DDERR_INVALIDPARAMS;
-
-    }
     if (DDSD->dwFlags & DDSD_PIXELFORMAT)
     {
         newFormat = PixelFormat_DD2WineD3D(&DDSD->u4.ddpfPixelFormat);
@@ -2047,14 +2041,19 @@ IDirectDrawSurfaceImpl_SetSurfaceDesc(IDirectDrawSurface7 *iface,
                                     DDCKEY_SRCBLT,
                                     (WINEDDCOLORKEY *) &DDSD->ddckCKSrcBlt);
     }
-    if (DDSD->dwFlags & DDSD_LPSURFACE)
+    if (DDSD->dwFlags & DDSD_LPSURFACE && DDSD->lpSurface)
     {
         hr = IWineD3DSurface_SetMem(This->WineD3DSurface, DDSD->lpSurface);
         if(hr != WINED3D_OK)
         {
             /* No need for a trace here, wined3d does that for us */
-            return hr;
+            switch(hr)
+            {
+                case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
+                default:                            break; /* Go on */
+            }
         }
+
     }
 
     This->surface_desc = *DDSD;
