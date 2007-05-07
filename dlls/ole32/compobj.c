@@ -1624,21 +1624,6 @@ static HRESULT COM_GetRegisteredClassObject(
   return hr;
 }
 
-static void COM_RevokeAllClasses(struct apartment *apt)
-{
-  RegisteredClass *curClass, *cursor;
-
-  EnterCriticalSection( &csRegisteredClassList );
-
-  LIST_FOR_EACH_ENTRY_SAFE(curClass, cursor, &RegisteredClassList, RegisteredClass, entry)
-  {
-    if (curClass->apartment_id == apt->oxid)
-      CoRevokeClassObject(curClass->dwCookie);
-  }
-
-  LeaveCriticalSection( &csRegisteredClassList );
-}
-
 /******************************************************************************
  *		CoRegisterClassObject	[OLE32.@]
  *
@@ -1766,6 +1751,44 @@ HRESULT WINAPI CoRegisterClassObject(
   return S_OK;
 }
 
+static void COM_RevokeRegisteredClassObject(RegisteredClass *curClass)
+{
+    list_remove(&curClass->entry);
+
+    if (curClass->runContext & CLSCTX_LOCAL_SERVER)
+        RPC_StopLocalServer(curClass->RpcRegistration);
+
+    /*
+     * Release the reference to the class object.
+     */
+    IUnknown_Release(curClass->classObject);
+
+    if (curClass->pMarshaledData)
+    {
+        LARGE_INTEGER zero;
+        memset(&zero, 0, sizeof(zero));
+        IStream_Seek(curClass->pMarshaledData, zero, STREAM_SEEK_SET, NULL);
+        CoReleaseMarshalData(curClass->pMarshaledData);
+    }
+
+    HeapFree(GetProcessHeap(), 0, curClass);
+}
+
+static void COM_RevokeAllClasses(struct apartment *apt)
+{
+  RegisteredClass *curClass, *cursor;
+
+  EnterCriticalSection( &csRegisteredClassList );
+
+  LIST_FOR_EACH_ENTRY_SAFE(curClass, cursor, &RegisteredClassList, RegisteredClass, entry)
+  {
+    if (curClass->apartment_id == apt->oxid)
+      COM_RevokeRegisteredClassObject(curClass);
+  }
+
+  LeaveCriticalSection( &csRegisteredClassList );
+}
+
 /***********************************************************************
  *           CoRevokeClassObject [OLE32.@]
  *
@@ -1798,29 +1821,7 @@ HRESULT WINAPI CoRevokeClassObject(
      */
     if (curClass->dwCookie == dwRegister)
     {
-      list_remove(&curClass->entry);
-
-      if (curClass->runContext & CLSCTX_LOCAL_SERVER)
-        RPC_StopLocalServer(curClass->RpcRegistration);
-
-      /*
-       * Release the reference to the class object.
-       */
-      IUnknown_Release(curClass->classObject);
-
-      if (curClass->pMarshaledData)
-      {
-        LARGE_INTEGER zero;
-        memset(&zero, 0, sizeof(zero));
-        IStream_Seek(curClass->pMarshaledData, zero, STREAM_SEEK_SET, NULL);
-        CoReleaseMarshalData(curClass->pMarshaledData);
-      }
-
-      /*
-       * Free the memory used by the chain node.
-       */
-      HeapFree(GetProcessHeap(), 0, curClass);
-
+      COM_RevokeRegisteredClassObject(curClass);
       hr = S_OK;
       break;
     }
