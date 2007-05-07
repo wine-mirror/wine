@@ -40,6 +40,9 @@
 #include "kernel_private.h"
 #include "kernel16_private.h"
 #include "console_private.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(process);
 
 extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
 
@@ -69,9 +72,44 @@ static void thread_detach(void)
 
 
 /***********************************************************************
+ *           set_entry_point
+ */
+static void set_entry_point( HMODULE module, const char *name, DWORD rva )
+{
+    IMAGE_EXPORT_DIRECTORY *exports;
+    DWORD exp_size;
+
+    if ((exports = RtlImageDirectoryEntryToData( module, TRUE,
+                                                  IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
+    {
+        DWORD *functions = (DWORD *)((char *)module + exports->AddressOfFunctions);
+        const WORD *ordinals = (const WORD *)((const char *)module + exports->AddressOfNameOrdinals);
+        const DWORD *names = (const DWORD *)((const char *)module +  exports->AddressOfNames);
+        int min = 0, max = exports->NumberOfNames - 1;
+
+        while (min <= max)
+        {
+            int res, pos = (min + max) / 2;
+            const char *ename = (const char *)module + names[pos];
+            if (!(res = strcmp( ename, name )))
+            {
+                WORD ordinal = ordinals[pos];
+                assert( ordinal < exports->NumberOfFunctions );
+                TRACE( "setting %s at %p to %08x\n", name, &functions[ordinal], rva );
+                functions[ordinal] = rva;
+                return;
+            }
+            if (res > 0) max = pos - 1;
+            else min = pos + 1;
+        }
+    }
+}
+
+
+/***********************************************************************
  *           KERNEL process initialisation routine
  */
-static BOOL process_attach(void)
+static BOOL process_attach( HMODULE module )
 {
     SYSTEM_INFO si;
     RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
@@ -108,8 +146,13 @@ static BOOL process_attach(void)
     /* copy process information from ntdll */
     ENV_CopyStartupInformation();
 
+    if (!(GetVersion() & 0x80000000))
+    {
+        /* Securom checks for this one when version is NT */
+        set_entry_point( module, "FT_Thunk", 0 );
+    }
 #ifdef __i386__
-    if (GetVersion() & 0x80000000)
+    else
     {
         /* create the shared heap for broken win95 native dlls */
         HeapCreate( HEAP_SHARED, 0, 0 );
@@ -148,7 +191,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        return process_attach();
+        return process_attach( hinst );
     case DLL_THREAD_ATTACH:
         thread_attach();
         break;
