@@ -406,6 +406,13 @@ static UINT ControlEvent_DirectoryListUp(MSIPACKAGE *package, LPCWSTR argument,
     return msi_dialog_directorylist_up( dialog );
 }
 
+static UINT ControlEvent_ReinstallMode(MSIPACKAGE *package, LPCWSTR argument,
+                                       msi_dialog *dialog)
+{
+    static const WCHAR szReinstallMode[] = {'R','E','I','N','S','T','A','L','L','M','O','D','E',0};
+    return MSI_SetPropertyW( package, szReinstallMode, argument );
+}
+
 static const struct _events Events[] = {
     { "EndDialog",ControlEvent_EndDialog },
     { "NewDialog",ControlEvent_NewDialog },
@@ -420,6 +427,7 @@ static const struct _events Events[] = {
     { "SetInstallLevel",ControlEvent_SetInstallLevel },
     { "DirectoryListUp",ControlEvent_DirectoryListUp },
     { "SelectionBrowse",ControlEvent_SpawnDialog },
+    { "ReinstallMode",ControlEvent_ReinstallMode },
     { NULL,NULL },
 };
 
