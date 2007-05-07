@@ -847,7 +847,6 @@ static void test_registered_object_thread_affinity(void)
     WaitForSingleObject(thread, INFINITE);
     GetExitCodeThread(thread, &exitcode);
     hr = exitcode;
-    todo_wine
     ok(hr == RPC_E_WRONG_THREAD, "CoRevokeClassObject called from different "
        "thread to where registered should return RPC_E_WRONG_THREAD instead of 0x%08x\n", hr);
 
@@ -860,7 +859,6 @@ static void test_registered_object_thread_affinity(void)
         "thread should return S_OK instead of 0x%08x\n", hr);
 
     hr = CoRevokeClassObject(cookie);
-    todo_wine
     ok_ole_success(hr, "CoRevokeClassObject");
 
     CoUninitialize();

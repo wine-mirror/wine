@@ -1809,8 +1809,16 @@ HRESULT WINAPI CoRevokeClassObject(
 {
   HRESULT hr = E_INVALIDARG;
   RegisteredClass *curClass;
+  APARTMENT *apt;
 
   TRACE("(%08x)\n",dwRegister);
+
+  apt = COM_CurrentApt();
+  if (!apt)
+  {
+    ERR("COM was not initialized\n");
+    return CO_E_NOTINITIALIZED;
+  }
 
   EnterCriticalSection( &csRegisteredClassList );
 
@@ -1821,8 +1829,17 @@ HRESULT WINAPI CoRevokeClassObject(
      */
     if (curClass->dwCookie == dwRegister)
     {
-      COM_RevokeRegisteredClassObject(curClass);
-      hr = S_OK;
+      if (curClass->apartment_id == apt->oxid)
+      {
+          COM_RevokeRegisteredClassObject(curClass);
+          hr = S_OK;
+      }
+      else
+      {
+          ERR("called from wrong apartment, should be called from %s\n",
+              wine_dbgstr_longlong(curClass->apartment_id));
+          hr = RPC_E_WRONG_THREAD;
+      }
       break;
     }
   }
