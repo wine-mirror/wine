@@ -465,13 +465,9 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
         }
         */
 
-        /* Switch from normal to full screen mode? */
-        if(This->cooperative_level & DDSCL_NORMAL)
-        {
-            This->cooperative_level &= ~DDSCL_NORMAL;
-            IWineD3DDevice_SetFullscreen(This->wineD3DDevice,
-                                         TRUE);
-        }
+        This->cooperative_level &= ~DDSCL_NORMAL;
+        IWineD3DDevice_SetFullscreen(This->wineD3DDevice,
+                                     TRUE);
 
         /* Don't override focus windows or private device windows */
         if( hwnd &&
