@@ -3,6 +3,7 @@
  *
  * Copyright 1995 Sven Verdoolaege
  * Copyright 2005 Mike McCormack
+ * Copyright 2007 Rolf Kalbermatter
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -53,6 +54,7 @@ typedef struct service_start_info_t
 #define WINESERV_STARTINFO   1
 #define WINESERV_GETSTATUS   2
 #define WINESERV_SENDCONTROL 3
+#define WINESERV_SETPID      4
 
 typedef struct service_data_t
 {
@@ -520,6 +522,41 @@ static BOOL service_get_status(HANDLE pipe, LPSERVICE_STATUS_PROCESS status)
 }
 
 /******************************************************************************
+ * service_handle_set_processID
+ */
+static BOOL service_handle_set_processID(HANDLE pipe, service_data *service, DWORD dwProcessId)
+{
+    DWORD count, ret = ERROR_SUCCESS;
+
+    TRACE("received control %d\n", dwProcessId);
+	service->status.dwProcessId = dwProcessId;
+    return WriteFile(pipe, &ret, sizeof ret , &count, NULL);
+}
+
+/******************************************************************************
+ * service_set_processID
+ */
+static BOOL service_set_processID(HANDLE pipe, DWORD dwprocessId, LPDWORD dwResult)
+{
+    DWORD cmd[2], count = 0;
+    BOOL r;
+
+    cmd[0] = WINESERV_SETPID;
+    cmd[1] = dwprocessId;
+    r = WriteFile( pipe, cmd, sizeof cmd, &count, NULL );
+    if (!r || count != sizeof cmd)
+    {
+        ERR("service protocol error - failed to write pipe!\n");
+        return r;
+    }
+    r = ReadFile( pipe, dwResult, sizeof *dwResult, &count, NULL );
+    if (!r || count != sizeof *dwResult)
+        ERR("service protocol error - failed to read pipe "
+            "r = %d  count = %d!\n", r, count);
+    return r;
+}
+
+/******************************************************************************
  * service_send_control
  */
 static BOOL service_send_control(HANDLE pipe, DWORD dwControl, DWORD *result)
@@ -703,6 +740,9 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
             break;
         case WINESERV_SENDCONTROL:
             service_handle_control(pipe, service, req[1]);
+            break;
+        case WINESERV_SETPID:
+            service_handle_set_processID(pipe, service, req[1]);
             break;
         default:
             ERR("received invalid command %d length %d\n", req[0], req[1]);
@@ -1523,7 +1563,7 @@ BOOL WINAPI StartServiceW(SC_HANDLE hService, DWORD dwNumServiceArgs,
 {
     struct sc_service *hsvc;
     BOOL r = FALSE;
-    DWORD pid;
+    DWORD dwResult, dwProcessId = 0;
     SC_LOCK hLock;
     HANDLE handle = INVALID_HANDLE_VALUE;
 
@@ -1544,15 +1584,15 @@ BOOL WINAPI StartServiceW(SC_HANDLE hService, DWORD dwNumServiceArgs,
     if (handle==INVALID_HANDLE_VALUE)
     {
         /* start the service process */
-        if (service_start_process(hsvc, &pid))
+        if (service_start_process(hsvc, &dwProcessId))
             handle = service_open_pipe(hsvc->name);
     }
 
     if (handle != INVALID_HANDLE_VALUE)
     {
-        service_send_start_message(handle, lpServiceArgVectors, dwNumServiceArgs);
+        if (service_send_start_message(handle, lpServiceArgVectors, dwNumServiceArgs))
+            r = service_set_processID(handle, dwProcessId, &dwResult);
         CloseHandle(handle);
-        r = TRUE;
     }
 
     UnlockServiceDatabase( hLock );
