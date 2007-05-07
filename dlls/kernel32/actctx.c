@@ -46,6 +46,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(actctx);
 #define ACTCTX_FAKE_HANDLE ((HANDLE) 0xf00baa)
 #define ACTCTX_FAKE_COOKIE ((ULONG_PTR) 0xf00bad)
 
+#define ACTCTX_MAGIC       0xC07E3E11
+
+struct actctx
+{
+    ULONG               magic;
+    LONG                ref_count;
+};
+
 /***********************************************************************
  * CreateActCtxA (KERNEL32.@)
  *
@@ -130,15 +138,44 @@ done:
  */
 HANDLE WINAPI CreateActCtxW(PCACTCTXW pActCtx)
 {
-  FIXME("%p %08x\n", pActCtx, pActCtx ? pActCtx->dwFlags : 0);
+    struct actctx*      actctx;
+    DWORD               ret = ERROR_SUCCESS;
 
-  if (!pActCtx)
+    TRACE("%p %08x\n", pActCtx, pActCtx ? pActCtx->dwFlags : 0);
+
+    if (!pActCtx || pActCtx->cbSize != sizeof(*pActCtx) ||
+        (pActCtx->dwFlags & ~ACTCTX_FLAGS_ALL))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_HANDLE_VALUE;
+    }
+    actctx = HeapAlloc(GetProcessHeap(), 0, sizeof(*actctx));
+    if (!actctx) return INVALID_HANDLE_VALUE;
+
+    actctx->magic = ACTCTX_MAGIC;
+    actctx->ref_count = 1;
+
+    if (ret == ERROR_SUCCESS)
+    {
+        return (HANDLE)actctx;
+    }
+
+    ReleaseActCtx((HANDLE)actctx);
+    SetLastError(ret);
     return INVALID_HANDLE_VALUE;
-  if (pActCtx->cbSize != sizeof *pActCtx)
-    return INVALID_HANDLE_VALUE;
-  if (pActCtx->dwFlags & ~ACTCTX_FLAGS_ALL)
-    return INVALID_HANDLE_VALUE;
-  return ACTCTX_FAKE_HANDLE;
+}
+
+static struct actctx* check_actctx(HANDLE h)
+{
+    struct actctx*      actctx = (struct actctx*)h;
+
+    switch (actctx->magic)
+    {
+    case ACTCTX_MAGIC: return actctx;
+    default:
+        SetLastError(ERROR_INVALID_HANDLE);
+        return NULL;
+    }
 }
 
 /***********************************************************************
@@ -204,7 +241,12 @@ BOOL WINAPI GetCurrentActCtx(HANDLE* phActCtx)
  */
 void WINAPI AddRefActCtx(HANDLE hActCtx)
 {
-  FIXME("%p\n", hActCtx);
+    struct actctx*      actctx;
+
+    TRACE("%p\n", hActCtx);
+
+    if ((actctx = check_actctx(hActCtx)))
+        InterlockedIncrement( &actctx->ref_count );
 }
 
 /***********************************************************************
@@ -214,7 +256,18 @@ void WINAPI AddRefActCtx(HANDLE hActCtx)
  */
 void WINAPI ReleaseActCtx(HANDLE hActCtx)
 {
-  FIXME("%p\n", hActCtx);
+    struct actctx*      actctx;
+
+    TRACE("%p\n", hActCtx);
+
+    if ((actctx = check_actctx(hActCtx)))
+    {
+        if (!InterlockedDecrement( &actctx->ref_count ))
+        {
+            actctx->magic = 0;
+            HeapFree(GetProcessHeap(), 0, actctx);
+        }
+    }
 }
 
 /***********************************************************************
