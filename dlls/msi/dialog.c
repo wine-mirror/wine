@@ -265,11 +265,11 @@ static LPWSTR msi_dialog_get_style( LPCWSTR p, LPCWSTR *rest )
     while ((first = strchrW( p, '{' )) && (q = strchrW( first + 1, '}' )))
     {
         p = first + 1;
-        if( *p == '\\' || *p == '&' )
-            p++;
+        if( *p != '\\' && *p != '&' )
+            return NULL;
 
         /* little bit of sanity checking to stop us getting confused with RTF */
-        for( i=p; i<q; i++ )
+        for( i=++p; i<q; i++ )
             if( *i == '}' || *i == '\\' )
                 return NULL;
     }
