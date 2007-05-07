@@ -651,6 +651,7 @@ static void test_CoRegisterClassObject(void)
     }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
     DWORD cookie;
     HRESULT hr;
+    IClassFactory *pcf;
 
     pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
@@ -698,6 +699,22 @@ static void test_CoRegisterClassObject(void)
     ok_ole_success(hr, "CoRegisterClassObject");
     hr = CoRevokeClassObject(cookie);
     ok_ole_success(hr, "CoRevokeClassObject");
+
+    /* test whether registered class becomes invalid when apartment is destroyed */
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
+                               CLSCTX_INPROC_SERVER, REGCLS_SINGLEUSE, &cookie);
+    ok_ole_success(hr, "CoRegisterClassObject");
+
+    CoUninitialize();
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER, NULL,
+                          &IID_IClassFactory, (void **)&pcf);
+    ok(hr == REGDB_E_CLASSNOTREG, "object registered in an apartment shouldn't accessible after it is destroyed\n");
+
+    /* crashes with at least win9x DCOM! */
+    if (0)
+        hr = CoRevokeClassObject(cookie);
 
     CoUninitialize();
 }
