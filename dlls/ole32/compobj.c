@@ -77,7 +77,7 @@ HINSTANCE OLE32_hInstance = 0; /* FIXME: make static ... */
  */
 
 static HRESULT COM_GetRegisteredClassObject(REFCLSID rclsid, DWORD dwClsContext, LPUNKNOWN*  ppUnk);
-static void COM_RevokeAllClasses(void);
+static void COM_RevokeAllClasses(struct apartment *apt);
 static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv);
 
 static APARTMENT *MTA; /* protected by csApartment */
@@ -121,6 +121,7 @@ typedef struct tagRegisteredClass
 {
   struct list entry;
   CLSID     classIdentifier;
+  OXID      apartment_id;
   LPUNKNOWN classObject;
   DWORD     runContext;
   DWORD     connectFlags;
@@ -360,6 +361,9 @@ DWORD apartment_release(struct apartment *apt)
         struct list *cursor, *cursor2;
 
         TRACE("destroying apartment %p, oxid %s\n", apt, wine_dbgstr_longlong(apt->oxid));
+
+        /* Release the references to the registered class objects */
+        COM_RevokeAllClasses(apt);
 
         /* no locking is needed for this apartment, because no other thread
          * can access it at this point */
@@ -954,9 +958,6 @@ void WINAPI CoUninitialize(void)
     TRACE("() - Releasing the COM libraries\n");
 
     RunningObjectTableImpl_UnInitialize();
-
-    /* Release the references to the registered class objects */
-    COM_RevokeAllClasses();
 
     /* This will free the loaded COM Dlls  */
     CoFreeAllLibraries();
@@ -1621,6 +1622,21 @@ static HRESULT COM_GetRegisteredClassObject(
   return hr;
 }
 
+static void COM_RevokeAllClasses(struct apartment *apt)
+{
+  RegisteredClass *curClass, *cursor;
+
+  EnterCriticalSection( &csRegisteredClassList );
+
+  LIST_FOR_EACH_ENTRY_SAFE(curClass, cursor, &RegisteredClassList, RegisteredClass, entry)
+  {
+    if (curClass->apartment_id == apt->oxid)
+      CoRevokeClassObject(curClass->dwCookie);
+  }
+
+  LeaveCriticalSection( &csRegisteredClassList );
+}
+
 /******************************************************************************
  *		CoRegisterClassObject	[OLE32.@]
  *
@@ -1657,6 +1673,7 @@ HRESULT WINAPI CoRegisterClassObject(
   RegisteredClass* newClass;
   LPUNKNOWN        foundObject;
   HRESULT          hr;
+  APARTMENT *apt;
 
   TRACE("(%s,%p,0x%08x,0x%08x,%p)\n",
 	debugstr_guid(rclsid),pUnk,dwClsContext,flags,lpdwRegister);
@@ -1664,7 +1681,8 @@ HRESULT WINAPI CoRegisterClassObject(
   if ( (lpdwRegister==0) || (pUnk==0) )
     return E_INVALIDARG;
 
-  if (!COM_CurrentApt())
+  apt = COM_CurrentApt();
+  if (!apt)
   {
       ERR("COM was not initialized\n");
       return CO_E_NOTINITIALIZED;
@@ -1699,6 +1717,7 @@ HRESULT WINAPI CoRegisterClassObject(
     return E_OUTOFMEMORY;
 
   newClass->classIdentifier = *rclsid;
+  newClass->apartment_id    = apt->oxid;
   newClass->runContext      = dwClsContext;
   newClass->connectFlags    = flags;
   newClass->pMarshaledData  = NULL;
@@ -2382,20 +2401,6 @@ HRESULT WINAPI CoFileTimeNow( FILETIME *lpFileTime )
 {
     GetSystemTimeAsFileTime( lpFileTime );
     return S_OK;
-}
-
-static void COM_RevokeAllClasses(void)
-{
-  EnterCriticalSection( &csRegisteredClassList );
-
-  while (list_head(&RegisteredClassList))
-  {
-    RegisteredClass *curClass = LIST_ENTRY(list_head(&RegisteredClassList),
-                                           RegisteredClass, entry);
-    CoRevokeClassObject(curClass->dwCookie);
-  }
-
-  LeaveCriticalSection( &csRegisteredClassList );
 }
 
 /******************************************************************************
