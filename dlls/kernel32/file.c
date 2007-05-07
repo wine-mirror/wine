@@ -43,7 +43,6 @@
 #include "kernel_private.h"
 
 #include "wine/exception.h"
-#include "excpt.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "thread.h"

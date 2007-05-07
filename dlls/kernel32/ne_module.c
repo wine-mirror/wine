@@ -37,7 +37,6 @@
 #include "wownt32.h"
 #include "winternl.h"
 #include "toolhelp.h"
-#include "excpt.h"
 #include "kernel_private.h"
 #include "kernel16_private.h"
 #include "wine/exception.h"

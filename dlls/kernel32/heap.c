@@ -60,7 +60,6 @@
 #include "winerror.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "excpt.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 
