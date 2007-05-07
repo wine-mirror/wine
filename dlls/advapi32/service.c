@@ -2073,9 +2073,36 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
   LPWSTR lpDisplayName, LPDWORD lpcchBuffer)
 {
-    FIXME("%p %s %p %p\n", hSCManager,
+    struct sc_manager *hscm;
+    DWORD type, size;
+    LONG ret;
+
+    TRACE("%p %s %p %p\n", hSCManager,
           debugstr_w(lpServiceName), lpDisplayName, lpcchBuffer);
-    return FALSE;
+
+    hscm = sc_handle_get_handle_data(hSCManager, SC_HTYPE_MANAGER);
+    if (!hscm)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    size = *lpcchBuffer * sizeof(WCHAR);
+    ret = RegGetValueW(hscm->hkey, lpServiceName, szDisplayName, RRF_RT_REG_SZ, &type, lpDisplayName, &size);
+    if (ret)
+    {
+        if (lpDisplayName && *lpcchBuffer) *lpDisplayName = 0;
+
+        if (ret == ERROR_MORE_DATA)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            *lpcchBuffer = (size / sizeof(WCHAR)) - 1;
+        }
+        else
+            SetLastError(ret);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /******************************************************************************
