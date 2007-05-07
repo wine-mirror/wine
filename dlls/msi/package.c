@@ -22,7 +22,6 @@
 #define NONAMELESSSTRUCT
 
 #include <stdarg.h>
-#include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -1105,12 +1104,10 @@ UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
     if (rc == ERROR_SUCCESS)
     {
         rc = MSI_ViewExecute(view, row);
-        if (rc != ERROR_SUCCESS) printf("MSI_ViewExecute failed: %d\n", rc);
-
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
     }
-    else printf("MSI_DatabaseOpenView failed: %d\n", rc);
+
     msiobj_release(&row->hdr);
 
     return rc;
