@@ -31,7 +31,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
-#include "winerror.h"
 
 #include "wine/winbase16.h"
 #include "toolhelp.h"

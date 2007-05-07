@@ -40,7 +40,6 @@
 #include "winternl.h"
 #include "winerror.h"
 #include "wine/exception.h"
-#include "excpt.h"
 #include "wine/debug.h"
 
 #include "kernel_private.h"

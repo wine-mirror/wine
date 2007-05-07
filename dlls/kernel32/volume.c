@@ -36,7 +36,6 @@
 #include "winnls.h"
 #include "winternl.h"
 #include "winioctl.h"
-#include "ntddstor.h"
 #include "ntddcdrm.h"
 #include "kernel_private.h"
 #include "wine/library.h"
