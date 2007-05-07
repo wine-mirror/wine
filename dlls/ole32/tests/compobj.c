@@ -797,7 +797,6 @@ static void test_registered_object_thread_affinity(void)
     WaitForSingleObject(thread, INFINITE);
     GetExitCodeThread(thread, &exitcode);
     hr = exitcode;
-    todo_wine
     ok(hr == REGDB_E_CLASSNOTREG, "CoGetClassObject on inproc object "
        "registered in different thread should return REGDB_E_CLASSNOTREG "
        "instead of 0x%08x\n", hr);
@@ -811,7 +810,6 @@ static void test_registered_object_thread_affinity(void)
     WaitForSingleObject(thread, INFINITE);
     GetExitCodeThread(thread, &exitcode);
     hr = exitcode;
-    todo_wine
     ok(hr == S_OK, "CoRegisterClassObject with same CLSID but in different thread should return S_OK instead of 0x%08x\n", hr);
 
     hr = CoRevokeClassObject(cookie);

@@ -76,9 +76,9 @@ HINSTANCE OLE32_hInstance = 0; /* FIXME: make static ... */
  * TODO: Most of these things will have to be made thread-safe.
  */
 
-static HRESULT COM_GetRegisteredClassObject(REFCLSID rclsid, DWORD dwClsContext, LPUNKNOWN*  ppUnk);
+static HRESULT COM_GetRegisteredClassObject(struct apartment *apt, REFCLSID rclsid, DWORD dwClsContext, LPUNKNOWN*  ppUnk);
 static void COM_RevokeAllClasses(struct apartment *apt);
-static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv);
+static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv);
 
 static APARTMENT *MTA; /* protected by csApartment */
 static APARTMENT *MainApartment; /* the first STA apartment */
@@ -1583,6 +1583,7 @@ HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid)
  *                 reference count on this object.
  */
 static HRESULT COM_GetRegisteredClassObject(
+        struct apartment *apt,
 	REFCLSID    rclsid,
 	DWORD       dwClsContext,
 	LPUNKNOWN*  ppUnk)
@@ -1602,7 +1603,8 @@ static HRESULT COM_GetRegisteredClassObject(
     /*
      * Check if we have a match on the class ID and context.
      */
-    if ((dwClsContext & curClass->runContext) &&
+    if ((apt->oxid == curClass->apartment_id) &&
+        (dwClsContext & curClass->runContext) &&
         IsEqualGUID(&(curClass->classIdentifier), rclsid))
     {
       /*
@@ -1699,7 +1701,7 @@ HRESULT WINAPI CoRegisterClassObject(
    * First, check if the class is already registered.
    * If it is, this should cause an error.
    */
-  hr = COM_GetRegisteredClassObject(rclsid, dwClsContext, &foundObject);
+  hr = COM_GetRegisteredClassObject(apt, rclsid, dwClsContext, &foundObject);
   if (hr == S_OK) {
     if (flags & REGCLS_MULTIPLEUSE) {
       if (dwClsContext & CLSCTX_LOCAL_SERVER)
@@ -1867,7 +1869,8 @@ static void get_threading_model(HKEY key, LPWSTR value, DWORD len)
         value[0] = '\0';
 }
 
-static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv)
+static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll,
+                                       REFCLSID rclsid, REFIID riid, void **ppv)
 {
     static const WCHAR wszApartment[] = {'A','p','a','r','t','m','e','n','t',0};
     static const WCHAR wszFree[] = {'F','r','e','e',0};
@@ -1875,7 +1878,6 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
     WCHAR dllpath[MAX_PATH+1];
     WCHAR threading_model[10 /* strlenW(L"apartment")+1 */];
     HRESULT hr;
-    APARTMENT *apt = COM_CurrentApt();
 
     get_threading_model(hkeydll, threading_model, ARRAYSIZE(threading_model));
     /* "Apartment" */
@@ -1991,6 +1993,7 @@ HRESULT WINAPI CoGetClassObject(
 {
     LPUNKNOWN	regClassObject;
     HRESULT	hres = E_UNEXPECTED;
+    APARTMENT  *apt;
 
     TRACE("\n\tCLSID:\t%s,\n\tIID:\t%s\n", debugstr_guid(rclsid), debugstr_guid(iid));
 
@@ -1999,7 +2002,8 @@ HRESULT WINAPI CoGetClassObject(
 
     *ppv = NULL;
 
-    if (!COM_CurrentApt())
+    apt = COM_CurrentApt();
+    if (!apt)
     {
         ERR("apartment not initialised\n");
         return CO_E_NOTINITIALIZED;
@@ -2014,7 +2018,8 @@ HRESULT WINAPI CoGetClassObject(
      * First, try and see if we can't match the class ID with one of the
      * registered classes.
      */
-    if (S_OK == COM_GetRegisteredClassObject(rclsid, dwClsContext, &regClassObject))
+    if (S_OK == COM_GetRegisteredClassObject(apt, rclsid, dwClsContext,
+                                             &regClassObject))
     {
       /* Get the required interface from the retrieved pointer. */
       hres = IUnknown_QueryInterface(regClassObject, iid, ppv);
@@ -2052,7 +2057,7 @@ HRESULT WINAPI CoGetClassObject(
 
         if (SUCCEEDED(hres))
         {
-            hres = get_inproc_class_object(hkey, rclsid, iid, ppv);
+            hres = get_inproc_class_object(apt, hkey, rclsid, iid, ppv);
             RegCloseKey(hkey);
         }
 
@@ -2082,7 +2087,7 @@ HRESULT WINAPI CoGetClassObject(
 
         if (SUCCEEDED(hres))
         {
-            hres = get_inproc_class_object(hkey, rclsid, iid, ppv);
+            hres = get_inproc_class_object(apt, hkey, rclsid, iid, ppv);
             RegCloseKey(hkey);
         }
 
