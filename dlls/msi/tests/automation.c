@@ -531,6 +531,34 @@ static HRESULT Installer_OpenPackage(LPCWSTR szPackagePath, int options, IDispat
     return hr;
 }
 
+static HRESULT Installer_ProductState(LPCWSTR szProduct, int *pInstallState)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szProduct);
+
+    hr = invoke(pInstaller, "ProductState", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
+    *pInstallState = V_I4(&varresult);
+    VariantClear(&varresult);
+    return hr;
+}
+
+static HRESULT Installer_Products(IDispatch **pStringList)
+{
+    VARIANT varresult;
+    DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+    HRESULT hr;
+
+    hr = invoke(pInstaller, "Products", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_DISPATCH);
+    *pStringList = V_DISPATCH(&varresult);
+    return hr;
+}
+
 static HRESULT Installer_VersionGet(LPCWSTR szVersion)
 {
     VARIANT varresult;
@@ -815,6 +843,33 @@ static HRESULT Record_StringDataPut(IDispatch *pRecord, int iField, LPCWSTR szSt
     return invoke(pRecord, "StringData", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_BSTR);
 }
 
+static HRESULT StringList_Item(IDispatch *pStringList, int iIndex, LPWSTR szString)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = iIndex;
+
+    hr = invoke(pStringList, "Item", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
+    lstrcpyW(szString, V_BSTR(&varresult));
+    VariantClear(&varresult);
+    return hr;
+}
+
+static HRESULT StringList_Count(IDispatch *pStringList, int *pCount)
+{
+    VARIANT varresult;
+    DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+    HRESULT hr = invoke(pStringList, "Count", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
+    *pCount = V_I4(&varresult);
+    VariantClear(&varresult);
+    return hr;
+}
+
 /* Test the various objects */
 
 static void test_Database(IDispatch *pDatabase)
@@ -995,11 +1050,13 @@ static void test_Session(IDispatch *pSession)
 
 static void test_Installer(void)
 {
+    static WCHAR szProductCode[] = { '{','F','1','C','3','A','F','5','0','-','8','B','5','6','-','4','A','6','9','-','A','0','0','C','-','0','0','7','7','3','F','E','4','2','F','3','0','}',0 };
     static WCHAR szBackslash[] = { '\\',0 };
     WCHAR szPath[MAX_PATH];
     HRESULT hr;
     UINT len;
-    IDispatch *pSession = NULL, *pRecord = NULL;
+    IDispatch *pSession = NULL, *pRecord = NULL, *pStringList = NULL;
+    int iState;
 
     if (!pInstaller) return;
 
@@ -1041,6 +1098,52 @@ static void test_Installer(void)
     }
 
     DeleteFileA(msifile);
+
+    /* Installer::Products */
+    todo_wine {
+        hr = Installer_Products(&pStringList);
+        ok(SUCCEEDED(hr), "Installer_Products failed, hresult 0x%08x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            int iCount = 0, idx;
+
+            /* StringList::Count */
+            hr = StringList_Count(pStringList, &iCount);
+            ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
+
+            for (idx=0; idx<iCount; idx++)
+            {
+                /* StringList::Item */
+                memset(szPath, 0, sizeof(szPath));
+                hr = StringList_Item(pStringList, idx, szPath);
+                ok(SUCCEEDED(hr), "StringList_Item failed (idx %d, count %d), hresult 0x%08x\n", idx, iCount, hr);
+
+                if (SUCCEEDED(hr))
+                {
+                    /* Installer::ProductState */
+                    hr = Installer_ProductState(szPath, &iState);
+                    ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
+                    if (SUCCEEDED(hr))
+                        ok(iState == INSTALLSTATE_DEFAULT || iState == INSTALLSTATE_ADVERTISED, "Installer_ProductState returned %d, expected %d or %d", iState, INSTALLSTATE_DEFAULT, INSTALLSTATE_ADVERTISED);
+                }
+            }
+
+            /* StringList::Item using an invalid index */
+            memset(szPath, 0, sizeof(szPath));
+            hr = StringList_Item(pStringList, iCount, szPath);
+            ok(hr == DISP_E_BADINDEX, "StringList_Item for an invalid index did not return DISP_E_BADINDEX, hresult 0x%08x\n", hr);
+
+            IDispatch_Release(pStringList);
+        }
+    }
+
+    /* Installer::ProductState for our product code, which should not be installed */
+    todo_wine {
+        hr = Installer_ProductState(szProductCode, &iState);
+        ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
+        if (SUCCEEDED(hr))
+            ok(iState == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d", iState, INSTALLSTATE_UNKNOWN);
+    }
 
     /* Installer::Version */
     todo_wine {
