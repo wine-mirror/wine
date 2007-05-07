@@ -30,7 +30,6 @@
 #define WINE_NO_INLINE_STRING
 #include "windef.h"
 #include "winbase.h"
-#include "excpt.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "wine/exception.h"

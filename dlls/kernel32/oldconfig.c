@@ -44,9 +44,7 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
-#include "winnls.h"
 #include "winternl.h"
-#include "winioctl.h"
 #include "ntddscsi.h"
 #include "wine/library.h"
 #include "wine/unicode.h"

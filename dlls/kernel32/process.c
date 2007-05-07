@@ -45,7 +45,6 @@
 #define WIN32_NO_STATUS
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "winioctl.h"
 #include "winternl.h"
 #include "kernel_private.h"
 #include "wine/exception.h"

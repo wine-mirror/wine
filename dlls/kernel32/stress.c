@@ -19,7 +19,6 @@
 #include <stdarg.h>
 
 #include "windef.h"
-#include "winbase.h"
 #include "wine/windef16.h"
 #include "wine/debug.h"
 
