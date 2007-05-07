@@ -3185,8 +3185,7 @@ static LRESULT msi_dialog_oncommand( msi_dialog *dialog, WPARAM param, HWND hwnd
             msi_dialog_evaluate_control_conditions( dialog );
         }
     }
-    else
-        ERR("button click from nowhere %p %d %p\n", dialog, param, hwnd);
+
     return 0;
 }
 
