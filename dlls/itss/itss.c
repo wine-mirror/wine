@@ -31,12 +31,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "winnls.h"
 #include "winreg.h"
 #include "ole2.h"
 #include "advpub.h"
-
-#include "uuids.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
