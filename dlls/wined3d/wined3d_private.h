@@ -741,11 +741,10 @@ static inline BOOL isStateDirty(WineD3DContext *context, DWORD state) {
     return context->isStateDirty[idx] & (1 << shift);
 }
 
-/* Support for IWineD3DResource ::Set/Get/FreePrivateData. I don't think
- * anybody uses it for much so a good implementation is optional. */
+/* Support for IWineD3DResource ::Set/Get/FreePrivateData. */
 typedef struct PrivateData
 {
-    struct PrivateData* next;
+    struct list entry;
 
     GUID tag;
     DWORD flags; /* DDSPD_* */
@@ -777,7 +776,7 @@ typedef struct IWineD3DResourceClass
     DWORD                   usage;
     WINED3DFORMAT           format;
     BYTE                   *allocatedMemory;
-    PrivateData            *privateData;
+    struct list             privateData;
 
 } IWineD3DResourceClass;
 

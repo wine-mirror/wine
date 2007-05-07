@@ -88,58 +88,66 @@ HRESULT WINAPI IWineD3DResourceImpl_GetDevice(IWineD3DResource *iface, IWineD3DD
     return WINED3D_OK;
 }
 
-static PrivateData** IWineD3DResourceImpl_FindPrivateData(IWineD3DResourceImpl *This,
+static PrivateData* IWineD3DResourceImpl_FindPrivateData(IWineD3DResourceImpl *This,
                     REFGUID tag)
 {
-    PrivateData** data;
-    for (data = &This->resource.privateData; *data != NULL; data = &(*data)->next)
+    PrivateData *data;
+    struct list *entry;
+
+    TRACE("Searching for private data %s\n", debugstr_guid(tag));
+    LIST_FOR_EACH(entry, &This->resource.privateData)
     {
-        if (IsEqualGUID(&(*data)->tag, tag)) break;
+        data = LIST_ENTRY(entry, PrivateData, entry);
+        if (IsEqualGUID(&data->tag, tag)) {
+            TRACE("Found %p\n", data);
+            return data;
+        }
     }
-    return data;
+    TRACE("Not found\n");
+    return NULL;
 }
 
 HRESULT WINAPI IWineD3DResourceImpl_SetPrivateData(IWineD3DResource *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    PrivateData **data;
+    PrivateData *data;
 
-    TRACE("(%p) : %p %p %d %d\n", This, refguid, pData, SizeOfData, Flags);
+    TRACE("(%p) : %s %p %d %d\n", This, debugstr_guid(refguid), pData, SizeOfData, Flags);
     data = IWineD3DResourceImpl_FindPrivateData(This, refguid);
-    if (*data == NULL)
+    if (data == NULL)
     {
-        *data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**data));
-        if (NULL == *data) return E_OUTOFMEMORY;
+        data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
+        if (NULL == data) return E_OUTOFMEMORY;
 
-        (*data)->tag = *refguid;
-        (*data)->flags = Flags;
+        data->tag = *refguid;
+        data->flags = Flags;
 #if 0
         (*data)->uniquenessValue = This->uniquenessValue;
 #endif
         if (Flags & WINED3DSPD_IUNKNOWN) {
-            (*data)->ptr.object = (LPUNKNOWN)pData;
-            (*data)->size = sizeof(LPUNKNOWN);
-            IUnknown_AddRef((*data)->ptr.object);
+            data->ptr.object = (LPUNKNOWN)pData;
+            data->size = sizeof(LPUNKNOWN);
+            IUnknown_AddRef(data->ptr.object);
         }
         else
         {
-            (*data)->ptr.data = HeapAlloc(GetProcessHeap(), 0, SizeOfData);
-            if (NULL == (*data)->ptr.data) {
-                HeapFree(GetProcessHeap(), 0, *data);
+            data->ptr.data = HeapAlloc(GetProcessHeap(), 0, SizeOfData);
+            if (NULL == data->ptr.data) {
+                HeapFree(GetProcessHeap(), 0, data);
                 return E_OUTOFMEMORY;
             }
-            (*data)->size = SizeOfData;
-            memcpy((*data)->ptr.data, pData, SizeOfData);
+            data->size = SizeOfData;
+            memcpy(data->ptr.data, pData, SizeOfData);
         }
-        /* link it in */
-        (*data)->next = This->resource.privateData;
-        This->resource.privateData = *data;
+        list_add_tail(&This->resource.privateData, &data->entry);
         return WINED3D_OK;
 
     } else {
         /* I don't actually know how windows handles this case. The only
-            * reason I don't just call FreePrivateData is because I want to
-            * guarantee SetPrivateData working when using LPUNKNOWN or data
-            * that is no larger than the old data. */
+         * reason I don't just call FreePrivateData is because I want to
+         * guarantee SetPrivateData working when using LPUNKNOWN or data
+         * that is no larger than the old data.
+         */
+        FIXME("Handle overwriting private data in SetPrivateData\n");
         return E_FAIL;
 
     }
@@ -149,11 +157,11 @@ HRESULT WINAPI IWineD3DResourceImpl_SetPrivateData(IWineD3DResource *iface, REFG
 
 HRESULT WINAPI IWineD3DResourceImpl_GetPrivateData(IWineD3DResource *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    PrivateData **data;
+    PrivateData *data;
 
     TRACE("(%p) : %p %p %p\n", This, refguid, pData, pSizeOfData);
     data = IWineD3DResourceImpl_FindPrivateData(This, refguid);
-    if (*data == NULL) return WINED3DERR_NOTFOUND;
+    if (data == NULL) return WINED3DERR_NOTFOUND;
 
 
 #if 0 /* This may not be right. */
@@ -161,41 +169,39 @@ HRESULT WINAPI IWineD3DResourceImpl_GetPrivateData(IWineD3DResource *iface, REFG
         && (*data)->uniquenessValue != This->uniquenessValue)
         return DDERR_EXPIRED;
 #endif
-    if (*pSizeOfData < (*data)->size) {
-        *pSizeOfData = (*data)->size;
+    if (*pSizeOfData < data->size) {
+        *pSizeOfData = data->size;
         return WINED3DERR_MOREDATA;
     }
 
-    if ((*data)->flags & WINED3DSPD_IUNKNOWN) {
-        *(LPUNKNOWN *)pData = (*data)->ptr.object;
-        IUnknown_AddRef((*data)->ptr.object);
+    if (data->flags & WINED3DSPD_IUNKNOWN) {
+        *(LPUNKNOWN *)pData = data->ptr.object;
+        IUnknown_AddRef(data->ptr.object);
     }
     else {
-        memcpy(pData, (*data)->ptr.data, (*data)->size);
+        memcpy(pData, data->ptr.data, data->size);
     }
 
     return WINED3D_OK;
 }
 HRESULT WINAPI IWineD3DResourceImpl_FreePrivateData(IWineD3DResource *iface, REFGUID refguid) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    PrivateData **data;
+    PrivateData *data;
 
-    TRACE("(%p) : %p\n", This, refguid);
-    /* TODO: move this code off into a linked list class */
+    TRACE("(%p) : %s\n", This, debugstr_guid(refguid));
     data = IWineD3DResourceImpl_FindPrivateData(This, refguid);
-    if (*data == NULL) return WINED3DERR_NOTFOUND;
+    if (data == NULL) return WINED3DERR_NOTFOUND;
 
-    *data = (*data)->next;
-
-    if ((*data)->flags & WINED3DSPD_IUNKNOWN)
+    if (data->flags & WINED3DSPD_IUNKNOWN)
     {
-        if ((*data)->ptr.object != NULL)
-            IUnknown_Release((*data)->ptr.object);
+        if (data->ptr.object != NULL)
+            IUnknown_Release(data->ptr.object);
     } else {
-        HeapFree(GetProcessHeap(), 0, (*data)->ptr.data);
+        HeapFree(GetProcessHeap(), 0, data->ptr.data);
     }
+    list_remove(&data->entry);
 
-    HeapFree(GetProcessHeap(), 0, *data);
+    HeapFree(GetProcessHeap(), 0, data);
 
     return WINED3D_OK;
 }

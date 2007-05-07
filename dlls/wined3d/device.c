@@ -109,6 +109,7 @@ static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3
     object->resource.format          = Format; \
     object->resource.usage           = Usage; \
     object->resource.size            = _size; \
+    list_init(&object->resource.privateData); \
     /* Check that we have enough video ram left */ \
     if (Pool == WINED3DPOOL_DEFAULT) { \
         if (IWineD3DDevice_GetAvailableTextureMem(iface) <= _size) { \
