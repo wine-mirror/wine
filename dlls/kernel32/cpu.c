@@ -51,7 +51,6 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "winerror.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

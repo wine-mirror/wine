@@ -25,7 +25,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "winnls.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(actctx);

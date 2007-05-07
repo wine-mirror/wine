@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "windef.h"
-#include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/debug.h"
 
