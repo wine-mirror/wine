@@ -298,10 +298,7 @@ static WCHAR szSource[] = {'M','s','i',' ','A','P','I',' ','E','r','r','o','r',0
             len = WideCharToMultiByte(CP_ACP, 0, szDescription, -1, string2, MAX_PATH, NULL, NULL); \
             ok(len, "WideCharToMultiByteChar returned error %d\n", GetLastError()); \
                                                                         \
-            todo_wine {                                                 \
-                /* Our parameter names are different so the descriptions will not match */ \
-                ok(0, "Exception description was \"%s\" but expected to be \"%s\"\n", string1, string2);                        \
-            }                                                           \
+            ok(0, "Exception description was \"%s\" but expected to be \"%s\"\n", string1, string2); \
         }                                                               \
     }
 
