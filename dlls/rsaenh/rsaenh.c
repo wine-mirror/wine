@@ -1476,7 +1476,12 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
                 SetLastError(NTE_BAD_KEYSET_PARAM);
                 return FALSE;
             } else {
-                if (!RegDeleteKeyA(HKEY_CURRENT_USER, szRegKey)) {
+                HKEY hRootKey;
+                if (dwFlags & CRYPT_MACHINE_KEYSET)
+                    hRootKey = HKEY_LOCAL_MACHINE;
+                else
+                    hRootKey = HKEY_CURRENT_USER;
+                if (!RegDeleteKeyA(hRootKey, szRegKey)) {
                     SetLastError(ERROR_SUCCESS);
                     return TRUE;
                 } else {

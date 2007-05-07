@@ -1623,6 +1623,26 @@ static void test_null_provider(void)
     CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 
+    /* test the machine key set */
+    CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET|CRYPT_MACHINE_KEYSET);
+    result = CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
+     CRYPT_NEWKEYSET|CRYPT_MACHINE_KEYSET);
+    ok(result, "CryptAcquireContext with CRYPT_MACHINE_KEYSET failed: %08x\n", GetLastError());
+    CryptReleaseContext(prov, 0);
+    result = CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
+     CRYPT_MACHINE_KEYSET);
+    ok(result, "CryptAcquireContext with CRYPT_MACHINE_KEYSET failed: %08x\n", GetLastError());
+    CryptReleaseContext(prov,0);
+    result = CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
+       CRYPT_DELETEKEYSET|CRYPT_MACHINE_KEYSET);
+    ok(result, "CryptAcquireContext with CRYPT_DELETEKEYSET|CRYPT_MACHINE_KEYSET failed: %08x\n",
+		GetLastError());
+    result = CryptAcquireContext(&prov, szContainer, NULL, PROV_RSA_FULL,
+     CRYPT_MACHINE_KEYSET);
+    ok(!result && GetLastError() == NTE_BAD_KEYSET ,
+	"Expected NTE_BAD_KEYSET, got %08x\n", GetLastError());
+
 }
 
 START_TEST(rsaenh)
