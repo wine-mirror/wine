@@ -43,8 +43,6 @@ LONG BROWSEUI_refCount = 0;
 
 HINSTANCE browseui_hinstance = 0;
 
-LONG module_ref = 0;
-
 typedef HRESULT (WINAPI *LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
 
 static const struct {
@@ -133,9 +131,9 @@ static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
     TRACE("(%p)->(%x)\n", This, fLock);
 
     if(fLock)
-        LOCK_MODULE();
+        InterlockedIncrement(&BROWSEUI_refCount);
     else
-        UNLOCK_MODULE();
+        InterlockedDecrement(&BROWSEUI_refCount);
 
     return S_OK;
 }
