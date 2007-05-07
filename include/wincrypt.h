@@ -1613,6 +1613,11 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 #define PP_KEYSPEC              39
 #define PP_ENUMEX_SIGNING_PROT  40
 
+/* Values returned by CryptGetProvParam of PP_KEYSTORAGE */
+#define CRYPT_SEC_DESCR         0x00000001
+#define CRYPT_PSTORE            0x00000002
+#define CRYPT_UI_PROMPT         0x00000004
+
 /* Crypt{Get/Set}KeyParam */
 #define KP_IV                   1
 #define KP_SALT                 2
