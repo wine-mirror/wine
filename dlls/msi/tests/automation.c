@@ -325,10 +325,11 @@ static DISPID get_dispid( IDispatch *disp, const char *name )
 
 static void test_dispid(void)
 {
-    ok( get_dispid( pInstaller, "OpenPackage" ) == 2, "dispid wrong\n");
-
     todo_wine {
     ok( get_dispid( pInstaller, "CreateRecord" ) == 1, "dispid wrong\n");
+    }
+    ok( get_dispid( pInstaller, "OpenPackage" ) == 2, "dispid wrong\n");
+    todo_wine {
     ok( get_dispid( pInstaller, "OpenProduct" ) == 3, "dispid wrong\n");
     ok( get_dispid( pInstaller, "OpenDatabase" ) == 4, "dispid wrong\n");
     ok( get_dispid( pInstaller, "SummaryInformation" ) == 5, "dispid wrong\n");
@@ -343,7 +344,9 @@ static void test_dispid(void)
 
     ok( get_dispid( pInstaller, "FileSize" ) == 15, "dispid wrong\n");
     ok( get_dispid( pInstaller, "FileVersion" ) == 16, "dispid wrong\n");
+    }
     ok( get_dispid( pInstaller, "ProductState" ) == 17, "dispid wrong\n");
+    todo_wine {
     ok( get_dispid( pInstaller, "ProductInfo" ) == 18, "dispid wrong\n");
     ok( get_dispid( pInstaller, "ConfigureProduct" ) == 19, "dispid wrong\n");
     ok( get_dispid( pInstaller, "ReinstallProduct" ) == 20 , "dispid wrong\n");
@@ -361,7 +364,9 @@ static void test_dispid(void)
     ok( get_dispid( pInstaller, "ProvideQualifiedComponent" ) == 32, "dispid wrong\n");
     ok( get_dispid( pInstaller, "QualifierDescription" ) == 33, "dispid wrong\n");
     ok( get_dispid( pInstaller, "ComponentQualifiers" ) == 34, "dispid wrong\n");
+    }
     ok( get_dispid( pInstaller, "Products" ) == 35, "dispid wrong\n");
+    todo_wine {
     ok( get_dispid( pInstaller, "Features" ) == 36, "dispid wrong\n");
     ok( get_dispid( pInstaller, "Components" ) == 37, "dispid wrong\n");
     ok( get_dispid( pInstaller, "ComponentClients" ) == 38, "dispid wrong\n");
@@ -1100,50 +1105,46 @@ static void test_Installer(void)
     DeleteFileA(msifile);
 
     /* Installer::Products */
-    todo_wine {
-        hr = Installer_Products(&pStringList);
-        ok(SUCCEEDED(hr), "Installer_Products failed, hresult 0x%08x\n", hr);
-        if (SUCCEEDED(hr))
+    hr = Installer_Products(&pStringList);
+    ok(SUCCEEDED(hr), "Installer_Products failed, hresult 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        int iCount = 0, idx;
+
+        /* StringList::Count */
+        hr = StringList_Count(pStringList, &iCount);
+        ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
+
+        for (idx=0; idx<iCount; idx++)
         {
-            int iCount = 0, idx;
-
-            /* StringList::Count */
-            hr = StringList_Count(pStringList, &iCount);
-            ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
-
-            for (idx=0; idx<iCount; idx++)
-            {
-                /* StringList::Item */
-                memset(szPath, 0, sizeof(szPath));
-                hr = StringList_Item(pStringList, idx, szPath);
-                ok(SUCCEEDED(hr), "StringList_Item failed (idx %d, count %d), hresult 0x%08x\n", idx, iCount, hr);
-
-                if (SUCCEEDED(hr))
-                {
-                    /* Installer::ProductState */
-                    hr = Installer_ProductState(szPath, &iState);
-                    ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
-                    if (SUCCEEDED(hr))
-                        ok(iState == INSTALLSTATE_DEFAULT || iState == INSTALLSTATE_ADVERTISED, "Installer_ProductState returned %d, expected %d or %d", iState, INSTALLSTATE_DEFAULT, INSTALLSTATE_ADVERTISED);
-                }
-            }
-
-            /* StringList::Item using an invalid index */
+            /* StringList::Item */
             memset(szPath, 0, sizeof(szPath));
-            hr = StringList_Item(pStringList, iCount, szPath);
-            ok(hr == DISP_E_BADINDEX, "StringList_Item for an invalid index did not return DISP_E_BADINDEX, hresult 0x%08x\n", hr);
+            hr = StringList_Item(pStringList, idx, szPath);
+            ok(SUCCEEDED(hr), "StringList_Item failed (idx %d, count %d), hresult 0x%08x\n", idx, iCount, hr);
 
-            IDispatch_Release(pStringList);
+            if (SUCCEEDED(hr))
+            {
+                /* Installer::ProductState */
+                hr = Installer_ProductState(szPath, &iState);
+                ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
+                if (SUCCEEDED(hr))
+                    ok(iState == INSTALLSTATE_DEFAULT || iState == INSTALLSTATE_ADVERTISED, "Installer_ProductState returned %d, expected %d or %d", iState, INSTALLSTATE_DEFAULT, INSTALLSTATE_ADVERTISED);
+            }
         }
+
+        /* StringList::Item using an invalid index */
+        memset(szPath, 0, sizeof(szPath));
+        hr = StringList_Item(pStringList, iCount, szPath);
+        ok(hr == DISP_E_BADINDEX, "StringList_Item for an invalid index did not return DISP_E_BADINDEX, hresult 0x%08x\n", hr);
+
+        IDispatch_Release(pStringList);
     }
 
     /* Installer::ProductState for our product code, which should not be installed */
-    todo_wine {
-        hr = Installer_ProductState(szProductCode, &iState);
-        ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
-        if (SUCCEEDED(hr))
-            ok(iState == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d", iState, INSTALLSTATE_UNKNOWN);
-    }
+    hr = Installer_ProductState(szProductCode, &iState);
+    ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        ok(iState == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d", iState, INSTALLSTATE_UNKNOWN);
 
     /* Installer::Version */
     todo_wine {

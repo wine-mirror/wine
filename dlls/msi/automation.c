@@ -83,6 +83,11 @@ interface AutomationObject {
  */
 
 typedef struct {
+    int iCount;
+    LPWSTR *pszStrings;
+} StringListData;
+
+typedef struct {
     /* The parent Installer object */
     IDispatch *pInstaller;
 } SessionData;
@@ -559,6 +564,60 @@ static HRESULT WINAPI RecordImpl_Invoke(
     return S_OK;
 }
 
+static HRESULT WINAPI StringListImpl_Invoke(
+        AutomationObject* This,
+        DISPID dispIdMember,
+        REFIID riid,
+        LCID lcid,
+        WORD wFlags,
+        DISPPARAMS* pDispParams,
+        VARIANT* pVarResult,
+        EXCEPINFO* pExcepInfo,
+        UINT* puArgErr)
+{
+    StringListData *data = (StringListData *)private_data(This);
+    HRESULT hr;
+    VARIANTARG varg0;
+
+    VariantInit(&varg0);
+
+    switch (dispIdMember)
+    {
+         case DISPID_STRINGLIST_ITEM:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                if (V_I4(&varg0) < 0 || V_I4(&varg0) >= data->iCount)
+                    return DISP_E_BADINDEX;
+                V_VT(pVarResult) = VT_BSTR;
+                V_BSTR(pVarResult) = SysAllocString(data->pszStrings[V_I4(&varg0)]);
+            }
+            break;
+
+         case DISPID_STRINGLIST_COUNT:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+                V_VT(pVarResult) = VT_I4;
+                V_I4(pVarResult) = data->iCount;
+	    }
+            break;
+
+         default:
+            return DISP_E_MEMBERNOTFOUND;
+    }
+
+    return S_OK;
+}
+
+static void WINAPI StringListImpl_Free(AutomationObject *This)
+{
+    StringListData *data = private_data(This);
+    int idx;
+
+    for (idx=0; idx<data->iCount; idx++)
+        SysFreeString(data->pszStrings[idx]);
+    HeapFree(GetProcessHeap(), 0, data->pszStrings);
+}
+
 static HRESULT WINAPI ViewImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -939,6 +998,53 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 }
 	    }
 	    break;
+
+        case DISPID_INSTALLER_PRODUCTSTATE:
+            if (wFlags & DISPATCH_PROPERTYGET) {
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                V_VT(pVarResult) = VT_I4;
+                V_I4(pVarResult) = MsiQueryProductStateW(V_BSTR(&varg0));
+            }
+            break;
+
+        case DISPID_INSTALLER_PRODUCTS:
+            if (wFlags & DISPATCH_PROPERTYGET)
+            {
+                StringListData *sldata = NULL;
+                int idx = 0;
+                WCHAR szProductBuf[GUID_SIZE];
+
+                /* Find number of products */
+                do {
+                    ret = MsiEnumProductsW(idx, szProductBuf);
+                    if (ret == ERROR_SUCCESS) idx++;
+                } while (ret == ERROR_SUCCESS && ret != ERROR_NO_MORE_ITEMS);
+
+                if (ret != ERROR_SUCCESS && ret != ERROR_NO_MORE_ITEMS)
+                {
+                    ERR("MsiEnumProducts returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+
+                V_VT(pVarResult) = VT_DISPATCH;
+                if (SUCCEEDED(create_automation_object(0, NULL, (LPVOID*)&pDispatch, &DIID_StringList, StringListImpl_Invoke, StringListImpl_Free, sizeof(StringListData))))
+                {
+                    IDispatch_AddRef(pDispatch);
+                    V_DISPATCH(pVarResult) = pDispatch;
+
+                    /* Save product strings */
+                    sldata = (StringListData *)private_data((AutomationObject *)pDispatch);
+                    sldata->iCount = idx;
+                    sldata->pszStrings = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LPWSTR)*sldata->iCount);
+                    for (idx = 0; idx < sldata->iCount; idx++)
+                    {
+                        ret = MsiEnumProductsW(idx, szProductBuf);
+                        sldata->pszStrings[idx] = SysAllocString(szProductBuf);
+                    }
+                }
+            }
+            break;
 
          default:
             return DISP_E_MEMBERNOTFOUND;

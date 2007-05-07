@@ -38,6 +38,22 @@ library WindowsInstaller
     dispinterface Product;
     dispinterface Patch;
 
+    typedef enum {
+        msiInstallStateNotUsed = -7,
+        msiInstallStateBadConfig = -6,
+        msiInstallStateIncomplete = -5,
+        msiInstallStateSourceAbsent = -4,
+        msiInstallStateInvalidArg = -2,
+        msiInstallStateUnknown = -1,
+        msiInstallStateBroken = 0,
+        msiInstallStateAdvertised = 1,
+        msiInstallStateRemoved = 1,
+        msiInstallStateAbsent = 2,
+        msiInstallStateLocal = 3,
+        msiInstallStateSource = 4,
+        msiInstallStateDefault = 5
+    } MsiInstallState;
+
     [ uuid(000C1090-0000-0000-C000-000000000046) ]
     dispinterface Installer
     {
@@ -47,6 +63,11 @@ library WindowsInstaller
             Session* OpenPackage(
                 [in] VARIANT PackagePath,
                 [in, optional, defaultvalue(0)] long Options);
+        [id(DISPID_INSTALLER_PRODUCTSTATE), propget]
+            MsiInstallState ProductState(
+                [in] BSTR Product);
+        [id(DISPID_INSTALLER_PRODUCTS), propget]
+            StringList *Products();
     }
 
     [ uuid(000C1093-0000-0000-C000-000000000046) ]
@@ -67,6 +88,10 @@ library WindowsInstaller
     {
         properties:
         methods:
+        [id(DISPID_STRINGLIST_ITEM), propget]
+            BSTR Item(long Index);
+        [id(DISPID_STRINGLIST_COUNT), propget]
+            long Count();
     }
 
     [ uuid(000C1096-0000-0000-C000-000000000046) ]
@@ -141,22 +166,6 @@ library WindowsInstaller
         msiRunModeRollback = 17,
         msiRunModeCommit = 18
     } MsiRunMode;
-
-    typedef enum {
-        msiInstallStateNotUsed = -7,
-        msiInstallStateBadConfig = -6,
-        msiInstallStateIncomplete = -5,
-        msiInstallStateSourceAbsent = -4,
-        msiInstallStateInvalidArg = -2,
-        msiInstallStateUnknown = -1,
-        msiInstallStateBroken = 0,
-        msiInstallStateAdvertised = 1,
-        msiInstallStateRemoved = 1,
-        msiInstallStateAbsent = 2,
-        msiInstallStateLocal = 3,
-        msiInstallStateSource = 4,
-        msiInstallStateDefault = 5
-    } MsiInstallState;
 
     [ uuid(000C109E-0000-0000-C000-000000000046) ]
     dispinterface Session
