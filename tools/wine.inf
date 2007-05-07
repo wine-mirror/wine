@@ -2153,6 +2153,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,wintrust.dll,1
 
 [FakeDllsSection]
+10,,explorer.exe
 10,,notepad.exe
 10,,regedit.exe
 10,,winebrowser.exe
@@ -2173,7 +2174,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,ddraw.dll
 11,,dsound.dll
 11,,dsound.vxd
-11,,explorer.exe
 11,,gdi32.dll
 11,,hhctrl.ocx
 11,,imaadp32.acm
