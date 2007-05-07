@@ -61,9 +61,6 @@ interface AutomationObject {
     /* The MSI handle of the current object */
     MSIHANDLE msiHandle;
 
-    /* The parent Installer object (only used in the Session object) */
-    IDispatch *pInstaller;
-
     /* A function that is called from AutomationObject::Invoke, specific to this type of object. */
     HRESULT (STDMETHODCALLTYPE *funcInvoke)(
         AutomationObject* This,
@@ -75,7 +72,20 @@ interface AutomationObject {
         VARIANT* pVarResult,
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr);
+
+    /* A function that is called from AutomationObject::Release when the object is being freed to free any private
+     * data structures (or NULL) */
+    void (STDMETHODCALLTYPE *funcFree)(AutomationObject* This);
 };
+
+/*
+ * Structures for additional data required by specific automation objects
+ */
+
+typedef struct {
+    /* The parent Installer object */
+    IDispatch *pInstaller;
+} SessionData;
 
 /* VTables */
 static const struct IDispatchVtbl AutomationObject_Vtbl;
@@ -116,17 +126,19 @@ HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsid, LCID
  * with the appropriate clsid and invocation function. */
 HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, LPVOID *ppObj, REFIID clsid,
 	    HRESULT (STDMETHODCALLTYPE *funcInvoke)(AutomationObject*,DISPID,REFIID,LCID,WORD,DISPPARAMS*,
-						    VARIANT*,EXCEPINFO*,UINT*))
+						    VARIANT*,EXCEPINFO*,UINT*),
+                                 void (STDMETHODCALLTYPE *funcFree)(AutomationObject*),
+                                 SIZE_T sizetPrivateData)
 {
     AutomationObject *object;
     HRESULT hr;
 
-    TRACE("(%ld,%p,%p,%s,%p)\n", (unsigned long)msiHandle, pUnkOuter, ppObj, debugstr_guid(clsid), funcInvoke);
+    TRACE("(%ld,%p,%p,%s,%p,%p,%ld)\n", (unsigned long)msiHandle, pUnkOuter, ppObj, debugstr_guid(clsid), funcInvoke, funcFree, sizetPrivateData);
 
     if( pUnkOuter )
 	return CLASS_E_NOAGGREGATION;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AutomationObject));
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AutomationObject)+sizetPrivateData);
 
     /* Set all the VTable references */
     object->lpVtbl = &AutomationObject_Vtbl;
@@ -137,7 +149,7 @@ HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, LPVOI
     object->msiHandle = msiHandle;
     object->clsid = (LPCLSID)clsid;
     object->funcInvoke = funcInvoke;
-    object->pInstaller = NULL;
+    object->funcFree = funcFree;
 
     /* Load our TypeInfo so we don't have to process GetIDsOfNames */
     object->iTypeInfo = NULL;
@@ -156,6 +168,12 @@ HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, LPVOI
 static inline AutomationObject *obj_from_IProvideMultipleClassInfo( IProvideMultipleClassInfo *iface )
 {
     return (AutomationObject *)((char*)iface - FIELD_OFFSET(AutomationObject, lpvtblIProvideMultipleClassInfo));
+}
+
+/* Macro to get pointer to private object data */
+static inline void *private_data( AutomationObject *This )
+{
+    return This + 1;
 }
 
 /*
@@ -213,6 +231,7 @@ static ULONG WINAPI AutomationObject_Release(IDispatch* iface)
 
     if (!ref)
     {
+        if (This->funcFree) This->funcFree(This);
 	MsiCloseHandle(This->msiHandle);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -579,7 +598,7 @@ static HRESULT WINAPI ViewImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
                 if ((ret = MsiViewFetch(This->msiHandle, &msiHandle)) == ERROR_SUCCESS)
                 {
-                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Record, RecordImpl_Invoke)))
+                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Record, RecordImpl_Invoke, NULL, 0)))
                     {
                         IDispatch_AddRef(pDispatch);
                         V_DISPATCH(pVarResult) = pDispatch;
@@ -639,7 +658,7 @@ static HRESULT WINAPI DatabaseImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
                 if ((ret = MsiDatabaseOpenViewW(This->msiHandle, V_BSTR(&varg0), &msiHandle)) == ERROR_SUCCESS)
                 {
-                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_View, ViewImpl_Invoke)))
+                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_View, ViewImpl_Invoke, NULL, 0)))
                     {
                         IDispatch_AddRef(pDispatch);
                         V_DISPATCH(pVarResult) = pDispatch;
@@ -671,6 +690,7 @@ static HRESULT WINAPI SessionImpl_Invoke(
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr)
 {
+    SessionData *data = private_data(This);
     WCHAR *szString;
     DWORD dwLen;
     IDispatch *pDispatch = NULL;
@@ -689,8 +709,8 @@ static HRESULT WINAPI SessionImpl_Invoke(
 	case DISPID_SESSION_INSTALLER:
 	    if (wFlags & DISPATCH_PROPERTYGET) {
                 V_VT(pVarResult) = VT_DISPATCH;
-                IDispatch_AddRef(This->pInstaller);
-                V_DISPATCH(pVarResult) = This->pInstaller;
+                IDispatch_AddRef(data->pInstaller);
+                V_DISPATCH(pVarResult) = data->pInstaller;
 	    }
 	    break;
 
@@ -761,7 +781,7 @@ static HRESULT WINAPI SessionImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
 		if ((msiHandle = MsiGetActiveDatabase(This->msiHandle)))
                 {
-                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Database, DatabaseImpl_Invoke)))
+                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Database, DatabaseImpl_Invoke, NULL, 0)))
                     {
                         IDispatch_AddRef(pDispatch);
                         V_DISPATCH(pVarResult) = pDispatch;
@@ -930,14 +950,14 @@ static HRESULT WINAPI InstallerImpl_Invoke(
 /* Wrapper around create_automation_object to create an installer object. */
 HRESULT create_msiserver(IUnknown *pOuter, LPVOID *ppObj)
 {
-    return create_automation_object(0, pOuter, ppObj, &DIID_Installer, InstallerImpl_Invoke);
+    return create_automation_object(0, pOuter, ppObj, &DIID_Installer, InstallerImpl_Invoke, NULL, 0);
 }
 
 /* Wrapper around create_automation_object to create a session object. */
 HRESULT create_session(MSIHANDLE msiHandle, IDispatch *pInstaller, IDispatch **pDispatch)
 {
-    HRESULT hr = create_automation_object(msiHandle, NULL, (LPVOID)pDispatch, &DIID_Session, SessionImpl_Invoke);
+    HRESULT hr = create_automation_object(msiHandle, NULL, (LPVOID)pDispatch, &DIID_Session, SessionImpl_Invoke, NULL, sizeof(SessionData));
     if (SUCCEEDED(hr) && pDispatch && *pDispatch)
-        ((AutomationObject *)*pDispatch)->pInstaller = (IDispatch *)pInstaller;
+        ((SessionData *)private_data((AutomationObject *)*pDispatch))->pInstaller = pInstaller;
     return hr;
 }
