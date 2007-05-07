@@ -747,6 +747,31 @@ static DWORD CALLBACK get_class_object_thread(LPVOID pv)
     return hr;
 }
 
+static DWORD CALLBACK get_class_object_proxy_thread(LPVOID pv)
+{
+    CLSCTX clsctx = (CLSCTX)(DWORD_PTR)pv;
+    HRESULT hr;
+    IClassFactory *pcf;
+    IMultiQI *pMQI;
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoGetClassObject(&CLSID_WineOOPTest, clsctx, NULL, &IID_IClassFactory,
+                          (void **)&pcf);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IClassFactory_QueryInterface(pcf, &IID_IMultiQI, (void **)&pMQI);
+        if (SUCCEEDED(hr))
+            IMultiQI_Release(pMQI);
+        IClassFactory_Release(pcf);
+    }
+
+    CoUninitialize();
+
+    return hr;
+}
+
 static DWORD CALLBACK register_class_object_thread(LPVOID pv)
 {
     HRESULT hr;
@@ -821,7 +846,7 @@ static void test_registered_object_thread_affinity(void)
                                CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE, &cookie);
     ok_ole_success(hr, "CoRegisterClassObject");
 
-    thread = CreateThread(NULL, 0, get_class_object_thread, (LPVOID)CLSCTX_LOCAL_SERVER, 0, &tid);
+    thread = CreateThread(NULL, 0, get_class_object_proxy_thread, (LPVOID)CLSCTX_LOCAL_SERVER, 0, &tid);
     ok(thread != NULL, "CreateThread failed with error %d\n", GetLastError());
     while (MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT) == WAIT_OBJECT_0 + 1)
     {
