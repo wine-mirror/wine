@@ -1142,15 +1142,34 @@ static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
 static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
-    LPCWSTR prop;
-    LPWSTR val;
+    LPCWSTR prop, text;
+    LPWSTR val, begin, end;
+    WCHAR num[10];
+    DWORD limit;
 
     control = msi_dialog_add_control( dialog, rec, szEdit,
                                       WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL );
     control->handler = msi_dialog_edit_handler;
+
+    text = MSI_RecordGetString( rec, 10 );
+    if ( text )
+    {
+        begin = strchrW( text, '{' );
+        end = strchrW( text, '}' );
+
+        if ( begin && end && end > begin )
+        {
+            lstrcpynW( num, begin + 1, end - begin );
+            limit = atolW( num );
+
+            SendMessageW( control->hwnd, EM_SETLIMITTEXT, limit, 0 );
+        }
+    }
+
     prop = MSI_RecordGetString( rec, 9 );
     if( prop )
         control->property = strdupW( prop );
+
     val = msi_dup_property( dialog->package, control->property );
     SetWindowTextW( control->hwnd, val );
     msi_free( val );
