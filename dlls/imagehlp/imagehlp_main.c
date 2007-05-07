@@ -23,7 +23,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "imagehlp.h"
-#include "winerror.h"
 #include "wine/debug.h"
 
 /**********************************************************************/
