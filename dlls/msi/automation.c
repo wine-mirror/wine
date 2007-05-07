@@ -670,11 +670,13 @@ static HRESULT WINAPI ViewImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
                 if ((ret = MsiViewFetch(This->msiHandle, &msiHandle)) == ERROR_SUCCESS)
                 {
-                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Record, RecordImpl_Invoke, NULL, 0)))
+                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Record, RecordImpl_Invoke, NULL, 0)))
                     {
                         IDispatch_AddRef(pDispatch);
                         V_DISPATCH(pVarResult) = pDispatch;
                     }
+                    else
+                        ERR("Failed to create Record object, hresult 0x%08x\n", hr);
                 }
 		else if (ret == ERROR_NO_MORE_ITEMS)
                     V_DISPATCH(pVarResult) = NULL;
@@ -732,11 +734,13 @@ static HRESULT WINAPI DatabaseImpl_Invoke(
                 VariantClear(&varg0);
                 if (ret == ERROR_SUCCESS)
                 {
-                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_View, ViewImpl_Invoke, NULL, 0)))
+                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_View, ViewImpl_Invoke, NULL, 0)))
                     {
                         IDispatch_AddRef(pDispatch);
                         V_DISPATCH(pVarResult) = pDispatch;
                     }
+                    else
+                        ERR("Failed to create View object, hresult 0x%08x\n", hr);
                 }
 		else
                 {
@@ -859,11 +863,13 @@ static HRESULT WINAPI SessionImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
 		if ((msiHandle = MsiGetActiveDatabase(This->msiHandle)))
                 {
-                    if (SUCCEEDED(create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Database, DatabaseImpl_Invoke, NULL, 0)))
+                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Database, DatabaseImpl_Invoke, NULL, 0)))
                     {
                         IDispatch_AddRef(pDispatch);
                         V_DISPATCH(pVarResult) = pDispatch;
                     }
+                    else
+                        ERR("Failed to create Database object, hresult 0x%08x\n", hr);
                 }
 		else
                 {
@@ -1059,7 +1065,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 }
 
                 V_VT(pVarResult) = VT_DISPATCH;
-                if (SUCCEEDED(create_automation_object(0, NULL, (LPVOID*)&pDispatch, &DIID_StringList, StringListImpl_Invoke, StringListImpl_Free, sizeof(StringListData))))
+                if (SUCCEEDED(hr = create_automation_object(0, NULL, (LPVOID*)&pDispatch, &DIID_StringList, StringListImpl_Invoke, StringListImpl_Free, sizeof(StringListData))))
                 {
                     IDispatch_AddRef(pDispatch);
                     V_DISPATCH(pVarResult) = pDispatch;
@@ -1074,6 +1080,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                         sldata->pszStrings[idx] = SysAllocString(szProductBuf);
                     }
                 }
+                else
+                    ERR("Failed to create StringList object, hresult 0x%08x\n", hr);
             }
             break;
 
