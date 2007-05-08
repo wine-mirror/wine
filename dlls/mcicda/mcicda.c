@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
@@ -34,7 +33,6 @@
 #include "wownt32.h"
 #include "mmddk.h"
 #include "winioctl.h"
-#include "ntddstor.h"
 #include "ntddcdrm.h"
 #include "winternl.h"
 #include "wine/debug.h"
