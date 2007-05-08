@@ -127,7 +127,7 @@ static void async_queue_dump( struct object *obj, int verbose )
 }
 
 /* notifies client thread of new status of its async request */
-static void async_terminate( struct async *async, unsigned int status )
+void async_terminate( struct async *async, unsigned int status )
 {
     apc_call_t data;
 
