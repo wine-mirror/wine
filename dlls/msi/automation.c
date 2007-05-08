@@ -1026,11 +1026,13 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
 		if ((ret = MsiOpenPackageExW(V_BSTR(&varg0), V_I4(&varg1), &msiHandle)) == ERROR_SUCCESS)
                 {
-                    if (SUCCEEDED(create_session(msiHandle, (IDispatch *)This, &pDispatch)))
+                    if (SUCCEEDED(hr = create_session(msiHandle, (IDispatch *)This, &pDispatch)))
                     {
                         IDispatch_AddRef(pDispatch);
                         V_DISPATCH(pVarResult) = pDispatch;
                     }
+                    else
+                        ERR("Failed to create Session object, hresult 0x%08x\n", hr);
                 }
 		else
                 {
