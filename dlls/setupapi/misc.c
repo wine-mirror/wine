@@ -919,6 +919,29 @@ done:
     return ret;
 }
 
+static int compare_files( HANDLE file1, HANDLE file2 )
+{
+    char buffer1[2048];
+    char buffer2[2048];
+    DWORD size1;
+    DWORD size2;
+
+    while( ReadFile(file1, buffer1, sizeof(buffer1), &size1, NULL) &&
+           ReadFile(file2, buffer2, sizeof(buffer2), &size2, NULL) )
+    {
+        int ret;
+        if (size1 != size2)
+            return size1 > size2 ? 1 : -1;
+        if (!size1)
+            return 0;
+        ret = memcmp( buffer1, buffer2, size1 );
+        if (ret)
+            return ret;
+    }
+
+    return 0;
+}
+
 /***********************************************************************
  *      SetupCopyOEMInfW  (SETUPAPI.@)
  */
@@ -959,6 +982,20 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
     {
         static const WCHAR oem[] = { 'o','e','m',0 };
         unsigned int i;
+        LARGE_INTEGER source_file_size;
+        HANDLE source_file;
+
+        source_file = CreateFileW( source, FILE_READ_DATA | FILE_READ_ATTRIBUTES,
+                                   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                   NULL, OPEN_EXISTING, 0, NULL );
+        if (source_file == INVALID_HANDLE_VALUE)
+            return FALSE;
+
+        if (!GetFileSizeEx( source_file, &source_file_size ))
+        {
+            CloseHandle( source_file );
+            return FALSE;
+        }
 
         p = strrchrW( target, '\\' ) + 1;
         memcpy( p, oem, sizeof(oem) );
@@ -968,12 +1005,30 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
         for (i = 0; i < OEM_INDEX_LIMIT; i++)
         {
             static const WCHAR format[] = { '%','u','.','i','n','f',0 };
+            HANDLE dest_file;
+            LARGE_INTEGER dest_file_size;
+
             wsprintfW( p, format, i );
+            dest_file = CreateFileW( target, FILE_READ_DATA | FILE_READ_ATTRIBUTES,
+                                     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                     NULL, OPEN_EXISTING, 0, NULL );
             /* if we found a file name that doesn't exist then we're done */
-            if (GetFileAttributesW( target ) == INVALID_FILE_ATTRIBUTES)
+            if (dest_file == INVALID_HANDLE_VALUE)
                 break;
+            /* now check if the same inf file has already been copied to the inf
+             * directory. if so, use that file and don't create a new one */
+            if (!GetFileSizeEx( dest_file, &dest_file_size ) ||
+                (dest_file_size.QuadPart != source_file_size.QuadPart) ||
+                compare_files( source_file, dest_file ))
+            {
+                CloseHandle( dest_file );
+                continue;
+            }
+            CloseHandle( dest_file );
+            break;
         }
 
+        CloseHandle( source_file );
         if (i == OEM_INDEX_LIMIT)
         {
             SetLastError( ERROR_FILENAME_EXCED_RANGE );
