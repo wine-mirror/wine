@@ -560,10 +560,9 @@ static HRESULT WINAPI RecordImpl_Invoke(
                 if (FAILED(hr)) return hr;
                 hr = DispGetParam(pDispParams, DISPID_PROPERTYPUT, VT_BSTR, &varg1, puArgErr);
                 if (FAILED(hr)) return hr;
-                ret = MsiRecordSetStringW(This->msiHandle, V_I4(&varg0), V_BSTR(&varg1));
-                VariantClear(&varg1);
-		if (ret != ERROR_SUCCESS)
+		if ((ret = MsiRecordSetStringW(This->msiHandle, V_I4(&varg0), V_BSTR(&varg1))) != ERROR_SUCCESS)
                 {
+                    VariantClear(&varg1);
                     ERR("MsiRecordSetString returned %d\n", ret);
                     return DISP_E_EXCEPTION;
                 }
@@ -573,6 +572,9 @@ static HRESULT WINAPI RecordImpl_Invoke(
          default:
             return DISP_E_MEMBERNOTFOUND;
     }
+
+    VariantClear(&varg1);
+    VariantClear(&varg0);
 
     return S_OK;
 }
@@ -617,6 +619,8 @@ static HRESULT WINAPI StringListImpl_Invoke(
          default:
             return DISP_E_MEMBERNOTFOUND;
     }
+
+    VariantClear(&varg0);
 
     return S_OK;
 }
@@ -699,6 +703,9 @@ static HRESULT WINAPI ViewImpl_Invoke(
             return DISP_E_MEMBERNOTFOUND;
     }
 
+    VariantClear(&varg1);
+    VariantClear(&varg0);
+
     return S_OK;
 }
 
@@ -730,9 +737,7 @@ static HRESULT WINAPI DatabaseImpl_Invoke(
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
                 V_VT(pVarResult) = VT_DISPATCH;
-                ret = MsiDatabaseOpenViewW(This->msiHandle, V_BSTR(&varg0), &msiHandle);
-                VariantClear(&varg0);
-                if (ret == ERROR_SUCCESS)
+                if ((ret = MsiDatabaseOpenViewW(This->msiHandle, V_BSTR(&varg0), &msiHandle)) == ERROR_SUCCESS)
                 {
                     if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_View, ViewImpl_Invoke, NULL, 0)))
                     {
@@ -744,6 +749,7 @@ static HRESULT WINAPI DatabaseImpl_Invoke(
                 }
 		else
                 {
+                    VariantClear(&varg0);
                     ERR("MsiDatabaseOpenView returned %d\n", ret);
                     return DISP_E_EXCEPTION;
                 }
@@ -753,6 +759,9 @@ static HRESULT WINAPI DatabaseImpl_Invoke(
          default:
             return DISP_E_MEMBERNOTFOUND;
     }
+
+    VariantClear(&varg1);
+    VariantClear(&varg0);
 
     return S_OK;
 }
@@ -811,7 +820,6 @@ static HRESULT WINAPI SessionImpl_Invoke(
                 }
                 if (ret != ERROR_SUCCESS)
 		    ERR("MsiGetProperty returned %d\n", ret);
-                VariantClear(&varg0);
 	    } else if (wFlags & DISPATCH_PROPERTYPUT) {
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
@@ -820,11 +828,10 @@ static HRESULT WINAPI SessionImpl_Invoke(
                     VariantClear(&varg0);
                     return hr;
                 }
-                ret = MsiSetPropertyW(This->msiHandle, V_BSTR(&varg0), V_BSTR(&varg1));
-                VariantClear(&varg0);
-                VariantClear(&varg1);
-		if (ret != ERROR_SUCCESS)
+		if ((ret = MsiSetPropertyW(This->msiHandle, V_BSTR(&varg0), V_BSTR(&varg1))) != ERROR_SUCCESS)
                 {
+                    VariantClear(&varg0);
+                    VariantClear(&varg1);
                     ERR("MsiSetProperty returned %d\n", ret);
                     return DISP_E_EXCEPTION;
                 }
@@ -884,7 +891,6 @@ static HRESULT WINAPI SessionImpl_Invoke(
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
                 ret = MsiDoActionW(This->msiHandle, V_BSTR(&varg0));
-                VariantClear(&varg0);
                 V_VT(pVarResult) = VT_I4;
                 switch (ret)
                 {
@@ -913,6 +919,7 @@ static HRESULT WINAPI SessionImpl_Invoke(
                         V_I4(pVarResult) = msiDoActionStatusBadActionData;
                         break;
                     default:
+                        VariantClear(&varg0);
                         FIXME("MsiDoAction returned unhandled value %d\n", ret);
                         return DISP_E_EXCEPTION;
                 }
@@ -941,7 +948,6 @@ static HRESULT WINAPI SessionImpl_Invoke(
 		    ERR("MsiGetFeatureState returned %d\n", ret);
                     V_I4(pVarResult) = msiInstallStateUnknown;
 		}
-                VariantClear(&varg0);
 	    }
 	    break;
 
@@ -957,7 +963,6 @@ static HRESULT WINAPI SessionImpl_Invoke(
 		    ERR("MsiGetFeatureState returned %d\n", ret);
                     V_I4(pVarResult) = msiInstallStateUnknown;
 		}
-                VariantClear(&varg0);
 	    } else if (wFlags & DISPATCH_PROPERTYPUT) {
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
@@ -966,10 +971,9 @@ static HRESULT WINAPI SessionImpl_Invoke(
                     VariantClear(&varg0);
                     return hr;
                 }
-                ret = MsiSetFeatureStateW(This->msiHandle, V_BSTR(&varg0), V_I4(&varg1));
-                VariantClear(&varg0);
-		if (ret != ERROR_SUCCESS)
+		if ((ret = MsiSetFeatureStateW(This->msiHandle, V_BSTR(&varg0), V_I4(&varg1))) != ERROR_SUCCESS)
                 {
+                    VariantClear(&varg0);
                     ERR("MsiSetFeatureState returned %d\n", ret);
                     return DISP_E_EXCEPTION;
                 }
@@ -979,6 +983,9 @@ static HRESULT WINAPI SessionImpl_Invoke(
          default:
             return DISP_E_MEMBERNOTFOUND;
     }
+
+    VariantClear(&varg1);
+    VariantClear(&varg0);
 
     return S_OK;
 }
@@ -1017,9 +1024,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                     return hr;
                 }
                 V_VT(pVarResult) = VT_DISPATCH;
-                ret = MsiOpenPackageExW(V_BSTR(&varg0), V_I4(&varg1), &msiHandle);
-                VariantClear(&varg0);
-		if (ret == ERROR_SUCCESS)
+		if ((ret = MsiOpenPackageExW(V_BSTR(&varg0), V_I4(&varg1), &msiHandle)) == ERROR_SUCCESS)
                 {
                     if (SUCCEEDED(create_session(msiHandle, (IDispatch *)This, &pDispatch)))
                     {
@@ -1029,6 +1034,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 }
 		else
                 {
+                    VariantClear(&varg0);
                     ERR("MsiOpenPackageEx returned %d\n", ret);
                     return DISP_E_EXCEPTION;
                 }
@@ -1041,7 +1047,6 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 if (FAILED(hr)) return hr;
                 V_VT(pVarResult) = VT_I4;
                 V_I4(pVarResult) = MsiQueryProductStateW(V_BSTR(&varg0));
-                VariantClear(&varg0);
             }
             break;
 
@@ -1088,6 +1093,9 @@ static HRESULT WINAPI InstallerImpl_Invoke(
          default:
             return DISP_E_MEMBERNOTFOUND;
     }
+
+    VariantClear(&varg1);
+    VariantClear(&varg0);
 
     return S_OK;
 }
