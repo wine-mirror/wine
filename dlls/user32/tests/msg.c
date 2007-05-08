@@ -207,7 +207,7 @@ static const struct message WmSWP_ResizeNoZOrder[] = {
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent },
     { WM_GETTEXT, sent|defwinproc|optional },
-    { WM_ERASEBKGND, sent|parent|optional }, /* FIXME: remove optional once Wine is fixed */
+    { WM_ERASEBKGND, sent|optional }, /* FIXME: remove optional once Wine is fixed */
     { WM_WINDOWPOSCHANGED, sent|wparam, /*SWP_NOZORDER|*/SWP_NOMOVE|SWP_NOCLIENTMOVE },
     { WM_SIZE, sent|defwinproc|wparam, 0 },
     { WM_NCCALCSIZE, sent|wparam|optional, 1 }, /* Win9x doesn't send it */
@@ -6321,6 +6321,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	    !lstrcmpiA(buf, "my_button_class") ||
 	    !lstrcmpiA(buf, "my_edit_class") ||
 	    !lstrcmpiA(buf, "static") ||
+	    !lstrcmpiA(buf, "MyDialogClass") ||
 	    !lstrcmpiA(buf, "#32770"))
 	{
 	    struct message msg;
@@ -6367,6 +6368,7 @@ static void CALLBACK win_event_proc(HWINEVENTHOOK hevent,
 	    !lstrcmpiA(buf, "my_button_class") ||
 	    !lstrcmpiA(buf, "my_edit_class") ||
 	    !lstrcmpiA(buf, "static") ||
+	    !lstrcmpiA(buf, "MyDialogClass") ||
 	    !lstrcmpiA(buf, "#32770"))
 	{
 	    struct message msg;
@@ -8874,6 +8876,56 @@ static void test_ShowWindow(void)
     DestroyWindow(hwnd);
 }
 
+static INT_PTR WINAPI test_dlg_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct message msg;
+
+    trace("dialog: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    switch (message)
+    {
+    case WM_WINDOWPOSCHANGING:
+    case WM_WINDOWPOSCHANGED:
+    {
+        WINDOWPOS *winpos = (WINDOWPOS *)lParam;
+
+        trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
+        trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+              winpos->hwnd, winpos->hwndInsertAfter,
+              winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+        dump_winpos_flags(winpos->flags);
+
+        /* Log only documented flags, win2k uses 0x1000 and 0x2000
+         * in the high word for internal purposes
+         */
+        wParam = winpos->flags & 0xffff;
+        /* We are not interested in the flags that don't match under XP and Win9x */
+        wParam &= ~(SWP_NOZORDER);
+        break;
+    }
+
+    /* explicitly ignore WM_GETICON message */
+    case WM_GETICON:
+        return 0;
+    }
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(&msg);
+
+    /* calling DefDlgProc leads to a recursion under XP */
+
+    switch (message)
+    {
+    case WM_INITDIALOG:
+    case WM_GETDLGCODE:
+        return 0;
+    }
+    return 1;
+}
+
 static const struct message WmDefDlgSetFocus_1[] = {
     { WM_GETDLGCODE, sent|wparam|lparam, 0, 0 },
     { WM_GETTEXTLENGTH, sent|wparam|lparam|optional, 0, 0 }, /* XP */
@@ -8898,11 +8950,39 @@ static const struct message WmDefDlgSetFocus_2[] = {
     { WM_GETTEXT, sent|wparam|optional, 6 }, /* XP */
     { WM_GETTEXT, sent|wparam|optional, 12 }, /* XP */
     { EM_SETSEL, sent|wparam, 0 }, /* XP sets lparam to text length, Win9x to -2 */
+    { WM_CTLCOLOREDIT, sent|optional }, /* XP */
+    { 0 }
+};
+/* Creation of a dialog */
+static const struct message WmCreateDialogParamSeq_1[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SIZE, sent|wparam, SIZE_RESTORED },
+    { WM_MOVE, sent },
+    { WM_SETFONT, sent },
+    { WM_INITDIALOG, sent },
+    { WM_CHANGEUISTATE, sent|optional },
+    { 0 }
+};
+/* Creation of a dialog */
+static const struct message WmCreateDialogParamSeq_2[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SIZE, sent|wparam, SIZE_RESTORED },
+    { WM_MOVE, sent },
+    { WM_CHANGEUISTATE, sent|optional },
     { 0 }
 };
 
 static void test_dialog_messages(void)
 {
+    WNDCLASS cls;
     HWND hdlg, hedit1, hedit2, hfocus;
     LRESULT ret;
 
@@ -8973,9 +9053,31 @@ static void test_dialog_messages(void)
     check_selection(hedit2, 0, 3);
 
     EndDialog(hdlg, 0);
+    flush_sequence();
 
 #undef set_selection
 #undef check_selection
+
+    ok(GetClassInfo(0, "#32770", &cls), "GetClassInfo failed\n");
+    cls.lpszClassName = "MyDialogClass";
+    cls.hInstance = GetModuleHandle(0);
+    /* need a cast since a dlgproc is used as a wndproc */
+    cls.lpfnWndProc = (WNDPROC)test_dlg_proc;
+    if (!RegisterClass(&cls)) assert(0);
+
+    hdlg = CreateDialogParam(0, "CLASS_TEST_DIALOG_2", 0, test_dlg_proc, 0);
+    ok(IsWindow(hdlg), "CreateDialogParam failed\n");
+    ok_sequence(WmCreateDialogParamSeq_1, "CreateDialogParam_1", FALSE);
+    EndDialog(hdlg, 0);
+    flush_sequence();
+
+    hdlg = CreateDialogParam(0, "CLASS_TEST_DIALOG_2", 0, NULL, 0);
+    ok(IsWindow(hdlg), "CreateDialogParam failed\n");
+    ok_sequence(WmCreateDialogParamSeq_2, "CreateDialogParam_2", FALSE);
+    EndDialog(hdlg, 0);
+    flush_sequence();
+
+    UnregisterClass(cls.lpszClassName, cls.hInstance);
 }
 
 static void test_nullCallback(void)

@@ -651,7 +651,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     if (unicode) SetWindowLongPtrW( hwnd, DWLP_DLGPROC, (ULONG_PTR)dlgProc );
     else SetWindowLongPtrA( hwnd, DWLP_DLGPROC, (ULONG_PTR)dlgProc );
 
-    if (dlgInfo->hUserFont)
+    if (dlgProc && dlgInfo->hUserFont)
         SendMessageW( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
 
     /* Create controls */
@@ -660,13 +660,16 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     {
         /* Send initialisation messages and set focus */
 
-        if (SendMessageW( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ) &&
-            ((~template.style & DS_CONTROL) || (template.style & WS_VISIBLE)))
+        if (dlgProc)
         {
-            /* By returning TRUE, app has requested a default focus assignment */
-            dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE);
-            if( dlgInfo->hwndFocus )
-                SetFocus( dlgInfo->hwndFocus );
+            if (SendMessageW( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ) &&
+                ((~template.style & DS_CONTROL) || (template.style & WS_VISIBLE)))
+            {
+                /* By returning TRUE, app has requested a default focus assignment */
+                dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE);
+                if( dlgInfo->hwndFocus )
+                    SetFocus( dlgInfo->hwndFocus );
+            }
         }
 
         if (template.style & WS_VISIBLE && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
