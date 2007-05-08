@@ -22,7 +22,6 @@
 
 #include <stdarg.h>
 
-#include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
