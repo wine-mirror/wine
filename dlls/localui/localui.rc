@@ -40,3 +40,4 @@
 
 #include "ui_De.rc"
 #include "ui_En.rc"
+#include "ui_Pl.rc"
