@@ -652,8 +652,12 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationW(
     PSP_ORIGINAL_FILE_INFO_W OriginalFileInfo)
 {
     LPCWSTR inf_name;
+    LPCWSTR inf_path;
+    HINF hinf;
+    static const WCHAR wszVersion[] = { 'V','e','r','s','i','o','n',0 };
+    static const WCHAR wszCatalogFile[] = { 'C','a','t','a','l','o','g','F','i','l','e',0 };
 
-    FIXME("(%p, %d, %p, %p): stub\n", InfInformation, InfIndex,
+    FIXME("(%p, %d, %p, %p): semi-stub\n", InfInformation, InfIndex,
         AlternativePlatformInfo, OriginalFileInfo);
 
     if (OriginalFileInfo->cbSize != sizeof(*OriginalFileInfo))
@@ -662,18 +666,30 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationW(
         return ERROR_INVALID_USER_BUFFER;
     }
 
+    inf_path = (LPWSTR)&InfInformation->VersionData[0];
+
     /* FIXME: we should get OriginalCatalogName from CatalogFile line in
      * the original inf file and cache it, but that would require building a
      * .pnf file. */
-    OriginalFileInfo->OriginalCatalogName[0] = '\0';
+    hinf = SetupOpenInfFileW(inf_path, NULL, INF_STYLE_WIN4, NULL);
+    if (!hinf) return FALSE;
+
+    if (!SetupGetLineTextW(NULL, hinf, wszVersion, wszCatalogFile,
+                           OriginalFileInfo->OriginalCatalogName,
+                           sizeof(OriginalFileInfo->OriginalCatalogName)/sizeof(OriginalFileInfo->OriginalCatalogName[0]),
+                           NULL))
+    {
+        OriginalFileInfo->OriginalCatalogName[0] = '\0';
+    }
+    SetupCloseInfFile(hinf);
 
     /* FIXME: not quite correct as we just return the same file name as
      * destination (copied) inf file, not the source (original) inf file.
      * to fix it properly would require building a .pnf file */
     /* file name is stored in VersionData field of InfInformation */
-    inf_name = strrchrW((LPWSTR)&InfInformation->VersionData[0], '\\');
+    inf_name = strrchrW(inf_path, '\\');
     if (inf_name) inf_name++;
-    else inf_name = (LPWSTR)&InfInformation->VersionData[0];
+    else inf_name = inf_path;
 
     strcpyW(OriginalFileInfo->OriginalInfName, inf_name);
 
