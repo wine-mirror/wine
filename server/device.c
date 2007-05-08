@@ -269,6 +269,18 @@ static enum server_fd_type device_get_fd_type( struct fd *fd )
     return FD_TYPE_DEVICE;
 }
 
+static struct ioctl_call *find_ioctl_call( struct device *device, struct thread *thread,
+                                           void *user_arg )
+{
+    struct ioctl_call *ioctl;
+
+    LIST_FOR_EACH_ENTRY( ioctl, &device->requests, struct ioctl_call, dev_entry )
+        if (ioctl->thread == thread && ioctl->user_arg == user_arg) return ioctl;
+
+    set_error( STATUS_INVALID_PARAMETER );
+    return NULL;
+}
+
 static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
                                   const void *data, data_size_t size )
 {
@@ -487,4 +499,32 @@ DECL_HANDLER(get_next_device_request)
     else set_error( STATUS_PENDING );
 
     release_object( manager );
+}
+
+
+/* retrieve results of an async ioctl */
+DECL_HANDLER(get_ioctl_result)
+{
+    struct device *device;
+    struct ioctl_call *ioctl;
+
+    if (!(device = (struct device *)get_handle_obj( current->process, req->handle, 0, &device_ops )))
+        return;
+
+    if ((ioctl = find_ioctl_call( device, current, req->user_arg )))
+    {
+        if (ioctl->out_data)
+        {
+            data_size_t size = min( ioctl->out_size, get_reply_max_size() );
+            if (size)
+            {
+                set_reply_data_ptr( ioctl->out_data, size );
+                ioctl->out_data = NULL;
+            }
+        }
+        set_error( ioctl->status );
+        list_remove( &ioctl->dev_entry );
+        release_object( ioctl );  /* no longer on the device queue */
+    }
+    release_object( device );
 }

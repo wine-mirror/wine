@@ -918,10 +918,35 @@ done:
 }
 
 
+struct async_ioctl
+{
+    HANDLE handle;   /* handle to the device */
+    void  *buffer;   /* buffer for output */
+    ULONG  size;     /* size of buffer */
+};
+
 /* callback for ioctl async I/O completion */
 static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS status )
 {
-    io->u.Status = status;
+    struct async_ioctl *async = arg;
+
+    if (status == STATUS_ALERTED)
+    {
+        SERVER_START_REQ( get_ioctl_result )
+        {
+            req->handle   = async->handle;
+            req->user_arg = async;
+            wine_server_set_reply( req, async->buffer, async->size );
+            if (!(status = wine_server_call( req )))
+                io->Information = wine_server_reply_size( reply );
+        }
+        SERVER_END_REQ;
+    }
+    if (status != STATUS_PENDING)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, async );
+        io->u.Status = status;
+    }
     return status;
 }
 
@@ -932,9 +957,16 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
                                    PVOID in_buffer, ULONG in_size,
                                    PVOID out_buffer, ULONG out_size )
 {
+    struct async_ioctl *async;
     NTSTATUS status;
     HANDLE wait_handle;
     ULONG options;
+
+    if (!(async = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*async) )))
+        return STATUS_NO_MEMORY;
+    async->handle = handle;
+    async->buffer = out_buffer;
+    async->size   = out_size;
 
     SERVER_START_REQ( ioctl )
     {
@@ -942,7 +974,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         req->code           = code;
         req->async.callback = ioctl_completion;
         req->async.iosb     = io;
-        req->async.arg      = NULL;
+        req->async.arg      = async;
         req->async.apc      = apc;
         req->async.apc_arg  = apc_context;
         req->async.event    = event;
@@ -958,6 +990,8 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
     if (status == STATUS_NOT_SUPPORTED)
         FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+
+    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, async );
 
     if (wait_handle)
     {

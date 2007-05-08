@@ -2424,6 +2424,18 @@ static void dump_ioctl_reply( const struct ioctl_reply *req )
     dump_varargs_bytes( cur_size );
 }
 
+static void dump_get_ioctl_result_request( const struct get_ioctl_result_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " user_arg=%p", req->user_arg );
+}
+
+static void dump_get_ioctl_result_reply( const struct get_ioctl_result_reply *req )
+{
+    fprintf( stderr, " out_data=" );
+    dump_varargs_bytes( cur_size );
+}
+
 static void dump_create_named_pipe_request( const struct create_named_pipe_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
@@ -3650,6 +3662,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_register_async_request,
     (dump_func)dump_cancel_async_request,
     (dump_func)dump_ioctl_request,
+    (dump_func)dump_get_ioctl_result_request,
     (dump_func)dump_create_named_pipe_request,
     (dump_func)dump_get_named_pipe_info_request,
     (dump_func)dump_create_window_request,
@@ -3871,6 +3884,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_ioctl_reply,
+    (dump_func)dump_get_ioctl_result_reply,
     (dump_func)dump_create_named_pipe_reply,
     (dump_func)dump_get_named_pipe_info_reply,
     (dump_func)dump_create_window_reply,
@@ -4092,6 +4106,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "register_async",
     "cancel_async",
     "ioctl",
+    "get_ioctl_result",
     "create_named_pipe",
     "get_named_pipe_info",
     "create_window",

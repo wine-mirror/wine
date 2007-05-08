@@ -1979,6 +1979,15 @@ enum message_type
 @END
 
 
+/* Retrieve results of an async ioctl */
+@REQ(get_ioctl_result)
+    obj_handle_t   handle;        /* handle to the device */
+    void*          user_arg;      /* user arg used to identify the request */
+@REPLY
+    VARARG(out_data,bytes);       /* ioctl output data */
+@END
+
+
 /* Create a named pipe */
 @REQ(create_named_pipe)
     unsigned int   access;
