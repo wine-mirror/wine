@@ -10410,7 +10410,7 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_ICU 1
 _ACEOF
 
-                 ICULIBS="icu_libs"
+                 ICULIBS="$icu_libs"
 
                  { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }

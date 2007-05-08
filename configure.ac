@@ -603,7 +603,7 @@ then
     AC_TRY_RUN([#include <unicode/ubidi.h>
 main () { ubidi_open(); return 0; }],
 		[AC_DEFINE(HAVE_ICU,1,[Define to 1 if the ICU libraries are installed])
-                 AC_SUBST(ICULIBS,"icu_libs")
+                 AC_SUBST(ICULIBS,"$icu_libs")
                  AC_MSG_RESULT(yes)],
                 [AC_MSG_RESULT(no)],[AC_MSG_RESULT(no)])
     LIBS="$saved_libs"
