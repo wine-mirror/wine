@@ -739,7 +739,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     if (!(server->ioctl_fd = alloc_pseudo_fd( &pipe_server_fd_ops, &server->obj, options )))
     {
         release_object( server );
-        server = NULL;
+        return NULL;
     }
     set_server_state( server, ps_idle_server );
     return server;
