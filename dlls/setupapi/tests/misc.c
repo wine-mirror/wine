@@ -44,7 +44,7 @@ static CHAR CURR_DIR[MAX_PATH];
 
 static BOOL (WINAPI *pSetupGetFileCompressionInfoExA)(PCSTR, PSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
 static BOOL (WINAPI *pSetupCopyOEMInfA)(PCSTR, PCSTR, DWORD, DWORD, PSTR, DWORD, PDWORD, PSTR *);
-
+static BOOL (WINAPI *pSetupQueryInfOriginalFileInformationA)(PSP_INF_INFORMATION, UINT, PSP_ALTPLATFORM_INFO, PSP_ORIGINAL_FILE_INFO_A);
 
 static void append_str(char **str, const char *data)
 {
@@ -111,6 +111,12 @@ static void test_original_file_name(LPCSTR original, LPCSTR dest)
     BOOL res;
     DWORD size;
 
+    if (!pSetupQueryInfOriginalFileInformationA)
+    {
+        skip("SetupQueryInfOriginalFileInformationA is not available\n");
+        return;
+    }
+
     hinf = SetupOpenInfFileA(dest, NULL, INF_STYLE_WIN4, NULL);
     ok(hinf != NULL, "SetupOpenInfFileA failed with error %d\n", GetLastError());
 
@@ -123,12 +129,12 @@ static void test_original_file_name(LPCSTR original, LPCSTR dest)
     ok(res, "SetupGetInfInformation failed with error %d\n", GetLastError());
 
     spofi.cbSize = 0;
-    res = SetupQueryInfOriginalFileInformationA(pspii, 0, NULL, &spofi);
+    res = pSetupQueryInfOriginalFileInformationA(pspii, 0, NULL, &spofi);
     ok(!res && GetLastError() == ERROR_INVALID_USER_BUFFER,
         "SetupQueryInfOriginalFileInformationA should have failed with ERROR_INVALID_USER_BUFFER instead of %d\n", GetLastError());
 
     spofi.cbSize = sizeof(spofi);
-    res = SetupQueryInfOriginalFileInformationA(pspii, 0, NULL, &spofi);
+    res = pSetupQueryInfOriginalFileInformationA(pspii, 0, NULL, &spofi);
     ok(res, "SetupQueryInfOriginalFileInformationA failed with error %d\n", GetLastError());
     ok(!spofi.OriginalCatalogName[0], "spofi.OriginalCatalogName should have been \"\" instead of \"%s\"\n", spofi.OriginalCatalogName);
     todo_wine
@@ -568,6 +574,7 @@ START_TEST(misc)
 
     pSetupGetFileCompressionInfoExA = (void*)GetProcAddress(hsetupapi, "SetupGetFileCompressionInfoExA");
     pSetupCopyOEMInfA = (void*)GetProcAddress(hsetupapi, "SetupCopyOEMInfA");
+    pSetupQueryInfOriginalFileInformationA = (void*)GetProcAddress(hsetupapi, "SetupQueryInfOriginalFileInformationA");
 
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
