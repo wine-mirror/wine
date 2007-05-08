@@ -1810,9 +1810,9 @@ static void SizeTest(void)
         dsurface = NULL;
 
         ok(desc.dwFlags & DDSD_WIDTH, "Primary surface doesn't have width set\n");
-        ok(desc.dwFlags & DDSD_HEIGHT, "Primary surface doesn't have hight set\n");
-        ok(desc.dwWidth == GetSystemMetrics(SM_CXSCREEN), "Surface Width differs from screen Width\n");
-        ok(desc.dwHeight == GetSystemMetrics(SM_CYSCREEN), "Surface Width differs from screen Width\n");
+        ok(desc.dwFlags & DDSD_HEIGHT, "Primary surface doesn't have height set\n");
+        ok(desc.dwWidth == GetSystemMetrics(SM_CXSCREEN), "Surface width differs from screen width\n");
+        ok(desc.dwHeight == GetSystemMetrics(SM_CYSCREEN), "Surface height differs from screen height\n");
     }
     ret = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL);
     ok(ret == DD_OK, "SetCooperativeLevel failed with %08x\n", ret);
