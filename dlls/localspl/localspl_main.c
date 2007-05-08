@@ -27,12 +27,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winreg.h"
-#include "winver.h"
-#include "winnls.h"
-
-#include "winspool.h"
-#include "ddk/winsplp.h"
 
 #include "wine/debug.h"
 #include "localspl_private.h"

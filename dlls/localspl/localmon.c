@@ -28,8 +28,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
-#include "winver.h"
-#include "winnls.h"
 
 #include "winspool.h"
 #include "ddk/winsplp.h"
