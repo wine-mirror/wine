@@ -1590,8 +1590,14 @@ BOOL WINAPI StartServiceW(SC_HANDLE hService, DWORD dwNumServiceArgs,
 
     if (handle != INVALID_HANDLE_VALUE)
     {
-        if (service_send_start_message(handle, lpServiceArgVectors, dwNumServiceArgs))
-            r = service_set_processID(handle, dwProcessId, &dwResult);
+        r = service_send_start_message(handle, lpServiceArgVectors, dwNumServiceArgs);
+        CloseHandle(handle);
+    }
+
+    handle = service_open_pipe(hsvc->name);
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        service_set_processID(handle, dwProcessId, &dwResult);
         CloseHandle(handle);
     }
 
