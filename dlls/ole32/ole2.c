@@ -149,7 +149,7 @@ extern void OLEClipbrd_Initialize(void);
 static void            OLEDD_Initialize(void);
 static DropTargetNode* OLEDD_FindDropTarget(
                          HWND hwndOfTarget);
-static void            OLEDD_FreeDropTarget(DropTargetNode*);
+static void            OLEDD_FreeDropTarget(DropTargetNode*, BOOL);
 static LRESULT WINAPI  OLEDD_DragTrackerWindowProc(
 			 HWND   hwnd,
 			 UINT   uMsg,
@@ -355,7 +355,7 @@ HRESULT WINAPI RevokeDragDrop(
   if (dropTargetInfo==NULL)
     return DRAGDROP_E_NOTREGISTERED;
 
-  OLEDD_FreeDropTarget(dropTargetInfo);
+  OLEDD_FreeDropTarget(dropTargetInfo, TRUE);
 
   return S_OK;
 }
@@ -1896,10 +1896,10 @@ static void OLEDD_Initialize(void)
  *
  * Frees the drag and drop data structure
  */
-static void OLEDD_FreeDropTarget(DropTargetNode *dropTargetInfo)
+static void OLEDD_FreeDropTarget(DropTargetNode *dropTargetInfo, BOOL release_drop_target)
 {
   list_remove(&dropTargetInfo->entry);
-  IDropTarget_Release(dropTargetInfo->dropTarget);
+  if (release_drop_target) IDropTarget_Release(dropTargetInfo->dropTarget);
   HeapFree(GetProcessHeap(), 0, dropTargetInfo);
 }
 
@@ -1915,9 +1915,8 @@ void OLEDD_UnInitialize(void)
    */
   while (!list_empty(&targetListHead))
   {
-    DropTargetNode* curNode;
-    curNode = LIST_ENTRY(list_head(&targetListHead), DropTargetNode, entry);
-    OLEDD_FreeDropTarget(curNode);
+    DropTargetNode* curNode = LIST_ENTRY(list_head(&targetListHead), DropTargetNode, entry);
+    OLEDD_FreeDropTarget(curNode, FALSE);
   }
 }
 
