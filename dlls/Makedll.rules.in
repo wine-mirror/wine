@@ -32,7 +32,7 @@ all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 # Rules for .so files
 
 $(MODULE).so: $(MAINSPEC) $(ALL_OBJS) Makefile.in
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(SUBSYSTEM:%=-Wb,--subsystem,%) $(BASEADDRESS:%=-Wl,--image-base,%) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(SUBSYSTEM:%=-Wb,--subsystem,%) $(DLLFILENAME:%=-Wb,-F,%) $(BASEADDRESS:%=-Wl,--image-base,%) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
 
 # Rules for .dll files
 
