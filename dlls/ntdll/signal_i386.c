@@ -758,10 +758,19 @@ void set_cpu_context( const CONTEXT *context )
     }
     if (flags & CONTEXT_FULL)
     {
-        if ((flags & CONTEXT_FULL) != (CONTEXT_FULL & ~CONTEXT_i386))
+        if (!(flags & CONTEXT_CONTROL))
             FIXME( "setting partial context (%x) not supported\n", flags );
-        else
+        else if (flags & CONTEXT_SEGMENTS)
             __wine_call_from_32_restore_regs( context );
+        else
+        {
+            CONTEXT newcontext = *context;
+            newcontext.SegDs = wine_get_ds();
+            newcontext.SegEs = wine_get_es();
+            newcontext.SegFs = wine_get_fs();
+            newcontext.SegGs = wine_get_gs();
+            __wine_call_from_32_restore_regs( &newcontext );
+        }
     }
 }
 
