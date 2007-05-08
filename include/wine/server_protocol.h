@@ -3970,6 +3970,50 @@ struct allocate_locally_unique_id_reply
 };
 
 
+
+struct create_device_manager_request
+{
+    struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
+};
+struct create_device_manager_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+};
+
+
+
+struct create_device_request
+{
+    struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
+    obj_handle_t rootdir;
+    obj_handle_t manager;
+    void*        user_ptr;
+    /* VARARG(name,unicode_str); */
+};
+struct create_device_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+};
+
+
+
+struct delete_device_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct delete_device_reply
+{
+    struct reply_header __header;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -4186,6 +4230,9 @@ enum request
     REQ_get_object_info,
     REQ_get_token_impersonation_level,
     REQ_allocate_locally_unique_id,
+    REQ_create_device_manager,
+    REQ_create_device,
+    REQ_delete_device,
     REQ_NB_REQUESTS
 };
 
@@ -4407,6 +4454,9 @@ union generic_request
     struct get_object_info_request get_object_info_request;
     struct get_token_impersonation_level_request get_token_impersonation_level_request;
     struct allocate_locally_unique_id_request allocate_locally_unique_id_request;
+    struct create_device_manager_request create_device_manager_request;
+    struct create_device_request create_device_request;
+    struct delete_device_request delete_device_request;
 };
 union generic_reply
 {
@@ -4626,8 +4676,11 @@ union generic_reply
     struct get_object_info_reply get_object_info_reply;
     struct get_token_impersonation_level_reply get_token_impersonation_level_reply;
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
+    struct create_device_manager_reply create_device_manager_reply;
+    struct create_device_reply create_device_reply;
+    struct delete_device_reply delete_device_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 300
+#define SERVER_PROTOCOL_VERSION 301
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

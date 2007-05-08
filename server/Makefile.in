@@ -19,6 +19,7 @@ C_SRCS = \
 	context_sparc.c \
 	context_x86_64.c \
 	debugger.c \
+	device.c \
 	directory.c \
 	event.c \
 	fd.c \

@@ -3460,6 +3460,38 @@ static void dump_allocate_locally_unique_id_reply( const struct allocate_locally
     dump_luid( &req->luid );
 }
 
+static void dump_create_device_manager_request( const struct create_device_manager_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x", req->attributes );
+}
+
+static void dump_create_device_manager_reply( const struct create_device_manager_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_create_device_request( const struct create_device_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " attributes=%08x,", req->attributes );
+    fprintf( stderr, " rootdir=%p,", req->rootdir );
+    fprintf( stderr, " manager=%p,", req->manager );
+    fprintf( stderr, " user_ptr=%p,", req->user_ptr );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_create_device_reply( const struct create_device_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_delete_device_request( const struct delete_device_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -3675,6 +3707,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_object_info_request,
     (dump_func)dump_get_token_impersonation_level_request,
     (dump_func)dump_allocate_locally_unique_id_request,
+    (dump_func)dump_create_device_manager_request,
+    (dump_func)dump_create_device_request,
+    (dump_func)dump_delete_device_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -3892,6 +3927,9 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_object_info_reply,
     (dump_func)dump_get_token_impersonation_level_reply,
     (dump_func)dump_allocate_locally_unique_id_reply,
+    (dump_func)dump_create_device_manager_reply,
+    (dump_func)dump_create_device_reply,
+    (dump_func)0,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -4109,6 +4147,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_object_info",
     "get_token_impersonation_level",
     "allocate_locally_unique_id",
+    "create_device_manager",
+    "create_device",
+    "delete_device",
 };
 
 static const struct

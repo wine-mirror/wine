@@ -324,6 +324,9 @@ DECL_HANDLER(query_symlink);
 DECL_HANDLER(get_object_info);
 DECL_HANDLER(get_token_impersonation_level);
 DECL_HANDLER(allocate_locally_unique_id);
+DECL_HANDLER(create_device_manager);
+DECL_HANDLER(create_device);
+DECL_HANDLER(delete_device);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -544,6 +547,9 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_object_info,
     (req_handler)req_get_token_impersonation_level,
     (req_handler)req_allocate_locally_unique_id,
+    (req_handler)req_create_device_manager,
+    (req_handler)req_create_device,
+    (req_handler)req_delete_device,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 
