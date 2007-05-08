@@ -3492,6 +3492,28 @@ static void dump_delete_device_request( const struct delete_device_request *req 
     fprintf( stderr, " handle=%p", req->handle );
 }
 
+static void dump_get_next_device_request_request( const struct get_next_device_request_request *req )
+{
+    fprintf( stderr, " manager=%p,", req->manager );
+    fprintf( stderr, " prev=%p,", req->prev );
+    fprintf( stderr, " status=%08x,", req->status );
+    fprintf( stderr, " prev_data=" );
+    dump_varargs_bytes( cur_size );
+}
+
+static void dump_get_next_device_request_reply( const struct get_next_device_request_reply *req )
+{
+    fprintf( stderr, " next=%p,", req->next );
+    fprintf( stderr, " code=" );
+    dump_ioctl_code( &req->code );
+    fprintf( stderr, "," );
+    fprintf( stderr, " user_ptr=%p,", req->user_ptr );
+    fprintf( stderr, " in_size=%u,", req->in_size );
+    fprintf( stderr, " out_size=%u,", req->out_size );
+    fprintf( stderr, " next_data=" );
+    dump_varargs_bytes( cur_size );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -3710,6 +3732,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_device_manager_request,
     (dump_func)dump_create_device_request,
     (dump_func)dump_delete_device_request,
+    (dump_func)dump_get_next_device_request_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -3930,6 +3953,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_device_manager_reply,
     (dump_func)dump_create_device_reply,
     (dump_func)0,
+    (dump_func)dump_get_next_device_request_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -4150,6 +4174,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_device_manager",
     "create_device",
     "delete_device",
+    "get_next_device_request",
 };
 
 static const struct
@@ -4181,6 +4206,7 @@ static const struct
     { "ERROR_CLIPBOARD_NOT_OPEN",    0xc0010000 | ERROR_CLIPBOARD_NOT_OPEN },
     { "ERROR_INVALID_INDEX",         0xc0010000 | ERROR_INVALID_INDEX },
     { "ERROR_INVALID_WINDOW_HANDLE", 0xc0010000 | ERROR_INVALID_WINDOW_HANDLE },
+    { "FILE_DELETED",                STATUS_FILE_DELETED },
     { "FILE_IS_A_DIRECTORY",         STATUS_FILE_IS_A_DIRECTORY },
     { "FILE_LOCK_CONFLICT",          STATUS_FILE_LOCK_CONFLICT },
     { "GENERIC_NOT_MAPPED",          STATUS_GENERIC_NOT_MAPPED },

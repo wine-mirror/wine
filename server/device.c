@@ -442,3 +442,49 @@ DECL_HANDLER(delete_device)
         release_object( device );
     }
 }
+
+
+/* retrieve the next pending device ioctl request */
+DECL_HANDLER(get_next_device_request)
+{
+    struct ioctl_call *ioctl;
+    struct device_manager *manager;
+    struct list *ptr;
+
+    if (!(manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
+                                                             0, &device_manager_ops )))
+        return;
+
+    if (req->prev)
+    {
+        if ((ioctl = (struct ioctl_call *)get_handle_obj( current->process, req->prev,
+                                                          0, &ioctl_call_ops )))
+        {
+            set_ioctl_result( ioctl, req->status, get_req_data(), get_req_data_size() );
+            close_handle( current->process, req->prev );  /* avoid an extra round-trip for close */
+            release_object( ioctl );
+        }
+        clear_error();
+    }
+
+    if ((ptr = list_head( &manager->requests )))
+    {
+        ioctl = LIST_ENTRY( ptr, struct ioctl_call, mgr_entry );
+        reply->code = ioctl->code;
+        reply->user_ptr = ioctl->device->user_ptr;
+        reply->in_size = ioctl->in_size;
+        reply->out_size = ioctl->out_size;
+        if (ioctl->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
+        else if ((reply->next = alloc_handle( current->process, ioctl, 0, 0 )))
+        {
+            set_reply_data_ptr( ioctl->in_data, ioctl->in_size );
+            ioctl->in_data = NULL;
+            ioctl->in_size = 0;
+            list_remove( &ioctl->mgr_entry );
+            list_init( &ioctl->mgr_entry );
+        }
+    }
+    else set_error( STATUS_PENDING );
+
+    release_object( manager );
+}

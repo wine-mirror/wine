@@ -4014,6 +4014,27 @@ struct delete_device_reply
 };
 
 
+
+struct get_next_device_request_request
+{
+    struct request_header __header;
+    obj_handle_t manager;
+    obj_handle_t prev;
+    unsigned int status;
+    /* VARARG(prev_data,bytes); */
+};
+struct get_next_device_request_reply
+{
+    struct reply_header __header;
+    obj_handle_t next;
+    ioctl_code_t code;
+    void*        user_ptr;
+    data_size_t  in_size;
+    data_size_t  out_size;
+    /* VARARG(next_data,bytes); */
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -4233,6 +4254,7 @@ enum request
     REQ_create_device_manager,
     REQ_create_device,
     REQ_delete_device,
+    REQ_get_next_device_request,
     REQ_NB_REQUESTS
 };
 
@@ -4457,6 +4479,7 @@ union generic_request
     struct create_device_manager_request create_device_manager_request;
     struct create_device_request create_device_request;
     struct delete_device_request delete_device_request;
+    struct get_next_device_request_request get_next_device_request_request;
 };
 union generic_reply
 {
@@ -4679,8 +4702,9 @@ union generic_reply
     struct create_device_manager_reply create_device_manager_reply;
     struct create_device_reply create_device_reply;
     struct delete_device_reply delete_device_reply;
+    struct get_next_device_request_reply get_next_device_request_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 301
+#define SERVER_PROTOCOL_VERSION 302
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

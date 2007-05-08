@@ -2882,3 +2882,19 @@ enum message_type
 @REQ(delete_device)
     obj_handle_t handle;          /* handle to the device */
 @END
+
+
+/* Retrieve the next pending device ioctl request */
+@REQ(get_next_device_request)
+    obj_handle_t manager;         /* handle to the device manager */
+    obj_handle_t prev;            /* handle to the previous ioctl */
+    unsigned int status;          /* status of the previous ioctl */
+    VARARG(prev_data,bytes);      /* output data of the previous ioctl */
+@REPLY
+    obj_handle_t next;            /* handle to the next ioctl */
+    ioctl_code_t code;            /* ioctl code */
+    void*        user_ptr;        /* opaque ptr for the device */
+    data_size_t  in_size;         /* total needed input size */
+    data_size_t  out_size;        /* needed output size */
+    VARARG(next_data,bytes);      /* input data of the next ioctl */
+@END
