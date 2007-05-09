@@ -35,7 +35,7 @@
 #include "shlguid.h"
 
 #include "initguid.h"
-DEFINE_SHLGUID(CGID_Undocumented, 0x000214D4L, 0, 0);
+DEFINE_SHLGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -1841,7 +1841,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         };
     }
 
-    if(IsEqualGUID(&CGID_Undocumented, pguidCmdGroup))
+    if(IsEqualGUID(&CGID_DocHostCmdPriv, pguidCmdGroup))
         return E_FAIL; /* TODO */
 
     ok(0, "unexpected call\n");
