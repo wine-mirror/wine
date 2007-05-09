@@ -31,11 +31,8 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winreg.h"
 #include "ole2.h"
 #include "mlang.h"
-
-#include "uuids.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
