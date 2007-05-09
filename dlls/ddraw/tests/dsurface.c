@@ -1213,18 +1213,24 @@ static void AttachmentTest(void)
     hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &surface4, NULL);
     ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
 
-    hr = IDirectDrawSurface7_AddAttachedSurface(surface1, surface4);
+    hr = IDirectDrawSurface7_AddAttachedSurface(surface1, surface4); /* Succeeds on refrast */
     ok(hr == DDERR_CANNOTATTACHSURFACE, "Attaching a 16x16 offscreen plain surface to a 128x128 texture root returned %08x\n", hr);
-    hr = IDirectDrawSurface7_AddAttachedSurface(surface4, surface1);
+    if(SUCCEEDED(hr)) IDirectDrawSurface7_DeleteAttachedSurface(surface1, 0, surface4);
+    hr = IDirectDrawSurface7_AddAttachedSurface(surface4, surface1);  /* Succeeds on refrast */
     ok(hr == DDERR_CANNOTATTACHSURFACE, "Attaching a 128x128 texture root to a 16x16 offscreen plain surface returned %08x\n", hr);
-    hr = IDirectDrawSurface7_AddAttachedSurface(surface3, surface4);
+    if(SUCCEEDED(hr)) IDirectDrawSurface7_DeleteAttachedSurface(surface1, 0, surface1);
+    hr = IDirectDrawSurface7_AddAttachedSurface(surface3, surface4);  /* Succeeds on refrast */
     ok(hr == DDERR_CANNOTATTACHSURFACE, "Attaching a 16x16 offscreen plain surface to a 32x32 texture mip level returned %08x\n", hr);
+    if(SUCCEEDED(hr)) IDirectDrawSurface7_DeleteAttachedSurface(surface3, 0, surface4);
     hr = IDirectDrawSurface7_AddAttachedSurface(surface4, surface3);
     ok(hr == DDERR_CANNOTATTACHSURFACE, "Attaching a 32x32 texture mip level to a 16x16 offscreen plain surface returned %08x\n", hr);
-    hr = IDirectDrawSurface7_AddAttachedSurface(surface2, surface4);
+    if(SUCCEEDED(hr)) IDirectDrawSurface7_DeleteAttachedSurface(surface4, 0, surface3);
+    hr = IDirectDrawSurface7_AddAttachedSurface(surface2, surface4);  /* Succeeds on refrast */
     ok(hr == DDERR_CANNOTATTACHSURFACE, "Attaching a 16x16 offscreen plain surface to a 64x64 texture sublevel returned %08x\n", hr);
+    if(SUCCEEDED(hr)) IDirectDrawSurface7_DeleteAttachedSurface(surface2, 0, surface4);
     hr = IDirectDrawSurface7_AddAttachedSurface(surface4, surface2);
     ok(hr == DDERR_CANNOTATTACHSURFACE, "Attaching a 64x64 texture sublevel to a 16x16 offscreen plain surface returned %08x\n", hr);
+    if(SUCCEEDED(hr)) IDirectDrawSurface7_DeleteAttachedSurface(surface4, 0, surface2);
 
     IDirectDrawSurface7_Release(surface4);
     IDirectDrawSurface7_Release(surface3);
@@ -1301,10 +1307,13 @@ static void AttachmentTest(void)
     /* Now the proper detach */
     hr = IDirectDrawSurface_DeleteAttachedSurface(surface2, 0, surface1);
     ok(hr == DD_OK, "DeleteAttachedSurface failed with %08x\n", hr);
-    hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface3);
+    hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface3); /* Fails on refrast */
     ok(hr == DD_OK, "Attaching an offscreen plain surface to another offscreen plain surface returned %08x\n", hr);
-    hr = IDirectDrawSurface_DeleteAttachedSurface(surface2, 0, surface3);
-    ok(hr == DD_OK, "DeleteAttachedSurface failed with %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirectDrawSurface_DeleteAttachedSurface(surface2, 0, surface3);
+        ok(hr == DD_OK, "DeleteAttachedSurface failed with %08x\n", hr);
+    }
     hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface4);
     ok(hr == DDERR_CANNOTATTACHSURFACE, "Attaching an offscreen plain surface to a front buffer of different size returned %08x\n", hr);
     hr = IDirectDrawSurface_AddAttachedSurface(surface4, surface1);
