@@ -504,12 +504,10 @@ static HRESULT Installer_CreateRecord(int count, IDispatch **pRecord)
     return hr;
 }
 
-static HRESULT Installer_RegistryValue(HKEY hkey, LPCWSTR szKey, BOOL *pBool)
+static HRESULT Installer_RegistryValue(HKEY hkey, LPCWSTR szKey, VARIANT vValue, VARIANT *pVarResult, VARTYPE vtExpect)
 {
-    VARIANT varresult;
     VARIANTARG vararg[3];
     DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
-    HRESULT hr;
 
     VariantInit(&vararg[2]);
     V_VT(&vararg[2]) = VT_I4;
@@ -518,9 +516,21 @@ static HRESULT Installer_RegistryValue(HKEY hkey, LPCWSTR szKey, BOOL *pBool)
     V_VT(&vararg[1]) = VT_BSTR;
     V_BSTR(&vararg[1]) = SysAllocString(szKey);
     VariantInit(&vararg[0]);
-    V_VT(&vararg[0]) = VT_EMPTY;
+    VariantCopy(&vararg[0], &vValue);
+    VariantClear(&vValue);
 
-    hr = invoke(pInstaller, "RegistryValue", DISPATCH_METHOD, &dispparams, &varresult, VT_BOOL);
+    return invoke(pInstaller, "RegistryValue", DISPATCH_METHOD, &dispparams, pVarResult, vtExpect);
+}
+
+static HRESULT Installer_RegistryValueE(HKEY hkey, LPCWSTR szKey, BOOL *pBool)
+{
+    VARIANT varresult;
+    VARIANTARG vararg;
+    HRESULT hr;
+
+    VariantInit(&vararg);
+    V_VT(&vararg) = VT_EMPTY;
+    hr = Installer_RegistryValue(hkey, szKey, vararg, &varresult, VT_BOOL);
     *pBool = V_BOOL(&varresult);
     VariantClear(&varresult);
     return hr;
@@ -529,21 +539,14 @@ static HRESULT Installer_RegistryValue(HKEY hkey, LPCWSTR szKey, BOOL *pBool)
 static HRESULT Installer_RegistryValueW(HKEY hkey, LPCWSTR szKey, LPCWSTR szValue, LPWSTR szString)
 {
     VARIANT varresult;
-    VARIANTARG vararg[3];
-    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    VARIANTARG vararg;
     HRESULT hr;
 
-    VariantInit(&vararg[2]);
-    V_VT(&vararg[2]) = VT_I4;
-    V_I4(&vararg[2]) = (int)hkey;
-    VariantInit(&vararg[1]);
-    V_VT(&vararg[1]) = VT_BSTR;
-    V_BSTR(&vararg[1]) = SysAllocString(szKey);
-    VariantInit(&vararg[0]);
-    V_VT(&vararg[0]) = VT_BSTR;
-    V_BSTR(&vararg[0]) = SysAllocString(szValue);
+    VariantInit(&vararg);
+    V_VT(&vararg) = VT_BSTR;
+    V_BSTR(&vararg) = SysAllocString(szValue);
 
-    hr = invoke(pInstaller, "RegistryValue", DISPATCH_METHOD, &dispparams, &varresult, VT_BSTR);
+    hr = Installer_RegistryValue(hkey, szKey, vararg, &varresult, VT_BSTR);
     lstrcpyW(szString, V_BSTR(&varresult));
     VariantClear(&varresult);
     return hr;
@@ -552,21 +555,14 @@ static HRESULT Installer_RegistryValueW(HKEY hkey, LPCWSTR szKey, LPCWSTR szValu
 static HRESULT Installer_RegistryValueI(HKEY hkey, LPCWSTR szKey, int iValue, LPWSTR szString, VARTYPE vtResult)
 {
     VARIANT varresult;
-    VARIANTARG vararg[3];
-    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    VARIANTARG vararg;
     HRESULT hr;
 
-    VariantInit(&vararg[2]);
-    V_VT(&vararg[2]) = VT_I4;
-    V_I4(&vararg[2]) = (int)hkey;
-    VariantInit(&vararg[1]);
-    V_VT(&vararg[1]) = VT_BSTR;
-    V_BSTR(&vararg[1]) = SysAllocString(szKey);
-    VariantInit(&vararg[0]);
-    V_VT(&vararg[0]) = VT_I4;
-    V_I4(&vararg[0]) = iValue;
+    VariantInit(&vararg);
+    V_VT(&vararg) = VT_I4;
+    V_I4(&vararg) = iValue;
 
-    hr = invoke(pInstaller, "RegistryValue", DISPATCH_METHOD, &dispparams, &varresult, vtResult);
+    hr = Installer_RegistryValue(hkey, szKey, vararg, &varresult, vtResult);
     if (vtResult == VT_BSTR) lstrcpyW(szString, V_BSTR(&varresult));
     VariantClear(&varresult);
     return hr;
@@ -1136,8 +1132,18 @@ static void test_Installer_RegistryValue(void)
     static const WCHAR szOne[] = { 'O','n','e',0 };
     static const WCHAR szTwo[] = { 'T','w','o',0 };
     static const WCHAR szThree[] = { 'T','h','r','e','e',0 };
+    static const WCHAR szREG_BINARY[] = { '(','R','E','G','_','B','I','N','A','R','Y',')',0 };
     static const WCHAR szFour[] = { 'F','o','u','r',0 };
+    static const WCHAR szExpand[] = { '%','M','S','I','T','E','S','T','%',0 };
+    static const WCHAR szFive[] = { 'F','i','v','e',0,'H','i',0,0 };
+    static const WCHAR szFiveHi[] = { 'F','i','v','e','\n','H','i',0 };
+    static const WCHAR szSix[] = { 'S','i','x',0 };
+    static const WCHAR szREG_[] = { '(','R','E','G','_',']',0 };
+    static const WCHAR szSeven[] = { 'S','e','v','e','n',0 };
+    static const WCHAR szEight[] = { 'E','i','g','h','t',0 };
     static const WCHAR szBlank[] = { 0 };
+    VARIANT varresult;
+    VARIANTARG vararg;
     WCHAR szString[MAX_PATH];
     HKEY hkey, hkey_sub;
     HRESULT hr;
@@ -1146,16 +1152,20 @@ static void test_Installer_RegistryValue(void)
     /* Delete keys */
     if (!RegOpenKeyW( HKEY_CURRENT_USER, szKey, &hkey )) delete_key( hkey );
 
-    /* Does our key exist? Shouldn't; two different ways to check */
+    /* Does our key exist? Shouldn't; check with all three possible value parameter types */
     todo_wine {
-        hr = Installer_RegistryValue(HKEY_CURRENT_USER, szKey, &bRet);
-        ok(SUCCEEDED(hr), "Installer_RegistryValue failed, hresult 0x%08x\n", hr);
+        hr = Installer_RegistryValueE(HKEY_CURRENT_USER, szKey, &bRet);
+        ok(SUCCEEDED(hr), "Installer_RegistryValueE failed, hresult 0x%08x\n", hr);
         if (SUCCEEDED(hr))
             ok(!bRet, "Registry key expected to not exist, but Installer_RegistryValue claims it does\n");
 
         memset(szString, 0, sizeof(szString));
         hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, NULL, szString);
         ok(hr == DISP_E_BADINDEX, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+
+        memset(szString, 0, sizeof(szString));
+        hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, 0, szString, VT_BSTR);
+        ok(hr == DISP_E_BADINDEX, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
     }
 
     /* Create key */
@@ -1167,16 +1177,26 @@ static void test_Installer_RegistryValue(void)
         "RegSetValueExW failed\n");
     ok(!RegSetValueExW(hkey,szThree,0,REG_BINARY, (const BYTE *)qw, 4),
         "RegSetValueExW failed\n");
+    ok(SetEnvironmentVariableA("MSITEST", "Four"), "SetEnvironmentVariableA failed %d\n", GetLastError());
+    ok(!RegSetValueExW(hkey,szFour,0,REG_EXPAND_SZ, (const BYTE *)szExpand, sizeof(szExpand)),
+        "RegSetValueExW failed\n");
+    ok(!RegSetValueExW(hkey,szFive,0,REG_MULTI_SZ, (const BYTE *)szFive, sizeof(szFive)),
+        "RegSetValueExW failed\n");
+    ok(!RegSetValueExW(hkey,szSix,0,REG_QWORD, (const BYTE *)qw, 8),
+        "RegSetValueExW failed\n");
+    ok(!RegSetValueExW(hkey,szSeven,0,REG_NONE, (const BYTE *)NULL, 0),
+        "RegSetValueExW failed\n");
+
     ok(!RegSetValueExW(hkey,NULL,0,REG_SZ, (const BYTE *)szOne, sizeof(szOne)),
         "RegSetValueExW failed\n");
 
-    ok(!RegCreateKeyW( hkey, szFour, &hkey_sub ), "RegCreateKeyW failed\n");
+    ok(!RegCreateKeyW( hkey, szEight, &hkey_sub ), "RegCreateKeyW failed\n");
 
     todo_wine {
         /* Does our key exist? It should, and make sure we retrieve the correct default value */
         bRet = FALSE;
-        hr = Installer_RegistryValue(HKEY_CURRENT_USER, szKey, &bRet);
-        ok(SUCCEEDED(hr), "Installer_RegistryValue failed, hresult 0x%08x\n", hr);
+        hr = Installer_RegistryValueE(HKEY_CURRENT_USER, szKey, &bRet);
+        ok(SUCCEEDED(hr), "Installer_RegistryValueE failed, hresult 0x%08x\n", hr);
         if (SUCCEEDED(hr))
             ok(bRet, "Registry key expected to exist, but Installer_RegistryValue claims it does not\n");
 
@@ -1185,11 +1205,50 @@ static void test_Installer_RegistryValue(void)
         ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
         ok_w2("Default registry value \"%s\" does not match expected \"%s\"\n", szString, szOne);
 
-        /* Get value of key */
+        /* Ask for the value of a non-existent key */
+        memset(szString, 0, sizeof(szString));
+        hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szExpand, szString);
+        ok(hr == DISP_E_BADINDEX, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+
+        /* Get values of keys */
         memset(szString, 0, sizeof(szString));
         hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szOne, szString);
         ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
         ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szOne);
+
+        VariantInit(&vararg);
+        V_VT(&vararg) = VT_BSTR;
+        V_BSTR(&vararg) = SysAllocString(szTwo);
+        hr = Installer_RegistryValue(HKEY_CURRENT_USER, szKey, vararg, &varresult, VT_I4);
+        ok(SUCCEEDED(hr), "Installer_RegistryValue failed, hresult 0x%08x\n", hr);
+        ok(V_I4(&varresult) == 305419896, "Registry value %d does not match expected value\n", V_I4(&varresult));
+        VariantClear(&varresult);
+
+        memset(szString, 0, sizeof(szString));
+        hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szThree, szString);
+        ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+        ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szREG_BINARY);
+
+        memset(szString, 0, sizeof(szString));
+        hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szFour, szString);
+        ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+        ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szFour);
+
+        memset(szString, 0, sizeof(szString));
+        hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szFive, szString);
+        ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+        ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szFiveHi);
+
+        memset(szString, 0, sizeof(szString));
+        hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szSix, szString);
+        ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+        ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szREG_);
+
+        VariantInit(&vararg);
+        V_VT(&vararg) = VT_BSTR;
+        V_BSTR(&vararg) = SysAllocString(szSeven);
+        hr = Installer_RegistryValue(HKEY_CURRENT_USER, szKey, vararg, &varresult, VT_EMPTY);
+        ok(SUCCEEDED(hr), "Installer_RegistryValue failed, hresult 0x%08x\n", hr);
 
         /* Get string class name for the key */
         memset(szString, 0, sizeof(szString));
@@ -1212,7 +1271,7 @@ static void test_Installer_RegistryValue(void)
         memset(szString, 0, sizeof(szString));
         hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, -1, szString, VT_BSTR);
         ok(SUCCEEDED(hr), "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
-        ok_w2("Registry name \"%s\" does not match expected \"%s\"\n", szString, szFour);
+        ok_w2("Registry name \"%s\" does not match expected \"%s\"\n", szString, szEight);
 
         /* Get name of a subkey by negative number (RegEnumValue like), invalid index */
         memset(szString, 0, sizeof(szString));
