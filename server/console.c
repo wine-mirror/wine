@@ -611,10 +611,10 @@ static int set_console_input_info( const struct set_console_input_info_request *
 	struct screen_buffer *screen_buffer;
 
 	screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, req->active_sb,
-								CONSOLE_READ, &screen_buffer_ops );
+								CONSOLE_WRITE, &screen_buffer_ops );
 	if (!screen_buffer || screen_buffer->input != console)
 	{
-	    set_error( STATUS_INVALID_PARAMETER );
+	    set_error( STATUS_INVALID_HANDLE );
 	    if (screen_buffer) release_object( screen_buffer );
 	    goto error;
 	}
