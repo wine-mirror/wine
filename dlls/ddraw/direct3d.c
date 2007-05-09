@@ -312,16 +312,24 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
      *
      * Some games(GTA 2) seem to use the second enumerated device, so I have to enumerate
      * at least 2 devices. So enumerate the reference device to have 2 devices.
+     *
+     * Other games(Rollcage) tell emulation and hal device appart by certain flags.
+     * Rollcage expects D3DPTEXTURECAPS_POW2 to be set(yeah, it is a limitation flag),
+     * and it refuses all devices that have the perspective flag set. This way it refuses
+     * the emulation device, and HAL devices never have POW2 unset in d3d7 on windows.
      */
 
     if(This->d3dversion != 1)
     {
-        static CHAR reference_description[] = "Reference Direct3D ID";
+        static CHAR reference_description[] = "RGB Direct3D emulation";
 
         TRACE("(%p) Enumerating WineD3D D3DDevice interface\n", This);
         d1 = dref;
         d2 = dref;
-        hr = Callback( (LPIID) &IID_IDirect3DRefDevice, reference_description, device_name, &d1, &d2, Context);
+        /* The rgb device has the pow2 flag set in the hel caps, but not in the hal caps */
+        d1.dpcLineCaps.dwTextureCaps &= ~(D3DPTEXTURECAPS_POW2 | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
+        d1.dpcTriCaps.dwTextureCaps &= ~(D3DPTEXTURECAPS_POW2 | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
+        hr = Callback( (LPIID) &IID_IDirect3DRGBDevice, reference_description, device_name, &d1, &d2, Context);
         if(hr != D3DENUMRET_OK)
         {
             TRACE("Application cancelled the enumeration\n");
@@ -329,10 +337,13 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
         }
     }
 
-    TRACE("(%p) Enumerating WineD3D D3DDevice interface\n", This);
+    TRACE("(%p) Enumerating HAL Direct3D device\n", This);
     d1 = dref;
     d2 = dref;
-    hr = Callback( (LPIID) &IID_D3DDEVICE_WineD3D, wined3d_description, device_name, &d1, &d2, Context);
+    /* The hal device does not have the pow2 flag set in hel, but in hal */
+    d2.dpcLineCaps.dwTextureCaps &= ~(D3DPTEXTURECAPS_POW2 | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
+    d2.dpcTriCaps.dwTextureCaps &= ~(D3DPTEXTURECAPS_POW2 | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
+    hr = Callback( (LPIID) &IID_IDirect3DHALDevice, wined3d_description, device_name, &d1, &d2, Context);
     if(hr != D3DENUMRET_OK)
     {
         TRACE("Application cancelled the enumeration\n");
@@ -1304,6 +1315,12 @@ IDirect3DImpl_GetCaps(IWineD3D *WineD3D,
     hr = IWineD3D_GetDeviceCaps(WineD3D, 0, WINED3DDEVTYPE_HAL, &WCaps);
     if(hr != D3D_OK) return hr;
 
+    if(!(Desc7->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2)) {
+        /* DirectX7 always has the np2 flag set, no matter what the card supports. Some old games(rollcage)
+         * check the caps incorrectly. If wined3d supports nonpow2 textures it also has np2 conditional support
+         */
+        Desc7->dpcLineCaps.dwTextureCaps |= D3DPTEXTURECAPS_POW2 | D3DPTEXTURECAPS_NONPOW2CONDITIONAL;
+    }
     /* Fill the missing members, and do some fixup */
     Desc7->dpcLineCaps.dwSize = sizeof(Desc7->dpcLineCaps);
     Desc7->dpcLineCaps.dwTextureBlendCaps = D3DPTBLENDCAPS_ADD | D3DPTBLENDCAPS_MODULATEMASK |
