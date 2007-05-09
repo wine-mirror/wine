@@ -25,7 +25,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winerror.h"
 #include "wine/debug.h"
 #include "mmsystem.h"
 #define NOBITMAP
