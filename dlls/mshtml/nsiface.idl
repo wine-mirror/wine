@@ -687,6 +687,16 @@ interface nsIDOMRange : nsISupports
 
 [
     object,
+    uuid(7b9badc6-c9bc-447a-8670-dbd195aed24b)
+    /* FROZEN */
+]
+interface nsIDOMDocumentRange : nsISupports
+{
+    nsresult CreateRange(nsIDOMRange **_retval);
+}
+
+[
+    object,
     uuid(b2c7ed59-8634-4352-9e37-5484c8b6e4e1)
     /* FROZEN */
 ]

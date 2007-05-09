@@ -395,8 +395,33 @@ static HRESULT WINAPI HTMLBodyElement_get_onbeforeunload(IHTMLBodyElement *iface
 static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, IHTMLTxtRange **range)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, range);
-    return E_NOTIMPL;
+    nsIDOMRange *nsrange = NULL;
+
+    TRACE("(%p)->(%p)\n", This, range);
+
+    if(This->element->node->doc->nscontainer) {
+        nsIDOMDocument *nsdoc;
+        nsIDOMDocumentRange *nsdocrange;
+        nsresult nsres;
+
+        nsIWebNavigation_GetDocument(This->element->node->doc->nscontainer->navigation, &nsdoc);
+        nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentRange, (void**)&nsdocrange);
+        nsIDOMDocument_Release(nsdoc);
+
+        nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &nsrange);
+        if(NS_SUCCEEDED(nsres)) {
+            nsres = nsIDOMRange_SelectNodeContents(nsrange, This->element->node->nsnode);
+            if(NS_FAILED(nsres))
+                ERR("SelectNodeContents failed: %08x\n", nsres);
+        }else {
+            ERR("CreateRange failed: %08x\n", nsres);
+        }
+
+        nsIDOMDocumentRange_Release(nsdocrange);
+    }
+
+    *range = HTMLTxtRange_Create(nsrange);
+    return S_OK;
 }
 
 static void HTMLBodyElement_destructor(IUnknown *iface)
