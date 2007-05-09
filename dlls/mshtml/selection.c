@@ -139,10 +139,24 @@ static HRESULT WINAPI HTMLSelectionObject_Invoke(IHTMLSelectionObject *iface, DI
 static HRESULT WINAPI HTMLSelectionObject_createRange(IHTMLSelectionObject *iface, IDispatch **range)
 {
     HTMLSelectionObject *This = HTMLSELOBJ_THIS(iface);
+    nsIDOMRange *nsrange = NULL;
 
     TRACE("(%p)->(%p)\n", This, range);
 
-    *range = (IDispatch*)HTMLTxtRange_Create(This->nsselection);
+    if(This->nsselection) {
+        PRInt32 nsrange_cnt = 0;
+        nsresult nsres;
+
+        nsISelection_GetRangeCount(This->nsselection, &nsrange_cnt);
+        if(nsrange_cnt != 1)
+            FIXME("range_cnt = %d\n", nsrange_cnt);
+
+        nsres = nsISelection_GetRangeAt(This->nsselection, 0, &nsrange);
+        if(NS_FAILED(nsres))
+            ERR("GetRangeAt failed: %08x\n", nsres);
+    }
+
+    *range = (IDispatch*)HTMLTxtRange_Create(nsrange);
     return S_OK;
 }
 

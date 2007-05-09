@@ -41,7 +41,7 @@ typedef struct {
 
     LONG ref;
 
-    nsISelection *nsselection;
+    nsIDOMRange *nsrange;
 } HTMLTxtRange;
 
 #define HTMLTXTRANGE(x)  ((IHTMLTxtRange*)  &(x)->lpHTMLTxtRangeVtbl)
@@ -92,8 +92,8 @@ static ULONG WINAPI HTMLTxtRange_Release(IHTMLTxtRange *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        if(This->nsselection)
-            nsISelection_Release(This->nsselection);
+        if(This->nsrange)
+            nsISelection_Release(This->nsrange);
         mshtml_free(This);
     }
 
@@ -152,25 +152,35 @@ static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
 static HRESULT WINAPI HTMLTxtRange_get_text(IHTMLTxtRange *iface, BSTR *p)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    PRUnichar *nstext = NULL;
-    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nsselection) {
+    *p = NULL;
+
+    if(This->nsrange) {
+        nsAString text_str;
+        nsresult nsres;
+
+        nsAString_Init(&text_str, NULL);
+
+        nsres = nsIDOMRange_ToString(This->nsrange, &text_str);
+        if(NS_SUCCEEDED(nsres)) {
+            const PRUnichar *nstext;
+
+            nsAString_GetData(&text_str, &nstext, NULL);
+            *p = SysAllocString(nstext);
+        }else {
+            ERR("ToString failed: %08x\n", nsres);
+        }
+
+        nsAString_Finish(&text_str);
+    }
+
+    if(!*p) {
         static const WCHAR empty[] = {0};
         *p = SysAllocString(empty);
-        return S_OK;
     }
 
-    nsres = nsISelection_ToString(This->nsselection, &nstext);
-    if(NS_FAILED(nsres) || !nstext) {
-        ERR("toString failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    *p = SysAllocString(nstext);
-    nsfree(nstext);
     return S_OK;
 }
 
@@ -422,16 +432,16 @@ static const IHTMLTxtRangeVtbl HTMLTxtRangeVtbl = {
     HTMLTxtRange_execCommandShowHelp
 };
 
-IHTMLTxtRange *HTMLTxtRange_Create(nsISelection *nsselection)
+IHTMLTxtRange *HTMLTxtRange_Create(nsIDOMRange *nsrange)
 {
     HTMLTxtRange *ret = mshtml_alloc(sizeof(HTMLTxtRange));
 
     ret->lpHTMLTxtRangeVtbl = &HTMLTxtRangeVtbl;
     ret->ref = 1;
 
-    if(nsselection)
-        nsISelection_AddRef(nsselection);
-    ret->nsselection = nsselection;
+    if(nsrange)
+        nsIDOMRange_AddRef(nsrange);
+    ret->nsrange = nsrange;
 
     return HTMLTXTRANGE(ret);
 }
