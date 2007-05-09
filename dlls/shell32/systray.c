@@ -45,6 +45,20 @@ static const WCHAR classname[] = /* Shell_TrayWnd */ {'S','h','e','l','l','_','T
 BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid)
 {
     NOTIFYICONDATAW nidW;
+    INT cbSize;
+
+    /* Validate the cbSize as Windows XP does */
+    if (pnid->cbSize != NOTIFYICONDATAA_V1_SIZE &&
+        pnid->cbSize != NOTIFYICONDATAA_V2_SIZE &&
+        pnid->cbSize != NOTIFYICONDATAA_V3_SIZE &&
+        pnid->cbSize != sizeof(NOTIFYICONDATAA))
+    {
+        WARN("Invalid cbSize (%d) - using only Win95 fields (size=%d)\n",
+            pnid->cbSize, NOTIFYICONDATAA_V1_SIZE);
+        cbSize = NOTIFYICONDATAA_V1_SIZE;
+    }
+    else
+        cbSize = pnid->cbSize;
 
     ZeroMemory(&nidW, sizeof(nidW));
     nidW.cbSize = sizeof(nidW);
@@ -58,7 +72,7 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid)
     if (pnid->uFlags & NIF_TIP)
         MultiByteToWideChar(CP_ACP, 0, pnid->szTip, -1, nidW.szTip, sizeof(nidW.szTip)/sizeof(WCHAR));
 
-    if (pnid->cbSize >= NOTIFYICONDATAA_V2_SIZE)
+    if (cbSize >= NOTIFYICONDATAA_V2_SIZE)
     {
         nidW.dwState      = pnid->dwState;
         nidW.dwStateMask  = pnid->dwStateMask;
@@ -74,10 +88,10 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid)
         nidW.dwInfoFlags = pnid->dwInfoFlags;
     }
     
-    if (pnid->cbSize >= NOTIFYICONDATAA_V3_SIZE)
+    if (cbSize >= NOTIFYICONDATAA_V3_SIZE)
         nidW.guidItem = pnid->guidItem;
 
-    if (pnid->cbSize >= sizeof(NOTIFYICONDATAA))
+    if (cbSize >= sizeof(NOTIFYICONDATAA))
         nidW.hBalloonIcon = pnid->hBalloonIcon;
     return Shell_NotifyIconW(dwMessage, &nidW);
 }
@@ -92,6 +106,21 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     char *buffer = NULL;
 
     TRACE("dwMessage = %d, nid->cbSize=%d\n", dwMessage, nid->cbSize);
+
+    /* Validate the cbSize so that WM_COPYDATA doesn't crash the application */
+    if (nid->cbSize != NOTIFYICONDATAW_V1_SIZE &&
+        nid->cbSize != NOTIFYICONDATAW_V2_SIZE &&
+        nid->cbSize != NOTIFYICONDATAW_V3_SIZE &&
+        nid->cbSize != sizeof(NOTIFYICONDATAW))
+    {
+        NOTIFYICONDATAW newNid;
+
+        WARN("Invalid cbSize (%d) - using only Win95 fields (size=%d)\n",
+            nid->cbSize, NOTIFYICONDATAW_V1_SIZE);
+        CopyMemory(&newNid, nid, NOTIFYICONDATAW_V1_SIZE);
+        newNid.cbSize = NOTIFYICONDATAW_V1_SIZE;
+        return Shell_NotifyIconW(dwMessage, &newNid);
+    }
 
     tray = FindWindowExW(0, NULL, classname, NULL);
     if (!tray) return FALSE;
@@ -131,7 +160,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         }
         cds.lpData = buffer;
 
-        memcpy(buffer, nid, sizeof(*nid));
+        memcpy(buffer, nid, nid->cbSize);
         buffer += nid->cbSize;
         memcpy(buffer, &bmMask, sizeof(bmMask));
         buffer += sizeof(bmMask);

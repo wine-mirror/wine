@@ -290,7 +290,7 @@ static void delete_icon(const NOTIFYICONDATAW *nid)
    
     if (!icon)
     {
-        WINE_ERR("invalid tray icon ID specified: %ud\n", nid->uID);
+        WINE_ERR("invalid tray icon ID specified: %u\n", nid->uID);
         return;
     }
 

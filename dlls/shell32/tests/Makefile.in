@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = shell32.dll
-IMPORTS   = shell32 ole32 oleaut32 shlwapi advapi32 kernel32
+IMPORTS   = shell32 ole32 oleaut32 shlwapi user32 gdi32 advapi32 kernel32
 EXTRALIBS = -luuid
 
 CTESTS = \
@@ -13,7 +13,8 @@ CTESTS = \
 	shlexec.c \
 	shlfileop.c \
 	shlfolder.c \
-	string.c
+	string.c \
+	systray.c
 
 @MAKE_TEST_RULES@
 
