@@ -32,15 +32,15 @@ static const char *usage =
     "filename - registry file name\n"
     "regpath - name of the registry key\n"
     "\n"
-    "When is called without any switches adds contents of the specified\n"
-    "registry file to the registry\n"
+    "When regedit is called without any switches, it adds the contents of the\n"
+    "specified registry file to the registry\n"
     "\n"
     "Switches:\n"
     "    /E - exports contents of the specified registry key to the specified\n"
     "	file. Exports the whole registry if no key is specified.\n"
     "    /D - deletes specified registry key\n"
     "    /S - silent execution, can be used with any other switch.\n"
-    "	The only existing mode, exists for compatibility with Windows regedit.\n"
+    "	Default. The only existing mode, exists for compatibility with Windows regedit.\n"
     "    /V - advanced mode, can be used with any other switch.\n"
     "	Ignored, exists for compatibility with Windows regedit.\n"
     "    /L - location of system.dat file. Can be used with any other switch.\n"
@@ -48,7 +48,7 @@ static const char *usage =
     "    /R - location of user.dat file. Can be used with any other switch.\n"
     "	Ignored. Exists for compatibility with Windows regedit.\n"
     "    /? - print this help. Any other switches are ignored.\n"
-    "    /C - create registry from. Not implemented.\n"
+    "    /C - create registry from file. Not implemented.\n"
     "\n"
     "The switches are case-insensitive, can be prefixed either by '-' or '/'.\n"
     "This program is command-line compatible with Microsoft Windows\n"
@@ -73,7 +73,7 @@ static void error_unknown_switch(char chu, char *s)
         fprintf(stderr,"%s: Undefined switch /%c!\n", getAppName(), chu);
     } else {
         fprintf(stderr,"%s: Alphabetic character is expected after '%c' "
-                "in swit ch specification\n", getAppName(), *(s - 1));
+                "in switch specification\n", getAppName(), *(s - 1));
     }
     exit(1);
 }
@@ -161,7 +161,7 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
 
             get_file_name(&s, filename);
             if (!filename[0]) {
-                fprintf(stderr,"%s: No file name is specified\n", getAppName());
+                fprintf(stderr,"%s: No file name was specified\n", getAppName());
                 fprintf(stderr,usage);
                 exit(1);
             }
@@ -203,7 +203,7 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
 
             get_file_name(&s, reg_key_name);
             if (!reg_key_name[0]) {
-                fprintf(stderr,"%s: No registry key is specified for removal\n",
+                fprintf(stderr,"%s: No registry key was specified for removal\n",
                         getAppName());
                 fprintf(stderr,usage);
                 exit(1);
@@ -217,7 +217,7 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
             filename[0] = '\0';
             get_file_name(&s, filename);
             if (!filename[0]) {
-                fprintf(stderr,"%s: No file name is specified\n", getAppName());
+                fprintf(stderr,"%s: No file name was specified\n", getAppName());
                 fprintf(stderr,usage);
                 exit(1);
             }
