@@ -2763,15 +2763,8 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
     } else {
         if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
             static const GLbyte one = 1;
-            glDisableClientState(GL_WEIGHT_ARRAY_ARB);
-            checkGLcall("glEnableClientState(GL_WEIGHT_ARRAY_ARB)");
             GL_EXTCALL(glWeightbvARB(1, &one));
             checkGLcall("glWeightivARB(GL_LIMITS(blends), weights)");
-        } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
-            TRACE(" EXT_VERTEX_WEIGHTING\n");
-            glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
-            checkGLcall("glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT)");
-
         }
     }
 
@@ -2879,10 +2872,6 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
         checkGLcall("glVertexPointer(...)");
         glEnableClientState(GL_VERTEX_ARRAY);
         checkGLcall("glEnableClientState(GL_VERTEX_ARRAY)");
-
-    } else {
-        glDisableClientState(GL_VERTEX_ARRAY);
-        checkGLcall("glDisableClientState(GL_VERTEX_ARRAY)");
     }
 
     /* Normals -------------------------------------------------*/
@@ -2905,8 +2894,6 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
         checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
 
     } else {
-        glDisableClientState(GL_NORMAL_ARRAY);
-        checkGLcall("glDisableClientState(GL_NORMAL_ARRAY)");
         glNormal3f(0, 0, 1);
         checkGLcall("glNormal3f(0, 0, 1)");
     }
@@ -2939,8 +2926,6 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
         checkGLcall("glEnableClientState(GL_COLOR_ARRAY)");
 
     } else {
-        glDisableClientState(GL_COLOR_ARRAY);
-        checkGLcall("glDisableClientState(GL_COLOR_ARRAY)");
         glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         checkGLcall("glColor4f(1, 1, 1, 1)");
     }
@@ -2972,9 +2957,6 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
 
     } else {
         if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
-
-            glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
-            checkGLcall("glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
             GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
             checkGLcall("glSecondaryColor3fEXT(0, 0, 0)");
         } else {
@@ -3004,14 +2986,10 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
 
             if (coordIdx >= MAX_TEXTURES) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                 GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + mapped_stage, 0, 0, 0, 1));
-
             } else if (sd->u.s.texCoords[coordIdx].lpData == NULL && sd->u.s.texCoords[coordIdx].VBO == 0) {
                 VTRACE(("Bound texture but no texture coordinates supplied, so skipping\n"));
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                 GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + mapped_stage, 0, 0, 0, 1));
-
             } else {
                 TRACE("Setting up texture %u, idx %d, cordindx %u, data %p\n",
                       textureNo, mapped_stage, coordIdx, sd->u.s.texCoords[coordIdx].lpData);
@@ -3029,16 +3007,12 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             }
         } else if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-            GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo));
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
         }
     }
     if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
         /* The number of the mapped stages increases monotonically, so it's fine to use the last used one */
         for (textureNo = mapped_stage + 1; textureNo < GL_LIMITS(textures); ++textureNo) {
-            GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo));
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
         }
     }
