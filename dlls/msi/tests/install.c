@@ -1406,7 +1406,10 @@ static void test_setdirproperty(void)
     ok(delete_pf("Common Files\\msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("Common Files\\msitest", FALSE), "File not installed\n");
 
+    /* Delete the files in the temp (current) folder */
     DeleteFile(msifile);
+    DeleteFile("msitest\\maximus");
+    RemoveDirectory("msitest");
 }
 
 static void test_cabisextracted(void)
@@ -1435,8 +1438,14 @@ static void test_cabisextracted(void)
     ok(delete_pf("msitest\\gaius", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+    /* Delete the files in the temp (current) folder */
     delete_cab_files();
     DeleteFile(msifile);
+    DeleteFile("maximus");
+    DeleteFile("augustus");
+    DeleteFile("caesar");
+    DeleteFile("msitest\\gaius");
+    RemoveDirectory("msitest");
 }
 
 static void test_concurrentinstall(void)
@@ -1463,7 +1472,13 @@ static void test_concurrentinstall(void)
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+    /* Delete the files in the temp (current) folder */
     DeleteFile(msifile);
+    DeleteFile(path);
+    DeleteFile("msitest\\msitest\\augustus");
+    DeleteFile("msitest\\maximus");
+    RemoveDirectory("msitest\\msitest");
+    RemoveDirectory("msitest");
 }
 
 static void test_setpropertyfolder(void)
@@ -1483,7 +1498,10 @@ static void test_setpropertyfolder(void)
     ok(delete_pf("msitest\\added", FALSE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+    /* Delete the files in the temp (current) folder */
     DeleteFile(msifile);
+    DeleteFile("msitest\\maximus");
+    RemoveDirectory("msitest");
 }
 
 START_TEST(install)
