@@ -1379,6 +1379,53 @@ static void testCertOpenSystemStore(void)
     RegDeleteKeyW(HKEY_CURRENT_USER, BogusPathW);
 }
 
+struct EnumSystemStoreInfo
+{
+    BOOL  goOn;
+    DWORD storeCount;
+};
+
+static BOOL CALLBACK enumSystemStoreCB(const void *systemStore, DWORD dwFlags,
+ PCERT_SYSTEM_STORE_INFO pStoreInfo, void *pvReserved, void *pvArg)
+{
+    struct EnumSystemStoreInfo *info = (struct EnumSystemStoreInfo *)pvArg;
+
+    info->storeCount++;
+    return info->goOn;
+}
+
+static void testCertEnumSystemStore(void)
+{
+    BOOL ret;
+    struct EnumSystemStoreInfo info = { FALSE, 0 };
+
+    SetLastError(0xdeadbeef);
+    ret = CertEnumSystemStore(0, NULL, NULL, NULL);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    /* Crashes
+    ret = CertEnumSystemStore(CERT_SYSTEM_STORE_LOCAL_MACHINE, NULL, NULL,
+     NULL);
+     */
+
+    SetLastError(0xdeadbeef);
+    ret = CertEnumSystemStore(CERT_SYSTEM_STORE_LOCAL_MACHINE, NULL, &info,
+     enumSystemStoreCB);
+    /* Callback returning FALSE stops enumeration */
+    ok(!ret, "Expected CertEnumSystemStore to stop\n");
+    ok(info.storeCount == 0 || info.storeCount == 1,
+     "Expected 0 or 1 stores\n");
+
+    info.goOn = TRUE;
+    info.storeCount = 0;
+    ret = CertEnumSystemStore(CERT_SYSTEM_STORE_LOCAL_MACHINE, NULL, &info,
+     enumSystemStoreCB);
+    ok(ret, "CertEnumSystemStore failed: %08x\n", GetLastError());
+    /* There should always be at least My, Root, and CA stores */
+    ok(info.storeCount == 0 || info.storeCount >= 3,
+     "Expected at least 3 stores\n");
+}
+
 static void testAddSerialized(void)
 {
     BOOL ret;
@@ -1545,6 +1592,7 @@ START_TEST(store)
     testFileNameStore();
 
     testCertOpenSystemStore();
+    testCertEnumSystemStore();
 
     testAddSerialized();
 }

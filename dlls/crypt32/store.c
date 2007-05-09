@@ -2603,3 +2603,90 @@ void WINAPI CertRemoveStoreFromCollection(HCERTSTORE hCollectionStore,
     }
     LeaveCriticalSection(&collection->cs);
 }
+
+static LONG CRYPT_OpenParentStore(DWORD dwFlags,
+    void *pvSystemStoreLocationPara, HKEY *key)
+{
+    HKEY root;
+    LPCWSTR base;
+
+    TRACE("(%08x, %p)\n", dwFlags, pvSystemStoreLocationPara);
+
+    switch (dwFlags & CERT_SYSTEM_STORE_LOCATION_MASK)
+    {
+    case CERT_SYSTEM_STORE_LOCAL_MACHINE:
+        root = HKEY_LOCAL_MACHINE;
+        base = CERT_LOCAL_MACHINE_SYSTEM_STORE_REGPATH;
+        break;
+    case CERT_SYSTEM_STORE_CURRENT_USER:
+        root = HKEY_CURRENT_USER;
+        base = CERT_LOCAL_MACHINE_SYSTEM_STORE_REGPATH;
+        break;
+    case CERT_SYSTEM_STORE_CURRENT_SERVICE:
+        /* hklm\Software\Microsoft\Cryptography\Services\servicename\
+         * SystemCertificates
+         */
+        FIXME("CERT_SYSTEM_STORE_CURRENT_SERVICE\n");
+        return ERROR_FILE_NOT_FOUND;
+    case CERT_SYSTEM_STORE_SERVICES:
+        /* hklm\Software\Microsoft\Cryptography\Services\servicename\
+         * SystemCertificates
+         */
+        FIXME("CERT_SYSTEM_STORE_SERVICES");
+        return ERROR_FILE_NOT_FOUND;
+    case CERT_SYSTEM_STORE_USERS:
+        /* hku\user sid\Software\Microsoft\SystemCertificates */
+        FIXME("CERT_SYSTEM_STORE_USERS\n");
+        return ERROR_FILE_NOT_FOUND;
+    case CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY:
+        root = HKEY_CURRENT_USER;
+        base = CERT_GROUP_POLICY_SYSTEM_STORE_REGPATH;
+        break;
+    case CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY:
+        root = HKEY_LOCAL_MACHINE;
+        base = CERT_GROUP_POLICY_SYSTEM_STORE_REGPATH;
+        break;
+    case CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE:
+        /* hklm\Software\Microsoft\EnterpriseCertificates */
+        FIXME("CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE\n");
+        return ERROR_FILE_NOT_FOUND;
+    default:
+        return ERROR_FILE_NOT_FOUND;
+    }
+
+    return RegOpenKeyExW(root, base, 0, KEY_READ, key);
+}
+
+BOOL WINAPI CertEnumSystemStore(DWORD dwFlags, void *pvSystemStoreLocationPara,
+    void *pvArg, PFN_CERT_ENUM_SYSTEM_STORE pfnEnum)
+{
+    BOOL ret = FALSE;
+    LONG rc;
+    HKEY key;
+
+    TRACE("(%08x, %p, %p, %p)\n", dwFlags, pvSystemStoreLocationPara, pvArg,
+        pfnEnum);
+
+    rc = CRYPT_OpenParentStore(dwFlags, pvArg, &key);
+    if (!rc)
+    {
+        DWORD index = 0;
+        CERT_SYSTEM_STORE_INFO info = { sizeof(info) };
+
+        ret = TRUE;
+        do {
+            WCHAR name[MAX_PATH];
+            DWORD size = sizeof(name) / sizeof(name[0]);
+
+            rc = RegEnumKeyExW(key, index++, name, &size, NULL, NULL, NULL,
+                NULL);
+            if (!rc)
+                ret = pfnEnum(name, 0, &info, NULL, pvArg);
+        } while (ret && !rc);
+        if (ret && rc != ERROR_NO_MORE_ITEMS)
+            SetLastError(rc);
+    }
+    else
+        SetLastError(rc);
+    return ret;
+}
