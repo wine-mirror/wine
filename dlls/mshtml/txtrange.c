@@ -138,8 +138,38 @@ static HRESULT WINAPI HTMLTxtRange_Invoke(IHTMLTxtRange *iface, DISPID dispIdMem
 static HRESULT WINAPI HTMLTxtRange_get_htmlText(IHTMLTxtRange *iface, BSTR *p)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = NULL;
+
+    if(This->nsrange) {
+        nsIDOMDocumentFragment *fragment;
+        nsresult nsres;
+
+        nsres = nsIDOMRange_CloneContents(This->nsrange, &fragment);
+        if(NS_SUCCEEDED(nsres)) {
+            const PRUnichar *nstext;
+            nsAString nsstr;
+
+            nsAString_Init(&nsstr, NULL);
+            nsnode_to_nsstring((nsIDOMNode*)fragment, &nsstr);
+            nsIDOMDocumentFragment_Release(fragment);
+
+            nsAString_GetData(&nsstr, &nstext, NULL);
+            *p = SysAllocString(nstext);
+
+            nsAString_Finish(&nsstr);
+        }
+    }
+
+    if(!*p) {
+        const WCHAR emptyW[] = {0};
+        *p = SysAllocString(emptyW);
+    }
+
+    TRACE("return %s\n", debugstr_w(*p));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)

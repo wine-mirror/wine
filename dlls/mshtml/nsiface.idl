@@ -97,7 +97,6 @@ typedef nsISupports nsIDOMNamedNodeMap;
 typedef nsISupports nsIDOMAttr;
 typedef nsISupports nsIDOMDocumentType;
 typedef nsISupports nsIDOMDOMImplementation;
-typedef nsISupports nsIDOMDocumentFragment;
 typedef nsISupports nsIDOMComment;
 typedef nsISupports nsIDOMCDATASection;
 typedef nsISupports nsIDOMProcessingInstruction;
@@ -584,6 +583,15 @@ interface nsIDOMCharacterData : nsIDOMNode
 interface nsIDOMText : nsIDOMCharacterData
 {
     nsresult SplitText(PRUint32 offset, nsIDOMText **_retval);
+}
+
+[
+    object,
+    uuid(a6cf9076-15b3-11d2-932e-00805f8add32)
+    /* NOT_FROZEN */
+]
+interface nsIDOMDocumentFragment : nsIDOMNode
+{
 }
 
 [
