@@ -43,6 +43,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
+static const WCHAR SZ_PROPERTY_SELECTION_LANGUAGE[] = {'S','e','l','e','c','t','i','o','n','L','a','n','g','u','a','g','e',0};
+static const WCHAR SZ_VALUE_XPATH[] = {'X','P','a','t','h',0};
+static const WCHAR SZ_VALUE_XSLPATTERN[] = {'X','S','L','P','a','t','t','e','r','n',0};
+
 typedef struct {
     const struct IBindStatusCallbackVtbl *lpVtbl;
 } bsc;
@@ -169,6 +173,7 @@ typedef struct _domdoc
     VARIANT_BOOL validating;
     VARIANT_BOOL resolving;
     VARIANT_BOOL preserving;
+    BOOL bUseXPath;
     IUnknown *node_unk;
     IXMLDOMNode *node;
     IXMLDOMSchemaCollection *schema;
@@ -1374,8 +1379,38 @@ static HRESULT WINAPI domdoc_setProperty(
     BSTR p,
     VARIANT var)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument2( iface );
+
+    if (lstrcmpiW(p, SZ_PROPERTY_SELECTION_LANGUAGE) == 0)
+    {
+        VARIANT varStr;
+        HRESULT hr;
+        BSTR bstr;
+
+        V_VT(&varStr) = VT_EMPTY;
+        if (V_VT(&var) != VT_BSTR)
+        {
+            if (FAILED(hr = VariantChangeType(&varStr, &var, 0, VT_BSTR)))
+                return hr;
+            bstr = V_BSTR(&varStr);
+        }
+        else
+            bstr = V_BSTR(&var);
+
+        hr = S_OK;
+        if (lstrcmpiW(bstr, SZ_VALUE_XPATH) == 0)
+            This->bUseXPath = TRUE;
+        else if (lstrcmpiW(bstr, SZ_VALUE_XSLPATTERN) == 0)
+            This->bUseXPath = FALSE;
+        else
+            hr = E_FAIL;
+
+        VariantClear(&varStr);
+        return hr;
+    }
+
+    FIXME("Unknown property %s\n", wine_dbgstr_w(p));
+    return E_FAIL;
 }
 
 static HRESULT WINAPI domdoc_getProperty(
@@ -1383,8 +1418,22 @@ static HRESULT WINAPI domdoc_getProperty(
     BSTR p,
     VARIANT* var)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument2( iface );
+
+    if (var == NULL)
+        return E_INVALIDARG;
+    if (lstrcmpiW(p, SZ_PROPERTY_SELECTION_LANGUAGE) == 0)
+    {
+        V_VT(var) = VT_BSTR;
+        if (This->bUseXPath)
+            V_BSTR(var) = SysAllocString(SZ_VALUE_XPATH);
+        else
+            V_BSTR(var) = SysAllocString(SZ_VALUE_XSLPATTERN);
+        return S_OK;
+    }
+
+    FIXME("Unknown property %s\n", wine_dbgstr_w(p));
+    return E_FAIL;
 }
 
 static const struct IXMLDOMDocument2Vtbl domdoc_vtbl =
@@ -1491,6 +1540,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->validating = 0;
     doc->resolving = 0;
     doc->preserving = 0;
+    doc->bUseXPath = FALSE;
     doc->error = S_OK;
     doc->schema = NULL;
 

@@ -26,6 +26,7 @@
 #include "xmldom.h"
 #include "msxml2.h"
 #include <stdio.h>
+#include <assert.h>
 
 #include "wine/test.h"
 
@@ -100,6 +101,59 @@ static const WCHAR szstr1[] = { 's','t','r','1',0 };
 static const WCHAR szstr2[] = { 's','t','r','2',0 };
 static const WCHAR szstar[] = { '*',0 };
 static const WCHAR szfn1_txt[] = {'f','n','1','.','t','x','t',0};
+
+#define expect_bstr_eq_and_free(bstr, expect) { \
+    BSTR bstrExp = alloc_str_from_narrow(expect); \
+    ok(lstrcmpW(bstr, bstrExp) == 0, "String differs\n"); \
+    SysFreeString(bstr); \
+    SysFreeString(bstrExp); \
+}
+
+#define expect_eq(expr, value, type, format) { type ret = (expr); ok((value) == ret, #expr " expected " format " got " format "\n", value, ret); }
+
+#define ole_check(expr) { \
+    HRESULT r = expr; \
+    ok(r == S_OK, #expr " returned %x\n", r); \
+}
+
+#define ole_expect(expr, expect) { \
+    HRESULT r = expr; \
+    ok(r == (expect), #expr " returned %x, expected %x\n", r, expect); \
+}
+
+static BSTR alloc_str_from_narrow(const char *str)
+{
+    int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    BSTR ret = SysAllocStringLen(NULL, len - 1);  /* NUL character added automatically */
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
+
+BSTR alloced_bstrs[256];
+int alloced_bstrs_count = 0;
+
+static BSTR _bstr_(const char *str)
+{
+    assert(alloced_bstrs_count < sizeof(alloced_bstrs)/sizeof(alloced_bstrs[0]));
+    alloced_bstrs[alloced_bstrs_count] = alloc_str_from_narrow(str);
+    return alloced_bstrs[alloced_bstrs_count++];
+}
+
+static void free_bstrs()
+{
+    int i;
+    for (i = 0; i < alloced_bstrs_count; i++)
+        SysFreeString(alloced_bstrs[i]);
+    alloced_bstrs_count = 0;
+}
+
+static VARIANT _variantbstr_(const char *str)
+{
+    VARIANT v;
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_(str);
+    return v;
+}
 
 static void test_domdoc( void )
 {
@@ -1162,6 +1216,8 @@ static void test_IXMLDOMDocument2(void)
     BSTR str;
     IXMLDOMDocument *doc;
     IXMLDOMDocument2 *doc2;
+    VARIANT var;
+    int ref;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL,
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
@@ -1177,8 +1233,43 @@ static void test_IXMLDOMDocument2(void)
     r = IXMLDOMDocument_QueryInterface( doc, &IID_IXMLDOMDocument2, (void**)&doc2 );
     ok( r == S_OK, "ret %08x\n", r );
     ok( doc == (IXMLDOMDocument*)doc2, "interfaces differ\n");
+
+    /* we will check if the variant got cleared */
+    ref = IXMLDOMDocument2_AddRef(doc2);
+    expect_eq(ref, 3, int, "%d");  /* doc, doc2, AddRef*/
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = (IUnknown *)doc2;
+
+    /* invalid calls */
+    ole_expect(IXMLDOMDocument2_getProperty(doc2, _bstr_("askldhfaklsdf"), &var), E_FAIL);
+    expect_eq(V_VT(&var), VT_UNKNOWN, int, "%x");
+    ole_expect(IXMLDOMDocument2_getProperty(doc2, _bstr_("SelectionLanguage"), NULL), E_INVALIDARG);
+
+    /* valid call */
+    ole_check(IXMLDOMDocument2_getProperty(doc2, _bstr_("SelectionLanguage"), &var));
+    expect_eq(V_VT(&var), VT_BSTR, int, "%x");
+    expect_bstr_eq_and_free(V_BSTR(&var), "XSLPattern");
+    V_VT(&var) = VT_R4;
+
+    /* the variant didn't get cleared*/
+    expect_eq(IXMLDOMDocument2_Release(doc2), 2, int, "%d");
+
+    /* setProperty tests */
+    ole_expect(IXMLDOMDocument2_setProperty(doc2, _bstr_("askldhfaklsdf"), var), E_FAIL);
+    ole_expect(IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), var), E_FAIL);
+    ole_expect(IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), _variantbstr_("alskjdh faklsjd hfk")), E_FAIL);
+    ole_check(IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), _variantbstr_("XSLPattern")));
+    ole_check(IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), _variantbstr_("XPath")));
+    ole_check(IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), _variantbstr_("XSLPattern")));
+
+    /* contrary to what MSDN calims you can switch back from XPath to XSLPattern */
+    ole_check(IXMLDOMDocument2_getProperty(doc2, _bstr_("SelectionLanguage"), &var));
+    expect_eq(V_VT(&var), VT_BSTR, int, "%x");
+    expect_bstr_eq_and_free(V_BSTR(&var), "XSLPattern");
+
     IXMLDOMDocument2_Release( doc2 );
     IXMLDOMDocument_Release( doc );
+    free_bstrs();
 }
 
 START_TEST(domdoc)
