@@ -833,7 +833,8 @@ int main(int argc, char **argv)
 		}
 		else if(msi_option_prefix(argvW[i], "q"))
 		{
-			if(lstrlenW(argvW[i]) == 2 || msi_strequal(argvW[i]+2, "n"))
+			if(lstrlenW(argvW[i]) == 2 || msi_strequal(argvW[i]+2, "n") ||
+			   msi_strequal(argvW[i] + 2, "uiet"))
 			{
 				InstallUILevel = INSTALLUILEVEL_NONE;
 			}
