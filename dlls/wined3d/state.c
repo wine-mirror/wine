@@ -1811,7 +1811,69 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
 }
 
-static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVertexStridedData *sd);
+static void unloadTexCoords(IWineD3DStateBlockImpl *stateblock) {
+    int texture_idx;
+
+    for (texture_idx = 0; texture_idx < GL_LIMITS(textures); ++texture_idx) {
+        GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    }
+}
+
+static void loadTexCoords(IWineD3DStateBlockImpl *stateblock, WineDirect3DVertexStridedData *sd, GLint *curVBO) {
+    UINT *offset = stateblock->streamOffset;
+    unsigned int mapped_stage = 0;
+    unsigned int textureNo = 0;
+
+    for (textureNo = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
+        /* The code below uses glClientActiveTexture and glMultiTexCoord* which are all part of the GL_ARB_multitexture extension. */
+        /* Abort if we don't support the extension. */
+        if (!GL_SUPPORT(ARB_MULTITEXTURE)) {
+            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+            continue;
+        }
+
+        if (stateblock->textures[textureNo]) {
+            int coordIdx = stateblock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
+
+            mapped_stage = stateblock->wineD3DDevice->texUnitMap[textureNo];
+            /* The gl texture unit will never be -1 for a bound texture */
+            GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
+            checkGLcall("glClientActiveTextureARB");
+
+            if (coordIdx >= MAX_TEXTURES) {
+                VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
+                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + mapped_stage, 0, 0, 0, 1));
+            } else if (sd->u.s.texCoords[coordIdx].lpData == NULL && sd->u.s.texCoords[coordIdx].VBO == 0) {
+                VTRACE(("Bound texture but no texture coordinates supplied, so skipping\n"));
+                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + mapped_stage, 0, 0, 0, 1));
+            } else {
+                TRACE("Setting up texture %u, idx %d, cordindx %u, data %p\n",
+                        textureNo, mapped_stage, coordIdx, sd->u.s.texCoords[coordIdx].lpData);
+                if (*curVBO != sd->u.s.texCoords[coordIdx].VBO) {
+                    GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s.texCoords[coordIdx].VBO));
+                    checkGLcall("glBindBufferARB");
+                    *curVBO = sd->u.s.texCoords[coordIdx].VBO;
+                }
+                /* The coords to supply depend completely on the fvf / vertex shader */
+                glTexCoordPointer(
+                        WINED3D_ATR_SIZE(sd->u.s.texCoords[coordIdx].dwType),
+                        WINED3D_ATR_GLTYPE(sd->u.s.texCoords[coordIdx].dwType),
+                        sd->u.s.texCoords[coordIdx].dwStride,
+                        sd->u.s.texCoords[coordIdx].lpData + stateblock->loadBaseVertexIndex * sd->u.s.texCoords[coordIdx].dwStride + offset[sd->u.s.texCoords[coordIdx].streamNo]);
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            }
+        } else if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+            GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
+        }
+    }
+    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        /* The number of the mapped stages increases monotonically, so it's fine to use the last used one */
+        for (textureNo = mapped_stage + 1; textureNo < GL_LIMITS(textures); ++textureNo) {
+            GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
+        }
+    }
+}
 
 static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
@@ -1983,11 +2045,14 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 
     if(!isStateDirty(context, STATE_VDECL) && context->namedArraysLoaded) {
         /* Reload the arrays if we are using fixed function arrays to reflect the selected coord input
-         * source. Call loadVertexData directly because there is no need to reparse the vertex declaration
+         * source. Call loadTexCoords directly because there is no need to reparse the vertex declaration
          * and do all the things linked to it
          * TODO: Tidy that up to reload only the arrays of the changed unit
          */
-        loadVertexData(stateblock, &stateblock->wineD3DDevice->strided_streams);
+        GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
+
+        unloadTexCoords(stateblock);
+        loadTexCoords(stateblock, &stateblock->wineD3DDevice->strided_streams, &curVBO);
     }
 }
 
@@ -2528,8 +2593,6 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
  * TODO: Only load / unload arrays if we have to.
  */
 static inline void unloadVertexData(IWineD3DStateBlockImpl *stateblock) {
-    int texture_idx;
-
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);
@@ -2541,10 +2604,7 @@ static inline void unloadVertexData(IWineD3DStateBlockImpl *stateblock) {
     } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
         glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
     }
-    for (texture_idx = 0; texture_idx < GL_LIMITS(textures); ++texture_idx) {
-        GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    }
+    unloadTexCoords(stateblock);
 }
 
 /* This should match any arrays loaded in loadNumberedArrays
@@ -2691,10 +2751,8 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
 
 /* Used from 2 different functions, and too big to justify making it inlined */
 static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVertexStridedData *sd) {
-    unsigned int textureNo   = 0;
     UINT *offset = stateblock->streamOffset;
     GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
-    unsigned int mapped_stage = 0;
 
     TRACE("Using fast vertex array code\n");
 
@@ -2967,55 +3025,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
     }
 
     /* Texture coords -------------------------------------------*/
-
-    for (textureNo = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
-        /* The code below uses glClientActiveTexture and glMultiTexCoord* which are all part of the GL_ARB_multitexture extension. */
-        /* Abort if we don't support the extension. */
-        if (!GL_SUPPORT(ARB_MULTITEXTURE)) {
-            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-            continue;
-        }
-
-        if (stateblock->textures[textureNo] != NULL) {
-            int coordIdx = stateblock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
-
-            mapped_stage = stateblock->wineD3DDevice->texUnitMap[textureNo];
-            /* The gl texture unit will never be -1 for a bound texture */
-            GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
-            checkGLcall("glClientActiveTextureARB");
-
-            if (coordIdx >= MAX_TEXTURES) {
-                VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
-                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + mapped_stage, 0, 0, 0, 1));
-            } else if (sd->u.s.texCoords[coordIdx].lpData == NULL && sd->u.s.texCoords[coordIdx].VBO == 0) {
-                VTRACE(("Bound texture but no texture coordinates supplied, so skipping\n"));
-                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + mapped_stage, 0, 0, 0, 1));
-            } else {
-                TRACE("Setting up texture %u, idx %d, cordindx %u, data %p\n",
-                      textureNo, mapped_stage, coordIdx, sd->u.s.texCoords[coordIdx].lpData);
-                if(curVBO != sd->u.s.texCoords[coordIdx].VBO) {
-                    GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s.texCoords[coordIdx].VBO));
-                    checkGLcall("glBindBufferARB");
-                    curVBO = sd->u.s.texCoords[coordIdx].VBO;
-                }
-                /* The coords to supply depend completely on the fvf / vertex shader */
-                glTexCoordPointer(
-                    WINED3D_ATR_SIZE(sd->u.s.texCoords[coordIdx].dwType),
-                    WINED3D_ATR_GLTYPE(sd->u.s.texCoords[coordIdx].dwType),
-                    sd->u.s.texCoords[coordIdx].dwStride,
-                    sd->u.s.texCoords[coordIdx].lpData + stateblock->loadBaseVertexIndex * sd->u.s.texCoords[coordIdx].dwStride + offset[sd->u.s.texCoords[coordIdx].streamNo]);
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            }
-        } else if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-            GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
-        }
-    }
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        /* The number of the mapped stages increases monotonically, so it's fine to use the last used one */
-        for (textureNo = mapped_stage + 1; textureNo < GL_LIMITS(textures); ++textureNo) {
-            GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
-        }
-    }
+    loadTexCoords(stateblock, sd, &curVBO);
 }
 
 static inline void drawPrimitiveTraceDataLocations(
