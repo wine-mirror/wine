@@ -163,6 +163,12 @@ static void test_create_storage_modes(void)
    ok(r == 0, "storage not released\n");
    ok(DeleteFileW(filename), "failed to delete file\n");
 
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+   ok(r==S_OK, "StgCreateDocfile failed\n");
+   r = IStorage_Release(stg);
+   ok(r == 0, "storage not released\n");
+   ok(DeleteFileW(filename), "failed to delete file\n");
+
    /* test the way excel uses StgCreateDocFile */
    r = StgCreateDocfile( filename, STGM_TRANSACTED|STGM_CREATE|STGM_SHARE_DENY_WRITE|STGM_READWRITE, 0, &stg);
    ok(r==S_OK, "StgCreateDocfile the excel way failed\n");

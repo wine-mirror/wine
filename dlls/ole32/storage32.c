@@ -5680,6 +5680,10 @@ HRESULT WINAPI StgCreateDocfile(
   if (reserved != 0)
     return STG_E_INVALIDPARAMETER;
 
+  /* if no share mode given then DENY_NONE is the default */
+  if (STGM_SHARE_MODE(grfMode) == 0)
+      grfMode |= STGM_SHARE_DENY_NONE;
+
   /*
    * Validate the STGM flags
    */
@@ -5696,14 +5700,6 @@ HRESULT WINAPI StgCreateDocfile(
     goto end;
   }
 
-  /* if no share mode given then DENY_NONE is the default */     
-  if (STGM_SHARE_MODE(grfMode) == 0)
-    grfMode |= STGM_SHARE_DENY_NONE;
-
-  /* must have at least one access mode */
-  if (STGM_ACCESS_MODE(grfMode) == 0)
-    goto end;
-  
   /* in direct mode, can only use SHARE_EXCLUSIVE */
   if (!(grfMode & STGM_TRANSACTED) && (STGM_SHARE_MODE(grfMode) != STGM_SHARE_EXCLUSIVE))
     goto end;
