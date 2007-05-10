@@ -3504,7 +3504,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DCl
     TRACE("(%p)->(%p)\n", This, clipper);
 
     *clipper = This->clipper;
-    IWineD3DClipper_AddRef(*clipper);
+    if(*clipper) {
+        IWineD3DClipper_AddRef(*clipper);
+    }
     return WINED3D_OK;
 }
 
