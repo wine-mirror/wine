@@ -1175,6 +1175,20 @@ static void test_Console(void)
 
     cpInC = GetConsoleCP();
     cpOutC = GetConsoleOutputCP();
+
+    /* Try to set invalid CP */
+    SetLastError(0xdeadbeef);
+    ok(!SetConsoleCP(0), "Shouldn't succeed\n");
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,
+       "GetLastError: expecting %u got %u\n",
+       ERROR_INVALID_PARAMETER, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ok(!SetConsoleOutputCP(0), "Shouldn't succeed\n");
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,
+       "GetLastError: expecting %u got %u\n",
+       ERROR_INVALID_PARAMETER, GetLastError());
+
     SetConsoleCP(cpIn);
     SetConsoleOutputCP(cpOut);
 
@@ -1213,8 +1227,8 @@ static void test_Console(void)
     okChildInt("Console", "InputMode", modeIn);
     okChildInt("Console", "OutputMode", modeOut);
 
-    todo_wine ok(cpInC == 1252, "Wrong console CP (expected 1252 got %d/%d)\n", cpInC, cpIn);
-    todo_wine ok(cpOutC == 1252, "Wrong console-SB CP (expected 1252 got %d/%d)\n", cpOutC, cpOut);
+    ok(cpInC == 1252, "Wrong console CP (expected 1252 got %d/%d)\n", cpInC, cpIn);
+    ok(cpOutC == 1252, "Wrong console-SB CP (expected 1252 got %d/%d)\n", cpOutC, cpOut);
     ok(modeInC == (modeIn ^ 1), "Wrong console mode\n");
     ok(modeOutC == (modeOut ^ 1), "Wrong console-SB mode\n");
     ok(sbiC.dwCursorPosition.X == (sbi.dwCursorPosition.X ^ 1), "Wrong cursor position\n");
