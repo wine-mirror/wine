@@ -89,7 +89,7 @@ static void InitFunctionPtr(void)
     }
 }
 
-static DWORD RtlAtomTestThread(LPVOID Table)
+static DWORD WINAPI RtlAtomTestThread(LPVOID Table)
 {
     RTL_ATOM_TABLE AtomTable = *(PRTL_ATOM_TABLE)Table;
     RTL_ATOM Atom;
@@ -175,7 +175,7 @@ static void test_NtAtom(void)
         res = pRtlPinAtomInAtomTable(AtomTable, Atom2);
         ok(!res, "Unable to pin atom in atom table, retval: %x\n", res);
 
-        testThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)RtlAtomTestThread, &AtomTable, 0, NULL);
+        testThread = CreateThread(NULL, 0, RtlAtomTestThread, &AtomTable, 0, NULL);
         WaitForSingleObject(testThread, INFINITE);
 
         Len = 64;
