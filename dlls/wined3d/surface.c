@@ -2365,10 +2365,10 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     if( (xrel - 1.0 < -eps) || (xrel - 1.0 > eps)) {
         FIXME("Doing a pixel by pixel copy from the framebuffer to a texture, expect major performance issues\n");
 
-        if(Filter != WINED3DTEXF_NONE) {
+        if(Filter != WINED3DTEXF_NONE && Filter != WINED3DTEXF_POINT) {
             ERR("Texture filtering not supported in direct blit\n");
         }
-    } else if((Filter != WINED3DTEXF_NONE) && ((yrel - 1.0 < -eps) || (yrel - 1.0 > eps))) {
+    } else if((Filter != WINED3DTEXF_NONE && Filter != WINED3DTEXF_POINT) && ((yrel - 1.0 < -eps) || (yrel - 1.0 > eps))) {
         ERR("Texture filtering not supported in direct blit\n");
     }
 
@@ -3207,7 +3207,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, D
         if(trans & WINEDDBLTFAST_DONOTWAIT)
             Flags |= WINEDDBLT_DONOTWAIT;
 
-        if(IWineD3DSurfaceImpl_BltOverride(This, &DstRect, Source, &SrcRect, Flags, NULL, WINED3DTEXF_NONE) == WINED3D_OK) return WINED3D_OK;
+        if(IWineD3DSurfaceImpl_BltOverride(This, &DstRect, Source, &SrcRect, Flags, NULL, WINED3DTEXF_POINT) == WINED3D_OK) return WINED3D_OK;
     }
 
 

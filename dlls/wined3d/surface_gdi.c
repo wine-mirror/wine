@@ -525,7 +525,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
         return WINEDDERR_SURFACEBUSY;
     }
 
-    if(Filter != WINED3DTEXF_NONE) {
+    if(Filter != WINED3DTEXF_NONE && Filter != WINED3DTEXF_POINT) {
         /* Can happen when d3d9 apps do a StretchRect call which isn't handled in gl */
         FIXME("Filters not supported in software blit\n");
     }

@@ -745,7 +745,7 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
                              SrcRect,
                              Flags,
                              (WINEDDBLTFX *) DDBltFx,
-                             WINED3DTEXF_NONE);
+                             WINED3DTEXF_POINT);
     switch(hr)
     {
         case WINED3DERR_NOTAVAILABLE:       return DDERR_UNSUPPORTED;
