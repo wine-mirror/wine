@@ -62,6 +62,36 @@ struct expr_eval_routine
 static size_t type_memsize(const type_t *t, int ptr_level, const array_dims_t *array, unsigned int *align);
 static size_t fields_memsize(const var_list_t *fields, unsigned int *align);
 
+const char *string_of_type(unsigned char type)
+{
+    switch (type)
+    {
+    case RPC_FC_BYTE: return "FC_BYTE";
+    case RPC_FC_CHAR: return "FC_CHAR";
+    case RPC_FC_SMALL: return "FC_SMALL";
+    case RPC_FC_USMALL: return "FC_USMALL";
+    case RPC_FC_WCHAR: return "FC_WCHAR";
+    case RPC_FC_SHORT: return "FC_SHORT";
+    case RPC_FC_USHORT: return "FC_USHORT";
+    case RPC_FC_LONG: return "FC_LONG";
+    case RPC_FC_ULONG: return "FC_ULONG";
+    case RPC_FC_FLOAT: return "FC_FLOAT";
+    case RPC_FC_HYPER: return "FC_HYPER";
+    case RPC_FC_DOUBLE: return "FC_DOUBLE";
+    case RPC_FC_ENUM16: return "FC_ENUM16";
+    case RPC_FC_ENUM32: return "FC_ENUM32";
+    case RPC_FC_IGNORE: return "FC_IGNORE";
+    case RPC_FC_ERROR_STATUS_T: return "FC_ERROR_STATUS_T";
+    case RPC_FC_RP: return "FC_RP";
+    case RPC_FC_UP: return "FC_UP";
+    case RPC_FC_OP: return "FC_OP";
+    case RPC_FC_FP: return "FC_FP";
+    default:
+        error("string_of_type: unknown type 0x%02x\n", type);
+        return NULL;
+    }
+}
+
 static int compare_expr(const expr_t *a, const expr_t *b)
 {
     int ret;
@@ -220,36 +250,18 @@ static size_t write_procformatstring_var(FILE *file, int indent,
         else
             print_file(file, indent, "0x4e,    /* FC_IN_PARAM_BASETYPE */\n");
 
-        switch(type->type)
+        if (is_base_type(type->type))
         {
-#define CASE_BASETYPE(fctype) \
-        case RPC_##fctype: \
-            print_file(file, indent, "0x%02x,    /* " #fctype " */\n", RPC_##fctype); \
-            size = 2; /* includes param type prefix */ \
-            break
-
-        CASE_BASETYPE(FC_BYTE);
-        CASE_BASETYPE(FC_CHAR);
-        CASE_BASETYPE(FC_WCHAR);
-        CASE_BASETYPE(FC_USHORT);
-        CASE_BASETYPE(FC_SHORT);
-        CASE_BASETYPE(FC_ULONG);
-        CASE_BASETYPE(FC_LONG);
-        CASE_BASETYPE(FC_HYPER);
-        CASE_BASETYPE(FC_IGNORE);
-        CASE_BASETYPE(FC_USMALL);
-        CASE_BASETYPE(FC_SMALL);
-        CASE_BASETYPE(FC_FLOAT);
-        CASE_BASETYPE(FC_DOUBLE);
-        CASE_BASETYPE(FC_ERROR_STATUS_T);
-#undef CASE_BASETYPE
-
-        case RPC_FC_BIND_PRIMITIVE:
+            print_file(file, indent, "0x%02x,    /* %s */\n", type->type, string_of_type(type->type));
+            size = 2; /* includes param type prefix */
+        }
+        else if (type->type == RPC_FC_BIND_PRIMITIVE)
+        {
             print_file(file, indent, "0x%02x,    /* FC_IGNORE */\n", RPC_FC_IGNORE);
             size = 2; /* includes param type prefix */
-            break;
-
-        default:
+        }
+        else
+        {
             error("Unknown/unsupported type: %s (0x%02x)\n", var->name, type->type);
             size = 0;
         }
@@ -329,31 +341,11 @@ void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
 
 static int write_base_type(FILE *file, const type_t *type, unsigned int *typestring_offset)
 {
-    switch (type->type)
+    if (is_base_type(type->type))
     {
-#define CASE_BASETYPE(fctype) \
-        case RPC_##fctype: \
-            print_file(file, 2, "0x%02x,  /* " #fctype " */\n", RPC_##fctype); \
-            *typestring_offset += 1; \
-            return 1;
-
-        CASE_BASETYPE(FC_BYTE);
-        CASE_BASETYPE(FC_CHAR);
-        CASE_BASETYPE(FC_SMALL);
-        CASE_BASETYPE(FC_USMALL);
-        CASE_BASETYPE(FC_WCHAR);
-        CASE_BASETYPE(FC_SHORT);
-        CASE_BASETYPE(FC_USHORT);
-        CASE_BASETYPE(FC_LONG);
-        CASE_BASETYPE(FC_ULONG);
-        CASE_BASETYPE(FC_FLOAT);
-        CASE_BASETYPE(FC_HYPER);
-        CASE_BASETYPE(FC_DOUBLE);
-        CASE_BASETYPE(FC_ENUM16);
-        CASE_BASETYPE(FC_ENUM32);
-        CASE_BASETYPE(FC_IGNORE);
-        CASE_BASETYPE(FC_ERROR_STATUS_T);
-#undef CASE_BASETYPE
+        print_file(file, 2, "0x%02x,\t/* %s */\n", type->type, string_of_type(type->type));
+        *typestring_offset += 1;
+        return 1;
     }
     return 0;
 }
@@ -813,7 +805,7 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
 
     print_file(file, 2,"0x%x, 0x%x,    /* %s%s */\n",
                pointer_type, flags,
-               pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"),
+               string_of_type(pointer_type),
                (flags & RPC_FC_P_SIMPLEPOINTER) ? " [simple_pointer]" : "");
     *typestring_offset += 2;
 
@@ -884,7 +876,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
 
     print_file(file, 2, "0x%x, 0x00,    /* %s */\n",
                pointer_type,
-               pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
+               string_of_type(pointer_type));
     print_file(file, 2, "NdrFcShort(0x2),\n");
     *typestring_offset += 4;
 
@@ -1306,7 +1298,7 @@ static void write_pointer_only_tfs(FILE *file, const attr_list_t *attrs, int poi
     print_file(file, 2, "0x%x, 0x%x,\t\t/* %s",
                pointer_type,
                flags,
-               pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
+               string_of_type(pointer_type));
     if (file)
     {
         if (flags & 0x04)
@@ -1482,37 +1474,16 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
             }
 
             /* special case for pointers to base types */
-            switch (base->type)
+            if (is_base_type(base->type))
             {
-#define CASE_BASETYPE(fctype) \
-            case RPC_##fctype: \
-                print_file(file, indent, "0x%x, 0x%x,    /* %s %s[simple_pointer] */\n", \
-                           pointer_type, \
-                           (!in_attr && out_attr) ? 0x0C : 0x08, \
-                           pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"), \
-                           (!in_attr && out_attr) ? "[allocated_on_stack] " : ""); \
-                print_file(file, indent, "0x%02x,    /* " #fctype " */\n", RPC_##fctype); \
-                print_file(file, indent, "0x5c,          /* FC_PAD */\n"); \
-                *typeformat_offset += 4; \
-                return start_offset
-            CASE_BASETYPE(FC_BYTE);
-            CASE_BASETYPE(FC_CHAR);
-            CASE_BASETYPE(FC_SMALL);
-            CASE_BASETYPE(FC_USMALL);
-            CASE_BASETYPE(FC_WCHAR);
-            CASE_BASETYPE(FC_SHORT);
-            CASE_BASETYPE(FC_USHORT);
-            CASE_BASETYPE(FC_LONG);
-            CASE_BASETYPE(FC_ULONG);
-            CASE_BASETYPE(FC_FLOAT);
-            CASE_BASETYPE(FC_HYPER);
-            CASE_BASETYPE(FC_DOUBLE);
-            CASE_BASETYPE(FC_ENUM16);
-            CASE_BASETYPE(FC_ENUM32);
-            CASE_BASETYPE(FC_IGNORE);
-            CASE_BASETYPE(FC_ERROR_STATUS_T);
-            default:
-                break;
+                print_file(file, indent, "0x%x, 0x%x,    /* %s %s[simple_pointer] */\n",
+                           pointer_type, (!in_attr && out_attr) ? 0x0C : 0x08,
+                           string_of_type(pointer_type),
+                           (!in_attr && out_attr) ? "[allocated_on_stack] " : "");
+                print_file(file, indent, "0x%02x,    /* %s */\n", base->type, string_of_type(base->type));
+                print_file(file, indent, "0x5c,          /* FC_PAD */\n");
+                *typeformat_offset += 4;
+                return start_offset;
             }
         }
 
