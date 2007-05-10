@@ -195,6 +195,70 @@ static void test_lockrect_invalid(IDirect3DDevice8 *device)
     IDirect3DSurface8_Release(surface);
 }
 
+static unsigned long getref(IUnknown *iface)
+{
+    IUnknown_AddRef(iface);
+    return IUnknown_Release(iface);
+}
+
+static void test_private_data(IDirect3DDevice8 *device)
+{
+    HRESULT hr;
+    IDirect3DSurface8 *surface;
+    ULONG ref, ref2;
+    IUnknown *ptr;
+    DWORD size = sizeof(IUnknown *);
+
+    hr = IDirect3DDevice8_CreateImageSurface(device, 4, 4, D3DFMT_A8R8G8B8, &surface);
+    ok(SUCCEEDED(hr), "CreateImageSurface failed (0x%08x)\n", hr);
+    if(!surface)
+    {
+        return;
+    }
+
+    /* This fails */
+    hr = IDirect3DSurface8_SetPrivateData(surface, &IID_IDirect3DSurface8 /* Abuse this tag */, device, 0, D3DSPD_IUNKNOWN);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DSurface8_SetPrivateData failed with %08x\n", hr);
+    hr = IDirect3DSurface8_SetPrivateData(surface, &IID_IDirect3DSurface8 /* Abuse this tag */, device, 5, D3DSPD_IUNKNOWN);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DSurface8_SetPrivateData failed with %08x\n", hr);
+    hr = IDirect3DSurface8_SetPrivateData(surface, &IID_IDirect3DSurface8 /* Abuse this tag */, device, sizeof(IUnknown *) * 2, D3DSPD_IUNKNOWN);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DSurface8_SetPrivateData failed with %08x\n", hr);
+
+    ref = getref((IUnknown *) device);
+    hr = IDirect3DSurface8_SetPrivateData(surface, &IID_IDirect3DSurface8 /* Abuse this tag */, device, sizeof(IUnknown *), D3DSPD_IUNKNOWN);
+    ok(hr == D3D_OK, "IDirect3DSurface8_SetPrivateData failed with %08x\n", hr);
+    ref2 = getref((IUnknown *) device);
+    ok(ref2 == ref + 1, "Object reference is %d, expected %d\n", ref2, ref + 1);
+    hr = IDirect3DSurface8_FreePrivateData(surface, &IID_IDirect3DSurface8);
+    ok(hr == D3D_OK, "IDirect3DSurface8_FreePrivateData returned %08x\n", hr);
+    ref2 = getref((IUnknown *) device);
+    ok(ref2 == ref, "Object reference is %d, expected %d\n", ref2, ref);
+
+    hr = IDirect3DSurface8_SetPrivateData(surface, &IID_IDirect3DSurface8, device, sizeof(IUnknown *), D3DSPD_IUNKNOWN);
+    ok(hr == D3D_OK, "IDirect3DSurface8_SetPrivateData failed with %08x\n", hr);
+    hr = IDirect3DSurface8_SetPrivateData(surface, &IID_IDirect3DSurface8, surface, sizeof(IUnknown *), D3DSPD_IUNKNOWN);
+    ok(hr == D3D_OK, "IDirect3DSurface8_SetPrivateData failed with %08x\n", hr);
+    ref2 = getref((IUnknown *) device);
+    ok(ref2 == ref, "Object reference is %d, expected %d\n", ref2, ref);
+
+    hr = IDirect3DSurface8_SetPrivateData(surface, &IID_IDirect3DSurface8, device, sizeof(IUnknown *), D3DSPD_IUNKNOWN);
+    ok(hr == D3D_OK, "IDirect3DSurface8_SetPrivateData failed with %08x\n", hr);
+    hr = IDirect3DSurface8_GetPrivateData(surface, &IID_IDirect3DSurface8, &ptr, &size);
+    ok(hr == D3D_OK, "IDirect3DSurface8_GetPrivateData failed with %08x\n", hr);
+    ref2 = getref((IUnknown *) device);
+    /* Object is NOT beein addrefed */
+    ok(ptr == (IUnknown *) device, "Returned interface pointer is %p, expected %p\n", ptr, device);
+    ok(ref2 == ref + 2, "Object reference is %d, expected %d. ptr at %p, orig at %p\n", ref2, ref + 2, ptr, device);
+    IUnknown_Release(ptr);
+
+    IDirect3DSurface8_Release(surface);
+
+    /* Destroying the surface frees the held reference */
+    ref2 = getref((IUnknown *) device);
+    /* -1 because the surface was released and held a reference before */
+    ok(ref2 == (ref - 1), "Object reference is %d, expected %d\n", ref2, ref - 1);
+}
+
 START_TEST(surface)
 {
     HMODULE d3d8_handle;
@@ -212,4 +276,5 @@ START_TEST(surface)
 
     test_surface_get_container(device_ptr);
     test_lockrect_invalid(device_ptr);
+    test_private_data(device_ptr);
 }

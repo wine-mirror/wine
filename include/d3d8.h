@@ -46,6 +46,11 @@
 #define D3DCREATE_MIXED_VERTEXPROCESSING        0x00000080L
 
 /*****************************************************************************
+ * Flags for SetPrivateData
+ */
+#define D3DSPD_IUNKNOWN                         0x00000001L
+
+/*****************************************************************************
  * #defines and error codes
  */
 #define D3D_SDK_VERSION              220

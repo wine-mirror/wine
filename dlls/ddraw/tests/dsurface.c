@@ -2083,6 +2083,77 @@ static void SizeTest(void)
     ok(ret == DD_OK, "SetCooperativeLevel failed with %08x\n", ret);
 }
 
+static void PrivateDataTest(void)
+{
+    HRESULT hr;
+    IDirectDrawSurface7 *surface7;
+    IDirectDrawSurface *surface;
+    DDSURFACEDESC desc;
+    ULONG ref, ref2;
+    IUnknown *ptr;
+    DWORD size = sizeof(IUnknown *);
+
+    ZeroMemory(&desc, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+    desc.ddsCaps.dwCaps |= DDSCAPS_OFFSCREENPLAIN;
+    desc.dwHeight = 128;
+    desc.dwWidth = 128;
+    hr = IDirectDraw_CreateSurface(lpDD, &desc, &surface, NULL);
+    ok(hr == DD_OK, "Creating an offscreen plain surface failed with %08x\n", hr);
+    if(!surface)
+    {
+        return;
+    }
+    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface7, (void **) &surface7);
+    ok(hr == DD_OK, "IDirectDrawSurface_QueryInterface failed with %08x\n", hr);
+    if(!surface)
+    {
+        IDirectDrawSurface_Release(surface);
+        return;
+    }
+
+    /* This fails */
+    hr = IDirectDrawSurface7_SetPrivateData(surface7, &IID_IDirectDrawSurface7 /* Abuse this tag */, lpDD, 0, DDSPD_IUNKNOWNPTR);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDrawSurface7_SetPrivateData failed with %08x\n", hr);
+    hr = IDirectDrawSurface7_SetPrivateData(surface7, &IID_IDirectDrawSurface7 /* Abuse this tag */, lpDD, 5, DDSPD_IUNKNOWNPTR);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDrawSurface7_SetPrivateData failed with %08x\n", hr);
+    hr = IDirectDrawSurface7_SetPrivateData(surface7, &IID_IDirectDrawSurface7 /* Abuse this tag */, lpDD, sizeof(IUnknown *) * 2, DDSPD_IUNKNOWNPTR);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDrawSurface7_SetPrivateData failed with %08x\n", hr);
+
+    ref = getref((IUnknown *) lpDD);
+    hr = IDirectDrawSurface7_SetPrivateData(surface7, &IID_IDirectDrawSurface7 /* Abuse this tag */, lpDD, sizeof(IUnknown *), DDSPD_IUNKNOWNPTR);
+    ok(hr == DD_OK, "IDirectDrawSurface7_SetPrivateData failed with %08x\n", hr);
+    ref2 = getref((IUnknown *) lpDD);
+    ok(ref2 == ref + 1, "Object reference is %d, expected %d\n", ref2, ref + 1);
+    hr = IDirectDrawSurface7_FreePrivateData(surface7, &IID_IDirectDrawSurface7);
+    ref2 = getref((IUnknown *) lpDD);
+    ok(ref2 == ref, "Object reference is %d, expected %d\n", ref2, ref);
+
+    hr = IDirectDrawSurface7_SetPrivateData(surface7, &IID_IDirectDrawSurface7, lpDD, sizeof(IUnknown *), DDSPD_IUNKNOWNPTR);
+    ok(hr == DD_OK, "IDirectDrawSurface7_SetPrivateData failed with %08x\n", hr);
+    hr = IDirectDrawSurface7_SetPrivateData(surface7, &IID_IDirectDrawSurface7, surface7, sizeof(IUnknown *), DDSPD_IUNKNOWNPTR);
+    ok(hr == DD_OK, "IDirectDrawSurface7_SetPrivateData failed with %08x\n", hr);
+    ref2 = getref((IUnknown *) lpDD);
+    ok(ref2 == ref, "Object reference is %d, expected %d\n", ref2, ref);
+
+    hr = IDirectDrawSurface7_SetPrivateData(surface7, &IID_IDirectDrawSurface7, lpDD, sizeof(IUnknown *), DDSPD_IUNKNOWNPTR);
+    ok(hr == DD_OK, "IDirectDrawSurface7_SetPrivateData failed with %08x\n", hr);
+    hr = IDirectDrawSurface7_GetPrivateData(surface7, &IID_IDirectDrawSurface7, &ptr, &size);
+    ok(hr == DD_OK, "IDirectDrawSurface7_GetPrivateData failed with %08x\n", hr);
+    ref2 = getref((IUnknown *) lpDD);
+    /* Object is NOT beein addrefed */
+    ok(ptr == (IUnknown *) lpDD, "Returned interface pointer is %p, expected %p\n", ptr, lpDD);
+    ok(ref2 == ref + 1, "Object reference is %d, expected %d. ptr at %p, orig at %p\n", ref2, ref + 1, ptr, lpDD);
+
+    IDirectDrawSurface_Release(surface);
+    IDirectDrawSurface7_Release(surface7);
+
+    /* Destroying the surface frees the held reference */
+    ref2 = getref((IUnknown *) lpDD);
+    ok(ref2 == ref, "Object reference is %d, expected %d\n", ref2, ref);
+}
+
 START_TEST(dsurface)
 {
     if (!CreateDirectDraw())
@@ -2101,5 +2172,6 @@ START_TEST(dsurface)
     test_lockrect_invalid();
     CompressedTest();
     SizeTest();
+    PrivateDataTest();
     ReleaseDirectDraw();
 }

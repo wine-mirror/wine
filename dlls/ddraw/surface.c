@@ -1105,13 +1105,19 @@ IDirectDrawSurfaceImpl_SetPrivateData(IDirectDrawSurface7 *iface,
                                       DWORD Flags)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
+    HRESULT hr;
     TRACE("(%p)->(%s,%p,%d,%x): Relay\n", This, debugstr_guid(tag), Data, Size, Flags);
 
-    return IWineD3DSurface_SetPrivateData(This->WineD3DSurface,
-                                          tag,
-                                          Data,
-                                          Size,
-                                          Flags);
+    hr = IWineD3DSurface_SetPrivateData(This->WineD3DSurface,
+                                        tag,
+                                        Data,
+                                        Size,
+                                        Flags);
+    switch(hr)
+    {
+        case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
+        default:                            return hr;
+    }
 }
 
 /*****************************************************************************

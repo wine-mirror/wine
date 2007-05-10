@@ -64,10 +64,22 @@ ULONG WINAPI IWineD3DResourceImpl_Release(IWineD3DResource *iface) {
 /* class static (not in vtable) */
 void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface){
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
+    struct list *e1, *e2;
+    PrivateData *data;
+    HRESULT hr;
+
     TRACE("(%p) Cleaning up resource\n", This);
     if (This->resource.pool == WINED3DPOOL_DEFAULT) {
         TRACE("Decrementing device memory pool by %u\n", This->resource.size);
         globalChangeGlRam(-This->resource.size);
+    }
+
+    LIST_FOR_EACH_SAFE(e1, e2, &This->resource.privateData) {
+        data = LIST_ENTRY(e1, PrivateData, entry);
+        hr = IWineD3DResourceImpl_FreePrivateData(iface, &data->tag);
+        if(hr != WINED3D_OK) {
+            ERR("Failed to free private data when destroying resource %p, hr = %08x\n", This, hr);
+        }
     }
 
     HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
@@ -112,45 +124,36 @@ HRESULT WINAPI IWineD3DResourceImpl_SetPrivateData(IWineD3DResource *iface, REFG
     PrivateData *data;
 
     TRACE("(%p) : %s %p %d %d\n", This, debugstr_guid(refguid), pData, SizeOfData, Flags);
-    data = IWineD3DResourceImpl_FindPrivateData(This, refguid);
-    if (data == NULL)
-    {
-        data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
-        if (NULL == data) return E_OUTOFMEMORY;
+    IWineD3DResourceImpl_FreePrivateData(iface, refguid);
 
-        data->tag = *refguid;
-        data->flags = Flags;
+    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
+    if (NULL == data) return E_OUTOFMEMORY;
+
+    data->tag = *refguid;
+    data->flags = Flags;
 #if 0
         (*data)->uniquenessValue = This->uniquenessValue;
 #endif
-        if (Flags & WINED3DSPD_IUNKNOWN) {
-            data->ptr.object = (LPUNKNOWN)pData;
-            data->size = sizeof(LPUNKNOWN);
-            IUnknown_AddRef(data->ptr.object);
+    if (Flags & WINED3DSPD_IUNKNOWN) {
+        if(SizeOfData != sizeof(IUnknown *)) {
+            WARN("IUnknown data with size %d, returning WINED3DERR_INVALIDCALL\n", SizeOfData);
+            return WINED3DERR_INVALIDCALL;
         }
-        else
-        {
-            data->ptr.data = HeapAlloc(GetProcessHeap(), 0, SizeOfData);
-            if (NULL == data->ptr.data) {
-                HeapFree(GetProcessHeap(), 0, data);
-                return E_OUTOFMEMORY;
-            }
-            data->size = SizeOfData;
-            memcpy(data->ptr.data, pData, SizeOfData);
-        }
-        list_add_tail(&This->resource.privateData, &data->entry);
-        return WINED3D_OK;
-
-    } else {
-        /* I don't actually know how windows handles this case. The only
-         * reason I don't just call FreePrivateData is because I want to
-         * guarantee SetPrivateData working when using LPUNKNOWN or data
-         * that is no larger than the old data.
-         */
-        FIXME("Handle overwriting private data in SetPrivateData\n");
-        return E_FAIL;
-
+        data->ptr.object = (LPUNKNOWN)pData;
+        data->size = sizeof(LPUNKNOWN);
+        IUnknown_AddRef(data->ptr.object);
     }
+    else
+    {
+        data->ptr.data = HeapAlloc(GetProcessHeap(), 0, SizeOfData);
+        if (NULL == data->ptr.data) {
+            HeapFree(GetProcessHeap(), 0, data);
+            return E_OUTOFMEMORY;
+        }
+        data->size = SizeOfData;
+        memcpy(data->ptr.data, pData, SizeOfData);
+    }
+    list_add_tail(&This->resource.privateData, &data->entry);
 
     return WINED3D_OK;
 }
@@ -176,7 +179,13 @@ HRESULT WINAPI IWineD3DResourceImpl_GetPrivateData(IWineD3DResource *iface, REFG
 
     if (data->flags & WINED3DSPD_IUNKNOWN) {
         *(LPUNKNOWN *)pData = data->ptr.object;
-        IUnknown_AddRef(data->ptr.object);
+        if(((IWineD3DImpl *) This->resource.wineD3DDevice->wineD3D)->dxVersion != 7) {
+            /* D3D8 and D3D9 addref the private data, DDraw does not. This can't be handled in
+             * ddraw because it doesn't know if the pointer returned is an IUnknown * or just a
+             * Blob
+             */
+            IUnknown_AddRef(data->ptr.object);
+        }
     }
     else {
         memcpy(pData, data->ptr.data, data->size);
