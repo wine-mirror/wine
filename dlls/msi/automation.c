@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "msidefs.h"
 #include "msipriv.h"
 #include "activscp.h"
@@ -514,6 +515,35 @@ static const IProvideMultipleClassInfoVtbl AutomationObject_IProvideMultipleClas
  * Individual Object Invocation Functions
  */
 
+/* Helper function that copies a passed parameter instead of using VariantChangeType like the actual DispGetParam.
+   This function is only for VARIANT type parameters that have several types that cannot be properly discriminated
+   using DispGetParam/VariantChangeType. */
+HRESULT WINAPI DispGetParam_CopyOnly(
+	DISPPARAMS *pdispparams, /* [in] Parameter list */
+	UINT        *position,    /* [in] Position of parameter to copy in pdispparams; on return will contain calculated position */
+	VARIANT    *pvarResult)  /* [out] Destination for resulting variant */
+{
+    /* position is counted backwards */
+    UINT pos;
+
+    TRACE("position=%d, cArgs=%d, cNamedArgs=%d\n",
+          *position, pdispparams->cArgs, pdispparams->cNamedArgs);
+    if (*position < pdispparams->cArgs) {
+      /* positional arg? */
+      pos = pdispparams->cArgs - *position - 1;
+    } else {
+      /* FIXME: is this how to handle named args? */
+      for (pos=0; pos<pdispparams->cNamedArgs; pos++)
+        if (pdispparams->rgdispidNamedArgs[pos] == *position) break;
+
+      if (pos==pdispparams->cNamedArgs)
+        return DISP_E_PARAMNOTFOUND;
+    }
+    *position = pos;
+    return VariantCopyInd(pvarResult,
+                        &pdispparams->rgvarg[pos]);
+}
+
 static HRESULT WINAPI RecordImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -990,6 +1020,69 @@ static HRESULT WINAPI SessionImpl_Invoke(
     return S_OK;
 }
 
+/* Fill the variant pointed to by pVarResult with the value & size returned by RegQueryValueEx as dictated by the
+ * registry value type. Used by Installer::RegistryValue. */
+static void variant_from_registry_value(VARIANT *pVarResult, DWORD dwType, LPBYTE lpData, DWORD dwSize)
+{
+    static const WCHAR szREG_BINARY[] = { '(','R','E','G','_','B','I','N','A','R','Y',')',0 };
+    static const WCHAR szREG_[] = { '(','R','E','G','_',']',0 };
+    WCHAR *szString = (WCHAR *)lpData;
+    LPWSTR szNewString = NULL;
+    DWORD dwNewSize = 0;
+    int idx;
+
+    switch (dwType)
+    {
+        /* Registry strings may not be null terminated so we must use SysAllocStringByteLen/Len */
+        case REG_MULTI_SZ: /* Multi SZ change internal null characters to newlines */
+            idx = (dwSize/sizeof(WCHAR))-1;
+            while (idx >= 0 && !szString[idx]) idx--;
+            for (; idx >= 0; idx--)
+                if (!szString[idx]) szString[idx] = '\n';
+        case REG_SZ:
+            V_VT(pVarResult) = VT_BSTR;
+            V_BSTR(pVarResult) = SysAllocStringByteLen((LPCSTR)szString, dwSize);
+            break;
+
+        case REG_EXPAND_SZ:
+            if (!(dwNewSize = ExpandEnvironmentStringsW(szString, szNewString, dwNewSize)))
+                ERR("ExpandEnvironmentStrings returned error %d\n", GetLastError());
+            else if (!(szNewString = msi_alloc(dwNewSize)))
+                ERR("Out of memory\n");
+            else if (!(dwNewSize = ExpandEnvironmentStringsW(szString, szNewString, dwNewSize)))
+                ERR("ExpandEnvironmentStrings returned error %d\n", GetLastError());
+            else
+            {
+                V_VT(pVarResult) = VT_BSTR;
+                V_BSTR(pVarResult) = SysAllocStringLen(szNewString, dwNewSize);
+            }
+            msi_free(szNewString);
+            break;
+
+        case REG_DWORD:
+            V_VT(pVarResult) = VT_I4;
+            V_I4(pVarResult) = *((DWORD *)lpData);
+            break;
+
+        case REG_QWORD:
+            V_VT(pVarResult) = VT_BSTR;
+            V_BSTR(pVarResult) = SysAllocString(szREG_);   /* Weird string, don't know why native returns it */
+            break;
+
+        case REG_BINARY:
+            V_VT(pVarResult) = VT_BSTR;
+            V_BSTR(pVarResult) = SysAllocString(szREG_BINARY);
+            break;
+
+        case REG_NONE:
+            V_VT(pVarResult) = VT_EMPTY;
+            break;
+
+        default:
+            FIXME("Unhandled registry value type %d\n", dwType);
+    }
+}
+
 static HRESULT WINAPI InstallerImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -1004,11 +1097,12 @@ static HRESULT WINAPI InstallerImpl_Invoke(
     MSIHANDLE msiHandle;
     IDispatch *pDispatch = NULL;
     UINT ret;
-    VARIANTARG varg0, varg1;
+    VARIANTARG varg0, varg1, varg2;
     HRESULT hr;
 
     VariantInit(&varg0);
     VariantInit(&varg1);
+    VariantInit(&varg2);
 
     switch (dispIdMember)
     {
@@ -1042,6 +1136,95 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 }
 	    }
 	    break;
+
+        case DISPID_INSTALLER_REGISTRYVALUE:
+            if (wFlags & DISPATCH_METHOD) {
+                HKEY hkey;
+                LPWSTR szString = NULL;
+                DWORD dwSize = 0, dwType;
+                UINT posValue = 2;    /* Save valuePos so we can save puArgErr if we are unable to do our type conversions */
+
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
+                if (FAILED(hr)) return hr;
+                hr = DispGetParam_CopyOnly(pDispParams, &posValue, &varg2);
+                if (FAILED(hr))
+                {
+                    VariantClear(&varg1);
+                    return hr;
+                }
+                ret = RegOpenKeyW((HKEY)V_I4(&varg0), V_BSTR(&varg1), &hkey);
+
+                /* Third parameter can be VT_EMPTY, VT_I4, or VT_BSTR */
+                switch (V_VT(&varg2))
+                {
+                    case VT_EMPTY:  /* Return VT_BOOL as to whether or not registry key exists */
+                        V_VT(pVarResult) = VT_BOOL;
+                        V_BOOL(pVarResult) = (ret == ERROR_SUCCESS);
+                        break;
+
+                    case VT_BSTR:   /* Return value of specified key if it exists */
+                        if (ret == ERROR_SUCCESS &&
+                            (ret = RegQueryValueExW(hkey, V_BSTR(&varg2), NULL, NULL, NULL, &dwSize)) == ERROR_SUCCESS)
+                        {
+                            if (!(szString = msi_alloc(dwSize)))
+                                ERR("Out of memory\n");
+                            else if ((ret = RegQueryValueExW(hkey, V_BSTR(&varg2), NULL, &dwType, (LPBYTE)szString, &dwSize)) == ERROR_SUCCESS)
+                                variant_from_registry_value(pVarResult, dwType, (LPBYTE)szString, dwSize);
+                        }
+
+                        if (ret != ERROR_SUCCESS)
+                        {
+                            msi_free(szString);
+                            VariantClear(&varg2);
+                            VariantClear(&varg1);
+                            return DISP_E_BADINDEX;
+                        }
+                        break;
+
+                    default:     /* Try to make it into VT_I4, can use VariantChangeType for this */
+                        hr = VariantChangeType(&varg2, &varg2, 0, VT_I4);
+                        if (SUCCEEDED(hr) && ret != ERROR_SUCCESS) hr = DISP_E_BADINDEX; /* Conversion fine, but couldn't find key */
+                        if (FAILED(hr))
+                        {
+                            if (hr == DISP_E_TYPEMISMATCH) *puArgErr = posValue;
+                            VariantClear(&varg2);   /* Unknown type, so let's clear it */
+                            VariantClear(&varg1);
+                            return hr;
+                        }
+
+                        /* Retrieve class name or maximum value name or subkey name size */
+                        if (!V_I4(&varg2))
+                            ret = RegQueryInfoKeyW(hkey, NULL, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                        else if (V_I4(&varg2) > 0)
+                            ret = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &dwSize, NULL, NULL, NULL);
+                        else /* V_I4(&varg2) < 0 */
+                            ret = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL);
+
+                        if (ret == ERROR_SUCCESS)
+                        {
+                            if (!(szString = msi_alloc(++dwSize * sizeof(WCHAR))))
+                                ERR("Out of memory\n");
+                            else if (!V_I4(&varg2))
+                                ret = RegQueryInfoKeyW(hkey, szString, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                            else if (V_I4(&varg2) > 0)
+                                ret = RegEnumValueW(hkey, V_I4(&varg2)-1, szString, &dwSize, 0, 0, NULL, NULL);
+                            else /* V_I4(&varg2) < 0 */
+                                ret = RegEnumKeyW(hkey, -1 - V_I4(&varg2), szString, dwSize);
+
+                            if (szString && ret == ERROR_SUCCESS)
+                            {
+                                V_VT(pVarResult) = VT_BSTR;
+                                V_BSTR(pVarResult) = SysAllocString(szString);
+                            }
+                        }
+                }
+
+                msi_free(szString);
+                RegCloseKey(hkey);
+            }
+            break;
 
         case DISPID_INSTALLER_PRODUCTSTATE:
             if (wFlags & DISPATCH_PROPERTYGET) {
@@ -1096,6 +1279,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
             return DISP_E_MEMBERNOTFOUND;
     }
 
+    VariantClear(&varg2);
     VariantClear(&varg1);
     VariantClear(&varg0);
 

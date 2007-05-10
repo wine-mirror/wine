@@ -63,6 +63,11 @@ library WindowsInstaller
             Session* OpenPackage(
                 [in] VARIANT PackagePath,
                 [in, optional, defaultvalue(0)] long Options);
+        [id(DISPID_INSTALLER_REGISTRYVALUE), propget]
+            BSTR RegistryValue(
+                [in] VARIANT Root,
+                [in] BSTR Key,
+                [in, optional] VARIANT Value);
         [id(DISPID_INSTALLER_PRODUCTSTATE), propget]
             MsiInstallState ProductState(
                 [in] BSTR Product);
