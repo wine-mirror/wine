@@ -2659,7 +2659,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         while(1)
         {
             RECT mySrcRect;
-            TRACE("Looking if a Present can be done... ");
+            TRACE("Looking if a Present can be done...\n");
             /* Source Rectangle must be full surface */
             if( SrcRect ) {
                 if(SrcRect->left != 0 || SrcRect->top != 0 ||
