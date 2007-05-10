@@ -1157,6 +1157,7 @@ static void testCreateSelfSignCert(void)
     HCRYPTPROV csp;
     BOOL ret;
     HCRYPTKEY key;
+    CRYPT_KEY_PROV_INFO info;
 
     /* This crashes:
     context = CertCreateSelfSignCertificate(0, NULL, 0, NULL, NULL, NULL, NULL,
@@ -1228,6 +1229,54 @@ static void testCreateSelfSignCert(void)
     CryptReleaseContext(csp, 0);
     ret = CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
+
+    /* do the same test with AT_KEYEXCHANGE  and key info*/
+    memset(&info,0,sizeof(info));
+    info.dwProvType = PROV_RSA_FULL;
+    info.dwKeySpec = AT_KEYEXCHANGE;
+    info.pwszProvName = (LPWSTR) MS_DEF_PROV_W;
+    info.pwszContainerName = cspNameW;
+    context = CertCreateSelfSignCertificate(0, &name, 0, &info, NULL, NULL,
+        NULL, NULL);
+    ok(context != NULL, "CertCreateSelfSignCertificate failed: %08x\n",
+        GetLastError());
+    if (context)
+    {
+        DWORD size = 0;
+        PCRYPT_KEY_PROV_INFO info;
+
+        /* The context must have a key provider info property */
+        ret = CertGetCertificateContextProperty(context,
+            CERT_KEY_PROV_INFO_PROP_ID, NULL, &size);
+        ok(ret && size, "Expected non-zero key provider info\n");
+        if (size)
+        {
+            info = HeapAlloc(GetProcessHeap(), 0, size);
+            if (info)
+            {
+                ret = CertGetCertificateContextProperty(context,
+                    CERT_KEY_PROV_INFO_PROP_ID, info, &size);
+                ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
+                    GetLastError());
+                if (ret)
+                {
+                    /* Sanity-check the key provider */
+                    ok(!lstrcmpW(info->pwszContainerName, cspNameW),
+                        "Unexpected key container\n");
+                    ok(!lstrcmpW(info->pwszProvName, MS_DEF_PROV_W),
+                        "Unexpected provider\n");
+                    ok(info->dwKeySpec == AT_KEYEXCHANGE,
+                        "Expected AT_KEYEXCHANGE, got %d\n", info->dwKeySpec);
+                }
+                HeapFree(GetProcessHeap(), 0, info);
+            }
+        }
+
+        CertFreeCertificateContext(context);
+    }
+
+    CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+        CRYPT_DELETEKEYSET);
 }
 
 static const LPCSTR keyUsages[] = { szOID_PKIX_KP_CODE_SIGNING,

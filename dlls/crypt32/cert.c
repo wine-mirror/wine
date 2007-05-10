@@ -1970,10 +1970,10 @@ static void CertContext_SetKeyProvInfo(PCCERT_CONTEXT context,
             }
         }
         size = sizeof(info.dwKeySpec);
-        ret = CryptGetProvParam(hProv, PP_KEYSPEC, (LPBYTE)&info.dwKeySpec,
-         &size, 0);
-        if (!ret)
-            info.dwKeySpec = AT_SIGNATURE;
+        /* in case no CRYPT_KEY_PROV_INFO given,
+         *  we always use AT_SIGNATURE key spec
+         */
+        info.dwKeySpec = AT_SIGNATURE;
         size = sizeof(info.dwProvType);
         ret = CryptGetProvParam(hProv, PP_PROVTYPE, (LPBYTE)&info.dwProvType,
          &size, 0);
@@ -1996,19 +1996,19 @@ static void CertContext_SetKeyProvInfo(PCCERT_CONTEXT context,
  * in blob, using the crypto provider hProv and the signature algorithm sigAlgo.
  */
 static PCCERT_CONTEXT CRYPT_CreateSignedCert(const CRYPT_DER_BLOB *blob,
- HCRYPTPROV hProv, PCRYPT_ALGORITHM_IDENTIFIER sigAlgo)
+ HCRYPTPROV hProv, DWORD dwKeySpec, PCRYPT_ALGORITHM_IDENTIFIER sigAlgo)
 {
     PCCERT_CONTEXT context = NULL;
     BOOL ret;
     DWORD sigSize = 0;
 
-    ret = CryptSignCertificate(hProv, AT_SIGNATURE, X509_ASN_ENCODING,
+    ret = CryptSignCertificate(hProv, dwKeySpec, X509_ASN_ENCODING,
      blob->pbData, blob->cbData, sigAlgo, NULL, NULL, &sigSize);
     if (ret)
     {
         LPBYTE sig = CryptMemAlloc(sigSize);
 
-        ret = CryptSignCertificate(hProv, AT_SIGNATURE, X509_ASN_ENCODING,
+        ret = CryptSignCertificate(hProv, dwKeySpec, X509_ASN_ENCODING,
          blob->pbData, blob->cbData, sigAlgo, NULL, sig, &sigSize);
         if (ret)
         {
@@ -2168,24 +2168,80 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV hProv,
     PCCERT_CONTEXT context = NULL;
     BOOL ret, releaseContext = FALSE;
     PCERT_PUBLIC_KEY_INFO pubKey = NULL;
-    DWORD pubKeySize = 0;
+    DWORD pubKeySize = 0,dwKeySpec = AT_SIGNATURE;
 
     TRACE("(%08lx, %p, %08x, %p, %p, %p, %p, %p)\n", hProv,
      pSubjectIssuerBlob, dwFlags, pKeyProvInfo, pSignatureAlgorithm, pStartTime,
      pExtensions, pExtensions);
 
-    if (!hProv)
+    if(!pSubjectIssuerBlob)
     {
-        hProv = CRYPT_CreateKeyProv();
-        releaseContext = TRUE;
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
     }
 
-    CryptExportPublicKeyInfo(hProv, AT_SIGNATURE, X509_ASN_ENCODING, NULL,
+    if (!hProv)
+    {
+        if (!pKeyProvInfo)
+        {
+            hProv = CRYPT_CreateKeyProv();
+            releaseContext = TRUE;
+        }
+        else if (pKeyProvInfo->dwFlags & CERT_SET_KEY_PROV_HANDLE_PROP_ID)
+        {
+            SetLastError(NTE_BAD_FLAGS);
+            return NULL;
+        }
+        else
+        {
+            HCRYPTKEY hKey = 0;
+            /* acquire the context using the given information*/
+            ret = CryptAcquireContextW(&hProv,pKeyProvInfo->pwszContainerName,
+                    pKeyProvInfo->pwszProvName,pKeyProvInfo->dwProvType,
+                    pKeyProvInfo->dwFlags);
+            if (!ret)
+            {
+	        if(GetLastError() != NTE_BAD_KEYSET)
+                    return NULL;
+                /* create the key set */
+                ret = CryptAcquireContextW(&hProv,pKeyProvInfo->pwszContainerName,
+                    pKeyProvInfo->pwszProvName,pKeyProvInfo->dwProvType,
+                    pKeyProvInfo->dwFlags|CRYPT_NEWKEYSET);
+                if (!ret)
+                    return NULL;
+	    }
+            dwKeySpec = pKeyProvInfo->dwKeySpec;
+            /* check if the key is here */
+            ret = CryptGetUserKey(hProv,dwKeySpec,&hKey);
+            if(!ret)
+            {
+                if (NTE_NO_KEY == GetLastError())
+                { /* generate the key */
+                    ret = CryptGenKey(hProv,dwKeySpec,0,&hKey);
+                }
+                if (!ret)
+                {
+                    CryptReleaseContext(hProv,0);
+                    SetLastError(NTE_BAD_KEYSET);
+                    return NULL;
+                }
+            }
+            CryptDestroyKey(hKey);
+            releaseContext = TRUE;
+        }
+    }
+    else if (pKeyProvInfo)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    CryptExportPublicKeyInfo(hProv, dwKeySpec, X509_ASN_ENCODING, NULL,
      &pubKeySize);
     pubKey = CryptMemAlloc(pubKeySize);
     if (pubKey)
     {
-        ret = CryptExportPublicKeyInfo(hProv, AT_SIGNATURE, X509_ASN_ENCODING,
+        ret = CryptExportPublicKeyInfo(hProv, dwKeySpec, X509_ASN_ENCODING,
          pubKey, &pubKeySize);
         if (ret)
         {
@@ -2203,7 +2259,7 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV hProv,
             if (ret)
             {
                 if (!(dwFlags & CERT_CREATE_SELFSIGN_NO_SIGN))
-                    context = CRYPT_CreateSignedCert(&blob, hProv,
+                    context = CRYPT_CreateSignedCert(&blob, hProv,dwKeySpec,
                      &info.SignatureAlgorithm);
                 else
                     context = CertCreateCertificateContext(X509_ASN_ENCODING,
