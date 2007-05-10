@@ -1279,13 +1279,8 @@ static type_t *make_class(char *name)
 static type_t *make_safearray(type_t *type)
 {
   type_t *sa = duptype(find_type("SAFEARRAY", 0), 1);
-  type_t *ptr;
-
   sa->ref = type;
-  ptr = make_type(RPC_FC_FP, sa);
-  ptr->name = xstrdup("SAFEARRAY");
-
-  return ptr;
+  return make_type(RPC_FC_FP, sa);
 }
 
 #define HASHMAX 64
