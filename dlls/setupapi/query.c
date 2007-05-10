@@ -672,7 +672,7 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationW(
      * the original inf file and cache it, but that would require building a
      * .pnf file. */
     hinf = SetupOpenInfFileW(inf_path, NULL, INF_STYLE_WIN4, NULL);
-    if (!hinf) return FALSE;
+    if (hinf == INVALID_HANDLE_VALUE) return FALSE;
 
     if (!SetupGetLineTextW(NULL, hinf, wszVersion, wszCatalogFile,
                            OriginalFileInfo->OriginalCatalogName,
