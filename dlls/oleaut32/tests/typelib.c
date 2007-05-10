@@ -343,9 +343,7 @@ static void test_CreateDispTypeInfo(void)
 
     hr = ITypeInfo_GetRefTypeOfImplType(pTypeInfo, 0, &href);
     ok(hr == S_OK, "hr %08x\n", hr);
-    todo_wine {
     ok(href == 0, "href = 0x%x\n", href);
-    }
     hr = ITypeInfo_GetRefTypeInfo(pTypeInfo, href, &pTI2);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI2, &pTypeAttr);

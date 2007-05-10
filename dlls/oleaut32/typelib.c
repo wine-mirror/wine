@@ -70,6 +70,7 @@
 #include "typelib.h"
 #include "wine/debug.h"
 #include "variant.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(typelib);
@@ -894,9 +895,9 @@ typedef struct tagITypeLibImpl
     TLBImpLib   * pImpLibs;     /* linked list to all imported typelibs */
     int ctTypeDesc;             /* number of items in type desc array */
     TYPEDESC * pTypeDesc;       /* array of TypeDescriptions found in the
-				   library. Only used while read MSFT
+				   library. Only used while reading MSFT
 				   typelibs */
-
+    struct list ref_list;       /* list of ref types in this typelib */
     /* typelibs are cached, keyed by path and index, so store the linked list info within them */
     struct tagITypeLibImpl *next, *prev;
     WCHAR *path;
@@ -932,7 +933,7 @@ typedef struct tagTLBRefType
 			       TLB_REF_INTERNAL for internal refs
 			       TLB_REF_NOT_FOUND for broken refs */
 
-    struct tagTLBRefType * next;
+    struct list entry;
 } TLBRefType;
 
 #define TLB_REF_USE_GUID -2
@@ -1015,7 +1016,6 @@ typedef struct tagITypeInfoImpl
     /* Implemented Interfaces  */
     TLBImplType * impltypelist;
 
-    TLBRefType * reflist;
     int ctCustData;
     TLBCustData * pCustData;        /* linked list to cust data; */
     struct tagITypeInfoImpl * next;
@@ -1042,7 +1042,7 @@ typedef struct tagTLBContext
 } TLBContext;
 
 
-static void MSFT_DoRefType(TLBContext *pcx, ITypeInfoImpl *pTI, int offset);
+static void MSFT_DoRefType(TLBContext *pcx, ITypeLibImpl *pTL, int offset);
 
 /*
  debug
@@ -1200,23 +1200,24 @@ static void dump_TLBImpLib(const TLBImpLib *import)
 		    import->wVersionMinor, import->lcid, import->offset);
 }
 
-static void dump_TLBRefType(const TLBRefType * prt)
+static void dump_TLBRefType(const ITypeLibImpl *pTL)
 {
-	while (prt)
-	{
-	  TRACE_(typelib)("href:0x%08x\n", prt->reference);
-	  if(prt->index == -1)
-	    TRACE_(typelib)("%s\n", debugstr_guid(&(prt->guid)));
-	  else
-	    TRACE_(typelib)("type no: %d\n", prt->index);
+    TLBRefType *ref;
 
-	  if(prt->pImpTLInfo != TLB_REF_INTERNAL &&
-	     prt->pImpTLInfo != TLB_REF_NOT_FOUND) {
-	      TRACE_(typelib)("in lib\n");
-	      dump_TLBImpLib(prt->pImpTLInfo);
-	  }
-	  prt = prt->next;
-	};
+    LIST_FOR_EACH_ENTRY(ref, &pTL->ref_list, TLBRefType, entry)
+    {
+        TRACE_(typelib)("href:0x%08x\n", ref->reference);
+        if(ref->index == -1)
+	    TRACE_(typelib)("%s\n", debugstr_guid(&(ref->guid)));
+        else
+	    TRACE_(typelib)("type no: %d\n", ref->index);
+
+        if(ref->pImpTLInfo != TLB_REF_INTERNAL && ref->pImpTLInfo != TLB_REF_NOT_FOUND)
+        {
+            TRACE_(typelib)("in lib\n");
+            dump_TLBImpLib(ref->pImpTLInfo);
+        }
+    }
 }
 
 static void dump_TLBImplType(const TLBImplType * impl)
@@ -1697,7 +1698,7 @@ static void MSFT_GetTdesc(TLBContext *pcx, INT type, TYPEDESC *pTd,
         *pTd=pcx->pLibInfo->pTypeDesc[type/(2*sizeof(INT))];
 
     if(pTd->vt == VT_USERDEFINED)
-      MSFT_DoRefType(pcx, pTI, pTd->u.hreftype);
+      MSFT_DoRefType(pcx, pTI->pTypeLib, pTd->u.hreftype);
 
     TRACE_(typelib)("vt type = %X\n", pTd->vt);
 }
@@ -1718,7 +1719,7 @@ static void MSFT_ResolveReferencedTypes(TLBContext *pcx, ITypeInfoImpl *pTI, TYP
             break;
 
         case VT_USERDEFINED:
-            MSFT_DoRefType(pcx, pTI,
+            MSFT_DoRefType(pcx, pTI->pTypeLib,
                            lpTypeDesc->u.hreftype);
 
             lpTypeDesc = NULL;
@@ -2002,22 +2003,21 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
  * in the typelib, it's just an (file) offset in the type info base dir.
  * If comes from import, it's an offset+1 in the ImpInfo table
  * */
-static void MSFT_DoRefType(TLBContext *pcx, ITypeInfoImpl *pTI,
+static void MSFT_DoRefType(TLBContext *pcx, ITypeLibImpl *pTL,
                           int offset)
 {
     int j;
-    TLBRefType **ppRefType = &pTI->reflist;
+    TLBRefType *ref;
 
     TRACE_(typelib)("TLB context %p, TLB offset %x\n", pcx, offset);
 
-    while(*ppRefType) {
-        if((*ppRefType)->reference == offset)
-	    return;
-	ppRefType = &(*ppRefType)->next;
+    LIST_FOR_EACH_ENTRY(ref, &pTL->ref_list, TLBRefType, entry)
+    {
+        if(ref->reference == offset) return;
     }
 
-    *ppRefType = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-			   sizeof(**ppRefType));
+    ref = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ref));
+    list_add_tail(&pTL->ref_list, &ref->entry);
 
     if(!MSFT_HREFTYPE_INTHISFILE( offset)) {
         /* external typelib */
@@ -2033,24 +2033,24 @@ static void MSFT_DoRefType(TLBContext *pcx, ITypeInfoImpl *pTI,
             pImpLib=pImpLib->next;
         }
         if(pImpLib){
-            (*ppRefType)->reference=offset;
-            (*ppRefType)->pImpTLInfo = pImpLib;
+            ref->reference = offset;
+            ref->pImpTLInfo = pImpLib;
             if(impinfo.flags & MSFT_IMPINFO_OFFSET_IS_GUID) {
-                MSFT_ReadGuid(&(*ppRefType)->guid, impinfo.oGuid, pcx);
-                TRACE("importing by guid %s\n", debugstr_guid(&(*ppRefType)->guid));
-                (*ppRefType)->index = TLB_REF_USE_GUID;
+                MSFT_ReadGuid(&ref->guid, impinfo.oGuid, pcx);
+                TRACE("importing by guid %s\n", debugstr_guid(&ref->guid));
+                ref->index = TLB_REF_USE_GUID;
             } else
-                (*ppRefType)->index = impinfo.oGuid;
+                ref->index = impinfo.oGuid;
         }else{
             ERR("Cannot find a reference\n");
-            (*ppRefType)->reference=-1;
-            (*ppRefType)->pImpTLInfo=TLB_REF_NOT_FOUND;
+            ref->reference = -1;
+            ref->pImpTLInfo = TLB_REF_NOT_FOUND;
         }
     }else{
         /* in this typelib */
-        (*ppRefType)->index = MSFT_HREFTYPE_INDEX(offset);
-        (*ppRefType)->reference=offset;
-        (*ppRefType)->pImpTLInfo=TLB_REF_INTERNAL;
+        ref->index = MSFT_HREFTYPE_INDEX(offset);
+        ref->reference = offset;
+        ref->pImpTLInfo = TLB_REF_INTERNAL;
     }
 }
 
@@ -2068,7 +2068,7 @@ static void MSFT_DoImplTypes(TLBContext *pcx, ITypeInfoImpl *pTI, int count,
         if(offset<0) break; /* paranoia */
         *ppImpl=TLB_Alloc(sizeof(**ppImpl));
         MSFT_ReadLEDWords(&refrec,sizeof(refrec),pcx,offset+pcx->pTblDir->pRefTab.offset);
-        MSFT_DoRefType(pcx, pTI, refrec.reftype);
+        MSFT_DoRefType(pcx, pTI->pTypeLib, refrec.reftype);
 	(*ppImpl)->hRef = refrec.reftype;
 	(*ppImpl)->implflags=refrec.flags;
         (*ppImpl)->ctCustData=
@@ -2157,18 +2157,18 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
 
             if (tiBase.datatype1 != -1)
             {
-              MSFT_DoRefType(pcx, ptiRet, tiBase.datatype1);
+              MSFT_DoRefType(pcx, pLibInfo, tiBase.datatype1);
 	      ptiRet->impltypelist->hRef = tiBase.datatype1;
             }
             else
 	    {
-              MSFT_DoRefType(pcx, ptiRet, dispatch_href);
+              MSFT_DoRefType(pcx, pLibInfo, dispatch_href);
               ptiRet->impltypelist->hRef = dispatch_href;
             }
             break;
         default:
             ptiRet->impltypelist=TLB_Alloc(sizeof(TLBImplType));
-            MSFT_DoRefType(pcx, ptiRet, tiBase.datatype1);
+            MSFT_DoRefType(pcx, pLibInfo, tiBase.datatype1);
 	    ptiRet->impltypelist->hRef = tiBase.datatype1;
             break;
        }
@@ -2361,6 +2361,8 @@ static ITypeLibImpl* TypeLibImpl_Constructor(void)
     pTypeLibImpl->lpVtbl = &tlbvt;
     pTypeLibImpl->lpVtblTypeComp = &tlbtcvt;
     pTypeLibImpl->ref = 1;
+
+    list_init(&pTypeLibImpl->ref_list);
 
     return pTypeLibImpl;
 }
@@ -2781,12 +2783,12 @@ static WORD *SLTG_DoElem(WORD *pType, char *pBlk, ELEMDESC *pElem)
 }
 
 
-static void SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeInfoImpl *pTI,
+static void SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 			char *pNameTable)
 {
     int ref;
     char *name;
-    TLBRefType **ppRefType;
+    TLBRefType *ref_type;
 
     if(pRef->magic != SLTG_REF_MAGIC) {
         FIXME("Ref magic = %x\n", pRef->magic);
@@ -2794,19 +2796,17 @@ static void SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeInfoImpl *pTI,
     }
     name = ( (char*)(&pRef->names) + pRef->number);
 
-    ppRefType = &pTI->reflist;
     for(ref = 0; ref < pRef->number >> 3; ref++) {
         char *refname;
 	unsigned int lib_offs, type_num;
 
-	*ppRefType = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-			       sizeof(**ppRefType));
+	ref_type = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ref_type));
 
 	name += SLTG_ReadStringA(name, &refname);
 	if(sscanf(refname, "*\\R%x*#%x", &lib_offs, &type_num) != 2)
 	    FIXME("Can't sscanf ref\n");
 	if(lib_offs != 0xffff) {
-	    TLBImpLib **import = &pTI->pTypeLib->pImpLibs;
+	    TLBImpLib **import = &pTL->pImpLibs;
 
 	    while(*import) {
 	        if((*import)->offset == lib_offs)
@@ -2835,19 +2835,19 @@ static void SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeInfoImpl *pTI,
 		fname[len-1] = '\0';
 		(*import)->name = TLB_MultiByteToBSTR(fname);
 	    }
-	    (*ppRefType)->pImpTLInfo = *import;
+	    ref_type->pImpTLInfo = *import;
 	} else { /* internal ref */
-	  (*ppRefType)->pImpTLInfo = TLB_REF_INTERNAL;
+	  ref_type->pImpTLInfo = TLB_REF_INTERNAL;
 	}
-	(*ppRefType)->reference = ref;
-	(*ppRefType)->index = type_num;
+	ref_type->reference = ref;
+	ref_type->index = type_num;
 
 	HeapFree(GetProcessHeap(), 0, refname);
-	ppRefType = &(*ppRefType)->next;
+        list_add_tail(&pTL->ref_list, &ref_type->entry);
     }
     if((BYTE)*name != SLTG_REF_MAGIC)
       FIXME("End of ref block magic = %x\n", *name);
-    dump_TLBRefType(pTI->reflist);
+    dump_TLBRefType(pTL);
 }
 
 static char *SLTG_DoImpls(char *pBlk, ITypeInfoImpl *pTI,
@@ -3074,7 +3074,7 @@ static void SLTG_ProcessCoClass(char *pBlk, ITypeInfoImpl *pTI,
     char *pFirstItem, *pNextItem;
 
     if(pTIHeader->href_table != 0xffffffff) {
-        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
+        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
 		    pNameTable);
     }
 
@@ -3093,7 +3093,7 @@ static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
     char *pFirstItem, *pNextItem;
 
     if(pTIHeader->href_table != 0xffffffff) {
-        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
+        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
 		    pNameTable);
     }
 
@@ -3130,7 +3130,7 @@ static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
   }
 
   if(pTIHeader->href_table != 0xffffffff) {
-      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
+      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
 		  pNameTable);
   }
 
@@ -3145,7 +3145,7 @@ static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
 				 SLTG_TypeInfoTail *pTITail)
 {
   if (pTIHeader->href_table != 0xffffffff)
-      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
+      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
                                   pNameTable);
 
   if (pTITail->vars_off != 0xffff)
@@ -3175,7 +3175,7 @@ static void SLTG_ProcessModule(char *pBlk, ITypeInfoImpl *pTI,
 			       SLTG_TypeInfoTail *pTITail)
 {
   if (pTIHeader->href_table != 0xffffffff)
-      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI,
+      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
                                   pNameTable);
 
   if (pTITail->vars_off != 0xffff)
@@ -3553,6 +3553,8 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
     {
       TLBImpLib *pImpLib, *pImpLibNext;
       TLBCustData *pCustData, *pCustDataNext;
+      TLBRefType *ref_type;
+      void *cursor2;
       int i;
 
       /* remove cache entry */
@@ -3614,6 +3616,12 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
 
           pImpLibNext = pImpLib->next;
           TLB_Free(pImpLib);
+      }
+
+      LIST_FOR_EACH_ENTRY_SAFE(ref_type, cursor2, &This->ref_list, TLBRefType, entry)
+      {
+          list_remove(&ref_type->entry);
+          TLB_Free(ref_type);
       }
 
       if (This->pTypeInfo) /* can be NULL */
@@ -4402,7 +4410,6 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
       TLBFuncDesc *pFInfo, *pFInfoNext;
       TLBVarDesc *pVInfo, *pVInfoNext;
       TLBImplType *pImpl, *pImplNext;
-      TLBRefType *pRefType,*pRefTypeNext;
       TLBCustData *pCustData, *pCustDataNext;
 
       TRACE("destroying ITypeInfo(%p)\n",This);
@@ -4480,11 +4487,6 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
           }
           pImplNext = pImpl->next;
           TLB_Free(pImpl);
-      }
-      for(pRefType = This->reflist; pRefType; pRefType = pRefTypeNext)
-      {
-          pRefTypeNext = pRefType->next;
-          TLB_Free(pRefType);
       }
       TLB_Free(This->pCustData);
 
@@ -5999,51 +6001,55 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 	  result = S_OK;
 
     } else {
-        TLBRefType *pRefType;
-        for(pRefType = This->reflist; pRefType; pRefType = pRefType->next) {
-	    if(pRefType->reference == hRefType)
-	        break;
-	}
-	if(!pRefType)
-	  FIXME("Can't find pRefType for ref %x\n", hRefType);
-	if(pRefType && hRefType != -1) {
+        TLBRefType *ref_type;
+        LIST_FOR_EACH_ENTRY(ref_type, &This->pTypeLib->ref_list, TLBRefType, entry)
+        {
+            if(ref_type->reference == hRefType)
+                break;
+        }
+        if(&ref_type->entry == &This->pTypeLib->ref_list)
+        {
+            FIXME("Can't find pRefType for ref %x\n", hRefType);
+            goto end;
+        }
+        if(hRefType != -1) {
             ITypeLib *pTLib = NULL;
 
-	    if(pRefType->pImpTLInfo == TLB_REF_INTERNAL) {
+            if(ref_type->pImpTLInfo == TLB_REF_INTERNAL) {
 	        UINT Index;
 		result = ITypeInfo_GetContainingTypeLib(iface, &pTLib, &Index);
 	    } else {
-	        if(pRefType->pImpTLInfo->pImpTypeLib) {
+                if(ref_type->pImpTLInfo->pImpTypeLib) {
 		    TRACE("typeinfo in imported typelib that is already loaded\n");
-		    pTLib = (ITypeLib*)pRefType->pImpTLInfo->pImpTypeLib;
+                    pTLib = (ITypeLib*)ref_type->pImpTLInfo->pImpTypeLib;
 		    ITypeLib2_AddRef((ITypeLib*) pTLib);
 		    result = S_OK;
 		} else {
 		    TRACE("typeinfo in imported typelib that isn't already loaded\n");
-		    result = LoadRegTypeLib( &pRefType->pImpTLInfo->guid,
-					     pRefType->pImpTLInfo->wVersionMajor,
-					     pRefType->pImpTLInfo->wVersionMinor,
-					     pRefType->pImpTLInfo->lcid,
+                    result = LoadRegTypeLib( &ref_type->pImpTLInfo->guid,
+                                             ref_type->pImpTLInfo->wVersionMajor,
+                                             ref_type->pImpTLInfo->wVersionMinor,
+                                             ref_type->pImpTLInfo->lcid,
 					     &pTLib);
 
 		    if(!SUCCEEDED(result)) {
-		        BSTR libnam=SysAllocString(pRefType->pImpTLInfo->name);
+                        BSTR libnam=SysAllocString(ref_type->pImpTLInfo->name);
 			result=LoadTypeLib(libnam, &pTLib);
 			SysFreeString(libnam);
 		    }
 		    if(SUCCEEDED(result)) {
-		        pRefType->pImpTLInfo->pImpTypeLib = (ITypeLibImpl*)pTLib;
+                        ref_type->pImpTLInfo->pImpTypeLib = (ITypeLibImpl*)pTLib;
 			ITypeLib2_AddRef(pTLib);
 		    }
 		}
 	    }
 	    if(SUCCEEDED(result)) {
-	        if(pRefType->index == TLB_REF_USE_GUID)
+                if(ref_type->index == TLB_REF_USE_GUID)
 		    result = ITypeLib2_GetTypeInfoOfGuid(pTLib,
-							 &pRefType->guid,
+                                                         &ref_type->guid,
 							 ppTInfo);
 		else
-		    result = ITypeLib2_GetTypeInfo(pTLib, pRefType->index,
+                    result = ITypeLib2_GetTypeInfo(pTLib, ref_type->index,
 						   ppTInfo);
 	    }
 	    if (pTLib != NULL)
@@ -6051,6 +6057,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 	}
     }
 
+end:
     TRACE("(%p) hreftype 0x%04x loaded %s (%p)\n", This, hRefType,
           SUCCEEDED(result)? "SUCCESS":"FAILURE", *ppTInfo);
     return result;
@@ -6809,6 +6816,7 @@ HRESULT WINAPI CreateDispTypeInfo(
     ITypeLibImpl *pTypeLibImpl;
     int param, func;
     TLBFuncDesc **ppFuncDesc;
+    TLBRefType *ref;
 
     TRACE("\n");
     pTypeLibImpl = TypeLibImpl_Constructor();
@@ -6892,12 +6900,13 @@ HRESULT WINAPI CreateDispTypeInfo(
     pTIClass->TypeAttr.wTypeFlags = 0;
 
     pTIClass->impltypelist = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pTIClass->impltypelist));
-    pTIClass->impltypelist->hRef = 1;
+    pTIClass->impltypelist->hRef = 0;
 
-    pTIClass->reflist = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pTIClass->reflist));
-    pTIClass->reflist->index = 0;
-    pTIClass->reflist->reference = 1;
-    pTIClass->reflist->pImpTLInfo = TLB_REF_INTERNAL;
+    ref = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ref));
+    ref->index = 0;
+    ref->reference = 0;
+    ref->pImpTLInfo = TLB_REF_INTERNAL;
+    list_add_head(&pTypeLibImpl->ref_list, &ref->entry);
 
     dump_TypeInfo(pTIClass);
 
