@@ -68,6 +68,7 @@ const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"http://www.winehq.org/tests/foo%20bar", URL_UNESCAPE , S_OK, "http://www.winehq.org/tests/foo bar"},
     {"file:///c:/tests/foo%20bar", URL_UNESCAPE , S_OK, "file:///c:/tests/foo bar"},
     {"file:///c:/tests\\foo%20bar", URL_UNESCAPE , S_OK, "file:///c:/tests/foo bar"},
+    {"file:///c:/tests/foo%20bar", 0, S_OK, "file:///c:/tests/foo%20bar"},
     {"file:///c:/tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "file://c:\\tests\\foo bar"},
     {"file://c:/tests/../tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "file://c:\\tests\\foo bar"},
     {"file://c:/tests\\../tests/foo%20bar", URL_FILE_USE_PATHURL, S_OK, "file://c:\\tests\\foo bar"},
@@ -80,6 +81,8 @@ const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"c:\\dir\\file", 0, S_OK, "file:///c:/dir/file"},
     {"file:///c:\\dir\\file", 0, S_OK, "file:///c:/dir/file"},
     {"c:dir\\file", 0, S_OK, "file:///c:dir/file"},
+    {"c:\\tests\\foo bar", URL_FILE_USE_PATHURL, S_OK, "file://c:\\tests\\foo bar"},
+    {"c:\\tests\\foo bar", 0, S_OK, "file:///c:/tests/foo%20bar"},
     {"A", 0, S_OK, "A"},
     {"", 0, S_OK, ""}
 };
@@ -508,12 +511,6 @@ static void test_UrlCanonicalize(void)
     }
 
     /* move to TEST_CANONICALIZE when fixed */
-    dwSize = sizeof szReturnUrl;
-    ok(UrlCanonicalizeA("c:\\tests\\foo bar", szReturnUrl, &dwSize, 0) == S_OK, "UrlCanonicalizeA didn't return 0x%08x\n", S_OK);
-    todo_wine {
-        ok(strcmp(szReturnUrl,"file:///c:/tests/foo%20bar")==0, "UrlCanonicalizeA got %s\n", szReturnUrl);
-    }
-
     dwSize = sizeof szReturnUrl;
     /*LimeWire online installer calls this*/
     hr = UrlCanonicalizeA("/uri-res/N2R?urn:sha1:B3K", szReturnUrl, &dwSize,URL_DONT_ESCAPE_EXTRA_INFO | URL_WININET_COMPATIBILITY /*0x82000000*/);

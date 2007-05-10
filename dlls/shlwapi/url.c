@@ -358,6 +358,13 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 
         memcpy(wk2, wszFilePrefix, sizeof(wszFilePrefix));
         wk2 += sizeof(wszFilePrefix)/sizeof(WCHAR);
+        if (dwFlags & URL_FILE_USE_PATHURL)
+        {
+            slash = '\\';
+            --wk2;
+        }
+        else
+            dwFlags |= URL_ESCAPE_UNSAFE;
         state = 5;
     }
 
