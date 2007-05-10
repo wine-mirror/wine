@@ -55,9 +55,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
 
-static UINT console_input_codepage;
-static UINT console_output_codepage;
-
 static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
 static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
 
@@ -141,12 +138,19 @@ HWND WINAPI GetConsoleWindow(VOID)
  */
 UINT WINAPI GetConsoleCP(VOID)
 {
-    if (!console_input_codepage) 
+    BOOL ret;
+    UINT codepage = GetOEMCP(); /* default value */
+
+    SERVER_START_REQ(get_console_input_info)
     {
-        console_input_codepage = GetOEMCP();
-	TRACE("%u\n", console_input_codepage);
+        req->handle = 0;
+        ret = !wine_server_call_err(req);
+        if (ret && reply->input_cp)
+            codepage = reply->input_cp;
     }
-    return console_input_codepage;
+    SERVER_END_REQ;
+
+    return codepage;
 }
 
 
@@ -155,9 +159,24 @@ UINT WINAPI GetConsoleCP(VOID)
  */
 BOOL WINAPI SetConsoleCP(UINT cp)
 {
-    if (!IsValidCodePage( cp )) return FALSE;
-    console_input_codepage = cp;
-    return TRUE;
+    BOOL ret;
+
+    if (!IsValidCodePage(cp))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    SERVER_START_REQ(set_console_input_info)
+    {
+        req->handle   = 0;
+        req->mask     = SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE;
+        req->input_cp = cp;
+        ret = !wine_server_call_err(req);
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 
@@ -166,12 +185,19 @@ BOOL WINAPI SetConsoleCP(UINT cp)
  */
 UINT WINAPI GetConsoleOutputCP(VOID)
 {
-    if (!console_output_codepage)
+    BOOL ret;
+    UINT codepage = GetOEMCP(); /* default value */
+
+    SERVER_START_REQ(get_console_input_info)
     {
-        console_output_codepage = GetOEMCP();
-	TRACE("%u\n", console_output_codepage);
+        req->handle = 0;
+        ret = !wine_server_call_err(req);
+        if (ret && reply->output_cp)
+            codepage = reply->output_cp;
     }
-    return console_output_codepage;
+    SERVER_END_REQ;
+
+    return codepage;
 }
 
 
@@ -187,9 +213,24 @@ UINT WINAPI GetConsoleOutputCP(VOID)
  */
 BOOL WINAPI SetConsoleOutputCP(UINT cp)
 {
-    if (!IsValidCodePage( cp )) return FALSE;
-    console_output_codepage = cp;
-    return TRUE;
+    BOOL ret;
+
+    if (!IsValidCodePage(cp))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    SERVER_START_REQ(set_console_input_info)
+    {
+        req->handle   = 0;
+        req->mask     = SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE;
+        req->output_cp = cp;
+        ret = !wine_server_call_err(req);
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 

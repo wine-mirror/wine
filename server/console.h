@@ -42,6 +42,8 @@ struct console_input
     int                          history_index; /* number of used entries in history array */
     int                          history_mode;  /* mode of history (non zero means remove doubled strings */
     int                          edition_mode;  /* index to edition mode flavors */
+    int                          input_cp;      /* console input codepage */
+    int                          output_cp;     /* console output codepage */
     struct event                *event;         /* event to wait on for input queue */
 };
 

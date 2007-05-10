@@ -1466,6 +1466,8 @@ static void dump_set_console_input_info_request( const struct set_console_input_
     fprintf( stderr, " history_mode=%d,", req->history_mode );
     fprintf( stderr, " history_size=%d,", req->history_size );
     fprintf( stderr, " edition_mode=%d,", req->edition_mode );
+    fprintf( stderr, " input_cp=%d,", req->input_cp );
+    fprintf( stderr, " output_cp=%d,", req->output_cp );
     fprintf( stderr, " title=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -1481,6 +1483,8 @@ static void dump_get_console_input_info_reply( const struct get_console_input_in
     fprintf( stderr, " history_size=%d,", req->history_size );
     fprintf( stderr, " history_index=%d,", req->history_index );
     fprintf( stderr, " edition_mode=%d,", req->edition_mode );
+    fprintf( stderr, " input_cp=%d,", req->input_cp );
+    fprintf( stderr, " output_cp=%d,", req->output_cp );
     fprintf( stderr, " title=" );
     dump_varargs_unicode_str( cur_size );
 }

@@ -1378,6 +1378,8 @@ struct set_console_input_info_request
     int          history_mode;
     int          history_size;
     int          edition_mode;
+    int          input_cp;
+    int          output_cp;
     /* VARARG(title,unicode_str); */
 };
 struct set_console_input_info_reply
@@ -1389,6 +1391,8 @@ struct set_console_input_info_reply
 #define SET_CONSOLE_INPUT_INFO_HISTORY_MODE     0x04
 #define SET_CONSOLE_INPUT_INFO_HISTORY_SIZE     0x08
 #define SET_CONSOLE_INPUT_INFO_EDITION_MODE     0x10
+#define SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE   0x20
+#define SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE  0x40
 
 
 
@@ -1404,6 +1408,8 @@ struct get_console_input_info_reply
     int          history_size;
     int          history_index;
     int          edition_mode;
+    int          input_cp;
+    int          output_cp;
     /* VARARG(title,unicode_str); */
 };
 
@@ -4722,6 +4728,6 @@ union generic_reply
     struct get_next_device_request_reply get_next_device_request_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 303
+#define SERVER_PROTOCOL_VERSION 304
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

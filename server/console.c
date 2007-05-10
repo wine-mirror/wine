@@ -255,6 +255,8 @@ static struct object *create_console_input( struct thread* renderer )
     console_input->history_index = 0;
     console_input->history_mode  = 0;
     console_input->edition_mode  = 0;
+    console_input->input_cp      = 0;
+    console_input->output_cp     = 0;
     console_input->event         = create_event( NULL, NULL, 0, 1, 0 );
 
     if (!console_input->history || !console_input->evt)
@@ -679,6 +681,14 @@ static int set_console_input_info( const struct set_console_input_info_request *
     if (req->mask & SET_CONSOLE_INPUT_INFO_EDITION_MODE)
     {
         console->edition_mode = req->edition_mode;
+    }
+    if (req->mask & SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE)
+    {
+        console->input_cp = req->input_cp;
+    }
+    if (req->mask & SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE)
+    {
+        console->output_cp = req->output_cp;
     }
     release_object( console );
     return 1;
@@ -1372,6 +1382,8 @@ DECL_HANDLER(get_console_input_info)
     reply->history_size  = console->history_size;
     reply->history_index = console->history_index;
     reply->edition_mode  = console->edition_mode;
+    reply->input_cp      = console->input_cp;
+    reply->output_cp     = console->output_cp;
 
     release_object( console );
 }
