@@ -2632,7 +2632,7 @@ static LONG CRYPT_OpenParentStore(DWORD dwFlags,
         /* hklm\Software\Microsoft\Cryptography\Services\servicename\
          * SystemCertificates
          */
-        FIXME("CERT_SYSTEM_STORE_SERVICES");
+        FIXME("CERT_SYSTEM_STORE_SERVICES\n");
         return ERROR_FILE_NOT_FOUND;
     case CERT_SYSTEM_STORE_USERS:
         /* hku\user sid\Software\Microsoft\SystemCertificates */
