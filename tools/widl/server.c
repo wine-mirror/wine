@@ -192,7 +192,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         assign_stub_out_args(server, indent, func);
 
         /* Call the real server function */
-        if (!is_void(def->type, NULL))
+        if (!is_void(def->type))
             print_server("_RetVal = ");
         else
             print_server("");
@@ -246,7 +246,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         write_remoting_arguments(server, indent, func, type_offset, PASS_OUT, PHASE_MARSHAL);
 
         /* marshall the return value */
-        if (!is_void(def->type, NULL))
+        if (!is_void(def->type))
             print_phase_basetype(server, indent, PHASE_MARSHAL, PASS_RETURN, def, "_RetVal");
 
         indent--;

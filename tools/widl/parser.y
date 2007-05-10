@@ -79,11 +79,13 @@ static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, exp
 static type_t *make_type(unsigned char type, type_t *ref);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static array_dims_t *append_array(array_dims_t *list, expr_t *expr);
-static void set_type(var_t *v, type_t *type, array_dims_t *arr);
+static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
 static var_list_t *append_var(var_list_t *list, var_t *var);
 static var_t *make_var(char *name);
+static pident_list_t *append_pident(pident_list_t *list, pident_t *p);
+static pident_t *make_pident(var_t *var);
 static func_list_t *append_func(func_list_t *list, func_t *func);
 static func_t *make_func(var_t *def, var_list_t *args);
 static type_t *make_class(char *name);
@@ -127,6 +129,8 @@ static void check_arg(var_t *arg);
 	type_t *type;
 	var_t *var;
 	var_list_t *var_list;
+	pident_t *pident;
+	pident_list_t *pident_list;
 	func_t *func;
 	func_list_t *func_list;
 	ifref_t *ifref;
@@ -234,8 +238,10 @@ static void check_arg(var_t *arg);
 %type <ifref> coclass_int
 %type <ifref_list> gbl_statements coclass_ints
 %type <var> arg field s_field case enum constdef externdef
-%type <var_list> m_args no_args args fields cases enums enum_list pident_list dispint_props
-%type <var> m_ident t_ident ident p_ident pident
+%type <var_list> m_args no_args args fields cases enums enum_list dispint_props
+%type <var> m_ident t_ident ident
+%type <pident> p_ident pident
+%type <pident_list> pident_list
 %type <func> funcdef
 %type <func_list> int_statements dispint_meths
 %type <type> coclass coclasshdr coclassdef
@@ -297,12 +303,12 @@ int_statements:					{ $$ = NULL; }
 statement: ';'					{}
 	| constdef ';'				{ if (!parse_only && do_header) { write_constdef($1); } }
 	| cppquote				{}
-	| enumdef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL); fprintf(header, ";\n\n"); } }
+	| enumdef ';'				{ if (!parse_only && do_header) { write_type(header, $1); fprintf(header, ";\n\n"); } }
 	| externdef ';'				{ if (!parse_only && do_header) { write_externdef($1); } }
 	| import				{}
-	| structdef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL); fprintf(header, ";\n\n"); } }
+	| structdef ';'				{ if (!parse_only && do_header) { write_type(header, $1); fprintf(header, ";\n\n"); } }
 	| typedef ';'				{}
-	| uniondef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL); fprintf(header, ";\n\n"); } }
+	| uniondef ';'				{ if (!parse_only && do_header) { write_type(header, $1); fprintf(header, ";\n\n"); } }
 	;
 
 cppquote: tCPPQUOTE '(' aSTRING ')'		{ if (!parse_only && do_header) fprintf(header, "%s\n", $3); }
@@ -339,22 +345,24 @@ args:	  arg					{ check_arg($1); $$ = append_var( NULL, $1 ); }
 	;
 
 /* split into two rules to get bison to resolve a tVOID conflict */
-arg:	  attributes type pident array		{ $$ = $3;
-						  set_type($$, $2, $4);
+arg:	  attributes type pident array		{ $$ = $3->var;
+						  set_type($$, $2, $3->ptr_level, $4);
+						  free($3);
 						  $$->attrs = $1;
 						}
-	| type pident array			{ $$ = $2;
-						  set_type($$, $1, $3);
+	| type pident array			{ $$ = $2->var;
+						  set_type($$, $1, $2->ptr_level, $3);
+						  free($2);
 						}
-	| attributes type pident '(' m_args ')'	{ $$ = $3;
-						  $$->ptr_level--;
-						  set_type($$, $2, NULL);
+	| attributes type pident '(' m_args ')'	{ $$ = $3->var;
+						  set_type($$, $2, $3->ptr_level - 1, NULL);
+						  free($3);
 						  $$->attrs = $1;
 						  $$->args = $5;
 						}
-	| type pident '(' m_args ')'		{ $$ = $2;
-						  $$->ptr_level--;
-						  set_type($$, $1, NULL);
+	| type pident '(' m_args ')'		{ $$ = $2->var;
+						  set_type($$, $1, $2->ptr_level - 1, NULL);
+						  free($2);
 						  $$->args = $4;
 						}
 	;
@@ -482,7 +490,7 @@ case:	  tCASE expr ':' field			{ attr_t *a = make_attrp(ATTR_CASE, $2);
 	;
 
 constdef: tCONST type ident '=' expr_const	{ $$ = reg_const($3);
-						  set_type($$, $2, NULL);
+						  set_type($$, $2, 0, NULL);
 						  $$->eval = $5;
 						}
 	;
@@ -574,7 +582,7 @@ expr_const: expr				{ $$ = $1;
 	;
 
 externdef: tEXTERN tCONST type ident		{ $$ = $4;
-						  set_type($$, $3, NULL);
+						  set_type($$, $3, 0, NULL);
 						}
 	;
 
@@ -588,15 +596,21 @@ field:	  s_field ';'				{ $$ = $1; }
 	| ';'					{ $$ = NULL; }
 	;
 
-s_field:  m_attributes type pident array	{ $$ = $3; set_type($$, $2, $4); $$->attrs = $1; }
+s_field:  m_attributes type pident array	{ $$ = $3->var;
+						  set_type($$, $2, $3->ptr_level, $4);
+						  free($3);
+						  $$->attrs = $1;
+						}
 	;
 
 funcdef:
 	  m_attributes type callconv pident
-	  '(' m_args ')'			{ set_type($4, $2, NULL);
-						  $4->attrs = $1;
-						  $$ = make_func($4, $6);
-						  if (is_attr($4->attrs, ATTR_IN)) {
+	  '(' m_args ')'			{ var_t *v = $4->var;
+						  set_type(v, $2, $4->ptr_level, NULL);
+						  free($4);
+						  v->attrs = $1;
+						  $$ = make_func(v, $6);
+						  if (is_attr(v->attrs, ATTR_IN)) {
 						    yyerror("inapplicable attribute [in] for function '%s'",$$->def->name);
 						  }
 						}
@@ -792,14 +806,14 @@ p_ident:  '*' pident %prec PPTR			{ $$ = $2; $$->ptr_level++; }
 	| tCONST p_ident			{ $$ = $2; /* FIXME */ }
 	;
 
-pident:	  ident
+pident:	  ident					{ $$ = make_pident($1); }
 	| p_ident
 	| '(' pident ')'			{ $$ = $2; }
 	;
 
 pident_list:
-	pident                                  { $$ = append_var( NULL, $1 ); }
-	| pident_list ',' pident                { $$ = append_var( $1, $3 ); }
+	pident                                  { $$ = append_pident( NULL, $1 ); }
+	| pident_list ',' pident                { $$ = append_pident( $1, $3 ); }
 	;
 
 pointer_type:
@@ -1185,6 +1199,7 @@ static type_t *make_type(unsigned char type, type_t *ref)
   t->funcs = NULL;
   t->fields = NULL;
   t->ifaces = NULL;
+  t->typestring_offset = 0;
   t->ignore = parse_only;
   t->is_const = FALSE;
   t->sign = 0;
@@ -1195,10 +1210,13 @@ static type_t *make_type(unsigned char type, type_t *ref)
   return t;
 }
 
-static void set_type(var_t *v, type_t *type, array_dims_t *arr)
+static void set_type(var_t *v, type_t *type, int ptr_level, array_dims_t *arr)
 {
   v->type = type;
   v->array = arr;
+
+  for ( ; 0 < ptr_level; --ptr_level)
+    v->type = make_type(RPC_FC_RP, v->type);
 }
 
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface)
@@ -1237,13 +1255,31 @@ static var_t *make_var(char *name)
 {
   var_t *v = xmalloc(sizeof(var_t));
   v->name = name;
-  v->ptr_level = 0;
   v->type = NULL;
   v->args = NULL;
   v->attrs = NULL;
   v->array = NULL;
   v->eval = NULL;
   return v;
+}
+
+static pident_list_t *append_pident(pident_list_t *list, pident_t *p)
+{
+  if (!p) return list;
+  if (!list) {
+    list = xmalloc(sizeof(*list));
+    list_init(list);
+  }
+  list_add_tail(list, &p->entry);
+  return list;
+}
+
+static pident_t *make_pident(var_t *var)
+{
+  pident_t *p = xmalloc(sizeof(*p));
+  p->var = var;
+  p->ptr_level = 0;
+  return p;
 }
 
 static func_list_t *append_func(func_list_t *list, func_t *func)
@@ -1326,10 +1362,10 @@ static type_t *reg_type(type_t *type, const char *name, int t)
   return type;
 }
 
-static type_t *reg_typedefs(type_t *type, var_list_t *names, attr_list_t *attrs)
+static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *attrs)
 {
   type_t *ptr = type;
-  const var_t *name;
+  const pident_t *pident;
   int ptrc = 0;
   int is_str = is_attr(attrs, ATTR_STRING);
   unsigned char ptr_type = get_attrv(attrs, ATTR_POINTERTYPE);
@@ -1345,9 +1381,9 @@ static type_t *reg_typedefs(type_t *type, var_list_t *names, attr_list_t *attrs)
     c = t->type;
     if (c != RPC_FC_CHAR && c != RPC_FC_BYTE && c != RPC_FC_WCHAR)
     {
-      name = LIST_ENTRY( list_head( names ), const var_t, entry );
+      pident = LIST_ENTRY( list_head( pidents ), const pident_t, entry );
       yyerror("'%s': [string] attribute is only valid on 'char', 'byte', or 'wchar_t' pointers and arrays",
-              name->name);
+              pident->var->name);
     }
   }
 
@@ -1363,11 +1399,13 @@ static type_t *reg_typedefs(type_t *type, var_list_t *names, attr_list_t *attrs)
     type->name = gen_name();
   }
 
-  LIST_FOR_EACH_ENTRY( name, names, const var_t, entry )
+  LIST_FOR_EACH_ENTRY( pident, pidents, const pident_t, entry )
   {
+    var_t *name = pident->var;
+
     if (name->name) {
       type_t *cur = ptr;
-      int cptr = name->ptr_level;
+      int cptr = pident->ptr_level;
       if (cptr > ptrc) {
         while (cptr > ptrc) {
           cur = ptr = make_type(RPC_FC_RP, cur);
@@ -1467,20 +1505,20 @@ static int get_struct_type(var_list_t *fields)
   {
     type_t *t = field->type;
 
-    if (field->ptr_level > 0)
+    if (is_ptr(field->type))
     {
         has_pointer = 1;
         continue;
     }
 
-    if (is_string_type(field->attrs, 0, field->array))
+    if (is_string_type(field->attrs, field->type, field->array))
     {
         has_conformance = 1;
         has_variance = 1;
         continue;
     }
 
-    if (is_array_type(field->attrs, 0, field->array))
+    if (is_array_type(field->attrs, field->type, field->array))
     {
         if (field->array && is_conformant_array(field->array))
         {
@@ -1700,21 +1738,23 @@ static char *gen_name(void)
   return name;
 }
 
-static void process_typedefs(var_list_t *names)
+static void process_typedefs(pident_list_t *pidents)
 {
-  var_t *name, *next;
+  pident_t *pident, *next;
 
-  if (!names) return;
-  LIST_FOR_EACH_ENTRY_SAFE( name, next, names, var_t, entry )
+  if (!pidents) return;
+  LIST_FOR_EACH_ENTRY_SAFE( pident, next, pidents, pident_t, entry )
   {
-    type_t *type = find_type(name->name, 0);
+    var_t *var = pident->var;
+    type_t *type = find_type(var->name, 0);
 
     if (! parse_only && do_header)
       write_typedef(type);
     if (in_typelib && type->attrs)
       add_typelib_entry(type);
 
-    free(name);
+    free(pident);
+    free(var);
   }
 }
 

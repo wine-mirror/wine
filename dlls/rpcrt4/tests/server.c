@@ -114,6 +114,18 @@ s_sum_fixed_array(int a[5])
   return a[0] + a[1] + a[2] + a[3] + a[4];
 }
 
+int
+s_pints_sum(pints_t *pints)
+{
+  return *pints->pi + **pints->ppi + ***pints->pppi;
+}
+
+double
+s_ptypes_sum(ptypes_t *pt)
+{
+  return *pt->pc + *pt->ps + *pt->pl + *pt->pf + *pt->pd;
+}
+
 void
 s_stop(void)
 {
@@ -155,9 +167,14 @@ basic_tests(void)
   static char string[] = "I am a string";
   static int f[5] = {1, 3, 0, -2, -4};
   static vector_t a = {1, 3, 7};
+  pints_t pints;
+  ptypes_t ptypes;
+  int i1, i2, i3, *pi2, *pi3, **ppi3;
   double u, v;
   float s, t;
   long q, r;
+  short h;
+  char c;
   int x;
 
   ok(int_return() == INT_CODE, "RPC int_return\n");
@@ -190,6 +207,29 @@ basic_tests(void)
   q = square_half_long(3, &r);
   ok(q == 9, "RPC square_half_long\n");
   ok(r == 1, "RPC square_half_long\n");
+
+  i1 = 19;
+  i2 = -3;
+  i3 = -29;
+  pi2 = &i2;
+  pi3 = &i3;
+  ppi3 = &pi3;
+  pints.pi = &i1;
+  pints.ppi = &pi2;
+  pints.pppi = &ppi3;
+  ok(pints_sum(&pints) == -13, "RPC pints_sum\n");
+
+  c = 10;
+  h = 3;
+  q = 14;
+  s = -5.0f;
+  u = 11.0;
+  ptypes.pc = &c;
+  ptypes.ps = &h;
+  ptypes.pl = &q;
+  ptypes.pf = &s;
+  ptypes.pd = &u;
+  ok(ptypes_sum(&ptypes) == 33.0, "RPC ptypes_sum\n");
 
   ok(sum_fixed_array(f) == -2, "RPC sum_fixed_array\n");
 }

@@ -31,6 +31,22 @@ typedef struct tag_vector
 ]
 interface IServer
 {
+  typedef struct
+  {
+    int *pi;
+    int **ppi;
+    int ***pppi;
+  } pints_t;
+
+  typedef struct
+  {
+    char *pc;
+    short *ps;
+    long *pl;
+    float *pf;
+    double *pd;
+  } ptypes_t;
+
   int int_return(void);
   int square(int x);
   int sum(int x, int y);
@@ -42,5 +58,7 @@ interface IServer
   float square_half_float(float x, [out] float *y);
   long square_half_long(long x, [out] long *y);
   int sum_fixed_array(int a[5]);
+  int pints_sum(pints_t *pints);
+  double ptypes_sum(ptypes_t *ptypes);
   void stop(void);
 }

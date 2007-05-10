@@ -1049,7 +1049,8 @@ static void dump_type(type_t *t)
 
 static int encode_var(
 	msft_typelib_t *typelib,   /* [I] The type library in which to encode the TYPEDESC. */
-	var_t *var,                /* [I] The type description to encode. */
+	type_t *type,              /* [I] The type description to encode. */
+	var_t *var,                /* [I] The var to encode. */
 	int *encoded_type,         /* [O] The encoded type description. */
 	int *width,                /* [O] The width of the type, or NULL. */
 	int *alignment,            /* [O] The alignment of the type, or NULL. */
@@ -1061,20 +1062,18 @@ static int encode_var(
     int child_size;
     int vt;
     int scratch;
-    type_t *type;
 
     if (!width) width = &scratch;
     if (!alignment) alignment = &scratch;
     if (!decoded_size) decoded_size = &scratch;
     *decoded_size = 0;
 
-    chat("encode_var: var %p var->type %p var->type->name %s var->ptr_level %d var->type->ref %p\n",
-         var, var->type, var->type->name ? var->type->name : "NULL", var->ptr_level, var->type->ref);
-    if(var->ptr_level) {
-        int skip_ptr;
-        var->ptr_level--;
-	skip_ptr = encode_var(typelib, var, &target_type, NULL, NULL, &child_size);
-        var->ptr_level++;
+    chat("encode_var: var %p type %p type->name %s type->ref %p\n",
+         var, type, type->name ? type->name : "NULL", type->ref);
+
+    vt = get_type_vt(type);
+    if (vt == VT_PTR) {
+        int skip_ptr = encode_var(typelib, type->ref, var, &target_type, NULL, NULL, &child_size);
 
         if(skip_ptr == 2) {
             chat("encode_var: skipping ptr\n");
@@ -1124,7 +1123,7 @@ static int encode_var(
         chat("array with %d dimensions\n", num_dims);
         array_save = var->array;
         var->array = NULL;
-	encode_var(typelib, var, &target_type, width, alignment, NULL);
+	encode_var(typelib, type, var, &target_type, width, alignment, NULL);
         var->array = array_save;
 	arrayoffset = ctl2_alloc_segment(typelib, MSFT_SEG_ARRAYDESC, (2 + 2 * num_dims) * sizeof(long), 0);
 	arraydata = (void *)&typelib->typelib_segment_data[MSFT_SEG_ARRAYDESC][arrayoffset];
@@ -1153,10 +1152,8 @@ static int encode_var(
 	*decoded_size = 20 /*sizeof(ARRAYDESC)*/ + (num_dims - 1) * 8 /*sizeof(SAFEARRAYBOUND)*/;
         return 0;
     }
-    dump_type(var->type);
+    dump_type(type);
 
-    vt = get_type_vt(var->type);
-    type = var->type;
     encode_type(typelib, vt, type, encoded_type, width, alignment, decoded_size);
     if(type->type == RPC_FC_IP) return 2;
     return 0;
@@ -1177,6 +1174,7 @@ static void write_value(msft_typelib_t* typelib, int *out, int vt, void *value)
     case VT_INT:
     case VT_UINT:
     case VT_HRESULT:
+    case VT_PTR:
       {
         unsigned long *lv = value;
         if((*lv & 0x3ffffff) == *lv) {
@@ -1389,7 +1387,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
 
     /* fill out the basic type information */
     typedata[0] = typedata_size | (index << 16);
-    encode_var(typeinfo->typelib, func->def, &typedata[1], NULL, NULL, &decoded_size);
+    encode_var(typeinfo->typelib, func->def->type, func->def, &typedata[1], NULL, NULL, &decoded_size);
     typedata[2] = funcflags;
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
     typedata[4] = (next_idx << 16) | (callconv << 8) | (invokekind << 3) | funckind;
@@ -1427,7 +1425,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
 
         if(defaultdata) *defaultdata = -1;
 
-	encode_var(typeinfo->typelib, arg, paramdata, NULL, NULL, &decoded_size);
+	encode_var(typeinfo->typelib, arg->type, arg, paramdata, NULL, NULL, &decoded_size);
         if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
             switch(attr->type) {
             case ATTR_DEFAULTVALUE_EXPR:
@@ -1629,7 +1627,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     typeinfo->var_offsets[var_num] = offset;
 
     /* figure out type widths and whatnot */
-    encode_var(typeinfo->typelib, var, &typedata[1], &var_datawidth,
+    encode_var(typeinfo->typelib, var->type, var, &typedata[1], &var_datawidth,
                &var_alignment, &var_type_size);
 
     /* pad out starting position to data width */

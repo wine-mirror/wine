@@ -138,7 +138,7 @@ static void clear_output_vars( const var_list_t *args )
 
 int is_var_ptr(const var_t *v)
 {
-  return v->ptr_level || is_ptr(v->type);
+  return is_ptr(v->type);
 }
 
 int cant_be_null(const var_t *v)
@@ -247,12 +247,17 @@ static void proxy_free_variables( var_list_t *args, unsigned int type_offset )
   if (!args) return;
   LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
   {
+    size_t start_offset;
+    size_t size_type = get_size_typeformatstring_var(arg, &start_offset);
+    start_offset += type_offset;
+
     if (is_attr(arg->attrs, ATTR_OUT))
     {
       free_variable( arg, type_offset );
       fprintf(proxy, "\n");
     }
-    type_offset += get_size_typeformatstring_var(arg);
+
+    type_offset += size_type;
   }
 }
 
@@ -260,11 +265,11 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
                       unsigned int proc_offset, unsigned int *type_offset)
 {
   var_t *def = cur->def;
-  int has_ret = !is_void(def->type, def);
+  int has_ret = !is_void(def->type);
   unsigned int offset;
 
   indent = 0;
-  write_type(proxy, def->type, def);
+  write_type(proxy, def->type);
   print_proxy( " STDMETHODCALLTYPE %s_", iface->name);
   write_name(proxy, def);
   print_proxy( "_Proxy(\n");
@@ -275,7 +280,7 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   /* local variables */
   if (has_ret) {
     print_proxy( "" );
-    write_type(proxy, def->type, def);
+    write_type(proxy, def->type);
     print_proxy( " _RetVal;\n");
   }
   print_proxy( "RPC_MESSAGE _RpcMessage;\n" );
@@ -355,7 +360,7 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
 {
   var_t *def = cur->def;
   const var_t *arg;
-  int has_ret = !is_void(def->type, def);
+  int has_ret = !is_void(def->type);
   unsigned int offset;
 
   indent = 0;

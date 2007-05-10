@@ -116,7 +116,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             }
         }
 
-        write_type(client, def->type, def);
+        write_type(client, def->type);
         fprintf(client, " ");
         write_prefix_name(client, prefix_client, def);
         fprintf(client, "(\n");
@@ -133,10 +133,10 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         indent++;
 
         /* declare return value '_RetVal' */
-        if (!is_void(def->type, NULL))
+        if (!is_void(def->type))
         {
             print_client("");
-            write_type(client, def->type, def);
+            write_type(client, def->type);
             fprintf(client, " _RetVal;\n");
         }
 
@@ -226,7 +226,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         write_remoting_arguments(client, indent, func, type_offset, PASS_OUT, PHASE_UNMARSHAL);
 
         /* unmarshal return value */
-        if (!is_void(def->type, NULL))
+        if (!is_void(def->type))
             print_phase_basetype(client, indent, PHASE_UNMARSHAL, PASS_RETURN, def, "_RetVal");
 
         /* update proc_offset */
@@ -235,7 +235,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
                 *proc_offset += get_size_procformatstring_var(var);
         }
-        if (!is_void(def->type, NULL))
+        if (!is_void(def->type))
             *proc_offset += get_size_procformatstring_var(def);
         else
             *proc_offset += 2; /* FC_END and FC_PAD */
@@ -257,7 +257,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
 
 
         /* emit return code */
-        if (!is_void(def->type, NULL))
+        if (!is_void(def->type))
         {
             fprintf(client, "\n");
             print_client("return _RetVal;\n");

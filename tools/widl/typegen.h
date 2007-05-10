@@ -42,7 +42,7 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase, enu
 void write_remoting_arguments(FILE *file, int indent, const func_t *func, unsigned int *type_offset, enum pass pass, enum remoting_phase phase);
 size_t get_size_procformatstring_var(const var_t *var);
 size_t get_size_procformatstring_func(const func_t *func);
-size_t get_size_typeformatstring_var(const var_t *var);
+size_t get_size_typeformatstring_var(const var_t *var, size_t *start_offset);
 size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects);
 size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects);
 void assign_stub_out_args( FILE *file, int indent, const func_t *func );
