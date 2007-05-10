@@ -163,7 +163,7 @@ static void RPCSS_ServerProcessMessage(PRPCSS_NP_MESSAGE pMsg, PRPCSS_NP_REPLY p
 }
 
 /* each message gets its own thread.  this is it. */
-static VOID HandlerThread(LPVOID lpvPipeHandle)
+static DWORD WINAPI HandlerThread(LPVOID lpvPipeHandle)
 {
   RPCSS_NP_MESSAGE msg, vardata_payload_msg;
   char *c, *vardata = NULL;
@@ -247,9 +247,10 @@ static VOID HandlerThread(LPVOID lpvPipeHandle)
   DisconnectNamedPipe(mypipe);
   CloseHandle(mypipe);
   InterlockedDecrement(&srv_thread_count);
+  return 0;
 }
 
-static VOID NPMainWorkThread(LPVOID ignored)
+static DWORD WINAPI NPMainWorkThread(LPVOID ignored)
 {
   BOOL connected;
   HANDLE hthread, master_mutex = RPCSS_GetMasterMutex();
@@ -272,7 +273,7 @@ static VOID NPMainWorkThread(LPVOID ignored)
       hthread = CreateThread( 
         NULL,                      /* no security attribute */ 
         0,                         /* default stack size */
-        (LPTHREAD_START_ROUTINE) HandlerThread, 
+        HandlerThread,
         (LPVOID) np_server_end,    /* thread parameter */
         0,                         /* not suspended */
         &threadid                  /* returns thread ID  (not used) */
@@ -330,6 +331,7 @@ static VOID NPMainWorkThread(LPVOID ignored)
     }
   }
   WINE_TRACE("Server thread shutdown.\n");
+  return 0;
 }
 
 static HANDLE RPCSS_NPConnect(void)
@@ -514,7 +516,7 @@ BOOL RPCSS_BecomePipeServer(void)
     hthread = CreateThread( 
       NULL,                      /* no security attribute */ 
       0,                         /* default stack size */
-      (LPTHREAD_START_ROUTINE) NPMainWorkThread,
+      NPMainWorkThread,
       NULL,             /* thread parameter */
       0,                         /* not suspended */
       &threadid                  /* returns thread ID  (not used) */
