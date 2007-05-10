@@ -2218,14 +2218,13 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
                     checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");
 
                     Handled = TRUE;
+                    break;
                 } else if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
                     /* Technically texture shader support without register combiners is possible, but not expected to occur
                      * on real world cards, so for now a fixme should be enough
                      */
                     FIXME("Implement bump mapping with GL_NV_texture_shader in non register combiner path\n");
                 }
-                Handled = FALSE;
-                break;
         default:
                 Handled = FALSE;
         }
