@@ -606,7 +606,7 @@ static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *m
         return ERROR_FUNCTION_FAILED;
     }
 
-    if (mi->volume_label)
+    if (mi->volume_label && mi->disk_id > 1)
     {
         source_dir = msi_dup_property(package, cszSourceDir);
         PathStripToRootW(source_dir);
