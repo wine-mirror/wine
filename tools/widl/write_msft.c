@@ -1155,7 +1155,7 @@ static int encode_var(
     }
     dump_type(var->type);
 
-    vt = get_var_vt(var);
+    vt = get_type_vt(var->type);
     type = var->type;
     while(!vt) {
         if(type->ref == NULL) {
@@ -1445,7 +1445,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
                 if (arg->type->type == RPC_FC_ENUM16)
                     vt = VT_INT;
                 else
-                    vt = get_var_vt(arg);
+                    vt = get_type_vt(arg->type);
                 paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
                 chat("default value %ld\n", expr->cval);
                 write_value(typeinfo->typelib, defaultdata, vt, &expr->cval);
@@ -1458,7 +1458,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
                 if (arg->type->type == RPC_FC_ENUM16)
                   vt = VT_INT;
                 else
-                  vt = get_var_vt(arg);
+                  vt = get_type_vt(arg->type);
                 paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
                 chat("default value '%s'\n", s);
                 write_value(typeinfo->typelib, defaultdata, vt, s);

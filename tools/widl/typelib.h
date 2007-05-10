@@ -82,7 +82,6 @@ enum VARENUM {
     VT_TYPEMASK = 0xfff
 };
 extern unsigned short get_type_vt(type_t *t);
-extern unsigned short get_var_vt(var_t *v);
 
 extern int create_msft_typelib(typelib_t *typelib);
 #endif
