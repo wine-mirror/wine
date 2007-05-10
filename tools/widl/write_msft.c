@@ -1157,14 +1157,6 @@ static int encode_var(
 
     vt = get_type_vt(var->type);
     type = var->type;
-    while(!vt) {
-        if(type->ref == NULL) {
-            vt = VT_VOID;
-            break;
-        }
-        type = type->ref;
-        vt = get_type_vt(type);
-    }
     encode_type(typelib, vt, type, encoded_type, width, alignment, decoded_size);
     if(type->type == RPC_FC_IP) return 2;
     return 0;
