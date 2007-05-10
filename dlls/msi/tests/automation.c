@@ -1361,7 +1361,7 @@ static void test_Installer(void)
                 hr = Installer_ProductState(szPath, &iState);
                 ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
                 if (SUCCEEDED(hr))
-                    ok(iState == INSTALLSTATE_DEFAULT || iState == INSTALLSTATE_ADVERTISED, "Installer_ProductState returned %d, expected %d or %d", iState, INSTALLSTATE_DEFAULT, INSTALLSTATE_ADVERTISED);
+                    ok(iState == INSTALLSTATE_DEFAULT || iState == INSTALLSTATE_ADVERTISED, "Installer_ProductState returned %d, expected %d or %d\n", iState, INSTALLSTATE_DEFAULT, INSTALLSTATE_ADVERTISED);
             }
         }
 
@@ -1377,7 +1377,7 @@ static void test_Installer(void)
     hr = Installer_ProductState(szProductCode, &iState);
     ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
     if (SUCCEEDED(hr))
-        ok(iState == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d", iState, INSTALLSTATE_UNKNOWN);
+        ok(iState == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d\n", iState, INSTALLSTATE_UNKNOWN);
 
     /* Installer::Version */
     todo_wine {
