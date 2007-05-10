@@ -174,8 +174,7 @@ static void SrcColorKey32BlitTest(void)
 {
     LPDIRECTDRAWSURFACE lpSrc;
     LPDIRECTDRAWSURFACE lpDst;
-    DDSURFACEDESC ddsd;
-    DDSURFACEDESC ddsd2;
+    DDSURFACEDESC ddsd, ddsd2, ddsd3;
     DDCOLORKEY DDColorKey;
     LPDWORD lpData;
     HRESULT rc;
@@ -211,8 +210,23 @@ static void SrcColorKey32BlitTest(void)
     lpData[1] = 0xCCCCCCCC;
     lpData[2] = 0xCCCCCCCC;
     lpData[3] = 0xCCCCCCCC;
+
+    memset(&ddsd3, 0, sizeof(ddsd3));
+    ddsd3.dwSize = sizeof(ddsd3);
+    U4(ddsd3).ddpfPixelFormat.dwSize = sizeof(U4(ddsd3).ddpfPixelFormat);
+    rc = IDirectDrawSurface_GetSurfaceDesc(lpDst, &ddsd3);
+    ok(rc == DD_OK, "IDirectDrawSurface_GetSurfaceDesc between a lock/unlock pair returned %08x\n", rc);
+    ok(ddsd3.lpSurface == ddsd3.lpSurface, "lpSurface from GetSurfaceDesc(%p) differs from the one returned by Lock(%p)\n", ddsd3.lpSurface, ddsd2.lpSurface);
+
     rc = IDirectDrawSurface_Unlock(lpDst, NULL);
     ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    memset(&ddsd3, 0, sizeof(ddsd3));
+    ddsd3.dwSize = sizeof(ddsd3);
+    U4(ddsd3).ddpfPixelFormat.dwSize = sizeof(U4(ddsd3).ddpfPixelFormat);
+    rc = IDirectDrawSurface_GetSurfaceDesc(lpDst, &ddsd3);
+    ok(rc == DD_OK, "IDirectDrawSurface_GetSurfaceDesc between a lock/unlock pair returned %08x\n", rc);
+    ok(ddsd3.lpSurface == NULL, "lpSurface from GetSurfaceDesc(%p) is not NULL after unlock\n", ddsd3.lpSurface);
 
     rc = IDirectDrawSurface_Lock(lpSrc, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);

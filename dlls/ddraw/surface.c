@@ -585,7 +585,6 @@ IDirectDrawSurfaceImpl_Lock(IDirectDrawSurface7 *iface,
         DDSD->dwSize = sizeof(DDSURFACEDESC2);
     }
 
-    DD_STRUCT_COPY_BYSIZE(DDSD,&(This->surface_desc));
     hr = IWineD3DSurface_LockRect(This->WineD3DSurface,
                                   &LockedRect,
                                   Rect,
@@ -596,7 +595,8 @@ IDirectDrawSurfaceImpl_Lock(IDirectDrawSurface7 *iface,
      * does not set the LPSURFACE flag on locked surfaces !?!.
      * DDSD->dwFlags |= DDSD_LPSURFACE;
      */
-    DDSD->lpSurface = LockedRect.pBits;
+    This->surface_desc.lpSurface = LockedRect.pBits;
+    DD_STRUCT_COPY_BYSIZE(DDSD,&(This->surface_desc));
 
     TRACE("locked surface returning description :\n");
     if (TRACE_ON(ddraw)) DDRAW_dump_surface_desc(DDSD);
@@ -622,9 +622,15 @@ IDirectDrawSurfaceImpl_Unlock(IDirectDrawSurface7 *iface,
                               RECT *pRect)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
+    HRESULT hr;
     TRACE("(%p)->(%p)\n", This, pRect);
 
-    return IWineD3DSurface_UnlockRect(This->WineD3DSurface);
+    hr = IWineD3DSurface_UnlockRect(This->WineD3DSurface);
+    if(SUCCEEDED(hr))
+    {
+        This->surface_desc.lpSurface = NULL;
+    }
+    return hr;
 }
 
 /*****************************************************************************
