@@ -3086,6 +3086,26 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
     return WINED3DERR_INVALIDCALL;
 }
 
+static HRESULT WINAPI IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, WINEDDBLTFX *DDBltFx)
+{
+    IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
+
+    if (Flags & WINEDDBLT_DEPTHFILL) {
+        return IWineD3DDevice_Clear((IWineD3DDevice *) myDevice,
+                                    DestRect == NULL ? 0 : 1,
+                                    (WINED3DRECT *) DestRect,
+                                    WINED3DCLEAR_ZBUFFER,
+                                    0x00000000,
+                                    (float) DDBltFx->u5.dwFillDepth / (float) MAXDWORD,
+                                    0x00000000);
+
+        return WINED3D_OK;
+    }
+
+    FIXME("(%p): Unsupp depthstencil blit\n", This);
+    return WINED3DERR_INVALIDCALL;
+}
+
 static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
@@ -3094,11 +3114,14 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *Dest
     TRACE("(%p): Usage is %s\n", This, debug_d3dusage(This->resource.usage));
 
     /* Accessing the depth stencil is supposed to fail between a BeginScene and EndScene pair */
-    if(myDevice->inScene &&
-       (iface == myDevice->stencilBufferTarget ||
-       (SrcSurface && SrcSurface == myDevice->stencilBufferTarget))) {
-        TRACE("Attempt to access the depth stencil surface in a BeginScene / EndScene pair, returning WINED3DERR_INVALIDCALL\n");
-        return WINED3DERR_INVALIDCALL;
+    if(iface == myDevice->stencilBufferTarget || (SrcSurface && SrcSurface == myDevice->stencilBufferTarget)) {
+        if(myDevice->inScene) {
+            TRACE("Attempt to access the depth stencil surface in a BeginScene / EndScene pair, returning WINED3DERR_INVALIDCALL\n");
+            return WINED3DERR_INVALIDCALL;
+        } else if(IWineD3DSurfaceImpl_BltZ(This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx) == WINED3D_OK) {
+            TRACE("Z Blit override handled the blit\n");
+            return WINED3D_OK;
+        }
     }
 
     /* Special cases for RenderTargets */
