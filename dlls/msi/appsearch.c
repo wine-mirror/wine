@@ -244,6 +244,7 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNAT
         'w','h','e','r','e',' ',
         'S','i','g','n','a','t','u','r','e','_',' ','=',' ', '\'','%','s','\'',0};
     LPWSTR keyPath = NULL, valueName = NULL;
+    LPWSTR deformatted = NULL;
     int root, type;
     HKEY rootKey, key = NULL;
     DWORD sz = 0, regType;
@@ -264,10 +265,10 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNAT
 
     root = MSI_RecordGetInteger(row,2);
     keyPath = msi_dup_record_field(row,3);
-    /* FIXME: keyPath needs to be expanded for properties */
     valueName = msi_dup_record_field(row,4);
-    /* FIXME: valueName probably does too */
     type = MSI_RecordGetInteger(row,5);
+
+    deformat_string(package, keyPath, &deformatted);
 
     switch (root)
     {
@@ -288,7 +289,7 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNAT
         goto end;
     }
 
-    rc = RegOpenKeyW(rootKey, keyPath, &key);
+    rc = RegOpenKeyW(rootKey, deformatted, &key);
     if (rc)
     {
         TRACE("RegOpenKeyW returned %d\n", rc);
@@ -337,6 +338,7 @@ end:
 
     msi_free( keyPath );
     msi_free( valueName );
+    msi_free( deformatted );
 
     msiobj_release(&row->hdr);
 
