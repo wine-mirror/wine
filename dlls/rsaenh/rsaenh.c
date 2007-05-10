@@ -2907,12 +2907,29 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
     switch (dwParam) 
     {
         case PP_CONTAINER:
+        case PP_UNIQUE_CONTAINER:/* MSDN says we can return the same value as PP_CONTAINER */
             return copy_param(pbData, pdwDataLen, (CONST BYTE*)pKeyContainer->szName, 
                               strlen(pKeyContainer->szName)+1);
 
         case PP_NAME:
             return copy_param(pbData, pdwDataLen, (CONST BYTE*)pKeyContainer->szProvName, 
                               strlen(pKeyContainer->szProvName)+1);
+
+        case PP_PROVTYPE:
+            dwTemp = PROV_RSA_FULL;
+            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
+
+        case PP_KEYSPEC:
+            dwTemp = AT_SIGNATURE | AT_KEYEXCHANGE;
+            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
+
+        case PP_KEYSET_TYPE:
+            dwTemp = pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET;
+            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
+
+        case PP_KEYSTORAGE:
+            dwTemp = CRYPT_SEC_DESCR;
+            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
 
         case PP_SIG_KEYSIZE_INC:
         case PP_KEYX_KEYSIZE_INC:
