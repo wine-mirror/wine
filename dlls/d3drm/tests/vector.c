@@ -65,6 +65,56 @@
   "Expected Vector= (%f, %f, %f)\n , Got Vector= (%f, %f, %f)\n", \
   U1(expectedvec).x,U2(expectedvec).y,U3(expectedvec).z, U1(gotvec).x, U2(gotvec).y, U3(gotvec).z);
 
+static HMODULE d3drm_handle = 0;
+
+static void (WINAPI * pD3DRMMatrixFromQuaternion)(D3DRMMATRIX4D, LPD3DRMQUATERNION);
+static LPD3DVECTOR (WINAPI* pD3DRMVectorAdd)(LPD3DVECTOR, LPD3DVECTOR, LPD3DVECTOR);
+static LPD3DVECTOR (WINAPI* pD3DRMVectorCrossProduct)(LPD3DVECTOR, LPD3DVECTOR, LPD3DVECTOR);
+static D3DVALUE (WINAPI* pD3DRMVectorDotProduct)(LPD3DVECTOR, LPD3DVECTOR);
+static D3DVALUE (WINAPI* pD3DRMVectorModulus)(LPD3DVECTOR);
+static LPD3DVECTOR (WINAPI * pD3DRMVectorNormalize)(LPD3DVECTOR);
+static LPD3DVECTOR (WINAPI * pD3DRMVectorReflect)(LPD3DVECTOR, LPD3DVECTOR, LPD3DVECTOR);
+static LPD3DVECTOR (WINAPI * pD3DRMVectorRotate)(LPD3DVECTOR, LPD3DVECTOR, LPD3DVECTOR, D3DVALUE);
+static LPD3DVECTOR (WINAPI * pD3DRMVectorScale)(LPD3DVECTOR, LPD3DVECTOR, D3DVALUE);
+static LPD3DVECTOR (WINAPI * pD3DRMVectorSubtract)(LPD3DVECTOR, LPD3DVECTOR, LPD3DVECTOR);
+static LPD3DRMQUATERNION (WINAPI * pD3DRMQuaternionFromRotation)(LPD3DRMQUATERNION, LPD3DVECTOR, D3DVALUE);
+static LPD3DRMQUATERNION (WINAPI * pD3DRMQuaternionSlerp)(LPD3DRMQUATERNION, LPD3DRMQUATERNION, LPD3DRMQUATERNION, D3DVALUE);
+
+#define D3DRM_GET_PROC(func) \
+    p ## func = (void*)GetProcAddress(d3drm_handle, #func); \
+    if(!p ## func) { \
+      trace("GetProcAddress(%s) failed\n", #func); \
+      FreeLibrary(d3drm_handle); \
+      return FALSE; \
+    }
+
+static BOOL InitFunctionPtrs(void)
+{
+    d3drm_handle = LoadLibraryA("d3drm.dll");
+
+    if(!d3drm_handle)
+    {
+        skip("Could not load d3drm.dll\n");
+        return FALSE;
+    }
+
+    D3DRM_GET_PROC(D3DRMMatrixFromQuaternion)
+    D3DRM_GET_PROC(D3DRMVectorAdd)
+    D3DRM_GET_PROC(D3DRMVectorCrossProduct)
+    D3DRM_GET_PROC(D3DRMVectorDotProduct)
+    D3DRM_GET_PROC(D3DRMVectorModulus)
+    D3DRM_GET_PROC(D3DRMVectorNormalize)
+    D3DRM_GET_PROC(D3DRMVectorReflect)
+    D3DRM_GET_PROC(D3DRMVectorRotate)
+    D3DRM_GET_PROC(D3DRMVectorScale)
+    D3DRM_GET_PROC(D3DRMVectorSubtract)
+    D3DRM_GET_PROC(D3DRMQuaternionFromRotation)
+    D3DRM_GET_PROC(D3DRMQuaternionSlerp)
+
+    return TRUE;
+}
+
+
 static void VectorTest(void)
 {
     D3DVALUE mod,par,theta;
@@ -74,37 +124,37 @@ static void VectorTest(void)
     U1(v).x=4.0;U2(v).y=4.0;U3(v).z=0.0;
 
 /*______________________VectorAdd_________________________________*/
-    D3DRMVectorAdd(&r,&u,&v);
+    pD3DRMVectorAdd(&r,&u,&v);
     U1(e).x=6.0;U2(e).y=6.0;U3(e).z=1.0;
     expect_vec(e,r);
 
 /*_______________________VectorSubtract__________________________*/
-    D3DRMVectorSubtract(&r,&u,&v);
+    pD3DRMVectorSubtract(&r,&u,&v);
     U1(e).x=-2.0;U2(e).y=-2.0;U3(e).z=1.0;
     expect_vec(e,r);
 
 /*_______________________VectorCrossProduct_______________________*/
-    D3DRMVectorCrossProduct(&r,&u,&v);
+    pD3DRMVectorCrossProduct(&r,&u,&v);
     U1(e).x=-4.0;U2(e).y=4.0;U3(e).z=0.0;
     expect_vec(e,r);
 
 /*_______________________VectorDotProduct__________________________*/
-    mod=D3DRMVectorDotProduct(&u,&v);
+    mod=pD3DRMVectorDotProduct(&u,&v);
     ok((mod == 16.0), "Expected 16.0, Got %f\n",mod);
 
 /*_______________________VectorModulus_____________________________*/
-    mod=D3DRMVectorModulus(&u);
+    mod=pD3DRMVectorModulus(&u);
     ok((mod == 3.0), "Expected 3.0, Got %f\n",mod);
 
 /*_______________________VectorNormalize___________________________*/
-    D3DRMVectorNormalize(&u);
+    pD3DRMVectorNormalize(&u);
     U1(e).x=2.0/3.0;U2(e).y=2.0/3.0;U3(e).z=1.0/3.0;
     expect_vec(e,u);
 
 /* If u is the NULL vector, MSDN says that the return vector is NULL. In fact, the returned vector is (1,0,0). The following test case prove it. */
 
     U1(casnul).x=0.0; U2(casnul).y=0.0; U3(casnul).z=0.0;
-    D3DRMVectorNormalize(&casnul);
+    pD3DRMVectorNormalize(&casnul);
     U1(e).x=1.0; U2(e).y=0.0; U3(e).z=0.0;
     expect_vec(e,casnul);
 
@@ -112,26 +162,26 @@ static void VectorTest(void)
     U1(ray).x=3.0; U2(ray).y=-4.0; U3(ray).z=5.0;
     U1(norm).x=1.0; U2(norm).y=-2.0; U3(norm).z=6.0;
     U1(e).x=79.0; U2(e).y=-160.0; U3(e).z=487.0;
-    D3DRMVectorReflect(&r,&ray,&norm);
+    pD3DRMVectorReflect(&r,&ray,&norm);
     expect_vec(e,r);
 
 /*_______________________VectorRotate_______________________________*/
     U1(w).x=3.0; U2(w).y=4.0; U3(w).z=0.0;
     U1(axis).x=0.0; U2(axis).y=0.0; U3(axis).z=1.0;
     theta=2.0*PI/3.0;
-    D3DRMVectorRotate(&r,&w,&axis,theta);
+    pD3DRMVectorRotate(&r,&w,&axis,theta);
     U1(e).x=-0.3-0.4*sqrt(3.0); U2(e).y=0.3*sqrt(3.0)-0.4; U3(e).z=0.0;
     expect_vec(e,r);
 
 /* The same formula gives D3DRMVectorRotate, for theta in [-PI/2;+PI/2] or not. The following test proves this fact.*/
     theta=-PI/4.0;
-    D3DRMVectorRotate(&r,&w,&axis,-PI/4);
+    pD3DRMVectorRotate(&r,&w,&axis,-PI/4);
     U1(e).x=1.4/sqrt(2.0); U2(e).y=0.2/sqrt(2.0); U3(e).z=0.0;
     expect_vec(e,r);
 
 /*_______________________VectorScale__________________________*/
     par=2.5;
-    D3DRMVectorScale(&r,&v,par);
+    pD3DRMVectorScale(&r,&v,par);
     U1(e).x=10.0; U2(e).y=10.0; U3(e).z=0.0;
     expect_vec(e,r);
 }
@@ -147,7 +197,7 @@ static void MatrixTest(void)
     exp[3][0]=0.0;   exp[3][1]=0.0;   exp[3][2]=0.0;   exp[3][3]=1.0;
     q.s=1.0; U1(q.v).x=2.0; U2(q.v).y=3.0; U3(q.v).z=4.0;
 
-   D3DRMMatrixFromQuaternion(mat,&q);
+   pD3DRMMatrixFromQuaternion(mat,&q);
    expect_mat(exp,mat);
 }
 
@@ -160,7 +210,7 @@ static void QuaternionTest(void)
 /*_________________QuaternionFromRotation___________________*/
     U1(axis).x=1.0; U2(axis).y=1.0; U3(axis).z=1.0;
     theta=2.0*PI/3.0;
-    D3DRMQuaternionFromRotation(&r,&axis,theta);
+    pD3DRMQuaternionFromRotation(&r,&axis,theta);
     q.s=0.5; U1(q.v).x=0.5; U2(q.v).y=0.5; U3(q.v).z=0.5;
     expect_quat(q,r);
 
@@ -180,7 +230,7 @@ static void QuaternionTest(void)
     U1(q.v).x=g*U1(q1.v).x+h*U1(q2.v).x;
     U2(q.v).y=g*U2(q1.v).y+h*U2(q2.v).y;
     U3(q.v).z=g*U3(q1.v).z+h*U3(q2.v).z;
-    D3DRMQuaternionSlerp(&r,&q1,&q2,par);
+    pD3DRMQuaternionSlerp(&r,&q1,&q2,par);
     expect_quat(q,r);
 
     q1.s=1.0; U1(q1.v).x=2.0; U2(q1.v).y=3.0; U3(q1.v).z=50.0;
@@ -192,13 +242,18 @@ static void QuaternionTest(void)
     U1(q.v).x=g*U1(q1.v).x+h*U1(q2.v).x;
     U2(q.v).y=g*U2(q1.v).y+h*U2(q2.v).y;
     U3(q.v).z=g*U3(q1.v).z+h*U3(q2.v).z;
-    D3DRMQuaternionSlerp(&r,&q1,&q2,par);
+    pD3DRMQuaternionSlerp(&r,&q1,&q2,par);
     expect_quat(q,r);
 }
 
 START_TEST(vector)
 {
+    if(!InitFunctionPtrs())
+        return;
+
     VectorTest();
     MatrixTest();
     QuaternionTest();
+
+    FreeLibrary(d3drm_handle);
 }
