@@ -941,6 +941,40 @@ static HRESULT Record_StringDataPut(IDispatch *pRecord, int iField, LPCWSTR szSt
     return invoke(pRecord, "StringData", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
 }
 
+static HRESULT Record_IntegerDataGet(IDispatch *pRecord, int iField, int *pValue)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = iField;
+
+    hr = invoke(pRecord, "IntegerData", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
+    *pValue = V_I4(&varresult);
+    VariantClear(&varresult);
+    return hr;
+}
+
+static HRESULT Record_IntegerDataPut(IDispatch *pRecord, int iField, int iValue)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPID dispid = DISPID_PROPERTYPUT;
+    DISPPARAMS dispparams = {vararg, &dispid, sizeof(vararg)/sizeof(VARIANTARG), 1};
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_I4;
+    V_I4(&vararg[1]) = iField;
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = iValue;
+
+    return invoke(pRecord, "IntegerData", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
+}
+
 static HRESULT StringList_Item(IDispatch *pStringList, int iIndex, LPWSTR szString)
 {
     VARIANT varresult;
@@ -1374,11 +1408,12 @@ static void test_Installer(void)
     static WCHAR szProductCode[] = { '{','F','1','C','3','A','F','5','0','-','8','B','5','6','-','4','A','6','9','-','A','0','0','C','-','0','0','7','7','3','F','E','4','2','F','3','0','}',0 };
     static WCHAR szBackslash[] = { '\\',0 };
     static WCHAR szCreateRecordException[] = { 'C','r','e','a','t','e','R','e','c','o','r','d',',','C','o','u','n','t',0 };
+    static WCHAR szIntegerDataException[] = { 'I','n','t','e','g','e','r','D','a','t','a',',','F','i','e','l','d',0 };
     WCHAR szPath[MAX_PATH];
     HRESULT hr;
     UINT len;
     IDispatch *pSession = NULL, *pRecord = NULL, *pStringList = NULL;
-    int iState;
+    int iValue;
 
     if (!pInstaller) return;
 
@@ -1395,12 +1430,37 @@ static void test_Installer(void)
     ok(pRecord != NULL, "Installer_CreateRecord should not have returned NULL record\n");
     if (pRecord)
     {
-        int iFieldCount = 0;
-
         /* Record::FieldCountGet */
-        hr = Record_FieldCountGet(pRecord, &iFieldCount);
+        hr = Record_FieldCountGet(pRecord, &iValue);
         ok(SUCCEEDED(hr), "Record_FiledCountGet failed, hresult 0x%08x\n", hr);
-        ok(iFieldCount == 1, "Record_FieldCountGet result was %d but expected 1\n", iFieldCount);
+        ok(iValue == 1, "Record_FieldCountGet result was %d but expected 1\n", iValue);
+
+        todo_wine
+        {
+            /* Record::IntegerDataGet */
+            hr = Record_IntegerDataGet(pRecord, 1, &iValue);
+            ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
+            ok(iValue == MSI_NULL_INTEGER, "Record_IntegerDataGet result was %d but expected %d\n", iValue, MSI_NULL_INTEGER);
+
+            /* Record::IntegerDataGet, bad index */
+            hr = Record_IntegerDataGet(pRecord, 10, &iValue);
+            ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
+            ok(iValue == MSI_NULL_INTEGER, "Record_IntegerDataGet result was %d but expected %d\n", iValue, MSI_NULL_INTEGER);
+
+            /* Record::IntegerDataPut */
+            hr = Record_IntegerDataPut(pRecord, 1, 100);
+            ok(SUCCEEDED(hr), "Record_IntegerDataPut failed, hresult 0x%08x\n", hr);
+
+            /* Record::IntegerDataPut, bad index */
+            hr = Record_IntegerDataPut(pRecord, 10, 100);
+            ok(hr == DISP_E_EXCEPTION, "Record_IntegerDataPut failed, hresult 0x%08x\n", hr);
+            ok_exception(hr, szIntegerDataException);
+
+            /* Record::IntegerDataGet */
+            hr = Record_IntegerDataGet(pRecord, 1, &iValue);
+            ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
+            ok(iValue == 100, "Record_IntegerDataGet result was %d but expected 100\n", iValue);
+        }
 
         IDispatch_Release(pRecord);
     }
@@ -1450,10 +1510,10 @@ static void test_Installer(void)
             if (SUCCEEDED(hr))
             {
                 /* Installer::ProductState */
-                hr = Installer_ProductState(szPath, &iState);
+                hr = Installer_ProductState(szPath, &iValue);
                 ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
                 if (SUCCEEDED(hr))
-                    ok(iState == INSTALLSTATE_DEFAULT || iState == INSTALLSTATE_ADVERTISED, "Installer_ProductState returned %d, expected %d or %d\n", iState, INSTALLSTATE_DEFAULT, INSTALLSTATE_ADVERTISED);
+                    ok(iValue == INSTALLSTATE_DEFAULT || iValue == INSTALLSTATE_ADVERTISED, "Installer_ProductState returned %d, expected %d or %d\n", iValue, INSTALLSTATE_DEFAULT, INSTALLSTATE_ADVERTISED);
             }
         }
 
@@ -1466,10 +1526,10 @@ static void test_Installer(void)
     }
 
     /* Installer::ProductState for our product code, which should not be installed */
-    hr = Installer_ProductState(szProductCode, &iState);
+    hr = Installer_ProductState(szProductCode, &iValue);
     ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
     if (SUCCEEDED(hr))
-        ok(iState == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d\n", iState, INSTALLSTATE_UNKNOWN);
+        ok(iValue == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_UNKNOWN);
 
     /* Installer::Version */
     todo_wine {
