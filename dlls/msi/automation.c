@@ -597,6 +597,7 @@ static HRESULT WINAPI RecordImpl_Invoke(
                     return DISP_E_EXCEPTION;
                 }
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
          default:
@@ -637,6 +638,7 @@ static HRESULT WINAPI StringListImpl_Invoke(
                 V_VT(pVarResult) = VT_BSTR;
                 V_BSTR(pVarResult) = SysAllocString(data->pszStrings[V_I4(&varg0)]);
             }
+            else return DISP_E_MEMBERNOTFOUND;
             break;
 
          case DISPID_STRINGLIST_COUNT:
@@ -644,6 +646,7 @@ static HRESULT WINAPI StringListImpl_Invoke(
                 V_VT(pVarResult) = VT_I4;
                 V_I4(pVarResult) = data->iCount;
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
             break;
 
          default:
@@ -696,6 +699,7 @@ static HRESULT WINAPI ViewImpl_Invoke(
                 else
                     MsiViewExecute(This->msiHandle, 0);
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
 	case DISPID_VIEW_FETCH:
@@ -720,6 +724,7 @@ static HRESULT WINAPI ViewImpl_Invoke(
                     return DISP_E_EXCEPTION;
                 }
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
 	case DISPID_VIEW_CLOSE:
@@ -727,6 +732,7 @@ static HRESULT WINAPI ViewImpl_Invoke(
 	    {
 		MsiViewClose(This->msiHandle);
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
          default:
@@ -784,6 +790,7 @@ static HRESULT WINAPI DatabaseImpl_Invoke(
                     return DISP_E_EXCEPTION;
                 }
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
          default:
@@ -829,6 +836,7 @@ static HRESULT WINAPI SessionImpl_Invoke(
                 IDispatch_AddRef(data->pInstaller);
                 V_DISPATCH(pVarResult) = data->pInstaller;
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
 	case DISPID_SESSION_PROPERTY:
@@ -866,6 +874,7 @@ static HRESULT WINAPI SessionImpl_Invoke(
                     return DISP_E_EXCEPTION;
                 }
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
 	case DISPID_SESSION_LANGUAGE:
@@ -874,6 +883,7 @@ static HRESULT WINAPI SessionImpl_Invoke(
                 V_VT(pVarResult) = VT_I4;
                 V_I4(pVarResult) = langId;
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
 	case DISPID_SESSION_MODE:
@@ -893,6 +903,7 @@ static HRESULT WINAPI SessionImpl_Invoke(
                     return DISP_E_EXCEPTION;
                 }
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
 	case DISPID_SESSION_DATABASE:
@@ -914,6 +925,7 @@ static HRESULT WINAPI SessionImpl_Invoke(
                     return DISP_E_EXCEPTION;
                 }
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
         case DISPID_SESSION_DOACTION:
@@ -954,6 +966,7 @@ static HRESULT WINAPI SessionImpl_Invoke(
                         return DISP_E_EXCEPTION;
                 }
             }
+            else return DISP_E_MEMBERNOTFOUND;
             break;
 
         case DISPID_SESSION_EVALUATECONDITION:
@@ -963,16 +976,20 @@ static HRESULT WINAPI SessionImpl_Invoke(
                 V_VT(pVarResult) = VT_I4;
                 V_I4(pVarResult) = MsiEvaluateConditionW(This->msiHandle, V_BSTR(&varg0));
             }
+            else return DISP_E_MEMBERNOTFOUND;
             break;
 
         case DISPID_SESSION_SETINSTALLLEVEL:
-            hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
-            if (FAILED(hr)) return hr;
-            if ((ret = MsiSetInstallLevel(This->msiHandle, V_I4(&varg0))) != ERROR_SUCCESS)
-            {
-                ERR("MsiSetInstallLevel returned %d\n", ret);
-                return DISP_E_EXCEPTION;
+            if (wFlags & DISPATCH_METHOD) {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                if ((ret = MsiSetInstallLevel(This->msiHandle, V_I4(&varg0))) != ERROR_SUCCESS)
+                {
+                    ERR("MsiSetInstallLevel returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
             }
+            else return DISP_E_MEMBERNOTFOUND;
             break;
 
 	case DISPID_SESSION_FEATURECURRENTSTATE:
@@ -988,6 +1005,7 @@ static HRESULT WINAPI SessionImpl_Invoke(
                     V_I4(pVarResult) = msiInstallStateUnknown;
 		}
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
 	case DISPID_SESSION_FEATUREREQUESTSTATE:
@@ -1017,6 +1035,7 @@ static HRESULT WINAPI SessionImpl_Invoke(
                     return DISP_E_EXCEPTION;
                 }
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
          default:
@@ -1137,6 +1156,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                     return DISP_E_EXCEPTION;
                 }
             }
+            else return DISP_E_MEMBERNOTFOUND;
             break;
 
 	case DISPID_INSTALLER_OPENPACKAGE:
@@ -1168,6 +1188,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                     return DISP_E_EXCEPTION;
                 }
 	    }
+            else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
         case DISPID_INSTALLER_REGISTRYVALUE:
@@ -1257,6 +1278,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 msi_free(szString);
                 RegCloseKey(hkey);
             }
+            else return DISP_E_MEMBERNOTFOUND;
             break;
 
         case DISPID_INSTALLER_PRODUCTSTATE:
@@ -1266,6 +1288,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 V_VT(pVarResult) = VT_I4;
                 V_I4(pVarResult) = MsiQueryProductStateW(V_BSTR(&varg0));
             }
+            else return DISP_E_MEMBERNOTFOUND;
             break;
 
         case DISPID_INSTALLER_PRODUCTS:
@@ -1306,6 +1329,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 else
                     ERR("Failed to create StringList object, hresult 0x%08x\n", hr);
             }
+            else return DISP_E_MEMBERNOTFOUND;
             break;
 
          default:
