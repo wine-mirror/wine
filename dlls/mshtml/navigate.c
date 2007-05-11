@@ -172,7 +172,7 @@ static const nsIInputStreamVtbl nsInputStreamVtbl = {
     nsInputStream_IsNonBlocking
 };
 
-static nsProtocolStream *create_nsprotocol_stream(IStream *stream)
+static nsProtocolStream *create_nsprotocol_stream(void)
 {
     nsProtocolStream *ret = mshtml_alloc(sizeof(nsProtocolStream));
 
@@ -181,6 +181,60 @@ static nsProtocolStream *create_nsprotocol_stream(IStream *stream)
     ret->buf_size = 0;
 
     return ret;
+}
+
+static HRESULT read_stream_data(BSCallback *This, IStream *stream)
+{
+    nsresult nsres;
+    HRESULT hres;
+
+    if(!This->nslistener) {
+        BYTE buf[1024];
+        DWORD read;
+
+        do {
+            read = 0;
+            hres = IStream_Read(stream, buf, sizeof(buf), &read);
+        }while(hres == S_OK && read);
+
+        return S_OK;
+    }
+
+    if(!This->nsstream)
+        This->nsstream = create_nsprotocol_stream();
+
+    do {
+        hres = IStream_Read(stream, This->nsstream->buf, sizeof(This->nsstream->buf),
+                &This->nsstream->buf_size);
+        if(!This->nsstream->buf_size)
+            break;
+
+        if(!This->readed && This->nsstream->buf_size >= 2 && *(WORD*)This->nsstream->buf == 0xfeff) {
+                This->nschannel->charset = mshtml_alloc(sizeof(UTF16_STR));
+                memcpy(This->nschannel->charset, UTF16_STR, sizeof(UTF16_STR));
+        }
+
+        if(!This->readed) {
+            nsres = nsIStreamListener_OnStartRequest(This->nslistener,
+                    (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
+            if(NS_FAILED(nsres))
+                FIXME("OnStartRequest failed: %08x\n", nsres);
+        }
+
+        This->readed += This->nsstream->buf_size;
+
+        nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
+                (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext,
+                NSINSTREAM(This->nsstream), This->readed-This->nsstream->buf_size,
+                This->nsstream->buf_size);
+        if(NS_FAILED(nsres))
+            ERR("OnDataAvailable failed: %08x\n", nsres);
+
+        if(This->nsstream->buf_size)
+            FIXME("buffer is not empty!\n");
+    }while(hres == S_OK);
+
+    return S_OK;
 }
 
 #define STATUSCLB_THIS(iface) DEFINE_THIS(BSCallback, BindStatusCallback, iface)
@@ -394,55 +448,10 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
         DWORD grfBSCF, DWORD dwSize, FORMATETC *pformatetc, STGMEDIUM *pstgmed)
 {
     BSCallback *This = STATUSCLB_THIS(iface);
-    nsresult nsres;
-    HRESULT hres;
 
     TRACE("(%p)->(%08x %d %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
 
-    if(This->nslistener) {
-        if(!This->nsstream)
-            This->nsstream = create_nsprotocol_stream(pstgmed->u.pstm);
-
-        do {
-            hres = IStream_Read(pstgmed->u.pstm, This->nsstream->buf, sizeof(This->nsstream->buf),
-                         &This->nsstream->buf_size);
-            if(!This->nsstream->buf_size)
-                break;
-
-            if(!This->readed && This->nsstream->buf_size >= 2 && *(WORD*)This->nsstream->buf == 0xfeff) {
-                This->nschannel->charset = mshtml_alloc(sizeof(UTF16_STR));
-                memcpy(This->nschannel->charset, UTF16_STR, sizeof(UTF16_STR));
-            }
-
-            if(!This->readed) {
-                nsres = nsIStreamListener_OnStartRequest(This->nslistener,
-                        (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
-                if(NS_FAILED(nsres))
-                    FIXME("OnStartRequest failed: %08x\n", nsres);
-            }
-
-            This->readed += This->nsstream->buf_size;
-
-            nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
-                    (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext,
-                    NSINSTREAM(This->nsstream), This->readed-This->nsstream->buf_size,
-                    This->nsstream->buf_size);
-            if(NS_FAILED(nsres))
-                ERR("OnDataAvailable failed: %08x\n", nsres);
-
-            if(This->nsstream->buf_size)
-                FIXME("buffer is not empty!\n");
-        }while(hres == S_OK);
-    }else {
-        BYTE buf[1024];
-        DWORD read;
-        do {
-            read = 0;
-            hres = IStream_Read(pstgmed->u.pstm, buf, sizeof(buf), &read);
-        }while(hres == S_OK && read);
-    }
-
-    return S_OK;
+    return read_stream_data(This, pstgmed->u.pstm);
 }
 
 static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *iface,
