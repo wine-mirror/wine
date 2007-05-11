@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Jacek Caban for CodeWeavers
+ * Copyright 2006-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -816,4 +816,21 @@ void set_document_bscallback(HTMLDocument *doc, BSCallback *callback)
         IBindStatusCallback_AddRef(STATUSCLB(callback));
         callback->doc = doc;
     }
+}
+
+HRESULT load_stream(BSCallback *bscallback, IStream *stream)
+{
+    HRESULT hres;
+
+    const char text_html[] = "text/html";
+
+    add_nsrequest(bscallback);
+
+    bscallback->nschannel->content = mshtml_alloc(sizeof(text_html));
+    memcpy(bscallback->nschannel->content, text_html, sizeof(text_html));
+
+    hres = read_stream_data(bscallback, stream);
+    IBindStatusCallback_OnStopBinding(STATUSCLB(bscallback), hres, ERROR_SUCCESS);
+
+    return hres;
 }

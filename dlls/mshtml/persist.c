@@ -558,8 +558,25 @@ static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
 static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM pStm)
 {
     HTMLDocument *This = PERSTRINIT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pStm);
-    return E_NOTIMPL;
+    IMoniker *mon;
+    HRESULT hres;
+
+    static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+
+    TRACE("(%p)->(%p)\n", This, pStm);
+
+    hres = CreateURLMoniker(NULL, about_blankW, &mon);
+    if(FAILED(hres)) {
+        WARN("CreateURLMoniker failed: %08x\n", hres);
+        return hres;
+    }
+
+    hres = set_moniker(This, mon, NULL);
+    IMoniker_Release(mon);
+    if(FAILED(hres))
+        return hres;
+
+    return load_stream(This->bscallback, pStm);
 }
 
 static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM pStm,
