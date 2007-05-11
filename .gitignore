@@ -693,6 +693,7 @@ include/exdisp.h
 include/hlink.h
 include/htiframe.h
 include/iads.h
+include/icftypes.h
 include/indexsrv.h
 include/mediaobj.h
 include/mimeinfo.h
