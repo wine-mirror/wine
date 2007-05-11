@@ -41,9 +41,10 @@ extern IUnknown         *create_attribute( xmlNodePtr attribute );
 extern IUnknown         *create_text( xmlNodePtr text );
 extern IUnknown         *create_pi( xmlNodePtr pi );
 extern IUnknown         *create_comment( xmlNodePtr comment );
-extern IXMLDOMNodeList  *create_nodelist( xmlNodePtr node );
+extern IXMLDOMNodeList  *create_children_nodelist( xmlNodePtr );
 extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );
-extern IXMLDOMNodeList  *create_filtered_nodelist( xmlNodePtr, const xmlChar *, BOOL );
+
+extern HRESULT queryresult_create( xmlNodePtr, LPWSTR, IXMLDOMNodeList ** );
 
 extern void attach_xmlnode( IXMLDOMNode *node, xmlNodePtr xmlnode );
 

@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = msxml3.dll
-IMPORTS   = oleaut32 ole32 kernel32
+IMPORTS   = oleaut32 ole32 user32 kernel32
 EXTRALIBS = -luuid
 
 CTESTS = \

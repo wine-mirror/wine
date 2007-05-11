@@ -823,15 +823,18 @@ static HRESULT WINAPI domdoc_getElementsByTagName(
     IXMLDOMNodeList** resultList )
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
-    xmlChar *name;
+    LPWSTR szPattern;
+    HRESULT hr;
     TRACE("(%p)->(%s, %p)\n", This, debugstr_w(tagName), resultList);
 
-    name = xmlChar_from_wchar((WCHAR*)tagName);
-    *resultList = create_filtered_nodelist((xmlNodePtr)get_doc(This), name, TRUE);
-    HeapFree(GetProcessHeap(), 0, name);
+    szPattern = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(2+lstrlenW(tagName)+1));
+    szPattern[0] = szPattern[1] = '/';
+    lstrcpyW(szPattern + 2, tagName);
 
-    if(!*resultList) return S_FALSE;
-    return S_OK;
+    hr = queryresult_create((xmlNodePtr)get_doc(This), szPattern, resultList);
+    HeapFree(GetProcessHeap(), 0, szPattern);
+
+    return hr;
 }
 
 static DOMNodeType get_node_type(VARIANT Type)

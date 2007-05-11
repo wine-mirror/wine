@@ -20,6 +20,7 @@ C_SRCS = \
 	nodemap.c \
 	parseerror.c \
 	pi.c \
+	queryresult.c \
 	regsvr.c \
 	schema.c \
 	text.c \

@@ -33,147 +33,25 @@
 
 #include "wine/debug.h"
 
+/* This file implements the object returned by childNodes property. Note that this is
+ * not the IXMLDOMNodeList returned by XPath querites - it's implemented in queryresult.c.
+ * They are different because the list returned by childNodes:
+ *  - is "live" - changes to the XML tree are automatically reflected in the list
+ *  - doesn't supports IXMLDOMSelection
+ *  - note that an attribute node have a text child in DOM but not in the XPath data model
+ *    thus the child is inaccessible by an XPath query
+ */
+
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
-
-#ifdef HAVE_LIBXSLT
-
-#ifdef HAVE_LIBXSLT_PATTERN_H
-#include <libxslt/pattern.h>
-#endif
-#ifdef HAVE_LIBXSLT_TRANSFORM_H
-#include <libxslt/transform.h>
-#endif
-
-struct xslt_info {
-    xsltTransformContextPtr ctxt;
-    xsltCompMatchPtr pattern;
-    xsltStylesheetPtr sheet;
-};
-
-static void xslt_info_init( struct xslt_info *info )
-{
-    info->ctxt = NULL;
-    info->pattern = NULL;
-    info->sheet = NULL;
-}
-
-static int create_xslt_parser( struct xslt_info *info, xmlNodePtr node, const xmlChar *str )
-{
-    if(!node) return 1;
-
-    info->sheet = xsltNewStylesheet();
-    if (!info->sheet)
-        return 0;
-
-    info->ctxt = xsltNewTransformContext( info->sheet, node->doc );
-    if (!info->ctxt)
-        return 0;
-
-    info->pattern = xsltCompilePattern( str, node->doc,
-                                        node, info->sheet, info->ctxt );
-    if (!info->pattern)
-        return 0;
-    return 1;
-}
-
-static void free_xslt_info( struct xslt_info *info )
-{
-    if (info->pattern)
-        xsltFreeCompMatchList( info->pattern );
-    if (info->sheet)
-        xsltFreeStylesheet( info->sheet );
-    if (info->ctxt)
-        xsltFreeTransformContext( info->ctxt );
-}
-
-
-static xmlNodePtr get_next_node( struct xslt_info *info, xmlNodePtr node, xmlNodePtr *top_level_node );
-
-static HRESULT xslt_next_match( struct xslt_info *info, xmlNodePtr *node, xmlNodePtr *top_level_node )
-{
-    if (!info->ctxt)
-        return S_FALSE;
- 
-    /* make sure that the current element matches the pattern */
-    while ( *node )
-    {
-        int r;
-
-        r = xsltTestCompMatchList( info->ctxt, *node, info->pattern );
-        if ( 1 == r )
-        {
-            TRACE("Matched %p (%s)\n", *node, (*node)->name );
-            return S_OK;
-        }
-        if (r != 0)
-        {
-            ERR("Pattern match failed\n");
-            return E_FAIL;
-        }
-        *node = get_next_node(info, *node, top_level_node);
-    }
-    return S_OK;
-}
-
-#else
-
-struct xslt_info {
-    /* empty */
-};
-
-static void xslt_info_init( struct xslt_info *info )
-{
-}
-
-void free_xslt_info( struct xslt_info *info )
-{
-}
-
-static int create_xslt_parser( struct xslt_info *info, xmlNodePtr node, const xmlChar *str )
-{
-    MESSAGE("libxslt was missing at compile time\n");
-    return 0;
-}
-
-static HRESULT xslt_next_match( struct xslt_info *info, xmlNodePtr *node, xmlNodePtr *top_level_node )
-{
-    return S_FALSE;
-}
-
-#endif
-
-static xmlNodePtr get_next_node( struct xslt_info *info, xmlNodePtr node, xmlNodePtr *top_level_node )
-{
-    if(!top_level_node) return node->next;
-
-    if(node->children) return node->children;
-    if(node->next)
-    {
-        if(node == *top_level_node)
-            *top_level_node = node->next;
-        return node->next;
-    }
-
-    if(node != *top_level_node && node->parent)
-    {
-        if(node->parent == *top_level_node)
-            *top_level_node = node->parent->next;
-        return node->parent->next;
-    }
-    return NULL;
-}
 
 typedef struct _xmlnodelist
 {
     const struct IXMLDOMNodeListVtbl *lpVtbl;
     LONG ref;
-    xmlNodePtr node;
+    xmlNodePtr parent;
     xmlNodePtr current;
-    xmlNodePtr top_level_node;
-    BOOL enum_children;
-    struct xslt_info xinfo;
 } xmlnodelist;
 
 static inline xmlnodelist *impl_from_IXMLDOMNodeList( IXMLDOMNodeList *iface )
@@ -222,8 +100,7 @@ static ULONG WINAPI xmlnodelist_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        free_xslt_info( &This->xinfo );
-        if(This->node) xmldoc_release( This->node->doc );
+        xmldoc_release( This->parent->doc );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -281,10 +158,8 @@ static HRESULT WINAPI xmlnodelist_get_item(
         IXMLDOMNode** listItem)
 {
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
-    xmlNodePtr curr, tmp;
-    xmlNodePtr *top_level_node = NULL;
+    xmlNodePtr curr;
     long nodeIndex = 0;
-    HRESULT r;
 
     TRACE("%p %ld\n", This, index);
  
@@ -293,20 +168,11 @@ static HRESULT WINAPI xmlnodelist_get_item(
     if (index < 0)
         return S_FALSE;
 
-    curr = This->node;
-
-    if(This->enum_children)
-    {
-        tmp = curr;
-        top_level_node = &tmp;
-    }
-
+    curr = This->parent->children;
     while(curr)
     {
-        r = xslt_next_match( &This->xinfo, &curr, top_level_node);
-        if(FAILED(r) || !curr) return S_FALSE;
         if(nodeIndex++ == index) break;
-        curr = get_next_node(&This->xinfo, curr, top_level_node);
+        curr = curr->next;
     }
     if(!curr) return S_FALSE;
 
@@ -320,34 +186,18 @@ static HRESULT WINAPI xmlnodelist_get_length(
         long* listLength)
 {
 
-    xmlNodePtr curr, tmp;
-    xmlNodePtr *top_level_node = NULL;
+    xmlNodePtr curr;
     long nodeCount = 0;
-    HRESULT r;
 
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
 
     TRACE("%p\n", This);
 
-    if (This->node == NULL) {
-        *listLength = 0;
-	return S_OK;
-    }
-        
-    curr = This->node;
-
-    if(This->enum_children)
-    {
-        tmp = curr;
-        top_level_node = &tmp;
-    }
-
+    curr = This->parent->children;
     while (curr)
     {
-        r = xslt_next_match( &This->xinfo, &curr, top_level_node );
-        if(FAILED(r) || !curr) break;
         nodeCount++;
-        curr = get_next_node(&This->xinfo, curr, top_level_node);
+        curr = curr->next;
     }
 
     *listLength = nodeCount;
@@ -359,25 +209,16 @@ static HRESULT WINAPI xmlnodelist_nextNode(
         IXMLDOMNode** nextItem)
 {
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
-    HRESULT r;
-    xmlNodePtr *top_level_node = NULL;
 
     TRACE("%p %p\n", This, nextItem );
 
     *nextItem = NULL;
 
-    if(This->enum_children)
-        top_level_node = &This->top_level_node;
-
-    r = xslt_next_match( &This->xinfo, &This->current, top_level_node );
-    if (FAILED(r) )
-        return r;
-
     if (!This->current)
         return S_FALSE;
 
     *nextItem = create_node( This->current );
-    This->current = get_next_node(&This->xinfo, This->current, top_level_node);
+    This->current = This->current->next;
     return S_OK;
 }
 
@@ -387,7 +228,7 @@ static HRESULT WINAPI xmlnodelist_reset(
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
 
     TRACE("%p\n", This);
-    This->current = This->node;
+    This->current = This->parent->children;
     return S_OK;
 }
 
@@ -416,7 +257,7 @@ static const struct IXMLDOMNodeListVtbl xmlnodelist_vtbl =
     xmlnodelist__newEnum,
 };
 
-static xmlnodelist *new_nodelist( xmlNodePtr node )
+IXMLDOMNodeList* create_children_nodelist( xmlNodePtr node )
 {
     xmlnodelist *nodelist;
 
@@ -426,34 +267,12 @@ static xmlnodelist *new_nodelist( xmlNodePtr node )
 
     nodelist->lpVtbl = &xmlnodelist_vtbl;
     nodelist->ref = 1;
-    nodelist->node = node;
-    nodelist->current = node; 
-    nodelist->top_level_node = node;
-    nodelist->enum_children = FALSE;
-    xslt_info_init( &nodelist->xinfo );
+    nodelist->parent = node;
+    nodelist->current = node->children;
 
-    if(node) xmldoc_add_ref( node->doc );
+    xmldoc_add_ref( node->doc );
 
-    return nodelist;
-}
-
-IXMLDOMNodeList* create_nodelist( xmlNodePtr node )
-{
-    xmlnodelist *nodelist = new_nodelist( node );
     return (IXMLDOMNodeList*) &nodelist->lpVtbl;
-}
-
-IXMLDOMNodeList* create_filtered_nodelist( xmlNodePtr node, const xmlChar *str, BOOL enum_children )
-{
-    xmlnodelist *This = new_nodelist( node );
-    if (create_xslt_parser( &This->xinfo, node, str ))
-    {
-        This->enum_children = enum_children;
-        return (IXMLDOMNodeList*) &This->lpVtbl;
-    }
-
-    IXMLDOMNodeList_Release( (IXMLDOMNodeList*) &This->lpVtbl );
-    return NULL;
 }
 
 #endif

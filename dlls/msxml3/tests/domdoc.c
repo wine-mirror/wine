@@ -85,6 +85,39 @@ static const WCHAR szComplete5[] = {
     '<','/','S',':','s','e','a','r','c','h','>',0
 };
 
+static const CHAR szExampleXML[] =
+"<?xml version='1.0' encoding='utf-8'?>\n"
+"<root xmlns:foo='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'>\n"
+"    <elem>\n"
+"        <a>A1 field</a>\n"
+"        <b>B1 field</b>\n"
+"        <c>C1 field</c>\n"
+"        <description xmlns:foo='http://www.winehq.org' xmlns:bar='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'>\n"
+"            <html xmlns='http://www.w3.org/1999/xhtml'>\n"
+"                This is <strong>a</strong> <i>description</i>. <bar:x/>\n"
+"            </html>\n"
+"        </description>\n"
+"    </elem>\n"
+"\n"
+"    <elem>\n"
+"        <a>A2 field</a>\n"
+"        <b>B2 field</b>\n"
+"        <c type=\"old\">C2 field</c>\n"
+"    </elem>\n"
+"\n"
+"    <elem xmlns='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'>\n"
+"        <a>A3 field</a>\n"
+"        <b>B3 field</b>\n"
+"        <c>C3 field</c>\n"
+"    </elem>\n"
+"\n"
+"    <elem>\n"
+"        <a>A4 field</a>\n"
+"        <b>B4 field</b>\n"
+"        <foo:c>C4 field</foo:c>\n"
+"    </elem>\n"
+"</root>\n";
+
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
@@ -154,6 +187,142 @@ static VARIANT _variantbstr_(const char *str)
     V_BSTR(&v) = _bstr_(str);
     return v;
 }
+
+static void get_str_for_type(DOMNodeType type, char *buf)
+{
+    switch (type)
+    {
+        case NODE_ATTRIBUTE:
+            strcpy(buf, "A");
+            break;
+        case NODE_ELEMENT:
+            strcpy(buf, "E");
+            break;
+        case NODE_DOCUMENT:
+            strcpy(buf, "D");
+            break;
+        default:
+            wsprintfA(buf, "[%d]", type);
+    }
+}
+
+static int get_node_position(IXMLDOMNode *node)
+{
+    HRESULT r;
+    int pos = 0;
+
+    IXMLDOMNode_AddRef(node);
+    do
+    {
+        IXMLDOMNode *new_node;
+
+        pos++;
+        r = IXMLDOMNode_get_previousSibling(node, &new_node);
+        ok(!FAILED(r), "get_previousSibling failed\n");
+        IXMLDOMNode_Release(node);
+        node = new_node;
+    } while (r == S_OK);
+    return pos;
+}
+
+static void node_to_string(IXMLDOMNode *node, char *buf)
+{
+    HRESULT r = S_OK;
+    DOMNodeType type;
+
+    if (node == NULL)
+    {
+        lstrcpyA(buf, "(null)");
+        return;
+    }
+
+    IXMLDOMNode_AddRef(node);
+    while (r == S_OK)
+    {
+        IXMLDOMNode *new_node;
+
+        ole_check(IXMLDOMNode_get_nodeType(node, &type));
+        get_str_for_type(type, buf);
+        buf+=strlen(buf);
+
+        if (type == NODE_ATTRIBUTE)
+        {
+            BSTR bstr;
+            ole_check(IXMLDOMNode_get_nodeName(node, &bstr));
+            *(buf++) = '\'';
+            wsprintfA(buf, "%ws", bstr);
+            buf += strlen(buf);
+            *(buf++) = '\'';
+            SysFreeString(bstr);
+
+            r = IXMLDOMNode_selectSingleNode(node, _bstr_(".."), &new_node);
+        }
+        else
+        {
+            int pos = get_node_position(node);
+            DOMNodeType parent_type = NODE_INVALID;
+            r = IXMLDOMNode_get_parentNode(node, &new_node);
+
+            /* currently wine doesn't create a node for the <?xml ... ?>. To be able to test query
+             * results we "fix" it */
+            if (r == S_OK)
+                ole_check(IXMLDOMNode_get_nodeType(node, &parent_type));
+            /* we need also to workaround the no document node problem - see below */
+            if (((r == S_FALSE && type != NODE_DOCUMENT) || parent_type == NODE_DOCUMENT) && type != NODE_PROCESSING_INSTRUCTION && pos==1)
+            {
+                todo_wine ok(FALSE, "The first child of the document node in MSXML is the <?xml ... ?> processing instruction\n");
+                pos++;
+            }
+            wsprintf(buf, "%d", pos);
+            buf += strlen(buf);
+        }
+
+        ok(!FAILED(r), "get_parentNode failed (%08x)\n", r);
+        IXMLDOMNode_Release(node);
+        node = new_node;
+        if (r == S_OK)
+            *(buf++) = '.';
+    }
+
+    /* currently we can't access document node in wine. All our examples this is the
+     * root node so to be able to test query results we add it */
+    if (type != NODE_DOCUMENT)
+    {
+        todo_wine ok(FALSE, "Document node is not the last returned node!\n");
+        *(buf++) = '.';
+        *(buf++) = 'D';
+        *(buf++) = '1';
+    }
+    *buf = 0;
+}
+
+static char *list_to_string(IXMLDOMNodeList *list)
+{
+    static char buf[4096];
+    char *pos = buf;
+    long len = 0;
+    int i;
+
+    if (list == NULL)
+    {
+        lstrcpyA(buf, "(null)");
+        return buf;
+    }
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    for (i = 0; i < len; i++)
+    {
+        IXMLDOMNode *node;
+        if (i > 0)
+            *(pos++) = ' ';
+        ole_check(IXMLDOMNodeList_nextNode(list, &node));
+        node_to_string(node, pos);
+        pos += strlen(pos);
+        IXMLDOMNode_Release(node);
+    }
+    *pos = 0;
+    return buf;
+}
+#define expect_list_and_release(list, expstr) { char *str = list_to_string(list); ok(strcmp(str, expstr)==0, "Invalid node list: %s, exptected %s\n", str, expstr); if (list) IXMLDOMNodeList_Release(list); }
 
 static void test_domdoc( void )
 {
@@ -1272,6 +1441,86 @@ static void test_IXMLDOMDocument2(void)
     free_bstrs();
 }
 
+static void test_XPath()
+{
+    HRESULT r;
+    VARIANT_BOOL b;
+    IXMLDOMDocument2 *doc;
+    IXMLDOMNode *rootNode;
+    IXMLDOMNode *elem1Node;
+    IXMLDOMNodeList *list;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
+    if( r != S_OK )
+        return;
+
+    ole_check(IXMLDOMDocument_loadXML(doc, _bstr_(szExampleXML), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* switch to XPath */
+    ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XPath")));
+
+    /* some simple queries*/
+    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("root"), &list));
+    ole_check(IXMLDOMNodeList_get_item(list, 0, &rootNode));
+    ole_check(IXMLDOMNodeList_reset(list));
+    expect_list_and_release(list, "E2.D1");
+    if (rootNode == NULL)
+        return;
+
+    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("root//c"), &list));
+    expect_list_and_release(list, "E3.E1.E2.D1 E3.E2.E2.D1");
+
+    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("//c[@type]"), &list));
+    expect_list_and_release(list, "E3.E2.E2.D1");
+
+    ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_("elem"), &list));
+    expect_list_and_release(list, "E1.E2.D1 E2.E2.D1 E4.E2.D1");
+
+    ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_("."), &list));
+    expect_list_and_release(list, "E2.D1");
+
+    ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_("elem[3]/preceding-sibling::*"), &list));
+    ole_check(IXMLDOMNodeList_get_item(list, 0, &elem1Node));
+    ole_check(IXMLDOMNodeList_reset(list));
+    expect_list_and_release(list, "E1.E2.D1 E2.E2.D1 E3.E2.D1");
+
+    /* select an attribute */
+    ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_(".//@type"), &list));
+    expect_list_and_release(list, "A'type'.E3.E2.E2.D1");
+
+    /* would evaluate to a number */
+    ole_expect(IXMLDOMNode_selectNodes(rootNode, _bstr_("count(*)"), &list), E_FAIL);
+    /* would evaluate to a boolean */
+    ole_expect(IXMLDOMNode_selectNodes(rootNode, _bstr_("position()>0"), &list), E_FAIL);
+    /* would evaluate to a string */
+    ole_expect(IXMLDOMNode_selectNodes(rootNode, _bstr_("name()"), &list), E_FAIL);
+
+    /* no results */
+    ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_("c"), &list));
+    expect_list_and_release(list, "");
+    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("elem//c"), &list));
+    expect_list_and_release(list, "");
+    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("//elem[4]"), &list));
+    expect_list_and_release(list, "");
+
+    /* foo undeclared in document node */
+    ole_expect(IXMLDOMDocument_selectNodes(doc, _bstr_("root//foo:c"), &list), E_FAIL);
+    /* undeclared in <root> node */
+    ole_expect(IXMLDOMNode_selectNodes(rootNode, _bstr_(".//foo:c"), &list), E_FAIL);
+    /* undeclared in <elem> node */
+    ole_expect(IXMLDOMNode_selectNodes(elem1Node, _bstr_("//foo:c"), &list), E_FAIL);
+    /* but this trick can be used */
+    ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_("//*[name()='foo:c']"), &list));
+    expect_list_and_release(list, "E3.E4.E2.D1");
+
+    IXMLDOMNode_Release(rootNode);
+    IXMLDOMNode_Release(elem1Node);
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -1289,6 +1538,7 @@ START_TEST(domdoc)
     test_removeChild();
     test_XMLHTTP();
     test_IXMLDOMDocument2();
+    test_XPath();
 
     CoUninitialize();
 }

@@ -311,23 +311,10 @@ static HRESULT WINAPI xmlnode_get_childNodes(
     if ( !childList )
         return E_INVALIDARG;
 
-    switch(This->node->type)
-    {
-    case XML_ELEMENT_NODE:
-        *childList = create_filtered_nodelist( This->node->children, (const xmlChar *)"*", FALSE );
-        break;
+    *childList = create_children_nodelist(This->node);
+    if (*childList == NULL)
+        return E_OUTOFMEMORY;
 
-    case XML_ATTRIBUTE_NODE:
-        *childList = create_filtered_nodelist( This->node->children, (const xmlChar *)"node()", FALSE );
-        break;
-
-    default:
-        FIXME("unhandled node type %d\n", This->node->type);
-        break;
-    }
-
-    if (!*childList)
-        return S_FALSE;
     return S_OK;
 }
 
@@ -658,21 +645,10 @@ static HRESULT WINAPI xmlnode_selectNodes(
     IXMLDOMNodeList** resultList)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    xmlChar *str = NULL;
-    HRESULT r = E_FAIL;
 
     TRACE("%p %s %p\n", This, debugstr_w(queryString), resultList );
 
-    str = xmlChar_from_wchar( queryString );
-    if (!str)
-        return r;
-
-    if( !This->node->children )
-        return S_FALSE;
-
-    *resultList = create_filtered_nodelist( This->node->children, str, FALSE );
-    HeapFree( GetProcessHeap(), 0, str );
-    return S_OK;
+    return queryresult_create( This->node, queryString, resultList );
 }
 
 static HRESULT WINAPI xmlnode_selectSingleNode(
@@ -686,6 +662,7 @@ static HRESULT WINAPI xmlnode_selectSingleNode(
 
     TRACE("%p %s %p\n", This, debugstr_w(queryString), resultNode );
 
+    *resultNode = NULL;
     r = IXMLDOMNode_selectNodes(iface, queryString, &list);
     if(r == S_OK)
     {
