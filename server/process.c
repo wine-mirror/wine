@@ -46,7 +46,6 @@
 #include "process.h"
 #include "thread.h"
 #include "request.h"
-#include "console.h"
 #include "user.h"
 #include "security.h"
 
@@ -567,7 +566,7 @@ void kill_console_processes( struct thread *renderer, int exit_code )
         {
             if (process == renderer->process) continue;
             if (!process->running_threads) continue;
-            if (process->console && process->console->renderer == renderer) break;
+            if (process->console && console_get_renderer( process->console ) == renderer) break;
         }
         if (&process->entry == &process_list) break;  /* no process found */
         terminate_process( process, NULL, exit_code );

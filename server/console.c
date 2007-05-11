@@ -35,12 +35,36 @@
 #include "process.h"
 #include "request.h"
 #include "unicode.h"
-#include "console.h"
+#include "wincon.h"
 #include "winternl.h"
 
 /* specific access rights (FIXME: should use finer-grained access rights) */
 #define CONSOLE_READ   0x01
 #define CONSOLE_WRITE  0x02
+
+struct screen_buffer;
+struct console_input_events;
+
+struct console_input
+{
+    struct object                obj;           /* object header */
+    int                          num_proc;      /* number of processes attached to this console */
+    struct thread               *renderer;      /* console renderer thread */
+    int                          mode;          /* input mode */
+    struct screen_buffer        *active;        /* active screen buffer */
+    int                          recnum;        /* number of input records */
+    INPUT_RECORD                *records;       /* input records */
+    struct console_input_events *evt;           /* synchronization event with renderer */
+    WCHAR                       *title;         /* console title */
+    WCHAR                      **history;       /* lines history */
+    int                          history_size;  /* number of entries in history array */
+    int                          history_index; /* number of used entries in history array */
+    int                          history_mode;  /* mode of history (non zero means remove doubled strings */
+    int                          edition_mode;  /* index to edition mode flavors */
+    int                          input_cp;      /* console input codepage */
+    int                          output_cp;     /* console output codepage */
+    struct event                *event;         /* event to wait on for input queue */
+};
 
 static unsigned int console_map_access( struct object *obj, unsigned int access );
 
@@ -403,6 +427,11 @@ void inherit_console(struct thread *parent_thread, struct process *process, obj_
 	process->console = (struct console_input*)grab_object( parent->console );
 	process->console->num_proc++;
     }
+}
+
+struct thread *console_get_renderer( struct console_input *console )
+{
+    return console->renderer;
 }
 
 static struct console_input* console_input_get( obj_handle_t handle, unsigned access )

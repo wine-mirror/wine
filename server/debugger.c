@@ -36,7 +36,6 @@
 #include "process.h"
 #include "thread.h"
 #include "request.h"
-#include "console.h"
 
 enum debug_event_state { EVENT_QUEUED, EVENT_SENT, EVENT_CONTINUED };
 
@@ -426,7 +425,7 @@ static int debugger_attach( struct process *process, struct thread *debugger )
         if (thread->process == process) goto error;
 
     /* don't let a debugger debug its console... won't work */
-    if (debugger->process->console && debugger->process->console->renderer->process == process)
+    if (debugger->process->console && console_get_renderer(debugger->process->console)->process == process)
         goto error;
 
     suspend_process( process );
