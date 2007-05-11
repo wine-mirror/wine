@@ -938,7 +938,7 @@ static HRESULT Record_StringDataPut(IDispatch *pRecord, int iField, LPCWSTR szSt
     V_VT(&vararg[0]) = VT_BSTR;
     V_BSTR(&vararg[0]) = SysAllocString(szString);
 
-    return invoke(pRecord, "StringData", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_BSTR);
+    return invoke(pRecord, "StringData", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
 }
 
 static HRESULT StringList_Item(IDispatch *pStringList, int iIndex, LPWSTR szString)
@@ -1001,6 +1001,16 @@ static void test_Database(IDispatch *pDatabase)
             hr = Record_StringDataGet(pRecord, 1, szString);
             ok(SUCCEEDED(hr), "Record_StringDataGet failed, hresult 0x%08x\n", hr);
             ok_w2("Record_StringDataGet result was %s but expected %s\n", szString, szThree);
+
+            /* Record::StringDataPut with correct index */
+            hr = Record_StringDataPut(pRecord, 1, szTwo);
+            ok(SUCCEEDED(hr), "Record_StringDataPut failed, hresult 0x%08x\n", hr);
+
+            /* Record::StringDataGet */
+            memset(szString, 0, sizeof(szString));
+            hr = Record_StringDataGet(pRecord, 1, szString);
+            ok(SUCCEEDED(hr), "Record_StringDataGet failed, hresult 0x%08x\n", hr);
+            ok_w2("Record_StringDataGet result was %s but expected %s\n", szString, szTwo);
 
             /* Record::StringDataPut with incorrect index */
             hr = Record_StringDataPut(pRecord, -1, szString);
