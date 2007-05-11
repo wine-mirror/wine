@@ -120,10 +120,11 @@ DEFINE_EXPECT(Protocol_Read);
 DEFINE_EXPECT(LockRequest);
 DEFINE_EXPECT(UnlockRequest);
 
+static IUnknown *doc_unk;
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
 static BOOL set_clientsite = FALSE, container_locked = FALSE;
-static BOOL readystate_set_loading = FALSE;
+static BOOL readystate_set_loading = FALSE, load_from_stream;
 static BOOL editmode = FALSE;
 static int stream_read, protocol_read;
 static enum load_state_t {
@@ -2054,8 +2055,6 @@ static void test_readyState(IUnknown *unk)
     BSTR state;
     HRESULT hres;
 
-    static IUnknown *_unk;
-
     static const WCHAR wszUninitialized[] = {'u','n','i','n','i','t','i','a','l','i','z','e','d',0};
     static const WCHAR wszLoading[] = {'l','o','a','d','i','n','g',0};
     static const WCHAR wszInteractive[] = {'i','n','t','e','r','a','c','t','i','v','e',0};
@@ -2069,8 +2068,8 @@ static void test_readyState(IUnknown *unk)
         wszUninitialized
     };
 
-    if(!unk) unk = _unk;
-    else _unk = unk;
+    if(!unk)
+        unk = doc_unk;
 
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLDocument2, (void**)&htmldoc);
     ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument2) failed: %08x\n", hres);
@@ -2239,7 +2238,8 @@ static void test_download(BOOL verb_done, BOOL css_dwl)
 
     if(verb_done) {
         SET_EXPECT(Exec_SETPROGRESSMAX);
-        SET_EXPECT(GetHostInfo);
+        if(!load_from_stream)
+            SET_EXPECT(GetHostInfo);
     }
     SET_EXPECT(SetStatusText);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
@@ -2268,7 +2268,8 @@ static void test_download(BOOL verb_done, BOOL css_dwl)
 
     if(verb_done) {
         CHECK_CALLED(Exec_SETPROGRESSMAX);
-        CHECK_CALLED(GetHostInfo);
+        if(!load_from_stream)
+            CHECK_CALLED(GetHostInfo);
     }
     CHECK_CALLED(SetStatusText);
     CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
@@ -2408,10 +2409,8 @@ static void test_QueryStatus(IUnknown *unk, REFIID cgid, ULONG cmdid, DWORD cmdf
 
 static void test_MSHTML_QueryStatus(IUnknown *unk, DWORD cmdf)
 {
-    static IUnknown *_unk;
-
-    if(unk) _unk = unk;
-    else unk = _unk;
+    if(!unk)
+        unk = doc_unk;
 
     test_QueryStatus(unk, &CGID_MSHTML, IDM_FONTNAME, cmdf);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_FONTSIZE, cmdf);
@@ -2987,6 +2986,35 @@ static void test_Navigate(IUnknown *unk)
     IHlinkTarget_Release(hlink);
 }
 
+static void test_StreamLoad(IUnknown *unk)
+{
+    IPersistStreamInit *init;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistStreamInit, (void**)&init);
+    ok(hres == S_OK, "QueryInterface(IID_IPersistStreamInit) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    SET_EXPECT(Invoke_AMBIENT_SILENT);
+    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    SET_EXPECT(Exec_ShellDocView_37);
+    SET_EXPECT(OnChanged_READYSTATE);
+    SET_EXPECT(Read);
+    readystate_set_loading = TRUE;
+
+    hres = IPersistStreamInit_Load(init, &Stream);
+    ok(hres == S_OK, "Load failed: %08x\n", hres);
+
+    CHECK_CALLED(Invoke_AMBIENT_SILENT);
+    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    CHECK_CALLED(Exec_ShellDocView_37);
+    CHECK_CALLED(OnChanged_READYSTATE);
+    CHECK_CALLED(Read);
+
+    IPersistStreamInit_Release(init);
+}
+
 static void test_QueryInterface(IUnknown *unk)
 {
     IRunnableObject *runnable = (IRunnableObject*)0xdeadbeef;
@@ -2998,8 +3026,10 @@ static void test_QueryInterface(IUnknown *unk)
 }
 
 static void init_test(enum load_state_t ls) {
+    doc_unk = NULL;
     hwnd = last_hwnd = NULL;
     set_clientsite = FALSE;
+    load_from_stream = FALSE;
     call_UIActivate = FALSE;
     load_state = ls;
     editmode = FALSE;
@@ -3020,6 +3050,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     hres = create_document(&unk);
     if(FAILED(hres))
         return;
+    doc_unk = unk;
 
     test_QueryInterface(unk);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
@@ -3100,6 +3131,7 @@ static void test_HTMLDocument_hlink(void)
     hres = create_document(&unk);
     if(FAILED(hres))
         return;
+    doc_unk = unk;
 
     test_ConnectionPointContainer(unk);
     test_Persist(unk);
@@ -3121,6 +3153,52 @@ static void test_HTMLDocument_hlink(void)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
+static void test_HTMLDocument_StreamLoad(void)
+{
+    IOleObject *oleobj;
+    IUnknown *unk;
+    HRESULT hres;
+    ULONG ref;
+
+    trace("Testing HTMLDocument (IPersistStreamInit)...\n");
+
+    init_test(LD_DOLOAD);
+    load_from_stream = TRUE;
+
+    hres = create_document(&unk);
+    if(FAILED(hres))
+        return;
+    doc_unk = unk;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
+
+    test_readyState(unk);
+    test_ConnectionPointContainer(unk);
+    test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
+    test_DoVerb(oleobj);
+    test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
+
+    IOleObject_Release(oleobj);
+
+    test_StreamLoad(unk);
+    test_download(TRUE, FALSE);
+
+    test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
+    test_UIDeactivate();
+    test_InPlaceDeactivate(unk, TRUE);
+    test_Close(unk, FALSE);
+
+    if(view) {
+        IOleDocumentView_Release(view);
+        view = NULL;
+    }
+
+
+    ref = IUnknown_Release(unk);
+    ok(ref == 0, "ref=%d, expected 0\n", ref);
+}
+
 static void test_editing_mode(void)
 {
     IUnknown *unk;
@@ -3135,6 +3213,7 @@ static void test_editing_mode(void)
     hres = create_document(&unk);
     if(FAILED(hres))
         return;
+    doc_unk = unk;
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
@@ -3223,6 +3302,7 @@ START_TEST(htmldoc)
     test_HTMLDocument(LD_NO);
     test_HTMLDocument(LD_DOLOAD);
     test_HTMLDocument_hlink();
+    test_HTMLDocument_StreamLoad();
     test_editing_mode();
 
     DestroyWindow(container_hwnd);
