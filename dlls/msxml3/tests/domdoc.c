@@ -322,6 +322,8 @@ static char *list_to_string(IXMLDOMNodeList *list)
     *pos = 0;
     return buf;
 }
+
+#define expect_node(node, expstr) { char str[4096]; node_to_string(node, str); ok(strcmp(str, expstr)==0, "Invalid node: %s, exptected %s\n", str, expstr); }
 #define expect_list_and_release(list, expstr) { char *str = list_to_string(list); ok(strcmp(str, expstr)==0, "Invalid node list: %s, exptected %s\n", str, expstr); if (list) IXMLDOMNodeList_Release(list); }
 
 static void test_domdoc( void )
@@ -759,11 +761,25 @@ todo_wine
     if (map)
         IXMLDOMNamedNodeMap_Release( map );
 
-    /* now traverse the tree from the root node */
+    /* now traverse the tree from the root element */
     if (element)
     {
+        IXMLDOMNode *node;
         r = IXMLDOMNode_get_childNodes( element, &list );
         ok( r == S_OK, "get_childNodes returned wrong code\n");
+
+        /* using get_item for child list doesn't advance the position */
+        ole_check(IXMLDOMNodeList_get_item(list, 1, &node));
+        expect_node(node, "E2.E2.D1");
+        IXMLDOMNode_Release(node);
+        ole_check(IXMLDOMNodeList_nextNode(list, &node));
+        expect_node(node, "E1.E2.D1");
+        IXMLDOMNode_Release(node);
+        ole_check(IXMLDOMNodeList_reset(list));
+
+        IXMLDOMNodeList_AddRef(list);
+        expect_list_and_release(list, "E1.E2.D1 E2.E2.D1 E3.E2.D1 E4.E2.D1");
+        ole_check(IXMLDOMNodeList_reset(list));
     }
     else
         ok( FALSE, "no element\n");
@@ -1448,6 +1464,7 @@ static void test_XPath()
     IXMLDOMDocument2 *doc;
     IXMLDOMNode *rootNode;
     IXMLDOMNode *elem1Node;
+    IXMLDOMNode *node;
     IXMLDOMNodeList *list;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL,
@@ -1476,6 +1493,14 @@ static void test_XPath()
     expect_list_and_release(list, "E3.E2.E2.D1");
 
     ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_("elem"), &list));
+    /* using get_item for query results advances the position */
+    ole_check(IXMLDOMNodeList_get_item(list, 1, &node));
+    expect_node(node, "E2.E2.D1");
+    IXMLDOMNode_Release(node);
+    ole_check(IXMLDOMNodeList_nextNode(list, &node));
+    expect_node(node, "E4.E2.D1");
+    IXMLDOMNode_Release(node);
+    ole_check(IXMLDOMNodeList_reset(list));
     expect_list_and_release(list, "E1.E2.D1 E2.E2.D1 E4.E2.D1");
 
     ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_("."), &list));

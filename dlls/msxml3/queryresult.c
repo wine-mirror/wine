@@ -220,6 +220,7 @@ static HRESULT WINAPI queryresult_get_item(
         return S_FALSE;
 
     *listItem = create_node(This->result->nodesetval->nodeTab[index]);
+    This->resultPos = index + 1;
 
     return S_OK;
 }
