@@ -1340,6 +1340,7 @@ static void test_Installer(void)
 {
     static WCHAR szProductCode[] = { '{','F','1','C','3','A','F','5','0','-','8','B','5','6','-','4','A','6','9','-','A','0','0','C','-','0','0','7','7','3','F','E','4','2','F','3','0','}',0 };
     static WCHAR szBackslash[] = { '\\',0 };
+    static WCHAR szCreateRecordException[] = { 'C','r','e','a','t','e','R','e','c','o','r','d',',','C','o','u','n','t',0 };
     WCHAR szPath[MAX_PATH];
     HRESULT hr;
     UINT len;
@@ -1350,6 +1351,12 @@ static void test_Installer(void)
 
     /* Installer::CreateRecord */
     todo_wine {
+        /* Test for error */
+        hr = Installer_CreateRecord(-1, &pRecord);
+        ok(hr == DISP_E_EXCEPTION, "Installer_CreateRecord failed, hresult 0x%08x\n", hr);
+        ok_exception(hr, szCreateRecordException);
+
+        /* Test for success */
         hr = Installer_CreateRecord(1, &pRecord);
         ok(SUCCEEDED(hr), "Installer_CreateRecord failed, hresult 0x%08x\n", hr);
         ok(pRecord != NULL, "Installer_CreateRecord should not have returned NULL record\n");
