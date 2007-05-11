@@ -394,6 +394,7 @@ static void test_dispatch(void)
 {
     static WCHAR szOpenPackage[] = { 'O','p','e','n','P','a','c','k','a','g','e',0 };
     static WCHAR szOpenPackageException[] = {'O','p','e','n','P','a','c','k','a','g','e',',','P','a','c','k','a','g','e','P','a','t','h',',','O','p','t','i','o','n','s',0};
+    static WCHAR szProductState[] = { 'P','r','o','d','u','c','t','S','t','a','t','e',0 };
     HRESULT hr;
     DISPID dispid;
     OLECHAR *name;
@@ -444,6 +445,30 @@ static void test_dispatch(void)
 
     ok(hr == DISP_E_EXCEPTION, "IDispatch::Invoke returned 0x%08x\n", hr);
     ok_exception(hr, szOpenPackageException);
+
+    /* Test invoking a method as a DISPATCH_PROPERTYGET or DISPATCH_PROPERTYPUT */
+    VariantInit(&vararg[0]);
+    hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
+    todo_wine ok(hr == DISP_E_MEMBERNOTFOUND, "IDispatch::Invoke returned 0x%08x\n", hr);
+
+    VariantInit(&vararg[0]);
+    hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
+    todo_wine ok(hr == DISP_E_MEMBERNOTFOUND, "IDispatch::Invoke returned 0x%08x\n", hr);
+
+    /* Test invoking a read-only property as DISPATCH_PROPERTYPUT or as a DISPATCH_METHOD */
+    name = (WCHAR *)szProductState;
+    hr = IDispatch_GetIDsOfNames(pInstaller, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
+    ok(SUCCEEDED(hr), "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
+
+    dispparams.rgvarg = NULL;
+    dispparams.cArgs = 0;
+    hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
+    todo_wine ok(hr == DISP_E_MEMBERNOTFOUND, "IDispatch::Invoke returned 0x%08x\n", hr);
+
+    dispparams.rgvarg = NULL;
+    dispparams.cArgs = 0;
+    hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
+    todo_wine ok(hr == DISP_E_MEMBERNOTFOUND, "IDispatch::Invoke returned 0x%08x\n", hr);
 }
 
 /* invocation helper function */
