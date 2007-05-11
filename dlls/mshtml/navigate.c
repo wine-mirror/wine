@@ -380,8 +380,10 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 
     TRACE("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
 
-    IBinding_Release(This->binding);
-    This->binding = NULL;
+    if(This->binding) {
+        IBinding_Release(This->binding);
+        This->binding = NULL;
+    }
 
     if(This->nslistener) {
         nsIStreamListener_OnStopRequest(This->nslistener, (nsIRequest*)NSCHANNEL(This->nschannel),
