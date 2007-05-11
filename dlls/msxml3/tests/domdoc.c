@@ -1460,6 +1460,7 @@ static void test_IXMLDOMDocument2(void)
 static void test_XPath()
 {
     HRESULT r;
+    VARIANT var;
     VARIANT_BOOL b;
     IXMLDOMDocument2 *doc;
     IXMLDOMNode *rootNode;
@@ -1539,6 +1540,36 @@ static void test_XPath()
     /* but this trick can be used */
     ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_("//*[name()='foo:c']"), &list));
     expect_list_and_release(list, "E3.E4.E2.D1");
+
+    /* it has to be declared in SelectionNamespaces */
+    todo_wine ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
+        _variantbstr_("xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'")));
+
+    /* now the namespace can be used */
+    todo_wine ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("root//test:c"), &list));
+    todo_wine expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
+    todo_wine ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_(".//test:c"), &list));
+    todo_wine expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
+    todo_wine ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_("//test:c"), &list));
+    todo_wine expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
+    todo_wine ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_(".//test:x"), &list));
+    todo_wine expect_list_and_release(list, "E5.E1.E4.E1.E2.D1");
+
+    /* SelectionNamespaces syntax error - the namespaces doesn't work anymore but the value is stored */
+    ole_expect(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
+        _variantbstr_("xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29' xmlns:foo=###")), E_FAIL);
+
+    ole_expect(IXMLDOMDocument_selectNodes(doc, _bstr_("root//foo:c"), &list), E_FAIL);
+
+    todo_wine ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var));
+    todo_wine expect_eq(V_VT(&var), VT_BSTR, int, "%x");
+    if (V_VT(&var) == VT_BSTR)
+        expect_bstr_eq_and_free(V_BSTR(&var), "xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29' xmlns:foo=###");
+
+    /* extra attributes - same thing*/
+    ole_expect(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
+        _variantbstr_("xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29' param='test'")), E_FAIL);
+    ole_expect(IXMLDOMDocument_selectNodes(doc, _bstr_("root//foo:c"), &list), E_FAIL);
 
     IXMLDOMNode_Release(rootNode);
     IXMLDOMNode_Release(elem1Node);
