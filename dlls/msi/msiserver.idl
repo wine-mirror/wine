@@ -59,6 +59,8 @@ library WindowsInstaller
     {
     properties:
     methods:
+        [id(DISPID_INSTALLER_CREATERECORD)]
+            Record *CreateRecord([in] long Count);
         [id(DISPID_INSTALLER_OPENPACKAGE)]
             Session* OpenPackage(
                 [in] VARIANT PackagePath,

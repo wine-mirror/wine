@@ -312,9 +312,7 @@ static DISPID get_dispid( IDispatch *disp, const char *name )
 
 static void test_dispid(void)
 {
-    todo_wine {
     ok( get_dispid( pInstaller, "CreateRecord" ) == 1, "dispid wrong\n");
-    }
     ok( get_dispid( pInstaller, "OpenPackage" ) == 2, "dispid wrong\n");
     todo_wine {
     ok( get_dispid( pInstaller, "OpenProduct" ) == 3, "dispid wrong\n");
@@ -1350,25 +1348,27 @@ static void test_Installer(void)
     if (!pInstaller) return;
 
     /* Installer::CreateRecord */
-    todo_wine {
-        /* Test for error */
-        hr = Installer_CreateRecord(-1, &pRecord);
-        ok(hr == DISP_E_EXCEPTION, "Installer_CreateRecord failed, hresult 0x%08x\n", hr);
-        ok_exception(hr, szCreateRecordException);
 
-        /* Test for success */
-        hr = Installer_CreateRecord(1, &pRecord);
-        ok(SUCCEEDED(hr), "Installer_CreateRecord failed, hresult 0x%08x\n", hr);
-        ok(pRecord != NULL, "Installer_CreateRecord should not have returned NULL record\n");
-    }
+    /* Test for error */
+    hr = Installer_CreateRecord(-1, &pRecord);
+    ok(hr == DISP_E_EXCEPTION, "Installer_CreateRecord failed, hresult 0x%08x\n", hr);
+    ok_exception(hr, szCreateRecordException);
+
+    /* Test for success */
+    hr = Installer_CreateRecord(1, &pRecord);
+    ok(SUCCEEDED(hr), "Installer_CreateRecord failed, hresult 0x%08x\n", hr);
+    ok(pRecord != NULL, "Installer_CreateRecord should not have returned NULL record\n");
     if (pRecord)
     {
         int iFieldCount = 0;
 
         /* Record::FieldCountGet */
-        hr = Record_FieldCountGet(pRecord, &iFieldCount);
-        ok(SUCCEEDED(hr), "Record_FiledCountGet failed, hresult 0x%08x\n", hr);
-        ok(iFieldCount == 1, "Record_FieldCountGet result was %d but expected 1\n", iFieldCount);
+        todo_wine
+        {
+            hr = Record_FieldCountGet(pRecord, &iFieldCount);
+            ok(SUCCEEDED(hr), "Record_FiledCountGet failed, hresult 0x%08x\n", hr);
+            ok(iFieldCount == 1, "Record_FieldCountGet result was %d but expected 1\n", iFieldCount);
+        }
 
         IDispatch_Release(pRecord);
     }

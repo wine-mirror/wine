@@ -1115,6 +1115,30 @@ static HRESULT WINAPI InstallerImpl_Invoke(
 
     switch (dispIdMember)
     {
+        case DISPID_INSTALLER_CREATERECORD:
+	    if (wFlags & DISPATCH_METHOD)
+	    {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                V_VT(pVarResult) = VT_DISPATCH;
+                if ((msiHandle = MsiCreateRecord(V_I4(&varg0))))
+                {
+                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Record, RecordImpl_Invoke, NULL, 0)))
+                    {
+                        IDispatch_AddRef(pDispatch);
+                        V_DISPATCH(pVarResult) = pDispatch;
+                    }
+                    else
+                        ERR("Failed to create Record object, hresult 0x%08x\n", hr);
+                }
+                else
+                {
+                    ERR("MsiCreateRecord failed\n");
+                    return DISP_E_EXCEPTION;
+                }
+            }
+            break;
+
 	case DISPID_INSTALLER_OPENPACKAGE:
 	    if (wFlags & DISPATCH_METHOD)
 	    {
