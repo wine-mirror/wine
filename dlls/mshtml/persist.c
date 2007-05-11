@@ -39,86 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-static HRESULT get_doc_string(HTMLDocument *This, char **str, DWORD *len)
-{
-    nsIDOMDocument *nsdoc;
-    nsIDOMNode *nsnode;
-    LPCWSTR strw;
-    nsAString nsstr;
-    nsresult nsres;
-
-    if(!This->nscontainer) {
-        WARN("no nscontainer, returning NULL\n");
-        return S_OK;
-    }
-
-    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMNode, (void**)&nsnode);
-    nsIDOMDocument_Release(nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNode failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsAString_Init(&nsstr, NULL);
-    nsnode_to_nsstring(nsnode, &nsstr);
-    nsIDOMNode_Release(nsnode);
-
-    nsAString_GetData(&nsstr, &strw, NULL);
-    TRACE("%s\n", debugstr_w(strw));
-
-    *len = WideCharToMultiByte(CP_ACP, 0, strw, -1, NULL, 0, NULL, NULL);
-    *str = mshtml_alloc(*len);
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, *str, *len, NULL, NULL);
-
-    nsAString_Finish(&nsstr);
-
-    return S_OK;
-}
-
-/**********************************************************
- * IPersistMoniker implementation
- */
-
-#define PERSISTMON_THIS(iface) DEFINE_THIS(HTMLDocument, PersistMoniker, iface)
-
-static HRESULT WINAPI PersistMoniker_QueryInterface(IPersistMoniker *iface, REFIID riid,
-                                                            void **ppvObject)
-{
-    HTMLDocument *This = PERSISTMON_THIS(iface);
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
-}
-
-static ULONG WINAPI PersistMoniker_AddRef(IPersistMoniker *iface)
-{
-    HTMLDocument *This = PERSISTMON_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
-}
-
-static ULONG WINAPI PersistMoniker_Release(IPersistMoniker *iface)
-{
-    HTMLDocument *This = PERSISTMON_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This));
-}
-
-static HRESULT WINAPI PersistMoniker_GetClassID(IPersistMoniker *iface, CLSID *pClassID)
-{
-    HTMLDocument *This = PERSISTMON_THIS(iface);
-    return IPersist_GetClassID(PERSIST(This), pClassID);
-}
-
-static HRESULT WINAPI PersistMoniker_IsDirty(IPersistMoniker *iface)
-{
-    HTMLDocument *This = PERSISTMON_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
-}
-
 static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
 {
     nsIInputStream *ret = NULL;
@@ -193,17 +113,13 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
     return ret;
 }
 
-static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAvailable,
-        IMoniker *pimkName, LPBC pibc, DWORD grfMode)
+static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc)
 {
-    HTMLDocument *This = PERSISTMON_THIS(iface);
     BSCallback *bscallback;
     LPOLESTR url = NULL;
     task_t *task;
     HRESULT hres;
     nsresult nsres;
-
-    TRACE("(%p)->(%x %p %p %08x)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
 
     if(pibc) {
         IUnknown *unk = NULL;
@@ -240,7 +156,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
 
     HTMLDocument_LockContainer(This, TRUE);
     
-    hres = IMoniker_GetDisplayName(pimkName, pibc, NULL, &url);
+    hres = IMoniker_GetDisplayName(mon, pibc, NULL, &url);
     if(FAILED(hres)) {
         WARN("GetDiaplayName failed: %08x\n", hres);
         return hres;
@@ -285,7 +201,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
     }
 
-    bscallback = create_bscallback(pimkName);
+    bscallback = create_bscallback(mon);
 
     if(This->frame) {
         task = mshtml_alloc(sizeof(task_t));
@@ -328,12 +244,106 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     }
 
     set_document_bscallback(This, bscallback);
-    hres = start_binding(bscallback);
-
     IBindStatusCallback_Release(STATUSCLB(bscallback));
     CoTaskMemFree(url);
 
-    return hres;
+    return S_OK;
+}
+
+static HRESULT get_doc_string(HTMLDocument *This, char **str, DWORD *len)
+{
+    nsIDOMDocument *nsdoc;
+    nsIDOMNode *nsnode;
+    LPCWSTR strw;
+    nsAString nsstr;
+    nsresult nsres;
+
+    if(!This->nscontainer) {
+        WARN("no nscontainer, returning NULL\n");
+        return S_OK;
+    }
+
+    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMNode, (void**)&nsnode);
+    nsIDOMDocument_Release(nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNode failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsAString_Init(&nsstr, NULL);
+    nsnode_to_nsstring(nsnode, &nsstr);
+    nsIDOMNode_Release(nsnode);
+
+    nsAString_GetData(&nsstr, &strw, NULL);
+    TRACE("%s\n", debugstr_w(strw));
+
+    *len = WideCharToMultiByte(CP_ACP, 0, strw, -1, NULL, 0, NULL, NULL);
+    *str = mshtml_alloc(*len);
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, *str, *len, NULL, NULL);
+
+    nsAString_Finish(&nsstr);
+
+    return S_OK;
+}
+
+
+/**********************************************************
+ * IPersistMoniker implementation
+ */
+
+#define PERSISTMON_THIS(iface) DEFINE_THIS(HTMLDocument, PersistMoniker, iface)
+
+static HRESULT WINAPI PersistMoniker_QueryInterface(IPersistMoniker *iface, REFIID riid,
+                                                            void **ppvObject)
+{
+    HTMLDocument *This = PERSISTMON_THIS(iface);
+    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+}
+
+static ULONG WINAPI PersistMoniker_AddRef(IPersistMoniker *iface)
+{
+    HTMLDocument *This = PERSISTMON_THIS(iface);
+    return IHTMLDocument2_AddRef(HTMLDOC(This));
+}
+
+static ULONG WINAPI PersistMoniker_Release(IPersistMoniker *iface)
+{
+    HTMLDocument *This = PERSISTMON_THIS(iface);
+    return IHTMLDocument2_Release(HTMLDOC(This));
+}
+
+static HRESULT WINAPI PersistMoniker_GetClassID(IPersistMoniker *iface, CLSID *pClassID)
+{
+    HTMLDocument *This = PERSISTMON_THIS(iface);
+    return IPersist_GetClassID(PERSIST(This), pClassID);
+}
+
+static HRESULT WINAPI PersistMoniker_IsDirty(IPersistMoniker *iface)
+{
+    HTMLDocument *This = PERSISTMON_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAvailable,
+        IMoniker *pimkName, LPBC pibc, DWORD grfMode)
+{
+    HTMLDocument *This = PERSISTMON_THIS(iface);
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %p %p %08x)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
+
+    hres = set_moniker(This, pimkName, pibc);
+    if(FAILED(hres))
+        return hres;
+
+    return start_binding(This->bscallback);
 }
 
 static HRESULT WINAPI PersistMoniker_Save(IPersistMoniker *iface, IMoniker *pimkName,
@@ -529,7 +539,7 @@ static ULONG WINAPI PersistStreamInit_AddRef(IPersistStreamInit *iface)
 static ULONG WINAPI PersistStreamInit_Release(IPersistStreamInit *iface)
 {
     HTMLDocument *This = PERSTRINIT_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
+    return IHTMLDocument2_Release(HTMLDOC(This));
 }
 
 static HRESULT WINAPI PersistStreamInit_GetClassID(IPersistStreamInit *iface, CLSID *pClassID)
