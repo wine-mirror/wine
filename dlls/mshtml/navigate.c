@@ -237,6 +237,17 @@ static HRESULT read_stream_data(BSCallback *This, IStream *stream)
     return S_OK;
 }
 
+static void add_nsrequest(BSCallback *This)
+{
+    if(This->nschannel && This->nschannel->load_group) {
+        nsresult nsres = nsILoadGroup_AddRequest(This->nschannel->load_group,
+                (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
+
+        if(NS_FAILED(nsres))
+            ERR("AddRequest failed:%08x\n", nsres);
+    }
+}
+
 #define STATUSCLB_THIS(iface) DEFINE_THIS(BSCallback, BindStatusCallback, iface)
 
 static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *iface,
@@ -323,13 +334,7 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
     IBinding_AddRef(pbind);
     This->binding = pbind;
 
-    if(This->nschannel && This->nschannel->load_group) {
-        nsresult nsres = nsILoadGroup_AddRequest(This->nschannel->load_group,
-                (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
-
-        if(NS_FAILED(nsres))
-            ERR("AddRequest failed:%08x\n", nsres);
-    }
+    add_nsrequest(This);
 
     return S_OK;
 }
