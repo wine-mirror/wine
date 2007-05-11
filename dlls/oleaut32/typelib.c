@@ -4692,7 +4692,7 @@ HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const F
         return S_OK;
     }
 
-    return E_INVALIDARG;
+    return TYPE_E_ELEMENTNOTFOUND;
 }
 
 /* internal function to make the inherited interfaces' methods appear

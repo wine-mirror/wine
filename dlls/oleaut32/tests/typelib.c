@@ -623,9 +623,7 @@ todo_wine {
 
     /* Should have six methods */
     hr = ITypeInfo_GetFuncDesc(pTI, 6, &pFD);
-todo_wine{
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "hr %08x\n", hr);
-}
     hr = ITypeInfo_GetFuncDesc(pTI, 5, &pFD);
 todo_wine {
     ok(hr == S_OK, "hr %08x\n", hr);
@@ -662,9 +660,7 @@ todo_wine {
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
     hr = ITypeInfo_GetFuncDesc(pTI, 1, &pFD);
-todo_wine {
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "hr %08x\n", hr);
- }
     hr = ITypeInfo_GetFuncDesc(pTI, 0, &pFD);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pFD->memid == 0x1c, "memid %08x\n", pFD->memid);
