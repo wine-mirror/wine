@@ -183,7 +183,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {WINED3DSIO_FRC,  "frc",  "FRC", 1, 2, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {WINED3DSIO_CND,  "cnd",  NULL, 1, 4, pshader_hw_cnd, shader_glsl_cnd, WINED3DPS_VERSION(1,1), WINED3DPS_VERSION(1,4)},
     {WINED3DSIO_CMP,  "cmp",  NULL, 1, 4, pshader_hw_cmp, shader_glsl_cmp, WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(3,0)},
-    {WINED3DSIO_POW,  "pow",  "POW", 1, 3, NULL, shader_glsl_map2gl, 0, 0},
+    {WINED3DSIO_POW,  "pow",  "POW", 1, 3, NULL, shader_glsl_pow, 0, 0},
     {WINED3DSIO_CRS,  "crs",  "XPS", 1, 3, NULL, shader_glsl_cross, 0, 0},
     /* TODO: xyz normalise can be performed as VS_ARB using one temporary register,
         DP3 tmp , vec, vec;

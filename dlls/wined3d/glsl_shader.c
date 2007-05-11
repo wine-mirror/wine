@@ -987,6 +987,29 @@ void shader_glsl_cross(SHADER_OPCODE_ARG *arg) {
     shader_addline(arg->buffer, "cross(%s, %s).%s);\n", src0_param.param_str, src1_param.param_str, dst_mask);
 }
 
+/* Process the WINED3DSIO_POW instruction in GLSL (dst = |src0|^src1)
+ * Src0 and src1 are scalars. Note that D3D uses the absolute of src0, while
+ * GLSL uses the value as-is. */
+void shader_glsl_pow(SHADER_OPCODE_ARG *arg) {
+    SHADER_BUFFER *buffer = arg->buffer;
+    glsl_src_param_t src0_param;
+    glsl_src_param_t src1_param;
+    DWORD dst_write_mask;
+    size_t dst_size;
+
+    dst_write_mask = shader_glsl_append_dst(buffer, arg);
+    dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
+
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, &src0_param);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_0, &src1_param);
+
+    if (dst_size > 1) {
+        shader_addline(buffer, "vec%d(pow(abs(%s), %s)));\n", dst_size, src0_param.param_str, src1_param.param_str);
+    } else {
+        shader_addline(buffer, "pow(abs(%s), %s));\n", src0_param.param_str, src1_param.param_str);
+    }
+}
+
 /* Map the opcode 1-to-1 to the GL code (arg->dst = instruction(src0, src1, ...) */
 void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
     CONST SHADER_OPCODE* curOpcode = arg->opcode;
@@ -1005,7 +1028,6 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
         case WINED3DSIO_RSQ: instruction = "inversesqrt"; break;
         case WINED3DSIO_ABS: instruction = "abs"; break;
         case WINED3DSIO_FRC: instruction = "fract"; break;
-        case WINED3DSIO_POW: instruction = "pow"; break;
         case WINED3DSIO_NRM: instruction = "normalize"; break;
         case WINED3DSIO_LOGP:
         case WINED3DSIO_LOG: instruction = "log2"; break;
