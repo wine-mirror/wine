@@ -158,4 +158,74 @@ library TestTypelib
         interface IWidget;
         [source] interface IWidget;
     };
+
+    [
+        odl,
+        uuid(375f8a9d-33d0-44f3-b972-61f8407899e0)
+    ]
+        interface ItestIF1 : IUnknown
+    {
+        HRESULT fn1([in] int x);
+        HRESULT fn2([out,retval] int *x);
+    }
+
+    [
+        odl,
+        uuid(094056a3-666f-4956-be12-1859668310b8)
+    ]
+    interface ItestIF2 : ItestIF1
+    {
+        HRESULT fn3([in] int y);
+    }
+
+    [
+        odl,
+        uuid(33baba09-2e68-43ab-81fe-d84b403df2e5)
+    ]
+    dispinterface ItestIF3
+    {
+        interface ItestIF2;
+    }
+
+    [
+        odl,
+        uuid(a01005c7-7491-42eb-94f3-668e37ce60a6)
+    ]
+    dispinterface ItestIF4
+    {
+        properties:
+        methods:
+        [id(0x1c)] HRESULT fn([in] int z);
+    }
+
+    [
+        odl,
+        uuid(4ab61e25-c09f-4239-8f7f-7a018ea0199f),
+        dual
+    ]
+    interface ItestIF5 : ItestIF2
+    {
+        [id(0x1234)] HRESULT fn4([in] int a);
+        [id(0x1235)] HRESULT fn5([in] int a);
+    }
+
+    [
+        odl,
+        uuid(ec236d8e-2cc7-44f2-b394-36c86ff3da74)
+    ]
+    interface ItestIF6 : IDispatch
+    {
+        [id(0x1234)] HRESULT fn4([in] int a);
+        [id(0x1235)] HRESULT fn5([in] int a);
+    }
+
+    [
+        odl,
+        uuid(f711b105-554d-4751-818c-46fcc5d7c0d5),
+        dual
+    ]
+    interface ItestIF7 : ItestIF6
+    {
+        [id(0x1236)] HRESULT fn6([in] int a);
+    }
 };
