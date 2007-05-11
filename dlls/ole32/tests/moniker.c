@@ -777,12 +777,14 @@ static void test_MkParseDisplayName(void)
     ok_ole_success(hr, CreateBindCtx);
 
     hr = MkParseDisplayName(pbc, wszNonExistentProgId, &eaten, &pmk);
-    ok(hr == MK_E_CANTOPENFILE, "MkParseDisplayName should have failed with MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
+    ok(hr == MK_E_SYNTAX || hr == MK_E_CANTOPENFILE /* Win9x */,
+        "MkParseDisplayName should have failed with MK_E_SYNTAX or MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
 
     /* no special handling of "clsid:" without the string form of the clsid
      * following */
     hr = MkParseDisplayName(pbc, wszDisplayNameClsid, &eaten, &pmk);
-    ok(hr == MK_E_CANTOPENFILE, "MkParseDisplayName should have failed with MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
+    ok(hr == MK_E_SYNTAX || hr == MK_E_CANTOPENFILE /* Win9x */,
+        "MkParseDisplayName should have failed with MK_E_SYNTAX or MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
 
     /* shows clsid has higher precedence than a running object */
     hr = CreateFileMoniker(wszDisplayName, &pmk);
@@ -849,7 +851,8 @@ static void test_MkParseDisplayName(void)
     }
 
     hr = MkParseDisplayName(pbc, wszDisplayNameProgIdFail, &eaten, &pmk);
-    ok(hr == MK_E_CANTOPENFILE, "MkParseDisplayName with ProgId without marker should fail with MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
+    ok(hr == MK_E_SYNTAX || hr == MK_E_CANTOPENFILE /* Win9x */,
+        "MkParseDisplayName with ProgId without marker should fail with MK_E_SYNTAX or MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
 
     hr = CoRevokeClassObject(pdwReg1);
     ok_ole_success(hr, CoRevokeClassObject);
