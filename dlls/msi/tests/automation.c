@@ -890,6 +890,24 @@ static HRESULT View_Fetch(IDispatch *pView, IDispatch **ppRecord)
     return hr;
 }
 
+static HRESULT View_Modify(IDispatch *pView, int iMode, IDispatch *pRecord)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_I4;
+    V_I4(&vararg[1]) = iMode;
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_DISPATCH;
+    V_DISPATCH(&vararg[0]) = pRecord;
+    if (pRecord)
+        IDispatch_AddRef(pRecord);   /* VariantClear in invoke will call IDispatch_Release */
+
+    return invoke(pView, "Modify", DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
+}
+
 static HRESULT View_Close(IDispatch *pView)
 {
     VARIANT varresult;
@@ -1010,6 +1028,7 @@ static void test_Database(IDispatch *pDatabase)
     static WCHAR szThree[] = { 'T','h','r','e','e',0 };
     static WCHAR szTwo[] = { 'T','w','o',0 };
     static WCHAR szStringDataField[] = { 'S','t','r','i','n','g','D','a','t','a',',','F','i','e','l','d',0 };
+    static WCHAR szModifyModeRecord[] = { 'M','o','d','i','f','y',',','M','o','d','e',',','R','e','c','o','r','d',0 };
     IDispatch *pView = NULL;
     HRESULT hr;
 
@@ -1050,6 +1069,35 @@ static void test_Database(IDispatch *pDatabase)
             hr = Record_StringDataPut(pRecord, -1, szString);
             ok(hr == DISP_E_EXCEPTION, "Record_StringDataPut failed, hresult 0x%08x\n", hr);
             ok_exception(hr, szStringDataField);
+
+            /* View::Modify with incorrect parameters */
+            todo_wine
+            {
+                hr = View_Modify(pView, -5, NULL);
+                ok(hr == DISP_E_EXCEPTION, "View_Modify failed, hresult 0x%08x\n", hr);
+                ok_exception(hr, szModifyModeRecord);
+
+                hr = View_Modify(pView, -5, pRecord);
+                ok(hr == DISP_E_EXCEPTION, "View_Modify failed, hresult 0x%08x\n", hr);
+                ok_exception(hr, szModifyModeRecord);
+
+                hr = View_Modify(pView, MSIMODIFY_REFRESH, NULL);
+                ok(hr == DISP_E_EXCEPTION, "View_Modify failed, hresult 0x%08x\n", hr);
+                ok_exception(hr, szModifyModeRecord);
+            }
+
+            /* View::Modify with MSIMODIFY_REFRESH should undo our changes */
+            todo_wine
+            {
+                hr = View_Modify(pView, MSIMODIFY_REFRESH, pRecord);
+                ok(SUCCEEDED(hr), "View_Modify failed, hresult 0x%08x\n", hr);
+            }
+
+            /* Record::StringDataGet, confirm that the record is back to its unmodified value */
+            memset(szString, 0, sizeof(szString));
+            hr = Record_StringDataGet(pRecord, 1, szString);
+            ok(SUCCEEDED(hr), "Record_StringDataGet failed, hresult 0x%08x\n", hr);
+            todo_wine ok_w2("Record_StringDataGet result was %s but expected %s\n", szString, szThree);
 
             IDispatch_Release(pRecord);
         }
