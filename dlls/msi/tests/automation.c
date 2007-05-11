@@ -1071,27 +1071,22 @@ static void test_Database(IDispatch *pDatabase)
             ok_exception(hr, szStringDataField);
 
             /* View::Modify with incorrect parameters */
-            todo_wine
-            {
-                hr = View_Modify(pView, -5, NULL);
-                ok(hr == DISP_E_EXCEPTION, "View_Modify failed, hresult 0x%08x\n", hr);
-                ok_exception(hr, szModifyModeRecord);
+            hr = View_Modify(pView, -5, NULL);
+            ok(hr == DISP_E_EXCEPTION, "View_Modify failed, hresult 0x%08x\n", hr);
+            ok_exception(hr, szModifyModeRecord);
 
-                hr = View_Modify(pView, -5, pRecord);
-                ok(hr == DISP_E_EXCEPTION, "View_Modify failed, hresult 0x%08x\n", hr);
-                ok_exception(hr, szModifyModeRecord);
+            hr = View_Modify(pView, -5, pRecord);
+            ok(hr == DISP_E_EXCEPTION, "View_Modify failed, hresult 0x%08x\n", hr);
+            ok_exception(hr, szModifyModeRecord);
 
-                hr = View_Modify(pView, MSIMODIFY_REFRESH, NULL);
-                ok(hr == DISP_E_EXCEPTION, "View_Modify failed, hresult 0x%08x\n", hr);
-                ok_exception(hr, szModifyModeRecord);
-            }
+            hr = View_Modify(pView, MSIMODIFY_REFRESH, NULL);
+            ok(hr == DISP_E_EXCEPTION, "View_Modify failed, hresult 0x%08x\n", hr);
+            ok_exception(hr, szModifyModeRecord);
 
             /* View::Modify with MSIMODIFY_REFRESH should undo our changes */
-            todo_wine
-            {
-                hr = View_Modify(pView, MSIMODIFY_REFRESH, pRecord);
-                ok(SUCCEEDED(hr), "View_Modify failed, hresult 0x%08x\n", hr);
-            }
+            hr = View_Modify(pView, MSIMODIFY_REFRESH, pRecord);
+            /* Wine's MsiViewModify currently does not support MSIMODIFY_REFRESH */
+            todo_wine ok(SUCCEEDED(hr), "View_Modify failed, hresult 0x%08x\n", hr);
 
             /* Record::StringDataGet, confirm that the record is back to its unmodified value */
             memset(szString, 0, sizeof(szString));

@@ -735,6 +735,24 @@ static HRESULT WINAPI ViewImpl_Invoke(
             else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
+	case DISPID_VIEW_MODIFY:
+	    if (wFlags & DISPATCH_METHOD)
+	    {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                hr = DispGetParam(pDispParams, 1, VT_DISPATCH, &varg1, puArgErr);
+                if (FAILED(hr)) return hr;
+                if (!V_DISPATCH(&varg1)) return DISP_E_EXCEPTION;
+                if ((ret = MsiViewModify(This->msiHandle, V_I4(&varg0), ((AutomationObject *)V_DISPATCH(&varg1))->msiHandle)) != ERROR_SUCCESS)
+                {
+                    VariantClear(&varg1);
+                    ERR("MsiViewModify returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+	    }
+            else return DISP_E_MEMBERNOTFOUND;
+	    break;
+
 	case DISPID_VIEW_CLOSE:
 	    if (wFlags & DISPATCH_METHOD)
 	    {

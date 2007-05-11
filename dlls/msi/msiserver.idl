@@ -124,6 +124,22 @@ library WindowsInstaller
         methods:
     }
 
+    typedef enum {
+        msiViewModifySeek = -1,
+        msiViewModifyRefresh = 0,
+        msiViewModifyInsert = 1,
+        msiViewModifyUpdate = 2,
+        msiViewModifyAssign = 3,
+        msiViewModifyReplace = 4,
+        msiViewModifyMerge = 5,
+        msiViewModifyDelete = 6,
+        msiViewModifyInsertTemporary = 7,
+        msiViewModifyValidate = 8,
+        msiViewModifyValidateNew = 9,
+        msiViewModifyValidateField = 10,
+        msiViewModifyValidateDelete = 11,
+    } _MsiViewModify;                                /* Added underscore to avoid conflict with function name */
+
     [ uuid(000C109C-0000-0000-C000-000000000046) ]
     dispinterface View
     {
@@ -133,6 +149,10 @@ library WindowsInstaller
             void Execute([in, optional, defaultvalue(0)] Record *Params);
         [id(DISPID_VIEW_FETCH)]
             Record* Fetch();
+        [id(DISPID_VIEW_MODIFY)]
+            void Modify(
+                [in] _MsiViewModify Mode,
+                Record *Record);
         [id(DISPID_VIEW_CLOSE)]
             void Close();
     }
