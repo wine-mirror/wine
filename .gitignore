@@ -703,6 +703,7 @@ include/mshtmhst.h
 include/mshtml.h
 include/msxml.h
 include/msxml2.h
+include/netfw.h
 include/oaidl.h
 include/objidl.h
 include/objsafe.h

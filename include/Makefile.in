@@ -29,6 +29,7 @@ IDL_H_SRCS = \
 	mshtml.idl \
 	msxml.idl \
 	msxml2.idl \
+	netfw.idl \
 	oaidl.idl \
 	objidl.idl \
 	objsafe.idl \
