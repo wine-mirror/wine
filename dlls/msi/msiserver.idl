@@ -88,6 +88,8 @@ library WindowsInstaller
             void StringData(
                 [in] long Field,
                 [in] BSTR rhs);
+        [id(DISPID_RECORD_FIELDCOUNT), propget]
+            long FieldCount();
     }
 
     [ uuid(000C1095-0000-0000-C000-000000000046) ]

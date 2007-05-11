@@ -566,6 +566,14 @@ static HRESULT WINAPI RecordImpl_Invoke(
 
     switch (dispIdMember)
     {
+	case DISPID_RECORD_FIELDCOUNT:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+                V_VT(pVarResult) = VT_I4;
+                V_I4(pVarResult) = MsiRecordGetFieldCount(This->msiHandle);
+	    }
+            else return DISP_E_MEMBERNOTFOUND;
+	    break;
+
 	case DISPID_RECORD_STRINGDATA:
 	    if (wFlags & DISPATCH_PROPERTYGET) {
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);

@@ -1388,12 +1388,9 @@ static void test_Installer(void)
         int iFieldCount = 0;
 
         /* Record::FieldCountGet */
-        todo_wine
-        {
-            hr = Record_FieldCountGet(pRecord, &iFieldCount);
-            ok(SUCCEEDED(hr), "Record_FiledCountGet failed, hresult 0x%08x\n", hr);
-            ok(iFieldCount == 1, "Record_FieldCountGet result was %d but expected 1\n", iFieldCount);
-        }
+        hr = Record_FieldCountGet(pRecord, &iFieldCount);
+        ok(SUCCEEDED(hr), "Record_FiledCountGet failed, hresult 0x%08x\n", hr);
+        ok(iFieldCount == 1, "Record_FieldCountGet result was %d but expected 1\n", iFieldCount);
 
         IDispatch_Release(pRecord);
     }
