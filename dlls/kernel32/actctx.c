@@ -100,7 +100,7 @@ HANDLE WINAPI CreateActCtxA(PCACTCTXA pActCtx)
     }
     if (actw.dwFlags & ACTCTX_FLAG_RESOURCE_NAME_VALID)
     {
-        if (!((ULONG_PTR)pActCtx->lpResourceName >> 16))
+        if ((ULONG_PTR)pActCtx->lpResourceName >> 16)
         {
             len = MultiByteToWideChar(CP_ACP, 0, pActCtx->lpResourceName, -1, NULL, 0);
             resname = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
