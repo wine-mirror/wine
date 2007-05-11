@@ -748,6 +748,23 @@ static HRESULT Session_DoAction(IDispatch *pSession, LPCWSTR szAction, int *iRet
     return hr;
 }
 
+static HRESULT Session_EvaluateCondition(IDispatch *pSession, LPCWSTR szCondition, int *iReturn)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szCondition);
+
+    hr = invoke(pSession, "EvaluateCondition", DISPATCH_METHOD, &dispparams, &varresult, VT_I4);
+    *iReturn = V_I4(&varresult);
+    VariantClear(&varresult);
+    return hr;
+}
+
 static HRESULT Session_SetInstallLevel(IDispatch *pSession, long iInstallLevel)
 {
     VARIANT varresult;
@@ -1005,6 +1022,10 @@ static void test_Session(IDispatch *pSession)
     static WCHAR szProductName[] = { 'P','r','o','d','u','c','t','N','a','m','e',0 };
     static WCHAR szMSITEST[] = { 'M','S','I','T','E','S','T',0 };
     static WCHAR szOne[] = { 'O','n','e',0 };
+    static WCHAR szOneStateFalse[] = { '!','O','n','e','>','0',0 };
+    static WCHAR szOneStateTrue[] = { '!','O','n','e','=','-','1',0 };
+    static WCHAR szOneActionFalse[] = { '$','O','n','e','=','-','1',0 };
+    static WCHAR szOneActionTrue[] = { '$','O','n','e','>','0',0 };
     static WCHAR szCostInitialize[] = { 'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0 };
     static WCHAR szEmpty[] = { 0 };
     static WCHAR szEquals[] = { '=',0 };
@@ -1084,6 +1105,22 @@ static void test_Session(IDispatch *pSession)
         IDispatch_Release(pDatabase);
     }
 
+    /* Session::EvaluateCondition */
+    todo_wine
+    {
+        hr = Session_EvaluateCondition(pSession, NULL, &myint);
+        ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+        ok(myint == MSICONDITION_NONE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
+
+        hr = Session_EvaluateCondition(pSession, szEmpty, &myint);
+        ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+        ok(myint == MSICONDITION_NONE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
+
+        hr = Session_EvaluateCondition(pSession, szEquals, &myint);
+        ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+        ok(myint == MSICONDITION_ERROR, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
+    }
+
     /* Session::DoAction(CostInitialize) must occur before the next statements */
     hr = Session_DoAction(pSession, szCostInitialize, &myint);
     ok(SUCCEEDED(hr), "Session_DoAction failed, hresult 0x%08x\n", hr);
@@ -1098,12 +1135,38 @@ static void test_Session(IDispatch *pSession)
     ok(SUCCEEDED(hr), "Session_FeatureCurrentState failed, hresult 0x%08x\n", hr);
     ok(myint == INSTALLSTATE_UNKNOWN, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
 
+    /* Session::EvaluateCondition */
+    todo_wine
+    {
+        hr = Session_EvaluateCondition(pSession, szOneStateFalse, &myint);
+        ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+        if (SUCCEEDED(hr))
+            ok(myint == MSICONDITION_FALSE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
+
+        hr = Session_EvaluateCondition(pSession, szOneStateTrue, &myint);
+        ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+        ok(myint == MSICONDITION_TRUE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
+    }
+
     /* Session::FeatureRequestState, put */
     hr = Session_FeatureRequestStatePut(pSession, szOne, INSTALLSTATE_ADVERTISED);
     ok(SUCCEEDED(hr), "Session_FeatureRequestStatePut failed, hresult 0x%08x\n", hr);
     hr = Session_FeatureRequestStateGet(pSession, szOne, &myint);
     ok(SUCCEEDED(hr), "Session_FeatureRequestStateGet failed, hresult 0x%08x\n", hr);
     ok(myint == INSTALLSTATE_ADVERTISED, "Feature request state was %d but expected %d\n", myint, INSTALLSTATE_ADVERTISED);
+
+    /* Session::EvaluateCondition */
+    todo_wine
+    {
+        hr = Session_EvaluateCondition(pSession, szOneActionFalse, &myint);
+        ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+        if (SUCCEEDED(hr))
+            ok(myint == MSICONDITION_FALSE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
+
+        hr = Session_EvaluateCondition(pSession, szOneActionTrue, &myint);
+        ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+        ok(myint == MSICONDITION_TRUE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
+    }
 }
 
 /* delete key and all its subkeys */
