@@ -172,6 +172,13 @@ library WindowsInstaller
         msiRunModeCommit = 18
     } MsiRunMode;
 
+    typedef enum {
+        msiEvaluateConditionFalse = 0,
+        msiEvaluateConditionTrue = 1,
+        msiEvaluateConditionNone = 2,
+        msiEvaluateConditionError = 3
+    } _MsiEvaluateCondition;           /* Added underscore to avoid conflict with function name */
+
     [ uuid(000C109E-0000-0000-C000-000000000046) ]
     dispinterface Session
     {
@@ -197,6 +204,8 @@ library WindowsInstaller
             Database* Database();
         [id(DISPID_SESSION_DOACTION)]
             MsiDoActionStatus DoAction([in] BSTR Action);
+        [id(DISPID_SESSION_EVALUATECONDITION)]
+            _MsiEvaluateCondition EvaluateCondition([in] BSTR Expression);
         [id(DISPID_SESSION_FEATURECURRENTSTATE), propget]
             MsiInstallState FeatureCurrentState([in] BSTR Feature);
         [id(DISPID_SESSION_FEATUREREQUESTSTATE), propget]

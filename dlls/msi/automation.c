@@ -956,6 +956,15 @@ static HRESULT WINAPI SessionImpl_Invoke(
             }
             break;
 
+        case DISPID_SESSION_EVALUATECONDITION:
+            if (wFlags & DISPATCH_METHOD) {
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                V_VT(pVarResult) = VT_I4;
+                V_I4(pVarResult) = MsiEvaluateConditionW(This->msiHandle, V_BSTR(&varg0));
+            }
+            break;
+
         case DISPID_SESSION_SETINSTALLLEVEL:
             hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
             if (FAILED(hr)) return hr;
