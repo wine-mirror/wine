@@ -21,7 +21,6 @@
 #include <stdarg.h>
 
 #include "windef.h"
-#include "winbase.h"
 
 extern void CDECL __getmainargs(int *argc, char** *argv, char** *envp,
                                 int expand_wildcards, int *new_mode);
