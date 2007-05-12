@@ -85,6 +85,8 @@ static BOOL CreateDirect3D(void)
     ddsd.dwHeight = 256;
     rc = IDirectDraw7_CreateSurface(lpDD, &ddsd, &lpDDS, NULL);
     ok(rc==DD_OK, "CreateSurface returned: %x\n", rc);
+    if (!SUCCEEDED(rc))
+	return FALSE;
 
     rc = IDirect3D7_CreateDevice(lpD3D, &IID_IDirect3DTnLHalDevice, lpDDS,
         &lpD3DDevice);

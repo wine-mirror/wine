@@ -73,6 +73,10 @@ static void MipMapCreationTest(void)
     ddsd.dwHeight = 32;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
+    if (FAILED(rc)) {
+	skip("failed to create surface\n");
+	return;
+    }
 
     /* Check the number of created mipmaps */
     memset(&ddsd, 0, sizeof(DDSURFACEDESC));
@@ -99,7 +103,10 @@ static void MipMapCreationTest(void)
     ddsd.dwHeight = 32;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
-
+    if (FAILED(rc)) {
+	skip("failed to create surface\n");
+	return;
+    }
     /* Check the number of created mipmaps */
     memset(&ddsd, 0, sizeof(DDSURFACEDESC));
     ddsd.dwSize = sizeof(ddsd);
@@ -128,6 +135,10 @@ static void MipMapCreationTest(void)
     ddsd.dwHeight = 32;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
+    if (FAILED(rc)) {
+	skip("failed to create surface\n");
+	return;
+    }
 
     /* Check the number of created mipmaps */
     memset(&ddsd, 0, sizeof(DDSURFACEDESC));
@@ -155,6 +166,10 @@ static void MipMapCreationTest(void)
     ddsd.dwHeight = 64;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
+    if (FAILED(rc)) {
+	skip("failed to create surface\n");
+	return;
+    }
 
     /* Check the number of created mipmaps */
     memset(&ddsd, 0, sizeof(DDSURFACEDESC));
@@ -196,12 +211,20 @@ static void SrcColorKey32BlitTest(void)
     U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x0000FF;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDst, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
+    if (FAILED(rc)) {
+	skip("failed to create surface\n");
+	return;
+    }
 
     ddsd.dwFlags |= DDSD_CKSRCBLT;
     ddsd.ddckCKSrcBlt.dwColorSpaceLowValue = 0xFF00FF;
     ddsd.ddckCKSrcBlt.dwColorSpaceHighValue = 0xFF00FF;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpSrc, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
+    if (FAILED(rc)) {
+	skip("failed to create surface\n");
+	return;
+    }
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
     ok(rc==DD_OK,"Lock returned: %x\n",rc);
@@ -1577,6 +1600,10 @@ static void test_lockrect_invalid(void)
 
         hr = IDirectDraw_CreateSurface(lpDD, &surface_desc, &surface, NULL);
         ok(SUCCEEDED(hr), "CreateSurface failed (0x%08x)\n", hr);
+        if (FAILED(hr)) {
+	    skip("failed to create surface\n");
+	    continue;
+	}
 
         for (i = 0; i < (sizeof(valid) / sizeof(*valid)); ++i)
         {
@@ -1631,6 +1658,10 @@ static void CompressedTest(void)
 
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
     ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+    if (FAILED(hr)) {
+	skip("failed to create surface\n");
+	return;
+    }
 
     memset(&ddsd2, 0, sizeof(ddsd2));
     ddsd2.dwSize = sizeof(ddsd2);
@@ -1651,6 +1682,10 @@ static void CompressedTest(void)
     U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','3');
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
     ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+    if (FAILED(hr)) {
+	skip("failed to create surface\n");
+	return;
+    }
 
     memset(&ddsd2, 0, sizeof(ddsd2));
     ddsd2.dwSize = sizeof(ddsd2);
@@ -1670,6 +1705,10 @@ static void CompressedTest(void)
     U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','5');
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
     ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+    if (FAILED(hr)) {
+	skip("failed to create surface\n");
+	return;
+    }
 
     memset(&ddsd2, 0, sizeof(ddsd2));
     ddsd2.dwSize = sizeof(ddsd2);
@@ -2011,8 +2050,9 @@ static void SizeTest(void)
     desc.dwSize = sizeof(desc);
     desc.dwFlags = DDSD_CAPS;
     desc.ddsCaps.dwCaps |= DDSCAPS_OFFSCREENPLAIN;
+    trace("before offscreenplain create dsurface = %p\n", dsurface);
     ret = IDirectDraw_CreateSurface(lpDD, &desc, &dsurface, NULL);
-    ok(ret == DDERR_INVALIDPARAMS, "Creating an offscreen plain surface without a size info returned %08x\n", ret);
+    ok(ret == DDERR_INVALIDPARAMS, "Creating an offscreen plain surface without a size info returned %08x (dsurface=%p)\n", ret, dsurface);
     if(dsurface)
     {
         trace("Surface at %p\n", dsurface);
@@ -2095,8 +2135,8 @@ static void SizeTest(void)
 static void PrivateDataTest(void)
 {
     HRESULT hr;
-    IDirectDrawSurface7 *surface7;
-    IDirectDrawSurface *surface;
+    IDirectDrawSurface7 *surface7 = NULL;
+    IDirectDrawSurface *surface = NULL;
     DDSURFACEDESC desc;
     ULONG ref, ref2;
     IUnknown *ptr;
