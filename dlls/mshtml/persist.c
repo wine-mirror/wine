@@ -113,7 +113,7 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
     return ret;
 }
 
-static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc)
+static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL *bind_complete)
 {
     BSCallback *bscallback;
     LPOLESTR url = NULL;
@@ -237,6 +237,9 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc)
 
             IBindStatusCallback_Release(STATUSCLB(bscallback));
             CoTaskMemFree(url);
+
+            if(bind_complete)
+                *bind_complete = TRUE;
             return S_OK;
         }else if(nsres != WINE_NS_LOAD_FROM_MONIKER) {
             WARN("LoadURI failed: %08x\n", nsres);
@@ -247,6 +250,8 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc)
     IBindStatusCallback_Release(STATUSCLB(bscallback));
     CoTaskMemFree(url);
 
+    if(bind_complete)
+        *bind_complete = FALSE;
     return S_OK;
 }
 
@@ -335,15 +340,19 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         IMoniker *pimkName, LPBC pibc, DWORD grfMode)
 {
     HTMLDocument *This = PERSISTMON_THIS(iface);
+    BOOL bind_complete = FALSE;
     HRESULT hres;
 
     TRACE("(%p)->(%x %p %p %08x)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
 
-    hres = set_moniker(This, pimkName, pibc);
+    hres = set_moniker(This, pimkName, pibc, &bind_complete);
     if(FAILED(hres))
         return hres;
 
-    return start_binding(This->bscallback);
+    if(!bind_complete)
+        return start_binding(This->bscallback);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PersistMoniker_Save(IPersistMoniker *iface, IMoniker *pimkName,
@@ -571,7 +580,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
         return hres;
     }
 
-    hres = set_moniker(This, mon, NULL);
+    hres = set_moniker(This, mon, NULL, NULL);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
