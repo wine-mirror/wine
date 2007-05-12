@@ -47,6 +47,12 @@ interface IServer
     double *pd;
   } ptypes_t;
 
+  typedef struct
+  {
+    vector_t *pu;
+    vector_t **pv;
+  } pvectors_t;
+
   int int_return(void);
   int square(int x);
   int sum(int x, int y);
@@ -60,5 +66,6 @@ interface IServer
   int sum_fixed_array(int a[5]);
   int pints_sum(pints_t *pints);
   double ptypes_sum(ptypes_t *ptypes);
+  int dot_pvectors(pvectors_t *pvectors);
   void stop(void);
 }

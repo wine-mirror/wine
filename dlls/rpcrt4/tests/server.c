@@ -126,6 +126,12 @@ s_ptypes_sum(ptypes_t *pt)
   return *pt->pc + *pt->ps + *pt->pl + *pt->pf + *pt->pd;
 }
 
+int
+s_dot_pvectors(pvectors_t *p)
+{
+  return p->pu->x * (*p->pv)->x + p->pu->y * (*p->pv)->y + p->pu->z * (*p->pv)->z;
+}
+
 void
 s_stop(void)
 {
@@ -167,6 +173,8 @@ basic_tests(void)
   static char string[] = "I am a string";
   static int f[5] = {1, 3, 0, -2, -4};
   static vector_t a = {1, 3, 7};
+  static vector_t vec1 = {4, -2, 1}, vec2 = {-5, 2, 3}, *pvec2 = &vec2;
+  static pvectors_t pvecs = {&vec1, &pvec2};
   pints_t pints;
   ptypes_t ptypes;
   int i1, i2, i3, *pi2, *pi3, **ppi3;
@@ -231,6 +239,7 @@ basic_tests(void)
   ptypes.pd = &u;
   ok(ptypes_sum(&ptypes) == 33.0, "RPC ptypes_sum\n");
 
+  ok(dot_pvectors(&pvecs) == -21, "RPC dot_pvectors\n");
   ok(sum_fixed_array(f) == -2, "RPC sum_fixed_array\n");
 }
 

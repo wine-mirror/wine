@@ -675,8 +675,10 @@ static size_t write_nonsimple_pointer(FILE *file, const type_t *type, size_t off
 {
     short absoff = type->ref->typestring_offset;
     short reloff = absoff - (offset + 2);
-    print_file(file, 2, "0x%02x, 0x10,\t/* %s */\n",
-               type->type, string_of_type(type->type));
+    int ptr_attr = is_ptr(type->ref) ? 0x10 : 0x0;
+
+    print_file(file, 2, "0x%02x, 0x%x,\t/* %s */\n",
+               type->type, ptr_attr, string_of_type(type->type));
     print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%hd) */\n",
                reloff, reloff, absoff);
     return 4;
@@ -1207,6 +1209,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
             write_pointers(file, NULL, type, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
+        type->typestring_offset = start_offset;
         if (type->type == RPC_FC_STRUCT)
             WRITE_FCTYPE(file, FC_STRUCT, *typestring_offset);
         else
@@ -1249,6 +1252,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
             write_pointers(file, NULL, type, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
+        type->typestring_offset = start_offset;
         if (type->type == RPC_FC_CSTRUCT)
             WRITE_FCTYPE(file, FC_CSTRUCT, *typestring_offset);
         else
@@ -1300,6 +1304,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         has_pointers = write_pointers(file, NULL, type, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
+        type->typestring_offset = start_offset;
         WRITE_FCTYPE(file, FC_CVSTRUCT, *typestring_offset);
         /* alignment */
         print_file(file, 2, "0x%02x,\n", align - 1);
