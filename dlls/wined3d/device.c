@@ -1366,15 +1366,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     /** FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat **/
 
     object->context = HeapAlloc(GetProcessHeap(), 0, sizeof(object->context));
-    if(!object->context) {
-    }
+    if(!object->context)
+	return E_OUTOFMEMORY;
     object->num_contexts = 1;
 
     ENTER_GL();
     object->context[0] = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, display, object->win);
     LEAVE_GL();
 
-    if (!object->context) {
+    if (!object->context[0]) {
         ERR("Failed to create a new context\n");
         hr = WINED3DERR_NOTAVAILABLE;
         goto error;
@@ -1517,9 +1517,8 @@ error:
         HeapFree(GetProcessHeap(), 0, object->backBuffer);
         object->backBuffer = NULL;
     }
-    if(object->context) {
+    if(object->context[0])
         DestroyContext(This, object->context[0]);
-    }
     if(object->frontBuffer) {
         IWineD3DSurface_GetParent(object->frontBuffer, &bufferParent);
         IUnknown_Release(bufferParent); /* once for the get parent */
