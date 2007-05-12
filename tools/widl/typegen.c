@@ -728,8 +728,7 @@ static int write_pointers(FILE *file, const attr_list_t *attrs,
         }
         else
         {
-            pointers_written = write_pointers(file, attrs, type->ref, array,
-                                              level + 1, typestring_offset);
+            write_pointers(file, attrs, type->ref, array, level + 1, typestring_offset);
 
             if (1 < level)
             {
