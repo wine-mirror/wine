@@ -1698,6 +1698,167 @@ static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIWineURI **_re
     return NS_OK;
 }
 
+typedef struct {
+    const nsIProtocolHandlerVtbl  *lpProtocolHandlerVtbl;
+
+    LONG ref;
+
+    nsIProtocolHandler *nshandler;
+} nsProtocolHandler;
+
+#define NSPROTHANDLER(x)  ((nsIProtocolHandler*)  &(x)->lpProtocolHandlerVtbl)
+
+#define NSPROTHANDLER_THIS(iface) DEFINE_THIS(nsProtocolHandler, ProtocolHandler, iface)
+
+static nsresult NSAPI nsProtocolHandler_QueryInterface(nsIProtocolHandler *iface, nsIIDRef riid,
+        nsQIResult result)
+{
+    nsProtocolHandler *This = NSPROTHANDLER_THIS(iface);
+
+    *result = NULL;
+
+    if(IsEqualGUID(&IID_nsISupports, riid)) {
+        TRACE("(%p)->(IID_nsISupports %p)\n", This, result);
+        *result = NSPROTHANDLER(This);
+    }else if(IsEqualGUID(&IID_nsIProtocolHandler, riid)) {
+        TRACE("(%p)->(IID_nsIProtocolHandler %p)\n", This, result);
+        *result = NSPROTHANDLER(This);
+    }else if(IsEqualGUID(&IID_nsIExternalProtocolHandler, riid)) {
+        TRACE("(%p)->(IID_nsIExternalProtocolHandler %p), returning NULL\n", This, result);
+        return NS_NOINTERFACE;
+    }
+
+    if(*result) {
+        nsISupports_AddRef((nsISupports*)*result);
+        return NS_OK;
+    }
+
+    WARN("(%s %p)\nn", debugstr_guid(riid), result);
+    return NS_NOINTERFACE;
+}
+
+static nsrefcnt NSAPI nsProtocolHandler_AddRef(nsIProtocolHandler *iface)
+{
+    nsProtocolHandler *This = NSPROTHANDLER_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static nsrefcnt NSAPI nsProtocolHandler_Release(nsIProtocolHandler *iface)
+{
+    nsProtocolHandler *This = NSPROTHANDLER_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        if(This->nshandler)
+            nsIProtocolHandler_Release(This->nshandler);
+        mshtml_free(This);
+    }
+
+    return ref;
+}
+
+static nsresult NSAPI nsProtocolHandler_GetScheme(nsIProtocolHandler *iface, nsACString *aScheme)
+{
+    nsProtocolHandler *This = NSPROTHANDLER_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aScheme);
+
+    if(This->nshandler)
+        return nsIProtocolHandler_GetScheme(This->nshandler, aScheme);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsProtocolHandler_GetDefaultPort(nsIProtocolHandler *iface,
+        PRInt32 *aDefaultPort)
+{
+    nsProtocolHandler *This = NSPROTHANDLER_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aDefaultPort);
+
+    if(This->nshandler)
+        return nsIProtocolHandler_GetDefaultPort(This->nshandler, aDefaultPort);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsProtocolHandler_GetProtocolFlags(nsIProtocolHandler *iface,
+                                                         PRUint32 *aProtocolFlags)
+{
+    nsProtocolHandler *This = NSPROTHANDLER_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aProtocolFlags);
+
+    if(This->nshandler)
+        return nsIProtocolHandler_GetProtocolFlags(This->nshandler, aProtocolFlags);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsProtocolHandler_NewURI(nsIProtocolHandler *iface,
+        const nsACString *aSpec, const char *aOriginCharset, nsIURI *aBaseURI, nsIURI **_retval)
+{
+    nsProtocolHandler *This = NSPROTHANDLER_THIS(iface);
+
+    TRACE("((%p)->%p %s %p %p)\n", This, aSpec, debugstr_a(aOriginCharset), aBaseURI, _retval);
+
+    if(This->nshandler)
+        return nsIProtocolHandler_NewURI(This->nshandler, aSpec, aOriginCharset, aBaseURI, _retval);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsProtocolHandler_NewChannel(nsIProtocolHandler *iface,
+        nsIURI *aURI, nsIChannel **_retval)
+{
+    nsProtocolHandler *This = NSPROTHANDLER_THIS(iface);
+
+    TRACE("(%p)->(%p %p)\n", This, aURI, _retval);
+
+    if(This->nshandler)
+        return nsIProtocolHandler_NewChannel(This->nshandler, aURI, _retval);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsProtocolHandler_AllowPort(nsIProtocolHandler *iface,
+        PRInt32 port, const char *scheme, PRBool *_retval)
+{
+    nsProtocolHandler *This = NSPROTHANDLER_THIS(iface);
+
+    TRACE("(%p)->(%d %s %p)\n", This, port, debugstr_a(scheme), _retval);
+
+    if(This->nshandler)
+        return nsIProtocolHandler_AllowPort(This->nshandler, port, scheme, _retval);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+#undef NSPROTHANDLER_THIS
+
+static const nsIProtocolHandlerVtbl nsProtocolHandlerVtbl = {
+    nsProtocolHandler_QueryInterface,
+    nsProtocolHandler_AddRef,
+    nsProtocolHandler_Release,
+    nsProtocolHandler_GetScheme,
+    nsProtocolHandler_GetDefaultPort,
+    nsProtocolHandler_GetProtocolFlags,
+    nsProtocolHandler_NewURI,
+    nsProtocolHandler_NewChannel,
+    nsProtocolHandler_AllowPort
+};
+
+static nsIProtocolHandler *create_protocol_handler(nsIProtocolHandler *nshandler)
+{
+    nsProtocolHandler *ret = mshtml_alloc(sizeof(nsProtocolHandler));
+
+    ret->lpProtocolHandlerVtbl = &nsProtocolHandlerVtbl;
+    ret->ref = 1;
+    ret->nshandler = nshandler;
+
+    return NSPROTHANDLER(ret);
+}
+
 static nsresult NSAPI nsIOService_QueryInterface(nsIIOService *iface, nsIIDRef riid,
                                                  nsQIResult result)
 {
@@ -1733,8 +1894,29 @@ static nsrefcnt NSAPI nsIOService_Release(nsIIOService *iface)
 static nsresult NSAPI nsIOService_GetProtocolHandler(nsIIOService *iface, const char *aScheme,
                                                      nsIProtocolHandler **_retval)
 {
+    nsIExternalProtocolHandler *nsexthandler;
+    nsIProtocolHandler *nshandler;
+    nsresult nsres;
+
     TRACE("(%s %p)\n", debugstr_a(aScheme), _retval);
-    return nsIIOService_GetProtocolHandler(nsio, aScheme, _retval);
+
+    nsres = nsIIOService_GetProtocolHandler(nsio, aScheme, &nshandler);
+    if(NS_FAILED(nsres)) {
+        WARN("GetProtocolHandler failed: %08x\n", nsres);
+        return nsres;
+    }
+
+    nsres = nsIProtocolHandler_QueryInterface(nshandler, &IID_nsIExternalProtocolHandler,
+                                              (void**)&nsexthandler);
+    if(NS_FAILED(nsres)) {
+        *_retval = nshandler;
+        return NS_OK;
+    }
+
+    nsIExternalProtocolHandler_Release(nsexthandler);
+    *_retval = create_protocol_handler(nshandler);
+    TRACE("return %p\n", *_retval);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsIOService_GetProtocolFlags(nsIIOService *iface, const char *aScheme,

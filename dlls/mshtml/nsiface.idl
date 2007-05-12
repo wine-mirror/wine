@@ -86,7 +86,6 @@ interface nsISupports
 typedef nsISupports nsISHistory;
 typedef nsISupports nsISimpleEnumerator;
 typedef nsISupports nsIWidget;
-typedef nsISupports nsIProtocolHandler;
 typedef nsISupports nsIDOMAbstractView;
 typedef nsISupports nsIHttpHeaderVisitor;
 typedef nsISupports nsIDOMBarProp;
@@ -1192,6 +1191,32 @@ interface nsIFile : nsISupports
     nsresult Contains(nsIFile *inFile, PRBool recir, PRBool *_retval);
     nsresult GetParent(nsIFile **aParent);
     nsresult GetDirectoryEntries(nsISimpleEnumerator **aDirectoryEntries);
+}
+
+[
+    object,
+    uuid(15fd6940-8ea7-11d3-93ad-00104ba0fd40)
+    /* FROZEN */
+]
+interface nsIProtocolHandler : nsISupports
+{
+    nsresult GetScheme(nsACString *aScheme);
+    nsresult GetDefaultPort(PRInt32 *aDefaultPort);
+    nsresult GetProtocolFlags(PRUint32 *aProtocolFlags);
+    nsresult NewURI(const nsACString *aSpec, const char *aOriginCharset,
+                    nsIURI *aBaseURI, nsIURI **_retval);
+    nsresult NewChannel(nsIURI *aURI, nsIChannel **_retval);
+    nsresult AllowPort(PRInt32 port, const char *scheme, PRBool *_retval);
+}
+
+[
+    object,
+    uuid(0e61f3b2-34d7-4c79-bfdc-4860bc7341b7)
+    /* NOT_FROZEN */
+]
+interface nsIExternalProtocolHandler : nsIProtocolHandler
+{
+    nsresult ExternalAppExistsForScheme(const nsACString *scheme, PRBool *_retval);
 }
 
 [
