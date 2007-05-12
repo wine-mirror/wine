@@ -555,10 +555,24 @@ static HRESULT WINAPI domelem_removeAttributeNode(
 
 static HRESULT WINAPI domelem_getElementsByTagName(
     IXMLDOMElement *iface,
-    BSTR p, IXMLDOMNodeList** resultList)
+    BSTR bstrName, IXMLDOMNodeList** resultList)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    LPWSTR szPattern;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_w(bstrName), resultList);
+
+    szPattern = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(3+lstrlenW(bstrName)+1));
+    szPattern[0] = '.';
+    szPattern[1] = szPattern[2] = '/';
+    lstrcpyW(szPattern+3, bstrName);
+    TRACE("%s\n", debugstr_w(szPattern));
+
+    hr = queryresult_create(get_element(This), szPattern, resultList);
+    HeapFree(GetProcessHeap(), 0, szPattern);
+
+    return hr;
 }
 
 static HRESULT WINAPI domelem_normalize(
