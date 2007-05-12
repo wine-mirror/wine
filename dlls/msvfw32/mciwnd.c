@@ -28,7 +28,6 @@
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "vfw.h"
 #include "digitalv.h"
