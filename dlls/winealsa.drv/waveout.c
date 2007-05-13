@@ -276,21 +276,6 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEDEV* wwo, BOOL force)
      * - we hit the beginning of a running loop
      * - we hit a wavehdr which hasn't finished playing
      */
-#if 0
-    while ((lpWaveHdr = wwo->lpQueuePtr) &&
-           (force ||
-            (lpWaveHdr != wwo->lpPlayPtr &&
-             lpWaveHdr != wwo->lpLoopPtr &&
-             lpWaveHdr->reserved <= wwo->dwPlayedTotal))) {
-
-	wwo->lpQueuePtr = lpWaveHdr->lpNext;
-
-	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
-	lpWaveHdr->dwFlags |= WHDR_DONE;
-
-	wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
-    }
-#else
     for (;;)
     {
         lpWaveHdr = wwo->lpQueuePtr;
@@ -308,7 +293,6 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEDEV* wwo, BOOL force)
 
 	wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
     }
-#endif
     return  (lpWaveHdr && lpWaveHdr != wwo->lpPlayPtr && lpWaveHdr != wwo->lpLoopPtr) ?
         wodPlayer_NotifyWait(wwo, lpWaveHdr) : INFINITE;
 }
@@ -499,13 +483,6 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEDEV* wwo)
     wodUpdatePlayedTotal(wwo, NULL);
     availInQ = snd_pcm_avail_update(wwo->pcm);
 
-#if 0
-    /* input queue empty and output buffer with less than one fragment to play */
-    if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + wwo->dwFragmentSize) {
-	TRACE("Run out of wavehdr:s...\n");
-        return INFINITE;
-    }
-#endif
     /* no more room... no need to try to feed */
     if (availInQ > 0) {
         /* Feed from partial wavehdr */

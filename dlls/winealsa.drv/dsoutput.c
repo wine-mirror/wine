@@ -421,11 +421,6 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 
     if (wwo->hw_params == NULL || wwo->pcm == NULL) return DSERR_GENERIC;
 
-#if 0 /* Shouldn't be needed */
-    /* we need to track down buffer underruns */
-    DSDB_CheckXRUN(This);
-#endif
-
     state = snd_pcm_state(wwo->pcm);
     if (state == SND_PCM_STATE_RUNNING)
     {
