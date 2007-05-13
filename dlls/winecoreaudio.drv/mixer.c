@@ -616,6 +616,91 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEW lpMl, DWORD_PTR fdwInfo)
 }
 
 /**************************************************************************
+* 				MIX_GetLineControls		[internal]
+*/
+static DWORD MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSW lpMlc, DWORD_PTR flags)
+{
+    DWORD ret = MMSYSERR_NOTENABLED;
+    int ctrl = 0;
+    TRACE("%04X, %p, %08lX\n", wDevID, lpMlc, flags);
+
+    if (lpMlc == NULL) {
+        WARN("invalid parameter: lpMlc == NULL\n");
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if (lpMlc->cbStruct < sizeof(*lpMlc)) {
+        WARN("invalid parameter: lpMlc->cbStruct = %d\n", lpMlc->cbStruct);
+	return MMSYSERR_INVALPARAM;
+    }
+
+    if (lpMlc->cbmxctrl < sizeof(MIXERCONTROLW)) {
+        WARN("invalid parameter: lpMlc->cbmxctrl = %d\n", lpMlc->cbmxctrl);
+	return MMSYSERR_INVALPARAM;
+    }
+
+    if (wDevID >= numMixers) {
+        WARN("bad device ID: %04X\n", wDevID);
+        return MMSYSERR_BADDEVICEID;
+    }
+
+    switch (flags & MIXER_GETLINECONTROLSF_QUERYMASK)
+    {
+        case MIXER_GETLINECONTROLSF_ALL:
+            FIXME("dwLineID=%d MIXER_GETLINECONTROLSF_ALL (%d)\n", lpMlc->dwLineID, lpMlc->cControls);
+            if (lpMlc->cControls != ControlsPerLine)
+            {
+                WARN("invalid parameter lpMlc->cControls %d\n", lpMlc->cControls);
+                ret = MMSYSERR_INVALPARAM;
+	    }
+            else
+            {
+                if ( (lpMlc->dwLineID >= 0) && (lpMlc->dwLineID < mixer.caps.cDestinations) )
+                {
+                    int i;
+                    for (i = 0; i < lpMlc->cControls; i++)
+                    {
+                        lpMlc->pamxctrl[i] = mixer.mixerCtrls[lpMlc->dwLineID * i].ctrl;
+                    }
+                    ret = MMSYSERR_NOERROR;
+                }
+                else ret = MIXERR_INVALLINE;
+            }
+            break;
+        case MIXER_GETLINECONTROLSF_ONEBYID:
+            TRACE("dwLineID=%d MIXER_GETLINECONTROLSF_ONEBYID (%d)\n", lpMlc->dwLineID, lpMlc->u.dwControlID);
+            if ( lpMlc->u.dwControlID >= 0 && lpMlc->u.dwControlID < mixer.numCtrl )
+            {
+                lpMlc->pamxctrl[0] = mixer.mixerCtrls[lpMlc->u.dwControlID].ctrl;
+                ret = MMSYSERR_NOERROR;
+            }
+            else ret = MIXERR_INVALVALUE;
+            break;
+        case MIXER_GETLINECONTROLSF_ONEBYTYPE:
+            TRACE("dwLineID=%d MIXER_GETLINECONTROLSF_ONEBYTYPE (%s)\n", lpMlc->dwLineID, getControlType(lpMlc->u.dwControlType));
+            if (lpMlc->u.dwControlType == MIXERCONTROL_CONTROLTYPE_VOLUME)
+            {
+                ctrl = (lpMlc->dwLineID * ControlsPerLine) + IDControlVolume;
+                lpMlc->pamxctrl[0] = mixer.mixerCtrls[ctrl].ctrl;
+                ret = MMSYSERR_NOERROR;
+            }
+            else
+                if (lpMlc->u.dwControlType == MIXERCONTROL_CONTROLTYPE_MUTE)
+                {
+                    ctrl = (lpMlc->dwLineID * ControlsPerLine) + IDControlMute;
+                    lpMlc->pamxctrl[0] = mixer.mixerCtrls[ctrl].ctrl;
+                    ret = MMSYSERR_NOERROR;
+                }
+                break;
+        default:
+            ERR("Unknown flag %08lx\n", flags & MIXER_GETLINECONTROLSF_QUERYMASK);
+            ret = MMSYSERR_INVALPARAM;
+    }
+
+    return ret;
+}
+
+/**************************************************************************
 * 				mxdMessage
 */
 DWORD WINAPI CoreAudio_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
@@ -643,6 +728,7 @@ DWORD WINAPI CoreAudio_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
         case MXDM_GETLINEINFO:
             return MIX_GetLineInfo(wDevID, (LPMIXERLINEW)dwParam1, dwParam2);
         case MXDM_GETLINECONTROLS:
+            return MIX_GetLineControls(wDevID, (LPMIXERLINECONTROLSW)dwParam1, dwParam2);
         case MXDM_GETCONTROLDETAILS:
         case MXDM_SETCONTROLDETAILS:
         default:
