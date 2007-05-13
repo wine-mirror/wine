@@ -1,0 +1,36 @@
+/*
+ * German language resource file for Credentials UI
+ *
+ * Copyright 2007 Frank Richter
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
+
+IDD_CREDDIALOG DIALOG DISCARDABLE  0, 0, 220, 82
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Benutzername und Passwort eingeben"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "&Benutzername:",IDC_STATIC,7,10,72,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_USERNAME,80,10,130,12,ES_AUTOHSCROLL
+    LTEXT           "&Passwort:",IDC_STATIC,7,27,72,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_PASSWORD,80,27,130,12,ES_PASSWORD | ES_AUTOHSCROLL
+    LTEXT           "&Domänenname:",IDC_STATIC,7,44,72,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_DOMAIN,80,44,130,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,7,61,50,14
+    PUSHBUTTON      "Abbrechen",IDCANCEL,67,61,50,14
+END
