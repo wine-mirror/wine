@@ -38,6 +38,11 @@ extern "C" {
 #define SERVICES_ACTIVE_DATABASE      WINELIB_NAME_AW( SERVICES_ACTIVE_DATABASE )
 #define SERVICES_FAILED_DATABASE      WINELIB_NAME_AW( SERVICES_FAILED_DATABASE )
 
+/* Service State requests */
+#define SERVICE_ACTIVE                        0x00000001
+#define SERVICE_INACTIVE                      0x00000002
+#define SERVICE_STATE_ALL                     (SERVICE_ACTIVE | SERVICE_INACTIVE)
+
 /* Controls */
 #define SERVICE_CONTROL_STOP                  0x00000001
 #define SERVICE_CONTROL_PAUSE                 0x00000002
