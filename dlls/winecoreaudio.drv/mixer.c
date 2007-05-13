@@ -452,6 +452,33 @@ void CoreAudio_MixerRelease(void)
 }
 
 /**************************************************************************
+* 				MIX_Open			[internal]
+*/
+static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpMod, DWORD_PTR flags)
+{
+    TRACE("wDevID=%d lpMod=%p dwSize=%08lx\n", wDevID, lpMod, flags);
+    if (lpMod == NULL) {
+        WARN("invalid parameter: lpMod == NULL\n");
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if (wDevID >= numMixers) {
+        WARN("bad device ID: %04X\n", wDevID);
+        return MMSYSERR_BADDEVICEID;
+    }
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+* 				MIX_GetNumDevs			[internal]
+*/
+static DWORD MIX_GetNumDevs(void)
+{
+    TRACE("()\n");
+    return numMixers;
+}
+
+/**************************************************************************
 * 				mxdMessage
 */
 DWORD WINAPI CoreAudio_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
@@ -469,8 +496,11 @@ DWORD WINAPI CoreAudio_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
             /* FIXME: Pretend this is supported */
             return 0;
         case MXDM_OPEN:
+            return MIX_Open(wDevID, (LPMIXEROPENDESC)dwParam1, dwParam2);
         case MXDM_CLOSE:
+            return MMSYSERR_NOERROR;
         case MXDM_GETNUMDEVS:
+            return MIX_GetNumDevs();
         case MXDM_GETDEVCAPS:
         case MXDM_GETLINEINFO:
         case MXDM_GETLINECONTROLS:
