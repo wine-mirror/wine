@@ -395,6 +395,7 @@ static HRESULT test_primary8(LPGUID lpGuid)
     HRESULT rc;
     LPDIRECTSOUND8 dso=NULL;
     LPDIRECTSOUNDBUFFER primary=NULL,second=NULL,third=NULL;
+    LPDIRECTSOUNDBUFFER8 pb8 = NULL;
     DSBUFFERDESC bufdesc;
     DSCAPS dscaps;
     WAVEFORMATEX wfx;
@@ -494,6 +495,10 @@ static HRESULT test_primary8(LPGUID lpGuid)
         /* rc=0x88780032 */
         ok(rc!=DS_OK,"IDirectSound8_DuplicateSoundBuffer() primary buffer "
            "should have failed %s\n",DXGetErrorString8(rc));
+
+        /* Primary buffers don't have an IDirectSoundBuffer8 */
+        rc = IDirectSoundBuffer_QueryInterface(primary, &IID_IDirectSoundBuffer8, (LPVOID*)&pb8);
+        ok(FAILED(rc), "Primary buffer does have an IDirectSoundBuffer8: %s\n", DXGetErrorString8(rc));
 
         rc=IDirectSoundBuffer_GetVolume(primary,&vol);
         ok(rc==DS_OK,"IDirectSoundBuffer_GetVolume() failed: %s\n",

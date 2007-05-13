@@ -223,7 +223,7 @@ HRESULT SecondaryBufferImpl_Create(
  */
 struct PrimaryBufferImpl
 {
-    const IDirectSoundBuffer8Vtbl *lpVtbl;
+    const IDirectSoundBufferVtbl *lpVtbl;
     LONG                        ref;
     DirectSoundDevice*          device;
 };
