@@ -478,6 +478,23 @@ static DWORD MIX_GetNumDevs(void)
     return numMixers;
 }
 
+static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPSW lpCaps, DWORD_PTR dwSize)
+{
+    TRACE("wDevID=%d lpCaps=%p\n", wDevID, lpCaps);
+
+    if (lpCaps == NULL) {
+	WARN("Invalid Parameter\n");
+	return MMSYSERR_INVALPARAM;
+    }
+
+    if (wDevID >= numMixers) {
+        WARN("bad device ID : %d\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+    memcpy(lpCaps, &mixer.caps, min(dwSize, sizeof(*lpCaps)));
+    return MMSYSERR_NOERROR;
+}
+
 /**************************************************************************
 * 				mxdMessage
 */
@@ -502,6 +519,7 @@ DWORD WINAPI CoreAudio_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
         case MXDM_GETNUMDEVS:
             return MIX_GetNumDevs();
         case MXDM_GETDEVCAPS:
+            return MIX_GetDevCaps(wDevID, (LPMIXERCAPSW)dwParam1, dwParam2);
         case MXDM_GETLINEINFO:
         case MXDM_GETLINECONTROLS:
         case MXDM_GETCONTROLDETAILS:
