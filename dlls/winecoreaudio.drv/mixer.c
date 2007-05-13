@@ -271,6 +271,50 @@ static BOOL MIX_LineGetMute(DWORD lineID, BOOL *muted)
     return (err == noErr);
 }
 
+/*
+ * Setters
+ */
+static BOOL MIX_LineSetVolume(DWORD lineID, DWORD channels, Float32 left, Float32 right)
+{
+    MixerLine *line = &mixer.lines[lineID];
+    UInt32 size = sizeof(Float32);
+    OSStatus err = noErr;
+    TRACE("lineID %d channels %d left %f right %f\n", lineID, channels, left, right);
+
+    if (channels == 2)
+    {
+        err = AudioDeviceSetProperty(line->deviceID, NULL, 1, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, size, &left);
+        if (err != noErr)
+            return FALSE;
+
+        err = AudioDeviceSetProperty(line->deviceID, NULL, 2, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, size, &right);
+    }
+    else
+    {
+        /*
+            FIXME Using master channel failed ?? return kAudioHardwareUnknownPropertyError
+            err = AudioDeviceSetProperty(line->deviceID, NULL, 0, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, size, &left);
+        */
+        right = left;
+        err = AudioDeviceSetProperty(line->deviceID, NULL, 1, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, size, &left);
+        if (err != noErr)
+            return FALSE;
+        err = AudioDeviceSetProperty(line->deviceID, NULL, 2, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, size, &right);
+    }
+    return (err == noErr);
+}
+
+static BOOL MIX_LineSetMute(DWORD lineID, BOOL mute)
+{
+    MixerLine *line = &mixer.lines[lineID];
+    UInt32 val = mute;
+    UInt32 size = sizeof(UInt32);
+    OSStatus err = noErr;
+
+    err = AudioDeviceSetProperty(line->deviceID, 0, 0, IsInput(line->direction), kAudioDevicePropertyMute, size, &val);
+    return (err == noErr);
+}
+
 static void MIX_FillControls(void)
 {
     int i;
@@ -844,6 +888,97 @@ static DWORD MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWO
 }
 
 /**************************************************************************
+* 				MIX_SetControlDetails		[internal]
+*/
+static DWORD MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWORD_PTR fdwDetails)
+{
+    DWORD ret = MMSYSERR_NOTSUPPORTED;
+    DWORD dwControlType;
+
+    TRACE("%04X, %p, %08lx\n", wDevID, lpmcd, fdwDetails);
+
+    if (lpmcd == NULL) {
+        TRACE("invalid parameter: lpmcd == NULL\n");
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if (wDevID >= numMixers) {
+        WARN("bad device ID: %04X\n", wDevID);
+        return MMSYSERR_BADDEVICEID;
+    }
+
+    if ( (fdwDetails & MIXER_SETCONTROLDETAILSF_QUERYMASK) != MIXER_GETCONTROLDETAILSF_VALUE )
+    {
+        WARN("Unknown SetControlDetails flag (%08lx)\n", fdwDetails & MIXER_SETCONTROLDETAILSF_QUERYMASK);
+        return MMSYSERR_NOTSUPPORTED;
+    }
+
+    TRACE("MIXER_SETCONTROLDETAILSF_VALUE dwControlID=%d\n", lpmcd->dwControlID);
+    dwControlType = mixer.mixerCtrls[lpmcd->dwControlID].ctrl.dwControlType;
+    switch (dwControlType)
+    {
+        case MIXERCONTROL_CONTROLTYPE_VOLUME:
+            FIXME("controlType : %s\n", getControlType(dwControlType));
+            {
+                LPMIXERCONTROLDETAILS_UNSIGNED mcdu;
+                Float32 left, right = 0;
+
+                if (lpmcd->cbDetails != sizeof(MIXERCONTROLDETAILS_UNSIGNED)) {
+                    WARN("invalid parameter: lpmcd->cbDetails == %d\n", lpmcd->cbDetails);
+                    return MMSYSERR_INVALPARAM;
+                }
+
+                mcdu = (LPMIXERCONTROLDETAILS_UNSIGNED)lpmcd->paDetails;
+
+                switch (lpmcd->cChannels)
+                {
+                    case 1:
+                        /* mono... so R = L */
+                        TRACE("Setting RL to %d\n", mcdu->dwValue);
+                        left = (Float32) mcdu->dwValue / 65535.0;
+                        break;
+                    case 2:
+                        /* stereo, left is paDetails[0] */
+			TRACE("Setting L to %d\n", mcdu->dwValue);
+			left = (Float32) mcdu->dwValue / 65535.0;
+                        mcdu++;
+			TRACE("Setting R to %d\n", mcdu->dwValue);
+			right = (Float32) mcdu->dwValue / 65535.0;
+			break;
+                    default:
+                        WARN("Unsupported cChannels (%d)\n", lpmcd->cChannels);
+                        return MMSYSERR_INVALPARAM;
+                }
+                if ( MIX_LineSetVolume(mixer.mixerCtrls[lpmcd->dwControlID].dwLineID, lpmcd->cChannels, left, right) )
+                    ret = MMSYSERR_NOERROR;
+            }
+            break;
+        case MIXERCONTROL_CONTROLTYPE_MUTE:
+        case MIXERCONTROL_CONTROLTYPE_ONOFF:
+            TRACE("%s MIXERCONTROLDETAILS_BOOLEAN[%u]\n", getControlType(dwControlType), lpmcd->cChannels);
+            {
+                LPMIXERCONTROLDETAILS_BOOLEAN	mcdb;
+
+                if (lpmcd->cbDetails != sizeof(MIXERCONTROLDETAILS_BOOLEAN)) {
+                    WARN("invalid parameter: cbDetails\n");
+                    return MMSYSERR_INVALPARAM;
+                }
+                mcdb = (LPMIXERCONTROLDETAILS_BOOLEAN)lpmcd->paDetails;
+                if ( MIX_LineSetMute(mixer.mixerCtrls[lpmcd->dwControlID].dwLineID, mcdb->fValue) )
+                    ret = MMSYSERR_NOERROR;
+            }
+            break;
+        case MIXERCONTROL_CONTROLTYPE_MIXER:
+        case MIXERCONTROL_CONTROLTYPE_MUX:
+        default:
+            FIXME("controlType : %s\n", getControlType(dwControlType));
+            ret = MMSYSERR_NOTSUPPORTED;
+            break;
+    }
+    return ret;
+}
+
+/**************************************************************************
 * 				mxdMessage
 */
 DWORD WINAPI CoreAudio_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
@@ -875,6 +1010,7 @@ DWORD WINAPI CoreAudio_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
         case MXDM_GETCONTROLDETAILS:
             return MIX_GetControlDetails(wDevID, (LPMIXERCONTROLDETAILS)dwParam1, dwParam2);
         case MXDM_SETCONTROLDETAILS:
+            return MIX_SetControlDetails(wDevID, (LPMIXERCONTROLDETAILS)dwParam1, dwParam2);
         default:
             WARN("unknown message %d!\n", wMsg);
             return MMSYSERR_NOTSUPPORTED;
