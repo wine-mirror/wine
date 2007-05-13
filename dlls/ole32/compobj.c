@@ -187,10 +187,11 @@ static const WCHAR wszAptWinClass[] = {'O','l','e','M','a','i','n','T','h','r','
 static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
                                         REFCLSID rclsid, REFIID riid, void **ppv);
+static void apartment_freeunusedlibraries(struct apartment *apt);
 
 static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret);
 static OpenDll *COMPOBJ_DllList_Get(LPCWSTR library_name);
-static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry);
+static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry, BOOL free_entry);
 
 static DWORD COM_RegReadPath(HKEY hkeyroot, const WCHAR *keyname, const WCHAR *valuename, WCHAR * dst, DWORD dstlen);
 
@@ -399,10 +400,16 @@ DWORD apartment_release(struct apartment *apt)
 
         if (apt->filter) IUnknown_Release(apt->filter);
 
+        /* free as many unused libraries as possible... */
+        apartment_freeunusedlibraries(apt);
+
+        /* ... and free the memory for the apartment loaded dll entry and
+         * release the dll list reference without freeing the library for the
+         * rest */
         while ((cursor = list_head(&apt->loaded_dlls)))
         {
             struct apartment_loaded_dll *apartment_loaded_dll = LIST_ENTRY(cursor, struct apartment_loaded_dll, entry);
-            COMPOBJ_DllList_ReleaseRef(apartment_loaded_dll->dll);
+            COMPOBJ_DllList_ReleaseRef(apartment_loaded_dll->dll, FALSE);
             list_remove(cursor);
             HeapFree(GetProcessHeap(), 0, apartment_loaded_dll);
         }
@@ -643,7 +650,7 @@ static void apartment_freeunusedlibraries(struct apartment *apt)
 	if (entry->dll->DllCanUnloadNow && (entry->dll->DllCanUnloadNow() == S_OK))
         {
             list_remove(&entry->entry);
-            COMPOBJ_DllList_ReleaseRef(entry->dll);
+            COMPOBJ_DllList_ReleaseRef(entry->dll, TRUE);
             HeapFree(GetProcessHeap(), 0, entry);
         }
     }
@@ -745,9 +752,11 @@ static OpenDll *COMPOBJ_DllList_Get(LPCWSTR library_name)
     return ret;
 }
 
-static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry)
+/* pass FALSE for free_entry to release a reference without destroying the
+ * entry if it reaches zero or TRUE otherwise */
+static void COMPOBJ_DllList_ReleaseRef(OpenDll *entry, BOOL free_entry)
 {
-    if (!InterlockedDecrement(&entry->refs))
+    if (!InterlockedDecrement(&entry->refs) && free_entry)
     {
         EnterCriticalSection(&csOpenDllList);
         list_remove(&entry->entry);
