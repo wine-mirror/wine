@@ -839,6 +839,15 @@ BOOL WINAPI CryptUnregisterDefaultOIDFunction(DWORD dwEncodingType,
     return ret;
 }
 
+/********************************************************************
+ *              CryptFindLocalizedName (CRYPT32.@)
+ */
+LPCWSTR WINAPI CryptFindLocalizedName(LPCWSTR pwszCryptName)
+{
+    FIXME(" %s - stub\n",debugstr_w(pwszCryptName));
+    return NULL;
+}
+
 static CRITICAL_SECTION oidInfoCS;
 static struct list oidInfo;
 
