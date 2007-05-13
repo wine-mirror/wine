@@ -2,7 +2,7 @@
  * WineCfg resources
  * Spanish Language Support
  *
- * Copyright 2003-2006 José Manuel Ferrer Ortiz
+ * Copyright 2003-2007 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -45,8 +45,8 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Configuración de aplicaciones",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine puede imitar distintas versiones de Windows para cada aplicación. Esta pestaña está vinculada a las de Librerías y Gráficos para poder cambiar en ellas la configuración global y/o la de por aplicación.",
+    GROUPBOX        " Configuración de aplicaciones ",IDC_STATIC, 8,4,244,240
+    LTEXT           "Wine puede imitar distintas versiones de Windows para cada aplicación. Esta pestaña está enlazada a las de Librerías y Gráficos para poder cambiar en ellas la configuración global y/o la de por aplicación.",
                     IDC_STATIC,15,20,227,30
     CONTROL         "Aplicaciones",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,150
@@ -60,37 +60,36 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Configuración de ventanas",IDC_STATIC,8,25,244,180
+    GROUPBOX        " Configuración de ventanas ",IDC_STATIC,8,4,244,180
 
-    CONTROL        "Permitir a los programas DirectX retener el ratón en sus ventanas",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL        "Permitir a los programas DirectX retener el ratón en sus ventanas",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
     LTEXT          "Si las ventanas son gestionadas por su gestor de ventanas, tendrán los bordes estándar, respetarán su escritorio virtual y aparecerán en su lista de ventanas.\n\nSi las ventanas no son gestionadas, estarán desconectadas de su gestor de ventanas. Esto significa que las ventanas no se integrarán tanto con su escritorio, pero la emulación será más precisa por lo que puede hacer que algunos programas funcionen mejor.",
-    		    IDC_STATIC,15,58,228,80
-    CONTROL        "Permitir al gestor de ventanas controlar las ventanas",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8
+		    IDC_STATIC,15,37,228,80
+    CONTROL        "Permitir al gestor de ventanas controlar las ventanas",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
 
-    /* FIXME: the wording of this explanation could be a lot better */
-    LTEXT           "Puede elegir entre emular un escritorio de ventanas, donde todas las ventanas están confinadas a una 'pantalla virtual', o bien que las ventanas se sitúen en su escritorio estándar.",
-                    IDC_STATIC,15,146,228,28
-    LTEXT           "Dimensiones:",IDC_DESKTOP_SIZE,15,188,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,188,8,8,WS_DISABLED
+    LTEXT           "Puede elegir entre tener todas las aplicaciones de Windows confinadas a única ventana que actúe como un escritorio virtual, o bien hacer que se comporten como sus otras aplicaciones.",
+                    IDC_STATIC,15,125,228,28
+    LTEXT           "Dimensiones:",IDC_DESKTOP_SIZE,15,167,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
     CONTROL         "Emular un escritorio virtual",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,173,230,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,152,230,10
 
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,210,244,50
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,50
 
-    LTEXT           "Soporte Vertex Shader: ",IDC_STATIC,15,220,80,30
-    COMBOBOX        IDC_D3D_VSHADER_MODE,100,218,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Soporte Vertex Shader: ",IDC_STATIC,15,199,80,30
+    COMBOBOX        IDC_D3D_VSHADER_MODE,100,197,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL         "Permitir Pixel Shader (si hay soporte por hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,237,230,10
+    CONTROL         "Permitir Pixel Shader (si hay soporte por hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,216,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Reemplazos de DLL",IDC_STATIC,8,4,244,240
+    GROUPBOX        " Reemplazos de DLL ",IDC_STATIC,8,4,244,240
     LTEXT           "Cada librería de enlace dinámico se puede especificar para que sea la interna (proporcionada por Wine) o la nativa (obtenida de Windows o proporcionada por la aplicación)."
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "Nuevo reemplazo para librería:",IDC_STATIC,16,58,100,8
@@ -102,26 +101,26 @@ BEGIN
     PUSHBUTTON      "E&liminar",IDC_DLLS_REMOVEDLL,164,114,82,14
 END
 
-IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
+IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 120, 92
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Editar reemplazo"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Orden de carga",IDC_STATIC,8,4,94,66
-    CONTROL         "&Interna (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
-    CONTROL         "&Nativa (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
-    CONTROL         "I&nterna y después Nativa",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
-    CONTROL         "Nati&va y después Interna",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
-    CONTROL         "&Deshabilitar",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
-    DEFPUSHBUTTON   "Aceptar",IDOK,8,74,45,14,WS_GROUP
-    PUSHBUTTON      "Cancelar",IDCANCEL,57,74,45,14,WS_GROUP
+    GROUPBOX        " Orden de carga ",IDC_STATIC,8,4,104,66
+    CONTROL         "&Interna (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,85,10
+    CONTROL         "&Nativa (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,85,10
+    CONTROL         "I&nterna y luego nativa",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,85,10
+    CONTROL         "Nati&va y luego interna",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,85,10
+    CONTROL         "&Deshabilitar",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,85,10
+    DEFPUSHBUTTON   "Aceptar",IDOK,8,74,50,14,WS_GROUP
+    PUSHBUTTON      "Cancelar",IDCANCEL,62,74,50,14,WS_GROUP
 END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Mapeos de unidad",IDC_STATIC,8,4,244,240
+    GROUPBOX        " Mapeos de unidad ",IDC_STATIC,8,4,244,240
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Añadir...",IDC_BUTTON_ADD,15,98,37,14
@@ -158,21 +157,26 @@ IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Selección de manejador",IDC_STATIC,8,4,244,195
-    LTEXT           "Seleccione un manejador de sonido marcando la casilla del deseado. Para deshabilitar el sonido no seleccione ninguno. La selección de más de un manejador no se recomienda. Configure un manejador haciendo doble click sobre él.",IDC_STATIC,15,20,227,30
+    GROUPBOX        " Selección de manejador ",IDC_STATIC,8,4,244,195
+    LTEXT           "Seleccione un manejador de sonido marcando la casilla del deseado. Para deshabilitar el sonido no seleccione ninguno. No se recomienda la selección de más de un manejador. Para configurar un manejador haga doble click sobre él.",IDC_STATIC,15,15,227,35
     CONTROL         "Dispositivos",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
-    PUSHBUTTON      "Panel de control",IDC_AUDIO_CONTROL_PANEL,170,50,59,14
+    PUSHBUTTON      "Probar sonido",IDC_AUDIO_TEST,170,50,59,14
+    PUSHBUTTON      "Panel de control",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT           "Aceleración Hardware: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Emulación del manejador",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,230,230,10
+    LTEXT           "Frecuencia muestreo:",IDC_STATIC,15,232,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Bits por muestra:",IDC_STATIC,137,232,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Emulación del manejador",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
+    GROUPBOX        " Apariencia ",IDC_STATIC,8,4,244,106
     LTEXT           "Tema:",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Instalar tema...",IDC_THEME_INSTALL,152,23,93,14
@@ -180,20 +184,20 @@ BEGIN
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Tamaño:",IDC_THEME_SIZETEXT,135,40,110,8
     COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Item:",IDC_STATIC,15,64,112,8
+    LTEXT           "Elemento:",IDC_STATIC,15,64,112,8
     COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
     LTEXT           "Color:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
     PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
-    LTEXT           "Size:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    LTEXT           "Tamaño:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
-    PUSHBUTTON      "Font",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
-    GROUPBOX        " Shell Folder ",IDC_STATIC,8,114,244,100
+    PUSHBUTTON      "Fuente",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    GROUPBOX        " Carpetas del sistema ",IDC_STATIC,8,114,244,100
     CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-    CONTROL         "Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    CONTROL         "Enlace a:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
     EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "Browse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    PUSHBUTTON      "Explorar",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
@@ -202,80 +206,100 @@ BEGIN
     IDS_TAB_APPLICATIONS    "Aplicaciones"
     IDS_TAB_DLLS            "Librerías"
     IDS_TAB_DRIVES          "Unidades"
-    IDS_CHOOSE_PATH         "Select the unix target directory, please."
+    IDS_CHOOSE_PATH         "Por favor, seleccione el directorio unix."
     IDS_HIDE_ADVANCED       "Ocultar avanzado"
     IDS_SHOW_ADVANCED       "Mostrar avanzado"
     IDS_NOTHEME             "(Ningún tema)"
     IDS_TAB_GRAPHICS        "Gráficos"
-    IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
+    IDS_TAB_DESKTOP_INTEGRATION "Integración de escritorio"
     IDS_TAB_AUDIO           "Audio"
     IDS_TAB_ABOUT           "Acerca de"
     IDS_WINECFG_TITLE       "Configuración de Wine"
-    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
+    IDS_WINECFG_TITLE_APP   "Configuración de Wine para %s"
     IDS_THEMEFILE           "Ficheros de tema"
     IDS_THEMEFILE_SELECT    "Seleccione un fichero de tema"
-    IDS_AUDIO_MISSING       "Actualmente no hay ningún manejador de audio especificado en el registro.\n\nSe ha seleccionado un manejador recomendado para usted. Puede usar este manejador o seleccionar otro manejador disponible.\n\nDebe pulsar Aplicar para que la selección surja efecto."
-    IDS_SHELL_FOLDER        "Shell Folder"
-    IDS_LINKS_TO            "Links to"
+    IDS_AUDIO_MISSING       "Actualmente no hay ningún manejador de audio especificado en el registro.\n\nSe ha seleccionado para usted un manejador recomendado. Puede usar éste o seleccionar otro manejador disponible.\n\nDebe pulsar Aplicar para que la selección surja efecto."
+    IDS_SHELL_FOLDER        "Carpeta del sistema"
+    IDS_LINKS_TO            "Enlaza a"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DLL_WARNING         "Changing the load order of this library is not recommended.\nAre you sure you want to do this?"
-    IDS_DLL_WARNING_CAPTION "Warning: system library"
-    IDS_DLL_NATIVE          "native"
-    IDS_DLL_BUILTIN         "builtin"
-    IDS_DLL_NATIVE_BUILTIN  "native, builtin"
-    IDS_DLL_BUILTIN_NATIVE  "builtin, native"
-    IDS_DLL_DISABLED        "disabled"
-    IDS_DEFAULT_SETTINGS    "Default Settings"
-    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
-    IDS_USE_GLOBAL_SETTINGS "Use global settings"
-    IDS_SELECT_EXECUTABLE   "Select an executable file"
+    IDS_DLL_WARNING         "No se recomienda cambiar el orden de carga de esta librería.\n¿Está seguro que desea hacer esto?"
+    IDS_DLL_WARNING_CAPTION "Advertencia: librería del sistema"
+    IDS_DLL_NATIVE          "nativa"
+    IDS_DLL_BUILTIN         "interna"
+    IDS_DLL_NATIVE_BUILTIN  "nativa, interna"
+    IDS_DLL_BUILTIN_NATIVE  "interna, nativa"
+    IDS_DLL_DISABLED        "deshabilitada"
+    IDS_DEFAULT_SETTINGS    "Configuración por defecto"
+    IDS_EXECUTABLE_FILTER   "Programas Wine (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "Usar la configuración global"
+    IDS_SELECT_EXECUTABLE   "Seleccione un fichero ejecutable"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_SHADER_MODE_HARDWARE    "Hardware"
-    IDS_SHADER_MODE_NONE        "None"
+    IDS_SHADER_MODE_NONE        "Ninguno"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
-    IDS_DRIVE_FIXED             "Local hard disk"
-    IDS_DRIVE_REMOTE            "Network share"
-    IDS_DRIVE_REMOVABLE         "Floppy disk"
+    IDS_DRIVE_UNKNOWN           "Autodetectar"
+    IDS_DRIVE_FIXED             "Disco duro local"
+    IDS_DRIVE_REMOTE            "Compartición de red"
+    IDS_DRIVE_REMOVABLE         "Disco flexible"
     IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
-    IDS_SYSTEM_DRIVE_LABEL      "System drive"
-    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
-    IDS_COL_DRIVELETTER         "Letter"
-    IDS_COL_DRIVEMAPPING        "Drive Mapping"
-    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
+    IDS_DRIVE_LETTERS_EXCEEDED  "No puede añadir más unidades.\n\nCada unidad debe tener una letra, de la A a la Z, por lo que no puede tener más de 26"
+    IDS_SYSTEM_DRIVE_LABEL      "Unidad del sistema"
+    IDS_CONFIRM_DELETE_C        "¿Seguro que desea eliminar la unidad C?\n\nLa mayoría de las aplicaciones Windows esperan que la unidad C exista, y fallarán si no existe. ¡Si lo hace recuerde volver a crearla!"
+    IDS_COL_DRIVELETTER         "Letra"
+    IDS_COL_DRIVEMAPPING        "Mapeo de unidad"
+    IDS_NO_DRIVE_C              "No tiene una unidad C. Esto no es muy bueno.\n\n¡Recuerde pulsar 'Añadir' en la pestaña de Unidades para crear una!\n"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ACCEL_FULL              "Full"
-    IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove \"%s\" from registry?"
-    IDS_WARNING                 "Warning"
+    IDS_ACCEL_FULL              "Completa"
+    IDS_ACCEL_STANDARD          "Estándar"
+    IDS_ACCEL_BASIC             "Básica"
+    IDS_ACCEL_EMULATION         "Emulación"
+    IDS_DRIVER_ALSA             "Manejador ALSA"
+    IDS_DRIVER_ESOUND           "Manejador EsounD"
+    IDS_DRIVER_OSS              "Manejador OSS"
+    IDS_DRIVER_JACK             "Manejador JACK"
+    IDS_DRIVER_NAS              "Manejador NAS"
+    IDS_DRIVER_AUDIOIO          "Manejador Audio IO (Solaris)"
+    IDS_DRIVER_COREAUDIO        "Manejador CoreAudio"
+    IDS_OPEN_DRIVER_ERROR       "¡No se ha podido abrir %s!"
+    IDS_SOUNDDRIVERS            "Manejadores de sonido"
+    IDS_DEVICES_WAVEOUT         "Dispositivos de salida de onda"
+    IDS_DEVICES_WAVEIN          "Dispositivos de entrada de onda"
+    IDS_DEVICES_MIDIOUT         "Dispositivos de salida MIDI"
+    IDS_DEVICES_MIDIIN          "Dispositivos de entrada MIDI"
+    IDS_DEVICES_AUX             "Dispositivos auxiliares"
+    IDS_DEVICES_MIXER           "Dispositivos mezcladores"
+    IDS_UNAVAILABLE_DRIVER      "¡Se ha encontrado en el registro un manejador que no está disponible!\n\n¿Eliminar \"%s\" del registro?"
+    IDS_WARNING                 "Advertencia"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDC_SYSPARAMS_BUTTON            "Fondo del control"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Texto del control"
+    IDC_SYSPARAMS_DESKTOP           "Escritorio"
+    IDC_SYSPARAMS_MENU              "Fondo del menú"
+    IDC_SYSPARAMS_MENU_TEXT         "Texto del menú"
+    IDC_SYSPARAMS_SCROLLBAR         "Barra de desplazamiento"
+    IDC_SYSPARAMS_SELECTION         "Fondo de la selección"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Texto de la selección"
+    IDC_SYSPARAMS_TOOLTIP           "Fondo del consejo"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "Texto del consejo"
+    IDC_SYSPARAMS_WINDOW            "Fondo de la ventana"
+    IDC_SYSPARAMS_WINDOW_TEXT       "Texto de la ventana"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "Barra de título activa"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Texto de barra de título activa"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "Barra de título inactiva"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Texto de barra de título inactiva"
 END
