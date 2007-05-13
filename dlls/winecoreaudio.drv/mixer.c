@@ -496,6 +496,126 @@ static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPSW lpCaps, DWORD_PTR dwSize)
 }
 
 /**************************************************************************
+* 				MIX_GetLineInfo			[internal]
+*/
+static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEW lpMl, DWORD_PTR fdwInfo)
+{
+    int i;
+    DWORD ret = MMSYSERR_ERROR;
+    MixerLine *line = NULL;
+
+    TRACE("%04X, %p, %08lx\n", wDevID, lpMl, fdwInfo);
+
+    if (lpMl == NULL) {
+        WARN("invalid parameter: lpMl = NULL\n");
+	return MMSYSERR_INVALPARAM;
+    }
+
+    if (lpMl->cbStruct != sizeof(*lpMl)) {
+        WARN("invalid parameter: lpMl->cbStruct\n");
+	return MMSYSERR_INVALPARAM;
+    }
+
+    if (wDevID >= numMixers) {
+        WARN("bad device ID: %04X\n", wDevID);
+        return MMSYSERR_BADDEVICEID;
+    }
+
+    /* FIXME: set all the variables correctly... the lines below
+        * are very wrong...
+        */
+    lpMl->dwUser = 0;
+
+    switch (fdwInfo & MIXER_GETLINEINFOF_QUERYMASK)
+    {
+        case MIXER_GETLINEINFOF_DESTINATION:
+            TRACE("MIXER_GETLINEINFOF_DESTINATION %d\n", lpMl->dwDestination);
+            if ( (lpMl->dwDestination >= 0) && (lpMl->dwDestination < mixer.caps.cDestinations) )
+            {
+                lpMl->dwLineID = lpMl->dwDestination;
+                line = &mixer.lines[lpMl->dwDestination];
+            }
+            else ret = MIXERR_INVALLINE;
+            break;
+        case MIXER_GETLINEINFOF_COMPONENTTYPE:
+            TRACE("MIXER_GETLINEINFOF_COMPONENTTYPE %s\n", getComponentType(lpMl->dwComponentType));
+            for (i = 0; i < mixer.caps.cDestinations; i++)
+            {
+                if (mixer.lines[i].componentType == lpMl->dwComponentType)
+                {
+                    lpMl->dwDestination = lpMl->dwLineID = i;
+                    line = &mixer.lines[i];
+                    break;
+                }
+            }
+            if (line == NULL)
+            {
+                WARN("can't find component type %s\n", getComponentType(lpMl->dwComponentType));
+                ret = MIXERR_INVALVALUE;
+            }
+            break;
+        case MIXER_GETLINEINFOF_SOURCE:
+            FIXME("MIXER_GETLINEINFOF_SOURCE %d dst=%d\n", lpMl->dwSource, lpMl->dwDestination);
+            break;
+        case MIXER_GETLINEINFOF_LINEID:
+            TRACE("MIXER_GETLINEINFOF_LINEID %d\n", lpMl->dwLineID);
+            if ( (lpMl->dwLineID >= 0) && (lpMl->dwLineID < mixer.caps.cDestinations) )
+            {
+                lpMl->dwDestination = lpMl->dwLineID;
+                line = &mixer.lines[lpMl->dwLineID];
+            }
+            else ret = MIXERR_INVALLINE;
+            break;
+        case MIXER_GETLINEINFOF_TARGETTYPE:
+            FIXME("MIXER_GETLINEINFOF_TARGETTYPE (%s)\n", getTargetType(lpMl->Target.dwType));
+            switch (lpMl->Target.dwType) {
+                case MIXERLINE_TARGETTYPE_UNDEFINED:
+                case MIXERLINE_TARGETTYPE_WAVEOUT:
+                case MIXERLINE_TARGETTYPE_WAVEIN:
+                case MIXERLINE_TARGETTYPE_MIDIOUT:
+                case MIXERLINE_TARGETTYPE_MIDIIN:
+                case MIXERLINE_TARGETTYPE_AUX:
+                default:
+                    FIXME("Unhandled target type (%s)\n",
+                          getTargetType(lpMl->Target.dwType));
+                    return MMSYSERR_INVALPARAM;
+            }
+                break;
+        default:
+            WARN("Unknown flag (%08lx)\n", fdwInfo & MIXER_GETLINEINFOF_QUERYMASK);
+            break;
+    }
+
+    if (line)
+    {
+        lpMl->dwComponentType = line->componentType;
+        lpMl->cChannels = line->numChannels;
+        lpMl->cControls = ControlsPerLine;
+
+        /* FIXME check there with CoreAudio */
+        lpMl->cConnections = 1;
+        lpMl->fdwLine = MIXERLINE_LINEF_ACTIVE;
+
+        MultiByteToWideChar(CP_ACP, 0, line->name, -1, lpMl->szShortName, sizeof(lpMl->szShortName) / sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, line->name, -1, lpMl->szName, sizeof(lpMl->szName) / sizeof(WCHAR));
+
+        if ( IsInput(line->direction) )
+            lpMl->Target.dwType = MIXERLINE_TARGETTYPE_WAVEIN;
+        else
+            lpMl->Target.dwType = MIXERLINE_TARGETTYPE_WAVEOUT;
+
+        lpMl->Target.dwDeviceID = line->deviceID;
+        lpMl->Target.wMid = mixer.caps.wMid;
+        lpMl->Target.wPid = mixer.caps.wPid;
+        lpMl->Target.vDriverVersion = mixer.caps.vDriverVersion;
+
+        MultiByteToWideChar(CP_ACP, 0, WINE_MIXER_NAME, -1, lpMl->Target.szPname, sizeof(lpMl->Target.szPname) / sizeof(WCHAR));
+        ret = MMSYSERR_NOERROR;
+    }
+    return ret;
+}
+
+/**************************************************************************
 * 				mxdMessage
 */
 DWORD WINAPI CoreAudio_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
@@ -521,6 +641,7 @@ DWORD WINAPI CoreAudio_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
         case MXDM_GETDEVCAPS:
             return MIX_GetDevCaps(wDevID, (LPMIXERCAPSW)dwParam1, dwParam2);
         case MXDM_GETLINEINFO:
+            return MIX_GetLineInfo(wDevID, (LPMIXERLINEW)dwParam1, dwParam2);
         case MXDM_GETLINECONTROLS:
         case MXDM_GETCONTROLDETAILS:
         case MXDM_SETCONTROLDETAILS:
