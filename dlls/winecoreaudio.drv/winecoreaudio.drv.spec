@@ -3,3 +3,4 @@
 @ stdcall -private wodMessage(long long long long long) CoreAudio_wodMessage
 @ stdcall -private midMessage(long long long long long) CoreAudio_midMessage
 @ stdcall -private modMessage(long long long long long) CoreAudio_modMessage
+@ stdcall -private mxdMessage(long long long long long) CoreAudio_mxdMessage

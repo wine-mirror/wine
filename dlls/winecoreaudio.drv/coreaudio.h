@@ -1,6 +1,6 @@
 /* Definition for CoreAudio drivers : wine multimedia system
  *
- * Copyright 2005 Emmanuel Maillard
+ * Copyright 2005-2007 Emmanuel Maillard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,5 +25,8 @@ extern void CoreAudio_WaveRelease(void);
 
 extern LONG CoreAudio_MIDIInit(void);
 extern void CoreAudio_MIDIRelease(void);
+
+extern LONG CoreAudio_MixerInit(void);
+extern void CoreAudio_MixerRelease(void);
 
 #endif /* __WINE_COREAUDIO_H */

@@ -11,7 +11,8 @@ C_SRCS = \
 	audiounit.c \
 	coreaudio.c \
 	coremidi.c \
-	midi.c
+	midi.c \
+	mixer.c
 
 @MAKE_DLL_RULES@
 
