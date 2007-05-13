@@ -594,9 +594,23 @@ void apartment_joinmta(void)
 static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
                                         REFCLSID rclsid, REFIID riid, void **ppv)
 {
+    static const WCHAR wszOle32[] = {'o','l','e','3','2','.','d','l','l',0};
     HRESULT hr = S_OK;
     BOOL found = FALSE;
     struct apartment_loaded_dll *apartment_loaded_dll;
+
+    if (!strcmpiW(dllpath, wszOle32))
+    {
+        /* we don't need to control the lifetime of this dll, so use the local
+         * implementation of DllGetClassObject directly */
+        TRACE("calling ole32!DllGetClassObject\n");
+        hr = DllGetClassObject(rclsid, riid, ppv);
+
+        if (hr != S_OK)
+            ERR("DllGetClassObject returned error 0x%08x\n", hr);
+
+        return hr;
+    }
 
     EnterCriticalSection(&apt->cs);
 
