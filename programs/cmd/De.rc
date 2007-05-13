@@ -215,6 +215,13 @@ Das Verify Flag hat keine Funktion in Wine.\n"
 
   WCMD_VOL,    "Hilfe für VOL\n"
 
+  WCMD_PUSHD,  "PUSHD <Verzeichnisname> speichert das aktuelle\n\
+Verzeichnis auf einem Stack und wecheselt das Arbeitsverzeichnis\n\
+zu dem angegebenen.\n"
+
+  WCMD_POPD,   "POPD wechselt das Arbeitsverzeichnis zu dem zuletzt\n\
+mit PUSHD gespeicherten.\n"
+
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
   WCMD_EXIT,
@@ -251,11 +258,11 @@ EXIT\t\tBeendet den CMD\n\n\
 Geben Sie HELP <Befehl> ein, damit Sie weitere Informationen für einen der\n\
 obigen Befehle erhalten.\n"
 
-  WCMD_CONFIRM, "Are you sure"
-  WCMD_YES, "Y"
+  WCMD_CONFIRM, "Sind sie sicher"
+  WCMD_YES, "J"
   WCMD_NO, "N"
-  WCMD_NOASSOC, "File association missing for extension %s\n"
-  WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
+  WCMD_NOASSOC, "Verknüpfung für Dateiendung %s fehlt\n"
+  WCMD_NOFTYPE, "Kein Befehl zum Öffnen für Dateityp '%s'\n"
   WCMD_OVERWRITE, "Overwrite"
   WCMD_MORESTR, "More..."
 }
