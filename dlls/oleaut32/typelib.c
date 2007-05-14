@@ -898,6 +898,9 @@ typedef struct tagITypeLibImpl
 				   library. Only used while reading MSFT
 				   typelibs */
     struct list ref_list;       /* list of ref types in this typelib */
+    HREFTYPE dispatch_href;     /* reference to IDispatch, -1 if unused */
+
+
     /* typelibs are cached, keyed by path and index, so store the linked list info within them */
     struct tagITypeLibImpl *next, *prev;
     WCHAR *path;
@@ -2083,7 +2086,6 @@ static void MSFT_DoImplTypes(TLBContext *pcx, ITypeInfoImpl *pTI, int count,
 static ITypeInfoImpl * MSFT_DoTypeInfo(
     TLBContext *pcx,
     int count,
-    INT dispatch_href,
     ITypeLibImpl * pLibInfo)
 {
     MSFT_TypeInfoBase tiBase;
@@ -2153,19 +2155,19 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
                 tiBase.datatype1);
             break;
         case TKIND_DISPATCH:
-            ptiRet->impltypelist=TLB_Alloc(sizeof(TLBImplType));
+            /* This is not -1 when the interface is a non-base dual interface or
+               when a dispinterface wraps an interface ie the idl 'dispinterface x {interface y;};'.
+               Note however that GetRefTypeOfImplType(0) always returns a ref to IDispatch and
+               not this interface.
+            */
 
             if (tiBase.datatype1 != -1)
             {
-              MSFT_DoRefType(pcx, pLibInfo, tiBase.datatype1);
-	      ptiRet->impltypelist->hRef = tiBase.datatype1;
+                ptiRet->impltypelist = TLB_Alloc(sizeof(TLBImplType));
+                ptiRet->impltypelist->hRef = tiBase.datatype1;
+                MSFT_DoRefType(pcx, pLibInfo, tiBase.datatype1);
             }
-            else
-	    {
-              MSFT_DoRefType(pcx, pLibInfo, dispatch_href);
-              ptiRet->impltypelist->hRef = dispatch_href;
-            }
-            break;
+          break;
         default:
             ptiRet->impltypelist=TLB_Alloc(sizeof(TLBImplType));
             MSFT_DoRefType(pcx, pLibInfo, tiBase.datatype1);
@@ -2363,6 +2365,7 @@ static ITypeLibImpl* TypeLibImpl_Constructor(void)
     pTypeLibImpl->ref = 1;
 
     list_init(&pTypeLibImpl->ref_list);
+    pTypeLibImpl->dispatch_href = -1;
 
     return pTypeLibImpl;
 }
@@ -2558,6 +2561,10 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
         }
     }
 
+    pTypeLibImpl->dispatch_href = tlbHeader.dispatchpos;
+    if(pTypeLibImpl->dispatch_href != -1)
+        MSFT_DoRefType(&cx, pTypeLibImpl, pTypeLibImpl->dispatch_href);
+
     /* type info's */
     if(tlbHeader.nrtypeinfos >= 0 )
     {
@@ -2567,7 +2574,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 
         for(i = 0; i<(int)tlbHeader.nrtypeinfos; i++)
         {
-            *ppTI = MSFT_DoTypeInfo(&cx, i, tlbHeader.dispatchpos, pTypeLibImpl);
+            *ppTI = MSFT_DoTypeInfo(&cx, i, pTypeLibImpl);
 
             ppTI = &((*ppTI)->next);
             (pTypeLibImpl->TypeInfoCount)++;
@@ -2836,6 +2843,11 @@ static void SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 		(*import)->name = TLB_MultiByteToBSTR(fname);
 	    }
 	    ref_type->pImpTLInfo = *import;
+
+            /* Store a reference to IDispatch */
+            if(pTL->dispatch_href == -1 && IsEqualGUID(&(*import)->guid, &IID_StdOle) && type_num == 4)
+                pTL->dispatch_href = ref;
+
 	} else { /* internal ref */
 	  ref_type->pImpTLInfo = TLB_REF_INTERNAL;
 	}
@@ -4702,22 +4714,17 @@ static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     HRESULT hr;
-    UINT i;
     UINT implemented_funcs = 0;
 
     if (funcs)
         *funcs = 0;
 
-    for (i = 0; i < This->TypeAttr.cImplTypes; i++)
+    if(This->impltypelist)
     {
-        HREFTYPE href;
         ITypeInfo *pSubTypeInfo;
         UINT sub_funcs;
 
-        hr = ITypeInfo_GetRefTypeOfImplType(iface, i, &href);
-        if (FAILED(hr))
-            return hr;
-        hr = ITypeInfo_GetRefTypeInfo(iface, href, &pSubTypeInfo);
+        hr = ITypeInfo_GetRefTypeInfo(iface, This->impltypelist->hRef, &pSubTypeInfo);
         if (FAILED(hr))
             return hr;
 
@@ -4755,8 +4762,7 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
 
     TRACE("(%p) index %d\n", This, index);
 
-    if ((This->TypeAttr.typekind == TKIND_DISPATCH) &&
-        (This->TypeAttr.wTypeFlags & TYPEFLAG_FDUAL))
+    if (This->TypeAttr.typekind == TKIND_DISPATCH)
         hr = ITypeInfoImpl_GetInternalDispatchFuncDesc((ITypeInfo *)iface, index,
                                                        &internal_funcdesc, NULL);
     else
@@ -4887,7 +4893,7 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
       }
       else
       {
-        if(This->TypeAttr.cImplTypes &&
+        if(This->impltypelist &&
 	   (This->TypeAttr.typekind==TKIND_INTERFACE || This->TypeAttr.typekind==TKIND_DISPATCH)) {
           /* recursive search */
           ITypeInfo *pTInfo;
@@ -4951,6 +4957,11 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeOfImplType(
       {
         hr = TYPE_E_ELEMENTNOTFOUND;
       }
+    }
+    else if(index == 0 && This->TypeAttr.typekind == TKIND_DISPATCH)
+    {
+      /* All TKIND_DISPATCHs are made to look like they inherit from IDispatch */
+      *pRefType = This->pTypeLib->dispatch_href;
     }
     else
     {
@@ -5045,7 +5056,7 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
         }
     }
     /* not found, see if it can be found in an inherited interface */
-    if(This->TypeAttr.cImplTypes) {
+    if(This->impltypelist) {
         /* recursive search */
         ITypeInfo *pTInfo;
         ret=ITypeInfo_GetRefTypeInfo(iface,
@@ -5883,7 +5894,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
         }
     }
 
-    if(This->TypeAttr.cImplTypes &&
+    if(This->impltypelist &&
        (This->TypeAttr.typekind==TKIND_INTERFACE || This->TypeAttr.typekind==TKIND_DISPATCH)) {
         /* recursive search */
         ITypeInfo *pTInfo;
@@ -6998,7 +7009,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
         }
     }
     /* FIXME: search each inherited interface, not just the first */
-    if (hr == DISP_E_MEMBERNOTFOUND && This->TypeAttr.cImplTypes) {
+    if (hr == DISP_E_MEMBERNOTFOUND && This->impltypelist) {
         /* recursive search */
         ITypeInfo *pTInfo;
         ITypeComp *pTComp;

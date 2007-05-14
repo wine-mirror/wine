@@ -615,9 +615,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
-todo_wine {
     ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
- }
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
 
@@ -625,15 +623,10 @@ todo_wine {
     hr = ITypeInfo_GetFuncDesc(pTI, 6, &pFD);
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "hr %08x\n", hr);
     hr = ITypeInfo_GetFuncDesc(pTI, 5, &pFD);
-todo_wine {
     ok(hr == S_OK, "hr %08x\n", hr);
-}
-    if(SUCCEEDED(hr))
-    {
-        ok(pFD->memid == 0x60020000, "memid %08x\n", pFD->memid);
-        ok(pFD->oVft == 20, "oVft %d\n", pFD->oVft);
-        ITypeInfo_ReleaseFuncDesc(pTI, pFD);
-    }
+    ok(pFD->memid == 0x60020000, "memid %08x\n", pFD->memid);
+    ok(pFD->oVft == 20, "oVft %d\n", pFD->oVft);
+    ITypeInfo_ReleaseFuncDesc(pTI, pFD);
 }
     ITypeInfo_Release(pTI);
 
@@ -688,9 +681,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
-todo_wine {
     ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
- }
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
 if(use_midl_tlb) {
@@ -719,9 +710,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
-todo_wine {
     ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
-}
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
 
