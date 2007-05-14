@@ -106,3 +106,24 @@ END
  '00 00 00 00 00 00 00 00 00 00 FF FF FF 00 40 00'
  '00 00'
 } */
+
+1 MENU
+{
+    POPUP "&File"
+    {
+        MENUITEM "&New", 100
+        MENUITEM "&Open", 101
+        MENUITEM "&Save", 102
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit", 103
+    }
+    POPUP "Edit"
+    {
+        MENUITEM "&Undo", 200
+        MENUITEM SEPARATOR
+        MENUITEM "Cu&t", 201
+        MENUITEM "&Copy", 202
+        MENUITEM "&Paste", 203
+        MENUITEM "&Delete", 204
+    }
+}

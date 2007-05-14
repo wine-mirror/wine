@@ -4817,34 +4817,49 @@ BOOL WINAPI CheckMenuRadioItem(HMENU hMenu,
 				   UINT first, UINT last, UINT check,
 				   UINT bypos)
 {
-     MENUITEM *mifirst, *milast, *micheck;
-     HMENU mfirst = hMenu, mlast = hMenu, mcheck = hMenu;
+    BOOL done = FALSE;
+    UINT i;
+    MENUITEM *mi_first = NULL, *mi_check;
+    HMENU m_first, m_check;
 
-     TRACE("%p: %d-%d, check %d, bypos=%d\n", hMenu, first, last, check, bypos);
+    TRACE("%p: %u-%u, check %u, flags %04x\n", hMenu, first, last, check, bypos);
 
-     mifirst = MENU_FindItem (&mfirst, &first, bypos);
-     milast = MENU_FindItem (&mlast, &last, bypos);
-     micheck = MENU_FindItem (&mcheck, &check, bypos);
+    for (i = first; i <= last; i++)
+    {
+        UINT pos = i;
 
-     if (mifirst == NULL || milast == NULL || micheck == NULL ||
-	 mifirst > milast || mfirst != mlast || mfirst != mcheck ||
-	 micheck > milast || micheck < mifirst)
-	  return FALSE;
+        if (!mi_first)
+        {
+            m_first = hMenu;
+            mi_first = MENU_FindItem(&m_first, &pos, bypos);
+            if (!mi_first) continue;
+            mi_check = mi_first;
+            m_check = m_first;
+        }
+        else
+        {
+            m_check = hMenu;
+            mi_check = MENU_FindItem(&m_check, &pos, bypos);
+            if (!mi_check) continue;
+        }
 
-     while (mifirst <= milast)
-     {
-	  if (mifirst == micheck)
-	  {
-	       mifirst->fType |= MFT_RADIOCHECK;
-	       mifirst->fState |= MFS_CHECKED;
-	  } else {
-	       mifirst->fType &= ~MFT_RADIOCHECK;
-	       mifirst->fState &= ~MFS_CHECKED;
-	  }
-	  mifirst++;
-     }
+        if (m_first != m_check) continue;
+        if (mi_check->fType == MFT_SEPARATOR) continue;
 
-     return TRUE;
+        if (i == check)
+        {
+            mi_check->fType |= MFT_RADIOCHECK;
+            mi_check->fState |= MFS_CHECKED;
+            done = TRUE;
+        }
+        else
+        {
+            /* MSDN is wrong, Windows does not remove MFT_RADIOCHECK */
+            mi_check->fState &= ~MFS_CHECKED;
+        }
+    }
+
+    return done;
 }
 
 
