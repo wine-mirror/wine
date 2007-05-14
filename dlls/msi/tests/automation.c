@@ -33,6 +33,7 @@
 
 static const char *msifile = "winetest.msi";
 static const WCHAR szMsifile[] = {'w','i','n','e','t','e','s','t','.','m','s','i',0};
+static const WCHAR szProductCode[] = { '{','F','1','C','3','A','F','5','0','-','8','B','5','6','-','4','A','6','9','-','A','0','0','C','-','0','0','7','7','3','F','E','4','2','F','3','0','}',0 };
 CHAR CURR_DIR[MAX_PATH];
 EXCEPINFO excepinfo;
 
@@ -92,8 +93,8 @@ static const CHAR feature_comp_dat[] = "Feature_\tComponent_\n"
 static const CHAR file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
                                "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
                                "File\tFile\n"
-                               "five.txt\tFive\tfive.txt\t1000\t\t\t16384\t5\n"
-                               "four.txt\tFour\tfour.txt\t1000\t\t\t16384\t4\n"
+                               "five.txt\tFive\tfive.txt\t1000\t\t\t0\t5\n"
+                               "four.txt\tFour\tfour.txt\t1000\t\t\t0\t4\n"
                                "one.txt\tOne\tone.txt\t1000\t\t\t0\t1\n"
                                "three.txt\tThree\tthree.txt\t1000\t\t\t0\t3\n"
                                "two.txt\tTwo\ttwo.txt\t1000\t\t\t0\t2\n"
@@ -109,6 +110,8 @@ static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                            "FileCost\t\t900\n"
                                            "InstallFiles\t\t4000\n"
                                            "InstallServices\t\t5000\n"
+                                           "RegisterProduct\t\t6100\n"
+                                           "PublishProduct\t\t6400\n"
                                            "InstallFinalize\t\t6600\n"
                                            "InstallInitialize\t\t1500\n"
                                            "InstallValidate\t\t1400\n"
@@ -118,8 +121,7 @@ static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
 static const CHAR media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
                                 "i2\ti4\tL64\tS255\tS32\tS72\n"
                                 "Media\tDiskId\n"
-                                "1\t3\t\t\tDISK1\t\n"
-                                "2\t5\t\tmsitest.cab\tDISK2\t\n";
+                                "1\t5\t\t\tDISK1\t\n";
 
 static const CHAR property_dat[] = "Property\tValue\n"
                                    "s72\tl0\n"
@@ -253,6 +255,109 @@ static void create_database(const CHAR *name, const msi_table *tables, int num_t
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     MsiCloseHandle(db);
+}
+
+/*
+ * Installation helpers
+ */
+
+static char PROG_FILES_DIR[MAX_PATH];
+
+static BOOL get_program_files_dir(LPSTR buf)
+{
+    HKEY hkey;
+    DWORD type = REG_EXPAND_SZ, size;
+
+    if (RegOpenKey(HKEY_LOCAL_MACHINE,
+                   "Software\\Microsoft\\Windows\\CurrentVersion", &hkey))
+        return FALSE;
+
+    size = MAX_PATH;
+    if (RegQueryValueEx(hkey, "ProgramFilesDir", 0, &type, (LPBYTE)buf, &size))
+        return FALSE;
+
+    RegCloseKey(hkey);
+    return TRUE;
+}
+
+static void create_file(const CHAR *name, DWORD size)
+{
+    HANDLE file;
+    DWORD written, left;
+
+    file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Failure to open file %s\n", name);
+    WriteFile(file, name, strlen(name), &written, NULL);
+    WriteFile(file, "\n", strlen("\n"), &written, NULL);
+
+    left = size - lstrlen(name) - 1;
+
+    SetFilePointer(file, left, NULL, FILE_CURRENT);
+    SetEndOfFile(file);
+
+    CloseHandle(file);
+}
+
+static void create_test_files(void)
+{
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\one.txt", 100);
+    CreateDirectoryA("msitest\\first", NULL);
+    create_file("msitest\\first\\two.txt", 100);
+    CreateDirectoryA("msitest\\second", NULL);
+    create_file("msitest\\second\\three.txt", 100);
+    CreateDirectoryA("msitest\\cabout",NULL);
+    create_file("msitest\\cabout\\four.txt", 100);
+    CreateDirectoryA("msitest\\cabout\\new",NULL);
+    create_file("msitest\\cabout\\new\\five.txt", 100);
+    create_file("msitest\\filename", 100);
+    create_file("msitest\\service.exe", 100);
+}
+
+static BOOL delete_pf(const CHAR *rel_path, BOOL is_file)
+{
+    CHAR path[MAX_PATH];
+
+    lstrcpyA(path, PROG_FILES_DIR);
+    lstrcatA(path, "\\");
+    lstrcatA(path, rel_path);
+
+    if (is_file)
+        return DeleteFileA(path);
+    else
+        return RemoveDirectoryA(path);
+}
+
+static void delete_test_files(void)
+{
+    DeleteFileA(msifile);
+    DeleteFileA("msitest\\cabout\\new\\five.txt");
+    DeleteFileA("msitest\\cabout\\four.txt");
+    DeleteFileA("msitest\\second\\three.txt");
+    DeleteFileA("msitest\\first\\two.txt");
+    DeleteFileA("msitest\\one.txt");
+    DeleteFileA("msitest\\service.exe");
+    DeleteFileA("msitest\\filename");
+    RemoveDirectoryA("msitest\\cabout\\new");
+    RemoveDirectoryA("msitest\\cabout");
+    RemoveDirectoryA("msitest\\second");
+    RemoveDirectoryA("msitest\\first");
+    RemoveDirectoryA("msitest");
+}
+
+static void check_service_is_installed(void)
+{
+    SC_HANDLE scm, service;
+    BOOL res;
+
+    scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    ok(scm != NULL, "Failed to open the SC Manager\n");
+
+    service = OpenService(scm, "TestService", SC_MANAGER_ALL_ACCESS);
+    todo_wine ok(service != NULL, "Failed to open TestService\n");
+
+    res = DeleteService(service);
+    todo_wine ok(res, "Failed to delete TestService\n");
 }
 
 /*
@@ -610,6 +715,22 @@ static HRESULT Installer_OpenPackage(LPCWSTR szPackagePath, int options, IDispat
     hr = invoke(pInstaller, "OpenPackage", DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
     *pSession = V_DISPATCH(&varresult);
     return hr;
+}
+
+static HRESULT Installer_InstallProduct(LPCWSTR szPackagePath, LPCWSTR szPropertyValues)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_BSTR;
+    V_BSTR(&vararg[1]) = SysAllocString(szPackagePath);
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szPropertyValues);
+
+    return invoke(pInstaller, "InstallProduct", DISPATCH_METHOD, &dispparams, &varresult, VT_EMPTY);
 }
 
 static HRESULT Installer_ProductState(LPCWSTR szProduct, int *pInstallState)
@@ -1446,9 +1567,177 @@ static void test_Installer_RegistryValue(void)
     delete_key(hkey);
 }
 
+/* Delete a registry subkey, including all its subkeys (RegDeleteKey does not work on keys with subkeys without
+ * deleting the subkeys first) */
+static UINT delete_registry_key(HKEY hkeyParent, LPCSTR subkey)
+{
+    UINT ret;
+    CHAR *string = NULL;
+    HKEY hkey;
+    DWORD dwSize;
+
+    ret = RegOpenKey(hkeyParent, subkey, &hkey);
+    if (ret != ERROR_SUCCESS) return ret;
+    ret = RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL);
+    if (ret != ERROR_SUCCESS) return ret;
+    if (!(string = HeapAlloc(GetProcessHeap(), 0, ++dwSize))) return ERROR_NOT_ENOUGH_MEMORY;
+
+    while (RegEnumKeyA(hkey, 0, string, dwSize) == ERROR_SUCCESS)
+        delete_registry_key(hkey, string);
+
+    RegCloseKey(hkey);
+    HeapFree(GetProcessHeap(), 0, string);
+    RegDeleteKeyA(hkeyParent, subkey);
+    return ERROR_SUCCESS;
+}
+
+/* Find a specific registry subkey at any depth within the given key and subkey and return its parent key. */
+static UINT find_registry_key(HKEY hkeyParent, LPCSTR subkey, LPCSTR findkey, HKEY *phkey)
+{
+    UINT ret;
+    CHAR *string = NULL;
+    int idx = 0;
+    HKEY hkey;
+    DWORD dwSize;
+    BOOL found = FALSE;
+
+    *phkey = 0;
+
+    ret = RegOpenKey(hkeyParent, subkey, &hkey);
+    if (ret != ERROR_SUCCESS) return ret;
+    ret = RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL);
+    if (ret != ERROR_SUCCESS) return ret;
+    if (!(string = HeapAlloc(GetProcessHeap(), 0, ++dwSize))) return ERROR_NOT_ENOUGH_MEMORY;
+
+    while (!found &&
+           RegEnumKeyA(hkey, idx++, string, dwSize) == ERROR_SUCCESS)
+    {
+        if (!strcmp(string, findkey))
+        {
+            *phkey = hkey;
+            found = TRUE;
+        }
+        else if (find_registry_key(hkey, string, findkey, phkey) == ERROR_SUCCESS) found = TRUE;
+    }
+
+    if (*phkey != hkey) RegCloseKey(hkey);
+    HeapFree(GetProcessHeap(), 0, string);
+    return (found ? ERROR_SUCCESS : ERROR_FILE_NOT_FOUND);
+}
+
+static void test_Installer_InstallProduct(LPCWSTR szPath)
+{
+    HRESULT hr;
+    CHAR path[MAX_PATH];
+    LONG res;
+    HKEY hkey;
+    DWORD num, size, type;
+    int iValue;
+
+    create_test_files();
+
+    /* Installer::InstallProduct */
+    todo_wine
+    {
+        hr = Installer_InstallProduct(szMsifile, NULL);
+        ok(SUCCEEDED(hr), "Installer_InstallProduct failed, hresult 0x%08x\n", hr);
+    }
+
+    /* Installer::ProductState for our product code, which has been installed */
+    hr = Installer_ProductState(szProductCode, &iValue);
+    ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
+    todo_wine ok(iValue == INSTALLSTATE_DEFAULT, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_DEFAULT);
+
+    /* Check & clean up installed files & registry keys */
+    todo_wine
+    {
+        ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\cabout\\new", FALSE), "File not installed\n");
+        ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\cabout", FALSE), "File not installed\n");
+        ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\changed", FALSE), "File not installed\n");
+        ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\first", FALSE), "File not installed\n");
+        ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+        ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+        res = RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", &hkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        size = MAX_PATH;
+        type = REG_SZ;
+        res = RegQueryValueExA(hkey, "Name", NULL, &type, (LPBYTE)path, &size);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        ok(!lstrcmpA(path, "imaname"), "Expected imaname, got %s\n", path);
+
+        size = MAX_PATH;
+        type = REG_SZ;
+        res = RegQueryValueExA(hkey, "blah", NULL, &type, (LPBYTE)path, &size);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+        size = sizeof(num);
+        type = REG_DWORD;
+        res = RegQueryValueExA(hkey, "number", NULL, &type, (LPBYTE)&num, &size);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        ok(num == 314, "Expected 314, got %d\n", num);
+
+        size = MAX_PATH;
+        type = REG_SZ;
+        res = RegQueryValueExA(hkey, "OrderTestName", NULL, &type, (LPBYTE)path, &size);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        ok(!lstrcmpA(path, "OrderTestValue"), "Expected imaname, got %s\n", path);
+
+        RegCloseKey(hkey);
+
+        res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+
+    check_service_is_installed();
+
+    /* Remove registry keys written by RegisterProduct standard action */
+    todo_wine
+    {
+        res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{F1C3AF50-8B56-4A69-A00C-00773FE42F30}");
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UpgradeCodes\\D8E760ECA1E276347B43E42BDBDA5656");
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        res = find_registry_key(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData", "05FA3C1F65B896A40AC00077F34EF203", &hkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        if (res == ERROR_SUCCESS)
+        {
+            res = delete_registry_key(hkey, "05FA3C1F65B896A40AC00077F34EF203");
+            ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+            RegCloseKey(hkey);
+        }
+    }
+
+    /* Remove registry keys written by PublishProduct standard action */
+    res = RegOpenKey(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Installer", &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    todo_wine
+    {
+        res = delete_registry_key(hkey, "Products\\05FA3C1F65B896A40AC00077F34EF203");
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        res = RegDeleteKeyA(hkey, "UpgradeCodes\\D8E760ECA1E276347B43E42BDBDA5656");
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+
+    RegCloseKey(hkey);
+
+    /* Delete installation files we installed */
+    delete_test_files();
+}
+
 static void test_Installer(void)
 {
-    static WCHAR szProductCode[] = { '{','F','1','C','3','A','F','5','0','-','8','B','5','6','-','4','A','6','9','-','A','0','0','C','-','0','0','7','7','3','F','E','4','2','F','3','0','}',0 };
     static WCHAR szBackslash[] = { '\\',0 };
     static WCHAR szCreateRecordException[] = { 'C','r','e','a','t','e','R','e','c','o','r','d',',','C','o','u','n','t',0 };
     static WCHAR szIntegerDataException[] = { 'I','n','t','e','g','e','r','D','a','t','a',',','F','i','e','l','d',0 };
@@ -1524,8 +1813,6 @@ static void test_Installer(void)
         IDispatch_Release(pSession);
     }
 
-    DeleteFileA(msifile);
-
     /* Installer::RegistryValue */
     test_Installer_RegistryValue();
 
@@ -1577,6 +1864,9 @@ static void test_Installer(void)
         hr = Installer_VersionGet(szPath);
         ok(SUCCEEDED(hr), "Installer_VersionGet failed, hresult 0x%08x\n", hr);
     }
+
+    /* Installer::InstallProduct and other tests that depend on our product being installed */
+    test_Installer_InstallProduct(szPath);
 }
 
 START_TEST(automation)
@@ -1596,6 +1886,8 @@ START_TEST(automation)
 
     if(len && (CURR_DIR[len - 1] == '\\'))
         CURR_DIR[len - 1] = 0;
+
+    get_program_files_dir(PROG_FILES_DIR);
 
     hr = OleInitialize(NULL);
     ok (SUCCEEDED(hr), "OleInitialize returned 0x%08x\n", hr);
