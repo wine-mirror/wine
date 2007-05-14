@@ -35,7 +35,6 @@
 #include "lmwksta.h"
 #include "iphlpapi.h"
 #include "winerror.h"
-#include "winreg.h"
 #include "ntsecapi.h"
 #include "netbios.h"
 #include "wine/debug.h"
