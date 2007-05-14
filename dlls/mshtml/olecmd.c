@@ -577,6 +577,24 @@ static void set_ns_align(HTMLDocument *This, const char *align_str)
     nsICommandParams_Release(nsparam);
 }
 
+static HRESULT exec_mshtml_copy(HTMLDocument *This)
+{
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT exec_mshtml_cut(HTMLDocument *This)
+{
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT exec_mshtml_paste(HTMLDocument *This)
+{
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
 static HRESULT exec_fontname(HTMLDocument *This, VARIANT *in, VARIANT *out)
 {
     TRACE("(%p)->(%p %p)\n", This, in, out);
@@ -911,9 +929,9 @@ static HRESULT exec_outdent(HTMLDocument *This)
     return S_OK;
 }
 
-static HRESULT exec_htmleditmode(HTMLDocument *This)
+static HRESULT exec_htmleditmode(HTMLDocument *This, VARIANT *in)
 {
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%p)\n", This, in);
     return S_OK;
 }
 
@@ -927,6 +945,12 @@ static HRESULT exec_composesettings(HTMLDocument *This, VARIANT *in)
     FIXME("%s\n", debugstr_w(V_BSTR(in)));
 
     return S_OK;
+}
+
+static HRESULT exec_setdirty(HTMLDocument *This, VARIANT *in)
+{
+    FIXME("(%p)->(%p)\n", This, in);
+    return E_NOTIMPL;
 }
 
 static const struct {
@@ -1162,10 +1186,22 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         return OLECMDERR_E_NOTSUPPORTED;
     }else if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
         switch(nCmdID) {
+        case IDM_COPY:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_mshtml_copy(This);
+        case IDM_CUT:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_mshtml_cut(This);
         case IDM_FONTNAME:
             return exec_fontname(This, pvaIn, pvaOut);
         case IDM_FONTSIZE:
             return exec_fontsize(This, pvaIn, pvaOut);
+        case IDM_PASTE:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_mshtml_paste(This);
         case IDM_PRINT:
             return exec_print(This, nCmdexecopt, pvaIn, pvaOut);
         case IDM_BOLD:
@@ -1225,13 +1261,17 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
                 FIXME("unsupported arguments\n");
             return exec_outdent(This);
         case IDM_HTMLEDITMODE:
-            if(pvaIn || pvaOut)
+            if(pvaOut)
                 FIXME("unsupported arguments\n");
-            return exec_htmleditmode(This);
+            return exec_htmleditmode(This, pvaIn);
         case IDM_COMPOSESETTINGS:
             if(pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_composesettings(This, pvaIn);
+        case IDM_SETDIRTY:
+            if(pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_setdirty(This, pvaIn);
         default:
             FIXME("unsupported nCmdID %d of CGID_MSHTML group\n", nCmdID);
             return OLECMDERR_E_NOTSUPPORTED;
