@@ -34,6 +34,7 @@
 static const char *msifile = "winetest.msi";
 static const WCHAR szMsifile[] = {'w','i','n','e','t','e','s','t','.','m','s','i',0};
 static const WCHAR szProductCode[] = { '{','F','1','C','3','A','F','5','0','-','8','B','5','6','-','4','A','6','9','-','A','0','0','C','-','0','0','7','7','3','F','E','4','2','F','3','0','}',0 };
+static const WCHAR szUpgradeCode[] = { '{','C','E','0','6','7','E','8','D','-','2','E','1','A','-','4','3','6','7','-','B','7','3','4','-','4','E','B','2','B','D','A','D','6','5','6','5','}',0 };
 CHAR CURR_DIR[MAX_PATH];
 EXCEPINFO excepinfo;
 
@@ -759,6 +760,22 @@ static HRESULT Installer_Products(IDispatch **pStringList)
     HRESULT hr;
 
     hr = invoke(pInstaller, "Products", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_DISPATCH);
+    *pStringList = V_DISPATCH(&varresult);
+    return hr;
+}
+
+static HRESULT Installer_RelatedProducts(LPCWSTR szProduct, IDispatch **pStringList)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[1];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szProduct);
+
+    hr = invoke(pInstaller, "RelatedProducts", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_DISPATCH);
     *pStringList = V_DISPATCH(&varresult);
     return hr;
 }
@@ -1631,10 +1648,12 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
 {
     HRESULT hr;
     CHAR path[MAX_PATH];
+    WCHAR szString[MAX_PATH];
     LONG res;
     HKEY hkey;
     DWORD num, size, type;
-    int iValue;
+    int iValue, iCount;
+    IDispatch *pStringList = NULL;
 
     create_test_files();
 
@@ -1646,6 +1665,27 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
     hr = Installer_ProductState(szProductCode, &iValue);
     ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
     ok(iValue == INSTALLSTATE_DEFAULT, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_DEFAULT);
+
+    /* Installer::RelatedProducts for our upgrade code */
+    todo_wine {
+        hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
+        ok(SUCCEEDED(hr), "Installer_RelatedProducts failed, hresult 0x%08x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            /* StringList::Count */
+            hr = StringList_Count(pStringList, &iCount);
+            ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
+            ok(iCount == 1, "Expected one related product but found %d\n", iCount);
+
+            /* StringList::Item */
+            memset(szString, 0, sizeof(szString));
+            hr = StringList_Item(pStringList, 0, szString);
+            ok(SUCCEEDED(hr), "StringList_Item failed (idx 0, count %d), hresult 0x%08x\n", iCount, hr);
+            ok_w2("StringList_Item returned %s but expected %s\n", szString, szProductCode);
+
+            IDispatch_Release(pStringList);
+        }
+    }
 
     /* Check & clean up installed files & registry keys */
     ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
@@ -1735,7 +1775,7 @@ static void test_Installer(void)
     HRESULT hr;
     UINT len;
     IDispatch *pSession = NULL, *pRecord = NULL, *pStringList = NULL;
-    int iValue;
+    int iValue, iCount;
 
     if (!pInstaller) return;
 
@@ -1811,7 +1851,7 @@ static void test_Installer(void)
     ok(SUCCEEDED(hr), "Installer_Products failed, hresult 0x%08x\n", hr);
     if (SUCCEEDED(hr))
     {
-        int iCount = 0, idx;
+        int idx;
 
         /* StringList::Count */
         hr = StringList_Count(pStringList, &iCount);
@@ -1847,6 +1887,21 @@ static void test_Installer(void)
     ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
     if (SUCCEEDED(hr))
         ok(iValue == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_UNKNOWN);
+
+    /* Installer::RelatedProducts for our upgrade code, should not find anything */
+    todo_wine {
+        hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
+        ok(SUCCEEDED(hr), "Installer_RelatedProducts failed, hresult 0x%08x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            /* StringList::Count */
+            hr = StringList_Count(pStringList, &iCount);
+            ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
+            ok(!iCount, "Expected no related products but found %d\n", iCount);
+
+            IDispatch_Release(pStringList);
+        }
+    }
 
     /* Installer::Version */
     todo_wine {
