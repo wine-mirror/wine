@@ -51,7 +51,7 @@
 @ stdcall CertGetCRLContextProperty(ptr long ptr ptr)
 @ stdcall CertGetCRLFromStore(ptr ptr ptr ptr)
 @ stdcall CertGetCTLContextProperty(ptr long ptr ptr)
-@ stub CertGetCertificateChain
+@ stdcall CertGetCertificateChain(ptr ptr ptr ptr ptr long ptr ptr)
 @ stdcall CertGetCertificateContextProperty(ptr long ptr ptr)
 @ stdcall CertGetEnhancedKeyUsage(ptr long ptr ptr)
 @ stub CertGetIntendedKeyUsage

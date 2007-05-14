@@ -2275,3 +2275,15 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV hProv,
         CryptReleaseContext(hProv, 0);
     return context;
 }
+
+BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
+    PCCERT_CONTEXT pCertContext, LPFILETIME pTime, HCERTSTORE hAdditionalStore,
+    PCERT_CHAIN_PARA pChainPara, DWORD dwFlags, LPVOID pvReserved,
+    PCCERT_CHAIN_CONTEXT* ppChainContext)
+{
+    FIXME(" %p %p %p %p %p 0x%08X %p %p - stub\n",hChainEngine, pCertContext,
+     pTime, hAdditionalStore, pChainPara, dwFlags, pvReserved, ppChainContext);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
