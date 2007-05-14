@@ -8,6 +8,7 @@
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Stefan Dösinger for CodeWeavers
  * Copyright 2006-2007 Henri Verbeet
+ * Copyright 2007 Andrew Riedi
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -223,6 +224,8 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         }
 
         if(This->contexts) ERR("Context array not freed!\n");
+        if (This->hardwareCursor) DestroyCursor(This->hardwareCursor);
+        This->haveHardwareCursor = FALSE;
 
         IWineD3D_Release(This->wineD3D);
         This->wineD3D = NULL;
@@ -577,7 +580,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
     TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, object);
     return WINED3D_OK;
 }
-
 
 /* ************************************
 MSDN:
@@ -5702,6 +5704,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     /* TODO: the use of Impl is deprecated. */
     IWineD3DSurfaceImpl * pSur = (IWineD3DSurfaceImpl *) pCursorBitmap;
+    WINED3DLOCKED_RECT lockedRect;
 
     TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
@@ -5713,6 +5716,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
         LEAVE_GL();
         This->cursorTexture = 0;
     }
+
+    if ( (pSur->currentDesc.Width == 32) && (pSur->currentDesc.Height == 32) )
+        This->haveHardwareCursor = TRUE;
+    else
+        This->haveHardwareCursor = FALSE;
 
     if(pCursorBitmap) {
         WINED3DLOCKED_RECT rect;
@@ -5730,67 +5738,107 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
             return WINED3DERR_INVALIDCALL;
         }
 
-        /* TODO: MSDN: Cursor sizes must be a power of 2 */
+        if (!This->haveHardwareCursor) {
+            /* TODO: MSDN: Cursor sizes must be a power of 2 */
 
-        /* Do not store the surface's pointer because the application may release
-         * it after setting the cursor image. Windows doesn't addref the set surface, so we can't
-         * do this either without creating circular refcount dependencies. Copy out the gl texture instead.
-         */
-        This->cursorWidth = pSur->currentDesc.Width;
-        This->cursorHeight = pSur->currentDesc.Height;
-        if (SUCCEEDED(IWineD3DSurface_LockRect(pCursorBitmap, &rect, NULL, WINED3DLOCK_READONLY)))
-        {
-            const PixelFormatDesc *tableEntry = getFormatDescEntry(WINED3DFMT_A8R8G8B8);
-            char *mem, *bits = (char *)rect.pBits;
-            GLint intfmt = tableEntry->glInternal;
-            GLint format = tableEntry->glFormat;
-            GLint type = tableEntry->glType;
-            INT height = This->cursorHeight;
-            INT width = This->cursorWidth;
-            INT bpp = tableEntry->bpp;
-            INT i;
+            /* Do not store the surface's pointer because the application may
+             * release it after setting the cursor image. Windows doesn't
+             * addref the set surface, so we can't do this either without
+             * creating circular refcount dependencies. Copy out the gl texture
+             * instead.
+             */
+            This->cursorWidth = pSur->currentDesc.Width;
+            This->cursorHeight = pSur->currentDesc.Height;
+            if (SUCCEEDED(IWineD3DSurface_LockRect(pCursorBitmap, &rect, NULL, WINED3DLOCK_READONLY)))
+            {
+                const PixelFormatDesc *tableEntry = getFormatDescEntry(WINED3DFMT_A8R8G8B8);
+                char *mem, *bits = (char *)rect.pBits;
+                GLint intfmt = tableEntry->glInternal;
+                GLint format = tableEntry->glFormat;
+                GLint type = tableEntry->glType;
+                INT height = This->cursorHeight;
+                INT width = This->cursorWidth;
+                INT bpp = tableEntry->bpp;
+                INT i;
 
-            /* Reformat the texture memory (pitch and width can be different) */
-            mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
-            for(i = 0; i < height; i++)
-                memcpy(&mem[width * bpp * i], &bits[rect.Pitch * i], width * bpp);
-            IWineD3DSurface_UnlockRect(pCursorBitmap);
-            ENTER_GL();
+                /* Reformat the texture memory (pitch and width can be
+                 * different) */
+                mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
+                for(i = 0; i < height; i++)
+                    memcpy(&mem[width * bpp * i], &bits[rect.Pitch * i], width * bpp);
+                IWineD3DSurface_UnlockRect(pCursorBitmap);
+                ENTER_GL();
 
-            if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
-                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-                checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
+                if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+                    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+                    checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
+                }
+
+                /* Make sure that a proper texture unit is selected */
+                if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+                    checkGLcall("glActiveTextureARB");
+                }
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(0));
+                /* Create a new cursor texture */
+                glGenTextures(1, &This->cursorTexture);
+                checkGLcall("glGenTextures");
+                glBindTexture(GL_TEXTURE_2D, This->cursorTexture);
+                checkGLcall("glBindTexture");
+                /* Copy the bitmap memory into the cursor texture */
+                glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, format, type, mem);
+                HeapFree(GetProcessHeap(), 0, mem);
+                checkGLcall("glTexImage2D");
+
+                if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+                    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+                    checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
+                }
+
+                LEAVE_GL();
             }
-
-            /* Make sure that a proper texture unit is selected */
-            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-                checkGLcall("glActiveTextureARB");
+            else
+            {
+                FIXME("A cursor texture was not returned.\n");
+                This->cursorTexture = 0;
             }
-            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(0));
-            /* Create a new cursor texture */
-            glGenTextures(1, &This->cursorTexture);
-            checkGLcall("glGenTextures");
-            glBindTexture(GL_TEXTURE_2D, This->cursorTexture);
-            checkGLcall("glBindTexture");
-            /* Copy the bitmap memory into the cursor texture */
-            glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, format, type, mem);
-            HeapFree(GetProcessHeap(), 0, mem);
-            checkGLcall("glTexImage2D");
-
-            if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
-                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-                checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
-            }
-
-            LEAVE_GL();
         }
         else
         {
-            FIXME("A cursor texture was not returned.\n");
-            This->cursorTexture = 0;
-        }
+            /* Draw a hardware cursor */
+            ICONINFO cursorInfo;
+            HCURSOR cursor;
+            /* Create and clear maskBits because it is not needed for
+             * 32-bit cursors.  32x32 bits split into 32-bit chunks == 32
+             * chunks. */
+            DWORD *maskBits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                (pSur->currentDesc.Width * pSur->currentDesc.Height / 8));
+            IWineD3DSurface_LockRect(pCursorBitmap, &lockedRect, NULL,
+                                         WINED3DLOCK_NO_DIRTY_UPDATE |
+                                         WINED3DLOCK_READONLY
+            );
+            TRACE("width: %i height: %i\n", pSur->currentDesc.Width,
+                  pSur->currentDesc.Height);
 
+            cursorInfo.fIcon = FALSE;
+            cursorInfo.xHotspot = XHotSpot;
+            cursorInfo.yHotspot = YHotSpot;
+            cursorInfo.hbmMask = CreateBitmap(pSur->currentDesc.Width,
+                                              pSur->currentDesc.Height, 1,
+                                              1, &maskBits);
+            cursorInfo.hbmColor = CreateBitmap(pSur->currentDesc.Width,
+                                               pSur->currentDesc.Height, 1,
+                                               32, lockedRect.pBits);
+            IWineD3DSurface_UnlockRect(pCursorBitmap);
+            /* Create our cursor and clean up. */
+            cursor = CreateIconIndirect(&cursorInfo);
+            SetCursor(cursor);
+            if (cursorInfo.hbmMask) DeleteObject(cursorInfo.hbmMask);
+            if (cursorInfo.hbmColor) DeleteObject(cursorInfo.hbmColor);
+            if (This->hardwareCursor) DestroyCursor(This->hardwareCursor);
+            This->hardwareCursor = cursor;
+            HeapFree(GetProcessHeap(), 0, maskBits);
+        }
     }
 
     This->xHotSpot = XHotSpot;
@@ -5816,8 +5864,6 @@ static BOOL     WINAPI  IWineD3DDeviceImpl_ShowCursor(IWineD3DDevice* iface, BOO
 
     TRACE("(%p) : visible(%d)\n", This, bShow);
 
-    if(This->cursorTexture)
-        This->bCursorVisible = bShow;
     /*
      * When ShowCursor is first called it should make the cursor appear at the OS's last
      * known cursor position.  Because of this, some applications just repetitively call
@@ -5826,6 +5872,19 @@ static BOOL     WINAPI  IWineD3DDeviceImpl_ShowCursor(IWineD3DDevice* iface, BOO
     GetCursorPos(&pt);
     This->xScreenSpace = pt.x;
     This->yScreenSpace = pt.y;
+
+    if (This->haveHardwareCursor) {
+        This->bCursorVisible = bShow;
+        if (bShow)
+            SetCursor(This->hardwareCursor);
+        else
+            SetCursor(NULL);
+    }
+    else
+    {
+        if (This->cursorTexture)
+            This->bCursorVisible = bShow;
+    }
 
     return oldVisible;
 }

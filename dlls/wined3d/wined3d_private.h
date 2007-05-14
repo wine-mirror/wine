@@ -688,6 +688,8 @@ struct IWineD3DDeviceImpl
     UINT                    yScreenSpace;
     UINT                    cursorWidth, cursorHeight;
     GLuint                  cursorTexture;
+    BOOL                    haveHardwareCursor;
+    HCURSOR                 hardwareCursor;
 
     /* Textures for when no other textures are mapped */
     UINT                          dummyTextureName[MAX_TEXTURES];
