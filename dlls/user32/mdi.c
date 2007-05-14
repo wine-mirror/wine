@@ -1498,7 +1498,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         return 0;
 
     case WM_SYSCOMMAND:
-        switch( wParam )
+        switch (wParam & 0xfff0)
         {
         case SC_MOVE:
             if( ci->hwndChildMaximized == hwnd )
