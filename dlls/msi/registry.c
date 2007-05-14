@@ -993,6 +993,7 @@ UINT WINAPI MsiEnumRelatedProductsW(LPCWSTR szUpgradeCode, DWORD dwReserved,
 {
     UINT r;
     HKEY hkey;
+    DWORD dwSize = SQUISH_GUID_SIZE;
     WCHAR szKeyName[SQUISH_GUID_SIZE];
 
     TRACE("%s %u %u %p\n", debugstr_w(szUpgradeCode), dwReserved,
@@ -1007,7 +1008,7 @@ UINT WINAPI MsiEnumRelatedProductsW(LPCWSTR szUpgradeCode, DWORD dwReserved,
     if (r != ERROR_SUCCESS)
         return ERROR_NO_MORE_ITEMS;
 
-    r = RegEnumKeyW(hkey, iProductIndex, szKeyName, SQUISH_GUID_SIZE);
+    r = RegEnumValueW(hkey, iProductIndex, szKeyName, &dwSize, NULL, NULL, NULL, NULL);
     if( r == ERROR_SUCCESS )
         unsquash_guid(szKeyName, lpProductBuf);
     RegCloseKey(hkey);

@@ -1676,13 +1676,13 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
         /* StringList::Count */
         hr = StringList_Count(pStringList, &iCount);
         ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
-        todo_wine ok(iCount == 1, "Expected one related product but found %d\n", iCount);
+        ok(iCount == 1, "Expected one related product but found %d\n", iCount);
 
         /* StringList::Item */
         memset(szString, 0, sizeof(szString));
         hr = StringList_Item(pStringList, 0, szString);
-        todo_wine ok(SUCCEEDED(hr), "StringList_Item failed (idx 0, count %d), hresult 0x%08x\n", iCount, hr);
-        todo_wine ok_w2("StringList_Item returned %s but expected %s\n", szString, szProductCode);
+        ok(SUCCEEDED(hr), "StringList_Item failed (idx 0, count %d), hresult 0x%08x\n", iCount, hr);
+        ok_w2("StringList_Item returned %s but expected %s\n", szString, szProductCode);
 
         IDispatch_Release(pStringList);
     }
