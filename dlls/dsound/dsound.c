@@ -1707,7 +1707,7 @@ HRESULT DirectSoundDevice_Compact(
         return DSERR_UNINITIALIZED;
     }
 
-    if (device->priolevel != DSSCL_PRIORITY) {
+    if (device->priolevel < DSSCL_PRIORITY) {
         WARN("incorrect priority level\n");
         return DSERR_PRIOLEVELNEEDED;
     }
