@@ -1043,6 +1043,18 @@ static void test_verify_signature(void) {
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
 
+    /*check that a NULL pointer signature is correctly handled*/
+    result = CryptVerifySignature(hHash, NULL, 128, hPubSignKey, NULL, 0);
+    ok(!result && ERROR_INVALID_PARAMETER == GetLastError(),
+     "Expected ERROR_INVALID_PARAMETER error, got %08x\n", GetLastError());
+    if (result) return;
+
+    /* check that we get a bad signature error when the signature is too short*/
+    result = CryptVerifySignature(hHash, abSignatureMD2, 64, hPubSignKey, NULL, 0);
+    ok(!result && NTE_BAD_SIGNATURE == GetLastError(),
+     "Expected NTE_BAD_SIGNATURE error, got %08x\n", GetLastError());
+    if (result) return;
+
     result = CryptVerifySignature(hHash, abSignatureMD2, 128, hPubSignKey, NULL, 0);
     ok(result, "%08x\n", GetLastError());
     if (!result) return;

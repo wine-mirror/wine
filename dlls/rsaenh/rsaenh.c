@@ -3611,6 +3611,21 @@ BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST B
         return FALSE;
     }
 
+    /* in Microsoft implementation, the signature length is checked before
+     * the signature pointer.
+     */
+    if (dwSigLen != pCryptKey->dwKeyLen)
+    {
+        SetLastError(NTE_BAD_SIGNATURE);
+        return FALSE;
+    }
+
+    if (!hHash || !pbSignature)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     if (sDescription) {
         if (!RSAENH_CPHashData(hProv, hHash, (CONST BYTE*)sDescription, 
                                 (DWORD)lstrlenW(sDescription)*sizeof(WCHAR), 0))
