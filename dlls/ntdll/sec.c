@@ -37,7 +37,6 @@
 #include "windef.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
-#include "excpt.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

@@ -29,7 +29,6 @@
 
 #include "windef.h"
 #include "winternl.h"
-#include "excpt.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
 #include "wine/unicode.h"

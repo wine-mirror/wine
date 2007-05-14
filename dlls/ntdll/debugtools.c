@@ -36,7 +36,6 @@
 #include "wine/unicode.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "excpt.h"
 #include "ntdll_misc.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(tid);

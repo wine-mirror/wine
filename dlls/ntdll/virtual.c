@@ -48,7 +48,6 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
-#include "winioctl.h"
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/list.h"
