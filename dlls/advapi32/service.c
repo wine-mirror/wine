@@ -110,12 +110,14 @@ struct sc_manager       /* service control manager handle */
 {
     struct sc_handle hdr;
     HKEY   hkey;   /* handle to services database in the registry */
+    DWORD  dwAccess;
 };
 
 struct sc_service       /* service handle */
 {
     struct sc_handle hdr;
     HKEY   hkey;          /* handle to service entry in the registry (under hkey) */
+    DWORD  dwAccess;
     struct sc_manager *scm;  /* pointer to SCM handle */
     WCHAR  name[1];
 };
@@ -1055,6 +1057,7 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     if (r!=ERROR_SUCCESS)
         goto error;
 
+    manager->dwAccess = dwDesiredAccess;
     TRACE("returning %p\n", manager);
 
     return (SC_HANDLE) &manager->hdr;
@@ -1233,6 +1236,7 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         return NULL;
     strcpyW( hsvc->name, lpServiceName );
     hsvc->hkey = hKey;
+    hsvc->dwAccess = dwDesiredAccess;
 
     /* add reference to SCM handle */
     hscm->hdr.ref_count++;
