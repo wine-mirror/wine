@@ -1367,12 +1367,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 WCHAR szProductBuf[GUID_SIZE];
 
                 /* Find number of products */
-                do {
-                    ret = MsiEnumProductsW(idx, szProductBuf);
-                    if (ret == ERROR_SUCCESS) idx++;
-                } while (ret == ERROR_SUCCESS && ret != ERROR_NO_MORE_ITEMS);
-
-                if (ret != ERROR_SUCCESS && ret != ERROR_NO_MORE_ITEMS)
+                while ((ret = MsiEnumProductsW(idx, szProductBuf)) == ERROR_SUCCESS) idx++;
+                if (ret != ERROR_NO_MORE_ITEMS)
                 {
                     ERR("MsiEnumProducts returned %d\n", ret);
                     return DISP_E_EXCEPTION;
@@ -1415,12 +1411,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 if (FAILED(hr)) return hr;
 
                 /* Find number of related products */
-                do {
-                    ret = MsiEnumRelatedProductsW(V_BSTR(&varg0), 0, idx, szProductBuf);
-                    if (ret == ERROR_SUCCESS) idx++;
-                } while (ret == ERROR_SUCCESS);
-
-                if (ret != ERROR_SUCCESS && ret != ERROR_NO_MORE_ITEMS)
+                while ((ret = MsiEnumRelatedProductsW(V_BSTR(&varg0), 0, idx, szProductBuf)) == ERROR_SUCCESS) idx++;
+                if (ret != ERROR_NO_MORE_ITEMS)
                 {
                     VariantClear(&varg0);
                     ERR("MsiEnumRelatedProducts returned %d\n", ret);
