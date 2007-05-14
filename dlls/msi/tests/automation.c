@@ -354,10 +354,10 @@ static void check_service_is_installed(void)
     ok(scm != NULL, "Failed to open the SC Manager\n");
 
     service = OpenService(scm, "TestService", SC_MANAGER_ALL_ACCESS);
-    todo_wine ok(service != NULL, "Failed to open TestService\n");
+    ok(service != NULL, "Failed to open TestService\n");
 
     res = DeleteService(service);
-    todo_wine ok(res, "Failed to delete TestService\n");
+    ok(res, "Failed to delete TestService\n");
 }
 
 /*
@@ -425,7 +425,9 @@ static void test_dispid(void)
     ok( get_dispid( pInstaller, "SummaryInformation" ) == 5, "dispid wrong\n");
     ok( get_dispid( pInstaller, "UILevel" ) == 6, "dispid wrong\n");
     ok( get_dispid( pInstaller, "EnableLog" ) == 7, "dispid wrong\n");
+    }
     ok( get_dispid( pInstaller, "InstallProduct" ) == 8, "dispid wrong\n");
+    todo_wine {
     ok( get_dispid( pInstaller, "Version" ) == 9, "dispid wrong\n");
     ok( get_dispid( pInstaller, "LastErrorRecord" ) == 10, "dispid wrong\n");
     }
@@ -1637,98 +1639,86 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
     create_test_files();
 
     /* Installer::InstallProduct */
-    todo_wine
-    {
-        hr = Installer_InstallProduct(szMsifile, NULL);
-        ok(SUCCEEDED(hr), "Installer_InstallProduct failed, hresult 0x%08x\n", hr);
-    }
+    hr = Installer_InstallProduct(szMsifile, NULL);
+    ok(SUCCEEDED(hr), "Installer_InstallProduct failed, hresult 0x%08x\n", hr);
 
     /* Installer::ProductState for our product code, which has been installed */
     hr = Installer_ProductState(szProductCode, &iValue);
     ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
-    todo_wine ok(iValue == INSTALLSTATE_DEFAULT, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_DEFAULT);
+    ok(iValue == INSTALLSTATE_DEFAULT, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_DEFAULT);
 
     /* Check & clean up installed files & registry keys */
-    todo_wine
-    {
-        ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\cabout\\new", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\cabout", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\changed", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\first", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
-        ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\new", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\changed", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\first", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-        res = RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", &hkey);
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    res = RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-        size = MAX_PATH;
-        type = REG_SZ;
-        res = RegQueryValueExA(hkey, "Name", NULL, &type, (LPBYTE)path, &size);
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        ok(!lstrcmpA(path, "imaname"), "Expected imaname, got %s\n", path);
+    size = MAX_PATH;
+    type = REG_SZ;
+    res = RegQueryValueExA(hkey, "Name", NULL, &type, (LPBYTE)path, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!lstrcmpA(path, "imaname"), "Expected imaname, got %s\n", path);
 
-        size = MAX_PATH;
-        type = REG_SZ;
-        res = RegQueryValueExA(hkey, "blah", NULL, &type, (LPBYTE)path, &size);
-        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    size = MAX_PATH;
+    type = REG_SZ;
+    res = RegQueryValueExA(hkey, "blah", NULL, &type, (LPBYTE)path, &size);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
-        size = sizeof(num);
-        type = REG_DWORD;
-        res = RegQueryValueExA(hkey, "number", NULL, &type, (LPBYTE)&num, &size);
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        ok(num == 314, "Expected 314, got %d\n", num);
+    size = sizeof(num);
+    type = REG_DWORD;
+    res = RegQueryValueExA(hkey, "number", NULL, &type, (LPBYTE)&num, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(num == 314, "Expected 314, got %d\n", num);
 
-        size = MAX_PATH;
-        type = REG_SZ;
-        res = RegQueryValueExA(hkey, "OrderTestName", NULL, &type, (LPBYTE)path, &size);
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        ok(!lstrcmpA(path, "OrderTestValue"), "Expected imaname, got %s\n", path);
+    size = MAX_PATH;
+    type = REG_SZ;
+    res = RegQueryValueExA(hkey, "OrderTestName", NULL, &type, (LPBYTE)path, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!lstrcmpA(path, "OrderTestValue"), "Expected imaname, got %s\n", path);
 
-        RegCloseKey(hkey);
+    RegCloseKey(hkey);
 
-        res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    }
+    res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     check_service_is_installed();
 
     /* Remove registry keys written by RegisterProduct standard action */
-    todo_wine
+    res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{F1C3AF50-8B56-4A69-A00C-00773FE42F30}");
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UpgradeCodes\\D8E760ECA1E276347B43E42BDBDA5656");
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = find_registry_key(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData", "05FA3C1F65B896A40AC00077F34EF203", &hkey);
+    todo_wine ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    if (res == ERROR_SUCCESS)
     {
-        res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{F1C3AF50-8B56-4A69-A00C-00773FE42F30}");
+        res = delete_registry_key(hkey, "05FA3C1F65B896A40AC00077F34EF203");
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-
-        res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UpgradeCodes\\D8E760ECA1E276347B43E42BDBDA5656");
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-
-        res = find_registry_key(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData", "05FA3C1F65B896A40AC00077F34EF203", &hkey);
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        if (res == ERROR_SUCCESS)
-        {
-            res = delete_registry_key(hkey, "05FA3C1F65B896A40AC00077F34EF203");
-            ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-            RegCloseKey(hkey);
-        }
+        RegCloseKey(hkey);
     }
 
     /* Remove registry keys written by PublishProduct standard action */
     res = RegOpenKey(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Installer", &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    todo_wine
-    {
-        res = delete_registry_key(hkey, "Products\\05FA3C1F65B896A40AC00077F34EF203");
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    res = delete_registry_key(hkey, "Products\\05FA3C1F65B896A40AC00077F34EF203");
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-        res = RegDeleteKeyA(hkey, "UpgradeCodes\\D8E760ECA1E276347B43E42BDBDA5656");
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    }
+    res = RegDeleteKeyA(hkey, "UpgradeCodes\\D8E760ECA1E276347B43E42BDBDA5656");
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     RegCloseKey(hkey);
 
