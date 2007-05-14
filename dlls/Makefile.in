@@ -73,6 +73,7 @@ BASEDIRS = \
 	dxdiagn \
 	gdi32 \
 	gphoto2.ds \
+	hal \
 	hhctrl.ocx \
 	hid \
 	hlink \

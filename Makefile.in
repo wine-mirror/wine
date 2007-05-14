@@ -235,6 +235,7 @@ ALL_MAKEFILES = \
 	dlls/gdi32/tests/Makefile \
 	dlls/glu32/Makefile \
 	dlls/gphoto2.ds/Makefile \
+	dlls/hal/Makefile \
 	dlls/hhctrl.ocx/Makefile \
 	dlls/hid/Makefile \
 	dlls/hlink/Makefile \
@@ -582,6 +583,7 @@ dlls/gdi32/Makefile: dlls/gdi32/Makefile.in dlls/Makedll.rules
 dlls/gdi32/tests/Makefile: dlls/gdi32/tests/Makefile.in dlls/Maketest.rules
 dlls/glu32/Makefile: dlls/glu32/Makefile.in dlls/Makedll.rules
 dlls/gphoto2.ds/Makefile: dlls/gphoto2.ds/Makefile.in dlls/Makedll.rules
+dlls/hal/Makefile: dlls/hal/Makefile.in dlls/Makedll.rules
 dlls/hhctrl.ocx/Makefile: dlls/hhctrl.ocx/Makefile.in dlls/Makedll.rules
 dlls/hid/Makefile: dlls/hid/Makefile.in dlls/Makedll.rules
 dlls/hlink/Makefile: dlls/hlink/Makefile.in dlls/Makedll.rules

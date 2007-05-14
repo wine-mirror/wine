@@ -20539,6 +20539,8 @@ ac_config_files="$ac_config_files dlls/glu32/Makefile"
 
 ac_config_files="$ac_config_files dlls/gphoto2.ds/Makefile"
 
+ac_config_files="$ac_config_files dlls/hal/Makefile"
+
 ac_config_files="$ac_config_files dlls/hhctrl.ocx/Makefile"
 
 ac_config_files="$ac_config_files dlls/hid/Makefile"
@@ -21692,6 +21694,7 @@ do
     "dlls/gdi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/tests/Makefile" ;;
     "dlls/glu32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/glu32/Makefile" ;;
     "dlls/gphoto2.ds/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gphoto2.ds/Makefile" ;;
+    "dlls/hal/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hal/Makefile" ;;
     "dlls/hhctrl.ocx/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hhctrl.ocx/Makefile" ;;
     "dlls/hid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hid/Makefile" ;;
     "dlls/hlink/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hlink/Makefile" ;;
