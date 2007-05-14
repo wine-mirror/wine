@@ -1386,12 +1386,16 @@ static HRESULT WINAPI InstallerImpl_Invoke(
 
                     /* Save product strings */
                     sldata = (StringListData *)private_data((AutomationObject *)pDispatch);
-                    sldata->iCount = idx;
-                    sldata->pszStrings = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LPWSTR)*sldata->iCount);
-                    for (idx = 0; idx < sldata->iCount; idx++)
+                    if (!(sldata->pszStrings = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LPWSTR)*sldata->iCount)))
+                        ERR("Out of memory\n");
+                    else
                     {
-                        ret = MsiEnumProductsW(idx, szProductBuf);
-                        sldata->pszStrings[idx] = SysAllocString(szProductBuf);
+                        sldata->iCount = idx;
+                        for (idx = 0; idx < sldata->iCount; idx++)
+                        {
+                            ret = MsiEnumProductsW(idx, szProductBuf);
+                            sldata->pszStrings[idx] = SysAllocString(szProductBuf);
+                        }
                     }
                 }
                 else
