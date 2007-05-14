@@ -608,6 +608,26 @@ static HRESULT WINAPI RecordImpl_Invoke(
             else return DISP_E_MEMBERNOTFOUND;
 	    break;
 
+	case DISPID_RECORD_INTEGERDATA:
+	    if (wFlags & DISPATCH_PROPERTYGET) {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                V_VT(pVarResult) = VT_I4;
+                V_I4(pVarResult) = MsiRecordGetInteger(This->msiHandle, V_I4(&varg0));
+	    } else if (wFlags & DISPATCH_PROPERTYPUT) {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                hr = DispGetParam(pDispParams, DISPID_PROPERTYPUT, VT_I4, &varg1, puArgErr);
+                if (FAILED(hr)) return hr;
+                if ((ret = MsiRecordSetInteger(This->msiHandle, V_I4(&varg0), V_I4(&varg1))) != ERROR_SUCCESS)
+                {
+                    ERR("MsiRecordSetInteger returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+	    }
+            else return DISP_E_MEMBERNOTFOUND;
+	    break;
+
          default:
             return DISP_E_MEMBERNOTFOUND;
     }

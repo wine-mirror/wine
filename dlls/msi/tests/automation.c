@@ -1478,32 +1478,29 @@ static void test_Installer(void)
         ok(SUCCEEDED(hr), "Record_FiledCountGet failed, hresult 0x%08x\n", hr);
         ok(iValue == 1, "Record_FieldCountGet result was %d but expected 1\n", iValue);
 
-        todo_wine
-        {
-            /* Record::IntegerDataGet */
-            hr = Record_IntegerDataGet(pRecord, 1, &iValue);
-            ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
-            ok(iValue == MSI_NULL_INTEGER, "Record_IntegerDataGet result was %d but expected %d\n", iValue, MSI_NULL_INTEGER);
+        /* Record::IntegerDataGet */
+        hr = Record_IntegerDataGet(pRecord, 1, &iValue);
+        ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
+        ok(iValue == MSI_NULL_INTEGER, "Record_IntegerDataGet result was %d but expected %d\n", iValue, MSI_NULL_INTEGER);
 
-            /* Record::IntegerDataGet, bad index */
-            hr = Record_IntegerDataGet(pRecord, 10, &iValue);
-            ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
-            ok(iValue == MSI_NULL_INTEGER, "Record_IntegerDataGet result was %d but expected %d\n", iValue, MSI_NULL_INTEGER);
+        /* Record::IntegerDataGet, bad index */
+        hr = Record_IntegerDataGet(pRecord, 10, &iValue);
+        ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
+        ok(iValue == MSI_NULL_INTEGER, "Record_IntegerDataGet result was %d but expected %d\n", iValue, MSI_NULL_INTEGER);
 
-            /* Record::IntegerDataPut */
-            hr = Record_IntegerDataPut(pRecord, 1, 100);
-            ok(SUCCEEDED(hr), "Record_IntegerDataPut failed, hresult 0x%08x\n", hr);
+        /* Record::IntegerDataPut */
+        hr = Record_IntegerDataPut(pRecord, 1, 100);
+        ok(SUCCEEDED(hr), "Record_IntegerDataPut failed, hresult 0x%08x\n", hr);
 
-            /* Record::IntegerDataPut, bad index */
-            hr = Record_IntegerDataPut(pRecord, 10, 100);
-            ok(hr == DISP_E_EXCEPTION, "Record_IntegerDataPut failed, hresult 0x%08x\n", hr);
-            ok_exception(hr, szIntegerDataException);
+        /* Record::IntegerDataPut, bad index */
+        hr = Record_IntegerDataPut(pRecord, 10, 100);
+        ok(hr == DISP_E_EXCEPTION, "Record_IntegerDataPut failed, hresult 0x%08x\n", hr);
+        ok_exception(hr, szIntegerDataException);
 
-            /* Record::IntegerDataGet */
-            hr = Record_IntegerDataGet(pRecord, 1, &iValue);
-            ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
-            ok(iValue == 100, "Record_IntegerDataGet result was %d but expected 100\n", iValue);
-        }
+        /* Record::IntegerDataGet */
+        hr = Record_IntegerDataGet(pRecord, 1, &iValue);
+        ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
+        ok(iValue == 100, "Record_IntegerDataGet result was %d but expected 100\n", iValue);
 
         IDispatch_Release(pRecord);
     }
