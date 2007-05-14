@@ -1400,6 +1400,55 @@ static HRESULT WINAPI InstallerImpl_Invoke(
             else return DISP_E_MEMBERNOTFOUND;
             break;
 
+        case DISPID_INSTALLER_RELATEDPRODUCTS:
+            if (wFlags & DISPATCH_PROPERTYGET)
+            {
+                StringListData *sldata = NULL;
+                int idx = 0;
+                WCHAR szProductBuf[GUID_SIZE];
+
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+
+                /* Find number of related products */
+                do {
+                    ret = MsiEnumRelatedProductsW(V_BSTR(&varg0), 0, idx, szProductBuf);
+                    if (ret == ERROR_SUCCESS) idx++;
+                } while (ret == ERROR_SUCCESS);
+
+                if (ret != ERROR_SUCCESS && ret != ERROR_NO_MORE_ITEMS)
+                {
+                    VariantClear(&varg0);
+                    ERR("MsiEnumRelatedProducts returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+
+                V_VT(pVarResult) = VT_DISPATCH;
+                if (SUCCEEDED(hr = create_automation_object(0, NULL, (LPVOID*)&pDispatch, &DIID_StringList, StringListImpl_Invoke, StringListImpl_Free, sizeof(StringListData))))
+                {
+                    IDispatch_AddRef(pDispatch);
+                    V_DISPATCH(pVarResult) = pDispatch;
+
+                    /* Save product strings */
+                    sldata = (StringListData *)private_data((AutomationObject *)pDispatch);
+                    if (!(sldata->pszStrings = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LPWSTR)*sldata->iCount)))
+                        ERR("Out of memory\n");
+                    else
+                    {
+                        sldata->iCount = idx;
+                        for (idx = 0; idx < sldata->iCount; idx++)
+                        {
+                            ret = MsiEnumRelatedProductsW(V_BSTR(&varg0), 0, idx, szProductBuf);
+                            sldata->pszStrings[idx] = SysAllocString(szProductBuf);
+                        }
+                    }
+                }
+                else
+                    ERR("Failed to create StringList object, hresult 0x%08x\n", hr);
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
          default:
             return DISP_E_MEMBERNOTFOUND;
     }

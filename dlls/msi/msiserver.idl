@@ -79,6 +79,9 @@ library WindowsInstaller
                 [in] BSTR Product);
         [id(DISPID_INSTALLER_PRODUCTS), propget]
             StringList *Products();
+        [id(DISPID_INSTALLER_RELATEDPRODUCTS), propget]
+            StringList *RelatedProducts(
+                [in] BSTR UpgradeCode);
     }
 
     [ uuid(000C1093-0000-0000-C000-000000000046) ]

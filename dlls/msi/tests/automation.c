@@ -466,7 +466,9 @@ static void test_dispid(void)
     ok( get_dispid( pInstaller, "Components" ) == 37, "dispid wrong\n");
     ok( get_dispid( pInstaller, "ComponentClients" ) == 38, "dispid wrong\n");
     ok( get_dispid( pInstaller, "Patches" ) == 39, "dispid wrong\n");
+    }
     ok( get_dispid( pInstaller, "RelatedProducts" ) == 40, "dispid wrong\n");
+    todo_wine {
     ok( get_dispid( pInstaller, "PatchInfo" ) == 41, "dispid wrong\n");
     ok( get_dispid( pInstaller, "PatchTransforms" ) == 42, "dispid wrong\n");
     ok( get_dispid( pInstaller, "AddSource" ) == 43, "dispid wrong\n");
@@ -1667,24 +1669,22 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
     ok(iValue == INSTALLSTATE_DEFAULT, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_DEFAULT);
 
     /* Installer::RelatedProducts for our upgrade code */
-    todo_wine {
-        hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
-        ok(SUCCEEDED(hr), "Installer_RelatedProducts failed, hresult 0x%08x\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            /* StringList::Count */
-            hr = StringList_Count(pStringList, &iCount);
-            ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
-            ok(iCount == 1, "Expected one related product but found %d\n", iCount);
+    hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
+    ok(SUCCEEDED(hr), "Installer_RelatedProducts failed, hresult 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        /* StringList::Count */
+        hr = StringList_Count(pStringList, &iCount);
+        ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
+        todo_wine ok(iCount == 1, "Expected one related product but found %d\n", iCount);
 
-            /* StringList::Item */
-            memset(szString, 0, sizeof(szString));
-            hr = StringList_Item(pStringList, 0, szString);
-            ok(SUCCEEDED(hr), "StringList_Item failed (idx 0, count %d), hresult 0x%08x\n", iCount, hr);
-            ok_w2("StringList_Item returned %s but expected %s\n", szString, szProductCode);
+        /* StringList::Item */
+        memset(szString, 0, sizeof(szString));
+        hr = StringList_Item(pStringList, 0, szString);
+        todo_wine ok(SUCCEEDED(hr), "StringList_Item failed (idx 0, count %d), hresult 0x%08x\n", iCount, hr);
+        todo_wine ok_w2("StringList_Item returned %s but expected %s\n", szString, szProductCode);
 
-            IDispatch_Release(pStringList);
-        }
+        IDispatch_Release(pStringList);
     }
 
     /* Check & clean up installed files & registry keys */
@@ -1889,18 +1889,16 @@ static void test_Installer(void)
         ok(iValue == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_UNKNOWN);
 
     /* Installer::RelatedProducts for our upgrade code, should not find anything */
-    todo_wine {
-        hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
-        ok(SUCCEEDED(hr), "Installer_RelatedProducts failed, hresult 0x%08x\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            /* StringList::Count */
-            hr = StringList_Count(pStringList, &iCount);
-            ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
-            ok(!iCount, "Expected no related products but found %d\n", iCount);
+    hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
+    ok(SUCCEEDED(hr), "Installer_RelatedProducts failed, hresult 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        /* StringList::Count */
+        hr = StringList_Count(pStringList, &iCount);
+        ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
+        ok(!iCount, "Expected no related products but found %d\n", iCount);
 
-            IDispatch_Release(pStringList);
-        }
+        IDispatch_Release(pStringList);
     }
 
     /* Installer::Version */
