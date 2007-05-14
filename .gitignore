@@ -378,6 +378,7 @@ dlls/ntdll/tests/ntdll_crosstest.exe
 dlls/ntdll/tests/testlist.c
 dlls/ntdll/version.res
 dlls/ntdsapi/libntdsapi.def
+dlls/ntoskrnl.exe/libntoskrnl.exe.def
 dlls/objsel/objsel.res
 dlls/odbc32/libodbc32.def
 dlls/odbccp32/libodbccp32.def

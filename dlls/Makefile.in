@@ -128,6 +128,7 @@ BASEDIRS = \
 	newdev \
 	ntdll \
 	ntdsapi \
+	ntoskrnl.exe \
 	objsel \
 	odbc32 \
 	odbccp32 \
@@ -526,6 +527,7 @@ IMPORT_LIBS = \
 	newdev/libnewdev.$(IMPLIBEXT) \
 	ntdll/libntdll.$(IMPLIBEXT) \
 	ntdsapi/libntdsapi.$(IMPLIBEXT) \
+	ntoskrnl.exe/libntoskrnl.exe.$(IMPLIBEXT) \
 	odbc32/libodbc32.$(IMPLIBEXT) \
 	odbccp32/libodbccp32.$(IMPLIBEXT) \
 	ole32/libole32.$(IMPLIBEXT) \
@@ -785,6 +787,9 @@ ntdll/libntdll.$(IMPLIBEXT): ntdll/ntdll.spec $(WINEBUILD)
 
 ntdsapi/libntdsapi.$(IMPLIBEXT): ntdsapi/ntdsapi.spec $(WINEBUILD)
 	@cd ntdsapi && $(MAKE) libntdsapi.$(IMPLIBEXT)
+
+ntoskrnl.exe/libntoskrnl.exe.$(IMPLIBEXT): ntoskrnl.exe/ntoskrnl.exe.spec $(WINEBUILD)
+	@cd ntoskrnl.exe && $(MAKE) libntoskrnl.exe.$(IMPLIBEXT)
 
 odbc32/libodbc32.$(IMPLIBEXT): odbc32/odbc32.spec $(WINEBUILD)
 	@cd odbc32 && $(MAKE) libodbc32.$(IMPLIBEXT)
