@@ -185,20 +185,17 @@ static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
     if (ret)
     {
         if (!pvData)
-        {
             *pcbData = blob.cbData;
-            ret = TRUE;
-        }
         else if (*pcbData < blob.cbData)
         {
             SetLastError(ERROR_MORE_DATA);
             *pcbData = blob.cbData;
+            ret = FALSE;
         }
         else
         {
             memcpy(pvData, blob.pbData, blob.cbData);
             *pcbData = blob.cbData;
-            ret = TRUE;
         }
     }
     else
@@ -320,10 +317,7 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
         if (ret)
         {
             if (!pvData)
-            {
                 *pcbData = sizeof(HCRYPTPROV);
-                ret = TRUE;
-            }
             else if (*pcbData < sizeof(HCRYPTPROV))
             {
                 SetLastError(ERROR_MORE_DATA);
@@ -331,10 +325,7 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
                 ret = FALSE;
             }
             else
-            {
                 *(HCRYPTPROV *)pvData = keyContext.hCryptProv;
-                ret = TRUE;
-            }
         }
         break;
     }
