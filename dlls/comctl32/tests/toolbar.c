@@ -678,6 +678,14 @@ static tbsize_result_t tbsize_results[] =
   { {0, 0, 672, 26}, {489, 39}, 3, {
     {  0,   2, 163,  41}, {163,   2, 330,  41}, {330,   2, 493,  41},
   }, },
+  { {0, 0, 672, 104}, {978, 24}, 6, {
+    {  0,   2, 163,  26}, {163,   2, 326,  26}, {326,   2, 489,  26},
+    {489,   2, 652,  26}, {652,   2, 819,  26}, {819,   2, 850,  26},
+  }, },
+  { {0, 0, 672, 28}, {978, 38}, 6, {
+    {  0,   0, 163,  38}, {163,   0, 326,  38}, {326,   0, 489,  38},
+    {489,   0, 652,  38}, {652,   0, 819,  38}, {819,   0, 850,  38},
+  }, },
 };
 
 static int tbsize_numtests = 0;
@@ -725,6 +733,7 @@ static TBBUTTON buttons3[] = {
 static void test_sizes(void)
 {
     HWND hToolbar = NULL;
+    HIMAGELIST himl;
     int style;
     int i;
 
@@ -855,7 +864,36 @@ static void test_sizes(void)
     ok(SendMessageA(hToolbar, TB_SETSTATE, 20, TBSTATE_ENABLED), "TB_SETSTATE failed\n");
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(23, 22), "Unexpected button size\n");
 
+    /* TB_SETIMAGELIST always changes the height but the width only if necessary */
+    SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(100, 100));
+    himl = ImageList_LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_80x15), 20, 2, CLR_NONE, IMAGE_BITMAP, LR_DEFAULTCOLOR);
+    ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, (LPARAM)himl) == 0, "TB_SETIMAGELIST failed\n");
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(100, 21), "Unexpected button size\n");
+    SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(100, 100));
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(100, 100), "Unexpected button size\n");
+    SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(1, 1));
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(27, 21), "Unexpected button size\n");
+    ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, 0) == (LRESULT)himl, "TB_SETIMAGELIST failed\n");
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(27, 7), "Unexpected button size\n");
+    SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(1, 1));
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(8, 7), "Unexpected button size\n");
+    ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, (LPARAM)himl) == 0, "TB_SETIMAGELIST failed\n");
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(27, 21), "Unexpected button size\n");
+    /* the text is taken into account */
+    SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"A\0MMMMMMMMMMMMM\0");
+    SendMessageA(hToolbar, TB_ADDBUTTONS, 4, (LPARAM)buttons3);
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(163, 38), "Unexpected button size\n");
+    ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, 0) == (LRESULT)himl, "TB_SETIMAGELIST failed\n");
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(163, 24), "Unexpected button size\n");
+    /* the style change also comes into effect */
+    check_sizes();
+    SetWindowLong(hToolbar, GWL_STYLE, GetWindowLong(hToolbar, GWL_STYLE) | TBSTYLE_FLAT);
+    ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, (LPARAM)himl) == 0, "TB_SETIMAGELIST failed\n");
+    check_sizes_todo(0x30);     /* some small problems with BTNS_AUTOSIZE button sizes */
+
     rebuild_toolbar(&hToolbar);
+    ImageList_Destroy(himl);
+
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]);
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(27, 39), "Unexpected button size\n");
     SendMessageA(hToolbar, TB_DELETEBUTTON, 0, 0);
