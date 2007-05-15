@@ -32,8 +32,16 @@ typedef ULONG_PTR KSPIN_LOCK, *PKSPIN_LOCK;
 
 struct _KDPC;
 struct _KAPC;
+struct _IRP;
+struct _DEVICE_OBJECT;
+struct _DRIVER_OBJECT;
 
 typedef VOID (WINAPI *PKDEFERRED_ROUTINE)(struct _KDPC *, PVOID, PVOID, PVOID);
+
+typedef NTSTATUS (WINAPI *PDRIVER_INITIALIZE)(struct _DRIVER_OBJECT *, PUNICODE_STRING);
+typedef NTSTATUS (WINAPI *PDRIVER_DISPATCH)(struct _DEVICE_OBJECT *, struct _IRP *);
+typedef void (WINAPI *PDRIVER_STARTIO)(struct _DEVICE_OBJECT *, struct _IRP *);
+typedef void (WINAPI *PDRIVER_UNLOAD)(struct _DRIVER_OBJECT *);
 
 typedef struct _DISPATCHER_HEADER {
   UCHAR  Type;
@@ -77,6 +85,8 @@ typedef struct _KDEVICE_QUEUE {
 
 typedef struct _IO_TIMER *PIO_TIMER;
 typedef struct _ETHREAD *PETHREAD;
+typedef struct _KTHREAD *PKTHREAD;
+typedef struct _EPROCESS *PEPROCESS;
 
 #define MAXIMUM_VOLUME_LABEL_LENGTH       (32 * sizeof(WCHAR))
 
@@ -170,10 +180,10 @@ typedef struct _DRIVER_OBJECT {
   UNICODE_STRING  DriverName;
   PUNICODE_STRING  HardwareDatabase;
   PVOID  FastIoDispatch;
-  PVOID  DriverInit;
-  PVOID  DriverStartIo;
-  PVOID  DriverUnload;
-  PVOID  MajorFunction[IRP_MJ_MAXIMUM_FUNCTION + 1];
+  PDRIVER_INITIALIZE DriverInit;
+  PDRIVER_STARTIO    DriverStartIo;
+  PDRIVER_UNLOAD     DriverUnload;
+  PDRIVER_DISPATCH   MajorFunction[IRP_MJ_MAXIMUM_FUNCTION + 1];
 } DRIVER_OBJECT;
 typedef struct _DRIVER_OBJECT *PDRIVER_OBJECT;
 
@@ -770,10 +780,6 @@ typedef struct _MDL {
   ULONG  ByteOffset;
 } MDL, *PMDL;
 
-typedef NTSTATUS (WINAPI *PDRIVER_DISPATCH)(
-  IN struct _DEVICE_OBJECT  *DeviceObject,
-  IN struct _IRP  *Irp);
-
 typedef struct _KSYSTEM_TIME {
     ULONG LowPart;
     LONG High1Time;
@@ -854,7 +860,26 @@ NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 #define SYMBOLIC_LINK_QUERY             0x0001
 #define SYMBOLIC_LINK_ALL_ACCESS        (STANDARD_RIGHTS_REQUIRED | 0x1)
 
-/* Zw function prototypes */
+PVOID     WINAPI ExAllocatePool(POOL_TYPE,SIZE_T);
+PVOID     WINAPI ExAllocatePoolWithQuota(POOL_TYPE,SIZE_T);
+PVOID     WINAPI ExAllocatePoolWithTag(POOL_TYPE,SIZE_T,ULONG);
+PVOID     WINAPI ExAllocatePoolWithQuotaTag(POOL_TYPE,SIZE_T,ULONG);
+void      WINAPI ExFreePool(PVOID);
+
+NTSTATUS  WINAPI IoCreateDevice(DRIVER_OBJECT*,ULONG,UNICODE_STRING*,DEVICE_TYPE,ULONG,BOOLEAN,DEVICE_OBJECT**);
+NTSTATUS  WINAPI IoCreateSymbolicLink(UNICODE_STRING*,UNICODE_STRING*);
+void      WINAPI IoDeleteDevice(DEVICE_OBJECT*);
+NTSTATUS  WINAPI IoDeleteSymbolicLink(UNICODE_STRING*);
+PEPROCESS WINAPI IoGetCurrentProcess(void);
+
+PKTHREAD  WINAPI KeGetCurrentThread(void);
+
+#define          PsGetCurrentProcess() IoGetCurrentProcess()
+#define          PsGetCurrentThread() ((PETHREAD)KeGetCurrentThread())
+HANDLE    WINAPI PsGetCurrentProcessId(void);
+HANDLE    WINAPI PsGetCurrentThreadId(void);
+BOOLEAN   WINAPI PsGetVersion(ULONG*,ULONG*,ULONG*,UNICODE_STRING*);
+
 NTSTATUS  WINAPI ZwAddBootEntry(PUNICODE_STRING,PUNICODE_STRING);
 NTSTATUS  WINAPI ZwAccessCheckAndAuditAlarm(PUNICODE_STRING,HANDLE,PUNICODE_STRING,PUNICODE_STRING,PSECURITY_DESCRIPTOR,ACCESS_MASK,PGENERIC_MAPPING,BOOLEAN,PACCESS_MASK,PBOOLEAN,PBOOLEAN);
 NTSTATUS  WINAPI ZwAdjustPrivilegesToken(HANDLE,BOOLEAN,PTOKEN_PRIVILEGES,DWORD,PTOKEN_PRIVILEGES,PDWORD);
