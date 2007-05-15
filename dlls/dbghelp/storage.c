@@ -73,30 +73,28 @@ void pool_destroy(struct pool* pool)
 
 void* pool_alloc(struct pool* pool, unsigned len)
 {
-    struct pool_arena** parena;
     struct pool_arena*  arena;
     void*               ret;
 
     len = (len + 3) & ~3; /* round up size on DWORD boundary */
     assert(sizeof(struct pool_arena) + len <= pool->arena_size && len);
 
-    for (parena = &pool->first; *parena; parena = &(*parena)->next)
+    for (arena = pool->first; arena; arena = arena->next)
     {
-        if ((char*)(*parena) + pool->arena_size - (*parena)->current >= len)
+        if ((char*)arena + pool->arena_size - arena->current >= len)
         {
-            ret = (*parena)->current;
-            (*parena)->current += len;
+            ret = arena->current;
+            arena->current += len;
             return ret;
         }
     }
- 
+
     arena = HeapAlloc(GetProcessHeap(), 0, pool->arena_size);
     if (!arena) {FIXME("OOM\n");return NULL;}
 
-    *parena = arena;
-
     ret = (char*)arena + sizeof(*arena);
-    arena->next = NULL;
+    arena->next = pool->first;
+    pool->first = arena;
     arena->current = (char*)ret + len;
     return ret;
 }
