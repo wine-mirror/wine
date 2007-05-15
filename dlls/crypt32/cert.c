@@ -296,8 +296,11 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
         }
         else
         {
-            *(DWORD *)pvData =
-             CertStore_GetAccessState(pCertContext->hCertStore);
+            if (pCertContext->hCertStore)
+                ret = CertGetStoreProperty(pCertContext->hCertStore, dwPropId,
+                 pvData, pcbData);
+            else
+                *(DWORD *)pvData = 0;
             ret = TRUE;
         }
         break;

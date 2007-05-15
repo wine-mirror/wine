@@ -120,8 +120,6 @@ BOOL CRYPT_ReadSerializedFile(HANDLE file, HCERTSTORE store);
  */
 void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO info);
 
-DWORD CertStore_GetAccessState(HCERTSTORE hCertStore);
-
 /**
  *  Context functions
  */

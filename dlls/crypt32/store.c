@@ -2098,21 +2098,6 @@ BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
     return TRUE;
 }
 
-DWORD CertStore_GetAccessState(HCERTSTORE hCertStore)
-{
-    DWORD state = 0;
-
-    if (hCertStore)
-    {
-        PWINECRYPT_CERTSTORE store = (PWINECRYPT_CERTSTORE)hCertStore;
-
-        if (store->type != StoreTypeMem &&
-         !(store->dwOpenFlags & CERT_STORE_READONLY_FLAG))
-            state |= CERT_ACCESS_STATE_WRITE_PERSIST_FLAG;
-    }
-    return state;
-}
-
 #define CertContext_CopyProperties(to, from) \
  Context_CopyProperties((to), (from), sizeof(CERT_CONTEXT))
 
@@ -2508,7 +2493,12 @@ BOOL WINAPI CertGetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
         }
         else
         {
-            *(DWORD *)pvData = CertStore_GetAccessState(hCertStore);
+            DWORD state = 0;
+
+            if (store->type != StoreTypeMem &&
+             !(store->dwOpenFlags & CERT_STORE_READONLY_FLAG))
+                state |= CERT_ACCESS_STATE_WRITE_PERSIST_FLAG;
+            *(DWORD *)pvData = state;
             ret = TRUE;
         }
         break;
