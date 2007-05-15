@@ -59,6 +59,7 @@
 @ stdcall CertGetNameStringA(ptr long long ptr ptr long)
 @ stdcall CertGetNameStringW(ptr long long ptr ptr long)
 @ stdcall CertGetPublicKeyLength(long ptr)
+@ stdcall CertGetStoreProperty(long long ptr ptr)
 @ stdcall CertGetSubjectCertificateFromStore(ptr long ptr)
 @ stdcall CertGetValidUsages(long ptr ptr ptr ptr)
 @ stub CertIsRDNAttrsInCertificateName
@@ -81,6 +82,7 @@
 @ stdcall CertSetCTLContextProperty(ptr long long ptr)
 @ stdcall CertSetCertificateContextProperty(ptr long long ptr)
 @ stdcall CertSetEnhancedKeyUsage(ptr ptr)
+@ stdcall CertSetStoreProperty(ptr long long ptr)
 @ stdcall CertStrToNameA(long str long ptr ptr ptr ptr)
 @ stdcall CertStrToNameW(long wstr long ptr ptr ptr ptr)
 @ stdcall CertVerifyCRLRevocation(long ptr long ptr)

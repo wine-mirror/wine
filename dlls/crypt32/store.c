@@ -138,6 +138,7 @@ typedef struct WINE_CRYPTCERTSTORE
     CONTEXT_STORE               certs;
     CONTEXT_STORE               crls;
     PFN_CERT_STORE_PROV_CONTROL control; /* optional */
+    PCONTEXT_PROPERTY_LIST      properties;
 } WINECRYPT_CERTSTORE, *PWINECRYPT_CERTSTORE;
 
 typedef struct _WINE_MEMSTORE
@@ -216,6 +217,14 @@ static void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, HCRYPTPROV hCryptProv,
     }
     store->cryptProv = hCryptProv;
     store->dwOpenFlags = dwFlags;
+    store->properties = NULL;
+}
+
+static void CRYPT_FreeStore(PWINECRYPT_CERTSTORE store)
+{
+    if (store->properties)
+        ContextPropertyList_Free(store->properties);
+    CryptMemFree(store);
 }
 
 static BOOL CRYPT_MemAddCert(PWINECRYPT_CERTSTORE store, void *cert,
@@ -316,7 +325,7 @@ static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 
     ContextList_Free(store->certs);
     ContextList_Free(store->crls);
-    CryptMemFree(store);
+    CRYPT_FreeStore((PWINECRYPT_CERTSTORE)store);
 }
 
 static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
@@ -371,7 +380,7 @@ static void WINAPI CRYPT_CollectionCloseStore(HCERTSTORE store, DWORD dwFlags)
     }
     cs->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&cs->cs);
-    CryptMemFree(cs);
+    CRYPT_FreeStore((PWINECRYPT_CERTSTORE)store);
 }
 
 static void *CRYPT_CollectionCreateContextFromChild(PWINE_COLLECTIONSTORE store,
@@ -692,7 +701,7 @@ static void WINAPI CRYPT_ProvCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
         store->provCloseStore(store->hStoreProv, dwFlags);
     if (!(store->dwStoreProvFlags & CERT_STORE_PROV_EXTERNAL_FLAG))
         CertCloseStore(store->memStore, dwFlags);
-    CryptMemFree(store);
+    CRYPT_FreeStore((PWINECRYPT_CERTSTORE)store);
 }
 
 static BOOL CRYPT_ProvAddCert(PWINECRYPT_CERTSTORE store, void *cert,
@@ -2472,6 +2481,97 @@ BOOL WINAPI CertControlStore(HCERTSTORE hCertStore, DWORD dwFlags,
             ret = hcs->control(hCertStore, dwFlags, dwCtrlType, pvCtrlPara);
         else
             ret = TRUE;
+    }
+    return ret;
+}
+
+BOOL WINAPI CertGetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
+ void *pvData, DWORD *pcbData)
+{
+    PWINECRYPT_CERTSTORE store = (PWINECRYPT_CERTSTORE)hCertStore;
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %d, %p, %p)\n", hCertStore, dwPropId, pvData, pcbData);
+
+    switch (dwPropId)
+    {
+    case CERT_ACCESS_STATE_PROP_ID:
+        if (!pvData)
+        {
+            *pcbData = sizeof(DWORD);
+            ret = TRUE;
+        }
+        else if (*pcbData < sizeof(DWORD))
+        {
+            SetLastError(ERROR_MORE_DATA);
+            *pcbData = sizeof(DWORD);
+        }
+        else
+        {
+            *(DWORD *)pvData = CertStore_GetAccessState(hCertStore);
+            ret = TRUE;
+        }
+        break;
+    default:
+        if (store->properties)
+        {
+            CRYPT_DATA_BLOB blob;
+
+            ret = ContextPropertyList_FindProperty(store->properties, dwPropId,
+             &blob);
+            if (ret)
+            {
+                if (!pvData)
+                    *pcbData = blob.cbData;
+                else if (*pcbData < blob.cbData)
+                {
+                    SetLastError(ERROR_MORE_DATA);
+                    *pcbData = blob.cbData;
+                    ret = FALSE;
+                }
+                else
+                {
+                    memcpy(pvData, blob.pbData, blob.cbData);
+                    *pcbData = blob.cbData;
+                }
+            }
+            else
+                SetLastError(CRYPT_E_NOT_FOUND);
+        }
+        else
+            SetLastError(CRYPT_E_NOT_FOUND);
+    }
+    return ret;
+}
+
+BOOL WINAPI CertSetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
+ DWORD dwFlags, const void *pvData)
+{
+    PWINECRYPT_CERTSTORE store = (PWINECRYPT_CERTSTORE)hCertStore;
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %d, %08x, %p)\n", hCertStore, dwPropId, dwFlags, pvData);
+
+    if (!store->properties)
+        store->properties = ContextPropertyList_Create();
+    switch (dwPropId)
+    {
+    case CERT_ACCESS_STATE_PROP_ID:
+        SetLastError(E_INVALIDARG);
+        break;
+    default:
+        if (pvData)
+        {
+            const CRYPT_DATA_BLOB *blob = (const CRYPT_DATA_BLOB *)pvData;
+
+            ret = ContextPropertyList_SetProperty(store->properties, dwPropId,
+             blob->pbData, blob->cbData);
+        }
+        else
+        {
+            ContextPropertyList_RemoveProperty(store->properties, dwPropId);
+            ret = TRUE;
+        }
     }
     return ret;
 }

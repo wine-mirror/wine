@@ -1426,6 +1426,79 @@ static void testCertEnumSystemStore(void)
      "Expected at least 3 stores\n");
 }
 
+static void testStoreProperty(void)
+{
+    HCERTSTORE store;
+    BOOL ret;
+    DWORD propID, size = 0, state;
+    CRYPT_DATA_BLOB blob;
+
+    /* Crash
+    ret = CertGetStoreProperty(NULL, 0, NULL, NULL);
+    ret = CertGetStoreProperty(NULL, 0, NULL, &size);
+    ret = CertGetStoreProperty(store, 0, NULL, NULL);
+     */
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    /* Check a missing prop ID */
+    SetLastError(0xdeadbeef);
+    ret = CertGetStoreProperty(store, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    /* Contrary to MSDN, CERT_ACCESS_STATE_PROP_ID is supported for stores.. */
+    size = sizeof(state);
+    ret = CertGetStoreProperty(store, CERT_ACCESS_STATE_PROP_ID, &state, &size);
+    ok(ret, "CertGetStoreProperty failed for CERT_ACCESS_STATE_PROP_ID: %08x\n",
+     GetLastError());
+    ok(!state, "Expected a non-persisted store\n");
+    /* and CERT_STORE_LOCALIZED_NAME_PROP_ID isn't supported by default. */
+    size = 0;
+    ret = CertGetStoreProperty(store, CERT_STORE_LOCALIZED_NAME_PROP_ID, NULL,
+     &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    /* Delete an arbitrary property on a store */
+    ret = CertSetStoreProperty(store, CERT_FIRST_USER_PROP_ID, 0, NULL);
+    ok(ret, "CertSetStoreProperty failed: %08x\n", GetLastError());
+    /* Set an arbitrary property on a store */
+    blob.pbData = (LPBYTE)&state;
+    blob.cbData = sizeof(state);
+    ret = CertSetStoreProperty(store, CERT_FIRST_USER_PROP_ID, 0, &blob);
+    ok(ret, "CertSetStoreProperty failed: %08x\n", GetLastError());
+    /* Get an arbitrary property that's been set */
+    ret = CertGetStoreProperty(store, CERT_FIRST_USER_PROP_ID, NULL, &size);
+    ok(ret, "CertGetStoreProperty failed: %08x\n", GetLastError());
+    ok(size == sizeof(state), "Unexpected data size %d\n", size);
+    ret = CertGetStoreProperty(store, CERT_FIRST_USER_PROP_ID, &propID, &size);
+    ok(ret, "CertGetStoreProperty failed: %08x\n", GetLastError());
+    ok(propID == state, "CertGetStoreProperty got the wrong value\n");
+    /* Delete it again */
+    ret = CertSetStoreProperty(store, CERT_FIRST_USER_PROP_ID, 0, NULL);
+    ok(ret, "CertSetStoreProperty failed: %08x\n", GetLastError());
+    /* And check that it's missing */
+    SetLastError(0xdeadbeef);
+    ret = CertGetStoreProperty(store, CERT_FIRST_USER_PROP_ID, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    CertCloseStore(store, 0);
+
+    /* Recheck on the My store.. */
+    store = CertOpenSystemStoreW(0, MyW);
+    size = sizeof(state);
+    ret = CertGetStoreProperty(store, CERT_ACCESS_STATE_PROP_ID, &state, &size);
+    ok(ret, "CertGetStoreProperty failed for CERT_ACCESS_STATE_PROP_ID: %08x\n",
+     GetLastError());
+    ok(state, "Expected a persisted store\n");
+    SetLastError(0xdeadbeef);
+    size = 0;
+    ret = CertGetStoreProperty(store, CERT_STORE_LOCALIZED_NAME_PROP_ID, NULL,
+     &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    CertCloseStore(store, 0);
+}
+
 static void testAddSerialized(void)
 {
     BOOL ret;
@@ -1593,6 +1666,7 @@ START_TEST(store)
 
     testCertOpenSystemStore();
     testCertEnumSystemStore();
+    testStoreProperty();
 
     testAddSerialized();
 }
