@@ -85,8 +85,6 @@ static void test_AddRemoveProvider(void)
     SetLastError(0xdeadbeef);
     ret = CryptSIPAddProvider(&newprov);
     ok ( ret, "CryptSIPAddProvider should have succeeded\n");
-    ok ( GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n",
-     GetLastError());
 
     /* Dummy provider will be deleted, but the function still fails because
      * pwszIsFunctionName and pwszIsFunctionNameFmt2 are not present in the
@@ -113,15 +111,11 @@ static void test_AddRemoveProvider(void)
     SetLastError(0xdeadbeef);
     ret = CryptSIPAddProvider(&newprov);
     ok ( ret, "CryptSIPAddProvider should have succeeded\n");
-    ok ( GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n",
-     GetLastError());
 
     /* Dummy provider should be deleted */
     SetLastError(0xdeadbeef);
     ret = CryptSIPRemoveProvider(&actionid);
     ok ( ret, "CryptSIPRemoveProvider should have succeeded\n");
-    ok ( GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n",
-     GetLastError());
 }
 
 static void test_SIPRetrieveSubjectGUID(void)
@@ -176,8 +170,6 @@ static void test_SIPRetrieveSubjectGUID(void)
     memset(&subject, 1, sizeof(GUID));
     ret = CryptSIPRetrieveSubjectGuid(regeditPathW, NULL, &subject);
     ok ( ret, "Expected CryptSIPRetrieveSubjectGuid to succeed\n");
-    ok ( GetLastError() == ERROR_SUCCESS,
-        "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError());
     ok ( !memcmp(&subject, &unknownGUID, sizeof(GUID)),
         "Expected (%s), got (%s).\n", show_guid(&unknownGUID), show_guid(&subject));
 
@@ -187,8 +179,6 @@ static void test_SIPRetrieveSubjectGUID(void)
     memset(&subject, 1, sizeof(GUID));
     ret = CryptSIPRetrieveSubjectGuid(NULL, file, &subject);
     ok ( ret, "Expected CryptSIPRetrieveSubjectGuid to succeed\n");
-    ok ( GetLastError() == ERROR_SUCCESS,
-        "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError());
     ok ( !memcmp(&subject, &unknownGUID, sizeof(GUID)),
         "Expected (%s), got (%s).\n", show_guid(&unknownGUID), show_guid(&subject));
     CloseHandle(file);
@@ -199,8 +189,6 @@ static void test_SIPRetrieveSubjectGUID(void)
     memset(&subject, 1, sizeof(GUID));
     ret = CryptSIPRetrieveSubjectGuid(regeditPathW, file, &subject);
     ok ( ret, "Expected CryptSIPRetrieveSubjectGuid to succeed\n");
-    ok ( GetLastError() == ERROR_SUCCESS,
-        "Expected ERROR_SUCCESS, got 0x%08x\n", GetLastError());
     ok ( !memcmp(&subject, &unknownGUID, sizeof(GUID)),
         "Expected (%s), got (%s).\n", show_guid(&unknownGUID), show_guid(&subject));
     CloseHandle(file);
@@ -315,13 +303,11 @@ static void test_SIPLoad(void)
     todo_wine
     {
         ok ( ret, "Expected CryptSIPLoad to succeed\n");
-        /* This error will always be there as native searches for the function DllCanUnloadNow
+        /* On native the last error will always be ERROR_PROC_NOT_FOUND as native searches for the function DllCanUnloadNow
          * in WINTRUST.DLL (in this case). This function is not available in WINTRUST.DLL.
          * For now there's no need to implement this is Wine as I doubt any program will rely on
          * this last error when the call succeeded.
          */
-        ok ( GetLastError() == ERROR_PROC_NOT_FOUND,
-            "Expected ERROR_PROC_NOT_FOUND, got 0x%08x\n", GetLastError());
         ok( sdi.pfGet != (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected a function pointer to be loaded.\n");
     }
 
@@ -356,8 +342,6 @@ static void test_SIPLoad(void)
          * CryptSIPLoad will not try to search for the already mentioned DllCanUnloadNow.
          */
     }
-    ok ( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n", GetLastError());
     todo_wine
         ok( sdi.pfGet != (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected a function pointer to be loaded.\n");
 
@@ -376,8 +360,6 @@ static void test_SIPLoad(void)
          */
         todo_wine
         {
-            ok ( GetLastError() == ERROR_PROC_NOT_FOUND,
-                "Expected ERROR_PROC_NOT_FOUND, got 0x%08x\n", GetLastError());
             ok( sdi.pfGet != (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected a function pointer to be loaded.\n");
 
             /* This is another SIP but this test proves the function addresses are the same as
