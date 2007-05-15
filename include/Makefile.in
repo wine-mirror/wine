@@ -352,6 +352,8 @@ SRCDIR_INCLUDES = \
 	winreg.h \
 	winres.h \
 	winresrc.h \
+	winscard.h \
+	winsmcrd.h \
 	winsock.h \
 	winsock2.h \
 	winspool.h \
