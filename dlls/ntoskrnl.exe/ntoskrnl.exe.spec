@@ -345,7 +345,7 @@
 @ stub IoCreateStreamFileObject
 @ stub IoCreateStreamFileObjectEx
 @ stub IoCreateStreamFileObjectLite
-@ stub IoCreateSymbolicLink
+@ stdcall IoCreateSymbolicLink(ptr ptr)
 @ stub IoCreateSynchronizationEvent
 @ stub IoCreateUnprotectedSymbolicLink
 @ stub IoCsqInitialize
