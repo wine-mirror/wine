@@ -83,6 +83,7 @@ struct hash_table
     unsigned                    num_elts;
     unsigned                    num_buckets;
     struct hash_table_elt**     buckets;
+    struct pool*                pool;
 };
 
 void     hash_table_init(struct pool* pool, struct hash_table* ht,
