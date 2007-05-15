@@ -293,6 +293,7 @@ SRCDIR_INCLUDES = \
 	rpcndr.h \
 	rpcnterr.h \
 	rpcproxy.h \
+	scarderr.h \
 	schannel.h \
 	schemadef.h \
 	schnlsp.h \
