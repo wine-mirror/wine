@@ -44,8 +44,6 @@ struct pool /* poor's man */
 void     pool_init(struct pool* a, unsigned arena_size);
 void     pool_destroy(struct pool* a);
 void*    pool_alloc(struct pool* a, unsigned len);
-/* void*    pool_realloc(struct pool* a, void* p,
-   unsigned old_size, unsigned new_size); */
 char*    pool_strdup(struct pool* a, const char* str);
 
 struct vector
@@ -55,6 +53,7 @@ struct vector
     unsigned    shift;
     unsigned    num_elts;
     unsigned    num_buckets;
+    unsigned    buckets_allocated;
 };
 
 void     vector_init(struct vector* v, unsigned elt_sz, unsigned bucket_sz);

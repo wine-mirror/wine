@@ -101,33 +101,6 @@ void* pool_alloc(struct pool* pool, unsigned len)
     return ret;
 }
 
-static struct pool_arena* pool_is_last(const struct pool* pool, const void* p, unsigned old_size)
-{
-    struct pool_arena*  arena;
-
-    for (arena = pool->first; arena; arena = arena->next)
-    {
-        if (arena->current == (const char*)p + old_size) return arena;
-    }
-    return NULL;
-}
-
-static void* pool_realloc(struct pool* pool, void* p, unsigned old_size, unsigned new_size)
-{
-    struct pool_arena*  arena;
-    void*               new;
-
-    if ((arena = pool_is_last(pool, p, old_size)) && 
-        (char*)p + new_size <= (char*)arena + pool->arena_size)
-    {
-        arena->current = (char*)p + new_size;
-        return p;
-    }
-    if ((new = pool_alloc(pool, new_size)) && old_size)
-        memcpy(new, p, min(old_size, new_size));
-    return new;
-}
-
 char* pool_strdup(struct pool* pool, const char* str)
 {
     char* ret;
@@ -155,6 +128,7 @@ void vector_init(struct vector* v, unsigned esz, unsigned bucket_sz)
     default: assert(0);
     }
     v->num_buckets = 0;
+    v->buckets_allocated = 0;
     v->num_elts = 0;
 }
 
@@ -180,9 +154,22 @@ void* vector_add(struct vector* v, struct pool* pool)
     assert(v->num_elts > ncurr);
     if (ncurr == (v->num_buckets << v->shift))
     {
-        v->buckets = pool_realloc(pool, v->buckets,
-                                  v->num_buckets * sizeof(void*),
-                                  (v->num_buckets + 1) * sizeof(void*));
+        if(v->num_buckets == v->buckets_allocated)
+        {
+            /* Double the bucket cache, so it scales well with big vectors.*/
+            unsigned    new_reserved;
+            void*       new;
+
+            new_reserved = 2*v->buckets_allocated;
+            if(new_reserved == 0) new_reserved = 1;
+
+            /* Don't even try to resize memory.
+               Pool datastructure is very inefficient with reallocs. */
+            new = pool_alloc(pool, new_reserved * sizeof(void*));
+            memcpy(new, v->buckets, v->buckets_allocated * sizeof(void*));
+            v->buckets = new;
+            v->buckets_allocated = new_reserved;
+        }
         v->buckets[v->num_buckets] = pool_alloc(pool, v->elt_size << v->shift);
         return v->buckets[v->num_buckets++];
     }
