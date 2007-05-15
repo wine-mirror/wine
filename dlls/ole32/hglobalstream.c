@@ -39,7 +39,6 @@
 #include "objbase.h"
 #include "ole2.h"
 #include "winerror.h"
-#include "winreg.h"
 #include "winternl.h"
 
 #include "wine/debug.h"

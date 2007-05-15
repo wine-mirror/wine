@@ -41,10 +41,8 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "winreg.h"
-#include "commctrl.h"
 #include "ole2.h"
 #include "ole2ver.h"
-#include "wownt32.h"
 
 #include "wine/unicode.h"
 #include "compobj_private.h"
