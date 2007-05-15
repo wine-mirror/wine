@@ -51,6 +51,22 @@ typedef struct _KSERVICE_TABLE_DESCRIPTOR
 KSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable[4];
 
 
+#ifdef __i386__
+#define DEFINE_FASTCALL1_ENTRYPOINT( name ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "popl %eax\n\t" \
+                       "pushl %ecx\n\t" \
+                       "pushl %eax\n\t" \
+                       "jmp " __ASM_NAME("__regs_") #name )
+#define DEFINE_FASTCALL2_ENTRYPOINT( name ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "popl %eax\n\t" \
+                       "pushl %edx\n\t" \
+                       "pushl %ecx\n\t" \
+                       "pushl %eax\n\t" \
+                       "jmp " __ASM_NAME("__regs_") #name )
+#endif
+
 static inline LPCSTR debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
@@ -180,6 +196,21 @@ NTSTATUS WINAPI IoCreateSymbolicLink( UNICODE_STRING *name, UNICODE_STRING *targ
     TRACE( "%s -> %s\n", debugstr_us(name), debugstr_us(target) );
     /* FIXME: store handle somewhere */
     return NtCreateSymbolicLinkObject( &handle, SYMBOLIC_LINK_ALL_ACCESS, &attr, target );
+}
+
+
+/***********************************************************************
+ *           IofCompleteRequest   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL2_ENTRYPOINT
+DEFINE_FASTCALL2_ENTRYPOINT( IofCompleteRequest )
+void WINAPI __regs_IofCompleteRequest( IRP *irp, UCHAR priority_boost )
+#else
+void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
+#endif
+{
+    TRACE( "%p %u\n", irp, priority_boost );
+    /* nothing to do for now */
 }
 
 
