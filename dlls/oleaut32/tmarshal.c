@@ -40,7 +40,6 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "winuser.h"
-#include "excpt.h"
 
 #include "ole2.h"
 #include "propidl.h" /* for LPSAFEARRAY_User* functions */
