@@ -2032,6 +2032,8 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT_PTR id,
         item->text = NULL;
     }
 
+    if (flags & MF_SEPARATOR) flags |= MF_GRAYED | MF_DISABLED;
+
     if (flags & MF_OWNERDRAW)
         item->dwItemData = (DWORD_PTR)str;
     else
