@@ -1510,7 +1510,7 @@ static void test_Installer_RegistryValue(void)
     ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Default registry value \"%s\" does not match expected \"%s\"\n", szString, szOne);
 
-    /* Ask for the value of a non-existent key */
+    /* Ask for the value of a nonexistent key */
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szExpand, szString);
     ok(hr == DISP_E_BADINDEX, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);

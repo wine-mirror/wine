@@ -2026,7 +2026,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
  *  count: number of surfaces to create
  *  DDSD: Description of the surface. Intentionally not a pointer to avoid side
  *        effects on the caller
- *  CubeFaceRoot: Wether the new surface is a root of a cube map face. This
+ *  CubeFaceRoot: Whether the new surface is a root of a cube map face. This
  *                creates an additional surface without the mipmapping flags
  *
  *****************************************************************************/

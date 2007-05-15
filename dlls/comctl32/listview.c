@@ -3263,7 +3263,7 @@ static BOOL LISTVIEW_GetItemAtPt(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVIte
  * over the item for a certain period of time.
  *
  */
-static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKyes, INT x, INT y)
+static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, INT y)
 {
     if (infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT)
     {

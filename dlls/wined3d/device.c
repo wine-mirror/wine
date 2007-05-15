@@ -4059,7 +4059,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
     }
 
     /** NOTE: MSDN says that setTexture increases the reference count,
-    * and the the application nust set the texture back to null (or have a leaky application),
+    * and the the application must set the texture back to null (or have a leaky application),
     * This means we should pass the refcount up to the parent
      *******************************/
     if (NULL != This->updateStateBlock->textures[Stage]) {

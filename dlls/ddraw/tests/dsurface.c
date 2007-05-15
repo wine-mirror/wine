@@ -1045,7 +1045,7 @@ static void AttachmentTest7(void)
     IDirectDrawSurface7_Release(surface2);
     num = 0;
     IDirectDrawSurface7_EnumAttachedSurfaces(surface3, &num, SurfaceCounter);
-    ok(num == 0, "Secound mip level has %d surfaces attached, expected 1\n", num);
+    ok(num == 0, "Second mip level has %d surfaces attached, expected 1\n", num);
     /* Done level 2 */
     /* Mip level 3 is still needed */
 
@@ -1263,7 +1263,7 @@ static void AttachmentTest(void)
     hr = IDirectDraw_SetCooperativeLevel(lpDD, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "SetCooperativeLevel returned %08x\n", hr);
 
-    /* Creating a back buffer as-is is not allowed, no need to perform attachment tests */
+    /* Creating a back buffer as-is, is not allowed. No need to perform attachment tests */
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS;
@@ -1907,7 +1907,7 @@ static void CompressedTest(void)
         skip("Hardware DXTN textures not supported\n");
     }
 
-    /* What happens to managed textures? Interestingly, Windows reports them as beeing in system
+    /* What happens to managed textures? Interestingly, Windows reports them as being in system
      * memory. The linear size fits again.
      */
     ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
