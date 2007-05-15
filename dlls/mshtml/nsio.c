@@ -1733,7 +1733,7 @@ static nsresult NSAPI nsProtocolHandler_QueryInterface(nsIProtocolHandler *iface
         return NS_OK;
     }
 
-    WARN("(%s %p)\nn", debugstr_guid(riid), result);
+    WARN("(%s %p)\n", debugstr_guid(riid), result);
     return NS_NOINTERFACE;
 }
 
