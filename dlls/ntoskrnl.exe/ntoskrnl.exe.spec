@@ -603,7 +603,7 @@
 @ stub KeRundownQueue
 @ stub KeSaveFloatingPointState
 @ stub KeSaveStateForHibernate
-@ stub KeServiceDescriptorTable
+@ extern KeServiceDescriptorTable
 @ stub KeSetAffinityThread
 @ stub KeSetBasePriorityThread
 @ stub KeSetDmaIoCoherency
@@ -622,7 +622,7 @@
 @ stub KeStackAttachProcess
 @ stub KeSynchronizeExecution
 @ stub KeTerminateThread
-@ stub KeTickCount
+@ extern KeTickCount
 @ stub KeUnstackDetachProcess
 @ stub KeUpdateRunTime
 @ stub KeUpdateSystemTime

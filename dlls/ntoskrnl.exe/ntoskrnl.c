@@ -37,6 +37,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 
+
+KSYSTEM_TIME KeTickCount;
+
+typedef struct _KSERVICE_TABLE_DESCRIPTOR
+{
+    PULONG_PTR Base;
+    PULONG Count;
+    ULONG Limit;
+    PUCHAR Number;
+} KSERVICE_TABLE_DESCRIPTOR, *PKSERVICE_TABLE_DESCRIPTOR;
+
+KSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable[4];
+
+
 static inline LPCSTR debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
