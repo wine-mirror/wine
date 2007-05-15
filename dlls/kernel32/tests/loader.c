@@ -231,7 +231,8 @@ START_TEST(loader)
     static const char section_data[0x10] = "section data";
     int i;
     DWORD dummy, file_size, file_align;
-    HANDLE hfile, hlib;
+    HANDLE hfile;
+    HMODULE hlib, hlib_as_data_file;
     SYSTEM_INFO si;
     char temp_path[MAX_PATH];
     char dll_name[MAX_PATH];
@@ -421,7 +422,33 @@ START_TEST(loader)
             }
 
             SetLastError(0xdeadbeef);
+            hlib_as_data_file = LoadLibraryEx(dll_name, 0, LOAD_LIBRARY_AS_DATAFILE);
+            ok(hlib_as_data_file != 0, "LoadLibraryEx error %u\n", GetLastError());
+todo_wine   ok(hlib_as_data_file == hlib, "hlib_as_file and hlib are different\n");
+
+            SetLastError(0xdeadbeef);
             ok(FreeLibrary(hlib), "FreeLibrary error %d\n", GetLastError());
+
+            SetLastError(0xdeadbeef);
+            hlib = GetModuleHandle(dll_name);
+todo_wine   ok(hlib != 0, "GetModuleHandle error %u\n", GetLastError());
+
+            SetLastError(0xdeadbeef);
+            ok(FreeLibrary(hlib_as_data_file), "FreeLibrary error %d\n", GetLastError());
+
+            hlib = GetModuleHandle(dll_name);
+            ok(!hlib, "GetModuleHandle should fail\n");
+
+            SetLastError(0xdeadbeef);
+            hlib_as_data_file = LoadLibraryEx(dll_name, 0, LOAD_LIBRARY_AS_DATAFILE);
+            ok(hlib_as_data_file != 0, "LoadLibraryEx error %u\n", GetLastError());
+            ok((ULONG_PTR)hlib_as_data_file & 1, "hlib_as_data_file is even\n");
+
+            hlib = GetModuleHandle(dll_name);
+            ok(!hlib, "GetModuleHandle should fail\n");
+
+            SetLastError(0xdeadbeef);
+            ok(FreeLibrary(hlib_as_data_file), "FreeLibrary error %d\n", GetLastError());
         }
         else
         {   /* LoadLibrary is expected to fail */
