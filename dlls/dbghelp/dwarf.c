@@ -1004,8 +1004,8 @@ static struct symt* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx,
     struct symt* ref_type;
     struct symt* idx_type = NULL;
     struct attribute min, max, cnt;
-    dwarf2_debug_info_t** pchild = NULL;
     dwarf2_debug_info_t* child;
+    int    i;
 
     if (di->symt) return di->symt;
 
@@ -1018,9 +1018,9 @@ static struct symt* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx,
     }
     ref_type = dwarf2_lookup_type(ctx, di);
 
-    while ((pchild = vector_iter_up(&di->children, pchild)))
+    for (i=0; i<vector_length(&di->children); i++)
     {
-        child = *pchild;
+        child = *(dwarf2_debug_info_t**)vector_at(&di->children, i);
         switch (child->abbrev->tag)
         {
         case DW_TAG_subrange_type:
@@ -1162,12 +1162,12 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
     {
-        dwarf2_debug_info_t**   pchild = NULL;
         dwarf2_debug_info_t*    child;
+        int    i;
 
-        while ((pchild = vector_iter_up(&di->children, pchild)))
+        for (i=0; i<vector_length(&di->children); i++)
         {
-            child = *pchild;
+            child = *(dwarf2_debug_info_t**)vector_at(&di->children, i);
 
             switch (child->abbrev->tag)
             {
@@ -1227,13 +1227,13 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx,
 
     if (di->abbrev->have_child) /* any interest to not have child ? */
     {
-        dwarf2_debug_info_t**   pchild = NULL;
         dwarf2_debug_info_t*    child;
+        int    i;
 
         /* FIXME: should we use the sibling stuff ?? */
-        while ((pchild = vector_iter_up(&di->children, pchild)))
+        for (i=0; i<vector_length(&di->children); i++)
         {
-            child = *pchild;
+            child = *(dwarf2_debug_info_t**)vector_at(&di->children, i);
 
             switch (child->abbrev->tag)
             {
@@ -1411,12 +1411,12 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
     {
-        dwarf2_debug_info_t**   pchild = NULL;
         dwarf2_debug_info_t*    child;
+        int    i;
 
-        while ((pchild = vector_iter_up(&di->children, pchild)))
+        for (i=0; i<vector_length(&di->children); i++)
         {
-            child = *pchild;
+            child = *(dwarf2_debug_info_t**)vector_at(&di->children, i);
 
             switch (child->abbrev->tag)
             {
@@ -1464,12 +1464,12 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
     {
-        dwarf2_debug_info_t**   pchild = NULL;
         dwarf2_debug_info_t*    child;
+        int    i;
 
-        while ((pchild = vector_iter_up(&di->children, pchild)))
+        for (i=0; i<vector_length(&di->children); i++)
         {
-            child = *pchild;
+            child = *(dwarf2_debug_info_t**)vector_at(&di->children, i);
 
             switch (child->abbrev->tag)
             {
@@ -1581,12 +1581,12 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
     {
-        dwarf2_debug_info_t**   pchild = NULL;
         dwarf2_debug_info_t*    child;
+        int    i;
 
-        while ((pchild = vector_iter_up(&di->children, pchild)))
+        for (i=0; i<vector_length(&di->children); i++)
         {
-            child = *pchild;
+            child = *(dwarf2_debug_info_t**)vector_at(&di->children, i);
 
             switch (child->abbrev->tag)
             {
@@ -1653,12 +1653,12 @@ static struct symt* dwarf2_parse_subroutine_type(dwarf2_parse_context_t* ctx,
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
     {
-        dwarf2_debug_info_t**   pchild = NULL;
         dwarf2_debug_info_t*    child;
+        int    i;
 
-        while ((pchild = vector_iter_up(&di->children, pchild)))
+        for (i=0; i<vector_length(&di->children); i++)
         {
-            child = *pchild;
+            child = *(dwarf2_debug_info_t**)vector_at(&di->children, i);
 
             switch (child->abbrev->tag)
             {
@@ -2005,8 +2005,10 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
 
         if (di->abbrev->have_child)
         {
-            while ((pdi = vector_iter_up(&di->children, pdi)))
+            int    i;
+            for (i=0; i<vector_length(&di->children); i++)
             {
+                pdi = vector_at(&di->children, i);
                 dwarf2_load_one_entry(&ctx, *pdi, (struct symt_compiland*)di->symt);
             }
         }
@@ -2059,9 +2061,11 @@ static enum location_error loc_compute_frame(struct process* pcs,
     struct location*            pframe;
     dwarf2_traverse_context_t   lctx;
     enum location_error         err;
+    int                         i;
 
-    while ((psym = vector_iter_up(&func->vchildren, psym)))
+    for (i=0; i<vector_length(&func->vchildren); i++)
     {
+        psym = vector_at(&func->vchildren, i);
         if ((*psym)->tag == SymTagCustom)
         {
             pframe = &((struct symt_function_point*)*psym)->loc;

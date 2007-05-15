@@ -215,10 +215,10 @@ BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
     TRACE_(dbghelp_symt)("Adding %s to UDT %s\n", name, udt_type->hash_elt.name);
     if (name)
     {
-        p = NULL;
-        while ((p = vector_iter_up(&udt_type->vchildren, p)))
+        int    i;
+        for (i=0; i<vector_length(&udt_type->vchildren); i++)
         {
-            m = (struct symt_data*)*p;
+            m = *(struct symt_data**)vector_at(&udt_type->vchildren, i);
             assert(m);
             assert(m->symt.tag == SymTagData);
             if (strcmp(m->hash_elt.name, name) == 0)
@@ -379,8 +379,8 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
     SYMBOL_INFO*        sym_info = (SYMBOL_INFO*)buffer;
     const char*         tmp;
     struct symt*        type;
-    void*               pos = NULL;
     DWORD64             size;
+    int                 i;
 
     TRACE("(%p %s %p %p)\n",
           hProcess, wine_dbgstr_longlong(BaseOfDll), EnumSymbolsCallback,
@@ -393,9 +393,9 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
     sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
     sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
 
-    while ((pos = vector_iter_up(&pair.effective->vtypes, pos)))
+    for (i=0; i<vector_length(&pair.effective->vtypes); i++)
     {
-        type = *(struct symt**)pos;
+        type = *(struct symt**)vector_at(&pair.effective->vtypes, i);
         sym_info->TypeIndex = (DWORD)type;
         sym_info->info = 0; /* FIXME */
         symt_get_info(type, TI_GET_LENGTH, &size);

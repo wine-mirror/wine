@@ -174,42 +174,6 @@ void* vector_add(struct vector* v, struct pool* pool)
     return vector_at(v, ncurr);
 }
 
-static unsigned vector_position(const struct vector* v, const void* elt)
-{
-    int i;
-
-    for (i = 0; i < v->num_buckets; i++)
-    {
-        if (v->buckets[i] <= elt && 
-            (const char*)elt < (const char*)v->buckets[i] + (v->elt_size << v->shift))
-        {
-            return (i << v->shift) + 
-                ((const char*)elt - (const char*)v->buckets[i]) / v->elt_size;
-        }
-    }
-    assert(0);
-    return 0;
-}
-
-void* vector_iter_up(const struct vector* v, const void* elt)
-{
-    unsigned    pos;
-
-    if (!elt) return vector_at(v, 0);
-    pos = vector_position(v, elt) + 1;
-    if (pos >= vector_length(v)) return NULL;
-    return vector_at(v, pos);
-}
-
-void* vector_iter_down(const struct vector* v, const void* elt)
-{
-    unsigned    pos;
-    if (!elt) return vector_at(v, vector_length(v) - 1);
-    pos = vector_position(v, elt);
-    if (pos == 0) return NULL;
-    return vector_at(v, pos - 1);
-}
-
 /* We construct the sparse array as two vectors (of equal size)
  * The first vector (key2index) is the lookup table between the key and
  * an index in the second vector (elements)

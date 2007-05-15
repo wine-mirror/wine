@@ -190,13 +190,15 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
     hash_table_iter_init(&pair.effective->ht_symbols, &hti, NULL);
     while ((ptr = hash_table_iter_up(&hti)))
     {
+        int    i;
+
         sym = GET_ENTRY(ptr, struct symt_ht, hash_elt);
         if (sym->symt.tag != SymTagFunction) continue;
 
-        dli = NULL;
         sci.FileName[0] = '\0';
-        while ((dli = vector_iter_up(&((struct symt_function*)sym)->vlines, dli)))
+        for (i=0; i<vector_length(&((struct symt_function*)sym)->vlines); i++)
         {
+            dli = vector_at(&((struct symt_function*)sym)->vlines, i);
             if (dli->is_source_file)
             {
                 file = source_get(pair.effective, dli->u.source_file);

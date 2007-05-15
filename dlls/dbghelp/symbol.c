@@ -253,6 +253,7 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
 {
     struct line_info*   dli;
     BOOL                last_matches = FALSE;
+    int                 i;
 
     if (func == NULL || !(dbghelp_options & SYMOPT_LOAD_LINES)) return;
 
@@ -262,9 +263,9 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
 
     assert(func->symt.tag == SymTagFunction);
 
-    dli = NULL;
-    while ((dli = vector_iter_down(&func->vlines, dli)))
+    for (i=vector_length(&func->vlines)-1; i>=0; i--)
     {
+        dli = vector_at(&func->vlines, i);
         if (dli->is_source_file)
         {
             last_matches = (source_idx == dli->u.source_file);
@@ -754,13 +755,13 @@ static BOOL symt_enum_locals_helper(struct module_pair* pair,
                                     regex_t* preg, const struct sym_enum* se,
                                     struct symt_function* func, const struct vector* v)
 {
-    struct symt**       plsym = NULL;
     struct symt*        lsym = NULL;
     DWORD               pc = pair->pcs->ctx_frame.InstructionOffset;
+    int                 i;
 
-    while ((plsym = vector_iter_up(v, plsym)))
+    for (i=0; i<vector_length(v); i++)
     {
-        lsym = *plsym;
+        lsym = *(struct symt**)vector_at(v, i);
         switch (lsym->tag)
         {
         case SymTagBlock:
@@ -1228,11 +1229,13 @@ BOOL symt_fill_func_line_info(const struct module* module, const struct symt_fun
 {
     struct line_info*   dli = NULL;
     BOOL                found = FALSE;
+    int                 i;
 
     assert(func->symt.tag == SymTagFunction);
 
-    while ((dli = vector_iter_down(&func->vlines, dli)))
+    for (i=vector_length(&func->vlines)-1; i>=0; i--)
     {
+        dli = vector_at(&func->vlines, i);
         if (!dli->is_source_file)
         {
             if (found || dli->u.pc_offset > addr) continue;
