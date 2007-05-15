@@ -6,6 +6,9 @@ MODULE    = ntoskrnl.exe
 IMPORTLIB = libntoskrnl.exe.$(IMPLIBEXT)
 IMPORTS   = kernel32 ntdll
 
+C_SRCS = \
+	ntoskrnl.c
+
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

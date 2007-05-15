@@ -336,7 +336,7 @@
 @ stub IoCompleteRequest
 @ stub IoConnectInterrupt
 @ stub IoCreateController
-@ stub IoCreateDevice
+@ stdcall IoCreateDevice(ptr long ptr long long long ptr)
 @ stub IoCreateDisk
 @ stub IoCreateDriver
 @ stub IoCreateFile
@@ -353,7 +353,7 @@
 @ stub IoCsqRemoveIrp
 @ stub IoCsqRemoveNextIrp
 @ stub IoDeleteController
-@ stub IoDeleteDevice
+@ stdcall IoDeleteDevice(ptr)
 @ stub IoDeleteDriver
 @ stub IoDeleteSymbolicLink
 @ stub IoDetachDevice
