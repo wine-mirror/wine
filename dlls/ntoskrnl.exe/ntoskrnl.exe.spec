@@ -116,10 +116,10 @@
 @ stub ExAcquireSharedStarveExclusive
 @ stub ExAcquireSharedWaitForExclusive
 @ stub ExAllocateFromPagedLookasideList
-@ stub ExAllocatePool
-@ stub ExAllocatePoolWithQuota
-@ stub ExAllocatePoolWithQuotaTag
-@ stub ExAllocatePoolWithTag
+@ stdcall ExAllocatePool(long long)
+@ stdcall ExAllocatePoolWithQuota(long long)
+@ stdcall ExAllocatePoolWithQuotaTag(long long long)
+@ stdcall ExAllocatePoolWithTag(long long long)
 @ stub ExAllocatePoolWithTagPriority
 @ stub ExConvertExclusiveToSharedLite
 @ stub ExCreateCallback
@@ -131,8 +131,8 @@
 @ stub ExEnumHandleTable
 @ stub ExEventObjectType
 @ stub ExExtendZone
-@ stub ExFreePool
-@ stub ExFreePoolWithTag
+@ stdcall ExFreePool(ptr)
+@ stdcall ExFreePoolWithTag(ptr long)
 @ stub ExFreeToPagedLookasideList
 @ stub ExGetCurrentProcessorCounts
 @ stub ExGetCurrentProcessorCpuUsage
@@ -658,7 +658,7 @@
 @ stub MmAllocateContiguousMemory
 @ stub MmAllocateContiguousMemorySpecifyCache
 @ stub MmAllocateMappingAddress
-@ stub MmAllocateNonCachedMemory
+@ stdcall MmAllocateNonCachedMemory(long)
 @ stub MmAllocatePagesForMdl
 @ stub MmBuildMdlForNonPagedPool
 @ stub MmCanFileBeTruncated
@@ -671,7 +671,7 @@
 @ stub MmFreeContiguousMemory
 @ stub MmFreeContiguousMemorySpecifyCache
 @ stub MmFreeMappingAddress
-@ stub MmFreeNonCachedMemory
+@ stdcall MmFreeNonCachedMemory(ptr long)
 @ stub MmFreePagesFromMdl
 @ stub MmGetPhysicalAddress
 @ stub MmGetPhysicalMemoryRanges

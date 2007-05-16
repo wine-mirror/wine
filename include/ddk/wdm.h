@@ -865,6 +865,7 @@ PVOID     WINAPI ExAllocatePoolWithQuota(POOL_TYPE,SIZE_T);
 PVOID     WINAPI ExAllocatePoolWithTag(POOL_TYPE,SIZE_T,ULONG);
 PVOID     WINAPI ExAllocatePoolWithQuotaTag(POOL_TYPE,SIZE_T,ULONG);
 void      WINAPI ExFreePool(PVOID);
+void      WINAPI ExFreePoolWithTag(PVOID,ULONG);
 
 NTSTATUS  WINAPI IoCreateDevice(DRIVER_OBJECT*,ULONG,UNICODE_STRING*,DEVICE_TYPE,ULONG,BOOLEAN,DEVICE_OBJECT**);
 NTSTATUS  WINAPI IoCreateSymbolicLink(UNICODE_STRING*,UNICODE_STRING*);
@@ -873,6 +874,9 @@ NTSTATUS  WINAPI IoDeleteSymbolicLink(UNICODE_STRING*);
 PEPROCESS WINAPI IoGetCurrentProcess(void);
 
 PKTHREAD  WINAPI KeGetCurrentThread(void);
+
+LPVOID    WINAPI MmAllocateNonCachedMemory(SIZE_T);
+void      WINAPI MmFreeNonCachedMemory(PVOID,SIZE_T);
 
 #define          PsGetCurrentProcess() IoGetCurrentProcess()
 #define          PsGetCurrentThread() ((PETHREAD)KeGetCurrentThread())

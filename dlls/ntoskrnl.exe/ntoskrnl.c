@@ -214,6 +214,84 @@ void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
 }
 
 
+/***********************************************************************
+ *           ExAllocatePool   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI ExAllocatePool( POOL_TYPE type, SIZE_T size )
+{
+    return ExAllocatePoolWithTag( type, size, 0 );
+}
+
+
+/***********************************************************************
+ *           ExAllocatePoolWithQuota   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI ExAllocatePoolWithQuota( POOL_TYPE type, SIZE_T size )
+{
+    return ExAllocatePoolWithTag( type, size, 0 );
+}
+
+
+/***********************************************************************
+ *           ExAllocatePoolWithTag   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI ExAllocatePoolWithTag( POOL_TYPE type, SIZE_T size, ULONG tag )
+{
+    /* FIXME: handle page alignment constraints */
+    void *ret = HeapAlloc( GetProcessHeap(), 0, size );
+    TRACE( "%lu pool %u -> %p\n", size, type, ret );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           ExAllocatePoolWithQuotaTag   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI ExAllocatePoolWithQuotaTag( POOL_TYPE type, SIZE_T size, ULONG tag )
+{
+    return ExAllocatePoolWithTag( type, size, tag );
+}
+
+
+/***********************************************************************
+ *           ExFreePool   (NTOSKRNL.EXE.@)
+ */
+void WINAPI ExFreePool( void *ptr )
+{
+    ExFreePoolWithTag( ptr, 0 );
+}
+
+
+/***********************************************************************
+ *           ExFreePoolWithTag   (NTOSKRNL.EXE.@)
+ */
+void WINAPI ExFreePoolWithTag( void *ptr, ULONG tag )
+{
+    TRACE( "%p\n", ptr );
+    HeapFree( GetProcessHeap(), 0, ptr );
+}
+
+
+/***********************************************************************
+ *           MmAllocateNonCachedMemory   (NTOSKRNL.EXE.@)
+ */
+LPVOID WINAPI MmAllocateNonCachedMemory( SIZE_T size )
+{
+    TRACE( "%lu\n", size );
+    return VirtualAlloc( NULL, size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE|PAGE_NOCACHE );
+}
+
+
+/***********************************************************************
+ *           MmFreeNonCachedMemory   (NTOSKRNL.EXE.@)
+ */
+void WINAPI MmFreeNonCachedMemory( void *addr, SIZE_T size )
+{
+    TRACE( "%p %lu\n", addr, size );
+    VirtualFree( addr, 0, MEM_RELEASE );
+}
+
+
 /*****************************************************
  *           DllMain
  */
