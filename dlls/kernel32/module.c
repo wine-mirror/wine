@@ -844,24 +844,37 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     HMODULE hModule;
     WCHAR *load_path;
 
+    load_path = MODULE_get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL );
+
     if (flags & LOAD_LIBRARY_AS_DATAFILE)
     {
+        ULONG magic;
+
+        LdrLockLoaderLock( 0, NULL, &magic );
+        if (!(nts = LdrGetDllHandle( load_path, flags, libname, &hModule )))
+        {
+            LdrAddRefDll( 0, hModule );
+            LdrUnlockLoaderLock( 0, magic );
+            goto done;
+        }
+        LdrUnlockLoaderLock( 0, magic );
+
         /* The method in load_library_as_datafile allows searching for the
          * 'native' libraries only
          */
-        if (load_library_as_datafile( libname->Buffer, &hModule )) return hModule;
+        if (load_library_as_datafile( libname->Buffer, &hModule )) goto done;
         flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
         /* Fallback to normal behaviour */
     }
 
-    load_path = MODULE_get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL );
     nts = LdrLoadDll( load_path, flags, libname, &hModule );
-    HeapFree( GetProcessHeap(), 0, load_path );
     if (nts != STATUS_SUCCESS)
     {
         hModule = 0;
         SetLastError( RtlNtStatusToDosError( nts ) );
     }
+done:
+    HeapFree( GetProcessHeap(), 0, load_path );
     return hModule;
 }
 

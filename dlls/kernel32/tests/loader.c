@@ -424,14 +424,14 @@ START_TEST(loader)
             SetLastError(0xdeadbeef);
             hlib_as_data_file = LoadLibraryEx(dll_name, 0, LOAD_LIBRARY_AS_DATAFILE);
             ok(hlib_as_data_file != 0, "LoadLibraryEx error %u\n", GetLastError());
-todo_wine   ok(hlib_as_data_file == hlib, "hlib_as_file and hlib are different\n");
+            ok(hlib_as_data_file == hlib, "hlib_as_file and hlib are different\n");
 
             SetLastError(0xdeadbeef);
             ok(FreeLibrary(hlib), "FreeLibrary error %d\n", GetLastError());
 
             SetLastError(0xdeadbeef);
             hlib = GetModuleHandle(dll_name);
-todo_wine   ok(hlib != 0, "GetModuleHandle error %u\n", GetLastError());
+            ok(hlib != 0, "GetModuleHandle error %u\n", GetLastError());
 
             SetLastError(0xdeadbeef);
             ok(FreeLibrary(hlib_as_data_file), "FreeLibrary error %d\n", GetLastError());
