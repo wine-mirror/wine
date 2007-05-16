@@ -33,8 +33,10 @@
 
 static const char *msifile = "winetest.msi";
 static const WCHAR szMsifile[] = {'w','i','n','e','t','e','s','t','.','m','s','i',0};
+static const WCHAR szMSITEST[] = { 'M','S','I','T','E','S','T',0 };
 static const WCHAR szProductCode[] = { '{','F','1','C','3','A','F','5','0','-','8','B','5','6','-','4','A','6','9','-','A','0','0','C','-','0','0','7','7','3','F','E','4','2','F','3','0','}',0 };
 static const WCHAR szUpgradeCode[] = { '{','C','E','0','6','7','E','8','D','-','2','E','1','A','-','4','3','6','7','-','B','7','3','4','-','4','E','B','2','B','D','A','D','6','5','6','5','}',0 };
+static const WCHAR szProductInfoException[] = { 'P','r','o','d','u','c','t','I','n','f','o',',','P','r','o','d','u','c','t',',','A','t','t','r','i','b','u','t','e',0 };
 CHAR CURR_DIR[MAX_PATH];
 EXCEPINFO excepinfo;
 
@@ -755,6 +757,26 @@ static HRESULT Installer_ProductState(LPCWSTR szProduct, int *pInstallState)
     return hr;
 }
 
+static HRESULT Installer_ProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute, LPWSTR szString)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_BSTR;
+    V_BSTR(&vararg[1]) = SysAllocString(szProduct);
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(szAttribute);
+
+    hr = invoke(pInstaller, "ProductInfo", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
+    if (V_BSTR(&varresult)) lstrcpyW(szString, V_BSTR(&varresult));
+    VariantClear(&varresult);
+    return hr;
+}
+
 static HRESULT Installer_Products(IDispatch **pStringList)
 {
     VARIANT varresult;
@@ -1272,7 +1294,6 @@ static void test_Database(IDispatch *pDatabase)
 static void test_Session(IDispatch *pSession)
 {
     static WCHAR szProductName[] = { 'P','r','o','d','u','c','t','N','a','m','e',0 };
-    static WCHAR szMSITEST[] = { 'M','S','I','T','E','S','T',0 };
     static WCHAR szOne[] = { 'O','n','e',0 };
     static WCHAR szOneStateFalse[] = { '!','O','n','e','>','0',0 };
     static WCHAR szOneStateTrue[] = { '!','O','n','e','=','-','1',0 };
@@ -1664,6 +1685,34 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
     ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
     ok(iValue == INSTALLSTATE_DEFAULT, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_DEFAULT);
 
+    /* Installer::ProductInfo for our product code */
+    todo_wine
+    {
+        /* NULL attribute */
+        memset(szString, 0, sizeof(szString));
+        hr = Installer_ProductInfo(szProductCode, NULL, szString);
+        ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+        ok_exception(hr, szProductInfoException);
+
+        /* Non-existent attribute */
+        memset(szString, 0, sizeof(szString));
+        hr = Installer_ProductInfo(szProductCode, szMsifile, szString);
+        ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+        ok_exception(hr, szProductInfoException);
+
+        /* Package name */
+        memset(szString, 0, sizeof(szString));
+        hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PACKAGENAMEW, szString);
+        ok(SUCCEEDED(hr), "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+        ok_w2("StringList_Item returned %s but expected %s\n", szString, szMsifile);
+
+        /* Product name */
+        memset(szString, 0, sizeof(szString));
+        hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PRODUCTNAMEW, szString);
+        ok(SUCCEEDED(hr), "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+        ok_w2("StringList_Item returned %s but expected %s\n", szString, szMSITEST);
+    }
+
     /* Installer::RelatedProducts for our upgrade code */
     hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
     ok(SUCCEEDED(hr), "Installer_RelatedProducts failed, hresult 0x%08x\n", hr);
@@ -1882,6 +1931,22 @@ static void test_Installer(void)
     hr = Installer_ProductState(szProductCode, &iValue);
     ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
     ok(iValue == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_UNKNOWN);
+
+    /* Installer::ProductInfo for our product code, which should not be installed */
+    todo_wine
+    {
+        /* Package name */
+        memset(szPath, 0, sizeof(szPath));
+        hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PACKAGENAMEW, szPath);
+        ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+        ok_exception(hr, szProductInfoException);
+
+        /* NULL attribute and NULL product code */
+        memset(szPath, 0, sizeof(szPath));
+        hr = Installer_ProductInfo(NULL, NULL, szPath);
+        ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+        ok_exception(hr, szProductInfoException);
+    }
 
     /* Installer::RelatedProducts for our upgrade code, should not find anything */
     hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
