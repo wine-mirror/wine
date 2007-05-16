@@ -1481,3 +1481,11 @@
 @ cdecl -private wcsstr(wstr wstr) msvcrt.wcsstr
 @ cdecl -private wcstombs(ptr ptr long) msvcrt.wcstombs
 @ cdecl -private wctomb(ptr long) msvcrt.wctomb
+
+################################################################
+# Wine internal extensions
+#
+# All functions must be prefixed with '__wine_' (for internal functions)
+# or 'wine_' (for user-visible functions) to avoid namespace conflicts.
+
+@ cdecl wine_ntoskrnl_main_loop(long)

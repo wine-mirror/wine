@@ -36,6 +36,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 
 KSYSTEM_TIME KeTickCount;
@@ -99,6 +100,129 @@ static HANDLE get_device_manager(void)
             NtClose( handle );  /* somebody beat us to it */
     }
     return ret;
+}
+
+/* process an ioctl request for a given device */
+static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff, ULONG in_size,
+                               void *out_buff, ULONG *out_size )
+{
+    IRP irp;
+    MDL mdl;
+    IO_STACK_LOCATION irpsp;
+    PDRIVER_DISPATCH dispatch = device->DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL];
+    NTSTATUS status;
+
+    TRACE( "ioctl %x device %p in_size %u out_size %u\n", code, device, in_size, *out_size );
+
+    /* so we can spot things that we should initialize */
+    memset( &irp, 0x55, sizeof(irp) );
+    memset( &irpsp, 0x66, sizeof(irpsp) );
+    memset( &mdl, 0x77, sizeof(mdl) );
+
+    irp.RequestorMode = UserMode;
+    irp.AssociatedIrp.SystemBuffer = in_buff;
+    irp.UserBuffer = out_buff;
+    irp.MdlAddress = &mdl;
+    irp.Tail.Overlay.s.u.CurrentStackLocation = &irpsp;
+
+    irpsp.MajorFunction = IRP_MJ_DEVICE_CONTROL;
+    irpsp.Parameters.DeviceIoControl.OutputBufferLength = *out_size;
+    irpsp.Parameters.DeviceIoControl.InputBufferLength = in_size;
+    irpsp.Parameters.DeviceIoControl.IoControlCode = code;
+    irpsp.Parameters.DeviceIoControl.Type3InputBuffer = in_buff;
+    irpsp.DeviceObject = device;
+
+    mdl.Next = NULL;
+    mdl.Size = 0;
+    mdl.StartVa = out_buff;
+    mdl.ByteCount = *out_size;
+    mdl.ByteOffset = 0;
+
+    device->CurrentIrp = &irp;
+
+    if (TRACE_ON(relay))
+        DPRINTF( "%04x:Call driver dispatch %p (device=%p,irp=%p)\n",
+                 GetCurrentThreadId(), dispatch, device, &irp );
+
+    status = dispatch( device, &irp );
+
+    if (TRACE_ON(relay))
+        DPRINTF( "%04x:Ret  driver dispatch %p (device=%p,irp=%p) retval=%08x\n",
+                 GetCurrentThreadId(), dispatch, device, &irp, status );
+
+    *out_size = irp.IoStatus.u.Status ? 0 : irp.IoStatus.Information;
+    return irp.IoStatus.u.Status;
+}
+
+
+/***********************************************************************
+ *           wine_ntoskrnl_main_loop   (Not a Windows API)
+ */
+NTSTATUS wine_ntoskrnl_main_loop( HANDLE stop_event )
+{
+    HANDLE manager = get_device_manager();
+    HANDLE ioctl = 0;
+    NTSTATUS status = STATUS_SUCCESS;
+    ULONG code = 0;
+    void *in_buff, *out_buff = NULL;
+    DEVICE_OBJECT *device = NULL;
+    ULONG in_size = 4096, out_size = 0;
+    HANDLE handles[2];
+
+    if (!(in_buff = HeapAlloc( GetProcessHeap(), 0, in_size )))
+    {
+        ERR( "failed to allocate buffer\n" );
+        return STATUS_NO_MEMORY;
+    }
+
+    handles[0] = stop_event;
+    handles[1] = manager;
+
+    for (;;)
+    {
+        SERVER_START_REQ( get_next_device_request )
+        {
+            req->manager = manager;
+            req->prev = ioctl;
+            req->status = status;
+            wine_server_add_data( req, out_buff, out_size );
+            wine_server_set_reply( req, in_buff, in_size );
+            if (!(status = wine_server_call( req )))
+            {
+                code     = reply->code;
+                ioctl    = reply->next;
+                device   = reply->user_ptr;
+                in_size  = reply->in_size;
+                out_size = reply->out_size;
+            }
+            else
+            {
+                ioctl = 0; /* no previous ioctl */
+                out_size = 0;
+                in_size = reply->in_size;
+            }
+        }
+        SERVER_END_REQ;
+
+        switch(status)
+        {
+        case STATUS_SUCCESS:
+            HeapFree( GetProcessHeap(), 0, out_buff );
+            if (out_size) out_buff = HeapAlloc( GetProcessHeap(), 0, out_size );
+            else out_buff = NULL;
+            status = process_ioctl( device, code, in_buff, in_size, out_buff, &out_size );
+            break;
+        case STATUS_BUFFER_OVERFLOW:
+            HeapFree( GetProcessHeap(), 0, in_buff );
+            in_buff = HeapAlloc( GetProcessHeap(), 0, in_size );
+            /* restart with larger buffer */
+            break;
+        case STATUS_PENDING:
+            if (WaitForMultipleObjects( 2, handles, FALSE, INFINITE ) == WAIT_OBJECT_0)
+                return STATUS_SUCCESS;
+            break;
+        }
+    }
 }
 
 
