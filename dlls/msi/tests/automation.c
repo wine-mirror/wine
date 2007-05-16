@@ -1387,8 +1387,7 @@ static void test_Session(IDispatch *pSession)
     /* Session::EvaluateCondition */
     hr = Session_EvaluateCondition(pSession, szOneStateFalse, &myint);
     ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        ok(myint == MSICONDITION_FALSE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
+    ok(myint == MSICONDITION_FALSE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
 
     hr = Session_EvaluateCondition(pSession, szOneStateTrue, &myint);
     ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
@@ -1404,8 +1403,7 @@ static void test_Session(IDispatch *pSession)
     /* Session::EvaluateCondition */
     hr = Session_EvaluateCondition(pSession, szOneActionFalse, &myint);
     ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        ok(myint == MSICONDITION_FALSE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
+    ok(myint == MSICONDITION_FALSE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
 
     hr = Session_EvaluateCondition(pSession, szOneActionTrue, &myint);
     ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
@@ -1463,8 +1461,7 @@ static void test_Installer_RegistryValue(void)
     /* Does our key exist? Shouldn't; check with all three possible value parameter types */
     hr = Installer_RegistryValueE(HKEY_CURRENT_USER, szKey, &bRet);
     ok(SUCCEEDED(hr), "Installer_RegistryValueE failed, hresult 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        ok(!bRet, "Registry key expected to not exist, but Installer_RegistryValue claims it does\n");
+    ok(!bRet, "Registry key expected to not exist, but Installer_RegistryValue claims it does\n");
 
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, NULL, szString);
@@ -1502,8 +1499,7 @@ static void test_Installer_RegistryValue(void)
     bRet = FALSE;
     hr = Installer_RegistryValueE(HKEY_CURRENT_USER, szKey, &bRet);
     ok(SUCCEEDED(hr), "Installer_RegistryValueE failed, hresult 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        ok(bRet, "Registry key expected to exist, but Installer_RegistryValue claims it does not\n");
+    ok(bRet, "Registry key expected to exist, but Installer_RegistryValue claims it does not\n");
 
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, NULL, szString);
@@ -1885,8 +1881,7 @@ static void test_Installer(void)
     /* Installer::ProductState for our product code, which should not be installed */
     hr = Installer_ProductState(szProductCode, &iValue);
     ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        ok(iValue == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_UNKNOWN);
+    ok(iValue == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_UNKNOWN);
 
     /* Installer::RelatedProducts for our upgrade code, should not find anything */
     hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
