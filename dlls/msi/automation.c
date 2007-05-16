@@ -575,24 +575,21 @@ static HRESULT WINAPI RecordImpl_Invoke(
 	    break;
 
 	case DISPID_RECORD_STRINGDATA:
-	    if (wFlags & DISPATCH_PROPERTYGET) {
+            if (wFlags & DISPATCH_PROPERTYGET) {
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
                 V_VT(pVarResult) = VT_BSTR;
                 V_BSTR(pVarResult) = NULL;
-		ret = MsiRecordGetStringW(This->msiHandle, V_I4(&varg0), NULL, &dwLen);
-                if (ret == ERROR_SUCCESS)
+                if ((ret = MsiRecordGetStringW(This->msiHandle, V_I4(&varg0), NULL, &dwLen)) == ERROR_SUCCESS)
                 {
-                    szString = msi_alloc((++dwLen)*sizeof(WCHAR));
-                    if (szString)
-                    {
-                        if ((ret = MsiRecordGetStringW(This->msiHandle, V_I4(&varg0), szString, &dwLen)) == ERROR_SUCCESS)
-                            V_BSTR(pVarResult) = SysAllocString(szString);
-                        msi_free(szString);
-                    }
+                    if (!(szString = msi_alloc((++dwLen)*sizeof(WCHAR))))
+                        ERR("Out of memory\n");
+                    else if ((ret = MsiRecordGetStringW(This->msiHandle, V_I4(&varg0), szString, &dwLen)) == ERROR_SUCCESS)
+                        V_BSTR(pVarResult) = SysAllocString(szString);
+                    msi_free(szString);
                 }
                 if (ret != ERROR_SUCCESS)
-		    ERR("MsiRecordGetString returned %d\n", ret);
+                    ERR("MsiRecordGetString returned %d\n", ret);
 	    } else if (wFlags & DISPATCH_PROPERTYPUT) {
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
@@ -886,24 +883,21 @@ static HRESULT WINAPI SessionImpl_Invoke(
 	    break;
 
 	case DISPID_SESSION_PROPERTY:
-	    if (wFlags & DISPATCH_PROPERTYGET) {
+            if (wFlags & DISPATCH_PROPERTYGET) {
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
                 V_VT(pVarResult) = VT_BSTR;
                 V_BSTR(pVarResult) = NULL;
-		ret = MsiGetPropertyW(This->msiHandle, V_BSTR(&varg0), NULL, &dwLen);
-                if (ret == ERROR_SUCCESS)
+                if ((ret = MsiGetPropertyW(This->msiHandle, V_BSTR(&varg0), NULL, &dwLen)) == ERROR_SUCCESS)
                 {
-                    szString = msi_alloc((++dwLen)*sizeof(WCHAR));
-                    if (szString)
-                    {
-                        if ((ret = MsiGetPropertyW(This->msiHandle, V_BSTR(&varg0), szString, &dwLen)) == ERROR_SUCCESS)
-                            V_BSTR(pVarResult) = SysAllocString(szString);
-                        msi_free(szString);
-                    }
+                    if (!(szString = msi_alloc((++dwLen)*sizeof(WCHAR))))
+                        ERR("Out of memory\n");
+                    else if ((ret = MsiGetPropertyW(This->msiHandle, V_BSTR(&varg0), szString, &dwLen)) == ERROR_SUCCESS)
+                        V_BSTR(pVarResult) = SysAllocString(szString);
+                    msi_free(szString);
                 }
                 if (ret != ERROR_SUCCESS)
-		    ERR("MsiGetProperty returned %d\n", ret);
+                    ERR("MsiGetProperty returned %d\n", ret);
 	    } else if (wFlags & DISPATCH_PROPERTYPUT) {
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
