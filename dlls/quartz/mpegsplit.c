@@ -29,7 +29,6 @@
 
 #include "uuids.h"
 #include "mmreg.h"
-#include "vfwmsgs.h"
 #include "mmsystem.h"
 
 #include "winternl.h"

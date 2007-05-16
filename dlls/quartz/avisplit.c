@@ -29,7 +29,6 @@
 
 #include "uuids.h"
 #include "aviriff.h"
-#include "mmreg.h"
 #include "vfwmsgs.h"
 #include "amvideo.h"
 

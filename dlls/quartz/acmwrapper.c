@@ -21,7 +21,6 @@
 #include "config.h"
 
 #include "quartz_private.h"
-#include "control_private.h"
 #include "pin.h"
 
 #include "uuids.h"
@@ -31,7 +30,6 @@
 #include "dshow.h"
 #include "strmif.h"
 #include "vfwmsgs.h"
-#include "evcode.h"
 #include "msacm.h"
 
 #include <assert.h>
