@@ -1821,6 +1821,30 @@ NTSTATUS WINAPI LdrGetDllHandle( LPCWSTR load_path, ULONG flags, const UNICODE_S
 
 
 /******************************************************************
+ *		LdrAddRefDll (NTDLL.@)
+ */
+NTSTATUS WINAPI LdrAddRefDll( ULONG flags, HMODULE module )
+{
+    NTSTATUS ret = STATUS_SUCCESS;
+    WINE_MODREF *wm;
+
+    if (flags) FIXME( "%p flags %x not implemented\n", module, flags );
+
+    RtlEnterCriticalSection( &loader_section );
+
+    if ((wm = get_modref( module )))
+    {
+        if (wm->ldr.LoadCount != -1) wm->ldr.LoadCount++;
+        TRACE( "(%s) ldr.LoadCount: %d\n", debugstr_w(wm->ldr.BaseDllName.Buffer), wm->ldr.LoadCount );
+    }
+    else ret = STATUS_INVALID_PARAMETER;
+
+    RtlLeaveCriticalSection( &loader_section );
+    return ret;
+}
+
+
+/******************************************************************
  *		LdrQueryProcessModuleInformation
  *
  */

@@ -50,7 +50,7 @@
 @ stub KiUserExceptionDispatcher
 # @ stub LdrAccessOutOfProcessResource
 @ stdcall LdrAccessResource(long ptr ptr ptr)
-# @ stub LdrAddRefDll
+@ stdcall LdrAddRefDll(long ptr)
 # @ stub LdrAlternateResourcesEnabled
 # @ stub LdrCreateOutOfProcessImage
 # @ stub LdrDestroyOutOfProcessImage
