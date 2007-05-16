@@ -132,6 +132,12 @@ s_dot_pvectors(pvectors_t *p)
   return p->pu->x * (*p->pv)->x + p->pu->y * (*p->pv)->y + p->pu->z * (*p->pv)->z;
 }
 
+int
+s_sum_sp(sp_t *sp)
+{
+  return sp->x + sp->s->x;
+}
+
 void
 s_stop(void)
 {
@@ -175,6 +181,8 @@ basic_tests(void)
   static vector_t a = {1, 3, 7};
   static vector_t vec1 = {4, -2, 1}, vec2 = {-5, 2, 3}, *pvec2 = &vec2;
   static pvectors_t pvecs = {&vec1, &pvec2};
+  static sp_inner_t spi = {42};
+  static sp_t sp = {-13, &spi};
   pints_t pints;
   ptypes_t ptypes;
   int i1, i2, i3, *pi2, *pi3, **ppi3;
@@ -241,6 +249,7 @@ basic_tests(void)
 
   ok(dot_pvectors(&pvecs) == -21, "RPC dot_pvectors\n");
   ok(sum_fixed_array(f) == -2, "RPC sum_fixed_array\n");
+  ok(sum_sp(&sp) == 29, "RPC sum_sp\n");
 }
 
 static void

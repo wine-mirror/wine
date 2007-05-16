@@ -61,7 +61,8 @@ struct expr_eval_routine
 
 static size_t type_memsize(const type_t *t, const array_dims_t *array, unsigned int *align);
 static size_t fields_memsize(const var_list_t *fields, unsigned int *align);
-
+static size_t write_struct_tfs(FILE *file, type_t *type, const char *name,
+                               unsigned int *typestring_offset);
 const char *string_of_type(unsigned char type)
 {
     switch (type)
@@ -89,6 +90,22 @@ const char *string_of_type(unsigned char type)
     default:
         error("string_of_type: unknown type 0x%02x\n", type);
         return NULL;
+    }
+}
+
+static int is_struct(unsigned char type)
+{
+    switch (type)
+    {
+    case RPC_FC_STRUCT:
+    case RPC_FC_PSTRUCT:
+    case RPC_FC_CSTRUCT:
+    case RPC_FC_CPSTRUCT:
+    case RPC_FC_CVSTRUCT:
+    case RPC_FC_BOGUS_STRUCT:
+        return 1;
+    default:
+        return 0;
     }
 }
 
@@ -691,83 +708,85 @@ static size_t write_simple_pointer(FILE *file, const type_t *type)
     return 4;
 }
 
+static size_t write_pointer_tfs(FILE *file, type_t *type, size_t *typestring_offset)
+{
+    size_t offset = *typestring_offset;
+
+    print_file(file, 0, "/* %d */\n", offset);
+    type->typestring_offset = offset;
+
+    if (type->ref->typestring_offset)
+        *typestring_offset += write_nonsimple_pointer(file, type, offset);
+    else if (is_base_type(type->ref->type))
+        *typestring_offset += write_simple_pointer(file, type);
+
+    return offset;
+}
+
+static int has_known_tfs(const type_t *type)
+{
+    return type->typestring_offset || is_base_type(type->type);
+}
+
 static int write_pointers(FILE *file, const attr_list_t *attrs,
-                          type_t *type,
+                          type_t *type, const char *name,
                           const array_dims_t *array, int level,
                           unsigned int *typestring_offset)
 {
-    int pointers_written = 0;
     const var_t *v;
 
     /* don't generate a pointer for first-level arrays since we want to
     * descend into them to write their pointers, not stop here */
     if ((level == 0 || !is_ptr(type)) && is_array_type(attrs, type, array))
     {
-        return write_pointers(file, NULL, type, NULL, level + 1, typestring_offset);
+        return write_pointers(file, NULL, type, name, NULL, level + 1, typestring_offset);
     }
-
-    if (is_ptr(type))
+    else if (is_ptr(type))
     {
-        if (!is_ptr(type->ref) && 1 < level)
+        type_t *ref = type->ref;
+
+        if (!has_known_tfs(ref))
         {
-            print_file(file, 0, "/* %d */\n", *typestring_offset);
-            if (type->ref->typestring_offset)
+            if (is_ptr(ref))
             {
-                type->typestring_offset = *typestring_offset;
-                *typestring_offset += write_nonsimple_pointer(file, type, *typestring_offset);
+                write_pointers(file, attrs, ref, name, array, level + 1,
+                               typestring_offset);
             }
-            else if (is_base_type(type->ref->type))
+            else if (is_struct(ref->type))
             {
-                type->typestring_offset = *typestring_offset;
-                *typestring_offset += write_simple_pointer(file, type);
+                write_struct_tfs(file, ref, name, typestring_offset);
             }
             else
-                error("write_pointers: pointer doesn't point to anything recognizable (0x%02x)\n",
-                      type->ref->type);
-        }
-        else
-        {
-            write_pointers(file, attrs, type->ref, array, level + 1, typestring_offset);
-
-            if (1 < level)
             {
-                print_file(file, 0, "/* %d */\n", *typestring_offset);
-                type->typestring_offset = *typestring_offset;
-                *typestring_offset += write_nonsimple_pointer(file, type, *typestring_offset);
+                error("write_pointers: type format string unknown for %s (0x%02x)\n",
+                      name, ref->type);
             }
         }
+
+        /* top-level pointers are handled by write_pointer_description */
+        if (1 < level)
+            write_pointer_tfs(file, type, typestring_offset);
 
         return 1;
     }
-
-    switch (type->type)
+    else if (is_struct(type->type))
     {
-        /* note: don't descend into complex structures or unions since these
-         * will always be generated as a separate type */
-        case RPC_FC_STRUCT:
-        case RPC_FC_CVSTRUCT:
-        case RPC_FC_CPSTRUCT:
-        case RPC_FC_CSTRUCT:
-        case RPC_FC_PSTRUCT:
-            if (!type->fields) break;
+        int pointers_written = 0;
+        if (type->fields)
+        {
             LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
                 pointers_written += write_pointers(file, v->attrs, v->type,
-                                                   v->array,
+                                                   v->name, v->array,
                                                    level + 1,
                                                    typestring_offset);
-
-            break;
-
-        default:
-            /* nothing to do */
-            break;
+        }
+        return pointers_written;
     }
-
-    return pointers_written;
+    else return 0;
 }
 
 static size_t write_pointer_description(FILE *file, const attr_list_t *attrs,
-                                        const type_t *type, size_t mem_offset,
+                                        type_t *type, size_t mem_offset,
                                         const array_dims_t *array, int level,
                                         size_t *typestring_offset)
 {
@@ -787,43 +806,23 @@ static size_t write_pointer_description(FILE *file, const attr_list_t *attrs,
         print_file(file, 2, "0x5c,\t/* FC_PAD */\n");
         print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", mem_offset, mem_offset);
         print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", mem_offset, mem_offset);
+        *typestring_offset += 6;
 
-        if (type->ref->typestring_offset)
-        {
-            *typestring_offset
-                += 6 + write_nonsimple_pointer(file, type, 6 + *typestring_offset);
-        }
-        else if (is_base_type(type->ref->type))
-        {
-            *typestring_offset += 6 + write_simple_pointer(file, type);
-        }
+        if (has_known_tfs(type->ref))
+            write_pointer_tfs(file, type, typestring_offset);
         else
-            error("write_pointer_description: unimplemented\n");
+            error("write_pointer_description: type format string unknown\n");
     }
-    else
+    else if (level == 0 && is_struct(type->type))
     {
-        switch (type->type)
+        if (type->fields)
         {
-            /* note: don't descend into complex structures or unions since these
-             * will always be generated as a separate type */
-        case RPC_FC_STRUCT:
-        case RPC_FC_CVSTRUCT:
-        case RPC_FC_CPSTRUCT:
-        case RPC_FC_CSTRUCT:
-        case RPC_FC_PSTRUCT:
-            if (!type->fields) break;
             LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
-                {
-                    mem_offset
-                        += write_pointer_description(file, v->attrs, v->type,
-                                                     mem_offset, v->array,
-                                                     level + 1,
-                                                     typestring_offset);
-                }
-            break;
-
-        default:
-            break;
+                mem_offset
+                    += write_pointer_description(file, v->attrs, v->type,
+                                                 mem_offset, v->array,
+                                                 level + 1,
+                                                 typestring_offset);
         }
     }
 
@@ -950,7 +949,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
         const expr_t *dim = array ? LIST_ENTRY( list_head( array ), expr_t, entry ) : NULL;
         int has_pointer = 0;
 
-        if (write_pointers(file, attrs, type, array, 0, typestring_offset) > 0)
+        if (write_pointers(file, attrs, type, name, array, 0, typestring_offset) > 0)
             has_pointer = 1;
 
         start_offset = *typestring_offset;
@@ -1199,11 +1198,11 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         total_size = type_memsize(type, NULL, &align);
 
         if (total_size > USHRT_MAX)
-            error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
+            error("structure size for %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
         if (type->type == RPC_FC_PSTRUCT)
-            write_pointers(file, NULL, type, NULL, 0, typestring_offset);
+            write_pointers(file, NULL, type, name, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
         type->typestring_offset = start_offset;
@@ -1235,7 +1234,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         total_size = type_memsize(type, NULL, &align);
 
         if (total_size > USHRT_MAX)
-            error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
+            error("structure size for %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
         array = find_array_or_string_in_struct(type);
@@ -1246,7 +1245,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         current_structure = NULL;
 
         if (type->type == RPC_FC_CPSTRUCT)
-            write_pointers(file, NULL, type, NULL, 0, typestring_offset);
+            write_pointers(file, NULL, type, name, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
         type->typestring_offset = start_offset;
@@ -1283,7 +1282,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         total_size = type_memsize(type, NULL, &align);
 
         if (total_size > USHRT_MAX)
-            error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
+            error("structure size for %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
         array = find_array_or_string_in_struct(type);
@@ -1298,7 +1297,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
                                            typestring_offset);
         current_structure = NULL;
 
-        has_pointers = write_pointers(file, NULL, type, NULL, 0, typestring_offset);
+        has_pointers = write_pointers(file, NULL, type, name, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
         type->typestring_offset = start_offset;
@@ -1351,7 +1350,7 @@ static size_t write_pointer_only_tfs(FILE *file, const attr_list_t *attrs, int p
     print_file(file, 2, "0x%x, 0x%x,\t\t/* %s",
                pointer_type,
                flags,
-               pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
+               string_of_type(pointer_type));
     if (file)
     {
         if (flags & 0x04)

@@ -67,5 +67,19 @@ interface IServer
   int pints_sum(pints_t *pints);
   double ptypes_sum(ptypes_t *ptypes);
   int dot_pvectors(pvectors_t *pvectors);
+
+  /* don't use this anywhere except in sp_t */
+  typedef struct
+  {
+    int x;
+  } sp_inner_t;
+
+  typedef struct
+  {
+    int x;
+    sp_inner_t *s;
+  } sp_t;
+
+  int sum_sp(sp_t *sp);
   void stop(void);
 }
