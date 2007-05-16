@@ -1136,64 +1136,6 @@ NTSTATUS WINAPI LdrUnlockLoaderLock( ULONG flags, ULONG magic )
 
 
 /******************************************************************
- *		LdrGetDllHandle (NTDLL.@)
- */
-NTSTATUS WINAPI LdrGetDllHandle(ULONG x, ULONG y, const UNICODE_STRING *name, HMODULE *base)
-{
-    NTSTATUS status = STATUS_DLL_NOT_FOUND;
-    WCHAR dllname[MAX_PATH+4], *p;
-    UNICODE_STRING str;
-    PLIST_ENTRY mark, entry;
-    PLDR_MODULE mod;
-
-    if (x != 0 || y != 0)
-        FIXME("Unknown behavior, please report\n");
-
-    /* Append .DLL to name if no extension present */
-    if (!(p = strrchrW( name->Buffer, '.')) || strchrW( p, '/' ) || strchrW( p, '\\'))
-    {
-        if (name->Length >= MAX_PATH) return STATUS_NAME_TOO_LONG;
-        strcpyW( dllname, name->Buffer );
-        strcatW( dllname, dllW );
-        RtlInitUnicodeString( &str, dllname );
-        name = &str;
-    }
-
-    RtlEnterCriticalSection( &loader_section );
-
-    if (cached_modref)
-    {
-        if (RtlEqualUnicodeString( name, &cached_modref->ldr.FullDllName, TRUE ) ||
-            RtlEqualUnicodeString( name, &cached_modref->ldr.BaseDllName, TRUE ))
-        {
-            *base = cached_modref->ldr.BaseAddress;
-            status = STATUS_SUCCESS;
-            goto done;
-        }
-    }
-
-    mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
-    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
-    {
-        mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
-
-        if (RtlEqualUnicodeString( name, &mod->FullDllName, TRUE ) ||
-            RtlEqualUnicodeString( name, &mod->BaseDllName, TRUE ))
-        {
-            cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
-            *base = mod->BaseAddress;
-            status = STATUS_SUCCESS;
-            break;
-        }
-    }
-done:
-    RtlLeaveCriticalSection( &loader_section );
-    TRACE("%x %x %s -> %p\n", x, y, debugstr_us(name), status ? NULL : *base);
-    return status;
-}
-
-
-/******************************************************************
  *		LdrGetProcedureAddress  (NTDLL.@)
  */
 NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
@@ -1642,7 +1584,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
         if (len)
         {
             if (len >= *size) goto overflow;
-            if ((*pwm = find_fullname_module( filename )) != NULL) goto found;
+            if ((*pwm = find_fullname_module( filename )) || !handle) goto found;
 
             if (!RtlDosPathNameToNtPathName_U( filename, &nt_name, NULL, NULL ))
             {
@@ -1682,7 +1624,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
     len = nt_name.Length - 4*sizeof(WCHAR);  /* for \??\ prefix */
     if (len >= *size) goto overflow;
     memcpy( filename, nt_name.Buffer + 4, len + sizeof(WCHAR) );
-    if (!(*pwm = find_fullname_module( filename )))
+    if (!(*pwm = find_fullname_module( filename )) && handle)
     {
         attr.Length = sizeof(attr);
         attr.RootDirectory = 0;
@@ -1838,6 +1780,45 @@ NTSTATUS WINAPI LdrLoadDll(LPCWSTR path_name, DWORD flags,
     RtlLeaveCriticalSection( &loader_section );
     return nts;
 }
+
+
+/******************************************************************
+ *		LdrGetDllHandle (NTDLL.@)
+ */
+NTSTATUS WINAPI LdrGetDllHandle( LPCWSTR load_path, ULONG flags, const UNICODE_STRING *name, HMODULE *base )
+{
+    NTSTATUS status;
+    WCHAR buffer[128];
+    WCHAR *filename;
+    ULONG size;
+    WINE_MODREF *wm;
+
+    RtlEnterCriticalSection( &loader_section );
+
+    if (!load_path) load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
+
+    filename = buffer;
+    size = sizeof(buffer);
+    for (;;)
+    {
+        status = find_dll_file( load_path, name->Buffer, filename, &size, &wm, NULL );
+        if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
+        if (status != STATUS_BUFFER_TOO_SMALL) break;
+        /* grow the buffer and retry */
+        if (!(filename = RtlAllocateHeap( GetProcessHeap(), 0, size ))) return STATUS_NO_MEMORY;
+    }
+
+    if (status == STATUS_SUCCESS)
+    {
+        if (wm) *base = wm->ldr.BaseAddress;
+        else status = STATUS_DLL_NOT_FOUND;
+    }
+
+    RtlLeaveCriticalSection( &loader_section );
+    TRACE( "%s -> %p (load path %s)\n", debugstr_us(name), status ? NULL : *base, debugstr_w(load_path) );
+    return status;
+}
+
 
 /******************************************************************
  *		LdrQueryProcessModuleInformation
