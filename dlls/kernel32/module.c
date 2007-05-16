@@ -501,6 +501,12 @@ BOOL WINAPI GetModuleHandleExW( DWORD flags, LPCWSTR name, HMODULE *module )
 {
     NTSTATUS status = STATUS_SUCCESS;
     HMODULE ret;
+    ULONG magic;
+
+    /* if we are messing with the refcount, grab the loader lock */
+    if ((flags & GET_MODULE_HANDLE_EX_FLAG_PIN) ||
+        !(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
+        LdrLockLoaderLock( 0, NULL, &magic );
 
     if (!name)
     {
@@ -515,21 +521,24 @@ BOOL WINAPI GetModuleHandleExW( DWORD flags, LPCWSTR name, HMODULE *module )
     {
         UNICODE_STRING wstr;
         RtlInitUnicodeString( &wstr, name );
-        status = LdrGetDllHandle( 0, 0, &wstr, &ret );
+        status = LdrGetDllHandle( NULL, 0, &wstr, &ret );
     }
 
-    if (status != STATUS_SUCCESS)
+    if (status == STATUS_SUCCESS)
     {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return FALSE;
+        if (flags & GET_MODULE_HANDLE_EX_FLAG_PIN)
+            FIXME( "should pin refcount for %p\n", ret );
+        else if (!(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
+            LdrAddRefDll( 0, ret );
     }
+    else SetLastError( RtlNtStatusToDosError( status ) );
 
     if ((flags & GET_MODULE_HANDLE_EX_FLAG_PIN) ||
         !(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
-        FIXME( "should update refcount, flags %x\n", flags );
+        LdrUnlockLoaderLock( 0, magic );
 
     if (module) *module = ret;
-    return TRUE;
+    return (status == STATUS_SUCCESS);
 }
 
 /***********************************************************************
