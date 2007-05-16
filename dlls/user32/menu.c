@@ -3729,9 +3729,6 @@ BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
         return FALSE;
     }
 
-    if (flags & MF_POPUP)  /* Set the MF_POPUP flag on the popup-menu */
-	(MENU_GetMenu((HMENU)id))->wFlags |= MF_POPUP;
-
     item->hCheckBit = item->hUnCheckBit = 0;
     return TRUE;
 }
