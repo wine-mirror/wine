@@ -23,13 +23,8 @@
 #include "control_private.h"
 #include "pin.h"
 
-#include "uuids.h"
-#include "aviriff.h"
-#include "mmreg.h"
 #include "vfwmsgs.h"
 #include "amvideo.h"
-
-#include "fourcc.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"

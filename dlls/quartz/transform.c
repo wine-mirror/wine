@@ -24,17 +24,11 @@
 #include "control_private.h"
 #include "pin.h"
 
-#include "uuids.h"
-#include "aviriff.h"
-#include "mmreg.h"
-#include "vfwmsgs.h"
 #include "amvideo.h"
 #include "windef.h"
 #include "winbase.h"
 #include "dshow.h"
 #include "strmif.h"
-#include "vfwmsgs.h"
-#include "evcode.h"
 #include "vfw.h"
 
 #include <assert.h>

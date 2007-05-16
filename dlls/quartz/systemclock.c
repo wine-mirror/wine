@@ -22,7 +22,6 @@
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
-#include "uuids.h"
 #include <assert.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);

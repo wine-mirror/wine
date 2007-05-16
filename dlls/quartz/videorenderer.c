@@ -27,10 +27,8 @@
 #include "pin.h"
 
 #include "uuids.h"
-#include "mmreg.h"
 #include "vfwmsgs.h"
 #include "amvideo.h"
-#include "fourcc.h"
 #include "windef.h"
 #include "winbase.h"
 #include "dshow.h"
