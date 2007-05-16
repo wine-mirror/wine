@@ -30,7 +30,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "objbase.h"
-#include "uuids.h"
 
 #include "evcode.h"
 #include "strmif.h"

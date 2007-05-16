@@ -38,7 +38,6 @@
 #include "pin.h"
 #include "capture.h"
 #include "uuids.h"
-#include "mmreg.h"
 #include "vfwmsgs.h"
 #include "amvideo.h"
 #include "strmif.h"

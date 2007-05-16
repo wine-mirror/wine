@@ -24,7 +24,6 @@
 #include <stdarg.h>
 
 #include "windef.h"
-#include "winbase.h"
 #include "objbase.h"
 #include "strmif.h"
 #include "qcap_main.h"
