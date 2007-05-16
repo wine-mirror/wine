@@ -961,7 +961,7 @@ static BOOL elf_debuglink_parse(struct elf_file_map* fmap, struct module* module
      * 2/ padding on 4 byte boundary
      * 3/ CRC of the linked ELF file
      */
-    const char* dbg_link = (char*)debuglink;
+    const char* dbg_link = (const char*)debuglink;
     DWORD crc;
 
     crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
@@ -1090,7 +1090,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
                                     dw2_debug_loclist, elf_get_map_size(&debug_loclist_sect));
 
                 if (!lret)
-                    WARN("Couldn't correctly read stabs\n");
+                    WARN("Couldn't correctly read dwarf2\n");
                 ret = ret || lret;
             }
             elf_unmap_section(&debug_sect);
