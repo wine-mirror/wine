@@ -76,7 +76,7 @@ static void write_parameters_init(const func_t *func)
 }
 
 
-static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsigned int *type_offset)
+static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 {
     char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
     int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
@@ -88,7 +88,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
     LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
     {
         const var_t *def = func->def;
-        unsigned int type_offset_func;
 
         /* check for a defined binding handle */
         explicit_handle_var = get_explicit_handle_var(func);
@@ -164,11 +163,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             indent -= 2;
             fprintf(server, "\n");
 
-            /* make a copy so we don't increment the type offset twice */
-            type_offset_func = *type_offset;
-
             /* unmarshall arguments */
-            write_remoting_arguments(server, indent, func, &type_offset_func, PASS_IN, PHASE_UNMARSHAL);
+            write_remoting_arguments(server, indent, func, PASS_IN, PHASE_UNMARSHAL);
         }
 
         print_server("if (_StubMsg.Buffer > _StubMsg.BufferEnd)\n");
@@ -225,8 +221,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
 
         if (has_out_arg_or_return(func))
         {
-            type_offset_func = *type_offset;
-            write_remoting_arguments(server, indent, func, &type_offset_func, PASS_OUT, PHASE_BUFFERSIZE);
+            write_remoting_arguments(server, indent, func, PASS_OUT, PHASE_BUFFERSIZE);
 
             print_server("_pRpcMessage->BufferLength = _StubMsg.BufferLength;\n");
             fprintf(server, "\n");
@@ -240,10 +235,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             fprintf(server, "\n");
         }
 
-        type_offset_func = *type_offset;
-
         /* marshall arguments */
-        write_remoting_arguments(server, indent, func, type_offset, PASS_OUT, PHASE_MARSHAL);
+        write_remoting_arguments(server, indent, func, PASS_OUT, PHASE_MARSHAL);
 
         /* marshall the return value */
         if (!is_void(def->type))
@@ -255,7 +248,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         print_server("{\n");
         indent++;
 
-        write_remoting_arguments(server, indent, func, &type_offset_func, PASS_OUT, PHASE_FREE);
+        write_remoting_arguments(server, indent, func, PASS_OUT, PHASE_FREE);
 
         indent--;
         print_server("}\n");
@@ -419,7 +412,6 @@ static void init_server(void)
 void write_server(ifref_list_t *ifaces)
 {
     unsigned int proc_offset = 0;
-    unsigned int type_offset = 2;
     ifref_t *iface;
 
     if (!do_server)
@@ -450,7 +442,7 @@ void write_server(ifref_list_t *ifaces)
             write_serverinterfacedecl(iface->iface);
             write_stubdescdecl(iface->iface);
     
-            write_function_stubs(iface->iface, &proc_offset, &type_offset);
+            write_function_stubs(iface->iface, &proc_offset);
     
             print_server("#if !defined(__RPC_WIN32__)\n");
             print_server("#error  Invalid build platform for this stub.\n");

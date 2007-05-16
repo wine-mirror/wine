@@ -191,8 +191,9 @@ static void proxy_check_pointers( const var_list_t *args )
   }
 }
 
-static void free_variable( const var_t *arg, unsigned int type_offset )
+static void free_variable( const var_t *arg )
 {
+  size_t type_offset = arg->type->typestring_offset;
   var_t *constraint;
   type_t *type;
   expr_list_t *expr;
@@ -240,33 +241,24 @@ static void free_variable( const var_t *arg, unsigned int type_offset )
   }
 }
 
-static void proxy_free_variables( var_list_t *args, unsigned int type_offset )
+static void proxy_free_variables( var_list_t *args )
 {
   const var_t *arg;
 
   if (!args) return;
   LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
-  {
-    size_t start_offset;
-    size_t size_type = get_size_typeformatstring_var(arg, &start_offset);
-    start_offset += type_offset;
-
     if (is_attr(arg->attrs, ATTR_OUT))
     {
-      free_variable( arg, type_offset );
+      free_variable( arg );
       fprintf(proxy, "\n");
     }
-
-    type_offset += size_type;
-  }
 }
 
 static void gen_proxy(type_t *iface, const func_t *cur, int idx,
-                      unsigned int proc_offset, unsigned int *type_offset)
+                      unsigned int proc_offset)
 {
   var_t *def = cur->def;
   int has_ret = !is_void(def->type);
-  unsigned int offset;
 
   indent = 0;
   write_type(proxy, def->type);
@@ -300,13 +292,11 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   print_proxy( "{\n" );
   indent++;
 
-  offset = *type_offset;
-  write_remoting_arguments(proxy, indent, cur, &offset, PASS_IN, PHASE_BUFFERSIZE);
+  write_remoting_arguments(proxy, indent, cur, PASS_IN, PHASE_BUFFERSIZE);
 
   print_proxy( "NdrProxyGetBuffer(This, &_StubMsg);\n" );
 
-  offset = *type_offset;
-  write_remoting_arguments(proxy, indent, cur, &offset, PASS_IN, PHASE_MARSHAL);
+  write_remoting_arguments(proxy, indent, cur, PASS_IN, PHASE_MARSHAL);
 
   print_proxy( "NdrProxySendReceive(This, &_StubMsg);\n" );
   fprintf(proxy, "\n");
@@ -319,8 +309,7 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   indent--;
   fprintf(proxy, "\n");
 
-  offset = *type_offset;
-  write_remoting_arguments(proxy, indent, cur, type_offset, PASS_OUT, PHASE_UNMARSHAL);
+  write_remoting_arguments(proxy, indent, cur, PASS_OUT, PHASE_UNMARSHAL);
 
   if (has_ret)
       print_phase_basetype(proxy, indent, PHASE_UNMARSHAL, PASS_RETURN, def, "_RetVal");
@@ -340,7 +329,7 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   print_proxy( "{\n" );
   if (has_ret) {
     indent++;
-    proxy_free_variables( cur->args, offset );
+    proxy_free_variables( cur->args );
     print_proxy( "_RetVal = NdrProxyErrorHandler(RpcExceptionCode());\n" );
     indent--;
   }
@@ -356,12 +345,11 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
 }
 
 static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
-                     unsigned int proc_offset, unsigned int *type_offset)
+                     unsigned int proc_offset)
 {
   var_t *def = cur->def;
   const var_t *arg;
   int has_ret = !is_void(def->type);
-  unsigned int offset;
 
   indent = 0;
   print_proxy( "void __RPC_STUB %s_", iface->name);
@@ -398,8 +386,7 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   indent--;
   fprintf(proxy, "\n");
 
-  offset = *type_offset;
-  write_remoting_arguments(proxy, indent, cur, &offset, PASS_IN, PHASE_UNMARSHAL);
+  write_remoting_arguments(proxy, indent, cur, PASS_IN, PHASE_UNMARSHAL);
   fprintf(proxy, "\n");
 
   assign_stub_out_args( proxy, indent, cur );
@@ -431,13 +418,11 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   print_proxy("*_pdwStubPhase = STUB_MARSHAL;\n");
   fprintf(proxy, "\n");
 
-  offset = *type_offset;
-  write_remoting_arguments(proxy, indent, cur, &offset, PASS_OUT, PHASE_BUFFERSIZE);
+  write_remoting_arguments(proxy, indent, cur, PASS_OUT, PHASE_BUFFERSIZE);
 
   print_proxy("NdrStubGetBuffer(This, _pRpcChannelBuffer, &_StubMsg);\n");
 
-  offset = *type_offset;
-  write_remoting_arguments(proxy, indent, cur, &offset, PASS_OUT, PHASE_MARSHAL);
+  write_remoting_arguments(proxy, indent, cur, PASS_OUT, PHASE_MARSHAL);
   fprintf(proxy, "\n");
 
   if (has_ret)
@@ -448,8 +433,7 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   print_proxy("RpcFinally\n");
   print_proxy("{\n");
 
-  offset = *type_offset;
-  write_remoting_arguments(proxy, indent+1, cur, &offset, PASS_OUT, PHASE_FREE);
+  write_remoting_arguments(proxy, indent+1, cur, PASS_OUT, PHASE_FREE);
 
   print_proxy("}\n");
   print_proxy("RpcEndFinally\n");
@@ -501,11 +485,10 @@ static int write_stub_methods(type_t *iface)
   return i;
 }
 
-static void write_proxy(type_t *iface, unsigned int *proc_offset, unsigned int *type_offset)
+static void write_proxy(type_t *iface, unsigned int *proc_offset)
 {
   int midx = -1, stubs;
   const func_t *cur;
-  unsigned int offset;
 
   if (!iface->funcs) return;
 
@@ -530,9 +513,8 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset, unsigned int *
                   break;
               }
       }
-      offset = *type_offset;
-      gen_proxy(iface, cur, idx, *proc_offset, type_offset);
-      gen_stub(iface, cur, cname, *proc_offset, &offset);
+      gen_proxy(iface, cur, idx, *proc_offset);
+      gen_stub(iface, cur, cname, *proc_offset);
       *proc_offset += get_size_procformatstring_func( cur );
       if (midx == -1) midx = idx;
       else if (midx != idx) parser_error("method index mismatch in write_proxy");
@@ -594,7 +576,7 @@ void write_proxies(ifref_list_t *ifaces)
   ifref_t *cur;
   char *file_id = proxy_token;
   int c;
-  unsigned int proc_offset = 0, type_offset = 0;
+  unsigned int proc_offset = 0;
 
   if (!do_proxies) return;
   if (do_everything && !ifaces) return;
@@ -605,7 +587,7 @@ void write_proxies(ifref_list_t *ifaces)
   if (ifaces)
       LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
           if (is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
-              write_proxy(cur->iface, &proc_offset, &type_offset);
+              write_proxy(cur->iface, &proc_offset);
 
   write_stubdesc();
 

@@ -232,7 +232,7 @@ static inline int is_base_type(unsigned char type)
 }
 
 static size_t write_procformatstring_var(FILE *file, int indent,
-    const var_t *var, int is_return, unsigned int *type_offset)
+                                         const var_t *var, int is_return)
 {
     size_t size;
     const type_t *type = var->type;
@@ -277,10 +277,9 @@ static size_t write_procformatstring_var(FILE *file, int indent,
             print_file(file, indent, "0x4d,    /* FC_IN_PARAM */\n");
 
         print_file(file, indent, "0x01,\n");
-        print_file(file, indent, "NdrFcShort(0x%x),\n", *type_offset);
+        print_file(file, indent, "NdrFcShort(0x%x),\n", type->typestring_offset);
         size = 4; /* includes param type prefix */
     }
-    *type_offset += get_size_typeformatstring_var(var, NULL);
     return size;
 }
 
@@ -289,7 +288,6 @@ void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
     const ifref_t *iface;
     int indent = 0;
     const var_t *var;
-    unsigned int type_offset = 2;
 
     print_file(file, indent, "static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString =\n");
     print_file(file, indent, "{\n");
@@ -313,7 +311,7 @@ void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
                 if (func->args)
                 {
                     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-                        write_procformatstring_var(file, indent, var, FALSE, &type_offset);
+                        write_procformatstring_var(file, indent, var, FALSE);
                 }
 
                 /* emit return value data */
@@ -324,8 +322,7 @@ void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
                     print_file(file, indent, "0x5c,    /* FC_PAD */\n");
                 }
                 else
-                    write_procformatstring_var(file, indent, var, TRUE,
-                                               &type_offset);
+                    write_procformatstring_var(file, indent, var, TRUE);
             }
         }
     }
@@ -1530,22 +1527,50 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
                            offset, typeformat_offset);
 }
 
-
-void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_objects)
+static void clear_tfsoff(type_t *type)
 {
-    int indent = 0;
-    const var_t *var;
-    unsigned int typeformat_offset;
-    const ifref_t *iface;
+    for (;;)
+    {
+        type->typestring_offset = 0;
 
-    print_file(file, indent, "static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString =\n");
-    print_file(file, indent, "{\n");
-    indent++;
-    print_file(file, indent, "0,\n");
-    print_file(file, indent, "{\n");
-    indent++;
-    print_file(file, indent, "NdrFcShort(0x0),\n");
-    typeformat_offset = 2;
+        if (type->kind == TKIND_ALIAS)
+            type = type->orig;
+        else if (is_ptr(type))
+            type = type->ref;
+        else
+        {
+            if (type->fields)
+            {
+                var_t *v;
+                LIST_FOR_EACH_ENTRY( v, type->fields, var_t, entry )
+                    clear_tfsoff(v->type);
+            }
+
+            return;
+        }
+    }
+}
+
+static void clear_all_tfsoffs(const ifref_list_t *ifaces)
+{
+    const ifref_t * iface;
+    const func_t *func;
+    const var_t *var;
+
+    if (ifaces)
+        LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
+            if (iface->iface->funcs)
+                LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
+                    if (func->args)
+                        LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+                            clear_tfsoff(var->type);
+}
+
+static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, int for_objects)
+{
+    const var_t *var;
+    const ifref_t *iface;
+    size_t typeformat_offset = 2;
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {
@@ -1558,14 +1583,33 @@ void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
             LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
             {
                 if (is_local(func->def->attrs)) continue;
-                current_func = func;
                 if (func->args)
                     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-                        write_typeformatstring_var(file, indent, func, var->type, var,
-                                                   &typeformat_offset);
+                        var->type->typestring_offset
+                            = write_typeformatstring_var(file, 2, func, var->type,
+                                                         var, &typeformat_offset);
             }
         }
     }
+
+    return typeformat_offset + 1;
+}
+
+
+void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_objects)
+{
+    int indent = 0;
+
+    print_file(file, indent, "static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString =\n");
+    print_file(file, indent, "{\n");
+    indent++;
+    print_file(file, indent, "0,\n");
+    print_file(file, indent, "{\n");
+    indent++;
+    print_file(file, indent, "NdrFcShort(0x0),\n");
+
+    clear_all_tfsoffs(ifaces);
+    process_tfs(file, ifaces, for_objects);
 
     print_file(file, indent, "0x0\n");
     indent--;
@@ -1875,8 +1919,7 @@ static inline int is_size_needed_for_phase(enum remoting_phase phase)
 }
 
 void write_remoting_arguments(FILE *file, int indent, const func_t *func,
-                              unsigned int *type_offset, enum pass pass,
-                              enum remoting_phase phase)
+                              enum pass pass, enum remoting_phase phase)
 {
     const expr_list_t *length_is;
     const expr_list_t *size_is;
@@ -1896,9 +1939,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
     {
         const type_t *type = var->type;
         unsigned char rtype;
-        size_t start_offset;
-        size_t size_type = get_size_typeformatstring_var(var, &start_offset);
-        start_offset += *type_offset;
+        size_t start_offset = type->typestring_offset;
 
         length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
         size_is = get_attrp(var->attrs, ATTR_SIZEIS);
@@ -1917,10 +1958,10 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         switch (pass)
         {
         case PASS_IN:
-            if (!in_attr) goto next;
+            if (!in_attr) continue;
             break;
         case PASS_OUT:
-            if (!out_attr) goto next;
+            if (!out_attr) continue;
             break;
         case PASS_RETURN:
             break;
@@ -2084,16 +2125,13 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             }
         }
         fprintf(file, "\n");
-    next:
-        *type_offset += size_type;
     }
 }
 
 
 size_t get_size_procformatstring_var(const var_t *var)
 {
-    unsigned int type_offset = 2;
-    return write_procformatstring_var(NULL, 0, var, FALSE, &type_offset);
+    return write_procformatstring_var(NULL, 0, var, FALSE);
 }
 
 
@@ -2114,17 +2152,6 @@ size_t get_size_procformatstring_func(const func_t *func)
         size += get_size_procformatstring_var(func->def);
 
     return size;
-}
-
-size_t get_size_typeformatstring_var(const var_t *var, size_t *pstart_offset)
-{
-    unsigned int type_offset = 2; /* 0 is used as an invalid offset */
-    size_t start_offset = write_typeformatstring_var(NULL, 0, NULL, var->type,
-                                                     var, &type_offset);
-    if (pstart_offset)
-        *pstart_offset = start_offset - 2;
-
-    return type_offset - 2;
 }
 
 size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
@@ -2148,29 +2175,7 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
 
 size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
 {
-    const ifref_t *iface;
-    size_t size = 3;
-    const func_t *func;
-    const var_t *var;
-
-    if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
-    {
-        if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
-            continue;
-
-        if (iface->iface->funcs)
-        {
-            LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
-            {
-                if (is_local(func->def->attrs)) continue;
-                /* argument list size */
-                if (func->args)
-                    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-                        size += get_size_typeformatstring_var(var, NULL);
-            }
-        }
-    }
-    return size;
+    return process_tfs(NULL, ifaces, for_objects);
 }
 
 static void write_struct_expr(FILE *h, const expr_t *e, int brackets,

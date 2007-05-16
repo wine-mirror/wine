@@ -80,7 +80,7 @@ static void check_pointers(const func_t *func)
     }
 }
 
-static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsigned int *type_offset)
+static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 {
     const func_t *func;
     const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
@@ -95,7 +95,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
     {
         const var_t *def = func->def;
         const var_t* explicit_handle_var;
-        unsigned int type_offset_func;
 
         /* check for a defined binding handle */
         explicit_handle_var = get_explicit_handle_var(func);
@@ -174,8 +173,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             fprintf(client, "\n");
         }
 
-        type_offset_func = *type_offset;
-        write_remoting_arguments(client, indent, func, &type_offset_func, PASS_IN, PHASE_BUFFERSIZE);
+        write_remoting_arguments(client, indent, func, PASS_IN, PHASE_BUFFERSIZE);
 
         print_client("NdrGetBuffer(\n");
         indent++;
@@ -188,12 +186,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         indent--;
         fprintf(client, "\n");
 
-
-        /* make a copy so we don't increment the type offset twice */
-        type_offset_func = *type_offset;
-
         /* marshal arguments */
-        write_remoting_arguments(client, indent, func, &type_offset_func, PASS_IN, PHASE_MARSHAL);
+        write_remoting_arguments(client, indent, func, PASS_IN, PHASE_MARSHAL);
 
         /* send/receive message */
         /* print_client("NdrNsSendReceive(\n"); */
@@ -223,7 +217,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
 
         /* unmarshall arguments */
         fprintf(client, "\n");
-        write_remoting_arguments(client, indent, func, type_offset, PASS_OUT, PHASE_UNMARSHAL);
+        write_remoting_arguments(client, indent, func, PASS_OUT, PHASE_UNMARSHAL);
 
         /* unmarshal return value */
         if (!is_void(def->type))
@@ -397,7 +391,6 @@ static void init_client(void)
 void write_client(ifref_list_t *ifaces)
 {
     unsigned int proc_offset = 0;
-    unsigned int type_offset = 2;
     ifref_t *iface;
 
     if (!do_client)
@@ -429,7 +422,7 @@ void write_client(ifref_list_t *ifaces)
     
             write_clientinterfacedecl(iface->iface);
             write_stubdescdecl(iface->iface);
-            write_function_stubs(iface->iface, &proc_offset, &type_offset);
+            write_function_stubs(iface->iface, &proc_offset);
 
             print_client("#if !defined(__RPC_WIN32__)\n");
             print_client("#error  Invalid build platform for this stub.\n");
