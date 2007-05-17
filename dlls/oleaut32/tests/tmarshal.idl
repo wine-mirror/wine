@@ -228,4 +228,43 @@ library TestTypelib
     {
         [id(0x1236)] HRESULT fn6([in] int a);
     }
+
+    [
+        odl,
+        uuid(bdfa260b-ef40-43d3-b071-cddec919f132)
+    ]
+        interface ItestIF8
+    {
+        HRESULT fn1([in] int x);
+        HRESULT fn2([out,retval] int *x);
+    }
+
+    [
+        odl,
+        uuid(51033a23-dc37-4f19-aa34-4d8a670458a0)
+
+    ]
+    interface ItestIF9 : ItestIF8
+    {
+        HRESULT fn3([in] int y);
+    }
+
+    [
+        odl,
+        uuid(2e8f14fe-0bce-42f0-8b7d-3af8393c7967)
+    ]
+    dispinterface ItestIF10
+    {
+        interface ItestIF9;
+    }
+
+    [
+        odl,
+        uuid(7d9e9371-482e-4944-9b19-511fc705236f)
+    ]
+    dispinterface ItestIF11
+    {
+        interface ItestIF7;
+    }
+
 };
