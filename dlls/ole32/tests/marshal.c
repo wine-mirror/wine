@@ -78,7 +78,6 @@ static void test_cocreateinstance_proxy(void)
     hr = CoCreateInstance(&CLSID_ShellDesktop, NULL, CLSCTX_INPROC, &IID_IUnknown, (void **)&pProxy);
     ok_ole_success(hr, CoCreateInstance);
     hr = IUnknown_QueryInterface(pProxy, &IID_IMultiQI, (void **)&pMQI);
-    todo_wine
     ok(hr == S_OK, "created object is not a proxy, so was created in the wrong apartment\n");
     if (hr == S_OK)
         IMultiQI_Release(pMQI);

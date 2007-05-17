@@ -372,6 +372,7 @@ DWORD apartment_release(struct apartment *apt)
         apartment_disconnectproxies(apt);
 
         if (apt->win) DestroyWindow(apt->win);
+        if (apt->host_apt_tid) PostThreadMessageW(apt->host_apt_tid, WM_QUIT, 0, 0);
 
         LIST_FOR_EACH_SAFE(cursor, cursor2, &apt->stubmgrs)
         {
@@ -510,6 +511,8 @@ struct host_object_params
     HKEY hkeydll;
     CLSID clsid; /* clsid of object to marshal */
     IID iid; /* interface to marshal */
+    HANDLE event; /* event signalling when ready for multi-threaded case */
+    HRESULT hr; /* result for multi-threaded case */
     IStream *stream; /* stream that the object will be marshaled into */
 };
 
@@ -521,7 +524,7 @@ static HRESULT apartment_hostobject(struct apartment *apt,
     static const LARGE_INTEGER llZero;
     WCHAR dllpath[MAX_PATH+1];
 
-    TRACE("\n");
+    TRACE("clsid %s, iid %s\n", debugstr_guid(&params->clsid), debugstr_guid(&params->iid));
 
     if (COM_RegReadPath(params->hkeydll, NULL, NULL, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
     {
@@ -554,6 +557,167 @@ static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LP
     default:
         return DefWindowProcW(hWnd, msg, wParam, lParam);
     }
+}
+
+struct host_thread_params
+{
+    COINIT threading_model;
+    HANDLE ready_event;
+    HWND apartment_hwnd;
+};
+
+static DWORD CALLBACK apartment_hostobject_thread(LPVOID p)
+{
+    struct host_thread_params *params = p;
+    MSG msg;
+    HRESULT hr;
+    struct apartment *apt;
+
+    TRACE("\n");
+
+    hr = CoInitializeEx(NULL, params->threading_model);
+    if (FAILED(hr)) return hr;
+
+    apt = COM_CurrentApt();
+    if (params->threading_model == COINIT_APARTMENTTHREADED)
+    {
+        apartment_createwindowifneeded(apt);
+        params->apartment_hwnd = apartment_getwindow(apt);
+    }
+    else
+        params->apartment_hwnd = NULL;
+
+    /* force the message queue to be created before signaling parent thread */
+    PeekMessageW(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+
+    SetEvent(params->ready_event);
+    params = NULL; /* can't touch params after here as it may be invalid */
+
+    while (GetMessageW(&msg, NULL, 0, 0))
+    {
+        if (!msg.hwnd && (msg.message == DM_HOSTOBJECT))
+        {
+            struct host_object_params *params = (struct host_object_params *)msg.lParam;
+            params->hr = apartment_hostobject(apt, params);
+            SetEvent(params->event);
+        }
+        else
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+
+    TRACE("exiting\n");
+
+    CoUninitialize();
+
+    return S_OK;
+}
+
+static HRESULT apartment_hostobject_in_hostapt(struct apartment *apt, BOOL multi_threaded, BOOL main_apartment, HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv)
+{
+    struct host_object_params params;
+    HWND apartment_hwnd = NULL;
+    DWORD apartment_tid = 0;
+    HRESULT hr;
+
+    if (!multi_threaded && main_apartment)
+    {
+        APARTMENT *host_apt = apartment_findfromtype(FALSE, FALSE);
+        if (host_apt)
+        {
+            apartment_hwnd = apartment_getwindow(host_apt);
+            apartment_release(host_apt);
+        }
+    }
+
+    if (!apartment_hwnd)
+    {
+        EnterCriticalSection(&apt->cs);
+
+        if (!apt->host_apt_tid)
+        {
+            struct host_thread_params thread_params;
+            HANDLE handles[2];
+            DWORD wait_value;
+
+            thread_params.threading_model = multi_threaded ? COINIT_MULTITHREADED : COINIT_APARTMENTTHREADED;
+            handles[0] = thread_params.ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+            thread_params.apartment_hwnd = NULL;
+            handles[1] = CreateThread(NULL, 0, apartment_hostobject_thread, &thread_params, 0, &apt->host_apt_tid);
+            if (!handles[1])
+            {
+                CloseHandle(handles[0]);
+                LeaveCriticalSection(&apt->cs);
+                return E_OUTOFMEMORY;
+            }
+            wait_value = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+            CloseHandle(handles[0]);
+            CloseHandle(handles[1]);
+            if (wait_value == WAIT_OBJECT_0)
+                apt->host_apt_hwnd = thread_params.apartment_hwnd;
+            else
+            {
+                LeaveCriticalSection(&apt->cs);
+                return E_OUTOFMEMORY;
+            }
+        }
+
+        if (multi_threaded || !main_apartment)
+        {
+            apartment_hwnd = apt->host_apt_hwnd;
+            apartment_tid = apt->host_apt_tid;
+        }
+
+        LeaveCriticalSection(&apt->cs);
+    }
+
+    /* another thread may have become the main apartment in the time it took
+     * us to create the thread for the host apartment */
+    if (!apartment_hwnd && !multi_threaded && main_apartment)
+    {
+        APARTMENT *host_apt = apartment_findfromtype(FALSE, FALSE);
+        if (host_apt)
+        {
+            apartment_hwnd = apartment_getwindow(host_apt);
+            apartment_release(host_apt);
+        }
+    }
+
+    params.hkeydll = hkeydll;
+    params.clsid = *rclsid;
+    params.iid = *riid;
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &params.stream);
+    if (FAILED(hr))
+        return hr;
+    if (multi_threaded)
+    {
+        params.hr = S_OK;
+        params.event = CreateEventW(NULL, FALSE, FALSE, NULL);
+        if (!PostThreadMessageW(apartment_tid, DM_HOSTOBJECT, 0, (LPARAM)&params))
+            hr = E_OUTOFMEMORY;
+        else
+        {
+            WaitForSingleObject(params.event, INFINITE);
+            hr = params.hr;
+        }
+        CloseHandle(params.event);
+    }
+    else
+    {
+        if (!apartment_hwnd)
+        {
+            ERR("host apartment didn't create window\n");
+            hr = E_OUTOFMEMORY;
+        }
+        else
+            hr = SendMessageW(apartment_hwnd, DM_HOSTOBJECT, 0, (LPARAM)&params);
+    }
+    if (SUCCEEDED(hr))
+        hr = CoUnmarshalInterface(params.stream, riid, ppv);
+    IStream_Release(params.stream);
+    return hr;
 }
 
 HRESULT apartment_createwindowifneeded(struct apartment *apt)
@@ -1927,45 +2091,19 @@ static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll,
     static const WCHAR wszBoth[] = {'B','o','t','h',0};
     WCHAR dllpath[MAX_PATH+1];
     WCHAR threading_model[10 /* strlenW(L"apartment")+1 */];
-    HRESULT hr;
 
     get_threading_model(hkeydll, threading_model, ARRAYSIZE(threading_model));
     /* "Apartment" */
     if (!strcmpiW(threading_model, wszApartment))
     {
         if (apt->multi_threaded)
-        {
-            /* try to find an STA */
-            APARTMENT *host_apt = apartment_findfromtype(FALSE, FALSE);
-            if (!host_apt)
-                FIXME("create a host apartment for apartment-threaded object %s\n", debugstr_guid(rclsid));
-            if (host_apt)
-            {
-                struct host_object_params params;
-                HWND hwnd = apartment_getwindow(host_apt);
-
-                params.hkeydll = hkeydll;
-                params.clsid = *rclsid;
-                params.iid = *riid;
-                hr = CreateStreamOnHGlobal(NULL, TRUE, &params.stream);
-                if (FAILED(hr))
-                    return hr;
-                hr = SendMessageW(hwnd, DM_HOSTOBJECT, 0, (LPARAM)&params);
-                if (SUCCEEDED(hr))
-                    hr = CoUnmarshalInterface(params.stream, riid, ppv);
-                IStream_Release(params.stream);
-                return hr;
-            }
-        }
+            return apartment_hostobject_in_hostapt(apt, FALSE, FALSE, hkeydll, rclsid, riid, ppv);
     }
     /* "Free" */
     else if (!strcmpiW(threading_model, wszFree))
     {
         if (!apt->multi_threaded)
-        {
-            FIXME("should create object %s in multi-threaded apartment\n",
-                debugstr_guid(rclsid));
-        }
+            return apartment_hostobject_in_hostapt(apt, TRUE, FALSE, hkeydll, rclsid, riid, ppv);
     }
     /* everything except "Apartment", "Free" and "Both" */
     else if (strcmpiW(threading_model, wszBoth))
@@ -1976,29 +2114,7 @@ static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll,
                 debugstr_w(threading_model), debugstr_guid(rclsid));
 
         if (apt->multi_threaded || !apt->main)
-        {
-            /* try to find an STA */
-            APARTMENT *host_apt = apartment_findfromtype(FALSE, TRUE);
-            if (!host_apt)
-                FIXME("create a host apartment for main-threaded object %s\n", debugstr_guid(rclsid));
-            if (host_apt)
-            {
-                struct host_object_params params;
-                HWND hwnd = apartment_getwindow(host_apt);
-
-                params.hkeydll = hkeydll;
-                params.clsid = *rclsid;
-                params.iid = *riid;
-                hr = CreateStreamOnHGlobal(NULL, TRUE, &params.stream);
-                if (FAILED(hr))
-                    return hr;
-                hr = SendMessageW(hwnd, DM_HOSTOBJECT, 0, (LPARAM)&params);
-                if (SUCCEEDED(hr))
-                    hr = CoUnmarshalInterface(params.stream, riid, ppv);
-                IStream_Release(params.stream);
-                return hr;
-            }
-        }
+            return apartment_hostobject_in_hostapt(apt, FALSE, TRUE, hkeydll, rclsid, riid, ppv);
     }
 
     if (COM_RegReadPath(hkeydll, NULL, NULL, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
