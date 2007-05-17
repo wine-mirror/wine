@@ -1167,6 +1167,8 @@ static HRESULT WINAPI InstallerImpl_Invoke(
     UINT ret;
     VARIANTARG varg0, varg1, varg2;
     HRESULT hr;
+    LPWSTR szString = NULL;
+    DWORD dwSize = 0;
 
     VariantInit(&varg0);
     VariantInit(&varg1);
@@ -1256,8 +1258,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
         case DISPID_INSTALLER_REGISTRYVALUE:
             if (wFlags & DISPATCH_METHOD) {
                 HKEY hkey;
-                LPWSTR szString = NULL;
-                DWORD dwSize = 0, dwType;
+                DWORD dwType;
                 UINT posValue = 2;    /* Save valuePos so we can save puArgErr if we are unable to do our type conversions */
 
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
@@ -1349,6 +1350,37 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                 if (FAILED(hr)) return hr;
                 V_VT(pVarResult) = VT_I4;
                 V_I4(pVarResult) = MsiQueryProductStateW(V_BSTR(&varg0));
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
+        case DISPID_INSTALLER_PRODUCTINFO:
+            if (wFlags & DISPATCH_PROPERTYGET) {
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
+                if (FAILED(hr))
+                {
+                    VariantClear(&varg0);
+                    return hr;
+                }
+                V_VT(pVarResult) = VT_BSTR;
+                V_BSTR(pVarResult) = NULL;
+                if ((ret = MsiGetProductInfoW(V_BSTR(&varg0), V_BSTR(&varg1), NULL, &dwSize)) == ERROR_SUCCESS)
+                {
+                    if (!(szString = msi_alloc((++dwSize)*sizeof(WCHAR))))
+                        ERR("Out of memory\n");
+                    else if ((ret = MsiGetProductInfoW(V_BSTR(&varg0), V_BSTR(&varg1), szString, &dwSize)) == ERROR_SUCCESS)
+                        V_BSTR(pVarResult) = SysAllocString(szString);
+                    msi_free(szString);
+                }
+                if (ret != ERROR_SUCCESS)
+                {
+                    ERR("MsiGetProductInfo returned %d\n", ret);
+                    VariantClear(&varg1);
+                    VariantClear(&varg0);
+                    return DISP_E_EXCEPTION;
+                }
             }
             else return DISP_E_MEMBERNOTFOUND;
             break;

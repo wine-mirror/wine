@@ -443,8 +443,8 @@ static void test_dispid(void)
     ok( get_dispid( pInstaller, "FileVersion" ) == 16, "dispid wrong\n");
     }
     ok( get_dispid( pInstaller, "ProductState" ) == 17, "dispid wrong\n");
-    todo_wine {
     ok( get_dispid( pInstaller, "ProductInfo" ) == 18, "dispid wrong\n");
+    todo_wine {
     ok( get_dispid( pInstaller, "ConfigureProduct" ) == 19, "dispid wrong\n");
     ok( get_dispid( pInstaller, "ReinstallProduct" ) == 20 , "dispid wrong\n");
     ok( get_dispid( pInstaller, "CollectUserInfo" ) == 21, "dispid wrong\n");
@@ -1686,32 +1686,30 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
     ok(iValue == INSTALLSTATE_DEFAULT, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_DEFAULT);
 
     /* Installer::ProductInfo for our product code */
-    todo_wine
-    {
-        /* NULL attribute */
-        memset(szString, 0, sizeof(szString));
-        hr = Installer_ProductInfo(szProductCode, NULL, szString);
-        ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
-        ok_exception(hr, szProductInfoException);
 
-        /* Non-existent attribute */
-        memset(szString, 0, sizeof(szString));
-        hr = Installer_ProductInfo(szProductCode, szMsifile, szString);
-        ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
-        ok_exception(hr, szProductInfoException);
+    /* NULL attribute */
+    memset(szString, 0, sizeof(szString));
+    hr = Installer_ProductInfo(szProductCode, NULL, szString);
+    ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+    ok_exception(hr, szProductInfoException);
 
-        /* Package name */
-        memset(szString, 0, sizeof(szString));
-        hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PACKAGENAMEW, szString);
-        ok(SUCCEEDED(hr), "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
-        ok_w2("StringList_Item returned %s but expected %s\n", szString, szMsifile);
+    /* Non-existent attribute */
+    memset(szString, 0, sizeof(szString));
+    hr = Installer_ProductInfo(szProductCode, szMsifile, szString);
+    ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+    ok_exception(hr, szProductInfoException);
 
-        /* Product name */
-        memset(szString, 0, sizeof(szString));
-        hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PRODUCTNAMEW, szString);
-        ok(SUCCEEDED(hr), "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
-        ok_w2("StringList_Item returned %s but expected %s\n", szString, szMSITEST);
-    }
+    /* Package name */
+    memset(szString, 0, sizeof(szString));
+    hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PACKAGENAMEW, szString);
+    todo_wine ok(SUCCEEDED(hr), "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+    todo_wine ok_w2("StringList_Item returned %s but expected %s\n", szString, szMsifile);
+
+    /* Product name */
+    memset(szString, 0, sizeof(szString));
+    hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PRODUCTNAMEW, szString);
+    ok(SUCCEEDED(hr), "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+    ok_w2("StringList_Item returned %s but expected %s\n", szString, szMSITEST);
 
     /* Installer::RelatedProducts for our upgrade code */
     hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
@@ -1933,20 +1931,18 @@ static void test_Installer(void)
     ok(iValue == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_UNKNOWN);
 
     /* Installer::ProductInfo for our product code, which should not be installed */
-    todo_wine
-    {
-        /* Package name */
-        memset(szPath, 0, sizeof(szPath));
-        hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PACKAGENAMEW, szPath);
-        ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
-        ok_exception(hr, szProductInfoException);
 
-        /* NULL attribute and NULL product code */
-        memset(szPath, 0, sizeof(szPath));
-        hr = Installer_ProductInfo(NULL, NULL, szPath);
-        ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
-        ok_exception(hr, szProductInfoException);
-    }
+    /* Package name */
+    memset(szPath, 0, sizeof(szPath));
+    hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PACKAGENAMEW, szPath);
+    ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+    ok_exception(hr, szProductInfoException);
+
+    /* NULL attribute and NULL product code */
+    memset(szPath, 0, sizeof(szPath));
+    hr = Installer_ProductInfo(NULL, NULL, szPath);
+    ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+    ok_exception(hr, szProductInfoException);
 
     /* Installer::RelatedProducts for our upgrade code, should not find anything */
     hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);

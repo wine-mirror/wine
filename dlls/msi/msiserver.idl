@@ -77,6 +77,10 @@ library WindowsInstaller
         [id(DISPID_INSTALLER_PRODUCTSTATE), propget]
             MsiInstallState ProductState(
                 [in] BSTR Product);
+        [id(DISPID_INSTALLER_PRODUCTINFO), propget]
+            BSTR ProductInfo(
+                [in] BSTR Product,
+                [in] BSTR Attribute);
         [id(DISPID_INSTALLER_PRODUCTS), propget]
             StringList *Products();
         [id(DISPID_INSTALLER_RELATEDPRODUCTS), propget]
