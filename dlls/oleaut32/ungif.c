@@ -65,6 +65,11 @@ static void *ungif_calloc( size_t num, size_t sz )
     return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, num*sz );
 }
 
+static void *ungif_realloc( void *ptr, size_t sz )
+{
+    return HeapReAlloc( GetProcessHeap(), 0, ptr, sz );
+}
+
 static void ungif_free( void *ptr )
 {
     HeapFree( GetProcessHeap(), 0, ptr );
@@ -194,7 +199,7 @@ AddExtensionBlock(SavedImage * New,
     if (New->ExtensionBlocks == NULL)
         New->ExtensionBlocks = ungif_alloc(sizeof(ExtensionBlock));
     else
-        New->ExtensionBlocks = realloc(New->ExtensionBlocks,
+        New->ExtensionBlocks = ungif_realloc(New->ExtensionBlocks,
                                       sizeof(ExtensionBlock) *
                                       (New->ExtensionBlockCount + 1));
 
@@ -387,7 +392,7 @@ DGifGetImageDesc(GifFileType * GifFile) {
     }
 
     if (GifFile->SavedImages) {
-        if ((GifFile->SavedImages = realloc(GifFile->SavedImages,
+        if ((GifFile->SavedImages = ungif_realloc(GifFile->SavedImages,
                                       sizeof(SavedImage) *
                                       (GifFile->ImageCount + 1))) == NULL) {
             return GIF_ERROR;
