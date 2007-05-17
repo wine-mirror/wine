@@ -51,6 +51,7 @@ typedef struct _KSERVICE_TABLE_DESCRIPTOR
 
 KSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable[4];
 
+typedef void (WINAPI *PCREATE_PROCESS_NOTIFY_ROUTINE)(HANDLE,HANDLE,BOOLEAN);
 
 #ifdef __i386__
 #define DEFINE_FASTCALL1_ENTRYPOINT( name ) \
@@ -413,6 +414,59 @@ void WINAPI MmFreeNonCachedMemory( void *addr, SIZE_T size )
 {
     TRACE( "%p %lu\n", addr, size );
     VirtualFree( addr, 0, MEM_RELEASE );
+}
+
+
+/***********************************************************************
+ *           PsGetCurrentProcessId   (NTOSKRNL.EXE.@)
+ */
+HANDLE WINAPI PsGetCurrentProcessId(void)
+{
+    return (HANDLE)GetCurrentProcessId();  /* FIXME: not quite right... */
+}
+
+
+/***********************************************************************
+ *           PsGetCurrentThreadId   (NTOSKRNL.EXE.@)
+ */
+HANDLE WINAPI PsGetCurrentThreadId(void)
+{
+    return (HANDLE)GetCurrentThreadId();  /* FIXME: not quite right... */
+}
+
+
+/***********************************************************************
+ *           PsGetVersion   (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI PsGetVersion(ULONG *major, ULONG *minor, ULONG *build, UNICODE_STRING *version )
+{
+    RTL_OSVERSIONINFOEXW info;
+
+    RtlGetVersion( &info );
+    if (major) *major = info.dwMajorVersion;
+    if (minor) *minor = info.dwMinorVersion;
+    if (build) *build = info.dwBuildNumber;
+
+    if (version)
+    {
+#if 0  /* FIXME: GameGuard passes an uninitialized pointer in version->Buffer */
+        size_t len = min( strlenW(info.szCSDVersion)*sizeof(WCHAR), version->MaximumLength );
+        memcpy( version->Buffer, info.szCSDVersion, len );
+        if (len < version->MaximumLength) version->Buffer[len / sizeof(WCHAR)] = 0;
+        version->Length = len;
+#endif
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           PsSetCreateProcessNotifyRoutine   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PsSetCreateProcessNotifyRoutine( PCREATE_PROCESS_NOTIFY_ROUTINE callback, BOOLEAN remove )
+{
+    FIXME( "stub: %p %d\n", callback, remove );
+    return STATUS_SUCCESS;
 }
 
 

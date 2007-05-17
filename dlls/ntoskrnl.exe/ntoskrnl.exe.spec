@@ -850,10 +850,10 @@
 @ stub PsEstablishWin32Callouts
 @ stub PsGetContextThread
 @ stub PsGetCurrentProcess
-@ stub PsGetCurrentProcessId
+@ stdcall PsGetCurrentProcessId()
 @ stub PsGetCurrentProcessSessionId
 @ stub PsGetCurrentThread
-@ stub PsGetCurrentThreadId
+@ stdcall PsGetCurrentThreadId()
 @ stub PsGetCurrentThreadPreviousMode
 @ stub PsGetCurrentThreadStackBase
 @ stub PsGetCurrentThreadStackLimit
@@ -884,7 +884,7 @@
 @ stub PsGetThreadSessionId
 @ stub PsGetThreadTeb
 @ stub PsGetThreadWin32Thread
-@ stub PsGetVersion
+@ stdcall PsGetVersion(ptr ptr ptr ptr)
 @ stub PsImpersonateClient
 @ stub PsInitialSystemProcess
 @ stub PsIsProcessBeingDebugged
@@ -907,7 +907,7 @@
 @ stub PsRevertThreadToSelf
 @ stub PsRevertToSelf
 @ stub PsSetContextThread
-@ stub PsSetCreateProcessNotifyRoutine
+@ stdcall PsSetCreateProcessNotifyRoutine(ptr long)
 @ stub PsSetCreateThreadNotifyRoutine
 @ stub PsSetJobUIRestrictionsClass
 @ stub PsSetLegoNotifyRoutine
