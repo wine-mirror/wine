@@ -1640,6 +1640,58 @@ static inline HRESULT get_facbuf_for_iid(REFIID riid, IPSFactoryBuffer **facbuf)
                              &IID_IPSFactoryBuffer, (LPVOID*)facbuf);
 }
 
+static HRESULT init_proxy_entry_point(TMProxyImpl *proxy, unsigned int num)
+{
+    int j;
+    /* nrofargs without This */
+    int nrofargs;
+    ITypeInfo *tinfo2;
+    TMAsmProxy	*xasm = proxy->asmstubs + num;
+    HRESULT hres;
+    const FUNCDESC *fdesc;
+
+    hres = get_funcdesc(proxy->tinfo, num, &tinfo2, &fdesc, NULL, NULL, NULL);
+    if (hres) {
+        ERR("GetFuncDesc %x should not fail here.\n",hres);
+        return hres;
+    }
+    ITypeInfo_Release(tinfo2);
+    /* some args take more than 4 byte on the stack */
+    nrofargs = 0;
+    for (j=0;j<fdesc->cParams;j++)
+        nrofargs += _argsize(fdesc->lprgelemdescParam[j].tdesc.vt);
+
+#ifdef __i386__
+    if (fdesc->callconv != CC_STDCALL) {
+        ERR("calling convention is not stdcall????\n");
+        return E_FAIL;
+    }
+/* popl %eax	-	return ptr
+ * pushl <nr>
+ * pushl %eax
+ * call xCall
+ * lret <nr> (+4)
+ *
+ *
+ * arg3 arg2 arg1 <method> <returnptr>
+ */
+    xasm->popleax       = 0x58;
+    xasm->pushlval      = 0x6a;
+    xasm->nr            = num;
+    xasm->pushleax      = 0x50;
+    xasm->lcall         = 0xe8; /* relative jump */
+    xasm->xcall         = (DWORD)xCall;
+    xasm->xcall        -= (DWORD)&(xasm->lret);
+    xasm->lret          = 0xc2;
+    xasm->bytestopop    = (nrofargs+2)*4; /* pop args, This, iMethod */
+    proxy->lpvtbl[num]  = xasm;
+#else
+    FIXME("not implemented on non i386\n");
+    return E_FAIL;
+#endif
+    return S_OK;
+}
+
 static HRESULT WINAPI
 PSFacBuf_CreateProxy(
     LPPSFACTORYBUFFER iface, IUnknown* pUnkOuter, REFIID riid,
@@ -1648,7 +1700,6 @@ PSFacBuf_CreateProxy(
     HRESULT	hres;
     ITypeInfo	*tinfo;
     int		i, nroffuncs;
-    const FUNCDESC *fdesc;
     TMProxyImpl	*proxy;
     TYPEATTR	*typeattr;
 
@@ -1685,8 +1736,6 @@ PSFacBuf_CreateProxy(
 
     proxy->lpvtbl = HeapAlloc(GetProcessHeap(),0,sizeof(LPBYTE)*nroffuncs);
     for (i=0;i<nroffuncs;i++) {
-	TMAsmProxy	*xasm = proxy->asmstubs+i;
-
 	switch (i) {
 	case 0:
 		proxy->lpvtbl[i] = ProxyIUnknown_QueryInterface;
@@ -1697,52 +1746,9 @@ PSFacBuf_CreateProxy(
 	case 2:
 		proxy->lpvtbl[i] = ProxyIUnknown_Release;
 		break;
-	default: {
-		int j;
-		/* nrofargs without This */
-		int nrofargs;
-                ITypeInfo *tinfo2;
-		hres = get_funcdesc(tinfo,i,&tinfo2,&fdesc,NULL,NULL,NULL);
-		if (hres) {
-		    ERR("GetFuncDesc %x should not fail here.\n",hres);
-		    return hres;
-		}
-                ITypeInfo_Release(tinfo2);
-		/* some args take more than 4 byte on the stack */
-		nrofargs = 0;
-		for (j=0;j<fdesc->cParams;j++)
-		    nrofargs += _argsize(fdesc->lprgelemdescParam[j].tdesc.vt);
-
-#ifdef __i386__
-		if (fdesc->callconv != CC_STDCALL) {
-		    ERR("calling convention is not stdcall????\n");
-		    return E_FAIL;
-		}
-/* popl %eax	-	return ptr
- * pushl <nr>
- * pushl %eax
- * call xCall
- * lret <nr> (+4)
- *
- *
- * arg3 arg2 arg1 <method> <returnptr>
- */
-		xasm->popleax	= 0x58;
-		xasm->pushlval	= 0x6a;
-		xasm->nr	= i;
-		xasm->pushleax	= 0x50;
-		xasm->lcall	= 0xe8;	/* relative jump */
-		xasm->xcall	= (DWORD)xCall;
-		xasm->xcall     -= (DWORD)&(xasm->lret);
-		xasm->lret	= 0xc2;
-		xasm->bytestopop= (nrofargs+2)*4; /* pop args, This, iMethod */
-		proxy->lpvtbl[i] = xasm;
-		break;
-#else
-                FIXME("not implemented on non i386\n");
-                return E_FAIL;
-#endif
-	    }
+	default:
+                hres = init_proxy_entry_point(proxy, i);
+                if(FAILED(hres)) return hres;
 	}
     }
 
