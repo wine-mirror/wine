@@ -226,8 +226,6 @@
 #include "winreg.h"
 #define NO_SHLWAPI_STREAM 
 #include "shlwapi.h"
-#include "imm.h"
-#include "textserv.h"
 #include "rtf.h"
 
 #define STACK_SIZE_DEFAULT  100
