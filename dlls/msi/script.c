@@ -111,21 +111,21 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
 
     /* Create the scripting engine */
     if ((type & 7) == msidbCustomActionTypeJScript)
-	hr = CLSIDFromProgID(szJScript, &clsid);
+        hr = CLSIDFromProgID(szJScript, &clsid);
     else if ((type & 7) == msidbCustomActionTypeVBScript)
-	hr = CLSIDFromProgID(szVBScript, &clsid);
+        hr = CLSIDFromProgID(szVBScript, &clsid);
     else {
-	ERR("Unknown script type %d\n", type);
-	goto done;
+        ERR("Unknown script type %d\n", type);
+        goto done;
     }
     if (FAILED(hr)) {
-	ERR("Could not find CLSID for Windows Script\n");
-	goto done;
+        ERR("Could not find CLSID for Windows Script\n");
+        goto done;
     }
     hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IActiveScript, (void **)&pActiveScript);
     if (FAILED(hr)) {
-	ERR("Could not instantiate class for Windows Script\n");
-	goto done;
+        ERR("Could not instantiate class for Windows Script\n");
+        goto done;
     }
 
     /* If we got this far, Windows Script is installed, so don't return success by default anymore */
@@ -156,29 +156,29 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
 
     /* Call a function if necessary through the IDispatch interface */
     if (function != NULL && strlenW(function) > 0) {
-	TRACE("Calling function %s\n", debugstr_w(function));
+        TRACE("Calling function %s\n", debugstr_w(function));
 
-	hr = IActiveScript_GetScriptDispatch(pActiveScript, NULL, &pDispatch);
-	if (FAILED(hr)) goto done;
+        hr = IActiveScript_GetScriptDispatch(pActiveScript, NULL, &pDispatch);
+        if (FAILED(hr)) goto done;
 
-	hr = IDispatch_GetIDsOfNames(pDispatch, &IID_NULL, (WCHAR **)&function, 1,LOCALE_USER_DEFAULT, &dispid);
-	if (FAILED(hr)) goto done;
+        hr = IDispatch_GetIDsOfNames(pDispatch, &IID_NULL, (WCHAR **)&function, 1,LOCALE_USER_DEFAULT, &dispid);
+        if (FAILED(hr)) goto done;
 
-	hr = IDispatch_Invoke(pDispatch, dispid, &IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &dispparamsNoArgs, &var, NULL, NULL);
-	if (FAILED(hr)) goto done;
+        hr = IDispatch_Invoke(pDispatch, dispid, &IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &dispparamsNoArgs, &var, NULL, NULL);
+        if (FAILED(hr)) goto done;
 
-	/* Check return value, if it's not IDOK we failed */
-	hr = VariantChangeType(&var, &var, 0, VT_I4);
-	if (FAILED(hr)) goto done;
+        /* Check return value, if it's not IDOK we failed */
+        hr = VariantChangeType(&var, &var, 0, VT_I4);
+        if (FAILED(hr)) goto done;
 
-	if (V_I4(&var) == IDOK)
-	    ret = ERROR_SUCCESS;
-	else ret = ERROR_INSTALL_FAILURE;
+        if (V_I4(&var) == IDOK)
+            ret = ERROR_SUCCESS;
+        else ret = ERROR_INSTALL_FAILURE;
 
-	VariantClear(&var);
+        VariantClear(&var);
     } else {
-	/* If no function to be called, MSI behavior is to succeed */
-	ret = ERROR_SUCCESS;
+        /* If no function to be called, MSI behavior is to succeed */
+        ret = ERROR_SUCCESS;
     }
 
 done:
@@ -187,9 +187,9 @@ done:
     if (pDispatch) IDispatch_Release(pDispatch);
     if (pActiveScript) IActiveScriptSite_Release(pActiveScript);
     if (pActiveScriptSite &&
-	pActiveScriptSite->pSession) IUnknown_Release((IUnknown *)pActiveScriptSite->pSession);
+        pActiveScriptSite->pSession) IUnknown_Release((IUnknown *)pActiveScriptSite->pSession);
     if (pActiveScriptSite &&
-	pActiveScriptSite->pInstaller) IUnknown_Release((IUnknown *)pActiveScriptSite->pInstaller);
+        pActiveScriptSite->pInstaller) IUnknown_Release((IUnknown *)pActiveScriptSite->pInstaller);
     if (pActiveScriptSite) IUnknown_Release((IUnknown *)pActiveScriptSite);
 
     CoUninitialize();    /* must call even if CoInitialize failed */
@@ -258,21 +258,21 @@ static HRESULT WINAPI MsiActiveScriptSite_GetItemInfo(IActiveScriptSite* iface, 
 
     /* Determine the kind of pointer that is requested, and make sure placeholder is valid */
     if (dwReturnMask & SCRIPTINFO_ITYPEINFO) {
-	if (!ppti) return E_INVALIDARG;
-	*ppti = NULL;
+        if (!ppti) return E_INVALIDARG;
+        *ppti = NULL;
     }
     if (dwReturnMask & SCRIPTINFO_IUNKNOWN) {
-	if (!ppiunkItem) return E_INVALIDARG;
-	*ppiunkItem = NULL;
+        if (!ppiunkItem) return E_INVALIDARG;
+        *ppiunkItem = NULL;
     }
 
     /* Are we looking for the session object? */
     if (!strcmpW(szSession, pstrName)) {
-	if (dwReturnMask & SCRIPTINFO_ITYPEINFO)
-	    return load_type_info(This->pSession, ppti, &DIID_Session, 0);
-	else if (dwReturnMask & SCRIPTINFO_IUNKNOWN) {
-	    IDispatch_QueryInterface(This->pSession, &IID_IUnknown, (void **)ppiunkItem);
-	    return S_OK;
+        if (dwReturnMask & SCRIPTINFO_ITYPEINFO)
+            return load_type_info(This->pSession, ppti, &DIID_Session, 0);
+        else if (dwReturnMask & SCRIPTINFO_IUNKNOWN) {
+            IDispatch_QueryInterface(This->pSession, &IID_IUnknown, (void **)ppiunkItem);
+            return S_OK;
         }
     }
 
@@ -296,33 +296,33 @@ static HRESULT WINAPI MsiActiveScriptSite_OnScriptTerminate(IActiveScriptSite* i
 static HRESULT WINAPI MsiActiveScriptSite_OnStateChange(IActiveScriptSite* iface, SCRIPTSTATE ssScriptState)
 {
     switch (ssScriptState) {
-	case SCRIPTSTATE_UNINITIALIZED:
-	      TRACE("State: Uninitialized.\n");
-	      break;
+        case SCRIPTSTATE_UNINITIALIZED:
+              TRACE("State: Uninitialized.\n");
+              break;
 
-	case SCRIPTSTATE_INITIALIZED:
-	      TRACE("State: Initialized.\n");
-	      break;
+        case SCRIPTSTATE_INITIALIZED:
+              TRACE("State: Initialized.\n");
+              break;
 
-	case SCRIPTSTATE_STARTED:
-	      TRACE("State: Started.\n");
-	      break;
+        case SCRIPTSTATE_STARTED:
+              TRACE("State: Started.\n");
+              break;
 
-	case SCRIPTSTATE_CONNECTED:
-	      TRACE("State: Connected.\n");
-	      break;
+        case SCRIPTSTATE_CONNECTED:
+              TRACE("State: Connected.\n");
+              break;
 
-	case SCRIPTSTATE_DISCONNECTED:
-	      TRACE("State: Disconnected.\n");
-	      break;
+        case SCRIPTSTATE_DISCONNECTED:
+              TRACE("State: Disconnected.\n");
+              break;
 
-	case SCRIPTSTATE_CLOSED:
-	      TRACE("State: Closed.\n");
-	      break;
+        case SCRIPTSTATE_CLOSED:
+              TRACE("State: Closed.\n");
+              break;
 
-	default:
-	      ERR("Unknown State: %d\n", ssScriptState);
-	      break;
+        default:
+              ERR("Unknown State: %d\n", ssScriptState);
+              break;
     }
 
     return S_OK;
@@ -338,7 +338,7 @@ static HRESULT WINAPI MsiActiveScriptSite_OnScriptError(IActiveScriptSite* iface
 
     hr = IActiveScriptError_GetExceptionInfo(pscripterror, &exception);
     if (SUCCEEDED(hr))
-	ERR("script error: %s\n", debugstr_w(exception.bstrDescription));
+        ERR("script error: %s\n", debugstr_w(exception.bstrDescription));
 
     return S_OK;
 }
