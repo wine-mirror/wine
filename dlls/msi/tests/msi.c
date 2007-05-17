@@ -131,7 +131,7 @@ static void test_null(void)
     ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
 
     r = MsiGetProductInfoA("", "", NULL, NULL);
-    todo_wine ok ( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
+    ok ( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
 
     if (lpData)
     {
@@ -157,7 +157,7 @@ static void test_null(void)
     ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
 
     r = MsiGetProductInfoA("{F1C3AF50-8B56-4A69-A00C-00773FE42F30}", "", NULL, NULL);
-    todo_wine ok ( r == ERROR_UNKNOWN_PROPERTY, "wrong error %d\n", r);
+    ok ( r == ERROR_UNKNOWN_PROPERTY, "wrong error %d\n", r);
 
     r = RegCloseKey(hkey);
     ok( r == ERROR_SUCCESS, "wrong error %d\n", r);

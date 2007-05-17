@@ -444,7 +444,7 @@ static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
      * FIXME: Values seem scattered/duplicated in the registry. Is there a system?
      */
 
-    if ((szValue->str.w && !pcchValueBuf) || !szProduct || !szAttribute)
+    if ((szValue->str.w && !pcchValueBuf) || !szProduct || !szProduct[0] || !szAttribute)
         return ERROR_INVALID_PARAMETER;
 
     /* check for special properties */
@@ -504,6 +504,10 @@ static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         val = msi_reg_get_val_str( hkey, szAttribute );
 
         RegCloseKey(hkey);
+    }
+    else if (!szAttribute[0])
+    {
+        return ERROR_UNKNOWN_PROPERTY;
     }
     else
     {
