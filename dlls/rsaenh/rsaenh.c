@@ -33,7 +33,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "wincrypt.h"
-#include "lmcons.h"
 #include "handle.h"
 #include "implglue.h"
 #include "objbase.h"
