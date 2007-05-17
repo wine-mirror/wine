@@ -790,6 +790,32 @@ if(use_midl_tlb) {
 }
     ITypeInfo_Release(pTI);
 
+
+    /* ItestIF2 is an interface which derives from IUnknown */
+    hr = ITypeLib_GetTypeInfoOfGuid(pTL, &IID_ItestIF2, &pTI);
+    ok(hr == S_OK, "hr %08x\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(pTI, &pTA);
+    ok(hr == S_OK, "hr %08x\n", hr);
+    ok(pTA->typekind == TKIND_INTERFACE, "kind %04x\n", pTA->typekind);
+    ok(pTA->cbSizeVft == 24, "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->wTypeFlags == 0, "typeflags %x\n", pTA->wTypeFlags);
+if(use_midl_tlb) {
+    ok(pTA->cFuncs == 1, "cfuncs %d\n", pTA->cFuncs);
+    ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
+    ITypeInfo_ReleaseTypeAttr(pTI, pTA);
+
+    /* Should have one method */
+    hr = ITypeInfo_GetFuncDesc(pTI, 1, &pFD);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "hr %08x\n", hr);
+    hr = ITypeInfo_GetFuncDesc(pTI, 0, &pFD);
+    ok(hr == S_OK, "hr %08x\n", hr);
+    ok(pFD->memid == 0x60020000, "memid %08x\n", pFD->memid);
+    ok(pFD->oVft == 20, "oVft %d\n", pFD->oVft);
+    ITypeInfo_ReleaseFuncDesc(pTI, pFD);
+}
+    ITypeInfo_Release(pTI);
+
     ITypeLib_Release(pTL);
 
     return;
