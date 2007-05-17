@@ -804,14 +804,14 @@ static HRESULT Installer_RelatedProducts(LPCWSTR szProduct, IDispatch **pStringL
     return hr;
 }
 
-static HRESULT Installer_VersionGet(LPCWSTR szVersion)
+static HRESULT Installer_VersionGet(LPWSTR szVersion)
 {
     VARIANT varresult;
     DISPPARAMS dispparams = {NULL, NULL, 0, 0};
     HRESULT hr;
 
     hr = invoke(pInstaller, "Version", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
-    lstrcpyW((WCHAR *)szVersion, V_BSTR(&varresult));
+    lstrcpyW(szVersion, V_BSTR(&varresult));
     VariantClear(&varresult);
     return hr;
 }
@@ -827,7 +827,7 @@ static HRESULT Session_Installer(IDispatch *pSession, IDispatch **pInst)
     return hr;
 }
 
-static HRESULT Session_PropertyGet(IDispatch *pSession, LPCWSTR szName, LPCWSTR szReturn)
+static HRESULT Session_PropertyGet(IDispatch *pSession, LPCWSTR szName, LPWSTR szReturn)
 {
     VARIANT varresult;
     VARIANTARG vararg[1];
@@ -839,7 +839,7 @@ static HRESULT Session_PropertyGet(IDispatch *pSession, LPCWSTR szName, LPCWSTR 
     V_BSTR(&vararg[0]) = SysAllocString(szName);
 
     hr = invoke(pSession, "Property", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
-    lstrcpyW((WCHAR *)szReturn, V_BSTR(&varresult));
+    lstrcpyW(szReturn, V_BSTR(&varresult));
     VariantClear(&varresult);
     return hr;
 }
@@ -1089,7 +1089,7 @@ static HRESULT Record_FieldCountGet(IDispatch *pRecord, int *pFieldCount)
     return hr;
 }
 
-static HRESULT Record_StringDataGet(IDispatch *pRecord, int iField, LPCWSTR szString)
+static HRESULT Record_StringDataGet(IDispatch *pRecord, int iField, LPWSTR szString)
 {
     VARIANT varresult;
     VARIANTARG vararg[1];
@@ -1101,7 +1101,7 @@ static HRESULT Record_StringDataGet(IDispatch *pRecord, int iField, LPCWSTR szSt
     V_I4(&vararg[0]) = iField;
 
     hr = invoke(pRecord, "StringData", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_BSTR);
-    lstrcpyW((WCHAR *)szString, V_BSTR(&varresult));
+    lstrcpyW(szString, V_BSTR(&varresult));
     VariantClear(&varresult);
     return hr;
 }
