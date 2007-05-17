@@ -164,7 +164,7 @@ BOOL16 WINAPI PeekMessage32_16( MSG32_16 *msg16, HWND16 hwnd16,
     HWND hwnd = WIN_Handle32( hwnd16 );
 
     if(USER16_AlertableWait)
-        MsgWaitForMultipleObjectsEx( 0, NULL, 1, 0, MWMO_ALERTABLE );
+        MsgWaitForMultipleObjectsEx( 0, NULL, 0, 0, MWMO_ALERTABLE );
     if (!PeekMessageA( &msg, hwnd, first, last, flags )) return FALSE;
 
     msg16->msg.time    = msg.time;
