@@ -1486,26 +1486,43 @@ static DWORD service_start_process(struct sc_service *hsvc, LPDWORD ppid)
     PROCESS_INFORMATION pi;
     STARTUPINFOW si;
     LPWSTR path = NULL, str;
-    DWORD type, size, ret;
+    DWORD type, size, ret, svc_type;
     HANDLE handles[2];
     BOOL r;
 
-    /* read the executable path from memory */
-    size = 0;
-    ret = RegQueryValueExW(hsvc->hkey, _ImagePathW, NULL, &type, NULL, &size);
-    if (ret!=ERROR_SUCCESS)
-        return FALSE;
-    str = HeapAlloc(GetProcessHeap(),0,size);
-    ret = RegQueryValueExW(hsvc->hkey, _ImagePathW, NULL, &type, (LPBYTE)str, &size);
-    if (ret==ERROR_SUCCESS)
+    size = sizeof(svc_type);
+    if (RegQueryValueExW(hsvc->hkey, szType, NULL, &type, (LPBYTE)&svc_type, &size) || type != REG_DWORD)
+        svc_type = 0;
+
+    if (svc_type == SERVICE_KERNEL_DRIVER)
     {
-        size = ExpandEnvironmentStringsW(str,NULL,0);
-        path = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
-        ExpandEnvironmentStringsW(str,path,size);
+        static const WCHAR winedeviceW[] = {'\\','w','i','n','e','d','e','v','i','c','e','.','e','x','e',' ',0};
+        DWORD len = GetSystemDirectoryW( NULL, 0 ) + sizeof(winedeviceW)/sizeof(WCHAR) + strlenW(hsvc->name);
+
+        if (!(path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
+        GetSystemDirectoryW( path, len );
+        lstrcatW( path, winedeviceW );
+        lstrcatW( path, hsvc->name );
     }
-    HeapFree(GetProcessHeap(),0,str);
-    if (!path)
-        return FALSE;
+    else
+    {
+        /* read the executable path from the registry */
+        size = 0;
+        ret = RegQueryValueExW(hsvc->hkey, _ImagePathW, NULL, &type, NULL, &size);
+        if (ret!=ERROR_SUCCESS)
+            return FALSE;
+        str = HeapAlloc(GetProcessHeap(),0,size);
+        ret = RegQueryValueExW(hsvc->hkey, _ImagePathW, NULL, &type, (LPBYTE)str, &size);
+        if (ret==ERROR_SUCCESS)
+        {
+            size = ExpandEnvironmentStringsW(str,NULL,0);
+            path = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
+            ExpandEnvironmentStringsW(str,path,size);
+        }
+        HeapFree(GetProcessHeap(),0,str);
+        if (!path)
+            return FALSE;
+    }
 
     /* wait for the process to start and set an event or terminate */
     handles[0] = service_get_event_handle( hsvc->name );
