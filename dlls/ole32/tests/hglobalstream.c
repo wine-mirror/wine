@@ -259,6 +259,50 @@ static void test_copyto(void)
     IStream_Release(pStream);
 }
 
+static void test_freed_hglobal(void)
+{
+    HRESULT hr;
+    IStream *pStream;
+    HGLOBAL hglobal;
+    char *p;
+    char buffer[10];
+    ULARGE_INTEGER ull;
+    ULONG read, written;
+
+    hglobal = GlobalAlloc(GMEM_DDESHARE|GMEM_NODISCARD|GMEM_MOVEABLE, strlen("Rob") + 1);
+    ok(hglobal != NULL, "GlobalAlloc failed with error %d\n", GetLastError());
+    p = GlobalLock(hglobal);
+    strcpy(p, "Rob");
+    GlobalUnlock(hglobal);
+
+    hr = CreateStreamOnHGlobal(hglobal, FALSE, &pStream);
+    ok_ole_success(hr, "CreateStreamOnHGlobal");
+
+    hr = IStream_Read(pStream, buffer, sizeof(buffer), &read);
+    ok_ole_success(hr, "IStream_Read");
+    ok(!strcmp(buffer, "Rob"), "buffer data %s differs\n", buffer);
+    ok(read == strlen("Rob") + 1, "read should be 4 instead of %d\n", read);
+
+    GlobalFree(hglobal);
+
+    memset(buffer, 0, sizeof(buffer));
+    read = -1;
+    hr = IStream_Read(pStream, buffer, sizeof(buffer), &read);
+    ok_ole_success(hr, "IStream_Read");
+    ok(buffer[0] == 0, "buffer data should be untouched\n");
+    ok(read == 0, "read should be 0 instead of %d\n", read);
+
+    ull.QuadPart = sizeof(buffer);
+    hr = IStream_SetSize(pStream, ull);
+    ok(hr == E_OUTOFMEMORY, "IStream_SetSize with invalid HGLOBAL should return E_OUTOFMEMORY instead of 0x%08x\n", hr);
+
+    hr = IStream_Write(pStream, buffer, sizeof(buffer), &written);
+    ok(hr == E_OUTOFMEMORY, "IStream_Write with invalid HGLOBAL should return E_OUTOFMEMORY instead of 0x%08x\n", hr);
+    ok(written == 0, "written should be 0 instead of %d\n", written);
+
+    IStream_Release(pStream);
+}
+
 START_TEST(hglobalstream)
 {
     HRESULT hr;
@@ -270,4 +314,5 @@ START_TEST(hglobalstream)
     test_streamonhglobal(pStream);
     IStream_Release(pStream);
     test_copyto();
+    test_freed_hglobal();
 }
