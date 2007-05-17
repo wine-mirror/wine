@@ -526,7 +526,7 @@ static void test_dispatch(void)
     /* Test getting ID of a function name that does exist */
     name = (WCHAR *)szOpenPackage;
     hr = IDispatch_GetIDsOfNames(pInstaller, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
-    ok(SUCCEEDED(hr), "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
+    ok(hr == S_OK, "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
 
     /* Test invoking this function (without parameters passed) */
     if (0) /* All of these crash MSI on Windows XP */
@@ -570,7 +570,7 @@ static void test_dispatch(void)
     /* Test invoking a read-only property as DISPATCH_PROPERTYPUT or as a DISPATCH_METHOD */
     name = (WCHAR *)szProductState;
     hr = IDispatch_GetIDsOfNames(pInstaller, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
-    ok(SUCCEEDED(hr), "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
+    ok(hr == S_OK, "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
 
     dispparams.rgvarg = NULL;
     dispparams.cArgs = 0;
@@ -601,19 +601,19 @@ static HRESULT invoke(IDispatch *pDispatch, LPCSTR szName, WORD wFlags, DISPPARA
     len = MultiByteToWideChar(CP_ACP, 0, szName, -1, name, len );
     hr = IDispatch_GetIDsOfNames(pDispatch, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
     HeapFree(GetProcessHeap(), 0, name);
-    ok(SUCCEEDED(hr), "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
-    if (!SUCCEEDED(hr)) return hr;
+    ok(hr == S_OK, "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
+    if (!hr == S_OK) return hr;
 
     memset(&excepinfo, 0, sizeof(excepinfo));
     hr = IDispatch_Invoke(pDispatch, dispid, &IID_NULL, LOCALE_NEUTRAL, wFlags, pDispParams, pVarResult, &excepinfo, NULL);
 
-    if (SUCCEEDED(hr))
+    if (hr == S_OK)
     {
         ok(V_VT(pVarResult) == vtResult, "Variant result type is %d, expected %d\n", V_VT(pVarResult), vtResult);
         if (vtResult != VT_EMPTY)
         {
             hr = VariantChangeTypeEx(pVarResult, pVarResult, LOCALE_NEUTRAL, 0, vtResult);
-            ok(SUCCEEDED(hr), "VariantChangeTypeEx returned 0x%08x\n", hr);
+            ok(hr == S_OK, "VariantChangeTypeEx returned 0x%08x\n", hr);
         }
     }
 
@@ -1197,36 +1197,36 @@ static void test_Database(IDispatch *pDatabase)
     HRESULT hr;
 
     hr = Database_OpenView(pDatabase, szSql, &pView);
-    ok(SUCCEEDED(hr), "Database_OpenView failed, hresult 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
+    ok(hr == S_OK, "Database_OpenView failed, hresult 0x%08x\n", hr);
+    if (hr == S_OK)
     {
         IDispatch *pRecord = NULL;
         WCHAR szString[MAX_PATH];
 
         /* View::Execute */
         hr = View_Execute(pView, NULL);
-        ok(SUCCEEDED(hr), "View_Execute failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "View_Execute failed, hresult 0x%08x\n", hr);
 
         /* View::Fetch */
         hr = View_Fetch(pView, &pRecord);
-        ok(SUCCEEDED(hr), "View_Fetch failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "View_Fetch failed, hresult 0x%08x\n", hr);
         ok(pRecord != NULL, "View_Fetch should not have returned NULL record\n");
         if (pRecord)
         {
             /* Record::StringDataGet */
             memset(szString, 0, sizeof(szString));
             hr = Record_StringDataGet(pRecord, 1, szString);
-            ok(SUCCEEDED(hr), "Record_StringDataGet failed, hresult 0x%08x\n", hr);
+            ok(hr == S_OK, "Record_StringDataGet failed, hresult 0x%08x\n", hr);
             ok_w2("Record_StringDataGet result was %s but expected %s\n", szString, szThree);
 
             /* Record::StringDataPut with correct index */
             hr = Record_StringDataPut(pRecord, 1, szTwo);
-            ok(SUCCEEDED(hr), "Record_StringDataPut failed, hresult 0x%08x\n", hr);
+            ok(hr == S_OK, "Record_StringDataPut failed, hresult 0x%08x\n", hr);
 
             /* Record::StringDataGet */
             memset(szString, 0, sizeof(szString));
             hr = Record_StringDataGet(pRecord, 1, szString);
-            ok(SUCCEEDED(hr), "Record_StringDataGet failed, hresult 0x%08x\n", hr);
+            ok(hr == S_OK, "Record_StringDataGet failed, hresult 0x%08x\n", hr);
             ok_w2("Record_StringDataGet result was %s but expected %s\n", szString, szTwo);
 
             /* Record::StringDataPut with incorrect index */
@@ -1250,12 +1250,12 @@ static void test_Database(IDispatch *pDatabase)
             /* View::Modify with MSIMODIFY_REFRESH should undo our changes */
             hr = View_Modify(pView, MSIMODIFY_REFRESH, pRecord);
             /* Wine's MsiViewModify currently does not support MSIMODIFY_REFRESH */
-            todo_wine ok(SUCCEEDED(hr), "View_Modify failed, hresult 0x%08x\n", hr);
+            todo_wine ok(hr == S_OK, "View_Modify failed, hresult 0x%08x\n", hr);
 
             /* Record::StringDataGet, confirm that the record is back to its unmodified value */
             memset(szString, 0, sizeof(szString));
             hr = Record_StringDataGet(pRecord, 1, szString);
-            ok(SUCCEEDED(hr), "Record_StringDataGet failed, hresult 0x%08x\n", hr);
+            ok(hr == S_OK, "Record_StringDataGet failed, hresult 0x%08x\n", hr);
             todo_wine ok_w2("Record_StringDataGet result was %s but expected %s\n", szString, szThree);
 
             IDispatch_Release(pRecord);
@@ -1263,14 +1263,14 @@ static void test_Database(IDispatch *pDatabase)
 
         /* View::Fetch */
         hr = View_Fetch(pView, &pRecord);
-        ok(SUCCEEDED(hr), "View_Fetch failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "View_Fetch failed, hresult 0x%08x\n", hr);
         ok(pRecord != NULL, "View_Fetch should not have returned NULL record\n");
         if (pRecord)
         {
             /* Record::StringDataGet */
             memset(szString, 0, sizeof(szString));
             hr = Record_StringDataGet(pRecord, 1, szString);
-            ok(SUCCEEDED(hr), "Record_StringDataGet failed, hresult 0x%08x\n", hr);
+            ok(hr == S_OK, "Record_StringDataGet failed, hresult 0x%08x\n", hr);
             ok_w2("Record_StringDataGet result was %s but expected %s\n", szString, szTwo);
 
             IDispatch_Release(pRecord);
@@ -1278,14 +1278,14 @@ static void test_Database(IDispatch *pDatabase)
 
         /* View::Fetch */
         hr = View_Fetch(pView, &pRecord);
-        ok(SUCCEEDED(hr), "View_Fetch failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "View_Fetch failed, hresult 0x%08x\n", hr);
         ok(pRecord == NULL, "View_Fetch should have returned NULL record\n");
         if (pRecord)
             IDispatch_Release(pRecord);
 
         /* View::Close */
         hr = View_Close(pView);
-        ok(SUCCEEDED(hr), "View_Close failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "View_Close failed, hresult 0x%08x\n", hr);
 
         IDispatch_Release(pView);
     }
@@ -1313,14 +1313,14 @@ static void test_Session(IDispatch *pSession)
 
     /* Session::Installer */
     hr = Session_Installer(pSession, &pInst);
-    ok(SUCCEEDED(hr), "Session_Installer failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_Installer failed, hresult 0x%08x\n", hr);
     ok(pInst != NULL, "Session_Installer returned NULL IDispatch pointer\n");
     ok(pInst == pInstaller, "Session_Installer does not match Installer instance from CoCreateInstance\n");
 
     /* Session::Property, get */
     memset(stringw, 0, sizeof(stringw));
     hr = Session_PropertyGet(pSession, szProductName, stringw);
-    ok(SUCCEEDED(hr), "Session_PropertyGet failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_PropertyGet failed, hresult 0x%08x\n", hr);
     if (lstrcmpW(stringw, szMSITEST) != 0)
     {
         len = WideCharToMultiByte(CP_ACP, 0, stringw, -1, string, MAX_PATH, NULL, NULL);
@@ -1330,10 +1330,10 @@ static void test_Session(IDispatch *pSession)
 
     /* Session::Property, put */
     hr = Session_PropertyPut(pSession, szProductName, szProductName);
-    ok(SUCCEEDED(hr), "Session_PropertyPut failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_PropertyPut failed, hresult 0x%08x\n", hr);
     memset(stringw, 0, sizeof(stringw));
     hr = Session_PropertyGet(pSession, szProductName, stringw);
-    ok(SUCCEEDED(hr), "Session_PropertyGet failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_PropertyGet failed, hresult 0x%08x\n", hr);
     if (lstrcmpW(stringw, szProductName) != 0)
     {
         len = WideCharToMultiByte(CP_ACP, 0, stringw, -1, string, MAX_PATH, NULL, NULL);
@@ -1348,31 +1348,31 @@ static void test_Session(IDispatch *pSession)
 
     /* Try putting a property using illegal property identifier */
     hr = Session_PropertyPut(pSession, szEquals, szProductName);
-    ok(SUCCEEDED(hr), "Session_PropertyPut failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_PropertyPut failed, hresult 0x%08x\n", hr);
 
     /* Session::Language, get */
     hr = Session_LanguageGet(pSession, &len);
-    ok(SUCCEEDED(hr), "Session_LanguageGet failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_LanguageGet failed, hresult 0x%08x\n", hr);
     /* Not sure how to check the language is correct */
 
     /* Session::Mode, get */
     hr = Session_ModeGet(pSession, MSIRUNMODE_REBOOTATEND, &bool);
-    ok(SUCCEEDED(hr), "Session_ModeGet failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_ModeGet failed, hresult 0x%08x\n", hr);
     todo_wine ok(!bool, "Reboot at end session mode is %d\n", bool);
 
     /* Session::Mode, put */
     hr = Session_ModePut(pSession, MSIRUNMODE_REBOOTATEND, TRUE);
-    todo_wine ok(SUCCEEDED(hr), "Session_ModePut failed, hresult 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "Session_ModePut failed, hresult 0x%08x\n", hr);
     hr = Session_ModeGet(pSession, MSIRUNMODE_REBOOTATEND, &bool);
-    ok(SUCCEEDED(hr), "Session_ModeGet failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_ModeGet failed, hresult 0x%08x\n", hr);
     ok(bool, "Reboot at end session mode is %d, expected 1\n", bool);
     hr = Session_ModePut(pSession, MSIRUNMODE_REBOOTATEND, FALSE);  /* set it again so we don't reboot */
-    todo_wine ok(SUCCEEDED(hr), "Session_ModePut failed, hresult 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "Session_ModePut failed, hresult 0x%08x\n", hr);
 
     /* Session::Database, get */
     hr = Session_Database(pSession, &pDatabase);
-    ok(SUCCEEDED(hr), "Session_Database failed, hresult 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
+    ok(hr == S_OK, "Session_Database failed, hresult 0x%08x\n", hr);
+    if (hr == S_OK)
     {
         test_Database(pDatabase);
         IDispatch_Release(pDatabase);
@@ -1380,54 +1380,54 @@ static void test_Session(IDispatch *pSession)
 
     /* Session::EvaluateCondition */
     hr = Session_EvaluateCondition(pSession, NULL, &myint);
-    ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
     ok(myint == MSICONDITION_NONE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
 
     hr = Session_EvaluateCondition(pSession, szEmpty, &myint);
-    ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
     ok(myint == MSICONDITION_NONE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
 
     hr = Session_EvaluateCondition(pSession, szEquals, &myint);
-    ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
     ok(myint == MSICONDITION_ERROR, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
 
     /* Session::DoAction(CostInitialize) must occur before the next statements */
     hr = Session_DoAction(pSession, szCostInitialize, &myint);
-    ok(SUCCEEDED(hr), "Session_DoAction failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_DoAction failed, hresult 0x%08x\n", hr);
     ok(myint == IDOK, "DoAction(CostInitialize) returned %d, %d expected\n", myint, IDOK);
 
     /* Session::SetInstallLevel */
     hr = Session_SetInstallLevel(pSession, INSTALLLEVEL_MINIMUM);
-    ok(SUCCEEDED(hr), "Session_SetInstallLevel failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_SetInstallLevel failed, hresult 0x%08x\n", hr);
 
     /* Session::FeatureCurrentState, get */
     hr = Session_FeatureCurrentState(pSession, szOne, &myint);
-    ok(SUCCEEDED(hr), "Session_FeatureCurrentState failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_FeatureCurrentState failed, hresult 0x%08x\n", hr);
     ok(myint == INSTALLSTATE_UNKNOWN, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
 
     /* Session::EvaluateCondition */
     hr = Session_EvaluateCondition(pSession, szOneStateFalse, &myint);
-    ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
     ok(myint == MSICONDITION_FALSE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
 
     hr = Session_EvaluateCondition(pSession, szOneStateTrue, &myint);
-    ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
     ok(myint == MSICONDITION_TRUE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
 
     /* Session::FeatureRequestState, put */
     hr = Session_FeatureRequestStatePut(pSession, szOne, INSTALLSTATE_ADVERTISED);
-    ok(SUCCEEDED(hr), "Session_FeatureRequestStatePut failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_FeatureRequestStatePut failed, hresult 0x%08x\n", hr);
     hr = Session_FeatureRequestStateGet(pSession, szOne, &myint);
-    ok(SUCCEEDED(hr), "Session_FeatureRequestStateGet failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_FeatureRequestStateGet failed, hresult 0x%08x\n", hr);
     ok(myint == INSTALLSTATE_ADVERTISED, "Feature request state was %d but expected %d\n", myint, INSTALLSTATE_ADVERTISED);
 
     /* Session::EvaluateCondition */
     hr = Session_EvaluateCondition(pSession, szOneActionFalse, &myint);
-    ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
     ok(myint == MSICONDITION_FALSE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
 
     hr = Session_EvaluateCondition(pSession, szOneActionTrue, &myint);
-    ok(SUCCEEDED(hr), "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_EvaluateCondition failed, hresult 0x%08x\n", hr);
     ok(myint == MSICONDITION_TRUE, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
 }
 
@@ -1481,7 +1481,7 @@ static void test_Installer_RegistryValue(void)
 
     /* Does our key exist? Shouldn't; check with all three possible value parameter types */
     hr = Installer_RegistryValueE(HKEY_CURRENT_USER, szKey, &bRet);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueE failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueE failed, hresult 0x%08x\n", hr);
     ok(!bRet, "Registry key expected to not exist, but Installer_RegistryValue claims it does\n");
 
     memset(szString, 0, sizeof(szString));
@@ -1519,12 +1519,12 @@ static void test_Installer_RegistryValue(void)
     /* Does our key exist? It should, and make sure we retrieve the correct default value */
     bRet = FALSE;
     hr = Installer_RegistryValueE(HKEY_CURRENT_USER, szKey, &bRet);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueE failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueE failed, hresult 0x%08x\n", hr);
     ok(bRet, "Registry key expected to exist, but Installer_RegistryValue claims it does not\n");
 
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, NULL, szString);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Default registry value \"%s\" does not match expected \"%s\"\n", szString, szOne);
 
     /* Ask for the value of a nonexistent key */
@@ -1535,71 +1535,71 @@ static void test_Installer_RegistryValue(void)
     /* Get values of keys */
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szOne, szString);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szOne);
 
     VariantInit(&vararg);
     V_VT(&vararg) = VT_BSTR;
     V_BSTR(&vararg) = SysAllocString(szTwo);
     hr = Installer_RegistryValue(HKEY_CURRENT_USER, szKey, vararg, &varresult, VT_I4);
-    ok(SUCCEEDED(hr), "Installer_RegistryValue failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValue failed, hresult 0x%08x\n", hr);
     ok(V_I4(&varresult) == 305419896, "Registry value %d does not match expected value\n", V_I4(&varresult));
     VariantClear(&varresult);
 
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szThree, szString);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szREG_BINARY);
 
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szFour, szString);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szFour);
 
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szFive, szString);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szFiveHi);
 
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szSix, szString);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szREG_);
 
     VariantInit(&vararg);
     V_VT(&vararg) = VT_BSTR;
     V_BSTR(&vararg) = SysAllocString(szSeven);
     hr = Installer_RegistryValue(HKEY_CURRENT_USER, szKey, vararg, &varresult, VT_EMPTY);
-    ok(SUCCEEDED(hr), "Installer_RegistryValue failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValue failed, hresult 0x%08x\n", hr);
 
     /* Get string class name for the key */
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, 0, szString, VT_BSTR);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
     ok_w2("Registry name \"%s\" does not match expected \"%s\"\n", szString, szBlank);
 
     /* Get name of a value by positive number (RegEnumValue like), valid index */
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, 2, szString, VT_BSTR);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
     /* RegEnumValue order seems different on wine */
     todo_wine ok_w2("Registry name \"%s\" does not match expected \"%s\"\n", szString, szTwo);
 
     /* Get name of a value by positive number (RegEnumValue like), invalid index */
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, 10, szString, VT_EMPTY);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
 
     /* Get name of a subkey by negative number (RegEnumValue like), valid index */
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, -1, szString, VT_BSTR);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
     ok_w2("Registry name \"%s\" does not match expected \"%s\"\n", szString, szEight);
 
     /* Get name of a subkey by negative number (RegEnumValue like), invalid index */
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, -10, szString, VT_EMPTY);
-    ok(SUCCEEDED(hr), "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
 
     /* clean up */
     delete_key(hkey);
@@ -1678,11 +1678,11 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
 
     /* Installer::InstallProduct */
     hr = Installer_InstallProduct(szMsifile, NULL);
-    ok(SUCCEEDED(hr), "Installer_InstallProduct failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_InstallProduct failed, hresult 0x%08x\n", hr);
 
     /* Installer::ProductState for our product code, which has been installed */
     hr = Installer_ProductState(szProductCode, &iValue);
-    ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_ProductState failed, hresult 0x%08x\n", hr);
     ok(iValue == INSTALLSTATE_DEFAULT, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_DEFAULT);
 
     /* Installer::ProductInfo for our product code */
@@ -1702,29 +1702,29 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
     /* Package name */
     memset(szString, 0, sizeof(szString));
     hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PACKAGENAMEW, szString);
-    todo_wine ok(SUCCEEDED(hr), "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
     todo_wine ok_w2("StringList_Item returned %s but expected %s\n", szString, szMsifile);
 
     /* Product name */
     memset(szString, 0, sizeof(szString));
     hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PRODUCTNAMEW, szString);
-    ok(SUCCEEDED(hr), "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
     ok_w2("StringList_Item returned %s but expected %s\n", szString, szMSITEST);
 
     /* Installer::RelatedProducts for our upgrade code */
     hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
-    ok(SUCCEEDED(hr), "Installer_RelatedProducts failed, hresult 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
+    ok(hr == S_OK, "Installer_RelatedProducts failed, hresult 0x%08x\n", hr);
+    if (hr == S_OK)
     {
         /* StringList::Count */
         hr = StringList_Count(pStringList, &iCount);
-        ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "StringList_Count failed, hresult 0x%08x\n", hr);
         ok(iCount == 1, "Expected one related product but found %d\n", iCount);
 
         /* StringList::Item */
         memset(szString, 0, sizeof(szString));
         hr = StringList_Item(pStringList, 0, szString);
-        ok(SUCCEEDED(hr), "StringList_Item failed (idx 0, count %d), hresult 0x%08x\n", iCount, hr);
+        ok(hr == S_OK, "StringList_Item failed (idx 0, count %d), hresult 0x%08x\n", iCount, hr);
         ok_w2("StringList_Item returned %s but expected %s\n", szString, szProductCode);
 
         IDispatch_Release(pStringList);
@@ -1831,28 +1831,28 @@ static void test_Installer(void)
 
     /* Test for success */
     hr = Installer_CreateRecord(1, &pRecord);
-    ok(SUCCEEDED(hr), "Installer_CreateRecord failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_CreateRecord failed, hresult 0x%08x\n", hr);
     ok(pRecord != NULL, "Installer_CreateRecord should not have returned NULL record\n");
     if (pRecord)
     {
         /* Record::FieldCountGet */
         hr = Record_FieldCountGet(pRecord, &iValue);
-        ok(SUCCEEDED(hr), "Record_FiledCountGet failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "Record_FiledCountGet failed, hresult 0x%08x\n", hr);
         ok(iValue == 1, "Record_FieldCountGet result was %d but expected 1\n", iValue);
 
         /* Record::IntegerDataGet */
         hr = Record_IntegerDataGet(pRecord, 1, &iValue);
-        ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
         ok(iValue == MSI_NULL_INTEGER, "Record_IntegerDataGet result was %d but expected %d\n", iValue, MSI_NULL_INTEGER);
 
         /* Record::IntegerDataGet, bad index */
         hr = Record_IntegerDataGet(pRecord, 10, &iValue);
-        ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
         ok(iValue == MSI_NULL_INTEGER, "Record_IntegerDataGet result was %d but expected %d\n", iValue, MSI_NULL_INTEGER);
 
         /* Record::IntegerDataPut */
         hr = Record_IntegerDataPut(pRecord, 1, 100);
-        ok(SUCCEEDED(hr), "Record_IntegerDataPut failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "Record_IntegerDataPut failed, hresult 0x%08x\n", hr);
 
         /* Record::IntegerDataPut, bad index */
         hr = Record_IntegerDataPut(pRecord, 10, 100);
@@ -1861,7 +1861,7 @@ static void test_Installer(void)
 
         /* Record::IntegerDataGet */
         hr = Record_IntegerDataGet(pRecord, 1, &iValue);
-        ok(SUCCEEDED(hr), "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "Record_IntegerDataGet failed, hresult 0x%08x\n", hr);
         ok(iValue == 100, "Record_IntegerDataGet result was %d but expected 100\n", iValue);
 
         IDispatch_Release(pRecord);
@@ -1879,8 +1879,8 @@ static void test_Installer(void)
 
     /* Installer::OpenPackage */
     hr = Installer_OpenPackage(szPath, 0, &pSession);
-    ok(SUCCEEDED(hr), "Installer_OpenPackage failed, hresult 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
+    ok(hr == S_OK, "Installer_OpenPackage failed, hresult 0x%08x\n", hr);
+    if (hr == S_OK)
     {
         test_Session(pSession);
         IDispatch_Release(pSession);
@@ -1891,28 +1891,28 @@ static void test_Installer(void)
 
     /* Installer::Products */
     hr = Installer_Products(&pStringList);
-    ok(SUCCEEDED(hr), "Installer_Products failed, hresult 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
+    ok(hr == S_OK, "Installer_Products failed, hresult 0x%08x\n", hr);
+    if (hr == S_OK)
     {
         int idx;
 
         /* StringList::Count */
         hr = StringList_Count(pStringList, &iCount);
-        ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "StringList_Count failed, hresult 0x%08x\n", hr);
 
         for (idx=0; idx<iCount; idx++)
         {
             /* StringList::Item */
             memset(szPath, 0, sizeof(szPath));
             hr = StringList_Item(pStringList, idx, szPath);
-            ok(SUCCEEDED(hr), "StringList_Item failed (idx %d, count %d), hresult 0x%08x\n", idx, iCount, hr);
+            ok(hr == S_OK, "StringList_Item failed (idx %d, count %d), hresult 0x%08x\n", idx, iCount, hr);
 
-            if (SUCCEEDED(hr))
+            if (hr == S_OK)
             {
                 /* Installer::ProductState */
                 hr = Installer_ProductState(szPath, &iValue);
-                ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
-                if (SUCCEEDED(hr))
+                ok(hr == S_OK, "Installer_ProductState failed, hresult 0x%08x\n", hr);
+                if (hr == S_OK)
                     ok(iValue == INSTALLSTATE_DEFAULT || iValue == INSTALLSTATE_ADVERTISED, "Installer_ProductState returned %d, expected %d or %d\n", iValue, INSTALLSTATE_DEFAULT, INSTALLSTATE_ADVERTISED);
             }
         }
@@ -1927,7 +1927,7 @@ static void test_Installer(void)
 
     /* Installer::ProductState for our product code, which should not be installed */
     hr = Installer_ProductState(szProductCode, &iValue);
-    ok(SUCCEEDED(hr), "Installer_ProductState failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_ProductState failed, hresult 0x%08x\n", hr);
     ok(iValue == INSTALLSTATE_UNKNOWN, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_UNKNOWN);
 
     /* Installer::ProductInfo for our product code, which should not be installed */
@@ -1946,12 +1946,12 @@ static void test_Installer(void)
 
     /* Installer::RelatedProducts for our upgrade code, should not find anything */
     hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
-    ok(SUCCEEDED(hr), "Installer_RelatedProducts failed, hresult 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
+    ok(hr == S_OK, "Installer_RelatedProducts failed, hresult 0x%08x\n", hr);
+    if (hr == S_OK)
     {
         /* StringList::Count */
         hr = StringList_Count(pStringList, &iCount);
-        ok(SUCCEEDED(hr), "StringList_Count failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "StringList_Count failed, hresult 0x%08x\n", hr);
         ok(!iCount, "Expected no related products but found %d\n", iCount);
 
         IDispatch_Release(pStringList);
@@ -1961,7 +1961,7 @@ static void test_Installer(void)
     todo_wine {
         memset(szPath, 0, sizeof(szPath));
         hr = Installer_VersionGet(szPath);
-        ok(SUCCEEDED(hr), "Installer_VersionGet failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "Installer_VersionGet failed, hresult 0x%08x\n", hr);
     }
 
     /* Installer::InstallProduct and other tests that depend on our product being installed */
@@ -1989,23 +1989,23 @@ START_TEST(automation)
     get_program_files_dir(PROG_FILES_DIR);
 
     hr = OleInitialize(NULL);
-    ok (SUCCEEDED(hr), "OleInitialize returned 0x%08x\n", hr);
+    ok (hr == S_OK, "OleInitialize returned 0x%08x\n", hr);
     hr = CLSIDFromProgID(szProgId, &clsid);
-    ok (SUCCEEDED(hr), "CLSIDFromProgID returned 0x%08x\n", hr);
+    ok (hr == S_OK, "CLSIDFromProgID returned 0x%08x\n", hr);
     hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
-    ok(SUCCEEDED(hr), "CoCreateInstance returned 0x%08x\n", hr);
+    ok(hr == S_OK, "CoCreateInstance returned 0x%08x\n", hr);
 
     if (pUnk)
     {
         hr = IUnknown_QueryInterface(pUnk, &IID_IDispatch, (void **)&pInstaller);
-        ok (SUCCEEDED(hr), "IUnknown::QueryInterface returned 0x%08x\n", hr);
+        ok (hr == S_OK, "IUnknown::QueryInterface returned 0x%08x\n", hr);
 
         test_dispid();
         test_dispatch();
         test_Installer();
 
-        hr = IUnknown_Release(pUnk);
-        ok (SUCCEEDED(hr), "IUnknown::Release returned 0x%08x\n", hr);
+        IDispatch_Release(pInstaller);
+        IUnknown_Release(pUnk);
     }
 
     OleUninitialize();
