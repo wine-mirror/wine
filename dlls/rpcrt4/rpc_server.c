@@ -33,7 +33,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "winreg.h"
 
 #include "rpc.h"
 #include "rpcndr.h"

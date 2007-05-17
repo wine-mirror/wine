@@ -32,7 +32,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "winreg.h"
 
 #include "objbase.h"
 

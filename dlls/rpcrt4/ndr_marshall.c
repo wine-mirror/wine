@@ -39,7 +39,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "winreg.h"
 
 #include "ndr_misc.h"
 #include "rpcndr.h"
