@@ -81,6 +81,9 @@ static void test_null(void)
 {
     MSIHANDLE hpkg;
     UINT r;
+    HKEY hkey;
+    DWORD dwType, cbData;
+    LPBYTE lpData = NULL;
 
     r = pMsiOpenPackageExW(NULL, 0, &hpkg);
     ok( r == ERROR_INVALID_PARAMETER,"wrong error\n");
@@ -102,6 +105,65 @@ static void test_null(void)
 
     r = MsiConfigureFeatureA("{00000000-0000-0000-0000-000000000000}", "foo", INSTALLSTATE_DEFAULT);
     ok( r == ERROR_UNKNOWN_PRODUCT, "wrong error %d\n", r);
+
+    /* make sure empty string to MsiGetProductInfo is not a handle to default registry value, saving and restoring the
+     * necessary registry values */
+
+    /* empty product string */
+    r = RegOpenKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", &hkey);
+    ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
+
+    r = RegQueryValueExA(hkey, NULL, 0, &dwType, lpData, &cbData);
+    ok ( r == ERROR_SUCCESS || r == ERROR_FILE_NOT_FOUND, "wrong error %d\n", r);
+    if ( r == ERROR_SUCCESS )
+    {
+        lpData = HeapAlloc(GetProcessHeap(), 0, cbData);
+        if (!lpData)
+            skip("Out of memory\n");
+        else
+        {
+            r = RegQueryValueExA(hkey, NULL, 0, &dwType, lpData, &cbData);
+            ok ( r == ERROR_SUCCESS, "wrong error %d\n", r);
+        }
+    }
+
+    r = RegSetValueA(hkey, NULL, REG_SZ, "test", strlen("test"));
+    ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
+
+    r = MsiGetProductInfoA("", "", NULL, NULL);
+    todo_wine ok ( r == ERROR_INVALID_PARAMETER, "wrong error %d\n", r);
+
+    if (lpData)
+    {
+        r = RegSetValueExA(hkey, NULL, 0, dwType, lpData, cbData);
+        ok ( r == ERROR_SUCCESS, "wrong error %d\n", r);
+
+        HeapFree(GetProcessHeap(), 0, lpData);
+    }
+    else
+    {
+        r = RegDeleteValueA(hkey, NULL);
+        ok ( r == ERROR_SUCCESS, "wrong error %d\n", r);
+    }
+
+    r = RegCloseKey(hkey);
+    ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
+
+    /* empty attribute */
+    r = RegCreateKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{F1C3AF50-8B56-4A69-A00C-00773FE42F30}", &hkey);
+    ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
+
+    r = RegSetValueA(hkey, NULL, REG_SZ, "test", strlen("test"));
+    ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
+
+    r = MsiGetProductInfoA("{F1C3AF50-8B56-4A69-A00C-00773FE42F30}", "", NULL, NULL);
+    todo_wine ok ( r == ERROR_UNKNOWN_PROPERTY, "wrong error %d\n", r);
+
+    r = RegCloseKey(hkey);
+    ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
+
+    r = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{F1C3AF50-8B56-4A69-A00C-00773FE42F30}");
+    ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
 }
 
 static void test_getcomponentpath(void)
