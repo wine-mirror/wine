@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winedevice.exe
+APPMODE   = -mwindows -municode
+IMPORTS   = advapi32 ntoskrnl.exe kernel32 ntdll
+
+C_SRCS = \
+	device.c
+
+@MAKE_PROG_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

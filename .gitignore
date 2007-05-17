@@ -809,6 +809,7 @@ programs/winedbg/dbg.tab.h
 programs/winedbg/debug.yy.c
 programs/winedbg/winedbg
 programs/winedbg/winedbg.man
+programs/winedevice/winedevice
 programs/winefile/drivebar.bmp
 programs/winefile/images.bmp
 programs/winefile/rsrc.res

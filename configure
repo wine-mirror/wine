@@ -21007,6 +21007,8 @@ ac_config_files="$ac_config_files programs/wineconsole/Makefile"
 
 ac_config_files="$ac_config_files programs/winedbg/Makefile"
 
+ac_config_files="$ac_config_files programs/winedevice/Makefile"
+
 ac_config_files="$ac_config_files programs/winefile/Makefile"
 
 ac_config_files="$ac_config_files programs/winemenubuilder/Makefile"
@@ -21928,6 +21930,7 @@ do
     "programs/winecfg/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winecfg/Makefile" ;;
     "programs/wineconsole/Makefile") CONFIG_FILES="$CONFIG_FILES programs/wineconsole/Makefile" ;;
     "programs/winedbg/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winedbg/Makefile" ;;
+    "programs/winedevice/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winedevice/Makefile" ;;
     "programs/winefile/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winefile/Makefile" ;;
     "programs/winemenubuilder/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winemenubuilder/Makefile" ;;
     "programs/winemine/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winemine/Makefile" ;;

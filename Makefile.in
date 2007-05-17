@@ -469,6 +469,7 @@ ALL_MAKEFILES = \
 	programs/winecfg/Makefile \
 	programs/wineconsole/Makefile \
 	programs/winedbg/Makefile \
+	programs/winedevice/Makefile \
 	programs/winefile/Makefile \
 	programs/winemenubuilder/Makefile \
 	programs/winemine/Makefile \
@@ -817,6 +818,7 @@ programs/winebrowser/Makefile: programs/winebrowser/Makefile.in programs/Makepro
 programs/winecfg/Makefile: programs/winecfg/Makefile.in programs/Makeprog.rules
 programs/wineconsole/Makefile: programs/wineconsole/Makefile.in programs/Makeprog.rules
 programs/winedbg/Makefile: programs/winedbg/Makefile.in programs/Makeprog.rules
+programs/winedevice/Makefile: programs/winedevice/Makefile.in programs/Makeprog.rules
 programs/winefile/Makefile: programs/winefile/Makefile.in programs/Makeprog.rules
 programs/winemenubuilder/Makefile: programs/winemenubuilder/Makefile.in programs/Makeprog.rules
 programs/winemine/Makefile: programs/winemine/Makefile.in programs/Makeprog.rules
