@@ -1703,13 +1703,13 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
     memset(szString, 0, sizeof(szString));
     hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PACKAGENAMEW, szString);
     todo_wine ok(hr == S_OK, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
-    todo_wine ok_w2("StringList_Item returned %s but expected %s\n", szString, szMsifile);
+    todo_wine ok_w2("Installer_ProductInfo returned %s but expected %s\n", szString, szMsifile);
 
     /* Product name */
     memset(szString, 0, sizeof(szString));
     hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PRODUCTNAMEW, szString);
     ok(hr == S_OK, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
-    ok_w2("StringList_Item returned %s but expected %s\n", szString, szMSITEST);
+    ok_w2("Installer_ProductInfo returned %s but expected %s\n", szString, szMSITEST);
 
     /* Installer::RelatedProducts for our upgrade code */
     hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
