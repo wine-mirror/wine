@@ -137,6 +137,12 @@ static void test_negative_source_length(void)
     len = MultiByteToWideChar(CP_ACP, 0, "foobar", -2002, bufW, 10);
     ok(len == 7 && !mylstrcmpW(bufW, foobarW) && GetLastError() == 0xdeadbeef,
        "MultiByteToWideChar(-2002): len=%d error=%u\n", len, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memset(bufW, 'x', sizeof(bufW));
+    len = MultiByteToWideChar(CP_ACP, 0, "foobar", -1, bufW, 6);
+    ok(len == 0 && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "MultiByteToWideChar(-1): len=%d error=%u\n", len, GetLastError());
 }
 
 static void test_overlapped_buffers(void)
