@@ -216,6 +216,7 @@ UINT CALLBACK QUEUE_callback_WtoA( void *context, UINT notification,
     case SPFILENOTIFY_RENAMEERROR:
     case SPFILENOTIFY_STARTCOPY:
     case SPFILENOTIFY_ENDCOPY:
+    case SPFILENOTIFY_QUEUESCAN_EX:
         {
             FILEPATHS_W *pathsW = (FILEPATHS_W *)param1;
             FILEPATHS_A pathsA;
@@ -249,8 +250,18 @@ UINT CALLBACK QUEUE_callback_WtoA( void *context, UINT notification,
         }
         break;
 
-    case SPFILENOTIFY_NEEDMEDIA:
     case SPFILENOTIFY_QUEUESCAN:
+        {
+            LPWSTR targetW = (LPWSTR)param1;
+            LPSTR target = strdupWtoA( targetW );
+
+            ret = callback_ctx->orig_handler( callback_ctx->orig_context, notification,
+                                              (UINT_PTR)target, param2 );
+            HeapFree( GetProcessHeap(), 0, target );
+        }
+        break;
+
+    case SPFILENOTIFY_NEEDMEDIA:
         FIXME("mapping for %d not implemented\n",notification);
     case SPFILENOTIFY_STARTQUEUE:
     case SPFILENOTIFY_ENDQUEUE:
@@ -1203,22 +1214,70 @@ BOOL WINAPI SetupCommitFileQueueW( HWND owner, HSPFILEQ handle, PSP_FILE_CALLBAC
 /***********************************************************************
  *            SetupScanFileQueueA   (SETUPAPI.@)
  */
-BOOL WINAPI SetupScanFileQueueA( HSPFILEQ queue, DWORD flags, HWND window,
-                                 PSP_FILE_CALLBACK_A callback, PVOID context, PDWORD result )
+BOOL WINAPI SetupScanFileQueueA( HSPFILEQ handle, DWORD flags, HWND window,
+                                 PSP_FILE_CALLBACK_A handler, PVOID context, PDWORD result )
 {
-    FIXME("stub\n");
-    return FALSE;
+    struct callback_WtoA_context ctx;
+
+    TRACE("%p %x %p %p %p %p\n", handle, flags, window, handler, context, result);
+
+    ctx.orig_context = context;
+    ctx.orig_handler = handler;
+
+    return SetupScanFileQueueW( handle, flags, window, QUEUE_callback_WtoA, &ctx, result );
 }
 
 
 /***********************************************************************
  *            SetupScanFileQueueW   (SETUPAPI.@)
  */
-BOOL WINAPI SetupScanFileQueueW( HSPFILEQ queue, DWORD flags, HWND window,
-                                 PSP_FILE_CALLBACK_W callback, PVOID context, PDWORD result )
+BOOL WINAPI SetupScanFileQueueW( HSPFILEQ handle, DWORD flags, HWND window,
+                                 PSP_FILE_CALLBACK_W handler, PVOID context, PDWORD result )
 {
-    FIXME("stub\n");
-    return FALSE;
+    struct file_queue *queue = handle;
+    struct file_op *op;
+    FILEPATHS_W paths;
+    UINT notification = 0;
+    BOOL ret = FALSE;
+
+    TRACE("%p %x %p %p %p %p\n", handle, flags, window, handler, context, result);
+
+    if (!queue->copy_queue.count) return TRUE;
+
+    if (flags & SPQ_SCAN_USE_CALLBACK)        notification = SPFILENOTIFY_QUEUESCAN;
+    else if (flags & SPQ_SCAN_USE_CALLBACKEX) notification = SPFILENOTIFY_QUEUESCAN_EX;
+
+    if (flags & ~(SPQ_SCAN_USE_CALLBACK | SPQ_SCAN_USE_CALLBACKEX))
+    {
+        FIXME("flags %x not fully implemented\n", flags);
+    }
+
+    paths.Source = paths.Target = NULL;
+
+    for (op = queue->copy_queue.head; op; op = op->next)
+    {
+        build_filepathsW( op, &paths );
+        switch (notification)
+        {
+        case SPFILENOTIFY_QUEUESCAN:
+            /* FIXME: handle delay flag */
+            if (handler( context,  notification, (UINT_PTR)paths.Target, 0 )) goto done;
+            break;
+        case SPFILENOTIFY_QUEUESCAN_EX:
+            if (handler( context, notification, (UINT_PTR)&paths, 0 )) goto done;
+            break;
+        default:
+            ret = TRUE; goto done;
+        }
+    }
+
+    ret = TRUE;
+
+ done:
+    if (result) *result = 0;
+    HeapFree( GetProcessHeap(), 0, (void *)paths.Source );
+    HeapFree( GetProcessHeap(), 0, (void *)paths.Target );
+    return ret;
 }
 
 
