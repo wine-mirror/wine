@@ -320,7 +320,7 @@ BOOL WINAPI SetupGetSourceFileLocationA( HINF hinf, PINFCONTEXT context, PCSTR f
     TRACE("%p, %p, %s, %p, %p, 0x%08x, %p\n", hinf, context, debugstr_a(filename), source_id,
           buffer, buffer_size, required_size);
 
-    if (filename && !(filenameW = strdupAtoW( filename )))
+    if (filename && *filename && !(filenameW = strdupAtoW( filename )))
         return FALSE;
 
     if (!SetupGetSourceFileLocationW( hinf, context, filenameW, source_id, NULL, 0, &required ))
