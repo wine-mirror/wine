@@ -545,13 +545,13 @@
 @ stdcall pSetupGetField(ptr long)
 @ stdcall pSetupGetGlobalFlags()
 @ stub pSetupGetOsLoaderDriveAndPath
-@ stub pSetupGetQueueFlags
+@ stdcall pSetupGetQueueFlags(ptr)
 @ stub pSetupGetVersionDatum
 @ stub pSetupGuidFromString
 @ stub pSetupIsGuidNull
 @ stub pSetupMakeSurePathExists
 @ stdcall pSetupSetGlobalFlags(long)
-@ stub pSetupSetQueueFlags
+@ stdcall pSetupSetQueueFlags(ptr long)
 @ stub pSetupSetSystemSourceFlags
 @ stub pSetupStringFromGuid
 @ stdcall pSetupStringTableAddString(ptr wstr long) StringTableAddString

@@ -1527,3 +1527,22 @@ UINT WINAPI SetupCopyErrorW( HWND parent, PCWSTR dialogTitle, PCWSTR diskname,
            w32error, debugstr_w(sourcefile), debugstr_w(sourcepath) ,debugstr_w(targetpath));
     return DPROMPT_SKIPFILE;
 }
+
+/***********************************************************************
+ *            pSetupGetQueueFlags   (SETUPAPI.@)
+ */
+DWORD WINAPI pSetupGetQueueFlags( HSPFILEQ handle )
+{
+    struct file_queue *queue = handle;
+    return queue->flags;
+}
+
+/***********************************************************************
+ *            pSetupSetQueueFlags   (SETUPAPI.@)
+ */
+BOOL WINAPI pSetupSetQueueFlags( HSPFILEQ handle, DWORD flags )
+{
+    struct file_queue *queue = handle;
+    queue->flags = flags;
+    return TRUE;
+}
