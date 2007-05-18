@@ -1260,6 +1260,7 @@ static var_t *make_var(char *name)
   v->attrs = NULL;
   v->array = NULL;
   v->eval = NULL;
+  v->corrdesc = 0;
   return v;
 }
 

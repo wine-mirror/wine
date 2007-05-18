@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "server_defines.h"
+
 typedef struct tag_vector
 {
   int x;
@@ -53,6 +55,17 @@ interface IServer
     vector_t **pv;
   } pvectors_t;
 
+  typedef struct
+  {
+    [switch_is(s)] union
+    {
+      [case(SUN_I)] int i;
+      [case(SUN_F1, SUN_F2)] float f;
+    } u;
+
+    int s;
+  } sun_t;
+
   int int_return(void);
   int square(int x);
   int sum(int x, int y);
@@ -81,5 +94,6 @@ interface IServer
   } sp_t;
 
   int sum_sp(sp_t *sp);
+  double square_sun(sun_t *sun);
   void stop(void);
 }

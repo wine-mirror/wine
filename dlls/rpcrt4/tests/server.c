@@ -21,6 +21,7 @@
 #include <windows.h>
 #include "wine/test.h"
 #include "server.h"
+#include "server_defines.h"
 
 #include <stdio.h>
 
@@ -138,6 +139,19 @@ s_sum_sp(sp_t *sp)
   return sp->x + sp->s->x;
 }
 
+double
+s_square_sun(sun_t *sun)
+{
+  switch (sun->s)
+  {
+  case SUN_I: return sun->u.i * sun->u.i;
+  case SUN_F1:
+  case SUN_F2: return sun->u.f * sun->u.f;
+  default:
+    return 0.0;
+  }
+}
+
 void
 s_stop(void)
 {
@@ -253,6 +267,24 @@ basic_tests(void)
 }
 
 static void
+union_tests(void)
+{
+  sun_t sun;
+
+  sun.s = SUN_I;
+  sun.u.i = 9;
+  ok(square_sun(&sun) == 81.0, "RPC square_sun\n");
+
+  sun.s = SUN_F1;
+  sun.u.f = 5.0;
+  ok(square_sun(&sun) == 25.0, "RPC square_sun\n");
+
+  sun.s = SUN_I;
+  sun.u.i = -2.0;
+  ok(square_sun(&sun) == 4.0, "RPC square_sun\n");
+}
+
+static void
 client(const char *test)
 {
   if (strcmp(test, "tcp_basic") == 0)
@@ -266,6 +298,7 @@ client(const char *test)
     ok(RPC_S_OK == RpcBindingFromStringBinding(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
 
     basic_tests();
+    union_tests();
 
     ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
@@ -281,6 +314,7 @@ client(const char *test)
     ok(RPC_S_OK == RpcBindingFromStringBinding(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
 
     basic_tests();
+    union_tests();
     stop();
 
     ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");
