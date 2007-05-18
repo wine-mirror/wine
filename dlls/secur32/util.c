@@ -21,10 +21,8 @@
 #include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
-#include "winnls.h"
 #include "rpc.h"
 #include "sspi.h"
-#include "lm.h"
 #include "secur32_priv.h"
 #include "wine/debug.h"
 

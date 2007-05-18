@@ -21,7 +21,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "sspi.h"
 #include "secur32_priv.h"
