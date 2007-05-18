@@ -575,8 +575,11 @@ struct token *token_create_admin( void )
     static const SID_IDENTIFIER_AUTHORITY nt_authority = { SECURITY_NT_AUTHORITY };
     static const unsigned int alias_admins_subauth[] = { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS };
     static const unsigned int alias_users_subauth[] = { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS };
+    /* on Windows, this value changes every time the user logs on */
+    static const unsigned int logon_subauth[] = { SECURITY_LOGON_IDS_RID, 0, 1 /* FIXME: should be randomly generated when tokens are inherited by new processes */ };
     PSID alias_admins_sid;
     PSID alias_users_sid;
+    PSID logon_sid;
     /* note: should be the owner specified in the token */
     ACL *default_dacl = create_default_dacl( &interactive_sid );
 
@@ -584,8 +587,10 @@ struct token *token_create_admin( void )
                                            alias_admins_subauth );
     alias_users_sid = security_sid_alloc( &nt_authority, sizeof(alias_users_subauth)/sizeof(alias_users_subauth[0]),
                                           alias_users_subauth );
+    logon_sid = security_sid_alloc( &nt_authority, sizeof(logon_subauth)/sizeof(logon_subauth[0]),
+                                    logon_subauth );
 
-    if (alias_admins_sid && alias_users_sid && default_dacl)
+    if (alias_admins_sid && alias_users_sid && logon_sid && default_dacl)
     {
         const LUID_AND_ATTRIBUTES admin_privs[] =
         {
@@ -620,6 +625,7 @@ struct token *token_create_admin( void )
             { security_authenticated_user_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
             { alias_admins_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_OWNER },
             { alias_users_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { logon_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_LOGON_ID },
         };
         static const TOKEN_SOURCE admin_source = {"SeMgr", {0, 0}};
         /* note: we just set the user sid to be the interactive builtin sid -
@@ -632,6 +638,7 @@ struct token *token_create_admin( void )
         assert( token->primary_group );
     }
 
+    free( logon_sid );
     free( alias_admins_sid );
     free( alias_users_sid );
     free( default_dacl );
