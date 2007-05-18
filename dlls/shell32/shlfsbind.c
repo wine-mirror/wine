@@ -28,7 +28,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winuser.h"
 #include "shlobj.h"
 #include "shell32_main.h"

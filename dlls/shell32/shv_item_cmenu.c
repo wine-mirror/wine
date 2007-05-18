@@ -30,7 +30,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "pidl.h"
-#include "shlguid.h"
 #include "undocshell.h"
 #include "shlobj.h"
 

@@ -29,7 +29,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "pidl.h"
-#include "shlguid.h"
 #include "shlobj.h"
 
 #include "shell32_main.h"

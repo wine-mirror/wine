@@ -27,13 +27,11 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winerror.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
 
 #include "shlobj.h"
-#include "shellapi.h"
 #include "shlwapi.h"
 #include "shell32_main.h"
 #include "undocshell.h"
