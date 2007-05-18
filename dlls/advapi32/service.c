@@ -2078,6 +2078,9 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
     size = *lpcchBuffer;
     ret = RegGetValueA(hscm->hkey, lpServiceName, "DisplayName", RRF_RT_REG_SZ, &type, lpDisplayName, &size);
+    if (!ret && !lpDisplayName && size)
+        ret = ERROR_MORE_DATA;
+
     if (ret)
     {
         if (lpDisplayName && *lpcchBuffer) *lpDisplayName = 0;
@@ -2116,6 +2119,9 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 
     size = *lpcchBuffer * sizeof(WCHAR);
     ret = RegGetValueW(hscm->hkey, lpServiceName, szDisplayName, RRF_RT_REG_SZ, &type, lpDisplayName, &size);
+    if (!ret && !lpDisplayName && size)
+        ret = ERROR_MORE_DATA;
+
     if (ret)
     {
         if (lpDisplayName && *lpcchBuffer) *lpDisplayName = 0;
