@@ -5827,11 +5827,10 @@ func_fail:
     /* not found, look for it in inherited interfaces */
     ITypeInfo2_GetTypeKind(iface, &type_kind);
     if(type_kind == TKIND_INTERFACE || type_kind == TKIND_DISPATCH) {
-        HREFTYPE ref_type;
-        if(SUCCEEDED(ITypeInfo2_GetRefTypeOfImplType(iface, 0, &ref_type))) {
+        if(This->impltypelist) {
             /* recursive search */
             ITypeInfo *pTInfo;
-            hres = ITypeInfo_GetRefTypeInfo(iface, ref_type, &pTInfo);
+            hres = ITypeInfo_GetRefTypeInfo(iface, This->impltypelist->hRef, &pTInfo);
             if(SUCCEEDED(hres)){
                 hres = ITypeInfo_Invoke(pTInfo,pIUnk,memid,wFlags,pDispParams,pVarResult,pExcepInfo,pArgErr);
                 ITypeInfo_Release(pTInfo);
