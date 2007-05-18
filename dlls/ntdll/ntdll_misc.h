@@ -25,7 +25,6 @@
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "winioctl.h"
 #include "wine/server.h"
 
 #define MAX_NT_PATH_LENGTH 277
@@ -117,6 +116,7 @@ extern NTSTATUS DIR_get_unix_cwd( char **cwd );
 extern NTSTATUS VIRTUAL_HandleFault(LPCVOID addr);
 extern void VIRTUAL_SetForceExec( BOOL enable );
 extern void VIRTUAL_UseLargeAddressSpace(void);
+extern struct _KUSER_SHARED_DATA *user_shared_data;
 
 /* code pages */
 extern int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen);

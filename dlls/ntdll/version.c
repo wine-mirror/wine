@@ -34,6 +34,7 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
+#include "ddk/wdm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
 
@@ -504,6 +505,13 @@ done:
     NtCurrentTeb()->Peb->OSMinorVersion = current_version->dwMinorVersion;
     NtCurrentTeb()->Peb->OSBuildNumber  = current_version->dwBuildNumber;
     NtCurrentTeb()->Peb->OSPlatformId   = current_version->dwPlatformId;
+
+    user_shared_data->NtProductType      = current_version->wProductType;
+    user_shared_data->ProductTypeIsValid = TRUE;
+    user_shared_data->MajorNtVersion     = current_version->dwMajorVersion;
+    user_shared_data->MinorNtVersion     = current_version->dwMinorVersion;
+    user_shared_data->MinorNtVersion     = current_version->dwMinorVersion;
+    user_shared_data->SuiteMask          = current_version->wSuiteMask;
 
     TRACE( "got %d.%d plaform %d build %x name %s service pack %d.%d product %d\n",
            current_version->dwMajorVersion, current_version->dwMinorVersion,

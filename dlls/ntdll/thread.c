@@ -40,10 +40,13 @@
 #include "wine/pthread.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
+#include "ddk/wdm.h"
 #include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
+
+struct _KUSER_SHARED_DATA *user_shared_data = NULL;
 
 /* info passed to a starting thread */
 struct startup_info
@@ -225,6 +228,7 @@ HANDLE thread_init(void)
     void *addr;
     SIZE_T size, info_size;
     HANDLE exe_file = 0;
+    LARGE_INTEGER now;
     struct ntdll_thread_data *thread_data;
     struct ntdll_thread_regs *thread_regs;
     struct wine_pthread_thread_info thread_info;
@@ -236,7 +240,8 @@ HANDLE thread_init(void)
 
     addr = (void *)0x7ffe0000;
     size = 0x10000;
-    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size, MEM_RESERVE, PAGE_READONLY );
+    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE );
+    user_shared_data = addr;
 
     /* allocate and initialize the PEB */
 
@@ -324,6 +329,15 @@ HANDLE thread_init(void)
 
     /* initialize LDT locking */
     wine_ldt_init_locking( ldt_lock, ldt_unlock );
+
+    /* initialize time values in user_shared_data */
+    NtQuerySystemTime( &now );
+    user_shared_data->SystemTime.LowPart = now.LowPart;
+    user_shared_data->SystemTime.High1Time = user_shared_data->SystemTime.High2Time = now.HighPart;
+    user_shared_data->u.TickCountQuad = (now.QuadPart - server_start_time) / 10000;
+    user_shared_data->u.TickCount.High2Time = user_shared_data->u.TickCount.High1Time;
+    user_shared_data->TickCountLowDeprecated = user_shared_data->u.TickCount.LowPart;
+    user_shared_data->TickCountMultiplier = 1 << 24;
 
     return exe_file;
 }

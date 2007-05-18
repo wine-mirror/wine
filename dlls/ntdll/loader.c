@@ -40,6 +40,7 @@
 #include "wine/debug.h"
 #include "wine/server.h"
 #include "ntdll_misc.h"
+#include "ddk/wdm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -2307,6 +2308,7 @@ void __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir )
     LPWSTR buffer, p;
 
     RtlCreateUnicodeString( &system_dir, sysdir );
+    strcpyW( user_shared_data->NtSystemRoot, windir );
 
     /* prepend the system dir to the name of the already created modules */
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
