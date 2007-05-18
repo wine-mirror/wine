@@ -1910,15 +1910,12 @@ static void test_Installer(void)
         ULONG celt;
 
         /* StringList::_NewEnum */
-        todo_wine
+        hr = StringList__NewEnum(pStringList, &pUnk);
+        ok(hr == S_OK, "StringList_NewEnum failed, hresult 0x%08x\n", hr);
+        if (hr == S_OK)
         {
-            hr = StringList__NewEnum(pStringList, &pUnk);
-            ok(hr == S_OK, "StringList_NewEnum failed, hresult 0x%08x\n", hr);
-            if (hr == S_OK)
-            {
-                hr = IUnknown_QueryInterface(pUnk, &IID_IEnumVARIANT, (void **)&pEnum);
-                ok (hr == S_OK, "IUnknown::QueryInterface returned 0x%08x\n", hr);
-            }
+            hr = IUnknown_QueryInterface(pUnk, &IID_IEnumVARIANT, (void **)&pEnum);
+            ok (hr == S_OK, "IUnknown::QueryInterface returned 0x%08x\n", hr);
         }
         if (!pEnum)
             skip("IEnumVARIANT tests\n");

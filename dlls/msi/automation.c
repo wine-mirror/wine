@@ -80,6 +80,24 @@ interface AutomationObject {
 };
 
 /*
+ * ListEnumerator - IEnumVARIANT implementation for MSI automation lists.
+ */
+
+typedef interface ListEnumerator ListEnumerator;
+
+interface ListEnumerator {
+    /* VTables */
+    const IEnumVARIANTVtbl *lpVtbl;
+
+    /* Object reference count */
+    LONG ref;
+
+    /* Current position and pointer to AutomationObject that stores actual data */
+    ULONG ulPos;
+    AutomationObject *pObj;
+};
+
+/*
  * Structures for additional data required by specific automation objects
  */
 
@@ -96,6 +114,7 @@ typedef struct {
 /* VTables */
 static const struct IDispatchVtbl AutomationObject_Vtbl;
 static const struct IProvideMultipleClassInfoVtbl AutomationObject_IProvideMultipleClassInfo_Vtbl;
+static const struct IEnumVARIANTVtbl ListEnumerator_Vtbl;
 
 /* Load type info so we don't have to process GetIDsOfNames */
 HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsid, LCID lcid)
@@ -167,6 +186,31 @@ HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, LPVOI
 
     *ppObj = object;
 
+    return S_OK;
+}
+
+/* Create a list enumerator, placing the result in the pointer ppObj.  */
+HRESULT create_list_enumerator(IUnknown *pUnkOuter, LPVOID *ppObj, AutomationObject *pObj, ULONG ulPos)
+{
+    ListEnumerator *object;
+
+    TRACE("(%p,%p,%p,%uld)\n", pUnkOuter, ppObj, pObj, ulPos);
+
+    if( pUnkOuter )
+        return CLASS_E_NOAGGREGATION;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ListEnumerator));
+
+    /* Set all the VTable references */
+    object->lpVtbl = &ListEnumerator_Vtbl;
+    object->ref = 1;
+
+    /* Store data that was passed */
+    object->ulPos = ulPos;
+    object->pObj = pObj;
+    if (pObj) IDispatch_AddRef((IDispatch *)pObj);
+
+    *ppObj = object;
     return S_OK;
 }
 
@@ -512,6 +556,148 @@ static const IProvideMultipleClassInfoVtbl AutomationObject_IProvideMultipleClas
 };
 
 /*
+ * ListEnumerator methods
+ */
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI ListEnumerator_QueryInterface(IEnumVARIANT* iface, REFIID riid, void** ppvObject)
+{
+    ListEnumerator *This = (ListEnumerator *)iface;
+
+    TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
+
+    if (ppvObject == NULL)
+      return E_INVALIDARG;
+
+    *ppvObject = 0;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IEnumVARIANT))
+        *ppvObject = This;
+    else
+    {
+        TRACE("() : asking for unsupported interface %s\n",debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IClassFactory_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI ListEnumerator_AddRef(IEnumVARIANT* iface)
+{
+    ListEnumerator *This = (ListEnumerator *)iface;
+
+    TRACE("(%p/%p)\n", iface, This);
+
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI ListEnumerator_Release(IEnumVARIANT* iface)
+{
+    ListEnumerator *This = (ListEnumerator *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p/%p)\n", iface, This);
+
+    if (!ref)
+    {
+        if (This->pObj) IDispatch_Release((IDispatch *)This->pObj);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+/* IEnumVARIANT methods */
+
+static HRESULT WINAPI ListEnumerator_Next(IEnumVARIANT* iface, ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
+{
+    ListEnumerator *This = (ListEnumerator *)iface;
+    ListData *data = (ListData *)private_data(This->pObj);
+    ULONG idx, local;
+
+    TRACE("(%p,%uld,%p,%p)\n", iface, celt, rgVar, pCeltFetched);
+
+    if (pCeltFetched != NULL)
+        *pCeltFetched = 0;
+
+    if (rgVar == NULL)
+        return S_FALSE;
+
+    for (local = 0; local < celt; local++)
+        VariantInit(&rgVar[local]);
+
+    for (idx = This->ulPos, local = 0; idx < data->ulCount && local < celt; idx++, local++)
+        VariantCopy(&rgVar[local], &data->pVars[idx]);
+
+    if (pCeltFetched != NULL)
+        *pCeltFetched = local;
+    This->ulPos = idx;
+
+    return (local < celt) ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI ListEnumerator_Skip(IEnumVARIANT* iface, ULONG celt)
+{
+    ListEnumerator *This = (ListEnumerator *)iface;
+    ListData *data = (ListData *)private_data(This->pObj);
+
+    TRACE("(%p,%uld)\n", iface, celt);
+
+    This->ulPos += celt;
+    if (This->ulPos >= data->ulCount)
+    {
+        This->ulPos = data->ulCount;
+        return S_FALSE;
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI ListEnumerator_Reset(IEnumVARIANT* iface)
+{
+    ListEnumerator *This = (ListEnumerator *)iface;
+
+    TRACE("(%p)\n", iface);
+
+    This->ulPos = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI ListEnumerator_Clone(IEnumVARIANT* iface, IEnumVARIANT **ppEnum)
+{
+    ListEnumerator *This = (ListEnumerator *)iface;
+    HRESULT hr;
+
+    TRACE("(%p,%p)\n", iface, ppEnum);
+
+    if (ppEnum == NULL)
+        return S_FALSE;
+
+    *ppEnum = NULL;
+    hr = create_list_enumerator(NULL, (LPVOID *)ppEnum, This->pObj, 0);
+    if (FAILED(hr))
+    {
+        if (*ppEnum)
+            IUnknown_Release(*ppEnum);
+        return hr;
+    }
+
+    IUnknown_AddRef(*ppEnum);
+    return S_OK;
+}
+
+static const struct IEnumVARIANTVtbl ListEnumerator_Vtbl =
+{
+    ListEnumerator_QueryInterface,
+    ListEnumerator_AddRef,
+    ListEnumerator_Release,
+    ListEnumerator_Next,
+    ListEnumerator_Skip,
+    ListEnumerator_Reset,
+    ListEnumerator_Clone
+};
+
+/*
  * Individual Object Invocation Functions
  */
 
@@ -649,13 +835,28 @@ static HRESULT WINAPI ListImpl_Invoke(
     ListData *data = (ListData *)private_data(This);
     HRESULT hr;
     VARIANTARG varg0;
+    IUnknown *pUnk = NULL;
 
     VariantInit(&varg0);
 
     switch (dispIdMember)
     {
+         case DISPID_LIST__NEWENUM:
+             if (wFlags & DISPATCH_METHOD) {
+                 V_VT(pVarResult) = VT_UNKNOWN;
+                 if (SUCCEEDED(hr = create_list_enumerator(NULL, (LPVOID *)&pUnk, This, 0)))
+                 {
+                     IUnknown_AddRef(pUnk);
+                     V_UNKNOWN(pVarResult) = pUnk;
+                 }
+                 else
+                     ERR("Failed to create IEnumVARIANT object, hresult 0x%08x\n", hr);
+             }
+             else return DISP_E_MEMBERNOTFOUND;
+             break;
+
          case DISPID_LIST_ITEM:
-            if (wFlags & DISPATCH_PROPERTYGET) {
+             if (wFlags & DISPATCH_PROPERTYGET) {
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
                 if (V_I4(&varg0) < 0 || V_I4(&varg0) >= data->ulCount)

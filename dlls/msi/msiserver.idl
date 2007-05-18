@@ -114,6 +114,8 @@ library WindowsInstaller
     {
         properties:
         methods:
+        [id(DISPID_LIST__NEWENUM)]
+            IUnknown _NewEnum();
         [id(DISPID_LIST_ITEM), propget]
             BSTR Item(long Index);
         [id(DISPID_LIST_COUNT), propget]
