@@ -36,8 +36,8 @@ static void test_destination_buffer(void)
 
     SetLastError(0xdeadbeef);
     needed = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, NULL, 0, NULL, NULL);
-    ok( (needed > 0), "returned %d with 0x%x/%d (expected '> 0')\n",
-        needed, GetLastError(), GetLastError());
+    ok( (needed > 0), "returned %d with %u (expected '> 0')\n",
+        needed, GetLastError());
 
     maxsize = needed*2;
     buffer = HeapAlloc(GetProcessHeap(), 0, maxsize);
@@ -48,45 +48,44 @@ static void test_destination_buffer(void)
     buffer[maxsize] = '\0';
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, needed+1, NULL, NULL);
-    ok( (len > 0), "returned %d with 0x%x/%d and '%s' (expected '> 0')\n",
-        len, GetLastError(), GetLastError(), buffer);
+    ok( (len > 0), "returned %d with %u and '%s' (expected '> 0')\n",
+        len, GetLastError(), buffer);
 
     memset(buffer, 'x', maxsize);
     buffer[maxsize] = '\0';
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, needed, NULL, NULL);
-    ok( (len > 0), "returned %d with 0x%x/%d and '%s' (expected '> 0')\n",
-        len, GetLastError(), GetLastError(), buffer);
+    ok( (len > 0), "returned %d with %u and '%s' (expected '> 0')\n",
+        len, GetLastError(), buffer);
 
     memset(buffer, 'x', maxsize);
     buffer[maxsize] = '\0';
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, needed-1, NULL, NULL);
     ok( !len && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-        "returned %d with 0x%x/%d and '%s' (expected '0' with "
-        "ERROR_INSUFFICIENT_BUFFER)\n", len, GetLastError(), GetLastError(), buffer);
+        "returned %d with %u and '%s' (expected '0' with "
+        "ERROR_INSUFFICIENT_BUFFER)\n", len, GetLastError(), buffer);
 
     memset(buffer, 'x', maxsize);
     buffer[maxsize] = '\0';
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, 1, NULL, NULL);
     ok( !len && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-        "returned %d with 0x%x/%d and '%s' (expected '0' with "
-        "ERROR_INSUFFICIENT_BUFFER)\n", len, GetLastError(), GetLastError(), buffer);
+        "returned %d with %u and '%s' (expected '0' with "
+        "ERROR_INSUFFICIENT_BUFFER)\n", len, GetLastError(), buffer);
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, 0, NULL, NULL);
-    ok( (len > 0), "returned %d with 0x%x/%d (expected '> 0')\n",
-        len, GetLastError(), GetLastError());
+    ok( (len > 0), "returned %d with %u (expected '> 0')\n",
+        len, GetLastError());
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, NULL, needed, NULL, NULL);
     ok( !len && (GetLastError() == ERROR_INVALID_PARAMETER),
-        "returned %d with 0x%x/%d (expected '0' with "
-        "ERROR_INVALID_PARAMETER)\n", len, GetLastError(), GetLastError());
+        "returned %d with %u (expected '0' with "
+        "ERROR_INVALID_PARAMETER)\n", len, GetLastError());
 
     HeapFree(GetProcessHeap(), 0, buffer);
-
 }
 
 
@@ -99,14 +98,14 @@ static void test_null_source(void)
     len = WideCharToMultiByte(CP_ACP, 0, NULL, 0, NULL, 0, NULL, NULL);
     GLE = GetLastError();
     ok(!len && GLE == ERROR_INVALID_PARAMETER,
-        "WideCharToMultiByte returned %d with GLE=%d (expected 0 with ERROR_INVALID_PARAMETER)\n",
+        "WideCharToMultiByte returned %d with GLE=%u (expected 0 with ERROR_INVALID_PARAMETER)\n",
         len, GLE);
 
     SetLastError(0);
     len = WideCharToMultiByte(CP_ACP, 0, NULL, -1, NULL, 0, NULL, NULL);
     GLE = GetLastError();
     ok(!len && GLE == ERROR_INVALID_PARAMETER,
-        "WideCharToMultiByte returned %d with GLE=%d (expected 0 with ERROR_INVALID_PARAMETER)\n",
+        "WideCharToMultiByte returned %d with GLE=%u (expected 0 with ERROR_INVALID_PARAMETER)\n",
         len, GLE);
 }
 
@@ -131,13 +130,13 @@ static void test_negative_source_length(void)
     memset(buf,'x',sizeof(buf));
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -2002, buf, 10, NULL, NULL);
     ok(len == 7 && !lstrcmpA(buf, "foobar") && GetLastError() == 0xdeadbeef,
-       "WideCharToMultiByte(-2002): len=%d error=%d\n",len,GetLastError());
+       "WideCharToMultiByte(-2002): len=%d error=%u\n", len, GetLastError());
 
     SetLastError( 0xdeadbeef );
     memset(bufW,'x',sizeof(bufW));
     len = MultiByteToWideChar(CP_ACP, 0, "foobar", -2002, bufW, 10);
     ok(len == 7 && !mylstrcmpW(bufW, foobarW) && GetLastError() == 0xdeadbeef,
-       "MultiByteToWideChar(-2002): len=%d error=%d\n",len,GetLastError());
+       "MultiByteToWideChar(-2002): len=%d error=%u\n", len, GetLastError());
 }
 
 static void test_overlapped_buffers(void)
