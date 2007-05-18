@@ -33,7 +33,6 @@
 #include "objbase.h"
 #include "undocshell.h"
 #include "shlguid.h"
-#include "winreg.h"
 
 #include "wine/debug.h"
 

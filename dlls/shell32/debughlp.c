@@ -25,7 +25,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "pidl.h"
-#include "shlguid.h"
 #include "shldisp.h"
 #include "wine/debug.h"
 #include "debughlp.h"

@@ -51,7 +51,6 @@
 #include "objbase.h"
 
 #include "pidl.h"
-#include "shlguid.h"
 #include "shlobj.h"
 #include "shldisp.h"
 #include "debughlp.h"

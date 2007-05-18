@@ -26,7 +26,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
-#include "wingdi.h"
 #include "shell32_main.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);

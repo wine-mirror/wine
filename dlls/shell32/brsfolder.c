@@ -29,7 +29,6 @@
 
 #include "wine/debug.h"
 #include "undocshell.h"
-#include "shlguid.h"
 #include "pidl.h"
 #include "shell32_main.h"
 #include "shellapi.h"
