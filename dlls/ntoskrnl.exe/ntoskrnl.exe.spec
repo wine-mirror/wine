@@ -573,9 +573,9 @@
 @ stub KeQueryInterruptTime
 @ stub KeQueryPriorityThread
 @ stub KeQueryRuntimeThread
-@ stub KeQuerySystemTime
-@ stub KeQueryTickCount
-@ stub KeQueryTimeIncrement
+@ stdcall KeQuerySystemTime(ptr)
+@ stdcall KeQueryTickCount(ptr)
+@ stdcall KeQueryTimeIncrement()
 @ stub KeRaiseUserException
 @ stub KeReadStateEvent
 @ stub KeReadStateMutant

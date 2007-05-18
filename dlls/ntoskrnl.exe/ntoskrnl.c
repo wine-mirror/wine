@@ -130,6 +130,7 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     IO_STACK_LOCATION irpsp;
     PDRIVER_DISPATCH dispatch = device->DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL];
     NTSTATUS status;
+    LARGE_INTEGER count;
 
     TRACE( "ioctl %x device %p in_size %u out_size %u\n", code, device, in_size, *out_size );
 
@@ -158,6 +159,8 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     mdl.ByteOffset = 0;
 
     device->CurrentIrp = &irp;
+
+    KeQueryTickCount( &count );  /* update the global KeTickCount */
 
     if (TRACE_ON(relay))
         DPRINTF( "%04x:Call driver dispatch %p (device=%p,irp=%p)\n",
@@ -416,6 +419,37 @@ void WINAPI ExFreePoolWithTag( void *ptr, ULONG tag )
 
 
 /***********************************************************************
+ *           KeQuerySystemTime   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeQuerySystemTime( LARGE_INTEGER *time )
+{
+    NtQuerySystemTime( time );
+}
+
+
+/***********************************************************************
+ *           KeQueryTickCount   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeQueryTickCount( LARGE_INTEGER *count )
+{
+    count->QuadPart = NtGetTickCount();
+    /* update the global variable too */
+    KeTickCount.LowPart   = count->u.LowPart;
+    KeTickCount.High1Time = count->u.HighPart;
+    KeTickCount.High2Time = count->u.HighPart;
+}
+
+
+/***********************************************************************
+ *           KeQueryTimeIncrement   (NTOSKRNL.EXE.@)
+ */
+ULONG WINAPI KeQueryTimeIncrement(void)
+{
+    return 10000;
+}
+
+
+/***********************************************************************
  *           MmAllocateNonCachedMemory   (NTOSKRNL.EXE.@)
  */
 LPVOID WINAPI MmAllocateNonCachedMemory( SIZE_T size )
@@ -493,11 +527,14 @@ NTSTATUS WINAPI PsSetCreateProcessNotifyRoutine( PCREATE_PROCESS_NOTIFY_ROUTINE 
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
+    LARGE_INTEGER count;
+
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( inst );
         RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
+        KeQueryTickCount( &count );  /* initialize the global KeTickCount */
         break;
     }
     return TRUE;

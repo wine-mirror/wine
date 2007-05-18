@@ -874,6 +874,9 @@ NTSTATUS  WINAPI IoDeleteSymbolicLink(UNICODE_STRING*);
 PEPROCESS WINAPI IoGetCurrentProcess(void);
 
 PKTHREAD  WINAPI KeGetCurrentThread(void);
+void      WINAPI KeQuerySystemTime(LARGE_INTEGER*);
+void      WINAPI KeQueryTickCount(LARGE_INTEGER*);
+ULONG     WINAPI KeQueryTimeIncrement(void);
 
 LPVOID    WINAPI MmAllocateNonCachedMemory(SIZE_T);
 void      WINAPI MmFreeNonCachedMemory(PVOID,SIZE_T);
