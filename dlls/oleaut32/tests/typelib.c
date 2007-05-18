@@ -350,10 +350,15 @@ static void test_CreateDispTypeInfo(void)
     hr = ITypeInfo_GetTypeAttr(pTI2, &pTypeAttr);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pTypeAttr->typekind == TKIND_INTERFACE, "typekind %0x\n", pTypeAttr->typekind);
+    ok(pTypeAttr->cFuncs == 4, "cFuncs %d\n", pTypeAttr->cFuncs);
+    ok(IsEqualGUID(&pTypeAttr->guid, &GUID_NULL), "guid {%08x-...}\n", pTypeAttr->guid.Data1);
+    ok(pTypeAttr->wTypeFlags == 0, "typeflags %08x\n", pTypeAttr->wTypeFlags);
+
     ITypeInfo_ReleaseTypeAttr(pTI2, pTypeAttr);
 
     hr = ITypeInfo_GetFuncDesc(pTI2, 0, &pFuncDesc);
     ok(hr == S_OK, "hr %08x\n", hr);
+    ok(pFuncDesc->memid == 0x123, "memid %x\n", pFuncDesc->memid);
     ok(pFuncDesc->funckind == FUNC_VIRTUAL, "funckind %d\n", pFuncDesc->funckind);
     ok(pFuncDesc->invkind == methdata[0].wFlags, "invkind %d\n", pFuncDesc->invkind);
     ok(pFuncDesc->callconv == methdata[0].cc, "callconv %d\n", pFuncDesc->callconv);

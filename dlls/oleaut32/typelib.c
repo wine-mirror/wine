@@ -6884,6 +6884,7 @@ HRESULT WINAPI CreateDispTypeInfo(
         (*ppFuncDesc)->ctCustData = 0;
         (*ppFuncDesc)->pCustData = NULL;
         (*ppFuncDesc)->next = NULL;
+        pTIIface->TypeAttr.cFuncs++;
         ppFuncDesc = &(*ppFuncDesc)->next;
     }
 
