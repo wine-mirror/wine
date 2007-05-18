@@ -43,7 +43,6 @@
 #include "winnls.h"
 #include "undocshell.h"
 #include "shell32_main.h"
-#include "shellapi.h"
 #include "shlwapi.h"
 
 #include "pidl.h"

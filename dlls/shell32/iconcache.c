@@ -39,7 +39,6 @@
 
 #include "shellapi.h"
 #include "objbase.h"
-#include "shlguid.h"
 #include "pidl.h"
 #include "shell32_main.h"
 #include "undocshell.h"

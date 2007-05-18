@@ -37,7 +37,6 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "shlobj.h"
-#include "shlguid.h"
 #include "shlwapi.h"
 
 #include "undocshell.h"

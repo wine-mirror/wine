@@ -33,16 +33,13 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winerror.h"
 #include "winreg.h"
 #include "wownt32.h"
-#include "dlgs.h"
 #include "shellapi.h"
 #include "winuser.h"
 #include "wingdi.h"
 #include "shlobj.h"
 #include "shlwapi.h"
-#include "ddeml.h"
 
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"

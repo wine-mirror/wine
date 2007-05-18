@@ -30,9 +30,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "shlobj.h"
-#include "winerror.h"
 #include "winreg.h"
-#include "winnls.h"
 
 #include "undocshell.h"
 #include "wine/winbase16.h"
