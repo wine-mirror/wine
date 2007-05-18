@@ -925,7 +925,7 @@ static void append_inf_file( struct inf_file *parent, struct inf_file *child )
  *
  * parse an INF file.
  */
-static struct inf_file *parse_file( HANDLE handle, const WCHAR *class, UINT *error_line )
+static struct inf_file *parse_file( HANDLE handle, const WCHAR *class, DWORD style, UINT *error_line )
 {
     void *buffer;
     DWORD err = 0;
@@ -1002,7 +1002,7 @@ static struct inf_file *parse_file( HANDLE handle, const WCHAR *class, UINT *err
             }
         }
         if (error_line) *error_line = 0;
-        err = ERROR_WRONG_INF_STYLE;
+        if (style & INF_STYLE_WIN4) err = ERROR_WRONG_INF_STYLE;
     }
 
  done:
@@ -1145,7 +1145,7 @@ HINF WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR class, DWORD style, UINT *err
 
     if (handle != INVALID_HANDLE_VALUE)
     {
-        file = parse_file( handle, class, error );
+        file = parse_file( handle, class, style, error );
         CloseHandle( handle );
     }
     if (!file)

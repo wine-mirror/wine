@@ -101,6 +101,27 @@ static void create_inf_file(LPSTR filename)
     CloseHandle(hf);
 }
 
+static void create_inf_file2(LPSTR filename)
+{
+    char data[1024];
+    char *ptr = data;
+    DWORD dwNumberOfBytesWritten;
+    HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
+                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    append_str(&ptr, "[SourceFileInfo]\n");
+    append_str(&ptr, "sp1qfe\\bitsinst.exe=250B3702C7CCD7C2F9E4DAA1555C933E,000600060A28062C,27136,SP1QFE\n");
+    append_str(&ptr, "sp1qfe\\bitsprx2.dll=4EBEA67F4BB4EB402E725CA7CA2857AE,000600060A280621,7680,SP1QFE\n");
+    append_str(&ptr, "sp1qfe\\bitsprx3.dll=C788A1D9330DA011EF25E95D3BC7BDE5,000600060A280621,7168,SP1QFE\n");
+    append_str(&ptr, "sp1qfe\\qmgr.dll=696AC82FB290A03F205901442E0E9589,000600060A280621,361984,SP1QFE\n");
+    append_str(&ptr, "sp1qfe\\qmgrprxy.dll=8B5848144829E1BC985EA4C3D8CA7E3F,000600060A280621,17408,SP1QFE\n");
+    append_str(&ptr, "sp1qfe\\winhttp.dll=3EC6F518114606CA59D4160322077437,000500010A280615,331776,SP1QFE\n");
+    append_str(&ptr, "sp1qfe\\xpob2res.dll=DB83156B9F496F20D1EA70E4ABEC0166,000500010A280622,158720,SP1QFE\n");
+
+    WriteFile(hf, data, ptr - data, &dwNumberOfBytesWritten, NULL);
+    CloseHandle(hf);
+}
+
 static BOOL check_info_filename(PSP_INF_INFORMATION info, LPSTR test)
 {
     LPSTR filename;
@@ -271,7 +292,7 @@ static void test_SetupGetSourceFileLocation(void)
 {
     char buffer[MAX_PATH] = "not empty", inf_filename[MAX_PATH];
     UINT source_id;
-    DWORD required;
+    DWORD required, error;
     HINF hinf;
     BOOL ret;
 
@@ -293,6 +314,23 @@ static void test_SetupGetSourceFileLocation(void)
     ok(required == 1, "unexpected required size: %d\n", required);
     ok(source_id == 2, "unexpected source id: %d\n", source_id);
     ok(!lstrcmpA("", buffer), "unexpected result string: %s\n", buffer);
+
+    pSetupCloseInfFile(hinf);
+    DeleteFileA(inf_filename);
+
+    create_inf_file2(inf_filename);
+
+    SetLastError(0xdeadbeef);
+    hinf = pSetupOpenInfFileA(inf_filename, NULL, INF_STYLE_WIN4, NULL);
+    error = GetLastError();
+    ok(hinf == INVALID_HANDLE_VALUE, "could open inf file\n");
+    ok(error == ERROR_WRONG_INF_STYLE, "got wrong error: %d\n", error);
+
+    hinf = pSetupOpenInfFileA(inf_filename, NULL, INF_STYLE_OLDNT, NULL);
+    ok(hinf != INVALID_HANDLE_VALUE, "could not open inf file\n");
+
+    ret = pSetupGetSourceFileLocationA(hinf, NULL, "", &source_id, buffer, sizeof(buffer), &required);
+    ok(!ret, "SetupGetSourceFileLocation succeeded\n");
 
     pSetupCloseInfFile(hinf);
     DeleteFileA(inf_filename);
