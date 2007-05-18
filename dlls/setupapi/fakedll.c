@@ -27,7 +27,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "winver.h"
 #include "winnt.h"
 #include "winternl.h"
 #include "wine/unicode.h"

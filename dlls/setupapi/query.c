@@ -24,7 +24,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winreg.h"
-#include "winver.h"
 #include "setupapi.h"
 #include "advpub.h"
 #include "winnls.h"

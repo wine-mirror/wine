@@ -28,7 +28,6 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "wownt32.h"
-#include "wingdi.h"
 #include "winnls.h"
 #include "setupapi.h"
 #include "setupx16.h"
