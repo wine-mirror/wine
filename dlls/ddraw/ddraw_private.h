@@ -80,6 +80,9 @@ extern ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain);
 
 extern ULONG WINAPI D3D7CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface);
 
+/* Global critical section */
+extern CRITICAL_SECTION ddraw_cs;
+
 /*****************************************************************************
  * IDirectDraw implementation structure
  *****************************************************************************/
