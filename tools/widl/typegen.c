@@ -1582,6 +1582,8 @@ static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, int for_object
             LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
             {
                 if (is_local(func->def->attrs)) continue;
+
+                current_func = func;
                 if (func->args)
                     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
                         var->type->typestring_offset
