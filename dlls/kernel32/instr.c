@@ -428,12 +428,12 @@ static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
 
 
 /***********************************************************************
- *           INSTR_EmulateInstruction
+ *           __wine_emulate_instruction
  *
  * Emulate a privileged instruction.
  * Returns exception continuation status.
  */
-DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
+DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 {
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
     BYTE *instr;
@@ -886,7 +886,7 @@ LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs )
         (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
          record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION))
     {
-        if (INSTR_EmulateInstruction( record, context ) == ExceptionContinueExecution)
+        if (__wine_emulate_instruction( record, context ) == ExceptionContinueExecution)
             return EXCEPTION_CONTINUE_EXECUTION;
     }
     return EXCEPTION_CONTINUE_SEARCH;

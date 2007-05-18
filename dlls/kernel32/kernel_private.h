@@ -79,7 +79,7 @@ extern void FILE_SetDosError(void);
 extern WCHAR *FILE_name_AtoW( LPCSTR name, BOOL alloc );
 extern DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen );
 
-extern DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
+extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
 extern LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs );
 extern void INSTR_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum );
 

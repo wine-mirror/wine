@@ -1234,6 +1234,7 @@
 @ cdecl __wine_dll_register_16(ptr str)
 @ cdecl __wine_dll_unregister_16(ptr)
 @ varargs -private __wine_call_from_16_regs()
+@ cdecl __wine_emulate_instruction(ptr ptr)
 
 # Unix files
 @ cdecl wine_get_unix_file_name(wstr)

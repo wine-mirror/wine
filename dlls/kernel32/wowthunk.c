@@ -256,7 +256,7 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
         else
         {
             SEGPTR gpHandler;
-            DWORD ret = INSTR_EmulateInstruction( record, context );
+            DWORD ret = __wine_emulate_instruction( record, context );
 
             /*
              * Insert check for pending DPMI events. Note that this 
@@ -310,7 +310,7 @@ static DWORD vm86_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECO
     if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
         record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION)
     {
-        return INSTR_EmulateInstruction( record, context );
+        return __wine_emulate_instruction( record, context );
     }
 
     return ExceptionContinueSearch;

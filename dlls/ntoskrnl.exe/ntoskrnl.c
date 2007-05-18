@@ -30,6 +30,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "excpt.h"
 #include "ddk/wdm.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
@@ -101,6 +102,23 @@ static HANDLE get_device_manager(void)
             NtClose( handle );  /* somebody beat us to it */
     }
     return ret;
+}
+
+/* exception handler for emulation of privileged instructions */
+static LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs )
+{
+    extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
+
+    EXCEPTION_RECORD *record = ptrs->ExceptionRecord;
+    CONTEXT86 *context = ptrs->ContextRecord;
+
+    if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
+        record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION)
+    {
+        if (__wine_emulate_instruction( record, context ) == ExceptionContinueExecution)
+            return EXCEPTION_CONTINUE_EXECUTION;
+    }
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 /* process an ioctl request for a given device */
@@ -479,6 +497,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( inst );
+        RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
         break;
     }
     return TRUE;
