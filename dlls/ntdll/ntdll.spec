@@ -910,7 +910,7 @@
 @ stub RtlWalkFrameChain
 @ stdcall RtlWalkHeap(long ptr)
 @ stub RtlWriteMemoryStream
-@ stub RtlWriteRegistryValue
+@ stdcall RtlWriteRegistryValue(long ptr ptr long ptr long)
 @ stub RtlZeroHeap
 @ stdcall RtlZeroMemory(ptr long)
 # @ stub RtlZombifyActivationContext

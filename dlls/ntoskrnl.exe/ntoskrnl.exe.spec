@@ -1197,7 +1197,7 @@
 @ stdcall RtlVerifyVersionInfo(ptr long double) ntdll.RtlVerifyVersionInfo
 @ stub RtlVolumeDeviceToDosName
 @ stub RtlWalkFrameChain
-@ stub RtlWriteRegistryValue
+@ stdcall RtlWriteRegistryValue(long ptr ptr long ptr long) ntdll.RtlWriteRegistryValue
 @ stub RtlZeroHeap
 @ stdcall RtlZeroMemory(ptr long) ntdll.RtlZeroMemory
 @ stdcall RtlxAnsiStringToUnicodeSize(ptr) ntdll.RtlxAnsiStringToUnicodeSize

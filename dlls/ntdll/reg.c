@@ -1334,3 +1334,44 @@ NTSTATUS WINAPI RtlDeleteRegistryValue(IN ULONG RelativeTo, IN PCWSTR Path, IN P
     NtClose(handle);
     return status;
 }
+
+/*************************************************************************
+ * RtlWriteRegistryValue   [NTDLL.@]
+ *
+ * Sets the registry value with provided data.
+ *
+ * PARAMS
+ *  RelativeTo [I] Registry path that path parameter refers to
+ *  path       [I] Path to the key (or handle - see RTL_GetKeyHandle)
+ *  name       [I] Name of the registry value to set
+ *  type       [I] Type of the registry key to set
+ *  data       [I] Pointer to the user data to be set
+ *  length     [I] Length of the user data pointed by data
+ *
+ * RETURNS
+ *  STATUS_SUCCESS if the specified key is successfully set,
+ *  or an NTSTATUS error code.
+ */
+NTSTATUS WINAPI RtlWriteRegistryValue( ULONG RelativeTo, PCWSTR path, PCWSTR name,
+                                       ULONG type, PVOID data, ULONG length )
+{
+    HANDLE hkey;
+    NTSTATUS status;
+    UNICODE_STRING str;
+
+    TRACE( "(%d, %s, %s) -> %d: %p [%d]\n", RelativeTo, debugstr_w(path), debugstr_w(name),
+           type, data, length );
+
+    RtlInitUnicodeString( &str, name );
+
+    if (RelativeTo == RTL_REGISTRY_HANDLE)
+        return NtSetValueKey( (HANDLE)path, &str, 0, type, data, length );
+
+    status = RTL_GetKeyHandle( RelativeTo, path, &hkey );
+    if (status != STATUS_SUCCESS) return status;
+
+    status = NtSetValueKey( hkey, &str, 0, type, data, length );
+    NtClose( hkey );
+
+    return status;
+}
