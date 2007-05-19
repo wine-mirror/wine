@@ -46,7 +46,6 @@
 #include "user_private.h"
 #include "win.h"
 #include "controls.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
 
