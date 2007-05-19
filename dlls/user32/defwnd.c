@@ -29,7 +29,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winnls.h"
-#include "imm.h"
 #include "win.h"
 #include "user_private.h"
 #include "controls.h"

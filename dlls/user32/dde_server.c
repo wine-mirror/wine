@@ -29,7 +29,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winerror.h"
 #include "dde.h"
 #include "ddeml.h"
 #include "win.h"
