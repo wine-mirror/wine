@@ -474,33 +474,18 @@ APARTMENT *apartment_findfromtid(DWORD tid)
     return result;
 }
 
-/* gets an apartment which has a given type. The caller must
+/* gets the main apartment if it exists. The caller must
  * release the reference from the apartment as soon as the apartment pointer
  * is no longer required. */
-static APARTMENT *apartment_findfromtype(BOOL multi_threaded, BOOL main_apartment)
+static APARTMENT *apartment_findmain(void)
 {
-    APARTMENT *result = NULL;
-    struct apartment *apt;
+    APARTMENT *result;
 
     EnterCriticalSection(&csApartment);
 
-    if (!multi_threaded && main_apartment)
-    {
-        result = MainApartment;
-        if (result) apartment_addref(result);
-        LeaveCriticalSection(&csApartment);
-        return result;
-    }
+    result = MainApartment;
+    if (result) apartment_addref(result);
 
-    LIST_FOR_EACH_ENTRY( apt, &apts, struct apartment, entry )
-    {
-        if (apt->multi_threaded == multi_threaded)
-        {
-            result = apt;
-            apartment_addref(result);
-            break;
-        }
-    }
     LeaveCriticalSection(&csApartment);
 
     return result;
@@ -624,7 +609,7 @@ static HRESULT apartment_hostobject_in_hostapt(struct apartment *apt, BOOL multi
 
     if (!multi_threaded && main_apartment)
     {
-        APARTMENT *host_apt = apartment_findfromtype(FALSE, FALSE);
+        APARTMENT *host_apt = apartment_findmain();
         if (host_apt)
         {
             apartment_hwnd = apartment_getwindow(host_apt);
@@ -677,7 +662,7 @@ static HRESULT apartment_hostobject_in_hostapt(struct apartment *apt, BOOL multi
      * us to create the thread for the host apartment */
     if (!apartment_hwnd && !multi_threaded && main_apartment)
     {
-        APARTMENT *host_apt = apartment_findfromtype(FALSE, FALSE);
+        APARTMENT *host_apt = apartment_findmain();
         if (host_apt)
         {
             apartment_hwnd = apartment_getwindow(host_apt);
