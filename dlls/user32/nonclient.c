@@ -26,11 +26,9 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
-#include "wownt32.h"
 #include "win.h"
 #include "user_private.h"
 #include "controls.h"
-#include "shellapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nonclient);

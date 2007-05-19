@@ -99,7 +99,6 @@
 #include "controls.h"
 #include "user_private.h"
 #include "wine/debug.h"
-#include "dlgs.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mdi);
 
