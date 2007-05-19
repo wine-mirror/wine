@@ -25,7 +25,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winreg.h"
 
 #include "controls.h"
 #include "user_private.h"

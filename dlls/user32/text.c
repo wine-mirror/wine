@@ -37,7 +37,6 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
-#include "winerror.h"
 #include "winnls.h"
 #include "controls.h"
 #include "user_private.h"
