@@ -1991,7 +1991,7 @@ static void test_menu_resource_layout(void)
     static const struct
     {
         MENUITEMTEMPLATEHEADER mith;
-        WORD data[];
+        WORD data[14];
     } menu_template =
     {
         { 0, 0 }, /* versionNumber, offset */
