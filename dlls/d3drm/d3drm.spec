@@ -1,6 +1,6 @@
 @ stub D3DRMColorGetAlpha
 @ stub D3DRMColorGetBlue
-@ stub D3DRMColorGetGreen
+@ stdcall D3DRMColorGetGreen(long)
 @ stdcall D3DRMColorGetRed(long)
 @ stub D3DRMCreateColorRGB
 @ stub D3DRMCreateColorRGBA
