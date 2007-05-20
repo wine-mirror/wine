@@ -79,6 +79,7 @@ static LPD3DVECTOR (WINAPI * pD3DRMVectorScale)(LPD3DVECTOR, LPD3DVECTOR, D3DVAL
 static LPD3DVECTOR (WINAPI * pD3DRMVectorSubtract)(LPD3DVECTOR, LPD3DVECTOR, LPD3DVECTOR);
 static LPD3DRMQUATERNION (WINAPI * pD3DRMQuaternionFromRotation)(LPD3DRMQUATERNION, LPD3DVECTOR, D3DVALUE);
 static LPD3DRMQUATERNION (WINAPI * pD3DRMQuaternionSlerp)(LPD3DRMQUATERNION, LPD3DRMQUATERNION, LPD3DRMQUATERNION, D3DVALUE);
+static D3DCOLOR (WINAPI * pD3DRMCreateColorRGBA)(D3DVALUE, D3DVALUE, D3DVALUE, D3DVALUE);
 static D3DVALUE (WINAPI * pD3DRMColorGetAlpha)(D3DCOLOR);
 static D3DVALUE (WINAPI * pD3DRMColorGetBlue)(D3DCOLOR);
 static D3DVALUE (WINAPI * pD3DRMColorGetGreen)(D3DCOLOR);
@@ -114,6 +115,7 @@ static BOOL InitFunctionPtrs(void)
     D3DRM_GET_PROC(D3DRMVectorSubtract)
     D3DRM_GET_PROC(D3DRMQuaternionFromRotation)
     D3DRM_GET_PROC(D3DRMQuaternionSlerp)
+    D3DRM_GET_PROC(D3DRMCreateColorRGBA)
     D3DRM_GET_PROC(D3DRMColorGetAlpha)
     D3DRM_GET_PROC(D3DRMColorGetBlue)
     D3DRM_GET_PROC(D3DRMColorGetGreen)
@@ -256,8 +258,35 @@ static void QuaternionTest(void)
 
 static void ColorTest(void)
 {
-    D3DCOLOR color;
-    D3DVALUE expected, got;
+    D3DCOLOR color, expected_color, got_color;
+    D3DVALUE expected, got, red, green, blue, alpha;
+
+/*___________D3DRMCreateColorRGBA________________________*/
+    red=0.1;
+    green=0.4;
+    blue=0.7;
+    alpha=0.58;
+    expected_color=0x931966b2;
+    got_color=pD3DRMCreateColorRGBA(red,green,blue,alpha);
+    ok((expected_color==got_color),"Expected color=%x, Got color=%x\n",expected_color,got_color);
+
+/* if a component is <0 then, then one considers this compenent as 0. The following test proves this fact (test only with the red component). */
+    red=-0.88;
+    green=0.4;
+    blue=0.6;
+    alpha=0.41;
+    expected_color=0x68006699;
+    got_color=pD3DRMCreateColorRGBA(red,green,blue,alpha);
+    ok((expected_color==got_color),"Expected color=%x, Got color=%x\n",expected_color,got_color);
+
+/* if a component is >1 then, then one considers this compenent as 1. The following test proves this fact (test only with the red component). */
+    red=2.37;
+    green=0.4;
+    blue=0.6;
+    alpha=0.41;
+    expected_color=0x68ff6699;
+    got_color=pD3DRMCreateColorRGBA(red,green,blue,alpha);
+    ok((expected_color==got_color),"Expected color=%x, Got color=%x\n",expected_color,got_color);
 
 /*___________D3DRMColorGetAlpha_________________________*/
     color=0x0e4921bf;

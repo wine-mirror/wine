@@ -3,7 +3,7 @@
 @ stdcall D3DRMColorGetGreen(long)
 @ stdcall D3DRMColorGetRed(long)
 @ stub D3DRMCreateColorRGB
-@ stub D3DRMCreateColorRGBA
+@ stdcall D3DRMCreateColorRGBA(long long long long)
 @ stdcall D3DRMMatrixFromQuaternion(ptr ptr)
 @ stdcall D3DRMQuaternionFromRotation(ptr ptr long)
 @ stdcall D3DRMQuaternionMultiply(ptr ptr ptr)
