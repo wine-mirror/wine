@@ -97,11 +97,17 @@ IDirectDrawImpl_QueryInterface(IDirectDraw7 *iface,
 
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(refiid), obj);
 
+    /* Can change surface impl type */
+    EnterCriticalSection(&ddraw_cs);
+
     /* According to COM docs, if the QueryInterface fails, obj should be set to NULL */
     *obj = NULL;
 
     if(!refiid)
+    {
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
+    }
 
     /* Check DirectDraw Interfaces */
     if ( IsEqualGUID( &IID_IUnknown, refiid ) ||
@@ -193,10 +199,12 @@ IDirectDrawImpl_QueryInterface(IDirectDraw7 *iface,
     else
     {
         ERR("(%p)->(%s, %p): No interface found\n", This, debugstr_guid(refiid), obj);
+        LeaveCriticalSection(&ddraw_cs);
         return E_NOINTERFACE;
     }
 
     IUnknown_AddRef( (IUnknown *) *obj );
+    LeaveCriticalSection(&ddraw_cs);
     return S_OK;
 }
 
@@ -364,11 +372,14 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
     FIXME("(%p)->(%p,%08x)\n",This,hwnd,cooplevel);
     DDRAW_dump_cooperativelevel(cooplevel);
 
+    EnterCriticalSection(&ddraw_cs);
+
     /* Get the old window */
     hr = IWineD3DDevice_GetHWND(This->wineD3DDevice, &window);
     if(hr != D3D_OK)
     {
         ERR("IWineD3DDevice::GetHWND failed, hr = %08x\n", hr);
+        LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
 
@@ -378,6 +389,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
                       DDSCL_EXCLUSIVE      )))
     {
         TRACE("Incorrect cooplevel flags, returning DDERR_INVALIDPARAMS\n");
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
     }
 
@@ -396,11 +408,13 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
                          DDSCL_FULLSCREEN      ) )
         {
             TRACE("Called with incompatible flags, returning DDERR_INVALIDPARAMS\n");
+            LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDPARAMS;
         }
         else if( (This->cooperative_level & DDSCL_FULLSCREEN) && window)
         {
             TRACE("Setting DDSCL_SETFOCUSWINDOW with an already set window, returning DDERR_HWNDALREADYSET\n");
+            LeaveCriticalSection(&ddraw_cs);
             return DDERR_HWNDALREADYSET;
         }
 
@@ -425,6 +439,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
         if(cooplevel & (DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE) )
         {
             TRACE("(%p) DDSCL_NORMAL is not compative with DDSCL_FULLSCREEN or DDSCL_EXCLUSIVE\n", This);
+            LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDPARAMS;
         }
 
@@ -457,6 +472,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
         if(!(cooplevel & DDSCL_EXCLUSIVE) )
         {
             TRACE("(%p) DDSCL_FULLSCREEN needs DDSCL_EXCLUSIVE\n", This);
+            LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDPARAMS;
         }
         /* Need a HWND
@@ -483,6 +499,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
     else if(cooplevel & DDSCL_EXCLUSIVE)
     {
         TRACE("(%p) DDSCL_EXCLUSIVE needs DDSCL_FULLSCREEN\n", This);
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
     }
 
@@ -507,7 +524,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
 
     if(cooplevel & DDSCL_MULTITHREADED && !(This->cooperative_level & DDSCL_MULTITHREADED))
     {
-        FIXME("DirectDraw is not thread safe yet\n");
+        FIXME("DirectDraw is not fully thread safe yet\n");
 
         /* Enable thread safety in wined3d */
         IWineD3DDevice_SetMultithreaded(This->wineD3DDevice);
@@ -526,6 +543,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
     /* Store the cooperative_level */
     This->cooperative_level |= cooplevel;
     TRACE("SetCooperativeLevel retuning DD_OK\n");
+    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
@@ -564,10 +582,12 @@ IDirectDrawImpl_SetDisplayMode(IDirectDraw7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%d,%d,%d,%d,%x: Relay!\n", This, Width, Height, BPP, RefreshRate, Flags);
 
+    EnterCriticalSection(&ddraw_cs);
     if( !Width || !Height )
     {
         ERR("Width=%d, Height=%d, what to do?\n", Width, Height);
         /* It looks like Need for Speed Porsche Unleashed expects DD_OK here */
+        LeaveCriticalSection(&ddraw_cs);
         return DD_OK;
     }
 
@@ -601,6 +621,7 @@ IDirectDrawImpl_SetDisplayMode(IDirectDraw7 *iface,
     hr = IWineD3DDevice_SetDisplayMode(This->wineD3DDevice,
                                        0, /* First swapchain */
                                        &Mode);
+    LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
         case WINED3DERR_NOTAVAILABLE:       return DDERR_INVALIDMODE;
@@ -738,9 +759,11 @@ IDirectDrawImpl_GetDisplayMode(IDirectDraw7 *iface,
     DWORD Size;
     TRACE("(%p)->(%p): Relay\n", This, DDSD);
 
+    EnterCriticalSection(&ddraw_cs);
     /* This seems sane */
     if(!DDSD) 
     {
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
     }
 
@@ -753,6 +776,7 @@ IDirectDrawImpl_GetDisplayMode(IDirectDraw7 *iface,
     if( hr != D3D_OK )
     {
         ERR(" (%p) IWineD3DDevice::GetDisplayMode returned %08x\n", This, hr);
+        LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
 
@@ -775,6 +799,7 @@ IDirectDrawImpl_GetDisplayMode(IDirectDraw7 *iface,
         DDRAW_dump_surface_desc(DDSD);
     }
 
+    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
@@ -857,10 +882,16 @@ IDirectDrawImpl_GetVerticalBlankStatus(IDirectDraw7 *iface,
     TRACE("(%p)->(%p)\n", This, status);
 
     /* This looks sane, the MSDN suggests it too */
-    if(!status) return DDERR_INVALIDPARAMS;
+    EnterCriticalSection(&ddraw_cs);
+    if(!status)
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
+    }
 
     *status = This->fake_vblank;
     This->fake_vblank = !This->fake_vblank;
+    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
@@ -891,17 +922,23 @@ IDirectDrawImpl_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *Caps, DWORD *t
         DDRAW_dump_DDSCAPS2(Caps);
         TRACE("\n");
     }
+    EnterCriticalSection(&ddraw_cs);
 
     /* Todo: System memory vs local video memory vs non-local video memory
      * The MSDN also mentions differences between texture memory and other
      * resources, but that's not important
      */
 
-    if( (!total) && (!free) ) return DDERR_INVALIDPARAMS;
+    if( (!total) && (!free) )
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
+    }
 
     if(total) *total = This->total_vidmem;
     if(free) *free = IWineD3DDevice_GetAvailableTextureMem(This->wineD3DDevice);
 
+    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
@@ -1009,6 +1046,7 @@ static HRESULT WINAPI IDirectDrawImpl_GetScanLine(IDirectDraw7 *iface, DWORD *Sc
     WINED3DDISPLAYMODE Mode;
 
     /* This function is called often, so print the fixme only once */
+    EnterCriticalSection(&ddraw_cs);
     if(!hide)
     {
         FIXME("(%p)->(%p): Semi-Stub\n", This, Scanline);
@@ -1026,6 +1064,7 @@ static HRESULT WINAPI IDirectDrawImpl_GetScanLine(IDirectDraw7 *iface, DWORD *Sc
     if (This->cur_scanline >= Mode.Height + 20)
         This->cur_scanline = 0;
 
+    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
@@ -1048,6 +1087,7 @@ IDirectDrawImpl_TestCooperativeLevel(IDirectDraw7 *iface)
     HRESULT hr;
     TRACE("(%p)\n", This);
 
+    EnterCriticalSection(&ddraw_cs);
     /* Description from MSDN:
      * For fullscreen apps return DDERR_NOEXCLUSIVEMODE if the user switched
      * away from the app with e.g. alt-tab. Windowed apps receive 
@@ -1066,17 +1106,21 @@ IDirectDrawImpl_TestCooperativeLevel(IDirectDraw7 *iface)
         case WINED3DERR_DEVICELOST:
             if(This->cooperative_level & DDSCL_EXCLUSIVE)
             {
+                LeaveCriticalSection(&ddraw_cs);
                 return DDERR_NOEXCLUSIVEMODE;
             }
             else
             {
+                LeaveCriticalSection(&ddraw_cs);
                 return DDERR_EXCLUSIVEMODEALREADYSET;
             }
 
         case WINED3DERR_DEVICENOTRESET:
+            LeaveCriticalSection(&ddraw_cs);
             return DD_OK;
 
         case WINED3D_OK:
+            LeaveCriticalSection(&ddraw_cs);
             return DD_OK;
 
         case WINED3DERR_DRIVERINTERNALERROR:
@@ -1085,6 +1129,7 @@ IDirectDrawImpl_TestCooperativeLevel(IDirectDraw7 *iface)
                 " returning DD_OK\n", This, hr);
     }
 
+    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
@@ -1116,6 +1161,7 @@ IDirectDrawImpl_GetGDISurface(IDirectDraw7 *iface,
     /* Get the back buffer from the wineD3DDevice and search its
      * attached surfaces for the front buffer
      */
+    EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DDevice_GetBackBuffer(This->wineD3DDevice,
                                       0, /* SwapChain */
                                       0, /* first back buffer*/
@@ -1126,6 +1172,7 @@ IDirectDrawImpl_GetGDISurface(IDirectDraw7 *iface,
         (!Surf) )
     {
         ERR("IWineD3DDevice::GetBackBuffer failed\n");
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_NOTFOUND;
     }
 
@@ -1147,6 +1194,7 @@ IDirectDrawImpl_GetGDISurface(IDirectDraw7 *iface,
     }
 
     /* The AddRef is OK this time */
+    LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
 
@@ -1202,8 +1250,13 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
 
     TRACE("(%p)->(%p,%p,%p): Relay\n", This, DDSD, Context, cb);
 
+    EnterCriticalSection(&ddraw_cs);
     /* This looks sane */
-    if(!cb) return DDERR_INVALIDPARAMS;
+    if(!cb)
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
+    }
 
     if(DDSD)
     {
@@ -1252,12 +1305,14 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
             if(cb(&callback_sd, Context) == DDENUMRET_CANCEL)
             {
                 TRACE("Application asked to terminate the enumeration\n");
+                LeaveCriticalSection(&ddraw_cs);
                 return DD_OK;
             }
         }
     }
 
     TRACE("End of enumeration\n");
+    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
@@ -2189,16 +2244,19 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         TRACE(" (%p) Requesting surface desc :\n", This);
         DDRAW_dump_surface_desc(DDSD);
     }
+    EnterCriticalSection(&ddraw_cs);
 
     if (UnkOuter != NULL)
     {
         FIXME("(%p) : outer != NULL?\n", This);
+        LeaveCriticalSection(&ddraw_cs);
         return CLASS_E_NOAGGREGATION; /* unchecked */
     }
 
     if (Surf == NULL)
     {
         FIXME("(%p) You want to get back a surface? Don't give NULL ptrs!\n", This);
+        LeaveCriticalSection(&ddraw_cs);
         return E_POINTER; /* unchecked */
     }
 
@@ -2231,11 +2289,13 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
     {
         TRACE("(%p): Attempt to create a flipable primary surface without DDSCL_EXCLUSIVE set\n", This);
         *Surf = NULL;
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_NOEXCLUSIVEMODE;
     }
 
     if(DDSD->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER)) {
         WARN("Application tried to create an explicit front or back buffer\n");
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDCAPS;
     }
     /* Check cube maps but only if the size includes them */
@@ -2245,12 +2305,14 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
            !(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP))
         {
             WARN("Cube map faces requested without cube map flag\n");
+            LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDCAPS;
         }
         if(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP &&
            (DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES) == 0)
         {
             WARN("Cube map without faces requested\n");
+            LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDPARAMS;
         }
 
@@ -2349,6 +2411,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         {
             WARN("Creating a non-Primary surface without Width or Height info, returning DDERR_INVALIDPARAMS\n");
             *Surf = NULL;
+            LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDPARAMS;
         }
 
@@ -2411,6 +2474,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
     if( hr != DD_OK)
     {
         ERR("IDirectDrawImpl_CreateNewSurface failed with %08x\n", hr);
+        LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
     object->is_complex_root = TRUE;
@@ -2456,6 +2520,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
     {
         /* This destroys and possibly created surfaces too */
         IDirectDrawSurface_Release( ICOM_INTERFACE(object, IDirectDrawSurface7) );
+        LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
 
@@ -2561,6 +2626,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         This->tex_root = NULL;
     }
 
+    LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
 
@@ -2720,9 +2786,13 @@ IDirectDrawImpl_EnumSurfaces(IDirectDraw7 *iface,
     nomatch = Flags & DDENUMSURFACES_NOMATCH;
 
     TRACE("(%p)->(%x,%p,%p,%p)\n", This, Flags, DDSD, Context, Callback);
+    EnterCriticalSection(&ddraw_cs);
 
     if(!Callback)
+    {
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
+    }
 
     /* Use the _SAFE enumeration, the app may destroy enumerated surfaces */
     LIST_FOR_EACH_SAFE(entry, entry2, &This->surface_list)
@@ -2733,9 +2803,13 @@ IDirectDrawImpl_EnumSurfaces(IDirectDraw7 *iface,
             desc = surf->surface_desc;
             IDirectDrawSurface7_AddRef(ICOM_INTERFACE(surf, IDirectDrawSurface7));
             if(Callback( ICOM_INTERFACE(surf, IDirectDrawSurface7), &desc, Context) != DDENUMRET_OK)
+            {
+                LeaveCriticalSection(&ddraw_cs);
                 return DD_OK;
+            }
         }
     }
+    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
@@ -3040,11 +3114,20 @@ DirectDrawCreateClipper(DWORD Flags,
     IDirectDrawClipperImpl* object;
     TRACE("(%08x,%p,%p)\n", Flags, Clipper, UnkOuter);
 
-    if (UnkOuter != NULL) return CLASS_E_NOAGGREGATION;
+    EnterCriticalSection(&ddraw_cs);
+    if (UnkOuter != NULL)
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return CLASS_E_NOAGGREGATION;
+    }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                      sizeof(IDirectDrawClipperImpl));
-    if (object == NULL) return E_OUTOFMEMORY;
+    if (object == NULL)
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return E_OUTOFMEMORY;
+    }
 
     ICOM_INIT_INTERFACE(object, IDirectDrawClipper, IDirectDrawClipper_Vtbl);
     object->ref = 1;
@@ -3052,10 +3135,12 @@ DirectDrawCreateClipper(DWORD Flags,
     if(!object->wineD3DClipper)
     {
         HeapFree(GetProcessHeap(), 0, object);
+        LeaveCriticalSection(&ddraw_cs);
         return E_OUTOFMEMORY;
     }
 
     *Clipper = (IDirectDrawClipper *) object;
+    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
@@ -3105,9 +3190,11 @@ IDirectDrawImpl_CreatePalette(IDirectDraw7 *iface,
     HRESULT hr = DDERR_GENERIC;
     TRACE("(%p)->(%x,%p,%p,%p)\n", This, Flags, ColorTable, Palette, pUnkOuter);
 
+    EnterCriticalSection(&ddraw_cs);
     if(pUnkOuter != NULL)
     {
         WARN("pUnkOuter is %p, returning CLASS_E_NOAGGREGATION\n", pUnkOuter);
+        LeaveCriticalSection(&ddraw_cs);
         return CLASS_E_NOAGGREGATION;
     }
 
@@ -3115,6 +3202,7 @@ IDirectDrawImpl_CreatePalette(IDirectDraw7 *iface,
     if(!This->cooperative_level)
     {
         WARN("No cooperative level set, returning DDERR_NOCOOPERATIVELEVELSET\n");
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_NOCOOPERATIVELEVELSET;
     }
 
@@ -3122,6 +3210,7 @@ IDirectDrawImpl_CreatePalette(IDirectDraw7 *iface,
     if(!object)
     {
         ERR("Out of memory when allocating memory for a palette implementation\n");
+        LeaveCriticalSection(&ddraw_cs);
         return E_OUTOFMEMORY;
     }
 
@@ -3133,12 +3222,14 @@ IDirectDrawImpl_CreatePalette(IDirectDraw7 *iface,
     if(hr != DD_OK)
     {
         HeapFree(GetProcessHeap(), 0, object);
+        LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
 
     IDirectDraw7_AddRef(iface);
     object->ifaceToRelease = (IUnknown *) iface;
     *Palette = ICOM_INTERFACE(object, IDirectDrawPalette);
+    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
