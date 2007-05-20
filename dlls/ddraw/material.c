@@ -149,8 +149,10 @@ IDirect3DMaterialImpl_Release(IDirect3DMaterial3 *iface)
     {
         if(This->Handle)
         {
+            EnterCriticalSection(&ddraw_cs);
             This->ddraw->d3ddevice->Handles[This->Handle - 1].ptr = NULL;
             This->ddraw->d3ddevice->Handles[This->Handle - 1].type = DDrawHandle_Unknown;
+            LeaveCriticalSection(&ddraw_cs);
         }
 
         HeapFree(GetProcessHeap(), 0, This);
@@ -246,9 +248,11 @@ IDirect3DMaterialImpl_SetMaterial(IDirect3DMaterial3 *iface,
         dump_material(lpMat);
 
     /* Stores the material */
+    EnterCriticalSection(&ddraw_cs);
     memset(&This->mat, 0, sizeof(This->mat));
     memcpy(&This->mat, lpMat, lpMat->dwSize);
-    
+    LeaveCriticalSection(&ddraw_cs);
+
     return DD_OK;
 }
 
@@ -278,9 +282,11 @@ IDirect3DMaterialImpl_GetMaterial(IDirect3DMaterial3 *iface,
     }
 
     /* Copies the material structure */
+    EnterCriticalSection(&ddraw_cs);
     dwSize = lpMat->dwSize;
     memset(lpMat, 0, dwSize);
     memcpy(lpMat, &This->mat, dwSize);
+    LeaveCriticalSection(&ddraw_cs);
 
     return DD_OK;
 }
@@ -309,6 +315,7 @@ IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
     IDirect3DDeviceImpl *device = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice3, lpDirect3DDevice3);
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, device, lpHandle);
 
+    EnterCriticalSection(&ddraw_cs);
     This->active_device = device;
     if(!This->Handle)
     {
@@ -316,6 +323,7 @@ IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
         if(!This->Handle)
         {
             ERR("Error creating a handle\n");
+            LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDPARAMS;   /* Unchecked */
         }
         device->Handles[This->Handle - 1].ptr = This;
@@ -323,6 +331,7 @@ IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
     }
     *lpHandle = This->Handle;
     TRACE(" returning handle %08x.\n", *lpHandle);
+    LeaveCriticalSection(&ddraw_cs);
 
     return D3D_OK;
 }
