@@ -1,7 +1,7 @@
 @ stub D3DRMColorGetAlpha
 @ stub D3DRMColorGetBlue
 @ stub D3DRMColorGetGreen
-@ stub D3DRMColorGetRed
+@ stdcall D3DRMColorGetRed(long)
 @ stub D3DRMCreateColorRGB
 @ stub D3DRMCreateColorRGBA
 @ stdcall D3DRMMatrixFromQuaternion(ptr ptr)

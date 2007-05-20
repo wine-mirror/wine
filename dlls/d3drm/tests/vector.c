@@ -79,6 +79,7 @@ static LPD3DVECTOR (WINAPI * pD3DRMVectorScale)(LPD3DVECTOR, LPD3DVECTOR, D3DVAL
 static LPD3DVECTOR (WINAPI * pD3DRMVectorSubtract)(LPD3DVECTOR, LPD3DVECTOR, LPD3DVECTOR);
 static LPD3DRMQUATERNION (WINAPI * pD3DRMQuaternionFromRotation)(LPD3DRMQUATERNION, LPD3DVECTOR, D3DVALUE);
 static LPD3DRMQUATERNION (WINAPI * pD3DRMQuaternionSlerp)(LPD3DRMQUATERNION, LPD3DRMQUATERNION, LPD3DRMQUATERNION, D3DVALUE);
+static D3DVALUE (WINAPI * pD3DRMColorGetRed)(D3DCOLOR);
 
 #define D3DRM_GET_PROC(func) \
     p ## func = (void*)GetProcAddress(d3drm_handle, #func); \
@@ -110,6 +111,7 @@ static BOOL InitFunctionPtrs(void)
     D3DRM_GET_PROC(D3DRMVectorSubtract)
     D3DRM_GET_PROC(D3DRMQuaternionFromRotation)
     D3DRM_GET_PROC(D3DRMQuaternionSlerp)
+    D3DRM_GET_PROC(D3DRMColorGetRed)
 
     return TRUE;
 }
@@ -246,6 +248,18 @@ static void QuaternionTest(void)
     expect_quat(q,r);
 }
 
+static void ColorTest(void)
+{
+    D3DCOLOR color;
+    D3DVALUE expected, got;
+
+/*___________D3DRMColorGetRed__________________________*/
+    color=0xb62d7a1c;
+    expected=3.0/17.0;
+    got=pD3DRMColorGetRed(color);
+    ok((fabs(expected-got)<admit_error),"Expected=%f, Got=%f\n",expected,got);
+}
+
 START_TEST(vector)
 {
     if(!InitFunctionPtrs())
@@ -254,6 +268,7 @@ START_TEST(vector)
     VectorTest();
     MatrixTest();
     QuaternionTest();
+    ColorTest();
 
     FreeLibrary(d3drm_handle);
 }

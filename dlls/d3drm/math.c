@@ -34,6 +34,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
+/* Determine the red part of a color */
+D3DVALUE WINAPI D3DRMColorGetRed(D3DCOLOR color)
+{
+    return (RGBA_GETRED(color)/255.0);
+}
+
 /* Product of 2 quaternions */
 LPD3DRMQUATERNION WINAPI D3DRMQuaternionMultiply(LPD3DRMQUATERNION q, LPD3DRMQUATERNION a, LPD3DRMQUATERNION b)
 {
