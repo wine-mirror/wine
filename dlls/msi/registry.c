@@ -107,6 +107,14 @@ static const WCHAR szUserProduct_fmt[] = {
 'P','r','o','d','u','c','t','s','\\',
 '%','s',0};
 
+static const WCHAR szInstaller_Products[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'P','r','o','d','u','c','t','s',0};
+
 static const WCHAR szInstaller_Products_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -493,6 +501,11 @@ UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
     return rc;
 }
 
+UINT MSIREG_OpenProducts(HKEY* key)
+{
+    return RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller_Products,key);
+}
+
 UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
 {
     UINT rc;
@@ -680,7 +693,7 @@ UINT WINAPI MsiEnumProductsA(DWORD index, LPSTR lpguid)
 
 UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
 {
-    HKEY hkeyFeatures = 0;
+    HKEY hkeyProducts = 0;
     DWORD r;
     WCHAR szKeyName[SQUISH_GUID_SIZE];
 
@@ -689,14 +702,14 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
     if (NULL == lpguid)
         return ERROR_INVALID_PARAMETER;
 
-    r = MSIREG_OpenFeatures(&hkeyFeatures);
+    r = MSIREG_OpenProducts(&hkeyProducts);
     if( r != ERROR_SUCCESS )
         return ERROR_NO_MORE_ITEMS;
 
-    r = RegEnumKeyW(hkeyFeatures, index, szKeyName, SQUISH_GUID_SIZE);
+    r = RegEnumKeyW(hkeyProducts, index, szKeyName, SQUISH_GUID_SIZE);
     if( r == ERROR_SUCCESS )
         unsquash_guid(szKeyName, lpguid);
-    RegCloseKey(hkeyFeatures);
+    RegCloseKey(hkeyProducts);
 
     return r;
 }

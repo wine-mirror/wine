@@ -1679,10 +1679,9 @@ static void test_Installer_Products(BOOL bProductInstalled)
             }
         }
 
-        if (bProductInstalled)
-            todo_wine ok(bProductFound, "Product expected to be installed but product code was not found\n");
-        else
-            ok(!bProductFound, "Product not expected to be installed but product code was found\n");
+        ok(bProductInstalled == bProductFound, "Product expected to %s installed but product code was %s\n",
+           bProductInstalled ? "be" : "not be",
+           bProductFound ? "found" : "not found");
 
         if (pEnum)
         {
