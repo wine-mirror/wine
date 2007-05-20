@@ -28,7 +28,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winver.h"
 #include "winternl.h"
 #include "wine/winuser16.h"
