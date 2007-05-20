@@ -79,6 +79,7 @@ static LPD3DVECTOR (WINAPI * pD3DRMVectorScale)(LPD3DVECTOR, LPD3DVECTOR, D3DVAL
 static LPD3DVECTOR (WINAPI * pD3DRMVectorSubtract)(LPD3DVECTOR, LPD3DVECTOR, LPD3DVECTOR);
 static LPD3DRMQUATERNION (WINAPI * pD3DRMQuaternionFromRotation)(LPD3DRMQUATERNION, LPD3DVECTOR, D3DVALUE);
 static LPD3DRMQUATERNION (WINAPI * pD3DRMQuaternionSlerp)(LPD3DRMQUATERNION, LPD3DRMQUATERNION, LPD3DRMQUATERNION, D3DVALUE);
+static D3DVALUE (WINAPI * pD3DRMColorGetAlpha)(D3DCOLOR);
 static D3DVALUE (WINAPI * pD3DRMColorGetBlue)(D3DCOLOR);
 static D3DVALUE (WINAPI * pD3DRMColorGetGreen)(D3DCOLOR);
 static D3DVALUE (WINAPI * pD3DRMColorGetRed)(D3DCOLOR);
@@ -113,6 +114,7 @@ static BOOL InitFunctionPtrs(void)
     D3DRM_GET_PROC(D3DRMVectorSubtract)
     D3DRM_GET_PROC(D3DRMQuaternionFromRotation)
     D3DRM_GET_PROC(D3DRMQuaternionSlerp)
+    D3DRM_GET_PROC(D3DRMColorGetAlpha)
     D3DRM_GET_PROC(D3DRMColorGetBlue)
     D3DRM_GET_PROC(D3DRMColorGetGreen)
     D3DRM_GET_PROC(D3DRMColorGetRed)
@@ -256,6 +258,12 @@ static void ColorTest(void)
 {
     D3DCOLOR color;
     D3DVALUE expected, got;
+
+/*___________D3DRMColorGetAlpha_________________________*/
+    color=0x0e4921bf;
+    expected=14.0/255.0;
+    got=pD3DRMColorGetAlpha(color);
+    ok((fabs(expected-got)<admit_error),"Expected=%f, Got=%f\n",expected,got);
 
 /*___________D3DRMColorGetBlue__________________________*/
     color=0xc82a1455;

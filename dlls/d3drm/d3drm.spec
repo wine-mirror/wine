@@ -1,4 +1,4 @@
-@ stub D3DRMColorGetAlpha
+@ stdcall D3DRMColorGetAlpha(long)
 @ stdcall D3DRMColorGetBlue(long)
 @ stdcall D3DRMColorGetGreen(long)
 @ stdcall D3DRMColorGetRed(long)

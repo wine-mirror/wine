@@ -34,6 +34,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
+/* Determine the alpha part of a color */
+D3DVALUE WINAPI D3DRMColorGetAlpha(D3DCOLOR color)
+{
+    return (RGBA_GETALPHA(color)/255.0);
+}
+
 /* Determine the blue part of a color */
 D3DVALUE WINAPI D3DRMColorGetBlue(D3DCOLOR color)
 {
