@@ -1814,6 +1814,9 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
 
     RegCloseKey(hkey);
 
+    res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\Products\\05FA3C1F65B896A40AC00077F34EF203");
+    todo_wine ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_SUCCESS, got %d\n", res);
+
     /* Delete installation files we installed */
     delete_test_files();
 }
