@@ -1614,6 +1614,156 @@ static void test_Installer_RegistryValue(void)
     delete_key(hkey);
 }
 
+static void test_Installer_Products(BOOL bProductInstalled)
+{
+    WCHAR szString[MAX_PATH];
+    HRESULT hr;
+    int idx;
+    IUnknown *pUnk = NULL;
+    IEnumVARIANT *pEnum = NULL;
+    VARIANT var;
+    ULONG celt;
+    int iCount, iValue;
+    IDispatch *pStringList = NULL;
+    BOOL bProductFound = FALSE;
+
+    /* Installer::Products */
+    hr = Installer_Products(&pStringList);
+    ok(hr == S_OK, "Installer_Products failed, hresult 0x%08x\n", hr);
+    if (hr == S_OK)
+    {
+        /* StringList::_NewEnum */
+        hr = StringList__NewEnum(pStringList, &pUnk);
+        ok(hr == S_OK, "StringList_NewEnum failed, hresult 0x%08x\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IUnknown_QueryInterface(pUnk, &IID_IEnumVARIANT, (void **)&pEnum);
+            ok (hr == S_OK, "IUnknown::QueryInterface returned 0x%08x\n", hr);
+        }
+        if (!pEnum)
+            skip("IEnumVARIANT tests\n");
+
+        /* StringList::Count */
+        hr = StringList_Count(pStringList, &iCount);
+        ok(hr == S_OK, "StringList_Count failed, hresult 0x%08x\n", hr);
+
+        for (idx=0; idx<iCount; idx++)
+        {
+            /* StringList::Item */
+            memset(szString, 0, sizeof(szString));
+            hr = StringList_Item(pStringList, idx, szString);
+            ok(hr == S_OK, "StringList_Item failed (idx %d, count %d), hresult 0x%08x\n", idx, iCount, hr);
+
+            if (hr == S_OK)
+            {
+                /* Installer::ProductState */
+                hr = Installer_ProductState(szString, &iValue);
+                ok(hr == S_OK, "Installer_ProductState failed, hresult 0x%08x\n", hr);
+                if (hr == S_OK)
+                    ok(iValue == INSTALLSTATE_DEFAULT || iValue == INSTALLSTATE_ADVERTISED, "Installer_ProductState returned %d, expected %d or %d\n", iValue, INSTALLSTATE_DEFAULT, INSTALLSTATE_ADVERTISED);
+
+                /* Not found our product code yet? Check */
+                if (!bProductFound && !lstrcmpW(szString, szProductCode))
+                    bProductFound = TRUE;
+
+                /* IEnumVARIANT::Next */
+                if (pEnum)
+                {
+                    hr = IEnumVARIANT_Next(pEnum, 1, &var, &celt);
+                    ok(hr == S_OK, "IEnumVARIANT_Next failed (idx %d, count %d), hresult 0x%08x\n", idx, iCount, hr);
+                    ok(celt == 1, "%d items were retrieved, expected 1\n", celt);
+                    ok(V_VT(&var) == VT_BSTR, "IEnumVARIANT_Next returned variant of type %d, expected %d\n", V_VT(&var), VT_BSTR);
+                    ok_w2("%s returned by StringList_Item does not match %s returned by IEnumVARIANT_Next\n", szString, V_BSTR(&var));
+                    VariantClear(&var);
+                }
+            }
+        }
+
+        if (bProductInstalled)
+            todo_wine ok(bProductFound, "Product expected to be installed but product code was not found\n");
+        else
+            ok(!bProductFound, "Product not expected to be installed but product code was found\n");
+
+        if (pEnum)
+        {
+            IEnumVARIANT *pEnum2 = NULL;
+
+            if (0) /* Crashes on Windows XP */
+            {
+                /* IEnumVARIANT::Clone, NULL pointer */
+                hr = IEnumVARIANT_Clone(pEnum, NULL);
+            }
+
+            /* IEnumVARIANT::Clone */
+            hr = IEnumVARIANT_Clone(pEnum, &pEnum2);
+            ok(hr == S_OK, "IEnumVARIANT_Clone failed, hresult 0x%08x\n", hr);
+            if (hr == S_OK)
+            {
+                /* IEnumVARIANT::Clone is supposed to save the position, but it actually just goes back to the beginning */
+
+                /* IEnumVARIANT::Next of the clone */
+                if (iCount)
+                {
+                    hr = IEnumVARIANT_Next(pEnum2, 1, &var, &celt);
+                    ok(hr == S_OK, "IEnumVARIANT_Next failed, hresult 0x%08x\n", hr);
+                    ok(celt == 1, "%d items were retrieved, expected 0\n", celt);
+                    ok(V_VT(&var) == VT_BSTR, "IEnumVARIANT_Next returned variant of type %d, expected %d\n", V_VT(&var), VT_BSTR);
+                    VariantClear(&var);
+                }
+                else
+                    skip("IEnumVARIANT::Next of clone will not return success with 0 products\n");
+
+                IEnumVARIANT_Release(pEnum2);
+            }
+
+            /* IEnumVARIANT::Skip should fail */
+            hr = IEnumVARIANT_Skip(pEnum, 1);
+            ok(hr == S_FALSE, "IEnumVARIANT_Skip failed, hresult 0x%08x\n", hr);
+
+            /* IEnumVARIANT::Next, NULL variant pointer */
+            hr = IEnumVARIANT_Next(pEnum, 1, NULL, &celt);
+            ok(hr == S_FALSE, "IEnumVARIANT_Next failed, hresult 0x%08x\n", hr);
+            ok(celt == 0, "%d items were retrieved, expected 0\n", celt);
+
+            /* IEnumVARIANT::Next, should not return any more items */
+            hr = IEnumVARIANT_Next(pEnum, 1, &var, &celt);
+            ok(hr == S_FALSE, "IEnumVARIANT_Next failed, hresult 0x%08x\n", hr);
+            ok(celt == 0, "%d items were retrieved, expected 0\n", celt);
+            VariantClear(&var);
+
+            /* IEnumVARIANT::Reset */
+            hr = IEnumVARIANT_Reset(pEnum);
+            ok(hr == S_OK, "IEnumVARIANT_Reset failed, hresult 0x%08x\n", hr);
+
+            if (iCount)
+            {
+                /* IEnumVARIANT::Skip to the last product */
+                hr = IEnumVARIANT_Skip(pEnum, iCount-1);
+                ok(hr == S_OK, "IEnumVARIANT_Skip failed, hresult 0x%08x\n", hr);
+
+                /* IEnumVARIANT::Next should match the very last retrieved value, also makes sure it works with
+                 * NULL celt pointer. */
+                hr = IEnumVARIANT_Next(pEnum, 1, &var, NULL);
+                ok(hr == S_OK, "IEnumVARIANT_Next failed (idx %d, count %d), hresult 0x%08x\n", idx, iCount, hr);
+                ok(V_VT(&var) == VT_BSTR, "IEnumVARIANT_Next returned variant of type %d, expected %d\n", V_VT(&var), VT_BSTR);
+                ok_w2("%s returned by StringList_Item does not match %s returned by IEnumVARIANT_Next\n", szString, V_BSTR(&var));
+                VariantClear(&var);
+            }
+            else
+                skip("IEnumVARIANT::Skip impossible for 0 products\n");
+        }
+
+        /* StringList::Item using an invalid index */
+        memset(szString, 0, sizeof(szString));
+        hr = StringList_Item(pStringList, iCount, szString);
+        ok(hr == DISP_E_BADINDEX, "StringList_Item for an invalid index did not return DISP_E_BADINDEX, hresult 0x%08x\n", hr);
+
+        if (pEnum) IEnumVARIANT_Release(pEnum);
+        if (pUnk) IUnknown_Release(pUnk);
+        IDispatch_Release(pStringList);
+    }
+}
+
 /* Delete a registry subkey, including all its subkeys (RegDeleteKey does not work on keys with subkeys without
  * deleting the subkeys first) */
 static UINT delete_registry_key(HKEY hkeyParent, LPCSTR subkey)
@@ -1719,6 +1869,9 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
     hr = Installer_ProductInfo(szProductCode, INSTALLPROPERTY_PRODUCTNAMEW, szString);
     ok(hr == S_OK, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
     ok_w2("Installer_ProductInfo returned %s but expected %s\n", szString, szMSITEST);
+
+    /* Installer::Products */
+    test_Installer_Products(TRUE);
 
     /* Installer::RelatedProducts for our upgrade code */
     hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
@@ -1901,139 +2054,6 @@ static void test_Installer(void)
     /* Installer::RegistryValue */
     test_Installer_RegistryValue();
 
-    /* Installer::Products */
-    hr = Installer_Products(&pStringList);
-    ok(hr == S_OK, "Installer_Products failed, hresult 0x%08x\n", hr);
-    if (hr == S_OK)
-    {
-        int idx;
-        IUnknown *pUnk = NULL;
-        IEnumVARIANT *pEnum = NULL;
-        VARIANT var;
-        ULONG celt;
-
-        /* StringList::_NewEnum */
-        hr = StringList__NewEnum(pStringList, &pUnk);
-        ok(hr == S_OK, "StringList_NewEnum failed, hresult 0x%08x\n", hr);
-        if (hr == S_OK)
-        {
-            hr = IUnknown_QueryInterface(pUnk, &IID_IEnumVARIANT, (void **)&pEnum);
-            ok (hr == S_OK, "IUnknown::QueryInterface returned 0x%08x\n", hr);
-        }
-        if (!pEnum)
-            skip("IEnumVARIANT tests\n");
-
-        /* StringList::Count */
-        hr = StringList_Count(pStringList, &iCount);
-        ok(hr == S_OK, "StringList_Count failed, hresult 0x%08x\n", hr);
-
-        for (idx=0; idx<iCount; idx++)
-        {
-            /* StringList::Item */
-            memset(szPath, 0, sizeof(szPath));
-            hr = StringList_Item(pStringList, idx, szPath);
-            ok(hr == S_OK, "StringList_Item failed (idx %d, count %d), hresult 0x%08x\n", idx, iCount, hr);
-
-            /* Installer::ProductState */
-            if (hr == S_OK)
-            {
-                hr = Installer_ProductState(szPath, &iValue);
-                ok(hr == S_OK, "Installer_ProductState failed, hresult 0x%08x\n", hr);
-                if (hr == S_OK)
-                    ok(iValue == INSTALLSTATE_DEFAULT || iValue == INSTALLSTATE_ADVERTISED, "Installer_ProductState returned %d, expected %d or %d\n", iValue, INSTALLSTATE_DEFAULT, INSTALLSTATE_ADVERTISED);
-            }
-
-            /* IEnumVARIANT::Next */
-            if (pEnum)
-            {
-                hr = IEnumVARIANT_Next(pEnum, 1, &var, &celt);
-                ok(hr == S_OK, "IEnumVARIANT_Next failed (idx %d, count %d), hresult 0x%08x\n", idx, iCount, hr);
-                ok(celt == 1, "%d items were retrieved, expected 1\n", celt);
-                ok(V_VT(&var) == VT_BSTR, "IEnumVARIANT_Next returned variant of type %d, expected %d\n", V_VT(&var), VT_BSTR);
-                ok_w2("%s returned by StringList_Item does not match %s returned by IEnumVARIANT_Next\n", szPath, V_BSTR(&var));
-                VariantClear(&var);
-            }
-        }
-
-        if (pEnum)
-        {
-            IEnumVARIANT *pEnum2 = NULL;
-
-            if (0) /* Crashes on Windows XP */
-            {
-                /* IEnumVARIANT::Clone, NULL pointer */
-                hr = IEnumVARIANT_Clone(pEnum, NULL);
-            }
-
-            /* IEnumVARIANT::Clone */
-            hr = IEnumVARIANT_Clone(pEnum, &pEnum2);
-            ok(hr == S_OK, "IEnumVARIANT_Clone failed, hresult 0x%08x\n", hr);
-            if (hr == S_OK)
-            {
-                /* IEnumVARIANT::Clone is supposed to save the position, but it actually just goes back to the beginning */
-
-                /* IEnumVARIANT::Next of the clone */
-                if (iCount)
-                {
-                    hr = IEnumVARIANT_Next(pEnum2, 1, &var, &celt);
-                    ok(hr == S_OK, "IEnumVARIANT_Next failed, hresult 0x%08x\n", hr);
-                    ok(celt == 1, "%d items were retrieved, expected 0\n", celt);
-                    ok(V_VT(&var) == VT_BSTR, "IEnumVARIANT_Next returned variant of type %d, expected %d\n", V_VT(&var), VT_BSTR);
-                    VariantClear(&var);
-                }
-                else
-                    skip("IEnumVARIANT::Next of clone will not return success with 0 products\n");
-
-                IEnumVARIANT_Release(pEnum2);
-            }
-
-            /* IEnumVARIANT::Skip should fail */
-            hr = IEnumVARIANT_Skip(pEnum, 1);
-            ok(hr == S_FALSE, "IEnumVARIANT_Skip failed, hresult 0x%08x\n", hr);
-
-            /* IEnumVARIANT::Next, NULL variant pointer */
-            hr = IEnumVARIANT_Next(pEnum, 1, NULL, &celt);
-            ok(hr == S_FALSE, "IEnumVARIANT_Next failed, hresult 0x%08x\n", hr);
-            ok(celt == 0, "%d items were retrieved, expected 0\n", celt);
-
-            /* IEnumVARIANT::Next, should not return any more items */
-            hr = IEnumVARIANT_Next(pEnum, 1, &var, &celt);
-            ok(hr == S_FALSE, "IEnumVARIANT_Next failed, hresult 0x%08x\n", hr);
-            ok(celt == 0, "%d items were retrieved, expected 0\n", celt);
-            VariantClear(&var);
-
-            /* IEnumVARIANT::Reset */
-            hr = IEnumVARIANT_Reset(pEnum);
-            ok(hr == S_OK, "IEnumVARIANT_Reset failed, hresult 0x%08x\n", hr);
-
-            if (iCount)
-            {
-                /* IEnumVARIANT::Skip to the last product */
-                hr = IEnumVARIANT_Skip(pEnum, iCount-1);
-                ok(hr == S_OK, "IEnumVARIANT_Skip failed, hresult 0x%08x\n", hr);
-
-                /* IEnumVARIANT::Next should match the very last retrieved value, also makes sure it works with
-                 * NULL celt pointer. */
-                hr = IEnumVARIANT_Next(pEnum, 1, &var, NULL);
-                ok(hr == S_OK, "IEnumVARIANT_Next failed (idx %d, count %d), hresult 0x%08x\n", idx, iCount, hr);
-                ok(V_VT(&var) == VT_BSTR, "IEnumVARIANT_Next returned variant of type %d, expected %d\n", V_VT(&var), VT_BSTR);
-                ok_w2("%s returned by StringList_Item does not match %s returned by IEnumVARIANT_Next\n", szPath, V_BSTR(&var));
-                VariantClear(&var);
-            }
-            else
-                skip("IEnumVARIANT::Skip impossible for 0 products\n");
-        }
-
-        /* StringList::Item using an invalid index */
-        memset(szPath, 0, sizeof(szPath));
-        hr = StringList_Item(pStringList, iCount, szPath);
-        ok(hr == DISP_E_BADINDEX, "StringList_Item for an invalid index did not return DISP_E_BADINDEX, hresult 0x%08x\n", hr);
-
-        if (pEnum) IEnumVARIANT_Release(pEnum);
-        if (pUnk) IUnknown_Release(pUnk);
-        IDispatch_Release(pStringList);
-    }
-
     /* Installer::ProductState for our product code, which should not be installed */
     hr = Installer_ProductState(szProductCode, &iValue);
     ok(hr == S_OK, "Installer_ProductState failed, hresult 0x%08x\n", hr);
@@ -2052,6 +2072,9 @@ static void test_Installer(void)
     hr = Installer_ProductInfo(NULL, NULL, szPath);
     ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
     ok_exception(hr, szProductInfoException);
+
+    /* Installer::Products */
+    test_Installer_Products(FALSE);
 
     /* Installer::RelatedProducts for our upgrade code, should not find anything */
     hr = Installer_RelatedProducts(szUpgradeCode, &pStringList);
