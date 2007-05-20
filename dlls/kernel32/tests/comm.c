@@ -1413,6 +1413,7 @@ static void  test_WaitRing(HANDLE hcom)
     HANDLE alarmThread;
     DWORD args[3], defaultStat;
     DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0;
+    BOOL ret;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     if (dcb.fDtrControl == DTR_CONTROL_DISABLE)
@@ -1421,7 +1422,11 @@ static void  test_WaitRing(HANDLE hcom)
 	return;
     }
     args[0]= TIMEOUT >>1;
-    ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
+    ok((ret = GetCommModemStatus(hcom, &defaultStat)), "GetCommModemStatus failed\n");
+    if (!ret) {
+	skip("modem status failed -> skip.\n");
+	return;
+    }
     if(defaultStat & MS_RING_ON)
 	args[1] = CLRDTR;
     else
