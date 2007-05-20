@@ -2069,6 +2069,12 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     TRACE("%p %s %p %p\n", hSCManager,
           debugstr_a(lpServiceName), lpDisplayName, lpcchBuffer);
 
+    if (!lpServiceName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     hscm = sc_handle_get_handle_data(hSCManager, SC_HTYPE_MANAGER);
     if (!hscm)
     {
@@ -2109,6 +2115,12 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 
     TRACE("%p %s %p %p\n", hSCManager,
           debugstr_w(lpServiceName), lpDisplayName, lpcchBuffer);
+
+    if (!lpServiceName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
     hscm = sc_handle_get_handle_data(hSCManager, SC_HTYPE_MANAGER);
     if (!hscm)
