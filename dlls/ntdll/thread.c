@@ -332,8 +332,8 @@ HANDLE thread_init(void)
 
     /* initialize time values in user_shared_data */
     NtQuerySystemTime( &now );
-    user_shared_data->SystemTime.LowPart = now.LowPart;
-    user_shared_data->SystemTime.High1Time = user_shared_data->SystemTime.High2Time = now.HighPart;
+    user_shared_data->SystemTime.LowPart = now.u.LowPart;
+    user_shared_data->SystemTime.High1Time = user_shared_data->SystemTime.High2Time = now.u.HighPart;
     user_shared_data->u.TickCountQuad = (now.QuadPart - server_start_time) / 10000;
     user_shared_data->u.TickCount.High2Time = user_shared_data->u.TickCount.High1Time;
     user_shared_data->TickCountLowDeprecated = user_shared_data->u.TickCount.LowPart;
