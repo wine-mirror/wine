@@ -268,7 +268,9 @@ IDirectDrawImpl_Destroy(IDirectDrawImpl *This)
     /* Unregister the window class */
     UnregisterClassA(This->classname, 0);
 
-    remove_ddraw_object(This);
+    EnterCriticalSection(&ddraw_cs);
+    list_remove(&This->ddraw_list_entry);
+    LeaveCriticalSection(&ddraw_cs);
 
     /* Release the attached WineD3D stuff */
     IWineD3DDevice_Release(This->wineD3DDevice);

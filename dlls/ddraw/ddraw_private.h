@@ -203,9 +203,6 @@ IWineD3DVertexDeclaration *
 IDirectDrawImpl_FindDecl(IDirectDrawImpl *This,
                          DWORD fvf);
 
-void
-remove_ddraw_object(IDirectDrawImpl *ddraw);
-
 /* The default surface type */
 extern WINED3DSURFTYPE DefaultSurfaceType;
 
