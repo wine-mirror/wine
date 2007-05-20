@@ -40,11 +40,6 @@
 #define D3DCOLOR_RGBA(r,g,b,a)        D3DCOLOR_ARGB(a,r,g,b)
 #define D3DCOLOR_XRGB(r,g,b)          D3DCOLOR_ARGB(0xff,r,g,b)
 
-#define D3DCOLORWRITEENABLED_RED     1
-#define D3DCOLORWRITEENABLED_GREEN   2
-#define D3DCOLORWRITEENABLED_BLUE    4
-#define D3DCOLORWRITEENABLED_ALPHA   8
-
 #define D3DCS_LEFT                 0x001
 #define D3DCS_RIGHT                0x002
 #define D3DCS_TOP                  0x004

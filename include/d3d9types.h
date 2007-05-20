@@ -42,11 +42,6 @@
 #define D3DCOLOR_XYUV(y,u,v)         D3DCOLOR_ARGB(0xFF,y,u,v)
 #define D3DCOLOR_AYUV(a,y,u,v)       D3DCOLOR_ARGB(a,y,u,v)
 
-#define D3DCOLORWRITEENABLED_RED     1
-#define D3DCOLORWRITEENABLED_GREEN   2
-#define D3DCOLORWRITEENABLED_BLUE    4
-#define D3DCOLORWRITEENABLED_ALPHA   8
-
 #define D3DCS_LEFT                   0x001L
 #define D3DCS_RIGHT                  0x002L
 #define D3DCS_TOP                    0x004L
