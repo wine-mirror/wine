@@ -44,7 +44,6 @@ static const CHAR  str_colonA[] = ":";
 
 static const WCHAR com1W[]      = {'c','o','m','1',0};
 static const WCHAR emptyW[]     = {0};
-static const WCHAR fmt_comW[]   = {'c','o','m','%','d',0};
 static const WCHAR str_colonW[] = {':',0};
 
 /* ################# */
