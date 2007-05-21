@@ -392,7 +392,7 @@ BOOL WINAPI SetThreadPriorityBoost(
 /**********************************************************************
  *           SetThreadAffinityMask   (KERNEL32.@)
  */
-DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
+DWORD_PTR WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD_PTR dwThreadAffinityMask )
 {
     NTSTATUS                    status;
     THREAD_BASIC_INFORMATION    tbi;

@@ -2004,7 +2004,7 @@ BOOL        WINAPI SetSystemTime(const SYSTEMTIME*);
 BOOL        WINAPI SetSystemTimeAdjustment(DWORD,BOOL);
 DWORD       WINAPI SetTapeParameters(HANDLE,DWORD,LPVOID);
 DWORD       WINAPI SetTapePosition(HANDLE,DWORD,DWORD,DWORD,DWORD,BOOL);
-DWORD       WINAPI SetThreadAffinityMask(HANDLE,DWORD);
+DWORD_PTR   WINAPI SetThreadAffinityMask(HANDLE,DWORD_PTR);
 BOOL        WINAPI SetThreadContext(HANDLE,const CONTEXT *);
 DWORD       WINAPI SetThreadExecutionState(EXECUTION_STATE);
 DWORD       WINAPI SetThreadIdealProcessor(HANDLE,DWORD);

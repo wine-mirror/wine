@@ -729,7 +729,7 @@ typedef struct _THREAD_BASIC_INFORMATION
     NTSTATUS  ExitStatus;
     PVOID     TebBaseAddress;
     CLIENT_ID ClientId;
-    ULONG     AffinityMask;
+    ULONG_PTR AffinityMask;
     LONG      Priority;
     LONG      BasePriority;
 } THREAD_BASIC_INFORMATION, *PTHREAD_BASIC_INFORMATION;
@@ -960,7 +960,7 @@ typedef struct _PROCESS_BASIC_INFORMATION {
 #ifdef __WINESRC__
     DWORD ExitStatus;
     DWORD PebBaseAddress;
-    DWORD AffinityMask;
+    DWORD_PTR AffinityMask;
     DWORD BasePriority;
     ULONG UniqueProcessId;
     ULONG InheritedFromUniqueProcessId;
