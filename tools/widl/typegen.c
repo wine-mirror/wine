@@ -759,7 +759,7 @@ static size_t type_memsize(const type_t *t, const array_dims_t *array, unsigned 
     return size;
 }
 
-static size_t write_nonsimple_pointer(FILE *file, const type_t *type, size_t offset)
+static unsigned int write_nonsimple_pointer(FILE *file, const type_t *type, size_t offset)
 {
     short absoff = type->ref->typestring_offset;
     short reloff = absoff - (offset + 2);
@@ -772,7 +772,7 @@ static size_t write_nonsimple_pointer(FILE *file, const type_t *type, size_t off
     return 4;
 }
 
-static size_t write_simple_pointer(FILE *file, const type_t *type)
+static unsigned int write_simple_pointer(FILE *file, const type_t *type)
 {
     print_file(file, 2, "0x%02x, 0x8,\t/* %s [simple_pointer] */\n",
                type->type, string_of_type(type->type));
@@ -782,9 +782,9 @@ static size_t write_simple_pointer(FILE *file, const type_t *type)
     return 4;
 }
 
-static size_t write_pointer_tfs(FILE *file, type_t *type, size_t *typestring_offset)
+static size_t write_pointer_tfs(FILE *file, type_t *type, unsigned int *typestring_offset)
 {
-    size_t offset = *typestring_offset;
+    unsigned int offset = *typestring_offset;
 
     print_file(file, 0, "/* %d */\n", offset);
     type->typestring_offset = offset;
@@ -862,7 +862,7 @@ static int write_pointers(FILE *file, const attr_list_t *attrs,
 static size_t write_pointer_description(FILE *file, const attr_list_t *attrs,
                                         type_t *type, size_t mem_offset,
                                         const array_dims_t *array, int level,
-                                        size_t *typestring_offset)
+                                        unsigned int *typestring_offset)
 {
     const var_t *v;
     unsigned int align = 0;
@@ -1817,7 +1817,7 @@ static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, int for_object
 {
     const var_t *var;
     const ifref_t *iface;
-    size_t typeformat_offset = 2;
+    unsigned int typeformat_offset = 2;
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {

@@ -193,7 +193,7 @@ static void proxy_check_pointers( const var_list_t *args )
 
 static void free_variable( const var_t *arg )
 {
-  size_t type_offset = arg->type->typestring_offset;
+  unsigned int type_offset = arg->type->typestring_offset;
   var_t *constraint;
   type_t *type;
   expr_list_t *expr;
