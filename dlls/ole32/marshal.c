@@ -298,7 +298,7 @@ static HRESULT WINAPI ClientIdentity_QueryMultipleInterfaces(IMultiQI *iface, UL
                 ULONG index = mapping[i];
                 HRESULT hrobj = qiresults[i].hResult;
                 if (hrobj == S_OK)
-                    hrobj = unmarshal_object(&qiresults[i].std, This->parent,
+                    hrobj = unmarshal_object(&qiresults[i].std, COM_CurrentApt(),
                                              This->dest_context,
                                              This->dest_context_data,
                                              pMQIs[index].pIID, &This->oxid_info,
@@ -964,14 +964,25 @@ static void proxy_manager_disconnect(struct proxy_manager * This)
 static HRESULT proxy_manager_get_remunknown(struct proxy_manager * This, IRemUnknown **remunk)
 {
     HRESULT hr = S_OK;
+    struct apartment *apt;
+    BOOL called_in_original_apt;
 
     /* we don't want to try and unmarshal or use IRemUnknown if we don't want
      * lifetime management */
     if (This->sorflags & SORFP_NOLIFETIMEMGMT)
         return S_FALSE;
 
+    apt = COM_CurrentApt();
+    if (!apt)
+        return CO_E_NOTINITIALIZED;
+
+    called_in_original_apt = This->parent && (This->parent->oxid == apt->oxid);
+
     EnterCriticalSection(&This->cs);
-    if (This->remunk)
+    /* only return the cached object if called from the original apartment.
+     * in future, we might want to make the IRemUnknown proxy callable from any
+     * apartment to avoid these checks */
+    if (This->remunk && called_in_original_apt)
     {
         /* already created - return existing object */
         *remunk = This->remunk;
@@ -994,10 +1005,10 @@ static HRESULT proxy_manager_get_remunknown(struct proxy_manager * This, IRemUnk
         stdobjref.ipid = This->oxid_info.ipidRemUnknown;
 
         /* do the unmarshal */
-        hr = unmarshal_object(&stdobjref, This->parent, This->dest_context,
+        hr = unmarshal_object(&stdobjref, COM_CurrentApt(), This->dest_context,
                               This->dest_context_data, &IID_IRemUnknown,
                               &This->oxid_info, (void**)remunk);
-        if (hr == S_OK)
+        if (hr == S_OK && called_in_original_apt)
         {
             This->remunk = *remunk;
             IRemUnknown_AddRef(This->remunk);

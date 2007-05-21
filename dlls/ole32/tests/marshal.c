@@ -1283,6 +1283,24 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
     HRESULT hr;
     IUnknown * proxy = NULL;
 
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
+    todo_wine
+    ok(hr == CO_E_NOTINITIALIZED,
+       "COM should have failed with CO_E_NOTINITIALIZED on using proxy without apartment, but instead returned 0x%08x\n",
+       hr);
+
+    hr = IClassFactory_QueryInterface(cf, &IID_IMultiQI, (LPVOID *)&proxy);
+    /* Win9x returns S_OK, whilst NT returns RPC_E_WRONG_THREAD */
+    trace("call to proxy's QueryInterface for local interface without apartment returned 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(proxy);
+
+    hr = IClassFactory_QueryInterface(cf, &IID_IStream, (LPVOID *)&proxy);
+    /* Win9x returns E_NOINTERFACE, whilst NT returns RPC_E_WRONG_THREAD */
+    trace("call to proxy's QueryInterface without apartment returned 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(proxy);
+
     pCoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
@@ -1290,6 +1308,19 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
     ok(hr == RPC_E_WRONG_THREAD,
         "COM should have failed with RPC_E_WRONG_THREAD on using proxy from wrong apartment, but instead returned 0x%08x\n",
         hr);
+
+    hr = IClassFactory_QueryInterface(cf, &IID_IStream, (LPVOID *)&proxy);
+    /* Win9x returns E_NOINTERFACE, whilst NT returns RPC_E_WRONG_THREAD */
+    trace("call to proxy's QueryInterface from wrong apartment returned 0x%08x\n", hr);
+
+    /* this statement causes Win9x DCOM to crash during CoUninitialize of
+     * other apartment, so don't test this on Win9x (signified by NT-only
+     * export of CoRegisterSurrogateEx) */
+    if (GetProcAddress(GetModuleHandle("ole32"), "CoRegisterSurrogateEx"))
+        /* now be really bad and release the proxy from the wrong apartment */
+        IUnknown_Release(cf);
+    else
+        skip("skipping test for releasing proxy from wrong apartment that will succeed, but cause a crash during CoUninitialize\n");
 
     CoUninitialize();
 
@@ -1321,13 +1352,18 @@ static void test_proxy_used_in_wrong_thread(void)
 
     ok_more_than_one_lock();
 
+    /* do a call that will fail, but result in IRemUnknown being used by the proxy */
+    IClassFactory_QueryInterface(pProxy, &IID_IStream, (LPVOID *)&pStream);
+
     /* create a thread that we can misbehave in */
     thread = CreateThread(NULL, 0, bad_thread_proc, (LPVOID)pProxy, 0, &tid2);
 
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
 
-    IUnknown_Release(pProxy);
+    /* do release statement on Win9x that we should have done above */
+    if (!GetProcAddress(GetModuleHandle("ole32"), "CoRegisterSurrogateEx"))
+        IUnknown_Release(pProxy);
 
     ok_no_locks();
 
