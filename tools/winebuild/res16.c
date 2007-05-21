@@ -293,10 +293,11 @@ void output_res16_directory( DLLSPEC *spec, const char *header_name )
 
         for (j = 0, res = type->res; j < type->nb_names; j++, res++)
         {
-            output( "\t%s .L__wine_spec_resource_%u-%s\n",
-                     get_asm_short_keyword(), res - spec->resources, header_name );
-            output( "\t%s .L__wine_spec_resource_%u_end-.L__wine_spec_resource_%u\n",
-                     get_asm_short_keyword(), res - spec->resources, res - spec->resources );
+            output( "\t%s .L__wine_spec_resource_%lu-%s\n",
+                     get_asm_short_keyword(), (unsigned long)(res - spec->resources), header_name );
+            output( "\t%s .L__wine_spec_resource_%lu_end-.L__wine_spec_resource_%lu\n",
+                     get_asm_short_keyword(), (unsigned long)(res - spec->resources),
+                     (unsigned long)(res - spec->resources) );
             output( "\t%s 0x%04x\n", get_asm_short_keyword(), res->memopt );
             if (res->name.str)
                 output( "\t%s .L__wine_spec_resname_%u_%u-.L__wine_spec_ne_rsrctab\n",
