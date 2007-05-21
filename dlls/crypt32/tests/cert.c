@@ -134,6 +134,7 @@ static void testAddCert(void)
     HCERTSTORE store;
     HCERTSTORE collection;
     PCCERT_CONTEXT context;
+    PCCERT_CONTEXT copyContext;
     BOOL ret;
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
@@ -274,6 +275,15 @@ static void testAddCert(void)
              CERT_STORE_ADD_REPLACE_EXISTING, NULL);
             ok(ret, "CertAddCertificateContextToStore failed: %08x\n",
              GetLastError());
+            /* use the existing certificate and ask for a copy of the context*/
+            copyContext = NULL;
+            ret = CertAddCertificateContextToStore(collection, context,
+             CERT_STORE_ADD_USE_EXISTING, &copyContext);
+            ok(ret, "CertAddCertificateContextToStore failed: %08x\n",
+             GetLastError());
+            ok(copyContext != NULL, "Expected on output a non NULL copyContext\n");
+            if (copyContext)
+                CertFreeCertificateContext(copyContext);
             /* but adding a new certificate isn't allowed. */
             ret = CertAddCertificateContextToStore(collection, context,
              CERT_STORE_ADD_ALWAYS, NULL);

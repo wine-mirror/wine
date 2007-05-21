@@ -2160,7 +2160,12 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
         break;
     case CERT_STORE_ADD_USE_EXISTING:
         if (existing)
+        {
             CertContext_CopyProperties(existing, pCertContext);
+            *ppStoreContext = CertDuplicateCertificateContext(existing);
+        }
+        else
+            toAdd = CertDuplicateCertificateContext(pCertContext);
         break;
     default:
         FIXME("Unimplemented add disposition %d\n", dwAddDisposition);
