@@ -424,8 +424,12 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue 
 {
     SECURITY_STATUS sec_status;
     struct HttpAuthInfo *pAuthInfo = lpwhr->pAuthInfo;
+    LPWSTR password = lpwhr->lpHttpSession->lpszPassword;
+    LPWSTR domain_and_username = lpwhr->lpHttpSession->lpszUserName;
 
     TRACE("%s\n", debugstr_w(pszAuthValue));
+
+    if (!domain_and_username) return FALSE;
 
     if (!pAuthInfo)
     {
@@ -452,13 +456,13 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue 
         if (!is_basic_auth_value(pszAuthValue))
         {
             SEC_WINNT_AUTH_IDENTITY_W nt_auth_identity;
-            WCHAR *user = strchrW(lpwhr->lpHttpSession->lpszUserName, '\\');
-            WCHAR *domain = lpwhr->lpHttpSession->lpszUserName;
+            WCHAR *user = strchrW(domain_and_username, '\\');
+            WCHAR *domain = domain_and_username;
 
             if (user) user++;
             else
             {
-                user = lpwhr->lpHttpSession->lpszUserName;
+                user = domain_and_username;
                 domain = NULL;
             }
             nt_auth_identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
@@ -466,7 +470,7 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue 
             nt_auth_identity.UserLength = strlenW(nt_auth_identity.User);
             nt_auth_identity.Domain = domain;
             nt_auth_identity.DomainLength = domain ? user - domain - 1 : 0;
-            nt_auth_identity.Password = lpwhr->lpHttpSession->lpszPassword;
+            nt_auth_identity.Password = password;
             nt_auth_identity.PasswordLength = strlenW(nt_auth_identity.Password);
 
             /* FIXME: make sure scheme accepts SEC_WINNT_AUTH_IDENTITY before calling AcquireCredentialsHandle */
@@ -500,8 +504,26 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue 
 
     if (is_basic_auth_value(pszAuthValue))
     {
-        FIXME("do basic authentication\n");
-        return FALSE;
+        int userlen = WideCharToMultiByte(CP_UTF8, 0, domain_and_username, lstrlenW(domain_and_username), NULL, 0, NULL, NULL);
+        int passlen = WideCharToMultiByte(CP_UTF8, 0, password, lstrlenW(password), NULL, 0, NULL, NULL);
+        char *auth_data;
+
+        TRACE("basic authentication\n");
+
+        /* length includes a nul terminator, which will be re-used for the ':' */
+        auth_data = HeapAlloc(GetProcessHeap(), 0, userlen + 1 + passlen);
+        if (!auth_data)
+            return FALSE;
+
+        WideCharToMultiByte(CP_UTF8, 0, domain_and_username, -1, auth_data, userlen, NULL, NULL);
+        auth_data[userlen] = ':';
+        WideCharToMultiByte(CP_UTF8, 0, password, -1, &auth_data[userlen+1], passlen, NULL, NULL);
+
+        pAuthInfo->auth_data = auth_data;
+        pAuthInfo->auth_data_len = userlen + 1 + passlen;
+        pAuthInfo->finished = TRUE;
+
+        return TRUE;
     }
     else
     {
