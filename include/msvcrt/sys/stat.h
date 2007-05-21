@@ -164,11 +164,6 @@ int _wstat64(const wchar_t*,struct _stat64*);
 #define S_IWRITE _S_IWRITE
 #define S_IEXEC  _S_IEXEC
 
-#define	S_ISCHR(m)	(((m)&_S_IFMT) == _S_IFCHR)
-#define	S_ISDIR(m)	(((m)&_S_IFMT) == _S_IFDIR)
-#define	S_ISFIFO(m)	(((m)&_S_IFMT) == _S_IFIFO)
-#define	S_ISREG(m)	(((m)&_S_IFMT) == _S_IFREG)
-
 static inline int fstat(int fd, struct stat* ptr) { return _fstat(fd, (struct _stat*)ptr); }
 static inline int stat(const char* path, struct stat* ptr) { return _stat(path, (struct _stat*)ptr); }
 #ifndef _UMASK_DEFINED

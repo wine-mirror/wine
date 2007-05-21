@@ -809,7 +809,7 @@ static void test_stat(void)
     {
         if (fstat(fd, &buf) == 0)
         {
-            if (S_ISREG(buf.st_mode))
+            if ((buf.st_mode & _S_IFMT) == _S_IFREG)
             {
                 ok(buf.st_dev == 0, "st_dev is %d, expected 0\n", buf.st_dev);
                 ok(buf.st_dev == buf.st_rdev, "st_dev (%d) and st_rdev (%d) differ\n",
