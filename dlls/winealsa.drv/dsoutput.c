@@ -50,7 +50,6 @@
 #include "wingdi.h"
 #include "winerror.h"
 #include "winuser.h"
-#include "winnls.h"
 #include "mmddk.h"
 
 #include "alsa.h"

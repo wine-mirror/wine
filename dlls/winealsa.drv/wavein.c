@@ -48,7 +48,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "winerror.h"
 #include "winuser.h"
 #include "winnls.h"
 #include "mmddk.h"
