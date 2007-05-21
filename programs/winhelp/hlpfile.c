@@ -157,7 +157,7 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset)
  */
 HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
 {
-    int                 i;
+    unsigned int i;
 
     if (!hlpfile) return 0;
 
@@ -179,7 +179,7 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
  */
 HLPFILE_PAGE *HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap)
 {
-    int                 i;
+    unsigned int i;
 
     if (!hlpfile) return 0;
 
@@ -1578,12 +1578,13 @@ static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
  */
 static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
 {
-    UINT num, dec_size, cpr_size;
+    UINT num;
+    INT dec_size, cpr_size;
     BYTE *buf_idx, *end_idx;
     BYTE *buf_phs, *end_phs;
-    short i, n;
     long* ptr, mask = 0;
-    unsigned short bc;
+    unsigned int i;
+    unsigned short bc, n;
 
     if (!HLPFILE_FindSubFile("|PhrIndex", &buf_idx, &end_idx) ||
         !HLPFILE_FindSubFile("|PhrImage", &buf_phs, &end_phs)) return FALSE;
@@ -1649,7 +1650,7 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
 static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
 {
     BYTE *buf, *ptr, *end, *newptr;
-    int  i, newsize = 0;
+    unsigned int i, newsize = 0;
 
     if (!HLPFILE_FindSubFile("|TOPIC", &buf, &end))
     {WINE_WARN("topic0\n"); return FALSE;}
@@ -1761,7 +1762,7 @@ static void HLPFILE_Uncompress2(const BYTE *ptr, const BYTE *end, BYTE *newptr, 
 static BOOL HLPFILE_Uncompress3(char* dst, const char* dst_end,
                                 const BYTE* src, const BYTE* src_end)
 {
-    int         idx, len;
+    unsigned int idx, len;
 
     for (; src < src_end; src++)
     {

@@ -233,7 +233,7 @@ void CALLBACK MACRO_BackFlush(void)
 
     if (win)
     {
-        int     i;
+        unsigned int i;
 
         for (i = 0; i < win->backIndex; i++)
         {
