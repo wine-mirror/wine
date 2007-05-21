@@ -20,11 +20,13 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "wingdi.h"
+#include "winnls.h"
 #include "winreg.h"
 
 #include "winspool.h"
@@ -41,6 +43,51 @@ static PMONITORUI pui;
 static BOOL  (WINAPI *pAddPortUI)(PCWSTR, HWND, PCWSTR, PWSTR *);
 static BOOL  (WINAPI *pConfigurePortUI)(PCWSTR, HWND, PCWSTR);
 static BOOL  (WINAPI *pDeletePortUI)(PCWSTR, HWND, PCWSTR);
+
+static WCHAR does_not_existW[] = {'d','o','e','s','_','n','o','t','_','e','x','i','s','t',0};
+static WCHAR emptyW[] = {0};
+static CHAR  fmt_comA[] = {'C','O','M','%','u',':',0};
+static CHAR  fmt_lptA[] = {'L','P','T','%','u',':',0};
+static WCHAR portname_fileW[] = {'F','I','L','E',':',0};
+
+static LPBYTE pi_buffer;
+static DWORD pi_numports;
+static DWORD pi_needed;
+
+static PORT_INFO_2W * lpt_present;
+static PORT_INFO_2W * com_present;
+static PORT_INFO_2W * file_present;
+
+static LPWSTR   lpt_absent;
+static LPWSTR   com_absent;
+
+/* ########################### */
+
+static PORT_INFO_2W * find_portinfo2(LPWSTR pPort)
+{
+    PORT_INFO_2W * pi;
+    DWORD   res;
+
+    if (!pi_buffer) {
+        res = EnumPortsW(NULL, 2, NULL, 0, &pi_needed, &pi_numports);
+        pi_buffer = HeapAlloc(GetProcessHeap(), 0, pi_needed);
+        SetLastError(0xdeadbeef);
+        res = EnumPortsW(NULL, 2, pi_buffer, pi_needed, &pi_needed, &pi_numports);
+    }
+    if (pi_buffer) {
+        pi = (PORT_INFO_2W *) pi_buffer;
+        res = 0;
+        while (pi_numports > res) {
+            if (lstrcmpiW(pi->pPortName, pPort) == 0) {
+                return pi;
+            }
+            pi++;
+            res++;
+        }
+    }
+    return NULL;
+}
+
 
 /* ########################### */
 
@@ -59,6 +106,96 @@ static LPCSTR load_functions(void)
     return NULL;
 }
 
+/* ###########################
+ *   strdupW [internal]
+ */
+
+static LPWSTR strdupW(LPCWSTR strW)
+{
+    LPWSTR  ptr;
+
+    ptr = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(strW) + 1) * sizeof(WCHAR));
+    if (ptr) {
+        lstrcpyW(ptr, strW);
+    }
+    return ptr;
+}
+
+/* ########################### */
+
+static void test_ConfigurePortUI(void)
+{
+    DWORD   res;
+
+    /* not present before w2k */
+    if (!pConfigurePortUI) {
+        skip("ConfigurePortUI not found\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    res = pConfigurePortUI(NULL, NULL, NULL);
+    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
+        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
+        res, GetLastError());
+
+
+    SetLastError(0xdeadbeef);
+    res = pConfigurePortUI(NULL, NULL, emptyW);
+    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
+        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
+        res, GetLastError());
+
+
+    SetLastError(0xdeadbeef);
+    res = pConfigurePortUI(NULL, NULL, does_not_existW);
+    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
+        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
+        res, GetLastError());
+
+
+    if (winetest_interactive && lpt_present) {
+        SetLastError(0xdeadbeef);
+        res = pConfigurePortUI(NULL, NULL, lpt_present->pPortName);
+        ok( res ||
+            (GetLastError() == ERROR_CANCELLED) || (GetLastError() == ERROR_ACCESS_DENIED),
+            "got %d with %u (expected '!= 0' or '0' with: ERROR_CANCELLED or "
+            "ERROR_ACCESS_DENIED)\n", res, GetLastError());
+    }
+
+    if (lpt_absent) {
+        SetLastError(0xdeadbeef);
+        res = pConfigurePortUI(NULL, NULL, lpt_absent);
+        ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
+            "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
+            res, GetLastError());
+    }
+
+    if (winetest_interactive && com_present) {
+        SetLastError(0xdeadbeef);
+        res = pConfigurePortUI(NULL, NULL, com_present->pPortName);
+        ok( res ||
+            (GetLastError() == ERROR_CANCELLED) || (GetLastError() == ERROR_ACCESS_DENIED),
+            "got %d with %u (expected '!= 0' or '0' with: ERROR_CANCELLED or "
+            "ERROR_ACCESS_DENIED)\n", res, GetLastError());
+    }
+
+    if (com_absent) {
+        SetLastError(0xdeadbeef);
+        res = pConfigurePortUI(NULL, NULL, com_absent);
+        ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
+            "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
+            res, GetLastError());
+    }
+
+    if (winetest_interactive && file_present) {
+        SetLastError(0xdeadbeef);
+        res = pConfigurePortUI(NULL, NULL, portname_fileW);
+        ok( !res && (GetLastError() == ERROR_CANCELLED),
+            "got %d with %u (expected '0' with ERROR_CANCELLED)\n",
+            res, GetLastError());
+    }
+}
 
 /* ########################### */
 
@@ -66,7 +203,10 @@ START_TEST(localui)
 {
     LPCSTR   ptr;
     DWORD   numentries;
-
+    PORT_INFO_2W * pi2;
+    WCHAR   bufferW[16];
+    CHAR    bufferA[16];
+    DWORD   id;
 
     /* localui.dll does not exist before w2k */
     ptr = load_functions();
@@ -88,4 +228,37 @@ START_TEST(localui)
         }
     }
 
+    /* find installed Ports */
+
+    id = 0;
+    /* "LPT1:" - "LPT9:" */
+    while (((lpt_present == NULL) || (lpt_absent == NULL)) && id < 9) {
+        id++;
+        sprintf(bufferA, fmt_lptA, id);
+        MultiByteToWideChar( CP_ACP, 0, bufferA, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) );
+        pi2 = find_portinfo2(bufferW);
+        if (pi2 && (lpt_present == NULL)) lpt_present = pi2;
+        if (!pi2 && (lpt_absent == NULL)) lpt_absent = strdupW(bufferW);
+    }
+
+    id = 0;
+    /* "COM1:" - "COM9:" */
+    while (((com_present == NULL) || (com_absent == NULL)) && id < 9) {
+        id++;
+        sprintf(bufferA, fmt_comA, id);
+        MultiByteToWideChar( CP_ACP, 0, bufferA, -1, bufferW, sizeof(bufferW)/sizeof(WCHAR) );
+        pi2 = find_portinfo2(bufferW);
+        if (pi2 && (com_present == NULL)) com_present = pi2;
+        if (!pi2 && (com_absent == NULL)) com_absent = strdupW(bufferW);
+    }
+
+    /* "FILE:" */
+    file_present = find_portinfo2(portname_fileW);
+
+    test_ConfigurePortUI();
+
+    /* cleanup */
+    HeapFree(GetProcessHeap(), 0, lpt_absent);
+    HeapFree(GetProcessHeap(), 0, com_absent);
+    HeapFree(GetProcessHeap(), 0, pi_buffer);
 }
