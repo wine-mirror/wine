@@ -166,6 +166,7 @@ typedef struct
     LPWSTR  lpszHostName; /* the final destination of the request */
     LPWSTR  lpszServerName; /* the name of the server we directly connect to */
     LPWSTR  lpszUserName;
+    LPWSTR  lpszPassword;
     INTERNET_PORT nHostPort; /* the final destination port of the request */
     INTERNET_PORT nServerPort; /* the port of the server we directly connect to */
     struct sockaddr_in socketAddress;
@@ -184,6 +185,8 @@ typedef struct
 } HTTPHEADERW, *LPHTTPHEADERW;
 
 
+struct HttpAuthInfo;
+
 typedef struct
 {
     WININETHANDLEHEADER hdr;
@@ -198,6 +201,7 @@ typedef struct
     DWORD dwContentRead; /* bytes of the content read so far */
     HTTPHEADERW *pCustHeaders;
     DWORD nCustHeaders;
+    struct HttpAuthInfo *pAuthInfo;
 } WININETHTTPREQW, *LPWININETHTTPREQW;
 
 

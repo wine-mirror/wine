@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 MODULE    = wininet.dll
 IMPORTLIB = libwininet.$(IMPLIBEXT)
 IMPORTS   = mpr shlwapi shell32 user32 advapi32 kernel32 ntdll
-DELAYIMPORTS = crypt32
+DELAYIMPORTS = secur32 crypt32
 EXTRALIBS = @SOCKETLIBS@
 
 C_SRCS = \
