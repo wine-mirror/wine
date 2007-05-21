@@ -19,6 +19,11 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+/* With Visual Studio >= 2005,  swprintf() takes an extra parameter unless
+ * the following macro is defined.
+ */
+#define _CRT_NON_CONFORMING_SWPRINTFS
  
 #include <stdio.h>
 
