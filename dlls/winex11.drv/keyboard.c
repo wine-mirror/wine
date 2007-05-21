@@ -1373,7 +1373,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
         ascii_chars = XLookupString(event, Str, sizeof(Str), &keysym, NULL);
     wine_tsx11_unlock();
 
-    TRACE_(key)("state = %X nbyte = %d, status 0x%x\n", event->state, ascii_chars, status);
+    TRACE_(key)("nbyte = %d, status 0x%x\n", ascii_chars, status);
 
     if (status == XBufferOverflow)
         ERR("Buffer Overflow need %i!\n",ascii_chars);
@@ -1396,7 +1396,6 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     /* Save also all possible modifier states. */
     AltGrMask = event->state & (0x6000 | Mod1Mask | Mod2Mask | Mod3Mask | Mod4Mask | Mod5Mask);
 
-    Str[ascii_chars] = '\0';
     if (TRACE_ON(key)){
 	const char *ksname;
 
@@ -1405,9 +1404,9 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
         wine_tsx11_unlock();
 	if (!ksname)
 	  ksname = "No Name";
-	TRACE_(key)("%s : keysym=%lX (%s), # of chars=%d / 0x%02x / '%s'\n",
+	TRACE_(key)("%s : keysym=%lX (%s), # of chars=%d / %s\n",
                     (event->type == KeyPress) ? "KeyPress" : "KeyRelease",
-                    keysym, ksname, ascii_chars, Str[0] & 0xff, Str);
+                    keysym, ksname, ascii_chars, debugstr_an(Str, ascii_chars));
     }
 
     wine_tsx11_lock();
@@ -2391,7 +2390,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     char lpChar[10];
     HWND focus;
     XIC xic;
-    Status status;
+    Status status = 0;
 
     if (scanCode & 0x8000)
     {
@@ -2491,6 +2490,24 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     else
         ret = XLookupString(&e, lpChar, sizeof(lpChar), &keysym, NULL);
     wine_tsx11_unlock();
+
+    TRACE_(key)("nbyte = %d, status 0x%x\n", ret, status);
+
+    if (status == XBufferOverflow)
+        ERR("Buffer Overflow need %d!\n", ret);
+
+    if (TRACE_ON(key))
+    {
+        const char *ksname;
+
+        wine_tsx11_lock();
+        ksname = XKeysymToString(keysym);
+        wine_tsx11_unlock();
+        if (!ksname) ksname = "No Name";
+        TRACE_(key)("%s : keysym=%lX (%s), # of chars=%d / %s\n",
+                    (e.type == KeyPress) ? "KeyPress" : "KeyRelease",
+                    keysym, ksname, ret, debugstr_an(lpChar, ret));
+    }
 
     if (ret == 0)
     {
