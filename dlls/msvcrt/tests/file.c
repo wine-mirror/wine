@@ -646,8 +646,9 @@ static void test_file_inherit( const char* selfname )
     ok(fd != -1, "Couldn't create test file\n");
     arg_v[0] = selfname;
     arg_v[1] = "tests/file.c";
-    arg_v[2] = buffer; sprintf(buffer, "%d", fd);
-    arg_v[3] = 0;
+    arg_v[2] = "inherit";
+    arg_v[3] = buffer; sprintf(buffer, "%d", fd);
+    arg_v[4] = 0;
     _spawnvp(_P_WAIT, selfname, arg_v);
     ok(tell(fd) == 8, "bad position %lu expecting 8\n", tell(fd));
     lseek(fd, 0, SEEK_SET);
@@ -659,8 +660,8 @@ static void test_file_inherit( const char* selfname )
     ok(fd != -1, "Couldn't create test file\n");
     arg_v[0] = selfname;
     arg_v[1] = "tests/file.c";
-    arg_v[2] = buffer; sprintf(buffer, "%d", fd);
-    arg_v[3] = buffer;
+    arg_v[2] = "inherit_no";
+    arg_v[3] = buffer; sprintf(buffer, "%d", fd);
     arg_v[4] = 0;
     _spawnvp(_P_WAIT, selfname, arg_v);
     ok(tell(fd) == 0, "bad position %lu expecting 0\n", tell(fd));
@@ -877,6 +878,91 @@ static void test_stat(void)
         skip("pipe failed with errno %d\n", errno);
 }
 
+static const char* pipe_string="Hello world";
+
+static void test_pipes_child(int argc, char** args)
+{
+    int fd;
+
+    if (argc < 5)
+    {
+        ok(0, "not enough parameters: %d\n", argc);
+        return;
+    }
+
+    fd=atoi(args[3]);
+    ok(close(fd) == 0, "unable to close %d: %d\n", fd, errno);
+
+    fd=atoi(args[4]);
+    write(fd, pipe_string, strlen(pipe_string));
+    ok(close(fd) == 0, "unable to close %d: %d\n", fd, errno);
+}
+
+static void test_pipes(const char* selfname)
+{
+    int pipes[2];
+    char str_fdr[12], str_fdw[12];
+    FILE* file;
+    const char* arg_v[6];
+    char buf[4096];
+    int r;
+
+    /* Test reading from a pipe with read() */
+    if (_pipe(pipes, 1024, O_BINARY) < 0)
+    {
+        ok(0, "pipe failed with errno %d\n", errno);
+        return;
+    }
+
+    arg_v[0] = selfname;
+    arg_v[1] = "tests/file.c";
+    arg_v[2] = "pipes";
+    arg_v[3] = str_fdr; sprintf(str_fdr, "%d", pipes[0]);
+    arg_v[4] = str_fdw; sprintf(str_fdw, "%d", pipes[1]);
+    arg_v[5] = NULL;
+    _spawnvp(_P_NOWAIT, selfname, arg_v);
+    ok(close(pipes[1]) == 0, "unable to close %d: %d\n", pipes[1], errno);
+
+    r=read(pipes[0], buf, sizeof(buf)-1);
+    ok(r == strlen(pipe_string), "expected to read %d bytes, got %d\n", strlen(pipe_string)+1, r);
+    if (r > 0)
+        buf[r]='\0';
+    ok(strcmp(buf, pipe_string) == 0, "expected to read '%s', got '%s'\n", pipe_string, buf);
+    r=read(pipes[0], buf, sizeof(buf)-1);
+    ok(r == 0, "expected to read 0 bytes, got %d\n", r);
+    ok(close(pipes[0]) == 0, "unable to close %d: %d\n", pipes[0], errno);
+
+    /* Test reading from a pipe with fread() */
+    if (_pipe(pipes, 1024, O_BINARY) < 0)
+    {
+        ok(0, "pipe failed with errno %d\n", errno);
+        return;
+    }
+
+    arg_v[0] = selfname;
+    arg_v[1] = "tests/file.c";
+    arg_v[2] = "pipes";
+    arg_v[3] = str_fdr; sprintf(str_fdr, "%d", pipes[0]);
+    arg_v[4] = str_fdw; sprintf(str_fdw, "%d", pipes[1]);
+    arg_v[5] = NULL;
+    _spawnvp(_P_NOWAIT, selfname, arg_v);
+    ok(close(pipes[1]) == 0, "unable to close %d: %d\n", pipes[1], errno);
+    file=fdopen(pipes[0], "r");
+
+    r=fread(buf, 1, sizeof(buf)-1, file);
+    ok(r == strlen(pipe_string), "fread() returned %d instead of %d: ferror=%d\n", r, strlen(pipe_string), ferror(file));
+    if (r > 0)
+        buf[r]='\0';
+    ok(strcmp(buf, pipe_string) == 0, "got '%s' expected '%s'\n", buf, pipe_string);
+
+    r=fread(buf, 1, sizeof(buf)-1, file);
+    ok(r == 0, "fread() returned %d instead of 0\n", r);
+    ok(ferror(file) == 0, "got ferror() = %d\n", ferror(file));
+    ok(feof(file), "feof() is false!\n");
+
+    ok(fclose(file) == 0, "unable to close the pipe: %d\n", errno);
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -887,8 +973,14 @@ START_TEST(file)
     /* testing low-level I/O */
     if (arg_c >= 3)
     {
-        if (arg_c == 3) test_file_inherit_child(arg_v[2]); 
-        else test_file_inherit_child_no(arg_v[2]);
+        if (strcmp(arg_v[2], "inherit") == 0)
+            test_file_inherit_child(arg_v[3]);
+        else if (strcmp(arg_v[2], "inherit_no") == 0)
+            test_file_inherit_child_no(arg_v[3]);
+        else if (strcmp(arg_v[2], "pipes") == 0)
+            test_pipes_child(arg_c, arg_v);
+        else
+            ok(0, "invalid argument '%s'\n", arg_v[2]);
         return;
     }
     test_file_inherit(arg_v[0]);
@@ -909,4 +1001,5 @@ START_TEST(file)
     test_tmpnam();
     test_get_osfhandle();
     test_setmaxstdio();
+    test_pipes(arg_v[0]);
 }
