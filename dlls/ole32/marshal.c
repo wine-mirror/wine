@@ -375,22 +375,29 @@ static HRESULT WINAPI Proxy_MarshalInterface(
     if (SUCCEEDED(hr))
     {
         STDOBJREF stdobjref = ifproxy->stdobjref;
-        ULONG cPublicRefs = ifproxy->refs;
-        ULONG cPublicRefsOld;
 
-        /* optimization - share out proxy's public references if possible
-         * instead of making new proxy do a roundtrip through the server */
-        do
+        stdobjref.cPublicRefs = 0;
+
+        if ((mshlflags != MSHLFLAGS_TABLEWEAK) &&
+            (mshlflags != MSHLFLAGS_TABLESTRONG))
         {
-            ULONG cPublicRefsNew;
-            cPublicRefsOld = cPublicRefs;
-            stdobjref.cPublicRefs = cPublicRefs / 2;
-            cPublicRefsNew = cPublicRefs - stdobjref.cPublicRefs;
-            cPublicRefs = InterlockedCompareExchange(
-                (LONG *)&ifproxy->refs, cPublicRefsNew, cPublicRefsOld);
-        } while (cPublicRefs != cPublicRefsOld);
+            ULONG cPublicRefs = ifproxy->refs;
+            ULONG cPublicRefsOld;
+            /* optimization - share out proxy's public references if possible
+             * instead of making new proxy do a roundtrip through the server */
+            do
+            {
+                ULONG cPublicRefsNew;
+                cPublicRefsOld = cPublicRefs;
+                stdobjref.cPublicRefs = cPublicRefs / 2;
+                cPublicRefsNew = cPublicRefs - stdobjref.cPublicRefs;
+                cPublicRefs = InterlockedCompareExchange(
+                    (LONG *)&ifproxy->refs, cPublicRefsNew, cPublicRefsOld);
+            } while (cPublicRefs != cPublicRefsOld);
+        }
 
-        if (!stdobjref.cPublicRefs)
+        /* normal and table-strong marshaling need at least one reference */
+        if (!stdobjref.cPublicRefs && (mshlflags != MSHLFLAGS_TABLEWEAK))
         {
             IRemUnknown *remunk;
             hr = proxy_manager_get_remunknown(This, &remunk);
@@ -399,11 +406,16 @@ static HRESULT WINAPI Proxy_MarshalInterface(
                 HRESULT hrref = S_OK;
                 REMINTERFACEREF rif;
                 rif.ipid = ifproxy->stdobjref.ipid;
-                rif.cPublicRefs = NORMALEXTREFS;
+                rif.cPublicRefs = (mshlflags == MSHLFLAGS_TABLESTRONG) ? 1 : NORMALEXTREFS;
                 rif.cPrivateRefs = 0;
                 hr = IRemUnknown_RemAddRef(remunk, 1, &rif, &hrref);
                 if (hr == S_OK && hrref == S_OK)
-                    stdobjref.cPublicRefs = rif.cPublicRefs;
+                {
+                    /* table-strong marshaling doesn't give the refs to the
+                     * client that unmarshals the STDOBJREF */
+                    if (mshlflags != MSHLFLAGS_TABLESTRONG)
+                        stdobjref.cPublicRefs = rif.cPublicRefs;
+                }
                 else
                     ERR("IRemUnknown_RemAddRef returned with 0x%08x, hrref = 0x%08x\n", hr, hrref);
             }
