@@ -241,7 +241,6 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
     {
         if (msg.hwnd == NULL && msg.message == RELEASEMARSHALDATA)
         {
-            trace("releasing marshal data\n");
             CoReleaseMarshalData(data->stream);
             SetEvent((HANDLE)msg.lParam);
         }
@@ -522,14 +521,6 @@ static void test_proxy_marshal_and_unmarshal(void)
     ok_ole_success(hr, CoUnmarshalInterface);
 
     ok_more_than_one_lock();
-
-    /* now the proxies should be as follows:
-     *  pProxy2 -> &Test_ClassFactory
-     * they should NOT be as follows:
-     *  pProxy -> &Test_ClassFactory
-     *  pProxy2 -> pProxy
-     * the above can only really be tested by looking in +ole traces
-     */
 
     IUnknown_Release(pProxy2);
 
