@@ -1559,8 +1559,8 @@ NTSTATUS WINAPI NtSetSecurityObject(HANDLE Handle,
 {
     NTSTATUS status;
     struct security_descriptor sd;
-    PACL dacl, sacl;
-    PSID owner, group;
+    PACL dacl = NULL, sacl = NULL;
+    PSID owner = NULL, group = NULL;
     BOOLEAN defaulted, present;
     DWORD revision;
     SECURITY_DESCRIPTOR_CONTROL control;
