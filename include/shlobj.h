@@ -401,6 +401,11 @@ typedef struct tagBROWSEINFOW {
 #define BIF_EDITBOX            0x0010
 #define BIF_VALIDATE           0x0020
 #define BIF_NEWDIALOGSTYLE     0x0040
+#define BIF_USENEWUI           (BIF_NEWDIALOGSTYLE | BIF_EDITBOX)
+#define BIF_BROWSEINCLUDEURLS  0x0080
+#define BIF_UAHINT             0x0100
+#define BIF_NONEWFOLDERBUTTON  0x0200
+#define BIF_NOTRANSLATETARGETS 0x0400
 
 #define BIF_BROWSEFORCOMPUTER  0x1000
 #define BIF_BROWSEFORPRINTER   0x2000
@@ -409,8 +414,9 @@ typedef struct tagBROWSEINFOW {
 /* message from browser */
 #define BFFM_INITIALIZED        1
 #define BFFM_SELCHANGED         2
-#define BFFM_VALIDATEFAILEDA    3   /* lParam:szPath ret:1(cont),0(EndDialog) */
-#define BFFM_VALIDATEFAILEDW    4   /* lParam:wzPath ret:1(cont),0(EndDialog) */
+#define BFFM_VALIDATEFAILEDA    3
+#define BFFM_VALIDATEFAILEDW    4
+#define BFFM_IUNKNOWN           5
 
 /* messages to browser */
 #define BFFM_SETSTATUSTEXTA     (WM_USER+100)
