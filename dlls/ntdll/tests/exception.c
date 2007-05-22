@@ -215,10 +215,8 @@ LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *ExceptionIn
      */
     if(rec->ExceptionCode == EXCEPTION_BREAKPOINT)
     {
-        todo_wine {
         ok(context->Eip == (DWORD)code_mem + 0xa, "Eip at %x instead of %x\n",
            context->Eip, (DWORD)code_mem + 0xa);
-        }
     }
     else
     {
@@ -247,10 +245,8 @@ static DWORD rtlraiseexception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
      */
     if(rec->ExceptionCode == EXCEPTION_BREAKPOINT)
     {
-        todo_wine {
         ok(context->Eip == (DWORD)code_mem + 0xa, "Eip at %x instead of %x\n",
            context->Eip, (DWORD)code_mem + 0xa);
-        }
     }
     else
     {
@@ -525,9 +521,7 @@ static DWORD int3_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD 
 {
     ok( rec->ExceptionAddress == code_mem, "exception address not at: %p, but at %p\n",
                                            code_mem,  rec->ExceptionAddress);
-    todo_wine {
-        ok( context->Eip == (DWORD)code_mem, "eip not at: %p, but at %#x\n", code_mem, context->Eip);
-    }
+    ok( context->Eip == (DWORD)code_mem, "eip not at: %p, but at %#x\n", code_mem, context->Eip);
     if(context->Eip == (DWORD)code_mem) context->Eip++; /* skip breakpoint */
 
     return ExceptionContinueExecution;
@@ -692,10 +686,8 @@ static void test_debugger(void)
                         /* ctx.Eip is the same value the exception handler got */
                         if (de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
                         {
-                            todo_wine{
                             ok((char *)ctx.Eip == (char *)code_mem_address + 0xa, "Eip at 0x%x instead of %p\n",
                                 ctx.Eip, (char *)code_mem_address + 0xa);
-                            }
                             /* need to fixup Eip for debuggee */
                             if ((char *)ctx.Eip == (char *)code_mem_address + 0xa)
                                 ctx.Eip += 1;
