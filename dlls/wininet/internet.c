@@ -1044,6 +1044,13 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
   WCHAR* lpwszUrl;
 
   TRACE("(%s %u %x %p)\n", debugstr_a(lpszUrl), dwUrlLength, dwFlags, lpUrlComponents);
+
+  if (!lpszUrl || !*lpszUrl)
+  {
+      INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+      return FALSE;
+  }
+
   if(dwUrlLength<=0)
       dwUrlLength=-1;
   nLength=MultiByteToWideChar(CP_ACP,0,lpszUrl,dwUrlLength,NULL,0);

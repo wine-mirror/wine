@@ -1449,9 +1449,10 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
             SERVER_END_REQ;
             if (!io->u.Status)
             {
+                char *tmpbuf;
                 ULONG size = info->MaximumMessageSize ? info->MaximumMessageSize : 0x10000;
-                char *tmpbuf = RtlAllocateHeap( GetProcessHeap(), 0, size );
-                if (tmpbuf)
+                if (size > 0x10000) size = 0x10000;
+                if ((tmpbuf = RtlAllocateHeap( GetProcessHeap(), 0, size )))
                 {
                     int fd, needs_close;
                     if (!server_get_unix_fd( hFile, FILE_READ_DATA, &fd, &needs_close, NULL, NULL ))
