@@ -1,0 +1,17 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winscard.dll
+IMPORTLIB = libwinscard.$(IMPLIBEXT)
+IMPORTS   = kernel32
+
+C_SRCS = \
+	winscard.c
+
+RC_SRCS = \
+	rsrc.rc
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

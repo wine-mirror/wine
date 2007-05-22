@@ -20907,6 +20907,8 @@ ac_config_files="$ac_config_files dlls/winmm/tests/Makefile"
 
 ac_config_files="$ac_config_files dlls/winnls32/Makefile"
 
+ac_config_files="$ac_config_files dlls/winscard/Makefile"
+
 ac_config_files="$ac_config_files dlls/winspool.drv/Makefile"
 
 ac_config_files="$ac_config_files dlls/winspool.drv/tests/Makefile"
@@ -21880,6 +21882,7 @@ do
     "dlls/winmm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winmm/Makefile" ;;
     "dlls/winmm/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winmm/tests/Makefile" ;;
     "dlls/winnls32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winnls32/Makefile" ;;
+    "dlls/winscard/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winscard/Makefile" ;;
     "dlls/winspool.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winspool.drv/Makefile" ;;
     "dlls/winspool.drv/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winspool.drv/tests/Makefile" ;;
     "dlls/wintab32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintab32/Makefile" ;;

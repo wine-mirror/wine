@@ -419,6 +419,7 @@ ALL_MAKEFILES = \
 	dlls/winmm/Makefile \
 	dlls/winmm/tests/Makefile \
 	dlls/winnls32/Makefile \
+	dlls/winscard/Makefile \
 	dlls/winspool.drv/Makefile \
 	dlls/winspool.drv/tests/Makefile \
 	dlls/wintab32/Makefile \
@@ -768,6 +769,7 @@ dlls/wininet/tests/Makefile: dlls/wininet/tests/Makefile.in dlls/Maketest.rules
 dlls/winmm/Makefile: dlls/winmm/Makefile.in dlls/Makedll.rules
 dlls/winmm/tests/Makefile: dlls/winmm/tests/Makefile.in dlls/Maketest.rules
 dlls/winnls32/Makefile: dlls/winnls32/Makefile.in dlls/Makedll.rules
+dlls/winscard/Makefile: dlls/winscard/Makefile.in dlls/Makedll.rules
 dlls/winspool.drv/Makefile: dlls/winspool.drv/Makefile.in dlls/Makedll.rules
 dlls/winspool.drv/tests/Makefile: dlls/winspool.drv/tests/Makefile.in dlls/Maketest.rules
 dlls/wintab32/Makefile: dlls/wintab32/Makefile.in dlls/Makedll.rules

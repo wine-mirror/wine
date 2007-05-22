@@ -207,6 +207,7 @@ BASEDIRS = \
 	wininet \
 	winmm \
 	winnls32 \
+	winscard \
 	winspool.drv \
 	wintab32 \
 	wintrust \
@@ -574,6 +575,7 @@ IMPORT_LIBS = \
 	wininet/libwininet.$(IMPLIBEXT) \
 	winmm/libwinmm.$(IMPLIBEXT) \
 	winnls32/libwinnls32.$(IMPLIBEXT) \
+	winscard/libwinscard.$(IMPLIBEXT) \
 	winspool.drv/libwinspool.$(IMPLIBEXT) \
 	wintab32/libwintab32.$(IMPLIBEXT) \
 	wintrust/libwintrust.$(IMPLIBEXT) \
@@ -926,6 +928,9 @@ winmm/libwinmm.$(IMPLIBEXT): winmm/winmm.spec $(WINEBUILD)
 
 winnls32/libwinnls32.$(IMPLIBEXT): winnls32/winnls32.spec $(WINEBUILD)
 	@cd winnls32 && $(MAKE) libwinnls32.$(IMPLIBEXT)
+
+winscard/libwinscard.$(IMPLIBEXT): winscard/winscard.spec $(WINEBUILD)
+	@cd winscard && $(MAKE) libwinscard.$(IMPLIBEXT)
 
 winspool.drv/libwinspool.$(IMPLIBEXT): winspool.drv/winspool.drv.spec $(WINEBUILD)
 	@cd winspool.drv && $(MAKE) libwinspool.$(IMPLIBEXT)
