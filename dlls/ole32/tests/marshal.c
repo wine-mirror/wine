@@ -2640,9 +2640,8 @@ static void test_globalinterfacetable(void)
 
 	/* test getting interface from global with different iid */
 	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(git, cookie, &IID_IUnknown, (void **)&object);
-	todo_wine
 	ok_ole_success(hr, IGlobalInterfaceTable_GetInterfaceFromGlobal);
-	if (SUCCEEDED(hr)) IUnknown_Release(object);
+	IUnknown_Release(object);
 
 	/* test getting interface from global with same iid */
 	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(git, cookie, &IID_IClassFactory, (void **)&object);

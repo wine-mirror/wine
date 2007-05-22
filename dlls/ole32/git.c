@@ -271,15 +271,11 @@ StdGlobalInterfaceTable_GetInterfaceFromGlobal(
 
   entry = StdGlobalInterfaceTable_FindEntry(iface, dwCookie);
   if (entry == NULL) {
+    WARN("Entry for cookie 0x%x not found\n", dwCookie);
     LeaveCriticalSection(&git_section);
     return E_INVALIDARG;
   }
 
-  if (!IsEqualIID(&entry->iid, riid)) {
-    LeaveCriticalSection(&git_section);
-    WARN("entry->iid (%s) != riid\n", debugstr_guid(&entry->iid));
-    return E_INVALIDARG;
-  }
   TRACE("entry=%p\n", entry);
 
   hres = IStream_Clone(entry->stream, &stream);
