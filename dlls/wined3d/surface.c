@@ -1532,6 +1532,15 @@ static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BO
             }
             break;
 
+        case WINED3DFMT_X1R5G5B5:
+            if (colorkey_active) {
+                *convert = CONVERT_CK_5551;
+                *format = GL_BGRA;
+                *internal = GL_RGBA;
+                *type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+            }
+            break;
+
         case WINED3DFMT_R8G8B8:
             if (colorkey_active) {
                 *convert = CONVERT_CK_RGB24;
@@ -1713,6 +1722,32 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
                     if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
                         (color > surf->SrcBltCKey.dwColorSpaceHighValue)) {
                         *Dest |= 0x0001;
+                    }
+                    Dest++;
+                }
+            }
+        }
+        break;
+
+        case CONVERT_CK_5551:
+        {
+            /* Converting X1R5G5B5 format to R5G5B5A1 to emulate color-keying. */
+            unsigned int x, y;
+            WORD *Source;
+            WORD *Dest;
+            TRACE("Color keyed 5551\n");
+            for (y = 0; y < height; y++) {
+                Source = (WORD *) (src + y * pitch);
+                Dest = (WORD *) (dst + y * outpitch);
+                for (x = 0; x < width; x++ ) {
+                    WORD color = *Source++;
+		    *Dest = color;
+                    if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
+                        (color > surf->SrcBltCKey.dwColorSpaceHighValue)) {
+                        *Dest |= (1 << 15);
+                    }
+                    else {
+                        *Dest &= ~(1 << 15);
                     }
                     Dest++;
                 }
