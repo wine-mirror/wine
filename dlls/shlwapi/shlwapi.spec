@@ -260,7 +260,7 @@
 260 stdcall -noname SHQueueUserWorkItem(long long long long long long long)
 261 stub -noname SHCreateTimerQueue
 262 stub -noname SHDeleteTimerQueue
-263 stub -noname SHSetTimerQueueTimer
+263 stdcall -noname SHSetTimerQueueTimer(long ptr ptr long long str long)
 264 stub -noname SHChangeTimerQueueTimer
 265 stub -noname SHCancelTimerQueueTimer
 266 stdcall -noname SHRestrictionLookup(long wstr ptr ptr)

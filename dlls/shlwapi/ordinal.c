@@ -4223,6 +4223,32 @@ BOOL WINAPI SHQueueUserWorkItem(LPTHREAD_START_ROUTINE pfnCallback,
 }
 
 /***********************************************************************
+ *		SHSetTimerQueueTimer (SHLWAPI.263)
+ */
+HANDLE WINAPI SHSetTimerQueueTimer(HANDLE hQueue,
+        WAITORTIMERCALLBACK pfnCallback, LPVOID pContext, DWORD dwDueTime,
+        DWORD dwPeriod, LPCSTR lpszLibrary, DWORD dwFlags)
+{
+    HANDLE hNewTimer;
+
+    /* SHSetTimerQueueTimer flags -> CreateTimerQueueTimer flags */
+    if (dwFlags & TPS_LONGEXECTIME) {
+        dwFlags &= ~TPS_LONGEXECTIME;
+        dwFlags |= WT_EXECUTELONGFUNCTION;
+    }
+    if (dwFlags & TPS_EXECUTEIO) {
+        dwFlags &= ~TPS_EXECUTEIO;
+        dwFlags |= WT_EXECUTEINIOTHREAD;
+    }
+
+    if (!CreateTimerQueueTimer(&hNewTimer, hQueue, pfnCallback, pContext,
+                               dwDueTime, dwPeriod, dwFlags))
+        return NULL;
+
+    return hNewTimer;
+}
+
+/***********************************************************************
  *		IUnknown_OnFocusChangeIS (SHLWAPI.@)
  */
 HRESULT WINAPI IUnknown_OnFocusChangeIS(LPUNKNOWN lpUnknown, LPUNKNOWN pFocusObject, BOOL bFocus)
