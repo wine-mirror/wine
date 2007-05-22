@@ -164,7 +164,8 @@ static int set_timer( struct timer *timer, timeout_t expire, unsigned int period
         period = 0;  /* period doesn't make any sense for a manual timer */
         timer->signaled = 0;
     }
-
+    if (expire > 0 && expire < current_time) expire = current_time;
+    timer->when     = expire;
     timer->period   = period;
     timer->callback = callback;
     timer->arg      = arg;
