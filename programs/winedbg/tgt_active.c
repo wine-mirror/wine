@@ -381,6 +381,14 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
 	case EXCEPTION_FLT_STACK_CHECK:
             dbg_printf("floating point stack check");
             break;
+        case CXX_EXCEPTION:
+            if(rec->NumberParameters == 3 && rec->ExceptionInformation[0] == CXX_FRAME_MAGIC)
+                dbg_printf("C++ exception(object = 0x%08lx, type = 0x%08lx)",
+                           rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
+            else
+                dbg_printf("C++ exception with strange parameter count %d or magic 0x%08lx",
+                           rec->NumberParameters, rec->ExceptionInformation[0]);
+            break;
         default:
             dbg_printf("0x%08x", rec->ExceptionCode);
             break;
