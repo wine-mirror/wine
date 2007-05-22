@@ -262,7 +262,6 @@ StdGlobalInterfaceTable_GetInterfaceFromGlobal(
 {
   StdGITEntry* entry;
   HRESULT hres;
-  LPUNKNOWN lpUnk;
   IStream *stream;
 
   TRACE("dwCookie=0x%x, riid=%s, ppv=%p\n", dwCookie, debugstr_guid(riid), ppv);
@@ -296,9 +295,6 @@ StdGlobalInterfaceTable_GetInterfaceFromGlobal(
     return hres;
   }
 
-  /* addref it */
-  lpUnk = *ppv;
-  IUnknown_AddRef(lpUnk);
   TRACE("ppv=%p\n", *ppv);
   return S_OK;
 }

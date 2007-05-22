@@ -2651,7 +2651,6 @@ static void test_globalinterfacetable(void)
 	hr = IGlobalInterfaceTable_RevokeInterfaceFromGlobal(git, cookie);
 	ok_ole_success(hr, IGlobalInterfaceTable_RevokeInterfaceFromGlobal);
 
-	todo_wine
 	ok_no_locks();
 
 	IGlobalInterfaceTable_Release(git);
