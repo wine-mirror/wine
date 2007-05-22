@@ -775,15 +775,22 @@ BOOL break_should_continue(ADDRESS64* addr, DWORD code)
 }
 
 /***********************************************************************
- *           break_ajust_pc
+ *           break_adjust_pc
  *
  * Adjust PC to the address where the trap (if any) actually occurred
  * Also sets dbg_curr_thread->stopped_xpoint
  */
-void break_adjust_pc(ADDRESS64* addr, DWORD code, BOOL* is_break)
+void break_adjust_pc(ADDRESS64* addr, DWORD code, BOOL first_chance, BOOL* is_break)
 {
     DWORD	        oldval = 0;
 
+    /* break / watch points are handled on first chance */
+    if ( !first_chance )
+    {
+        *is_break = TRUE;
+        dbg_curr_thread->stopped_xpoint = -1;
+        return;
+    }
     *is_break = FALSE;
 
     /* If not single-stepping, back up to the break instruction */

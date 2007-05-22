@@ -107,7 +107,14 @@ static unsigned dbg_fetch_context(void)
     return TRUE;
 }
 
-static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
+/***********************************************************************
+ *              dbg_exception_prolog
+ *
+ * Examine exception and decide if interactive mode is entered(return TRUE)
+ * or exception is silently continued(return FALSE)
+ * is_debug means the exception is a breakpoint or single step exception
+ */
+static unsigned dbg_exception_prolog(BOOL is_debug, BOOL first_chance, const EXCEPTION_RECORD* rec)
 {
     ADDRESS64   addr;
     BOOL        is_break;
@@ -143,7 +150,7 @@ static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
     /* this will resynchronize builtin dbghelp's internal ELF module list */
     SymLoadModule(dbg_curr_process->handle, 0, 0, 0, 0, 0);
 
-    if (is_debug) break_adjust_pc(&addr, rec->ExceptionCode, &is_break);
+    if (is_debug) break_adjust_pc(&addr, rec->ExceptionCode, first_chance, &is_break);
     /*
      * Do a quiet backtrace so that we have an idea of what the situation
      * is WRT the source files.
@@ -398,7 +405,7 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
         dbg_printf( ", invalid program stack" );
     }
 
-    if (dbg_exception_prolog(is_debug, rec))
+    if (dbg_exception_prolog(is_debug, first_chance, rec))
     {
 	dbg_interactiveP = TRUE;
         return 0;
