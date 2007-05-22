@@ -2588,10 +2588,11 @@ static DWORD CALLBACK get_global_interface_proc(LPVOID pv)
 		hr);
 
 	CoInitialize(NULL);
+
 	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(params->git, params->cookie, &IID_IClassFactory, (void **)&cf);
 	ok_ole_success(hr, IGlobalInterfaceTable_GetInterfaceFromGlobal);
 
-	IGlobalInterfaceTable_Release(params->git);
+	IClassFactory_Release(cf);
 
 	CoUninitialize();
 
@@ -2607,12 +2608,18 @@ static void test_globalinterfacetable(void)
 	DWORD tid;
 	struct git_params params;
 	DWORD ret;
+        IUnknown *object;
+
+        trace("test_globalinterfacetable\n");
+	cLocks = 0;
 
 	hr = CoCreateInstance(&CLSID_StdGlobalInterfaceTable, NULL, CLSCTX_INPROC_SERVER, &IID_IGlobalInterfaceTable, (void **)&git);
 	ok_ole_success(hr, CoCreateInstance);
 
 	hr = IGlobalInterfaceTable_RegisterInterfaceInGlobal(git, (IUnknown *)&Test_ClassFactory, &IID_IClassFactory, &cookie);
 	ok_ole_success(hr, IGlobalInterfaceTable_RegisterInterfaceInGlobal);
+
+	ok_more_than_one_lock();
 
 	params.cookie = cookie;
 	params.git = git;
@@ -2630,6 +2637,25 @@ static void test_globalinterfacetable(void)
 	}
 
 	CloseHandle(thread);
+
+	/* test getting interface from global with different iid */
+	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(git, cookie, &IID_IUnknown, (void **)&object);
+	todo_wine
+	ok_ole_success(hr, IGlobalInterfaceTable_GetInterfaceFromGlobal);
+	if (SUCCEEDED(hr)) IUnknown_Release(object);
+
+	/* test getting interface from global with same iid */
+	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(git, cookie, &IID_IClassFactory, (void **)&object);
+	ok_ole_success(hr, IGlobalInterfaceTable_GetInterfaceFromGlobal);
+	IUnknown_Release(object);
+
+	hr = IGlobalInterfaceTable_RevokeInterfaceFromGlobal(git, cookie);
+	ok_ole_success(hr, IGlobalInterfaceTable_RevokeInterfaceFromGlobal);
+
+	todo_wine
+	ok_no_locks();
+
+	IGlobalInterfaceTable_Release(git);
 }
 
 static const char *debugstr_iid(REFIID riid)
