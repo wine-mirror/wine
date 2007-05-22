@@ -25,6 +25,10 @@
 # error You must include config.h to use this header
 #endif
 
+#ifdef __WINE_BASETSD_H
+# error You must include port.h before all other headers
+#endif
+
 #define _FILE_OFFSET_BITS 64
 #define _GNU_SOURCE  /* for pread/pwrite */
 #include <fcntl.h>
