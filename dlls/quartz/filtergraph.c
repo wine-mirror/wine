@@ -997,7 +997,7 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
     IBaseFilter* preader = NULL;
     IBaseFilter* psplitter = NULL;
     IPin* ppinreader = NULL;
-    IPin* ppinsplitter;
+    IPin* ppinsplitter = NULL;
     IEnumPins* penumpins;
     ULONG pin;
     HRESULT hr;
