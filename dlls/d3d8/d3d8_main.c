@@ -24,6 +24,15 @@
 #include "d3d8_private.h"
 #include "wine/debug.h"
 
+static CRITICAL_SECTION_DEBUG d3d8_cs_debug =
+{
+    0, 0, &d3d8_cs,
+    { &d3d8_cs_debug.ProcessLocksList,
+      &d3d8_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": d3d8_cs") }
+};
+CRITICAL_SECTION d3d8_cs = { &d3d8_cs_debug, -1, 0, 0, 0, 0 };
+
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
 HRESULT WINAPI D3D8GetSWInfo(void) {
@@ -36,13 +45,18 @@ void WINAPI DebugSetMute(void) {
 }
 
 IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion) {
-    IDirect3D8Impl* object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3D8Impl));
+    IDirect3D8Impl* object;
+    TRACE("SDKVersion = %x\n", SDKVersion);
+
+    EnterCriticalSection(&d3d8_cs);
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3D8Impl));
 
     object->lpVtbl = &Direct3D8_Vtbl;
     object->ref = 1;
     object->WineD3D = WineDirect3DCreate(SDKVersion, 8, (IUnknown *)object);
 
-    TRACE("SDKVersion = %x, Created Direct3D object @ %p, WineObj @ %p\n", SDKVersion, object, object->WineD3D);
+    TRACE("Created Direct3D object @ %p, WineObj @ %p\n", object, object->WineD3D);
+    LeaveCriticalSection(&d3d8_cs);
 
     return (IDirect3D8*) object;
 }

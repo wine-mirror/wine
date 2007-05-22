@@ -123,6 +123,9 @@ typedef struct IDirect3DVertexShaderDeclarationImpl IDirect3DVertexShaderDeclara
 /* Advance declaration of structures to satisfy compiler */
 typedef struct IDirect3DVertexShader8Impl IDirect3DVertexShader8Impl;
 
+/* Global critical section */
+extern CRITICAL_SECTION d3d8_cs;
+
 /* ===========================================================================
     The interfactes themselves
    =========================================================================== */
