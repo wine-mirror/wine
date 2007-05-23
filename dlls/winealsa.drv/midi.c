@@ -345,6 +345,27 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 		case SND_SEQ_EVENT_CHANPRESS:
 		    toSend = (ev->data.control.value << 16) | (ev->data.control.param << 8) | MIDI_CMD_CHANNEL_PRESSURE | ev->data.control.channel;
 		    break;
+                case SND_SEQ_EVENT_CLOCK:
+                    toSend = 0xF8;
+                    break;
+                case SND_SEQ_EVENT_START:
+                    toSend = 0xFA;
+                    break;
+                case SND_SEQ_EVENT_CONTINUE:
+                    toSend = 0xFB;
+                    break;
+                case SND_SEQ_EVENT_STOP:
+                    toSend = 0xFC;
+                    break;
+                case SND_SEQ_EVENT_SONGPOS:
+                    toSend = (((ev->data.control.value >> 7) & 0x7f) << 16) | ((ev->data.control.value & 0x7f) << 8) | 0xF2;
+                    break;
+                case SND_SEQ_EVENT_SONGSEL:
+                  toSend = ((ev->data.control.value & 0x7f) << 8) | 0xF3;
+                    break;
+                case SND_SEQ_EVENT_RESET:
+                    toSend = 0xFF;
+                    break;
 		case SND_SEQ_EVENT_SYSEX:
 		    {
 			int len = ev->data.ext.len;
