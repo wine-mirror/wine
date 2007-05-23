@@ -1071,6 +1071,7 @@ HRESULT DSOUND_Create8(
     TRACE("(%s, %p)\n", debugstr_guid(riid), ppDS);
 
     if (!IsEqualIID(riid, &IID_IUnknown) &&
+        !IsEqualIID(riid, &IID_IDirectSound) &&
         !IsEqualIID(riid, &IID_IDirectSound8)) {
         *ppDS = 0;
         return E_NOINTERFACE;
