@@ -601,9 +601,46 @@ HRESULT WINAPI ConvertINetString(
     LPINT pcDstSize
 )
 {
-    FIXME("%p %d %d %s %p %p %p: stub!\n", pdwMode, dwSrcEncoding, dwDstEncoding,
+    TRACE("%p %d %d %s %p %p %p\n", pdwMode, dwSrcEncoding, dwDstEncoding,
           debugstr_a(pSrcStr), pcSrcSize, pDstStr, pcDstSize);
-    return E_NOTIMPL;
+
+    if (dwSrcEncoding == CP_UNICODE)
+    {
+        INT cSrcSizeW;
+        if (pcSrcSize && *pcSrcSize != -1)
+        {
+            cSrcSizeW = *pcSrcSize / sizeof(WCHAR);
+            pcSrcSize = &cSrcSizeW;
+        }
+        return ConvertINetUnicodeToMultiByte(pdwMode, dwDstEncoding, (LPCWSTR)pSrcStr, pcSrcSize, pDstStr, pcDstSize);
+    }
+    else if (dwDstEncoding == CP_UNICODE)
+    {
+        HRESULT hr = ConvertINetMultiByteToUnicode(pdwMode, dwSrcEncoding, pSrcStr, pcSrcSize, (LPWSTR)pDstStr, pcDstSize);
+        *pcDstSize *= sizeof(WCHAR);
+        return hr;
+    }
+    else
+    {
+        INT cDstSizeW;
+        LPWSTR pDstStrW;
+        HRESULT hr;
+
+        TRACE("convert %s from %d to %d\n", debugstr_a(pSrcStr), dwSrcEncoding, dwDstEncoding);
+
+        hr = ConvertINetMultiByteToUnicode(pdwMode, dwSrcEncoding, pSrcStr, pcSrcSize, NULL, &cDstSizeW);
+        if (hr != S_OK)
+            return hr;
+
+        pDstStrW = HeapAlloc(GetProcessHeap(), 0, cDstSizeW * sizeof(WCHAR));
+        hr = ConvertINetMultiByteToUnicode(pdwMode, dwSrcEncoding, pSrcStr, pcSrcSize, pDstStrW, &cDstSizeW);
+        if (hr != S_OK)
+            return hr;
+
+        hr = ConvertINetUnicodeToMultiByte(pdwMode, dwDstEncoding, pDstStrW, &cDstSizeW, pDstStr, pcDstSize);
+        HeapFree(GetProcessHeap(), 0, pDstStrW);
+        return hr;
+    }
 }
 
 static HRESULT GetFamilyCodePage(
