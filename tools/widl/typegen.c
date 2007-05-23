@@ -62,7 +62,7 @@ struct expr_eval_routine
 static size_t type_memsize(const type_t *t, const array_dims_t *array, unsigned int *align);
 static size_t fields_memsize(const var_list_t *fields, unsigned int *align);
 static size_t write_struct_tfs(FILE *file, type_t *type, const char *name, unsigned int *tfsoff);
-static void write_embedded_types(FILE *file, const type_t *type, size_t *tfsoff);
+static void write_embedded_types(FILE *file, const type_t *type, unsigned int *tfsoff);
 
 const char *string_of_type(unsigned char type)
 {
@@ -1480,7 +1480,7 @@ static size_t write_pointer_only_tfs(FILE *file, const attr_list_t *attrs, int p
     return start_offset;
 }
 
-static void write_branch_type(FILE *file, const type_t *t, size_t *tfsoff)
+static void write_branch_type(FILE *file, const type_t *t, unsigned int *tfsoff)
 {
     if (is_base_type(t->type))
     {
@@ -1499,10 +1499,10 @@ static void write_branch_type(FILE *file, const type_t *t, size_t *tfsoff)
     *tfsoff += 2;
 }
 
-static size_t write_union_tfs(FILE *file, type_t *type, size_t *tfsoff)
+static size_t write_union_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
 {
-    size_t align = 0;
-    size_t start_offset;
+    unsigned int align = 0;
+    unsigned int start_offset;
     size_t size = type_memsize(type, NULL, &align);
     var_list_t *fields = type->fields;
     size_t nbranch = 0;
@@ -1743,7 +1743,7 @@ static void clear_tfsoff(type_t *type)
     }
 }
 
-static void write_embedded_types(FILE *file, const type_t *type, size_t *tfsoff)
+static void write_embedded_types(FILE *file, const type_t *type, unsigned int *tfsoff)
 {
     var_list_t *fields = type->fields;
     size_t offset = 0;
