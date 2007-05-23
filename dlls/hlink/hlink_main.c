@@ -134,17 +134,22 @@ HRESULT WINAPI HlinkCreateFromString( LPCWSTR pwzTarget, LPCWSTR pwzLocation,
 
         if (FAILED(r))
         {
-            FIXME("ParseDisplayName failed, falling back to file\n");
-            r = CreateFileMoniker(pwzTarget,&pTgtMk);
+            LPCWSTR p = strchrW(pwzTarget, ':');
+            if (p && (p - pwzTarget > 1))
+                r = CreateURLMoniker(NULL, pwzTarget, &pTgtMk);
+            else
+                r = CreateFileMoniker(pwzTarget,&pTgtMk);
         }
 
-        if (pTgtMk)
+        if (FAILED(r))
         {
-            IHlink_SetMonikerReference(hl, 0, pTgtMk, pwzLocation);
-            IMoniker_Release(pTgtMk);
+            ERR("couldn't create moniker for %s, failed with error 0x%08x\n",
+                debugstr_w(pwzTarget), r);
+            return r;
         }
-        else
-            FIXME("Unable to come up with a moniker, expect problems\n");
+
+        IHlink_SetMonikerReference(hl, 0, pTgtMk, pwzLocation);
+        IMoniker_Release(pTgtMk);
 
         IHlink_SetStringReference(hl, HLINKSETF_TARGET, pwzTarget, NULL);
     }
