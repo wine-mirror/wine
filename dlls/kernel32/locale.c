@@ -1240,7 +1240,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
         lang_id = MAKELANGID(PRIMARYLANGID(lang_id), SUBLANG_DEFAULT);
 
     if (!(hrsrc = FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
-                                   (LPCWSTR)((lctype >> 4) + 1), lang_id )))
+                                   ULongToPtr((lctype >> 4) + 1), lang_id )))
     {
         SetLastError( ERROR_INVALID_FLAGS );  /* no such lctype */
         return 0;

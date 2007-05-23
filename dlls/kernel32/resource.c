@@ -60,7 +60,7 @@ static NTSTATUS get_res_nameA( LPCSTR name, UNICODE_STRING *str )
         ULONG value;
         if (RtlCharToInteger( name + 1, 10, &value ) != STATUS_SUCCESS || HIWORD(value))
             return STATUS_INVALID_PARAMETER;
-        str->Buffer = (LPWSTR)value;
+        str->Buffer = ULongToPtr(value);
         return STATUS_SUCCESS;
     }
     RtlCreateUnicodeStringFromAsciiz( str, name );
@@ -82,7 +82,7 @@ static NTSTATUS get_res_nameW( LPCWSTR name, UNICODE_STRING *str )
         RtlInitUnicodeString( str, name + 1 );
         if (RtlUnicodeStringToInteger( str, 10, &value ) != STATUS_SUCCESS || HIWORD(value))
             return STATUS_INVALID_PARAMETER;
-        str->Buffer = (LPWSTR)value;
+        str->Buffer = ULongToPtr(value);
         return STATUS_SUCCESS;
     }
     RtlCreateUnicodeString( str, name );
@@ -288,7 +288,7 @@ BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG_PTR l
         }
         else
         {
-            ret = lpfun( hmod, (LPSTR)(int)et[i].u1.s2.Id, lparam );
+            ret = lpfun( hmod, UIntToPtr(et[i].u1.s2.Id), lparam );
         }
         if (!ret) break;
     }
@@ -337,7 +337,7 @@ BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG_PTR l
         }
         else
         {
-            ret = lpfun( hmod, (LPWSTR)(int)et[i].u1.s2.Id, lparam );
+            ret = lpfun( hmod, UIntToPtr(et[i].u1.s2.Id), lparam );
         }
         if (!ret) break;
     }
@@ -370,7 +370,7 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
         goto done;
     if ((status = get_res_nameA( type, &typeW )) != STATUS_SUCCESS)
         goto done;
-    info.Type = (ULONG)typeW.Buffer;
+    info.Type = (ULONG_PTR)typeW.Buffer;
     if ((status = LdrFindResourceDirectory_U( hmod, &info, 1, &resdir )) != STATUS_SUCCESS)
         goto done;
 
@@ -397,7 +397,7 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
         }
         else
         {
-            ret = lpfun( hmod, type, (LPSTR)(int)et[i].u1.s2.Id, lparam );
+            ret = lpfun( hmod, type, UIntToPtr(et[i].u1.s2.Id), lparam );
         }
         if (!ret) break;
     }
@@ -432,7 +432,7 @@ BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpf
         goto done;
     if ((status = get_res_nameW( type, &typeW )) != STATUS_SUCCESS)
         goto done;
-    info.Type = (ULONG)typeW.Buffer;
+    info.Type = (ULONG_PTR)typeW.Buffer;
     if ((status = LdrFindResourceDirectory_U( hmod, &info, 1, &resdir )) != STATUS_SUCCESS)
         goto done;
 
@@ -458,7 +458,7 @@ BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpf
         }
         else
         {
-            ret = lpfun( hmod, type, (LPWSTR)(int)et[i].u1.s2.Id, lparam );
+            ret = lpfun( hmod, type, UIntToPtr(et[i].u1.s2.Id), lparam );
         }
         if (!ret) break;
     }
@@ -979,7 +979,7 @@ static LPWSTR resource_dup_string( const IMAGE_RESOURCE_DIRECTORY *root, const I
     LPWSTR s;
 
     if (!entry->u1.s1.NameIsString)
-        return (LPWSTR) (DWORD) entry->u1.s2.Id;
+        return UIntToPtr(entry->u1.s2.Id);
 
     string = (const IMAGE_RESOURCE_DIR_STRING_U*) (((const char *)root) + entry->u1.s1.NameOffset);
     s = HeapAlloc(GetProcessHeap(), 0, (string->Length + 1)*sizeof (WCHAR) );

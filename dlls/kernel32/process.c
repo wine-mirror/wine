@@ -1848,7 +1848,7 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
 
     if (!SearchPathA( NULL, name, ".exe", sizeof(filename), filename, NULL ) &&
         !SearchPathA( NULL, name, NULL, sizeof(filename), filename, NULL ))
-        return (HINSTANCE)GetLastError();
+        return ULongToHandle(GetLastError());
 
     len = (BYTE)params->lpCmdLine[0];
     if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, strlen(filename) + len + 2 )))
@@ -1879,7 +1879,7 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
         CloseHandle( info.hThread );
         CloseHandle( info.hProcess );
     }
-    else if ((hInstance = (HINSTANCE)GetLastError()) >= (HINSTANCE)32)
+    else if ((hInstance = ULongToHandle(GetLastError())) >= (HINSTANCE)32)
     {
         FIXME("Strange error set by CreateProcess: %p\n", hInstance );
         hInstance = (HINSTANCE)11;
@@ -2174,15 +2174,15 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
     case GPD_WINDOWS_VERSION:
         return GetExeVersion16();
     case GPD_THDB:
-        return (DWORD)NtCurrentTeb() - 0x10 /* FIXME */;
+        return (DWORD_PTR)NtCurrentTeb() - 0x10 /* FIXME */;
     case GPD_PDB:
-        return (DWORD)NtCurrentTeb()->Peb;
+        return (DWORD_PTR)NtCurrentTeb()->Peb; /* FIXME: truncating a pointer */
     case GPD_STARTF_SHELLDATA: /* return stdoutput handle from startupinfo ??? */
         GetStartupInfoW(&siw);
-        return (DWORD)siw.hStdOutput;
+        return HandleToULong(siw.hStdOutput);
     case GPD_STARTF_HOTKEY: /* return stdinput handle from startupinfo ??? */
         GetStartupInfoW(&siw);
-        return (DWORD)siw.hStdInput;
+        return HandleToULong(siw.hStdInput);
     case GPD_STARTF_SHOWWINDOW:
         GetStartupInfoW(&siw);
         return siw.wShowWindow;
@@ -2289,7 +2289,7 @@ HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
     OBJECT_ATTRIBUTES   attr;
     CLIENT_ID           cid;
 
-    cid.UniqueProcess = (HANDLE)id;
+    cid.UniqueProcess = ULongToHandle(id);
     cid.UniqueThread = 0; /* FIXME ? */
 
     attr.Length = sizeof(OBJECT_ATTRIBUTES);
@@ -2363,7 +2363,7 @@ BOOL WINAPI CloseHandle( HANDLE handle )
     if ((handle == (HANDLE)STD_INPUT_HANDLE) ||
         (handle == (HANDLE)STD_OUTPUT_HANDLE) ||
         (handle == (HANDLE)STD_ERROR_HANDLE))
-        handle = GetStdHandle( (DWORD)handle );
+        handle = GetStdHandle( HandleToULong(handle) );
 
     if (is_console_handle(handle))
         return CloseConsoleHandle(handle);

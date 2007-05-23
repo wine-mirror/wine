@@ -664,10 +664,10 @@ LONG WINAPI _hwrite( HFILE handle, LPCSTR buffer, LONG count )
     if (!count)
     {
         /* Expand or truncate at current position */
-        if (!SetEndOfFile( (HANDLE)handle )) return HFILE_ERROR;
+        if (!SetEndOfFile( LongToHandle(handle) )) return HFILE_ERROR;
         return 0;
     }
-    if (!WriteFile( (HANDLE)handle, buffer, count, &result, NULL ))
+    if (!WriteFile( LongToHandle(handle), buffer, count, &result, NULL ))
         return HFILE_ERROR;
     return result;
 }
@@ -679,7 +679,7 @@ LONG WINAPI _hwrite( HFILE handle, LPCSTR buffer, LONG count )
 HFILE WINAPI _lclose( HFILE hFile )
 {
     TRACE("handle %d\n", hFile );
-    return CloseHandle( (HANDLE)hFile ) ? 0 : HFILE_ERROR;
+    return CloseHandle( LongToHandle(hFile) ) ? 0 : HFILE_ERROR;
 }
 
 
@@ -688,12 +688,15 @@ HFILE WINAPI _lclose( HFILE hFile )
  */
 HFILE WINAPI _lcreat( LPCSTR path, INT attr )
 {
+    HANDLE hfile;
+
     /* Mask off all flags not explicitly allowed by the doc */
     attr &= FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
     TRACE("%s %02x\n", path, attr );
-    return (HFILE)CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
+    hfile = CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
                                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                                CREATE_ALWAYS, attr, 0 );
+    return HandleToLong(hfile);
 }
 
 
@@ -702,8 +705,11 @@ HFILE WINAPI _lcreat( LPCSTR path, INT attr )
  */
 HFILE WINAPI _lopen( LPCSTR path, INT mode )
 {
+    HANDLE hfile;
+
     TRACE("(%s,%04x)\n", debugstr_a(path), mode );
-    return (HFILE)create_file_OF( path, mode & ~OF_CREATE );
+    hfile = create_file_OF( path, mode & ~OF_CREATE );
+    return HandleToLong(hfile);
 }
 
 /***********************************************************************
@@ -712,7 +718,7 @@ HFILE WINAPI _lopen( LPCSTR path, INT mode )
 UINT WINAPI _lread( HFILE handle, LPVOID buffer, UINT count )
 {
     DWORD result;
-    if (!ReadFile( (HANDLE)handle, buffer, count, &result, NULL ))
+    if (!ReadFile( LongToHandle(handle), buffer, count, &result, NULL ))
         return HFILE_ERROR;
     return result;
 }
@@ -723,7 +729,7 @@ UINT WINAPI _lread( HFILE handle, LPVOID buffer, UINT count )
  */
 LONG WINAPI _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
 {
-    return SetFilePointer( (HANDLE)hFile, lOffset, NULL, nOrigin );
+    return SetFilePointer( LongToHandle(hFile), lOffset, NULL, nOrigin );
 }
 
 
@@ -2254,7 +2260,7 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
             return TRUE;
         }
 
-        handle = (HANDLE)_lopen( ofs->szPathName, mode );
+        handle = LongToHandle(_lopen( ofs->szPathName, mode ));
         if (handle == INVALID_HANDLE_VALUE) goto error;
 
         GetFileTime( handle, NULL, NULL, &filetime );
@@ -2279,7 +2285,7 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
         CloseHandle( handle );
         return TRUE;
     }
-    else return (HFILE)handle;
+    return HandleToLong(handle);
 
 error:  /* We get here if there was an error opening the file */
     ofs->nErrCode = GetLastError();

@@ -82,7 +82,7 @@ static DWORD CALLBACK pthread_thread_start(LPVOID data)
 {
   struct pthread_thread_init init = *(struct pthread_thread_init*)data;
   HeapFree(GetProcessHeap(),0,data);
-  return (DWORD)init.start_routine(init.arg);
+  return (DWORD_PTR)init.start_routine(init.arg);
 }
 
 static int wine_pthread_create(pthread_t* thread, const pthread_attr_t* attr, void*
@@ -193,7 +193,7 @@ static int wine_pthread_mutex_unlock(pthread_mutex_t *mutex)
     CRITICAL_SECTION *crit = ((wine_mutex)mutex)->critsect;
 
     if (!crit) return 0;
-    if (crit->OwningThread != (HANDLE)GetCurrentThreadId()) return EPERM;
+    if (crit->OwningThread != ULongToHandle(GetCurrentThreadId())) return EPERM;
     RtlLeaveCriticalSection( crit );
     return 0;
 }
@@ -526,7 +526,7 @@ static int wine_pthread_equal(pthread_t thread1, pthread_t thread2)
 
 static void wine_pthread_exit(void *retval, char *currentframe)
 {
-    ExitThread((DWORD)retval);
+    ExitThread((DWORD_PTR)retval);
 }
 
 static void *wine_get_thread_data(void)

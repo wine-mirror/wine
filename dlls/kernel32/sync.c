@@ -170,7 +170,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
         if ((handles[i] == (HANDLE)STD_INPUT_HANDLE) ||
             (handles[i] == (HANDLE)STD_OUTPUT_HANDLE) ||
             (handles[i] == (HANDLE)STD_ERROR_HANDLE))
-            hloc[i] = GetStdHandle( (DWORD)handles[i] );
+            hloc[i] = GetStdHandle( HandleToULong(handles[i]) );
         else
             hloc[i] = handles[i];
 
@@ -1168,7 +1168,7 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
     pipe_type = (dwPipeMode & PIPE_TYPE_MESSAGE) ? TRUE : FALSE;
     read_mode = (dwPipeMode & PIPE_READMODE_MESSAGE) ? TRUE : FALSE;
     non_block = (dwPipeMode & PIPE_NOWAIT) ? TRUE : FALSE;
-    if (nMaxInstances >= PIPE_UNLIMITED_INSTANCES) nMaxInstances = ~0UL;
+    if (nMaxInstances >= PIPE_UNLIMITED_INSTANCES) nMaxInstances = ~0U;
 
     timeout.QuadPart = (ULONGLONG)nDefaultTimeOut * -10000;
 

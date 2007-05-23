@@ -499,8 +499,8 @@ LONG WINAPI LZCopy( HFILE src, HFILE dest )
 
 	/* Maintain the timestamp of source file to destination file */
 	srcfd = (!(lzs = GET_LZ_STATE(src))) ? src : lzs->realfd;
-	GetFileTime((HANDLE)srcfd, NULL, NULL, &filetime);
-	SetFileTime((HANDLE)dest, NULL, NULL, &filetime);
+	GetFileTime( LongToHandle(srcfd), NULL, NULL, &filetime );
+	SetFileTime( LongToHandle(dest), NULL, NULL, &filetime );
 
 	/* close handle */
 	if (usedlzinit)
@@ -583,7 +583,7 @@ void WINAPI LZClose( HFILE fd )
         else
         {
             HeapFree( GetProcessHeap(), 0, lzs->get );
-            CloseHandle((HANDLE)lzs->realfd);
+            CloseHandle( LongToHandle(lzs->realfd) );
             lzstates[fd - LZ_MIN_HANDLE] = NULL;
             HeapFree( GetProcessHeap(), 0, lzs );
         }
