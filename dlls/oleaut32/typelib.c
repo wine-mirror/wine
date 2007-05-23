@@ -2702,7 +2702,27 @@ static DWORD SLTG_ReadLibBlk(LPVOID pLibBlk, ITypeLibImpl *pTypeLibImpl)
     return ptr - (char*)pLibBlk;
 }
 
-static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD)
+/* stores a mapping between the sltg typeinfo's references and the typelib's HREFTYPEs */
+typedef struct
+{
+    unsigned int num;
+    HREFTYPE refs[1];
+} sltg_ref_lookup_t;
+
+static HRESULT sltg_get_typelib_ref(sltg_ref_lookup_t *table, DWORD typeinfo_ref, HREFTYPE *typelib_ref)
+{
+    if(typeinfo_ref < table->num)
+    {
+        *typelib_ref = table->refs[typeinfo_ref];
+        return S_OK;
+    }
+
+    ERR("Unable to find reference\n");
+    *typelib_ref = -1;
+    return E_FAIL;
+}
+
+static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD, sltg_ref_lookup_t *ref_lookup)
 {
     BOOL done = FALSE;
 
@@ -2723,7 +2743,7 @@ static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD)
 
 	case VT_USERDEFINED:
 	    pTD->vt = VT_USERDEFINED;
-	    pTD->u.hreftype = *(++pType) / 4;
+            sltg_get_typelib_ref(ref_lookup, *(++pType) / 4, &pTD->u.hreftype);
 	    done = TRUE;
 	    break;
 
@@ -2768,7 +2788,7 @@ static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD)
     return pType;
 }
 
-static WORD *SLTG_DoElem(WORD *pType, char *pBlk, ELEMDESC *pElem)
+static WORD *SLTG_DoElem(WORD *pType, char *pBlk, ELEMDESC *pElem, sltg_ref_lookup_t *ref_lookup)
 {
     /* Handle [in/out] first */
     if((*pType & 0xc000) == 0xc000)
@@ -2786,22 +2806,32 @@ static WORD *SLTG_DoElem(WORD *pType, char *pBlk, ELEMDESC *pElem)
     if(*pType & 0x80)
         pElem->u.paramdesc.wParamFlags |= PARAMFLAG_FRETVAL;
 
-    return SLTG_DoType(pType, pBlk, &pElem->tdesc);
+    return SLTG_DoType(pType, pBlk, &pElem->tdesc, ref_lookup);
 }
 
 
-static void SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
+static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 			char *pNameTable)
 {
     int ref;
     char *name;
     TLBRefType *ref_type;
+    sltg_ref_lookup_t *table;
+    HREFTYPE typelib_ref;
 
     if(pRef->magic != SLTG_REF_MAGIC) {
         FIXME("Ref magic = %x\n", pRef->magic);
-	return;
+	return NULL;
     }
     name = ( (char*)(&pRef->names) + pRef->number);
+
+    table = HeapAlloc(GetProcessHeap(), 0, sizeof(*table) + ((pRef->number >> 3) - 1) * sizeof(table->refs[0]));
+    table->num = pRef->number >> 3;
+
+    /* FIXME should scan the existing list and reuse matching refs added by previous typeinfos */
+
+    /* We don't want the first href to be 0 */
+    typelib_ref = (list_count(&pTL->ref_list) + 1) << 2;
 
     for(ref = 0; ref < pRef->number >> 3; ref++) {
         char *refname;
@@ -2846,24 +2876,28 @@ static void SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 
             /* Store a reference to IDispatch */
             if(pTL->dispatch_href == -1 && IsEqualGUID(&(*import)->guid, &IID_StdOle) && type_num == 4)
-                pTL->dispatch_href = ref;
+                pTL->dispatch_href = typelib_ref;
 
 	} else { /* internal ref */
 	  ref_type->pImpTLInfo = TLB_REF_INTERNAL;
 	}
-	ref_type->reference = ref;
+	ref_type->reference = typelib_ref;
 	ref_type->index = type_num;
 
 	HeapFree(GetProcessHeap(), 0, refname);
         list_add_tail(&pTL->ref_list, &ref_type->entry);
+
+        table->refs[ref] = typelib_ref;
+        typelib_ref += 4;
     }
     if((BYTE)*name != SLTG_REF_MAGIC)
       FIXME("End of ref block magic = %x\n", *name);
     dump_TLBRefType(pTL);
+    return table;
 }
 
 static char *SLTG_DoImpls(char *pBlk, ITypeInfoImpl *pTI,
-			  BOOL OneOnly)
+			  BOOL OneOnly, sltg_ref_lookup_t *ref_lookup)
 {
     SLTG_ImplInfo *info;
     TLBImplType **ppImplType = &pTI->impltypelist;
@@ -2878,7 +2912,7 @@ static char *SLTG_DoImpls(char *pBlk, ITypeInfoImpl *pTI,
     while(1) {
 	*ppImplType = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 				sizeof(**ppImplType));
-	(*ppImplType)->hRef = info->ref;
+        sltg_get_typelib_ref(ref_lookup, info->ref, &(*ppImplType)->hRef);
 	(*ppImplType)->implflags = info->impltypeflags;
 	pTI->TypeAttr.cImplTypes++;
 	ppImplType = &(*ppImplType)->next;
@@ -2893,7 +2927,7 @@ static char *SLTG_DoImpls(char *pBlk, ITypeInfoImpl *pTI,
     return (char*)info;
 }
 
-static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsigned short cVars, char *pNameTable)
+static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsigned short cVars, char *pNameTable, sltg_ref_lookup_t *ref_lookup)
 {
   TLBVarDesc **ppVarDesc = &pTI->varlist;
   BSTR bstrPrevName = NULL;
@@ -2957,7 +2991,7 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
         FIXME_(typelib)("unhandled flags = %02x\n", pItem->flags & ~0xd2);
 
       SLTG_DoElem(pType, pBlk,
-		  &(*ppVarDesc)->vardesc.elemdescVar);
+		  &(*ppVarDesc)->vardesc.elemdescVar, ref_lookup);
 
       dump_TypeDesc(&(*ppVarDesc)->vardesc.elemdescVar.tdesc, buf);
 
@@ -2967,7 +3001,7 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
   pTI->TypeAttr.cVars = cVars;
 }
 
-static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsigned short cFuncs, char *pNameTable)
+static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsigned short cFuncs, char *pNameTable, sltg_ref_lookup_t *ref_lookup)
 {
     SLTG_Function *pFunc;
     unsigned short i;
@@ -3015,7 +3049,7 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsig
 	else
 	    pType = (WORD*)(pBlk + pFunc->rettype);
 
-	SLTG_DoElem(pType, pBlk, &(*ppFuncDesc)->funcdesc.elemdescFunc);
+	SLTG_DoElem(pType, pBlk, &(*ppFuncDesc)->funcdesc.elemdescFunc, ref_lookup);
 
 	(*ppFuncDesc)->funcdesc.lprgelemdescParam =
 	  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -3053,13 +3087,13 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsig
 	    if(HaveOffs) { /* the next word is an offset to type */
 	        pType = (WORD*)(pBlk + *pArg);
 		SLTG_DoElem(pType, pBlk,
-			    &(*ppFuncDesc)->funcdesc.lprgelemdescParam[param]);
+			    &(*ppFuncDesc)->funcdesc.lprgelemdescParam[param], ref_lookup);
 		pArg++;
 	    } else {
 		if(paramName)
 		  paramName--;
 		pArg = SLTG_DoElem(pArg, pBlk,
-			   &(*ppFuncDesc)->funcdesc.lprgelemdescParam[param]);
+                                   &(*ppFuncDesc)->funcdesc.lprgelemdescParam[param], ref_lookup);
 	    }
 
 	    /* Are we an optional param ? */
@@ -3084,17 +3118,19 @@ static void SLTG_ProcessCoClass(char *pBlk, ITypeInfoImpl *pTI,
 				SLTG_TypeInfoTail *pTITail)
 {
     char *pFirstItem, *pNextItem;
+    sltg_ref_lookup_t *ref_lookup = NULL;
 
     if(pTIHeader->href_table != 0xffffffff) {
-        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
+        ref_lookup = SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
 		    pNameTable);
     }
 
     pFirstItem = pNextItem = pBlk;
 
     if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
-        pNextItem = SLTG_DoImpls(pFirstItem, pTI, FALSE);
+        pNextItem = SLTG_DoImpls(pFirstItem, pTI, FALSE, ref_lookup);
     }
+    HeapFree(GetProcessHeap(), 0, ref_lookup);
 }
 
 
@@ -3103,20 +3139,23 @@ static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 				  SLTG_TypeInfoTail *pTITail)
 {
     char *pFirstItem, *pNextItem;
+    sltg_ref_lookup_t *ref_lookup = NULL;
 
     if(pTIHeader->href_table != 0xffffffff) {
-        SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
+        ref_lookup = SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
 		    pNameTable);
     }
 
     pFirstItem = pNextItem = pBlk;
 
     if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
-        pNextItem = SLTG_DoImpls(pFirstItem, pTI, TRUE);
+        pNextItem = SLTG_DoImpls(pFirstItem, pTI, TRUE, ref_lookup);
     }
 
     if (pTITail->funcs_off != 0xffff)
-        SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable);
+        SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable, ref_lookup);
+
+    HeapFree(GetProcessHeap(), 0, ref_lookup);
 
     if (TRACE_ON(typelib))
         dump_TLBFuncDesc(pTI->funclist);
@@ -3126,7 +3165,7 @@ static void SLTG_ProcessRecord(char *pBlk, ITypeInfoImpl *pTI,
 			       char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
 			       SLTG_TypeInfoTail *pTITail)
 {
-  SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
+  SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable, NULL);
 }
 
 static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
@@ -3134,6 +3173,7 @@ static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
 			      SLTG_TypeInfoTail *pTITail)
 {
   WORD *pType;
+  sltg_ref_lookup_t *ref_lookup = NULL;
 
   if (pTITail->simple_alias) {
     /* if simple alias, no more processing required */
@@ -3142,35 +3182,39 @@ static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
   }
 
   if(pTIHeader->href_table != 0xffffffff) {
-      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
+      ref_lookup = SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
 		  pNameTable);
   }
 
   /* otherwise it is an offset to a type */
   pType = (WORD *)(pBlk + pTITail->tdescalias_vt);
 
-  SLTG_DoType(pType, pBlk, &pTI->TypeAttr.tdescAlias);
+  SLTG_DoType(pType, pBlk, &pTI->TypeAttr.tdescAlias, ref_lookup);
+
+  HeapFree(GetProcessHeap(), 0, ref_lookup);
 }
 
 static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
 				 char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
 				 SLTG_TypeInfoTail *pTITail)
 {
+  sltg_ref_lookup_t *ref_lookup = NULL;
   if (pTIHeader->href_table != 0xffffffff)
-      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
+      ref_lookup = SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
                                   pNameTable);
 
   if (pTITail->vars_off != 0xffff)
-    SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
+    SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable, ref_lookup);
 
   if (pTITail->funcs_off != 0xffff)
-    SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable);
+    SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable, ref_lookup);
 
   /* this is necessary to cope with MSFT typelibs that set cFuncs to the number
    * of dispinterface functons including the IDispatch ones, so
    * ITypeInfo::GetFuncDesc takes the real value for cFuncs from cbSizeVft */
   pTI->TypeAttr.cbSizeVft = pTI->TypeAttr.cFuncs * sizeof(void *);
 
+  HeapFree(GetProcessHeap(), 0, ref_lookup);
   if (TRACE_ON(typelib))
       dump_TLBFuncDesc(pTI->funclist);
 }
@@ -3179,22 +3223,24 @@ static void SLTG_ProcessEnum(char *pBlk, ITypeInfoImpl *pTI,
 			     char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
                              SLTG_TypeInfoTail *pTITail)
 {
-  SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
+  SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable, NULL);
 }
 
 static void SLTG_ProcessModule(char *pBlk, ITypeInfoImpl *pTI,
 			       char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
 			       SLTG_TypeInfoTail *pTITail)
 {
+  sltg_ref_lookup_t *ref_lookup = NULL;
   if (pTIHeader->href_table != 0xffffffff)
-      SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
+      ref_lookup = SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table), pTI->pTypeLib,
                                   pNameTable);
 
   if (pTITail->vars_off != 0xffff)
-    SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable);
+    SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable, ref_lookup);
 
   if (pTITail->funcs_off != 0xffff)
-    SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable);
+    SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable, ref_lookup);
+  HeapFree(GetProcessHeap(), 0, ref_lookup);
 }
 
 /* Because SLTG_OtherTypeInfo is such a painful struct, we make a more
