@@ -522,7 +522,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
 
         if (result.create_thread.status == STATUS_SUCCESS)
         {
-            if (id) id->UniqueThread = (HANDLE)result.create_thread.tid;
+            if (id) id->UniqueThread = ULongToHandle(result.create_thread.tid);
             if (handle_ptr) *handle_ptr = result.create_thread.handle;
             else NtClose( result.create_thread.handle );
         }
@@ -567,8 +567,8 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     info->pthread_info.teb_size = size;
     if ((status = init_teb( teb ))) goto error;
 
-    teb->ClientId.UniqueProcess = (HANDLE)GetCurrentProcessId();
-    teb->ClientId.UniqueThread  = (HANDLE)tid;
+    teb->ClientId.UniqueProcess = ULongToHandle(GetCurrentProcessId());
+    teb->ClientId.UniqueThread  = ULongToHandle(tid);
 
     thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
     thread_regs = (struct ntdll_thread_regs *)teb->SpareBytes1;
@@ -609,7 +609,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     }
     pthread_functions.sigprocmask( SIG_SETMASK, &sigset, NULL );
 
-    if (id) id->UniqueThread = (HANDLE)tid;
+    if (id) id->UniqueThread = ULongToHandle(tid);
     if (handle_ptr) *handle_ptr = handle;
     else NtClose( handle );
 
@@ -650,7 +650,7 @@ NTSTATUS WINAPI NtOpenThread( HANDLE *handle, ACCESS_MASK access,
 
     SERVER_START_REQ( open_thread )
     {
-        req->tid        = (thread_id_t)id->UniqueThread;
+        req->tid        = HandleToULong(id->UniqueThread);
         req->access     = access;
         req->attributes = attr ? attr->Attributes : 0;
         ret = wine_server_call( req );
@@ -1173,8 +1173,8 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                 {
                     info.ExitStatus             = reply->exit_code;
                     info.TebBaseAddress         = reply->teb;
-                    info.ClientId.UniqueProcess = (HANDLE)reply->pid;
-                    info.ClientId.UniqueThread  = (HANDLE)reply->tid;
+                    info.ClientId.UniqueProcess = ULongToHandle(reply->pid);
+                    info.ClientId.UniqueThread  = ULongToHandle(reply->tid);
                     info.AffinityMask           = reply->affinity;
                     info.Priority               = reply->priority;
                     info.BasePriority           = reply->priority;  /* FIXME */

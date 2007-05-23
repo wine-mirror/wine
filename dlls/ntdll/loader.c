@@ -516,7 +516,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
             {
                 int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
                 WARN("No implementation for %s.%d", name, ordinal );
-                thunk_list->u1.Function = allocate_stub( name, (const char *)ordinal );
+                thunk_list->u1.Function = allocate_stub( name, IntToPtr(ordinal) );
             }
             else
             {
@@ -543,7 +543,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
                                                                       ordinal - exports->Base );
             if (!thunk_list->u1.Function)
             {
-                thunk_list->u1.Function = allocate_stub( name, (const char *)ordinal );
+                thunk_list->u1.Function = allocate_stub( name, IntToPtr(ordinal) );
                 WARN("No implementation for %s.%d imported from %s, setting to %p\n",
                      name, ordinal, debugstr_w(current_modref->ldr.FullDllName.Buffer),
                      (void *)thunk_list->u1.Function );

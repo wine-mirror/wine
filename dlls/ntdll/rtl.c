@@ -164,7 +164,7 @@ start:
     }
     else if( rwl->iNumberActive < 0 ) /* exclusive lock in progress */
     {
-	 if( rwl->hOwningThreadId == (HANDLE)GetCurrentThreadId() )
+	 if( rwl->hOwningThreadId == ULongToHandle(GetCurrentThreadId()) )
 	 {
 	     retVal = 1;
 	     rwl->iNumberActive--;
@@ -189,7 +189,7 @@ wait:
 	     goto wait;
 
     if( retVal == 1 )
-	rwl->hOwningThreadId = (HANDLE)GetCurrentThreadId();
+	rwl->hOwningThreadId = ULongToHandle(GetCurrentThreadId());
 done:
     RtlLeaveCriticalSection( &rwl->rtlCS );
     return retVal;
@@ -208,7 +208,7 @@ start:
     RtlEnterCriticalSection( &rwl->rtlCS );
     if( rwl->iNumberActive < 0 )
     {
-	if( rwl->hOwningThreadId == (HANDLE)GetCurrentThreadId() )
+	if( rwl->hOwningThreadId == ULongToHandle(GetCurrentThreadId()) )
 	{
 	    rwl->iNumberActive--;
 	    retVal = 1;
@@ -945,7 +945,7 @@ WORD WINAPI RtlQueryDepthSList(PSLIST_HEADER ListHeader)
     TRACE("(%p)\n", ListHeader);
 #ifdef _WIN64
     FIXME("stub\n");
-    return NULL;
+    return 0;
 #else
     return ListHeader->s.Depth;
 #endif

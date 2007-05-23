@@ -1149,8 +1149,8 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
         if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
         {
-            WARN( "Need to relocate module from addr %x, but there are no relocation records\n",
-                  nt->OptionalHeader.ImageBase );
+            WARN( "Need to relocate module from addr %lx, but there are no relocation records\n",
+                  (ULONG_PTR)nt->OptionalHeader.ImageBase );
             status = STATUS_CONFLICTING_ADDRESSES;
             goto error;
         }

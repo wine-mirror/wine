@@ -778,7 +778,7 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
                                                             call->create_thread.func,
                                                             call->create_thread.arg,
                                                             &result->create_thread.handle, &id );
-        result->create_thread.tid = (thread_id_t)id.UniqueThread;
+        result->create_thread.tid = HandleToULong(id.UniqueThread);
         break;
     }
     default:

@@ -90,7 +90,7 @@ typedef struct tagARENA_FREE
 #define HEAP_MIN_SHRINK_SIZE  (HEAP_MIN_DATA_SIZE+sizeof(ARENA_FREE))
 
 /* Max size of the blocks on the free lists */
-static const DWORD HEAP_freeListSizes[] =
+static const SIZE_T HEAP_freeListSizes[] =
 {
     0x10, 0x20, 0x30, 0x40, 0x60, 0x80, 0x100, 0x200, 0x400, 0x1000, ~0UL
 };
@@ -236,7 +236,7 @@ static void HEAP_Dump( HEAP *heap )
 
     DPRINTF( "\nFree lists:\n Block   Stat   Size    Id\n" );
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
-        DPRINTF( "%p free %08x prev=%p next=%p\n",
+        DPRINTF( "%p free %08lx prev=%p next=%p\n",
                  &heap->freeList[i].arena, HEAP_freeListSizes[i],
                  LIST_ENTRY( heap->freeList[i].arena.entry.prev, ARENA_FREE, entry ),
                  LIST_ENTRY( heap->freeList[i].arena.entry.next, ARENA_FREE, entry ));

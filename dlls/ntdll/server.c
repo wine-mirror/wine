@@ -1123,8 +1123,8 @@ size_t server_init_thread( int unix_pid, int unix_tid, void *entry_point )
         req->wait_fd     = ntdll_get_thread_data()->wait_fd[1];
         req->debug_level = (TRACE_ON(server) != 0);
         ret = wine_server_call( req );
-        NtCurrentTeb()->ClientId.UniqueProcess = (HANDLE)reply->pid;
-        NtCurrentTeb()->ClientId.UniqueThread  = (HANDLE)reply->tid;
+        NtCurrentTeb()->ClientId.UniqueProcess = ULongToHandle(reply->pid);
+        NtCurrentTeb()->ClientId.UniqueThread  = ULongToHandle(reply->tid);
         info_size         = reply->info_size;
         version           = reply->version;
         server_start_time = reply->server_start;

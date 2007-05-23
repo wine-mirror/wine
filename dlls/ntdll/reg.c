@@ -1148,7 +1148,7 @@ NTSTATUS WINAPI RtlQueryRegistryValues(IN ULONG RelativeTo, IN PCWSTR Path,
             if (QueryTable->Flags & RTL_QUERY_REGISTRY_SUBKEY)
             {
                 handle = 0;
-                status = RTL_GetKeyHandle((ULONG)QueryTable->Name, Path, &handle);
+                status = RTL_GetKeyHandle(PtrToUlong(QueryTable->Name), Path, &handle);
                 if(status != STATUS_SUCCESS)
                 {
                     ret = status;
