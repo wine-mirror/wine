@@ -319,6 +319,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 		FIXME("Unexpected event received, type = %x from %d:%d\n", ev->type, ev->source.client, ev->source.port);
 	    else {
 		DWORD dwTime, toSend = 0;
+		int value = 0;
 		/* FIXME: Should use ev->time instead for better accuracy */
 		dwTime = GetTickCount() - MidiInDev[wDevID].startTime;
 		TRACE("Event received, type = %x, device = %d\n", ev->type, wDevID);
@@ -337,7 +338,8 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 		    toSend = (ev->data.control.value << 16) | (ev->data.control.param << 8) | MIDI_CMD_CONTROL | ev->data.control.channel;
 		    break;
 		case SND_SEQ_EVENT_PITCHBEND:
-		    toSend = (ev->data.control.value << 16) | (ev->data.control.param << 8) | MIDI_CMD_BENDER | ev->data.control.channel;
+		    value = ev->data.control.value + 0x2000;
+		    toSend = (((value >> 7) & 0x7f) << 16) | ((value & 0x7f) << 8) | MIDI_CMD_BENDER | ev->data.control.channel;
 		    break;
 		case SND_SEQ_EVENT_PGMCHANGE:
 		    toSend = (ev->data.control.value << 16) | (ev->data.control.param << 8) | MIDI_CMD_PGM_CHANGE | ev->data.control.channel;
