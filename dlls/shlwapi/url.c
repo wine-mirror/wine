@@ -409,6 +409,8 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
             while(isalnumW(*wk1) || (*wk1 == L'-') || (*wk1 == L'.') || (*wk1 == ':'))
                 *wk2++ = *wk1++;
             state = 5;
+            if (!*wk1)
+                *wk2++ = slash;
             break;
         case 5:
             if (*wk1 != '/' && *wk1 != '\\') {state = 3; break;}
