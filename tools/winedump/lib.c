@@ -106,9 +106,9 @@ static void dump_long_import(const void *base, const IMAGE_SECTION_HEADER *ish, 
         }
         else if (globals.do_debug && !strcmp((const char *)ish[i].Name, ".debug$S"))
         {
-            const char *imp_debug$ = (const char *)base + ish[i].PointerToRawData;
+            const char *imp_debugS = (const char *)base + ish[i].PointerToRawData;
 
-            codeview_dump_symbols(imp_debug$, ish[i].SizeOfRawData);
+            codeview_dump_symbols(imp_debugS, ish[i].SizeOfRawData);
             printf("\n");
         }
     }
