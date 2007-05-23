@@ -454,7 +454,7 @@ static HRESULT WINAPI URLMonikerImpl_Save(IMoniker* iface,
     len = strlenW(This->URLName);
     res=IStream_Write(pStm,&len,sizeof(ULONG),NULL);
     if(SUCCEEDED(res))
-        res=IStream_Write(pStm,&This->URLName,len*sizeof(WCHAR),NULL);
+        res=IStream_Write(pStm,This->URLName,len*sizeof(WCHAR),NULL);
     return res;
 
 }
