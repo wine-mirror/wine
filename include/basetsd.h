@@ -219,7 +219,7 @@ typedef unsigned short UHALF_PTR, *PUHALF_PTR;
 #define HandleToULong(h)        ((ULONG)(ULONG_PTR)(h))
 #define HandleToLong(h)         ((LONG)(LONG_PTR)(h))
 #define ULongToHandle(ul)       ((HANDLE)(ULONG_PTR)(ul))
-#define LongToHandle(h)         ((HANDLE)(LONG_PTR)(h))
+#define LongToHandle(l)         ((HANDLE)(LONG_PTR)(l))
 #define PtrToUlong(p)           ((ULONG)(ULONG_PTR)(p))
 #define PtrToLong(p)            ((LONG)(LONG_PTR)(p))
 #define PtrToUint(p)            ((UINT)(UINT_PTR)(p))
