@@ -958,12 +958,12 @@ typedef struct _OBJECT_BASIC_INFORMATION {
 
 typedef struct _PROCESS_BASIC_INFORMATION {
 #ifdef __WINESRC__
-    DWORD ExitStatus;
-    DWORD PebBaseAddress;
+    DWORD_PTR ExitStatus;
+    PPEB PebBaseAddress;
     DWORD_PTR AffinityMask;
-    DWORD BasePriority;
-    ULONG UniqueProcessId;
-    ULONG InheritedFromUniqueProcessId;
+    DWORD_PTR BasePriority;
+    ULONG_PTR UniqueProcessId;
+    ULONG_PTR InheritedFromUniqueProcessId;
 #else
     PVOID Reserved1;
     PPEB PebBaseAddress;

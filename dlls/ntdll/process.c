@@ -144,7 +144,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                         if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
                         {
                             pbi.ExitStatus = reply->exit_code;
-                            pbi.PebBaseAddress = (DWORD)reply->peb;
+                            pbi.PebBaseAddress = reply->peb;
                             pbi.AffinityMask = reply->affinity;
                             pbi.BasePriority = reply->priority;
                             pbi.UniqueProcessId = reply->pid;
