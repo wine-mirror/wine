@@ -2236,10 +2236,7 @@ static void test_formatrecord_tables(void)
     MsiRecordSetString( hrec, 1, "[$parietal]" );
     r = MsiFormatRecord( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
-    todo_wine
-    {
-        ok( !lstrcmp( buf, expected ), "Expected '%s', got %s\n", expected, buf);
-    }
+    ok( !lstrcmp( buf, expected ), "Expected '%s', got %s\n", expected, buf);
 
     DeleteFile( "C:\\I am a really long directory\\temporal.txt" );
     RemoveDirectory( "C:\\I am a really long directory" );

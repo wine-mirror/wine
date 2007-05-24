@@ -113,16 +113,17 @@ static LPWSTR deformat_component(MSIPACKAGE* package, LPCWSTR key, DWORD* sz)
 {
     LPWSTR value = NULL;
     MSICOMPONENT *comp;
+    BOOL source;
 
     *sz = 0;
     if (!package)
         return NULL;
 
-    FIXME("component key %s\n", debugstr_w(key));
     comp = get_loaded_component(package,key);
     if (comp)
     {
-        value = resolve_folder(package, comp->Directory, FALSE, FALSE, TRUE, NULL);
+        source = (comp->Action == INSTALLSTATE_SOURCE) ? TRUE : FALSE;
+        value = resolve_folder(package, comp->Directory, source, FALSE, TRUE, NULL);
         *sz = (strlenW(value)) * sizeof(WCHAR);
     }
 
