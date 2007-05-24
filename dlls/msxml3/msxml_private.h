@@ -63,6 +63,7 @@ extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, B
                                              LONG line, LONG linepos, LONG filepos );
 extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
+extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
 extern HRESULT XMLElementCollection_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
 

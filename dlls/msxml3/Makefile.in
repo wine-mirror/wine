@@ -25,6 +25,7 @@ C_SRCS = \
 	schema.c \
 	text.c \
 	uuid.c \
+	xmldoc.c \
 	xmlelem.c
 
 RC_SRCS = version.rc
