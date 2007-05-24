@@ -1591,7 +1591,6 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
                     checkGLcall("glDisable(GL_TEXTURE_2D)");
                     glEnable(GL_TEXTURE_3D);
                     checkGLcall("glEnable(GL_TEXTURE_3D)");
-                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_3D);
                 }
                 break;
             case GL_TEXTURE_CUBE_MAP_ARB:
@@ -1604,7 +1603,6 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
                     checkGLcall("glDisable(GL_TEXTURE_3D)");
                     glEnable(GL_TEXTURE_CUBE_MAP_ARB);
                     checkGLcall("glEnable(GL_TEXTURE_CUBE_MAP_ARB)");
-                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_CUBE_MAP_ARB);
                 }
               break;
         }
