@@ -1301,9 +1301,17 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         wine_tsx11_lock();
 	XSetForeground( gdi_display, physDev->gc, textPixel );
 
-	if(aa_type == AA_None) {
+        if(aa_type == AA_None || physDev->depth == 1)
+        {
+            void (* sharp_glyph_fn)(X11DRV_PDEVICE *, INT, INT, void *, XGlyphInfo *);
+
+            if(aa_type == AA_None)
+                sharp_glyph_fn = SharpGlyphMono;
+            else
+                sharp_glyph_fn = SharpGlyphGray;
+
 	    for(idx = 0; idx < count; idx++) {
-	        SharpGlyphMono(physDev, physDev->dc_rect.left + x + xoff,
+	        sharp_glyph_fn(physDev, physDev->dc_rect.left + x + xoff,
 			       physDev->dc_rect.top + y + yoff,
 			       formatEntry->bitmaps[wstr[idx]],
 			       &formatEntry->gis[wstr[idx]]);
@@ -1315,22 +1323,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 		    xoff += formatEntry->gis[wstr[idx]].xOff;
 		    yoff += formatEntry->gis[wstr[idx]].yOff;
 		}
-	    }
-	} else if(physDev->depth == 1) {
-	    for(idx = 0; idx < count; idx++) {
-	        SharpGlyphGray(physDev, physDev->dc_rect.left + x + xoff,
-			       physDev->dc_rect.top + y + yoff,
-			       formatEntry->bitmaps[wstr[idx]],
-			       &formatEntry->gis[wstr[idx]]);
-		if(lpDx) {
-		    offset += lpDx[idx];
-		    xoff = offset * cosEsc;
-		    yoff = offset * -sinEsc;
-		} else {
-		    xoff += formatEntry->gis[wstr[idx]].xOff;
-		    yoff += formatEntry->gis[wstr[idx]].yOff;
-		}
-		    
 	    }
 	} else {
 	    XImage *image;
