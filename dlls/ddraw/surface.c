@@ -2027,6 +2027,35 @@ IDirectDrawSurfaceImpl_BltFast(IDirectDrawSurface7 *iface,
     IDirectDrawSurfaceImpl *src = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, Source);
     TRACE("(%p)->(%d,%d,%p,%p,%d): Relay\n", This, dstx, dsty, Source, rsrc, trans);
 
+    /* Source must be != NULL, This is not checked by windows. Windows happily throws a 0xc0000005
+     * in that case
+     */
+    if(rsrc)
+    {
+        if(rsrc->top > rsrc->bottom || rsrc->left > rsrc->right ||
+           rsrc->right > src->surface_desc.dwWidth ||
+           rsrc->bottom > src->surface_desc.dwHeight)
+        {
+            WARN("Source rectangle is invalid, returning DDERR_INVALIDRECT\n");
+            return DDERR_INVALIDRECT;
+        }
+        if(dstx + rsrc->right - rsrc->left > This->surface_desc.dwWidth ||
+           dsty + rsrc->bottom - rsrc->top > This->surface_desc.dwHeight)
+        {
+            WARN("Destination area out of bounds, returning DDERR_INVALIDRECT\n");
+            return DDERR_INVALIDRECT;
+        }
+    }
+    else
+    {
+        if(dstx + src->surface_desc.dwWidth > This->surface_desc.dwWidth ||
+           dsty + src->surface_desc.dwHeight > This->surface_desc.dwHeight)
+        {
+            WARN("Destination area out of bounds, returning DDERR_INVALIDRECT\n");
+            return DDERR_INVALIDRECT;
+        }
+    }
+
     EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DSurface_BltFast(This->WineD3DSurface,
                                  dstx, dsty,

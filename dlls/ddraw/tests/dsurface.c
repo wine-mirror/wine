@@ -2203,6 +2203,62 @@ static void PrivateDataTest(void)
     ok(ref2 == ref, "Object reference is %d, expected %d\n", ref2, ref);
 }
 
+static void BltParamTest(void)
+{
+    IDirectDrawSurface *surface1 = NULL, *surface2 = NULL;
+    DDSURFACEDESC desc;
+    HRESULT hr;
+    RECT valid = {10, 10, 20, 20};
+    RECT invalid1 = {20, 10, 10, 20};
+    RECT invalid2 = {20, 20, 20, 20};
+    RECT invalid3 = {-1, -1, 20, 20};
+    RECT invalid4 = {60, 60, 70, 70};
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+    desc.ddsCaps.dwCaps |= DDSCAPS_OFFSCREENPLAIN;
+    desc.dwHeight = 128;
+    desc.dwWidth = 128;
+    hr = IDirectDraw_CreateSurface(lpDD, &desc, &surface1, NULL);
+    ok(hr == DD_OK, "Creating an offscreen plain surface failed with %08x\n", hr);
+
+    desc.dwHeight = 64;
+    desc.dwWidth = 64;
+    hr = IDirectDraw_CreateSurface(lpDD, &desc, &surface2, NULL);
+    ok(hr == DD_OK, "Creating an offscreen plain surface failed with %08x\n", hr);
+
+    if(0)
+    {
+        /* This crashes */
+        hr = IDirectDrawSurface_BltFast(surface1, 0, 0, NULL, NULL, 0);
+        ok(hr == DD_OK, "BltFast from NULL surface returned %08x\n", hr);
+    }
+    hr = IDirectDrawSurface_BltFast(surface1, 0, 0, surface2, NULL, 0);
+    ok(hr == DD_OK, "BltFast from smaller to bigger surface returned %08x\n", hr);
+    hr = IDirectDrawSurface_BltFast(surface2, 0, 0, surface1, NULL, 0);
+    ok(hr == DDERR_INVALIDRECT, "BltFast from bigger to smaller surface returned %08x\n", hr);
+    hr = IDirectDrawSurface_BltFast(surface2, 0, 0, surface1, &valid, 0);
+    ok(hr == DD_OK, "BltFast from bigger to smaller surface using a valid rectangle returned %08x\n", hr);
+    hr = IDirectDrawSurface_BltFast(surface2, 60, 60, surface1, &valid, 0);
+    ok(hr == DDERR_INVALIDRECT, "BltFast with a rectangle resulting in an off-surface write returned %08x\n", hr);
+    hr = IDirectDrawSurface_BltFast(surface1, 90, 90, surface2, NULL, 0);
+    ok(hr == DDERR_INVALIDRECT, "BltFast with a rectangle resulting in an off-surface write returned %08x\n", hr);
+    hr = IDirectDrawSurface_BltFast(surface2, 0, 0, surface1, &invalid1, 0);
+    ok(hr == DDERR_INVALIDRECT, "BltFast with invalid rectangle 1 returned %08x\n", hr);
+    hr = IDirectDrawSurface_BltFast(surface2, 0, 0, surface1, &invalid2, 0);
+    ok(hr == DDERR_INVALIDRECT, "BltFast with invalid rectangle 2 returned %08x\n", hr);
+    hr = IDirectDrawSurface_BltFast(surface2, 0, 0, surface1, &invalid3, 0);
+    ok(hr == DDERR_INVALIDRECT, "BltFast with invalid rectangle 3 returned %08x\n", hr);
+    hr = IDirectDrawSurface_BltFast(surface1, 0, 0, surface2, &invalid4, 0);
+    ok(hr == DDERR_INVALIDRECT, "BltFast with invalid rectangle 3 returned %08x\n", hr);
+    hr = IDirectDrawSurface_BltFast(surface1, 0, 0, surface1, NULL, 0);
+    ok(hr == DD_OK, "BltFast blitting a surface onto itself returned %08x\n", hr);
+
+    IDirectDrawSurface_Release(surface1);
+    IDirectDrawSurface_Release(surface2);
+}
+
 START_TEST(dsurface)
 {
     if (!CreateDirectDraw())
@@ -2222,5 +2278,6 @@ START_TEST(dsurface)
     CompressedTest();
     SizeTest();
     PrivateDataTest();
+    BltParamTest();
     ReleaseDirectDraw();
 }
