@@ -48,6 +48,7 @@ static WCHAR does_not_existW[] = {'d','o','e','s','_','n','o','t','_','e','x','i
 static WCHAR emptyW[] = {0};
 static CHAR  fmt_comA[] = {'C','O','M','%','u',':',0};
 static CHAR  fmt_lptA[] = {'L','P','T','%','u',':',0};
+static WCHAR localportW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
 static WCHAR portname_fileW[] = {'F','I','L','E',':',0};
 
 static LPBYTE pi_buffer;
@@ -119,6 +120,61 @@ static LPWSTR strdupW(LPCWSTR strW)
         lstrcpyW(ptr, strW);
     }
     return ptr;
+}
+
+/* ########################### */
+
+static void test_AddPortUI(void)
+{
+    DWORD   res;
+    LPWSTR  new_portname;
+
+    /* not present before w2k */
+    if (!pAddPortUI) {
+        skip("AddPortUI not found\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    res = pAddPortUI(NULL, NULL, NULL, NULL);
+    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
+        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
+        res, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    res = pAddPortUI(NULL, NULL, emptyW, NULL);
+    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
+        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
+        res, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    res = pAddPortUI(NULL, NULL, does_not_existW, NULL);
+    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
+        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
+        res, GetLastError());
+
+    if (winetest_interactive) {
+        SetLastError(0xdeadbeef);
+        new_portname = NULL;
+        /*
+         * - On MSDN, you can read, that no dialogs should be displayed, when hWnd
+         *   is NULL, but native localui does not care
+         * - when the new port already exist,
+         *   TRUE is returned, but new_portname is NULL
+         * - when the new port starts with "COM" or "LPT",
+         *   FALSE is returned with ERROR_NOT_SUPPORTED in windows
+         */
+        res = pAddPortUI(NULL, NULL, localportW, &new_portname);
+        ok( res ||
+            (GetLastError() == ERROR_CANCELLED) ||
+            (GetLastError() == ERROR_ACCESS_DENIED) ||
+            (GetLastError() == ERROR_NOT_SUPPORTED),
+            "got %d with %u and %p (expected '!= 0' or '0' with: "
+            "ERROR_CANCELLED, ERROR_ACCESS_DENIED or ERROR_NOT_SUPPORTED)\n",
+            res, GetLastError(), new_portname);
+
+        GlobalFree(new_portname);
+    }
 }
 
 /* ########################### */
@@ -255,6 +311,7 @@ START_TEST(localui)
     /* "FILE:" */
     file_present = find_portinfo2(portname_fileW);
 
+    test_AddPortUI();
     test_ConfigurePortUI();
 
     /* cleanup */
