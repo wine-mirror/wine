@@ -162,8 +162,6 @@ static LPWSTR deformat_file(MSIPACKAGE* package, LPCWSTR key, DWORD* sz,
             }
             else
             {
-                ERR("Unable to get ShortPath size (%s)\n",
-                    debugstr_w( file->TargetPath) );
                 value = strdupW( file->TargetPath );
                 *sz = (lstrlenW(value)) * sizeof(WCHAR);
             }
