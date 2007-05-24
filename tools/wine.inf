@@ -2212,6 +2212,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,winver.exe
 11,,ws2_32.dll
 11,,wsock32.dll
+16422,Internet Explorer,iexplore.exe
 
 [SystemIni]
 system.ini, mci,,"MPEGVideo=mciqtz.drv" 
