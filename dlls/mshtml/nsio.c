@@ -647,7 +647,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 
             if(do_load_from_moniker_hack(This))
                 return WINE_NS_LOAD_FROM_MONIKER;
-        }else if(container->doc) {
+        }else  {
             BOOL cont = before_async_open(This, container);
             nsIWebBrowserChrome_Release(NSWBCHROME(container));
 
@@ -655,11 +655,11 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                 TRACE("canceled\n");
                 return NS_ERROR_UNEXPECTED;
             }
-        }else {
-            nsIWebBrowserChrome_Release(NSWBCHROME(container));
-            return This->channel
-                ?  nsIChannel_AsyncOpen(This->channel, aListener, aContext)
-                : NS_ERROR_UNEXPECTED;
+
+            if(!container->doc)
+                return This->channel
+                    ?  nsIChannel_AsyncOpen(This->channel, aListener, aContext)
+                    : NS_ERROR_UNEXPECTED;
         }
     }
 
@@ -1567,7 +1567,7 @@ static nsresult NSAPI nsURI_SetNSContainer(nsIWineURI *iface, NSContainer *aCont
     if(This->container) {
         if(This->container == aContainer)
             return NS_OK;
-        WARN("Container already set: %p\n", This->container);
+        TRACE("Changing %p -> %p\n", This->container, aContainer);
         nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
     }
 
