@@ -32,6 +32,8 @@ static HMODULE secdll;
 
 static BOOLEAN (WINAPI * pGetComputerObjectNameA)(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG lpnSize);
 static BOOLEAN (WINAPI * pGetComputerObjectNameW)(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG lpnSize);
+static PSecurityFunctionTableA (SEC_ENTRY * pInitSecurityInterfaceA)(void);
+static PSecurityFunctionTableW (SEC_ENTRY * pInitSecurityInterfaceW)(void);
 
 static EXTENDED_NAME_FORMAT formats[] = {
     NameUnknown, NameFullyQualifiedDN, NameSamCompatible, NameDisplay,
@@ -86,6 +88,38 @@ static void testGetComputerObjectNameW(void)
     }
 }
 
+static void test_InitSecurityInterface(void)
+{
+    PSecurityFunctionTableA sftA;
+    PSecurityFunctionTableW sftW;
+
+    sftA = pInitSecurityInterfaceA();
+    ok(sftA != NULL, "pInitSecurityInterfaceA failed\n");
+    ok(sftA->dwVersion == SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION, "wrong dwVersion %ld in security function table\n", sftA->dwVersion);
+    ok(!sftA->Reserved2, "Reserved2 should be NULL instead of %p in security function table\n", sftA->Reserved2);
+    todo_wine
+    ok(sftA->Reserved3 != NULL, "Reserved3 should not be NULL in security function table\n");
+    todo_wine
+    ok(sftA->Reserved4 != NULL, "Reserved4 should not be NULL in security function table\n");
+    ok(!sftA->Reserved8, "Reserved8 should be NULL instead of %p in security function table\n", sftA->Reserved8);
+
+    if (!pInitSecurityInterfaceW)
+    {
+        skip("InitSecurityInterfaceW not exported by secur32.dll\n");
+        return;
+    }
+
+    sftW = pInitSecurityInterfaceW();
+    ok(sftW != NULL, "pInitSecurityInterfaceW failed\n");
+    ok(sftW->dwVersion == SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION, "wrong dwVersion %ld in security function table\n", sftW->dwVersion);
+    ok(!sftW->Reserved2, "Reserved2 should be NULL instead of %p in security function table\n", sftW->Reserved2);
+    todo_wine
+    ok(sftW->Reserved3 != NULL, "Reserved3 should note be NULL in security function table\n");
+    todo_wine
+    ok(sftW->Reserved4 != NULL, "Reserved4 should not be NULL in security function table\n");
+    ok(!sftW->Reserved8, "Reserved8 should be NULL instead of %p in security function table\n", sftW->Reserved8);
+}
+
 START_TEST(secur32)
 {
     secdll = LoadLibraryA("secur32.dll");
@@ -97,12 +131,16 @@ START_TEST(secur32)
     {
         pGetComputerObjectNameA = (PVOID)GetProcAddress(secdll, "GetComputerObjectNameA");
         pGetComputerObjectNameW = (PVOID)GetProcAddress(secdll, "GetComputerObjectNameW");
+        pInitSecurityInterfaceA = (PVOID)GetProcAddress(secdll, "InitSecurityInterfaceA");
+        pInitSecurityInterfaceW = (PVOID)GetProcAddress(secdll, "InitSecurityInterfaceW");
  
         if (pGetComputerObjectNameA)
             testGetComputerObjectNameA();
 
         if (pGetComputerObjectNameW)
             testGetComputerObjectNameW();
+
+        test_InitSecurityInterface();
 
         FreeLibrary(secdll);
     }
