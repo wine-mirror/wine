@@ -248,7 +248,7 @@ static HRESULT activate_window(HTMLDocument *This)
     return S_OK;
 }
 
-static LRESULT tooltips_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI tooltips_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     tooltip_data *data = GetPropW(hwnd, wszTooltipData);
 
