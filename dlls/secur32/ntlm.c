@@ -657,7 +657,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     }
 
     pOutput->pBuffers[0].cbBuffer = bin_len;
-    pOutput->pBuffers[0].BufferType = SECBUFFER_DATA;
     memcpy(pOutput->pBuffers[0].pvBuffer, bin, bin_len);
 
     if(ret == SEC_E_OK)
