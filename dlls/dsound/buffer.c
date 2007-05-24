@@ -687,6 +687,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(
 	EnterCriticalSection(&(This->lock));
 
 	newpos %= This->buflen;
+	newpos -= newpos%This->pwfx->nBlockAlign;
 	This->buf_mixpos = newpos;
 	if (This->hwbuf) {
 		hres = IDsDriverBuffer_SetPosition(This->hwbuf, This->buf_mixpos);

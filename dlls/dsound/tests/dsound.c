@@ -9,6 +9,7 @@
  * So this is only done if the test is being run in interactive mode.
  *
  * Copyright (c) 2002-2004 Francois Gouget
+ * Copyright (c) 2007 Maarten Lankhorst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -764,6 +765,7 @@ static HRESULT test_block_align(LPGUID lpGuid)
     DSBUFFERDESC bufdesc;
     DSBCAPS dsbcaps;
     WAVEFORMATEX wfx;
+    DWORD pos, pos2;
     int ref;
 
     /* Create the DirectSound object */
@@ -790,11 +792,23 @@ static HRESULT test_block_align(LPGUID lpGuid)
         rc=IDirectSoundBuffer_GetCaps(secondary,&dsbcaps);
         ok(rc==DS_OK,"IDirectSoundBuffer_GetCaps() should have returned DS_OK, "
            "returned: %s\n", DXGetErrorString8(rc));
-        if (rc==DS_OK)
+        if (rc==DS_OK && wfx.nBlockAlign > 1)
+        {
             ok(dsbcaps.dwBufferBytes==(wfx.nAvgBytesPerSec + wfx.nBlockAlign),
                "Buffer size not a multiple of nBlockAlign: requested %d, "
                "got %d, should be %d\n", bufdesc.dwBufferBytes,
                dsbcaps.dwBufferBytes, wfx.nAvgBytesPerSec + wfx.nBlockAlign);
+
+            rc = IDirectSoundBuffer_SetCurrentPosition(secondary, 0);
+            ok(rc == DS_OK, "Could not set position to 0: %s\n", DXGetErrorString8(rc));
+            rc = IDirectSoundBuffer_GetCurrentPosition(secondary, &pos, NULL);
+            ok(rc == DS_OK, "Could not get position: %s\n", DXGetErrorString8(rc));
+            rc = IDirectSoundBuffer_SetCurrentPosition(secondary, 1);
+            ok(rc == DS_OK, "Could not set position to 1: %s\n", DXGetErrorString8(rc));
+            rc = IDirectSoundBuffer_GetCurrentPosition(secondary, &pos2, NULL);
+            ok(rc == DS_OK, "Could not get new position: %s\n", DXGetErrorString8(rc));
+            ok(pos == pos2, "Positions not the same! Old position: %d, new position: %d\n", pos, pos2);
+        }
         ref=IDirectSoundBuffer_Release(secondary);
         ok(ref==0,"IDirectSoundBuffer_Release() secondary has %d references, "
            "should have 0\n",ref);
