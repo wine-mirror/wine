@@ -452,7 +452,7 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
 
     out_buf->pBuffers[0].cbBuffer = sspi_data->max_token;
 
-    ret = pInitializeSecurityContextA(sspi_data->cred, first?NULL:sspi_data->ctxt, NULL, req_attr, 
+    ret = pInitializeSecurityContextA(first?sspi_data->cred:NULL, first?NULL:sspi_data->ctxt, NULL, req_attr,
             0, data_rep, first?NULL:in_buf, 0, sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
@@ -463,7 +463,7 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
             ret = SEC_I_CONTINUE_NEEDED;
         else if(ret == SEC_I_COMPLETE_NEEDED)
             ret = SEC_E_OK;
-    }       
+    }
 
     ok(out_buf->pBuffers[0].cbBuffer < sspi_data->max_token,
        "InitializeSecurityContext set buffer size to %lu\n", out_buf->pBuffers[0].cbBuffer);

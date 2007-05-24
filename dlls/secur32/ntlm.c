@@ -390,19 +390,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-    if(!phCredential)
-        return SEC_E_INVALID_HANDLE;
-
-    /* As the server side of sspi never calls this, make sure that
-     * the handler is a client handler.
-     */
-    helper = (PNegoHelper)phCredential->dwLower;
-    if(helper->mode != NTLM_CLIENT)
-    {
-        TRACE("Helper mode = %d\n", helper->mode);
-        return SEC_E_INVALID_HANDLE;
-    }
-
     /****************************************
      * When communicating with the client, there can be the
      * following reply packets:
@@ -432,6 +419,20 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     if((phContext == NULL) && (pInput == NULL))
     {
         TRACE("First time in ISC()\n");
+
+        if(!phCredential)
+            return SEC_E_INVALID_HANDLE;
+
+        /* As the server side of sspi never calls this, make sure that
+         * the handler is a client handler.
+         */
+        helper = (PNegoHelper)phCredential->dwLower;
+        if(helper->mode != NTLM_CLIENT)
+        {
+            TRACE("Helper mode = %d\n", helper->mode);
+            return SEC_E_INVALID_HANDLE;
+        }
+
         /* Allocate space for a maximal string of 
          * "SF NTLMSSP_FEATURE_SIGN NTLMSSP_FEATURE_SEAL
          * NTLMSSP_FEATURE_SESSION_KEY"
@@ -548,6 +549,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
         /* put the decoded client blob into the out buffer */
 
+        phNewContext->dwUpper = ctxt_attr;
+        phNewContext->dwLower = (ULONG_PTR)helper;
+
         ret = SEC_I_CONTINUE_NEEDED;
     }
     else
@@ -558,6 +562,19 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         {
             ret = SEC_E_INCOMPLETE_MESSAGE;
             goto isc_end;
+        }
+
+        if(!phContext)
+            return SEC_E_INVALID_HANDLE;
+
+        /* As the server side of sspi never calls this, make sure that
+         * the handler is a client handler.
+         */
+        helper = (PNegoHelper)phContext->dwLower;
+        if(helper->mode != NTLM_CLIENT)
+        {
+            TRACE("Helper mode = %d\n", helper->mode);
+            return SEC_E_INVALID_HANDLE;
         }
 
         if (!pInput->pBuffers[0].pvBuffer)
@@ -752,34 +769,27 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(
  PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
+    SEC_WCHAR *target = NULL;
 
     TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
-    
-    if (phCredential)
+
+    if(pszTargetName != NULL)
     {
-        SEC_WCHAR *target = NULL;
-        if(pszTargetName != NULL)
-        {
-            int target_size = MultiByteToWideChar(CP_ACP, 0, pszTargetName, 
-                strlen(pszTargetName)+1, NULL, 0);
-            target = HeapAlloc(GetProcessHeap(), 0, target_size * 
-                    sizeof(SEC_WCHAR));
-            MultiByteToWideChar(CP_ACP, 0, pszTargetName, strlen(pszTargetName)+1,
-                target, target_size);
-        }
-        
-        ret = ntlm_InitializeSecurityContextW(phCredential, phContext, target, 
-                fContextReq, Reserved1, TargetDataRep, pInput, Reserved2,
-                phNewContext, pOutput, pfContextAttr, ptsExpiry);
-        
-        HeapFree(GetProcessHeap(), 0, target);
+        int target_size = MultiByteToWideChar(CP_ACP, 0, pszTargetName,
+            strlen(pszTargetName)+1, NULL, 0);
+        target = HeapAlloc(GetProcessHeap(), 0, target_size *
+                sizeof(SEC_WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pszTargetName, strlen(pszTargetName)+1,
+            target, target_size);
     }
-    else
-    {
-        ret = SEC_E_INVALID_HANDLE;
-    }
+
+    ret = ntlm_InitializeSecurityContextW(phCredential, phContext, target,
+            fContextReq, Reserved1, TargetDataRep, pInput, Reserved2,
+            phNewContext, pOutput, pfContextAttr, ptsExpiry);
+
+    HeapFree(GetProcessHeap(), 0, target);
     return ret;
 }
 
