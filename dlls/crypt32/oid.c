@@ -37,14 +37,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 static const WCHAR DllW[] = { 'D','l','l',0 };
 
-static void init_function_sets(void);
 static void init_oid_info(HINSTANCE hinst);
 static void free_function_sets(void);
 static void free_oid_info(void);
 
 void crypt_oid_init(HINSTANCE hinst)
 {
-    init_function_sets();
     init_oid_info(hinst);
 }
 
@@ -55,7 +53,14 @@ void crypt_oid_free(void)
 }
 
 static CRITICAL_SECTION funcSetCS;
-static struct list funcSets;
+static CRITICAL_SECTION_DEBUG funcSetCSDebug =
+{
+    0, 0, &funcSetCS,
+    { &funcSetCSDebug.ProcessLocksList, &funcSetCSDebug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": funcSetCS") }
+};
+static CRITICAL_SECTION funcSetCS = { &funcSetCSDebug, -1, 0, 0, 0, 0 };
+static struct list funcSets = { &funcSets, &funcSets };
 
 struct OIDFunctionSet
 {
@@ -71,13 +76,6 @@ struct OIDFunction
     CRYPT_OID_FUNC_ENTRY entry;
     struct list next;
 };
-
-static void init_function_sets(void)
-{
-    InitializeCriticalSection(&funcSetCS);
-    funcSetCS.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": funcSetCS");
-    list_init(&funcSets);
-}
 
 static void free_function_sets(void)
 {
@@ -100,8 +98,6 @@ static void free_function_sets(void)
         DeleteCriticalSection(&setCursor->cs);
         CryptMemFree(setCursor);
     }
-    funcSetCS.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&funcSetCS);
 }
 
 /* There is no free function associated with this; therefore, the sets are
@@ -849,7 +845,14 @@ LPCWSTR WINAPI CryptFindLocalizedName(LPCWSTR pwszCryptName)
 }
 
 static CRITICAL_SECTION oidInfoCS;
-static struct list oidInfo;
+static CRITICAL_SECTION_DEBUG oidInfoCSDebug =
+{
+    0, 0, &oidInfoCS,
+    { &oidInfoCSDebug.ProcessLocksList, &oidInfoCSDebug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": oidInfoCS") }
+};
+static CRITICAL_SECTION oidInfoCS = { &oidInfoCSDebug, -1, 0, 0, 0, 0 };
+static struct list oidInfo = { &oidInfo, &oidInfo };
 
 static const WCHAR tripledes[] = { '3','d','e','s',0 };
 static const WCHAR cms3deswrap[] = { 'C','M','S','3','D','E','S','w','r','a',
@@ -1190,9 +1193,6 @@ static void init_oid_info(HINSTANCE hinst)
 {
     DWORD i;
 
-    InitializeCriticalSection(&oidInfoCS);
-    oidInfoCS.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": oidInfoCS");
-    list_init(&oidInfo);
     for (i = 0; i < sizeof(oidInfoConstructors) /
      sizeof(oidInfoConstructors[0]); i++)
     {
@@ -1264,8 +1264,6 @@ static void free_oid_info(void)
         list_remove(&info->entry);
         CryptMemFree(info);
     }
-    oidInfoCS.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&oidInfoCS);
 }
 
 /***********************************************************************
