@@ -51,7 +51,7 @@ static unsigned be_x86_64_get_register_info(int regno, enum be_cpu_addr* kind)
     /* this is true when running in 32bit mode... and wrong in 64 :-/ */
     switch (regno)
     {
-    case CV_AMD64_EIP: *kind = be_cpu_addr_pc; return TRUE;
+    case CV_AMD64_RIP: *kind = be_cpu_addr_pc; return TRUE;
     case CV_AMD64_EBP: *kind = be_cpu_addr_frame; return TRUE;
     case CV_AMD64_ESP: *kind = be_cpu_addr_stack; return TRUE;
     }
