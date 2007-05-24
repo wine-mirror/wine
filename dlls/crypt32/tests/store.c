@@ -1230,34 +1230,6 @@ static void testFileNameStore(void)
     checkFileStoreFailure(filename, 0,
      CERT_FILE_STORE_COMMIT_ENABLE_FLAG | CERT_STORE_READONLY_FLAG,
      E_INVALIDARG);
-    /* Without an encoding type, these all fail */
-    checkFileStoreFailure(filename, 0, 0, ERROR_FILE_NOT_FOUND);
-    checkFileStoreFailure(filename, 0, CERT_STORE_OPEN_EXISTING_FLAG,
-     ERROR_FILE_NOT_FOUND);
-    checkFileStoreFailure(filename, 0, CERT_STORE_CREATE_NEW_FLAG,
-     ERROR_FILE_NOT_FOUND);
-    /* Without a message encoding type, these still fail */
-    checkFileStoreFailure(filename, X509_ASN_ENCODING, 0, ERROR_FILE_NOT_FOUND);
-    checkFileStoreFailure(filename, X509_ASN_ENCODING,
-     CERT_STORE_OPEN_EXISTING_FLAG, ERROR_FILE_NOT_FOUND);
-    checkFileStoreFailure(filename, X509_ASN_ENCODING,
-     CERT_STORE_CREATE_NEW_FLAG, ERROR_FILE_NOT_FOUND);
-    /* Without a cert encoding type, they still fail */
-    checkFileStoreFailure(filename, PKCS_7_ASN_ENCODING, 0,
-     ERROR_FILE_NOT_FOUND);
-    checkFileStoreFailure(filename, PKCS_7_ASN_ENCODING,
-     CERT_STORE_OPEN_EXISTING_FLAG, ERROR_FILE_NOT_FOUND);
-    checkFileStoreFailure(filename, PKCS_7_ASN_ENCODING,
-     CERT_STORE_CREATE_NEW_FLAG, ERROR_FILE_NOT_FOUND);
-    /* With both a message and cert encoding type, but without commit enabled,
-     * they still fail
-     */
-    checkFileStoreFailure(filename, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 0,
-     ERROR_FILE_NOT_FOUND);
-    checkFileStoreFailure(filename, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-     CERT_STORE_OPEN_EXISTING_FLAG, ERROR_FILE_NOT_FOUND);
-    checkFileStoreFailure(filename, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-     CERT_STORE_CREATE_NEW_FLAG, ERROR_FILE_NOT_FOUND);
 
     /* In all of the following tests, the encoding type seems to be ignored */
     if (initFileFromData(filename, bigCert, sizeof(bigCert)))

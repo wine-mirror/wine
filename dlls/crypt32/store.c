@@ -1920,12 +1920,6 @@ static PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
         SetLastError(ERROR_PATH_NOT_FOUND);
         return NULL;
     }
-    if (!(dwFlags & (CERT_FILE_STORE_COMMIT_ENABLE_FLAG |
-     CERT_STORE_READONLY_FLAG)))
-    {
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return NULL;
-    }
 
     access = GENERIC_READ;
     if (dwFlags & CERT_FILE_STORE_COMMIT_ENABLE_FLAG)
