@@ -235,9 +235,9 @@ static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
         RECT rc_item, rc_client, rc_clip;
         DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)lparam;
 
-        trace("%p WM_DRAWITEM %08x %08lx\n", hwnd, wparam, lparam);
+        trace("%p WM_DRAWITEM %08lx %08lx\n", hwnd, wparam, lparam);
 
-        ok(wparam == dis->CtlID, "got wParam=%08x instead of %08x\n",
+        ok(wparam == dis->CtlID, "got wParam=%08lx instead of %08x\n",
 			wparam, dis->CtlID);
         ok(dis->CtlType == ODT_LISTBOX, "wrong CtlType %04x\n", dis->CtlType);
 

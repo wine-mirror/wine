@@ -2743,7 +2743,7 @@ PRINTDLG_PS_WMCommandA(
     WORD id  = LOWORD(wParam);
     char buf[200];
 	
-    TRACE("loword (lparam) %d, wparam 0x%x, lparam %08lx\n",
+    TRACE("loword (lparam) %d, wparam 0x%lx, lparam %08lx\n",
 	    LOWORD(lParam),wParam,lParam);
     switch (id)  {
     case IDOK:
@@ -2881,7 +2881,7 @@ static BOOL
 PRINTDLG_PS_WMCommandW(
     HWND hDlg, WPARAM wParam, LPARAM lParam, PageSetupDataW *pda
 ) {
-    TRACE("loword (lparam) %d, wparam 0x%x, lparam %08lx\n",
+    TRACE("loword (lparam) %d, wparam 0x%lx, lparam %08lx\n",
 	    LOWORD(lParam),wParam,lParam);
     switch (LOWORD(wParam))  {
     case IDOK:

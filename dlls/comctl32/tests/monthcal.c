@@ -378,7 +378,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         message != WM_GETICON &&
         message != WM_DEVICECHANGE)
     {
-        trace("parent: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+        trace("parent: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
         msg.message = message;
         msg.flags = sent|wparam|lparam;
@@ -446,7 +446,7 @@ static LRESULT WINAPI monthcal_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     LRESULT ret;
     struct message msg;
 
-    trace("monthcal: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+    trace("monthcal: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;

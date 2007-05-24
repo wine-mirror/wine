@@ -369,7 +369,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     {
         int i;
 
-        TRACE("msg %x @ (%d %d): (X: %d Y: %d Z: %d", wparam, hook->pt.x, hook->pt.y,
+        TRACE("msg %lx @ (%d %d): (X: %d Y: %d Z: %d", wparam, hook->pt.x, hook->pt.y,
               This->m_state.lX, This->m_state.lY, This->m_state.lZ);
         for (i = 0; i < 5; i++) TRACE(" B%d: %02x", i, This->m_state.rgbButtons[i]);
         TRACE(")\n");

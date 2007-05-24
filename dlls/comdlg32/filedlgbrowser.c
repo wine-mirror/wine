@@ -609,7 +609,7 @@ static HRESULT WINAPI IShellBrowserImpl_SendControlMsg(IShellBrowser *iface,
     IShellBrowserImpl *This = (IShellBrowserImpl *)iface;
     LRESULT lres;
 
-    TRACE("(%p)->(0x%08x 0x%08x 0x%08x 0x%08lx %p)\n", This, id, uMsg, wParam, lParam, pret);
+    TRACE("(%p)->(0x%08x 0x%08x 0x%08lx 0x%08lx %p)\n", This, id, uMsg, wParam, lParam, pret);
 
     switch (id)
     {

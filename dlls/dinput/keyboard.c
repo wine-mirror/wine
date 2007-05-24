@@ -68,7 +68,7 @@ static LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam
     KBDLLHOOKSTRUCT *hook = (KBDLLHOOKSTRUCT *)lparam;
     BYTE new_diks;
 
-    TRACE("(%d,%d,%ld)\n", code, wparam, lparam);
+    TRACE("(%d,%ld,%ld)\n", code, wparam, lparam);
 
     /* returns now if not HC_ACTION */
     if (code != HC_ACTION) return CallNextHookEx(0, code, wparam, lparam);

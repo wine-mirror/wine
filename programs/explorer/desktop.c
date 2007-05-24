@@ -36,7 +36,7 @@ static BOOL using_root;
 /* window procedure for the desktop window */
 static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
-    WINE_TRACE( "got msg %x wp %x lp %lx\n", message, wp, lp );
+    WINE_TRACE( "got msg %x wp %lx lp %lx\n", message, wp, lp );
 
     switch(message)
     {

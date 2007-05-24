@@ -226,7 +226,7 @@ struct per_thread_data
 };
 
 static INT num_startup;          /* reference counter */
-static FARPROC blocking_hook = WSA_DefaultBlockingHook;
+static FARPROC blocking_hook = (FARPROC)WSA_DefaultBlockingHook;
 
 /* function prototypes */
 static struct WS_hostent *WS_dup_he(const struct hostent* p_he);
@@ -1449,7 +1449,7 @@ static int WS2_register_async_shutdown( SOCKET s, enum ws2_mode mode )
     LPWSAOVERLAPPED ovl = HeapAlloc(GetProcessHeap(), 0, sizeof( WSAOVERLAPPED ));
     IO_STATUS_BLOCK *iosb = NULL;
 
-    TRACE("s %d mode %d\n", s, mode);
+    TRACE("s %ld mode %d\n", s, mode);
     if (!ovl)
         goto out;
 
@@ -1489,7 +1489,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
     SOCKET as;
     BOOL is_blocking;
 
-    TRACE("socket %04x\n", s );
+    TRACE("socket %04lx\n", s );
     is_blocking = _is_blocking(s);
 
     do {
@@ -1531,7 +1531,7 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
     int fd = get_sock_fd( s, 0, NULL );
     int res = SOCKET_ERROR;
 
-    TRACE("socket %04x, ptr %p %s, length %d\n", s, name, debugstr_sockaddr(name), namelen);
+    TRACE("socket %04lx, ptr %p %s, length %d\n", s, name, debugstr_sockaddr(name), namelen);
 
     if (fd != -1)
     {
@@ -1586,7 +1586,7 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
  */
 int WINAPI WS_closesocket(SOCKET s)
 {
-    TRACE("socket %04x\n", s);
+    TRACE("socket %04lx\n", s);
     if (CloseHandle(SOCKET2HANDLE(s))) return 0;
     return SOCKET_ERROR;
 }
@@ -1598,7 +1598,7 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
 {
     int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
 
-    TRACE("socket %04x, ptr %p %s, length %d\n", s, name, debugstr_sockaddr(name), namelen);
+    TRACE("socket %04lx, ptr %p %s, length %d\n", s, name, debugstr_sockaddr(name), namelen);
 
     if (fd != -1)
     {
@@ -1683,7 +1683,7 @@ int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
     int fd;
     int res;
 
-    TRACE("socket: %04x, ptr %p, len %08x\n", s, name, *namelen);
+    TRACE("socket: %04lx, ptr %p, len %08x\n", s, name, *namelen);
 
     /* Check if what we've received is valid. Should we use IsBadReadPtr? */
     if( (name == NULL) || (namelen == NULL) )
@@ -1728,7 +1728,7 @@ int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
     int fd;
     int res;
 
-    TRACE("socket: %04x, ptr %p, len %8x\n", s, name, *namelen);
+    TRACE("socket: %04lx, ptr %p, len %8x\n", s, name, *namelen);
 
     /* Check if what we've received is valid. Should we use IsBadReadPtr? */
     if( (name == NULL) || (namelen == NULL) )
@@ -1774,7 +1774,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     int fd;
     INT ret = 0;
 
-    TRACE("socket: %04x, level 0x%x, name 0x%x, ptr %p, len %d\n",
+    TRACE("socket: %04lx, level 0x%x, name 0x%x, ptr %p, len %d\n",
           s, level, optname, optval, *optlen);
 
     switch(level)
@@ -2195,7 +2195,7 @@ INT WINAPI WSAIoctl(SOCKET s,
                     LPWSAOVERLAPPED lpOverlapped,
                     LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
-   TRACE("%d, 0x%08x, %p, %d, %p, %d, %p, %p, %p\n",
+   TRACE("%ld, 0x%08x, %p, %d, %p, %d, %p, %p, %p\n",
        s, dwIoControlCode, lpvInBuffer, cbInBuffer, lpbOutBuffer,
        cbOutBuffer, lpcbBytesReturned, lpOverlapped, lpCompletionRoutine);
 
@@ -2445,7 +2445,7 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, WS_u_long *argp)
     int fd;
     long newcmd  = cmd;
 
-    TRACE("socket %04x, cmd %08lx, ptr %p\n", s, cmd, argp);
+    TRACE("socket %04lx, cmd %08lx, ptr %p\n", s, cmd, argp);
 
     switch( cmd )
     {
@@ -2527,7 +2527,7 @@ int WINAPI WS_listen(SOCKET s, int backlog)
 {
     int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
 
-    TRACE("socket %04x, backlog %d\n", s, backlog);
+    TRACE("socket %04lx, backlog %d\n", s, backlog);
     if (fd != -1)
     {
 	if (listen(fd, backlog) == 0)
@@ -2760,7 +2760,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     struct ws2_async *wsa;
     IO_STATUS_BLOCK* iosb;
 
-    TRACE("socket %04x, wsabuf %p, nbufs %d, flags %d, to %p, tolen %d, ovl %p, func %p\n",
+    TRACE("socket %04lx, wsabuf %p, nbufs %d, flags %d, to %p, tolen %d, ovl %p, func %p\n",
           s, lpBuffers, dwBufferCount, dwFlags,
           to, tolen, lpOverlapped, lpCompletionRoutine);
 
@@ -2940,7 +2940,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     struct linger linger;
     struct timeval tval;
 
-    TRACE("socket: %04x, level 0x%x, name 0x%x, ptr %p, len %d\n",
+    TRACE("socket: %04lx, level 0x%x, name 0x%x, ptr %p, len %d\n",
           s, level, optname, optval, optlen);
 
     switch(level)
@@ -3174,7 +3174,7 @@ int WINAPI WS_shutdown(SOCKET s, int how)
     unsigned int options, clear_flags = 0;
 
     fd = get_sock_fd( s, 0, &options );
-    TRACE("socket %04x, how %i %x\n", s, how, options );
+    TRACE("socket %04lx, how %i %x\n", s, how, options );
 
     if (fd == -1)
         return SOCKET_ERROR;
@@ -3667,7 +3667,7 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
 {
     int ret;
 
-    TRACE("%08x, hEvent %p, lpEvent %p\n", s, hEvent, lpEvent );
+    TRACE("%08lx, hEvent %p, lpEvent %p\n", s, hEvent, lpEvent );
 
     SERVER_START_REQ( get_socket_event )
     {
@@ -3690,7 +3690,7 @@ int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, long lEvent)
 {
     int ret;
 
-    TRACE("%08x, hEvent %p, event %08x\n", s, hEvent, (unsigned)lEvent );
+    TRACE("%08lx, hEvent %p, event %08x\n", s, hEvent, (unsigned)lEvent );
 
     SERVER_START_REQ( set_socket_event )
     {
@@ -3716,7 +3716,7 @@ BOOL WINAPI WSAGetOverlappedResult( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
 {
     DWORD r;
 
-    TRACE( "socket %04x ovl %p trans %p, wait %d flags %p\n",
+    TRACE( "socket %04lx ovl %p trans %p, wait %d flags %p\n",
            s, lpOverlapped, lpcbTransfer, fWait, lpdwFlags );
 
     if ( lpOverlapped == NULL )
@@ -3774,7 +3774,7 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, long lEvent)
 {
     int ret;
 
-    TRACE("%x, hWnd %p, uMsg %08x, event %08lx\n", s, hWnd, uMsg, lEvent );
+    TRACE("%lx, hWnd %p, uMsg %08x, event %08lx\n", s, hWnd, uMsg, lEvent );
 
     SERVER_START_REQ( set_socket_event )
     {
@@ -3864,7 +3864,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     /* hack for WSADuplicateSocket */
     if (lpProtocolInfo && lpProtocolInfo->dwServiceFlags4 == 0xff00ff00) {
       ret = lpProtocolInfo->dwCatalogEntryId;
-      TRACE("\tgot duplicate %04x\n", ret);
+      TRACE("\tgot duplicate %04lx\n", ret);
       return ret;
     }
 
@@ -3916,7 +3916,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     SERVER_END_REQ;
     if (ret)
     {
-        TRACE("\tcreated %04x\n", ret );
+        TRACE("\tcreated %04lx\n", ret );
         return ret;
     }
 
@@ -3958,7 +3958,7 @@ int WINAPI __WSAFDIsSet(SOCKET s, WS_fd_set *set)
 {
   int i = set->fd_count;
 
-  TRACE("(%d,%p(%i))\n", s, set, i);
+  TRACE("(%ld,%p(%i))\n", s, set, i);
 
   while (i--)
       if (set->fd_array[i] == s) return 1;
@@ -4017,7 +4017,7 @@ FARPROC WINAPI WSASetBlockingHook(FARPROC lpBlockFunc)
  */
 INT WINAPI WSAUnhookBlockingHook(void)
 {
-    blocking_hook = WSA_DefaultBlockingHook;
+    blocking_hook = (FARPROC)WSA_DefaultBlockingHook;
     return 0;
 }
 
@@ -4266,7 +4266,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     struct ws2_async *wsa;
     IO_STATUS_BLOCK* iosb;
 
-    TRACE("socket %04x, wsabuf %p, nbufs %d, flags %d, from %p, fromlen %d, ovl %p, func %p\n",
+    TRACE("socket %04lx, wsabuf %p, nbufs %d, flags %d, from %p, fromlen %d, ovl %p, func %p\n",
           s, lpBuffers, dwBufferCount, *lpFlags, lpFrom,
           (lpFromlen ? *lpFromlen : -1),
           lpOverlapped, lpCompletionRoutine);
@@ -4411,7 +4411,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        SOCKET cs;
        SOCKADDR src_addr, dst_addr;
 
-       TRACE("Socket  %04x, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %d\n",
+       TRACE("Socket %04lx, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %d\n",
                s, addr, addrlen, lpfnCondition, dwCallbackData);
 
 
@@ -4472,7 +4472,7 @@ int WINAPI WSADuplicateSocketA( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOA
 {
    HANDLE hProcess;
 
-   TRACE("(%d,%x,%p)\n", s, dwProcessId, lpProtocolInfo);
+   TRACE("(%ld,%x,%p)\n", s, dwProcessId, lpProtocolInfo);
    memset(lpProtocolInfo, 0, sizeof(*lpProtocolInfo));
    /* FIXME: WS_getsockopt(s, WS_SOL_SOCKET, SO_PROTOCOL_INFO, lpProtocolInfo, sizeof(*lpProtocolInfo)); */
    /* I don't know what the real Windoze does next, this is a hack */
@@ -4495,7 +4495,7 @@ int WINAPI WSADuplicateSocketW( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOW
 {
    HANDLE hProcess;
 
-   TRACE("(%d,%x,%p)\n", s, dwProcessId, lpProtocolInfo);
+   TRACE("(%ld,%x,%p)\n", s, dwProcessId, lpProtocolInfo);
 
    memset(lpProtocolInfo, 0, sizeof(*lpProtocolInfo));
    hProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, dwProcessId);
@@ -4808,7 +4808,7 @@ INT WINAPI WSAEnumNameSpaceProvidersW( LPDWORD len, LPWSANAMESPACE_INFOW buffer 
  */
 BOOL WINAPI WSAGetQOSByName( SOCKET s, LPWSABUF lpQOSName, LPQOS lpQOS )
 {
-    FIXME( "(0x%04x %p %p) Stub!\n", s, lpQOSName, lpQOS );
+    FIXME( "(0x%04lx %p %p) Stub!\n", s, lpQOSName, lpQOS );
     return FALSE;
 }
 
@@ -4914,7 +4914,7 @@ INT WINAPI WSALookupServiceNextW( HANDLE lookup, DWORD flags, LPDWORD len, LPWSA
  */
 INT WINAPI WSANtohl( SOCKET s, WS_u_long netlong, WS_u_long* lphostlong )
 {
-    TRACE( "(0x%04x 0x%08x %p)\n", s, netlong, lphostlong );
+    TRACE( "(0x%04lx 0x%08x %p)\n", s, netlong, lphostlong );
 
     if (!lphostlong) return WSAEFAULT;
 
@@ -4927,7 +4927,7 @@ INT WINAPI WSANtohl( SOCKET s, WS_u_long netlong, WS_u_long* lphostlong )
  */
 INT WINAPI WSANtohs( SOCKET s, WS_u_short netshort, WS_u_short* lphostshort )
 {
-    TRACE( "(0x%04x 0x%08x %p)\n", s, netshort, lphostshort );
+    TRACE( "(0x%04lx 0x%08x %p)\n", s, netshort, lphostshort );
 
     if (!lphostshort) return WSAEFAULT;
 
@@ -4950,7 +4950,7 @@ INT WINAPI WSAProviderConfigChange( LPHANDLE handle, LPWSAOVERLAPPED overlapped,
  */
 INT WINAPI WSARecvDisconnect( SOCKET s, LPWSABUF disconnectdata )
 {
-    TRACE( "(0x%04x %p)\n", s, disconnectdata ); 
+    TRACE( "(0x%04lx %p)\n", s, disconnectdata );
 
     return WS_shutdown( s, 0 );
 }

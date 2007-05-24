@@ -767,7 +767,7 @@ INT WINAPI WSApSetPostRoutine(LPWPUPOSTMESSAGE lpPostRoutine)
 WSAEVENT WINAPI WPUCompleteOverlappedRequest(SOCKET s, LPWSAOVERLAPPED overlapped,
                                              DWORD error, DWORD transferred, LPINT errcode)
 {
-    FIXME("(0x%08x,%p,0x%08x,0x%08x,%p), stub !\n", s, overlapped, error, transferred, errcode);
+    FIXME("(0x%08lx,%p,0x%08x,0x%08x,%p), stub !\n", s, overlapped, error, transferred, errcode);
 
     if (errcode)
         *errcode = WSAEINVAL;

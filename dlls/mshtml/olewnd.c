@@ -234,7 +234,7 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_OnWindowMessage(IOleInPlaceObje
         UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *lpResult)
 {
     HTMLDocument *This = OLEINPLACEWND_THIS(iface);
-    FIXME("(%p)->(%u %u %lu %p)\n", This, msg, wParam, lParam, lpResult);
+    FIXME("(%p)->(%u %lu %lu %p)\n", This, msg, wParam, lParam, lpResult);
     return E_NOTIMPL;
 }
 

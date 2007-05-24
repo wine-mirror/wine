@@ -319,7 +319,7 @@ static void TOOLTIPS_GetDispInfoA(HWND hwnd, TOOLTIPS_INFO *infoPtr, TTTOOL_INFO
     ttnmdi.uFlags = toolPtr->uFlags;
     ttnmdi.lParam = toolPtr->lParam;
 
-    TRACE("hdr.idFrom = %x\n", ttnmdi.hdr.idFrom);
+    TRACE("hdr.idFrom = %lx\n", ttnmdi.hdr.idFrom);
     SendMessageW(toolPtr->hwnd, WM_NOTIFY,
                  (WPARAM)toolPtr->uId, (LPARAM)&ttnmdi);
 
@@ -368,7 +368,7 @@ static void TOOLTIPS_GetDispInfoW(HWND hwnd, TOOLTIPS_INFO *infoPtr, TTTOOL_INFO
     ttnmdi.uFlags = toolPtr->uFlags;
     ttnmdi.lParam = toolPtr->lParam;
 
-    TRACE("hdr.idFrom = %x\n", ttnmdi.hdr.idFrom);
+    TRACE("hdr.idFrom = %lx\n", ttnmdi.hdr.idFrom);
     SendMessageW(toolPtr->hwnd, WM_NOTIFY,
                  (WPARAM)toolPtr->uId, (LPARAM)&ttnmdi);
 
@@ -995,7 +995,7 @@ TOOLTIPS_AddToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lpToolInfo->cbSize < TTTOOLINFOA_V1_SIZE)
 	return FALSE;
 
-    TRACE("add tool (%p) %p %d%s!\n",
+    TRACE("add tool (%p) %p %ld%s!\n",
 	   hwnd, lpToolInfo->hwnd, lpToolInfo->uId,
 	   (lpToolInfo->uFlags & TTF_IDISHWND) ? " TTF_IDISHWND" : "");
 
@@ -1086,7 +1086,7 @@ TOOLTIPS_AddToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lpToolInfo->cbSize < TTTOOLINFOW_V1_SIZE)
 	return FALSE;
 
-    TRACE("add tool (%p) %p %d%s!\n",
+    TRACE("add tool (%p) %p %ld%s!\n",
 	   hwnd, lpToolInfo->hwnd, lpToolInfo->uId,
 	   (lpToolInfo->uFlags & TTF_IDISHWND) ? " TTF_IDISHWND" : "");
 
@@ -1461,7 +1461,7 @@ TOOLTIPS_GetDelayTime (HWND hwnd, WPARAM wParam, LPARAM lParam)
         return infoPtr->nInitialTime;
 
     default:
-        WARN("Invalid wParam %x\n", wParam);
+        WARN("Invalid wParam %lx\n", wParam);
 	break;
     }
 
@@ -1866,7 +1866,7 @@ TOOLTIPS_SetDelayTime (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    break;
 
     default:
-        WARN("Invalid wParam %x\n", wParam);
+        WARN("Invalid wParam %lx\n", wParam);
 	break;
     }
 
@@ -2445,7 +2445,7 @@ TOOLTIPS_NCHitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLTIPS_NotifyFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    FIXME ("hwnd=%p wParam=%x lParam=%lx\n", hwnd, wParam, lParam);
+    FIXME ("hwnd=%p wParam=%lx lParam=%lx\n", hwnd, wParam, lParam);
 
     return 0;
 }
@@ -2538,7 +2538,7 @@ TOOLTIPS_Timer (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
     INT nOldTool;
 
-    TRACE("timer %d (%p) expired!\n", wParam, hwnd);
+    TRACE("timer %ld (%p) expired!\n", wParam, hwnd);
 
     switch (wParam) {
     case ID_TIMERSHOW:
@@ -2575,7 +2575,7 @@ TOOLTIPS_Timer (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	break;
 
     default:
-        ERR("Unknown timer id %d\n", wParam);
+        ERR("Unknown timer id %ld\n", wParam);
 	break;
     }
     return 0;
@@ -2623,7 +2623,7 @@ TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_
 static LRESULT CALLBACK
 TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%p msg=%x wparam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
+    TRACE("hwnd=%p msg=%x wparam=%lx lParam=%lx\n", hwnd, uMsg, wParam, lParam);
     if (!TOOLTIPS_GetInfoPtr(hwnd) && (uMsg != WM_CREATE) && (uMsg != WM_NCCREATE))
         return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     switch (uMsg)
@@ -2804,7 +2804,7 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if ((uMsg >= WM_USER) && (uMsg < WM_APP))
-		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
+		ERR("unknown msg %04x wp=%08lx lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     }

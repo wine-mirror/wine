@@ -198,7 +198,7 @@ static INT_PTR CALLBACK FormatChooseDlgProc(HWND hWnd, UINT msg,
 				       WPARAM wParam, LPARAM lParam)
 {
 
-    TRACE("hwnd=%p msg=%i 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
+    TRACE("hwnd=%p msg=%i 0x%08lx 0x%08lx\n", hWnd,  msg, wParam, lParam );
 
     switch (msg) {
     case WM_INITDIALOG:
@@ -258,7 +258,7 @@ static INT_PTR CALLBACK FormatChooseDlgProc(HWND hWnd, UINT msg,
 	break;
 #endif
     default:
-	TRACE("Dropped dlgMsg: hwnd=%p msg=%i 0x%08x 0x%08lx\n",
+	TRACE("Dropped dlgMsg: hwnd=%p msg=%i 0x%08lx 0x%08lx\n",
 	      hWnd,  msg, wParam, lParam );
 	break;
     }

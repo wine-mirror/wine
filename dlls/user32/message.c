@@ -1337,13 +1337,13 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
                 /* send back the value of h on the other side */
                 push_data( data, &h, sizeof(HGLOBAL) );
                 lp = uiLo;
-                TRACE( "send dde-ack %x %08x => %p\n", uiLo, uiHi, h );
+                TRACE( "send dde-ack %lx %08lx => %p\n", uiLo, uiHi, h );
             }
         }
         else
         {
             /* uiHi should contain either an atom or 0 */
-            TRACE( "send dde-ack %x atom=%x\n", uiLo, uiHi );
+            TRACE( "send dde-ack %lx atom=%lx\n", uiLo, uiHi );
             lp = MAKELONG( uiLo, uiHi );
         }
         break;
@@ -1375,7 +1375,7 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
                 hunlock = (HGLOBAL)uiLo;
             }
         }
-        TRACE( "send ddepack %u %x\n", size, uiHi );
+        TRACE( "send ddepack %u %lx\n", size, uiHi );
         break;
     case WM_DDE_EXECUTE:
         if (info->lparam)
@@ -1442,13 +1442,13 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
             uiLo = *lparam;
             memcpy( &hMem, *buffer, size );
             uiHi = (UINT_PTR)hMem;
-            TRACE("recv dde-ack %x mem=%x[%lx]\n", uiLo, uiHi, GlobalSize( hMem ));
+            TRACE("recv dde-ack %lx mem=%lx[%lx]\n", uiLo, uiHi, GlobalSize( hMem ));
         }
         else
         {
             uiLo = LOWORD( *lparam );
             uiHi = HIWORD( *lparam );
-            TRACE("recv dde-ack %x atom=%x\n", uiLo, uiHi);
+            TRACE("recv dde-ack %lx atom=%lx\n", uiLo, uiHi);
         }
 	*lparam = PackDDElParam( WM_DDE_ACK, uiLo, uiHi );
 	break;
@@ -1998,7 +1998,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
 
         if (res) return FALSE;
 
-        TRACE( "got type %d msg %x (%s) hwnd %p wp %x lp %lx\n",
+        TRACE( "got type %d msg %x (%s) hwnd %p wp %lx lp %lx\n",
                info.type, info.msg.message,
                (info.type == MSG_WINEVENT) ? "MSG_WINEVENT" : SPY_GetMsgName(info.msg.message, info.msg.hwnd),
                info.msg.hwnd, info.msg.wParam, info.msg.lParam );
@@ -2046,7 +2046,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 }
 
                 if (TRACE_ON(relay))
-                    DPRINTF( "%04x:Call winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04x,time=%x)\n",
+                    DPRINTF( "%04x:Call winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
                              GetCurrentThreadId(), hook_proc,
                              data->hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
                              info.msg.lParam, data->tid, info.msg.time);
@@ -2055,7 +2055,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                                  info.msg.lParam, data->tid, info.msg.time );
 
                 if (TRACE_ON(relay))
-                    DPRINTF( "%04x:Ret  winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%lx,tid=%04x,time=%x)\n",
+                    DPRINTF( "%04x:Ret  winevent proc %p (hook=%p,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
                              GetCurrentThreadId(), hook_proc,
                              data->hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
                              info.msg.lParam, data->tid, info.msg.time);
@@ -2300,7 +2300,7 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
 
     HeapFree( GetProcessHeap(), 0, reply_data );
 
-    TRACE( "hwnd %p msg %x (%s) wp %x lp %lx got reply %lx (err=%d)\n",
+    TRACE( "hwnd %p msg %x (%s) wp %lx lp %lx got reply %lx (err=%d)\n",
            info->hwnd, info->msg, SPY_GetMsgName(info->msg, info->hwnd), info->wparam,
            info->lparam, *result, status );
 
@@ -2317,7 +2317,7 @@ static LRESULT send_inter_thread_message( const struct send_message_info *info, 
 {
     size_t reply_size = 0;
 
-    TRACE( "hwnd %p msg %x (%s) wp %x lp %lx\n",
+    TRACE( "hwnd %p msg %x (%s) wp %lx lp %lx\n",
            info->hwnd, info->msg, SPY_GetMsgName(info->msg, info->hwnd), info->wparam, info->lparam );
 
     USER_CheckNotLock();
@@ -2668,7 +2668,7 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
         return FALSE;
     }
 
-    TRACE( "hwnd %p msg %x (%s) wp %x lp %lx\n",
+    TRACE( "hwnd %p msg %x (%s) wp %lx lp %lx\n",
            hwnd, msg, SPY_GetMsgName(msg, hwnd), wparam, lparam );
 
     info.type   = MSG_POSTED;
@@ -2931,7 +2931,7 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
     if (msg->message < WM_KEYFIRST || msg->message > WM_KEYLAST) return FALSE;
     if (msg->message != WM_KEYDOWN && msg->message != WM_SYSKEYDOWN) return TRUE;
 
-    TRACE_(key)("Translating key %s (%04x), scancode %02x\n",
+    TRACE_(key)("Translating key %s (%04lx), scancode %02x\n",
                  SPY_GetVKeyName(msg->wParam), msg->wParam, LOBYTE(HIWORD(msg->lParam)));
 
     GetKeyboardState( state );
@@ -3321,13 +3321,13 @@ LONG WINAPI BroadcastSystemMessageA( DWORD flags, LPDWORD recipients, UINT msg, 
 {
     if ((*recipients & BSM_APPLICATIONS) || (*recipients == BSM_ALLCOMPONENTS))
     {
-        FIXME( "(%08x,%08x,%08x,%08x,%08lx): semi-stub!\n", flags, *recipients, msg, wp, lp );
+        FIXME( "(%08x,%08x,%08x,%08lx,%08lx): semi-stub!\n", flags, *recipients, msg, wp, lp );
         PostMessageA( HWND_BROADCAST, msg, wp, lp );
         return 1;
     }
     else
     {
-        FIXME( "(%08x,%08x,%08x,%08x,%08lx): stub!\n", flags, *recipients, msg, wp, lp);
+        FIXME( "(%08x,%08x,%08x,%08lx,%08lx): stub!\n", flags, *recipients, msg, wp, lp);
         return -1;
     }
 }
@@ -3340,13 +3340,13 @@ LONG WINAPI BroadcastSystemMessageW( DWORD flags, LPDWORD recipients, UINT msg, 
 {
     if ((*recipients & BSM_APPLICATIONS) || (*recipients == BSM_ALLCOMPONENTS))
     {
-        FIXME( "(%08x,%08x,%08x,%08x,%08lx): semi-stub!\n", flags, *recipients, msg, wp, lp );
+        FIXME( "(%08x,%08x,%08x,%08lx,%08lx): semi-stub!\n", flags, *recipients, msg, wp, lp );
         PostMessageW( HWND_BROADCAST, msg, wp, lp );
         return 1;
     }
     else
     {
-        FIXME( "(%08x,%08x,%08x,%08x,%08lx): stub!\n", flags, *recipients, msg, wp, lp );
+        FIXME( "(%08x,%08x,%08x,%08lx,%08lx): stub!\n", flags, *recipients, msg, wp, lp );
         return -1;
     }
 }
@@ -3400,7 +3400,7 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
     }
     SERVER_END_REQ;
 
-    TRACE("Added %p %x %p timeout %d\n", hwnd, id, winproc, timeout );
+    TRACE("Added %p %lx %p timeout %d\n", hwnd, id, winproc, timeout );
     return ret;
 }
 
@@ -3431,7 +3431,7 @@ UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC 
     }
     SERVER_END_REQ;
 
-    TRACE("Added %p %x %p timeout %d\n", hwnd, id, winproc, timeout );
+    TRACE("Added %p %lx %p timeout %d\n", hwnd, id, winproc, timeout );
     return ret;
 }
 
@@ -3443,7 +3443,7 @@ BOOL WINAPI KillTimer( HWND hwnd, UINT_PTR id )
 {
     BOOL ret;
 
-    TRACE("%p %d\n", hwnd, id );
+    TRACE("%p %ld\n", hwnd, id );
 
     SERVER_START_REQ( kill_win_timer )
     {
@@ -3464,7 +3464,7 @@ BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
 {
     BOOL ret;
 
-    TRACE("%p %d\n", hwnd, id );
+    TRACE("%p %ld\n", hwnd, id );
 
     SERVER_START_REQ( kill_win_timer )
     {

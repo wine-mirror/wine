@@ -166,8 +166,8 @@ START_TEST(main)
         return;
     }
 
-    pSpLsaModeInitialize  = GetProcAddress(hMod, "SpLsaModeInitialize");
-    pSpUserModeInitialize = GetProcAddress(hMod, "SpUserModeInitialize");
+    pSpLsaModeInitialize  = (void *)GetProcAddress(hMod, "SpLsaModeInitialize");
+    pSpUserModeInitialize = (void *)GetProcAddress(hMod, "SpUserModeInitialize");
 
     if (pSpLsaModeInitialize && pSpUserModeInitialize)
     {

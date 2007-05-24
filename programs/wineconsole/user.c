@@ -1320,7 +1320,7 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	    break;
 	case IDS_SCROLL:
 	case IDS_SEARCH:
-	    WINE_FIXME("Unhandled yet command: %x\n", wParam);
+	    WINE_FIXME("Unhandled yet command: %lx\n", wParam);
 	    break;
 	default:
 	    return DefWindowProc(hWnd, uMsg, wParam, lParam);

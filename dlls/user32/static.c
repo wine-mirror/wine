@@ -554,7 +554,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 	    lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)lParam, full_style );
 	    break;
 	default:
-	    FIXME("STM_SETIMAGE: Unhandled type %x\n", wParam);
+	    FIXME("STM_SETIMAGE: Unhandled type %lx\n", wParam);
 	    break;
 	}
         STATIC_TryPaintFcn( hwnd, full_style );

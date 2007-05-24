@@ -163,7 +163,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         message != WM_GETICON &&
         message != WM_DEVICECHANGE)
     {
-        trace("parent: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+        trace("parent: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
         msg.message = message;
         msg.flags = sent|wparam|lparam;
@@ -217,7 +217,7 @@ static LRESULT WINAPI listview_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     LRESULT ret;
     struct message msg;
 
-    trace("listview: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+    trace("listview: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
@@ -300,7 +300,7 @@ static LRESULT WINAPI header_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
     LRESULT ret;
     struct message msg;
 
-    trace("header: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+    trace("header: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;

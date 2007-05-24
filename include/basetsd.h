@@ -199,9 +199,9 @@ static inline void *ULongToPtr(ULONG32 ul)
 
 #else /* FIXME: defined(_WIN32) */
 
-typedef int INT_PTR, *PINT_PTR;
+typedef long INT_PTR, *PINT_PTR;
+typedef unsigned long UINT_PTR, *PUINT_PTR;
 typedef long LONG_PTR, *PLONG_PTR;
-typedef unsigned int UINT_PTR, *PUINT_PTR;
 typedef unsigned long ULONG_PTR, *PULONG_PTR;
 typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 

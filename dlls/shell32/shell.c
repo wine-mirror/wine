@@ -415,7 +415,7 @@ DWORD WINAPI DoEnvironmentSubst16(LPSTR str,WORD length)
  */
 static LRESULT WINAPI SHELL_HookProc(INT code, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("%i, %x, %08lx\n", code, wParam, lParam );
+    TRACE("%i, %lx, %08lx\n", code, wParam, lParam );
 
     if (SHELL_hWnd)
     {
@@ -586,7 +586,7 @@ DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 /*************************************************************************
  *           SHELL_Execute16 [Internal]
  */
-static UINT SHELL_Execute16(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
+static UINT_PTR SHELL_Execute16(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
 			    LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
     UINT ret;

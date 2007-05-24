@@ -245,14 +245,14 @@ static void do_test( HWND hwnd, int seqnr, const KEV td[] )
             seqnr + 1, buf);
     while( PeekMessage(&msg,hwnd,WM_KEYFIRST,WM_KEYLAST,PM_REMOVE) ) {
         if (winetest_debug > 1)
-            trace("message[%d] %-15s wParam %04x lParam %08lx time %x\n", i,
+            trace("message[%d] %-15s wParam %04lx lParam %08lx time %x\n", i,
                   MSGNAME[msg.message - WM_KEYFIRST], msg.wParam, msg.lParam, msg.time);
         if( i < kmctr ) {
             ok( msg.message == expmsg[i].message &&
                     msg.wParam == expmsg[i].wParam &&
                     msg.lParam == expmsg[i].lParam,
                     "wrong message! expected:\n"
-                    "message[%d] %-15s wParam %04x lParam %08lx\n",i,
+                    "message[%d] %-15s wParam %04lx lParam %08lx\n",i,
                     MSGNAME[(expmsg[i]).message - WM_KEYFIRST],
                     expmsg[i].wParam, expmsg[i].lParam );
         }

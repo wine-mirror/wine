@@ -850,7 +850,7 @@ BOOL WINAPI UpdateColors(
              */
             if (hWnd && size)
             {
-                RedrawWindow_funcptr pRedrawWindow = GetProcAddress( mod, "RedrawWindow" );
+                RedrawWindow_funcptr pRedrawWindow = (void *)GetProcAddress( mod, "RedrawWindow" );
                 if (pRedrawWindow) pRedrawWindow( hWnd, NULL, 0, RDW_INVALIDATE );
             }
         }

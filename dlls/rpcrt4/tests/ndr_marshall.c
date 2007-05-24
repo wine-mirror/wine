@@ -929,13 +929,13 @@ static void test_client_init(void)
     TEST_POINTER_UNSET(pCSInfo);
     TEST_POINTER_UNSET(ConformanceMark);
     TEST_POINTER_UNSET(VarianceMark);
-    ok(stubMsg.Unused == 0xcccccccc, "Unused should have be unset instead of 0x%x\n", stubMsg.Unused);
+    ok(stubMsg.Unused == 0xcccccccc, "Unused should have be unset instead of 0x%lx\n", stubMsg.Unused);
     TEST_POINTER_UNSET(pContext);
     TEST_POINTER_UNSET(ContextHandleHash);
     TEST_POINTER_UNSET(pUserMarshalList);
-    TEST_ULONG_UNSET(Reserved51_3);
-    TEST_ULONG_UNSET(Reserved51_4);
-    TEST_ULONG_UNSET(Reserved51_5);
+    TEST_ULONG_PTR_UNSET(Reserved51_3);
+    TEST_ULONG_PTR_UNSET(Reserved51_4);
+    TEST_ULONG_PTR_UNSET(Reserved51_5);
 #undef TEST_ULONG_UNSET
 #undef TEST_POINTER_UNSET
 #undef TEST_ZERO

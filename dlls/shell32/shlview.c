@@ -1579,7 +1579,7 @@ static LRESULT CALLBACK ShellView_WndProc(HWND hWnd, UINT uMessage, WPARAM wPara
 	IShellViewImpl * pThis = (IShellViewImpl*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
 	LPCREATESTRUCTA lpcs;
 
-	TRACE("(hwnd=%p msg=%x wparm=%x lparm=%lx)\n",hWnd, uMessage, wParam, lParam);
+	TRACE("(hwnd=%p msg=%x wparm=%lx lparm=%lx)\n",hWnd, uMessage, wParam, lParam);
 
 	switch (uMessage)
 	{
@@ -1759,7 +1759,7 @@ static HRESULT WINAPI IShellView_fnTranslateAccelerator(IShellView * iface,LPMSG
 
 	if ((lpmsg->message>=WM_KEYFIRST) && (lpmsg->message>=WM_KEYLAST))
 	{
-	  TRACE("-- key=0x04%x\n",lpmsg->wParam) ;
+	  TRACE("-- key=0x04%lx\n",lpmsg->wParam) ;
 	}
 	return S_FALSE; /* not handled */
 }

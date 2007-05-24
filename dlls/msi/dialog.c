@@ -706,7 +706,7 @@ MSIText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     struct msi_text_info *info;
     LRESULT r = 0;
 
-    TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
+    TRACE("%p %04x %08lx %08lx\n", hWnd, msg, wParam, lParam);
 
     info = GetPropW(hWnd, szButtonData);
 
@@ -891,7 +891,7 @@ MSIScrollText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     struct msi_scrolltext_info *info;
     HRESULT r;
 
-    TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
+    TRACE("%p %04x %08lx %08lx\n", hWnd, msg, wParam, lParam);
 
     info = GetPropW( hWnd, szButtonData );
 
@@ -1283,7 +1283,7 @@ MSIMaskedEdit_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     struct msi_maskedit_info *info;
     HRESULT r;
 
-    TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
+    TRACE("%p %04x %08lx %08lx\n", hWnd, msg, wParam, lParam);
 
     info = GetPropW(hWnd, szButtonData);
 
@@ -1605,7 +1605,7 @@ static LRESULT WINAPI MSIPathEdit_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LP
     struct msi_pathedit_info *info = GetPropW(hWnd, szButtonData);
     LRESULT r = 0;
 
-    TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
+    TRACE("%p %04x %08lx %08lx\n", hWnd, msg, wParam, lParam);
 
     if ( msg == WM_KILLFOCUS )
     {
@@ -1863,7 +1863,7 @@ MSISelectionTree_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     TVHITTESTINFO tvhti;
     HRESULT r;
 
-    TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
+    TRACE("%p %04x %08lx %08lx\n", hWnd, msg, wParam, lParam);
 
     info = GetPropW(hWnd, szButtonData);
 
@@ -2102,7 +2102,7 @@ static LRESULT WINAPI MSIListBox_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
     LRESULT r;
     DWORD j;
 
-    TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
+    TRACE("%p %04x %08lx %08lx\n", hWnd, msg, wParam, lParam);
 
     info = GetPropW( hWnd, szButtonData );
     if (!info)
@@ -3163,7 +3163,7 @@ static LRESULT msi_dialog_oncommand( msi_dialog *dialog, WPARAM param, HWND hwnd
 {
     msi_control *control = NULL;
 
-    TRACE("%p %p %08x\n", dialog, hwnd, param);
+    TRACE("%p %p %08lx\n", dialog, hwnd, param);
 
     switch (param)
     {
@@ -3267,7 +3267,7 @@ static LRESULT WINAPI MSIRadioGroup_WndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     WNDPROC oldproc = (WNDPROC) GetPropW(hWnd, szButtonData);
     LRESULT r;
 
-    TRACE("hWnd %p msg %04x wParam 0x%08x lParam 0x%08lx\n", hWnd, msg, wParam, lParam);
+    TRACE("hWnd %p msg %04x wParam 0x%08lx lParam 0x%08lx\n", hWnd, msg, wParam, lParam);
 
     if (msg == WM_COMMAND) /* Forward notifications to dialog */
         SendMessageW(GetParent(hWnd), msg, wParam, lParam);

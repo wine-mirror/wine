@@ -772,7 +772,7 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, INT nBar,
  */
 static void SCROLL_HandleKbdEvent(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%p wParam=%d lParam=%ld\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p wParam=%ld lParam=%ld\n", hwnd, wParam, lParam);
 
     /* hide caret on first KEYDOWN to prevent flicker */
     if ((lParam & PFD_DOUBLEBUFFER_DONTCARE) == 0)
@@ -1547,13 +1547,13 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     case 0x00ed:
     case 0x00ee:
     case 0x00ef:
-        ERR("unknown Win32 msg %04x wp=%08x lp=%08lx\n",
+        ERR("unknown Win32 msg %04x wp=%08lx lp=%08lx\n",
 		    message, wParam, lParam );
         break;
 
     default:
         if (message >= WM_USER)
-            WARN("unknown msg %04x wp=%04x lp=%08lx\n",
+            WARN("unknown msg %04x wp=%04lx lp=%08lx\n",
 			 message, wParam, lParam );
         return DefWindowProcW( hwnd, message, wParam, lParam );
     }

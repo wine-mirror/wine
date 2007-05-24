@@ -278,7 +278,7 @@ static void
 TOOLBAR_DumpButton(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *bP, INT btn_num, BOOL internal)
 {
     if (TRACE_ON(toolbar)){
-        TRACE("button %d id %d, bitmap=%d, state=%02x, style=%02x, data=%08lx, stringid=0x%08x\n",
+        TRACE("button %d id %d, bitmap=%d, state=%02x, style=%02x, data=%08lx, stringid=0x%08lx\n",
               btn_num, bP->idCommand, GETIBITMAP(infoPtr, bP->iBitmap), 
               bP->fsState, bP->fsStyle, bP->dwData, bP->iString);
 	TRACE("string %s\n", debugstr_w(TOOLBAR_GetText(infoPtr,bP)));
@@ -2351,7 +2351,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if (!TOOLBAR_GetButtonInfo(infoPtr, &nmtb))
 			break;
 
-		    TRACE("WM_INITDIALOG style: %x iItem(%d) idCommand(%d) iString(%d) %s\n", 
+		    TRACE("WM_INITDIALOG style: %x iItem(%d) idCommand(%d) iString(%ld) %s\n",
                         nmtb.tbButton.fsStyle, i, 
                         nmtb.tbButton.idCommand,
                         nmtb.tbButton.iString,
@@ -2739,7 +2739,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT iSumButtons, i;
     HIMAGELIST himlDef;
 
-    TRACE("hwnd=%p wParam=%x lParam=%lx\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p wParam=%lx lParam=%lx\n", hwnd, wParam, lParam);
     if (!lpAddBmp)
 	return -1;
 
@@ -2850,7 +2850,7 @@ TOOLBAR_AddButtonsT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL fUnicode)
     INT nOldButtons, nNewButtons, nAddButtons, nCount;
     BOOL fHasString = FALSE;
 
-    TRACE("adding %d buttons (unicode=%d)!\n", wParam, fUnicode);
+    TRACE("adding %ld buttons (unicode=%d)!\n", wParam, fUnicode);
 
     nAddButtons = (UINT)wParam;
     nOldButtons = infoPtr->nNumButtons;
@@ -3095,7 +3095,7 @@ TOOLBAR_ChangeBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TBUTTON_INFO *btnPtr;
     INT nIndex;
 
-    TRACE("button %d, iBitmap now %d\n", wParam, LOWORD(lParam));
+    TRACE("button %ld, iBitmap now %d\n", wParam, LOWORD(lParam));
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
@@ -3271,7 +3271,7 @@ TOOLBAR_EnableButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
 
-    TRACE("hwnd=%p, btn index=%d, lParam=0x%08lx\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p, btn index=%ld, lParam=0x%08lx\n", hwnd, wParam, lParam);
 
     if (nIndex == -1)
 	return FALSE;
@@ -3470,7 +3470,7 @@ TOOLBAR_GetButtonTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_GetDisabledImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%p, wParam=%d, lParam=0x%lx\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p, wParam=%ld, lParam=0x%lx\n", hwnd, wParam, lParam);
     /* UNDOCUMENTED: wParam is actually the ID of the image list to return */
     return (LRESULT)GETDISIMAGELIST(TOOLBAR_GetInfoPtr (hwnd), wParam);
 }
@@ -3490,7 +3490,7 @@ TOOLBAR_GetExtendedStyle (HWND hwnd)
 static LRESULT
 TOOLBAR_GetHotImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%p, wParam=%d, lParam=0x%lx\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p, wParam=%ld, lParam=0x%lx\n", hwnd, wParam, lParam);
     /* UNDOCUMENTED: wParam is actually the ID of the image list to return */
     return (LRESULT)GETHOTIMAGELIST(TOOLBAR_GetInfoPtr (hwnd), wParam);
 }
@@ -3514,7 +3514,7 @@ TOOLBAR_GetHotItem (HWND hwnd)
 static LRESULT
 TOOLBAR_GetDefImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%p, wParam=%d, lParam=0x%lx\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p, wParam=%ld, lParam=0x%lx\n", hwnd, wParam, lParam);
     /* UNDOCUMENTED: wParam is actually the ID of the image list to return */
     return (LRESULT) GETDEFIMAGELIST(TOOLBAR_GetInfoPtr(hwnd), wParam);
 }
@@ -3922,7 +3922,7 @@ TOOLBAR_LoadImages (HWND hwnd, WPARAM wParam, LPARAM lParam)
     tbab.hInst = (HINSTANCE)lParam;
     tbab.nID = (UINT_PTR)wParam;
 
-    TRACE("hwnd = %p, hInst = %p, nID = %u\n", hwnd, tbab.hInst, tbab.nID);
+    TRACE("hwnd = %p, hInst = %p, nID = %lu\n", hwnd, tbab.hInst, tbab.nID);
 
     return TOOLBAR_AddBitmap(hwnd, 0, (LPARAM)&tbab);
 }
@@ -3980,7 +3980,7 @@ TOOLBAR_MarkButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     DWORD oldState;
     TBUTTON_INFO *btnPtr;
 
-    TRACE("hwnd = %p, wParam = %d, lParam = 0x%08lx\n", hwnd, wParam, lParam);
+    TRACE("hwnd = %p, wParam = %ld, lParam = 0x%08lx\n", hwnd, wParam, lParam);
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
@@ -4030,7 +4030,7 @@ TOOLBAR_MoveButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT nMoveIndex = (INT)lParam;
     TBUTTON_INFO button;
 
-    TRACE("hwnd=%p, wParam=%d, lParam=%ld\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p, wParam=%ld, lParam=%ld\n", hwnd, wParam, lParam);
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, TRUE);
     if ((nIndex == -1) || (nMoveIndex < 0))
@@ -4110,7 +4110,7 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     int nOldBitmaps, nNewBitmaps = 0;
     HIMAGELIST himlDef = 0;
 
-    TRACE("hInstOld %p nIDOld %x hInstNew %p nIDNew %x nButtons %x\n",
+    TRACE("hInstOld %p nIDOld %lx hInstNew %p nIDNew %lx nButtons %x\n",
           lpReplace->hInstOld, lpReplace->nIDOld, lpReplace->hInstNew, lpReplace->nIDNew,
           lpReplace->nButtons);
 
@@ -4122,7 +4122,7 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else if (lpReplace->hInstOld != 0)
         FIXME("resources not in the current module not implemented\n");
 
-    TRACE("To be replaced hInstOld %p nIDOld %x\n", lpReplace->hInstOld, lpReplace->nIDOld);
+    TRACE("To be replaced hInstOld %p nIDOld %lx\n", lpReplace->hInstOld, lpReplace->nIDOld);
     for (i = 0; i < infoPtr->nNumBitmapInfos; i++) {
         TBITMAP_INFO *tbi = &infoPtr->bitmaps[i];
         TRACE("tbimapinfo %d hInstOld %p nIDOld %x\n", i, tbi->hInst, tbi->nID);
@@ -4141,7 +4141,7 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (nOldButtons == 0)
     {
-        WARN("No hinst/bitmap found! hInst %p nID %x\n", lpReplace->hInstOld, lpReplace->nIDOld);
+        WARN("No hinst/bitmap found! hInst %p nID %lx\n", lpReplace->hInstOld, lpReplace->nIDOld);
         return FALSE;
     }
     
@@ -4381,10 +4381,10 @@ TOOLBAR_SetBitmapSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     HIMAGELIST himlDef = GETDEFIMAGELIST(infoPtr, 0);
 
-    TRACE("hwnd=%p, wParam=%d, lParam=%ld\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p, wParam=%ld, lParam=%ld\n", hwnd, wParam, lParam);
 
     if (wParam != 0)
-        FIXME("wParam is %d. Perhaps image list index?\n", wParam);
+        FIXME("wParam is %ld. Perhaps image list index?\n", wParam);
 
     if (LOWORD(lParam) == 0)
         lParam = MAKELPARAM(1, HIWORD(lParam));
@@ -5145,7 +5145,7 @@ TOOLBAR_GetStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT TOOLBAR_Unkwn45D(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     SIZE * pSize = (SIZE*)lParam;
-    FIXME("hwnd=%p, wParam=0x%08x, size.cx=%d, size.cy=%d stub!\n", hwnd, wParam, pSize->cx, pSize->cy);
+    FIXME("hwnd=%p, wParam=0x%08lx, size.cx=%d, size.cy=%d stub!\n", hwnd, wParam, pSize->cx, pSize->cy);
     return 0;
 }
 
@@ -5183,7 +5183,7 @@ static LRESULT TOOLBAR_Unkwn460(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
 
-    TRACE("hwnd=%p iListGap=%d\n", hwnd, wParam);
+    TRACE("hwnd=%p iListGap=%ld\n", hwnd, wParam);
     
     if (lParam != 0)
         FIXME("lParam = 0x%08lx. Please report\n", lParam);
@@ -5201,7 +5201,7 @@ static LRESULT TOOLBAR_Unkwn462(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
 
-    TRACE("hwnd=%p wParam %08x lParam %08lx\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p wParam %08lx lParam %08lx\n", hwnd, wParam, lParam);
 
     return max(infoPtr->cimlDef, max(infoPtr->cimlHot, infoPtr->cimlDis));
 }
@@ -5222,7 +5222,7 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
      *   lParam    pointer to SIZE structure
      *
      */
-    TRACE("[0463] wParam %d, lParam 0x%08lx -> 0x%08x 0x%08x\n",
+    TRACE("[0463] wParam %ld, lParam 0x%08lx -> 0x%08x 0x%08x\n",
 	  wParam, lParam, lpsize->cx, lpsize->cy);
 
     switch(wParam) {
@@ -5250,7 +5250,7 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	lpsize->cy = infoPtr->rcBound.bottom - infoPtr->rcBound.top;
 	break;
     default:
-	ERR("Unknown wParam %d for Toolbar message [0463]. Please report\n",
+	ERR("Unknown wParam %ld for Toolbar message [0463]. Please report\n",
 	    wParam);
 	return 0;
     }
@@ -5261,7 +5261,7 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 static LRESULT TOOLBAR_Unkwn464(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    FIXME("hwnd=%p wParam %08x lParam %08lx\n", hwnd, wParam, lParam);
+    FIXME("hwnd=%p wParam %08lx lParam %08lx\n", hwnd, wParam, lParam);
 
     InvalidateRect(hwnd, NULL, TRUE);
     return 1;
@@ -6348,7 +6348,7 @@ TOOLBAR_NotifyFormat(const TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     LRESULT format;
 
-    TRACE("wParam = 0x%x, lParam = 0x%08lx\n", wParam, lParam);
+    TRACE("wParam = 0x%lx, lParam = 0x%08lx\n", wParam, lParam);
 
     if (lParam == NF_QUERY)
         return NFR_UNICODE;
@@ -6564,7 +6564,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n",
+    TRACE("hwnd=%p msg=%x wparam=%lx lparam=%lx\n",
 	  hwnd, uMsg, /* SPY_GetMsgName(uMsg), */ wParam, lParam);
 
     if (!infoPtr && (uMsg != WM_NCCREATE))
@@ -6968,7 +6968,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if ((uMsg >= WM_USER) && (uMsg < WM_APP))
-		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
+		ERR("unknown msg %04x wp=%08lx lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     }

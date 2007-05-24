@@ -192,7 +192,7 @@ BOOL WINAPI WTMgrPacketUnhook(HWTHOOK hHook)
 LRESULT WINAPI WTMgrPacketHookNext(HWTHOOK hHook, int nCode,
 				   WPARAM wParam, LPARAM lParam)
 {
-    FIXME("(%p, %d, %u, %lu): stub\n", hHook, nCode, wParam, lParam);
+    FIXME("(%p, %d, %lu, %lu): stub\n", hHook, nCode, wParam, lParam);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 

@@ -434,7 +434,7 @@ CreateProxyFromTypeInfo( LPTYPEINFO pTypeInfo, LPUNKNOWN pUnkOuter, REFIID riid,
 {
     typedef INT (WINAPI *MessageBoxA)(HWND,LPCSTR,LPCSTR,UINT);
     HMODULE hUser32 = LoadLibraryA("user32");
-    MessageBoxA pMessageBoxA = GetProcAddress(hUser32, "MessageBoxA");
+    MessageBoxA pMessageBoxA = (void *)GetProcAddress(hUser32, "MessageBoxA");
 
     FIXME("%p %p %s %p %p\n", pTypeInfo, pUnkOuter, debugstr_guid(riid), ppProxy, ppv);
     if (pMessageBoxA)

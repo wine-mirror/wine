@@ -1844,7 +1844,7 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 {
       LPHEADCOMBO lphc = (LPHEADCOMBO)GetWindowLongPtrW( hwnd, 0 );
 
-      TRACE("[%p]: msg %s wp %08x lp %08lx\n",
+      TRACE("[%p]: msg %s wp %08lx lp %08lx\n",
             hwnd, SPY_GetMsgName(message, hwnd), wParam, lParam );
 
       if( lphc || message == WM_NCCREATE )
@@ -2287,7 +2287,7 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 			return SendMessageW(lphc->hWndEdit, EM_LIMITTEXT, wParam, lParam);
 	default:
 		if (message >= WM_USER)
-		    WARN("unknown msg WM_USER+%04x wp=%04x lp=%08lx\n",
+		    WARN("unknown msg WM_USER+%04x wp=%04lx lp=%08lx\n",
 			message - WM_USER, wParam, lParam );
 		break;
       }

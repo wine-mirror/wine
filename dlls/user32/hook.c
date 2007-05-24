@@ -290,7 +290,7 @@ static LRESULT call_hook_proc( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
     LRESULT ret;
 
     if (TRACE_ON(relay))
-        DPRINTF( "%04x:Call hook proc %p (id=%s,code=%x,wp=%08x,lp=%08lx)\n",
+        DPRINTF( "%04x:Call hook proc %p (id=%s,code=%x,wp=%08lx,lp=%08lx)\n",
                  GetCurrentThreadId(), proc, hook_names[id-WH_MINHOOK], code, wparam, lparam );
 
     if (!prev_unicode == !next_unicode) ret = proc( code, wparam, lparam );
@@ -298,7 +298,7 @@ static LRESULT call_hook_proc( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
     else ret = call_hook_AtoW( proc, id, code, wparam, lparam );
 
     if (TRACE_ON(relay))
-        DPRINTF( "%04x:Ret  hook proc %p (id=%s,code=%x,wp=%08x,lp=%08lx) retval=%08lx\n",
+        DPRINTF( "%04x:Ret  hook proc %p (id=%s,code=%x,wp=%08lx,lp=%08lx) retval=%08lx\n",
                  GetCurrentThreadId(), proc, hook_names[id-WH_MINHOOK], code, wparam, lparam, ret );
 
     return ret;
@@ -339,7 +339,7 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
         h_extra.handle = info->handle;
         h_extra.lparam = lparam;
 
-        TRACE( "calling hook in thread %04x %s code %x wp %x lp %lx\n",
+        TRACE( "calling hook in thread %04x %s code %x wp %lx lp %lx\n",
                info->tid, hook_names[info->id-WH_MINHOOK], code, wparam, lparam );
 
         switch(info->id)
@@ -362,7 +362,7 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
     }
     else if (info->proc)
     {
-        TRACE( "calling hook %p %s code %x wp %x lp %lx module %s\n",
+        TRACE( "calling hook %p %s code %x wp %lx lp %lx module %s\n",
                info->proc, hook_names[info->id-WH_MINHOOK], code, wparam,
                lparam, debugstr_w(info->module) );
 

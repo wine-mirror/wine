@@ -239,7 +239,7 @@ MenuHelp (UINT uMsg, WPARAM wParam, LPARAM lParam, HMENU hMainMenu,
 
     switch (uMsg) {
 	case WM_MENUSELECT:
-	    TRACE("WM_MENUSELECT wParam=0x%X lParam=0x%lX\n",
+	    TRACE("WM_MENUSELECT wParam=0x%lX lParam=0x%lX\n",
 		   wParam, lParam);
 
             if ((HIWORD(wParam) == 0xFFFF) && (lParam == 0)) {
@@ -269,7 +269,7 @@ MenuHelp (UINT uMsg, WPARAM wParam, LPARAM lParam, HMENU hMainMenu,
 	    break;
 
         case WM_COMMAND :
-	    TRACE("WM_COMMAND wParam=0x%X lParam=0x%lX\n",
+	    TRACE("WM_COMMAND wParam=0x%lX lParam=0x%lX\n",
 		   wParam, lParam);
 	    /* WM_COMMAND is not invalid since it is documented
 	     * in the windows api reference. So don't output
@@ -320,7 +320,7 @@ ShowHideMenuCtl (HWND hwnd, UINT_PTR uFlags, LPINT lpInfo)
 {
     LPINT lpMenuId;
 
-    TRACE("%p, %x, %p\n", hwnd, uFlags, lpInfo);
+    TRACE("%p, %lx, %p\n", hwnd, uFlags, lpInfo);
 
     if (lpInfo == NULL)
 	return FALSE;
@@ -1008,7 +1008,7 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
    LPSUBCLASS_INFO stack;
    LPSUBCLASSPROCS proc;
 
-   TRACE ("(%p, %p, %x, %lx)\n", hWnd, pfnSubclass, uIDSubclass, dwRef);
+   TRACE ("(%p, %p, %lx, %lx)\n", hWnd, pfnSubclass, uIDSubclass, dwRef);
 
    /* Since the window procedure that we set here has two additional arguments,
     * we can't simply set it as the new window procedure of the window. So we
@@ -1092,7 +1092,7 @@ BOOL WINAPI GetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
    const SUBCLASS_INFO *stack;
    const SUBCLASSPROCS *proc;
 
-   TRACE ("(%p, %p, %x, %p)\n", hWnd, pfnSubclass, uID, pdwRef);
+   TRACE ("(%p, %p, %lx, %p)\n", hWnd, pfnSubclass, uID, pdwRef);
 
    /* See if we have been called for this window */
    stack = (LPSUBCLASS_INFO)GetPropW (hWnd, COMCTL32_wSubclass);
@@ -1135,7 +1135,7 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
    LPSUBCLASSPROCS proc;
    BOOL ret = FALSE;
 
-   TRACE ("(%p, %p, %x)\n", hWnd, pfnSubclass, uID);
+   TRACE ("(%p, %p, %lx)\n", hWnd, pfnSubclass, uID);
 
    /* Find the Subclass to remove */
    stack = (LPSUBCLASS_INFO)GetPropW (hWnd, COMCTL32_wSubclass);
@@ -1189,7 +1189,7 @@ LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
    LPSUBCLASSPROCS proc;
    LRESULT ret;
     
-   TRACE ("(%p, 0x%08x, 0x%08x, 0x%08lx)\n", hWnd, uMsg, wParam, lParam);
+   TRACE ("(%p, 0x%08x, 0x%08lx, 0x%08lx)\n", hWnd, uMsg, wParam, lParam);
 
    stack = (LPSUBCLASS_INFO)GetPropW (hWnd, COMCTL32_wSubclass);
    if (!stack) {
@@ -1239,7 +1239,7 @@ LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
    LPSUBCLASS_INFO stack;
    LRESULT ret;
    
-   TRACE ("(%p, 0x%08x, 0x%08x, 0x%08lx)\n", hWnd, uMsg, wParam, lParam);
+   TRACE ("(%p, 0x%08x, 0x%08lx, 0x%08lx)\n", hWnd, uMsg, wParam, lParam);
 
    /* retrieve our little stack from the Properties */
    stack = (LPSUBCLASS_INFO)GetPropW (hWnd, COMCTL32_wSubclass);

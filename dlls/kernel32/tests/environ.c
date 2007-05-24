@@ -282,7 +282,7 @@ static void test_GetComputerName(void)
         HeapFree(GetProcessHeap(), 0, nameW);
     }
 
-    pGetComputerNameExA = GetProcAddress(GetModuleHandle("kernel32.dll"), "GetComputerNameExA");
+    pGetComputerNameExA = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "GetComputerNameExA");
     if (!pGetComputerNameExA)
     {
         skip("GetComputerNameExA function not implemented, so not testing\n");
@@ -333,7 +333,7 @@ static void test_GetComputerName(void)
     trace("NetBIOS name is \"%s\"\n", name);
     HeapFree(GetProcessHeap(), 0, name);
 
-    pGetComputerNameExW = GetProcAddress(GetModuleHandle("kernel32.dll"), "GetComputerNameExW");
+    pGetComputerNameExW = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "GetComputerNameExW");
     if (!pGetComputerNameExW)
     {
         skip("GetComputerNameExW function not implemented, so not testing\n");

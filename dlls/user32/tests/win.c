@@ -546,7 +546,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	{
 	    MINMAXINFO* minmax = (MINMAXINFO *)lparam;
 
-	    trace("hwnd %p, WM_GETMINMAXINFO, %08x, %08lx\n", hwnd, wparam, lparam);
+	    trace("hwnd %p, WM_GETMINMAXINFO, %08lx, %08lx\n", hwnd, wparam, lparam);
             trace("ptReserved (%d,%d), ptMaxSize (%d,%d), ptMaxPosition (%d,%d)\n"
                   "	  ptMinTrackSize (%d,%d), ptMaxTrackSize (%d,%d)\n",
 		  minmax->ptReserved.x, minmax->ptReserved.y,
@@ -643,7 +643,7 @@ static LRESULT WINAPI tool_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	{
 	    MINMAXINFO* minmax = (MINMAXINFO *)lparam;
 
-	    trace("hwnd %p, WM_GETMINMAXINFO, %08x, %08lx\n", hwnd, wparam, lparam);
+	    trace("hwnd %p, WM_GETMINMAXINFO, %08lx, %08lx\n", hwnd, wparam, lparam);
             trace("ptReserved (%d,%d), ptMaxSize (%d,%d), ptMaxPosition (%d,%d)\n"
                   "	  ptMinTrackSize (%d,%d), ptMaxTrackSize (%d,%d)\n",
 		  minmax->ptReserved.x, minmax->ptReserved.y,
@@ -836,7 +836,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	"HCBT_SETFOCUS" };
     const char *code_name = (nCode >= 0 && nCode <= HCBT_SETFOCUS) ? CBT_code_name[nCode] : "Unknown";
 
-    trace("CBT: %d (%s), %08x, %08lx\n", nCode, code_name, wParam, lParam);
+    trace("CBT: %d (%s), %08lx, %08lx\n", nCode, code_name, wParam, lParam);
 
     /* on HCBT_DESTROYWND window state is undefined */
     if (nCode != HCBT_DESTROYWND && IsWindow((HWND)wParam))
@@ -4026,24 +4026,24 @@ static void test_SetWindowLong(void)
 
     SetLastError(0xdeadbeef);
     retval = SetWindowLongPtr(NULL, GWLP_WNDPROC, 0);
-    ok(!retval, "SetWindowLongPtr on invalid window handle should have returned 0 instead of 0x%x\n", retval);
+    ok(!retval, "SetWindowLongPtr on invalid window handle should have returned 0 instead of 0x%lx\n", retval);
     ok(check_error(GetLastError(), ERROR_INVALID_WINDOW_HANDLE),
         "SetWindowLongPtr should have set error to ERROR_INVALID_WINDOW_HANDLE instad of %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     retval = SetWindowLongPtr(hwndMain, 0xdeadbeef, 0);
-    ok(!retval, "SetWindowLongPtr on invalid index should have returned 0 instead of 0x%x\n", retval);
+    ok(!retval, "SetWindowLongPtr on invalid index should have returned 0 instead of 0x%lx\n", retval);
     ok(check_error(GetLastError(), ERROR_INVALID_INDEX),
         "SetWindowLongPtr should have set error to ERROR_INVALID_INDEX instad of %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     retval = SetWindowLongPtr(hwndMain, GWLP_WNDPROC, 0);
     ok((WNDPROC)retval == main_window_procA,
-        "SetWindowLongPtr on invalid window proc should have returned address of main_window_procA instead of 0x%x\n", retval);
+        "SetWindowLongPtr on invalid window proc should have returned address of main_window_procA instead of 0x%lx\n", retval);
     ok(GetLastError() == 0xdeadbeef, "SetWindowLongPtr shouldn't have set the last error, instead of setting it to %d\n", GetLastError());
     retval = GetWindowLongPtr(hwndMain, GWLP_WNDPROC);
     ok((WNDPROC)retval == main_window_procA,
-        "SetWindowLongPtr on invalid window proc shouldn't have changed the value returned by GetWindowLongPtr, instead of changing it to 0x%x\n", retval);
+        "SetWindowLongPtr on invalid window proc shouldn't have changed the value returned by GetWindowLongPtr, instead of changing it to 0x%lx\n", retval);
     ok(!IsWindowUnicode(hwndMain), "hwndMain shouldn't be Unicode\n");
 
     old_window_procW = (WNDPROC)GetWindowLongPtrW(hwndMain, GWLP_WNDPROC);
@@ -4054,7 +4054,7 @@ static void test_SetWindowLong(void)
         ok(GetLastError() == 0xdeadbeef, "SetWindowLongPtr shouldn't have set the last error, instead of setting it to %d\n", GetLastError());
         ok(retval != 0, "SetWindowLongPtr error %d\n", GetLastError());
         ok((WNDPROC)retval == old_window_procW,
-            "SetWindowLongPtr on invalid window proc shouldn't have changed the value returned by GetWindowLongPtr, instead of changing it to 0x%x\n", retval);
+            "SetWindowLongPtr on invalid window proc shouldn't have changed the value returned by GetWindowLongPtr, instead of changing it to 0x%lx\n", retval);
         ok(IsWindowUnicode(hwndMain), "hwndMain should now be Unicode\n");
 
         /* set it back to ANSI */

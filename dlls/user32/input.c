@@ -799,7 +799,7 @@ static void CALLBACK TrackMouseEventProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent,
     POINT pos;
     INT hoverwidth = 0, hoverheight = 0, hittest;
 
-    TRACE("hwnd %p, msg %04x, id %04x, time %u\n", hwnd, uMsg, idEvent, dwTime);
+    TRACE("hwnd %p, msg %04x, id %04lx, time %u\n", hwnd, uMsg, idEvent, dwTime);
 
     GetCursorPos(&pos);
     hwnd = WINPOS_WindowFromPoint(hwnd, pos, &hittest);

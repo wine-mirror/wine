@@ -1400,10 +1400,10 @@ UINT WINAPI SetupDefaultQueueCallbackA( PVOID context, UINT notification,
         TRACE( "end queue\n" );
         return 0;
     case SPFILENOTIFY_STARTSUBQUEUE:
-        TRACE( "start subqueue %d count %d\n", param1, param2 );
+        TRACE( "start subqueue %ld count %ld\n", param1, param2 );
         return TRUE;
     case SPFILENOTIFY_ENDSUBQUEUE:
-        TRACE( "end subqueue %d\n", param1 );
+        TRACE( "end subqueue %ld\n", param1 );
         return 0;
     case SPFILENOTIFY_STARTDELETE:
         TRACE( "start delete %s\n", debugstr_a(paths->Target) );
@@ -1439,7 +1439,7 @@ UINT WINAPI SetupDefaultQueueCallbackA( PVOID context, UINT notification,
         TRACE( "need media\n" );
         return FILEOP_SKIP;
     default:
-        FIXME( "notification %d params %x,%x\n", notification, param1, param2 );
+        FIXME( "notification %d params %lx,%lx\n", notification, param1, param2 );
         break;
     }
     return 0;
@@ -1464,10 +1464,10 @@ UINT WINAPI SetupDefaultQueueCallbackW( PVOID context, UINT notification,
         TRACE( "end queue\n" );
         return 0;
     case SPFILENOTIFY_STARTSUBQUEUE:
-        TRACE( "start subqueue %d count %d\n", param1, param2 );
+        TRACE( "start subqueue %ld count %ld\n", param1, param2 );
         return TRUE;
     case SPFILENOTIFY_ENDSUBQUEUE:
-        TRACE( "end subqueue %d\n", param1 );
+        TRACE( "end subqueue %ld\n", param1 );
         return 0;
     case SPFILENOTIFY_STARTDELETE:
         TRACE( "start delete %s\n", debugstr_w(paths->Target) );
@@ -1504,7 +1504,7 @@ UINT WINAPI SetupDefaultQueueCallbackW( PVOID context, UINT notification,
         TRACE( "need media\n" );
         return FILEOP_SKIP;
     default:
-        FIXME( "notification %d params %x,%x\n", notification, param1, param2 );
+        FIXME( "notification %d params %lx,%lx\n", notification, param1, param2 );
         break;
     }
     return 0;

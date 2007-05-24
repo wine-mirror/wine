@@ -1021,7 +1021,7 @@ BOOL WINAPI ImmIsUIMessageA(
 {
     BOOL rc = FALSE;
 
-    TRACE("(%p, %x, %d, %ld)\n", hWndIME, msg, wParam, lParam);
+    TRACE("(%p, %x, %ld, %ld)\n", hWndIME, msg, wParam, lParam);
     if ((msg >= WM_IME_STARTCOMPOSITION && msg <= WM_IME_KEYLAST) ||
         (msg >= WM_IME_SETCONTEXT && msg <= WM_IME_KEYUP) ||
         (msg == WM_MSIME_SERVICE) ||
@@ -1051,7 +1051,7 @@ BOOL WINAPI ImmIsUIMessageW(
   HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     BOOL rc = FALSE;
-    TRACE("(%p, %d, %d, %ld): stub\n", hWndIME, msg, wParam, lParam);
+    TRACE("(%p, %d, %ld, %ld): stub\n", hWndIME, msg, wParam, lParam);
     if ((msg >= WM_IME_STARTCOMPOSITION && msg <= WM_IME_KEYLAST) ||
         (msg >= WM_IME_SETCONTEXT && msg <= WM_IME_KEYUP) ||
         (msg == WM_MSIME_SERVICE) ||

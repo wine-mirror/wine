@@ -220,7 +220,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
         p += strlenW( info->windowName ) + 1;
     }
 
-    TRACE("    %s %s %d, %d, %d, %d, %d, %08x, %08x, %08x\n",
+    TRACE("    %s %s %ld, %d, %d, %d, %d, %08x, %08x, %08x\n",
           debugstr_w( info->className ), debugstr_w( info->windowName ),
           info->id, info->x, info->y, info->cx, info->cy,
           info->style, info->exStyle, info->helpId );
@@ -869,7 +869,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     DIALOGINFO * dlgInfo;
     HWND owner;
 
-    TRACE("%p %d\n", hwnd, retval );
+    TRACE("%p %ld\n", hwnd, retval );
 
     if (!(dlgInfo = DIALOG_get_info( hwnd, FALSE )))
     {

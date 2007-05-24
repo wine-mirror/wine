@@ -39,7 +39,7 @@ START_TEST(mci)
     ok(PeekMessageW( &msg, (HWND)-1, 0, 0, PM_REMOVE ), "PeekMessage should succeed\n");
     ok(msg.hwnd == NULL, "got %p instead of NULL\n", msg.hwnd);
     ok(msg.message == MM_MCINOTIFY, "got %04x instead of MM_MCINOTIFY\n", msg.message);
-    ok(msg.wParam == MCI_NOTIFY_SUCCESSFUL, "got %08x instead of MCI_NOTIFY_SUCCESSFUL\n", msg.wParam);
+    ok(msg.wParam == MCI_NOTIFY_SUCCESSFUL, "got %08lx instead of MCI_NOTIFY_SUCCESSFUL\n", msg.wParam);
 
     err = mciSendString(command_close_all, NULL, 0, NULL);
     todo_wine ok(!err,"mciSendString(%s, NULL, 0 , NULL) returned error: %d\n", command_close_all, err);

@@ -226,7 +226,7 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
     TRACE("%s ", prefix);
     if (mp) {
         UINT flags = mp->fType;
-        TRACE( "{ ID=0x%x", mp->wID);
+        TRACE( "{ ID=0x%lx", mp->wID);
         if ( mp->hSubMenu)
             TRACE( ", Sub=%p", mp->hSubMenu);
         if (flags) {
@@ -994,7 +994,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         } else
             lpitem->rect.bottom += mis.itemHeight;
 
-        TRACE("id=%04x size=%dx%d\n",
+        TRACE("id=%04lx size=%dx%d\n",
                 lpitem->wID, lpitem->rect.right-lpitem->rect.left,
                 lpitem->rect.bottom-lpitem->rect.top);
         return;
@@ -2448,7 +2448,7 @@ static INT MENU_ExecFocusedItem( MTRACKER* pmt, HMENU hMenu, UINT wFlags )
 
     item = &menu->items[menu->FocusedItem];
 
-    TRACE("hMenu %p wID %08x hSubMenu %p fType %04x\n", hMenu, item->wID, item->hSubMenu, item->fType);
+    TRACE("hMenu %p wID %08lx hSubMenu %p fType %04x\n", hMenu, item->wID, item->hSubMenu, item->fType);
 
     if (!(item->fType & MF_POPUP))
     {
@@ -3406,7 +3406,7 @@ BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
  */
 static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    TRACE("hwnd=%p msg=0x%04x wp=0x%04x lp=0x%08lx\n", hwnd, message, wParam, lParam);
+    TRACE("hwnd=%p msg=0x%04x wp=0x%04lx lp=0x%08lx\n", hwnd, message, wParam, lParam);
 
     switch(message)
     {
@@ -3716,9 +3716,9 @@ BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
     MENUITEM *item;
 
     if (IS_STRING_ITEM(flags) && str)
-        TRACE("hMenu %p, pos %d, flags %08x, id %04x, str %s\n",
+        TRACE("hMenu %p, pos %d, flags %08x, id %04lx, str %s\n",
               hMenu, pos, flags, id, debugstr_w(str) );
-    else TRACE("hMenu %p, pos %d, flags %08x, id %04x, str %p (not a string)\n",
+    else TRACE("hMenu %p, pos %d, flags %08x, id %04lx, str %p (not a string)\n",
                hMenu, pos, flags, id, str );
 
     if (!(item = MENU_InsertItem( hMenu, pos, flags ))) return FALSE;
@@ -3837,9 +3837,9 @@ BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
     MENUITEM *item;
 
     if (IS_STRING_ITEM(flags))
-        TRACE("%p %d %04x %04x %s\n", hMenu, pos, flags, id, debugstr_w(str) );
+        TRACE("%p %d %04x %04lx %s\n", hMenu, pos, flags, id, debugstr_w(str) );
     else
-        TRACE("%p %d %04x %04x %p\n", hMenu, pos, flags, id, str );
+        TRACE("%p %d %04x %04lx %p\n", hMenu, pos, flags, id, str );
 
     if (!(item = MENU_FindItem( &hMenu, &pos, flags ))) return FALSE;
     MENU_GetMenu(hMenu)->Height = 0; /* force size recalculate */
@@ -5050,7 +5050,7 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
     {
         if ( !(fVirt & FVIRTKEY) && (mask & FALT) == (fVirt & FALT) )
         {
-            TRACE_(accel)("found accel for WM_CHAR: ('%c')\n", wParam & 0xff);
+            TRACE_(accel)("found accel for WM_CHAR: ('%c')\n", LOWORD(wParam) & 0xff);
             goto found;
         }
     }
@@ -5058,7 +5058,7 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
     {
         if(fVirt & FVIRTKEY)
         {
-            TRACE_(accel)("found accel for virt_key %04x (scan %04x)\n",
+            TRACE_(accel)("found accel for virt_key %04lx (scan %04x)\n",
                           wParam, 0xff & HIWORD(lParam));
 
             if(mask == (fVirt & (FSHIFT | FCONTROL | FALT))) goto found;
@@ -5070,7 +5070,7 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
             {
                 if ((fVirt & FALT) && (lParam & 0x20000000))
                 {                              /* ^^ ALT pressed */
-                    TRACE_(accel)("found accel for Alt-%c\n", wParam & 0xff);
+                    TRACE_(accel)("found accel for Alt-%c\n", LOWORD(wParam) & 0xff);
                     goto found;
                 }
             }
@@ -5233,7 +5233,7 @@ INT WINAPI TranslateAcceleratorA( HWND hWnd, HACCEL hAccel, LPMSG msg )
         return 0;
     }
 
-    TRACE_(accel)("hAccel %p, hWnd %p, msg->hwnd %p, msg->message %04x, wParam %08x, lParam %08lx\n",
+    TRACE_(accel)("hAccel %p, hWnd %p, msg->hwnd %p, msg->message %04x, wParam %08lx, lParam %08lx\n",
                   hAccel,hWnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
     i = 0;
     do
@@ -5275,7 +5275,7 @@ INT WINAPI TranslateAcceleratorW( HWND hWnd, HACCEL hAccel, LPMSG msg )
         return 0;
     }
 
-    TRACE_(accel)("hAccel %p, hWnd %p, msg->hwnd %p, msg->message %04x, wParam %08x, lParam %08lx\n",
+    TRACE_(accel)("hAccel %p, hWnd %p, msg->hwnd %p, msg->message %04x, wParam %08lx, lParam %08lx\n",
                   hAccel,hWnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
     i = 0;
     do

@@ -255,7 +255,7 @@ static void ExportRegistryFile_StoreSelection(HWND hdlg, OPENFILENAME *pOpenFile
         pOpenFileName->lCustData = (LPARAM)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TCHAR));
 }
 
-static UINT_PTR CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
+static UINT CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
 {
     static OPENFILENAME* pOpenFileName;
     OFNOTIFY *pOfNotify;

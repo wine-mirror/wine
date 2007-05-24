@@ -445,13 +445,13 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
 
     hwnd = WIN_GetFullHandle( hwnd );
     if (TRACE_ON(relay))
-        DPRINTF( "%04x:Call window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
+        DPRINTF( "%04x:Call window proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp );
 
     *result = WINPROC_wrapper( proc, hwnd, msg, wp, lp );
 
     if (TRACE_ON(relay))
-        DPRINTF( "%04x:Ret  window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx) retval=%08lx\n",
+        DPRINTF( "%04x:Ret  window proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx) retval=%08lx\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp, *result );
     return *result;
 }
@@ -466,14 +466,14 @@ static LRESULT call_dialog_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
 
     hwnd = WIN_GetFullHandle( hwnd );
     if (TRACE_ON(relay))
-        DPRINTF( "%04x:Call dialog proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
+        DPRINTF( "%04x:Call dialog proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp );
 
     ret = WINPROC_wrapper( proc, hwnd, msg, wp, lp );
     *result = GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
 
     if (TRACE_ON(relay))
-        DPRINTF( "%04x:Ret  dialog proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx) retval=%08lx result=%08lx\n",
+        DPRINTF( "%04x:Ret  dialog proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx) retval=%08lx result=%08lx\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp, ret, *result );
     return ret;
 }
@@ -756,7 +756,7 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
 {
     LRESULT ret = 0;
 
-    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
+    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
                 hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     switch(msg)
@@ -1030,7 +1030,7 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 {
     LRESULT ret = 0;
 
-    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
+    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
                 hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     switch(msg)
@@ -1617,7 +1617,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
 {
     LRESULT ret = 0;
 
-    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
+    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
                 hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     switch(msg)
@@ -1964,7 +1964,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             case 1:
                 break; /* atom, nothing to do */
             case 3:
-                MESSAGE("DDE_ACK: %x both atom and handle... choosing handle\n", hi);
+                MESSAGE("DDE_ACK: %lx both atom and handle... choosing handle\n", hi);
                 /* fall thru */
             case 2:
                 hi = convert_handle_32_to_16(hi, GMEM_DDESHARE);

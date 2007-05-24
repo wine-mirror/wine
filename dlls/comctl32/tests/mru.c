@@ -173,7 +173,7 @@ static void test_MRUListA(void)
 
     /* Create (size too small) */
     mruA.cbSize = sizeof(mruA) - 2;
-    hMRU = create_mruA(NULL, MRUF_STRING_LIST, cmp_mru_strA);
+    hMRU = create_mruA(NULL, MRUF_STRING_LIST, (PROC)cmp_mru_strA);
     ok (!hMRU && !GetLastError(),
         "CreateMRUListA(too small) expected NULL,0 got %p,%d\n",
         hMRU, GetLastError());
@@ -181,21 +181,21 @@ static void test_MRUListA(void)
 
     /* Create (size too big) */
     mruA.cbSize = sizeof(mruA) + 2;
-    hMRU = create_mruA(NULL, MRUF_STRING_LIST, cmp_mru_strA);
+    hMRU = create_mruA(NULL, MRUF_STRING_LIST, (PROC)cmp_mru_strA);
     ok (!hMRU && !GetLastError(),
         "CreateMRUListA(too big) expected NULL,0 got %p,%d\n",
         hMRU, GetLastError());
     mruA.cbSize = sizeof(mruA);
 
     /* Create (NULL hKey) */
-    hMRU = create_mruA(NULL, MRUF_STRING_LIST, cmp_mru_strA);
+    hMRU = create_mruA(NULL, MRUF_STRING_LIST, (PROC)cmp_mru_strA);
     ok (!hMRU && !GetLastError(),
         "CreateMRUListA(NULL key) expected NULL,0 got %p,%d\n",
         hMRU, GetLastError());
 
     /* Create (NULL name) */
     mruA.lpszSubKey = NULL;
-    hMRU = create_mruA(NULL, MRUF_STRING_LIST, cmp_mru_strA);
+    hMRU = create_mruA(NULL, MRUF_STRING_LIST, (PROC)cmp_mru_strA);
     ok (!hMRU && !GetLastError(),
         "CreateMRUListA(NULL name) expected NULL,0 got %p,%d\n",
         hMRU, GetLastError());
@@ -206,7 +206,7 @@ static void test_MRUListA(void)
        "Couldn't create test key \"%s\"\n", REG_TEST_KEYA);
     if (!hKey)
         return;
-    hMRU = create_mruA(hKey, MRUF_STRING_LIST, cmp_mru_strA);
+    hMRU = create_mruA(hKey, MRUF_STRING_LIST, (PROC)cmp_mru_strA);
     ok(hMRU && !GetLastError(),
        "CreateMRUListA(string) expected non-NULL,0 got %p,%d\n",
        hMRU, GetLastError());

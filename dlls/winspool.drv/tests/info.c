@@ -2015,7 +2015,7 @@ static void test_DeviceCapabilities(void)
 
     hComdlg32 = LoadLibrary("comdlg32.dll");
     assert(hComdlg32);
-    pPrintDlgA = GetProcAddress(hComdlg32, "PrintDlgA");
+    pPrintDlgA = (void *)GetProcAddress(hComdlg32, "PrintDlgA");
     assert(pPrintDlgA);
 
     memset(&prn_dlg, 0, sizeof(prn_dlg));

@@ -9261,7 +9261,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
     UINT uNewView = lpss->styleNew & LVS_TYPEMASK;
     UINT uOldView = lpss->styleOld & LVS_TYPEMASK;
 
-    TRACE("(styletype=%x, styleOld=0x%08x, styleNew=0x%08x)\n",
+    TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
           wStyleType, lpss->styleOld, lpss->styleNew);
 
     if (wStyleType != GWL_STYLE) return 0;
@@ -9347,7 +9347,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongPtrW(hwnd, 0);
 
-  TRACE("(uMsg=%x wParam=%x lParam=%lx)\n", uMsg, wParam, lParam);
+  TRACE("(uMsg=%x wParam=%lx lParam=%lx)\n", uMsg, wParam, lParam);
 
   if (!infoPtr && (uMsg != WM_NCCREATE))
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
@@ -9851,7 +9851,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   default:
     if ((uMsg >= WM_USER) && (uMsg < WM_APP))
-      ERR("unknown msg %04x wp=%08x lp=%08lx\n", uMsg, wParam, lParam);
+      ERR("unknown msg %04x wp=%08lx lp=%08lx\n", uMsg, wParam, lParam);
 
   fwd_msg:
     /* call default window procedure */
@@ -9991,7 +9991,7 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
     LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongPtrW(GetParent(hwnd), 0);
     BOOL cancel = FALSE;
 
-    TRACE("(hwnd=%p, uMsg=%x, wParam=%x, lParam=%lx, isW=%d)\n",
+    TRACE("(hwnd=%p, uMsg=%x, wParam=%lx, lParam=%lx, isW=%d)\n",
 	  hwnd, uMsg, wParam, lParam, isW);
 
     switch (uMsg)

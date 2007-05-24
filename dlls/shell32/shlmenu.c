@@ -661,7 +661,7 @@ LRESULT WINAPI FileMenu_HandleMenuChar(
 	HMENU	hMenu,
 	WPARAM	wParam)
 {
-	FIXME("%p 0x%08x\n",hMenu,wParam);
+	FIXME("%p 0x%08lx\n",hMenu,wParam);
 	return 0;
 }
 

@@ -161,7 +161,7 @@ BOOL WINAPI ShellDDEInit(BOOL start)
     {
       if (!SHDOCVW_LoadShell32())
         return FALSE;
-      pShellDDEInit = GetProcAddress(SHDOCVW_hshell32, (LPCSTR)188);
+      pShellDDEInit = (void *)GetProcAddress(SHDOCVW_hshell32, (LPCSTR)188);
     }
 
     if (pShellDDEInit)

@@ -95,14 +95,14 @@ void ok_sequence_(struct msg_sequence **seq, int sequence_index,
                     {
                         failcount++;
                         ok_(file, line) (FALSE,
-                            "%s: in msg 0x%04x expecting wParam 0x%x got 0x%x\n",
+                            "%s: in msg 0x%04x expecting wParam 0x%lx got 0x%lx\n",
                             context, expected->message, expected->wParam, actual->wParam);
                     }
                 }
                 else
                 {
                     ok_(file, line) (expected->wParam == actual->wParam,
-                        "%s: in msg 0x%04x expecting wParam 0x%x got 0x%x\n",
+                        "%s: in msg 0x%04x expecting wParam 0x%lx got 0x%lx\n",
                         context, expected->message, expected->wParam, actual->wParam);
                 }
             }

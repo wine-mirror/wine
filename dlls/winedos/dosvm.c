@@ -352,7 +352,7 @@ static void DOSVM_ProcessMessage(MSG *msg)
 {
   BYTE scan = 0;
 
-  TRACE("got message %04x, wparam=%08x, lparam=%08lx\n",msg->message,msg->wParam,msg->lParam);
+  TRACE("got message %04x, wparam=%08lx, lparam=%08lx\n",msg->message,msg->wParam,msg->lParam);
   if ((msg->message>=WM_MOUSEFIRST)&&
       (msg->message<=WM_MOUSELAST)) {
     DOSVM_Int33Message(msg->message,msg->wParam,msg->lParam);
@@ -503,7 +503,7 @@ DWORD WINAPI DOSVM_Loop( HANDLE hThread )
                           DOS_SPC *spc = (DOS_SPC *)msg.lParam;
                           TRACE_(int)("calling %p with arg %08lx\n", spc->proc, spc->arg);
                           (spc->proc)(spc->arg);
-                          TRACE_(int)("done, signalling event %x\n", msg.wParam);
+                          TRACE_(int)("done, signalling event %lx\n", msg.wParam);
                           SetEvent( (HANDLE)msg.wParam );
                       }
                       break;

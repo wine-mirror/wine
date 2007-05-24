@@ -3402,7 +3402,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 static INT_PTR CALLBACK
 PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  TRACE("hwnd=%p msg=0x%04x wparam=%x lparam=%lx\n",
+  TRACE("hwnd=%p msg=0x%04x wparam=%lx lparam=%lx\n",
 	hwnd, uMsg, wParam, lParam);
 
   switch (uMsg)

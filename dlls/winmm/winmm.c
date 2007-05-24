@@ -717,7 +717,7 @@ UINT WINAPI auxGetDevCapsW(UINT_PTR uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X, %p, %d) !\n", uDeviceID, lpCaps, uSize);
+    TRACE("(%04lX, %p, %d) !\n", uDeviceID, lpCaps, uSize);
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
@@ -809,7 +809,7 @@ UINT WINAPI midiOutGetDevCapsW(UINT_PTR uDeviceID, LPMIDIOUTCAPSW lpCaps,
 {
     LPWINE_MLD	wmld;
 
-    TRACE("(%u, %p, %u);\n", uDeviceID, lpCaps, uSize);
+    TRACE("(%lu, %p, %u);\n", uDeviceID, lpCaps, uSize);
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
@@ -1191,7 +1191,7 @@ UINT WINAPI midiInGetDevCapsW(UINT_PTR uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSi
 {
     LPWINE_MLD	wmld;
 
-    TRACE("(%d, %p, %d);\n", uDeviceID, lpCaps, uSize);
+    TRACE("(%ld, %p, %d);\n", uDeviceID, lpCaps, uSize);
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
@@ -1552,7 +1552,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	 */
 	lpMidiHdr = (LPMIDIHDR)msg->lParam;
 	lpData = (LPBYTE)lpMidiHdr->lpData;
-	TRACE("Adding %s lpMidiHdr=%p [lpData=0x%p dwBufferLength=%u/%u dwFlags=0x%08x size=%u]\n",
+	TRACE("Adding %s lpMidiHdr=%p [lpData=0x%p dwBufferLength=%u/%u dwFlags=0x%08x size=%lu]\n",
 	      (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular", lpMidiHdr,
 	      lpMidiHdr, lpMidiHdr->dwBufferLength, lpMidiHdr->dwBytesRecorded,
 	      lpMidiHdr->dwFlags, msg->wParam);
@@ -2149,7 +2149,7 @@ UINT WINAPI waveOutGetDevCapsW(UINT_PTR uDeviceID, LPWAVEOUTCAPSW lpCaps,
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%u %p %u)!\n", uDeviceID, lpCaps, uSize);
+    TRACE("(%lu %p %u)!\n", uDeviceID, lpCaps, uSize);
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
@@ -2543,7 +2543,7 @@ UINT WINAPI waveInGetDevCapsW(UINT_PTR uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSi
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%u %p %u)!\n", uDeviceID, lpCaps, uSize);
+    TRACE("(%lu %p %u)!\n", uDeviceID, lpCaps, uSize);
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 

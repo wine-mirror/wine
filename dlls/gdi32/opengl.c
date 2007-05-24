@@ -306,7 +306,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
      * of a wrapper function which will handle the HDC->PhysDev conversion.
      */
     if(ret && strcmp(func, "wglMakeContextCurrentARB") == 0)
-        return wglMakeContextCurrentARB;
+        return (PROC)wglMakeContextCurrentARB;
     else if(ret && strcmp(func, "wglGetPbufferDCARB") == 0)
         return (PROC)wglGetPbufferDCARB;
 

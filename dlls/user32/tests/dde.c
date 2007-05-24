@@ -38,13 +38,13 @@ static LRESULT WINAPI hook_dde_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam
 {
     UINT_PTR lo, hi;
 
-    trace("hook_dde_client_wndproc: %p %04x %08x %08lx\n", hwnd, msg, wparam, lparam);
+    trace("hook_dde_client_wndproc: %p %04x %08lx %08lx\n", hwnd, msg, wparam, lparam);
 
     switch (msg)
     {
     case WM_DDE_ACK:
         UnpackDDElParam(WM_DDE_ACK, lparam, &lo, &hi);
-        trace("WM_DDE_ACK: status %04x hglobal %p\n", lo, (HGLOBAL)hi);
+        trace("WM_DDE_ACK: status %04lx hglobal %p\n", lo, (HGLOBAL)hi);
         break;
 
     default:
@@ -55,7 +55,7 @@ static LRESULT WINAPI hook_dde_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam
 
 static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    trace("dde_server_wndproc: %p %04x %08x %08lx\n", hwnd, msg, wparam, lparam);
+    trace("dde_server_wndproc: %p %04x %08lx %08lx\n", hwnd, msg, wparam, lparam);
 
     switch (msg)
     {
@@ -87,7 +87,7 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         trace("server: got WM_DDE_EXECUTE from %p with %08lx\n", (HWND)wparam, lparam);
 
         UnpackDDElParam(WM_DDE_EXECUTE, lparam, &lo, &hi);
-        trace("%08lx => lo %04x hi %04x\n", lparam, lo, hi);
+        trace("%08lx => lo %04lx hi %04lx\n", lparam, lo, hi);
 
         ack.bAppReturnCode = 0;
         ack.reserved = 0;

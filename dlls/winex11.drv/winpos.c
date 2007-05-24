@@ -1215,7 +1215,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
-    TRACE("hwnd %p (%smanaged), command %04x, hittest %d, pos %d,%d\n",
+    TRACE("hwnd %p (%smanaged), command %04lx, hittest %d, pos %d,%d\n",
           hwnd, data->managed ? "" : "NOT ", syscommand, hittest, pt.x, pt.y);
 
     /* if we are managed then we let the WM do all the work */

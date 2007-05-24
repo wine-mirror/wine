@@ -61,7 +61,7 @@ BOOL WINAPI AcceptEx(
                                       overlapped (asynchronous) I/O 
                                       operation */
 {
-    FIXME("(listen=%d, accept=%d, %p, %d, %d, %d, %p, %p), not implemented\n",
+    FIXME("(listen=%ld, accept=%ld, %p, %d, %d, %d, %p, %p), not implemented\n",
 	sListenSocket,sAcceptSocket,lpOutputBuffer,dwReceiveDataLength,
 	dwLocalAddressLength,dwRemoteAddressLength,lpdwBytesReceived,lpOverlapped
     );

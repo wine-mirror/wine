@@ -947,7 +947,7 @@ LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notifyCode, 
     HDC hdc;
     COLORREF *cr;
     LPCCPRIV lpp = (LPCCPRIV) GetPropW( hDlg, szColourDialogProp );
-    TRACE("CC_WMCommand wParam=%x lParam=%lx\n", wParam, lParam);
+    TRACE("CC_WMCommand wParam=%lx lParam=%lx\n", wParam, lParam);
     switch (LOWORD(wParam))
     {
           case 0x2c2:  /* edit notify RGB */

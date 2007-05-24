@@ -63,7 +63,7 @@ static INT_PTR CALLBACK SHDlgProcEx(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 {
   DLGDATAEX *d = (DLGDATAEX *)GetWindowLongPtrW(hDlg, DWLP_USER);
 
-  TRACE("(%p,%u,%d,%ld) data %p\n", hDlg, uMsg, wParam, lParam, d);
+  TRACE("(%p,%u,%ld,%ld) data %p\n", hDlg, uMsg, wParam, lParam, d);
 
   switch (uMsg)
   {
@@ -187,7 +187,7 @@ typedef struct tagDLGDATA
 /* Dialogue procedure for shlwapi message boxes */
 static INT_PTR CALLBACK SHDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  TRACE("(%p,%u,%d,%ld)\n", hDlg, uMsg, wParam, lParam);
+  TRACE("(%p,%u,%ld,%ld)\n", hDlg, uMsg, wParam, lParam);
 
   switch (uMsg)
   {

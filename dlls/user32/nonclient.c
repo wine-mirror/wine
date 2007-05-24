@@ -1539,7 +1539,7 @@ LRESULT NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
  */
 LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-    TRACE("hwnd %p WM_SYSCOMMAND %x %lx\n", hwnd, wParam, lParam );
+    TRACE("hwnd %p WM_SYSCOMMAND %lx %lx\n", hwnd, wParam, lParam );
 
     if (!IsWindowEnabled( hwnd )) return 0;
 
@@ -1621,7 +1621,7 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
     case SC_ARRANGE:
     case SC_NEXTWINDOW:
     case SC_PREVWINDOW:
-        FIXME("unimplemented WM_SYSCOMMAND %04x!\n", wParam);
+        FIXME("unimplemented WM_SYSCOMMAND %04lx!\n", wParam);
         break;
     }
     return 0;

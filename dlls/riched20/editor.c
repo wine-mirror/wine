@@ -1416,7 +1416,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
 {
   ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongPtrW(hWnd, 0);
   
-  TRACE("hwnd %p msg %04x (%s) %x %lx, unicode %d\n",
+  TRACE("hwnd %p msg %04x (%s) %lx %lx, unicode %d\n",
         hWnd, msg, get_msg_name(msg), wParam, lParam, unicode);
   
   if (!editor && msg != WM_NCCREATE && msg != WM_NCDESTROY) {
@@ -2188,7 +2188,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       nNextLineOfs = ME_FindItemFwd(item, diParagraphOrEnd)->member.para.nCharOfs
        - (editor->bEmulateVersion10?2:1);
     nChars = nNextLineOfs - nThisLineOfs;
-    TRACE("EM_LINELENGTH(%d)==%d\n",wParam, nChars);
+    TRACE("EM_LINELENGTH(%ld)==%d\n",wParam, nChars);
     return nChars;
   }
   case EM_EXLIMITTEXT:
@@ -2794,14 +2794,14 @@ static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
 
 LRESULT WINAPI REComboWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   /* FIXME: Not implemented */
-  TRACE("hWnd %p msg %04x (%s) %08x %08lx\n",
+  TRACE("hWnd %p msg %04x (%s) %08lx %08lx\n",
         hWnd, msg, get_msg_name(msg), wParam, lParam);
   return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
 LRESULT WINAPI REListWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   /* FIXME: Not implemented */
-  TRACE("hWnd %p msg %04x (%s) %08x %08lx\n",
+  TRACE("hWnd %p msg %04x (%s) %08lx %08lx\n",
         hWnd, msg, get_msg_name(msg), wParam, lParam);
   return DefWindowProcW(hWnd, msg, wParam, lParam);
 }

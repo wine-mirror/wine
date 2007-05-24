@@ -2976,7 +2976,7 @@ static int FILEDLG95_LOOKIN_SearchItem(HWND hwnd,WPARAM searchArg,int iSearchMet
   int i = 0;
   int iCount = CBGetCount(hwnd);
 
-  TRACE("0x%08x 0x%x\n",searchArg, iSearchMethod);
+  TRACE("0x%08lx 0x%x\n",searchArg, iSearchMethod);
 
   if (iCount != CB_ERR)
   {
@@ -3593,18 +3593,18 @@ static BOOL CALLBACK FD32_CallWindowProc(const FD31_DATA *lfs, UINT wMsg, WPARAM
 
     if (priv->ofnA)
     {
-        TRACE("Call hookA %p (%p, %04x, %08x, %08lx)\n",
+        TRACE("Call hookA %p (%p, %04x, %08lx, %08lx)\n",
                priv->ofnA->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
         ret = priv->ofnA->lpfnHook(lfs->hwnd, wMsg, wParam, lParam);
-        TRACE("ret hookA %p (%p, %04x, %08x, %08lx)\n",
+        TRACE("ret hookA %p (%p, %04x, %08lx, %08lx)\n",
                priv->ofnA->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
         return ret;
     }
 
-    TRACE("Call hookW %p (%p, %04x, %08x, %08lx)\n",
+    TRACE("Call hookW %p (%p, %04x, %08lx, %08lx)\n",
            lfs->ofnW->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
     ret = lfs->ofnW->lpfnHook(lfs->hwnd, wMsg, wParam, lParam);
-    TRACE("Ret hookW %p (%p, %04x, %08x, %08lx)\n",
+    TRACE("Ret hookW %p (%p, %04x, %08lx, %08lx)\n",
            lfs->ofnW->lpfnHook, lfs->hwnd, wMsg, wParam, lParam);
     return ret;
 }
@@ -3705,7 +3705,7 @@ static INT_PTR CALLBACK FD32_FileOpenDlgProc(HWND hWnd, UINT wMsg,
 {
     PFD31_DATA lfs = (PFD31_DATA)GetPropA(hWnd,FD31_OFN_PROP);
 
-    TRACE("msg=%x wparam=%x lParam=%lx\n", wMsg, wParam, lParam);
+    TRACE("msg=%x wparam=%lx lParam=%lx\n", wMsg, wParam, lParam);
     if ((wMsg != WM_INITDIALOG) && lfs && lfs->hook)
         {
             INT_PTR lRet;

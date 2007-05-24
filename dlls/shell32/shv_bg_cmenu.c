@@ -407,7 +407,7 @@ static HRESULT WINAPI ISVBgCm_fnGetCommandString(
 {
 	BgCmImpl *This = (BgCmImpl *)iface;
 
-	TRACE("(%p)->(idcom=%x flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
+	TRACE("(%p)->(idcom=%lx flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
 
 	/* test the existence of the menu items, the file dialog enables
 	   the buttons according to this */
@@ -439,7 +439,7 @@ static HRESULT WINAPI ISVBgCm_fnHandleMenuMsg(
 {
 	BgCmImpl *This = (BgCmImpl *)iface;
 
-	FIXME("(%p)->(msg=%x wp=%x lp=%lx)\n",This, uMsg, wParam, lParam);
+	FIXME("(%p)->(msg=%x wp=%lx lp=%lx)\n",This, uMsg, wParam, lParam);
 
 	return E_NOTIMPL;
 }

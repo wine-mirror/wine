@@ -837,7 +837,7 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	mymru.dwFlags = MRUF_BINARY_LIST | MRUF_DELAYED_SAVE;
 	mymru.hKey = HCUbasekey;
 	mymru.lpszSubKey = "RecentDocs";
-	mymru.lpfnCompare = &SHADD_compare_mru;
+	mymru.lpfnCompare = (PROC)SHADD_compare_mru;
 	mruhandle = CreateMRUListA(&mymru);
 	if (!mruhandle) {
 	    /* MRU failed */

@@ -849,9 +849,9 @@ static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret)
         return E_ACCESSDENIED; /* FIXME: or should this be CO_E_DLLNOTFOUND? */
     }
 
-    DllCanUnloadNow = GetProcAddress(hLibrary, "DllCanUnloadNow");
+    DllCanUnloadNow = (void *)GetProcAddress(hLibrary, "DllCanUnloadNow");
     /* Note: failing to find DllCanUnloadNow is not a failure */
-    DllGetClassObject = GetProcAddress(hLibrary, "DllGetClassObject");
+    DllGetClassObject = (void *)GetProcAddress(hLibrary, "DllGetClassObject");
     if (!DllGetClassObject)
     {
         /* failure: the dll did not export DllGetClassObject */
