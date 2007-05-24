@@ -8,7 +8,8 @@ EXTRALIBS = -luuid
 
 CTESTS = \
 	domdoc.c \
-	schema.c
+	schema.c \
+	xmlelem.c
 
 @MAKE_TEST_RULES@
 
