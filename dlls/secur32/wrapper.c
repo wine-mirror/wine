@@ -247,46 +247,52 @@ SECURITY_STATUS WINAPI InitializeSecurityContextA(
  ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
+    SecurePackage *package = NULL;
+    PCredHandle cred = NULL;
+    PCredHandle ctxt = NULL;
 
     TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+
+    if (phContext)
+    {
+        package = (SecurePackage *)phContext->dwUpper;
+        ctxt = (PCtxtHandle)phContext->dwLower;
+    }
     if (phCredential)
     {
-        SecurePackage *package = (SecurePackage *)phCredential->dwUpper;
-        PCredHandle cred = (PCredHandle)phCredential->dwLower;
+        package = (SecurePackage *)phCredential->dwUpper;
+        cred = (PCredHandle)phCredential->dwLower;
+    }
 
-        if (package && package->provider)
+    if (package && package->provider)
+    {
+        if (package->provider->fnTableA.InitializeSecurityContextA)
         {
-            if (package->provider->fnTableA.InitializeSecurityContextA)
+            CtxtHandle myCtxt;
+
+            if (phContext)
             {
-                CtxtHandle myCtxt;
-
-                if(phContext)
-                {
-                    PCtxtHandle realCtxt = (PCtxtHandle)phContext->dwLower;
-                    myCtxt.dwUpper = realCtxt->dwUpper;
-                    myCtxt.dwLower = realCtxt->dwLower;
-                }
-
-                ret = package->provider->fnTableA.InitializeSecurityContextA(
-                 cred, phContext ? &myCtxt : NULL, pszTargetName, fContextReq,
-                 Reserved1, TargetDataRep, pInput, Reserved2, &myCtxt,
-                 pOutput, pfContextAttr, ptsExpiry);
-                if (ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED)
-                {
-                    SECURITY_STATUS ret2;
-                    ret2 = SECUR32_makeSecHandle(phNewContext, package, &myCtxt);
-                    if (ret2 != SEC_E_OK)
-                        package->provider->fnTableW.DeleteSecurityContext(
-                         &myCtxt);
-                }
+                PCtxtHandle realCtxt = (PCtxtHandle)phContext->dwLower;
+                myCtxt.dwUpper = realCtxt->dwUpper;
+                myCtxt.dwLower = realCtxt->dwLower;
             }
-            else
-                ret = SEC_E_UNSUPPORTED_FUNCTION;
+
+            ret = package->provider->fnTableA.InitializeSecurityContextA(
+                 cred, ctxt, pszTargetName, fContextReq,
+                 Reserved1, TargetDataRep, pInput, Reserved2, phNewContext ? &myCtxt : NULL,
+                 pOutput, pfContextAttr, ptsExpiry);
+            if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && phNewContext)
+            {
+                SECURITY_STATUS ret2;
+                ret2 = SECUR32_makeSecHandle(phNewContext, package, &myCtxt);
+                if (ret2 != SEC_E_OK)
+                    package->provider->fnTableA.DeleteSecurityContext(&myCtxt);
+            }
         }
         else
-            ret = SEC_E_INVALID_HANDLE;
+            ret = SEC_E_UNSUPPORTED_FUNCTION;
     }
     else
         ret = SEC_E_INVALID_HANDLE;
@@ -304,46 +310,52 @@ SECURITY_STATUS WINAPI InitializeSecurityContextW(
  ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
+    SecurePackage *package = NULL;
+    PCredHandle cred = NULL;
+    PCredHandle ctxt = NULL;
 
     TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+
+    if (phContext)
+    {
+        package = (SecurePackage *)phContext->dwUpper;
+        ctxt = (PCtxtHandle)phContext->dwLower;
+    }
     if (phCredential)
     {
-        SecurePackage *package = (SecurePackage *)phCredential->dwUpper;
-        PCredHandle cred = (PCredHandle)phCredential->dwLower;
+        package = (SecurePackage *)phCredential->dwUpper;
+        cred = (PCredHandle)phCredential->dwLower;
+    }
 
-        if (package && package->provider)
+    if (package && package->provider)
+    {
+        if (package->provider->fnTableW.InitializeSecurityContextW)
         {
-            if (package->provider->fnTableW.QueryCredentialsAttributesW)
+            CtxtHandle myCtxt;
+
+            if (phContext)
             {
-                CtxtHandle myCtxt;
-
-                if(phContext)
-                {
-                    PCtxtHandle realCtxt = (PCtxtHandle)phContext->dwLower;
-                    myCtxt.dwUpper = realCtxt->dwUpper;
-                    myCtxt.dwLower = realCtxt->dwLower;
-                }
-
-                ret = package->provider->fnTableW.InitializeSecurityContextW(
-                 cred, phContext ? &myCtxt : NULL, pszTargetName, fContextReq,
-                 Reserved1, TargetDataRep, pInput, Reserved2, &myCtxt,
-                 pOutput, pfContextAttr, ptsExpiry);
-                if (ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED)
-                {
-                    SECURITY_STATUS ret2;
-                    ret2 = SECUR32_makeSecHandle(phNewContext, package, &myCtxt);
-                    if (ret2 != SEC_E_OK)
-                        package->provider->fnTableW.DeleteSecurityContext(
-                         &myCtxt);
-                }
+                PCtxtHandle realCtxt = (PCtxtHandle)phContext->dwLower;
+                myCtxt.dwUpper = realCtxt->dwUpper;
+                myCtxt.dwLower = realCtxt->dwLower;
             }
-            else
-                ret = SEC_E_UNSUPPORTED_FUNCTION;
+
+            ret = package->provider->fnTableW.InitializeSecurityContextW(
+                 cred, ctxt, pszTargetName, fContextReq,
+                 Reserved1, TargetDataRep, pInput, Reserved2, phNewContext ? &myCtxt : NULL,
+                 pOutput, pfContextAttr, ptsExpiry);
+            if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && phNewContext)
+            {
+                SECURITY_STATUS ret2;
+                ret2 = SECUR32_makeSecHandle(phNewContext, package, &myCtxt);
+                if (ret2 != SEC_E_OK)
+                    package->provider->fnTableW.DeleteSecurityContext(&myCtxt);
+            }
         }
         else
-            ret = SEC_E_INVALID_HANDLE;
+            ret = SEC_E_UNSUPPORTED_FUNCTION;
     }
     else
         ret = SEC_E_INVALID_HANDLE;
