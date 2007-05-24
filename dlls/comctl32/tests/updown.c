@@ -259,7 +259,7 @@ struct subclass_info
 
 static LRESULT WINAPI edit_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongA(hwnd, GWL_USERDATA);
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -298,16 +298,16 @@ static HWND create_edit_control(void)
         return NULL;
     }
 
-    info->oldproc = (WNDPROC)SetWindowLongA(edit, GWL_WNDPROC,
-                                            (LONG)edit_subclass_proc);
-    SetWindowLongA(edit, GWL_USERDATA, (LONG)info);
+    info->oldproc = (WNDPROC)SetWindowLongPtrA(edit, GWLP_WNDPROC,
+                                            (LONG_PTR)edit_subclass_proc);
+    SetWindowLongPtrA(edit, GWLP_USERDATA, (LONG_PTR)info);
 
     return edit;
 }
 
 static LRESULT WINAPI updown_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongA(hwnd, GWL_USERDATA);
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -348,9 +348,9 @@ static HWND create_updown_control(void)
         return NULL;
     }
 
-    info->oldproc = (WNDPROC)SetWindowLongA(updown, GWL_WNDPROC,
-                                            (LONG)updown_subclass_proc);
-    SetWindowLongA(updown, GWL_USERDATA, (LONG)info);
+    info->oldproc = (WNDPROC)SetWindowLongPtrA(updown, GWLP_WNDPROC,
+                                            (LONG_PTR)updown_subclass_proc);
+    SetWindowLongPtrA(updown, GWLP_USERDATA, (LONG_PTR)info);
 
     return updown;
 }

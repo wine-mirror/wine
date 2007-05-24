@@ -445,7 +445,7 @@ static HWND create_parent_window(void){
 }
 
 static LRESULT WINAPI trackbar_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
-    struct subclass_info *info = (struct subclass_info *) GetWindowLongA(hwnd, GWL_USERDATA);
+    struct subclass_info *info = (struct subclass_info *) GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -485,9 +485,9 @@ static HWND create_trackbar(DWORD style, HWND parent){
         return NULL;
     }
 
-    info->oldproc = (WNDPROC)SetWindowLongA(hWndTrack, GWL_WNDPROC, (LONG)trackbar_subclass_proc);
+    info->oldproc = (WNDPROC)SetWindowLongPtrA(hWndTrack, GWLP_WNDPROC, (LONG_PTR)trackbar_subclass_proc);
 
-    SetWindowLongA(hWndTrack, GWL_USERDATA, (LONG)info);
+    SetWindowLongPtrA(hWndTrack, GWLP_USERDATA, (LONG_PTR)info);
 
     return hWndTrack;
 }

@@ -137,7 +137,7 @@ struct subclass_info
 
 static LRESULT WINAPI datetime_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongA(hwnd, GWL_USERDATA);
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -182,9 +182,9 @@ static HWND create_datetime_control(DWORD style, DWORD exstyle)
         return NULL;
     }
 
-    info->oldproc = (WNDPROC)SetWindowLongA(hWndDateTime, GWL_WNDPROC,
-                                            (LONG)datetime_subclass_proc);
-    SetWindowLongA(hWndDateTime, GWL_USERDATA, (LONG)info);
+    info->oldproc = (WNDPROC)SetWindowLongPtrA(hWndDateTime, GWLP_WNDPROC,
+                                            (LONG_PTR)datetime_subclass_proc);
+    SetWindowLongPtrA(hWndDateTime, GWLP_USERDATA, (LONG_PTR)info);
 
     return hWndDateTime;
 }

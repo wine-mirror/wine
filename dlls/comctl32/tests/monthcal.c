@@ -441,7 +441,7 @@ static HWND create_parent_window(void)
 
 static LRESULT WINAPI monthcal_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongA(hwnd, GWL_USERDATA);
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -487,9 +487,9 @@ static HWND create_monthcal_control(DWORD style, HWND parent_window)
         return NULL;
     }
 
-    info->oldproc = (WNDPROC)SetWindowLongA(hwnd, GWL_WNDPROC,
-                                            (LONG)monthcal_subclass_proc);
-    SetWindowLongA(hwnd, GWL_USERDATA, (LONG)info);
+    info->oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                                            (LONG_PTR)monthcal_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)info);
 
     return hwnd;
 }

@@ -574,7 +574,7 @@ static LRESULT WINAPI TreeviewWndProc(HWND hwnd, UINT message, WPARAM wParam, LP
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
-    WNDPROC *lpOldProc = (WNDPROC*)GetWindowLongA(hwnd, GWL_USERDATA);
+    WNDPROC lpOldProc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
@@ -584,7 +584,7 @@ static LRESULT WINAPI TreeviewWndProc(HWND hwnd, UINT message, WPARAM wParam, LP
     add_message(MsgSequences, LISTVIEW_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
-    ret = CallWindowProcA(*lpOldProc, hwnd, message, wParam, lParam);
+    ret = CallWindowProcA(lpOldProc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
 
     return ret;
@@ -592,7 +592,7 @@ static LRESULT WINAPI TreeviewWndProc(HWND hwnd, UINT message, WPARAM wParam, LP
 
 static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    WNDPROC *pOldWndProc;
+    WNDPROC pOldWndProc;
 
     switch(msg) {
 
@@ -604,16 +604,9 @@ static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 
         SetFocus(hTree);
 
-        pOldWndProc = HeapAlloc(GetProcessHeap(), 0, sizeof(WNDPROC));
-        if ( !ok(pOldWndProc != NULL, "Failed to allocate memory for subclass_info.\n") )
-        {
-            PostQuitMessage(1);
-            break;
-        }
-
         /* Record the old WNDPROC so we can call it after recording the messages */
-        *pOldWndProc = (WNDPROC)SetWindowLongA(hTree, GWL_WNDPROC, (LONG)TreeviewWndProc);
-        SetWindowLongA(hTree, GWL_USERDATA, (LONG)pOldWndProc);
+        pOldWndProc = (WNDPROC)SetWindowLongPtrA(hTree, GWLP_WNDPROC, (LONG_PTR)TreeviewWndProc);
+        SetWindowLongPtrA(hTree, GWLP_USERDATA, (LONG_PTR)pOldWndProc);
 
         return 0;
     }

@@ -212,7 +212,7 @@ static HWND create_parent_window(void)
 
 static LRESULT WINAPI listview_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongA(hwnd, GWL_USERDATA);
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -256,9 +256,9 @@ static HWND create_listview_control(void)
         return NULL;
     }
 
-    info->oldproc = (WNDPROC)SetWindowLongA(hwnd, GWL_WNDPROC,
-                                            (LONG)listview_subclass_proc);
-    SetWindowLongA(hwnd, GWL_USERDATA, (LONG)info);
+    info->oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                                            (LONG_PTR)listview_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)info);
 
     return hwnd;
 }
@@ -286,16 +286,16 @@ static HWND create_custom_listview_control(DWORD style)
         return NULL;
     }
 
-    info->oldproc = (WNDPROC)SetWindowLongA(hwnd, GWL_WNDPROC,
-                                            (LONG)listview_subclass_proc);
-    SetWindowLongA(hwnd, GWL_USERDATA, (LONG)info);
+    info->oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                                            (LONG_PTR)listview_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)info);
 
     return hwnd;
 }
 
 static LRESULT WINAPI header_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongA(hwnd, GWL_USERDATA);
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -326,9 +326,9 @@ static HWND subclass_header(HWND hwndListview)
         return NULL;
 
     hwnd = ListView_GetHeader(hwndListview);
-    info->oldproc = (WNDPROC)SetWindowLongA(hwnd, GWL_WNDPROC,
-                                            (LONG)header_subclass_proc);
-    SetWindowLongA(hwnd, GWL_USERDATA, (LONG)info);
+    info->oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                                            (LONG_PTR)header_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)info);
 
     return hwnd;
 }
@@ -773,13 +773,13 @@ static void test_customdraw(void)
     insert_column(hwnd, 1);
     insert_item(hwnd, 0);
 
-    oldwndproc = (WNDPROC)SetWindowLongPtr(hwndparent, GWL_WNDPROC,
-                                           (INT_PTR)cd_wndproc);
+    oldwndproc = (WNDPROC)SetWindowLongPtr(hwndparent, GWLP_WNDPROC,
+                                           (LONG_PTR)cd_wndproc);
 
     InvalidateRect(hwnd, NULL, TRUE);
     UpdateWindow(hwnd);
 
-    SetWindowLongPtr(hwndparent, GWL_WNDPROC, (INT_PTR)oldwndproc);
+    SetWindowLongPtr(hwndparent, GWLP_WNDPROC, (LONG_PTR)oldwndproc);
 
     DestroyWindow(hwnd);
 }

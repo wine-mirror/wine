@@ -402,7 +402,7 @@ struct subclass_info
 
 static LRESULT WINAPI header_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct subclass_info *info = (struct subclass_info *)GetWindowLongA(hwnd, GWL_USERDATA);
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
@@ -533,9 +533,9 @@ static HWND create_custom_header_control(HWND hParent, BOOL preloadHeaderItems)
     SetWindowPos(childHandle, winpos.hwndInsertAfter, winpos.x, winpos.y,
                  winpos.cx, winpos.cy, 0);
 
-    info->oldproc = (WNDPROC)SetWindowLongA(childHandle, GWL_WNDPROC,
-                                    (LONG)header_subclass_proc);
-    SetWindowLongA(childHandle, GWL_USERDATA, (LONG)info);
+    info->oldproc = (WNDPROC)SetWindowLongPtrA(childHandle, GWLP_WNDPROC,
+                                               (LONG_PTR)header_subclass_proc);
+    SetWindowLongPtrA(childHandle, GWLP_USERDATA, (LONG_PTR)info);
     return childHandle;
 }
 
