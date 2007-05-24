@@ -333,7 +333,7 @@ DLLSPEC *alloc_dll_spec(void)
     spec->alloc_entry_points = 0;
     spec->nb_names           = 0;
     spec->nb_resources       = 0;
-    spec->characteristics    = 0;
+    spec->characteristics    = IMAGE_FILE_EXECUTABLE_IMAGE;
     spec->dll_characteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
     spec->subsystem          = 0;
     spec->subsystem_major    = 4;
