@@ -448,6 +448,16 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
 
         ok(out_buf->pBuffers[0].cbBuffer == 0,
            "InitializeSecurityContext set buffer size to %lu\n", out_buf->pBuffers[0].cbBuffer);
+
+        out_buf->pBuffers[0].cbBuffer = sspi_data->max_token;
+        out_buf->pBuffers[0].BufferType = SECBUFFER_DATA;
+
+        ret = pInitializeSecurityContextA(sspi_data->cred, NULL, NULL, req_attr,
+            0, data_rep, NULL, 0, sspi_data->ctxt, out_buf,
+            &ctxt_attr, &ttl);
+
+        ok(ret == SEC_E_BUFFER_TOO_SMALL, "expected SEC_E_BUFFER_TOO_SMALL, got %s\n", getSecError(ret));
+        out_buf->pBuffers[0].BufferType = SECBUFFER_TOKEN;
     }
 
     out_buf->pBuffers[0].cbBuffer = sspi_data->max_token;
