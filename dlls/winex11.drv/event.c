@@ -40,7 +40,6 @@
 #include "shlobj.h"  /* DROPFILES */
 
 #include "win.h"
-#include "winreg.h"
 #include "x11drv.h"
 #include "shellapi.h"
 #include "wine/debug.h"
