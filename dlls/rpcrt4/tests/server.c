@@ -279,8 +279,8 @@ union_tests(void)
   sun.u.f = 5.0;
   ok(square_sun(&sun) == 25.0, "RPC square_sun\n");
 
-  sun.s = SUN_I;
-  sun.u.i = -2.0;
+  sun.s = SUN_F2;
+  sun.u.f = -2.0;
   ok(square_sun(&sun) == 4.0, "RPC square_sun\n");
 }
 
