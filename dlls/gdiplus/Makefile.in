@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = gdiplus.dll
+IMPORTLIB = libgdiplus.$(IMPLIBEXT)
+IMPORTS   = gdi32 advapi32 kernel32 ntdll
+
+C_SRCS = \
+	gdiplus.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

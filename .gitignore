@@ -239,6 +239,7 @@ dlls/gdi32/tests/gdi32_crosstest.exe
 dlls/gdi32/tests/testlist.c
 dlls/gdi32/version.res
 dlls/gdi32/version16.res
+dlls/gdiplus/libgdiplus.def
 dlls/glu32/libglu32.def
 dlls/gphoto2.ds/rsrc.res
 dlls/hhctrl.ocx/hhctrl.res
