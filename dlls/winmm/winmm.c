@@ -50,7 +50,6 @@
 #include "mmsystem.h"
 #include "winuser.h"
 #include "winnls.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "winemm.h"
 

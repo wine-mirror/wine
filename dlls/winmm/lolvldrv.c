@@ -30,11 +30,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
-#include "winver.h"
 #include "winemm.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
-#include "excpt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
