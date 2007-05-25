@@ -1200,7 +1200,7 @@ static type_t *make_type(unsigned char type, type_t *ref)
   t->fields = NULL;
   t->ifaces = NULL;
   t->typestring_offset = 0;
-  t->ignore = parse_only;
+  t->ignore = (parse_only != 0);
   t->is_const = FALSE;
   t->sign = 0;
   t->defined = FALSE;

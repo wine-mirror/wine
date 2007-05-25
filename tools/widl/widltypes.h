@@ -208,9 +208,13 @@ struct _type_t {
   ifref_list_t *ifaces;           /* coclasses */
   type_t *orig;                   /* dup'd types */
   unsigned int typestring_offset;
-  int ignore, is_const, sign;
-  int defined, written, user_types_registered;
   int typelib_idx;
+  unsigned int ignore : 1;
+  unsigned int is_const : 1;
+  unsigned int defined : 1;
+  unsigned int written : 1;
+  unsigned int user_types_registered : 1;
+  int sign : 2;
 };
 
 struct _var_t {
