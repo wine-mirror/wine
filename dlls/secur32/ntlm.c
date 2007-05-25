@@ -608,7 +608,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
         if(pInput->pBuffers[input_token_idx].cbBuffer > max_len)
         {
-            TRACE("pInput->pBuffers[0].cbBuffer is: %ld\n",
+            TRACE("pInput->pBuffers[%d].cbBuffer is: %ld\n",
+                    input_token_idx,
                     pInput->pBuffers[input_token_idx].cbBuffer);
             ret = SEC_E_INVALID_TOKEN;
             goto isc_end;
@@ -657,7 +658,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
     if (!pOutput || ((token_idx = ntlm_GetTokenBufferIndex(pOutput)) == -1))
     {
-        WARN("no SECBUFFER_TOKEN buffer could be found\n");
+        TRACE("no SECBUFFER_TOKEN buffer could be found\n");
         ret = SEC_E_BUFFER_TOO_SMALL;
         goto isc_end;
     }
