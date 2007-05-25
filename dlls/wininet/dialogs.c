@@ -29,7 +29,6 @@
 #include "winreg.h"
 #include "wininet.h"
 #include "winnetwk.h"
-#include "winnls.h"
 #include "wine/debug.h"
 #include "winerror.h"
 #define NO_SHLWAPI_STREAM

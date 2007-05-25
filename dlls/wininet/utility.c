@@ -33,7 +33,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wininet.h"
-#include "winerror.h"
 #include "winnls.h"
 
 #include "wine/debug.h"

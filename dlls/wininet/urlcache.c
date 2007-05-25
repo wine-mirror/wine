@@ -42,7 +42,6 @@
 #include "internet.h"
 #include "winreg.h"
 #include "shlwapi.h"
-#include "wingdi.h"
 #include "shlobj.h"
 
 #include "wine/unicode.h"

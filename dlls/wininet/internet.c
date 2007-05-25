@@ -60,7 +60,6 @@
 #include "shlwapi.h"
 
 #include "wine/exception.h"
-#include "excpt.h"
 
 #include "internet.h"
 #include "resource.h"
