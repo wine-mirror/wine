@@ -24,6 +24,7 @@
 #include "server_defines.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #define PORT "4114"
 #define PIPE "\\pipe\\wine_rpcrt4_test"
@@ -147,6 +148,7 @@ s_square_sun(sun_t *sun)
   case SUN_I: return sun->u.i * sun->u.i;
   case SUN_F1:
   case SUN_F2: return sun->u.f * sun->u.f;
+  case SUN_PI: return (*sun->u.pi) * (*sun->u.pi);
   default:
     return 0.0;
   }
@@ -270,6 +272,7 @@ static void
 union_tests(void)
 {
   sun_t sun;
+  int i;
 
   sun.s = SUN_I;
   sun.u.i = 9;
@@ -282,6 +285,11 @@ union_tests(void)
   sun.s = SUN_F2;
   sun.u.f = -2.0;
   ok(square_sun(&sun) == 4.0, "RPC square_sun\n");
+
+  sun.s = SUN_PI;
+  sun.u.pi = &i;
+  i = 11;
+  ok(square_sun(&sun) == 121.0, "RPC square_sun\n");
 }
 
 static void

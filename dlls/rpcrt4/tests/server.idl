@@ -61,6 +61,7 @@ interface IServer
     {
       [case(SUN_I)] int i;
       [case(SUN_F1, SUN_F2)] float f;
+      [case(SUN_PI)] int *pi;
     } u;
 
     int s;

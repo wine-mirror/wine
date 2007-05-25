@@ -22,3 +22,4 @@
 #define SUN_I 10
 #define SUN_F1 -2
 #define SUN_F2 7
+#define SUN_PI 399

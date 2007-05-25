@@ -62,7 +62,9 @@ struct expr_eval_routine
 static size_t type_memsize(const type_t *t, const array_dims_t *array, unsigned int *align);
 static size_t fields_memsize(const var_list_t *fields, unsigned int *align);
 static size_t write_struct_tfs(FILE *file, type_t *type, const char *name, unsigned int *tfsoff);
-static void write_embedded_types(FILE *file, const type_t *type, unsigned int *tfsoff);
+static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *type,
+                                const char *name, const array_dims_t *array, int level,
+                                unsigned int *tfsoff);
 
 const char *string_of_type(unsigned char type)
 {
@@ -802,63 +804,6 @@ static int has_known_tfs(const type_t *type)
     return type->typestring_offset || is_base_type(type->type);
 }
 
-static int write_pointers(FILE *file, const attr_list_t *attrs,
-                          type_t *type, const char *name,
-                          const array_dims_t *array, int level,
-                          unsigned int *typestring_offset)
-{
-    const var_t *v;
-
-    /* don't generate a pointer for first-level arrays since we want to
-    * descend into them to write their pointers, not stop here */
-    if ((level == 0 || !is_ptr(type)) && is_array_type(attrs, type, array))
-    {
-        return write_pointers(file, NULL, type, name, NULL, level + 1, typestring_offset);
-    }
-    else if (is_ptr(type))
-    {
-        type_t *ref = type->ref;
-
-        if (!has_known_tfs(ref))
-        {
-            if (is_ptr(ref))
-            {
-                write_pointers(file, attrs, ref, name, array, level + 1,
-                               typestring_offset);
-            }
-            else if (is_struct(ref->type))
-            {
-                write_struct_tfs(file, ref, name, typestring_offset);
-            }
-            else
-            {
-                error("write_pointers: type format string unknown for %s (0x%02x)\n",
-                      name, ref->type);
-            }
-        }
-
-        /* top-level pointers are handled by write_pointer_description */
-        if (1 < level)
-            write_pointer_tfs(file, type, typestring_offset);
-
-        return 1;
-    }
-    else if (is_struct(type->type))
-    {
-        int pointers_written = 0;
-        if (type->fields)
-        {
-            LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
-                pointers_written += write_pointers(file, v->attrs, v->type,
-                                                   v->name, v->array,
-                                                   level + 1,
-                                                   typestring_offset);
-        }
-        return pointers_written;
-    }
-    else return 0;
-}
-
 static size_t write_pointer_description(FILE *file, const attr_list_t *attrs,
                                         type_t *type, size_t mem_offset,
                                         const array_dims_t *array, int level,
@@ -1023,7 +968,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
         const expr_t *dim = array ? LIST_ENTRY( list_head( array ), expr_t, entry ) : NULL;
         int has_pointer = 0;
 
-        if (write_pointers(file, attrs, type, name, array, 0, typestring_offset) > 0)
+        if (write_embedded_types(file, attrs, type, name, array, 0, typestring_offset))
             has_pointer = 1;
 
         start_offset = *typestring_offset;
@@ -1290,7 +1235,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
         if (type->type == RPC_FC_PSTRUCT)
-            write_pointers(file, NULL, type, name, NULL, 0, typestring_offset);
+            write_embedded_types(file, NULL, type, name, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
         type->typestring_offset = start_offset;
@@ -1333,7 +1278,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         current_structure = NULL;
 
         if (type->type == RPC_FC_CPSTRUCT)
-            write_pointers(file, NULL, type, name, NULL, 0, typestring_offset);
+            write_embedded_types(file, NULL, type, name, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
         type->typestring_offset = start_offset;
@@ -1385,7 +1330,8 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
                                            typestring_offset);
         current_structure = NULL;
 
-        has_pointers = write_pointers(file, NULL, type, name, NULL, 0, typestring_offset);
+        has_pointers = write_embedded_types(file, NULL, type, name, NULL, 0,
+                                            typestring_offset);
 
         start_offset = *typestring_offset;
         type->typestring_offset = start_offset;
@@ -1422,7 +1368,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
             error("structure size for %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
-        write_embedded_types(file, type, typestring_offset);
+        write_embedded_types(file, NULL, type, name, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
         print_file(file, 0, "/* %d */\n", start_offset);
@@ -1489,7 +1435,7 @@ static void write_branch_type(FILE *file, const type_t *t, unsigned int *tfsoff)
     }
     else if (t->typestring_offset)
     {
-        short reloff = t->typestring_offset - (*tfsoff + 2);
+        short reloff = t->typestring_offset - *tfsoff;
         print_file(file, 2, "NdrFcShort(0x%x),\t/* Offset= %d (%d) */\n",
                    reloff, reloff, t->typestring_offset);
     }
@@ -1499,7 +1445,8 @@ static void write_branch_type(FILE *file, const type_t *t, unsigned int *tfsoff)
     *tfsoff += 2;
 }
 
-static size_t write_union_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
+static size_t write_union_tfs(FILE *file, type_t *type, const char *name,
+                              unsigned int *tfsoff)
 {
     unsigned int align = 0;
     unsigned int start_offset;
@@ -1509,6 +1456,9 @@ static size_t write_union_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     type_t *deftype = NULL;
     short nodeftype = 0xffff;
     var_t *f;
+
+    /* use a level of 1 so pointers always get written */
+    write_embedded_types(file, NULL, type, name, NULL, 1, tfsoff);
 
     if (fields) LIST_FOR_EACH_ENTRY(f, fields, var_t, entry)
     {
@@ -1674,7 +1624,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
             return write_struct_tfs(file, type, var->name, typeformat_offset);
         case RPC_FC_ENCAPSULATED_UNION:
         case RPC_FC_NON_ENCAPSULATED_UNION:
-            return write_union_tfs(file, type, typeformat_offset);
+            return write_union_tfs(file, type, var->name, typeformat_offset);
         case RPC_FC_IGNORE:
         case RPC_FC_BIND_PRIMITIVE:
             /* nothing to do */
@@ -1743,9 +1693,12 @@ static void clear_tfsoff(type_t *type)
     }
 }
 
-static void write_embedded_types(FILE *file, const type_t *type, unsigned int *tfsoff)
+static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *type,
+                                const char *name, const array_dims_t *array,
+                                int level, unsigned int *tfsoff)
 {
     var_list_t *fields = type->fields;
+    int retmask = 0;
     size_t offset = 0;
     var_t *f;
 
@@ -1753,13 +1706,13 @@ static void write_embedded_types(FILE *file, const type_t *type, unsigned int *t
     {
         unsigned int align = 0;
         type_t *ft = f->type;
-        size_t corroff;
 
         if (ft->type == RPC_FC_NON_ENCAPSULATED_UNION)
         {
             expr_t *swexp = get_attrp(f->attrs, ATTR_SWITCHIS);
             const char *swname;
             var_t *swvar;
+            size_t corroff;
             unsigned char corrdesc, op = 0;
             short creloff, ureloff;
 
@@ -1770,7 +1723,7 @@ static void write_embedded_types(FILE *file, const type_t *type, unsigned int *t
                       f->name);
 
             if (ft->typestring_offset == 0)
-                write_union_tfs(file, ft, tfsoff);
+                write_union_tfs(file, ft, f->name, tfsoff);
 
             swname = swexp->u.sval;
             corroff = field_offset(type, swname, &swvar);
@@ -1790,12 +1743,52 @@ static void write_embedded_types(FILE *file, const type_t *type, unsigned int *t
                        ureloff, ureloff, ft->typestring_offset);
             *tfsoff += 8;
         }
-        else if (!is_base_type(ft->type))
-            error("write_embedded_types: unknown type (0x%x)\n", ft->type);
+        else
+            retmask |= write_embedded_types(file, attrs, ft, f->name, array,
+                                            level + 1, tfsoff);
 
         /* FIXME: this doesn't take alignment/padding into account */
         offset += type_memsize(ft, NULL, &align);
     }
+    /* don't generate a pointer for first-level arrays since we want to
+       descend into them to write their pointers, not stop here */
+    else if ((level == 0 || !is_ptr(type)) && is_array_type(attrs, type, array))
+    {
+        return write_embedded_types(file, NULL, type, name, NULL, level + 1, tfsoff);
+    }
+    else if (is_ptr(type))
+    {
+        type_t *ref = type->ref;
+
+        if (!has_known_tfs(ref))
+        {
+            if (is_ptr(ref))
+            {
+                retmask |= write_embedded_types(file, attrs, ref, name, array,
+                                                level + 1, tfsoff);
+            }
+            else if (is_struct(ref->type))
+            {
+                write_struct_tfs(file, ref, name, tfsoff);
+            }
+            else
+            {
+                error("write_embedded_types: type format string unknown for %s (0x%x)\n",
+                      name, ref->type);
+            }
+        }
+
+        /* top-level pointers are handled inline */
+        if (1 < level)
+            write_pointer_tfs(file, type, tfsoff);
+
+        retmask |= 1;
+    }
+    else if (!is_base_type(type->type))
+        error("write_embedded_types: unknown embedded type for %s (0x%x)\n",
+              name, type->type);
+
+    return retmask;
 }
 
 static void clear_all_tfsoffs(const ifref_list_t *ifaces)
