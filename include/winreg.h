@@ -154,6 +154,9 @@ LONG        WINAPI RegCreateKeyW(HKEY,LPCWSTR,PHKEY);
 LONG        WINAPI RegDeleteKeyA(HKEY,LPCSTR);
 LONG        WINAPI RegDeleteKeyW(HKEY,LPCWSTR);
 #define     RegDeleteKey WINELIB_NAME_AW(RegDeleteKey)
+LONG        WINAPI RegDeleteTreeA(HKEY,LPCSTR);
+LONG        WINAPI RegDeleteTreeW(HKEY,LPCWSTR);
+#define     RegDeleteTree WINELIB_NAME_AW(RegDeleteTree)
 LONG        WINAPI RegDeleteValueA(HKEY,LPCSTR);
 LONG        WINAPI RegDeleteValueW(HKEY,LPCWSTR);
 #define     RegDeleteValue WINELIB_NAME_AW(RegDeleteValue)
