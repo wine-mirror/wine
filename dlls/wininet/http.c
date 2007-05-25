@@ -2224,8 +2224,8 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     LPWININETAPPINFOW hIC = NULL;
     BOOL r;
 
-    TRACE("%p, %p (%s), %i, %p, %i)\n", hHttpRequest,
-            lpszHeaders, debugstr_w(lpszHeaders), dwHeaderLength, lpOptional, dwOptionalLength);
+    TRACE("%p, %s, %i, %p, %i)\n", hHttpRequest,
+            debugstr_wn(lpszHeaders, dwHeaderLength), dwHeaderLength, lpOptional, dwOptionalLength);
 
     lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hHttpRequest );
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
@@ -2260,7 +2260,10 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
         req = &workRequest.u.HttpSendRequestW;
         if (lpszHeaders)
-            req->lpszHeader = WININET_strdupW(lpszHeaders);
+        {
+            req->lpszHeader = HeapAlloc(GetProcessHeap(), 0, dwHeaderLength * sizeof(WCHAR));
+            memcpy(req->lpszHeader, lpszHeaders, dwHeaderLength * sizeof(WCHAR));
+        }
         else
             req->lpszHeader = 0;
         req->dwHeaderLength = dwHeaderLength;
