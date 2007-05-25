@@ -31,7 +31,6 @@
 #endif
 #include "psdrv.h"
 #include "wine/debug.h"
-#include "winspool.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 

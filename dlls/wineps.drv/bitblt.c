@@ -20,7 +20,6 @@
 
 #include "psdrv.h"
 #include "wine/debug.h"
-#include "winbase.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 

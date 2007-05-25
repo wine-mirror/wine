@@ -30,9 +30,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winerror.h"
 #include "wingdi.h"
-#include "winspool.h"
 
 #include "psdrv.h"
 #include "wine/debug.h"

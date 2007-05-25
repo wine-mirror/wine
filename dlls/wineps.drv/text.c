@@ -23,10 +23,8 @@
 #include <math.h>
 
 #include "windef.h"
-#include "winbase.h"
 #include "wingdi.h"
 #include "psdrv.h"
-#include "winspool.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
