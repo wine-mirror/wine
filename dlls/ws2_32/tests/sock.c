@@ -146,6 +146,57 @@ static int        client_id;
 
 /**************** General utility functions ***************/
 
+static int tcp_socketpair(SOCKET *src, SOCKET *dst)
+{
+    SOCKET server = INVALID_SOCKET;
+    struct sockaddr_in addr;
+    int len;
+    int ret;
+
+    *src = INVALID_SOCKET;
+    *dst = INVALID_SOCKET;
+
+    *src = socket(AF_INET, SOCK_STREAM, 0);
+    if (*src == INVALID_SOCKET)
+        goto end;
+
+    server = socket(AF_INET, SOCK_STREAM, 0);
+    if (server == INVALID_SOCKET)
+        goto end;
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    ret = bind(server, (struct sockaddr*)&addr, sizeof(addr));
+    if (ret != 0)
+        goto end;
+
+    len = sizeof(addr);
+    ret = getsockname(server, (struct sockaddr*)&addr, &len);
+    if (ret != 0)
+        goto end;
+
+    ret = listen(server, 1);
+    if (ret != 0)
+        goto end;
+
+    ret = connect(*src, (struct sockaddr*)&addr, sizeof(addr));
+    if (ret != 0)
+        goto end;
+
+    len = sizeof(addr);
+    *dst = accept(server, (struct sockaddr*)&addr, &len);
+
+end:
+    if (server != INVALID_SOCKET)
+        closesocket(server);
+    if (*src != INVALID_SOCKET && *dst != INVALID_SOCKET)
+        return 0;
+    closesocket(*src);
+    closesocket(*dst);
+    return -1;
+}
+
 static void set_so_opentype ( BOOL overlapped )
 {
     int optval = !overlapped, newval, len = sizeof (int);
@@ -1635,68 +1686,17 @@ static DWORD WINAPI drain_socket_thread(LPVOID arg)
 static void test_send(void)
 {
     SOCKET src = INVALID_SOCKET;
-    SOCKET server = INVALID_SOCKET;
     SOCKET dst = INVALID_SOCKET;
     HANDLE hThread = NULL;
-    struct sockaddr_in addr;
-    int len;
     const int buflen = 1024*1024;
     char *buffer = NULL;
     int ret;
     DWORD id;
 
-    src = socket(AF_INET, SOCK_STREAM, 0);
-    if (src == INVALID_SOCKET)
+    if (tcp_socketpair(&src, &dst) != 0)
     {
-        ok(0, "socket failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    server = socket(AF_INET, SOCK_STREAM, 0);
-    if (server == INVALID_SOCKET)
-    {
-        ok(0, "socket failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    ret = bind(server, (struct sockaddr*)&addr, sizeof(addr));
-    if (ret != 0)
-    {
-        ok(0, "bind failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    len = sizeof(addr);
-    ret = getsockname(server, (struct sockaddr*)&addr, &len);
-    if (ret != 0)
-    {
-        ok(0, "getsockname failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    ret = listen(server, 1);
-    if (ret != 0)
-    {
-        ok(0, "listen failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    ret = connect(src, (struct sockaddr*)&addr, sizeof(addr));
-    if (ret != 0)
-    {
-        ok(0, "connect failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    len = sizeof(addr);
-    dst = accept(server, (struct sockaddr*)&addr, &len);
-    if (dst == INVALID_SOCKET)
-    {
-        ok(0, "accept failed, error %d\n", WSAGetLastError());
-        goto end;
+        ok(0, "creating socket pair failed, skipping test\n");
+        return;
     }
 
     hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
@@ -1722,8 +1722,6 @@ static void test_send(void)
 end:
     if (src != INVALID_SOCKET)
         closesocket(src);
-    if (server != INVALID_SOCKET)
-        closesocket(server);
     if (dst != INVALID_SOCKET)
         closesocket(dst);
     if (hThread != NULL)
@@ -1734,68 +1732,18 @@ end:
 static void test_write_events(void)
 {
     SOCKET src = INVALID_SOCKET;
-    SOCKET server = INVALID_SOCKET;
     SOCKET dst = INVALID_SOCKET;
     HANDLE hThread = NULL;
     HANDLE hEvent = INVALID_HANDLE_VALUE;
-    struct sockaddr_in addr;
     int len;
     u_long one = 1;
     int ret;
     DWORD id;
 
-    src = socket(AF_INET, SOCK_STREAM, 0);
-    if (src == INVALID_SOCKET)
+    if (tcp_socketpair(&src, &dst) != 0)
     {
-        ok(0, "socket failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    server = socket(AF_INET, SOCK_STREAM, 0);
-    if (server == INVALID_SOCKET)
-    {
-        ok(0, "socket failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    ret = bind(server, (struct sockaddr*)&addr, sizeof(addr));
-    if (ret != 0)
-    {
-        ok(0, "bind failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    len = sizeof(addr);
-    ret = getsockname(server, (struct sockaddr*)&addr, &len);
-    if (ret != 0)
-    {
-        ok(0, "getsockname failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    ret = listen(server, 1);
-    if (ret != 0)
-    {
-        ok(0, "listen failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    ret = connect(src, (struct sockaddr*)&addr, sizeof(addr));
-    if (ret != 0)
-    {
-        ok(0, "connect failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    len = sizeof(addr);
-    dst = accept(server, (struct sockaddr*)&addr, &len);
-    if (dst == INVALID_SOCKET)
-    {
-        ok(0, "accept failed, error %d\n", WSAGetLastError());
-        goto end;
+        ok(0, "creating socket pair failed, skipping test\n");
+        return;
     }
 
     hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
@@ -1863,8 +1811,6 @@ static void test_write_events(void)
 end:
     if (src != INVALID_SOCKET)
         closesocket(src);
-    if (server != INVALID_SOCKET)
-        closesocket(server);
     if (dst != INVALID_SOCKET)
         closesocket(dst);
     if (hThread != NULL)
