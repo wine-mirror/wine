@@ -1,7 +1,7 @@
 /*
  * Regedit resources
  *
- * Copyright 2003,2004 José Manuel Ferrer Ortiz
+ * Copyright 2003,2004,2007 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -61,12 +61,13 @@ BEGIN
             MENUITEM "Valor de c&adena",            ID_EDIT_NEW_STRINGVALUE
             MENUITEM "Valor &binario",              ID_EDIT_NEW_BINARYVALUE
             MENUITEM "Valor &DWORD",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "Valor de cadena &múltiple",   ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Eliminar\tDel",              ID_EDIT_DELETE
         MENUITEM "&Renombrar\tF2",              ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Copiar valor de la clave",   ID_EDIT_COPYKEYNAME
+        MENUITEM "&Copiar nombre de la clave",  ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Buscar\tCtrl+F",             ID_EDIT_FIND, GRAYED
         MENUITEM "Buscar &siguiente\tF3",       ID_EDIT_FINDNEXT, GRAYED
@@ -81,14 +82,14 @@ BEGIN
     END
     POPUP "&Favoritos"
     BEGIN
-        MENUITEM "&Añadir a Favoritos",         ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "&Eliminar Favorito",          ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "&Añadir a favoritos",         ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Eliminar favorito",          ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "A&yuda"
     BEGIN
         MENUITEM "&Temas de ayuda\tF1",         ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
-        MENUITEM "&Acerca del Editor de registro", ID_HELP_ABOUT
+        MENUITEM "&Acerca del Editor del registro", ID_HELP_ABOUT
     END
 END
 
@@ -104,27 +105,79 @@ BEGIN
   END
   POPUP ""
   BEGIN
-	POPUP "&Nuevo"
-	BEGIN
-		MENUITEM "&Clave",              ID_EDIT_NEW_KEY
-		MENUITEM SEPARATOR
-		MENUITEM "Valor de &cadena",    ID_EDIT_NEW_STRINGVALUE
-		MENUITEM "Valor &binario",      ID_EDIT_NEW_BINARYVALUE
-		MENUITEM "Valor &DWORD",        ID_EDIT_NEW_DWORDVALUE
-	END
+        POPUP "&Nuevo"
+        BEGIN
+            MENUITEM "&Clave",              ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "Valor de &cadena",    ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "Valor &binario",      ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "Valor &DWORD",        ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "Valor de cadena &múltiple", ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
         MENUITEM SEPARATOR
         MENUITEM "&Eliminar\tDel",              ID_EDIT_DELETE
         MENUITEM "&Renombrar\tF2",              ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Copiar valor de la clave",   ID_EDIT_COPYKEYNAME
+        MENUITEM "&Copiar nombre de la clave",  ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Buscar\tCtrl+F",             ID_EDIT_FIND, GRAYED
   END
 END
 
+
 /*
  * Dialog
  */
+
+IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "Exportar registro", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "&Todo", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "&Rama seleccionada:", IDC_EXPORT_SELECTED, 12, 30, 70, 12
+    EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
+END
+
+IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Buscar"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Buscar:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "Buscar en:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "Claves", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "Nombre de valores", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Contenido de valores", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Sólo cadena completa", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "Buscar",IDOK,175,5,30,11,WS_GROUP
+    PUSHBUTTON      "Cerrar",IDCANCEL,175,22,30,11, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Añadir favorito"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nombre:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP |
+     ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "Aceptar",IDOK,140,40,30,11,WS_GROUP
+    PUSHBUTTON      "Cancelar",IDCANCEL,175,40,30,11, WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Eliminar favorito"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nombre:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "Aceptar",IDOK,140,73,30,11,WS_GROUP
+    PUSHBUTTON      "Cancelar",IDCANCEL,175,73,30,11, WS_GROUP
+END
 
 IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
@@ -141,11 +194,11 @@ END
 
 IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "Editar cadena"
+CAPTION "Editar DWORD"
 FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Nombre del valor:",IDC_STATIC,5,5,119,8
-    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
     LTEXT           "Datos del valor:",IDC_STATIC,5,30,90,8
     EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
     GROUPBOX        "Base", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
@@ -153,6 +206,33 @@ BEGIN
     AUTORADIOBUTTON "Decimal", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
     DEFPUSHBUTTON   "Aceptar",IDOK,140,80,30,11,WS_GROUP
     PUSHBUTTON   "Cancelar",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Editar binario"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nombre del valor:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP |
+     ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Datos del valor:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,4,40,160,40
+    DEFPUSHBUTTON   "Aceptar",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Cancelar",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Editar cadena múltiple"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nombre del valor:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Datos del valor:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "Aceptar",IDOK,140,160,30,11,WS_GROUP
+    PUSHBUTTON   "Cancelar",IDCANCEL,175,160,30,11,WS_GROUP
 END
 
 /*
@@ -190,6 +270,7 @@ BEGIN
     ID_EDIT_NEW_STRINGVALUE "Añade un nuevo valor de cadena"
     ID_EDIT_NEW_BINARYVALUE "Añade un nuevo valor binario"
     ID_EDIT_NEW_DWORDVALUE  "Añade un nuevo valor de doble palabra"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Añade un nuevo valor de cadena múltiple"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importa un archivo de texto al registro"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Exporta todo o parte del registro a un archivo de texto"
@@ -198,7 +279,7 @@ BEGIN
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
                             "Se desconecta del registro de un ordenador remoto"
     ID_REGISTRY_PRINT       "Imprime todo o parte del registro"
-/*    ID_HELP_HELPTOPICS      "Opens registry editor help" */
+/*    ID_HELP_HELPTOPICS      "Abre la ayuda del Editor del registro" */
     ID_HELP_ABOUT           "Muestra información del programa, número de versión y derechos de autor"
 END
 
@@ -228,6 +309,23 @@ BEGIN
     IDS_DELETE_BOX_TEXT     "¿Seguro que desea eliminar el valor '%s'?"
     IDS_NEWKEY              "Nueva clave #%d"
     IDS_NEWVALUE            "Nuevo valor #%d"
+    IDS_NOTFOUND            "Cadena de búsqueda '%s' no encontrada"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Importar archivo de registro"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Exportar arvhivo de registro"
+    IDS_FILEDIALOG_FILTER         "Archivos de registro\0*.reg\0Archivos de registro de Win9x/NT4 (REGEDIT4)\0*.reg\0Todos los archivos (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+ BEGIN
+    IDS_REGISTRY_ROOT_NAME           "Mi PC"
+    IDS_REGISTRY_DEFAULT_VALUE       "(Por defecto)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(valor no puesto)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(no se puede mostrar valor)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(desconocido %d)"
 END
 
 /*****************************************************************/

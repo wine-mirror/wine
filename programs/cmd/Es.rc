@@ -2,7 +2,7 @@
  * Wine command prompt
  * Spanish Language Support
  *
- * Copyright (C) 2004 José Manuel Ferrer Ortiz
+ * Copyright (C) 2004, 2007 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -212,7 +212,14 @@ La bandera de verificación no tiene funcionalidad en Wine.\n"
 
   WCMD_VOL,    "Ayuda sobre VOL\n"
 
-  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+  WCMD_PUSHD,
+"PUSHD <nombre de directorio> almacena el directorio actual a una\n\
+pila, y luego cambia el directorio actual al proporcionado.\n"
+
+  WCMD_POPD,   "POPD cambia el directorio actual al último almacenado con\n\
+PUSHD.\n"
+
+  WCMD_MORE,   "MORE muestra la salida de archivos o entrada entubada por páginas.\n"
 
   WCMD_EXIT,
 "EXIT termina la sesión de comandos actual y regresa al sistema\n\
@@ -231,10 +238,12 @@ DIR\t\tListar el contenido de un directorio\n\
 ECHO\t\tCopiar texto directamente a la salida de consola\n\
 HELP\t\tMostrar detalles breves de ayuda sobre un tema\n\
 MD (MKDIR)\tCrear un subdirectorio\n\
-MORE\t\tDisplay output in pages\n\
+MORE\t\tMostrar la salida por páginas\n\
 MOVE\t\tMover un archivo, conjunto de archivos o árbol de directorio\n\
 PATH\t\tAjustar o cambiar la ruta de búsqueda\n\
+POPD\t\tRestaurar el directorio al último almacenado con PUSHD\n\
 PROMPT\t\tCambiar el prompt de comandos\n\
+PUSHD\t\tCambiar a un nuevo directorio, almacenando el actual\n\
 REN (RENAME)\tRenombrar un archivo\n\
 RD (RMDIR)\tEliminar un subdirectorio\n\
 SET\t\tAjustar o mostrar variables de entorno\n\
@@ -246,11 +255,11 @@ VOL\t\tMostrar la etiqueta de volumen de un dispositivo de disco\n\
 EXIT\t\tConcluir CMD\n\n\
 Introduzca HELP <comando> para más información sobre cualquiera de los comandos\nde arriba\n"
 
-  WCMD_CONFIRM, "Are you sure"
-  WCMD_YES, "Y"
+  WCMD_CONFIRM, "Está seguro"
+  WCMD_YES, "S"
   WCMD_NO, "N"
-  WCMD_NOASSOC, "File association missing for extension %s\n"
-  WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
-  WCMD_OVERWRITE, "Overwrite"
-  WCMD_MORESTR, "More..."
+  WCMD_NOASSOC, "Falta una asociación de archivo para la extensión %s\n"
+  WCMD_NOFTYPE, "Ningún comando de apertura asociado con el tipo de archivo '%s'\n"
+  WCMD_OVERWRITE, "Sobreescribir"
+  WCMD_MORESTR, "Más..."
 }
