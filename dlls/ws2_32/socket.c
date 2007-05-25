@@ -1293,7 +1293,7 @@ static int WS2_send( int fd, struct iovec* iov, int count,
 {
     struct msghdr hdr;
     int n;
-    TRACE( "fd %d, iovec %p, count %d addr %s, len %d, flags %x\n",
+    TRACE( "fd %d, iovec %p, count %d, addr %s, len %d, flags %x\n",
            fd, iov, count, debugstr_sockaddr(to), tolen, dwFlags);
 
     hdr.msg_name = NULL;
