@@ -132,6 +132,23 @@ static int is_union(unsigned char type)
     }
 }
 
+static void update_tfsoff(type_t *type, unsigned int offset, FILE *file)
+{
+    type->typestring_offset = offset;
+    if (file) type->tfswrite = FALSE;
+}
+
+static void guard_rec(type_t *type)
+{
+    /* types that contain references to themselves (like a linked list),
+       need to be shielded from infinite recursion when writing embedded
+       types  */
+    if (type->typestring_offset)
+        type->tfswrite = FALSE;
+    else
+        type->typestring_offset = 1;
+}
+
 static int is_embedded_complex(const type_t *type)
 {
     return is_struct(type->type) || is_union(type->type);
@@ -789,7 +806,7 @@ static size_t write_pointer_tfs(FILE *file, type_t *type, unsigned int *typestri
     unsigned int offset = *typestring_offset;
 
     print_file(file, 0, "/* %d */\n", offset);
-    type->typestring_offset = offset;
+    update_tfsoff(type, offset, file);
 
     if (type->ref->typestring_offset)
         *typestring_offset += write_nonsimple_pointer(file, type, offset);
@@ -799,9 +816,9 @@ static size_t write_pointer_tfs(FILE *file, type_t *type, unsigned int *typestri
     return offset;
 }
 
-static int has_known_tfs(const type_t *type)
+static int processed(const type_t *type)
 {
-    return type->typestring_offset || is_base_type(type->type);
+    return type->typestring_offset && !type->tfswrite;
 }
 
 static size_t write_pointer_description(FILE *file, const attr_list_t *attrs,
@@ -827,7 +844,7 @@ static size_t write_pointer_description(FILE *file, const attr_list_t *attrs,
         print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", mem_offset, mem_offset);
         *typestring_offset += 6;
 
-        if (has_known_tfs(type->ref))
+        if (processed(type->ref) || is_base_type(type->ref->type))
             write_pointer_tfs(file, type, typestring_offset);
         else
             error("write_pointer_description: type format string unknown\n");
@@ -1224,6 +1241,8 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
     int has_pointers;
     unsigned int align = 0;
 
+    guard_rec(type);
+
     switch (type->type)
     {
     case RPC_FC_STRUCT:
@@ -1238,7 +1257,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
             write_embedded_types(file, NULL, type, name, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
-        type->typestring_offset = start_offset;
+        update_tfsoff(type, start_offset, file);
         if (type->type == RPC_FC_STRUCT)
             WRITE_FCTYPE(file, FC_STRUCT, *typestring_offset);
         else
@@ -1281,7 +1300,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
             write_embedded_types(file, NULL, type, name, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
-        type->typestring_offset = start_offset;
+        update_tfsoff(type, start_offset, file);
         if (type->type == RPC_FC_CSTRUCT)
             WRITE_FCTYPE(file, FC_CSTRUCT, *typestring_offset);
         else
@@ -1334,7 +1353,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
                                             typestring_offset);
 
         start_offset = *typestring_offset;
-        type->typestring_offset = start_offset;
+        update_tfsoff(type, start_offset, file);
         WRITE_FCTYPE(file, FC_CVSTRUCT, *typestring_offset);
         /* alignment */
         print_file(file, 2, "0x%02x,\n", align - 1);
@@ -1371,6 +1390,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         write_embedded_types(file, NULL, type, name, NULL, 0, typestring_offset);
 
         start_offset = *typestring_offset;
+        update_tfsoff(type, start_offset, file);
         print_file(file, 0, "/* %d */\n", start_offset);
         print_file(file, 2, "0x%x,\t/* %s */\n", type->type, string_of_type(type->type));
         print_file(file, 2, "0x%x,\t/* %d */\n", align - 1, align - 1);
@@ -1457,6 +1477,8 @@ static size_t write_union_tfs(FILE *file, type_t *type, const char *name,
     short nodeftype = 0xffff;
     var_t *f;
 
+    guard_rec(type);
+
     /* use a level of 1 so pointers always get written */
     write_embedded_types(file, NULL, type, name, NULL, 1, tfsoff);
 
@@ -1468,7 +1490,7 @@ static size_t write_union_tfs(FILE *file, type_t *type, const char *name,
     }
 
     start_offset = *tfsoff;
-    type->typestring_offset = start_offset;
+    update_tfsoff(type, start_offset, file);
     print_file(file, 0, "/* %d */\n", start_offset);
     print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", size, size);
     print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", nbranch, nbranch);
@@ -1669,11 +1691,11 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
                            offset, typeformat_offset);
 }
 
-static void clear_tfsoff(type_t *type)
+static void set_tfswrite(type_t *type, int val)
 {
-    for (;;)
+    while (type->tfswrite != val)
     {
-        type->typestring_offset = 0;
+        type->tfswrite = val;
 
         if (type->kind == TKIND_ALIAS)
             type = type->orig;
@@ -1685,7 +1707,7 @@ static void clear_tfsoff(type_t *type)
             {
                 var_t *v;
                 LIST_FOR_EACH_ENTRY( v, type->fields, var_t, entry )
-                    clear_tfsoff(v->type);
+                    set_tfswrite(v->type, val);
             }
 
             return;
@@ -1707,7 +1729,8 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
         unsigned int align = 0;
         type_t *ft = f->type;
 
-        if (ft->type == RPC_FC_NON_ENCAPSULATED_UNION)
+        if (!ft) continue;
+        else if (ft->type == RPC_FC_NON_ENCAPSULATED_UNION)
         {
             expr_t *swexp = get_attrp(f->attrs, ATTR_SWITCHIS);
             const char *swname;
@@ -1722,7 +1745,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
                 error("%s: only identifiers are supported for switch_is at this time\n",
                       f->name);
 
-            if (ft->typestring_offset == 0)
+            if (!processed(ft))
                 write_union_tfs(file, ft, f->name, tfsoff);
 
             swname = swexp->u.sval;
@@ -1760,7 +1783,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     {
         type_t *ref = type->ref;
 
-        if (!has_known_tfs(ref))
+        if (!processed(ref) && !is_base_type(ref->type))
         {
             if (is_ptr(ref))
             {
@@ -1791,7 +1814,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     return retmask;
 }
 
-static void clear_all_tfsoffs(const ifref_list_t *ifaces)
+static void set_all_tfswrite(const ifref_list_t *ifaces, int val)
 {
     const ifref_t * iface;
     const func_t *func;
@@ -1803,7 +1826,7 @@ static void clear_all_tfsoffs(const ifref_list_t *ifaces)
                 LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
                     if (func->args)
                         LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-                            clear_tfsoff(var->type);
+                            set_tfswrite(var->type, val);
 }
 
 static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, int for_objects)
@@ -1827,9 +1850,12 @@ static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, int for_object
                 current_func = func;
                 if (func->args)
                     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-                        var->type->typestring_offset
-                            = write_typeformatstring_var(file, 2, func, var->type,
-                                                         var, &typeformat_offset);
+                        update_tfsoff(
+                            var->type,
+                            write_typeformatstring_var(
+                                file, 2, func, var->type, var,
+                                &typeformat_offset),
+                            file);
             }
         }
     }
@@ -1850,7 +1876,7 @@ void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
     indent++;
     print_file(file, indent, "NdrFcShort(0x0),\n");
 
-    clear_all_tfsoffs(ifaces);
+    set_all_tfswrite(ifaces, TRUE);
     process_tfs(file, ifaces, for_objects);
 
     print_file(file, indent, "0x0\n");
@@ -2417,6 +2443,7 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
 
 size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
 {
+    set_all_tfswrite(ifaces, FALSE);
     return process_tfs(NULL, ifaces, for_objects);
 }
 

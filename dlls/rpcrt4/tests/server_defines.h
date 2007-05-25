@@ -23,3 +23,7 @@
 #define SUN_F1 -2
 #define SUN_F2 7
 #define SUN_PI 399
+
+/* test_list_t case values */
+#define TL_NULL 0
+#define TL_LIST 1

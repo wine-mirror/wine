@@ -1206,6 +1206,7 @@ static type_t *make_type(unsigned char type, type_t *ref)
   t->defined = FALSE;
   t->written = FALSE;
   t->user_types_registered = FALSE;
+  t->tfswrite = FALSE;
   t->typelib_idx = -1;
   return t;
 }

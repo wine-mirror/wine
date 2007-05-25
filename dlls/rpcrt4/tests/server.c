@@ -154,6 +154,14 @@ s_square_sun(sun_t *sun)
   }
 }
 
+int
+s_test_list_length(test_list_t *list)
+{
+  return (list->t == TL_LIST
+          ? 1 + s_test_list_length(list->u.tail)
+          : 0);
+}
+
 void
 s_stop(void)
 {
@@ -292,6 +300,41 @@ union_tests(void)
   ok(square_sun(&sun) == 121.0, "RPC square_sun\n");
 }
 
+static test_list_t *
+null_list(void)
+{
+  test_list_t *n = HeapAlloc(GetProcessHeap(), 0, sizeof *n);
+  n->t = TL_NULL;
+  return n;
+}
+
+static test_list_t *
+make_list(test_list_t *tail)
+{
+  test_list_t *n = HeapAlloc(GetProcessHeap(), 0, sizeof *n);
+  n->t = TL_LIST;
+  n->u.tail = tail;
+  return n;
+}
+
+static void
+free_list(test_list_t *list)
+{
+  if (list->t == TL_LIST)
+    free_list(list->u.tail);
+  HeapFree(GetProcessHeap(), 0, list);
+}
+
+static void
+pointer_tests(void)
+{
+  test_list_t *list = make_list(make_list(make_list(null_list())));
+
+  ok(test_list_length(list) == 3, "RPC test_list_length\n");
+
+  free_list(list);
+}
+
 static void
 client(const char *test)
 {
@@ -307,6 +350,7 @@ client(const char *test)
 
     basic_tests();
     union_tests();
+    pointer_tests();
 
     ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
@@ -323,6 +367,7 @@ client(const char *test)
 
     basic_tests();
     union_tests();
+    pointer_tests();
     stop();
 
     ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");

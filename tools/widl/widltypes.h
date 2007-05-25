@@ -214,6 +214,7 @@ struct _type_t {
   unsigned int defined : 1;
   unsigned int written : 1;
   unsigned int user_types_registered : 1;
+  unsigned int tfswrite : 1;   /* if the type needs to be written to the TFS */
   int sign : 2;
 };
 

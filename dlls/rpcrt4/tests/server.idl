@@ -96,5 +96,17 @@ interface IServer
 
   int sum_sp(sp_t *sp);
   double square_sun(sun_t *sun);
+
+  typedef struct test_list
+  {
+    int t;
+    [switch_is(t)] union
+    {
+      [case(TL_NULL)] int x;  /* end of list */
+      [case(TL_LIST)] struct test_list *tail;
+    } u;
+  } test_list_t;
+
+  int test_list_length(test_list_t *ls);
   void stop(void);
 }
