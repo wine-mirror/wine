@@ -1062,6 +1062,11 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
        then the default texture will kick in until replaced by a SetTexture call     */
     ENTER_GL();
 
+    if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+        /* The dummy texture does not have client storage backing */
+        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
+    }
     for (i = 0; i < GL_LIMITS(textures); i++) {
         GLubyte white = 255;
 
@@ -1091,6 +1096,11 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 1, 1, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, &white);
         checkGLcall("glTexImage2D");
+    }
+    if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+        /* Reenable because if supported it is enabled by default */
+        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
     }
 
     LEAVE_GL();
