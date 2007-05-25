@@ -440,12 +440,6 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue 
         if (!pAuthInfo)
             return FALSE;
 
-        pAuthInfo->scheme = WININET_strdupW(pszAuthValue);
-        if (!pAuthInfo->scheme)
-        {
-            HeapFree(GetProcessHeap(), 0, pAuthInfo);
-            return FALSE;
-        }
         SecInvalidateHandle(&pAuthInfo->cred);
         SecInvalidateHandle(&pAuthInfo->ctx);
         memset(&pAuthInfo->exp, 0, sizeof(pAuthInfo->exp));
@@ -454,11 +448,28 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue 
         pAuthInfo->auth_data_len = 0;
         pAuthInfo->finished = FALSE;
 
-        if (!is_basic_auth_value(pszAuthValue))
+        if (is_basic_auth_value(pszAuthValue))
+        {
+            static const WCHAR szBasic[] = {'B','a','s','i','c',0};
+            pAuthInfo->scheme = WININET_strdupW(szBasic);
+            if (!pAuthInfo->scheme)
+            {
+                HeapFree(GetProcessHeap(), 0, pAuthInfo);
+                return FALSE;
+            }
+        }
+        else
         {
             SEC_WINNT_AUTH_IDENTITY_W nt_auth_identity;
             WCHAR *user = strchrW(domain_and_username, '\\');
             WCHAR *domain = domain_and_username;
+
+            pAuthInfo->scheme = WININET_strdupW(pszAuthValue);
+            if (!pAuthInfo->scheme)
+            {
+                HeapFree(GetProcessHeap(), 0, pAuthInfo);
+                return FALSE;
+            }
 
             if (user) user++;
             else
