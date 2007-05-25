@@ -1610,8 +1610,8 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
         if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
             glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE);
         } else {
-            glDisable(GL_TEXTURE_2D);
-            checkGLcall("glDisable(GL_TEXTURE_2D)");
+            glEnable(GL_TEXTURE_2D);
+            checkGLcall("glEnable(GL_TEXTURE_2D)");
             glDisable(GL_TEXTURE_3D);
             checkGLcall("glDisable(GL_TEXTURE_3D)");
             if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
