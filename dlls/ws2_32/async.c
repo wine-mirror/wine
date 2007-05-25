@@ -104,7 +104,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winsock2.h"
-#include "mswsock.h"
 #include "ws2spi.h"
 #include "wownt32.h"
 #include "wine/winsock16.h"

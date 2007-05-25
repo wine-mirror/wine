@@ -40,7 +40,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winnls.h"
 #include "wtypes.h"
 #include "nspapi.h"
 #include "winsock2.h"
