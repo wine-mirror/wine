@@ -76,7 +76,9 @@ static ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
             if (This->parentDevice) IUnknown_Release(This->parentDevice);
             /* Implicit surfaces are destroyed with the device, not if refcount reaches 0. */
             if (!This->isImplicit) {
+                EnterCriticalSection(&d3d8_cs);
                 IWineD3DSurface_Release(This->wineD3DSurface);
+                LeaveCriticalSection(&d3d8_cs);
                 HeapFree(GetProcessHeap(), 0, This);
             }
         }
@@ -88,25 +90,46 @@ static ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
 /* IDirect3DSurface8 IDirect3DResource8 Interface follow: */
 static HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(LPDIRECT3DSURFACE8 iface, IDirect3DDevice8 **ppDevice) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
-    return IDirect3DResource8Impl_GetDevice((LPDIRECT3DRESOURCE8) This, ppDevice);
+    HRESULT hr;
+    TRACE("(%p)->(%p)\n", This, ppDevice);
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IDirect3DResource8Impl_GetDevice((LPDIRECT3DRESOURCE8) This, ppDevice);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DSurface8Impl_SetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, CONST void *pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DSurface_SetPrivateData(This->wineD3DSurface, refguid, pData, SizeOfData, Flags);
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DSurface_SetPrivateData(This->wineD3DSurface, refguid, pData, SizeOfData, Flags);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DSurface8Impl_GetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, void *pData, DWORD *pSizeOfData) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DSurface_GetPrivateData(This->wineD3DSurface, refguid, pData, pSizeOfData);
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DSurface_GetPrivateData(This->wineD3DSurface, refguid, pData, pSizeOfData);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DSurface8Impl_FreePrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DSurface_FreePrivateData(This->wineD3DSurface, refguid);
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DSurface_FreePrivateData(This->wineD3DSurface, refguid);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 /* IDirect3DSurface8 Interface follow: */
@@ -127,6 +150,7 @@ static HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 ifac
 static HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFACE_DESC *pDesc) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     WINED3DSURFACE_DESC    wined3ddesc;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
     /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
@@ -140,14 +164,19 @@ static HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3
     wined3ddesc.Width               = &pDesc->Width;
     wined3ddesc.Height              = &pDesc->Height;
 
-    return IWineD3DSurface_GetDesc(This->wineD3DSurface, &wined3ddesc);
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DSurface_GetDesc(This->wineD3DSurface, &wined3ddesc);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKED_RECT *pLockedRect, CONST RECT *pRect, DWORD Flags) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
     TRACE("(%p) calling IWineD3DSurface_LockRect %p %p %p %d\n", This, This->wineD3DSurface, pLockedRect, pRect, Flags);
 
+    EnterCriticalSection(&d3d8_cs);
     if (pRect) {
         D3DSURFACE_DESC desc;
         IDirect3DSurface8_GetDesc(iface, &desc);
@@ -159,17 +188,25 @@ static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D
                 || (pRect->right > desc.Width)
                 || (pRect->bottom > desc.Height)) {
             WARN("Trying to lock an invalid rectangle, returning D3DERR_INVALIDCALL\n");
+            LeaveCriticalSection(&d3d8_cs);
             return D3DERR_INVALIDCALL;
         }
     }
 
-    return IWineD3DSurface_LockRect(This->wineD3DSurface, (WINED3DLOCKED_RECT *) pLockedRect, pRect, Flags);
+    hr = IWineD3DSurface_LockRect(This->wineD3DSurface, (WINED3DLOCKED_RECT *) pLockedRect, pRect, Flags);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DSurface_UnlockRect(This->wineD3DSurface);
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DSurface_UnlockRect(This->wineD3DSurface);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 const IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl =
