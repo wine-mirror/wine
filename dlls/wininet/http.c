@@ -426,6 +426,7 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue 
     struct HttpAuthInfo *pAuthInfo = lpwhr->pAuthInfo;
     LPWSTR password = lpwhr->lpHttpSession->lpszPassword;
     LPWSTR domain_and_username = lpwhr->lpHttpSession->lpszUserName;
+    BOOL first = FALSE;
 
     TRACE("%s\n", debugstr_w(pszAuthValue));
 
@@ -435,6 +436,7 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue 
     {
         TimeStamp exp;
 
+        first = TRUE;
         pAuthInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*pAuthInfo));
         if (!pAuthInfo)
             return FALSE;
@@ -561,7 +563,8 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue 
         out_desc.cBuffers = 1;
         out_desc.pBuffers = &out;
 
-        sec_status = InitializeSecurityContextW(&pAuthInfo->cred, NULL, NULL,
+        sec_status = InitializeSecurityContextW(first ? &pAuthInfo->cred : NULL,
+                                                first ? NULL : &pAuthInfo->ctx, NULL,
                                                 context_req, 0, SECURITY_NETWORK_DREP,
                                                 in.pvBuffer ? &in_desc : NULL,
                                                 0, &pAuthInfo->ctx, &out_desc,
