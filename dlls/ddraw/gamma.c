@@ -141,6 +141,7 @@ IDirectDrawGammaControlImpl_GetGammaRamp(IDirectDrawGammaControl *iface,
         return DDERR_INVALIDPARAMS;
     }
 
+    EnterCriticalSection(&ddraw_cs);
     if(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
         /* Note: DDGAMMARAMP is compatible with WINED3DGAMMARAMP */
@@ -152,6 +153,7 @@ IDirectDrawGammaControlImpl_GetGammaRamp(IDirectDrawGammaControl *iface,
     {
         ERR("(%p) Unimplemented for non-primary surfaces\n", This);
     }
+    LeaveCriticalSection(&ddraw_cs);
 
     return DD_OK;
 }
@@ -185,6 +187,7 @@ IDirectDrawGammaControlImpl_SetGammaRamp(IDirectDrawGammaControl *iface,
         return DDERR_INVALIDPARAMS;
     }
 
+    EnterCriticalSection(&ddraw_cs);
     if(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
 
@@ -198,6 +201,7 @@ IDirectDrawGammaControlImpl_SetGammaRamp(IDirectDrawGammaControl *iface,
     {
         ERR("(%p) Unimplemented for non-primary surfaces\n", This);
     }
+    LeaveCriticalSection(&ddraw_cs);
 
     return DD_OK;
 }
