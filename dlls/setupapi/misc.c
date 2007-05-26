@@ -950,9 +950,12 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
                               DWORD buffer_size, PDWORD required_size, PWSTR *component )
 {
     BOOL ret = FALSE;
-    WCHAR target[MAX_PATH], *p;
+    WCHAR target[MAX_PATH], catalog_file[MAX_PATH], *p;
     static const WCHAR inf[] = { '\\','i','n','f','\\',0 };
+    static const WCHAR wszVersion[] = { 'V','e','r','s','i','o','n',0 };
+    static const WCHAR wszCatalogFile[] = { 'C','a','t','a','l','o','g','F','i','l','e',0 };
     DWORD size;
+    HINF hinf;
 
     TRACE("%s, %s, %d, %d, %p, %d, %p, %p\n", debugstr_w(source), debugstr_w(location),
           media_type, style, dest, buffer_size, required_size, component);
@@ -1035,6 +1038,25 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
             return FALSE;
         }
     }
+
+    hinf = SetupOpenInfFileW( source, NULL, INF_STYLE_WIN4, NULL );
+    if (hinf == INVALID_HANDLE_VALUE) return FALSE;
+
+    if (SetupGetLineTextW( NULL, hinf, wszVersion, wszCatalogFile, catalog_file,
+                           sizeof(catalog_file)/sizeof(catalog_file[0]), NULL ))
+    {
+        WCHAR source_cat[MAX_PATH];
+        strcpyW( source_cat, source );
+
+        p = strrchrW( source_cat, '\\' );
+        if (p) p++;
+        else p = source_cat;
+
+        strcpyW( p, catalog_file );
+
+        FIXME("install catalog file %s\n", debugstr_w( source_cat ));
+    }
+    SetupCloseInfFile( hinf );
 
     if (!(ret = CopyFileW( source, target, (style & SP_COPY_NOOVERWRITE) != 0 )))
         return ret;
