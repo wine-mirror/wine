@@ -56,7 +56,9 @@ static ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) 
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
+        EnterCriticalSection(&d3d8_cs);
         IWineD3DSwapChain_Destroy(This->wineD3DSwapChain, D3D8CB_DestroyRenderTarget);
+        LeaveCriticalSection(&d3d8_cs);
         if (This->parentDevice) IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -66,8 +68,13 @@ static ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) 
 /* IDirect3DSwapChain8 parts follow: */
 static HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion) {
     IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DSwapChain_Present(This->wineD3DSwapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, 0);
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DSwapChain_Present(This->wineD3DSwapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, 0);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface, UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8** ppBackBuffer) {
@@ -77,11 +84,13 @@ static HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8
 
     TRACE("(%p) Relay\n", This);
 
+    EnterCriticalSection(&d3d8_cs);
     hrc = IWineD3DSwapChain_GetBackBuffer(This->wineD3DSwapChain, iBackBuffer, (WINED3DBACKBUFFER_TYPE )Type, &mySurface);
     if (hrc == D3D_OK && NULL != mySurface) {
        IWineD3DSurface_GetParent(mySurface, (IUnknown **)ppBackBuffer);
        IWineD3DSurface_Release(mySurface);
     }
+    LeaveCriticalSection(&d3d8_cs);
     return hrc;
 }
 
