@@ -241,7 +241,7 @@ static	DWORD 	WAVE_ConvertTimeFormatToByte(WINE_MCIWAVE* wmw, DWORD val)
 /**************************************************************************
  * 			WAVE_mciReadFmt	                        [internal]
  */
-static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
+static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, const MMCKINFO* pckMainRIFF)
 {
     MMCKINFO	mmckInfo;
     long	r;
