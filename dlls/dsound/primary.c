@@ -397,7 +397,7 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 			}
 			if (device->state == STATE_PLAYING) device->state = STATE_STARTING;
 			else if (device->state == STATE_STOPPING) device->state = STATE_STOPPED;
-		} else {
+		} else if (FAILED(err)) {
 			WARN("IDsDriverBuffer_SetFormat failed\n");
 			goto done;
 		}
