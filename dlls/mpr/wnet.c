@@ -449,7 +449,7 @@ static PWNetEnumerator _createContextEnumerator(DWORD dwScope, DWORD dwType,
  * failure.
  */
 static DWORD _thunkNetResourceArrayWToA(const NETRESOURCEW *lpNetArrayIn,
- LPDWORD lpcCount, LPVOID lpBuffer, LPDWORD lpBufferSize)
+ const DWORD *lpcCount, LPVOID lpBuffer, const DWORD *lpBufferSize)
 {
     DWORD i, numToThunk, totalBytes, ret;
     LPSTR strNext;
@@ -534,7 +534,7 @@ static DWORD _thunkNetResourceArrayWToA(const NETRESOURCEW *lpNetArrayIn,
  * failure.
  */
 static DWORD _thunkNetResourceArrayAToW(const NETRESOURCEA *lpNetArrayIn,
- LPDWORD lpcCount, LPVOID lpBuffer, LPDWORD lpBufferSize)
+ const DWORD *lpcCount, LPVOID lpBuffer, const DWORD *lpBufferSize)
 {
     DWORD i, numToThunk, totalBytes, ret;
     LPWSTR strNext;
@@ -876,7 +876,7 @@ static DWORD _countProviderBytesW(PWNetProvider provider)
 }
 
 static DWORD _enumerateProvidersW(PWNetEnumerator enumerator, LPDWORD lpcCount,
- LPVOID lpBuffer, LPDWORD lpBufferSize)
+ LPVOID lpBuffer, const DWORD *lpBufferSize)
 {
     DWORD ret;
 
