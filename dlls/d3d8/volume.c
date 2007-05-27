@@ -72,7 +72,9 @@ static ULONG WINAPI IDirect3DVolume8Impl_Release(LPDIRECT3DVOLUME8 iface) {
         TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
         if (ref == 0) {
+            EnterCriticalSection(&d3d8_cs);
             IWineD3DVolume_Release(This->wineD3DVolume);
+            LeaveCriticalSection(&d3d8_cs);
             HeapFree(GetProcessHeap(), 0, This);
         }
 
@@ -85,28 +87,45 @@ static HRESULT WINAPI IDirect3DVolume8Impl_GetDevice(LPDIRECT3DVOLUME8 iface, ID
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     IWineD3DDevice       *myDevice = NULL;
 
+    EnterCriticalSection(&d3d8_cs);
     IWineD3DVolume_GetDevice(This->wineD3DVolume, &myDevice);
     IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
     IWineD3DDevice_Release(myDevice);
+    LeaveCriticalSection(&d3d8_cs);
     return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DVolume8Impl_SetPrivateData(LPDIRECT3DVOLUME8 iface, REFGUID refguid, CONST void *pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DVolume_SetPrivateData(This->wineD3DVolume, refguid, pData, SizeOfData, Flags);
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DVolume_SetPrivateData(This->wineD3DVolume, refguid, pData, SizeOfData, Flags);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DVolume8Impl_GetPrivateData(LPDIRECT3DVOLUME8 iface, REFGUID  refguid, void *pData, DWORD* pSizeOfData) {
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DVolume_GetPrivateData(This->wineD3DVolume, refguid, pData, pSizeOfData);
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DVolume_GetPrivateData(This->wineD3DVolume, refguid, pData, pSizeOfData);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DVolume8Impl_FreePrivateData(LPDIRECT3DVOLUME8 iface, REFGUID refguid) {
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DVolume_FreePrivateData(This->wineD3DVolume, refguid);
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DVolume_FreePrivateData(This->wineD3DVolume, refguid);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DVolume8Impl_GetContainer(LPDIRECT3DVOLUME8 iface, REFIID riid, void **ppContainer) {
@@ -130,6 +149,7 @@ static HRESULT WINAPI IDirect3DVolume8Impl_GetContainer(LPDIRECT3DVOLUME8 iface,
 
 static HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(LPDIRECT3DVOLUME8 iface, D3DVOLUME_DESC *pDesc) {
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
+    HRESULT hr;
     WINED3DVOLUME_DESC     wined3ddesc;
 
     TRACE("(%p) Relay\n", This);
@@ -144,19 +164,32 @@ static HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(LPDIRECT3DVOLUME8 iface, D3DV
     wined3ddesc.Height              = &pDesc->Height;
     wined3ddesc.Depth               = &pDesc->Depth;
 
-    return IWineD3DVolume_GetDesc(This->wineD3DVolume, &wined3ddesc);
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DVolume_GetDesc(This->wineD3DVolume, &wined3ddesc);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_BOX *pLockedVolume, CONST D3DBOX *pBox, DWORD Flags) {
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) relay %p %p %p %d\n", This, This->wineD3DVolume, pLockedVolume, pBox, Flags);
-    return IWineD3DVolume_LockBox(This->wineD3DVolume, (WINED3DLOCKED_BOX *) pLockedVolume, (CONST WINED3DBOX *) pBox, Flags);
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DVolume_LockBox(This->wineD3DVolume, (WINED3DLOCKED_BOX *) pLockedVolume, (CONST WINED3DBOX *) pBox, Flags);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(LPDIRECT3DVOLUME8 iface) {
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) relay %p\n", This, This->wineD3DVolume);
-    return IWineD3DVolume_UnlockBox(This->wineD3DVolume);
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DVolume_UnlockBox(This->wineD3DVolume);
+    LeaveCriticalSection(&d3d8_cs);
+    return hr;
 }
 
 static const IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl =
