@@ -174,7 +174,7 @@ static const struct exception
 static int got_exception;
 static BOOL have_vectored_api;
 
-static void run_exception_test(const void *handler, const void* context,
+static void run_exception_test(void *handler, const void* context,
                                const void *code, unsigned int code_size)
 {
     struct {
