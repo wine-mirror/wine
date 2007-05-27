@@ -32,6 +32,13 @@
 
 #include "wine/test.h"
 
+/* Helper macros to find the size of SECPKG_FUNCTION_TABLE */
+#define SECPKG_FUNCTION_TABLE_SIZE_1 offsetof(SECPKG_FUNCTION_TABLE, \
+    SpSetContextAttributes)
+#define SECPKG_FUNCTION_TABLE_SIZE_2 offsetof(SECPKG_FUNCTION_TABLE, \
+    SetCredentialsAttributes)
+#define SECPKG_FUNCTION_TABLE_SIZE_3 sizeof(SECPKG_FUNCTION_TABLE)
+
 static NTSTATUS (NTAPI *pSpLsaModeInitialize)(ULONG, PULONG,
     PSECPKG_FUNCTION_TABLE*, PULONG);
 static NTSTATUS (NTAPI *pSpUserModeInitialize)(ULONG, PULONG,

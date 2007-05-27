@@ -405,13 +405,6 @@ typedef struct SECPKG_FUNCTION_TABLE {
 } SECPKG_FUNCTION_TABLE,
  *PSECPKG_FUNCTION_TABLE;
 
-/* Helper macros to find the size of SECPKG_FUNCTION_TABLE */
-#define SECPKG_FUNCTION_TABLE_SIZE_1 offsetof(SECPKG_FUNCTION_TABLE, \
-    SpSetContextAttributes)
-#define SECPKG_FUNCTION_TABLE_SIZE_2 offsetof(SECPKG_FUNCTION_TABLE, \
-    SetCredentialsAttributes)
-#define SECPKG_FUNCTION_TABLE_SIZE_3 sizeof(SECPKG_FUNCTION_TABLE)
-
 /* dispatch tables of user-mode functions implemented by SSP/AP */
 typedef struct SECPKG_USER_FUNCTION_TABLE {
     SpInstanceInitFn *InstanceInit;
