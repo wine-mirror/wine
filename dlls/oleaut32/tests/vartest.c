@@ -2153,24 +2153,24 @@ static void test_VarSub(void)
     VARSUB(I2,4,I2,2,I2,2);
     VARSUB(I2,-13,I4,5,I4,-18);
     VARSUB(I4,-13,I4,5,I4,-18);
-    VARSUB(I2,7,R4,0.5,R4,6.5);
-    VARSUB(R4,0.5,I4,5,R8,-4.5);
+    VARSUB(I2,7,R4,0.5f,R4,6.5f);
+    VARSUB(R4,0.5f,I4,5,R8,-4.5);
     VARSUB(R8,7.1,BOOL,0,R8,7.1);
     VARSUB(BSTR,lbstr,I2,4,R8,8);
     VARSUB(BSTR,lbstr,BOOL,1,R8,11);
-    VARSUB(BSTR,lbstr,R4,0.1,R8,11.9);
-    VARSUB(R4,0.2,BSTR,rbstr,R8,-11.8);
+    VARSUB(BSTR,lbstr,R4,0.1f,R8,11.9);
+    VARSUB(R4,0.2f,BSTR,rbstr,R8,-11.8);
     VARSUB(DATE,2.25,I4,7,DATE,-4.75);
-    VARSUB(DATE,1.25,R4,-1.7,DATE,2.95);
+    VARSUB(DATE,1.25,R4,-1.7f,DATE,2.95);
 
     VARSUB(UI1, UI1_MAX, UI1, UI1_MAX, UI1, 0);
     VARSUB(I2, I2_MAX, I2, I2_MAX, I2, 0);
     VARSUB(I2, I2_MIN, I2, I2_MIN, I2, 0);
-    VARSUB(I4, I4_MAX, I4, I4_MAX, I4, 0.0);
-    VARSUB(I4, I4_MIN, I4, I4_MIN, I4, 0.0);
-    VARSUB(R4, R4_MAX, R4, R4_MAX, R4, 0.0);
+    VARSUB(I4, I4_MAX, I4, I4_MAX, I4, 0);
+    VARSUB(I4, I4_MIN, I4, I4_MIN, I4, 0);
+    VARSUB(R4, R4_MAX, R4, R4_MAX, R4, 0.0f);
     VARSUB(R4, R4_MAX, R4, R4_MIN, R4, R4_MAX - R4_MIN);
-    VARSUB(R4, R4_MIN, R4, R4_MIN, R4, 0.0);
+    VARSUB(R4, R4_MIN, R4, R4_MIN, R4, 0.0f);
     VARSUB(R8, R8_MAX, R8, R8_MIN, R8, R8_MAX - R8_MIN);
     VARSUB(R8, R8_MIN, R8, R8_MIN, R8, 0.0);
 
@@ -2792,12 +2792,12 @@ static void test_VarFix(void)
     {
         VARFIX(I8,-1,I8,-1);
     }
-    VARFIX(R4,1.4,R4,1);
-    VARFIX(R4,1.5,R4,1);
-    VARFIX(R4,1.6,R4,1);
-    VARFIX(R4,-1.4,R4,-1);
-    VARFIX(R4,-1.5,R4,-1);
-    VARFIX(R4,-1.6,R4,-1);
+    VARFIX(R4,1.4f,R4,1);
+    VARFIX(R4,1.5f,R4,1);
+    VARFIX(R4,1.6f,R4,1);
+    VARFIX(R4,-1.4f,R4,-1);
+    VARFIX(R4,-1.5f,R4,-1);
+    VARFIX(R4,-1.6f,R4,-1);
     /* DATE & R8 round as for R4 */
     VARFIX(DATE,-1,DATE,-1);
     VARFIX(R8,-1,R8,-1);
@@ -2907,12 +2907,12 @@ static void test_VarInt(void)
     {
         VARINT(I8,-1,I8,-1);
     }
-    VARINT(R4,1.4,R4,1);
-    VARINT(R4,1.5,R4,1);
-    VARINT(R4,1.6,R4,1);
-    VARINT(R4,-1.4,R4,-2); /* Note these 3 are different from VarFix */
-    VARINT(R4,-1.5,R4,-2);
-    VARINT(R4,-1.6,R4,-2);
+    VARINT(R4,1.4f,R4,1);
+    VARINT(R4,1.5f,R4,1);
+    VARINT(R4,1.6f,R4,1);
+    VARINT(R4,-1.4f,R4,-2); /* Note these 3 are different from VarFix */
+    VARINT(R4,-1.5f,R4,-2);
+    VARINT(R4,-1.6f,R4,-2);
     /* DATE & R8 round as for R4 */
     VARINT(DATE,-1,DATE,-1);
     VARINT(R8,-1,R8,-1);
@@ -3128,8 +3128,8 @@ static void test_VarRound(void)
      * case Wine returns .2 (which is more correct) and Native returns .3
      */
 
-    VARROUND(R4,1.0,0,R4,1.0);
-    VARROUND(R4,-1.0,0,R4,-1.0);
+    VARROUND(R4,1.0f,0,R4,1.0f);
+    VARROUND(R4,-1.0f,0,R4,-1.0f);
     VARROUND(R8,1.0,0,R8,1.0);
     VARROUND(R8,-1.0,0,R8,-1.0);
 
@@ -3140,16 +3140,16 @@ static void test_VarRound(void)
     VARROUND(BSTR,(BSTR)szNumMin,1,R8,-1.40);
     if (0) { VARROUND(BSTR,(BSTR)szNum,1,R8,1.50); }
 
-    VARROUND(R4,1.23456,0,R4,1.0);
-    VARROUND(R4,1.23456,1,R4,1.2);
-    VARROUND(R4,1.23456,2,R4,1.23);
-    VARROUND(R4,1.23456,3,R4,1.235);
-    VARROUND(R4,1.23456,4,R4,1.2346);
-    VARROUND(R4,-1.23456,0,R4,-1.0);
-    VARROUND(R4,-1.23456,1,R4,-1.2);
-    VARROUND(R4,-1.23456,2,R4,-1.23);
-    VARROUND(R4,-1.23456,3,R4,-1.235);
-    VARROUND(R4,-1.23456,4,R4,-1.2346);
+    VARROUND(R4,1.23456f,0,R4,1.0f);
+    VARROUND(R4,1.23456f,1,R4,1.2f);
+    VARROUND(R4,1.23456f,2,R4,1.23f);
+    VARROUND(R4,1.23456f,3,R4,1.235f);
+    VARROUND(R4,1.23456f,4,R4,1.2346f);
+    VARROUND(R4,-1.23456f,0,R4,-1.0f);
+    VARROUND(R4,-1.23456f,1,R4,-1.2f);
+    VARROUND(R4,-1.23456f,2,R4,-1.23f);
+    VARROUND(R4,-1.23456f,3,R4,-1.235f);
+    VARROUND(R4,-1.23456f,4,R4,-1.2346f);
 
     VARROUND(R8,1.23456,0,R8,1.0);
     VARROUND(R8,1.23456,1,R8,1.2);
@@ -4866,14 +4866,14 @@ static void test_VarMul(void)
     VARMUL(I2,4,I2,2,I2,8);
     VARMUL(I2,-13,I4,5,I4,-65);
     VARMUL(I4,-13,I4,5,I4,-65);
-    VARMUL(I2,7,R4,0.5,R4,3.5);
-    VARMUL(R4,0.5,I4,5,R8,2.5);
+    VARMUL(I2,7,R4,0.5f,R4,3.5f);
+    VARMUL(R4,0.5f,I4,5,R8,2.5);
     VARMUL(R8,7.1,BOOL,0,R8,0);
     VARMUL(BSTR,lbstr,I2,4,R8,48);
     VARMUL(BSTR,lbstr,BOOL,1,R8,12);
-    VARMUL(BSTR,lbstr,R4,0.1,R8,1.2);
+    VARMUL(BSTR,lbstr,R4,0.1f,R8,1.2);
     VARMUL(BSTR,lbstr,BSTR,rbstr,R8,144);
-    VARMUL(R4,0.2,BSTR,rbstr,R8,2.4);
+    VARMUL(R4,0.2f,BSTR,rbstr,R8,2.4);
     VARMUL(DATE,2.25,I4,7,R8,15.75);
 
     VARMUL(UI1, UI1_MAX, UI1, UI1_MAX, I4, UI1_MAX * UI1_MAX);
@@ -5045,15 +5045,15 @@ static void test_VarAdd(void)
     VARADD(I2,4,I2,2,I2,6);
     VARADD(I2,-13,I4,5,I4,-8);
     VARADD(I4,-13,I4,5,I4,-8);
-    VARADD(I2,7,R4,0.5,R4,7.5);
-    VARADD(R4,0.5,I4,5,R8,5.5);
+    VARADD(I2,7,R4,0.5f,R4,7.5f);
+    VARADD(R4,0.5f,I4,5,R8,5.5);
     VARADD(R8,7.1,BOOL,0,R8,7.1);
     VARADD(BSTR,lbstr,I2,4,R8,16);
     VARADD(BSTR,lbstr,BOOL,1,R8,13);
-    VARADD(BSTR,lbstr,R4,0.1,R8,12.1);
-    VARADD(R4,0.2,BSTR,rbstr,R8,12.2);
+    VARADD(BSTR,lbstr,R4,0.1f,R8,12.1);
+    VARADD(R4,0.2f,BSTR,rbstr,R8,12.2);
     VARADD(DATE,2.25,I4,7,DATE,9.25);
-    VARADD(DATE,1.25,R4,-1.7,DATE,-0.45);
+    VARADD(DATE,1.25,R4,-1.7f,DATE,-0.45);
 
     VARADD(UI1, UI1_MAX, UI1, UI1_MAX, I2, UI1_MAX + UI1_MAX);
     VARADD(I2, I2_MAX, I2, I2_MAX, I4, I2_MAX + I2_MAX);
@@ -6475,7 +6475,7 @@ static void test_VarPow(void)
     VARPOW(EMPTY,0,NULL,0,NULL,0);
     VARPOW(EMPTY,0,I2,3,R8,0.0);
     VARPOW(EMPTY,0,I4,3,R8,0.0);
-    VARPOW(EMPTY,0,R4,3.0,R8,0.0);
+    VARPOW(EMPTY,0,R4,3.0f,R8,0.0);
     VARPOW(EMPTY,0,R8,3.0,R8,0.0);
     VARPOW(EMPTY,0,DATE,3,R8,0.0);
     VARPOW(EMPTY,0,BSTR,num3_str,R8,0.0);
@@ -6495,7 +6495,7 @@ static void test_VarPow(void)
     VARPOW(NULL,0,NULL,0,NULL,0);
     VARPOW(NULL,0,I2,3,NULL,0);
     VARPOW(NULL,0,I4,3,NULL,0);
-    VARPOW(NULL,0,R4,3.0,NULL,0);
+    VARPOW(NULL,0,R4,3.0f,NULL,0);
     VARPOW(NULL,0,R8,3.0,NULL,0);
     VARPOW(NULL,0,DATE,3,NULL,0);
     VARPOW(NULL,0,BSTR,num3_str,NULL,0);
@@ -6515,7 +6515,7 @@ static void test_VarPow(void)
     VARPOW(I2,2,NULL,0,NULL,0);
     VARPOW(I2,2,I2,3,R8,8.0);
     VARPOW(I2,2,I4,3,R8,8.0);
-    VARPOW(I2,2,R4,3.0,R8,8.0);
+    VARPOW(I2,2,R4,3.0f,R8,8.0);
     VARPOW(I2,2,R8,3.0,R8,8.0);
     VARPOW(I2,2,DATE,3,R8,8.0);
     VARPOW(I2,2,BSTR,num3_str,R8,8.0);
@@ -6535,7 +6535,7 @@ static void test_VarPow(void)
     VARPOW(I4,2,NULL,0,NULL,0);
     VARPOW(I4,2,I2,3,R8,8.0);
     VARPOW(I4,2,I4,3,R8,8.0);
-    VARPOW(I4,2,R4,3.0,R8,8.0);
+    VARPOW(I4,2,R4,3.0f,R8,8.0);
     VARPOW(I4,2,R8,3.0,R8,8.0);
     VARPOW(I4,2,DATE,3,R8,8.0);
     VARPOW(I4,2,BSTR,num3_str,R8,8.0);
@@ -6555,7 +6555,7 @@ static void test_VarPow(void)
     VARPOW(R4,2,NULL,0,NULL,0);
     VARPOW(R4,2,I2,3,R8,8.0);
     VARPOW(R4,2,I4,3,R8,8.0);
-    VARPOW(R4,2,R4,3.0,R8,8.0);
+    VARPOW(R4,2,R4,3.0f,R8,8.0);
     VARPOW(R4,2,R8,3.0,R8,8.0);
     VARPOW(R4,2,DATE,3,R8,8.0);
     VARPOW(R4,2,BSTR,num3_str,R8,8.0);
@@ -6575,7 +6575,7 @@ static void test_VarPow(void)
     VARPOW(R8,2,NULL,0,NULL,0);
     VARPOW(R8,2,I2,3,R8,8.0);
     VARPOW(R8,2,I4,3,R8,8.0);
-    VARPOW(R8,2,R4,3.0,R8,8.0);
+    VARPOW(R8,2,R4,3.0f,R8,8.0);
     VARPOW(R8,2,R8,3.0,R8,8.0);
     VARPOW(R8,2,DATE,3,R8,8.0);
     VARPOW(R8,2,BSTR,num3_str,R8,8.0);
@@ -6595,7 +6595,7 @@ static void test_VarPow(void)
     VARPOW(DATE,2,NULL,0,NULL,0);
     VARPOW(DATE,2,I2,3,R8,8.0);
     VARPOW(DATE,2,I4,3,R8,8.0);
-    VARPOW(DATE,2,R4,3.0,R8,8.0);
+    VARPOW(DATE,2,R4,3.0f,R8,8.0);
     VARPOW(DATE,2,R8,3.0,R8,8.0);
     VARPOW(DATE,2,DATE,3,R8,8.0);
     VARPOW(DATE,2,BSTR,num3_str,R8,8.0);
@@ -6615,7 +6615,7 @@ static void test_VarPow(void)
     VARPOW(BSTR,num2_str,NULL,0,NULL,0);
     VARPOW(BSTR,num2_str,I2,3,R8,8.0);
     VARPOW(BSTR,num2_str,I4,3,R8,8.0);
-    VARPOW(BSTR,num2_str,R4,3.0,R8,8.0);
+    VARPOW(BSTR,num2_str,R4,3.0f,R8,8.0);
     VARPOW(BSTR,num2_str,R8,3.0,R8,8.0);
     VARPOW(BSTR,num2_str,DATE,3,R8,8.0);
     VARPOW(BSTR,num2_str,BSTR,num3_str,R8,8.0);
@@ -6635,7 +6635,7 @@ static void test_VarPow(void)
     VARPOW(BOOL,VARIANT_TRUE,NULL,0,NULL,0);
     VARPOW(BOOL,VARIANT_TRUE,I2,3,R8,-1.0);
     VARPOW(BOOL,VARIANT_TRUE,I4,3,R8,-1.0);
-    VARPOW(BOOL,VARIANT_TRUE,R4,3.0,R8,-1.0);
+    VARPOW(BOOL,VARIANT_TRUE,R4,3.0f,R8,-1.0);
     VARPOW(BOOL,VARIANT_TRUE,R8,3.0,R8,-1.0);
     VARPOW(BOOL,VARIANT_TRUE,DATE,3,R8,-1.0);
     VARPOW(BOOL,VARIANT_TRUE,BSTR,num3_str,R8,-1.0);
@@ -6655,7 +6655,7 @@ static void test_VarPow(void)
     VARPOW(I1,2,NULL,0,NULL,0);
     VARPOW(I1,2,I2,3,R8,8.0);
     VARPOW(I1,2,I4,3,R8,8.0);
-    VARPOW(I1,2,R4,3.0,R8,8.0);
+    VARPOW(I1,2,R4,3.0f,R8,8.0);
     VARPOW(I1,2,R8,3.0,R8,8.0);
     VARPOW(I1,2,DATE,3,R8,8.0);
     VARPOW(I1,2,BSTR,num3_str,R8,8.0);
@@ -6675,7 +6675,7 @@ static void test_VarPow(void)
     VARPOW(UI1,2,NULL,0,NULL,0);
     VARPOW(UI1,2,I2,3,R8,8.0);
     VARPOW(UI1,2,I4,3,R8,8.0);
-    VARPOW(UI1,2,R4,3.0,R8,8.0);
+    VARPOW(UI1,2,R4,3.0f,R8,8.0);
     VARPOW(UI1,2,R8,3.0,R8,8.0);
     VARPOW(UI1,2,DATE,3,R8,8.0);
     VARPOW(UI1,2,BSTR,num3_str,R8,8.0);
@@ -6695,7 +6695,7 @@ static void test_VarPow(void)
     VARPOW(UI2,2,NULL,0,NULL,0);
     VARPOW(UI2,2,I2,3,R8,8.0);
     VARPOW(UI2,2,I4,3,R8,8.0);
-    VARPOW(UI2,2,R4,3.0,R8,8.0);
+    VARPOW(UI2,2,R4,3.0f,R8,8.0);
     VARPOW(UI2,2,R8,3.0,R8,8.0);
     VARPOW(UI2,2,DATE,3,R8,8.0);
     VARPOW(UI2,2,BSTR,num3_str,R8,8.0);
@@ -6715,7 +6715,7 @@ static void test_VarPow(void)
     VARPOW(UI4,2,NULL,0,NULL,0);
     VARPOW(UI4,2,I2,3,R8,8.0);
     VARPOW(UI4,2,I4,3,R8,8.0);
-    VARPOW(UI4,2,R4,3.0,R8,8.0);
+    VARPOW(UI4,2,R4,3.0f,R8,8.0);
     VARPOW(UI4,2,R8,3.0,R8,8.0);
     VARPOW(UI4,2,DATE,3,R8,8.0);
     VARPOW(UI4,2,BSTR,num3_str,R8,8.0);
@@ -6737,7 +6737,7 @@ static void test_VarPow(void)
         VARPOW(I8,2,NULL,0,NULL,0);
         VARPOW(I8,2,I2,3,R8,8.0);
         VARPOW(I8,2,I4,3,R8,8.0);
-        VARPOW(I8,2,R4,3.0,R8,8.0);
+        VARPOW(I8,2,R4,3.0f,R8,8.0);
         VARPOW(I8,2,R8,3.0,R8,8.0);
         VARPOW(I8,2,DATE,3,R8,8.0);
         VARPOW(I8,2,BSTR,num3_str,R8,8.0);
@@ -6754,7 +6754,7 @@ static void test_VarPow(void)
         VARPOW(UI8,2,NULL,0,NULL,0);
         VARPOW(UI8,2,I2,3,R8,8.0);
         VARPOW(UI8,2,I4,3,R8,8.0);
-        VARPOW(UI8,2,R4,3.0,R8,8.0);
+        VARPOW(UI8,2,R4,3.0f,R8,8.0);
         VARPOW(UI8,2,R8,3.0,R8,8.0);
         VARPOW(UI8,2,DATE,3,R8,8.0);
         VARPOW(UI8,2,BSTR,num3_str,R8,8.0);
@@ -6771,7 +6771,7 @@ static void test_VarPow(void)
     VARPOW(INT,2,NULL,0,NULL,0);
     VARPOW(INT,2,I2,3,R8,8.0);
     VARPOW(INT,2,I4,3,R8,8.0);
-    VARPOW(INT,2,R4,3.0,R8,8.0);
+    VARPOW(INT,2,R4,3.0f,R8,8.0);
     VARPOW(INT,2,R8,3.0,R8,8.0);
     VARPOW(INT,2,DATE,3,R8,8.0);
     VARPOW(INT,2,BSTR,num3_str,R8,8.0);
@@ -6791,7 +6791,7 @@ static void test_VarPow(void)
     VARPOW(UINT,2,NULL,0,NULL,0);
     VARPOW(UINT,2,I2,3,R8,8.0);
     VARPOW(UINT,2,I4,3,R8,8.0);
-    VARPOW(UINT,2,R4,3.0,R8,8.0);
+    VARPOW(UINT,2,R4,3.0f,R8,8.0);
     VARPOW(UINT,2,R8,3.0,R8,8.0);
     VARPOW(UINT,2,DATE,3,R8,8.0);
     VARPOW(UINT,2,BSTR,num3_str,R8,8.0);
@@ -6951,7 +6951,7 @@ static void test_VarDiv(void)
                     break;
                 case VT_I2: V_I2(&right) = 2; break;
                 case VT_I4: V_I4(&right) = 2; break;
-                case VT_R4: V_R4(&right) = 2.0; break;
+                case VT_R4: V_R4(&right) = 2.0f; break;
                 case VT_R8: V_R8(&right) = 2.0; break;
                 case VT_CY: V_CY(&right).int64 = 2; break;
                 case VT_DATE: V_DATE(&right) = 2; break;
@@ -7021,7 +7021,7 @@ static void test_VarDiv(void)
     VARDIV(EMPTY,0,NULL,0,NULL,0);
     VARDIV(EMPTY,0,I2,2,R8,0.0);
     VARDIV(EMPTY,0,I4,2,R8,0.0);
-    VARDIV(EMPTY,0,R4,2.0,R4,0.0);
+    VARDIV(EMPTY,0,R4,2.0f,R4,0.0f);
     VARDIV(EMPTY,0,R8,2.0,R8,0.0);
     VARDIV(EMPTY,0,DATE,2.0,R8,0.0);
     VARDIV(EMPTY,0,BSTR,num2_str,R8,0.0);
@@ -7032,7 +7032,7 @@ static void test_VarDiv(void)
     VARDIV(NULL,0,NULL,0,NULL,0);
     VARDIV(NULL,0,I2,2,NULL,0);
     VARDIV(NULL,0,I4,2,NULL,0);
-    VARDIV(NULL,0,R4,2.0,NULL,0);
+    VARDIV(NULL,0,R4,2.0f,NULL,0);
     VARDIV(NULL,0,R8,2.0,NULL,0);
     VARDIV(NULL,0,DATE,2,NULL,0);
     VARDIV(NULL,0,BSTR,num2_str,NULL,0);
@@ -7042,7 +7042,7 @@ static void test_VarDiv(void)
     VARDIV(I2,2,NULL,0,NULL,0);
     VARDIV(I2,1,I2,2,R8,0.5);
     VARDIV(I2,1,I4,2,R8,0.5);
-    VARDIV(I2,1,R4,2,R4,0.5);
+    VARDIV(I2,1,R4,2,R4,0.5f);
     VARDIV(I2,1,R8,2.0,R8,0.5);
     VARDIV(I2,1,DATE,2,R8,0.5);
     VARDIV(I2,1,BOOL,VARIANT_TRUE,R8,-1.0);
@@ -7051,27 +7051,27 @@ static void test_VarDiv(void)
     VARDIV(I4,1,NULL,0,NULL,0);
     VARDIV(I4,1,I2,2,R8,0.5);
     VARDIV(I4,1,I4,2,R8,0.5);
-    VARDIV(I4,1,R4,2.0,R8,0.5);
+    VARDIV(I4,1,R4,2.0f,R8,0.5);
     VARDIV(I4,1,R8,2.0,R8,0.5);
     VARDIV(I4,1,DATE,2,R8,0.5);
     VARDIV(I4,1,BSTR,num2_str,R8,0.5);
     VARDIV(I4,1,BOOL,VARIANT_TRUE,R8,-1.0);
     VARDIV(I4,1,UI1,2,R8,0.5);
-    VARDIV(I4,1,I8,2.0,R8,0.5);
-    VARDIV(R4,1.0,NULL,0,NULL,0);
-    VARDIV(R4,1.0,I2,2,R4,0.5);
-    VARDIV(R4,1.0,I4,2,R8,0.5);
-    VARDIV(R4,1.0,R4,2.0,R4,0.5);
-    VARDIV(R4,1.0,R8,2.0,R8,0.5);
-    VARDIV(R4,1.0,DATE,2,R8,0.5);
-    VARDIV(R4,1.0,BSTR,num2_str,R8,0.5);
-    VARDIV(R4,1.0,BOOL,VARIANT_TRUE,R4,-1);
-    VARDIV(R4,1.0,UI1,2,R4,0.5);
-    VARDIV(R4,1.0,I8,2,R8,0.5);
+    VARDIV(I4,1,I8,2,R8,0.5);
+    VARDIV(R4,1.0f,NULL,0,NULL,0);
+    VARDIV(R4,1.0f,I2,2,R4,0.5f);
+    VARDIV(R4,1.0f,I4,2,R8,0.5);
+    VARDIV(R4,1.0f,R4,2.0f,R4,0.5f);
+    VARDIV(R4,1.0f,R8,2.0,R8,0.5);
+    VARDIV(R4,1.0f,DATE,2,R8,0.5);
+    VARDIV(R4,1.0f,BSTR,num2_str,R8,0.5);
+    VARDIV(R4,1.0f,BOOL,VARIANT_TRUE,R4,-1);
+    VARDIV(R4,1.0f,UI1,2,R4,0.5f);
+    VARDIV(R4,1.0f,I8,2,R8,0.5);
     VARDIV(R8,1.0,NULL,0,NULL,0);
     VARDIV(R8,1.0,I2,2,R8,0.5);
     VARDIV(R8,1.0,I4,2,R8,0.5);
-    VARDIV(R8,1.0,R4,2.0,R8,0.5);
+    VARDIV(R8,1.0,R4,2.0f,R8,0.5);
     VARDIV(R8,1.0,R8,2.0,R8,0.5);
     VARDIV(R8,1.0,DATE,2,R8,0.5);
     VARDIV(R8,1.0,BSTR,num2_str,R8,0.5);
@@ -7081,7 +7081,7 @@ static void test_VarDiv(void)
     VARDIV(DATE,1,NULL,0,NULL,0);
     VARDIV(DATE,1,I2,2,R8,0.5);
     VARDIV(DATE,1,I4,2,R8,0.5);
-    VARDIV(DATE,1,R4,2.0,R8,0.5);
+    VARDIV(DATE,1,R4,2.0f,R8,0.5);
     VARDIV(DATE,1,R8,2.0,R8,0.5);
     VARDIV(DATE,1,DATE,2,R8,0.5);
     VARDIV(DATE,1,BSTR,num2_str,R8,0.5);
@@ -7091,20 +7091,20 @@ static void test_VarDiv(void)
     VARDIV(BSTR,num1_str,NULL,0,NULL,0);
     VARDIV(BSTR,num1_str,I2,2,R8,0.5);
     VARDIV(BSTR,num1_str,I4,2,R8,0.5);
-    VARDIV(BSTR,num1_str,R4,2.0,R8,0.5);
+    VARDIV(BSTR,num1_str,R4,2.0f,R8,0.5);
     VARDIV(BSTR,num1_str,R8,2.0,R8,0.5);
     VARDIV(BSTR,num1_str,DATE,2,R8,0.5);
     VARDIV(BSTR,num1_str,BSTR,num2_str,R8,0.5);
     VARDIV(BSTR,num1_str,BOOL,VARIANT_TRUE,R8,-1);
     VARDIV(BSTR,num1_str,UI1,2,R8,0.5);
-    VARDIV(BSTR,num1_str,I8,2.0,R8,0.5);
+    VARDIV(BSTR,num1_str,I8,2,R8,0.5);
     VARDIV(BOOL,VARIANT_TRUE,NULL,0,NULL,0);
     VARDIV(BOOL,VARIANT_TRUE,I2,1,R8,-1.0);
     VARDIV(BOOL,VARIANT_FALSE,I2,1,R8,0.0);
     VARDIV(BOOL,VARIANT_TRUE,I4,1,R8,-1.0);
     VARDIV(BOOL,VARIANT_FALSE,I4,1,R8,0.0);
-    VARDIV(BOOL,VARIANT_TRUE,R4,1,R4,-1.0);
-    VARDIV(BOOL,VARIANT_FALSE,R4,1,R4,0.0);
+    VARDIV(BOOL,VARIANT_TRUE,R4,1,R4,-1.0f);
+    VARDIV(BOOL,VARIANT_FALSE,R4,1,R4,0.0f);
     VARDIV(BOOL,VARIANT_TRUE,R8,1.0,R8,-1.0);
     VARDIV(BOOL,VARIANT_FALSE,R8,1.0,R8,0.0);
     VARDIV(BOOL,VARIANT_FALSE,DATE,2,R8,0.0);
@@ -7116,7 +7116,7 @@ static void test_VarDiv(void)
     VARDIV(UI1,1,NULL,0,NULL,0);
     VARDIV(UI1,1,I2,2,R8,0.5);
     VARDIV(UI1,1,I4,2,R8,0.5);
-    VARDIV(UI1,1,R4,2.0,R4,0.5);
+    VARDIV(UI1,1,R4,2.0f,R4,0.5f);
     VARDIV(UI1,1,R8,2.0,R8,0.5);
     VARDIV(UI1,1,DATE,2,R8,0.5);
     VARDIV(UI1,1,BSTR,num2_str,R8,0.5);
@@ -7126,7 +7126,7 @@ static void test_VarDiv(void)
     VARDIV(I8,1,NULL,0,NULL,0);
     VARDIV(I8,1,I2,2,R8,0.5);
     VARDIV(I8,1,I4,2,R8,0.5);
-    VARDIV(I8,1,R4,2.0,R8,0.5);
+    VARDIV(I8,1,R4,2.0f,R8,0.5);
     VARDIV(I8,1,R8,2.0,R8,0.5);
     VARDIV(I8,1,DATE,2,R8,0.5);
     VARDIV(I8,1,BSTR,num2_str,R8,0.5);
@@ -7189,17 +7189,17 @@ static void test_VarDiv(void)
 
     /* Check for division by zero and overflow */
     V_VT(&left) = VT_R8;
-    V_I4(&left) = 1.0;
+    V_I4(&left) = 1;
     V_VT(&right) = VT_R8;
-    V_I4(&right) = 0.0;
+    V_I4(&right) = 0;
     hres = pVarDiv(&left, &right, &result);
     ok(hres == DISP_E_DIVBYZERO && V_VT(&result) == VT_EMPTY,
         "VARDIV: Division by (1.0/0.0) should result in DISP_E_DIVBYZERO but got 0x%X\n", hres);
 
     V_VT(&left) = VT_R8;
-    V_I4(&left) = 0.0;
+    V_I4(&left) = 0;
     V_VT(&right) = VT_R8;
-    V_I4(&right) = 0.0;
+    V_I4(&right) = 0;
     hres = pVarDiv(&left, &right, &result);
     ok(hres == DISP_E_OVERFLOW && V_VT(&result) == VT_EMPTY,
         "VARDIV: Division by (0.0/0.0) should result in DISP_E_OVERFLOW but got 0x%X\n", hres);
@@ -7290,7 +7290,7 @@ static void test_VarIdiv(void)
                     break;
                 case VT_I2: V_I2(&right) = 2; break;
                 case VT_I4: V_I4(&right) = 2; break;
-                case VT_R4: V_R4(&right) = 2.0; break;
+                case VT_R4: V_R4(&right) = 2.0f; break;
                 case VT_R8: V_R8(&right) = 2.0; break;
                 case VT_DATE: V_DATE(&right) = 2; break;
                 case VT_I1: V_I1(&right) = 2; break;
@@ -7363,7 +7363,7 @@ static void test_VarIdiv(void)
     VARIDIV(EMPTY,0,NULL,0,NULL,0);
     VARIDIV(EMPTY,0,I2,1,I2,0);
     VARIDIV(EMPTY,0,I4,1,I4,0);
-    VARIDIV(EMPTY,0,R4,1.0,I4,0);
+    VARIDIV(EMPTY,0,R4,1.0f,I4,0);
     VARIDIV(EMPTY,0,R8,1.0,I4,0);
     VARIDIV(EMPTY,0,DATE,1.0,I4,0);
     VARIDIV(EMPTY,0,BSTR,num1_str,I4,0);
@@ -7425,22 +7425,22 @@ static void test_VarIdiv(void)
     VARIDIV(I4,2,UI8,1,I4,2);
     VARIDIV(I4,2,INT,1,I4,2);
     VARIDIV(I4,2,UINT,1,I4,2);
-    VARIDIV(R4,2.0,NULL,0,NULL,0);
-    VARIDIV(R4,2.0,I2,1,I4,2);
-    VARIDIV(R4,2.0,I4,1,I4,2);
-    VARIDIV(R4,2.0,R4,1.0,I4,2);
-    VARIDIV(R4,2.0,R8,1.0,I4,2);
-    VARIDIV(R4,2.0,DATE,1,I4,2);
-    VARIDIV(R4,2.0,BSTR,num1_str,I4,2);
-    VARIDIV(R4,2.0,BOOL,VARIANT_TRUE,I4,-2);
-    VARIDIV(R4,2.0,I1,1,I4,2);
-    VARIDIV(R4,2.0,UI1,1,I4,2);
-    VARIDIV(R4,2.0,UI2,1,I4,2);
-    VARIDIV(R4,2.0,UI4,1,I4,2);
-    VARIDIV(R4,2.0,I8,1,I8,2);
-    VARIDIV(R4,2.0,UI8,1,I4,2);
-    VARIDIV(R4,2.0,INT,1,I4,2);
-    VARIDIV(R4,2.0,UINT,1,I4,2);
+    VARIDIV(R4,2.0f,NULL,0,NULL,0);
+    VARIDIV(R4,2.0f,I2,1,I4,2);
+    VARIDIV(R4,2.0f,I4,1,I4,2);
+    VARIDIV(R4,2.0f,R4,1.0f,I4,2);
+    VARIDIV(R4,2.0f,R8,1.0,I4,2);
+    VARIDIV(R4,2.0f,DATE,1,I4,2);
+    VARIDIV(R4,2.0f,BSTR,num1_str,I4,2);
+    VARIDIV(R4,2.0f,BOOL,VARIANT_TRUE,I4,-2);
+    VARIDIV(R4,2.0f,I1,1,I4,2);
+    VARIDIV(R4,2.0f,UI1,1,I4,2);
+    VARIDIV(R4,2.0f,UI2,1,I4,2);
+    VARIDIV(R4,2.0f,UI4,1,I4,2);
+    VARIDIV(R4,2.0f,I8,1,I8,2);
+    VARIDIV(R4,2.0f,UI8,1,I4,2);
+    VARIDIV(R4,2.0f,INT,1,I4,2);
+    VARIDIV(R4,2.0f,UINT,1,I4,2);
     VARIDIV(R8,2.0,NULL,0,NULL,0);
     VARIDIV(R8,2.0,I2,1,I4,2);
     VARIDIV(R8,2.0,I4,1,I4,2);
@@ -7476,7 +7476,7 @@ static void test_VarIdiv(void)
     VARIDIV(BSTR,num2_str,NULL,0,NULL,0);
     VARIDIV(BSTR,num2_str,I2,1,I4,2);
     VARIDIV(BSTR,num2_str,I4,1,I4,2);
-    VARIDIV(BSTR,num2_str,R4,1.0,I4,2);
+    VARIDIV(BSTR,num2_str,R4,1.0f,I4,2);
     VARIDIV(BSTR,num2_str,R8,1.0,I4,2);
     VARIDIV(BSTR,num2_str,DATE,1,I4,2);
     VARIDIV(BSTR,num2_str,BSTR,num1_str,I4,2);
@@ -7492,7 +7492,7 @@ static void test_VarIdiv(void)
     VARIDIV(BOOL,VARIANT_TRUE,NULL,0,NULL,0);
     VARIDIV(BOOL,VARIANT_TRUE,I2,1,I2,-1);
     VARIDIV(BOOL,VARIANT_TRUE,I4,1,I4,-1);
-    VARIDIV(BOOL,VARIANT_TRUE,R4,1.0,I4,-1);
+    VARIDIV(BOOL,VARIANT_TRUE,R4,1.0f,I4,-1);
     VARIDIV(BOOL,VARIANT_TRUE,R8,1.0,I4,-1);
     VARIDIV(BOOL,VARIANT_TRUE,DATE,1,I4,-1);
     VARIDIV(BOOL,VARIANT_TRUE,BSTR,num1_str,I4,-1);
@@ -7508,7 +7508,7 @@ static void test_VarIdiv(void)
     VARIDIV(I1,2,NULL,0,NULL,0);
     VARIDIV(I1,2,I2,1,I4,2);
     VARIDIV(I1,2,I4,1,I4,2);
-    VARIDIV(I1,2,R4,1.0,I4,2);
+    VARIDIV(I1,2,R4,1.0f,I4,2);
     VARIDIV(I1,2,R8,1.0,I4,2);
     VARIDIV(I1,2,DATE,1,I4,2);
     VARIDIV(I1,2,BSTR,num1_str,I4,2);
@@ -7524,7 +7524,7 @@ static void test_VarIdiv(void)
     VARIDIV(UI1,2,NULL,0,NULL,0);
     VARIDIV(UI1,2,I2,1,I2,2);
     VARIDIV(UI1,2,I4,1,I4,2);
-    VARIDIV(UI1,2,R4,1.0,I4,2);
+    VARIDIV(UI1,2,R4,1.0f,I4,2);
     VARIDIV(UI1,2,R8,1.0,I4,2);
     VARIDIV(UI1,2,DATE,1,I4,2);
     VARIDIV(UI1,2,BSTR,num1_str,I4,2);
@@ -7540,7 +7540,7 @@ static void test_VarIdiv(void)
     VARIDIV(UI2,2,NULL,0,NULL,0);
     VARIDIV(UI2,2,I2,1,I4,2);
     VARIDIV(UI2,2,I4,1,I4,2);
-    VARIDIV(UI2,2,R4,1.0,I4,2);
+    VARIDIV(UI2,2,R4,1.0f,I4,2);
     VARIDIV(UI2,2,R8,1.0,I4,2);
     VARIDIV(UI2,2,DATE,1,I4,2);
     VARIDIV(UI2,2,BSTR,num1_str,I4,2);
@@ -7556,7 +7556,7 @@ static void test_VarIdiv(void)
     VARIDIV(UI4,2,NULL,0,NULL,0);
     VARIDIV(UI4,2,I2,1,I4,2);
     VARIDIV(UI4,2,I4,1,I4,2);
-    VARIDIV(UI4,2,R4,1.0,I4,2);
+    VARIDIV(UI4,2,R4,1.0f,I4,2);
     VARIDIV(UI4,2,R8,1.0,I4,2);
     VARIDIV(UI4,2,DATE,1,I4,2);
     VARIDIV(UI4,2,BSTR,num1_str,I4,2);
@@ -7572,7 +7572,7 @@ static void test_VarIdiv(void)
     VARIDIV(I8,2,NULL,0,NULL,0);
     VARIDIV(I8,2,I2,1,I8,2);
     VARIDIV(I8,2,I4,1,I8,2);
-    VARIDIV(I8,2,R4,1.0,I8,2);
+    VARIDIV(I8,2,R4,1.0f,I8,2);
     VARIDIV(I8,2,R8,1.0,I8,2);
     VARIDIV(I8,2,DATE,1,I8,2);
     VARIDIV(I8,2,BSTR,num1_str,I8,2);
@@ -7587,7 +7587,7 @@ static void test_VarIdiv(void)
     VARIDIV(UI8,2,NULL,0,NULL,0);
     VARIDIV(UI8,2,I2,1,I4,2);
     VARIDIV(UI8,2,I4,1,I4,2);
-    VARIDIV(UI8,2,R4,1.0,I4,2);
+    VARIDIV(UI8,2,R4,1.0f,I4,2);
     VARIDIV(UI8,2,R8,1.0,I4,2);
     VARIDIV(UI8,2,DATE,1,I4,2);
     VARIDIV(UI8,2,BSTR,num1_str,I4,2);
@@ -7603,7 +7603,7 @@ static void test_VarIdiv(void)
     VARIDIV(INT,2,NULL,0,NULL,0);
     VARIDIV(INT,2,I2,1,I4,2);
     VARIDIV(INT,2,I4,1,I4,2);
-    VARIDIV(INT,2,R4,1.0,I4,2);
+    VARIDIV(INT,2,R4,1.0f,I4,2);
     VARIDIV(INT,2,R8,1.0,I4,2);
     VARIDIV(INT,2,DATE,1,I4,2);
     VARIDIV(INT,2,BSTR,num1_str,I4,2);
@@ -7618,7 +7618,7 @@ static void test_VarIdiv(void)
     VARIDIV(UINT,2,NULL,0,NULL,0);
     VARIDIV(UINT,2,I2,1,I4,2);
     VARIDIV(UINT,2,I4,1,I4,2);
-    VARIDIV(UINT,2,R4,1.0,I4,2);
+    VARIDIV(UINT,2,R4,1.0f,I4,2);
     VARIDIV(UINT,2,R8,1.0,I4,2);
     VARIDIV(UINT,2,DATE,1,I4,2);
     VARIDIV(UINT,2,BSTR,num1_str,I4,2);
@@ -7792,7 +7792,7 @@ static void test_VarImp(void)
                 case VT_I1: V_I1(&right) = 2; break;
                 case VT_I2: V_I2(&right) = 2; break;
                 case VT_I4: V_I4(&right) = 2; break;
-                case VT_R4: V_R4(&right) = 2.0; break;
+                case VT_R4: V_R4(&right) = 2.0f; break;
                 case VT_R8: V_R8(&right) = 2.0; break;
                 case VT_CY: V_CY(&right).int64 = 10000; break;
                 case VT_DATE: V_DATE(&right) = 2; break;
@@ -7866,7 +7866,7 @@ static void test_VarImp(void)
     VARIMP(EMPTY,0,NULL,0,I2,-1);
     VARIMP(EMPTY,0,I2,-1,I2,-1);
     VARIMP(EMPTY,0,I4,-1,I4,-1);
-    VARIMP(EMPTY,0,R4,0.0,I4,-1);
+    VARIMP(EMPTY,0,R4,0.0f,I4,-1);
     VARIMP(EMPTY,0,R8,-1.0,I4,-1);
     VARIMP(EMPTY,0,DATE,0,I4,-1);
     VARIMP(EMPTY,0,BSTR,true_str,I2,-1);
@@ -7883,7 +7883,7 @@ static void test_VarImp(void)
     VARIMP(NULL,0,NULL,0,NULL,0);
     VARIMP(NULL,0,I2,-1,I2,-1);
     VARIMP(NULL,0,I4,-1,I4,-1);
-    VARIMP(NULL,0,R4,0.0,NULL,0);
+    VARIMP(NULL,0,R4,0.0f,NULL,0);
     VARIMP(NULL,0,R8,-1.0,I4,-1);
     VARIMP(NULL,0,DATE,0,NULL,0);
     VARIMP(NULL,0,BSTR,true_str,BOOL,-1);
@@ -7899,7 +7899,7 @@ static void test_VarImp(void)
     VARIMP(I2,-1,EMPTY,0,I2,0);
     VARIMP(I2,-1,I2,-1,I2,-1);
     VARIMP(I2,-1,I4,-1,I4,-1);
-    VARIMP(I2,-1,R4,0.0,I4,0);
+    VARIMP(I2,-1,R4,0.0f,I4,0);
     VARIMP(I2,-1,R8,-1.0,I4,-1);
     VARIMP(I2,-1,DATE,0,I4,0);
     VARIMP(I2,-1,BSTR,true_str,I2,-1);
@@ -7916,7 +7916,7 @@ static void test_VarImp(void)
     VARIMP(I4,2,NULL,0,I4,-3);
     VARIMP(I4,2,I2,-1,I4,-1);
     VARIMP(I4,2,I4,-1,I4,-1);
-    VARIMP(I4,2,R4,0.0,I4,-3);
+    VARIMP(I4,2,R4,0.0f,I4,-3);
     VARIMP(I4,2,R8,-1.0,I4,-1);
     VARIMP(I4,2,DATE,0,I4,-3);
     VARIMP(I4,2,BSTR,true_str,I4,-1);
@@ -7929,28 +7929,28 @@ static void test_VarImp(void)
     VARIMP(I4,2,UI8,1,I4,-3);
     VARIMP(I4,2,INT,-1,I4,-1);
     VARIMP(I4,2,UINT,1,I4,-3);
-    VARIMP(R4,-1.0,EMPTY,0,I4,0);
-    VARIMP(R4,-1.0,NULL,0,NULL,0);
-    VARIMP(R4,-1.0,I2,-1,I4,-1);
-    VARIMP(R4,-1.0,I4,-1,I4,-1);
-    VARIMP(R4,-1.0,R4,0.0,I4,0);
-    VARIMP(R4,-1.0,R8,-1.0,I4,-1);
-    VARIMP(R4,-1.0,DATE,1,I4,1);
-    VARIMP(R4,-1.0,BSTR,true_str,I4,-1);
-    VARIMP(R4,-1.0,BOOL,VARIANT_FALSE,I4,0);
-    VARIMP(R4,-1.0,I1,0,I4,0);
-    VARIMP(R4,-1.0,UI1,1,I4,1);
-    VARIMP(R4,-1.0,UI2,1,I4,1);
-    VARIMP(R4,-1.0,UI4,1,I4,1);
-    VARIMP(R4,-1.0,I8,1,I8,1);
-    VARIMP(R4,-1.0,UI8,1,I4,1);
-    VARIMP(R4,-1.0,INT,-1,I4,-1);
-    VARIMP(R4,-1.0,UINT,1,I4,1);
+    VARIMP(R4,-1.0f,EMPTY,0,I4,0);
+    VARIMP(R4,-1.0f,NULL,0,NULL,0);
+    VARIMP(R4,-1.0f,I2,-1,I4,-1);
+    VARIMP(R4,-1.0f,I4,-1,I4,-1);
+    VARIMP(R4,-1.0f,R4,0.0f,I4,0);
+    VARIMP(R4,-1.0f,R8,-1.0,I4,-1);
+    VARIMP(R4,-1.0f,DATE,1,I4,1);
+    VARIMP(R4,-1.0f,BSTR,true_str,I4,-1);
+    VARIMP(R4,-1.0f,BOOL,VARIANT_FALSE,I4,0);
+    VARIMP(R4,-1.0f,I1,0,I4,0);
+    VARIMP(R4,-1.0f,UI1,1,I4,1);
+    VARIMP(R4,-1.0f,UI2,1,I4,1);
+    VARIMP(R4,-1.0f,UI4,1,I4,1);
+    VARIMP(R4,-1.0f,I8,1,I8,1);
+    VARIMP(R4,-1.0f,UI8,1,I4,1);
+    VARIMP(R4,-1.0f,INT,-1,I4,-1);
+    VARIMP(R4,-1.0f,UINT,1,I4,1);
     VARIMP(R8,1.0,EMPTY,0,I4,-2);
     VARIMP(R8,1.0,NULL,0,I4,-2);
     VARIMP(R8,1.0,I2,-1,I4,-1);
     VARIMP(R8,1.0,I4,-1,I4,-1);
-    VARIMP(R8,1.0,R4,0.0,I4,-2);
+    VARIMP(R8,1.0,R4,0.0f,I4,-2);
     VARIMP(R8,1.0,R8,-1.0,I4,-1);
     VARIMP(R8,1.0,DATE,0,I4,-2);
     VARIMP(R8,1.0,BSTR,true_str,I4,-1);
@@ -7967,7 +7967,7 @@ static void test_VarImp(void)
     VARIMP(DATE,0,NULL,0,I4,-1);
     VARIMP(DATE,0,I2,-1,I4,-1);
     VARIMP(DATE,0,I4,-1,I4,-1);
-    VARIMP(DATE,0,R4,0.0,I4,-1);
+    VARIMP(DATE,0,R4,0.0f,I4,-1);
     VARIMP(DATE,0,R8,-1.0,I4,-1);
     VARIMP(DATE,0,DATE,0,I4,-1);
     VARIMP(DATE,0,BSTR,true_str,I4,-1);
@@ -7984,7 +7984,7 @@ static void test_VarImp(void)
     VARIMP(BSTR,false_str,NULL,0,BOOL,-1);
     VARIMP(BSTR,false_str,I2,-1,I2,-1);
     VARIMP(BSTR,false_str,I4,-1,I4,-1);
-    VARIMP(BSTR,false_str,R4,0.0,I4,-1);
+    VARIMP(BSTR,false_str,R4,0.0f,I4,-1);
     VARIMP(BSTR,false_str,R8,-1.0,I4,-1);
     VARIMP(BSTR,false_str,DATE,0,I4,-1);
     VARIMP(BSTR,false_str,BSTR,true_str,BOOL,-1);
@@ -8001,7 +8001,7 @@ static void test_VarImp(void)
     VARIMP(BOOL,VARIANT_TRUE,NULL,0,NULL,0);
     VARIMP(BOOL,VARIANT_TRUE,I2,-1,I2,-1);
     VARIMP(BOOL,VARIANT_TRUE,I4,-1,I4,-1);
-    VARIMP(BOOL,VARIANT_TRUE,R4,0.0,I4,0);
+    VARIMP(BOOL,VARIANT_TRUE,R4,0.0f,I4,0);
     VARIMP(BOOL,VARIANT_TRUE,R8,-1.0,I4,-1);
     VARIMP(BOOL,VARIANT_TRUE,DATE,0,I4,0);
     VARIMP(BOOL,VARIANT_TRUE,BSTR,true_str,BOOL,-1);
@@ -8018,7 +8018,7 @@ static void test_VarImp(void)
     VARIMP(I1,-1,NULL,0,NULL,0);
     VARIMP(I1,-1,I2,-1,I4,-1);
     VARIMP(I1,-1,I4,-1,I4,-1);
-    VARIMP(I1,-1,R4,0.0,I4,0);
+    VARIMP(I1,-1,R4,0.0f,I4,0);
     VARIMP(I1,-1,R8,-1.0,I4,-1);
     VARIMP(I1,-1,DATE,0,I4,0);
     VARIMP(I1,-1,BSTR,true_str,I4,-1);
@@ -8035,7 +8035,7 @@ static void test_VarImp(void)
     VARIMP(UI1,0,NULL,0,UI1,255);
     VARIMP(UI1,0,I2,-1,I2,-1);
     VARIMP(UI1,0,I4,-1,I4,-1);
-    VARIMP(UI1,0,R4,0.0,I4,-1);
+    VARIMP(UI1,0,R4,0.0f,I4,-1);
     VARIMP(UI1,0,R8,-1.0,I4,-1);
     VARIMP(UI1,0,DATE,0,I4,-1);
     VARIMP(UI1,0,BSTR,true_str,I2,-1);
@@ -8052,7 +8052,7 @@ static void test_VarImp(void)
     VARIMP(UI2,0,NULL,0,I4,-1);
     VARIMP(UI2,0,I2,-1,I4,-1);
     VARIMP(UI2,0,I4,-1,I4,-1);
-    VARIMP(UI2,0,R4,0.0,I4,-1);
+    VARIMP(UI2,0,R4,0.0f,I4,-1);
     VARIMP(UI2,0,R8,-1.0,I4,-1);
     VARIMP(UI2,0,DATE,0,I4,-1);
     VARIMP(UI2,0,BSTR,true_str,I4,-1);
@@ -8069,7 +8069,7 @@ static void test_VarImp(void)
     VARIMP(UI4,0,NULL,0,I4,-1);
     VARIMP(UI4,0,I2,-1,I4,-1);
     VARIMP(UI4,0,I4,-1,I4,-1);
-    VARIMP(UI4,0,R4,0.0,I4,-1);
+    VARIMP(UI4,0,R4,0.0f,I4,-1);
     VARIMP(UI4,0,R8,-1.0,I4,-1);
     VARIMP(UI4,0,DATE,0,I4,-1);
     VARIMP(UI4,0,BSTR,true_str,I4,-1);
@@ -8086,7 +8086,7 @@ static void test_VarImp(void)
     VARIMP(I8,-1,NULL,0,NULL,0);
     VARIMP(I8,-1,I2,-1,I8,-1);
     VARIMP(I8,-1,I4,-1,I8,-1);
-    VARIMP(I8,-1,R4,0.0,I8,0);
+    VARIMP(I8,-1,R4,0.0f,I8,0);
     VARIMP(I8,-1,R8,-1.0,I8,-1);
     VARIMP(I8,-1,DATE,0,I8,0);
     VARIMP(I8,-1,BSTR,true_str,I8,-1);
@@ -8102,7 +8102,7 @@ static void test_VarImp(void)
     VARIMP(UI8,0,NULL,0,I4,-1);
     VARIMP(UI8,0,I2,-1,I4,-1);
     VARIMP(UI8,0,I4,-1,I4,-1);
-    VARIMP(UI8,0,R4,0.0,I4,-1);
+    VARIMP(UI8,0,R4,0.0f,I4,-1);
     VARIMP(UI8,0,R8,-1.0,I4,-1);
     VARIMP(UI8,0,DATE,0,I4,-1);
     VARIMP(UI8,0,BSTR,true_str,I4,-1);
@@ -8119,7 +8119,7 @@ static void test_VarImp(void)
     VARIMP(INT,-1,NULL,0,NULL,0);
     VARIMP(INT,-1,I2,-1,I4,-1);
     VARIMP(INT,-1,I4,-1,I4,-1);
-    VARIMP(INT,-1,R4,0.0,I4,0);
+    VARIMP(INT,-1,R4,0.0f,I4,0);
     VARIMP(INT,-1,R8,-1.0,I4,-1);
     VARIMP(INT,-1,DATE,0,I4,0);
     VARIMP(INT,-1,BSTR,true_str,I4,-1);
@@ -8136,7 +8136,7 @@ static void test_VarImp(void)
     VARIMP(UINT,1,NULL,0,I4,-2);
     VARIMP(UINT,1,I2,-1,I4,-1);
     VARIMP(UINT,1,I4,-1,I4,-1);
-    VARIMP(UINT,1,R4,0.0,I4,-2);
+    VARIMP(UINT,1,R4,0.0f,I4,-2);
     VARIMP(UINT,1,R8,-1.0,I4,-1);
     VARIMP(UINT,1,DATE,0,I4,-2);
     VARIMP(UINT,1,BSTR,true_str,I4,-1);
