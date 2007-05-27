@@ -84,7 +84,7 @@ static void test_VirtualAllocEx(void)
     src = (char *) HeapAlloc( GetProcessHeap(), 0, alloc_size );
     dst = (char *) HeapAlloc( GetProcessHeap(), 0, alloc_size );
     for (i = 0; i < alloc_size; i++)
-        src[i] = 0xcafedead + i;
+        src[i] = i & 0xff;
 
     ok(addr1 != NULL, "VirtualAllocEx error %u\n", GetLastError());
     b = WriteProcessMemory(hProcess, addr1, src, alloc_size, &bytes_written);
