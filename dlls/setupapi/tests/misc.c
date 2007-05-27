@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winuser.h"
 #include "winreg.h"
 #include "setupapi.h"
@@ -97,7 +98,7 @@ static BOOL check_format(LPSTR path, LPSTR inf)
 
     GetWindowsDirectory(check, MAX_PATH);
     lstrcat(check, format);
-    res = !strncasecmp(check, path, lstrlen(check)) &&
+    res = CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, check, -1, path, lstrlen(check)) == CSTR_EQUAL &&
           path[lstrlen(check)] != '\\';
 
     return (!inf) ? res : res && (inf == path + lstrlen(check) - 3);
