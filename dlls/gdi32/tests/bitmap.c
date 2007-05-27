@@ -1051,7 +1051,7 @@ static void test_GetDIBits_selected_DIB(UINT bpp)
     info->bmiHeader.biBitCount = bpp;
     info->bmiHeader.biCompression = BI_RGB;
 
-    for (i=0; i < (1 << bpp); i++)
+    for (i=0; i < (1u << bpp); i++)
     {
         BYTE c = i * (1 << (8 - bpp));
         info->bmiColors[i].rgbRed = c;
@@ -1085,7 +1085,7 @@ static void test_GetDIBits_selected_DIB(UINT bpp)
 
     /* Compare the color table and the bits */
     equalContents = TRUE;
-    for (i=0; i < (1 << bpp); i++)
+    for (i=0; i < (1u << bpp); i++)
     {
         if ((info->bmiColors[i].rgbRed != info2->bmiColors[i].rgbRed)
             || (info->bmiColors[i].rgbGreen != info2->bmiColors[i].rgbGreen)
@@ -1208,7 +1208,7 @@ static void test_GetDIBits_selected_DDB(BOOL monochrome)
     if (bpp <= 8)
     {
         equalContents = TRUE;
-        for (i=0; i < (1 << bpp); i++)
+        for (i=0; i < (1u << bpp); i++)
         {
             if ((info->bmiColors[i].rgbRed != info2->bmiColors[i].rgbRed)
                 || (info->bmiColors[i].rgbGreen != info2->bmiColors[i].rgbGreen)
