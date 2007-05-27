@@ -1981,7 +1981,7 @@ IDirectDrawSurfaceImpl_SetClipper(IDirectDrawSurface7 *iface,
     if(oldClipper)
         IDirectDrawClipper_Release(ICOM_INTERFACE(oldClipper, IDirectDrawClipper));
 
-    return IWineD3DSurface_SetClipper(This->WineD3DSurface, This->clipper->wineD3DClipper);
+    return IWineD3DSurface_SetClipper(This->WineD3DSurface, This->clipper ? This->clipper->wineD3DClipper : NULL);
 }
 
 /*****************************************************************************
