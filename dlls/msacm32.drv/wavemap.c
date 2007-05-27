@@ -67,7 +67,7 @@ typedef	struct tagWAVEMAPDATA {
     DWORD       nSamplesPerSecInner;
 } WAVEMAPDATA;
 
-static	BOOL	WAVEMAP_IsData(WAVEMAPDATA* wm)
+static	BOOL	WAVEMAP_IsData(const WAVEMAPDATA* wm)
 {
     return (!IsBadReadPtr(wm, sizeof(WAVEMAPDATA)) && wm->self == wm);
 }
