@@ -144,7 +144,8 @@ static void test_readmode( BOOL ascii_mode )
     int fd;
     FILE *file;
     const int *ip;
-    int i, j, m, fp, ao, pl;
+    int i, j, m, ao, pl;
+    unsigned int fp;
     long l;
 
     fd = open ("fdopen.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
@@ -307,7 +308,8 @@ static void test_fgetwc( void )
   WCHAR wtextW[BUFSIZ+LLEN+1];
   WCHAR *mytextW = NULL, *aptr, *wptr;
   BOOL diff_found = FALSE;
-  int i, j;
+  int j;
+  unsigned int i;
   long l;
 
   tempf=_tempnam(".","wne");
