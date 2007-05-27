@@ -251,7 +251,7 @@ typedef struct IDirectDrawGammaControl *LPDIRECTDRAWGAMMACONTROL;
 #define DDGFS_ISFLIPDONE	2L
 
 /* dwFlags for IDirectDrawSurface7::SetPrivateData */
-#define DDSPD_IUNKNOWNPTR	1L
+#define DDSPD_IUNKNOWNPOINTER	1L
 #define DDSPD_VOLATILE		2L
 
 /* DDSCAPS.dwCaps */
