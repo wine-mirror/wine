@@ -398,10 +398,13 @@ typedef LPCSTR          PCTSTR,      LPCTSTR;
 
 /* Misc common WIN32 types */
 typedef char            CCHAR;
-typedef LONG            HRESULT;
 typedef DWORD           LCID,       *PLCID;
 typedef WORD            LANGID;
 typedef DWORD		EXECUTION_STATE;
+#ifndef _HRESULT_DEFINED
+#define _HRESULT_DEFINED
+typedef LONG            HRESULT;
+#endif
 
 /* Handle type */
 

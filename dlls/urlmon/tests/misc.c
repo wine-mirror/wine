@@ -373,9 +373,9 @@ static const struct {
     {url2, mimeTextHtml, S_OK},
     {url3, mimeTextHtml, S_OK},
     {url4, NULL, E_FAIL},
-    {url5, NULL, HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)},
+    {url5, NULL, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)},
     {url6, NULL, E_FAIL},
-    {url7, NULL, HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)}
+    {url7, NULL, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)}
 };
 
 static BYTE data1[] = "test data\n";
