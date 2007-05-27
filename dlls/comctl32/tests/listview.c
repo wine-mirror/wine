@@ -568,7 +568,7 @@ static void insert_item(HWND hwnd, int idx)
     item.iSubItem = 0;
     item.pszText = text;
 
-    rc = ListView_InsertItemA(hwnd, &item);
+    rc = ListView_InsertItem(hwnd, &item);
     expect(idx, rc);
 }
 
