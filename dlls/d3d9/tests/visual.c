@@ -143,38 +143,38 @@ static void lighting_test(IDirect3DDevice9 *device)
     DWORD nfvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
     DWORD color;
 
-    float mat[16] = { 1.0, 0.0, 0.0, 0.0,
-                      0.0, 1.0, 0.0, 0.0,
-                      0.0, 0.0, 1.0, 0.0,
-                      0.0, 0.0, 0.0, 1.0 };
+    float mat[16] = { 1.0f, 0.0f, 0.0f, 0.0f,
+                      0.0f, 1.0f, 0.0f, 0.0f,
+                      0.0f, 0.0f, 1.0f, 0.0f,
+                      0.0f, 0.0f, 0.0f, 1.0f };
 
     struct vertex unlitquad[] =
     {
-        {-1.0,  -1.0,    0.1,                           0xffff0000},
-        {-1.0,   0.0,    0.1,                           0xffff0000},
-        { 0.0,   0.0,    0.1,                           0xffff0000},
-        { 0.0,  -1.0,    0.1,                           0xffff0000},
+        {-1.0f, -1.0f,   0.1f,                          0xffff0000},
+        {-1.0f,  0.0f,   0.1f,                          0xffff0000},
+        { 0.0f,  0.0f,   0.1f,                          0xffff0000},
+        { 0.0f, -1.0f,   0.1f,                          0xffff0000},
     };
     struct vertex litquad[] =
     {
-        {-1.0,   0.0,    0.1,                           0xff00ff00},
-        {-1.0,   1.0,    0.1,                           0xff00ff00},
-        { 0.0,   1.0,    0.1,                           0xff00ff00},
-        { 0.0,   0.0,    0.1,                           0xff00ff00},
+        {-1.0f,  0.0f,   0.1f,                          0xff00ff00},
+        {-1.0f,  1.0f,   0.1f,                          0xff00ff00},
+        { 0.0f,  1.0f,   0.1f,                          0xff00ff00},
+        { 0.0f,  0.0f,   0.1f,                          0xff00ff00},
     };
     struct nvertex unlitnquad[] =
     {
-        { 0.0,  -1.0,    0.1,   1.0,    1.0,    1.0,    0xff0000ff},
-        { 0.0,   0.0,    0.1,   1.0,    1.0,    1.0,    0xff0000ff},
-        { 1.0,   0.0,    0.1,   1.0,    1.0,    1.0,    0xff0000ff},
-        { 1.0,  -1.0,    0.1,   1.0,    1.0,    1.0,    0xff0000ff},
+        { 0.0f, -1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
+        { 0.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
+        { 1.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
+        { 1.0f, -1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
     };
     struct nvertex litnquad[] =
     {
-        { 0.0,   0.0,    0.1,   1.0,    1.0,    1.0,    0xffffff00},
-        { 0.0,   1.0,    0.1,   1.0,    1.0,    1.0,    0xffffff00},
-        { 1.0,   1.0,    0.1,   1.0,    1.0,    1.0,    0xffffff00},
-        { 1.0,   0.0,    0.1,   1.0,    1.0,    1.0,    0xffffff00},
+        { 0.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
+        { 0.0f,  1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
+        { 1.0f,  1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
+        { 1.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
     };
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
 
@@ -426,36 +426,36 @@ static void fog_test(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     DWORD color;
-    float start = 0.0, end = 1.0;
+    float start = 0.0f, end = 1.0f;
 
     /* Gets full z based fog with linear fog, no fog with specular color */
     struct sVertex unstransformed_1[] = {
-        {-1,    -1,   0.1,          0xFFFF0000,     0xFF000000  },
-        {-1,     0,   0.1,          0xFFFF0000,     0xFF000000  },
-        { 0,     0,   0.1,          0xFFFF0000,     0xFF000000  },
-        { 0,    -1,   0.1,          0xFFFF0000,     0xFF000000  },
+        {-1,    -1,   0.1f,         0xFFFF0000,     0xFF000000  },
+        {-1,     0,   0.1f,         0xFFFF0000,     0xFF000000  },
+        { 0,     0,   0.1f,         0xFFFF0000,     0xFF000000  },
+        { 0,    -1,   0.1f,         0xFFFF0000,     0xFF000000  },
     };
     /* Ok, I am too lazy to deal with transform matrices */
     struct sVertex unstransformed_2[] = {
-        {-1,     0,   1.0,          0xFFFF0000,     0xFF000000  },
-        {-1,     1,   1.0,          0xFFFF0000,     0xFF000000  },
-        { 0,     1,   1.0,          0xFFFF0000,     0xFF000000  },
-        { 0,     0,   1.0,          0xFFFF0000,     0xFF000000  },
+        {-1,     0,   1.0f,         0xFFFF0000,     0xFF000000  },
+        {-1,     1,   1.0f,         0xFFFF0000,     0xFF000000  },
+        { 0,     1,   1.0f,         0xFFFF0000,     0xFF000000  },
+        { 0,     0,   1.0f,         0xFFFF0000,     0xFF000000  },
     };
     /* Untransformed ones. Give them a different diffuse color to make the test look
      * nicer. It also makes making sure that they are drawn correctly easier.
      */
     struct sVertexT transformed_1[] = {
-        {320,    0,   1.0,  1.0,    0xFFFFFF00,     0xFF000000  },
-        {640,    0,   1.0,  1.0,    0xFFFFFF00,     0xFF000000  },
-        {640,  240,   1.0,  1.0,    0xFFFFFF00,     0xFF000000  },
-        {320,  240,   1.0,  1.0,    0xFFFFFF00,     0xFF000000  },
+        {320,    0,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
+        {640,    0,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
+        {640,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
+        {320,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
     };
     struct sVertexT transformed_2[] = {
-        {320,  240,   1.0,  1.0,    0xFFFFFF00,     0xFF000000  },
-        {640,  240,   1.0,  1.0,    0xFFFFFF00,     0xFF000000  },
-        {640,  480,   1.0,  1.0,    0xFFFFFF00,     0xFF000000  },
-        {320,  480,   1.0,  1.0,    0xFFFFFF00,     0xFF000000  },
+        {320,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
+        {640,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
+        {640,  480,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
+        {320,  480,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
     };
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
 
@@ -831,8 +831,8 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
     };
 
     /* NOTE: changing these values will not affect the tests with foggy vertex shader, as the values are hardcoded in the shader*/
-    start.f=0.9;
-    end.f=0.1;
+    start.f=0.9f;
+    end.f=0.1f;
 
     hr = IDirect3DDevice9_CreateVertexShader(device, vertex_shader_code1, &vertex_shader[1]);
     ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
