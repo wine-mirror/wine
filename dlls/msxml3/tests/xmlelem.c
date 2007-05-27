@@ -116,7 +116,7 @@ static void test_xmlelem(void)
     hr = IXMLElement_removeAttribute(element, str);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
 
-    /* remove now non-existent attribute */
+    /* remove now nonexistent attribute */
     hr = IXMLElement_removeAttribute(element, str);
     ok(hr == S_FALSE, "Expected S_FALSE, got %d\n", hr);
 

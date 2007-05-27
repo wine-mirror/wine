@@ -583,7 +583,7 @@ PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
         {
             return WINED3DFMT_R8G8_B8G8;
         }
-        return WINED3DFMT_UNKNOWN;  /* Abuse this as a error value */
+        return WINED3DFMT_UNKNOWN;  /* Abuse this as an error value */
     }
     else if(DDPixelFormat->dwFlags & DDPF_BUMPDUDV)
     {

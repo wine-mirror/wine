@@ -1851,7 +1851,7 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
     ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
     ok_exception(hr, szProductInfoException);
 
-    /* Non-existent attribute */
+    /* Nonexistent attribute */
     memset(szString, 0, sizeof(szString));
     hr = Installer_ProductInfo(szProductCode, szMsifile, szString);
     ok(hr == DISP_E_EXCEPTION, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);

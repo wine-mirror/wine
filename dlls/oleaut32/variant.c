@@ -2929,7 +2929,7 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     }
     ExtraFlags = leftExtraFlags;
 
-    /* Native VarAnd always returns a error when using any extra
+    /* Native VarAnd always returns an error when using extra
      * flags or if the variant combination is I8 and INT.
      */
     if ((leftvt == VT_I8 && rightvt == VT_INT) ||
@@ -3563,7 +3563,7 @@ HRESULT WINAPI VarDiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     }
     ExtraFlags = leftExtraFlags;
 
-    /* Native VarDiv always returns a error when using any extra flags */
+    /* Native VarDiv always returns an error when using extra flags */
     if (ExtraFlags != 0)
     {
         hres = DISP_E_BADVARTYPE;
@@ -5131,7 +5131,7 @@ HRESULT WINAPI VarIdiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     }
     ExtraFlags = leftExtraFlags;
 
-    /* Native VarIdiv always returns a error when using any extra
+    /* Native VarIdiv always returns an error when using extra
      * flags or if the variant combination is I8 and INT.
      */
     if ((leftvt == VT_I8 && rightvt == VT_INT) ||
@@ -5543,7 +5543,7 @@ HRESULT WINAPI VarPow(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     }
     ExtraFlags = leftExtraFlags;
 
-    /* Native VarPow always returns a error when using any extra flags */
+    /* Native VarPow always returns an error when using extra flags */
     if (ExtraFlags != 0)
     {
         hr = DISP_E_BADVARTYPE;
@@ -5659,7 +5659,7 @@ HRESULT WINAPI VarImp(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     }
     ExtraFlags = leftExtraFlags;
 
-    /* Native VarImp always returns a error when using any extra
+    /* Native VarImp always returns an error when using extra
      * flags or if the variants are I8 and INT.
      */
     if ((leftvt == VT_I8 && rightvt == VT_INT) ||

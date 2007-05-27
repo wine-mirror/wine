@@ -1252,7 +1252,7 @@ static void test_VarParseNumFromStr(void)
   EXPECT(1,NUMPRS_EXPONENT,NUMPRS_EXPONENT,4,0,-1);
   EXPECT2(1,FAILDIG);
 
-  /* As are positive exponents and leading exponent 0's */
+  /* As are positive exponents and leading exponent 0s */
   CONVERT("1e+01", NUMPRS_EXPONENT);
   EXPECT(1,NUMPRS_EXPONENT,NUMPRS_EXPONENT,5,0,1);
   EXPECT2(1,FAILDIG);
@@ -1304,12 +1304,12 @@ static void test_VarParseNumFromStr(void)
 
   /** Combinations **/
 
-  /* Leading whitepace and plus, doesn't consume trailing whitespace */
+  /* Leading whitespace and plus, doesn't consume trailing whitespace */
   CONVERT("+ 0 ", NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE);
   EXPECT(1,NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE,NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE,3,0,0);
   EXPECT2(0,FAILDIG);
 
-  /* Order of whitepace and plus is unimportant */
+  /* Order of whitespace and plus is unimportant */
   CONVERT(" +0", NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE);
   EXPECT(1,NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE,NUMPRS_LEADING_PLUS|NUMPRS_LEADING_WHITE,3,0,0);
   EXPECT2(0,FAILDIG);
@@ -5428,7 +5428,7 @@ static HRESULT (WINAPI *pVarAnd)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
         test_var_call2( __LINE__, pVarAnd, &left, &right, &exp );
 
-/* Skip any type that is not defined or produces a error for every case */
+/* Skip any type that is not defined or produces an error for every case */
 #define SKIPTESTAND(a)                                \
         if (a == VT_ERROR || a == VT_VARIANT ||       \
             a == VT_DISPATCH || a == VT_UNKNOWN ||    \
@@ -5474,7 +5474,7 @@ static void test_VarAnd(void)
                 if ((rightvt | ExtraFlags[i]) == VT_BSTR)
                     V_BSTR(&right) = true_str;
 
-                /* Native VarAnd always returns a error when using any extra
+                /* Native VarAnd always returns an error when using extra
                  * flags or if the variant combination is I8 and INT.
                  */
                 if ((leftvt == VT_I8 && rightvt == VT_INT) ||
@@ -6372,7 +6372,7 @@ static HRESULT (WINAPI *pVarPow)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
         test_var_call2( __LINE__, pVarPow, &left, &right, &exp );
 
-/* Skip any type that is not defined or produces a error for every case */
+/* Skip any type that is not defined or produces an error for every case */
 #define SKIPTESTPOW(a)                            \
     if (a == VT_ERROR || a == VT_VARIANT ||       \
         a == VT_DISPATCH || a == VT_UNKNOWN ||    \
@@ -6424,7 +6424,7 @@ static void test_VarPow(void)
                 if (rightvt == VT_BSTR)
                     V_BSTR(&right) = num2_str;
 
-                /* Native VarPow always returns a error when using any extra flags */
+                /* Native VarPow always returns an error when using extra flags */
                 if (ExtraFlags[i] != 0)
                     bFail = TRUE;
 
@@ -6876,7 +6876,7 @@ static HRESULT (WINAPI *pVarDiv)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
         test_var_call2( __LINE__, pVarDiv, &left, &right, &exp );
 
-/* Skip any type that is not defined or produces a error for every case */
+/* Skip any type that is not defined or produces an error for every case */
 #define SKIPTESTDIV(a)                            \
     if (a == VT_ERROR || a == VT_VARIANT ||       \
         a == VT_DISPATCH || a == VT_UNKNOWN ||    \
@@ -6995,7 +6995,7 @@ static void test_VarDiv(void)
                 else
                     bFail = TRUE;
 
-                /* Native VarDiv always returns a error when using any extra flags */
+                /* Native VarDiv always returns an error when using extra flags */
                 if (ExtraFlags[i] != 0)
                     bFail = TRUE;
 
@@ -7216,7 +7216,7 @@ static HRESULT (WINAPI *pVarIdiv)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
         test_var_call2( __LINE__, pVarIdiv, &left, &right, &exp );
 
-/* Skip any type that is not defined or produces a error for every case */
+/* Skip any type that is not defined or produces an error for every case */
 #define SKIPTESTIDIV(a)                           \
     if (a == VT_ERROR || a == VT_VARIANT ||       \
         a == VT_DISPATCH || a == VT_UNKNOWN ||    \
@@ -7304,7 +7304,7 @@ static void test_VarIdiv(void)
                 default: break;
                 }
 
-                /* Native VarIdiv always returns a error when using any extra
+                /* Native VarIdiv always returns an error when using extra
                  * flags or if the variant combination is I8 and INT.
                  */
                 if ((leftvt == VT_I8 && rightvt == VT_INT) ||
@@ -7720,7 +7720,7 @@ static HRESULT (WINAPI *pVarImp)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
         test_var_call2( __LINE__, pVarImp, &left, &right, &exp );
 
-/* Skip any type that is not defined or produces a error for every case */
+/* Skip any type that is not defined or produces an error for every case */
 #define SKIPTESTIMP(a)                            \
     if (a == VT_ERROR || a == VT_VARIANT ||       \
         a == VT_DISPATCH || a == VT_UNKNOWN ||    \
@@ -7806,7 +7806,7 @@ static void test_VarImp(void)
                 default: break;
                 }
 
-                /* Native VarImp always returns a error when using any extra
+                /* Native VarImp always returns an error when using extra
                  * flags or if the variants are I8 and INT.
                  */
                 if ((leftvt == VT_I8 && rightvt == VT_INT) ||

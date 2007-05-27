@@ -886,7 +886,7 @@ static void test_EM_SETUNDOLIMIT(void)
 
 static void test_ES_PASSWORD(void)
 {
-  /* This isn't hugely testable, so we're just going to run it through it's paces. */
+  /* This isn't hugely testable, so we're just going to run it through its paces */
 
   HWND hwndRichEdit = new_richedit(NULL);
   WCHAR result;

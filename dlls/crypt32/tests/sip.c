@@ -313,7 +313,7 @@ static void test_SIPLoad(void)
 
     /* The function addresses returned by CryptSIPLoad are actually the addresses of
      * crypt32's own functions. A function calling these addresses will end up first
-     * calling crypt32 functions which in it's turn call the equivalent in the SIP
+     * calling crypt32 functions which in its turn call the equivalent in the SIP
      * as dictated by the given GUID.
      */
     if (funcCryptSIPGetSignedDataMsg && funcCryptSIPPutSignedDataMsg && funcCryptSIPCreateIndirectData &&
@@ -337,7 +337,7 @@ static void test_SIPLoad(void)
     todo_wine
     {
         ok ( ret, "Expected CryptSIPLoad to succeed\n");
-        /* This call on it's own would have resulted in a ERROR_PROC_NOT_FOUND, but the previous
+        /* This call on its own would have resulted in an ERROR_PROC_NOT_FOUND, but the previous
          * call to CryptSIPLoad already loaded wintrust.dll. As this information is cached,
          * CryptSIPLoad will not try to search for the already mentioned DllCanUnloadNow.
          */
