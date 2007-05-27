@@ -608,8 +608,8 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
             ok(rc==DS_OK,"IDirectSound3dListener_GetAllParameters() "
                "failed: %s\n",DXGetErrorString8(rc));
             if (move_listener) {
-                listener_param.vPosition.x = -5.0;
-                listener_param.vVelocity.x = 10.0/duration;
+                listener_param.vPosition.x = -5.0f;
+                listener_param.vVelocity.x = (float)(10.0/duration);
             }
             rc=IDirectSound3DListener_SetAllParameters(listener,
                                                        &listener_param,
@@ -619,8 +619,8 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
         }
         if (buffer3d) {
             if (move_sound) {
-                buffer_param.vPosition.x = 100.0;
-                buffer_param.vVelocity.x = -200.0/duration;
+                buffer_param.vPosition.x = 100.0f;
+                buffer_param.vVelocity.x = (float)(-200.0/duration);
             }
             buffer_param.flMinDistance = 10;
             rc=IDirectSound3DBuffer_SetAllParameters(buffer,&buffer_param,
@@ -634,8 +634,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
             WaitForSingleObject(GetCurrentProcess(),TIME_SLICE);
             now=GetTickCount();
             if (listener && move_listener) {
-                listener_param.vPosition.x = -5.0+10.0*(now-start_time)/
-                    1000/duration;
+                listener_param.vPosition.x = (float)(-5.0+10.0*(now-start_time)/1000/duration);
                 if (winetest_debug>2)
                     trace("listener position=%g\n",listener_param.vPosition.x);
                 rc=IDirectSound3DListener_SetPosition(listener,
@@ -645,8 +644,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
                    "%s\n",DXGetErrorString8(rc));
             }
             if (buffer3d && move_sound) {
-                buffer_param.vPosition.x = 100-200.0*(now-start_time)/
-                    1000/duration;
+                buffer_param.vPosition.x = (float)(100-200.0*(now-start_time)/1000/duration);
                 if (winetest_debug>2)
                     trace("sound position=%g\n",buffer_param.vPosition.x);
                 rc=IDirectSound3DBuffer_SetPosition(buffer,
