@@ -31,6 +31,9 @@
 #define INITGUID
 #include "initguid.h"
 
+/* This GUID has been removed from the PSDK */
+DEFINE_OLEGUID(WINE_IID_IDelayedRelease,     0x000214EDL, 0, 0);
+
 /* Function ptrs for ordinal calls */
 static HMODULE hShlwapi = 0;
 static BOOL (WINAPI *pSHLWAPI_269)(LPCSTR, CLSID *) = 0;
@@ -59,7 +62,7 @@ const GUID * TEST_guids[] = {
   &IID_IPersistFolder,
   &IID_IExtractIconA,
   &IID_IShellDetails,
-  &IID_IDelayedRelease,
+  &WINE_IID_IDelayedRelease,
   &IID_IShellLinkA,
   &IID_IShellCopyHookA,
   &IID_IFileViewerA,
