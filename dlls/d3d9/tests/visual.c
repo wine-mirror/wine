@@ -693,8 +693,10 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     DWORD color;
-    /* NOTE: changing these values will not effect the tests with foggy vertex shader, as the values are hardcoded in the shader*/
-    union {float f; DWORD i;} start={.f=0.9}, end={.f=0.1};
+    union {
+        float f;
+        DWORD i;
+    } start, end;
     unsigned int i, j;
 
     /* basic vertex shader without fog computation ("non foggy") */
@@ -827,6 +829,10 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
          0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
 
     };
+
+    /* NOTE: changing these values will not affect the tests with foggy vertex shader, as the values are hardcoded in the shader*/
+    start.f=0.9;
+    end.f=0.1;
 
     hr = IDirect3DDevice9_CreateVertexShader(device, vertex_shader_code1, &vertex_shader[1]);
     ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
