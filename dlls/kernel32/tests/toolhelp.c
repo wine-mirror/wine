@@ -227,7 +227,8 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
     THREADENTRY32       te;
     MODULEENTRY32       me;
     unsigned            found[32];
-    int                 i, num = 0;
+    unsigned            i;
+    int                 num = 0;
 
     ok(NUM_OF(found) >= num_expected, "Internal: bump found[] size\n");
 
