@@ -622,7 +622,8 @@ static void test_ScriptString(HDC hdc)
     int             MaxSel = 0;
     BOOL            Disabled = FALSE;
     const int      *clip_len;
-    UINT           *order, i;
+    int            i;
+    UINT           *order;
 
 
     Charset = -1;     /* this flag indicates unicode input */
