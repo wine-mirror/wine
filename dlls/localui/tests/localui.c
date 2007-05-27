@@ -137,21 +137,24 @@ static void test_AddPortUI(void)
 
     SetLastError(0xdeadbeef);
     res = pAddPortUI(NULL, NULL, NULL, NULL);
-    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
-        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
-        res, GetLastError());
+    ok( !res &&
+        ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+        "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
     res = pAddPortUI(NULL, NULL, emptyW, NULL);
-    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
-        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
-        res, GetLastError());
+    ok( !res &&
+        ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+        "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
     res = pAddPortUI(NULL, NULL, does_not_existW, NULL);
-    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
-        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
-        res, GetLastError());
+    ok( !res &&
+        ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+        "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     if (winetest_interactive) {
         SetLastError(0xdeadbeef);
@@ -191,24 +194,25 @@ static void test_ConfigurePortUI(void)
 
     SetLastError(0xdeadbeef);
     res = pConfigurePortUI(NULL, NULL, NULL);
-    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
-        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
-        res, GetLastError());
-
+    ok( !res &&
+        ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+        "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
     res = pConfigurePortUI(NULL, NULL, emptyW);
-    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
-        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
-        res, GetLastError());
+    ok( !res &&
+        ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+        "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
 
     SetLastError(0xdeadbeef);
     res = pConfigurePortUI(NULL, NULL, does_not_existW);
-    ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
-        "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
-        res, GetLastError());
-
+    ok( !res &&
+        ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+        "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     if (winetest_interactive && lpt_present) {
         SetLastError(0xdeadbeef);
@@ -222,9 +226,10 @@ static void test_ConfigurePortUI(void)
     if (lpt_absent) {
         SetLastError(0xdeadbeef);
         res = pConfigurePortUI(NULL, NULL, lpt_absent);
-        ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
-            "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
-            res, GetLastError());
+        ok( !res &&
+            ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+            "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
+            "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
     }
 
     if (winetest_interactive && com_present) {
@@ -239,17 +244,20 @@ static void test_ConfigurePortUI(void)
     if (com_absent) {
         SetLastError(0xdeadbeef);
         res = pConfigurePortUI(NULL, NULL, com_absent);
-        ok( !res && (GetLastError() == ERROR_UNKNOWN_PORT),
-            "got %d with %u (expected '0' with ERROR_UNKNOWN_PORT)\n",
-            res, GetLastError());
+        ok( !res &&
+            ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+            "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
+            "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
+
     }
 
     if (winetest_interactive && file_present) {
         SetLastError(0xdeadbeef);
         res = pConfigurePortUI(NULL, NULL, portname_fileW);
-        ok( !res && (GetLastError() == ERROR_CANCELLED),
-            "got %d with %u (expected '0' with ERROR_CANCELLED)\n",
-            res, GetLastError());
+        ok( !res &&
+            ((GetLastError() == ERROR_CANCELLED) || (GetLastError() == ERROR_ACCESS_DENIED)),
+            "got %d with %u (expected '0' with: ERROR_CANCELLED or "
+            "ERROR_ACCESS_DENIED)\n", res, GetLastError());
     }
 }
 
