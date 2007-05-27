@@ -437,7 +437,7 @@ static void test_simple_types(void)
     *(ULONGLONG*)(wiredata + 2 * sizeof(void*)) = ll;
     test_pointer_marshal(fmtstr_up_longlong, &ll, 8, wiredata, 16, NULL, 0, "up_longlong");
 
-    f = 3.1415;
+    f = 3.1415f;
     *(void**)wiredata = &f;
     *(float*)(wiredata + sizeof(void*)) = f;
     test_pointer_marshal(fmtstr_up_float, &f, 4, wiredata, 8, NULL, 0, "up_float");
