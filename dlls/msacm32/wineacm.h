@@ -382,7 +382,7 @@ extern PWINE_ACMNOTIFYWND MSACM_GetNotifyWnd(HACMDRIVERID hDriver);
 extern PWINE_ACMOBJ MSACM_GetObj(HACMOBJ hObj, DWORD type);
 
 extern MMRESULT MSACM_Message(HACMDRIVER, UINT, LPARAM, LPARAM);
-extern BOOL MSACM_FindFormatTagInCache(WINE_ACMDRIVERID*, DWORD, LPDWORD);
+extern BOOL MSACM_FindFormatTagInCache(const WINE_ACMDRIVERID*, DWORD, LPDWORD);
 
 extern void MSACM_RePositionDriver(PWINE_ACMDRIVERID, DWORD);
 extern void MSACM_WriteCurrentPriorities(void);
@@ -390,7 +390,7 @@ extern void MSACM_BroadcastNotification(void);
 extern void MSACM_DisableNotifications(void);
 extern void MSACM_EnableNotifications(void);
 extern PWINE_ACMNOTIFYWND MSACM_RegisterNotificationWindow(HWND hNotifyWnd, DWORD dwNotifyMsg);
-extern PWINE_ACMNOTIFYWND MSACM_UnRegisterNotificationWindow(PWINE_ACMNOTIFYWND);
+extern PWINE_ACMNOTIFYWND MSACM_UnRegisterNotificationWindow(const WINE_ACMNOTIFYWND*);
 
 extern PWINE_ACMDRIVERID MSACM_RegisterDriverFromRegistry(LPCWSTR pszRegEntry);
 
