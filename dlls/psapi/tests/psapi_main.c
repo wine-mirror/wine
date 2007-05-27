@@ -236,7 +236,7 @@ static void test_ws_functions(void)
     PSAPI_WS_WATCH_INFORMATION wswi[4096];
     ULONG_PTR pages[4096];
     char *addr;
-    int i;
+    unsigned int i;
     
     todo_wine w32_err(pEmptyWorkingSet(NULL), ERROR_INVALID_HANDLE);
     todo_wine w32_err(pEmptyWorkingSet(hpSR), ERROR_ACCESS_DENIED);
