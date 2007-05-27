@@ -35,7 +35,7 @@
 #include "shlguid.h"
 
 #include "initguid.h"
-DEFINE_SHLGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
+DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
