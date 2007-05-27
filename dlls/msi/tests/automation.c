@@ -589,7 +589,7 @@ static HRESULT invoke(IDispatch *pDispatch, LPCSTR szName, WORD wFlags, DISPPARA
     OLECHAR *name = NULL;
     DISPID dispid;
     HRESULT hr;
-    int i;
+    UINT i;
     UINT len;
 
     memset(pVarResult, 0, sizeof(VARIANT));
