@@ -55,7 +55,7 @@ static LRESULT ADPCM_drvClose(DWORD_PTR dwDevID)
 
 typedef struct tagAcmAdpcmData
 {
-    void (*convert)(PACMDRVSTREAMINSTANCE adsi,
+    void (*convert)(const ACMDRVSTREAMINSTANCE *adsi,
 		    const unsigned char*, LPDWORD, unsigned char*, LPDWORD);
 } AcmAdpcmData;
 
@@ -101,7 +101,7 @@ static ADPCMCOEFSET MSADPCM_CoeffSet[] =
 /***********************************************************************
  *           ADPCM_GetFormatIndex
  */
-static	DWORD	ADPCM_GetFormatIndex(WAVEFORMATEX* wfx)
+static	DWORD	ADPCM_GetFormatIndex(const WAVEFORMATEX* wfx)
 {
     int             i, hi;
     const Format*   fmts;
@@ -204,7 +204,7 @@ static inline void process_nibble(unsigned nibble, int* idelta,
     if (*idelta < 16) *idelta = 16;
 }
 
-static	void cvtSSms16K(PACMDRVSTREAMINSTANCE adsi,
+static	void cvtSSms16K(const ACMDRVSTREAMINSTANCE *adsi,
                         const unsigned char* src, LPDWORD nsrc,
                         unsigned char* dst, LPDWORD ndst)
 {
@@ -254,7 +254,7 @@ static	void cvtSSms16K(PACMDRVSTREAMINSTANCE adsi,
     }
 }
 
-static	void cvtMMms16K(PACMDRVSTREAMINSTANCE adsi,
+static	void cvtMMms16K(const ACMDRVSTREAMINSTANCE *adsi,
                         const unsigned char* src, LPDWORD nsrc,
                         unsigned char* dst, LPDWORD ndst)
 {
@@ -616,7 +616,7 @@ static	LRESULT	ADPCM_StreamClose(PACMDRVSTREAMINSTANCE adsi)
  *           ADPCM_StreamSize
  *
  */
-static	LRESULT ADPCM_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE adss)
+static	LRESULT ADPCM_StreamSize(const ACMDRVSTREAMINSTANCE *adsi, PACMDRVSTREAMSIZE adss)
 {
     switch (adss->fdwSize)
     {
