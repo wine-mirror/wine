@@ -34,7 +34,7 @@
 
 /* Helper macros to find the size of SECPKG_FUNCTION_TABLE */
 #define SECPKG_FUNCTION_TABLE_SIZE_1 offsetof(SECPKG_FUNCTION_TABLE, \
-    SpSetContextAttributes)
+    SetContextAttributes)
 #define SECPKG_FUNCTION_TABLE_SIZE_2 offsetof(SECPKG_FUNCTION_TABLE, \
     SetCredentialsAttributes)
 #define SECPKG_FUNCTION_TABLE_SIZE_3 sizeof(SECPKG_FUNCTION_TABLE)

@@ -107,7 +107,7 @@ static SECPKG_FUNCTION_TABLE secPkgFunctionTable[2] =
     NULL, /* SpQueryContextAttributes */
     NULL, /* SpAddCredentials */
     NULL, /* SetExtendedInformation */
-    NULL, /* SpSetContextAttributes */
+    NULL, /* SetContextAttributes */
     NULL, /* SetCredentialsAttributes */
   }, {
     NULL, /* InitializePackage */
@@ -137,7 +137,7 @@ static SECPKG_FUNCTION_TABLE secPkgFunctionTable[2] =
     NULL, /* SpQueryContextAttributes */
     NULL, /* SpAddCredentials */
     NULL, /* SetExtendedInformation */
-    NULL, /* SpSetContextAttributes */
+    NULL, /* SetContextAttributes */
     NULL, /* SetCredentialsAttributes */
   }
 };

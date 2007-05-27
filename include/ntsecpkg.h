@@ -368,6 +368,10 @@ typedef NTSTATUS (NTAPI SpExportSecurityContextFn)(LSA_SEC_HANDLE, ULONG,
 typedef NTSTATUS (NTAPI SpImportSecurityContextFn)(PSecBuffer, HANDLE,
  PLSA_SEC_HANDLE);
 
+#ifdef WINE_NO_UNICODE_MACROS
+#undef SetContextAttributes
+#endif
+
 /* dispatch tables of LSA-mode functions implemented by SSP/AP */
 typedef struct SECPKG_FUNCTION_TABLE {
     PLSA_AP_INITIALIZE_PACKAGE InitializePackage;
@@ -398,7 +402,7 @@ typedef struct SECPKG_FUNCTION_TABLE {
     SpAddCredentialsFn *SpAddCredentials;
     SpSetExtendedInformationFn *SetExtendedInformation;
     /* Packages with version SECPKG_INTERFACE_VERSION end here */
-    SpSetContextAttributesFn *SpSetContextAttributes;
+    SpSetContextAttributesFn *SetContextAttributes;
     /* Packages with version SECPKG_INTERFACE_VERSION_2 end here */
     SpSetCredentialsAttributesFn *SetCredentialsAttributes;
     /* Packages with version SECPKG_INTERFACE_VERSION_3 end here */
