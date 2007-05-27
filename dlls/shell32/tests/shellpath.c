@@ -197,6 +197,11 @@ static void loadShell32(void)
 #define CSIDL_PROFILES		0x003e
 #endif
 
+/* CSIDL_MYDOCUMENTS is now the same as CSIDL_PERSONAL, but what we want
+ * here is its original value.
+ */
+#define OLD_CSIDL_MYDOCUMENTS  0x000c
+
 /* A couple utility printing functions */
 static const char *getFolderName(int folder)
 {
@@ -217,7 +222,7 @@ static const char *getFolderName(int folder)
     CSIDL_TO_STR(CSIDL_SENDTO);
     CSIDL_TO_STR(CSIDL_BITBUCKET);
     CSIDL_TO_STR(CSIDL_STARTMENU);
-    CSIDL_TO_STR(CSIDL_MYDOCUMENTS);
+    CSIDL_TO_STR(OLD_CSIDL_MYDOCUMENTS);
     CSIDL_TO_STR(CSIDL_MYMUSIC);
     CSIDL_TO_STR(CSIDL_MYVIDEO);
     CSIDL_TO_STR(CSIDL_DESKTOPDIRECTORY);
