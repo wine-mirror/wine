@@ -102,7 +102,7 @@ static LPWSTR GUIDToString(LPWSTR lpwstr, REFGUID lpcguid)
     return lpwstr;
 }
 
-static BOOL IsMediaTypeEqual(DMO_PARTIAL_MEDIATYPE* mt1, DMO_PARTIAL_MEDIATYPE* mt2)
+static BOOL IsMediaTypeEqual(const DMO_PARTIAL_MEDIATYPE* mt1, const DMO_PARTIAL_MEDIATYPE* mt2)
 {
 
     return (IsEqualCLSID(&mt1->type, &mt2->type) ||
