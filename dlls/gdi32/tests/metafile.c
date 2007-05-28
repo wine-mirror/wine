@@ -1541,7 +1541,7 @@ static void test_gdiis(void)
     ok(!pGdiIsMetaPrintDC(hmfDC), "ismetaprint on metafile\n");
     ok(pGdiIsMetaFileDC(hmfDC), "ismetafile on metafile\n");
     ok(!pGdiIsPlayMetafileDC(hmfDC), "isplaymetafile on metafile\n");
-    DeleteObject(CloseMetaFile(hmfDC));
+    DeleteMetaFile(CloseMetaFile(hmfDC));
 
     /* try with an enhanced metafile */
     hdc = GetDC(NULL);
@@ -1554,8 +1554,51 @@ static void test_gdiis(void)
 
     hemf = CloseEnhMetaFile(hemfDC);
     ok(hemf != NULL, "failed to close EMF\n");
-    DeleteObject(hemf);
+    DeleteEnhMetaFile(hemf);
     ReleaseDC(NULL,hdc);
+}
+
+static void test_SetEnhMetaFileBits(void)
+{
+    BYTE data[256];
+    HENHMETAFILE hemf;
+    ENHMETAHEADER *emh;
+
+    memset(data, 0xAA, sizeof(data));
+    SetLastError(0xdeadbeef);
+    hemf = SetEnhMetaFileBits(sizeof(data), data);
+    ok(!hemf, "SetEnhMetaFileBits should fail\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "expected ERROR_INVALID_DATA, got %u\n", GetLastError());
+
+    emh = (ENHMETAHEADER *)data;
+    memset(emh, 0, sizeof(*emh));
+
+    emh->iType = EMR_HEADER;
+    emh->nSize = sizeof(*emh);
+    emh->dSignature = ENHMETA_SIGNATURE;
+    /* emh->nVersion  = 0x10000; XP doesn't care about version */
+    emh->nBytes = sizeof(*emh);
+    /* emh->nRecords = 1; XP doesn't care about records */
+    emh->nHandles = 1; /* XP refuses to load a EMF if nHandles == 0 */
+
+    SetLastError(0xdeadbeef);
+    hemf = SetEnhMetaFileBits(emh->nBytes, data);
+    ok(hemf != 0, "SetEnhMetaFileBits error %u\n", GetLastError());
+    DeleteEnhMetaFile(hemf);
+
+    /* XP refuses to load unaligned EMF */
+    emh->nBytes++;
+    SetLastError(0xdeadbeef);
+    hemf = SetEnhMetaFileBits(emh->nBytes, data);
+    ok(!hemf, "SetEnhMetaFileBits should fail\n");
+    /* XP doesn't set error in this case */
+
+    emh->dSignature = 0;
+    emh->nBytes--;
+    SetLastError(0xdeadbeef);
+    hemf = SetEnhMetaFileBits(emh->nBytes, data);
+    ok(!hemf, "SetEnhMetaFileBits should fail\n");
+    /* XP doesn't set error in this case */
 }
 
 START_TEST(metafile)
@@ -1580,4 +1623,5 @@ START_TEST(metafile)
     test_SetWinMetaFileBits();
 
     test_gdiis();
+    test_SetEnhMetaFileBits();
 }
