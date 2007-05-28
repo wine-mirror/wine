@@ -94,7 +94,7 @@ static const Format ULaw_Formats[] =
 /***********************************************************************
  *           G711_GetFormatIndex
  */
-static	DWORD	G711_GetFormatIndex(LPWAVEFORMATEX wfx)
+static	DWORD	G711_GetFormatIndex(const WAVEFORMATEX *wfx)
 {
     int             i, hi;
     const Format*   fmts;
@@ -983,7 +983,7 @@ static	LRESULT	G711_StreamClose(PACMDRVSTREAMINSTANCE adsi)
  *           G711_StreamSize
  *
  */
-static	LRESULT G711_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE adss)
+static	LRESULT G711_StreamSize(const ACMDRVSTREAMINSTANCE *adsi, PACMDRVSTREAMSIZE adss)
 {
     switch (adss->fdwSize)
     {
