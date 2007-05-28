@@ -233,43 +233,6 @@ static void delete_test_association(const char* extension)
     SHDeleteKey(HKEY_CLASSES_ROOT, extension);
 }
 
-static void create_test_verb(const char* extension, const char* verb,
-                             int rawcmd, const char* cmdtail)
-{
-    HKEY hkey_shell, hkey_verb, hkey_cmd;
-    char shell[MAX_PATH];
-    char* cmd;
-    LONG rc;
-
-    sprintf(shell, "shlexec%s\\shell", extension);
-    rc=RegOpenKeyEx(HKEY_CLASSES_ROOT, shell, 0,
-                    KEY_CREATE_SUB_KEY, &hkey_shell);
-    assert(rc==ERROR_SUCCESS);
-    rc=RegCreateKeyEx(hkey_shell, verb, 0, NULL, 0, KEY_CREATE_SUB_KEY,
-                      NULL, &hkey_verb, NULL);
-    assert(rc==ERROR_SUCCESS);
-    rc=RegCreateKeyEx(hkey_verb, "command", 0, NULL, 0, KEY_SET_VALUE,
-                      NULL, &hkey_cmd, NULL);
-    assert(rc==ERROR_SUCCESS);
-
-    if (rawcmd)
-    {
-        rc=RegSetValueEx(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmdtail, strlen(cmdtail)+1);
-    }
-    else
-    {
-        cmd=malloc(strlen(argv0)+10+strlen(child_file)+2+strlen(cmdtail)+1);
-        sprintf(cmd,"%s shlexec \"%s\" %s", argv0, child_file, cmdtail);
-        rc=RegSetValueEx(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmd, strlen(cmd)+1);
-        assert(rc==ERROR_SUCCESS);
-        free(cmd);
-    }
-
-    CloseHandle(hkey_shell);
-    CloseHandle(hkey_verb);
-    CloseHandle(hkey_cmd);
-}
-
 static void create_test_verb_dde(const char* extension, const char* verb,
                                  int rawcmd, const char* cmdtail, const char *ddeexec,
                                  const char *application, const char *topic,
@@ -350,6 +313,13 @@ static void create_test_verb_dde(const char* extension, const char* verb,
     CloseHandle(hkey_shell);
     CloseHandle(hkey_verb);
     CloseHandle(hkey_cmd);
+}
+
+static void create_test_verb(const char* extension, const char* verb,
+                             int rawcmd, const char* cmdtail)
+{
+    create_test_verb_dde(extension, verb, rawcmd, cmdtail, NULL, NULL,
+                         NULL, NULL);
 }
 
 /***
