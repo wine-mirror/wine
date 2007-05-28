@@ -738,6 +738,12 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
 static void HTTP_DrainContent(LPWININETHTTPREQW lpwhr)
 {
     DWORD bytes_read;
+
+    if (!NETCON_connected(&lpwhr->netConnection)) return;
+
+    if (lpwhr->dwContentLength == -1)
+        NETCON_close(&lpwhr->netConnection);
+
     do
     {
         char buffer[2048];

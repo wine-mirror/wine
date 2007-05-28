@@ -444,6 +444,7 @@ static void InternetReadFileExA_test(int flags)
 
         length += inetbuffers.dwBufferLength;
     }
+    ok(length > 0, "failed to read any of the document\n");
     trace("Finished. Read %d bytes\n", length);
 
 abort:
