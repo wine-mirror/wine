@@ -270,7 +270,87 @@ static void create_test_verb(const char* extension, const char* verb,
     CloseHandle(hkey_cmd);
 }
 
+static void create_test_verb_dde(const char* extension, const char* verb,
+                                 int rawcmd, const char* cmdtail, const char *ddeexec,
+                                 const char *application, const char *topic,
+                                 const char *ifexec)
+{
+    HKEY hkey_shell, hkey_verb, hkey_cmd;
+    char shell[MAX_PATH];
+    char* cmd;
+    LONG rc;
 
+    sprintf(shell, "shlexec%s\\shell", extension);
+    rc=RegOpenKeyEx(HKEY_CLASSES_ROOT, shell, 0,
+                    KEY_CREATE_SUB_KEY, &hkey_shell);
+    assert(rc==ERROR_SUCCESS);
+    rc=RegCreateKeyEx(hkey_shell, verb, 0, NULL, 0, KEY_CREATE_SUB_KEY,
+                      NULL, &hkey_verb, NULL);
+    assert(rc==ERROR_SUCCESS);
+    rc=RegCreateKeyEx(hkey_verb, "command", 0, NULL, 0, KEY_SET_VALUE,
+                      NULL, &hkey_cmd, NULL);
+    assert(rc==ERROR_SUCCESS);
+
+    if (rawcmd)
+    {
+        rc=RegSetValueEx(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmdtail, strlen(cmdtail)+1);
+    }
+    else
+    {
+        cmd=malloc(strlen(argv0)+10+strlen(child_file)+2+strlen(cmdtail)+1);
+        sprintf(cmd,"%s shlexec \"%s\" %s", argv0, child_file, cmdtail);
+        rc=RegSetValueEx(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmd, strlen(cmd)+1);
+        assert(rc==ERROR_SUCCESS);
+        free(cmd);
+    }
+
+    if (ddeexec)
+    {
+        HKEY hkey_ddeexec, hkey_application, hkey_topic, hkey_ifexec;
+
+        rc=RegCreateKeyEx(hkey_verb, "ddeexec", 0, NULL, 0, KEY_SET_VALUE |
+                          KEY_CREATE_SUB_KEY, NULL, &hkey_ddeexec, NULL);
+        assert(rc==ERROR_SUCCESS);
+        rc=RegSetValueEx(hkey_ddeexec, NULL, 0, REG_SZ, (LPBYTE)ddeexec,
+                         strlen(ddeexec)+1);
+        assert(rc==ERROR_SUCCESS);
+        if (application)
+        {
+            rc=RegCreateKeyEx(hkey_ddeexec, "application", 0, NULL, 0, KEY_SET_VALUE,
+                              NULL, &hkey_application, NULL);
+            assert(rc==ERROR_SUCCESS);
+            rc=RegSetValueEx(hkey_application, NULL, 0, REG_SZ, (LPBYTE)application,
+                             strlen(application)+1);
+            assert(rc==ERROR_SUCCESS);
+            CloseHandle(hkey_application);
+        }
+        if (topic)
+        {
+            rc=RegCreateKeyEx(hkey_ddeexec, "topic", 0, NULL, 0, KEY_SET_VALUE,
+                              NULL, &hkey_topic, NULL);
+            assert(rc==ERROR_SUCCESS);
+            rc=RegSetValueEx(hkey_topic, NULL, 0, REG_SZ, (LPBYTE)topic,
+                             strlen(topic)+1);
+            assert(rc==ERROR_SUCCESS);
+            CloseHandle(hkey_topic);
+        }
+        if (ifexec)
+        {
+            rc=RegCreateKeyEx(hkey_ddeexec, "ifexec", 0, NULL, 0, KEY_SET_VALUE,
+                              NULL, &hkey_ifexec, NULL);
+            assert(rc==ERROR_SUCCESS);
+            rc=RegSetValueEx(hkey_ifexec, NULL, 0, REG_SZ, (LPBYTE)ifexec,
+                             strlen(ifexec)+1);
+            assert(rc==ERROR_SUCCESS);
+            CloseHandle(hkey_ifexec);
+        }
+        CloseHandle(hkey_ddeexec);
+    }
+
+    CloseHandle(hkey_shell);
+    CloseHandle(hkey_verb);
+    CloseHandle(hkey_cmd);
+}
 
 /***
  *
@@ -486,6 +566,7 @@ static const char* testfiles[]=
     "%s\\test file.sfe",
     "%s\\masked file.shlexec",
     "%s\\masked",
+    "%s\\test file.sde",
     NULL
 };
 
@@ -984,6 +1065,206 @@ static void test_exes_long(void)
     }
 }
 
+typedef struct
+{
+    const char* command;
+    const char* ddeexec;
+    const char* application;
+    const char* topic;
+    const char* ifexec;
+    BOOL bExpectCmdLine;
+    const char* expectedDdeExec;
+    int todo;
+    int rc;
+} dde_tests_t;
+
+static dde_tests_t dde_tests[] =
+{
+    /* Test passing and not passing command-line
+     * argument, no DDE */
+    {"", NULL, NULL, NULL, NULL, FALSE, "", 0x2, 33},
+    {"\"%1\"", NULL, NULL, NULL, NULL, TRUE, "", 0x0, 33},
+
+    /* Test passing and not passing command-line
+     * argument, with DDE */
+    {"", "[open(\"%1\")]", "shlexec", "dde", NULL, FALSE, "[open(\"%s\")]", 0xa, 33},
+    {"\"%1\"", "[open(\"%1\")]", "shlexec", "dde", NULL, TRUE, "[open(\"%s\")]", 0x8, 33},
+
+    /* Test ifexec precedence over ddeexec */
+    {"", "[open(\"%1\")]", "shlexec", "dde", "[ifexec(\"%1\")]", FALSE, "[ifexec(\"%s\")]", 0xa, 33},
+
+    /* Test default DDE topic */
+    {"", "[open(\"%1\")]", "shlexec", NULL, NULL, FALSE, "[open(\"%s\")]", 0xa, 33},
+
+    /* Test default DDE application */
+    {"", "[open(\"%1\")]", NULL, "dde", NULL, FALSE, "[open(\"%s\")]", 0xa, 33},
+
+    {NULL, NULL, NULL, NULL, 0x0, 0}
+};
+
+static HSZ hszTopic;
+static char ddeExec[MAX_PATH];
+static BOOL denyNextConnection;
+
+static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
+                                HSZ hsz1, HSZ hsz2, HDDEDATA hData,
+                                ULONG_PTR dwData1, ULONG_PTR dwData2)
+{
+    DWORD size = 0;
+
+    if (winetest_debug > 2)
+        trace("dde_cb: %04x, %04x, %p, %p, %p, %p, %08lx, %08lx\n",
+              uType, uFmt, hConv, hsz1, hsz2, hData, dwData1, dwData2);
+
+    switch (uType)
+    {
+        case XTYP_CONNECT:
+            if (!DdeCmpStringHandles(hsz1, hszTopic))
+            {
+                if (denyNextConnection)
+                    denyNextConnection = FALSE;
+                else
+                    return (HDDEDATA)TRUE;
+            }
+            return (HDDEDATA)FALSE;
+
+        case XTYP_EXECUTE:
+            size = DdeGetData(hData, (LPBYTE)ddeExec, MAX_PATH, 0L);
+            assert(size < MAX_PATH);
+            DdeFreeDataHandle(hData);
+            return (HDDEDATA)DDE_FACK;
+
+        default:
+            return (HDDEDATA)NULL;
+    }
+}
+
+typedef struct
+{
+    char *filename;
+    DWORD threadIdParent;
+} dde_thread_info_t;
+
+static DWORD CALLBACK ddeThread(LPVOID arg)
+{
+    dde_thread_info_t *info = (dde_thread_info_t *)arg;
+    int rc;
+
+    assert(info && info->filename);
+    rc=shell_execute(NULL, info->filename, NULL, NULL);
+    PostThreadMessage(info->threadIdParent, WM_QUIT, 0, 0L);
+    ExitThread(rc);
+}
+
+/* ShellExecute won't succesfully send DDE commands to console applications after starting them,
+ * so we run a DDE server in this application, deny the first connection request to make
+ * ShellExecute start the application, and then process the next DDE connection in this application
+ * to see the execute command that is sent. */
+static void test_dde(void)
+{
+    char filename[MAX_PATH], defApplication[MAX_PATH];
+    HSZ hszApplication;
+    dde_thread_info_t info = { filename, GetCurrentThreadId() };
+    const dde_tests_t* test;
+    char params[1024];
+    DWORD inst = 0;
+    HANDLE hThread;
+    MSG msg;
+    int rc;
+
+    rc = DdeInitializeA(&inst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
+                        CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0L);
+    assert(rc == DMLERR_NO_ERROR);
+
+    sprintf(filename, "%s\\test file.sde", tmpdir);
+
+    /* Default service is application name minus path and extension */
+    strcpy(defApplication, strrchr(argv0, '\\')+1);
+    *strchr(defApplication, '.') = 0;
+
+    test = dde_tests;
+    while (test->command)
+    {
+        create_test_association(".sde");
+        create_test_verb_dde(".sde", "Open", 0, test->command, test->ddeexec,
+                             test->application, test->topic, test->ifexec);
+        hszApplication = DdeCreateStringHandleA(inst, test->application ?
+                                                test->application : defApplication, CP_WINANSI);
+        hszTopic = DdeCreateStringHandleA(inst, test->topic ? test->topic : SZDDESYS_TOPIC,
+                                          CP_WINANSI);
+        assert(hszApplication && hszTopic);
+        assert(DdeNameService(inst, hszApplication, 0L, DNS_REGISTER));
+        denyNextConnection = TRUE;
+        ddeExec[0] = 0;
+
+        hThread = CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, NULL);
+        assert(hThread);
+        while (GetMessage(&msg, NULL, 0, 0))
+        {
+            /* Need a message loop for DDE server */
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        rc = WaitForSingleObject(hThread, 5000);
+        assert(rc == WAIT_OBJECT_0);
+
+        GetExitCodeThread(hThread, (DWORD *)&rc);
+        if (rc > 32)
+            rc=33;
+        if ((test->todo & 0x1)==0)
+        {
+            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+               rc, GetLastError());
+        }
+        else todo_wine
+        {
+            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+               rc, GetLastError());
+        }
+        if (rc == 33)
+        {
+            if ((test->todo & 0x2)==0)
+            {
+                okChildInt("argcA", test->bExpectCmdLine ? 4 : 3);
+            }
+            else todo_wine
+            {
+                okChildInt("argcA", test->bExpectCmdLine ? 4 : 3);
+            }
+            if (test->bExpectCmdLine)
+            {
+                if ((test->todo & 0x4) == 0)
+                {
+                    okChildPath("argvA3", filename);
+                }
+                else todo_wine
+                {
+                    okChildPath("argvA3", filename);
+                }
+            }
+            if ((test->todo & 0x8) == 0)
+            {
+                sprintf(params, test->expectedDdeExec, filename);
+                ok(StrCmpPath(params, ddeExec) == 0,
+                   "ddeexec expected '%s', got '%s'\n", params, ddeExec);
+            }
+            else todo_wine
+            {
+                sprintf(params, test->expectedDdeExec, filename);
+                ok(StrCmpPath(params, ddeExec) == 0,
+                   "ddeexec expected '%s', got '%s'\n", params, ddeExec);
+            }
+        }
+
+        assert(DdeNameService(inst, hszApplication, 0L, DNS_UNREGISTER));
+        assert(DdeFreeStringHandle(inst, hszTopic));
+        assert(DdeFreeStringHandle(inst, hszApplication));
+        delete_test_association(".sde");
+        test++;
+    }
+
+    assert(DdeUninitialize(inst));
+}
 
 static void init_test(void)
 {
@@ -1127,6 +1408,7 @@ START_TEST(shlexec)
     test_lnks();
     test_exes();
     test_exes_long();
+    test_dde();
 
     cleanup_test();
 }
