@@ -69,7 +69,7 @@
 extern DWORD MSCMS_hprofile2access( HPROFILE );
 extern HPROFILE MSCMS_handle2hprofile( HANDLE file );
 extern HPROFILE MSCMS_cmsprofile2hprofile( cmsHPROFILE cmsprofile );
-extern HPROFILE MSCMS_iccprofile2hprofile( icProfile *iccprofile );
+extern HPROFILE MSCMS_iccprofile2hprofile( const icProfile *iccprofile );
 extern HANDLE MSCMS_hprofile2handle( HPROFILE profile );
 extern cmsHPROFILE MSCMS_hprofile2cmsprofile( HPROFILE profile );
 extern icProfile *MSCMS_hprofile2iccprofile( HPROFILE profile );
@@ -82,12 +82,12 @@ extern cmsHTRANSFORM MSCMS_htransform2cmstransform( HTRANSFORM transform );
 extern HTRANSFORM MSCMS_create_htransform_handle( cmsHTRANSFORM cmstransform );
 extern void MSCMS_destroy_htransform_handle( HTRANSFORM transform );
 
-extern DWORD MSCMS_get_tag_count( icProfile *iccprofile );
+extern DWORD MSCMS_get_tag_count( const icProfile *iccprofile );
 extern void MSCMS_get_tag_by_index( icProfile *iccprofile, DWORD index, icTag *tag );
-extern void MSCMS_get_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *buffer );
-extern void MSCMS_set_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *buffer );
-extern void MSCMS_get_profile_header( icProfile *iccprofile, PROFILEHEADER *header );
-extern void MSCMS_set_profile_header( icProfile *iccprofile, PROFILEHEADER *header );
-extern DWORD MSCMS_get_profile_size( icProfile *iccprofile );
+extern void MSCMS_get_tag_data( const icProfile *iccprofile, const icTag *tag, DWORD offset, void *buffer );
+extern void MSCMS_set_tag_data( icProfile *iccprofile, const icTag *tag, DWORD offset, const void *buffer );
+extern void MSCMS_get_profile_header( const icProfile *iccprofile, PROFILEHEADER *header );
+extern void MSCMS_set_profile_header( icProfile *iccprofile, const PROFILEHEADER *header );
+extern DWORD MSCMS_get_profile_size( const icProfile *iccprofile );
 
 #endif /* HAVE_LCMS */

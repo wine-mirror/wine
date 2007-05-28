@@ -471,7 +471,7 @@ BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profi
     return TRUE;
 }
 
-static BOOL MSCMS_header_from_file( LPWSTR file, PPROFILEHEADER header )
+static BOOL MSCMS_header_from_file( LPCWSTR file, PPROFILEHEADER header )
 {
     BOOL ret;
     PROFILE profile;

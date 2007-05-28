@@ -153,7 +153,7 @@ cmsHPROFILE MSCMS_hprofile2cmsprofile( HPROFILE profile )
     return cmsprofile;
 }
 
-HPROFILE MSCMS_iccprofile2hprofile( icProfile *iccprofile )
+HPROFILE MSCMS_iccprofile2hprofile( const icProfile *iccprofile )
 {
     HPROFILE profile = NULL;
     DWORD_PTR i;
