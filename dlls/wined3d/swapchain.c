@@ -321,52 +321,57 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         BOOL frontuptodate = front->Flags & SFLAG_INSYSMEM;
         BOOL backuptodate = back->Flags & SFLAG_INSYSMEM;
 
-        /* Flip the DC */
-        {
-            HDC tmp;
-            tmp = front->hDC;
-            front->hDC = back->hDC;
-            back->hDC = tmp;
+        if(front->resource.size == back->resource.size) {
+            /* Flip the DC */
+            {
+                HDC tmp;
+                tmp = front->hDC;
+                front->hDC = back->hDC;
+                back->hDC = tmp;
+            }
+
+            /* Flip the DIBsection */
+            {
+                HBITMAP tmp;
+                BOOL hasDib = front->Flags & SFLAG_DIBSECTION;
+                tmp = front->dib.DIBsection;
+                front->dib.DIBsection = back->dib.DIBsection;
+                back->dib.DIBsection = tmp;
+
+                if(back->Flags & SFLAG_DIBSECTION) front->Flags |= SFLAG_DIBSECTION;
+                else front->Flags &= ~SFLAG_DIBSECTION;
+                if(hasDib) back->Flags |= SFLAG_DIBSECTION;
+                else back->Flags &= ~SFLAG_DIBSECTION;
+            }
+
+            /* Flip the surface data */
+            {
+                void* tmp;
+
+                tmp = front->dib.bitmap_data;
+                front->dib.bitmap_data = back->dib.bitmap_data;
+                back->dib.bitmap_data = tmp;
+
+                tmp = front->resource.allocatedMemory;
+                front->resource.allocatedMemory = back->resource.allocatedMemory;
+                back->resource.allocatedMemory = tmp;
+            }
+
+            /* client_memory should not be different, but just in case */
+            {
+                BOOL tmp;
+                tmp = front->dib.client_memory;
+                front->dib.client_memory = back->dib.client_memory;
+                back->dib.client_memory = tmp;
+            }
+            if(frontuptodate) back->Flags |= SFLAG_INSYSMEM;
+            else back->Flags &= ~SFLAG_INSYSMEM;
+            if(backuptodate) front->Flags |= SFLAG_INSYSMEM;
+            else front->Flags &= ~SFLAG_INSYSMEM;
+        } else {
+            back->Flags &= ~SFLAG_INSYSMEM;
+            front->Flags &= ~SFLAG_INSYSMEM;
         }
-
-        /* Flip the DIBsection */
-        {
-            HBITMAP tmp;
-            BOOL hasDib = front->Flags & SFLAG_DIBSECTION;
-            tmp = front->dib.DIBsection;
-            front->dib.DIBsection = back->dib.DIBsection;
-            back->dib.DIBsection = tmp;
-
-            if(back->Flags & SFLAG_DIBSECTION) front->Flags |= SFLAG_DIBSECTION;
-            else front->Flags &= ~SFLAG_DIBSECTION;
-            if(hasDib) back->Flags |= SFLAG_DIBSECTION;
-            else back->Flags &= ~SFLAG_DIBSECTION;
-        }
-
-        /* Flip the surface data */
-        {
-            void* tmp;
-
-            tmp = front->dib.bitmap_data;
-            front->dib.bitmap_data = back->dib.bitmap_data;
-            back->dib.bitmap_data = tmp;
-
-            tmp = front->resource.allocatedMemory;
-            front->resource.allocatedMemory = back->resource.allocatedMemory;
-            back->resource.allocatedMemory = tmp;
-        }
-
-        /* client_memory should not be different, but just in case */
-        {
-            BOOL tmp;
-            tmp = front->dib.client_memory;
-            front->dib.client_memory = back->dib.client_memory;
-            back->dib.client_memory = tmp;
-        }
-        if(frontuptodate) back->Flags |= SFLAG_INSYSMEM;
-        else back->Flags &= ~SFLAG_INSYSMEM;
-        if(backuptodate) front->Flags |= SFLAG_INSYSMEM;
-        else front->Flags &= ~SFLAG_INSYSMEM;
     }
 
     TRACE("returning\n");
