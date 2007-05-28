@@ -1082,22 +1082,22 @@ static dde_tests_t dde_tests[] =
 {
     /* Test passing and not passing command-line
      * argument, no DDE */
-    {"", NULL, NULL, NULL, NULL, FALSE, "", 0x2, 33},
+    {"", NULL, NULL, NULL, NULL, FALSE, "", 0x0, 33},
     {"\"%1\"", NULL, NULL, NULL, NULL, TRUE, "", 0x0, 33},
 
     /* Test passing and not passing command-line
      * argument, with DDE */
-    {"", "[open(\"%1\")]", "shlexec", "dde", NULL, FALSE, "[open(\"%s\")]", 0xa, 33},
-    {"\"%1\"", "[open(\"%1\")]", "shlexec", "dde", NULL, TRUE, "[open(\"%s\")]", 0x8, 33},
+    {"", "[open(\"%1\")]", "shlexec", "dde", NULL, FALSE, "[open(\"%s\")]", 0x0, 33},
+    {"\"%1\"", "[open(\"%1\")]", "shlexec", "dde", NULL, TRUE, "[open(\"%s\")]", 0x0, 33},
 
     /* Test ifexec precedence over ddeexec */
-    {"", "[open(\"%1\")]", "shlexec", "dde", "[ifexec(\"%1\")]", FALSE, "[ifexec(\"%s\")]", 0xa, 33},
+    {"", "[open(\"%1\")]", "shlexec", "dde", "[ifexec(\"%1\")]", FALSE, "[ifexec(\"%s\")]", 0x0, 33},
 
     /* Test default DDE topic */
-    {"", "[open(\"%1\")]", "shlexec", NULL, NULL, FALSE, "[open(\"%s\")]", 0xa, 33},
+    {"", "[open(\"%1\")]", "shlexec", NULL, NULL, FALSE, "[open(\"%s\")]", 0x0, 33},
 
     /* Test default DDE application */
-    {"", "[open(\"%1\")]", NULL, "dde", NULL, FALSE, "[open(\"%s\")]", 0xa, 33},
+    {"", "[open(\"%1\")]", NULL, "dde", NULL, FALSE, "[open(\"%s\")]", 0x1, 33},
 
     {NULL, NULL, NULL, NULL, 0x0, 0}
 };

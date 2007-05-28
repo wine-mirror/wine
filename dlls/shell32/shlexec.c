@@ -876,67 +876,52 @@ static UINT_PTR execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR
 			     SHELL_ExecuteW32 execfunc,
                              LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
-    WCHAR cmd[256];
-    LONG cmdlen = sizeof(cmd);
+    static const WCHAR wCommand[] = {'c','o','m','m','a','n','d',0};
+    static const WCHAR wDdeexec[] = {'d','d','e','e','x','e','c',0};
+    WCHAR cmd[256], param[1024], ddeexec[256];
+    LONG cmdlen = sizeof(cmd), ddeexeclen = sizeof(ddeexec);
     UINT_PTR retval = SE_ERR_NOASSOC;
+    DWORD resultLen;
+    LPWSTR tmp;
 
     TRACE("%s %s %s %s %s\n", debugstr_w(key), debugstr_w(lpFile), debugstr_w(env),
            debugstr_w(szCommandline), debugstr_w(executable_name));
 
     cmd[0] = '\0';
+    param[0] = '\0';
 
     /* Get the application from the registry */
     if (RegQueryValueW(HKEY_CLASSES_ROOT, key, cmd, &cmdlen) == ERROR_SUCCESS)
     {
-        WCHAR param[1024];
-        DWORD resultLen;
-
         TRACE("got cmd: %s\n", debugstr_w(cmd));
-
-        param[0] = '\0';
 
         /* Is there a replace() function anywhere? */
         cmdlen /= sizeof(WCHAR);
         cmd[cmdlen] = '\0';
-        if (!SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline, &resultLen))
-        {
-            /* looks like there is no %1 param in the cmd, add one */
-            static const WCHAR oneW[] = { ' ','\"','%','1','\"',0 };
-            strcatW(cmd, oneW);
-            SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline, &resultLen);
-        }
+        SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline, &resultLen);
         if (resultLen > sizeof(param)/sizeof(WCHAR))
             ERR("Argify buffer not large enough, truncating\n");
+    }
 
+    /* Get the parameters needed by the application
+       from the associated ddeexec key */
+    tmp = strstrW(key, wCommand);
+    assert(tmp);
+    strcpyW(tmp, wDdeexec);
+
+    if (RegQueryValueW(HKEY_CLASSES_ROOT, key, ddeexec, &ddeexeclen) == ERROR_SUCCESS)
+    {
+        TRACE("Got ddeexec %s => %s\n", debugstr_w(key), debugstr_w(ddeexec));
+        if (!param[0]) strcpyW(param, executable_name);
+        retval = dde_connect(key, param, ddeexec, lpFile, env, szCommandline, psei->lpIDList, execfunc, psei, psei_out);
+    }
+    else if (param[0])
+    {
         TRACE("executing: %s\n", debugstr_w(param));
         retval = execfunc(param, env, FALSE, psei, psei_out);
     }
     else
-    {
-	static const WCHAR wCommand[] = {'c','o','m','m','a','n','d',0};
-	static const WCHAR wDdeexec[] = {'d','d','e','e','x','e','c',0};
-        LPWSTR tmp;
-        WCHAR param[256];
-        LONG paramlen = sizeof(param);
-
-        param[0] = '\0';
-
-        /* Get the parameters needed by the application
-           from the associated ddeexec key */
-        tmp = strstrW(key, wCommand);
-        assert(tmp);
-        strcpyW(tmp, wDdeexec);
-
-        TRACE("trying ddeexec cmd: %s\n", debugstr_w(key));
-
-        if (RegQueryValueW(HKEY_CLASSES_ROOT, key, param, &paramlen) == ERROR_SUCCESS)
-        {
-            TRACE("Got ddeexec %s => %s\n", debugstr_w(key), debugstr_w(param));
-            retval = dde_connect(key, executable_name, param, lpFile, env, szCommandline, psei->lpIDList, execfunc, psei, psei_out);
-        }
-        else
-            WARN("Nothing appropriate found for %s\n", debugstr_w(key));
-    }
+        WARN("Nothing appropriate found for %s\n", debugstr_w(key));
 
     return retval;
 }
