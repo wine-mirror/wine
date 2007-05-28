@@ -282,7 +282,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->ldt_copy        = NULL;
     process->winstation      = 0;
     process->desktop         = 0;
-    process->token           = token_create_admin();
+    process->token           = NULL;
     process->trace_data      = 0;
     list_init( &process->thread_list );
     list_init( &process->locks );
@@ -301,15 +301,22 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     if (!(process->msg_fd = create_anonymous_fd( &process_fd_ops, fd, &process->obj, 0 ))) goto error;
 
     /* create the handle table */
-    if (!parent_thread) process->handles = alloc_handle_table( process, 0 );
+    if (!parent_thread)
+    {
+        process->handles = alloc_handle_table( process, 0 );
+        process->token = token_create_admin();
+    }
     else
     {
         struct process *parent = parent_thread->process;
         process->parent = (struct process *)grab_object( parent );
         process->handles = inherit_all ? copy_handle_table( process, parent )
                                        : alloc_handle_table( process, 0 );
+        /* Note: for security reasons, starting a new process does not attempt
+         * to use the current impersonation token for the new process */
+        process->token = token_duplicate( parent->token, TRUE, 0 );
     }
-    if (!process->handles) goto error;
+    if (!process->handles || !process->token) goto error;
 
     /* create the main thread */
     if (pipe( request_pipe ) == -1)
