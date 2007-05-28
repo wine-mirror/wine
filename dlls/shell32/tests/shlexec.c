@@ -567,6 +567,8 @@ static const char* testfiles[]=
     "%s\\masked file.shlexec",
     "%s\\masked",
     "%s\\test file.sde",
+    "%s\\test file.exe",
+    "%s\\test2.exe",
     NULL
 };
 
@@ -1102,8 +1104,9 @@ static dde_tests_t dde_tests[] =
     {NULL, NULL, NULL, NULL, 0x0, 0}
 };
 
+static DWORD ddeInst;
 static HSZ hszTopic;
-static char ddeExec[MAX_PATH];
+static char ddeExec[MAX_PATH], ddeApplication[MAX_PATH];
 static BOOL denyNextConnection;
 
 static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
@@ -1124,7 +1127,11 @@ static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
                 if (denyNextConnection)
                     denyNextConnection = FALSE;
                 else
+                {
+                    size = DdeQueryString(ddeInst, hsz2, ddeApplication, MAX_PATH, CP_WINANSI);
+                    assert(size < MAX_PATH);
                     return (HDDEDATA)TRUE;
+                }
             }
             return (HDDEDATA)FALSE;
 
@@ -1167,12 +1174,12 @@ static void test_dde(void)
     dde_thread_info_t info = { filename, GetCurrentThreadId() };
     const dde_tests_t* test;
     char params[1024];
-    DWORD inst = 0;
     HANDLE hThread;
     MSG msg;
     int rc;
 
-    rc = DdeInitializeA(&inst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
+    ddeInst = 0;
+    rc = DdeInitializeA(&ddeInst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
                         CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0L);
     assert(rc == DMLERR_NO_ERROR);
 
@@ -1188,12 +1195,12 @@ static void test_dde(void)
         create_test_association(".sde");
         create_test_verb_dde(".sde", "Open", 0, test->command, test->ddeexec,
                              test->application, test->topic, test->ifexec);
-        hszApplication = DdeCreateStringHandleA(inst, test->application ?
+        hszApplication = DdeCreateStringHandleA(ddeInst, test->application ?
                                                 test->application : defApplication, CP_WINANSI);
-        hszTopic = DdeCreateStringHandleA(inst, test->topic ? test->topic : SZDDESYS_TOPIC,
+        hszTopic = DdeCreateStringHandleA(ddeInst, test->topic ? test->topic : SZDDESYS_TOPIC,
                                           CP_WINANSI);
         assert(hszApplication && hszTopic);
-        assert(DdeNameService(inst, hszApplication, 0L, DNS_REGISTER));
+        assert(DdeNameService(ddeInst, hszApplication, 0L, DNS_REGISTER));
         denyNextConnection = TRUE;
         ddeExec[0] = 0;
 
@@ -1256,14 +1263,150 @@ static void test_dde(void)
             }
         }
 
-        assert(DdeNameService(inst, hszApplication, 0L, DNS_UNREGISTER));
-        assert(DdeFreeStringHandle(inst, hszTopic));
-        assert(DdeFreeStringHandle(inst, hszApplication));
+        assert(DdeNameService(ddeInst, hszApplication, 0L, DNS_UNREGISTER));
+        assert(DdeFreeStringHandle(ddeInst, hszTopic));
+        assert(DdeFreeStringHandle(ddeInst, hszApplication));
         delete_test_association(".sde");
         test++;
     }
 
-    assert(DdeUninitialize(inst));
+    assert(DdeUninitialize(ddeInst));
+}
+
+typedef struct
+{
+    const char* command;
+    const char* expectedDdeApplication;
+    int todo;
+    int rc;
+} dde_default_app_tests_t;
+
+static dde_default_app_tests_t dde_default_app_tests[] =
+{
+    /* Test unquoted existing filename with a space */
+    {"%s\\test file.exe", "test file", 0x1, 33},
+    {"%s\\test file.exe param", "test file", 0x1, 33},
+
+    /* Test quoted existing filename with a space */
+    {"\"%s\\test file.exe\"", "test file", 0x1, 33},
+    {"\"%s\\test file.exe\" param", "test file", 0x1, 33},
+
+    /* Test unquoted filename with a space that doesn't exist, but
+     * test2.exe does */
+    {"%s\\test2 file.exe", "test2", 0x1, 33},
+    {"%s\\test2 file.exe param", "test2", 0x1, 33},
+
+    /* Test quoted filename with a space that does not exist */
+    {"\"%s\\test2 file.exe\"", "", 0x1, 5},
+    {"\"%s\\test2 file.exe\" param", "", 0x1, 5},
+
+    /* Test filename supplied without the extension */
+    {"%s\\test2", "test2", 0x1, 33},
+    {"%s\\test2 param", "test2", 0x1, 33},
+
+    /* Test an unquoted non-existent filename */
+    {"%s\\notexist.exe", "", 0x1, 5},
+    {"%s\\notexist.exe param", "", 0x1, 5},
+
+    /* Test an application that will be found on the path */
+    {"cmd", "cmd", 0x1, 33},
+    {"cmd param", "cmd", 0x1, 33},
+
+    /* Test an application that will not be found on the path */
+    {"xyzwxyzwxyz", "", 0x1, 5},
+    {"xyzwxyzwxyz param", "", 0x1, 5},
+
+    {NULL, NULL, 0, 0}
+};
+
+static void test_dde_default_app(void)
+{
+    char filename[MAX_PATH];
+    HSZ hszApplication;
+    dde_thread_info_t info = { filename, GetCurrentThreadId() };
+    const dde_default_app_tests_t* test;
+    char params[1024];
+    HANDLE hThread;
+    MSG msg;
+    int rc;
+
+    ddeInst = 0;
+    rc = DdeInitializeA(&ddeInst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
+                        CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0L);
+    assert(rc == DMLERR_NO_ERROR);
+
+    sprintf(filename, "%s\\test file.sde", tmpdir);
+
+    /* It is strictly not necessary to register an application name here, but wine's
+     * DdeNameService implementation complains if 0L is passed instead of
+     * hszApplication with DNS_FILTEROFF */
+    hszApplication = DdeCreateStringHandleA(ddeInst, "shlexec", CP_WINANSI);
+    hszTopic = DdeCreateStringHandleA(ddeInst, "shlexec", CP_WINANSI);
+    assert(hszApplication && hszTopic);
+    assert(DdeNameService(ddeInst, hszApplication, 0L, DNS_REGISTER | DNS_FILTEROFF));
+
+    test = dde_default_app_tests;
+    while (test->command)
+    {
+        create_test_association(".sde");
+        sprintf(params, test->command, tmpdir);
+        create_test_verb_dde(".sde", "Open", 1, params, "[test]", NULL,
+                             "shlexec", NULL);
+        denyNextConnection = FALSE;
+        ddeApplication[0] = 0;
+
+        /* No application will be run as we will respond to the first DDE event,
+         * so don't wait for it */
+        SetEvent(hEvent);
+
+        hThread = CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, NULL);
+        assert(hThread);
+        while (GetMessage(&msg, NULL, 0, 0))
+        {
+            /* Need a message loop for DDE server */
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        rc = WaitForSingleObject(hThread, 5000);
+        assert(rc == WAIT_OBJECT_0);
+
+        GetExitCodeThread(hThread, (DWORD *)&rc);
+        if (rc > 32)
+            rc=33;
+        if ((test->todo & 0x1)==0)
+        {
+            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+               rc, GetLastError());
+        }
+        else todo_wine
+        {
+            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+               rc, GetLastError());
+        }
+        if (rc == 33)
+        {
+            if ((test->todo & 0x2)==0)
+            {
+                ok(!strcmp(ddeApplication, test->expectedDdeApplication),
+                   "Expected application '%s', got '%s'\n",
+                   test->expectedDdeApplication, ddeApplication);
+            }
+            else todo_wine
+            {
+                ok(!strcmp(ddeApplication, test->expectedDdeApplication),
+                   "Expected application '%s', got '%s'\n",
+                   test->expectedDdeApplication, ddeApplication);
+            }
+        }
+
+        delete_test_association(".sde");
+        test++;
+    }
+
+    assert(DdeNameService(ddeInst, hszApplication, 0L, DNS_UNREGISTER));
+    assert(DdeFreeStringHandle(ddeInst, hszTopic));
+    assert(DdeFreeStringHandle(ddeInst, hszApplication));
+    assert(DdeUninitialize(ddeInst));
 }
 
 static void init_test(void)
@@ -1409,6 +1552,7 @@ START_TEST(shlexec)
     test_exes();
     test_exes_long();
     test_dde();
+    test_dde_default_app();
 
     cleanup_test();
 }
