@@ -33,6 +33,9 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -567,6 +570,35 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
 	return FALSE;
 #endif
     }
+}
+
+/******************************************************************************
+ * NETCON_query_data_available
+ * Returns the number of bytes of peeked data plus the number of bytes of
+ * queued, but unread data.
+ */
+BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *available)
+{
+    if (!NETCON_connected(connection))
+        return FALSE;
+
+    if (connection->peek_msg)
+        *available = connection->peek_len;
+    else
+        *available = 0;
+#ifdef FIONREAD
+    if (!connection->useSSL)
+    {
+        int unread;
+        int retval = ioctl(connection->socketFD, FIONREAD, &unread);
+        if (!retval)
+        {
+            TRACE("%d bytes of queued, but unread data\n", unread);
+            *available += unread;
+        }
+    }
+#endif
+    return TRUE;
 }
 
 /******************************************************************************
