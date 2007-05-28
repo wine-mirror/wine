@@ -674,7 +674,16 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
     break;
 
   case PICTYPE_METAFILE:
+    PlayMetaFile(hdc, This->desc.u.wmf.hmeta);
+    break;
+
   case PICTYPE_ENHMETAFILE:
+  {
+    RECT rc = { x, y, cx, cy };
+    PlayEnhMetaFile(hdc, This->desc.u.emf.hemf, &rc);
+    break;
+  }
+
   default:
     FIXME("type %d not implemented\n", This->desc.picType);
     return E_NOTIMPL;
@@ -795,6 +804,7 @@ static HRESULT WINAPI OLEPictureImpl_get_Attributes(IPicture *iface,
   switch (This->desc.picType) {
   case PICTYPE_BITMAP: 	if (This->hbmMask) *pdwAttr = PICTURE_TRANSPARENT; break;	/* not 'truly' scalable, see MSDN. */
   case PICTYPE_ICON: *pdwAttr     = PICTURE_TRANSPARENT;break;
+  case PICTYPE_ENHMETAFILE: /* fall through */
   case PICTYPE_METAFILE: *pdwAttr = PICTURE_TRANSPARENT|PICTURE_SCALABLE;break;
   default:FIXME("Unknown pictype %d\n",This->desc.picType);break;
   }
@@ -1385,6 +1395,43 @@ static HRESULT OLEPictureImpl_LoadIcon(OLEPictureImpl *This, BYTE *xbuf, ULONG x
     }
 }
 
+static HRESULT OLEPictureImpl_LoadMetafile(OLEPictureImpl *This,
+                                           const BYTE *data, ULONG size)
+{
+    HMETAFILE hmf;
+    HENHMETAFILE hemf;
+
+    /* SetMetaFileBitsEx performs data check on its own */
+    hmf = SetMetaFileBitsEx(size, data);
+    if (hmf)
+    {
+        This->desc.picType = PICTYPE_METAFILE;
+        This->desc.u.wmf.hmeta = hmf;
+        This->desc.u.wmf.xExt = 0;
+        This->desc.u.wmf.yExt = 0;
+
+        This->origWidth = 0;
+        This->origHeight = 0;
+        This->himetricWidth = 0;
+        This->himetricHeight = 0;
+
+        return S_OK;
+    }
+
+    hemf = SetEnhMetaFileBits(size, data);
+    if (!hemf) return E_FAIL;
+
+    This->desc.picType = PICTYPE_ENHMETAFILE;
+    This->desc.u.emf.hemf = hemf;
+
+    This->origWidth = 0;
+    This->origHeight = 0;
+    This->himetricWidth = 0;
+    This->himetricHeight = 0;
+
+    return S_OK;
+}
+
 /************************************************************************
  * OLEPictureImpl_IPersistStream_Load (IUnknown)
  *
@@ -1393,7 +1440,7 @@ static HRESULT OLEPictureImpl_LoadIcon(OLEPictureImpl *This, BYTE *xbuf, ULONG x
  * 	DWORD magic;
  * 	DWORD len;
  *
- * Currently implemented: BITMAP, ICON, JPEG, GIF
+ * Currently implemented: BITMAP, ICON, JPEG, GIF, WMF, EMF
  */
 static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   HRESULT	hr = E_FAIL;
@@ -1544,6 +1591,11 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   default:
   {
     unsigned int i;
+
+    /* let's see if it's a metafile */
+    hr = OLEPictureImpl_LoadMetafile(This, xbuf, xread);
+    if (hr == S_OK) break;
+
     FIXME("Unknown magic %04x, %d read bytes:\n",magic,xread);
     hr=E_FAIL;
     for (i=0;i<xread+8;i++) {
