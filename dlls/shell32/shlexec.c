@@ -780,8 +780,51 @@ static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
     applen = sizeof(app);
     if (RegQueryValueW(HKEY_CLASSES_ROOT, key, app, &applen) != ERROR_SUCCESS)
     {
-        FIXME("default app name NIY %s\n", debugstr_w(key));
-        return 2;
+        WCHAR command[1024], fullpath[MAX_PATH];
+        static const WCHAR wSo[] = { '.','s','o',0 };
+        int sizeSo = sizeof(wSo)/sizeof(WCHAR);
+        LPWSTR ptr = NULL;
+        DWORD ret = 0;
+
+        /* Get application command from start string and find filename of application */
+        if (*start == '"')
+        {
+            strcpyW(command, start+1);
+            if ((ptr = strchrW(command, '"')))
+                *ptr = 0;
+            ret = SearchPathW(NULL, command, wszExe, sizeof(fullpath)/sizeof(WCHAR), fullpath, &ptr);
+        }
+        else
+        {
+            LPWSTR p,space;
+            for (p=(LPWSTR)start; (space=strchrW(p, ' ')); p=space+1)
+            {
+                int idx = space-start;
+                memcpy(command, start, idx*sizeof(WCHAR));
+                command[idx] = '\0';
+                if ((ret = SearchPathW(NULL, command, wszExe, sizeof(fullpath)/sizeof(WCHAR), fullpath, &ptr)))
+                    break;
+            }
+            if (!ret)
+                ret = SearchPathW(NULL, start, wszExe, sizeof(fullpath)/sizeof(WCHAR), fullpath, &ptr);
+        }
+
+        if (!ret)
+        {
+            ERR("Unable to find application path for command %s\n", debugstr_w(start));
+            return ERROR_ACCESS_DENIED;
+        }
+        strcpyW(app, ptr);
+
+        /* Remove extensions (including .so) */
+        ptr = app + strlenW(app) - (sizeSo-1);
+        if (strlenW(app) >= sizeSo &&
+            !strcmpW(ptr, wSo))
+            *ptr = 0;
+
+        ptr = strrchrW(app, '.');
+        assert(ptr);
+        *ptr = 0;
     }
 
     strcpyW(endkey, wTopic);

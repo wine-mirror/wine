@@ -1099,7 +1099,7 @@ static dde_tests_t dde_tests[] =
     {"", "[open(\"%1\")]", "shlexec", NULL, NULL, FALSE, "[open(\"%s\")]", 0x0, 33},
 
     /* Test default DDE application */
-    {"", "[open(\"%1\")]", NULL, "dde", NULL, FALSE, "[open(\"%s\")]", 0x1, 33},
+    {"", "[open(\"%1\")]", NULL, "dde", NULL, FALSE, "[open(\"%s\")]", 0x0, 33},
 
     {NULL, NULL, NULL, NULL, 0x0, 0}
 };
@@ -1284,37 +1284,37 @@ typedef struct
 static dde_default_app_tests_t dde_default_app_tests[] =
 {
     /* Test unquoted existing filename with a space */
-    {"%s\\test file.exe", "test file", 0x1, 33},
-    {"%s\\test file.exe param", "test file", 0x1, 33},
+    {"%s\\test file.exe", "test file", 0x0, 33},
+    {"%s\\test file.exe param", "test file", 0x0, 33},
 
     /* Test quoted existing filename with a space */
-    {"\"%s\\test file.exe\"", "test file", 0x1, 33},
-    {"\"%s\\test file.exe\" param", "test file", 0x1, 33},
+    {"\"%s\\test file.exe\"", "test file", 0x0, 33},
+    {"\"%s\\test file.exe\" param", "test file", 0x0, 33},
 
     /* Test unquoted filename with a space that doesn't exist, but
      * test2.exe does */
-    {"%s\\test2 file.exe", "test2", 0x1, 33},
-    {"%s\\test2 file.exe param", "test2", 0x1, 33},
+    {"%s\\test2 file.exe", "test2", 0x0, 33},
+    {"%s\\test2 file.exe param", "test2", 0x0, 33},
 
     /* Test quoted filename with a space that does not exist */
-    {"\"%s\\test2 file.exe\"", "", 0x1, 5},
-    {"\"%s\\test2 file.exe\" param", "", 0x1, 5},
+    {"\"%s\\test2 file.exe\"", "", 0x0, 5},
+    {"\"%s\\test2 file.exe\" param", "", 0x0, 5},
 
     /* Test filename supplied without the extension */
-    {"%s\\test2", "test2", 0x1, 33},
-    {"%s\\test2 param", "test2", 0x1, 33},
+    {"%s\\test2", "test2", 0x0, 33},
+    {"%s\\test2 param", "test2", 0x0, 33},
 
     /* Test an unquoted non-existent filename */
-    {"%s\\notexist.exe", "", 0x1, 5},
-    {"%s\\notexist.exe param", "", 0x1, 5},
+    {"%s\\notexist.exe", "", 0x0, 5},
+    {"%s\\notexist.exe param", "", 0x0, 5},
 
     /* Test an application that will be found on the path */
-    {"cmd", "cmd", 0x1, 33},
-    {"cmd param", "cmd", 0x1, 33},
+    {"cmd", "cmd", 0x0, 33},
+    {"cmd param", "cmd", 0x0, 33},
 
     /* Test an application that will not be found on the path */
-    {"xyzwxyzwxyz", "", 0x1, 5},
-    {"xyzwxyzwxyz param", "", 0x1, 5},
+    {"xyzwxyzwxyz", "", 0x0, 5},
+    {"xyzwxyzwxyz param", "", 0x0, 5},
 
     {NULL, NULL, 0, 0}
 };
