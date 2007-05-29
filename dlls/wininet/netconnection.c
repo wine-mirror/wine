@@ -582,10 +582,11 @@ BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *avail
     if (!NETCON_connected(connection))
         return FALSE;
 
-    if (connection->peek_msg)
-        *available = connection->peek_len;
-    else
-        *available = 0;
+    *available = 0;
+#if defined HAVE_OPENSSL_SSL_H
+    if (connection->peek_msg) *available = connection->peek_len;
+#endif
+
 #ifdef FIONREAD
     if (!connection->useSSL)
     {
