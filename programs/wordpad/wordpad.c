@@ -725,7 +725,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 4;
     wc.hInstance = hInstance;
-    wc.hIcon = NULL;
+    wc.hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_WORDPAD));
     wc.hCursor = LoadCursor(NULL, IDC_IBEAM);
     wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
     wc.lpszMenuName = xszMainMenu;
