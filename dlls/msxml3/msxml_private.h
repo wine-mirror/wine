@@ -57,6 +57,10 @@ extern BSTR bstr_from_xmlChar( const xmlChar *buf );
 
 extern LONG xmldoc_add_ref( xmlDocPtr doc );
 extern LONG xmldoc_release( xmlDocPtr doc );
+
+extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
+extern HRESULT XMLElementCollection_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
+
 #endif
 
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
@@ -64,7 +68,5 @@ extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, B
 extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
-extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
-extern HRESULT XMLElementCollection_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
 
 #endif /* __MSXML_PRIVATE__ */
