@@ -215,7 +215,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 {
     WCHAR pth[MAX_PATH];
     WCHAR *ptr;
-    OSVERSIONINFOA OSVersion;
+    OSVERSIONINFOEXW OSVersion;
     MEMORYSTATUSEX msex;
     DWORD verval;
     WCHAR verstr[10], bufstr[20];
@@ -277,6 +277,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 {'1',0};
     static const WCHAR v9x[] = { 'V','e','r','s','i','o','n','9','X',0 };
     static const WCHAR vNT[] = { 'V','e','r','s','i','o','n','N','T',0 };
+    static const WCHAR szMsiNTProductType[] = { 'M','s','i','N','T','P','r','o','d','u','c','t','T','y','p','e',0 };
     static const WCHAR szFormat[] = {'%','l','i',0};
     static const WCHAR szWinBuild[] =
 {'W','i','n','d','o','w','s','B','u','i','l','d', 0 };
@@ -414,8 +415,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     MSI_SetPropertyW(package, szAllUsers, szOne);
 
     /* set the os things */
-    OSVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-    GetVersionExA(&OSVersion);
+    OSVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
+    GetVersionExW((OSVERSIONINFOW *)&OSVersion);
     verval = OSVersion.dwMinorVersion+OSVersion.dwMajorVersion*100;
     sprintfW(verstr,szFormat,verval);
     switch (OSVersion.dwPlatformId)
@@ -425,6 +426,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
             break;
         case VER_PLATFORM_WIN32_NT:
             MSI_SetPropertyW(package,vNT,verstr);
+            sprintfW(verstr,szFormat,OSVersion.wProductType);
+            MSI_SetPropertyW(package,szMsiNTProductType,verstr);
             break;
     }
     sprintfW(verstr,szFormat,OSVersion.dwBuildNumber);
