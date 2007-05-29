@@ -1,5 +1,5 @@
 /* code page 20127 (US-ASCII (7bit)) */
-/* DO NOT EDIT!! */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "wine/unicode.h"
 
@@ -676,6 +676,7 @@ static const unsigned short uni2cp_high[256] =
 const struct sbcs_table cptable_20127 =
 {
     { 20127, 1, 0x003f, 0x003f, "US-ASCII (7bit)" },
+    cp2uni,
     cp2uni,
     uni2cp_low,
     uni2cp_high

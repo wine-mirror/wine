@@ -53,6 +53,7 @@ struct sbcs_table
 {
     struct cp_info        info;
     const WCHAR          *cp2uni;            /* code page -> Unicode map */
+    const WCHAR          *cp2uni_glyphs;     /* code page -> Unicode map with glyph chars */
     const unsigned char  *uni2cp_low;        /* Unicode -> code page map */
     const unsigned short *uni2cp_high;
 };
