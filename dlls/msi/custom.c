@@ -389,7 +389,7 @@ static UINT custom_get_process_return( HANDLE process )
     return ERROR_SUCCESS;
 }
 
-static UINT custom_get_thread_return( HANDLE thread )
+static UINT custom_get_thread_return( MSIPACKAGE *package, HANDLE thread )
 {
     DWORD rc = 0;
 
@@ -403,6 +403,9 @@ static UINT custom_get_thread_return( HANDLE thread )
     case ERROR_INSTALL_FAILURE:
         return rc;
     case ERROR_NO_MORE_ITEMS:
+        return ERROR_SUCCESS;
+    case ERROR_INSTALL_SUSPEND:
+        ACTION_ForceReboot( package );
         return ERROR_SUCCESS;
     default:
         ERR("Invalid Return Code %d\n",rc);
@@ -475,7 +478,7 @@ static UINT wait_thread_handle( msi_custom_action_info *info )
         msi_dialog_check_messages( info->handle );
 
         if (!(info->type & msidbCustomActionTypeContinue))
-            rc = custom_get_thread_return( info->handle );
+            rc = custom_get_thread_return( info->package, info->handle );
 
         free_custom_action_data( info );
     }

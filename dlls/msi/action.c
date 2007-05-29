@@ -3851,7 +3851,7 @@ static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
     return rc;
 }
 
-static UINT ACTION_ForceReboot(MSIPACKAGE *package)
+UINT ACTION_ForceReboot(MSIPACKAGE *package)
 {
     static const WCHAR RunOnce[] = {
     'S','o','f','t','w','a','r','e','\\',

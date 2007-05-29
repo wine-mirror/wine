@@ -580,6 +580,7 @@ extern void append_storage_to_db( MSIDATABASE *db, IStorage *stg );
 extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern void ACTION_free_package_structures( MSIPACKAGE* );
 extern UINT ACTION_DialogBox( MSIPACKAGE*, LPCWSTR);
+extern UINT ACTION_ForceReboot(MSIPACKAGE *package);
 extern UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR szTable, INT iSequenceMode );
 extern UINT MSI_SetFeatureStates( MSIPACKAGE *package );
 
