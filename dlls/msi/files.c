@@ -615,6 +615,9 @@ static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *m
         if (type == DRIVE_CDROM || type == DRIVE_REMOVABLE)
             found = source_matches_volume(mi, source_dir);
 
+        if (!found)
+            found = GetFileAttributesW(mi->cabinet) != INVALID_FILE_ATTRIBUTES;
+
         msi_free(source_dir);
     }
 
