@@ -549,7 +549,6 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
             bindf = 0;
             hres = IBindStatusCallback_GetBindInfo(bind->pbscb, &bindf, &bi);
             if(SUCCEEDED(hres)) {
-                WCHAR *urlcopy, *tmpwc;
                 URL_COMPONENTSW url;
                 WCHAR *host, *path, *user, *pass;
                 DWORD lensz = sizeof(bind->expected_size);
@@ -561,24 +560,13 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
                 hres = IBindStatusCallback_OnStartBinding(bind->pbscb, 0, (IBinding*)bind);
                 TRACE("OnStartBinding rets %08x\n", hres);
 
-                /* This class will accept URLs with the backslash in them. But InternetCrackURL will not - it
-                 * requires forward slashes (this is the behaviour of Microsoft's INETAPI). So we need to make
-                 * a copy of the URL here and change the backslash to a forward slash everywhere it appears -
-                 * but only before any '#' or '?', after which backslash should be left alone.
-                 */
-                urlcopy = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * (lstrlenW(bind->URLName) + 1));
-                lstrcpyW(urlcopy, bind->URLName);
-                for (tmpwc = urlcopy; *tmpwc && *tmpwc != '#' && *tmpwc != '?'; ++tmpwc)
-                    if (*tmpwc == '\\')
-                            *tmpwc = '/';
-
                 bind->expected_size = 0;
                 bind->total_read = 0;
 
                 memset(&url, 0, sizeof(url));
                 url.dwStructSize = sizeof(url);
                 url.dwSchemeLength = url.dwHostNameLength = url.dwUrlPathLength = url.dwUserNameLength = url.dwPasswordLength = 1;
-                InternetCrackUrlW(urlcopy, 0, ICU_ESCAPE, &url);
+                InternetCrackUrlW(URLName, 0, ICU_ESCAPE, &url);
                 host = HeapAlloc(GetProcessHeap(), 0, (url.dwHostNameLength + 1) * sizeof(WCHAR));
                 memcpy(host, url.lpszHostName, url.dwHostNameLength * sizeof(WCHAR));
                 host[url.dwHostNameLength] = '\0';
@@ -739,7 +727,6 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
                 HeapFree(GetProcessHeap(), 0, pass);
                 HeapFree(GetProcessHeap(), 0, path);
                 HeapFree(GetProcessHeap(), 0, host);
-                HeapFree(GetProcessHeap(), 0, urlcopy);
             }
         }
     }
