@@ -1330,6 +1330,9 @@ HLOCAL16 WINAPI LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
     {
 	TRACE("size increase, making new free block\n");
         LOCAL_GrowArenaUpward(ds, arena, nextarena - arena);
+        if (flags & LMEM_ZEROINIT)
+            memset((char *)pArena + oldsize, 0, size - oldsize);
+
         TRACE("returning %04x\n", handle );
         return handle;
     }
