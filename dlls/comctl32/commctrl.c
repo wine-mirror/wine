@@ -1522,3 +1522,16 @@ LRESULT WINAPI SetPathWordBreakProc(HWND hwnd, BOOL bSet)
     return SendMessageW(hwnd, EM_SETWORDBREAKPROC, 0,
         (LPARAM)(bSet ? PathWordBreakProc : NULL));
 }
+
+/***********************************************************************
+ * DrawShadowText [COMCTL32.@]
+ *
+ * Draw text with shadow.
+ */
+int WINAPI DrawShadowText(HDC hdc, LPCWSTR pszText, UINT cch, const RECT *pRect, DWORD dwFlags,
+                          COLORREF crText, COLORREF crShadow, int ixOffset, int iyOffset)
+{
+    FIXME("(%p, %s, %d, %p, %d, 0x%08x, 0x%08x, %d, %d): stub\n", hdc, debugstr_w(pszText), cch, pRect, dwFlags,
+                                                                  crText, crShadow, ixOffset, iyOffset);
+    return DrawTextW(hdc, pszText, cch, (LPRECT)pRect, DT_LEFT);
+}
