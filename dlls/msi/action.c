@@ -4567,6 +4567,131 @@ static UINT ACTION_InstallODBC( MSIPACKAGE *package )
     return rc;
 }
 
+#define ENV_ACT_SETALWAYS   0x1
+#define ENV_ACT_SETABSENT   0x2
+#define ENV_ACT_REMOVE      0x4
+
+#define ENV_MOD_MACHINE     0x20000000
+#define ENV_MOD_APPEND      0x40000000
+#define ENV_MOD_PREFIX      0x80000000
+
+static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
+{
+    LPCWSTR var, value;
+    LPWSTR val = NULL, ptr;
+    DWORD flags, type, size;
+    LONG res;
+    HKEY env, root = HKEY_CURRENT_USER;
+
+    static const WCHAR environment[] =
+        {'S','y','s','t','e','m','\\',
+         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+         'C','o','n','t','r','o','l','\\',
+         'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
+         'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR semicolon[] = {';',0};
+
+    var = MSI_RecordGetString(rec, 1);
+    value = MSI_RecordGetString(rec, 2);
+    flags = MSI_RecordGetInteger(rec, 3);
+
+    TRACE("(%s, %s, %08x)\n", debugstr_w(var), debugstr_w(value), flags);
+
+    if (flags & ENV_MOD_MACHINE)
+        root = HKEY_LOCAL_MACHINE;
+
+    res = RegOpenKeyExW(root, environment, 0, KEY_ALL_ACCESS, &env);
+    if (res != ERROR_SUCCESS)
+        return res;
+
+    if (flags & ENV_ACT_REMOVE)
+    {
+        res = RegDeleteKeyW(env, var);
+        RegCloseKey(env);
+        return res;
+    }
+
+    size = 0;
+    res = RegQueryValueExW(env, var, NULL, &type, NULL, &size);
+    if ((res != ERROR_MORE_DATA && res != ERROR_FILE_NOT_FOUND) || type != REG_SZ)
+    {
+        RegCloseKey(env);
+        return res;
+    }
+
+    if (res != ERROR_FILE_NOT_FOUND)
+    {
+        if (flags & ENV_ACT_SETABSENT)
+        {
+            res = ERROR_SUCCESS;
+            goto done;
+        }
+
+        /* oldvals;newval */
+        size = (lstrlenW(value) + 1 + size) * sizeof(WCHAR);
+        val = msi_alloc(size);
+        ptr = val;
+        if (!val)
+        {
+            res = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+
+        if (flags & ENV_MOD_PREFIX)
+        {
+            lstrcpyW(val, value);
+            lstrcatW(val, semicolon);
+            ptr = val + lstrlenW(value) + 1;
+        }
+
+        res = RegQueryValueExW(env, var, NULL, &type, (LPVOID)ptr, &size);
+        if (res != ERROR_SUCCESS)
+            goto done;
+
+        if (!flags || flags & ENV_MOD_APPEND)
+        {
+            lstrcatW(val, semicolon);
+            lstrcatW(val, value);
+        }
+    }
+    else
+    {
+        size = (lstrlenW(value) + 1) * sizeof(WCHAR);
+        val = msi_alloc(size);
+        if (!val)
+        {
+            res = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+
+        lstrcpyW(val, value);
+    }
+
+    res = RegSetValueExW(env, var, 0, type, (LPVOID)val, size);
+
+done:
+    RegCloseKey(env);
+    msi_free(val);
+    return res;
+}
+
+static UINT ACTION_WriteEnvironmentStrings( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY * view;
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','E','n','v','i','r','o','n','m','e','n','t','`',0};
+    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords(view, NULL, ITERATE_WriteEnvironmentString, package);
+    msiobj_release(&view->hdr);
+
+    return rc;
+}
+
 static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
                                            LPCSTR action, LPCWSTR table )
 {
@@ -4659,13 +4784,6 @@ static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
 	static const WCHAR table[] = {
 		'P','r','o','d','u','c','t','I','D',0 };
 	return msi_unimplemented_action_stub( package, "ValidateProductID", table );
-}
-
-static UINT ACTION_WriteEnvironmentStrings( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = {
-        'E','n','v','i','r','o','n','m','e','n','t',0 };
-    return msi_unimplemented_action_stub( package, "WriteEnvironmentStrings", table );
 }
 
 static UINT ACTION_RemoveEnvironmentStrings( MSIPACKAGE *package )
