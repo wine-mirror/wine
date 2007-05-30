@@ -3725,7 +3725,7 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
  DWORD dwMsgType, const void *pvMsgEncodeInfo, LPSTR pszInnerContentObjID,
  PCMSG_STREAM_INFO pStreamInfo);
 
-HCRYPTMSG WINAPI CryptMsgUpdate(HCRYPTMSG hCryptMsg, const BYTE *pbData,
+BOOL WINAPI CryptMsgUpdate(HCRYPTMSG hCryptMsg, const BYTE *pbData,
  DWORD cbData, BOOL fFinal);
 
 BOOL WINAPI CryptMsgVerifyCountersignatureEncoded(HCRYPTPROV hCryptProv,
