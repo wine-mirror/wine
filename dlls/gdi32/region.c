@@ -551,7 +551,7 @@ static BOOL REGION_DeleteObject( HGDIOBJ handle, void *obj )
  */
 static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
 {
-    return (HGDIOBJ)SelectClipRgn( hdc, handle );
+    return ULongToHandle(SelectClipRgn( hdc, handle ));
 }
 
 

@@ -804,7 +804,7 @@ DWORD WINAPI DrvGetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
     strcpy(RegStr_Printer, Printers);
     strcat(RegStr_Printer, lpPrinter);
 
-    if (((DWORD)lpProfile == INT_PD_DEFAULT_DEVMODE) || (HIWORD(lpProfile) &&
+    if ((PtrToUlong(lpProfile) == INT_PD_DEFAULT_DEVMODE) || (HIWORD(lpProfile) &&
     (!strcmp(lpProfile, DefaultDevMode)))) {
 	size = DrvGetPrinterDataInternal(RegStr_Printer, lpPrinterData, cbData,
 					 INT_PD_DEFAULT_DEVMODE);
@@ -816,7 +816,7 @@ DWORD WINAPI DrvGetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
 	else res = ERROR_INVALID_PRINTER_NAME;
     }
     else
-    if (((DWORD)lpProfile == INT_PD_DEFAULT_MODEL) || (HIWORD(lpProfile) &&
+    if ((PtrToUlong(lpProfile) == INT_PD_DEFAULT_MODEL) || (HIWORD(lpProfile) &&
     (!strcmp(lpProfile, PrinterModel)))) {
 	*lpNeeded = 32;
 	if (!lpPrinterData) goto failed;
@@ -890,7 +890,7 @@ DWORD WINAPI DrvSetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
     TRACE("lpType %08x\n",lpType);
 
     if ((!lpPrinter) || (!lpProfile) ||
-    ((DWORD)lpProfile == INT_PD_DEFAULT_MODEL) || (HIWORD(lpProfile) &&
+    (PtrToUlong(lpProfile) == INT_PD_DEFAULT_MODEL) || (HIWORD(lpProfile) &&
     (!strcmp(lpProfile, PrinterModel))))
 	return ERROR_INVALID_PARAMETER;
 
@@ -899,7 +899,7 @@ DWORD WINAPI DrvSetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
     strcpy(RegStr_Printer, Printers);
     strcat(RegStr_Printer, lpPrinter);
 
-    if (((DWORD)lpProfile == INT_PD_DEFAULT_DEVMODE) || (HIWORD(lpProfile) &&
+    if ((PtrToUlong(lpProfile) == INT_PD_DEFAULT_DEVMODE) || (HIWORD(lpProfile) &&
     (!strcmp(lpProfile, DefaultDevMode)))) {
 	if ( RegOpenKeyA(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey)
 	     != ERROR_SUCCESS ||

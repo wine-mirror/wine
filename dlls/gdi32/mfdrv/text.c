@@ -87,7 +87,7 @@ MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     int charset = GetTextCharset(physDev->hdc);
     UINT cp = CP_ACP;
 
-    if(TranslateCharsetInfo((DWORD*)charset, &csi, TCI_SRCCHARSET))
+    if(TranslateCharsetInfo(ULongToPtr(charset), &csi, TCI_SRCCHARSET))
         cp = csi.ciACP;
     else {
         switch(charset) {

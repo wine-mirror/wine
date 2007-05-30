@@ -356,7 +356,7 @@ DWORD WINAPI GdiGetCodePage( HDC hdc )
     int charset = GetTextCharset(hdc);
 
     /* Hmm, nicely designed api this one! */
-    if(TranslateCharsetInfo((DWORD*)charset, &csi, TCI_SRCCHARSET))
+    if(TranslateCharsetInfo(ULongToPtr(charset), &csi, TCI_SRCCHARSET))
         cp = csi.ciACP;
     else {
         switch(charset) {
@@ -2653,7 +2653,7 @@ DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
     }
 
     charset = GetTextCharset(hDC);
-    if (!TranslateCharsetInfo((DWORD *)charset, &csi, TCI_SRCCHARSET))
+    if (!TranslateCharsetInfo(ULongToPtr(charset), &csi, TCI_SRCCHARSET))
     {
         FIXME("Can't find codepage for charset %d\n", charset);
         return 0;
@@ -2762,10 +2762,10 @@ BOOL WINAPI TranslateCharsetInfo(
 	while (!(*lpSrc>>index & 0x0001) && index<MAXTCIINDEX) index++;
       break;
     case TCI_SRCCODEPAGE:
-      while ((UINT) (lpSrc) != FONT_tci[index].ciACP && index < MAXTCIINDEX) index++;
+      while (PtrToUlong(lpSrc) != FONT_tci[index].ciACP && index < MAXTCIINDEX) index++;
       break;
     case TCI_SRCCHARSET:
-      while ((UINT) (lpSrc) != FONT_tci[index].ciCharset && index < MAXTCIINDEX) index++;
+      while (PtrToUlong(lpSrc) != FONT_tci[index].ciCharset && index < MAXTCIINDEX) index++;
       break;
     default:
       return FALSE;

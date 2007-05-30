@@ -392,7 +392,7 @@ HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, HANDLE gdiFont )
 /******************************************************************
  *         EMFDRV_CreatePenIndirect
  */
-static HPEN EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen )
+static DWORD EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen)
 {
     EMRCREATEPEN emr;
     DWORD index = 0;
@@ -423,7 +423,7 @@ static HPEN EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen )
 
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
         index = 0;
-    return (HPEN)index;
+    return index;
 }
 
 /******************************************************************
@@ -453,7 +453,7 @@ HPEN EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
     if((index = EMFDRV_FindObject(dev, hPen)) != 0)
         goto found;
 
-    if (!(index = (DWORD)EMFDRV_CreatePenIndirect(dev, hPen ))) return 0;
+    if (!(index = EMFDRV_CreatePenIndirect(dev, hPen))) return 0;
     GDI_hdc_using_object(hPen, physDev->hdc);
 
  found:

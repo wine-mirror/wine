@@ -485,7 +485,7 @@ static UINT get_default_charset( void )
 
     uACP = GetACP();
     csi.ciCharset = ANSI_CHARSET;
-    if ( ! TranslateCharsetInfo( (LPDWORD)uACP, &csi, TCI_SRCCODEPAGE ) )
+    if ( !TranslateCharsetInfo( ULongToPtr(uACP), &csi, TCI_SRCCODEPAGE ) )
     {
         FIXME( "unhandled codepage %u - use ANSI_CHARSET for default stock objects\n", uACP );
         return ANSI_CHARSET;
@@ -1157,7 +1157,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
             if (header->funcs && header->funcs->pSelectObject)
             {
                 ret = header->funcs->pSelectObject( hObj, header, hdc );
-                if (ret && ret != hObj && (INT)ret > COMPLEXREGION)
+                if (ret && ret != hObj && HandleToULong(ret) > COMPLEXREGION)
                 {
                     inc_ref_count( hObj );
                     dec_ref_count( ret );
