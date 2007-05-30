@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(global);
   /* Global arena block */
 typedef struct
 {
-    DWORD_PTR base;          /* Base address (0 if discarded) */
+    void     *base;          /* Base address (0 if discarded) */
     DWORD     size;          /* Size in bytes (0 indicates a free block) */
     HGLOBAL16 handle;        /* Handle for this block */
     HGLOBAL16 hOwner;        /* Owner of this block */
@@ -134,7 +134,7 @@ void debug_handles(void)
  *
  * Create a global heap block for a fixed range of linear memory.
  */
-HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
+HGLOBAL16 GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
                               HGLOBAL16 hOwner, unsigned char selflags )
 {
     WORD sel, selcount;
@@ -154,7 +154,7 @@ HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
 
       /* Fill the arena block */
 
-    pArena->base = (DWORD_PTR)ptr;
+    pArena->base = ptr;
     pArena->size = GetSelectorLimit16(sel) + 1;
     pArena->handle = (flags & GMEM_MOVEABLE) ? sel - 1 : sel;
     pArena->hOwner = hOwner;
@@ -195,7 +195,7 @@ BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle )
 /***********************************************************************
  *           GLOBAL_MoveBlock
  */
-BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, const void *ptr, DWORD size )
+BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, void *ptr, DWORD size )
 {
     WORD sel;
     GLOBALARENA *pArena;
@@ -207,7 +207,7 @@ BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, const void *ptr, DWORD size )
     if (pArena->selCount != 1)
         return FALSE;
 
-    pArena->base = (DWORD)ptr;
+    pArena->base = ptr;
     pArena->size = size;
     SELECTOR_ReallocBlock( sel, ptr, size );
     return TRUE;
@@ -428,7 +428,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
          As we may have used HEAP_REALLOC_IN_PLACE_ONLY, areas may overlap*/
 
     if (pNewArena != pArena) memmove( pNewArena, pArena, sizeof(GLOBALARENA) );
-    pNewArena->base = (DWORD)ptr;
+    pNewArena->base = ptr;
     pNewArena->size = GetSelectorLimit16(sel) + 1;
     pNewArena->selCount = selcount;
     pNewArena->handle = (pNewArena->flags & GA_MOVEABLE) ? sel - 1 : sel;
@@ -983,7 +983,7 @@ BOOL16 WINAPI GlobalNext16( GLOBALENTRY *pGlobal, WORD wFlags)
         pGlobal->dwNext = i;
     }
 
-    pGlobal->dwAddress    = pArena->base;
+    pGlobal->dwAddress    = (DWORD_PTR)pArena->base;
     pGlobal->dwBlockSize  = pArena->size;
     pGlobal->hBlock       = pArena->handle;
     pGlobal->wcLock       = pArena->lockCount;
@@ -1022,7 +1022,7 @@ BOOL16 WINAPI GlobalEntryHandle16( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
 {
     GLOBALARENA *pArena = GET_ARENA_PTR(hItem);
 
-    pGlobal->dwAddress    = pArena->base;
+    pGlobal->dwAddress    = (DWORD_PTR)pArena->base;
     pGlobal->dwBlockSize  = pArena->size;
     pGlobal->hBlock       = pArena->handle;
     pGlobal->wcLock       = pArena->lockCount;
