@@ -105,11 +105,13 @@ IDirectDrawPaletteImpl_Release(IDirectDrawPalette *iface)
 
     if (ref == 0)
     {
+        EnterCriticalSection(&ddraw_cs);
         IWineD3DPalette_Release(This->wineD3DPalette);
         if(This->ifaceToRelease)
         {
             IUnknown_Release(This->ifaceToRelease);
         }
+        LeaveCriticalSection(&ddraw_cs);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -160,9 +162,13 @@ IDirectDrawPaletteImpl_GetCaps(IDirectDrawPalette *iface,
                                DWORD *Caps)
 {
     ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
+    HRESULT hr;
     TRACE("(%p)->(%p): Relay\n", This, Caps);
 
-    return IWineD3DPalette_GetCaps(This->wineD3DPalette, Caps);
+    EnterCriticalSection(&ddraw_cs);
+    hr = IWineD3DPalette_GetCaps(This->wineD3DPalette, Caps);
+    LeaveCriticalSection(&ddraw_cs);
+    return hr;
 }
 
 /*****************************************************************************
@@ -191,12 +197,16 @@ IDirectDrawPaletteImpl_SetEntries(IDirectDrawPalette *iface,
                                   PALETTEENTRY *PalEnt)
 {
     ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
+    HRESULT hr;
     TRACE("(%p)->(%x,%d,%d,%p): Relay\n", This, Flags, Start, Count, PalEnt);
 
     if(!PalEnt)
         return DDERR_INVALIDPARAMS;
 
-    return IWineD3DPalette_SetEntries(This->wineD3DPalette, Flags, Start, Count, PalEnt);
+    EnterCriticalSection(&ddraw_cs);
+    hr = IWineD3DPalette_SetEntries(This->wineD3DPalette, Flags, Start, Count, PalEnt);
+    LeaveCriticalSection(&ddraw_cs);
+    return hr;
 }
 
 /*****************************************************************************
@@ -224,12 +234,16 @@ IDirectDrawPaletteImpl_GetEntries(IDirectDrawPalette *iface,
                                   PALETTEENTRY *PalEnt)
 {
     ICOM_THIS_FROM(IDirectDrawPaletteImpl, IDirectDrawPalette, iface);
+    HRESULT hr;
     TRACE("(%p)->(%x,%d,%d,%p): Relay\n", This, Flags, Start, Count, PalEnt);
 
     if(!PalEnt)
         return DDERR_INVALIDPARAMS;
 
-    return IWineD3DPalette_GetEntries(This->wineD3DPalette, Flags, Start, Count, PalEnt);
+    EnterCriticalSection(&ddraw_cs);
+    hr = IWineD3DPalette_GetEntries(This->wineD3DPalette, Flags, Start, Count, PalEnt);
+    LeaveCriticalSection(&ddraw_cs);
+    return hr;
 }
 
 const IDirectDrawPaletteVtbl IDirectDrawPalette_Vtbl =
