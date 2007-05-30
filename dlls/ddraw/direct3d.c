@@ -253,13 +253,19 @@ IDirect3DImpl_7_EnumDevices(IDirect3D7 *iface,
     HRESULT hr;
 
     TRACE("(%p)->(%p,%p)\n", This, Callback, Context);
+    EnterCriticalSection(&ddraw_cs);
 
     TRACE("(%p) Enumerating WineD3D D3Device7 interface\n", This);
     hr = IDirect3DImpl_GetCaps(This->wineD3D, &oldDesc, &ddesc);
-    if(hr != D3D_OK) return hr;
+    if(hr != D3D_OK)
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return hr;
+    }
     Callback(interface_name, device_name, &ddesc, Context);
 
     TRACE("(%p) End of enumeration\n", This);
+    LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }
 
@@ -297,9 +303,14 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
     strcpy(device_name,"direct3d");
 
     TRACE("(%p)->(%p,%p)\n", This, Callback, Context);
+    EnterCriticalSection(&ddraw_cs);
 
     hr = IDirect3DImpl_GetCaps(This->wineD3D, &dref, &newDesc);
-    if(hr != D3D_OK) return hr;
+    if(hr != D3D_OK)
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return hr;
+    }
 
     /* Do I have to enumerate the reference id? Note from old d3d7:
      * "It seems that enumerating the reference IID on Direct3D 1 games
@@ -333,6 +344,7 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
         if(hr != D3DENUMRET_OK)
         {
             TRACE("Application cancelled the enumeration\n");
+            LeaveCriticalSection(&ddraw_cs);
             return D3D_OK;
         }
     }
@@ -347,10 +359,12 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
     if(hr != D3DENUMRET_OK)
     {
         TRACE("Application cancelled the enumeration\n");
+        LeaveCriticalSection(&ddraw_cs);
         return D3D_OK;
     }
     TRACE("(%p) End of enumeration\n", This);
 
+    LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }
 
@@ -748,6 +762,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     IDirectDrawSurfaceImpl *target = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, Surface);
     TRACE("(%p)->(%s,%p,%p)\n", iface, debugstr_guid(refiid), Surface, Device);
 
+    EnterCriticalSection(&ddraw_cs);
     *Device = NULL;
 
     /* Fail device creation if non-opengl surfaces are used */
@@ -758,6 +773,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
         /* We only hit this path if a default surface is set in the registry. Incorrect autodetection
          * is caught in CreateSurface or QueryInterface
          */
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_NO3D;
     }
 
@@ -765,6 +781,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     if(This->d3ddevice)
     {
         FIXME("(%p): Only one Direct3D device per DirectDraw object supported\n", This);
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
     }
 
@@ -772,6 +789,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     if(!object)
     {
         ERR("Out of memory when allocating a IDirect3DDevice implementation\n");
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_OUTOFMEMORY;
     }
 
@@ -799,6 +817,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     {
         ERR("Allocating memory for an index buffer parent failed\n");
         HeapFree(GetProcessHeap(), 0, object);
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_OUTOFMEMORY;
     }
     ICOM_INIT_INTERFACE(IndexBufferParent, IParent, IParent_Vtbl);
@@ -822,6 +841,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     {
         ERR("Failed to create an index buffer\n");
         HeapFree(GetProcessHeap(), 0, object);
+        LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
     IndexBufferParent->child = (IUnknown *) object->indexbuffer;
@@ -898,6 +918,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     IWineD3DDevice_SetRenderState(This->wineD3DDevice,
                                   WINED3DRS_ZENABLE,
                                   IDirect3DDeviceImpl_UpdateDepthStencil(object));
+    LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }
 
@@ -1010,6 +1031,7 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
     object->Caps = Desc->dwCaps;
     object->ddraw = This;
 
+    EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DDevice_CreateVertexBuffer(This->wineD3DDevice,
                                            get_flexible_vertex_size(Desc->dwFVF) * Desc->dwNumVertices,
                                            Desc->dwCaps & D3DVBCAPS_WRITEONLY ? WINED3DUSAGE_WRITEONLY : 0,
@@ -1022,6 +1044,7 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
     {
         ERR("(%p) IWineD3DDevice::CreateVertexBuffer failed with hr=%08x\n", This, hr);
         HeapFree(GetProcessHeap(), 0, object);
+        LeaveCriticalSection(&ddraw_cs);
         if (hr == WINED3DERR_INVALIDCALL)
             return DDERR_INVALIDPARAMS;
         else
@@ -1035,6 +1058,7 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
         ERR("Cannot find the vertex declaration for fvf %08x\n", Desc->dwFVF);
         IWineD3DVertexBuffer_Release(object->wineD3DVertexBuffer);
         HeapFree(GetProcessHeap(), 0, object);
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
     }
     IWineD3DVertexDeclaration_AddRef(object->wineD3DVertexDeclaration);
@@ -1043,6 +1067,7 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
     *VertexBuffer = ICOM_INTERFACE(object, IDirect3DVertexBuffer7);
 
     TRACE("(%p) Created new vertex buffer implementation at %p, returning interface at %p\n", This, object, *VertexBuffer);
+    LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }
 
@@ -1113,6 +1138,7 @@ IDirect3DImpl_7_EnumZBufferFormats(IDirect3D7 *iface,
     if(!Callback)
         return DDERR_INVALIDPARAMS;
 
+    EnterCriticalSection(&ddraw_cs);
     for(i = 0; i < sizeof(FormatList) / sizeof(WINED3DFORMAT); i++)
     {
         hr = IWineD3D_CheckDeviceFormat(This->wineD3D,
@@ -1135,11 +1161,13 @@ IDirect3DImpl_7_EnumZBufferFormats(IDirect3D7 *iface,
             if(hr != DDENUMRET_OK)
             {
                 TRACE("Format enumeration cancelled by application\n");
+                LeaveCriticalSection(&ddraw_cs);
                 return D3D_OK;
             }
         }
     }
     TRACE("End of enumeration\n");
+    LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }
 
@@ -1312,8 +1340,13 @@ IDirect3DImpl_GetCaps(IWineD3D *WineD3D,
     WCaps.Reserved3 = NULL;
 
     /* Now get the caps */
+    EnterCriticalSection(&ddraw_cs);
     hr = IWineD3D_GetDeviceCaps(WineD3D, 0, WINED3DDEVTYPE_HAL, &WCaps);
-    if(hr != D3D_OK) return hr;
+    LeaveCriticalSection(&ddraw_cs);
+    if(hr != D3D_OK)
+    {
+        return hr;
+    }
 
     /* Remove all non-d3d7 caps */
     Desc7->dwDevCaps &= (
