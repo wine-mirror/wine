@@ -482,7 +482,7 @@ SEGPTR WINAPI MapLS( LPCVOID ptr )
 
     if (!HIWORD(ptr)) return (SEGPTR)LOWORD(ptr);
 
-    base = (const char *)ptr - ((unsigned int)ptr & 0x7fff);
+    base = (const char *)ptr - ((ULONG_PTR)ptr & 0x7fff);
     HeapLock( GetProcessHeap() );
     for (entry = first_entry; entry; entry = entry->next)
     {
