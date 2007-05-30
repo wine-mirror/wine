@@ -114,6 +114,8 @@ static DWORD CALLBACK stream_in(DWORD_PTR cookie, LPBYTE buffer, LONG cb, LONG *
     return 0;
 }
 
+static WCHAR wszFileName[MAX_PATH];
+
 static void set_caption(LPCWSTR wszNewFileName)
 {
     static const WCHAR wszSeparator[] = {' ','-',' ','\0'};
@@ -180,6 +182,8 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
     SetFocus(hEditorWnd);
 
     set_caption(szOpenFileName);
+
+    lstrcpyW(wszFileName, szOpenFileName);
 }
 
 static void DialogOpenFile(void)
@@ -442,6 +446,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_FILE_NEW:
         SetWindowTextA(hwndEditor, "");
         set_caption(NULL);
+        wszFileName[0] = '\0';
         /* FIXME: set default format too */
         break;
 
