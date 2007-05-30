@@ -55,6 +55,17 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
 }
 
 /***********************************************************************
+ *             CryptCATAdminAddCatalog (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, WCHAR *catalogFile,
+                                    WCHAR *selectBaseName, DWORD flags)
+{
+    FIXME("%p %s %s %d\n", catAdmin, debugstr_w(catalogFile),
+          debugstr_w(selectBaseName), flags);
+    return TRUE;
+}
+
+/***********************************************************************
  *             CryptCATAdminCalcHashFromFileHandle (WINTRUST.@)
  */
 BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash,
@@ -77,6 +88,29 @@ HCATINFO WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN hCatAdmin,
 {
     FIXME("%p %p %d %d %p\n", hCatAdmin, pbHash, cbHash, dwFlags, phPrevCatInfo);
     return NULL;
+}
+
+/***********************************************************************
+ *      CryptCATAdminReleaseCatalogContext (WINTRUST.@)
+ *
+ * Release a catalog context handle.
+ *
+ * PARAMS
+ *   hCatAdmin [I] Context handle.
+ *   hCatInfo  [I] Catalog handle.
+ *   dwFlags   [I] Reserved.
+ *
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FAIL.
+ *
+ */
+BOOL WINAPI CryptCATAdminReleaseCatalogContext(HCATADMIN hCatAdmin,
+                                               HCATADMIN hCatInfo,
+                                               DWORD dwFlags)
+{
+    FIXME("%p %p %x\n", hCatAdmin, hCatInfo, dwFlags);
+    return TRUE;
 }
 
 /***********************************************************************
