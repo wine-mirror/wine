@@ -114,7 +114,24 @@ static DWORD CALLBACK stream_in(DWORD_PTR cookie, LPBYTE buffer, LONG cb, LONG *
     return 0;
 }
 
-static void DoOpenFile(LPCWSTR szFileName)
+static void set_caption(LPCWSTR wszNewFileName)
+{
+    static const WCHAR wszSeparator[] = {' ','-',' ','\0'};
+    WCHAR wszCaption[MAX_PATH];
+
+    if(wszNewFileName)
+    {
+        lstrcpyW(wszCaption, wszNewFileName);
+        lstrcatW(wszCaption, wszSeparator);
+        lstrcatW(wszCaption, wszAppTitle);
+        SetWindowTextW(hMainWnd, wszCaption);
+    } else
+    {
+        SetWindowTextW(hMainWnd, wszAppTitle);
+    }
+}
+
+static void DoOpenFile(LPCWSTR szOpenFileName)
 {
     HANDLE hFile;
     LPSTR pTemp;
@@ -122,11 +139,7 @@ static void DoOpenFile(LPCWSTR szFileName)
     DWORD dwNumRead;
     EDITSTREAM es;
 
-    char szCaption[MAX_PATH];
-    char szAppTitle[sizeof(wszAppTitle)];
-    char szSeparator[] = " - ";
-
-    hFile = CreateFileW(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
+    hFile = CreateFileW(szOpenFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
         return;
@@ -166,14 +179,7 @@ static void DoOpenFile(LPCWSTR szFileName)
 
     SetFocus(hEditorWnd);
 
-    WideCharToMultiByte(CP_ACP, 0, wszAppTitle, -1, szAppTitle, sizeof(wszAppTitle), NULL, NULL);
-
-    WideCharToMultiByte(CP_ACP, 0, szFileName, -1, szCaption, MAX_PATH, NULL, NULL);
-
-    lstrcat(szCaption, szSeparator);
-    lstrcat(szCaption, szAppTitle);
-
-    SetWindowText(hMainWnd, szCaption);
+    set_caption(szOpenFileName);
 }
 
 static void DialogOpenFile(void)
@@ -435,7 +441,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_FILE_NEW:
         SetWindowTextA(hwndEditor, "");
-        SetWindowTextW(hMainWnd, wszAppTitle);
+        set_caption(NULL);
         /* FIXME: set default format too */
         break;
 
