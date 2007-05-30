@@ -1622,7 +1622,12 @@ static int get_struct_type(var_list_t *fields)
   }
 
   if( has_variance )
-    return RPC_FC_CVSTRUCT;
+  {
+    if ( has_conformance )
+      return RPC_FC_CVSTRUCT;
+    else
+      return RPC_FC_BOGUS_STRUCT;
+  }
   if( has_conformance && has_pointer )
     return RPC_FC_CPSTRUCT;
   if( has_conformance )
