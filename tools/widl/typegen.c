@@ -1279,7 +1279,9 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         }
 
         /* member layout */
+        current_structure = type;
         write_struct_members(file, type, typestring_offset);
+        current_structure = NULL;
         return start_offset;
     case RPC_FC_CSTRUCT:
     case RPC_FC_CPSTRUCT:
@@ -1403,7 +1405,9 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         print_file(file, 2, "NdrFcShort(0x0),\t/* FIXME: pointer stuff */\n");
 
         *typestring_offset += 8;
+        current_structure = type;
         write_struct_members(file, type, typestring_offset);
+        current_structure = NULL;
 
         return start_offset;
 
