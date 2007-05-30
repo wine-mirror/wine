@@ -217,6 +217,7 @@ IDirect3DTextureImpl_GetHandle(IDirect3DTexture2 *iface,
 
     TRACE("(%p)->(%p,%p)\n", This, d3d, lpHandle);
 
+    EnterCriticalSection(&ddraw_cs);
     if(!This->Handle)
     {
         This->Handle = IDirect3DDeviceImpl_CreateHandle(d3d);
@@ -230,6 +231,7 @@ IDirect3DTextureImpl_GetHandle(IDirect3DTexture2 *iface,
 
     TRACE(" returning handle %08x.\n", *lpHandle);
 
+    LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }
 
@@ -304,6 +306,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
     HRESULT ret_value = D3D_OK;
 
     TRACE("(%p)->(%p)\n", This, src_ptr);
+    EnterCriticalSection(&ddraw_cs);
 
     if (((src_ptr->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) != (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP)) ||
         (src_ptr->surface_desc.u2.dwMipMapCount != This->surface_desc.u2.dwMipMapCount))
@@ -331,6 +334,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
         if( ret_value != D3D_OK)
         {
             ERR("IWineD3DSurface::GetPalette failed! This is unexpected\n");
+            LeaveCriticalSection(&ddraw_cs);
             return D3DERR_TEXTURE_LOAD_FAILED;
         }
         if(wine_pal)
@@ -339,6 +343,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
             if(ret_value != D3D_OK)
             {
                 ERR("IWineD3DPalette::GetParent failed! This is unexpected\n");
+                LeaveCriticalSection(&ddraw_cs);
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
             pal_impl = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette, pal);
@@ -352,6 +357,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
         if( ret_value != D3D_OK)
         {
             ERR("IWineD3DSurface::GetPalette failed! This is unexpected\n");
+            LeaveCriticalSection(&ddraw_cs);
             return D3DERR_TEXTURE_LOAD_FAILED;
         }
         if(wine_pal_src)
@@ -360,6 +366,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
             if(ret_value != D3D_OK)
             {
                 ERR("IWineD3DPalette::GetParent failed! This is unexpected\n");
+                LeaveCriticalSection(&ddraw_cs);
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
             pal_impl_src = ICOM_OBJECT(IDirectDrawPaletteImpl, IDirectDrawPalette, pal_src);
@@ -395,6 +402,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
         {
             /* Should also check for same pixel format, u1.lPitch, ... */
             ERR("Error in surface sizes\n");
+            LeaveCriticalSection(&ddraw_cs);
             return D3DERR_TEXTURE_LOAD_FAILED;
         }
         else
@@ -419,6 +427,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
             if(ret_value != D3D_OK)
             {
                 ERR(" (%p) Locking the source surface failed\n", This);
+                LeaveCriticalSection(&ddraw_cs);
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
 
@@ -427,6 +436,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
             {
                 ERR(" (%p) Locking the destination surface failed\n", This);
                 IWineD3DSurface_UnlockRect(src_ptr->WineD3DSurface);
+                LeaveCriticalSection(&ddraw_cs);
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
 
@@ -466,6 +476,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
         }
     }
 
+    LeaveCriticalSection(&ddraw_cs);
     return ret_value;
 }
 
