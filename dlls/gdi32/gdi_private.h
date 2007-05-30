@@ -271,7 +271,7 @@ typedef struct tagDC
     PHYSDEV      physDev;         /* Physical device (driver-specific) */
     INT          saveLevel;
     HDC          saved_dc;
-    DWORD        dwHookData;
+    DWORD_PTR    dwHookData;
     FARPROC16    hookProc;         /* the original SEGPTR ... */
     DCHOOKPROC   hookThunk;        /* ... and the thunk to call it */
 

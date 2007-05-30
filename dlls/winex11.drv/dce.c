@@ -51,7 +51,7 @@ struct dce
 
 static struct list dce_list = LIST_INIT(dce_list);
 
-static BOOL16 CALLBACK dc_hook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam );
+static BOOL CALLBACK dc_hook( HDC hDC, WORD code, DWORD_PTR data, LPARAM lParam );
 
 static CRITICAL_SECTION dce_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -224,7 +224,7 @@ static struct dce *alloc_cache_dce(void)
     SaveDC( dce->hdc );
 
     /* store DCE handle in DC hook data field */
-    SetDCHook( dce->hdc, dc_hook, (DWORD)dce );
+    SetDCHook( dce->hdc, dc_hook, (DWORD_PTR)dce );
 
     dce->hwnd      = 0;
     dce->clip_rgn  = 0;
@@ -290,7 +290,7 @@ void alloc_window_dce( struct x11drv_win_data *data )
 
     /* store DCE handle in DC hook data field */
 
-    SetDCHook( dce->hdc, dc_hook, (DWORD)dce );
+    SetDCHook( dce->hdc, dc_hook, (DWORD_PTR)dce );
 
     dce->hwnd      = data->hwnd;
     dce->clip_rgn  = 0;
@@ -593,15 +593,15 @@ INT X11DRV_ReleaseDC( HWND hwnd, HDC hdc, BOOL end_paint )
  *
  * See "Undoc. Windows" for hints (DC, SetDCHook, SetHookFlags)..
  */
-static BOOL16 CALLBACK dc_hook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
+static BOOL CALLBACK dc_hook( HDC hDC, WORD code, DWORD_PTR data, LPARAM lParam )
 {
     BOOL retv = TRUE;
     struct dce *dce = (struct dce *)data;
 
-    TRACE("hDC = %04x, %i\n", hDC, code);
+    TRACE("hDC = %p, %u\n", hDC, code);
 
     if (!dce) return 0;
-    assert( HDC_16(dce->hdc) == hDC );
+    assert( dce->hdc == hDC );
 
     switch( code )
     {
