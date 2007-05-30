@@ -743,7 +743,7 @@ HTMLWindow *HTMLWindow_Create(HTMLDocument *doc)
     return ret;
 }
 
-HTMLWindow *nswindow_to_window(nsIDOMWindow *nswindow)
+HTMLWindow *nswindow_to_window(const nsIDOMWindow *nswindow)
 {
     HTMLWindow *iter;
 

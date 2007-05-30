@@ -295,7 +295,7 @@ HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
 
 HTMLWindow *HTMLWindow_Create(HTMLDocument*);
-HTMLWindow *nswindow_to_window(nsIDOMWindow*);
+HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*);
 void HTMLDocument_Persist_Init(HTMLDocument*);
@@ -406,7 +406,7 @@ typedef struct {
 thread_data_t *get_thread_data(BOOL);
 HWND get_thread_hwnd(void);
 void push_task(task_t*);
-void remove_doc_tasks(HTMLDocument*);
+void remove_doc_tasks(const HTMLDocument*);
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_JSProtocol, 0x3050F3B2, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);

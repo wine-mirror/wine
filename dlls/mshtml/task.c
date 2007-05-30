@@ -66,7 +66,7 @@ static task_t *pop_task(void)
     return task;
 }
 
-void remove_doc_tasks(HTMLDocument *doc)
+void remove_doc_tasks(const HTMLDocument *doc)
 {
     thread_data_t *thread_data = get_thread_data(FALSE);
     task_t *iter, *tmp;

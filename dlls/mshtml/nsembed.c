@@ -119,7 +119,7 @@ static void register_nscontainer_class(void)
     nscontainer_class = RegisterClassExW(&wndclass);
 }
 
-static BOOL load_xpcom(PRUnichar *gre_path)
+static BOOL load_xpcom(const PRUnichar *gre_path)
 {
     WCHAR path_env[MAX_PATH];
     int len;
@@ -247,7 +247,7 @@ static void set_profile(void)
     nsIProfile_Release(profile);
 }
 
-static BOOL init_xpcom(PRUnichar *gre_path)
+static BOOL init_xpcom(const PRUnichar *gre_path)
 {
     nsresult nsres;
     nsIObserver *pStartNotif;
