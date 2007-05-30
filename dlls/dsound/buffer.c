@@ -898,11 +898,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCaps(
 
 	caps->dwBufferBytes = This->buflen;
 
-	/* This value represents the speed of the "unlock" command.
-	   As unlock is quite fast (it does not do anything), I put
-	   4096 ko/s = 4 Mo / s */
-	/* FIXME: hwbuf speed */
-	caps->dwUnlockTransferRate = 4096;
+	/* According to windows, this is zero*/
+	caps->dwUnlockTransferRate = 0;
 	caps->dwPlayCpuOverhead = 0;
 
 	return DS_OK;
