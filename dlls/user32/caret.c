@@ -156,7 +156,7 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap, INT width, INT height )
 		{
 		    HBITMAP hPrevBmp = SelectObject(hMemDC, hBmp);
                     SetRect( &r, 0, 0, width, height );
-		    FillRect(hMemDC, &r, (HBRUSH)((bitmap ? COLOR_GRAYTEXT : COLOR_WINDOW) + 1));
+		    FillRect(hMemDC, &r, ULongToHandle((bitmap ? COLOR_GRAYTEXT : COLOR_WINDOW) + 1));
 		    SelectObject(hMemDC, hPrevBmp);
 		}
 		DeleteDC(hMemDC);

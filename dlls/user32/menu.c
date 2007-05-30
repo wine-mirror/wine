@@ -4245,7 +4245,7 @@ HMENU16 WINAPI LoadMenu16( HINSTANCE16 instance, LPCSTR name )
     HGLOBAL16 handle;
     HMENU16 hMenu;
 
-    if (HIWORD(name) && name[0] == '#') name = (LPCSTR)atoi( name + 1 );
+    if (HIWORD(name) && name[0] == '#') name = ULongToPtr(atoi( name + 1 ));
     if (!name) return 0;
 
     instance = GetExePtr( instance );

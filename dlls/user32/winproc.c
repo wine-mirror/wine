@@ -530,7 +530,7 @@ static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPA
         if (size)
         {
             memcpy( &args.u, MapSL(lParam), size );
-            lParam = (SEGPTR)NtCurrentTeb()->WOW32Reserved - size;
+            lParam = PtrToUlong(NtCurrentTeb()->WOW32Reserved) - size;
         }
     }
 
@@ -711,7 +711,7 @@ static inline BOOL WINPROC_TestLBForStr( HWND hwnd, UINT msg )
 }
 
 
-static UINT convert_handle_16_to_32(HANDLE16 src, unsigned int flags)
+static UINT_PTR convert_handle_16_to_32(HANDLE16 src, unsigned int flags)
 {
     HANDLE      dst;
     UINT        sz = GlobalSize16(src);
@@ -725,10 +725,10 @@ static UINT convert_handle_16_to_32(HANDLE16 src, unsigned int flags)
     GlobalUnlock16(src);
     GlobalUnlock(dst);
 
-    return (UINT)dst;
+    return (UINT_PTR)dst;
 }
 
-static HANDLE16 convert_handle_32_to_16(UINT src, unsigned int flags)
+static HANDLE16 convert_handle_32_to_16(UINT_PTR src, unsigned int flags)
 {
     HANDLE16    dst;
     UINT        sz = GlobalSize((HANDLE)src);
@@ -1538,7 +1538,7 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
     case WM_DDE_POKE:
         {
             HANDLE16 lo16 = LOWORD(lParam);
-            UINT lo32 = 0;
+            UINT_PTR lo32 = 0;
             if (lo16 && !(lo32 = convert_handle_16_to_32(lo16, GMEM_DDESHARE))) break;
             lParam = PackDDElParam( msg, lo32, HIWORD(lParam) );
             ret = callback( hwnd32, msg, (WPARAM)WIN_Handle32(wParam), lParam, result, arg );
@@ -1546,8 +1546,8 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
         break; /* FIXME don't know how to free allocated memory (handle)  !! */
     case WM_DDE_ACK:
         {
-            UINT lo = LOWORD(lParam);
-            UINT hi = HIWORD(lParam);
+            UINT_PTR lo = LOWORD(lParam);
+            UINT_PTR hi = HIWORD(lParam);
             int flag = 0;
             char buf[2];
 
@@ -1565,7 +1565,7 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
             case 1:
                 break; /* atom, nothing to do */
             case 3:
-                MESSAGE("DDE_ACK: %x both atom and handle... choosing handle\n", hi);
+                MESSAGE("DDE_ACK: %lx both atom and handle... choosing handle\n", hi);
                 /* fall thru */
             case 2:
                 hi = convert_handle_16_to_32(hi, GMEM_DDESHARE);

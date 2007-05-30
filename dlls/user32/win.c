@@ -678,7 +678,7 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
         UINT id = 0;
 
         MDI_CalcDefaultChildPos(cs->hwndParent, -1, pos, 0, &id);
-        if (!(cs->style & WS_POPUP)) cs->hMenu = (HMENU)id;
+        if (!(cs->style & WS_POPUP)) cs->hMenu = ULongToHandle(id);
 
         TRACE("MDI child id %04x\n", id);
     }
@@ -2125,7 +2125,7 @@ LONG WINAPI SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
     if (is_winproc)
     {
         WNDPROC new_proc = WINPROC_AllocProc16( (WNDPROC16)newval );
-        WNDPROC old_proc = (WNDPROC)SetWindowLongA( WIN_Handle32(hwnd), offset, (LONG_PTR)new_proc );
+        WNDPROC old_proc = (WNDPROC)SetWindowLongPtrA( WIN_Handle32(hwnd), offset, (LONG_PTR)new_proc );
         return (LONG)WINPROC_GetProc16( (WNDPROC)old_proc, FALSE );
     }
     else return SetWindowLongA( WIN_Handle32(hwnd), offset, newval );

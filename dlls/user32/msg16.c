@@ -194,7 +194,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam, LPAR
             CREATESTRUCT16 *cs16 = MapSL(lParam);
             CREATESTRUCTA cs32;
 
-            cs32.lpCreateParams = (LPVOID)cs16->lpCreateParams;
+            cs32.lpCreateParams = ULongToPtr(cs16->lpCreateParams);
             cs32.hInstance      = HINSTANCE_32(cs16->hInstance);
             cs32.hMenu          = HMENU_32(cs16->hMenu);
             cs32.hwndParent     = WIN_Handle32(cs16->hwndParent);

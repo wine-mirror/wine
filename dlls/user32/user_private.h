@@ -35,7 +35,7 @@ extern WORD USER_HeapSel;
 
 static inline HLOCAL16 LOCAL_Alloc( HANDLE16 ds, UINT16 flags, WORD size )
 {
-    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
     HANDLE16 oldDS = stack16->ds;
     HLOCAL16 ret;
 
@@ -47,7 +47,7 @@ static inline HLOCAL16 LOCAL_Alloc( HANDLE16 ds, UINT16 flags, WORD size )
 
 static inline  HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, UINT16 flags )
 {
-    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
     HANDLE16 oldDS = stack16->ds;
     HLOCAL16 ret;
 
@@ -59,7 +59,7 @@ static inline  HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, 
 
 static inline HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
 {
-    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
     HANDLE16 oldDS = stack16->ds;
     HLOCAL16 ret;
 

@@ -1485,7 +1485,7 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
 	    {
 		memcpy( ptr, *buffer, size );
 		GlobalUnlock( hMem );
-                TRACE( "exec: pairing c=%08lx s=%08x\n", *lparam, (DWORD)hMem );
+                TRACE( "exec: pairing c=%08lx s=%p\n", *lparam, hMem );
                 if (!dde_add_pair( (HGLOBAL)*lparam, hMem ))
                 {
                     GlobalFree( hMem );

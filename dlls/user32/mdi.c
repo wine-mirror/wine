@@ -1062,7 +1062,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 	}
         else
 	{
-	    LPCLIENTCREATESTRUCT16 ccs = MapSL((SEGPTR)cs->lpCreateParams);
+	    LPCLIENTCREATESTRUCT16 ccs = MapSL(PtrToUlong(cs->lpCreateParams));
 	    ci->hWindowMenu	= HMENU_32(ccs->hWindowMenu);
 	    ci->idFirstChild	= ccs->idFirstChild;
 	}

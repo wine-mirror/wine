@@ -1686,7 +1686,7 @@ static LPWSTR EDIT_GetPasswordPointer_SL(EDITSTATE *es)
  */
 static void EDIT_LockBuffer(EDITSTATE *es)
 {
-	STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+	STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
 	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 
 	if (!es->text) {
@@ -2487,7 +2487,7 @@ static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 		    TRACE("Synchronizing with 16-bit ANSI buffer\n");
 		    TRACE("%d WCHARs translated to %d bytes\n", countW, countA_new);
 
-		    stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+		    stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
 		    oldDS = stack16->ds;
 		    stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 
@@ -2760,7 +2760,7 @@ static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
 	if (es->hloc16)
 		return es->hloc16;
 
-	stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+	stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
 	oldDS = stack16->ds;
 	stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 
@@ -3506,7 +3506,7 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 
 	if(es->hloc16)
 	{
-	    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+	    STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
 	    HANDLE16 oldDS = stack16->ds;
 	
 	    stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
@@ -3578,7 +3578,7 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
  */
 static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc)
 {
-	STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+	STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
 	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 	HANDLE16 oldDS = stack16->ds;
 	INT countW, countA;
@@ -4235,7 +4235,7 @@ static LRESULT EDIT_WM_Destroy(EDITSTATE *es)
 		LocalFree(es->hloc32A);
 	}
 	if (es->hloc16) {
-		STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+		STACK16FRAME* stack16 = MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved));
 		HANDLE16 oldDS = stack16->ds;
 
 		stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );

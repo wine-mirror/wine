@@ -1984,7 +1984,7 @@ WDML_CONV*	WDML_GetConvFromWnd(HWND hWnd)
  *
  */
 BOOL		WDML_PostAck(WDML_CONV* pConv, WDML_SIDE side, WORD appRetCode,
-			     BOOL fBusy, BOOL fAck, UINT pmt, LPARAM lParam, UINT oldMsg)
+			     BOOL fBusy, BOOL fAck, UINT_PTR pmt, LPARAM lParam, UINT oldMsg)
 {
     DDEACK	ddeAck;
     HWND	from, to;
