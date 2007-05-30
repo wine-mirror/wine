@@ -5806,7 +5806,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             }
 
             if (SUCCEEDED(hres) && pVarResult && (func_desc->cParams == 1) &&
-                (wFlags == INVOKE_PROPERTYGET) &&
+                (func_desc->invkind & INVOKE_PROPERTYGET) &&
                 (func_desc->lprgelemdescParam[0].u.paramdesc.wParamFlags & PARAMFLAG_FRETVAL) &&
                 (pDispParams->cArgs != 0))
             {
