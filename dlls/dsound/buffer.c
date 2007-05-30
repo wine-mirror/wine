@@ -221,6 +221,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 	if (This->dsbd.dwFlags & DSBCAPS_CTRL3D) {
 		oldVol = This->ds3db_lVolume;
 		This->ds3db_lVolume = vol;
+		if (vol != oldVol)
+			/* recalc 3d volume, which in turn recalcs the pans */
+			DSOUND_Calc3DBuffer(This);
 	} else {
 		oldVol = This->volpan.lVolume;
 		This->volpan.lVolume = vol;
