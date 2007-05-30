@@ -337,14 +337,14 @@ static size_t write_procformatstring_var(FILE *file, int indent,
         else
             print_file(file, indent, "0x4e,    /* FC_IN_PARAM_BASETYPE */\n");
 
-        if (is_base_type(type->type))
-        {
-            print_file(file, indent, "0x%02x,    /* %s */\n", type->type, string_of_type(type->type));
-            size = 2; /* includes param type prefix */
-        }
-        else if (type->type == RPC_FC_BIND_PRIMITIVE)
+        if (type->type == RPC_FC_BIND_PRIMITIVE)
         {
             print_file(file, indent, "0x%02x,    /* FC_IGNORE */\n", RPC_FC_IGNORE);
+            size = 2; /* includes param type prefix */
+        }
+        else if (is_base_type(type->type))
+        {
+            print_file(file, indent, "0x%02x,    /* %s */\n", type->type, string_of_type(type->type));
             size = 2; /* includes param type prefix */
         }
         else
