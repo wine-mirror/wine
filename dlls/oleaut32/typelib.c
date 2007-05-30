@@ -104,6 +104,8 @@ static DWORD FromLEDWord(DWORD p_iVal)
 #define FromLEDWord(X) (X)
 #endif
 
+#define DISPATCH_HREF_OFFSET 0x01000000
+#define DISPATCH_HREF_MASK   0xff000000
 
 /****************************************************************************
  *              FromLExxx
@@ -4756,7 +4758,7 @@ HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const F
 /* internal function to make the inherited interfaces' methods appear
  * part of the interface */
 static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
-    UINT index, const FUNCDESC **ppFuncDesc, UINT *funcs)
+    UINT index, const FUNCDESC **ppFuncDesc, UINT *funcs, UINT *hrefoffset)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     HRESULT hr;
@@ -4764,6 +4766,8 @@ static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
 
     if (funcs)
         *funcs = 0;
+    else
+        *hrefoffset = DISPATCH_HREF_OFFSET;
 
     if(This->impltypelist)
     {
@@ -4777,20 +4781,54 @@ static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
         hr = ITypeInfoImpl_GetInternalDispatchFuncDesc(pSubTypeInfo,
                                                        index,
                                                        ppFuncDesc,
-                                                       &sub_funcs);
+                                                       &sub_funcs, hrefoffset);
         implemented_funcs += sub_funcs;
         ITypeInfo_Release(pSubTypeInfo);
         if (SUCCEEDED(hr))
             return hr;
+        *hrefoffset += DISPATCH_HREF_OFFSET;
     }
 
     if (funcs)
         *funcs = implemented_funcs + This->TypeAttr.cFuncs;
+    else
+        *hrefoffset = 0;
     
     if (index < implemented_funcs)
         return E_INVALIDARG;
     return ITypeInfoImpl_GetInternalFuncDesc(iface, index - implemented_funcs,
                                              ppFuncDesc);
+}
+
+static inline void ITypeInfoImpl_ElemDescAddHrefOffset( LPELEMDESC pElemDesc, UINT hrefoffset)
+{
+    TYPEDESC *pTypeDesc = &pElemDesc->tdesc;
+    while (TRUE)
+    {
+        switch (pTypeDesc->vt)
+        {
+        case VT_USERDEFINED:
+            pTypeDesc->u.hreftype += hrefoffset;
+            return;
+        case VT_PTR:
+        case VT_SAFEARRAY:
+            pTypeDesc = pTypeDesc->u.lptdesc;
+            break;
+        case VT_CARRAY:
+            pTypeDesc = &pTypeDesc->u.lpadesc->tdescElem;
+            break;
+        default:
+            return;
+        }
+    }
+}
+
+static inline void ITypeInfoImpl_FuncDescAddHrefOffset( LPFUNCDESC pFuncDesc, UINT hrefoffset)
+{
+    SHORT i;
+    for (i = 0; i < pFuncDesc->cParams; i++)
+        ITypeInfoImpl_ElemDescAddHrefOffset(&pFuncDesc->lprgelemdescParam[i], hrefoffset);
+    ITypeInfoImpl_ElemDescAddHrefOffset(&pFuncDesc->elemdescFunc, hrefoffset);
 }
 
 /* ITypeInfo::GetFuncDesc
@@ -4805,12 +4843,14 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     const FUNCDESC *internal_funcdesc;
     HRESULT hr;
+    UINT hrefoffset = 0;
 
     TRACE("(%p) index %d\n", This, index);
 
     if (This->TypeAttr.typekind == TKIND_DISPATCH)
         hr = ITypeInfoImpl_GetInternalDispatchFuncDesc((ITypeInfo *)iface, index,
-                                                       &internal_funcdesc, NULL);
+                                                       &internal_funcdesc, NULL,
+                                                       &hrefoffset);
     else
         hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index,
                                                &internal_funcdesc);
@@ -4820,10 +4860,16 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
         return hr;
     }
 
-    return TLB_AllocAndInitFuncDesc(
+    hr = TLB_AllocAndInitFuncDesc(
         internal_funcdesc,
         ppFuncDesc,
         This->TypeAttr.typekind == TKIND_DISPATCH);
+
+    if ((This->TypeAttr.typekind == TKIND_DISPATCH) && hrefoffset)
+        ITypeInfoImpl_FuncDescAddHrefOffset(*ppFuncDesc, hrefoffset);
+
+    TRACE("-- 0x%08x\n", hr);
+    return hr;
 }
 
 static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
@@ -6005,6 +6051,38 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
     return TYPE_E_ELEMENTNOTFOUND;
 }
 
+/* internal function to make the inherited interfaces' methods appear
+ * part of the interface */
+static HRESULT ITypeInfoImpl_GetDispatchRefTypeInfo( ITypeInfo *iface,
+    HREFTYPE *hRefType, ITypeInfo  **ppTInfo)
+{
+    ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
+    HRESULT hr;
+
+    TRACE("%p, 0x%x\n", iface, *hRefType);
+
+    if (This->impltypelist && (*hRefType & DISPATCH_HREF_MASK))
+    {
+        ITypeInfo *pSubTypeInfo;
+
+        hr = ITypeInfo_GetRefTypeInfo(iface, This->impltypelist->hRef, &pSubTypeInfo);
+        if (FAILED(hr))
+            return hr;
+
+        hr = ITypeInfoImpl_GetDispatchRefTypeInfo(pSubTypeInfo,
+                                                  hRefType, ppTInfo);
+        ITypeInfo_Release(pSubTypeInfo);
+        if (SUCCEEDED(hr))
+            return hr;
+    }
+    *hRefType -= DISPATCH_HREF_OFFSET;
+
+    if (!(*hRefType & DISPATCH_HREF_MASK))
+        return ITypeInfo_GetRefTypeInfo(iface, *hRefType, ppTInfo);
+    else
+        return E_FAIL;
+}
+
 /* ITypeInfo::GetRefTypeInfo
  *
  * If a type description references other type descriptions, it retrieves
@@ -6025,8 +6103,8 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
         result = S_OK;
     }
     else if (hRefType == -1 &&
-	(((ITypeInfoImpl*) This)->TypeAttr.typekind   == TKIND_DISPATCH) &&
-	(((ITypeInfoImpl*) This)->TypeAttr.wTypeFlags &  TYPEFLAG_FDUAL))
+	(This->TypeAttr.typekind   == TKIND_DISPATCH) &&
+	(This->TypeAttr.wTypeFlags &  TYPEFLAG_FDUAL))
     {
 	  /* when we meet a DUAL dispinterface, we must create the interface
 	  * version of it.
@@ -6056,6 +6134,12 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 
 	  result = S_OK;
 
+    } else if ((hRefType != -1) && (hRefType & DISPATCH_HREF_MASK) &&
+        (This->TypeAttr.typekind   == TKIND_DISPATCH) &&
+	(This->TypeAttr.wTypeFlags &  TYPEFLAG_FDUAL))
+    {
+        HREFTYPE href_dispatch = hRefType;
+        result = ITypeInfoImpl_GetDispatchRefTypeInfo((ITypeInfo *)iface, &href_dispatch, ppTInfo);
     } else {
         TLBRefType *ref_type;
         LIST_FOR_EACH_ENTRY(ref_type, &This->pTypeLib->ref_list, TLBRefType, entry)
