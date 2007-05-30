@@ -2201,9 +2201,10 @@ static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x
 			{
 			   if( offset > length ||
 			       pfi->cptable >= (UINT16)X11DRV_CPTABLE_COUNT ||
-			      (int)(pfi->next) != j++ )
+			       PtrToInt(pfi->next) != j++ )
 			   {
-			       TRACE("error: offset=%ld length=%ld cptable=%d pfi->next=%d j=%d\n",(long)offset,(long)length,pfi->cptable,(int)pfi->next,j-1);
+			       TRACE("error: offset=%ld length=%ld cptable=%d pfi->next=%p j=%d\n",
+                                      (long)offset, (long)length, pfi->cptable, pfi->next, j-1);
 			       goto fail;
 			   }
 
@@ -2332,7 +2333,7 @@ static BOOL XFONT_WriteCachedMetrics( int fd, unsigned x_checksum, int x_count, 
 		    fi = *pfi;
 
 		    fi.df.dfFace = NULL;
-		    fi.next = (fontInfo*)k;	/* loader checks this */
+		    fi.next = IntToPtr(k);	/* loader checks this */
 
 		    j = write( fd, &fi, sizeof(fi) );
 		    k++;
