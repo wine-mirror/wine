@@ -427,34 +427,16 @@ extern BYTE WINAPI DOSVM_Int09ReadScan(BYTE*ascii);
 extern void WINAPI DOSVM_Int10Handler(CONTEXT86*);
 extern void WINAPI DOSVM_PutChar(BYTE ascii);
 
-/* int11.c */
-extern void WINAPI DOSVM_Int11Handler(CONTEXT86*);
-
-/* int12.c */
-extern void WINAPI DOSVM_Int12Handler(CONTEXT86*);
-
 /* int13.c */
 extern void WINAPI DOSVM_Int13Handler(CONTEXT86*);
 
 /* int15.c */
 extern void WINAPI DOSVM_Int15Handler(CONTEXT86*);
 
-/* int1a.c */
-extern void WINAPI DOSVM_Int1aHandler(CONTEXT86*);
-
 /* int16.c */
 extern void WINAPI DOSVM_Int16Handler(CONTEXT86*);
 extern BOOL WINAPI DOSVM_Int16ReadChar( BYTE *, BYTE *, CONTEXT86 * );
 extern int WINAPI DOSVM_Int16AddChar(BYTE ascii,BYTE scan);
-
-/* int17.c */
-extern void WINAPI DOSVM_Int17Handler(CONTEXT86*);
-
-/* int19.c */
-extern void WINAPI DOSVM_Int19Handler(CONTEXT86*);
-
-/* int20.c */
-extern void WINAPI DOSVM_Int20Handler(CONTEXT86*);
 
 /* int21.c */
 extern void WINAPI DOSVM_Int21Handler(CONTEXT86*);
@@ -466,12 +448,6 @@ void WINAPI DOSVM_Int25Handler( CONTEXT86 * );
 /* int26.c */
 BOOL DOSVM_RawWrite( BYTE, DWORD, DWORD, BYTE *, BOOL );
 void WINAPI DOSVM_Int26Handler( CONTEXT86 * );
-
-/* int29.c */
-extern void WINAPI DOSVM_Int29Handler(CONTEXT86*);
-
-/* int2a.c */
-extern void WINAPI DOSVM_Int2aHandler(CONTEXT86*);
 
 /* int2f.c */
 extern void WINAPI DOSVM_Int2fHandler(CONTEXT86*);
@@ -490,15 +466,6 @@ extern BOOL DOSVM_CheckWrappers(CONTEXT86*);
 extern void WINAPI DOSVM_Int33Handler(CONTEXT86*);
 extern void WINAPI DOSVM_Int33Message(UINT,WPARAM,LPARAM);
 extern void WINAPI DOSVM_Int33Console(MOUSE_EVENT_RECORD*);
-
-/* int41.c */
-extern void WINAPI DOSVM_Int41Handler(CONTEXT86*);
-
-/* int4b.c */
-extern void WINAPI DOSVM_Int4bHandler(CONTEXT86*);
-
-/* int5c.c */
-extern void WINAPI DOSVM_Int5cHandler(CONTEXT86*);
 
 /* int67.c */
 extern void WINAPI DOSVM_Int67Handler(CONTEXT86*);

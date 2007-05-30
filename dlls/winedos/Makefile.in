@@ -19,26 +19,15 @@ C_SRCS = \
 	himem.c \
 	int09.c \
 	int10.c \
-	int11.c \
-	int12.c \
 	int13.c \
 	int15.c \
 	int16.c \
-	int17.c \
-	int19.c \
-	int1a.c \
-	int20.c \
 	int21.c \
 	int25.c \
 	int26.c \
-	int29.c \
-	int2a.c \
 	int2f.c \
 	int31.c \
 	int33.c \
-	int41.c \
-	int4b.c \
-	int5c.c \
 	int67.c \
 	interrupts.c \
 	ioports.c \
