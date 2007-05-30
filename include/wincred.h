@@ -65,7 +65,7 @@ typedef struct _CREDENTIALA
     LPBYTE CredentialBlob;
     DWORD Persist;
     DWORD AttributeCount;
-    PCREDENTIAL_ATTRIBUTEA Attribute;
+    PCREDENTIAL_ATTRIBUTEA Attributes;
     LPSTR TargetAlias;
     LPSTR UserName;
 } CREDENTIALA, *PCREDENTIALA;
@@ -81,7 +81,7 @@ typedef struct _CREDENTIALW
     LPBYTE CredentialBlob;
     DWORD Persist;
     DWORD AttributeCount;
-    PCREDENTIAL_ATTRIBUTEW Attribute;
+    PCREDENTIAL_ATTRIBUTEW Attributes;
     LPWSTR TargetAlias;
     LPWSTR UserName;
 } CREDENTIALW, *PCREDENTIALW;
