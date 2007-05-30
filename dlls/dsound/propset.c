@@ -197,8 +197,18 @@ HRESULT IKsBufferPropertySetImpl_Create(
     IDirectSoundBufferImpl *dsb,
     IKsBufferPropertySetImpl **piks)
 {
+    PIDSDRIVERPROPERTYSET ps = NULL;
     IKsBufferPropertySetImpl *iks;
     TRACE("(%p,%p)\n",dsb,piks);
+
+    if (!dsb->hwbuf)
+        return DSERR_INVALIDPARAM;
+
+    IDsDriver_QueryInterface(dsb->hwbuf, &IID_IDsDriverPropertySet, (void **)&ps);
+    if (!ps)
+        return DSERR_INVALIDPARAM;
+
+    IUnknown_Release(ps);
 
     iks = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*iks));
     if (iks == 0) {
