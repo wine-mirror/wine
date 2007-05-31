@@ -1617,17 +1617,17 @@ static void test_DateFromUDate( int line, WORD d, WORD m, WORD y, WORD h, WORD m
     double out;
     HRESULT res;
 
-    ud.st.wYear = (y);
-    ud.st.wMonth = (m);
-    ud.st.wDay = (d);
-    ud.st.wHour = (h);
-    ud.st.wMinute = (mn);
-    ud.st.wSecond = (s);
-    ud.st.wMilliseconds = (ms);
-    ud.st.wDayOfWeek = (dw);
-    ud.wDayOfYear = (dy);
+    ud.st.wYear = y;
+    ud.st.wMonth = m;
+    ud.st.wDay = d;
+    ud.st.wHour = h;
+    ud.st.wMinute = mn;
+    ud.st.wSecond = s;
+    ud.st.wMilliseconds = ms;
+    ud.st.wDayOfWeek = dw;
+    ud.wDayOfYear = dy;
     res = pVarDateFromUdate(&ud, flags, &out);
-    ok_(__FILE__,line)((r) == res && (FAILED(r) || fabs(out-(dt)) < 1.0e-11),
+    ok_(__FILE__,line)(r == res && (FAILED(r) || fabs(out-dt) < 1.0e-11),
                        "expected %x, %.16g, got %x, %.16g\n", r, dt, res, out);
 }
 #define UD2T(d,m,y,h,mn,s,ms,dw,dy,flags,r,dt) test_DateFromUDate(__LINE__,d,m,y,h,mn,s,ms,dw,dy,flags,r,dt)
