@@ -514,6 +514,40 @@ static msi_custom_action_info *find_action_by_guid( const GUID *guid )
     return info;
 }
 
+static void handle_msi_break( LPCWSTR target )
+{
+    LPWSTR msg;
+    WCHAR val[MAX_PATH];
+
+    static const WCHAR MsiBreak[] = { 'M','s','i','B','r','e','a','k',0 };
+    static const WCHAR WindowsInstaller[] = {
+        'W','i','n','d','o','w','s',' ','I','n','s','t','a','l','l','e','r',0
+    };
+
+    static const WCHAR format[] = {
+        'T','o',' ','d','e','b','u','g',' ','y','o','u','r',' ',
+        'c','u','s','t','o','m',' ','a','c','t','i','o','n',',',' ',
+        'a','t','t','a','c','h',' ','y','o','u','r',' ','d','e','b','u','g','g','e','r',' ',
+        't','o',' ','p','r','o','c','e','s','s',' ','%','i',' ','(','0','x','%','X',')',' ',
+        'a','n','d',' ','p','r','e','s','s',' ','O','K',0
+    };
+
+    if( !GetEnvironmentVariableW( MsiBreak, val, MAX_PATH ))
+        return;
+
+    if( lstrcmpiW( val, target ))
+        return;
+
+    msg = msi_alloc( (lstrlenW(format) + 10) * sizeof(WCHAR) );
+    if (!msg)
+        return;
+
+    wsprintfW( msg, format, GetCurrentProcessId(), GetCurrentProcessId());
+    MessageBoxW( NULL, msg, WindowsInstaller, MB_OK);
+    msi_free(msg);
+    DebugBreak();
+}
+
 static DWORD WINAPI ACTION_CallDllFunction( const GUID *guid )
 {
     msi_custom_action_info *info;
@@ -548,6 +582,7 @@ static DWORD WINAPI ACTION_CallDllFunction( const GUID *guid )
         if (hPackage)
         {
             TRACE("calling %s\n", debugstr_w( info->target ) );
+            handle_msi_break( info->target );
             r = fn( hPackage );
             MsiCloseHandle( hPackage );
         }
