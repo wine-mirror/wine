@@ -26,6 +26,7 @@ BEGIN
         MENUITEM "새 파일(&N)\tCtrl+N",          ID_FILE_NEW
         MENUITEM "열기(&O)\tCtrl+O",         ID_FILE_OPEN
         MENUITEM "저장(&S)\tCtrl+S",         ID_FILE_SAVE
+        MENUITEM "다른 이름으로 저장(&A)...", ID_FILE_SAVEAS
         MENUITEM SEPARATOR
         MENUITEM "나가기(&X)",         ID_FILE_EXIT
     END

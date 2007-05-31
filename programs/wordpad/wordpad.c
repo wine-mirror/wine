@@ -223,6 +223,29 @@ static void DoSaveFile(LPCWSTR wszSaveFileName)
     set_caption(wszFileName);
 }
 
+static void DialogSaveFile(void)
+{
+    OPENFILENAMEW sfn;
+
+    WCHAR wszFile[MAX_PATH] = {'\0'};
+    static const WCHAR wszDefExt[] = {'r','t','f','\0'};
+
+    ZeroMemory(&sfn, sizeof(sfn));
+
+    sfn.lStructSize = sizeof(sfn);
+    sfn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
+    sfn.hwndOwner = hMainWnd;
+    sfn.lpstrFilter = wszFilter;
+    sfn.lpstrFile = wszFile;
+    sfn.nMaxFile = MAX_PATH;
+    sfn.lpstrDefExt = wszDefExt;
+
+    if(!GetSaveFileNameW(&sfn))
+        return;
+
+    DoSaveFile(sfn.lpstrFile);
+}
+
 static void HandleCommandLine(LPWSTR cmdline)
 {
     WCHAR delimiter;
@@ -466,9 +489,14 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_FILE_SAVE:
         if(wszFileName[0])
+        {
             DoSaveFile(wszFileName);
-        else
-            MessageBox(hWnd, "Can only save existing for now", "WordPad", MB_OK);
+            break;
+        }
+        /* Fall through */
+
+    case ID_FILE_SAVEAS:
+        DialogSaveFile();
         break;
 
     case ID_PRINT:

@@ -27,6 +27,7 @@ BEGIN
         MENUITEM "&Yeni\tCtrl+N",         ID_FILE_NEW
         MENUITEM "&Aç\tCtrl+O",           ID_FILE_OPEN
         MENUITEM "&Kaydet\tCtrl+S",       ID_FILE_SAVE
+        MENUITEM "&Farklý Kaydet...",     ID_FILE_SAVEAS
         MENUITEM SEPARATOR
         MENUITEM "&Çýk",          ID_FILE_EXIT
     END
