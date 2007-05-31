@@ -2,7 +2,7 @@
  * Wine command prompt
  * Norwegian Bokmål Language Support
  *
- * Copyright (C) 2005 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright (C) 2005-2007 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -61,7 +61,7 @@ et @-tegn foran den.\n"
 \n\
 Syntaks: FOR %variabel IN (sett) DO kommando\n\
 \n\
-Kravet om to %-tegn når FOR brukes i en satsvis fil finnes ikke i CMD.\n"
+Kravet om to %-tegn når FOR brukes i en satsvis fil finnes ikke i Wines CMD.\n"
 
   WCMD_GOTO,
 "GOTO-kommandoen flytter kjøringen til et annet sted i en satsvis fil.\n\
@@ -79,7 +79,7 @@ GOTO har ingen effekt når den brukes interaktivt.\n"
   WCMD_IF,
 "IF brukes til å kjøre en kommando på betingelser.\n\
 \n\
-Syntax:	IF [NOT] EXIST filnavn kommando\n\
+Bruk:	IF [NOT] EXIST filnavn kommando\n\
 	IF [NOT] streng1==streng2 kommando\n\
 	IF [NOT] ERRORLEVEL nummer kommando\n\
 \n\
@@ -195,7 +195,12 @@ VERIFY		Viser ON hvis på ellerr OFF hvis av.\n\
 
   WCMD_VOL,    "Hjelp til VOL\n"
 
-  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+  WCMD_PUSHD,  "PUSHD <katalognavn> lagrer arbeidskatalogen i en stabel, og endrer deretter\n\
+arbeidskatalog til den som er oppgitt.\n"
+
+  WCMD_POPD,   "POPD endrer arbeidskatalog til den som sist ble brukt med PUSHD.\n"
+
+  WCMD_MORE,   "MORE lar deg bla gjennom innholdet i filer eller inndata i rør.\n"
 
   WCMD_EXIT,
 "EXIT avslutter gjeldende kommandoøkt og returnerer til operativsystemet\n\
@@ -217,7 +222,9 @@ MD (MKDIR)\tLager en underkatalog\n\
 MORE\t\tDisplay output in pages\n\
 MOVE\t\tFlytter en eller flere filer, eller en katalogtre\n\
 PATH\t\tEndrer eller viser søkestien\n\
+POPD\t\tEndrer arbeidskatalog til den sist lagret med PUSHD\n\
 PROMPT\t\tEndrer kommando-klartegnet\n\
+PUSHD\t\tEndrer arbeidskatalog og lagrer den gjeldende\n\
 REN (RENAME)\tGir nytt navn til en fil\n\
 RD (RMDIR)\tSletter en underkatalog\n\
 SET\t\tAngir eller viser miljøvariabler\n\
@@ -229,11 +236,11 @@ VOL\t\tViser volumnavnet til en stasjon\n\
 EXIT\t\tAvslutter CMD\n\n\
 Skriv «HELP <kommando>» for mer informasjon om kommandoene ovenfor\n"
 
-  WCMD_CONFIRM, "Are you sure"
-  WCMD_YES, "Y"
+  WCMD_CONFIRM, "Er du sikker"
+  WCMD_YES, "J"
   WCMD_NO, "N"
-  WCMD_NOASSOC, "File association missing for extension %s\n"
-  WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
-  WCMD_OVERWRITE, "Overwrite"
-  WCMD_MORESTR, "More..."
+  WCMD_NOASSOC, "Manglende filtilknytning for etternavnet %s\n"
+  WCMD_NOFTYPE, "Ingen åpnekommando er tilknyttet filtypene '%s'\n"
+  WCMD_OVERWRITE, "Overskriv"
+  WCMD_MORESTR, "Mer . . ."
 }
