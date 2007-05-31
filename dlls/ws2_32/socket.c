@@ -4213,7 +4213,8 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
 {
     unsigned int i, options;
-    int n, fd, err = WSAENOTSOCK, ret;
+    int n, fd, err;
+    DWORD timeout_start = GetTickCount();
     struct iovec* iovec;
     struct ws2_async *wsa;
     IO_STATUS_BLOCK* iosb;
@@ -4232,7 +4233,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     if ( !iovec )
     {
         err = WSAEFAULT;
-        goto err_close;
+        goto error;
     }
 
     for (i = 0; i < dwBufferCount; i++)
@@ -4241,63 +4242,82 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         iovec[i].iov_len  = lpBuffers[i].len;
     }
 
-    if ( (lpOverlapped || lpCompletionRoutine) &&
-        !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
+    for (;;)
     {
-        wsa = WS2_make_async( s, ws2m_read, iovec, dwBufferCount,
-                              lpFlags, lpFrom, lpFromlen,
-                              lpOverlapped, lpCompletionRoutine, &iosb );
+        n = WS2_recv( fd, iovec, dwBufferCount, lpFrom, lpFromlen, lpFlags );
+        if (n != -1) break;
 
-        if ( !wsa )
+        if (errno == EINTR) continue;
+        if (errno != EAGAIN)
         {
-            err = WSAEFAULT;
-            goto err_free;
+            err = wsaErrno();
+            goto error;
         }
 
-        if ((ret = ws2_queue_async( wsa, iosb )) != STATUS_PENDING)
+        if ((lpOverlapped || lpCompletionRoutine) &&
+             !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
         {
-            err = NtStatusToWSAError( ret );
-
-            if ( !lpOverlapped )
-                HeapFree( GetProcessHeap(), 0, iosb );
-            HeapFree( GetProcessHeap(), 0, wsa );
-            goto err_free;
-        }
-        release_sock_fd( s, fd );
-
-        /* Try immediate completion */
-        if ( lpOverlapped )
-        {
-            if  ( WSAGetOverlappedResult( s, lpOverlapped,
-                                           lpNumberOfBytesRecvd, FALSE, lpFlags) )
-                return 0;
-
-            if ( (err = WSAGetLastError()) != WSA_IO_INCOMPLETE )
+            wsa = WS2_make_async( s, ws2m_read, iovec, dwBufferCount,
+                                  lpFlags, lpFrom, lpFromlen,
+                                  lpOverlapped, lpCompletionRoutine, &iosb );
+            if ( !wsa )
+            {
+                err = WSAEFAULT;
                 goto error;
+            }
+            release_sock_fd( s, fd );
+
+            iosb->u.Status = STATUS_PENDING;
+            iosb->Information = 0;
+
+            SERVER_START_REQ( register_async )
+            {
+                req->handle = wsa->hSocket;
+                req->type   = ASYNC_TYPE_READ;
+                req->async.callback = WS2_async_recv;
+                req->async.iosb     = iosb;
+                req->async.arg      = wsa;
+                req->async.event    = lpCompletionRoutine ? 0 : lpOverlapped->hEvent;
+                err = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+
+            if (err == STATUS_PENDING)
+                NtCurrentTeb()->num_async_io++;
+            else
+                ws2_async_terminate(wsa, iosb, err, 0);
+
+            WSASetLastError( NtStatusToWSAError( err ));
+            return SOCKET_ERROR;
         }
 
-        WSASetLastError( WSA_IO_PENDING );
-        return SOCKET_ERROR;
-    }
+        if ( _is_blocking(s) )
+        {
+            struct pollfd pfd;
+            int timeout = GET_RCVTIMEO(fd);
+            if (timeout != -1)
+            {
+                timeout -= GetTickCount() - timeout_start;
+                if (timeout < 0) timeout = 0;
+            }
 
-    if ( _is_blocking(s) )
-    {
-        /* block here */
-        /* FIXME: OOB and exceptfds? */
-        int timeout = GET_RCVTIMEO(fd);
-        if( !do_block(fd, POLLIN, timeout)) {
-            err = WSAETIMEDOUT;
-            /* a timeout is not fatal */
-            _enable_event(SOCKET2HANDLE(s), FD_READ, 0, 0);
-            goto err_free;
+            pfd.fd = fd;
+            pfd.events = POLLIN;
+            if (*lpFlags & WS_MSG_OOB) pfd.events |= POLLPRI;
+
+            if (!timeout || !poll( &pfd, 1, timeout ))
+            {
+                err = WSAETIMEDOUT;
+                /* a timeout is not fatal */
+                _enable_event(SOCKET2HANDLE(s), FD_READ, 0, 0);
+                goto error;
+            }
         }
-    }
-
-    n = WS2_recv( fd, iovec, dwBufferCount, lpFrom, lpFromlen, lpFlags );
-    if ( n == -1 )
-    {
-        err = wsaErrno();
-        goto err_free;
+        else
+        {
+            err = WSAEWOULDBLOCK;
+            goto error;
+        }
     }
 
     TRACE(" -> %i bytes\n", n);
@@ -4309,13 +4329,9 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
     return 0;
 
-err_free:
-    HeapFree(GetProcessHeap(), 0, iovec);
-
-err_close:
-    release_sock_fd( s, fd );
-
 error:
+    HeapFree(GetProcessHeap(), 0, iovec);
+    release_sock_fd( s, fd );
     WARN(" -> ERROR %d\n", err);
     WSASetLastError( err );
     return SOCKET_ERROR;
