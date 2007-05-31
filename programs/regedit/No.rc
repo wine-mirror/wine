@@ -1,7 +1,7 @@
 /*
  * Regedit Norwegian Bokmål resources
  *
- * Copyright 2005-2006 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2007 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -58,9 +58,10 @@ BEGIN
         BEGIN
             MENUITEM "Nø&kkel",                        ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "&Strengverdi",               ID_EDIT_NEW_STRINGVALUE
-            MENUITEM "&Binærverdi",               ID_EDIT_NEW_BINARYVALUE
-            MENUITEM "&DWORD-verdi",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Strengverdi",                   ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binærverdi",                    ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD-verdi",                   ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Flerstrengverdi",               ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Slett\tDel",                ID_EDIT_DELETE
@@ -97,10 +98,10 @@ BEGIN
   POPUP ""
   BEGIN
 	MENUITEM "&Endre",                     ID_EDIT_MODIFY
-	MENUITEM "Modify Binary Data",          ID_EDIT_MODIFY_BIN
+	MENUITEM "Endre binærdata",            ID_EDIT_MODIFY_BIN
 	MENUITEM SEPARATOR
 	MENUITEM "&Slett\tDel",                ID_EDIT_DELETE
-	MENUITEM "&Gi nytt navn",                     ID_EDIT_RENAME
+	MENUITEM "&Gi nytt navn",              ID_EDIT_RENAME
   END
   POPUP ""
   BEGIN
@@ -108,9 +109,10 @@ BEGIN
         BEGIN
             MENUITEM "Nø&kkel",                        ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "&Strengverdi",               ID_EDIT_NEW_STRINGVALUE
-            MENUITEM "&Binærverdi",               ID_EDIT_NEW_BINARYVALUE
-            MENUITEM "&DWORD-verdi",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Strengverdi",                   ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binærverdi",                    ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD-verdi",                   ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Flerstrengverdi",               ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Slett\tDel",                ID_EDIT_DELETE
@@ -218,6 +220,19 @@ BEGIN
     PUSHBUTTON   "Avbryt",IDCANCEL,175,80,30,11,WS_GROUP
 END
 
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Rediger flerstreng"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Verdinavn:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Verdidata:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "OK",IDOK,140,160,30,11,WS_GROUP
+    PUSHBUTTON   "Avbryt",IDCANCEL,175,160,30,11,WS_GROUP
+END
+
 /*
  * String Table
  */
@@ -253,6 +268,7 @@ BEGIN
     ID_EDIT_NEW_STRINGVALUE "Legger til en ny strengverdi"
     ID_EDIT_NEW_BINARYVALUE "Legger til en ny binærverdis"
     ID_EDIT_NEW_DWORDVALUE  "Legger til en ny dobbeltord-verdi"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Legger til en ny flerstrengverdi"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importerer en tekstfil inn i registeret"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Eksporterer hele eller deler av registeret til en tekstfil"
