@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2007 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -102,6 +102,19 @@ FONT 8, "MS Shell Dlg"
  	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
 	WS_BORDER | WS_TABSTOP,
 	4, 40, 180, 120
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Meldings"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Ja", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Ja til &alt", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Nei", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Avbry&t", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
 }
 
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
