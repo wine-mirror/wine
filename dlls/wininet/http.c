@@ -1240,7 +1240,7 @@ static BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
     TRACE( "Inserting authorization: %s\n", debugstr_w( authorization ) );
 
     HTTP_ProcessHeader(lpwhr, szProxy_Authorization, authorization,
-            HTTP_ADDHDR_FLAG_REPLACE);
+            HTTP_ADDHDR_FLAG_REPLACE|HTTP_ADDHDR_FLAG_REQ);
 
     HeapFree( GetProcessHeap(), 0, authorization );
     
