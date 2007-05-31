@@ -726,7 +726,7 @@ extern HINSTANCE msi_hInstance;
 /* action related functions */
 extern UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, BOOL force);
 extern UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action);
-extern void ACTION_FinishCustomActions( MSIPACKAGE* package);
+extern void ACTION_FinishCustomActions( const MSIPACKAGE* package);
 extern UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, BOOL execute);
 
 static inline void msi_feature_set_state( MSIFEATURE *feature, INSTALLSTATE state )

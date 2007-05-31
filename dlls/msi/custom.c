@@ -124,7 +124,7 @@ static BOOL check_execution_scheduling_options(MSIPACKAGE *package, LPCWSTR acti
 /* stores the CustomActionData before the action:
  *     [CustomActionData]Action
  */
-static LPWSTR msi_get_deferred_action(LPCWSTR action, LPWSTR actiondata)
+static LPWSTR msi_get_deferred_action(LPCWSTR action, LPCWSTR actiondata)
 {
     LPWSTR deferred;
     DWORD len;
@@ -1016,7 +1016,7 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
     return wait_process_handle(package, type, info.hProcess, action);
 }
 
-static DWORD WINAPI ACTION_CallScript( const LPGUID guid )
+static DWORD WINAPI ACTION_CallScript( const GUID *guid )
 {
     msi_custom_action_info *info;
     MSIHANDLE hPackage;
@@ -1235,7 +1235,7 @@ static UINT HANDLE_CustomType53_54(MSIPACKAGE *package, LPCWSTR source,
     return wait_thread_handle( info );
 }
 
-void ACTION_FinishCustomActions(MSIPACKAGE* package)
+void ACTION_FinishCustomActions(const MSIPACKAGE* package)
 {
     struct list *item;
     HANDLE *wait_handles;

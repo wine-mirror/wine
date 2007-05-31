@@ -56,8 +56,8 @@ struct cond_str {
     INT len;
 };
 
-static LPWSTR COND_GetString( struct cond_str *str );
-static LPWSTR COND_GetLiteral( struct cond_str *str );
+static LPWSTR COND_GetString( const struct cond_str *str );
+static LPWSTR COND_GetLiteral( const struct cond_str *str );
 static int cond_lex( void *COND_lval, COND_input *info);
 static const WCHAR szEmpty[] = { 0 };
 
@@ -678,7 +678,7 @@ static int cond_lex( void *COND_lval, COND_input *cond )
     return rc;
 }
 
-static LPWSTR COND_GetString( struct cond_str *str )
+static LPWSTR COND_GetString( const struct cond_str *str )
 {
     LPWSTR ret;
 
@@ -692,7 +692,7 @@ static LPWSTR COND_GetString( struct cond_str *str )
     return ret;
 }
 
-static LPWSTR COND_GetLiteral( struct cond_str *str )
+static LPWSTR COND_GetLiteral( const struct cond_str *str )
 {
     LPWSTR ret;
 

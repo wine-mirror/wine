@@ -474,7 +474,7 @@ static void ACTION_ExpandAnyPath(MSIPACKAGE *package, WCHAR *src, WCHAR *dst,
  * Return ERROR_SUCCESS in case of success (whether or not the file matches),
  * something else if an install-halting error occurs.
  */
-static UINT ACTION_FileVersionMatches(MSISIGNATURE *sig, LPCWSTR filePath,
+static UINT ACTION_FileVersionMatches(const MSISIGNATURE *sig, LPCWSTR filePath,
  BOOL *matches)
 {
     UINT rc = ERROR_SUCCESS;
@@ -549,8 +549,8 @@ static UINT ACTION_FileVersionMatches(MSISIGNATURE *sig, LPCWSTR filePath,
  * Return ERROR_SUCCESS in case of success (whether or not the file matches),
  * something else if an install-halting error occurs.
  */
-static UINT ACTION_FileMatchesSig(MSISIGNATURE *sig,
- LPWIN32_FIND_DATAW findData, LPCWSTR fullFilePath, BOOL *matches)
+static UINT ACTION_FileMatchesSig(const MSISIGNATURE *sig,
+ const WIN32_FIND_DATAW *findData, LPCWSTR fullFilePath, BOOL *matches)
 {
     UINT rc = ERROR_SUCCESS;
 

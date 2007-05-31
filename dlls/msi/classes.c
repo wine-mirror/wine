@@ -735,7 +735,7 @@ static void mark_mime_for_install( MSIMIME *mime )
     mime->InstallMe = TRUE;
 }
 
-static UINT register_appid(MSIAPPID *appid, LPCWSTR app )
+static UINT register_appid(const MSIAPPID *appid, LPCWSTR app )
 {
     static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
     static const WCHAR szRemoteServerName[] =
@@ -965,7 +965,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     return rc;
 }
 
-static LPCWSTR get_clsid_of_progid( MSIPROGID *progid )
+static LPCWSTR get_clsid_of_progid( const MSIPROGID *progid )
 {
     while (progid)
     {
@@ -976,7 +976,7 @@ static LPCWSTR get_clsid_of_progid( MSIPROGID *progid )
     return NULL;
 }
 
-static UINT register_progid( MSIPROGID* progid )
+static UINT register_progid( const MSIPROGID* progid )
 {
     static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
     static const WCHAR szDefaultIcon[] =
@@ -1048,7 +1048,7 @@ UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
 }
 
 static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid, 
-                MSICOMPONENT* component, MSIEXTENSION* extension,
+                MSICOMPONENT* component, const MSIEXTENSION* extension,
                 MSIVERB* verb, INT* Sequence )
 {
     LPWSTR keyname;
