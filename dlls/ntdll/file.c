@@ -576,7 +576,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 if (total)
                     status = STATUS_SUCCESS;
                 else
-                    status = (type == FD_TYPE_FILE) ? STATUS_END_OF_FILE : STATUS_PIPE_BROKEN;
+                    status = (type == FD_TYPE_FILE || type == FD_TYPE_CHAR) ? STATUS_END_OF_FILE : STATUS_PIPE_BROKEN;
                 goto done;
             }
         }
