@@ -1993,7 +1993,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     y = pt.y;
 
     char_extra = GetTextCharacterExtra(hdc);
-    if(char_extra || dc->breakExtra || breakRem || lpDx)
+    if(char_extra || dc->breakExtra || breakRem || lpDx || lf.lfEscapement != 0)
     {
         UINT i;
         SIZE tmpsz;
