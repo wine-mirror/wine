@@ -1112,7 +1112,7 @@ static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
             return (HDDEDATA)DDE_FACK;
 
         default:
-            return (HDDEDATA)NULL;
+            return NULL;
     }
 }
 
