@@ -1132,6 +1132,17 @@ static ULONG ws2_queue_async(struct ws2_async* wsa, IO_STATUS_BLOCK* iosb)
     return status;
 }
 
+/* user APC called upon async completion */
+static void WINAPI ws2_async_apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
+{
+    ws2_async *wsa = arg;
+
+    if (wsa->completion_func) wsa->completion_func( NtStatusToWSAError(iosb->u.Status),
+                                                    iosb->Information, wsa->user_overlapped,
+                                                    wsa->flags );
+    HeapFree( GetProcessHeap(), 0, wsa );
+}
+
 /***********************************************************************
  *              WS2_recv                (INTERNAL)
  *
@@ -1231,7 +1242,11 @@ static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS stat
         }
         break;
     }
-    if (status != STATUS_PENDING) ws2_async_terminate(wsa, iosb, status, result);
+    if (status != STATUS_PENDING)
+    {
+        iosb->u.Status = status;
+        iosb->Information = result;
+    }
     return status;
 }
 
@@ -1348,7 +1363,11 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
         }
         break;
     }
-    if (status != STATUS_PENDING) ws2_async_terminate(wsa, iosb, status, result);
+    if (status != STATUS_PENDING)
+    {
+        iosb->u.Status = status;
+        iosb->Information = result;
+    }
     return status;
 }
 
@@ -2693,7 +2712,6 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     unsigned int i, options;
     int n, fd, err;
     struct iovec iovec[WS_MSG_MAXIOVLEN];
-    IO_STATUS_BLOCK* iosb;
 
     TRACE("socket %04lx, wsabuf %p, nbufs %d, flags %d, to %p, tolen %d, ovl %p, func %p\n",
           s, lpBuffers, dwBufferCount, dwFlags,
@@ -2738,9 +2756,9 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         if ((lpOverlapped || lpCompletionRoutine) &&
             !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
         {
-            struct ws2_async *wsa = WS2_make_async( s, ws2m_write, iovec, dwBufferCount,
-                                                    &dwFlags, (struct WS_sockaddr*) to, &tolen,
-                                                    lpOverlapped, lpCompletionRoutine, &iosb );
+            IO_STATUS_BLOCK *iosb;
+            struct ws2_async *wsa = HeapAlloc( GetProcessHeap(), 0, sizeof(*wsa) );
+
             if ( !wsa )
             {
                 err = WSAEFAULT;
@@ -2748,6 +2766,16 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             }
             release_sock_fd( s, fd );
 
+            wsa->hSocket         = SOCKET2HANDLE(s);
+            wsa->addr            = (struct WS_sockaddr *)to;
+            wsa->addrlen.val     = tolen;
+            wsa->flags           = 0;
+            wsa->user_overlapped = lpOverlapped;
+            wsa->completion_func = lpCompletionRoutine;
+            wsa->n_iovecs        = dwBufferCount;
+            memcpy( wsa->iovec, iovec, dwBufferCount * sizeof(*iovec) );
+
+            iosb = lpOverlapped ? (IO_STATUS_BLOCK *)lpOverlapped : &wsa->local_iosb;
             iosb->u.Status = STATUS_PENDING;
             iosb->Information = 0;
 
@@ -2758,6 +2786,8 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 req->async.callback = WS2_async_send;
                 req->async.iosb     = iosb;
                 req->async.arg      = wsa;
+                req->async.apc      = ws2_async_apc;
+                req->async.apc_arg  = wsa;
                 req->async.event    = lpCompletionRoutine ? 0 : lpOverlapped->hEvent;
                 err = wine_server_call( req );
             }
@@ -2766,7 +2796,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             if (err == STATUS_PENDING)
                 NtCurrentTeb()->num_async_io++;
             else
-                ws2_async_terminate(wsa, iosb, err, 0);
+                HeapFree( GetProcessHeap(), 0, wsa );
 
             WSASetLastError( NtStatusToWSAError( err ));
             return SOCKET_ERROR;
@@ -4196,8 +4226,6 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     int n, fd, err;
     DWORD timeout_start = GetTickCount();
     struct iovec iovec[WS_MSG_MAXIOVLEN];
-    struct ws2_async *wsa;
-    IO_STATUS_BLOCK* iosb;
 
     TRACE("socket %04lx, wsabuf %p, nbufs %d, flags %d, from %p, fromlen %d, ovl %p, func %p\n",
           s, lpBuffers, dwBufferCount, *lpFlags, lpFrom,
@@ -4236,9 +4264,9 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         if ((lpOverlapped || lpCompletionRoutine) &&
              !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
         {
-            wsa = WS2_make_async( s, ws2m_read, iovec, dwBufferCount,
-                                  lpFlags, lpFrom, lpFromlen,
-                                  lpOverlapped, lpCompletionRoutine, &iosb );
+            IO_STATUS_BLOCK *iosb;
+            struct ws2_async *wsa = HeapAlloc( GetProcessHeap(), 0, sizeof(*wsa) );
+
             if ( !wsa )
             {
                 err = WSAEFAULT;
@@ -4246,6 +4274,16 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             }
             release_sock_fd( s, fd );
 
+            wsa->hSocket         = SOCKET2HANDLE(s);
+            wsa->flags           = *lpFlags;
+            wsa->addr            = lpFrom;
+            wsa->addrlen.ptr     = lpFromlen;
+            wsa->user_overlapped = lpOverlapped;
+            wsa->completion_func = lpCompletionRoutine;
+            wsa->n_iovecs        = dwBufferCount;
+            memcpy( wsa->iovec, iovec, dwBufferCount * sizeof(*iovec) );
+
+            iosb = lpOverlapped ? (IO_STATUS_BLOCK *)lpOverlapped : &wsa->local_iosb;
             iosb->u.Status = STATUS_PENDING;
             iosb->Information = 0;
 
@@ -4256,6 +4294,8 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 req->async.callback = WS2_async_recv;
                 req->async.iosb     = iosb;
                 req->async.arg      = wsa;
+                req->async.apc      = ws2_async_apc;
+                req->async.apc_arg  = wsa;
                 req->async.event    = lpCompletionRoutine ? 0 : lpOverlapped->hEvent;
                 err = wine_server_call( req );
             }
@@ -4264,7 +4304,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             if (err == STATUS_PENDING)
                 NtCurrentTeb()->num_async_io++;
             else
-                ws2_async_terminate(wsa, iosb, err, 0);
+                HeapFree( GetProcessHeap(), 0, wsa );
 
             WSASetLastError( NtStatusToWSAError( err ));
             return SOCKET_ERROR;
