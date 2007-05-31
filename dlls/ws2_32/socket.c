@@ -189,7 +189,7 @@ typedef struct ws2_async
     LPWSAOVERLAPPED                     user_overlapped;
     LPWSAOVERLAPPED_COMPLETION_ROUTINE  completion_func;
     IO_STATUS_BLOCK                     local_iosb;
-    struct iovec                        *iovec;
+    struct iovec                        iovec[WS_MSG_MAXIOVLEN];
     int                                 n_iovecs;
     struct WS_sockaddr                  *addr;
     union
@@ -1033,7 +1033,6 @@ static void ws2_async_terminate(ws2_async* as, IO_STATUS_BLOCK* iosb, NTSTATUS s
         as->completion_func( NtStatusToWSAError(status),
                              count, as->user_overlapped, as->flags );
 
-    HeapFree( GetProcessHeap(), 0, as->iovec );
     HeapFree( GetProcessHeap(), 0, as );
 }
 
@@ -1078,7 +1077,7 @@ WS2_make_async(SOCKET s, enum ws2_mode mode, struct iovec *iovec, DWORD dwBuffer
     }
     wsa->user_overlapped = lpOverlapped;
     wsa->completion_func = lpCompletionRoutine;
-    wsa->iovec = iovec;
+    memcpy( wsa->iovec, iovec, dwBufferCount * sizeof(*iovec) );
     wsa->n_iovecs = dwBufferCount;
     wsa->addr = addr;
     wsa->event = 0;
@@ -2697,13 +2696,19 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 {
     unsigned int i, options;
     int n, fd, err = WSAENOTSOCK, ret;
-    struct iovec* iovec;
+    struct iovec iovec[WS_MSG_MAXIOVLEN];
     struct ws2_async *wsa;
     IO_STATUS_BLOCK* iosb;
 
     TRACE("socket %04lx, wsabuf %p, nbufs %d, flags %d, to %p, tolen %d, ovl %p, func %p\n",
           s, lpBuffers, dwBufferCount, dwFlags,
           to, tolen, lpOverlapped, lpCompletionRoutine);
+
+    if (dwBufferCount > WS_MSG_MAXIOVLEN)
+    {
+        WSASetLastError( WSAEINVAL );
+        return SOCKET_ERROR;
+    }
 
     fd = get_sock_fd( s, FILE_WRITE_DATA, &options );
     TRACE( "fd=%d, options=%x\n", fd, options );
@@ -2713,15 +2718,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     if ( !lpNumberOfBytesSent )
     {
         err = WSAEFAULT;
-        goto err_close;
-    }
-
-    iovec = HeapAlloc(GetProcessHeap(), 0, dwBufferCount * sizeof(struct iovec) );
-
-    if ( !iovec )
-    {
-        err = WSAEFAULT;
-        goto err_close;
+        goto error;
     }
 
     for ( i = 0; i < dwBufferCount; i++ )
@@ -2739,7 +2736,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         if ( !wsa )
         {
             err = WSAEFAULT;
-            goto err_free;
+            goto error;
         }
 
         if ((ret = ws2_queue_async( wsa, iosb )) != STATUS_PENDING)
@@ -2747,7 +2744,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             err = NtStatusToWSAError( ret );
 
             HeapFree( GetProcessHeap(), 0, wsa );
-            goto err_free;
+            goto error;
         }
         release_sock_fd( s, fd );
 
@@ -2759,7 +2756,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 return 0;
 
             if ( (err = WSAGetLastError()) != WSA_IO_INCOMPLETE )
-                goto error;
+                return SOCKET_ERROR;
         }
 
         WSASetLastError( WSA_IO_PENDING );
@@ -2789,14 +2786,14 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             /* FIXME: exceptfds? */
             if( !do_block(fd, POLLOUT, timeout)) {
                 err = WSAETIMEDOUT;
-                goto err_free; /* msdn says a timeout in send is fatal */
+                goto error; /* msdn says a timeout in send is fatal */
             }
 
             n = WS2_send( fd, piovec, dwBufferCount, to, tolen, dwFlags );
             if ( n == -1 )
             {
                 err = wsaErrno();
-                goto err_free;
+                goto error;
             }
             *lpNumberOfBytesSent += n;
 
@@ -2825,7 +2822,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             err = wsaErrno();
             if ( err == WSAEWOULDBLOCK )
                 _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
-            goto err_free;
+            goto error;
         }
         else
             _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
@@ -2834,17 +2831,11 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
     TRACE(" -> %i bytes\n", *lpNumberOfBytesSent);
 
-    HeapFree( GetProcessHeap(), 0, iovec );
     release_sock_fd( s, fd );
     return 0;
 
-err_free:
-    HeapFree( GetProcessHeap(), 0, iovec );
-
-err_close:
-    release_sock_fd( s, fd );
-
 error:
+    release_sock_fd( s, fd );
     WARN(" -> ERROR %d\n", err);
     WSASetLastError(err);
     return SOCKET_ERROR;
@@ -4200,7 +4191,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     unsigned int i, options;
     int n, fd, err;
     DWORD timeout_start = GetTickCount();
-    struct iovec* iovec;
+    struct iovec iovec[WS_MSG_MAXIOVLEN];
     struct ws2_async *wsa;
     IO_STATUS_BLOCK* iosb;
 
@@ -4209,17 +4200,16 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
           (lpFromlen ? *lpFromlen : -1),
           lpOverlapped, lpCompletionRoutine);
 
+    if (dwBufferCount > WS_MSG_MAXIOVLEN)
+    {
+        WSASetLastError( WSAEINVAL );
+        return SOCKET_ERROR;
+    }
+
     fd = get_sock_fd( s, FILE_READ_DATA, &options );
     TRACE( "fd=%d, options=%x\n", fd, options );
 
     if (fd == -1) return SOCKET_ERROR;
-
-    iovec = HeapAlloc( GetProcessHeap(), 0, dwBufferCount * sizeof (struct iovec) );
-    if ( !iovec )
-    {
-        err = WSAEFAULT;
-        goto error;
-    }
 
     for (i = 0; i < dwBufferCount; i++)
     {
@@ -4308,14 +4298,12 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     TRACE(" -> %i bytes\n", n);
     *lpNumberOfBytesRecvd = n;
 
-    HeapFree(GetProcessHeap(), 0, iovec);
     release_sock_fd( s, fd );
     _enable_event(SOCKET2HANDLE(s), FD_READ, 0, 0);
 
     return 0;
 
 error:
-    HeapFree(GetProcessHeap(), 0, iovec);
     release_sock_fd( s, fd );
     WARN(" -> ERROR %d\n", err);
     WSASetLastError( err );
