@@ -93,8 +93,8 @@ typedef struct tagWINE_MCIMIDI {
 struct SCA {
     UINT 	wDevID;
     UINT 	wMsg;
-    DWORD 	dwParam1;
-    DWORD 	dwParam2;
+    DWORD_PTR   dwParam1;
+    DWORD_PTR   dwParam2;
 };
 
 /* EPP DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2); */
@@ -107,10 +107,10 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
     struct SCA*	sca = (struct SCA*)arg;
     DWORD		ret;
 
-    TRACE("In thread before async command (%08x,%u,%08x,%08x)\n",
+    TRACE("In thread before async command (%08x,%u,%08lx,%08lx)\n",
 	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
     ret = mciSendCommandA(sca->wDevID, sca->wMsg, sca->dwParam1 | MCI_WAIT, sca->dwParam2);
-    TRACE("In thread after async command (%08x,%u,%08x,%08x)\n",
+    TRACE("In thread after async command (%08x,%u,%08lx,%08lx)\n",
 	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
     HeapFree(GetProcessHeap(), 0, sca);
     ExitThread(ret);
@@ -122,8 +122,8 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
 /**************************************************************************
  * 				MCI_SendCommandAsync		[internal]
  */
-static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
-				   DWORD dwParam2, UINT size)
+static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD_PTR dwParam1,
+				   DWORD_PTR dwParam2, UINT size)
 {
     HANDLE handle;
     struct SCA*	sca = HeapAlloc(GetProcessHeap(), 0, sizeof(struct SCA) + size);
@@ -136,7 +136,7 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
     sca->dwParam1 = dwParam1;
 
     if (size && dwParam2) {
-	sca->dwParam2 = (DWORD)sca + sizeof(struct SCA);
+	sca->dwParam2 = (DWORD_PTR)sca + sizeof(struct SCA);
 	/* copy structure passed by program in dwParam2 to be sure
 	 * we can still use it whatever the program does
 	 */
@@ -175,7 +175,7 @@ static	DWORD	MIDI_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 	return 0;
 
     wmm->wDevID = modp->wDeviceID;
-    mciSetDriverData(wmm->wDevID, (DWORD)wmm);
+    mciSetDriverData(wmm->wDevID, (DWORD_PTR)wmm);
     modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
     modp->wType = MCI_DEVTYPE_SEQUENCER;
     return modp->wDeviceID;
@@ -935,7 +935,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 
     if (!(dwFlags & MCI_WAIT)) {
 	/** FIXME: I'm not 100% sure that wNotifyDeviceID is the right value in all cases ??? */
-	return MCI_SendCommandAsync(wmm->wNotifyDeviceID, MCI_PLAY, dwFlags, (DWORD)lpParms, sizeof(LPMCI_PLAY_PARMS));
+	return MCI_SendCommandAsync(wmm->wNotifyDeviceID, MCI_PLAY, dwFlags, (DWORD_PTR)lpParms, sizeof(LPMCI_PLAY_PARMS));
     }
 
     if (lpParms && (dwFlags & MCI_FROM)) {
