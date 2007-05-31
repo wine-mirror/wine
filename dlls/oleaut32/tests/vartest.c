@@ -99,13 +99,23 @@ static INT (WINAPI *pVariantTimeToDosDateTime)(double,USHORT*,USHORT *);
 #define R8_MAX DBL_MAX
 #define R8_MIN DBL_MIN
 
-/* Macros to set a DECIMAL */
-#define SETDEC(dec, scl, sgn, hi, lo) S(U(dec)).scale = (BYTE)scl; \
-        S(U(dec)).sign = (BYTE)sgn; dec.Hi32 = (ULONG)hi; \
-        U1(dec).Lo64 = (ULONG64)lo
-#define SETDEC64(dec, scl, sgn, hi, mid, lo) S(U(dec)).scale = (BYTE)scl; \
-        S(U(dec)).sign = (BYTE)sgn; dec.Hi32 = (ULONG)hi; \
-        S1(U1(dec)).Mid32 = mid; S1(U1(dec)).Lo32 = lo
+/* Functions to set a DECIMAL */
+static void setdec(DECIMAL* dec, BYTE scl, BYTE sgn, ULONG hi32, ULONG64 lo64)
+{
+    S(U(*dec)).scale = scl;
+    S(U(*dec)).sign = sgn;
+    dec->Hi32 = hi32;
+    U1(*dec).Lo64 = lo64;
+}
+
+static void setdec64(DECIMAL* dec, BYTE scl, BYTE sgn, ULONG hi32, ULONG mid32, ULONG lo32)
+{
+    S(U(*dec)).scale = scl;
+    S(U(*dec)).sign = sgn;
+    dec->Hi32 = hi32;
+    S1(U1(*dec)).Mid32 = mid32;
+    S1(U1(*dec)).Lo32 = lo32;
+}
 
 static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 {
@@ -1650,19 +1660,29 @@ static void test_VarDateFromUdate(void)
   UD2T(1,13,1980,0,0,0,0,2,1,0,S_OK,29587.0);     /* Rolls fwd to 1/1/1981 */
 }
 
-#define ST2DT(d,m,y,h,mn,s,ms,r,dt) \
-  st.wYear = y; st.wMonth = m; st.wDay = d; st.wHour = h; st.wMinute = mn; \
-  st.wSecond = s; st.wMilliseconds = ms; st.wDayOfWeek = 0; \
-  res = pSystemTimeToVariantTime(&st, &out); \
-  ok(r == res && (!r || EQ_DOUBLE(out, dt)),        \
-     "expected %d, %.16g, got %d, %.16g\n", r, dt, res, out)
+static void test_st2dt(int line, WORD d, WORD m, WORD y, WORD h, WORD mn,
+                       WORD s, WORD ms, INT r, double dt)
+{
+    SYSTEMTIME st;
+    double out;
+    INT res;
+
+    st.wYear = y;
+    st.wMonth = m;
+    st.wDay = d;
+    st.wHour = h;
+    st.wMinute = mn;
+    st.wSecond = s;
+    st.wMilliseconds = ms;
+    st.wDayOfWeek = 0;
+    res = pSystemTimeToVariantTime(&st, &out);
+    ok_(__FILE__,line)(r == res && (!r || EQ_DOUBLE(out, dt)),
+                       "expected %d, %.16g, got %d, %.16g\n", r, dt, res, out);
+}
+#define ST2DT(d,m,y,h,mn,s,ms,r,dt) test_st2dt(__LINE__,d,m,y,h,mn,s,ms,r,dt)
 
 static void test_SystemTimeToVariantTime(void)
 {
-  SYSTEMTIME st;
-  double out;
-  int res;
-
   CHECKPTR(SystemTimeToVariantTime);
   ST2DT(1,1,1980,0,0,0,0,TRUE,29221.0);
   ST2DT(2,1,1980,0,0,0,0,TRUE,29222.0);
@@ -1671,21 +1691,27 @@ static void test_SystemTimeToVariantTime(void)
   ST2DT(31,12,90,0,0,0,0,TRUE,33238.0);   /* year < 100 is 1900+year! */
 }
 
-#define DT2ST(dt,r,d,m,y,h,mn,s,ms) \
-  memset(&st, 0, sizeof(st)); \
-  res = pVariantTimeToSystemTime(dt, &st); \
-  ok(r == res && (!r || (st.wYear == y && st.wMonth == m && st.wDay == d && \
-     st.wHour == h && st.wMinute == mn && st.wSecond == s && \
-     st.wMilliseconds == ms)), \
-     "%.16g expected %d, %d,%d,%d,%d,%d,%d,%d, got %d, %d,%d,%d,%d,%d,%d,%d\n", \
-     dt, r, d, m, y, h, mn, s, ms, res, st.wDay, st.wMonth, st.wYear, \
-     st.wHour, st.wMinute, st.wSecond, st.wMilliseconds)
+static void test_dt2st(int line, double dt, INT r, WORD d, WORD m, WORD y,
+                       WORD h, WORD mn, WORD s, WORD ms)
+{
+  SYSTEMTIME st;
+  INT res;
+
+  memset(&st, 0, sizeof(st));
+  res = pVariantTimeToSystemTime(dt, &st);
+  ok_(__FILE__,line)(r == res &&
+                     (!r || (st.wYear == y && st.wMonth == m && st.wDay == d &&
+                             st.wHour == h && st.wMinute == mn &&
+                             st.wSecond == s && st.wMilliseconds == ms)),
+                     "%.16g expected %d, %d,%d,%d,%d,%d,%d,%d, got %d, %d,%d,%d,%d,%d,%d,%d\n",
+                     dt, r, d, m, y, h, mn, s, ms, res, st.wDay, st.wMonth,
+                     st.wYear, st.wHour, st.wMinute, st.wSecond,
+                     st.wMilliseconds);
+}
+#define DT2ST(dt,r,d,m,y,h,mn,s,ms) test_dt2st(__LINE__,dt,r,d,m,y,h,mn,s,ms)
 
 static void test_VariantTimeToSystemTime(void)
 {
-  SYSTEMTIME st;
-  int res;
-
   CHECKPTR(VariantTimeToSystemTime);
   DT2ST(29221.0,1,1,1,1980,0,0,0,0);
   DT2ST(29222.0,1,2,1,1980,0,0,0,0);
@@ -1694,20 +1720,24 @@ static void test_VariantTimeToSystemTime(void)
 #define MKDOSDATE(d,m,y) ((d & 0x1f) | ((m & 0xf) << 5) | (((y-1980) & 0x7f) << 9))
 #define MKDOSTIME(h,m,s) (((s>>1) & 0x1f) | ((m & 0x3f) << 5) | ((h & 0x1f) << 11))
 
-static const char *szDosDateToVarTimeFail = "expected %d, %.16g, got %d, %.16g\n";
-#define DOS2DT(d,m,y,h,mn,s,r,dt) out = 0.0; \
-  dosDate = MKDOSDATE(d,m,y); \
-  dosTime = MKDOSTIME(h,mn,s); \
-  res = pDosDateTimeToVariantTime(dosDate, dosTime, &out); \
-  ok(r == res && (!r || EQ_DOUBLE(out, dt)),   \
-     szDosDateToVarTimeFail, r, dt, res, out)
+static void test_dos2dt(int line, WORD d, WORD m, WORD y, WORD h, WORD mn,
+                        WORD s, INT r, double dt)
+{
+    unsigned short dosDate, dosTime;
+    double out;
+    INT res;
+
+    out = 0.0;
+    dosDate = MKDOSDATE(d, m, y);
+    dosTime = MKDOSTIME(h, mn, s);
+    res = pDosDateTimeToVariantTime(dosDate, dosTime, &out);
+    ok_(__FILE__,line)(r == res && (!r || EQ_DOUBLE(out, dt)),
+                       "expected %d, %.16g, got %d, %.16g\n", r, dt, res, out);
+}
+#define DOS2DT(d,m,y,h,mn,s,r,dt) test_dos2dt(__LINE__,d,m,y,h,mn,s,r,dt)
 
 static void test_DosDateTimeToVariantTime(void)
 {
-  USHORT dosDate, dosTime;
-  double out;
-  INT res;
-
   CHECKPTR(DosDateTimeToVariantTime);
 
   /* Date */
@@ -1736,22 +1766,30 @@ static void test_DosDateTimeToVariantTime(void)
   DOS2DT(1,1,1980,24,0,0,0,0.0);               /* Invalid hours */
 }
 
-#define DT2DOS(dt,r,d,m,y,h,mn,s) dosTime = dosDate = 0; \
-  expDosDate = MKDOSDATE(d,m,y); \
-  expDosTime = MKDOSTIME(h,mn,s); \
-  res = pVariantTimeToDosDateTime(dt, &dosDate, &dosTime); \
-  ok(r == res && (!r || (dosTime == expDosTime && dosDate == expDosDate)), \
-     "%g: expected %d,%d(%d/%d/%d),%d(%d:%d:%d) got %d,%d(%d/%d/%d),%d(%d:%d:%d)\n", \
-     dt, r, expDosDate, expDosDate & 0x1f, (expDosDate >> 5) & 0xf, 1980 + (expDosDate >> 9), \
-     expDosTime, expDosTime >> 11, (expDosTime >> 5) & 0x3f, (expDosTime & 0x1f), \
-     res, dosDate, dosDate & 0x1f, (dosDate >> 5) & 0xf, 1980 + (dosDate >> 9), \
-     dosTime, dosTime >> 11, (dosTime >> 5) & 0x3f, (dosTime & 0x1f))
+static void test_dt2dos(int line, double dt, INT r, WORD d, WORD m, WORD y,
+                        WORD h, WORD mn, WORD s)
+{
+    unsigned short dosDate, dosTime, expDosDate, expDosTime;
+    INT res;
+
+    dosTime = dosDate = 0;
+    expDosDate = MKDOSDATE(d,m,y);
+    expDosTime = MKDOSTIME(h,mn,s);
+    res = pVariantTimeToDosDateTime(dt, &dosDate, &dosTime);
+    ok_(__FILE__,line)(r == res && (!r || (dosTime == expDosTime && dosDate == expDosDate)),
+                       "%g: expected %d,%d(%d/%d/%d),%d(%d:%d:%d) got %d,%d(%d/%d/%d),%d(%d:%d:%d)\n",
+                       dt, r, expDosDate, expDosDate & 0x1f,
+                       (expDosDate >> 5) & 0xf, 1980 + (expDosDate >> 9),
+                       expDosTime, expDosTime >> 11, (expDosTime >> 5) & 0x3f,
+                       (expDosTime & 0x1f),
+                       res, dosDate, dosDate & 0x1f, (dosDate >> 5) & 0xf,
+                       1980 + (dosDate >> 9), dosTime, dosTime >> 11,
+                       (dosTime >> 5) & 0x3f, (dosTime & 0x1f));
+}
+#define DT2DOS(dt,r,d,m,y,h,mn,s) test_dt2dos(__LINE__,dt,r,d,m,y,h,mn,s)
 
 static void test_VariantTimeToDosDateTime(void)
 {
-  USHORT dosDate, dosTime, expDosDate, expDosTime;
-  INT res;
-
   CHECKPTR(VariantTimeToDosDateTime);
 
   /* Date */
@@ -6320,14 +6358,14 @@ static void test_VarCmp(void)
     VARCMP(BSTR,bstr42,BSTR,bstr7,VARCMP_LT);
 
     /* DECIMAL handling */
-    SETDEC(dec,0,0,0,0);
+    setdec(&dec,0,0,0,0);
     VARCMPEX(DECIMAL,dec,BSTR,bstr0,VARCMP_LT,VARCMP_EQ,VARCMP_EQ,VARCMP_LT);
-    SETDEC64(dec,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF); /* max DECIMAL */
+    setdec64(&dec,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF); /* max DECIMAL */
     VARCMP(DECIMAL,dec,R8,R8_MAX,VARCMP_LT);    /* R8 has bigger range */
     VARCMP(DECIMAL,dec,DATE,R8_MAX,VARCMP_LT);  /* DATE has bigger range */
-    SETDEC64(dec,0,0x80,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF);
+    setdec64(&dec,0,0x80,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF);
     VARCMP(DECIMAL,dec,R8,-R8_MAX,VARCMP_GT);
-    SETDEC64(dec,20,0,0x5,0x6BC75E2D,0x63100001);     /* 1+1e-20 */
+    setdec64(&dec,20,0,0x5,0x6BC75E2D,0x63100001);    /* 1+1e-20 */
     VARCMP(DECIMAL,dec,R8,1,VARCMP_GT); /* DECIMAL has higher precision */
 
     /* Show that DATE is handled just as a R8 */
@@ -6349,7 +6387,7 @@ static void test_VarCmp(void)
     VARCMP(R4,R4_MAX,R8,R8_MAX,VARCMP_LT);
     VARCMP(R4,1,DATE,1+1e-8,VARCMP_EQ);
     VARCMP(R4,1,BSTR,bstr1few,VARCMP_LT); /* bstr1few == 1+1e-8 */
-    SETDEC(dec,8,0,0,0x5F5E101);          /* 1+1e-8 */
+    setdec(&dec,8,0,0,0x5F5E101);         /* 1+1e-8 */
     VARCMP(R4,1,DECIMAL,dec,VARCMP_LT);
 
     SysFreeString(bstrhuh);
