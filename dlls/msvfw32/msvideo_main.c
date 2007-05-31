@@ -107,9 +107,8 @@ typedef BOOL (*enum_handler_t)(const char*, int, void*);
 static BOOL enum_drivers(DWORD fccType, enum_handler_t handler, void* param)
 {
     CHAR buf[2048], fccTypeStr[5], *s;
-    DWORD i, cnt = 0, bufLen, lRet;
+    DWORD i, cnt = 0, lRet;
     BOOL result = FALSE;
-    FILETIME lastWrite;
     HKEY hKey;
 
     fourcc_to_string(fccTypeStr, fccType);
@@ -119,14 +118,17 @@ static BOOL enum_drivers(DWORD fccType, enum_handler_t handler, void* param)
     lRet = RegOpenKeyExA(HKEY_LOCAL_MACHINE, HKLM_DRIVERS32, 0, KEY_QUERY_VALUE, &hKey);
     if (lRet == ERROR_SUCCESS) 
     {
-	DWORD numkeys;
-	RegQueryInfoKeyA( hKey, 0, 0, 0, &numkeys, 0, 0, 0, 0, 0, 0, 0);
-	for (i = 0; i < numkeys; i++) 
+        DWORD name, data, type;
+        i = 0;
+        for (;;)
 	{
-	    bufLen = sizeof(buf) / sizeof(buf[0]);
-	    lRet = RegEnumKeyExA(hKey, i, buf, &bufLen, 0, 0, 0, &lastWrite);
+	    name = 10;
+	    data = sizeof buf - name;
+	    lRet = RegEnumValueA(hKey, i++, buf, &name, 0, &type, (LPBYTE)(buf+name), &data);
+	    if (lRet == ERROR_NO_MORE_ITEMS) break;
 	    if (lRet != ERROR_SUCCESS) continue;
-	    if (strncasecmp(buf, fccTypeStr, 5) || buf[9] != '=') continue;
+	    if (name != 9 || strncasecmp(buf, fccTypeStr, 5)) continue;
+	    buf[name] = '=';
 	    if ((result = handler(buf, cnt++, param))) break;
 	}
     	RegCloseKey( hKey );
