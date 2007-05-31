@@ -66,8 +66,8 @@ static INT (WINAPI *pVariantTimeToDosDateTime)(double,USHORT*,USHORT *);
 /* When comparing floating point values we cannot expect an exact match
  * because the rounding errors depend on the exact algorithm.
  */
-#define EQ_DOUBLE(a,b)     (fabs((a)-(b))<1e-14)
-#define EQ_FLOAT(a,b)      (fabs((a)-(b))<1e-7)
+#define EQ_DOUBLE(a,b)     (fabs((a)-(b)) / (1.0+fabs(a)+fabs(b)) < 1e-14)
+#define EQ_FLOAT(a,b)      (fabs((a)-(b)) / (1.0+fabs(a)+fabs(b)) < 1e-7)
 
 #define SKIPTESTS(a)  if((a > VT_CLSID+10) && (a < VT_BSTR_BLOB-10)) continue
 
@@ -1627,7 +1627,7 @@ static void test_DateFromUDate( int line, WORD d, WORD m, WORD y, WORD h, WORD m
     ud.st.wDayOfWeek = dw;
     ud.wDayOfYear = dy;
     res = pVarDateFromUdate(&ud, flags, &out);
-    ok_(__FILE__,line)(r == res && (FAILED(r) || fabs(out-dt) < 1.0e-11),
+    ok_(__FILE__,line)(r == res && (FAILED(r) || EQ_DOUBLE(out, dt)),
                        "expected %x, %.16g, got %x, %.16g\n", r, dt, res, out);
 }
 #define UD2T(d,m,y,h,mn,s,ms,dw,dy,flags,r,dt) test_DateFromUDate(__LINE__,d,m,y,h,mn,s,ms,dw,dy,flags,r,dt)
@@ -1654,7 +1654,7 @@ static void test_VarDateFromUdate(void)
   st.wYear = y; st.wMonth = m; st.wDay = d; st.wHour = h; st.wMinute = mn; \
   st.wSecond = s; st.wMilliseconds = ms; st.wDayOfWeek = 0; \
   res = pSystemTimeToVariantTime(&st, &out); \
-  ok(r == res && (!r || fabs(out-dt) < 1.0e-11), \
+  ok(r == res && (!r || EQ_DOUBLE(out, dt)),        \
      "expected %d, %.16g, got %d, %.16g\n", r, dt, res, out)
 
 static void test_SystemTimeToVariantTime(void)
@@ -1699,7 +1699,7 @@ static const char *szDosDateToVarTimeFail = "expected %d, %.16g, got %d, %.16g\n
   dosDate = MKDOSDATE(d,m,y); \
   dosTime = MKDOSTIME(h,mn,s); \
   res = pDosDateTimeToVariantTime(dosDate, dosTime, &out); \
-  ok(r == res && (!r || fabs(out-dt) < 1.0e-11), \
+  ok(r == res && (!r || EQ_DOUBLE(out, dt)),   \
      szDosDateToVarTimeFail, r, dt, res, out)
 
 static void test_DosDateTimeToVariantTime(void)
