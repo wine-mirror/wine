@@ -1146,8 +1146,8 @@ static LPDLGTEMPLATEW AX_ConvertDialogTemplate(LPCDLGTEMPLATEW src_tmpl)
 
     while(rescount--)
     {
-        src = (const WORD *)( ( ((ULONG)src) + 3) & ~3); /* align on DWORD boundary */
-                filled = (filled + 1) & ~1; /* depends on DWORD-aligned allocation unit */
+        src = (const WORD *)( ( ((ULONG_PTR)src) + 3) & ~3); /* align on DWORD boundary */
+        filled = (filled + 1) & ~1; /* depends on DWORD-aligned allocation unit */
 
         tmp = src;
         if (ext)
@@ -1167,8 +1167,8 @@ static LPDLGTEMPLATEW AX_ConvertDialogTemplate(LPCDLGTEMPLATEW src_tmpl)
         src += strlenW(src) + 1; /* title */
         if ( GET_WORD(tmp) == '{' ) /* all this mess created because of this line */
         {
-            const WCHAR AtlAxWin[9]={'A','t','l','A','x','W','i','n',0};
-            PUT_BLOCK(AtlAxWin, sizeof(AtlAxWin)/sizeof(WORD));
+            static const WCHAR AtlAxWin[9]={'A','t','l','A','x','W','i','n',0};
+            PUT_BLOCK(AtlAxWin, sizeof(AtlAxWin)/sizeof(WCHAR));
             PUT_BLOCK(tmp, strlenW(tmp)+1);
         } else
             PUT_BLOCK(tmp, src-tmp);
