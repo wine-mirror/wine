@@ -46,29 +46,29 @@ static const WCHAR wszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a',
 static HWND hMainWnd;
 static HWND hEditorWnd;
 
-static char szFilter[MAX_STRING_LEN];
+static WCHAR wszFilter[MAX_STRING_LEN];
 
 /* Load string resources */
 static void DoLoadStrings(void)
 {
-    LPSTR p = szFilter;
-    char files_rtf[] = "*.rtf";
-    char files_txt[] = "*.txt";
-    char files_all[] = "*.*";
+    LPWSTR p = wszFilter;
+    static const WCHAR files_rtf[] = {'*','.','r','t','f','\0'};
+    static const WCHAR files_txt[] = {'*','.','t','x','t','\0'};
+    static const WCHAR files_all[] = {'*','.','*','\0'};
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
 
-    LoadString(hInstance, STRING_RICHTEXT_FILES_RTF, p, MAX_STRING_LEN);
-    p += strlen(p) + 1;
-    lstrcpy(p, files_rtf);
-    p += strlen(p) + 1;
-    LoadString(hInstance, STRING_TEXT_FILES_TXT, p, MAX_STRING_LEN);
-    p += strlen(p) + 1;
-    lstrcpy(p, files_txt);
-    p += strlen(p) + 1;
-    LoadString(hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
-    p += strlen(p) + 1;
-    lstrcpy(p, files_all);
-    p += strlen(p) + 1;
+    LoadStringW(hInstance, STRING_RICHTEXT_FILES_RTF, p, MAX_STRING_LEN);
+    p += lstrlenW(p) + 1;
+    lstrcpyW(p, files_rtf);
+    p += lstrlenW(p) + 1;
+    LoadStringW(hInstance, STRING_TEXT_FILES_TXT, p, MAX_STRING_LEN);
+    p += lstrlenW(p) + 1;
+    lstrcpyW(p, files_txt);
+    p += lstrlenW(p) + 1;
+    LoadStringW(hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
+    p += lstrlenW(p) + 1;
+    lstrcpyW(p, files_all);
+    p += lstrlenW(p) + 1;
     *p = '\0';
 }
 
@@ -175,29 +175,23 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
 
 static void DialogOpenFile(void)
 {
-    OPENFILENAME ofn;
+    OPENFILENAMEW ofn;
 
-    char szFile[MAX_PATH] = "";
-    char szDefExt[] = "rtf";
+    WCHAR wszFile[MAX_PATH] = {'\0'};
+    static const WCHAR wszDefExt[] = {'r','t','f','\0'};
 
     ZeroMemory(&ofn, sizeof(ofn));
 
     ofn.lStructSize = sizeof(ofn);
     ofn.Flags = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
     ofn.hwndOwner = hMainWnd;
-    ofn.lpstrFilter = szFilter;
-    ofn.lpstrFile = szFile;
+    ofn.lpstrFilter = wszFilter;
+    ofn.lpstrFile = wszFile;
     ofn.nMaxFile = MAX_PATH;
-    ofn.lpstrDefExt = szDefExt;
+    ofn.lpstrDefExt = wszDefExt;
 
-    if(GetOpenFileName(&ofn))
-    {
-        WCHAR szOpenFile[MAX_PATH];
-
-        MultiByteToWideChar(CP_ACP, 0, ofn.lpstrFile, MAX_PATH, szOpenFile, sizeof(szOpenFile)/sizeof(szOpenFile[0]));
-
-        DoOpenFile(szOpenFile);
-    }
+    if(GetOpenFileNameW(&ofn))
+        DoOpenFile(ofn.lpstrFile);
 }
 
 static void DoSaveFile(LPCWSTR wszSaveFileName)
