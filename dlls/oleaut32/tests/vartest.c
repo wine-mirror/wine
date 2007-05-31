@@ -69,7 +69,7 @@ static INT (WINAPI *pVariantTimeToDosDateTime)(double,USHORT*,USHORT *);
 #define EQ_DOUBLE(a,b)     (fabs((a)-(b))<1e-14)
 #define EQ_FLOAT(a,b)      (fabs((a)-(b))<1e-7)
 
-#define SKIPTESTS(a)  if((a > VT_CLSID+10) && (a < VT_BSTR_BLOB-10)) continue;
+#define SKIPTESTS(a)  if((a > VT_CLSID+10) && (a < VT_BSTR_BLOB-10)) continue
 
 /* Allow our test macros to work for VT_NULL and VT_EMPTY too */
 #define V_EMPTY(v) V_I4(v)
@@ -105,7 +105,7 @@ static INT (WINAPI *pVariantTimeToDosDateTime)(double,USHORT*,USHORT *);
         U1(dec).Lo64 = (ULONG64)lo
 #define SETDEC64(dec, scl, sgn, hi, mid, lo) S(U(dec)).scale = (BYTE)scl; \
         S(U(dec)).sign = (BYTE)sgn; dec.Hi32 = (ULONG)hi; \
-        S1(U1(dec)).Mid32 = mid; S1(U1(dec)).Lo32 = lo;
+        S1(U1(dec)).Mid32 = mid; S1(U1(dec)).Lo32 = lo
 
 static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 {
@@ -1772,7 +1772,7 @@ static HRESULT (WINAPI *pVarAbs)(LPVARIANT,LPVARIANT);
 #define VARABS(vt,val,rvt,rval)                  \
     V_VT(&v) = VT_##vt; V_##vt(&v) = val;        \
     V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval; \
-    test_var_call1( __LINE__, pVarAbs, &v, &exp );
+    test_var_call1( __LINE__, pVarAbs, &v, &exp )
 
 static void test_VarAbs(void)
 {
@@ -1868,7 +1868,7 @@ static HRESULT (WINAPI *pVarNot)(LPVARIANT,LPVARIANT);
 #define VARNOT(vt,val,rvt,rval)                  \
     V_VT(&v) = VT_##vt; V_##vt(&v) = val;        \
     V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval; \
-    test_var_call1( __LINE__, pVarNot, &v, &exp );
+    test_var_call1( __LINE__, pVarNot, &v, &exp )
 
 static void test_VarNot(void)
 {
@@ -1994,7 +1994,7 @@ static HRESULT (WINAPI *pVarSub)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarSub, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarSub, &left, &right, &exp )
 
 static void test_VarSub(void)
 {
@@ -2236,13 +2236,13 @@ static void test_Mod( int line, VARIANT *left, VARIANT *right, VARIANT *expected
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarMod, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarMod, &left, &right, &exp )
 
 #define VARMOD2(vt1,vt2,val1,val2,rvt,rval,hexpected)         \
         V_VT(&left) = VT_##vt1; V_I4(&left) = val1;           \
         V_VT(&right) = VT_##vt2; V_I4(&right) = val2;         \
         V_VT(&exp) = VT_##rvt; V_I4(&exp) = rval;             \
-        test_Mod( __LINE__, &left, &right, &exp, hexpected );
+        test_Mod( __LINE__, &left, &right, &exp, hexpected )
 
 static void test_VarMod(void)
 {
@@ -2730,7 +2730,7 @@ static HRESULT (WINAPI *pVarFix)(LPVARIANT,LPVARIANT);
 #define VARFIX(vt,val,rvt,rval)                  \
     V_VT(&v) = VT_##vt; V_##vt(&v) = val;        \
     V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval; \
-    test_var_call1( __LINE__, pVarFix, &v, &exp );
+    test_var_call1( __LINE__, pVarFix, &v, &exp )
 
 static void test_VarFix(void)
 {
@@ -2845,7 +2845,7 @@ static HRESULT (WINAPI *pVarInt)(LPVARIANT,LPVARIANT);
 #define VARINT(vt,val,rvt,rval)                  \
     V_VT(&v) = VT_##vt; V_##vt(&v) = val;        \
     V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval; \
-    test_var_call1( __LINE__, pVarInt, &v, &exp );
+    test_var_call1( __LINE__, pVarInt, &v, &exp )
 
 static void test_VarInt(void)
 {
@@ -2961,7 +2961,7 @@ static HRESULT (WINAPI *pVarNeg)(LPVARIANT,LPVARIANT);
 #define VARNEG(vt,val,rvt,rval)                  \
     V_VT(&v) = VT_##vt; V_##vt(&v) = val;        \
     V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval; \
-    test_var_call1( __LINE__, pVarNeg, &v, &exp );
+    test_var_call1( __LINE__, pVarNeg, &v, &exp )
 
 static void test_VarNeg(void)
 {
@@ -3097,7 +3097,7 @@ static void test_Round( int line, VARIANT *arg, int deci, VARIANT *expected )
 #define VARROUND(vt,val,deci,rvt,rval)           \
     V_VT(&v) = VT_##vt; V_##vt(&v) = val;        \
     V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval; \
-    test_Round( __LINE__, &v, deci, &exp );
+    test_Round( __LINE__, &v, deci, &exp )
 
 static void test_VarRound(void)
 {
@@ -3211,13 +3211,13 @@ static HRESULT (WINAPI *pVarXor)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarXor, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarXor, &left, &right, &exp )
 
 #define VARXORCY(vt1,val1,val2,rvt,rval)                 \
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_CY; V_CY(&right).int64 = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarXor, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarXor, &left, &right, &exp )
 
 static void test_VarXor(void)
 {
@@ -3908,13 +3908,13 @@ static HRESULT (WINAPI *pVarOr)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarOr, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarOr, &left, &right, &exp )
 
 #define VARORCY(vt1,val1,val2,rvt,rval)                  \
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_CY; V_CY(&right).int64 = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarOr, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarOr, &left, &right, &exp )
 
 static void test_VarOr(void)
 {
@@ -4612,7 +4612,7 @@ static HRESULT (WINAPI *pVarEqv)(LPVARIANT,LPVARIANT,LPVARIANT);
     V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
     V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
     V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-    test_var_call2( __LINE__, pVarEqv, &left, &right, &exp );
+    test_var_call2( __LINE__, pVarEqv, &left, &right, &exp )
 
 static void test_VarEqv(void)
 {
@@ -4751,7 +4751,7 @@ static HRESULT (WINAPI *pVarMul)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarMul, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarMul, &left, &right, &exp )
 
 static void test_VarMul(void)
 {
@@ -4923,7 +4923,7 @@ static HRESULT (WINAPI *pVarAdd)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarAdd, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarAdd, &left, &right, &exp )
 
 static void test_VarAdd(void)
 {
@@ -5420,20 +5420,20 @@ static HRESULT (WINAPI *pVarAnd)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarAnd, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarAnd, &left, &right, &exp )
 
 #define VARANDCY(vt1,val1,val2,rvt,rval)                 \
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_CY; V_CY(&right).int64 = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarAnd, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarAnd, &left, &right, &exp )
 
 /* Skip any type that is not defined or produces an error for every case */
 #define SKIPTESTAND(a)                                \
         if (a == VT_ERROR || a == VT_VARIANT ||       \
             a == VT_DISPATCH || a == VT_UNKNOWN ||    \
             a > VT_UINT || a == 15 /*not defined*/)   \
-            continue;
+            continue
 
 static void test_VarAnd(void)
 {
@@ -6113,11 +6113,11 @@ static void test_cmpex( int line, LCID lcid, VARIANT *left, VARIANT *right,
 #define _VARCMP(vt1,val1,vtfl1,vt2,val2,vtfl2,lcid,flags,result) \
         V_##vt1(&left) = val1; V_VT(&left) = VT_##vt1 | vtfl1; \
         V_##vt2(&right) = val2; V_VT(&right) = VT_##vt2 | vtfl2; \
-        test_cmp( __LINE__, lcid, flags, &left, &right, result );
+        test_cmp( __LINE__, lcid, flags, &left, &right, result )
 #define VARCMPEX(vt1,val1,vt2,val2,res1,res2,res3,res4) \
         V_##vt1(&left) = val1; V_VT(&left) = VT_##vt1; \
         V_##vt2(&right) = val2; V_VT(&right) = VT_##vt2; \
-        test_cmpex( __LINE__, lcid, &left, &right, res1, res2, res3, res4 );
+        test_cmpex( __LINE__, lcid, &left, &right, res1, res2, res3, res4 )
 #define VARCMP(vt1,val1,vt2,val2,result) \
         VARCMPEX(vt1,val1,vt2,val2,result,result,result,result)
 /* The above macros do not work for VT_NULL as NULL gets expanded first */
@@ -6370,7 +6370,7 @@ static HRESULT (WINAPI *pVarPow)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarPow, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarPow, &left, &right, &exp )
 
 /* Skip any type that is not defined or produces an error for every case */
 #define SKIPTESTPOW(a)                            \
@@ -6378,7 +6378,7 @@ static HRESULT (WINAPI *pVarPow)(LPVARIANT,LPVARIANT,LPVARIANT);
         a == VT_DISPATCH || a == VT_UNKNOWN ||    \
         a == VT_RECORD || a > VT_UINT ||          \
         a == 15 /*not defined*/)                  \
-        continue;
+        continue
 
 static void test_VarPow(void)
 {
@@ -6874,7 +6874,7 @@ static HRESULT (WINAPI *pVarDiv)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarDiv, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarDiv, &left, &right, &exp )
 
 /* Skip any type that is not defined or produces an error for every case */
 #define SKIPTESTDIV(a)                            \
@@ -6885,7 +6885,7 @@ static HRESULT (WINAPI *pVarDiv)(LPVARIANT,LPVARIANT,LPVARIANT);
         a == VT_INT || a == VT_UINT ||            \
         a == VT_UI2 || a == VT_UI4 ||             \
         a == 15 /*not defined*/)                  \
-        continue;
+        continue
 
 static void test_VarDiv(void)
 {
@@ -7214,7 +7214,7 @@ static HRESULT (WINAPI *pVarIdiv)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarIdiv, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarIdiv, &left, &right, &exp )
 
 /* Skip any type that is not defined or produces an error for every case */
 #define SKIPTESTIDIV(a)                           \
@@ -7222,7 +7222,7 @@ static HRESULT (WINAPI *pVarIdiv)(LPVARIANT,LPVARIANT,LPVARIANT);
         a == VT_DISPATCH || a == VT_UNKNOWN ||    \
         a == VT_RECORD || a > VT_UINT ||          \
         a == 15 /*not defined*/)                  \
-        continue;
+        continue
 
 static void test_VarIdiv(void)
 {
@@ -7718,7 +7718,7 @@ static HRESULT (WINAPI *pVarImp)(LPVARIANT,LPVARIANT,LPVARIANT);
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1;   \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         V_VT(&exp) = VT_##rvt; V_##rvt(&exp) = rval;     \
-        test_var_call2( __LINE__, pVarImp, &left, &right, &exp );
+        test_var_call2( __LINE__, pVarImp, &left, &right, &exp )
 
 /* Skip any type that is not defined or produces an error for every case */
 #define SKIPTESTIMP(a)                            \
@@ -7726,7 +7726,7 @@ static HRESULT (WINAPI *pVarImp)(LPVARIANT,LPVARIANT,LPVARIANT);
         a == VT_DISPATCH || a == VT_UNKNOWN ||    \
         a == VT_RECORD || a > VT_UINT ||          \
         a == 15 /*not defined*/)                  \
-        continue;
+        continue
 
 static void test_VarImp(void)
 {
