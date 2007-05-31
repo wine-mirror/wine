@@ -141,14 +141,14 @@ s_sum_sp(sp_t *sp)
 }
 
 double
-s_square_sun(sun_t *sun)
+s_square_sun(sun_t *su)
 {
-  switch (sun->s)
+  switch (su->s)
   {
-  case SUN_I: return sun->u.i * sun->u.i;
+  case SUN_I: return su->u.i * su->u.i;
   case SUN_F1:
-  case SUN_F2: return sun->u.f * sun->u.f;
-  case SUN_PI: return (*sun->u.pi) * (*sun->u.pi);
+  case SUN_F2: return su->u.f * su->u.f;
+  case SUN_PI: return (*su->u.pi) * (*su->u.pi);
   default:
     return 0.0;
   }
@@ -279,25 +279,25 @@ basic_tests(void)
 static void
 union_tests(void)
 {
-  sun_t sun;
+  sun_t su;
   int i;
 
-  sun.s = SUN_I;
-  sun.u.i = 9;
-  ok(square_sun(&sun) == 81.0, "RPC square_sun\n");
+  su.s = SUN_I;
+  su.u.i = 9;
+  ok(square_sun(&su) == 81.0, "RPC square_sun\n");
 
-  sun.s = SUN_F1;
-  sun.u.f = 5.0;
-  ok(square_sun(&sun) == 25.0, "RPC square_sun\n");
+  su.s = SUN_F1;
+  su.u.f = 5.0;
+  ok(square_sun(&su) == 25.0, "RPC square_sun\n");
 
-  sun.s = SUN_F2;
-  sun.u.f = -2.0;
-  ok(square_sun(&sun) == 4.0, "RPC square_sun\n");
+  su.s = SUN_F2;
+  su.u.f = -2.0;
+  ok(square_sun(&su) == 4.0, "RPC square_sun\n");
 
-  sun.s = SUN_PI;
-  sun.u.pi = &i;
+  su.s = SUN_PI;
+  su.u.pi = &i;
   i = 11;
-  ok(square_sun(&sun) == 121.0, "RPC square_sun\n");
+  ok(square_sun(&su) == 121.0, "RPC square_sun\n");
 }
 
 static test_list_t *

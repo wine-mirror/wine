@@ -95,7 +95,7 @@ interface IServer
   } sp_t;
 
   int sum_sp(sp_t *sp);
-  double square_sun(sun_t *sun);
+  double square_sun(sun_t *su);
 
   typedef struct test_list
   {
