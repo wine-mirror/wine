@@ -2691,9 +2691,8 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 {
     unsigned int i, options;
-    int n, fd, err = WSAENOTSOCK, ret;
+    int n, fd, err;
     struct iovec iovec[WS_MSG_MAXIOVLEN];
-    struct ws2_async *wsa;
     IO_STATUS_BLOCK* iosb;
 
     TRACE("socket %04lx, wsabuf %p, nbufs %d, flags %d, to %p, tolen %d, ovl %p, func %p\n",
@@ -2723,105 +2722,114 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         iovec[i].iov_len  = lpBuffers[i].len;
     }
 
-    if ( (lpOverlapped || lpCompletionRoutine) &&
-         !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
+    for (;;)
     {
-        wsa = WS2_make_async( s, ws2m_write, iovec, dwBufferCount,
-                              &dwFlags, (struct WS_sockaddr*) to, &tolen,
-                              lpOverlapped, lpCompletionRoutine, &iosb );
-        if ( !wsa )
+        n = WS2_send( fd, iovec, dwBufferCount, to, tolen, dwFlags );
+        if (n != -1 || errno != EINTR) break;
+    }
+    if (n == -1)
+    {
+        if (errno != EAGAIN)
         {
-            err = WSAEFAULT;
+            err = wsaErrno();
             goto error;
         }
 
-        if ((ret = ws2_queue_async( wsa, iosb )) != STATUS_PENDING)
+        if ((lpOverlapped || lpCompletionRoutine) &&
+            !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
         {
-            err = NtStatusToWSAError( ret );
+            struct ws2_async *wsa = WS2_make_async( s, ws2m_write, iovec, dwBufferCount,
+                                                    &dwFlags, (struct WS_sockaddr*) to, &tolen,
+                                                    lpOverlapped, lpCompletionRoutine, &iosb );
+            if ( !wsa )
+            {
+                err = WSAEFAULT;
+                goto error;
+            }
+            release_sock_fd( s, fd );
 
-            HeapFree( GetProcessHeap(), 0, wsa );
-            goto error;
+            iosb->u.Status = STATUS_PENDING;
+            iosb->Information = 0;
+
+            SERVER_START_REQ( register_async )
+            {
+                req->handle = wsa->hSocket;
+                req->type   = ASYNC_TYPE_WRITE;
+                req->async.callback = WS2_async_send;
+                req->async.iosb     = iosb;
+                req->async.arg      = wsa;
+                req->async.event    = lpCompletionRoutine ? 0 : lpOverlapped->hEvent;
+                err = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+
+            if (err == STATUS_PENDING)
+                NtCurrentTeb()->num_async_io++;
+            else
+                ws2_async_terminate(wsa, iosb, err, 0);
+
+            WSASetLastError( NtStatusToWSAError( err ));
+            return SOCKET_ERROR;
         }
-        release_sock_fd( s, fd );
-
-        /* Try immediate completion */
-        if ( lpOverlapped )
-        {
-            if  ( WSAGetOverlappedResult( s, lpOverlapped,
-                                          lpNumberOfBytesSent, FALSE, &dwFlags) )
-                return 0;
-
-            if ( (err = WSAGetLastError()) != WSA_IO_INCOMPLETE )
-                return SOCKET_ERROR;
-        }
-
-        WSASetLastError( WSA_IO_PENDING );
-        return SOCKET_ERROR;
     }
 
-    *lpNumberOfBytesSent = 0;
     if ( _is_blocking(s) )
     {
         /* On a blocking non-overlapped stream socket,
          * sending blocks until the entire buffer is sent. */
-        struct iovec *piovec = iovec;
-        int finish_time = GET_SNDTIMEO(fd);
-        if (finish_time >= 0)
-            finish_time += GetTickCount();
-        while ( dwBufferCount > 0 )
+        DWORD timeout_start = GetTickCount();
+        unsigned int first_buff = 0;
+
+        *lpNumberOfBytesSent = 0;
+
+        while (first_buff < dwBufferCount)
         {
-            int timeout;
-            if ( finish_time >= 0 )
+            struct pollfd pfd;
+            int timeout = GET_SNDTIMEO(fd);
+
+            if (n > 0)
             {
-                timeout = finish_time - GetTickCount();
-                if ( timeout < 0 )
-                    timeout = 0;
+                *lpNumberOfBytesSent += n;
+                if (iovec[first_buff].iov_len > n)
+                    iovec[first_buff].iov_len -= n;
+                else
+                {
+                    while (n > 0) n -= iovec[first_buff++].iov_len;
+                    if (first_buff >= dwBufferCount) break;
+                }
             }
-            else
-                timeout = finish_time;
-            /* FIXME: exceptfds? */
-            if( !do_block(fd, POLLOUT, timeout)) {
+
+            if (timeout != -1)
+            {
+                timeout -= timeout_start - GetTickCount();
+                if (timeout < 0) timeout = 0;
+            }
+
+            pfd.fd = fd;
+            pfd.events = POLLOUT;
+
+            if (!timeout || !poll( &pfd, 1, timeout ))
+            {
                 err = WSAETIMEDOUT;
                 goto error; /* msdn says a timeout in send is fatal */
             }
 
-            n = WS2_send( fd, piovec, dwBufferCount, to, tolen, dwFlags );
-            if ( n == -1 )
+            n = WS2_send( fd, iovec + first_buff, dwBufferCount - first_buff, to, tolen, dwFlags );
+            if (n == -1 && errno != EAGAIN && errno != EINTR)
             {
                 err = wsaErrno();
                 goto error;
             }
-            *lpNumberOfBytesSent += n;
-
-            while ( n > 0 )
-            {
-                if ( piovec->iov_len > n )
-                {
-                    piovec->iov_base = (char*)piovec->iov_base + n;
-                    piovec->iov_len -= n;
-                    n = 0;
-                }
-                else
-                {
-                    n -= piovec->iov_len;
-                    --dwBufferCount;
-                    ++piovec;
-                }
-            }
         }
     }
-    else
+    else  /* non-blocking */
     {
-        n = WS2_send( fd, iovec, dwBufferCount, to, tolen, dwFlags );
-        if ( n == -1 )
+        _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
+        if (n == -1)
         {
-            err = wsaErrno();
-            if ( err == WSAEWOULDBLOCK )
-                _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
+            err = WSAEWOULDBLOCK;
             goto error;
         }
-        else
-            _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
         *lpNumberOfBytesSent = n;
     }
 
