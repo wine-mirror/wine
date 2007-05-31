@@ -569,25 +569,25 @@ LRESULT WINAPI DefDriverProc(DWORD_PTR dwDriverIdentifier, HDRVR hDrv,
 /**************************************************************************
  * 				DriverCallback			[WINMM.@]
  */
-BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
-			   UINT wMsg, DWORD dwUser, DWORD dwParam1,
-			   DWORD dwParam2)
+BOOL WINAPI DriverCallback(DWORD_PTR dwCallBack, DWORD uFlags, HDRVR hDev,
+			   DWORD wMsg, DWORD_PTR dwUser, DWORD_PTR dwParam1,
+			   DWORD_PTR dwParam2)
 {
-    TRACE("(%08X, %04X, %p, %04X, %08X, %08X, %08X); !\n",
+    TRACE("(%08lX, %04X, %p, %04X, %08lX, %08lX, %08lX)\n",
 	  dwCallBack, uFlags, hDev, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (uFlags & DCB_TYPEMASK) {
     case DCB_NULL:
 	TRACE("Null !\n");
 	if (dwCallBack)
-	    WARN("uFlags=%04X has null DCB value, but dwCallBack=%08X is not null !\n", uFlags, dwCallBack);
+	    WARN("uFlags=%04X has null DCB value, but dwCallBack=%08lX is not null !\n", uFlags, dwCallBack);
 	break;
     case DCB_WINDOW:
-	TRACE("Window(%04X) handle=%p!\n", dwCallBack, hDev);
+	TRACE("Window(%04lX) handle=%p!\n", dwCallBack, hDev);
 	PostMessageA((HWND)dwCallBack, wMsg, (WPARAM)hDev, dwParam1);
 	break;
     case DCB_TASK: /* aka DCB_THREAD */
-	TRACE("Task(%04x) !\n", dwCallBack);
+	TRACE("Task(%04lx) !\n", dwCallBack);
 	PostThreadMessageA(dwCallBack, wMsg, (WPARAM)hDev, dwParam1);
 	break;
     case DCB_FUNCTION:
@@ -595,7 +595,7 @@ BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
 	((LPDRVCALLBACK)dwCallBack)(hDev, wMsg, dwUser, dwParam1, dwParam2);
 	break;
     case DCB_EVENT:
-	TRACE("Event(%08x) !\n", dwCallBack);
+	TRACE("Event(%08lx) !\n", dwCallBack);
 	SetEvent((HANDLE)dwCallBack);
 	break;
     case 6: /* I would dub it DCB_MMTHREADSIGNAL */

@@ -446,8 +446,8 @@ BOOL			WINAPI	mciFreeCommandResource(UINT uTable);
 #define DCB_TYPEMASK		0x0007
 #define DCB_NOSWITCH		0x0008			/* don't switch stacks for callback */
 
-BOOL		 	WINAPI	DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
-					       UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
+BOOL WINAPI DriverCallback(DWORD_PTR dwCallBack, DWORD uFlags, HDRVR hDev,
+                           DWORD wMsg, DWORD_PTR dwUser, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 
 typedef void (*LPTASKCALLBACK)(DWORD dwInst);
 

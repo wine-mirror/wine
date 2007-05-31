@@ -258,7 +258,7 @@ static BOOL	MIDIMAP_LoadSettings(MIDIMAPDATA* mom)
     return ret;
 }
 
-static	DWORD	modOpen(LPDWORD lpdwUser, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
+static DWORD modOpen(DWORD_PTR *lpdwUser, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 {
     MIDIMAPDATA*	mom = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIMAPDATA));
 
@@ -268,7 +268,7 @@ static	DWORD	modOpen(LPDWORD lpdwUser, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 
     if (MIDIMAP_LoadSettings(mom))
     {
-	*lpdwUser = (DWORD)mom;
+	*lpdwUser = (DWORD_PTR)mom;
 	mom->self = mom;
 
 	return MMSYSERR_NOERROR;
@@ -304,7 +304,7 @@ static	DWORD	modClose(MIDIMAPDATA* mom)
     return ret;
 }
 
-static	DWORD	modLongData(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
+static DWORD modLongData(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwParam2)
 {
     WORD	chn;
     DWORD	ret = MMSYSERR_NOERROR;
@@ -328,7 +328,7 @@ static	DWORD	modLongData(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
     return ret;
 }
 
-static	DWORD	modData(MIDIMAPDATA* mom, DWORD dwParam)
+static DWORD modData(MIDIMAPDATA* mom, DWORD_PTR dwParam)
 {
     BYTE	lb = LOBYTE(LOWORD(dwParam));
     WORD	chn = lb & 0x0F;
@@ -385,13 +385,13 @@ static	DWORD	modData(MIDIMAPDATA* mom, DWORD dwParam)
 	}
 	break;
     default:
-	FIXME("ooch %u\n", dwParam);
+	FIXME("ooch %lx\n", dwParam);
     }
 
     return ret;
 }
 
-static	DWORD	modPrepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
+static DWORD modPrepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwParam2)
 {
     if (MIDIMAP_IsBadData(mom)) return MMSYSERR_ERROR;
     if (lpMidiHdr->dwFlags & (MHDR_ISSTRM|MHDR_PREPARED))
@@ -401,7 +401,7 @@ static	DWORD	modPrepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
     return MMSYSERR_NOERROR;
 }
 
-static	DWORD	modUnprepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
+static DWORD modUnprepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwParam2)
 {
     if (MIDIMAP_IsBadData(mom)) return MMSYSERR_ERROR;
     if ((lpMidiHdr->dwFlags & MHDR_ISSTRM) || !(lpMidiHdr->dwFlags & MHDR_PREPARED))
@@ -411,7 +411,7 @@ static	DWORD	modUnprepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
     return MMSYSERR_NOERROR;
 }
 
-static	DWORD	modGetDevCaps(UINT wDevID, MIDIMAPDATA* mom, LPMIDIOUTCAPSW lpMidiCaps, DWORD size)
+static DWORD modGetDevCaps(UINT wDevID, MIDIMAPDATA* mom, LPMIDIOUTCAPSW lpMidiCaps, DWORD_PTR size)
 {
     static const WCHAR name[] = {'W','i','n','e',' ','m','i','d','i',' ','m','a','p','p','e','r',0};
     lpMidiCaps->wMid = 0x00FF;
@@ -449,10 +449,10 @@ static	DWORD	modReset(MIDIMAPDATA* mom)
 /**************************************************************************
  * 				modMessage (MIDIMAP.@)
  */
-DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-				DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
+				DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%u, %04X, %08X, %08X, %08X);\n",
+    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg)
@@ -464,7 +464,7 @@ DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 	/* FIXME: Pretend this is supported */
 	return 0;
 
-    case MODM_OPEN:	 	return modOpen		((LPDWORD)dwUser,      (LPMIDIOPENDESC)dwParam1,dwParam2);
+    case MODM_OPEN: return modOpen((DWORD_PTR *)dwUser, (LPMIDIOPENDESC)dwParam1, dwParam2);
     case MODM_CLOSE:	 	return modClose		((MIDIMAPDATA*)dwUser);
 
     case MODM_DATA:		return modData		((MIDIMAPDATA*)dwUser, dwParam1);
