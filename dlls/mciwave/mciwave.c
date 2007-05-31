@@ -65,8 +65,8 @@ typedef struct {
 struct SCA {
     UINT 	wDevID;
     UINT 	wMsg;
-    DWORD 	dwParam1;
-    DWORD 	dwParam2;
+    DWORD_PTR   dwParam1;
+    DWORD_PTR   dwParam2;
 };
 
 /**************************************************************************
@@ -77,10 +77,10 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
     struct SCA*	sca = (struct SCA*)arg;
     DWORD		ret;
 
-    TRACE("In thread before async command (%08x,%u,%08x,%08x)\n",
+    TRACE("In thread before async command (%08x,%u,%08lx,%08lx)\n",
 	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
     ret = mciSendCommandA(sca->wDevID, sca->wMsg, sca->dwParam1 | MCI_WAIT, sca->dwParam2);
-    TRACE("In thread after async command (%08x,%u,%08x,%08x)\n",
+    TRACE("In thread after async command (%08x,%u,%08lx,%08lx)\n",
 	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
     HeapFree(GetProcessHeap(), 0, sca);
     ExitThread(ret);
@@ -92,8 +92,8 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
 /**************************************************************************
  * 				MCI_SendCommandAsync		[internal]
  */
-static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
-				   DWORD dwParam2, UINT size)
+static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD_PTR dwParam1,
+				   DWORD_PTR dwParam2, UINT size)
 {
     HANDLE handle;
     struct SCA*	sca = HeapAlloc(GetProcessHeap(), 0, sizeof(struct SCA) + size);
@@ -106,7 +106,7 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
     sca->dwParam1 = dwParam1;
 
     if (size && dwParam2) {
-	sca->dwParam2 = (DWORD)sca + sizeof(struct SCA);
+	sca->dwParam2 = (DWORD_PTR)sca + sizeof(struct SCA);
 	/* copy structure passed by program in dwParam2 to be sure
 	 * we can still use it whatever the program does
 	 */
@@ -145,7 +145,7 @@ static LRESULT WAVE_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 	return 0;
 
     wmw->wDevID = modp->wDeviceID;
-    mciSetDriverData(wmw->wDevID, (DWORD)wmw);
+    mciSetDriverData(wmw->wDevID, (DWORD_PTR)wmw);
     modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
     modp->wType = MCI_DEVTYPE_WAVEFORM_AUDIO;
 
@@ -736,7 +736,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lp
 
     if (!(dwFlags & MCI_WAIT)) {
 	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, MCI_PLAY, dwFlags,
-				    (DWORD)lpParms, sizeof(MCI_PLAY_PARMS));
+				    (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
     end = 0xFFFFFFFF;
@@ -795,7 +795,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lp
      */
     /* FIXME: how to choose between several output channels ? here mapper is forced */
     dwRet = waveOutOpen((HWAVEOUT *)&wmw->hWave, WAVE_MAPPER, wmw->lpWaveFormat,
-			(DWORD)WAVE_mciPlayCallback, (DWORD)wmw, CALLBACK_FUNCTION);
+			(DWORD_PTR)WAVE_mciPlayCallback, (DWORD_PTR)wmw, CALLBACK_FUNCTION);
 
     if (dwRet != 0) {
 	TRACE("Can't open low level audio device %d\n", dwRet);
@@ -978,7 +978,7 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_RECORD_PARM
 
     if (!(dwFlags & MCI_WAIT)) {
 	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, MCI_RECORD, dwFlags,
-				    (DWORD)lpParms, sizeof(MCI_RECORD_PARMS));
+				    (DWORD_PTR)lpParms, sizeof(MCI_RECORD_PARMS));
     }
 
     /* FIXME: we only re-create the RIFF structure from an existing file (if any)
@@ -1028,7 +1028,7 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_RECORD_PARM
      */
     /* FIXME: how to choose between several output channels ? here mapper is forced */
     dwRet = waveInOpen((HWAVEIN*)&wmw->hWave, WAVE_MAPPER, wmw->lpWaveFormat,
-			(DWORD)WAVE_mciRecordCallback, (DWORD)wmw, CALLBACK_FUNCTION);
+			(DWORD_PTR)WAVE_mciRecordCallback, (DWORD_PTR)wmw, CALLBACK_FUNCTION);
 
     if (dwRet != MMSYSERR_NOERROR) {
 	TRACE("Can't open low level audio device %d\n", dwRet);
