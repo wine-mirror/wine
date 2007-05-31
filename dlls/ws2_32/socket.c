@@ -188,6 +188,7 @@ typedef struct ws2_async
     enum ws2_mode {ws2m_read, ws2m_write, ws2m_sd_read, ws2m_sd_write} mode;
     LPWSAOVERLAPPED                     user_overlapped;
     LPWSAOVERLAPPED_COMPLETION_ROUTINE  completion_func;
+    IO_STATUS_BLOCK                     local_iosb;
     struct iovec                        *iovec;
     int                                 n_iovecs;
     struct WS_sockaddr                  *addr;
@@ -1031,15 +1032,6 @@ static void ws2_async_terminate(ws2_async* as, IO_STATUS_BLOCK* iosb, NTSTATUS s
     if (as->completion_func)
         as->completion_func( NtStatusToWSAError(status),
                              count, as->user_overlapped, as->flags );
-    if ( !as->user_overlapped )
-    {
-#if 0
-        /* FIXME: I don't think this is really used */
-        if ( as->overlapped->hEvent != INVALID_HANDLE_VALUE )
-            WSACloseEvent( as->overlapped->hEvent  );
-#endif
-        HeapFree( GetProcessHeap(), 0, iosb );
-    }
 
     HeapFree( GetProcessHeap(), 0, as->iovec );
     HeapFree( GetProcessHeap(), 0, as );
@@ -1097,19 +1089,14 @@ WS2_make_async(SOCKET s, enum ws2_mode mode, struct iovec *iovec, DWORD dwBuffer
         if (!lpCompletionRoutine)
             wsa->event = lpOverlapped->hEvent;
     }
-    else if (!(*piosb = HeapAlloc( GetProcessHeap(), 0, sizeof(IO_STATUS_BLOCK))))
-        goto error;
+    else
+        *piosb = &wsa->local_iosb;
 
     TRACE( "wsa %p, h %p, ev %p, iosb %p, uov %p, cfunc %p\n",
            wsa, wsa->hSocket, wsa->event,
            *piosb, wsa->user_overlapped, wsa->completion_func );
 
     return wsa;
-
-error:
-    TRACE("Error\n");
-    HeapFree( GetProcessHeap(), 0, wsa );
-    return NULL;
 }
 
 static ULONG ws2_queue_async(struct ws2_async* wsa, IO_STATUS_BLOCK* iosb)
@@ -2759,8 +2746,6 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         {
             err = NtStatusToWSAError( ret );
 
-            if ( !lpOverlapped )
-                HeapFree( GetProcessHeap(), 0, iosb );
             HeapFree( GetProcessHeap(), 0, wsa );
             goto err_free;
         }
