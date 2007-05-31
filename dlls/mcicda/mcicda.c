@@ -72,7 +72,7 @@ static	DWORD	MCICDA_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 	return 0;
 
     wmcda->wDevID = modp->wDeviceID;
-    mciSetDriverData(wmcda->wDevID, (DWORD)wmcda);
+    mciSetDriverData(wmcda->wDevID, (DWORD_PTR)wmcda);
     modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
     modp->wType = MCI_DEVTYPE_CD_AUDIO;
     return modp->wDeviceID;
@@ -293,7 +293,7 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpOpenPar
     }
     if (dwFlags & MCI_OPEN_ELEMENT) {
         if (dwFlags & MCI_OPEN_ELEMENT_ID) {
-            WARN("MCI_OPEN_ELEMENT_ID %8x ! Abort\n", (DWORD)lpOpenParms->lpstrElementName);
+            WARN("MCI_OPEN_ELEMENT_ID %p! Abort\n", lpOpenParms->lpstrElementName);
             return MCIERR_NO_ELEMENT_ALLOWED;
         }
         TRACE("MCI_OPEN_ELEMENT element name: %s\n", debugstr_w(lpOpenParms->lpstrElementName));
