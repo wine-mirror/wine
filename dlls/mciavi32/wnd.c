@@ -137,9 +137,9 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
                               dwStyle, rc.left, rc.top,
                               rc.right, rc.bottom,
                               hParent, 0, MCIAVI_hInstance,
-                              (LPVOID)wma->wDevID);
+                              ULongToPtr(wma->wDevID));
     wma->hWndPaint = wma->hWnd;
-    return (BOOL)wma->hWnd;
+    return wma->hWnd != 0;
 }
 
 /***************************************************************************

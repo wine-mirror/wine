@@ -91,7 +91,7 @@ static	DWORD	MCIAVI_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
     wma->wCommandTable = mciLoadCommandResource(MCIAVI_hInstance, mciAviWStr, 0);
     modp->wCustomCommandTable = wma->wCommandTable;
     modp->wType = MCI_DEVTYPE_DIGITAL_VIDEO;
-    mciSetDriverData(wma->wDevID, (DWORD)wma);
+    mciSetDriverData(wma->wDevID, (DWORD_PTR)wma);
 
     return modp->wDeviceID;
 }

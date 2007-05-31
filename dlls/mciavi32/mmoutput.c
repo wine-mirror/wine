@@ -476,7 +476,7 @@ BOOL    MCIAVI_OpenVideo(WINE_MCIAVI* wma)
     }
 
     if (ICSendMessage(wma->hic, ICM_DECOMPRESS_BEGIN,
-		      (DWORD)wma->inbih, (DWORD)wma->outbih) != ICERR_OK) {
+		      (DWORD_PTR)wma->inbih, (DWORD_PTR)wma->outbih) != ICERR_OK) {
 	WARN("Can't begin decompression\n");
 	return FALSE;
     }
