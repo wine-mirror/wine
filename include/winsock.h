@@ -791,16 +791,16 @@ typedef struct WS(WSAData)
 #define MSG_OOB                    0x0001
 #define MSG_PEEK                   0x0002
 #define MSG_DONTROUTE              0x0004
-#define MSG_MAXIOVLEN              0x000a
 #define MSG_PARTIAL                0x8000
+#define MSG_MAXIOVLEN              16
 #else /* USE_WS_PREFIX */
 #define WS_SOMAXCONN               5
 
 #define WS_MSG_OOB                 0x0001
 #define WS_MSG_PEEK                0x0002
 #define WS_MSG_DONTROUTE           0x0004
-#define WS_MSG_MAXIOVLEN           0x000a
 #define WS_MSG_PARTIAL             0x8000
+#define WS_MSG_MAXIOVLEN           16
 #endif /* USE_WS_PREFIX */
 
 /*
