@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2007 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,17 @@
 
 
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_MESSAGE_BOX_TITLE, "Wine Internet Explorer"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_PRINT_HEADER_TEMPLATE "&w&bSide &p" /* FIXME: should be "&w&bPage &p of &P" */
+    IDS_PRINT_FOOTER_TEMPLATE "&u&b&d"
+}
 
 IDR_BROWSE_CONTEXT_MENU MENU
 {
@@ -193,11 +204,11 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Dump sporingsinformasjon", IDM_DUMPTRACKINGINFO
         MENUITEM "Feilsøkingspause",        IDM_DEBUGBREAK
         MENUITEM "Feilsøkingsvisning",         IDM_DEBUGVIEW
-        MENUITEM "Dump 'Tree'",          IDM_DUMPTREE
-        MENUITEM "Dump 'Lines'",         IDM_DUMPLINES
-        MENUITEM "Dump 'DisplayTree'",   IDM_DUMPDISPLAYTREE
-        MENUITEM "Dump 'FormatCaches'",  IDM_DUMPFORMATCACHES
-        MENUITEM "Dump 'LayoutRects'",   IDM_DUMPLAYOUTRECTS
+        MENUITEM "Dump «Tree»",          IDM_DUMPTREE
+        MENUITEM "Dump «Lines»",         IDM_DUMPLINES
+        MENUITEM "Dump «DisplayTree»",   IDM_DUMPDISPLAYTREE
+        MENUITEM "Dump «FormatCaches»",  IDM_DUMPFORMATCACHES
+        MENUITEM "Dump «LayoutRects»",   IDM_DUMPLAYOUTRECTS
         MENUITEM "Minneovervåker",     IDM_MEMORYMONITOR
         MENUITEM "Ytelsesmålere", IDM_PERFORMANCEMETERS
         MENUITEM "Lagre HTML",          IDM_SAVEHTML
