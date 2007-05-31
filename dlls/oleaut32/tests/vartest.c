@@ -124,109 +124,110 @@ static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 }
 
 /* return the string text of a given variant type */
+static char vtstr_buffer[16][256];
+static int vtstr_current=0;
 static const char *vtstr(int x)
 {
-	switch(x) {
-	case 0:
-		return "VT_EMPTY";
-	case 1:
-		return "VT_NULL";
-	case 2:
-		return "VT_I2";
-	case 3:
-		return "VT_I4";
-	case 4:
-		return "VT_R4";
-	case 5:
-		return "VT_R8";
-	case 6:
-		return "VT_CY";
-	case 7:
-		return "VT_DATE";
-	case 8:
-		return "VT_BSTR";
-	case 9:
-		return "VT_DISPATCH";
-	case 10:
-		return "VT_ERROR";
-	case 11:
-		return "VT_BOOL";
-	case 12:
-		return "VT_VARIANT";
-	case 13:
-		return "VT_UNKNOWN";
-	case 14:
-		return "VT_DECIMAL";
-	case 15:
-		return "notdefined";
-	case 16:
-		return "VT_I1";
-	case 17:
-		return "VT_UI1";
-	case 18:
-		return "VT_UI2";
-	case 19:
-		return "VT_UI4";
-	case 20:
-		return "VT_I8";
-	case 21:
-		return "VT_UI8";
-	case 22:
-		return "VT_INT";
-	case 23:
-		return "VT_UINT";
-	case 24:
-		return "VT_VOID";
-	case 25:
-		return "VT_HRESULT";
-	case 26:
-		return "VT_PTR";
-	case 27:
-		return "VT_SAFEARRAY";
-	case 28:
-		return "VT_CARRAY";
-	case 29:
-		return "VT_USERDEFINED";
-	case 30:
-		return "VT_LPSTR";
-	case 31:
-		return "VT_LPWSTR";
-	case 36:
-		return "VT_RECORD";
-	case 64:
-		return "VT_FILETIME";
-	case 65:
-		return "VT_BLOB";
-	case 66:
-		return "VT_STREAM";
-	case 67:
-		return "VT_STORAGE";
-	case 68:
-		return "VT_STREAMED_OBJECT";
-	case 69:
-		return "VT_STORED_OBJECT";
-	case 70:
-		return "VT_BLOB_OBJECT";
-	case 71:
-		return "VT_CF";
-	case 72:
-		return "VT_CLSID";
-	case 0xFFF:
-		return "VT_BSTR_BLOB/VT_ILLEGALMASKED/VT_TYPEMASK";
-	case 0x1000:
-		return "VT_VECTOR";
-	case 0x2000:
-		return "VT_ARRAY";
-	case 0x4000:
-		return "VT_BYREF";
-	case 0x8000:
-		return "VT_RESERVED";
-	case 0xFFFF:
-		return "VT_ILLEGAL";
+    switch(x) {
+#define CASE(vt) case VT_##vt: return #vt
+    CASE(EMPTY);
+    CASE(NULL);
+    CASE(I2);
+    CASE(I4);
+    CASE(R4);
+    CASE(R8);
+    CASE(CY);
+    CASE(DATE);
+    CASE(BSTR);
+    CASE(DISPATCH);
+    CASE(ERROR);
+    CASE(BOOL);
+    CASE(VARIANT);
+    CASE(UNKNOWN);
+    CASE(DECIMAL);
+    CASE(I1);
+    CASE(UI1);
+    CASE(UI2);
+    CASE(UI4);
+    CASE(I8);
+    CASE(UI8);
+    CASE(INT);
+    CASE(UINT);
+    CASE(VOID);
+    CASE(HRESULT);
+    CASE(PTR);
+    CASE(SAFEARRAY);
+    CASE(CARRAY);
+    CASE(USERDEFINED);
+    CASE(LPSTR);
+    CASE(LPWSTR);
+    CASE(RECORD);
+    CASE(INT_PTR);
+    CASE(UINT_PTR);
+    CASE(FILETIME);
+    CASE(BLOB);
+    CASE(STREAM);
+    CASE(STORAGE);
+    CASE(STREAMED_OBJECT);
+    CASE(STORED_OBJECT);
+    CASE(BLOB_OBJECT);
+    CASE(CF);
+    CASE(CLSID);
+    CASE(VERSIONED_STREAM);
+    CASE(VECTOR);
+    CASE(ARRAY);
+    CASE(BYREF);
+    CASE(RESERVED);
+    CASE(ILLEGAL);
+#undef CASE
 
-	default:
-		return "defineme";
-	}
+    case 0xfff:
+        return "VT_BSTR_BLOB/VT_ILLEGALMASKED/VT_TYPEMASK";
+
+    default:
+        vtstr_current %= sizeof(vtstr_buffer)/sizeof(*vtstr_buffer);
+        sprintf(vtstr_buffer[vtstr_current], "unknown variant type %d", x);
+        return vtstr_buffer[vtstr_current++];
+    }
+}
+
+static const char *variantstr( const VARIANT *var )
+{
+    vtstr_current %= sizeof(vtstr_buffer)/sizeof(*vtstr_buffer);
+    switch(V_VT(var))
+    {
+    case VT_I1:
+        sprintf( vtstr_buffer[vtstr_current], "VT_I1(%d)", V_I1(var) ); break;
+    case VT_I2:
+        sprintf( vtstr_buffer[vtstr_current], "VT_I2(%d)", V_I2(var) ); break;
+    case VT_I4:
+        sprintf( vtstr_buffer[vtstr_current], "VT_I4(%d)", V_I4(var) ); break;
+    case VT_INT:
+        sprintf( vtstr_buffer[vtstr_current], "VT_INT(%d)", V_INT(var) ); break;
+    case VT_I8:
+        sprintf( vtstr_buffer[vtstr_current], "VT_I8(%x%08x)", (UINT)(V_I8(var) >> 32), (UINT)V_I8(var) ); break;
+    case VT_UI8:
+        sprintf( vtstr_buffer[vtstr_current], "VT_UI8(%x%08x)", (UINT)(V_UI8(var) >> 32), (UINT)V_UI8(var) ); break;
+    case VT_R4:
+        sprintf( vtstr_buffer[vtstr_current], "VT_R4(%g)", V_R4(var) ); break;
+    case VT_R8:
+        sprintf( vtstr_buffer[vtstr_current], "VT_R8(%g)", V_R8(var) ); break;
+    case VT_UI1:
+        sprintf( vtstr_buffer[vtstr_current], "VT_UI1(%u)", V_UI1(var) ); break;
+    case VT_UI2:
+        sprintf( vtstr_buffer[vtstr_current], "VT_UI2(%u)", V_UI2(var) ); break;
+    case VT_UI4:
+        sprintf( vtstr_buffer[vtstr_current], "VT_UI4(%u)", V_UI4(var) ); break;
+    case VT_UINT:
+        sprintf( vtstr_buffer[vtstr_current], "VT_UINT(%d)", V_UINT(var) ); break;
+    case VT_CY:
+        sprintf( vtstr_buffer[vtstr_current], "VT_CY(%x%08x)", S(V_CY(var)).Hi, S(V_CY(var)).Lo ); break;
+    case VT_DATE:
+        sprintf( vtstr_buffer[vtstr_current], "VT_DATE(%g)", V_DATE(var) ); break;
+    default:
+        return vtstr(V_VT(var));
+    }
+    return vtstr_buffer[vtstr_current++];
 }
 
 static BOOL is_expected_variant( const VARIANT *result, const VARIANT *expected )
@@ -268,56 +269,6 @@ static BOOL is_expected_variant( const VARIANT *result, const VARIANT *expected 
         ok(0, "unhandled variant type %s\n",vtstr(V_VT(expected)));
         return 0;
     }
-}
-
-static const char *variantstr( const VARIANT *var )
-{
-    static char buffer[16][256];
-    static int current;
-
-    current %= 16;
-    switch(V_VT(var))
-    {
-    case VT_EMPTY:
-        return "VT_EMPTY";
-    case VT_NULL:
-        return "VT_NULL";
-    case VT_VOID:
-        return "VT_VOID";
-    case VT_UNKNOWN:
-        return "VT_UNKNOWN";
-    case VT_I1:
-        sprintf( buffer[current], "VT_I1(%d)", V_I1(var) ); break;
-    case VT_I2:
-        sprintf( buffer[current], "VT_I2(%d)", V_I2(var) ); break;
-    case VT_I4:
-        sprintf( buffer[current], "VT_I4(%d)", V_I4(var) ); break;
-    case VT_INT:
-        sprintf( buffer[current], "VT_INT(%d)", V_INT(var) ); break;
-    case VT_I8:
-        sprintf( buffer[current], "VT_I8(%x%08x)", (UINT)(V_I8(var) >> 32), (UINT)V_I8(var) ); break;
-    case VT_UI8:
-        sprintf( buffer[current], "VT_UI8(%x%08x)", (UINT)(V_UI8(var) >> 32), (UINT)V_UI8(var) ); break;
-    case VT_R4:
-        sprintf( buffer[current], "VT_R4(%g)", V_R4(var) ); break;
-    case VT_R8:
-        sprintf( buffer[current], "VT_R8(%g)", V_R8(var) ); break;
-    case VT_UI1:
-        sprintf( buffer[current], "VT_UI1(%u)", V_UI1(var) ); break;
-    case VT_UI2:
-        sprintf( buffer[current], "VT_UI2(%u)", V_UI2(var) ); break;
-    case VT_UI4:
-        sprintf( buffer[current], "VT_UI4(%u)", V_UI4(var) ); break;
-    case VT_UINT:
-        sprintf( buffer[current], "VT_UINT(%d)", V_UINT(var) ); break;
-    case VT_CY:
-        sprintf( buffer[current], "VT_CY(%x%08x)", S(V_CY(var)).Hi, S(V_CY(var)).Lo ); break;
-    case VT_DATE:
-        sprintf( buffer[current], "VT_DATE(%g)", V_DATE(var) ); break;
-    default:
-        return vtstr(V_VT(var));
-    }
-    return buffer[current++];
 }
 
 static void test_var_call1( int line, HRESULT (WINAPI *func)(LPVARIANT,LPVARIANT),
