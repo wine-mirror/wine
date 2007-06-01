@@ -82,6 +82,14 @@ HANDLE get_BaseNamedObjects_handle(void)
     return handle;
 }
 
+/* helper for kernel32->ntdll timeout format conversion */
+static inline PLARGE_INTEGER get_nt_timeout( PLARGE_INTEGER pTime, DWORD timeout )
+{
+    if (timeout == INFINITE) return NULL;
+    pTime->QuadPart = (ULONGLONG)timeout * -10000;
+    return pTime;
+}
+
 /***********************************************************************
  *              Sleep  (KERNEL32.@)
  */
@@ -96,18 +104,11 @@ VOID WINAPI Sleep( DWORD timeout )
 DWORD WINAPI SleepEx( DWORD timeout, BOOL alertable )
 {
     NTSTATUS status;
+    LARGE_INTEGER time;
 
-    if (timeout == INFINITE) status = NtDelayExecution( alertable, NULL );
-    else
-    {
-        LARGE_INTEGER time;
-
-        time.QuadPart = timeout * (ULONGLONG)10000;
-        time.QuadPart = -time.QuadPart;
-        status = NtDelayExecution( alertable, &time );
-    }
-    if (status != STATUS_USER_APC) status = STATUS_SUCCESS;
-    return status;
+    status = NtDelayExecution( alertable, get_nt_timeout( &time, timeout ) );
+    if (status == STATUS_USER_APC) return WAIT_IO_COMPLETION;
+    return 0;
 }
 
 
@@ -158,6 +159,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
 {
     NTSTATUS status;
     HANDLE hloc[MAXIMUM_WAIT_OBJECTS];
+    LARGE_INTEGER time;
     unsigned int i;
 
     if (count > MAXIMUM_WAIT_OBJECTS)
@@ -187,18 +189,8 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
         }
     }
 
-    if (timeout == INFINITE)
-    {
-        status = NtWaitForMultipleObjects( count, hloc, wait_all, alertable, NULL );
-    }
-    else
-    {
-        LARGE_INTEGER time;
-
-        time.QuadPart = timeout * (ULONGLONG)10000;
-        time.QuadPart = -time.QuadPart;
-        status = NtWaitForMultipleObjects( count, hloc, wait_all, alertable, &time );
-    }
+    status = NtWaitForMultipleObjects( count, hloc, wait_all, alertable,
+                                       get_nt_timeout( &time, timeout ) );
 
     if (HIWORD(status))  /* is it an error code? */
     {
@@ -302,20 +294,13 @@ DWORD WINAPI SignalObjectAndWait( HANDLE hObjectToSignal, HANDLE hObjectToWaitOn
                                   DWORD dwMilliseconds, BOOL bAlertable )
 {
     NTSTATUS status;
-    LARGE_INTEGER timeout, *ptimeout = NULL;
+    LARGE_INTEGER timeout;
 
     TRACE("%p %p %d %d\n", hObjectToSignal,
           hObjectToWaitOn, dwMilliseconds, bAlertable);
 
-    if (dwMilliseconds != INFINITE)
-    {
-        timeout.QuadPart = dwMilliseconds * (ULONGLONG)10000;
-        timeout.QuadPart = -timeout.QuadPart;
-        ptimeout = &timeout;
-    }
-
-    status = NtSignalAndWaitForSingleObject( hObjectToSignal, hObjectToWaitOn,
-                                             bAlertable, ptimeout );
+    status = NtSignalAndWaitForSingleObject( hObjectToSignal, hObjectToWaitOn, bAlertable,
+                                             get_nt_timeout( &timeout, dwMilliseconds ) );
     if (HIWORD(status))
     {
         SetLastError( RtlNtStatusToDosError(status) );
