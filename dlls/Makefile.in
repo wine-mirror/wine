@@ -141,6 +141,7 @@ BASEDIRS = \
 	oledlg \
 	olepro32 \
 	olesvr32 \
+	pdh \
 	powrprof \
 	psapi \
 	pstorec \
