@@ -730,6 +730,114 @@ HRESULT WINAPI DispGetParam_CopyOnly(
                         &pdispparams->rgvarg[pos]);
 }
 
+static HRESULT WINAPI SummaryInfoImpl_Invoke(
+        AutomationObject* This,
+        DISPID dispIdMember,
+        REFIID riid,
+        LCID lcid,
+        WORD wFlags,
+        DISPPARAMS* pDispParams,
+        VARIANT* pVarResult,
+        EXCEPINFO* pExcepInfo,
+        UINT* puArgErr)
+{
+    UINT ret;
+    VARIANTARG varg0;
+    HRESULT hr;
+
+    VariantInit(&varg0);
+
+    switch (dispIdMember)
+    {
+        case DISPID_SUMMARYINFO_PROPERTY:
+            if (wFlags & DISPATCH_PROPERTYGET)
+            {
+                UINT type;
+                INT value;
+                INT pid;
+
+                static WCHAR szEmpty[] = {0};
+
+                VariantClear(pVarResult);
+
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                pid = V_I4(&varg0);
+
+                if (pid == PID_CODEPAGE || (pid >= PID_PAGECOUNT && pid <= PID_CHARCOUNT) || PID_SECURITY)
+                {
+                    ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, &value,
+                                                     NULL, NULL, NULL);
+                    if (ret != ERROR_SUCCESS)
+                        return DISP_E_EXCEPTION;
+
+                    if (pid == PID_CODEPAGE)
+                    {
+                        V_VT(pVarResult) = VT_I2;
+                        V_I2(pVarResult) = value;
+                    }
+                    else
+                    {
+                        V_VT(pVarResult) = VT_I4;
+                        V_I4(pVarResult) = value;
+                    }
+                }
+                else if ((pid >= PID_TITLE && pid <= PID_REVNUMBER) || pid == PID_APPNAME)
+                {
+                    LPWSTR str;
+                    DWORD size = 0;
+
+                    ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, NULL,
+                                                     NULL, szEmpty, &size);
+                    if (ret != ERROR_MORE_DATA)
+                        return DISP_E_EXCEPTION;
+
+                    str = msi_alloc(++size * sizeof(WCHAR));
+                    if (!str)
+                        return DISP_E_EXCEPTION;
+
+                    ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, NULL,
+                                                     NULL, str, &size);
+                    if (ret != ERROR_SUCCESS)
+                    {
+                        msi_free(str);
+                        return DISP_E_EXCEPTION;
+                    }
+
+                    V_VT(pVarResult) = VT_BSTR;
+                    V_BSTR(pVarResult) = SysAllocString(str);
+                    msi_free(str);
+                }
+                else if (pid >= PID_EDITTIME && pid <= PID_LASTSAVE_DTM)
+                {
+                    FILETIME ft;
+                    SYSTEMTIME st;
+                    DATE date;
+
+                    ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, &value,
+                                                     &ft, NULL, NULL);
+                    if (ret != ERROR_SUCCESS)
+                        return DISP_E_EXCEPTION;
+
+                    FileTimeToSystemTime(&ft, &st);
+                    SystemTimeToVariantTime(&st, &date);
+
+                    V_VT(pVarResult) = VT_DATE;
+                    V_DATE(pVarResult) = date;
+                }
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
+        default:
+            ERR("Member not found: %d\n", dispIdMember);
+            return DISP_E_MEMBERNOTFOUND;
+    }
+
+    VariantClear(&varg0);
+    return S_OK;
+}
+
 static HRESULT WINAPI RecordImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -1010,6 +1118,34 @@ static HRESULT WINAPI DatabaseImpl_Invoke(
 
     switch (dispIdMember)
     {
+        case DISPID_DATABASE_SUMMARYINFORMATION:
+            if (wFlags & DISPATCH_METHOD)
+            {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr))
+                    V_I4(&varg0) = 0;
+
+                V_VT(pVarResult) = VT_DISPATCH;
+                if ((ret = MsiGetSummaryInformationW(This->msiHandle, NULL, V_I4(&varg0), &msiHandle)) == ERROR_SUCCESS)
+                {
+                    hr = create_automation_object(msiHandle, NULL, (LPVOID *)&pDispatch, &DIID_SummaryInfo, SummaryInfoImpl_Invoke, NULL, 0);
+                    if (SUCCEEDED(hr))
+                    {
+                        IDispatch_AddRef(pDispatch);
+                        V_DISPATCH(pVarResult) = pDispatch;
+                    }
+                    else
+                        ERR("Failed to create SummaryInfo object: 0x%08x\n", hr);
+                }
+                else
+                {
+                    ERR("MsiGetSummaryInformation returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
         case DISPID_DATABASE_OPENVIEW:
             if (wFlags & DISPATCH_METHOD)
             {

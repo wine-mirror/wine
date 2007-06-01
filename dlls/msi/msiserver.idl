@@ -146,6 +146,8 @@ library WindowsInstaller
     {
         properties:
         methods:
+        [id(DISPID_SUMMARYINFO_PROPERTY), propget]
+            VARIANT Property([in] long Pid);
     }
 
     typedef enum {
@@ -188,6 +190,8 @@ library WindowsInstaller
         methods:
         [id(DISPID_DATABASE_OPENVIEW)]
             View* OpenView([in] BSTR Sql);
+        [id(DISPID_DATABASE_SUMMARYINFORMATION)]
+            SummaryInfo *SummaryInformation([in, optional, defaultvalue(0)] long UpdateCount);
     }
 
     typedef enum {
