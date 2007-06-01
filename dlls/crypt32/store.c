@@ -1367,59 +1367,6 @@ static BOOL WINAPI CRYPT_RegControl(HCERTSTORE hCertStore, DWORD dwFlags,
     return ret;
 }
 
-/* Copied from shlwapi's SHDeleteKeyW, and reformatted to match this file. */
-static DWORD CRYPT_RecurseDeleteKey(HKEY hKey, LPCWSTR lpszSubKey)
-{
-    DWORD dwRet, dwKeyCount = 0, dwMaxSubkeyLen = 0, dwSize, i;
-    WCHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
-    HKEY hSubKey = 0;
-
-    TRACE("(hkey=%p,%s)\n", hKey, debugstr_w(lpszSubKey));
-
-    dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
-    if (!dwRet)
-    {
-        /* Find how many subkeys there are */
-        dwRet = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, &dwKeyCount,
-         &dwMaxSubkeyLen, NULL, NULL, NULL, NULL, NULL, NULL);
-        if (!dwRet)
-        {
-            dwMaxSubkeyLen++;
-            if (dwMaxSubkeyLen > sizeof(szNameBuf)/sizeof(WCHAR))
-            {
-                /* Name too big: alloc a buffer for it */
-                lpszName = CryptMemAlloc(dwMaxSubkeyLen*sizeof(WCHAR));
-            }
-
-            if (!lpszName)
-                dwRet = ERROR_NOT_ENOUGH_MEMORY;
-            else
-            {
-                /* Recursively delete all the subkeys */
-                for (i = 0; i < dwKeyCount && !dwRet; i++)
-                {
-                    dwSize = dwMaxSubkeyLen;
-                    dwRet = RegEnumKeyExW(hSubKey, i, lpszName, &dwSize, NULL,
-                     NULL, NULL, NULL);
-                    if (!dwRet)
-                        dwRet = CRYPT_RecurseDeleteKey(hSubKey, lpszName);
-                }
-
-                if (lpszName != szNameBuf)
-                {
-                    /* Free buffer if allocated */
-                    CryptMemFree(lpszName);
-                }
-            }
-        }
-
-        RegCloseKey(hSubKey);
-        if (!dwRet)
-            dwRet = RegDeleteKeyW(hKey, lpszSubKey);
-    }
-    return dwRet;
-}
-
 static void *regProvFuncs[] = {
     CRYPT_RegCloseStore,
     NULL, /* CERT_STORE_PROV_READ_CERT_FUNC */
@@ -1446,12 +1393,12 @@ static WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv,
 
     if (dwFlags & CERT_STORE_DELETE_FLAG)
     {
-        DWORD rc = CRYPT_RecurseDeleteKey((HKEY)pvPara, CertsW);
+        DWORD rc = RegDeleteTreeW((HKEY)pvPara, CertsW);
 
         if (rc == ERROR_SUCCESS || rc == ERROR_NO_MORE_ITEMS)
-            rc = CRYPT_RecurseDeleteKey((HKEY)pvPara, CRLsW);
+            rc = RegDeleteTreeW((HKEY)pvPara, CRLsW);
         if (rc == ERROR_SUCCESS || rc == ERROR_NO_MORE_ITEMS)
-            rc = CRYPT_RecurseDeleteKey((HKEY)pvPara, CTLsW);
+            rc = RegDeleteTreeW((HKEY)pvPara, CTLsW);
         if (rc == ERROR_NO_MORE_ITEMS)
             rc = ERROR_SUCCESS;
         SetLastError(rc);
