@@ -114,6 +114,22 @@ static DWORD CALLBACK stream_in(DWORD_PTR cookie, LPBYTE buffer, LONG cb, LONG *
     return 0;
 }
 
+static DWORD CALLBACK stream_out(DWORD_PTR cookie, LPBYTE buffer, LONG cb, LONG *pcb)
+{
+    DWORD written;
+    int ret;
+    HANDLE hFile = (HANDLE)cookie;
+
+    ret = WriteFile(hFile, buffer, cb, &written, 0);
+
+    if(!ret || (cb != written))
+        return 1;
+
+    *pcb = cb;
+
+    return 0;
+}
+
 static WCHAR wszFileName[MAX_PATH];
 
 static void set_caption(LPCWSTR wszNewFileName)
@@ -211,6 +227,35 @@ static void DialogOpenFile(void)
 
         DoOpenFile(szOpenFile);
     }
+}
+
+static void DoSaveFile(LPCWSTR wszSaveFileName)
+{
+    HANDLE hFile;
+    EDITSTREAM stream;
+    LRESULT ret;
+
+    hFile = CreateFileW(wszSaveFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL, NULL);
+
+    if(hFile == INVALID_HANDLE_VALUE)
+        return;
+
+    stream.dwCookie = (DWORD_PTR)hFile;
+    stream.pfnCallback = stream_out;
+
+    /* FIXME: Handle different formats */
+    ret = SendMessageW(hEditorWnd, EM_STREAMOUT, SF_RTF, (LPARAM)&stream);
+
+    CloseHandle(hFile);
+
+    SetFocus(hEditorWnd);
+
+    if(!ret)
+        return;
+
+    lstrcpyW(wszFileName, wszSaveFileName);
+    set_caption(wszFileName);
 }
 
 static void HandleCommandLine(LPWSTR cmdline)
@@ -455,6 +500,12 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     case ID_FILE_SAVE:
+        if(wszFileName[0])
+            DoSaveFile(wszFileName);
+        else
+            MessageBox(hWnd, "Can only save existing for now", "WordPad", MB_OK);
+        break;
+
     case ID_PRINT:
     case ID_PREVIEW:
     case ID_FIND:
