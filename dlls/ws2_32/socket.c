@@ -2285,12 +2285,12 @@ INT WINAPI WSAIoctl(SOCKET s,
 /***********************************************************************
  *		ioctlsocket		(WS2_32.10)
  */
-int WINAPI WS_ioctlsocket(SOCKET s, long cmd, WS_u_long *argp)
+int WINAPI WS_ioctlsocket(SOCKET s, LONG cmd, WS_u_long *argp)
 {
     int fd;
     long newcmd  = cmd;
 
-    TRACE("socket %04lx, cmd %08lx, ptr %p\n", s, cmd, argp);
+    TRACE("socket %04lx, cmd %08x, ptr %p\n", s, cmd, argp);
 
     switch( cmd )
     {
@@ -2347,7 +2347,7 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, WS_u_long *argp)
         /* FIXME: 0x667e above is ('f' << 8) | 126, and is a low word of
          * FIONBIO (_IOW('f', 126, u_long)), how that should be handled?
          */
-        WARN("\tunknown WS_IOCTL cmd (%08lx)\n", cmd);
+        WARN("\tunknown WS_IOCTL cmd (%08x)\n", cmd);
         break;
     }
 
@@ -3538,11 +3538,11 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
 /***********************************************************************
  *		WSAEventSelect (WS2_32.39)
  */
-int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, long lEvent)
+int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
 {
     int ret;
 
-    TRACE("%08lx, hEvent %p, event %08x\n", s, hEvent, (unsigned)lEvent );
+    TRACE("%08lx, hEvent %p, event %08x\n", s, hEvent, lEvent);
 
     SERVER_START_REQ( set_socket_event )
     {
@@ -3622,11 +3622,11 @@ BOOL WINAPI WSAGetOverlappedResult( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
 /***********************************************************************
  *      WSAAsyncSelect			(WS2_32.101)
  */
-INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, long lEvent)
+INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 {
     int ret;
 
-    TRACE("%lx, hWnd %p, uMsg %08x, event %08lx\n", s, hWnd, uMsg, lEvent );
+    TRACE("%lx, hWnd %p, uMsg %08x, event %08x\n", s, hWnd, uMsg, lEvent);
 
     SERVER_START_REQ( set_socket_event )
     {
