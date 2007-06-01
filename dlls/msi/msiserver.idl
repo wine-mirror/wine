@@ -66,6 +66,10 @@ library WindowsInstaller
             Session* OpenPackage(
                 [in] VARIANT PackagePath,
                 [in, optional, defaultvalue(0)] long Options);
+        [id(DISPID_INSTALLER_OPENDATABASE)]
+		Database *OpenDatabase(
+		    [in] BSTR DatabasePath,
+		    [in] VARIANT OpenMode);
         [id(DISPID_INSTALLER_INSTALLPRODUCT)]
             void InstallProduct(
                 [in] BSTR PackagePath,

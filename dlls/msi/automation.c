@@ -1433,6 +1433,43 @@ static HRESULT WINAPI InstallerImpl_Invoke(
             else return DISP_E_MEMBERNOTFOUND;
             break;
 
+        case DISPID_INSTALLER_OPENDATABASE:
+            if (wFlags & DISPATCH_METHOD)
+            {
+                hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+
+                hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
+                if (FAILED(hr))
+                {
+                    VariantClear(&varg0);
+                    return hr;
+                }
+
+                V_VT(pVarResult) = VT_DISPATCH;
+                if ((ret = MsiOpenDatabaseW(V_BSTR(&varg0), V_BSTR(&varg1), &msiHandle)) == ERROR_SUCCESS)
+                {
+                    hr = create_automation_object(msiHandle, NULL, (LPVOID *)&pDispatch,
+                                                  &DIID_Database, DatabaseImpl_Invoke, NULL, 0);
+                    if (SUCCEEDED(hr))
+                    {
+                        IDispatch_AddRef(pDispatch);
+                        V_DISPATCH(pVarResult) = pDispatch;
+                    }
+                    else
+                        ERR("Failed to create Database object: 0x%08x\n", hr);
+                }
+                else
+                {
+                    VariantClear(&varg0);
+                    VariantClear(&varg1);
+                    ERR("MsiOpenDatabase returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
         case DISPID_INSTALLER_INSTALLPRODUCT:
             if (wFlags & DISPATCH_METHOD)
             {
@@ -1676,6 +1713,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
             break;
 
          default:
+            ERR("Member not found: %d\n", dispIdMember);
             return DISP_E_MEMBERNOTFOUND;
     }
 
