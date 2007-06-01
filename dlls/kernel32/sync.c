@@ -1811,12 +1811,45 @@ BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
 HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle, HANDLE hExistingCompletionPort,
                                      ULONG_PTR CompletionKey, DWORD dwNumberOfConcurrentThreads)
 {
-    FIXME("(%p, %p, %08lx, %08x): stub.\n",
-          hFileHandle, hExistingCompletionPort, CompletionKey, dwNumberOfConcurrentThreads);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return NULL;
-}
+    NTSTATUS status;
+    HANDLE ret = 0;
 
+    TRACE("(%p, %p, %08lx, %08x)\n",
+          hFileHandle, hExistingCompletionPort, CompletionKey, dwNumberOfConcurrentThreads);
+
+    if (hExistingCompletionPort && hFileHandle == INVALID_HANDLE_VALUE)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    if (hExistingCompletionPort)
+        ret = hExistingCompletionPort;
+    else
+    {
+        status = NtCreateIoCompletion( &ret, IO_COMPLETION_ALL_ACCESS, NULL, dwNumberOfConcurrentThreads );
+        if (status != STATUS_SUCCESS) goto fail;
+    }
+
+    if (hFileHandle != INVALID_HANDLE_VALUE)
+    {
+        FILE_COMPLETION_INFORMATION info;
+        IO_STATUS_BLOCK iosb;
+
+        info.CompletionPort = ret;
+        info.CompletionKey = CompletionKey;
+        status = NtSetInformationFile( hFileHandle, &iosb, &info, sizeof(info), FileCompletionInformation );
+        if (status != STATUS_SUCCESS) goto fail;
+    }
+
+    return ret;
+
+fail:
+    if (ret && !hExistingCompletionPort)
+        CloseHandle( ret );
+    SetLastError( RtlNtStatusToDosError(status) );
+    return 0;
+}
 
 /******************************************************************************
  *		GetQueuedCompletionStatus (KERNEL32.@)
@@ -1825,17 +1858,43 @@ BOOL WINAPI GetQueuedCompletionStatus( HANDLE CompletionPort, LPDWORD lpNumberOf
                                        PULONG_PTR pCompletionKey, LPOVERLAPPED *lpOverlapped,
                                        DWORD dwMilliseconds )
 {
-    FIXME("(%p,%p,%p,%p,%d), stub!\n",
+    NTSTATUS status;
+    IO_STATUS_BLOCK iosb;
+    LARGE_INTEGER wait_time;
+
+    TRACE("(%p,%p,%p,%p,%d)\n",
           CompletionPort,lpNumberOfBytesTransferred,pCompletionKey,lpOverlapped,dwMilliseconds);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+    *lpOverlapped = NULL;
+
+    status = NtRemoveIoCompletion( CompletionPort, pCompletionKey, (PULONG_PTR)lpOverlapped,
+                                   &iosb, get_nt_timeout( &wait_time, dwMilliseconds ) );
+    if (status == STATUS_SUCCESS)
+    {
+        *lpNumberOfBytesTransferred = iosb.Information;
+        return TRUE;
+    }
+
+    SetLastError( RtlNtStatusToDosError(status) );
     return FALSE;
 }
 
+
+/******************************************************************************
+ *		PostQueuedCompletionStatus (KERNEL32.@)
+ */
 BOOL WINAPI PostQueuedCompletionStatus( HANDLE CompletionPort, DWORD dwNumberOfBytes,
                                         ULONG_PTR dwCompletionKey, LPOVERLAPPED lpOverlapped)
 {
-    FIXME("%p %d %08lx %p\n", CompletionPort, dwNumberOfBytes, dwCompletionKey, lpOverlapped );
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    NTSTATUS status;
+
+    TRACE("%p %d %08lx %p\n", CompletionPort, dwNumberOfBytes, dwCompletionKey, lpOverlapped );
+
+    status = NtSetIoCompletion( CompletionPort, dwCompletionKey, (ULONG_PTR)lpOverlapped,
+                                STATUS_SUCCESS, dwNumberOfBytes );
+
+    if (status == STATUS_SUCCESS) return TRUE;
+    SetLastError( RtlNtStatusToDosError(status) );
     return FALSE;
 }
 
