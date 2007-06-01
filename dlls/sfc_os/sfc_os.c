@@ -84,3 +84,42 @@ BOOL WINAPI SfcIsFileProtected(HANDLE RpcHandle, LPCWSTR ProtFileName)
     SetLastError(ERROR_FILE_NOT_FOUND);
     return FALSE;
 }
+
+/******************************************************************
+ *              SfcIsKeyProtected     [sfc_os.@]
+ *
+ * Check, if the given Registry Key is protected by the System
+ *
+ * PARAMS
+ *  hKey          [I] Handle to the root registry key
+ *  lpSubKey      [I] Name of the subkey to check
+ *  samDesired    [I] The Registry View to Examine (32 or 64 bit)
+ *
+ * RETURNS
+ *  Failure: FALSE with GetLastError() != ERROR_FILE_NOT_FOUND
+ *  Success: TRUE, when the Key is Protected
+ *           FALSE with GetLastError() == ERROR_FILE_NOT_FOUND,
+ *           when the Key is not Protected
+ *
+ */
+BOOL WINAPI SfcIsKeyProtected(HKEY hKey, LPCWSTR lpSubKey, REGSAM samDesired)
+{
+    static BOOL reported = FALSE;
+
+    if (reported) {
+        TRACE("(%p, %s) stub\n", hKey, debugstr_w(lpSubKey));
+    }
+    else
+    {
+        FIXME("(%p, %s) stub\n", hKey, debugstr_w(lpSubKey));
+        reported = TRUE;
+    }
+
+    if( !hKey ) {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    SetLastError(ERROR_FILE_NOT_FOUND);
+    return FALSE;
+}
