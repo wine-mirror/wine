@@ -1171,7 +1171,7 @@ static int WS2_recv( int fd, struct iovec* iov, int count,
     if ( (n = recvmsg(fd, &hdr, *lpFlags)) == -1 )
     {
         TRACE( "recvmsg error %d\n", errno);
-        goto out;
+        return -1;
     }
 
     if ( lpFrom &&
@@ -1180,11 +1180,9 @@ static int WS2_recv( int fd, struct iovec* iov, int count,
         /* The from buffer was too small, but we read the data
          * anyway. Is that really bad?
          */
-        WSASetLastError( WSAEFAULT );
         WARN( "Address buffer too small\n" );
     }
 
-out:
     TRACE("-> %d\n", n);
     return n;
 }
@@ -1197,7 +1195,7 @@ out:
 static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status)
 {
     ws2_async* wsa = user;
-    int result = 0, fd, err;
+    int result = 0, fd;
 
     TRACE( "(%p %p %x)\n", wsa, iosb, status );
 
@@ -1218,8 +1216,7 @@ static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS stat
         }
         else
         {
-            err = wsaErrno();
-            if ( err == WSAEINTR || err == WSAEWOULDBLOCK )  /* errno: EINTR / EAGAIN */
+            if (errno == EINTR || errno == EAGAIN)
             {
                 status = STATUS_PENDING;
                 _enable_event( wsa->hSocket, FD_READ, 0, 0 );
@@ -1228,8 +1225,8 @@ static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS stat
             else
             {
                 result = 0;
-                status = err; /* FIXME: is this correct ???? */
-                TRACE( "Error: %x\n", err );
+                status = wsaErrno(); /* FIXME: is this correct ???? */
+                TRACE( "Error: %x\n", status );
             }
         }
         break;
@@ -1260,8 +1257,8 @@ static int WS2_send( int fd, struct iovec* iov, int count,
         hdr.msg_namelen = ws_sockaddr_ws2u( to, tolen, &unix_addr );
         if ( !hdr.msg_namelen )
         {
-            WSASetLastError( WSAEFAULT );
-            return SOCKET_ERROR;
+            errno = EFAULT;
+            return -1;
         }
 
 #ifdef HAVE_IPX
@@ -1334,8 +1331,7 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
         }
         else
         {
-            int err = wsaErrno();
-            if ( err == WSAEINTR )
+            if (errno == EINTR || errno == EAGAIN)
             {
                 status = STATUS_PENDING;
                 _enable_event( wsa->hSocket, FD_WRITE, 0, 0 );
@@ -1345,9 +1341,9 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
             {
                 /* We set the status to a winsock error code and check for that
                    later in NtStatusToWSAError () */
-                status = err;
+                status = wsaErrno();
                 result = 0;
-                TRACE( "Error: %x\n", err );
+                TRACE( "Error: %x\n", status );
             }
         }
         break;
