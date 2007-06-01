@@ -3222,7 +3222,7 @@ struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
     int locerr = ENOBUFS;
 #endif
     char buf[100];
-    if( !name) {
+    if( !name || !name[0]) {
         name = buf;
         if( gethostname( buf, 100) == -1) {
             SetLastError( WSAENOBUFS); /* appropriate ? */

@@ -1665,6 +1665,14 @@ static void test_getsockname(void)
     WSACleanup();
 }
 
+static void test_dns(void)
+{
+    struct hostent *h;
+
+    h = gethostbyname("");
+    ok(h != NULL, "gethostbyname(\"\") failed with %d\n", h_errno);
+}
+
 static void test_inet_addr(void)
 {
     u_long addr;
@@ -1850,6 +1858,7 @@ START_TEST( sock )
     test_accept();
     test_getsockname();
     test_inet_addr();
+    test_dns();
 
     test_send();
     test_write_events();
