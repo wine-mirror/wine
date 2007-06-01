@@ -2036,7 +2036,7 @@ static void test_menu_resource_layout(void)
     count = GetMenuItemCount(hmenu);
     ok(count == sizeof(menu_data)/sizeof(menu_data[0]),
        "expected %u menu items, got %u\n",
-       (UINT)sizeof(menu_data)/sizeof(menu_data[0]), count);
+       (UINT)(sizeof(menu_data)/sizeof(menu_data[0])), count);
 
     for (i = 0; i < count; i++)
     {
