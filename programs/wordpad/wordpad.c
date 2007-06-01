@@ -100,17 +100,16 @@ static void AddSeparator(HWND hwndToolBar)
     SendMessage(hwndToolBar, TB_ADDBUTTONS, 1, (LPARAM)&button);
 }
 
-static LPSTR stream_buffer;
-static LONG  stream_buffer_size;
-
 static DWORD CALLBACK stream_in(DWORD_PTR cookie, LPBYTE buffer, LONG cb, LONG *pcb)
 {
-    LONG size = min(stream_buffer_size, cb);
+    HANDLE hFile = (HANDLE)cookie;
+    DWORD read;
 
-    memcpy(buffer, stream_buffer, size);
-    stream_buffer_size -= size;
-    stream_buffer += size;
-    *pcb = size;
+    if(!ReadFile(hFile, buffer, cb, &read, 0))
+        return 1;
+
+    *pcb = read;
+
     return 0;
 }
 
@@ -152,9 +151,6 @@ static void set_caption(LPCWSTR wszNewFileName)
 static void DoOpenFile(LPCWSTR szOpenFileName)
 {
     HANDLE hFile;
-    LPSTR pTemp;
-    DWORD size;
-    DWORD dwNumRead;
     EDITSTREAM es;
 
     hFile = CreateFileW(szOpenFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
@@ -162,38 +158,13 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
     if (hFile == INVALID_HANDLE_VALUE)
         return;
 
-    size = GetFileSize(hFile, NULL);
-    if (size == INVALID_FILE_SIZE)
-    {
-        CloseHandle(hFile);
-        return;
-    }
-    size++;
-
-    pTemp = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!pTemp)
-    {
-        CloseHandle(hFile);
-        return;
-    }
-
-    if (!ReadFile(hFile, pTemp, size, &dwNumRead, NULL))
-    {
-        CloseHandle(hFile);
-        HeapFree(GetProcessHeap(), 0, pTemp);
-        return;
-    }
-    CloseHandle(hFile);
-    pTemp[dwNumRead] = 0;
-
-    memset(&es, 0, sizeof(es));
+    es.dwCookie = (DWORD_PTR)hFile;
     es.pfnCallback = stream_in;
 
-    stream_buffer = pTemp;
-    stream_buffer_size = size;
+    /* FIXME: Handle different file formats */
+    SendMessageW(hEditorWnd, EM_STREAMIN, SF_RTF, (LPARAM)&es);
 
-    SendMessage(hEditorWnd, EM_STREAMIN, SF_RTF, (LPARAM)&es);
-    HeapFree(GetProcessHeap(), 0, pTemp);
+    CloseHandle(hFile);
 
     SetFocus(hEditorWnd);
 
