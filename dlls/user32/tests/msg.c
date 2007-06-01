@@ -9095,6 +9095,38 @@ static void test_nullCallback(void)
     DestroyWindow(hwnd);
 }
 
+static const struct message SetForegroundWindowSeq[] =
+{
+    { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ACTIVATE, sent|wparam, 0 },
+    { WM_ACTIVATEAPP, sent|wparam, 0 },
+    { WM_KILLFOCUS, sent },
+    { 0 }
+};
+
+static void test_SetForegroundWindow(void)
+{
+    HWND hwnd;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test SetForegroundWindow",
+                           WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create overlapped window\n");
+    flush_sequence();
+
+    trace("SetForegroundWindow( 0 )\n");
+    SetForegroundWindow( 0 );
+    ok_sequence(WmEmptySeq, "SetForegroundWindow( 0 ) away from foreground top level window", FALSE);
+    trace("SetForegroundWindow( GetDesktopWindow() )\n");
+    SetForegroundWindow( GetDesktopWindow() );
+    ok_sequence(SetForegroundWindowSeq, "SetForegroundWindow( desktop ) away from "
+                                        "foreground top level window", TRUE);
+    trace("done\n");
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -9166,6 +9198,7 @@ START_TEST(msg)
     test_sys_menu();
     test_dialog_messages();
     test_nullCallback();
+    test_SetForegroundWindow();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)
