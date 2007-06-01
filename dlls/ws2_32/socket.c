@@ -4290,6 +4290,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         }
         else
         {
+            _enable_event(SOCKET2HANDLE(s), FD_READ, 0, 0);
             err = WSAEWOULDBLOCK;
             goto error;
         }
