@@ -2563,7 +2563,7 @@ BOOL WINAPI
 ImageList_SetImageCount (HIMAGELIST himl, UINT iImageCount)
 {
     HDC     hdcBitmap;
-    HBITMAP hbmNewBitmap;
+    HBITMAP hbmNewBitmap, hbmOld;
     INT     nNewCount, nCopyCount;
 
     TRACE("%p %d\n",himl,iImageCount);
@@ -2588,8 +2588,9 @@ ImageList_SetImageCount (HIMAGELIST himl, UINT iImageCount)
 
     if (hbmNewBitmap != 0)
     {
-        SelectObject (hdcBitmap, hbmNewBitmap);
+        hbmOld = SelectObject (hdcBitmap, hbmNewBitmap);
         imagelist_copy_images( himl, himl->hdcImage, hdcBitmap, 0, nCopyCount, 0 );
+        SelectObject (hdcBitmap, hbmOld);
 
 	/* FIXME: delete 'empty' image space? */
 
@@ -2607,8 +2608,9 @@ ImageList_SetImageCount (HIMAGELIST himl, UINT iImageCount)
         hbmNewBitmap = CreateBitmap (sz.cx, sz.cy, 1, 1, NULL);
         if (hbmNewBitmap != 0)
         {
-            SelectObject (hdcBitmap, hbmNewBitmap);
+            hbmOld = SelectObject (hdcBitmap, hbmNewBitmap);
             imagelist_copy_images( himl, himl->hdcMask, hdcBitmap, 0, nCopyCount, 0 );
+            SelectObject (hdcBitmap, hbmOld);
 
 	    /* FIXME: delete 'empty' image space? */
 
