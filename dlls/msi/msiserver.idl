@@ -190,7 +190,7 @@ library WindowsInstaller
         methods:
         [id(DISPID_DATABASE_OPENVIEW)]
             View* OpenView([in] BSTR Sql);
-        [id(DISPID_DATABASE_SUMMARYINFORMATION)]
+        [id(DISPID_DATABASE_SUMMARYINFORMATION), propget]
             SummaryInfo *SummaryInformation([in, optional, defaultvalue(0)] long UpdateCount);
     }
 

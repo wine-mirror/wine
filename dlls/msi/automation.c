@@ -1116,7 +1116,7 @@ static HRESULT WINAPI DatabaseImpl_Invoke(
     switch (dispIdMember)
     {
         case DISPID_DATABASE_SUMMARYINFORMATION:
-            if (wFlags & DISPATCH_METHOD)
+            if (wFlags & DISPATCH_PROPERTYGET)
             {
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
                 if (FAILED(hr))
