@@ -4526,11 +4526,20 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
     WINED3DINDEXBUFFER_DESC  IdxBufDsc;
     GLuint vbo;
 
+    pIB = This->stateBlock->pIndexData;
+    if (!pIB) {
+        /* D3D9 returns D3DERR_INVALIDCALL when DrawIndexedPrimitive is called
+         * without an index buffer set. (The first time at least...)
+         * D3D8 simply dies, but I doubt it can do much harm to return
+         * D3DERR_INVALIDCALL there as well. */
+        ERR("(%p) : Called without a valid index buffer set, returning WINED3DERR_INVALIDCALL\n", This);
+        return WINED3DERR_INVALIDCALL;
+    }
+
     if(This->stateBlock->streamIsUP) {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
         This->stateBlock->streamIsUP = FALSE;
     }
-    pIB = This->stateBlock->pIndexData;
     vbo = ((IWineD3DIndexBufferImpl *) pIB)->vbo;
 
     TRACE("(%p) : Type=(%d,%s), min=%d, CountV=%d, startIdx=%d, countP=%d\n", This,
