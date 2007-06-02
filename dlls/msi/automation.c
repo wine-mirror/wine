@@ -758,8 +758,6 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
 
                 static WCHAR szEmpty[] = {0};
 
-                VariantClear(pVarResult);
-
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
                 pid = V_I4(&varg0);
