@@ -617,9 +617,10 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return MMSYSERR_ALLOCATED;
     }
 
-    if ((dwFlags & WAVE_DIRECTSOUND) && !(wwo->outcaps.dwSupport & WAVECAPS_DIRECTSOUND))
-	/* not supported, ignore it */
-	dwFlags &= ~WAVE_DIRECTSOUND;
+    if (dwFlags & WAVE_DIRECTSOUND)
+        FIXME("Why are we called with DirectSound flag? It doesn't use MMSYSTEM any more\n");
+        /* not supported, ignore it */
+    dwFlags &= ~WAVE_DIRECTSOUND;
 
     flags = SND_PCM_NONBLOCK;
 
@@ -693,18 +694,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     if ((err = snd_pcm_hw_params_set_channels(pcm, hw_params, wwo->format.Format.nChannels)) < 0) {
         WARN("unable to set required channels: %d\n", wwo->format.Format.nChannels);
-        if (dwFlags & WAVE_DIRECTSOUND) {
-            if (wwo->format.Format.nChannels > 2)
-                wwo->format.Format.nChannels = 2;
-            else if (wwo->format.Format.nChannels == 2)
-                wwo->format.Format.nChannels = 1;
-            else if (wwo->format.Format.nChannels == 1)
-                wwo->format.Format.nChannels = 2;
-            /* recalculate block align and bytes per second */
-            wwo->format.Format.nBlockAlign = (wwo->format.Format.wBitsPerSample * wwo->format.Format.nChannels) / 8;
-            wwo->format.Format.nAvgBytesPerSec = wwo->format.Format.nSamplesPerSec * wwo->format.Format.nBlockAlign;
-            WARN("changed number of channels from %d to %d\n", lpDesc->lpFormat->nChannels, wwo->format.Format.nChannels);
-        }
         EXIT_ON_ERROR( snd_pcm_hw_params_set_channels(pcm, hw_params, wwo->format.Format.nChannels ), WAVERR_BADFORMAT, "unable to set required channels" );
     }
 
@@ -738,23 +727,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     if ((err = snd_pcm_hw_params_set_format(pcm, hw_params, format)) < 0) {
         WARN("unable to set required format: %s\n", snd_pcm_format_name(format));
-        if (dwFlags & WAVE_DIRECTSOUND) {
-            if ((wwo->format.Format.wFormatTag == WAVE_FORMAT_PCM) ||
-               ((wwo->format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) &&
-               IsEqualGUID(&wwo->format.SubFormat, & KSDATAFORMAT_SUBTYPE_PCM))) {
-                if (wwo->format.Format.wBitsPerSample != 16) {
-                    wwo->format.Format.wBitsPerSample = 16;
-                    format = SND_PCM_FORMAT_S16_LE;
-                } else {
-                    wwo->format.Format.wBitsPerSample = 8;
-                    format = SND_PCM_FORMAT_U8;
-                }
-                /* recalculate block align and bytes per second */
-                wwo->format.Format.nBlockAlign = (wwo->format.Format.wBitsPerSample * wwo->format.Format.nChannels) / 8;
-                wwo->format.Format.nAvgBytesPerSec = wwo->format.Format.nSamplesPerSec * wwo->format.Format.nBlockAlign;
-                WARN("changed bits per sample from %d to %d\n", lpDesc->lpFormat->wBitsPerSample, wwo->format.Format.wBitsPerSample);
-            }
-        }
         EXIT_ON_ERROR( snd_pcm_hw_params_set_format(pcm, hw_params, format), WAVERR_BADFORMAT, "unable to set required format" );
     }
 
@@ -767,26 +739,9 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         goto errexit;
     }
     if (!ALSA_NearMatch(rate, wwo->format.Format.nSamplesPerSec)) {
-        if (dwFlags & WAVE_DIRECTSOUND) {
-            WARN("changed sample rate from %d Hz to %d Hz\n", wwo->format.Format.nSamplesPerSec, rate);
-            wwo->format.Format.nSamplesPerSec = rate;
-            /* recalculate bytes per second */
-            wwo->format.Format.nAvgBytesPerSec = wwo->format.Format.nSamplesPerSec * wwo->format.Format.nBlockAlign;
-        } else {
-            WARN("Rate doesn't match (requested %d Hz, got %d Hz)\n", wwo->format.Format.nSamplesPerSec, rate);
-            retcode = WAVERR_BADFORMAT;
-            goto errexit;
-        }
-    }
-
-    /* give the new format back to direct sound */
-    if (dwFlags & WAVE_DIRECTSOUND) {
-        lpDesc->lpFormat->wFormatTag = wwo->format.Format.wFormatTag;
-        lpDesc->lpFormat->nChannels = wwo->format.Format.nChannels;
-        lpDesc->lpFormat->nSamplesPerSec = wwo->format.Format.nSamplesPerSec;
-        lpDesc->lpFormat->wBitsPerSample = wwo->format.Format.wBitsPerSample;
-        lpDesc->lpFormat->nBlockAlign = wwo->format.Format.nBlockAlign;
-        lpDesc->lpFormat->nAvgBytesPerSec = wwo->format.Format.nAvgBytesPerSec;
+        WARN("Rate doesn't match (requested %d Hz, got %d Hz)\n", wwo->format.Format.nSamplesPerSec, rate);
+        retcode = WAVERR_BADFORMAT;
+        goto errexit;
     }
 
     TRACE("Got this format: %dx%dx%d %s\n",
@@ -806,7 +761,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     err = snd_pcm_hw_params_get_buffer_size(hw_params, &buffer_size);
 
     snd_pcm_sw_params_current(pcm, sw_params);
-    EXIT_ON_ERROR( snd_pcm_sw_params_set_start_threshold(pcm, sw_params, dwFlags & WAVE_DIRECTSOUND ? INT_MAX : 1 ), MMSYSERR_ERROR, "unable to set start threshold");
+    EXIT_ON_ERROR( snd_pcm_sw_params_set_start_threshold(pcm, sw_params, 1), MMSYSERR_ERROR, "unable to set start threshold");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_silence_size(pcm, sw_params, 0), MMSYSERR_ERROR, "unable to set silence size");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_avail_min(pcm, sw_params, period_size), MMSYSERR_ERROR, "unable to set avail min");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_xfer_align(pcm, sw_params, 1), MMSYSERR_ERROR, "unable to set xfer align");
@@ -829,24 +784,19 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     ALSA_InitRingMessage(&wwo->msgRing);
 
-    if (!(dwFlags & WAVE_DIRECTSOUND)) {
-	wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
-        if (wwo->hThread)
-            SetThreadPriority(wwo->hThread, THREAD_PRIORITY_TIME_CRITICAL);
-        else
-        {
-            ERR("Thread creation for the wodPlayer failed!\n");
-	    CloseHandle(wwo->hStartUpEvent);
-            retcode = MMSYSERR_NOMEM;
-            goto errexit;
-        }
-	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
-	CloseHandle(wwo->hStartUpEvent);
-    } else {
-	wwo->hThread = INVALID_HANDLE_VALUE;
-	wwo->dwThreadID = 0;
+    wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
+    if (wwo->hThread)
+        SetThreadPriority(wwo->hThread, THREAD_PRIORITY_TIME_CRITICAL);
+    else
+    {
+        ERR("Thread creation for the wodPlayer failed!\n");
+        CloseHandle(wwo->hStartUpEvent);
+        retcode = MMSYSERR_NOMEM;
+        goto errexit;
     }
+    WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
+    CloseHandle(wwo->hStartUpEvent);
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
     TRACE("handle=%p\n", pcm);
