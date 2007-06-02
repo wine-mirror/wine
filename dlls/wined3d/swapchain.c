@@ -555,3 +555,33 @@ const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
     IWineD3DSwapChainImpl_SetGammaRamp,
     IWineD3DSwapChainImpl_GetGammaRamp
 };
+
+WineD3DContext *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *iface) {
+    WineD3DContext *ctx;
+    IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *) iface;
+    WineD3DContext **newArray;
+
+    TRACE("Creating a new context for swapchain %p, thread %d\n", This, GetCurrentThreadId());
+
+    ctx = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer,
+                        This->context[0]->display, This->win);
+    if(!ctx) {
+        ERR("Failed to create a new context for the swapchain\n");
+        return NULL;
+    }
+
+    newArray = HeapAlloc(GetProcessHeap(), 0, sizeof(*newArray) * This->num_contexts + 1);
+    if(!newArray) {
+        ERR("Out of memory when trying to allocate a new context array\n");
+        DestroyContext(This->wineD3DDevice, ctx);
+        return NULL;
+    }
+    memcpy(newArray, This->context, sizeof(*newArray) * This->num_contexts);
+    HeapFree(GetProcessHeap(), 0, This->context);
+    newArray[This->num_contexts] = ctx;
+    This->context = newArray;
+    This->num_contexts++;
+
+    TRACE("Returning context %p\n", ctx);
+    return ctx;
+}

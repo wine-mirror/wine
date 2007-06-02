@@ -1412,6 +1412,8 @@ typedef struct IWineD3DSwapChainImpl
 
 extern const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;
 
+WineD3DContext *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *iface);
+
 /*****************************************************************************
  * Utility function prototypes 
  */

@@ -668,8 +668,8 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
             }
 
             if(!context) {
-                /* TODO: Create a new context for the thread */
-                FIXME("Context creation for a new thread not implemented yet\n");
+                /* Create a new context for the thread */
+                context = IWineD3DSwapChainImpl_CreateContextForThread(swapchain);
             }
             This->render_offscreen = FALSE;
             /* The context != This->activeContext will catch a NOP context change. This can occur
