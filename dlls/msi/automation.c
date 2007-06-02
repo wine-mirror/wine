@@ -764,7 +764,7 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
                 if (FAILED(hr)) return hr;
                 pid = V_I4(&varg0);
 
-                if (pid == PID_CODEPAGE || (pid >= PID_PAGECOUNT && pid <= PID_CHARCOUNT) || PID_SECURITY)
+                if (pid == PID_CODEPAGE || (pid >= PID_PAGECOUNT && pid <= PID_CHARCOUNT) || pid == PID_SECURITY)
                 {
                     ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, &value,
                                                      NULL, NULL, NULL);
