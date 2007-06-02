@@ -830,7 +830,6 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
             break;
 
         default:
-            ERR("Member not found: %d\n", dispIdMember);
             return DISP_E_MEMBERNOTFOUND;
     }
 
@@ -1849,7 +1848,6 @@ static HRESULT WINAPI InstallerImpl_Invoke(
             break;
 
          default:
-            ERR("Member not found: %d\n", dispIdMember);
             return DISP_E_MEMBERNOTFOUND;
     }
 
