@@ -312,6 +312,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     }
     ret->surface = (IWineD3DSurface *) target;
     ret->isPBuffer = win == 0;
+    ret->tid = GetCurrentThreadId();
 
     TRACE("Successfully created new context %p\n", ret);
 
@@ -641,7 +642,7 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
  *
  *****************************************************************************/
 void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextUsage usage) {
-    DWORD tid = This->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED ? GetCurrentThreadId() : 0;
+    DWORD                         tid = GetCurrentThreadId();
     int                           i;
     DWORD                         dirtyState, idx;
     BYTE                          shift;
@@ -650,7 +651,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
 
-    if(This->lastActiveRenderTarget != target) {
+    if(This->lastActiveRenderTarget != target || tid != This->lastThread) {
         IWineD3DSwapChain *swapchain = NULL;
         HRESULT hr;
         BOOL readTexture = wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_offscreen;
@@ -658,7 +659,18 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **) &swapchain);
         if(hr == WINED3D_OK && swapchain) {
             TRACE("Rendering onscreen\n");
-            context = ((IWineD3DSwapChainImpl *) swapchain)->context[0];
+
+            context = NULL;
+            for(i = 0; i < ((IWineD3DSwapChainImpl *) swapchain)->num_contexts; i++) {
+                if(((IWineD3DSwapChainImpl *) swapchain)->context[i]->tid == tid) {
+                    context = ((IWineD3DSwapChainImpl *) swapchain)->context[i];
+                }
+            }
+
+            if(!context) {
+                /* TODO: Create a new context for the thread */
+                FIXME("Context creation for a new thread not implemented yet\n");
+            }
             This->render_offscreen = FALSE;
             /* The context != This->activeContext will catch a NOP context change. This can occur
              * if we are switching back to swapchain rendering in case of FBO or Back Buffer offscreen
@@ -682,9 +694,15 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                 Context_MarkStateDirty(context, STATE_VDECL);
                 Context_MarkStateDirty(context, STATE_VIEWPORT);
             }
+
         } else {
             TRACE("Rendering offscreen\n");
             This->render_offscreen = TRUE;
+
+            if(tid != This->lastThread) {
+                FIXME("Offscreen rendering is only supported from the creation thread yet\n");
+                FIXME("Expect a crash now ...\n");
+            }
 
             switch(wined3d_settings.offscreen_rendering_mode) {
                 case ORM_FBO:

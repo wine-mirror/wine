@@ -736,8 +736,9 @@ struct IWineD3DDeviceImpl
 
     /* Context management */
     WineD3DContext          **contexts;                  /* Dynamic array containing pointers to context structures */
-    WineD3DContext          *activeContext;              /* Only 0 for now      */
-    UINT                    numContexts;                 /* Always 1 for now    */
+    WineD3DContext          *activeContext;
+    DWORD                   lastThread;
+    UINT                    numContexts;
     WineD3DContext          *pbufferContext;             /* The context that has a pbuffer as drawable */
     DWORD                   pbufferWidth, pbufferHeight; /* Size of the buffer drawable */
 };
