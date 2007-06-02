@@ -1289,7 +1289,7 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
         else if (vt == VT_I4)
             ok(V_I4(&varresult) == entry->iValue, "SummaryInfo_Property (pid %d) I4 result expected to be %d, but was %d\n",
                entry->property, entry->iValue, V_I4(&varresult));
-        else if (vt == VT_DATE) todo_wine
+        else if (vt == VT_DATE)
         {
             SYSTEMTIME st;
             FILETIME ft;
@@ -1312,11 +1312,11 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
 
     /* Invalid pids */
     hr = SummaryInfo_PropertyGet(pSummaryInfo, -1, &varresult, VT_EMPTY);
-    todo_wine ok(hr == DISP_E_EXCEPTION, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
+    ok(hr == DISP_E_EXCEPTION, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
     ok_exception(hr, szPropertyException);
 
     hr = SummaryInfo_PropertyGet(pSummaryInfo, 1000, &varresult, VT_EMPTY);
-    todo_wine ok(hr == DISP_E_EXCEPTION, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
+    ok(hr == DISP_E_EXCEPTION, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
     ok_exception(hr, szPropertyException);
 
     /* Unsupported pids */
@@ -1327,21 +1327,17 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
     ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
 
     /* Pids we have not set, one for each type */
-    _invoke_todo_vtResult = 1;
-
     hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_CODEPAGE, &varresult, VT_EMPTY);
     ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
 
     hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_TITLE, &varresult, VT_EMPTY);
-    todo_wine ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
 
     hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_EDITTIME, &varresult, VT_EMPTY);
     ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
 
     hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_CHARCOUNT, &varresult, VT_EMPTY);
     ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
-
-    _invoke_todo_vtResult = 0;
 }
 
 static void test_Database(IDispatch *pDatabase)

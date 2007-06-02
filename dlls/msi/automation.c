@@ -764,17 +764,15 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
 
                 if (pid == PID_CODEPAGE || (pid >= PID_PAGECOUNT && pid <= PID_CHARCOUNT) || pid == PID_SECURITY)
                 {
-                    ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, &value,
-                                                     NULL, NULL, NULL);
-                    if (ret != ERROR_SUCCESS)
-                        return DISP_E_EXCEPTION;
-
-                    if (pid == PID_CODEPAGE)
+                    if ((ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, &value,
+                                                          NULL, NULL, NULL)) != ERROR_SUCCESS)
+                        ERR("MsiSummaryInfoGetProperty returned %d\n", ret);
+                    else if (type == VT_I2)
                     {
                         V_VT(pVarResult) = VT_I2;
                         V_I2(pVarResult) = value;
                     }
-                    else
+                    else if (type == VT_I4)
                     {
                         V_VT(pVarResult) = VT_I4;
                         V_I4(pVarResult) = value;
@@ -785,44 +783,43 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
                     LPWSTR str;
                     DWORD size = 0;
 
-                    ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, NULL,
-                                                     NULL, szEmpty, &size);
-                    if (ret != ERROR_MORE_DATA)
-                        return DISP_E_EXCEPTION;
-
-                    str = msi_alloc(++size * sizeof(WCHAR));
-                    if (!str)
-                        return DISP_E_EXCEPTION;
-
-                    ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, NULL,
-                                                     NULL, str, &size);
-                    if (ret != ERROR_SUCCESS)
+                    if ((ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, NULL,
+                                                          NULL, szEmpty, &size)) == ERROR_MORE_DATA)
                     {
+                        if (!(str = msi_alloc(++size * sizeof(WCHAR))))
+                            ERR("Out of memory\n");
+                        else if ((ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, NULL,
+                                                                   NULL, str, &size)) == ERROR_SUCCESS)
+                        {
+                            V_VT(pVarResult) = VT_BSTR;
+                            V_BSTR(pVarResult) = SysAllocString(str);
+                        }
                         msi_free(str);
-                        return DISP_E_EXCEPTION;
                     }
-
-                    V_VT(pVarResult) = VT_BSTR;
-                    V_BSTR(pVarResult) = SysAllocString(str);
-                    msi_free(str);
+                    if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA)
+                        ERR("MsiSummaryInfoGetProperty returned %d\n", ret);
                 }
                 else if (pid >= PID_EDITTIME && pid <= PID_LASTSAVE_DTM)
                 {
-                    FILETIME ft;
+                    FILETIME ft, ftlocal;
                     SYSTEMTIME st;
                     DATE date;
 
-                    ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, &value,
-                                                     &ft, NULL, NULL);
-                    if (ret != ERROR_SUCCESS)
-                        return DISP_E_EXCEPTION;
+                    if ((ret = MsiSummaryInfoGetPropertyW(This->msiHandle, pid, &type, &value,
+                                                          &ft, NULL, NULL)) != ERROR_SUCCESS)
+                        ERR("MsiSummaryInfoGetProperty returned %d\n", ret);
+                    else if (type == VT_FILETIME)
+                    {
+                        FileTimeToLocalFileTime(&ft, &ftlocal);
+                        FileTimeToSystemTime(&ftlocal, &st);
+                        SystemTimeToVariantTime(&st, &date);
 
-                    FileTimeToSystemTime(&ft, &st);
-                    SystemTimeToVariantTime(&st, &date);
-
-                    V_VT(pVarResult) = VT_DATE;
-                    V_DATE(pVarResult) = date;
+                        V_VT(pVarResult) = VT_DATE;
+                        V_DATE(pVarResult) = date;
+                    }
                 }
+                else if (pid != PID_DICTIONARY && pid != PID_THUMBNAIL)
+                    return DISP_E_EXCEPTION;
             }
             else return DISP_E_MEMBERNOTFOUND;
             break;
