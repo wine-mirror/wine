@@ -1331,7 +1331,12 @@ HLOCAL16 WINAPI LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
 	TRACE("size increase, making new free block\n");
         LOCAL_GrowArenaUpward(ds, arena, nextarena - arena);
         if (flags & LMEM_ZEROINIT)
-            memset((char *)pArena + oldsize, 0, size - oldsize);
+        {
+            char *oldend = (char *)pArena + ARENA_HEADER_SIZE + oldsize;
+            char *newend = ptr + pArena->next;
+            TRACE("Clearing memory from %p to %p (DS -> %p)\n", oldend, newend, ptr);
+            memset(oldend, 0, newend - oldend);
+        }
 
         TRACE("returning %04x\n", handle );
         return handle;
