@@ -237,9 +237,16 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
  *                  Asynchronous file I/O                              *
  */
 
-typedef struct
+struct async_fileio
 {
     HANDLE              handle;
+    PIO_APC_ROUTINE     apc;
+    void               *apc_arg;
+};
+
+typedef struct
+{
+    struct async_fileio io;
     char*               buffer;
     unsigned int        already;
     unsigned int        count;
@@ -248,12 +255,20 @@ typedef struct
 
 typedef struct
 {
-    HANDLE              handle;
+    struct async_fileio io;
     const char         *buffer;
     unsigned int        already;
     unsigned int        count;
 } async_fileio_write;
 
+
+/* callback for file I/O user APC */
+static void WINAPI fileio_apc( void *arg, IO_STATUS_BLOCK *io, ULONG reserved )
+{
+    struct async_fileio *async = arg;
+    if (async->apc) async->apc( async->apc_arg, io, reserved );
+    RtlFreeHeap( GetProcessHeap(), 0, async );
+}
 
 /***********************************************************************
  *           FILE_GetNtStatus(void)
@@ -315,7 +330,7 @@ static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATU
     {
     case STATUS_ALERTED: /* got some new data */
         /* check to see if the data is ready (non-blocking) */
-        if ((status = server_get_unix_fd( fileio->handle, FILE_READ_DATA, &fd,
+        if ((status = server_get_unix_fd( fileio->io.handle, FILE_READ_DATA, &fd,
                                           &needs_close, NULL, NULL )))
             break;
 
@@ -365,7 +380,6 @@ static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATU
     {
         iosb->u.Status = status;
         iosb->Information = fileio->already;
-        RtlFreeHeap( GetProcessHeap(), 0, fileio );
     }
     return status;
 }
@@ -608,7 +622,9 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 status = STATUS_NO_MEMORY;
                 goto done;
             }
-            fileio->handle = hFile;
+            fileio->io.handle  = hFile;
+            fileio->io.apc     = apc;
+            fileio->io.apc_arg = apc_user;
             fileio->already = total;
             fileio->count = length;
             fileio->buffer = buffer;
@@ -622,8 +638,8 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 req->async.callback = FILE_AsyncReadService;
                 req->async.iosb     = io_status;
                 req->async.arg      = fileio;
-                req->async.apc      = apc;
-                req->async.apc_arg  = apc_user;
+                req->async.apc      = fileio_apc;
+                req->async.apc_arg  = fileio;
                 req->async.event    = hEvent;
                 status = wine_server_call( req );
             }
@@ -701,7 +717,7 @@ static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTAT
     {
     case STATUS_ALERTED:
         /* write some data (non-blocking) */
-        if ((status = server_get_unix_fd( fileio->handle, FILE_WRITE_DATA, &fd,
+        if ((status = server_get_unix_fd( fileio->io.handle, FILE_WRITE_DATA, &fd,
                                           &needs_close, &type, NULL )))
             break;
 
@@ -734,7 +750,6 @@ static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTAT
     {
         iosb->u.Status = status;
         iosb->Information = fileio->already;
-        RtlFreeHeap( GetProcessHeap(), 0, fileio );
     }
     return status;
 }
@@ -842,7 +857,9 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                 status = STATUS_NO_MEMORY;
                 goto done;
             }
-            fileio->handle = hFile;
+            fileio->io.handle  = hFile;
+            fileio->io.apc     = apc;
+            fileio->io.apc_arg = apc_user;
             fileio->already = total;
             fileio->count = length;
             fileio->buffer = buffer;
@@ -855,8 +872,8 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                 req->async.callback = FILE_AsyncWriteService;
                 req->async.iosb     = io_status;
                 req->async.arg      = fileio;
-                req->async.apc      = apc;
-                req->async.apc_arg  = apc_user;
+                req->async.apc      = fileio_apc;
+                req->async.apc_arg  = fileio;
                 req->async.event    = hEvent;
                 status = wine_server_call( req );
             }
@@ -920,9 +937,11 @@ done:
 
 struct async_ioctl
 {
-    HANDLE handle;   /* handle to the device */
-    void  *buffer;   /* buffer for output */
-    ULONG  size;     /* size of buffer */
+    HANDLE          handle;   /* handle to the device */
+    void           *buffer;   /* buffer for output */
+    ULONG           size;     /* size of buffer */
+    PIO_APC_ROUTINE apc;      /* user apc params */
+    void           *apc_arg;
 };
 
 /* callback for ioctl async I/O completion */
@@ -942,12 +961,16 @@ static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS statu
         }
         SERVER_END_REQ;
     }
-    if (status != STATUS_PENDING)
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, async );
-        io->u.Status = status;
-    }
+    if (status != STATUS_PENDING) io->u.Status = status;
     return status;
+}
+
+/* callback for ioctl user APC */
+static void WINAPI ioctl_apc( void *arg, IO_STATUS_BLOCK *io, ULONG reserved )
+{
+    struct async_ioctl *async = arg;
+    if (async->apc) async->apc( async->apc_arg, io, reserved );
+    RtlFreeHeap( GetProcessHeap(), 0, async );
 }
 
 /* do a ioctl call through the server */
@@ -964,9 +987,11 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
 
     if (!(async = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*async) )))
         return STATUS_NO_MEMORY;
-    async->handle = handle;
-    async->buffer = out_buffer;
-    async->size   = out_size;
+    async->handle  = handle;
+    async->buffer  = out_buffer;
+    async->size    = out_size;
+    async->apc     = apc;
+    async->apc_arg = apc_context;
 
     SERVER_START_REQ( ioctl )
     {
@@ -975,8 +1000,8 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         req->async.callback = ioctl_completion;
         req->async.iosb     = io;
         req->async.arg      = async;
-        req->async.apc      = apc;
-        req->async.apc_arg  = apc_context;
+        req->async.apc      = (apc || event) ? ioctl_apc : NULL;
+        req->async.apc_arg  = async;
         req->async.event    = event;
         wine_server_add_data( req, in_buffer, in_size );
         wine_server_set_reply( req, out_buffer, out_size );
@@ -998,6 +1023,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         NtWaitForSingleObject( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT), NULL );
         status = io->u.Status;
         NtClose( wait_handle );
+        RtlFreeHeap( GetProcessHeap(), 0, async );
     }
 
     return status;

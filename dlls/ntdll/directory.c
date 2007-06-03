@@ -2168,7 +2168,17 @@ struct read_changes_info
     HANDLE FileHandle;
     PVOID Buffer;
     ULONG BufferSize;
+    PIO_APC_ROUTINE apc;
+    void           *apc_arg;
 };
+
+/* callback for ioctl user APC */
+static void WINAPI read_changes_user_apc( void *arg, IO_STATUS_BLOCK *io, ULONG reserved )
+{
+    struct read_changes_info *info = arg;
+    if (info->apc) info->apc( info->apc_arg, io, reserved );
+    RtlFreeHeap( GetProcessHeap(), 0, info );
+}
 
 static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status )
 {
@@ -2221,8 +2231,6 @@ static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS st
 
     iosb->u.Status = ret;
     iosb->Information = len;
-
-    RtlFreeHeap( GetProcessHeap(), 0, info );
     return ret;
 }
 
@@ -2265,6 +2273,8 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
     info->FileHandle = FileHandle;
     info->Buffer     = Buffer;
     info->BufferSize = BufferSize;
+    info->apc        = ApcRoutine;
+    info->apc_arg    = ApcContext;
 
     SERVER_START_REQ( read_directory_changes )
     {
@@ -2275,8 +2285,8 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
         req->async.callback = read_changes_apc;
         req->async.iosb     = IoStatusBlock;
         req->async.arg      = info;
-        req->async.apc      = ApcRoutine;
-        req->async.apc_arg  = ApcContext;
+        req->async.apc      = read_changes_user_apc;
+        req->async.apc_arg  = info;
         req->async.event    = Event;
         status = wine_server_call( req );
     }
