@@ -189,6 +189,7 @@ extern WCHAR anykey[];
 extern WCHAR version_string[];
 
 /* Translated messages */
+#define WCMD_ALLHELP          1000
 #define WCMD_CONFIRM          1001
 #define WCMD_YES              1002
 #define WCMD_NO               1003
