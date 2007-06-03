@@ -646,6 +646,8 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     if (ref)
         return ref;
 
+    IDirectInputDevice_Unacquire(iface);
+
     /* Free the device name */
     HeapFree(GetProcessHeap(),0,This->name);
 

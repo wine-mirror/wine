@@ -268,7 +268,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     if (ref)
 	return ref;
 
-    set_dinput_hook(WH_MOUSE_LL, NULL);
+    IDirectInputDevice_Unacquire(iface);
 
     /* Free the data queue */
     HeapFree(GetProcessHeap(), 0, This->base.data_queue);

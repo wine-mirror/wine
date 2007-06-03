@@ -516,6 +516,8 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 	if (ref)
 		return ref;
 
+        IDirectInputDevice_Unacquire(iface);
+
 	/* Reset the FF state, free all effects, etc */
 	IDirectInputDevice8_SendForceFeedbackCommand(iface, DISFFC_RESET);
 

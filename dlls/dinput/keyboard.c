@@ -281,7 +281,7 @@ static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     ref = InterlockedDecrement(&This->base.ref);
     if (ref) return ref;
 
-    set_dinput_hook(WH_KEYBOARD_LL, NULL);
+    IDirectInputDevice_Unacquire(iface);
 
     HeapFree(GetProcessHeap(), 0, This->base.data_queue);
 
