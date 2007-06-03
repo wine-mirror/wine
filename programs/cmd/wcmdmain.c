@@ -1535,9 +1535,15 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start) {
     /* Find the end of the environment variable, and extract name */
     endOfVar = strchrW(start+1, '%');
     if (endOfVar == NULL) {
-      /* FIXME: Some special conditions here depending on whether
+      /* In batch program, missing terminator for % and no following
+         ':' just removes the '%'                                   */
+      s = WCMD_strdupW(start + 1);
+      strcpyW (start, s);
+      free(s);
+
+      /* FIXME: Some other special conditions here depending on whether
          in batch, complex or not, and whether env var exists or not! */
-      return start+1;
+      return start;
     }
     memcpy(thisVar, start, ((endOfVar - start) + 1) * sizeof(WCHAR));
     thisVar[(endOfVar - start)+1] = 0x00;
