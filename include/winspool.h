@@ -1349,10 +1349,8 @@ BOOL WINAPI AddPortA(LPSTR pName, HWND hWnd, LPSTR pMonitorName);
 BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName);
 #define AddPort WINELIB_NAME_AW(AddPort)
 
-BOOL WINAPI AddPortExA(HANDLE hMonitor, LPSTR pName, DWORD Level,
-                       LPBYTE lpBuffer, LPSTR lpMonitorName);
-BOOL WINAPI AddPortExW(HANDLE hMonitor, LPWSTR pName, DWORD Level,
-                       LPBYTE lpBuffer, LPWSTR lpMonitorName);
+BOOL WINAPI AddPortExA(LPSTR, DWORD, LPBYTE, LPSTR);
+BOOL WINAPI AddPortExW(LPWSTR, DWORD, LPBYTE, LPWSTR);
 #define AddPortEx WINELIB_NAME_AW(AddPortEx)
 
 BOOL WINAPI ConfigurePortA(LPSTR pName, HWND hWnd, LPSTR pPortName);

@@ -6091,11 +6091,75 @@ BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
  * See AddPortExW.
  *
  */
-BOOL WINAPI AddPortExA(HANDLE hMonitor, LPSTR pName, DWORD Level, LPBYTE lpBuffer, LPSTR lpMonitorName)
+BOOL WINAPI AddPortExA(LPSTR pName, DWORD level, LPBYTE pBuffer, LPSTR pMonitorName)
 {
-    FIXME("(%p, %s, %d, %p, %s), stub!\n",hMonitor, debugstr_a(pName), Level,
-          lpBuffer, debugstr_a(lpMonitorName));
-    return FALSE;
+    PORT_INFO_2W   pi2W;
+    PORT_INFO_2A * pi2A;
+    LPWSTR  nameW = NULL;
+    LPWSTR  monitorW = NULL;
+    DWORD   len;
+    BOOL    res;
+
+    pi2A = (PORT_INFO_2A *) pBuffer;
+
+    TRACE("(%s, %d, %p, %s): %s\n", debugstr_a(pName), level, pBuffer,
+            debugstr_a(pMonitorName), debugstr_a(pi2A ? pi2A->pPortName : NULL));
+
+    if ((level < 1) || (level > 2)) {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    if (!pi2A) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pName, -1, NULL, 0);
+        nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pName, -1, nameW, len);
+    }
+
+    if (pMonitorName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pMonitorName, -1, NULL, 0);
+        monitorW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pMonitorName, -1, monitorW, len);
+    }
+
+    ZeroMemory(&pi2W, sizeof(PORT_INFO_2W));
+
+    if (pi2A->pPortName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pi2A->pPortName, -1, NULL, 0);
+        pi2W.pPortName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pi2A->pPortName, -1, pi2W.pPortName, len);
+    }
+
+    if (level > 1) {
+        if (pi2A->pMonitorName) {
+            len = MultiByteToWideChar(CP_ACP, 0, pi2A->pMonitorName, -1, NULL, 0);
+            pi2W.pMonitorName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, pi2A->pMonitorName, -1, pi2W.pMonitorName, len);
+        }
+
+        if (pi2A->pDescription) {
+            len = MultiByteToWideChar(CP_ACP, 0, pi2A->pDescription, -1, NULL, 0);
+            pi2W.pDescription = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, pi2A->pDescription, -1, pi2W.pDescription, len);
+        }
+        pi2W.fPortType = pi2A->fPortType;
+        pi2W.Reserved = pi2A->Reserved;
+    }
+
+    res = AddPortExW(nameW, level, (LPBYTE) &pi2W, monitorW);
+
+    HeapFree(GetProcessHeap(), 0, nameW);
+    HeapFree(GetProcessHeap(), 0, monitorW);
+    HeapFree(GetProcessHeap(), 0, pi2W.pPortName);
+    HeapFree(GetProcessHeap(), 0, pi2W.pMonitorName);
+    HeapFree(GetProcessHeap(), 0, pi2W.pDescription);
+    return res;
+
 }
 
 /******************************************************************************
@@ -6104,25 +6168,60 @@ BOOL WINAPI AddPortExA(HANDLE hMonitor, LPSTR pName, DWORD Level, LPBYTE lpBuffe
  * Add a Port for a specific Monitor, without presenting a user interface
  *
  * PARAMS
- *  hMonitor      [I] Handle from InitializePrintMonitor2()
  *  pName         [I] Servername or NULL (local Computer)
- *  Level         [I] Structure-Level (1 or 2) for lpBuffer
- *  lpBuffer      [I] PTR to: PORT_INFO_1 or PORT_INFO_2
- *  lpMonitorName [I] Name of the Monitor that manage the Port or NULL
+ *  level         [I] Structure-Level (1 or 2) for pBuffer
+ *  pBuffer       [I] PTR to: PORT_INFO_1 or PORT_INFO_2
+ *  pMonitorName  [I] Name of the Monitor that manage the Port
  *
  * RETURNS
  *  Success: TRUE
  *  Failure: FALSE
  *
- * BUGS
- *  only a Stub
- *
  */
-BOOL WINAPI AddPortExW(HANDLE hMonitor, LPWSTR pName, DWORD Level, LPBYTE lpBuffer, LPWSTR lpMonitorName)
+BOOL WINAPI AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer, LPWSTR pMonitorName)
 {
-    FIXME("(%p, %s, %d, %p, %s), stub!\n", hMonitor, debugstr_w(pName), Level,
-          lpBuffer, debugstr_w(lpMonitorName));
-    return FALSE;
+    PORT_INFO_2W * pi2;
+    monitor_t * pm;
+    DWORD       res = FALSE;
+
+    pi2 = (PORT_INFO_2W *) pBuffer;
+
+    TRACE("(%s, %d, %p, %s): %s %s %s\n", debugstr_w(pName), level, pBuffer,
+            debugstr_w(pMonitorName), debugstr_w(pi2 ? pi2->pPortName : NULL),
+            debugstr_w(((level > 1) && pi2) ? pi2->pMonitorName : NULL),
+            debugstr_w(((level > 1) && pi2) ? pi2->pDescription : NULL));
+
+
+    if ((level < 1) || (level > 2)) {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    if (!pi2) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    /* we need a valid Monitorname */
+    if (!pMonitorName) {
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+    if (!pMonitorName[0]) {
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+
+    /* load the Monitor */
+    pm = monitor_load(pMonitorName, NULL);
+    if (!pm) return FALSE;
+
+    if (pm->monitor && pm->monitor->pfnAddPortEx) {
+        res = pm->monitor->pfnAddPortEx(pName, level, pBuffer, pMonitorName);
+        TRACE("got %u with %u\n", res, GetLastError());
+    }
+    monitor_unload(pm);
+    return res;
 }
 
 /******************************************************************************
