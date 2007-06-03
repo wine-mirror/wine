@@ -470,4 +470,8 @@ Digite HELP <comando> para mais informações sobre alguns dos comandos acima\n"
   WCMD_ARGERR, "Parameter error\n"
   WCMD_VOLUMEDETAIL, "Volume in drive %c is %s\nVolume Serial Number is %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Volume label (11 characters, ENTER for none)?"
+  WCMD_NOPATH, "PATH not found\n"
+  WCMD_ANYKEY,"Press Return key to continue: "
+  WCMD_CONSTITLE,"Wine Command Prompt"
+  WCMD_VERSION,"CMD Version %s\n\n"
 }

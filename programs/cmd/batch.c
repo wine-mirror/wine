@@ -21,7 +21,7 @@
 #include "wcmd.h"
 
 extern int echo_mode;
-extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
+extern WCHAR quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
 extern DWORD errorlevel;
 
@@ -41,30 +41,31 @@ extern DWORD errorlevel;
  * a label to goto once opened.
  */
 
-void WCMD_batch (char *file, char *command, int called, char *startLabel, HANDLE pgmHandle) {
+void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HANDLE pgmHandle) {
 
 #define WCMD_BATCH_EXT_SIZE 5
 
   HANDLE h = INVALID_HANDLE_VALUE;
-  char string[MAXSTRING];
-  char extension_batch[][WCMD_BATCH_EXT_SIZE] = {".bat",".cmd"};
-  char extension_exe[WCMD_BATCH_EXT_SIZE] = ".exe";
+  WCHAR string[MAXSTRING];
+  static const WCHAR extension_batch[][WCMD_BATCH_EXT_SIZE] = {{'.','b','a','t','\0'},
+                                                               {'.','c','m','d','\0'}};
+  static const WCHAR extension_exe[WCMD_BATCH_EXT_SIZE] = {'.','e','x','e','\0'};
   unsigned int  i;
   BATCH_CONTEXT *prev_context;
 
   if (startLabel == NULL) {
-    for(i=0; (i<(sizeof(extension_batch)/WCMD_BATCH_EXT_SIZE)) &&
+    for(i=0; (i<((sizeof(extension_batch) * sizeof(WCHAR))/WCMD_BATCH_EXT_SIZE)) &&
              (h == INVALID_HANDLE_VALUE); i++) {
-    strcpy (string, file);
-    CharLower (string);
-      if (strstr (string, extension_batch[i]) == NULL) strcat (string, extension_batch[i]);
-    h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
-                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+      strcpyW (string, file);
+      CharLower (string);
+      if (strstrW (string, extension_batch[i]) == NULL) strcatW (string, extension_batch[i]);
+      h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
+                      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     }
     if (h == INVALID_HANDLE_VALUE) {
-      strcpy (string, file);
+      strcpyW (string, file);
       CharLower (string);
-      if (strstr (string, extension_exe) == NULL) strcat (string, extension_exe);
+      if (strstrW (string, extension_exe) == NULL) strcatW (string, extension_exe);
       h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
                       NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
       if (h != INVALID_HANDLE_VALUE) {
@@ -95,7 +96,7 @@ void WCMD_batch (char *file, char *command, int called, char *startLabel, HANDLE
 
   /* If processing a call :label, 'goto' the label in question */
   if (startLabel) {
-    strcpy(param1, startLabel);
+    strcpyW(param1, startLabel);
     WCMD_goto();
   }
 
@@ -105,7 +106,7 @@ void WCMD_batch (char *file, char *command, int called, char *startLabel, HANDLE
  */
 
   while (context -> skip_rest == FALSE && WCMD_fgets (string, sizeof(string), h)) {
-      if (strlen(string) == MAXSTRING -1) {
+      if (strlenW(string) == MAXSTRING -1) {
           WCMD_output_asis( WCMD_LoadMessage(WCMD_TRUNCATEDLINE));
           WCMD_output_asis( string);
           WCMD_output_asis( newline);
@@ -141,11 +142,11 @@ void WCMD_batch (char *file, char *command, int called, char *startLabel, HANDLE
  *	Also returns a pointer to the location of the parameter in the command line.
  */
 
-char *WCMD_parameter (char *s, int n, char **where) {
+WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where) {
 
   int i = 0;
-  static char param[MAX_PATH];
-  char *p;
+  static WCHAR param[MAX_PATH];
+  WCHAR *p;
 
   if (where != NULL) *where = NULL;
   p = param;
@@ -211,32 +212,32 @@ char *WCMD_parameter (char *s, int n, char **where) {
  * the LF (or CRLF) from the line.
  */
 
-char *WCMD_fgets (char *s, int n, HANDLE h) {
+WCHAR *WCMD_fgets (WCHAR *s, int noChars, HANDLE h) {
 
   DWORD bytes;
   BOOL status;
-  char *p;
+  WCHAR *p;
 
   p = s;
   do {
-    status = ReadFile (h, s, 1, &bytes, NULL);
+    status = WCMD_ReadFile (h, s, 1, &bytes, NULL);
     if ((status == 0) || ((bytes == 0) && (s == p))) return NULL;
     if (*s == '\n') bytes = 0;
     else if (*s != '\r') {
       s++;
-      n--;
+      noChars--;
     }
     *s = '\0';
-  } while ((bytes == 1) && (n > 1));
+  } while ((bytes == 1) && (noChars > 1));
   return p;
 }
 
 /* WCMD_splitpath - copied from winefile as no obvious way to use it otherwise */
-void WCMD_splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext)
+void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext)
 {
-        const CHAR* end; /* end of processed string */
-	const CHAR* p;	 /* search pointer */
-	const CHAR* s;	 /* copy pointer */
+        const WCHAR* end; /* end of processed string */
+	const WCHAR* p;	 /* search pointer */
+	const WCHAR* s;	 /* copy pointer */
 
 	/* extract drive name */
 	if (path[0] && path[1]==':') {
@@ -307,7 +308,7 @@ void WCMD_splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ex
  *  To work out the length of the modifier:
  *
  *  Note: In the case of %0-9 knowing the end of the modifier is easy,
- *    but in a for loop, the for end character may also be a modifier
+ *    but in a for loop, the for end WCHARacter may also be a modifier
  *    eg. for %a in (c:\a.a) do echo XXX
  *             where XXX = %~a    (just ~)
  *                         %~aa   (~ and attributes)
@@ -317,22 +318,22 @@ void WCMD_splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ex
  *  Hence search forwards until find an invalid modifier, and then
  *  backwards until find for variable or 0-9
  */
-void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
+void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable) {
 
 #define NUMMODIFIERS 11
-  const char validmodifiers[NUMMODIFIERS] = {
+  static const WCHAR validmodifiers[NUMMODIFIERS] = {
         '~', 'f', 'd', 'p', 'n', 'x', 's', 'a', 't', 'z', '$'
   };
-  const char space[] = " ";
+  static const WCHAR space[] = {' ', '\0'};
 
   WIN32_FILE_ATTRIBUTE_DATA fileInfo;
-  char  outputparam[MAX_PATH];
-  char  finaloutput[MAX_PATH];
-  char  fullfilename[MAX_PATH];
-  char  thisoutput[MAX_PATH];
-  char  *pos            = *start+1;
-  char  *firstModifier  = pos;
-  char  *lastModifier   = NULL;
+  WCHAR  outputparam[MAX_PATH];
+  WCHAR  finaloutput[MAX_PATH];
+  WCHAR  fullfilename[MAX_PATH];
+  WCHAR  thisoutput[MAX_PATH];
+  WCHAR  *pos            = *start+1;
+  WCHAR  *firstModifier  = pos;
+  WCHAR  *lastModifier   = NULL;
   int   modifierLen     = 0;
   BOOL  finished        = FALSE;
   int   i               = 0;
@@ -340,10 +341,10 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
   BOOL  skipFileParsing = FALSE;
   BOOL  doneModifier    = FALSE;
 
-  /* Search forwards until find invalid character modifier */
+  /* Search forwards until find invalid WCHARacter modifier */
   while (!finished) {
 
-    /* Work on the previous character */
+    /* Work on the previous WCHARacter */
     if (lastModifier != NULL) {
 
       for (i=0; i<NUMMODIFIERS; i++) {
@@ -374,10 +375,10 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
   /* Now make sure the position we stopped at is a valid parameter */
   if (!(*lastModifier >= '0' || *lastModifier <= '9') &&
       (forVariable != NULL) &&
-      (toupper(*lastModifier) != toupper(*forVariable)))  {
+      (toupperW(*lastModifier) != toupperW(*forVariable)))  {
 
     /* Its not... Step backwards until it matches or we get to the start */
-    while (toupper(*lastModifier) != toupper(*forVariable) &&
+    while (toupperW(*lastModifier) != toupperW(*forVariable) &&
           lastModifier > firstModifier) {
       lastModifier--;
     }
@@ -386,7 +387,7 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
 
   /* Extract the parameter to play with */
   if ((*lastModifier >= '0' && *lastModifier <= '9')) {
-    strcpy(outputparam, WCMD_parameter (context -> command,
+    strcpyW(outputparam, WCMD_parameter (context -> command,
                  *lastModifier-'0' + context -> shift_count[*lastModifier-'0'], NULL));
   } else {
     /* FIXME: Retrieve 'for' variable %c\n", *lastModifier); */
@@ -407,26 +408,26 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
 
   /* 1. Handle '~' : Strip surrounding quotes */
   if (outputparam[0]=='"' &&
-      memchr(firstModifier, '~', modifierLen) != NULL) {
-    int len = strlen(outputparam);
+      memchrW(firstModifier, '~', modifierLen) != NULL) {
+    int len = strlenW(outputparam);
     if (outputparam[len-1] == '"') {
         outputparam[len-1]=0x00;
         len = len - 1;
     }
-    memmove(outputparam, &outputparam[1], len-1);
+    memmove(outputparam, &outputparam[1], (len * sizeof(WCHAR))-1);
   }
 
   /* 2. Handle the special case of a $ */
-  if (memchr(firstModifier, '$', modifierLen) != NULL) {
+  if (memchrW(firstModifier, '$', modifierLen) != NULL) {
     /* Special Case: Search envar specified in $[envvar] for outputparam
        Note both $ and : are guaranteed otherwise check above would fail */
-    char *start = strchr(firstModifier, '$') + 1;
-    char *end   = strchr(firstModifier, ':');
-    char env[MAX_PATH];
-    char fullpath[MAX_PATH];
+    WCHAR *start = strchrW(firstModifier, '$') + 1;
+    WCHAR *end   = strchrW(firstModifier, ':');
+    WCHAR env[MAX_PATH];
+    WCHAR fullpath[MAX_PATH];
 
     /* Extract the env var */
-    strncpy(env, start, (end-start));
+    memcpy(env, start, (end-start) * sizeof(WCHAR));
     env[(end-start)] = 0x00;
 
     /* If env var not found, return emptry string */
@@ -445,15 +446,16 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
     if (GetFullPathName(outputparam, MAX_PATH, fullfilename, NULL) == 0)
       return;
 
-    exists = GetFileAttributesExA(fullfilename, GetFileExInfoStandard,
+    exists = GetFileAttributesExW(fullfilename, GetFileExInfoStandard,
                                   &fileInfo);
 
     /* 2. Handle 'a' : Output attributes */
     if (exists &&
-        memchr(firstModifier, 'a', modifierLen) != NULL) {
+        memchrW(firstModifier, 'a', modifierLen) != NULL) {
 
+      WCHAR defaults[] = {'-','-','-','-','-','-','-','-','-','\0'};
       doneModifier = TRUE;
-      strcpy(thisoutput, "---------");
+      strcpyW(thisoutput, defaults);
       if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         thisoutput[0]='d';
       if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
@@ -469,114 +471,115 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
       /* FIXME: What are 6 and 7? */
       if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
         thisoutput[8]='l';
-      strcat(finaloutput, thisoutput);
+      strcatW(finaloutput, thisoutput);
     }
 
     /* 3. Handle 't' : Date+time */
     if (exists &&
-        memchr(firstModifier, 't', modifierLen) != NULL) {
+        memchrW(firstModifier, 't', modifierLen) != NULL) {
 
       SYSTEMTIME systime;
       int datelen;
 
       doneModifier = TRUE;
-      if (finaloutput[0] != 0x00) strcat(finaloutput, space);
+      if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
 
       /* Format the time */
       FileTimeToSystemTime(&fileInfo.ftLastWriteTime, &systime);
       GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &systime,
                         NULL, thisoutput, MAX_PATH);
-      strcat(thisoutput, space);
-      datelen = strlen(thisoutput);
+      strcatW(thisoutput, space);
+      datelen = strlenW(thisoutput);
       GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &systime,
                         NULL, (thisoutput+datelen), MAX_PATH-datelen);
-      strcat(finaloutput, thisoutput);
+      strcatW(finaloutput, thisoutput);
     }
 
     /* 4. Handle 'z' : File length */
     if (exists &&
-        memchr(firstModifier, 'z', modifierLen) != NULL) {
+        memchrW(firstModifier, 'z', modifierLen) != NULL) {
       /* FIXME: Output full 64 bit size (sprintf does not support I64 here) */
       ULONG/*64*/ fullsize = /*(fileInfo.nFileSizeHigh << 32) +*/
                                   fileInfo.nFileSizeLow;
+      static const WCHAR fmt[] = {'%','u','\0'};
 
       doneModifier = TRUE;
-      if (finaloutput[0] != 0x00) strcat(finaloutput, space);
-      sprintf(thisoutput, "%u", fullsize);
-      strcat(finaloutput, thisoutput);
+      if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
+      wsprintf(thisoutput, fmt, fullsize);
+      strcatW(finaloutput, thisoutput);
     }
 
     /* 4. Handle 's' : Use short paths (File doesn't have to exist) */
-    if (memchr(firstModifier, 's', modifierLen) != NULL) {
-      if (finaloutput[0] != 0x00) strcat(finaloutput, space);
+    if (memchrW(firstModifier, 's', modifierLen) != NULL) {
+      if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
       /* Don't flag as doneModifier - %~s on its own is processed later */
       GetShortPathName(outputparam, outputparam, sizeof(outputparam));
     }
 
     /* 5. Handle 'f' : Fully qualified path (File doesn't have to exist) */
     /*      Note this overrides d,p,n,x                                 */
-    if (memchr(firstModifier, 'f', modifierLen) != NULL) {
+    if (memchrW(firstModifier, 'f', modifierLen) != NULL) {
       doneModifier = TRUE;
-      if (finaloutput[0] != 0x00) strcat(finaloutput, space);
-      strcat(finaloutput, fullfilename);
+      if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
+      strcatW(finaloutput, fullfilename);
     } else {
 
-      char drive[10];
-      char dir[MAX_PATH];
-      char fname[MAX_PATH];
-      char ext[MAX_PATH];
+      WCHAR drive[10];
+      WCHAR dir[MAX_PATH];
+      WCHAR fname[MAX_PATH];
+      WCHAR ext[MAX_PATH];
       BOOL doneFileModifier = FALSE;
 
-      if (finaloutput[0] != 0x00) strcat(finaloutput, space);
+      if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
 
       /* Split into components */
       WCMD_splitpath(fullfilename, drive, dir, fname, ext);
 
       /* 5. Handle 'd' : Drive Letter */
-      if (memchr(firstModifier, 'd', modifierLen) != NULL) {
-        strcat(finaloutput, drive);
+      if (memchrW(firstModifier, 'd', modifierLen) != NULL) {
+        strcatW(finaloutput, drive);
         doneModifier = TRUE;
         doneFileModifier = TRUE;
       }
 
       /* 6. Handle 'p' : Path */
-      if (memchr(firstModifier, 'p', modifierLen) != NULL) {
-        strcat(finaloutput, dir);
+      if (memchrW(firstModifier, 'p', modifierLen) != NULL) {
+        strcatW(finaloutput, dir);
         doneModifier = TRUE;
         doneFileModifier = TRUE;
       }
 
       /* 7. Handle 'n' : Name */
-      if (memchr(firstModifier, 'n', modifierLen) != NULL) {
-        strcat(finaloutput, fname);
+      if (memchrW(firstModifier, 'n', modifierLen) != NULL) {
+        strcatW(finaloutput, fname);
         doneModifier = TRUE;
         doneFileModifier = TRUE;
       }
 
       /* 8. Handle 'x' : Ext */
-      if (memchr(firstModifier, 'x', modifierLen) != NULL) {
-        strcat(finaloutput, ext);
+      if (memchrW(firstModifier, 'x', modifierLen) != NULL) {
+        strcatW(finaloutput, ext);
         doneModifier = TRUE;
         doneFileModifier = TRUE;
       }
 
       /* If 's' but no other parameter, dump the whole thing */
       if (!doneFileModifier &&
-          memchr(firstModifier, 's', modifierLen) != NULL) {
+          memchrW(firstModifier, 's', modifierLen) != NULL) {
         doneModifier = TRUE;
-        if (finaloutput[0] != 0x00) strcat(finaloutput, space);
-        strcat(finaloutput, outputparam);
+        if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
+        strcatW(finaloutput, outputparam);
       }
     }
   }
 
   /* If No other modifier processed,  just add in parameter */
-  if (!doneModifier) strcpy(finaloutput, outputparam);
+  if (!doneModifier) strcpyW(finaloutput, outputparam);
 
   /* Finish by inserting the replacement into the string */
-  pos = strdup (lastModifier+1);
-  strcpy(*start, finaloutput);
-  strcat(*start, pos);
+  pos = WCMD_strdupW(lastModifier+1);
+  strcpyW(*start, finaloutput);
+  strcatW(*start, pos);
   free(pos);
 }
 
@@ -586,16 +589,16 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
  *	If there is a leading ':', calls within this batch program
  *	otherwise launches another program.
  */
-void WCMD_call (char *command) {
+void WCMD_call (WCHAR *command) {
 
   /* Run other program if no leading ':' */
   if (*command != ':') {
     WCMD_run_program(command, 1);
   } else {
 
-    char gotoLabel[MAX_PATH];
+    WCHAR gotoLabel[MAX_PATH];
 
-    strcpy(gotoLabel, param1);
+    strcpyW(gotoLabel, param1);
 
     if (context) {
 
