@@ -1404,6 +1404,7 @@ typedef struct IWineD3DSwapChainImpl
     WINED3DFORMAT             orig_fmt;
 
     long prev_time, frames;   /* Performance tracking */
+    unsigned int vSyncCounter;
 
     WineD3DContext        **context; /* Later a array for multithreading */
     unsigned int            num_contexts;

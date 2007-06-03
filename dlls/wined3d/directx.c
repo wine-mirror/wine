@@ -1064,6 +1064,10 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 }
                 memcpy(ThisExtn, Start, (GLX_Extensions - Start));
                 TRACE_(d3d_caps)("- %s\n", ThisExtn);
+                if (strstr(ThisExtn, "GLX_SGI_video_sync")) {
+                    gl_info->supported[SGI_VIDEO_SYNC] = TRUE;
+                }
+
                 if (*GLX_Extensions == ' ') GLX_Extensions++;
             }
         }

@@ -1759,4 +1759,15 @@ typedef struct _WINEDDOVERLAYFX
 #define WINEDDGFS_CANFLIP                       1L
 #define WINEDDGFS_ISFLIPDONE                    2L
 
+/* dwFlags for Flip */
+#define WINEDDFLIP_WAIT                         0x00000001
+#define WINEDDFLIP_EVEN                         0x00000002 /* only valid for overlay */
+#define WINEDDFLIP_ODD                          0x00000004 /* only valid for overlay */
+#define WINEDDFLIP_NOVSYNC                      0x00000008
+#define WINEDDFLIP_STEREO                       0x00000010
+#define WINEDDFLIP_DONOTWAIT                    0x00000020
+#define WINEDDFLIP_INTERVAL2                    0x02000000
+#define WINEDDFLIP_INTERVAL3                    0x03000000
+#define WINEDDFLIP_INTERVAL4                    0x04000000
+
 #endif

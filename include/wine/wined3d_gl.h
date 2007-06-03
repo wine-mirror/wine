@@ -1225,6 +1225,10 @@ typedef void (APIENTRY * PGLFNTEXBUMPPARAMETERFVATIPROC) (GLenum, GLfloat *);
 typedef void (APIENTRY * PGLFNGETTEXBUMPPARAMETERIVATIPROC) (GLenum, GLint *);
 typedef void (APIENTRY * PGLFNGETTEXBUMPPARAMETERFVATIPROC) (GLenum, GLfloat *);
 
+/* GLX_SGI_video_sync */
+typedef int (APIENTRY * PGLXFNGETVIDEOSYNCSGIPROC) (unsigned int *);
+typedef int (APIENTRY * PGLXFNWAITVIDEOSYNCSGIPROC) (int, int, unsigned int *);
+
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
@@ -1593,6 +1597,8 @@ typedef enum _GL_SupportedExt {
   /* APPLE */
   APPLE_FENCE,
   APPLE_CLIENT_STORAGE,
+  /* SGI */
+  SGI_VIDEO_SYNC,
 
   OPENGL_SUPPORTED_EXT_END
 } GL_SupportedExt;
@@ -1817,6 +1823,9 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNTEXBUMPPARAMETERFVATIPROC,                 glTexBumpParameterfvATI); \
     USE_GL_FUNC(PGLFNGETTEXBUMPPARAMETERIVATIPROC,              glGetTexBumpParameterivATI); \
     USE_GL_FUNC(PGLFNGETTEXBUMPPARAMETERFVATIPROC,              glGetTexBumpParameterfvATI); \
+    /* GLX_SGI_video_sync */ \
+    USE_GL_FUNC(PGLXFNGETVIDEOSYNCSGIPROC,                      glXGetVideoSyncSGI); \
+    USE_GL_FUNC(PGLXFNWAITVIDEOSYNCSGIPROC,                     glXWaitVideoSyncSGI); \
 
 /* OpenGL 2.0 functions */
 #define GL2_FUNCS_GEN \
