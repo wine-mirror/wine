@@ -83,9 +83,10 @@ char *WCMD_strtrim_leading_spaces (char *string);
 void WCMD_strtrim_trailing_spaces (char *string);
 void WCMD_opt_s_strip_quotes(char *cmd);
 void WCMD_HandleTildaModifiers(char **start, char *forVariable);
-BOOL WCMD_ask_confirm (char *message, BOOL showSureText);
+BOOL WCMD_ask_confirm (char *message, BOOL showSureText, BOOL *optionAll);
 
 void WCMD_splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext);
+char *WCMD_LoadMessage(UINT id);
 
 /*	Data structure to hold context when executing batch files */
 
@@ -179,19 +180,40 @@ typedef struct _DIRECTORY_STACK
 #define WCMD_EXIT   44
 
 /* Some standard messages */
-extern const char nyi[];
 extern const char newline[];
 extern const char version_string[];
 extern const char anykey[];
 
 /* Translated messages */
-#define WCMD_CONFIRM  1001
-#define WCMD_YES      1002
-#define WCMD_NO       1003
-#define WCMD_NOASSOC  1004
-#define WCMD_NOFTYPE  1005
-#define WCMD_OVERWRITE 1006
-#define WCMD_MORESTR  1007
+#define WCMD_CONFIRM          1001
+#define WCMD_YES              1002
+#define WCMD_NO               1003
+#define WCMD_NOASSOC          1004
+#define WCMD_NOFTYPE          1005
+#define WCMD_OVERWRITE        1006
+#define WCMD_MORESTR          1007
+#define WCMD_TRUNCATEDLINE    1008
+#define WCMD_NYI              1009
+#define WCMD_NOARG            1010
+#define WCMD_SYNTAXERR        1011
+#define WCMD_FILENOTFOUND     1012
+#define WCMD_NOCMDHELP        1013
+#define WCMD_NOTARGET         1014
+#define WCMD_CURRENTDATE      1015
+#define WCMD_CURRENTTIME      1016
+#define WCMD_NEWDATE          1017
+#define WCMD_NEWTIME          1018
+#define WCMD_MISSINGENV       1019
+#define WCMD_READFAIL         1020
+#define WCMD_CALLINSCRIPT     1021
+#define WCMD_ALL              1022
+#define WCMD_DELPROMPT        1023
+#define WCMD_ECHOPROMPT       1024
+#define WCMD_VERIFYPROMPT     1025
+#define WCMD_VERIFYERR        1026
+#define WCMD_ARGERR           1027
+#define WCMD_VOLUMEDETAIL     1028
+#define WCMD_VOLUMEPROMPT     1029
 
 /* msdn specified max for Win XP */
 #define MAXSTRING 8192

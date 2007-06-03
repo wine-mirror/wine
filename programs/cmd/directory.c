@@ -490,7 +490,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         fd = HeapReAlloc(GetProcessHeap(),0,fd,(entry_count+1)*sizeof(WIN32_FIND_DATA));
         if (fd == NULL) {
           FindClose (hff);
-          WCMD_output ("Memory Allocation Error");
+          WINE_ERR ("Out of memory");
           errorlevel = 1;
           return parms->next;
         }
@@ -504,7 +504,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
     /* Output the results */
     if (!bare) {
-       if (level != 0 && (entry_count > 0)) WCMD_output ("\n");
+       if (level != 0 && (entry_count > 0)) WCMD_output (newline);
        if (!recurse || ((entry_count > 0) && done_header==FALSE)) {
            WCMD_output ("Directory of %s\n\n", real_path);
            done_header = TRUE;
@@ -629,7 +629,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         }
       }
      }
-     if (addNewLine) WCMD_output ("\n");
+     if (addNewLine) WCMD_output (newline);
      cur_width = 0;
     }
 

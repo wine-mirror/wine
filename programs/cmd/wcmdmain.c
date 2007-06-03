@@ -42,7 +42,6 @@ HINSTANCE hinst;
 DWORD errorlevel;
 int echo_mode = 1, verify_mode = 0, defaultColor = 7;
 static int opt_c, opt_k, opt_s;
-const char nyi[] = "Not Yet Implemented\n\n";
 const char newline[] = "\n";
 const char version_string[] = "CMD Version " PACKAGE_VERSION "\n\n";
 const char anykey[] = "Press Return key to continue: ";
@@ -466,7 +465,7 @@ void WCMD_process_command (char *command)
       if (echo_mode && (cmd[0] != '@')) {
         WCMD_show_prompt();
         WCMD_output_asis ( cmd);
-        WCMD_output_asis ( "\n");
+        WCMD_output_asis ( newline);
       }
     }
 
@@ -1129,7 +1128,7 @@ void WCMD_print_error (void) {
   status = FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
     			NULL, error_code, 0, (LPTSTR) &lpMsgBuf, 0, NULL);
   if (!status) {
-    WCMD_output ("FIXME: Cannot display message for error %d, status %d\n",
+    WINE_FIXME ("Cannot display message for error %d, status %d\n",
 			error_code, GetLastError());
     return;
   }
@@ -1208,7 +1207,7 @@ void WCMD_output (const char *format, ...) {
   ret = vsnprintf (string, sizeof( string), format, ap);
   va_end(ap);
   if( ret >= sizeof( string)) {
-       WCMD_output_asis("ERR: output truncated in WCMD_output\n" );
+       WINE_ERR("Output truncated in WCMD_output\n" );
        string[sizeof( string) -1] = '\0';
   }
   WCMD_output_asis(string);
@@ -1602,4 +1601,20 @@ static char *WCMD_expand_envvar(char *start) {
       return start;
     }
     return start+1;
+}
+
+/*************************************************************************
+ * WCMD_LoadMessage
+ *    Load a string from the resource file, handling any error
+ *    Returns string retrieved from resource file
+ */
+char *WCMD_LoadMessage(UINT id) {
+    static char msg[2048];
+    const char failedMsg[]  = "Failed!";
+
+    if (!LoadString(GetModuleHandle(NULL), id, msg, sizeof(msg))) {
+       WINE_FIXME("LoadString failed with %d\n", GetLastError());
+       lstrcpy(msg, failedMsg);
+    }
+    return msg;
 }

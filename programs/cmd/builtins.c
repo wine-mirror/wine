@@ -89,7 +89,7 @@ void WCMD_clear_screen (void) {
 
 void WCMD_change_tty (void) {
 
-  WCMD_output (nyi);
+  WCMD_output (WCMD_LoadMessage(WCMD_NYI));
 
 }
 
@@ -102,16 +102,14 @@ void WCMD_change_tty (void) {
 
 void WCMD_copy (void) {
 
-  DWORD count;
   WIN32_FIND_DATA fd;
   HANDLE hff;
   BOOL force, status;
-  static const char overwrite[] = "Overwrite file (Y/N)?";
-  char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile, copycmd[3];
+  char outpath[MAX_PATH], inpath[MAX_PATH], *infile, copycmd[3];
   DWORD len;
 
   if (param1[0] == 0x00) {
-    WCMD_output ("Argument missing\n");
+    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
     return;
   }
 
@@ -151,10 +149,12 @@ void WCMD_copy (void) {
   if (!force) {
     hff = FindFirstFile (outpath, &fd);
     if (hff != INVALID_HANDLE_VALUE) {
+      char buffer[MAXSTRING];
+
       FindClose (hff);
-      WCMD_output (overwrite);
-      ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
-      if (toupper(string[0]) == 'Y') force = TRUE;
+
+      sprintf(buffer, WCMD_LoadMessage(WCMD_OVERWRITE), outpath);
+      force = WCMD_ask_confirm(buffer, FALSE, NULL);
     }
     else force = TRUE;
   }
@@ -220,7 +220,7 @@ static BOOL create_full_path(CHAR* path)
 void WCMD_create_dir (void) {
 
     if (param1[0] == 0x00) {
-        WCMD_output ("Argument missing\n");
+        WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
         return;
     }
     if (!create_full_path(param1)) WCMD_print_error ();
@@ -291,7 +291,7 @@ BOOL WCMD_delete (char *command, BOOL expectDir) {
 
             /* Ask for confirmation */
             sprintf(question, "%s, ", fpath);
-            ok = WCMD_ask_confirm(question, TRUE);
+            ok = WCMD_ask_confirm(question, TRUE, NULL);
 
             /* Abort if answer is 'N' */
             if (!ok) continue;
@@ -364,7 +364,7 @@ BOOL WCMD_delete (char *command, BOOL expectDir) {
                     case 'A': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE);
                               break;
                     default:
-                        WCMD_output ("Syntax error\n");
+                        WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
                     }
 
                     /* Now check result, keeping a running boolean about whether it
@@ -392,8 +392,8 @@ BOOL WCMD_delete (char *command, BOOL expectDir) {
                 char  question[MAXSTRING];
 
                 /* Ask for confirmation */
-                sprintf(question, "%s, Delete", fpath);
-                ok = WCMD_ask_confirm(question, FALSE);
+                sprintf(question, WCMD_LoadMessage(WCMD_DELPROMPT), fpath);
+                ok = WCMD_ask_confirm(question, FALSE, NULL);
               }
 
               /* Only proceed if ok to */
@@ -494,7 +494,7 @@ BOOL WCMD_delete (char *command, BOOL expectDir) {
         if (expectDir) {
           if (!found) {
             errorlevel = 1;
-            WCMD_output ("%s : File Not Found\n", argCopy);
+            WCMD_output (WCMD_LoadMessage(WCMD_FILENOTFOUND), argCopy);
           }
         }
         foundAny |= found;
@@ -503,7 +503,7 @@ BOOL WCMD_delete (char *command, BOOL expectDir) {
 
     /* Handle no valid args */
     if (argsProcessed == 0) {
-      WCMD_output ("Argument missing\n");
+      WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
     }
 
     return foundAny;
@@ -518,7 +518,6 @@ BOOL WCMD_delete (char *command, BOOL expectDir) {
 
 void WCMD_echo (const char *command) {
 
-  static const char eon[] = "Echo is ON\n", eoff[] = "Echo is OFF\n";
   int count;
 
   if ((command[0] == '.') && (command[1] == 0)) {
@@ -529,8 +528,8 @@ void WCMD_echo (const char *command) {
     command++;
   count = strlen(command);
   if (count == 0) {
-    if (echo_mode) WCMD_output (eon);
-    else WCMD_output (eoff);
+    if (echo_mode) WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), "ON");
+    else WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), "OFF");
     return;
   }
   if (lstrcmpi(command, "ON") == 0) {
@@ -565,7 +564,7 @@ void WCMD_for (char *p) {
   if (lstrcmpi (WCMD_parameter (p, 1, NULL), "in")
 	|| lstrcmpi (WCMD_parameter (p, 3, NULL), "do")
 	|| (param1[0] != '%')) {
-    WCMD_output ("Syntax error\n");
+    WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
     return;
   }
   lstrcpyn (set, WCMD_parameter (p, 2, NULL), sizeof(set));
@@ -651,7 +650,7 @@ void WCMD_give_help (char *command) {
 	return;
       }
     }
-    WCMD_output ("No help available for %s\n", param1);
+    WCMD_output (WCMD_LoadMessage(WCMD_NOCMDHELP), param1);
   }
   return;
 }
@@ -670,7 +669,7 @@ void WCMD_goto (void) {
   char string[MAX_PATH];
 
   if (param1[0] == 0x00) {
-    WCMD_output ("Argument missing\n");
+    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
     return;
   }
   if (context != NULL) {
@@ -689,7 +688,7 @@ void WCMD_goto (void) {
     while (WCMD_fgets (string, sizeof(string), context -> h)) {
       if ((string[0] == ':') && (lstrcmpi (&string[1], paramStart) == 0)) return;
     }
-    WCMD_output ("Target to GOTO not found\n");
+    WCMD_output (WCMD_LoadMessage(WCMD_NOTARGET));
   }
   return;
 }
@@ -715,7 +714,7 @@ void WCMD_pushd (char *command) {
     if( !curdir || !thisdir ) {
       LocalFree(curdir);
       LocalFree(thisdir);
-      WCMD_output ("out of memory\n");
+      WINE_ERR ("out of memory\n");
       return;
     }
 
@@ -801,7 +800,7 @@ void WCMD_if (char *p) {
     WCMD_parameter (s, 1, &command);
   }
   else {
-    WCMD_output ("Syntax error\n");
+    WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
     return;
   }
   if (test != negate) {
@@ -830,7 +829,7 @@ void WCMD_move (void) {
   char            ext[MAX_PATH];
 
   if (param1[0] == 0x00) {
-    WCMD_output ("Argument missing\n");
+    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
     return;
   }
 
@@ -904,13 +903,13 @@ void WCMD_move (void) {
         /* Prompt if overwriting */
         if (!force) {
           char  question[MAXSTRING];
-          char  overwrite[MAXSTRING];
+          char  yesChar[10];
 
-          LoadString (hinst, WCMD_OVERWRITE, overwrite, sizeof(overwrite));
+          strcpy(yesChar, WCMD_LoadMessage(WCMD_YES));
 
           /* Ask for confirmation */
-          sprintf(question, "%s %s? ", overwrite, dest);
-          ok = WCMD_ask_confirm(question, TRUE);
+          sprintf(question, WCMD_LoadMessage(WCMD_OVERWRITE), dest);
+          ok = WCMD_ask_confirm(question, FALSE, NULL);
 
           /* So delete the destination prior to the move */
           if (ok) {
@@ -995,7 +994,7 @@ void WCMD_remove_dir (char *command) {
 
           /* Ask for confirmation */
           sprintf(question, "%s, ", thisArg);
-          ok = WCMD_ask_confirm(question, TRUE);
+          ok = WCMD_ask_confirm(question, TRUE, NULL);
 
           /* Abort if answer is 'N' */
           if (!ok) return;
@@ -1014,7 +1013,7 @@ void WCMD_remove_dir (char *command) {
 
   /* Handle no valid args */
   if (argsProcessed == 0) {
-    WCMD_output ("Argument missing\n");
+    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
     return;
   }
 
@@ -1043,7 +1042,7 @@ void WCMD_rename (void) {
 
   /* Must be at least two args */
   if (param1[0] == 0x00 || param2[0] == 0x00) {
-    WCMD_output ("Argument missing\n");
+    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
     errorlevel = 1;
     return;
   }
@@ -1151,7 +1150,7 @@ static WCHAR *WCMD_dupenv( const WCHAR *env )
   env_copy = LocalAlloc (LMEM_FIXED, (len+1) * sizeof (WCHAR) );
   if (!env_copy)
   {
-    WCMD_output ("out of memory\n");
+    WINE_ERR("out of memory\n");
     return env_copy;
   }
   memcpy (env_copy, env, len*sizeof (WCHAR));
@@ -1176,7 +1175,7 @@ void WCMD_setlocal (const char *s) {
   env_copy = LocalAlloc (LMEM_FIXED, sizeof (struct env_stack));
   if( !env_copy )
   {
-    WCMD_output ("out of memory\n");
+    WINE_ERR ("out of memory\n");
     return;
   }
 
@@ -1299,7 +1298,7 @@ void WCMD_setshow_attrib (void) {
   char flags[9] = {"        "};
 
   if (param1[0] == '-') {
-    WCMD_output (nyi);
+    WCMD_output (WCMD_LoadMessage(WCMD_NYI));
     return;
   }
 
@@ -1310,7 +1309,7 @@ void WCMD_setshow_attrib (void) {
 
   hff = FindFirstFile (param1, &fd);
   if (hff == INVALID_HANDLE_VALUE) {
-    WCMD_output ("%s: File Not Found\n",param1);
+    WCMD_output (WCMD_LoadMessage(WCMD_FILENOTFOUND), param1);
   }
   else {
     do {
@@ -1368,7 +1367,7 @@ void WCMD_setshow_default (char *command) {
 
   GetCurrentDirectory (sizeof(cwd), cwd);
   if (strlen(command) == 0) {
-    strcat (cwd, "\n");
+    strcat (cwd, newline);
     WCMD_output (cwd);
   }
   else {
@@ -1461,19 +1460,19 @@ void WCMD_setshow_date (void) {
   if (lstrlen(param1) == 0) {
     if (GetDateFormat (LOCALE_USER_DEFAULT, 0, NULL, NULL,
   		curdate, sizeof(curdate))) {
-      WCMD_output ("Current Date is %s\n", curdate);
+      WCMD_output (WCMD_LoadMessage(WCMD_CURRENTDATE), curdate);
       if (strstr (quals, "/T") == NULL) {
-        WCMD_output("Enter new date: ");
+        WCMD_output (WCMD_LoadMessage(WCMD_NEWDATE));
         ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer), &count, NULL);
         if (count > 2) {
-          WCMD_output (nyi);
+          WCMD_output (WCMD_LoadMessage(WCMD_NYI));
         }
       }
     }
     else WCMD_print_error ();
   }
   else {
-    WCMD_output (nyi);
+    WCMD_output (WCMD_LoadMessage(WCMD_NYI));
   }
 }
 
@@ -1530,7 +1529,7 @@ static int WCMD_setshow_sortenv(const char *s, const char *stub)
       /* Don't display special internal variables */
       if (str[i][0] != '=') {
         WCMD_output_asis(str[i]);
-        WCMD_output_asis("\n");
+        WCMD_output_asis(newline);
         displayedcount++;
       }
     }
@@ -1571,7 +1570,7 @@ void WCMD_setshow_env (char *s) {
 
     /* If no parameter, or no '=' sign, return an error */
     if (!(*s) || ((p = strchr (s, '=')) == NULL )) {
-      WCMD_output ("Argument missing\n");
+      WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
       return;
     }
 
@@ -1594,7 +1593,7 @@ void WCMD_setshow_env (char *s) {
     if (p == NULL) {
       env = GetEnvironmentStrings ();
       if (WCMD_setshow_sortenv( env, s ) == 0) {
-        WCMD_output ("Environment variable %s not defined\n", s);
+        WCMD_output (WCMD_LoadMessage(WCMD_MISSINGENV), s);
         errorlevel = 1;
       }
       return;
@@ -1626,7 +1625,7 @@ void WCMD_setshow_path (char *command) {
     if (status != 0) {
       WCMD_output_asis ( "PATH=");
       WCMD_output_asis ( string);
-      WCMD_output_asis ( "\n");
+      WCMD_output_asis ( newline);
     }
     else {
       WCMD_output ("PATH not found\n");
@@ -1679,19 +1678,19 @@ void WCMD_setshow_time (void) {
     GetLocalTime(&st);
     if (GetTimeFormat (LOCALE_USER_DEFAULT, 0, &st, NULL,
   		curtime, sizeof(curtime))) {
-      WCMD_output ("Current Time is %s\n", curtime);
+      WCMD_output (WCMD_LoadMessage(WCMD_CURRENTDATE), curtime);
       if (strstr (quals, "/T") == NULL) {
-        WCMD_output ("Enter new time: ", curtime);
+        WCMD_output (WCMD_LoadMessage(WCMD_NEWTIME));
         ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer), &count, NULL);
         if (count > 2) {
-          WCMD_output (nyi);
+          WCMD_output (WCMD_LoadMessage(WCMD_NYI));
         }
       }
     }
     else WCMD_print_error ();
   }
   else {
-    WCMD_output (nyi);
+    WCMD_output (WCMD_LoadMessage(WCMD_NYI));
   }
 }
 
@@ -1750,7 +1749,7 @@ void WCMD_type (char *command) {
   BOOL  writeHeaders  = FALSE;
 
   if (param1[0] == 0x00) {
-    WCMD_output ("Argument missing\n");
+    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
     return;
   }
 
@@ -1772,7 +1771,7 @@ void WCMD_type (char *command) {
 		FILE_ATTRIBUTE_NORMAL, NULL);
     if (h == INVALID_HANDLE_VALUE) {
       WCMD_print_error ();
-      WCMD_output ("%s :Failed\n", thisArg);
+      WCMD_output (WCMD_LoadMessage(WCMD_READFAIL), thisArg);
       errorlevel = 1;
     } else {
       if (writeHeaders) {
@@ -1867,7 +1866,7 @@ void WCMD_more (char *command) {
 		FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
         WCMD_print_error ();
-        WCMD_output ("%s :Failed\n", thisArg);
+        WCMD_output (WCMD_LoadMessage(WCMD_READFAIL), thisArg);
         errorlevel = 1;
       } else {
         ULONG64 curPos  = 0;
@@ -1907,13 +1906,12 @@ void WCMD_more (char *command) {
 
 void WCMD_verify (char *command) {
 
-  static const char von[] = "Verify is ON\n", voff[] = "Verify is OFF\n";
   int count;
 
   count = strlen(command);
   if (count == 0) {
-    if (verify_mode) WCMD_output (von);
-    else WCMD_output (voff);
+    if (verify_mode) WCMD_output (WCMD_LoadMessage(WCMD_VERIFYPROMPT), "ON");
+    else WCMD_output (WCMD_LoadMessage(WCMD_VERIFYPROMPT), "OFF");
     return;
   }
   if (lstrcmpi(command, "ON") == 0) {
@@ -1924,7 +1922,7 @@ void WCMD_verify (char *command) {
     verify_mode = 0;
     return;
   }
-  else WCMD_output ("Verify must be ON or OFF\n");
+  else WCMD_output (WCMD_LoadMessage(WCMD_VERIFYERR));
 }
 
 /****************************************************************************
@@ -1962,7 +1960,7 @@ int WCMD_volume (int mode, char *path) {
   }
   else {
     if ((path[1] != ':') || (lstrlen(path) != 2)) {
-      WCMD_output_asis("Syntax Error\n\n");
+      WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return 0;
     }
     wsprintf (curdir, "%s\\", path);
@@ -1973,10 +1971,10 @@ int WCMD_volume (int mode, char *path) {
     WCMD_print_error ();
     return 0;
   }
-  WCMD_output ("Volume in drive %c is %s\nVolume Serial Number is %04x-%04x\n\n",
+  WCMD_output (WCMD_LoadMessage(WCMD_VOLUMEDETAIL),
     	curdir[0], label, HIWORD(serial), LOWORD(serial));
   if (mode) {
-    WCMD_output ("Volume label (11 characters, ENTER for none)?");
+    WCMD_output (WCMD_LoadMessage(WCMD_VOLUMEPROMPT));
     ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
     if (count > 1) {
       string[count-1] = '\0';		/* ReadFile output is not null-terminated! */
@@ -2017,21 +2015,25 @@ void WCMD_exit (void) {
  * Issue a message and ask 'Are you sure (Y/N)', waiting on a valid
  * answer.
  *
- * Returns True if Y answer is selected
+ * Returns True if Y (or A) answer is selected
+ *         If optionAll contains a pointer, ALL is allowed, and if answered
+ *                   set to TRUE
  *
  */
-BOOL WCMD_ask_confirm (char *message, BOOL showSureText) {
+BOOL WCMD_ask_confirm (char *message, BOOL showSureText, BOOL *optionAll) {
 
     char  msgbuffer[MAXSTRING];
     char  Ybuffer[MAXSTRING];
     char  Nbuffer[MAXSTRING];
+    char  Abuffer[MAXSTRING];
     char  answer[MAX_PATH] = "";
     DWORD count = 0;
 
     /* Load the translated 'Are you sure', plus valid answers */
     LoadString (hinst, WCMD_CONFIRM, msgbuffer, sizeof(msgbuffer));
     LoadString (hinst, WCMD_YES, Ybuffer, sizeof(Ybuffer));
-    LoadString (hinst, WCMD_NO, Nbuffer, sizeof(Nbuffer));
+    LoadString (hinst, WCMD_NO,  Nbuffer, sizeof(Nbuffer));
+    LoadString (hinst, WCMD_ALL, Abuffer, sizeof(Abuffer));
 
     /* Loop waiting on a Y or N */
     while (answer[0] != Ybuffer[0] && answer[0] != Nbuffer[0]) {
@@ -2043,6 +2045,10 @@ BOOL WCMD_ask_confirm (char *message, BOOL showSureText) {
       WCMD_output_asis (Ybuffer);
       WCMD_output_asis ("/");
       WCMD_output_asis (Nbuffer);
+      if (optionAll) {
+          WCMD_output_asis ("/");
+          WCMD_output_asis (Abuffer);
+      }
       WCMD_output_asis (")?");
       ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer),
                 &count, NULL);
@@ -2050,7 +2056,8 @@ BOOL WCMD_ask_confirm (char *message, BOOL showSureText) {
     }
 
     /* Return the answer */
-    return (answer[0] == Ybuffer[0]);
+    return ((answer[0] == Ybuffer[0]) ||
+            (optionAll && (answer[0] == Abuffer[0])));
 }
 
 /*****************************************************************************
@@ -2120,7 +2127,7 @@ void WCMD_assoc (char *command, BOOL assoc) {
               if (rc == ERROR_SUCCESS) {
                 WCMD_output_asis(keyValue);
               }
-              WCMD_output_asis("\n");
+              WCMD_output_asis(newline);
             }
           }
         }
@@ -2152,7 +2159,7 @@ void WCMD_assoc (char *command, BOOL assoc) {
           WCMD_output_asis("=");
           /* If no default value found, leave line empty after '=' */
           if (rc == ERROR_SUCCESS) WCMD_output_asis(keyValue);
-          WCMD_output_asis("\n");
+          WCMD_output_asis(newline);
           RegCloseKey(readKey);
 
         } else {
@@ -2226,7 +2233,7 @@ void WCMD_assoc (char *command, BOOL assoc) {
             WCMD_output_asis(command);
             WCMD_output_asis("=");
             WCMD_output_asis(newValue);
-            WCMD_output_asis("\n");
+            WCMD_output_asis(newline);
           }
         }
       }
@@ -2250,7 +2257,7 @@ void WCMD_color (void) {
   HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
   if (param1[0] != 0x00 && strlen(param1) > 2) {
-    WCMD_output ("Argument invalid\n");
+    WCMD_output (WCMD_LoadMessage(WCMD_ARGERR));
     return;
   }
 

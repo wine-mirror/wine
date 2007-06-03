@@ -106,9 +106,9 @@ void WCMD_batch (char *file, char *command, int called, char *startLabel, HANDLE
 
   while (context -> skip_rest == FALSE && WCMD_fgets (string, sizeof(string), h)) {
       if (strlen(string) == MAXSTRING -1) {
-          WCMD_output_asis( "Line in Batch processing possibly truncated. Using:\n");
+          WCMD_output_asis( WCMD_LoadMessage(WCMD_TRUNCATEDLINE));
           WCMD_output_asis( string);
-          WCMD_output_asis( "\n");
+          WCMD_output_asis( newline);
       }
       if (string[0] != ':') {                      /* Skip over labels */
           WCMD_process_command (string);
@@ -323,6 +323,7 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
   const char validmodifiers[NUMMODIFIERS] = {
         '~', 'f', 'd', 'p', 'n', 'x', 's', 'a', 't', 'z', '$'
   };
+  const char space[] = " ";
 
   WIN32_FILE_ATTRIBUTE_DATA fileInfo;
   char  outputparam[MAX_PATH];
@@ -479,13 +480,13 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
       int datelen;
 
       doneModifier = TRUE;
-      if (finaloutput[0] != 0x00) strcat(finaloutput, " ");
+      if (finaloutput[0] != 0x00) strcat(finaloutput, space);
 
       /* Format the time */
       FileTimeToSystemTime(&fileInfo.ftLastWriteTime, &systime);
       GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &systime,
                         NULL, thisoutput, MAX_PATH);
-      strcat(thisoutput, " ");
+      strcat(thisoutput, space);
       datelen = strlen(thisoutput);
       GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &systime,
                         NULL, (thisoutput+datelen), MAX_PATH-datelen);
@@ -500,14 +501,14 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
                                   fileInfo.nFileSizeLow;
 
       doneModifier = TRUE;
-      if (finaloutput[0] != 0x00) strcat(finaloutput, " ");
+      if (finaloutput[0] != 0x00) strcat(finaloutput, space);
       sprintf(thisoutput, "%u", fullsize);
       strcat(finaloutput, thisoutput);
     }
 
     /* 4. Handle 's' : Use short paths (File doesn't have to exist) */
     if (memchr(firstModifier, 's', modifierLen) != NULL) {
-      if (finaloutput[0] != 0x00) strcat(finaloutput, " ");
+      if (finaloutput[0] != 0x00) strcat(finaloutput, space);
       /* Don't flag as doneModifier - %~s on its own is processed later */
       GetShortPathName(outputparam, outputparam, sizeof(outputparam));
     }
@@ -516,7 +517,7 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
     /*      Note this overrides d,p,n,x                                 */
     if (memchr(firstModifier, 'f', modifierLen) != NULL) {
       doneModifier = TRUE;
-      if (finaloutput[0] != 0x00) strcat(finaloutput, " ");
+      if (finaloutput[0] != 0x00) strcat(finaloutput, space);
       strcat(finaloutput, fullfilename);
     } else {
 
@@ -526,7 +527,7 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
       char ext[MAX_PATH];
       BOOL doneFileModifier = FALSE;
 
-      if (finaloutput[0] != 0x00) strcat(finaloutput, " ");
+      if (finaloutput[0] != 0x00) strcat(finaloutput, space);
 
       /* Split into components */
       WCMD_splitpath(fullfilename, drive, dir, fname, ext);
@@ -563,7 +564,7 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
       if (!doneFileModifier &&
           memchr(firstModifier, 's', modifierLen) != NULL) {
         doneModifier = TRUE;
-        if (finaloutput[0] != 0x00) strcat(finaloutput, " ");
+        if (finaloutput[0] != 0x00) strcat(finaloutput, space);
         strcat(finaloutput, outputparam);
       }
     }
@@ -611,7 +612,7 @@ void WCMD_call (char *command) {
       SetFilePointer(context -> h, li.u.LowPart,
                      &li.u.HighPart, FILE_BEGIN);
     } else {
-      printf("Cannot call batch label outside of a batch script\n");
+      WCMD_output_asis( WCMD_LoadMessage(WCMD_CALLINSCRIPT));
     }
   }
 }
