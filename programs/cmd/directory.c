@@ -72,6 +72,7 @@ static const WCHAR dotdotW[] = {'.','.','\0'};
 static const WCHAR starW[]   = {'*','\0'};
 static const WCHAR slashW[]  = {'\\','\0'};
 static const WCHAR emptyW[]  = {'\0'};
+static const WCHAR spaceW[]  = {' ','\0'};
 
 /*****************************************************************************
  * WCMD_directory
@@ -618,8 +619,24 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         if ((cur_width + widest) > max_width) {
             cur_width = 0;
         } else {
-            static const WCHAR fmt[]  = {'%','*','.','s','\0'};
-            WCMD_output (fmt, (tmp_width - cur_width), emptyW);
+            int padding = cur_width - tmp_width;
+            int toWrite = 0;
+            WCHAR temp[101];
+
+            /* Note: WCMD_output uses wvsprintf which does not allow %*
+                 so manually pad with spaces to appropriate width       */
+            strcpyW(temp, emptyW);
+            while (padding > 0) {
+                strcatW(&temp[toWrite], spaceW);
+                toWrite++;
+                if (toWrite > 99) {
+                    WCMD_output(temp);
+                    toWrite = 0;
+                    strcpyW(temp, emptyW);
+                }
+                padding--;
+            }
+            WCMD_output(temp);
         }
 
       } else if ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
