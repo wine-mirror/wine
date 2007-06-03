@@ -26,6 +26,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <wine/unicode.h>
 
 void WCMD_assoc (char *, BOOL);
 void WCMD_batch (char *, char *, int, char *, HANDLE);

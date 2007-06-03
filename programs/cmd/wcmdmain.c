@@ -59,6 +59,9 @@ static char *WCMD_expand_envvar(char *start);
 
 int main (int argc, char *argv[])
 {
+  LPWSTR *argvW = NULL;
+  int     args;
+  WCHAR  *cmdW  = NULL;
   char string[1024];
   char envvar[4];
   char* cmd=NULL;
@@ -67,34 +70,44 @@ int main (int argc, char *argv[])
   int opt_q;
   int opt_t = 0;
 
+  /* Get a Unicode command line */
+  argvW = CommandLineToArgvW( GetCommandLineW(), &argc );
+  args  = argc;
+
   opt_c=opt_k=opt_q=opt_s=0;
-  while (*argv!=NULL)
+  while (args > 0)
   {
-      char c;
-      if ((*argv)[0]!='/' || (*argv)[1]=='\0') {
-          argv++;
+      WCHAR c;
+      WINE_TRACE("Command line parm: '%s'\n", wine_dbgstr_w(*argvW));
+      if ((*argvW)[0]!='/' || (*argvW)[1]=='\0') {
+          argvW++;
+          args--;
           continue;
       }
 
-      c=(*argv)[1];
-      if (tolower(c)=='c') {
+      c=(*argvW)[1];
+      if (tolowerW(c)=='c') {
           opt_c=1;
-      } else if (tolower(c)=='q') {
+      } else if (tolowerW(c)=='q') {
           opt_q=1;
-      } else if (tolower(c)=='k') {
+      } else if (tolowerW(c)=='k') {
           opt_k=1;
-      } else if (tolower(c)=='s') {
+      } else if (tolowerW(c)=='s') {
           opt_s=1;
-      } else if (tolower(c)=='t' && (*argv)[2]==':') {
-          opt_t=strtoul(&(*argv)[3], NULL, 16);
-      } else if (tolower(c)=='x' || tolower(c)=='y') {
+      } else if (tolowerW(c)=='t' && (*argvW)[2]==':') {
+          opt_t=strtoulW(&(*argvW)[3], NULL, 16);
+      } else if (tolowerW(c)=='x' || tolowerW(c)=='y') {
           /* Ignored for compatibility with Windows */
       }
 
-      if ((*argv)[2]==0)
-          argv++;
+      if ((*argvW)[2]==0) {
+          argvW++;
+          args--;
+      }
       else /* handle `cmd /cnotepad.exe` and `cmd /x/c ...` */
-          *argv+=2;
+      {
+          *argvW+=2;
+      }
 
       if (opt_c || opt_k) /* break out of parsing immediately after c or k */
           break;
@@ -105,9 +118,10 @@ int main (int argc, char *argv[])
   }
 
   if (opt_c || opt_k) {
-      int len,qcount;
-      char** arg;
-      char* p;
+      int     len,qcount;
+      WCHAR** arg;
+      int     argsLeft;
+      WCHAR*  p;
 
       /* opt_s left unflagged if the command starts with and contains exactly
        * one quoted string (exactly two quote characters). The quoted string
@@ -117,10 +131,11 @@ int main (int argc, char *argv[])
       /* Build the command to execute */
       len = 0;
       qcount = 0;
-      for (arg = argv; *arg; arg++)
+      argsLeft = args;
+      for (arg = argvW; argsLeft>0; arg++,argsLeft--)
       {
           int has_space,bcount;
-          char* a;
+          WCHAR* a;
 
           has_space=0;
           bcount=0;
@@ -143,7 +158,7 @@ int main (int argc, char *argv[])
               }
               a++;
           }
-          len+=(a-*arg)+1 /* for the separating space */;
+          len+=(a-*arg) + 1; /* for the separating space */
           if (has_space)
           {
               len+=2; /* for the quotes */
@@ -154,10 +169,10 @@ int main (int argc, char *argv[])
       if (qcount!=2)
           opt_s=1;
 
-      /* check argv[0] for a space and invalid characters */
+      /* check argvW[0] for a space and invalid characters */
       if (!opt_s) {
           opt_s=1;
-          p=*argv;
+          p=*argvW;
           while (*p!='\0') {
               if (*p=='&' || *p=='<' || *p=='>' || *p=='(' || *p==')'
                   || *p=='@' || *p=='^' || *p=='|') {
@@ -170,15 +185,16 @@ int main (int argc, char *argv[])
           }
       }
 
-      cmd = HeapAlloc(GetProcessHeap(), 0, len);
-      if (!cmd)
+      cmdW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+      if (!cmdW)
           exit(1);
 
-      p = cmd;
-      for (arg = argv; *arg; arg++)
+      p = cmdW;
+      argsLeft = args;
+      for (arg = argvW; argsLeft>0; arg++,argsLeft--)
       {
           int has_space,has_quote;
-          char* a;
+          WCHAR* a;
 
           /* Check for quotes and spaces in this argument */
           has_space=has_quote=0;
@@ -202,7 +218,7 @@ int main (int argc, char *argv[])
               *p++='"';
           if (has_quote) {
               int bcount;
-              char* a;
+              WCHAR* a;
 
               bcount=0;
               a=*arg;
@@ -226,16 +242,26 @@ int main (int argc, char *argv[])
                   a++;
               }
           } else {
-              strcpy(p,*arg);
-              p+=strlen(*arg);
+              strcpyW(p,*arg);
+              p+=strlenW(*arg);
           }
           if (has_space)
               *p++='"';
           *p++=' ';
       }
-      if (p > cmd)
+      if (p > cmdW)
           p--;  /* remove last space */
       *p = '\0';
+
+      /* FIXME: Convert back to ansi until more is in unicode */
+      cmd = HeapAlloc(GetProcessHeap(), 0, len);
+      if (!cmd) {
+        exit(1);
+      } else {
+        WideCharToMultiByte(CP_ACP, 0, cmdW, len, cmd, len, NULL, NULL);
+      }
+      WINE_TRACE("Input (U): '%s'\n", wine_dbgstr_w(cmdW));
+      WINE_TRACE("Input (A): '%s'\n", cmd);
 
       /* strip first and last quote characters if opt_s; check for invalid
        * executable is done later */
@@ -254,6 +280,7 @@ int main (int argc, char *argv[])
       else
           WCMD_process_command(cmd);
       HeapFree(GetProcessHeap(), 0, cmd);
+      HeapFree(GetProcessHeap(), 0, cmdW);
       return errorlevel;
   }
 
@@ -338,6 +365,7 @@ int main (int argc, char *argv[])
   if (opt_k) {
       WCMD_process_command(cmd);
       HeapFree(GetProcessHeap(), 0, cmd);
+      HeapFree(GetProcessHeap(), 0, cmdW);
   }
 
 /*
