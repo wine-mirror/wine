@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cmd.exe
-APPMODE   = -mconsole
+APPMODE   = -mconsole -municode
 EXTRADEFS = -DUNICODE
 IMPORTS   = shell32 user32 advapi32 kernel32
 

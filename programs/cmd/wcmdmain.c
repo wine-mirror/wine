@@ -100,9 +100,8 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start);
  * winmain().
  */
 
-int main (int argc, char *argv[])
+int wmain (int argc, WCHAR *argvW[])
 {
-  LPWSTR *argvW = NULL;
   int     args;
   WCHAR  *cmd   = NULL;
   WCHAR string[1024];
@@ -121,10 +120,7 @@ int main (int argc, char *argv[])
   wsprintf(version_string, WCMD_LoadMessage(WCMD_VERSION), string);
   strcpyW(anykey, WCMD_LoadMessage(WCMD_ANYKEY));
 
-  /* Get a Unicode command line */
-  argvW = CommandLineToArgvW( GetCommandLineW(), &argc );
   args  = argc;
-
   opt_c=opt_k=opt_q=opt_s=0;
   while (args > 0)
   {
