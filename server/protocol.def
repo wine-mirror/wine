@@ -177,7 +177,6 @@ typedef struct
     void           *iosb;          /* I/O status block in client addr space */
     void           *arg;           /* opaque user data to pass to callback */
     void           *apc;           /* user apc to call */
-    void           *apc_arg;       /* argument for user apc */
     obj_handle_t    event;         /* event to signal when done */
 } async_data_t;
 

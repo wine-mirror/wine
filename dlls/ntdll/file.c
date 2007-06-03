@@ -639,7 +639,6 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 req->async.iosb     = io_status;
                 req->async.arg      = fileio;
                 req->async.apc      = fileio_apc;
-                req->async.apc_arg  = fileio;
                 req->async.event    = hEvent;
                 status = wine_server_call( req );
             }
@@ -873,7 +872,6 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                 req->async.iosb     = io_status;
                 req->async.arg      = fileio;
                 req->async.apc      = fileio_apc;
-                req->async.apc_arg  = fileio;
                 req->async.event    = hEvent;
                 status = wine_server_call( req );
             }
@@ -1001,7 +999,6 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         req->async.iosb     = io;
         req->async.arg      = async;
         req->async.apc      = (apc || event) ? ioctl_apc : NULL;
-        req->async.apc_arg  = async;
         req->async.event    = event;
         wine_server_add_data( req, in_buffer, in_size );
         wine_server_set_reply( req, out_buffer, out_size );

@@ -2286,7 +2286,6 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
         req->async.iosb     = IoStatusBlock;
         req->async.arg      = info;
         req->async.apc      = read_changes_user_apc;
-        req->async.apc_arg  = info;
         req->async.event    = Event;
         status = wine_server_call( req );
     }

@@ -245,8 +245,8 @@ static void dump_apc_result( const apc_result_t *result )
 
 static void dump_async_data( const async_data_t *data )
 {
-    fprintf( stderr, "{callback=%p,iosb=%p,arg=%p,apc=%p,apc_arg=%p,event=%p}",
-             data->callback, data->iosb, data->arg, data->apc, data->apc_arg, data->event );
+    fprintf( stderr, "{callback=%p,iosb=%p,arg=%p,apc=%p,event=%p}",
+             data->callback, data->iosb, data->arg, data->apc, data->event );
 }
 
 static void dump_luid( const luid_t *luid )

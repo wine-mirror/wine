@@ -161,7 +161,6 @@ typedef struct
     void           *iosb;
     void           *arg;
     void           *apc;
-    void           *apc_arg;
     obj_handle_t    event;
 } async_data_t;
 
@@ -4728,6 +4727,6 @@ union generic_reply
     struct get_next_device_request_reply get_next_device_request_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 304
+#define SERVER_PROTOCOL_VERSION 305
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
