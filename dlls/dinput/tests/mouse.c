@@ -72,10 +72,14 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
 {
     HRESULT hr;
     LPDIRECTINPUTDEVICE pMouse = NULL;
+    DIMOUSESTATE2 m_state;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysMouse, &pMouse, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
     if (FAILED(hr)) return;
+
+    hr = IDirectInputDevice_SetCooperativeLevel(pMouse, hwnd, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
+    ok(hr == S_OK, "SetCooperativeLevel: %s\n", DXGetErrorString8(hr));
 
     hr = IDirectInputDevice_SetDataFormat(pMouse, &c_dfDIMouse);
     ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %s\n", DXGetErrorString8(hr));
@@ -85,6 +89,23 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %s\n", DXGetErrorString8(hr));
     hr = IDirectInputDevice_Acquire(pMouse);
     ok(hr == S_FALSE, "IDirectInputDevice_Acquire() should have failed: %s\n", DXGetErrorString8(hr));
+
+    /* Foreground coop level requires window to have focus */
+    /* This should make dinput loose mouse input */
+    SetActiveWindow( 0 );
+
+    hr = IDirectInputDevice_GetDeviceState(pMouse, sizeof(m_state), &m_state);
+    todo_wine
+    ok(hr == DIERR_NOTACQUIRED, "GetDeviceState() should have failed: %s\n", DXGetErrorString8(hr));
+    /* Workaround so we can test other things. Remove when Wine is fixed */
+    IDirectInputDevice_Unacquire(pMouse);
+
+    hr = IDirectInputDevice_Acquire(pMouse);
+    ok(hr == DIERR_OTHERAPPHASPRIO, "Acquire() should have failed: %s\n", DXGetErrorString8(hr));
+
+    SetActiveWindow( hwnd );
+    hr = IDirectInputDevice_Acquire(pMouse);
+    ok(hr == S_OK, "Acquire() failed: %s\n", DXGetErrorString8(hr));
 
     if (pMouse) IUnknown_Release(pMouse);
 }

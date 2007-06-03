@@ -556,6 +556,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     HRESULT res;
 
     if (!This->data_format.user_df) return DIERR_INVALIDPARAM;
+    if (This->dwCoopLevel & DISCL_FOREGROUND && This->win != GetForegroundWindow())
+        return DIERR_OTHERAPPHASPRIO;
 
     EnterCriticalSection(&This->crit);
     res = This->acquired ? S_FALSE : DI_OK;
