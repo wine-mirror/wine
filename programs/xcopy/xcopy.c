@@ -93,7 +93,7 @@ static WCHAR copyTo[MAX_PATH];
 
      Processes the args, and drives the actual copying
    ========================================================================= */
-int main (int argc, char *argv[])
+int wmain (int argc, WCHAR *argvW[])
 {
     int     rc = 0;
     WCHAR   suppliedsource[MAX_PATH] = {0};   /* As supplied on the cmd line */
@@ -104,7 +104,6 @@ int main (int argc, char *argv[])
     WCHAR   destinationspec[MAX_PATH] = {0};  /* Filespec of destination */
     WCHAR   copyCmd[MAXSTRING];               /* COPYCMD env var         */
     DWORD   flags = 0;                        /* Option flags            */
-    LPWSTR *argvW = NULL;
     const WCHAR PROMPTSTR1[]  = {'/', 'Y', 0};
     const WCHAR PROMPTSTR2[]  = {'/', 'y', 0};
     const WCHAR COPYCMD[]  = {'C', 'O', 'P', 'Y', 'C', 'M', 'D', 0};
@@ -113,9 +112,6 @@ int main (int argc, char *argv[])
     /*
      * Parse the command line
      */
-
-    /* overwrite the command line */
-    argvW = CommandLineToArgvW( GetCommandLineW(), &argc );
 
     /* Confirm at least one parameter */
     if (argc < 2) {
