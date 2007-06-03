@@ -1193,6 +1193,16 @@ int p = 0;
 }
 
 /*******************************************************************
+ * WCMD_output_asis_len - send output to current standard output
+ *        device without formatting eg. when message contains '%'
+ *        of a supplied length.
+ */
+static void WCMD_output_asis_len(const char *message, int len) {
+  DWORD count;
+  WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), message, len, &count, NULL);
+}
+
+/*******************************************************************
  * WCMD_output - send output to current standard output device.
  *
  */
@@ -1208,9 +1218,10 @@ void WCMD_output (const char *format, ...) {
   va_end(ap);
   if( ret >= sizeof( string)) {
        WINE_ERR("Output truncated in WCMD_output\n" );
-       string[sizeof( string) -1] = '\0';
+       ret = sizeof(string) - 1;
+       string[ret] = '\0';
   }
-  WCMD_output_asis(string);
+  WCMD_output_asis_len(string, ret);
 }
 
 
@@ -1250,21 +1261,19 @@ void WCMD_output_asis (const char *message) {
   if (paged_mode) {
     do {
       if ((ptr = strchr(message, '\n')) != NULL) ptr++;
-      WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), message,
-                 (ptr) ? ptr - message : lstrlen(message), &count, NULL);
+      WCMD_output_asis_len(message, (ptr) ? ptr - message : lstrlen(message));
       if (ptr) {
         if (++line_count >= max_height - 1) {
-          line_count = 0;
-          WCMD_output_asis (pagedMessage);
+          line_count = 1;
+          WCMD_output_asis_len(pagedMessage, lstrlen(pagedMessage));
           ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
         }
       }
     } while ((message = ptr) != NULL);
   } else {
-      WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), message, lstrlen(message), &count, NULL);
+    WCMD_output_asis_len(message, lstrlen(message));
   }
 }
-
 
 /***************************************************************************
  * WCMD_strtrim_leading_spaces
