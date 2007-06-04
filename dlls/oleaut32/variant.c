@@ -4484,10 +4484,20 @@ VarFix_Exit:
 HRESULT WINAPI VarInt(LPVARIANT pVarIn, LPVARIANT pVarOut)
 {
     HRESULT hRet = S_OK;
+    VARIANT temp;
+
+    VariantInit(&temp);
 
     TRACE("(%p->(%s%s),%p)\n", pVarIn, debugstr_VT(pVarIn),
           debugstr_VF(pVarIn), pVarOut);
 
+    /* Handle VT_DISPATCH by storing and taking address of returned value */
+    if ((V_VT(pVarIn) & VT_TYPEMASK) == VT_DISPATCH && ((V_VT(pVarIn) & ~VT_TYPEMASK) == 0))
+    {
+        hRet = VARIANT_FetchDispatchValue(pVarIn, &temp);
+        if (FAILED(hRet)) goto VarInt_Exit;
+        pVarIn = &temp;
+    }
     V_VT(pVarOut) = V_VT(pVarIn);
 
     switch (V_VT(pVarIn))
@@ -4511,8 +4521,10 @@ HRESULT WINAPI VarInt(LPVARIANT pVarIn, LPVARIANT pVarOut)
         hRet = VarDecInt(&V_DECIMAL(pVarIn), &V_DECIMAL(pVarOut));
         break;
     default:
-        return VarFix(pVarIn, pVarOut);
+        hRet = VarFix(pVarIn, pVarOut);
     }
+VarInt_Exit:
+    VariantClear(&temp);
 
     return hRet;
 }
