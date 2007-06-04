@@ -60,7 +60,7 @@ static unsigned char *(*pcapi20_get_manufacturer)(unsigned, unsigned char *) = N
 static unsigned char *(*pcapi20_get_serial_number)(unsigned, unsigned char *) = NULL;
 static unsigned char *(*pcapi20_get_version)(unsigned, unsigned char *) = NULL;
 
-static void load_functions() {
+static void load_functions(void) {
     void *capi_handle = NULL;
 
     if (pcapi20_register) /* loaded already */
