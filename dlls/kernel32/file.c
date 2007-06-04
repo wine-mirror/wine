@@ -539,17 +539,11 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
  *
  *  If successful (and relevant) lpTransferred will hold the number of
  *   bytes transferred during the async operation.
- *
- * BUGS
- *
- * Currently only works for WaitCommEvent, ReadFile, WriteFile
- *   with communications ports.
- *
  */
 BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
                                 LPDWORD lpTransferred, BOOL bWait)
 {
-    DWORD r = WAIT_OBJECT_0;
+    NTSTATUS status;
 
     TRACE( "(%p %p %p %x)\n", hFile, lpOverlapped, lpTransferred, bWait );
 
@@ -558,57 +552,26 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
         ERR("lpOverlapped was null\n");
         return FALSE;
     }
-    if ( bWait )
+
+    status = lpOverlapped->Internal;
+    if (status == STATUS_PENDING)
     {
-        if ( lpOverlapped->hEvent )
+        if (!bWait)
         {
-            do
-            {
-                TRACE( "waiting on %p\n", lpOverlapped );
-                r = WaitForSingleObjectEx( lpOverlapped->hEvent, INFINITE, TRUE );
-                TRACE( "wait on %p returned %d\n", lpOverlapped, r );
-            } while ( r == WAIT_IO_COMPLETION );
+            SetLastError( ERROR_IO_INCOMPLETE );
+            return FALSE;
         }
-        else
-        {
-            /* busy loop */
-            while ( ((volatile OVERLAPPED*)lpOverlapped)->Internal == STATUS_PENDING )
-                Sleep( 10 );
-        }
+
+        if (WaitForSingleObject( lpOverlapped->hEvent ? lpOverlapped->hEvent : hFile,
+                                 INFINITE ) == WAIT_FAILED)
+            return FALSE;
+        status = lpOverlapped->Internal;
     }
-    else if ( lpOverlapped->Internal == STATUS_PENDING )
-    {
-        /* Wait in order to give APCs a chance to run. */
-        /* This is cheating, so we must set the event again in case of success -
-           it may be a non-manual reset event. */
-        do
-        {
-            TRACE( "waiting on %p\n", lpOverlapped );
-            r = WaitForSingleObjectEx( lpOverlapped->hEvent, 0, TRUE );
-            TRACE( "wait on %p returned %d\n", lpOverlapped, r );
-        } while ( r == WAIT_IO_COMPLETION );
-        if ( r == WAIT_OBJECT_0 && lpOverlapped->hEvent )
-            NtSetEvent( lpOverlapped->hEvent, NULL );
-    }
-    if ( r == WAIT_FAILED )
-    {
-        WARN("wait operation failed\n");
-        return FALSE;
-    }
+
     if (lpTransferred) *lpTransferred = lpOverlapped->InternalHigh;
 
-    switch ( lpOverlapped->Internal )
-    {
-    case STATUS_SUCCESS:
-        return TRUE;
-    case STATUS_PENDING:
-        SetLastError( ERROR_IO_INCOMPLETE );
-        if ( bWait ) ERR("PENDING status after waiting!\n");
-        return FALSE;
-    default:
-        SetLastError( RtlNtStatusToDosError( lpOverlapped->Internal ) );
-        return FALSE;
-    }
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 /***********************************************************************

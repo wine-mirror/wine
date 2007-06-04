@@ -1768,9 +1768,7 @@ static void test_overlapped(void)
     ov.Internal = STATUS_PENDING;
     ov.InternalHigh = 0xabcd;
     r = GetOverlappedResult(0, &ov, &result, 0);
-    todo_wine {
     ok( GetLastError() == ERROR_IO_INCOMPLETE, "wrong error %u\n", GetLastError() );
-    }
     ok( r == FALSE, "should return false\n");
     ok( result == 0, "wrong result %u\n", result );
 
