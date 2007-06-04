@@ -135,7 +135,6 @@
 #include "wsipx.h"
 #include "winnt.h"
 #include "iphlpapi.h"
-#include "thread.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -1328,11 +1327,6 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
         HeapFree( GetProcessHeap(), 0, wsa );
         return NtStatusToWSAError( status );
     }
-    else
-        NtCurrentTeb()->num_async_io++;
-
-    /* Try immediate completion */
-    Sleep(0);
     return 0;
 }
 
@@ -2681,11 +2675,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             }
             SERVER_END_REQ;
 
-            if (err == STATUS_PENDING)
-                NtCurrentTeb()->num_async_io++;
-            else
-                HeapFree( GetProcessHeap(), 0, wsa );
-
+            if (err != STATUS_PENDING) HeapFree( GetProcessHeap(), 0, wsa );
             WSASetLastError( NtStatusToWSAError( err ));
             return SOCKET_ERROR;
         }
@@ -4206,11 +4196,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 }
                 SERVER_END_REQ;
 
-                if (err == STATUS_PENDING)
-                    NtCurrentTeb()->num_async_io++;
-                else
-                    HeapFree( GetProcessHeap(), 0, wsa );
-
+                if (err != STATUS_PENDING) HeapFree( GetProcessHeap(), 0, wsa );
                 WSASetLastError( NtStatusToWSAError( err ));
                 return SOCKET_ERROR;
             }

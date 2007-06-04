@@ -645,7 +645,6 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             SERVER_END_REQ;
 
             if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
-            else NtCurrentTeb()->num_async_io++;
             goto done;
         }
         else  /* synchronous read, wait for the fd to become ready */
@@ -878,7 +877,6 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             SERVER_END_REQ;
 
             if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
-            else NtCurrentTeb()->num_async_io++;
             goto done;
         }
         else  /* synchronous write, wait for the fd to become ready */

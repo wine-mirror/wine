@@ -671,8 +671,6 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         result->async_io.status = call->async_io.func( call->async_io.user,
                                                        call->async_io.sb,
                                                        call->async_io.status );
-        if (result->async_io.status != STATUS_PENDING)
-            NtCurrentTeb()->num_async_io--;
         break;
     case APC_VIRTUAL_ALLOC:
         result->type = call->type;
@@ -973,13 +971,10 @@ NTSTATUS WINAPI NtYieldExecution(void)
  */
 NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    /* if alertable or async I/O in progress, we need to query the server */
-    if (alertable || NtCurrentTeb()->num_async_io)
-    {
-        UINT flags = SELECT_INTERRUPTIBLE;
-        if (alertable) flags |= SELECT_ALERTABLE;
-        return NTDLL_wait_for_multiple_objects( 0, NULL, flags, timeout, 0 );
-    }
+    /* if alertable, we need to query the server */
+    if (alertable)
+        return NTDLL_wait_for_multiple_objects( 0, NULL, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE,
+                                                timeout, 0 );
 
     if (!timeout || timeout->QuadPart == TIMEOUT_INFINITE)  /* sleep forever */
     {
