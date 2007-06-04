@@ -55,6 +55,15 @@ library WindowsInstaller
         msiInstallStateDefault = 5
     } MsiInstallState;
 
+    typedef enum {
+        msiOpenDatabaseModeReadOnly = 0,
+        msiOpenDatabaseModeTransact = 1,
+        msiOpenDatabaseModeDirect = 2,
+        msiOpenDatabaseModeCreate = 3,
+        msiOpenDatabaseModeCreateDirect = 4,
+        msiOpenDatabaseModePatchFile = 32
+    } MsiOpenDatabaseMode;
+
     [ uuid(000C1090-0000-0000-C000-000000000046) ]
     dispinterface Installer
     {
