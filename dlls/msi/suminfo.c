@@ -529,15 +529,15 @@ static UINT get_prop( MSIHANDLE handle, UINT uiProperty, UINT *puiDataType,
     TRACE("%ld %d %p %p %p %p %p\n", handle, uiProperty, puiDataType,
           piValue, pftValue, str, pcchValueBuf);
 
+    if ( uiProperty >= MSI_MAX_PROPS )
+    {
+        if (puiDataType) *puiDataType = VT_EMPTY;
+        return ERROR_UNKNOWN_PROPERTY;
+    }
+
     si = msihandle2msiinfo( handle, MSIHANDLETYPE_SUMMARYINFO );
     if( !si )
         return ERROR_INVALID_HANDLE;
-
-    if ( uiProperty >= MSI_MAX_PROPS )
-    {
-        *puiDataType = VT_EMPTY;
-        return ret;
-    }
 
     prop = &si->property[uiProperty];
 
