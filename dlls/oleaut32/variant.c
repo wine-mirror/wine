@@ -4273,15 +4273,28 @@ HRESULT WINAPI VarAbs(LPVARIANT pVarIn, LPVARIANT pVarOut)
 {
     VARIANT varIn;
     HRESULT hRet = S_OK;
+    VARIANT temp;
+
+    VariantInit(&temp);
 
     TRACE("(%p->(%s%s),%p)\n", pVarIn, debugstr_VT(pVarIn),
           debugstr_VF(pVarIn), pVarOut);
 
+    /* Handle VT_DISPATCH by storing and taking address of returned value */
+    if ((V_VT(pVarIn) & VT_TYPEMASK) == VT_DISPATCH && ((V_VT(pVarIn) & ~VT_TYPEMASK) == 0))
+    {
+        hRet = VARIANT_FetchDispatchValue(pVarIn, &temp);
+        if (FAILED(hRet)) goto VarAbs_Exit;
+        pVarIn = &temp;
+    }
+
     if (V_ISARRAY(pVarIn) || V_VT(pVarIn) == VT_UNKNOWN ||
         V_VT(pVarIn) == VT_DISPATCH || V_VT(pVarIn) == VT_RECORD ||
         V_VT(pVarIn) == VT_ERROR)
-        return DISP_E_TYPEMISMATCH;
-
+    {
+        hRet = DISP_E_TYPEMISMATCH;
+        goto VarAbs_Exit;
+    }
     *pVarOut = *pVarIn; /* Shallow copy the value, and invert it if needed */
 
 #define ABS_CASE(typ,min) \
@@ -4331,6 +4344,8 @@ HRESULT WINAPI VarAbs(LPVARIANT pVarIn, LPVARIANT pVarOut)
         hRet = DISP_E_BADVARTYPE;
     }
 
+VarAbs_Exit:
+    VariantClear(&temp);
     return hRet;
 }
 
