@@ -1040,7 +1040,7 @@ static void add_resource(resource_t *res)
     idnode->langs = langnode;
 }
 
-static void setup_tabs()
+static void setup_tabs(void)
 {
     int i;
 
