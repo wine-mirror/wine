@@ -1280,12 +1280,32 @@ static HRESULT SummaryInfo_PropertyGet(IDispatch *pSummaryInfo, int pid, VARIANT
     return invoke(pSummaryInfo, "Property", DISPATCH_PROPERTYGET, &dispparams, pVarResult, vtExpect);
 }
 
+static HRESULT SummaryInfo_PropertyPut(IDispatch *pSummaryInfo, int pid, VARIANT *pVariant)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPID dispid = DISPID_PROPERTYPUT;
+    DISPPARAMS dispparams = {vararg, &dispid, sizeof(vararg)/sizeof(VARIANTARG), 1};
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_I4;
+    V_I4(&vararg[1]) = pid;
+    VariantInit(&vararg[0]);
+    VariantCopyInd(vararg, pVariant);
+
+    return invoke(pSummaryInfo, "Property", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
+}
+
 /* Test the various objects */
+
+#define TEST_SUMMARYINFO_PROPERTIES_MODIFIED 4
 
 static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *info, int num_info, BOOL readonly)
 {
     static const WCHAR szPropertyException[] = { 'P','r','o','p','e','r','t','y',',','P','i','d',0 };
-    VARIANT varresult;
+    static const WCHAR szTitle[] = { 'T','i','t','l','e',0 };
+    VARIANT varresult, var;
+    SYSTEMTIME st;
     HRESULT hr;
     int j;
 
@@ -1297,20 +1317,17 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
         int vt = entry->datatype;
         if (vt == VT_LPSTR) vt = VT_BSTR;
         else if (vt == VT_FILETIME) vt = VT_DATE;
+        else if (vt == VT_I2) vt = VT_I4;
 
         hr = SummaryInfo_PropertyGet(pSummaryInfo, entry->property, &varresult, vt);
         ok(hr == S_OK, "SummaryInfo_Property (pid %d) failed, hresult 0x%08x\n", entry->property, hr);
         if (V_VT(&varresult) != vt)
             skip("Skipping property tests due to type mismatch\n");
-        else if (vt == VT_I2)
-            ok(V_I2(&varresult) == entry->iValue, "SummaryInfo_Property (pid %d) I2 result expected to be %d, but was %d\n",
-               entry->property, entry->iValue, V_I2(&varresult));
         else if (vt == VT_I4)
             ok(V_I4(&varresult) == entry->iValue, "SummaryInfo_Property (pid %d) I4 result expected to be %d, but was %d\n",
                entry->property, entry->iValue, V_I4(&varresult));
         else if (vt == VT_DATE)
         {
-            SYSTEMTIME st;
             FILETIME ft;
             DATE d;
 
@@ -1357,6 +1374,65 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
 
     hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_CHARCOUNT, &varresult, VT_EMPTY);
     ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
+
+    if (!readonly)
+    {
+        /* SummaryInfo::Property, put; one for each type */
+
+        _invoke_todo_vtResult = 1;
+
+        /* VT_I2 */
+        VariantInit(&var);
+        V_VT(&var) = VT_I2;
+        V_I2(&var) = 1;
+        hr = SummaryInfo_PropertyPut(pSummaryInfo, PID_CODEPAGE, &var);
+        todo_wine ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
+
+        hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_CODEPAGE, &varresult, VT_I4 /* NOT VT_I2 */);
+        ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
+        todo_wine ok(V_I2(&var) == V_I2(&varresult), "SummaryInfo_PropertyGet expected %d, but returned %d\n", V_I2(&var), V_I2(&varresult));
+        VariantClear(&varresult);
+        VariantClear(&var);
+
+        /* VT_BSTR */
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = SysAllocString(szTitle);
+        hr = SummaryInfo_PropertyPut(pSummaryInfo, PID_TITLE, &var);
+        todo_wine ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
+
+        hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_TITLE, &varresult, V_VT(&var));
+        ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
+        todo_wine ok_w2("SummaryInfo_PropertyGet expected %s, but returned %s\n", V_BSTR(&var), V_BSTR(&varresult));
+        VariantClear(&varresult);
+        VariantClear(&var);
+
+        /* VT_DATE */
+        V_VT(&var) = VT_DATE;
+        FileTimeToSystemTime(&systemtime, &st);
+        SystemTimeToVariantTime(&st, &V_DATE(&var));
+        hr = SummaryInfo_PropertyPut(pSummaryInfo, PID_LASTSAVE_DTM, &var);
+        todo_wine ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
+
+        hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_LASTSAVE_DTM, &varresult, V_VT(&var));
+        ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
+        todo_wine ok(V_DATE(&var) == V_DATE(&varresult), "SummaryInfo_PropertyGet expected %lf, but returned %lf\n", V_DATE(&var), V_DATE(&varresult));
+        VariantClear(&varresult);
+        VariantClear(&var);
+
+        /* VT_I4 */
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = 1000;
+        hr = SummaryInfo_PropertyPut(pSummaryInfo, PID_CHARCOUNT, &var);
+        todo_wine ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
+
+        hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_CHARCOUNT, &varresult, V_VT(&var));
+        ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
+        todo_wine ok(V_I4(&var) == V_I4(&varresult), "SummaryInfo_PropertyGet expected %d, but returned %d\n", V_I4(&var), V_I4(&varresult));
+        VariantClear(&varresult);
+        VariantClear(&var);
+
+        _invoke_todo_vtResult = 0;
+    }
 }
 
 static void test_Database(IDispatch *pDatabase, BOOL readonly)
@@ -1464,7 +1540,7 @@ static void test_Database(IDispatch *pDatabase, BOOL readonly)
     }
 
     /* Database::SummaryInformation */
-    hr = Database_SummaryInformation(pDatabase, 0, &pSummaryInfo);
+    hr = Database_SummaryInformation(pDatabase, TEST_SUMMARYINFO_PROPERTIES_MODIFIED, &pSummaryInfo);
     ok(hr == S_OK, "Database_SummaryInformation failed, hresult 0x%08x\n", hr);
     ok(pSummaryInfo != NULL, "Database_SummaryInformation should not have returned NULL record\n");
     if (pSummaryInfo)
