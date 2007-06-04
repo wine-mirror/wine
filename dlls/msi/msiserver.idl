@@ -161,6 +161,8 @@ library WindowsInstaller
             void Property(
                 [in] long Pid,
                 [in] VARIANT rhs);
+        [id(DISPID_SUMMARYINFO_PROPERTYCOUNT), propget]
+            long PropertyCount();
     }
 
     typedef enum {

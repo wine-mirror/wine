@@ -858,6 +858,20 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
             else return DISP_E_MEMBERNOTFOUND;
             break;
 
+        case DISPID_SUMMARYINFO_PROPERTYCOUNT:
+            if (wFlags & DISPATCH_PROPERTYGET) {
+                UINT count;
+                if ((ret = MsiSummaryInfoGetPropertyCount(This->msiHandle, &count)) != ERROR_SUCCESS)
+                    ERR("MsiSummaryInfoGetPropertyCount returned %d\n", ret);
+                else
+                {
+                    V_VT(pVarResult) = VT_I4;
+                    V_I4(pVarResult) = count;
+                }
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
         default:
             return DISP_E_MEMBERNOTFOUND;
     }

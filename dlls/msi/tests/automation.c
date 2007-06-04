@@ -1322,12 +1322,9 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
     int j;
 
     /* SummaryInfo::PropertyCount */
-    todo_wine
-    {
-        hr = SummaryInfo_PropertyCountGet(pSummaryInfo, &j);
-        ok(hr == S_OK, "SummaryInfo_PropertyCount failed, hresult 0x%08x\n", hr);
-        ok(j == num_info, "SummaryInfo_PropertyCount returned %d, expected %d\n", j, num_info);
-    }
+    hr = SummaryInfo_PropertyCountGet(pSummaryInfo, &j);
+    ok(hr == S_OK, "SummaryInfo_PropertyCount failed, hresult 0x%08x\n", hr);
+    ok(j == num_info, "SummaryInfo_PropertyCount returned %d, expected %d\n", j, num_info);
 
     /* SummaryInfo::Property, get for properties we have set */
     for (j = 0; j < num_info; j++)
@@ -1451,12 +1448,9 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
         VariantClear(&var);
 
         /* SummaryInfo::PropertyCount */
-        todo_wine
-        {
-            hr = SummaryInfo_PropertyCountGet(pSummaryInfo, &j);
-            ok(hr == S_OK, "SummaryInfo_PropertyCount failed, hresult 0x%08x\n", hr);
-            ok(j == num_info+4, "SummaryInfo_PropertyCount returned %d, expected %d\n", j, num_info);
-        }
+        hr = SummaryInfo_PropertyCountGet(pSummaryInfo, &j);
+        ok(hr == S_OK, "SummaryInfo_PropertyCount failed, hresult 0x%08x\n", hr);
+        ok(j == num_info+4, "SummaryInfo_PropertyCount returned %d, expected %d\n", j, num_info);
     }
 }
 
