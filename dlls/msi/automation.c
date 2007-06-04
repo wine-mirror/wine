@@ -742,10 +742,13 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
         UINT* puArgErr)
 {
     UINT ret;
-    VARIANTARG varg0;
+    VARIANTARG varg0, varg1;
+    FILETIME ft, ftlocal;
+    SYSTEMTIME st;
     HRESULT hr;
 
     VariantInit(&varg0);
+    VariantInit(&varg1);
 
     switch (dispIdMember)
     {
@@ -755,8 +758,6 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
                 UINT type;
                 INT value;
                 DWORD size = 0;
-                FILETIME ft, ftlocal;
-                SYSTEMTIME st;
                 DATE date;
                 LPWSTR str;
 
@@ -779,10 +780,6 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
                         break;
 
                     case VT_I2:
-                        V_VT(pVarResult) = VT_I2;
-                        V_I2(pVarResult) = value;
-                        break;
-
                     case VT_I4:
                         V_VT(pVarResult) = VT_I4;
                         V_I4(pVarResult) = value;
@@ -815,6 +812,49 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
                         ERR("Unhandled variant type %d\n", type);
                 }
             }
+            else if (wFlags & DISPATCH_PROPERTYPUT)
+            {
+                UINT posValue = DISPID_PROPERTYPUT;
+
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                hr = DispGetParam_CopyOnly(pDispParams, &posValue, &varg1);
+                if (FAILED(hr))
+                {
+                    *puArgErr = posValue;
+                    return hr;
+                }
+
+                switch (V_VT(&varg1))
+                {
+                    case VT_I2:
+                    case VT_I4:
+                        ret = MsiSummaryInfoSetPropertyW(This->msiHandle, V_I4(&varg0), V_VT(&varg1), V_I4(&varg1), NULL, NULL);
+                        break;
+
+                    case VT_DATE:
+                        VariantTimeToSystemTime(V_DATE(&varg1), &st);
+                        SystemTimeToFileTime(&st, &ftlocal);
+                        LocalFileTimeToFileTime(&ftlocal, &ft);
+                        ret = MsiSummaryInfoSetPropertyW(This->msiHandle, V_I4(&varg0), VT_FILETIME, 0, &ft, NULL);
+                        break;
+
+                    case VT_BSTR:
+                        ret = MsiSummaryInfoSetPropertyW(This->msiHandle, V_I4(&varg0), VT_LPSTR, 0, NULL, V_BSTR(&varg1));
+                        break;
+
+                    default:
+                        FIXME("Unhandled variant type %d\n", V_VT(&varg1));
+                        VariantClear(&varg1);
+                        return DISP_E_EXCEPTION;
+                }
+
+                if (ret != ERROR_SUCCESS)
+                {
+                    ERR("MsiSummaryInfoSetPropertyW returned %d\n", ret);
+                    return DISP_E_EXCEPTION;
+                }
+            }
             else return DISP_E_MEMBERNOTFOUND;
             break;
 
@@ -822,7 +862,9 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
             return DISP_E_MEMBERNOTFOUND;
     }
 
+    VariantClear(&varg1);
     VariantClear(&varg0);
+
     return S_OK;
 }
 

@@ -1379,18 +1379,16 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
     {
         /* SummaryInfo::Property, put; one for each type */
 
-        _invoke_todo_vtResult = 1;
-
         /* VT_I2 */
         VariantInit(&var);
         V_VT(&var) = VT_I2;
         V_I2(&var) = 1;
         hr = SummaryInfo_PropertyPut(pSummaryInfo, PID_CODEPAGE, &var);
-        todo_wine ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
 
         hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_CODEPAGE, &varresult, VT_I4 /* NOT VT_I2 */);
         ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
-        todo_wine ok(V_I2(&var) == V_I2(&varresult), "SummaryInfo_PropertyGet expected %d, but returned %d\n", V_I2(&var), V_I2(&varresult));
+        ok(V_I2(&var) == V_I2(&varresult), "SummaryInfo_PropertyGet expected %d, but returned %d\n", V_I2(&var), V_I2(&varresult));
         VariantClear(&varresult);
         VariantClear(&var);
 
@@ -1398,11 +1396,11 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(szTitle);
         hr = SummaryInfo_PropertyPut(pSummaryInfo, PID_TITLE, &var);
-        todo_wine ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
 
         hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_TITLE, &varresult, V_VT(&var));
         ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
-        todo_wine ok_w2("SummaryInfo_PropertyGet expected %s, but returned %s\n", V_BSTR(&var), V_BSTR(&varresult));
+        ok_w2("SummaryInfo_PropertyGet expected %s, but returned %s\n", V_BSTR(&var), V_BSTR(&varresult));
         VariantClear(&varresult);
         VariantClear(&var);
 
@@ -1411,10 +1409,11 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
         FileTimeToSystemTime(&systemtime, &st);
         SystemTimeToVariantTime(&st, &V_DATE(&var));
         hr = SummaryInfo_PropertyPut(pSummaryInfo, PID_LASTSAVE_DTM, &var);
-        todo_wine ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
 
         hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_LASTSAVE_DTM, &varresult, V_VT(&var));
         ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
+        /* FIXME: Off by one second */
         todo_wine ok(V_DATE(&var) == V_DATE(&varresult), "SummaryInfo_PropertyGet expected %lf, but returned %lf\n", V_DATE(&var), V_DATE(&varresult));
         VariantClear(&varresult);
         VariantClear(&var);
@@ -1423,15 +1422,13 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
         V_VT(&var) = VT_I4;
         V_I4(&var) = 1000;
         hr = SummaryInfo_PropertyPut(pSummaryInfo, PID_CHARCOUNT, &var);
-        todo_wine ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
+        ok(hr == S_OK, "SummaryInfo_PropertyPut failed, hresult 0x%08x\n", hr);
 
         hr = SummaryInfo_PropertyGet(pSummaryInfo, PID_CHARCOUNT, &varresult, V_VT(&var));
         ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
-        todo_wine ok(V_I4(&var) == V_I4(&varresult), "SummaryInfo_PropertyGet expected %d, but returned %d\n", V_I4(&var), V_I4(&varresult));
+        ok(V_I4(&var) == V_I4(&varresult), "SummaryInfo_PropertyGet expected %d, but returned %d\n", V_I4(&var), V_I4(&varresult));
         VariantClear(&varresult);
         VariantClear(&var);
-
-        _invoke_todo_vtResult = 0;
     }
 }
 

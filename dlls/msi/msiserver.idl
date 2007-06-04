@@ -157,6 +157,10 @@ library WindowsInstaller
         methods:
         [id(DISPID_SUMMARYINFO_PROPERTY), propget]
             VARIANT Property([in] long Pid);
+        [id(DISPID_SUMMARYINFO_PROPERTY), propput]
+            void Property(
+                [in] long Pid,
+                [in] VARIANT rhs);
     }
 
     typedef enum {
