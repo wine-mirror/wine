@@ -99,6 +99,16 @@ static void test_suminfo(void)
     r = MsiSummaryInfoGetProperty(hsuminfo, 0, NULL, NULL, NULL, 0, NULL);
     ok(r == ERROR_SUCCESS, "getpropcount failed\n");
 
+    /* Page faults in wine */
+    if (0)
+    {
+        r = MsiSummaryInfoGetProperty(hsuminfo, -1, NULL, NULL, NULL, 0, NULL);
+        ok(r == ERROR_UNKNOWN_PROPERTY, "MsiSummaryInfoGetProperty wrong error\n");
+
+        r = MsiSummaryInfoGetProperty(hsuminfo, PID_SECURITY+1, NULL, NULL, NULL, 0, NULL);
+        ok(r == ERROR_UNKNOWN_PROPERTY, "MsiSummaryInfoGetProperty wrong error\n");
+    }
+
     type = -1;
     r = MsiSummaryInfoGetProperty(hsuminfo, 0, &type, NULL, NULL, 0, NULL);
     ok(r == ERROR_SUCCESS, "getpropcount failed\n");
