@@ -3566,7 +3566,7 @@ BOOL WINAPI WSAGetOverlappedResult( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
                                     LPDWORD lpcbTransfer, BOOL fWait,
                                     LPDWORD lpdwFlags )
 {
-    DWORD r;
+    NTSTATUS status;
 
     TRACE( "socket %04lx ovl %p trans %p, wait %d flags %p\n",
            s, lpOverlapped, lpcbTransfer, fWait, lpdwFlags );
@@ -3578,24 +3578,19 @@ BOOL WINAPI WSAGetOverlappedResult( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
         return FALSE;
     }
 
-    if ( fWait )
+    status = lpOverlapped->Internal;
+    if (status == STATUS_PENDING)
     {
-        if (lpOverlapped->hEvent)
-            while ( WaitForSingleObjectEx(lpOverlapped->hEvent, 
-                                          INFINITE, TRUE) == STATUS_USER_APC );
-        else /* busy loop */
-            while ( ((volatile OVERLAPPED*)lpOverlapped)->Internal == STATUS_PENDING )
-                Sleep( 10 );
+        if (!fWait)
+        {
+            SetLastError( WSA_IO_INCOMPLETE );
+            return FALSE;
+        }
 
-    }
-    else if ( lpOverlapped->Internal == STATUS_PENDING )
-    {
-        /* Wait in order to give APCs a chance to run. */
-        /* This is cheating, so we must set the event again in case of success -
-           it may be a non-manual reset event. */
-        while ( (r = WaitForSingleObjectEx(lpOverlapped->hEvent, 0, TRUE)) == STATUS_USER_APC );
-        if ( r == WAIT_OBJECT_0 && lpOverlapped->hEvent )
-            NtSetEvent( lpOverlapped->hEvent, NULL );
+        if (WaitForSingleObject( lpOverlapped->hEvent ? lpOverlapped->hEvent : SOCKET2HANDLE(s),
+                                 INFINITE ) == WAIT_FAILED)
+            return FALSE;
+        status = lpOverlapped->Internal;
     }
 
     if ( lpcbTransfer )
@@ -3604,18 +3599,8 @@ BOOL WINAPI WSAGetOverlappedResult( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
     if ( lpdwFlags )
         *lpdwFlags = lpOverlapped->u.s.Offset;
 
-    switch ( lpOverlapped->Internal )
-    {
-    case STATUS_SUCCESS:
-        return TRUE;
-    case STATUS_PENDING:
-        WSASetLastError( WSA_IO_INCOMPLETE );
-        if (fWait) ERR("PENDING status after waiting!\n");
-        return FALSE;
-    default:
-        WSASetLastError( NtStatusToWSAError( lpOverlapped->Internal ));
-        return FALSE;
-    }
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
