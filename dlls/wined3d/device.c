@@ -3861,11 +3861,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
      */
     This->stateBlock->streamIsUP = FALSE;
     memset(&strided, 0, sizeof(strided));
-    if(This->stateBlock->vertexDecl) {
-        primitiveDeclarationConvertToStridedData(iface, FALSE, &strided, &vbo);
-    } else {
-        primitiveConvertToStridedData(iface, &strided, &vbo);
-    }
+    primitiveDeclarationConvertToStridedData(iface, FALSE, &strided, &vbo);
     This->stateBlock->streamIsUP = streamWasUP;
 
     if(vbo || SrcStartIndex) {

@@ -410,20 +410,11 @@ void drawPrimitive(IWineD3DDevice *iface,
                     const void *idxData,
                     int   minIndex);
 
-void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *strided, BOOL *fixup);
-
 void primitiveDeclarationConvertToStridedData(
      IWineD3DDevice *iface,
      BOOL useVertexShaderFunction,
      WineDirect3DVertexStridedData *strided,
      BOOL *fixup);
-
-void primitiveConvertFVFtoOffset(DWORD thisFVF,
-                                 DWORD stride,
-                                 BYTE *data,
-                                 WineDirect3DVertexStridedData *strided,
-                                 GLint streamVBO,
-                                 UINT streamNo);
 
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 
