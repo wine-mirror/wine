@@ -1851,8 +1851,8 @@ typedef struct {
     DWORD        bV5Reserved;
 } BITMAPV5HEADER, *LPBITMAPV5HEADER, *PBITMAPV5HEADER;
 
-#define PROFILE_LINKED   'LINK'
-#define PROFILE_EMBEDDED 'MBED'
+#define PROFILE_LINKED   0x4c494e4b     /* 'LINK' */
+#define PROFILE_EMBEDDED 0x4d424544     /* 'MBED' */
 
 
   /* biCompression */
