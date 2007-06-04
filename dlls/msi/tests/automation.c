@@ -458,9 +458,9 @@ static void test_dispid(void)
 {
     ok( get_dispid( pInstaller, "CreateRecord" ) == 1, "dispid wrong\n");
     ok( get_dispid( pInstaller, "OpenPackage" ) == 2, "dispid wrong\n");
-    todo_wine {
-    ok( get_dispid( pInstaller, "OpenProduct" ) == 3, "dispid wrong\n");
+    todo_wine ok( get_dispid( pInstaller, "OpenProduct" ) == 3, "dispid wrong\n");
     ok( get_dispid( pInstaller, "OpenDatabase" ) == 4, "dispid wrong\n");
+    todo_wine {
     ok( get_dispid( pInstaller, "SummaryInformation" ) == 5, "dispid wrong\n");
     ok( get_dispid( pInstaller, "UILevel" ) == 6, "dispid wrong\n");
     ok( get_dispid( pInstaller, "EnableLog" ) == 7, "dispid wrong\n");
@@ -762,6 +762,25 @@ static HRESULT Installer_OpenPackage(LPCWSTR szPackagePath, int options, IDispat
 
     hr = invoke(pInstaller, "OpenPackage", DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
     *pSession = V_DISPATCH(&varresult);
+    return hr;
+}
+
+static HRESULT Installer_OpenDatabase(LPCWSTR szDatabasePath, int openmode, IDispatch **pDatabase)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_BSTR;
+    V_BSTR(&vararg[1]) = SysAllocString(szDatabasePath);
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = openmode;
+
+    hr = invoke(pInstaller, "OpenDatabase", DISPATCH_METHOD, &dispparams, &varresult, VT_DISPATCH);
+    *pDatabase = V_DISPATCH(&varresult);
     return hr;
 }
 
@@ -1263,7 +1282,7 @@ static HRESULT SummaryInfo_PropertyGet(IDispatch *pSummaryInfo, int pid, VARIANT
 
 /* Test the various objects */
 
-static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *info, int num_info)
+static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *info, int num_info, BOOL readonly)
 {
     static const WCHAR szPropertyException[] = { 'P','r','o','p','e','r','t','y',',','P','i','d',0 };
     VARIANT varresult;
@@ -1340,7 +1359,7 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
     ok(hr == S_OK, "SummaryInfo_PropertyGet failed, hresult 0x%08x\n", hr);
 }
 
-static void test_Database(IDispatch *pDatabase)
+static void test_Database(IDispatch *pDatabase, BOOL readonly)
 {
     static WCHAR szSql[] = { 'S','E','L','E','C','T',' ','`','F','e','a','t','u','r','e','`',' ','F','R','O','M',' ','`','F','e','a','t','u','r','e','`',' ','W','H','E','R','E',' ','`','F','e','a','t','u','r','e','_','P','a','r','e','n','t','`','=','\'','O','n','e','\'',0 };
     static WCHAR szThree[] = { 'T','h','r','e','e',0 };
@@ -1450,7 +1469,7 @@ static void test_Database(IDispatch *pDatabase)
     ok(pSummaryInfo != NULL, "Database_SummaryInformation should not have returned NULL record\n");
     if (pSummaryInfo)
     {
-        test_SummaryInfo(pSummaryInfo, summary_info, sizeof(summary_info)/sizeof(msi_summary_info));
+        test_SummaryInfo(pSummaryInfo, summary_info, sizeof(summary_info)/sizeof(msi_summary_info), readonly);
         IDispatch_Release(pSummaryInfo);
     }
 }
@@ -1538,7 +1557,7 @@ static void test_Session(IDispatch *pSession)
     ok(hr == S_OK, "Session_Database failed, hresult 0x%08x\n", hr);
     if (hr == S_OK)
     {
-        test_Database(pDatabase);
+        test_Database(pDatabase, TRUE);
         IDispatch_Release(pDatabase);
     }
 
@@ -2136,7 +2155,7 @@ static void test_Installer(void)
     WCHAR szPath[MAX_PATH];
     HRESULT hr;
     UINT len;
-    IDispatch *pSession = NULL, *pRecord = NULL, *pStringList = NULL;
+    IDispatch *pSession = NULL, *pDatabase = NULL, *pRecord = NULL, *pStringList = NULL;
     int iValue, iCount;
 
     if (!pInstaller) return;
@@ -2204,6 +2223,15 @@ static void test_Installer(void)
     {
         test_Session(pSession);
         IDispatch_Release(pSession);
+    }
+
+    /* Installer::OpenDatabase */
+    hr = Installer_OpenDatabase(szPath, (int)MSIDBOPEN_TRANSACT, &pDatabase);
+    ok(hr == S_OK, "Installer_OpenDatabase failed, hresult 0x%08x\n", hr);
+    if (hr == S_OK)
+    {
+        test_Database(pDatabase, FALSE);
+        IDispatch_Release(pDatabase);
     }
 
     /* Installer::RegistryValue */
