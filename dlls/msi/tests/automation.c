@@ -1296,6 +1296,18 @@ static HRESULT SummaryInfo_PropertyPut(IDispatch *pSummaryInfo, int pid, VARIANT
     return invoke(pSummaryInfo, "Property", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
 }
 
+static HRESULT SummaryInfo_PropertyCountGet(IDispatch *pSummaryInfo, int *pCount)
+{
+    VARIANT varresult;
+    DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+    HRESULT hr;
+
+    hr = invoke(pSummaryInfo, "PropertyCount", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_I4);
+    *pCount = V_I4(&varresult);
+    VariantClear(&varresult);
+    return hr;
+}
+
 /* Test the various objects */
 
 #define TEST_SUMMARYINFO_PROPERTIES_MODIFIED 4
@@ -1308,6 +1320,14 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
     SYSTEMTIME st;
     HRESULT hr;
     int j;
+
+    /* SummaryInfo::PropertyCount */
+    todo_wine
+    {
+        hr = SummaryInfo_PropertyCountGet(pSummaryInfo, &j);
+        ok(hr == S_OK, "SummaryInfo_PropertyCount failed, hresult 0x%08x\n", hr);
+        ok(j == num_info, "SummaryInfo_PropertyCount returned %d, expected %d\n", j, num_info);
+    }
 
     /* SummaryInfo::Property, get for properties we have set */
     for (j = 0; j < num_info; j++)
@@ -1429,6 +1449,14 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
         ok(V_I4(&var) == V_I4(&varresult), "SummaryInfo_PropertyGet expected %d, but returned %d\n", V_I4(&var), V_I4(&varresult));
         VariantClear(&varresult);
         VariantClear(&var);
+
+        /* SummaryInfo::PropertyCount */
+        todo_wine
+        {
+            hr = SummaryInfo_PropertyCountGet(pSummaryInfo, &j);
+            ok(hr == S_OK, "SummaryInfo_PropertyCount failed, hresult 0x%08x\n", hr);
+            ok(j == num_info+4, "SummaryInfo_PropertyCount returned %d, expected %d\n", j, num_info);
+        }
     }
 }
 
