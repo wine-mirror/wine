@@ -509,7 +509,7 @@ static CameraList *detected_cameras;
 static CameraAbilitiesList *abilities_list;
 
 static TW_UINT16
-gphoto2_auto_detect() {
+gphoto2_auto_detect(void) {
     int result, count;
 
     if (detected_cameras && (gp_list_count (detected_cameras) == 0)) {
