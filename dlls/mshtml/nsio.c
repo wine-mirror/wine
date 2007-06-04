@@ -2189,7 +2189,6 @@ void init_nsio(nsIComponentManager *component_manager, nsIComponentRegistrar *re
                                                &IID_nsIFactory, (void**)&old_factory);
     if(NS_FAILED(nsres)) {
         ERR("Could not get factory: %08x\n", nsres);
-        nsIFactory_Release(old_factory);
         return;
     }
 
