@@ -5045,8 +5045,19 @@ HRESULT WINAPI VarRound(LPVARIANT pVarIn, int deci, LPVARIANT pVarOut)
     VARIANT varIn;
     HRESULT hRet = S_OK;
     float factor;
+    VARIANT temp;
+
+    VariantInit(&temp);
 
     TRACE("(%p->(%s%s),%d)\n", pVarIn, debugstr_VT(pVarIn), debugstr_VF(pVarIn), deci);
+
+    /* Handle VT_DISPATCH by storing and taking address of returned value */
+    if ((V_VT(pVarIn) & VT_TYPEMASK) == VT_DISPATCH && ((V_VT(pVarIn) & ~VT_TYPEMASK) == 0))
+    {
+        hRet = VARIANT_FetchDispatchValue(pVarIn, &temp);
+        if (FAILED(hRet)) goto VarRound_Exit;
+        pVarIn = &temp;
+    }
 
     switch (V_VT(pVarIn))
     {
@@ -5138,9 +5149,10 @@ HRESULT WINAPI VarRound(LPVARIANT pVarIn, int deci, LPVARIANT pVarOut)
 		V_VT(pVarIn) & VT_TYPEMASK, deci);
 	hRet = DISP_E_BADVARTYPE;
     }
-
+VarRound_Exit:
     if (FAILED(hRet))
       V_VT(pVarOut) = VT_EMPTY;
+    VariantClear(&temp);
 
     TRACE("returning 0x%08x (%s%s),%f\n", hRet, debugstr_VT(pVarOut),
 	debugstr_VF(pVarOut), (V_VT(pVarOut) == VT_R4) ? V_R4(pVarOut) :
