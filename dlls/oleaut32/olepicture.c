@@ -365,6 +365,7 @@ static void OLEPictureImpl_Destroy(OLEPictureImpl* Obj)
       DeleteEnhMetaFile(Obj->desc.u.emf.hemf);
       break;
     case PICTYPE_NONE:
+    case PICTYPE_UNINITIALIZED:
       /* Nothing to do */
       break;
     default:
@@ -505,6 +506,7 @@ static HRESULT WINAPI OLEPictureImpl_get_Handle(IPicture *iface,
   TRACE("(%p)->(%p)\n", This, phandle);
   switch(This->desc.picType) {
   case PICTYPE_NONE:
+  case PICTYPE_UNINITIALIZED:
     *phandle = 0;
     break;
   case PICTYPE_BITMAP:

@@ -43,6 +43,7 @@
 static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pOleLoadPicture)(LPSTREAM,LONG,BOOL,REFIID,LPVOID*);
+static HRESULT (WINAPI *pOleCreatePictureIndirect)(PICTDESC*,REFIID,BOOL,LPVOID*);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 
@@ -396,10 +397,38 @@ static void test_Invoke(void)
     IPictureDisp_Release(picdisp);
 }
 
+static void test_OleCreatePictureIndirect(void)
+{
+    IPicture *pict;
+    HRESULT hr;
+    short type;
+    OLE_HANDLE handle;
+
+    if(!pOleCreatePictureIndirect)
+    {
+        skip("Skipping OleCreatePictureIndirect tests\n");
+        return;
+    }
+
+    hr = pOleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (void**)&pict);
+    ok(hr == S_OK, "hr %08x\n", hr);
+
+    hr = IPicture_get_Type(pict, &type);
+    ok(hr == S_OK, "hr %08x\n", hr);
+    ok(type == PICTYPE_UNINITIALIZED, "type %d\n", type);
+
+    hr = IPicture_get_Handle(pict, &handle);
+    ok(hr == S_OK, "hr %08x\n", hr);
+    ok(handle == 0, "handle %08x\n", handle);
+
+    IPicture_Release(pict);
+}
+
 START_TEST(olepicture)
 {
 	hOleaut32 = LoadLibraryA("oleaut32.dll");
 	pOleLoadPicture = (void*)GetProcAddress(hOleaut32, "OleLoadPicture");
+	pOleCreatePictureIndirect = (void*)GetProcAddress(hOleaut32, "OleCreatePictureIndirect");
 	if (!pOleLoadPicture)
 	    return;
 
@@ -414,6 +443,7 @@ START_TEST(olepicture)
 	test_empty_image_2();
 
 	test_Invoke();
+        test_OleCreatePictureIndirect();
 }
 
 
