@@ -246,58 +246,6 @@ static const WCHAR default_doc_title[] = {'L','o','c','a','l',' ','D','o','w','n
                                           'D','o','c','u','m','e','n','t',0};
 
 
-/*****************************************************************************
- *   WINSPOOL_SHRegDeleteKey
- *
- *   Recursively delete subkeys.
- *   Cut & paste from shlwapi.
- *
- */
-static DWORD WINSPOOL_SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
-{
-  DWORD dwRet, dwKeyCount = 0, dwMaxSubkeyLen = 0, dwSize, i;
-  WCHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
-  HKEY hSubKey = 0;
-
-  dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
-  if(!dwRet)
-  {
-    /* Find how many subkeys there are */
-    dwRet = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, &dwKeyCount,
-                             &dwMaxSubkeyLen, NULL, NULL, NULL, NULL, NULL, NULL);
-    if(!dwRet)
-    {
-      dwMaxSubkeyLen++;
-      if (dwMaxSubkeyLen > sizeof(szNameBuf)/sizeof(WCHAR))
-        /* Name too big: alloc a buffer for it */
-        lpszName = HeapAlloc(GetProcessHeap(), 0, dwMaxSubkeyLen*sizeof(WCHAR));
-
-      if(!lpszName)
-        dwRet = ERROR_NOT_ENOUGH_MEMORY;
-      else
-      {
-        /* Recursively delete all the subkeys */
-        for(i = 0; i < dwKeyCount && !dwRet; i++)
-        {
-          dwSize = dwMaxSubkeyLen;
-          dwRet = RegEnumKeyExW(hSubKey, i, lpszName, &dwSize, NULL, NULL, NULL, NULL);
-          if(!dwRet)
-            dwRet = WINSPOOL_SHDeleteKeyW(hSubKey, lpszName);
-        }
-
-        if (lpszName != szNameBuf)
-          HeapFree(GetProcessHeap(), 0, lpszName); /* Free buffer if allocated */
-      }
-    }
-
-    RegCloseKey(hSubKey);
-    if(!dwRet)
-      dwRet = RegDeleteKeyW(hKey, lpszSubKey);
-  }
-  return dwRet;
-}
-
-
 /******************************************************************
  *  validate the user-supplied printing-environment [internal]
  *
@@ -2323,7 +2271,7 @@ BOOL WINAPI DeleteMonitorW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorNa
     }
 
     /* change this, when advapi32.dll/RegDeleteTree is implemented */
-    if(WINSPOOL_SHDeleteKeyW(hroot, pMonitorName) == ERROR_SUCCESS) {
+    if(RegDeleteTreeW(hroot, pMonitorName) == ERROR_SUCCESS) {
         TRACE("monitor %s deleted\n", debugstr_w(pMonitorName));
         RegCloseKey(hroot);
         return TRUE;
@@ -3044,7 +2992,7 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
         return FALSE;
     }
     if(RegOpenKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) == ERROR_SUCCESS) {
-        WINSPOOL_SHDeleteKeyW(hkeyPrinters, lpNameW);
+        RegDeleteTreeW(hkeyPrinters, lpNameW);
         RegCloseKey(hkeyPrinters);
     }
     WriteProfileStringW(devicesW, lpNameW, NULL);
@@ -6432,7 +6380,7 @@ BOOL WINAPI DeletePrinterDriverExW( LPWSTR pName, LPWSTR pEnvironment,
         return FALSE;
     }
 
-    if(WINSPOOL_SHDeleteKeyW(hkey_drivers, pDriverName) == ERROR_SUCCESS)
+    if(RegDeleteTreeW(hkey_drivers, pDriverName) == ERROR_SUCCESS)
         ret = TRUE;
 
     RegCloseKey(hkey_drivers);
