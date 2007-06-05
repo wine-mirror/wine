@@ -288,9 +288,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
 
         EnterCriticalSection(&ddraw_cs);
         /* Free the index buffer. */
-        IWineD3DDevice_SetIndices(This->wineD3DDevice,
-                                  NULL,
-                                  0);
+        IWineD3DDevice_SetIndices(This->wineD3DDevice, NULL);
         IWineD3DIndexBuffer_GetParent(This->indexbuffer,
                                       (IUnknown **) &IndexBufferParent);
         IParent_Release(IndexBufferParent); /* Once for the getParent */
@@ -3896,9 +3894,8 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     }
 
     /* Set the index stream */
-    hr = IWineD3DDevice_SetIndices(This->wineD3DDevice,
-                                   This->indexbuffer,
-                                   StartVertex);
+    IWineD3DDevice_SetBaseVertexIndex(This->wineD3DDevice, StartVertex);
+    hr = IWineD3DDevice_SetIndices(This->wineD3DDevice, This->indexbuffer);
 
     /* Set the vertex stream source */
     hr = IWineD3DDevice_SetStreamSource(This->wineD3DDevice,

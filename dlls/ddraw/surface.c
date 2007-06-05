@@ -311,7 +311,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
             TRACE("(%p) Destroying the render target, uninitializing D3D\n", This);
 
             /* Unset any index buffer, just to be sure */
-            IWineD3DDevice_SetIndices(ddraw->wineD3DDevice, NULL, 0);
+            IWineD3DDevice_SetIndices(ddraw->wineD3DDevice, NULL);
             IWineD3DDevice_SetDepthStencilSurface(ddraw->wineD3DDevice, NULL);
 
             if(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice, D3D7CB_DestroyDepthStencilSurface, D3D7CB_DestroySwapChain) != D3D_OK)

@@ -711,8 +711,10 @@ should really perform a delta so that only the changes get updated*/
                 IWineD3DDevice_SetTransform(pDevice, i, &This->transforms[i]);
         }
 
-        if (This->set.indices && This->changed.indices)
-            IWineD3DDevice_SetIndices(pDevice, This->pIndexData, This->baseVertexIndex);
+        if (This->set.indices && This->changed.indices) {
+            IWineD3DDevice_SetIndices(pDevice, This->pIndexData);
+            IWineD3DDevice_SetBaseVertexIndex(pDevice, This->baseVertexIndex);
+        }
 
         if (This->set.material && This->changed.material )
             IWineD3DDevice_SetMaterial(pDevice, &This->material);

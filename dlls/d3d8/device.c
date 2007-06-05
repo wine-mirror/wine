@@ -1444,9 +1444,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderFunction(LPDIRECT3DDEV
 static HRESULT WINAPI IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8* pIndexData, UINT baseVertexIndex) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n", This);
+    IWineD3DDevice_SetBaseVertexIndex(This->WineD3DDevice, baseVertexIndex);
     return IWineD3DDevice_SetIndices(This->WineD3DDevice,
-                                     NULL == pIndexData ? NULL : ((IDirect3DIndexBuffer8Impl *)pIndexData)->wineD3DIndexBuffer,
-                                     baseVertexIndex);
+            pIndexData ? ((IDirect3DIndexBuffer8Impl *)pIndexData)->wineD3DIndexBuffer : NULL);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8** ppIndexData,UINT* pBaseVertexIndex) {

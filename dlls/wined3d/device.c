@@ -2751,19 +2751,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetMaterial(IWineD3DDevice *iface, WINE
 /*****
  * Get / Set Indices
  *****/
-static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWineD3DIndexBuffer* pIndexData,
-                                             UINT BaseVertexIndex) {
+static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWineD3DIndexBuffer* pIndexData) {
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DIndexBuffer *oldIdxs;
-    UINT oldBaseIndex = This->updateStateBlock->baseVertexIndex;
 
-    TRACE("(%p) : Setting to %p, base %d\n", This, pIndexData, BaseVertexIndex);
+    TRACE("(%p) : Setting to %p\n", This, pIndexData);
     oldIdxs = This->updateStateBlock->pIndexData;
 
     This->updateStateBlock->changed.indices = TRUE;
     This->updateStateBlock->set.indices = TRUE;
     This->updateStateBlock->pIndexData = pIndexData;
-    This->updateStateBlock->baseVertexIndex = BaseVertexIndex;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -2771,12 +2768,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWine
         return WINED3D_OK;
     }
 
-    /* The base vertex index affects the stream sources, while
-     * The index buffer is a seperate index buffer state
-     */
-    if(BaseVertexIndex != oldBaseIndex) {
-        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
-    }
     if(oldIdxs != pIndexData) {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
     }
@@ -2817,6 +2808,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetBaseVertexIndex(IWineD3DDevice *ifac
         TRACE("Recording... not performing anything\n");
         return WINED3D_OK;
     }
+    /* The base vertex index affects the stream sources */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
     return WINED3D_OK;
 }

@@ -403,7 +403,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(GetFVF)(THIS_ DWORD * pfvf) PURE;
     STDMETHOD_(void, SetGammaRamp)(THIS_ UINT iSwapChain, DWORD Flags, CONST WINED3DGAMMARAMP* pRamp) PURE;
     STDMETHOD_(void, GetGammaRamp)(THIS_ UINT iSwapChain, WINED3DGAMMARAMP* pRamp) PURE;
-    STDMETHOD(SetIndices)(THIS_ struct IWineD3DIndexBuffer * pIndexData,UINT  BaseVertexIndex) PURE;
+    STDMETHOD(SetIndices)(THIS_ struct IWineD3DIndexBuffer * pIndexData) PURE;
     STDMETHOD(GetIndices)(THIS_ struct IWineD3DIndexBuffer ** ppIndexData,UINT * pBaseVertexIndex) PURE;
     STDMETHOD(SetBaseVertexIndex)(THIS_ UINT baseIndex);
     STDMETHOD(SetLight)(THIS_ DWORD  Index,CONST WINED3DLIGHT * pLight) PURE;
@@ -539,7 +539,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_GetDepthStencilSurface(p,a)              (p)->lpVtbl->GetDepthStencilSurface(p,a)
 #define IWineD3DDevice_SetGammaRamp(p,a,b,c)                    (p)->lpVtbl->SetGammaRamp(p,a,b,c)
 #define IWineD3DDevice_GetGammaRamp(p,a,b)                      (p)->lpVtbl->GetGammaRamp(p,a,b)
-#define IWineD3DDevice_SetIndices(p,a,b)                        (p)->lpVtbl->SetIndices(p,a,b)
+#define IWineD3DDevice_SetIndices(p,a)                          (p)->lpVtbl->SetIndices(p,a)
 #define IWineD3DDevice_GetIndices(p,a,b)                        (p)->lpVtbl->GetIndices(p,a,b)
 #define IWineD3DDevice_SetBaseVertexIndex(p, a)                 (p)->lpVtbl->SetBaseVertexIndex(p, a)
 #define IWineD3DDevice_SetLight(p,a,b)                          (p)->lpVtbl->SetLight(p,a,b)

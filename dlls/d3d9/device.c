@@ -910,9 +910,8 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetStreamSourceFreq(LPDIRECT3DDEVIC
 static HRESULT  WINAPI  IDirect3DDevice9Impl_SetIndices(LPDIRECT3DDEVICE9 iface, IDirect3DIndexBuffer9* pIndexData) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DDevice_SetIndices(This->WineD3DDevice, 
-                                     pIndexData==NULL ? NULL:((IDirect3DIndexBuffer9Impl *)pIndexData)->wineD3DIndexBuffer, 
-                                     0);
+    return IWineD3DDevice_SetIndices(This->WineD3DDevice,
+            pIndexData ? ((IDirect3DIndexBuffer9Impl *)pIndexData)->wineD3DIndexBuffer : NULL);
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_GetIndices(LPDIRECT3DDEVICE9 iface, IDirect3DIndexBuffer9 **ppIndexData) {
