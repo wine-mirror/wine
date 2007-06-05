@@ -1347,21 +1347,21 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;
 
     case 0x0900:  /* Get and Disable Virtual Interrupt State */
-        TRACE( "Get and Disable Virtual Interrupt State: %ld\n", 
+        TRACE( "Get and Disable Virtual Interrupt State: %d\n",
                NtCurrentTeb()->dpmi_vif );
         SET_AL( context, NtCurrentTeb()->dpmi_vif ? 1 : 0 );
         NtCurrentTeb()->dpmi_vif = 0;
         break;
 
     case 0x0901:  /* Get and Enable Virtual Interrupt State */
-        TRACE( "Get and Enable Virtual Interrupt State: %ld\n", 
+        TRACE( "Get and Enable Virtual Interrupt State: %d\n",
                NtCurrentTeb()->dpmi_vif );
         SET_AL( context, NtCurrentTeb()->dpmi_vif ? 1 : 0 );
         NtCurrentTeb()->dpmi_vif = 1;
         break;
 
     case 0x0902:  /* Get Virtual Interrupt State */
-        TRACE( "Get Virtual Interrupt State: %ld\n", 
+        TRACE( "Get Virtual Interrupt State: %d\n",
                NtCurrentTeb()->dpmi_vif );
         SET_AL( context, NtCurrentTeb()->dpmi_vif ? 1 : 0 );
         break;
