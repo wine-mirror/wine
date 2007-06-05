@@ -113,8 +113,6 @@ static BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr
 static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField, INT index, BOOL Request);
 static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index);
 static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
-static BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
-                       LPCWSTR username, LPCWSTR password );
 static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD
         dwInfoLevel, LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD
         lpdwIndex);
@@ -399,19 +397,6 @@ static void HTTP_ProcessHeaders( LPWININETHTTPREQW lpwhr )
     }
 }
 
-static void HTTP_AddProxyInfo( LPWININETHTTPREQW lpwhr )
-{
-    LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
-    LPWININETAPPINFOW hIC = lpwhs->lpAppInfo;
-
-    assert(lpwhs->hdr.htype == WH_HHTTPSESSION);
-    assert(hIC->hdr.htype == WH_HINIT);
-
-    if (hIC && (hIC->lpszProxyUsername || hIC->lpszProxyPassword ))
-        HTTP_InsertProxyAuthorization(lpwhr, hIC->lpszProxyUsername,
-                hIC->lpszProxyPassword);
-}
-
 static inline BOOL is_basic_auth_value( LPCWSTR pszAuthValue )
 {
     static const WCHAR szBasic[] = {'B','a','s','i','c'}; /* Note: not nul-terminated */
@@ -419,12 +404,12 @@ static inline BOOL is_basic_auth_value( LPCWSTR pszAuthValue )
         ((pszAuthValue[ARRAYSIZE(szBasic)] != ' ') || !pszAuthValue[ARRAYSIZE(szBasic)]);
 }
 
-static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue )
+static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue,
+                                  struct HttpAuthInfo **ppAuthInfo,
+                                  LPWSTR domain_and_username, LPWSTR password )
 {
     SECURITY_STATUS sec_status;
-    struct HttpAuthInfo *pAuthInfo = lpwhr->pAuthInfo;
-    LPWSTR password = lpwhr->lpHttpSession->lpszPassword;
-    LPWSTR domain_and_username = lpwhr->lpHttpSession->lpszUserName;
+    struct HttpAuthInfo *pAuthInfo = *ppAuthInfo;
     BOOL first = FALSE;
 
     TRACE("%s\n", debugstr_w(pszAuthValue));
@@ -501,7 +486,7 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue 
                 return FALSE;
             }
         }
-        lpwhr->pAuthInfo = pAuthInfo;
+        *ppAuthInfo = pAuthInfo;
     }
     else if (pAuthInfo->finished)
         return FALSE;
@@ -1190,104 +1175,66 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
 }
 
 /***********************************************************************
- *  HTTP_EncodeBasicAuth
- *
- *  Encode the basic authentication string for HTTP 1.1
- */
-static LPWSTR HTTP_EncodeBasicAuth( LPCWSTR username, LPCWSTR password)
-{
-    UINT len;
-    char *in;
-    LPWSTR out;
-    static const WCHAR szBasic[] = {'B','a','s','i','c',' '}; /* Note: not nul-terminated */
-    int userlen = WideCharToMultiByte(CP_UTF8, 0, username, lstrlenW(username), NULL, 0, NULL, NULL);
-    int passlen = WideCharToMultiByte(CP_UTF8, 0, password, lstrlenW(password), NULL, 0, NULL, NULL);
-
-    in = HeapAlloc( GetProcessHeap(), 0, userlen + 1 + passlen );
-    if( !in )
-        return NULL;
-
-    len = ARRAYSIZE(szBasic) +
-          (lstrlenW( username ) + 1 + lstrlenW ( password ))*2 + 1 + 1;
-    out = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-    if( out )
-    {
-        WideCharToMultiByte(CP_UTF8, 0, username, -1, in, userlen, NULL, NULL);
-        in[userlen] = ':';
-        WideCharToMultiByte(CP_UTF8, 0, password, -1, &in[userlen+1], passlen, NULL, NULL);
-        memcpy( out, szBasic, sizeof(szBasic) );
-        HTTP_EncodeBase64( in, userlen + 1 + passlen, &out[strlenW(out)] );
-    }
-    HeapFree( GetProcessHeap(), 0, in );
-
-    return out;
-}
-
-/***********************************************************************
- *  HTTP_InsertProxyAuthorization
- *
- *   Insert the basic authorization field in the request header
- */
-static BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
-                       LPCWSTR username, LPCWSTR password )
-{
-    WCHAR *authorization = HTTP_EncodeBasicAuth( username, password );
-    BOOL ret = TRUE;
-
-    if (!authorization)
-        return FALSE;
-
-    TRACE( "Inserting authorization: %s\n", debugstr_w( authorization ) );
-
-    HTTP_ProcessHeader(lpwhr, szProxy_Authorization, authorization,
-            HTTP_ADDHDR_FLAG_REPLACE|HTTP_ADDHDR_FLAG_REQ);
-
-    HeapFree( GetProcessHeap(), 0, authorization );
-    
-    return ret;
-}
-
-/***********************************************************************
- *  HTTP_InsertAuthorization
+ *  HTTP_InsertAuthorizationForHeader
  *
  *   Insert or delete the authorization field in the request header.
  */
-static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr )
+static BOOL HTTP_InsertAuthorizationForHeader( LPWININETHTTPREQW lpwhr, struct HttpAuthInfo *pAuthInfo, LPCWSTR header )
 {
     WCHAR *authorization = NULL;
 
-    if (lpwhr->pAuthInfo && lpwhr->pAuthInfo->auth_data_len)
+    if (pAuthInfo && pAuthInfo->auth_data_len)
     {
         static const WCHAR wszSpace[] = {' ',0};
         unsigned int len;
 
         /* scheme + space + base64 encoded data (3/2/1 bytes data -> 4 bytes of characters) */
-        len = strlenW(lpwhr->pAuthInfo->scheme)+1+((lpwhr->pAuthInfo->auth_data_len+2)*4)/3;
+        len = strlenW(pAuthInfo->scheme)+1+((pAuthInfo->auth_data_len+2)*4)/3;
         authorization = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
         if (!authorization)
             return FALSE;
 
-        strcpyW(authorization, lpwhr->pAuthInfo->scheme);
+        strcpyW(authorization, pAuthInfo->scheme);
         strcatW(authorization, wszSpace);
-        HTTP_EncodeBase64(lpwhr->pAuthInfo->auth_data,
-                          lpwhr->pAuthInfo->auth_data_len,
+        HTTP_EncodeBase64(pAuthInfo->auth_data,
+                          pAuthInfo->auth_data_len,
                           authorization+strlenW(authorization));
 
         /* clear the data as it isn't valid now that it has been sent to the
          * server */
-        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->auth_data);
-        lpwhr->pAuthInfo->auth_data = NULL;
-        lpwhr->pAuthInfo->auth_data_len = 0;
+        HeapFree(GetProcessHeap(), 0, pAuthInfo->auth_data);
+        pAuthInfo->auth_data = NULL;
+        pAuthInfo->auth_data_len = 0;
     }
 
     TRACE("Inserting authorization: %s\n", debugstr_w(authorization));
 
-    HTTP_ProcessHeader(lpwhr, szAuthorization, authorization,
+    HTTP_ProcessHeader(lpwhr, header, authorization,
                        HTTP_ADDHDR_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
 
     HeapFree(GetProcessHeap(), 0, authorization);
 
     return TRUE;
+}
+
+/***********************************************************************
+ *  HTTP_InsertAuthorization
+ *
+ *   Insert the authorization field in the request header
+ */
+static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr )
+{
+    return HTTP_InsertAuthorizationForHeader(lpwhr, lpwhr->pAuthInfo, szAuthorization);
+}
+
+/***********************************************************************
+ *  HTTP_InsertProxyAuthorization
+ *
+ *   Insert the proxy authorization field in the request header
+ */
+static BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr )
+{
+    return HTTP_InsertAuthorizationForHeader(lpwhr, lpwhr->pProxyAuthInfo, szProxy_Authorization);
 }
 
 /***********************************************************************
@@ -2659,8 +2606,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                            HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
 
         HTTP_InsertAuthorization(lpwhr);
-        /* if there's a proxy username and password, add it to the headers */
-        HTTP_AddProxyInfo(lpwhr);
+        HTTP_InsertProxyAuthorization(lpwhr);
 
         requestString = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, FALSE);
  
@@ -2697,6 +2643,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         if (bEndRequest)
         {
             DWORD dwBufferSize;
+            DWORD dwStatusCode;
 
             INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                                 INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
@@ -2722,13 +2669,16 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             if (lpwhr->dwContentLength == 0)
                 HTTP_FinishedReading(lpwhr);
 
+            dwBufferSize = sizeof(dwStatusCode);
+            if (!HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,
+                                     &dwStatusCode,&dwBufferSize,NULL))
+                dwStatusCode = 0;
+
             if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && bSuccess)
             {
-                DWORD dwCode,dwCodeLength=sizeof(DWORD);
                 WCHAR szNewLocation[2048];
                 dwBufferSize=sizeof(szNewLocation);
-                if (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,NULL) &&
-                    (dwCode==HTTP_STATUS_REDIRECT || dwCode==HTTP_STATUS_MOVED) &&
+                if ((dwStatusCode==HTTP_STATUS_REDIRECT || dwStatusCode==HTTP_STATUS_MOVED) &&
                     HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
                 {
                     HTTP_DrainContent(lpwhr);
@@ -2745,16 +2695,32 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             }
             if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTH) && bSuccess)
             {
-                DWORD dwCode,dwCodeLength=sizeof(DWORD);
                 WCHAR szAuthValue[2048];
                 dwBufferSize=2048;
-                if (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,NULL) &&
-                    (dwCode == HTTP_STATUS_DENIED))
+                if (dwStatusCode == HTTP_STATUS_DENIED)
                 {
                     DWORD dwIndex = 0;
                     while (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_WWW_AUTHENTICATE,szAuthValue,&dwBufferSize,&dwIndex))
                     {
-                        if (HTTP_DoAuthorization(lpwhr, szAuthValue))
+                        if (HTTP_DoAuthorization(lpwhr, szAuthValue,
+                                                 &lpwhr->pAuthInfo,
+                                                 lpwhr->lpHttpSession->lpszUserName,
+                                                 lpwhr->lpHttpSession->lpszPassword))
+                        {
+                            loop_next = TRUE;
+                            break;
+                        }
+                    }
+                }
+                if (dwStatusCode == HTTP_STATUS_PROXY_AUTH_REQ)
+                {
+                    DWORD dwIndex = 0;
+                    while (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_PROXY_AUTHENTICATE,szAuthValue,&dwBufferSize,&dwIndex))
+                    {
+                        if (HTTP_DoAuthorization(lpwhr, szAuthValue,
+                                                 &lpwhr->pProxyAuthInfo,
+                                                 lpwhr->lpHttpSession->lpAppInfo->lpszProxyUsername,
+                                                 lpwhr->lpHttpSession->lpAppInfo->lpszProxyPassword))
                         {
                             loop_next = TRUE;
                             break;
@@ -3348,6 +3314,16 @@ static VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
         HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->scheme);
         HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo);
         lpwhr->pAuthInfo = NULL;
+    }
+    if (lpwhr->pProxyAuthInfo)
+    {
+        DeleteSecurityContext(&lpwhr->pProxyAuthInfo->ctx);
+        FreeCredentialsHandle(&lpwhr->pProxyAuthInfo->cred);
+
+        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->auth_data);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->scheme);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo);
+        lpwhr->pProxyAuthInfo = NULL;
     }
 
     lpwhs = lpwhr->lpHttpSession;

@@ -202,6 +202,7 @@ typedef struct
     HTTPHEADERW *pCustHeaders;
     DWORD nCustHeaders;
     struct HttpAuthInfo *pAuthInfo;
+    struct HttpAuthInfo *pProxyAuthInfo;
 } WININETHTTPREQW, *LPWININETHTTPREQW;
 
 
