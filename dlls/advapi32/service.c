@@ -35,6 +35,7 @@
 #include "winternl.h"
 #include "lmcons.h"
 #include "lmserver.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 
@@ -58,7 +59,7 @@ typedef struct service_start_info_t
 
 typedef struct service_data_t
 {
-    struct service_data_t *next;
+    struct list entry;
     union {
         LPHANDLER_FUNCTION handler;
         LPHANDLER_FUNCTION_EX handler_ex;
@@ -86,7 +87,7 @@ static CRITICAL_SECTION_DEBUG service_cs_debug =
 };
 static CRITICAL_SECTION service_cs = { &service_cs_debug, -1, 0, 0, 0, 0 };
 
-static service_data *service_list;
+static struct list service_list = LIST_INIT(service_list);
 
 /******************************************************************************
  * SC_HANDLEs
@@ -764,22 +765,20 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
 static BOOL service_run_threads(void)
 {
     service_data *service;
-    DWORD count = 0, n = 0;
+    DWORD count, n = 0;
     HANDLE *handles;
 
     EnterCriticalSection( &service_cs );
 
-    /* count how many services there are */
-    for (service = service_list; service; service = service->next)
-        count++;
+    count = list_count( &service_list );
 
     TRACE("starting %d pipe listener threads\n", count);
 
     handles = HeapAlloc(GetProcessHeap(), 0, sizeof(HANDLE)*count);
 
-    for (n=0, service = service_list; service; service = service->next, n++)
-        handles[n] = CreateThread( NULL, 0, service_control_dispatcher,
-                                   service, 0, NULL );
+    LIST_FOR_EACH_ENTRY( service, &service_list, service_data, entry )
+        handles[n++] = CreateThread( NULL, 0, service_control_dispatcher,
+                                     service, 0, NULL );
     assert(n==count);
 
     LeaveCriticalSection( &service_cs );
@@ -816,11 +815,7 @@ BOOL WINAPI StartServiceCtrlDispatcherA( const SERVICE_TABLE_ENTRYA *servent )
         MultiByteToWideChar(CP_ACP, 0, name, -1, info->name, len);
         info->proc.a = servent->lpServiceProc;
         info->unicode = FALSE;
-        
-        /* insert into the list */
-        info->next = service_list;
-        service_list = info;
-
+        list_add_head( &service_list, &info->entry );
         servent++;
     }
     LeaveCriticalSection( &service_cs );
@@ -862,11 +857,7 @@ BOOL WINAPI StartServiceCtrlDispatcherW( const SERVICE_TABLE_ENTRYW *servent )
         strcpyW(info->name, name);
         info->proc.w = servent->lpServiceProc;
         info->unicode = TRUE;
-        
-        /* insert into the list */
-        info->next = service_list;
-        service_list = info;
-
+        list_add_head( &service_list, &info->entry );
         servent++;
     }
     LeaveCriticalSection( &service_cs );
@@ -934,16 +925,20 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerW( LPCWSTR lpServiceName,
                              LPHANDLER_FUNCTION lpfHandler )
 {
     service_data *service;
+    SERVICE_STATUS_HANDLE handle = 0;
 
     EnterCriticalSection( &service_cs );
-    for(service = service_list; service; service = service->next)
+    LIST_FOR_EACH_ENTRY( service, &service_list, service_data, entry )
+    {
         if(!strcmpW(lpServiceName, service->name))
+        {
+            service->handler.handler = lpfHandler;
+            handle = (SERVICE_STATUS_HANDLE)service;
             break;
-    if (service)
-        service->handler.handler = lpfHandler;
+        }
+    }
     LeaveCriticalSection( &service_cs );
-
-    return (SERVICE_STATUS_HANDLE)service;
+    return handle;
 }
 
 /******************************************************************************
@@ -957,7 +952,7 @@ BOOL WINAPI
 SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
 {
     service_data *service;
-    BOOL r = TRUE;
+    BOOL r = FALSE;
 
     TRACE("%p %x %x %x %x %x %x %x\n", hService,
           lpStatus->dwServiceType, lpStatus->dwCurrentState,
@@ -966,16 +961,16 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
           lpStatus->dwWaitHint);
 
     EnterCriticalSection( &service_cs );
-    for (service = service_list; service; service = service->next)
-        if(service == (service_data*)hService)
-            break;
-    if (service)
+    LIST_FOR_EACH_ENTRY( service, &service_list, service_data, entry )
     {
-        memcpy( &service->status, lpStatus, sizeof(SERVICE_STATUS) );
-        TRACE("Set service status to %d\n",service->status.dwCurrentState);
+        if(service == (service_data*)hService)
+        {
+            memcpy( &service->status, lpStatus, sizeof(SERVICE_STATUS) );
+            TRACE("Set service status to %d\n",service->status.dwCurrentState);
+            r = TRUE;
+            break;
+        }
     }
-    else
-        r = FALSE;
     LeaveCriticalSection( &service_cs );
 
     return r;
@@ -2383,20 +2378,23 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW( LPCWSTR lpServiceNam
         LPHANDLER_FUNCTION_EX lpHandlerProc, LPVOID lpContext )
 {
     service_data *service;
+    SERVICE_STATUS_HANDLE handle = 0;
 
     TRACE("%s %p %p\n", debugstr_w(lpServiceName), lpHandlerProc, lpContext);
 
     EnterCriticalSection( &service_cs );
-    for(service = service_list; service; service = service->next)
-        if(!strcmpW(lpServiceName, service->name))
-            break;
-    if (service)
+    LIST_FOR_EACH_ENTRY( service, &service_list, service_data, entry )
     {
-        service->handler.handler_ex = lpHandlerProc;
-        service->context = lpContext;
-        service->extended = TRUE;
+        if(!strcmpW(lpServiceName, service->name))
+        {
+            service->handler.handler_ex = lpHandlerProc;
+            service->context = lpContext;
+            service->extended = TRUE;
+            handle = (SERVICE_STATUS_HANDLE)service;
+            break;
+        }
     }
     LeaveCriticalSection( &service_cs );
 
-    return (SERVICE_STATUS_HANDLE)service;
+    return handle;
 }
