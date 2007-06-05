@@ -561,7 +561,7 @@ BOOL WINAPI GetWsChanges( HANDLE process, PPSAPI_WS_WATCH_INFORMATION watchinfo,
 
     TRACE( "(%p, %p, %d)\n", process, watchinfo, size );
 
-    status = NtQueryVirtualMemory( process, NULL, ProcessWorkingSetWatch, watchinfo, size, NULL );
+    status = NtQueryInformationProcess( process, ProcessWorkingSetWatch, watchinfo, size, NULL );
 
     if (status)
     {
