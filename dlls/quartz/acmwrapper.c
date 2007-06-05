@@ -228,7 +228,7 @@ static HRESULT ACMWrapper_ConnectInput(TransformFilterImpl* pTransformFilter, co
     }
 
     TRACE("Connection refused\n");
-    return S_FALSE;
+    return VFW_E_TYPE_NOT_ACCEPTED;
 }
 
 static HRESULT ACMWrapper_Cleanup(TransformFilterImpl* pTransformFilter)

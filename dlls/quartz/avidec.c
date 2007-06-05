@@ -159,7 +159,7 @@ static HRESULT AVIDec_ProcessEnd(TransformFilterImpl* pTransformFilter)
 static HRESULT AVIDec_ConnectInput(TransformFilterImpl* pTransformFilter, const AM_MEDIA_TYPE * pmt)
 {
     AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
-    HRESULT hr = S_FALSE;
+    HRESULT hr = VFW_E_TYPE_NOT_ACCEPTED;
 
     TRACE("(%p)->(%p)\n", This, pmt);
 
