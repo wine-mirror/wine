@@ -691,8 +691,8 @@ HRESULT WINAPI OleTranslateColor(
 
 extern HRESULT OLEAUTPS_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
 
-extern void _get_STDFONT_CF(LPVOID);
-extern void _get_STDPIC_CF(LPVOID);
+extern void _get_STDFONT_CF(LPVOID *);
+extern void _get_STDPIC_CF(LPVOID *);
 
 static HRESULT WINAPI PSDispatchFacBuf_QueryInterface(IPSFactoryBuffer *iface, REFIID riid, void **ppv)
 {
