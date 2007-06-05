@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 by Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2006-2007 by Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,12 +22,12 @@ MAINMENU MENU DISCARDABLE
 BEGIN
     POPUP "&Fil"
     BEGIN
-        MENUITEM "&Ny\tCtrl+N",          ID_FILE_NEW
-        MENUITEM "&Åpne\tCtrl+O",         ID_FILE_OPEN
-        MENUITEM "&Lagre\tCtrl+S",         ID_FILE_SAVE
-        MENUITEM "Lagre &som . . .",        ID_FILE_SAVEAS
+        MENUITEM "&Ny\tCtrl+N",               ID_FILE_NEW
+        MENUITEM "&Åpne . . .\tCtrl+O",       ID_FILE_OPEN
+        MENUITEM "&Lagre\tCtrl+S",            ID_FILE_SAVE
+        MENUITEM "Lagre &som . . .",          ID_FILE_SAVEAS
         MENUITEM SEPARATOR
-        MENUITEM "&Avslutt",         ID_FILE_EXIT
+        MENUITEM "&Avslutt",                  ID_FILE_EXIT
     END
     POPUP "R&ediger"
     BEGIN

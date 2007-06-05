@@ -23,8 +23,8 @@ MAINMENU MENU DISCARDABLE
 BEGIN
     POPUP "&Plik"
     BEGIN
-        MENUITEM "&Nowy\tCtrl+N",          ID_FILE_NEW
-        MENUITEM "&Otwórz\tCtrl+O",         ID_FILE_OPEN
+        MENUITEM "&Nowy\tCtrl+N",           ID_FILE_NEW
+        MENUITEM "&Otwórz...\tCtrl+O",      ID_FILE_OPEN
         MENUITEM "&Zapisz\tCtrl+S",         ID_FILE_SAVE
         MENUITEM "Z&apisz jako...",         ID_FILE_SAVEAS
         MENUITEM SEPARATOR
