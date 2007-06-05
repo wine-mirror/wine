@@ -24,12 +24,19 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#include <errno.h>
 #include <time.h>
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
+#endif
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
 #endif
 
 #include "windef.h"
@@ -44,9 +51,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmtime);
 
 static    HANDLE                TIME_hMMTimer;
 static    LPWINE_TIMERENTRY 	TIME_TimersList;
-static    HANDLE                TIME_hWakeEvent;
 static    CRITICAL_SECTION      TIME_cbcrst;
 static    BOOL                  TIME_TimeToDie = TRUE;
+static    int                   TIME_fdWake[2] = { -1, -1 };
 
 /*
  * Some observations on the behavior of winmm on Windows.
@@ -219,7 +226,12 @@ static    LPWINE_TIMERENTRY		lpTimers;
 static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 {
     LPWINE_MM_IDATA iData = (LPWINE_MM_IDATA)arg;
-    DWORD rc;
+    int sleep_time, ret;
+    char readme[16];
+    struct pollfd pfd;
+
+    pfd.fd = TIME_fdWake[0];
+    pfd.events = POLLIN;
 
     TRACE("Starting main winmm thread\n");
 
@@ -231,17 +243,21 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 
     while (! TIME_TimeToDie) 
     {
-        int sleep_time = TIME_MMSysTimeCallback(iData);
+        sleep_time = TIME_MMSysTimeCallback(iData);
 
         if (sleep_time == 0)
             continue;
 
-        rc = WaitForSingleObject(TIME_hWakeEvent, (sleep_time == -1) ? INFINITE : (DWORD)sleep_time);
-        if (rc != WAIT_TIMEOUT && rc != WAIT_OBJECT_0)
-        {   
-            FIXME("Unexpected error %d(%d) in timer thread\n", rc, GetLastError());
-            break;
-        }
+        if ((ret = poll(&pfd, 1, sleep_time)) < 0)
+        {
+            if (errno != EINTR && errno != EAGAIN)
+            {
+                ERR("Unexpected error in poll: %s(%d)\n", strerror(errno), errno);
+                break;
+            }
+         }
+
+        while (ret > 0) ret = read(TIME_fdWake[0], readme, sizeof(readme));
     }
     TRACE("Exiting main winmm thread\n");
     return 0;
@@ -253,10 +269,17 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 void	TIME_MMTimeStart(void)
 {
     if (!TIME_hMMTimer) {
-	TIME_TimersList = NULL;
-        TIME_hWakeEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+        TIME_TimersList = NULL;
+        if (pipe(TIME_fdWake) < 0)
+        {
+            TIME_fdWake[0] = TIME_fdWake[1] = -1;
+            ERR("Cannot create pipe: %s\n", strerror(errno));
+        } else {
+            fcntl(TIME_fdWake[0], F_SETFL, O_NONBLOCK);
+            fcntl(TIME_fdWake[1], F_SETFL, O_NONBLOCK);
+        }
         TIME_TimeToDie = FALSE;
-	TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, &WINMM_IData, 0, NULL);
+        TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, &WINMM_IData, 0, NULL);
         SetThreadPriority(TIME_hMMTimer, THREAD_PRIORITY_TIME_CRITICAL);
         InitializeCriticalSection(&TIME_cbcrst);
         TIME_cbcrst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINMM.TIME_cbcrst");
@@ -269,16 +292,17 @@ void	TIME_MMTimeStart(void)
 void	TIME_MMTimeStop(void)
 {
     if (TIME_hMMTimer) {
+        const char a='a';
 
         TIME_TimeToDie = TRUE;
-        SetEvent(TIME_hWakeEvent);
+        write(TIME_fdWake[1], &a, sizeof(a));
 
-        /* FIXME: in the worst case, we're going to wait 65 seconds here :-( */
-	WaitForSingleObject(TIME_hMMTimer, INFINITE);
-
-	CloseHandle(TIME_hMMTimer);
-	CloseHandle(TIME_hWakeEvent);
-	TIME_hMMTimer = 0;
+        WaitForSingleObject(TIME_hMMTimer, INFINITE);
+        close(TIME_fdWake[0]);
+        close(TIME_fdWake[1]);
+        TIME_fdWake[0] = TIME_fdWake[1] = -1;
+        CloseHandle(TIME_hMMTimer);
+        TIME_hMMTimer = 0;
         TIME_cbcrst.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&TIME_cbcrst);
         TIME_TimersList = NULL;
@@ -309,6 +333,7 @@ WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
     WORD 		wNewID = 0;
     LPWINE_TIMERENTRY	lpNewTimer;
     LPWINE_TIMERENTRY	lpTimer;
+    const char c = 'c';
 
     TRACE("(%u, %u, %p, %08X, %04X);\n", wDelay, wResol, lpFunc, dwUser, wFlags);
 
@@ -344,7 +369,7 @@ WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
     LeaveCriticalSection(&WINMM_IData.cs);
 
     /* Wake the service thread in case there is work to be done */
-    SetEvent(TIME_hWakeEvent);
+    write(TIME_fdWake[1], &c, sizeof(c));
 
     TRACE("=> %u\n", wNewID + 1);
 
