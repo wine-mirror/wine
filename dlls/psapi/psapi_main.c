@@ -483,7 +483,7 @@ BOOL WINAPI GetPerformanceInfo( PPERFORMANCE_INFORMATION info, DWORD size )
 
     TRACE( "(%p, %d)\n", info, size );
 
-    status = NtQueryInformationProcess( GetCurrentProcess(), SystemPerformanceInformation, info, size, NULL );
+    status = NtQuerySystemInformation( SystemPerformanceInformation, info, size, NULL );
 
     if (status)
     {
