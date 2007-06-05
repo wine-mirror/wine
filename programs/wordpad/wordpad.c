@@ -133,15 +133,28 @@ static WCHAR wszFileName[MAX_PATH];
 
 static void set_caption(LPCWSTR wszNewFileName)
 {
-    static const WCHAR wszSeparator[] = {' ','-',' ','\0'};
-    WCHAR wszCaption[MAX_PATH];
+    static const WCHAR wszSeparator[] = {' ','-',' '};
 
     if(wszNewFileName)
     {
-        lstrcpyW(wszCaption, wszNewFileName);
-        lstrcatW(wszCaption, wszSeparator);
-        lstrcatW(wszCaption, wszAppTitle);
+        WCHAR *wszCaption;
+        SIZE_T length = 0;
+
+        wszCaption = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    lstrlenW(wszNewFileName)*sizeof(WCHAR)+sizeof(wszSeparator)+sizeof(wszAppTitle));
+
+        if(!wszCaption)
+            return;
+
+        memcpy(wszCaption, wszNewFileName, lstrlenW(wszNewFileName)*sizeof(WCHAR));
+        length += lstrlenW(wszNewFileName);
+        memcpy(wszCaption + length, wszSeparator, sizeof(wszSeparator));
+        length += sizeof(wszSeparator) / sizeof(WCHAR);
+        memcpy(wszCaption + length, wszAppTitle, sizeof(wszAppTitle));
+
         SetWindowTextW(hMainWnd, wszCaption);
+
+        HeapFree(GetProcessHeap(), 0, wszCaption);
     } else
     {
         SetWindowTextW(hMainWnd, wszAppTitle);
