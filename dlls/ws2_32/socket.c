@@ -359,7 +359,8 @@ static inline DWORD NtStatusToWSAError( const DWORD status )
     {
     case STATUS_SUCCESS:              wserr = 0;                     break;
     case STATUS_PENDING:              wserr = WSA_IO_PENDING;        break;
-    case STATUS_INVALID_HANDLE:       wserr = WSAENOTSOCK;           break;  /* WSAEBADF ? */
+    case STATUS_OBJECT_TYPE_MISMATCH: wserr = WSAENOTSOCK;           break;
+    case STATUS_INVALID_HANDLE:       wserr = WSAEBADF;              break;
     case STATUS_INVALID_PARAMETER:    wserr = WSAEINVAL;             break;
     case STATUS_PIPE_DISCONNECTED:    wserr = WSAESHUTDOWN;          break;
     case STATUS_CANCELLED:            wserr = WSA_OPERATION_ABORTED; break;
