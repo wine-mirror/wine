@@ -6,6 +6,7 @@ TESTDLL   = wintrust.dll
 IMPORTS   = user32 advapi32 kernel32
 
 CTESTS = \
+	crypt.c \
 	register.c
 
 @MAKE_TEST_RULES@
