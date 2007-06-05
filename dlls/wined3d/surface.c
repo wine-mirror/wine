@@ -457,7 +457,7 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
 
     TRACE("(%p)Checking to see if the container is a base texture\n", This);
     if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == WINED3D_OK) {
-        TRACE("Passing to conatiner\n");
+        TRACE("Passing to container\n");
         IWineD3DBaseTexture_PreLoad(baseTexture);
         IWineD3DBaseTexture_Release(baseTexture);
     } else {
@@ -570,7 +570,7 @@ void WINAPI IWineD3DSurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor *
 /* TODO: think about moving this down to resource? */
 const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    /* This should only be called for sysmem textures, it may be a good idea to extend this to all pools at some point in the futture  */
+    /* This should only be called for sysmem textures, it may be a good idea to extend this to all pools at some point in the future  */
     if (This->resource.pool != WINED3DPOOL_SYSTEMMEM) {
         FIXME(" (%p)Attempting to get system memory for a non-system memory texture\n", iface);
     }
@@ -753,7 +753,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         This->lockCount++;
         /* MAXLOCKCOUNT is defined in wined3d_private.h */
         if(This->lockCount > MAXLOCKCOUNT) {
-            TRACE("Surface is locked regularily, not freeing the system memory copy any more\n");
+            TRACE("Surface is locked regularly, not freeing the system memory copy any more\n");
             This->Flags |= SFLAG_DYNLOCK;
         }
     }
@@ -855,7 +855,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         FIXME("Depth stencil locking not supported yet\n");
     } else {
         /* This path is for normal surfaces, offscreen render targets and everything else that is in a gl texture */
-        TRACE("locking an ordinarary surface\n");
+        TRACE("locking an ordinary surface\n");
 
         if (0 != This->glDescription.textureName) {
             /* Now I have to copy thing bits back */
@@ -2147,7 +2147,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
         ERR("opening of %s failed with: %s\n", filename, strerror(errno));
         return WINED3DERR_INVALIDCALL;
     }
-/* Save the dat out to a TGA file because 1: it's an easy raw format, 2: it supports an alpha chanel*/
+/* Save the dat out to a TGA file because 1: it's an easy raw format, 2: it supports an alpha channel*/
     TRACE("(%p) opened %s with format %s\n", This, filename, debug_d3dformat(This->resource.format));
 /* TGA header */
     fputc(0,f);
@@ -2221,7 +2221,7 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
           This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
     /* if the container is a basetexture then mark it dirty. */
     if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == WINED3D_OK) {
-        TRACE("Passing to conatiner\n");
+        TRACE("Passing to container\n");
         IWineD3DBaseTexture_SetDirty(baseTexture, TRUE);
         IWineD3DBaseTexture_Release(baseTexture);
     }
@@ -2246,11 +2246,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
     const PixelFormatDesc *formatEntry = getFormatDescEntry(format);
 
     if (This->resource.format != WINED3DFMT_UNKNOWN) {
-        FIXME("(%p) : The foramt of the surface must be WINED3DFORMAT_UNKNOWN\n", This);
+        FIXME("(%p) : The format of the surface must be WINED3DFORMAT_UNKNOWN\n", This);
         return WINED3DERR_INVALIDCALL;
     }
 
-    TRACE("(%p) : Setting texture foramt to (%d,%s)\n", This, format, debug_d3dformat(format));
+    TRACE("(%p) : Setting texture format to (%d,%s)\n", This, format, debug_d3dformat(format));
     if (format == WINED3DFMT_UNKNOWN) {
         This->resource.size = 0;
     } else if (format == WINED3DFMT_DXT1) {
@@ -2420,10 +2420,10 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     } else {
         UINT yoffset = Src->currentDesc.Height - srect->y1 + drect->y1 - 1;
         /* I have to process this row by row to swap the image,
-         * otherwise it would be upside down, so streching in y direction
+         * otherwise it would be upside down, so stretching in y direction
          * doesn't cost extra time
          *
-         * However, streching in x direction can be avoided if not necessary
+         * However, stretching in x direction can be avoided if not necessary
          */
         for(row = drect->y1; row < drect->y2; row++) {
             if( (xrel - 1.0 < -eps) || (xrel - 1.0 > eps)) {
@@ -2763,7 +2763,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                     * untouched. Therefore it's necessary to override the swap effect
                     * and to set it back after the flip.
                     *
-                    * Windowed Direct3D < 7 apps do the same. The D3D7 sdk demso are nice
+                    * Windowed Direct3D < 7 apps do the same. The D3D7 sdk demos are nice
                     * testcases.
                     */
 
@@ -2807,7 +2807,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
         IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
-        /* Make sure that the top pixel is always above the bottom pixel, and keep a seperate upside down flag
+        /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
             * glCopyTexSubImage is a bit picky about the parameters we pass to it
             */
         if(SrcRect) {
@@ -2919,7 +2919,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
          *
          * Just modify the color keying parameters in the surface and restore them afterwards
          * The surface keeps track of the color key last used to load the opengl surface.
-         * PreLoad will catch the change to the flags and color key and reload if neccessary.
+         * PreLoad will catch the change to the flags and color key and reload if necessary.
          */
         if(Flags & WINEDDBLT_KEYSRC) {
             /* Use color key from surface */
@@ -3416,7 +3416,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     if ((This->pow2Width > GL_LIMITS(texture_size) || This->pow2Height > GL_LIMITS(texture_size)) && !(This->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL))) {
         /* one of three options
         1: Do the same as we do with nonpow 2 and scale the texture, (any texture ops would require the texture to be scaled which is potentially slow)
-        2: Set the texture to the maxium size (bad idea)
+        2: Set the texture to the maximum size (bad idea)
         3:    WARN and return WINED3DERR_NOTAVAILABLE;
         4: Create the surface, but allow it to be used only for DirectDraw Blts. Some apps(e.g. Swat 3) create textures with a Height of 16 and a Width > 3000 and blt 16x16 letter areas from them to the render target.
         */
