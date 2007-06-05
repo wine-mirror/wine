@@ -5591,9 +5591,11 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     if (flip) {
         GL_EXTCALL(glBlitFramebufferEXT(src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2,
                 dst_rect->x1, dst_rect->y2, dst_rect->x2, dst_rect->y1, mask, gl_filter));
+        checkGLcall("glBlitFramebuffer()");
     } else {
         GL_EXTCALL(glBlitFramebufferEXT(src_rect->x1, src_rect->y1, src_rect->x2, src_rect->y2,
                 dst_rect->x1, dst_rect->y1, dst_rect->x2, dst_rect->y2, mask, gl_filter));
+        checkGLcall("glBlitFramebuffer()");
     }
 
     if (This->render_offscreen) {

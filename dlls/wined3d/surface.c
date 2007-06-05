@@ -2943,6 +2943,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         if(!dstSwapchain) {
             TRACE("Drawing to offscreen buffer\n");
             glDrawBuffer(myDevice->offscreenBuffer);
+            checkGLcall("glDrawBuffer");
         } else {
             GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This, (IWineD3DSwapChain *)dstSwapchain);
             TRACE("Drawing to %#x buffer\n", buffer);
@@ -3016,6 +3017,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
          */
         if(dstSwapchain && This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer && dstSwapchain->backBuffer) {
             glDrawBuffer(GL_BACK);
+            checkGLcall("glDrawBuffer");
         }
         /* Restore the color key parameters */
         Src->CKeyFlags = oldCKeyFlags;
