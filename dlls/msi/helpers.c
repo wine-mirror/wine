@@ -793,7 +793,7 @@ void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * record)
     msiobj_release(&row->hdr);
 }
 
-BOOL ACTION_VerifyComponentForAction( MSICOMPONENT* comp, INSTALLSTATE check )
+BOOL ACTION_VerifyComponentForAction( const MSICOMPONENT* comp, INSTALLSTATE check )
 {
     if (!comp)
         return FALSE;
@@ -807,7 +807,7 @@ BOOL ACTION_VerifyComponentForAction( MSICOMPONENT* comp, INSTALLSTATE check )
         return FALSE;
 }
 
-BOOL ACTION_VerifyFeatureForAction( MSIFEATURE* feature, INSTALLSTATE check )
+BOOL ACTION_VerifyFeatureForAction( const MSIFEATURE* feature, INSTALLSTATE check )
 {
     if (!feature)
         return FALSE;
@@ -969,7 +969,7 @@ UINT register_unique_action(MSIPACKAGE *package, LPCWSTR action)
     return ERROR_SUCCESS;
 }
 
-BOOL check_unique_action(MSIPACKAGE *package, LPCWSTR action)
+BOOL check_unique_action(const MSIPACKAGE *package, LPCWSTR action)
 {
     INT i;
 

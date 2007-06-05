@@ -587,7 +587,7 @@ static MSIPACKAGE *msi_alloc_package( void )
     return package;
 }
 
-MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPWSTR base_url )
+MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
 {
     static const WCHAR szLevel[] = { 'U','I','L','e','v','e','l',0 };
     static const WCHAR szpi[] = {'%','i',0};

@@ -106,7 +106,7 @@ MSIHANDLE WINAPI MsiCreateRecord( unsigned int cParams )
     return ret;
 }
 
-unsigned int MSI_RecordGetFieldCount( MSIRECORD *rec )
+unsigned int MSI_RecordGetFieldCount( const MSIRECORD *rec )
 {
     return rec->count;
 }
@@ -393,7 +393,7 @@ UINT WINAPI MsiRecordGetStringA(MSIHANDLE handle, unsigned int iField,
     return ret;
 }
 
-const WCHAR *MSI_RecordGetString( MSIRECORD *rec, unsigned int iField )
+const WCHAR *MSI_RecordGetString( const MSIRECORD *rec, unsigned int iField )
 {
     if( iField > rec->count )
         return NULL;

@@ -111,7 +111,7 @@ UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
 UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
                         column_info *col_info, BOOL hold );
 
-UINT INSERT_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
+UINT INSERT_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR table,
                         column_info *columns, column_info *values, BOOL temp );
 
 UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **, LPWSTR table,
@@ -128,7 +128,7 @@ UINT STREAMS_CreateView( MSIDATABASE *db, MSIVIEW **view );
 
 int sqliteGetToken(const WCHAR *z, int *tokenType);
 
-MSIRECORD *msi_query_merge_record( UINT fields, column_info *vl, MSIRECORD *rec );
+MSIRECORD *msi_query_merge_record( UINT fields, const column_info *vl, MSIRECORD *rec );
 
 UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
                        BOOL persistent, MSITABLE **table_ret);
