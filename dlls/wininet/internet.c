@@ -1855,6 +1855,9 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
         return FALSE;
     }
 
+    INTERNET_SendCallback(lpwh, lpwh->dwContext,
+                          INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
+
     /* FIXME: IRF_ASYNC may not be the right thing to test here;
      * hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC is probably better */
     if (dwFlags & IRF_ASYNC)
@@ -1886,6 +1889,14 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
     retval = INTERNET_ReadFile(lpwh, lpBuffersOut->lpvBuffer,
         lpBuffersOut->dwBufferLength, &lpBuffersOut->dwBufferLength,
         !(dwFlags & IRF_NO_WAIT), FALSE);
+
+    if (retval)
+    {
+        DWORD dwBytesReceived = lpBuffersOut->dwBufferLength;
+        INTERNET_SendCallback(lpwh, lpwh->dwContext,
+                              INTERNET_STATUS_RESPONSE_RECEIVED, &dwBytesReceived,
+                              sizeof(dwBytesReceived));
+    }
 
     WININET_Release( lpwh );
 

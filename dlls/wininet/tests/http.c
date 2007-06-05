@@ -34,6 +34,8 @@
 #define TEST_URL "http://www.winehq.org/site/about"
 
 static HANDLE hCompleteEvent;
+static BOOL bResponseReceived;
+static BOOL bReceivingResponse;
 
 static INTERNET_STATUS_CALLBACK (WINAPI *pInternetSetStatusCallbackA)(HINTERNET ,INTERNET_STATUS_CALLBACK);
 static BOOL (WINAPI *pInternetTimeFromSystemTimeA)(CONST SYSTEMTIME *,DWORD ,LPSTR ,DWORD);
@@ -93,6 +95,7 @@ static VOID WINAPI callback(
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_RECEIVING_RESPONSE %p %d\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 lpvStatusInformation,dwStatusInformationLength);
+            bReceivingResponse = TRUE;
             break;
         case INTERNET_STATUS_RESPONSE_RECEIVED:
             ok(dwStatusInformationLength == sizeof(DWORD),
@@ -101,6 +104,7 @@ static VOID WINAPI callback(
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_RESPONSE_RECEIVED 0x%x %d\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 *(DWORD *)lpvStatusInformation,dwStatusInformationLength);
+            bResponseReceived = TRUE;
             break;
         case INTERNET_STATUS_CTL_RESPONSE_RECEIVED:
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CTL_RESPONSE_RECEIVED %p %d\n",
@@ -413,13 +417,17 @@ static void InternetReadFileExA_test(int flags)
         inetbuffers.dwOffsetHigh = 1234;
         inetbuffers.dwOffsetLow = 5678;
 
+        bReceivingResponse = FALSE;
+        bResponseReceived = FALSE;
         rc = InternetReadFileExA(hor, &inetbuffers, IRF_ASYNC | IRF_USE_CONTEXT, 0xcafebabe);
         if (!rc)
         {
             if (GetLastError() == ERROR_IO_PENDING)
             {
                 trace("InternetReadFileEx -> PENDING\n");
+                ok(bReceivingResponse, "INTERNET_STATUS_RECEIVING_RESPONSE should have been sent to callback function\n");
                 WaitForSingleObject(hCompleteEvent, INFINITE);
+                ok(!bResponseReceived, "INTERNET_STATUS_RESPONSE_RECEIVED should not have been sent to callback function\n");
             }
             else
             {
@@ -428,7 +436,11 @@ static void InternetReadFileExA_test(int flags)
             }
         }
         else
+        {
             trace("InternetReadFileEx -> SUCCEEDED\n");
+            ok(bReceivingResponse, "INTERNET_STATUS_RECEIVING_RESPONSE should have been sent to callback function\n");
+            ok(bResponseReceived, "INTERNET_STATUS_RESPONSE_RECEIVED should have been sent to callback function\n");
+        }
 
         trace("read %i bytes\n", inetbuffers.dwBufferLength);
         ((char *)inetbuffers.lpvBuffer)[inetbuffers.dwBufferLength] = '\0';
