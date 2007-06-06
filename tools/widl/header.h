@@ -32,7 +32,6 @@ extern int is_conformant_array( const array_dims_t *array );
 extern int is_non_void(const expr_list_t *list);
 extern void write_name(FILE *h, const var_t *v);
 extern void write_prefix_name(FILE *h, const char *prefix, const var_t *v);
-extern const char* get_name(const var_t *v);
 extern void write_type(FILE *h, type_t *t);
 extern int is_object(const attr_list_t *list);
 extern int is_local(const attr_list_t *list);

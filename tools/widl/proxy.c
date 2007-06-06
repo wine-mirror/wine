@@ -507,7 +507,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
       if (cname) {
           const func_t *m;
           LIST_FOR_EACH_ENTRY( m, iface->funcs, const func_t, entry )
-              if (!strcmp(get_name(m->def), cname))
+              if (!strcmp(m->def->name, cname))
               {
                   idx = m->idx;
                   break;

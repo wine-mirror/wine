@@ -141,11 +141,6 @@ void write_prefix_name(FILE *h, const char *prefix, const var_t *v)
   write_name(h, v);
 }
 
-const char* get_name(const var_t *v)
-{
-  return v->name;
-}
-
 void write_array(FILE *h, array_dims_t *dims, int field)
 {
   expr_t *v;
@@ -170,7 +165,7 @@ static void write_field(FILE *h, var_t *v)
   if (v->type) {
     indent(h, 0);
     write_type(h, v->type);
-    if (get_name(v))
+    if (v->name)
       fprintf(h, " %s", v->name);
     else {
       /* not all C/C++ compilers support anonymous structs and unions */
@@ -210,7 +205,7 @@ static void write_enums(FILE *h, var_list_t *enums)
   if (!enums) return;
   LIST_FOR_EACH_ENTRY( v, enums, var_t, entry )
   {
-    if (get_name(v)) {
+    if (v->name) {
       indent(h, 0);
       write_name(h, v);
       if (v->eval) {
@@ -444,7 +439,7 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
 
 void write_constdef(const var_t *v)
 {
-  fprintf(header, "#define %s (", get_name(v));
+  fprintf(header, "#define %s (", v->name);
   write_expr(header, v->eval, 0);
   fprintf(header, ")\n\n");
 }
@@ -453,7 +448,7 @@ void write_externdef(const var_t *v)
 {
   fprintf(header, "extern const ");
   write_type(header, v->type);
-  if (get_name(v))
+  if (v->name)
     fprintf(header, " %s", v->name);
   fprintf(header, ";\n\n");
 }
@@ -688,7 +683,7 @@ static void write_method_proto(const type_t *iface)
     if (cas) {
       const func_t *m;
       LIST_FOR_EACH_ENTRY( m, iface->funcs, const func_t, entry )
-          if (!strcmp(get_name(m->def), cas->name)) break;
+          if (!strcmp(m->def->name, cas->name)) break;
       if (&m->entry != iface->funcs) {
         const var_t *mdef = m->def;
         /* proxy prototype - use local prototype */
@@ -707,7 +702,7 @@ static void write_method_proto(const type_t *iface)
         fprintf(header, ");\n");
       }
       else {
-        parser_warning("invalid call_as attribute (%s -> %s)\n", get_name(def), cas->name);
+        parser_warning("invalid call_as attribute (%s -> %s)\n", def->name, cas->name);
       }
     }
   }
