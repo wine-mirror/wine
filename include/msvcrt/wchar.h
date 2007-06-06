@@ -37,12 +37,16 @@ typedef unsigned short wchar_t;
 #define WCHAR_MIN 0
 #define WCHAR_MAX ((wchar_t)-1)
 
-#if !defined(_MSC_VER) && !defined(__int64)
-#define __int64 long long
-#endif
-
 #if defined(__x86_64__) && !defined(_WIN64)
 #define _WIN64
+#endif
+
+#if !defined(_MSC_VER) && !defined(__int64)
+# ifdef _WIN64
+#   define __int64 long
+# else
+#   define __int64 long long
+# endif
 #endif
 
 #ifndef DECLSPEC_ALIGN

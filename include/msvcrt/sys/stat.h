@@ -22,12 +22,6 @@ typedef unsigned short wchar_t;
 #endif
 #endif
 
-#ifndef _MSC_VER
-# ifndef __int64
-#  define __int64 long long
-# endif
-#endif
-
 #ifndef _DEV_T_DEFINED
 typedef unsigned int _dev_t;
 #define _DEV_T_DEFINED

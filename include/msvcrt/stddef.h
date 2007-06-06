@@ -27,6 +27,14 @@
 #define _WIN64
 #endif
 
+#if !defined(_MSC_VER) && !defined(__int64)
+# ifdef _WIN64
+#   define __int64 long
+# else
+#   define __int64 long long
+# endif
+#endif
+
 #ifndef _WCHAR_T_DEFINED
 #define _WCHAR_T_DEFINED
 #ifndef __cplusplus

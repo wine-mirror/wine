@@ -28,8 +28,16 @@ typedef unsigned short wchar_t;
 #endif
 #endif
 
+#if defined(__x86_64__) && !defined(_WIN64)
+#define _WIN64
+#endif
+
 #if !defined(_MSC_VER) && !defined(__int64)
-#define __int64 long long
+# ifdef _WIN64
+#   define __int64 long
+# else
+#   define __int64 long long
+# endif
 #endif
 
 #define EXIT_SUCCESS        0
