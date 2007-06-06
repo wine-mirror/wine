@@ -512,7 +512,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         fd = HeapReAlloc(GetProcessHeap(),0,fd,(entry_count+1)*sizeof(WIN32_FIND_DATA));
         if (fd == NULL) {
           FindClose (hff);
-          WINE_ERR ("Out of memory");
+          WINE_ERR("Out of memory\n");
           errorlevel = 1;
           return parms->next;
         }
