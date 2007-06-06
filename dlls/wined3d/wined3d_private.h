@@ -2000,7 +2000,7 @@ typedef struct {
     DWORD                   alphaMask, redMask, greenMask, blueMask;
     UINT                    bpp;
     BOOL                    isFourcc;
-    GLint                   glInternal, glFormat, glType;
+    GLint                   glInternal, glGammaInternal, glFormat, glType;
 } PixelFormatDesc;
 
 const PixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt);
