@@ -95,6 +95,8 @@ static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *ifac
     int i;
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    BOOL srgb_mode = This->baseTexture.is_srgb;
+    BOOL srgb_was_toggled = FALSE;
 
     TRACE("(%p) : About to load texture\n", This);
 
@@ -103,17 +105,32 @@ static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *ifac
     ENTER_GL();
     if(!device->isInDraw) {
         ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    } else if (GL_SUPPORT(EXT_TEXTURE_SRGB) && This->baseTexture.bindCount > 0) {
+        srgb_mode = device->stateBlock->samplerState[This->baseTexture.sampler][WINED3DSAMP_SRGBTEXTURE];
+        srgb_was_toggled = This->baseTexture.is_srgb != srgb_mode;
+        This->baseTexture.is_srgb = srgb_mode;
     }
-    /* If were dirty then reload the volumes */
-    if(This->baseTexture.dirty) {
-        for (i = 0; i < This->baseTexture.levels; i++) {
-            IWineD3DVolume_LoadTexture(This->volumes[i], i, FALSE);
-        }
+    /* If the texture is marked dirty or the srgb sampler setting has changed since the last load then reload the surfaces */
+    if (This->baseTexture.dirty) {
+        for (i = 0; i < This->baseTexture.levels; i++)
+            IWineD3DVolume_LoadTexture(This->volumes[i], i, srgb_mode);
+    } else if (srgb_was_toggled) {
+        if (This->baseTexture.srgb_mode_change_count < 20)
+            ++This->baseTexture.srgb_mode_change_count;
+        else
+            FIXME("Volumetexture (%p) has been reloaded at least 20 times due to WINED3DSAMP_SRGBTEXTURE changes on it\'s sampler\n", This);
 
-        /* No longer dirty */
-        This->baseTexture.dirty = FALSE;
+        for (i = 0; i < This->baseTexture.levels; i++) {
+            IWineD3DVolume_AddDirtyBox(This->volumes[i], NULL);
+            IWineD3DVolume_LoadTexture(This->volumes[i], i, srgb_mode);
+        }
+    } else {
+        TRACE("(%p) Texture not dirty, nothing to do\n" , iface);
     }
     LEAVE_GL();
+
+    /* No longer dirty */
+    This->baseTexture.dirty = FALSE;
 
     return ;
 }

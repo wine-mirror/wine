@@ -105,6 +105,8 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
     BOOL setGlTextureDesc = FALSE;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    BOOL srgb_mode = This->baseTexture.is_srgb;
+    BOOL srgb_was_toggled = FALSE;
 
     TRACE("(%p) : About to load texture: dirtified(%d)\n", This, This->baseTexture.dirty);
 
@@ -120,23 +122,46 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
         ENTER_GL();
         ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         LEAVE_GL();
+    } else if (GL_SUPPORT(EXT_TEXTURE_SRGB) && This->baseTexture.bindCount > 0) {
+        srgb_mode = device->stateBlock->samplerState[This->baseTexture.sampler][WINED3DSAMP_SRGBTEXTURE];
+        srgb_was_toggled = (This->baseTexture.is_srgb != srgb_mode);
+        This->baseTexture.is_srgb = srgb_mode;
     }
     IWineD3DCubeTexture_BindTexture(iface);
 
     ENTER_GL();
-    /* If were dirty then reload the surfaces */
+    /* If the texture is marked dirty or the srgb sampler setting has changed since the last load then reload the surfaces */
     if (This->baseTexture.dirty) {
         for (i = 0; i < This->baseTexture.levels; i++) {
             for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
                 if(setGlTextureDesc)
                       IWineD3DSurface_SetGlTextureDesc(This->surfaces[j][i], This->baseTexture.textureName, cube_targets[j]);
-                IWineD3DSurface_LoadTexture(This->surfaces[j][i], FALSE);
+                IWineD3DSurface_LoadTexture(This->surfaces[j][i], srgb_mode);
             }
         }
-        /* No longer dirty */
-        This->baseTexture.dirty = FALSE;
+    } else if (srgb_was_toggled) {
+        /* Loop is repeated in the else block with the extra AddDirtyRect line to avoid the alternative of
+         * checking srgb_was_toggled in every iteration, even when the texture is just dirty
+         */
+        if (This->baseTexture.srgb_mode_change_count < 20)
+            ++This->baseTexture.srgb_mode_change_count;
+        else
+            FIXME("Cubetexture (%p) has been reloaded at least 20 times due to WINED3DSAMP_SRGBTEXTURE changes on it\'s sampler\n", This);
+
+        for (i = 0; i < This->baseTexture.levels; i++) {
+            for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
+                IWineD3DSurfaceImpl_AddDirtyRect(This->surfaces[j][i], NULL);
+                IWineD3DSurface_SetGlTextureDesc(This->surfaces[j][i], This->baseTexture.textureName, cube_targets[j]);
+                IWineD3DSurface_LoadTexture(This->surfaces[j][i], srgb_mode);
+            }
+        }
+    } else {
+        TRACE("(%p) Texture not dirty, nothing to do\n" , iface);
     }
     LEAVE_GL();
+
+    /* No longer dirty */
+    This->baseTexture.dirty = FALSE;
     return ;
 }
 

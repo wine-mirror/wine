@@ -883,6 +883,8 @@ typedef struct IWineD3DBaseTextureClass
     DWORD                   states[MAX_WINETEXTURESTATES];
     LONG                    bindCount;
     DWORD                   sampler;
+    BOOL                    is_srgb;
+    UINT                    srgb_mode_change_count;
 } IWineD3DBaseTextureClass;
 
 typedef struct IWineD3DBaseTextureImpl

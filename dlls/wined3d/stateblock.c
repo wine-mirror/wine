@@ -1052,7 +1052,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         This->samplerState[i][WINED3DSAMP_MIPMAPLODBIAS    ] = 0;
         This->samplerState[i][WINED3DSAMP_MAXMIPLEVEL      ] = 0;
         This->samplerState[i][WINED3DSAMP_MAXANISOTROPY    ] = 1;
-        This->samplerState[i][WINED3DSAMP_SRGBTEXTURE      ] = 0; /* TODO: Gamma correction value*/
+        This->samplerState[i][WINED3DSAMP_SRGBTEXTURE      ] = 0;
         This->samplerState[i][WINED3DSAMP_ELEMENTINDEX     ] = 0; /* TODO: Indicates which element of a  multielement texture to use */
         This->samplerState[i][WINED3DSAMP_DMAPOFFSET       ] = 0; /* TODO: Vertex offset in the presampled displacement map */
     }
