@@ -54,6 +54,10 @@ BEGIN
             MENUITEM "&Metni al",                   ID_EDIT_GETTEXT
         END
     END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",        ID_TOGGLE_TOOLBAR
+    END
     POPUP "&Biçim"
     BEGIN
         POPUP "&Arkaplan"

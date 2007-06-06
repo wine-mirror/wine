@@ -52,6 +52,10 @@ BEGIN
             MENUITEM "&Hent tekst",                   ID_EDIT_GETTEXT
         END
     END
+    POPUP "&Vis"
+    BEGIN
+        MENUITEM "Verk&tøylinje",        ID_TOGGLE_TOOLBAR
+    END
     POPUP "F&ormat"
     BEGIN
         POPUP "&Bakgrunn"

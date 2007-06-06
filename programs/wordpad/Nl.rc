@@ -52,6 +52,10 @@ BEGIN
             MENUITEM "&Haal tekst",                  ID_EDIT_GETTEXT
         END
     END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",        ID_TOGGLE_TOOLBAR
+    END
     POPUP "&Opmaak"
     BEGIN
         POPUP "&Achtergrond"

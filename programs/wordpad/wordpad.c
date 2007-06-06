@@ -48,6 +48,8 @@ static HWND hEditorWnd;
 
 static WCHAR wszFilter[MAX_STRING_LEN];
 
+static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam );
+
 /* Load string resources */
 static void DoLoadStrings(void)
 {
@@ -324,6 +326,43 @@ static void DoDefaultFont(void)
     SendMessage(hEditorWnd, EM_SETCHARFORMAT,  SCF_DEFAULT, (LPARAM)&fmt);
 }
 
+static void toggle_toolbar(int bandId)
+{
+    HWND hwndReBar = GetDlgItem(hMainWnd, IDC_REBAR);
+    REBARBANDINFOW rbbinfo;
+    RECT rect;
+
+    if(!hwndReBar)
+        return;
+
+    rbbinfo.cbSize = sizeof(rbbinfo);
+    rbbinfo.fMask = RBBIM_STYLE;
+
+    SendMessageW(hwndReBar, RB_GETBANDINFO, bandId, (LPARAM)&rbbinfo);
+
+    SendMessageW(hwndReBar, RB_SHOWBAND, bandId, (rbbinfo.fStyle & RBBS_HIDDEN));
+
+    GetWindowRect(hMainWnd, &rect);
+
+    (void) OnSize(hMainWnd, SIZE_RESTORED, MAKELONG(rect.bottom, rect.right));
+}
+
+static int rebar_height(void)
+{
+    HWND hwndReBar = GetDlgItem(hMainWnd, IDC_REBAR);
+
+    REBARBANDINFOW rbbinfo;
+
+    if(!hwndReBar)
+        return 0;
+
+    rbbinfo.cbSize = sizeof(rbbinfo);
+    rbbinfo.fMask = RBBIM_STYLE;
+    SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_TOOLBAR, (LPARAM)&rbbinfo);
+
+    return (rbbinfo.fStyle & RBBS_HIDDEN) ? 0 : SendMessage(hwndReBar, RB_GETBARHEIGHT, 0, 0);
+}
+
 static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     HWND hToolBarWnd, hReBarWnd;
@@ -389,7 +428,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     rbb.cxMinChild = 0;
     rbb.cyChild = rbb.cyMinChild = HIWORD(SendMessage(hToolBarWnd, TB_GETBUTTONSIZE, 0, 0));
 
-    SendMessage(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
+    SendMessageW(hReBarWnd, RB_INSERTBAND, BANDID_TOOLBAR, (LPARAM)&rbb);
 
     hDLL = LoadLibrary("RICHED20.DLL");
     assert(hDLL);
@@ -674,6 +713,10 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         SendMessage(hwndEditor, EM_SETBKGNDCOLOR, 0, RGB(255,255,192));
         break;
 
+    case ID_TOGGLE_TOOLBAR:
+        toggle_toolbar(BANDID_TOOLBAR);
+        break;
+
     default:
         SendMessage(hwndEditor, WM_COMMAND, wParam, lParam);
         break;
@@ -685,8 +728,10 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
 {
     HMENU hMenu = (HMENU)wParam;
     HWND hwndEditor = GetDlgItem(hWnd, IDC_EDITOR);
+    HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
     PARAFORMAT pf;
     int nAlignment = -1;
+    REBARBANDINFOW rbbinfo;
 
     pf.cbSize = sizeof(PARAFORMAT);
     SendMessage(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
@@ -701,17 +746,26 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
     CheckMenuItem(hMenu, ID_ALIGN_RIGHT, MF_BYCOMMAND|(nAlignment == PFA_RIGHT) ? MF_CHECKED : MF_UNCHECKED);
     EnableMenuItem(hMenu, ID_EDIT_UNDO, MF_BYCOMMAND|(SendMessage(hwndEditor, EM_CANUNDO, 0, 0)) ? MF_ENABLED : MF_GRAYED);
     EnableMenuItem(hMenu, ID_EDIT_REDO, MF_BYCOMMAND|(SendMessage(hwndEditor, EM_CANREDO, 0, 0)) ? MF_ENABLED : MF_GRAYED);
+
+    rbbinfo.cbSize = sizeof(rbbinfo);
+    rbbinfo.fMask = RBBIM_STYLE;
+    SendMessageW(hwndReBar, RB_GETBANDINFO, 0, (LPARAM)&rbbinfo);
+
+    CheckMenuItem(hMenu, ID_TOGGLE_TOOLBAR, MF_BYCOMMAND|(rbbinfo.fStyle & RBBS_HIDDEN) ?
+            MF_UNCHECKED : MF_CHECKED);
+
     return 0;
 }
 
 static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
 {
-    int nStatusSize = 0, nTBSize = 0;
+    int nStatusSize = 0;
     RECT rc;
     HWND hwndEditor = GetDlgItem(hWnd, IDC_EDITOR);
     HWND hwndStatusBar = GetDlgItem(hWnd, IDC_STATUSBAR);
     HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
     HWND hwndToolBar = GetDlgItem(hwndReBar, IDC_TOOLBAR);
+    int rebarHeight;
 
     if (hwndStatusBar)
     {
@@ -726,14 +780,14 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
         rc.bottom = HIWORD(lParam);
         SendMessage(hwndToolBar, TB_AUTOSIZE, 0, 0);
         SendMessage(hwndReBar, RB_SIZETORECT, 0, (LPARAM)&rc);
-        nTBSize = SendMessage(hwndReBar, RB_GETBARHEIGHT, 0, 0);
         GetClientRect(hwndReBar, &rc);
         MoveWindow(hwndReBar, 0, 0, LOWORD(lParam), rc.right, FALSE);
     }
     if (hwndEditor)
     {
+        rebarHeight = rebar_height();
         GetClientRect(hWnd, &rc);
-        MoveWindow(hwndEditor, 0, nTBSize, rc.right, rc.bottom-nStatusSize-nTBSize, TRUE);
+        MoveWindow(hwndEditor, 0, rebarHeight, rc.right, rc.bottom-nStatusSize-rebarHeight, TRUE);
     }
 
     return DefWindowProcW(hWnd, WM_SIZE, wParam, lParam);

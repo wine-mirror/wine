@@ -52,6 +52,10 @@ BEGIN
             MENUITEM "&Get text",                   ID_EDIT_GETTEXT
         END
     END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",        ID_TOGGLE_TOOLBAR
+    END
     POPUP "F&ormat"
     BEGIN
         POPUP "&Hintergrund"

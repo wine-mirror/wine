@@ -50,6 +50,10 @@ BEGIN
             MENUITEM "П&олучить текст",                 ID_EDIT_GETTEXT
         END
     END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",        ID_TOGGLE_TOOLBAR
+    END
     POPUP "Фор&мат"
     BEGIN
         POPUP "&Фон"

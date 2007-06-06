@@ -53,6 +53,10 @@ BEGIN
             MENUITEM "텍스트 얻기(&G)",                   ID_EDIT_GETTEXT
         END
     END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",        ID_TOGGLE_TOOLBAR
+    END
     POPUP "형식(&O)"
     BEGIN
         POPUP "배경(&B)"

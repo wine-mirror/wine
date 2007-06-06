@@ -53,6 +53,10 @@ BEGIN
             MENUITEM "&Pobie¿ tekst",                   ID_EDIT_GETTEXT
         END
     END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",        ID_TOGGLE_TOOLBAR
+    END
     POPUP "F&ormat"
     BEGIN
         POPUP "&T³o"
