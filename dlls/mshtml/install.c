@@ -31,6 +31,8 @@
 #include "ole2.h"
 #include "commctrl.h"
 #include "advpub.h"
+#include "wininet.h"
+#include "shellapi.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -76,20 +78,26 @@ static void set_status(DWORD id)
 
 static void set_registry(LPCSTR install_dir)
 {
+    WCHAR mshtml_key[100];
     LPWSTR gecko_path;
     HKEY hkey;
     DWORD res, len, size;
 
     static const WCHAR wszMshtmlKey[] = {
         'S','o','f','t','w','a','r','e','\\','W','i','n','e',
-        '\\','M','S','H','T','M','L',0};
+        '\\','M','S','H','T','M','L','\\'};
     static const WCHAR wszGeckoPath[] = {'G','e','c','k','o','P','a','t','h',0};
     static const WCHAR wszWineGecko[] = {'w','i','n','e','_','g','e','c','k','o',0};
 
-    /* @@ Wine registry key: HKCU\Software\Wine\MSHTML */
-    res = RegOpenKeyW(HKEY_CURRENT_USER, wszMshtmlKey, &hkey);
+    memcpy(mshtml_key, wszMshtmlKey, sizeof(wszMshtmlKey));
+    MultiByteToWideChar(CP_ACP, 0, GECKO_VERSION, sizeof(GECKO_VERSION),
+            mshtml_key+sizeof(wszMshtmlKey)/sizeof(WCHAR),
+            (sizeof(mshtml_key)-sizeof(wszMshtmlKey))/sizeof(WCHAR));
+
+    /* @@ Wine registry key: HKCU\Software\Wine\MSHTML\<version> */
+    res = RegCreateKeyW(HKEY_CURRENT_USER, mshtml_key, &hkey);
     if(res != ERROR_SUCCESS) {
-        ERR("Faild to open MSHTML key: %d\n", res);
+        ERR("Faild to create MSHTML key: %d\n", res);
         return;
     }
 
@@ -189,8 +197,9 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
     LPSTR file_name;
     DWORD len;
     HMODULE advpack;
-    char program_files[MAX_PATH];
+    char install_dir[MAX_PATH];
     typeof(ExtractFilesA) *pExtractFilesA;
+    BOOL res;
     HRESULT hres;
 
     static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
@@ -206,6 +215,21 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
 
     set_status(IDS_INSTALLING);
 
+    GetWindowsDirectoryA(install_dir, sizeof(install_dir));
+    strcat(install_dir, "\\gecko\\");
+    res = CreateDirectoryA(install_dir, NULL);
+    if(!res && GetLastError() != ERROR_ALREADY_EXISTS) {
+        ERR("Could not create directory: %08u\n", GetLastError());
+        return S_OK;
+    }
+
+    strcat(install_dir, GECKO_VERSION);
+    res = CreateDirectoryA(install_dir, NULL);
+    if(!res && GetLastError() != ERROR_ALREADY_EXISTS) {
+        ERR("Could not create directory: %08u\n", GetLastError());
+        return S_OK;
+    }
+
     advpack = LoadLibraryW(wszAdvpack);
     pExtractFilesA = (typeof(ExtractFilesA)*)GetProcAddress(advpack, "ExtractFiles");
 
@@ -213,10 +237,8 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
     file_name = mshtml_alloc(len);
     WideCharToMultiByte(CP_ACP, 0, tmp_file_name, -1, file_name, -1, NULL, NULL);
 
-    GetEnvironmentVariableA("ProgramFiles", program_files, sizeof(program_files));
-
     /* FIXME: Use unicode version (not yet implemented) */
-    hres = pExtractFilesA(file_name, program_files, 0, NULL, NULL, 0);
+    hres = pExtractFilesA(file_name, install_dir, 0, NULL, NULL, 0);
     FreeLibrary(advpack);
     mshtml_free(file_name);
     if(FAILED(hres)) {
@@ -224,7 +246,7 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
         clean_up();
     }
 
-    set_registry(program_files);
+    set_registry(install_dir);
     clean_up();
 
     return S_OK;
@@ -283,13 +305,15 @@ static LPWSTR get_url(void)
 {
     HKEY hkey;
     DWORD res, type;
-    DWORD size = 512*sizeof(WCHAR);
+    DWORD size = INTERNET_MAX_URL_LENGTH*sizeof(WCHAR);
     LPWSTR url;
 
     static const WCHAR wszMshtmlKey[] = {
         'S','o','f','t','w','a','r','e','\\','W','i','n','e',
         '\\','M','S','H','T','M','L',0};
     static const WCHAR wszGeckoUrl[] = {'G','e','c','k','o','U','r','l',0};
+    static const WCHAR httpW[] = {'h','t','t','p'};
+    static const WCHAR v_formatW[] = {'?','v','=',0};
 
     /* @@ Wine registry key: HKCU\Software\Wine\MSHTML */
     res = RegOpenKeyW(HKEY_CURRENT_USER, wszMshtmlKey, &hkey);
@@ -305,6 +329,12 @@ static LPWSTR get_url(void)
         return NULL;
     }
 
+    if(size > sizeof(httpW) && !memcmp(url, httpW, sizeof(httpW))) {
+        strcatW(url, v_formatW);
+        MultiByteToWideChar(CP_ACP, 0, GECKO_VERSION, -1, url+strlenW(url), -1);
+    }
+
+    TRACE("Got URL %s\n", debugstr_w(url));
     return url;
 }
 
@@ -369,7 +399,7 @@ BOOL install_wine_gecko(void)
         WaitForSingleObject(hsem, INFINITE);
     }else {
         if((url = get_url()))
-           DialogBoxW(hInst, MAKEINTRESOURCEW(ID_DWL_DIALOG), 0, installer_proc);
+            DialogBoxW(hInst, MAKEINTRESOURCEW(ID_DWL_DIALOG), 0, installer_proc);
     }
 
     ReleaseSemaphore(hsem, 1, NULL);

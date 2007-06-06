@@ -165,7 +165,7 @@ static BOOL load_xpcom(const PRUnichar *gre_path)
     return TRUE;
 }
 
-static void check_version(LPCWSTR gre_path)
+static BOOL check_version(LPCWSTR gre_path, const char *version_string)
 {
     WCHAR file_name[MAX_PATH];
     char version[128];
@@ -180,42 +180,73 @@ static void check_version(LPCWSTR gre_path)
     hfile = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL,
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if(hfile == INVALID_HANDLE_VALUE) {
-        TRACE("unknown version\n");
-        return;
+        ERR("Could not open VERSION file\n");
+        return FALSE;
     }
 
     ReadFile(hfile, version, sizeof(version), &read, NULL);
     version[read] = 0;
+    CloseHandle(hfile);
 
     TRACE("%s\n", debugstr_a(version));
 
-    CloseHandle(hfile);
+    if(strcmp(version, version_string)) {
+        ERR("Unexpected version %s, expected %s\n", debugstr_a(version),
+            debugstr_a(version_string));
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL load_wine_gecko_v(PRUnichar *gre_path, HKEY mshtml_key,
+        const char *version, const char *version_string)
+{
+    DWORD res, type, size = MAX_PATH;
+    HKEY hkey = mshtml_key;
+
+    static const WCHAR wszGeckoPath[] =
+        {'G','e','c','k','o','P','a','t','h',0};
+
+    if(version) {
+        /* @@ Wine registry key: HKCU\Software\Wine\MSHTML\<version> */
+        res = RegOpenKeyA(mshtml_key, version, &hkey);
+        if(res != ERROR_SUCCESS)
+            return FALSE;
+    }
+
+    res = RegQueryValueExW(hkey, wszGeckoPath, NULL, &type, (LPBYTE)gre_path, &size);
+    if(hkey != mshtml_key)
+        RegCloseKey(hkey);
+    if(res != ERROR_SUCCESS || type != REG_SZ)
+        return FALSE;
+
+    if(!check_version(gre_path, version_string))
+        return FALSE;
+
+    return load_xpcom(gre_path);
 }
 
 static BOOL load_wine_gecko(PRUnichar *gre_path)
 {
     HKEY hkey;
-    DWORD res, type, size = MAX_PATH;
+    DWORD res;
+    BOOL ret;
 
     static const WCHAR wszMshtmlKey[] = {
         'S','o','f','t','w','a','r','e','\\','W','i','n','e',
         '\\','M','S','H','T','M','L',0};
-    static const WCHAR wszGeckoPath[] =
-        {'G','e','c','k','o','P','a','t','h',0};
 
     /* @@ Wine registry key: HKCU\Software\Wine\MSHTML */
     res = RegOpenKeyW(HKEY_CURRENT_USER, wszMshtmlKey, &hkey);
     if(res != ERROR_SUCCESS)
         return FALSE;
 
-    res = RegQueryValueExW(hkey, wszGeckoPath, NULL, &type, (LPBYTE)gre_path, &size);
-    if(res != ERROR_SUCCESS || type != REG_SZ)
-        return FALSE;
+    ret = load_wine_gecko_v(gre_path, hkey, GECKO_VERSION, GECKO_VERSION_STRING)
+        || load_wine_gecko_v(gre_path, hkey, NULL, "Wine Gecko 0.0.1\n");
 
-    if(TRACE_ON(mshtml))
-        check_version(gre_path);
-
-    return load_xpcom(gre_path);
+    RegCloseKey(hkey);
+    return ret;
 }
 
 static void set_profile(void)

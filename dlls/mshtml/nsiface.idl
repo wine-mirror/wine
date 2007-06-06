@@ -23,6 +23,9 @@
  * useable in C code.
  */
 
+cpp_quote("#define GECKO_VERSION \"0.0.1\"");
+cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION \"\n\"");
+
 import "wtypes.idl";
 
 typedef HRESULT nsresult;
