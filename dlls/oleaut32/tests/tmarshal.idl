@@ -88,6 +88,9 @@ library TestTypelib
         [id(DISPID_TM_VARIANT)]
         void Variant([in] VARIANT var);
 
+        [vararg, id(DISPID_TM_VARARG)]
+        void VarArg([in] int numexpect, [in] SAFEARRAY(VARIANT) values);
+
         [id(DISPID_TM_ERROR)]
         HRESULT Error();
     }

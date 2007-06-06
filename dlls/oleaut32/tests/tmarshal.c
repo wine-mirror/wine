@@ -476,6 +476,38 @@ void WINAPI Widget_Variant(
     ok(S(V_CY(&var)).Lo == 0xdeadbeef, "V_CY(&var).Lo was 0x%x\n", S(V_CY(&var)).Lo);
 }
 
+void WINAPI Widget_VarArg(
+    IWidget * iface,
+    int numexpect,
+    SAFEARRAY * values)
+{
+    LONG lbound, ubound, i;
+    VARIANT * data;
+    HRESULT hr;
+
+    trace("VarArg(%p)\n", values);
+
+    hr = SafeArrayGetLBound(values, 1, &lbound);
+    ok(hr == S_OK, "SafeArrayGetLBound failed with %x\n", hr);
+    ok(lbound == 0, "SafeArrayGetLBound returned %d\n", lbound);
+
+    hr = SafeArrayGetUBound(values, 1, &ubound);
+    ok(hr == S_OK, "SafeArrayGetUBound failed with %x\n", hr);
+    ok(ubound == numexpect-1, "SafeArrayGetUBound returned %d, but expected %d\n", ubound, numexpect-1);
+
+    hr = SafeArrayAccessData(values, (LPVOID)&data);
+    ok(hr == S_OK, "SafeArrayAccessData failed with %x\n", hr);
+
+    for (i=0; i<=ubound-lbound; i++)
+    {
+        ok(V_VT(&data[i]) == VT_I4, "V_VT(&data[%d]) was %d\n", i, V_VT(&data[i]));
+        ok(V_I4(&data[i]) == i, "V_I4(&data[%d]) was %d\n", i, V_I4(&data[i]));
+    }
+
+    hr = SafeArrayUnaccessData(values);
+    ok(hr == S_OK, "SafeArrayUnaccessData failed with %x\n", hr);
+}
+
 HRESULT WINAPI Widget_Error(
     IWidget __RPC_FAR * iface)
 {
@@ -507,6 +539,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_Array,
     Widget_VariantArrayPtr,
     Widget_Variant,
+    Widget_VarArg,
     Widget_Error
 };
 
@@ -955,6 +988,34 @@ static void test_typelibmarshal(void)
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARIANT, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     ok_ole_success(hr, IDispatch_Invoke);
     VariantClear(&varresult);
+
+    /* call VarArg */
+    VariantInit(&vararg[3]);
+    V_VT(&vararg[3]) = VT_I4;
+    V_I4(&vararg[3]) = 3;
+    VariantInit(&vararg[2]);
+    V_VT(&vararg[2]) = VT_I4;
+    V_I4(&vararg[2]) = 0;
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_I4;
+    V_I4(&vararg[1]) = 1;
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = 2;
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 4;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = vararg;
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    todo_wine ok_ole_success(hr, ITypeInfo_Invoke);
+
+    /* call VarArg, even one (non-optional, non-safearray) named argument is not allowed */
+    dispidNamed = 0;
+    dispparams.cNamedArgs = 1;
+    dispparams.rgdispidNamedArgs = &dispidNamed;
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    todo_wine ok(hr == DISP_E_NONAMEDARGS, "IDispatch_Invoke should have returned DISP_E_NONAMEDARGS instead of 0x%08x\n", hr);
+    dispidNamed = DISPID_PROPERTYPUT;
 
     /* call Error */
     dispparams.cNamedArgs = 0;
