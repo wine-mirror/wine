@@ -298,16 +298,10 @@ static void test_RegPolicyFlags(void)
      *  WTPF_OFFLINEOK_COM |
      *  WTPF_OFFLINEOK_IND
      */
-    static const WCHAR Software_Publishing[] = {
-     'S','o','f','t','w','a','r','e','\\',
-     'M','i','c','r','o','s','o','f','t','\\',
-     'W','i','n','d','o','w','s','\\',
-     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-     'W','i','n','t','r','u','s','t','\\',
-     'T','r','u','s','t',' ','P','r','o','v','i','d','e','r','s','\\',
-     'S','o','f','t','w','a','r','e',' ',
-     'P','u','b','l','i','s','h','i','n','g',0 };
-    static const WCHAR State[] = { 'S','t','a','t','e',0 };
+    static const CHAR Software_Publishing[] =
+     "Software\\Microsoft\\Windows\\CurrentVersion\\Wintrust\\"
+     "Trust Providers\\Software Publishing";
+    static const CHAR State[] = "State";
     WintrustGetRegPolicyFlagsFunc pGetFlags;
     WintrustSetRegPolicyFlagsFunc pSetFlags;
     HKEY key;
@@ -322,12 +316,12 @@ static void test_RegPolicyFlags(void)
     if (!pGetFlags || !pSetFlags)
         skip("Policy flags functions not present\n");
 
-    r = RegOpenKeyExW(HKEY_CURRENT_USER, Software_Publishing, 0, KEY_ALL_ACCESS,
+    r = RegOpenKeyExA(HKEY_CURRENT_USER, Software_Publishing, 0, KEY_ALL_ACCESS,
      &key);
     ok(!r, "RegOpenKeyEx failed: %d\n", r);
 
     size = sizeof(flags1);
-    r = RegQueryValueExW(key, State, NULL, NULL, (LPBYTE)&flags1, &size);
+    r = RegQueryValueExA(key, State, NULL, NULL, (LPBYTE)&flags1, &size);
     ok(!r, "RegQueryValueEx failed: %d\n", r);
 
     pGetFlags(&flags2);
@@ -337,7 +331,7 @@ static void test_RegPolicyFlags(void)
     ret = pSetFlags(flags3);
     ok(ret, "pSetFlags failed: %d\n", GetLastError());
     size = sizeof(flags1);
-    r = RegQueryValueExW(key, State, NULL, NULL, (LPBYTE)&flags1, &size);
+    r = RegQueryValueExA(key, State, NULL, NULL, (LPBYTE)&flags1, &size);
     ok(flags1 == flags3, "Didn't get expected flags\n");
 
     pSetFlags(flags2);
