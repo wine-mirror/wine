@@ -3530,6 +3530,15 @@ static void dump_get_next_device_request_reply( const struct get_next_device_req
     dump_varargs_bytes( cur_size );
 }
 
+static void dump_make_process_system_request( const struct make_process_system_request *req )
+{
+}
+
+static void dump_make_process_system_reply( const struct make_process_system_reply *req )
+{
+    fprintf( stderr, " event=%p", req->event );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -3750,6 +3759,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_device_request,
     (dump_func)dump_delete_device_request,
     (dump_func)dump_get_next_device_request_request,
+    (dump_func)dump_make_process_system_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -3972,6 +3982,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_device_reply,
     (dump_func)0,
     (dump_func)dump_get_next_device_request_reply,
+    (dump_func)dump_make_process_system_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -4194,6 +4205,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_device",
     "delete_device",
     "get_next_device_request",
+    "make_process_system",
 };
 
 static const struct

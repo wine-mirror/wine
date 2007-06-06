@@ -52,7 +52,8 @@
 /* process structure */
 
 static struct list process_list = LIST_INIT(process_list);
-static int running_processes;
+static int running_processes, user_processes;
+static struct event *user_process_event;  /* signaled when all user processes have exited */
 
 /* process operations */
 
@@ -224,6 +225,11 @@ static void set_process_startup_state( struct process *process, enum startup_sta
 static void process_died( struct process *process )
 {
     if (debug_level) fprintf( stderr, "%04x: *process killed*\n", process->id );
+    if (!process->is_system)
+    {
+        if (!--user_processes && user_process_event)
+            set_event( user_process_event );
+    }
     release_object( process );
     if (!--running_processes) close_master_socket();
 }
@@ -272,6 +278,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->priority        = PROCESS_PRIOCLASS_NORMAL;
     process->affinity        = 1;
     process->suspend         = 0;
+    process->is_system       = 0;
     process->create_flags    = 0;
     process->console         = NULL;
     process->startup_state   = STARTUP_IN_PROGRESS;
@@ -616,7 +623,15 @@ static void process_killed( struct process *process )
 void add_process_thread( struct process *process, struct thread *thread )
 {
     list_add_tail( &process->thread_list, &thread->proc_entry );
-    if (!process->running_threads++) running_processes++;
+    if (!process->running_threads++)
+    {
+        running_processes++;
+        if (!process->is_system)
+        {
+            if (!user_processes++ && user_process_event)
+                reset_event( user_process_event );
+        }
+    }
     grab_object( thread );
 }
 
@@ -1141,5 +1156,26 @@ DECL_HANDLER(get_process_idle_event)
             reply->event = alloc_handle( current->process, process->idle_event,
                                          EVENT_ALL_ACCESS, 0 );
         release_object( process );
+    }
+}
+
+/* make the current process a system process */
+DECL_HANDLER(make_process_system)
+{
+    struct process *process = current->process;
+
+    if (!user_process_event)
+    {
+        if (!(user_process_event = create_event( NULL, NULL, 0, 1, 0 ))) return;
+        make_object_static( (struct object *)user_process_event );
+    }
+
+    if (!(reply->event = alloc_handle( current->process, user_process_event, EVENT_ALL_ACCESS, 0 )))
+        return;
+
+    if (!process->is_system)
+    {
+        process->is_system = 1;
+        if (!--user_processes) set_event( user_process_event );
     }
 }

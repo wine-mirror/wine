@@ -4054,6 +4054,18 @@ struct get_next_device_request_reply
 };
 
 
+
+struct make_process_system_request
+{
+    struct request_header __header;
+};
+struct make_process_system_reply
+{
+    struct reply_header __header;
+    obj_handle_t event;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -4275,6 +4287,7 @@ enum request
     REQ_create_device,
     REQ_delete_device,
     REQ_get_next_device_request,
+    REQ_make_process_system,
     REQ_NB_REQUESTS
 };
 
@@ -4501,6 +4514,7 @@ union generic_request
     struct create_device_request create_device_request;
     struct delete_device_request delete_device_request;
     struct get_next_device_request_request get_next_device_request_request;
+    struct make_process_system_request make_process_system_request;
 };
 union generic_reply
 {
@@ -4725,8 +4739,9 @@ union generic_reply
     struct create_device_reply create_device_reply;
     struct delete_device_reply delete_device_reply;
     struct get_next_device_request_reply get_next_device_request_reply;
+    struct make_process_system_reply make_process_system_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 305
+#define SERVER_PROTOCOL_VERSION 306
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

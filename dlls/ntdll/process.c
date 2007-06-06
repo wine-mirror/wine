@@ -71,6 +71,24 @@ PEB * WINAPI RtlGetCurrentPeb(void)
     return NtCurrentTeb()->Peb;
 }
 
+/***********************************************************************
+ *           __wine_make_process_system   (NTDLL.@)
+ *
+ * Mark the current process as a system process.
+ * Returns the event that is signaled when all non-system processes have exited.
+ */
+HANDLE __wine_make_process_system(void)
+{
+    HANDLE ret = 0;
+    SERVER_START_REQ( make_process_system )
+    {
+        if (!wine_server_call( req )) ret = reply->event;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
 #define UNIMPLEMENTED_INFO_CLASS(c) \
     case c: \
         FIXME("(process=%p) Unimplemented information class: " #c "\n", ProcessHandle); \
