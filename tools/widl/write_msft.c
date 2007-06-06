@@ -1248,7 +1248,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
     int *typedata, typedata_size;
     int i, id, next_idx;
     int decoded_size, extra_attr = 0;
-    int num_params = 0, num_defaults = 0;
+    int num_params = 0, num_optional = 0, num_defaults = 0;
     var_t *arg;
     char *namedata;
     const attr_t *attr;
@@ -1283,10 +1283,10 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
       {
         num_params++;
         if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
-            if(attr->type == ATTR_DEFAULTVALUE_EXPR || attr->type == ATTR_DEFAULTVALUE_STRING) {
+            if(attr->type == ATTR_DEFAULTVALUE_EXPR || attr->type == ATTR_DEFAULTVALUE_STRING)
                 num_defaults++;
-                break;
-            }
+            else if(attr->type == ATTR_OPTIONAL)
+                num_optional++;
         }
       }
 
@@ -1341,6 +1341,12 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
         case ATTR_BINDABLE:
             funcflags |= 0x4; /* FUNCFLAG_BINDABLE */
             break;
+        case ATTR_VARARG:
+            if (num_optional || num_defaults)
+                warning("add_func_desc: ignoring vararg in function with optional or defaultvalue params\n");
+            else
+                num_optional = -1;
+            break;
         default:
             warning("add_func_desc: ignoring attr %d\n", attr->type);
             break;
@@ -1394,7 +1400,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
     typedata[4] = (next_idx << 16) | (callconv << 8) | (invokekind << 3) | funckind;
     if(num_defaults) typedata[4] |= 0x1000;
     if(entry_is_ord) typedata[4] |= 0x2000;
-    typedata[5] = num_params;
+    typedata[5] = (num_optional << 16) | num_params;
 
     /* NOTE: High word of typedata[3] is total size of FUNCDESC + size of all ELEMDESCs for params + TYPEDESCs for pointer params and return types. */
     /* That is, total memory allocation required to reconstitute the FUNCDESC in its entirety. */
