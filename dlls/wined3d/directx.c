@@ -718,6 +718,9 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
             } else if (strcmp(ThisExtn, "GL_EXT_texture_env_dot3") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT Dot3 support\n");
                 gl_info->supported[EXT_TEXTURE_ENV_DOT3] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_EXT_texture_sRGB") == 0) {
+                TRACE_(d3d_caps)(" FOUND: EXT sRGB support\n");
+                gl_info->supported[EXT_TEXTURE_SRGB] = TRUE;
             } else if (strcmp(ThisExtn, "GL_EXT_texture_filter_anisotropic") == 0) {
                 gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC] = TRUE;
                 glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
@@ -1723,6 +1726,27 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
           return WINED3D_OK;
         default:
             break; /* Avoid compiler warnings */
+        }
+    }
+
+    /* Check for supported sRGB formats (Texture loading and framebuffer) */
+    if (GL_SUPPORT(EXT_TEXTURE_SRGB) && (Usage & WINED3DUSAGE_QUERY_SRGBREAD)) {
+        switch (CheckFormat) {
+            case WINED3DFMT_A8R8G8B8:
+            case WINED3DFMT_X8R8G8B8:
+            case WINED3DFMT_L8:
+            case WINED3DFMT_A8L8:
+            case WINED3DFMT_DXT1:
+            case WINED3DFMT_DXT2:
+            case WINED3DFMT_DXT3:
+            case WINED3DFMT_DXT4:
+            case WINED3DFMT_DXT5:
+                TRACE_(d3d_caps)("[OK]\n");
+                return WINED3D_OK;
+
+            default:
+                TRACE_(d3d_caps)("[FAILED] Gamma texture format %s not supported.\n", debug_d3dformat(CheckFormat));
+                return WINED3DERR_NOTAVAILABLE;
         }
     }
 
