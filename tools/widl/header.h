@@ -28,11 +28,14 @@ extern int is_attr(const attr_list_t *list, enum attr_type t);
 extern void *get_attrp(const attr_list_t *list, enum attr_type t);
 extern unsigned long get_attrv(const attr_list_t *list, enum attr_type t);
 extern int is_void(const type_t *t);
-extern int is_conformant_array( const array_dims_t *array );
-extern int is_non_void(const expr_list_t *list);
+extern int is_conformant_array(const type_t *t);
 extern void write_name(FILE *h, const var_t *v);
 extern void write_prefix_name(FILE *h, const char *prefix, const var_t *v);
-extern void write_type(FILE *h, type_t *t);
+extern const char* get_name(const var_t *v);
+extern void write_type_left(FILE *h, type_t *t);
+extern void write_type_right(FILE *h, type_t *t, int is_field);
+extern void write_type(FILE *h, type_t *t, int is_field, const char *fmt, ...);
+extern int needs_space_after(type_t *t);
 extern int is_object(const attr_list_t *list);
 extern int is_local(const attr_list_t *list);
 extern const var_t *is_callas(const attr_list_t *list);
@@ -59,16 +62,14 @@ static inline int last_ptr(const type_t *type)
     return is_ptr(type) && !is_ptr(type->ref);
 }
 
-static inline int is_string_type(const attr_list_t *attrs, const type_t *type, const array_dims_t *array)
+static inline int last_array(const type_t *type)
 {
-    return (is_attr(attrs, ATTR_STRING) &&
-            ((last_ptr(type) && !array) || (!is_ptr(type) && array)));
+    return is_array(type) && !is_array(type->ref);
 }
 
-static inline int is_array_type(const attr_list_t *attrs, const type_t *type, const array_dims_t *array)
+static inline int is_string_type(const attr_list_t *attrs, const type_t *type)
 {
-    return ((last_ptr(type) && !array && is_attr(attrs, ATTR_SIZEIS)) ||
-            (!is_ptr(type) && array));
+    return is_attr(attrs, ATTR_STRING) && (last_ptr(type) || last_array(type));
 }
 
 #endif

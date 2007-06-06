@@ -261,7 +261,7 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   int has_ret = !is_void(def->type);
 
   indent = 0;
-  write_type(proxy, def->type);
+  write_type_left(proxy, def->type);
   print_proxy( " STDMETHODCALLTYPE %s_", iface->name);
   write_name(proxy, def);
   print_proxy( "_Proxy(\n");
@@ -272,7 +272,7 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   /* local variables */
   if (has_ret) {
     print_proxy( "" );
-    write_type(proxy, def->type);
+    write_type_left(proxy, def->type);
     print_proxy( " _RetVal;\n");
   }
   print_proxy( "RPC_MESSAGE _RpcMessage;\n" );
@@ -408,7 +408,7 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
       LIST_FOR_EACH_ENTRY( arg, cur->args, const var_t, entry )
       {
           fprintf(proxy, ", ");
-          if (arg->array)
+          if (arg->type->declarray)
               fprintf(proxy, "*");
           write_name(proxy, arg);
       }

@@ -162,6 +162,47 @@ s_test_list_length(test_list_t *list)
           : 0);
 }
 
+int
+s_sum_fixed_int_3d(int m[2][3][4])
+{
+  int i, j, k;
+  int sum = 0;
+
+  for (i = 0; i < 2; ++i)
+    for (j = 0; j < 3; ++j)
+      for (k = 0; k < 4; ++k)
+        sum += m[i][j][k];
+
+  return sum;
+}
+
+int
+s_sum_conf_array(int x[], int n)
+{
+  int *p = x, *end = p + n;
+  int sum = 0;
+
+  while (p < end)
+    sum += *p++;
+
+  return sum;
+}
+
+int
+s_sum_var_array(int x[20], int n)
+{
+  ok(0 <= n, "RPC sum_var_array\n");
+  ok(n <= 20, "RPC sum_var_array\n");
+
+  return s_sum_conf_array(x, n);
+}
+
+int
+s_dot_two_vectors(vector_t vs[2])
+{
+  return vs[0].x * vs[1].x + vs[0].y * vs[1].y + vs[0].z * vs[1].z;
+}
+
 void
 s_stop(void)
 {
@@ -336,6 +377,41 @@ pointer_tests(void)
 }
 
 static void
+array_tests(void)
+{
+  static int m[2][3][4] =
+  {
+    {{1, 2, 3, 4}, {-1, -3, -5, -7}, {0, 2, 4, 6}},
+    {{1, -2, 3, -4}, {2, 3, 5, 7}, {-4, -1, -14, 4114}}
+  };
+  static int c[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  static vector_t vs[2] = {{1, -2, 3}, {4, -5, -6}};
+
+  ok(sum_fixed_int_3d(m) == 4116, "RPC sum_fixed_int_3d\n");
+
+  ok(sum_conf_array(c, 10) == 45, "RPC sum_conf_array\n");
+  ok(sum_conf_array(&c[5], 2) == 11, "RPC sum_conf_array\n");
+  ok(sum_conf_array(&c[7], 1) == 7, "RPC sum_conf_array\n");
+  ok(sum_conf_array(&c[2], 0) == 0, "RPC sum_conf_array\n");
+
+  ok(sum_var_array(c, 10) == 45, "RPC sum_conf_array\n");
+  ok(sum_var_array(&c[5], 2) == 11, "RPC sum_conf_array\n");
+  ok(sum_var_array(&c[7], 1) == 7, "RPC sum_conf_array\n");
+  ok(sum_var_array(&c[2], 0) == 0, "RPC sum_conf_array\n");
+
+  ok(dot_two_vectors(vs) == -4, "RPC dot_two_vectors\n");
+}
+
+static void
+run_tests(void)
+{
+  basic_tests();
+  union_tests();
+  pointer_tests();
+  array_tests();
+}
+
+static void
 client(const char *test)
 {
   if (strcmp(test, "tcp_basic") == 0)
@@ -348,9 +424,7 @@ client(const char *test)
     ok(RPC_S_OK == RpcStringBindingCompose(NULL, iptcp, address, port, NULL, &binding), "RpcStringBindingCompose\n");
     ok(RPC_S_OK == RpcBindingFromStringBinding(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
 
-    basic_tests();
-    union_tests();
-    pointer_tests();
+    run_tests();
 
     ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
@@ -365,9 +439,7 @@ client(const char *test)
     ok(RPC_S_OK == RpcStringBindingCompose(NULL, np, address, pipe, NULL, &binding), "RpcStringBindingCompose\n");
     ok(RPC_S_OK == RpcBindingFromStringBinding(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
 
-    basic_tests();
-    union_tests();
-    pointer_tests();
+    run_tests();
     stop();
 
     ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");

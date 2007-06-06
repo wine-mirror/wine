@@ -206,9 +206,12 @@ struct _type_t {
   func_list_t *funcs;             /* interfaces and modules */
   var_list_t *fields;             /* interfaces, structures and enumerations */
   ifref_list_t *ifaces;           /* coclasses */
+  unsigned long dim;              /* array dimension */
+  expr_t *size_is, *length_is;
   type_t *orig;                   /* dup'd types */
   unsigned int typestring_offset;
   int typelib_idx;
+  unsigned int declarray : 1;     /* if declared as an array */
   unsigned int ignore : 1;
   unsigned int is_const : 1;
   unsigned int defined : 1;
@@ -220,7 +223,6 @@ struct _type_t {
 
 struct _var_t {
   char *name;
-  array_dims_t *array;
   type_t *type;
   var_list_t *args;  /* for function pointers */
   attr_list_t *attrs;
@@ -300,6 +302,7 @@ type_t *duptype(type_t *t, int dupname);
 type_t *alias(type_t *t, const char *name);
 
 int is_ptr(const type_t *t);
+int is_array(const type_t *t);
 int is_var_ptr(const var_t *v);
 int cant_be_null(const var_t *v);
 

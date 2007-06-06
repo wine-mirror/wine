@@ -49,3 +49,4 @@ void declare_stub_args( FILE *file, int indent, const func_t *func );
 int write_expr_eval_routines(FILE *file, const char *iface);
 void write_expr_eval_routine_list(FILE *file, const char *iface);
 void write_endpoints( FILE *f, const char *prefix, const str_list_t *list );
+size_t type_memsize(const type_t *t, unsigned int *align);

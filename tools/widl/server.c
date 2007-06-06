@@ -207,7 +207,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
                 else
                     fprintf(server, ",\n");
                 print_server("");
-                if (var->array)
+                if (var->type->declarray)
                     fprintf(server, "*");
                 write_name(server, var);
             }

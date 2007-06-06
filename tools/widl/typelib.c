@@ -69,6 +69,7 @@ type_t *alias(type_t *t, const char *name)
   a->name = xstrdup(name);
   a->kind = TKIND_ALIAS;
   a->attrs = NULL;
+  a->declarray = FALSE;
 
   return a;
 }
@@ -80,6 +81,23 @@ int is_ptr(const type_t *t)
       || c == RPC_FC_UP
       || c == RPC_FC_FP
       || c == RPC_FC_OP;
+}
+
+int is_array(const type_t *t)
+{
+    switch (t->type)
+    {
+    case RPC_FC_SMFARRAY:
+    case RPC_FC_LGFARRAY:
+    case RPC_FC_SMVARRAY:
+    case RPC_FC_LGVARRAY:
+    case RPC_FC_CARRAY:
+    case RPC_FC_CVARRAY:
+    case RPC_FC_BOGUS_ARRAY:
+        return TRUE;
+    default:
+        return FALSE;
+    }
 }
 
 /* List of oleauto types that should be recognized by name.
