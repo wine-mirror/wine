@@ -55,6 +55,7 @@ typedef enum {
 HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
 
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
+    if (!This->resource.allocatedMemory) This->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), 0, This->resource.size + 4);
     if (This->resource.format == WINED3DFMT_DXT1 ||
             This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
             This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
@@ -159,9 +160,11 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
             HeapFree(GetProcessHeap(), 0, mem);
         }
     }
+    /* Surface has now been downloaded */
+    This->Flags |= SFLAG_INSYSMEM;
 }
 
-static void surface_upload_data(IWineD3DSurfaceImpl *This, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data) {
+static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data) {
     if (This->resource.format == WINED3DFMT_DXT1 ||
             This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
             This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
@@ -179,7 +182,7 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLsizei width, GLsize
              * glCompressedTexImage2D does not accept NULL pointers. So for compressed textures surface_allocate_surface does nothing, and this
              * function uses glCompressedTexImage2D instead of the SubImage call
              */
-            GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level, This->glDescription.glFormatInternal,
+            GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level, internal,
                        width, height, 0 /* border */, This->resource.size, data));
             checkGLcall("glCompressedTexSubImage2D");
             LEAVE_GL();
@@ -477,7 +480,7 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
         }
         glBindTexture(This->glDescription.target, This->glDescription.textureName);
         checkGLcall("glBindTexture");
-        IWineD3DSurface_LoadTexture(iface);
+        IWineD3DSurface_LoadTexture(iface, FALSE);
         /* This is where we should be reducing the amount of GLMemoryUsed */
     } else if (This->glDescription.textureName) { /* NOTE: the level 0 surface of a mpmapped texture must be loaded first! */
         /* assume this is a coding error not a real error for now */
@@ -877,9 +880,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             surface_download_data(This);
             LEAVE_GL();
         }
-
-        /* The local copy is now up to date to the opengl one because a full download was done */
-        This->Flags |= SFLAG_INSYSMEM;
     }
 
 lock_end:
@@ -1478,13 +1478,13 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
    IWineD3DSurface Internal (No mapping to directx api) parts follow
    ****************************************************** */
 
-static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp) {
+static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp, BOOL srgb_mode) {
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
     const PixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format);
 
     /* Default values: From the surface */
     *format = formatEntry->glFormat;
-    *internal = formatEntry->glInternal;
+    *internal = srgb_mode?formatEntry->glGammaInternal:formatEntry->glInternal;
     *type = formatEntry->glType;
     *convert = NO_CONVERSION;
     *target_bpp = This->bytesPerPixel;
@@ -1875,7 +1875,7 @@ static BOOL palette9_changed(IWineD3DSurfaceImpl *This) {
     return TRUE;
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
+static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BOOL srgb_mode) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     GLenum format, internal, type;
@@ -1915,7 +1915,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         return WINED3DERR_INVALIDCALL;
     }
 
-    d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp);
+    d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, srgb_mode);
 
     if (This->Flags & SFLAG_INDRAWABLE) {
         if (This->glDescription.level != 0)
@@ -2006,7 +2006,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             surface_allocate_surface(This, internal, This->pow2Width, This->pow2Height, format, type);
         }
         if (mem) {
-            surface_upload_data(This, This->currentDesc.Width, This->currentDesc.Height, format, type, mem);
+            surface_upload_data(This, internal, This->currentDesc.Width, This->currentDesc.Height, format, type, mem);
         }
     } else {
         /* When making the realloc conditional, keep in mind that GL_APPLE_client_storage may be in use, and This->resource.allocatedMemory
@@ -2016,7 +2016,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             surface_allocate_surface(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type);
         }
         if (mem) {
-            surface_upload_data(This, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type, mem);
+            surface_upload_data(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type, mem);
         }
     }
 
@@ -2205,6 +2205,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
 extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RECT* pDirtyRect) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DBaseTexture *baseTexture = NULL;
+    if (!(This->Flags & SFLAG_INSYSMEM) && (This->Flags & SFLAG_INTEXTURE))
+        surface_download_data(This);
+
     This->Flags &= ~(SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
     if (NULL != pDirtyRect) {
         This->dirtyRect.left   = min(This->dirtyRect.left,   pDirtyRect->left);

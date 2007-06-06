@@ -1131,7 +1131,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(GetClipper)(THIS_ struct IWineD3DClipper **clipper);
     /* Internally used methods */
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pRect) PURE;
-    STDMETHOD(LoadTexture)(THIS) PURE;
+    STDMETHOD(LoadTexture)(THIS, BOOL srgb_mode) PURE;
     STDMETHOD(SaveSnapshot)(THIS_ const char *filename) PURE;
     STDMETHOD(SetContainer)(THIS_ IWineD3DBase *container) PURE;
     STDMETHOD_(void,SetGlTextureDesc)(THIS_ UINT textureName, int target) PURE;
@@ -1186,7 +1186,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_GetClipper(p, a)             (p)->lpVtbl->GetClipper(p, a)
 /*** IWineD3DSurface (Internal, no d3d mapping) methods ***/
 #define IWineD3DSurface_AddDirtyRect(p,a)            (p)->lpVtbl->AddDirtyRect(p,a)
-#define IWineD3DSurface_LoadTexture(p)               (p)->lpVtbl->LoadTexture(p)
+#define IWineD3DSurface_LoadTexture(p,a)             (p)->lpVtbl->LoadTexture(p,a)
 #define IWineD3DSurface_SaveSnapshot(p,a)            (p)->lpVtbl->SaveSnapshot(p,a)
 #define IWineD3DSurface_SetContainer(p,a)            (p)->lpVtbl->SetContainer(p,a)
 #define IWineD3DSurface_SetGlTextureDesc(p,a,b)      (p)->lpVtbl->SetGlTextureDesc(p,a,b)
@@ -1224,7 +1224,7 @@ DECLARE_INTERFACE_(IWineD3DVolume,IWineD3DResource)
     STDMETHOD(UnlockBox)(THIS) PURE;
     STDMETHOD(AddDirtyBox)(THIS_ CONST WINED3DBOX* pDirtyBox) PURE;
     STDMETHOD(CleanDirtyBox)(THIS) PURE;
-    STDMETHOD(LoadTexture)(THIS_ int gl_level) PURE;
+    STDMETHOD(LoadTexture)(THIS_ int gl_level, BOOL srgb_mode) PURE;
     STDMETHOD(SetContainer)(THIS_ IWineD3DBase *container) PURE;
 };
 #undef INTERFACE
@@ -1252,7 +1252,7 @@ DECLARE_INTERFACE_(IWineD3DVolume,IWineD3DResource)
 #define IWineD3DVolume_UnlockBox(p)               (p)->lpVtbl->UnlockBox(p)
 #define IWineD3DVolume_AddDirtyBox(p,a)           (p)->lpVtbl->AddDirtyBox(p,a)
 #define IWineD3DVolume_CleanDirtyBox(p)           (p)->lpVtbl->CleanDirtyBox(p)
-#define IWineD3DVolume_LoadTexture(p,a)           (p)->lpVtbl->LoadTexture(p,a)
+#define IWineD3DVolume_LoadTexture(p,a,b)         (p)->lpVtbl->LoadTexture(p,a,b)
 #define IWineD3DVolume_SetContainer(p,a)          (p)->lpVtbl->SetContainer(p,a)
 #endif
 

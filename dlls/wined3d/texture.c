@@ -120,7 +120,7 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
         for (i = 0; i < This->baseTexture.levels; i++) {
             if(setGlTextureDesc)
                 IWineD3DSurface_SetGlTextureDesc(This->surfaces[i], This->baseTexture.textureName, IWineD3DTexture_GetTextureDimensions(iface));
-            IWineD3DSurface_LoadTexture(This->surfaces[i]);
+            IWineD3DSurface_LoadTexture(This->surfaces[i], FALSE);
         }
 
         /* No longer dirty */

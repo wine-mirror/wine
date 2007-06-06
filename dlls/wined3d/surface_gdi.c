@@ -1371,7 +1371,7 @@ error:
  *
  *****************************************************************************/
 HRESULT WINAPI
-IWineGDISurfaceImpl_LoadTexture(IWineD3DSurface *iface)
+IWineGDISurfaceImpl_LoadTexture(IWineD3DSurface *iface, BOOL srgb_mode)
 {
     ERR("Unsupported on X11 surfaces\n");
     return WINED3DERR_INVALIDCALL;

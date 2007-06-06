@@ -107,7 +107,7 @@ static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *ifac
     /* If were dirty then reload the volumes */
     if(This->baseTexture.dirty) {
         for (i = 0; i < This->baseTexture.levels; i++) {
-            IWineD3DVolume_LoadTexture(This->volumes[i], i);
+            IWineD3DVolume_LoadTexture(This->volumes[i], i, FALSE);
         }
 
         /* No longer dirty */
