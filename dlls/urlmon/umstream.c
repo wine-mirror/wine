@@ -49,32 +49,30 @@ HRESULT UMCreateStreamOnCacheFile(LPCWSTR pszURL,
 {
     IUMCacheStream* ucstr;
     HANDLE handle;
-    LPWSTR ext;
-    LPCWSTR c;
-    LPCWSTR eloc = 0;
+    DWORD size;
+    LPWSTR url, c, ext = NULL;
     HRESULT hr;
 
-    for (c = pszURL; *c && *c != '#' && *c != '?'; ++c)
+    size = (strlenW(pszURL)+1)*sizeof(WCHAR);
+    url = HeapAlloc(GetProcessHeap(), 0, size);
+    memcpy(url, pszURL, size);
+
+    for (c = url; *c && *c != '#' && *c != '?'; ++c)
     {
         if (*c == '.')
-           eloc = c + 1;
-        else if (*c == '/' || *c == '\\')
-           eloc = 0;
+            ext = c+1;
+        else if(*c == '/')
+            ext = NULL;
     }
 
-    if (!eloc)
-       eloc = c;
+    *c = 0;
 
-    ext = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * (c - eloc + 1));
-    memcpy(ext, eloc, sizeof(WCHAR) * (c - eloc));
-    ext[c - eloc] = 0;
-
-    if(!CreateUrlCacheEntryW(pszURL, dwSize, ext, pszFileName, 0))
+    if(!CreateUrlCacheEntryW(url, dwSize, ext, pszFileName, 0))
        hr = HRESULT_FROM_WIN32(GetLastError());
     else
        hr = 0;
 
-    HeapFree(GetProcessHeap(), 0, ext);
+    HeapFree(GetProcessHeap(), 0, url);
 
     if (hr)
        return hr;
