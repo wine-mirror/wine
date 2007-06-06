@@ -200,6 +200,7 @@ HRESULT IKsBufferPropertySetImpl_Create(
     PIDSDRIVERPROPERTYSET ps = NULL;
     IKsBufferPropertySetImpl *iks;
     TRACE("(%p,%p)\n",dsb,piks);
+    *piks = NULL;
 
     if (!dsb->hwbuf)
         return DSERR_INVALIDPARAM;
