@@ -2270,7 +2270,6 @@ BOOL WINAPI DeleteMonitorW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorNa
         return FALSE;
     }
 
-    /* change this, when advapi32.dll/RegDeleteTree is implemented */
     if(RegDeleteTreeW(hroot, pMonitorName) == ERROR_SUCCESS) {
         TRACE("monitor %s deleted\n", debugstr_w(pMonitorName));
         RegCloseKey(hroot);
