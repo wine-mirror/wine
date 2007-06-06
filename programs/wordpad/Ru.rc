@@ -53,6 +53,7 @@ BEGIN
     POPUP "&View"
     BEGIN
         MENUITEM "&Toolbar",        ID_TOGGLE_TOOLBAR
+        MENUITEM "&Statusbar",      ID_TOGGLE_STATUSBAR
     END
     POPUP "‘ор&мат"
     BEGIN

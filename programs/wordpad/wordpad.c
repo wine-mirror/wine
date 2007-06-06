@@ -326,11 +326,19 @@ static void DoDefaultFont(void)
     SendMessage(hEditorWnd, EM_SETCHARFORMAT,  SCF_DEFAULT, (LPARAM)&fmt);
 }
 
+static void update_window(void)
+{
+    RECT rect;
+
+    GetWindowRect(hMainWnd, &rect);
+
+    (void) OnSize(hMainWnd, SIZE_RESTORED, MAKELONG(rect.bottom, rect.right));
+}
+
 static void toggle_toolbar(int bandId)
 {
     HWND hwndReBar = GetDlgItem(hMainWnd, IDC_REBAR);
     REBARBANDINFOW rbbinfo;
-    RECT rect;
 
     if(!hwndReBar)
         return;
@@ -342,9 +350,7 @@ static void toggle_toolbar(int bandId)
 
     SendMessageW(hwndReBar, RB_SHOWBAND, bandId, (rbbinfo.fStyle & RBBS_HIDDEN));
 
-    GetWindowRect(hMainWnd, &rect);
-
-    (void) OnSize(hMainWnd, SIZE_RESTORED, MAKELONG(rect.bottom, rect.right));
+    update_window();
 }
 
 static int rebar_height(void)
@@ -518,6 +524,7 @@ static LRESULT OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam)
 static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndEditor = GetDlgItem(hWnd, IDC_EDITOR);
+    HWND hwndStatus = GetDlgItem(hWnd, IDC_STATUSBAR);
 
     if ((HWND)lParam == hwndEditor)
         return 0;
@@ -717,6 +724,11 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         toggle_toolbar(BANDID_TOOLBAR);
         break;
 
+    case ID_TOGGLE_STATUSBAR:
+        ShowWindow(hwndStatus, IsWindowVisible(hwndStatus) ? SW_HIDE : SW_SHOW);
+        update_window();
+        break;
+
     default:
         SendMessage(hwndEditor, WM_COMMAND, wParam, lParam);
         break;
@@ -729,6 +741,7 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
     HMENU hMenu = (HMENU)wParam;
     HWND hwndEditor = GetDlgItem(hWnd, IDC_EDITOR);
     HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
+    HWND hwndStatus = GetDlgItem(hWnd, IDC_STATUSBAR);
     PARAFORMAT pf;
     int nAlignment = -1;
     REBARBANDINFOW rbbinfo;
@@ -754,6 +767,8 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
     CheckMenuItem(hMenu, ID_TOGGLE_TOOLBAR, MF_BYCOMMAND|(rbbinfo.fStyle & RBBS_HIDDEN) ?
             MF_UNCHECKED : MF_CHECKED);
 
+    CheckMenuItem(hMenu, ID_TOGGLE_STATUSBAR, MF_BYCOMMAND|IsWindowVisible(hwndStatus) ?
+            MF_CHECKED : MF_UNCHECKED);
     return 0;
 }
 
@@ -770,8 +785,14 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
     if (hwndStatusBar)
     {
         SendMessage(hwndStatusBar, WM_SIZE, 0, 0);
-        GetClientRect(hwndStatusBar, &rc);
-        nStatusSize = rc.bottom - rc.top;
+        if (IsWindowVisible(hwndStatusBar))
+        {
+            GetClientRect(hwndStatusBar, &rc);
+            nStatusSize = rc.bottom - rc.top;
+        } else
+        {
+            nStatusSize = 0;
+        }
     }
     if (hwndToolBar)
     {

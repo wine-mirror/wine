@@ -55,6 +55,7 @@ BEGIN
     POPUP "&Vis"
     BEGIN
         MENUITEM "Verk&tøylinje",        ID_TOGGLE_TOOLBAR
+        MENUITEM "&Statuslinje",      ID_TOGGLE_STATUSBAR
     END
     POPUP "F&ormat"
     BEGIN
