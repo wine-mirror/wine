@@ -107,7 +107,7 @@ static DWORD WINAPI IWineD3DIndexBufferImpl_GetPriority(IWineD3DIndexBuffer *ifa
 }
 
 static void WINAPI IWineD3DIndexBufferImpl_PreLoad(IWineD3DIndexBuffer *iface) {
-    return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
+    IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DIndexBufferImpl_GetType(IWineD3DIndexBuffer *iface) {

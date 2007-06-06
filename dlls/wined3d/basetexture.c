@@ -137,7 +137,7 @@ DWORD    WINAPI        IWineD3DBaseTextureImpl_GetPriority(IWineD3DBaseTexture *
 }
 
 void     WINAPI        IWineD3DBaseTextureImpl_PreLoad(IWineD3DBaseTexture *iface) {
-    return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
+    IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
 WINED3DRESOURCETYPE WINAPI IWineD3DBaseTextureImpl_GetType(IWineD3DBaseTexture *iface) {

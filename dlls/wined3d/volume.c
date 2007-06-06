@@ -94,7 +94,7 @@ static DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface) {
 }
 
 static void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
-    return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
+    IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface) {
