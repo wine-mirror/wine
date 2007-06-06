@@ -740,6 +740,28 @@ HRESULT WINAPI LcidToRfc1766W(
     return S_FALSE;
 }
 
+static HRESULT lcid_from_rfc1766(IEnumRfc1766 *iface, LCID *lcid, LPCWSTR rfc1766)
+{
+    RFC1766INFO info;
+    ULONG num;
+
+    while (IEnumRfc1766_Next(iface, 1, &info, &num) == S_OK)
+    {
+        if (!strcmpW(info.wszRfc1766, rfc1766))
+        {
+            *lcid = info.lcid;
+            return S_OK;
+        }
+        if (strlenW(rfc1766) == 2 && !memcmp(info.wszRfc1766, rfc1766, 2 * sizeof(WCHAR)))
+        {
+            *lcid = PRIMARYLANGID(info.lcid);
+            return S_OK;
+        }
+    }
+
+    return E_FAIL;
+}
+
 /******************************************************************************
  * MLANG ClassFactory
  */
@@ -1656,8 +1678,22 @@ static HRESULT WINAPI fnIMultiLanguage_GetLcidFromRfc1766(
     LCID* pLocale,
     BSTR bstrRfc1766)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    IEnumRfc1766 *rfc1766;
+
+    TRACE("%p %p %s\n", iface, pLocale, debugstr_w(bstrRfc1766));
+
+    if (!pLocale || !bstrRfc1766)
+        return E_INVALIDARG;
+
+    hr = IMultiLanguage_EnumRfc1766(iface, &rfc1766);
+    if (FAILED(hr))
+        return hr;
+
+    hr = lcid_from_rfc1766(rfc1766, pLocale, bstrRfc1766);
+
+    IEnumRfc1766_Release(rfc1766);
+    return hr;
 }
 
 /******************************************************************************/
@@ -2172,8 +2208,22 @@ static HRESULT WINAPI fnIMultiLanguage2_GetLcidFromRfc1766(
     LCID* pLocale,
     BSTR bstrRfc1766)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    IEnumRfc1766 *rfc1766;
+
+    TRACE("%p %p %s\n", iface, pLocale, debugstr_w(bstrRfc1766));
+
+    if (!pLocale || !bstrRfc1766)
+        return E_INVALIDARG;
+
+    hr = IMultiLanguage2_EnumRfc1766(iface, 0, &rfc1766);
+    if (FAILED(hr))
+        return hr;
+
+    hr = lcid_from_rfc1766(rfc1766, pLocale, bstrRfc1766);
+
+    IEnumRfc1766_Release(rfc1766);
+    return hr;
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_EnumRfc1766(

@@ -679,6 +679,60 @@ static void test_rfc1766(IMultiLanguage2 *iML2)
     }
 }
 
+static void test_GetLcidFromRfc1766(IMultiLanguage2 *iML2)
+{
+    LCID lcid;
+    HRESULT ret;
+
+    static WCHAR e[] = { 'e',0 };
+    static WCHAR en[] = { 'e','n',0 };
+    static WCHAR empty[] = { 0 };
+    static WCHAR dash[] = { '-',0 };
+    static WCHAR e_dash[] = { 'e','-',0 };
+    static WCHAR en_gb[] = { 'e','n','-','g','b',0 };
+    static WCHAR en_us[] = { 'e','n','-','u','s',0 };
+    static WCHAR en_them[] = { 'e','n','-','t','h','e','m',0 };
+    static WCHAR english[] = { 'e','n','g','l','i','s','h',0 };
+
+    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, NULL, en);
+    ok(ret == E_INVALIDARG, "GetLcidFromRfc1766 returned: %08x\n", ret);
+
+    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, NULL);
+    ok(ret == E_INVALIDARG, "GetLcidFromRfc1766 returned: %08x\n", ret);
+
+    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, e);
+    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
+
+    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, empty);
+    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
+
+    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, dash);
+    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
+
+    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, e_dash);
+    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
+
+    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, en_them);
+    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
+
+    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, english);
+    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
+
+    lcid = 0;
+
+    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, en);
+    ok(ret == S_OK, "GetLcidFromRfc1766 returned: %08x\n", ret);
+    ok(lcid == 9, "got wrong lcid: %04x\n", lcid);
+
+    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, en_gb);
+    ok(ret == S_OK, "GetLcidFromRfc1766 returned: %08x\n", ret);
+    ok(lcid == 0x809, "got wrong lcid: %04x\n", lcid);
+
+    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, en_us);
+    ok(ret == S_OK, "GetLcidFromRfc1766 returned: %08x\n", ret);
+    ok(lcid == 0x409, "got wrong lcid: %04x\n", lcid);
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage2 *iML2 = NULL;
@@ -696,6 +750,7 @@ START_TEST(mlang)
     if (ret != S_OK || !iML2) return;
 
     test_rfc1766(iML2);
+    test_GetLcidFromRfc1766(iML2);
 
     test_EnumCodePages(iML2, 0);
     test_EnumCodePages(iML2, MIMECONTF_MIME_LATEST);
