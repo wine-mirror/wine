@@ -899,8 +899,8 @@ programs/winhelp/macro.lex.yy.c
 programs/winhelp/rsrc.res
 programs/winhelp/winhelp
 programs/winver/winver
+programs/wordpad/formatbar.bmp
 programs/wordpad/rsrc.res
-programs/wordpad/toolbar.bmp
 programs/wordpad/wordpad
 programs/wordpad/wordpad.ico
 programs/xcopy/rsrc.res

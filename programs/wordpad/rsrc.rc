@@ -39,8 +39,8 @@ BEGIN
     "S",          ID_FILE_SAVE,       VIRTKEY, CONTROL    
 END
 
-/* BINRES toolbar.bmp */
-IDB_TOOLBAR BITMAP "toolbar.bmp"
+/* BINRES formatbar.bmp */
+IDB_FORMATBAR BITMAP "formatbar.bmp"
 /* {
  '42 4d 3e 03 00 00 00 00 00 00 3e 00 00 00 28 00'
  '00 00 60 00 00 00 10 00 00 00 01 00 04 00 00 00'

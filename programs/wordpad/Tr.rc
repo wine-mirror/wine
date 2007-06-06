@@ -57,6 +57,7 @@ BEGIN
     POPUP "&View"
     BEGIN
         MENUITEM "&Toolbar",        ID_TOGGLE_TOOLBAR
+        MENUITEM "&Formatbar",      ID_TOGGLE_FORMATBAR
         MENUITEM "&Statusbar",      ID_TOGGLE_STATUSBAR
     END
     POPUP "&Biçim"

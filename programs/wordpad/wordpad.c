@@ -339,39 +339,39 @@ static void toggle_toolbar(int bandId)
 {
     HWND hwndReBar = GetDlgItem(hMainWnd, IDC_REBAR);
     REBARBANDINFOW rbbinfo;
+    BOOL hide = TRUE;
 
     if(!hwndReBar)
         return;
 
     rbbinfo.cbSize = sizeof(rbbinfo);
-    rbbinfo.fMask = RBBIM_STYLE;
+    rbbinfo.fMask = RBBIM_STYLE | RBBIM_SIZE;
 
     SendMessageW(hwndReBar, RB_GETBANDINFO, bandId, (LPARAM)&rbbinfo);
 
-    SendMessageW(hwndReBar, RB_SHOWBAND, bandId, (rbbinfo.fStyle & RBBS_HIDDEN));
+    if(rbbinfo.fStyle & RBBS_HIDDEN)
+        hide = FALSE;
 
-    update_window();
-}
+    SendMessageW(hwndReBar, RB_SHOWBAND, bandId, hide ? 0 : 1);
 
-static int rebar_height(void)
-{
-    HWND hwndReBar = GetDlgItem(hMainWnd, IDC_REBAR);
+    if(bandId == BANDID_TOOLBAR)
+    {
+        rbbinfo.fMask ^= RBBIM_SIZE;
 
-    REBARBANDINFOW rbbinfo;
+        SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_FORMATBAR, (LPARAM)&rbbinfo);
 
-    if(!hwndReBar)
-        return 0;
+        if(hide)
+            rbbinfo.fStyle ^= RBBS_BREAK;
+        else
+            rbbinfo.fStyle |= RBBS_BREAK;
 
-    rbbinfo.cbSize = sizeof(rbbinfo);
-    rbbinfo.fMask = RBBIM_STYLE;
-    SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_TOOLBAR, (LPARAM)&rbbinfo);
-
-    return (rbbinfo.fStyle & RBBS_HIDDEN) ? 0 : SendMessage(hwndReBar, RB_GETBARHEIGHT, 0, 0);
+        SendMessageW(hwndReBar, RB_SETBANDINFO, BANDID_FORMATBAR, (LPARAM)&rbbinfo);
+    }
 }
 
 static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-    HWND hToolBarWnd, hReBarWnd;
+    HWND hToolBarWnd, hFormatBarWnd,  hReBarWnd;
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
     HANDLE hDLL;
     TBADDBITMAP ab;
@@ -393,13 +393,14 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     hToolBarWnd = CreateToolbarEx(hReBarWnd, CCS_NOPARENTALIGN|CCS_NOMOVEY|WS_VISIBLE|WS_CHILD|TBSTYLE_TOOLTIPS|TBSTYLE_BUTTON,
       IDC_TOOLBAR,
-      6, hInstance, IDB_TOOLBAR,
+      0, hInstance, 0,
       NULL, 0,
       24, 24, 16, 16, sizeof(TBBUTTON));
 
     ab.hInst = HINST_COMMCTRL;
     ab.nID = IDB_STD_SMALL_COLOR;
-    nStdBitmaps = SendMessage(hToolBarWnd, TB_ADDBITMAP, 6, (LPARAM)&ab);
+    nStdBitmaps = SendMessageW(hToolBarWnd, TB_ADDBITMAP, 0, (LPARAM)&ab);
+
     AddButton(hToolBarWnd, nStdBitmaps+STD_FILENEW, ID_FILE_NEW);
     AddButton(hToolBarWnd, nStdBitmaps+STD_FILEOPEN, ID_FILE_OPEN);
     AddButton(hToolBarWnd, nStdBitmaps+STD_FILESAVE, ID_FILE_SAVE);
@@ -414,27 +415,41 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     AddButton(hToolBarWnd, nStdBitmaps+STD_PASTE, ID_EDIT_PASTE);
     AddButton(hToolBarWnd, nStdBitmaps+STD_UNDO, ID_EDIT_UNDO);
     AddButton(hToolBarWnd, nStdBitmaps+STD_REDOW, ID_EDIT_REDO);
-    AddSeparator(hToolBarWnd);
-    AddButton(hToolBarWnd, 0, ID_FORMAT_BOLD);
-    AddButton(hToolBarWnd, 1, ID_FORMAT_ITALIC);
-    AddButton(hToolBarWnd, 2, ID_FORMAT_UNDERLINE);
-    AddSeparator(hToolBarWnd);
-    AddButton(hToolBarWnd, 3, ID_ALIGN_LEFT);
-    AddButton(hToolBarWnd, 4, ID_ALIGN_CENTER);
-    AddButton(hToolBarWnd, 5, ID_ALIGN_RIGHT);
 
     SendMessage(hToolBarWnd, TB_ADDSTRING, 0, (LPARAM)"Exit\0");
     SendMessage(hToolBarWnd, TB_AUTOSIZE, 0, 0);
 
     rbb.cbSize = sizeof(rbb);
     rbb.fMask = RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_CHILD | RBBIM_STYLE;
-    rbb.fStyle = RBBS_CHILDEDGE;
-    rbb.cx = 500;
+    rbb.fStyle = RBBS_CHILDEDGE | RBBS_BREAK | RBBS_NOGRIPPER;
+    rbb.cx = 0;
     rbb.hwndChild = hToolBarWnd;
     rbb.cxMinChild = 0;
     rbb.cyChild = rbb.cyMinChild = HIWORD(SendMessage(hToolBarWnd, TB_GETBUTTONSIZE, 0, 0));
 
     SendMessageW(hReBarWnd, RB_INSERTBAND, BANDID_TOOLBAR, (LPARAM)&rbb);
+
+    hFormatBarWnd = CreateToolbarEx(hReBarWnd,
+         CCS_NOPARENTALIGN | CCS_NOMOVEY | WS_VISIBLE | TBSTYLE_TOOLTIPS | TBSTYLE_BUTTON,
+         IDC_FORMATBAR, 6, hInstance, IDB_FORMATBAR, NULL, 0, 24, 24, 16, 16, sizeof(TBBUTTON));
+
+    ab.hInst = HINST_COMMCTRL;
+    ab.nID = IDB_STD_SMALL_COLOR;
+    nStdBitmaps = SendMessageW(hFormatBarWnd, TB_ADDBITMAP, 6, (LPARAM)&ab);
+
+    AddButton(hFormatBarWnd, 0, ID_FORMAT_BOLD);
+    AddButton(hFormatBarWnd, 1, ID_FORMAT_ITALIC);
+    AddButton(hFormatBarWnd, 2, ID_FORMAT_UNDERLINE);
+    AddSeparator(hFormatBarWnd);
+    AddButton(hFormatBarWnd, 3, ID_ALIGN_LEFT);
+    AddButton(hFormatBarWnd, 4, ID_ALIGN_CENTER);
+    AddButton(hFormatBarWnd, 5, ID_ALIGN_RIGHT);
+
+    SendMessageW(hFormatBarWnd, TB_AUTOSIZE, 0, 0);
+
+    rbb.hwndChild = hFormatBarWnd;
+
+    SendMessageW(hReBarWnd, RB_INSERTBAND, BANDID_FORMATBAR, (LPARAM)&rbb);
 
     hDLL = LoadLibrary("RICHED20.DLL");
     assert(hDLL);
@@ -442,6 +457,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     hEditorWnd = CreateWindowExW(WS_EX_CLIENTEDGE, wszRichEditClass, NULL,
       WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_AUTOVSCROLL|ES_WANTRETURN|WS_VSCROLL,
       0, 0, 1000, 100, hWnd, (HMENU)IDC_EDITOR, hInstance, NULL);
+
     if (!hEditorWnd)
     {
         fprintf(stderr, "Error code %u\n", GetLastError());
@@ -464,6 +480,7 @@ static LRESULT OnUser( HWND hWnd, WPARAM wParam, LPARAM lParam)
     HWND hwndEditor = GetDlgItem(hWnd, IDC_EDITOR);
     HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
     HWND hwndToolBar = GetDlgItem(hwndReBar, IDC_TOOLBAR);
+    HWND hwndFormatBar = GetDlgItem(hwndReBar, IDC_FORMATBAR);
     int from, to;
     CHARFORMAT2W fmt;
     PARAFORMAT2 pf;
@@ -483,17 +500,21 @@ static LRESULT OnUser( HWND hWnd, WPARAM wParam, LPARAM lParam)
       SendMessage(hwndEditor, EM_CANREDO, 0, 0));
     SendMessage(hwndToolBar, TB_ENABLEBUTTON, ID_EDIT_CUT, from == to ? 0 : 1);
     SendMessage(hwndToolBar, TB_ENABLEBUTTON, ID_EDIT_COPY, from == to ? 0 : 1);
-    SendMessage(hwndToolBar, TB_CHECKBUTTON, ID_FORMAT_BOLD, (fmt.dwMask & CFM_BOLD) && (fmt.dwEffects & CFE_BOLD));
-    SendMessage(hwndToolBar, TB_INDETERMINATE, ID_FORMAT_BOLD, !(fmt.dwMask & CFM_BOLD));
-    SendMessage(hwndToolBar, TB_CHECKBUTTON, ID_FORMAT_ITALIC, (fmt.dwMask & CFM_ITALIC) && (fmt.dwEffects & CFE_ITALIC));
-    SendMessage(hwndToolBar, TB_INDETERMINATE, ID_FORMAT_ITALIC, !(fmt.dwMask & CFM_ITALIC));
-    SendMessage(hwndToolBar, TB_CHECKBUTTON, ID_FORMAT_UNDERLINE, (fmt.dwMask & CFM_UNDERLINE) && (fmt.dwEffects & CFE_UNDERLINE));
-    SendMessage(hwndToolBar, TB_INDETERMINATE, ID_FORMAT_UNDERLINE, !(fmt.dwMask & CFM_UNDERLINE));
 
-    SendMessage(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
-    SendMessage(hwndToolBar, TB_CHECKBUTTON, ID_ALIGN_LEFT, (pf.wAlignment == PFA_LEFT));
-    SendMessage(hwndToolBar, TB_CHECKBUTTON, ID_ALIGN_CENTER, (pf.wAlignment == PFA_CENTER));
-    SendMessage(hwndToolBar, TB_CHECKBUTTON, ID_ALIGN_RIGHT, (pf.wAlignment == PFA_RIGHT));
+    SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_FORMAT_BOLD, (fmt.dwMask & CFM_BOLD) &&
+            (fmt.dwEffects & CFE_BOLD));
+    SendMessageW(hwndFormatBar, TB_INDETERMINATE, ID_FORMAT_BOLD, !(fmt.dwMask & CFM_BOLD));
+    SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_FORMAT_ITALIC, (fmt.dwMask & CFM_ITALIC) &&
+            (fmt.dwEffects & CFE_ITALIC));
+    SendMessageW(hwndFormatBar, TB_INDETERMINATE, ID_FORMAT_ITALIC, !(fmt.dwMask & CFM_ITALIC));
+    SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_FORMAT_UNDERLINE, (fmt.dwMask & CFM_UNDERLINE) &&
+            (fmt.dwEffects & CFE_UNDERLINE));
+    SendMessageW(hwndFormatBar, TB_INDETERMINATE, ID_FORMAT_UNDERLINE, !(fmt.dwMask & CFM_UNDERLINE));
+
+    SendMessageW(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
+    SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_ALIGN_LEFT, (pf.wAlignment == PFA_LEFT));
+    SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_ALIGN_CENTER, (pf.wAlignment == PFA_CENTER));
+    SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_ALIGN_RIGHT, (pf.wAlignment == PFA_RIGHT));
 
     return 0;
 }
@@ -722,6 +743,12 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_TOGGLE_TOOLBAR:
         toggle_toolbar(BANDID_TOOLBAR);
+        update_window();
+        break;
+
+    case ID_TOGGLE_FORMATBAR:
+        toggle_toolbar(BANDID_FORMATBAR);
+        update_window();
         break;
 
     case ID_TOGGLE_STATUSBAR:
@@ -754,17 +781,27 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
       MF_BYCOMMAND|(SendMessage(hwndEditor, EM_GETMODIFY, 0, 0) ? MF_CHECKED : MF_UNCHECKED));
     if (pf.dwMask & PFM_ALIGNMENT)
         nAlignment = pf.wAlignment;
-    CheckMenuItem(hMenu, ID_ALIGN_LEFT, MF_BYCOMMAND|(nAlignment == PFA_LEFT) ? MF_CHECKED : MF_UNCHECKED);
-    CheckMenuItem(hMenu, ID_ALIGN_CENTER, MF_BYCOMMAND|(nAlignment == PFA_CENTER) ? MF_CHECKED : MF_UNCHECKED);
-    CheckMenuItem(hMenu, ID_ALIGN_RIGHT, MF_BYCOMMAND|(nAlignment == PFA_RIGHT) ? MF_CHECKED : MF_UNCHECKED);
-    EnableMenuItem(hMenu, ID_EDIT_UNDO, MF_BYCOMMAND|(SendMessage(hwndEditor, EM_CANUNDO, 0, 0)) ? MF_ENABLED : MF_GRAYED);
-    EnableMenuItem(hMenu, ID_EDIT_REDO, MF_BYCOMMAND|(SendMessage(hwndEditor, EM_CANREDO, 0, 0)) ? MF_ENABLED : MF_GRAYED);
+    CheckMenuItem(hMenu, ID_ALIGN_LEFT, MF_BYCOMMAND|(nAlignment == PFA_LEFT) ?
+            MF_CHECKED : MF_UNCHECKED);
+    CheckMenuItem(hMenu, ID_ALIGN_CENTER, MF_BYCOMMAND|(nAlignment == PFA_CENTER) ?
+            MF_CHECKED : MF_UNCHECKED);
+    CheckMenuItem(hMenu, ID_ALIGN_RIGHT, MF_BYCOMMAND|(nAlignment == PFA_RIGHT) ?
+            MF_CHECKED : MF_UNCHECKED);
+    EnableMenuItem(hMenu, ID_EDIT_UNDO, MF_BYCOMMAND|(SendMessageW(hwndEditor, EM_CANUNDO, 0, 0)) ?
+            MF_ENABLED : MF_GRAYED);
+    EnableMenuItem(hMenu, ID_EDIT_REDO, MF_BYCOMMAND|(SendMessageW(hwndEditor, EM_CANREDO, 0, 0)) ?
+            MF_ENABLED : MF_GRAYED);
 
     rbbinfo.cbSize = sizeof(rbbinfo);
     rbbinfo.fMask = RBBIM_STYLE;
-    SendMessageW(hwndReBar, RB_GETBANDINFO, 0, (LPARAM)&rbbinfo);
+    SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_TOOLBAR, (LPARAM)&rbbinfo);
 
     CheckMenuItem(hMenu, ID_TOGGLE_TOOLBAR, MF_BYCOMMAND|(rbbinfo.fStyle & RBBS_HIDDEN) ?
+            MF_UNCHECKED : MF_CHECKED);
+
+    SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_FORMATBAR, (LPARAM)&rbbinfo);
+
+    CheckMenuItem(hMenu, ID_TOGGLE_FORMATBAR, MF_BYCOMMAND|(rbbinfo.fStyle & RBBS_HIDDEN) ?
             MF_UNCHECKED : MF_CHECKED);
 
     CheckMenuItem(hMenu, ID_TOGGLE_STATUSBAR, MF_BYCOMMAND|IsWindowVisible(hwndStatus) ?
@@ -780,7 +817,10 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
     HWND hwndStatusBar = GetDlgItem(hWnd, IDC_STATUSBAR);
     HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
     HWND hwndToolBar = GetDlgItem(hwndReBar, IDC_TOOLBAR);
-    int rebarHeight;
+    HWND hwndFormatBar = GetDlgItem(hwndReBar, IDC_FORMATBAR);
+    int rebarHeight = 0;
+    REBARBANDINFOW rbbinfo;
+    int rebarRows = 2;
 
     if (hwndStatusBar)
     {
@@ -804,9 +844,33 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
         GetClientRect(hwndReBar, &rc);
         MoveWindow(hwndReBar, 0, 0, LOWORD(lParam), rc.right, FALSE);
     }
+    if (hwndFormatBar)
+    {
+        rc.left = rc.top = 0;
+        rc.right = LOWORD(lParam);
+        rc.bottom = HIWORD(lParam);
+        SendMessageW(hwndFormatBar, TB_AUTOSIZE, 0, 0);
+        SendMessageW(hwndReBar, RB_SIZETORECT, 0, (LPARAM)&rc);
+        GetClientRect(hwndReBar, &rc);
+        MoveWindow(hwndReBar, 0, 0, LOWORD(lParam), rc.right, FALSE);
+    }
+    if (hwndReBar)
+    {
+        rbbinfo.cbSize = sizeof(rbbinfo);
+        rbbinfo.fMask = RBBIM_STYLE;
+
+        SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_TOOLBAR, (LPARAM)&rbbinfo);
+        if(rbbinfo.fStyle & RBBS_HIDDEN)
+            rebarRows--;
+
+        SendMessageW(hwndReBar, RB_GETBANDINFO, BANDID_FORMATBAR, (LPARAM)&rbbinfo);
+        if(rbbinfo.fStyle & RBBS_HIDDEN)
+            rebarRows--;
+
+        rebarHeight = rebarRows ? SendMessageW(hwndReBar, RB_GETBARHEIGHT, 0, 0) : 0;
+    }
     if (hwndEditor)
     {
-        rebarHeight = rebar_height();
         GetClientRect(hWnd, &rc);
         MoveWindow(hwndEditor, 0, rebarHeight, rc.right, rc.bottom-nStatusSize-rebarHeight, TRUE);
     }
