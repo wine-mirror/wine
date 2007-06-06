@@ -404,7 +404,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD_(void, SetGammaRamp)(THIS_ UINT iSwapChain, DWORD Flags, CONST WINED3DGAMMARAMP* pRamp) PURE;
     STDMETHOD_(void, GetGammaRamp)(THIS_ UINT iSwapChain, WINED3DGAMMARAMP* pRamp) PURE;
     STDMETHOD(SetIndices)(THIS_ struct IWineD3DIndexBuffer * pIndexData) PURE;
-    STDMETHOD(GetIndices)(THIS_ struct IWineD3DIndexBuffer ** ppIndexData,UINT * pBaseVertexIndex) PURE;
+    STDMETHOD(GetIndices)(THIS_ struct IWineD3DIndexBuffer ** ppIndexData) PURE;
     STDMETHOD(SetBaseVertexIndex)(THIS_ UINT baseIndex);
     STDMETHOD(GetBaseVertexIndex)(THIS_ UINT *baseIndex);
     STDMETHOD(SetLight)(THIS_ DWORD  Index,CONST WINED3DLIGHT * pLight) PURE;
@@ -541,7 +541,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_SetGammaRamp(p,a,b,c)                    (p)->lpVtbl->SetGammaRamp(p,a,b,c)
 #define IWineD3DDevice_GetGammaRamp(p,a,b)                      (p)->lpVtbl->GetGammaRamp(p,a,b)
 #define IWineD3DDevice_SetIndices(p,a)                          (p)->lpVtbl->SetIndices(p,a)
-#define IWineD3DDevice_GetIndices(p,a,b)                        (p)->lpVtbl->GetIndices(p,a,b)
+#define IWineD3DDevice_GetIndices(p,a)                          (p)->lpVtbl->GetIndices(p,a)
 #define IWineD3DDevice_SetBaseVertexIndex(p, a)                 (p)->lpVtbl->SetBaseVertexIndex(p, a)
 #define IWineD3DDevice_GetBaseVertexIndex(p,a)                  (p)->lpVtbl->GetBaseVertexIndex(p,a)
 #define IWineD3DDevice_SetLight(p,a,b)                          (p)->lpVtbl->SetLight(p,a,b)

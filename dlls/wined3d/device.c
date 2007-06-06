@@ -2774,7 +2774,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWine
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWineD3DIndexBuffer** ppIndexData, UINT* pBaseVertexIndex) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWineD3DIndexBuffer** ppIndexData) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     *ppIndexData = This->stateBlock->pIndexData;
@@ -2782,12 +2782,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWine
     /* up ref count on ppindexdata */
     if (*ppIndexData) {
         IWineD3DIndexBuffer_AddRef(*ppIndexData);
-        *pBaseVertexIndex = This->stateBlock->baseVertexIndex;
-        TRACE("(%p) index data set to %p + %u\n", This, ppIndexData, This->stateBlock->baseVertexIndex);
+        TRACE("(%p) index data set to %p\n", This, ppIndexData);
     }else{
         TRACE("(%p) No index data set\n", This);
     }
-    TRACE("Returning %p %d\n", *ppIndexData, *pBaseVertexIndex);
+    TRACE("Returning %p\n", *ppIndexData);
 
     return WINED3D_OK;
 }

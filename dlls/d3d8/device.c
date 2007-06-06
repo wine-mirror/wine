@@ -1460,12 +1460,13 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, I
         return D3DERR_INVALIDCALL;
     }
 
-    rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData, pBaseVertexIndex);
-    if (D3D_OK == rc && NULL != retIndexData) {
+    IWineD3DDevice_GetBaseVertexIndex(This->WineD3DDevice, pBaseVertexIndex);
+    rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData);
+    if (SUCCEEDED(rc) && retIndexData) {
         IWineD3DIndexBuffer_GetParent(retIndexData, (IUnknown **)ppIndexData);
         IWineD3DIndexBuffer_Release(retIndexData);
     } else {
-        if(rc != D3D_OK)  FIXME("Call to GetIndices failed\n");
+        if (FAILED(rc)) FIXME("Call to GetIndices failed\n");
         *ppIndexData = NULL;
     }
     return rc;
