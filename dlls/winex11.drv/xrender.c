@@ -633,6 +633,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
     gsCacheEntryFormat *formatEntry;
     UINT ggo_format = GGO_GLYPH_INDEX;
     XRenderPictFormat pf;
+    const char zero = 0;
 
     switch(format) {
     case AA_Grey:
@@ -790,7 +791,6 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 	}
     }
 
-    memcpy(&formatEntry->gis[glyph], &gi, sizeof(gi));
 
     if(formatEntry->glyphset) {
         if(format == AA_None && BitmapBitOrder(gdi_display) != MSBFirst) {
@@ -809,14 +809,28 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 	    }
 	}
 	gid = glyph;
+
+        /*
+          XRenderCompositeText seems to ignore 0x0 glyphs when
+          AA_None, which means we lose the advance width of glyphs
+          like the space.  We'll pretend that such glyphs are 1x1
+          bitmaps.
+        */
+
+        if(buflen == 0)
+            gi.width = gi.height = 1;
+
         wine_tsx11_lock();
 	pXRenderAddGlyphs(gdi_display, formatEntry->glyphset, &gid, &gi, 1,
-			  buf, buflen);
+			  buflen ? buf : &zero, buflen ? buflen : 1);
 	wine_tsx11_unlock();
 	HeapFree(GetProcessHeap(), 0, buf);
     } else {
         formatEntry->bitmaps[glyph] = buf;
     }
+
+    memcpy(&formatEntry->gis[glyph], &gi, sizeof(gi));
+
     return TRUE;
 }
 
