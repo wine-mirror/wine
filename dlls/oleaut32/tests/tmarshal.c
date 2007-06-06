@@ -1007,14 +1007,14 @@ static void test_typelibmarshal(void)
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = vararg;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    todo_wine ok_ole_success(hr, ITypeInfo_Invoke);
+    ok_ole_success(hr, ITypeInfo_Invoke);
 
     /* call VarArg, even one (non-optional, non-safearray) named argument is not allowed */
     dispidNamed = 0;
     dispparams.cNamedArgs = 1;
     dispparams.rgdispidNamedArgs = &dispidNamed;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    todo_wine ok(hr == DISP_E_NONAMEDARGS, "IDispatch_Invoke should have returned DISP_E_NONAMEDARGS instead of 0x%08x\n", hr);
+    ok(hr == DISP_E_NONAMEDARGS, "IDispatch_Invoke should have returned DISP_E_NONAMEDARGS instead of 0x%08x\n", hr);
     dispidNamed = DISPID_PROPERTYPUT;
 
     /* call Error */

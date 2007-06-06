@@ -5594,6 +5594,13 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 rgdispidNamedArgs++;
             }
 
+            if (func_desc->cParamsOpt < 0 && cNamedArgs)
+            {
+                ERR("functions with the vararg attribute do not support named arguments\n");
+                hres = DISP_E_NONAMEDARGS;
+                goto func_fail;
+            }
+
             for (i = 0; i < func_desc->cParams; i++)
             {
                 TYPEDESC *tdesc = &func_desc->lprgelemdescParam[i].tdesc;
@@ -5674,6 +5681,36 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         }
                         V_VT(&rgvarg[i]) = rgvt[i];
                     }
+                    else if (rgvt[i] == (VT_VARIANT | VT_ARRAY) && func_desc->cParamsOpt < 0 && i == func_desc->cParams-1)
+                    {
+                        SAFEARRAY *a;
+                        SAFEARRAYBOUND bound;
+                        VARIANT *v;
+                        LONG j;
+                        bound.lLbound = 0;
+                        bound.cElements = pDispParams->cArgs-i;
+                        if (!(a = SafeArrayCreate(VT_VARIANT, 1, &bound)))
+                        {
+                            ERR("SafeArrayCreate failed\n");
+                            break;
+                        }
+                        hres = SafeArrayAccessData(a, (LPVOID)&v);
+                        if (hres != S_OK)
+                        {
+                            ERR("SafeArrayAccessData failed with %x\n", hres);
+                            break;
+                        }
+                        for (j = 0; j < bound.cElements; j++)
+                            VariantCopy(&v[j], &pDispParams->rgvarg[pDispParams->cArgs - 1 - i - j]);
+                        hres = SafeArrayUnaccessData(a);
+                        if (hres != S_OK)
+                        {
+                            ERR("SafeArrayUnaccessData failed with %x\n", hres);
+                            break;
+                        }
+                        V_ARRAY(&rgvarg[i]) = a;
+                        V_VT(&rgvarg[i]) = rgvt[i];
+                    }
                     else if ((rgvt[i] & VT_BYREF) && !V_ISBYREF(src_arg))
                     {
                         VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
@@ -5740,12 +5777,6 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 }
             }
             if (FAILED(hres)) goto func_fail; /* FIXME: we don't free changed types here */
-            if (func_desc->cParamsOpt < 0)
-            {
-                FIXME("Does not support safearray optional parameters\n");
-                hres = DISP_E_BADPARAMCOUNT;
-                goto func_fail; /* FIXME: we don't free changed types here */
-            }
 
             /* VT_VOID is a special case for return types, so it is not
              * handled in the general function */
@@ -5806,6 +5837,34 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         {
                             ERR("failed to convert param %d to vt %d\n", i,
                                 V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i]));
+                            break;
+                        }
+                    }
+                    else if (V_VT(prgpvarg[i]) == (VT_VARIANT | VT_ARRAY) &&
+                             func_desc->cParamsOpt < 0 &&
+                             i == func_desc->cParams-1)
+                    {
+                        SAFEARRAY *a = V_ARRAY(prgpvarg[i]);
+                        LONG j, ubound;
+                        VARIANT *v;
+                        hres = SafeArrayGetUBound(a, 1, &ubound);
+                        if (hres != S_OK)
+                        {
+                            ERR("SafeArrayGetUBound failed with %x\n", hres);
+                            break;
+                        }
+                        hres = SafeArrayAccessData(a, (LPVOID)&v);
+                        if (hres != S_OK)
+                        {
+                            ERR("SafeArrayAccessData failed with %x\n", hres);
+                            break;
+                        }
+                        for (j = 0; j <= ubound; j++)
+                            VariantClear(&v[j]);
+                        hres = SafeArrayUnaccessData(a);
+                        if (hres != S_OK)
+                        {
+                            ERR("SafeArrayUnaccessData failed with %x\n", hres);
                             break;
                         }
                     }
