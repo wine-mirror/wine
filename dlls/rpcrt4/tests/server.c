@@ -23,6 +23,7 @@
 #include "server.h"
 #include "server_defines.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -201,6 +202,12 @@ int
 s_dot_two_vectors(vector_t vs[2])
 {
   return vs[0].x * vs[1].x + vs[0].y * vs[1].y + vs[0].z * vs[1].z;
+}
+
+int
+s_sum_cs(cs_t *cs)
+{
+  return s_sum_conf_array(cs->ca, cs->n);
 }
 
 void
@@ -386,6 +393,7 @@ array_tests(void)
   };
   static int c[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
   static vector_t vs[2] = {{1, -2, 3}, {4, -5, -6}};
+  cs_t *cs;
 
   ok(sum_fixed_int_3d(m) == 4116, "RPC sum_fixed_int_3d\n");
 
@@ -400,6 +408,15 @@ array_tests(void)
   ok(sum_var_array(&c[2], 0) == 0, "RPC sum_conf_array\n");
 
   ok(dot_two_vectors(vs) == -4, "RPC dot_two_vectors\n");
+  cs = HeapAlloc(GetProcessHeap(), 0, offsetof(cs_t, ca) + 5 * sizeof cs->ca[0]);
+  cs->n = 5;
+  cs->ca[0] = 3;
+  cs->ca[1] = 5;
+  cs->ca[2] = -2;
+  cs->ca[3] = -1;
+  cs->ca[4] = -4;
+  ok(sum_cs(cs) == 1, "RPC sum_cs\n");
+  HeapFree(GetProcessHeap(), 0, cs);
 }
 
 static void

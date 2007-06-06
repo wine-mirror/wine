@@ -112,5 +112,14 @@ interface IServer
   int sum_conf_array([size_is(n)] int x[], int n);
   int sum_var_array([length_is(n)] int x[20], int n);
   int dot_two_vectors(vector_t vs[2]);
+
+  typedef struct
+  {
+    int n;
+    [size_is(n)] int ca[];
+  } cs_t;
+
+  int sum_cs(cs_t *cs);
+
   void stop(void);
 }

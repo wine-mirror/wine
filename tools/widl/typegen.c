@@ -709,7 +709,12 @@ size_t type_memsize(const type_t *t, unsigned int *align)
 {
     size_t size = 0;
 
-    if (is_ptr(t))
+    if (t->declarray && is_conformant_array(t))
+    {
+        type_memsize(t->ref, align);
+        size = 0;
+    }
+    else if (is_ptr(t) || is_conformant_array(t))
     {
         size = sizeof(void *);
         if (size > *align) *align = size;
@@ -759,12 +764,8 @@ size_t type_memsize(const type_t *t, unsigned int *align)
     case RPC_FC_LGFARRAY:
     case RPC_FC_SMVARRAY:
     case RPC_FC_LGVARRAY:
-        size = t->dim * type_memsize(t->ref, align);
-        break;
-    case RPC_FC_CARRAY:
-    case RPC_FC_CVARRAY:
     case RPC_FC_BOGUS_ARRAY:
-        size = type_memsize(t->ref, align);
+        size = t->dim * type_memsize(t->ref, align);
         break;
     default:
         error("type_memsize: Unknown type %d\n", t->type);
@@ -1000,6 +1001,8 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
         has_pointer = TRUE;
 
     size = type_memsize(type, &align);
+    if (size == 0)              /* conformant array */
+        size = type_memsize(type->ref, &align);
 
     start_offset = *typestring_offset;
     update_tfsoff(type, start_offset, file);
@@ -1075,15 +1078,15 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
 static const var_t *find_array_or_string_in_struct(const type_t *type)
 {
     const var_t *last_field = LIST_ENTRY( list_tail(type->fields), const var_t, entry );
+    const type_t *ft = last_field->type;
 
-    if (last_field->type->declarray)
+    if (ft->declarray && is_conformant_array(ft))
         return last_field;
 
-    assert((last_field->type->type == RPC_FC_CSTRUCT) ||
-           (last_field->type->type == RPC_FC_CPSTRUCT) ||
-           (last_field->type->type == RPC_FC_CVSTRUCT));
-
-    return find_array_or_string_in_struct(last_field->type);
+    if (ft->type == RPC_FC_CSTRUCT || ft->type == RPC_FC_CPSTRUCT || ft->type == RPC_FC_CVSTRUCT)
+        return find_array_or_string_in_struct(last_field->type);
+    else
+        return NULL;
 }
 
 static void write_struct_members(FILE *file, const type_t *type, unsigned int *typestring_offset)
@@ -1091,13 +1094,17 @@ static void write_struct_members(FILE *file, const type_t *type, unsigned int *t
     const var_t *field;
 
     if (type->fields) LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
-        write_member_type(file, field->type, field, typestring_offset);
+    {
+        type_t *ft = field->type;
+        if (!ft->declarray || !is_conformant_array(ft))
+            write_member_type(file, ft, field, typestring_offset);
+    }
 
     write_end(file, typestring_offset);
 }
 
 static size_t write_struct_tfs(FILE *file, type_t *type,
-                               const char *name, unsigned int *typestring_offset)
+                               const char *name, unsigned int *tfsoff)
 {
     unsigned int total_size;
     const var_t *array;
@@ -1108,175 +1115,67 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
 
     guard_rec(type);
 
-    switch (type->type)
+    total_size = type_memsize(type, &align);
+    if (total_size > USHRT_MAX)
+        error("structure size for %s exceeds %d bytes by %d bytes\n",
+              name, USHRT_MAX, total_size - USHRT_MAX);
+
+    has_pointers = write_embedded_types(file, NULL, type, name, 0, tfsoff);
+
+    array = find_array_or_string_in_struct(type);
+    if (array && !processed(array->type))
     {
-    case RPC_FC_STRUCT:
-    case RPC_FC_PSTRUCT:
-        total_size = type_memsize(type, &align);
-
-        if (total_size > USHRT_MAX)
-            error("structure size for %s exceeds %d bytes by %d bytes\n",
-                  name, USHRT_MAX, total_size - USHRT_MAX);
-
-        if (type->type == RPC_FC_PSTRUCT)
-            write_embedded_types(file, NULL, type, name, 0, typestring_offset);
-
-        start_offset = *typestring_offset;
-        update_tfsoff(type, start_offset, file);
-        if (type->type == RPC_FC_STRUCT)
-            WRITE_FCTYPE(file, FC_STRUCT, *typestring_offset);
-        else
-            WRITE_FCTYPE(file, FC_PSTRUCT, *typestring_offset);
-        /* alignment */
-        print_file(file, 2, "0x%02x,\n", align - 1);
-        /* total size */
-        print_file(file, 2, "NdrFcShort(0x%x), /* %u */\n", total_size, total_size);
-        *typestring_offset += 4;
-
-        if (type->type == RPC_FC_PSTRUCT)
-        {
-            print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
-            print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
-            *typestring_offset += 2;
-            write_pointer_description(file, type, 0, 0, typestring_offset);
-            print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
-            *typestring_offset += 1;
-        }
-
-        /* member layout */
         current_structure = type;
-        write_struct_members(file, type, typestring_offset);
+        array_offset
+            = is_attr(array->attrs, ATTR_STRING)
+            ? write_string_tfs(file, array->attrs, array->type, array->name, tfsoff)
+            : write_array_tfs(file, array->attrs, array->type, array->name, tfsoff);
         current_structure = NULL;
-        return start_offset;
-    case RPC_FC_CSTRUCT:
-    case RPC_FC_CPSTRUCT:
-        total_size = type_memsize(type, &align);
-
-        if (total_size > USHRT_MAX)
-            error("structure size for %s exceeds %d bytes by %d bytes\n",
-                  name, USHRT_MAX, total_size - USHRT_MAX);
-
-        array = find_array_or_string_in_struct(type);
-        current_structure = type;
-        array_offset = write_array_tfs(file, array->attrs, array->type,
-                                       array->name, typestring_offset);
-        current_structure = NULL;
-
-        if (type->type == RPC_FC_CPSTRUCT)
-            write_embedded_types(file, NULL, type, name, 0, typestring_offset);
-
-        start_offset = *typestring_offset;
-        update_tfsoff(type, start_offset, file);
-        if (type->type == RPC_FC_CSTRUCT)
-            WRITE_FCTYPE(file, FC_CSTRUCT, *typestring_offset);
-        else
-            WRITE_FCTYPE(file, FC_CPSTRUCT, *typestring_offset);
-        /* alignment */
-        print_file(file, 2, "0x%02x,\n", align - 1);
-        /* total size */
-        print_file(file, 2, "NdrFcShort(0x%x), /* %u */\n", total_size, total_size);
-        *typestring_offset += 4;
-        print_file(file, 2, "NdrFcShort(0x%x), /* offset = %d (%u) */\n",
-                   array_offset - *typestring_offset,
-                   array_offset - *typestring_offset,
-                   array_offset);
-        *typestring_offset += 2;
-
-        if (type->type == RPC_FC_CPSTRUCT)
-        {
-            print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
-            print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
-            *typestring_offset += 2;
-            write_pointer_description(file, type, 0, 0, typestring_offset);
-            print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
-            *typestring_offset += 1;
-        }
-
-        print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
-        *typestring_offset += 1;
-
-        return start_offset;
-    case RPC_FC_CVSTRUCT:
-        total_size = type_memsize(type, &align);
-
-        if (total_size > USHRT_MAX)
-            error("structure size for %s exceeds %d bytes by %d bytes\n",
-                  name, USHRT_MAX, total_size - USHRT_MAX);
-
-        array = find_array_or_string_in_struct(type);
-        current_structure = type;
-        if (is_attr(array->attrs, ATTR_STRING))
-            array_offset = write_string_tfs(file, array->attrs, array->type,
-                                            array->name, typestring_offset);
-        else
-            array_offset = write_array_tfs(file, array->attrs, array->type,
-                                           array->name, typestring_offset);
-        current_structure = NULL;
-
-        has_pointers = write_embedded_types(file, NULL, type, name, 0,
-                                            typestring_offset);
-
-        start_offset = *typestring_offset;
-        update_tfsoff(type, start_offset, file);
-        WRITE_FCTYPE(file, FC_CVSTRUCT, *typestring_offset);
-        /* alignment */
-        print_file(file, 2, "0x%02x,\n", align - 1);
-        /* total size */
-        print_file(file, 2, "NdrFcShort(0x%x), /* %u */\n", total_size, total_size);
-        *typestring_offset += 4;
-        print_file(file, 2, "NdrFcShort(0x%x), /* offset = %d (%u) */\n",
-                   array_offset - *typestring_offset,
-                   array_offset - *typestring_offset,
-                   array_offset);
-        *typestring_offset += 2;
-
-        if (has_pointers)
-        {
-            print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
-            print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
-            *typestring_offset += 2;
-            write_pointer_description(file, type, 0, 0, typestring_offset);
-            print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
-            *typestring_offset += 1;
-        }
-
-        print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
-        *typestring_offset += 1;
-
-        return start_offset;
-
-    case RPC_FC_BOGUS_STRUCT:
-        total_size = type_memsize(type, &align);
-        if (total_size > USHRT_MAX)
-            error("structure size for %s exceeds %d bytes by %d bytes\n",
-                  name, USHRT_MAX, total_size - USHRT_MAX);
-
-        write_embedded_types(file, NULL, type, name, 0, typestring_offset);
-
-        start_offset = *typestring_offset;
-        update_tfsoff(type, start_offset, file);
-        print_file(file, 0, "/* %d */\n", start_offset);
-        print_file(file, 2, "0x%x,\t/* %s */\n", type->type, string_of_type(type->type));
-        print_file(file, 2, "0x%x,\t/* %d */\n", align - 1, align - 1);
-        print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", total_size, total_size);
-
-        /* do conformant array stuff */
-        print_file(file, 2, "NdrFcShort(0x0),\t/* FIXME: conformant array stuff */\n");
-
-        /* do pointer stuff here */
-        print_file(file, 2, "NdrFcShort(0x0),\t/* FIXME: pointer stuff */\n");
-
-        *typestring_offset += 8;
-        current_structure = type;
-        write_struct_members(file, type, typestring_offset);
-        current_structure = NULL;
-
-        return start_offset;
-
-    default:
-        error("write_struct_tfs: Unimplemented for type 0x%x\n", type->type);
-        return *typestring_offset;
     }
+
+    start_offset = *tfsoff;
+    update_tfsoff(type, start_offset, file);
+    print_file(file, 0, "/* %d */\n", start_offset);
+    print_file(file, 2, "0x%x,\t/* %s */\n", type->type, string_of_type(type->type));
+    print_file(file, 2, "0x%x,\t/* %d */\n", align - 1, align - 1);
+    print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", total_size, total_size);
+    *tfsoff += 4;
+
+    if (array)
+    {
+        unsigned int absoff = array->type->typestring_offset;
+        short reloff = absoff - *tfsoff;
+        print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%lu) */\n",
+                   reloff, reloff, absoff);
+        *tfsoff += 2;
+    }
+    else if (type->type == RPC_FC_BOGUS_STRUCT)
+    {
+        print_file(file, 2, "NdrFcShort(0x0),\n");
+        *tfsoff += 2;
+    }
+
+    if (type->type == RPC_FC_BOGUS_STRUCT)
+    {
+
+        print_file(file, 2, "NdrFcShort(0x0),\t/* FIXME: pointer stuff */\n");
+        *tfsoff += 2;
+    }
+    else if (has_pointers)
+    {
+        print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
+        print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
+        *tfsoff += 2;
+        write_pointer_description(file, type, 0, 0, tfsoff);
+        print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+        *tfsoff += 1;
+    }
+
+    current_structure = type;
+    write_struct_members(file, type, tfsoff);
+    current_structure = NULL;
+
+    return start_offset;
 }
 
 static size_t write_pointer_only_tfs(FILE *file, const attr_list_t *attrs, int pointer_type,
@@ -1665,9 +1564,11 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
 
         retmask |= 1;
     }
+    else if (type->declarray && is_conformant_array(type))
+        ;    /* conformant arrays and strings are handled specially */
     else if (is_array(type))
     {
-        retmask |= write_array_tfs(file, attrs, type, name, tfsoff);
+        write_array_tfs(file, attrs, type, name, tfsoff);
     }
     else if (!is_base_type(type->type))
         error("write_embedded_types: unknown embedded type for %s (0x%x)\n",
