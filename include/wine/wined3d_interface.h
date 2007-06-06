@@ -406,6 +406,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(SetIndices)(THIS_ struct IWineD3DIndexBuffer * pIndexData) PURE;
     STDMETHOD(GetIndices)(THIS_ struct IWineD3DIndexBuffer ** ppIndexData,UINT * pBaseVertexIndex) PURE;
     STDMETHOD(SetBaseVertexIndex)(THIS_ UINT baseIndex);
+    STDMETHOD(GetBaseVertexIndex)(THIS_ UINT *baseIndex);
     STDMETHOD(SetLight)(THIS_ DWORD  Index,CONST WINED3DLIGHT * pLight) PURE;
     STDMETHOD(GetLight)(THIS_ DWORD  Index,WINED3DLIGHT * pLight) PURE;
     STDMETHOD(SetLightEnable)(THIS_ DWORD  Index,BOOL  Enable) PURE;
@@ -542,6 +543,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_SetIndices(p,a)                          (p)->lpVtbl->SetIndices(p,a)
 #define IWineD3DDevice_GetIndices(p,a,b)                        (p)->lpVtbl->GetIndices(p,a,b)
 #define IWineD3DDevice_SetBaseVertexIndex(p, a)                 (p)->lpVtbl->SetBaseVertexIndex(p, a)
+#define IWineD3DDevice_GetBaseVertexIndex(p,a)                  (p)->lpVtbl->GetBaseVertexIndex(p,a)
 #define IWineD3DDevice_SetLight(p,a,b)                          (p)->lpVtbl->SetLight(p,a,b)
 #define IWineD3DDevice_GetLight(p,a,b)                          (p)->lpVtbl->GetLight(p,a,b)
 #define IWineD3DDevice_SetLightEnable(p,a,b)                    (p)->lpVtbl->SetLightEnable(p,a,b)

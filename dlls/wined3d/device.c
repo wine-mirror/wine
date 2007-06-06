@@ -2813,6 +2813,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetBaseVertexIndex(IWineD3DDevice *ifac
     return WINED3D_OK;
 }
 
+static HRESULT WINAPI IWineD3DDeviceImpl_GetBaseVertexIndex(IWineD3DDevice *iface, UINT* base_index) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p) : base_index %p\n", This, base_index);
+
+    *base_index = This->stateBlock->baseVertexIndex;
+
+    TRACE("Returning %u\n", *base_index);
+
+    return WINED3D_OK;
+}
+
 /*****
  * Get / Set Viewports
  *****/
@@ -6369,6 +6380,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_SetIndices,
     IWineD3DDeviceImpl_GetIndices,
     IWineD3DDeviceImpl_SetBaseVertexIndex,
+    IWineD3DDeviceImpl_GetBaseVertexIndex,
     IWineD3DDeviceImpl_SetLight,
     IWineD3DDeviceImpl_GetLight,
     IWineD3DDeviceImpl_SetLightEnable,
