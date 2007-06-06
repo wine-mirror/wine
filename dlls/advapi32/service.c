@@ -89,6 +89,8 @@ static CRITICAL_SECTION service_cs = { &service_cs_debug, -1, 0, 0, 0, 0 };
 
 static struct list service_list = LIST_INIT(service_list);
 
+extern HANDLE __wine_make_process_system(void);
+
 /******************************************************************************
  * SC_HANDLEs
  */
@@ -774,18 +776,37 @@ static BOOL service_run_threads(void)
 
     TRACE("starting %d pipe listener threads\n", count);
 
-    handles = HeapAlloc(GetProcessHeap(), 0, sizeof(HANDLE)*count);
+    handles = HeapAlloc(GetProcessHeap(), 0, sizeof(HANDLE) * (count + 1));
+
+    handles[n++] = __wine_make_process_system();
 
     LIST_FOR_EACH_ENTRY( service, &service_list, service_data, entry )
         handles[n++] = CreateThread( NULL, 0, service_control_dispatcher,
                                      service, 0, NULL );
-    assert(n==count);
+    assert(n == count + 1);
 
     LeaveCriticalSection( &service_cs );
 
     /* wait for all the threads to pack up and exit */
-    WaitForMultipleObjectsEx(count, handles, TRUE, INFINITE, FALSE);
+    while (n > 1)
+    {
+        DWORD ret = WaitForMultipleObjects( min(n,MAXIMUM_WAIT_OBJECTS), handles, FALSE, INFINITE );
+        if (!ret)  /* system process event */
+        {
+            TRACE( "last user process exited, shutting down\n" );
+            /* FIXME: we should maybe send a shutdown control to running services */
+            ExitProcess(0);
+        }
+        if (ret < MAXIMUM_WAIT_OBJECTS)
+        {
+            CloseHandle( handles[ret] );
+            memmove( &handles[ret], &handles[ret+1], (n - ret - 1) * sizeof(HANDLE) );
+            n--;
+        }
+        else break;
+    }
 
+    while (n) CloseHandle( handles[--n] );
     HeapFree(GetProcessHeap(), 0, handles);
 
     return TRUE;
