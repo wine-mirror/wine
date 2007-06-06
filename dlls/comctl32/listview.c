@@ -1771,6 +1771,9 @@ static void LISTVIEW_ShowFocusRect(const LISTVIEW_INFO *infoPtr, BOOL fShow)
 	DRAWITEMSTRUCT dis;
 	LVITEMW item;
 
+	HFONT hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
+	HFONT hOldFont = SelectObject(hdc, hFont);
+
         item.iItem = infoPtr->nFocusedItem;
 	item.iSubItem = 0;
         item.mask = LVIF_PARAM;
@@ -1788,6 +1791,8 @@ static void LISTVIEW_ShowFocusRect(const LISTVIEW_INFO *infoPtr, BOOL fShow)
 	dis.itemData = item.lParam;
 
 	SendMessageW(infoPtr->hwndNotify, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
+
+	SelectObject(hdc, hOldFont);
     }
     else
     {
