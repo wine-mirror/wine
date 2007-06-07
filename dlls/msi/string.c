@@ -41,6 +41,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msidb);
 
 #define HASH_SIZE 0x101
+#define LONG_STR_BYTES 3
 
 typedef struct _msistring
 {
@@ -507,13 +508,15 @@ HRESULT msi_init_string_table( IStorage *stg )
     return S_OK;
 }
 
-string_table *msi_load_string_table( IStorage *stg )
+string_table *msi_load_string_table( IStorage *stg, UINT *bytes_per_strref )
 {
     string_table *st = NULL;
     CHAR *data = NULL;
     USHORT *pool = NULL;
     UINT r, datasize = 0, poolsize = 0, codepage;
     DWORD i, count, offset, len, n, refs;
+
+    static const USHORT large_str_sig[] = { 0x0000, 0x8000 };
 
     r = read_stream_data( stg, szStringPool, &pool, &poolsize );
     if( r != ERROR_SUCCESS)
@@ -522,8 +525,14 @@ string_table *msi_load_string_table( IStorage *stg )
     if( r != ERROR_SUCCESS)
         goto end;
 
+    if ( !memcmp(pool, large_str_sig, sizeof(large_str_sig)) )
+        *bytes_per_strref = LONG_STR_BYTES;
+    else
+        *bytes_per_strref = sizeof(USHORT);
+
+    /* FIXME: don't know where the codepage is in large str tables */
     count = poolsize/4;
-    if( poolsize > 4 )
+    if( poolsize > 4 && *bytes_per_strref != LONG_STR_BYTES )
         codepage = pool[0] | ( pool[1] << 16 );
     else
         codepage = CP_ACP;

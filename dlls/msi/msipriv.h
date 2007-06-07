@@ -75,6 +75,7 @@ typedef struct tagMSIDATABASE
     MSIOBJECTHDR hdr;
     IStorage *storage;
     string_table *strings;
+    UINT bytes_per_strref;
     LPWSTR path;
     LPWSTR deletefile;
     LPCWSTR mode;
@@ -556,10 +557,11 @@ extern VOID msi_destroy_stringtable( string_table *st );
 extern UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res );
 extern const WCHAR *msi_string_lookup_id( string_table *st, UINT id );
 extern HRESULT msi_init_string_table( IStorage *stg );
-extern string_table *msi_load_string_table( IStorage *stg );
+extern string_table *msi_load_string_table( IStorage *stg, UINT *bytes_per_strref );
 extern UINT msi_save_string_table( string_table *st, IStorage *storage );
 
 
+extern void msi_table_set_strref(UINT bytes_per_strref);
 extern BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name );
 extern MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table );
 

@@ -188,10 +188,11 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     list_init( &db->tables );
     list_init( &db->transforms );
 
-    db->strings = msi_load_string_table( stg );
+    db->strings = msi_load_string_table( stg, &db->bytes_per_strref );
     if( !db->strings )
         goto end;
 
+    msi_table_set_strref( db->bytes_per_strref );
     ret = ERROR_SUCCESS;
 
     msiobj_addref( &db->hdr );

@@ -42,6 +42,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msidb);
 
 #define MSITABLE_HASH_TABLE_SIZE 37
+#define LONG_STR_BYTES 3
 
 typedef struct tagMSICOLUMNHASHENTRY
 {
@@ -113,10 +114,19 @@ static UINT get_tablecolumns( MSIDATABASE *db,
        LPCWSTR szTableName, MSICOLUMNINFO *colinfo, UINT *sz);
 static void msi_free_colinfo( MSICOLUMNINFO *colinfo, UINT count );
 
+
+void msi_table_set_strref(UINT bytes_per_strref)
+{
+    _Columns_cols[0].offset = 0;
+    _Columns_cols[1].offset = bytes_per_strref;
+    _Columns_cols[2].offset = _Columns_cols[1].offset + sizeof(USHORT);
+    _Columns_cols[3].offset = _Columns_cols[2].offset + bytes_per_strref;
+}
+
 static inline UINT bytes_per_column( const MSICOLUMNINFO *col )
 {
     if( col->type & MSITYPE_STRING )
-        return 2;
+        return _Columns_cols[1].offset;
     if( (col->type & 0xff) > 4 )
         ERR("Invalid column size!\n");
     return col->type & 0xff;
@@ -525,7 +535,7 @@ static UINT read_table_from_storage( MSITABLE *t, IStorage *stg )
             UINT n = bytes_per_column( &t->colinfo[j] );
             UINT k;
 
-            if ( n != 2 && n != 4 )
+            if ( n != 2 && n != 3 && n != 4 )
             {
                 ERR("oops - unknown column width %d\n", n);
                 goto err;
@@ -975,12 +985,12 @@ static UINT get_tablecolumns( MSIDATABASE *db,
     count = table->row_count;
     for( i=0; i<count; i++ )
     {
-        if( table->data[ i ][ 0 ] != table_id )
+        if( read_table_int(table->data, i, 0, db->bytes_per_strref) != table_id )
             continue;
         if( colinfo )
         {
-            UINT id = read_table_int(table->data, i, 4, sizeof(USHORT));
-            UINT col = read_table_int(table->data, i, 2, sizeof(USHORT)) - (1<<15);
+            UINT id = read_table_int(table->data, i, _Columns_cols[2].offset, db->bytes_per_strref);
+            UINT col = read_table_int(table->data, i, _Columns_cols[1].offset, sizeof(USHORT)) - (1<<15);
 
             /* check the column number is in range */
             if (col<1 || col>maxcount)
@@ -999,7 +1009,7 @@ static UINT get_tablecolumns( MSIDATABASE *db,
             colinfo[ col - 1 ].tablename = msi_makestring( db, table_id );
             colinfo[ col - 1 ].number = col;
             colinfo[ col - 1 ].colname = msi_makestring( db, id );
-            colinfo[ col - 1 ].type = read_table_int(table->data, i, 6, sizeof(USHORT)) - (1<<15);
+            colinfo[ col - 1 ].type = read_table_int(table->data, i, _Columns_cols[3].offset, sizeof(USHORT)) - (1<<15);
             colinfo[ col - 1 ].offset = 0;
             colinfo[ col - 1 ].hash_table = NULL;
         }
@@ -1112,7 +1122,7 @@ static UINT TABLE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
         data = tv->table->data;
 
     n = bytes_per_column( &tv->columns[col-1] );
-    if (n != 2 && n != 4)
+    if (n != 2 && n != 3 && n != 4)
     {
         ERR("oops! what is %d bytes per column?\n", n );
         return ERROR_FUNCTION_FAILED;
@@ -1227,7 +1237,7 @@ static UINT TABLE_set_int( MSITABLEVIEW *tv, UINT row, UINT col, UINT val )
         data = tv->table->data;
 
     n = bytes_per_column( &tv->columns[col-1] );
-    if ( n != 2 && n != 4 )
+    if ( n != 2 && n != 3 && n != 4 )
     {
         ERR("oops! what is %d bytes per column?\n", n );
         return ERROR_FUNCTION_FAILED;
@@ -2053,7 +2063,7 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
 
     TRACE("%p %p\n", db, stg );
 
-    strings = msi_load_string_table( stg );
+    strings = msi_load_string_table( stg, &db->bytes_per_strref );
     if( !strings )
         goto end;
 
