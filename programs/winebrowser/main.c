@@ -42,6 +42,7 @@
 
 #include <windows.h>
 #include <shlwapi.h>
+#include <ddeml.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -121,6 +122,128 @@ static int open_mailto_url( const char *url )
 }
 
 /*****************************************************************************
+ * DDE helper functions.
+ */
+
+static char *ddeExec = NULL;
+static HSZ hszTopic = 0;
+
+/* Dde callback, save the execute string for processing */
+static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
+                                HSZ hsz1, HSZ hsz2, HDDEDATA hData,
+                                ULONG_PTR dwData1, ULONG_PTR dwData2)
+{
+    DWORD size = 0;
+
+    WINE_TRACE("dde_cb: %04x, %04x, %p, %p, %p, %p, %08lx, %08lx\n",
+               uType, uFmt, hConv, hsz1, hsz2, hData, dwData1, dwData2);
+
+    switch (uType)
+    {
+        case XTYP_CONNECT:
+            if (!DdeCmpStringHandles(hsz1, hszTopic))
+                return (HDDEDATA)TRUE;
+            return (HDDEDATA)FALSE;
+
+        case XTYP_EXECUTE:
+            if (!(size = DdeGetData(hData, NULL, 0, 0)))
+                WINE_ERR("DdeGetData returned zero size of execute string\n");
+            else if (!(ddeExec = HeapAlloc(GetProcessHeap(), 0, size)))
+                WINE_ERR("Out of memory\n");
+            else if (DdeGetData(hData, (LPBYTE)ddeExec, size, 0) != size)
+                WINE_WARN("DdeGetData did not return %d bytes\n", size);
+            DdeFreeDataHandle(hData);
+            return (HDDEDATA)DDE_FACK;
+
+        default:
+            return NULL;
+    }
+}
+
+static char *get_url_from_dde(void)
+{
+    static const char szApplication[] = "IExplore";
+    static const char szTopic[] = "WWW_OpenURL";
+
+    HSZ hszApplication = 0;
+    DWORD ddeInst = 0;
+    UINT_PTR timer = 0;
+    int rc;
+    char *ret = NULL;
+
+    rc = DdeInitializeA(&ddeInst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
+                        CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0);
+    if (rc != DMLERR_NO_ERROR)
+    {
+        WINE_ERR("Unable to initialize DDE, DdeInitialize returned %d\n", rc);
+        goto done;
+    }
+
+    hszApplication = DdeCreateStringHandleA(ddeInst, szApplication, CP_WINANSI);
+    if (!hszApplication)
+    {
+        WINE_ERR("Unable to initialize DDE, DdeCreateStringHandle failed\n");
+        goto done;
+    }
+
+    hszTopic = DdeCreateStringHandleA(ddeInst, szTopic, CP_WINANSI);
+    if (!hszTopic)
+    {
+        WINE_ERR("Unable to initialize DDE, DdeCreateStringHandle failed\n");
+        goto done;
+    }
+
+    if (!DdeNameService(ddeInst, hszApplication, 0, DNS_REGISTER))
+    {
+        WINE_ERR("Unable to initialize DDE, DdeNameService failed\n");
+        goto done;
+    }
+
+    timer = SetTimer(NULL, 0, 5000, NULL);
+    if (!timer)
+    {
+        WINE_ERR("SetTimer failed to create timer\n");
+        goto done;
+    }
+
+    while (!ddeExec)
+    {
+        MSG msg;
+        if (!GetMessage(&msg, NULL, 0, 0)) break;
+        if (msg.message == WM_TIMER) break;
+        DispatchMessage(&msg);
+    }
+
+    if (ddeExec)
+    {
+        if (*ddeExec == '"')
+        {
+            char *endquote = strchr(ddeExec+1, '"');
+            if (!endquote)
+            {
+                WINE_ERR("Unabled to retrieve URL from string '%s'\n", ddeExec);
+                goto done;
+            }
+            *endquote = 0;
+            ret = ddeExec+1;
+        }
+        else
+            ret = ddeExec;
+    }
+
+done:
+    if (timer) KillTimer(NULL, timer);
+    if (ddeInst)
+    {
+        if (hszTopic && hszApplication) DdeNameService(ddeInst, hszApplication, 0, DNS_UNREGISTER);
+        if (hszTopic) DdeFreeStringHandle(ddeInst, hszTopic);
+        if (hszApplication) DdeFreeStringHandle(ddeInst, hszApplication);
+        DdeUninitialize(ddeInst);
+    }
+    return ret;
+}
+
+/*****************************************************************************
  * Main entry point. This is a console application so we have a main() not a
  * winmain().
  */
@@ -128,11 +251,17 @@ int main(int argc, char *argv[])
 {
     char *url = argv[1];
     wine_get_unix_file_name_t wine_get_unix_file_name_ptr;
+    int ret = 1;
 
-    if (argc == 1)
+    /* DDE used only if -nohome is specified; avoids delay in printing usage info
+     * when no parameters are passed */
+    if (url && !strcasecmp( url, "-nohome" ))
+        url = argc > 2 ? argv[2] : get_url_from_dde();
+
+    if (!url)
     {
         fprintf( stderr, "Usage: winebrowser URL\n" );
-        return 1;
+        goto done;
     }
 
     /* handle an RFC1738 file URL */
@@ -144,7 +273,7 @@ int main(int argc, char *argv[])
         if (UrlUnescapeA( url, NULL, &len, URL_UNESCAPE_INPLACE ) != S_OK)
         {
             fprintf( stderr, "winebrowser: unescaping URL failed: %s\n", url );
-            return 1;
+            goto done;
         }
 
         /* look for a Windows path after 'file:' */
@@ -157,7 +286,7 @@ int main(int argc, char *argv[])
         if (!*p)
         {
             fprintf( stderr, "winebrowser: no valid Windows path in: %s\n", url );
-            return 1;
+            goto done;
         }
 
         if (p[1] == '|') p[1] = ':';
@@ -189,13 +318,20 @@ int main(int argc, char *argv[])
             struct stat dummy;
 
             if (stat( unixpath, &dummy ) >= 0)
-                return open_http_url( unixpath );
+            {
+                ret = open_http_url( unixpath );
+                goto done;
+            }
         }
     }
 
     if (!strncasecmp( url, "mailto:", 7 ))
-        return open_mailto_url( url );
+        ret = open_mailto_url( url );
+    else
+        /* let the browser decide how to handle the given url */
+        ret = open_http_url( url );
 
-    /* let the browser decide how to handle the given url */
-    return open_http_url( url );
+done:
+    HeapFree(GetProcessHeap(), 0, ddeExec);
+    return ret;
 }

@@ -3,8 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winebrowser.exe
-APPMODE   = -mconsole
-IMPORTS   = shlwapi advapi32 kernel32
+APPMODE   = -mwindows
+IMPORTS   = shlwapi user32 advapi32 kernel32
 
 C_SRCS = \
 	main.c
