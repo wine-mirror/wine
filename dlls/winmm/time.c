@@ -113,7 +113,7 @@ static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer)
 /**************************************************************************
  *           TIME_MMSysTimeCallback
  */
-static DWORD CALLBACK TIME_MMSysTimeCallback(LPWINE_MM_IDATA iData)
+static int TIME_MMSysTimeCallback(LPWINE_MM_IDATA iData)
 {
 static    int				nSizeLpTimers;
 static    LPWINE_TIMERENTRY		lpTimers;
@@ -121,14 +121,7 @@ static    LPWINE_TIMERENTRY		lpTimers;
     LPWINE_TIMERENTRY   timer, *ptimer, *next_ptimer;
     int			idx;
     DWORD               cur_time;
-    DWORD               delta_time;
-    DWORD               ret_time = INFINITE;
-    DWORD               adjust_time;
-
-
-    /* optimize for the most frequent case  - no events */
-    if (! TIME_TimersList)
-        return(ret_time);
+    int delta_time, ret_time = -1;
 
     /* since timeSetEvent() and timeKillEvent() can be called
      * from 16 bit code, there are cases where win16 lock is
@@ -151,7 +144,8 @@ static    LPWINE_TIMERENTRY		lpTimers;
     for (ptimer = &TIME_TimersList; *ptimer != NULL; ) {
         timer = *ptimer;
         next_ptimer = &timer->lpNext;
-        if (cur_time >= timer->dwTriggerTime)
+        delta_time = timer->dwTriggerTime - cur_time;
+        if (delta_time <= 0)
         {
             if (timer->lpFunc) {
                 if (idx == nSizeLpTimers) {
@@ -180,23 +174,22 @@ static    LPWINE_TIMERENTRY		lpTimers;
                 HeapFree(GetProcessHeap(), 0, timer);
 
                 /* We don't need to trigger oneshots again */
-                delta_time = INFINITE;
+                delta_time = -1;
             }
             else
             {
                 /* Compute when this event needs this function
                     to be called again */
-                if (timer->dwTriggerTime <= cur_time)
-                    delta_time = 0;
-                else
-                    delta_time = timer->dwTriggerTime - cur_time;
+                delta_time = timer->dwTriggerTime - cur_time;
+                if (delta_time < 0) delta_time = 0;
             }
-        } 
-        else
-            delta_time = timer->dwTriggerTime - cur_time;
+        }
 
         /* Determine when we need to return to this function */
-        ret_time = min(ret_time, delta_time);
+        if (delta_time != -1)
+        {
+            if (ret_time == -1 || ret_time > delta_time) ret_time = delta_time;
+        }
 
         ptimer = next_ptimer;
     }
@@ -209,15 +202,15 @@ static    LPWINE_TIMERENTRY		lpTimers;
     /* Finally, adjust the recommended wait time downward
        by the amount of time the processing routines 
        actually took */
-    adjust_time = GetTickCount() - cur_time;
-    if (adjust_time > ret_time)
-        ret_time = 0;
-    else
-        ret_time -= adjust_time;
+    if (ret_time != -1)
+    {
+        ret_time -= GetTickCount() - cur_time;
+        if (ret_time < 0) ret_time = 0;
+    }
 
     /* We return the amount of time our caller should sleep
        before needing to check in on us again       */
-    return(ret_time);
+    return ret_time;
 }
 
 /**************************************************************************
@@ -226,7 +219,6 @@ static    LPWINE_TIMERENTRY		lpTimers;
 static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 {
     LPWINE_MM_IDATA iData = (LPWINE_MM_IDATA)arg;
-    DWORD sleep_time;
     DWORD rc;
 
     TRACE("Starting main winmm thread\n");
@@ -239,12 +231,12 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 
     while (! TIME_TimeToDie) 
     {
-	sleep_time = TIME_MMSysTimeCallback(iData);
+        int sleep_time = TIME_MMSysTimeCallback(iData);
 
         if (sleep_time == 0)
             continue;
 
-        rc = WaitForSingleObject(TIME_hWakeEvent, sleep_time);
+        rc = WaitForSingleObject(TIME_hWakeEvent, (sleep_time == -1) ? INFINITE : (DWORD)sleep_time);
         if (rc != WAIT_TIMEOUT && rc != WAIT_OBJECT_0)
         {   
             FIXME("Unexpected error %d(%d) in timer thread\n", rc, GetLastError());
