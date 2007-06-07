@@ -2021,7 +2021,8 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	  }
 	  else if( nOpenAction == ONOPEN_SEARCH )
 	  {
-            IShellView_Refresh(fodInfos->Shell.FOIShellView);
+            if (fodInfos->Shell.FOIShellView)
+              IShellView_Refresh(fodInfos->Shell.FOIShellView);
 	  }
           COMDLG32_SHFree(pidlCurrent);
           SendMessageW(fodInfos->DlgInfos.hwndFileName, EM_SETSEL, 0, -1);
@@ -2322,8 +2323,11 @@ static void FILEDLG95_SHELL_Clean(HWND hwnd)
     COMDLG32_SHFree(fodInfos->ShellInfos.pidlAbsCurrent);
 
     /* clean Shell interfaces */
-    IShellView_DestroyViewWindow(fodInfos->Shell.FOIShellView);
-    IShellView_Release(fodInfos->Shell.FOIShellView);
+    if (fodInfos->Shell.FOIShellView)
+    {
+      IShellView_DestroyViewWindow(fodInfos->Shell.FOIShellView);
+      IShellView_Release(fodInfos->Shell.FOIShellView);
+    }
     IShellFolder_Release(fodInfos->Shell.FOIShellFolder);
     IShellBrowser_Release(fodInfos->Shell.FOIShellBrowser);
     if (fodInfos->Shell.FOIDataObject)
@@ -2483,7 +2487,8 @@ static BOOL FILEDLG95_FILETYPE_OnCommand(HWND hwnd, WORD wNotifyCode)
       }
 
       /* Refresh the actual view to display the included items*/
-      IShellView_Refresh(fodInfos->Shell.FOIShellView);
+      if (fodInfos->Shell.FOIShellView)
+        IShellView_Refresh(fodInfos->Shell.FOIShellView);
     }
   }
   return FALSE;
