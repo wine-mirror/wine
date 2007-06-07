@@ -72,10 +72,16 @@ static void test_DialogCancel(void)
     ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
               CDERR_INITIALIZATION, CommDlgExtendedError());
 
+    SetLastError(0xdeadbeef);
     result = GetOpenFileNameW((LPOPENFILENAMEW) &ofn);
-    ok(0 == result, "expected %d, got %d\n", 0, result);
-    ok(0 == CommDlgExtendedError(), "expected %d, got %d\n", 0,
-       CommDlgExtendedError());
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        skip("GetOpenFileNameW is not implemented\n");
+    else
+    {
+        ok(0 == result, "expected %d, got %d\n", 0, result);
+        ok(0 == CommDlgExtendedError(), "expected %d, got %d\n", 0,
+           CommDlgExtendedError());
+    }
 
     PrintDlgA(NULL);
     ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
@@ -90,10 +96,16 @@ static void test_DialogCancel(void)
     ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
               CDERR_INITIALIZATION, CommDlgExtendedError());
 
+    SetLastError(0xdeadbeef);
     result = GetSaveFileNameW((LPOPENFILENAMEW) &ofn);
-    ok(0 == result, "expected %d, got %d\n", 0, result);
-    ok(0 == CommDlgExtendedError(), "expected %d, got %d\n", 0,
-       CommDlgExtendedError());
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        skip("GetSaveFileNameW is not implemented\n");
+    else
+    {
+        ok(0 == result, "expected %d, got %d\n", 0, result);
+        ok(0 == CommDlgExtendedError(), "expected %d, got %d\n", 0,
+           CommDlgExtendedError());
+    }
 }
 
 
