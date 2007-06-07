@@ -501,6 +501,18 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     list_init(&This->baseShader.constantsB);
     list_init(&This->baseShader.constantsI);
 
+    if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) > 1) {
+        shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+        HRESULT hr;
+
+        /* Second pass: figure out which registers are used, what the semantics are, etc.. */
+        memset(reg_maps, 0, sizeof(shader_reg_maps));
+        hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
+            This->semantics_in, NULL, pFunction, NULL);
+        if (FAILED(hr)) return hr;
+        /* FIXME: validate reg_maps against OpenGL */
+    }
+
     This->baseShader.shader_mode = deviceImpl->ps_selected_mode;
 
     TRACE("(%p) : Copying the function\n", This);
@@ -523,8 +535,6 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
     IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     CONST DWORD *function = This->baseShader.function;
-    shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
-    HRESULT hr;
 
     TRACE("(%p) : function %p\n", iface, function);
 
@@ -537,12 +547,17 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
         return WINED3D_OK;
     }
 
-    /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-    memset(reg_maps, 0, sizeof(shader_reg_maps));
-    hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
-        This->semantics_in, NULL, This->baseShader.function, deviceImpl->stateBlock);
-    if (hr != WINED3D_OK) return hr;
-    /* FIXME: validate reg_maps against OpenGL */
+    if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1) {
+        shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+        HRESULT hr;
+
+        /* Second pass: figure out which registers are used, what the semantics are, etc.. */
+        memset(reg_maps, 0, sizeof(shader_reg_maps));
+        hr = shader_get_registers_used((IWineD3DBaseShader*)This, reg_maps,
+            This->semantics_in, NULL, This->baseShader.function, deviceImpl->stateBlock);
+        if (FAILED(hr)) return hr;
+        /* FIXME: validate reg_maps against OpenGL */
+    }
 
     /* Generate the HW shader */
     TRACE("(%p) : Generating hardware program\n", This);
