@@ -103,6 +103,9 @@
 /* these IDs are the same as on native */
 #define IDD_YESTOALL            0x3207
 /* browse for folder dialog box */
+#define IDD_MAKENEWFOLDER       0x3746
+#define IDD_FOLDERTEXT          0x3745
+#define IDD_FOLDER              0x3744
 #define IDD_STATUS		0x3743
 #define IDD_TITLE		0x3742
 #define IDD_TREEVIEW		0x3741
