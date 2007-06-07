@@ -784,6 +784,9 @@ typedef void (APIENTRY * PGLFNGLFOGCOORDPOINTEREXTPROC) (GLenum type, GLsizei st
 #define GL_ARB_shader_objects 1
 typedef char GLcharARB;
 typedef unsigned int GLhandleARB;
+#define GL_PROGRAM_OBJECT_ARB                   0x8B40
+#define GL_OBJECT_TYPE_ARB                      0x8B4E
+#define GL_OBJECT_SUBTYPE_ARB                   0x8B4F
 #define GL_OBJECT_DELETE_STATUS_ARB             0x8B80
 #define GL_OBJECT_COMPILE_STATUS_ARB            0x8B81
 #define GL_OBJECT_LINK_STATUS_ARB               0x8B82
@@ -793,6 +796,28 @@ typedef unsigned int GLhandleARB;
 #define GL_OBJECT_ACTIVE_UNIFORMS_ARB           0x8B86
 #define GL_OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB 0x8B87
 #define GL_OBJECT_SHADER_SOURCE_LENGTH_ARB      0x8B88
+#define GL_SHADER_OBJECT_ARB                    0x8B48
+#define GL_FLOAT_VEC2_ARB                       0x8B50
+#define GL_FLOAT_VEC3_ARB                       0x8B51
+#define GL_FLOAT_VEC4_ARB                       0x8B52
+#define GL_INT_VEC2_ARB                         0x8B53
+#define GL_INT_VEC3_ARB                         0x8B54
+#define GL_INT_VEC4_ARB                         0x8B55
+#define GL_BOOL_ARB                             0x8B56
+#define GL_BOOL_VEC2_ARB                        0x8B57
+#define GL_BOOL_VEC3_ARB                        0x8B58
+#define GL_BOOL_VEC4_ARB                        0x8B59
+#define GL_FLOAT_MAT2_ARB                       0x8B5A
+#define GL_FLOAT_MAT3_ARB                       0x8B5B
+#define GL_FLOAT_MAT4_ARB                       0x8B5C
+#define GL_SAMPLER_1D_ARB                       0x8B5D
+#define GL_SAMPLER_2D_ARB                       0x8B5E
+#define GL_SAMPLER_3D_ARB                       0x8B5F
+#define GL_SAMPLER_CUBE_ARB                     0x8B60
+#define GL_SAMPLER_1D_SHADOW_ARB                0x8B61
+#define GL_SAMPLER_2D_SHADOW_ARB                0x8B62
+#define GL_SAMPLER_2D_RECT_ARB                  0x8B63
+#define GL_SAMPELR_2D_RECT_SHADOW_ARB           0x8B64
 #endif
 #ifndef GL_ARB_shading_language_100
 #define GL_ARB_shading_language_100         1
@@ -802,34 +827,17 @@ typedef unsigned int GLhandleARB;
 #define GL_ARB_fragment_shader 1
 #define GL_FRAGMENT_SHADER_ARB                  0x8B30
 #define GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB  0x8B49
+#define GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB  0x8B8B
 #endif
 #ifndef GL_ARB_vertex_shader
 #define GL_ARB_vertex_shader 1
-#define GL_VERTEX_SHADER_ARB              0x8B31
-#define GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB 0x8B4A
-#define GL_PROGRAM_OBJECT_ARB             0x8B40
-#define GL_SHADER_OBJECT_ARB              0x8B48
-#define GL_OBJECT_TYPE_ARB                0x8B4E
-#define GL_OBJECT_SUBTYPE_ARB             0x8B4F
-#define GL_FLOAT_VEC2_ARB                 0x8B50
-#define GL_FLOAT_VEC3_ARB                 0x8B51
-#define GL_FLOAT_VEC4_ARB                 0x8B52
-#define GL_INT_VEC2_ARB                   0x8B53
-#define GL_INT_VEC3_ARB                   0x8B54
-#define GL_INT_VEC4_ARB                   0x8B55
-#define GL_BOOL_ARB                       0x8B56
-#define GL_BOOL_VEC2_ARB                  0x8B57
-#define GL_BOOL_VEC3_ARB                  0x8B58
-#define GL_BOOL_VEC4_ARB                  0x8B59
-#define GL_FLOAT_MAT2_ARB                 0x8B5A
-#define GL_FLOAT_MAT3_ARB                 0x8B5B
-#define GL_FLOAT_MAT4_ARB                 0x8B5C
-#define GL_SAMPLER_1D_ARB                 0x8B5D
-#define GL_SAMPLER_2D_ARB                 0x8B5E
-#define GL_SAMPLER_3D_ARB                 0x8B5F
-#define GL_SAMPLER_CUBE_ARB               0x8B60
-#define GL_SAMPLER_1D_SHADOW_ARB          0x8B61
-#define GL_SAMPLER_2D_SHADOW_ARB          0x8B62
+#define GL_VERTEX_SHADER_ARB                        0x8B31
+#define GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB        0x8B4A
+#define GL_MAX_VARYING_FLOATS_ARB                   0x8B4B
+#define GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB       0x8B4C
+#define GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB     0x8B4D
+#define GL_OBJECT_ACTIVE_ATTRIBUTES_ARB             0x8B89
+#define GL_OBJECT_ACTIVE_ATTRIBUTE_MAX_LENGTH_ARB   0x8B8A
 #endif
 typedef void (APIENTRY * WINED3D_PFNGLGETOBJECTPARAMETERIVARBPROC) (GLhandleARB obj, GLenum pname, GLint *params);
 typedef void (APIENTRY * WINED3D_PFNGLGETOBJECTPARAMETERFVARBPROC) (GLhandleARB obj, GLenum pname, GLfloat *params);
