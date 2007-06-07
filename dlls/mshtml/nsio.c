@@ -1985,7 +1985,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
             nsIWineURI_GetNSContainer(base_wine_uri, &nscontainer);
             nsIWineURI_GetWineURL(base_wine_uri, &base_wine_url);
         }else {
-            ERR("Could not get nsIWineURI: %08x\n", nsres);
+            TRACE("Could not get base nsIWineURI: %08x\n", nsres);
         }
     }
 
