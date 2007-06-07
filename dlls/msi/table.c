@@ -62,9 +62,9 @@ typedef struct tagMSICOLUMNINFO
 
 struct tagMSITABLE
 {
-    USHORT **data;
+    BYTE **data;
     UINT row_count;
-    USHORT **nonpersistent_data;
+    BYTE **nonpersistent_data;
     UINT nonpersistent_row_count;
     struct list entry;
     MSICOLUMNINFO *colinfo;
@@ -486,7 +486,7 @@ static UINT msi_table_get_row_size( const MSICOLUMNINFO *cols, UINT count )
 /* add this table to the list of cached tables in the database */
 static UINT read_table_from_storage( MSITABLE *t, IStorage *stg )
 {
-    USHORT *rawdata = NULL;
+    BYTE *rawdata = NULL;
     UINT rawsize = 0, i, j, row_size = 0;
 
     TRACE("%s\n",debugstr_w(t->name));
@@ -494,7 +494,7 @@ static UINT read_table_from_storage( MSITABLE *t, IStorage *stg )
     row_size = msi_table_get_row_size( t->colinfo, t->col_count );
 
     /* if we can't read the table, just assume that it's empty */
-    read_stream_data( stg, t->name, &rawdata, &rawsize );
+    read_stream_data( stg, t->name, (USHORT **)&rawdata, &rawsize );
     if( !rawdata )
         return ERROR_SUCCESS;
 
@@ -521,7 +521,7 @@ static UINT read_table_from_storage( MSITABLE *t, IStorage *stg )
 
         for( j=0; j<t->col_count; j++ )
         {
-            UINT ofs = t->colinfo[j].offset/2;
+            UINT ofs = t->colinfo[j].offset;
             UINT n = bytes_per_column( &t->colinfo[j] );
             UINT k;
 
@@ -531,8 +531,8 @@ static UINT read_table_from_storage( MSITABLE *t, IStorage *stg )
                 goto err;
             }
 
-            for ( k = 0; k < n / 2; k++ )
-                t->data[i][ofs + k] = rawdata[ofs*t->row_count + i * n / 2 + k];
+            for ( k = 0; k < n; k++ )
+                t->data[i][ofs + k] = rawdata[ofs*t->row_count + i * n + k];
         }
     }
 
@@ -811,7 +811,7 @@ static UINT get_table( MSIDATABASE *db, LPCWSTR name, MSITABLE **table_ret )
 
 static UINT save_table( MSIDATABASE *db, MSITABLE *t )
 {
-    USHORT *rawdata = NULL, *p;
+    BYTE *rawdata = NULL, *p;
     UINT rawsize, r, i, j, row_size;
 
     /* Nothing to do for non-persistent tables */
@@ -837,9 +837,13 @@ static UINT save_table( MSIDATABASE *db, MSITABLE *t )
         {
             UINT offset = t->colinfo[i].offset;
 
-            *p++ = t->data[j][offset/2];
+            *p++ = t->data[j][offset];
+            *p++ = t->data[j][offset + 1];
             if( 4 == bytes_per_column( &t->colinfo[i] ) )
-                *p++ = t->data[j][offset/2+1];
+            {
+                *p++ = t->data[j][offset + 2];
+                *p++ = t->data[j][offset + 3];
+            }
         }
     }
 
@@ -924,12 +928,12 @@ static LPWSTR msi_makestring( MSIDATABASE *db, UINT stringid)
     return strdupW(msi_string_lookup_id( db->strings, stringid ));
 }
 
-static UINT read_table_int(USHORT **data, UINT row, UINT col, UINT bytes)
+static UINT read_table_int(BYTE **data, UINT row, UINT col, UINT bytes)
 {
     UINT ret = 0, i;
 
-    for (i = 0; i < bytes / 2; i++)
-        ret += (data[row][col + i] << i * 16);
+    for (i = 0; i < bytes; i++)
+        ret += (data[row][col + i] << i * 8);
 
     return ret;
 }
@@ -975,8 +979,8 @@ static UINT get_tablecolumns( MSIDATABASE *db,
             continue;
         if( colinfo )
         {
-            UINT id = table->data[ i ] [ 2 ];
-            UINT col = table->data[ i ][ 1 ] - (1<<15);
+            UINT id = read_table_int(table->data, i, 4, sizeof(USHORT));
+            UINT col = read_table_int(table->data, i, 2, sizeof(USHORT)) - (1<<15);
 
             /* check the column number is in range */
             if (col<1 || col>maxcount)
@@ -995,7 +999,7 @@ static UINT get_tablecolumns( MSIDATABASE *db,
             colinfo[ col - 1 ].tablename = msi_makestring( db, table_id );
             colinfo[ col - 1 ].number = col;
             colinfo[ col - 1 ].colname = msi_makestring( db, id );
-            colinfo[ col - 1 ].type = table->data[ i ] [ 3 ] - (1<<15);
+            colinfo[ col - 1 ].type = read_table_int(table->data, i, 6, sizeof(USHORT)) - (1<<15);
             colinfo[ col - 1 ].offset = 0;
             colinfo[ col - 1 ].hash_table = NULL;
         }
@@ -1080,7 +1084,7 @@ static UINT TABLE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
     UINT offset, n;
-    USHORT **data;
+    BYTE **data;
 
     if( !tv->table )
         return ERROR_INVALID_PARAMETER;
@@ -1114,7 +1118,7 @@ static UINT TABLE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
         return ERROR_FUNCTION_FAILED;
     }
 
-    offset = tv->columns[col-1].offset / 2;
+    offset = tv->columns[col-1].offset;
     *val = read_table_int(data, row, offset, n);
 
     /* TRACE("Data [%d][%d] = %d\n", row, col, *val ); */
@@ -1193,7 +1197,7 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
 static UINT TABLE_set_int( MSITABLEVIEW *tv, UINT row, UINT col, UINT val )
 {
     UINT offset, n, i;
-    USHORT **data;
+    BYTE **data;
 
     if( !tv->table )
         return ERROR_INVALID_PARAMETER;
@@ -1229,9 +1233,9 @@ static UINT TABLE_set_int( MSITABLEVIEW *tv, UINT row, UINT col, UINT val )
         return ERROR_FUNCTION_FAILED;
     }
 
-    offset = tv->columns[col-1].offset / 2;
-    for ( i = 0; i < n / 2; i++ )
-        data[row][offset + i] = (val >> i * 16) & 0xffff;
+    offset = tv->columns[col-1].offset;
+    for ( i = 0; i < n; i++ )
+        data[row][offset + i] = (val >> i * 8) & 0xff;
 
     return ERROR_SUCCESS;
 }
@@ -1299,9 +1303,9 @@ static UINT TABLE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UI
 static UINT table_create_new_row( struct tagMSIVIEW *view, UINT *num, BOOL temporary )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
-    USHORT **p, *row;
+    BYTE **p, *row;
     UINT sz;
-    USHORT ***data_ptr;
+    BYTE ***data_ptr;
     UINT *row_count;
 
     TRACE("%p %s\n", view, temporary ? "TRUE" : "FALSE");
@@ -1326,7 +1330,7 @@ static UINT table_create_new_row( struct tagMSIVIEW *view, UINT *num, BOOL tempo
         *num = tv->table->row_count;
     }
 
-    sz = (*row_count + 1) * sizeof (UINT*);
+    sz = (*row_count + 1) * sizeof (BYTE*);
     if( *data_ptr )
         p = msi_realloc( *data_ptr, sz );
     else
