@@ -1565,33 +1565,10 @@ static UINT TABLE_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 
         for (i = 0; i < num_rows; i++, new_entry++)
         {
-            UINT row_value, n;
-            UINT offset;
-            USHORT **data;
-            UINT row = i;
-            if( row >= tv->table->row_count )
-            {
-                row -= tv->table->row_count;
-                data = tv->table->nonpersistent_data;
-            }
-            else
-                data = tv->table->data;
-            n = bytes_per_column( &tv->columns[col-1] );
-            switch( n )
-            {
-            case 4:
-                offset = tv->columns[col-1].offset/2;
-                row_value = data[row][offset] +
-                    (data[row][offset + 1] << 16);
-                break;
-            case 2:
-                offset = tv->columns[col-1].offset/2;
-                row_value = data[row][offset];
-                break;
-            default:
-                ERR("oops! what is %d bytes per column?\n", n );
+            UINT row_value;
+
+            if (view->ops->fetch_int( view, i, col, &row_value ) != ERROR_SUCCESS)
                 continue;
-            }
 
             new_entry->next = NULL;
             new_entry->value = row_value;
