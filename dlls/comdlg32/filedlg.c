@@ -1037,10 +1037,10 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
             so it will be easily accessible through a GetPropA(...) */
       	 SetPropA(hwnd, FileOpenDlgInfosStr, (HANDLE) fodInfos);
 
+         FILEDLG95_InitControls(hwnd);
+
       	 fodInfos->DlgInfos.hwndCustomDlg =
      	   CreateTemplateDialog((FileOpenDlgInfos *)lParam, hwnd);
-
-         FILEDLG95_InitControls(hwnd);
 
          if (fodInfos->DlgInfos.hwndCustomDlg)
          {
