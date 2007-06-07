@@ -2545,18 +2545,11 @@ static BOOL FTP_DoPassive(LPWININETFTPSESSIONW lpwfs)
 	    struct sockaddr_in dataSocketAddress;
 
 	    p = lpszResponseBuffer+4; /* skip status code */
+	    while (*p != '\0' && (*p < '0' || *p > '9')) p++;
 
-	    /* do a very strict check; we can improve that later. */
-
-	    if (strncmp(p, "Entering Passive Mode", 21))
+	    if (*p == '\0')
 	    {
-		ERR("unknown response '%.*s', aborting\n", 21, p);
-		goto lend;
-	    }
-	    p += 21; /* skip string */
-	    if ((*p++ != ' ') || (*p++ != '('))
-	    {
-		ERR("unknown response format, aborting\n");
+		ERR("no address found in response, aborting\n");
 		goto lend;
 	    }
 
