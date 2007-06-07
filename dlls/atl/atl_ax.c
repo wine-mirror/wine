@@ -848,7 +848,7 @@ static LRESULT IOCS_OnWndProc( IOCS *This, HWND hWnd, UINT uMsg, WPARAM wParam, 
             break;
     }
 
-    return OrigWndProc( hWnd, uMsg, wParam, lParam );
+    return CallWindowProcW( OrigWndProc, hWnd, uMsg, wParam, lParam );
 }
 
 static LRESULT CALLBACK AtlHost_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam )
@@ -862,9 +862,8 @@ static HRESULT IOCS_Attach( IOCS *This, HWND hWnd, IUnknown *pUnkControl ) /* su
     This->hWnd = hWnd;
     IUnknown_QueryInterface( pUnkControl, &IID_IOleObject, (void**)&This->control );
     IOleObject_SetClientSite( This->control, THIS2IOLECLIENTSITE( This ) );
-    This->OrigWndProc = (WNDPROC) GetWindowLongPtrW( This->hWnd, GWLP_WNDPROC );
     SetWindowLongPtrW( hWnd, GWLP_USERDATA, (ULONG_PTR) This );
-    SetWindowLongPtrW( hWnd, GWLP_WNDPROC, (ULONG_PTR) AtlHost_wndproc );
+    This->OrigWndProc = (WNDPROC)SetWindowLongPtrW( hWnd, GWLP_WNDPROC, (ULONG_PTR) AtlHost_wndproc );
 
     return S_OK;
 }
