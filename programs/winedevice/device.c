@@ -204,7 +204,7 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
     if (load_driver())
     {
         status.dwCurrentState     = SERVICE_RUNNING;
-        status.dwControlsAccepted = SERVICE_ACCEPT_STOP;
+        status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
         SetServiceStatus( service_handle, &status );
 
         wine_ntoskrnl_main_loop( stop_event );
