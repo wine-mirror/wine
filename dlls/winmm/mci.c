@@ -84,6 +84,8 @@ static const WCHAR wszMci      [] = {'M','C','I',0};
 static const WCHAR wszOpen     [] = {'o','p','e','n',0};
 static const WCHAR wszSystemIni[] = {'s','y','s','t','e','m','.','i','n','i',0};
 
+static WINE_MCIDRIVER *MciDrivers;
+
 /* dup a string and uppercase it */
 static inline LPWSTR str_dup_upper( LPCWSTR str )
 {
@@ -104,12 +106,12 @@ LPWINE_MCIDRIVER	MCI_GetDriver(UINT16 wDevID)
 {
     LPWINE_MCIDRIVER	wmd = 0;
 
-    EnterCriticalSection(&WINMM_IData.cs);
-    for (wmd = WINMM_IData.lpMciDrvs; wmd; wmd = wmd->lpNext) {
+    EnterCriticalSection(&WINMM_cs);
+    for (wmd = MciDrivers; wmd; wmd = wmd->lpNext) {
 	if (wmd->wDeviceID == wDevID)
 	    break;
     }
-    LeaveCriticalSection(&WINMM_IData.cs);
+    LeaveCriticalSection(&WINMM_cs);
     return wmd;
 }
 
@@ -127,8 +129,8 @@ UINT	MCI_GetDriverFromString(LPCWSTR lpstrName)
     if (!strcmpiW(lpstrName, wszAll))
 	return MCI_ALL_DEVICE_ID;
 
-    EnterCriticalSection(&WINMM_IData.cs);
-    for (wmd = WINMM_IData.lpMciDrvs; wmd; wmd = wmd->lpNext) {
+    EnterCriticalSection(&WINMM_cs);
+    for (wmd = MciDrivers; wmd; wmd = wmd->lpNext) {
 	if (wmd->lpstrElementName && strcmpW(wmd->lpstrElementName, lpstrName) == 0) {
 	    ret = wmd->wDeviceID;
 	    break;
@@ -142,7 +144,7 @@ UINT	MCI_GetDriverFromString(LPCWSTR lpstrName)
 	    break;
 	}
     }
-    LeaveCriticalSection(&WINMM_IData.cs);
+    LeaveCriticalSection(&WINMM_cs);
 
     return ret;
 }
@@ -679,7 +681,7 @@ static	UINT		MCI_GetCommandTable(UINT uDevType)
 
     /* well try to load id */
     if (uDevType >= MCI_DEVTYPE_FIRST && uDevType <= MCI_DEVTYPE_LAST) {
-	if (LoadStringW(WINMM_IData.hWinMM32Instance, uDevType, buf, sizeof(buf) / sizeof(WCHAR))) {
+	if (LoadStringW(hWinMM32Instance, uDevType, buf, sizeof(buf) / sizeof(WCHAR))) {
 	    str = buf;
 	}
     } else if (uDevType == 0) {
@@ -688,15 +690,15 @@ static	UINT		MCI_GetCommandTable(UINT uDevType)
     }
     uTbl = MCI_NO_COMMAND_TABLE;
     if (str) {
-	HRSRC 	hRsrc = FindResourceW(WINMM_IData.hWinMM32Instance, str, (LPCWSTR)RT_RCDATA);
+	HRSRC 	hRsrc = FindResourceW(hWinMM32Instance, str, (LPCWSTR)RT_RCDATA);
 	HANDLE	hMem = 0;
 
-	if (hRsrc) hMem = LoadResource(WINMM_IData.hWinMM32Instance, hRsrc);
+	if (hRsrc) hMem = LoadResource(hWinMM32Instance, hRsrc);
 	if (hMem) {
 	    uTbl = MCI_SetCommandTable(LockResource(hMem), uDevType);
 	} else {
 	    WARN("No command table found in resource %p[%s]\n",
-		 WINMM_IData.hWinMM32Instance, debugstr_w(str));
+		 hWinMM32Instance, debugstr_w(str));
 	}
     }
     TRACE("=> %d\n", uTbl);
@@ -799,14 +801,14 @@ static	BOOL	MCI_UnLoadMciDriver(LPWINE_MCIDRIVER wmd)
     if (wmd->dwPrivate != 0)
 	WARN("Unloading mci driver with non nul dwPrivate field\n");
 
-    EnterCriticalSection(&WINMM_IData.cs);
-    for (tmp = &WINMM_IData.lpMciDrvs; *tmp; tmp = &(*tmp)->lpNext) {
+    EnterCriticalSection(&WINMM_cs);
+    for (tmp = &MciDrivers; *tmp; tmp = &(*tmp)->lpNext) {
 	if (*tmp == wmd) {
 	    *tmp = wmd->lpNext;
 	    break;
 	}
     }
-    LeaveCriticalSection(&WINMM_IData.cs);
+    LeaveCriticalSection(&WINMM_cs);
 
     HeapFree(GetProcessHeap(), 0, wmd->lpstrDeviceType);
     HeapFree(GetProcessHeap(), 0, wmd->lpstrAlias);
@@ -871,12 +873,12 @@ static	DWORD	MCI_LoadMciDriver(LPCWSTR _strDevTyp, LPWINE_MCIDRIVER* lpwmd)
     wmd->dwYieldData = VK_CANCEL;
     wmd->CreatorThread = GetCurrentThreadId();
 
-    EnterCriticalSection(&WINMM_IData.cs);
+    EnterCriticalSection(&WINMM_cs);
     /* wmd must be inserted in list before sending opening the driver, coz' it
      * may want to lookup at wDevID
      */
-    wmd->lpNext = WINMM_IData.lpMciDrvs;
-    WINMM_IData.lpMciDrvs = wmd;
+    wmd->lpNext = MciDrivers;
+    MciDrivers = wmd;
 
     for (modp.wDeviceID = MCI_MAGIC;
 	 MCI_GetDriver(modp.wDeviceID) != 0;
@@ -884,7 +886,7 @@ static	DWORD	MCI_LoadMciDriver(LPCWSTR _strDevTyp, LPWINE_MCIDRIVER* lpwmd)
 
     wmd->wDeviceID = modp.wDeviceID;
 
-    LeaveCriticalSection(&WINMM_IData.cs);
+    LeaveCriticalSection(&WINMM_cs);
 
     TRACE("wDevID=%04X\n", modp.wDeviceID);
 
@@ -1194,8 +1196,7 @@ static	DWORD	MCI_HandleReturnValues(DWORD dwRet, LPWINE_MCIDRIVER wmd, DWORD ret
 	    case MCI_RESOURCE_RETURNED:
 		/* return string which ID is HIWORD(data[1]),
 		 * string is loaded from mmsystem.dll */
-		LoadStringW(WINMM_IData.hWinMM32Instance, HIWORD(data[1]),
-			    lpstrRet, uRetLen);
+		LoadStringW(hWinMM32Instance, HIWORD(data[1]), lpstrRet, uRetLen);
 		break;
 	    case MCI_RESOURCE_RETURNED|MCI_RESOURCE_DRIVER:
 		/* return string which ID is HIWORD(data[1]),
@@ -1654,7 +1655,7 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSW lpParms)
 
 	    if (uDevType < MCI_DEVTYPE_FIRST ||
 		uDevType > MCI_DEVTYPE_LAST ||
-		!LoadStringW(WINMM_IData.hWinMM32Instance, uDevType, 
+		!LoadStringW(hWinMM32Instance, uDevType,
                              strDevTyp, sizeof(strDevTyp) / sizeof(WCHAR))) {
 		dwRet = MCIERR_BAD_INTEGER;
 		goto errCleanUp;
@@ -1769,17 +1770,17 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
     if (wDevID == MCI_ALL_DEVICE_ID) {
 	LPWINE_MCIDRIVER	next;
 
-	EnterCriticalSection(&WINMM_IData.cs);
+	EnterCriticalSection(&WINMM_cs);
 	/* FIXME: shall I notify once after all is done, or for
 	 * each of the open drivers ? if the latest, which notif
 	 * to return when only one fails ?
 	 */
-	for (wmd = WINMM_IData.lpMciDrvs; wmd; ) {
+	for (wmd = MciDrivers; wmd; ) {
 	    next = wmd->lpNext;
 	    MCI_Close(wmd->wDeviceID, dwParam, lpParms);
 	    wmd = next;
 	}
-	LeaveCriticalSection(&WINMM_IData.cs);
+	LeaveCriticalSection(&WINMM_cs);
 	return 0;
     }
 
@@ -1840,11 +1841,11 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	if (lpParms->wDeviceType < MCI_DEVTYPE_FIRST || lpParms->wDeviceType > MCI_DEVTYPE_LAST) {
 	    if (dwFlags & MCI_SYSINFO_OPEN) {
 		TRACE("MCI_SYSINFO_QUANTITY: # of open MCI drivers\n");
-		EnterCriticalSection(&WINMM_IData.cs);
-		for (wmd = WINMM_IData.lpMciDrvs; wmd; wmd = wmd->lpNext) {
+		EnterCriticalSection(&WINMM_cs);
+		for (wmd = MciDrivers; wmd; wmd = wmd->lpNext) {
 		    cnt++;
 		}
-		LeaveCriticalSection(&WINMM_IData.cs);
+		LeaveCriticalSection(&WINMM_cs);
 	    } else {
 		TRACE("MCI_SYSINFO_QUANTITY: # of installed MCI drivers\n");
 		if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, wszHklmMci,
@@ -1858,11 +1859,11 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	} else {
 	    if (dwFlags & MCI_SYSINFO_OPEN) {
 		TRACE("MCI_SYSINFO_QUANTITY: # of open MCI drivers of type %u\n", lpParms->wDeviceType);
-		EnterCriticalSection(&WINMM_IData.cs);
-		for (wmd = WINMM_IData.lpMciDrvs; wmd; wmd = wmd->lpNext) {
+		EnterCriticalSection(&WINMM_cs);
+		for (wmd = MciDrivers; wmd; wmd = wmd->lpNext) {
 		    if (wmd->wType == lpParms->wDeviceType) cnt++;
 		}
-		LeaveCriticalSection(&WINMM_IData.cs);
+		LeaveCriticalSection(&WINMM_cs);
 	    } else {
 		TRACE("MCI_SYSINFO_QUANTITY: # of installed MCI drivers of type %u\n", lpParms->wDeviceType);
 		FIXME("Don't know how to get # of MCI devices of a given type\n");
@@ -2143,8 +2144,7 @@ BOOL WINAPI mciGetErrorStringW(MCIERROR wError, LPWSTR lpstrBuffer, UINT uLength
     if (lpstrBuffer != NULL && uLength > 0 &&
 	wError >= MCIERR_BASE && wError <= MCIERR_CUSTOM_DRIVER_BASE) {
 
-	if (LoadStringW(WINMM_IData.hWinMM32Instance,
-			wError, lpstrBuffer, uLength) > 0) {
+	if (LoadStringW(hWinMM32Instance, wError, lpstrBuffer, uLength) > 0) {
 	    ret = TRUE;
 	}
     }
@@ -2161,8 +2161,7 @@ BOOL WINAPI mciGetErrorStringA(MCIERROR dwError, LPSTR lpstrBuffer, UINT uLength
     if (lpstrBuffer != NULL && uLength > 0 &&
 	dwError >= MCIERR_BASE && dwError <= MCIERR_CUSTOM_DRIVER_BASE) {
 
-	if (LoadStringA(WINMM_IData.hWinMM32Instance,
-			dwError, lpstrBuffer, uLength) > 0) {
+	if (LoadStringA(hWinMM32Instance, dwError, lpstrBuffer, uLength) > 0) {
 	    ret = TRUE;
 	}
     }

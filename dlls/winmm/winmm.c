@@ -64,21 +64,26 @@ void    (WINAPI *pFnRestoreThunkLock)(DWORD);
  *                   G L O B A L   S E T T I N G S
  * ========================================================================*/
 
-WINE_MM_IDATA WINMM_IData;
+HINSTANCE hWinMM32Instance;
+HANDLE psLastEvent;
+HANDLE psStopEvent;
+
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &WINMM_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": WINMM_cs") }
+};
+CRITICAL_SECTION WINMM_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /**************************************************************************
  * 			WINMM_CreateIData			[internal]
  */
 static	BOOL	WINMM_CreateIData(HINSTANCE hInstDLL)
 {
-    memset( &WINMM_IData, 0, sizeof WINMM_IData );
-
-    WINMM_IData.hWinMM32Instance = hInstDLL;
-    InitializeCriticalSection(&WINMM_IData.cs);
-    WINMM_IData.cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINE_MM_IDATA.cs");
-    WINMM_IData.psStopEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    WINMM_IData.psLastEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    TRACE("Initialized IData (%p)\n", &WINMM_IData);
+    hWinMM32Instance = hInstDLL;
+    psStopEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    psLastEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     return TRUE;
 }
 
@@ -91,10 +96,9 @@ static	void WINMM_DeleteIData(void)
 
     /* FIXME: should also free content and resources allocated
      * inside WINMM_IData */
-    CloseHandle(WINMM_IData.psStopEvent);
-    CloseHandle(WINMM_IData.psLastEvent);
-    WINMM_IData.cs.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&WINMM_IData.cs);
+    CloseHandle(psStopEvent);
+    CloseHandle(psLastEvent);
+    DeleteCriticalSection(&WINMM_cs);
 }
 
 /******************************************************************
@@ -888,8 +892,7 @@ UINT WINAPI midiOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 		* a warning for the test was always true */
 	       (/*uError >= MMSYSERR_BASE && */ uError <= MMSYSERR_LASTERROR) ||
 	       (uError >= MIDIERR_BASE  && uError <= MIDIERR_LASTERROR)) {
-	if (LoadStringW(WINMM_IData.hWinMM32Instance,
-			uError, lpText, uSize) > 0) {
+	if (LoadStringW(hWinMM32Instance, uError, lpText, uSize) > 0) {
 	    ret = MMSYSERR_NOERROR;
 	}
     }
@@ -2199,7 +2202,7 @@ UINT WINAPI waveOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 		* a warning for the test was always true */
 	       (/*uError >= MMSYSERR_BASE && */ uError <= MMSYSERR_LASTERROR) ||
 	       (uError >= WAVERR_BASE  && uError <= WAVERR_LASTERROR)) {
-	if (LoadStringW(WINMM_IData.hWinMM32Instance,
+	if (LoadStringW(hWinMM32Instance,
 			uError, lpText, uSize) > 0) {
 	    ret = MMSYSERR_NOERROR;
 	}

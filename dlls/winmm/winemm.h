@@ -153,17 +153,6 @@ typedef struct tagWINE_MCIDRIVER {
 
 #define WINE_TIMER_IS32	0x80
 
-typedef struct tagWINE_TIMERENTRY {
-    UINT			wDelay;
-    UINT			wResol;
-    LPTIMECALLBACK              lpFunc; /* can be lots of things */
-    DWORD			dwUser;
-    UINT16			wFlags;
-    UINT16			wTimerID;
-    DWORD			dwTriggerTime;
-    struct tagWINE_TIMERENTRY*	lpNext;
-} WINE_TIMERENTRY, *LPWINE_TIMERENTRY;
-
 enum mmioProcType {MMIO_PROC_16,MMIO_PROC_32A,MMIO_PROC_32W};
 
 struct IOProcList
@@ -184,35 +173,6 @@ typedef struct tagWINE_MMIO {
     DWORD                       segBuffer16;
     DWORD                       dwFileSize;
 } WINE_MMIO, *LPWINE_MMIO;
-
-typedef struct tagWINE_PLAYSOUND {
-    unsigned                    bLoop : 1,
-                                bAlloc : 1;
-    LPCWSTR		        pszSound;
-    HMODULE		        hMod;
-    DWORD		        fdwSound;
-    HANDLE                      hThread;
-    struct tagWINE_PLAYSOUND*   lpNext;
-} WINE_PLAYSOUND, *LPWINE_PLAYSOUND;
-
-typedef struct tagWINE_MM_IDATA {
-    /* winmm part */
-    HANDLE			hWinMM32Instance;
-    HANDLE			hWinMM16Instance;
-    CRITICAL_SECTION		cs;
-    /* mci part */
-    LPWINE_MCIDRIVER 		lpMciDrvs;
-    /* low level drivers (unused yet) */
-    /* LPWINE_WAVE		lpWave; */
-    /* LPWINE_MIDI		lpMidi; */
-    /* LPWINE_MIXER		lpMixer; */
-    /* mmio part */
-    LPWINE_MMIO			lpMMIO;
-    /* playsound and sndPlaySound */
-    WINE_PLAYSOUND*             lpPlaySound;
-    HANDLE                      psLastEvent;
-    HANDLE                      psStopEvent;
-} WINE_MM_IDATA, *LPWINE_MM_IDATA;
 
 /* function prototypes */
 
@@ -285,7 +245,10 @@ void    	TIME_MMTimeStart(void);
 void		TIME_MMTimeStop(void);
 
 /* Global variables */
-extern WINE_MM_IDATA  WINMM_IData;
+extern CRITICAL_SECTION WINMM_cs;
+extern HINSTANCE hWinMM32Instance;
+extern HANDLE psLastEvent;
+extern HANDLE psStopEvent;
 
 /* pointers to 16 bit functions (if sibling MMSYSTEM.DLL is loaded
  * NULL otherwise

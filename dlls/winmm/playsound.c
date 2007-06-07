@@ -37,6 +37,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
+typedef struct tagWINE_PLAYSOUND
+{
+    unsigned                    bLoop : 1,
+                                bAlloc : 1;
+    LPCWSTR                     pszSound;
+    HMODULE                     hMod;
+    DWORD                       fdwSound;
+    HANDLE                      hThread;
+    struct tagWINE_PLAYSOUND*   lpNext;
+} WINE_PLAYSOUND;
+
+static WINE_PLAYSOUND *PlaySoundList;
+
 static HMMIO	get_mmioFromFile(LPCWSTR lpszName)
 {
     HMMIO       ret;
@@ -194,11 +207,11 @@ static void     PlaySound_Free(WINE_PLAYSOUND* wps)
 {
     WINE_PLAYSOUND**    p;
 
-    EnterCriticalSection(&WINMM_IData.cs);
-    for (p = &WINMM_IData.lpPlaySound; *p && *p != wps; p = &((*p)->lpNext));
+    EnterCriticalSection(&WINMM_cs);
+    for (p = &PlaySoundList; *p && *p != wps; p = &((*p)->lpNext));
     if (*p) *p = (*p)->lpNext;
-    if (WINMM_IData.lpPlaySound == NULL) SetEvent(WINMM_IData.psLastEvent);
-    LeaveCriticalSection(&WINMM_IData.cs);
+    if (PlaySoundList == NULL) SetEvent(psLastEvent);
+    LeaveCriticalSection(&WINMM_cs);
     if (wps->bAlloc) HeapFree(GetProcessHeap(), 0, (void*)wps->pszSound);
     if (wps->hThread) CloseHandle(wps->hThread);
     HeapFree(GetProcessHeap(), 0, wps);
@@ -382,7 +395,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 	mmioSeek(hmmio, mmckInfo.dwDataOffset, SEEK_SET);
 	while (left)
         {
-	    if (WaitForSingleObject(WINMM_IData.psStopEvent, 0) == WAIT_OBJECT_0)
+	    if (WaitForSingleObject(psStopEvent, 0) == WAIT_OBJECT_0)
             {
 		wps->bLoop = FALSE;
 		break;
@@ -430,7 +443,7 @@ static BOOL MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSo
     /* FIXME? I see no difference between SND_NOWAIT and SND_NOSTOP !
      * there could be one if several sounds can be played at once...
      */
-    if ((fdwSound & (SND_NOWAIT | SND_NOSTOP)) && WINMM_IData.lpPlaySound != NULL)
+    if ((fdwSound & (SND_NOWAIT | SND_NOSTOP)) && PlaySoundList != NULL)
 	return FALSE;
 
     /* alloc internal structure, if we need to play something */
@@ -440,27 +453,27 @@ static BOOL MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSo
             return FALSE;
     }
 
-    EnterCriticalSection(&WINMM_IData.cs);
+    EnterCriticalSection(&WINMM_cs);
     /* since several threads can enter PlaySound in parallel, we're not
      * sure, at this point, that another thread didn't start a new playsound
      */
-    while (WINMM_IData.lpPlaySound != NULL)
+    while (PlaySoundList != NULL)
     {
-        ResetEvent(WINMM_IData.psLastEvent);
+        ResetEvent(psLastEvent);
         /* FIXME: doc says we have to stop all instances of pszSound if it's non
          * NULL... as of today, we stop all playing instances */
-        SetEvent(WINMM_IData.psStopEvent);
+        SetEvent(psStopEvent);
 
-        LeaveCriticalSection(&WINMM_IData.cs);
-        WaitForSingleObject(WINMM_IData.psLastEvent, INFINITE);
-        EnterCriticalSection(&WINMM_IData.cs);
+        LeaveCriticalSection(&WINMM_cs);
+        WaitForSingleObject(psLastEvent, INFINITE);
+        EnterCriticalSection(&WINMM_cs);
 
-        ResetEvent(WINMM_IData.psStopEvent);
+        ResetEvent(psStopEvent);
     }
 
-    if (wps) wps->lpNext = WINMM_IData.lpPlaySound;
-    WINMM_IData.lpPlaySound = wps;
-    LeaveCriticalSection(&WINMM_IData.cs);
+    if (wps) wps->lpNext = PlaySoundList;
+    PlaySoundList = wps;
+    LeaveCriticalSection(&WINMM_cs);
 
     if (!pszSound || (fdwSound & SND_PURGE)) return TRUE;
 
