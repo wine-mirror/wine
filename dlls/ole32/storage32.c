@@ -753,6 +753,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
       grfStatFlag);
 
     pstatstg->grfMode = This->openFlags;
+    pstatstg->grfStateBits = This->stateBits;
 
     res = S_OK;
     goto end;
@@ -2352,8 +2353,9 @@ static HRESULT WINAPI StorageImpl_SetStateBits(
   DWORD         grfStateBits,/* [in] */
   DWORD         grfMask)     /* [in] */
 {
-  FIXME("not implemented!\n");
-  return E_NOTIMPL;
+  StorageImpl* const This = (StorageImpl*)iface;
+  This->base.stateBits = (This->base.stateBits & ~grfMask) | (grfStateBits & grfMask);
+  return S_OK;
 }
 
 /*

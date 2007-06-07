@@ -245,6 +245,11 @@ struct StorageBaseImpl
    * flags that this storage was opened or created with
    */
   DWORD openFlags;
+
+  /*
+   * State bits appear to only be preserved while running. No in the stream
+   */
+  DWORD stateBits;
 };
 
 /****************************************************************************
