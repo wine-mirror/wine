@@ -523,20 +523,16 @@ static UINT read_table_from_storage( MSITABLE *t, IStorage *stg )
         {
             UINT ofs = t->colinfo[j].offset/2;
             UINT n = bytes_per_column( &t->colinfo[j] );
+            UINT k;
 
-            switch( n )
+            if ( n != 2 && n != 4 )
             {
-            case 2:
-                t->data[i][ofs] = rawdata[ofs*t->row_count + i ];
-                break;
-            case 4:
-                t->data[i][ofs] = rawdata[ofs*t->row_count + i*2 ];
-                t->data[i][ofs+1] = rawdata[ofs*t->row_count + i*2 + 1];
-                break;
-            default:
                 ERR("oops - unknown column width %d\n", n);
                 goto err;
             }
+
+            for ( k = 0; k < n / 2; k++ )
+                t->data[i][ofs + k] = rawdata[ofs*t->row_count + i * n / 2 + k];
         }
     }
 
@@ -928,6 +924,16 @@ static LPWSTR msi_makestring( MSIDATABASE *db, UINT stringid)
     return strdupW(msi_string_lookup_id( db->strings, stringid ));
 }
 
+static UINT read_table_int(USHORT **data, UINT row, UINT col, UINT bytes)
+{
+    UINT ret = 0, i;
+
+    for (i = 0; i < bytes / 2; i++)
+        ret += (data[row][col + i] << i * 16);
+
+    return ret;
+}
+
 static UINT get_tablecolumns( MSIDATABASE *db,
        LPCWSTR szTableName, MSICOLUMNINFO *colinfo, UINT *sz)
 {
@@ -1100,22 +1106,16 @@ static UINT TABLE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
     }
     else
         data = tv->table->data;
+
     n = bytes_per_column( &tv->columns[col-1] );
-    switch( n )
+    if (n != 2 && n != 4)
     {
-    case 4:
-        offset = tv->columns[col-1].offset/2;
-        *val = data[row][offset] +
-               (data[row][offset + 1] << 16);
-        break;
-    case 2:
-        offset = tv->columns[col-1].offset/2;
-        *val = data[row][offset];
-        break;
-    default:
         ERR("oops! what is %d bytes per column?\n", n );
         return ERROR_FUNCTION_FAILED;
     }
+
+    offset = tv->columns[col-1].offset / 2;
+    *val = read_table_int(data, row, offset, n);
 
     /* TRACE("Data [%d][%d] = %d\n", row, col, *val ); */
 
@@ -1192,7 +1192,7 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
 
 static UINT TABLE_set_int( MSITABLEVIEW *tv, UINT row, UINT col, UINT val )
 {
-    UINT offset, n;
+    UINT offset, n, i;
     USHORT **data;
 
     if( !tv->table )
@@ -1221,22 +1221,18 @@ static UINT TABLE_set_int( MSITABLEVIEW *tv, UINT row, UINT col, UINT val )
     }
     else
         data = tv->table->data;
+
     n = bytes_per_column( &tv->columns[col-1] );
-    switch( n )
+    if ( n != 2 && n != 4 )
     {
-    case 4:
-        offset = tv->columns[col-1].offset/2;
-        data[row][offset]     = val & 0xffff;
-        data[row][offset + 1] = (val>>16)&0xffff;
-        break;
-    case 2:
-        offset = tv->columns[col-1].offset/2;
-        data[row][offset] = val;
-        break;
-    default:
         ERR("oops! what is %d bytes per column?\n", n );
         return ERROR_FUNCTION_FAILED;
     }
+
+    offset = tv->columns[col-1].offset / 2;
+    for ( i = 0; i < n / 2; i++ )
+        data[row][offset + i] = (val >> i * 16) & 0xffff;
+
     return ERROR_SUCCESS;
 }
 
