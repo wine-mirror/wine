@@ -456,7 +456,7 @@ BOOL WINAPI SymEnumTypesW(HANDLE hProcess, ULONG64 BaseOfDll,
 /******************************************************************
  *		symt_get_info
  *
- * Retrieves inforamtion about a symt (either symbol or type)
+ * Retrieves information about a symt (either symbol or type)
  */
 BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req, 
                    void* pInfo)

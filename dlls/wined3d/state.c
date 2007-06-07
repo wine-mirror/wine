@@ -411,7 +411,7 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
         return;
     }
 
-    /* TODO: Keep track of previously enabled clipplanes to avoid unneccessary resetting
+    /* TODO: Keep track of previously enabled clipplanes to avoid unnecessary resetting
      * of already set values
      */
 

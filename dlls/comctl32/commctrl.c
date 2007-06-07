@@ -1401,15 +1401,15 @@ void COMCTL32_DrawInsertMark(HDC hDC, const RECT *lpRect, COLORREF clrInsertMark
 /***********************************************************************
  * COMCTL32_EnsureBitmapSize [internal]
  *
- * If needed enlarge the bitmap so that the width is at least cxMinWidth
- * the height is at least cyMinHeight. If the bitmap already have these
+ * If needed, enlarge the bitmap so that the width is at least cxMinWidth and
+ * the height is at least cyMinHeight. If the bitmap already has these
  * dimensions nothing changes.
  *
  * PARAMS
  *     hBitmap       [I/O] Bitmap to modify. The handle may change
- *     cxMinWidth    [I]   If the width of the bitmap is smaller then it will
+ *     cxMinWidth    [I]   If the width of the bitmap is smaller, then it will
  *                         be enlarged to this value
- *     cyMinHeight   [I]   If the height of the bitmap is smaller then it will
+ *     cyMinHeight   [I]   If the height of the bitmap is smaller, then it will
  *                         be enlarged to this value
  *     cyBackground  [I]   The color with which the new area will be filled
  *

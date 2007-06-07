@@ -4480,8 +4480,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
 
     LEAVE_GL();
 
-    /* Dirtify the target surface for now. If the surface is locked regularily, and an up to date sysmem copy exists,
-     * it is most likely more efficient to perform a clear on the sysmem copy too isntead of downloading it
+    /* Dirtify the target surface for now. If the surface is locked regularly, and an up to date sysmem copy exists,
+     * it is most likely more efficient to perform a clear on the sysmem copy too instead of downloading it
      */
     if(This->render_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         target->Flags |= SFLAG_INTEXTURE;

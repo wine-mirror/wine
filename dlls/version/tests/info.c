@@ -317,7 +317,7 @@ static void test_32bit_win(void)
         ok( !memcmp(pVersionInfoA, pVersionInfoW, retvalA), "Both structs should be the same, they aren't\n");
     }
 
-    /* The structs on Windows are bigger then just the struct for the basic information. The total struct
+    /* The structs on Windows are bigger than just the struct for the basic information. The total struct
      * contains also an empty part, which is used for converted strings. The converted strings are a result
      * of calling VerQueryValueA on a 32bit resource and calling VerQueryValueW on a 16bit resource.
      * The first WORD of the structure (wLength) shows the size of the base struct. The total struct size depends

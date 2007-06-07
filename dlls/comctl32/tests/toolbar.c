@@ -764,7 +764,7 @@ static void test_sizes(void)
     SetWindowLong(hToolbar, GWL_STYLE, style | CCS_VERT);
     SendMessage(hToolbar, TB_AUTOSIZE, 0, 0);
     check_sizes_todo(0x3c);
-    /* with a TBSTYLE_WRAPABLE a wrapping will occure on the separator */
+    /* with a TBSTYLE_WRAPABLE a wrapping will occur on the separator */
     SetWindowLong(hToolbar, GWL_STYLE, style | TBSTYLE_WRAPABLE | CCS_VERT);
     SendMessage(hToolbar, TB_AUTOSIZE, 0, 0);
     check_sizes_todo(0x7c);

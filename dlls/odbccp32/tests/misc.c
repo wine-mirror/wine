@@ -90,7 +90,7 @@ static void test_SQLInstallDriverManager(void)
     ok(sql_ret == SQL_SUCCESS_WITH_INFO && error_code == ODBC_ERROR_INVALID_BUFF_LEN,
         "Expected SQLInstallDriverManager to fail with ODBC_ERROR_INVALID_BUFF_LEN\n");
 
-    /* Length smaller then MAX_PATH */
+    /* Length smaller than MAX_PATH */
     bool_ret = SQLInstallDriverManager(target_path, MAX_PATH / 2, NULL);
     sql_ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
     todo_wine {

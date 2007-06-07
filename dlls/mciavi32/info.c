@@ -249,7 +249,7 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 		wma->dwSet |= 2;
 		break;
 	    default:
-		WARN("Unknown audio chanel %u\n", lpParms->dwAudio);
+		WARN("Unknown audio channel %u\n", lpParms->dwAudio);
 		break;
 	    }
 	}
@@ -283,7 +283,7 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 		wma->dwSet &= ~2;
 		break;
 	    default:
-		WARN("Unknown audio chanel %u\n", lpParms->dwAudio);
+		WARN("Unknown audio channel %u\n", lpParms->dwAudio);
 		break;
 	    }
 	}

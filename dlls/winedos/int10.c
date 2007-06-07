@@ -446,10 +446,10 @@ static BOOL INT10_FillModeInformation( struct _ModeInfoBlock *mib, WORD mode )
      * 32,34,36 - BYTE: red/green/blue field position 
      * Bit position of the least significant bit of red/green/blue color
      * component.
-     * Both should be only used when memory model is direct color or YUV but
-     * "Imperium Romanum" uses this fields even when memory model is planar.
-     * So always fill this fields when we have a depth bigger then 8, otherwise
-     * set them to zero.
+     * Both should be only used when the memory model is direct color or YUV
+     * but "Imperium Romanum" uses this field even when the memory model is
+     * planar. So always fill this field when we have a depth bigger than 8,
+     * otherwise set them to zero.
      */
     switch (ptr->Depth) {
         case 24:

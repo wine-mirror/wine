@@ -498,7 +498,7 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
          *
          * This extra buffer is used for ANSI to Unicode conversions in W-Calls.
          * info->wLength should be the same as len. Currently it isn't but that
-         * doesn't seem to be a problem (len is bigger then info->wLength).
+         * doesn't seem to be a problem (len is bigger than info->wLength).
          */
          len = (len - sizeof(VS_FIXEDFILEINFO)) * 4;
     }

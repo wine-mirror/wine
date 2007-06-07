@@ -1589,7 +1589,7 @@ DECLARE_INTERFACE_(IWineD3DClipper,IUnknown)
 #define IWineD3DClipper_SetHWnd(p,a,b)             (p)->SetHWnd(a,b)
 #endif
 
-/* DDraw Clippers are not created from DDraw objects, they have a seperate creation function */
+/* DDraw Clippers are not created from DDraw objects, they have a separate creation function */
 IWineD3DClipper* WINAPI WineDirect3DCreateClipper(IUnknown *parent);
 
 #if 0 /* FIXME: During porting in from d3d8 - the following will be used */

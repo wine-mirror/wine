@@ -1133,7 +1133,7 @@ static DWORD CALLBACK ddeThread(LPVOID arg)
     ExitThread(rc);
 }
 
-/* ShellExecute won't succesfully send DDE commands to console applications after starting them,
+/* ShellExecute won't successfully send DDE commands to console applications after starting them,
  * so we run a DDE server in this application, deny the first connection request to make
  * ShellExecute start the application, and then process the next DDE connection in this application
  * to see the execute command that is sent. */
@@ -1274,7 +1274,7 @@ static dde_default_app_tests_t dde_default_app_tests[] =
     {"%s\\test2", "test2", 0x0, 33},
     {"%s\\test2 param", "test2", 0x0, 33},
 
-    /* Test an unquoted non-existent filename */
+    /* Test an unquoted nonexistent filename */
     {"%s\\notexist.exe", "", 0x0, 5},
     {"%s\\notexist.exe param", "", 0x0, 5},
 

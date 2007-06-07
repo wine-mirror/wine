@@ -970,7 +970,7 @@ START_TEST(localmon)
     pInitializePrintMonitor = (void *) GetProcAddress(hdll, "InitializePrintMonitor");
 
     if (!pInitializePrintMonitor) {
-        /* The Monitor for "Local Ports" was in a seperate dll before w2k */
+        /* The Monitor for "Local Ports" was in a separate dll before w2k */
         hlocalmon = LoadLibraryA("localmon.dll");
         if (hlocalmon) {
             pInitializePrintMonitor = (void *) GetProcAddress(hlocalmon, "InitializePrintMonitor");
@@ -978,7 +978,7 @@ START_TEST(localmon)
     }
     if (!pInitializePrintMonitor) return;
 
-    /* Native localmon.dll / localspl.dll need a vaild Port-Entry in:
+    /* Native localmon.dll / localspl.dll need a valid Port-Entry in:
        a) since xp: HKLM\Software\Microsoft\Windows NT\CurrentVersion\Ports 
        b) up to w2k: Section "Ports" in win.ini
        or InitializePrintMonitor fails. */

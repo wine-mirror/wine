@@ -2067,7 +2067,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
     GLuint tmpTexture = 0;
     DWORD color;
     /*FIXME:
-    Textures my not be stored in ->allocatedgMemory and a GlTexture
+    Textures may not be stored in ->allocatedgMemory and a GlTexture
     so we should lock the surface before saving a snapshot, or at least check that
     */
     /* TODO: Compressed texture images can be obtained from the GL in uncompressed form
@@ -2081,7 +2081,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
 /* Setup the width and height to be the internal texture width and height. */
     width  = This->pow2Width;
     height = This->pow2Height;
-/* check to see if were a 'virtual' texture e.g. were not a pbuffer of texture were a back buffer*/
+/* check to see if we're a 'virtual' texture, e.g. we're not a pbuffer of texture, we're a back buffer*/
     IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapChain);
 
     if (This->Flags & SFLAG_INDRAWABLE && !(This->Flags & SFLAG_INTEXTURE)) {
@@ -2147,7 +2147,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
         ERR("opening of %s failed with: %s\n", filename, strerror(errno));
         return WINED3DERR_INVALIDCALL;
     }
-/* Save the dat out to a TGA file because 1: it's an easy raw format, 2: it supports an alpha channel*/
+/* Save the data out to a TGA file because 1: it's an easy raw format, 2: it supports an alpha channel */
     TRACE("(%p) opened %s with format %s\n", This, filename, debug_d3dformat(This->resource.format));
 /* TGA header */
     fputc(0,f);
@@ -2170,7 +2170,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
     fputc(0x20,f);
     fputc(0x28,f);
 /* raw data */
-    /* if  the data is upside down if we've fetched it from a back buffer, so it needs flipping again to make it the correct way up*/
+    /* if the data is upside down if we've fetched it from a back buffer, so it needs flipping again to make it the correct way up */
     if(swapChain)
         textureRow = allocatedMemory + (width * (height - 1) *4);
     else
@@ -2293,7 +2293,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
 HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
 
-    /* Render targets depend on their hdc, and we can't create a hdc on a user pointer */
+    /* Render targets depend on their hdc, and we can't create an hdc on a user pointer */
     if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
         ERR("Not supported on render targets\n");
         return WINED3DERR_INVALIDCALL;
