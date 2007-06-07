@@ -1256,7 +1256,7 @@ LONG ALSA_MidiInit(void)
 	while (snd_seq_query_next_port(midiSeq, pinfo) >= 0) {
             int cap = snd_seq_port_info_get_capability(pinfo);
 	    int type = snd_seq_port_info_get_type(pinfo);
-	    if (type != SND_SEQ_PORT_TYPE_MIDI_GENERIC)
+	    if (!(type & SND_SEQ_PORT_TYPE_PORT))
 	        ALSA_AddMidiPort(cinfo, pinfo, cap, type);
 	}
     }
@@ -1269,7 +1269,7 @@ LONG ALSA_MidiInit(void)
 	while (snd_seq_query_next_port(midiSeq, pinfo) >= 0) {
             int cap = snd_seq_port_info_get_capability(pinfo);
 	    int type = snd_seq_port_info_get_type(pinfo);
-	    if (type == SND_SEQ_PORT_TYPE_MIDI_GENERIC)
+	    if (type & SND_SEQ_PORT_TYPE_PORT)
 	        ALSA_AddMidiPort(cinfo, pinfo, cap, type);
 	}
     }
