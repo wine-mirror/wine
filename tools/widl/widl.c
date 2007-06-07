@@ -144,7 +144,6 @@ static struct option long_options[] = {
 };
 
 static void rm_tempfile(void);
-static void segvhandler(int sig);
 
 static char *make_token(const char *name)
 {
@@ -186,7 +185,6 @@ int main(int argc,char *argv[])
   int ret = 0;
   int opti = 0;
 
-  signal(SIGSEGV, segvhandler);
   signal( SIGTERM, exit_on_signal );
   signal( SIGINT, exit_on_signal );
 #ifdef SIGHUP
@@ -454,12 +452,4 @@ static void rm_tempfile(void)
     unlink(client_name);
   if (server_name)
     unlink(server_name);
-}
-
-static void segvhandler(int sig)
-{
-  fprintf(stderr, "\n%s:%d: Oops, segment violation\n", input_name, line_number);
-  fflush(stdout);
-  fflush(stderr);
-  abort();
 }
