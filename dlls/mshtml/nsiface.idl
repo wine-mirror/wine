@@ -23,8 +23,8 @@
  * useable in C code.
  */
 
-cpp_quote("#define GECKO_VERSION \"0.0.1\"");
-cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION \"\n\"");
+cpp_quote("#define GECKO_VERSION \"0.1.0\"");
+cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION");
 
 import "wtypes.idl";
 
@@ -557,6 +557,10 @@ interface nsIDOMNSHTMLElement : nsISupports
     nsresult GetScrollWidth(PRInt32 *aScrollWidth);
     nsresult GetClientHeight(PRInt32 *aClientHeight);
     nsresult GetClientWidth(PRInt32 *aClientWidth);
+    nsresult GetTabIndex(PRInt32 *aTabIndex);
+    nsresult SetTabIndex(PRInt32 aTabIndex);
+    nsresult blur();
+    nsresult focus();
     nsresult ScrollIntoView(PRBool top);
 }
 
@@ -590,7 +594,7 @@ interface nsIDOMText : nsIDOMCharacterData
 [
     object,
     uuid(a6cf9076-15b3-11d2-932e-00805f8add32)
-    /* NOT_FROZEN */
+    /* FROZEN */
 ]
 interface nsIDOMDocumentFragment : nsIDOMNode
 {
