@@ -93,7 +93,7 @@ static const PixelFormatDesc formats[] = {
     {WINED3DFMT_D16_LOCKABLE,0x0        ,0x0        ,0x0        ,0x0        ,2      ,FALSE      ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB           ,GL_DEPTH_COMPONENT ,GL_UNSIGNED_SHORT },
     {WINED3DFMT_D32         ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,FALSE      ,GL_DEPTH_COMPONENT32_ARB         ,GL_DEPTH_COMPONENT32_ARB             ,GL_DEPTH_COMPONENT ,GL_UNSIGNED_INT },
     {WINED3DFMT_D15S1       ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,FALSE      ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB           ,GL_DEPTH_COMPONENT ,GL_UNSIGNED_SHORT },
-    {WINED3DFMT_D24S8       ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,FALSE      ,GL_DEPTH_COMPONENT24_ARB                                               ,GL_DEPTH_COMPONENT ,GL_UNSIGNED_INT },
+    {WINED3DFMT_D24S8       ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,FALSE      ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB             ,GL_DEPTH_COMPONENT ,GL_UNSIGNED_INT },
     {WINED3DFMT_D24X8       ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,FALSE      ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB              ,GL_DEPTH_COMPONENT,GL_UNSIGNED_INT },
     {WINED3DFMT_D24X4S4     ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,FALSE      ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB              ,GL_DEPTH_COMPONENT,GL_UNSIGNED_INT },
     {WINED3DFMT_D16         ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,FALSE      ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB            ,GL_DEPTH_COMPONENT,GL_UNSIGNED_SHORT },
