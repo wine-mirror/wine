@@ -44,8 +44,20 @@ static void DSOUND_RecalcPrimary(DirectSoundDevice *device)
 	nBlockAlign = device->pwfx->nBlockAlign;
 	if (device->hwbuf) {
 		DWORD fraglen;
-		/* let fragment size approximate the timer delay */
-		fraglen = (device->pwfx->nSamplesPerSec * DS_TIME_DEL / 1000) * nBlockAlign;
+		/* Alsa doesn't have continuous buffers, instead it has buffers with power of 2,
+		 * If DS_TIME_DEL is about 10 ms, 512 * nBlockAlign is roughly correct */
+		fraglen = 512 * nBlockAlign;
+
+		/* Compensate for only being rougly accurate */
+		if (device->pwfx->nSamplesPerSec <= 26000)
+			fraglen /= 2;
+
+		if (device->pwfx->nSamplesPerSec <= 12000)
+			fraglen /= 2;
+
+		if (device->pwfx->nSamplesPerSec >= 80000)
+			fraglen *= 2;
+
 		/* reduce fragment size until an integer number of them fits in the buffer */
 		/* (FIXME: this may or may not be a good idea) */
 		while (device->buflen % fraglen) fraglen -= nBlockAlign;
