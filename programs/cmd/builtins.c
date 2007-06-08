@@ -1469,7 +1469,7 @@ void WCMD_setshow_default (WCHAR *command) {
       strcpyW(env, equalW);
       memcpy(env+1, string, 2 * sizeof(WCHAR));
       env[3] = 0x00;
-      WINE_FIXME("Setting '%s' to '%s'\n", wine_dbgstr_w(env), wine_dbgstr_w(string));
+      WINE_TRACE("Setting '%s' to '%s'\n", wine_dbgstr_w(env), wine_dbgstr_w(string));
       SetEnvironmentVariable(env, string);
     }
 
