@@ -1469,9 +1469,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
                                                    WINED3DFORMAT RenderTargetFormat,
                                                    WINED3DFORMAT DepthStencilFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    HRESULT hr = WINED3DERR_NOTAVAILABLE;
-    GLXFBConfig* cfgs = NULL;
-    int nCfgs = 0;
     int it;
 
     WARN_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n",
@@ -1486,34 +1483,17 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* TODO: Store an array in the adapter */
-    if(WineD3D_CreateFakeGLContext())
-        cfgs = glXGetFBConfigs(wined3d_fake_gl_context_display, DefaultScreen(wined3d_fake_gl_context_display), &nCfgs);
-
-    if (cfgs) {
-        for (it = 0; it < nCfgs; ++it) {
-            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(wined3d_fake_gl_context_display, cfgs[it], RenderTargetFormat)) {
-                if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(wined3d_fake_gl_context_display, cfgs[it], DepthStencilFormat)) {
-                    hr = WINED3D_OK;
-                    break ;
-                }
+    for (it = 0; it < Adapters[Adapter].nCfgs; ++it) {
+        if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(Adapters[Adapter].display, Adapters[Adapter].cfgs[it], RenderTargetFormat)) {
+            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(Adapters[Adapter].display, Adapters[Adapter].cfgs[it], DepthStencilFormat)) {
+                TRACE_(d3d_caps)("(%p) : Formats matched\n", This);
+                return WINED3D_OK;
             }
         }
-        XFree(cfgs);
-        if(hr != WINED3D_OK)
-            ERR("unsupported format pair: %s and %s\n", debug_d3dformat(RenderTargetFormat), debug_d3dformat(DepthStencilFormat));
-    } else {
-        ERR_(d3d_caps)("returning WINED3D_OK even so CreateFakeGLContext or glXGetFBConfigs failed\n");
-        hr = WINED3D_OK;
     }
+    WARN_(d3d_caps)("unsupported format pair: %s and %s\n", debug_d3dformat(RenderTargetFormat), debug_d3dformat(DepthStencilFormat));
 
-    WineD3D_ReleaseFakeGLContext();
-
-    if (hr != WINED3D_OK)
-        TRACE_(d3d_caps)("Failed to match stencil format to device\n");
-
-    TRACE_(d3d_caps)("(%p) : Returning %x\n", This, hr);
-    return hr;
+    return WINED3DERR_NOTAVAILABLE;
 }
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
@@ -2615,9 +2595,21 @@ BOOL InitAdapters(void) {
         Adapters[0].display = get_display(device_context);
         ReleaseDC(0, device_context);
 
+        ENTER_GL();
+        if(WineD3D_CreateFakeGLContext()) {
+            Adapters[0].cfgs = glXGetFBConfigs(Adapters[0].display, DefaultScreen(Adapters[0].display), &Adapters[0].nCfgs);
+            WineD3D_ReleaseFakeGLContext();
+        } else {
+            ERR("Failed to create a fake opengl context to find fbconfigs formats\n");
+            LEAVE_GL();
+            return FALSE;
+        }
+        LEAVE_GL();
+
         ret = IWineD3DImpl_FillGLCaps(&Adapters[0].gl_info, Adapters[0].display);
-        if(ret != TRUE) {
+        if(!ret) {
             ERR("Failed to initialize gl caps for default adapter\n");
+            XFree(Adapters[0].cfgs);
             HeapFree(GetProcessHeap(), 0, Adapters);
             return FALSE;
         }

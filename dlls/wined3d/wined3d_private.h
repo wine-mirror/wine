@@ -579,6 +579,8 @@ struct WineD3DAdapter
     WineD3D_GL_Info         gl_info;
     const char              *driver;
     const char              *description;
+    GLXFBConfig             *cfgs;
+    int                     nCfgs;
 };
 
 extern BOOL InitAdapters(void);
