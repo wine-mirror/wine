@@ -305,5 +305,7 @@ int is_ptr(const type_t *t);
 int is_array(const type_t *t);
 int is_var_ptr(const var_t *v);
 int cant_be_null(const var_t *v);
+int is_struct(unsigned char tc);
+int is_union(unsigned char tc);
 
 #endif

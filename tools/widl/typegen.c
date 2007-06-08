@@ -109,7 +109,7 @@ const char *string_of_type(unsigned char type)
     }
 }
 
-static int is_struct(unsigned char type)
+int is_struct(unsigned char type)
 {
     switch (type)
     {
@@ -125,7 +125,7 @@ static int is_struct(unsigned char type)
     }
 }
 
-static int is_union(unsigned char type)
+int is_union(unsigned char type)
 {
     switch (type)
     {

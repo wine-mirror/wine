@@ -65,6 +65,17 @@
 # endif
 #endif
 
+typedef struct list typelist_t;
+struct typenode {
+  type_t *type;
+  struct list entry;
+};
+
+typelist_t incomplete_types = LIST_INIT(incomplete_types);
+
+static void add_incomplete(type_t *t);
+static void fix_incomplete(void);
+
 static str_list_t *append_str(str_list_t *list, char *str);
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_t *make_attr(enum attr_type type);
@@ -263,7 +274,11 @@ static void check_arg(var_t *arg);
 
 %%
 
-input:   gbl_statements                        { write_proxies($1); write_client($1); write_server($1); }
+input:   gbl_statements				{ fix_incomplete();
+						  write_proxies($1);
+						  write_client($1);
+						  write_server($1);
+						}
 	;
 
 gbl_statements:					{ $$ = NULL; }
@@ -1475,6 +1490,38 @@ static type_t *reg_type(type_t *type, const char *name, int t)
   return type;
 }
 
+static int is_incomplete(const type_t *t)
+{
+  return !t->defined && (is_struct(t->type) || is_union(t->type));
+}
+
+static void add_incomplete(type_t *t)
+{
+  struct typenode *tn = xmalloc(sizeof *tn);
+  tn->type = t;
+  list_add_tail(&incomplete_types, &tn->entry);
+}
+
+static void fix_type(type_t *t)
+{
+  if (t->kind == TKIND_ALIAS && is_incomplete(t)) {
+    type_t *ot = t->orig;
+    fix_type(ot);
+    t->fields = ot->fields;
+    t->defined = ot->defined;
+  }
+}
+
+static void fix_incomplete(void)
+{
+  struct typenode *tn, *next;
+
+  LIST_FOR_EACH_ENTRY_SAFE(tn, next, &incomplete_types, struct typenode, entry) {
+    fix_type(tn->type);
+    free(tn);
+  }
+}
+
 static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *attrs)
 {
   type_t *ptr = type;
@@ -1544,6 +1591,8 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
         yyerror("'%s': [string] attribute applied to non-pointer type",
                 cur->name);
 
+      if (is_incomplete(cur))
+        add_incomplete(cur);
       reg_type(cur, cur->name, 0);
     }
   }
