@@ -1457,7 +1457,7 @@ static void set_tfswrite(type_t *type, int val)
 
         if (type->kind == TKIND_ALIAS)
             type = type->orig;
-        else if (is_ptr(type))
+        else if (is_ptr(type) || is_array(type))
             type = type->ref;
         else
         {
@@ -1465,7 +1465,8 @@ static void set_tfswrite(type_t *type, int val)
             {
                 var_t *v;
                 LIST_FOR_EACH_ENTRY( v, type->fields, var_t, entry )
-                    set_tfswrite(v->type, val);
+                    if (v->type)
+                        set_tfswrite(v->type, val);
             }
 
             return;
