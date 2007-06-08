@@ -2208,6 +2208,7 @@ static void BltParamTest(void)
     IDirectDrawSurface *surface1 = NULL, *surface2 = NULL;
     DDSURFACEDESC desc;
     HRESULT hr;
+    DDBLTFX BltFx;
     RECT valid = {10, 10, 20, 20};
     RECT invalid1 = {20, 10, 10, 20};
     RECT invalid2 = {20, 20, 20, 20};
@@ -2254,6 +2255,54 @@ static void BltParamTest(void)
     ok(hr == DDERR_INVALIDRECT, "BltFast with invalid rectangle 3 returned %08x\n", hr);
     hr = IDirectDrawSurface_BltFast(surface1, 0, 0, surface1, NULL, 0);
     ok(hr == DD_OK, "BltFast blitting a surface onto itself returned %08x\n", hr);
+
+    /* Blt(non-fast) tests */
+    memset(&BltFx, 0, sizeof(BltFx));
+    BltFx.dwSize = sizeof(BltFx);
+    BltFx.dwFillColor = 0xaabbccdd;
+
+    hr = IDirectDrawSurface_Blt(surface1, &valid, NULL, NULL, DDBLT_COLORFILL, &BltFx);
+    ok(hr == DD_OK, "IDirectDrawSurface_Blt with a valid rectangle for color fill returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface1, &valid, NULL, &invalid3, DDBLT_COLORFILL, &BltFx);
+    ok(hr == DD_OK, "IDirectDrawSurface_Blt with a invalid, unused rectangle returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface2, &invalid1, NULL, NULL, DDBLT_COLORFILL, &BltFx);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 1 returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface2, &invalid2, NULL, NULL, DDBLT_COLORFILL, &BltFx);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 2 returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface2, &invalid3, NULL, NULL, DDBLT_COLORFILL, &BltFx);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 3 returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface2, &invalid4, NULL, NULL, DDBLT_COLORFILL, &BltFx);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 4 returned %08x\n", hr);
+
+    /* Valid on surface 1 */
+    hr = IDirectDrawSurface_Blt(surface1, &invalid4, NULL, NULL, DDBLT_COLORFILL, &BltFx);
+    ok(hr == DD_OK, "IDirectDrawSurface_Blt with a subrectangle fill returned %08x\n", hr);
+
+    /* Works - stretched blit */
+    hr = IDirectDrawSurface_Blt(surface1, NULL, surface2, NULL, 0, NULL);
+    ok(hr == DD_OK, "IDirectDrawSurface_Blt from a smaller to a bigger surface returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface2, NULL, surface1, NULL, 0, NULL);
+    ok(hr == DD_OK, "IDirectDrawSurface_Blt from a bigger to a smaller surface %08x\n", hr);
+
+    /* Invalid dest rects in sourced blits */
+    hr = IDirectDrawSurface_Blt(surface2, &invalid1, surface1, NULL, 0, NULL);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 1 returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface2, &invalid2, surface1, NULL, 0, NULL);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 2 returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface2, &invalid3, surface1, NULL, 0, NULL);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 3 returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface2, &invalid4, surface1, NULL, 0, NULL);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 4 returned %08x\n", hr);
+
+    /* Invalid src rects */
+    hr = IDirectDrawSurface_Blt(surface2, NULL, surface1, &invalid1, 0, NULL);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 1 returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface2, NULL, surface1, &invalid2, 0, NULL);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 2 returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface2, NULL, surface1, &invalid3, 0, NULL);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 3 returned %08x\n", hr);
+    hr = IDirectDrawSurface_Blt(surface1, NULL, surface2, &invalid4, 0, NULL);
+    ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 4 returned %08x\n", hr);
 
     IDirectDrawSurface_Release(surface1);
     IDirectDrawSurface_Release(surface2);

@@ -753,7 +753,31 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
         return DDERR_INVALIDPARAMS;
     }
 
+    /* Sizes can change, therefore hold the lock when testing the rectangles */
     EnterCriticalSection(&ddraw_cs);
+    if(DestRect)
+    {
+        if(DestRect->top >= DestRect->bottom || DestRect->left >= DestRect->right ||
+           DestRect->right > This->surface_desc.dwWidth ||
+           DestRect->bottom > This->surface_desc.dwHeight)
+        {
+            WARN("Source rectangle is invalid, returning DDERR_INVALIDRECT\n");
+            LeaveCriticalSection(&ddraw_cs);
+            return DDERR_INVALIDRECT;
+        }
+    }
+    if(Src && SrcRect)
+    {
+        if(SrcRect->top >= SrcRect->bottom || SrcRect->left >=SrcRect->right ||
+           SrcRect->right > Src->surface_desc.dwWidth ||
+           SrcRect->bottom > Src->surface_desc.dwHeight)
+        {
+            WARN("Source rectangle is invalid, returning DDERR_INVALIDRECT\n");
+            LeaveCriticalSection(&ddraw_cs);
+            return DDERR_INVALIDRECT;
+        }
+    }
+
     if(Flags & DDBLT_KEYSRC && (!Src || !(Src->surface_desc.dwFlags & DDSD_CKSRCBLT))) {
         WARN("DDBLT_KEYDEST blit without color key in surface, returning DDERR_INVALIDPARAMS\n");
         LeaveCriticalSection(&ddraw_cs);
