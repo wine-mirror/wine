@@ -16,9 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef DO_NO_IMPORTS
 import "ocidl.idl";
 import "oleidl.idl";
 import "oaidl.idl";
+#endif
  
 typedef enum tagSCRIPTSTATE {
     SCRIPTSTATE_UNINITIALIZED = 0,

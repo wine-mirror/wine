@@ -18,11 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef DO_NO_IMPORTS
 import "oleidl.idl";
 import "oaidl.idl";
 import "servprov.idl";
 import "urlmon.idl";
-
+#endif
 
 /*****************************************************************************
  * IOleControlTypes interface
