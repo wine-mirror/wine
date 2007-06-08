@@ -140,17 +140,18 @@
 @ stdcall CryptMemFree(ptr)
 @ stdcall CryptMemRealloc(ptr long)
 @ stub CryptMsgCalculateEncodedLength
-@ stub CryptMsgClose
+@ stdcall CryptMsgClose(ptr)
 @ stub CryptMsgControl
 @ stub CryptMsgCountersign
 @ stub CryptMsgCountersignEncoded
+@ stdcall CryptMsgDuplicate(ptr)
 @ stub CryptMsgEncodeAndSignCTL
 @ stub CryptMsgGetAndVerifySigner
-@ stub CryptMsgGetParam
-@ stub CryptMsgOpenToDecode
-@ stub CryptMsgOpenToEncode
+@ stdcall CryptMsgGetParam(ptr long long ptr ptr)
+@ stdcall CryptMsgOpenToDecode(long long long long ptr ptr)
+@ stdcall CryptMsgOpenToEncode(long long long ptr str ptr)
 @ stub CryptMsgSignCTL
-@ stub CryptMsgUpdate
+@ stdcall CryptMsgUpdate(ptr ptr long long)
 @ stub CryptMsgVerifyCountersignatureEncoded
 @ stdcall CryptProtectData(ptr wstr ptr ptr ptr long ptr)
 @ stdcall CryptQueryObject(long ptr long long long ptr ptr ptr ptr ptr ptr)

@@ -15,6 +15,7 @@ C_SRCS = \
 	context.c \
 	decode.c \
 	encode.c \
+	msg.c \
 	oid.c \
 	proplist.c \
 	protectdata.c \
