@@ -577,6 +577,8 @@ struct WineD3DAdapter
     POINT                   monitorPoint;
     Display                 *display;
     WineD3D_GL_Info         gl_info;
+    const char              *driver;
+    const char              *description;
 };
 
 extern BOOL InitAdapters(void);

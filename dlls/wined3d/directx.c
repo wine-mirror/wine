@@ -1316,8 +1316,8 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
 
     /* Return the information requested */
     TRACE_(d3d_caps)("device/Vendor Name and Version detection using FillGLCaps\n");
-    strcpy(pIdentifier->Driver, "Display");
-    strcpy(pIdentifier->Description, "Direct3D HAL");
+    strcpy(pIdentifier->Driver, Adapters[Adapter].driver);
+    strcpy(pIdentifier->Description, Adapters[Adapter].description);
 
     /* Note dx8 doesn't supply a DeviceName */
     if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY"); /* FIXME: May depend on desktop? */
@@ -2621,6 +2621,8 @@ BOOL InitAdapters(void) {
             HeapFree(GetProcessHeap(), 0, Adapters);
             return FALSE;
         }
+        Adapters[0].driver = "Display";
+        Adapters[0].description = "Direct3D HAL";
     }
     numAdapters = 1;
     TRACE("%d adapters successfully initialized\n", numAdapters);
