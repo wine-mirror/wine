@@ -71,15 +71,26 @@ static inline void call_finally_block( void *code_block, void *base_ptr )
                           : : "a" (code_block), "g" (base_ptr));
 }
 
-static inline DWORD call_filter( void *func, void *arg, void *ebp )
+static inline int call_filter( int (*func)(PEXCEPTION_POINTERS), void *arg, void *ebp )
 {
-    DWORD ret;
+    int ret;
     __asm__ __volatile__ ("pushl %%ebp; pushl %3; movl %2,%%ebp; call *%%eax; popl %%ebp; popl %%ebp"
                           : "=a" (ret)
                           : "0" (func), "r" (ebp), "r" (arg)
                           : "ecx", "edx", "memory" );
     return ret;
 }
+
+static inline int call_unwind_func( int (*func)(void), void *ebp )
+{
+    int ret;
+    __asm__ __volatile__ ("pushl %%ebp; movl %2,%%ebp; call *%0; popl %%ebp"
+                          : "=a" (ret)
+                          : "0" (func), "r" (ebp)
+                          : "ecx", "edx", "memory" );
+    return ret;
+}
+
 #endif
 
 static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
@@ -109,21 +120,8 @@ __ASM_GLOBAL_FUNC(_EH_prolog,
                   "leal  12(%esp), %ebp\n\t"
                   "pushl %eax\n\t"
                   "ret")
-#endif
 
-/*******************************************************************
- *		_global_unwind2 (MSVCRT.@)
- */
-void CDECL _global_unwind2(EXCEPTION_REGISTRATION_RECORD* frame)
-{
-    TRACE("(%p)\n",frame);
-    RtlUnwind( frame, 0, 0, 0 );
-}
-
-/*******************************************************************
- *		_local_unwind2 (MSVCRT.@)
- */
-void CDECL _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
+static void msvcrt_local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel, void *ebp)
 {
   EXCEPTION_REGISTRATION_RECORD reg;
 
@@ -140,14 +138,32 @@ void CDECL _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
       frame->trylevel = frame->scopetable[level].previousTryLevel;
       if (!frame->scopetable[level].lpfnFilter)
       {
-          FIXME( "__try block cleanup level %d handler %p not fully implemented\n",
-                 level, frame->scopetable[level].lpfnHandler );
-          /* FIXME: should probably set ebp to frame->_ebp */
-          frame->scopetable[level].lpfnHandler();
+          TRACE( "__try block cleanup level %d handler %p ebp %p\n",
+                 level, frame->scopetable[level].lpfnHandler, ebp );
+          call_unwind_func( frame->scopetable[level].lpfnHandler, ebp );
       }
   }
   __wine_pop_frame(&reg);
   TRACE("unwound OK\n");
+}
+
+/*******************************************************************
+ *		_local_unwind2 (MSVCRT.@)
+ */
+void CDECL _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
+{
+    msvcrt_local_unwind2( frame, trylevel, &frame->_ebp );
+}
+
+#endif  /* __i386__ */
+
+/*******************************************************************
+ *		_global_unwind2 (MSVCRT.@)
+ */
+void CDECL _global_unwind2(EXCEPTION_REGISTRATION_RECORD* frame)
+{
+    TRACE("(%p)\n",frame);
+    RtlUnwind( frame, 0, 0, 0 );
 }
 
 /*********************************************************************
@@ -172,8 +188,7 @@ int CDECL _except_handler3(PEXCEPTION_RECORD rec,
                            PCONTEXT context, void* dispatcher)
 {
 #if defined(__GNUC__) && defined(__i386__)
-  long retval;
-  int trylevel;
+  int retval, trylevel;
   EXCEPTION_POINTERS exceptPtrs;
   PSCOPETABLE pScopeTable;
 
@@ -186,7 +201,7 @@ int CDECL _except_handler3(PEXCEPTION_RECORD rec,
   if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
   {
     /* Unwinding the current frame */
-     _local_unwind2(frame, TRYLEVEL_END);
+    msvcrt_local_unwind2(frame, TRYLEVEL_END, &frame->_ebp);
     TRACE("unwound current frame, returning ExceptionContinueSearch\n");
     return ExceptionContinueSearch;
   }
@@ -218,7 +233,7 @@ int CDECL _except_handler3(PEXCEPTION_RECORD rec,
         {
           /* Unwind all higher frames, this one will handle the exception */
           _global_unwind2((EXCEPTION_REGISTRATION_RECORD*)frame);
-          _local_unwind2(frame, trylevel);
+          msvcrt_local_unwind2(frame, trylevel, &frame->_ebp);
 
           /* Set our trylevel to the enclosing block, and call the __finally
            * code, which won't return
@@ -298,7 +313,7 @@ DEFINE_SETJMP_ENTRYPOINT(MSVCRT__setjmp)
 int CDECL __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp)
 {
     jmp->Registration = (unsigned long)NtCurrentTeb()->Tib.ExceptionList;
-    if (jmp->Registration == TRYLEVEL_END)
+    if (jmp->Registration == ~0UL)
         jmp->TryLevel = TRYLEVEL_END;
     else
         jmp->TryLevel = ((MSVCRT_EXCEPTION_FRAME*)jmp->Registration)->trylevel;
@@ -317,7 +332,7 @@ int CDECL __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, 
     jmp->Cookie = MSVCRT_JMP_MAGIC;
     jmp->UnwindFunc = 0;
     jmp->Registration = (unsigned long)NtCurrentTeb()->Tib.ExceptionList;
-    if (jmp->Registration == TRYLEVEL_END)
+    if (jmp->Registration == ~0UL)
     {
         jmp->TryLevel = TRYLEVEL_END;
     }
@@ -367,8 +382,8 @@ int CDECL MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval)
             unwind_func(jmp);
         }
         else
-            _local_unwind2((MSVCRT_EXCEPTION_FRAME*)jmp->Registration,
-                           jmp->TryLevel);
+            msvcrt_local_unwind2((MSVCRT_EXCEPTION_FRAME*)jmp->Registration,
+                                 jmp->TryLevel, (void *)jmp->Ebp);
     }
 
     if (!retval)
@@ -382,7 +397,7 @@ int CDECL MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval)
  */
 void __stdcall _seh_longjmp_unwind(struct MSVCRT___JUMP_BUFFER *jmp)
 {
-    _local_unwind2( (MSVCRT_EXCEPTION_FRAME *)jmp->Registration, jmp->TryLevel );
+    msvcrt_local_unwind2( (MSVCRT_EXCEPTION_FRAME *)jmp->Registration, jmp->TryLevel, (void *)jmp->Ebp );
 }
 #endif /* i386 */
 
