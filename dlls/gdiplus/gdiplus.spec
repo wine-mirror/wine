@@ -31,7 +31,7 @@
 @ stub GdipAddPathRectanglesI
 @ stub GdipAddPathString
 @ stub GdipAddPathStringI
-@ stub GdipAlloc
+@ stdcall GdipAlloc(long)
 @ stub GdipBeginContainer2
 @ stub GdipBeginContainer
 @ stub GdipBeginContainerI
@@ -222,7 +222,7 @@
 @ stub GdipFillRegion
 @ stub GdipFlattenPath
 @ stub GdipFlush
-@ stub GdipFree
+@ stdcall GdipFree(ptr)
 @ stub GdipGetAdjustableArrowCapFillState
 @ stub GdipGetAdjustableArrowCapHeight
 @ stub GdipGetAdjustableArrowCapMiddleInset
@@ -605,5 +605,5 @@
 @ stub GdipWindingModeOutline
 @ stub GdiplusNotificationHook
 @ stub GdiplusNotificationUnhook
-@ stub GdiplusShutdown
-@ stub GdiplusStartup
+@ stdcall GdiplusShutdown(ptr)
+@ stdcall GdiplusStartup(ptr ptr ptr)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Evan Stade
+ * Copyright (C) 2007 Google (Evan Stade)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/debug.h"
+#include "gdiplus.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
@@ -42,4 +43,39 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
         break;
     }
     return TRUE;
+}
+
+Status WINAPI GdiplusStartup(ULONG_PTR *token, const struct GdiplusStartupInput *input,
+                             struct GdiplusStartupOutput *output)
+{
+    if(!token)
+        return InvalidParameter;
+
+    if(input->GdiplusVersion != 1) {
+        return UnsupportedGdiplusVersion;
+    } else if ((input->DebugEventCallback) ||
+        (input->SuppressBackgroundThread) || (input->SuppressExternalCodecs)){
+        FIXME("Unimplemented for non-default GdiplusStartupInput");
+        return NotImplemented;
+    } else if(output) {
+        FIXME("Unimplemented for non-null GdiplusStartupOutput");
+        return NotImplemented;
+    }
+
+    return Ok;
+}
+
+void WINAPI GdiplusShutdown(ULONG_PTR token)
+{
+    /* FIXME: no object tracking */
+}
+
+void* WINGDIPAPI GdipAlloc(SIZE_T size)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+}
+
+void WINGDIPAPI GdipFree(void* ptr)
+{
+    HeapFree(GetProcessHeap(), 0, ptr);
 }
