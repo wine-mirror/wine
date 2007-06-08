@@ -27,6 +27,7 @@
 static LPDIRECTDRAW7           lpDD = NULL;
 static LPDIRECT3D7             lpD3D = NULL;
 static LPDIRECTDRAWSURFACE7    lpDDS = NULL;
+static LPDIRECTDRAWSURFACE7    lpDDSdepth = NULL;
 static LPDIRECT3DDEVICE7       lpD3DDevice = NULL;
 static LPDIRECT3DVERTEXBUFFER7 lpVBufSrc = NULL;
 static LPDIRECT3DVERTEXBUFFER7 lpVBufDest1 = NULL;
@@ -88,6 +89,27 @@ static BOOL CreateDirect3D(void)
     if (!SUCCEEDED(rc))
 	return FALSE;
 
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    ddsd.ddpfPixelFormat.dwZBufferBitDepth = 16;
+    ddsd.ddpfPixelFormat.dwZBitMask = 0x0000FFFF;
+    ddsd.dwWidth = 256;
+    ddsd.dwHeight = 256;
+    rc = IDirectDraw7_CreateSurface(lpDD, &ddsd, &lpDDSdepth, NULL);
+    ok(rc==DD_OK, "CreateSurface returned: %x\n", rc);
+    if (!SUCCEEDED(rc)) {
+        lpDDSdepth = NULL;
+    } else {
+        rc = IDirectDrawSurface_AddAttachedSurface(lpDDS, lpDDSdepth);
+        ok(rc == DD_OK, "IDirectDrawSurface_AddAttachedSurface returned %x\n", rc);
+        if (!SUCCEEDED(rc))
+            return FALSE;
+    }
+
     rc = IDirect3D7_CreateDevice(lpD3D, &IID_IDirect3DTnLHalDevice, lpDDS,
         &lpD3DDevice);
     ok(rc==D3D_OK || rc==DDERR_NOPALETTEATTACHED || rc==E_OUTOFMEMORY, "CreateDevice returned: %x\n", rc);
@@ -115,6 +137,12 @@ static void ReleaseDirect3D(void)
     {
         IDirect3DDevice7_Release(lpD3DDevice);
         lpD3DDevice = NULL;
+    }
+
+    if (lpDDSdepth != NULL)
+    {
+        IDirectDrawSurface_Release(lpDDSdepth);
+        lpDDSdepth = NULL;
     }
 
     if (lpDDS != NULL)
@@ -569,6 +597,16 @@ static void SceneTest(void)
     ok(hr == D3D_OK, "IDirect3DDevice7_BeginScene failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
+        DDBLTFX fx;
+        memset(&fx, 0, sizeof(fx));
+        fx.dwSize = sizeof(fx);
+
+        if(lpDDSdepth) {
+            hr = IDirectDrawSurface7_Blt(lpDDSdepth, NULL, NULL, NULL, DDBLT_DEPTHFILL, &fx);
+            ok(hr == D3D_OK, "Depthfill failed in a BeginScene / EndScene pair\n");
+        } else {
+            skip("Depth stencil creation failed at startup, skipping\n");
+        }
         hr = IDirect3DDevice7_EndScene(lpD3DDevice);
         ok(hr == D3D_OK, "IDirect3DDevice7_EndScene failed with %08x\n", hr);
     }
