@@ -8321,11 +8321,9 @@ else
 sed 's/^/| /' conftest.$ac_ext >&5
 
 	wine_cv_opengl_header_version_OK="no"
-
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
 fi
 { echo "$as_me:$LINENO: result: $wine_cv_opengl_header_version_OK" >&5
 echo "${ECHO_T}$wine_cv_opengl_header_version_OK" >&6; }
@@ -10383,7 +10381,13 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <unicode/ubidi.h>
-main () { ubidi_open(); return 0; }
+int
+main ()
+{
+ubidi_open()
+  ;
+  return 0;
+}
 _ACEOF
 rm -f conftest$ac_exeext
 if { (ac_try="$ac_link"
@@ -11343,7 +11347,6 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_c_ppdev" >&5
 echo "${ECHO_T}$ac_cv_c_ppdev" >&6; }
@@ -11371,9 +11374,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-va_list ap1, ap2;
-    va_copy(ap1,ap2);
-
+va_list ap1, ap2; va_copy(ap1,ap2);
   ;
   return 0;
 }
@@ -11433,9 +11434,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-va_list ap1, ap2;
-    __va_copy(ap1,ap2);
-
+va_list ap1, ap2; __va_copy(ap1,ap2);
   ;
   return 0;
 }
@@ -12197,17 +12196,19 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
-int	L[4] = {0,1,2,3};
-int main(void) {
-  static int Array[3];
+int L[4] = {0,1,2,3};
+int
+main ()
+{
+static int Array[3];
   unsigned int B = 3;
   int i;
   for(i=0; i<B; i++) Array[i] = i - 3;
   for(i=0; i<4 - 1; i++) L[i] = L[i + 1];
   L[i] = 4;
-
-  exit( Array[1] != -2 || L[2] != 3);
+  exit( Array[1] != -2 || L[2] != 3)
+  ;
+  return 0;
 }
 _ACEOF
 rm -f conftest$ac_exeext
@@ -12618,12 +12619,11 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-void ac_asm(void) { asm("\t.globl _ac_test\n\t.def _ac_test; .scl 2; .type 32; .endef\n_ac_test:\t.long 0"); }
 
 int
 main ()
 {
-
+asm("\t.globl _ac_test\n\t.def _ac_test; .scl 2; .type 32; .endef\n_ac_test:\t.long 0");
   ;
   return 0;
 }
@@ -12657,12 +12657,11 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-void ac_asm(void) { asm("\t.globl _ac_test\n\t.type _ac_test,@function\n_ac_test:\t.long 0"); }
 
 int
 main ()
 {
-
+asm("\t.globl _ac_test\n\t.type _ac_test,@function\n_ac_test:\t.long 0");
   ;
   return 0;
 }
@@ -12696,12 +12695,11 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-void ac_asm(void) { asm("\t.globl _ac_test\n\t.type _ac_test,2\n_ac_test:\t.long 0"); }
 
 int
 main ()
 {
-
+asm("\t.globl _ac_test\n\t.type _ac_test,2\n_ac_test:\t.long 0");
   ;
   return 0;
 }
@@ -12783,12 +12781,11 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-void ac_asm(void) { asm(".globl _ac_test\n_ac_test:\t.long 0"); }
 extern int ac_test;
 int
 main ()
 {
-if (ac_test) return 1
+asm(".globl _ac_test\n_ac_test:\t.long 0"); if (ac_test) return 1
   ;
   return 0;
 }
@@ -17550,9 +17547,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
 #include <netdb.h>
-
 int
 main ()
 {

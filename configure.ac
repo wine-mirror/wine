@@ -5,18 +5,18 @@ dnl See ChangeLog file for detailed change history.
 m4_define(WINE_VERSION,regexp(m4_include(VERSION),[version \([-.0-9A-Za-z]+\)],[\1]))
 
 AC_PREREQ(2.53b)
-AC_INIT([Wine],WINE_VERSION,[wine-devel@winehq.org])
+AC_INIT([Wine],[WINE_VERSION],[wine-devel@winehq.org])
 AC_CONFIG_SRCDIR(server/atom.c)
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_AUX_DIR(tools)
 
 dnl **** Command-line arguments ****
 
-AC_ARG_ENABLE(win16, AC_HELP_STRING([--disable-win16],[do not include Win16 support]))
-AC_ARG_ENABLE(win64, AC_HELP_STRING([--enable-win64], [build a Win64 emulator on AMD64 (won't run Win32 binaries)]))
+AC_ARG_ENABLE(win16, AS_HELP_STRING([--disable-win16],[do not include Win16 support]))
+AC_ARG_ENABLE(win64, AS_HELP_STRING([--enable-win64],[build a Win64 emulator on AMD64 (won't run Win32 binaries)]))
 
-AC_ARG_WITH(opengl,    AC_HELP_STRING([--without-opengl],[do not use OpenGL]))
-AC_ARG_WITH(wine-tools,AC_HELP_STRING([--with-wine-tools=<dir>],[use Wine tools from directory <dir>]))
+AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
+AC_ARG_WITH(wine-tools,AS_HELP_STRING([--with-wine-tools=<dir>],[use Wine tools from directory <dir>]))
 
 AC_CANONICAL_HOST
 case $host in
@@ -387,9 +387,9 @@ then
         dnl *** Check for X RandR extension
         if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes"
         then
-                AC_TRY_COMPILE([#include <X11/Xlib.h>
-#include <X11/extensions/Xrandr.h>],[static typeof(XRRSetScreenConfigAndRate) * func;],
-                  [AC_DEFINE(HAVE_LIBXRANDR, 1, [Define if you have the Xrandr library])])
+                AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>]], [[static typeof(XRRSetScreenConfigAndRate) * func;]])],
+                  [AC_DEFINE(HAVE_LIBXRANDR, 1, [Define if you have the Xrandr library])],[])
         fi
 
         dnl *** Check for Transform functions in Xrender
@@ -404,9 +404,9 @@ then
         dnl *** Check for Xinerama extension
         if test "$ac_cv_header_X11_extensions_Xinerama_h" = "yes"
         then
-                AC_TRY_COMPILE([#include <X11/Xlib.h>
-#include <X11/extensions/Xinerama.h>],[static typeof(XineramaQueryScreens) * func;],
-                  [AC_DEFINE(HAVE_LIBXINERAMA, 1, [Define if you have the Xinerama library])])
+                AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>
+#include <X11/extensions/Xinerama.h>]], [[static typeof(XineramaQueryScreens) * func;]])],
+                  [AC_DEFINE(HAVE_LIBXINERAMA, 1, [Define if you have the Xinerama library])],[])
         fi
 
     dnl *** End of X11/Xlib.h check
@@ -422,13 +422,9 @@ then
 	then
 	    dnl Check for some problems due to old Mesa versions
 	    AC_CACHE_CHECK([for up-to-date OpenGL version], wine_cv_opengl_header_version_OK,
-	      AC_TRY_COMPILE(
-		[#include <GL/gl.h>],
-		[GLenum test = GL_UNSIGNED_SHORT_5_6_5;],
+	      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <GL/gl.h>]], [[GLenum test = GL_UNSIGNED_SHORT_5_6_5;]])],
 		[wine_cv_opengl_header_version_OK="yes"],
-		[wine_cv_opengl_header_version_OK="no"]
-	      )
-            )
+		[wine_cv_opengl_header_version_OK="no"]))
 
 	    if test "$wine_cv_opengl_header_version_OK" = "yes"
             then
@@ -600,12 +596,10 @@ then
     fi
     AC_MSG_CHECKING(whether can link with ICU libraries)
     LIBS="$saved_libs $icu_libs"
-    AC_TRY_RUN([#include <unicode/ubidi.h>
-main () { ubidi_open(); return 0; }],
-		[AC_DEFINE(HAVE_ICU,1,[Define to 1 if the ICU libraries are installed])
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <unicode/ubidi.h>]],[[ubidi_open()]])],
+                [AC_DEFINE(HAVE_ICU,1,[Define to 1 if the ICU libraries are installed])
                  AC_SUBST(ICULIBS,"$icu_libs")
-                 AC_MSG_RESULT(yes)],
-                [AC_MSG_RESULT(no)],[AC_MSG_RESULT(no)])
+                 AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)],[AC_MSG_RESULT(no)])
     LIBS="$saved_libs"
 fi
 
@@ -687,12 +681,10 @@ else
                          [#if HAVE_FT2BUILD_H
                           #include <ft2build.h>
                           #endif])
-	AC_TRY_CPP([#include <ft2build.h>
-                    #include <freetype/fttrigon.h>],
-                    [AC_DEFINE(HAVE_FREETYPE_FTTRIGON_H, 1,
+	AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <ft2build.h>
+                    #include <freetype/fttrigon.h>]])],[AC_DEFINE(HAVE_FREETYPE_FTTRIGON_H, 1,
           [Define if you have the <freetype/fttrigon.h> header file.])
-                    wine_cv_fttrigon=yes],
-                    wine_cv_fttrigon=no)
+                    wine_cv_fttrigon=yes],[wine_cv_fttrigon=no])
         AC_CHECK_TYPES(FT_TrueTypeEngineType,,,[#include <freetype/ftmodapi.h>])
         ac_save_CFLAGS="$CFLAGS"
         CFLAGS="$CFLAGS $FREETYPELIBS"
@@ -720,12 +712,8 @@ fi
 
 dnl **** Check for parport (currently Linux only) ****
 AC_CACHE_CHECK([for parport header/ppdev.h], ac_cv_c_ppdev,
- AC_TRY_COMPILE(
-   [#include <linux/ppdev.h>],
-   [ioctl (1,PPCLAIM,0)],
-   [ac_cv_c_ppdev="yes"],
-   [ac_cv_c_ppdev="no"])
- )
+ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <linux/ppdev.h>]], [[ioctl (1,PPCLAIM,0)]])],
+    [ac_cv_c_ppdev="yes"],[ac_cv_c_ppdev="no"]))
 if test "$ac_cv_c_ppdev" = "yes"
 then
     AC_DEFINE(HAVE_PPDEV, 1, [Define if we can use ppdev.h for parallel port access])
@@ -733,26 +721,16 @@ fi
 
 dnl **** Check for va_copy ****
 AC_CACHE_CHECK([for va_copy], ac_cv_c_va_copy,
- AC_TRY_LINK(
-   [#include <stdarg.h>],
-   [va_list ap1, ap2;
-    va_copy(ap1,ap2);
-   ],
-   [ac_cv_c_va_copy="yes"],
-   [ac_cv_c_va_copy="no"])
+ AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>]], [[va_list ap1, ap2; va_copy(ap1,ap2);]])],
+    [ac_cv_c_va_copy="yes"],[ac_cv_c_va_copy="no"])
  )
 if test "$ac_cv_c_va_copy" = "yes"
 then
     AC_DEFINE(HAVE_VA_COPY, 1, [Define if we have va_copy])
 fi
 AC_CACHE_CHECK([for __va_copy], ac_cv_c___va_copy,
- AC_TRY_LINK(
-   [#include <stdarg.h>],
-   [va_list ap1, ap2;
-    __va_copy(ap1,ap2);
-   ],
-   [ac_cv_c___va_copy="yes"],
-   [ac_cv_c___va_copy="no"])
+ AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>]], [[va_list ap1, ap2; __va_copy(ap1,ap2);]])],
+    [ac_cv_c___va_copy="yes"],[ac_cv_c___va_copy="no"])
  )
 if test "$ac_cv_c___va_copy" = "yes"
 then
@@ -761,13 +739,9 @@ fi
 
 dnl **** Check for sigsetjmp ****
 AC_CACHE_CHECK([for sigsetjmp], ac_cv_c_sigsetjmp,
- AC_TRY_LINK(
-   [#include <setjmp.h>],
-   [sigjmp_buf buf;
+ AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <setjmp.h>]], [[sigjmp_buf buf;
     sigsetjmp( buf, 1 );
-    siglongjmp( buf, 1 );],
-   [ac_cv_c_sigsetjmp="yes"],
-   [ac_cv_c_sigsetjmp="no"])
+    siglongjmp( buf, 1 );]])],[ac_cv_c_sigsetjmp="yes"],[ac_cv_c_sigsetjmp="no"])
  )
 if test "$ac_cv_c_sigsetjmp" = "yes"
 then
@@ -812,14 +786,13 @@ AC_SUBST(ALSALIBS,"")
 if test "$ac_cv_header_sys_asoundlib_h" = "yes" -o "$ac_cv_header_alsa_asoundlib_h" = "yes"
 then
     AC_CHECK_LIB(asound,snd_pcm_hw_params_get_access,
-        [AC_TRY_COMPILE([#ifdef HAVE_ALSA_ASOUNDLIB_H
+        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_ALSA_ASOUNDLIB_H
 #include <alsa/asoundlib.h>
 #elif defined(HAVE_SYS_ASOUNDLIB_H)
 #include <sys/asoundlib.h>
-#endif],
-                        [int ret = snd_pcm_hw_params_get_access(NULL, NULL)],
+#endif]], [[int ret = snd_pcm_hw_params_get_access(NULL, NULL)]])],
                         [AC_DEFINE(HAVE_ALSA,1,[Define if you have ALSA 1.x including devel headers])
-                         ALSALIBS="-lasound"])])
+                         ALSALIBS="-lasound"],[])])
 fi
 
 dnl **** Check for libaudioio (which can be used to get solaris audio support) ****
@@ -848,21 +821,15 @@ then
 
   dnl Check for strength-reduce bug
   AC_CACHE_CHECK( [for gcc strength-reduce bug], ac_cv_c_gcc_strength_bug,
-                  AC_TRY_RUN([
-int	L[[4]] = {0,1,2,3};
-int main(void) {
-  static int Array[[3]];
+                  AC_RUN_IFELSE([AC_LANG_PROGRAM([[int L[[4]] = {0,1,2,3};]],
+[[static int Array[[3]];
   unsigned int B = 3;
   int i;
   for(i=0; i<B; i++) Array[[i]] = i - 3;
   for(i=0; i<4 - 1; i++) L[[i]] = L[[i + 1]];
   L[[i]] = 4;
-
-  exit( Array[[1]] != -2 || L[[2]] != 3);
-}],
-    ac_cv_c_gcc_strength_bug="no",
-    ac_cv_c_gcc_strength_bug="yes",
-    ac_cv_c_gcc_strength_bug="yes") )
+  exit( Array[[1]] != -2 || L[[2]] != 3)]])],
+    [ac_cv_c_gcc_strength_bug="no"],[ac_cv_c_gcc_strength_bug="yes"],[ac_cv_c_gcc_strength_bug="yes"]) )
   if test "$ac_cv_c_gcc_strength_bug" = "yes"
   then
     EXTRACFLAGS="$EXTRACFLAGS -fno-strength-reduce"
@@ -881,8 +848,7 @@ int main(void) {
   saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -Wpointer-arith -Werror"
   AC_CACHE_CHECK([for broken string.h that generates warnings], ac_cv_c_string_h_warnings,
-      AC_TRY_COMPILE([#include <string.h>],[],
-                     [ac_cv_c_string_h_warnings=no],[ac_cv_c_string_h_warnings=yes]))
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]], [[]])],[ac_cv_c_string_h_warnings=no],[ac_cv_c_string_h_warnings=yes]))
   CFLAGS="$saved_CFLAGS"
   if test "$ac_cv_c_string_h_warnings" = "no"
   then
@@ -893,9 +859,7 @@ int main(void) {
   saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -Werror"
   AC_CACHE_CHECK([for builtin wchar inlines], ac_cv_c_builtin_wchar_ctype,
-      AC_TRY_COMPILE([],
-                     [int iswlower(unsigned short);],
-                     [ac_cv_c_builtin_wchar_ctype=no],[ac_cv_c_builtin_wchar_ctype=yes]))
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[int iswlower(unsigned short);]])],[ac_cv_c_builtin_wchar_ctype=no],[ac_cv_c_builtin_wchar_ctype=yes]))
   CFLAGS="$saved_CFLAGS"
   if test "$ac_cv_c_builtin_wchar_ctype" = "yes"
   then
@@ -1256,8 +1220,7 @@ AC_CHECK_MEMBERS([struct ff_effect.direction],,,
 #endif])
 
 AC_CACHE_CHECK([for sigaddset],wine_cv_have_sigaddset,
-               AC_TRY_LINK([#include <signal.h>],[sigset_t set; sigaddset(&set,SIGTERM);],
-                           wine_cv_have_sigaddset=yes,wine_cv_have_sigaddset=no))
+               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <signal.h>]], [[sigset_t set; sigaddset(&set,SIGTERM);]])],[wine_cv_have_sigaddset=yes],[wine_cv_have_sigaddset=no]))
 if test "$wine_cv_have_sigaddset" = "yes"
 then
   AC_DEFINE(HAVE_SIGADDSET, 1, [Define if sigaddset is supported])
@@ -1266,9 +1229,7 @@ fi
 
 AC_CACHE_CHECK([whether we can use re-entrant gethostbyname_r Linux style],
    	wine_cv_linux_gethostbyname_r_6,
-	AC_TRY_LINK([
-#include <netdb.h>
-	], [
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]],[[
     char *name=NULL;
     struct hostent he;
     struct hostent *result;
@@ -1280,10 +1241,8 @@ AC_CACHE_CHECK([whether we can use re-entrant gethostbyname_r Linux style],
     int addrtype=0;
     res=gethostbyname_r(name,&he,buf,bufsize,&result,&errnr);
     res=gethostbyaddr_r(addr, addrlen, addrtype,&he,buf,bufsize,&result,&errnr);
-    ],
-	wine_cv_linux_gethostbyname_r_6=yes,
-	wine_cv_linux_gethostbyname_r_6=no
-	)
+    ]])],[wine_cv_linux_gethostbyname_r_6=yes],[wine_cv_linux_gethostbyname_r_6=no
+	])
    )
    if test "$wine_cv_linux_gethostbyname_r_6" = "yes"
    then
@@ -1295,7 +1254,7 @@ if test "$ac_cv_header_linux_joystick_h" = "yes"
 then
    AC_CACHE_CHECK([whether linux/joystick.h uses the Linux 2.2+ API],
    	wine_cv_linux_joystick_22_api,
-	AC_TRY_COMPILE([
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	#include <sys/ioctl.h>
 	#include <sys/types.h>
 	#include <linux/joystick.h>
@@ -1304,11 +1263,7 @@ then
 	#if !defined(JS_EVENT_AXIS) || !defined(JS_EVENT_BUTTON)
 	#error "no 2.2 header"
 	#endif
-	],/*empty*/,
-	wine_cv_linux_joystick_22_api=yes,
-	wine_cv_linux_joystick_22_api=no,
-	wine_cv_linux_joystick_22_api=no
-	)
+	]], [[/*empty*/]])],[wine_cv_linux_joystick_22_api=yes],[wine_cv_linux_joystick_22_api=no])
    )
    if test "$wine_cv_linux_joystick_22_api" = "yes"
    then
@@ -1399,15 +1354,13 @@ AC_CHECK_MEMBERS([ns_msg._msg_ptr],,,
 
 dnl Check for the external timezone variables timezone and daylight
 AC_CACHE_CHECK([for timezone variable], ac_cv_have_timezone,
-               AC_TRY_LINK([#include <time.h>],[timezone = 1],
-			   ac_cv_have_timezone="yes", ac_cv_have_timezone="no"))
+               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[timezone = 1]])],[ac_cv_have_timezone="yes"],[ac_cv_have_timezone="no"]))
 if test "$ac_cv_have_timezone" = "yes"
 then
     AC_DEFINE(HAVE_TIMEZONE, 1, [Define if you have the timezone variable])
 fi
 AC_CACHE_CHECK([for daylight variable], ac_cv_have_daylight,
-               AC_TRY_LINK([#include <time.h>],[daylight = 1],
-			   ac_cv_have_daylight="yes", ac_cv_have_daylight="no"))
+               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[daylight = 1]])],[ac_cv_have_daylight="yes"],[ac_cv_have_daylight="no"]))
 if test "$ac_cv_have_daylight" = "yes"
 then
     AC_DEFINE(HAVE_DAYLIGHT, 1, [Define if you have the daylight variable])
@@ -2048,5 +2001,5 @@ dnl Local Variables:
 dnl comment-start: "dnl "
 dnl comment-end: ""
 dnl comment-start-skip: "\\bdnl\\b\\s *"
-dnl compile-command: "autoconf && autoheader"
+dnl compile-command: "autoreconf --warnings=all"
 dnl End:
