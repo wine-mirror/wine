@@ -582,17 +582,12 @@ IDirectDrawSurfaceImpl_Lock(IDirectDrawSurface7 *iface,
      * for the supported values. The others are ignored by WineD3D
      */
 
-    /* Hmm. Anarchy online passes an uninitialized surface descriptor,
-     * that means it doesn't have dwSize set. Init it to some sane
-     * value
-     */
-    if(DDSD->dwSize <= sizeof(DDSURFACEDESC))
+    if(DDSD->dwSize != sizeof(DDSURFACEDESC) &&
+       DDSD->dwSize != sizeof(DDSURFACEDESC2))
     {
-        DDSD->dwSize = sizeof(DDSURFACEDESC);
-    }
-    else
-    {
-        DDSD->dwSize = sizeof(DDSURFACEDESC2);
+        WARN("Invalid structure size %d, returning DDERR_INVALIDPARAMS\n", DDERR_INVALIDPARAMS);
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
     }
 
     hr = IWineD3DSurface_LockRect(This->WineD3DSurface,
