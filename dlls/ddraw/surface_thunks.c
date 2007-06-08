@@ -20,6 +20,7 @@
 #include "wine/port.h"
 #include "wine/debug.h"
 #include <stdarg.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -41,6 +42,7 @@
 					     (pdds))
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw_thunk);
+WINE_DECLARE_DEBUG_CHANNEL(ddraw);
 
 static HRESULT WINAPI
 IDirectDrawSurface3Impl_QueryInterface(LPDIRECTDRAWSURFACE3 This, REFIID iid,
@@ -299,11 +301,33 @@ IDirectDrawSurface3Impl_GetPixelFormat(LPDIRECTDRAWSURFACE3 This,
 }
 
 static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetSurfaceDesc(LPDIRECTDRAWSURFACE3 This,
+IDirectDrawSurface3Impl_GetSurfaceDesc(LPDIRECTDRAWSURFACE3 iface,
 				       LPDDSURFACEDESC pDDSD)
 {
-    return IDirectDrawSurface7_GetSurfaceDesc(CONVERT(This),
-					      (LPDDSURFACEDESC2)pDDSD);
+    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface3, iface);
+
+    TRACE_(ddraw)("(%p)->(%p)\n",This,pDDSD);
+
+    if(!pDDSD)
+        return DDERR_INVALIDPARAMS;
+
+    if (pDDSD->dwSize != sizeof(DDSURFACEDESC))
+    {
+        WARN("Incorrect struct size %d, returning DDERR_INVALIDPARAMS\n",pDDSD->dwSize);
+        return DDERR_INVALIDPARAMS;
+    }
+
+    EnterCriticalSection(&ddraw_cs);
+    DD_STRUCT_COPY_BYSIZE(pDDSD,(DDSURFACEDESC *) &This->surface_desc);
+    TRACE("Returning surface desc:\n");
+    if (TRACE_ON(ddraw))
+    {
+        /* DDRAW_dump_surface_desc handles the smaller size */
+        DDRAW_dump_surface_desc((DDSURFACEDESC2 *) pDDSD);
+    }
+
+    LeaveCriticalSection(&ddraw_cs);
+    return DD_OK;
 }
 
 static HRESULT WINAPI

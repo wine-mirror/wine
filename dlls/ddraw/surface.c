@@ -1592,11 +1592,10 @@ IDirectDrawSurfaceImpl_GetSurfaceDesc(IDirectDrawSurface7 *iface,
     if(!DDSD)
         return DDERR_INVALIDPARAMS;
 
-    if ((DDSD->dwSize < sizeof(DDSURFACEDESC)) ||
-        (DDSD->dwSize > sizeof(DDSURFACEDESC2)))
+    if (DDSD->dwSize != sizeof(DDSURFACEDESC2))
     {
-        ERR("Impossible/Strange struct size %d.\n",DDSD->dwSize);
-        return DDERR_GENERIC;
+        WARN("Incorrect struct size %d, returning DDERR_INVALIDPARAMS\n",DDSD->dwSize);
+        return DDERR_INVALIDPARAMS;
     }
 
     EnterCriticalSection(&ddraw_cs);
