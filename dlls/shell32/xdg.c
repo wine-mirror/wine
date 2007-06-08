@@ -376,8 +376,8 @@ static int url_encode(const char *value, char *output)
             if (output)
             {
                 *(output++) = '%';
-                *(output++) = hexchars[(unsigned)(*c)/16];
-                *(output++) = hexchars[(unsigned)(*c)%16];
+                *(output++) = hexchars[(unsigned char)*c / 16];
+                *(output++) = hexchars[(unsigned char)*c % 16];
             }
             num_written += 3;
         }

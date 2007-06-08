@@ -33,14 +33,19 @@
 #endif
 
 static CHAR CURR_DIR[MAX_PATH];
+static const WCHAR UNICODE_PATH[] = {'c',':','\\',0x00c4,'\0','\0'};
+    /* "c:\Ä", or "c:\A" with diaeresis */
+    /* Double-null termination needed for pFrom field of SHFILEOPSTRUCT */
 
 static HMODULE hshell32;
 static int (WINAPI *pSHCreateDirectoryExA)(HWND, LPCSTR, LPSECURITY_ATTRIBUTES);
+static int (WINAPI *pSHCreateDirectoryExW)(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
 
 static void InitFunctionPointers(void)
 {
     hshell32 = GetModuleHandleA("shell32.dll");
     pSHCreateDirectoryExA = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExA");
+    pSHCreateDirectoryExW = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExW");
 }
 
 /* creates a file with the specified name for tests */
@@ -56,9 +61,23 @@ static void createTestFile(const CHAR *name)
     CloseHandle(file);
 }
 
+static void createTestFileW(const WCHAR *name)
+{
+    HANDLE file;
+
+    file = CreateFileW(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Failure to open file\n");
+    CloseHandle(file);
+}
+
 static BOOL file_exists(const CHAR *name)
 {
     return GetFileAttributesA(name) != INVALID_FILE_ATTRIBUTES;
+}
+
+static BOOL file_existsW(LPCWSTR name)
+{
+  return GetFileAttributesW(name) != INVALID_FILE_ATTRIBUTES;
 }
 
 static BOOL file_has_content(const CHAR *name, const CHAR *content)
@@ -983,6 +1002,73 @@ static void test_sh_create_dir(void)
     ok(file_exists("c:\\testdir3"), "The directory is not created\n");
 }
 
+static void test_unicode(void)
+{
+    SHFILEOPSTRUCTW shfoW;
+    int ret;
+    HANDLE file;
+
+    shfoW.hwnd = NULL;
+    shfoW.wFunc = FO_DELETE;
+    shfoW.pFrom = UNICODE_PATH;
+    shfoW.pTo = '\0';
+    shfoW.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
+    shfoW.hNameMappings = NULL;
+    shfoW.lpszProgressTitle = NULL;
+
+    /* Clean up before start test */
+    DeleteFileW(UNICODE_PATH);
+    RemoveDirectoryW(UNICODE_PATH);
+
+    /* Make sure we are on a system that supports unicode */
+    SetLastError(0xdeadbeef);
+    file = CreateFileW(UNICODE_PATH, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    if (GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("Unicode tests skipped on non-unicode system\n");
+        return;
+    }
+    CloseHandle(file);
+
+    /* Try to delete a file with unicode filename */
+    ok(file_existsW(UNICODE_PATH), "The file does not exist\n");
+    ret = SHFileOperationW(&shfoW);
+    ok(!ret, "File is not removed, ErrorCode: %d\n", ret);
+    ok(!file_existsW(UNICODE_PATH), "The file should have been removed\n");
+
+    /* Try to trash a file with unicode filename */
+    createTestFileW(UNICODE_PATH);
+    shfoW.fFlags |= FOF_ALLOWUNDO;
+    ok(file_existsW(UNICODE_PATH), "The file does not exist\n");
+    ret = SHFileOperationW(&shfoW);
+    ok(!ret, "File is not removed, ErrorCode: %d\n", ret);
+    ok(!file_existsW(UNICODE_PATH), "The file should have been removed\n");
+
+    if(!pSHCreateDirectoryExW)
+    {
+        skip("Skipping SHCreateDirectoryExW tests\n");
+        return;
+    }
+
+    /* Try to delete a directory with unicode filename */
+    ret = pSHCreateDirectoryExW(NULL, UNICODE_PATH, NULL);
+    ok(!ret, "SHCreateDirectoryExW returned %d\n", ret);
+    ok(file_existsW(UNICODE_PATH), "The directory is not created\n");
+    shfoW.fFlags &= ~FOF_ALLOWUNDO;
+    ret = SHFileOperationW(&shfoW);
+    ok(!ret, "Directory is not removed, ErrorCode: %d\n", ret);
+    ok(!file_existsW(UNICODE_PATH), "The directory should have been removed\n");
+
+    /* Try to trash a directory with unicode filename */
+    ret = pSHCreateDirectoryExW(NULL, UNICODE_PATH, NULL);
+    ok(!ret, "SHCreateDirectoryExW returned %d\n", ret);
+    ok(file_existsW(UNICODE_PATH), "The directory was not created\n");
+    shfoW.fFlags |= FOF_ALLOWUNDO;
+    ret = SHFileOperationW(&shfoW);
+    ok(!ret, "Directory is not removed, ErrorCode: %d\n", ret);
+    ok(!file_existsW(UNICODE_PATH), "The directory should have been removed\n");
+}
+
 START_TEST(shlfileop)
 {
     InitFunctionPointers();
@@ -1011,4 +1097,6 @@ START_TEST(shlfileop)
 
     test_sh_create_dir();
     clean_after_shfo_tests();
+
+    test_unicode();
 }
