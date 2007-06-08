@@ -159,6 +159,14 @@ SRCDIR_INCLUDES = \
 	exdispid.h \
 	fci.h \
 	fdi.h \
+	gdiplus.h \
+	gdiplusenums.h \
+	gdiplusflat.h \
+	gdiplusgpstubs.h \
+	gdiplusinit.h \
+	gdiplusmem.h \
+	gdipluspixelformats.h \
+	gdiplustypes.h \
 	guiddef.h \
 	hlguids.h \
 	htmlhelp.h \
