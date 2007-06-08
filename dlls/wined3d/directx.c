@@ -2462,6 +2462,12 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     IWineD3D_AddRef(object->wineD3D);
     object->parent  = parent;
 
+    if(This->dxVersion == 7) {
+        object->surface_alignment = 8;
+    } else {
+        object->surface_alignment = 4;
+    }
+
     /* Set the state up as invalid until the device is fully created */
     object->state   = WINED3DERR_DRIVERINTERNALERROR;
 

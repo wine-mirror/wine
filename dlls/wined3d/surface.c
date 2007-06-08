@@ -79,9 +79,10 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
          }
 
         if (This->Flags & SFLAG_NONPOW2) {
+            unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
             src_pitch = This->bytesPerPixel * This->pow2Width;
             dst_pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);
-            src_pitch = (src_pitch + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
+            src_pitch = (src_pitch + alignment - 1) & ~(alignment - 1);
             mem = HeapAlloc(GetProcessHeap(), 0, src_pitch * This->pow2Height);
         } else {
             mem = This->resource.allocatedMemory;
@@ -1320,7 +1321,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         }
 
         b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        b_info->bmiHeader.biWidth = This->currentDesc.Width;
+        /* TODO: Is there a nicer way to force a specific alignment? (8 byte for ddraw) */
+        b_info->bmiHeader.biWidth = IWineD3DSurface_GetPitch(iface) / This->bytesPerPixel;
         b_info->bmiHeader.biHeight = -This->currentDesc.Height -extraline;
         b_info->bmiHeader.biSizeImage = ( This->currentDesc.Height + extraline) * IWineD3DSurface_GetPitch(iface);
         b_info->bmiHeader.biPlanes = 1;
@@ -1978,7 +1980,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
 
         /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
         outpitch = width * bpp;
-        outpitch = (outpitch + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
+        outpitch = (outpitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
 
         mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
         if(!mem) {
@@ -2264,7 +2266,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
                format == WINED3DFMT_DXT4 || format == WINED3DFMT_DXT5) {
         This->resource.size = ((max(This->pow2Width, 4) * formatEntry->bpp) * max(This->pow2Height, 4));
     } else {
-        This->resource.size = ((This->pow2Width * formatEntry->bpp) + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
+        unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
+        This->resource.size = ((This->pow2Width * formatEntry->bpp) + alignment - 1) & ~(alignment - 1);
         This->resource.size *= This->pow2Height;
     }
 
@@ -3483,9 +3486,9 @@ DWORD WINAPI IWineD3DSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
              This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) /* DXT2/3/4/5 is 16 bytes per block */
         ret = ((This->currentDesc.Width + 3) >> 2) << 4;
     else {
+        unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
         ret = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */
-        /* Surfaces are 32 bit aligned */
-        ret = (ret + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
+        ret = (ret + alignment - 1) & ~(alignment - 1);
     }
     TRACE("(%p) Returning %d\n", This, ret);
     return ret;

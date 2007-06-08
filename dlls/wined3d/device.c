@@ -674,7 +674,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
        Size = ((max(Width,4) * tableEntry->bpp) * max(Height,4));
     } else {
        /* The pitch is a multiple of 4 bytes */
-       Size = ((Width * tableEntry->bpp) + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
+        Size = ((Width * tableEntry->bpp) + This->surface_alignment - 1) & ~(This->surface_alignment - 1);
        Size *= Height;
     }
 

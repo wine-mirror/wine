@@ -347,10 +347,10 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
     checkGLcall("glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);");
 
-    glPixelStorei(GL_PACK_ALIGNMENT, SURFACE_ALIGNMENT);
-    checkGLcall("glPixelStorei(GL_PACK_ALIGNMENT, SURFACE_ALIGNMENT);");
-    glPixelStorei(GL_UNPACK_ALIGNMENT, SURFACE_ALIGNMENT);
-    checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, SURFACE_ALIGNMENT);");
+    glPixelStorei(GL_PACK_ALIGNMENT, This->surface_alignment);
+    checkGLcall("glPixelStorei(GL_PACK_ALIGNMENT, This->surface_alignment);");
+    glPixelStorei(GL_UNPACK_ALIGNMENT, This->surface_alignment);
+    checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, This->surface_alignment);");
 
     if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
         /* Most textures will use client storage if supported. Exceptions are non-native power of 2 textures

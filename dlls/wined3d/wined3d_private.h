@@ -647,6 +647,7 @@ struct IWineD3DDeviceImpl
     BOOL                    view_ident;        /* true iff view matrix is identity                */
     BOOL                    untransformed;
     BOOL                    vertexBlendUsed;   /* To avoid needless setting of the blend matrices */
+    unsigned char           surface_alignment; /* Line Alignment of surfaces                      */
 
     /* State block related */
     BOOL                    isRecordingState;
@@ -1183,9 +1184,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DCl
                           SFLAG_CLIENT)
 
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]);
-
-/* Alignment of the pitch */
-#define SURFACE_ALIGNMENT 4
 
 /*****************************************************************************
  * IWineD3DVertexDeclaration implementation structure
