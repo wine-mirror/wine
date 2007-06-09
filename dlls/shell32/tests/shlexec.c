@@ -1125,12 +1125,12 @@ typedef struct
 static DWORD CALLBACK ddeThread(LPVOID arg)
 {
     dde_thread_info_t *info = (dde_thread_info_t *)arg;
-    int rc;
-
     assert(info && info->filename);
-    rc=shell_execute(NULL, info->filename, NULL, NULL);
-    PostThreadMessage(info->threadIdParent, WM_QUIT, 0, 0L);
-    ExitThread(rc);
+    PostThreadMessage(info->threadIdParent,
+                      WM_QUIT,
+                      shell_execute(NULL, info->filename, NULL, NULL),
+                      0L);
+    ExitThread(0);
 }
 
 /* ShellExecute won't successfully send DDE commands to console applications after starting them,
@@ -1144,7 +1144,6 @@ static void test_dde(void)
     dde_thread_info_t info = { filename, GetCurrentThreadId() };
     const dde_tests_t* test;
     char params[1024];
-    HANDLE hThread;
     MSG msg;
     int rc;
 
@@ -1174,20 +1173,9 @@ static void test_dde(void)
         denyNextConnection = TRUE;
         ddeExec[0] = 0;
 
-        hThread = CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, NULL);
-        assert(hThread);
-        while (GetMessage(&msg, NULL, 0, 0))
-        {
-            /* Need a message loop for DDE server */
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-        rc = WaitForSingleObject(hThread, 5000);
-        assert(rc == WAIT_OBJECT_0);
-
-        GetExitCodeThread(hThread, (DWORD *)&rc);
-        if (rc > 32)
-            rc=33;
+        assert(CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, NULL));
+        while (GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
+        rc = msg.wParam > 32 ? 33 : msg.wParam;
         if ((test->todo & 0x1)==0)
         {
             ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
@@ -1296,7 +1284,6 @@ static void test_dde_default_app(void)
     dde_thread_info_t info = { filename, GetCurrentThreadId() };
     const dde_default_app_tests_t* test;
     char params[1024];
-    HANDLE hThread;
     MSG msg;
     int rc;
 
@@ -1329,20 +1316,9 @@ static void test_dde_default_app(void)
          * so don't wait for it */
         SetEvent(hEvent);
 
-        hThread = CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, NULL);
-        assert(hThread);
-        while (GetMessage(&msg, NULL, 0, 0))
-        {
-            /* Need a message loop for DDE server */
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-        rc = WaitForSingleObject(hThread, 5000);
-        assert(rc == WAIT_OBJECT_0);
-
-        GetExitCodeThread(hThread, (DWORD *)&rc);
-        if (rc > 32)
-            rc=33;
+        assert(CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, NULL));
+        while (GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
+        rc = msg.wParam > 32 ? 33 : msg.wParam;
         if ((test->todo & 0x1)==0)
         {
             ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
