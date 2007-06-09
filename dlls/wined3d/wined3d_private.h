@@ -537,9 +537,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
 void apply_fbo_state(IWineD3DDevice *iface);
 
-/* Routine to fill gl caps for swapchains and IWineD3D */
-BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display);
-
 /* Macros for doing basic GPU detection based on opengl capabilities */
 #define WINE_D3D6_CAPABLE(gl_info) (gl_info->supported[ARB_MULTITEXTURE])
 #define WINE_D3D7_CAPABLE(gl_info) (gl_info->supported[ARB_TEXTURE_COMPRESSION] && gl_info->supported[ARB_TEXTURE_CUBE_MAP] && gl_info->supported[ARB_TEXTURE_ENV_DOT3])
@@ -574,6 +571,16 @@ struct PLIGHTINFOEL {
 /* The default light parameters */
 extern const WINED3DLIGHT WINED3D_default_light;
 
+/* The adapter structure */
+struct WineD3DAdapter
+{
+    POINT                   monitorPoint;
+    Display                 *display;
+    WineD3D_GL_Info         gl_info;
+};
+
+extern BOOL InitAdapters(void);
+
 /*****************************************************************************
  * IWineD3D implementation structure
  */
@@ -586,10 +593,6 @@ typedef struct IWineD3DImpl
     /* WineD3D Information */
     IUnknown               *parent;
     UINT                    dxVersion;
-
-    /* GL Information */
-    BOOL                    isGLInfoValid;
-    WineD3D_GL_Info         gl_info;
 } IWineD3DImpl;
 
 extern const IWineD3DVtbl IWineD3D_Vtbl;
@@ -620,6 +623,7 @@ struct IWineD3DDeviceImpl
     /* WineD3D Information  */
     IUnknown               *parent;
     IWineD3D               *wineD3D;
+    struct WineD3DAdapter  *adapter;
 
     /* Window styles to restore when switching fullscreen mode */
     LONG                    style;

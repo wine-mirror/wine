@@ -104,7 +104,7 @@ void shader_arb_load_constants(
    
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device; 
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
-    WineD3D_GL_Info *gl_info = &((IWineD3DImpl*)deviceImpl->wineD3D)->gl_info;
+    WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
@@ -383,7 +383,7 @@ static void shader_hw_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const ch
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler_idx];
-    WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(((IWineD3DDeviceImpl *)(This->baseShader.device))->wineD3D))->gl_info;
+    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
 
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
@@ -1033,7 +1033,7 @@ static GLuint create_arb_blt_fragment_program(WineD3D_GL_Info *gl_info) {
 
 static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(This->wineD3D))->gl_info;
+    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
 
     if (useVS) {
         TRACE("Using vertex shader\n");
@@ -1074,7 +1074,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
 
 static void shader_arb_select_depth_blt(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(This->wineD3D))->gl_info;
+    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
     static GLuint vprogram_id = 0;
     static GLuint fprogram_id = 0;
 
@@ -1089,7 +1089,7 @@ static void shader_arb_select_depth_blt(IWineD3DDevice *iface) {
 
 static void shader_arb_cleanup(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(This->wineD3D))->gl_info;
+    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
     if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) glDisable(GL_VERTEX_PROGRAM_ARB);
     if (GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }

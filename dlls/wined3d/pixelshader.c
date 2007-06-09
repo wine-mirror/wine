@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
-#define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->baseShader.device)->wineD3D))->gl_info
+#define GLINFO_LOCATION ((IWineD3DDeviceImpl *) This->baseShader.device)->adapter->gl_info
 
 #if 0 /* Must not be 1 in cvs version */
 # define PSTRACE(A) TRACE A

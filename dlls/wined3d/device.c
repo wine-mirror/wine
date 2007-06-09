@@ -33,7 +33,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-#define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
+#define GLINFO_LOCATION This->adapter->gl_info
 
 /* Define the default light parameters as specified by MSDN */
 const WINED3DLIGHT WINED3D_default_light = {
@@ -1855,12 +1855,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* Set up some starting GL setup */
     ENTER_GL();
-    /*
-    * Initialize openGL extension related variables
-    *  with Default values
-    */
 
-    ((IWineD3DImpl *) This->wineD3D)->isGLInfoValid = IWineD3DImpl_FillGLCaps(This->wineD3D, swapchain->context[0]->display);
     /* Setup all the devices defaults */
     IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)This->stateBlock);
 #if 0

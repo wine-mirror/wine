@@ -27,7 +27,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
-#define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
+#define GLINFO_LOCATION This->adapter->gl_info
 
 #include <stdio.h>
 

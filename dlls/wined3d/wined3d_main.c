@@ -59,7 +59,14 @@ long globalChangeGlRam(long glram){
 }
 
 IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *parent) {
-    IWineD3DImpl* object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DImpl));
+    IWineD3DImpl* object;
+
+    if (!InitAdapters()) {
+        ERR("Failed to initialize direct3d adapters\n");
+        return NULL;
+    }
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DImpl));
     object->lpVtbl = &IWineD3D_Vtbl;
     object->dxVersion = dxVersion;
     object->ref = 1;
@@ -71,7 +78,6 @@ IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *p
         wineD3DGlobalStatistics = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wineD3DGlobalStatistics));
 
     }
-
 
     TRACE("Created WineD3D object @ %p for d3d%d support\n", object, dxVersion);
 

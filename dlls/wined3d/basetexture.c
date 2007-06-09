@@ -24,7 +24,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
-#define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->resource.wineD3DDevice)->wineD3D))->gl_info
+#define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
 static const Wined3dTextureStateMap textureObjectSamplerStates[]  = {
     {WINED3DSAMP_ADDRESSU,      WINED3DSAMP_ADDRESSU},

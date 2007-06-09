@@ -27,7 +27,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-#define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
+#define GLINFO_LOCATION This->adapter->gl_info
 
 /*****************************************************************************
  * Pixel format array
@@ -1217,7 +1217,6 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
 /* Setup the texture operations texture stage states */
 void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
 {
-#define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
         GLenum src1, src2, src3;
         GLenum opr1, opr2, opr3;
         GLenum comb_target;
@@ -2577,7 +2576,7 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
  *  FALSE otherwise
  *
  *********************************************************************/
-#define GLINFO_LOCATION ((IWineD3DImpl *)(This->resource.wineD3DDevice->wineD3D))->gl_info
+#define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]) {
     int x1 = Rect->left, x2 = Rect->right;

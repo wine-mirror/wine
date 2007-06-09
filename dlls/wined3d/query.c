@@ -33,7 +33,7 @@
  */
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-#define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->wineD3DDevice)->wineD3D))->gl_info
+#define GLINFO_LOCATION This->wineD3DDevice->adapter->gl_info
 
 /* *******************************************
    IWineD3DQuery IUnknown parts follow
