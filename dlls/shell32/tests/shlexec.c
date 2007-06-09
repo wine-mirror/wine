@@ -1232,50 +1232,55 @@ static void test_dde(void)
     assert(DdeUninitialize(ddeInst));
 }
 
+#define DDE_DEFAULT_APP_VARIANTS 2
 typedef struct
 {
     const char* command;
-    const char* expectedDdeApplication;
+    const char* expectedDdeApplication[DDE_DEFAULT_APP_VARIANTS];
     int todo;
-    int rc;
+    int rc[DDE_DEFAULT_APP_VARIANTS];
 } dde_default_app_tests_t;
 
 static dde_default_app_tests_t dde_default_app_tests[] =
 {
+    /* Windows XP and 98 handle default DDE app names in different ways.
+     * The application name we see in the first test determines the pattern
+     * of application names and return codes we will look for. */
+
     /* Test unquoted existing filename with a space */
-    {"%s\\test file.exe", "test file", 0x0, 33},
-    {"%s\\test file.exe param", "test file", 0x0, 33},
+    {"%s\\test file.exe", {"test file", "test"}, 0x0, {33, 33}},
+    {"%s\\test file.exe param", {"test file", "test"}, 0x0, {33, 33}},
 
     /* Test quoted existing filename with a space */
-    {"\"%s\\test file.exe\"", "test file", 0x0, 33},
-    {"\"%s\\test file.exe\" param", "test file", 0x0, 33},
+    {"\"%s\\test file.exe\"", {"test file", "test file"}, 0x0, {33, 33}},
+    {"\"%s\\test file.exe\" param", {"test file", "test file"}, 0x0, {33, 33}},
 
     /* Test unquoted filename with a space that doesn't exist, but
      * test2.exe does */
-    {"%s\\test2 file.exe", "test2", 0x0, 33},
-    {"%s\\test2 file.exe param", "test2", 0x0, 33},
+    {"%s\\test2 file.exe", {"test2", "test2"}, 0x0, {33, 33}},
+    {"%s\\test2 file.exe param", {"test2", "test2"}, 0x0, {33, 33}},
 
     /* Test quoted filename with a space that does not exist */
-    {"\"%s\\test2 file.exe\"", "", 0x0, 5},
-    {"\"%s\\test2 file.exe\" param", "", 0x0, 5},
+    {"\"%s\\test2 file.exe\"", {"", "test2 file"}, 0x0, {5, 33}},
+    {"\"%s\\test2 file.exe\" param", {"", "test2 file"}, 0x0, {5, 33}},
 
     /* Test filename supplied without the extension */
-    {"%s\\test2", "test2", 0x0, 33},
-    {"%s\\test2 param", "test2", 0x0, 33},
+    {"%s\\test2", {"test2", "test2"}, 0x0, {33, 33}},
+    {"%s\\test2 param", {"test2", "test2"}, 0x0, {33, 33}},
 
     /* Test an unquoted nonexistent filename */
-    {"%s\\notexist.exe", "", 0x0, 5},
-    {"%s\\notexist.exe param", "", 0x0, 5},
+    {"%s\\notexist.exe", {"", "notexist"}, 0x0, {5, 33}},
+    {"%s\\notexist.exe param", {"", "notexist"}, 0x0, {5, 33}},
 
     /* Test an application that will be found on the path */
-    {"cmd", "cmd", 0x0, 33},
-    {"cmd param", "cmd", 0x0, 33},
+    {"cmd", {"cmd", "cmd"}, 0x0, {33, 33}},
+    {"cmd param", {"cmd", "cmd"}, 0x0, {33, 33}},
 
     /* Test an application that will not be found on the path */
-    {"xyzwxyzwxyz", "", 0x0, 5},
-    {"xyzwxyzwxyz param", "", 0x0, 5},
+    {"xyzwxyzwxyz", {"", "xyzwxyzwxyz"}, 0x0, {5, 33}},
+    {"xyzwxyzwxyz param", {"", "xyzwxyzwxyz"}, 0x0, {5, 33}},
 
-    {NULL, NULL, 0, 0}
+    {NULL, {NULL}, 0, {0}}
 };
 
 static void test_dde_default_app(void)
@@ -1287,7 +1292,7 @@ static void test_dde_default_app(void)
     char params[1024];
     DWORD threadId;
     MSG msg;
-    int rc;
+    int rc, which = 0;
 
     ddeInst = 0;
     rc = DdeInitializeA(&ddeInst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
@@ -1321,29 +1326,46 @@ static void test_dde_default_app(void)
         assert(CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, &threadId));
         while (GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
         rc = msg.wParam > 32 ? 33 : msg.wParam;
+
+        /* First test, find which set of test data we expect to see */
+        if (test == dde_default_app_tests)
+        {
+            int i;
+            for (i=0; i<DDE_DEFAULT_APP_VARIANTS; i++)
+            {
+                if (!strcmp(ddeApplication, test->expectedDdeApplication[i]))
+                {
+                    which = i;
+                    break;
+                }
+            }
+            if (i == DDE_DEFAULT_APP_VARIANTS)
+                skip("Default DDE application test does not match any available results, using first expected data set.\n");
+        }
+
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+            ok(rc==test->rc[which], "%s failed: rc=%d err=%d\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+            ok(rc==test->rc[which], "%s failed: rc=%d err=%d\n", shell_call,
                rc, GetLastError());
         }
         if (rc == 33)
         {
             if ((test->todo & 0x2)==0)
             {
-                ok(!strcmp(ddeApplication, test->expectedDdeApplication),
+                ok(!strcmp(ddeApplication, test->expectedDdeApplication[which]),
                    "Expected application '%s', got '%s'\n",
-                   test->expectedDdeApplication, ddeApplication);
+                   test->expectedDdeApplication[which], ddeApplication);
             }
             else todo_wine
             {
-                ok(!strcmp(ddeApplication, test->expectedDdeApplication),
+                ok(!strcmp(ddeApplication, test->expectedDdeApplication[which]),
                    "Expected application '%s', got '%s'\n",
-                   test->expectedDdeApplication, ddeApplication);
+                   test->expectedDdeApplication[which], ddeApplication);
             }
         }
 
