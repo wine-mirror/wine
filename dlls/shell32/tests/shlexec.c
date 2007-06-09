@@ -1128,7 +1128,7 @@ static DWORD CALLBACK ddeThread(LPVOID arg)
     assert(info && info->filename);
     PostThreadMessage(info->threadIdParent,
                       WM_QUIT,
-                      shell_execute(NULL, info->filename, NULL, NULL),
+                      shell_execute_ex(SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI, NULL, info->filename, NULL, NULL),
                       0L);
     ExitThread(0);
 }
