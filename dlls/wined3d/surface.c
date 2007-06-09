@@ -2385,6 +2385,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     ENTER_GL();
 
     ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
+    IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
     /* Bind the target texture */
     glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
@@ -2470,6 +2471,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
     ENTER_GL();
     ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
+    IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
     /* Try to use an aux buffer for drawing the rectangle. This way it doesn't need restoring.
      * This way we don't have to wait for the 2nd readback to finish to leave this function.
@@ -2802,17 +2804,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             /* Destination color key is checked above */
         }
 
-        /* Call preload for the surface to make sure it isn't dirty */
-        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-            checkGLcall("glActiveTextureARB");
-        }
-        IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
-        IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
-
         /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
-            * glCopyTexSubImage is a bit picky about the parameters we pass to it
-            */
+         * glCopyTexSubImage is a bit picky about the parameters we pass to it
+         */
         if(SrcRect) {
             if(SrcRect->top < SrcRect->bottom) {
                 srect.y1 = SrcRect->top;
