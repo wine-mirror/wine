@@ -1144,6 +1144,7 @@ static void test_dde(void)
     dde_thread_info_t info = { filename, GetCurrentThreadId() };
     const dde_tests_t* test;
     char params[1024];
+    DWORD threadId;
     MSG msg;
     int rc;
 
@@ -1173,7 +1174,7 @@ static void test_dde(void)
         denyNextConnection = TRUE;
         ddeExec[0] = 0;
 
-        assert(CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, NULL));
+        assert(CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, &threadId));
         while (GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
         rc = msg.wParam > 32 ? 33 : msg.wParam;
         if ((test->todo & 0x1)==0)
@@ -1284,6 +1285,7 @@ static void test_dde_default_app(void)
     dde_thread_info_t info = { filename, GetCurrentThreadId() };
     const dde_default_app_tests_t* test;
     char params[1024];
+    DWORD threadId;
     MSG msg;
     int rc;
 
@@ -1316,7 +1318,7 @@ static void test_dde_default_app(void)
          * so don't wait for it */
         SetEvent(hEvent);
 
-        assert(CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, NULL));
+        assert(CreateThread(NULL, 0, ddeThread, (LPVOID)&info, 0, &threadId));
         while (GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
         rc = msg.wParam > 32 ? 33 : msg.wParam;
         if ((test->todo & 0x1)==0)
