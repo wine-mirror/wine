@@ -1044,7 +1044,7 @@ typedef struct
     const char* application;
     const char* topic;
     const char* ifexec;
-    BOOL bExpectCmdLine;
+    int expectedArgs;
     const char* expectedDdeExec;
     int todo;
     int rc;
@@ -1071,7 +1071,7 @@ static dde_tests_t dde_tests[] =
     /* Test default DDE application */
     {"", "[open(\"%1\")]", NULL, "dde", NULL, FALSE, "[open(\"%s\")]", 0x0, 33},
 
-    {NULL, NULL, NULL, NULL, 0x0, 0}
+    {NULL, NULL, NULL, NULL, NULL, 0, 0x0, 0}
 };
 
 static DWORD ddeInst;
@@ -1191,13 +1191,13 @@ static void test_dde(void)
         {
             if ((test->todo & 0x2)==0)
             {
-                okChildInt("argcA", test->bExpectCmdLine ? 4 : 3);
+                okChildInt("argcA", test->expectedArgs + 3);
             }
             else todo_wine
             {
-                okChildInt("argcA", test->bExpectCmdLine ? 4 : 3);
+                okChildInt("argcA", test->expectedArgs + 3);
             }
-            if (test->bExpectCmdLine)
+            if (test->expectedArgs == 1)
             {
                 if ((test->todo & 0x4) == 0)
                 {
