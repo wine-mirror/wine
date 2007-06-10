@@ -864,14 +864,72 @@ static HRESULT exec_outdent(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, V
 
 static HRESULT exec_composesettings(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
+    WCHAR *ptr;
+
     if(out || !in || V_VT(in) != VT_BSTR) {
         WARN("invalid arg\n");
         return E_INVALIDARG;
     }
 
-    FIXME("%s\n", debugstr_w(V_BSTR(in)));
+    TRACE("(%p)->(%x %s)\n", This, cmdexecopt, debugstr_w(V_BSTR(in)));
 
     update_doc(This, UPDATE_UI);
+
+    ptr = V_BSTR(in);
+    if(*ptr == '1')
+        exec_bold(This, cmdexecopt, NULL, NULL);
+    ptr = strchrW(ptr, ',');
+    if(!ptr)
+        return S_OK;
+
+    if(*++ptr == '1')
+        exec_italic(This, cmdexecopt, NULL, NULL);
+    ptr = strchrW(ptr, ',');
+    if(!ptr)
+        return S_OK;
+
+    if(*++ptr == '1')
+        exec_underline(This, cmdexecopt, NULL, NULL);
+    ptr = strchrW(ptr, ',');
+    if(!ptr)
+        return S_OK;
+
+    if(isdigitW(*++ptr)) {
+        VARIANT v;
+
+        V_VT(&v) = VT_I4;
+        V_I4(&v) = *ptr-'0';
+
+        exec_fontsize(This, cmdexecopt, &v, NULL);
+    }
+    ptr = strchrW(ptr, ',');
+    if(!ptr)
+        return S_OK;
+
+    if(*++ptr != ',')
+        FIXME("set font color\n");
+    ptr = strchrW(ptr, ',');
+    if(!ptr)
+        return S_OK;
+
+    if(*++ptr != ',')
+        FIXME("set background color\n");
+    ptr = strchrW(ptr, ',');
+    if(!ptr)
+        return S_OK;
+
+    ptr++;
+    if(*ptr) {
+        VARIANT v;
+
+        V_VT(&v) = VT_BSTR;
+        V_BSTR(&v) = SysAllocString(ptr);
+
+        exec_fontname(This, cmdexecopt, &v, NULL);
+
+        SysFreeString(V_BSTR(&v));
+    }
+
     return S_OK;
 }
 
