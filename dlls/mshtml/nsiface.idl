@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Jacek Caban for CodeWeavers
+ * Copyright 2005-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1147,6 +1147,35 @@ interface nsIWebBrowserPrint : nsISupports
     nsresult Cancel();
     nsresult EnumerateDocumentNames(PRUint32 *aCount, PRUnichar ***aResult);
     nsresult ExitPrintPreview();
+}
+
+[
+    object,
+    uuid(919e792a-6490-40b8-bba5-f9e9ad5640c8)
+]
+interface nsIScrollable : nsISupports
+{
+    enum {
+        ScrollOrientation_X = 1,
+        ScrollOrientation_Y = 2
+    };
+
+    enum {
+        Scrollbar_Auto   = 1,
+        Scrollbar_Never  = 2,
+        Scrollbar_Always = 3
+    };
+
+    nsresult GetCurScrollPos(PRInt32 scrollOrientation, PRInt32 *curPos);
+    nsresult SetCurScrollPos(PRInt32 scrollOrientation, PRInt32 curPos);
+    nsresult SetCurScrollPosEx(PRInt32 curHorizontalPos, PRInt32 curVerticalPos);
+    nsresult GetScrollRange(PRInt32 scrollOrientation, PRInt32 *minPos, PRInt32 *maxPos);
+    nsresult SetScrollRange(PRInt32 scrollOrientation, PRInt32 minPos, PRInt32 maxPos);
+    nsresult SetScrollRangeEx(PRInt32 minHorizontalPos, PRInt32 maxHorizontalPos,
+            PRInt32 minVerticalPos, PRInt32 maxVerticalPos);
+    nsresult GetDefaultScrollbarPreferences(PRInt32 scrollOrientation, PRInt32 *scrollbarPref);
+    nsresult SetDefaultScrollbarPreferences(PRInt32 scrollOrientation, PRInt32 scrollbarPref);
+    nsresult GetScrollbarVisibility(PRBool *verticalVisible, PRBool *horizontalVisible);
 }
 
 [

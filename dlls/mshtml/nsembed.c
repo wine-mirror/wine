@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Jacek Caban for CodeWeavers
+ * Copyright 2005-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1526,6 +1526,7 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
 {
     nsIDOMWindow *dom_window;
     nsIWebBrowserSetup *wbsetup;
+    nsIScrollable *scrollable;
     NSContainer *ret;
     nsresult nsres;
 
@@ -1640,6 +1641,23 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
         }
     }else {
         ERR("GetContentDOMWindow failed: %08x\n", nsres);
+    }
+
+    nsres = nsIWebBrowser_QueryInterface(ret->webbrowser, &IID_nsIScrollable, (void**)&scrollable);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIScrollable_SetDefaultScrollbarPreferences(scrollable,
+                ScrollOrientation_Y, Scrollbar_Always);
+        if(NS_FAILED(nsres))
+            ERR("Could not set default Y scrollbar prefs: %08x\n", nsres);
+
+        nsres = nsIScrollable_SetDefaultScrollbarPreferences(scrollable,
+                ScrollOrientation_X, Scrollbar_Auto);
+        if(NS_FAILED(nsres))
+            ERR("Could not set default X scrollbar prefs: %08x\n", nsres);
+
+        nsIScrollable_Release(scrollable);
+    }else {
+        ERR("Could not get nsIScrollable: %08x\n", nsres);
     }
 
     return ret;
