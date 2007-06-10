@@ -41,7 +41,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_BOLD         "cmd_bold"
 #define NSCMD_FONTCOLOR    "cmd_fontColor"
 #define NSCMD_FONTFACE     "cmd_fontFace"
+#define NSCMD_INDENT       "cmd_indent"
+#define NSCMD_INSERTHR     "cmd_insertHR"
 #define NSCMD_ITALIC       "cmd_italic"
+#define NSCMD_OL           "cmd_ol"
+#define NSCMD_OUTDENT      "cmd_outdent"
+#define NSCMD_UL           "cmd_ul"
 #define NSCMD_UNDERLINE    "cmd_underline"
 
 #define NSSTATE_ATTRIBUTE "state_attribute"
@@ -722,6 +727,83 @@ static HRESULT exec_underline(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     return S_OK;
 }
 
+static HRESULT exec_horizontalline(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_INSERTHR, NULL);
+
+    return S_OK;
+}
+
+static HRESULT exec_orderlist(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_OL, NULL);
+
+    return S_OK;
+}
+
+static HRESULT exec_unorderlist(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_UL, NULL);
+
+    return S_OK;
+}
+
+static HRESULT exec_indent(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_INDENT, NULL);
+
+    return S_OK;
+}
+
+static HRESULT exec_outdent(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_OUTDENT, NULL);
+
+    return S_OK;
+}
+
+static HRESULT exec_composesettings(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    if(out || !in || V_VT(in) != VT_BSTR) {
+        WARN("invalid arg\n");
+        return E_INVALIDARG;
+    }
+
+    FIXME("%s\n", debugstr_w(V_BSTR(in)));
+
+    return S_OK;
+}
+
 const cmdtable_t editmode_cmds[] = {
     {IDM_FONTNAME,        NULL,         exec_fontname},
     {IDM_FONTSIZE,        NULL,         exec_fontsize},
@@ -732,5 +814,11 @@ const cmdtable_t editmode_cmds[] = {
     {IDM_JUSTIFYRIGHT,    NULL,         exec_justifyright},
     {IDM_JUSTIFYLEFT,     NULL,         exec_justifyleft},
     {IDM_UNDERLINE,       NULL,         exec_underline},
+    {IDM_HORIZONTALLINE,  NULL,         exec_horizontalline},
+    {IDM_ORDERLIST,       NULL,         exec_orderlist},
+    {IDM_UNORDERLIST,     NULL,         exec_unorderlist},
+    {IDM_INDENT,          NULL,         exec_indent},
+    {IDM_OUTDENT,         NULL,         exec_outdent},
+    {IDM_COMPOSESETTINGS, NULL,         exec_composesettings},
     {0,NULL,NULL}
 };

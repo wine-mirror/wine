@@ -461,36 +461,6 @@ static HRESULT exec_get_print_template(HTMLDocument *This, DWORD nCmdexecopt, VA
     return E_NOTIMPL;
 }
 
-static void do_ns_command(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
-{
-    nsICommandManager *cmdmgr;
-    nsIInterfaceRequestor *iface_req;
-    nsresult nsres;
-
-    TRACE("(%p)\n", This);
-
-    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
-            &IID_nsIInterfaceRequestor, (void**)&iface_req);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
-        return;
-    }
-
-    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsICommandManager,
-                                               (void**)&cmdmgr);
-    nsIInterfaceRequestor_Release(iface_req);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsICommandManager: %08x\n", nsres);
-        return;
-    }
-
-    nsres = nsICommandManager_DoCommand(cmdmgr, cmd, nsparam, NULL);
-    if(NS_FAILED(nsres))
-        ERR("DoCommand(%s) failed: %08x\n", debugstr_a(cmd), nsres);
-
-    nsICommandManager_Release(cmdmgr);
-}
-
 static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
 {
     nsICommandManager *cmdmgr;
@@ -681,77 +651,9 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     return IPersistMoniker_Load(PERSISTMON(This), TRUE, mon, NULL, 0);
 }
 
-static HRESULT exec_baselinefont3(HTMLDocument *This)
-{
-    FIXME("(%p)\n", This);
-    return S_OK;
-}
-
-static HRESULT exec_horizontalline(HTMLDocument *This)
-{
-    TRACE("(%p)\n", This);
-
-    if(This->nscontainer)
-        do_ns_command(This->nscontainer, NSCMD_INSERTHR, NULL);
-
-    return S_OK;
-}
-
-static HRESULT exec_orderlist(HTMLDocument *This)
-{
-    TRACE("(%p)\n", This);
-
-    if(This->nscontainer)
-        do_ns_command(This->nscontainer, NSCMD_OL, NULL);
-
-    return S_OK;
-}
-
-static HRESULT exec_unorderlist(HTMLDocument *This)
-{
-    TRACE("(%p)\n", This);
-
-    if(This->nscontainer)
-        do_ns_command(This->nscontainer, NSCMD_UL, NULL);
-
-    return S_OK;
-}
-
-static HRESULT exec_indent(HTMLDocument *This)
-{
-    TRACE("(%p)\n", This);
-
-    if(This->nscontainer)
-        do_ns_command(This->nscontainer, NSCMD_INDENT, NULL);
-
-    return S_OK;
-}
-
-static HRESULT exec_outdent(HTMLDocument *This)
-{
-    TRACE("(%p)\n", This);
-
-    if(This->nscontainer)
-        do_ns_command(This->nscontainer, NSCMD_OUTDENT, NULL);
-
-    return S_OK;
-}
-
 static HRESULT exec_htmleditmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
-    return S_OK;
-}
-
-static HRESULT exec_composesettings(HTMLDocument *This, VARIANT *in)
-{
-    if(!in || V_VT(in) != VT_BSTR) {
-        WARN("invalid arg\n");
-        return E_INVALIDARG;
-    }
-
-    FIXME("%s\n", debugstr_w(V_BSTR(in)));
-
     return S_OK;
 }
 
@@ -759,6 +661,12 @@ static HRESULT exec_setdirty(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
 {
     FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
     return E_NOTIMPL;
+}
+
+static HRESULT exec_baselinefont3(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
+    return S_OK;
 }
 
 static const struct {
@@ -815,6 +723,7 @@ static const cmdtable_t base_cmds[] = {
     {IDM_PRINT,            NULL,           exec_print},
     {IDM_SETDIRTY,         NULL,           exec_setdirty},
     {IDM_HTMLEDITMODE,     NULL,           exec_htmleditmode},
+    {IDM_BASELINEFONT3,    NULL,           exec_baselinefont3},
     {0,NULL,NULL}
 };
 
@@ -1023,40 +932,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         if(hres == OLECMDERR_E_NOTSUPPORTED)
             hres = exec_from_table(This, editmode_cmds, nCmdID,
                                    nCmdexecopt, pvaIn, pvaOut);
-        if(hres != OLECMDERR_E_NOTSUPPORTED)
-            return hres;
-
-        switch(nCmdID) {
-        case IDM_BASELINEFONT3:
-            return exec_baselinefont3(This);
-        case IDM_HORIZONTALLINE:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_horizontalline(This);
-        case IDM_ORDERLIST:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_orderlist(This);
-        case IDM_UNORDERLIST:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_unorderlist(This);
-        case IDM_INDENT:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_indent(This);
-        case IDM_OUTDENT:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_outdent(This);
-        case IDM_COMPOSESETTINGS:
-            if(pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_composesettings(This, pvaIn);
-        default:
+        if(hres == OLECMDERR_E_NOTSUPPORTED)
             FIXME("unsupported nCmdID %d of CGID_MSHTML group\n", nCmdID);
-            return OLECMDERR_E_NOTSUPPORTED;
-        }
+
+        return hres;
     }
 
     FIXME("Unsupported pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
