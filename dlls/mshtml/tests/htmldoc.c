@@ -3331,6 +3331,7 @@ static void test_editing_mode(void)
     test_exec_editmode(unk);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_download(TRUE, FALSE);
+    test_timer(EXPECT_UPDATEUI);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED|OLECMDF_ENABLED);
 
     test_exec_fontname(unk, NULL, wszTimesNewRoman);

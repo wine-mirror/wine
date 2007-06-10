@@ -973,6 +973,8 @@ const cmdtable_t editmode_cmds[] = {
 
 void init_editor(HTMLDocument *This)
 {
+    update_doc(This, UPDATE_UI);
+
     if(!This->nscontainer)
         return;
 
