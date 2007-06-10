@@ -44,11 +44,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_INDENT       "cmd_indent"
 #define NSCMD_INSERTHR     "cmd_insertHR"
 #define NSCMD_ITALIC       "cmd_italic"
+#define NSCMD_LINENEXT     "cmd_lineNext"
 #define NSCMD_LINEPREVIOUS "cmd_linePrevious"
+#define NSCMD_MOVEPAGEDOWN "cmd_movePageDown"
 #define NSCMD_MOVEPAGEUP   "cmd_movePageUp"
 #define NSCMD_OL           "cmd_ol"
 #define NSCMD_OUTDENT      "cmd_outdent"
+#define NSCMD_SELECTLINENEXT      "cmd_selectLineNext"
 #define NSCMD_SELECTLINEPREVIOUS  "cmd_selectLinePrevious"
+#define NSCMD_SELECTPAGEDOWN      "cmd_selectPageDown"
 #define NSCMD_SELECTPAGEUP "cmd_selectPageUp"
 #define NSCMD_UL           "cmd_ul"
 #define NSCMD_UNDERLINE    "cmd_underline"
@@ -608,6 +612,17 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
             NSCMD_MOVEPAGEUP,
             NSCMD_SELECTLINEPREVIOUS,
             NSCMD_SELECTPAGEUP
+        };
+
+        handle_arrow_key(This, key_event, cmds);
+        break;
+    }
+    case DOM_VK_DOWN: {
+        static const char *cmds[] = {
+            NSCMD_LINENEXT,
+            NSCMD_MOVEPAGEDOWN,
+            NSCMD_SELECTLINENEXT,
+            NSCMD_SELECTPAGEDOWN
         };
 
         handle_arrow_key(This, key_event, cmds);
