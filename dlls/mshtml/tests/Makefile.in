@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = mshtml.dll
-IMPORTS   = ole32 user32 urlmon advapi32 kernel32
+IMPORTS   = ole32 oleaut32 user32 urlmon advapi32 kernel32
 EXTRALIBS = -luuid
 
 CTESTS = \

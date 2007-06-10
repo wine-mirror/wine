@@ -150,6 +150,12 @@ static const WCHAR doc_url[] = {'w','i','n','e','t','e','s','t',':','d','o','c',
 static HRESULT QueryInterface(REFIID riid, void **ppv);
 static void test_readyState(IUnknown*);
 static void test_MSHTML_QueryStatus(IUnknown*,DWORD);
+static BOOL nogecko = FALSE;
+
+static const WCHAR wszTimesNewRoman[] =
+    {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
+static const WCHAR wszArial[] =
+    {'A','r','i','a','l',0};
 
 #define EXPECT_UPDATEUI  1
 #define EXPECT_SETTITLE  2
@@ -2321,6 +2327,8 @@ static void test_download(BOOL verb_done, BOOL css_dwl)
             SET_CALLED(Terminate);
             SET_CALLED(Protocol_Read);
             SET_CALLED(UnlockRequest);
+
+            nogecko = TRUE;
         }
     }
     CHECK_CALLED(OnChanged_1005);
@@ -2606,6 +2614,46 @@ static void test_exec_editmode(IUnknown *unk)
     hres = IOleCommandTarget_Exec(cmdtrg, &CGID_MSHTML, IDM_EDITMODE,
             OLECMDEXECOPT_DODEFAULT, NULL, NULL);
     ok(hres == S_OK, "Exec failed: %08x\n", hres);
+}
+
+static void test_exec_fontname(IUnknown *unk, LPCWSTR name, LPCWSTR exname)
+{
+   IOleCommandTarget *cmdtrg;
+   VARIANT *in = NULL, _in, *out = NULL, _out;
+   HRESULT hres;
+
+   hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+   ok(hres == S_OK, "QueryInterface(IIDIOleM=CommandTarget failed: %08x\n", hres);
+   if(FAILED(hres))
+       return;
+
+   if(name) {
+       in = &_in;
+       V_VT(in) = VT_BSTR;
+       V_BSTR(in) = SysAllocString(name);
+   }
+
+   if(exname) {
+       out = &_out;
+       V_VT(out) = VT_I4;
+       V_I4(out) = 0xdeadbeef;
+   }
+
+   hres = IOleCommandTarget_Exec(cmdtrg, &CGID_MSHTML, IDM_FONTNAME, 0, in, out);
+   if(!nogecko)
+       ok(hres == S_OK, "Exec(IDM_FONTNAME) failed: %08x\n", hres);
+
+   if(in)
+       VariantClear(in);
+
+   if(out && !nogecko) {
+       ok(V_VT(out) == VT_BSTR, "V_VT(out) = %x\n", V_VT(out));
+       if(V_VT(out) == VT_BSTR)
+           ok(!lstrcmpW(V_BSTR(out), name ? name : exname), "unexpected fontname\n");
+       VariantClear(out);
+   }
+
+   IOleCommandTarget_Release(cmdtrg);
 }
 
 static HWND create_container_window(void)
@@ -3267,6 +3315,10 @@ static void test_editing_mode(void)
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_download(TRUE, FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED|OLECMDF_ENABLED);
+
+    test_exec_fontname(unk, NULL, wszTimesNewRoman);
+    test_exec_fontname(unk, wszArial, wszTimesNewRoman);
+    test_exec_fontname(unk, NULL, wszArial);
 
     test_UIDeactivate();
     test_InPlaceDeactivate(unk, TRUE);
