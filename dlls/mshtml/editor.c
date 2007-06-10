@@ -50,6 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_UNDERLINE    "cmd_underline"
 
 #define NSSTATE_ATTRIBUTE "state_attribute"
+#define NSSTATE_ALL       "state_all"
 
 #define NSALIGN_CENTER "center"
 #define NSALIGN_LEFT   "left"
@@ -120,6 +121,26 @@ static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsIComm
 
     nsICommandManager_Release(cmdmgr);
     return nsres;
+}
+
+static DWORD query_ns_edit_status(HTMLDocument *This, const char *nscmd)
+{
+    nsICommandParams *nsparam;
+    PRBool b = FALSE;
+
+    if(This->usermode != EDITMODE || This->readystate < READYSTATE_INTERACTIVE)
+        return OLECMDF_SUPPORTED;
+
+    if(This->nscontainer && nscmd) {
+        nsparam = create_nscommand_params();
+        get_ns_command_state(This->nscontainer, nscmd, nsparam);
+
+        nsICommandParams_GetBooleanValue(nsparam, NSSTATE_ALL, &b);
+
+        nsICommandParams_Release(nsparam);
+    }
+
+    return OLECMDF_SUPPORTED | OLECMDF_ENABLED | (b ? OLECMDF_LATCHED : 0);
 }
 
 static void set_ns_align(HTMLDocument *This, const char *align_str)
@@ -847,21 +868,73 @@ static HRESULT exec_composesettings(HTMLDocument *This, DWORD cmdexecopt, VARIAN
     return S_OK;
 }
 
+static HRESULT query_edit_status(HTMLDocument *This, OLECMD *cmd)
+{
+    switch(cmd->cmdID) {
+    case IDM_FONTNAME:
+        TRACE("CGID_MSHTML: IDM_FONTNAME\n");
+        cmd->cmdf = query_ns_edit_status(This, NULL);
+        break;
+    case IDM_FONTSIZE:
+        TRACE("CGID_MSHTML: IDM_FONTSIZE\n");
+        cmd->cmdf = query_ns_edit_status(This, NULL);
+        break;
+    case IDM_BOLD:
+        TRACE("CGID_MSHTML: IDM_BOLD\n");
+        cmd->cmdf = query_ns_edit_status(This, NSCMD_BOLD);
+        break;
+    case IDM_FORECOLOR:
+        TRACE("CGID_MSHTML: IDM_FORECOLOR\n");
+        cmd->cmdf = query_ns_edit_status(This, NULL);
+        break;
+    case IDM_ITALIC:
+        TRACE("CGID_MSHTML: IDM_ITALIC\n");
+        cmd->cmdf = query_ns_edit_status(This, NSCMD_ITALIC);
+        break;
+    case IDM_UNDERLINE:
+        TRACE("CGID_MSHTML: IDM_UNDERLINE\n");
+        cmd->cmdf = query_ns_edit_status(This, NSCMD_UNDERLINE);
+        break;
+    case IDM_HORIZONTALLINE:
+        TRACE("CGID_MSHTML: IDM_HORIZONTALLINE\n");
+        cmd->cmdf = query_ns_edit_status(This, NULL);
+        break;
+    case IDM_ORDERLIST:
+        TRACE("CGID_MSHTML: IDM_ORDERLIST\n");
+        cmd->cmdf = query_ns_edit_status(This, NSCMD_OL);
+        break;
+    case IDM_UNORDERLIST:
+        TRACE("CGID_MSHTML: IDM_HORIZONTALLINE\n");
+        cmd->cmdf = query_ns_edit_status(This, NSCMD_UL);
+        break;
+    case IDM_INDENT:
+        TRACE("CGID_MSHTML: IDM_INDENT\n");
+        cmd->cmdf = query_ns_edit_status(This, NULL);
+        break;
+    case IDM_OUTDENT:
+        TRACE("CGID_MSHTML: IDM_OUTDENT\n");
+        cmd->cmdf = query_ns_edit_status(This, NULL);
+        break;
+    }
+
+    return S_OK;
+}
+
 const cmdtable_t editmode_cmds[] = {
-    {IDM_FONTNAME,        NULL,         exec_fontname},
-    {IDM_FONTSIZE,        NULL,         exec_fontsize},
-    {IDM_FORECOLOR,       NULL,         exec_forecolor},
-    {IDM_BOLD,            NULL,         exec_bold},
-    {IDM_ITALIC,          NULL,         exec_italic},
-    {IDM_JUSTIFYCENTER,   query_justify,     exec_justifycenter},
-    {IDM_JUSTIFYRIGHT,    query_justify,     exec_justifyright},
-    {IDM_JUSTIFYLEFT,     query_justify,     exec_justifyleft},
-    {IDM_UNDERLINE,       NULL,         exec_underline},
-    {IDM_HORIZONTALLINE,  NULL,         exec_horizontalline},
-    {IDM_ORDERLIST,       NULL,         exec_orderlist},
-    {IDM_UNORDERLIST,     NULL,         exec_unorderlist},
-    {IDM_INDENT,          NULL,         exec_indent},
-    {IDM_OUTDENT,         NULL,         exec_outdent},
-    {IDM_COMPOSESETTINGS, NULL,         exec_composesettings},
+    {IDM_FONTNAME,        query_edit_status,    exec_fontname},
+    {IDM_FONTSIZE,        query_edit_status,    exec_fontsize},
+    {IDM_FORECOLOR,       query_edit_status,    exec_forecolor},
+    {IDM_BOLD,            query_edit_status,    exec_bold},
+    {IDM_ITALIC,          query_edit_status,    exec_italic},
+    {IDM_JUSTIFYCENTER,   query_justify,        exec_justifycenter},
+    {IDM_JUSTIFYRIGHT,    query_justify,        exec_justifyright},
+    {IDM_JUSTIFYLEFT,     query_justify,        exec_justifyleft},
+    {IDM_UNDERLINE,       query_edit_status,    exec_underline},
+    {IDM_HORIZONTALLINE,  query_edit_status,    exec_horizontalline},
+    {IDM_ORDERLIST,       query_edit_status,    exec_orderlist},
+    {IDM_UNORDERLIST,     query_edit_status,    exec_unorderlist},
+    {IDM_INDENT,          query_edit_status,    exec_indent},
+    {IDM_OUTDENT,         query_edit_status,    exec_outdent},
+    {IDM_COMPOSESETTINGS, NULL,                 exec_composesettings},
     {0,NULL,NULL}
 };

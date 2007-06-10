@@ -52,7 +52,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_OL "cmd_ol"
 
 #define NSSTATE_ATTRIBUTE "state_attribute"
-#define NSSTATE_ALL "state_all"
 
 #define NSALIGN_CENTER "center"
 #define NSALIGN_LEFT   "left"
@@ -461,55 +460,6 @@ static HRESULT exec_get_print_template(HTMLDocument *This, DWORD nCmdexecopt, VA
     return E_NOTIMPL;
 }
 
-static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
-{
-    nsICommandManager *cmdmgr;
-    nsIInterfaceRequestor *iface_req;
-    nsresult nsres;
-
-    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
-            &IID_nsIInterfaceRequestor, (void**)&iface_req);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
-        return nsres;
-    }
-
-    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsICommandManager,
-                                               (void**)&cmdmgr);
-    nsIInterfaceRequestor_Release(iface_req);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsICommandManager: %08x\n", nsres);
-        return nsres;
-    }
-
-    nsres = nsICommandManager_GetCommandState(cmdmgr, cmd, NULL, nsparam);
-    if(NS_FAILED(nsres))
-        ERR("GetCommandState(%s) failed: %08x\n", debugstr_a(cmd), nsres);
-
-    nsICommandManager_Release(cmdmgr);
-    return nsres;
-}
-
-static DWORD query_edit_status(HTMLDocument *This, const char *nscmd)
-{
-    nsICommandParams *nsparam;
-    PRBool b = FALSE;
-
-    if(This->usermode != EDITMODE || This->readystate < READYSTATE_INTERACTIVE)
-        return OLECMDF_SUPPORTED;
-
-    if(This->nscontainer && nscmd) {
-        nsparam = create_nscommand_params();
-        get_ns_command_state(This->nscontainer, nscmd, nsparam);
-
-        nsICommandParams_GetBooleanValue(nsparam, NSSTATE_ALL, &b);
-
-        nsICommandParams_Release(nsparam);
-    }
-
-    return OLECMDF_SUPPORTED | OLECMDF_ENABLED | (b ? OLECMDF_LATCHED : 0);
-}
-
 static HRESULT query_mshtml_copy(HTMLDocument *This, OLECMD *cmd)
 {
     FIXME("(%p)\n", This);
@@ -817,53 +767,9 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 continue;
 
             switch(prgCmds[i].cmdID) {
-            case IDM_FONTNAME:
-                TRACE("CGID_MSHTML: IDM_FONTNAME\n");
-                prgCmds[i].cmdf = query_edit_status(This, NULL);
-                break;
-            case IDM_FONTSIZE:
-                TRACE("CGID_MSHTML: IDM_FONTSIZE\n");
-                prgCmds[i].cmdf = query_edit_status(This, NULL);
-                break;
             case IDM_PRINT:
                 FIXME("CGID_MSHTML: IDM_PRINT\n");
                 prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
-                break;
-            case IDM_BOLD:
-                TRACE("CGID_MSHTML: IDM_BOLD\n");
-                prgCmds[i].cmdf = query_edit_status(This, NSCMD_BOLD);
-                break;
-            case IDM_FORECOLOR:
-                TRACE("CGID_MSHTML: IDM_FORECOLOR\n");
-                prgCmds[i].cmdf = query_edit_status(This, NULL);
-                break;
-            case IDM_ITALIC:
-                TRACE("CGID_MSHTML: IDM_ITALIC\n");
-                prgCmds[i].cmdf = query_edit_status(This, NSCMD_ITALIC);
-                break;
-            case IDM_UNDERLINE:
-                TRACE("CGID_MSHTML: IDM_UNDERLINE\n");
-                prgCmds[i].cmdf = query_edit_status(This, NSCMD_UNDERLINE);
-                break;
-            case IDM_HORIZONTALLINE:
-                TRACE("CGID_MSHTML: IDM_HORIZONTALLINE\n");
-                prgCmds[i].cmdf = query_edit_status(This, NULL);
-                break;
-            case IDM_ORDERLIST:
-                TRACE("CGID_MSHTML: IDM_ORDERLIST\n");
-                prgCmds[i].cmdf = query_edit_status(This, NSCMD_OL);
-                break;
-            case IDM_UNORDERLIST:
-                TRACE("CGID_MSHTML: IDM_HORIZONTALLINE\n");
-                prgCmds[i].cmdf = query_edit_status(This, NSCMD_UL);
-                break;
-            case IDM_INDENT:
-                TRACE("CGID_MSHTML: IDM_INDENT\n");
-                prgCmds[i].cmdf = query_edit_status(This, NULL);
-                break;
-            case IDM_OUTDENT:
-                TRACE("CGID_MSHTML: IDM_OUTDENT\n");
-                prgCmds[i].cmdf = query_edit_status(This, NULL);
                 break;
             case IDM_BLOCKDIRLTR:
                 FIXME("CGID_MSHTML: IDM_BLOCKDIRLTR\n");
