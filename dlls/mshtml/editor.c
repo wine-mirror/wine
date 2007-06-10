@@ -39,6 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define NSCMD_ALIGN        "cmd_align"
 #define NSCMD_BOLD         "cmd_bold"
+#define NSCMD_CHARNEXT     "cmd_charNext"
 #define NSCMD_FONTCOLOR    "cmd_fontColor"
 #define NSCMD_FONTFACE     "cmd_fontFace"
 #define NSCMD_INDENT       "cmd_indent"
@@ -50,12 +51,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_MOVEPAGEUP   "cmd_movePageUp"
 #define NSCMD_OL           "cmd_ol"
 #define NSCMD_OUTDENT      "cmd_outdent"
+#define NSCMD_SELECTCHARNEXT      "cmd_selectCharNext"
 #define NSCMD_SELECTLINENEXT      "cmd_selectLineNext"
 #define NSCMD_SELECTLINEPREVIOUS  "cmd_selectLinePrevious"
 #define NSCMD_SELECTPAGEDOWN      "cmd_selectPageDown"
-#define NSCMD_SELECTPAGEUP "cmd_selectPageUp"
+#define NSCMD_SELECTPAGEUP        "cmd_selectPageUp"
+#define NSCMD_SELECTWORDNEXT      "cmd_selectWordNext"
 #define NSCMD_UL           "cmd_ul"
 #define NSCMD_UNDERLINE    "cmd_underline"
+#define NSCMD_WORDNEXT     "cmd_wordNext"
 
 #define NSSTATE_ATTRIBUTE "state_attribute"
 #define NSSTATE_ALL       "state_all"
@@ -602,10 +606,18 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
         TRACE("left\n");
         collapse_next_char(This, key_event, FALSE);
         break;
-    case DOM_VK_RIGHT:
+    case DOM_VK_RIGHT: {
+        static const char *cmds[] = {
+            NSCMD_CHARNEXT,
+            NSCMD_WORDNEXT,
+            NSCMD_SELECTCHARNEXT,
+            NSCMD_SELECTWORDNEXT
+        };
+
         TRACE("right\n");
-        collapse_next_char(This, key_event, TRUE);
+        handle_arrow_key(This, key_event, cmds);
         break;
+    }
     case DOM_VK_UP: {
         static const char *cmds[] = {
             NSCMD_LINEPREVIOUS,
@@ -614,6 +626,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
             NSCMD_SELECTPAGEUP
         };
 
+        TRACE("up\n");
         handle_arrow_key(This, key_event, cmds);
         break;
     }
@@ -625,6 +638,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
             NSCMD_SELECTPAGEDOWN
         };
 
+        TRACE("down\n");
         handle_arrow_key(This, key_event, cmds);
         break;
     }
