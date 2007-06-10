@@ -57,7 +57,9 @@ static ULONG WINAPI IDirect3D9Impl_Release(LPDIRECT3D9 iface) {
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
+        EnterCriticalSection(&d3d9_cs);
         IWineD3D_Release(This->WineD3D);
+        LeaveCriticalSection(&d3d9_cs);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -67,17 +69,30 @@ static ULONG WINAPI IDirect3D9Impl_Release(LPDIRECT3D9 iface) {
 /* IDirect3D9 Interface follow: */
 static HRESULT  WINAPI  IDirect3D9Impl_RegisterSoftwareDevice(LPDIRECT3D9 iface, void* pInitializeFunction) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    return IWineD3D_RegisterSoftwareDevice(This->WineD3D, pInitializeFunction);
+    HRESULT hr;
+    TRACE("(%p)->(%p)\n", This, pInitializeFunction);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3D_RegisterSoftwareDevice(This->WineD3D, pInitializeFunction);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static UINT     WINAPI  IDirect3D9Impl_GetAdapterCount(LPDIRECT3D9 iface) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    return IWineD3D_GetAdapterCount(This->WineD3D);
+    HRESULT hr;
+    TRACE("%p\n", This);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3D_GetAdapterCount(This->WineD3D);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_GetAdapterIdentifier(LPDIRECT3D9 iface, UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER9* pIdentifier) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     WINED3DADAPTER_IDENTIFIER adapter_id;
+    HRESULT hr;
 
     /* dx8 and dx9 have different structures to be filled in, with incompatible 
        layouts so pass in pointers to the places to be filled via an internal 
@@ -93,27 +108,41 @@ static HRESULT WINAPI IDirect3D9Impl_GetAdapterIdentifier(LPDIRECT3D9 iface, UIN
     adapter_id.DeviceIdentifier = &pIdentifier->DeviceIdentifier;
     adapter_id.WHQLLevel        = &pIdentifier->WHQLLevel;       
 
-    return IWineD3D_GetAdapterIdentifier(This->WineD3D, Adapter, Flags, &adapter_id);
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3D_GetAdapterIdentifier(This->WineD3D, Adapter, Flags, &adapter_id);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static UINT WINAPI IDirect3D9Impl_GetAdapterModeCount(LPDIRECT3D9 iface, UINT Adapter, D3DFORMAT Format) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
+    HRESULT hr;
+    TRACE("(%p)->(%d, %d\n", This, Adapter, Format);
 
     /* Others than that not supported by d3d9, but reported by wined3d for ddraw. Filter them out */
     if(Format != D3DFMT_X8R8G8B8 && Format != D3DFMT_R5G6B5) {
         return 0;
     }
 
-    return IWineD3D_GetAdapterModeCount(This->WineD3D, Adapter, Format);
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3D_GetAdapterModeCount(This->WineD3D, Adapter, Format);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_EnumAdapterModes(LPDIRECT3D9 iface, UINT Adapter, D3DFORMAT Format, UINT Mode, D3DDISPLAYMODE* pMode) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
+    HRESULT hr;
+    TRACE("(%p)->(%d, %d, %d, %p)\n", This, Adapter, Format, Mode, pMode);
     /* We can't pass this to WineD3D, otherwise it'll think it came from D3D8 or DDraw.
        It's supposed to fail anyway, so no harm returning failure. */
     if(Format != WINED3DFMT_X8R8G8B8 && Format != WINED3DFMT_R5G6B5)
         return D3DERR_INVALIDCALL;
-    return IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, Format, Mode, (WINED3DDISPLAYMODE *) pMode);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, Format, Mode, (WINED3DDISPLAYMODE *) pMode);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_GetAdapterDisplayMode(LPDIRECT3D9 iface, UINT Adapter, D3DDISPLAYMODE* pMode) {
@@ -125,38 +154,69 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceType(LPDIRECT3D9 iface,
 					      UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
 					      D3DFORMAT BackBufferFormat, BOOL Windowed) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    return IWineD3D_CheckDeviceType(This->WineD3D, Adapter, CheckType, DisplayFormat,
+    HRESULT hr;
+    TRACE("(%p)->(%d, %d, %d, %d, %s\n", This, Adapter, CheckType, DisplayFormat,
+          BackBufferFormat, Windowed ? "true" : "false");
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3D_CheckDeviceType(This->WineD3D, Adapter, CheckType, DisplayFormat,
                                     BackBufferFormat, Windowed);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormat(LPDIRECT3D9 iface,
 						  UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
 						  DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    return IWineD3D_CheckDeviceFormat(This->WineD3D, Adapter, DeviceType, AdapterFormat,
+    HRESULT hr;
+    TRACE("%p\n", This);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3D_CheckDeviceFormat(This->WineD3D, Adapter, DeviceType, AdapterFormat,
                                     Usage, RType, CheckFormat);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_CheckDeviceMultiSampleType(LPDIRECT3D9 iface,
 							   UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
 							   BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType, DWORD* pQualityLevels) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    return IWineD3D_CheckDeviceMultiSampleType(This->WineD3D, Adapter, DeviceType, SurfaceFormat,
+    HRESULT hr;
+    TRACE("%p\n", This);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3D_CheckDeviceMultiSampleType(This->WineD3D, Adapter, DeviceType, SurfaceFormat,
                                                Windowed, MultiSampleType, pQualityLevels);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_CheckDepthStencilMatch(LPDIRECT3D9 iface, 
 						       UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
 						       D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    return IWineD3D_CheckDepthStencilMatch(This->WineD3D, Adapter, DeviceType, AdapterFormat,
+    HRESULT hr;
+    TRACE("%p\n", This);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3D_CheckDepthStencilMatch(This->WineD3D, Adapter, DeviceType, AdapterFormat,
                                            RenderTargetFormat, DepthStencilFormat);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormatConversion(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    return IWineD3D_CheckDeviceFormatConversion(This->WineD3D, Adapter, DeviceType, SourceFormat,
+    HRESULT hr;
+    TRACE("%p\n", This);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3D_CheckDeviceFormatConversion(This->WineD3D, Adapter, DeviceType, SourceFormat,
                                                 TargetFormat);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9* pCaps) {
@@ -174,7 +234,9 @@ static HRESULT WINAPI IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9 iface, UINT Adapt
         return D3DERR_INVALIDCALL; /*well this is what MSDN says to return*/
     }
     D3D9CAPSTOWINECAPS(pCaps, pWineCaps)
+    EnterCriticalSection(&d3d9_cs);
     hrc = IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, pWineCaps);
+    LeaveCriticalSection(&d3d9_cs);
     HeapFree(GetProcessHeap(), 0, pWineCaps);
 
     /* Some functionality is implemented in d3d9.dll, not wined3d.dll. Add the needed caps */
@@ -185,7 +247,13 @@ static HRESULT WINAPI IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9 iface, UINT Adapt
 
 static HMONITOR WINAPI IDirect3D9Impl_GetAdapterMonitor(LPDIRECT3D9 iface, UINT Adapter) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    return IWineD3D_GetAdapterMonitor(This->WineD3D, Adapter);
+    HMONITOR ret;
+    TRACE("%p\n", This);
+
+    EnterCriticalSection(&d3d9_cs);
+    ret = IWineD3D_GetAdapterMonitor(This->WineD3D, Adapter);
+    LeaveCriticalSection(&d3d9_cs);
+    return ret;
 }
 
 /* Internal function called back during the CreateDevice to create a render target */
@@ -348,11 +416,13 @@ static HRESULT WINAPI IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapte
     *ppReturnedDeviceInterface = (IDirect3DDevice9 *)object;
 
     /* Allocate an associated WineD3DDevice object */
+    EnterCriticalSection(&d3d9_cs);
     hr =IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &object->WineD3DDevice, (IUnknown *)object);
 
     if (hr != D3D_OK) {
         HeapFree(GetProcessHeap(), 0, object);
         *ppReturnedDeviceInterface = NULL;
+        LeaveCriticalSection(&d3d9_cs);
         return hr;
     }
 
@@ -404,6 +474,7 @@ static HRESULT WINAPI IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapte
      * can be used without further checking
      */
     object->convertedDecls = HeapAlloc(GetProcessHeap(), 0, 0);
+    LeaveCriticalSection(&d3d9_cs);
 
     return hr;
 }
