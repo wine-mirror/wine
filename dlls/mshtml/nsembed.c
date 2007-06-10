@@ -513,6 +513,12 @@ static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode 
         nsIDOMText_Release(nstext);
         break;
     }
+    case COMMENT_NODE: {
+        nsIDOMComment *nscomment;
+        nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMComment, (void**)&nscomment);
+        nsres = nsIContentSerializer_AppendComment(serializer, nscomment, 0, -1, str);
+        break;
+    }
     case DOCUMENT_NODE: {
         nsIDOMDocument *nsdoc;
         nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMDocument, (void**)&nsdoc);

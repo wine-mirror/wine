@@ -99,7 +99,6 @@ typedef nsISupports nsIDOMNamedNodeMap;
 typedef nsISupports nsIDOMAttr;
 typedef nsISupports nsIDOMDocumentType;
 typedef nsISupports nsIDOMDOMImplementation;
-typedef nsISupports nsIDOMComment;
 typedef nsISupports nsIDOMCDATASection;
 typedef nsISupports nsIDOMProcessingInstruction;
 typedef nsISupports nsIDOMEntityReference;
@@ -590,6 +589,15 @@ interface nsIDOMCharacterData : nsIDOMNode
 interface nsIDOMText : nsIDOMCharacterData
 {
     nsresult SplitText(PRUint32 offset, nsIDOMText **_retval);
+}
+
+[
+    object,
+    uuid(a6cf9073-15b3-11d2-932e-00805f8add32)
+    /* FROZEN */
+]
+interface nsIDOMComment : nsIDOMCharacterData
+{
 }
 
 [
@@ -1152,6 +1160,7 @@ interface nsIWebBrowserPrint : nsISupports
 [
     object,
     uuid(919e792a-6490-40b8-bba5-f9e9ad5640c8)
+    /* NOT_FROZEN */
 ]
 interface nsIScrollable : nsISupports
 {
