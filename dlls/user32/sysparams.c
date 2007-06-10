@@ -314,7 +314,7 @@ static ICONMETRICSW icon_metrics =
     75,   /* iHorzSpacing */
     75,   /* iVertSpacing */
     TRUE, /* iTitleWrap */
-    { -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+    { -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH }   /* lfFont */
 };
 
