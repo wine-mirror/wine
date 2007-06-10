@@ -2656,6 +2656,23 @@ static void test_exec_fontname(IUnknown *unk, LPCWSTR name, LPCWSTR exname)
    IOleCommandTarget_Release(cmdtrg);
 }
 
+static void test_exec_noargs(IUnknown *unk, DWORD cmdid)
+{
+    IOleCommandTarget *cmdtrg;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    ok(hres == S_OK, "QueryInterface(IID_IOleCommandTarget) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IOleCommandTarget_Exec(cmdtrg, &CGID_MSHTML, cmdid,
+            OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+    ok(hres == S_OK, "Exec failed: %08x\n", hres);
+
+    IOleCommandTarget_Release(cmdtrg);
+}
+
 static HWND create_container_window(void)
 {
     static const WCHAR wszHTMLDocumentTest[] =
@@ -3319,6 +3336,22 @@ static void test_editing_mode(void)
     test_exec_fontname(unk, NULL, wszTimesNewRoman);
     test_exec_fontname(unk, wszArial, wszTimesNewRoman);
     test_exec_fontname(unk, NULL, wszArial);
+
+    test_exec_noargs(unk, IDM_JUSTIFYRIGHT);
+    if(!nogecko)
+        test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYRIGHT,
+                         OLECMDF_SUPPORTED|OLECMDF_ENABLED|OLECMDF_LATCHED);
+
+    test_exec_noargs(unk, IDM_JUSTIFYCENTER);
+    test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYRIGHT,
+                     OLECMDF_SUPPORTED|OLECMDF_ENABLED);
+    if(!nogecko)
+        test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYCENTER,
+                         OLECMDF_SUPPORTED|OLECMDF_ENABLED|OLECMDF_LATCHED);
+
+    test_exec_noargs(unk, IDM_HORIZONTALLINE);
+    test_QueryStatus(unk, &CGID_MSHTML, IDM_HORIZONTALLINE,
+                     OLECMDF_SUPPORTED|OLECMDF_ENABLED);
 
     test_UIDeactivate();
     test_InPlaceDeactivate(unk, TRUE);
