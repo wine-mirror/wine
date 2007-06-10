@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Jacek Caban for CodeWeavers
+ * Copyright 2006-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,6 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_ALIGN        "cmd_align"
 #define NSCMD_BOLD         "cmd_bold"
 #define NSCMD_CHARNEXT     "cmd_charNext"
+#define NSCMD_CHARPREVIOUS "cmd_charPrevious"
 #define NSCMD_FONTCOLOR    "cmd_fontColor"
 #define NSCMD_FONTFACE     "cmd_fontFace"
 #define NSCMD_INDENT       "cmd_indent"
@@ -52,14 +53,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_OL           "cmd_ol"
 #define NSCMD_OUTDENT      "cmd_outdent"
 #define NSCMD_SELECTCHARNEXT      "cmd_selectCharNext"
+#define NSCMD_SELECTCHARPREVIOUS  "cmd_selectCharPrevious"
 #define NSCMD_SELECTLINENEXT      "cmd_selectLineNext"
 #define NSCMD_SELECTLINEPREVIOUS  "cmd_selectLinePrevious"
 #define NSCMD_SELECTPAGEDOWN      "cmd_selectPageDown"
 #define NSCMD_SELECTPAGEUP        "cmd_selectPageUp"
 #define NSCMD_SELECTWORDNEXT      "cmd_selectWordNext"
+#define NSCMD_SELECTWORDPREVIOUS  "cmd_selectWordPrevious"
 #define NSCMD_UL           "cmd_ul"
 #define NSCMD_UNDERLINE    "cmd_underline"
 #define NSCMD_WORDNEXT     "cmd_wordNext"
+#define NSCMD_WORDPREVIOUS "cmd_wordPrevious"
 
 #define NSSTATE_ATTRIBUTE "state_attribute"
 #define NSSTATE_ALL       "state_all"
@@ -462,118 +466,6 @@ static nsIDOMNode *get_child_text_node(nsIDOMNode *node, BOOL first)
     return NULL;
 }
 
-static nsIDOMNode *get_next_text_node(nsIDOMNode *node, BOOL next)
-{
-    nsIDOMNode *iter, *iter2 = NULL, *parent = NULL;
-    PRUint16 node_type;
-
-    iter = node;
-    nsIDOMNode_AddRef(iter);
-
-    while(1) {
-        if(next)
-            nsIDOMNode_GetNextSibling(iter, &iter2);
-        else
-            nsIDOMNode_GetPreviousSibling(iter, &iter2);
-
-        while(!iter2) {
-            nsIDOMNode_GetParentNode(iter, &parent);
-            nsIDOMNode_Release(iter);
-            if(!parent)
-                return NULL;
-
-            iter = parent;
-
-            if(next)
-                nsIDOMNode_GetNextSibling(iter, &iter2);
-            else
-                nsIDOMNode_GetPreviousSibling(iter, &iter2);
-        }
-
-        nsIDOMNode_Release(iter);
-        iter = iter2;
-
-        nsIDOMNode_GetNodeType(iter, &node_type);
-
-        switch(node_type) {
-        case TEXT_NODE:
-            if(is_visible_text_node(iter))
-                return iter;
-        case ELEMENT_NODE:
-            iter2 = get_child_text_node(iter, next);
-            if(iter2) {
-                nsIDOMNode_Release(iter);
-                return iter2;
-            }
-        }
-    }
-
-    return NULL;
-}
-
-static void collapse_end_node(nsISelection *selection, nsIDOMNode *node)
-{
-    nsIDOMCharacterData *char_data;
-    PRUint32 len;
-
-    nsIDOMNode_QueryInterface(node, &IID_nsIDOMCharacterData, (void**)&char_data);
-    nsIDOMCharacterData_GetLength(char_data, &len);
-    nsIDOMCharacterData_Release(char_data);
-
-    nsISelection_Collapse(selection, node, len);
-}
-
-static void collapse_next_char(HTMLDocument *doc, nsIDOMKeyEvent *event, BOOL next)
-{
-    nsISelection *selection = get_ns_selection(doc);
-    nsIDOMNode *node;
-    PRBool collapsed, b;
-    PRUint16 node_type;
-    nsIDOMNode *text_node;
-
-    nsIDOMKeyEvent_GetCtrlKey(event, &b);
-    if(b) return;
-
-    nsIDOMKeyEvent_GetShiftKey(event, &b);
-    if(b) return;
-
-    nsISelection_GetIsCollapsed(selection, &collapsed);
-    if(!collapsed)
-        nsISelection_CollapseToEnd(selection);
-
-    nsISelection_GetFocusNode(selection, &node);
-    nsIDOMNode_GetNodeType(node, &node_type);
-
-    if(node_type == TEXT_NODE) {
-        nsIDOMCharacterData *char_data;
-        PRInt32 offset;
-        PRUint32 len;
-
-        nsISelection_GetFocusOffset(selection, &offset);
-
-        nsIDOMNode_QueryInterface(node, &IID_nsIDOMCharacterData, (void**)&char_data);
-        nsIDOMCharacterData_GetLength(char_data, &len);
-        nsIDOMCharacterData_Release(char_data);
-
-        if(next ? offset != len : offset) {
-            nsISelection_Collapse(selection, node, offset + (next?1:-1));
-            return;
-        }
-    }
-
-    text_node = get_next_text_node(node, next);
-    if(text_node) {
-        if(next)
-            nsISelection_Collapse(selection, text_node, 1);
-        else
-            collapse_end_node(selection, text_node);
-        nsIDOMNode_Release(text_node);
-    }
-
-    nsIDOMNode_Release(node);
-    nsISelection_Release(selection);
-}
-
 static void handle_arrow_key(HTMLDocument *This, nsIDOMKeyEvent *event, const char **cmds)
 {
     int i=0;
@@ -602,10 +494,18 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
     nsIDOMKeyEvent_GetKeyCode(key_event, &code);
 
     switch(code) {
-    case DOM_VK_LEFT:
+    case DOM_VK_LEFT: {
+        static const char *cmds[] = {
+            NSCMD_CHARPREVIOUS,
+            NSCMD_WORDPREVIOUS,
+            NSCMD_SELECTCHARPREVIOUS,
+            NSCMD_SELECTWORDPREVIOUS
+        };
+
         TRACE("left\n");
-        collapse_next_char(This, key_event, FALSE);
+        handle_arrow_key(This, key_event, cmds);
         break;
+    }
     case DOM_VK_RIGHT: {
         static const char *cmds[] = {
             NSCMD_CHARNEXT,
