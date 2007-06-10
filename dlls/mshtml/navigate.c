@@ -826,8 +826,10 @@ HRESULT load_stream(BSCallback *bscallback, IStream *stream)
 
     add_nsrequest(bscallback);
 
-    bscallback->nschannel->content = mshtml_alloc(sizeof(text_html));
-    memcpy(bscallback->nschannel->content, text_html, sizeof(text_html));
+    if(bscallback->nschannel) {
+        bscallback->nschannel->content = mshtml_alloc(sizeof(text_html));
+        memcpy(bscallback->nschannel->content, text_html, sizeof(text_html));
+    }
 
     hres = read_stream_data(bscallback, stream);
     IBindStatusCallback_OnStopBinding(STATUSCLB(bscallback), hres, ERROR_SUCCESS);
