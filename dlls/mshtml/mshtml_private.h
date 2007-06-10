@@ -383,6 +383,7 @@ typedef struct {
 extern const cmdtable_t editmode_cmds[];
 
 /* editor */
+void set_ns_editmode(NSContainer*);
 void handle_edit_event(HTMLDocument*,nsIDOMEvent*);
 
 extern DWORD mshtml_tls;
