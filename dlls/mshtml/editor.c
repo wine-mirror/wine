@@ -44,8 +44,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_INDENT       "cmd_indent"
 #define NSCMD_INSERTHR     "cmd_insertHR"
 #define NSCMD_ITALIC       "cmd_italic"
+#define NSCMD_LINEPREVIOUS "cmd_linePrevious"
+#define NSCMD_MOVEPAGEUP   "cmd_movePageUp"
 #define NSCMD_OL           "cmd_ol"
 #define NSCMD_OUTDENT      "cmd_outdent"
+#define NSCMD_SELECTLINEPREVIOUS  "cmd_selectLinePrevious"
+#define NSCMD_SELECTPAGEUP "cmd_selectPageUp"
 #define NSCMD_UL           "cmd_ul"
 #define NSCMD_UNDERLINE    "cmd_underline"
 
@@ -92,6 +96,18 @@ static void do_ns_command(NSContainer *This, const char *cmd, nsICommandParams *
         ERR("DoCommand(%s) failed: %08x\n", debugstr_a(cmd), nsres);
 
     nsICommandManager_Release(cmdmgr);
+}
+
+static void do_ns_editor_command(NSContainer *This, const char *cmd)
+{
+    nsresult nsres;
+
+    if(!This->editor_controller)
+        return;
+
+    nsres = nsIController_DoCommand(This->editor_controller, cmd);
+    if(NS_FAILED(nsres))
+        ERR("DoCommand(%s) failed: %08x\n", debugstr_a(cmd), nsres);
 }
 
 static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
@@ -550,6 +566,24 @@ static void collapse_next_char(HTMLDocument *doc, nsIDOMKeyEvent *event, BOOL ne
     nsISelection_Release(selection);
 }
 
+static void handle_arrow_key(HTMLDocument *This, nsIDOMKeyEvent *event, const char **cmds)
+{
+    int i=0;
+    PRBool b;
+
+    nsIDOMKeyEvent_GetCtrlKey(event, &b);
+    if(b)
+        i |= 1;
+
+    nsIDOMKeyEvent_GetShiftKey(event, &b);
+    if(b)
+        i |= 2;
+
+    do_ns_editor_command(This->nscontainer, cmds[i]);
+
+    nsIDOMKeyEvent_PreventDefault(event);
+}
+
 void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
 {
     nsIDOMKeyEvent *key_event;
@@ -567,6 +601,18 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
     case DOM_VK_RIGHT:
         TRACE("right\n");
         collapse_next_char(This, key_event, TRUE);
+        break;
+    case DOM_VK_UP: {
+        static const char *cmds[] = {
+            NSCMD_LINEPREVIOUS,
+            NSCMD_MOVEPAGEUP,
+            NSCMD_SELECTLINEPREVIOUS,
+            NSCMD_SELECTPAGEUP
+        };
+
+        handle_arrow_key(This, key_event, cmds);
+        break;
+    }
     };
 
     nsIDOMKeyEvent_Release(key_event);
