@@ -153,6 +153,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
 
     This->readystate = READYSTATE_LOADING;
     call_property_onchanged(This->cp_propnotif, DISPID_READYSTATE);
+    update_doc(This, UPDATE_TITLE);
 
     HTMLDocument_LockContainer(This, TRUE);
     

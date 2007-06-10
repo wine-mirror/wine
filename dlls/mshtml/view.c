@@ -104,6 +104,34 @@ void update_doc(HTMLDocument *This, DWORD flags)
     This->update |= flags;
 }
 
+void update_title(HTMLDocument *This)
+{
+    IOleCommandTarget *olecmd;
+    HRESULT hres;
+
+    if(!(This->update & UPDATE_TITLE))
+        return;
+
+    This->update &= ~UPDATE_TITLE;
+
+    if(!This->client)
+        return;
+
+    hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget, (void**)&olecmd);
+    if(SUCCEEDED(hres)) {
+        VARIANT title;
+        WCHAR empty[] = {0};
+
+        V_VT(&title) = VT_BSTR;
+        V_BSTR(&title) = SysAllocString(empty);
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETTITLE, OLECMDEXECOPT_DONTPROMPTUSER,
+                               &title, NULL);
+        SysFreeString(V_BSTR(&title));
+
+        IOleCommandTarget_Release(olecmd);
+    }
+}
+
 static LRESULT on_timer(HTMLDocument *This)
 {
     TRACE("(%p) %x\n", This, This->update);
@@ -131,6 +159,7 @@ static LRESULT on_timer(HTMLDocument *This)
         }
     }
 
+    update_title(This);
     This->update = 0;
     return 0;
 }

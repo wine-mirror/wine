@@ -388,6 +388,7 @@ extern const cmdtable_t editmode_cmds[];
 #define UPDATE_TITLE    0x0002
 
 void update_doc(HTMLDocument *This, DWORD flags);
+void update_title(HTMLDocument*);
 
 /* editor */
 void set_ns_editmode(NSContainer*);
