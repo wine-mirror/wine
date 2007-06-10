@@ -136,6 +136,29 @@ static void set_ns_align(HTMLDocument *This, const char *align_str)
 
     nsICommandParams_Release(nsparam);
 }
+
+static DWORD query_align_status(HTMLDocument *This, const char *align_str)
+{
+    nsICommandParams *nsparam;
+    char *align = NULL;
+
+    if(This->usermode != EDITMODE || This->readystate < READYSTATE_INTERACTIVE)
+        return OLECMDF_SUPPORTED;
+
+    if(This->nscontainer) {
+        nsparam = create_nscommand_params();
+        get_ns_command_state(This->nscontainer, NSCMD_ALIGN, nsparam);
+
+        nsICommandParams_GetCStringValue(nsparam, NSSTATE_ATTRIBUTE, &align);
+
+        nsICommandParams_Release(nsparam);
+    }
+
+    return OLECMDF_SUPPORTED | OLECMDF_ENABLED
+        | (align && !strcmp(align_str, align) ? OLECMDF_LATCHED : 0);
+}
+
+
 static nsISelection *get_ns_selection(HTMLDocument *This)
 {
     nsIDOMWindow *dom_window;
@@ -685,6 +708,26 @@ static HRESULT exec_italic(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VA
     return S_OK;
 }
 
+static HRESULT query_justify(HTMLDocument *This, OLECMD *cmd)
+{
+    switch(cmd->cmdID) {
+    case IDM_JUSTIFYCENTER:
+        TRACE("(%p) IDM_JUSTIFYCENTER\n", This);
+        cmd->cmdf = query_align_status(This, NSALIGN_CENTER);
+        break;
+    case IDM_JUSTIFYLEFT:
+        TRACE("(%p) IDM_JUSTIFYLEFT\n", This);
+        cmd->cmdf = query_align_status(This, NSALIGN_LEFT);
+        break;
+    case IDM_JUSTIFYRIGHT:
+        TRACE("(%p) IDM_JUSTIFYRIGHT\n", This);
+        cmd->cmdf = query_align_status(This, NSALIGN_RIGHT);
+        break;
+    }
+
+    return S_OK;
+}
+
 static HRESULT exec_justifycenter(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     TRACE("(%p)\n", This);
@@ -810,9 +853,9 @@ const cmdtable_t editmode_cmds[] = {
     {IDM_FORECOLOR,       NULL,         exec_forecolor},
     {IDM_BOLD,            NULL,         exec_bold},
     {IDM_ITALIC,          NULL,         exec_italic},
-    {IDM_JUSTIFYCENTER,   NULL,         exec_justifycenter},
-    {IDM_JUSTIFYRIGHT,    NULL,         exec_justifyright},
-    {IDM_JUSTIFYLEFT,     NULL,         exec_justifyleft},
+    {IDM_JUSTIFYCENTER,   query_justify,     exec_justifycenter},
+    {IDM_JUSTIFYRIGHT,    query_justify,     exec_justifyright},
+    {IDM_JUSTIFYLEFT,     query_justify,     exec_justifyleft},
     {IDM_UNDERLINE,       NULL,         exec_underline},
     {IDM_HORIZONTALLINE,  NULL,         exec_horizontalline},
     {IDM_ORDERLIST,       NULL,         exec_orderlist},

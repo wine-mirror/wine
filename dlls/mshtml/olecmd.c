@@ -510,26 +510,6 @@ static DWORD query_edit_status(HTMLDocument *This, const char *nscmd)
     return OLECMDF_SUPPORTED | OLECMDF_ENABLED | (b ? OLECMDF_LATCHED : 0);
 }
 
-static DWORD query_align_status(HTMLDocument *This, const char *align_str)
-{
-    nsICommandParams *nsparam;
-    char *align = NULL;
-
-    if(This->usermode != EDITMODE || This->readystate < READYSTATE_INTERACTIVE)
-        return OLECMDF_SUPPORTED;
-
-    if(This->nscontainer) {
-        nsparam = create_nscommand_params();
-        get_ns_command_state(This->nscontainer, NSCMD_ALIGN, nsparam);
-
-        nsICommandParams_GetCStringValue(nsparam, NSSTATE_ATTRIBUTE, &align);
-
-        nsICommandParams_Release(nsparam);
-    }
-
-    return OLECMDF_SUPPORTED | OLECMDF_ENABLED | (align && !strcmp(align_str, align) ? OLECMDF_LATCHED : 0);
-}
-
 static HRESULT query_mshtml_copy(HTMLDocument *This, OLECMD *cmd)
 {
     FIXME("(%p)\n", This);
@@ -860,18 +840,6 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
             case IDM_ITALIC:
                 TRACE("CGID_MSHTML: IDM_ITALIC\n");
                 prgCmds[i].cmdf = query_edit_status(This, NSCMD_ITALIC);
-                break;
-            case IDM_JUSTIFYCENTER:
-                TRACE("CGID_MSHTML: IDM_JUSTIFYCENTER\n");
-                prgCmds[i].cmdf = query_align_status(This, NSALIGN_CENTER);
-                break;
-            case IDM_JUSTIFYLEFT:
-                TRACE("CGID_MSHTML: IDM_JUSTIFYLEFT\n");
-                prgCmds[i].cmdf = query_align_status(This, NSALIGN_LEFT);
-                break;
-            case IDM_JUSTIFYRIGHT:
-                TRACE("CGID_MSHTML: IDM_JUSTIFYRIGHT\n");
-                prgCmds[i].cmdf = query_align_status(This, NSALIGN_RIGHT);
                 break;
             case IDM_UNDERLINE:
                 TRACE("CGID_MSHTML: IDM_UNDERLINE\n");
