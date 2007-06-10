@@ -115,6 +115,8 @@ struct HTMLDocument {
     BOOL has_key_path;
     BOOL container_locked;
 
+    DWORD update;
+
     ConnectionPoint *cp_htmldocevents;
     ConnectionPoint *cp_htmldocevents2;
     ConnectionPoint *cp_propnotif;
@@ -381,6 +383,11 @@ typedef struct {
 } cmdtable_t;
 
 extern const cmdtable_t editmode_cmds[];
+
+#define UPDATE_UI       0x0001
+#define UPDATE_TITLE    0x0002
+
+void update_doc(HTMLDocument *This, DWORD flags);
 
 /* editor */
 void set_ns_editmode(NSContainer*);
