@@ -572,6 +572,15 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
     nsIDOMKeyEvent_Release(key_event);
 }
 
+static void set_ns_fontname(NSContainer *This, const char *fontname)
+{
+    nsICommandParams *nsparam = create_nscommand_params();
+
+    nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, fontname);
+    do_ns_command(This, NSCMD_FONTFACE, nsparam);
+    nsICommandParams_Release(nsparam);
+}
+
 static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     TRACE("(%p)->(%p %p)\n", This, in, out);
@@ -580,7 +589,6 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         return E_FAIL;
 
     if(in) {
-        nsICommandParams *nsparam = create_nscommand_params();
         char *stra;
         DWORD len;
 
@@ -589,15 +597,17 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
             return E_INVALIDARG;
         }
 
+        TRACE("%s\n", debugstr_w(V_BSTR(in)));
+
         len = WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, NULL, 0, NULL, NULL);
         stra = mshtml_alloc(len);
         WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, stra, -1, NULL, NULL);
-        nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, stra);
+
+        set_ns_fontname(This->nscontainer, stra);
+
         mshtml_free(stra);
 
-        do_ns_command(This->nscontainer, NSCMD_FONTFACE, nsparam);
-
-        nsICommandParams_Release(nsparam);
+        update_doc(This, UPDATE_UI);
     }
 
     if(out) {
@@ -621,6 +631,7 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         MultiByteToWideChar(CP_ACP, 0, stra, -1, strw, -1);
         nsfree(stra);
 
+        V_VT(out) = VT_BSTR;
         V_BSTR(out) = SysAllocString(strw);
         mshtml_free(strw);
     }
@@ -937,3 +948,11 @@ const cmdtable_t editmode_cmds[] = {
     {IDM_COMPOSESETTINGS, NULL,                 exec_composesettings},
     {0,NULL,NULL}
 };
+
+void init_editor(HTMLDocument *This)
+{
+    if(!This->nscontainer)
+        return;
+
+    set_ns_fontname(This->nscontainer, "Times New Roman");
+}

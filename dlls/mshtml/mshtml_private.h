@@ -391,6 +391,7 @@ void update_doc(HTMLDocument *This, DWORD flags);
 void update_title(HTMLDocument*);
 
 /* editor */
+void init_editor(HTMLDocument*);
 void set_ns_editmode(NSContainer*);
 void handle_edit_event(HTMLDocument*,nsIDOMEvent*);
 

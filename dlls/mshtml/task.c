@@ -132,6 +132,9 @@ static void set_parsecomplete(HTMLDocument *doc)
 
     TRACE("(%p)\n", doc);
 
+    if(doc->usermode == EDITMODE)
+        init_editor(doc);
+
     call_property_onchanged(doc->cp_propnotif, 1005);
 
     doc->readystate = READYSTATE_INTERACTIVE;
