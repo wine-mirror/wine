@@ -584,8 +584,12 @@ static HRESULT Stream_LoadString( IStream* stm, BOOL unicode, LPWSTR *pstr )
     {
         count = MultiByteToWideChar( CP_ACP, 0, (LPSTR) temp, len, NULL, 0 );
         str = HeapAlloc( GetProcessHeap(), 0, (count+1)*sizeof (WCHAR) );
-        if( str )
-            MultiByteToWideChar( CP_ACP, 0, (LPSTR) temp, len, str, count );
+        if( !str )
+        {
+            HeapFree( GetProcessHeap(), 0, temp );
+            return E_OUTOFMEMORY;
+        }
+        MultiByteToWideChar( CP_ACP, 0, (LPSTR) temp, len, str, count );
         HeapFree( GetProcessHeap(), 0, temp );
     }
     else
