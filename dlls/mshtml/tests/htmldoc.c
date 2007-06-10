@@ -151,6 +151,35 @@ static HRESULT QueryInterface(REFIID riid, void **ppv);
 static void test_readyState(IUnknown*);
 static void test_MSHTML_QueryStatus(IUnknown*,DWORD);
 
+#define EXPECT_UPDATEUI  1
+#define EXPECT_SETTITLE  2
+
+static void test_timer(DWORD flags)
+{
+    BOOL *b = &called_Exec_SETTITLE;
+    MSG msg;
+
+    if(flags & EXPECT_UPDATEUI) {
+        SET_EXPECT(UpdateUI);
+        SET_EXPECT(Exec_UPDATECOMMANDS);
+        b = &called_UpdateUI;
+    }
+    if(flags & EXPECT_SETTITLE)
+        SET_EXPECT(Exec_SETTITLE);
+
+    while(!*b && GetMessage(&msg, hwnd, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    if(flags & EXPECT_UPDATEUI) {
+        CHECK_CALLED(UpdateUI);
+        CHECK_CALLED(Exec_UPDATECOMMANDS);
+    }
+    if(flags & EXPECT_SETTITLE)
+        CHECK_CALLED(Exec_SETTITLE);
+}
+
 static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocol, riid)) {
@@ -1493,6 +1522,8 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 }
             }
 
+            test_timer(EXPECT_UPDATEUI | ((load_state == LD_LOADING) ? EXPECT_SETTITLE : 0));
+
             if(activeobj)
                 IOleInPlaceActiveObject_Release(activeobj);
         }
@@ -2258,7 +2289,6 @@ static void test_download(BOOL verb_done, BOOL css_dwl)
     SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
     SET_EXPECT(Exec_MSHTML_PARSECOMPLETE);
     SET_EXPECT(Exec_HTTPEQUIV_DONE);
-    SET_EXPECT(Exec_SETTITLE);
     expect_status_text = (LPWSTR)0xdeadbeef; /* TODO */
 
     while(!called_Exec_HTTPEQUIV_DONE && GetMessage(&msg, hwnd, 0, 0)) {
@@ -2299,7 +2329,6 @@ static void test_download(BOOL verb_done, BOOL css_dwl)
     CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
     CHECK_CALLED(Exec_HTTPEQUIV_DONE);
-    CHECK_CALLED(Exec_SETTITLE);
 
     load_state = LD_COMPLETE;
 
@@ -2567,6 +2596,8 @@ static void test_exec_editmode(IUnknown *unk)
     CHECK_CALLED(Invoke_AMBIENT_SILENT);
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(OnChanged_READYSTATE);
+
+    test_timer(EXPECT_UPDATEUI|EXPECT_SETTITLE);
 
     IOleCommandTarget_Release(cmdtrg);
 
@@ -3015,6 +3046,8 @@ static void test_StreamLoad(IUnknown *unk)
     CHECK_CALLED(Exec_ShellDocView_37);
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Read);
+
+    test_timer(EXPECT_SETTITLE);
 
     IPersistStreamInit_Release(init);
 }
