@@ -553,6 +553,8 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         return hres;
     }
 
+    update_doc(This, UPDATE_UI);
+
     return IPersistMoniker_Load(PERSISTMON(This), TRUE, mon, NULL, 0);
 }
 
