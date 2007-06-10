@@ -738,7 +738,11 @@ static HRESULT query_justify(HTMLDocument *This, OLECMD *cmd)
         break;
     case IDM_JUSTIFYLEFT:
         TRACE("(%p) IDM_JUSTIFYLEFT\n", This);
-        cmd->cmdf = query_align_status(This, NSALIGN_LEFT);
+        /* FIXME: We should set OLECMDF_LATCHED only if it's set explicitly. */
+        if(This->usermode != EDITMODE || This->readystate < READYSTATE_INTERACTIVE)
+            cmd->cmdf = OLECMDF_SUPPORTED;
+        else
+            cmd->cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
         break;
     case IDM_JUSTIFYRIGHT:
         TRACE("(%p) IDM_JUSTIFYRIGHT\n", This);
