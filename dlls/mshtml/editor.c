@@ -41,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_BOLD         "cmd_bold"
 #define NSCMD_CHARNEXT     "cmd_charNext"
 #define NSCMD_CHARPREVIOUS "cmd_charPrevious"
+#define NSCMD_COPY         "cmd_copy"
 #define NSCMD_FONTCOLOR    "cmd_fontColor"
 #define NSCMD_FONTFACE     "cmd_fontFace"
 #define NSCMD_INDENT       "cmd_indent"
@@ -930,6 +931,17 @@ static HRESULT exec_composesettings(HTMLDocument *This, DWORD cmdexecopt, VARIAN
         SysFreeString(V_BSTR(&v));
     }
 
+    return S_OK;
+}
+
+HRESULT editor_exec_copy(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    update_doc(This, UPDATE_UI);
+
+    if(!This->nscontainer)
+        return E_FAIL;
+
+    do_ns_editor_command(This->nscontainer, NSCMD_COPY);
     return S_OK;
 }
 
