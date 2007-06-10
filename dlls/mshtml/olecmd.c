@@ -487,7 +487,12 @@ static HRESULT query_mshtml_cut(HTMLDocument *This, OLECMD *cmd)
 
 static HRESULT exec_mshtml_cut(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
+    TRACE("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
+
+    if(This->usermode == EDITMODE)
+        return editor_exec_cut(This, cmdexecopt, in, out);
+
+    FIXME("Unimplemented in browse mode\n");
     return E_NOTIMPL;
 }
 
