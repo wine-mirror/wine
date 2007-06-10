@@ -2291,7 +2291,7 @@ static void test_download(BOOL verb_done, BOOL css_dwl)
     SET_EXPECT(Exec_HTTPEQUIV_DONE);
     expect_status_text = (LPWSTR)0xdeadbeef; /* TODO */
 
-    while(!called_Exec_HTTPEQUIV_DONE && GetMessage(&msg, hwnd, 0, 0)) {
+    while(!called_Exec_HTTPEQUIV_DONE && GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
