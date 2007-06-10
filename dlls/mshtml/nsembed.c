@@ -1559,7 +1559,7 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
             static const PRUnichar wsz_load[] = {'l','o','a','d',0};
 
             nsAString_Init(&keypress_str, wsz_keypress);
-            nsres = nsIDOMEventTarget_AddEventListener(target, &keypress_str, NSEVENTLIST(ret), TRUE);
+            nsres = nsIDOMEventTarget_AddEventListener(target, &keypress_str, NSEVENTLIST(ret), FALSE);
             nsAString_Finish(&keypress_str);
             if(NS_FAILED(nsres))
                 ERR("AddEventTarget failed: %08x\n", nsres);
