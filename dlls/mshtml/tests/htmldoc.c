@@ -2436,12 +2436,12 @@ static void test_QueryStatus(IUnknown *unk, REFIID cgid, ULONG cmdid, DWORD cmdf
         return;
 
     hres = IOleCommandTarget_QueryStatus(cmdtrg, cgid, 1, &olecmd, NULL);
-    ok(hres == S_OK, "QueryStatus failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryStatus(%u) failed: %08x\n", cmdid, hres);
 
     IOleCommandTarget_Release(cmdtrg);
 
     ok(olecmd.cmdID == cmdid, "cmdID changed\n");
-    ok(olecmd.cmdf == cmdf, "cmdf=%08x, expected %08x\n", olecmd.cmdf, cmdf);
+    ok(olecmd.cmdf == cmdf, "(%u) cmdf=%08x, expected %08x\n", cmdid, olecmd.cmdf, cmdf);
 }
 
 static void test_MSHTML_QueryStatus(IUnknown *unk, DWORD cmdf)
@@ -2510,7 +2510,7 @@ static void test_OleCommandTarget_fail(IUnknown *unk)
     };
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
-    ok(hres == S_OK, "QueryInterface(IIDIOleM=CommandTarget failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IIDIOleCommandTarget failed: %08x\n", hres);
     if(FAILED(hres))
         return;
 
@@ -2671,6 +2671,38 @@ static void test_exec_noargs(IUnknown *unk, DWORD cmdid)
     ok(hres == S_OK, "Exec failed: %08x\n", hres);
 
     IOleCommandTarget_Release(cmdtrg);
+}
+
+static void test_IsDirty(IUnknown *unk, HRESULT exhres)
+{
+    IPersistStreamInit *perinit;
+    IPersistMoniker *permon;
+    IPersistFile *perfile;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistStreamInit, (void**)&perinit);
+    ok(hres == S_OK, "QueryInterface(IID_IPersistStreamInit failed: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        hres = IPersistStreamInit_IsDirty(perinit);
+        ok(hres == exhres, "IsDirty() = %08x, expected %08x\n", hres, exhres);
+        IPersistStreamInit_Release(perinit);
+    }
+
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistMoniker, (void**)&permon);
+    ok(hres == S_OK, "QueryInterface(IID_IPersistMoniker failed: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        hres = IPersistMoniker_IsDirty(permon);
+        ok(hres == exhres, "IsDirty() = %08x, expected %08x\n", hres, exhres);
+        IPersistMoniker_Release(permon);
+    }
+
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistFile, (void**)&perfile);
+    ok(hres == S_OK, "QueryInterface(IID_IPersistFile failed: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        hres = IPersistFile_IsDirty(perfile);
+        ok(hres == exhres, "IsDirty() = %08x, expected %08x\n", hres, exhres);
+        IPersistFile_Release(perfile);
+    }
 }
 
 static HWND create_container_window(void)
@@ -3155,6 +3187,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     doc_unk = unk;
 
     test_QueryInterface(unk);
+    test_IsDirty(unk, S_FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_ConnectionPointContainer(unk);
     test_Persist(unk);
@@ -3175,6 +3208,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     test_OleCommandTarget(unk);
     test_OnAmbientPropertyChange(unk);
     test_Window(unk, TRUE);
+
     test_UIDeactivate();
     test_OleCommandTarget(unk);
     test_Window(unk, TRUE);
@@ -3241,11 +3275,13 @@ static void test_HTMLDocument_hlink(void)
 
     test_download(FALSE, TRUE);
 
+    test_IsDirty(unk, S_FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_exec_onunload(unk);
     test_Window(unk, TRUE);
     test_InPlaceDeactivate(unk, TRUE);
     test_Close(unk, FALSE);
+    test_IsDirty(unk, S_FALSE);
 
     if(view)
         IOleDocumentView_Release(view);
@@ -3276,6 +3312,7 @@ static void test_HTMLDocument_StreamLoad(void)
     ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
 
     test_readyState(unk);
+    test_IsDirty(unk, S_FALSE);
     test_ConnectionPointContainer(unk);
     test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
     test_DoVerb(oleobj);
@@ -3290,6 +3327,7 @@ static void test_HTMLDocument_StreamLoad(void)
     test_UIDeactivate();
     test_InPlaceDeactivate(unk, TRUE);
     test_Close(unk, FALSE);
+    test_IsDirty(unk, S_FALSE);
 
     if(view) {
         IOleDocumentView_Release(view);
