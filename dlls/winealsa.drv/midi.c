@@ -55,6 +55,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 #ifdef HAVE_ALSA
 
+#ifndef SND_SEQ_PORT_TYPE_PORT
+#define SND_SEQ_PORT_TYPE_PORT (1<<19)  /* Appears in version 1.0.12rc1 */
+#endif
+
 typedef struct {
     int			state;                  /* -1 disabled, 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
     DWORD		bufsize;
