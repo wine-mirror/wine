@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Jacek Caban for CodeWeavers
+ * Copyright 2005-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -576,6 +576,13 @@ static HRESULT exec_baselinefont3(HTMLDocument *This, DWORD cmdexecopt, VARIANT 
     return S_OK;
 }
 
+static HRESULT exec_respectvisibility_indesign(HTMLDocument *This, DWORD cmdexecopt,
+        VARIANT *in, VARIANT *out)
+{
+    FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
+    return E_NOTIMPL;
+}
+
 static HRESULT query_enabled_stub(HTMLDocument *This, OLECMD *cmd)
 {
     switch(cmd->cmdID) {
@@ -653,6 +660,7 @@ static const cmdtable_t base_cmds[] = {
     {IDM_BASELINEFONT3,    NULL,                  exec_baselinefont3},
     {IDM_BLOCKDIRLTR,      query_enabled_stub,    NULL},
     {IDM_BLOCKDIRRTL,      query_enabled_stub,    NULL},
+    {IDM_RESPECTVISIBILITY_INDESIGN, NULL,        exec_respectvisibility_indesign},
     {0,NULL,NULL}
 };
 
