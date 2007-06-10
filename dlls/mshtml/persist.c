@@ -332,8 +332,10 @@ static HRESULT WINAPI PersistMoniker_GetClassID(IPersistMoniker *iface, CLSID *p
 static HRESULT WINAPI PersistMoniker_IsDirty(IPersistMoniker *iface)
 {
     HTMLDocument *This = PERSISTMON_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    return IPersistStreamInit_IsDirty(PERSTRINIT(This));
 }
 
 static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAvailable,
@@ -467,8 +469,10 @@ static HRESULT WINAPI PersistFile_GetClassID(IPersistFile *iface, CLSID *pClassI
 static HRESULT WINAPI PersistFile_IsDirty(IPersistFile *iface)
 {
     HTMLDocument *This = PERSISTFILE_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    return IPersistStreamInit_IsDirty(PERSTRINIT(This));
 }
 
 static HRESULT WINAPI PersistFile_Load(IPersistFile *iface, LPCOLESTR pszFileName, DWORD dwMode)
