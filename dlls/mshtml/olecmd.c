@@ -777,9 +777,12 @@ static HRESULT exec_underline(HTMLDocument *This)
     return S_OK;
 }
 
-static HRESULT exec_browsemode(HTMLDocument *This)
+static HRESULT exec_browsemode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    WARN("(%p)\n", This);
+    WARN("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
+
+    if(in || out)
+        FIXME("unsupported args\n");
 
     This->usermode = BROWSEMODE;
 
@@ -834,14 +837,17 @@ static void setup_ns_editing(NSContainer *This)
     nsIWebBrowser_SetParentURIContentListener(This->webbrowser, NSURICL(This));
 }
 
-static HRESULT exec_editmode(HTMLDocument *This)
+static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     IMoniker *mon;
     HRESULT hres;
 
     static const WCHAR wszAboutBlank[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
+
+    if(in || out)
+        FIXME("unsupported args\n");
 
     This->usermode = EDITMODE;
 
@@ -996,6 +1002,12 @@ static const struct {
     {0},{0},{0},
     { OLECMDF_SUPPORTED,                  exec_set_print_template   }, /* OLECMDID_SETPRINTTEMPLATE */
     { OLECMDF_SUPPORTED,                  exec_get_print_template   }  /* OLECMDID_GETPRINTTEMPLATE */
+};
+
+static const cmdtable_t base_cmds[] = {
+    {IDM_BROWSEMODE,       NULL,           exec_browsemode},
+    {IDM_EDITMODE,         NULL,           exec_editmode},
+    {0,NULL,NULL}
 };
 
 static HRESULT WINAPI OleCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
@@ -1165,6 +1177,20 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
     return hres;
 }
 
+static HRESULT exec_from_table(HTMLDocument *This, const cmdtable_t *cmdtable, DWORD cmdid,
+                               DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    const cmdtable_t *iter = cmdtable;
+
+    while(iter->id && iter->id != cmdid)
+        iter++;
+
+    if(!iter->id || !iter->exec)
+        return OLECMDERR_E_NOTSUPPORTED;
+
+    return iter->exec(This, cmdexecopt, in, out);
+}
+
 static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
         DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
@@ -1185,6 +1211,11 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         FIXME("unsupported nCmdID %d of CGID_ShellDocView group\n", nCmdID);
         return OLECMDERR_E_NOTSUPPORTED;
     }else if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
+        HRESULT hres = exec_from_table(This, base_cmds, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+
+        if(hres != OLECMDERR_E_NOTSUPPORTED)
+            return hres;
+
         switch(nCmdID) {
         case IDM_COPY:
             if(pvaIn || pvaOut)
@@ -1230,14 +1261,6 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_underline(This);
-        case IDM_BROWSEMODE:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_browsemode(This);
-        case IDM_EDITMODE:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_editmode(This);
         case IDM_BASELINEFONT3:
             return exec_baselinefont3(This);
         case IDM_HORIZONTALLINE:

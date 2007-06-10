@@ -374,6 +374,12 @@ void release_nodes(HTMLDocument*);
 
 BOOL install_wine_gecko(void);
 
+typedef struct {
+    DWORD id;
+    HRESULT (*query)(HTMLDocument*,OLECMD*);
+    HRESULT (*exec)(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
+} cmdtable_t;
+
 /* editor */
 void handle_edit_event(HTMLDocument*,nsIDOMEvent*);
 
