@@ -607,11 +607,6 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         DWORD len;
         nsresult nsres;
 
-        if(V_VT(out) != VT_BSTR) {
-            FIXME("Unsupported vt=%d\n", V_VT(out));
-            return E_INVALIDARG;
-        }
-
         nsparam = create_nscommand_params();
 
         nsres = get_ns_command_state(This->nscontainer, NSCMD_FONTFACE, nsparam);
