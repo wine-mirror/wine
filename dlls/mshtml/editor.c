@@ -37,10 +37,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+#define NSCMD_ALIGN        "cmd_align"
+#define NSCMD_BOLD         "cmd_bold"
 #define NSCMD_FONTCOLOR    "cmd_fontColor"
 #define NSCMD_FONTFACE     "cmd_fontFace"
+#define NSCMD_ITALIC       "cmd_italic"
+#define NSCMD_UNDERLINE    "cmd_underline"
 
 #define NSSTATE_ATTRIBUTE "state_attribute"
+
+#define NSALIGN_CENTER "center"
+#define NSALIGN_LEFT   "left"
+#define NSALIGN_RIGHT  "right"
 
 #define DOM_VK_LEFT  VK_LEFT
 #define DOM_VK_UP    VK_UP
@@ -109,6 +117,20 @@ static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsIComm
     return nsres;
 }
 
+static void set_ns_align(HTMLDocument *This, const char *align_str)
+{
+    nsICommandParams *nsparam;
+
+    if(!This->nscontainer)
+        return;
+
+    nsparam = create_nscommand_params();
+    nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, align_str);
+
+    do_ns_command(This->nscontainer, NSCMD_ALIGN, nsparam);
+
+    nsICommandParams_Release(nsparam);
+}
 static nsISelection *get_ns_selection(HTMLDocument *This)
 {
     nsIDOMWindow *dom_window;
@@ -275,7 +297,7 @@ void set_font_size(HTMLDocument *This, LPCWSTR size)
         FIXME("range_cnt %d not supprted\n", range_cnt);
 
     nsIDOMDocument_CreateElement(nsdoc, &font_str, &elem);
-    nsIDOMElement_SetAttribute(elem, &size_str, &val_str);        
+    nsIDOMElement_SetAttribute(elem, &size_str, &val_str);
 
     nsISelection_GetRangeAt(nsselection, 0, &range);
     nsISelection_GetIsCollapsed(nsselection, &collapsed);
@@ -632,9 +654,83 @@ static HRESULT exec_fontsize(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     return S_OK;
 }
 
+static HRESULT exec_bold(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_BOLD, NULL);
+
+    return S_OK;
+}
+
+static HRESULT exec_italic(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_ITALIC, NULL);
+
+    return S_OK;
+}
+
+static HRESULT exec_justifycenter(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
+    set_ns_align(This, NSALIGN_CENTER);
+    return S_OK;
+}
+
+static HRESULT exec_justifyleft(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
+    set_ns_align(This, NSALIGN_LEFT);
+    return S_OK;
+}
+
+static HRESULT exec_justifyright(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+    set_ns_align(This, NSALIGN_RIGHT);
+    return S_OK;
+}
+
+static HRESULT exec_underline(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_UNDERLINE, NULL);
+
+    return S_OK;
+}
+
 const cmdtable_t editmode_cmds[] = {
     {IDM_FONTNAME,        NULL,         exec_fontname},
     {IDM_FONTSIZE,        NULL,         exec_fontsize},
     {IDM_FORECOLOR,       NULL,         exec_forecolor},
+    {IDM_BOLD,            NULL,         exec_bold},
+    {IDM_ITALIC,          NULL,         exec_italic},
+    {IDM_JUSTIFYCENTER,   NULL,         exec_justifycenter},
+    {IDM_JUSTIFYRIGHT,    NULL,         exec_justifyright},
+    {IDM_JUSTIFYLEFT,     NULL,         exec_justifyleft},
+    {IDM_UNDERLINE,       NULL,         exec_underline},
     {0,NULL,NULL}
 };

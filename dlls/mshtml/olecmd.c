@@ -560,20 +560,6 @@ static DWORD query_align_status(HTMLDocument *This, const char *align_str)
     return OLECMDF_SUPPORTED | OLECMDF_ENABLED | (align && !strcmp(align_str, align) ? OLECMDF_LATCHED : 0);
 }
 
-static void set_ns_align(HTMLDocument *This, const char *align_str)
-{
-    nsICommandParams *nsparam;
-
-    if(!This->nscontainer)
-        return;
-
-    nsparam = create_nscommand_params();
-    nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, align_str);
-
-    do_ns_command(This->nscontainer, NSCMD_ALIGN, nsparam);
-
-    nsICommandParams_Release(nsparam);
-}
 
 static HRESULT exec_mshtml_copy(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
@@ -591,57 +577,6 @@ static HRESULT exec_mshtml_paste(HTMLDocument *This, DWORD cmdexecopt, VARIANT *
 {
     FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
     return E_NOTIMPL;
-}
-
-static HRESULT exec_bold(HTMLDocument *This)
-{
-    TRACE("(%p)\n", This);
-
-    if(This->nscontainer)
-        do_ns_command(This->nscontainer, NSCMD_BOLD, NULL);
-
-    return S_OK;
-}
-
-static HRESULT exec_italic(HTMLDocument *This)
-{
-    TRACE("(%p)\n", This);
-
-    if(This->nscontainer)
-        do_ns_command(This->nscontainer, NSCMD_ITALIC, NULL);
-
-    return S_OK;
-}
-
-static HRESULT exec_justifycenter(HTMLDocument *This)
-{
-    TRACE("(%p)\n", This);
-    set_ns_align(This, NSALIGN_CENTER);
-    return S_OK;
-}
-
-static HRESULT exec_justifyleft(HTMLDocument *This)
-{
-    TRACE("(%p)\n", This);
-    set_ns_align(This, NSALIGN_LEFT);
-    return S_OK;
-}
-
-static HRESULT exec_justifyright(HTMLDocument *This)
-{
-    TRACE("(%p)\n", This);
-    set_ns_align(This, NSALIGN_RIGHT);
-    return S_OK;
-}
-
-static HRESULT exec_underline(HTMLDocument *This)
-{
-    TRACE("(%p)\n", This);
-
-    if(This->nscontainer)
-        do_ns_command(This->nscontainer, NSCMD_UNDERLINE, NULL);
-
-    return S_OK;
 }
 
 static HRESULT exec_browsemode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
@@ -1092,30 +1027,6 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             return hres;
 
         switch(nCmdID) {
-        case IDM_BOLD:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_bold(This);
-        case IDM_ITALIC:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_italic(This);
-        case IDM_JUSTIFYCENTER:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_justifycenter(This);
-        case IDM_JUSTIFYLEFT:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_justifyleft(This);
-        case IDM_JUSTIFYRIGHT:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_justifyright(This);
-        case IDM_UNDERLINE:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_underline(This);
         case IDM_BASELINEFONT3:
             return exec_baselinefont3(This);
         case IDM_HORIZONTALLINE:
