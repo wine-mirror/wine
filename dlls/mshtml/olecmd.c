@@ -575,21 +575,21 @@ static void set_ns_align(HTMLDocument *This, const char *align_str)
     nsICommandParams_Release(nsparam);
 }
 
-static HRESULT exec_mshtml_copy(HTMLDocument *This)
+static HRESULT exec_mshtml_copy(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
     return E_NOTIMPL;
 }
 
-static HRESULT exec_mshtml_cut(HTMLDocument *This)
+static HRESULT exec_mshtml_cut(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
     return E_NOTIMPL;
 }
 
-static HRESULT exec_mshtml_paste(HTMLDocument *This)
+static HRESULT exec_mshtml_paste(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
     return E_NOTIMPL;
 }
 
@@ -802,9 +802,9 @@ static HRESULT exec_outdent(HTMLDocument *This)
     return S_OK;
 }
 
-static HRESULT exec_htmleditmode(HTMLDocument *This, VARIANT *in)
+static HRESULT exec_htmleditmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    FIXME("(%p)->(%p)\n", This, in);
+    FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
     return S_OK;
 }
 
@@ -820,9 +820,9 @@ static HRESULT exec_composesettings(HTMLDocument *This, VARIANT *in)
     return S_OK;
 }
 
-static HRESULT exec_setdirty(HTMLDocument *This, VARIANT *in)
+static HRESULT exec_setdirty(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    FIXME("(%p)->(%p)\n", This, in);
+    FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
     return E_NOTIMPL;
 }
 
@@ -872,8 +872,14 @@ static const struct {
 };
 
 static const cmdtable_t base_cmds[] = {
+    {IDM_COPY,             NULL,           exec_mshtml_copy},
+    {IDM_PASTE,            NULL,           exec_mshtml_paste},
+    {IDM_CUT,              NULL,           exec_mshtml_cut},
     {IDM_BROWSEMODE,       NULL,           exec_browsemode},
     {IDM_EDITMODE,         NULL,           exec_editmode},
+    {IDM_PRINT,            NULL,           exec_print},
+    {IDM_SETDIRTY,         NULL,           exec_setdirty},
+    {IDM_HTMLEDITMODE,     NULL,           exec_htmleditmode},
     {0,NULL,NULL}
 };
 
@@ -1086,20 +1092,6 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             return hres;
 
         switch(nCmdID) {
-        case IDM_COPY:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_mshtml_copy(This);
-        case IDM_CUT:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_mshtml_cut(This);
-        case IDM_PASTE:
-            if(pvaIn || pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_mshtml_paste(This);
-        case IDM_PRINT:
-            return exec_print(This, nCmdexecopt, pvaIn, pvaOut);
         case IDM_BOLD:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
@@ -1146,18 +1138,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_outdent(This);
-        case IDM_HTMLEDITMODE:
-            if(pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_htmleditmode(This, pvaIn);
         case IDM_COMPOSESETTINGS:
             if(pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_composesettings(This, pvaIn);
-        case IDM_SETDIRTY:
-            if(pvaOut)
-                FIXME("unsupported arguments\n");
-            return exec_setdirty(This, pvaIn);
         default:
             FIXME("unsupported nCmdID %d of CGID_MSHTML group\n", nCmdID);
             return OLECMDERR_E_NOTSUPPORTED;
