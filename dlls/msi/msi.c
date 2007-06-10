@@ -1206,7 +1206,7 @@ UINT WINAPI MsiGetFileVersionA(LPCSTR szFilePath, LPSTR lpVersionBuf,
 
     if( lpLangBuf && pcchLangBuf && *pcchLangBuf )
     {
-        lpwLangBuff = msi_alloc(*pcchVersionBuf*sizeof(WCHAR));
+        lpwLangBuff = msi_alloc(*pcchLangBuf*sizeof(WCHAR));
         if( !lpwLangBuff )
             goto end;
     }
