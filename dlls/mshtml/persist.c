@@ -565,8 +565,13 @@ static HRESULT WINAPI PersistStreamInit_GetClassID(IPersistStreamInit *iface, CL
 static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
 {
     HTMLDocument *This = PERSTRINIT_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    if(This->usermode == EDITMODE)
+        FIXME("Unimplemented in edit mode\n");
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM pStm)
