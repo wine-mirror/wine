@@ -140,6 +140,8 @@ struct NSContainer {
     nsIBaseWindow *window;
     nsIWebBrowserFocus *focus;
 
+    nsIController *editor_controller;
+
     LONG ref;
 
     NSContainer *parent;
@@ -376,6 +378,7 @@ void release_nodes(HTMLDocument*);
 
 BOOL install_wine_gecko(void);
 
+/* commands */
 typedef struct {
     DWORD id;
     HRESULT (*query)(HTMLDocument*,OLECMD*);
@@ -384,6 +387,7 @@ typedef struct {
 
 extern const cmdtable_t editmode_cmds[];
 
+/* timer */
 #define UPDATE_UI       0x0001
 #define UPDATE_TITLE    0x0002
 

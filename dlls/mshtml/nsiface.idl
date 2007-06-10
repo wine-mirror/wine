@@ -111,6 +111,7 @@ typedef nsISupports nsIWebProgressListener;
 typedef nsISupports nsIDOMCSSValue;
 typedef nsISupports nsIDOMCSSRule;
 typedef nsISupports nsIPrintSession;
+typedef nsISupports nsIControllerCommandTable;
 
 [
     object,
@@ -1607,6 +1608,30 @@ interface nsICommandManager : nsISupports
             nsICommandParams *aCommandParams);
     nsresult DoCommand(const char *aCommandName, nsICommandParams *aCommandParams,
             nsIDOMWindow *aTargetWindow);
+}
+
+[
+    object,
+    uuid(47b82b60-a36f-4167-8072-6f421151ed50)
+    /* NOT_FROZEN */
+]
+interface nsIControllerContext : nsISupports
+{
+    nsresult Init(nsIControllerCommandTable *aCommandTable);
+    nsresult SetCommandContext(nsISupports *aCommandContext);
+}
+
+[
+    object,
+    uuid(d5b61b82-1da4-11d3-bf87-00105a1b0627)
+    /* NOT_FROZEN */
+]
+interface nsIController : nsISupports
+{
+    nsresult IsCommandEnabled(const char *command, PRBool *_retval);
+    nsresult SupportsCommand(const char *command, PRBool *_retval);
+    nsresult DoCommand(const char *command);
+    nsresult OnEvent(const char *eventName);
 }
 
 [

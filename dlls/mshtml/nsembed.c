@@ -42,6 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NS_STRINGSTREAM_CONTRACTID "@mozilla.org/io/string-input-stream;1"
 #define NS_COMMANDPARAMS_CONTRACTID "@mozilla.org/embedcomp/command-params;1"
 #define NS_HTMLSERIALIZER_CONTRACTID "@mozilla.org/layout/contentserializer;1?mimetype=text/html"
+#define NS_EDITORCONTROLLER_CONTRACTID "@mozilla.org/editor/editorcontroller;1"
 
 #define APPSTARTUP_TOPIC "app-startup"
 
@@ -580,6 +581,58 @@ void nsnode_to_nsstring(nsIDOMNode *nsdoc, nsAString *str)
     nsIContentSerializer_Release(serializer);
 }
 
+static nsIController *get_editor_controller(NSContainer *This)
+{
+    nsIController *ret = NULL;
+    nsIEditingSession *editing_session = NULL;
+    nsIInterfaceRequestor *iface_req;
+    nsIControllerContext *ctrlctx;
+    nsIEditor *editor = NULL;
+    nsresult nsres;
+
+    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
+            &IID_nsIInterfaceRequestor, (void**)&iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsIEditingSession,
+                                               (void**)&editing_session);
+    nsIInterfaceRequestor_Release(iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIEditingSession: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIEditingSession_GetEditorForWindow(editing_session,
+            This->doc->window->nswindow, &editor);
+    nsIEditingSession_Release(editing_session);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get editor: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
+            NS_EDITORCONTROLLER_CONTRACTID, NULL, &IID_nsIControllerContext, (void**)&ctrlctx);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIControllerContext_SetCommandContext(ctrlctx, editor);
+        if(NS_FAILED(nsres))
+            ERR("SetCommandContext failed: %08x\n", nsres);
+        nsres = nsIControllerContext_QueryInterface(ctrlctx, &IID_nsIController,
+                (void**)&ret);
+        nsIControllerContext_Release(ctrlctx);
+        if(NS_FAILED(nsres))
+            ERR("Could not get nsIController interface: %08x\n", nsres);
+    }else {
+        ERR("Could not create edit controller: %08x\n", nsres);
+    }
+
+    nsISupports_Release(editor);
+
+    return ret;
+}
+
 void set_ns_editmode(NSContainer *This)
 {
     nsIInterfaceRequestor *iface_req;
@@ -636,6 +689,14 @@ static void handle_load_event(NSContainer *This, nsIDOMEvent *event)
 
     if(!This->doc)
         return;
+
+    if(This->editor_controller) {
+        nsIController_Release(This->editor_controller);
+        This->editor_controller = NULL;
+    }
+
+    if(This->doc->usermode == EDITMODE)
+        This->editor_controller = get_editor_controller(This);
 
     task = mshtml_alloc(sizeof(task_t));
 
@@ -1318,7 +1379,9 @@ static nsresult NSAPI nsDOMEventListener_HandleEvent(nsIDOMEventListener *iface,
 
     if(!strcmpW(loadW, type)) {
         handle_load_event(This, event);
-    }else if(This->doc && This->doc->usermode == EDITMODE) {
+    }else if(This->doc) {
+        update_doc(This->doc, UPDATE_UI);
+        if(This->doc->usermode == EDITMODE)
             handle_edit_event(This->doc, event);
     }
 
@@ -1485,6 +1548,7 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     ret->ref = 1;
     ret->bscallback = NULL;
     ret->content_listener = NULL;
+    ret->editor_controller = NULL;
 
     if(parent)
         nsIWebBrowserChrome_AddRef(NSWBCHROME(parent));
@@ -1604,6 +1668,11 @@ void NSContainer_Release(NSContainer *This)
 
     nsIWebBrowserFocus_Release(This->focus);
     This->focus = NULL;
+
+    if(This->editor_controller) {
+        nsIController_Release(This->editor_controller);
+        This->editor_controller = NULL;
+    }
 
     if(This->content_listener) {
         nsIURIContentListener_Release(This->content_listener);
