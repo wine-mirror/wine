@@ -25,6 +25,15 @@
 #include "initguid.h"
 #include "d3d9_private.h"
 
+static CRITICAL_SECTION_DEBUG d3d9_cs_debug =
+{
+    0, 0, &d3d9_cs,
+    { &d3d9_cs_debug.ProcessLocksList,
+    &d3d9_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": d3d9_cs") }
+};
+CRITICAL_SECTION d3d9_cs = { &d3d9_cs_debug, -1, 0, 0, 0, 0 };
+
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 static int D3DPERF_event_level = 0;
@@ -43,7 +52,9 @@ IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion) {
 
     object->lpVtbl = &Direct3D9_Vtbl;
     object->ref = 1;
+    EnterCriticalSection(&d3d9_cs);
     object->WineD3D = WineDirect3DCreate(SDKVersion, 9, (IUnknown *)object);
+    LeaveCriticalSection(&d3d9_cs);
 
     TRACE("SDKVersion = %x, Created Direct3D object @ %p, WineObj @ %p\n", SDKVersion, object, object->WineD3D);
 
