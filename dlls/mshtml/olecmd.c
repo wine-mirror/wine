@@ -619,6 +619,26 @@ static HRESULT exec_baselinefont3(HTMLDocument *This, DWORD cmdexecopt, VARIANT 
     return S_OK;
 }
 
+static HRESULT query_enabled_stub(HTMLDocument *This, OLECMD *cmd)
+{
+    switch(cmd->cmdID) {
+    case IDM_PRINT:
+        FIXME("CGID_MSHTML: IDM_PRINT\n");
+        cmd->cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+        break;
+    case IDM_BLOCKDIRLTR:
+        FIXME("CGID_MSHTML: IDM_BLOCKDIRLTR\n");
+        cmd->cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+        break;
+    case IDM_BLOCKDIRRTL:
+        FIXME("CGID_MSHTML: IDM_BLOCKDIRRTL\n");
+        cmd->cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+        break;
+    }
+
+    return S_OK;
+}
+
 static const struct {
     OLECMDF cmdf;
     HRESULT (*func)(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
@@ -668,12 +688,14 @@ static const cmdtable_t base_cmds[] = {
     {IDM_COPY,             query_mshtml_copy,     exec_mshtml_copy},
     {IDM_PASTE,            query_mshtml_paste,    exec_mshtml_paste},
     {IDM_CUT,              query_mshtml_cut,      exec_mshtml_cut},
-    {IDM_BROWSEMODE,       NULL,           exec_browsemode},
-    {IDM_EDITMODE,         NULL,           exec_editmode},
-    {IDM_PRINT,            NULL,           exec_print},
-    {IDM_SETDIRTY,         NULL,           exec_setdirty},
-    {IDM_HTMLEDITMODE,     NULL,           exec_htmleditmode},
-    {IDM_BASELINEFONT3,    NULL,           exec_baselinefont3},
+    {IDM_BROWSEMODE,       NULL,                  exec_browsemode},
+    {IDM_EDITMODE,         NULL,                  exec_editmode},
+    {IDM_PRINT,            query_enabled_stub,    exec_print},
+    {IDM_SETDIRTY,         NULL,                  exec_setdirty},
+    {IDM_HTMLEDITMODE,     NULL,                  exec_htmleditmode},
+    {IDM_BASELINEFONT3,    NULL,                  exec_baselinefont3},
+    {IDM_BLOCKDIRLTR,      query_enabled_stub,    NULL},
+    {IDM_BLOCKDIRRTL,      query_enabled_stub,    NULL},
     {0,NULL,NULL}
 };
 
@@ -763,26 +785,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
             HRESULT hres = query_from_table(This, base_cmds, prgCmds+i);
             if(hres == OLECMDERR_E_NOTSUPPORTED)
                 hres = query_from_table(This, editmode_cmds, prgCmds+i);
-            if(hres != OLECMDERR_E_NOTSUPPORTED)
-                continue;
-
-            switch(prgCmds[i].cmdID) {
-            case IDM_PRINT:
-                FIXME("CGID_MSHTML: IDM_PRINT\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
-                break;
-            case IDM_BLOCKDIRLTR:
-                FIXME("CGID_MSHTML: IDM_BLOCKDIRLTR\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
-                break;
-            case IDM_BLOCKDIRRTL:
-                FIXME("CGID_MSHTML: IDM_BLOCKDIRRTL\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
-                break;
-            default:
+            if(hres == OLECMDERR_E_NOTSUPPORTED)
                 FIXME("CGID_MSHTML: unsupported cmdID %d\n", prgCmds[i].cmdID);
-                prgCmds[i].cmdf = 0;
-            }
         }
 
         hres = prgCmds[i-1].cmdf ? S_OK : OLECMDERR_E_NOTSUPPORTED;
