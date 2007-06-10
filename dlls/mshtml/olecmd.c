@@ -530,6 +530,12 @@ static DWORD query_align_status(HTMLDocument *This, const char *align_str)
     return OLECMDF_SUPPORTED | OLECMDF_ENABLED | (align && !strcmp(align_str, align) ? OLECMDF_LATCHED : 0);
 }
 
+static HRESULT query_mshtml_copy(HTMLDocument *This, OLECMD *cmd)
+{
+    FIXME("(%p)\n", This);
+    cmd->cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+    return S_OK;
+}
 
 static HRESULT exec_mshtml_copy(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
@@ -537,10 +543,24 @@ static HRESULT exec_mshtml_copy(HTMLDocument *This, DWORD cmdexecopt, VARIANT *i
     return E_NOTIMPL;
 }
 
+static HRESULT query_mshtml_cut(HTMLDocument *This, OLECMD *cmd)
+{
+    FIXME("(%p)\n", This);
+    cmd->cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+    return S_OK;
+}
+
 static HRESULT exec_mshtml_cut(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
     return E_NOTIMPL;
+}
+
+static HRESULT query_mshtml_paste(HTMLDocument *This, OLECMD *cmd)
+{
+    FIXME("(%p)\n", This);
+    cmd->cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+    return S_OK;
 }
 
 static HRESULT exec_mshtml_paste(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
@@ -715,9 +735,9 @@ static const struct {
 };
 
 static const cmdtable_t base_cmds[] = {
-    {IDM_COPY,             NULL,           exec_mshtml_copy},
-    {IDM_PASTE,            NULL,           exec_mshtml_paste},
-    {IDM_CUT,              NULL,           exec_mshtml_cut},
+    {IDM_COPY,             query_mshtml_copy,     exec_mshtml_copy},
+    {IDM_PASTE,            query_mshtml_paste,    exec_mshtml_paste},
+    {IDM_CUT,              query_mshtml_cut,      exec_mshtml_cut},
     {IDM_BROWSEMODE,       NULL,           exec_browsemode},
     {IDM_EDITMODE,         NULL,           exec_editmode},
     {IDM_PRINT,            NULL,           exec_print},
@@ -743,6 +763,21 @@ static ULONG WINAPI OleCommandTarget_Release(IOleCommandTarget *iface)
 {
     HTMLDocument *This = CMDTARGET_THIS(iface);
     return IHTMLDocument_Release(HTMLDOC(This));
+}
+
+static HRESULT query_from_table(HTMLDocument *This, const cmdtable_t *cmdtable, OLECMD *cmd)
+{
+    const cmdtable_t *iter = cmdtable;
+
+    cmd->cmdf = 0;
+
+    while(iter->id && iter->id != cmd->cmdID)
+        iter++;
+
+    if(!iter->id || !iter->query)
+        return OLECMDERR_E_NOTSUPPORTED;
+
+    return iter->query(This, cmd);
 }
 
 static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
@@ -795,15 +830,13 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
         ULONG i;
 
         for(i=0; i<cCmds; i++) {
+            HRESULT hres = query_from_table(This, base_cmds, prgCmds+i);
+            if(hres == OLECMDERR_E_NOTSUPPORTED)
+                hres = query_from_table(This, editmode_cmds, prgCmds+i);
+            if(hres != OLECMDERR_E_NOTSUPPORTED)
+                continue;
+
             switch(prgCmds[i].cmdID) {
-            case IDM_COPY:
-                FIXME("CGID_MSHTML: IDM_COPY\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
-                break;
-            case IDM_CUT:
-                FIXME("CGID_MSHTML: IDM_CUT\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
-                break;
             case IDM_FONTNAME:
                 TRACE("CGID_MSHTML: IDM_FONTNAME\n");
                 prgCmds[i].cmdf = query_edit_status(This, NULL);
@@ -814,10 +847,6 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 break;
             case IDM_PRINT:
                 FIXME("CGID_MSHTML: IDM_PRINT\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
-                break;
-            case IDM_PASTE:
-                FIXME("CGID_MSHTML: IDM_PASTE\n");
                 prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
                 break;
             case IDM_BOLD:
