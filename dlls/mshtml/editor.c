@@ -585,8 +585,10 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
 {
     TRACE("(%p)->(%p %p)\n", This, in, out);
 
-    if(!This->nscontainer)
+    if(!This->nscontainer) {
+        update_doc(This, UPDATE_UI);
         return E_FAIL;
+    }
 
     if(in) {
         char *stra;
@@ -658,6 +660,8 @@ static HRESULT exec_forecolor(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
         }else {
             FIXME("unsupported in vt=%d\n", V_VT(in));
         }
+
+        update_doc(This, UPDATE_UI);
     }
 
     if(out) {
@@ -704,6 +708,8 @@ static HRESULT exec_fontsize(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         default:
             FIXME("unsupported vt %d\n", V_VT(in));
         }
+
+        update_doc(This, UPDATE_UI);
     }
 
     return S_OK;
@@ -719,6 +725,7 @@ static HRESULT exec_bold(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARI
     if(This->nscontainer)
         do_ns_command(This->nscontainer, NSCMD_BOLD, NULL);
 
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 
@@ -732,6 +739,7 @@ static HRESULT exec_italic(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VA
     if(This->nscontainer)
         do_ns_command(This->nscontainer, NSCMD_ITALIC, NULL);
 
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 
@@ -767,6 +775,7 @@ static HRESULT exec_justifycenter(HTMLDocument *This, DWORD cmdexecopt, VARIANT 
         FIXME("unsupported args\n");
 
     set_ns_align(This, NSALIGN_CENTER);
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 
@@ -778,13 +787,19 @@ static HRESULT exec_justifyleft(HTMLDocument *This, DWORD cmdexecopt, VARIANT *i
         FIXME("unsupported args\n");
 
     set_ns_align(This, NSALIGN_LEFT);
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 
 static HRESULT exec_justifyright(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     TRACE("(%p)\n", This);
+
+    if(in || out)
+        FIXME("unsupported args\n");
+
     set_ns_align(This, NSALIGN_RIGHT);
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 
@@ -798,6 +813,7 @@ static HRESULT exec_underline(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     if(This->nscontainer)
         do_ns_command(This->nscontainer, NSCMD_UNDERLINE, NULL);
 
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 
@@ -811,6 +827,7 @@ static HRESULT exec_horizontalline(HTMLDocument *This, DWORD cmdexecopt, VARIANT
     if(This->nscontainer)
         do_ns_command(This->nscontainer, NSCMD_INSERTHR, NULL);
 
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 
@@ -824,6 +841,7 @@ static HRESULT exec_orderlist(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     if(This->nscontainer)
         do_ns_command(This->nscontainer, NSCMD_OL, NULL);
 
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 
@@ -837,6 +855,7 @@ static HRESULT exec_unorderlist(HTMLDocument *This, DWORD cmdexecopt, VARIANT *i
     if(This->nscontainer)
         do_ns_command(This->nscontainer, NSCMD_UL, NULL);
 
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 
@@ -850,6 +869,7 @@ static HRESULT exec_indent(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VA
     if(This->nscontainer)
         do_ns_command(This->nscontainer, NSCMD_INDENT, NULL);
 
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 
@@ -863,6 +883,7 @@ static HRESULT exec_outdent(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, V
     if(This->nscontainer)
         do_ns_command(This->nscontainer, NSCMD_OUTDENT, NULL);
 
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 
@@ -875,6 +896,7 @@ static HRESULT exec_composesettings(HTMLDocument *This, DWORD cmdexecopt, VARIAN
 
     FIXME("%s\n", debugstr_w(V_BSTR(in)));
 
+    update_doc(This, UPDATE_UI);
     return S_OK;
 }
 

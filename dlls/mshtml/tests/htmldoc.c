@@ -3335,14 +3335,17 @@ static void test_editing_mode(void)
 
     test_exec_fontname(unk, NULL, wszTimesNewRoman);
     test_exec_fontname(unk, wszArial, wszTimesNewRoman);
+    test_timer(EXPECT_UPDATEUI);
     test_exec_fontname(unk, NULL, wszArial);
 
     test_exec_noargs(unk, IDM_JUSTIFYRIGHT);
+    test_timer(EXPECT_UPDATEUI);
     if(!nogecko)
         test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYRIGHT,
                          OLECMDF_SUPPORTED|OLECMDF_ENABLED|OLECMDF_LATCHED);
 
     test_exec_noargs(unk, IDM_JUSTIFYCENTER);
+    test_timer(EXPECT_UPDATEUI);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYRIGHT,
                      OLECMDF_SUPPORTED|OLECMDF_ENABLED);
     if(!nogecko)
@@ -3350,6 +3353,7 @@ static void test_editing_mode(void)
                          OLECMDF_SUPPORTED|OLECMDF_ENABLED|OLECMDF_LATCHED);
 
     test_exec_noargs(unk, IDM_HORIZONTALLINE);
+    test_timer(EXPECT_UPDATEUI);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_HORIZONTALLINE,
                      OLECMDF_SUPPORTED|OLECMDF_ENABLED);
 
