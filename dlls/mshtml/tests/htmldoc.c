@@ -2571,6 +2571,10 @@ static void test_exec_editmode(IUnknown *unk)
     IOleCommandTarget_Release(cmdtrg);
 
     editmode = TRUE;
+
+    hres = IOleCommandTarget_Exec(cmdtrg, &CGID_MSHTML, IDM_EDITMODE,
+            OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+    ok(hres == S_OK, "Exec failed: %08x\n", hres);
 }
 
 static HWND create_container_window(void)

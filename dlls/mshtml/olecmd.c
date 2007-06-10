@@ -523,6 +523,9 @@ static HRESULT exec_editmode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     if(in || out)
         FIXME("unsupported args\n");
 
+    if(This->usermode == EDITMODE)
+        return S_OK;
+
     This->usermode = EDITMODE;
 
     if(This->frame)
