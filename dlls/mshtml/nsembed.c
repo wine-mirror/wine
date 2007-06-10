@@ -520,6 +520,8 @@ static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode 
         nsIDOMDocument_Release(nsdoc);
         break;
     }
+    case DOCUMENT_FRAGMENT_NODE:
+        break;
     default:
         FIXME("Unhandled type %u\n", type);
     }
