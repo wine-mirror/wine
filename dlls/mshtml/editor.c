@@ -28,6 +28,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "ole2.h"
+#include "mshtmcid.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -36,6 +37,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+#define NSCMD_FONTCOLOR    "cmd_fontColor"
+#define NSCMD_FONTFACE     "cmd_fontFace"
+
+#define NSSTATE_ATTRIBUTE "state_attribute"
+
 #define DOM_VK_LEFT  VK_LEFT
 #define DOM_VK_UP    VK_UP
 #define DOM_VK_RIGHT VK_RIGHT
@@ -43,6 +49,65 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static const WCHAR wszFont[] = {'f','o','n','t',0};
 static const WCHAR wszSize[] = {'s','i','z','e',0};
+
+static void do_ns_command(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
+{
+    nsICommandManager *cmdmgr;
+    nsIInterfaceRequestor *iface_req;
+    nsresult nsres;
+
+    TRACE("(%p)\n", This);
+
+    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
+            &IID_nsIInterfaceRequestor, (void**)&iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
+        return;
+    }
+
+    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsICommandManager,
+                                               (void**)&cmdmgr);
+    nsIInterfaceRequestor_Release(iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsICommandManager: %08x\n", nsres);
+        return;
+    }
+
+    nsres = nsICommandManager_DoCommand(cmdmgr, cmd, nsparam, NULL);
+    if(NS_FAILED(nsres))
+        ERR("DoCommand(%s) failed: %08x\n", debugstr_a(cmd), nsres);
+
+    nsICommandManager_Release(cmdmgr);
+}
+
+static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
+{
+    nsICommandManager *cmdmgr;
+    nsIInterfaceRequestor *iface_req;
+    nsresult nsres;
+
+    nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
+            &IID_nsIInterfaceRequestor, (void**)&iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
+        return nsres;
+    }
+
+    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsICommandManager,
+                                               (void**)&cmdmgr);
+    nsIInterfaceRequestor_Release(iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsICommandManager: %08x\n", nsres);
+        return nsres;
+    }
+
+    nsres = nsICommandManager_GetCommandState(cmdmgr, cmd, NULL, nsparam);
+    if(NS_FAILED(nsres))
+        ERR("GetCommandState(%s) failed: %08x\n", debugstr_a(cmd), nsres);
+
+    nsICommandManager_Release(cmdmgr);
+    return nsres;
+}
 
 static nsISelection *get_ns_selection(HTMLDocument *This)
 {
@@ -435,3 +500,141 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
 
     nsIDOMKeyEvent_Release(key_event);
 }
+
+static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)->(%p %p)\n", This, in, out);
+
+    if(!This->nscontainer)
+        return E_FAIL;
+
+    if(in) {
+        nsICommandParams *nsparam = create_nscommand_params();
+        char *stra;
+        DWORD len;
+
+        if(V_VT(in) != VT_BSTR) {
+            FIXME("Unsupported vt=%d\n", V_VT(out));
+            return E_INVALIDARG;
+        }
+
+        len = WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, NULL, 0, NULL, NULL);
+        stra = mshtml_alloc(len);
+        WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, stra, -1, NULL, NULL);
+        nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, stra);
+        mshtml_free(stra);
+
+        do_ns_command(This->nscontainer, NSCMD_FONTFACE, nsparam);
+
+        nsICommandParams_Release(nsparam);
+    }
+
+    if(out) {
+        nsICommandParams *nsparam;
+        LPWSTR strw;
+        char *stra;
+        DWORD len;
+        nsresult nsres;
+
+        if(V_VT(out) != VT_BSTR) {
+            FIXME("Unsupported vt=%d\n", V_VT(out));
+            return E_INVALIDARG;
+        }
+
+        nsparam = create_nscommand_params();
+
+        nsres = get_ns_command_state(This->nscontainer, NSCMD_FONTFACE, nsparam);
+        if(NS_FAILED(nsres))
+            return S_OK;
+
+        nsICommandParams_GetCStringValue(nsparam, NSSTATE_ATTRIBUTE, &stra);
+        nsICommandParams_Release(nsparam);
+
+        len = MultiByteToWideChar(CP_ACP, 0, stra, -1, NULL, 0);
+        strw = mshtml_alloc(len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, stra, -1, strw, -1);
+        nsfree(stra);
+
+        V_BSTR(out) = SysAllocString(strw);
+        mshtml_free(strw);
+    }
+
+    return S_OK;
+}
+
+static HRESULT exec_forecolor(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)->(%p %p)\n", This, in, out);
+
+    if(in) {
+        if(V_VT(in) == VT_I4) {
+            nsICommandParams *nsparam = create_nscommand_params();
+            char color_str[10];
+
+            sprintf(color_str, "#%02x%02x%02x",
+                    V_I4(in)&0xff, (V_I4(in)>>8)&0xff, (V_I4(in)>>16)&0xff);
+
+            nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, color_str);
+            do_ns_command(This->nscontainer, NSCMD_FONTCOLOR, nsparam);
+
+            nsICommandParams_Release(nsparam);
+        }else {
+            FIXME("unsupported in vt=%d\n", V_VT(in));
+        }
+    }
+
+    if(out) {
+        FIXME("unsupported out\n");
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT exec_fontsize(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)->(%p %p)\n", This, in, out);
+
+    if(out) {
+        WCHAR val[10] = {0};
+
+        switch(V_VT(out)) {
+        case VT_I4:
+            get_font_size(This, val);
+            V_I4(out) = strtolW(val, NULL, 10);
+            break;
+        case VT_BSTR:
+            get_font_size(This, val);
+            V_BSTR(out) = SysAllocString(val);
+            break;
+        default:
+            FIXME("unsupported vt %d\n", V_VT(out));
+        }
+    }
+
+    if(in) {
+        switch(V_VT(in)) {
+        case VT_I4: {
+            WCHAR size[10];
+            static const WCHAR format[] = {'%','d',0};
+            wsprintfW(size, format, V_I4(in));
+            set_font_size(This, size);
+            break;
+        }
+        case VT_BSTR:
+            set_font_size(This, V_BSTR(in));
+            break;
+        default:
+            FIXME("unsupported vt %d\n", V_VT(in));
+        }
+    }
+
+    return S_OK;
+}
+
+const cmdtable_t editmode_cmds[] = {
+    {IDM_FONTNAME,        NULL,         exec_fontname},
+    {IDM_FONTSIZE,        NULL,         exec_fontsize},
+    {IDM_FORECOLOR,       NULL,         exec_forecolor},
+    {0,NULL,NULL}
+};

@@ -44,9 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_BOLD "cmd_bold"
 #define NSCMD_ITALIC "cmd_italic"
 #define NSCMD_UNDERLINE "cmd_underline"
-#define NSCMD_FONTCOLOR "cmd_fontColor"
 #define NSCMD_ALIGN "cmd_align"
-#define NSCMD_FONTFACE "cmd_fontFace"
 #define NSCMD_INDENT "cmd_indent"
 #define NSCMD_OUTDENT "cmd_outdent"
 #define NSCMD_INSERTHR "cmd_insertHR"
@@ -595,137 +593,6 @@ static HRESULT exec_mshtml_paste(HTMLDocument *This)
     return E_NOTIMPL;
 }
 
-static HRESULT exec_fontname(HTMLDocument *This, VARIANT *in, VARIANT *out)
-{
-    TRACE("(%p)->(%p %p)\n", This, in, out);
-
-    if(!This->nscontainer)
-        return E_FAIL;
-
-    if(in) {
-        nsICommandParams *nsparam = create_nscommand_params();
-        char *stra;
-        DWORD len;
-
-        if(V_VT(in) != VT_BSTR) {
-            FIXME("Unsupported vt=%d\n", V_VT(out));
-            return E_INVALIDARG;
-        }
-
-        len = WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, NULL, 0, NULL, NULL);
-        stra = mshtml_alloc(len);
-        WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, stra, -1, NULL, NULL);
-        nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, stra);
-        mshtml_free(stra);
-
-        do_ns_command(This->nscontainer, NSCMD_FONTFACE, nsparam);
-
-        nsICommandParams_Release(nsparam);
-    }
-
-    if(out) {
-        nsICommandParams *nsparam;
-        LPWSTR strw;
-        char *stra;
-        DWORD len;
-        nsresult nsres;
-
-        if(V_VT(out) != VT_BSTR) {
-            FIXME("Unsupported vt=%d\n", V_VT(out));
-            return E_INVALIDARG;
-        }
-
-        nsparam = create_nscommand_params();
-
-        nsres = get_ns_command_state(This->nscontainer, NSCMD_FONTFACE, nsparam);
-        if(NS_FAILED(nsres))
-            return S_OK;
-
-        nsICommandParams_GetCStringValue(nsparam, NSSTATE_ATTRIBUTE, &stra);
-        nsICommandParams_Release(nsparam);
-
-        len = MultiByteToWideChar(CP_ACP, 0, stra, -1, NULL, 0);
-        strw = mshtml_alloc(len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, stra, -1, strw, -1);
-        nsfree(stra);
-
-        V_BSTR(out) = SysAllocString(strw);
-        mshtml_free(strw);
-    }
-
-    return S_OK;
-}
-
-static HRESULT exec_forecolor(HTMLDocument *This, VARIANT *in, VARIANT *out)
-{
-    TRACE("(%p)->(%p %p)\n", This, in, out);
-
-    if(in) {
-        if(V_VT(in) == VT_I4) {
-            nsICommandParams *nsparam = create_nscommand_params();
-            char color_str[10];
-
-            sprintf(color_str, "#%02x%02x%02x",
-                    V_I4(in)&0xff, (V_I4(in)>>8)&0xff, (V_I4(in)>>16)&0xff);
-
-            nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, color_str);
-            do_ns_command(This->nscontainer, NSCMD_FONTCOLOR, nsparam);
-
-            nsICommandParams_Release(nsparam);
-        }else {
-            FIXME("unsupported in vt=%d\n", V_VT(in));
-        }
-    }
-
-    if(out) {
-        FIXME("unsupported out\n");
-        return E_NOTIMPL;
-    }
-
-    return S_OK;
-}
-
-static HRESULT exec_fontsize(HTMLDocument *This, VARIANT *in, VARIANT *out)
-{
-    TRACE("(%p)->(%p %p)\n", This, in, out);
-
-    if(out) {
-        WCHAR val[10] = {0};
-
-        switch(V_VT(out)) {
-        case VT_I4:
-            get_font_size(This, val);
-            V_I4(out) = strtolW(val, NULL, 10);
-            break;
-        case VT_BSTR:
-            get_font_size(This, val);
-            V_BSTR(out) = SysAllocString(val);
-            break;
-        default:
-            FIXME("unsupported vt %d\n", V_VT(out));
-        }
-    }
-
-    if(in) {
-        switch(V_VT(in)) {
-        case VT_I4: {
-            WCHAR size[10];
-            static const WCHAR format[] = {'%','d',0};
-            wsprintfW(size, format, V_I4(in));
-            set_font_size(This, size);
-            break;
-        }
-        case VT_BSTR:
-            set_font_size(This, V_BSTR(in));
-            break;
-        default:
-            FIXME("unsupported vt %d\n", V_VT(in));
-        }
-    }
-
-    return S_OK;
-}
-
 static HRESULT exec_bold(HTMLDocument *This)
 {
     TRACE("(%p)\n", This);
@@ -1212,7 +1079,9 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         return OLECMDERR_E_NOTSUPPORTED;
     }else if(IsEqualGUID(&CGID_MSHTML, pguidCmdGroup)) {
         HRESULT hres = exec_from_table(This, base_cmds, nCmdID, nCmdexecopt, pvaIn, pvaOut);
-
+        if(hres == OLECMDERR_E_NOTSUPPORTED)
+            hres = exec_from_table(This, editmode_cmds, nCmdID,
+                                   nCmdexecopt, pvaIn, pvaOut);
         if(hres != OLECMDERR_E_NOTSUPPORTED)
             return hres;
 
@@ -1225,10 +1094,6 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_mshtml_cut(This);
-        case IDM_FONTNAME:
-            return exec_fontname(This, pvaIn, pvaOut);
-        case IDM_FONTSIZE:
-            return exec_fontsize(This, pvaIn, pvaOut);
         case IDM_PASTE:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
@@ -1239,8 +1104,6 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_bold(This);
-        case IDM_FORECOLOR:
-            return exec_forecolor(This, pvaIn, pvaOut);
         case IDM_ITALIC:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
