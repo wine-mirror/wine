@@ -53,6 +53,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_MOVEPAGEUP   "cmd_movePageUp"
 #define NSCMD_OL           "cmd_ol"
 #define NSCMD_OUTDENT      "cmd_outdent"
+#define NSCMD_PASTE        "cmd_paste"
 #define NSCMD_SELECTCHARNEXT      "cmd_selectCharNext"
 #define NSCMD_SELECTCHARPREVIOUS  "cmd_selectCharPrevious"
 #define NSCMD_SELECTLINENEXT      "cmd_selectLineNext"
@@ -942,6 +943,17 @@ HRESULT editor_exec_copy(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARI
         return E_FAIL;
 
     do_ns_editor_command(This->nscontainer, NSCMD_COPY);
+    return S_OK;
+}
+
+HRESULT editor_exec_paste(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    update_doc(This, UPDATE_UI);
+
+    if(!This->nscontainer)
+        return E_FAIL;
+
+    do_ns_editor_command(This->nscontainer, NSCMD_PASTE);
     return S_OK;
 }
 
