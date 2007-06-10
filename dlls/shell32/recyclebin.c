@@ -512,3 +512,14 @@ static const IPersistFolder2Vtbl recycleBinPersistVtbl =
     /* IPersistFolder2 */
     RecycleBin_GetCurFolder
 };
+
+/*************************************************************************
+ * SHUpdateRecycleBinIcon                                [SHELL32.@]
+ *
+ * Undocumented
+ */
+HRESULT WINAPI SHUpdateRecycleBinIcon(void)
+{
+    FIXME("stub\n");
+    return S_OK;
+}

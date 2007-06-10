@@ -368,7 +368,7 @@
 @ stdcall SHQueryRecycleBinA(str ptr)
 @ stdcall SHQueryRecycleBinW(wstr ptr)
 @ stdcall SHSetLocalizedName(wstr wstr long)
-@ stub SHUpdateRecycleBinIcon
+@ stdcall SHUpdateRecycleBinIcon()
 @ stdcall SheChangeDirA(str)
 @ stub SheChangeDirExA
 @ stub SheChangeDirExW
