@@ -628,6 +628,28 @@ void set_ns_editmode(NSContainer *This)
     nsIWebBrowser_SetParentURIContentListener(This->webbrowser, NSURICL(This));
 }
 
+static void handle_load_event(NSContainer *This, nsIDOMEvent *event)
+{
+    task_t *task;
+
+    TRACE("(%p)\n", This);
+
+    if(!This->doc)
+        return;
+
+    task = mshtml_alloc(sizeof(task_t));
+
+    task->doc = This->doc;
+    task->task_id = TASK_PARSECOMPLETE;
+    task->next = NULL;
+
+    /*
+     * This should be done in the worker thread that parses HTML,
+     * but we don't have such thread (Gecko parses HTML for us).
+     */
+    push_task(task);
+}
+
 void close_gecko(void)
 {
     TRACE("()\n");
@@ -1283,11 +1305,24 @@ static nsrefcnt NSAPI nsDOMEventListener_Release(nsIDOMEventListener *iface)
 static nsresult NSAPI nsDOMEventListener_HandleEvent(nsIDOMEventListener *iface, nsIDOMEvent *event)
 {
     NSContainer *This = NSEVENTLIST_THIS(iface);
+    nsAString type_str;
+    const PRUnichar *type;
 
-    TRACE("(%p)->(%p)\n", This, event);
+    static const PRUnichar loadW[] = {'l','o','a','d',0};
 
-    if(This->doc->usermode == EDITMODE)
-        handle_edit_event(This->doc, event);
+    nsAString_Init(&type_str, NULL);
+    nsIDOMEvent_GetType(event, &type_str);
+    nsAString_GetData(&type_str, &type, NULL);
+
+    TRACE("(%p)->(%p) %s\n", This, event, debugstr_w(type));
+
+    if(!strcmpW(loadW, type)) {
+        handle_load_event(This, event);
+    }else if(This->doc && This->doc->usermode == EDITMODE) {
+            handle_edit_event(This->doc, event);
+    }
+
+    nsAString_Finish(&type_str);
 
     return NS_OK;
 }
@@ -1519,14 +1554,23 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
         nsres = nsIDOMWindow_QueryInterface(dom_window, &IID_nsIDOMEventTarget, (void**)&target);
         nsIDOMWindow_Release(dom_window);
         if(NS_SUCCEEDED(nsres)) {
-            nsAString keypress_str;
+            nsAString keypress_str, load_str;
             static const PRUnichar wsz_keypress[] = {'k','e','y','p','r','e','s','s',0};
+            static const PRUnichar wsz_load[] = {'l','o','a','d',0};
+
             nsAString_Init(&keypress_str, wsz_keypress);
             nsres = nsIDOMEventTarget_AddEventListener(target, &keypress_str, NSEVENTLIST(ret), TRUE);
             nsAString_Finish(&keypress_str);
-            nsIDOMEventTarget_Release(target);
             if(NS_FAILED(nsres))
                 ERR("AddEventTarget failed: %08x\n", nsres);
+
+            nsAString_Init(&load_str, wsz_load);
+            nsres = nsIDOMEventTarget_AddEventListener(target, &load_str, NSEVENTLIST(ret), TRUE);
+            nsAString_Finish(&load_str);
+            if(NS_FAILED(nsres))
+                ERR("AddEventTarget failed: %08x\n", nsres);
+
+            nsIDOMEventTarget_Release(target);
         }else {
             ERR("Could not get nsIDOMEventTarget interface: %08x\n", nsres);
         }

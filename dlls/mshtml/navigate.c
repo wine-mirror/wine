@@ -404,7 +404,7 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
         }
     }
 
-    if(This->doc) {
+    if(This->doc && !This->doc->nscontainer) {
         task_t *task = mshtml_alloc(sizeof(task_t));
 
         task->doc = This->doc;
@@ -413,7 +413,7 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 
         /*
          * This should be done in the worker thread that parses HTML,
-         * but we don't have such thread (Gecko parses HTML for us).
+         * but we don't have such thread.
          */
         push_task(task);
     }
