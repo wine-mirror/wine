@@ -898,7 +898,7 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
         FIXME("aContextFlags=%08x\n", aContextFlags);
     };
 
-    HTMLDocument_ShowContextMenu(This->doc, dwID, &pt);
+    show_context_menu(This->doc, dwID, &pt);
 
     return NS_OK;
 }
