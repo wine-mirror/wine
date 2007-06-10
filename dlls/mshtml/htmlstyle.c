@@ -77,6 +77,30 @@ static HRESULT set_style_attr(HTMLStyle *This, LPCWSTR name, LPCWSTR value)
     return S_OK;
 }
 
+static HRESULT get_style_attr(HTMLStyle *This, LPCWSTR name, BSTR *p)
+{
+    nsAString str_name, str_value;
+    const PRUnichar *value;
+    nsresult nsres;
+
+    nsAString_Init(&str_name, name);
+    nsAString_Init(&str_value, NULL);
+
+    nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(This->nsstyle, &str_name, &str_value);
+    if(NS_FAILED(nsres))
+        ERR("SetProperty failed: %08x\n", nsres);
+
+    nsAString_GetData(&str_value, &value, NULL);
+    *p = SysAllocString(value);
+
+    nsAString_Finish(&str_name);
+    nsAString_Finish(&str_value);
+
+    TRACE("%s -> %s\n", debugstr_w(name), debugstr_w(*p));
+
+    return S_OK;
+}
+
 #define HTMLSTYLE_THIS(iface) DEFINE_THIS(HTMLStyle, HTMLStyle, iface)
 
 static HRESULT WINAPI HTMLStyle_QueryInterface(IHTMLStyle *iface, REFIID riid, void **ppv)
@@ -175,8 +199,10 @@ static HRESULT WINAPI HTMLStyle_put_fontFamily(IHTMLStyle *iface, BSTR v)
 static HRESULT WINAPI HTMLStyle_get_fontFamily(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, attrFontFamily, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_fontStyle(IHTMLStyle *iface, BSTR v)
