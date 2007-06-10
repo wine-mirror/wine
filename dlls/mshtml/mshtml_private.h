@@ -385,9 +385,6 @@ extern const cmdtable_t editmode_cmds[];
 /* editor */
 void handle_edit_event(HTMLDocument*,nsIDOMEvent*);
 
-void get_font_size(HTMLDocument*,WCHAR*);
-void set_font_size(HTMLDocument*,LPCWSTR);
-
 extern DWORD mshtml_tls;
 
 typedef struct task_t {

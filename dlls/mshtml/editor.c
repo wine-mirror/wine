@@ -247,7 +247,7 @@ static void remove_child_attr(nsIDOMElement *elem, LPCWSTR tag, nsAString *attr_
     nsIDOMNodeList_Release(node_list);
 }
 
-void get_font_size(HTMLDocument *This, WCHAR *ret)
+static void get_font_size(HTMLDocument *This, WCHAR *ret)
 {
     nsISelection *nsselection = get_ns_selection(This);
     nsIDOMElement *elem = NULL;
@@ -315,7 +315,7 @@ void get_font_size(HTMLDocument *This, WCHAR *ret)
         nsIDOMNode_Release(node);
 }
 
-void set_font_size(HTMLDocument *This, LPCWSTR size)
+static void set_font_size(HTMLDocument *This, LPCWSTR size)
 {
     nsISelection *nsselection;
     PRBool collapsed;
