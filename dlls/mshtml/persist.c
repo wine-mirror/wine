@@ -166,23 +166,8 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     TRACE("got url: %s\n", debugstr_w(url));
 
     if(This->client) {
-        IOleCommandTarget *cmdtrg = NULL;
-
-        hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget,
-                (void**)&cmdtrg);
-        if(SUCCEEDED(hres)) {
-            VARIANT var;
-
-            V_VT(&var) = VT_I4;
-            V_I4(&var) = 0;
-            IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
-
-            IOleCommandTarget_Release(cmdtrg);
-        }
-    }
-
-    if(This->client) {
         VARIANT silent, offline;
+        IOleCommandTarget *cmdtrg = NULL;
 
         hres = get_client_disp_property(This->client, DISPID_AMBIENT_SILENT, &silent);
         if(SUCCEEDED(hres)) {
@@ -199,6 +184,18 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
                 WARN("V_VT(offline) = %d\n", V_VT(&silent));
             else if(V_BOOL(&silent))
                 FIXME("offline == true\n");
+        }
+
+        hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget,
+                (void**)&cmdtrg);
+        if(SUCCEEDED(hres)) {
+            VARIANT var;
+
+            V_VT(&var) = VT_I4;
+            V_I4(&var) = 0;
+            IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
+
+            IOleCommandTarget_Release(cmdtrg);
         }
     }
 
