@@ -278,7 +278,7 @@ INT __cdecl NTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n )
 /*********************************************************************
  *                  wcstol  (NTDLL.@)
  */
-long __cdecl NTDLL_wcstol(LPCWSTR s,LPWSTR *end,INT base)
+LONG __cdecl NTDLL_wcstol(LPCWSTR s, LPWSTR *end, INT base)
 {
     return strtolW( s, end, base );
 }
@@ -287,7 +287,7 @@ long __cdecl NTDLL_wcstol(LPCWSTR s,LPWSTR *end,INT base)
 /*********************************************************************
  *                  wcstoul  (NTDLL.@)
  */
-unsigned long __cdecl NTDLL_wcstoul(LPCWSTR s,LPWSTR *end,INT base)
+ULONG __cdecl NTDLL_wcstoul(LPCWSTR s, LPWSTR *end, INT base)
 {
     return strtoulW( s, end, base );
 }
@@ -392,7 +392,7 @@ INT __cdecl NTDLL_iswxdigit( WCHAR wc )
  *  If str is NULL it just returns NULL.
  */
 LPWSTR __cdecl _ultow(
-    unsigned long value, /* [I] Value to be converted */
+    ULONG value,         /* [I] Value to be converted */
     LPWSTR str,          /* [O] Destination for the converted value */
     INT radix)           /* [I] Number base for conversion */
 {
@@ -436,11 +436,11 @@ LPWSTR __cdecl _ultow(
  *  If str is NULL it just returns NULL.
  */
 LPWSTR __cdecl _ltow(
-    long value, /* [I] Value to be converted */
+    LONG value, /* [I] Value to be converted */
     LPWSTR str, /* [O] Destination for the converted value */
     INT radix)  /* [I] Number base for conversion */
 {
-    unsigned long val;
+    ULONG val;
     int negative;
     WCHAR buffer[33];
     PWCHAR pos;

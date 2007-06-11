@@ -2818,11 +2818,9 @@ ULONG
 WCHAR
 WORD
 int
-long
 obj_handle_t
 size_t
 unsigned int
-unsigned long
 
 %long --pointer
 
