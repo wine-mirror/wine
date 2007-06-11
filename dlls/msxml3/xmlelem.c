@@ -219,7 +219,7 @@ static HRESULT WINAPI xmlelem_getAttribute(IXMLElement *iface, BSTR strPropertyN
     if (!PropertyValue)
         return E_INVALIDARG;
 
-    VariantClear(PropertyValue);
+    VariantInit(PropertyValue);
     V_BSTR(PropertyValue) = NULL;
 
     if (!strPropertyName)
