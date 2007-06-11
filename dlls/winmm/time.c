@@ -63,8 +63,16 @@ typedef struct tagWINE_TIMERENTRY {
 
 static struct list timer_list = LIST_INIT(timer_list);
 
+static CRITICAL_SECTION TIME_cbcrst;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &TIME_cbcrst,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": TIME_cbcrst") }
+};
+static CRITICAL_SECTION TIME_cbcrst = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 static    HANDLE                TIME_hMMTimer;
-static    CRITICAL_SECTION      TIME_cbcrst;
 static    BOOL                  TIME_TimeToDie = TRUE;
 static    int                   TIME_fdWake[2] = { -1, -1 };
 
@@ -243,8 +251,6 @@ static void TIME_MMTimeStart(void)
         TIME_TimeToDie = FALSE;
         TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, NULL, 0, NULL);
         SetThreadPriority(TIME_hMMTimer, THREAD_PRIORITY_TIME_CRITICAL);
-        InitializeCriticalSection(&TIME_cbcrst);
-        TIME_cbcrst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINMM.TIME_cbcrst");
     }
 }
 
@@ -265,7 +271,6 @@ void	TIME_MMTimeStop(void)
         TIME_fdWake[0] = TIME_fdWake[1] = -1;
         CloseHandle(TIME_hMMTimer);
         TIME_hMMTimer = 0;
-        TIME_cbcrst.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&TIME_cbcrst);
     }
 }
