@@ -113,7 +113,7 @@ static char *load_path(int path_id)
     
     ret = SHAlloc(strlen(paths[path_id].default_value)+1);
     if (ret != NULL)
-        lstrcpyA(ret, env);
+        lstrcpyA(ret, paths[path_id].default_value);
     return ret;
 }
 
