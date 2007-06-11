@@ -115,11 +115,27 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
 
 void set_current_mon(HTMLDocument *This, IMoniker *mon)
 {
-    if(This->mon)
+    HRESULT hres;
+
+    if(This->mon) {
         IMoniker_Release(This->mon);
-    if(mon)
-        IMoniker_AddRef(mon);
+        This->mon = NULL;
+    }
+
+    if(This->url) {
+        SysFreeString(This->url);
+        This->url = NULL;
+    }
+
+    if(!mon)
+        return;
+
+    IMoniker_AddRef(mon);
     This->mon = mon;
+
+    hres = IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
+    if(FAILED(hres))
+        WARN("GetDisplayName failed: %08x\n", hres);
 }
 
 static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL *bind_complete)
@@ -674,4 +690,5 @@ void HTMLDocument_Persist_Init(HTMLDocument *This)
 
     This->bscallback = NULL;
     This->mon = NULL;
+    This->url = NULL;
 }

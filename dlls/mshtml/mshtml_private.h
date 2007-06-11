@@ -102,6 +102,7 @@ struct HTMLDocument {
 
     BSCallback *bscallback;
     IMoniker *mon;
+    BSTR url;
 
     HWND hwnd;
     HWND tooltips_hwnd;

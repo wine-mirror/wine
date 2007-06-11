@@ -2189,8 +2189,10 @@ static void test_ConnectionPointContainer(IUnknown *unk)
 
 static void test_GetCurMoniker(IUnknown *unk, IMoniker *exmon, LPCWSTR exurl)
 {
+    IHTMLDocument2 *doc;
     IPersistMoniker *permon;
     IMoniker *mon = (void*)0xdeadbeef;
+    BSTR doc_url = (void*)0xdeadbeef;
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IPersistMoniker, (void**)&permon);
@@ -2198,12 +2200,32 @@ static void test_GetCurMoniker(IUnknown *unk, IMoniker *exmon, LPCWSTR exurl)
     if(FAILED(hres))
         return;
 
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDocument2, (void**)&doc);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument2) failed: %08x\n", hres);
+
+    hres = IHTMLDocument2_get_URL(doc, &doc_url);
+    ok(hres == S_OK, "get_URL failed: %08x\n", hres);
+
     hres = IPersistMoniker_GetCurMoniker(permon, &mon);
     IPersistMoniker_Release(permon);
 
     if(exmon) {
+        BSTR url;
+        BOOL exb = expect_GetDisplayName;
+        BOOL clb = called_GetDisplayName;
+
         ok(hres == S_OK, "GetCurrentMoniker failed: %08x\n", hres);
         ok(mon == exmon, "mon(%p) != exmon(%p)\n", mon, exmon);
+
+        SET_EXPECT(GetDisplayName);
+        hres = IMoniker_GetDisplayName(mon, NULL, NULL, &url);
+        ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
+        CHECK_CALLED(GetDisplayName);
+        expect_GetDisplayName = exb;
+        called_GetDisplayName = clb;
+
+        SysFreeString(url);
+        ok(!lstrcmpW(url, doc_url), "url != doc_url\n");
     }else if(exurl) {
         BSTR url;
 
@@ -2213,13 +2235,18 @@ static void test_GetCurMoniker(IUnknown *unk, IMoniker *exmon, LPCWSTR exurl)
         ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
 
         ok(!lstrcmpW(url, exurl), "unexpected url\n");
+        ok(!lstrcmpW(url, doc_url), "url != doc_url\n");
+
         SysFreeString(url);
     }else {
         ok(hres == E_UNEXPECTED,
            "GetCurrentMoniker failed: %08x, expected E_UNEXPECTED\n", hres);
         ok(mon == (IMoniker*)0xdeadbeef, "mon=%p\n", mon);
+        ok(!lstrcmpW(doc_url, about_blank_url), "doc_url is not about:blank\n");
     }
 
+    SysFreeString(doc_url);
+    IHTMLDocument_Release(doc);
     if(mon && mon != (void*)0xdeadbeef)
         IMoniker_Release(mon);
 }

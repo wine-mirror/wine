@@ -508,8 +508,15 @@ static HRESULT WINAPI HTMLDocument_put_URL(IHTMLDocument2 *iface, BSTR v)
 
 static HRESULT WINAPI HTMLDocument_get_URL(IHTMLDocument2 *iface, BSTR *p)
 {
-    FIXME("(%p)->(%p)\n", iface, p);
-    return E_NOTIMPL;
+    HTMLDocument *This = HTMLDOC_THIS(iface);
+
+    static const WCHAR about_blank_url[] =
+        {'a','b','o','u','t',':','b','l','a','n','k',0};
+
+    TRACE("(%p)->(%p)\n", iface, p);
+
+    *p = SysAllocString(This->url ? This->url : about_blank_url);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_put_domain(IHTMLDocument2 *iface, BSTR v)
