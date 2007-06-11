@@ -81,8 +81,8 @@
 @ stub GdipCreateFontFromLogfontA
 @ stub GdipCreateFontFromLogfontW
 @ stub GdipCreateFromHDC2
-@ stub GdipCreateFromHDC
-@ stub GdipCreateFromHWND
+@ stdcall GdipCreateFromHDC(long ptr)
+@ stdcall GdipCreateFromHWND(long ptr)
 @ stub GdipCreateFromHWNDICM
 @ stub GdipCreateHBITMAPFromBitmap
 @ stub GdipCreateHICONFromBitmap
@@ -132,7 +132,7 @@
 @ stub GdipDeleteCustomLineCap
 @ stub GdipDeleteFont
 @ stub GdipDeleteFontFamily
-@ stub GdipDeleteGraphics
+@ stdcall GdipDeleteGraphics(ptr)
 @ stub GdipDeleteMatrix
 @ stub GdipDeletePath
 @ stub GdipDeletePathIter

@@ -35,4 +35,9 @@ struct GpPen{
     HPEN gdipen;
 };
 
+struct GpGraphics{
+    HDC hdc;
+    HWND hwnd;
+};
+
 #endif
