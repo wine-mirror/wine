@@ -192,7 +192,7 @@ sub parse_api_file($$) {
 	    }
 	} elsif(defined($kind)) {
 	    my $type = $_;
-            if ($type =~ /^long\b/)
+            if ($type =~ /\blong\b/)
             {
                 $output->write("$file:$linenum: type ($type) is not Win64 compatible\n");
             }
