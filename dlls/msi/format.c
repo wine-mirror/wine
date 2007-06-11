@@ -45,7 +45,7 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
                                      BOOL* in_group);
 
 
-static LPWSTR build_default_format(MSIRECORD* record)
+static LPWSTR build_default_format(const MSIRECORD* record)
 {
     int i;  
     int count;
