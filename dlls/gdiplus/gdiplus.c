@@ -79,3 +79,17 @@ void WINGDIPAPI GdipFree(void* ptr)
 {
     HeapFree(GetProcessHeap(), 0, ptr);
 }
+
+COLORREF ARGB2COLORREF(ARGB color)
+{
+    /*
+    Packing of these color structures:
+    COLORREF:   00bbggrr
+    ARGB:       aarrggbb
+    FIXME:doesn't handle alpha channel
+    */
+    return (COLORREF)
+        ((color & 0x0000ff) << 16) +
+         (color & 0x00ff00) +
+        ((color & 0xff0000) >> 16);
+}

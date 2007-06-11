@@ -111,7 +111,7 @@
 @ stub GdipCreatePathGradientFromPath
 @ stub GdipCreatePathGradientI
 @ stub GdipCreatePathIter
-@ stub GdipCreatePen1
+@ stdcall GdipCreatePen1(long long long ptr)
 @ stub GdipCreatePen2
 @ stub GdipCreateRegion
 @ stub GdipCreateRegionHrgn
@@ -136,7 +136,7 @@
 @ stub GdipDeleteMatrix
 @ stub GdipDeletePath
 @ stub GdipDeletePathIter
-@ stub GdipDeletePen
+@ stdcall GdipDeletePen(ptr)
 @ stub GdipDeletePrivateFontCollection
 @ stub GdipDeleteRegion
 @ stub GdipDeleteStringFormat
