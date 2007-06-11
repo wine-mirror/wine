@@ -246,6 +246,7 @@ TESTSUBDIRS = \
 	dplayx/tests \
 	dsound/tests \
 	gdi32/tests \
+	gdiplus/tests \
 	hlink/tests \
 	infosoft/tests \
 	iphlpapi/tests \

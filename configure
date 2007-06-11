@@ -20532,6 +20532,8 @@ ac_config_files="$ac_config_files dlls/gdi32/tests/Makefile"
 
 ac_config_files="$ac_config_files dlls/gdiplus/Makefile"
 
+ac_config_files="$ac_config_files dlls/gdiplus/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/glu32/Makefile"
 
 ac_config_files="$ac_config_files dlls/gphoto2.ds/Makefile"
@@ -21696,6 +21698,7 @@ do
     "dlls/gdi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/Makefile" ;;
     "dlls/gdi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/tests/Makefile" ;;
     "dlls/gdiplus/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdiplus/Makefile" ;;
+    "dlls/gdiplus/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdiplus/tests/Makefile" ;;
     "dlls/glu32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/glu32/Makefile" ;;
     "dlls/gphoto2.ds/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gphoto2.ds/Makefile" ;;
     "dlls/hal/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hal/Makefile" ;;

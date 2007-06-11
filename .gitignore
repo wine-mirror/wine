@@ -240,6 +240,9 @@ dlls/gdi32/tests/testlist.c
 dlls/gdi32/version.res
 dlls/gdi32/version16.res
 dlls/gdiplus/libgdiplus.def
+dlls/gdiplus/tests/*.ok
+dlls/gdiplus/tests/gdiplus_crosstest.exe
+dlls/gdiplus/tests/testlist.c
 dlls/glu32/libglu32.def
 dlls/gphoto2.ds/rsrc.res
 dlls/hhctrl.ocx/hhctrl.res
@@ -845,6 +848,7 @@ programs/winetest/dnsapi_test.exe
 programs/winetest/dplayx_test.exe
 programs/winetest/dsound_test.exe
 programs/winetest/gdi32_test.exe
+programs/winetest/gdiplus_test.exe
 programs/winetest/hlink_test.exe
 programs/winetest/infosoft_test.exe
 programs/winetest/iphlpapi_test.exe

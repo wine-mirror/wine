@@ -40,6 +40,7 @@ TESTBINS = \
 	dplayx_test.exe \
 	dsound_test.exe \
 	gdi32_test.exe \
+	gdiplus_test.exe \
 	hlink_test.exe \
 	infosoft_test.exe \
 	iphlpapi_test.exe \
@@ -121,6 +122,8 @@ dsound_test.exe: $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT)
 	cp $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT) $@ && $(STRIP) $@
 gdi32_test.exe: $(DLLDIR)/gdi32/tests/gdi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/gdi32/tests/gdi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+gdiplus_test.exe: $(DLLDIR)/gdiplus/tests/gdiplus_test.exe$(DLLEXT)
+	cp $(DLLDIR)/gdiplus/tests/gdiplus_test.exe$(DLLEXT) $@ && $(STRIP) $@
 hlink_test.exe: $(DLLDIR)/hlink/tests/hlink_test.exe$(DLLEXT)
 	cp $(DLLDIR)/hlink/tests/hlink_test.exe$(DLLEXT) $@ && $(STRIP) $@
 infosoft_test.exe: $(DLLDIR)/infosoft/tests/infosoft_test.exe$(DLLEXT)
