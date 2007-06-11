@@ -57,7 +57,9 @@ static ULONG WINAPI IDirect3DIndexBuffer9Impl_Release(LPDIRECT3DINDEXBUFFER9 ifa
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
+        EnterCriticalSection(&d3d9_cs);
         IWineD3DIndexBuffer_Release(This->wineD3DIndexBuffer);
+        LeaveCriticalSection(&d3d9_cs);
         IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -67,69 +69,122 @@ static ULONG WINAPI IDirect3DIndexBuffer9Impl_Release(LPDIRECT3DINDEXBUFFER9 ifa
 /* IDirect3DIndexBuffer9 IDirect3DResource9 Interface follow: */
 static HRESULT WINAPI IDirect3DIndexBuffer9Impl_GetDevice(LPDIRECT3DINDEXBUFFER9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IDirect3DResource9Impl_GetDevice((LPDIRECT3DRESOURCE9) This, ppDevice);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IDirect3DResource9Impl_GetDevice((LPDIRECT3DRESOURCE9) This, ppDevice);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DIndexBuffer9Impl_SetPrivateData(LPDIRECT3DINDEXBUFFER9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DIndexBuffer_SetPrivateData(This->wineD3DIndexBuffer, refguid, pData, SizeOfData, Flags);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DIndexBuffer_SetPrivateData(This->wineD3DIndexBuffer, refguid, pData, SizeOfData, Flags);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DIndexBuffer9Impl_GetPrivateData(LPDIRECT3DINDEXBUFFER9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DIndexBuffer_GetPrivateData(This->wineD3DIndexBuffer, refguid, pData, pSizeOfData);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DIndexBuffer_GetPrivateData(This->wineD3DIndexBuffer, refguid, pData, pSizeOfData);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DIndexBuffer9Impl_FreePrivateData(LPDIRECT3DINDEXBUFFER9 iface, REFGUID refguid) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DIndexBuffer_FreePrivateData(This->wineD3DIndexBuffer, refguid);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DIndexBuffer_FreePrivateData(This->wineD3DIndexBuffer, refguid);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static DWORD WINAPI IDirect3DIndexBuffer9Impl_SetPriority(LPDIRECT3DINDEXBUFFER9 iface, DWORD PriorityNew) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
+    DWORD ret;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DIndexBuffer_SetPriority(This->wineD3DIndexBuffer, PriorityNew);
+
+    EnterCriticalSection(&d3d9_cs);
+    ret = IWineD3DIndexBuffer_SetPriority(This->wineD3DIndexBuffer, PriorityNew);
+    LeaveCriticalSection(&d3d9_cs);
+    return ret;
 }
 
 static DWORD WINAPI IDirect3DIndexBuffer9Impl_GetPriority(LPDIRECT3DINDEXBUFFER9 iface) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
+    DWORD ret;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DIndexBuffer_GetPriority(This->wineD3DIndexBuffer);
+
+    EnterCriticalSection(&d3d9_cs);
+    ret = IWineD3DIndexBuffer_GetPriority(This->wineD3DIndexBuffer);
+    LeaveCriticalSection(&d3d9_cs);
+    return ret;
 }
 
 static void WINAPI IDirect3DIndexBuffer9Impl_PreLoad(LPDIRECT3DINDEXBUFFER9 iface) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
     TRACE("(%p) Relay\n", This);
+
+    EnterCriticalSection(&d3d9_cs);
     IWineD3DIndexBuffer_PreLoad(This->wineD3DIndexBuffer);
+    LeaveCriticalSection(&d3d9_cs);
 }
 
 static D3DRESOURCETYPE WINAPI IDirect3DIndexBuffer9Impl_GetType(LPDIRECT3DINDEXBUFFER9 iface) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
+    D3DRESOURCETYPE ret;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DIndexBuffer_GetType(This->wineD3DIndexBuffer);
+
+    EnterCriticalSection(&d3d9_cs);
+    ret = IWineD3DIndexBuffer_GetType(This->wineD3DIndexBuffer);
+    LeaveCriticalSection(&d3d9_cs);
+    return ret;
 }
 
 /* IDirect3DIndexBuffer9 Interface follow: */
 static HRESULT WINAPI IDirect3DIndexBuffer9Impl_Lock(LPDIRECT3DINDEXBUFFER9 iface, UINT OffsetToLock, UINT SizeToLock, void** ppbData, DWORD Flags) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DIndexBuffer_Lock(This->wineD3DIndexBuffer, OffsetToLock, SizeToLock, (BYTE **)ppbData, Flags);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DIndexBuffer_Lock(This->wineD3DIndexBuffer, OffsetToLock, SizeToLock, (BYTE **)ppbData, Flags);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DIndexBuffer9Impl_Unlock(LPDIRECT3DINDEXBUFFER9 iface) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DIndexBuffer_Unlock(This->wineD3DIndexBuffer);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DIndexBuffer_Unlock(This->wineD3DIndexBuffer);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 static HRESULT  WINAPI        IDirect3DIndexBuffer9Impl_GetDesc(LPDIRECT3DINDEXBUFFER9 iface, D3DINDEXBUFFER_DESC *pDesc) {
     IDirect3DIndexBuffer9Impl *This = (IDirect3DIndexBuffer9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DIndexBuffer_GetDesc(This->wineD3DIndexBuffer, (WINED3DINDEXBUFFER_DESC *) pDesc);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DIndexBuffer_GetDesc(This->wineD3DIndexBuffer, (WINED3DINDEXBUFFER_DESC *) pDesc);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 
