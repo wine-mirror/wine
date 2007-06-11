@@ -68,6 +68,17 @@ static    CRITICAL_SECTION      TIME_cbcrst;
 static    BOOL                  TIME_TimeToDie = TRUE;
 static    int                   TIME_fdWake[2] = { -1, -1 };
 
+/* link timer at the appropriate spot in the list */
+static inline void link_timer( WINE_TIMERENTRY *timer )
+{
+    WINE_TIMERENTRY *next;
+
+    LIST_FOR_EACH_ENTRY( next, &timer_list, WINE_TIMERENTRY, entry )
+        if ((int)(next->dwTriggerTime - timer->dwTriggerTime) >= 0) break;
+
+    list_add_before( &next->entry, &timer->entry );
+}
+
 /*
  * Some observations on the behavior of winmm on Windows.
  * First, the call to timeBeginPeriod(xx) can never be used
@@ -98,50 +109,13 @@ static    int                   TIME_fdWake[2] = { -1, -1 };
 #define MMSYSTIME_MAXINTERVAL (65535)
 
 
-static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer)
-{
-    TRACE("%04x:CallBack => lpFunc=%p wTimerID=%04X dwUser=%08X dwTriggerTime %d(delta %d)\n",
-	  GetCurrentThreadId(), lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser,
-          lpTimer->dwTriggerTime, GetTickCount() - lpTimer->dwTriggerTime);
-
-    /* - TimeProc callback that is called here is something strange, under Windows 3.1x it is called
-     * 		during interrupt time,  is allowed to execute very limited number of API calls (like
-     *	    	PostMessage), and must reside in DLL (therefore uses stack of active application). So I
-     *       guess current implementation via SetTimer has to be improved upon.
-     */
-    switch (lpTimer->wFlags & 0x30) {
-    case TIME_CALLBACK_FUNCTION:
-	if (lpTimer->wFlags & WINE_TIMER_IS32)
-	    (lpTimer->lpFunc)(lpTimer->wTimerID, 0, lpTimer->dwUser, 0, 0);
-	else if (pFnCallMMDrvFunc16)
-	    pFnCallMMDrvFunc16((DWORD)lpTimer->lpFunc, lpTimer->wTimerID, 0,
-                               lpTimer->dwUser, 0, 0);
-	break;
-    case TIME_CALLBACK_EVENT_SET:
-	SetEvent((HANDLE)lpTimer->lpFunc);
-	break;
-    case TIME_CALLBACK_EVENT_PULSE:
-	PulseEvent((HANDLE)lpTimer->lpFunc);
-	break;
-    default:
-	FIXME("Unknown callback type 0x%04x for mmtime callback (%p), ignored.\n",
-	      lpTimer->wFlags, lpTimer->lpFunc);
-	break;
-    }
-}
-
 /**************************************************************************
  *           TIME_MMSysTimeCallback
  */
 static int TIME_MMSysTimeCallback(void)
 {
-static    int				nSizeLpTimers;
-static    LPWINE_TIMERENTRY		lpTimers;
-
-    WINE_TIMERENTRY *timer, *next;
-    int			idx;
-    DWORD               cur_time;
-    int delta_time, ret_time = -1;
+    WINE_TIMERENTRY *timer, *to_free;
+    int delta_time;
 
     /* since timeSetEvent() and timeKillEvent() can be called
      * from 16 bit code, there are cases where win16 lock is
@@ -153,80 +127,61 @@ static    LPWINE_TIMERENTRY		lpTimers;
      * To cope with that, we just copy the WINE_TIMERENTRY struct
      * that need to trigger the callback, and call it without the
      * mm timer crit sect locked.
-     * the hKillTimeEvent is used to mark the section where we 
-     * handle the callbacks so we can do synchronous kills.
-     * EPP 99/07/13, updated 04/01/10
      */
-    idx = 0;
-    cur_time = GetTickCount();
 
     EnterCriticalSection(&WINMM_cs);
-    LIST_FOR_EACH_ENTRY_SAFE( timer, next, &timer_list, WINE_TIMERENTRY, entry )
+    for (;;)
     {
-        delta_time = timer->dwTriggerTime - cur_time;
-        if (delta_time <= 0)
+        struct list *ptr = list_head( &timer_list );
+        if (!ptr)
         {
-            if (timer->lpFunc) {
-                if (idx == nSizeLpTimers) {
-                    if (lpTimers) 
-                        lpTimers = (LPWINE_TIMERENTRY)
-                            HeapReAlloc(GetProcessHeap(), 0, lpTimers,
-                                        ++nSizeLpTimers * sizeof(WINE_TIMERENTRY));
-                    else 
-                        lpTimers = (LPWINE_TIMERENTRY)
-                        HeapAlloc(GetProcessHeap(), 0,
-                                  ++nSizeLpTimers * sizeof(WINE_TIMERENTRY));
-                }
-                lpTimers[idx++] = *timer;
+            delta_time = -1;
+            break;
+        }
 
-            }
+        timer = LIST_ENTRY( ptr, WINE_TIMERENTRY, entry );
+        delta_time = timer->dwTriggerTime - GetTickCount();
+        if (delta_time > 0) break;
 
-            /* Update the time after we make the copy to preserve
-               the original trigger time    */
+        list_remove( &timer->entry );
+        if (timer->wFlags & TIME_PERIODIC)
+        {
             timer->dwTriggerTime += timer->wDelay;
-
-            /* TIME_ONESHOT is defined as 0 */
-            if (!(timer->wFlags & TIME_PERIODIC))
-            {
-                list_remove( &timer->entry );
-                HeapFree(GetProcessHeap(), 0, timer);
-
-                /* We don't need to trigger oneshots again */
-                delta_time = -1;
-            }
-            else
-            {
-                /* Compute when this event needs this function
-                    to be called again */
-                delta_time = timer->dwTriggerTime - cur_time;
-                if (delta_time < 0) delta_time = 0;
-            }
+            link_timer( timer );  /* restart it */
+            to_free = NULL;
         }
+        else to_free = timer;
 
-        /* Determine when we need to return to this function */
-        if (delta_time != -1)
+        switch(timer->wFlags & (TIME_CALLBACK_EVENT_SET|TIME_CALLBACK_EVENT_PULSE))
         {
-            if (ret_time == -1 || ret_time > delta_time) ret_time = delta_time;
+        case TIME_CALLBACK_EVENT_SET:
+            SetEvent((HANDLE)timer->lpFunc);
+            break;
+        case TIME_CALLBACK_EVENT_PULSE:
+            PulseEvent((HANDLE)timer->lpFunc);
+            break;
+        case TIME_CALLBACK_FUNCTION:
+            {
+                DWORD user = timer->dwUser;
+                UINT16 id = timer->wTimerID;
+                UINT16 flags = timer->wFlags;
+                LPTIMECALLBACK func = timer->lpFunc;
+
+                if (flags & TIME_KILL_SYNCHRONOUS) EnterCriticalSection(&TIME_cbcrst);
+                LeaveCriticalSection(&WINMM_cs);
+
+                if (flags & WINE_TIMER_IS32) func(id, 0, user, 0, 0);
+                else if (pFnCallMMDrvFunc16) pFnCallMMDrvFunc16((DWORD)func, id, 0, user, 0, 0);
+
+                EnterCriticalSection(&WINMM_cs);
+                if (flags & TIME_KILL_SYNCHRONOUS) LeaveCriticalSection(&TIME_cbcrst);
+            }
+            break;
         }
+        HeapFree( GetProcessHeap(), 0, to_free );
     }
     LeaveCriticalSection(&WINMM_cs);
-
-    EnterCriticalSection(&TIME_cbcrst);
-    while (idx > 0) TIME_TriggerCallBack(&lpTimers[--idx]);
-    LeaveCriticalSection(&TIME_cbcrst);
-
-    /* Finally, adjust the recommended wait time downward
-       by the amount of time the processing routines 
-       actually took */
-    if (ret_time != -1)
-    {
-        ret_time -= GetTickCount() - cur_time;
-        if (ret_time < 0) ret_time = 0;
-    }
-
-    /* We return the amount of time our caller should sleep
-       before needing to check in on us again       */
-    return ret_time;
+    return delta_time;
 }
 
 /**************************************************************************
@@ -350,8 +305,6 @@ WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
     if (lpNewTimer == NULL)
 	return 0;
 
-    TIME_MMTimeStart();
-
     lpNewTimer->wDelay = wDelay;
     lpNewTimer->dwTriggerTime = GetTickCount() + wDelay;
 
@@ -367,8 +320,10 @@ WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
     LIST_FOR_EACH_ENTRY( lpTimer, &timer_list, WINE_TIMERENTRY, entry )
         wNewID = max(wNewID, lpTimer->wTimerID);
 
-    list_add_head( &timer_list, &lpNewTimer->entry );
+    link_timer( lpNewTimer );
     lpNewTimer->wTimerID = wNewID + 1;
+
+    TIME_MMTimeStart();
 
     LeaveCriticalSection(&WINMM_cs);
 
