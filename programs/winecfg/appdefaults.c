@@ -107,7 +107,7 @@ static void update_comboboxes(HWND dialog)
     winver = get_reg_key(config_key, keypath(""), "Version", "");
     ver = get_registry_version();
 
-    if (*winver == '\0')
+    if (!winver || !winver[0])
     {
         HeapFree(GetProcessHeap(), 0, winver);
 
