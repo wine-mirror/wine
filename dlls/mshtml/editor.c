@@ -364,6 +364,15 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
     if(!nsselection)
         return;
 
+    nsISelection_GetRangeCount(nsselection, &range_cnt);
+    if(range_cnt != 1) {
+        FIXME("range_cnt %d not supprted\n", range_cnt);
+        if(!range_cnt) {
+            nsISelection_Release(nsselection);
+            return;
+        }
+    }
+
     nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
     if(NS_FAILED(nsres))
         return;
@@ -371,10 +380,6 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
     nsAString_Init(&font_str, wszFont);
     nsAString_Init(&size_str, wszSize);
     nsAString_Init(&val_str, size);
-
-    nsISelection_GetRangeCount(nsselection, &range_cnt);
-    if(range_cnt != 1)
-        FIXME("range_cnt %d not supprted\n", range_cnt);
 
     nsIDOMDocument_CreateElement(nsdoc, &font_str, &elem);
     nsIDOMElement_SetAttribute(elem, &size_str, &val_str);
