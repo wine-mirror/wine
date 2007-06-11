@@ -26,5 +26,6 @@
 
 #include "credui_De.rc"
 #include "credui_En.rc"
+#include "credui_Ko.rc"
 #include "credui_No.rc"
 #include "credui_Pl.rc"

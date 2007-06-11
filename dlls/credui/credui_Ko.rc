@@ -1,0 +1,37 @@
+/*
+ * Korean language resource file for Credentials UI
+ *
+ * Copyright 2007 Robert Shearman (for CodeWeavers)
+ * Copyright 2007 YunSong Hwang-황윤성(hys545@dreamwiz.com)
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+
+IDD_CREDDIALOG DIALOG DISCARDABLE  0, 0, 220, 82
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "사용자 이름과 암호 입력"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "사용자 이름(&U):",IDC_STATIC,7,10,72,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_USERNAME,80,10,130,12,ES_AUTOHSCROLL
+    LTEXT           "암호(&P):",IDC_STATIC,7,27,72,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_PASSWORD,80,27,130,12,ES_PASSWORD | ES_AUTOHSCROLL
+    LTEXT           "도메인 이름(&D):",IDC_STATIC,7,44,72,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_DOMAIN,80,44,130,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "확인",IDOK,7,61,50,14
+    PUSHBUTTON      "취소",IDCANCEL,67,61,50,14
+END
