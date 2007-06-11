@@ -605,15 +605,45 @@ static BOOL do_load_from_moniker_hack(nsChannel *This)
     return FALSE;
 }
 
+static HRESULT create_mon_for_nschannel(nsChannel *channel, IMoniker **mon)
+{
+    nsIWineURI *wine_uri;
+    LPCWSTR wine_url;
+    nsresult nsres;
+    HRESULT hres;
+
+    if(!channel->original_uri) {
+        ERR("original_uri == NULL\n");
+        return E_FAIL;
+    }
+
+    nsres = nsIURI_QueryInterface(channel->original_uri, &IID_nsIWineURI, (void**)&wine_uri);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIWineURI: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsIWineURI_GetWineURL(wine_uri, &wine_url);
+    nsIWineURI_Release(wine_uri);
+    if(!wine_url) {
+        TRACE("wine_url == NULL\n");
+        return E_FAIL;
+    }
+
+    hres = CreateURLMoniker(NULL, wine_url, mon);
+    if(FAILED(hres))
+        WARN("CreateURLMonikrer failed: %08x\n", hres);
+
+    return hres;
+}
+
 static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListener *aListener,
                                           nsISupports *aContext)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
     BSCallback *bscallback;
-    nsIWineURI *wine_uri;
-    IMoniker *mon;
+    IMoniker *mon = NULL;
     PRBool is_doc_uri;
-    LPCWSTR wine_url;
     nsresult nsres;
     task_t *task;
     HRESULT hres;
@@ -692,28 +722,9 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 
     TRACE("channel == NULL\n");
 
-    if(!This->original_uri) {
-        ERR("original_uri == NULL\n");
+    hres = create_mon_for_nschannel(This, &mon);
+    if(FAILED(hres))
         return NS_ERROR_UNEXPECTED;
-    }
-
-    nsres = nsIURI_QueryInterface(This->original_uri, &IID_nsIWineURI, (void**)&wine_uri);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIWineURI: %08x\n", nsres);
-        return NS_ERROR_UNEXPECTED;
-    }
-
-    nsIWineURI_GetWineURL(wine_uri, &wine_url);
-    if(!wine_url) {
-        TRACE("wine_url == NULL\n");
-        return NS_ERROR_UNEXPECTED;
-    }
-
-    hres = CreateURLMoniker(NULL, wine_url, &mon);
-    if(FAILED(hres)) {
-        WARN("CreateURLMonikrer failed: %08x\n", hres);
-        return NS_ERROR_UNEXPECTED;
-    }
 
     bscallback = create_bscallback(mon);
     IMoniker_Release(mon);
