@@ -159,6 +159,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
             IOleDocumentView_SetInPlaceSite(DOCVIEW(This), NULL);
 
         set_document_bscallback(This, NULL);
+        set_current_mon(This, NULL);
 
         if(This->tooltips_hwnd)
             DestroyWindow(This->tooltips_hwnd);

@@ -690,6 +690,11 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                 return This->channel
                     ?  nsIChannel_AsyncOpen(This->channel, aListener, aContext)
                     : NS_ERROR_UNEXPECTED;
+
+            hres = create_mon_for_nschannel(This, &mon);
+            if(FAILED(hres))
+                return NS_ERROR_UNEXPECTED;
+            set_current_mon(container->doc, mon);
         }
     }
 
@@ -714,6 +719,9 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         }
 
         nsres = nsIChannel_AsyncOpen(This->channel, aListener, aContext);
+
+        if(mon)
+            IMoniker_Release(mon);
 
         if(NS_FAILED(nsres) && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI))
             return WINE_NS_LOAD_FROM_MONIKER;

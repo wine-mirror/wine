@@ -101,6 +101,7 @@ struct HTMLDocument {
     IOleInPlaceFrame *frame;
 
     BSCallback *bscallback;
+    IMoniker *mon;
 
     HWND hwnd;
     HWND tooltips_hwnd;
@@ -353,6 +354,7 @@ BSCallback *create_bscallback(IMoniker*);
 HRESULT start_binding(BSCallback*);
 HRESULT load_stream(BSCallback*,IStream*);
 void set_document_bscallback(HTMLDocument*,BSCallback*);
+void set_current_mon(HTMLDocument*,IMoniker*);
 
 IHlink *Hlink_Create(void);
 IHTMLSelectionObject *HTMLSelectionObject_Create(nsISelection*);

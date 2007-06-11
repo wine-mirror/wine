@@ -113,6 +113,15 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
     return ret;
 }
 
+void set_current_mon(HTMLDocument *This, IMoniker *mon)
+{
+    if(This->mon)
+        IMoniker_Release(This->mon);
+    if(mon)
+        IMoniker_AddRef(mon);
+    This->mon = mon;
+}
+
 static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL *bind_complete)
 {
     BSCallback *bscallback;
@@ -164,6 +173,8 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     }
 
     TRACE("got url: %s\n", debugstr_w(url));
+
+    set_current_mon(This, mon);
 
     if(This->client) {
         VARIANT silent, offline;
@@ -655,4 +666,5 @@ void HTMLDocument_Persist_Init(HTMLDocument *This)
     This->lpPersistStreamInitVtbl = &PersistStreamInitVtbl;
 
     This->bscallback = NULL;
+    This->mon = NULL;
 }
