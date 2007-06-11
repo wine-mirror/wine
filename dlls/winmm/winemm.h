@@ -241,7 +241,6 @@ LPWINE_MMIO     MMIO_Get(HMMIO h);
 
 WORD            TIME_SetEventInternal(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
                                       DWORD dwUser, UINT wFlags);
-void    	TIME_MMTimeStart(void);
 void		TIME_MMTimeStop(void);
 
 /* Global variables */

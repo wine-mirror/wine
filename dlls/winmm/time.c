@@ -45,11 +45,13 @@
 
 #include "winemm.h"
 
+#include "wine/list.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmtime);
 
 typedef struct tagWINE_TIMERENTRY {
+    struct list                 entry;
     UINT                        wDelay;
     UINT                        wResol;
     LPTIMECALLBACK              lpFunc; /* can be lots of things */
@@ -57,12 +59,11 @@ typedef struct tagWINE_TIMERENTRY {
     UINT16                      wFlags;
     UINT16                      wTimerID;
     DWORD                       dwTriggerTime;
-    struct tagWINE_TIMERENTRY*  lpNext;
 } WINE_TIMERENTRY, *LPWINE_TIMERENTRY;
 
+static struct list timer_list = LIST_INIT(timer_list);
 
 static    HANDLE                TIME_hMMTimer;
-static    LPWINE_TIMERENTRY 	TIME_TimersList;
 static    CRITICAL_SECTION      TIME_cbcrst;
 static    BOOL                  TIME_TimeToDie = TRUE;
 static    int                   TIME_fdWake[2] = { -1, -1 };
@@ -137,7 +138,7 @@ static int TIME_MMSysTimeCallback(void)
 static    int				nSizeLpTimers;
 static    LPWINE_TIMERENTRY		lpTimers;
 
-    LPWINE_TIMERENTRY   timer, *ptimer, *next_ptimer;
+    WINE_TIMERENTRY *timer, *next;
     int			idx;
     DWORD               cur_time;
     int delta_time, ret_time = -1;
@@ -160,9 +161,8 @@ static    LPWINE_TIMERENTRY		lpTimers;
     cur_time = GetTickCount();
 
     EnterCriticalSection(&WINMM_cs);
-    for (ptimer = &TIME_TimersList; *ptimer != NULL; ) {
-        timer = *ptimer;
-        next_ptimer = &timer->lpNext;
+    LIST_FOR_EACH_ENTRY_SAFE( timer, next, &timer_list, WINE_TIMERENTRY, entry )
+    {
         delta_time = timer->dwTriggerTime - cur_time;
         if (delta_time <= 0)
         {
@@ -188,8 +188,7 @@ static    LPWINE_TIMERENTRY		lpTimers;
             /* TIME_ONESHOT is defined as 0 */
             if (!(timer->wFlags & TIME_PERIODIC))
             {
-                /* unlink timer from timers list */
-                *ptimer = *next_ptimer;
+                list_remove( &timer->entry );
                 HeapFree(GetProcessHeap(), 0, timer);
 
                 /* We don't need to trigger oneshots again */
@@ -209,8 +208,6 @@ static    LPWINE_TIMERENTRY		lpTimers;
         {
             if (ret_time == -1 || ret_time > delta_time) ret_time = delta_time;
         }
-
-        ptimer = next_ptimer;
     }
     LeaveCriticalSection(&WINMM_cs);
 
@@ -277,10 +274,9 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 /**************************************************************************
  * 				TIME_MMTimeStart
  */
-void	TIME_MMTimeStart(void)
+static void TIME_MMTimeStart(void)
 {
     if (!TIME_hMMTimer) {
-        TIME_TimersList = NULL;
         if (pipe(TIME_fdWake) < 0)
         {
             TIME_fdWake[0] = TIME_fdWake[1] = -1;
@@ -316,7 +312,6 @@ void	TIME_MMTimeStop(void)
         TIME_hMMTimer = 0;
         TIME_cbcrst.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&TIME_cbcrst);
-        TIME_TimersList = NULL;
     }
 }
 
@@ -369,12 +364,10 @@ WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
 
     EnterCriticalSection(&WINMM_cs);
 
-    for (lpTimer = TIME_TimersList; lpTimer != NULL; lpTimer = lpTimer->lpNext) {
-	wNewID = max(wNewID, lpTimer->wTimerID);
-    }
+    LIST_FOR_EACH_ENTRY( lpTimer, &timer_list, WINE_TIMERENTRY, entry )
+        wNewID = max(wNewID, lpTimer->wTimerID);
 
-    lpNewTimer->lpNext = TIME_TimersList;
-    TIME_TimersList = lpNewTimer;
+    list_add_head( &timer_list, &lpNewTimer->entry );
     lpNewTimer->wTimerID = wNewID + 1;
 
     LeaveCriticalSection(&WINMM_cs);
@@ -405,16 +398,16 @@ MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
  */
 MMRESULT WINAPI timeKillEvent(UINT wID)
 {
-    LPWINE_TIMERENTRY   lpSelf = NULL, *lpTimer;
+    WINE_TIMERENTRY *lpSelf = NULL, *lpTimer;
 
     TRACE("(%u)\n", wID);
     EnterCriticalSection(&WINMM_cs);
     /* remove WINE_TIMERENTRY from list */
-    for (lpTimer = &TIME_TimersList; *lpTimer; lpTimer = &(*lpTimer)->lpNext) {
-	if (wID == (*lpTimer)->wTimerID) {
-            lpSelf = *lpTimer;
-            /* unlink timer of id 'wID' */
-            *lpTimer = (*lpTimer)->lpNext;
+    LIST_FOR_EACH_ENTRY( lpTimer, &timer_list, WINE_TIMERENTRY, entry )
+    {
+	if (wID == lpTimer->wTimerID) {
+            lpSelf = lpTimer;
+            list_remove( &lpTimer->entry );
 	    break;
 	}
     }
