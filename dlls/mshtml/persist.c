@@ -384,8 +384,15 @@ static HRESULT WINAPI PersistMoniker_SaveCompleted(IPersistMoniker *iface, IMoni
 static HRESULT WINAPI PersistMoniker_GetCurMoniker(IPersistMoniker *iface, IMoniker **ppimkName)
 {
     HTMLDocument *This = PERSISTMON_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, ppimkName);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppimkName);
+
+    if(!This->mon)
+        return E_UNEXPECTED;
+
+    IMoniker_AddRef(This->mon);
+    *ppimkName = This->mon;
+    return S_OK;
 }
 
 static const IPersistMonikerVtbl PersistMonikerVtbl = {

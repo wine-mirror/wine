@@ -146,11 +146,14 @@ static const char html_page[] =
 static const char css_data[] = "body {color: red}";
 
 static const WCHAR doc_url[] = {'w','i','n','e','t','e','s','t',':','d','o','c',0};
+static const WCHAR about_blank_url[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 
 static HRESULT QueryInterface(REFIID riid, void **ppv);
 static void test_readyState(IUnknown*);
 static void test_MSHTML_QueryStatus(IUnknown*,DWORD);
 static BOOL nogecko = FALSE;
+
+static void test_GetCurMoniker(IUnknown*,IMoniker*,LPCWSTR);
 
 static const WCHAR wszTimesNewRoman[] =
     {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
@@ -1852,6 +1855,12 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         switch(nCmdID) {
         case 37:
             CHECK_EXPECT2(Exec_ShellDocView_37);
+
+            if(load_from_stream)
+                test_GetCurMoniker(doc_unk, NULL, about_blank_url);
+            else if(!editmode)
+                test_GetCurMoniker(doc_unk, &Moniker, NULL);
+
             ok(pvaOut == NULL, "pvaOut=%p, expected NULL\n", pvaOut);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             if(pvaIn) {
@@ -2178,6 +2187,43 @@ static void test_ConnectionPointContainer(IUnknown *unk)
     IConnectionPointContainer_Release(container);
 }
 
+static void test_GetCurMoniker(IUnknown *unk, IMoniker *exmon, LPCWSTR exurl)
+{
+    IPersistMoniker *permon;
+    IMoniker *mon = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistMoniker, (void**)&permon);
+    ok(hres == S_OK, "QueryInterface(IID_IPersistMoniker) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IPersistMoniker_GetCurMoniker(permon, &mon);
+    IPersistMoniker_Release(permon);
+
+    if(exmon) {
+        ok(hres == S_OK, "GetCurrentMoniker failed: %08x\n", hres);
+        ok(mon == exmon, "mon(%p) != exmon(%p)\n", mon, exmon);
+    }else if(exurl) {
+        BSTR url;
+
+        ok(hres == S_OK, "GetCurrentMoniker failed: %08x\n", hres);
+
+        hres = IMoniker_GetDisplayName(mon, NULL, NULL, &url);
+        ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
+
+        ok(!lstrcmpW(url, exurl), "unexpected url\n");
+        SysFreeString(url);
+    }else {
+        ok(hres == E_UNEXPECTED,
+           "GetCurrentMoniker failed: %08x, expected E_UNEXPECTED\n", hres);
+        ok(mon == (IMoniker*)0xdeadbeef, "mon=%p\n", mon);
+    }
+
+    if(mon && mon != (void*)0xdeadbeef)
+        IMoniker_Release(mon);
+}
+
 static void test_Load(IPersistMoniker *persist)
 {
     IBindCtx *bind;
@@ -2257,6 +2303,8 @@ static void test_Load(IPersistMoniker *persist)
     }
 
     set_clientsite = container_locked = TRUE;
+
+    test_GetCurMoniker((IUnknown*)persist, &Moniker, NULL);
 
     IBindCtx_Release(bind);
 
@@ -2585,6 +2633,8 @@ static void test_exec_editmode(IUnknown *unk)
     if(FAILED(hres))
         return;
 
+    editmode = TRUE;
+
     SET_EXPECT(SetStatusText);
     SET_EXPECT(Exec_ShellDocView_37);
     SET_EXPECT(GetHostInfo);
@@ -2608,8 +2658,6 @@ static void test_exec_editmode(IUnknown *unk)
     test_timer(EXPECT_UPDATEUI|EXPECT_SETTITLE);
 
     IOleCommandTarget_Release(cmdtrg);
-
-    editmode = TRUE;
 
     hres = IOleCommandTarget_Exec(cmdtrg, &CGID_MSHTML, IDM_EDITMODE,
             OLECMDEXECOPT_DODEFAULT, NULL, NULL);
@@ -3145,6 +3193,7 @@ static void test_StreamLoad(IUnknown *unk)
     CHECK_CALLED(Read);
 
     test_timer(EXPECT_SETTITLE);
+    test_GetCurMoniker(unk, NULL, about_blank_url);
 
     IPersistStreamInit_Release(init);
 }
@@ -3190,6 +3239,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     test_IsDirty(unk, S_FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_ConnectionPointContainer(unk);
+    test_GetCurMoniker(unk, NULL, NULL);
     test_Persist(unk);
     if(load_state == LD_NO)
         test_OnAmbientPropertyChange2(unk);
@@ -3200,8 +3250,10 @@ static void test_HTMLDocument(enum load_state_t ls)
         return;
     }
 
-    if(load_state == LD_LOADING)
+    if(load_state == LD_LOADING) {
         test_download(FALSE, TRUE);
+        test_GetCurMoniker(unk, &Moniker, NULL);
+    }
 
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_OleCommandTarget_fail(unk);
@@ -3241,6 +3293,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     test_CloseView();
     test_Close(unk, TRUE);
     test_OnAmbientPropertyChange2(unk);
+    test_GetCurMoniker(unk, load_state == LD_NO ? NULL : &Moniker, NULL);
 
     if(view)
         IOleDocumentView_Release(view);
@@ -3270,6 +3323,7 @@ static void test_HTMLDocument_hlink(void)
     doc_unk = unk;
 
     test_ConnectionPointContainer(unk);
+    test_GetCurMoniker(unk, NULL, NULL);
     test_Persist(unk);
     test_Navigate(unk);
 
@@ -3282,6 +3336,7 @@ static void test_HTMLDocument_hlink(void)
     test_InPlaceDeactivate(unk, TRUE);
     test_Close(unk, FALSE);
     test_IsDirty(unk, S_FALSE);
+    test_GetCurMoniker(unk, &Moniker, NULL);
 
     if(view)
         IOleDocumentView_Release(view);
@@ -3320,6 +3375,7 @@ static void test_HTMLDocument_StreamLoad(void)
 
     IOleObject_Release(oleobj);
 
+    test_GetCurMoniker(unk, NULL, NULL);
     test_StreamLoad(unk);
     test_download(TRUE, FALSE);
 
