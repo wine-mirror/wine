@@ -4631,6 +4631,115 @@ static void test_decodePKCSContentInfo(DWORD dwEncoding)
     }
 }
 
+static const BYTE emptyPKCSAttr[] = { 0x30,0x06,0x06,0x02,0x2a,0x03,0x31,
+ 0x00 };
+static const BYTE bogusPKCSAttr[] = { 0x30,0x07,0x06,0x02,0x2a,0x03,0x31,0x01,
+ 0x01 };
+static const BYTE intPKCSAttr[] = { 0x30,0x09,0x06,0x02,0x2a,0x03,0x31,0x03,
+ 0x02,0x01,0x01 };
+
+static void test_encodePKCSAttribute(DWORD dwEncoding)
+{
+    CRYPT_ATTRIBUTE attr = { 0 };
+    BOOL ret;
+    LPBYTE buf = NULL;
+    DWORD size = 0;
+    CRYPT_ATTR_BLOB blob;
+    char oid[] = "1.2.3";
+
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_ATTRIBUTE, NULL,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_ATTRIBUTE, &attr,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    attr.pszObjId = oid;
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_ATTRIBUTE, &attr,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(emptyPKCSAttr), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, emptyPKCSAttr, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    blob.cbData = sizeof(bogusDER);
+    blob.pbData = bogusDER;
+    attr.cValue = 1;
+    attr.rgValue = &blob;
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_ATTRIBUTE, &attr,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(bogusPKCSAttr), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, bogusPKCSAttr, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    blob.pbData = (BYTE *)ints[0].encoded;
+    blob.cbData = ints[0].encoded[1] + 2;
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_ATTRIBUTE, &attr,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (buf)
+    {
+        ok(size == sizeof(intPKCSAttr), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, intPKCSAttr, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
+static void test_decodePKCSAttribute(DWORD dwEncoding)
+{
+    BOOL ret;
+    LPBYTE buf = NULL;
+    DWORD size = 0;
+    CRYPT_ATTRIBUTE *attr;
+
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS_ATTRIBUTE,
+     emptyPKCSAttr, sizeof(emptyPKCSAttr),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
+    if (buf)
+    {
+        attr = (CRYPT_ATTRIBUTE *)buf;
+
+        ok(!strcmp(attr->pszObjId, "1.2.3"), "Expected 1.2.3, got %s\n",
+         attr->pszObjId);
+        ok(attr->cValue == 0, "Expected no value, got %d\n", attr->cValue);
+        LocalFree(buf);
+    }
+    SetLastError(0xdeadbeef);
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS_ATTRIBUTE,
+     bogusPKCSAttr, sizeof(bogusPKCSAttr),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    /* Native fails with CRYPT_E_ASN1_EOD, accept also CRYPT_E_ASN1_CORRUPT as
+     * I doubt an app depends on that.
+     */
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
+     GetLastError() == CRYPT_E_ASN1_CORRUPT),
+     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT, got %x\n",
+     GetLastError());
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS_ATTRIBUTE,
+     intPKCSAttr, sizeof(intPKCSAttr),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
+    if (buf)
+    {
+        attr = (CRYPT_ATTRIBUTE *)buf;
+
+        ok(!strcmp(attr->pszObjId, "1.2.3"), "Expected 1.2.3, got %s\n",
+         attr->pszObjId);
+        ok(attr->cValue == 1, "Expected 1 value, got %d\n", attr->cValue);
+        ok(attr->rgValue[0].cbData == ints[0].encoded[1] + 2,
+         "Unexpected size %d\n", attr->rgValue[0].cbData);
+        ok(!memcmp(attr->rgValue[0].pbData, ints[0].encoded,
+         attr->rgValue[0].cbData), "Unexpected value\n");
+    }
+}
 /* Free *pInfo with HeapFree */
 static void testExportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO *pInfo)
 {
@@ -4840,6 +4949,8 @@ START_TEST(encode)
         test_decodeAuthorityKeyId2(encodings[i]);
         test_encodePKCSContentInfo(encodings[i]);
         test_decodePKCSContentInfo(encodings[i]);
+        test_encodePKCSAttribute(encodings[i]);
+        test_decodePKCSAttribute(encodings[i]);
     }
     testPortPublicKeyInfo();
 }

@@ -1362,6 +1362,38 @@ static BOOL WINAPI CRYPT_AsnEncodeUnicodeName(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodePKCSAttribute(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret = FALSE;
+
+    __TRY
+    {
+        const CRYPT_ATTRIBUTE *attr = (const CRYPT_ATTRIBUTE *)pvStructInfo;
+
+        if (!attr->pszObjId)
+            SetLastError(E_INVALIDARG);
+        else
+        {
+            struct AsnEncodeSequenceItem items[2] = {
+             { attr->pszObjId, CRYPT_AsnEncodeOid, 0 },
+             { &attr->cValue, CRYPT_DEREncodeSet, 0 },
+            };
+
+            ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+             sizeof(items) / sizeof(items[0]), dwFlags, pEncodePara, pbEncoded,
+             pcbEncoded);
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnEncodePKCSContentInfo(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -3070,6 +3102,9 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
             break;
         case (WORD)PKCS_CONTENT_INFO:
             encodeFunc = CRYPT_AsnEncodePKCSContentInfo;
+            break;
+        case (WORD)PKCS_ATTRIBUTE:
+            encodeFunc = CRYPT_AsnEncodePKCSAttribute;
             break;
         case (WORD)X509_UNICODE_NAME_VALUE:
             encodeFunc = CRYPT_AsnEncodeUnicodeNameValue;
