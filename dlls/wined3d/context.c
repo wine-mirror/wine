@@ -801,6 +801,9 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                 glEnable(GL_TEXTURE_SHADER_NV);
                 checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
             }
+            if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+                IWineD3DDeviceImpl_FindTexUnitMap(This);
+            }
             for(i=0; i < context->numDirtyEntries; i++) {
                 dirtyState = context->dirtyArray[i];
                 idx = dirtyState >> 5;

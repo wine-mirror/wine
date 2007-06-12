@@ -3212,7 +3212,7 @@ static inline void markTextureStagesDirty(IWineD3DDeviceImpl *This, DWORD stage)
     }
 }
 
-static void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
+void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
     DWORD i, tex;
     /* This code can assume that GL_NV_register_combiners are supported, otherwise
      * it is never called.
@@ -3306,11 +3306,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
 
     TRACE("(%p) : setting pShader(%p)\n", This, pShader);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
-
-    /* Rebuild the texture unit mapping if nvrc's are supported */
-    if(GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        IWineD3DDeviceImpl_FindTexUnitMap(This);
-    }
 
     return WINED3D_OK;
 }
@@ -3999,13 +3994,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, Type));
 
-    /* Rebuild the stage -> gl texture unit mapping if register combiners are supported
-     * If there is a pixel shader there will be a 1:1 mapping, no need to touch it. SetPixelShader
-     * will call FindTexUnitMap too.
-     */
-    if(GL_SUPPORT(NV_REGISTER_COMBINERS) && !This->stateBlock->pixelShader) {
-        IWineD3DDeviceImpl_FindTexUnitMap(This);
-    }
     return WINED3D_OK;
 }
 
@@ -4112,13 +4100,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(Stage));
-
-    /* Verify the texture unit mapping(and rebuild it if needed) if we use nvrcs and no
-     * pixel shader is used
-     */
-    if(GL_SUPPORT(NV_REGISTER_COMBINERS) && !This->stateBlock->pixelShader) {
-        IWineD3DDeviceImpl_FindTexUnitMap(This);
-    }
 
     return WINED3D_OK;
 }
