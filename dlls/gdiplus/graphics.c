@@ -81,3 +81,35 @@ GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
+    INT y, INT width, INT height)
+{
+    LOGBRUSH lb;
+    HPEN hpen;
+    HGDIOBJ old_obj;
+
+    if(!pen || !graphics)
+        return InvalidParameter;
+
+    lb.lbStyle = BS_SOLID;
+    lb.lbColor = pen->color;
+    lb.lbHatch = 0;
+
+    hpen = ExtCreatePen(PS_GEOMETRIC | PS_ENDCAP_SQUARE, (INT) pen->width,
+        &lb, 0, NULL);
+
+    old_obj = SelectObject(graphics->hdc, hpen);
+
+    /* assume pen aligment centered */
+    MoveToEx(graphics->hdc, x, y, NULL);
+    LineTo(graphics->hdc, x+width, y);
+    LineTo(graphics->hdc, x+width, y+height);
+    LineTo(graphics->hdc, x, y+height);
+    LineTo(graphics->hdc, x, y);
+
+    SelectObject(graphics->hdc, old_obj);
+    DeleteObject(hpen);
+
+    return Ok;
+}
