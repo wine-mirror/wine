@@ -1176,41 +1176,33 @@ static BOOL WINAPI CRYPT_DEREncodeSet(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
-    CRYPT_SET_OF *set = (CRYPT_SET_OF *)pvStructInfo;
+    const CRYPT_SET_OF *set = (const CRYPT_SET_OF *)pvStructInfo;
     DWORD bytesNeeded = 0, lenBytes, i;
-    BOOL ret = FALSE;
+    BOOL ret;
 
     for (i = 0; i < set->cValue; i++)
         bytesNeeded += set->rgValue[i].cbData;
     CRYPT_EncodeLen(bytesNeeded, NULL, &lenBytes);
     bytesNeeded += 1 + lenBytes;
-    if (pbEncoded)
-    {
-        if (*pcbEncoded < bytesNeeded)
-        {
-            *pcbEncoded = bytesNeeded;
-            SetLastError(ERROR_MORE_DATA);
-        }
-        else
-        {
-            ret = TRUE;
-            *pcbEncoded = bytesNeeded;
-            qsort(set->rgValue, set->cValue, sizeof(CRYPT_DER_BLOB), BLOBComp);
-            *pbEncoded++ = ASN_CONSTRUCTOR | ASN_SETOF;
-            CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded, &lenBytes);
-            pbEncoded += lenBytes;
-            for (i = 0; ret && i < set->cValue; i++)
-            {
-                memcpy(pbEncoded, set->rgValue[i].pbData,
-                 set->rgValue[i].cbData);
-                pbEncoded += set->rgValue[i].cbData;
-            }
-        }
-    }
-    else
+    if (!pbEncoded)
     {
         *pcbEncoded = bytesNeeded;
         ret = TRUE;
+    }
+    else if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara,
+     pbEncoded, pcbEncoded, bytesNeeded)))
+    {
+        if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+            pbEncoded = *(BYTE **)pbEncoded;
+        qsort(set->rgValue, set->cValue, sizeof(CRYPT_DER_BLOB), BLOBComp);
+        *pbEncoded++ = ASN_CONSTRUCTOR | ASN_SETOF;
+        CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded, &lenBytes);
+        pbEncoded += lenBytes;
+        for (i = 0; ret && i < set->cValue; i++)
+        {
+            memcpy(pbEncoded, set->rgValue[i].pbData, set->rgValue[i].cbData);
+            pbEncoded += set->rgValue[i].cbData;
+        }
     }
     return ret;
 }
