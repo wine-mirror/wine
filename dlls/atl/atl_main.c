@@ -547,6 +547,9 @@ typedef struct ATL_PROPMAP_ENTRY
     VARTYPE vt;
 } ATL_PROPMAP_ENTRY;
 
+/***********************************************************************
+ *           AtlIPersistStreamInit_Load      [ATL.@]
+ */
 HRESULT WINAPI AtlIPersistStreamInit_Load( LPSTREAM pStm, ATL_PROPMAP_ENTRY *pMap,
                                            void *pThis, IUnknown *pUnk)
 {

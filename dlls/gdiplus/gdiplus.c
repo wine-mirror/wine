@@ -45,6 +45,9 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
+/*****************************************************
+ *      GdiplusStartup [GDIPLUS.@]
+ */
 Status WINAPI GdiplusStartup(ULONG_PTR *token, const struct GdiplusStartupInput *input,
                              struct GdiplusStartupOutput *output)
 {
@@ -65,16 +68,25 @@ Status WINAPI GdiplusStartup(ULONG_PTR *token, const struct GdiplusStartupInput 
     return Ok;
 }
 
+/*****************************************************
+ *      GdiplusShutdown [GDIPLUS.@]
+ */
 void WINAPI GdiplusShutdown(ULONG_PTR token)
 {
     /* FIXME: no object tracking */
 }
 
+/*****************************************************
+ *      GdipAlloc [GDIPLUS.@]
+ */
 void* WINGDIPAPI GdipAlloc(SIZE_T size)
 {
     return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 }
 
+/*****************************************************
+ *      GdipFree [GDIPLUS.@]
+ */
 void WINGDIPAPI GdipFree(void* ptr)
 {
     HeapFree(GetProcessHeap(), 0, ptr);
