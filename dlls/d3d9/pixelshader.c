@@ -56,7 +56,9 @@ static ULONG WINAPI IDirect3DPixelShader9Impl_Release(LPDIRECT3DPIXELSHADER9 ifa
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
+        EnterCriticalSection(&d3d9_cs);
         IWineD3DPixelShader_Release(This->wineD3DPixelShader);
+        LeaveCriticalSection(&d3d9_cs);
         IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -70,17 +72,24 @@ static HRESULT WINAPI IDirect3DPixelShader9Impl_GetDevice(LPDIRECT3DPIXELSHADER9
 
     TRACE("(%p) : Relay\n", This);
 
+    EnterCriticalSection(&d3d9_cs);
     IWineD3DPixelShader_GetDevice(This->wineD3DPixelShader, &myDevice);
     IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
     IWineD3DDevice_Release(myDevice);
+    LeaveCriticalSection(&d3d9_cs);
     TRACE("(%p) returning (%p)\n", This, *ppDevice);
     return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DPixelShader9Impl_GetFunction(LPDIRECT3DPIXELSHADER9 iface, VOID* pData, UINT* pSizeOfData) {
     IDirect3DPixelShader9Impl *This = (IDirect3DPixelShader9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DPixelShader_GetFunction(This->wineD3DPixelShader, pData, pSizeOfData);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DPixelShader_GetFunction(This->wineD3DPixelShader, pData, pSizeOfData);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 
@@ -118,7 +127,9 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreatePixelShader(LPDIRECT3DDEVICE9 iface, C
 
     object->ref    = 1;
     object->lpVtbl = &Direct3DPixelShader9_Vtbl;
+    EnterCriticalSection(&d3d9_cs);
     hrc = IWineD3DDevice_CreatePixelShader(This->WineD3DDevice, pFunction, &object->wineD3DPixelShader , (IUnknown *)object);
+    LeaveCriticalSection(&d3d9_cs);
     if (hrc != D3D_OK) {
 
         /* free up object */
@@ -139,7 +150,10 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShader(LPDIRECT3DDEVICE9 iface, IDir
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DPixelShader9Impl *shader = (IDirect3DPixelShader9Impl *)pShader;
     TRACE("(%p) Relay\n", This);
+
+    EnterCriticalSection(&d3d9_cs);
     IWineD3DDevice_SetPixelShader(This->WineD3DDevice, shader == NULL ? NULL :shader->wineD3DPixelShader);
+    LeaveCriticalSection(&d3d9_cs);
     return D3D_OK;
 }
 
@@ -154,6 +168,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(LPDIRECT3DDEVICE9 iface, IDir
         return D3DERR_INVALIDCALL;
     }
 
+    EnterCriticalSection(&d3d9_cs);
     hrc = IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &object);
     if (hrc == D3D_OK && object != NULL) {
        hrc = IWineD3DPixelShader_GetParent(object, (IUnknown **)ppShader);
@@ -161,6 +176,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(LPDIRECT3DDEVICE9 iface, IDir
     } else {
         *ppShader = NULL;
     }
+    LeaveCriticalSection(&d3d9_cs);
 
     TRACE("(%p) : returning %p\n", This, *ppShader);
     return hrc;
@@ -168,8 +184,13 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(LPDIRECT3DDEVICE9 iface, IDir
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantF(LPDIRECT3DDEVICE9 iface, UINT Register, CONST float* pConstantData, UINT Vector4fCount) {
    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);   
-    return IWineD3DDevice_SetPixelShaderConstantF(This->WineD3DDevice, Register, pConstantData, Vector4fCount);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DDevice_SetPixelShaderConstantF(This->WineD3DDevice, Register, pConstantData, Vector4fCount);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantF(LPDIRECT3DDEVICE9 iface, UINT Register, float* pConstantData, UINT Vector4fCount) {
@@ -180,24 +201,44 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantF(LPDIRECT3DDEVICE9 if
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantI(LPDIRECT3DDEVICE9 iface, UINT Register, CONST int* pConstantData, UINT Vector4iCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DDevice_SetPixelShaderConstantI(This->WineD3DDevice, Register, pConstantData, Vector4iCount);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DDevice_SetPixelShaderConstantI(This->WineD3DDevice, Register, pConstantData, Vector4iCount);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantI(LPDIRECT3DDEVICE9 iface, UINT Register, int* pConstantData, UINT Vector4iCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DDevice_GetPixelShaderConstantI(This->WineD3DDevice, Register, pConstantData, Vector4iCount);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DDevice_GetPixelShaderConstantI(This->WineD3DDevice, Register, pConstantData, Vector4iCount);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantB(LPDIRECT3DDEVICE9 iface, UINT Register, CONST BOOL* pConstantData, UINT BoolCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return  IWineD3DDevice_SetPixelShaderConstantB(This->WineD3DDevice, Register, pConstantData, BoolCount);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DDevice_SetPixelShaderConstantB(This->WineD3DDevice, Register, pConstantData, BoolCount);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantB(LPDIRECT3DDEVICE9 iface, UINT Register, BOOL* pConstantData, UINT BoolCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    HRESULT hr;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DDevice_GetPixelShaderConstantB(This->WineD3DDevice, Register, pConstantData, BoolCount);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DDevice_GetPixelShaderConstantB(This->WineD3DDevice, Register, pConstantData, BoolCount);
+    LeaveCriticalSection(&d3d9_cs);
+    return hr;
 }
