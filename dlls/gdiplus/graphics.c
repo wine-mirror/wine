@@ -65,3 +65,19 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
+    INT y1, INT x2, INT y2)
+{
+    HGDIOBJ old_obj;
+
+    if(!pen || !graphics)
+        return InvalidParameter;
+
+    old_obj = SelectObject(graphics->hdc, pen->gdipen);
+    MoveToEx(graphics->hdc, x1, y1, NULL);
+    LineTo(graphics->hdc, x2, y2);
+    SelectObject(graphics->hdc, old_obj);
+
+    return Ok;
+}
