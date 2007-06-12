@@ -33,8 +33,6 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "hlink.h"
-
-#include "initguid.h"
 #include "hlguids.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hlink);
