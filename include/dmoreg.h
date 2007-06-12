@@ -19,6 +19,8 @@
 #ifndef __DMOREG_H__
 #define __DMOREG_H__
 
+#include "mediaobj.h"
+
 typedef struct _DMO_PARTIAL_MEDIATYPE
 {
    GUID type;
