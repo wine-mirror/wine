@@ -119,7 +119,16 @@ interface IServer
     [size_is(n)] int ca[];
   } cs_t;
 
+  typedef struct
+  {
+    int *pn;
+    [size_is(*pn)] int *ca1;
+    [size_is(n * 2)] int *ca2;
+    int n;
+  } cps_t;
+
   int sum_cs(cs_t *cs);
+  int sum_cps(cps_t *cps);
 
   void stop(void);
 }

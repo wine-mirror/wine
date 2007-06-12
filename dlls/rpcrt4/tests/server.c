@@ -210,6 +210,21 @@ s_sum_cs(cs_t *cs)
   return s_sum_conf_array(cs->ca, cs->n);
 }
 
+int
+s_sum_cps(cps_t *cps)
+{
+  int sum = 0;
+  int i;
+
+  for (i = 0; i < *cps->pn; ++i)
+    sum += cps->ca1[i];
+
+  for (i = 0; i < 2 * cps->n; ++i)
+    sum += cps->ca2[i];
+
+  return sum;
+}
+
 void
 s_stop(void)
 {
@@ -393,7 +408,9 @@ array_tests(void)
   };
   static int c[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
   static vector_t vs[2] = {{1, -2, 3}, {4, -5, -6}};
+  cps_t cps;
   cs_t *cs;
+  int n;
 
   ok(sum_fixed_int_3d(m) == 4116, "RPC sum_fixed_int_3d\n");
 
@@ -417,6 +434,13 @@ array_tests(void)
   cs->ca[4] = -4;
   ok(sum_cs(cs) == 1, "RPC sum_cs\n");
   HeapFree(GetProcessHeap(), 0, cs);
+
+  n = 5;
+  cps.pn = &n;
+  cps.ca1 = &c[2];
+  cps.n = 3;
+  cps.ca2 = &c[3];
+  ok(sum_cps(&cps) == 53, "RPC sum_cps\n");
 }
 
 static void

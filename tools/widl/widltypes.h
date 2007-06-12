@@ -227,7 +227,6 @@ struct _var_t {
   var_list_t *args;  /* for function pointers */
   attr_list_t *attrs;
   expr_t *eval;
-  size_t corrdesc;  /* offset to correlation descriptor (e.g., for unions) */
 
   /* parser-internal */
   struct list entry;

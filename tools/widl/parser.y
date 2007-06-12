@@ -1387,7 +1387,6 @@ static var_t *make_var(char *name)
   v->args = NULL;
   v->attrs = NULL;
   v->eval = NULL;
-  v->corrdesc = 0;
   return v;
 }
 
