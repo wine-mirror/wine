@@ -3835,7 +3835,6 @@ HANDLE
 NTSTATUS
 SECURITY_STATUS
 ULONG
-unsigned long
 
 %ptr
 
@@ -3856,7 +3855,7 @@ PULONG
 PVOID
 PVOID *
 SEC_GET_KEY_FN
-unsigned long *
+ULONG *
 void *
 void **
 
