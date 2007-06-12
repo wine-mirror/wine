@@ -744,6 +744,7 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
     IBindCtx *bindctx;
     IMoniker *mon;
     IHlink *hlink;
+    HRESULT hr;
 
     callback = create_bscallback(NULL);
 
@@ -754,24 +755,35 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
               debugstr_an(callback->post_data, callback->post_data_len));
     }
 
-    CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &bindctx);
-
-    hlink = Hlink_Create();
-
-    CreateURLMoniker(NULL, uri, &mon);
-    IHlink_SetMonikerReference(hlink, 0, mon, NULL);
-
-    if(hlnf & HLNF_OPENINNEWWINDOW) {
-        static const WCHAR wszBlank[] = {'_','b','l','a','n','k',0};
-        IHlink_SetTargetFrameName(hlink, wszBlank); /* FIXME */
+    hr = CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &bindctx);
+    if (FAILED(hr)) {
+        IBindStatusCallback_Release(STATUSCLB(callback));
+        return;
     }
 
-    IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, STATUSCLB(callback), hlink);
+    hlink = Hlink_Create();
+    if (!hlink) {
+        IBindCtx_Release(bindctx);
+        IBindStatusCallback_Release(STATUSCLB(callback));
+        return;
+    }
+
+    hr = CreateURLMoniker(NULL, uri, &mon);
+    if (SUCCEEDED(hr)) {
+        IHlink_SetMonikerReference(hlink, 0, mon, NULL);
+
+        if(hlnf & HLNF_OPENINNEWWINDOW) {
+            static const WCHAR wszBlank[] = {'_','b','l','a','n','k',0};
+            IHlink_SetTargetFrameName(hlink, wszBlank); /* FIXME */
+        }
+
+        IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, STATUSCLB(callback), hlink);
+
+        IMoniker_Release(mon);
+    }
 
     IBindCtx_Release(bindctx);
     IBindStatusCallback_Release(STATUSCLB(callback));
-    IMoniker_Release(mon);
-
 }
 
 HRESULT start_binding(BSCallback *bscallback)
