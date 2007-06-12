@@ -1941,6 +1941,62 @@ static BOOL WINAPI CRYPT_AsnEncodeAltName(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeAuthorityKeyId2(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret;
+
+    __TRY
+    {
+        const CERT_AUTHORITY_KEY_ID2_INFO *info =
+         (const CERT_AUTHORITY_KEY_ID2_INFO *)pvStructInfo;
+        struct AsnEncodeSequenceItem items[3] = { { 0 } };
+        struct AsnEncodeTagSwappedItem swapped[3] = { { 0 } };
+        DWORD cItem = 0, cSwapped = 0;
+
+        if (info->KeyId.cbData)
+        {
+            swapped[cSwapped].tag = ASN_CONTEXT | 0;
+            swapped[cSwapped].pvStructInfo = &info->KeyId;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeInteger;
+            items[cItem].pvStructInfo = &swapped[cSwapped];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+            cSwapped++;
+            cItem++;
+        }
+        if (info->AuthorityCertIssuer.cAltEntry)
+        {
+            swapped[cSwapped].tag = ASN_CONTEXT | ASN_CONSTRUCTOR | 1;
+            swapped[cSwapped].pvStructInfo = &info->AuthorityCertIssuer;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeAltName;
+            items[cItem].pvStructInfo = &swapped[cSwapped];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+            cSwapped++;
+            cItem++;
+        }
+        if (info->AuthorityCertSerialNumber.cbData)
+        {
+            swapped[cSwapped].tag = ASN_CONTEXT | 2;
+            swapped[cSwapped].pvStructInfo = &info->AuthorityCertSerialNumber;
+            swapped[cSwapped].encodeFunc = CRYPT_AsnEncodeInteger;
+            items[cItem].pvStructInfo = &swapped[cSwapped];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+            cSwapped++;
+            cItem++;
+        }
+        ret = CRYPT_AsnEncodeSequence(X509_ASN_ENCODING, items, cItem, dwFlags,
+         pEncodePara, pbEncoded, pcbEncoded);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnEncodeBasicConstraints(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -2980,6 +3036,9 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         case (WORD)X509_CHOICE_OF_TIME:
             encodeFunc = CRYPT_AsnEncodeChoiceOfTime;
             break;
+        case (WORD)X509_AUTHORITY_KEY_ID2:
+            encodeFunc = CRYPT_AsnEncodeAuthorityKeyId2;
+            break;
         case (WORD)X509_SEQUENCE_OF_ANY:
             encodeFunc = CRYPT_AsnEncodeSequenceOfAny;
             break;
@@ -3005,6 +3064,8 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         encodeFunc = CRYPT_AsnEncodeUtcTime;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER))
         encodeFunc = CRYPT_AsnEncodeAuthorityKeyId;
+    else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER2))
+        encodeFunc = CRYPT_AsnEncodeAuthorityKeyId2;
     else if (!strcmp(lpszStructType, szOID_CRL_REASON_CODE))
         encodeFunc = CRYPT_AsnEncodeEnumerated;
     else if (!strcmp(lpszStructType, szOID_KEY_USAGE))

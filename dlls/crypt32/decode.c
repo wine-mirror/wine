@@ -475,7 +475,8 @@ static BOOL CRYPT_AsnDecodeSequence(DWORD dwCertEncodingType,
 
 /* tag:
  *     The expected tag of the entire encoded array (usually a variant
- *     of ASN_SETOF or ASN_SEQUENCEOF.)
+ *     of ASN_SETOF or ASN_SEQUENCEOF.)  If tag is 0, decodeFunc is called
+ *     regardless of the tag seen.
  * decodeFunc:
  *     used to decode each item in the array
  * itemSize:
@@ -515,7 +516,7 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
      cbEncoded, dwFlags, pDecodePara, pvStructInfo, *pcbStructInfo,
      startingPointer);
 
-    if (pbEncoded[0] == arrayDesc->tag)
+    if (!arrayDesc->tag || pbEncoded[0] == arrayDesc->tag)
     {
         DWORD dataLen;
 
@@ -2038,7 +2039,7 @@ static BOOL WINAPI CRYPT_AsnDecodeAltNameInternal(DWORD dwCertEncodingType,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
     BOOL ret = TRUE;
-    struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
+    struct AsnArrayDescriptor arrayDesc = { 0,
      CRYPT_AsnDecodeAltNameEntry, sizeof(CERT_ALT_NAME_ENTRY), TRUE,
      offsetof(CERT_ALT_NAME_ENTRY, u.pwszURL) };
     PCERT_ALT_NAME_INFO info = (PCERT_ALT_NAME_INFO)pvStructInfo;
@@ -2073,6 +2074,43 @@ static BOOL WINAPI CRYPT_AsnDecodeAuthorityKeyId(DWORD dwCertEncodingType,
            CertSerialNumber), CRYPT_AsnDecodeIntegerInternal,
            sizeof(CRYPT_INTEGER_BLOB), TRUE, TRUE,
            offsetof(CERT_AUTHORITY_KEY_ID_INFO, CertSerialNumber.pbData), 0 },
+        };
+
+        ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
+         sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnDecodeAuthorityKeyId2(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret;
+
+    __TRY
+    {
+        struct AsnDecodeSequenceItem items[] = {
+         { ASN_CONTEXT | 0, offsetof(CERT_AUTHORITY_KEY_ID2_INFO, KeyId),
+           CRYPT_AsnDecodeIntegerInternal, sizeof(CRYPT_DATA_BLOB),
+           TRUE, TRUE, offsetof(CERT_AUTHORITY_KEY_ID2_INFO, KeyId.pbData), 0 },
+         { ASN_CONTEXT | ASN_CONSTRUCTOR| 1,
+           offsetof(CERT_AUTHORITY_KEY_ID2_INFO, AuthorityCertIssuer),
+           CRYPT_AsnDecodeAltNameInternal, sizeof(CERT_ALT_NAME_INFO), TRUE,
+           TRUE, offsetof(CERT_AUTHORITY_KEY_ID2_INFO,
+           AuthorityCertIssuer.rgAltEntry), 0 },
+         { ASN_CONTEXT | 2, offsetof(CERT_AUTHORITY_KEY_ID2_INFO,
+           AuthorityCertSerialNumber), CRYPT_AsnDecodeIntegerInternal,
+           sizeof(CRYPT_INTEGER_BLOB), TRUE, TRUE,
+           offsetof(CERT_AUTHORITY_KEY_ID2_INFO,
+           AuthorityCertSerialNumber.pbData), 0 },
         };
 
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
@@ -3551,6 +3589,9 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         case (WORD)X509_CHOICE_OF_TIME:
             decodeFunc = CRYPT_AsnDecodeChoiceOfTime;
             break;
+        case (WORD)X509_AUTHORITY_KEY_ID2:
+            decodeFunc = CRYPT_AsnDecodeAuthorityKeyId2;
+            break;
         case (WORD)X509_SEQUENCE_OF_ANY:
             decodeFunc = CRYPT_AsnDecodeSequenceOfAny;
             break;
@@ -3576,6 +3617,8 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         decodeFunc = CRYPT_AsnDecodeUtcTime;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER))
         decodeFunc = CRYPT_AsnDecodeAuthorityKeyId;
+    else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER2))
+        decodeFunc = CRYPT_AsnDecodeAuthorityKeyId2;
     else if (!strcmp(lpszStructType, szOID_CRL_REASON_CODE))
         decodeFunc = CRYPT_AsnDecodeEnumerated;
     else if (!strcmp(lpszStructType, szOID_KEY_USAGE))

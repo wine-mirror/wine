@@ -4365,6 +4365,165 @@ static void test_decodeAuthorityKeyId(DWORD dwEncoding)
     }
 }
 
+static const BYTE authorityKeyIdWithIssuerUrl[] = { 0x30,0x15,0xa1,0x13,0x86,
+ 0x11,0x68,0x74,0x74,0x70,0x3a,0x2f,0x2f,0x77,0x69,0x6e,0x65,0x68,0x71,0x2e,
+ 0x6f,0x72,0x67 };
+
+static void test_encodeAuthorityKeyId2(DWORD dwEncoding)
+{
+    CERT_AUTHORITY_KEY_ID2_INFO info = { { 0 } };
+    CERT_ALT_NAME_ENTRY entry = { 0 };
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD size = 0;
+
+    /* Test with empty id */
+    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(emptySequence), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, emptySequence, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* With just a key id */
+    info.KeyId.cbData = sizeof(serialNum);
+    info.KeyId.pbData = (BYTE *)serialNum;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(authorityKeyIdWithId), "Unexpected size %d\n",
+         size);
+        ok(!memcmp(buf, authorityKeyIdWithId, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* With a bogus issuer name */
+    info.KeyId.cbData = 0;
+    info.AuthorityCertIssuer.cAltEntry = 1;
+    info.AuthorityCertIssuer.rgAltEntry = &entry;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    /* With an issuer name */
+    entry.dwAltNameChoice = CERT_ALT_NAME_URL;
+    entry.pwszURL = (LPWSTR)url;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(authorityKeyIdWithIssuerUrl), "Unexpected size %d\n",
+         size);
+        ok(!memcmp(buf, authorityKeyIdWithIssuerUrl, size),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* With just a serial number */
+    info.AuthorityCertIssuer.cAltEntry = 0;
+    info.AuthorityCertSerialNumber.cbData = sizeof(serialNum);
+    info.AuthorityCertSerialNumber.pbData = (BYTE *)serialNum;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(authorityKeyIdWithSerial), "Unexpected size %d\n",
+         size);
+        ok(!memcmp(buf, authorityKeyIdWithSerial, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
+static void test_decodeAuthorityKeyId2(DWORD dwEncoding)
+{
+    BOOL ret;
+    LPBYTE buf = NULL;
+    DWORD size = 0;
+
+    ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2,
+     emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        CERT_AUTHORITY_KEY_ID2_INFO *info = (CERT_AUTHORITY_KEY_ID2_INFO *)buf;
+
+        ok(size >= sizeof(CERT_AUTHORITY_KEY_ID2_INFO), "Unexpected size %d\n",
+         size);
+        ok(info->KeyId.cbData == 0, "Expected no key id\n");
+        ok(info->AuthorityCertIssuer.cAltEntry == 0,
+         "Expected no issuer name entries\n");
+        ok(info->AuthorityCertSerialNumber.cbData == 0,
+         "Expected no serial number\n");
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2,
+     authorityKeyIdWithId, sizeof(authorityKeyIdWithId),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        CERT_AUTHORITY_KEY_ID2_INFO *info = (CERT_AUTHORITY_KEY_ID2_INFO *)buf;
+
+        ok(size >= sizeof(CERT_AUTHORITY_KEY_ID2_INFO), "Unexpected size %d\n",
+         size);
+        ok(info->KeyId.cbData == sizeof(serialNum), "Unexpected key id len\n");
+        ok(!memcmp(info->KeyId.pbData, serialNum, sizeof(serialNum)),
+         "Unexpected key id\n");
+        ok(info->AuthorityCertIssuer.cAltEntry == 0,
+         "Expected no issuer name entries\n");
+        ok(info->AuthorityCertSerialNumber.cbData == 0,
+         "Expected no serial number\n");
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2,
+     authorityKeyIdWithIssuerUrl, sizeof(authorityKeyIdWithIssuerUrl),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        CERT_AUTHORITY_KEY_ID2_INFO *info = (CERT_AUTHORITY_KEY_ID2_INFO *)buf;
+
+        ok(size >= sizeof(CERT_AUTHORITY_KEY_ID2_INFO), "Unexpected size %d\n",
+         size);
+        ok(info->KeyId.cbData == 0, "Expected no key id\n");
+        ok(info->AuthorityCertIssuer.cAltEntry == 1,
+         "Expected 1 issuer entry, got %d\n",
+         info->AuthorityCertIssuer.cAltEntry);
+        ok(info->AuthorityCertIssuer.rgAltEntry[0].dwAltNameChoice ==
+         CERT_ALT_NAME_URL, "Expected CERT_ALT_NAME_URL, got %d\n",
+         info->AuthorityCertIssuer.rgAltEntry[0].dwAltNameChoice);
+        ok(!lstrcmpW(info->AuthorityCertIssuer.rgAltEntry[0].pwszURL,
+         url), "Unexpected URL\n");
+        ok(info->AuthorityCertSerialNumber.cbData == 0,
+         "Expected no serial number\n");
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2,
+     authorityKeyIdWithSerial, sizeof(authorityKeyIdWithSerial),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        CERT_AUTHORITY_KEY_ID2_INFO *info = (CERT_AUTHORITY_KEY_ID2_INFO *)buf;
+
+        ok(size >= sizeof(CERT_AUTHORITY_KEY_ID2_INFO), "Unexpected size %d\n",
+         size);
+        ok(info->KeyId.cbData == 0, "Expected no key id\n");
+        ok(info->AuthorityCertIssuer.cAltEntry == 0,
+         "Expected no issuer name entries\n");
+        ok(info->AuthorityCertSerialNumber.cbData == sizeof(serialNum),
+         "Unexpected serial number len\n");
+        ok(!memcmp(info->AuthorityCertSerialNumber.pbData, serialNum,
+         sizeof(serialNum)), "Unexpected serial number\n");
+        LocalFree(buf);
+    }
+}
+
 /* Free *pInfo with HeapFree */
 static void testExportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO *pInfo)
 {
@@ -4570,6 +4729,8 @@ START_TEST(encode)
         test_decodeEnhancedKeyUsage(encodings[i]);
         test_encodeAuthorityKeyId(encodings[i]);
         test_decodeAuthorityKeyId(encodings[i]);
+        test_encodeAuthorityKeyId2(encodings[i]);
+        test_decodeAuthorityKeyId2(encodings[i]);
     }
     testPortPublicKeyInfo();
 }
