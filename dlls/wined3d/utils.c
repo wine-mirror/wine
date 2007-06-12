@@ -66,7 +66,7 @@ static const PixelFormatDesc formats[] = {
     {WINED3DFMT_R5G6B5      ,0x0        ,0x0000F800 ,0x000007e0 ,0x0000001f ,2      ,FALSE      ,GL_RGB5                          ,GL_RGB5                              ,GL_RGB  ,GL_UNSIGNED_SHORT_5_6_5    },
     {WINED3DFMT_X1R5G5B5    ,0x0        ,0x00007c00 ,0x000003e0 ,0x0000001f ,2      ,FALSE      ,GL_RGB5_A1                       ,GL_RGB5_A1                        ,GL_BGRA ,GL_UNSIGNED_SHORT_1_5_5_5_REV },
     {WINED3DFMT_A1R5G5B5    ,0x00008000 ,0x00007c00 ,0x000003e0 ,0x0000001f ,2      ,FALSE      ,GL_RGB5_A1                       ,GL_RGB5_A1                        ,GL_BGRA ,GL_UNSIGNED_SHORT_1_5_5_5_REV },
-    {WINED3DFMT_A4R4G4B4    ,0x0000f000 ,0x00000f00 ,0x000000f0 ,0x0000000f ,2      ,FALSE      ,GL_RGBA4                         ,GL_RGBA4                          ,GL_BGRA ,GL_UNSIGNED_SHORT_4_4_4_4_REV },
+    {WINED3DFMT_A4R4G4B4    ,0x0000f000 ,0x00000f00 ,0x000000f0 ,0x0000000f ,2      ,FALSE      ,GL_RGBA4                         ,GL_SRGB8_ALPHA8_EXT               ,GL_BGRA ,GL_UNSIGNED_SHORT_4_4_4_4_REV },
     {WINED3DFMT_R3G3B2      ,0x0        ,0x000000e0 ,0x0000001c ,0x00000003 ,1      ,FALSE      ,GL_R3_G3_B2                      ,GL_R3_G3_B2                          ,GL_RGB  ,GL_UNSIGNED_BYTE_2_3_3_REV },
     {WINED3DFMT_A8          ,0x000000ff ,0x0        ,0x0        ,0x0        ,1      ,FALSE      ,GL_ALPHA8                        ,GL_ALPHA8                              ,GL_ALPHA ,GL_UNSIGNED_BYTE        },
     {WINED3DFMT_A8R3G3B2    ,0x0000ff00 ,0x000000e0 ,0x0000001c ,0x00000003 ,2      ,FALSE      ,0                                ,0                                      ,0       ,0                        },

@@ -1692,6 +1692,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         switch (CheckFormat) {
             case WINED3DFMT_A8R8G8B8:
             case WINED3DFMT_X8R8G8B8:
+            case WINED3DFMT_A4R4G4B4:
             case WINED3DFMT_L8:
             case WINED3DFMT_A8L8:
             case WINED3DFMT_DXT1:
