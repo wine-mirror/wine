@@ -51,7 +51,7 @@ typedef struct tag_SQL_input
     struct list *mem;
 } SQL_input;
 
-static LPWSTR SQL_getstring( void *info, struct sql_str *str );
+static LPWSTR SQL_getstring( void *info, const struct sql_str *str );
 static INT SQL_getint( void *info );
 static int sql_lex( void *SQL_lval, SQL_input *info );
 
@@ -62,9 +62,9 @@ static BOOL SQL_MarkPrimaryKeys( column_info *cols, column_info *keys);
 
 static struct expr * EXPR_complex( void *info, struct expr *l, UINT op, struct expr *r );
 static struct expr * EXPR_unary( void *info, struct expr *l, UINT op );
-static struct expr * EXPR_column( void *info, column_info *column );
+static struct expr * EXPR_column( void *info, const column_info *column );
 static struct expr * EXPR_ival( void *info, int val );
-static struct expr * EXPR_sval( void *info, struct sql_str * );
+static struct expr * EXPR_sval( void *info, const struct sql_str * );
 static struct expr * EXPR_wildcard( void *info );
 
 %}
@@ -697,7 +697,7 @@ static int sql_lex( void *SQL_lval, SQL_input *sql )
     return token;
 }
 
-LPWSTR SQL_getstring( void *info, struct sql_str *strdata )
+LPWSTR SQL_getstring( void *info, const struct sql_str *strdata )
 {
     LPCWSTR p = strdata->data;
     UINT len = strdata->len;
@@ -779,7 +779,7 @@ static struct expr * EXPR_unary( void *info, struct expr *l, UINT op )
     return e;
 }
 
-static struct expr * EXPR_column( void *info, column_info *column )
+static struct expr * EXPR_column( void *info, const column_info *column )
 {
     struct expr *e = parser_alloc( info, sizeof *e );
     if( e )
@@ -801,7 +801,7 @@ static struct expr * EXPR_ival( void *info, int val )
     return e;
 }
 
-static struct expr * EXPR_sval( void *info, struct sql_str *str )
+static struct expr * EXPR_sval( void *info, const struct sql_str *str )
 {
     struct expr *e = parser_alloc( info, sizeof *e );
     if( e )

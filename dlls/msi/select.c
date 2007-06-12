@@ -310,7 +310,7 @@ static UINT SELECT_AddColumn( MSISELECTVIEW *sv, LPCWSTR name )
     return ERROR_SUCCESS;
 }
 
-static int select_count_columns( column_info *col )
+static int select_count_columns( const column_info *col )
 {
     int n;
     for (n = 0; col; col = col->next)
@@ -319,7 +319,7 @@ static int select_count_columns( column_info *col )
 }
 
 UINT SELECT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
-                        column_info *columns )
+                        const column_info *columns )
 {
     MSISELECTVIEW *sv = NULL;
     UINT count = 0, r = ERROR_SUCCESS;

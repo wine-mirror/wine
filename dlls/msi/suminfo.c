@@ -131,7 +131,7 @@ static UINT get_type( UINT uiProperty )
     return VT_EMPTY;
 }
 
-static UINT get_property_count( PROPVARIANT *property )
+static UINT get_property_count( const PROPVARIANT *property )
 {
     UINT i, n = 0;
 
@@ -293,7 +293,7 @@ static DWORD write_dword( LPBYTE data, DWORD ofs, DWORD val )
     return 4;
 }
 
-static DWORD write_filetime( LPBYTE data, DWORD ofs, LPFILETIME ft )
+static DWORD write_filetime( LPBYTE data, DWORD ofs, const FILETIME *ft )
 {
     write_dword( data, ofs, ft->dwLowDateTime );
     write_dword( data, ofs + 4, ft->dwHighDateTime );
@@ -309,7 +309,7 @@ static DWORD write_string( LPBYTE data, DWORD ofs, LPCSTR str )
     return (7 + len) & ~3;
 }
 
-static UINT write_property_to_data( PROPVARIANT *prop, LPBYTE data )
+static UINT write_property_to_data( const PROPVARIANT *prop, LPBYTE data )
 {
     DWORD sz = 0;
 
@@ -336,7 +336,7 @@ static UINT write_property_to_data( PROPVARIANT *prop, LPBYTE data )
     return sz;
 }
 
-static UINT save_summary_info( MSISUMMARYINFO * si, IStream *stm )
+static UINT save_summary_info( const MSISUMMARYINFO * si, IStream *stm )
 {
     UINT ret = ERROR_FUNCTION_FAILED;
     PROPERTYSETHEADER set_hdr;

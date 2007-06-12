@@ -279,7 +279,7 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, UINT r
 }
 
 /* find the string identified by an id - return null if there's none */
-const WCHAR *msi_string_lookup_id( string_table *st, UINT id )
+const WCHAR *msi_string_lookup_id( const string_table *st, UINT id )
 {
     static const WCHAR zero[] = { 0 };
     if( id == 0 )
@@ -306,7 +306,7 @@ const WCHAR *msi_string_lookup_id( string_table *st, UINT id )
  *   The size includes the terminating nul character.  Short buffers
  *  will be filled, but not nul terminated.
  */
-UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
+UINT msi_id2stringW( const string_table *st, UINT id, LPWSTR buffer, UINT *sz )
 {
     UINT len;
     const WCHAR *str;
@@ -345,7 +345,7 @@ UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
  *   The size includes the terminating nul character.  Short buffers
  *  will be filled, but not nul terminated.
  */
-UINT msi_id2stringA( string_table *st, UINT id, LPSTR buffer, UINT *sz )
+UINT msi_id2stringA( const string_table *st, UINT id, LPSTR buffer, UINT *sz )
 {
     UINT len;
     const WCHAR *str;
@@ -387,7 +387,7 @@ UINT msi_id2stringA( string_table *st, UINT id, LPSTR buffer, UINT *sz )
  *  [in] str        - string to find in the string table
  *  [out] id        - id of the string, if found
  */
-UINT msi_string2idW( string_table *st, LPCWSTR str, UINT *id )
+UINT msi_string2idW( const string_table *st, LPCWSTR str, UINT *id )
 {
     UINT n, hash = msistring_makehash( str );
     msistring *se = st->strings;
@@ -404,7 +404,7 @@ UINT msi_string2idW( string_table *st, LPCWSTR str, UINT *id )
     return ERROR_INVALID_PARAMETER;
 }
 
-UINT msi_string2idA( string_table *st, LPCSTR buffer, UINT *id )
+UINT msi_string2idA( const string_table *st, LPCSTR buffer, UINT *id )
 {
     DWORD sz;
     UINT r = ERROR_INVALID_PARAMETER;
@@ -432,7 +432,7 @@ UINT msi_string2idA( string_table *st, LPCSTR buffer, UINT *id )
     return r;
 }
 
-UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res )
+UINT msi_strcmp( const string_table *st, UINT lval, UINT rval, UINT *res )
 {
     const WCHAR *l_str, *r_str;
 
@@ -450,7 +450,7 @@ UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res )
     return ERROR_SUCCESS;
 }
 
-static void string_totalsize( string_table *st, UINT *datasize, UINT *poolsize )
+static void string_totalsize( const string_table *st, UINT *datasize, UINT *poolsize )
 {
     UINT i, len, max, holesize;
 
@@ -595,7 +595,7 @@ end:
     return st;
 }
 
-UINT msi_save_string_table( string_table *st, IStorage *storage )
+UINT msi_save_string_table( const string_table *st, IStorage *storage )
 {
     UINT i, datasize = 0, poolsize = 0, sz, used, r, codepage, n;
     UINT ret = ERROR_FUNCTION_FAILED;
