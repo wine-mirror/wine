@@ -320,14 +320,14 @@ static void test_RegPolicyFlags(void)
     ok(!r, "RegQueryValueEx failed: %d\n", r);
 
     pGetFlags(&flags2);
-    ok(flags1 == flags2, "Didn't get expected flags\n");
+    ok(flags1 == flags2, "Got %08x flags instead of %08x\n", flags1, flags2);
 
     flags3 = flags2 | 1;
     ret = pSetFlags(flags3);
     ok(ret, "pSetFlags failed: %d\n", GetLastError());
     size = sizeof(flags1);
     r = RegQueryValueExA(key, State, NULL, NULL, (LPBYTE)&flags1, &size);
-    ok(flags1 == flags3, "Didn't get expected flags\n");
+    ok(flags1 == flags3, "Got %08x flags instead of %08x\n", flags1, flags3);
 
     pSetFlags(flags2);
 
