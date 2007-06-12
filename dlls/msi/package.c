@@ -35,6 +35,7 @@
 #include "wincrypt.h"
 #include "winuser.h"
 #include "wininet.h"
+#include "winver.h"
 #include "urlmon.h"
 #include "shlobj.h"
 #include "wine/unicode.h"
@@ -203,6 +204,123 @@ done:
     msi_free( user_name );
 
     return r;
+}
+
+static LPWSTR get_fusion_filename(MSIPACKAGE *package)
+{
+    HKEY netsetup;
+    LONG res;
+    LPWSTR file;
+    DWORD index = 0, size;
+    WCHAR ver[MAX_PATH];
+    WCHAR name[MAX_PATH];
+    WCHAR windir[MAX_PATH];
+
+    static const WCHAR backslash[] = {'\\',0};
+    static const WCHAR fusion[] = {'f','u','s','i','o','n','.','d','l','l',0};
+    static const WCHAR sub[] = {
+        'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'N','E','T',' ','F','r','a','m','e','w','o','r','k',' ','S','e','t','u','p','\\',
+        'N','D','P',0
+    };
+    static const WCHAR subdir[] = {
+        'M','i','c','r','o','s','o','f','t','.','N','E','T','\\',
+        'F','r','a','m','e','w','o','r','k','\\',0
+    };
+
+    res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, sub, 0, KEY_ENUMERATE_SUB_KEYS, &netsetup);
+    if (res != ERROR_SUCCESS)
+        return NULL;
+
+    ver[0] = '\0';
+    size = MAX_PATH;
+    while (RegEnumKeyExW(netsetup, index, name, &size, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+    {
+        index++;
+        if (lstrcmpW(ver, name) < 0)
+            lstrcpyW(ver, name);
+    }
+
+    RegCloseKey(netsetup);
+
+    if (!index)
+        return NULL;
+
+    GetWindowsDirectoryW(windir, MAX_PATH);
+
+    size = lstrlenW(windir) + lstrlenW(subdir) + lstrlenW(ver) +lstrlenW(fusion) + 3;
+    file = msi_alloc(size * sizeof(WCHAR));
+    if (!file)
+        return NULL;
+
+    lstrcpyW(file, windir);
+    lstrcatW(file, backslash);
+    lstrcatW(file, subdir);
+    lstrcatW(file, ver);
+    lstrcatW(file, backslash);
+    lstrcatW(file, fusion);
+
+    return file;
+}
+
+typedef struct tagLANGANDCODEPAGE
+{
+  WORD wLanguage;
+  WORD wCodePage;
+} LANGANDCODEPAGE;
+
+static void set_msi_assembly_prop(MSIPACKAGE *package)
+{
+    UINT val_len;
+    DWORD size, handle;
+    LPVOID version = NULL;
+    WCHAR buf[MAX_PATH];
+    LPWSTR fusion, verstr;
+    LANGANDCODEPAGE *translate;
+
+    static const WCHAR netasm[] = {
+        'M','s','i','N','e','t','A','s','s','e','m','b','l','y','S','u','p','p','o','r','t',0
+    };
+    static const WCHAR translation[] = {
+        '\\','V','a','r','F','i','l','e','I','n','f','o',
+        '\\','T','r','a','n','s','l','a','t','i','o','n',0
+    };
+    static const WCHAR verfmt[] = {
+        '\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o',
+        '\\','%','0','4','x','%','0','4','x',
+        '\\','P','r','o','d','u','c','t','V','e','r','s','i','o','n',0
+    };
+
+    fusion = get_fusion_filename(package);
+    if (!fusion)
+        return;
+
+    size = GetFileVersionInfoSizeW(fusion, &handle);
+    if (!size) return;
+
+    version = msi_alloc(size);
+    if (!version) return;
+
+    if (!GetFileVersionInfoW(fusion, handle, size, version))
+        goto done;
+
+    if (!VerQueryValueW(version, translation, (LPVOID *)&translate, &val_len))
+        goto done;
+
+    sprintfW(buf, verfmt, translate[0].wLanguage, translate[0].wCodePage);
+
+    if (!VerQueryValueW(version, buf, (LPVOID *)&verstr, &val_len))
+        goto done;
+
+    if (!val_len || !verstr)
+        goto done;
+
+    MSI_SetPropertyW(package, netasm, verstr);
+
+done:
+    msi_free(fusion);
+    msi_free(version);
 }
 
 /*
@@ -498,6 +616,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
         MSI_SetPropertyW( package, szTime, bufstr );
     else
         ERR("Couldn't set Time property: GetTimeFormat failed with error %d\n", GetLastError());
+
+    set_msi_assembly_prop( package );
 
     msi_free( check );
     CloseHandle( hkey );
