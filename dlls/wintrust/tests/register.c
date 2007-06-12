@@ -286,9 +286,6 @@ static void test_LoadFunctionPointers(void)
     ok(ret, "WintrustLoadFunctionPointers failed: %d\n", GetLastError());
 }
 
-typedef void (WINAPI *WintrustGetRegPolicyFlagsFunc)(DWORD *);
-typedef BOOL (WINAPI *WintrustSetRegPolicyFlagsFunc)(DWORD);
-
 static void test_RegPolicyFlags(void)
 {
     /* Default state value 0x00023c00, which is
@@ -302,17 +299,15 @@ static void test_RegPolicyFlags(void)
      "Software\\Microsoft\\Windows\\CurrentVersion\\Wintrust\\"
      "Trust Providers\\Software Publishing";
     static const CHAR State[] = "State";
-    WintrustGetRegPolicyFlagsFunc pGetFlags;
-    WintrustSetRegPolicyFlagsFunc pSetFlags;
+    void (WINAPI *pGetFlags)(DWORD *);
+    BOOL (WINAPI *pSetFlags)(DWORD);
     HKEY key;
     LONG r;
     DWORD flags1, flags2, flags3, size;
     BOOL ret;
 
-    pGetFlags = (WintrustGetRegPolicyFlagsFunc)GetProcAddress(hWintrust,
-     "WintrustGetRegPolicyFlags");
-    pSetFlags = (WintrustSetRegPolicyFlagsFunc)GetProcAddress(hWintrust,
-     "WintrustSetRegPolicyFlags");
+    pGetFlags = (void*)GetProcAddress(hWintrust, "WintrustGetRegPolicyFlags");
+    pSetFlags = (void*)GetProcAddress(hWintrust, "WintrustSetRegPolicyFlags");
     if (!pGetFlags || !pSetFlags)
         skip("Policy flags functions not present\n");
 
