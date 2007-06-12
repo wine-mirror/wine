@@ -125,7 +125,7 @@ sub check_documentation($) {
 
     if(!$documentation_error && $options->documentation_wrong) {
 	foreach (split(/\n/, $documentation)) {
-	    if (/^\s*\*\s*(\S+)\s*[\(\[]\s*(\w+(?:\.(?:DRV|VXD))?)\s*\.\s*([^\s\)\]]*)\s*[\)\]].*?$/) {
+	    if (/^\s*\*\s*(\S+)\s*[\(\[]\s*(\w+(?:\.(?:DRV|EXE|OCX|VXD))?)\s*\.\s*([^\s\)\]]*)\s*[\)\]].*?$/) {
 		my $external_name = $1;
 		my $module = $2;
 		my $ordinal = $3;
