@@ -4857,6 +4857,316 @@ static void test_decodePKCSAttributes(DWORD dwEncoding)
     }
 }
 
+static BYTE encodedCommonNameNoNull[] = { 0x30,0x14,0x31,0x12,0x30,0x10,
+ 0x06,0x03,0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,
+ 0x67 };
+/* As with the algorithm ID tests, accept the algorithm ID parameters either as
+ * NULL or as nonexistent.
+ */
+static const BYTE minimalPKCSSigner[] = {
+ 0x30,0x2b,0x02,0x01,0x00,0x30,0x18,0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x02,
+ 0x00,0x30,0x04,0x06,0x00,0x05,0x00,0x30,0x04,0x06,0x00,0x05,0x00,0x04,0x00 };
+static const BYTE minimalPKCSSignerNoNull[] = {
+ 0x30,0x27,0x02,0x01,0x00,0x30,0x18,0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x02,
+ 0x00,0x30,0x02,0x06,0x00,0x30,0x02,0x06,0x00,0x04,0x00 };
+static const BYTE PKCSSignerWithSerial[] = {
+ 0x30,0x2c,0x02,0x01,0x00,0x30,0x19,0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x02,
+ 0x01,0x01,0x30,0x04,0x06,0x00,0x05,0x00,0x30,0x04,0x06,0x00,0x05,0x00,0x04,
+ 0x00 };
+static const BYTE PKCSSignerWithSerialNoNull[] = {
+ 0x30,0x28,0x02,0x01,0x00,0x30,0x19,0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x02,
+ 0x01,0x01,0x30,0x02,0x06,0x00,0x30,0x02,0x06,0x00,0x04,0x00 };
+static const BYTE PKCSSignerWithHashAlgo[] = {
+ 0x30,0x2e,0x02,0x01,0x00,0x30,0x19,0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x02,
+ 0x01,0x01,0x30,0x06,0x06,0x02,0x2a,0x03,0x05,0x00,0x30,0x04,0x06,0x00,0x05,
+ 0x00,0x04,0x00 };
+static const BYTE PKCSSignerWithHashAlgoNoNull[] = {
+ 0x30,0x2a,0x02,0x01,0x00,0x30,0x19,0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x02,
+ 0x01,0x01,0x30,0x04,0x06,0x02,0x2a,0x03,0x30,0x02,0x06,0x00,0x04,0x00 };
+static const BYTE PKCSSignerWithHashAndEncryptionAlgo[] = {
+ 0x30,0x30,0x02,0x01,0x00,0x30,0x19,0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x02,
+ 0x01,0x01,0x30,0x06,0x06,0x02,0x2a,0x03,0x05,0x00,0x30,0x06,0x06,0x02,0x2d,
+ 0x06,0x05,0x00,0x04,0x00 };
+static const BYTE PKCSSignerWithHashAndEncryptionAlgoNoNull[] = {
+ 0x30,0x2c,0x02,0x01,0x00,0x30,0x19,0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x02,
+ 0x01,0x01,0x30,0x04,0x06,0x02,0x2a,0x03,0x30,0x04,0x06,0x02,0x2d,0x06,0x04,
+ 0x00 };
+static const BYTE PKCSSignerWithHash[] = {
+ 0x30,0x40,0x02,0x01,0x00,0x30,0x19,0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x02,
+ 0x01,0x01,0x30,0x06,0x06,0x02,0x2a,0x03,0x05,0x00,0x30,0x06,0x06,0x02,0x2d,
+ 0x06,0x05,0x00,0x04,0x10,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,
+ 0x0a,0x0b,0x0c,0x0d,0x0e,0x0f };
+static const BYTE PKCSSignerWithHashNoNull[] = {
+ 0x30,0x3c,0x02,0x01,0x00,0x30,0x19,0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x02,
+ 0x01,0x01,0x30,0x04,0x06,0x02,0x2a,0x03,0x30,0x04,0x06,0x02,0x2d,
+ 0x06,0x04,0x10,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,
+ 0x0a,0x0b,0x0c,0x0d,0x0e,0x0f };
+
+static void test_encodePKCSSignerInfo(DWORD dwEncoding)
+{
+    static char oid1[] = "1.2.3", oid2[] = "1.5.6";
+    BOOL ret;
+    LPBYTE buf = NULL;
+    DWORD size = 0;
+    CMSG_SIGNER_INFO info = { 0 };
+
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    /* To be encoded, a signer must have an issuer at least, and the encoding
+     * must include PKCS_7_ASN_ENCODING.  (That isn't enough to be decoded,
+     * see decoding tests.)
+     */
+    info.Issuer.cbData = sizeof(encodedCommonNameNoNull);
+    info.Issuer.pbData = encodedCommonNameNoNull;
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (!(dwEncoding & PKCS_7_ASN_ENCODING))
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    else
+    {
+        ok(ret, "CryptEncodeObjectEx failed: %x\n", GetLastError());
+        if (buf)
+        {
+            ok(size == sizeof(minimalPKCSSigner) ||
+             size == sizeof(minimalPKCSSignerNoNull), "Unexpected size %d\n",
+             size);
+            if (size == sizeof(minimalPKCSSigner))
+                ok(!memcmp(buf, minimalPKCSSigner, size), "Unexpected value\n");
+            else if (size == sizeof(minimalPKCSSignerNoNull))
+                ok(!memcmp(buf, minimalPKCSSignerNoNull, size),
+                 "Unexpected value\n");
+            else
+                ok(0, "Unexpected value\n");
+            LocalFree(buf);
+        }
+    }
+    info.SerialNumber.cbData = sizeof(serialNum);
+    info.SerialNumber.pbData = (BYTE *)serialNum;
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (!(dwEncoding & PKCS_7_ASN_ENCODING))
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    else
+    {
+        ok(ret, "CryptEncodeObjectEx failed: %x\n", GetLastError());
+        if (buf)
+        {
+            ok(size == sizeof(PKCSSignerWithSerial) ||
+             size == sizeof(PKCSSignerWithSerialNoNull), "Unexpected size %d\n",
+             size);
+            if (size == sizeof(PKCSSignerWithSerial))
+                ok(!memcmp(buf, PKCSSignerWithSerial, size),
+                 "Unexpected value\n");
+            else if (size == sizeof(PKCSSignerWithSerialNoNull))
+                ok(!memcmp(buf, PKCSSignerWithSerialNoNull, size),
+                 "Unexpected value\n");
+            else
+                ok(0, "Unexpected value\n");
+            LocalFree(buf);
+        }
+    }
+    info.HashAlgorithm.pszObjId = oid1;
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (!(dwEncoding & PKCS_7_ASN_ENCODING))
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    else
+    {
+        ok(ret, "CryptEncodeObjectEx failed: %x\n", GetLastError());
+        if (buf)
+        {
+            ok(size == sizeof(PKCSSignerWithHashAlgo) ||
+             size == sizeof(PKCSSignerWithHashAlgoNoNull),
+             "Unexpected size %d\n", size);
+            if (size == sizeof(PKCSSignerWithHashAlgo))
+                ok(!memcmp(buf, PKCSSignerWithHashAlgo, size),
+                 "Unexpected value\n");
+            else if (size == sizeof(PKCSSignerWithHashAlgoNoNull))
+                ok(!memcmp(buf, PKCSSignerWithHashAlgoNoNull, size),
+                 "Unexpected value\n");
+            else
+                ok(0, "Unexpected value\n");
+            LocalFree(buf);
+        }
+    }
+    info.HashEncryptionAlgorithm.pszObjId = oid2;
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (!(dwEncoding & PKCS_7_ASN_ENCODING))
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    else
+    {
+        ok(ret, "CryptEncodeObjectEx failed: %x\n", GetLastError());
+        if (buf)
+        {
+            ok(size == sizeof(PKCSSignerWithHashAndEncryptionAlgo) ||
+             size == sizeof(PKCSSignerWithHashAndEncryptionAlgoNoNull),
+             "Unexpected size %d\n", size);
+            if (size == sizeof(PKCSSignerWithHashAndEncryptionAlgo))
+                ok(!memcmp(buf, PKCSSignerWithHashAndEncryptionAlgo, size),
+                 "Unexpected value\n");
+            else if (size == sizeof(PKCSSignerWithHashAndEncryptionAlgoNoNull))
+                ok(!memcmp(buf, PKCSSignerWithHashAndEncryptionAlgoNoNull,
+                 size), "Unexpected value\n");
+            else
+                ok(0, "Unexpected value\n");
+            LocalFree(buf);
+        }
+    }
+    info.EncryptedHash.cbData = sizeof(hash);
+    info.EncryptedHash.pbData = (BYTE *)hash;
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (!(dwEncoding & PKCS_7_ASN_ENCODING))
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    else
+    {
+        ok(ret, "CryptEncodeObjectEx failed: %x\n", GetLastError());
+        if (buf)
+        {
+            ok(size == sizeof(PKCSSignerWithHash) ||
+             size == sizeof(PKCSSignerWithHashNoNull), "Unexpected size %d\n",
+             size);
+            if (size == sizeof(PKCSSignerWithHash))
+                ok(!memcmp(buf, PKCSSignerWithHash, size),
+                 "Unexpected value\n");
+            else if (size == sizeof(PKCSSignerWithHashNoNull))
+                ok(!memcmp(buf, PKCSSignerWithHashNoNull, size),
+                 "Unexpected value\n");
+            else
+                ok(0, "Unexpected value\n");
+            LocalFree(buf);
+        }
+    }
+}
+
+static void test_decodePKCSSignerInfo(DWORD dwEncoding)
+{
+    BOOL ret;
+    LPBYTE buf = NULL;
+    DWORD size = 0;
+    CMSG_SIGNER_INFO *info;
+
+    /* A PKCS signer can't be decoded without a serial number. */
+    SetLastError(0xdeadbeef);
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO,
+     minimalPKCSSigner, sizeof(minimalPKCSSigner),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
+     "Expected CRYPT_E_ASN1_CORRUPT, got %x\n", GetLastError());
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO,
+     PKCSSignerWithSerial, sizeof(PKCSSignerWithSerial),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
+    if (buf)
+    {
+        info = (CMSG_SIGNER_INFO *)buf;
+        ok(info->dwVersion == 0, "Expected version 0, got %d\n",
+         info->dwVersion);
+        ok(info->Issuer.cbData == sizeof(encodedCommonNameNoNull),
+         "Unexpected size %d\n", info->Issuer.cbData);
+        ok(!memcmp(info->Issuer.pbData, encodedCommonNameNoNull,
+         info->Issuer.cbData), "Unexpected value\n");
+        ok(info->SerialNumber.cbData == sizeof(serialNum),
+         "Unexpected size %d\n", info->SerialNumber.cbData);
+        ok(!memcmp(info->SerialNumber.pbData, serialNum, sizeof(serialNum)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO,
+     PKCSSignerWithHashAlgo, sizeof(PKCSSignerWithHashAlgo),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (buf)
+    {
+        info = (CMSG_SIGNER_INFO *)buf;
+        ok(info->dwVersion == 0, "Expected version 0, got %d\n",
+         info->dwVersion);
+        ok(info->Issuer.cbData == sizeof(encodedCommonNameNoNull),
+         "Unexpected size %d\n", info->Issuer.cbData);
+        ok(!memcmp(info->Issuer.pbData, encodedCommonNameNoNull,
+         info->Issuer.cbData), "Unexpected value\n");
+        ok(info->SerialNumber.cbData == sizeof(serialNum),
+         "Unexpected size %d\n", info->SerialNumber.cbData);
+        ok(!memcmp(info->SerialNumber.pbData, serialNum, sizeof(serialNum)),
+         "Unexpected value\n");
+        ok(!strcmp(info->HashAlgorithm.pszObjId, "1.2.3"),
+         "Expected 1.2.3, got %s\n", info->HashAlgorithm.pszObjId);
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO,
+     PKCSSignerWithHashAndEncryptionAlgo,
+     sizeof(PKCSSignerWithHashAndEncryptionAlgo), CRYPT_DECODE_ALLOC_FLAG,
+     NULL, (BYTE *)&buf, &size);
+    if (buf)
+    {
+        info = (CMSG_SIGNER_INFO *)buf;
+        ok(info->dwVersion == 0, "Expected version 0, got %d\n",
+         info->dwVersion);
+        ok(info->Issuer.cbData == sizeof(encodedCommonNameNoNull),
+         "Unexpected size %d\n", info->Issuer.cbData);
+        ok(!memcmp(info->Issuer.pbData, encodedCommonNameNoNull,
+         info->Issuer.cbData), "Unexpected value\n");
+        ok(info->SerialNumber.cbData == sizeof(serialNum),
+         "Unexpected size %d\n", info->SerialNumber.cbData);
+        ok(!memcmp(info->SerialNumber.pbData, serialNum, sizeof(serialNum)),
+         "Unexpected value\n");
+        ok(!strcmp(info->HashAlgorithm.pszObjId, "1.2.3"),
+         "Expected 1.2.3, got %s\n", info->HashAlgorithm.pszObjId);
+        ok(!strcmp(info->HashEncryptionAlgorithm.pszObjId, "1.5.6"),
+         "Expected 1.5.6, got %s\n", info->HashEncryptionAlgorithm.pszObjId);
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO,
+     PKCSSignerWithHash, sizeof(PKCSSignerWithHash),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (buf)
+    {
+        info = (CMSG_SIGNER_INFO *)buf;
+        ok(info->dwVersion == 0, "Expected version 0, got %d\n",
+         info->dwVersion);
+        ok(info->Issuer.cbData == sizeof(encodedCommonNameNoNull),
+         "Unexpected size %d\n", info->Issuer.cbData);
+        ok(!memcmp(info->Issuer.pbData, encodedCommonNameNoNull,
+         info->Issuer.cbData), "Unexpected value\n");
+        ok(info->SerialNumber.cbData == sizeof(serialNum),
+         "Unexpected size %d\n", info->SerialNumber.cbData);
+        ok(!memcmp(info->SerialNumber.pbData, serialNum, sizeof(serialNum)),
+         "Unexpected value\n");
+        ok(!strcmp(info->HashAlgorithm.pszObjId, "1.2.3"),
+         "Expected 1.2.3, got %s\n", info->HashAlgorithm.pszObjId);
+        ok(!strcmp(info->HashEncryptionAlgorithm.pszObjId, "1.5.6"),
+         "Expected 1.5.6, got %s\n", info->HashEncryptionAlgorithm.pszObjId);
+        ok(info->EncryptedHash.cbData == sizeof(hash), "Unexpected size %d\n",
+         info->EncryptedHash.cbData);
+        ok(!memcmp(info->EncryptedHash.pbData, hash, sizeof(hash)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
 /* Free *pInfo with HeapFree */
 static void testExportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO *pInfo)
 {
@@ -5070,6 +5380,8 @@ START_TEST(encode)
         test_decodePKCSAttribute(encodings[i]);
         test_encodePKCSAttributes(encodings[i]);
         test_decodePKCSAttributes(encodings[i]);
+        test_encodePKCSSignerInfo(encodings[i]);
+        test_decodePKCSSignerInfo(encodings[i]);
     }
     testPortPublicKeyInfo();
 }

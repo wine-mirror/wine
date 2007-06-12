@@ -3078,6 +3078,80 @@ static BOOL WINAPI CRYPT_AsnEncodeIssuingDistPoint(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeIssuerSerialNumber(
+ DWORD dwCertEncodingType, LPCSTR lpszStructType, const void *pvStructInfo,
+ DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    BOOL ret;
+    const CERT_ISSUER_SERIAL_NUMBER *issuerSerial =
+     (const CERT_ISSUER_SERIAL_NUMBER *)pvStructInfo;
+    struct AsnEncodeSequenceItem items[] = {
+     { &issuerSerial->Issuer,       CRYPT_CopyEncodedBlob, 0 },
+     { &issuerSerial->SerialNumber, CRYPT_AsnEncodeInteger, 0 },
+    };
+
+    ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+     sizeof(items) / sizeof(items[0]), dwFlags, pEncodePara, pbEncoded,
+     pcbEncoded);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnEncodePKCSSignerInfo(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret = FALSE;
+
+    if (!(dwCertEncodingType & PKCS_7_ASN_ENCODING))
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+
+    __TRY
+    {
+        const CMSG_SIGNER_INFO *info = (const CMSG_SIGNER_INFO *)pvStructInfo;
+
+        if (!info->Issuer.cbData)
+            SetLastError(E_INVALIDARG);
+        else
+        {
+            struct AsnEncodeSequenceItem items[7] = {
+             { &info->dwVersion,     CRYPT_AsnEncodeInt, 0 },
+             { &info->Issuer,        CRYPT_AsnEncodeIssuerSerialNumber, 0 },
+             { &info->HashAlgorithm, CRYPT_AsnEncodeAlgorithmId, 0 },
+             { &info->HashEncryptionAlgorithm, CRYPT_AsnEncodeAlgorithmId, 0 },
+            };
+            DWORD cItem = 4;
+
+            if (info->AuthAttrs.cAttr)
+            {
+                items[cItem].pvStructInfo = &info->AuthAttrs;
+                items[cItem].encodeFunc = CRYPT_AsnEncodePKCSAttributes;
+                cItem++;
+            }
+            if (info->UnauthAttrs.cAttr)
+            {
+                items[cItem].pvStructInfo = &info->UnauthAttrs;
+                items[cItem].encodeFunc = CRYPT_AsnEncodePKCSAttributes;
+                cItem++;
+            }
+            items[cItem].pvStructInfo = &info->EncryptedHash;
+            items[cItem].encodeFunc = CRYPT_AsnEncodeOctets;
+            cItem++;
+            ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items, cItem,
+             dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
+}
+
 BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara,
  void *pvEncoded, DWORD *pcbEncoded)
@@ -3200,6 +3274,9 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
             break;
         case (WORD)X509_ISSUING_DIST_POINT:
             encodeFunc = CRYPT_AsnEncodeIssuingDistPoint;
+            break;
+        case (WORD)PKCS7_SIGNER_INFO:
+            encodeFunc = CRYPT_AsnEncodePKCSSignerInfo;
             break;
         default:
             FIXME("%d: unimplemented\n", LOWORD(lpszStructType));

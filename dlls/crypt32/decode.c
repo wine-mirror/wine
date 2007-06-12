@@ -3659,6 +3659,86 @@ static BOOL WINAPI CRYPT_AsnDecodeIssuingDistPoint(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnDecodeIssuerSerialNumber(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret;
+    struct AsnDecodeSequenceItem items[] = {
+     { 0, offsetof(CERT_ISSUER_SERIAL_NUMBER, Issuer), CRYPT_AsnDecodeDerBlob,
+       sizeof(CRYPT_DER_BLOB), FALSE, TRUE, offsetof(CERT_ISSUER_SERIAL_NUMBER,
+       Issuer.pbData) },
+     { ASN_INTEGER, offsetof(CERT_ISSUER_SERIAL_NUMBER, SerialNumber),
+       CRYPT_AsnDecodeIntegerInternal, sizeof(CRYPT_INTEGER_BLOB), FALSE,
+       TRUE, offsetof(CERT_ISSUER_SERIAL_NUMBER, SerialNumber.pbData), 0 },
+    };
+    CERT_ISSUER_SERIAL_NUMBER *issuerSerial =
+     (CERT_ISSUER_SERIAL_NUMBER *)pvStructInfo;
+
+    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, *pcbStructInfo);
+
+    ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
+     sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded,
+     dwFlags, pDecodePara, pvStructInfo, pcbStructInfo,
+     issuerSerial ? issuerSerial->Issuer.pbData : NULL);
+    if (ret && issuerSerial && !issuerSerial->SerialNumber.cbData)
+    {
+        SetLastError(CRYPT_E_ASN1_CORRUPT);
+        ret = FALSE;
+    }
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnDecodePKCSSignerInfo(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret = FALSE;
+
+    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, *pcbStructInfo);
+
+    __TRY
+    {
+        struct AsnDecodeSequenceItem items[] = {
+         { ASN_INTEGER, offsetof(CMSG_SIGNER_INFO, dwVersion),
+           CRYPT_AsnDecodeInt, sizeof(DWORD), FALSE, FALSE, 0, 0 },
+         { ASN_SEQUENCEOF, offsetof(CMSG_SIGNER_INFO, Issuer),
+           CRYPT_AsnDecodeIssuerSerialNumber, sizeof(CERT_ISSUER_SERIAL_NUMBER),
+           FALSE, TRUE, offsetof(CMSG_SIGNER_INFO, Issuer.pbData), 0 },
+         { ASN_SEQUENCEOF, offsetof(CMSG_SIGNER_INFO, HashAlgorithm),
+           CRYPT_AsnDecodeAlgorithmId, sizeof(CRYPT_ALGORITHM_IDENTIFIER),
+           FALSE, TRUE, offsetof(CMSG_SIGNER_INFO, HashAlgorithm.pszObjId), 0 },
+         { ASN_SEQUENCEOF, offsetof(CMSG_SIGNER_INFO, HashEncryptionAlgorithm),
+           CRYPT_AsnDecodeAlgorithmId, sizeof(CRYPT_ALGORITHM_IDENTIFIER),
+           FALSE, TRUE, offsetof(CMSG_SIGNER_INFO,
+           HashEncryptionAlgorithm.pszObjId), 0 },
+         { ASN_CONSTRUCTOR | ASN_SETOF, offsetof(CMSG_SIGNER_INFO, AuthAttrs),
+           CRYPT_AsnDecodePKCSAttributesInternal, sizeof(CRYPT_ATTRIBUTES),
+           TRUE, TRUE, offsetof(CMSG_SIGNER_INFO, AuthAttrs.rgAttr), 0 },
+         { ASN_CONSTRUCTOR | ASN_SETOF, offsetof(CMSG_SIGNER_INFO, UnauthAttrs),
+           CRYPT_AsnDecodePKCSAttributesInternal, sizeof(CRYPT_ATTRIBUTES),
+           TRUE, TRUE, offsetof(CMSG_SIGNER_INFO, UnauthAttrs.rgAttr), 0 },
+         { ASN_OCTETSTRING, offsetof(CMSG_SIGNER_INFO, EncryptedHash),
+           CRYPT_AsnDecodeOctetsInternal, sizeof(CRYPT_DER_BLOB),
+           FALSE, TRUE, offsetof(CMSG_SIGNER_INFO, EncryptedHash.pbData), 0 },
+        };
+
+        ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
+         sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded,
+         dwFlags, pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
 BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
@@ -3791,6 +3871,9 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
             break;
         case (WORD)X509_ISSUING_DIST_POINT:
             decodeFunc = CRYPT_AsnDecodeIssuingDistPoint;
+            break;
+        case (WORD)PKCS7_SIGNER_INFO:
+            decodeFunc = CRYPT_AsnDecodePKCSSignerInfo;
             break;
         default:
             FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
