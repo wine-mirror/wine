@@ -87,7 +87,7 @@ static const char *command_to_string(UINT command)
 }
 
 /******************************************************************
- *		HtmlHelpW (hhctrl.ocx.15)
+ *		HtmlHelpW (HHCTRL.OCX.15)
  */
 HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR data)
 {
@@ -159,7 +159,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
 }
 
 /******************************************************************
- *		HtmlHelpA (hhctrl.ocx.14)
+ *		HtmlHelpA (HHCTRL.OCX.14)
  */
 HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD_PTR data)
 {
@@ -223,7 +223,7 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD_PTR data
 }
 
 /******************************************************************
- *		doWinMain (hhctrl.ocx.13)
+ *		doWinMain (HHCTRL.OCX.13)
  */
 int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
 {
@@ -244,7 +244,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
 }
 
 /******************************************************************
- *		DllGetClassObject (hhctrl.ocx.@)
+ *		DllGetClassObject (HHCTRL.OCX.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
