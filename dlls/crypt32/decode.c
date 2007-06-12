@@ -536,7 +536,7 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                 for (ptr = pbEncoded + 1 + lenBytes; ret &&
                  ptr - pbEncoded - 1 - lenBytes < dataLen; )
                 {
-                    DWORD itemLenBytes, itemDataLen, size;
+                    DWORD itemLenBytes, itemDataLen, size = 0;
 
                     itemLenBytes = GET_LEN_BYTES(ptr[1]);
                     /* Each item decoded may not tolerate extraneous bytes, so
@@ -1829,16 +1829,81 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSAttribute(DWORD dwCertEncodingType,
            CRYPT_DecodeDERArray, sizeof(struct GenericArray), FALSE, TRUE,
            offsetof(CRYPT_ATTRIBUTE, rgValue), 0 },
         };
+        PCRYPT_ATTRIBUTE attr = (PCRYPT_ATTRIBUTE)pvStructInfo;
 
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, attr ? attr->pszObjId :
+         NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
     }
     __ENDTRY
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnDecodePKCSAttributesInternal(
+ DWORD dwCertEncodingType, LPCSTR lpszStructType, const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, PCRYPT_DECODE_PARA pDecodePara,
+ void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    struct AsnArrayDescriptor arrayDesc = { ASN_CONSTRUCTOR | ASN_SETOF,
+     CRYPT_AsnDecodePKCSAttribute, sizeof(CRYPT_ATTRIBUTE), TRUE,
+     offsetof(CRYPT_ATTRIBUTE, pszObjId) };
+    PCRYPT_ATTRIBUTES attrs = (PCRYPT_ATTRIBUTES)pvStructInfo;
+    BOOL ret;
+
+    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, pcbStructInfo, attrs ? attrs->rgAttr :
+     NULL);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnDecodePKCSAttributes(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret = FALSE;
+
+    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, *pcbStructInfo);
+
+    __TRY
+    {
+        DWORD bytesNeeded;
+
+        if ((ret = CRYPT_AsnDecodePKCSAttributesInternal(dwCertEncodingType,
+         lpszStructType, pbEncoded, cbEncoded,
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded)))
+        {
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+             pvStructInfo, pcbStructInfo, bytesNeeded)))
+            {
+                PCRYPT_ATTRIBUTES attrs;
+
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                attrs = (PCRYPT_ATTRIBUTES)pvStructInfo;
+                attrs->rgAttr = (PCRYPT_ATTRIBUTE)((BYTE *)pvStructInfo +
+                 sizeof(CRYPT_ATTRIBUTES));
+                ret = CRYPT_AsnDecodePKCSAttributesInternal(dwCertEncodingType,
+                 lpszStructType, pbEncoded, cbEncoded,
+                 dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, pvStructInfo,
+                 &bytesNeeded);
+            }
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
@@ -3720,6 +3785,9 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
             break;
         case (WORD)X509_ENHANCED_KEY_USAGE:
             decodeFunc = CRYPT_AsnDecodeEnhancedKeyUsage;
+            break;
+        case (WORD)PKCS_ATTRIBUTES:
+            decodeFunc = CRYPT_AsnDecodePKCSAttributes;
             break;
         case (WORD)X509_ISSUING_DIST_POINT:
             decodeFunc = CRYPT_AsnDecodeIssuingDistPoint;
