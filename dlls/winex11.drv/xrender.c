@@ -633,7 +633,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
     gsCacheEntryFormat *formatEntry;
     UINT ggo_format = GGO_GLYPH_INDEX;
     XRenderPictFormat pf;
-    const char zero = 0;
+    static const char zero[4];
 
     switch(format) {
     case AA_Grey:
@@ -822,7 +822,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 
         wine_tsx11_lock();
 	pXRenderAddGlyphs(gdi_display, formatEntry->glyphset, &gid, &gi, 1,
-			  buflen ? buf : &zero, buflen ? buflen : 1);
+                          buflen ? buf : zero, buflen ? buflen : sizeof(zero));
 	wine_tsx11_unlock();
 	HeapFree(GetProcessHeap(), 0, buf);
     } else {
