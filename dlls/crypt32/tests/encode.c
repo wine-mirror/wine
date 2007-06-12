@@ -4524,6 +4524,113 @@ static void test_decodeAuthorityKeyId2(DWORD dwEncoding)
     }
 }
 
+static const BYTE emptyPKCSContentInfo[] = { 0x30,0x04,0x06,0x02,0x2a,0x03 };
+static const BYTE bogusPKCSContentInfo[] = { 0x30,0x07,0x06,0x02,0x2a,0x03,
+ 0xa0,0x01,0x01 };
+static const BYTE intPKCSContentInfo[] = { 0x30,0x09,0x06,0x02,0x2a,0x03,0xa0,
+ 0x03,0x02,0x01,0x01 };
+static BYTE bogusDER[] = { 1 };
+
+static void test_encodePKCSContentInfo(DWORD dwEncoding)
+{
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD size = 0;
+    CRYPT_CONTENT_INFO info = { 0 };
+    char oid1[] = "1.2.3";
+
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CONTENT_INFO, NULL,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CONTENT_INFO, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    info.pszObjId = oid1;
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CONTENT_INFO, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(emptyPKCSContentInfo), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, emptyPKCSContentInfo, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    info.Content.pbData = bogusDER;
+    info.Content.cbData = sizeof(bogusDER);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CONTENT_INFO, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed; %x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(bogusPKCSContentInfo), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, bogusPKCSContentInfo, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    info.Content.pbData = (BYTE *)ints[0].encoded;
+    info.Content.cbData = ints[0].encoded[1] + 2;
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CONTENT_INFO, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (buf)
+    {
+        ok(size == sizeof(intPKCSContentInfo), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, intPKCSContentInfo, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
+static void test_decodePKCSContentInfo(DWORD dwEncoding)
+{
+    BOOL ret;
+    LPBYTE buf = NULL;
+    DWORD size = 0;
+    CRYPT_CONTENT_INFO *info;
+
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CONTENT_INFO,
+     emptyPKCSContentInfo, sizeof(emptyPKCSContentInfo),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
+    if (buf)
+    {
+        info = (CRYPT_CONTENT_INFO *)buf;
+
+        ok(!strcmp(info->pszObjId, "1.2.3"), "Expected 1.2.3, got %s\n",
+         info->pszObjId);
+        ok(info->Content.cbData == 0, "Expected no data, got %d\n",
+         info->Content.cbData);
+        LocalFree(buf);
+    }
+    SetLastError(0xdeadbeef);
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CONTENT_INFO,
+     bogusPKCSContentInfo, sizeof(bogusPKCSContentInfo),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    /* Native fails with CRYPT_E_ASN1_EOD, accept also CRYPT_E_ASN1_CORRUPT as
+     * I doubt an app depends on that.
+     */
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
+     GetLastError() == CRYPT_E_ASN1_CORRUPT),
+     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT, got %x\n",
+     GetLastError());
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CONTENT_INFO,
+     intPKCSContentInfo, sizeof(intPKCSContentInfo),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
+    if (buf)
+    {
+        info = (CRYPT_CONTENT_INFO *)buf;
+
+        ok(!strcmp(info->pszObjId, "1.2.3"), "Expected 1.2.3, got %s\n",
+         info->pszObjId);
+        ok(info->Content.cbData == ints[0].encoded[1] + 2,
+         "Unexpected size %d\n", info->Content.cbData);
+        ok(!memcmp(info->Content.pbData, ints[0].encoded,
+         info->Content.cbData), "Unexpected value\n");
+    }
+}
+
 /* Free *pInfo with HeapFree */
 static void testExportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO *pInfo)
 {
@@ -4731,6 +4838,8 @@ START_TEST(encode)
         test_decodeAuthorityKeyId(encodings[i]);
         test_encodeAuthorityKeyId2(encodings[i]);
         test_decodeAuthorityKeyId2(encodings[i]);
+        test_encodePKCSContentInfo(encodings[i]);
+        test_decodePKCSContentInfo(encodings[i]);
     }
     testPortPublicKeyInfo();
 }

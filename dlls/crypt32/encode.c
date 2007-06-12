@@ -1349,6 +1349,50 @@ static BOOL WINAPI CRYPT_AsnEncodeUnicodeName(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodePKCSContentInfo(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret = FALSE;
+
+    __TRY
+    {
+        const CRYPT_CONTENT_INFO *info =
+         (const CRYPT_CONTENT_INFO *)pvStructInfo;
+
+        if (!info->pszObjId)
+            SetLastError(E_INVALIDARG);
+        else
+        {
+            struct AsnEncodeSequenceItem items[2] = {
+             { info->pszObjId, CRYPT_AsnEncodeOid, 0 },
+             { NULL, NULL, 0 },
+            };
+            struct AsnConstructedItem constructed = { 0 };
+            DWORD cItem = 1;
+
+            if (info->Content.cbData)
+            {
+                constructed.tag = 0;
+                constructed.pvStructInfo = &info->Content;
+                constructed.encodeFunc = CRYPT_CopyEncodedBlob;
+                items[cItem].pvStructInfo = &constructed;
+                items[cItem].encodeFunc = CRYPT_AsnEncodeConstructed;
+                cItem++;
+            }
+            ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+             cItem, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+        }
+
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL CRYPT_AsnEncodeUnicodeStringCoerce(const CERT_NAME_VALUE *value,
  BYTE tag, DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
@@ -3010,6 +3054,9 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
             break;
         case (WORD)X509_UNICODE_NAME:
             encodeFunc = CRYPT_AsnEncodeUnicodeName;
+            break;
+        case (WORD)PKCS_CONTENT_INFO:
+            encodeFunc = CRYPT_AsnEncodePKCSContentInfo;
             break;
         case (WORD)X509_UNICODE_NAME_VALUE:
             encodeFunc = CRYPT_AsnEncodeUnicodeNameValue;
