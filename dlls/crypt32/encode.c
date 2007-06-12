@@ -1165,92 +1165,105 @@ static int BLOBComp(const void *l, const void *r)
     return ret;
 }
 
-/* This encodes as a SET OF, which in DER must be lexicographically sorted.
+typedef struct _CRYPT_SET_OF {
+    DWORD           cValue;
+    PCRYPT_DER_BLOB rgValue;
+} CRYPT_SET_OF;
+
+/* This encodes a SET OF, which in DER must be lexicographically sorted.
  */
+static BOOL WINAPI CRYPT_DEREncodeSet(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    CRYPT_SET_OF *set = (CRYPT_SET_OF *)pvStructInfo;
+    DWORD bytesNeeded = 0, lenBytes, i;
+    BOOL ret = FALSE;
+
+    for (i = 0; i < set->cValue; i++)
+        bytesNeeded += set->rgValue[i].cbData;
+    CRYPT_EncodeLen(bytesNeeded, NULL, &lenBytes);
+    bytesNeeded += 1 + lenBytes;
+    if (pbEncoded)
+    {
+        if (*pcbEncoded < bytesNeeded)
+        {
+            *pcbEncoded = bytesNeeded;
+            SetLastError(ERROR_MORE_DATA);
+        }
+        else
+        {
+            ret = TRUE;
+            *pcbEncoded = bytesNeeded;
+            qsort(set->rgValue, set->cValue, sizeof(CRYPT_DER_BLOB), BLOBComp);
+            *pbEncoded++ = ASN_CONSTRUCTOR | ASN_SETOF;
+            CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded, &lenBytes);
+            pbEncoded += lenBytes;
+            for (i = 0; ret && i < set->cValue; i++)
+            {
+                memcpy(pbEncoded, set->rgValue[i].pbData,
+                 set->rgValue[i].cbData);
+                pbEncoded += set->rgValue[i].cbData;
+            }
+        }
+    }
+    else
+    {
+        *pcbEncoded = bytesNeeded;
+        ret = TRUE;
+    }
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
  CryptEncodeObjectExFunc nameValueEncodeFunc, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
     BOOL ret;
-    CRYPT_DER_BLOB *blobs = NULL;
+    CRYPT_SET_OF setOf = { 0, NULL };
 
     __TRY
     {
-        DWORD bytesNeeded = 0, lenBytes, i;
+        DWORD i;
 
-        blobs = NULL;
         ret = TRUE;
         if (rdn->cRDNAttr)
         {
-            blobs = CryptMemAlloc(rdn->cRDNAttr * sizeof(CRYPT_DER_BLOB));
-            if (!blobs)
+            setOf.cValue = rdn->cRDNAttr;
+            setOf.rgValue = CryptMemAlloc(rdn->cRDNAttr *
+             sizeof(CRYPT_DER_BLOB));
+            if (!setOf.rgValue)
                 ret = FALSE;
             else
-                memset(blobs, 0, rdn->cRDNAttr * sizeof(CRYPT_DER_BLOB));
+                memset(setOf.rgValue, 0, setOf.cValue * sizeof(CRYPT_DER_BLOB));
         }
         for (i = 0; ret && i < rdn->cRDNAttr; i++)
         {
+            setOf.rgValue[i].cbData = 0;
             ret = CRYPT_AsnEncodeRdnAttr(dwCertEncodingType, &rdn->rgRDNAttr[i],
-             nameValueEncodeFunc, NULL, &blobs[i].cbData);
+             nameValueEncodeFunc, NULL, &setOf.rgValue[i].cbData);
             if (ret)
-                bytesNeeded += blobs[i].cbData;
-            else
+            {
+                setOf.rgValue[i].pbData =
+                 CryptMemAlloc(setOf.rgValue[i].cbData);
+                if (!setOf.rgValue[i].pbData)
+                    ret = FALSE;
+                else
+                    ret = CRYPT_AsnEncodeRdnAttr(dwCertEncodingType,
+                     &rdn->rgRDNAttr[i], nameValueEncodeFunc,
+                     setOf.rgValue[i].pbData, &setOf.rgValue[i].cbData);
+            }
+            if (!ret)
             {
                 /* Have to propagate index of failing character */
-                *pcbEncoded = blobs[i].cbData;
+                *pcbEncoded = setOf.rgValue[i].cbData;
             }
         }
         if (ret)
-        {
-            CRYPT_EncodeLen(bytesNeeded, NULL, &lenBytes);
-            bytesNeeded += 1 + lenBytes;
-            if (pbEncoded)
-            {
-                if (*pcbEncoded < bytesNeeded)
-                {
-                    SetLastError(ERROR_MORE_DATA);
-                    ret = FALSE;
-                }
-                else
-                {
-                    for (i = 0; ret && i < rdn->cRDNAttr; i++)
-                    {
-                        blobs[i].pbData = CryptMemAlloc(blobs[i].cbData);
-                        if (!blobs[i].pbData)
-                            ret = FALSE;
-                        else
-                        {
-                            ret = CRYPT_AsnEncodeRdnAttr(dwCertEncodingType,
-                             &rdn->rgRDNAttr[i], nameValueEncodeFunc,
-                             blobs[i].pbData, &blobs[i].cbData);
-                            if (!ret)
-                                *pcbEncoded = blobs[i].cbData;
-                        }
-                    }
-                    if (ret)
-                    {
-                        qsort(blobs, rdn->cRDNAttr, sizeof(CRYPT_DER_BLOB),
-                         BLOBComp);
-                        *pbEncoded++ = ASN_CONSTRUCTOR | ASN_SETOF;
-                        CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded,
-                         &lenBytes);
-                        pbEncoded += lenBytes;
-                        for (i = 0; ret && i < rdn->cRDNAttr; i++)
-                        {
-                            memcpy(pbEncoded, blobs[i].pbData, blobs[i].cbData);
-                            pbEncoded += blobs[i].cbData;
-                        }
-                    }
-                }
-            }
-            if (ret)
-                *pcbEncoded = bytesNeeded;
-        }
-        if (blobs)
-        {
-            for (i = 0; i < rdn->cRDNAttr; i++)
-                CryptMemFree(blobs[i].pbData);
-        }
+            ret = CRYPT_DEREncodeSet(X509_ASN_ENCODING, NULL, &setOf, 0, NULL,
+             pbEncoded, pcbEncoded);
+        for (i = 0; i < setOf.cValue; i++)
+            CryptMemFree(setOf.rgValue[i].pbData);
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -1258,7 +1271,7 @@ static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
         ret = FALSE;
     }
     __ENDTRY
-    CryptMemFree(blobs);
+    CryptMemFree(setOf.rgValue);
     return ret;
 }
 
