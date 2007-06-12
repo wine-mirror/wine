@@ -57,6 +57,9 @@ static ULONG WINAPI IDirect3DQuery9Impl_Release(LPDIRECT3DQUERY9 iface) {
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
+        EnterCriticalSection(&d3d9_cs);
+        IWineD3DQuery_Release(This->wineD3DQuery);
+        LeaveCriticalSection(&d3d9_cs);
         IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
