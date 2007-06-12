@@ -2305,7 +2305,7 @@ PWSTR
 
 DWORD
 HRESULT
-unsigned long
+ULONG
 
 %ptr
 
@@ -2315,7 +2315,7 @@ DMO_PARTIAL_MEDIATYPE *
 IEnumDMO **
 REFCLSID
 REFGUID
-unsigned long *
+ULONG *
 
 %wstr
 

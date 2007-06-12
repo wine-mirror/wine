@@ -650,11 +650,11 @@ static const IEnumDMOVtbl edmovt =
 };
 
 
-HRESULT WINAPI DMOGetTypes(REFCLSID a, unsigned long b, unsigned long* c,
-			   DMO_PARTIAL_MEDIATYPE* d, unsigned long e,
-			   unsigned long* f, DMO_PARTIAL_MEDIATYPE* g)
+HRESULT WINAPI DMOGetTypes(REFCLSID a, ULONG b, ULONG* c,
+			   DMO_PARTIAL_MEDIATYPE* d, ULONG e,
+			   ULONG* f, DMO_PARTIAL_MEDIATYPE* g)
 {
-  FIXME("(%p,%lu,%p,%p,%lu,%p,%p),stub!\n",a,b,c,d,e,f,g);
+  FIXME("(%p,%u,%p,%p,%u,%p,%p),stub!\n",a,b,c,d,e,f,g);
 
   return E_NOTIMPL;
 }
