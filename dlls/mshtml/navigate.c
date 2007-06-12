@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "hlguids.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -761,8 +762,8 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
         return;
     }
 
-    hlink = Hlink_Create();
-    if (!hlink) {
+    hr = CoCreateInstance(&CLSID_StdHlink, NULL, CLSCTX_INPROC_SERVER, &IID_IHlink, (LPVOID*)&hlink);
+    if (FAILED(hr)) {
         IBindCtx_Release(bindctx);
         IBindStatusCallback_Release(STATUSCLB(callback));
         return;
