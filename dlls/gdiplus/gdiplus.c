@@ -55,10 +55,10 @@ Status WINAPI GdiplusStartup(ULONG_PTR *token, const struct GdiplusStartupInput 
         return UnsupportedGdiplusVersion;
     } else if ((input->DebugEventCallback) ||
         (input->SuppressBackgroundThread) || (input->SuppressExternalCodecs)){
-        FIXME("Unimplemented for non-default GdiplusStartupInput");
+        FIXME("Unimplemented for non-default GdiplusStartupInput\n");
         return NotImplemented;
     } else if(output) {
-        FIXME("Unimplemented for non-null GdiplusStartupOutput");
+        FIXME("Unimplemented for non-null GdiplusStartupOutput\n");
         return NotImplemented;
     }
 
