@@ -4473,6 +4473,214 @@ dispinterface HTMLDocumentEvents
 }
 
 /*****************************************************************************
+ *    HTMLTextContainerEvents interface
+ */
+[
+    hidden,
+    uuid(1ff6aa72-5842-11cf-a707-00aa00c0098d)
+]
+dispinterface HTMLTextContainerEvents
+{
+properties:
+
+methods:
+    [id(DISPID_HTMLELEMENTEVENTS_ONHELP)]
+    VARIANT_BOOL onhelp();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCLICK)]
+    VARIANT_BOOL onclick();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDBLCLICK)]
+    VARIANT_BOOL ondblclick();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONKEYPRESS)]
+    VARIANT_BOOL onkeypress();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONKEYDOWN)]
+    void onkeydown();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONKEYUP)]
+    void onkeyup();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEOUT)]
+    void onmouseout();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEOVER)]
+    void onmouseover();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEMOVE)]
+    void onmousemove();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEDOWN)]
+    void onmousedown();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEUP)]
+    void onmouseup();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONSELECTSTART)]
+    VARIANT_BOOL onselectstart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFILTERCHANGE)]
+    void onfilterchange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGSTART)]
+    VARIANT_BOOL ondragstart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREUPDATE)]
+    VARIANT_BOOL onbeforeupdate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONAFTERUPDATE)]
+    void onafterupdate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONERRORUPDATE)]
+    VARIANT_BOOL onerrorupdate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWEXIT)]
+    VARIANT_BOOL onrowexit();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWENTER)]
+    void onrowenter();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDATASETCHANGED)]
+    void ondatasetchanged();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDATAAVAILABLE)]
+    void ondataavailable();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDATASETCOMPLETE)]
+    void ondatasetcomplete();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONLOSECAPTURE)]
+    void onlosecapture();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONPROPERTYCHANGE)]
+    void onpropertychange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONSCROLL)]
+    void onscroll();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFOCUS)]
+    void onfocus();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBLUR)]
+    void onblur();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONRESIZE)]
+    void onresize();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAG)]
+    VARIANT_BOOL ondrag();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGEND)]
+    void ondragend();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGENTER)]
+    VARIANT_BOOL ondragenter();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGOVER)]
+    VARIANT_BOOL ondragover();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDRAGLEAVE)]
+    void ondragleave();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDROP)]
+    VARIANT_BOOL ondrop();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFORECUT)]
+    VARIANT_BOOL onbeforecut();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCUT)]
+    VARIANT_BOOL oncut();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFORECOPY)]
+    VARIANT_BOOL onbeforecopy();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCOPY)]
+    VARIANT_BOOL oncopy();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREPASTE)]
+    VARIANT_BOOL onbeforepaste();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONPASTE)]
+    VARIANT_BOOL onpaste();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCONTEXTMENU)]
+    VARIANT_BOOL oncontextmenu();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWSDELETE)]
+    void onrowsdelete();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONROWSINSERTED)]
+    void onrowsinserted();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCELLCHANGE)]
+    void oncellchange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONREADYSTATECHANGE)]
+    void onreadystatechange();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREEDITFOCUS)]
+    void onbeforeeditfocus();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONLAYOUTCOMPLETE)]
+    void onlayoutcomplete();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONPAGE)]
+    void onpage();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREDEACTIVATE)]
+    VARIANT_BOOL onbeforedeactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONBEFOREACTIVATE)]
+    VARIANT_BOOL onbeforeactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOVE)]
+    void onmove();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONCONTROLSELECT)]
+    VARIANT_BOOL oncontrolselect();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOVESTART)]
+    VARIANT_BOOL onmovestart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOVEEND)]
+    void onmoveend();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONRESIZESTART)]
+    VARIANT_BOOL onresizestart();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONRESIZEEND)]
+    void onresizeend();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEENTER)]
+    void onmouseenter();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSELEAVE)]
+    void onmouseleave();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONMOUSEWHEEL)]
+    VARIANT_BOOL onmousewheel();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONACTIVATE)]
+    void onactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONDEACTIVATE)]
+    void ondeactivate();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFOCUSIN)]
+    void onfocusin();
+
+    [id(DISPID_HTMLELEMENTEVENTS_ONFOCUSOUT)]
+    void onfocusout();
+
+    [id(DISPID_HTMLTEXTCONTAINEREVENTS_ONCHANGE)]
+    void onchange();
+
+    [id(DISPID_HTMLTEXTCONTAINEREVENTS_ONSELECT)]
+    void onselect();
+};
+
+/*****************************************************************************
  *    IHTMLDocument interface
  */
 [
