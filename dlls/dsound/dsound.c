@@ -1249,10 +1249,8 @@ ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
         int i;
         timeKillEvent(device->timerID);
         timeEndPeriod(DS_TIME_RES);
-        /* wait for timer to expire */
-        Sleep(DS_TIME_RES+1);
 
-        /* The sleep above should have allowed the timer process to expire
+        /* The kill event should have allowed the timer process to expire
          * but try to grab the lock just in case. Can't hold lock because
          * IDirectSoundBufferImpl_Destroy also grabs the lock */
         RtlAcquireResourceShared(&(device->buffer_list_lock), TRUE);
@@ -1521,7 +1519,7 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
         DSOUND_renderer[device->drvdesc.dnDevNode] = device;
         timeBeginPeriod(DS_TIME_RES);
         DSOUND_renderer[device->drvdesc.dnDevNode]->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
-            (DWORD_PTR)DSOUND_renderer[device->drvdesc.dnDevNode], TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
+            (DWORD_PTR)DSOUND_renderer[device->drvdesc.dnDevNode], TIME_PERIODIC | TIME_CALLBACK_FUNCTION | TIME_KILL_SYNCHRONOUS);
     } else {
         WARN("DSOUND_PrimaryCreate failed\n");
     }
