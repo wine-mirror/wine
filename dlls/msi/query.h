@@ -114,7 +114,7 @@ UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
 UINT INSERT_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR table,
                         column_info *columns, column_info *values, BOOL temp );
 
-UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **, LPWSTR table,
+UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **, LPCWSTR table,
                         column_info *list, struct expr *expr );
 
 UINT DELETE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );

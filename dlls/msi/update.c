@@ -186,7 +186,7 @@ static const MSIVIEWOPS update_ops =
     UPDATE_find_matching_rows
 };
 
-UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
+UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR table,
                         column_info *columns, struct expr *expr )
 {
     MSIUPDATEVIEW *uv = NULL;

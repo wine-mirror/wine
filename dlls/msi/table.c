@@ -206,7 +206,7 @@ static int mime2utf(int x)
     return '_';
 }
 
-BOOL decode_streamname(LPWSTR in, LPWSTR out)
+BOOL decode_streamname(LPCWSTR in, LPWSTR out)
 {
     WCHAR ch;
     DWORD count = 0;
@@ -408,7 +408,7 @@ end:
 }
 
 UINT write_stream_data( IStorage *stg, LPCWSTR stname,
-                        LPVOID data, UINT sz, BOOL bTable )
+                        LPCVOID data, UINT sz, BOOL bTable )
 {
     HRESULT r;
     UINT ret = ERROR_FUNCTION_FAILED;
@@ -819,7 +819,7 @@ static UINT get_table( MSIDATABASE *db, LPCWSTR name, MSITABLE **table_ret )
     return ERROR_SUCCESS;
 }
 
-static UINT save_table( MSIDATABASE *db, MSITABLE *t )
+static UINT save_table( MSIDATABASE *db, const MSITABLE *t )
 {
     BYTE *rawdata = NULL, *p;
     UINT rawsize, r, i, j, row_size;
@@ -933,12 +933,12 @@ static void msi_free_colinfo( MSICOLUMNINFO *colinfo, UINT count )
     }
 }
 
-static LPWSTR msi_makestring( MSIDATABASE *db, UINT stringid)
+static LPWSTR msi_makestring( const MSIDATABASE *db, UINT stringid)
 {
     return strdupW(msi_string_lookup_id( db->strings, stringid ));
 }
 
-static UINT read_table_int(BYTE **data, UINT row, UINT col, UINT bytes)
+static UINT read_table_int(BYTE *const *data, UINT row, UINT col, UINT bytes)
 {
     UINT ret = 0, i;
 
@@ -1720,7 +1720,8 @@ MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table )
         return MSICONDITION_FALSE;
 }
 
-static MSIRECORD *msi_get_transform_record( MSITABLEVIEW *tv, string_table *st, USHORT *rawdata )
+static MSIRECORD *msi_get_transform_record( const MSITABLEVIEW *tv, const string_table *st,
+                                            const USHORT *rawdata )
 {
     UINT i, val, ofs = 0;
     USHORT mask = *rawdata++;
@@ -1793,7 +1794,7 @@ static void dump_record( MSIRECORD *rec )
     }
 }
 
-static void dump_table( string_table *st, USHORT *rawdata, UINT rawsize )
+static void dump_table( const string_table *st, const USHORT *rawdata, UINT rawsize )
 {
     LPCWSTR sval;
     UINT i;
@@ -1805,7 +1806,7 @@ static void dump_table( string_table *st, USHORT *rawdata, UINT rawsize )
     }
 }
 
-static UINT* msi_record_to_row( MSITABLEVIEW *tv, MSIRECORD *rec )
+static UINT* msi_record_to_row( const MSITABLEVIEW *tv, MSIRECORD *rec )
 {
     LPCWSTR str;
     UINT i, r, *data;
@@ -1845,7 +1846,7 @@ static UINT* msi_record_to_row( MSITABLEVIEW *tv, MSIRECORD *rec )
     return data;
 }
 
-static UINT msi_row_matches( MSITABLEVIEW *tv, UINT row, UINT *data )
+static UINT msi_row_matches( MSITABLEVIEW *tv, UINT row, const UINT *data )
 {
     UINT i, r, x, ret = ERROR_FUNCTION_FAILED;
 
