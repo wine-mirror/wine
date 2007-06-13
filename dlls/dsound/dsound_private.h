@@ -20,10 +20,11 @@
  */
 
 /* Linux does not support better timing than 10ms */
-#define DS_TIME_RES 10  /* Resolution of multimedia timer */
+#define DS_TIME_RES 2  /* Resolution of multimedia timer */
 #define DS_TIME_DEL 10  /* Delay of multimedia timer callback, and duration of HEL fragment */
 
-#define DS_HEL_FRAGS 48 /* HEL only: number of waveOut fragments in primary buffer
+#define DS_HEL_BUFLEN 0x8000 /* HEL: The buffer length of the emulated buffer */
+#define DS_HEL_FRAGS 0x40 /* HEL only: number of waveOut fragments in primary buffer
 			 * (changing this won't help you) */
 
 /* direct sound hardware acceleration levels */
@@ -36,7 +37,6 @@ extern int ds_emuldriver;
 extern int ds_hel_margin;
 extern int ds_hel_queue;
 extern int ds_snd_queue_max;
-extern int ds_snd_queue_min;
 extern int ds_hw_accel;
 extern int ds_default_playback;
 extern int ds_default_capture;
@@ -91,7 +91,6 @@ struct DirectSoundDevice
     PIDSDRIVERBUFFER            hwbuf;
     LPBYTE                      buffer;
     DWORD                       writelead, buflen, state, playpos, mixpos;
-    BOOL                        need_remix;
     int                         nrofbuffers;
     IDirectSoundBufferImpl**    buffers;
     RTL_RWLOCK                  buffer_list_lock;
@@ -168,14 +167,12 @@ struct IDirectSoundBufferImpl
     DWORD                       playpos,startpos,writelead,buflen;
     DWORD                       nAvgBytesPerSec;
     DWORD                       freq;
-    DSVOLUMEPAN                 volpan, cvolpan;
+    DSVOLUMEPAN                 volpan;
     DSBUFFERDESC                dsbd;
     /* used for frequency conversion (PerfectPitch) */
     ULONG                       freqAdjust, freqAcc;
     /* used for intelligent (well, sort of) prebuffering */
-    DWORD                       probably_valid_to, last_playpos;
-    DWORD                       primary_mixpos, buf_mixpos;
-    BOOL                        need_remix;
+    DWORD                       primary_mixpos, buf_mixpos, last_playpos, remix_pos;
 
     /* IDirectSoundNotifyImpl fields */
     IDirectSoundNotifyImpl*     notify;
@@ -439,9 +436,6 @@ DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This, DWORD pplay, DWORD p
 /* mixer.c */
 
 void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len);
-void DSOUND_ForceRemix(IDirectSoundBufferImpl *dsb);
-void DSOUND_MixCancelAt(IDirectSoundBufferImpl *dsb, DWORD buf_writepos);
-void DSOUND_WaveQueue(DirectSoundDevice *device, DWORD mixq);
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);

@@ -66,8 +66,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 #define DS_HEL_QUEUE  5 /* HEL only: number of waveOut fragments ahead to queue to driver
 			 * (this will affect HEL sound reliability and latency) */
 
-#define DS_SND_QUEUE_MAX 28 /* max number of fragments to prebuffer */
-#define DS_SND_QUEUE_MIN 12 /* min number of fragments to prebuffer */
+#define DS_SND_QUEUE_MAX 10 /* max number of fragments to prebuffer */
 
 DirectSoundDevice*	DSOUND_renderer[MAXWAVEDRIVERS];
 GUID                    DSOUND_renderer_guids[MAXWAVEDRIVERS];
@@ -104,7 +103,6 @@ int ds_emuldriver = DS_EMULDRIVER;
 int ds_hel_margin = DS_HEL_MARGIN;
 int ds_hel_queue = DS_HEL_QUEUE;
 int ds_snd_queue_max = DS_SND_QUEUE_MAX;
-int ds_snd_queue_min = DS_SND_QUEUE_MIN;
 int ds_hw_accel = DS_HW_ACCEL_FULL;
 int ds_default_playback = 0;
 int ds_default_capture = 0;
@@ -170,9 +168,6 @@ void setup_dsound_options(void)
     if (!get_config_key( hkey, appkey, "SndQueueMax", buffer, MAX_PATH ))
         ds_snd_queue_max = atoi(buffer);
 
-    if (!get_config_key( hkey, appkey, "SndQueueMin", buffer, MAX_PATH ))
-        ds_snd_queue_min = atoi(buffer);
-
     if (!get_config_key( hkey, appkey, "HardwareAcceleration", buffer, MAX_PATH )) {
 	if (strcmp(buffer, "Full") == 0)
 	    ds_hw_accel = DS_HW_ACCEL_FULL;
@@ -207,8 +202,6 @@ void setup_dsound_options(void)
        WARN("ds_hel_queue = %d (default=%d)\n",ds_hel_queue, DS_HEL_QUEUE );
     if (ds_snd_queue_max != DS_SND_QUEUE_MAX)
        WARN("ds_snd_queue_max = %d (default=%d)\n",ds_snd_queue_max ,DS_SND_QUEUE_MAX);
-    if (ds_snd_queue_min != DS_SND_QUEUE_MIN)
-       WARN("ds_snd_queue_min = %d (default=%d)\n",ds_snd_queue_min ,DS_SND_QUEUE_MIN);
     if (ds_hw_accel != DS_HW_ACCEL_FULL)
 	WARN("ds_hw_accel = %s (default=Full)\n",
 	    ds_hw_accel==DS_HW_ACCEL_FULL ? "Full" :

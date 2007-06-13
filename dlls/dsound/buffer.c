@@ -236,8 +236,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 			hres = IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
 	    		if (hres != DS_OK)
 		    		WARN("IDsDriverBuffer_SetVolumePan failed\n");
-		} else
-			DSOUND_ForceRemix(This);
+		}
 	}
 
 	LeaveCriticalSection(&(This->lock));
@@ -297,8 +296,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 		This->freqAdjust = (freq << DSOUND_FREQSHIFT) / This->device->pwfx->nSamplesPerSec;
 		This->nAvgBytesPerSec = freq * This->pwfx->nBlockAlign;
 		DSOUND_RecalcFormat(This);
-		if (!This->hwbuf)
-			DSOUND_ForceRemix(This);
 	}
 
 	LeaveCriticalSection(&(This->lock));
@@ -424,29 +421,51 @@ DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This, DWORD pplay, DWORD p
 	/* we need to know how far away we are from there */
 	if (pmix < pplay) pmix += device->buflen; /* wraparound */
 	pmix -= pplay;
-	/* detect buffer underrun */
+
+	/* detect buffer underrun (sanity) */
 	if (pwrite < pplay) pwrite += device->buflen; /* wraparound */
 	pwrite -= pplay;
 	if (pmix > (ds_snd_queue_max * device->fraglen + pwrite + device->writelead)) {
-		WARN("detected an underrun: primary queue was %d\n",pmix);
+		ERR("detected an underrun: primary queue was %d\n",pmix);
 		pmix = 0;
 	}
+
+	TRACE("primary back-samples=%d\n",pmix);
+
 	/* divide the offset by its sample size */
 	pmix /= device->pwfx->nBlockAlign;
-	TRACE("primary back-samples=%d\n",pmix);
+
 	/* adjust for our frequency */
 	pmix = (pmix * This->freqAdjust) >> DSOUND_FREQSHIFT;
+
 	/* multiply by our own sample size */
 	pmix *= This->pwfx->nBlockAlign;
+
 	TRACE("this back-offset=%d\n", pmix);
+
+	/* sanity */
+	if(pmix > This->buflen){
+		ERR("Bad length in CalcPlayPosition!\n");
+		return 0;
+	}
+
 	/* subtract from our last mixed position */
-	while (bplay < pmix) bplay += This->buflen; /* wraparound */
+	if (bplay < pmix) bplay += This->buflen; /* wraparound */
 	bplay -= pmix;
+
+	/* check for lead-in */
 	if (This->leadin && ((bplay < This->startpos) || (bplay > This->buf_mixpos))) {
 		/* seems we haven't started playing yet */
 		TRACE("this still in lead-in phase\n");
 		bplay = This->startpos;
 	}
+
+	/* sanity */
+	if(bplay > This->buflen){
+		ERR("Bad play position in CalcPlayPosition!\n");
+		return 0;
+	}
+
 	/* return the result */
 	return bplay;
 }
@@ -469,13 +488,13 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 			*playpos = This->buf_mixpos;
 		} else if (playpos) {
 			DWORD pplay, pwrite;
-			/* let's get this exact; first, recursively call GetPosition on the primary */
+
+			/* get primary lock, before messing with primary/device data */
 			EnterCriticalSection(&(This->device->mixlock));
+
+			/* let's get this exact; first, recursively call GetPosition on the primary */
 			if (DSOUND_PrimaryGetPosition(This->device, &pplay, &pwrite) != DS_OK)
 				WARN("DSOUND_PrimaryGetPosition failed\n");
-			/* detect HEL mode underrun */
-			if (!(This->device->hwbuf || This->device->pwqueue))
-				TRACE("detected an underrun\n");
 			if ((This->dsbd.dwFlags & DSBCAPS_GETCURRENTPOSITION2) || This->device->hwbuf) {
 				/* calculate play position using this */
 				*playpos = DSOUND_CalcPlayPosition(This, pplay, pwrite);
@@ -489,7 +508,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 				wp = (This->device->pwplay + ds_hel_margin) * This->device->fraglen;
 				wp %= This->device->buflen;
 				*playpos = DSOUND_CalcPlayPosition(This, wp, pwrite);
+				TRACE("Using non-GETCURRENTPOSITION2\n");
 			}
+
 			LeaveCriticalSection(&(This->device->mixlock));
 		}
 		if (writepos)
@@ -504,7 +525,10 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 	}
 	if (playpos)
             This->last_playpos = *playpos;
-	TRACE("playpos = %d, writepos = %d (%p, time=%d)\n", playpos?*playpos:0, writepos?*writepos:0, This, GetTickCount());
+
+	TRACE("playpos = %d, writepos = %d, buflen=%d (%p, time=%d)\n",
+		playpos?*playpos:0, writepos?*writepos:0, This->buflen, This, GetTickCount());
+
 	return DS_OK;
 }
 
@@ -610,18 +634,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 		return DSERR_INVALIDPARAM;
         }
 
+	/* **** */
 	EnterCriticalSection(&(This->lock));
-
-	if ((writebytes == This->buflen) &&
-	    ((This->state == STATE_STARTING) ||
-	     (This->state == STATE_PLAYING)))
-		/* some games, like Half-Life, try to be clever (not) and
-		 * keep one secondary buffer, and mix sounds into it itself,
-		 * locking the entire buffer every time... so we can just forget
-		 * about tracking the last-written-to-position... */
-		This->probably_valid_to = (DWORD)-1;
-	else
-		This->probably_valid_to = writecursor;
 
 	if (!(This->device->drvdesc.dwFlags & DSDDESC_DONTNEEDSECONDARYLOCK) && This->hwbuf) {
 		hres = IDsDriverBuffer_Lock(This->hwbuf,
@@ -635,7 +649,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 			return hres;
 		}
 	} else {
-		BOOL remix = FALSE;
 		if (writecursor+writebytes <= This->buflen) {
 			*(LPBYTE*)lplpaudioptr1 = This->buffer->memory+writecursor;
 			*audiobytes1 = writebytes;
@@ -643,6 +656,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 				*(LPBYTE*)lplpaudioptr2 = NULL;
 			if (audiobytes2)
 				*audiobytes2 = 0;
+			TRACE("Locked %p(%i bytes) and %p(%i bytes) writecursor=%d\n",
+			  *(LPBYTE*)lplpaudioptr1, *audiobytes1, lplpaudioptr2 ? *(LPBYTE*)lplpaudioptr2 : NULL, audiobytes2 ? *audiobytes2: 0, writecursor);
 			TRACE("->%d.0\n",writebytes);
 		} else {
 			*(LPBYTE*)lplpaudioptr1 = This->buffer->memory+writecursor;
@@ -651,30 +666,12 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 				*(LPBYTE*)lplpaudioptr2 = This->buffer->memory;
 			if (audiobytes2)
 				*audiobytes2 = writebytes-(This->buflen-writecursor);
-			TRACE("->%d.%d\n",*audiobytes1,audiobytes2?*audiobytes2:0);
-		}
-		if (This->state == STATE_PLAYING) {
-			/* if the segment between playpos and buf_mixpos is touched,
-			 * we need to cancel some mixing */
-			/* we'll assume that the app always calls GetCurrentPosition before
-			 * locking a playing buffer, so that last_playpos is up-to-date */
-			if (This->buf_mixpos >= This->last_playpos) {
-				if (This->buf_mixpos > writecursor &&
-				    This->last_playpos < writecursor+writebytes)
-					remix = TRUE;
-			} else {
-				if (This->buf_mixpos > writecursor ||
-				    This->last_playpos < writecursor+writebytes)
-					remix = TRUE;
-			}
-			if (remix) {
-				TRACE("locking prebuffered region, ouch\n");
-				DSOUND_MixCancelAt(This, writecursor);
-			}
+			TRACE("Locked %p(%i bytes) and %p(%i bytes) writecursor=%d\n", *(LPBYTE*)lplpaudioptr1, *audiobytes1, lplpaudioptr2 ? *(LPBYTE*)lplpaudioptr2 : NULL, audiobytes2 ? *audiobytes2: 0, writecursor);
 		}
 	}
 
 	LeaveCriticalSection(&(This->lock));
+	/* **** */
 
 	return DS_OK;
 }
@@ -689,9 +686,15 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(
 	/* **** */
 	EnterCriticalSection(&(This->lock));
 
+	/* start mixing from this new location instead */
 	newpos %= This->buflen;
 	newpos -= newpos%This->pwfx->nBlockAlign;
 	This->buf_mixpos = newpos;
+
+	/* at this point, do not attempt to reset buffers, mess with primary mix position,
+           or anything like that to reduce latancy. The data already prebuffered cannot be changed */
+
+	/* position HW buffer if applicable */
 	if (This->hwbuf) {
 		hres = IDsDriverBuffer_SetPosition(This->hwbuf, This->buf_mixpos);
 		if (hres != DS_OK)
@@ -735,8 +738,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 			hres = IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
 			if (hres != DS_OK)
 				WARN("IDsDriverBuffer_SetVolumePan failed\n");
-		} else
-			DSOUND_ForceRemix(This);
+		}
 	}
 
 	LeaveCriticalSection(&(This->lock));
@@ -770,7 +772,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 	LPDIRECTSOUNDBUFFER8 iface,LPVOID p1,DWORD x1,LPVOID p2,DWORD x2
 ) {
 	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
-	DWORD probably_valid_to;
 	HRESULT hres = DS_OK;
 
 	TRACE("(%p,%p,%d,%p,%d)\n", This,p1,x1,p2,x2);
@@ -784,22 +785,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 			WARN("IDsDriverBuffer_Unlock failed\n");
 	}
 
-        if (hres == DS_OK) {
-		if (p2) probably_valid_to = (((LPBYTE)p2)-This->buffer->memory) + x2;
-		else probably_valid_to = (((LPBYTE)p1)-This->buffer->memory) + x1;
-		probably_valid_to %= This->buflen;
-		if ((probably_valid_to == 0) && ((x1+x2) == This->buflen) &&
-		    ((This->state == STATE_STARTING) ||
-		     (This->state == STATE_PLAYING)))
-			/* see IDirectSoundBufferImpl_Lock */
-			probably_valid_to = (DWORD)-1;
-		This->probably_valid_to = probably_valid_to;
-	}
-
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
 
-	TRACE("probably_valid_to=%d\n", This->probably_valid_to);
 	return hres;
 }
 
@@ -1043,6 +1031,8 @@ HRESULT IDirectSoundBufferImpl_Create(
 	dsb->device = device;
 	dsb->lpVtbl = &dsbvt;
 	dsb->iks = NULL;
+
+	dsb->remix_pos = 0;
 
 	/* size depends on version */
 	CopyMemory(&dsb->dsbd, dsbd, dsbd->dwSize);

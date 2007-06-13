@@ -192,7 +192,6 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 			TRACE("3D processing disabled\n");
 			/* this one is here only to eliminate annoying warning message */
 			DSOUND_RecalcVolPan (&dsb->volpan);
-			DSOUND_ForceRemix (dsb);
 			break;
 		case DS3DMODE_NORMAL:
 			TRACE("Normal 3D processing mode\n");
@@ -319,7 +318,6 @@ static void DSOUND_Mix3DBuffer(IDirectSoundBufferImpl *dsb)
 	TRACE("(%p)\n",dsb);
 
 	DSOUND_Calc3DBuffer(dsb);
-	DSOUND_ForceRemix(dsb);			
 }
 
 static void DSOUND_ChangeListener(IDirectSound3DListenerImpl *ds3dl)
@@ -332,6 +330,8 @@ static void DSOUND_ChangeListener(IDirectSound3DListenerImpl *ds3dl)
 		crash without the following line) */
 		if (ds3dl->device->buffers[i]->ds3db == NULL)
 			continue;
+
+		/* check if this buffer is waiting for recalculation */
 		if (ds3dl->device->buffers[i]->ds3db_need_recalc)
 		{
 			DSOUND_Mix3DBuffer(ds3dl->device->buffers[i]);

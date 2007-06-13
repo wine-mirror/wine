@@ -82,12 +82,14 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 		waveOutPause(device->hwo);
 		if (device->state == STATE_PLAYING) device->state = STATE_STARTING;
 		else if (device->state == STATE_STOPPING) device->state = STATE_STOPPED;
-		/* use fragments of 10ms (1/100s) each (which should get us within
-		 * the documented write cursor lead of 10-15ms) */
-		buflen = ((device->pwfx->nSamplesPerSec / 100) * device->pwfx->nBlockAlign) * DS_HEL_FRAGS;
-		TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
-		/* reallocate emulated primary buffer */
 
+		/* on original windows, the buffer it set to a fixed size, no matter what the settings are.
+		   on windows this size is always fixed (tested on win-xp) */
+		buflen = DS_HEL_BUFLEN;
+
+		TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
+
+		/* reallocate emulated primary buffer */
 		if (device->buffer)
 			newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer,buflen);
 		else
@@ -105,6 +107,11 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 			unsigned c;
 
 			device->fraglen = device->buflen / DS_HEL_FRAGS;
+
+			/* sanity */
+			if(device->buflen % DS_HEL_FRAGS){
+				ERR("Bad DS_HEL_FRAGS resolution\n");
+			}
 
 			/* prepare fragment headers */
 			for (c=0; c<DS_HEL_FRAGS; c++) {
@@ -128,7 +135,6 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 			device->mixpos = 0;
 			FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
 			TRACE("fraglen=%d\n", device->fraglen);
-			DSOUND_WaveQueue(device, (DWORD)-1);
 		}
 		if ((err == DS_OK) && (merr != DS_OK))
 			err = merr;
@@ -161,10 +167,17 @@ static void DSOUND_PrimaryClose(DirectSoundDevice *device)
 	if (!device->hwbuf) {
 		unsigned c;
 
+		/* get out of CS when calling the wave system */
+		LeaveCriticalSection(&(device->mixlock));
+		/* **** */
 		device->pwqueue = (DWORD)-1; /* resetting queues */
 		waveOutReset(device->hwo);
 		for (c=0; c<DS_HEL_FRAGS; c++)
 			waveOutUnprepareHeader(device->hwo, device->pwave[c], sizeof(WAVEHDR));
+		/* **** */
+		EnterCriticalSection(&(device->mixlock));
+
+		/* clear the queue */
 		device->pwqueue = 0;
 	} else {
 		if (IDsDriverBuffer_Release(device->hwbuf) == 0)
@@ -224,7 +237,8 @@ HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device)
 {
 	TRACE("(%p)\n", device);
 
-        EnterCriticalSection(&(device->mixlock));
+	/* **** */
+	EnterCriticalSection(&(device->mixlock));
 
 	DSOUND_PrimaryClose(device);
 	if (device->driver) {
@@ -240,7 +254,10 @@ HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device)
 	}
         HeapFree(GetProcessHeap(),0,device->pwfx);
         device->pwfx=NULL;
-        LeaveCriticalSection(&(device->mixlock));
+
+	LeaveCriticalSection(&(device->mixlock));
+	/* **** */
+
 	return DS_OK;
 }
 
@@ -267,7 +284,6 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 	HRESULT err = DS_OK;
 	TRACE("(%p)\n", device);
 
-	EnterCriticalSection(&(device->mixlock));
 	if (device->hwbuf) {
 		err = IDsDriverBuffer_Stop(device->hwbuf);
 		if (err == DSERR_BUFFERLOST) {
@@ -296,11 +312,20 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 			WARN("IDsDriverBuffer_Stop failed\n");
 		}
 	} else {
+
+		/* dont call the wave system with the lock set */
+		LeaveCriticalSection(&(device->mixlock));
+		/* **** */
+
 		err = mmErr(waveOutPause(device->hwo));
+
+		/* **** */
+		EnterCriticalSection(&(device->mixlock));
+
 		if (err != DS_OK)
 			WARN("waveOutPause failed\n");
 	}
-	LeaveCriticalSection(&(device->mixlock));
+
 	return err;
 }
 
@@ -315,19 +340,20 @@ HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LP
 			return err;
 		}
 	} else {
+
+		/* check if playpos was requested */
 		if (playpos) {
-			MMTIME mtime;
-			mtime.wType = TIME_BYTES;
-			waveOutGetPosition(device->hwo, &mtime, sizeof(mtime));
-			mtime.u.cb = mtime.u.cb % device->buflen;
-			*playpos = mtime.u.cb;
+			/* use the cached play position */
+			*playpos = device->pwplay * device->fraglen;
 		}
+
+		/* check if writepos was requested */
 		if (writepos) {
-			/* the writepos should only be used by apps with WRITEPRIMARY priority,
-			 * in which case our software mixer is disabled anyway */
-			*writepos = (device->pwplay + ds_hel_margin) * device->fraglen;
-			while (*writepos >= device->buflen)
-				*writepos -= device->buflen;
+			TRACE("pwplay=%i, pwqueue=%i\n", device->pwplay, device->pwqueue);
+
+			/* the writepos is the first non-queued position */
+			*writepos = (device->pwplay + device->pwqueue) * device->fraglen;
+			*writepos %= device->buflen;
 		}
 	}
 	TRACE("playpos = %d, writepos = %d (%p, time=%d)\n", playpos?*playpos:0, writepos?*writepos:0, device, GetTickCount());
@@ -607,6 +633,9 @@ static HRESULT WINAPI PrimaryBufferImpl_GetCurrentPosition(
         DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	TRACE("(%p,%p,%p)\n", iface, playpos, writepos);
 
+	/* **** */
+	EnterCriticalSection(&(device->mixlock));
+
 	hres = DSOUND_PrimaryGetPosition(device, playpos, writepos);
 	if (hres != DS_OK) {
 		WARN("DSOUND_PrimaryGetPosition failed\n");
@@ -618,6 +647,10 @@ static HRESULT WINAPI PrimaryBufferImpl_GetCurrentPosition(
 			*writepos += device->writelead;
 		while (*writepos >= device->buflen) *writepos -= device->buflen;
 	}
+
+	LeaveCriticalSection(&(device->mixlock));
+	/* **** */
+
 	TRACE("playpos = %d, writepos = %d (%p, time=%d)\n", playpos?*playpos:0, writepos?*writepos:0, device, GetTickCount());
 	return DS_OK;
 }
