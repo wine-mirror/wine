@@ -99,65 +99,6 @@ char* getToken(char** str, const char* delims)
 #endif
 
 /******************************************************************************
- * Copies file name from command line string to the buffer.
- * Rewinds the command line string pointer to the next non-space character
- * after the file name.
- * Buffer contains an empty string if no filename was found;
- *
- * params:
- * command_line - command line current position pointer
- *      where *s[0] is the first symbol of the file name.
- * file_name - buffer to write the file name to.
- */
-void get_file_name(CHAR **command_line, CHAR *file_name)
-{
-    CHAR *s = *command_line;
-    int pos = 0;                /* position of pointer "s" in *command_line */
-    file_name[0] = 0;
-
-    if (!s[0]) {
-        return;
-    }
-
-    if (s[0] == '"') {
-        s++;
-        (*command_line)++;
-        while(s[0] != '"') {
-            if (!s[0]) {
-                fprintf(stderr,"%s: Unexpected end of file name!\n",
-                        getAppName());
-                exit(1);
-            }
-            s++;
-            pos++;
-        }
-    } else {
-        while(s[0] && !isspace(s[0])) {
-            s++;
-            pos++;
-        }
-    }
-    memcpy(file_name, *command_line, pos * sizeof((*command_line)[0]));
-    /* remove the last backslash */
-    if (file_name[pos - 1] == '\\') {
-        file_name[pos - 1] = '\0';
-    } else {
-        file_name[pos] = '\0';
-    }
-
-    if (s[0]) {
-        s++;
-        pos++;
-    }
-    while(s[0] && isspace(s[0])) {
-        s++;
-        pos++;
-    }
-    (*command_line) += pos;
-}
-
-
-/******************************************************************************
  * Converts a hex representation of a DWORD into a DWORD.
  */
 DWORD convertHexToDWord(char *str, BYTE *buf)

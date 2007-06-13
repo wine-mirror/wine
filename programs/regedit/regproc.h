@@ -48,7 +48,6 @@ void processRegLines(FILE *in, CommandAPI command);
  * Generic prototypes
  */
 char*   getToken(char** str, const char* delims);
-void    get_file_name(CHAR **command_line, CHAR *filename);
 DWORD   convertHexToDWord(char *str, BYTE *buf);
 DWORD   convertHexCSVToHex(char *str, BYTE *buf, ULONG bufLen);
 LPSTR   convertHexToHexCSV( BYTE *buf, ULONG len);

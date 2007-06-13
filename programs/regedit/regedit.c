@@ -58,7 +58,152 @@ typedef enum {
     ACTION_UNDEF, ACTION_ADD, ACTION_EXPORT, ACTION_DELETE
 } REGEDIT_ACTION;
 
-BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s);
+
+/******************************************************************************
+ * Copies file name from command line string to the buffer.
+ * Rewinds the command line string pointer to the next non-space character
+ * after the file name.
+ * Buffer contains an empty string if no filename was found;
+ *
+ * params:
+ * command_line - command line current position pointer
+ *      where *s[0] is the first symbol of the file name.
+ * file_name - buffer to write the file name to.
+ */
+static void get_file_name(CHAR **command_line, CHAR *file_name)
+{
+    CHAR *s = *command_line;
+    int pos = 0;                /* position of pointer "s" in *command_line */
+    file_name[0] = 0;
+
+    if (!s[0]) {
+        return;
+    }
+
+    if (s[0] == '"') {
+        s++;
+        (*command_line)++;
+        while(s[0] != '"') {
+            if (!s[0]) {
+                fprintf(stderr,"%s: Unexpected end of file name!\n",
+                        getAppName());
+                exit(1);
+            }
+            s++;
+            pos++;
+        }
+    } else {
+        while(s[0] && !isspace(s[0])) {
+            s++;
+            pos++;
+        }
+    }
+    memcpy(file_name, *command_line, pos * sizeof((*command_line)[0]));
+    /* remove the last backslash */
+    if (file_name[pos - 1] == '\\') {
+        file_name[pos - 1] = '\0';
+    } else {
+        file_name[pos] = '\0';
+    }
+
+    if (s[0]) {
+        s++;
+        pos++;
+    }
+    while(s[0] && isspace(s[0])) {
+        s++;
+        pos++;
+    }
+    (*command_line) += pos;
+}
+
+static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
+{
+    switch (action) {
+    case ACTION_ADD: {
+            CHAR filename[MAX_PATH];
+            FILE *reg_file;
+
+            get_file_name(&s, filename);
+            if (!filename[0]) {
+                fprintf(stderr,"%s: No file name was specified\n", getAppName());
+                fprintf(stderr,usage);
+                exit(1);
+            }
+
+            while(filename[0]) {
+                char* realname = NULL;
+                int size;
+                size=SearchPath(NULL,filename,NULL,0,NULL,NULL);
+                if (size>0)
+                {
+                    realname=HeapAlloc(GetProcessHeap(),0,size);
+                    size=SearchPath(NULL,filename,NULL,size,realname,NULL);
+                }
+                if (size==0)
+                {
+                    fprintf(stderr,"%s: File not found \"%s\" (%d)\n",
+                            getAppName(),filename,GetLastError());
+                    exit(1);
+                }
+                reg_file = fopen(realname, "r");
+                if (reg_file==NULL)
+                {
+                    perror("");
+                    fprintf(stderr,"%s: Can't open file \"%s\"\n", getAppName(), filename);
+                    exit(1);
+                }
+                processRegLines(reg_file, doSetValue);
+                if (realname)
+                {
+                    HeapFree(GetProcessHeap(),0,realname);
+                    fclose(reg_file);
+                }
+                get_file_name(&s, filename);
+            }
+            break;
+        }
+    case ACTION_DELETE: {
+            CHAR reg_key_name[KEY_MAX_LEN];
+
+            get_file_name(&s, reg_key_name);
+            if (!reg_key_name[0]) {
+                fprintf(stderr,"%s: No registry key was specified for removal\n",
+                        getAppName());
+                fprintf(stderr,usage);
+                exit(1);
+            }
+            delete_registry_key(reg_key_name);
+            break;
+        }
+    case ACTION_EXPORT: {
+            CHAR filename[MAX_PATH];
+
+            filename[0] = '\0';
+            get_file_name(&s, filename);
+            if (!filename[0]) {
+                fprintf(stderr,"%s: No file name was specified\n", getAppName());
+                fprintf(stderr,usage);
+                exit(1);
+            }
+
+            if (s[0]) {
+                CHAR reg_key_name[KEY_MAX_LEN];
+
+                get_file_name(&s, reg_key_name);
+                export_registry_key(filename, reg_key_name);
+            } else {
+                export_registry_key(filename, NULL);
+            }
+            break;
+        }
+    default:
+        fprintf(stderr,"%s: Unhandled action!\n", getAppName());
+        exit(1);
+        break;
+    }
+    return TRUE;
+}
 
 /**
  * Process unknown switch.
@@ -150,92 +295,4 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
         return FALSE;
 
     return PerformRegAction(action, s);
-}
-
-BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
-{
-    switch (action) {
-    case ACTION_ADD: {
-            CHAR filename[MAX_PATH];
-            FILE *reg_file;
-
-            get_file_name(&s, filename);
-            if (!filename[0]) {
-                fprintf(stderr,"%s: No file name was specified\n", getAppName());
-                fprintf(stderr,usage);
-                exit(1);
-            }
-
-            while(filename[0]) {
-                char* realname = NULL;
-                int size;
-                size=SearchPath(NULL,filename,NULL,0,NULL,NULL);
-                if (size>0)
-                {
-                    realname=HeapAlloc(GetProcessHeap(),0,size);
-                    size=SearchPath(NULL,filename,NULL,size,realname,NULL);
-                }
-                if (size==0)
-                {
-                    fprintf(stderr,"%s: File not found \"%s\" (%d)\n",
-                            getAppName(),filename,GetLastError());
-                    exit(1);
-                }
-                reg_file = fopen(realname, "r");
-                if (reg_file==NULL)
-                {
-                    perror("");
-                    fprintf(stderr,"%s: Can't open file \"%s\"\n", getAppName(), filename);
-                    exit(1);
-                }
-                processRegLines(reg_file, doSetValue);
-                if (realname)
-                {
-                    HeapFree(GetProcessHeap(),0,realname);
-                    fclose(reg_file);
-                }
-                get_file_name(&s, filename);
-            }
-            break;
-        }
-    case ACTION_DELETE: {
-            CHAR reg_key_name[KEY_MAX_LEN];
-
-            get_file_name(&s, reg_key_name);
-            if (!reg_key_name[0]) {
-                fprintf(stderr,"%s: No registry key was specified for removal\n",
-                        getAppName());
-                fprintf(stderr,usage);
-                exit(1);
-            }
-            delete_registry_key(reg_key_name);
-            break;
-        }
-    case ACTION_EXPORT: {
-            CHAR filename[MAX_PATH];
-
-            filename[0] = '\0';
-            get_file_name(&s, filename);
-            if (!filename[0]) {
-                fprintf(stderr,"%s: No file name was specified\n", getAppName());
-                fprintf(stderr,usage);
-                exit(1);
-            }
-
-            if (s[0]) {
-                CHAR reg_key_name[KEY_MAX_LEN];
-
-                get_file_name(&s, reg_key_name);
-                export_registry_key(filename, reg_key_name);
-            } else {
-                export_registry_key(filename, NULL);
-            }
-            break;
-        }
-    default:
-        fprintf(stderr,"%s: Unhandled action!\n", getAppName());
-        exit(1);
-        break;
-    }
-    return TRUE;
 }
