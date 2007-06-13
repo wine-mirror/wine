@@ -85,6 +85,7 @@ static const WCHAR cmd_SetDefaultCommConfigW[] = {'S','e','t',
 
 static const WCHAR dllnameuiW[] = {'l','o','c','a','l','u','i','.','d','l','l',0};
 static const WCHAR emptyW[] = {0};
+static const WCHAR LocalPortW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
 
 static const WCHAR portname_LPT[]  = {'L','P','T',0};
 static const WCHAR portname_COM[]  = {'C','O','M',0};
@@ -296,6 +297,63 @@ static DWORD get_type_from_name(LPCWSTR name)
     }
     /* We can't use the name. use GetLastError() for the reason */
     return PORT_IS_UNKNOWN;
+}
+
+/******************************************************************************
+ *   localmon_AddPortExW [exported through MONITOREX]
+ *
+ * Add a Port, without presenting a user interface
+ *
+ * PARAMS
+ *  pName         [I] Servername or NULL (local Computer)
+ *  level         [I] Structure-Level (1) for pBuffer
+ *  pBuffer       [I] PTR to the Input-Data (PORT_INFO_1)
+ *  pMonitorName  [I] Name of the Monitor that manage the Port
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  Level 2 is documented on MSDN for Portmonitors, but not supported by the
+ *  "Local Port" Portmonitor (localspl.dll / localmon.dll)
+ */
+BOOL WINAPI localmon_AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer, LPWSTR pMonitorName)
+{
+    PORT_INFO_1W * pi;
+    HKEY  hroot;
+    DWORD res;
+
+    pi = (PORT_INFO_1W *) pBuffer;
+    TRACE("(%s, %d, %p, %s) => %s\n", debugstr_w(pName), level, pBuffer,
+            debugstr_w(pMonitorName), debugstr_w(pi ? pi->pName : NULL));
+
+
+    if ((pMonitorName == NULL) || (lstrcmpiW(pMonitorName, LocalPortW) != 0 ) ||
+        (pi == NULL) || (pi->pName == NULL) || (pi->pName[0] == '\0') ) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (level != 1) {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_PortsW, &hroot);
+    if (res == ERROR_SUCCESS) {
+        if (does_port_exist(pi->pName)) {
+            RegCloseKey(hroot);
+            TRACE("=> FALSE with %u\n", ERROR_INVALID_PARAMETER);
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+        res = RegSetValueExW(hroot, pi->pName, 0, REG_SZ, (const BYTE *) emptyW, sizeof(emptyW));
+        RegCloseKey(hroot);
+    }
+    if (res != ERROR_SUCCESS) SetLastError(ERROR_INVALID_PARAMETER);
+    TRACE("=> %u with %u\n", (res == ERROR_SUCCESS), GetLastError());
+    return (res == ERROR_SUCCESS);
 }
 
 /*****************************************************
@@ -607,8 +665,8 @@ LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR regroot)
             NULL,       /* localmon_ReadPortW */
             NULL,       /* localmon_EndDocPortW */
             NULL,       /* localmon_ClosePortW */
-            NULL,       /* localmon_AddPortW */
-            NULL,       /* localmon_AddPortExW */
+            NULL,       /* Use AddPortUI in localui.dll */
+            localmon_AddPortExW,
             NULL,       /* Use ConfigurePortUI in localui.dll */
             NULL,       /* Use DeletePortUI in localui.dll */
             NULL,       /* localmon_GetPrinterDataFromPort */
