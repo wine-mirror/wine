@@ -377,18 +377,20 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     TBADDBITMAP ab;
     int nStdBitmaps = 0;
     REBARINFO rbi;
-    REBARBANDINFO rbb;
+    REBARBANDINFOW rbb;
+    static const WCHAR wszRichEditDll[] = {'R','I','C','H','E','D','2','0','.','D','L','L','\0'};
+    static const WCHAR wszRichEditText[] = {'R','i','c','h','E','d','i','t',' ','t','e','x','t','\0'};
 
-    CreateStatusWindow(CCS_NODIVIDER|WS_CHILD|WS_VISIBLE, "RichEdit text", hWnd, IDC_STATUSBAR);
+    CreateStatusWindowW(CCS_NODIVIDER|WS_CHILD|WS_VISIBLE, wszRichEditText, hWnd, IDC_STATUSBAR);
 
-    hReBarWnd = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
+    hReBarWnd = CreateWindowExW(WS_EX_TOOLWINDOW, REBARCLASSNAMEW, NULL,
       CCS_NODIVIDER|WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|RBS_VARHEIGHT|CCS_TOP,
       CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, hWnd, (HMENU)IDC_REBAR, hInstance, NULL);
 
     rbi.cbSize = sizeof(rbi);
     rbi.fMask = 0;
     rbi.himl = NULL;
-    if(!SendMessage(hReBarWnd, RB_SETBARINFO, 0, (LPARAM)&rbi))
+    if(!SendMessageW(hReBarWnd, RB_SETBARINFO, 0, (LPARAM)&rbi))
         return -1;
 
     hToolBarWnd = CreateToolbarEx(hReBarWnd, CCS_NOPARENTALIGN|CCS_NOMOVEY|WS_VISIBLE|WS_CHILD|TBSTYLE_TOOLTIPS|TBSTYLE_BUTTON,
@@ -416,8 +418,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     AddButton(hToolBarWnd, nStdBitmaps+STD_UNDO, ID_EDIT_UNDO);
     AddButton(hToolBarWnd, nStdBitmaps+STD_REDOW, ID_EDIT_REDO);
 
-    SendMessage(hToolBarWnd, TB_ADDSTRING, 0, (LPARAM)"Exit\0");
-    SendMessage(hToolBarWnd, TB_AUTOSIZE, 0, 0);
+    SendMessageW(hToolBarWnd, TB_AUTOSIZE, 0, 0);
 
     rbb.cbSize = sizeof(rbb);
     rbb.fMask = RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_CHILD | RBBIM_STYLE;
@@ -425,7 +426,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     rbb.cx = 0;
     rbb.hwndChild = hToolBarWnd;
     rbb.cxMinChild = 0;
-    rbb.cyChild = rbb.cyMinChild = HIWORD(SendMessage(hToolBarWnd, TB_GETBUTTONSIZE, 0, 0));
+    rbb.cyChild = rbb.cyMinChild = HIWORD(SendMessageW(hToolBarWnd, TB_GETBUTTONSIZE, 0, 0));
 
     SendMessageW(hReBarWnd, RB_INSERTBAND, BANDID_TOOLBAR, (LPARAM)&rbb);
 
@@ -451,7 +452,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     SendMessageW(hReBarWnd, RB_INSERTBAND, BANDID_FORMATBAR, (LPARAM)&rbb);
 
-    hDLL = LoadLibrary("RICHED20.DLL");
+    hDLL = LoadLibraryW(wszRichEditDll);
     assert(hDLL);
 
     hEditorWnd = CreateWindowExW(WS_EX_CLIENTEDGE, wszRichEditClass, NULL,
@@ -466,7 +467,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     assert(hEditorWnd);
 
     SetFocus(hEditorWnd);
-    SendMessage(hEditorWnd, EM_SETEVENTMASK, 0, ENM_SELCHANGE);
+    SendMessageW(hEditorWnd, EM_SETEVENTMASK, 0, ENM_SELCHANGE);
 
     DoDefaultFont();
 
@@ -491,15 +492,15 @@ static LRESULT OnUser( HWND hWnd, WPARAM wParam, LPARAM lParam)
     ZeroMemory(&pf, sizeof(pf));
     pf.cbSize = sizeof(pf);
 
-    SendMessage(hwndEditor, EM_GETCHARFORMAT, TRUE, (LPARAM)&fmt);
+    SendMessageW(hwndEditor, EM_GETCHARFORMAT, TRUE, (LPARAM)&fmt);
 
-    SendMessage(hwndEditor, EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
-    SendMessage(hwndToolBar, TB_ENABLEBUTTON, ID_EDIT_UNDO,
-      SendMessage(hwndEditor, EM_CANUNDO, 0, 0));
-    SendMessage(hwndToolBar, TB_ENABLEBUTTON, ID_EDIT_REDO,
-      SendMessage(hwndEditor, EM_CANREDO, 0, 0));
-    SendMessage(hwndToolBar, TB_ENABLEBUTTON, ID_EDIT_CUT, from == to ? 0 : 1);
-    SendMessage(hwndToolBar, TB_ENABLEBUTTON, ID_EDIT_COPY, from == to ? 0 : 1);
+    SendMessageW(hwndEditor, EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
+    SendMessageW(hwndToolBar, TB_ENABLEBUTTON, ID_EDIT_UNDO,
+      SendMessageW(hwndEditor, EM_CANUNDO, 0, 0));
+    SendMessageW(hwndToolBar, TB_ENABLEBUTTON, ID_EDIT_REDO,
+      SendMessageW(hwndEditor, EM_CANREDO, 0, 0));
+    SendMessageW(hwndToolBar, TB_ENABLEBUTTON, ID_EDIT_CUT, from == to ? 0 : 1);
+    SendMessageW(hwndToolBar, TB_ENABLEBUTTON, ID_EDIT_COPY, from == to ? 0 : 1);
 
     SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_FORMAT_BOLD, (fmt.dwMask & CFM_BOLD) &&
             (fmt.dwEffects & CFE_BOLD));
@@ -553,13 +554,13 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
     case ID_FILE_EXIT:
-        PostMessage(hWnd, WM_CLOSE, 0, 0);
+        PostMessageW(hWnd, WM_CLOSE, 0, 0);
         break;
 
     case ID_FILE_NEW:
-        SetWindowTextA(hwndEditor, "");
         set_caption(NULL);
         wszFileName[0] = '\0';
+        SetWindowTextW(hwndEditor, wszFileName);
         /* FIXME: set default format too */
         break;
 
@@ -582,7 +583,11 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_PRINT:
     case ID_PREVIEW:
     case ID_FIND:
-        MessageBox(hWnd, "Not implemented", "WordPad", MB_OK);
+        {
+            static const WCHAR wszNotImplemented[] = {'N','o','t',' ',
+                                                      'i','m','p','l','e','m','e','n','t','e','d','\0'};
+            MessageBoxW(hWnd, wszNotImplemented, wszAppTitle, MB_OK);
+        }
         break;
 
     case ID_FORMAT_BOLD:
@@ -596,36 +601,36 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
         ZeroMemory(&fmt, sizeof(fmt));
         fmt.cbSize = sizeof(fmt);
-        SendMessage(hwndEditor, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+        SendMessageW(hwndEditor, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
         if (!(fmt.dwMask&mask))
             fmt.dwEffects |= mask;
         else
             fmt.dwEffects ^= mask;
         fmt.dwMask = mask;
-        SendMessage(hwndEditor, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+        SendMessageW(hwndEditor, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
         break;
         }
 
     case ID_EDIT_CUT:
-        PostMessage(hwndEditor, WM_CUT, 0, 0);
+        PostMessageW(hwndEditor, WM_CUT, 0, 0);
         break;
 
     case ID_EDIT_COPY:
-        PostMessage(hwndEditor, WM_COPY, 0, 0);
+        PostMessageW(hwndEditor, WM_COPY, 0, 0);
         break;
 
     case ID_EDIT_PASTE:
-        PostMessage(hwndEditor, WM_PASTE, 0, 0);
+        PostMessageW(hwndEditor, WM_PASTE, 0, 0);
         break;
 
     case ID_EDIT_CLEAR:
-        PostMessage(hwndEditor, WM_CLEAR, 0, 0);
+        PostMessageW(hwndEditor, WM_CLEAR, 0, 0);
         break;
 
     case ID_EDIT_SELECTALL:
         {
         CHARRANGE range = {0, -1};
-        SendMessage(hwndEditor, EM_EXSETSEL, 0, (LPARAM)&range);
+        SendMessageW(hwndEditor, EM_EXSETSEL, 0, (LPARAM)&range);
         /* SendMessage(hwndEditor, EM_SETSEL, 0, -1); */
         return 0;
         }
@@ -660,7 +665,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         ZeroMemory(&cf, sizeof(cf));
         cf.cbSize = sizeof(cf);
         cf.dwMask = 0;
-        i = SendMessage(hwndEditor, EM_GETCHARFORMAT,
+        i = SendMessageW(hwndEditor, EM_GETCHARFORMAT,
                         LOWORD(wParam) == ID_EDIT_CHARFORMAT, (LPARAM)&cf);
         return 0;
         }
@@ -670,7 +675,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         PARAFORMAT2 pf;
         ZeroMemory(&pf, sizeof(pf));
         pf.cbSize = sizeof(pf);
-        SendMessage(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
+        SendMessageW(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
         return 0;
         }
 
@@ -695,25 +700,25 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         {
         long nStyle = GetWindowLong(hwndEditor, GWL_STYLE);
         if (nStyle & ES_READONLY)
-            SendMessage(hwndEditor, EM_SETREADONLY, 0, 0);
+            SendMessageW(hwndEditor, EM_SETREADONLY, 0, 0);
         else
-            SendMessage(hwndEditor, EM_SETREADONLY, 1, 0);
+            SendMessageW(hwndEditor, EM_SETREADONLY, 1, 0);
         return 0;
         }
 
     case ID_EDIT_MODIFIED:
-        if (SendMessage(hwndEditor, EM_GETMODIFY, 0, 0))
-            SendMessage(hwndEditor, EM_SETMODIFY, 0, 0);
+        if (SendMessageW(hwndEditor, EM_GETMODIFY, 0, 0))
+            SendMessageW(hwndEditor, EM_SETMODIFY, 0, 0);
         else
-            SendMessage(hwndEditor, EM_SETMODIFY, 1, 0);
+            SendMessageW(hwndEditor, EM_SETMODIFY, 1, 0);
         return 0;
 
     case ID_EDIT_UNDO:
-        SendMessage(hwndEditor, EM_UNDO, 0, 0);
+        SendMessageW(hwndEditor, EM_UNDO, 0, 0);
         return 0;
 
     case ID_EDIT_REDO:
-        SendMessage(hwndEditor, EM_REDO, 0, 0);
+        SendMessageW(hwndEditor, EM_REDO, 0, 0);
         return 0;
 
     case ID_ALIGN_LEFT:
@@ -729,16 +734,16 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         case ID_ALIGN_CENTER: pf.wAlignment = PFA_CENTER; break;
         case ID_ALIGN_RIGHT: pf.wAlignment = PFA_RIGHT; break;
         }
-        SendMessage(hwndEditor, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
+        SendMessageW(hwndEditor, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
         break;
         }
 
     case ID_BACK_1:
-        SendMessage(hwndEditor, EM_SETBKGNDCOLOR, 1, 0);
+        SendMessageW(hwndEditor, EM_SETBKGNDCOLOR, 1, 0);
         break;
 
     case ID_BACK_2:
-        SendMessage(hwndEditor, EM_SETBKGNDCOLOR, 0, RGB(255,255,192));
+        SendMessageW(hwndEditor, EM_SETBKGNDCOLOR, 0, RGB(255,255,192));
         break;
 
     case ID_TOGGLE_TOOLBAR:
@@ -757,7 +762,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     default:
-        SendMessage(hwndEditor, WM_COMMAND, wParam, lParam);
+        SendMessageW(hwndEditor, WM_COMMAND, wParam, lParam);
         break;
     }
     return 0;
@@ -774,7 +779,7 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
     REBARBANDINFOW rbbinfo;
 
     pf.cbSize = sizeof(PARAFORMAT);
-    SendMessage(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
+    SendMessageW(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
     CheckMenuItem(hMenu, ID_EDIT_READONLY,
       MF_BYCOMMAND|(GetWindowLong(hwndEditor, GWL_STYLE)&ES_READONLY ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, ID_EDIT_MODIFIED,
@@ -824,7 +829,7 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
 
     if (hwndStatusBar)
     {
-        SendMessage(hwndStatusBar, WM_SIZE, 0, 0);
+        SendMessageW(hwndStatusBar, WM_SIZE, 0, 0);
         if (IsWindowVisible(hwndStatusBar))
         {
             GetClientRect(hwndStatusBar, &rc);
@@ -839,8 +844,8 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
         rc.left = rc.top = 0;
         rc.right = LOWORD(lParam);
         rc.bottom = HIWORD(lParam);
-        SendMessage(hwndToolBar, TB_AUTOSIZE, 0, 0);
-        SendMessage(hwndReBar, RB_SIZETORECT, 0, (LPARAM)&rc);
+        SendMessageW(hwndToolBar, TB_AUTOSIZE, 0, 0);
+        SendMessageW(hwndReBar, RB_SIZETORECT, 0, (LPARAM)&rc);
         GetClientRect(hwndReBar, &rc);
         MoveWindow(hwndReBar, 0, 0, LOWORD(lParam), rc.right, FALSE);
     }
@@ -922,10 +927,12 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     HACCEL hAccel;
     WNDCLASSW wc;
     MSG msg;
+    static const WCHAR wszAccelTable[] = {'M','A','I','N','A','C','C','E','L',
+                                          'T','A','B','L','E','\0'};
 
     InitCommonControlsEx(&classes);
 
-    hAccel = LoadAccelerators(hInstance, "MAINACCELTABLE");
+    hAccel = LoadAcceleratorsW(hInstance, wszAccelTable);
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = WndProc;
@@ -945,14 +952,14 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
 
     HandleCommandLine(GetCommandLineW());
 
-    while(GetMessage(&msg,0,0,0))
+    while(GetMessageW(&msg,0,0,0))
     {
-        if (TranslateAccelerator(hMainWnd, hAccel, &msg))
+        if (TranslateAcceleratorW(hMainWnd, hAccel, &msg))
             continue;
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
-        if (!PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE))
-            SendMessage(hMainWnd, WM_USER, 0, 0);
+        DispatchMessageW(&msg);
+        if (!PeekMessageW(&msg, 0, 0, 0, PM_NOREMOVE))
+            SendMessageW(hMainWnd, WM_USER, 0, 0);
     }
 
     return 0;
