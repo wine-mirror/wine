@@ -232,6 +232,12 @@ s_square_puint(puint_t p)
   return n * n;
 }
 
+int
+s_dot_copy_vectors(vector_t u, vector_t v)
+{
+  return u.x * v.x + u.y * v.y + u.z * v.z;
+}
+
 void
 s_stop(void)
 {
@@ -342,6 +348,7 @@ basic_tests(void)
   ok(ptypes_sum(&ptypes) == 33.0, "RPC ptypes_sum\n");
 
   ok(dot_pvectors(&pvecs) == -21, "RPC dot_pvectors\n");
+  ok(dot_copy_vectors(vec1, vec2) == -21, "RPC dot_copy_vectors\n");
   ok(sum_fixed_array(f) == -2, "RPC sum_fixed_array\n");
   ok(sum_sp(&sp) == 29, "RPC sum_sp\n");
 }
