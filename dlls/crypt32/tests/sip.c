@@ -84,6 +84,11 @@ static void test_AddRemoveProvider(void)
     newprov.pwszRemoveFuncName = dummyfunction;
     SetLastError(0xdeadbeef);
     ret = CryptSIPAddProvider(&newprov);
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        skip("Need admin rights\n");
+        return;
+    }
     ok ( ret, "CryptSIPAddProvider should have succeeded\n");
 
     /* Dummy provider will be deleted, but the function still fails because
