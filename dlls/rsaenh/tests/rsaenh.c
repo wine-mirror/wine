@@ -1318,6 +1318,11 @@ static void test_schannel_provider(void)
         0x3d, 0xca, 0x6a, 0x6f, 0xfa, 0x15, 0x4e, 0xaa
     };
     
+    result = CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_SCHANNEL, CRYPT_VERIFYCONTEXT|CRYPT_NEWKEYSET);
+    ok (result, "%08x\n", GetLastError());
+    if (result)
+        CryptReleaseContext(hProv, 0);
+
     result = CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_SCHANNEL, CRYPT_VERIFYCONTEXT);
     ok (result, "%08x\n", GetLastError());
     if (!result) return;

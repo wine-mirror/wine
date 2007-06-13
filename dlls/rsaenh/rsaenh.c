@@ -1502,6 +1502,7 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
             *phProv = new_key_container(szKeyContainerName, dwFlags, pVTable);
             break;
 
+        case CRYPT_VERIFYCONTEXT|CRYPT_NEWKEYSET:
         case CRYPT_VERIFYCONTEXT:
             if (pszContainer) {
                 TRACE("pszContainer should be NULL\n");
