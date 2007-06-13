@@ -531,8 +531,7 @@ resource
 
 		if(!win32)
 			parser_warning("LANGUAGE not supported in 16-bit mode");
-		if(currentlanguage)
-			free(currentlanguage);
+		free(currentlanguage);
 		if (get_language_codepage($3, $5) == -1)
 			parser_error( "Language %04x is not supported", ($5<<10) + $3);
 		currentlanguage = new_language($3, $5);
@@ -1460,11 +1459,8 @@ stringtable
 			 }
 			 /* Else were done */
 		}
-		if(tagstt_memopt)
-		{
-			free(tagstt_memopt);
-			tagstt_memopt = NULL;
-		}
+		free(tagstt_memopt);
+		tagstt_memopt = NULL;
 
 		$$ = tagstt;
 		}
@@ -1477,8 +1473,7 @@ stt_head: tSTRINGTABLE loadmemopts opt_lvc {
 		tagstt_memopt = $2;
 		tagstt_version = $3->version;
 		tagstt_characts = $3->characts;
-		if($3)
-			free($3);
+		free($3);
 		}
 	;
 
