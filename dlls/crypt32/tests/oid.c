@@ -286,8 +286,14 @@ static void test_registerOIDFunction(void)
     ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "foo",
      "1.2.3.4.5.6.7.8.9.10", NULL, NULL);
     ok(ret, "Expected pseudo-success, got %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
     ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        skip("Need admin rights\n");
+        return;
+    }
     ok(ret, "CryptRegisterOIDFunction failed: %d\n", GetLastError());
     ret = CryptUnregisterOIDFunction(X509_ASN_ENCODING, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10");
@@ -334,8 +340,14 @@ static void test_registerDefaultOIDFunction(void)
     ret = CryptRegisterDefaultOIDFunction(0, NULL, 0, bogusDll);
      */
     /* Register one at index 0 */
+    SetLastError(0xdeadbeef);
     ret = CryptRegisterDefaultOIDFunction(0, "CertDllOpenStoreProv", 0,
      bogusDll);
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        skip("Need admin rights\n");
+        return;
+    }
     ok(ret, "CryptRegisterDefaultOIDFunction failed: %08x\n", GetLastError());
     /* Reregistering should fail */
     ret = CryptRegisterDefaultOIDFunction(0, "CertDllOpenStoreProv", 0,
