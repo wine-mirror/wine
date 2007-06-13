@@ -311,6 +311,8 @@ static void test_RegPolicyFlags(void)
     if (!pGetFlags || !pSetFlags)
         skip("Policy flags functions not present\n");
 
+    pGetFlags(&flags2);
+
     r = RegOpenKeyExA(HKEY_CURRENT_USER, Software_Publishing, 0, KEY_ALL_ACCESS,
      &key);
     ok(!r, "RegOpenKeyEx failed: %d\n", r);
@@ -319,7 +321,6 @@ static void test_RegPolicyFlags(void)
     r = RegQueryValueExA(key, State, NULL, NULL, (LPBYTE)&flags1, &size);
     ok(!r, "RegQueryValueEx failed: %d\n", r);
 
-    pGetFlags(&flags2);
     ok(flags1 == flags2, "Got %08x flags instead of %08x\n", flags1, flags2);
 
     flags3 = flags2 | 1;
