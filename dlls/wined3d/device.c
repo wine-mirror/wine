@@ -140,8 +140,6 @@ static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3
     _basetexture.dirty      = TRUE; \
     _basetexture.is_srgb = FALSE; \
     _basetexture.srgb_mode_change_count = 0; \
-    _basetexture.is_srgb = FALSE; \
-    _basetexture.srgb_mode_change_count = 0; \
 }
 
 /**********************************************************
