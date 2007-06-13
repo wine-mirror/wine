@@ -828,7 +828,7 @@ static int processed(const type_t *type)
 
 static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
 {
-    unsigned int start, absoff;
+    unsigned int start, absoff, flags;
     unsigned int align = 0, ualign = 0;
     const char *name;
     type_t *utype = get_user_type(type, &name);
@@ -854,11 +854,19 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
         absoff = utype->typestring_offset;
     }
 
+    if (utype->type == RPC_FC_RP)
+        flags = 0x40;
+    else if (utype->type == RPC_FC_UP)
+        flags = 0x80;
+    else
+        flags = 0;
+
     start = *tfsoff;
     update_tfsoff(type, start, file);
     print_file(file, 0, "/* %d */\n", start);
     print_file(file, 2, "0x%x,\t/* FC_USER_MARSHAL */\n", RPC_FC_USER_MARSHAL);
-    print_file(file, 2, "0x%x,\t/* %d */\n", align - 1, align - 1);
+    print_file(file, 2, "0x%x,\t/* Alignment= %d, Flags= %02x */\n",
+               flags | (align - 1), align - 1, flags);
     print_file(file, 2, "NdrFcShort(0x%hx),\t/* Function offset= %hu */\n", funoff, funoff);
     print_file(file, 2, "NdrFcShort(0x%lx),\t/* %lu */\n", usize, usize);
     print_file(file, 2, "NdrFcShort(0x%lx),\t/* %lu */\n", size, size);

@@ -133,5 +133,22 @@ interface IServer
   typedef [wire_marshal(int)] void *puint_t;
   int square_puint(puint_t p);
   int dot_copy_vectors(vector_t u, vector_t v);
+
+  typedef struct wire_us *wire_us_t;
+  typedef [wire_marshal(wire_us_t)] struct us us_t;
+  struct us
+  {
+    void *x;
+  };
+  struct wire_us
+  {
+    int x;
+  };
+  typedef struct
+  {
+    us_t us;
+  } test_us_t;
+
+  int square_test_us(test_us_t *tus);
   void stop(void);
 }

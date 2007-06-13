@@ -238,6 +238,13 @@ s_dot_copy_vectors(vector_t u, vector_t v)
   return u.x * v.x + u.y * v.y + u.z * v.z;
 }
 
+int
+s_square_test_us(test_us_t *tus)
+{
+  int n = atoi(tus->us.x);
+  return n * n;
+}
+
 void
 s_stop(void)
 {
@@ -432,14 +439,47 @@ puint_t_UserFree(ULONG *flags, puint_t *p)
   HeapFree(GetProcessHeap(), 0, *p);
 }
 
+ULONG __RPC_USER
+us_t_UserSize(ULONG *flags, ULONG start, us_t *pus)
+{
+  return start + sizeof(struct wire_us);
+}
+
+unsigned char * __RPC_USER
+us_t_UserMarshal(ULONG *flags, unsigned char *buffer, us_t *pus)
+{
+  struct wire_us wus;
+  wus.x = atoi(pus->x);
+  memcpy(buffer, &wus, sizeof wus);
+  return buffer + sizeof wus;
+}
+
+unsigned char * __RPC_USER
+us_t_UserUnmarshal(ULONG *flags, unsigned char *buffer, us_t *pus)
+{
+  struct wire_us wus;
+  memcpy(&wus, buffer, sizeof wus);
+  pus->x = HeapAlloc(GetProcessHeap(), 0, 10);
+  sprintf(pus->x, "%d", wus.x);
+  return buffer + sizeof wus;
+}
+
+void __RPC_USER
+us_t_UserFree(ULONG *flags, us_t *pus)
+{
+  HeapFree(GetProcessHeap(), 0, pus->x);
+}
+
 static void
 pointer_tests(void)
 {
   static char p1[] = "11";
   test_list_t *list = make_list(make_list(make_list(null_list())));
+  static test_us_t tus = {{p1}};
 
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
   ok(square_puint(p1) == 121, "RPC square_puint\n");
+  ok(square_test_us(&tus) == 121, "RPC square_test_us\n");
 
   free_list(list);
 }
