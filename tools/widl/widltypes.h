@@ -46,6 +46,7 @@ typedef struct _typelib_entry_t typelib_entry_t;
 typedef struct _importlib_t importlib_t;
 typedef struct _importinfo_t importinfo_t;
 typedef struct _typelib_t typelib_t;
+typedef struct _user_type_t user_type_t;
 
 typedef struct list attr_list_t;
 typedef struct list str_list_t;
@@ -55,6 +56,7 @@ typedef struct list var_list_t;
 typedef struct list pident_list_t;
 typedef struct list ifref_list_t;
 typedef struct list array_dims_t;
+typedef struct list user_type_list_t;
 
 enum attr_type
 {
@@ -294,6 +296,14 @@ struct _typelib_t {
     struct list entries;
     struct list importlibs;
 };
+
+struct _user_type_t {
+    struct list entry;
+    const char *name;
+};
+
+extern user_type_list_t user_type_list;
+void check_for_user_types(const var_list_t *list);
 
 void init_types(void);
 

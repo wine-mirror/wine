@@ -61,7 +61,7 @@ static int print_server(const char *format, ...)
 }
 
 
-static void write_parameters_init(const func_t *func)
+void write_parameters_init(const func_t *func)
 {
     const var_t *var;
 
@@ -69,8 +69,14 @@ static void write_parameters_init(const func_t *func)
         return;
 
     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-        if (var->type->type != RPC_FC_BIND_PRIMITIVE)
-            print_server("%s = 0;\n", var->name);
+    {
+        const type_t *t = var->type;
+        const char *n = var->name;
+        if (decl_indirect(t))
+            print_server("MIDL_memset(&%s, 0, sizeof %s);\n", n, n);
+        else if (is_ptr(t) || is_array(t))
+            print_server("%s = 0;\n", n);
+    }
 
     fprintf(server, "\n");
 }
@@ -337,7 +343,7 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
     print_server("0,\n");
     print_server("0x50100a4, /* MIDL Version 5.1.164 */\n");
     print_server("0,\n");
-    print_server("0,\n");
+    print_server("%s,\n", list_empty(&user_type_list) ? "0" : "UserMarshalRoutines");
     print_server("0,  /* notify & notify_flag routine table */\n");
     print_server("1,  /* Flags */\n");
     print_server("0,  /* Reserved3 */\n");
@@ -454,6 +460,7 @@ void write_server(ifref_list_t *ifaces)
             if (expr_eval_routines)
                 write_expr_eval_routine_list(server, iface->iface->name);
 
+            write_user_quad_list(server);
             write_stubdescriptor(iface->iface, expr_eval_routines);
             write_dispatchtable(iface->iface);
         }

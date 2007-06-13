@@ -285,25 +285,18 @@ void write_type(FILE *h, type_t *t, int is_field, const char *fmt, ...)
   write_type_right(h, t, is_field);
 }
 
-
-struct user_type
-{
-    struct user_type *next;
-    char name[1];
-};
-
-static struct user_type *user_type_list;
+user_type_list_t user_type_list = LIST_INIT(user_type_list);
 
 static int user_type_registered(const char *name)
 {
-  struct user_type *ut;
-  for (ut = user_type_list; ut; ut = ut->next)
+  user_type_t *ut;
+  LIST_FOR_EACH_ENTRY(ut, &user_type_list, user_type_t, entry)
     if (!strcmp(name, ut->name))
-        return 1;
+      return 1;
   return 0;
 }
 
-static void check_for_user_types(const var_list_t *list)
+void check_for_user_types(const var_list_t *list)
 {
   const var_t *v;
 
@@ -318,10 +311,9 @@ static void check_for_user_types(const var_list_t *list)
       if (is_attr(type->attrs, ATTR_WIREMARSHAL)) {
         if (!user_type_registered(name))
         {
-          struct user_type *ut = xmalloc(sizeof(struct user_type) + strlen(name));
-          strcpy(ut->name, name);
-          ut->next = user_type_list;
-          user_type_list = ut;
+          user_type_t *ut = xmalloc(sizeof *ut);
+          ut->name = xstrdup(name);
+          list_add_tail(&user_type_list, &ut->entry);
         }
         /* don't carry on parsing fields within this type as we are already
          * using a wire marshaled type */
@@ -337,8 +329,8 @@ static void check_for_user_types(const var_list_t *list)
 
 void write_user_types(void)
 {
-  struct user_type *ut;
-  for (ut = user_type_list; ut; ut = ut->next)
+  user_type_t *ut;
+  LIST_FOR_EACH_ENTRY(ut, &user_type_list, user_type_t, entry)
   {
     const char *name = ut->name;
     fprintf(header, "ULONG           __RPC_USER %s_UserSize     (ULONG *, ULONG, %s *);\n", name, name);
@@ -668,7 +660,6 @@ static void write_method_proto(const type_t *iface)
       fprintf(header, "    IRpcChannelBuffer* pRpcChannelBuffer,\n");
       fprintf(header, "    PRPC_MESSAGE pRpcMessage,\n");
       fprintf(header, "    DWORD* pdwStubPhase);\n");
-      check_for_user_types(cur->args);
     }
     if (cas) {
       const func_t *m;

@@ -137,6 +137,20 @@ int is_union(unsigned char type)
     }
 }
 
+static unsigned short user_type_offset(const char *name)
+{
+    user_type_t *ut;
+    unsigned short off = 0;
+    LIST_FOR_EACH_ENTRY(ut, &user_type_list, user_type_t, entry)
+    {
+        if (strcmp(name, ut->name) == 0)
+            return off;
+        ++off;
+    }
+    error("user_type_offset: couldn't find type (%s)\n", name);
+    return 0;
+}
+
 static void update_tfsoff(type_t *type, unsigned int offset, FILE *file)
 {
     type->typestring_offset = offset;
@@ -154,10 +168,34 @@ static void guard_rec(type_t *type)
         type->typestring_offset = 1;
 }
 
+static type_t *get_user_type(const type_t *t, const char **pname)
+{
+    for (;;)
+    {
+        type_t *ut = get_attrp(t->attrs, ATTR_WIREMARSHAL);
+        if (ut)
+        {
+            if (pname)
+                *pname = t->name;
+            return ut;
+        }
+
+        if (t->kind == TKIND_ALIAS)
+            t = t->orig;
+        else
+            return 0;
+    }
+}
+
+static int is_user_type(const type_t *t)
+{
+    return get_user_type(t, NULL) != NULL;
+}
+
 static int is_embedded_complex(const type_t *type)
 {
     unsigned char tc = type->type;
-    return is_struct(tc) || is_union(tc) || is_array(type);
+    return is_struct(tc) || is_union(tc) || is_array(type) || is_user_type(type);
 }
 
 static int compare_expr(const expr_t *a, const expr_t *b)
@@ -257,20 +295,6 @@ void write_formatstringsdecl(FILE *f, int indent, ifref_list_t *ifaces, int for_
     print_file(f, indent, "\n");
 }
 
-static int is_user_derived(const var_t *v)
-{
-    const type_t *type = v->type;
-
-    if (v->attrs && is_attr( v->attrs, ATTR_WIREMARSHAL )) return 1;
-
-    while (type)
-    {
-        if (type->attrs && is_attr( type->attrs, ATTR_WIREMARSHAL )) return 1;
-        type = type->ref;
-    }
-    return 0;
-}
-
 static inline int is_base_type(unsigned char type)
 {
     switch (type)
@@ -297,6 +321,14 @@ static inline int is_base_type(unsigned char type)
     default:
         return FALSE;
     }
+}
+
+int decl_indirect(const type_t *t)
+{
+    return is_user_type(t)
+        || (!is_base_type(t->type)
+            && !is_ptr(t)
+            && !is_array(t));
 }
 
 static size_t write_procformatstring_var(FILE *file, int indent,
@@ -792,6 +824,48 @@ static size_t write_pointer_tfs(FILE *file, type_t *type, unsigned int *typestri
 static int processed(const type_t *type)
 {
     return type->typestring_offset && !type->tfswrite;
+}
+
+static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
+{
+    unsigned int start, absoff;
+    unsigned int align = 0, ualign = 0;
+    const char *name;
+    type_t *utype = get_user_type(type, &name);
+    size_t usize = type_memsize(utype, &ualign);
+    size_t size = type_memsize(type, &align);
+    unsigned short funoff = user_type_offset(name);
+    short reloff;
+
+    guard_rec(type);
+
+    if (is_base_type(utype->type))
+    {
+        absoff = *tfsoff;
+        print_file(file, 0, "/* %d */\n", absoff);
+        print_file(file, 2, "0x%x,\t/* %s */\n", utype->type, string_of_type(utype->type));
+        print_file(file, 2, "0x5c,\t/* FC_PAD */\n");
+        *tfsoff += 2;
+    }
+    else
+    {
+        if (!processed(utype))
+            write_embedded_types(file, NULL, utype, utype->name, TRUE, tfsoff);
+        absoff = utype->typestring_offset;
+    }
+
+    start = *tfsoff;
+    update_tfsoff(type, start, file);
+    print_file(file, 0, "/* %d */\n", start);
+    print_file(file, 2, "0x%x,\t/* FC_USER_MARSHAL */\n", RPC_FC_USER_MARSHAL);
+    print_file(file, 2, "0x%x,\t/* %d */\n", align - 1, align - 1);
+    print_file(file, 2, "NdrFcShort(0x%hx),\t/* Function offset= %hu */\n", funoff, funoff);
+    print_file(file, 2, "NdrFcShort(0x%lx),\t/* %lu */\n", usize, usize);
+    print_file(file, 2, "NdrFcShort(0x%lx),\t/* %lu */\n", size, size);
+    *tfsoff += 8;
+    reloff = absoff - *tfsoff;
+    print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%lu) */\n", reloff, reloff, absoff);
+    *tfsoff += 2;
 }
 
 static void write_member_type(FILE *file, type_t *type, const var_t *field,
@@ -1396,6 +1470,12 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
     int pointer_type;
     size_t offset;
 
+    if (is_user_type(type))
+    {
+        write_user_tfs(file, type, typeformat_offset);
+        return type->typestring_offset;
+    }
+
     if (type == var->type)      /* top-level pointers */
     {
         int pointer_attr = get_attrv(var->attrs, ATTR_POINTERTYPE);
@@ -1482,7 +1562,12 @@ static void set_tfswrite(type_t *type, int val)
 {
     while (type->tfswrite != val)
     {
+        type_t *utype = get_user_type(type, NULL);
+
         type->tfswrite = val;
+
+        if (utype)
+            set_tfswrite(utype, val);
 
         if (type->kind == TKIND_ALIAS)
             type = type->orig;
@@ -1508,7 +1593,11 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
 {
     int retmask = 0;
 
-    if (is_ptr(type))
+    if (is_user_type(type))
+    {
+        write_user_tfs(file, type, tfsoff);
+    }
+    else if (is_ptr(type))
     {
         type_t *ref = type->ref;
 
@@ -1795,7 +1884,7 @@ static unsigned int get_function_buffer_size( const func_t *func, enum pass pass
 
 static void print_phase_function(FILE *file, int indent, const char *type,
                                  enum remoting_phase phase,
-                                 const char *varname, unsigned int type_offset)
+                                 const var_t *var, unsigned int type_offset)
 {
     const char *function;
     switch (phase)
@@ -1820,9 +1909,11 @@ static void print_phase_function(FILE *file, int indent, const char *type,
     print_file(file, indent, "Ndr%s%s(\n", type, function);
     indent++;
     print_file(file, indent, "&_StubMsg,\n");
-    print_file(file, indent, "%s%s,\n",
-               (phase == PHASE_UNMARSHAL) ? "(unsigned char **)&" : "(unsigned char *)",
-               varname);
+    print_file(file, indent, "%s%s%s%s,\n",
+               (phase == PHASE_UNMARSHAL) ? "(unsigned char **)" : "(unsigned char *)",
+               (phase == PHASE_UNMARSHAL || decl_indirect(var->type)) ? "&" : "",
+               (phase == PHASE_UNMARSHAL && decl_indirect(var->type)) ? "_p_" : "",
+               var->name);
     print_file(file, indent, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]%s\n",
                type_offset, (phase == PHASE_UNMARSHAL) ? "," : ");");
     if (phase == PHASE_UNMARSHAL)
@@ -1971,14 +2062,14 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
 
         rtype = type->type;
 
-        if (is_user_derived( var ))
+        if (is_user_type(var->type))
         {
-            print_phase_function(file, indent, "UserMarshal", phase, var->name, start_offset);
+            print_phase_function(file, indent, "UserMarshal", phase, var, start_offset);
         }
         else if (is_string_type(var->attrs, var->type))
         {
             if (is_array(type) && !is_conformant_array(type))
-                print_phase_function(file, indent, "NonConformantString", phase, var->name, start_offset);
+                print_phase_function(file, indent, "NonConformantString", phase, var, start_offset);
             else
             {
                 if (type->size_is && is_size_needed_for_phase(phase))
@@ -1989,9 +2080,9 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 }
 
                 if ((phase == PHASE_FREE) || (pointer_type == RPC_FC_UP))
-                    print_phase_function(file, indent, "Pointer", phase, var->name, start_offset);
+                    print_phase_function(file, indent, "Pointer", phase, var, start_offset);
                 else
-                    print_phase_function(file, indent, "ConformantString", phase, var->name,
+                    print_phase_function(file, indent, "ConformantString", phase, var,
                                          start_offset + (type->size_is ? 4 : 2));
             }
         }
@@ -2049,9 +2140,9 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             else if (phase != PHASE_FREE)
             {
                 if (pointer_type == RPC_FC_UP)
-                    print_phase_function(file, indent, "Pointer", phase, var->name, start_offset);
+                    print_phase_function(file, indent, "Pointer", phase, var, start_offset);
                 else
-                    print_phase_function(file, indent, array_type, phase, var->name, start_offset);
+                    print_phase_function(file, indent, array_type, phase, var, start_offset);
             }
         }
         else if (!is_ptr(var->type) && is_base_type(rtype))
@@ -2064,17 +2155,17 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             {
             case RPC_FC_STRUCT:
             case RPC_FC_PSTRUCT:
-                print_phase_function(file, indent, "SimpleStruct", phase, var->name, start_offset);
+                print_phase_function(file, indent, "SimpleStruct", phase, var, start_offset);
                 break;
             case RPC_FC_CSTRUCT:
             case RPC_FC_CPSTRUCT:
-                print_phase_function(file, indent, "ConformantStruct", phase, var->name, start_offset);
+                print_phase_function(file, indent, "ConformantStruct", phase, var, start_offset);
                 break;
             case RPC_FC_CVSTRUCT:
-                print_phase_function(file, indent, "ConformantVaryingStruct", phase, var->name, start_offset);
+                print_phase_function(file, indent, "ConformantVaryingStruct", phase, var, start_offset);
                 break;
             case RPC_FC_BOGUS_STRUCT:
-                print_phase_function(file, indent, "ComplexStruct", phase, var->name, start_offset);
+                print_phase_function(file, indent, "ComplexStruct", phase, var, start_offset);
                 break;
             case RPC_FC_RP:
                 if (is_base_type( var->type->ref->type ))
@@ -2084,14 +2175,14 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 else if (var->type->ref->type == RPC_FC_STRUCT)
                 {
                     if (phase != PHASE_BUFFERSIZE && phase != PHASE_FREE)
-                        print_phase_function(file, indent, "SimpleStruct", phase, var->name, start_offset + 4);
+                        print_phase_function(file, indent, "SimpleStruct", phase, var, start_offset + 4);
                 }
                 else
                 {
                     const var_t *iid;
                     if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
                         print_file( file, indent, "_StubMsg.MaxCount = (unsigned long)%s;\n", iid->name );
-                    print_phase_function(file, indent, "Pointer", phase, var->name, start_offset);
+                    print_phase_function(file, indent, "Pointer", phase, var, start_offset);
                 }
                 break;
             default:
@@ -2107,14 +2198,14 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             else if (last_ptr(var->type) && (pointer_type == RPC_FC_RP) && (rtype == RPC_FC_STRUCT))
             {
                 if (phase != PHASE_BUFFERSIZE && phase != PHASE_FREE)
-                    print_phase_function(file, indent, "SimpleStruct", phase, var->name, start_offset + 4);
+                    print_phase_function(file, indent, "SimpleStruct", phase, var, start_offset + 4);
             }
             else
             {
                 const var_t *iid;
                 if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
                     print_file( file, indent, "_StubMsg.MaxCount = (unsigned long)%s;\n", iid->name );
-                print_phase_function(file, indent, "Pointer", phase, var->name, start_offset);
+                print_phase_function(file, indent, "Pointer", phase, var, start_offset);
             }
         }
         fprintf(file, "\n");
@@ -2308,6 +2399,10 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
             write_name(file, var);
         write_type_right(file, var->type, FALSE);
         fprintf(file, ";\n");
+
+        if (decl_indirect(var->type))
+            print_file(file, indent, "void *_p_%s = &%s;\n",
+                       var->name, var->name);
     }
 }
 
@@ -2414,6 +2509,27 @@ void write_expr_eval_routine_list(FILE *file, const char *iface)
     fprintf(file, "};\n\n");
 }
 
+void write_user_quad_list(FILE *file)
+{
+    user_type_t *ut;
+
+    if (list_empty(&user_type_list))
+        return;
+
+    fprintf(file, "static const USER_MARSHAL_ROUTINE_QUADRUPLE UserMarshalRoutines[] =\n");
+    fprintf(file, "{\n");
+    LIST_FOR_EACH_ENTRY(ut, &user_type_list, user_type_t, entry)
+    {
+        const char *sep = &ut->entry == list_tail(&user_type_list) ? "" : ",";
+        print_file(file, 1, "{\n");
+        print_file(file, 2, "%s_UserSize,\n", ut->name);
+        print_file(file, 2, "%s_UserMarshal,\n", ut->name);
+        print_file(file, 2, "%s_UserUnmarshal,\n", ut->name);
+        print_file(file, 2, "%s_UserFree\n", ut->name);
+        print_file(file, 1, "}%s\n", sep);
+    }
+    fprintf(file, "};\n\n");
+}
 
 void write_endpoints( FILE *f, const char *prefix, const str_list_t *list )
 {

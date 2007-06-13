@@ -85,7 +85,7 @@ static void write_stubdesc(void)
   print_proxy( "0,\n");
   print_proxy( "0x50100a4, /* MIDL Version 5.1.164 */\n");
   print_proxy( "0,\n");
-  print_proxy( "0,\n");
+  print_proxy("%s,\n", list_empty(&user_type_list) ? "0" : "UserMarshalRoutines");
   print_proxy( "0,  /* notify & notify_flag routine table */\n");
   print_proxy( "1,  /* Flags */\n");
   print_proxy( "0,  /* Reserved3 */\n");
@@ -373,9 +373,7 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   print_proxy("NdrStubInitialize(_pRpcMessage, &_StubMsg, &Object_StubDesc, _pRpcChannelBuffer);\n");
   fprintf(proxy, "\n");
 
-  if (cur->args)
-      LIST_FOR_EACH_ENTRY( arg, cur->args, const var_t, entry )
-          print_proxy("%s = 0;\n", arg->name);
+  write_parameters_init(cur);
 
   print_proxy("RpcTryFinally\n");
   print_proxy("{\n");
@@ -589,6 +587,7 @@ void write_proxies(ifref_list_t *ifaces)
           if (is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
               write_proxy(cur->iface, &proc_offset);
 
+  write_user_quad_list(proxy);
   write_stubdesc();
 
   print_proxy( "#if !defined(__RPC_WIN32__)\n");

@@ -125,6 +125,7 @@ static int compute_method_indexes(type_t *iface);
 static char *gen_name(void);
 static void process_typedefs(var_list_t *names);
 static void check_arg(var_t *arg);
+static void check_all_user_types(ifref_list_t *ifaces);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -275,6 +276,7 @@ static void check_arg(var_t *arg);
 %%
 
 input:   gbl_statements				{ fix_incomplete();
+						  check_all_user_types($1);
 						  write_proxies($1);
 						  write_client($1);
 						  write_server($1);
@@ -1931,4 +1933,17 @@ static void check_arg(var_t *arg)
 
   if (t->type == 0 && ! is_var_ptr(arg))
     yyerror("argument '%s' has void type", arg->name);
+}
+
+static void check_all_user_types(ifref_list_t *ifrefs)
+{
+  const ifref_t *ifref;
+  const func_t *f;
+
+  if (ifrefs) LIST_FOR_EACH_ENTRY(ifref, ifrefs, const ifref_t, entry)
+  {
+    const func_list_t *fs = ifref->iface->funcs;
+    if (fs) LIST_FOR_EACH_ENTRY(f, fs, const func_t, entry)
+      check_for_user_types(f->args);
+  }
 }

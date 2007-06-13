@@ -305,7 +305,7 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
     print_client("0,\n");
     print_client("0x50100a4, /* MIDL Version 5.1.164 */\n");
     print_client("0,\n");
-    print_client("0,\n");
+    print_client("%s,\n", list_empty(&user_type_list) ? "0" : "UserMarshalRoutines");
     print_client("0,  /* notify & notify_flag routine table */\n");
     print_client("1,  /* Flags */\n");
     print_client("0,  /* Reserved3 */\n");
@@ -434,6 +434,7 @@ void write_client(ifref_list_t *ifaces)
             expr_eval_routines = write_expr_eval_routines(client, iface->iface->name);
             if (expr_eval_routines)
                 write_expr_eval_routine_list(client, iface->iface->name);
+            write_user_quad_list(client);
             write_stubdescriptor(iface->iface, expr_eval_routines);
         }
     }

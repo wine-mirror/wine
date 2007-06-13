@@ -130,5 +130,7 @@ interface IServer
   int sum_cs(cs_t *cs);
   int sum_cps(cps_t *cps);
 
+  typedef [wire_marshal(int)] void *puint_t;
+  int square_puint(puint_t p);
   void stop(void);
 }

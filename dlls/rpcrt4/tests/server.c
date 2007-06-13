@@ -225,6 +225,13 @@ s_sum_cps(cps_t *cps)
   return sum;
 }
 
+int
+s_square_puint(puint_t p)
+{
+  int n = atoi(p);
+  return n * n;
+}
+
 void
 s_stop(void)
 {
@@ -388,12 +395,44 @@ free_list(test_list_t *list)
   HeapFree(GetProcessHeap(), 0, list);
 }
 
+ULONG __RPC_USER
+puint_t_UserSize(ULONG *flags, ULONG start, puint_t *p)
+{
+  return start + sizeof(int);
+}
+
+unsigned char * __RPC_USER
+puint_t_UserMarshal(ULONG *flags, unsigned char *buffer, puint_t *p)
+{
+  int n = atoi(*p);
+  memcpy(buffer, &n, sizeof n);
+  return buffer + sizeof n;
+}
+
+unsigned char * __RPC_USER
+puint_t_UserUnmarshal(ULONG *flags, unsigned char *buffer, puint_t *p)
+{
+  int n;
+  memcpy(&n, buffer, sizeof n);
+  *p = HeapAlloc(GetProcessHeap(), 0, 10);
+  sprintf(*p, "%d", n);
+  return buffer + sizeof n;
+}
+
+void __RPC_USER
+puint_t_UserFree(ULONG *flags, puint_t *p)
+{
+  HeapFree(GetProcessHeap(), 0, *p);
+}
+
 static void
 pointer_tests(void)
 {
+  static char p1[] = "11";
   test_list_t *list = make_list(make_list(make_list(null_list())));
 
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
+  ok(square_puint(p1) == 121, "RPC square_puint\n");
 
   free_list(list);
 }
