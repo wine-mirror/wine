@@ -63,7 +63,7 @@ static void test_constructor_destructor(void)
 
     status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
     expect(Ok, status);
-    ok(pen != NULL, "Expected pen to be initialized");
+    ok(pen != NULL, "Expected pen to be initialized\n");
 
     status = GdipDeletePen(NULL);
     expect(InvalidParameter, status);

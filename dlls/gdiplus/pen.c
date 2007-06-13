@@ -50,7 +50,7 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
         gp_pen->gdipen = ExtCreatePen(gp_pen->style, (INT) gp_pen->width, &lb,
             0, NULL);
     } else {
-        FIXME("UnitWorld, UnitPixel only supported units");
+        FIXME("UnitWorld, UnitPixel only supported units\n");
         return NotImplemented;
     }
 
