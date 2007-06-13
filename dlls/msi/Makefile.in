@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msi.dll
 IMPORTLIB = libmsi.$(IMPLIBEXT)
-IMPORTS   = urlmon wininet comctl32 shell32 shlwapi cabinet oleaut32 ole32 version user32 gdi32 advapi32 kernel32
+IMPORTS   = urlmon wininet comctl32 shell32 shlwapi cabinet oleaut32 ole32 version user32 gdi32 advapi32 kernel32 ntdll
 DELAYIMPORTS = odbccp32
 EXTRALIBS = -luuid
 

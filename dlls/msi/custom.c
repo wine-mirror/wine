@@ -25,10 +25,12 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "msidefs.h"
-#include "msipriv.h"
 #include "winuser.h"
+
+#include "msipriv.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -583,7 +585,19 @@ static DWORD WINAPI ACTION_CallDllFunction( const GUID *guid )
         {
             TRACE("calling %s\n", debugstr_w( info->target ) );
             handle_msi_break( info->target );
-            r = fn( hPackage );
+
+            __TRY
+            {
+                r = fn( hPackage );
+            }
+            __EXCEPT_PAGE_FAULT
+            {
+                ERR("Custom action (%s:%s) caused a page fault: %08x\n",
+                    debugstr_w(info->source), debugstr_w(info->target), GetExceptionCode());
+                r = ERROR_SUCCESS;
+            }
+            __ENDTRY;
+
             MsiCloseHandle( hPackage );
         }
         else
