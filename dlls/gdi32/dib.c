@@ -149,22 +149,11 @@ int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
  *           DIB_GetBitmapInfo
  *
  * Get the info from a bitmap header.
- * Return 1 for INFOHEADER, 0 for COREHEADER,
- * 4 for V4HEADER, 5 for V5HEADER, -1 for error.
+ * Return 0 for COREHEADER, 1 for INFOHEADER, -1 for error.
  */
 static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
                               LONG *height, WORD *planes, WORD *bpp, DWORD *compr, DWORD *size )
 {
-    if (header->biSize == sizeof(BITMAPINFOHEADER))
-    {
-        *width  = header->biWidth;
-        *height = header->biHeight;
-        *planes = header->biPlanes;
-        *bpp    = header->biBitCount;
-        *compr  = header->biCompression;
-        *size   = header->biSizeImage;
-        return 1;
-    }
     if (header->biSize == sizeof(BITMAPCOREHEADER))
     {
         const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)header;
@@ -176,27 +165,15 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
         *size   = 0;
         return 0;
     }
-    if (header->biSize == sizeof(BITMAPV4HEADER))
+    if (header->biSize >= sizeof(BITMAPINFOHEADER)) /* assume BITMAPINFOHEADER */
     {
-        const BITMAPV4HEADER *v4hdr = (const BITMAPV4HEADER *)header;
-        *width  = v4hdr->bV4Width;
-        *height = v4hdr->bV4Height;
-        *planes = v4hdr->bV4Planes;
-        *bpp    = v4hdr->bV4BitCount;
-        *compr  = v4hdr->bV4V4Compression;
-        *size   = v4hdr->bV4SizeImage;
-        return 4;
-    }
-    if (header->biSize == sizeof(BITMAPV5HEADER))
-    {
-        const BITMAPV5HEADER *v5hdr = (const BITMAPV5HEADER *)header;
-        *width  = v5hdr->bV5Width;
-        *height = v5hdr->bV5Height;
-        *planes = v5hdr->bV5Planes;
-        *bpp    = v5hdr->bV5BitCount;
-        *compr  = v5hdr->bV5Compression;
-        *size   = v5hdr->bV5SizeImage;
-        return 5;
+        *width  = header->biWidth;
+        *height = header->biHeight;
+        *planes = header->biPlanes;
+        *bpp    = header->biBitCount;
+        *compr  = header->biCompression;
+        *size   = header->biSizeImage;
+        return 1;
     }
     ERR("(%d): unknown/wrong size for header\n", header->biSize );
     return -1;
