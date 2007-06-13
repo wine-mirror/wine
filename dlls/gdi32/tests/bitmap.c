@@ -1700,6 +1700,97 @@ static void test_CreateBitmap(void)
     DeleteObject(bm);
 }
 
+static void test_bitmapinfoheadersize(void)
+{
+    HBITMAP hdib;
+    BITMAPINFO bmi;
+    BITMAPCOREINFO bci;
+    HDC hdc = GetDC(0);
+
+    memset(&bmi, 0, sizeof(BITMAPINFO));
+    bmi.bmiHeader.biHeight = 100;
+    bmi.bmiHeader.biWidth = 512;
+    bmi.bmiHeader.biBitCount = 24;
+    bmi.bmiHeader.biPlanes = 1;
+
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER) - 1;
+
+    hdib = CreateDIBSection(hdc, &bmi, 0, NULL, NULL, 0);
+    ok(hdib == NULL, "CreateDIBSection succeeded\n");
+
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+
+    SetLastError(0xdeadbeef);
+    hdib = CreateDIBSection(hdc, &bmi, 0, NULL, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
+    DeleteObject(hdib);
+
+    bmi.bmiHeader.biSize++;
+
+    SetLastError(0xdeadbeef);
+    hdib = CreateDIBSection(hdc, &bmi, 0, NULL, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
+    DeleteObject(hdib);
+
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFO);
+
+    SetLastError(0xdeadbeef);
+    hdib = CreateDIBSection(hdc, &bmi, 0, NULL, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
+    DeleteObject(hdib);
+
+    bmi.bmiHeader.biSize++;
+
+    SetLastError(0xdeadbeef);
+    hdib = CreateDIBSection(hdc, &bmi, 0, NULL, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
+    DeleteObject(hdib);
+
+    bmi.bmiHeader.biSize = sizeof(BITMAPV4HEADER);
+
+    SetLastError(0xdeadbeef);
+    hdib = CreateDIBSection(hdc, &bmi, 0, NULL, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
+    DeleteObject(hdib);
+
+    bmi.bmiHeader.biSize = sizeof(BITMAPV5HEADER);
+
+    SetLastError(0xdeadbeef);
+    hdib = CreateDIBSection(hdc, &bmi, 0, NULL, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
+    DeleteObject(hdib);
+
+    memset(&bci, 0, sizeof(BITMAPCOREINFO));
+    bci.bmciHeader.bcHeight = 100;
+    bci.bmciHeader.bcWidth = 512;
+    bci.bmciHeader.bcBitCount = 24;
+    bci.bmciHeader.bcPlanes = 1;
+
+    bci.bmciHeader.bcSize = sizeof(BITMAPCOREHEADER) - 1;
+
+    hdib = CreateDIBSection(hdc, (BITMAPINFO *)&bci, 0, NULL, NULL, 0);
+    ok(hdib == NULL, "CreateDIBSection succeeded\n");
+
+    bci.bmciHeader.bcSize = sizeof(BITMAPCOREHEADER);
+
+    SetLastError(0xdeadbeef);
+    hdib = CreateDIBSection(hdc, (BITMAPINFO *)&bci, 0, NULL, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
+    DeleteObject(hdib);
+
+    bci.bmciHeader.bcSize++;
+
+    hdib = CreateDIBSection(hdc, (BITMAPINFO *)&bci, 0, NULL, NULL, 0);
+    ok(hdib == NULL, "CreateDIBSection succeeded\n");
+
+    bci.bmciHeader.bcSize = sizeof(BITMAPCOREINFO);
+
+    hdib = CreateDIBSection(hdc, (BITMAPINFO *)&bci, 0, NULL, NULL, 0);
+    ok(hdib == NULL, "CreateDIBSection succeeded\n");
+
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(bitmap)
 {
     is_win9x = GetWindowLongPtrW(GetDesktopWindow(), GWLP_WNDPROC) == 0;
@@ -1717,4 +1808,5 @@ START_TEST(bitmap)
     test_GetDIBits();
     test_select_object();
     test_CreateBitmap();
+    test_bitmapinfoheadersize();
 }
