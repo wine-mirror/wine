@@ -276,7 +276,7 @@ int ffs( int x );
 
 #ifndef HAVE_FUTIMES
 struct timeval;
-int futimes(int fd, const struct timeval tv[2]);
+int futimes(int fd, const struct timeval *tv);
 #endif
 
 #ifndef HAVE_GETPAGESIZE
