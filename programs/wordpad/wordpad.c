@@ -319,7 +319,8 @@ static void DoDefaultFont(void)
     ZeroMemory(&fmt, sizeof(fmt));
 
     fmt.cbSize = sizeof(fmt);
-    fmt.dwMask = CFM_FACE;
+    fmt.dwMask = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE;
+    fmt.dwEffects = 0;
 
     lstrcpyW(fmt.szFaceName, szFaceName);
 
