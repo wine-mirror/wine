@@ -16,37 +16,42 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_GP_PRIVATE_H_
-#define __WINE_GP_PRIVATE_H_
-
 #include "windef.h"
+#include "wingdi.h"
 #include "gdiplus.h"
+#include "gdiplus_private.h"
 
-#define GP_DEFAULT_PENSTYLE (PS_GEOMETRIC | PS_ENDCAP_FLAT)
+GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
+{
+    COLORREF col = ARGB2COLORREF(color);
 
-COLORREF ARGB2COLORREF(ARGB color);
+    if(!sf)  return InvalidParameter;
 
-struct GpPen{
-    UINT style;
-    COLORREF color;
-    GpUnit unit;
-    REAL width;
-    HPEN gdipen;
-};
+    *sf = GdipAlloc(sizeof(GpSolidFill));
+    if (!*sf) return OutOfMemory;
 
-struct GpGraphics{
-    HDC hdc;
-    HWND hwnd;
-};
+    (*sf)->brush.gdibrush = CreateSolidBrush(col);
+    (*sf)->brush.bt = BrushTypeSolidColor;
+    (*sf)->brush.color = col;
 
-struct GpBrush{
-    HBRUSH gdibrush;
-    GpBrushType bt;
-    COLORREF color;
-};
+    return Ok;
+}
 
-struct GpSolidFill{
-    GpBrush brush;
-};
+GpStatus WINGDIPAPI GdipGetBrushType(GpBrush *brush, GpBrushType *type)
+{
+    if(!brush || !type)  return InvalidParameter;
 
-#endif
+    *type = brush->bt;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
+{
+    if(!brush)  return InvalidParameter;
+
+    DeleteObject(brush->gdibrush);
+    GdipFree(brush);
+
+    return Ok;
+}

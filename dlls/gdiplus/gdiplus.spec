@@ -119,7 +119,7 @@
 @ stub GdipCreateRegionRect
 @ stub GdipCreateRegionRectI
 @ stub GdipCreateRegionRgnData
-@ stub GdipCreateSolidFill
+@ stdcall GdipCreateSolidFill(long ptr)
 @ stub GdipCreateStreamOnFile
 @ stub GdipCreateStringFormat
 @ stub GdipCreateTexture2
@@ -127,7 +127,7 @@
 @ stub GdipCreateTexture
 @ stub GdipCreateTextureIA
 @ stub GdipCreateTextureIAI
-@ stub GdipDeleteBrush
+@ stdcall GdipDeleteBrush(ptr)
 @ stub GdipDeleteCachedBitmap
 @ stub GdipDeleteCustomLineCap
 @ stub GdipDeleteFont
@@ -228,7 +228,7 @@
 @ stub GdipGetAdjustableArrowCapMiddleInset
 @ stub GdipGetAdjustableArrowCapWidth
 @ stub GdipGetAllPropertyItems
-@ stub GdipGetBrushType
+@ stdcall GdipGetBrushType(ptr ptr)
 @ stub GdipGetCellAscent
 @ stub GdipGetCellDescent
 @ stub GdipGetClip

@@ -7,6 +7,7 @@ IMPORTLIB = libgdiplus.$(IMPLIBEXT)
 IMPORTS   = user32 gdi32 advapi32 kernel32 ntdll
 
 C_SRCS = \
+	brush.c \
 	gdiplus.c \
 	graphics.c \
 	pen.c
