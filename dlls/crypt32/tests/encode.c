@@ -4846,7 +4846,7 @@ static void test_decodePKCSAttributes(DWORD dwEncoding)
         ok(attributes->rgAttr[0].cValue == 0,
          "Expected no attributes, got %d\n", attributes->rgAttr[0].cValue);
         ok(!strcmp(attributes->rgAttr[1].pszObjId, "1.5.6"),
-         "Expected 1.5.6, got %s", attributes->rgAttr[1].pszObjId);
+         "Expected 1.5.6, got %s\n", attributes->rgAttr[1].pszObjId);
         ok(attributes->rgAttr[1].cValue == 1,
          "Expected 1 attribute, got %d\n", attributes->rgAttr[1].cValue);
         ok(attributes->rgAttr[1].rgValue[0].cbData == ints[0].encoded[1] + 2,
