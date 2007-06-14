@@ -1505,7 +1505,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
         NtCurrentTeb()->glContext = NULL;
     } else {
         Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-        Drawable drawable = physDev->drawable;
+        Drawable drawable = get_glxdrawable(physDev);
         if (ctx->ctx == NULL) {
             /* The describe lines below are for debugging purposes only */
             if (TRACE_ON(wgl)) {
