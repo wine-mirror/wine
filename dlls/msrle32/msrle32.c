@@ -60,23 +60,27 @@ static BOOL    isSupportedMRLE(LPCBITMAPINFOHEADER lpbi);
 static BYTE    MSRLE32_GetNearestPaletteIndex(UINT count, const RGBQUAD *clrs, RGBQUAD clr);
 
 /* compression functions */
-static void    computeInternalFrame(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn, LPBYTE lpIn);
+static void    computeInternalFrame(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn, const BYTE *lpIn);
 static LONG    MSRLE32_GetMaxCompressedSize(LPCBITMAPINFOHEADER lpbi);
-static LRESULT MSRLE32_CompressRLE4(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lpIn, LPBITMAPINFOHEADER lpbiOut, LPBYTE lpOut, BOOL isKey);
-static LRESULT MSRLE32_CompressRLE8(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lpIn, LPBITMAPINFOHEADER lpbiOut, LPBYTE lpOut, BOOL isKey);
+static LRESULT MSRLE32_CompressRLE4(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
+                                    const BYTE *lpIn, LPBITMAPINFOHEADER lpbiOut,
+                                    LPBYTE lpOut, BOOL isKey);
+static LRESULT MSRLE32_CompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
+                                    const BYTE *lpIn, LPBITMAPINFOHEADER lpbiOut,
+                                    LPBYTE lpOut, BOOL isKey);
 
 /* decompression functions */
-static LRESULT MSRLE32_DecompressRLE4(CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
-				      LPBYTE lpIn, LPBYTE lpOut);
-static LRESULT MSRLE32_DecompressRLE8(CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
-				      LPBYTE lpIn, LPBYTE lpOut);
+static LRESULT MSRLE32_DecompressRLE4(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
+				      const BYTE *lpIn, LPBYTE lpOut);
+static LRESULT MSRLE32_DecompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
+				      const BYTE *lpIn, LPBYTE lpOut);
 
 /* API functions */
 static LRESULT CompressGetFormat(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 				 LPBITMAPINFOHEADER lpbiOut);
 static LRESULT CompressGetSize(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 			       LPCBITMAPINFOHEADER lpbiOut);
-static LRESULT CompressQuery(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
+static LRESULT CompressQuery(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 			     LPCBITMAPINFOHEADER lpbiOut);
 static LRESULT CompressBegin(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 			     LPCBITMAPINFOHEADER lpbiOut);
@@ -183,7 +187,7 @@ static BYTE MSRLE32_GetNearestPaletteIndex(UINT count, const RGBQUAD *clrs, RGBQ
 
 /*****************************************************************************/
 
-void computeInternalFrame(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn, LPBYTE lpIn)
+void computeInternalFrame(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn, const BYTE *lpIn)
 {
   WORD   wIntensityTbl[256];
   DWORD  lInLine, lOutLine;
@@ -258,7 +262,7 @@ static LONG MSRLE32_GetMaxCompressedSize(LPCBITMAPINFOHEADER lpbi)
  * lpA => previous pos in current  frame
  * lpB => current  pos in current  frame
  */
-static INT countDiffRLE4(LPWORD lpP, LPWORD lpA, LPWORD lpB, INT pos, LONG lDist, LONG width)
+static INT countDiffRLE4(const WORD *lpP, const WORD *lpA, const WORD *lpB, INT pos, LONG lDist, LONG width)
 {
   INT  count;
   WORD clr1, clr2;
@@ -317,7 +321,7 @@ static INT countDiffRLE4(LPWORD lpP, LPWORD lpA, LPWORD lpB, INT pos, LONG lDist
  * lpA => previous pos in current  frame
  * lpB => current  pos in current  frame
  */
-static INT countDiffRLE8(LPWORD lpP, LPWORD lpA, LPWORD lpB, INT pos, LONG lDist, LONG width)
+static INT countDiffRLE8(const WORD *lpP, const WORD *lpA, const WORD *lpB, INT pos, LONG lDist, LONG width)
 {
   INT count;
 
@@ -346,7 +350,11 @@ static INT countDiffRLE8(LPWORD lpP, LPWORD lpA, LPWORD lpB, INT pos, LONG lDist
   return count;
 }
 
-static INT MSRLE32_CompressRLE4Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBITMAPINFOHEADER lpbi, BYTE *lpIn, LONG lDist, INT x, LPBYTE *ppOut, DWORD *lpSizeImage)
+static INT MSRLE32_CompressRLE4Line(const CodecInfo *pi, const WORD *lpP,
+                                    const WORD *lpC, LPCBITMAPINFOHEADER lpbi,
+                                    const BYTE *lpIn, LONG lDist,
+                                    INT x, LPBYTE *ppOut,
+                                    DWORD *lpSizeImage)
 {
   LPBYTE lpOut = *ppOut;
   INT    count, pos;
@@ -445,7 +453,11 @@ static INT MSRLE32_CompressRLE4Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBI
   return x;
 }
 
-static INT MSRLE32_CompressRLE8Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBITMAPINFOHEADER lpbi, BYTE *lpIn, LONG lDist, INT x, LPBYTE *ppOut, DWORD *lpSizeImage)
+static INT MSRLE32_CompressRLE8Line(const CodecInfo *pi, const WORD *lpP,
+                                    const WORD *lpC, LPCBITMAPINFOHEADER lpbi,
+                                    const BYTE *lpIn, LONG lDist,
+                                    INT x, LPBYTE *ppOut,
+                                    DWORD *lpSizeImage)
 {
   LPBYTE lpOut = *ppOut;
   INT    count, pos;
@@ -528,7 +540,9 @@ static INT MSRLE32_CompressRLE8Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBI
   return x;
 }
 
-LRESULT MSRLE32_CompressRLE4(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lpIn, LPBITMAPINFOHEADER lpbiOut, LPBYTE lpOut, BOOL isKey)
+LRESULT MSRLE32_CompressRLE4(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
+                             const BYTE *lpIn, LPBITMAPINFOHEADER lpbiOut,
+                             LPBYTE lpOut, BOOL isKey)
 {
   LPWORD lpC;
   LONG   lLine, lInLine, lDist;
@@ -680,7 +694,9 @@ LRESULT MSRLE32_CompressRLE4(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
   return ICERR_OK;
 }
 
-LRESULT MSRLE32_CompressRLE8(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lpIn, LPBITMAPINFOHEADER lpbiOut, LPBYTE lpOut, BOOL isKey)
+LRESULT MSRLE32_CompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
+                             const BYTE *lpIn, LPBITMAPINFOHEADER lpbiOut,
+                             LPBYTE lpOut, BOOL isKey)
 {
   LPWORD lpC;
   LONG   lDist, lInLine, lLine;
@@ -820,8 +836,8 @@ LRESULT MSRLE32_CompressRLE8(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
 
 /*****************************************************************************/
 
-static LRESULT MSRLE32_DecompressRLE4(CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
-				      LPBYTE lpIn, LPBYTE lpOut)
+static LRESULT MSRLE32_DecompressRLE4(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
+				      const BYTE *lpIn, LPBYTE lpOut)
 {
   int  bytes_per_pixel;
   int  line_size;
@@ -982,8 +998,8 @@ static LRESULT MSRLE32_DecompressRLE4(CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
   return ICERR_OK;
 }
 
-static LRESULT MSRLE32_DecompressRLE8(CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
-				      LPBYTE lpIn, LPBYTE lpOut)
+static LRESULT MSRLE32_DecompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
+				      const BYTE *lpIn, LPBYTE lpOut)
 {
   int  bytes_per_pixel;
   int  line_size;
@@ -1153,7 +1169,7 @@ static LRESULT Close(CodecInfo *pi)
   return 1;
 }
 
-static LRESULT GetInfo(CodecInfo *pi, ICINFO *icinfo, DWORD dwSize)
+static LRESULT GetInfo(const CodecInfo *pi, ICINFO *icinfo, DWORD dwSize)
 {
   /* pre-condition */
   assert(pi != NULL);
@@ -1192,7 +1208,7 @@ static LRESULT SetQuality(CodecInfo *pi, LONG lQuality)
   return ICERR_OK;
 }
 
-static LRESULT Configure(CodecInfo *pi, HWND hWnd)
+static LRESULT Configure(const CodecInfo *pi, HWND hWnd)
 {
   /* pre-condition */
   assert(pi != NULL);
@@ -1313,7 +1329,7 @@ static LRESULT CompressGetSize(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
     return MSRLE32_GetMaxCompressedSize(lpbiOut);
 }
 
-static LRESULT CompressQuery(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
+static LRESULT CompressQuery(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 			     LPCBITMAPINFOHEADER lpbiOut)
 {
   /* pre-condition */
