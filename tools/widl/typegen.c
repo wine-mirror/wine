@@ -2530,10 +2530,10 @@ void write_user_quad_list(FILE *file)
     {
         const char *sep = &ut->entry == list_tail(&user_type_list) ? "" : ",";
         print_file(file, 1, "{\n");
-        print_file(file, 2, "%s_UserSize,\n", ut->name);
-        print_file(file, 2, "%s_UserMarshal,\n", ut->name);
-        print_file(file, 2, "%s_UserUnmarshal,\n", ut->name);
-        print_file(file, 2, "%s_UserFree\n", ut->name);
+        print_file(file, 2, "(USER_MARSHAL_SIZING_ROUTINE)%s_UserSize,\n", ut->name);
+        print_file(file, 2, "(USER_MARSHAL_MARSHALLING_ROUTINE)%s_UserMarshal,\n", ut->name);
+        print_file(file, 2, "(USER_MARSHAL_UNMARSHALLING_ROUTINE)%s_UserUnmarshal,\n", ut->name);
+        print_file(file, 2, "(USER_MARSHAL_FREEING_ROUTINE)%s_UserFree\n", ut->name);
         print_file(file, 1, "}%s\n", sep);
     }
     fprintf(file, "};\n\n");
