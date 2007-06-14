@@ -66,6 +66,7 @@ HRESULT vdecl_convert_fvf(
         (fvf & D3DFVF_LASTBETA_UBYTE4));
     BOOL has_normal = (fvf & D3DFVF_NORMAL) != 0;
     BOOL has_psize = (fvf & D3DFVF_PSIZE) != 0;
+
     BOOL has_diffuse = (fvf & D3DFVF_DIFFUSE) != 0;
     BOOL has_specular = (fvf & D3DFVF_SPECULAR) !=0;
 
@@ -216,7 +217,9 @@ void IDirect3DVertexDeclaration9Impl_Destroy(LPDIRECT3DVERTEXDECLARATION9 iface)
         /* Should not happen unless wine has a bug or the application releases references it does not own */
         ERR("Destroying vdecl with ref != 0\n");
     }
+    EnterCriticalSection(&d3d9_cs);
     IWineD3DVertexDeclaration_Release(This->wineD3DVertexDeclaration);
+    LeaveCriticalSection(&d3d9_cs);
     HeapFree(GetProcessHeap(), 0, This->elements);
     HeapFree(GetProcessHeap(), 0, This);
 }
@@ -246,11 +249,13 @@ static HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDevice(LPDIRECT3DVERTEX
 
     TRACE("(%p) : Relay\n", iface);
 
+    EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DVertexDeclaration_GetDevice(This->wineD3DVertexDeclaration, &myDevice);
     if (hr == D3D_OK && myDevice != NULL) {
         hr = IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
         IWineD3DDevice_Release(myDevice);
     }
+    LeaveCriticalSection(&d3d9_cs);
     return hr;
 }
 
@@ -354,7 +359,9 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
     CopyMemory(object->elements, pVertexElements, element_count * sizeof(D3DVERTEXELEMENT9));
     object->element_count = element_count;
 
+    EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, &object->wineD3DVertexDeclaration, (IUnknown *)object, wined3d_elements, element_count);
+    LeaveCriticalSection(&d3d9_cs);
 
     HeapFree(GetProcessHeap(), 0, wined3d_elements);
 
@@ -380,7 +387,9 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_SetVertexDeclaration(LPDIRECT3DDEVICE9 ifa
 
     TRACE("(%p) : Relay\n", iface);
 
+    EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_SetVertexDeclaration(This->WineD3DDevice, pDeclImpl == NULL ? NULL : pDeclImpl->wineD3DVertexDeclaration);
+    LeaveCriticalSection(&d3d9_cs);
     return hr;
 }
 
@@ -396,6 +405,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetVertexDeclaration(LPDIRECT3DDEVICE9 ifa
     }
 
     *ppDecl = NULL;
+    EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_GetVertexDeclaration(This->WineD3DDevice, &pTest);
     if (hr == D3D_OK && NULL != pTest) {
         IWineD3DVertexDeclaration_GetParent(pTest, (IUnknown **)ppDecl);
@@ -403,6 +413,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetVertexDeclaration(LPDIRECT3DDEVICE9 ifa
     } else {
         *ppDecl = NULL;
     }
+    LeaveCriticalSection(&d3d9_cs);
     TRACE("(%p) : returning %p\n", This, *ppDecl);
     return hr;
 }
