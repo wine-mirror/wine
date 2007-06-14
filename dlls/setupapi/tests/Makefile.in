@@ -3,10 +3,11 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = setupapi.dll
-IMPORTS   = setupapi advapi32 kernel32
+IMPORTS   = setupapi user32 advapi32 kernel32
 
 CTESTS = \
 	devinst.c \
+	install.c \
 	misc.c \
 	parser.c \
 	query.c \
