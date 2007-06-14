@@ -227,6 +227,7 @@ static HRESULT activate_window(HTMLDocument *This)
     IOleInPlaceUIWindow *pIPWnd;
     IOleInPlaceFrame *pIPFrame;
     IOleCommandTarget *cmdtrg;
+    IOleInPlaceSiteEx *ipsiteex;
     RECT posrect, cliprect;
     OLEINPLACEFRAMEINFO frameinfo;
     HWND parent_hwnd;
@@ -289,7 +290,17 @@ static HRESULT activate_window(HTMLDocument *This)
     }
 
     This->in_place_active = TRUE;
-    hres = IOleInPlaceSite_OnInPlaceActivate(This->ipsite);
+    hres = IOleInPlaceSite_QueryInterface(This->ipsite, &IID_IOleInPlaceSiteEx, (void**)&ipsiteex);
+    if(SUCCEEDED(hres)) {
+        BOOL redraw = FALSE;
+
+        hres = IOleInPlaceSiteEx_OnInPlaceActivateEx(ipsiteex, &redraw, 0);
+        IOleInPlaceSiteEx_Release(ipsiteex);
+        if(redraw)
+            FIXME("unsupported redraw\n");
+    }else{
+        hres = IOleInPlaceSite_OnInPlaceActivate(This->ipsite);
+    }
     if(FAILED(hres)) {
         WARN("OnInPlaceActivate failed: %08x\n", hres);
         This->in_place_active = FALSE;

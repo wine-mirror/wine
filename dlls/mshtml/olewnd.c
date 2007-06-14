@@ -202,8 +202,18 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceOb
     }
 
     This->in_place_active = FALSE;
-    if(This->ipsite)
-        IOleInPlaceSite_OnInPlaceDeactivate(This->ipsite);
+    if(This->ipsite) {
+        IOleInPlaceSiteEx *ipsiteex;
+        HRESULT hres;
+
+        hres = IOleInPlaceSite_QueryInterface(This->ipsite, &IID_IOleInPlaceSiteEx, (void**)&ipsiteex);
+        if(SUCCEEDED(hres)) {
+            IOleInPlaceSiteEx_OnInPlaceDeactivateEx(ipsiteex, TRUE);
+            IOleInPlaceSiteEx_Release(ipsiteex);
+        }else {
+            IOleInPlaceSite_OnInPlaceDeactivate(This->ipsite);
+        }
+    }
 
     return S_OK;
 }
