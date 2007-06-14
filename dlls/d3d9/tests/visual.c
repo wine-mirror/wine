@@ -116,6 +116,8 @@ static IDirect3DDevice9 *init_d3d9(void)
     present_parameters.BackBufferWidth = 640;
     present_parameters.BackBufferHeight = 480;
     present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
 
     hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
     ok(hr == D3D_OK, "IDirect3D_CreateDevice returned: %s\n", DXGetErrorString9(hr));
@@ -1114,6 +1116,58 @@ static void texbem_test(IDirect3DDevice9 *device)
     }
 }
 
+static void present_test(IDirect3DDevice9 *device)
+{
+    struct vertex quad[] =
+    {
+        {-1.0f, -1.0f,   0.9f,                          0xffff0000},
+        {-1.0f,  1.0f,   0.9f,                          0xffff0000},
+        { 1.0f, -1.0f,   0.1f,                          0xffff0000},
+        { 1.0f,  1.0f,   0.1f,                          0xffff0000},
+    };
+    HRESULT hr;
+    DWORD color;
+
+    /* Does the Present clear the depth stencil? Clear the depth buffer with some value != 0,
+     * then call Present. Then clear the color buffer to make sure it has some defined content
+     * after the Present with D3DSWAPEFFECT_DISCARD. After that draw a plane that is somewhere cut
+     * by the depth value.
+     */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 0.75, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.4, 0);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_GREATER);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    if(hr == D3D_OK)
+    {
+        /* No lights are defined... That means, lit vertices should be entirely black */
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2 /*PrimCount */, quad, sizeof(quad[0]));
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawIndexedPrimitiveUP failed with %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+    color = getPixelColor(device, 512, 240);
+    ok(color == 0x00ffffff, "Present failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    color = getPixelColor(device, 64, 240);
+    ok(color == 0x00ff0000, "Present failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -1169,6 +1223,7 @@ START_TEST(visual)
     clear_test(device_ptr);
     fog_test(device_ptr);
     test_cube_wrap(device_ptr);
+    present_test(device_ptr);
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0))
     {

@@ -148,7 +148,6 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
 
 static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
-    DWORD clear_flags = 0;
     unsigned int sync;
     int retval;
 
@@ -298,22 +297,11 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
     LEAVE_GL();
 
-    if (This->wineD3DDevice->stencilBufferTarget) {
-        clear_flags |= WINED3DCLEAR_STENCIL|WINED3DCLEAR_ZBUFFER;
-    }
-
-    /* Although this is not strictly required, a simple demo showed this does occur
-       on (at least non-debug) d3d                                                  */
     if (This->presentParms.SwapEffect == WINED3DSWAPEFFECT_DISCARD) {
+        TRACE("Clearing the color buffer with pink color\n");
 
-        TRACE("Clearing\n");
-
-        IWineD3DDevice_Clear((IWineD3DDevice*)This->wineD3DDevice, 0, NULL, clear_flags|WINED3DCLEAR_TARGET, 0x00, 1.0, 0);
-
-    } else if (clear_flags) {
-        TRACE("Clearing z/stencil buffer\n");
-
-        IWineD3DDevice_Clear((IWineD3DDevice*)This->wineD3DDevice, 0, NULL, clear_flags, 0x00, 1.0, 0);
+        IWineD3DDevice_Clear((IWineD3DDevice*)This->wineD3DDevice, 0, NULL,
+                              WINED3DCLEAR_TARGET, 0xff00ffff, 1.0, 0);
     }
 
     if(((IWineD3DSurfaceImpl *) This->frontBuffer)->Flags   & SFLAG_INSYSMEM ||
