@@ -59,6 +59,11 @@ typedef enum {
 } REGEDIT_ACTION;
 
 
+const CHAR *getAppName(void)
+{
+    return "regedit";
+}
+
 /******************************************************************************
  * Copies file name from command line string to the buffer.
  * Rewinds the command line string pointer to the next non-space character
@@ -229,7 +234,6 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
     LPSTR s = lpCmdLine;        /* command line pointer */
     CHAR ch = *s;               /* current character */
 
-    setAppName("regedit");
     while (ch && ((ch == '-') || (ch == '/'))) {
         char chu;
         char ch2;

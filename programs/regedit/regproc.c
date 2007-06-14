@@ -40,8 +40,6 @@ static HKEY  currentKeyClass  = 0;
 static HKEY  currentKeyHandle = 0;
 static BOOL  bTheKeyIsOpen    = FALSE;
 
-static const CHAR *app_name = "UNKNOWN";
-
 static const CHAR *reg_class_names[] = {
                                      "HKEY_LOCAL_MACHINE", "HKEY_USERS", "HKEY_CLASSES_ROOT",
                                      "HKEY_CURRENT_CONFIG", "HKEY_CURRENT_USER", "HKEY_DYN_DATA"
@@ -1228,18 +1226,4 @@ void delete_registry_key(CHAR *reg_key_name)
         delete_branch(reg_key_class, &branch_name, &branch_name_len);
     }
     HeapFree(GetProcessHeap(), 0, branch_name);
-}
-
-/******************************************************************************
- * Sets the application name. Then application name is used in the error
- * reporting.
- */
-void setAppName(const CHAR *name)
-{
-    app_name = name;
-}
-
-const CHAR *getAppName(void)
-{
-    return app_name;
 }

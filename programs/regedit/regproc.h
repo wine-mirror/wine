@@ -39,7 +39,6 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name);
 BOOL import_registry_file(LPTSTR filename);
 void delete_registry_key(CHAR *reg_key_name);
 
-void setAppName(const CHAR *name);
 const CHAR *getAppName(void);
 
 void processRegLines(FILE *in, CommandAPI command);
