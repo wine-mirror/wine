@@ -85,7 +85,7 @@ static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
     button.fsStyle = TBSTYLE_BUTTON;
     button.dwData = 0;
     button.iString = -1;
-    SendMessage(hwndToolBar, TB_ADDBUTTONS, 1, (LPARAM)&button);
+    SendMessageW(hwndToolBar, TB_ADDBUTTONSW, 1, (LPARAM)&button);
 }
 
 static void AddSeparator(HWND hwndToolBar)
@@ -99,7 +99,7 @@ static void AddSeparator(HWND hwndToolBar)
     button.fsStyle = TBSTYLE_SEP;
     button.dwData = 0;
     button.iString = -1;
-    SendMessage(hwndToolBar, TB_ADDBUTTONS, 1, (LPARAM)&button);
+    SendMessageW(hwndToolBar, TB_ADDBUTTONSW, 1, (LPARAM)&button);
 }
 
 static DWORD CALLBACK stream_in(DWORD_PTR cookie, LPBYTE buffer, LONG cb, LONG *pcb)
@@ -323,7 +323,7 @@ static void DoDefaultFont(void)
 
     lstrcpyW(fmt.szFaceName, szFaceName);
 
-    SendMessage(hEditorWnd, EM_SETCHARFORMAT,  SCF_DEFAULT, (LPARAM)&fmt);
+    SendMessageW(hEditorWnd, EM_SETCHARFORMAT,  SCF_DEFAULT, (LPARAM)&fmt);
 }
 
 static void update_window(void)
