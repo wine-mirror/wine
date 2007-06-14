@@ -210,8 +210,9 @@ static void test_SIPRetrieveSubjectGUID(void)
     ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
     ok ( GetLastError() == ERROR_FILE_INVALID ||
-         GetLastError() == S_OK /* Win98 */,
-        "Expected ERROR_FILE_INVALID or S_OK, got 0x%08x\n", GetLastError());
+         GetLastError() == ERROR_INVALID_PARAMETER /* Vista */ ||
+         GetLastError() == ERROR_SUCCESS /* Win98 */,
+        "Expected ERROR_FILE_INVALID, ERROR_INVALID_PARAMETER or ERROR_SUCCESS, got 0x%08x\n", GetLastError());
     ok ( !memcmp(&subject, &nullSubject, sizeof(GUID)),
         "Expected a NULL GUID for empty file %s, not %s\n", tempfile, show_guid(&subject));
 
@@ -225,8 +226,8 @@ static void test_SIPRetrieveSubjectGUID(void)
     ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
     ok ( GetLastError() == ERROR_INVALID_PARAMETER ||
-         GetLastError() == S_OK /* Win98 */,
-        "Expected ERROR_INVALID_PARAMETER or S_OK, got 0x%08x\n", GetLastError());
+         GetLastError() == ERROR_SUCCESS /* Win98 */,
+        "Expected ERROR_INVALID_PARAMETER or ERROR_SUCCESS, got 0x%08x\n", GetLastError());
     ok ( !memcmp(&subject, &nullSubject, sizeof(GUID)),
         "Expected a NULL GUID for empty file %s, not %s\n", tempfile, show_guid(&subject));
 
@@ -240,8 +241,8 @@ static void test_SIPRetrieveSubjectGUID(void)
     ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
     ok ( GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN ||
-         GetLastError() == S_OK /* Win98 */,
-        "Expected TRUST_E_SUBJECT_FORM_UNKNOWN or S_OK, got 0x%08x\n", GetLastError());
+         GetLastError() == ERROR_SUCCESS /* Win98 */,
+        "Expected TRUST_E_SUBJECT_FORM_UNKNOWN or ERROR_SUCCESS, got 0x%08x\n", GetLastError());
     ok ( !memcmp(&subject, &nullSubject, sizeof(GUID)),
         "Expected a NULL GUID for empty file %s, not %s\n", tempfile, show_guid(&subject));
 
