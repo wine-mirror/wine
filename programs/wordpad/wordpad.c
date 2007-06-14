@@ -822,8 +822,6 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
     HWND hwndEditor = GetDlgItem(hWnd, IDC_EDITOR);
     HWND hwndStatusBar = GetDlgItem(hWnd, IDC_STATUSBAR);
     HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
-    HWND hwndToolBar = GetDlgItem(hwndReBar, IDC_TOOLBAR);
-    HWND hwndFormatBar = GetDlgItem(hwndReBar, IDC_FORMATBAR);
     int rebarHeight = 0;
     REBARBANDINFOW rbbinfo;
     int rebarRows = 2;
@@ -839,26 +837,6 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
         {
             nStatusSize = 0;
         }
-    }
-    if (hwndToolBar)
-    {
-        rc.left = rc.top = 0;
-        rc.right = LOWORD(lParam);
-        rc.bottom = HIWORD(lParam);
-        SendMessageW(hwndToolBar, TB_AUTOSIZE, 0, 0);
-        SendMessageW(hwndReBar, RB_SIZETORECT, 0, (LPARAM)&rc);
-        GetClientRect(hwndReBar, &rc);
-        MoveWindow(hwndReBar, 0, 0, LOWORD(lParam), rc.right, FALSE);
-    }
-    if (hwndFormatBar)
-    {
-        rc.left = rc.top = 0;
-        rc.right = LOWORD(lParam);
-        rc.bottom = HIWORD(lParam);
-        SendMessageW(hwndFormatBar, TB_AUTOSIZE, 0, 0);
-        SendMessageW(hwndReBar, RB_SIZETORECT, 0, (LPARAM)&rc);
-        GetClientRect(hwndReBar, &rc);
-        MoveWindow(hwndReBar, 0, 0, LOWORD(lParam), rc.right, FALSE);
     }
     if (hwndReBar)
     {
