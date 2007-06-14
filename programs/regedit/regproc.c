@@ -209,9 +209,9 @@ static void REGPROC_unescape_string(LPSTR str)
  * val_name - name of the registry value
  * val_data - registry value data
  */
-static HRESULT setValue(LPSTR val_name, LPSTR val_data)
+static LONG setValue(LPSTR val_name, LPSTR val_data)
 {
-    HRESULT hRes;
+    LONG res;
     DWORD  dwDataType, dwParseType;
     LPBYTE lpbData;
     DWORD  dwData, dwLen;
@@ -259,7 +259,7 @@ static HRESULT setValue(LPSTR val_name, LPSTR val_data)
         return ERROR_INVALID_DATA;
     }
 
-    hRes = RegSetValueEx(
+    res = RegSetValueEx(
                currentKeyHandle,
                val_name,
                0,                  /* Reserved */
@@ -268,7 +268,7 @@ static HRESULT setValue(LPSTR val_name, LPSTR val_data)
                dwLen);
     if (dwParseType == REG_BINARY)
         HeapFree(GetProcessHeap(), 0, lpbData);
-    return hRes;
+    return res;
 }
 
 
@@ -352,10 +352,10 @@ static LPSTR getRegKeyName(LPSTR lpLine)
 /******************************************************************************
  * Open the key
  */
-static HRESULT openKey( LPSTR stdInput)
+static LONG openKey( LPSTR stdInput)
 {
-    DWORD   dwDisp;
-    HRESULT hRes;
+    DWORD dwDisp;
+    LONG res;
 
     /* Sanity checks */
     if (stdInput == NULL)
@@ -364,14 +364,14 @@ static HRESULT openKey( LPSTR stdInput)
     /* Get the registry class */
     currentKeyClass = getRegClass(stdInput); /* Sets global variable */
     if (currentKeyClass == (HKEY)ERROR_INVALID_PARAMETER)
-        return (HRESULT)ERROR_INVALID_PARAMETER;
+        return ERROR_INVALID_PARAMETER;
 
     /* Get the key name */
     currentKeyName = getRegKeyName(stdInput); /* Sets global variable */
     if (currentKeyName == NULL)
         return ERROR_INVALID_PARAMETER;
 
-    hRes = RegCreateKeyEx(
+    res = RegCreateKeyEx(
                currentKeyClass,          /* Class     */
                currentKeyName,           /* Sub Key   */
                0,                        /* MUST BE 0 */
@@ -383,10 +383,10 @@ static HRESULT openKey( LPSTR stdInput)
                &dwDisp);                 /* disposition, REG_CREATED_NEW_KEY or
                                                         REG_OPENED_EXISTING_KEY */
 
-    if (hRes == ERROR_SUCCESS)
+    if (res == ERROR_SUCCESS)
         bTheKeyIsOpen = TRUE;
 
-    return hRes;
+    return res;
 
 }
 
@@ -420,7 +420,7 @@ static void processSetValue(LPSTR line)
     LPSTR val_data;                   /* registry value data   */
 
     int line_idx = 0;                 /* current character under analysis */
-    HRESULT hRes = 0;
+    LONG res;
 
     /* get value name */
     if (line[line_idx] == '@' && line[line_idx + 1] == '=') {
@@ -458,8 +458,8 @@ static void processSetValue(LPSTR line)
     val_data = line + line_idx;
 
     REGPROC_unescape_string(val_name);
-    hRes = setValue(val_name, val_data);
-    if ( hRes != ERROR_SUCCESS )
+    res = setValue(val_name, val_data);
+    if ( res != ERROR_SUCCESS )
         fprintf(stderr,"%s: ERROR Key %s not created. Value: %s, Data: %s\n",
                 getAppName(),
                 currentKeyName,
