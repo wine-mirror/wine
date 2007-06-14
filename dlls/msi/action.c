@@ -4570,15 +4570,92 @@ static UINT ACTION_InstallODBC( MSIPACKAGE *package )
 #define ENV_ACT_SETALWAYS   0x1
 #define ENV_ACT_SETABSENT   0x2
 #define ENV_ACT_REMOVE      0x4
+#define ENV_ACT_REMOVEMATCH 0x8
 
 #define ENV_MOD_MACHINE     0x20000000
 #define ENV_MOD_APPEND      0x40000000
 #define ENV_MOD_PREFIX      0x80000000
+#define ENV_MOD_MASK        0xC0000000
+
+#define check_flag_combo(x, y) ((x) & ~(y)) == (y)
+
+static LONG env_set_flags( LPCWSTR *name, LPWSTR *value, DWORD *flags )
+{
+    LPCWSTR cptr = *name;
+    LPWSTR ptr = *value;
+
+    static const WCHAR prefix[] = {'[','~',']',0};
+
+    *flags = 0;
+    while (*cptr && (*cptr == '=' || *cptr == '+' ||
+           *cptr == '-' || *cptr == '!' || *cptr == '*'))
+    {
+        switch (*cptr)
+        {
+        case '=':
+            *flags |= ENV_ACT_SETALWAYS;
+            break;
+        case '+':
+            *flags |= ENV_ACT_SETABSENT;
+            break;
+        case '-':
+            *flags |= ENV_ACT_REMOVE;
+            break;
+        case '!':
+            *flags |= ENV_ACT_REMOVEMATCH;
+            break;
+        case '*':
+            *flags |= ENV_MOD_MACHINE;
+            break;
+        default:
+            ERR("Unknown Environment flag: %c\n", *cptr);
+            return ERROR_FUNCTION_FAILED;
+        }
+
+        cptr++;
+        (*name)++;
+    }
+
+    if (!*cptr)
+    {
+        ERR("Missing environment variable\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    if (!strncmpW(ptr, prefix, lstrlenW(prefix)))
+    {
+        *flags |= ENV_MOD_PREFIX;
+        *value += lstrlenW(prefix);
+    }
+    else
+    {
+        ptr += lstrlenW(ptr) - lstrlenW(prefix) - 1;
+        if (!lstrcmpW(ptr, prefix))
+        {
+            *flags |= ENV_MOD_APPEND;
+            *ptr = '\0';
+        }
+    }
+
+    if (!*flags ||
+        check_flag_combo(*flags, ENV_ACT_SETALWAYS | ENV_ACT_SETABSENT) ||
+        check_flag_combo(*flags, ENV_ACT_REMOVEMATCH | ENV_ACT_SETABSENT) ||
+        check_flag_combo(*flags, ENV_ACT_REMOVEMATCH | ENV_ACT_SETALWAYS) ||
+        check_flag_combo(*flags, ENV_ACT_SETABSENT | ENV_MOD_MASK))
+    {
+        ERR("Invalid flags: %08x\n", *flags);
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    return ERROR_SUCCESS;
+}
 
 static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
 {
-    LPCWSTR var, value;
-    LPWSTR val = NULL, ptr;
+    MSIPACKAGE *package = param;
+    LPCWSTR name, value, comp;
+    LPWSTR data = NULL, newval = NULL;
+    LPWSTR deformatted, ptr;
     DWORD flags, type, size;
     LONG res;
     HKEY env, root = HKEY_CURRENT_USER;
@@ -4591,33 +4668,35 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
          'E','n','v','i','r','o','n','m','e','n','t',0};
     static const WCHAR semicolon[] = {';',0};
 
-    var = MSI_RecordGetString(rec, 1);
-    value = MSI_RecordGetString(rec, 2);
-    flags = MSI_RecordGetInteger(rec, 3);
+    name = MSI_RecordGetString(rec, 2);
+    value = MSI_RecordGetString(rec, 3);
+    comp = MSI_RecordGetString(rec, 4);
 
-    TRACE("(%s, %s, %08x)\n", debugstr_w(var), debugstr_w(value), flags);
+    deformat_string(package, value, &deformatted);
+    if (!deformatted)
+        return ERROR_OUTOFMEMORY;
+
+    res = env_set_flags(&name, &deformatted, &flags);
+    if (res != ERROR_SUCCESS)
+       goto done;
+
+    value = deformatted;
 
     if (flags & ENV_MOD_MACHINE)
         root = HKEY_LOCAL_MACHINE;
 
     res = RegOpenKeyExW(root, environment, 0, KEY_ALL_ACCESS, &env);
     if (res != ERROR_SUCCESS)
-        return res;
+        goto done;
 
     if (flags & ENV_ACT_REMOVE)
-    {
-        res = RegDeleteKeyW(env, var);
-        RegCloseKey(env);
-        return res;
-    }
+        FIXME("Not removing environment variable on uninstall!\n");
 
     size = 0;
-    res = RegQueryValueExW(env, var, NULL, &type, NULL, &size);
-    if ((res != ERROR_MORE_DATA && res != ERROR_FILE_NOT_FOUND) || type != REG_SZ)
-    {
-        RegCloseKey(env);
-        return res;
-    }
+    res = RegQueryValueExW(env, name, NULL, &type, NULL, &size);
+    if ((res != ERROR_SUCCESS && res != ERROR_FILE_NOT_FOUND) ||
+        (res == ERROR_SUCCESS && type != REG_SZ))
+        goto done;
 
     if (res != ERROR_FILE_NOT_FOUND)
     {
@@ -4627,51 +4706,73 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
             goto done;
         }
 
-        /* oldvals;newval */
-        size = (lstrlenW(value) + 1 + size) * sizeof(WCHAR);
-        val = msi_alloc(size);
-        ptr = val;
-        if (!val)
+        data = msi_alloc(size);
+        if (!data)
+        {
+            RegCloseKey(env);
+            return ERROR_OUTOFMEMORY;
+        }
+
+        res = RegQueryValueExW(env, name, NULL, &type, (LPVOID)data, &size);
+        if (res != ERROR_SUCCESS)
+            goto done;
+
+        if (flags & ENV_ACT_REMOVEMATCH && (!value || !lstrcmpW(data, value)))
+        {
+            res = RegDeleteKeyW(env, name);
+            goto done;
+        }
+
+        size =  (lstrlenW(value) + 1 + size) * sizeof(WCHAR);
+        newval =  msi_alloc(size);
+        ptr = newval;
+        if (!newval)
         {
             res = ERROR_OUTOFMEMORY;
             goto done;
         }
 
-        if (flags & ENV_MOD_PREFIX)
+        if (!(flags & ENV_MOD_MASK))
+            lstrcpyW(newval, value);
+        else
         {
-            lstrcpyW(val, value);
-            lstrcatW(val, semicolon);
-            ptr = val + lstrlenW(value) + 1;
-        }
+            if (flags & ENV_MOD_PREFIX)
+            {
+                lstrcpyW(newval, value);
+                lstrcatW(newval, semicolon);
+                ptr = newval + lstrlenW(value) + 1;
+            }
 
-        res = RegQueryValueExW(env, var, NULL, &type, (LPVOID)ptr, &size);
-        if (res != ERROR_SUCCESS)
-            goto done;
+            lstrcpyW(ptr, data);
 
-        if (!flags || flags & ENV_MOD_APPEND)
-        {
-            lstrcatW(val, semicolon);
-            lstrcatW(val, value);
+            if (flags & ENV_MOD_APPEND)
+            {
+                lstrcatW(newval, semicolon);
+                lstrcatW(newval, value);
+            }
         }
     }
     else
     {
         size = (lstrlenW(value) + 1) * sizeof(WCHAR);
-        val = msi_alloc(size);
-        if (!val)
+        newval = msi_alloc(size);
+        if (!newval)
         {
             res = ERROR_OUTOFMEMORY;
             goto done;
         }
 
-        lstrcpyW(val, value);
+        lstrcpyW(newval, value);
     }
 
-    res = RegSetValueExW(env, var, 0, type, (LPVOID)val, size);
+    TRACE("setting %s to %s\n", debugstr_w(name), debugstr_w(newval));
+    res = RegSetValueExW(env, name, 0, type, (LPVOID)newval, size);
 
 done:
     RegCloseKey(env);
-    msi_free(val);
+    msi_free(deformatted);
+    msi_free(data);
+    msi_free(newval);
     return res;
 }
 
