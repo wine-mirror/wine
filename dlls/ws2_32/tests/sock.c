@@ -1644,6 +1644,16 @@ static void test_getsockname(void)
         return;
     }
 
+    memcpy(&sa_get, &sa_set, sizeof(sa_set));
+    if (getsockname(sock, (struct sockaddr*) &sa_get, &sa_get_len) == 0)
+        ok(0, "getsockname on unbound socket should fail\n");
+    else {
+        ok(WSAGetLastError() == WSAEINVAL, "getsockname on unbound socket "
+            "failed with %d, expected %d\n", WSAGetLastError(), WSAEINVAL);
+        ok(memcmp(&sa_get, &sa_set, sizeof(sa_get)) == 0,
+            "failed getsockname modified sockaddr when it shouldn't\n");
+    }
+
     if(bind(sock, (struct sockaddr *) &sa_set, sa_set_len) < 0){
         trace("Failed to bind socket: %d\n", WSAGetLastError());
         closesocket(sock);

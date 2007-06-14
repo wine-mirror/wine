@@ -927,6 +927,35 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
     return uaddrlen;
 }
 
+static BOOL is_sockaddr_bound(const struct sockaddr *uaddr, int uaddrlen)
+{
+    switch (uaddr->sa_family)
+    {
+#ifdef HAVE_IPX
+        case AF_IPX:
+            FIXME("don't know how to tell if IPX socket is bound, assuming it is!\n");
+            return TRUE;
+#endif
+        case AF_INET6:
+        {
+            static const struct sockaddr_in6 emptyAddr;
+            const struct sockaddr_in6 *in6 = (const struct sockaddr_in6*) uaddr;
+            return in6->sin6_port || memcmp(&in6->sin6_addr, &emptyAddr.sin6_addr, sizeof(struct in6_addr));
+        }
+        case AF_INET:
+        {
+            static const struct sockaddr_in emptyAddr;
+            const struct sockaddr_in *in = (const struct sockaddr_in*) uaddr;
+            return in->sin_port || memcmp(&in->sin_addr, &emptyAddr.sin_addr, sizeof(struct in_addr));
+        }
+        case AF_UNSPEC:
+            return FALSE;
+        default:
+            FIXME("unknown address family %d\n", uaddr->sa_family);
+            return TRUE;
+    }
+}
+
 /* Returns 0 if successful, -1 if the buffer is too small */
 static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, struct WS_sockaddr* wsaddr, int* wsaddrlen)
 {
@@ -1589,6 +1618,10 @@ int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
         if (getsockname(fd, &uaddr.addr, &uaddrlen) != 0)
         {
             SetLastError(wsaErrno());
+        }
+        else if (!is_sockaddr_bound(&uaddr.addr, uaddrlen))
+        {
+            SetLastError(WSAEINVAL);
         }
         else if (ws_sockaddr_u2ws(&uaddr.addr, name, namelen) != 0)
         {
