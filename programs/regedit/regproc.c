@@ -219,8 +219,11 @@ static LONG setValue(LPSTR val_name, LPSTR val_data)
     if ( (val_name == NULL) || (val_data == NULL) )
         return ERROR_INVALID_PARAMETER;
 
-    if (val_data[0] == '-')
-        return RegDeleteValue(currentKeyHandle,val_name);
+    if (strcmp(val_data, "-") == 0)
+    {
+        res=RegDeleteValue(currentKeyHandle,val_name);
+        return (res == ERROR_FILE_NOT_FOUND ? ERROR_SUCCESS : res);
+    }
 
     /* Get the data type stored into the value field */
     dwDataType = getDataType(&val_data, &dwParseType);
