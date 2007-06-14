@@ -38,6 +38,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 static const WCHAR c_collen[] = {'C',':','\\',0};
 static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 
+
+static const WCHAR szActionData[] = {
+    'C','u','s','t','o','m','A','c','t','i','o','n','D','a','t','a',0
+};
+static const WCHAR ProdCode[] = {
+    'P','r','o','d','u','c','t','C','o','d','e',0
+};
+static const WCHAR UserSID[] = {'U','s','e','r','S','I','D',0};
+
 typedef struct tagMSIRUNNINGACTION
 {
     struct list entry;
@@ -123,29 +132,46 @@ static BOOL check_execution_scheduling_options(MSIPACKAGE *package, LPCWSTR acti
     return TRUE;
 }
 
-/* stores the CustomActionData before the action:
- *     [CustomActionData]Action
+/* stores the following properties before the action:
+ *
+ *    [CustomActionData;UserSID;ProductCode]Action
  */
-static LPWSTR msi_get_deferred_action(LPCWSTR action, LPCWSTR actiondata)
+static LPWSTR msi_get_deferred_action(LPCWSTR action, LPCWSTR actiondata,
+                                      LPCWSTR usersid, LPCWSTR prodcode)
 {
     LPWSTR deferred;
     DWORD len;
 
-    static const WCHAR begin[] = {'[',0};
-    static const WCHAR end[] = {']',0};
+    static const WCHAR format[] = {'[','%','s',';','%','s',';','%','s',']','%','s',0};
 
     if (!actiondata)
         return strdupW(action);
 
-    len = lstrlenW(action) + lstrlenW(actiondata) + 3;
+    len = lstrlenW(action) + lstrlenW(actiondata) +
+          lstrlenW(usersid) + lstrlenW(prodcode) + 5;
     deferred = msi_alloc(len * sizeof(WCHAR));
 
-    lstrcpyW(deferred, begin);
-    lstrcatW(deferred, actiondata);
-    lstrcatW(deferred, end);
-    lstrcatW(deferred, action);
-
+    sprintfW(deferred, format, actiondata, usersid, prodcode, action);
     return deferred;
+}
+
+static void set_deferred_action_props(MSIPACKAGE *package, LPWSTR deferred_data)
+{
+    LPWSTR end, beg = deferred_data;
+
+    end = strchrW(beg, ';');
+    *end = '\0';
+    MSI_SetPropertyW(package, szActionData, beg);
+    beg = end + 1;
+
+    end = strchrW(beg, ';');
+    *end = '\0';
+    MSI_SetPropertyW(package, UserSID, beg);
+    beg = end + 1;
+
+    end = strchrW(beg, ']');
+    *end = '\0';
+    MSI_SetPropertyW(package, ProdCode, beg);
 }
 
 UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
@@ -205,7 +231,9 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
         if (!execute)
         {
             LPWSTR actiondata = msi_dup_property(package, action);
-            LPWSTR deferred = msi_get_deferred_action(action, actiondata);
+            LPWSTR usersid = msi_dup_property(package, UserSID);
+            LPWSTR prodcode = msi_dup_property(package, ProdCode);
+            LPWSTR deferred = msi_get_deferred_action(action, actiondata, usersid, prodcode);
 
             if (type & msidbCustomActionTypeCommit)
             {
@@ -219,23 +247,25 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
             }
 
             rc = ERROR_SUCCESS;
+            msi_free(actiondata);
+            msi_free(usersid);
+            msi_free(prodcode);
             msi_free(deferred);
             goto end;
         }
         else
         {
-            /*Set ActionData*/
-
-            static const WCHAR szActionData[] = {
-            'C','u','s','t','o','m','A','c','t','i','o','n','D','a','t','a',0};
             static const WCHAR szBlank[] = {0};
+
             LPWSTR actiondata = msi_dup_property( package, action );
+
             if (deferred_data)
-                MSI_SetPropertyW(package,szActionData,deferred_data);
+                set_deferred_action_props(package, deferred_data);
             else if (actiondata)
                 MSI_SetPropertyW(package,szActionData,actiondata);
             else
                 MSI_SetPropertyW(package,szActionData,szBlank);
+
             msi_free(actiondata);
         }
     }
