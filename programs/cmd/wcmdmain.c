@@ -92,6 +92,7 @@ extern struct env_stack *pushd_directories;
 static const WCHAR *pagedMessage = NULL;
 static char  *output_bufA = NULL;
 #define MAX_WRITECONSOLE_SIZE 65535
+BOOL unicodePipes = FALSE;
 
 static WCHAR *WCMD_expand_envvar(WCHAR *start);
 
@@ -141,6 +142,10 @@ int wmain (int argc, WCHAR *argvW[])
           opt_k=1;
       } else if (tolowerW(c)=='s') {
           opt_s=1;
+      } else if (tolowerW(c)=='a') {
+          unicodePipes=FALSE;
+      } else if (tolowerW(c)=='u') {
+          unicodePipes=TRUE;
       } else if (tolowerW(c)=='t' && (*argvW)[2]==':') {
           opt_t=strtoulW(&(*argvW)[3], NULL, 16);
       } else if (tolowerW(c)=='x' || tolowerW(c)=='y') {
@@ -1306,22 +1311,27 @@ static void WCMD_output_asis_len(const WCHAR *message, int len) {
       BOOL usedDefaultChar = FALSE;
       DWORD convertedChars;
 
-      /*
-       * Allocate buffer to use when writing to file. (Not freed, as one off)
-       */
-      if (!output_bufA) output_bufA = HeapAlloc(GetProcessHeap(), 0,
-                                                MAX_WRITECONSOLE_SIZE);
-      if (!output_bufA) {
-        WINE_FIXME("Out of memory - could not allocate ansi 64K buffer\n");
-        return;
-      }
+      if (!unicodePipes) {
+        /*
+         * Allocate buffer to use when writing to file. (Not freed, as one off)
+         */
+        if (!output_bufA) output_bufA = HeapAlloc(GetProcessHeap(), 0,
+                                                  MAX_WRITECONSOLE_SIZE);
+        if (!output_bufA) {
+          WINE_FIXME("Out of memory - could not allocate ansi 64K buffer\n");
+          return;
+        }
 
-      /* Convert to OEM, then output */
-      convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, message,
-                          len, output_bufA, MAX_WRITECONSOLE_SIZE,
-                          "?", &usedDefaultChar);
-      WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), output_bufA, convertedChars,
-                &nOut, FALSE);
+        /* Convert to OEM, then output */
+        convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, message,
+                            len, output_bufA, MAX_WRITECONSOLE_SIZE,
+                            "?", &usedDefaultChar);
+        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), output_bufA, convertedChars,
+                  &nOut, FALSE);
+      } else {
+        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), message, len*sizeof(WCHAR),
+                  &nOut, FALSE);
+      }
     }
     return;
 }
