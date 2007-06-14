@@ -154,7 +154,6 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
 
     index = ListView_InsertItem(hwndLV, &item);
     if (index != -1) {
-        /*        LPTSTR pszText = NULL; */
         switch (dwValType) {
         case REG_SZ:
         case REG_EXPAND_SZ:
@@ -169,7 +168,6 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
                 wsprintf(buf, _T("0x%08X (%d)"), *(DWORD*)ValBuf, *(DWORD*)ValBuf);
                 ListView_SetItemText(hwndLV, index, 2, buf);
             }
-            /*            lpsRes = convertHexToDWORDStr(lpbData, dwLen); */
             break;
         case REG_BINARY: {
                 unsigned int i;
@@ -188,7 +186,6 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
             break;
         default:
           {
-            /*            lpsRes = convertHexToHexCSV(lpbData, dwLen); */
             TCHAR szText[128];
             LoadString(hInst, IDS_REGISTRY_VALUE_CANT_DISPLAY, szText, COUNT_OF(szText));
             ListView_SetItemText(hwndLV, index, 2, szText);

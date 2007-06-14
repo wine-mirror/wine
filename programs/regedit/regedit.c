@@ -158,7 +158,7 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
                     fprintf(stderr,"%s: Can't open file \"%s\"\n", getAppName(), filename);
                     exit(1);
                 }
-                processRegLines(reg_file, doSetValue);
+                processRegLines(reg_file);
                 if (realname)
                 {
                     HeapFree(GetProcessHeap(),0,realname);
