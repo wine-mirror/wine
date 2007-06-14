@@ -1006,12 +1006,9 @@ static void test_text_position(void)
 static void test_espassword(void)
 {
     HWND hwEdit;
-    MSG msMessage;
     LONG r;
     char buffer[1024];
     const char* password = "secret";
-
-    msMessage.message = WM_KEYDOWN;
 
     hwEdit = create_editcontrol(ES_PASSWORD, 0);
     r = get_edit_style(hwEdit);
