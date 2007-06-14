@@ -4021,14 +4021,15 @@ static void EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 		}
 		break;
 	case 0x03: /* ^C */
-		SendMessageW(es->hwndSelf, WM_COPY, 0, 0);
+		if (!(es->style & ES_PASSWORD))
+		    SendMessageW(es->hwndSelf, WM_COPY, 0, 0);
 		break;
 	case 0x16: /* ^V */
 	        if (!(es->style & ES_READONLY))
 		    SendMessageW(es->hwndSelf, WM_PASTE, 0, 0);
 		break;
 	case 0x18: /* ^X */
-	        if (!(es->style & ES_READONLY))
+	        if (!((es->style & ES_READONLY) || (es->style & ES_PASSWORD)))
 		    SendMessageW(es->hwndSelf, WM_CUT, 0, 0);
 		break;
 
@@ -4949,6 +4950,11 @@ static void EDIT_WM_Paste(EDITSTATE *es)
 		EDIT_EM_ReplaceSel(es, TRUE, src, TRUE, TRUE);
 		GlobalUnlock(hsrc);
 	}
+        else if (es->style & ES_PASSWORD) {
+            /* clear selected text in password edit box even with empty clipboard */
+            const WCHAR empty_strW[] = { 0 };
+            EDIT_EM_ReplaceSel(es, TRUE, empty_strW, TRUE, TRUE);
+        }
 	CloseClipboard();
 }
 

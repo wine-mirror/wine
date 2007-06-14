@@ -1003,6 +1003,53 @@ static void test_text_position(void)
     test_text_position_style(ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL);
 }
 
+static void test_espassword(void)
+{
+    HWND hwEdit;
+    MSG msMessage;
+    LONG r;
+    char buffer[1024];
+    const char* password = "secret";
+
+    msMessage.message = WM_KEYDOWN;
+
+    hwEdit = create_editcontrol(ES_PASSWORD, 0);
+    r = get_edit_style(hwEdit);
+    ok(r == ES_PASSWORD, "Wrong style expected 0x%x got: 0x%x\n", ES_PASSWORD, r);
+    /* set text */
+    r = SendMessage(hwEdit , WM_SETTEXT, 0, (LPARAM) password);
+    ok(r == TRUE, "Expected: %d, got: %d\n", TRUE, r);
+
+    /* select all, cut (ctrl-x) */
+    SendMessage(hwEdit, EM_SETSEL, 0, -1);
+    SendMessage(hwEdit, WM_CHAR, 24, 0);
+
+    /* get text */
+    r = SendMessage(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    ok(r == strlen(password), "Expected: %d, got: %d\n", strlen(password), r);
+    ok(strcmp(buffer, password) == 0, "expected %s, got %s\n", password, buffer);
+
+    r = OpenClipboard(hwEdit);
+    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    r = EmptyClipboard();
+    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    r = CloseClipboard();
+    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+
+    /* select all, copy (ctrl-c) and paste (ctrl-v) */
+    SendMessage(hwEdit, EM_SETSEL, 0, -1);
+    SendMessage(hwEdit, WM_CHAR, 3, 0);
+    SendMessage(hwEdit, WM_CHAR, 22, 0);
+
+    /* get text */
+    buffer[0] = 0;
+    r = SendMessage(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    ok(r == 0, "Expected: 0, got: %d\n", r);
+    ok(strcmp(buffer, "") == 0, "expected empty string, got %s\n", buffer);
+
+    DestroyWindow (hwEdit);
+}
+
 static BOOL RegisterWindowClasses (void)
 {
     WNDCLASSA test2;
@@ -1068,6 +1115,7 @@ START_TEST(edit)
     test_margins();
     test_margins_font_change();
     test_text_position();
+    test_espassword();
 
     UnregisterWindowClasses();
 }
