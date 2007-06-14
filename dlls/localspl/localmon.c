@@ -318,7 +318,7 @@ static DWORD get_type_from_name(LPCWSTR name)
  *  Level 2 is documented on MSDN for Portmonitors, but not supported by the
  *  "Local Port" Portmonitor (localspl.dll / localmon.dll)
  */
-BOOL WINAPI localmon_AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer, LPWSTR pMonitorName)
+static BOOL WINAPI localmon_AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer, LPWSTR pMonitorName)
 {
     PORT_INFO_1W * pi;
     HKEY  hroot;
@@ -382,8 +382,8 @@ BOOL WINAPI localmon_AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer, LPWST
  *   "HCU\Software\Wine\Spooler\<portname>" - redirection
  *
  */
-BOOL WINAPI localmon_EnumPortsW(LPWSTR pName, DWORD level, LPBYTE pPorts,
-                            DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned)
+static BOOL WINAPI localmon_EnumPortsW(LPWSTR pName, DWORD level, LPBYTE pPorts,
+                                       DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
     BOOL    res = FALSE;
     DWORD   needed;
@@ -428,7 +428,7 @@ cleanup:
  *  Failure: FALSE
  *
  */
-BOOL WINAPI localmon_XcvClosePort(HANDLE hXcv)
+static BOOL WINAPI localmon_XcvClosePort(HANDLE hXcv)
 {
     xcv_t * xcv = (xcv_t *) hXcv;
 
@@ -469,8 +469,8 @@ BOOL WINAPI localmon_XcvClosePort(HANDLE hXcv)
  *
  *
  */
-DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData, DWORD cbInputData,
-                PBYTE pOutputData, DWORD cbOutputData, PDWORD pcbOutputNeeded)
+static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData, DWORD cbInputData,
+                                         PBYTE pOutputData, DWORD cbOutputData, PDWORD pcbOutputNeeded)
 {
     WCHAR   buffer[16];     /* buffer for a decimal number */
     LPWSTR  ptr;
@@ -606,7 +606,7 @@ DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInput
  *  Failure: FALSE
  *
  */
-BOOL WINAPI localmon_XcvOpenPort(LPCWSTR pName, ACCESS_MASK GrantedAccess, PHANDLE phXcv)
+static BOOL WINAPI localmon_XcvOpenPort(LPCWSTR pName, ACCESS_MASK GrantedAccess, PHANDLE phXcv)
 {
     DWORD   len;
     xcv_t * xcv;
