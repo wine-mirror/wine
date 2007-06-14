@@ -1024,7 +1024,7 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
     path=d=s;
     while (*s)
     {
-        if (*s==0 || ((*s=='\t' || *s==' ') && !in_quotes)) {
+        if (*s==0) {
             /* end of this command line argument */
             break;
         } else if (*s=='\\') {

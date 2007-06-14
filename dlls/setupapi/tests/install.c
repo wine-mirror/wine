@@ -121,7 +121,7 @@ static void test_cmdline(void)
     create_inf_file(infwithspaces, cmdline_inf);
 
     sprintf(path, "%s\\%s", CURR_DIR, infwithspaces);
-    todo_wine ok_cmdline("DefaultInstall", 128, path, TRUE);
+    ok_cmdline("DefaultInstall", 128, path, TRUE);
 
     sprintf(path, "\"%s\\%s\"", CURR_DIR, infwithspaces);
     todo_wine ok_cmdline("DefaultInstall", 128, path, FALSE);
