@@ -279,7 +279,7 @@ static LONG setValue(LPSTR val_name, LPSTR val_data)
  * Extracts from [HKEY\some\key\path] or HKEY\some\key\path types of line
  * the key class (what ends before the first '\')
  */
-static HKEY getRegClass(LPSTR lpClass)
+static BOOL getRegClass(LPSTR lpClass, HKEY* hkey)
 {
     LPSTR classNameEnd;
     LPSTR classNameBeg;
@@ -288,7 +288,7 @@ static HKEY getRegClass(LPSTR lpClass)
     char  lpClassCopy[KEY_MAX_LEN];
 
     if (lpClass == NULL)
-        return (HKEY)ERROR_INVALID_PARAMETER;
+        return FALSE;
 
     lstrcpynA(lpClassCopy, lpClass, KEY_MAX_LEN);
 
@@ -310,10 +310,11 @@ static HKEY getRegClass(LPSTR lpClass)
 
     for (i = 0; i < REG_CLASS_NUMBER; i++) {
         if (!strcmp(classNameBeg, reg_class_names[i])) {
-            return reg_class_keys[i];
+            *hkey = reg_class_keys[i];
+            return TRUE;
         }
     }
-    return (HKEY)ERROR_INVALID_PARAMETER;
+    return FALSE;
 }
 
 /******************************************************************************
@@ -365,8 +366,7 @@ static LONG openKey( LPSTR stdInput)
         return ERROR_INVALID_PARAMETER;
 
     /* Get the registry class */
-    currentKeyClass = getRegClass(stdInput); /* Sets global variable */
-    if (currentKeyClass == (HKEY)ERROR_INVALID_PARAMETER)
+    if (!getRegClass(stdInput, &currentKeyClass)) /* Sets global variable */
         return ERROR_INVALID_PARAMETER;
 
     /* Get the key name */
@@ -918,8 +918,7 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
         strcpy(reg_key_name_buf, reg_key_name);
 
         /* open the specified key */
-        reg_key_class = getRegClass(reg_key_name);
-        if (reg_key_class == (HKEY)ERROR_INVALID_PARAMETER) {
+        if (!getRegClass(reg_key_name, &reg_key_class)) {
             fprintf(stderr,"%s: Incorrect registry class specification in '%s'\n",
                     getAppName(), reg_key_name);
             exit(1);
@@ -1052,8 +1051,7 @@ void delete_registry_key(CHAR *reg_key_name)
     if (!reg_key_name || !reg_key_name[0])
         return;
     /* open the specified key */
-    reg_key_class = getRegClass(reg_key_name);
-    if (reg_key_class == (HKEY)ERROR_INVALID_PARAMETER) {
+    if (!getRegClass(reg_key_name, &reg_key_class)) {
         fprintf(stderr,"%s: Incorrect registry class specification in '%s'\n",
                 getAppName(), reg_key_name);
         exit(1);
