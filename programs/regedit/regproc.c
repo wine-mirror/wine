@@ -169,7 +169,8 @@ static DWORD getDataType(LPSTR *lpValue, DWORD* parse_type)
         }
         return type;
     }
-    return (**lpValue=='\0'?REG_SZ:REG_NONE);
+    *parse_type=REG_NONE;
+    return REG_NONE;
 }
 
 /******************************************************************************
@@ -230,7 +231,7 @@ static HRESULT setValue(LPSTR val_name, LPSTR val_data)
     /* Get the data type stored into the value field */
     dwDataType = getDataType(&val_data, &dwParseType);
 
-    if ( dwParseType == REG_SZ)        /* no conversion for string */
+    if (dwParseType == REG_SZ)          /* no conversion for string */
     {
         REGPROC_unescape_string(val_data);
         /* Compute dwLen after REGPROC_unescape_string because it may
@@ -244,11 +245,13 @@ static HRESULT setValue(LPSTR val_name, LPSTR val_data)
             val_data[dwLen]='\0';
         }
         lpbData = (BYTE*) val_data;
-    } else if (dwParseType == REG_DWORD)  /* Convert the dword types */
+    }
+    else if (dwParseType == REG_DWORD)  /* Convert the dword types */
     {
         dwLen   = convertHexToDWord(val_data, convert);
         lpbData = convert;
-    } else                               /* Convert the hexadecimal types */
+    }
+    else if (dwParseType == REG_BINARY) /* Convert the binary data */
     {
         int b_len = strlen (val_data)+2/3;
         if (b_len > KEY_MAX_LEN) {
@@ -260,6 +263,11 @@ static HRESULT setValue(LPSTR val_name, LPSTR val_data)
             dwLen   = convertHexCSVToHex(val_data, convert, KEY_MAX_LEN);
             lpbData = convert;
         }
+    }
+    else                                /* unknown format */
+    {
+        fprintf(stderr,"%s: ERROR, unknown data format\n", getAppName());
+        return ERROR_INVALID_DATA;
     }
 
     hRes = RegSetValueEx(
