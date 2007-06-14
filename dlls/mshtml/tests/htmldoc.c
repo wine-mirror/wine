@@ -72,10 +72,12 @@ DEFINE_EXPECT(SetActiveObject);
 DEFINE_EXPECT(GetWindow);
 DEFINE_EXPECT(CanInPlaceActivate);
 DEFINE_EXPECT(OnInPlaceActivate);
+DEFINE_EXPECT(OnInPlaceActivateEx);
 DEFINE_EXPECT(OnUIActivate);
 DEFINE_EXPECT(GetWindowContext);
 DEFINE_EXPECT(OnUIDeactivate);
 DEFINE_EXPECT(OnInPlaceDeactivate);
+DEFINE_EXPECT(OnInPlaceDeactivateEx);
 DEFINE_EXPECT(GetContainer);
 DEFINE_EXPECT(ShowUI);
 DEFINE_EXPECT(ActivateMe);
@@ -122,7 +124,7 @@ DEFINE_EXPECT(UnlockRequest);
 
 static IUnknown *doc_unk;
 static BOOL expect_LockContainer_fLock;
-static BOOL expect_SetActiveObject_active;
+static BOOL expect_SetActiveObject_active, ipsex;
 static BOOL set_clientsite = FALSE, container_locked = FALSE;
 static BOOL readystate_set_loading = FALSE, load_from_stream;
 static BOOL editmode = FALSE;
@@ -1180,22 +1182,22 @@ static const IOleInPlaceFrameVtbl InPlaceFrameVtbl = {
 
 static IOleInPlaceFrame InPlaceFrame = { &InPlaceFrameVtbl };
 
-static HRESULT WINAPI InPlaceSite_QueryInterface(IOleInPlaceSite *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI InPlaceSite_QueryInterface(IOleInPlaceSiteEx *iface, REFIID riid, void **ppv)
 {
     return QueryInterface(riid, ppv);
 }
 
-static ULONG WINAPI InPlaceSite_AddRef(IOleInPlaceSite *iface)
+static ULONG WINAPI InPlaceSite_AddRef(IOleInPlaceSiteEx *iface)
 {
     return 2;
 }
 
-static ULONG WINAPI InPlaceSite_Release(IOleInPlaceSite *iface)
+static ULONG WINAPI InPlaceSite_Release(IOleInPlaceSiteEx *iface)
 {
     return 1;
 }
 
-static HRESULT WINAPI InPlaceSite_GetWindow(IOleInPlaceSite *iface, HWND *phwnd)
+static HRESULT WINAPI InPlaceSite_GetWindow(IOleInPlaceSiteEx *iface, HWND *phwnd)
 {
     CHECK_EXPECT(GetWindow);
     ok(phwnd != NULL, "phwnd = NULL\n");
@@ -1203,31 +1205,31 @@ static HRESULT WINAPI InPlaceSite_GetWindow(IOleInPlaceSite *iface, HWND *phwnd)
     return S_OK;
 }
 
-static HRESULT WINAPI InPlaceSite_ContextSensitiveHelp(IOleInPlaceSite *iface, BOOL fEnterMode)
+static HRESULT WINAPI InPlaceSite_ContextSensitiveHelp(IOleInPlaceSiteEx *iface, BOOL fEnterMode)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI InPlaceSite_CanInPlaceActivate(IOleInPlaceSite *iface)
+static HRESULT WINAPI InPlaceSite_CanInPlaceActivate(IOleInPlaceSiteEx *iface)
 {
     CHECK_EXPECT(CanInPlaceActivate);
     return S_OK;
 }
 
-static HRESULT WINAPI InPlaceSite_OnInPlaceActivate(IOleInPlaceSite *iface)
+static HRESULT WINAPI InPlaceSite_OnInPlaceActivate(IOleInPlaceSiteEx *iface)
 {
     CHECK_EXPECT(OnInPlaceActivate);
     return S_OK;
 }
 
-static HRESULT WINAPI InPlaceSite_OnUIActivate(IOleInPlaceSite *iface)
+static HRESULT WINAPI InPlaceSite_OnUIActivate(IOleInPlaceSiteEx *iface)
 {
     CHECK_EXPECT(OnUIActivate);
     return S_OK;
 }
 
-static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSite *iface,
+static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSiteEx *iface,
         IOleInPlaceFrame **ppFrame, IOleInPlaceUIWindow **ppDoc, LPRECT lprcPosRect,
         LPRECT lprcClipRect, LPOLEINPLACEFRAMEINFO lpFrameInfo)
 {
@@ -1259,44 +1261,70 @@ static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSite *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI InPlaceSite_Scroll(IOleInPlaceSite *iface, SIZE scrollExtant)
+static HRESULT WINAPI InPlaceSite_Scroll(IOleInPlaceSiteEx *iface, SIZE scrollExtant)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI InPlaceSite_OnUIDeactivate(IOleInPlaceSite *iface, BOOL fUndoable)
+static HRESULT WINAPI InPlaceSite_OnUIDeactivate(IOleInPlaceSiteEx *iface, BOOL fUndoable)
 {
     CHECK_EXPECT(OnUIDeactivate);
     ok(!fUndoable, "fUndoable = TRUE\n");
     return S_OK;
 }
 
-static HRESULT WINAPI InPlaceSite_OnInPlaceDeactivate(IOleInPlaceSite *iface)
+static HRESULT WINAPI InPlaceSite_OnInPlaceDeactivate(IOleInPlaceSiteEx *iface)
 {
     CHECK_EXPECT(OnInPlaceDeactivate);
     return S_OK;
 }
 
-static HRESULT WINAPI InPlaceSite_DiscardUndoState(IOleInPlaceSite *iface)
+static HRESULT WINAPI InPlaceSite_DiscardUndoState(IOleInPlaceSiteEx *iface)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI InPlaceSite_DeactivateAndUndo(IOleInPlaceSite *iface)
+static HRESULT WINAPI InPlaceSite_DeactivateAndUndo(IOleInPlaceSiteEx *iface)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI InPlaceSite_OnPosRectChange(IOleInPlaceSite *iface, LPCRECT lprcPosRect)
+static HRESULT WINAPI InPlaceSite_OnPosRectChange(IOleInPlaceSiteEx *iface, LPCRECT lprcPosRect)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
-static const IOleInPlaceSiteVtbl InPlaceSiteVtbl = {
+static HRESULT WINAPI InPlaceSiteEx_OnInPlaceActivateEx(IOleInPlaceSiteEx *iface, BOOL *pfNoRedraw, DWORD dwFlags)
+{
+    CHECK_EXPECT(OnInPlaceActivateEx);
+
+    ok(pfNoRedraw != NULL, "pfNoRedraw == NULL\n");
+    ok(!*pfNoRedraw, "*pfNoRedraw == TRUE\n");
+    ok(dwFlags == 0, "dwFlags = %08x\n", dwFlags);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSiteEx_OnInPlaceDeactivateEx(IOleInPlaceSiteEx *iface, BOOL fNoRedraw)
+{
+    CHECK_EXPECT(OnInPlaceDeactivateEx);
+
+    ok(fNoRedraw, "fNoRedraw == FALSE\n");
+
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSiteEx_RequestUIActivate(IOleInPlaceSiteEx *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IOleInPlaceSiteExVtbl InPlaceSiteVtbl = {
     InPlaceSite_QueryInterface,
     InPlaceSite_AddRef,
     InPlaceSite_Release,
@@ -1311,10 +1339,13 @@ static const IOleInPlaceSiteVtbl InPlaceSiteVtbl = {
     InPlaceSite_OnInPlaceDeactivate,
     InPlaceSite_DiscardUndoState,
     InPlaceSite_DeactivateAndUndo,
-    InPlaceSite_OnPosRectChange
+    InPlaceSite_OnPosRectChange,
+    InPlaceSiteEx_OnInPlaceActivateEx,
+    InPlaceSiteEx_OnInPlaceDeactivateEx,
+    InPlaceSiteEx_RequestUIActivate
 };
 
-static IOleInPlaceSite InPlaceSite = { &InPlaceSiteVtbl };
+static IOleInPlaceSiteEx InPlaceSiteEx = { &InPlaceSiteVtbl };
 
 static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **ppv)
 {
@@ -1412,7 +1443,7 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
     ok(hres == S_OK, "could not get IOleDocument: %08x\n", hres);
 
     if(SUCCEEDED(hres)) {
-        hres = IOleDocument_CreateView(document, &InPlaceSite, NULL, 0, &view);
+        hres = IOleDocument_CreateView(document, (IOleInPlaceSite*)&InPlaceSiteEx, NULL, 0, &view);
         ok(hres == S_OK, "CreateView failed: %08x\n", hres);
 
         if(SUCCEEDED(hres)) {
@@ -1423,16 +1454,16 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
 
             hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
             ok(hres == S_OK, "GetInPlaceSite failed: %08x\n", hres);
-            ok(inplacesite == &InPlaceSite, "inplacesite=%p, expected %p\n",
-                    inplacesite, &InPlaceSite);
+            ok(inplacesite == (IOleInPlaceSite*)&InPlaceSiteEx, "inplacesite=%p, expected %p\n",
+                    inplacesite, &InPlaceSiteEx);
 
-            hres = IOleDocumentView_SetInPlaceSite(view, &InPlaceSite);
+            hres = IOleDocumentView_SetInPlaceSite(view, (IOleInPlaceSite*)&InPlaceSiteEx);
             ok(hres == S_OK, "SetInPlaceSite failed: %08x\n", hres);
 
             hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
             ok(hres == S_OK, "GetInPlaceSite failed: %08x\n", hres);
-            ok(inplacesite == &InPlaceSite, "inplacesite=%p, expected %p\n",
-                    inplacesite, &InPlaceSite);
+            ok(inplacesite == (IOleInPlaceSite*)&InPlaceSiteEx, "inplacesite=%p, expected %p\n",
+                    inplacesite, &InPlaceSiteEx);
 
             hres = IOleDocumentView_QueryInterface(view, &IID_IOleInPlaceActiveObject, (void**)&activeobj);
             ok(hres == S_OK, "Could not get IOleInPlaceActiveObject: %08x\n", hres);
@@ -1447,7 +1478,10 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 SET_EXPECT(CanInPlaceActivate);
                 SET_EXPECT(GetWindowContext);
                 SET_EXPECT(GetWindow);
-                SET_EXPECT(OnInPlaceActivate);
+                if(ipsex)
+                    SET_EXPECT(OnInPlaceActivateEx);
+                else
+                    SET_EXPECT(OnInPlaceActivate);
                 SET_EXPECT(SetStatusText);
                 SET_EXPECT(Exec_SETPROGRESSMAX);
                 SET_EXPECT(Exec_SETPROGRESSPOS);
@@ -1468,7 +1502,10 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 CHECK_CALLED(CanInPlaceActivate);
                 CHECK_CALLED(GetWindowContext);
                 CHECK_CALLED(GetWindow);
-                CHECK_CALLED(OnInPlaceActivate);
+                if(ipsex)
+                    CHECK_CALLED(OnInPlaceActivateEx);
+                else
+                    CHECK_CALLED(OnInPlaceActivate);
                 CHECK_CALLED(SetStatusText);
                 CHECK_CALLED(Exec_SETPROGRESSMAX);
                 CHECK_CALLED(Exec_SETPROGRESSPOS);
@@ -1504,7 +1541,10 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 SET_EXPECT(CanInPlaceActivate);
                 SET_EXPECT(GetWindowContext);
                 SET_EXPECT(GetWindow);
-                SET_EXPECT(OnInPlaceActivate);
+                if(ipsex)
+                    SET_EXPECT(OnInPlaceActivateEx);
+                else
+                    SET_EXPECT(OnInPlaceActivate);
                 SET_EXPECT(SetStatusText);
                 SET_EXPECT(Exec_SETPROGRESSMAX);
                 SET_EXPECT(Exec_SETPROGRESSPOS);
@@ -1517,7 +1557,10 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 CHECK_CALLED(CanInPlaceActivate);
                 CHECK_CALLED(GetWindowContext);
                 CHECK_CALLED(GetWindow);
-                CHECK_CALLED(OnInPlaceActivate);
+                if(ipsex)
+                    CHECK_CALLED(OnInPlaceActivateEx);
+                else
+                    CHECK_CALLED(OnInPlaceActivate);
                 CHECK_CALLED(SetStatusText);
                 CHECK_CALLED(Exec_SETPROGRESSMAX);
                 CHECK_CALLED(Exec_SETPROGRESSPOS);
@@ -2068,7 +2111,7 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
     else if(IsEqualGUID(&IID_IOleContainer, riid))
         *ppv = &OleContainer;
     else if(IsEqualGUID(&IID_IOleWindow, riid) || IsEqualGUID(&IID_IOleInPlaceSite, riid))
-        *ppv = &InPlaceSite;
+        *ppv = &InPlaceSiteEx;
     else if(IsEqualGUID(&IID_IOleInPlaceUIWindow, riid) || IsEqualGUID(&IID_IOleInPlaceFrame, riid))
         *ppv = &InPlaceFrame;
     else if(IsEqualGUID(&IID_IOleCommandTarget , riid))
@@ -2077,9 +2120,10 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &Dispatch;
     else if(IsEqualGUID(&IID_IServiceProvider, riid))
         *ppv = &ServiceProvider;
+    else if(ipsex && IsEqualGUID(&IID_IOleInPlaceSiteEx, riid))
+        *ppv = &InPlaceSiteEx;
 
     /* TODO:
-     * IOleInPlaceSiteEx
      * {D48A6EC6-6A4A-11CF-94A7-444553540000}
      * {7BB0B520-B1A7-11D2-BB23-00C04F79ABCD}
      * {000670BA-0000-0000-C000-000000000046}
@@ -3045,10 +3089,20 @@ static void test_InPlaceDeactivate(IUnknown *unk, BOOL expect_call)
     if(FAILED(hres))
         return;
 
-    if(expect_call) SET_EXPECT(OnInPlaceDeactivate);
+    if(expect_call) {
+        if(ipsex)
+            SET_EXPECT(OnInPlaceDeactivateEx);
+        else
+            SET_EXPECT(OnInPlaceDeactivate);
+    }
     hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
     ok(hres == S_OK, "InPlaceDeactivate failed: %08x\n", hres);
-    if(expect_call) CHECK_CALLED(OnInPlaceDeactivate);
+    if(expect_call) {
+        if(ipsex)
+            CHECK_CALLED(OnInPlaceDeactivateEx);
+        else
+            CHECK_CALLED(OnInPlaceDeactivate);
+    }
 
     IOleInPlaceObjectWindowless_Release(windowlessobj);
 }
@@ -3245,6 +3299,7 @@ static void init_test(enum load_state_t ls) {
     editmode = FALSE;
     stream_read = 0;
     protocol_read = 0;
+    ipsex = FALSE;
 }
 
 static void test_HTMLDocument(enum load_state_t ls)
@@ -3343,6 +3398,7 @@ static void test_HTMLDocument_hlink(void)
     trace("Testing HTMLDocument (hlink)...\n");
 
     init_test(LD_DOLOAD);
+    ipsex = TRUE;
 
     hres = create_document(&unk);
     if(FAILED(hres))
