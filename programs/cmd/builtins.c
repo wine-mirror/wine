@@ -40,7 +40,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
-void WCMD_execute (WCHAR *orig_command, WCHAR *parameter, WCHAR *substitution, CMD_LIST **cmdList);
+static void WCMD_part_execute(CMD_LIST **commands, WCHAR *firstcmd, WCHAR *variable,
+                               WCHAR *value, BOOL isIF, BOOL conditionTRUE);
 
 struct env_stack *saved_environment;
 struct env_stack *pushd_directories;
@@ -571,6 +572,12 @@ void WCMD_echo (const WCHAR *command) {
  * WCMD_for
  *
  * Batch file loop processing.
+ *
+ * On entry: cmdList       contains the syntax up to the set
+ *           next cmdList and all in that bracket contain the set data
+ *           next cmdlist  contains the DO cmd
+ *           following that is either brackets or && entries (as per if)
+ *
  * FIXME: We don't exhaustively check syntax. Any command which works in MessDOS
  * will probably work here, but the reverse is not necessarily the case...
  */
@@ -579,45 +586,211 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
   WIN32_FIND_DATA fd;
   HANDLE hff;
-  WCHAR *cmd, *item;
-  WCHAR set[MAX_PATH], param[MAX_PATH];
   int i;
   const WCHAR inW[] = {'i', 'n', '\0'};
-  const WCHAR doW[] = {'d', 'o', '\0'};
+  const WCHAR doW[] = {'d', 'o', ' ','\0'};
+  CMD_LIST *setStart, *thisSet, *cmdStart, *cmdEnd;
+  WCHAR variable[4];
+  WCHAR *firstCmd;
+  int thisDepth;
 
+  /* Check:
+     the first line includes the % variable name as first parm
+     we have been provided with more parts to the command
+     and there is at least some set data
+     and IN as the one after that                                   */
   if (lstrcmpiW (WCMD_parameter (p, 1, NULL), inW)
-	|| lstrcmpiW (WCMD_parameter (p, 3, NULL), doW)
-	|| (param1[0] != '%')) {
+      || (*cmdList) == NULL
+      || (*cmdList)->nextcommand == NULL
+      || (param1[0] != '%')
+      || (strlenW(param1) > 3)) {
     WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
     return;
   }
-  lstrcpynW (set, WCMD_parameter (p, 2, NULL), sizeof(set)/sizeof(WCHAR));
-  WCMD_parameter (p, 4, &cmd);
-  strcpyW (param, param1);
 
-/*
- *	If the parameter within the set has a wildcard then search for matching files
- *	otherwise do a literal substitution.
- */
+  /* Save away where the set of data starts and the variable */
+  strcpyW(variable, param1);
+  thisDepth = (*cmdList)->bracketDepth;
+  *cmdList = (*cmdList)->nextcommand;
+  setStart = (*cmdList);
 
-  i = 0;
-  while (*(item = WCMD_parameter (set, i, NULL))) {
-    static const WCHAR wildcards[] = {'*','?','\0'};
-    if (strpbrkW (item, wildcards)) {
-      hff = FindFirstFile (item, &fd);
-      if (hff == INVALID_HANDLE_VALUE) {
-	return;
-      }
-      do {
-	WCMD_execute (cmd, param, fd.cFileName, cmdList);
-      } while (FindNextFile(hff, &fd) != 0);
-      FindClose (hff);
-    }
-    else {
-      WCMD_execute (cmd, param, item, cmdList);
-    }
-    i++;
+  /* Skip until the close bracket */
+  WINE_TRACE("Searching %p as the set\n", *cmdList);
+  while (*cmdList &&
+         (*cmdList)->command != NULL &&
+         (*cmdList)->bracketDepth > thisDepth) {
+    WINE_TRACE("Skipping %p which is part of the set\n", *cmdList);
+    *cmdList = (*cmdList)->nextcommand;
   }
+
+  /* Skip the close bracket, if there is one */
+  if (*cmdList) *cmdList = (*cmdList)->nextcommand;
+
+  /* Syntax error if missing close bracket, or nothing following it
+     and once we have the complete set, we expect a DO              */
+  WINE_TRACE("Looking for 'do' in %p\n", *cmdList);
+  if ((*cmdList == NULL) ||
+      (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                            (*cmdList)->command, 3, doW, -1) != 2)) {
+      WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
+      return;
+  }
+
+  /* Save away the starting position for the commands (and offset for the
+     first one                                                           */
+  cmdStart = *cmdList;
+  cmdEnd   = *cmdList;
+  firstCmd = (*cmdList)->command + 3; /* Skip 'do ' */
+
+  thisSet = setStart;
+  /* Loop through all set entries */
+  while (thisSet &&
+         thisSet->command != NULL &&
+         thisSet->bracketDepth >= thisDepth) {
+
+    /* Loop through all entries on the same line */
+    WCHAR *item;
+
+    WINE_TRACE("Processing for set %p\n", thisSet);
+    i = 0;
+    while (*(item = WCMD_parameter (thisSet->command, i, NULL))) {
+
+      /*
+       * If the parameter within the set has a wildcard then search for matching files
+       * otherwise do a literal substitution.
+       */
+      static const WCHAR wildcards[] = {'*','?','\0'};
+      CMD_LIST *thisCmdStart = cmdStart;
+
+      WINE_TRACE("Processing for item '%s'\n", wine_dbgstr_w(item));
+      if (strpbrkW (item, wildcards)) {
+        hff = FindFirstFile (item, &fd);
+        if (hff != INVALID_HANDLE_VALUE) {
+          do {
+            thisCmdStart = cmdStart;
+            WINE_TRACE("Processing FOR filename %s\n", wine_dbgstr_w(fd.cFileName));
+            WCMD_part_execute (&thisCmdStart, firstCmd, variable,
+                                         fd.cFileName, FALSE, TRUE);
+
+          } while (FindNextFile(hff, &fd) != 0);
+          FindClose (hff);
+        }
+      } else {
+        WCMD_part_execute(&thisCmdStart, firstCmd, variable, item, FALSE, TRUE);
+      }
+
+      WINE_TRACE("Post-command, cmdEnd = %p\n", cmdEnd);
+      cmdEnd = thisCmdStart;
+      i++;
+    }
+
+    /* Move onto the next set line */
+    thisSet = thisSet->nextcommand;
+  }
+
+  /* When the loop ends, either something like a GOTO or EXIT /b has terminated
+     all processing, OR it should be pointing to the end of && processing OR
+     it should be pointing at the NULL end of bracket for the DO. The return
+     value needs to be the NEXT command to execute, which it either is, or
+     we need to step over the closing bracket                                  */
+  *cmdList = cmdEnd;
+  if (cmdEnd && cmdEnd->command == NULL) *cmdList = cmdEnd->nextcommand;
+}
+
+
+/*****************************************************************************
+ * WCMD_part_execute
+ *
+ * Execute a command, and any && or bracketed follow on to the command. The
+ * first command to be executed may not be at the front of the
+ * commands->thiscommand string (eg. it may point after a DO or ELSE
+ * Returns TRUE if something like exit or goto has aborted all processing
+ */
+void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
+                       WCHAR *value, BOOL isIF, BOOL conditionTRUE) {
+
+  CMD_LIST *curPosition = *cmdList;
+  int myDepth = (*cmdList)->bracketDepth;
+
+  WINE_TRACE("cmdList(%p), firstCmd(%p), with '%s'='%s', doIt(%d)\n",
+             cmdList, wine_dbgstr_w(firstcmd),
+             wine_dbgstr_w(variable), wine_dbgstr_w(value),
+             conditionTRUE);
+
+  /* Skip leading whitespace between condition and the command */
+  while (firstcmd && *firstcmd && (*firstcmd==' ' || *firstcmd=='\t')) firstcmd++;
+
+  /* Process the first command, if there is one */
+  if (conditionTRUE && firstcmd && *firstcmd) {
+    WCHAR *command = WCMD_strdupW(firstcmd);
+    WCMD_execute (firstcmd, variable, value, cmdList);
+    free (command);
+  }
+
+
+  /* If it didnt move the position, step to next command */
+  if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+
+  /* Process any other parts of the command */
+  if (*cmdList) {
+    BOOL processThese = TRUE;
+
+    if (isIF) processThese = conditionTRUE;
+
+    while (*cmdList) {
+      const WCHAR ifElse[] = {'e','l','s','e',' ','\0'};
+
+      /* execute all appropriate commands */
+      curPosition = *cmdList;
+
+      WINE_TRACE("Processing cmdList(%p) - &(%d) bd(%d / %d)\n",
+                 *cmdList,
+                 (*cmdList)->isAmphersand,
+                 (*cmdList)->bracketDepth, myDepth);
+
+      /* Execute any appended to the statement with &&'s */
+      if ((*cmdList)->isAmphersand) {
+        if (processThese) {
+          WCMD_execute ((*cmdList)->command, variable, value, cmdList);
+        }
+        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+
+      /* Execute any appended to the statement with (...) */
+      } else if ((*cmdList)->bracketDepth > myDepth) {
+        if (processThese) {
+          *cmdList = WCMD_process_commands(*cmdList, TRUE, variable, value);
+          WINE_TRACE("Back from processing commands, (next = %p)\n", *cmdList);
+        }
+        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+
+      /* End of the command - does 'ELSE ' follow as the next command? */
+      } else {
+        if (isIF && CompareString (LOCALE_USER_DEFAULT,
+                                   NORM_IGNORECASE | SORT_STRINGSORT,
+                           (*cmdList)->command, 5, ifElse, -1) == 2) {
+
+          /* Swap between if and else processing */
+          processThese = !processThese;
+
+          /* Process the ELSE part */
+          if (processThese) {
+            WCHAR *cmd = ((*cmdList)->command) + strlenW(ifElse);
+
+            /* Skip leading whitespace between condition and the command */
+            while (*cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
+            if (*cmd) {
+              WCMD_execute (cmd, variable, value, cmdList);
+            }
+          }
+          if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+        } else {
+          WINE_TRACE("Found end of this IF statement (next = %p)\n", *cmdList);
+          break;
+        }
+      }
+    }
+  }
+  return;
 }
 
 /*****************************************************************************
@@ -631,22 +804,26 @@ void WCMD_execute (WCHAR *orig_cmd, WCHAR *param, WCHAR *subst, CMD_LIST **cmdLi
   WCHAR *new_cmd, *p, *s, *dup;
   int size;
 
-  size = strlenW (orig_cmd);
-  new_cmd = (WCHAR *) LocalAlloc (LMEM_FIXED | LMEM_ZEROINIT, size);
-  dup = s = WCMD_strdupW(orig_cmd);
+  if (param) {
+    size = (strlenW (orig_cmd) + 1) * sizeof(WCHAR);
+    new_cmd = (WCHAR *) LocalAlloc (LMEM_FIXED | LMEM_ZEROINIT, size);
+    dup = s = WCMD_strdupW(orig_cmd);
 
-  while ((p = strstrW (s, param))) {
-    *p = '\0';
-    size += strlenW (subst);
-    new_cmd = (WCHAR *) LocalReAlloc ((HANDLE)new_cmd, size, 0);
+    while ((p = strstrW (s, param))) {
+      *p = '\0';
+      size += strlenW (subst) * sizeof(WCHAR);
+      new_cmd = (WCHAR *) LocalReAlloc ((HANDLE)new_cmd, size, 0);
+      strcatW (new_cmd, s);
+      strcatW (new_cmd, subst);
+      s = p + strlenW (param);
+    }
     strcatW (new_cmd, s);
-    strcatW (new_cmd, subst);
-    s = p + strlenW (param);
+    WCMD_process_command (new_cmd, cmdList);
+    free (dup);
+    LocalFree ((HANDLE)new_cmd);
+  } else {
+    WCMD_process_command (orig_cmd, cmdList);
   }
-  strcatW (new_cmd, s);
-  WCMD_process_command (new_cmd, cmdList);
-  free (dup);
-  LocalFree ((HANDLE)new_cmd);
 }
 
 
@@ -810,8 +987,6 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
   static const WCHAR existW[]  = {'e','x','i','s','t','\0'};
   static const WCHAR defdW[]   = {'d','e','f','i','n','e','d','\0'};
   static const WCHAR eqeqW[]   = {'=','=','\0'};
-  CMD_LIST *curPosition;
-  int myDepth;
 
   if (!lstrcmpiW (param1, notW)) {
     negate = 1;
@@ -848,81 +1023,7 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
 
   /* Process rest of IF statement which is on the same line
      Note: This may process all or some of the cmdList (eg a GOTO) */
-  curPosition = *cmdList;
-  myDepth     = (*cmdList)->bracketDepth;
-
-  if (test != negate) {
-    WCHAR *cmd = command;
-
-    /* Skip leading whitespace between condition and the command */
-    while (cmd && *cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
-
-    if (cmd && *cmd) {
-      command = WCMD_strdupW(cmd);
-      WCMD_process_command (command, cmdList);
-      free (command);
-    }
-  }
-
-  /* If it didnt move the position, step to next command */
-  if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
-
-  /* Process any other parts of the IF */
-  if (*cmdList) {
-    BOOL processThese = (test != negate);
-
-    while (*cmdList) {
-      const WCHAR ifElse[] = {'e','l','s','e',' ','\0'};
-
-      /* execute all appropriate commands */
-      curPosition = *cmdList;
-
-      WINE_TRACE("Processing cmdList(%p) - &(%d) bd(%d / %d)\n",
-                 *cmdList,
-                 (*cmdList)->isAmphersand,
-                 (*cmdList)->bracketDepth, myDepth);
-
-      /* Execute any appended to the statement with &&'s */
-      if ((*cmdList)->isAmphersand) {
-        if (processThese) {
-          WCMD_process_command((*cmdList)->command, cmdList);
-        }
-        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
-
-      /* Execute any appended to the statement with (...) */
-      } else if ((*cmdList)->bracketDepth > myDepth) {
-        if (processThese) {
-          *cmdList = WCMD_process_commands(*cmdList, TRUE);
-          WINE_TRACE("Back from processing commands, (next = %p)\n", *cmdList);
-        }
-        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
-
-      /* End of the command - does 'ELSE ' follow as the next command? */
-      } else {
-        if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                           (*cmdList)->command, 5, ifElse, -1) == 2) {
-
-            /* Swap between if and else processing */
-            processThese = !processThese;
-
-            /* Process the ELSE part */
-            if (processThese) {
-              WCHAR *cmd = ((*cmdList)->command) + strlenW(ifElse);
-
-              /* Skip leading whitespace between condition and the command */
-              while (*cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
-              if (*cmd) {
-                WCMD_process_command(cmd, cmdList);
-              }
-            }
-            if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
-        } else {
-          WINE_TRACE("Found end of this IF statement (next = %p)\n", *cmdList);
-          break;
-        }
-      }
-    }
-  }
+  WCMD_part_execute(cmdList, command, NULL, NULL, TRUE, (test != negate));
 }
 
 /****************************************************************************

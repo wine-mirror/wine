@@ -109,7 +109,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
       CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
       if (WCMD_ReadAndParseLine(NULL, &toExecute, h) == NULL)
         break;
-      WCMD_process_commands(toExecute, FALSE);
+      WCMD_process_commands(toExecute, FALSE, NULL, NULL);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
   }
@@ -168,21 +168,9 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where) {
           i++;
         p = param;
 	break;
-      case '(':
-        if (where != NULL && i==n) *where = s;
-	s++;
-	while ((*s != '\0') && (*s != ')')) {
-	  *p++ = *s++;
-	}
-        if (i == n) {
-          *p = '\0';
-          return param;
-        }
-	if (*s == ')') s++;
-          param[0] = '\0';
-          i++;
-        p = param;
-	break;
+      /* The code to handle bracketed parms is removed because it should no longer
+         be necessary after the multiline support has been added and the for loop
+         set of data is now parseable individually. */
       case '\0':
         return param;
       default:

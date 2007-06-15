@@ -324,7 +324,7 @@ int wmain (int argc, WCHAR *argvW[])
 
       /* Parse the command string, without reading any more input */
       WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
-      WCMD_process_commands(toExecute, FALSE);
+      WCMD_process_commands(toExecute, FALSE, NULL, NULL);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
 
@@ -417,7 +417,7 @@ int wmain (int argc, WCHAR *argvW[])
   if (opt_k) {
       /* Parse the command string, without reading any more input */
       WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
-      WCMD_process_commands(toExecute, FALSE);
+      WCMD_process_commands(toExecute, FALSE, NULL, NULL);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
       HeapFree(GetProcessHeap(), 0, cmd);
@@ -449,7 +449,7 @@ int wmain (int argc, WCHAR *argvW[])
     if (WCMD_ReadAndParseLine(NULL, &toExecute,
                               GetStdHandle(STD_INPUT_HANDLE)) == NULL)
       break;
-    WCMD_process_commands(toExecute, FALSE);
+    WCMD_process_commands(toExecute, FALSE, NULL, NULL);
     WCMD_free_commands(toExecute);
     toExecute = NULL;
   }
@@ -497,8 +497,12 @@ void WCMD_process_command (WCHAR *command, CMD_LIST **cmdList)
     while ((p = strchrW(p, '%'))) {
       i = *(p+1) - '0';
 
+      /* Dont touch %% */
+      if (*(p+1) == '%') {
+        p+=2;
+
       /* Replace %~ modifications if in batch program */
-      if (context && *(p+1) == '~') {
+      } else if (context && *(p+1) == '~') {
         WCMD_HandleTildaModifiers(&p, NULL);
         p++;
 
@@ -531,13 +535,17 @@ void WCMD_process_command (WCHAR *command, CMD_LIST **cmdList)
     if (context) {
       p = cmd;
       while ((p = strchrW(p, '%'))) {
-        s = strchrW(p+1, '%');
-        if (!s) {
-          *p=0x00;
+        if (*(p+1) == '%') {
+          p+=2;
         } else {
-          t = WCMD_strdupW(s+1);
-          strcpyW(p, t);
-          free(t);
+          s = strchrW(p+1, '%');
+          if (!s) {
+            *p=0x00;
+          } else {
+            t = WCMD_strdupW(s+1);
+            strcpyW(p, t);
+            free(t);
+          }
         }
       }
 
@@ -1487,7 +1495,7 @@ void WCMD_opt_s_strip_quotes(WCHAR *cmd) {
  *	Handle pipes within a command - the DOS way using temporary files.
  */
 
-void WCMD_pipe (CMD_LIST **cmdEntry) {
+void WCMD_pipe (CMD_LIST **cmdEntry, WCHAR *var, WCHAR *val) {
 
   WCHAR *p;
   WCHAR *command = (*cmdEntry)->command;
@@ -1503,19 +1511,19 @@ void WCMD_pipe (CMD_LIST **cmdEntry) {
   p = strchrW(command, '|');
   *p++ = '\0';
   wsprintf (temp_cmd, redirOut, command, temp_file);
-  WCMD_process_command (temp_cmd, cmdEntry);
+  WCMD_execute (temp_cmd, var, val, cmdEntry);
   command = p;
   while ((p = strchrW(command, '|'))) {
     *p++ = '\0';
     GetTempFileName (temp_path, cmdW, 0, temp_file2);
     wsprintf (temp_cmd, redirBoth, command, temp_file, temp_file2);
-    WCMD_process_command (temp_cmd, cmdEntry);
+    WCMD_execute (temp_cmd, var, val, cmdEntry);
     DeleteFile (temp_file);
     strcpyW (temp_file, temp_file2);
     command = p;
   }
   wsprintf (temp_cmd, redirIn, command, temp_file);
-  WCMD_process_command (temp_cmd, cmdEntry);
+  WCMD_execute (temp_cmd, var, val, cmdEntry);
   DeleteFile (temp_file);
 }
 
@@ -1913,6 +1921,7 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
     const WCHAR ifElse[] = {'e','l','s','e',' ','\0'};
     BOOL      inRem = FALSE;
     BOOL      inFor = FALSE;
+    BOOL      inIn  = FALSE;
     BOOL      inIf  = FALSE;
     BOOL      inElse= FALSE;
     BOOL      onlyWhiteSpace = FALSE;
@@ -2057,11 +2066,15 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                            onlyWhiteSpace,
                            inFor, lastWasIn, lastWasDo,
                            inIf, inElse, lastWasElse);
-                if (curLen == 0) {
+
+                /* Ignore open brackets inside the for set */
+                if (curLen == 0 && !inIn) {
+                    WINE_TRACE("@@@4\n");
                   curDepth++;
 
                 /* If in quotes, ignore brackets */
                 } else if (inQuotes) {
+                    WINE_TRACE("@@@3\n");
                   curString[curLen++] = *curPos;
 
                 /* In a FOR loop, an unquoted '(' may occur straight after
@@ -2074,6 +2087,13 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                 } else if (inIf ||
                            (inElse && lastWasElse && onlyWhiteSpace) ||
                            (inFor && (lastWasIn || lastWasDo) && onlyWhiteSpace)) {
+
+                  WINE_TRACE("@@@2\n");
+                   /* If entering into an 'IN', set inIn */
+                  if (inFor && lastWasIn && onlyWhiteSpace) {
+                    WINE_TRACE("Inside an IN\n");
+                    inIn = TRUE;
+                  }
 
                   /* Add the current command */
                   thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(CMD_LIST));
@@ -2094,6 +2114,7 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
 
                   curDepth++;
                 } else {
+                  WINE_TRACE("@@@1\n");
                   curString[curLen++] = *curPos;
                 }
                 break;
@@ -2159,6 +2180,9 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                     *output = thisEntry;
                   }
                   lastEntry = thisEntry;
+
+                  /* Leave inIn if necessary */
+                  if (inIn) inIn =  FALSE;
                 } else {
                   curString[curLen++] = *curPos;
                 }
@@ -2227,7 +2251,8 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
  *
  * Process all the commands read in so far
  */
-CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket) {
+CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket,
+                                WCHAR *var, WCHAR *val) {
 
     int bdepth = -1;
 
@@ -2255,9 +2280,9 @@ CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket) {
         WINE_TRACE("Executing command: '%s'\n", wine_dbgstr_w(thisCmd->command));
 
         if (strchrW(thisCmd->command,'|') != NULL) {
-          WCMD_pipe (&thisCmd);
+          WCMD_pipe (&thisCmd, var, val);
         } else {
-          WCMD_process_command (thisCmd->command, &thisCmd);
+          WCMD_execute (thisCmd->command, var, val, &thisCmd);
         }
       }
 

@@ -62,7 +62,7 @@ void WCMD_output (const WCHAR *format, ...);
 void WCMD_output_asis (const WCHAR *message);
 void WCMD_parse (WCHAR *s, WCHAR *q, WCHAR *p1, WCHAR *p2);
 void WCMD_pause (void);
-void WCMD_pipe (CMD_LIST **command);
+void WCMD_pipe (CMD_LIST **command, WCHAR *var, WCHAR *val);
 void WCMD_popd (void);
 void WCMD_print_error (void);
 void WCMD_process_command (WCHAR *command, CMD_LIST **cmdList);
@@ -101,9 +101,10 @@ WCHAR *WCMD_strdupW(WCHAR *input);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
                    LPDWORD charsRead, const LPOVERLAPPED unused);
 
-WCHAR *WCMD_ReadAndParseLine(WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
-CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket);
-void   WCMD_free_commands(CMD_LIST *cmds);
+WCHAR    *WCMD_ReadAndParseLine(WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
+CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket, WCHAR *var, WCHAR *val);
+void      WCMD_free_commands(CMD_LIST *cmds);
+void      WCMD_execute (WCHAR *orig_command, WCHAR *parameter, WCHAR *substitution, CMD_LIST **cmdList);
 
 /*	Data structure to hold context when executing batch files */
 
