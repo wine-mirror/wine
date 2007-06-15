@@ -40,7 +40,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
-void WCMD_execute (WCHAR *orig_command, WCHAR *parameter, WCHAR *substitution);
+void WCMD_execute (WCHAR *orig_command, WCHAR *parameter, WCHAR *substitution, CMD_LIST **cmdList);
 
 struct env_stack *saved_environment;
 struct env_stack *pushd_directories;
@@ -575,7 +575,7 @@ void WCMD_echo (const WCHAR *command) {
  * will probably work here, but the reverse is not necessarily the case...
  */
 
-void WCMD_for (WCHAR *p) {
+void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
   WIN32_FIND_DATA fd;
   HANDLE hff;
@@ -609,12 +609,12 @@ void WCMD_for (WCHAR *p) {
 	return;
       }
       do {
-	WCMD_execute (cmd, param, fd.cFileName);
+	WCMD_execute (cmd, param, fd.cFileName, cmdList);
       } while (FindNextFile(hff, &fd) != 0);
       FindClose (hff);
-}
+    }
     else {
-      WCMD_execute (cmd, param, item);
+      WCMD_execute (cmd, param, item, cmdList);
     }
     i++;
   }
@@ -626,7 +626,7 @@ void WCMD_for (WCHAR *p) {
  *	Execute a command after substituting variable text for the supplied parameter
  */
 
-void WCMD_execute (WCHAR *orig_cmd, WCHAR *param, WCHAR *subst) {
+void WCMD_execute (WCHAR *orig_cmd, WCHAR *param, WCHAR *subst, CMD_LIST **cmdList) {
 
   WCHAR *new_cmd, *p, *s, *dup;
   int size;
@@ -644,7 +644,7 @@ void WCMD_execute (WCHAR *orig_cmd, WCHAR *param, WCHAR *subst) {
     s = p + strlenW (param);
   }
   strcatW (new_cmd, s);
-  WCMD_process_command (new_cmd);
+  WCMD_process_command (new_cmd, cmdList);
   free (dup);
   LocalFree ((HANDLE)new_cmd);
 }
@@ -790,7 +790,7 @@ void WCMD_popd (void) {
  * FIXME: Much more syntax checking needed!
  */
 
-void WCMD_if (WCHAR *p) {
+void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
 
   int negate = 0, test = 0;
   WCHAR condition[MAX_PATH], *command, *s;
@@ -834,7 +834,7 @@ void WCMD_if (WCHAR *p) {
   }
   if (test != negate) {
     command = WCMD_strdupW(command);
-    WCMD_process_command (command);
+    WCMD_process_command (command, cmdList);
     free (command);
   }
 }

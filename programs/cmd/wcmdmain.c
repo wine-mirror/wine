@@ -463,7 +463,7 @@ int wmain (int argc, WCHAR *argvW[])
  */
 
 
-void WCMD_process_command (WCHAR *command)
+void WCMD_process_command (WCHAR *command, CMD_LIST **cmdList)
 {
     WCHAR *cmd, *p, *s, *t, *redir;
     int status, i;
@@ -709,7 +709,7 @@ void WCMD_process_command (WCHAR *command)
         WCMD_echo(&whichcmd[count]);
         break;
       case WCMD_FOR:
-        WCMD_for (p);
+        WCMD_for (p, cmdList);
         break;
       case WCMD_GOTO:
         WCMD_goto ();
@@ -718,7 +718,7 @@ void WCMD_process_command (WCHAR *command)
         WCMD_give_help (p);
 	break;
       case WCMD_IF:
-	WCMD_if (p);
+	WCMD_if (p, cmdList);
         break;
       case WCMD_LABEL:
         WCMD_volume (1, p);
@@ -1503,19 +1503,19 @@ void WCMD_pipe (CMD_LIST **cmdEntry) {
   p = strchrW(command, '|');
   *p++ = '\0';
   wsprintf (temp_cmd, redirOut, command, temp_file);
-  WCMD_process_command (temp_cmd);
+  WCMD_process_command (temp_cmd, cmdEntry);
   command = p;
   while ((p = strchrW(command, '|'))) {
     *p++ = '\0';
     GetTempFileName (temp_path, cmdW, 0, temp_file2);
     wsprintf (temp_cmd, redirBoth, command, temp_file, temp_file2);
-    WCMD_process_command (temp_cmd);
+    WCMD_process_command (temp_cmd, cmdEntry);
     DeleteFile (temp_file);
     strcpyW (temp_file, temp_file2);
     command = p;
   }
   wsprintf (temp_cmd, redirIn, command, temp_file);
-  WCMD_process_command (temp_cmd);
+  WCMD_process_command (temp_cmd, cmdEntry);
   DeleteFile (temp_file);
 }
 
@@ -2080,10 +2080,10 @@ void WCMD_process_commands(CMD_LIST *thisCmd) {
         if (strchrW(thisCmd->command,'|') != NULL) {
           WCMD_pipe (&thisCmd);
         } else {
-          WCMD_process_command (thisCmd->command);
+          WCMD_process_command (thisCmd->command, &thisCmd);
         }
       }
-      thisCmd = thisCmd->nextcommand;
+      if (thisCmd) thisCmd = thisCmd->nextcommand;
     }
 }
 
