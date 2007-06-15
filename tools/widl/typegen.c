@@ -195,7 +195,8 @@ static int is_user_type(const type_t *t)
 static int is_embedded_complex(const type_t *type)
 {
     unsigned char tc = type->type;
-    return is_struct(tc) || is_union(tc) || is_array(type) || is_user_type(type);
+    return is_struct(tc) || is_union(tc) || is_array(type) || is_user_type(type)
+        || (is_ptr(type) && type->ref->type == RPC_FC_IP);
 }
 
 static int compare_expr(const expr_t *a, const expr_t *b)
@@ -879,12 +880,7 @@ static void write_user_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
 static void write_member_type(FILE *file, type_t *type, const var_t *field,
                               unsigned int *corroff, unsigned int *tfsoff)
 {
-    if (is_ptr(type))
-    {
-        print_file(file, 2, "0x8,\t/* FC_LONG */\n");
-        *tfsoff += 1;
-    }
-    else if (is_embedded_complex(type))
+    if (is_embedded_complex(type))
     {
         size_t absoff;
         short reloff;
@@ -906,6 +902,11 @@ static void write_member_type(FILE *file, type_t *type, const var_t *field,
         print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%lu) */\n",
                    reloff, reloff, absoff);
         *tfsoff += 4;
+    }
+    else if (is_ptr(type))
+    {
+        print_file(file, 2, "0x8,\t/* FC_LONG */\n");
+        *tfsoff += 1;
     }
     else if (!write_base_type(file, type, tfsoff))
         error("Unsupported member type 0x%x\n", type->type);
@@ -1415,12 +1416,12 @@ static size_t write_union_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     return start_offset;
 }
 
-static size_t write_ip_tfs(FILE *file, const func_t *func, const type_t *type, const var_t *var,
-                           unsigned int *typeformat_offset)
+static size_t write_ip_tfs(FILE *file, const func_t *func, const attr_list_t *attrs,
+                           type_t *type, unsigned int *typeformat_offset)
 {
     size_t i;
     size_t start_offset = *typeformat_offset;
-    const var_t *iid = get_attrp(var->attrs, ATTR_IIDIS);
+    const var_t *iid = get_attrp(attrs, ATTR_IIDIS);
 
     if (iid)
     {
@@ -1442,6 +1443,8 @@ static size_t write_ip_tfs(FILE *file, const func_t *func, const type_t *type, c
         if (! uuid)
             error("%s: interface %s missing UUID\n", __FUNCTION__, base->name);
 
+        update_tfsoff(type, start_offset, file);
+        print_file(file, 0, "/* %d */\n", start_offset);
         print_file(file, 2, "0x2f,\t/* FC_IP */\n");
         print_file(file, 2, "0x5a,\t/* FC_CONSTANT_IID */\n");
         print_file(file, 2, "NdrFcLong(0x%08lx),\n", uuid->Data1);
@@ -1539,7 +1542,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
 
         if (base->type == RPC_FC_IP)
         {
-            return write_ip_tfs(file, func, type, var, typeformat_offset);
+            return write_ip_tfs(file, func, var->attrs, type, typeformat_offset);
         }
 
         /* special case for pointers to base types */
@@ -1609,14 +1612,20 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     {
         type_t *ref = type->ref;
 
-        if (!processed(ref) && !is_base_type(ref->type))
-            retmask |= write_embedded_types(file, NULL, ref, name, TRUE, tfsoff);
+        if (ref->type == RPC_FC_IP)
+        {
+            write_ip_tfs(file, NULL, attrs, type, tfsoff);
+        }
+        else
+        {
+            if (!processed(ref) && !is_base_type(ref->type))
+                retmask |= write_embedded_types(file, NULL, ref, name, TRUE, tfsoff);
 
-        /* top-level pointers are handled inline for structures */
-        if (write_ptr)
-            write_pointer_tfs(file, type, tfsoff);
+            if (write_ptr)
+                write_pointer_tfs(file, type, tfsoff);
 
-        retmask |= 1;
+            retmask |= 1;
+        }
     }
     else if (type->declarray && is_conformant_array(type))
         ;    /* conformant arrays and strings are handled specially */

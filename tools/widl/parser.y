@@ -1668,8 +1668,21 @@ static int get_struct_type(var_list_t *fields)
   {
     type_t *t = field->type;
 
-    if (is_ptr(field->type))
+    if (is_ptr(t))
     {
+        do
+            t = t->ref;
+        while (is_ptr(t));
+
+        switch (t->type)
+        {
+        case RPC_FC_IP:
+        case RPC_FC_ENCAPSULATED_UNION:
+        case RPC_FC_NON_ENCAPSULATED_UNION:
+        case RPC_FC_BOGUS_STRUCT:
+            return RPC_FC_BOGUS_STRUCT;
+        }
+
         has_pointer = 1;
         continue;
     }
