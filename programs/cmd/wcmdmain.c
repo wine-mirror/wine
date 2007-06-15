@@ -1907,8 +1907,14 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
     CMD_LIST *lastEntry = NULL;
     BOOL      isAmphersand = FALSE;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
-    const WCHAR rem[] = {'r','e','m',' ','\0'};
+    const WCHAR remCmd[] = {'r','e','m',' ','\0'};
+    const WCHAR forCmd[] = {'f','o','r',' ','\0'};
     BOOL      inRem = FALSE;
+    BOOL      inFor = FALSE;
+    BOOL      onlyWhiteSpace = FALSE;
+    BOOL      lastWasWhiteSpace = FALSE;
+    BOOL      lastWasDo = FALSE;
+    BOOL      lastWasIn = FALSE;
 
     /* Allocate working space for a command read from keyboard, file etc */
     if (!extraSpace)
@@ -1939,13 +1945,57 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
 
       WCHAR thisChar;
 
-      /* If command starts with 'rem', ignore any &&, ( etc */
-      if (curLen == 0 && !inRem) {
+      /* Debugging AID:
+      WINE_TRACE("Looking at '%c' (len:%d, lws:%d, ows:%d)\n", *curPos, curLen,
+                 lastWasWhiteSpace, onlyWhiteSpace);
+      */
+
+     /* Certain commands need special handling */
+      if (curLen == 0) {
+        const WCHAR forDO[] = {'d','o',' ','\0'};
+
+        /* If command starts with 'rem', ignore any &&, ( etc */
         if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-          curPos, 4, rem, -1) == 2) {
+          curPos, 4, remCmd, -1) == 2) {
           inRem = TRUE;
-        } else {
-          inRem = FALSE;
+
+        /* If command starts with 'for', handle ('s mid line after IN or DO */
+        } else if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+          curPos, 4, forCmd, -1) == 2) {
+          inFor = TRUE;
+
+        /* In a for loop, the DO command will follow a close bracket followed by
+           whitespace, followed by DO, ie closeBracket inserts a NULL entry, curLen
+           is then 0, and all whitespace is skipped                                */
+        } else if (inFor &&
+                   (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                    curPos, 3, forDO, -1) == 2)) {
+          WINE_TRACE("Found DO\n");
+          lastWasDo = TRUE;
+          onlyWhiteSpace = TRUE;
+          memcpy(&curString[curLen], curPos, 3*sizeof(WCHAR));
+          curLen+=3;
+          curPos+=3;
+          continue;
+        }
+      } else {
+
+        /* Special handling for the 'FOR' command */
+        if (inFor && lastWasWhiteSpace) {
+          const WCHAR forIN[] = {'i','n',' ','\0'};
+
+          WINE_TRACE("Found 'FOR', comparing next parm: '%s'\n", wine_dbgstr_w(curPos));
+
+          if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+              curPos, 3, forIN, -1) == 2) {
+            WINE_TRACE("Found IN\n");
+            lastWasIn = TRUE;
+            onlyWhiteSpace = TRUE;
+            memcpy(&curString[curLen], curPos, 3*sizeof(WCHAR));
+            curLen+=3;
+            curPos+=3;
+            continue;
+          }
         }
       }
 
@@ -1955,20 +2005,61 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
       if (!inRem) thisChar = *curPos;
       else        thisChar = 'X';  /* Character with no special processing */
 
+      lastWasWhiteSpace = FALSE; /* Will be reset below */
+
       switch (thisChar) {
 
       case '\t':/* drop through - ignore whitespace at the start of a command */
       case ' ': if (curLen > 0)
                   curString[curLen++] = *curPos;
+
+                /* Remember just processed whitespace */
+                lastWasWhiteSpace = TRUE;
+
                 break;
 
       case '"': inQuotes = !inQuotes;
                 break;
 
-      case '(': if (inQuotes || curLen > 0) {
-                  curString[curLen++] = *curPos;
-                } else {
+      case '(': /* If a '(' is the first non whitespace in a command portion
+                   ie start of line or just after &&, then we read until an
+                   unquoted ) is found                                       */
+                WINE_TRACE("Found '(' conditions: curLen(%d), inQ(%d), onlyWS(%d)"
+                           ", for(%d, In:%d, Do:%d)\n",
+                           curLen, inQuotes,
+                           onlyWhiteSpace,
+                           inFor, lastWasIn, lastWasDo);
+                if (curLen == 0) {
                   curDepth++;
+
+                /* If in quotes, ignore brackets */
+                } else if (inQuotes) {
+                  curString[curLen++] = *curPos;
+
+                /* In a FOR loop, an unquoted '(' may occur straight after
+                   IN or DO                                                */
+                } else if (inFor && (lastWasIn || lastWasDo) && onlyWhiteSpace) {
+
+                  /* Add the current command */
+                  thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(CMD_LIST));
+                  thisEntry->command = HeapAlloc(GetProcessHeap(), 0,
+                                                 (curLen+1) * sizeof(WCHAR));
+                  memcpy(thisEntry->command, curString, curLen * sizeof(WCHAR));
+                  thisEntry->command[curLen] = 0x00;
+                  curLen = 0;
+                  thisEntry->nextcommand = NULL;
+                  thisEntry->isAmphersand = isAmphersand;
+                  thisEntry->bracketDepth = curDepth;
+                  if (lastEntry) {
+                    lastEntry->nextcommand = thisEntry;
+                  } else {
+                    *output = thisEntry;
+                  }
+                  lastEntry = thisEntry;
+
+                  curDepth++;
+                } else {
+                  curString[curLen++] = *curPos;
                 }
                 break;
 
@@ -2041,6 +2132,16 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
 
       curPos++;
 
+      /* At various times we need to know if we have only skipped whitespace,
+         so reset this variable and then it will remain true until a non
+         whitespace is found                                               */
+      if ((thisChar != ' ') && (thisChar != '\n')) onlyWhiteSpace = FALSE;
+
+      /* Flag end of interest in FOR DO and IN parms once something has been processed */
+      if (!lastWasWhiteSpace) {
+        lastWasIn = lastWasDo = FALSE;
+      }
+
       /* If we have reached the end, add this command into the list */
       if (*curPos == 0x00 && curLen > 0) {
 
@@ -2065,6 +2166,7 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
       /* If we have reached the end of the string, see if bracketing outstanding */
       if (*curPos == 0x00 && curDepth > 0 && readFrom != INVALID_HANDLE_VALUE) {
         inRem = FALSE;
+        inFor = FALSE;
         isAmphersand = FALSE;
         inQuotes = FALSE;
         memset(extraSpace, 0x00, (MAXSTRING+1) * sizeof(WCHAR));
