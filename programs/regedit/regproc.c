@@ -62,7 +62,7 @@ static HKEY reg_class_keys[REG_CLASS_NUMBER] = {
 #define CHECK_ENOUGH_MEMORY(p) \
 if (!(p)) \
 { \
-    fprintf(stderr,"%s: file %s, line %d: Not enough memory", \
+    fprintf(stderr,"%s: file %s, line %d: Not enough memory\n", \
             getAppName(), __FILE__, __LINE__); \
     exit(NOT_ENOUGH_MEMORY); \
 }
