@@ -1909,12 +1909,17 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
     const WCHAR remCmd[] = {'r','e','m',' ','\0'};
     const WCHAR forCmd[] = {'f','o','r',' ','\0'};
+    const WCHAR ifCmd[]  = {'i','f',' ','\0'};
+    const WCHAR ifElse[] = {'e','l','s','e',' ','\0'};
     BOOL      inRem = FALSE;
     BOOL      inFor = FALSE;
+    BOOL      inIf  = FALSE;
+    BOOL      inElse= FALSE;
     BOOL      onlyWhiteSpace = FALSE;
     BOOL      lastWasWhiteSpace = FALSE;
-    BOOL      lastWasDo = FALSE;
-    BOOL      lastWasIn = FALSE;
+    BOOL      lastWasDo   = FALSE;
+    BOOL      lastWasIn   = FALSE;
+    BOOL      lastWasElse = FALSE;
 
     /* Allocate working space for a command read from keyboard, file etc */
     if (!extraSpace)
@@ -1952,7 +1957,7 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
 
      /* Certain commands need special handling */
       if (curLen == 0) {
-        const WCHAR forDO[] = {'d','o',' ','\0'};
+        const WCHAR forDO[]  = {'d','o',' ','\0'};
 
         /* If command starts with 'rem', ignore any &&, ( etc */
         if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
@@ -1963,6 +1968,26 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
         } else if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
           curPos, 4, forCmd, -1) == 2) {
           inFor = TRUE;
+
+        /* If command starts with 'if' or 'else', handle ('s mid line. We should ensure this
+           is only true in the command portion of the IF statement, but this
+           should suffice for now
+            FIXME: Silly syntax like "if 1(==1( (
+                                        echo they equal
+                                      )" will be parsed wrong */
+        } else if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+          curPos, 3, ifCmd, -1) == 2) {
+          inIf = TRUE;
+
+        } else if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+          curPos, 5, ifElse, -1) == 2) {
+          inElse = TRUE;
+          lastWasElse = TRUE;
+          onlyWhiteSpace = TRUE;
+          memcpy(&curString[curLen], curPos, 5*sizeof(WCHAR));
+          curLen+=5;
+          curPos+=5;
+          continue;
 
         /* In a for loop, the DO command will follow a close bracket followed by
            whitespace, followed by DO, ie closeBracket inserts a NULL entry, curLen
@@ -2025,10 +2050,12 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                    ie start of line or just after &&, then we read until an
                    unquoted ) is found                                       */
                 WINE_TRACE("Found '(' conditions: curLen(%d), inQ(%d), onlyWS(%d)"
-                           ", for(%d, In:%d, Do:%d)\n",
+                           ", for(%d, In:%d, Do:%d)"
+                           ", if(%d, else:%d, lwe:%d)\n",
                            curLen, inQuotes,
                            onlyWhiteSpace,
-                           inFor, lastWasIn, lastWasDo);
+                           inFor, lastWasIn, lastWasDo,
+                           inIf, inElse, lastWasElse);
                 if (curLen == 0) {
                   curDepth++;
 
@@ -2037,8 +2064,15 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                   curString[curLen++] = *curPos;
 
                 /* In a FOR loop, an unquoted '(' may occur straight after
-                   IN or DO                                                */
-                } else if (inFor && (lastWasIn || lastWasDo) && onlyWhiteSpace) {
+                      IN or DO
+                   In an IF statement just handle it regardless as we don't
+                      parse the operands
+                   In an ELSE statement, only allow it straight away after
+                      the ELSE and whitespace
+                 */
+                } else if (inIf ||
+                           (inElse && lastWasElse && onlyWhiteSpace) ||
+                           (inFor && (lastWasIn || lastWasDo) && onlyWhiteSpace)) {
 
                   /* Add the current command */
                   thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(CMD_LIST));
@@ -2166,7 +2200,6 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
       /* If we have reached the end of the string, see if bracketing outstanding */
       if (*curPos == 0x00 && curDepth > 0 && readFrom != INVALID_HANDLE_VALUE) {
         inRem = FALSE;
-        inFor = FALSE;
         isAmphersand = FALSE;
         inQuotes = FALSE;
         memset(extraSpace, 0x00, (MAXSTRING+1) * sizeof(WCHAR));
