@@ -276,15 +276,13 @@ static LONG setValue(LPSTR val_name, LPSTR val_data)
 
 
 /******************************************************************************
- * Extracts from [HKEY\some\key\path] or HKEY\some\key\path types of line
+ * Extracts from HKEY\some\key\path types of line
  * the key class (what ends before the first '\')
  */
 static BOOL getRegClass(LPSTR lpClass, HKEY* hkey)
 {
     LPSTR classNameEnd;
-    LPSTR classNameBeg;
     unsigned int i;
-
     char  lpClassCopy[KEY_MAX_LEN];
 
     if (lpClass == NULL)
@@ -293,23 +291,11 @@ static BOOL getRegClass(LPSTR lpClass, HKEY* hkey)
     lstrcpynA(lpClassCopy, lpClass, KEY_MAX_LEN);
 
     classNameEnd  = strchr(lpClassCopy, '\\');    /* The class name ends by '\' */
-    if (!classNameEnd)                            /* or the whole string */
-    {
-        classNameEnd = lpClassCopy + strlen(lpClassCopy);
-        if (classNameEnd[-1] == ']')
-        {
-            classNameEnd--;
-        }
-    }
-    *classNameEnd = '\0';                       /* Isolate the class name */
-    if (lpClassCopy[0] == '[') {
-        classNameBeg = lpClassCopy + 1;
-    } else {
-        classNameBeg = lpClassCopy;
-    }
+    if (classNameEnd)                             /* or the whole string */
+        *classNameEnd = '\0';                     /* Isolate the class name */
 
     for (i = 0; i < REG_CLASS_NUMBER; i++) {
-        if (!strcmp(classNameBeg, reg_class_names[i])) {
+        if (!strcmp(lpClassCopy, reg_class_names[i])) {
             *hkey = reg_class_keys[i];
             return TRUE;
         }
@@ -318,7 +304,7 @@ static BOOL getRegClass(LPSTR lpClass, HKEY* hkey)
 }
 
 /******************************************************************************
- * Extracts from [HKEY\some\key\path] or HKEY\some\key\path types of line
+ * Extracts from HKEY\some\key\path types of line
  * the key name (what starts after the first '\')
  */
 static LPSTR getRegKeyName(LPSTR lpLine)
@@ -334,16 +320,6 @@ static LPSTR getRegKeyName(LPSTR lpLine)
     keyNameBeg = strchr(lpLineCopy, '\\');    /* The key name start by '\' */
     if (keyNameBeg) {
         keyNameBeg++;                             /* is not part of the name */
-
-        if (lpLine[0] == '[') /* need to find matching ']' */
-        {
-            LPSTR keyNameEnd;
-
-            keyNameEnd = strrchr(lpLineCopy, ']');
-            if (keyNameEnd) {
-                *keyNameEnd = '\0';               /* remove ']' from the key name */
-            }
-        }
     } else {
         keyNameBeg = lpLineCopy + strlen(lpLineCopy); /* branch - empty string */
     }
@@ -489,22 +465,22 @@ static void processRegEntry(LPSTR stdInput)
 
     if      ( stdInput[0] == '[')      /* We are reading a new key */
     {
+        LPSTR keyEnd;
         if ( bTheKeyIsOpen != FALSE )
             closeKey();                    /* Close the previous key before */
 
+        /* Get rid of the square brackets */
+        stdInput++;
+        keyEnd = strrchr(stdInput, ']');
+        if (keyEnd)
+            *keyEnd='\0';
+
         /* delete the key if we encounter '-' at the start of reg key */
-        if ( stdInput[1] == '-')
+        if ( stdInput[0] == '-')
         {
-            int last_chr = strlen(stdInput) - 1;
-
-            /* skip leading "[-" and get rid of trailing "]" */
-            if (stdInput[last_chr] == ']')
-                stdInput[last_chr] = '\0';
-            delete_registry_key(stdInput+2);
-            return;
+            delete_registry_key(stdInput+1);
         }
-
-        if ( openKey(stdInput) != ERROR_SUCCESS )
+        else if ( openKey(stdInput) != ERROR_SUCCESS )
             fprintf(stderr,"%s: setValue failed to open key %s\n",
                     getAppName(), stdInput);
     } else if( ( bTheKeyIsOpen ) &&
