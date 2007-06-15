@@ -509,8 +509,20 @@ state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
     if (stateblock->renderState[WINED3DRS_SPECULARENABLE]) {
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &stateblock->material.Specular);
         checkGLcall("glMaterialfv");
-        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, stateblock->material.Power);
+
+        if(stateblock->material.Power > 128.0) {
+            /* glMaterialf man page says that the material says that GL_SHININESS must be between 0.0
+             * and 128.0, although in d3d neither -1 nor 129 produce an error. For values > 128 clamp
+             * them, since 128 results in a hardly visible specular highlight, so it should be safe to
+             * to clamp to 128
+             */
+            WARN("Material power > 128\n");
+            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 128.0);
+        } else {
+            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, stateblock->material.Power);
+        }
         checkGLcall("glMaterialf(GL_SHININESS");
+
         if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
             glEnable(GL_COLOR_SUM_EXT);
         } else {

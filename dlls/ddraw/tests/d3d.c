@@ -172,6 +172,7 @@ static void LightTest(void)
     BOOL bEnabled = FALSE;
     float one = 1.0f;
     float zero= 0.0f;
+    D3DMATERIAL7 mat;
 
     /* Set a few lights with funky indices. */
     memset(&light, 0, sizeof(light));
@@ -315,6 +316,26 @@ static void LightTest(void)
     light.dvAttenuation0 = -1.0;
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 103, &light);
     ok(rc==D3D_OK, "SetLight returned: %x\n", rc);
+
+    memset(&mat, 0, sizeof(mat));
+    rc = IDirect3DDevice7_SetMaterial(lpD3DDevice, &mat);
+    ok(rc == D3D_OK, "IDirect3DDevice7_SetMaterial returned: %x\n", rc);
+
+    mat.power = 129.0;
+    rc = IDirect3DDevice7_SetMaterial(lpD3DDevice, &mat);
+    ok(rc == D3D_OK, "IDirect3DDevice7_SetMaterial(power = 129.0) returned: %x\n", rc);
+    memset(&mat, 0, sizeof(mat));
+    rc = IDirect3DDevice7_GetMaterial(lpD3DDevice, &mat);
+    ok(rc == D3D_OK, "IDirect3DDevice7_GetMaterial returned: %x\n", rc);
+    ok(mat.power == 129, "Returned power is %f\n", mat.power);
+
+    mat.power = -1.0;
+    rc = IDirect3DDevice7_SetMaterial(lpD3DDevice, &mat);
+    ok(rc == D3D_OK, "IDirect3DDevice7_SetMaterial(power = -1.0) returned: %x\n", rc);
+    memset(&mat, 0, sizeof(mat));
+    rc = IDirect3DDevice7_GetMaterial(lpD3DDevice, &mat);
+    ok(rc == D3D_OK, "IDirect3DDevice7_GetMaterial returned: %x\n", rc);
+    ok(mat.power == -1, "Returned power is %f\n", mat.power);
 }
 
 static void ProcessVerticesTest(void)
