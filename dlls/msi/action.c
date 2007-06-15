@@ -4587,30 +4587,20 @@ static LONG env_set_flags( LPCWSTR *name, LPWSTR *value, DWORD *flags )
     static const WCHAR prefix[] = {'[','~',']',0};
 
     *flags = 0;
-    while (*cptr && (*cptr == '=' || *cptr == '+' ||
-           *cptr == '-' || *cptr == '!' || *cptr == '*'))
+    while (*cptr)
     {
-        switch (*cptr)
-        {
-        case '=':
+        if (*cptr == '=')
             *flags |= ENV_ACT_SETALWAYS;
-            break;
-        case '+':
+        else if (*cptr == '+')
             *flags |= ENV_ACT_SETABSENT;
-            break;
-        case '-':
+        else if (*cptr == '-')
             *flags |= ENV_ACT_REMOVE;
-            break;
-        case '!':
+        else if (*cptr == '!')
             *flags |= ENV_ACT_REMOVEMATCH;
-            break;
-        case '*':
+        else if (*cptr == '*')
             *flags |= ENV_MOD_MACHINE;
+        else
             break;
-        default:
-            ERR("Unknown Environment flag: %c\n", *cptr);
-            return ERROR_FUNCTION_FAILED;
-        }
 
         cptr++;
         (*name)++;
