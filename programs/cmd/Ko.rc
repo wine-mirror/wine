@@ -263,4 +263,5 @@ HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
   WCMD_ANYKEY,"Press Return key to continue: "
   WCMD_CONSTITLE,"Wine Command Prompt"
   WCMD_VERSION,"CMD Version %s\n\n"
+  WCMD_MOREPROMPT, "More? "
 }

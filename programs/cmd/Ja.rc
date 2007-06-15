@@ -265,4 +265,5 @@ EXIT\t\tCMDÇèIóπ\n\n\
   WCMD_ANYKEY,"Press Return key to continue: "
   WCMD_CONSTITLE,"Wine Command Prompt"
   WCMD_VERSION,"CMD Version %s\n\n"
+  WCMD_MOREPROMPT, "More? "
 }

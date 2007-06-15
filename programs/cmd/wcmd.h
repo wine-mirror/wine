@@ -92,6 +92,19 @@ WCHAR *WCMD_strdupW(WCHAR *input);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
                    LPDWORD charsRead, const LPOVERLAPPED unused);
 
+/*	Data structure to hold commands to be processed */
+
+typedef struct _CMD_LIST {
+  WCHAR              *command;     /* Command string to execute                */
+  struct _CMD_LIST   *nextcommand; /* Next command string to execute           */
+  BOOL                isAmphersand;/* Whether follows &&                       */
+  int                 bracketDepth;/* How deep bracketing have we got to       */
+} CMD_LIST;
+
+WCHAR *WCMD_ReadAndParseLine(WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
+void   WCMD_process_commands(CMD_LIST *thisCmd);
+void   WCMD_free_commands(CMD_LIST *cmds);
+
 /*	Data structure to hold context when executing batch files */
 
 typedef struct {
@@ -100,6 +113,7 @@ typedef struct {
   int shift_count[10];	/* Offset in terms of shifts for %0 - %9 */
   void *prev_context;	/* Pointer to the previous context block */
   BOOL  skip_rest;      /* Skip the rest of the batch program and exit */
+  CMD_LIST *toExecute;  /* Commands left to be executed */
 } BATCH_CONTEXT;
 
 /* Data structure to save setlocal and pushd information */
@@ -223,7 +237,7 @@ extern WCHAR version_string[];
 #define WCMD_ANYKEY           1031
 #define WCMD_CONSTITLE        1032
 #define WCMD_VERSION          1033
-
+#define WCMD_MOREPROMPT       1034
 
 /* msdn specified max for Win XP */
 #define MAXSTRING 8192

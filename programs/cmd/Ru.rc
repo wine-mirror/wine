@@ -277,4 +277,5 @@ EXIT\t\tВыйти из CMD\n\n\
   WCMD_ANYKEY,"Нажмите ввод для продолжения: "
   WCMD_CONSTITLE,"Приглашение командной строки Wine"
   WCMD_VERSION,"Версия CMD %s\n\n"
+  WCMD_MOREPROMPT, "More? "
 }

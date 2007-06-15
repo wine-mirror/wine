@@ -84,6 +84,7 @@ int echo_mode = 1, verify_mode = 0, defaultColor = 7;
 static int opt_c, opt_k, opt_s;
 const WCHAR newline[] = {'\n','\0'};
 static const WCHAR equalsW[] = {'=','\0'};
+static const WCHAR closeBW[] = {')','\0'};
 WCHAR anykey[100];
 WCHAR version_string[100];
 WCHAR quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
@@ -107,13 +108,13 @@ int wmain (int argc, WCHAR *argvW[])
   WCHAR  *cmd   = NULL;
   WCHAR string[1024];
   WCHAR envvar[4];
-  DWORD count;
   HANDLE h;
   int opt_q;
   int opt_t = 0;
   static const WCHAR autoexec[] = {'\\','a','u','t','o','e','x','e','c','.',
                                    'b','a','t','\0'};
   char ansiVersion[100];
+  CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
 
   /* Pre initialize some messages */
   strcpy(ansiVersion, PACKAGE_VERSION);
@@ -320,10 +321,13 @@ int wmain (int argc, WCHAR *argvW[])
        * the currently allocated input and output handles. This allows
        * us to pipe to and read from the command interpreter.
        */
-      if (strchrW(cmd,'|') != NULL)
-          WCMD_pipe(cmd);
-      else
-          WCMD_process_command(cmd);
+
+      /* Parse the command string, without reading any more input */
+      WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
+      WCMD_process_commands(toExecute);
+      WCMD_free_commands(toExecute);
+      toExecute = NULL;
+
       HeapFree(GetProcessHeap(), 0, cmd);
       return errorlevel;
   }
@@ -411,7 +415,11 @@ int wmain (int argc, WCHAR *argvW[])
   }
 
   if (opt_k) {
-      WCMD_process_command(cmd);
+      /* Parse the command string, without reading any more input */
+      WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
+      WCMD_process_commands(toExecute);
+      WCMD_free_commands(toExecute);
+      toExecute = NULL;
       HeapFree(GetProcessHeap(), 0, cmd);
   }
 
@@ -434,22 +442,18 @@ int wmain (int argc, WCHAR *argvW[])
 
   WCMD_version ();
   while (TRUE) {
+
+    /* Read until EOF (which for std input is never, but if redirect
+       in place, may occur                                          */
     WCMD_show_prompt ();
-    WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), string,
-                   sizeof(string)/sizeof(WCHAR), &count, NULL);
-    if (count > 1) {
-      string[count-1] = '\0'; /* ReadFile output is not null-terminated! */
-      if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
-      if (strlenW (string) != 0) {
-        if (strchrW(string,'|') != NULL) {
-          WCMD_pipe (string);
-        }
-        else {
-          WCMD_process_command (string);
-        }
-      }
-    }
+    if (WCMD_ReadAndParseLine(NULL, &toExecute,
+                              GetStdHandle(STD_INPUT_HANDLE)) == NULL)
+      break;
+    WCMD_process_commands(toExecute);
+    WCMD_free_commands(toExecute);
+    toExecute = NULL;
   }
+  return 0;
 }
 
 
@@ -1851,4 +1855,252 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
 
     }
     return res;
+}
+
+/***************************************************************************
+ * WCMD_DumpCommands
+ *
+ *	Domps out the parsed command line to ensure syntax is correct
+ */
+void WCMD_DumpCommands(CMD_LIST *commands) {
+    WCHAR buffer[MAXSTRING];
+    CMD_LIST *thisCmd = commands;
+    const WCHAR fmt[] = {'%','p',' ','%','c',' ','%','2','.','2','d',' ',
+                         '%','p',' ','%','s','\0'};
+
+    WINE_TRACE("Parsed line:\n");
+    while (thisCmd != NULL) {
+      sprintfW(buffer, fmt,
+               thisCmd,
+               thisCmd->isAmphersand?'Y':'N',
+               thisCmd->bracketDepth,
+               thisCmd->nextcommand,
+               thisCmd->command);
+      WINE_TRACE("%s\n", wine_dbgstr_w(buffer));
+      thisCmd = thisCmd->nextcommand;
+    }
+}
+
+/***************************************************************************
+ * WCMD_ReadAndParseLine
+ *
+ *   Either uses supplied input or
+ *     Reads a file from the handle, and then...
+ *   Parse the text buffer, spliting into seperate commands
+ *     - unquoted && strings split 2 commands but the 2nd is flagged as
+ *            following an &&
+ *     - ( as the first character just ups the bracket depth
+ *     - unquoted ) when bracket depth > 0 terminates a bracket and
+ *            adds a CMD_LIST structure with null command
+ *     - Anything else gets put into the command string (including
+ *            redirects)
+ */
+WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readFrom) {
+
+    WCHAR    *curPos;
+    BOOL      inQuotes = FALSE;
+    WCHAR     curString[MAXSTRING];
+    int       curLen   = 0;
+    int       curDepth = 0;
+    CMD_LIST *thisEntry = NULL;
+    CMD_LIST *lastEntry = NULL;
+    BOOL      isAmphersand = FALSE;
+    static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
+
+    /* Allocate working space for a command read from keyboard, file etc */
+    if (!extraSpace)
+      extraSpace = HeapAlloc(GetProcessHeap(), 0, (MAXSTRING+1) * sizeof(WCHAR));
+
+    /* If initial command read in, use that, otherwise get input from handle */
+    if (optionalcmd != NULL) {
+        strcpyW(extraSpace, optionalcmd);
+    } else if (readFrom == INVALID_HANDLE_VALUE) {
+        WINE_FIXME("No command nor handle supplied\n");
+    } else {
+        if (WCMD_fgets(extraSpace, MAXSTRING, readFrom) == NULL) return NULL;
+    }
+    curPos = extraSpace;
+
+    /* Handle truncated input - issue warning */
+    if (strlenW(extraSpace) == MAXSTRING -1) {
+        WCMD_output_asis(WCMD_LoadMessage(WCMD_TRUNCATEDLINE));
+        WCMD_output_asis(extraSpace);
+        WCMD_output_asis(newline);
+    }
+
+    /* Start with an empty string */
+    curLen = 0;
+
+    /* Parse every character on the line being processed */
+    while (*curPos != 0x00) {
+      switch (*curPos) {
+
+      case '\t':/* drop through - ignore whitespace at the start of a command */
+      case ' ': if (curLen > 0)
+                  curString[curLen++] = *curPos;
+                break;
+
+      case '"': inQuotes = !inQuotes;
+                break;
+
+      case '(': if (inQuotes || curLen > 0) {
+                  curString[curLen++] = *curPos;
+                } else {
+                  curDepth++;
+                }
+                break;
+
+      case '&': if (!inQuotes && *(curPos+1) == '&') {
+                  curPos++; /* Skip other & */
+
+                  /* Add an entry to the command list */
+                  thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(CMD_LIST));
+                  thisEntry->command = HeapAlloc(GetProcessHeap(), 0,
+                                                 (curLen+1) * sizeof(WCHAR));
+                  memcpy(thisEntry->command, curString, curLen * sizeof(WCHAR));
+                  thisEntry->command[curLen] = 0x00;
+                  curLen = 0;
+                  thisEntry->nextcommand = NULL;
+                  thisEntry->isAmphersand = isAmphersand;
+                  thisEntry->bracketDepth = curDepth;
+                  if (lastEntry) {
+                    lastEntry->nextcommand = thisEntry;
+                  } else {
+                    *output = thisEntry;
+                  }
+                  lastEntry = thisEntry;
+                  isAmphersand = TRUE;
+                } else {
+                  curString[curLen++] = *curPos;
+                }
+                break;
+
+      case ')': if (!inQuotes && curDepth > 0) {
+
+                  /* Add the current command if there is one */
+                  if (curLen) {
+                    thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(CMD_LIST));
+                    thisEntry->command = HeapAlloc(GetProcessHeap(), 0,
+                                                   (curLen+1) * sizeof(WCHAR));
+                    memcpy(thisEntry->command, curString, curLen * sizeof(WCHAR));
+                    thisEntry->command[curLen] = 0x00;
+                    curLen = 0;
+                    thisEntry->nextcommand = NULL;
+                    thisEntry->isAmphersand = isAmphersand;
+                    thisEntry->bracketDepth = curDepth;
+                    if (lastEntry) {
+                      lastEntry->nextcommand = thisEntry;
+                    } else {
+                      *output = thisEntry;
+                    }
+                    lastEntry = thisEntry;
+                  }
+
+                  /* Add an empty entry to the command list */
+                  thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(CMD_LIST));
+                  thisEntry->command = NULL;
+                  thisEntry->nextcommand = NULL;
+                  thisEntry->isAmphersand = FALSE;
+                  thisEntry->bracketDepth = curDepth;
+                  curDepth--;
+                  if (lastEntry) {
+                    lastEntry->nextcommand = thisEntry;
+                  } else {
+                    *output = thisEntry;
+                  }
+                  lastEntry = thisEntry;
+                } else {
+                  curString[curLen++] = *curPos;
+                }
+                break;
+      default:
+                curString[curLen++] = *curPos;
+      }
+
+      curPos++;
+
+      /* If we have reached the end, add this command into the list */
+      if (*curPos == 0x00 && curLen > 0) {
+
+          /* Add an entry to the command list */
+          thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(CMD_LIST));
+          thisEntry->command = HeapAlloc(GetProcessHeap(), 0,
+                                         (curLen+1) * sizeof(WCHAR));
+          memcpy(thisEntry->command, curString, curLen * sizeof(WCHAR));
+          thisEntry->command[curLen] = 0x00;
+          curLen = 0;
+          thisEntry->nextcommand = NULL;
+          thisEntry->isAmphersand = isAmphersand;
+          thisEntry->bracketDepth = curDepth;
+          if (lastEntry) {
+            lastEntry->nextcommand = thisEntry;
+          } else {
+            *output = thisEntry;
+          }
+          lastEntry = thisEntry;
+      }
+
+      /* If we have reached the end of the string, see if bracketing outstanding */
+      if (*curPos == 0x00 && curDepth > 0 && readFrom != INVALID_HANDLE_VALUE) {
+        isAmphersand = FALSE;
+        inQuotes = FALSE;
+        memset(extraSpace, 0x00, (MAXSTRING+1) * sizeof(WCHAR));
+
+        /* Read more, skipping any blank lines */
+        while (*extraSpace == 0x00) {
+          if (!context) WCMD_output_asis( WCMD_LoadMessage(WCMD_MOREPROMPT));
+          if (WCMD_fgets(extraSpace, MAXSTRING, readFrom) == NULL) break;
+        }
+        curPos = extraSpace;
+      }
+    }
+
+    /* Dump out the parsed output */
+    WCMD_DumpCommands(*output);
+
+    return extraSpace;
+}
+
+/***************************************************************************
+ * WCMD_process_commands
+ *
+ * Process all the commands read in so far
+ */
+void WCMD_process_commands(CMD_LIST *thisCmd) {
+
+    /* Loop through the commands, processing them one by one */
+    while (thisCmd) {
+
+      /* Ignore the NULL entries a ')' inserts (Only 'if' cares
+         about them and it will be handled in there)
+         Also, skip over any batch labels (eg. :fred)          */
+      if (thisCmd->command && thisCmd->command[0] != ':') {
+        WINE_TRACE("Executing command: '%s'\n", wine_dbgstr_w(thisCmd->command));
+        if (strchrW(thisCmd->command,'|') != NULL) {
+          WCMD_pipe (thisCmd->command);
+        } else {
+          WCMD_process_command (thisCmd->command);
+        }
+      }
+      thisCmd = thisCmd->nextcommand;
+    }
+}
+
+/***************************************************************************
+ * WCMD_free_commands
+ *
+ * Frees the storage held for a parsed command line
+ * - This is not done in the process_commands, as eventually the current
+ *   pointer will be modified within the commands, and hence a single free
+ *   routine is simpler
+ */
+void WCMD_free_commands(CMD_LIST *cmds) {
+
+    /* Loop through the commands, freeing them one by one */
+    while (cmds) {
+      CMD_LIST *thisCmd = cmds;
+      cmds = cmds->nextcommand;
+      HeapFree(GetProcessHeap(), 0, thisCmd->command);
+      HeapFree(GetProcessHeap(), 0, thisCmd);
+    }
 }
