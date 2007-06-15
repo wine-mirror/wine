@@ -44,16 +44,20 @@ static void test_findAttribute(void)
     ok(ret == NULL, "Expected failure\n");
     ok(GetLastError() == 0xdeadbeef, "Last error was set to %08x\n",
      GetLastError());
-    /* crashes
-    SetLastError(0xdeadbeef);
-    ret = CertFindAttribute(NULL, 1, NULL);
-     */
-    /* returns NULL, last error is ERROR_INVALID_PARAMETER */
-    SetLastError(0xdeadbeef);
-    ret = CertFindAttribute(NULL, 1, &attr);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %d (%08x)\n", GetLastError(),
-     GetLastError());
+    if (0)
+    {
+        /* crashes */
+        SetLastError(0xdeadbeef);
+        ret = CertFindAttribute(NULL, 1, NULL);
+        /* returns NULL, last error is ERROR_INVALID_PARAMETER
+         * crashes on Vista
+         */
+        SetLastError(0xdeadbeef);
+        ret = CertFindAttribute(NULL, 1, &attr);
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %d (%08x)\n", GetLastError(),
+         GetLastError());
+    }
     /* returns NULL, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindAttribute("bogus", 1, &attr);
@@ -85,16 +89,20 @@ static void test_findExtension(void)
     ok(ret == NULL, "Expected failure\n");
     ok(GetLastError() == 0xdeadbeef, "Last error was set to %08x\n",
      GetLastError());
-    /* crashes
-    SetLastError(0xdeadbeef);
-    ret = CertFindExtension(NULL, 1, NULL);
-     */
-    /* returns NULL, last error is ERROR_INVALID_PARAMETER */
-    SetLastError(0xdeadbeef);
-    ret = CertFindExtension(NULL, 1, &ext);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %d (%08x)\n", GetLastError(),
-     GetLastError());
+    if (0)
+    {
+        /* crashes */
+        SetLastError(0xdeadbeef);
+        ret = CertFindExtension(NULL, 1, NULL);
+        /* returns NULL, last error is ERROR_INVALID_PARAMETER
+         * crashes on Vista
+         */
+        SetLastError(0xdeadbeef);
+        ret = CertFindExtension(NULL, 1, &ext);
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %d (%08x)\n", GetLastError(),
+         GetLastError());
+    }
     /* returns NULL, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindExtension("bogus", 1, &ext);
@@ -126,16 +134,20 @@ static void test_findRDNAttr(void)
     };
     CERT_NAME_INFO nameInfo = { sizeof(rdns) / sizeof(rdns[0]), rdns };
 
-    /* crashes
-    SetLastError(0xdeadbeef);
-    ret = CertFindRDNAttr(NULL, NULL);
-     */
-    /* returns NULL, last error is ERROR_INVALID_PARAMETER */
-    SetLastError(0xdeadbeef);
-    ret = CertFindRDNAttr(NULL, &nameInfo);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %d (%08x)\n", GetLastError(),
-     GetLastError());
+    if (0)
+    {
+        /* crashes */
+        SetLastError(0xdeadbeef);
+        ret = CertFindRDNAttr(NULL, NULL);
+        /* returns NULL, last error is ERROR_INVALID_PARAMETER
+         * crashes on Vista
+         */
+        SetLastError(0xdeadbeef);
+        ret = CertFindRDNAttr(NULL, &nameInfo);
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %d (%08x)\n", GetLastError(),
+         GetLastError());
+    }
     /* returns NULL, last error not set */
     SetLastError(0xdeadbeef);
     ret = CertFindRDNAttr("bogus", &nameInfo);
