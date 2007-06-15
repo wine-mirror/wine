@@ -2697,37 +2697,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONS
         return WINED3D_OK;
     }
 
-    ENTER_GL();
-    TRACE("(%p) : Diffuse (%f,%f,%f,%f)\n", This, pMaterial->Diffuse.r, pMaterial->Diffuse.g,
-        pMaterial->Diffuse.b, pMaterial->Diffuse.a);
-    TRACE("(%p) : Ambient (%f,%f,%f,%f)\n", This, pMaterial->Ambient.r, pMaterial->Ambient.g,
-        pMaterial->Ambient.b, pMaterial->Ambient.a);
-    TRACE("(%p) : Specular (%f,%f,%f,%f)\n", This, pMaterial->Specular.r, pMaterial->Specular.g,
-        pMaterial->Specular.b, pMaterial->Specular.a);
-    TRACE("(%p) : Emissive (%f,%f,%f,%f)\n", This, pMaterial->Emissive.r, pMaterial->Emissive.g,
-        pMaterial->Emissive.b, pMaterial->Emissive.a);
-    TRACE("(%p) : Power (%f)\n", This, pMaterial->Power);
-
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*) &This->updateStateBlock->material.Ambient);
-    checkGLcall("glMaterialfv(GL_AMBIENT)");
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &This->updateStateBlock->material.Diffuse);
-    checkGLcall("glMaterialfv(GL_DIFFUSE)");
-
-    /* Only change material color if specular is enabled, otherwise it is set to black */
-    if (This->stateBlock->renderState[WINED3DRS_SPECULARENABLE]) {
-       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->updateStateBlock->material.Specular);
-       checkGLcall("glMaterialfv(GL_SPECULAR");
-    } else {
-       float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
-       checkGLcall("glMaterialfv(GL_SPECULAR");
-    }
-    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*) &This->updateStateBlock->material.Emissive);
-    checkGLcall("glMaterialfv(GL_EMISSION)");
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, This->updateStateBlock->material.Power);
-    checkGLcall("glMaterialf(GL_SHININESS");
-
-    LEAVE_GL();
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_MATERIAL);
     return WINED3D_OK;
 }
 

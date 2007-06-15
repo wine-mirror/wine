@@ -505,11 +505,12 @@ state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
      * whether WINED3DRS_SPECULARENABLE is enabled or not.
      */
 
-    TRACE("Setting specular enable state\n");
-    /* TODO: Add to the material setting functions */
+    TRACE("Setting specular enable state and materials\n");
     if (stateblock->renderState[WINED3DRS_SPECULARENABLE]) {
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &stateblock->material.Specular);
         checkGLcall("glMaterialfv");
+        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, stateblock->material.Power);
+        checkGLcall("glMaterialf(GL_SHININESS");
         if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
             glEnable(GL_COLOR_SUM_EXT);
         } else {
@@ -541,6 +542,22 @@ state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
             checkGLcall("glFinalCombinerInputNV()");
         }
     }
+
+    TRACE("(%p) : Diffuse (%f,%f,%f,%f)\n", stateblock->wineD3DDevice, stateblock->material.Diffuse.r, stateblock->material.Diffuse.g,
+          stateblock->material.Diffuse.b, stateblock->material.Diffuse.a);
+    TRACE("(%p) : Ambient (%f,%f,%f,%f)\n", stateblock->wineD3DDevice, stateblock->material.Ambient.r, stateblock->material.Ambient.g,
+          stateblock->material.Ambient.b, stateblock->material.Ambient.a);
+    TRACE("(%p) : Specular (%f,%f,%f,%f)\n", stateblock->wineD3DDevice, stateblock->material.Specular.r, stateblock->material.Specular.g,
+          stateblock->material.Specular.b, stateblock->material.Specular.a);
+    TRACE("(%p) : Emissive (%f,%f,%f,%f)\n", stateblock->wineD3DDevice, stateblock->material.Emissive.r, stateblock->material.Emissive.g,
+          stateblock->material.Emissive.b, stateblock->material.Emissive.a);
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*) &stateblock->material.Ambient);
+    checkGLcall("glMaterialfv(GL_AMBIENT)");
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &stateblock->material.Diffuse);
+    checkGLcall("glMaterialfv(GL_DIFFUSE)");
+    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*) &stateblock->material.Emissive);
+    checkGLcall("glMaterialfv(GL_EMISSION)");
 }
 
 static void state_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -4517,4 +4534,6 @@ const struct StateEntry StateTable[] =
     { /* STATE_CLIPPLANE(29)                        */      STATE_CLIPPLANE(29),                                clipplane           },
     { /* STATE_CLIPPLANE(30)                        */      STATE_CLIPPLANE(30),                                clipplane           },
     { /* STATE_CLIPPLANE(31)                        */      STATE_CLIPPLANE(31),                                clipplane           },
+
+    { /* STATE_MATERIAL                             */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_specularenable},
 };
