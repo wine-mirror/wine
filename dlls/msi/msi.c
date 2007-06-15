@@ -226,9 +226,31 @@ UINT WINAPI MsiReinstallProductW(LPCWSTR szProduct, DWORD dwReinstallMode)
 UINT WINAPI MsiApplyPatchA(LPCSTR szPatchPackage, LPCSTR szInstallPackage,
         INSTALLTYPE eInstallType, LPCSTR szCommandLine)
 {
-    FIXME("%s %s %d %s\n", debugstr_a(szPatchPackage), debugstr_a(szInstallPackage),
+    LPWSTR patch_package = NULL;
+    LPWSTR install_package = NULL;
+    LPWSTR command_line = NULL;
+    UINT r = ERROR_OUTOFMEMORY;
+
+    TRACE("%s %s %d %s\n", debugstr_a(szPatchPackage), debugstr_a(szInstallPackage),
           eInstallType, debugstr_a(szCommandLine));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if (szPatchPackage && !(patch_package = strdupAtoW(szPatchPackage)))
+        goto done;
+
+    if (szInstallPackage && !(install_package = strdupAtoW(szInstallPackage)))
+        goto done;
+
+    if (szCommandLine && !(command_line = strdupAtoW(szCommandLine)))
+        goto done;
+
+    r = MsiApplyPatchW(patch_package, install_package, eInstallType, command_line);
+
+done:
+    msi_free(patch_package);
+    msi_free(install_package);
+    msi_free(command_line);
+
+    return r;
 }
 
 UINT WINAPI MsiApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szInstallPackage,
