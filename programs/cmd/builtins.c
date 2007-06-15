@@ -2053,7 +2053,7 @@ int WCMD_volume (int mode, WCHAR *path) {
  *
  */
 
-void WCMD_exit (void) {
+void WCMD_exit (CMD_LIST **cmdList) {
 
     static const WCHAR parmB[] = {'/','B','\0'};
     int rc = atoiW(param1); /* Note: atoi of empty parameter is 0 */
@@ -2061,6 +2061,7 @@ void WCMD_exit (void) {
     if (context && lstrcmpiW(quals, parmB) == 0) {
         errorlevel = rc;
         context -> skip_rest = TRUE;
+        *cmdList = NULL;
     } else {
         ExitProcess(rc);
     }

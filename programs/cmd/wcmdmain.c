@@ -799,7 +799,7 @@ void WCMD_process_command (WCHAR *command, CMD_LIST **cmdList)
         WCMD_more(p);
         break;
       case WCMD_EXIT:
-        WCMD_exit ();
+        WCMD_exit (cmdList);
         break;
       default:
         WCMD_run_program (whichcmd, 0);

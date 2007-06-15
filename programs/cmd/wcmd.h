@@ -50,7 +50,7 @@ void WCMD_directory (WCHAR *);
 void WCMD_echo (const WCHAR *);
 void WCMD_endlocal (void);
 void WCMD_enter_paged_mode(const WCHAR *);
-void WCMD_exit (void);
+void WCMD_exit (CMD_LIST **cmdList);
 void WCMD_for (WCHAR *, CMD_LIST **cmdList);
 void WCMD_give_help (WCHAR *command);
 void WCMD_goto (CMD_LIST **cmdList);
