@@ -2836,7 +2836,12 @@ INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 
   bRet = PROPSHEET_CreateDialog(psInfo);
   if(!psInfo->isModeless)
+  {
+      HWND parent = GetParent(psInfo->hwnd);
+      if (parent) EnableWindow(parent, FALSE);
       bRet = do_loop(psInfo);
+      if (parent) EnableWindow(parent, TRUE);
+  }
 
   return bRet;
 }
