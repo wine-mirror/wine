@@ -686,9 +686,12 @@ void WCMD_give_help (WCHAR *command) {
  * FIXME: DOS is supposed to allow labels with spaces - we don't.
  */
 
-void WCMD_goto (void) {
+void WCMD_goto (CMD_LIST **cmdList) {
 
   WCHAR string[MAX_PATH];
+
+  /* Do not process any more parts of a processed multipart or multilines command */
+  *cmdList = NULL;
 
   if (param1[0] == 0x00) {
     WCMD_output (WCMD_LoadMessage(WCMD_NOARG));

@@ -53,7 +53,7 @@ void WCMD_enter_paged_mode(const WCHAR *);
 void WCMD_exit (void);
 void WCMD_for (WCHAR *, CMD_LIST **cmdList);
 void WCMD_give_help (WCHAR *command);
-void WCMD_goto (void);
+void WCMD_goto (CMD_LIST **cmdList);
 void WCMD_if (WCHAR *, CMD_LIST **cmdList);
 void WCMD_leave_paged_mode(void);
 void WCMD_more (WCHAR *);

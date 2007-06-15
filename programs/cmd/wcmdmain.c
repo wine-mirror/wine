@@ -712,7 +712,7 @@ void WCMD_process_command (WCHAR *command, CMD_LIST **cmdList)
         WCMD_for (p, cmdList);
         break;
       case WCMD_GOTO:
-        WCMD_goto ();
+        WCMD_goto (cmdList);
         break;
       case WCMD_HELP:
         WCMD_give_help (p);
