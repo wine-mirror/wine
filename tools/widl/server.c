@@ -46,18 +46,12 @@ static FILE* server;
 static int indent = 0;
 
 
-static int print_server(const char *format, ...)
+static void print_server(const char *format, ...)
 {
     va_list va;
-    int i, r;
-
     va_start(va, format);
-    if (format[0] != '\n')
-        for (i = 0; i < indent; i++)
-            fprintf(server, "    ");
-    r = vfprintf(server, format, va);
+    print(server, indent, format, va);
     va_end(va);
-    return r;
 }
 
 

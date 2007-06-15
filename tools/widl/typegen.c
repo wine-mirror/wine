@@ -254,19 +254,23 @@ static int compare_expr(const expr_t *a, const expr_t *b)
     } \
     while (0)
 
-static int print_file(FILE *file, int indent, const char *format, ...)
+static void print_file(FILE *file, int indent, const char *format, ...)
 {
     va_list va;
-    int i, r;
-
-    if (!file) return 0;
-
     va_start(va, format);
-    for (i = 0; i < indent; i++)
-        fprintf(file, "    ");
-    r = vfprintf(file, format, va);
+    print(file, indent, format, va);
     va_end(va);
-    return r;
+}
+
+void print(FILE *file, int indent, const char *format, va_list va)
+{
+    if (file)
+    {
+        if (format[0] != '\n')
+            while (0 < indent--)
+                fprintf(file, "    ");
+        vfprintf(file, format, va);
+    }
 }
 
 static void write_formatdesc(FILE *f, int indent, const char *str)

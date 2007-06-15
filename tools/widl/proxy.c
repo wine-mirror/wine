@@ -51,18 +51,12 @@ static int indent = 0;
 
 /* FIXME: support generation of stubless proxies */
 
-static int print_proxy( const char *format, ... )
+static void print_proxy( const char *format, ... )
 {
   va_list va;
-  int i, r;
-
   va_start( va, format );
-  if ( format[0] != '\n' )
-    for( i=0; i<indent; i++ )
-      fprintf( proxy, "    " );
-  r = vfprintf( proxy, format, va );
+  print( proxy, indent, format, va );
   va_end( va );
-  return r;
 }
 
 static void write_stubdescproto(void)

@@ -44,18 +44,12 @@
 static FILE* client;
 static int indent = 0;
 
-static int print_client( const char *format, ... )
+static void print_client( const char *format, ... )
 {
     va_list va;
-    int i, r;
-
     va_start(va, format);
-    if (format[0] != '\n')
-        for (i = 0; i < indent; i++)
-            fprintf(client, "    ");
-    r = vfprintf(client, format, va);
+    print(client, indent, format, va);
     va_end(va);
-    return r;
 }
 
 
