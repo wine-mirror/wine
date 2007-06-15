@@ -629,6 +629,9 @@ BOOL
 HWND
 LONG
 LPARAM
+
+%long --pointer
+
 ULONG_PTR
 
 %ptr
