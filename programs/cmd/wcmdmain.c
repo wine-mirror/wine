@@ -1907,6 +1907,8 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
     CMD_LIST *lastEntry = NULL;
     BOOL      isAmphersand = FALSE;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
+    const WCHAR rem[] = {'r','e','m',' ','\0'};
+    BOOL      inRem = FALSE;
 
     /* Allocate working space for a command read from keyboard, file etc */
     if (!extraSpace)
@@ -1934,7 +1936,26 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
 
     /* Parse every character on the line being processed */
     while (*curPos != 0x00) {
-      switch (*curPos) {
+
+      WCHAR thisChar;
+
+      /* If command starts with 'rem', ignore any &&, ( etc */
+      if (curLen == 0 && !inRem) {
+        if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+          curPos, 4, rem, -1) == 2) {
+          inRem = TRUE;
+        } else {
+          inRem = FALSE;
+        }
+      }
+
+      /* Nothing 'ends' a REM statement and &&, quotes etc are ineffective,
+         so just use the default processing ie skip character specific
+         matching below                                                    */
+      if (!inRem) thisChar = *curPos;
+      else        thisChar = 'X';  /* Character with no special processing */
+
+      switch (thisChar) {
 
       case '\t':/* drop through - ignore whitespace at the start of a command */
       case ' ': if (curLen > 0)
@@ -2043,6 +2064,7 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
 
       /* If we have reached the end of the string, see if bracketing outstanding */
       if (*curPos == 0x00 && curDepth > 0 && readFrom != INVALID_HANDLE_VALUE) {
+        inRem = FALSE;
         isAmphersand = FALSE;
         inQuotes = FALSE;
         memset(extraSpace, 0x00, (MAXSTRING+1) * sizeof(WCHAR));
