@@ -109,7 +109,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
       CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
       if (WCMD_ReadAndParseLine(NULL, &toExecute, h) == NULL)
         break;
-      WCMD_process_commands(toExecute);
+      WCMD_process_commands(toExecute, FALSE);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
   }

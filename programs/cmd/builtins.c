@@ -790,6 +790,14 @@ void WCMD_popd (void) {
  * WCMD_if
  *
  * Batch file conditional.
+ *
+ * On entry, cmdlist will point to command containing the IF, and optionally
+ *   the first command to execute (if brackets not found)
+ *   If &&'s were found, this may be followed by a record flagged as isAmpersand
+ *   If ('s were found, execute all within that bracket
+ *   Command may optionally be followed by an ELSE - need to skip instructions
+ *   in the else using the same logic
+ *
  * FIXME: Much more syntax checking needed!
  */
 
@@ -802,6 +810,8 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
   static const WCHAR existW[]  = {'e','x','i','s','t','\0'};
   static const WCHAR defdW[]   = {'d','e','f','i','n','e','d','\0'};
   static const WCHAR eqeqW[]   = {'=','=','\0'};
+  CMD_LIST *curPosition;
+  int myDepth;
 
   if (!lstrcmpiW (param1, notW)) {
     negate = 1;
@@ -835,10 +845,83 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
     WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
     return;
   }
+
+  /* Process rest of IF statement which is on the same line
+     Note: This may process all or some of the cmdList (eg a GOTO) */
+  curPosition = *cmdList;
+  myDepth     = (*cmdList)->bracketDepth;
+
   if (test != negate) {
-    command = WCMD_strdupW(command);
-    WCMD_process_command (command, cmdList);
-    free (command);
+    WCHAR *cmd = command;
+
+    /* Skip leading whitespace between condition and the command */
+    while (cmd && *cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
+
+    if (cmd && *cmd) {
+      command = WCMD_strdupW(cmd);
+      WCMD_process_command (command, cmdList);
+      free (command);
+    }
+  }
+
+  /* If it didnt move the position, step to next command */
+  if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+
+  /* Process any other parts of the IF */
+  if (*cmdList) {
+    BOOL processThese = (test != negate);
+
+    while (*cmdList) {
+      const WCHAR ifElse[] = {'e','l','s','e',' ','\0'};
+
+      /* execute all appropriate commands */
+      curPosition = *cmdList;
+
+      WINE_TRACE("Processing cmdList(%p) - &(%d) bd(%d / %d)\n",
+                 *cmdList,
+                 (*cmdList)->isAmphersand,
+                 (*cmdList)->bracketDepth, myDepth);
+
+      /* Execute any appended to the statement with &&'s */
+      if ((*cmdList)->isAmphersand) {
+        if (processThese) {
+          WCMD_process_command((*cmdList)->command, cmdList);
+        }
+        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+
+      /* Execute any appended to the statement with (...) */
+      } else if ((*cmdList)->bracketDepth > myDepth) {
+        if (processThese) {
+          *cmdList = WCMD_process_commands(*cmdList, TRUE);
+          WINE_TRACE("Back from processing commands, (next = %p)\n", *cmdList);
+        }
+        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+
+      /* End of the command - does 'ELSE ' follow as the next command? */
+      } else {
+        if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                           (*cmdList)->command, 5, ifElse, -1) == 2) {
+
+            /* Swap between if and else processing */
+            processThese = !processThese;
+
+            /* Process the ELSE part */
+            if (processThese) {
+              WCHAR *cmd = ((*cmdList)->command) + strlenW(ifElse);
+
+              /* Skip leading whitespace between condition and the command */
+              while (*cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
+              if (*cmd) {
+                WCMD_process_command(cmd, cmdList);
+              }
+            }
+            if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+        } else {
+          WINE_TRACE("Found end of this IF statement (next = %p)\n", *cmdList);
+          break;
+        }
+      }
+    }
   }
 }
 

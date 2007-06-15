@@ -324,7 +324,7 @@ int wmain (int argc, WCHAR *argvW[])
 
       /* Parse the command string, without reading any more input */
       WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
-      WCMD_process_commands(toExecute);
+      WCMD_process_commands(toExecute, FALSE);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
 
@@ -417,7 +417,7 @@ int wmain (int argc, WCHAR *argvW[])
   if (opt_k) {
       /* Parse the command string, without reading any more input */
       WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
-      WCMD_process_commands(toExecute);
+      WCMD_process_commands(toExecute, FALSE);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
       HeapFree(GetProcessHeap(), 0, cmd);
@@ -449,7 +449,7 @@ int wmain (int argc, WCHAR *argvW[])
     if (WCMD_ReadAndParseLine(NULL, &toExecute,
                               GetStdHandle(STD_INPUT_HANDLE)) == NULL)
       break;
-    WCMD_process_commands(toExecute);
+    WCMD_process_commands(toExecute, FALSE);
     WCMD_free_commands(toExecute);
     toExecute = NULL;
   }
@@ -2044,6 +2044,7 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                 break;
 
       case '"': inQuotes = !inQuotes;
+                curString[curLen++] = *curPos;
                 break;
 
       case '(': /* If a '(' is the first non whitespace in a command portion
@@ -2101,21 +2102,23 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                   curPos++; /* Skip other & */
 
                   /* Add an entry to the command list */
-                  thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(CMD_LIST));
-                  thisEntry->command = HeapAlloc(GetProcessHeap(), 0,
-                                                 (curLen+1) * sizeof(WCHAR));
-                  memcpy(thisEntry->command, curString, curLen * sizeof(WCHAR));
-                  thisEntry->command[curLen] = 0x00;
-                  curLen = 0;
-                  thisEntry->nextcommand = NULL;
-                  thisEntry->isAmphersand = isAmphersand;
-                  thisEntry->bracketDepth = curDepth;
-                  if (lastEntry) {
-                    lastEntry->nextcommand = thisEntry;
-                  } else {
-                    *output = thisEntry;
+                  if (curLen > 0) {
+                    thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(CMD_LIST));
+                    thisEntry->command = HeapAlloc(GetProcessHeap(), 0,
+                                                   (curLen+1) * sizeof(WCHAR));
+                    memcpy(thisEntry->command, curString, curLen * sizeof(WCHAR));
+                    thisEntry->command[curLen] = 0x00;
+                    curLen = 0;
+                    thisEntry->nextcommand = NULL;
+                    thisEntry->isAmphersand = isAmphersand;
+                    thisEntry->bracketDepth = curDepth;
+                    if (lastEntry) {
+                      lastEntry->nextcommand = thisEntry;
+                    } else {
+                      *output = thisEntry;
+                    }
+                    lastEntry = thisEntry;
                   }
-                  lastEntry = thisEntry;
                   isAmphersand = TRUE;
                 } else {
                   curString[curLen++] = *curPos;
@@ -2224,24 +2227,44 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
  *
  * Process all the commands read in so far
  */
-void WCMD_process_commands(CMD_LIST *thisCmd) {
+CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket) {
+
+    int bdepth = -1;
+
+    if (thisCmd && oneBracket) bdepth = thisCmd->bracketDepth;
 
     /* Loop through the commands, processing them one by one */
     while (thisCmd) {
+
+      CMD_LIST *origCmd = thisCmd;
+
+      /* If processing one bracket only, and we find the end bracket
+         entry (or less), return                                    */
+      if (oneBracket && !thisCmd->command &&
+          bdepth <= thisCmd->bracketDepth) {
+        WINE_TRACE("Finished bracket @ %p, next command is %p\n",
+                   thisCmd, thisCmd->nextcommand);
+        return thisCmd->nextcommand;
+      }
 
       /* Ignore the NULL entries a ')' inserts (Only 'if' cares
          about them and it will be handled in there)
          Also, skip over any batch labels (eg. :fred)          */
       if (thisCmd->command && thisCmd->command[0] != ':') {
+
         WINE_TRACE("Executing command: '%s'\n", wine_dbgstr_w(thisCmd->command));
+
         if (strchrW(thisCmd->command,'|') != NULL) {
           WCMD_pipe (&thisCmd);
         } else {
           WCMD_process_command (thisCmd->command, &thisCmd);
         }
       }
-      if (thisCmd) thisCmd = thisCmd->nextcommand;
+
+      /* Step on unless the command itself already stepped on */
+      if (thisCmd == origCmd) thisCmd = thisCmd->nextcommand;
     }
+    return NULL;
 }
 
 /***************************************************************************

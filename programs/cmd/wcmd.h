@@ -102,7 +102,7 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
                    LPDWORD charsRead, const LPOVERLAPPED unused);
 
 WCHAR *WCMD_ReadAndParseLine(WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
-void   WCMD_process_commands(CMD_LIST *thisCmd);
+CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket);
 void   WCMD_free_commands(CMD_LIST *cmds);
 
 /*	Data structure to hold context when executing batch files */
