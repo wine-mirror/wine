@@ -34,12 +34,6 @@
    not including '\' character */
 #define REG_FILE_HEX_LINE_LEN   76
 
-/* Globals used by the api setValue */
-static LPSTR currentKeyName   = NULL;
-static HKEY  currentKeyClass  = 0;
-static HKEY  currentKeyHandle = 0;
-static BOOL  bTheKeyIsOpen    = FALSE;
-
 static const CHAR *reg_class_names[] = {
                                      "HKEY_LOCAL_MACHINE", "HKEY_USERS", "HKEY_CLASSES_ROOT",
                                      "HKEY_CURRENT_CONFIG", "HKEY_CURRENT_USER", "HKEY_DYN_DATA"
@@ -202,6 +196,49 @@ static void REGPROC_unescape_string(LPSTR str)
 }
 
 /******************************************************************************
+ * Parses HKEY_SOME_ROOT\some\key\path to get the root key handle and
+ * extract the key path (what comes after the first '\').
+ */
+static BOOL parseKeyName(LPSTR lpKeyName, HKEY *hKey, LPSTR *lpKeyPath)
+{
+    LPSTR lpSlash;
+    unsigned int i, len;
+
+    if (lpKeyName == NULL)
+        return FALSE;
+
+    lpSlash = strchr(lpKeyName, '\\');
+    if (lpSlash)
+    {
+        len = lpSlash-lpKeyName;
+    }
+    else
+    {
+        len = strlen(lpKeyName);
+        lpSlash = lpKeyName+len;
+    }
+    *hKey = NULL;
+    for (i = 0; i < REG_CLASS_NUMBER; i++) {
+        if (strncmp(lpKeyName, reg_class_names[i], len) == 0 &&
+            len == strlen(reg_class_names[i])) {
+            *hKey = reg_class_keys[i];
+            break;
+        }
+    }
+    if (*hKey == NULL)
+        return FALSE;
+
+    if (*lpSlash != '\0')
+        lpSlash++;
+    *lpKeyPath = lpSlash;
+    return TRUE;
+}
+
+/* Globals used by the setValue() & co */
+static LPSTR currentKeyName;
+static HKEY  currentKeyHandle = NULL;
+
+/******************************************************************************
  * Sets the value with name val_name to the data in val_data for the currently
  * opened key.
  *
@@ -274,66 +311,14 @@ static LONG setValue(LPSTR val_name, LPSTR val_data)
     return res;
 }
 
-
 /******************************************************************************
- * Extracts from HKEY\some\key\path types of line
- * the key class (what ends before the first '\')
+ * A helper function for processRegEntry() that opens the current key.
+ * That key must be closed by calling closeKey().
  */
-static BOOL getRegClass(LPSTR lpClass, HKEY* hkey)
+static LONG openKey(LPSTR stdInput)
 {
-    LPSTR classNameEnd;
-    unsigned int i;
-    char  lpClassCopy[KEY_MAX_LEN];
-
-    if (lpClass == NULL)
-        return FALSE;
-
-    lstrcpynA(lpClassCopy, lpClass, KEY_MAX_LEN);
-
-    classNameEnd  = strchr(lpClassCopy, '\\');    /* The class name ends by '\' */
-    if (classNameEnd)                             /* or the whole string */
-        *classNameEnd = '\0';                     /* Isolate the class name */
-
-    for (i = 0; i < REG_CLASS_NUMBER; i++) {
-        if (!strcmp(lpClassCopy, reg_class_names[i])) {
-            *hkey = reg_class_keys[i];
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
-/******************************************************************************
- * Extracts from HKEY\some\key\path types of line
- * the key name (what starts after the first '\')
- */
-static LPSTR getRegKeyName(LPSTR lpLine)
-{
-    LPSTR keyNameBeg;
-    char  lpLineCopy[KEY_MAX_LEN];
-
-    if (lpLine == NULL)
-        return NULL;
-
-    strcpy(lpLineCopy, lpLine);
-
-    keyNameBeg = strchr(lpLineCopy, '\\');    /* The key name start by '\' */
-    if (keyNameBeg) {
-        keyNameBeg++;                             /* is not part of the name */
-    } else {
-        keyNameBeg = lpLineCopy + strlen(lpLineCopy); /* branch - empty string */
-    }
-    currentKeyName = HeapAlloc(GetProcessHeap(), 0, strlen(keyNameBeg) + 1);
-    CHECK_ENOUGH_MEMORY(currentKeyName);
-    strcpy(currentKeyName, keyNameBeg);
-    return currentKeyName;
-}
-
-/******************************************************************************
- * Open the key
- */
-static LONG openKey( LPSTR stdInput)
-{
+    HKEY keyClass;
+    LPSTR keyPath;
     DWORD dwDisp;
     LONG res;
 
@@ -342,17 +327,12 @@ static LONG openKey( LPSTR stdInput)
         return ERROR_INVALID_PARAMETER;
 
     /* Get the registry class */
-    if (!getRegClass(stdInput, &currentKeyClass)) /* Sets global variable */
-        return ERROR_INVALID_PARAMETER;
-
-    /* Get the key name */
-    currentKeyName = getRegKeyName(stdInput); /* Sets global variable */
-    if (currentKeyName == NULL)
+    if (!parseKeyName(stdInput, &keyClass, &keyPath))
         return ERROR_INVALID_PARAMETER;
 
     res = RegCreateKeyEx(
-               currentKeyClass,          /* Class     */
-               currentKeyName,           /* Sub Key   */
+               keyClass,                 /* Class     */
+               keyPath,                  /* Sub Key   */
                0,                        /* MUST BE 0 */
                NULL,                     /* object type */
                REG_OPTION_NON_VOLATILE,  /* option, REG_OPTION_NON_VOLATILE ... */
@@ -363,7 +343,15 @@ static LONG openKey( LPSTR stdInput)
                                                         REG_OPENED_EXISTING_KEY */
 
     if (res == ERROR_SUCCESS)
-        bTheKeyIsOpen = TRUE;
+    {
+        currentKeyName = HeapAlloc(GetProcessHeap(), 0, strlen(stdInput)+1);
+        CHECK_ENOUGH_MEMORY(currentKeyName);
+        strcpy(currentKeyName, stdInput);
+    }
+    else
+    {
+        currentKeyHandle = NULL;
+    }
 
     return res;
 
@@ -374,15 +362,12 @@ static LONG openKey( LPSTR stdInput)
  */
 static void closeKey(void)
 {
-    RegCloseKey(currentKeyHandle);
-
-    HeapFree(GetProcessHeap(), 0, currentKeyName); /* Allocated by getKeyName */
-
-    bTheKeyIsOpen    = FALSE;
-
-    currentKeyName   = NULL;
-    currentKeyClass  = 0;
-    currentKeyHandle = 0;
+    if (currentKeyHandle)
+    {
+        HeapFree(GetProcessHeap(), 0, currentKeyName);
+        RegCloseKey(currentKeyHandle);
+        currentKeyHandle = NULL;
+    }
 }
 
 /******************************************************************************
@@ -457,17 +442,14 @@ static void processRegEntry(LPSTR stdInput)
      * close the opened key and exit
      */
     if (stdInput == NULL) {
-        if (bTheKeyIsOpen != FALSE)
-            closeKey();
-
+        closeKey();
         return;
     }
 
     if      ( stdInput[0] == '[')      /* We are reading a new key */
     {
         LPSTR keyEnd;
-        if ( bTheKeyIsOpen != FALSE )
-            closeKey();                    /* Close the previous key before */
+        closeKey();                    /* Close the previous key */
 
         /* Get rid of the square brackets */
         stdInput++;
@@ -477,21 +459,21 @@ static void processRegEntry(LPSTR stdInput)
 
         /* delete the key if we encounter '-' at the start of reg key */
         if ( stdInput[0] == '-')
-        {
             delete_registry_key(stdInput+1);
-        }
         else if ( openKey(stdInput) != ERROR_SUCCESS )
             fprintf(stderr,"%s: setValue failed to open key %s\n",
                     getAppName(), stdInput);
-    } else if( ( bTheKeyIsOpen ) &&
+    } else if( currentKeyHandle &&
                (( stdInput[0] == '@') || /* reading a default @=data pair */
                 ( stdInput[0] == '\"'))) /* reading a new value=data pair */
     {
         processSetValue(stdInput);
-    } else                               /* since we are assuming that the */
-    {                                  /* file format is valid we must   */
-        if ( bTheKeyIsOpen )             /* be reading a blank line which  */
-            closeKey();                    /* indicate end of this key processing */
+    } else
+    {
+        /* Since we are assuming that the file format is valid we must be
+         * reading a blank line which indicates the end of this key processing
+         */
+        closeKey();
     }
 }
 
@@ -868,8 +850,6 @@ static FILE *REGPROC_open_export_file(CHAR *file_name)
  */
 BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
 {
-    HKEY reg_key_class;
-
     CHAR *reg_key_name_buf;
     CHAR *val_name_buf;
     BYTE *val_buf;
@@ -886,6 +866,7 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
     CHECK_ENOUGH_MEMORY(reg_key_name_buf && val_name_buf && val_buf);
 
     if (reg_key_name && reg_key_name[0]) {
+        HKEY reg_key_class;
         CHAR *branch_name;
         HKEY key;
 
@@ -894,13 +875,11 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
         strcpy(reg_key_name_buf, reg_key_name);
 
         /* open the specified key */
-        if (!getRegClass(reg_key_name, &reg_key_class)) {
+        if (!parseKeyName(reg_key_name, &reg_key_class, &branch_name)) {
             fprintf(stderr,"%s: Incorrect registry class specification in '%s'\n",
                     getAppName(), reg_key_name);
             exit(1);
         }
-        branch_name = getRegKeyName(reg_key_name);
-        CHECK_ENOUGH_MEMORY(branch_name);
         if (!branch_name[0]) {
             /* no branch - registry class is specified */
             file = REGPROC_open_export_file(file_name);
@@ -920,7 +899,6 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
                     getAppName(), reg_key_name);
             REGPROC_print_error();
         }
-        HeapFree(GetProcessHeap(), 0, branch_name);
     } else {
         unsigned int i;
 
@@ -1019,31 +997,38 @@ static void delete_branch(HKEY key,
  */
 void delete_registry_key(CHAR *reg_key_name)
 {
-    CHAR *branch_name;
-    DWORD branch_name_len;
-    HKEY reg_key_class;
+    CHAR *key_name;
+    HKEY key_class;
     HKEY branch_key;
 
     if (!reg_key_name || !reg_key_name[0])
         return;
-    /* open the specified key */
-    if (!getRegClass(reg_key_name, &reg_key_class)) {
+
+    if (!parseKeyName(reg_key_name, &key_class, &key_name)) {
         fprintf(stderr,"%s: Incorrect registry class specification in '%s'\n",
                 getAppName(), reg_key_name);
         exit(1);
     }
-    branch_name = getRegKeyName(reg_key_name);
-    CHECK_ENOUGH_MEMORY(branch_name);
-    branch_name_len = strlen(branch_name);
-    if (!branch_name[0]) {
+    if (!*key_name) {
         fprintf(stderr,"%s: Can't delete registry class '%s'\n",
                 getAppName(), reg_key_name);
         exit(1);
     }
-    if (RegOpenKey(reg_key_class, branch_name, &branch_key) == ERROR_SUCCESS) {
-        /* check whether the key exists */
+
+    /* open the specified key to make sure it exists */
+    if (RegOpenKey(key_class, key_name, &branch_key) == ERROR_SUCCESS) {
+        CHAR *branch_name;
+        DWORD branch_name_len;
         RegCloseKey(branch_key);
-        delete_branch(reg_key_class, &branch_name, &branch_name_len);
+
+        /* Copy the key name to a new buffer that delete_branch() can
+         * reallocate as needed
+         */
+        branch_name_len = strlen(key_name);
+        branch_name = HeapAlloc(GetProcessHeap(), 0, branch_name_len+1);
+        CHECK_ENOUGH_MEMORY(branch_name);
+        strcpy(branch_name, key_name);
+        delete_branch(key_class, &branch_name, &branch_name_len);
+        HeapFree(GetProcessHeap(), 0, branch_name);
     }
-    HeapFree(GetProcessHeap(), 0, branch_name);
 }
