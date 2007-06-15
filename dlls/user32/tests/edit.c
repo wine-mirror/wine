@@ -1023,7 +1023,7 @@ static void test_espassword(void)
 
     /* get text */
     r = SendMessage(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-    ok(r == strlen(password), "Expected: %d, got: %d\n", strlen(password), r);
+    ok(r == strlen(password), "Expected: %s, got len %d\n", password, r);
     ok(strcmp(buffer, password) == 0, "expected %s, got %s\n", password, buffer);
 
     r = OpenClipboard(hwEdit);
