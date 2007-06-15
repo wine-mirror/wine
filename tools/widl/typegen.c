@@ -1327,7 +1327,11 @@ static size_t write_pointer_only_tfs(FILE *file, const attr_list_t *attrs, int p
 
 static void write_branch_type(FILE *file, const type_t *t, unsigned int *tfsoff)
 {
-    if (is_base_type(t->type))
+    if (t == NULL)
+    {
+        print_file(file, 2, "NdrFcShort(0x0),\t/* No type */\n");
+    }
+    else if (is_base_type(t->type))
     {
         print_file(file, 2, "NdrFcShort(0x80%02x),\t/* Simple arm type: %s */\n",
                    t->type, string_of_type(t->type));
@@ -1349,13 +1353,21 @@ static size_t write_union_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     unsigned int align = 0;
     unsigned int start_offset;
     size_t size = type_memsize(type, &align);
-    var_list_t *fields = type->fields;
+    var_list_t *fields;
     size_t nbranch = 0;
     type_t *deftype = NULL;
     short nodeftype = 0xffff;
     var_t *f;
 
     guard_rec(type);
+
+    if (type->type == RPC_FC_ENCAPSULATED_UNION)
+    {
+        const var_t *uv = LIST_ENTRY(list_tail(type->fields), const var_t, entry);
+        fields = uv->type->fields;
+    }
+    else
+        fields = type->fields;
 
     if (fields) LIST_FOR_EACH_ENTRY(f, fields, var_t, entry)
     {
@@ -1369,6 +1381,17 @@ static size_t write_union_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     start_offset = *tfsoff;
     update_tfsoff(type, start_offset, file);
     print_file(file, 0, "/* %d */\n", start_offset);
+    if (type->type == RPC_FC_ENCAPSULATED_UNION)
+    {
+        const var_t *sv = LIST_ENTRY(list_head(type->fields), const var_t, entry);
+        const type_t *st = sv->type;
+        size_t ss = type_memsize(st, &align);
+
+        print_file(file, 2, "0x%x,\t/* %s */\n", type->type, string_of_type(type->type));
+        print_file(file, 2, "0x%x,\t/* Switch type= %s */\n",
+                   (ss << 4) | st->type, string_of_type(st->type));
+        *tfsoff += 2;
+    }
     print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", size, size);
     print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", nbranch, nbranch);
     *tfsoff += 4;
