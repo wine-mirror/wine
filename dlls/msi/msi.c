@@ -30,6 +30,7 @@
 #include "shlwapi.h"
 #include "wine/debug.h"
 #include "msi.h"
+#include "msidefs.h"
 #include "msiquery.h"
 #include "msipriv.h"
 #include "wincrypt.h"
@@ -256,9 +257,89 @@ done:
 UINT WINAPI MsiApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szInstallPackage,
          INSTALLTYPE eInstallType, LPCWSTR szCommandLine)
 {
-    FIXME("%s %s %d %s\n", debugstr_w(szPatchPackage), debugstr_w(szInstallPackage),
+    MSIHANDLE patch, info;
+    UINT r, type;
+    DWORD size = 0;
+    LPCWSTR cmd_ptr = szCommandLine;
+    LPWSTR beg, end;
+    LPWSTR cmd = NULL, codes = NULL;
+
+    static const WCHAR space[] = {' ',0};
+    static const WCHAR patcheq[] = {'P','A','T','C','H','=',0};
+    static WCHAR empty[] = {0};
+
+    TRACE("%s %s %d %s\n", debugstr_w(szPatchPackage), debugstr_w(szInstallPackage),
           eInstallType, debugstr_w(szCommandLine));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if (szInstallPackage || eInstallType == INSTALLTYPE_NETWORK_IMAGE ||
+        eInstallType == INSTALLTYPE_SINGLE_INSTANCE)
+    {
+        FIXME("Only reading target products from patch\n");
+        return ERROR_CALL_NOT_IMPLEMENTED;
+    }
+
+    r = MsiOpenDatabaseW(szPatchPackage, MSIDBOPEN_READONLY, &patch);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MsiGetSummaryInformationW(patch, NULL, 0, &info);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    r = MsiSummaryInfoGetPropertyW(info, PID_TEMPLATE, &type, NULL, NULL, empty, &size);
+    if (r != ERROR_MORE_DATA || !size || type != VT_LPSTR)
+    {
+        ERR("Failed to read product codes from patch\n");
+        goto done;
+    }
+
+    codes = msi_alloc(++size * sizeof(WCHAR));
+    if (!codes)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+
+    r = MsiSummaryInfoGetPropertyW(info, PID_TEMPLATE, &type, NULL, NULL, codes, &size);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    if (!szCommandLine)
+        cmd_ptr = empty;
+
+    size = lstrlenW(cmd_ptr) + lstrlenW(patcheq) + lstrlenW(szPatchPackage) + 1;
+    cmd = msi_alloc(size * sizeof(WCHAR));
+    if (!cmd)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+
+    lstrcpyW(cmd, cmd_ptr);
+    if (szCommandLine) lstrcatW(cmd, space);
+    lstrcatW(cmd, patcheq);
+    lstrcatW(cmd, szPatchPackage);
+
+    beg = codes;
+    while ((end = strchrW(beg, '}')))
+    {
+        *(end + 1) = '\0';
+
+        r = MsiConfigureProductExW(beg, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, cmd);
+        if (r != ERROR_SUCCESS)
+            goto done;
+
+        beg = end + 2;
+    }
+
+done:
+    msi_free(cmd);
+    msi_free(codes);
+
+    MsiCloseHandle(info);
+    MsiCloseHandle(patch);
+
+    return r;
 }
 
 UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
