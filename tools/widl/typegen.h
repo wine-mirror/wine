@@ -53,5 +53,5 @@ void write_user_quad_list(FILE *file);
 void write_endpoints( FILE *f, const char *prefix, const str_list_t *list );
 size_t type_memsize(const type_t *t, unsigned int *align);
 int decl_indirect(const type_t *t);
-void write_parameters_init(const func_t *func);
+void write_parameters_init(FILE *file, int indent, const func_t *func);
 void print(FILE *file, int indent, const char *format, va_list ap);

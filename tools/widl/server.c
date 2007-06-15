@@ -54,28 +54,6 @@ static void print_server(const char *format, ...)
     va_end(va);
 }
 
-
-void write_parameters_init(const func_t *func)
-{
-    const var_t *var;
-
-    if (!func->args)
-        return;
-
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-    {
-        const type_t *t = var->type;
-        const char *n = var->name;
-        if (decl_indirect(t))
-            print_server("MIDL_memset(&%s, 0, sizeof %s);\n", n, n);
-        else if (is_ptr(t) || is_array(t))
-            print_server("%s = 0;\n", n);
-    }
-
-    fprintf(server, "\n");
-}
-
-
 static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 {
     char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
@@ -137,7 +115,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         indent--;
         fprintf(server, "\n");
 
-        write_parameters_init(func);
+        write_parameters_init(server, indent, func);
 
         if (explicit_handle_var)
         {

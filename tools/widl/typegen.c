@@ -273,6 +273,26 @@ void print(FILE *file, int indent, const char *format, va_list va)
     }
 }
 
+void write_parameters_init(FILE *file, int indent, const func_t *func)
+{
+    const var_t *var;
+
+    if (!func->args)
+        return;
+
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    {
+        const type_t *t = var->type;
+        const char *n = var->name;
+        if (decl_indirect(t))
+            print_file(file, indent, "MIDL_memset(&%s, 0, sizeof %s);\n", n, n);
+        else if (is_ptr(t) || is_array(t))
+            print_file(file, indent, "%s = 0;\n", n);
+    }
+
+    fprintf(file, "\n");
+}
+
 static void write_formatdesc(FILE *f, int indent, const char *str)
 {
     print_file(f, indent, "typedef struct _MIDL_%s_FORMAT_STRING\n", str);

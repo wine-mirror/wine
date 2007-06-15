@@ -367,7 +367,7 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   print_proxy("NdrStubInitialize(_pRpcMessage, &_StubMsg, &Object_StubDesc, _pRpcChannelBuffer);\n");
   fprintf(proxy, "\n");
 
-  write_parameters_init(cur);
+  write_parameters_init(proxy, indent, cur);
 
   print_proxy("RpcTryFinally\n");
   print_proxy("{\n");
