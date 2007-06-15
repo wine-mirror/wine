@@ -55,6 +55,9 @@
 #ifdef HAVE_SYS_STATFS_H
 #include <sys/statfs.h>
 #endif
+#ifdef HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
 #ifdef HAVE_SYS_EVENT_H
 #include <sys/event.h>
 #undef LIST_INIT
@@ -518,9 +521,17 @@ static int kqueue_fd = -1;
 
 static inline void init_epoll(void)
 {
-#ifndef __APPLE__ /* kqueue support is broken in the MacOS kernel so we can't use it */
-    kqueue_fd = kqueue();
+#ifdef __APPLE__ /* kqueue support is broken in Mac OS < 10.5 */
+    int mib[2];
+    char release[32];
+    size_t len = sizeof(release);
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_OSRELEASE;
+    if (sysctl( mib, 2, release, &len, NULL, 0 ) == -1) return;
+    if (atoi(release) < 9) return;
 #endif
+    kqueue_fd = kqueue();
 }
 
 static inline void set_fd_epoll_events( struct fd *fd, int user, int events )
