@@ -28,6 +28,15 @@
 #include <ctype.h>
 #include <wine/unicode.h>
 
+/*	Data structure to hold commands to be processed */
+
+typedef struct _CMD_LIST {
+  WCHAR              *command;     /* Command string to execute                */
+  struct _CMD_LIST   *nextcommand; /* Next command string to execute           */
+  BOOL                isAmphersand;/* Whether follows &&                       */
+  int                 bracketDepth;/* How deep bracketing have we got to       */
+} CMD_LIST;
+
 void WCMD_assoc (WCHAR *, BOOL);
 void WCMD_batch (WCHAR *, WCHAR *, int, WCHAR *, HANDLE);
 void WCMD_call (WCHAR *command);
@@ -53,7 +62,7 @@ void WCMD_output (const WCHAR *format, ...);
 void WCMD_output_asis (const WCHAR *message);
 void WCMD_parse (WCHAR *s, WCHAR *q, WCHAR *p1, WCHAR *p2);
 void WCMD_pause (void);
-void WCMD_pipe (WCHAR *command);
+void WCMD_pipe (CMD_LIST **command);
 void WCMD_popd (void);
 void WCMD_print_error (void);
 void WCMD_process_command (WCHAR *command);
@@ -91,15 +100,6 @@ WCHAR *WCMD_LoadMessage(UINT id);
 WCHAR *WCMD_strdupW(WCHAR *input);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
                    LPDWORD charsRead, const LPOVERLAPPED unused);
-
-/*	Data structure to hold commands to be processed */
-
-typedef struct _CMD_LIST {
-  WCHAR              *command;     /* Command string to execute                */
-  struct _CMD_LIST   *nextcommand; /* Next command string to execute           */
-  BOOL                isAmphersand;/* Whether follows &&                       */
-  int                 bracketDepth;/* How deep bracketing have we got to       */
-} CMD_LIST;
 
 WCHAR *WCMD_ReadAndParseLine(WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
 void   WCMD_process_commands(CMD_LIST *thisCmd);

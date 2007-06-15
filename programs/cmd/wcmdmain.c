@@ -1487,9 +1487,10 @@ void WCMD_opt_s_strip_quotes(WCHAR *cmd) {
  *	Handle pipes within a command - the DOS way using temporary files.
  */
 
-void WCMD_pipe (WCHAR *command) {
+void WCMD_pipe (CMD_LIST **cmdEntry) {
 
   WCHAR *p;
+  WCHAR *command = (*cmdEntry)->command;
   WCHAR temp_path[MAX_PATH], temp_file[MAX_PATH], temp_file2[MAX_PATH], temp_cmd[1024];
   static const WCHAR redirOut[] = {'%','s',' ','>',' ','%','s','\0'};
   static const WCHAR redirIn[]  = {'%','s',' ','<',' ','%','s','\0'};
@@ -2077,7 +2078,7 @@ void WCMD_process_commands(CMD_LIST *thisCmd) {
       if (thisCmd->command && thisCmd->command[0] != ':') {
         WINE_TRACE("Executing command: '%s'\n", wine_dbgstr_w(thisCmd->command));
         if (strchrW(thisCmd->command,'|') != NULL) {
-          WCMD_pipe (thisCmd->command);
+          WCMD_pipe (&thisCmd);
         } else {
           WCMD_process_command (thisCmd->command);
         }
