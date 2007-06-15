@@ -303,7 +303,9 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
     }
 
     /* no valid modes found */
-    ERR("No matching mode found! (%s)\n", handler_name);
+    ERR("No matching mode found(%dx%dx%d)! (%s)\n",
+        devmode->dmPelsWidth, devmode->dmPelsHeight,
+        devmode->dmBitsPerPel, handler_name);
     return DISP_CHANGE_BADMODE;
 }
 
