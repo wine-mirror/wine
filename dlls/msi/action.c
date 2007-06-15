@@ -454,15 +454,15 @@ static UINT msi_apply_substorage_transform( MSIPACKAGE *package,
 
 static UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si )
 {
-    static const WCHAR szProdID[] = { 'P','r','o','d','u','c','t','I','D',0 };
-    LPWSTR guid_list, *guids, product_id;
+    static const WCHAR szProdCode[] = { 'P','r','o','d','u','c','t','C','o','d','e',0 };
+    LPWSTR guid_list, *guids, product_code;
     UINT i, ret = ERROR_FUNCTION_FAILED;
 
-    product_id = msi_dup_property( package, szProdID );
-    if (!product_id)
+    product_code = msi_dup_property( package, szProdCode );
+    if (!product_code)
     {
-        /* FIXME: the property ProductID should be written into the DB somewhere */
-        ERR("no product ID to check\n");
+        /* FIXME: the property ProductCode should be written into the DB somewhere */
+        ERR("no product code to check\n");
         return ERROR_SUCCESS;
     }
 
@@ -470,12 +470,12 @@ static UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si 
     guids = msi_split_string( guid_list, ';' );
     for ( i = 0; guids[i] && ret != ERROR_SUCCESS; i++ )
     {
-        if (!lstrcmpW( guids[i], product_id ))
+        if (!lstrcmpW( guids[i], product_code ))
             ret = ERROR_SUCCESS;
     }
     msi_free( guids );
     msi_free( guid_list );
-    msi_free( product_id );
+    msi_free( product_code );
 
     return ret;
 }
