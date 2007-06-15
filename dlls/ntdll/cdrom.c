@@ -76,13 +76,12 @@
 #endif
 
 #ifdef HAVE_IOKIT_IOKITLIB_H
-# ifndef SENSEBUFLEN
-#  include <sys/disk.h>
-#  include <IOKit/IOKitLib.h>
-#  include <IOKit/storage/IOMedia.h>
-#  include <IOKit/scsi/SCSICmds_REQUEST_SENSE_Defs.h>
-#  define SENSEBUFLEN kSenseDefaultSize
-# endif
+# include <sys/disk.h>
+# include <IOKit/IOKitLib.h>
+# include <IOKit/storage/IOMedia.h>
+# include <IOKit/storage/IOCDMediaBSDClient.h>
+# include <IOKit/scsi/SCSICmds_REQUEST_SENSE_Defs.h>
+# define SENSEBUFLEN kSenseDefaultSize
 #endif
 
 #define NONAMELESSUNION
@@ -489,6 +488,33 @@ static NTSTATUS CDROM_SyncCache(int dev, int fd)
         toc->TrackData[i - toc->FirstTrack].Address[2] = toc_buffer.addr.msf.second;
         toc->TrackData[i - toc->FirstTrack].Address[3] = toc_buffer.addr.msf.frame;
     }
+    cdrom_cache[dev].toc_good = 1;
+    return STATUS_SUCCESS;
+
+#elif defined(__APPLE__)
+    int i;
+    dk_cd_read_toc_t hdr;
+    CDROM_TOC *toc = &cdrom_cache[dev].toc;
+    cdrom_cache[dev].toc_good = 0;
+
+    memset( &hdr, 0, sizeof(hdr) );
+    hdr.buffer = toc;
+    hdr.bufferLength = sizeof(*toc);
+    if (ioctl(fd, DKIOCCDREADTOC, &hdr) == -1)
+    {
+        WARN("(%d) -- Error occurred (%s)!\n", dev, strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    for (i = toc->FirstTrack; i <= toc->LastTrack + 1; i++)
+    {
+        /* convert address format */
+        TRACK_DATA *data = &toc->TrackData[i - toc->FirstTrack];
+        DWORD frame = (((DWORD)data->Address[0] << 24) | ((DWORD)data->Address[1] << 16) |
+                       ((DWORD)data->Address[2] << 8) | data->Address[3]);
+        MSF_OF_FRAME( data->Address[1], frame );
+        data->Address[0] = 0;
+    }
+
     cdrom_cache[dev].toc_good = 1;
     return STATUS_SUCCESS;
 #else
