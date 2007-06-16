@@ -342,7 +342,7 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
     mline->chans = chans(mmixer, mastelem, 0);
 
     snd_mixer_elem_set_callback(mastelem, &elem_callback);
-    snd_mixer_elem_set_callback_private(mastelem, &mmixer);
+    snd_mixer_elem_set_callback_private(mastelem, mmixer);
 
     /* Capture control
      * Note: since mmixer->dests = 1, it means only playback control is visible
@@ -361,7 +361,7 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
         mline->chans = chans(mmixer, captelem, 1);
 
         snd_mixer_elem_set_callback(captelem, &elem_callback);
-        snd_mixer_elem_set_callback_private(captelem, &mmixer);
+        snd_mixer_elem_set_callback_private(captelem, mmixer);
     }
 
     for (elem = snd_mixer_first_elem(mmixer->mix); elem; elem = snd_mixer_elem_next(elem))
@@ -391,7 +391,7 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
             }
 
             snd_mixer_elem_set_callback(elem, &elem_callback);
-            snd_mixer_elem_set_callback_private(elem, &mmixer);
+            snd_mixer_elem_set_callback_private(elem, mmixer);
         }
 }
 
