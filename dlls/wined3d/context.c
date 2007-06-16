@@ -206,6 +206,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     GLXFBConfig *cfgs = NULL;
     GLXContext ctx = NULL, oldCtx;
     WineD3DContext *ret = NULL;
+    int s;
 
     TRACE("(%p): Creating a %s context for render target %p\n", This, win ? "onscreen" : "offscreen", target);
 
@@ -368,8 +369,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         checkGLcall("glEnable(GL_WEIGHT_SUM_UNITY_ARB)");
     }
     if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-        int s;
-
         glEnable(GL_TEXTURE_SHADER_NV);
         checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
 
@@ -380,6 +379,13 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
             glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, GL_TEXTURE0_ARB + s - 1);
             checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, ...\n");
+        }
+    }
+    if(GL_SUPPORT(ARB_POINT_SPRITE)) {
+        for(s = 0; s < GL_LIMITS(textures); s++) {
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
+            glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
+            checkGLcall("glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n");
         }
     }
 
