@@ -156,32 +156,11 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
                     else
                         cmd = lpFile;
 
-                    /* Add double quotation marks unless we already have them
-                       (e.g.: "file://%1" %* for exefile) or unless the arg is already
-                       enclosed in double quotation marks */
-                    if ((res == out || *(fmt + 1) != '"') && *cmd != '"')
+                    used += strlenW(cmd);
+                    if (used < len)
                     {
-                        used++;
-                        if (used < len)
-                            *res++ = '"';
-                        used += strlenW(cmd);
-                        if (used < len)
-                        {
-                            strcpyW(res, cmd);
-                            res += strlenW(cmd);
-                        }
-                        used++;
-                        if (used < len)
-                            *res++ = '"';
-                    }
-                    else
-                    {
-                        used += strlenW(cmd);
-                        if (used < len)
-                        {
-                            strcpyW(res, cmd);
-                            res += strlenW(cmd);
-                        }
+                        strcpyW(res, cmd);
+                        res += strlenW(cmd);
                     }
                 }
                 found_p1 = TRUE;
