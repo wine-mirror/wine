@@ -613,7 +613,7 @@ static HRESULT WINAPI IWIneD3DVertexShaderImpl_SetLocalConstantsF(IWineD3DVertex
         if (!lconst) return E_OUTOFMEMORY;
 
         lconst->idx = i;
-        CopyMemory(lconst->value, src_data + i * 4, 4 * sizeof(float));
+        memcpy(lconst->value, src_data + (i - start_idx) * 4 /* 4 components */, 4 * sizeof(float));
         list_add_head(&This->baseShader.constantsF, &lconst->entry);
     }
 
