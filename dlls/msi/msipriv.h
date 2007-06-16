@@ -126,7 +126,7 @@ typedef struct tagMSIVIEWOPS
      *  To get a string value, query the database's string table with
      *   the integer value returned from this function.
      */
-    UINT (*fetch_int)( struct tagMSIVIEW *, UINT row, UINT col, UINT *val );
+    UINT (*fetch_int)( struct tagMSIVIEW *view, UINT row, UINT col, UINT *val );
 
     /*
      * fetch_stream - gets a stream from {row,col} in the table
@@ -134,29 +134,29 @@ typedef struct tagMSIVIEWOPS
      *  This function is similar to fetch_int, except fetches a
      *    stream instead of an integer.
      */
-    UINT (*fetch_stream)( struct tagMSIVIEW *, UINT row, UINT col, IStream **stm );
+    UINT (*fetch_stream)( struct tagMSIVIEW *view, UINT row, UINT col, IStream **stm );
 
     /*
      * set_row - sets values in a row as specified by mask
      *
      *  Similar semantics to fetch_int
      */
-    UINT (*set_row)( struct tagMSIVIEW *, UINT row, MSIRECORD *rec, UINT mask );
+    UINT (*set_row)( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UINT mask );
 
     /*
      * Inserts a new row into the database from the records contents
      */
-    UINT (*insert_row)( struct tagMSIVIEW *, MSIRECORD *, BOOL temporary );
+    UINT (*insert_row)( struct tagMSIVIEW *view, MSIRECORD *record, BOOL temporary );
 
     /*
      * execute - loads the underlying data into memory so it can be read
      */
-    UINT (*execute)( struct tagMSIVIEW *, MSIRECORD * );
+    UINT (*execute)( struct tagMSIVIEW *view, MSIRECORD *record );
 
     /*
      * close - clears the data read by execute from memory
      */
-    UINT (*close)( struct tagMSIVIEW * );
+    UINT (*close)( struct tagMSIVIEW *view );
 
     /*
      * get_dimensions - returns the number of rows or columns in a table.
@@ -164,7 +164,7 @@ typedef struct tagMSIVIEWOPS
      *  The number of rows can only be queried after the execute method
      *   is called. The number of columns can be queried at any time.
      */
-    UINT (*get_dimensions)( struct tagMSIVIEW *, UINT *rows, UINT *cols );
+    UINT (*get_dimensions)( struct tagMSIVIEW *view, UINT *rows, UINT *cols );
 
     /*
      * get_column_info - returns the name and type of a specific column
@@ -173,12 +173,12 @@ typedef struct tagMSIVIEWOPS
      *   the caller.
      *  The column information can be queried at any time.
      */
-    UINT (*get_column_info)( struct tagMSIVIEW *, UINT n, LPWSTR *name, UINT *type );
+    UINT (*get_column_info)( struct tagMSIVIEW *view, UINT n, LPWSTR *name, UINT *type );
 
     /*
      * modify - not yet implemented properly
      */
-    UINT (*modify)( struct tagMSIVIEW *, MSIMODIFY, MSIRECORD * );
+    UINT (*modify)( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRECORD *record );
 
     /*
      * delete - destroys the structure completely
@@ -196,7 +196,7 @@ typedef struct tagMSIVIEWOPS
      *  position in the iteration. It must be initialised to zero before the
      *  first call and continued to be passed in to subsequent calls.
      */
-    UINT (*find_matching_rows)( struct tagMSIVIEW *, UINT col, UINT val, UINT *row, MSIITERHANDLE *handle );
+    UINT (*find_matching_rows)( struct tagMSIVIEW *view, UINT col, UINT val, UINT *row, MSIITERHANDLE *handle );
 } MSIVIEWOPS;
 
 struct tagMSIVIEW
@@ -565,7 +565,7 @@ extern void msi_table_set_strref(UINT bytes_per_strref);
 extern BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name );
 extern MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table );
 
-extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
+extern UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
                                   USHORT **pdata, UINT *psz );
 extern UINT read_stream_data( IStorage *stg, LPCWSTR stname,
                               USHORT **pdata, UINT *psz );
@@ -637,7 +637,7 @@ extern UINT MSI_SetInstallLevel( MSIPACKAGE *package, int iInstallLevel );
 
 /* package internals */
 extern MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *, LPCWSTR );
-extern UINT MSI_OpenPackageW( LPCWSTR szPackage, MSIPACKAGE ** );
+extern UINT MSI_OpenPackageW( LPCWSTR szPackage, MSIPACKAGE **pPackage );
 extern UINT MSI_SetTargetPathW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern UINT MSI_SetPropertyW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern INT MSI_ProcessMessage( MSIPACKAGE *, INSTALLMESSAGE, MSIRECORD * );

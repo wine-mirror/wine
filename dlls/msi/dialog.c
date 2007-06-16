@@ -151,7 +151,7 @@ static UINT msi_dialog_checkbox_handler( msi_dialog *, msi_control *, WPARAM );
 static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
 static UINT msi_dialog_button_handler( msi_dialog *, msi_control *, WPARAM );
 static UINT msi_dialog_edit_handler( msi_dialog *, msi_control *, WPARAM );
-static UINT msi_dialog_radiogroup_handler( msi_dialog *, msi_control *, WPARAM param );
+static UINT msi_dialog_radiogroup_handler( msi_dialog *, msi_control *, WPARAM );
 static UINT msi_dialog_evaluate_control_conditions( msi_dialog *dialog );
 static LRESULT WINAPI MSIRadioGroup_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 static MSIFEATURE *msi_seltree_get_selected_feature( msi_control *control );

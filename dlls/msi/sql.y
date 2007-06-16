@@ -64,7 +64,7 @@ static struct expr * EXPR_complex( void *info, struct expr *l, UINT op, struct e
 static struct expr * EXPR_unary( void *info, struct expr *l, UINT op );
 static struct expr * EXPR_column( void *info, const column_info *column );
 static struct expr * EXPR_ival( void *info, int val );
-static struct expr * EXPR_sval( void *info, const struct sql_str * );
+static struct expr * EXPR_sval( void *info, const struct sql_str *str );
 static struct expr * EXPR_wildcard( void *info );
 
 %}
