@@ -144,7 +144,7 @@
 @ stub GdipDisposeImageAttributes
 @ stub GdipDrawArc
 @ stub GdipDrawArcI
-@ stub GdipDrawBezier
+@ stdcall GdipDrawBezier(ptr ptr long long long long long long long long)
 @ stub GdipDrawBezierI
 @ stub GdipDrawBeziers
 @ stub GdipDrawBeziersI

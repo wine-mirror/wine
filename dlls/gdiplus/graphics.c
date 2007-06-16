@@ -27,6 +27,11 @@
 #include "gdiplus_private.h"
 #include "wine/debug.h"
 
+static inline INT roundr(REAL x)
+{
+    return (INT) floor(x+0.5);
+}
+
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 {
     if(hdc == NULL)
@@ -62,6 +67,25 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
         ReleaseDC(graphics->hwnd, graphics->hdc);
 
     HeapFree(GetProcessHeap(), 0, graphics);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
+    REAL y1, REAL x2, REAL y2, REAL x3, REAL y3, REAL x4, REAL y4)
+{
+    HGDIOBJ old_pen;
+    POINT pt[4] = {{roundr(x1), roundr(y1)}, {roundr(x2), roundr(y2)},
+                   {roundr(x3), roundr(y3)}, {roundr(x4), roundr(y4)}};
+
+    if(!graphics || !pen)
+        return InvalidParameter;
+
+    old_pen = SelectObject(graphics->hdc, pen->gdipen);
+
+    PolyBezier(graphics->hdc, pt, 4);
+
+    SelectObject(graphics->hdc, old_pen);
 
     return Ok;
 }
