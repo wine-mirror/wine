@@ -4410,7 +4410,7 @@ static void test_encodeAuthorityKeyId2(DWORD dwEncoding)
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* With an issuer name */
     entry.dwAltNameChoice = CERT_ALT_NAME_URL;
-    entry.pwszURL = (LPWSTR)url;
+    U(entry).pwszURL = (LPWSTR)url;
     ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
@@ -4497,7 +4497,7 @@ static void test_decodeAuthorityKeyId2(DWORD dwEncoding)
         ok(info->AuthorityCertIssuer.rgAltEntry[0].dwAltNameChoice ==
          CERT_ALT_NAME_URL, "Expected CERT_ALT_NAME_URL, got %d\n",
          info->AuthorityCertIssuer.rgAltEntry[0].dwAltNameChoice);
-        ok(!lstrcmpW(info->AuthorityCertIssuer.rgAltEntry[0].pwszURL,
+        ok(!lstrcmpW(U(info->AuthorityCertIssuer.rgAltEntry[0]).pwszURL,
          url), "Unexpected URL\n");
         ok(info->AuthorityCertSerialNumber.cbData == 0,
          "Expected no serial number\n");
