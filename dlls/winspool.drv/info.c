@@ -6144,28 +6144,25 @@ BOOL WINAPI AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer, LPWSTR pMonito
         return FALSE;
     }
 
-    if (!pi2) {
+    if ((!pi2) || (!pMonitorName) || (!pMonitorName[0])) {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    /* we need a valid Monitorname */
-    if (!pMonitorName) {
-        SetLastError(RPC_X_NULL_REF_POINTER);
-        return FALSE;
-    }
-    if (!pMonitorName[0]) {
-        SetLastError(ERROR_NOT_SUPPORTED);
         return FALSE;
     }
 
     /* load the Monitor */
     pm = monitor_load(pMonitorName, NULL);
-    if (!pm) return FALSE;
+    if (!pm) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
     if (pm->monitor && pm->monitor->pfnAddPortEx) {
         res = pm->monitor->pfnAddPortEx(pName, level, pBuffer, pMonitorName);
         TRACE("got %u with %u\n", res, GetLastError());
+    }
+    else
+    {
+        FIXME("not implemented for %s (%p)\n", debugstr_w(pMonitorName), pm->monitor);
     }
     monitor_unload(pm);
     return res;

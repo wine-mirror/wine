@@ -45,6 +45,7 @@ static CHAR env_x86[]           = "Windows NT x86";
 static CHAR env_win9x_case[]    = "windowS 4.0";
 static CHAR illegal_name[]      = "illegal,name";
 static CHAR invalid_env[]       = "invalid_env";
+static CHAR LocalPortA[]        = "Local Port";
 static CHAR portname_com1[]     = "COM1:";
 static CHAR portname_file[]     = "FILE:";
 static CHAR portname_lpt1[]     = "LPT1:";
@@ -67,6 +68,7 @@ static HANDLE  hwinspool;
 static FARPROC pGetDefaultPrinterA;
 static FARPROC pSetDefaultPrinterA;
 static DWORD (WINAPI * pXcvDataW)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD, PDWORD);
+static BOOL  (WINAPI * pAddPortExA)(LPSTR, DWORD, LPBYTE, LPSTR);
 
 
 /* ################################ */
@@ -456,6 +458,119 @@ static void test_AddPort(void)
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
         "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+}
+
+/* ########################### */
+
+static void test_AddPortEx(void)
+{
+    PORT_INFO_2A pi;
+    DWORD   res;
+
+
+    if (!pAddPortExA) {
+        skip("AddPortEx not supported\n");
+        return;
+    }
+
+    /* start test with a clean system */
+    DeletePortA(NULL, 0, tempfileA);
+
+    pi.pPortName = tempfileA;
+    SetLastError(0xdeadbeef);
+    res = pAddPortExA(NULL, 1, (LPBYTE) &pi, LocalPortA);
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
+
+    /* Allowed only for (Printer-)Administrators.
+       W2K+XP: ERROR_INVALID_PARAMETER  */
+    if (!res && (GetLastError() == ERROR_INVALID_PARAMETER)) {
+        skip("ACCESS_DENIED (ERROR_INVALID_PARAMETER)\n");
+        return;
+    }
+    ok( res, "got %u with %u (expected '!= 0')\n", res, GetLastError());
+
+    /* Add a port, that already exist */
+    SetLastError(0xdeadbeef);
+    res = pAddPortExA(NULL, 1, (LPBYTE) &pi, LocalPortA);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+    DeletePortA(NULL, 0, tempfileA);
+
+
+    /* the Monitorname must match */
+    SetLastError(0xdeadbeef);
+    res = pAddPortExA(NULL, 1, (LPBYTE) &pi, NULL);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+    if (res) DeletePortA(NULL, 0, tempfileA);
+
+    SetLastError(0xdeadbeef);
+    res = pAddPortExA(NULL, 1, (LPBYTE) &pi, empty);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+    if (res) DeletePortA(NULL, 0, tempfileA);
+
+    SetLastError(0xdeadbeef);
+    res = pAddPortExA(NULL, 1, (LPBYTE) &pi, does_not_exist);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+    if (res) DeletePortA(NULL, 0, tempfileA);
+
+
+    /* We need a Portname */
+    SetLastError(0xdeadbeef);
+    res = pAddPortExA(NULL, 1, NULL, LocalPortA);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+
+    pi.pPortName = NULL;
+    SetLastError(0xdeadbeef);
+    res = pAddPortExA(NULL, 1, (LPBYTE) &pi, LocalPortA);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+    if (res) DeletePortA(NULL, 0, tempfileA);
+
+
+    /*  level 2 is documented as supported for Printmonitors,
+        but that is not supported for "Local Port" (localspl.dll) and
+        AddPortEx fails with ERROR_INVALID_LEVEL */
+
+    pi.pPortName = tempfileA;
+    pi.pMonitorName = LocalPortA;
+    pi.pDescription = winetest;
+    pi.fPortType = PORT_TYPE_WRITE;
+
+    SetLastError(0xdeadbeef);
+    res = pAddPortExA(NULL, 2, (LPBYTE) &pi, LocalPortA);
+    ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
+        "got %u with %u (expected '0' with ERROR_INVALID_LEVEL)\n",
+        res, GetLastError());
+    if (res) DeletePortA(NULL, 0, tempfileA);
+
+
+    /* invalid levels */
+    SetLastError(0xdeadbeef);
+    res = pAddPortExA(NULL, 0, (LPBYTE) &pi, LocalPortA);
+    ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
+        "got %u with %u (expected '0' with ERROR_INVALID_LEVEL)\n",
+        res, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    res = pAddPortExA(NULL, 3, (LPBYTE) &pi, LocalPortA);
+    ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
+        "got %u with %u (expected '0' with ERROR_INVALID_LEVEL)\n",
+        res, GetLastError());
+
+
+    /* cleanup */
+    DeletePortA(NULL, 0, tempfileA);
 
 }
 
@@ -2113,6 +2228,7 @@ START_TEST(info)
     pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
     pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
     pXcvDataW = (void *) GetProcAddress(hwinspool, "XcvDataW");
+    pAddPortExA = (void *) GetProcAddress(hwinspool, "AddPortExA");
 
     find_default_printer();
     find_local_server();
@@ -2120,6 +2236,7 @@ START_TEST(info)
 
     test_AddMonitor();
     test_AddPort();
+    test_AddPortEx();
     test_ConfigurePort();
     test_DeleteMonitor();
     test_DeletePort();
