@@ -78,6 +78,7 @@ static WCHAR cmd_PortIsValidW[] = {'P','o','r','t','I','s','V','a','l','i','d',0
 static WCHAR does_not_existW[] = {'d','o','e','s','_','n','o','t','_','e','x','i','s','t',0};
 static CHAR  emptyA[] = "";
 static WCHAR emptyW[] = {0};
+static WCHAR LocalPortW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
 static WCHAR Monitors_LocalPortW[] = {
                                 'S','y','s','t','e','m','\\',
                                 'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -115,6 +116,23 @@ static WCHAR wineW[] = {'W','i','n','e',0};
 static WCHAR tempdirW[MAX_PATH];
 static WCHAR tempfileW[MAX_PATH];
 
+
+/* ########################### */
+
+static DWORD delete_port(LPWSTR portname)
+{
+    DWORD   res;
+
+    if (pDeletePort) {
+        res = pDeletePort(NULL, 0, portname);
+    }
+    else
+    {
+        res = pXcvDataPort(hXcv, cmd_DeletePortW, (PBYTE) portname, (lstrlenW(portname) + 1) * sizeof(WCHAR), NULL, 0, NULL);
+    }
+    return res;
+}
+
 /* ########################### */
 
 static void test_AddPort(void)
@@ -143,6 +161,116 @@ static void test_AddPort(void)
     res = pAddPort(NULL, 0, does_not_existW);
     ok(!res, "returned %d with %u (expected '0')\n", res, GetLastError());
 
+}
+
+/* ########################### */
+
+static void test_AddPortEx(void)
+{
+    PORT_INFO_2W pi;
+    DWORD   res;
+
+    if (!pAddPortEx) {
+        skip("AddPortEx\n");
+        return;
+    }
+    if ((!pDeletePort) &&  (!hXcv)) {
+        skip("No API to delete a Port\n");
+        return;
+    }
+
+    /* start test with clean ports */
+    delete_port(tempfileW);
+
+    pi.pPortName = tempfileW;
+    if (0) {
+        /* tests crash with native localspl.dll in w2k,
+           but works with native localspl.dll in wine */
+        SetLastError(0xdeadbeef);
+        res = pAddPortEx(NULL, 1, (LPBYTE) &pi, LocalPortW);
+        trace("returned %u with %u\n", res, GetLastError() );
+        ok( res, "got %u with %u (expected '!= 0')\n", res, GetLastError());
+
+        /* port already exists: */
+        SetLastError(0xdeadbeef);
+        res = pAddPortEx(NULL, 1, (LPBYTE) &pi, LocalPortW);
+        trace("returned %u with %u\n", res, GetLastError() );
+        ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+            "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+            res, GetLastError());
+        delete_port(tempfileW);
+
+
+        /*  NULL for pMonitorName is documented for Printmonitors, but
+            localspl.dll fails always with ERROR_INVALID_PARAMETER  */
+        SetLastError(0xdeadbeef);
+        res = pAddPortEx(NULL, 1, (LPBYTE) &pi, NULL);
+        trace("returned %u with %u\n", res, GetLastError() );
+        ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+            "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+            res, GetLastError());
+        if (res) delete_port(tempfileW);
+
+
+        SetLastError(0xdeadbeef);
+        res = pAddPortEx(NULL, 1, (LPBYTE) &pi, emptyW);
+        trace("returned %u with %u\n", res, GetLastError() );
+        ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+            "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+            res, GetLastError());
+        if (res) delete_port(tempfileW);
+
+
+        SetLastError(0xdeadbeef);
+        res = pAddPortEx(NULL, 1, (LPBYTE) &pi, does_not_existW);
+        trace("returned %u with %u\n", res, GetLastError() );
+        ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+            "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+            res, GetLastError());
+        if (res) delete_port(tempfileW);
+    }
+
+    pi.pPortName = NULL;
+    SetLastError(0xdeadbeef);
+    res = pAddPortEx(NULL, 1, (LPBYTE) &pi, LocalPortW);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+
+    /*  level 2 is documented as supported for Printmonitors,
+        but localspl.dll fails always with ERROR_INVALID_LEVEL */
+
+    pi.pPortName = tempfileW;
+    pi.pMonitorName = LocalPortW;
+    pi.pDescription = wineW;
+    pi.fPortType = PORT_TYPE_WRITE;
+
+    SetLastError(0xdeadbeef);
+    res = pAddPortEx(NULL, 2, (LPBYTE) &pi, LocalPortW);
+    ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
+        "got %u with %u (expected '0' with ERROR_INVALID_LEVEL)\n",
+        res, GetLastError());
+    if (res) delete_port(tempfileW);
+
+
+    /* invalid levels */
+    SetLastError(0xdeadbeef);
+    res = pAddPortEx(NULL, 0, (LPBYTE) &pi, LocalPortW);
+    ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
+        "got %u with %u (expected '0' with ERROR_INVALID_LEVEL)\n",
+        res, GetLastError());
+    if (res) delete_port(tempfileW);
+
+
+    SetLastError(0xdeadbeef);
+    res = pAddPortEx(NULL, 3, (LPBYTE) &pi, LocalPortW);
+    ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
+        "got %u with %u (expected '0' with ERROR_INVALID_LEVEL)\n",
+        res, GetLastError());
+    if (res) delete_port(tempfileW);
+
+    /* cleanup */
+    delete_port(tempfileW);
 }
 
 /* ########################### */
@@ -1021,6 +1149,7 @@ START_TEST(localmon)
     test_InitializePrintMonitor();
 
     test_AddPort();
+    test_AddPortEx();
     test_ConfigurePort();
     test_DeletePort();
     test_EnumPorts();
