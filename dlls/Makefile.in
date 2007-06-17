@@ -143,6 +143,7 @@ BASEDIRS = \
 	olesvr32 \
 	pdh \
 	powrprof \
+	printui \
 	psapi \
 	pstorec \
 	qcap \

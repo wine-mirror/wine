@@ -20722,6 +20722,8 @@ ac_config_files="$ac_config_files dlls/pdh/Makefile"
 
 ac_config_files="$ac_config_files dlls/powrprof/Makefile"
 
+ac_config_files="$ac_config_files dlls/printui/Makefile"
+
 ac_config_files="$ac_config_files dlls/psapi/Makefile"
 
 ac_config_files="$ac_config_files dlls/psapi/tests/Makefile"
@@ -21793,6 +21795,7 @@ do
     "dlls/opengl32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/opengl32/Makefile" ;;
     "dlls/pdh/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pdh/Makefile" ;;
     "dlls/powrprof/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/powrprof/Makefile" ;;
+    "dlls/printui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/printui/Makefile" ;;
     "dlls/psapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/psapi/Makefile" ;;
     "dlls/psapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/psapi/tests/Makefile" ;;
     "dlls/pstorec/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pstorec/Makefile" ;;
