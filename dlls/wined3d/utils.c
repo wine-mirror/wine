@@ -834,9 +834,12 @@ static BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, WINED3DTEXTUREOP 
     if (op == WINED3DTOP_DISABLE) return FALSE;
     if (This->stateBlock->textures[stage]) return FALSE;
 
-    if (arg1 == WINED3DTA_TEXTURE && op != WINED3DTOP_SELECTARG2) return TRUE;
-    if (arg2 == WINED3DTA_TEXTURE && op != WINED3DTOP_SELECTARG1) return TRUE;
-    if (arg3 == WINED3DTA_TEXTURE && (op == WINED3DTOP_MULTIPLYADD || op == WINED3DTOP_LERP)) return TRUE;
+    if ((arg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
+            && op != WINED3DTOP_SELECTARG2) return TRUE;
+    if ((arg2 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
+            && op != WINED3DTOP_SELECTARG1) return TRUE;
+    if ((arg3 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
+            && (op == WINED3DTOP_MULTIPLYADD || op == WINED3DTOP_LERP)) return TRUE;
 
     return FALSE;
 }
