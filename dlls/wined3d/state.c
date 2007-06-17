@@ -1674,9 +1674,9 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
                 glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                 checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
             }
-        }
-        if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-            glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE);
+            if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+                glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE);
+            }
         }
         /* All done */
         return;
