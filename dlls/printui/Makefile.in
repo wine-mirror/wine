@@ -8,6 +8,8 @@ IMPORTS   = kernel32
 C_SRCS = \
 	printui.c
 
+RC_SRCS = printui.rc
+
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

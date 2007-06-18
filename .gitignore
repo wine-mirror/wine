@@ -426,6 +426,7 @@ dlls/olesvr32/libolesvr32.def
 dlls/opengl32/libopengl32.def
 dlls/opengl32/version.res
 dlls/powrprof/libpowrprof.def
+dlls/printui/printui.res
 dlls/psapi/libpsapi.def
 dlls/psapi/tests/*.ok
 dlls/psapi/tests/psapi_crosstest.exe
