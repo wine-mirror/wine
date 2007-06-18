@@ -21,6 +21,38 @@
 #include <windows.h>
 
 #define NET_START 0001
+#define NET_STOP  0002
+
+static BOOL StopService(SC_HANDLE SCManager, SC_HANDLE serviceHandle)
+{
+    LPENUM_SERVICE_STATUS dependencies = NULL;
+    DWORD buffer_size = 0;
+    DWORD count = 0, counter;
+    BOOL result;
+    SC_HANDLE dependent_serviceHandle;
+    SERVICE_STATUS_PROCESS ssp;
+
+    result = EnumDependentServices(serviceHandle, SERVICE_ACTIVE, dependencies, buffer_size, &buffer_size, &count);
+
+    if(!result && (GetLastError() == ERROR_MORE_DATA))
+    {
+        dependencies = HeapAlloc(GetProcessHeap(), 0, buffer_size);
+        if(EnumDependentServices(serviceHandle, SERVICE_ACTIVE, dependencies, buffer_size, &buffer_size, &count))
+        {
+            for(counter = 0; counter < count; counter++)
+            {
+                printf("Stopping dependent service: %s\n", dependencies[counter].lpDisplayName);
+                dependent_serviceHandle = OpenService(SCManager, dependencies[counter].lpServiceName, SC_MANAGER_ALL_ACCESS);
+                if(dependent_serviceHandle) result = StopService(SCManager, dependent_serviceHandle);
+                if(!result) printf("Could not stop service %s\n", dependencies[counter].lpDisplayName);
+           }
+        }
+    }
+
+    if(result) result = ControlService(serviceHandle, SERVICE_CONTROL_STOP, (LPSERVICE_STATUS)&ssp);
+    HeapFree(GetProcessHeap(), 0, dependencies);
+    return result;
+}
 
 static BOOL net_service(int operation, char *service_name)
 {
@@ -57,6 +89,14 @@ static BOOL net_service(int operation, char *service_name)
         if(!result) printf("failed to start.\n");
         else printf("was started successfully.\n");
         break;
+    case NET_STOP:
+        printf("The %s service is stopping.\n", service_display_name);
+        result = StopService(SCManager, serviceHandle);
+
+        printf("The %s service ", service_display_name);
+        if(!result) printf("failed to stop.\n");
+        else printf("was stopped successfully.\n");
+        break;
     }
 
     CloseServiceHandle(serviceHandle);
@@ -70,7 +110,7 @@ int main(int argc, char *argv[])
     if (argc < 2)
     {
         printf("The syntax of this command is:\n\n");
-        printf("NET [ HELP | START ]\n");
+        printf("NET [ HELP | START | STOP ]\n");
         return 1;
     }
 
@@ -79,7 +119,7 @@ int main(int argc, char *argv[])
         printf("The syntax of this command is:\n\n");
         printf("NET HELP command\n    -or-\nNET command /HELP\n\n");
         printf("   Commands available are:\n");
-        printf("   NET HELP	NET START\n");
+        printf("   NET HELP    NET START    NET STOP\n");
     }
 
     if(!strcasecmp(argv[1], "start"))
@@ -91,6 +131,21 @@ int main(int argc, char *argv[])
         }
 
         if(!net_service(NET_START, argv[2]))
+        {
+            return 1;
+        }
+        return 0;
+    }
+
+    if(!strcasecmp(argv[1], "stop"))
+    {
+        if(argc < 3)
+        {
+            printf("Specify service name to stop.\n");
+            return 1;
+        }
+
+        if(!net_service(NET_STOP, argv[2]))
         {
             return 1;
         }
