@@ -497,7 +497,25 @@ static unsigned be_i386_is_func_call(const void* insn, ADDRESS64* callee)
             WINE_FIXME("Unsupported yet call insn (0xFF 0x%02x) (SIB bytes) at %p\n", ch, insn);
             return FALSE;
         case 0x05: /* addr32 */
-            WINE_FIXME("Unsupported yet call insn (0xFF 0x%02x) (addr32) at %p\n", ch, insn);
+            if ((ch & 0x38) == 0x10 || /* call */
+                (ch & 0x38) == 0x18)   /* lcall */
+            {
+                void *addr;
+                if (!dbg_read_memory((const char *)insn + 2, &addr, sizeof(addr)))
+                    return FALSE;
+                if ((ch & 0x38) == 0x18)   /* lcall */
+                {
+                    if (!dbg_read_memory((const char*)addr + operand_size, &segment, sizeof(segment)))
+                        return FALSE;
+                }
+                else segment = dbg_context.SegCs;
+                if (!dbg_read_memory((const char*)addr, &dst, sizeof(dst)))
+                    return FALSE;
+                callee->Mode = get_selector_type(dbg_curr_thread->handle, &dbg_context, segment);
+                callee->Segment = segment;
+                callee->Offset = dst;
+                return TRUE;
+            }
             return FALSE;
         default:
             switch (ch & 0x07)
