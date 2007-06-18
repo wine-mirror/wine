@@ -52,7 +52,7 @@ static HINSTANCE MSVIDC32_hModule;
 #define WHAM_MAGIC mmioFOURCC('W', 'H', 'A', 'M')
 
 #define PALETTE_COUNT 256
-#define LE_16(x)  ((((uint8_t*)(x))[1] << 8) | ((uint8_t*)(x))[0])
+#define LE_16(x)  ((((const uint8_t *)(x))[1] << 8) | ((const uint8_t *)(x))[0])
 
 /* FIXME - check the stream size */
 #define CHECK_STREAM_PTR(n) \
@@ -70,7 +70,7 @@ typedef struct Msvideo1Context {
 } Msvideo1Context;
 
 static void 
-msvideo1_decode_8bit( int width, int height, unsigned char *buf, int buf_size,
+msvideo1_decode_8bit( int width, int height, const unsigned char *buf, int buf_size,
                       unsigned char *pixels, int stride)
 {
     int block_ptr, pixel_ptr;
@@ -193,7 +193,7 @@ msvideo1_decode_8bit( int width, int height, unsigned char *buf, int buf_size,
 }
 
 static void
-msvideo1_decode_16bit( int width, int height, unsigned char *buf, int buf_size,
+msvideo1_decode_16bit( int width, int height, const unsigned char *buf, int buf_size,
                        unsigned short *pixels, int stride)
 {
     int block_ptr, pixel_ptr;
@@ -456,7 +456,7 @@ static LRESULT CRAM_DecompressEx( Msvideo1Context *info, ICDECOMPRESSEX *icd, DW
     return ICERR_OK;
 }
 
-static LRESULT CRAM_GetInfo( Msvideo1Context *info, ICINFO *icinfo, DWORD dwSize )
+static LRESULT CRAM_GetInfo( const Msvideo1Context *info, ICINFO *icinfo, DWORD dwSize )
 {
     if (!icinfo) return sizeof(ICINFO);
     if (dwSize < sizeof(ICINFO)) return 0;
