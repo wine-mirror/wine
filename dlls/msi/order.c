@@ -274,6 +274,7 @@ static const MSIVIEWOPS order_ops =
     NULL,
     NULL,
     NULL,
+    NULL,
     ORDER_execute,
     ORDER_close,
     ORDER_get_dimensions,

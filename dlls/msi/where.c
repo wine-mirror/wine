@@ -439,6 +439,7 @@ static const MSIVIEWOPS where_ops =
     WHERE_fetch_stream,
     WHERE_set_row,
     NULL,
+    NULL,
     WHERE_execute,
     WHERE_close,
     WHERE_get_dimensions,

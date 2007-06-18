@@ -149,6 +149,11 @@ typedef struct tagMSIVIEWOPS
     UINT (*insert_row)( struct tagMSIVIEW *view, MSIRECORD *record, BOOL temporary );
 
     /*
+     * Deletes a row from the database
+     */
+    UINT (*delete_row)( struct tagMSIVIEW *view, UINT row );
+
+    /*
      * execute - loads the underlying data into memory so it can be read
      */
     UINT (*execute)( struct tagMSIVIEW *view, MSIRECORD *record );

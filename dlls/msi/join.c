@@ -245,6 +245,7 @@ static const MSIVIEWOPS join_ops =
     JOIN_fetch_stream,
     NULL,
     NULL,
+    NULL,
     JOIN_execute,
     JOIN_close,
     JOIN_get_dimensions,

@@ -204,6 +204,12 @@ done:
     return r;
 }
 
+static UINT STREAMS_delete_row(struct tagMSIVIEW *view, UINT row)
+{
+    FIXME("(%p %d): stub!\n", view, row);
+    return ERROR_SUCCESS;
+}
+
 static UINT STREAMS_execute(struct tagMSIVIEW *view, MSIRECORD *record)
 {
     TRACE("(%p, %p)\n", view, record);
@@ -323,6 +329,7 @@ static const MSIVIEWOPS streams_ops =
     STREAMS_fetch_stream,
     STREAMS_set_row,
     STREAMS_insert_row,
+    STREAMS_delete_row,
     STREAMS_execute,
     STREAMS_close,
     STREAMS_get_dimensions,

@@ -1476,6 +1476,35 @@ static UINT TABLE_insert_row( struct tagMSIVIEW *view, MSIRECORD *rec, BOOL temp
     return TABLE_set_row( view, row, rec, (1<<tv->num_cols) - 1 );
 }
 
+static UINT TABLE_delete_row( struct tagMSIVIEW *view, UINT row )
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
+    UINT r, num_rows, num_cols;
+    BYTE *src, *dest;
+
+    TRACE("%p %d\n", tv, row);
+
+    if ( !tv->table )
+        return ERROR_INVALID_PARAMETER;
+
+    r = TABLE_get_dimensions( view, &num_rows, &num_cols );
+    if ( r != ERROR_SUCCESS )
+        return r;
+
+    if ( row >= num_rows )
+        return ERROR_FUNCTION_FAILED;
+
+    tv->table->row_count--;
+
+    if ( row == num_rows - 1 )
+        return ERROR_SUCCESS;
+
+    dest = tv->table->data[row];
+    src = tv->table->data[row + 1];
+    memmove(dest, src, (num_rows - row - 1) * tv->row_size);
+    return ERROR_SUCCESS;
+}
+
 static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
                 MSIRECORD *rec)
 {
@@ -1618,6 +1647,7 @@ static const MSIVIEWOPS table_ops =
     TABLE_fetch_stream,
     TABLE_set_row,
     TABLE_insert_row,
+    TABLE_delete_row,
     TABLE_execute,
     TABLE_close,
     TABLE_get_dimensions,
@@ -1896,15 +1926,6 @@ static UINT msi_table_find_row( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *row )
     return r;
 }
 
-static UINT msi_delete_row( MSITABLEVIEW *tv, UINT row )
-{
-    UINT i;
-
-    for( i=1; i<=tv->num_cols; i++ )
-        TABLE_set_int( tv, row, i, 0 );
-    return ERROR_SUCCESS;
-}
-
 static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
                                       string_table *st, LPCWSTR name )
 {
@@ -2028,7 +2049,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
                 else
                 {
                     TRACE("deleting row [%d]:\n", row);
-                    msi_delete_row( tv, row );
+                    TABLE_delete_row( &tv->view, row );
                 }
             }
             if( TRACE_ON(msidb) ) dump_record( rec );

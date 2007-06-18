@@ -124,6 +124,7 @@ static const MSIVIEWOPS create_ops =
     NULL,
     NULL,
     NULL,
+    NULL,
     CREATE_execute,
     CREATE_close,
     CREATE_get_dimensions,

@@ -267,6 +267,7 @@ static const MSIVIEWOPS select_ops =
     SELECT_fetch_stream,
     SELECT_set_row,
     SELECT_insert_row,
+    NULL,
     SELECT_execute,
     SELECT_close,
     SELECT_get_dimensions,

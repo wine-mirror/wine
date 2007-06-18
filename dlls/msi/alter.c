@@ -130,6 +130,7 @@ static const MSIVIEWOPS alter_ops =
     ALTER_fetch_stream,
     NULL,
     NULL,
+    NULL,
     ALTER_execute,
     ALTER_close,
     ALTER_get_dimensions,
