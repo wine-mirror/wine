@@ -553,7 +553,7 @@
 @ stub KeInitializeQueue
 @ stub KeInitializeSemaphore
 @ stub KeInitializeSpinLock
-@ stub KeInitializeTimer
+@ stdcall KeInitializeTimer(ptr)
 @ stub KeInitializeTimerEx
 @ stub KeInsertByKeyDeviceQueue
 @ stub KeInsertDeviceQueue

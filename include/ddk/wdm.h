@@ -780,6 +780,14 @@ typedef struct _MDL {
   ULONG  ByteOffset;
 } MDL, *PMDL;
 
+typedef struct _KTIMER {
+    DISPATCHER_HEADER Header;
+    ULARGE_INTEGER DueTime;
+    LIST_ENTRY TimerListEntry;
+    struct _KDPC *Dpc;
+    LONG Period;
+} KTIMER, *PKTIMER;
+
 typedef struct _KSYSTEM_TIME {
     ULONG LowPart;
     LONG High1Time;

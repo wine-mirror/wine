@@ -419,6 +419,15 @@ void WINAPI ExFreePoolWithTag( void *ptr, ULONG tag )
 
 
 /***********************************************************************
+ *           KeInitializeTimer   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeInitializeTimer( PKTIMER Timer )
+{
+    FIXME("%p\n", Timer);
+}
+
+
+/***********************************************************************
  *           KeQuerySystemTime   (NTOSKRNL.EXE.@)
  */
 void WINAPI KeQuerySystemTime( LARGE_INTEGER *time )
