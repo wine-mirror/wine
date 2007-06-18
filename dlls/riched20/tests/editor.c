@@ -1491,6 +1491,51 @@ static void test_WM_PASTE(void)
     DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_FORMATRANGE(void)
+{
+  int r;
+  FORMATRANGE fr;
+  HDC hdc;
+  HWND hwndRichEdit = new_richedit(NULL);
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) haystack);
+
+  hdc = GetDC(hwndRichEdit);
+  ok(hdc != NULL, "Could not get HDC\n");
+
+  fr.hdc = fr.hdcTarget = hdc;
+  fr.rc.top = fr.rcPage.top = fr.rc.left = fr.rcPage.left = 0;
+  fr.rc.right = fr.rcPage.right = GetDeviceCaps(hdc, HORZRES);
+  fr.rc.bottom = fr.rcPage.bottom = GetDeviceCaps(hdc, VERTRES);
+  fr.chrg.cpMin = 0;
+  fr.chrg.cpMax = 20;
+
+  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) NULL);
+  todo_wine {
+    ok(r == 31, "EM_FORMATRANGE expect %d, got %d\n", 31, r);
+  }
+
+  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) &fr);
+  todo_wine {
+    ok(r == 20, "EM_FORMATRANGE expect %d, got %d\n", 20, r);
+  }
+
+  fr.chrg.cpMin = 0;
+  fr.chrg.cpMax = 10;
+
+  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) &fr);
+  todo_wine {
+    ok(r == 10, "EM_FORMATRANGE expect %d, got %d\n", 10, r);
+  }
+
+  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) NULL);
+  todo_wine {
+    ok(r == 31, "EM_FORMATRANGE expect %d, got %d\n", 31, r);
+  }
+
+  DestroyWindow(hwndRichEdit);
+}
+
 static int nCallbackCount = 0;
 
 static DWORD CALLBACK EditStreamCallback(DWORD_PTR dwCookie, LPBYTE pbBuff,
@@ -1808,6 +1853,7 @@ START_TEST( editor )
   test_EM_EXSETSEL();
   test_WM_PASTE();
   test_EM_StreamIn_Undo();
+  test_EM_FORMATRANGE();
   test_unicode_conversions();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
