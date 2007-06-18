@@ -132,6 +132,7 @@ BASEDIRS = \
 	ntdll \
 	ntdsapi \
 	ntoskrnl.exe \
+	ntprint \
 	objsel \
 	odbc32 \
 	odbccp32 \
