@@ -845,6 +845,7 @@ static BOOL INT21_SetCurrentDirectory( CONTEXT86 *context )
  */
 static HANDLE INT21_CreateMagicDeviceHandle( LPCWSTR name )
 {
+    static const WCHAR prefixW[] = {'\\','?','?','\\','u','n','i','x'};
     const char *dir = wine_get_server_dir();
     int len;
     HANDLE ret;
@@ -854,14 +855,16 @@ static HANDLE INT21_CreateMagicDeviceHandle( LPCWSTR name )
     IO_STATUS_BLOCK io;
 
     len = MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, NULL, 0 );
-    nameW.Length = (len + 1 + strlenW( name )) * sizeof(WCHAR);
+    nameW.Length = sizeof(prefixW) + (len + strlenW( name )) * sizeof(WCHAR);
     nameW.MaximumLength = nameW.Length + sizeof(WCHAR);
-    if (!(nameW.Buffer = HeapAlloc( GetProcessHeap(), 0, nameW.Length )))
+    if (!(nameW.Buffer = HeapAlloc( GetProcessHeap(), 0, nameW.MaximumLength )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
     }
-    MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, nameW.Buffer, len );
+    memcpy( nameW.Buffer, prefixW, sizeof(prefixW) );
+    MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, nameW.Buffer + sizeof(prefixW)/sizeof(WCHAR), len );
+    len += sizeof(prefixW) / sizeof(WCHAR);
     nameW.Buffer[len-1] = '/';
     strcpyW( nameW.Buffer + len, name );
 
