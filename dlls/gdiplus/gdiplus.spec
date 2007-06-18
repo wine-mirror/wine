@@ -179,7 +179,7 @@
 @ stub GdipDrawLines
 @ stub GdipDrawLinesI
 @ stub GdipDrawPath
-@ stub GdipDrawPie
+@ stdcall GdipDrawPie(ptr ptr long long long long long long)
 @ stub GdipDrawPieI
 @ stub GdipDrawPolygon
 @ stub GdipDrawPolygonI
@@ -209,7 +209,7 @@
 @ stub GdipFillEllipse
 @ stub GdipFillEllipseI
 @ stub GdipFillPath
-@ stub GdipFillPie
+@ stdcall GdipFillPie(ptr ptr long long long long long long)
 @ stub GdipFillPieI
 @ stub GdipFillPolygon2
 @ stub GdipFillPolygon2I

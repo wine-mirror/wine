@@ -32,6 +32,51 @@ static inline INT roundr(REAL x)
     return (INT) floor(x+0.5);
 }
 
+static inline REAL deg2rad(REAL degrees)
+{
+    return (M_PI*2.0) * degrees / 360.0;
+}
+
+/* Converts angle (in degrees) to x/y coordinates */
+static void deg2xy(REAL angle, REAL x_0, REAL y_0, REAL *x, REAL *y)
+{
+    REAL radAngle, hypotenuse;
+
+    radAngle = deg2rad(angle);
+    hypotenuse = 50.0; /* arbitrary */
+
+    *x = x_0 + cos(radAngle) * hypotenuse;
+    *y = y_0 + sin(radAngle) * hypotenuse;
+}
+
+/* GdipDrawPie/GdipFillPie helper function */
+static GpStatus draw_pie(GpGraphics *graphics, HBRUSH gdibrush, HPEN gdipen,
+    REAL x, REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
+{
+    HGDIOBJ old_pen, old_brush;
+    REAL x_0, y_0, x_1, y_1, x_2, y_2;
+
+    if(!graphics)
+        return InvalidParameter;
+
+    old_pen = SelectObject(graphics->hdc, gdipen);
+    old_brush = SelectObject(graphics->hdc, gdibrush);
+
+    x_0 = x + (width/2.0);
+    y_0 = y + (height/2.0);
+
+    deg2xy(startAngle+sweepAngle, x_0, y_0, &x_1, &y_1);
+    deg2xy(startAngle, x_0, y_0, &x_2, &y_2);
+
+    Pie(graphics->hdc, roundr(x), roundr(y), roundr(x+width), roundr(y+height),
+        roundr(x_1), roundr(y_1), roundr(x_2), roundr(y_2));
+
+    SelectObject(graphics->hdc, old_pen);
+    SelectObject(graphics->hdc, old_brush);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 {
     if(hdc == NULL)
@@ -106,6 +151,16 @@ GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipDrawPie(GpGraphics *graphics, GpPen *pen, REAL x,
+    REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
+{
+    if(!pen)
+        return InvalidParameter;
+
+    return draw_pie(graphics, GetStockObject(NULL_BRUSH), pen->gdipen, x, y,
+        width, height, startAngle, sweepAngle);
+}
+
 GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
     INT y, INT width, INT height)
 {
@@ -136,4 +191,14 @@ GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
     DeleteObject(hpen);
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
+    REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
+{
+    if(!brush)
+        return InvalidParameter;
+
+    return draw_pie(graphics, brush->gdibrush, GetStockObject(NULL_PEN), x, y,
+        width, height, startAngle, sweepAngle);
 }
