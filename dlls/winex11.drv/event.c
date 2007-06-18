@@ -405,6 +405,27 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
                 if (state == 0xFFFFFFFF || (state & (MF_DISABLED | MF_GRAYED)))
                     return;
             }
+            if (GetActiveWindow() != hwnd)
+            {
+                LRESULT ma = SendMessageW( hwnd, WM_MOUSEACTIVATE,
+                                           (WPARAM)GetAncestor( hwnd, GA_ROOT ),
+                                           MAKELONG(HTCLOSE,WM_LBUTTONDOWN) );
+                switch(ma)
+                {
+                    case MA_NOACTIVATEANDEAT:
+                    case MA_ACTIVATEANDEAT:
+                        return;
+                    case MA_NOACTIVATE:
+                        break;
+                    case MA_ACTIVATE:
+                    case 0:
+                        SetActiveWindow(hwnd);
+                        break;
+                    default:
+                        WARN( "unknown WM_MOUSEACTIVATE code %d\n", (int) ma );
+                        break;
+                }
+            }
             PostMessageW( hwnd, WM_X11DRV_DELETE_WINDOW, 0, 0 );
         }
     }
