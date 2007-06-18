@@ -157,7 +157,7 @@ static LPWSTR msi_get_deferred_action(LPCWSTR action, LPCWSTR actiondata,
 
 static void set_deferred_action_props(MSIPACKAGE *package, LPWSTR deferred_data)
 {
-    LPWSTR end, beg = deferred_data;
+    LPWSTR end, beg = deferred_data + 1;
 
     end = strchrW(beg, ';');
     *end = '\0';
@@ -189,11 +189,10 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
     LPWSTR action_copy = strdupW(action);
     WCHAR *deformated=NULL;
 
-    /* deferred action: [CustomActionData]Action */
+    /* deferred action: [properties]Action */
     if ((ptr = strchrW(action_copy, ']')))
     {
-        deferred_data = action_copy + 1;
-        *ptr = '\0';
+        deferred_data = action_copy;
         action = ptr + 1;
     }
 
