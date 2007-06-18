@@ -20548,6 +20548,8 @@ ac_config_files="$ac_config_files dlls/hlink/Makefile"
 
 ac_config_files="$ac_config_files dlls/hlink/tests/Makefile"
 
+ac_config_files="$ac_config_files dlls/hnetcfg/Makefile"
+
 ac_config_files="$ac_config_files dlls/iccvid/Makefile"
 
 ac_config_files="$ac_config_files dlls/icmp/Makefile"
@@ -21708,6 +21710,7 @@ do
     "dlls/hid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hid/Makefile" ;;
     "dlls/hlink/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hlink/Makefile" ;;
     "dlls/hlink/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hlink/tests/Makefile" ;;
+    "dlls/hnetcfg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/hnetcfg/Makefile" ;;
     "dlls/iccvid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/iccvid/Makefile" ;;
     "dlls/icmp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/icmp/Makefile" ;;
     "dlls/ifsmgr.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ifsmgr.vxd/Makefile" ;;

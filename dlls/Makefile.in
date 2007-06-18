@@ -78,6 +78,7 @@ BASEDIRS = \
 	hhctrl.ocx \
 	hid \
 	hlink \
+	hnetcfg \
 	iccvid \
 	icmp \
 	ifsmgr.vxd \

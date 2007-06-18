@@ -242,6 +242,7 @@ ALL_MAKEFILES = \
 	dlls/hid/Makefile \
 	dlls/hlink/Makefile \
 	dlls/hlink/tests/Makefile \
+	dlls/hnetcfg/Makefile \
 	dlls/iccvid/Makefile \
 	dlls/icmp/Makefile \
 	dlls/ifsmgr.vxd/Makefile \
@@ -596,6 +597,7 @@ dlls/hhctrl.ocx/Makefile: dlls/hhctrl.ocx/Makefile.in dlls/Makedll.rules
 dlls/hid/Makefile: dlls/hid/Makefile.in dlls/Makedll.rules
 dlls/hlink/Makefile: dlls/hlink/Makefile.in dlls/Makedll.rules
 dlls/hlink/tests/Makefile: dlls/hlink/tests/Makefile.in dlls/Maketest.rules
+dlls/hnetcfg/Makefile: dlls/hnetcfg/Makefile.in dlls/Makedll.rules
 dlls/iccvid/Makefile: dlls/iccvid/Makefile.in dlls/Makedll.rules
 dlls/icmp/Makefile: dlls/icmp/Makefile.in dlls/Makedll.rules
 dlls/ifsmgr.vxd/Makefile: dlls/ifsmgr.vxd/Makefile.in dlls/Makedll.rules
