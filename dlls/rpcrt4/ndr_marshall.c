@@ -4157,9 +4157,6 @@ static unsigned char *union_arm_unmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     return NULL;
 }
 
-/***********************************************************************
- *           NdrEncapsulatedUnionBufferSize [RPCRT4.@]
- */
 static void union_arm_buffer_size(PMIDL_STUB_MESSAGE pStubMsg,
                                   unsigned char *pMemory,
                                   ULONG discriminant,
@@ -4203,9 +4200,6 @@ static void union_arm_buffer_size(PMIDL_STUB_MESSAGE pStubMsg,
     }
 }
 
-/***********************************************************************
- *           NdrEncapsulatedUnionMemorySize [RPCRT4.@]
- */
 static ULONG union_arm_memory_size(PMIDL_STUB_MESSAGE pStubMsg,
                                    ULONG discriminant,
                                    PFORMAT_STRING pFormat)
@@ -4256,9 +4250,6 @@ static ULONG union_arm_memory_size(PMIDL_STUB_MESSAGE pStubMsg,
     return size;
 }
 
-/***********************************************************************
- *           NdrEncapsulatedUnionFree [RPCRT4.@]
- */
 static void union_arm_free(PMIDL_STUB_MESSAGE pStubMsg,
                            unsigned char *pMemory,
                            ULONG discriminant,
