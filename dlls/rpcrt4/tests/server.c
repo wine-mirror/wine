@@ -245,6 +245,18 @@ s_square_test_us(test_us_t *tus)
   return n * n;
 }
 
+double
+s_square_encu(encu_t *eu)
+{
+  switch (eu->t)
+  {
+  case ENCU_I: return eu->tagged_union.i * eu->tagged_union.i;
+  case ENCU_F: return eu->tagged_union.f * eu->tagged_union.f;
+  default:
+    return 0.0;
+  }
+}
+
 void
 s_stop(void)
 {
@@ -363,6 +375,7 @@ basic_tests(void)
 static void
 union_tests(void)
 {
+  encu_t eu;
   sun_t su;
   int i;
 
@@ -382,6 +395,16 @@ union_tests(void)
   su.u.pi = &i;
   i = 11;
   ok(square_sun(&su) == 121.0, "RPC square_sun\n");
+
+todo_wine {
+  eu.t = ENCU_I;
+  eu.tagged_union.i = 7;
+  ok(square_encu(&eu) == 49.0, "RPC square_encu\n");
+
+  eu.t = ENCU_F;
+  eu.tagged_union.f = 3.0;
+  ok(square_encu(&eu) == 9.0, "RPC square_encu\n");
+}
 }
 
 static test_list_t *

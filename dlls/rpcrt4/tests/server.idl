@@ -150,5 +150,13 @@ interface IServer
   } test_us_t;
 
   int square_test_us(test_us_t *tus);
+
+  typedef union encu switch (int t)
+  {
+  case ENCU_I: int i;
+  case ENCU_F: float f;
+  } encu_t;
+
+  double square_encu(encu_t *eu);
   void stop(void);
 }

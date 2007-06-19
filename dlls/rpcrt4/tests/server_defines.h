@@ -27,3 +27,7 @@
 /* test_list_t case values */
 #define TL_NULL 0
 #define TL_LIST 1
+
+/* encu_t case values */
+#define ENCU_I 27
+#define ENCU_F 0
