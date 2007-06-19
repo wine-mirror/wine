@@ -1624,7 +1624,9 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         print_file(file, 2, "NdrFcShort(0x0),\t/* FIXME: pointer stuff */\n");
         *tfsoff += 2;
     }
-    else if (has_pointers)
+    else if ((type->type == RPC_FC_PSTRUCT) ||
+             (type->type == RPC_FC_CPSTRUCT) ||
+             (type->type == RPC_FC_CVSTRUCT && has_pointers))
     {
         print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
         print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
