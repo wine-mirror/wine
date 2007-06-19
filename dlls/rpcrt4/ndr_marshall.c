@@ -4369,7 +4369,7 @@ void WINAPI NdrEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
     pFormat++;
 
     ALIGN_LENGTH(pStubMsg->BufferLength, increment);
-    switch_value = get_discriminant(switch_value, pMemory);
+    switch_value = get_discriminant(switch_type, pMemory);
     TRACE("got switch value 0x%x\n", switch_value);
 
     /* Add discriminant size */
