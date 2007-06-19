@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rpcss.exe
 APPMODE   = -mconsole
-IMPORTS   = kernel32
+IMPORTS   = kernel32 ntdll
 
 C_SRCS = \
        epmap_server.c \

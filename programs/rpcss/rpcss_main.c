@@ -67,119 +67,25 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 static HANDLE master_mutex;
-static long max_lazy_timeout = RPCSS_DEFAULT_MAX_LAZY_TIMEOUT;
+static HANDLE exit_event;
+
+extern HANDLE __wine_make_process_system(void);
 
 HANDLE RPCSS_GetMasterMutex(void)
 {
   return master_mutex;
 }
 
-void RPCSS_SetMaxLazyTimeout(long mlt)
+static BOOL RPCSS_work(HANDLE exit_event)
 {
-  /* FIXME: this max ensures that no caller will decrease our wait time,
-     but could have other bad results.  fix: Store "next_max_lazy_timeout" 
-     and install it as necessary next time we "do work"? */
-  max_lazy_timeout = max(RPCSS_GetLazyTimeRemaining(), mlt);
-}
-
-long RPCSS_GetMaxLazyTimeout(void)
-{
-  return max_lazy_timeout;
-}
-
-/* when do we just give up and bail? (UTC) */
-static SYSTEMTIME lazy_timeout_time;
-
-#if defined(NONAMELESSSTRUCT)
-# define FILETIME_TO_ULARGEINT(filetime, ularge) \
-    ( ularge.u.LowPart = filetime.dwLowDateTime, \
-      ularge.u.HighPart = filetime.dwHighDateTime )
-# define ULARGEINT_TO_FILETIME(ularge, filetime) \
-    ( filetime.dwLowDateTime = ularge.u.LowPart, \
-      filetime.dwHighDateTime = ularge.u.HighPart )
-#else
-# define FILETIME_TO_ULARGEINT(filetime, ularge) \
-    ( ularge.LowPart = filetime.dwLowDateTime, \
-      ularge.HighPart = filetime.dwHighDateTime )
-# define ULARGEINT_TO_FILETIME(ularge, filetime) \
-    ( filetime.dwLowDateTime = ularge.LowPart, \
-      filetime.dwHighDateTime = ularge.HighPart )
-#endif /* NONAMELESSSTRUCT */
-
-#define TEN_MIL ((ULONGLONG)10000000)
-
-/* returns time remaining in seconds */
-long RPCSS_GetLazyTimeRemaining(void)
-{
-  SYSTEMTIME st_just_now;
-  FILETIME ft_jn, ft_ltt;
-  ULARGE_INTEGER ul_jn, ul_ltt;
-
-  GetSystemTime(&st_just_now);
-  SystemTimeToFileTime(&st_just_now, &ft_jn);
-  FILETIME_TO_ULARGEINT(ft_jn, ul_jn);
-
-  SystemTimeToFileTime(&lazy_timeout_time, &ft_ltt);
-  FILETIME_TO_ULARGEINT(ft_ltt, ul_ltt);
-  
-  if (ul_jn.QuadPart > ul_ltt.QuadPart)
-    return 0;
-  else
-    return (ul_ltt.QuadPart - ul_jn.QuadPart) / TEN_MIL;
-}
-
-void RPCSS_SetLazyTimeRemaining(long seconds)
-{
-  SYSTEMTIME st_just_now;
-  FILETIME ft_jn, ft_ltt;
-  ULARGE_INTEGER ul_jn, ul_ltt;
-
-  WINE_TRACE("(seconds == %ld)\n", seconds);
-
-  assert(seconds >= 0);     /* negatives are not allowed */
-  
-  GetSystemTime(&st_just_now);
-  SystemTimeToFileTime(&st_just_now, &ft_jn);
-  FILETIME_TO_ULARGEINT(ft_jn, ul_jn);
-
-  /* we want to find the time ltt, s.t. ltt = just_now + seconds */
-  ul_ltt.QuadPart = ul_jn.QuadPart + seconds * TEN_MIL;
-
-  /* great. just remember it */
-  ULARGEINT_TO_FILETIME(ul_ltt, ft_ltt);
-  if (! FileTimeToSystemTime(&ft_ltt, &lazy_timeout_time))
-    assert(FALSE);
-}
-
-#undef FILETIME_TO_ULARGEINT
-#undef ULARGEINT_TO_FILETIME
-#undef TEN_MIL
-
-static BOOL RPCSS_work(void)
-{
-  return RPCSS_NPDoWork();
-}
-
-static BOOL RPCSS_Empty(void)
-{
-  BOOL rslt = TRUE;
-
-  rslt = RPCSS_EpmapEmpty();
-
-  return rslt;
-}
-
-BOOL RPCSS_ReadyToDie(void)
-{
-  long ltr = RPCSS_GetLazyTimeRemaining();
-  LONG stc = RPCSS_SrvThreadCount();
-  BOOL empty = RPCSS_Empty();
-  return ( empty && (ltr <= 0) && (stc == 0) );
+  return RPCSS_NPDoWork(exit_event);
 }
 
 static BOOL RPCSS_Initialize(void)
 {
   WINE_TRACE("\n");
+
+  exit_event = __wine_make_process_system();
 
   master_mutex = CreateMutexA( NULL, FALSE, RPCSS_MASTER_MUTEX_NAME);
   if (!master_mutex) {
@@ -211,106 +117,30 @@ static BOOL RPCSS_Shutdown(void)
 
   master_mutex = NULL;
 
+  CloseHandle(exit_event);
+
   return TRUE;
 }
 
 static void RPCSS_MainLoop(void)
 {
-  BOOL did_something_new;
-
   WINE_TRACE("\n");
 
-  for (;;) {
-    did_something_new = FALSE;
-
-    while ( (! did_something_new) && (! RPCSS_ReadyToDie()) )
-      did_something_new = (RPCSS_work() || did_something_new);
-
-    if ((! did_something_new) && RPCSS_ReadyToDie())
-      break; /* that's it for us */
-
-    if (did_something_new)
-      RPCSS_SetLazyTimeRemaining(max_lazy_timeout);
-  }
-}
-
-static BOOL RPCSS_ProcessArgs( int argc, char **argv )
-{
-  int i;
-  char *c,*c1;
-
-  for (i = 1; i < argc; i++) {
-    c = argv[i];
-    while (*c == ' ') c++;
-    if ((*c != '-') && (*c != '/'))
-      return FALSE;
-    c++;
-    switch (*(c++)) {
-      case 't':
-      case 'T':
-        while (*c == ' ') c++;
-	if (*c == '\0')  {
-	  /* next arg */
-	  if (++i >= argc)
-	    return FALSE;
-	  c = argv[i];
-	  while (*c == ' ') c++;
-	  if (c == '\0')
-	    return FALSE;
-	} else
-	  return FALSE;
-        max_lazy_timeout = strtol(c, &c1, 0);
-        if (c == c1)
-	  return FALSE;
-	c = c1;
-	if (max_lazy_timeout <= 0)
-	  return FALSE;
-	if (max_lazy_timeout == LONG_MAX)
-	  return FALSE;
-	WINE_TRACE("read timeout argument: %ld\n", max_lazy_timeout);
-	break;
-      default: 
-        return FALSE;
-	break;
-    }
-    while (*c == ' ') c++;
-    if (*c != '\0') return FALSE;
-  }
-
-  return TRUE;
-}
-
-static void RPCSS_Usage(void)
-{
-  printf("\nWine RPCSS\n");
-  printf("\nsyntax: rpcss [-t timeout]\n\n");
-  printf("  -t: rpcss (or the running rpcss process) will\n");
-  printf("      execute with at least the specified timeout.\n");
-  printf("\n");
+  while ( RPCSS_work(exit_event) )
+      ;
 }
 
 int main( int argc, char **argv )
 {
   /* 
    * We are invoked as a standard executable; we act in a
-   * "lazy" manner.  We open up our pipe, and hang around until we have
-   * nothing left to do, and then silently terminate.  When we're needed
-   * again, rpcrt4.dll.so will invoke us automatically.
+   * "lazy" manner.  We open up our pipe, and hang around until we all
+   * user processes exit, and then silently terminate.
    */
-       
-  if (!RPCSS_ProcessArgs(argc, argv)) {
-    RPCSS_Usage();
-    return 1;
-  }
-      
-  /* we want to wait for something to happen, and then 
-     timeout when no activity occurs. */
-  RPCSS_SetLazyTimeRemaining(max_lazy_timeout);
 
   if (RPCSS_Initialize()) {
-    do
-      RPCSS_MainLoop();
-    while (!RPCSS_Shutdown());
+    RPCSS_MainLoop();
+    RPCSS_Shutdown();
   }
 
   return 0;

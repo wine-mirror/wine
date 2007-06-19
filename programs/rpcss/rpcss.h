@@ -29,15 +29,10 @@
 
 /* rpcss_main.c */
 HANDLE RPCSS_GetMasterMutex(void);
-BOOL RPCSS_ReadyToDie(void);
-void RPCSS_SetLazyTimeRemaining(long);
-long RPCSS_GetLazyTimeRemaining(void);
-void RPCSS_SetMaxLazyTimeout(long);
-long RPCSS_GetMaxLazyTimeout(void);
 
 /* epmap_server.c */
 BOOL RPCSS_EpmapEmpty(void);
-BOOL RPCSS_NPDoWork(void);
+BOOL RPCSS_NPDoWork(HANDLE exit_event);
 void RPCSS_RegisterRpcEndpoints(RPC_SYNTAX_IDENTIFIER iface, int object_count,
   int binding_count, int no_replace, char *vardata, long vardata_size);
 void RPCSS_UnregisterRpcEndpoints(RPC_SYNTAX_IDENTIFIER iface, int object_count,
