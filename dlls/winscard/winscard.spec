@@ -12,7 +12,7 @@
 @ stub SCardControl
 @ stub SCardDisconnect
 @ stub SCardEndTransaction
-@ stub SCardEstablishContext
+@ stdcall SCardEstablishContext(long ptr ptr ptr)
 @ stub SCardForgetCardTypeA
 @ stub SCardForgetCardTypeW
 @ stub SCardForgetReaderA

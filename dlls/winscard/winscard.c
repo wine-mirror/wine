@@ -50,3 +50,11 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     return TRUE;
 }
+
+LONG WINAPI SCardEstablishContext(DWORD dwScope, LPCVOID pvReserved1,
+    LPCVOID pvReserved2, LPSCARDCONTEXT phContext)
+{
+    FIXME("(%x,%p,%p,%p) stub\n", dwScope, pvReserved1, pvReserved2, phContext);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return SCARD_F_INTERNAL_ERROR;
+}
