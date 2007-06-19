@@ -26,9 +26,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /* Index to TLS */
 DWORD msvcrt_tls_index;
 
-static inline BOOL msvcrt_init_tls(void);
-static inline BOOL msvcrt_free_tls(void);
-
 static const char* msvcrt_get_reason(DWORD reason)
 {
   switch (reason)
@@ -39,6 +36,28 @@ static const char* msvcrt_get_reason(DWORD reason)
   case DLL_THREAD_DETACH:  return "DLL_THREAD_DETACH";
   }
   return "UNKNOWN";
+}
+
+static inline BOOL msvcrt_init_tls(void)
+{
+  msvcrt_tls_index = TlsAlloc();
+
+  if (msvcrt_tls_index == TLS_OUT_OF_INDEXES)
+  {
+    ERR("TlsAlloc() failed!\n");
+    return FALSE;
+  }
+  return TRUE;
+}
+
+static inline BOOL msvcrt_free_tls(void)
+{
+  if (!TlsFree(msvcrt_tls_index))
+  {
+    ERR("TlsFree() failed!\n");
+    return FALSE;
+  }
+  return TRUE;
 }
 
 /*********************************************************************
@@ -91,28 +110,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     HeapFree(GetProcessHeap(), 0, tls);
     TRACE("finished thread free\n");
     break;
-  }
-  return TRUE;
-}
-
-static inline BOOL msvcrt_init_tls(void)
-{
-  msvcrt_tls_index = TlsAlloc();
-
-  if (msvcrt_tls_index == TLS_OUT_OF_INDEXES)
-  {
-    ERR("TlsAlloc() failed!\n");
-    return FALSE;
-  }
-  return TRUE;
-}
-
-static inline BOOL msvcrt_free_tls(void)
-{
-  if (!TlsFree(msvcrt_tls_index))
-  {
-    ERR("TlsFree() failed!\n");
-    return FALSE;
   }
   return TRUE;
 }
