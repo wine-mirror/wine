@@ -1859,6 +1859,7 @@ NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi,
     char*               ptr;
     PLIST_ENTRY         mark, entry;
     PLDR_MODULE         mod;
+    WORD id = 0;
 
     smi->ModulesCount = 0;
 
@@ -1875,7 +1876,7 @@ NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi,
             sm->ImageBaseAddress = mod->BaseAddress;
             sm->ImageSize = mod->SizeOfImage;
             sm->Flags = mod->Flags;
-            sm->Id = 0; /* FIXME */
+            sm->Id = id++;
             sm->Rank = 0; /* FIXME */
             sm->Unknown = 0; /* FIXME */
             str.Length = 0;

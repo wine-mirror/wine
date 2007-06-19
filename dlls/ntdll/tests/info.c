@@ -382,10 +382,8 @@ static void test_query_module(void)
 
     ModuleCount = smi->ModulesCount;
     sm = &smi->Modules[0];
-    todo_wine{
-        /* our implementation is a stub for now */
-        ok( ModuleCount > 0, "Expected some modules to be loaded\n");
-    }
+    /* our implementation is a stub for now */
+    ok( ModuleCount > 0, "Expected some modules to be loaded\n");
 
     /* Loop through all the modules/drivers, Wine doesn't get here (yet) */
     for (i = 0; i < ModuleCount ; i++)

@@ -844,19 +844,8 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         }
         break;
     case SystemModuleInformation:
-        {
-            SYSTEM_MODULE_INFORMATION smi;
-
-            memset(&smi, 0, sizeof(smi));
-            len = sizeof(smi);
-
-            if ( Length >= len)
-            {
-                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
-                else memcpy( SystemInformation, &smi, len);
-            }
-            else ret = STATUS_INFO_LENGTH_MISMATCH;
-        }
+        /* FIXME: should be system-wide */
+        ret = LdrQueryProcessModuleInformation( SystemInformation, Length, &len );
         break;
     case SystemHandleInformation:
         {
