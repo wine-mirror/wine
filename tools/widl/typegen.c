@@ -125,6 +125,21 @@ int is_struct(unsigned char type)
     }
 }
 
+static int is_non_complex_struct(const type_t *type)
+{
+    switch (type->type)
+    {
+    case RPC_FC_STRUCT:
+    case RPC_FC_PSTRUCT:
+    case RPC_FC_CSTRUCT:
+    case RPC_FC_CPSTRUCT:
+    case RPC_FC_CVSTRUCT:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 int is_union(unsigned char type)
 {
     switch (type)
@@ -976,44 +991,353 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
     }
 }
 
-static size_t write_pointer_description(FILE *file, type_t *type, size_t mem_offset,
-                                        int level, unsigned int *typestring_offset)
+static int write_no_repeat_pointer_descriptions(
+    FILE *file, const attr_list_t *attrs, type_t *type,
+    size_t *offset_in_memory, size_t *offset_in_buffer,
+    unsigned int *typestring_offset)
 {
-    const var_t *v;
-    unsigned int align = 0;
+    int written = 0;
+    unsigned int align;
 
-    /* don't generate a pointer for first-level arrays since we want to
-     * descend into them to write their pointers, not stop here */
-    if (level == 0 && is_array(type))
+    if (is_ptr(type))
     {
-        write_pointer_description(file, type->ref, mem_offset, level + 1,
-                                  typestring_offset);
-    }
-    else if (is_ptr(type))
-    {
-        print_file(file, 2, "0x46,\t/* FC_NO_REPEAT */\n");
-        print_file(file, 2, "0x5c,\t/* FC_PAD */\n");
-        print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", mem_offset, mem_offset);
-        print_file(file, 2, "NdrFcShort(0x%x),\t/* %d */\n", mem_offset, mem_offset);
+        print_file(file, 2, "0x%02x, /* FC_NO_REPEAT */\n", RPC_FC_NO_REPEAT);
+        print_file(file, 2, "0x%02x, /* FC_PAD */\n", RPC_FC_PAD);
+
+        /* pointer instance */
+        print_file(file, 2, "NdrFcShort(0x%x), /* Memory offset = %d */\n", *offset_in_memory, *offset_in_memory);
+        print_file(file, 2, "NdrFcShort(0x%x), /* Buffer offset = %d */\n", *offset_in_buffer, *offset_in_buffer);
         *typestring_offset += 6;
 
         if (processed(type->ref) || is_base_type(type->ref->type))
             write_pointer_tfs(file, type, typestring_offset);
         else
             error("write_pointer_description: type format string unknown\n");
-    }
-    else if (level == 0 && is_struct(type->type))
-    {
-        if (type->fields)
-        {
-            LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
-                mem_offset
-                    += write_pointer_description(file, v->type, mem_offset,
-                                                 level + 1, typestring_offset);
-        }
+
+        align = 0;
+        *offset_in_memory += type_memsize(type, &align);
+        /* FIXME: is there a case where these two are different? */
+        align = 0;
+        *offset_in_buffer += type_memsize(type, &align);
+
+        return 1;
     }
 
-    return type_memsize(type, &align);
+    if (is_non_complex_struct(type))
+    {
+        const var_t *v;
+        LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
+            written += write_no_repeat_pointer_descriptions(
+                file, v->attrs, v->type,
+                offset_in_memory, offset_in_buffer, typestring_offset);
+    }
+    else
+    {
+        align = 0;
+        *offset_in_memory += type_memsize(type, &align);
+        /* FIXME: is there a case where these two are different? */
+        align = 0;
+        *offset_in_buffer += type_memsize(type, &align);
+    }
+
+    return written;
+}
+
+static int write_pointer_description_offsets(
+    FILE *file, const attr_list_t *attrs, type_t *type,
+    size_t *offset_in_memory, size_t *offset_in_buffer,
+    unsigned int *typestring_offset)
+{
+    int written = 0;
+    unsigned int align;
+
+    if (is_ptr(type))
+    {
+        if (offset_in_memory && offset_in_buffer)
+        {
+            /* pointer instance */
+            /* FIXME: sometimes from end of structure, sometimes from beginning */
+            print_file(file, 2, "NdrFcShort(0x%x), /* Memory offset = %d */\n", *offset_in_memory, *offset_in_memory);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Buffer offset = %d */\n", *offset_in_buffer, *offset_in_buffer);
+
+            align = 0;
+            *offset_in_memory += type_memsize(type, &align);
+            /* FIXME: is there a case where these two are different? */
+            align = 0;
+            *offset_in_buffer += type_memsize(type, &align);
+        }
+        *typestring_offset += 4;
+
+        if (processed(type->ref) || is_base_type(type->ref->type))
+            write_pointer_tfs(file, type, typestring_offset);
+        else
+            error("write_pointer_description_offsets: type format string unknown\n");
+
+        return 1;
+    }
+
+    if (is_array(type))
+    {
+        return write_pointer_description_offsets(
+            file, attrs, type->ref, offset_in_memory, offset_in_buffer,
+                                                 typestring_offset);
+    }
+    else if (is_non_complex_struct(type))
+    {
+        /* otherwise search for interesting fields to parse */
+        const var_t *v;
+        LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
+        {
+            written += write_pointer_description_offsets(
+                file, v->attrs, v->type, offset_in_memory, offset_in_buffer,
+                typestring_offset);
+        }
+    }
+    else
+    {
+        align = 0;
+        if (offset_in_memory)
+            *offset_in_memory += type_memsize(type, &align);
+        /* FIXME: is there a case where these two are different? */
+        align = 0;
+        if (offset_in_buffer)
+            *offset_in_buffer += type_memsize(type, &align);
+    }
+
+    return written;
+}
+
+/* Note: if file is NULL return value is number of pointers to write, else
+ * it is the number of type format characters written */
+static int write_fixed_array_pointer_descriptions(
+    FILE *file, const attr_list_t *attrs, type_t *type,
+    size_t *offset_in_memory, size_t *offset_in_buffer,
+    unsigned int *typestring_offset)
+{
+    unsigned int align;
+    int pointer_count = 0;
+
+    if (type->type == RPC_FC_SMFARRAY || type->type == RPC_FC_LGFARRAY)
+    {
+        unsigned int temp = 0;
+        /* unfortunately, this needs to be done in two passes to avoid
+         * writing out redundant FC_FIXED_REPEAT descriptions */
+        pointer_count = write_pointer_description_offsets(
+            NULL, attrs, type->ref, NULL, NULL, &temp);
+        if (pointer_count > 0)
+        {
+            unsigned int increment_size;
+            size_t offset_of_array_pointer_mem = 0;
+            size_t offset_of_array_pointer_buf = 0;
+
+            align = 0;
+            increment_size = type_memsize(type->ref, &align);
+
+            print_file(file, 2, "0x%02x, /* FC_FIXED_REPEAT */\n", RPC_FC_FIXED_REPEAT);
+            print_file(file, 2, "0x%02x, /* FC_PAD */\n", RPC_FC_PAD);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Iterations = %d */\n", type->dim, type->dim);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Increment = %d */\n", increment_size, increment_size);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Offset to array = %d */\n", *offset_in_memory, *offset_in_memory);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Number of pointers = %d */\n", pointer_count, pointer_count);
+            *typestring_offset += 10;
+
+            pointer_count = write_pointer_description_offsets(
+                file, attrs, type, &offset_of_array_pointer_mem,
+                &offset_of_array_pointer_buf, typestring_offset);
+        }
+    }
+    else if (is_struct(type->type))
+    {
+        const var_t *v;
+        LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
+        {
+            pointer_count += write_fixed_array_pointer_descriptions(
+                file, v->attrs, v->type, offset_in_memory, offset_in_buffer,
+                typestring_offset);
+        }
+    }
+    else
+    {
+        align = 0;
+        if (offset_in_memory)
+            *offset_in_memory += type_memsize(type, &align);
+        /* FIXME: is there a case where these two are different? */
+        align = 0;
+        if (offset_in_buffer)
+            *offset_in_buffer += type_memsize(type, &align);
+    }
+
+    return pointer_count;
+}
+
+/* Note: if file is NULL return value is number of pointers to write, else
+ * it is the number of type format characters written */
+static int write_conformant_array_pointer_descriptions(
+    FILE *file, const attr_list_t *attrs, type_t *type,
+    size_t *offset_in_memory, size_t *offset_in_buffer,
+    unsigned int *typestring_offset)
+{
+    unsigned int align;
+    int pointer_count = 0;
+
+    if (is_conformant_array(type) && !type->length_is)
+    {
+        unsigned int temp = 0;
+        /* unfortunately, this needs to be done in two passes to avoid
+         * writing out redundant FC_VARIABLE_REPEAT descriptions */
+        pointer_count = write_pointer_description_offsets(
+            NULL, attrs, type->ref, NULL, NULL, &temp);
+        if (pointer_count > 0)
+        {
+            unsigned int increment_size;
+            size_t offset_of_array_pointer_mem = 0;
+            size_t offset_of_array_pointer_buf = 0;
+
+            align = 0;
+            increment_size = type_memsize(type->ref, &align);
+
+            if (increment_size > USHRT_MAX)
+                error("array size of %u bytes is too large\n", increment_size);
+
+            print_file(file, 2, "0x%02x, /* FC_VARIABLE_REPEAT */\n", RPC_FC_VARIABLE_REPEAT);
+            print_file(file, 2, "0x%02x, /* FC_FIXED_OFFSET */\n", RPC_FC_FIXED_OFFSET);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Increment = %d */\n", increment_size, increment_size);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Offset to array = %d */\n", *offset_in_memory, *offset_in_memory);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Number of pointers = %d */\n", pointer_count, pointer_count);
+            *typestring_offset += 8;
+
+            pointer_count = write_pointer_description_offsets(
+                file, attrs, type->ref, &offset_of_array_pointer_mem,
+                &offset_of_array_pointer_buf, typestring_offset);
+        }
+    }
+    else if (is_struct(type->type))
+    {
+        const var_t *v;
+        LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
+        {
+            pointer_count += write_conformant_array_pointer_descriptions(
+                file, v->attrs, v->type, offset_in_memory, offset_in_buffer,
+                typestring_offset);
+        }
+    }
+    else
+    {
+        align = 0;
+        if (offset_in_memory)
+            *offset_in_memory += type_memsize(type, &align);
+        /* FIXME: is there a case where these two are different? */
+        align = 0;
+        if (offset_in_buffer)
+            *offset_in_buffer += type_memsize(type, &align);
+    }
+
+    return pointer_count;
+}
+
+/* Note: if file is NULL return value is number of pointers to write, else
+ * it is the number of type format characters written */
+static int write_varying_array_pointer_descriptions(
+    FILE *file, const attr_list_t *attrs, type_t *type,
+    size_t *offset_in_memory, size_t *offset_in_buffer,
+    unsigned int *typestring_offset)
+{
+    unsigned int align;
+    int pointer_count = 0;
+
+    /* FIXME: do varying array searching here, but pointer searching in write_pointer_description_offsets */
+
+    if (is_array(type) && type->length_is)
+    {
+        unsigned int temp = 0;
+        /* unfortunately, this needs to be done in two passes to avoid
+         * writing out redundant FC_VARIABLE_REPEAT descriptions */
+        pointer_count = write_pointer_description_offsets(
+            NULL, attrs, type->ref, NULL, NULL, &temp);
+        if (pointer_count > 0)
+        {
+            unsigned int increment_size;
+            size_t offset_of_array_pointer_mem = 0;
+            size_t offset_of_array_pointer_buf = 0;
+
+            align = 0;
+            increment_size = type_memsize(type->ref, &align);
+
+            if (increment_size > USHRT_MAX)
+                error("array size of %u bytes is too large\n", increment_size);
+
+            print_file(file, 2, "0x%02x, /* FC_VARIABLE_REPEAT */\n", RPC_FC_VARIABLE_REPEAT);
+            print_file(file, 2, "0x%02x, /* FC_VARIABLE_OFFSET */\n", RPC_FC_VARIABLE_OFFSET);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Increment = %d */\n", increment_size, increment_size);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Offset to array = %d */\n", *offset_in_memory, *offset_in_memory);
+            print_file(file, 2, "NdrFcShort(0x%x), /* Number of pointers = %d */\n", pointer_count, pointer_count);
+            *typestring_offset += 8;
+
+            pointer_count = write_pointer_description_offsets(
+                file, attrs, type, &offset_of_array_pointer_mem,
+                &offset_of_array_pointer_buf, typestring_offset);
+        }
+    }
+    else if (is_struct(type->type))
+    {
+        const var_t *v;
+        LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
+        {
+            pointer_count += write_varying_array_pointer_descriptions(
+                file, v->attrs, v->type, offset_in_memory, offset_in_buffer,
+                typestring_offset);
+        }
+    }
+    else
+    {
+        align = 0;
+        if (offset_in_memory)
+            *offset_in_memory += type_memsize(type, &align);
+        /* FIXME: is there a case where these two are different? */
+        align = 0;
+        if (offset_in_buffer)
+            *offset_in_buffer += type_memsize(type, &align);
+    }
+
+    return pointer_count;
+}
+
+static void write_pointer_description(FILE *file, type_t *type,
+                                      size_t mem_offset, int level,
+                                      unsigned int *typestring_offset)
+{
+    size_t offset_in_buffer;
+    size_t offset_in_memory;
+
+    /* pass 1: search for single instance of a pointer (i.e. don't descend
+     * into arrays) */
+    offset_in_memory = 0;
+    offset_in_buffer = 0;
+    write_no_repeat_pointer_descriptions(
+        file, NULL, type,
+        &offset_in_memory, &offset_in_buffer, typestring_offset);
+
+    /* pass 2: search for pointers in fixed arrays */
+    offset_in_memory = 0;
+    offset_in_buffer = 0;
+    write_fixed_array_pointer_descriptions(
+        file, NULL, type,
+        &offset_in_memory, &offset_in_buffer, typestring_offset);
+
+    /* pass 3: search for pointers in conformant only arrays (but don't descend
+     * into conformant varying or varying arrays) */
+    offset_in_memory = 0;
+    offset_in_buffer = 0;
+    write_conformant_array_pointer_descriptions(
+        file, NULL, type,
+        &offset_in_memory, &offset_in_buffer, typestring_offset);
+
+   /* pass 4: search for pointers in varying arrays */
+    offset_in_memory = 0;
+    offset_in_buffer = 0;
+    write_varying_array_pointer_descriptions(
+            file, NULL, type,
+            &offset_in_memory, &offset_in_buffer, typestring_offset);
 }
 
 static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
