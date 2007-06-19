@@ -193,7 +193,7 @@ static void ok_path(HDC hdc, const path_test_t *expected, int expected_size, BOO
 
 static const path_test_t arcto_path[] = {
     {0, 0, PT_MOVETO, 0, 0}, /* 0 */
-    {229, 215, PT_LINETO, 0, 1}, /* 1 */
+    {229, 215, PT_LINETO, 0, 0}, /* 1 */
     {248, 205, PT_BEZIERTO, 1, 0}, /* 2 */
     {273, 200, PT_BEZIERTO, 0, 0}, /* 3 */
     {300, 200, PT_BEZIERTO, 0, 0}, /* 4 */
@@ -203,7 +203,7 @@ static const path_test_t arcto_path[] = {
     {399, 263, PT_BEZIERTO, 0, 0}, /* 8 */
     {389, 275, PT_BEZIERTO, 0, 0}, /* 9 */
     {370, 285, PT_BEZIERTO, 0, 0}, /* 10 */
-    {363, 277, PT_LINETO, 1, 1}, /* 11 */
+    {363, 277, PT_LINETO, 1, 0}, /* 11 */
     {380, 270, PT_BEZIERTO, 1, 0}, /* 12 */
     {389, 260, PT_BEZIERTO, 0, 0}, /* 13 */
     {389, 250, PT_BEZIERTO, 0, 0}, /* 14 */

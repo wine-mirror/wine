@@ -118,28 +118,44 @@ BOOL WINAPI ArcTo( HDC hdc,
     if(!dc) return FALSE;
 
     if(dc->funcs->pArcTo)
-    {
         result = dc->funcs->pArcTo( dc->physDev, left, top, right, bottom,
 				  xstart, ystart, xend, yend );
-        GDI_ReleaseObj( hdc );
-        return result;
+    else
+    {
+        double width = fabs(right-left),
+            height = fabs(bottom-top),
+            xradius = width/2,
+            yradius = height/2,
+            xcenter = right > left ? left+xradius : right+xradius,
+            ycenter = bottom > top ? top+yradius : bottom+yradius;
+        /*
+         * Else emulate it.
+         * According to the documentation, a line is drawn from the current
+         * position to the starting point of the arc.
+         */
+        double angle = atan2(
+            ((ystart-ycenter)/height),
+            ((xstart-xcenter)/width));
+        LineTo(hdc, GDI_ROUND(xcenter+(cos(angle)*xradius)),
+               GDI_ROUND(ycenter+(sin(angle)*yradius)));
+        /*
+         * Then the arc is drawn.
+         */
+        result = Arc(hdc, left, top, right, bottom, xstart, ystart, xend, yend);
+        /*
+         * If no error occurred, the current position is moved to the ending
+         * point of the arc.
+         */
+        if (result)
+        {
+            angle = atan2(
+                ((yend-ycenter)/height),
+                ((xend-xcenter)/width));
+            MoveToEx(hdc, GDI_ROUND(xcenter+(cos(angle)*xradius)),
+                     GDI_ROUND(ycenter+(sin(angle)*yradius)), NULL);
+        }
     }
     GDI_ReleaseObj( hdc );
-    /*
-     * Else emulate it.
-     * According to the documentation, a line is drawn from the current
-     * position to the starting point of the arc.
-     */
-    LineTo(hdc, xstart, ystart);
-    /*
-     * Then the arc is drawn.
-     */
-    result = Arc(hdc, left, top, right, bottom, xstart, ystart, xend, yend);
-    /*
-     * If no error occurred, the current position is moved to the ending
-     * point of the arc.
-     */
-    if (result) MoveToEx(hdc, xend, yend, NULL);
     return result;
 }
 
