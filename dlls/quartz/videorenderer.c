@@ -126,6 +126,20 @@ static LRESULT CALLBACK VideoWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
             /* TRACE("WM_SIZING %d %d %d %d\n", lprect->left, lprect->top, lprect->right, lprect->bottom); */
             SetWindowPos(hwnd, NULL, lprect->left, lprect->top, lprect->right - lprect->left, lprect->bottom - lprect->top, SWP_NOZORDER);
             GetClientRect(hwnd, &pVideoRenderer->DestRect);
+            TRACE("WM_SIZING: DestRect=(%d,%d),(%d,%d)\n",
+                pVideoRenderer->DestRect.left,
+                pVideoRenderer->DestRect.top,
+                pVideoRenderer->DestRect.right - pVideoRenderer->DestRect.left,
+                pVideoRenderer->DestRect.bottom - pVideoRenderer->DestRect.top);
+            return TRUE;
+        case WM_SIZE:
+            TRACE("WM_SIZE %d %d\n", LOWORD(lParam), HIWORD(lParam));
+            GetClientRect(hwnd, &pVideoRenderer->DestRect);
+            TRACE("WM_SIZING: DestRect=(%d,%d),(%d,%d)\n",
+                pVideoRenderer->DestRect.left,
+                pVideoRenderer->DestRect.top,
+                pVideoRenderer->DestRect.right - pVideoRenderer->DestRect.left,
+                pVideoRenderer->DestRect.bottom - pVideoRenderer->DestRect.top);
             return TRUE;
         default:
             return DefWindowProcA(hwnd, uMsg, wParam, lParam);
@@ -305,18 +319,14 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
  
     if (!This->init)
     {
-        /* Compute the size of the whole window so the client area size matches video one */
-        RECT wrect, crect;
-        int h, v;
-        GetWindowRect(This->hWnd, &wrect);
-        GetClientRect(This->hWnd, &crect);
-        h = (wrect.right - wrect.left) - (crect.right - crect.left);
-        v = (wrect.bottom - wrect.top) - (crect.bottom - crect.top);
-        SetWindowPos(This->hWnd, NULL, 0, 0, width + h +20, height + v+20, SWP_NOZORDER|SWP_NOMOVE);
-        This->WindowPos.left = 0;
-        This->WindowPos.top = 0;
-        This->WindowPos.right = width;
-        This->WindowPos.bottom = abs(height);
+        /* Honor previously set WindowPos */
+        TRACE("WindowPos: %d %d %d %d\n", This->WindowPos.left, This->WindowPos.top, This->WindowPos.right, This->WindowPos.bottom);
+        SetWindowPos(This->hWnd, NULL,
+            This->WindowPos.left,
+            This->WindowPos.top,
+            This->WindowPos.right - This->WindowPos.left,
+            This->WindowPos.bottom - This->WindowPos.top,
+            SWP_NOZORDER|SWP_NOMOVE);
         GetClientRect(This->hWnd, &This->DestRect);
         This->init  = TRUE;
     }
