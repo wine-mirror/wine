@@ -231,6 +231,8 @@ dlls/dsound/tests/dsound_crosstest.exe
 dlls/dsound/tests/testlist.c
 dlls/dsound/version.res
 dlls/dswave/version.res
+dlls/dwmapi/libdwmapi.def
+dlls/dwmapi/version.res
 dlls/dxdiagn/version.res
 dlls/gdi.exe16
 dlls/gdi32/libgdi32.def

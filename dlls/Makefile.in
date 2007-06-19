@@ -70,6 +70,7 @@ BASEDIRS = \
 	dpnhpast \
 	dsound \
 	dswave \
+	dwmapi \
 	dxdiagn \
 	gdi32 \
 	gdiplus \
@@ -505,6 +506,7 @@ IMPORT_LIBS = \
 	dplayx/libdplayx.$(IMPLIBEXT) \
 	dpnet/libdpnet.$(IMPLIBEXT) \
 	dsound/libdsound.$(IMPLIBEXT) \
+	dwmapi/libdwmapi.$(IMPLIBEXT) \
 	gdi32/libgdi32.$(IMPLIBEXT) \
 	gdiplus/libgdiplus.$(IMPLIBEXT) \
 	glu32/libglu32.$(IMPLIBEXT) \
@@ -705,6 +707,9 @@ dpnet/libdpnet.$(IMPLIBEXT): dpnet/dpnet.spec $(WINEBUILD)
 
 dsound/libdsound.$(IMPLIBEXT): dsound/dsound.spec $(WINEBUILD)
 	@cd dsound && $(MAKE) libdsound.$(IMPLIBEXT)
+
+dwmapi/libdwmapi.$(IMPLIBEXT): dwmapi/dwmapi.spec $(WINEBUILD)
+	@cd dwmapi && $(MAKE) libdwmapi.$(IMPLIBEXT)
 
 gdi32/libgdi32.$(IMPLIBEXT): gdi32/gdi32.spec $(WINEBUILD)
 	@cd gdi32 && $(MAKE) libgdi32.$(IMPLIBEXT)

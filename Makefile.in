@@ -227,6 +227,7 @@ ALL_MAKEFILES = \
 	dlls/dsound/Makefile \
 	dlls/dsound/tests/Makefile \
 	dlls/dswave/Makefile \
+	dlls/dwmapi/Makefile \
 	dlls/dxdiagn/Makefile \
 	dlls/dxerr8/Makefile \
 	dlls/dxerr9/Makefile \
@@ -584,6 +585,7 @@ dlls/dpnhpast/Makefile: dlls/dpnhpast/Makefile.in dlls/Makedll.rules
 dlls/dsound/Makefile: dlls/dsound/Makefile.in dlls/Makedll.rules
 dlls/dsound/tests/Makefile: dlls/dsound/tests/Makefile.in dlls/Maketest.rules
 dlls/dswave/Makefile: dlls/dswave/Makefile.in dlls/Makedll.rules
+dlls/dwmapi/Makefile: dlls/dwmapi/Makefile.in dlls/Makedll.rules
 dlls/dxdiagn/Makefile: dlls/dxdiagn/Makefile.in dlls/Makedll.rules
 dlls/dxerr8/Makefile: dlls/dxerr8/Makefile.in dlls/Makeimplib.rules
 dlls/dxerr9/Makefile: dlls/dxerr9/Makefile.in dlls/Makeimplib.rules
