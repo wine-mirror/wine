@@ -79,6 +79,11 @@
 #undef UINT16
 #endif
 
+#ifdef HAVE_PNG_H
+#undef FAR
+#include <png.h>
+#endif
+
 #include "ungif.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -1334,6 +1339,193 @@ static HRESULT OLEPictureImpl_LoadDIB(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
     return S_OK;
 }
 
+/*****************************************************
+*   start of PNG-specific code
+*   currently only supports colortype PNG_COLOR_TYPE_RGB
+*/
+#ifdef SONAME_LIBPNG
+typedef struct{
+    ULONG position;
+    ULONG size;
+    BYTE * buff;
+} png_io;
+
+static void png_stream_read_data(png_structp png_ptr, png_bytep data,
+    png_size_t length)
+{
+    png_io * io_ptr = png_ptr->io_ptr;
+
+    if(length + io_ptr->position > io_ptr->size){
+        length = io_ptr->size - io_ptr->position;
+    }
+
+    memcpy(data, io_ptr->buff + io_ptr->position, length);
+
+    io_ptr->position += length;
+}
+
+static void *libpng_handle;
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(png_create_read_struct);
+MAKE_FUNCPTR(png_create_info_struct);
+MAKE_FUNCPTR(png_set_read_fn);
+MAKE_FUNCPTR(png_read_info);
+MAKE_FUNCPTR(png_read_image);
+MAKE_FUNCPTR(png_get_rowbytes);
+MAKE_FUNCPTR(png_set_bgr);
+MAKE_FUNCPTR(png_destroy_read_struct);
+MAKE_FUNCPTR(png_set_palette_to_rgb);
+MAKE_FUNCPTR(png_read_update_info);
+#undef MAKE_FUNCPTR
+
+static void *load_libpng(void)
+{
+    if((libpng_handle = wine_dlopen(SONAME_LIBPNG, RTLD_NOW, NULL, 0)) != NULL) {
+
+#define LOAD_FUNCPTR(f) \
+    if((p##f = wine_dlsym(libpng_handle, #f, NULL, 0)) == NULL) { \
+        libpng_handle = NULL; \
+        return NULL; \
+    }
+        LOAD_FUNCPTR(png_create_read_struct);
+        LOAD_FUNCPTR(png_create_info_struct);
+        LOAD_FUNCPTR(png_set_read_fn);
+        LOAD_FUNCPTR(png_read_info);
+        LOAD_FUNCPTR(png_read_image);
+        LOAD_FUNCPTR(png_get_rowbytes);
+        LOAD_FUNCPTR(png_set_bgr);
+        LOAD_FUNCPTR(png_destroy_read_struct);
+        LOAD_FUNCPTR(png_set_palette_to_rgb);
+        LOAD_FUNCPTR(png_read_update_info);
+
+#undef LOAD_FUNCPTR
+    }
+    return libpng_handle;
+}
+#endif /* SONAME_LIBPNG */
+
+static HRESULT OLEPictureImpl_LoadPNG(OLEPictureImpl *This, BYTE *xbuf, ULONG xread)
+{
+#ifdef SONAME_LIBPNG
+    png_io              io;
+    png_structp         png_ptr = NULL;
+    png_infop           info_ptr = NULL;
+    INT                 row, rowsize, height, width;
+    png_bytep*          row_pointers = NULL;
+    png_bytep           pngdata = NULL;
+    BITMAPINFOHEADER    bmi;
+    HDC                 hdcref = NULL;
+    HRESULT             ret;
+    BOOL                set_bgr = FALSE;
+
+    if(!libpng_handle) {
+        if(!load_libpng()) {
+            ERR("Failed reading PNG because unable to find %s\n",SONAME_LIBPNG);
+            return E_FAIL;
+        }
+    }
+
+    io.size     = xread;
+    io.position = 0;
+    io.buff     = xbuf;
+
+    png_ptr = ppng_create_read_struct(PNG_LIBPNG_VER_STRING,
+        NULL, NULL, NULL);
+
+    if(setjmp(png_jmpbuf(png_ptr))){
+        TRACE("Error in libpng\n");
+        ret = E_FAIL;
+        goto pngend;
+    }
+
+    info_ptr = ppng_create_info_struct(png_ptr);
+    ppng_set_read_fn(png_ptr, &io, png_stream_read_data);
+    ppng_read_info(png_ptr, info_ptr);
+
+    if(!(png_ptr->color_type == PNG_COLOR_TYPE_RGB ||
+         png_ptr->color_type == PNG_COLOR_TYPE_PALETTE)){
+        FIXME("Unsupported .PNG type: %d\n", png_ptr->color_type);
+        ret = E_FAIL;
+        goto pngend;
+    }
+
+    if (png_ptr->color_type == PNG_COLOR_TYPE_PALETTE){
+        ppng_set_palette_to_rgb(png_ptr);
+        set_bgr = TRUE;
+    }
+
+    if (png_ptr->color_type == PNG_COLOR_TYPE_RGB ||
+        png_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA ||
+        set_bgr){
+        ppng_set_bgr(png_ptr);
+    }
+
+    ppng_read_update_info(png_ptr, info_ptr);
+
+    rowsize = ppng_get_rowbytes(png_ptr, info_ptr);
+    /* align rowsize to 4-byte boundary */
+    rowsize = (rowsize + 3) & ~3;
+    height = info_ptr->height;
+    width = info_ptr->width;
+
+    pngdata = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, height * rowsize);
+    row_pointers = HeapAlloc(GetProcessHeap(), 0, height * (sizeof(VOID *)));
+
+    if(!pngdata || !row_pointers){
+        ret = E_FAIL;
+        goto pngend;
+    }
+
+    for (row = 0; row < height; row++){
+        row_pointers[row] = pngdata + row * rowsize;
+    }
+
+    ppng_read_image(png_ptr, row_pointers);
+
+    bmi.biSize          = sizeof(bmi);
+    bmi.biWidth         = width;
+    bmi.biHeight        = -height;
+    bmi.biPlanes        = 1;
+    bmi.biBitCount      = info_ptr->channels * 8;
+    bmi.biCompression   = BI_RGB;
+    bmi.biSizeImage     = height * rowsize;
+    bmi.biXPelsPerMeter = 0;
+    bmi.biYPelsPerMeter = 0;
+    bmi.biClrUsed       = 0;
+    bmi.biClrImportant  = 0;
+
+    hdcref = GetDC(0);
+    This->desc.u.bmp.hbitmap = CreateDIBitmap(
+        hdcref,
+        &bmi,
+        CBM_INIT,
+        pngdata,
+        (BITMAPINFO*)&bmi,
+        DIB_RGB_COLORS
+    );
+    ReleaseDC(0, hdcref);
+    This->desc.picType = PICTYPE_BITMAP;
+    OLEPictureImpl_SetBitmap(This);
+    ret = S_OK;
+
+pngend:
+    if(png_ptr)
+        ppng_destroy_read_struct(&png_ptr,
+                                (info_ptr ? &info_ptr : (png_infopp) NULL),
+                                (png_infopp)NULL);
+    HeapFree(GetProcessHeap(), 0, row_pointers);
+    HeapFree(GetProcessHeap(), 0, pngdata);
+    return ret;
+#else /* SONAME_LIBPNG */
+    ERR("Trying to load PNG picture, but PNG supported not compiled in.\n");
+    return E_FAIL;
+#endif
+}
+
+/*****************************************************
+*   start of Icon-specific code
+*/
+
 static HRESULT OLEPictureImpl_LoadIcon(OLEPictureImpl *This, BYTE *xbuf, ULONG xread)
 {
     HICON hicon;
@@ -1582,6 +1774,9 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     break;
   case 0x4d42: /* Bitmap */
     hr = OLEPictureImpl_LoadDIB(This, xbuf, xread);
+    break;
+  case 0x5089: /* PNG */
+    hr = OLEPictureImpl_LoadPNG(This, xbuf, xread);
     break;
   case 0x0000: { /* ICON , first word is dwReserved */
     hr = OLEPictureImpl_LoadIcon(This, xbuf, xread);
@@ -1877,6 +2072,9 @@ static HRESULT WINAPI OLEPictureImpl_Save(
                 break;
             case 0x4947:
                 FIXME("(%p,%p,%d), PICTYPE_BITMAP (format GIF) not implemented!\n",This,pStm,fClearDirty);
+                break;
+            case 0x5089:
+                FIXME("(%p,%p,%d), PICTYPE_BITMAP (format PNG) not implemented!\n",This,pStm,fClearDirty);
                 break;
             default:
                 FIXME("(%p,%p,%d), PICTYPE_BITMAP (format UNKNOWN, using BMP?) not implemented!\n",This,pStm,fClearDirty);
