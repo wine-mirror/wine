@@ -288,7 +288,7 @@ typedef BOOL (*NetBTAnswerCallback)(void *data, WORD answerCount,
  * Returns NRC_GOODRET on timeout or a valid response received, something else
  * on error.
  */
-static UCHAR NetBTWaitForNameResponse(NetBTAdapter *adapter, SOCKET fd,
+static UCHAR NetBTWaitForNameResponse(const NetBTAdapter *adapter, SOCKET fd,
  DWORD waitUntil, NetBTAnswerCallback answerCallback, void *data)
 {
     BOOL found = FALSE;
@@ -424,7 +424,7 @@ static BOOL NetBTFindNameAnswerCallback(void *pVoid, WORD answerCount,
          queryData->cacheEntry->numAddresses < answerCount)
         {
             queryData->cacheEntry->addresses[queryData->cacheEntry->
-             numAddresses++] = *(PDWORD)(rData + 2);
+             numAddresses++] = *(const DWORD *)(rData + 2);
             ret = queryData->cacheEntry->numAddresses < answerCount;
         }
         else
@@ -444,7 +444,7 @@ static BOOL NetBTFindNameAnswerCallback(void *pVoid, WORD answerCount,
  * Returns NRC_GOODRET on success, though this may not mean the name was
  * resolved--check whether *cacheEntry is NULL.
  */
-static UCHAR NetBTNameWaitLoop(NetBTAdapter *adapter, SOCKET fd, PNCB ncb,
+static UCHAR NetBTNameWaitLoop(const NetBTAdapter *adapter, SOCKET fd, const NCB *ncb,
  DWORD sendTo, BOOL broadcast, DWORD timeout, DWORD maxQueries,
  NBNameCacheEntry **cacheEntry)
 {
@@ -1274,7 +1274,7 @@ static void NetBTCleanup(void)
     }
 }
 
-static UCHAR NetBTRegisterAdapter(PMIB_IPADDRROW ipRow)
+static UCHAR NetBTRegisterAdapter(const MIB_IPADDRROW *ipRow)
 {
     UCHAR ret;
     NetBTAdapter *adapter;

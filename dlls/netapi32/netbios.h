@@ -92,7 +92,7 @@ void NetBIOSEnumAdapters(ULONG transport, NetBIOSEnumAdaptersCallback cb,
  * This function is intended for use by a transport, if the session is closed
  * by some error in the transport layer.
  */
-void NetBIOSHangupSession(PNCB ncb);
+void NetBIOSHangupSession(const NCB *ncb);
 
 /**
  * Functions a transport implementation must implement
@@ -132,7 +132,7 @@ typedef void (*NetBIOSCleanup)(void);
  * some calls (recv) will block indefinitely, so a reset, shutdown, etc. will
  * never occur.
  */
-#define NCB_CANCELLED(pncb) *(PBOOL)((pncb)->ncb_reserve)
+#define NCB_CANCELLED(pncb) *(const BOOL *)((pncb)->ncb_reserve)
 
 typedef UCHAR (*NetBIOSAstat)(void *adapter, PNCB ncb);
 typedef UCHAR (*NetBIOSFindName)(void *adapter, PNCB ncb);

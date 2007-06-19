@@ -512,7 +512,7 @@ static void ACCESS_QueryGuestDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD p
 /************************************************************
  * Copies NET_DISPLAY_USER record.
  */
-static void ACCESS_CopyDisplayUser(PNET_DISPLAY_USER dest, LPWSTR *dest_buf,
+static void ACCESS_CopyDisplayUser(const NET_DISPLAY_USER *dest, LPWSTR *dest_buf,
                             PNET_DISPLAY_USER src)
 {
     LPWSTR str = *dest_buf;

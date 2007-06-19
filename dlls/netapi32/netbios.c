@@ -640,7 +640,7 @@ static UCHAR nbInternalHangup(NetBIOSAdapter *adapter, NetBIOSSession *session)
     return NRC_GOODRET;
 }
 
-static UCHAR nbHangup(NetBIOSAdapter *adapter, PNCB ncb)
+static UCHAR nbHangup(NetBIOSAdapter *adapter, const NCB *ncb)
 {
     UCHAR ret;
     NetBIOSSession *session;
@@ -661,7 +661,7 @@ static UCHAR nbHangup(NetBIOSAdapter *adapter, PNCB ncb)
     return ret;
 }
 
-void NetBIOSHangupSession(PNCB ncb)
+void NetBIOSHangupSession(const NCB *ncb)
 {
     NetBIOSAdapter *adapter;
 

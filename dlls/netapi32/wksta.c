@@ -71,7 +71,7 @@ BOOL NETAPI_IsLocalComputer(LPCWSTR ServerName)
     }
 }
 
-static void wprint_mac(WCHAR* buffer, int len, PMIB_IFROW ifRow)
+static void wprint_mac(WCHAR* buffer, int len, const MIB_IFROW *ifRow)
 {
     int i;
     unsigned char val;
