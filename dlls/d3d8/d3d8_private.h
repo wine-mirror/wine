@@ -167,6 +167,12 @@ extern const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl;
 
 typedef void * shader_handle;
 
+struct FvfToDecl
+{
+    DWORD fvf;
+    IWineD3DVertexDeclaration *decl;
+};
+
 struct IDirect3DDevice8Impl
 {
     /* IUnknown fields */
@@ -178,6 +184,10 @@ struct IDirect3DDevice8Impl
     DWORD                         allocated_shader_handles;
     shader_handle                *shader_handles;
     shader_handle                *free_shader_handles;
+
+    /* FVF management */
+    struct FvfToDecl       *decls;
+    UINT                    numConvertedDecls, declArraySize;
 
     /* Avoids recursion with nested ReleaseRef to 0 */
     BOOL                          inDestruction;

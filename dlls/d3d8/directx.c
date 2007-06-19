@@ -472,6 +472,15 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapte
         *ppReturnedDeviceInterface = NULL;
     }
 
+    object->declArraySize = 16;
+    object->decls = HeapAlloc(GetProcessHeap(), 0, object->declArraySize * sizeof(*object->decls));
+    if(!object->decls) {
+        ERR("Out of memory\n");
+        IWineD3DDevice_Release(object->WineD3DDevice);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppReturnedDeviceInterface = NULL;
+        hr = E_OUTOFMEMORY;
+    }
     return hr;
 }
 
