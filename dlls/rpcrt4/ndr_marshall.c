@@ -1137,10 +1137,10 @@ static unsigned char * EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     }
     for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *membase = pMemory + (i * stride);
-      unsigned char *bufbase = Mark + (i * stride);
+      unsigned char *membase = pMemory + ofs + (i * stride);
+      unsigned char *bufbase = Mark + ofs + (i * stride);
       unsigned u;
-      /* ofs doesn't seem to matter in this context */
+
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
         unsigned char *bufptr = bufbase + *(const SHORT*)&info[2];
@@ -1210,9 +1210,10 @@ static unsigned char * EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     /* ofs doesn't seem to matter in this context */
     for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *membase = *ppMemory + (i * stride);
-      unsigned char *bufbase = Mark + (i * stride);
+      unsigned char *membase = *ppMemory + ofs + (i * stride);
+      unsigned char *bufbase = Mark + ofs + (i * stride);
       unsigned u;
+
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
         unsigned char *bufptr = bufbase + *(const SHORT*)&info[2];
@@ -1272,11 +1273,11 @@ static void EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       pFormat += 8;
       break;
     }
-    /* ofs doesn't seem to matter in this context */
     for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *membase = pMemory + (i * stride);
+      unsigned char *membase = pMemory + ofs + (i * stride);
       unsigned u;
+
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
         unsigned char *saved_memory = pStubMsg->Memory;
@@ -1338,7 +1339,7 @@ static unsigned long EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
     /* ofs doesn't seem to matter in this context */
     for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *bufbase = Mark + (i * stride);
+      unsigned char *bufbase = Mark + ofs + (i * stride);
       unsigned u;
       for (u=0; u<count; u++,info+=8) {
         unsigned char *bufptr = bufbase + *(const SHORT*)&info[2];
@@ -1395,11 +1396,11 @@ static void EmbeddedPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
       pFormat += 8;
       break;
     }
-    /* ofs doesn't seem to matter in this context */
     for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
       unsigned char *membase = pMemory + (i * stride);
       unsigned u;
+
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
         unsigned char *saved_memory = pStubMsg->Memory;
