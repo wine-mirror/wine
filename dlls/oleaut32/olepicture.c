@@ -1765,6 +1765,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
    */
 
   magic = xbuf[0] + (xbuf[1]<<8);
+  This->loadtime_format = magic;
+
   switch (magic) {
   case 0x4947: /* GIF */
     hr = OLEPictureImpl_LoadGif(This, xbuf, xread);
