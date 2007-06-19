@@ -4301,7 +4301,7 @@ unsigned char *  WINAPI NdrEncapsulatedUnionMarshall(PMIDL_STUB_MESSAGE pStubMsg
     pFormat++;
 
     switch_type = *pFormat & 0xf;
-    increment = *pFormat & 0xf0 >> 4;
+    increment = (*pFormat & 0xf0) >> 4;
     pFormat++;
 
     ALIGN_POINTER(pStubMsg->Buffer, increment);
@@ -4333,7 +4333,7 @@ unsigned char *  WINAPI NdrEncapsulatedUnionUnmarshall(PMIDL_STUB_MESSAGE pStubM
     pFormat++;
 
     switch_type = *pFormat & 0xf;
-    increment = *pFormat & 0xf0 >> 4;
+    increment = (*pFormat & 0xf0) >> 4;
     pFormat++;
 
     ALIGN_POINTER(pStubMsg->Buffer, increment);
@@ -4365,7 +4365,7 @@ void WINAPI NdrEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
     pFormat++;
 
     switch_type = *pFormat & 0xf;
-    increment = *pFormat & 0xf0 >> 4;
+    increment = (*pFormat & 0xf0) >> 4;
     pFormat++;
 
     ALIGN_LENGTH(pStubMsg->BufferLength, increment);
@@ -4390,7 +4390,7 @@ ULONG WINAPI NdrEncapsulatedUnionMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
     ULONG switch_value;
 
     switch_type = *pFormat & 0xf;
-    increment = *pFormat & 0xf0 >> 4;
+    increment = (*pFormat & 0xf0) >> 4;
     pFormat++;
 
     ALIGN_POINTER(pStubMsg->Buffer, increment);
@@ -4417,7 +4417,7 @@ void WINAPI NdrEncapsulatedUnionFree(PMIDL_STUB_MESSAGE pStubMsg,
     pFormat++;
 
     switch_type = *pFormat & 0xf;
-    increment = *pFormat & 0xf0 >> 4;
+    increment = (*pFormat & 0xf0) >> 4;
     pFormat++;
 
     switch_value = get_discriminant(switch_type, pMemory);

@@ -396,7 +396,6 @@ union_tests(void)
   i = 11;
   ok(square_sun(&su) == 121.0, "RPC square_sun\n");
 
-todo_wine {
   eu.t = ENCU_I;
   eu.tagged_union.i = 7;
   ok(square_encu(&eu) == 49.0, "RPC square_encu\n");
@@ -404,7 +403,6 @@ todo_wine {
   eu.t = ENCU_F;
   eu.tagged_union.f = 3.0;
   ok(square_encu(&eu) == 9.0, "RPC square_encu\n");
-}
 }
 
 static test_list_t *
