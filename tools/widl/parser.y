@@ -1691,7 +1691,8 @@ static int get_struct_type(var_list_t *fields)
     {
         if (is_string_type(field->attrs, field->type))
         {
-            has_conformance = 1;
+            if (is_conformant_array(field->type))
+                has_conformance = 1;
             has_variance = 1;
             continue;
         }
