@@ -1278,7 +1278,14 @@ static DWORD wodReset(WORD wDevID)
     wwo = &WOutDev[wDevID];
 
     OSSpinLockLock(&wwo->lock);
-    
+
+    if (wwo->state == WINE_WS_CLOSED)
+    {
+        OSSpinLockUnlock(&wwo->lock);
+        WARN("resetting a closed device\n");
+        return MMSYSERR_INVALHANDLE;
+    }
+
     lpSavedQueuePtr = wwo->lpQueuePtr;
     wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
     wwo->state = WINE_WS_STOPPED;
