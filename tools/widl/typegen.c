@@ -992,7 +992,7 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
 }
 
 static int write_no_repeat_pointer_descriptions(
-    FILE *file, const attr_list_t *attrs, type_t *type,
+    FILE *file, type_t *type,
     size_t *offset_in_memory, size_t *offset_in_buffer,
     unsigned int *typestring_offset)
 {
@@ -1028,7 +1028,7 @@ static int write_no_repeat_pointer_descriptions(
         const var_t *v;
         LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
             written += write_no_repeat_pointer_descriptions(
-                file, v->attrs, v->type,
+                file, v->type,
                 offset_in_memory, offset_in_buffer, typestring_offset);
     }
     else
@@ -1303,7 +1303,6 @@ static int write_varying_array_pointer_descriptions(
 }
 
 static void write_pointer_description(FILE *file, type_t *type,
-                                      size_t mem_offset, int level,
                                       unsigned int *typestring_offset)
 {
     size_t offset_in_buffer;
@@ -1314,7 +1313,7 @@ static void write_pointer_description(FILE *file, type_t *type,
     offset_in_memory = 0;
     offset_in_buffer = 0;
     write_no_repeat_pointer_descriptions(
-        file, NULL, type,
+        file, type,
         &offset_in_memory, &offset_in_buffer, typestring_offset);
 
     /* pass 2: search for pointers in fixed arrays */
@@ -1518,7 +1517,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
             print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
             print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
             *typestring_offset += 2;
-            write_pointer_description(file, type, 0, 0, typestring_offset);
+            write_pointer_description(file, type, typestring_offset);
             print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
             *typestring_offset += 1;
         }
@@ -1631,7 +1630,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
         print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
         *tfsoff += 2;
-        write_pointer_description(file, type, 0, 0, tfsoff);
+        write_pointer_description(file, type, tfsoff);
         print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
         *tfsoff += 1;
     }
