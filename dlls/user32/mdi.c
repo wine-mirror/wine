@@ -307,7 +307,7 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
     MDICLIENTINFO *ci;
     HWND hwndFrame = GetParent(hwnd);
 
-    TRACE("%p %p %p\n", hwnd, hmenuFrame, hmenuWindow);
+    TRACE("%p, frame menu %p, window menu %p\n", hwnd, hmenuFrame, hmenuWindow);
 
     if (hmenuFrame && !IsMenu(hmenuFrame))
     {
@@ -322,6 +322,8 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
     }
 
     if (!(ci = get_client_info( hwnd ))) return 0;
+
+    TRACE("old frame menu %p, old window menu %p\n", ci->hFrameMenu, ci->hWindowMenu);
 
     if (hmenuFrame)
     {
@@ -844,12 +846,12 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     }
 
     AppendMenuW(menu, MF_HELP | MF_BITMAP,
-                SC_MINIMIZE, (LPCWSTR)HBMMENU_MBAR_MINIMIZE ) ;
+                SC_CLOSE, is_close_enabled(hChild, hSysPopup) ?
+                (LPCWSTR)HBMMENU_MBAR_CLOSE : (LPCWSTR)HBMMENU_MBAR_CLOSE_D );
     AppendMenuW(menu, MF_HELP | MF_BITMAP,
                 SC_RESTORE, (LPCWSTR)HBMMENU_MBAR_RESTORE );
     AppendMenuW(menu, MF_HELP | MF_BITMAP,
-                SC_CLOSE, is_close_enabled(hChild, hSysPopup) ?
-                (LPCWSTR)HBMMENU_MBAR_CLOSE : (LPCWSTR)HBMMENU_MBAR_CLOSE_D );
+                SC_MINIMIZE, (LPCWSTR)HBMMENU_MBAR_MINIMIZE ) ;
 
     /* The system menu is replaced by the child icon */
     hIcon = (HICON)SendMessageW(hChild, WM_GETICON, ICON_SMALL, 0);

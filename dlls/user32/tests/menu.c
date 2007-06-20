@@ -2069,6 +2069,155 @@ static void test_menu_resource_layout(void)
     DestroyMenu(hmenu);
 }
 
+struct menu_data
+{
+    UINT type, id;
+    const char *str;
+};
+
+static HMENU create_menu_from_data(const struct menu_data *item, INT item_count)
+{
+    HMENU hmenu;
+    INT i;
+    BOOL ret;
+
+    hmenu = CreateMenu();
+    assert(hmenu != 0);
+
+    for (i = 0; i < item_count; i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = AppendMenu(hmenu, item[i].type, item[i].id, item[i].str);
+        ok(ret, "%d: AppendMenu(%04x, %04x, %p) error %u\n",
+           i, item[i].type, item[i].id, item[i].str, GetLastError());
+    }
+    return hmenu;
+}
+
+static void compare_menu_data(HMENU hmenu, const struct menu_data *item, INT item_count)
+{
+    INT count, i;
+    BOOL ret;
+
+    count = GetMenuItemCount(hmenu);
+    ok(count == item_count, "expected %d, got %d menu items\n", count, item_count);
+
+    for (i = 0; i < count; i++)
+    {
+        char buf[20];
+        MENUITEMINFO mii;
+
+        memset(&mii, 0, sizeof(mii));
+        mii.cbSize = sizeof(mii);
+        mii.dwTypeData = buf;
+        mii.cch = sizeof(buf);
+        mii.fMask  = MIIM_FTYPE | MIIM_ID | MIIM_STRING | MIIM_BITMAP;
+        ret = GetMenuItemInfo(hmenu, i, TRUE, &mii);
+        ok(ret, "GetMenuItemInfo(%u) failed\n", i);
+#if 0
+        trace("item #%u: fType %04x, fState %04x, wID %04x, hbmp %p\n",
+               i, mii.fType, mii.fState, mii.wID, mii.hbmpItem);
+#endif
+        ok(mii.fType == item[i].type,
+           "%u: expected fType %04x, got %04x\n", i, item[i].type, mii.fType);
+        ok(mii.wID == item[i].id,
+           "%u: expected wID %04x, got %04x\n", i, item[i].id, mii.wID);
+        if (item[i].type & (MF_BITMAP | MF_SEPARATOR))
+        {
+            /* For some reason Windows sets high word to not 0 for
+             * not "magic" ids.
+             */
+            ok(LOWORD(mii.hbmpItem) == LOWORD(item[i].str),
+               "%u: expected hbmpItem %p, got %p\n", i, item[i].str, mii.hbmpItem);
+        }
+        else
+        {
+            ok(mii.cch == strlen(item[i].str),
+               "%u: expected cch %u, got %u\n", i, (UINT)strlen(item[i].str), mii.cch);
+            ok(!strcmp((LPCSTR)mii.dwTypeData, item[i].str),
+               "%u: expected dwTypeData %s, got %s\n", i, item[i].str, (LPCSTR)mii.dwTypeData);
+        }
+    }
+}
+
+static void test_InsertMenu(void)
+{
+    /* Note: XP treats only bitmap handles 1 - 6 as "magic" ones
+     * regardless of their id.
+     */
+    static const struct menu_data in1[] =
+    {
+        { MF_STRING, 1, "File" },
+        { MF_BITMAP|MF_HELP, SC_CLOSE, MAKEINTRESOURCE(1) },
+        { MF_STRING|MF_HELP, 2, "Help" }
+    };
+    static const struct menu_data out1[] =
+    {
+        { MF_STRING, 1, "File" },
+        { MF_STRING|MF_HELP, 2, "Help" },
+        { MF_BITMAP|MF_HELP, SC_CLOSE, MAKEINTRESOURCE(1) }
+    };
+    static const struct menu_data in2[] =
+    {
+        { MF_STRING, 1, "File" },
+        { MF_BITMAP|MF_HELP, SC_CLOSE, MAKEINTRESOURCE(100) },
+        { MF_STRING|MF_HELP, 2, "Help" }
+    };
+    static const struct menu_data out2[] =
+    {
+        { MF_STRING, 1, "File" },
+        { MF_BITMAP|MF_HELP, SC_CLOSE, MAKEINTRESOURCE(100) },
+        { MF_STRING|MF_HELP, 2, "Help" }
+    };
+    static const struct menu_data in3[] =
+    {
+        { MF_STRING, 1, "File" },
+        { MF_SEPARATOR|MF_HELP, SC_CLOSE, MAKEINTRESOURCE(1) },
+        { MF_STRING|MF_HELP, 2, "Help" }
+    };
+    static const struct menu_data out3[] =
+    {
+        { MF_STRING, 1, "File" },
+        { MF_SEPARATOR|MF_HELP, SC_CLOSE, MAKEINTRESOURCE(0) },
+        { MF_STRING|MF_HELP, 2, "Help" },
+    };
+    static const struct menu_data in4[] =
+    {
+        { MF_STRING, 1, "File" },
+        { MF_BITMAP|MF_HELP, 1, MAKEINTRESOURCE(1) },
+        { MF_STRING|MF_HELP, 2, "Help" }
+    };
+    static const struct menu_data out4[] =
+    {
+        { MF_STRING, 1, "File" },
+        { MF_STRING|MF_HELP, 2, "Help" },
+        { MF_BITMAP|MF_HELP, 1, MAKEINTRESOURCE(1) }
+    };
+    HMENU hmenu;
+
+#define create_menu(a) create_menu_from_data((a), sizeof(a)/sizeof((a)[0]))
+#define compare_menu(h, a) compare_menu_data((h), (a), sizeof(a)/sizeof((a)[0]))
+
+    hmenu = create_menu(in1);
+    compare_menu(hmenu, out1);
+    DestroyMenu(hmenu);
+
+    hmenu = create_menu(in2);
+    compare_menu(hmenu, out2);
+    DestroyMenu(hmenu);
+
+    hmenu = create_menu(in3);
+    compare_menu(hmenu, out3);
+    DestroyMenu(hmenu);
+
+    hmenu = create_menu(in4);
+    compare_menu(hmenu, out4);
+    DestroyMenu(hmenu);
+
+#undef create_menu
+#undef compare_menu
+}
+
 START_TEST(menu)
 {
     pSetMenuInfo =
@@ -2089,4 +2238,5 @@ START_TEST(menu)
     test_menu_hilitemenuitem();
     test_CheckMenuRadioItem();
     test_menu_resource_layout();
+    test_InsertMenu();
 }
