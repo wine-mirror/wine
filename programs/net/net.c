@@ -44,6 +44,7 @@ static BOOL StopService(SC_HANDLE SCManager, SC_HANDLE serviceHandle)
                 printf("Stopping dependent service: %s\n", dependencies[counter].lpDisplayName);
                 dependent_serviceHandle = OpenService(SCManager, dependencies[counter].lpServiceName, SC_MANAGER_ALL_ACCESS);
                 if(dependent_serviceHandle) result = StopService(SCManager, dependent_serviceHandle);
+                CloseServiceHandle(dependent_serviceHandle);
                 if(!result) printf("Could not stop service %s\n", dependencies[counter].lpDisplayName);
            }
         }
