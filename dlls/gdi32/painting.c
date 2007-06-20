@@ -124,7 +124,9 @@ BOOL WINAPI ArcTo( HDC hdc,
     DC * dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
 
-    if(dc->funcs->pArcTo)
+    if(PATH_IsPathOpen(dc->path))
+        result = PATH_Arc(dc,left,top,right,bottom,xstart,ystart,xend,yend,-1);
+    else if(dc->funcs->pArcTo)
         result = dc->funcs->pArcTo( dc->physDev, left, top, right, bottom,
 				  xstart, ystart, xend, yend );
     else /* We'll draw a line from the current position to the starting point of the arc, then draw the arc */

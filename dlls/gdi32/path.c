@@ -725,8 +725,10 @@ BOOL PATH_Ellipse(DC *dc, INT x1, INT y1, INT x2, INT y2)
  * Should be called when a call to Arc is performed on a DC that has
  * an open path. This adds up to five Bezier splines representing the arc
  * to the path. When 'lines' is 1, we add 1 extra line to get a chord,
- * and when 'lines' is 2, we add 2 extra lines to get a pie.
- * Returns TRUE if successful, else FALSE.
+ * when 'lines' is 2, we add 2 extra lines to get a pie, and when 'lines' is
+ * -1 we add 1 extra line from the current DC position to the starting position
+ * of the arc before drawing the arc itself (arcto). Returns TRUE if successful,
+ * else FALSE.
  */
 BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
    INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines)
@@ -736,7 +738,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
                /* Initialize angleEndQuadrant to silence gcc's warning */
    double      x, y;
    FLOAT_POINT corners[2], pointStart, pointEnd;
-   POINT       centre;
+   POINT       centre, pointCurPos;
    BOOL      start, end;
    INT       temp;
 
@@ -811,6 +813,18 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
       corners[1].y--;
    }
 
+   /* arcto: Add a PT_MOVETO only if this is the first entry in a stroke */
+   if(lines==-1 && pPath->newStroke)
+   {
+      pPath->newStroke=FALSE;
+      pointCurPos.x = dc->CursPosX;
+      pointCurPos.y = dc->CursPosY;
+      if(!LPtoDP(dc->hSelf, &pointCurPos, 1))
+         return FALSE;
+      if(!PATH_AddEntry(pPath, &pointCurPos, PT_MOVETO))
+         return FALSE;
+   }
+
    /* Add the arc to the path with one Bezier spline per quadrant that the
     * arc spans */
    start=TRUE;
@@ -848,7 +862,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
 
       /* Add the Bezier spline to the path */
       PATH_DoArcPart(pPath, corners, angleStartQuadrant, angleEndQuadrant,
-         start ? PT_MOVETO : FALSE);
+         start ? (lines==-1 ? PT_LINETO : PT_MOVETO) : FALSE);
       start=FALSE;
    }  while(!end);
 
