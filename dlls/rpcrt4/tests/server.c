@@ -257,6 +257,21 @@ s_square_encu(encu_t *eu)
   }
 }
 
+int
+s_sum_parr(int *a[3])
+{
+  return s_sum_pcarr(a, 3);
+}
+
+int
+s_sum_pcarr(int *a[], int n)
+{
+  int i, s = 0;
+  for (i = 0; i < n; ++i)
+    s += *a[i];
+  return s;
+}
+
 void
 s_stop(void)
 {
@@ -494,13 +509,26 @@ us_t_UserFree(ULONG *flags, us_t *pus)
 static void
 pointer_tests(void)
 {
+  static int a[] = {1, 2, 3, 4};
   static char p1[] = "11";
   test_list_t *list = make_list(make_list(make_list(null_list())));
   static test_us_t tus = {{p1}};
+  int *pa[4];
 
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
   ok(square_puint(p1) == 121, "RPC square_puint\n");
   ok(square_test_us(&tus) == 121, "RPC square_test_us\n");
+
+  pa[0] = &a[0];
+  pa[1] = &a[1];
+  pa[2] = &a[2];
+  ok(sum_parr(pa) == 6, "RPC sum_parr\n");
+
+  pa[0] = &a[0];
+  pa[1] = &a[1];
+  pa[2] = &a[2];
+  pa[3] = &a[3];
+  ok(sum_pcarr(pa, 4) == 10, "RPC sum_pcarr\n");
 
   free_list(list);
 }

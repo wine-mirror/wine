@@ -158,5 +158,7 @@ interface IServer
   } encu_t;
 
   double square_encu(encu_t *eu);
+  int sum_parr(int *a[3]);
+  int sum_pcarr([size_is(n)] int *a[], int n);
   void stop(void);
 }

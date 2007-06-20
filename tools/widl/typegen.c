@@ -1518,7 +1518,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
             print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
             print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
             *typestring_offset += 2;
-            write_pointer_description(file, type->ref, 0, 0, typestring_offset);
+            write_pointer_description(file, type, 0, 0, typestring_offset);
             print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
             *typestring_offset += 1;
         }
