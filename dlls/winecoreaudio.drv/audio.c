@@ -1265,6 +1265,7 @@ static DWORD wodReset(WORD wDevID)
 {
     WINE_WAVEOUT* wwo;
     OSStatus status;
+    LPWAVEHDR lpSavedQueuePtr;
 
     TRACE("(%u);\n", wDevID);
 
@@ -1276,12 +1277,9 @@ static DWORD wodReset(WORD wDevID)
 
     wwo = &WOutDev[wDevID];
 
-    /* updates current notify list */
-    /* if resetting, remove all wave headers and notify client that all headers were completed */
-    wodHelper_NotifyCompletions(wwo, TRUE);
-    
     OSSpinLockLock(&wwo->lock);
     
+    lpSavedQueuePtr = wwo->lpQueuePtr;
     wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
     wwo->state = WINE_WS_STOPPED;
     wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
@@ -1297,6 +1295,11 @@ static DWORD wodReset(WORD wDevID)
              (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
         return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
     }
+
+    /* Now, send the "done" notification for each header in our list. */
+    /* Do this last so the reset operation is effectively complete before the
+     * app does whatever it's going to do in response to these notifications. */
+    wodHelper_NotifyDoneForList(wwo, lpSavedQueuePtr);
 
     return MMSYSERR_NOERROR;
 }
