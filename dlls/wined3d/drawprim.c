@@ -510,6 +510,19 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 		    D3DCOLOR_B_G(diffuseColor),
 		    D3DCOLOR_B_B(diffuseColor),
 		    D3DCOLOR_B_A(diffuseColor)));
+
+            if(This->activeContext->num_untracked_materials) {
+                unsigned char i;
+                float color[4];
+                color[0] = D3DCOLOR_B_R(diffuseColor) / 255.0;
+                color[1] = D3DCOLOR_B_G(diffuseColor) / 255.0;
+                color[2] = D3DCOLOR_B_B(diffuseColor) / 255.0;
+                color[3] = D3DCOLOR_B_A(diffuseColor) / 255.0;
+
+                for(i = 0; i < This->activeContext->num_untracked_materials; i++) {
+                    glMaterialfv(GL_FRONT_AND_BACK, This->activeContext->untracked_materials[i], color);
+                }
+            }
         }
 
         /* Specular ------------------------------- */
@@ -1030,15 +1043,55 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     {
         GLenum glPrimType;
+        BOOL emulation = FALSE;
+        WineDirect3DVertexStridedData *strided = &This->strided_streams;
+        WineDirect3DVertexStridedData stridedlcl;
         /* Ok, Work out which primitive is requested and how many vertexes that
            will be                                                              */
         UINT calculatedNumberOfindices = primitiveToGl(PrimitiveType, NumPrimitives, &glPrimType);
         if (numberOfVertices == 0 )
             numberOfVertices = calculatedNumberOfindices;
 
-        if (This->useDrawStridedSlow) {
+        if(!This->strided_streams.u.s.position_transformed && !use_vs(This)) {
+            if(This->activeContext->num_untracked_materials &&
+               This->stateBlock->renderState[WINED3DRS_LIGHTING]) {
+                IWineD3DVertexBufferImpl *vb;
+
+                FIXME("Using software emulation because not all material properties could be tracked\n");
+                emulation = TRUE;
+
+                strided = &stridedlcl;
+                memcpy(&stridedlcl, &This->strided_streams, sizeof(stridedlcl));
+
+#define FIXVBO(type) \
+if(stridedlcl.u.s.type.VBO) { \
+    vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[stridedlcl.u.s.type.streamNo]; \
+    stridedlcl.u.s.type.VBO = 0; \
+    stridedlcl.u.s.type.lpData = (BYTE *) ((unsigned long) stridedlcl.u.s.type.lpData + (unsigned long) vb->resource.allocatedMemory); \
+}
+                FIXVBO(position);
+                FIXVBO(blendWeights);
+                FIXVBO(blendMatrixIndices);
+                FIXVBO(normal);
+                FIXVBO(pSize);
+                FIXVBO(diffuse);
+                FIXVBO(specular);
+                for(i = 0; i < WINED3DDP_MAXTEXCOORD; i++) FIXVBO(texCoords[i]);
+                FIXVBO(position2);
+                FIXVBO(normal2);
+                FIXVBO(tangent);
+                FIXVBO(binormal);
+                FIXVBO(tessFactor);
+                FIXVBO(fog);
+                FIXVBO(depth);
+                FIXVBO(sample);
+#undef FIXVBO
+            }
+        }
+
+        if (This->useDrawStridedSlow || emulation) {
             /* Immediate mode drawing */
-            drawStridedSlow(iface, &This->strided_streams, calculatedNumberOfindices,
+            drawStridedSlow(iface, strided, calculatedNumberOfindices,
                             glPrimType, idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
         } else if(This->instancedDraw) {
             /* Instancing emulation with mixing immediate mode and arrays */

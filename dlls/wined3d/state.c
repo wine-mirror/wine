@@ -980,6 +980,7 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 
     isDiffuseSupplied = diffuse->lpData || diffuse->VBO;
 
+    context->num_untracked_materials = 0;
     if (isDiffuseSupplied && stateblock->renderState[WINED3DRS_COLORVERTEX]) {
         TRACE("diff %d, amb %d, emis %d, spec %d\n",
               stateblock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE],
@@ -993,10 +994,30 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
             } else {
                 Parm = GL_DIFFUSE;
             }
+            if(stateblock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1) {
+                context->untracked_materials[context->num_untracked_materials] = GL_EMISSION;
+                context->num_untracked_materials++;
+            }
+            if(stateblock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1) {
+                context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
+                context->num_untracked_materials++;
+            }
         } else if (stateblock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1) {
             Parm = GL_AMBIENT;
+            if(stateblock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1) {
+                context->untracked_materials[context->num_untracked_materials] = GL_EMISSION;
+                context->num_untracked_materials++;
+            }
+            if(stateblock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1) {
+                context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
+                context->num_untracked_materials++;
+            }
         } else if (stateblock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1) {
             Parm = GL_EMISSION;
+            if(stateblock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1) {
+                context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
+                context->num_untracked_materials++;
+            }
         } else if (stateblock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1) {
             Parm = GL_SPECULAR;
         }

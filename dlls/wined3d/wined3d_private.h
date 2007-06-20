@@ -507,6 +507,8 @@ struct WineD3DContext {
     BOOL                    namedArraysLoaded, numberedArraysLoaded;
     BOOL                    lastWasPow2Texture[MAX_TEXTURES];
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */
+    unsigned char           num_untracked_materials;
+    GLenum                  untracked_materials[2];
     BOOL                    last_was_blit, last_was_ckey;
     char                    texShaderBumpMap;
 
