@@ -1625,7 +1625,7 @@ void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_append_dst(arg->buffer, arg);
     shader_glsl_get_write_mask(arg->dst, dst_mask);
-    shader_addline(arg->buffer, "texture1D(Psampler%u, dot(gl_TexCoord[%u].xyz, %s))%s);\n",
+    shader_addline(arg->buffer, "texture2D(Psampler%u, vec2(dot(gl_TexCoord[%u].xyz, %s), 0.5))%s);\n",
             sampler_idx, sampler_idx, src0_param.param_str, dst_mask);
 }
 
