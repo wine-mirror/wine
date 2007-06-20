@@ -1812,7 +1812,7 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 static void unloadTexCoords(IWineD3DStateBlockImpl *stateblock) {
     int texture_idx;
 
-    for (texture_idx = 0; texture_idx < GL_LIMITS(textures); ++texture_idx) {
+    for (texture_idx = 0; texture_idx < GL_LIMITS(texture_stages); ++texture_idx) {
         GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     }
