@@ -284,7 +284,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx, ULONG startVertex) {
 
     unsigned int               textureNo    = 0;
-    unsigned int               texture_idx  = 0;
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
     LONG                       vx_index;
@@ -318,7 +317,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     /* Adding the stream offset once is cheaper than doing it every iteration. Do not modify the strided data, it is a pointer
      * to the strided Data in the device and might be needed intact on the next draw
      */
-    for (textureNo = 0, texture_idx = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
+    for (textureNo = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
         if(sd->u.s.texCoords[textureNo].lpData) {
             texCoords[textureNo] = sd->u.s.texCoords[textureNo].lpData + streamOffset[sd->u.s.texCoords[textureNo].streamNo];
         } else {
@@ -383,7 +382,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
         }
 
         /* Texture coords --------------------------- */
-        for (textureNo = 0, texture_idx = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
+        for (textureNo = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
 
             if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
                 FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
@@ -399,22 +398,21 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
                 if (coordIdx > 7) {
                     VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
-                    ++texture_idx;
                     continue;
                 } else if (coordIdx < 0) {
                     FIXME("tex: %d - Coord index %d is less than zero, expect a crash.\n", textureNo, coordIdx);
-                    ++texture_idx;
                     continue;
                 }
 
                 ptrToCoords = (float *)(texCoords[coordIdx] + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
                 if (texCoords[coordIdx] == NULL) {
                     TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
-                    ++texture_idx;
                     continue;
                 } else {
-
+                    int texture_idx = This->texUnitMap[textureNo];
                     int coordsToUse = sd->u.s.texCoords[coordIdx].dwType + 1; /* 0 == WINED3DDECLTYPE_FLOAT1 etc */
+
+                    if (texture_idx == -1) continue;
 
                     /* The coords to supply depend completely on the fvf / vertex shader */
                     switch (coordsToUse) {
@@ -492,7 +490,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     }
                 }
             }
-            if (/*!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]*/TRUE) ++texture_idx;
         } /* End of textures */
 
         /* Diffuse -------------------------------- */
