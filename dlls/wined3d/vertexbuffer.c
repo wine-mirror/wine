@@ -104,13 +104,20 @@ static DWORD    WINAPI IWineD3DVertexBufferImpl_GetPriority(IWineD3DVertexBuffer
     return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
 }
 
-static void fixup_vertices(BYTE *src, BYTE *dst, int stride, int num, BYTE *pos, BOOL haspos, BYTE *diffuse, BOOL hasdiffuse, BYTE *specular, BOOL hasspecular) {
+static void fixup_vertices(
+	BYTE *src, BYTE *dst,
+	int stride,
+	int num,
+	int pos, BOOL haspos,
+	int diffuse, BOOL hasdiffuse,
+	int specular, BOOL hasspecular
+) {
     int i;
     float x, y, z, w;
 
     for(i = num - 1; i >= 0; i--) {
         if(haspos) {
-            float *p = (float *) (((int) src + (int) pos) + i * stride);
+            float *p = (float *) ((src + pos) + i * stride);
 
             /* rhw conversion like in drawStridedSlow */
             if(p[3] == 1.0 || ((p[3] < eps) && (p[3] > -eps))) {
@@ -124,15 +131,15 @@ static void fixup_vertices(BYTE *src, BYTE *dst, int stride, int num, BYTE *pos,
                 y = p[1] * w;
                 z = p[2] * w;
             }
-            p = (float *) ((int) dst + i * stride + (int) pos);
+            p = (float *) (dst + i * stride + pos);
             p[0] = x;
             p[1] = y;
             p[2] = z;
             p[3] = w;
         }
         if(hasdiffuse) {
-            DWORD srcColor, *dstColor = (DWORD *) (dst + i * stride + (int) diffuse);
-            srcColor = * (DWORD *) ( ((int) src + (int) diffuse) + i * stride);
+            DWORD srcColor, *dstColor = (DWORD *) (dst + i * stride + diffuse);
+            srcColor = * (DWORD *) ( (src + diffuse) + i * stride);
 
             /* Color conversion like in drawStridedSlow. watch out for little endianity
             * If we want that stuff to work on big endian machines too we have to consider more things
@@ -149,8 +156,8 @@ static void fixup_vertices(BYTE *src, BYTE *dst, int stride, int num, BYTE *pos,
             *dstColor |= (srcColor & 0x000000ff) << 16;   /* Blue */
         }
         if(hasspecular) {
-            DWORD srcColor, *dstColor = (DWORD *) (dst + i * stride + (int) specular);
-            srcColor = * (DWORD *) ( ((int) src + (int) specular) + i * stride);
+            DWORD srcColor, *dstColor = (DWORD *) (dst + i * stride + specular);
+            srcColor = * (DWORD *) ( (src + specular) + i * stride);
 
             /* Similar to diffuse
              * TODO: Write the alpha value out for fog coords
@@ -365,13 +372,13 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
 
     fixup_vertices(data, data, stride, ( end - start) / stride,
                    /* Position */
-                   This->strided.u.s.position.lpData, /* Data location */
+                   (int)This->strided.u.s.position.lpData, /* Data location */
                    This->strided.u.s.position_transformed, /* Do convert? */
                    /* Diffuse color */
-                   This->strided.u.s.diffuse.lpData, /* Location */
+                   (int)This->strided.u.s.diffuse.lpData, /* Location */
                    This->strided.u.s.diffuse.dwType == WINED3DDECLTYPE_SHORT4 || This->strided.u.s.diffuse.dwType == WINED3DDECLTYPE_D3DCOLOR, /* Convert? */
                    /* specular color */
-                   This->strided.u.s.specular.lpData, /* location */
+                   (int)This->strided.u.s.specular.lpData, /* location */
                    This->strided.u.s.specular.dwType == WINED3DDECLTYPE_SHORT4 || This->strided.u.s.specular.dwType == WINED3DDECLTYPE_D3DCOLOR);
 
     ENTER_GL();
