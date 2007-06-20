@@ -1184,12 +1184,6 @@ static struct file_lock *add_lock( struct fd *fd, int shared, file_pos_t start, 
 {
     struct file_lock *lock;
 
-    if (!fd->inode)  /* not a regular file */
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        return NULL;
-    }
-
     if (!(lock = alloc_object( &file_lock_ops ))) return NULL;
     lock->shared  = shared;
     lock->start   = start;
@@ -1258,6 +1252,12 @@ obj_handle_t lock_fd( struct fd *fd, file_pos_t start, file_pos_t count, int sha
 {
     struct list *ptr;
     file_pos_t end = start + count;
+
+    if (!fd->inode)  /* not a regular file */
+    {
+        set_error( STATUS_INVALID_DEVICE_REQUEST );
+        return 0;
+    }
 
     /* don't allow wrapping locks */
     if (end && end < start)
