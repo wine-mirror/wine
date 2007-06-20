@@ -202,13 +202,15 @@ static MDICLIENTINFO *get_client_info( HWND client )
     WND *win = WIN_GetPtr( client );
     if (win)
     {
-        if (win == WND_OTHER_PROCESS)
+        if (win == WND_OTHER_PROCESS || win == WND_DESKTOP)
         {
-            if (IsWindow(client)) ERR( "client %p belongs to other process\n", client );
+            if (IsWindow(client)) WARN( "client %p belongs to other process\n", client );
             return NULL;
         }
-        if (win->cbWndExtra < sizeof(MDICLIENTINFO)) WARN( "%p is not an MDI client\n", client );
-        else ret = (MDICLIENTINFO *)win->wExtra;
+        if (win->flags & WIN_ISMDICLIENT)
+            ret = (MDICLIENTINFO *)win->wExtra;
+        else
+            WARN( "%p is not an MDI client\n", client );
         WIN_ReleasePtr( win );
     }
     return ret;
@@ -1040,7 +1042,17 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 
     TRACE("%p %04x (%s) %08lx %08lx\n", hwnd, message, SPY_GetMsgName(message, hwnd), wParam, lParam);
 
-    if (!(ci = get_client_info( hwnd ))) return 0;
+    if (!(ci = get_client_info( hwnd )))
+    {
+        if (message == WM_NCCREATE)
+        {
+            WND *wndPtr = WIN_GetPtr( hwnd );
+            wndPtr->flags |= WIN_ISMDICLIENT;
+            WIN_ReleasePtr( wndPtr );
+        }
+        return unicode ? DefWindowProcW( hwnd, message, wParam, lParam ) :
+                         DefWindowProcA( hwnd, message, wParam, lParam );
+    }
 
     switch (message)
     {
@@ -1050,8 +1062,6 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
            * cast to LPCREATESTRUCTA here */
           LPCREATESTRUCTA cs = (LPCREATESTRUCTA)lParam;
           WND *wndPtr = WIN_GetPtr( hwnd );
-
-          wndPtr->flags |= WIN_ISMDICLIENT;
 
 	/* Translation layer doesn't know what's in the cs->lpCreateParams
 	 * so we have to keep track of what environment we're in. */
