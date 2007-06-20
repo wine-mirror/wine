@@ -1072,8 +1072,7 @@ static void wodHelper_NotifyDoneForList(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
  */
 static void wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 {
-    LPWAVEHDR		lpWaveHdr;
-    LPWAVEHDR		lpFirstDoneWaveHdr = NULL;
+    LPWAVEHDR lpFirstDoneWaveHdr = NULL;
 
     OSSpinLockLock(&wwo->lock);
 
@@ -1086,6 +1085,7 @@ static void wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
     }
     else
     {
+        LPWAVEHDR lpWaveHdr;
         LPWAVEHDR lpLastDoneWaveHdr = NULL;
 
         /* Start from lpQueuePtr and keep notifying until:
