@@ -203,7 +203,7 @@ static const path_test_t arcto_path[] = {
     {399, 263, PT_BEZIERTO, 0, 0}, /* 8 */
     {389, 275, PT_BEZIERTO, 0, 0}, /* 9 */
     {370, 285, PT_BEZIERTO, 0, 0}, /* 10 */
-    {363, 277, PT_LINETO, 1, 0}, /* 11 */
+    {363, 277, PT_LINETO, 0, 0}, /* 11 */
     {380, 270, PT_BEZIERTO, 1, 0}, /* 12 */
     {389, 260, PT_BEZIERTO, 0, 0}, /* 13 */
     {389, 250, PT_BEZIERTO, 0, 0}, /* 14 */

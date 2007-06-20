@@ -113,6 +113,13 @@ BOOL WINAPI ArcTo( HDC hdc,
                      INT xstart, INT ystart,
                      INT xend,   INT yend )
 {
+    double width = fabs(right-left),
+        height = fabs(bottom-top),
+        xradius = width/2,
+        yradius = height/2,
+        xcenter = right > left ? left+xradius : right+xradius,
+        ycenter = bottom > top ? top+yradius : bottom+yradius,
+        angle;
     BOOL result;
     DC * dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
@@ -120,40 +127,19 @@ BOOL WINAPI ArcTo( HDC hdc,
     if(dc->funcs->pArcTo)
         result = dc->funcs->pArcTo( dc->physDev, left, top, right, bottom,
 				  xstart, ystart, xend, yend );
-    else
+    else /* We'll draw a line from the current position to the starting point of the arc, then draw the arc */
     {
-        double width = fabs(right-left),
-            height = fabs(bottom-top),
-            xradius = width/2,
-            yradius = height/2,
-            xcenter = right > left ? left+xradius : right+xradius,
-            ycenter = bottom > top ? top+yradius : bottom+yradius;
-        /*
-         * Else emulate it.
-         * According to the documentation, a line is drawn from the current
-         * position to the starting point of the arc.
-         */
-        double angle = atan2(
-            ((ystart-ycenter)/height),
-            ((xstart-xcenter)/width));
+        angle = atan2(((ystart-ycenter)/height),
+                      ((xstart-xcenter)/width));
         LineTo(hdc, GDI_ROUND(xcenter+(cos(angle)*xradius)),
                GDI_ROUND(ycenter+(sin(angle)*yradius)));
-        /*
-         * Then the arc is drawn.
-         */
         result = Arc(hdc, left, top, right, bottom, xstart, ystart, xend, yend);
-        /*
-         * If no error occurred, the current position is moved to the ending
-         * point of the arc.
-         */
-        if (result)
-        {
-            angle = atan2(
-                ((yend-ycenter)/height),
-                ((xend-xcenter)/width));
-            MoveToEx(hdc, GDI_ROUND(xcenter+(cos(angle)*xradius)),
-                     GDI_ROUND(ycenter+(sin(angle)*yradius)), NULL);
-        }
+    }
+    if (result) {
+        angle = atan2(((yend-ycenter)/height),
+                      ((xend-xcenter)/width));
+        dc->CursPosX = GDI_ROUND(xcenter+(cos(angle)*xradius));
+        dc->CursPosY = GDI_ROUND(ycenter+(sin(angle)*yradius));
     }
     GDI_ReleaseObj( hdc );
     return result;
