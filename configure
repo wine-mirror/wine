@@ -744,7 +744,8 @@ LDSHARED
 LDDLLFLAGS
 LIBEXT
 IMPLIBEXT
-LIBWINE_LDFLAGS
+LDRPATH_INSTALL
+LDRPATH_LOCAL
 DLLTOOL
 DLLWRAP
 MINGWAR
@@ -12850,7 +12851,9 @@ LIBEXT="so"
 
 IMPLIBEXT="def"
 
-LIBWINE_LDFLAGS=""
+LDRPATH_INSTALL=""
+
+LDRPATH_LOCAL=""
 
 
 case $host_os in
@@ -13160,6 +13163,7 @@ fi
     LIBWINE_LDFLAGS="-multiply_defined suppress"
     LDSHARED="\$(CC) -dynamiclib"
     STRIP="$STRIP -u -r"
+    LDRPATH_LOCAL="&& install_name_tool -change @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/libwine.1.dylib @executable_path/\$(TOPOBJDIR)/libs/wine/libwine.1.dylib \$@ || \$(RM) \$@"
         COREFOUNDATIONLIB="-framework CoreFoundation"
 
     IOKITLIB="-framework IOKit -framework CoreFoundation"
@@ -13650,7 +13654,8 @@ ac_res=`eval echo '${'$as_ac_var'}'`
 	       { echo "$as_me:$LINENO: result: $ac_res" >&5
 echo "${ECHO_T}$ac_res" >&6; }
 if test `eval echo '${'$as_ac_var'}'` = yes; then
-  LIBWINE_LDFLAGS="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+  LDRPATH_INSTALL="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+                       LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(TOPOBJDIR)/libs/wine"
 else
   as_ac_var=`echo "ac_cv_cflags_-fPIC -Wl,-R,\$ORIGIN/../lib" | $as_tr_sh`
 { echo "$as_me:$LINENO: checking whether the compiler supports -fPIC -Wl,-R,\$ORIGIN/../lib" >&5
@@ -13709,7 +13714,8 @@ ac_res=`eval echo '${'$as_ac_var'}'`
 	       { echo "$as_me:$LINENO: result: $ac_res" >&5
 echo "${ECHO_T}$ac_res" >&6; }
 if test `eval echo '${'$as_ac_var'}'` = yes; then
-  LIBWINE_LDFLAGS="-Wl,-R,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+  LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+                            LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(TOPOBJDIR)/libs/wine"
 fi
 
 fi
@@ -22222,7 +22228,8 @@ LDSHARED!$LDSHARED$ac_delim
 LDDLLFLAGS!$LDDLLFLAGS$ac_delim
 LIBEXT!$LIBEXT$ac_delim
 IMPLIBEXT!$IMPLIBEXT$ac_delim
-LIBWINE_LDFLAGS!$LIBWINE_LDFLAGS$ac_delim
+LDRPATH_INSTALL!$LDRPATH_INSTALL$ac_delim
+LDRPATH_LOCAL!$LDRPATH_LOCAL$ac_delim
 DLLTOOL!$DLLTOOL$ac_delim
 DLLWRAP!$DLLWRAP$ac_delim
 MINGWAR!$MINGWAR$ac_delim
@@ -22248,7 +22255,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 71; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 72; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

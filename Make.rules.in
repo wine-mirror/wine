@@ -83,7 +83,8 @@ DLLDIR       = $(TOPOBJDIR)/dlls
 LIBPORT      = $(TOPOBJDIR)/libs/port/libwine_port.a
 LIBWPP       = $(TOPOBJDIR)/libs/wpp/libwpp.a
 LIBWINE      = -L$(TOPOBJDIR)/libs/wine -lwine
-LIBWINE_LDFLAGS = @LIBWINE_LDFLAGS@ $(LIBWINE)
+LDRPATH_INSTALL = @LDRPATH_INSTALL@
+LDRPATH_LOCAL   = @LDRPATH_LOCAL@
 
 @SET_MAKE@
 

@@ -744,9 +744,13 @@ libs/wpp/ppy.tab.c
 libs/wpp/ppy.tab.h
 loader/wine
 loader/wine-glibc
+loader/wine-glibc-installed
 loader/wine-kthread
+loader/wine-kthread-installed
 loader/wine-preloader
+loader/wine-preloader-installed
 loader/wine-pthread
+loader/wine-pthread-installed
 loader/wine.man
 programs/Makeprog.rules
 programs/clock/clock
@@ -912,6 +916,7 @@ programs/wordpad/wordpad.ico
 programs/xcopy/rsrc.res
 programs/xcopy/xcopy
 server/wineserver
+server/wineserver-installed
 server/wineserver.man
 tools/bin2res
 tools/fnt2bdf
@@ -939,9 +944,11 @@ tools/wineprefixcreate.man
 tools/wmc/mcy.tab.c
 tools/wmc/mcy.tab.h
 tools/wmc/wmc
+tools/wmc/wmc-installed
 tools/wmc/wmc.man
 tools/wrc/parser.tab.c
 tools/wrc/parser.tab.h
 tools/wrc/parser.yy.c
 tools/wrc/wrc
+tools/wrc/wrc-installed
 tools/wrc/wrc.man

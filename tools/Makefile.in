@@ -69,8 +69,8 @@ fnt2fon$(EXEEXT): fnt2fon.o
 relpath$(EXEEXT): relpath.o
 	$(CC) $(CFLAGS) -o $@ relpath.o $(LIBPORT) $(LDFLAGS)
 
-sfnt2fnt$(EXEEXT): sfnt2fnt.o
-	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS)
+sfnt2fnt$(EXEEXT): sfnt2fnt.o relpath$(EXEEXT)
+	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS) $(LDRPATH_LOCAL)
 
 bin2res$(EXEEXT): bin2res.o
 	$(CC) $(CFLAGS) -o $@ bin2res.o $(LIBPORT) $(LDFLAGS)
@@ -93,6 +93,8 @@ install install-dev:: $(INSTALLSUBDIRS:%=%/__install__) $(DESTDIR)$(bindir) $(DE
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/winemaker $(DESTDIR)$(bindir)/wineprefixcreate $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext) $(DESTDIR)$(mandir)/man$(prog_manext)/wineprefixcreate.$(prog_manext) $(DESTDIR)$(datadir)/wine/wine.inf $(DESTDIR)$(datadir)/applications/wine.desktop
 	-$(UPDATE_DESKTOP_DATABASE)
+
+wmc wrc: relpath$(EXEEXT)
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
 

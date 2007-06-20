@@ -21,15 +21,19 @@ WINE_BINARIES  = $(MAIN_BINARY) $(EXTRA_BINARIES)
 PROGRAMS = \
 	wine \
 	wine-glibc \
+	wine-glibc-installed \
 	wine-kthread \
+	wine-kthread-installed \
 	wine-preloader \
-	wine-pthread\
+	wine-preloader-installed \
+	wine-pthread \
+	wine-pthread-installed
 
 MANPAGES = wine.man
 
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
-all: $(WINE_BINARIES) $(MODULE) $(MANPAGES)
+all: $(WINE_BINARIES) $(WINE_BINARIES:%=%-installed) $(MODULE) $(MANPAGES)
 
 @MAKE_RULES@
 
@@ -37,25 +41,34 @@ LIBPTHREAD  = @LIBPTHREAD@
 LDEXECFLAGS = @LDEXECFLAGS@
 
 wine-glibc: glibc.o Makefile.in
-	$(CC) -o $@ glibc.o $(LIBWINE_LDFLAGS) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS)
+	$(CC) -o $@ glibc.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
 
-wine-preloader: preloader.o Makefile.in
+wine-glibc-installed: glibc.o Makefile.in
+	$(CC) -o $@ glibc.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
+
+wine-preloader wine-preloader-installed: preloader.o Makefile.in
 	$(CC) -o $@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c000000 preloader.o $(LIBPORT) $(LDFLAGS)
 
 wine-kthread: $(KTHREAD_OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(KTHREAD_OBJS) $(LIBWINE_LDFLAGS) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS)
+	$(CC) -o $@ $(LDEXECFLAGS) $(KTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
+
+wine-kthread-installed: $(KTHREAD_OBJS) Makefile.in
+	$(CC) -o $@ $(LDEXECFLAGS) $(KTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
 wine-pthread: $(PTHREAD_OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(PTHREAD_OBJS) $(LIBWINE_LDFLAGS) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS)
+	$(CC) -o $@ $(LDEXECFLAGS) $(PTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
+
+wine-pthread-installed: $(PTHREAD_OBJS) Makefile.in
+	$(CC) -o $@ $(LDEXECFLAGS) $(PTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
 $(MODULE): $(MAIN_BINARY)
 	$(RM) $(MODULE) && $(LN_S) $(MAIN_BINARY) $(MODULE)
 
-install:: $(WINE_BINARIES) $(MANPAGES) $(INSTALLDIRS)
+install:: $(WINE_BINARIES:%=%-installed) $(MANPAGES) $(INSTALLDIRS)
 	for f in $(WINE_BINARIES); do \
 	  if [ "$(MAIN_BINARY)" = "$$f" ]; \
-	  then $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$(MODULE); \
-	  else $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$$f; \
+	  then $(INSTALL_PROGRAM) $$f-installed $(DESTDIR)$(bindir)/$(MODULE); \
+	  else $(INSTALL_PROGRAM) $$f-installed $(DESTDIR)$(bindir)/$$f; \
 	  fi; \
 	done
 	$(INSTALL_DATA) wine.man $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)

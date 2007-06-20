@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 EXEEXT    = @EXEEXT@
 
-PROGRAMS = wrc$(EXEEXT)
+PROGRAMS = wrc$(EXEEXT) wrc-installed
 MANPAGES = wrc.man
 MODULE   = none
 
@@ -29,11 +29,14 @@ all: $(PROGRAMS) $(MANPAGES)
 @MAKE_RULES@
 
 wrc$(EXEEXT): $(OBJS) $(LIBWPP)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE_LDFLAGS) $(LIBPORT) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_LOCAL)
 
-install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
+wrc-installed: $(OBJS) $(LIBWPP)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_INSTALL)
+
+install:: wrc-installed $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_DATA) wrc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wrc.$(prog_manext)
-	$(INSTALL_PROGRAM) wrc$(EXEEXT) $(DESTDIR)$(bindir)/wrc$(EXEEXT)
+	$(INSTALL_PROGRAM) wrc-installed $(DESTDIR)$(bindir)/wrc$(EXEEXT)
 
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/wrc$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/wrc.$(prog_manext)

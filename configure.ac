@@ -915,7 +915,8 @@ AC_SUBST(LDSHARED,"")
 AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LIBEXT,"so")
 AC_SUBST(IMPLIBEXT,"def")
-AC_SUBST(LIBWINE_LDFLAGS,"")
+AC_SUBST(LDRPATH_INSTALL,"")
+AC_SUBST(LDRPATH_LOCAL,"")
 
 case $host_os in
   cygwin*|mingw32*)
@@ -941,6 +942,7 @@ case $host_os in
     LIBWINE_LDFLAGS="-multiply_defined suppress"
     LDSHARED="\$(CC) -dynamiclib"
     STRIP="$STRIP -u -r"
+    LDRPATH_LOCAL="&& install_name_tool -change @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/libwine.1.dylib @executable_path/\$(TOPOBJDIR)/libs/wine/libwine.1.dylib \$@ || \$(RM) \$@"
     dnl declare needed frameworks
     AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
     AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
@@ -996,9 +998,11 @@ case $host_os in
                       [AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])])
 
       WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
-                      [LIBWINE_LDFLAGS="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"],
+                      [LDRPATH_INSTALL="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+                       LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(TOPOBJDIR)/libs/wine"],
           [WINE_TRY_CFLAGS([-fPIC -Wl,-R,\$ORIGIN/../lib],
-                           [LIBWINE_LDFLAGS="-Wl,-R,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"])])
+                           [LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+                            LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(TOPOBJDIR)/libs/wine"])])
 
       case $host_cpu in
         *i[[3456789]]86* | x86_64)

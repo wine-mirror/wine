@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 EXEEXT    = @EXEEXT@
 
-PROGRAMS = wmc$(EXEEXT)
+PROGRAMS = wmc$(EXEEXT) wmc-installed
 MANPAGES = wmc.man
 MODULE   = none
 
@@ -24,11 +24,14 @@ all: $(PROGRAMS) $(MANPAGES)
 @MAKE_RULES@
 
 wmc$(EXEEXT): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE_LDFLAGS) $(LIBPORT) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_LOCAL)
 
-install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
+wmc-installed: $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_INSTALL)
+
+install:: wmc-installed $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_DATA) wmc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)
-	$(INSTALL_PROGRAM) wmc$(EXEEXT) $(DESTDIR)$(bindir)/wmc$(EXEEXT)
+	$(INSTALL_PROGRAM) wmc-installed $(DESTDIR)$(bindir)/wmc$(EXEEXT)
 
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/wmc$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)
