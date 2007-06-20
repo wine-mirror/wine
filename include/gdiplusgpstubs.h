@@ -38,5 +38,6 @@ typedef struct GpSolidFill GpSolidFill;
 typedef Status GpStatus;
 typedef Unit GpUnit;
 typedef BrushType GpBrushType;
+typedef PointF GpPointF;
 
 #endif
