@@ -65,8 +65,8 @@ static WCHAR portname_lpt1W[] = {'L','P','T','1',':',0};
 static WCHAR portname_lpt2W[] = {'L','P','T','2',':',0};
 
 static HANDLE  hwinspool;
-static FARPROC pGetDefaultPrinterA;
-static FARPROC pSetDefaultPrinterA;
+static BOOL  (WINAPI * pGetDefaultPrinterA)(LPSTR, LPDWORD);
+static BOOL  (WINAPI * pSetDefaultPrinterA)(LPCSTR);
 static DWORD (WINAPI * pXcvDataW)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD, PDWORD);
 static BOOL  (WINAPI * pAddPortExA)(LPSTR, DWORD, LPBYTE, LPSTR);
 
