@@ -142,7 +142,7 @@
 @ stub GdipDeleteStringFormat
 @ stub GdipDisposeImage
 @ stub GdipDisposeImageAttributes
-@ stub GdipDrawArc
+@ stdcall GdipDrawArc(ptr ptr long long long long long long)
 @ stub GdipDrawArcI
 @ stdcall GdipDrawBezier(ptr ptr long long long long long long long long)
 @ stub GdipDrawBezierI

@@ -116,6 +116,31 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipDrawArc(GpGraphics *graphics, GpPen *pen, REAL x,
+    REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
+{
+    HGDIOBJ old_pen;
+    REAL x_0, y_0, x_1, y_1, x_2, y_2;
+
+    if(!graphics || !pen)
+        return InvalidParameter;
+
+    old_pen = SelectObject(graphics->hdc, pen->gdipen);
+
+    x_0 = x + (width/2.0);
+    y_0 = y + (height/2.0);
+
+    deg2xy(startAngle+sweepAngle, x_0, y_0, &x_1, &y_1);
+    deg2xy(startAngle, x_0, y_0, &x_2, &y_2);
+
+    Arc(graphics->hdc, roundr(x), roundr(y), roundr(x+width), roundr(y+height),
+        roundr(x_1), roundr(y_1), roundr(x_2), roundr(y_2));
+
+    SelectObject(graphics->hdc, old_pen);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
     REAL y1, REAL x2, REAL y2, REAL x3, REAL y3, REAL x4, REAL y4)
 {
