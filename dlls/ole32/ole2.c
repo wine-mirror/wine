@@ -2597,7 +2597,7 @@ BSTR WINAPI PropSysAllocString(LPCOLESTR str)
      * string.
      */
     stringBuffer = (WCHAR*)newBuffer;
-    stringBuffer[len] = L'\0';
+    stringBuffer[len] = '\0';
 
     return (LPWSTR)stringBuffer;
 }
