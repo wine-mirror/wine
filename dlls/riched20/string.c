@@ -130,7 +130,7 @@ ME_String *ME_VSplitString(ME_String *orig, int charidx)
 
   s = ME_MakeString(orig->szData+charidx);
   orig->nLen = charidx;
-  orig->szData[charidx] = L'\0';
+  orig->szData[charidx] = '\0';
   return s;
 }
 
