@@ -1636,7 +1636,7 @@ static void MSFT_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
             MSFT_Read(ptr, size, pcx, DO_NOT_SEEK);/* read string (ANSI) */
             V_BSTR(pVar)=SysAllocStringLen(NULL,size);
             /* FIXME: do we need a AtoW conversion here? */
-            V_UNION(pVar, bstrVal[size])=L'\0';
+            V_UNION(pVar, bstrVal[size])='\0';
             while(size--) V_UNION(pVar, bstrVal[size])=ptr[size];
             TLB_Free(ptr);
 	}

@@ -266,7 +266,7 @@ BSTR WINAPI SysAllocStringLen(const OLECHAR *str, unsigned int len)
      * string.
      */
     stringBuffer = (WCHAR*)newBuffer;
-    stringBuffer[len] = L'\0';
+    stringBuffer[len] = '\0';
 
     return (LPWSTR)stringBuffer;
 }
