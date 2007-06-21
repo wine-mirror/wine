@@ -25,8 +25,11 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winver.h"
+#include "winerror.h"
+#include "wingdi.h"
 #include "winnls.h"
+#include "winver.h"
+#include "winspool.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -34,6 +37,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ntprint);
 
 HINSTANCE NTPRINT_hInstance = NULL;
+
+typedef struct {
+  LPMONITOR_INFO_2W mi2;    /* Buffer for installed Monitors */
+  DWORD installed;          /* Number of installed Monitors */
+} monitorinfo_t;
 
 /*****************************************************
  *      DllMain
@@ -53,4 +61,62 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             break;
     }
     return TRUE;
+}
+
+/*****************************************************
+ *  PSetupCreateMonitorInfo  [NTPRINT.@]
+ *
+ *
+ */
+
+HANDLE WINAPI PSetupCreateMonitorInfo(LPVOID unknown1, LPVOID  unknown2,LPVOID unknown3)
+{
+    monitorinfo_t * mi=NULL;
+    DWORD needed;
+    DWORD res;
+
+    TRACE("(%p, %p, %p)\n", unknown1, unknown2, unknown3);
+
+    if ((unknown2 != NULL) || (unknown3 != NULL)) {
+        FIXME("got unknown parameter: (%p, %p, %p)\n", unknown1, unknown2, unknown3);
+        return NULL;
+    }
+
+    mi = HeapAlloc(GetProcessHeap(), 0, sizeof(monitorinfo_t));
+    if (!mi) {
+        /* FIXME: SetLastError() needed? */
+        return NULL;
+    }
+
+    /* Get the needed size for all Monitors */
+    res = EnumMonitorsW(NULL, 2, NULL, 0, &needed, &mi->installed);
+    if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+        mi->mi2 = HeapAlloc(GetProcessHeap(), 0, needed);
+        res = EnumMonitorsW(NULL, 2, (LPBYTE) mi->mi2, needed, &needed, &mi->installed);
+    }
+
+    if (!res) {
+        HeapFree(GetProcessHeap(), 0, mi);
+        /* FIXME: SetLastError() needed? */
+        return NULL;
+    }
+
+    TRACE("=> %p (%u monitors installed)\n", mi, mi->installed);
+    return (HANDLE) mi;
+}
+
+/*****************************************************
+ *  PSetupDestroyMonitorInfo  [NTPRINT.@]
+ *
+ */
+
+VOID WINAPI PSetupDestroyMonitorInfo(HANDLE monitorinfo)
+{
+    monitorinfo_t * mi = (monitorinfo_t *) monitorinfo;
+
+    TRACE("(%p)\n", mi);
+    if (mi) {
+        if (mi->installed) HeapFree(GetProcessHeap(), 0, mi->mi2);
+        HeapFree(GetProcessHeap(), 0, mi);
+    }
 }
