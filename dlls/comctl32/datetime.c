@@ -811,6 +811,9 @@ DATETIME_Enable (DATETIME_INFO *infoPtr, BOOL bEnable)
         infoPtr->dwStyle &= ~WS_DISABLED;
     else
         infoPtr->dwStyle |= WS_DISABLED;
+
+    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+
     return 0;
 }
 
