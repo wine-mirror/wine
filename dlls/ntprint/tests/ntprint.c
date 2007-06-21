@@ -34,6 +34,7 @@
 static HMODULE  hdll;
 static HANDLE (WINAPI *pPSetupCreateMonitorInfo)(LPVOID, LPVOID, LPVOID);
 static VOID   (WINAPI *pPSetupDestroyMonitorInfo)(HANDLE);
+static BOOL   (WINAPI *pPSetupEnumMonitor)(HANDLE, DWORD, LPWSTR, LPDWORD);
 
 /* ########################### */
 
@@ -53,6 +54,9 @@ static LPCSTR load_functions(void)
     pPSetupDestroyMonitorInfo = (VOID *) GetProcAddress(hdll, ptr);
     if (!pPSetupDestroyMonitorInfo) return ptr;
 
+    ptr = "PSetupEnumMonitor";
+    pPSetupEnumMonitor = (VOID *) GetProcAddress(hdll, ptr);
+    if (!pPSetupEnumMonitor) return ptr;
 
     return NULL;
 }
@@ -112,6 +116,102 @@ static void test_PSetupDestroyMonitorInfo(VOID)
 
 /* ########################### */
 
+static void test_PSetupEnumMonitor(VOID)
+{
+    HANDLE  mi;
+    WCHAR   buffer[MAX_PATH+2];
+    DWORD   minsize = 0;
+    DWORD   size;
+    DWORD   res;
+    DWORD   index=0;
+
+    SetLastError(0xdeadbeef);
+    mi = pPSetupCreateMonitorInfo(NULL, NULL, NULL);
+    if (!mi) {
+        skip("PSetupCreateMonitorInfo\n");
+        return;
+    }
+
+    minsize = 0;
+    SetLastError(0xdeadbeef);
+    res = pPSetupEnumMonitor(mi, 0, NULL, &minsize);
+    ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER) && (minsize > 0),
+        "got %u with %u and %u (expected '0' with ERROR_INSUFFICIENT_BUFFER "
+        "and '> 0')\n", res, GetLastError(), minsize);
+
+
+    size = sizeof(buffer) / sizeof(buffer[0]);
+    if ((minsize + 1) > size) {
+        skip("overflow: %u\n", minsize);
+        pPSetupDestroyMonitorInfo(mi);
+        return;
+    }
+
+    if (0) {
+        /* XP: ERROR_INVALID_PARAMETER,  w2k: Crash */
+        SetLastError(0xdeadbeef);
+        size = sizeof(buffer) / sizeof(buffer[0]);
+        res = pPSetupEnumMonitor(NULL, 0, buffer, &size);
+        ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+            "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+            res, GetLastError());
+    }
+
+    if (0) {
+        /* XP: Crash,  w2k: Success (how can that work?) */
+        SetLastError(0xdeadbeef);
+        size = sizeof(buffer) / sizeof(buffer[0]);
+        res = pPSetupEnumMonitor(mi, 0, NULL, &size);
+        trace("got %u with %u and %u\n", res, GetLastError(), size);
+    }
+
+    if (0) {
+        /* XP: ERROR_INVALID_PARAMETER,  w2k: Crash */
+        SetLastError(0xdeadbeef);
+        res = pPSetupEnumMonitor(mi, 0, buffer, NULL);
+        ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+            "got %u with %u (expected '0' with ERROR_INVALID_PARAMETER)\n",
+            res, GetLastError());
+    }
+
+    SetLastError(0xdeadbeef);
+    size = minsize - 1;
+    res = pPSetupEnumMonitor(mi, 0, buffer, &size);
+    ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+        "got %u with %u and %u (expected '0' with ERROR_INSUFFICIENT_BUFFER)\n",
+        res, GetLastError(), size);
+
+
+    SetLastError(0xdeadbeef);
+    size = minsize;
+    res = pPSetupEnumMonitor(mi, 0, buffer, &size);
+    ok( res, "got %u with %u and %u (expected '!= 0')\n",
+        res, GetLastError(), size);
+
+    SetLastError(0xdeadbeef);
+    size = minsize + 1;
+    res = pPSetupEnumMonitor(mi, 0, buffer, &size);
+    ok( res, "got %u with %u and %u (expected '!= 0')\n",
+        res, GetLastError(), size);
+
+    /* try max. 20 monitors */
+    while (res && (index < 20)) {
+        SetLastError(0xdeadbeef);
+        buffer[0] = '\0';
+        size = sizeof(buffer) / sizeof(buffer[0]);
+        res = pPSetupEnumMonitor(mi, index, buffer, &size);
+        ok( res || (GetLastError() == ERROR_NO_MORE_ITEMS),
+            "(%u) got %u with %u and %u (expected '!=0' or: '0' with "
+            "ERROR_NO_MORE_ITEMS)\n", index, res, GetLastError(), size);
+
+        if (res) index++;
+    }
+    pPSetupDestroyMonitorInfo(mi);
+
+}
+
+/* ########################### */
+
 START_TEST(ntprint)
 {
     LPCSTR ptr;
@@ -125,5 +225,6 @@ START_TEST(ntprint)
 
     test_PSetupCreateMonitorInfo();
     test_PSetupDestroyMonitorInfo();
+    test_PSetupEnumMonitor();
 
 }
