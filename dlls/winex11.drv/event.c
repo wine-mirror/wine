@@ -445,17 +445,18 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
             LRESULT ma = SendMessageW( hwnd, WM_MOUSEACTIVATE,
                                        (WPARAM)GetAncestor( hwnd, GA_ROOT ),
                                        MAKELONG(HTCAPTION,WM_LBUTTONDOWN) );
-            if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE) set_focus( hwnd, event_time );
-            else TRACE( "not setting focus to %p (%lx), ma=%ld\n", hwnd, event->window, ma );
+            if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE)
+            {
+                set_focus( hwnd, event_time );
+                return;
+            }
         }
-        else
-        {
-            hwnd = GetFocus();
-            if (hwnd) hwnd = GetAncestor( hwnd, GA_ROOT );
-            if (!hwnd) hwnd = GetActiveWindow();
-            if (!hwnd) hwnd = last_focus;
-            if (hwnd && can_activate_window(hwnd)) set_focus( hwnd, event_time );
-        }
+        /* try to find some other window to give the focus to */
+        hwnd = GetFocus();
+        if (hwnd) hwnd = GetAncestor( hwnd, GA_ROOT );
+        if (!hwnd) hwnd = GetActiveWindow();
+        if (!hwnd) hwnd = last_focus;
+        if (hwnd && can_activate_window(hwnd)) set_focus( hwnd, event_time );
     }
     else if (protocol == x11drv_atom(_NET_WM_PING))
     {
