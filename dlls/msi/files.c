@@ -467,7 +467,8 @@ static VOID set_file_source(MSIPACKAGE* package, MSIFILE* file, LPCWSTR path)
         LPWSTR p, path;
         p = resolve_folder(package, file->Component->Directory, TRUE, FALSE, TRUE, NULL);
         path = build_directory_name(2, p, file->ShortName);
-        if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
+        if (file->LongName &&
+            INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
         {
             msi_free(path);
             path = build_directory_name(2, p, file->LongName);
