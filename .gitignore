@@ -384,6 +384,9 @@ dlls/ntdll/version.res
 dlls/ntdsapi/libntdsapi.def
 dlls/ntoskrnl.exe/libntoskrnl.exe.def
 dlls/ntprint/ntprint.res
+dlls/ntprint/tests/*.ok
+dlls/ntprint/tests/ntprint_crosstest.exe
+dlls/ntprint/tests/testlist.c
 dlls/objsel/objsel.res
 dlls/odbc32/libodbc32.def
 dlls/odbccp32/libodbccp32.def
@@ -874,6 +877,7 @@ programs/winetest/msvcrtd_test.exe
 programs/winetest/msxml3_test.exe
 programs/winetest/netapi32_test.exe
 programs/winetest/ntdll_test.exe
+programs/winetest/ntprint_test.exe
 programs/winetest/odbccp32_test.exe
 programs/winetest/ole32_test.exe
 programs/winetest/oleaut32_test.exe

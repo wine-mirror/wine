@@ -269,6 +269,7 @@ TESTSUBDIRS = \
 	msxml3/tests \
 	netapi32/tests \
 	ntdll/tests \
+	ntprint/tests \
 	odbccp32/tests \
 	ole32/tests \
 	oleaut32/tests \

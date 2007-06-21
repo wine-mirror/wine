@@ -20700,6 +20700,8 @@ ac_config_files="$ac_config_files dlls/ntoskrnl.exe/Makefile"
 
 ac_config_files="$ac_config_files dlls/ntprint/Makefile"
 
+ac_config_files="$ac_config_files dlls/ntprint/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/objsel/Makefile"
 
 ac_config_files="$ac_config_files dlls/odbc32/Makefile"
@@ -21791,6 +21793,7 @@ do
     "dlls/ntdsapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ntdsapi/Makefile" ;;
     "dlls/ntoskrnl.exe/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ntoskrnl.exe/Makefile" ;;
     "dlls/ntprint/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ntprint/Makefile" ;;
+    "dlls/ntprint/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ntprint/tests/Makefile" ;;
     "dlls/objsel/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/objsel/Makefile" ;;
     "dlls/odbc32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/odbc32/Makefile" ;;
     "dlls/odbccp32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/odbccp32/Makefile" ;;
