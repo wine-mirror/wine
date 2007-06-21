@@ -442,10 +442,10 @@ void WINAPI DrawStatusTextW (HDC hdc, LPCRECT lprc, LPCWSTR text, UINT style)
     if (text) {
         int oldbkmode = SetBkMode (hdc, TRANSPARENT);
         UINT align = DT_LEFT;
-        if (*text == L'\t') {
+        if (*text == '\t') {
 	    text++;
 	    align = DT_CENTER;
-	    if (*text == L'\t') {
+            if (*text == '\t') {
 	        text++;
 	        align = DT_RIGHT;
 	    }

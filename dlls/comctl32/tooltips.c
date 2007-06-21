@@ -427,7 +427,7 @@ TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
     }
     else {
 	/* no text available */
-	infoPtr->szTipText[0] = L'\0';
+        infoPtr->szTipText[0] = '\0';
     }
 
     TRACE("%s\n", debugstr_w(infoPtr->szTipText));
@@ -515,7 +515,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 
     TOOLTIPS_GetTipText (hwnd, infoPtr, infoPtr->nCurrentTool);
 
-    if (infoPtr->szTipText[0] == L'\0') {
+    if (infoPtr->szTipText[0] == '\0') {
 	infoPtr->nCurrentTool = -1;
 	return;
     }
@@ -734,7 +734,7 @@ TOOLTIPS_TrackShow (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 
     TOOLTIPS_GetTipText (hwnd, infoPtr, infoPtr->nTrackTool);
 
-    if (infoPtr->szTipText[0] == L'\0') {
+    if (infoPtr->szTipText[0] == '\0') {
 	infoPtr->nTrackTool = -1;
 	return;
     }

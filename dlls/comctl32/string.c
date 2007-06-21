@@ -240,7 +240,7 @@ INT WINAPI Str_GetPtrW (LPCWSTR lpSrc, LPWSTR lpDest, INT nMaxLen)
         return 0;
 
     if (lpSrc == NULL) {
-        lpDest[0] = L'\0';
+        lpDest[0] = '\0';
         return 0;
     }
 
@@ -249,7 +249,7 @@ INT WINAPI Str_GetPtrW (LPCWSTR lpSrc, LPWSTR lpDest, INT nMaxLen)
         len = nMaxLen - 1;
 
     RtlMoveMemory (lpDest, lpSrc, len*sizeof(WCHAR));
-    lpDest[len] = L'\0';
+    lpDest[len] = '\0';
 
     return len;
 }
