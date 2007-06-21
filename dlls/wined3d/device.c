@@ -3234,7 +3234,9 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
             if(This->texUnitMap[i] != i) {
                 This->texUnitMap[i] = i;
                 IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
-                markTextureStagesDirty(This, i);
+                if (i < MAX_TEXTURES) {
+                    markTextureStagesDirty(This, i);
+                }
             }
         }
         This->oneToOneTexUnitMap = TRUE;
