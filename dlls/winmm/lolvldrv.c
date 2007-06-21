@@ -103,68 +103,6 @@ BOOL            MMDRV_Is32(unsigned int idx)
 }
 
 /**************************************************************************
- * 				MMDRV_GetDescription32		[internal]
- */
-static	BOOL	MMDRV_GetDescription32(const char* fname, char* buf, int buflen)
-{
-    OFSTRUCT   	ofs;
-    DWORD	h;
-    LPVOID	ptr = 0;
-    LPVOID	val;
-    DWORD	dw;
-    BOOL	ret = FALSE;
-    UINT	u;
-    FARPROC pGetFileVersionInfoSizeA;
-    FARPROC pGetFileVersionInfoA;
-    FARPROC pVerQueryValueA;
-    HMODULE hmodule = 0;
-    TRACE("(%p, %p, %d)\n", fname, buf, buflen);
-
-#define E(_x)	do {TRACE _x;goto theEnd;} while(0)
-
-    if (OpenFile(fname, &ofs, OF_EXIST)==HFILE_ERROR)		E(("Can't find file %s\n", fname));
-
-    if (!(hmodule = LoadLibraryA( "version.dll" ))) goto theEnd;
-    if (!(pGetFileVersionInfoSizeA = GetProcAddress( hmodule, "GetFileVersionInfoSizeA" )))
-        goto theEnd;
-    if (!(pGetFileVersionInfoA = GetProcAddress( hmodule, "GetFileVersionInfoA" )))
-        goto theEnd;
-    if (!(pVerQueryValueA = GetProcAddress( hmodule, "VerQueryValueA" )))
-        goto theEnd;
-
-    if (!(dw = pGetFileVersionInfoSizeA(ofs.szPathName, &h)))	E(("Can't get FVIS\n"));
-    if (!(ptr = HeapAlloc(GetProcessHeap(), 0, dw)))		E(("OOM\n"));
-    if (!pGetFileVersionInfoA(ofs.szPathName, h, dw, ptr))	E(("Can't get FVI\n"));
-
-#define	A(_x) if (pVerQueryValueA(ptr, "\\StringFileInfo\\040904B0\\" #_x, &val, &u)) \
-                  TRACE(#_x " => %s\n", (LPSTR)val); else TRACE(#_x " @\n")
-
-    A(CompanyName);
-    A(FileDescription);
-    A(FileVersion);
-    A(InternalName);
-    A(LegalCopyright);
-    A(OriginalFilename);
-    A(ProductName);
-    A(ProductVersion);
-    A(Comments);
-    A(LegalTrademarks);
-    A(PrivateBuild);
-    A(SpecialBuild);
-#undef A
-
-    if (!pVerQueryValueA(ptr, "\\StringFileInfo\\040904B0\\ProductName", &val, &u)) E(("Can't get product name\n"));
-    lstrcpynA(buf, val, buflen);
-
-#undef E
-    ret = TRUE;
-theEnd:
-    HeapFree(GetProcessHeap(), 0, ptr);
-    if (hmodule) FreeLibrary( hmodule );
-    return ret;
-}
-
-/**************************************************************************
  * 			MMDRV_GetNum				[internal]
  */
 UINT	MMDRV_GetNum(UINT type)
@@ -666,7 +604,6 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
 
     if (lpDrv->bIs32) {
 	WINEMM_msgFunc32	func;
-        char    		buffer[128];
 
 	if (d->d.d32.hModule) {
 #define A(_x,_y)	AA(d->d.d32.hModule,_x,_y,32,GetProcAddress)
@@ -678,12 +615,6 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
 	    A(MMDRV_WAVEOUT,	wodMessage);
 #undef A
 	}
-        if (TRACE_ON(winmm)) {
-            if (MMDRV_GetDescription32(drvFileName, buffer, sizeof(buffer)))
-		TRACE("%s => %s\n", drvFileName, buffer);
-	    else
-		TRACE("%s => No description\n", drvFileName);
-        }
     } else if (WINMM_CheckForMMSystem() && pFnLoadMMDrvFunc16) {
         count += pFnLoadMMDrvFunc16(drvFileName, d, lpDrv);
     }
