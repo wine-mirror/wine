@@ -1552,63 +1552,71 @@ static void test_text_metrics(const LOGFONTA *lf)
     SetLastError(0xdeadbeef);
     ret = GetTextMetricsA(hdc, &tmA);
     ok(ret, "GetTextMetricsA error %u\n", GetLastError());
-
     trace("A: first %x, last %x, default %x, break %x\n",
           tmA.tmFirstChar, tmA.tmLastChar, tmA.tmDefaultChar, tmA.tmBreakChar);
 
-    SetLastError(0xdeadbeef);
-    ret = GetTextMetricsW(hdc, &tmW);
-    ok(ret, "GetTextMetricsA error %u\n", GetLastError());
-
-    trace("W: first %x, last %x, default %x, break %x\n",
-          tmW.tmFirstChar, tmW.tmLastChar, tmW.tmDefaultChar, tmW.tmBreakChar);
-
+#if 0 /* FIXME: This doesn't appear to be what Windows does */
+    test_char = min(first_unicode_char - 1, 255);
+    ok(tmA.tmFirstChar == test_char, "A: tmFirstChar for %s %02x != %02x\n",
+       font_name, tmA.tmFirstChar, test_char);
+#endif
     if (lf->lfCharSet == SYMBOL_CHARSET)
     {
         test_char = min(last_unicode_char - 0xf000, 255);
         ok(tmA.tmLastChar == test_char, "A: tmLastChar for %s %02x != %02x\n",
            font_name, tmA.tmLastChar, test_char);
-
-        /* It appears that for fonts with SYMBOL_CHARSET Windows always sets
-         * symbol range to 0 - f0ff
-         */
-        ok(tmW.tmFirstChar == 0, "W: tmFirstChar for %s %02x != 0\n",
-           font_name, tmW.tmFirstChar);
-        /* FIXME: Windows returns f0ff here, while Wine f0xx */
-        ok(tmW.tmLastChar >= 0xf000, "W: tmLastChar for %s %02x != 0xf0ff\n",
-           font_name, tmW.tmLastChar);
-
-        ok(tmA.tmDefaultChar == 0x1f, "A: tmDefaultChar for %s %02x != 0\n",
-           font_name, tmW.tmDefaultChar);
-        ok(tmA.tmBreakChar == 0x20, "A: tmBreakChar for %s %02x != 0xf0ff\n",
-           font_name, tmW.tmBreakChar);
-        ok(tmW.tmDefaultChar == 0x1f, "W: tmDefaultChar for %s %02x != 0\n",
-           font_name, tmW.tmDefaultChar);
-        ok(tmW.tmBreakChar == 0x20, "W: tmBreakChar for %s %02x != 0xf0ff\n",
-           font_name, tmW.tmBreakChar);
     }
     else
     {
-        test_char = min(tmW.tmLastChar, 255);
+        test_char = min(last_unicode_char, 255);
         ok(tmA.tmLastChar == test_char, "A: tmLastChar for %s %02x != %02x\n",
            font_name, tmA.tmLastChar, test_char);
-
-        ok(tmW.tmFirstChar == first_unicode_char, "W: tmFirstChar for %s %02x != %02x\n",
-           font_name, tmW.tmFirstChar, first_unicode_char);
-        ok(tmW.tmLastChar == last_unicode_char, "W: tmLastChar for %s %02x != %02x\n",
-           font_name, tmW.tmLastChar, last_unicode_char);
+        ok(tmA.tmDefaultChar == 0x1f, "A: tmDefaultChar for %s %02x != 0x1f\n",
+           font_name, tmA.tmDefaultChar);
+        ok(tmA.tmBreakChar == 0x20, "A: tmBreakChar for %s %02x != 0x20\n",
+           font_name, tmA.tmBreakChar);
     }
-#if 0 /* FIXME: This doesn't appear to be what Windows does */
-    test_char = min(tmW.tmFirstChar - 1, 255);
-    ok(tmA.tmFirstChar == test_char, "A: tmFirstChar for %s %02x != %02x\n",
-       font_name, tmA.tmFirstChar, test_char);
-#endif
-    ret = GetDeviceCaps(hdc, LOGPIXELSX);
-    ok(tmW.tmDigitizedAspectX == ret, "tmDigitizedAspectX %u != %u\n",
-       tmW.tmDigitizedAspectX, ret);
-    ret = GetDeviceCaps(hdc, LOGPIXELSY);
-    ok(tmW.tmDigitizedAspectX == ret, "tmDigitizedAspectY %u != %u\n",
-       tmW.tmDigitizedAspectX, ret);
+
+    SetLastError(0xdeadbeef);
+    ret = GetTextMetricsW(hdc, &tmW);
+    ok(ret || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
+       "GetTextMetricsW error %u\n", GetLastError());
+    if (ret)
+    {
+        trace("W: first %x, last %x, default %x, break %x\n",
+              tmW.tmFirstChar, tmW.tmLastChar, tmW.tmDefaultChar,
+              tmW.tmBreakChar);
+
+        if (lf->lfCharSet == SYMBOL_CHARSET)
+        {
+            /* It appears that for fonts with SYMBOL_CHARSET Windows always
+             * sets symbol range to 0 - f0ff
+             */
+            ok(tmW.tmFirstChar == 0, "W: tmFirstChar for %s %02x != 0\n",
+               font_name, tmW.tmFirstChar);
+            /* FIXME: Windows returns f0ff here, while Wine f0xx */
+            ok(tmW.tmLastChar >= 0xf000, "W: tmLastChar for %s %02x < 0xf000\n",
+               font_name, tmW.tmLastChar);
+
+            ok(tmW.tmDefaultChar == 0x1f, "W: tmDefaultChar for %s %02x != 0x1f\n",
+               font_name, tmW.tmDefaultChar);
+            ok(tmW.tmBreakChar == 0x20, "W: tmBreakChar for %s %02x != 0x20\n",
+               font_name, tmW.tmBreakChar);
+        }
+        else
+        {
+            ok(tmW.tmFirstChar == first_unicode_char, "W: tmFirstChar for %s %02x != %02x\n",
+               font_name, tmW.tmFirstChar, first_unicode_char);
+            ok(tmW.tmLastChar == last_unicode_char, "W: tmLastChar for %s %02x != %02x\n",
+               font_name, tmW.tmLastChar, last_unicode_char);
+        }
+        ret = GetDeviceCaps(hdc, LOGPIXELSX);
+        ok(tmW.tmDigitizedAspectX == ret, "W: tmDigitizedAspectX %u != %u\n",
+           tmW.tmDigitizedAspectX, ret);
+        ret = GetDeviceCaps(hdc, LOGPIXELSY);
+        ok(tmW.tmDigitizedAspectX == ret, "W: tmDigitizedAspectY %u != %u\n",
+           tmW.tmDigitizedAspectX, ret);
+    }
 
 end_of_test:
     SelectObject(hdc, hfont_old);
@@ -1634,14 +1642,6 @@ static void test_GetTextMetrics(void)
     LOGFONTA lf;
     HDC hdc;
     INT enumed;
-
-    SetLastError(0xdeadbeef);
-    GetTextMetricsW(0, NULL);
-    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        skip("Skipping GetTextMetrics test on a Win9x platform\n");
-        return;
-    }
 
     hdc = GetDC(0);
 
