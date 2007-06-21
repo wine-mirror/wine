@@ -86,7 +86,7 @@ void WINAPI IDirectMusicLoaderFileStream_Detach (LPSTREAM iface) {
 	if (This->hFile != INVALID_HANDLE_VALUE) {
         CloseHandle(This->hFile);
     }
-    This->wzFileName[0] = (L'\0');
+    This->wzFileName[0] = '\0';
 }
 
 
