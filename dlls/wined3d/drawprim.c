@@ -1124,7 +1124,7 @@ if(stridedlcl.u.s.type.VBO) { \
            {
             IWineD3DSurface *pSur;
             int textureNo;
-            for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
+            for (textureNo = 0; textureNo < MAX_SAMPLERS; ++textureNo) {
                 if (This->stateBlock->textures[textureNo] != NULL) {
                     sprintf(buffer, "/tmp/texture_%p_%d_%d.tga", This->stateBlock->textures[textureNo], primCounter, textureNo);
                     TRACE("Saving texture %s\n", buffer);
