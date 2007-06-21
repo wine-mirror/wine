@@ -271,7 +271,7 @@ BOOL WINAPI SetupDiBuildClassInfoListExW(
 	    TRACE("Guid: %p\n", szKeyName);
 	    if (dwGuidListIndex < ClassGuidListSize)
 	    {
-		if (szKeyName[0] == L'{' && szKeyName[37] == L'}')
+		if (szKeyName[0] == '{' && szKeyName[37] == '}')
 		{
 		    szKeyName[37] = 0;
 		}
@@ -447,7 +447,7 @@ BOOL WINAPI SetupDiClassGuidsFromNameExW(
 		    TRACE("Guid: %p\n", szKeyName);
 		    if (dwGuidListIndex < ClassGuidListSize)
 		    {
-			if (szKeyName[0] == L'{' && szKeyName[37] == L'}')
+			if (szKeyName[0] == '{' && szKeyName[37] == '}')
 			{
 			    szKeyName[37] = 0;
 			}
