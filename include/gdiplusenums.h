@@ -39,10 +39,17 @@ enum BrushType
    BrushTypeLinearGradient   = 4
 };
 
+enum FillMode
+{
+    FillModeAlternate   = 0,
+    FillModeWinding     = 1
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
 typedef enum BrushType BrushType;
+typedef enum FillMode FillMode;
 
 #endif /* end of c typedefs */
 

@@ -25,6 +25,7 @@ class GpGraphics {};
 class GpGraphics {};
 class GpBrush {};
 class GpSolidFill {};
+class GpPath {};
 
 #else /* end of c++ declarations */
 
@@ -32,6 +33,7 @@ typedef struct GpGraphics GpGraphics;
 typedef struct GpPen GpPen;
 typedef struct GpBrush GpBrush;
 typedef struct GpSolidFill GpSolidFill;
+typedef struct GpPath GpPath;
 
 #endif /* end of c declarations */
 
@@ -39,5 +41,7 @@ typedef Status GpStatus;
 typedef Unit GpUnit;
 typedef BrushType GpBrushType;
 typedef PointF GpPointF;
+typedef FillMode GpFillMode;
+typedef PathData GpPathData;
 
 #endif

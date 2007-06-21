@@ -89,6 +89,39 @@ public:
     REAL Y;
 };
 
+class PathData
+{
+public:
+    PathData()
+    {
+        Count = 0;
+        Points = NULL;
+        Types = NULL;
+    }
+
+    ~PathData()
+    {
+        if (Points != NULL)
+        {
+            delete Points;
+        }
+
+        if (Types != NULL)
+        {
+            delete Types;
+        }
+    }
+
+private:
+    PathData(const PathData &);
+    PathData& operator=(const PathData &);
+
+public:
+    INT Count;
+    PointF* Points;
+    BYTE* Types;
+};
+
 #else /* end of c++ typedefs */
 
 typedef struct PointF
@@ -96,6 +129,13 @@ typedef struct PointF
     REAL X;
     REAL Y;
 } PointF;
+
+typedef struct PathData
+{
+    INT Count;
+    PointF* Points;
+    BYTE* Types;
+} PathData;
 
 typedef enum Status Status;
 

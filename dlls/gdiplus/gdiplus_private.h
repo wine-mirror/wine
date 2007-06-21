@@ -49,4 +49,11 @@ struct GpSolidFill{
     GpBrush brush;
 };
 
+struct GpPath{
+    GpFillMode fill;
+    GpGraphics* graphics;
+    GpPathData pathdata;
+    BOOL newfigure; /* whether the next drawing action starts a new figure */
+};
+
 #endif

@@ -106,7 +106,7 @@
 @ stub GdipCreateMetafileFromWmfFile
 @ stub GdipCreatePath2
 @ stub GdipCreatePath2I
-@ stub GdipCreatePath
+@ stdcall GdipCreatePath(long ptr)
 @ stub GdipCreatePathGradient
 @ stub GdipCreatePathGradientFromPath
 @ stub GdipCreatePathGradientI
@@ -134,7 +134,7 @@
 @ stub GdipDeleteFontFamily
 @ stdcall GdipDeleteGraphics(ptr)
 @ stub GdipDeleteMatrix
-@ stub GdipDeletePath
+@ stdcall GdipDeletePath(ptr)
 @ stub GdipDeletePathIter
 @ stdcall GdipDeletePen(ptr)
 @ stub GdipDeletePrivateFontCollection

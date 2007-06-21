@@ -47,6 +47,9 @@ GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB,GpSolidFill**);
 GpStatus WINGDIPAPI GdipGetBrushType(GpBrush*,GpBrushType*);
 GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush*);
 
+GpStatus WINGDIPAPI GdipCreatePath(GpFillMode,GpPath**);
+GpStatus WINGDIPAPI GdipDeletePath(GpPath*);
+
 #ifdef __cplusplus
 }
 #endif
