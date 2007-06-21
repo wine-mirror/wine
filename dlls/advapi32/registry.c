@@ -1451,6 +1451,8 @@ LONG WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
           hKey, debugstr_w(pszSubKey), debugstr_w(pszValue), dwFlags, pdwType,
           pvData, pcbData, cbData);
 
+    if (pvData && !pcbData)
+        return ERROR_INVALID_PARAMETER;
     if ((dwFlags & RRF_RT_REG_EXPAND_SZ) && !(dwFlags & RRF_NOEXPAND))
         return ERROR_INVALID_PARAMETER;
 
@@ -1466,7 +1468,7 @@ LONG WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
      * if the passed buffer was too small as the expanded string might be
      * smaller than the unexpanded one and could fit into cbData bytes. */
     if ((ret == ERROR_SUCCESS || ret == ERROR_MORE_DATA) &&
-        (dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND)))
+        dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND))
     {
         do {
             HeapFree(GetProcessHeap(), 0, pvBuf);
@@ -1478,7 +1480,7 @@ LONG WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
                 break;
             }
 
-            if (ret == ERROR_MORE_DATA)
+            if (ret == ERROR_MORE_DATA || !pvData)
                 ret = RegQueryValueExW(hKey, pszValue, NULL, 
                                        &dwType, pvBuf, &cbData);
             else
@@ -1496,6 +1498,7 @@ LONG WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
 
         if (ret == ERROR_SUCCESS)
         {
+            /* Recheck dwType in case it changed since the first call */
             if (dwType == REG_EXPAND_SZ)
             {
                 cbData = ExpandEnvironmentStringsW(pvBuf, pvData,
@@ -1504,7 +1507,7 @@ LONG WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
                 if(pcbData && cbData > *pcbData)
                     ret = ERROR_MORE_DATA;
             }
-            else if (pcbData)
+            else if (pvData)
                 CopyMemory(pvData, pvBuf, *pcbData);
         }
 
@@ -1516,7 +1519,7 @@ LONG WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
 
     ADVAPI_ApplyRestrictions(dwFlags, dwType, cbData, &ret);
 
-    if (pcbData && ret != ERROR_SUCCESS && (dwFlags & RRF_ZEROONFAILURE))
+    if (pvData && ret != ERROR_SUCCESS && (dwFlags & RRF_ZEROONFAILURE))
         ZeroMemory(pvData, *pcbData);
 
     if (pdwType) *pdwType = dwType;
@@ -1543,6 +1546,8 @@ LONG WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
           hKey, pszSubKey, pszValue, dwFlags, pdwType, pvData, pcbData,
           cbData);
 
+    if (pvData && !pcbData)
+        return ERROR_INVALID_PARAMETER;
     if ((dwFlags & RRF_RT_REG_EXPAND_SZ) && !(dwFlags & RRF_NOEXPAND))
         return ERROR_INVALID_PARAMETER;
 
@@ -1558,7 +1563,7 @@ LONG WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
      * if the passed buffer was too small as the expanded string might be
      * smaller than the unexpanded one and could fit into cbData bytes. */
     if ((ret == ERROR_SUCCESS || ret == ERROR_MORE_DATA) &&
-        (dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND)))
+        dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND))
     {
         do {
             HeapFree(GetProcessHeap(), 0, pvBuf);
@@ -1570,7 +1575,7 @@ LONG WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
                 break;
             }
 
-            if (ret == ERROR_MORE_DATA)
+            if (ret == ERROR_MORE_DATA || !pvData)
                 ret = RegQueryValueExA(hKey, pszValue, NULL, 
                                        &dwType, pvBuf, &cbData);
             else
@@ -1588,6 +1593,7 @@ LONG WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
 
         if (ret == ERROR_SUCCESS)
         {
+            /* Recheck dwType in case it changed since the first call */
             if (dwType == REG_EXPAND_SZ)
             {
                 cbData = ExpandEnvironmentStringsA(pvBuf, pvData,
@@ -1596,7 +1602,7 @@ LONG WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
                 if(pcbData && cbData > *pcbData)
                     ret = ERROR_MORE_DATA;
             }
-            else if (pcbData)
+            else if (pvData)
                 CopyMemory(pvData, pvBuf, *pcbData);
         }
 
@@ -1608,7 +1614,7 @@ LONG WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
 
     ADVAPI_ApplyRestrictions(dwFlags, dwType, cbData, &ret);
 
-    if (pcbData && ret != ERROR_SUCCESS && (dwFlags & RRF_ZEROONFAILURE))
+    if (pvData && ret != ERROR_SUCCESS && (dwFlags & RRF_ZEROONFAILURE))
         ZeroMemory(pvData, *pcbData);
 
     if (pdwType) *pdwType = dwType;

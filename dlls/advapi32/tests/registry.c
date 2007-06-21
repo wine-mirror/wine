@@ -598,6 +598,10 @@ static void test_get_value(void)
         return;
     }
 
+    /* Invalid parameter */
+    ret = pRegGetValueA(hkey_main, NULL, "DWORD", RRF_RT_REG_DWORD, &type, &dw, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "ret=%d\n", ret);
+
     /* Query REG_DWORD using RRF_RT_REG_DWORD (ok) */
     size = type = dw = 0xdeadbeef;
     ret = pRegGetValueA(hkey_main, NULL, "DWORD", RRF_RT_REG_DWORD, &type, &dw, &size);
@@ -628,6 +632,13 @@ static void test_get_value(void)
     ok(type == REG_DWORD, "type=%d\n", type);
     /* ... except the buffer, which is zeroed out */
     ok(dw == 0, "dw=%d\n", dw);
+
+    /* Test RRF_ZEROONFAILURE with a NULL buffer... */
+    type = size = 0xbadbeef;
+    ret = pRegGetValueA(hkey_main, NULL, "DWORD", RRF_RT_REG_SZ|RRF_ZEROONFAILURE, &type, NULL, &size);
+    ok(ret == ERROR_UNSUPPORTED_TYPE, "ret=%d\n", ret);
+    ok(size == 4, "size=%d\n", size);
+    ok(type == REG_DWORD, "type=%d\n", type);
 
     /* Query REG_DWORD using RRF_RT_DWORD (ok) */
     size = type = dw = 0xdeadbeef;
@@ -678,6 +689,15 @@ static void test_get_value(void)
     ok(type == REG_SZ, "type=%d\n", type);
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
 
+    /* Query REG_SZ using RRF_RT_REG_SZ and no buffer (ok) */
+    type = 0xdeadbeef; size = 0;
+    ret = pRegGetValueA(hkey_main, NULL, "TP1_SZ", RRF_RT_REG_SZ, &type, NULL, &size);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    /* v5.2.3790.1830 (2003 SP1) returns sTestpath1 length + 2 here. */
+    ok(size == strlen(sTestpath1)+1 || size == strlen(sTestpath1)+2,
+       "strlen(sTestpath1)=%d size=%d\n", lstrlenA(sTestpath1), size);
+    ok(type == REG_SZ, "type=%d\n", type);
+
     /* Query REG_SZ using RRF_RT_REG_SZ|RRF_NOEXPAND (ok) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_SZ", RRF_RT_REG_SZ|RRF_NOEXPAND, &type, buf, &size);
@@ -685,6 +705,14 @@ static void test_get_value(void)
     ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%d\n", lstrlenA(sTestpath1), size);
     ok(type == REG_SZ, "type=%d\n", type);
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
+
+    /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ and no buffer (ok, expands) */
+    size = 0xbadbeef;
+    ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_SZ, NULL, NULL, &size);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath1 length + 1 here. */
+    ok((size == strlen(expanded)+1) || (size == strlen(sTestpath1)+1),
+        "strlen(expanded)=%d, strlen(sTestpath1)=%d, size=%d\n", lstrlenA(expanded), lstrlenA(sTestpath1), size);
 
     /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ (ok, expands) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
@@ -703,7 +731,15 @@ static void test_get_value(void)
     ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%d\n", lstrlenA(sTestpath1), size);
     ok(type == REG_EXPAND_SZ, "type=%d\n", type);
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
-    
+
+    /* Query REG_EXPAND_SZ using RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND and no buffer (ok, doesn't expand) */
+    size = 0xbadbeef;
+    ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND, NULL, NULL, &size);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    /* v5.2.3790.1830 (2003 SP1) returns sTestpath1 length + 2 here. */
+    ok(size == strlen(sTestpath1)+1 || size == strlen(sTestpath1)+2,
+       "strlen(sTestpath1)=%d size=%d\n", lstrlenA(sTestpath1), size);
+
     /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ|RRF_NOEXPAND (type mismatch) */
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_SZ|RRF_NOEXPAND, NULL, NULL, NULL);
     ok(ret == ERROR_UNSUPPORTED_TYPE, "ret=%d\n", ret);
