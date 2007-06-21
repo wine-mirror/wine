@@ -434,14 +434,14 @@ sub parse_c_file($$) {
 		$argument =~ s/^\s*(.*?)\s*$/$1/;
 		# print "  " . ($n + 1) . ": '$argument'\n";
 		$argument =~ s/^(?:IN OUT|IN|OUT)?\s+//;
-		$argument =~ s/^(?:const|CONST|volatile)?\s+//;
+		$argument =~ s/^(?:const|CONST|GDIPCONST|volatile)?\s+//;
 		if($argument =~ /^\.\.\.$/) {
 		    $argument_type = "...";
 		    $argument_name = "...";
 		} elsif($argument =~ /^
 			((?:interface\s+|struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)?
 			  (?:short\s+(?=int)|long\s+(?=int))?)?(?:\w+|ElfW\(\w+\)|WS\(\w+\)))\s*
-			((?:__RPC_FAR|const|CONST|volatile)?\s*(?:\*\s*(?:__RPC_FAR|const|CONST|volatile)?\s*?)*)\s*
+			((?:__RPC_FAR|const|CONST|GDIPCONST|volatile)?\s*(?:\*\s*(?:__RPC_FAR|const|CONST|volatile)?\s*?)*)\s*
 			(\w*)\s*(\[\])?(?:\s+OPTIONAL)?$/x)
 		{
 		    $argument_type = $1;
