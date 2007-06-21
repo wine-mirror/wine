@@ -259,6 +259,27 @@ GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
+    GpPointF *points, INT count)
+{
+    HGDIOBJ old_obj;
+    INT i;
+
+    if(!pen || !graphics || (count < 2))
+        return InvalidParameter;
+
+    old_obj = SelectObject(graphics->hdc, pen->gdipen);
+    MoveToEx(graphics->hdc, roundr(points[0].X), roundr(points[0].Y), NULL);
+
+    for(i = 1; i < count; i++){
+        LineTo(graphics->hdc, roundr(points[i].X), roundr(points[i].Y));
+    }
+
+    SelectObject(graphics->hdc, old_obj);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipDrawPie(GpGraphics *graphics, GpPen *pen, REAL x,
     REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
 {
