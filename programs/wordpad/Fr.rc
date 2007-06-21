@@ -52,11 +52,11 @@ BEGIN
             MENUITEM "&Recevoir texte",             ID_EDIT_GETTEXT
         END
     END
-    POPUP "&View"
+    POPUP "&Affichage"
     BEGIN
-        MENUITEM "&Toolbar",        ID_TOGGLE_TOOLBAR
-        MENUITEM "&Formatbar",      ID_TOGGLE_FORMATBAR
-        MENUITEM "&Statusbar",      ID_TOGGLE_STATUSBAR
+        MENUITEM "&Barre d'outils",        ID_TOGGLE_TOOLBAR
+        MENUITEM "&Barre de format",      ID_TOGGLE_FORMATBAR
+        MENUITEM "&Barre d'état",      ID_TOGGLE_STATUSBAR
     END
     POPUP "Forma&t"
     BEGIN
