@@ -117,30 +117,12 @@ static HRESULT WINAPI ISF_Desktop_fnQueryInterface(
 
 static ULONG WINAPI ISF_Desktop_fnAddRef (IShellFolder2 * iface)
 {
-    IGenericSFImpl *This = (IGenericSFImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->ref);
-
-    TRACE ("(%p)->(count=%u)\n", This, refCount - 1);
-
-    return refCount;
+    return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI ISF_Desktop_fnRelease (IShellFolder2 * iface)
 {
-    IGenericSFImpl *This = (IGenericSFImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->ref);
-
-    TRACE ("(%p)->(count=%u)\n", This, refCount + 1);
-
-    if (!refCount)
-    {
-        TRACE ("-- destroying IShellFolder(%p)\n", This);
-        SHFree (This->pidlRoot);
-        SHFree (This->sPathTarget);
-        LocalFree ((HLOCAL) This);
-        return 0;
-    }
-    return refCount;
+    return 1; /* non-heap based object */
 }
 
 /**************************************************************************
@@ -865,9 +847,8 @@ static const IShellFolder2Vtbl vt_MCFldr_ShellFolder2 =
 HRESULT WINAPI ISF_Desktop_Constructor (
                 IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
 {
-    IGenericSFImpl *sf;
+    static IGenericSFImpl *cached_sf;
     WCHAR szMyPath[MAX_PATH];
-    HRESULT r;
 
     TRACE ("unkOut=%p %s\n", pUnkOuter, shdebugstr_guid (riid));
 
@@ -876,26 +857,31 @@ HRESULT WINAPI ISF_Desktop_Constructor (
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    if (!SHGetSpecialFolderPathW( 0, szMyPath, CSIDL_DESKTOPDIRECTORY, TRUE ))
-        return E_UNEXPECTED;
-
-    sf = LocalAlloc( LMEM_ZEROINIT, sizeof (IGenericSFImpl) );
-    if (!sf)
-        return E_OUTOFMEMORY;
-
-    sf->ref = 0;
-    sf->lpVtbl = &vt_MCFldr_ShellFolder2;
-    sf->pidlRoot = _ILCreateDesktop();    /* my qualified pidl */
-    sf->sPathTarget = SHAlloc( (lstrlenW(szMyPath) + 1)*sizeof(WCHAR) );
-    lstrcpyW( sf->sPathTarget, szMyPath );
-
-    r = IUnknown_QueryInterface( _IUnknown_(sf), riid, ppv );
-    if (!SUCCEEDED (r))
+    if (!cached_sf)
     {
-        IUnknown_Release( _IUnknown_(sf) );
-        return r;
+        IGenericSFImpl *sf;
+
+        if (!SHGetSpecialFolderPathW( 0, szMyPath, CSIDL_DESKTOPDIRECTORY, TRUE ))
+            return E_UNEXPECTED;
+
+        sf = LocalAlloc( LMEM_ZEROINIT, sizeof (IGenericSFImpl) );
+        if (!sf)
+            return E_OUTOFMEMORY;
+
+        sf->ref = 1;
+        sf->lpVtbl = &vt_MCFldr_ShellFolder2;
+        sf->pidlRoot = _ILCreateDesktop();    /* my qualified pidl */
+        sf->sPathTarget = SHAlloc( (lstrlenW(szMyPath) + 1)*sizeof(WCHAR) );
+        lstrcpyW( sf->sPathTarget, szMyPath );
+
+        if (InterlockedCompareExchangePointer((void *)&cached_sf, sf, NULL) != NULL)
+        {
+            /* some other thread already been here */
+            SHFree( sf->pidlRoot );
+            SHFree( sf->sPathTarget );
+            LocalFree( sf );
+        }
     }
 
-    TRACE ("--(%p)\n", sf);
-    return S_OK;
+    return IUnknown_QueryInterface( _IUnknown_(cached_sf), riid, ppv );
 }
