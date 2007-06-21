@@ -9,7 +9,7 @@
 @ stub PSetupDestroyPrinterDeviceInfoList
 @ stub PSetupDestroySelectedDriverInfo
 @ stub PSetupDriverInfoFromName
-@ stub PSetupEnumMonitor
+@ stdcall PSetupEnumMonitor(long long ptr ptr)
 @ stub PSetupFreeDrvField
 @ stub PSetupGetDriverInfForPrinter
 @ stub PSetupGetDriverInfo3

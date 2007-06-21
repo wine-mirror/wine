@@ -120,3 +120,48 @@ VOID WINAPI PSetupDestroyMonitorInfo(HANDLE monitorinfo)
         HeapFree(GetProcessHeap(), 0, mi);
     }
 }
+
+/*****************************************************
+ *  PSetupEnumMonitor  [NTPRINT.@]
+ *
+ * Copy the selected Monitorname to a buffer
+ *
+ * PARAMS
+ *  monitorinfo [I]  HANDLE from PSetupCreateMonitorInfo
+ *  index       [I]  Nr. of the Monitorname to copy
+ *  buffer      [I]  Target, that receive the Monitorname
+ *  psize       [IO] PTR to a DWORD that hold the size of the buffer and receive
+ *                   the needed size, when the buffer is to small
+ *
+ * RETURNS
+ *  Success:  TRUE
+ *  Failure:  FALSE
+ *
+ * NOTES
+ *   size is in Bytes on w2k and WCHAR on XP
+ *
+ */
+
+BOOL WINAPI PSetupEnumMonitor(HANDLE monitorinfo, DWORD index, LPWSTR buffer, LPDWORD psize)
+{
+    monitorinfo_t * mi = (monitorinfo_t *) monitorinfo;
+    LPWSTR  nameW;
+    DWORD   len;
+
+    TRACE("(%p, %u, %p, %p) => %d\n", mi, index, buffer, psize, psize ? *psize : 0);
+
+    if (index < mi->installed) {
+        nameW = mi->mi2[index].pName;
+        len = lstrlenW(nameW) + 1;
+        if (len <= *psize) {
+            memcpy(buffer, nameW, len * sizeof(WCHAR));
+            TRACE("#%u: %s\n", index, debugstr_w(buffer));
+            return TRUE;
+        }
+        *psize = len;
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+    SetLastError(ERROR_NO_MORE_ITEMS);
+    return FALSE;
+}
