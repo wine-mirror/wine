@@ -55,6 +55,9 @@ static BOOL test_DestroyWindow_flag;
 static HWINEVENTHOOK hEvent_hook;
 
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
+static void (WINAPI *pNotifyWinEvent)(DWORD, HWND, LONG, LONG);
+static HWINEVENTHOOK (WINAPI *pSetWinEventHook)(DWORD, DWORD, HMODULE, WINEVENTPROC, DWORD, DWORD, DWORD);
+static BOOL (WINAPI *pUnhookWinEvent)(HWINEVENTHOOK);
 
 static void dump_winpos_flags(UINT flags);
 
@@ -1391,6 +1394,24 @@ static int after_end_dialog, test_def_id;
 static int sequence_cnt, sequence_size;
 static struct message* sequence;
 static int log_all_parent_messages;
+
+static void init_procs(void)
+{
+    HMODULE user32 = GetModuleHandleA("user32.dll");
+
+#define USER32_GET_PROC(func) \
+    p ## func = (void*)GetProcAddress(user32, #func); \
+    if(!p ## func) { \
+      trace("GetProcAddress(%s) failed\n", #func); \
+    }
+
+    USER32_GET_PROC(GetAncestor)
+    USER32_GET_PROC(NotifyWinEvent)
+    USER32_GET_PROC(SetWinEventHook)
+    USER32_GET_PROC(UnhookWinEvent)
+
+#undef USER32_GET_PROC
+}
 
 static void add_message(const struct message *msg)
 {
@@ -6896,8 +6917,6 @@ static DWORD WINAPI win_event_global_thread_proc(void *param)
     HWND hwnd;
     MSG msg;
     HANDLE hevent = *(HANDLE *)param;
-    HMODULE user32 = GetModuleHandleA("user32.dll");
-    FARPROC pNotifyWinEvent = GetProcAddress(user32, "NotifyWinEvent");
 
     assert(pNotifyWinEvent);
 
@@ -6999,10 +7018,6 @@ static void test_winevents(void)
     DWORD tid;
     HWINEVENTHOOK hhook;
     const struct message *events = WmWinEventsSeq;
-    HMODULE user32 = GetModuleHandleA("user32.dll");
-    FARPROC pSetWinEventHook = GetProcAddress(user32, "SetWinEventHook");
-    FARPROC pUnhookWinEvent = GetProcAddress(user32, "UnhookWinEvent");
-    FARPROC pNotifyWinEvent = GetProcAddress(user32, "NotifyWinEvent");
 
     hwnd = CreateWindowExA(0, "TestWindowClass", NULL,
 			   WS_OVERLAPPEDWINDOW,
@@ -7200,9 +7215,6 @@ static void test_set_hook(void)
     BOOL ret;
     HHOOK hhook;
     HWINEVENTHOOK hwinevent_hook;
-    HMODULE user32 = GetModuleHandleA("user32.dll");
-    FARPROC pSetWinEventHook = GetProcAddress(user32, "SetWinEventHook");
-    FARPROC pUnhookWinEvent = GetProcAddress(user32, "UnhookWinEvent");
 
     hhook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, GetModuleHandleA(0), GetCurrentThreadId());
     ok(hhook != 0, "local hook does not require hModule set to 0\n");
@@ -9242,11 +9254,9 @@ static void test_SetForegroundWindow(void)
 START_TEST(msg)
 {
     BOOL ret;
-    HMODULE user32 = GetModuleHandleA("user32.dll");
-    FARPROC pSetWinEventHook = GetProcAddress(user32, "SetWinEventHook");
-    FARPROC pUnhookWinEvent = GetProcAddress(user32, "UnhookWinEvent");
     FARPROC pIsWinEventHookInstalled = 0;/*GetProcAddress(user32, "IsWinEventHookInstalled");*/
-    pGetAncestor = (void*) GetProcAddress(user32, "GetAncestor");
+
+    init_procs();
 
     if (!RegisterWindowClasses()) assert(0);
 
