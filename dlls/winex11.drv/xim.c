@@ -456,9 +456,6 @@ err:
 
 XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
 {
-    XFontSet fontSet = NULL;
-    char **list;
-    int count;
     XPoint spot = {0};
     XVaNestedList preedit = NULL;
     XVaNestedList status = NULL;
@@ -485,29 +482,6 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
         return xic;
     }
 
-
-    if (((ximStyle & (XIMPreeditNothing | XIMPreeditNone)) == 0) ||
-        ((ximStyle & (XIMStatusNothing | XIMStatusNone)) == 0))
-    {
-        fontSet = XCreateFontSet(display,
-                          "*", /*FIXME*/
-                          &list, &count, NULL);
-
-        TRACE("ximFontSet = %p\n", fontSet);
-        TRACE("list = %p, count = %d\n", list, count);
-
-        if (list != NULL)
-        {
-            int i;
-
-            for (i = 0; i < count; ++i)
-            {
-                TRACE("list[%d] = %s\n", i, list[i]);
-            }
-            XFreeStringList(list);
-        }
-    }
-
     /* create callbacks */
     P_StartCB.client_data = NULL;
     P_StartCB.callback = (XIMProc)XIMPreEditStartCallback;
@@ -521,7 +495,6 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
     if ((ximStyle & (XIMPreeditNothing | XIMPreeditNone)) == 0)
     {
         preedit = XVaCreateNestedList(0,
-                        XNFontSet, fontSet,
                         XNSpotLocation, &spot,
                         XNPreeditStartCallback, &P_StartCB,
                         XNPreeditDoneCallback, &P_DoneCB,
@@ -545,7 +518,6 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
     if ((ximStyle & (XIMStatusNothing | XIMStatusNone)) == 0)
     {
         status = XVaCreateNestedList(0,
-            XNFontSet, fontSet,
             NULL);
         TRACE("status = %p\n", status);
      }
