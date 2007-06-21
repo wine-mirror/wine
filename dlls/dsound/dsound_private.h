@@ -24,7 +24,7 @@
 #define DS_TIME_DEL 10  /* Delay of multimedia timer callback, and duration of HEL fragment */
 
 #define DS_HEL_BUFLEN 0x8000 /* HEL: The buffer length of the emulated buffer */
-#define DS_HEL_FRAGS 0x40 /* HEL only: number of waveOut fragments in primary buffer
+#define DS_HEL_FRAGS 0x10 /* HEL only: number of waveOut fragments in primary buffer
 			 * (changing this won't help you) */
 
 /* direct sound hardware acceleration levels */

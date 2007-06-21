@@ -61,9 +61,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 /* some stuff may get more responsive with lower values though... */
 #define DS_EMULDRIVER 0 /* some games (Quake 2, UT) refuse to accept
 				emulated dsound devices. set to 0 ! */
-#define DS_HEL_MARGIN 5 /* HEL only: number of waveOut fragments ahead to mix in new buffers
+#define DS_HEL_MARGIN 2 /* HEL only: number of waveOut fragments ahead to mix in new buffers
 			 * (keep this close or equal to DS_HEL_QUEUE for best results) */
-#define DS_HEL_QUEUE  5 /* HEL only: number of waveOut fragments ahead to queue to driver
+#define DS_HEL_QUEUE  2 /* HEL only: number of waveOut fragments ahead to queue to driver
 			 * (this will affect HEL sound reliability and latency) */
 
 #define DS_SND_QUEUE_MAX 10 /* max number of fragments to prebuffer */
