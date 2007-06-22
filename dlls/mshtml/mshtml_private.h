@@ -140,7 +140,6 @@ struct NSContainer {
     const nsIInterfaceRequestorVtbl     *lpInterfaceRequestorVtbl;
     const nsIWeakReferenceVtbl          *lpWeakReferenceVtbl;
     const nsISupportsWeakReferenceVtbl  *lpSupportsWeakReferenceVtbl;
-    const nsIDOMEventListenerVtbl       *lpDOMEventListenerVtbl;
 
     nsEventListener keypress_listener;
     nsEventListener load_listener;
