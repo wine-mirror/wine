@@ -1811,7 +1811,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* Initialize the texture unit mapping to a 1:1 mapping */
     for(state = 0; state < MAX_SAMPLERS; state++) {
-        This->texUnitMap[state] = state;
+        if (state < GL_LIMITS(samplers)) {
+            This->texUnitMap[state] = state;
+            This->rev_tex_unit_map[state] = state;
+        } else {
+            This->texUnitMap[state] = -1;
+            This->rev_tex_unit_map[state] = -1;
+        }
     }
     This->oneToOneTexUnitMap = TRUE;
 
@@ -3180,6 +3186,21 @@ static inline void markTextureStagesDirty(IWineD3DDeviceImpl *This, DWORD stage)
     }
 }
 
+static void device_map_stage(IWineD3DDeviceImpl *This, int stage, int unit) {
+    int i = This->rev_tex_unit_map[unit];
+    int j = This->texUnitMap[stage];
+
+    This->texUnitMap[stage] = unit;
+    if (i != -1 && i != stage) {
+        This->texUnitMap[i] = -1;
+    }
+
+    This->rev_tex_unit_map[unit] = stage;
+    if (j != -1 && j != unit) {
+        This->rev_tex_unit_map[j] = -1;
+    }
+}
+
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
     DWORD i, tex;
     /* This code can assume that GL_NV_register_combiners are supported, otherwise
@@ -3202,7 +3223,7 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
         /* Restore a 1:1 mapping */
         for(i = 0; i < MAX_SAMPLERS; i++) {
             if(This->texUnitMap[i] != i) {
-                This->texUnitMap[i] = i;
+                device_map_stage(This, i, i);
                 IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
                 if (i < MAX_TEXTURES) {
                     markTextureStagesDirty(This, i);
@@ -3235,14 +3256,14 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
                 /* Map to -1, so the check below doesn't fail if a non-NULL
                  * texture is set on this stage */
                 TRACE("Mapping texture stage %d to -1\n", i);
-                This->texUnitMap[i] = -1;
+                device_map_stage(This, i, -1);
 
                 continue;
             }
 
             TRACE("Mapping texture stage %d to unit %d\n", i, tex);
             if(This->texUnitMap[i] != tex) {
-                This->texUnitMap[i] = tex;
+                device_map_stage(This, i, tex);
                 IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
                 markTextureStagesDirty(This, i);
             }
