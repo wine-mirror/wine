@@ -515,6 +515,15 @@ HRESULT WINAPI Widget_Error(
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI Widget_CloneInterface(
+    IWidget __RPC_FAR * iface,
+    ISomethingFromDispatch **ppVal)
+{
+    trace("CloneInterface()\n");
+    *ppVal = 0;
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -540,7 +549,8 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_VariantArrayPtr,
     Widget_Variant,
     Widget_VarArg,
-    Widget_Error
+    Widget_Error,
+    Widget_CloneInterface
 };
 
 
@@ -914,6 +924,18 @@ static void test_typelibmarshal(void)
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_CLONE, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, IDispatch_Invoke);
+    ok(V_VT(&varresult) == VT_DISPATCH, "vt %x\n", V_VT(&varresult));
+    VariantClear(&varresult);
+
+    /* call CloneInterface */
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = NULL;
+    VariantInit(&varresult);
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_CLONEINTERFACE, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
+    ok_ole_success(hr, IDispatch_Invoke);
+    ok(V_VT(&varresult) == VT_DISPATCH, "vt %x\n", V_VT(&varresult));
     VariantClear(&varresult);
 
     /* call CloneDispatch with automatic value getting */

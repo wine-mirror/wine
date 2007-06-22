@@ -39,6 +39,15 @@ library TestTypelib
 
     [
         odl,
+        uuid(12345678-1234-4321-1234-121212121212)
+    ]
+    interface ISomethingFromDispatch : IDispatch
+    {
+        HRESULT anotherfn(void);
+    }
+
+    [
+        odl,
         uuid(a1f8cae3-c947-4c5f-b57d-c87b9b5f3586),
         oleautomation,
         dual
@@ -93,6 +102,10 @@ library TestTypelib
 
         [id(DISPID_TM_ERROR)]
         HRESULT Error();
+
+        [propget, id(DISPID_TM_CLONEINTERFACE)]
+        HRESULT CloneInterface([out, retval] ISomethingFromDispatch **ppVal);
+
     }
 
     [

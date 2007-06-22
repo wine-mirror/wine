@@ -5307,7 +5307,7 @@ static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc,
         break;
 
     case TKIND_INTERFACE:
-        if (IsEqualIID(&IID_IDispatch, &tattr->guid))
+        if (tattr->wTypeFlags & TYPEFLAG_FDISPATCHABLE)
            *vt |= VT_DISPATCH;
         else
            *vt |= VT_UNKNOWN;
