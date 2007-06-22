@@ -793,34 +793,25 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, F
     dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
 
-    if(dc->funcs->pAngleArc)
-    {
-        result = dc->funcs->pAngleArc( dc->physDev, x, y, dwRadius, eStartAngle, eSweepAngle );
-
-        GDI_ReleaseObj( hdc );
-        return result;
-    }
-    GDI_ReleaseObj( hdc );
-
-    /* AngleArc always works counterclockwise */
-    arcdir = GetArcDirection( hdc );
-    SetArcDirection( hdc, AD_COUNTERCLOCKWISE );
-
-    x1 = x + cos(eStartAngle*M_PI/180) * dwRadius;
-    y1 = y - sin(eStartAngle*M_PI/180) * dwRadius;
+    /* Calculate the end point */
     x2 = x + cos((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius;
     y2 = y - sin((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius;
 
-    LineTo( hdc, x1, y1 );
-    if( eSweepAngle >= 0 )
-        result = Arc( hdc, x-dwRadius, y-dwRadius, x+dwRadius, y+dwRadius,
-		      x1, y1, x2, y2 );
-    else
-	result = Arc( hdc, x-dwRadius, y-dwRadius, x+dwRadius, y+dwRadius,
-		      x2, y2, x1, y1 );
+    if(!PATH_IsPathOpen(dc->path) && dc->funcs->pAngleArc)
+        result = dc->funcs->pAngleArc( dc->physDev, x, y, dwRadius, eStartAngle, eSweepAngle );
+    else { /* do it using ArcTo */
+        x1 = x + cos(eStartAngle*M_PI/180) * dwRadius;
+        y1 = y - sin(eStartAngle*M_PI/180) * dwRadius;
 
-    if( result ) MoveToEx( hdc, x2, y2, NULL );
-    SetArcDirection( hdc, arcdir );
+        arcdir = SetArcDirection( hdc, eSweepAngle >= 0 ? AD_COUNTERCLOCKWISE : AD_CLOCKWISE);
+        result = ArcTo( hdc, x-dwRadius, y-dwRadius, x+dwRadius, y+dwRadius,
+                        x1, y1, x2, y2 );
+        SetArcDirection( hdc, arcdir );
+    }
+    if (result) {
+        dc->CursPosX = x2;
+        dc->CursPosY = y2;
+    }
     return result;
 }
 

@@ -252,7 +252,7 @@ done:
 static const path_test_t anglearc_path[] = {
     {0, 0, PT_MOVETO, 0, 0}, /* 0 */
     {371, 229, PT_LINETO, 0, 0}, /* 1 */
-    {352, 211, PT_BEZIERTO, 1, 0}, /* 2 */
+    {352, 211, PT_BEZIERTO, 0, 0}, /* 2 */
     {327, 200, PT_BEZIERTO, 0, 0}, /* 3 */
     {300, 200, PT_BEZIERTO, 0, 0}, /* 4 */
     {245, 200, PT_BEZIERTO, 0, 0}, /* 5 */
@@ -261,16 +261,16 @@ static const path_test_t anglearc_path[] = {
     {200, 300, PT_BEZIERTO, 0, 2}, /* 8 */
     {200, 300, PT_BEZIERTO, 0, 2}, /* 9 */
     {200, 300, PT_BEZIERTO, 0, 2}, /* 10 */
-    {231, 260, PT_LINETO, 1, 0}, /* 11 */
-    {245, 235, PT_BEZIERTO, 1, 1}, /* 12 */
-    {271, 220, PT_BEZIERTO, 0, 1}, /* 13 */
-    {300, 220, PT_BEZIERTO, 0, 1}, /* 14 */
-    {344, 220, PT_BEZIERTO, 0, 1}, /* 15 */
-    {380, 256, PT_BEZIERTO, 0, 1}, /* 16 */
-    {380, 300, PT_BEZIERTO, 0, 1}, /* 17 */
-    {380, 314, PT_BEZIERTO, 0, 1}, /* 18 */
-    {376, 328, PT_BEZIERTO, 0, 1}, /* 19 */
-    {369, 340, PT_BEZIERTO | PT_CLOSEFIGURE, 0, 1}}; /* 20 */
+    {231, 260, PT_LINETO, 0, 0}, /* 11 */
+    {245, 235, PT_BEZIERTO, 0, 0}, /* 12 */
+    {271, 220, PT_BEZIERTO, 0, 0}, /* 13 */
+    {300, 220, PT_BEZIERTO, 0, 0}, /* 14 */
+    {344, 220, PT_BEZIERTO, 0, 0}, /* 15 */
+    {380, 256, PT_BEZIERTO, 0, 0}, /* 16 */
+    {380, 300, PT_BEZIERTO, 0, 0}, /* 17 */
+    {380, 314, PT_BEZIERTO, 0, 0}, /* 18 */
+    {376, 328, PT_BEZIERTO, 0, 0}, /* 19 */
+    {369, 340, PT_BEZIERTO | PT_CLOSEFIGURE, 0, 0}}; /* 20 */
 
 static void test_anglearc(void)
 {
@@ -287,7 +287,7 @@ static void test_anglearc(void)
     CloseFigure(hdc);
     EndPath(hdc);
 
-    ok_path(hdc, "anglearc_path", anglearc_path, sizeof(anglearc_path)/sizeof(path_test_t), 0);
+    ok_path(hdc, "anglearc_path", anglearc_path, sizeof(anglearc_path)/sizeof(path_test_t), 1);
 done:
     ReleaseDC(0, hdc);
 }
