@@ -662,18 +662,9 @@ static HRESULT exec_fontsize(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     if(out) {
         WCHAR val[10] = {0};
 
-        switch(V_VT(out)) {
-        case VT_I4:
-            get_font_size(This, val);
-            V_I4(out) = strtolW(val, NULL, 10);
-            break;
-        case VT_BSTR:
-            get_font_size(This, val);
-            V_BSTR(out) = SysAllocString(val);
-            break;
-        default:
-            FIXME("unsupported vt %d\n", V_VT(out));
-        }
+        get_font_size(This, val);
+        V_VT(out) = VT_I4;
+        V_I4(out) = strtolW(val, NULL, 10);
     }
 
     if(in) {
