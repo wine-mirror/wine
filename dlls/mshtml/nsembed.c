@@ -1206,8 +1206,10 @@ static nsresult NSAPI nsEmbeddingSiteWindow_GetDimensions(nsIEmbeddingSiteWindow
 static nsresult NSAPI nsEmbeddingSiteWindow_SetFocus(nsIEmbeddingSiteWindow *iface)
 {
     NSContainer *This = NSEMBWNDS_THIS(iface);
-    WARN("(%p)\n", This);
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    TRACE("(%p)\n", This);
+
+    return nsIBaseWindow_SetFocus(This->window);
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_GetVisibility(nsIEmbeddingSiteWindow *iface,
