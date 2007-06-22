@@ -121,6 +121,9 @@ DEFINE_EXPECT(Terminate);
 DEFINE_EXPECT(Protocol_Read);
 DEFINE_EXPECT(LockRequest);
 DEFINE_EXPECT(UnlockRequest);
+DEFINE_EXPECT(OnFocus_TRUE);
+DEFINE_EXPECT(OnFocus_FALSE);
+DEFINE_EXPECT(RequestUIActivate);
 
 static IUnknown *doc_unk;
 static BOOL expect_LockContainer_fLock;
@@ -1320,8 +1323,8 @@ static HRESULT WINAPI InPlaceSiteEx_OnInPlaceDeactivateEx(IOleInPlaceSiteEx *ifa
 
 static HRESULT WINAPI InPlaceSiteEx_RequestUIActivate(IOleInPlaceSiteEx *iface)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(RequestUIActivate);
+    return S_OK;
 }
 
 static const IOleInPlaceSiteExVtbl InPlaceSiteVtbl = {
@@ -1594,6 +1597,83 @@ static const IOleDocumentSiteVtbl DocumentSiteVtbl = {
 };
 
 static IOleDocumentSite DocumentSite = { &DocumentSiteVtbl };
+
+static HRESULT WINAPI OleControlSite_QueryInterface(IOleControlSite *iface, REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI OleControlSite_AddRef(IOleControlSite *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI OleControlSite_Release(IOleControlSite *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI OleControlSite_OnControlInfoChanged(IOleControlSite *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControlSite_LockInPlaceActive(IOleControlSite *iface, BOOL fLock)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControlSite_GetExtendedControl(IOleControlSite *iface, IDispatch **ppDisp)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControlSite_TransformCoords(IOleControlSite *iface, POINTL *pPtHimetric,
+        POINTF *pPtfContainer, DWORD dwFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControlSite_TranslateAccelerator(IOleControlSite *iface,
+        MSG *pMsg, DWORD grfModifiers)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControlSite_OnFocus(IOleControlSite *iface, BOOL fGotFocus)
+{
+    if(fGotFocus)
+        CHECK_EXPECT(OnFocus_TRUE);
+    else
+        CHECK_EXPECT(OnFocus_FALSE);
+    return S_OK;
+}
+
+static HRESULT WINAPI OleControlSite_ShowPropertyFrame(IOleControlSite *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IOleControlSiteVtbl OleControlSiteVtbl = {
+    OleControlSite_QueryInterface,
+    OleControlSite_AddRef,
+    OleControlSite_Release,
+    OleControlSite_OnControlInfoChanged,
+    OleControlSite_LockInPlaceActive,
+    OleControlSite_GetExtendedControl,
+    OleControlSite_TransformCoords,
+    OleControlSite_TranslateAccelerator,
+    OleControlSite_OnFocus,
+    OleControlSite_ShowPropertyFrame
+};
+
+static IOleControlSite OleControlSite = { &OleControlSiteVtbl };
 
 static HRESULT WINAPI DocHostUIHandler_QueryInterface(IDocHostUIHandler2 *iface, REFIID riid, void **ppv)
 {
@@ -2122,6 +2202,8 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &ServiceProvider;
     else if(ipsex && IsEqualGUID(&IID_IOleInPlaceSiteEx, riid))
         *ppv = &InPlaceSiteEx;
+    else if(IsEqualGUID(&IID_IOleControlSite, riid))
+        *ppv = &OleControlSite;
 
     /* TODO:
      * {D48A6EC6-6A4A-11CF-94A7-444553540000}
@@ -3090,6 +3172,7 @@ static void test_InPlaceDeactivate(IUnknown *unk, BOOL expect_call)
         return;
 
     if(expect_call) {
+        SET_EXPECT(OnFocus_FALSE);
         if(ipsex)
             SET_EXPECT(OnInPlaceDeactivateEx);
         else
@@ -3098,6 +3181,7 @@ static void test_InPlaceDeactivate(IUnknown *unk, BOOL expect_call)
     hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
     ok(hres == S_OK, "InPlaceDeactivate failed: %08x\n", hres);
     if(expect_call) {
+        CHECK_CALLED(OnFocus_FALSE);
         if(ipsex)
             CHECK_CALLED(OnInPlaceDeactivateEx);
         else
