@@ -201,6 +201,9 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceOb
         SetWindowPos(This->hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
     }
 
+    This->focus = FALSE;
+    notif_focus(This);
+
     This->in_place_active = FALSE;
     if(This->ipsite) {
         IOleInPlaceSiteEx *ipsiteex;
