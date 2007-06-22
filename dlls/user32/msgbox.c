@@ -70,9 +70,11 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     HWND hItem;
     HDC hdc;
     int i, buttons;
-    int bspace, bw, bh, theight, tleft, wwidth, wheight, bpos;
+    int bspace, bw, bh, theight, tleft, wwidth, wheight, wleft, wtop, bpos;
     int borheight, borwidth, iheight, ileft, iwidth, twidth, tiheight;
     NONCLIENTMETRICSW nclm;
+    HMONITOR monitor = 0;
+    MONITORINFO mon_info;
     LPCWSTR lpszText;
     WCHAR buf[256];
 
@@ -244,9 +246,15 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     wwidth  = tleft + twidth + ileft + borwidth;
     wheight = 8 + tiheight + bh + borheight;
 
-    /* Resize the window */
-    SetWindowPos(hwnd, 0, 0, 0, wwidth, wheight,
-		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
+    /* Message boxes are always desktop centered, so query desktop size and center window */
+    monitor = MonitorFromWindow(lpmb->hwndOwner ? lpmb->hwndOwner : GetActiveWindow(), MONITOR_DEFAULTTOPRIMARY);
+    GetMonitorInfoW(monitor, &mon_info);
+    wleft = (mon_info.rcWork.left + mon_info.rcWork.right - wwidth) / 2;
+    wtop = (mon_info.rcWork.top + mon_info.rcWork.bottom - wheight) / 2;
+
+    /* Resize and center the window */
+    SetWindowPos(hwnd, 0, wleft, wtop, wwidth, wheight,
+		 SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
 
     /* Position the icon */
     SetWindowPos(GetDlgItem(hwnd, MSGBOX_IDICON), 0, ileft, (tiheight - iheight) / 2, 0, 0,
