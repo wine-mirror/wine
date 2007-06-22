@@ -1627,15 +1627,8 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
         nsres = nsIDOMWindow_QueryInterface(dom_window, &IID_nsIDOMEventTarget, (void**)&target);
         nsIDOMWindow_Release(dom_window);
         if(NS_SUCCEEDED(nsres)) {
-            nsAString keypress_str, load_str;
-            static const PRUnichar wsz_keypress[] = {'k','e','y','p','r','e','s','s',0};
+            nsAString load_str;
             static const PRUnichar wsz_load[] = {'l','o','a','d',0};
-
-            nsAString_Init(&keypress_str, wsz_keypress);
-            nsres = nsIDOMEventTarget_AddEventListener(target, &keypress_str, NSEVENTLIST(ret), FALSE);
-            nsAString_Finish(&keypress_str);
-            if(NS_FAILED(nsres))
-                ERR("AddEventTarget failed: %08x\n", nsres);
 
             nsAString_Init(&load_str, wsz_load);
             nsres = nsIDOMEventTarget_AddEventListener(target, &load_str, NSEVENTLIST(ret), TRUE);
@@ -1650,6 +1643,8 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     }else {
         ERR("GetContentDOMWindow failed: %08x\n", nsres);
     }
+
+    init_nsevents(ret);
 
     nsres = nsIWebBrowser_QueryInterface(ret->webbrowser, &IID_nsIScrollable, (void**)&scrollable);
     if(NS_SUCCEEDED(nsres)) {

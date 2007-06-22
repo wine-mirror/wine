@@ -126,6 +126,11 @@ struct HTMLDocument {
     HTMLDOMNode *nodes;
 };
 
+typedef struct {
+    const nsIDOMEventListenerVtbl      *lpDOMEventListenerVtbl;
+    NSContainer *This;
+} nsEventListener;
+
 struct NSContainer {
     const nsIWebBrowserChromeVtbl       *lpWebBrowserChromeVtbl;
     const nsIContextMenuListenerVtbl    *lpContextMenuListenerVtbl;
@@ -136,6 +141,8 @@ struct NSContainer {
     const nsIWeakReferenceVtbl          *lpWeakReferenceVtbl;
     const nsISupportsWeakReferenceVtbl  *lpSupportsWeakReferenceVtbl;
     const nsIDOMEventListenerVtbl       *lpDOMEventListenerVtbl;
+
+    nsEventListener keypress_listener;
 
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
@@ -350,6 +357,7 @@ void nsAString_Finish(nsAString*);
 nsIInputStream *create_nsstream(const char*,PRInt32);
 nsICommandParams *create_nscommand_params(void);
 void nsnode_to_nsstring(nsIDOMNode*,nsAString*);
+void init_nsevents(NSContainer*);
 
 BSCallback *create_bscallback(IMoniker*);
 HRESULT start_binding(BSCallback*);

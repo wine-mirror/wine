@@ -30,6 +30,7 @@ C_SRCS = \
 	main.c \
 	navigate.c \
 	nsembed.c \
+	nsevents.c \
 	nsio.c \
 	nsservice.c \
 	olecmd.c \

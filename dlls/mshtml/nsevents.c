@@ -1,0 +1,148 @@
+/*
+ * Copyright 2007 Jacek Caban for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "config.h"
+
+#include <stdarg.h>
+
+#define COBJMACROS
+
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "ole2.h"
+
+#include "wine/debug.h"
+#include "wine/unicode.h"
+
+#include "mshtml_private.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
+
+#define NSEVENTLIST_THIS(iface) DEFINE_THIS(nsEventListener, DOMEventListener, iface)
+
+static nsresult NSAPI nsDOMEventListener_QueryInterface(nsIDOMEventListener *iface,
+                                                        nsIIDRef riid, nsQIResult result)
+{
+    nsEventListener *This = NSEVENTLIST_THIS(iface);
+
+    *result = NULL;
+
+    if(IsEqualGUID(&IID_nsISupports, riid)) {
+        TRACE("(%p)->(IID_nsISupports, %p)\n", This, result);
+        *result = NSEVENTLIST(This);
+    }else if(IsEqualGUID(&IID_nsIDOMEventListener, riid)) {
+        TRACE("(%p)->(IID_nsIDOMEventListener %p)\n", This, result);
+        *result = NSEVENTLIST(This);
+    }
+
+    if(*result) {
+        nsIWebBrowserChrome_AddRef(NSEVENTLIST(This));
+        return NS_OK;
+    }
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
+    return NS_NOINTERFACE;
+}
+
+static nsrefcnt NSAPI nsDOMEventListener_AddRef(nsIDOMEventListener *iface)
+{
+    NSContainer *This = NSEVENTLIST_THIS(iface)->This;
+    return nsIWebBrowserChrome_AddRef(NSWBCHROME(This));
+}
+
+static nsrefcnt NSAPI nsDOMEventListener_Release(nsIDOMEventListener *iface)
+{
+    NSContainer *This = NSEVENTLIST_THIS(iface)->This;
+    return nsIWebBrowserChrome_Release(NSWBCHROME(This));
+}
+
+static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
+        nsIDOMEvent *event)
+{
+    NSContainer *This = NSEVENTLIST_THIS(iface)->This;
+
+    TRACE("(%p)->(%p)\n", This, event);
+
+    update_doc(This->doc, UPDATE_UI);
+    if(This->doc->usermode == EDITMODE)
+        handle_edit_event(This->doc, event);
+
+    return NS_OK;
+}
+
+#undef NSEVENTLIST_THIS
+
+#define EVENTLISTENER_VTBL(handler) \
+    { \
+        nsDOMEventListener_QueryInterface, \
+        nsDOMEventListener_AddRef, \
+        nsDOMEventListener_Release, \
+        handler, \
+    };
+
+static const nsIDOMEventListenerVtbl keypress_vtbl =  EVENTLISTENER_VTBL(handle_keypress);
+
+static void init_event(nsIDOMEventTarget *target, const PRUnichar *type,
+        nsIDOMEventListener *listener, BOOL capture)
+{
+    nsAString type_str;
+    nsresult nsres;
+
+    nsAString_Init(&type_str, type);
+    nsres = nsIDOMEventTarget_AddEventListener(target, &type_str, listener, capture);
+    nsAString_Finish(&type_str);
+    if(NS_FAILED(nsres))
+        ERR("AddEventTarget failed: %08x\n", nsres);
+
+}
+
+static void init_listener(nsEventListener *This, NSContainer *container,
+        const nsIDOMEventListenerVtbl *vtbl)
+{
+    This->lpDOMEventListenerVtbl = vtbl;
+    This->This = container;
+}
+
+void init_nsevents(NSContainer *This)
+{
+    nsIDOMWindow *dom_window;
+    nsIDOMEventTarget *target;
+    nsresult nsres;
+
+    static const PRUnichar wsz_keypress[]  = {'k','e','y','p','r','e','s','s',0};
+
+    init_listener(&This->keypress_listener,    This, &keypress_vtbl);
+
+    nsres = nsIWebBrowser_GetContentDOMWindow(This->webbrowser, &dom_window);
+    if(NS_FAILED(nsres)) {
+        ERR("GetContentDOMWindow failed: %08x\n", nsres);
+        return;
+    }
+
+    nsres = nsIDOMWindow_QueryInterface(dom_window, &IID_nsIDOMEventTarget, (void**)&target);
+    nsIDOMWindow_Release(dom_window);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMEventTarget interface: %08x\n", nsres);
+        return;
+    }
+
+    init_event(target, wsz_keypress,   NSEVENTLIST(&This->keypress_listener),    FALSE);
+
+    nsIDOMEventTarget_Release(target);
+}
