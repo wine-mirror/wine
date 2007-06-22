@@ -35,7 +35,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(debug_buffer);
 
-static void dump_DEBUG_MODULE_INFORMATION(PDEBUG_MODULE_INFORMATION iBuf)
+static void dump_DEBUG_MODULE_INFORMATION(const DEBUG_MODULE_INFORMATION *iBuf)
 {
   TRACE( "MODULE_INFORMATION:%p\n", iBuf );
   if (NULL == iBuf) return ;
@@ -44,7 +44,7 @@ static void dump_DEBUG_MODULE_INFORMATION(PDEBUG_MODULE_INFORMATION iBuf)
   TRACE( "Flags:%d\n", iBuf->Flags );
 }
 
-static void dump_DEBUG_HEAP_INFORMATION(PDEBUG_HEAP_INFORMATION iBuf)
+static void dump_DEBUG_HEAP_INFORMATION(const DEBUG_HEAP_INFORMATION *iBuf)
 {
   TRACE( "HEAP_INFORMATION:%p\n", iBuf );
   if (NULL == iBuf) return ;
@@ -52,7 +52,7 @@ static void dump_DEBUG_HEAP_INFORMATION(PDEBUG_HEAP_INFORMATION iBuf)
   TRACE( "Flags:%d\n", iBuf->Flags );
 }
 
-static void dump_DEBUG_LOCK_INFORMATION(PDEBUG_LOCK_INFORMATION iBuf)
+static void dump_DEBUG_LOCK_INFORMATION(const DEBUG_LOCK_INFORMATION *iBuf)
 {
   TRACE( "LOCK_INFORMATION:%p\n", iBuf );
 
@@ -70,7 +70,7 @@ static void dump_DEBUG_LOCK_INFORMATION(PDEBUG_LOCK_INFORMATION iBuf)
   TRACE( "NumberOfExclusiveWaiters:%d\n", iBuf->NumberOfExclusiveWaiters );
 }
 
-static void dump_DEBUG_BUFFER(PDEBUG_BUFFER iBuf)
+static void dump_DEBUG_BUFFER(const DEBUG_BUFFER *iBuf)
 {
   if (NULL == iBuf) return ;
   TRACE( "SectionHandle:%p\n", iBuf->SectionHandle);

@@ -161,7 +161,7 @@ static inline BOOL is_invalid_dos_char( WCHAR ch )
 }
 
 /* check if the device can be a mounted volume */
-static inline int is_valid_mounted_device( struct stat *st )
+static inline int is_valid_mounted_device( const struct stat *st )
 {
 #if defined(linux) || defined(__sun__)
     return S_ISBLK( st->st_mode );
