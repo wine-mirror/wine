@@ -3214,6 +3214,19 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
 
     device_update_fixed_function_usage_map(This);
 
+    if (This->stateBlock->lowest_disabled_stage <= GL_LIMITS(textures)) {
+        for (i = 0; i < MAX_SAMPLERS; ++i) {
+            if (This->texUnitMap[i] != i) {
+                device_map_stage(This, i, i);
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
+                if (i < MAX_TEXTURES) {
+                    markTextureStagesDirty(This, i);
+                }
+            }
+        }
+        return;
+    }
+
     /* No pixel shader, and we do not have enough texture units available. Try to skip NULL textures
      * First, see if we can succeed at all
      */
@@ -3266,7 +3279,7 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
      * -> Whith a 1:1 mapping oneToOneTexUnitMap is set to avoid checking MAX_SAMPLERS array
      * entries to make pixel shaders cheaper. MAX_SAMPLERS will be 128 in dx10
      */
-    if(This->stateBlock->pixelShader || This->stateBlock->lowest_disabled_stage <= GL_LIMITS(textures)) {
+    if (This->stateBlock->pixelShader) {
         if(This->oneToOneTexUnitMap) {
             TRACE("Not touching 1:1 map\n");
             return;
