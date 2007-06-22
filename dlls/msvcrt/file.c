@@ -2764,7 +2764,7 @@ int CDECL MSVCRT_fputws(const MSVCRT_wchar_t *s, MSVCRT_FILE* file)
       return MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
     for (i=0; i<len; i++)
       {
-	if ((s[i] == L'\n') && (MSVCRT_fputc('\r', file) == MSVCRT_EOF))
+        if ((s[i] == '\n') && (MSVCRT_fputc('\r', file) == MSVCRT_EOF))
 	  return MSVCRT_WEOF;
 	if (MSVCRT_fputwc(s[i], file) == MSVCRT_WEOF)
 	  return MSVCRT_WEOF; 
