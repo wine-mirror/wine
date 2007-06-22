@@ -2,6 +2,7 @@
  * Unit test suite for paths
  *
  * Copyright 2007 Laurent Vromman
+ * Copyright 2007 Misha Koshelev
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -107,7 +108,9 @@ typedef struct
      * but not on native? */
     int wine_only_entries_preceding;
 
-    /* Does this entry itself not match on wine? */
+    /* 0 - This entry matches on wine.
+     * 1 - This entry corresponds to a single entry on wine that does not match the native entry.
+     * 2 - This entry is currently skipped on wine but present on native. */
     int todo;
 } path_test_t;
 
@@ -115,17 +118,18 @@ typedef struct
  *
  * We use a "smart" matching algorithm that allows us to detect partial improvements
  * in conformance. Specifically, two running indices are kept, one through the actual
- * path and one through the expected path. The actual path index always increases,
- * whereas, if the wine_entries_preceding field of the appropriate path_test_t element is
- * non-zero, the expected path index does not increase for that many elements as long as
- * there is no match. This allows us to todo_wine extra path elements that are present only
- * in wine but not on native.
+ * path and one through the expected path. The actual path index increases unless there is
+ * no match and the todo field of the appropriate path_test_t element is 2. Similarly,
+ * if the wine_entries_preceding field of the appropriate path_test_t element is non-zero,
+ * the expected path index does not increase for that many elements as long as there
+ * is no match. This allows us to todo_wine extra path elements that are present only
+ * on wine but not on native and vice versa.
  *
  * Note that if expected_size is zero and the WINETEST_DEBUG environment variable is
  * greater than 2, the trace() output is a C path_test_t array structure, useful for making
  * new tests that use this function.
  */
-static void ok_path(HDC hdc, const path_test_t *expected, int expected_size, BOOL todo_size)
+static void ok_path(HDC hdc, const char *path_name, const path_test_t *expected, int expected_size, BOOL todo_size)
 {
     static const char *type_string[8] = { "Unknown (0)", "PT_CLOSEFIGURE", "PT_LINETO",
                                           "PT_LINETO | PT_CLOSEFIGURE", "PT_BEZIERTO",
@@ -133,7 +137,7 @@ static void ok_path(HDC hdc, const path_test_t *expected, int expected_size, BOO
     POINT *pnt = NULL;
     BYTE *types = NULL;
     int size, numskip,
-        idx, eidx = 0;
+        idx = 0, eidx = 0;
 
     /* Get the path */
     assert(hdc != 0);
@@ -156,17 +160,17 @@ static void ok_path(HDC hdc, const path_test_t *expected, int expected_size, BOO
     else
         ok(size == expected_size, "Path size %d does not match expected size %d\n", size, expected_size);
 
-    if (expected_size) numskip = expected[eidx].wine_only_entries_preceding;
-    for (idx = 0; idx < size && eidx < expected_size; idx++)
+    if (winetest_debug > 2)
+        trace("static const path_test_t %s[] = {\n", path_name);
+
+    numskip = expected_size ? expected[eidx].wine_only_entries_preceding : 0;
+    while (idx < size && eidx < expected_size)
     {
         /* We allow a few pixels fudge in matching X and Y coordinates to account for imprecision in
          * floating point to integer conversion */
         BOOL match = (types[idx] == expected[eidx].type) &&
-            (pnt[idx].x >= expected[eidx].x-1 && pnt[idx].x <= expected[eidx].x+1) &&
-            (pnt[idx].y >= expected[eidx].y-1 && pnt[idx].y <= expected[eidx].y+1);
-
-        if (winetest_debug > 2)
-            trace("{%d, %d, %s, 0, 0}, /* %d */\n", pnt[idx].x, pnt[idx].y, type_string[types[idx]], idx);
+            (pnt[idx].x >= expected[eidx].x-2 && pnt[idx].x <= expected[eidx].x+2) &&
+            (pnt[idx].y >= expected[eidx].y-2 && pnt[idx].y <= expected[eidx].y+2);
 
         if (expected[eidx].todo || numskip) todo_wine
             ok(match, "Expected #%d: %s (%d,%d) but got %s (%d,%d)\n", eidx,
@@ -177,6 +181,13 @@ static void ok_path(HDC hdc, const path_test_t *expected, int expected_size, BOO
                type_string[expected[eidx].type], expected[eidx].x, expected[eidx].y,
                type_string[types[idx]], pnt[idx].x, pnt[idx].y);
 
+        if (match || expected[eidx].todo != 2)
+        {
+            if (winetest_debug > 2)
+                trace("    {%d, %d, %s, 0, 0}%s /* %d */\n", pnt[idx].x, pnt[idx].y,
+                      type_string[types[idx]], idx < size-1 ? "," : "};", idx);
+            idx++;
+        }
         if (match || !numskip--)
             numskip = expected[++eidx].wine_only_entries_preceding;
     }
@@ -185,7 +196,8 @@ static void ok_path(HDC hdc, const path_test_t *expected, int expected_size, BOO
      * sure to display the entire path */
     if (winetest_debug > 2 && idx < size)
         for (; idx < size; idx++)
-            trace("{%d, %d, %s, 0, 0}, /* %d */\n", pnt[idx].x, pnt[idx].y, type_string[types[idx]], idx);
+            trace("    {%d, %d, %s, 0, 0}%s /* %d */\n", pnt[idx].x, pnt[idx].y,
+                  type_string[types[idx]], idx < size-1 ? "," : "};", idx);
 
     HeapFree(GetProcessHeap(), 0, types);
     HeapFree(GetProcessHeap(), 0, pnt);
@@ -232,7 +244,50 @@ static void test_arcto(void)
     CloseFigure(hdc);
     EndPath(hdc);
 
-    ok_path(hdc, arcto_path, sizeof(arcto_path)/sizeof(path_test_t), 0);
+    ok_path(hdc, "arcto_path", arcto_path, sizeof(arcto_path)/sizeof(path_test_t), 0);
+done:
+    ReleaseDC(0, hdc);
+}
+
+static const path_test_t anglearc_path[] = {
+    {0, 0, PT_MOVETO, 0, 0}, /* 0 */
+    {371, 229, PT_LINETO, 0, 0}, /* 1 */
+    {352, 211, PT_BEZIERTO, 1, 0}, /* 2 */
+    {327, 200, PT_BEZIERTO, 0, 0}, /* 3 */
+    {300, 200, PT_BEZIERTO, 0, 0}, /* 4 */
+    {245, 200, PT_BEZIERTO, 0, 0}, /* 5 */
+    {200, 245, PT_BEZIERTO, 0, 0}, /* 6 */
+    {200, 300, PT_BEZIERTO, 0, 0}, /* 7 */
+    {200, 300, PT_BEZIERTO, 0, 2}, /* 8 */
+    {200, 300, PT_BEZIERTO, 0, 2}, /* 9 */
+    {200, 300, PT_BEZIERTO, 0, 2}, /* 10 */
+    {231, 260, PT_LINETO, 1, 0}, /* 11 */
+    {245, 235, PT_BEZIERTO, 1, 1}, /* 12 */
+    {271, 220, PT_BEZIERTO, 0, 1}, /* 13 */
+    {300, 220, PT_BEZIERTO, 0, 1}, /* 14 */
+    {344, 220, PT_BEZIERTO, 0, 1}, /* 15 */
+    {380, 256, PT_BEZIERTO, 0, 1}, /* 16 */
+    {380, 300, PT_BEZIERTO, 0, 1}, /* 17 */
+    {380, 314, PT_BEZIERTO, 0, 1}, /* 18 */
+    {376, 328, PT_BEZIERTO, 0, 1}, /* 19 */
+    {369, 340, PT_BEZIERTO | PT_CLOSEFIGURE, 0, 1}}; /* 20 */
+
+static void test_anglearc(void)
+{
+    HDC hdc = GetDC(0);
+    BeginPath(hdc);
+    if (!AngleArc(hdc, 300, 300, 100, 45.0, 135.0) &&
+        GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        /* AngleArc is only available on Win2k and later */
+        skip("AngleArc is not available\n");
+        goto done;
+    }
+    AngleArc(hdc, 300, 300, 80, 150.0, -180.0);
+    CloseFigure(hdc);
+    EndPath(hdc);
+
+    ok_path(hdc, "anglearc_path", anglearc_path, sizeof(anglearc_path)/sizeof(path_test_t), 0);
 done:
     ReleaseDC(0, hdc);
 }
@@ -241,4 +296,5 @@ START_TEST(path)
 {
     test_widenpath();
     test_arcto();
+    test_anglearc();
 }
