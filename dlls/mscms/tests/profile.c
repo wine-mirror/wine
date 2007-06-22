@@ -394,8 +394,11 @@ static void test_GetColorProfileHeader(void)
         ret = pGetColorProfileHeader( NULL, &header );
         ok( !ret, "GetColorProfileHeader() succeeded (%d)\n", GetLastError() );
 
-        ret = pGetColorProfileHeader( handle, NULL );
-        ok( !ret, "GetColorProfileHeader() succeeded (%d)\n", GetLastError() );
+        if (0) /* Crashes on Vista */
+        {
+            ret = pGetColorProfileHeader( handle, NULL );
+            ok( !ret, "GetColorProfileHeader() succeeded (%d)\n", GetLastError() );
+        }
 
         /* Functional checks */
 
