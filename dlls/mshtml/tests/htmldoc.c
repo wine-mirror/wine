@@ -1073,7 +1073,8 @@ static IOleContainer OleContainer = { &OleContainerVtbl };
 
 static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFIID riid, void **ppv)
 {
-    return QueryInterface(riid, ppv);
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI InPlaceFrame_AddRef(IOleInPlaceFrame *iface)
@@ -1113,6 +1114,13 @@ static HRESULT WINAPI InPlaceFrame_RequestBorderSpace(IOleInPlaceFrame *iface,
 
 static HRESULT WINAPI InPlaceFrame_SetBorderSpace(IOleInPlaceFrame *iface,
         LPCBORDERWIDTHS pborderwidths)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceUIWindow_SetActiveObject(IOleInPlaceFrame *iface,
+        IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
@@ -1198,6 +1206,20 @@ static const IOleInPlaceFrameVtbl InPlaceFrameVtbl = {
 
 static IOleInPlaceFrame InPlaceFrame = { &InPlaceFrameVtbl };
 
+static const IOleInPlaceFrameVtbl InPlaceUIWindowVtbl = {
+    InPlaceFrame_QueryInterface,
+    InPlaceFrame_AddRef,
+    InPlaceFrame_Release,
+    InPlaceFrame_GetWindow,
+    InPlaceFrame_ContextSensitiveHelp,
+    InPlaceFrame_GetBorder,
+    InPlaceFrame_RequestBorderSpace,
+    InPlaceFrame_SetBorderSpace,
+    InPlaceUIWindow_SetActiveObject,
+};
+
+static IOleInPlaceFrame InPlaceUIWindow = { &InPlaceUIWindowVtbl };
+
 static HRESULT WINAPI InPlaceSite_QueryInterface(IOleInPlaceSiteEx *iface, REFIID riid, void **ppv)
 {
     return QueryInterface(riid, ppv);
@@ -1258,7 +1280,7 @@ static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSiteEx *iface,
         *ppFrame = &InPlaceFrame;
     ok(ppDoc != NULL, "ppDoc = NULL\n");
     if(ppDoc)
-        *ppDoc = NULL;
+        *ppDoc = (IOleInPlaceUIWindow*)&InPlaceUIWindow;
     ok(lprcPosRect != NULL, "lprcPosRect = NULL\n");
     if(lprcPosRect)
         memcpy(lprcPosRect, &rect, sizeof(RECT));
@@ -2209,8 +2231,6 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &OleContainer;
     else if(IsEqualGUID(&IID_IOleWindow, riid) || IsEqualGUID(&IID_IOleInPlaceSite, riid))
         *ppv = &InPlaceSiteEx;
-    else if(IsEqualGUID(&IID_IOleInPlaceUIWindow, riid) || IsEqualGUID(&IID_IOleInPlaceFrame, riid))
-        *ppv = &InPlaceFrame;
     else if(IsEqualGUID(&IID_IOleCommandTarget , riid))
         *ppv = &OleCommandTarget;
     else if(IsEqualGUID(&IID_IDispatch, riid))
