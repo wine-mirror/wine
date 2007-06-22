@@ -143,6 +143,7 @@ struct NSContainer {
     const nsIDOMEventListenerVtbl       *lpDOMEventListenerVtbl;
 
     nsEventListener keypress_listener;
+    nsEventListener load_listener;
 
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
@@ -357,6 +358,7 @@ void nsAString_Finish(nsAString*);
 nsIInputStream *create_nsstream(const char*,PRInt32);
 nsICommandParams *create_nscommand_params(void);
 void nsnode_to_nsstring(nsIDOMNode*,nsAString*);
+nsIController *get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
 
 BSCallback *create_bscallback(IMoniker*);

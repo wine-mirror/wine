@@ -589,7 +589,7 @@ void nsnode_to_nsstring(nsIDOMNode *nsdoc, nsAString *str)
     nsIContentSerializer_Release(serializer);
 }
 
-static nsIController *get_editor_controller(NSContainer *This)
+nsIController *get_editor_controller(NSContainer *This)
 {
     nsIController *ret = NULL;
     nsIEditingSession *editing_session = NULL;
@@ -1532,7 +1532,6 @@ static const nsISupportsWeakReferenceVtbl nsSupportsWeakReferenceVtbl = {
 
 NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
 {
-    nsIDOMWindow *dom_window;
     nsIWebBrowserSetup *wbsetup;
     nsIScrollable *scrollable;
     NSContainer *ret;
@@ -1620,29 +1619,6 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     nsres = nsIWebBrowser_SetParentURIContentListener(ret->webbrowser, NSURICL(ret));
     if(NS_FAILED(nsres))
         ERR("SetParentURIContentListener failed: %08x\n", nsres);
-
-    nsres = nsIWebBrowser_GetContentDOMWindow(ret->webbrowser, &dom_window);
-    if(NS_SUCCEEDED(nsres)) {
-        nsIDOMEventTarget *target;
-        nsres = nsIDOMWindow_QueryInterface(dom_window, &IID_nsIDOMEventTarget, (void**)&target);
-        nsIDOMWindow_Release(dom_window);
-        if(NS_SUCCEEDED(nsres)) {
-            nsAString load_str;
-            static const PRUnichar wsz_load[] = {'l','o','a','d',0};
-
-            nsAString_Init(&load_str, wsz_load);
-            nsres = nsIDOMEventTarget_AddEventListener(target, &load_str, NSEVENTLIST(ret), TRUE);
-            nsAString_Finish(&load_str);
-            if(NS_FAILED(nsres))
-                ERR("AddEventTarget failed: %08x\n", nsres);
-
-            nsIDOMEventTarget_Release(target);
-        }else {
-            ERR("Could not get nsIDOMEventTarget interface: %08x\n", nsres);
-        }
-    }else {
-        ERR("GetContentDOMWindow failed: %08x\n", nsres);
-    }
 
     init_nsevents(ret);
 

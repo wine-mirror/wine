@@ -86,6 +86,39 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
     return NS_OK;
 }
 
+static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event)
+{
+    NSContainer *This = NSEVENTLIST_THIS(iface)->This;
+    task_t *task;
+
+    TRACE("(%p)\n", This);
+
+    if(!This->doc)
+        return NS_OK;
+
+    if(This->editor_controller) {
+        nsIController_Release(This->editor_controller);
+        This->editor_controller = NULL;
+    }
+
+    if(This->doc->usermode == EDITMODE)
+        This->editor_controller = get_editor_controller(This);
+
+    task = mshtml_alloc(sizeof(task_t));
+
+    task->doc = This->doc;
+    task->task_id = TASK_PARSECOMPLETE;
+    task->next = NULL;
+
+    /*
+     * This should be done in the worker thread that parses HTML,
+     * but we don't have such thread (Gecko parses HTML for us).
+     */
+    push_task(task);
+
+    return NS_OK;
+}
+
 #undef NSEVENTLIST_THIS
 
 #define EVENTLISTENER_VTBL(handler) \
@@ -97,6 +130,7 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
     };
 
 static const nsIDOMEventListenerVtbl keypress_vtbl =  EVENTLISTENER_VTBL(handle_keypress);
+static const nsIDOMEventListenerVtbl load_vtbl =      EVENTLISTENER_VTBL(handle_load);
 
 static void init_event(nsIDOMEventTarget *target, const PRUnichar *type,
         nsIDOMEventListener *listener, BOOL capture)
@@ -126,8 +160,10 @@ void init_nsevents(NSContainer *This)
     nsresult nsres;
 
     static const PRUnichar wsz_keypress[]  = {'k','e','y','p','r','e','s','s',0};
+    static const PRUnichar wsz_load[]      = {'l','o','a','d',0};
 
     init_listener(&This->keypress_listener,    This, &keypress_vtbl);
+    init_listener(&This->load_listener,        This, &load_vtbl);
 
     nsres = nsIWebBrowser_GetContentDOMWindow(This->webbrowser, &dom_window);
     if(NS_FAILED(nsres)) {
@@ -143,6 +179,7 @@ void init_nsevents(NSContainer *This)
     }
 
     init_event(target, wsz_keypress,   NSEVENTLIST(&This->keypress_listener),    FALSE);
+    init_event(target, wsz_load,       NSEVENTLIST(&This->load_listener),        TRUE);
 
     nsIDOMEventTarget_Release(target);
 }
