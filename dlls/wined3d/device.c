@@ -3209,8 +3209,52 @@ static void device_update_fixed_function_usage_map(IWineD3DDeviceImpl *This) {
     }
 }
 
+static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
+    int i, tex;
+
+    device_update_fixed_function_usage_map(This);
+
+    /* No pixel shader, and we do not have enough texture units available. Try to skip NULL textures
+     * First, see if we can succeed at all
+     */
+    tex = 0;
+    for (i = 0; i < This->stateBlock->lowest_disabled_stage; ++i) {
+        if (!This->fixed_function_usage_map[i]) ++tex;
+    }
+
+    if (GL_LIMITS(textures) + tex < This->stateBlock->lowest_disabled_stage) {
+        FIXME("Too many bound textures to support the combiner settings\n");
+        return;
+    }
+
+    /* Now work out the mapping */
+    tex = 0;
+    This->oneToOneTexUnitMap = FALSE;
+    WARN("Non 1:1 mapping UNTESTED!\n");
+    for (i = 0; i < This->stateBlock->lowest_disabled_stage; ++i) {
+        /* Skip NULL textures */
+        if (!This->fixed_function_usage_map[i]) {
+            /* Map to -1, so the check below doesn't fail if a non-NULL
+             * texture is set on this stage */
+            TRACE("Mapping texture stage %d to -1\n", i);
+            device_map_stage(This, i, -1);
+
+            continue;
+        }
+
+        TRACE("Mapping texture stage %d to unit %d\n", i, tex);
+        if (This->texUnitMap[i] != tex) {
+            device_map_stage(This, i, tex);
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
+            markTextureStagesDirty(This, i);
+        }
+
+        ++tex;
+    }
+}
+
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
-    DWORD i, tex;
+    DWORD i;
     /* This code can assume that GL_NV_register_combiners are supported, otherwise
      * it is never called.
      *
@@ -3241,44 +3285,7 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
         This->oneToOneTexUnitMap = TRUE;
         return;
     } else {
-        device_update_fixed_function_usage_map(This);
-        /* No pixel shader, and we do not have enough texture units available. Try to skip NULL textures
-         * First, see if we can succeed at all
-         */
-        tex = 0;
-        for(i = 0; i < This->stateBlock->lowest_disabled_stage; i++) {
-            if (!This->fixed_function_usage_map[i]) ++tex;
-        }
-
-        if(GL_LIMITS(textures) + tex < This->stateBlock->lowest_disabled_stage) {
-            FIXME("Too many bound textures to support the combiner settings\n");
-            return;
-        }
-
-        /* Now work out the mapping */
-        tex = 0;
-        This->oneToOneTexUnitMap = FALSE;
-        WARN("Non 1:1 mapping UNTESTED!\n");
-        for(i = 0; i < This->stateBlock->lowest_disabled_stage; i++) {
-            /* Skip NULL textures */
-            if (!This->fixed_function_usage_map[i]) {
-                /* Map to -1, so the check below doesn't fail if a non-NULL
-                 * texture is set on this stage */
-                TRACE("Mapping texture stage %d to -1\n", i);
-                device_map_stage(This, i, -1);
-
-                continue;
-            }
-
-            TRACE("Mapping texture stage %d to unit %d\n", i, tex);
-            if(This->texUnitMap[i] != tex) {
-                device_map_stage(This, i, tex);
-                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
-                markTextureStagesDirty(This, i);
-            }
-
-            ++tex;
-        }
+        device_map_fixed_function_samplers(This);
     }
 }
 
