@@ -711,6 +711,8 @@ static inline SF_TYPE SAFEARRAY_GetUnionType(SAFEARRAY *psa)
     hr = SafeArrayGetVartype(psa, &vt);
     if (FAILED(hr))
     {
+        if(psa->fFeatures & FADF_VARIANT) return SF_VARIANT;
+
         switch(psa->cbElements)
         {
         case 1: vt = VT_I1; break;

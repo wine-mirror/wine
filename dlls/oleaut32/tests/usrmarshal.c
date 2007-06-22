@@ -49,6 +49,8 @@ static inline SF_TYPE get_union_type(SAFEARRAY *psa)
     hr = SafeArrayGetVartype(psa, &vt);
     if (FAILED(hr))
     {
+        if(psa->fFeatures & FADF_VARIANT) return SF_VARIANT;
+
         switch(psa->cbElements)
         {
         case 1: vt = VT_I1; break;
@@ -258,6 +260,29 @@ static void test_marshal_LPSAFEARRAY(void)
 
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
     ok(size == 432, "size %ld\n", size);
+    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+    check_safearray(buffer, lpsa);
+    HeapFree(GetProcessHeap(), 0, buffer);
+    SafeArrayDestroyData(lpsa);
+    SafeArrayDestroyDescriptor(lpsa);
+
+    /* VARTYPE-less arrays with FADF_VARIANT */
+    hr = SafeArrayAllocDescriptor(1, &lpsa);
+    ok(hr == S_OK, "saad failed %08x\n", hr);
+    lpsa->cbElements = 16;
+    lpsa->fFeatures = FADF_VARIANT;
+    lpsa->rgsabound[0].lLbound = 2;
+    lpsa->rgsabound[0].cElements = 48;
+    hr = SafeArrayAllocData(lpsa);
+    ok(hr == S_OK, "saad failed %08x\n", hr);
+
+    hr = SafeArrayGetVartype(lpsa, &vt);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+
+    size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
+    todo_wine
+    ok(size == 1388, "size %ld\n", size);
     buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
     LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
     check_safearray(buffer, lpsa);
