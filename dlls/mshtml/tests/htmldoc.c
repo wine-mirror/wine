@@ -21,6 +21,7 @@
 
 #include <wine/test.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -164,6 +165,18 @@ static const WCHAR wszTimesNewRoman[] =
     {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
 static const WCHAR wszArial[] =
     {'A','r','i','a','l',0};
+
+static const char *debugstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
 
 #define EXPECT_UPDATEUI  1
 #define EXPECT_SETTITLE  2
@@ -2178,6 +2191,10 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 
 static IServiceProvider ServiceProvider = { &ServiceProviderVtbl };
 
+DEFINE_GUID(IID_unk1, 0xD48A6EC6,0x6A4A,0x11CF,0x94,0xA7,0x44,0x45,0x53,0x54,0x00,0x00); /* HTMLWindow2 ? */
+DEFINE_GUID(IID_unk2, 0x7BB0B520,0xB1A7,0x11D2,0xBB,0x23,0x00,0xC0,0x4F,0x79,0xAB,0xCD);
+DEFINE_GUID(IID_unk3, 0x000670BA,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
+
 static HRESULT QueryInterface(REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -2200,16 +2217,20 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &Dispatch;
     else if(IsEqualGUID(&IID_IServiceProvider, riid))
         *ppv = &ServiceProvider;
-    else if(ipsex && IsEqualGUID(&IID_IOleInPlaceSiteEx, riid))
-        *ppv = &InPlaceSiteEx;
+    else if(IsEqualGUID(&IID_IOleInPlaceSiteEx, riid))
+        *ppv = ipsex ? &InPlaceSiteEx : NULL;
     else if(IsEqualGUID(&IID_IOleControlSite, riid))
         *ppv = &OleControlSite;
-
-    /* TODO:
-     * {D48A6EC6-6A4A-11CF-94A7-444553540000}
-     * {7BB0B520-B1A7-11D2-BB23-00C04F79ABCD}
-     * {000670BA-0000-0000-C000-000000000046}
-     */
+    else if(IsEqualGUID(&IID_IDocHostShowUI, riid))
+        return E_NOINTERFACE; /* TODO */
+    else if(IsEqualGUID(&IID_unk1, riid))
+        return E_NOINTERFACE; /* HTMLWindow2 ? */
+    else if(IsEqualGUID(&IID_unk2, riid))
+        return E_NOINTERFACE; /* ? */
+    else if(IsEqualGUID(&IID_unk3, riid))
+        return E_NOINTERFACE; /* ? */
+    else
+        ok(0, "unexpected riid %s\n", debugstr_guid(riid));
 
     if(*ppv)
         return S_OK;
