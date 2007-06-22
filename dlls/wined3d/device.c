@@ -3201,6 +3201,14 @@ static void device_map_stage(IWineD3DDeviceImpl *This, int stage, int unit) {
     }
 }
 
+static void device_update_fixed_function_usage_map(IWineD3DDeviceImpl *This) {
+    int i;
+
+    for (i = 0; i < MAX_TEXTURES; ++i) {
+        This->fixed_function_usage_map[i] = This->stateBlock->textures[i] ? TRUE : FALSE;
+    }
+}
+
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
     DWORD i, tex;
     /* This code can assume that GL_NV_register_combiners are supported, otherwise
@@ -3233,12 +3241,13 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
         This->oneToOneTexUnitMap = TRUE;
         return;
     } else {
+        device_update_fixed_function_usage_map(This);
         /* No pixel shader, and we do not have enough texture units available. Try to skip NULL textures
          * First, see if we can succeed at all
          */
         tex = 0;
         for(i = 0; i < This->stateBlock->lowest_disabled_stage; i++) {
-            if(This->stateBlock->textures[i] == NULL) tex++;
+            if (!This->fixed_function_usage_map[i]) ++tex;
         }
 
         if(GL_LIMITS(textures) + tex < This->stateBlock->lowest_disabled_stage) {
@@ -3252,7 +3261,7 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
         WARN("Non 1:1 mapping UNTESTED!\n");
         for(i = 0; i < This->stateBlock->lowest_disabled_stage; i++) {
             /* Skip NULL textures */
-            if (!This->stateBlock->textures[i]) {
+            if (!This->fixed_function_usage_map[i]) {
                 /* Map to -1, so the check below doesn't fail if a non-NULL
                  * texture is set on this stage */
                 TRACE("Mapping texture stage %d to -1\n", i);

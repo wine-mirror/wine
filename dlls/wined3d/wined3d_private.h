@@ -724,6 +724,7 @@ struct IWineD3DDeviceImpl
     /* With register combiners we can skip junk texture stages */
     DWORD                     texUnitMap[MAX_SAMPLERS];
     DWORD                     rev_tex_unit_map[MAX_SAMPLERS];
+    BOOL                      fixed_function_usage_map[MAX_TEXTURES];
     BOOL                      oneToOneTexUnitMap;
 
     /* Stream source management */
