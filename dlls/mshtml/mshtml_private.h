@@ -116,6 +116,7 @@ struct HTMLDocument {
     BOOL window_active;
     BOOL has_key_path;
     BOOL container_locked;
+    BOOL focus;
 
     DWORD update;
 
@@ -141,6 +142,8 @@ struct NSContainer {
     const nsIWeakReferenceVtbl          *lpWeakReferenceVtbl;
     const nsISupportsWeakReferenceVtbl  *lpSupportsWeakReferenceVtbl;
 
+    nsEventListener blur_listener;
+    nsEventListener focus_listener;
     nsEventListener keypress_listener;
     nsEventListener load_listener;
 
@@ -327,6 +330,7 @@ void NSContainer_Release(NSContainer*);
 
 void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
 void show_context_menu(HTMLDocument*,DWORD,POINT*);
+void notif_focus(HTMLDocument*);
 
 void show_tooltip(HTMLDocument*,DWORD,DWORD,LPCWSTR);
 void hide_tooltip(HTMLDocument*);

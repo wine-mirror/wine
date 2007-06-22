@@ -72,6 +72,46 @@ static nsrefcnt NSAPI nsDOMEventListener_Release(nsIDOMEventListener *iface)
     return nsIWebBrowserChrome_Release(NSWBCHROME(This));
 }
 
+static BOOL is_doc_child_focus(NSContainer *This)
+{
+    HWND hwnd;
+
+    if(!This->doc)
+        return FALSE;
+
+    for(hwnd = GetFocus(); hwnd && hwnd != This->doc->hwnd; hwnd = GetParent(hwnd));
+
+    return hwnd == This->doc->hwnd;
+}
+
+static nsresult NSAPI handle_blur(nsIDOMEventListener *iface, nsIDOMEvent *event)
+{
+    NSContainer *This = NSEVENTLIST_THIS(iface)->This;
+
+    TRACE("(%p)\n", This);
+
+    if(This->doc && This->doc->focus && !is_doc_child_focus(This)) {
+        This->doc->focus = FALSE;
+        notif_focus(This->doc);
+    }
+
+    return NS_OK;
+}
+
+static nsresult NSAPI handle_focus(nsIDOMEventListener *iface, nsIDOMEvent *event)
+{
+    NSContainer *This = NSEVENTLIST_THIS(iface)->This;
+
+    TRACE("(%p)\n", This);
+
+    if(This->doc && !This->doc->focus) {
+        This->doc->focus = TRUE;
+        notif_focus(This->doc);
+    }
+
+    return NS_OK;
+}
+
 static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
         nsIDOMEvent *event)
 {
@@ -129,6 +169,8 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         handler, \
     };
 
+static const nsIDOMEventListenerVtbl blur_vtbl =      EVENTLISTENER_VTBL(handle_blur);
+static const nsIDOMEventListenerVtbl focus_vtbl =     EVENTLISTENER_VTBL(handle_focus);
 static const nsIDOMEventListenerVtbl keypress_vtbl =  EVENTLISTENER_VTBL(handle_keypress);
 static const nsIDOMEventListenerVtbl load_vtbl =      EVENTLISTENER_VTBL(handle_load);
 
@@ -159,9 +201,13 @@ void init_nsevents(NSContainer *This)
     nsIDOMEventTarget *target;
     nsresult nsres;
 
+    static const PRUnichar wsz_blur[]      = {'b','l','u','r',0};
+    static const PRUnichar wsz_focus[]     = {'f','o','c','u','s',0};
     static const PRUnichar wsz_keypress[]  = {'k','e','y','p','r','e','s','s',0};
     static const PRUnichar wsz_load[]      = {'l','o','a','d',0};
 
+    init_listener(&This->blur_listener,        This, &blur_vtbl);
+    init_listener(&This->focus_listener,       This, &focus_vtbl);
     init_listener(&This->keypress_listener,    This, &keypress_vtbl);
     init_listener(&This->load_listener,        This, &load_vtbl);
 
@@ -178,6 +224,8 @@ void init_nsevents(NSContainer *This)
         return;
     }
 
+    init_event(target, wsz_blur,       NSEVENTLIST(&This->blur_listener),        TRUE);
+    init_event(target, wsz_focus,      NSEVENTLIST(&This->focus_listener),       TRUE);
     init_event(target, wsz_keypress,   NSEVENTLIST(&This->keypress_listener),    FALSE);
     init_event(target, wsz_load,       NSEVENTLIST(&This->load_listener),        TRUE);
 

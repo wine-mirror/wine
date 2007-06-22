@@ -164,6 +164,19 @@ static LRESULT on_timer(HTMLDocument *This)
     return 0;
 }
 
+void notif_focus(HTMLDocument *This)
+{
+    IOleControlSite *site;
+    HRESULT hres;
+
+    hres = IOleClientSite_QueryInterface(This->client, &IID_IOleControlSite, (void**)&site);
+    if(FAILED(hres))
+        return;
+
+    IOleControlSite_OnFocus(site, This->focus);
+    IOleControlSite_Release(site);
+}
+
 static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     HTMLDocument *This;
@@ -771,6 +784,7 @@ void HTMLDocument_View_Init(HTMLDocument *This)
     This->in_place_active = FALSE;
     This->ui_active = FALSE;
     This->window_active = FALSE;
+    This->focus = FALSE;
 
     This->update = 0;
 }
