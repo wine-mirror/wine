@@ -554,9 +554,9 @@ static void check_registry(void)
     }
 
     res = RegQueryInfoKeyA(hkIcmKey, NULL, NULL, NULL, NULL, NULL, NULL, &dwValCount, NULL, NULL, NULL, NULL);
-    if (!res) 
+    if (res) 
     {
-        trace("RegQueryInfoKeyA() failed\n");
+        trace("RegQueryInfoKeyA() failed : %d\n", res);
         return;
     }
 
