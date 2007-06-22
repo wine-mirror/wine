@@ -1216,16 +1216,21 @@ static nsresult NSAPI nsEmbeddingSiteWindow_GetVisibility(nsIEmbeddingSiteWindow
         PRBool *aVisibility)
 {
     NSContainer *This = NSEMBWNDS_THIS(iface);
-    WARN("(%p)->(%p)\n", This, aVisibility);
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    TRACE("(%p)->(%p)\n", This, aVisibility);
+
+    *aVisibility = This->doc && This->doc->hwnd && IsWindowVisible(This->doc->hwnd);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_SetVisibility(nsIEmbeddingSiteWindow *iface,
         PRBool aVisibility)
 {
     NSContainer *This = NSEMBWNDS_THIS(iface);
-    WARN("(%p)->(%x)\n", This, aVisibility);
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    TRACE("(%p)->(%x)\n", This, aVisibility);
+
+    return NS_OK;
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_GetTitle(nsIEmbeddingSiteWindow *iface,
