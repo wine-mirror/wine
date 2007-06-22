@@ -475,13 +475,17 @@ AC_SUBST(XML2LIBS,"")
 AC_SUBST(XML2INCL,"")
 AC_SUBST(XSLTLIBS,"")
 AC_SUBST(XSLTINCL,"")
+ac_save_CPPFLAGS="$CPPFLAGS"
 if test "$PKG_CONFIG" != "false"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     ac_xml_libs="`$PKG_CONFIG --libs libxml-2.0 2>/dev/null`"
     ac_xml_cflags="`$PKG_CONFIG --cflags libxml-2.0 2>/dev/null`"
-    CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
-    AC_CHECK_HEADERS(libxml/parser.h,
+else
+    ac_xml_libs="`xml2-config --libs 2>/dev/null`"
+    ac_xml_cflags="`xml2-config --cflags  2>/dev/null`"
+fi
+CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
+AC_CHECK_HEADERS(libxml/parser.h,
         [AC_CHECK_LIB(xml2, xmlParseMemory,
             [AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])
              XML2LIBS="$ac_xml_libs"
@@ -490,12 +494,18 @@ then
             [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])],,$ac_xml_libs)
          AC_CHECK_LIB(xml2, xmlNewDocPI,
             [AC_DEFINE(HAVE_XMLNEWDOCPI,1,[Define if libxml2 has the xmlNewDocPI function])],,$ac_xml_libs)
-        ])
-    CPPFLAGS="$ac_save_CPPFLAGS"
+    ])
+CPPFLAGS="$ac_save_CPPFLAGS"
+if test "$PKG_CONFIG" != "false"
+then
     ac_xslt_libs="`$PKG_CONFIG --libs libxslt 2>/dev/null`"
     ac_xslt_cflags="`$PKG_CONFIG --cflags libxslt 2>/dev/null`"
-    CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
-    AC_CHECK_HEADERS([libxslt/pattern.h libxslt/transform.h],
+else
+    ac_xslt_libs="`xslt-config --libs 2>/dev/null`"
+    ac_xslt_cflags="`xslt-config --cflags 2>/dev/null`"
+fi
+CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
+AC_CHECK_HEADERS([libxslt/pattern.h libxslt/transform.h],
         [AC_CHECK_LIB(xslt, xsltCompilePattern,
             [AC_DEFINE(HAVE_LIBXSLT, 1, [Define if you have the libxslt library])
              XSLTLIBS="$ac_xslt_libs"
@@ -504,8 +514,7 @@ then
 [#ifdef HAVE_LIBXSLT_PATTERN_H
 # include <libxslt/pattern.h>
 #endif])
-    CPPFLAGS="$ac_save_CPPFLAGS"
-fi
+CPPFLAGS="$ac_save_CPPFLAGS"
 
 dnl **** Check for libhal ****
 AC_SUBST(HALINCL,"")

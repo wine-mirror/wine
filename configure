@@ -8836,12 +8836,16 @@ XSLTLIBS=""
 
 XSLTINCL=""
 
+ac_save_CPPFLAGS="$CPPFLAGS"
 if test "$PKG_CONFIG" != "false"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
     ac_xml_libs="`$PKG_CONFIG --libs libxml-2.0 2>/dev/null`"
     ac_xml_cflags="`$PKG_CONFIG --cflags libxml-2.0 2>/dev/null`"
-    CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
+else
+    ac_xml_libs="`xml2-config --libs 2>/dev/null`"
+    ac_xml_cflags="`xml2-config --cflags  2>/dev/null`"
+fi
+CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
 
 for ac_header in libxml/parser.h
 do
@@ -9196,10 +9200,16 @@ fi
 
 done
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
+CPPFLAGS="$ac_save_CPPFLAGS"
+if test "$PKG_CONFIG" != "false"
+then
     ac_xslt_libs="`$PKG_CONFIG --libs libxslt 2>/dev/null`"
     ac_xslt_cflags="`$PKG_CONFIG --cflags libxslt 2>/dev/null`"
-    CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
+else
+    ac_xslt_libs="`xslt-config --libs 2>/dev/null`"
+    ac_xslt_cflags="`xslt-config --cflags 2>/dev/null`"
+fi
+CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
 
 
 for ac_header in libxslt/pattern.h libxslt/transform.h
@@ -9332,8 +9342,7 @@ fi
 
 done
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
-fi
+CPPFLAGS="$ac_save_CPPFLAGS"
 
 HALINCL=""
 
