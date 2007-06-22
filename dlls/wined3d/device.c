@@ -3266,8 +3266,22 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
     }
 }
 
+static void device_map_psamplers(IWineD3DDeviceImpl *This) {
+    int i;
+
+    for (i = 0; i < MAX_SAMPLERS; ++i) {
+        if (This->texUnitMap[i] != i) {
+            device_map_stage(This, i, i);
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
+            if (i < MAX_TEXTURES) {
+                markTextureStagesDirty(This, i);
+            }
+        }
+    }
+}
+
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
-    DWORD i;
+    BOOL ps = use_ps(This);
     /* This code can assume that GL_NV_register_combiners are supported, otherwise
      * it is never called.
      *
@@ -3276,27 +3290,9 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
      * that would be really messy and require shader recompilation
      * -> When the mapping of a stage is changed, sampler and ALL texture stage states have
      * to be reset. Because of that try to work with a 1:1 mapping as much as possible
-     * -> Whith a 1:1 mapping oneToOneTexUnitMap is set to avoid checking MAX_SAMPLERS array
-     * entries to make pixel shaders cheaper. MAX_SAMPLERS will be 128 in dx10
      */
-    if (This->stateBlock->pixelShader) {
-        if(This->oneToOneTexUnitMap) {
-            TRACE("Not touching 1:1 map\n");
-            return;
-        }
-        TRACE("Restoring 1:1 texture unit mapping\n");
-        /* Restore a 1:1 mapping */
-        for(i = 0; i < MAX_SAMPLERS; i++) {
-            if(This->texUnitMap[i] != i) {
-                device_map_stage(This, i, i);
-                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
-                if (i < MAX_TEXTURES) {
-                    markTextureStagesDirty(This, i);
-                }
-            }
-        }
-        This->oneToOneTexUnitMap = TRUE;
-        return;
+    if (ps) {
+        device_map_psamplers(This);
     } else {
         device_map_fixed_function_samplers(This);
     }
