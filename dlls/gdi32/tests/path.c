@@ -38,7 +38,6 @@ static void test_widenpath(void)
     HPEN oldPen;
     POINT pnt[6];
     INT nSize, ret;
-    DWORD error;
 
     /* Create a pen to be used in WidenPath */
     greenPen = CreatePen(PS_SOLID, 10, RGB(0,0,0));
@@ -73,12 +72,12 @@ static void test_widenpath(void)
 
     AbortPath(hdc);
 
-    /* Test WidenPath with an open path */
+    /* Test WidenPath with an open path (last error only set on Win2k and later) */
     SetLastError(0xdeadbeef);
     BeginPath(hdc);
     ret = WidenPath(hdc);
-    error = GetLastError();
-    ok(ret == FALSE && GetLastError() == ERROR_CAN_NOT_COMPLETE, "WidenPath fails while widening an open path. Return value is %d, should be %d. Error is %08x, should be %08x\n", ret, FALSE, GetLastError(), ERROR_CAN_NOT_COMPLETE);
+    ok(ret == FALSE && (GetLastError() == ERROR_CAN_NOT_COMPLETE || GetLastError() == 0xdeadbeef),
+       "WidenPath fails while widening an open path. Return value is %d, should be %d. Error is %u\n", ret, FALSE, GetLastError());
 
     AbortPath(hdc);
 
