@@ -639,6 +639,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetCurrentPosition(
 	hres = DSOUND_PrimaryGetPosition(device, playpos, writepos);
 	if (hres != DS_OK) {
 		WARN("DSOUND_PrimaryGetPosition failed\n");
+		LeaveCriticalSection(&(device->mixlock));
 		return hres;
 	}
 	if (writepos) {
