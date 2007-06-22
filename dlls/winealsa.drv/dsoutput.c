@@ -459,6 +459,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     if (!This->pcm)
     {
         FIXME("Bad pointer for pcm: %p\n", This->pcm);
+        LeaveCriticalSection(&This->pcm_crst);
         return DSERR_GENERIC;
     }
 
