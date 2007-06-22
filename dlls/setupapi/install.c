@@ -1001,9 +1001,9 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
 #endif
     static const WCHAR nt_genericW[] = {'.','n','t',0};
 
-    WCHAR *s, *d, *path, section[MAX_PATH + sizeof(nt_platformW)/sizeof(WCHAR)];
+    WCHAR *s, *path, section[MAX_PATH + sizeof(nt_platformW)/sizeof(WCHAR)];
     void *callback_context;
-    UINT mode, in_quotes, bcount;
+    UINT mode;
     HINF hinf;
 
     TRACE("hwnd %p, handle %p, cmdline %s\n", hwnd, handle, debugstr_w(cmdline));
@@ -1015,47 +1015,10 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
     while (*s == ' ') s++;
     mode = atoiW( s );
 
+    /* quoted paths are not allowed on native, the rest of the command line is taken as the path */
     if (!(s = strchrW( s, ' ' ))) return;
     while (*s == ' ') s++;
-
-    /* The inf path may be quoted. Code adapted from CommandLineToArgvW() */
-    bcount=0;
-    in_quotes=0;
-    path=d=s;
-    while (*s)
-    {
-        if (*s==0) {
-            /* end of this command line argument */
-            break;
-        } else if (*s=='\\') {
-            /* '\\' */
-            *d++=*s++;
-            bcount++;
-        } else if (*s=='"') {
-            /* '"' */
-            if ((bcount & 1)==0) {
-                /* Preceded by an even number of '\', this is half that
-                 * number of '\', plus a quote which we erase.
-                 */
-                d-=bcount/2;
-                in_quotes=!in_quotes;
-                s++;
-            } else {
-                /* Preceded by an odd number of '\', this is half that
-                 * number of '\' followed by a '"'
-                 */
-                d=d-bcount/2-1;
-                *d++='"';
-                s++;
-            }
-            bcount=0;
-        } else {
-            /* a regular character */
-            *d++=*s++;
-            bcount=0;
-        }
-    }
-    *d=0;
+    path = s;
 
     hinf = SetupOpenInfFileW( path, NULL, INF_STYLE_WIN4, NULL );
     if (hinf == INVALID_HANDLE_VALUE) return;

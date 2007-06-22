@@ -124,7 +124,7 @@ static void test_cmdline(void)
     ok_cmdline("DefaultInstall", 128, path, TRUE);
 
     sprintf(path, "\"%s\\%s\"", CURR_DIR, infwithspaces);
-    todo_wine ok_cmdline("DefaultInstall", 128, path, FALSE);
+    ok_cmdline("DefaultInstall", 128, path, FALSE);
 
     ok(DeleteFile(infwithspaces), "Expected source inf to exist, last error was %d\n", GetLastError());
 }
