@@ -38,14 +38,13 @@ GpStatus WINGDIPAPI GdipCreatePath(GpFillMode fill, GpPath **path)
     if(!path)
         return InvalidParameter;
 
-    *path = GdipAlloc(sizeof(GpSolidFill));
+    *path = GdipAlloc(sizeof(GpPath));
     if(!*path)  return OutOfMemory;
-
-    hdc = GetDC(0);
 
     (*path)->fill = fill;
     (*path)->newfigure = TRUE;
 
+    hdc = GetDC(0);
     ret = GdipCreateFromHDC(hdc, &((*path)->graphics));
 
     if(ret != Ok){
