@@ -4648,7 +4648,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     LPWSTR deformatted, ptr;
     DWORD flags, type, size;
     LONG res;
-    HKEY env, root = HKEY_CURRENT_USER;
+    HKEY env = NULL, root = HKEY_CURRENT_USER;
 
     static const WCHAR environment[] =
         {'S','y','s','t','e','m','\\',
@@ -4759,7 +4759,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     res = RegSetValueExW(env, name, 0, type, (LPVOID)newval, size);
 
 done:
-    RegCloseKey(env);
+    if (env) RegCloseKey(env);
     msi_free(deformatted);
     msi_free(data);
     msi_free(newval);
