@@ -33,8 +33,11 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
     LOGBRUSH lb;
     GpPen *gp_pen;
 
+    if(!pen)
+        return InvalidParameter;
+
     gp_pen = GdipAlloc(sizeof(GpPen));
-    if(!pen)    return OutOfMemory;
+    if(!gp_pen)    return OutOfMemory;
 
     gp_pen->style = GP_DEFAULT_PENSTYLE;
     gp_pen->color = ARGB2COLORREF(color);
@@ -51,11 +54,9 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
             0, NULL);
     } else {
         FIXME("UnitWorld, UnitPixel only supported units\n");
+        GdipFree(gp_pen);
         return NotImplemented;
     }
-
-    if(!gp_pen)
-        return GenericError;
 
     *pen = gp_pen;
 
