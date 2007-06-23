@@ -242,7 +242,7 @@ static void init_debug_lists(void)
  *
  * Check if a given module and function is in the list.
  */
-static BOOL check_list( const char *module, int ordinal, const char *func, const WCHAR **list )
+static BOOL check_list( const char *module, int ordinal, const char *func, const WCHAR *const *list )
 {
     char ord_str[10];
 
@@ -320,14 +320,14 @@ static BOOL check_from_module( const WCHAR **includelist, const WCHAR **excludel
 /***********************************************************************
  *           RELAY_PrintArgs
  */
-static inline void RELAY_PrintArgs( int *args, int nb_args, unsigned int typemask )
+static inline void RELAY_PrintArgs( const int *args, int nb_args, unsigned int typemask )
 {
     while (nb_args--)
     {
 	if ((typemask & 3) && HIWORD(*args))
         {
 	    if (typemask & 2)
-                DPRINTF( "%08x %s", *args, debugstr_w((LPWSTR)*args) );
+                DPRINTF( "%08x %s", *args, debugstr_w((LPCWSTR)*args) );
             else
                 DPRINTF( "%08x %s", *args, debugstr_a((LPCSTR)*args) );
 	}
@@ -367,7 +367,7 @@ __ASM_GLOBAL_FUNC( call_entry_point,
  *
  * stack points to the return address, i.e. the first argument is stack[1].
  */
-static LONGLONG WINAPI relay_call_from_32( struct relay_descr *descr, unsigned int idx, int *stack )
+static LONGLONG WINAPI relay_call_from_32( struct relay_descr *descr, unsigned int idx, const int *stack )
 {
     LONGLONG ret;
     WORD ordinal = LOWORD(idx);

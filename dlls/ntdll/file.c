@@ -465,7 +465,7 @@ static NTSTATUS get_io_timeouts( HANDLE handle, enum server_fd_type type, ULONG 
 
 
 /* retrieve the timeout for the next wait, in milliseconds */
-static inline int get_next_io_timeout( struct io_timeouts *timeouts, ULONG already )
+static inline int get_next_io_timeout( const struct io_timeouts *timeouts, ULONG already )
 {
     int ret = -1;
 
@@ -973,7 +973,7 @@ static void WINAPI ioctl_apc( void *arg, IO_STATUS_BLOCK *io, ULONG reserved )
 static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
                                    PIO_APC_ROUTINE apc, PVOID apc_context,
                                    IO_STATUS_BLOCK *io, ULONG code,
-                                   PVOID in_buffer, ULONG in_size,
+                                   const void *in_buffer, ULONG in_size,
                                    PVOID out_buffer, ULONG out_size )
 {
     struct async_ioctl *async;
