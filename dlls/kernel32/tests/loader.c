@@ -328,6 +328,13 @@ START_TEST(loader)
 
             ok(hlib != 0, "%d: LoadLibrary error %d\n", i, GetLastError());
 
+            /* No point in crashing. Test crashes on Vista with some of the given files */
+            if (hlib == 0)
+            {
+                skip("Failed to load dll number %d\n", i);
+                goto endloop;
+            }
+
             SetLastError(0xdeadbeef);
             ok(VirtualQuery(hlib, &info, sizeof(info)) == sizeof(info),
                 "%d: VirtualQuery error %d\n", i, GetLastError());
@@ -467,6 +474,7 @@ START_TEST(loader)
                i, td[i].error, GetLastError());
         }
 
+endloop:
         SetLastError(0xdeadbeef);
         ok(DeleteFile(dll_name), "DeleteFile error %d\n", GetLastError());
     }
