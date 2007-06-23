@@ -116,8 +116,9 @@ GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
     if(graphics == NULL)
         return InvalidParameter;
 
-    *graphics = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-        sizeof(GpGraphics));
+    *graphics = GdipAlloc(sizeof(GpGraphics));
+    if(!*graphics)  return OutOfMemory;
+
     (*graphics)->hdc = hdc;
     (*graphics)->hwnd = NULL;
 
