@@ -201,15 +201,18 @@ static void test_GetSetEnvironmentVariableW(void)
        "should not find variable but ret_size=%d GetLastError=%d\n",
        ret_size, GetLastError());
 
-    ret_size = GetEnvironmentVariableW(NULL, buf, lstrlenW(value) + 1);
-    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND,
-       "should not find variable but ret_size=%d GetLastError=%d\n",
-       ret_size, GetLastError());
+    if (0) /* Both tests crash on Vista */
+    {
+        ret_size = GetEnvironmentVariableW(NULL, buf, lstrlenW(value) + 1);
+        ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND,
+           "should not find variable but ret_size=%d GetLastError=%d\n",
+           ret_size, GetLastError());
 
-    ret = SetEnvironmentVariableW(NULL, NULL);
-    ok(ret == FALSE && (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_ENVVAR_NOT_FOUND),
-       "should fail with NULL, NULL but ret=%d and GetLastError=%d\n",
-       ret, GetLastError());
+        ret = SetEnvironmentVariableW(NULL, NULL);
+        ok(ret == FALSE && (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_ENVVAR_NOT_FOUND),
+           "should fail with NULL, NULL but ret=%d and GetLastError=%d\n",
+           ret, GetLastError());
+    }
 }
 
 static void test_ExpandEnvironmentStringsA(void)
