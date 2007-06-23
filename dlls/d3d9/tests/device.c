@@ -1263,7 +1263,7 @@ static void test_draw_indexed(void)
     IDirect3DVertexBuffer9 *vertex_buffer = NULL;
     IDirect3DIndexBuffer9 *index_buffer = NULL;
     D3DPRESENT_PARAMETERS present_parameters;
-    IDirect3DDevice9 *device;
+    IDirect3DDevice9 *device = NULL;
     IDirect3D9 *d3d9;
     HRESULT hr;
     HWND hwnd;
