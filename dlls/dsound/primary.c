@@ -64,8 +64,11 @@ static void DSOUND_RecalcPrimary(DirectSoundDevice *device)
 		device->fraglen = fraglen;
 		TRACE("fraglen=%d\n", device->fraglen);
 	}
+	if (device->hwbuf && device->drvdesc.dwFlags & DSDDESC_DONTNEEDWRITELEAD)
+		device->writelead = 0;
+	else
 	/* calculate the 10ms write lead */
-	device->writelead = (device->pwfx->nSamplesPerSec / 100) * nBlockAlign;
+		device->writelead = (device->pwfx->nSamplesPerSec / 100) * nBlockAlign;
 }
 
 static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
