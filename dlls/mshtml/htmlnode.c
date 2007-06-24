@@ -214,8 +214,30 @@ static HRESULT WINAPI HTMLDOMNode_appendChild(IHTMLDOMNode *iface, IHTMLDOMNode 
 static HRESULT WINAPI HTMLDOMNode_get_nodeName(IHTMLDOMNode *iface, BSTR *p)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = NULL;
+
+    if(This->nsnode) {
+        nsAString name_str;
+        const PRUnichar *name;
+        nsresult nsres;
+
+        nsAString_Init(&name_str, NULL);
+        nsres = nsIDOMNode_GetNodeName(This->nsnode, &name_str);
+
+        if(NS_SUCCEEDED(nsres)) {
+            nsAString_GetData(&name_str, &name, NULL);
+            *p = SysAllocString(name);
+        }else {
+            ERR("GetNodeName failed: %08x\n", nsres);
+        }
+
+        nsAString_Finish(&name_str);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_put_nodeValue(IHTMLDOMNode *iface, VARIANT v)
