@@ -7,6 +7,7 @@ IMPORTS   = ole32 oleaut32 user32 urlmon advapi32 kernel32
 EXTRALIBS = -luuid
 
 CTESTS = \
+	dom.c \
 	htmldoc.c \
 	misc.c \
 	protocol.c
