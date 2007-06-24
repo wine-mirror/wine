@@ -117,6 +117,7 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
     HTMLDocument *This = HTMLDOC3_THIS(iface);
     nsIDOMDocument *nsdoc;
     HTMLDOMNode *node;
+    nsIDOMElement *nselem = NULL;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -131,7 +132,12 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
         ERR("GetDocument failed: %08x\n", nsres);
 
     if(nsdoc) {
-        node = get_node(This, (nsIDOMNode*)nsdoc);
+        nsres = nsIDOMHTMLDocument_GetDocumentElement(nsdoc, &nselem);
+        if(NS_FAILED(nsres))
+            ERR("GetDocumentElement failed: %08x\n", nsres);
+    }
+    if(nselem) {
+        node = get_node(This, (nsIDOMNode *)nselem);
         nsIDOMDocument_Release(nsdoc);
 
         IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
