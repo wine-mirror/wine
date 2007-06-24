@@ -135,8 +135,40 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
                                                VARIANT AttributeValue, LONG lFlags)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%s . %08x)\n", This, debugstr_w(strAttributeName), lFlags);
-    return E_NOTIMPL;
+    nsAString attr_str;
+    nsAString value_str;
+    nsresult nsres;
+    HRESULT hres;
+    VARIANT AttributeValueChanged;
+
+    WARN("(%p)->(%s . %08x)\n", This, debugstr_w(strAttributeName), lFlags);
+
+    VariantInit(&AttributeValueChanged);
+
+    hres = VariantChangeType(&AttributeValueChanged, &AttributeValue, 0, VT_BSTR);
+    if (FAILED(hres)) {
+        WARN("couldn't convert input attribute value %d to VT_BSTR\n", V_VT(&AttributeValue));
+        return hres;
+    }
+
+    nsAString_Init(&attr_str, strAttributeName);
+    nsAString_Init(&value_str, V_BSTR(&AttributeValueChanged));
+
+    TRACE("setting %s to %s\n", debugstr_w(strAttributeName),
+        debugstr_w(V_BSTR(&AttributeValueChanged)));
+
+    nsres = nsIDOMHTMLElement_SetAttribute(This->nselem, &attr_str, &value_str);
+    nsAString_Finish(&attr_str);
+    nsAString_Finish(&value_str);
+
+    if(NS_SUCCEEDED(nsres)) {
+        hres = S_OK;
+    }else {
+        ERR("SetAttribute failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttributeName,
