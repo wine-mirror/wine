@@ -796,6 +796,8 @@ HRESULT start_binding(BSCallback *bscallback)
     hres = CreateAsyncBindCtx(0, STATUSCLB(bscallback), NULL, &bctx);
     if(FAILED(hres)) {
         WARN("CreateAsyncBindCtx failed: %08x\n", hres);
+        nsIStreamListener_OnStopRequest(bscallback->nslistener, (nsIRequest*)NSCHANNEL(bscallback->nschannel),
+                bscallback->nscontext, NS_OK);
         return hres;
     }
 
@@ -803,6 +805,8 @@ HRESULT start_binding(BSCallback *bscallback)
     IBindCtx_Release(bctx);
     if(FAILED(hres)) {
         WARN("BindToStorage failed: %08x\n", hres);
+        nsIStreamListener_OnStopRequest(bscallback->nslistener, (nsIRequest*)NSCHANNEL(bscallback->nschannel),
+                bscallback->nscontext, NS_OK);
         return hres;
     }
 
