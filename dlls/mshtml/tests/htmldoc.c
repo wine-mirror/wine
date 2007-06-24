@@ -3406,12 +3406,23 @@ static void test_StreamLoad(IUnknown *unk)
 
 static void test_QueryInterface(IUnknown *unk)
 {
-    IRunnableObject *runnable = (IRunnableObject*)0xdeadbeef;
+    IUnknown *qi;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IRunnableObject, (void**)&runnable);
+    qi = (void*)0xdeadbeef;
+    hres = IUnknown_QueryInterface(unk, &IID_IRunnableObject, (void**)&qi);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(runnable == NULL, "runnable=%p, ezpected NULL\n", runnable);
+    ok(qi == NULL, "runnable=%p, ezpected NULL\n", qi);
+
+    qi = (void*)0xdeadbeef;
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMNode, (void**)&qi);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(qi == NULL, "runnable=%p, ezpected NULL\n", qi);
+
+    qi = (void*)0xdeadbeef;
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMNode2, (void**)&qi);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(qi == NULL, "runnable=%p, ezpected NULL\n", qi);
 }
 
 static void init_test(enum load_state_t ls) {
