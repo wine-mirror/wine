@@ -899,8 +899,9 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
                 }
             }
         }
-        ret = CertRDNValueToStrW(nameAttr->dwValueType, &nameAttr->Value,
-         pszNameString, cchNameString);
+        if (nameAttr)
+            ret = CertRDNValueToStrW(nameAttr->dwValueType, &nameAttr->Value,
+             pszNameString, cchNameString);
         if (info)
             LocalFree(info);
         break;
