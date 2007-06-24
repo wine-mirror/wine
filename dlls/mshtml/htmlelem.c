@@ -26,8 +26,10 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "winnls.h"
 #include "ole2.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -149,6 +151,8 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
 
     WARN("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName), lFlags, AttributeValue);
 
+    VariantInit(AttributeValue);
+
     nsAString_Init(&attr_str, strAttributeName);
     nsAString_Init(&value_str, NULL);
 
@@ -156,10 +160,30 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
     nsAString_Finish(&attr_str);
 
     if(NS_SUCCEEDED(nsres)) {
+        static const WCHAR wszSRC[] = {'s','r','c',0};
         nsAString_GetData(&value_str, &value, NULL);
-        V_VT(AttributeValue) = VT_BSTR;
-        V_BSTR(AttributeValue) = SysAllocString(value);
-        TRACE("attr_value=%s\n", debugstr_w(V_BSTR(AttributeValue)));
+        if(!strcmpiW(strAttributeName, wszSRC))
+        {
+            WCHAR buffer[256];
+            DWORD len;
+            BSTR bstrBaseUrl;
+            hres = IHTMLDocument2_get_URL(HTMLDOC(This->node->doc), &bstrBaseUrl);
+            if(SUCCEEDED(hres)) {
+                hres = CoInternetCombineUrl(bstrBaseUrl, value,
+                                            URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
+                                            buffer, sizeof(buffer)/sizeof(WCHAR), &len, 0);
+                SysFreeString(bstrBaseUrl);
+                if(SUCCEEDED(hres)) {
+                    V_VT(AttributeValue) = VT_BSTR;
+                    V_BSTR(AttributeValue) = SysAllocString(buffer);
+                    TRACE("attr_value=%s\n", debugstr_w(V_BSTR(AttributeValue)));
+                }
+            }
+        }else {
+            V_VT(AttributeValue) = VT_BSTR;
+            V_BSTR(AttributeValue) = SysAllocString(value);
+            TRACE("attr_value=%s\n", debugstr_w(V_BSTR(AttributeValue)));
+        }
     }else {
         ERR("GetAttribute failed: %08x\n", nsres);
         hres = E_FAIL;
