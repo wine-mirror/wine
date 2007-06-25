@@ -177,6 +177,7 @@ RpcPktHdr *RPCRT4_BuildFaultHeader(unsigned long DataRepresentation,
 RpcPktHdr *RPCRT4_BuildBindHeader(unsigned long DataRepresentation,
                                   unsigned short MaxTransmissionSize,
                                   unsigned short MaxReceiveSize,
+                                  unsigned long  AssocGroupId,
                                   RPC_SYNTAX_IDENTIFIER *AbstractId,
                                   RPC_SYNTAX_IDENTIFIER *TransferId)
 {
@@ -191,6 +192,7 @@ RpcPktHdr *RPCRT4_BuildBindHeader(unsigned long DataRepresentation,
   header->common.frag_len = sizeof(header->bind);
   header->bind.max_tsize = MaxTransmissionSize;
   header->bind.max_rsize = MaxReceiveSize;
+  header->bind.assoc_gid = AssocGroupId;
   header->bind.num_elements = 1;
   header->bind.num_syntaxes = 1;
   memcpy(&header->bind.abstract, AbstractId, sizeof(RPC_SYNTAX_IDENTIFIER));

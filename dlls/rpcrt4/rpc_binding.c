@@ -312,6 +312,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
 
     hdr = RPCRT4_BuildBindHeader(NDR_LOCAL_DATA_REPRESENTATION,
                                  RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE,
+                                 Binding->Assoc->assoc_group_id,
                                  InterfaceId, TransferSyntax);
 
     status = RPCRT4_Send(NewConnection, hdr, NULL, 0);

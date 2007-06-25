@@ -25,7 +25,7 @@
 #include "rpc_defs.h"
 
 RpcPktHdr *RPCRT4_BuildFaultHeader(unsigned long DataRepresentation, RPC_STATUS Status);
-RpcPktHdr *RPCRT4_BuildBindHeader(unsigned long DataRepresentation, unsigned short MaxTransmissionSize, unsigned short MaxReceiveSize, RPC_SYNTAX_IDENTIFIER *AbstractId, RPC_SYNTAX_IDENTIFIER *TransferId);
+RpcPktHdr *RPCRT4_BuildBindHeader(unsigned long DataRepresentation, unsigned short MaxTransmissionSize, unsigned short MaxReceiveSize, unsigned long AssocGroupId, RPC_SYNTAX_IDENTIFIER *AbstractId, RPC_SYNTAX_IDENTIFIER *TransferId);
 RpcPktHdr *RPCRT4_BuildBindNackHeader(unsigned long DataRepresentation, unsigned char RpcVersion, unsigned char RpcVersionMinor);
 RpcPktHdr *RPCRT4_BuildBindAckHeader(unsigned long DataRepresentation, unsigned short MaxTransmissionSize, unsigned short MaxReceiveSize, LPSTR ServerAddress, unsigned long Result, unsigned long Reason, RPC_SYNTAX_IDENTIFIER *TransferId);
 VOID RPCRT4_FreeHeader(RpcPktHdr *Header);

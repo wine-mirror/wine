@@ -1432,6 +1432,7 @@ RPC_STATUS RPCRT4_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr,
   assoc->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
   assoc->Endpoint = RPCRT4_strdupA(Endpoint);
   assoc->NetworkOptions = NetworkOptions ? RPCRT4_strdupW(NetworkOptions) : NULL;
+  assoc->assoc_group_id = 0;
   list_add_head(&assoc_list, &assoc->entry);
   *assoc_out = assoc;
 
@@ -1503,6 +1504,7 @@ void RpcAssoc_ReleaseIdleConnection(RpcAssoc *assoc, RpcConnection *Connection)
 {
   assert(!Connection->server);
   EnterCriticalSection(&assoc->cs);
+  if (!assoc->assoc_group_id) assoc->assoc_group_id = Connection->assoc_group_id;
   list_add_head(&assoc->connection_pool, &Connection->conn_pool_entry);
   LeaveCriticalSection(&assoc->cs);
 }

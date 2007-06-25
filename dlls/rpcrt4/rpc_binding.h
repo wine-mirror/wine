@@ -55,6 +55,9 @@ typedef struct _RpcAssoc
     LPWSTR NetworkOptions;
     RpcAuthInfo *AuthInfo;
 
+    /* id of this association group */
+    ULONG assoc_group_id;
+
     CRITICAL_SECTION cs;
     struct list connection_pool;
 } RpcAssoc;
@@ -86,6 +89,7 @@ typedef struct _RpcConnection
 
   /* client-only */
   struct list conn_pool_entry;
+  ULONG assoc_group_id; /* association group returned during binding */
 } RpcConnection;
 
 struct connection_ops {
