@@ -2138,7 +2138,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
     }
 
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        if (mapped_stage >= GL_LIMITS(fragment_samplers)) {
+        if (mapped_stage >= GL_LIMITS(combined_samplers)) {
             return;
         }
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));

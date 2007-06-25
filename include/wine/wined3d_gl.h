@@ -1962,6 +1962,8 @@ typedef struct _WineD3D_GL_Info {
   UINT   max_textures;
   UINT   max_texture_stages;
   UINT   max_fragment_samplers;
+  UINT   max_vertex_samplers;
+  UINT   max_combined_samplers;
   UINT   max_sampler_stages;
   UINT   max_clipplanes;
   UINT   max_texture_size;
