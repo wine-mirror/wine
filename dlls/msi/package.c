@@ -702,6 +702,9 @@ static MSIPACKAGE *msi_alloc_package( void )
         package->LastAction = NULL;
         package->dialog = NULL;
         package->next_dialog = NULL;
+        package->scheduled_action_running = FALSE;
+        package->commit_action_running = FALSE;
+        package->rollback_action_running = FALSE;
     }
 
     return package;

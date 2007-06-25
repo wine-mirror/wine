@@ -174,7 +174,7 @@ static void set_deferred_action_props(MSIPACKAGE *package, LPWSTR deferred_data)
     MSI_SetPropertyW(package, ProdCode, beg);
 }
 
-UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
+UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL execute)
 {
     UINT rc = ERROR_SUCCESS;
     MSIRECORD * row = 0;
@@ -258,6 +258,21 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
 
             LPWSTR actiondata = msi_dup_property( package, action );
 
+            switch (script)
+            {
+            case INSTALL_SCRIPT:
+                package->scheduled_action_running = TRUE;
+                break;
+            case COMMIT_SCRIPT:
+                package->commit_action_running = TRUE;
+                break;
+            case ROLLBACK_SCRIPT:
+                package->rollback_action_running = TRUE;
+                break;
+            default:
+                break;
+            }
+
             if (deferred_data)
                 set_deferred_action_props(package, deferred_data);
             else if (actiondata)
@@ -334,6 +349,9 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
     }
 
 end:
+    package->scheduled_action_running = FALSE;
+    package->commit_action_running = FALSE;
+    package->rollback_action_running = FALSE;
     msi_free(action_copy);
     msiobj_release(&row->hdr);
     return rc;

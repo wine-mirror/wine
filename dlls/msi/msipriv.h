@@ -248,6 +248,10 @@ typedef struct tagMSIPACKAGE
     UINT WordCount;
 
     struct list subscriptions;
+
+    unsigned char scheduled_action_running : 1;
+    unsigned char commit_action_running : 1;
+    unsigned char rollback_action_running : 1;
 } MSIPACKAGE;
 
 typedef struct tagMSIPREVIEW
@@ -731,10 +735,10 @@ extern WCHAR gszLogFile[MAX_PATH];
 extern HINSTANCE msi_hInstance;
 
 /* action related functions */
-extern UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, BOOL force);
-extern UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action);
+extern UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, UINT script, BOOL force);
+extern UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UINT script);
 extern void ACTION_FinishCustomActions( const MSIPACKAGE* package);
-extern UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, BOOL execute);
+extern UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, UINT script, BOOL execute);
 
 static inline void msi_feature_set_state( MSIFEATURE *feature, INSTALLSTATE state )
 {

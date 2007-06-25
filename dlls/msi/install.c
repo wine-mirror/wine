@@ -69,7 +69,7 @@ UINT WINAPI MsiDoActionW( MSIHANDLE hInstall, LPCWSTR szAction )
     if (!package)
         return ERROR_INVALID_HANDLE;
  
-    ret = ACTION_PerformUIAction( package, szAction );
+    ret = ACTION_PerformUIAction( package, szAction, -1 );
     msiobj_release( &package->hdr );
 
     return ret;
@@ -452,7 +452,12 @@ UINT WINAPI MsiSetTargetPathW(MSIHANDLE hInstall, LPCWSTR szFolder,
  */
 BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
 {
+    MSIPACKAGE *package;
     BOOL r = FALSE;
+
+    package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return FALSE;
 
     switch (iRunMode)
     {
@@ -467,8 +472,15 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
         break;
 
     case MSIRUNMODE_SCHEDULED:
+        r = package->scheduled_action_running;
+        break;
+
     case MSIRUNMODE_ROLLBACK:
+        r = package->rollback_action_running;
+        break;
+
     case MSIRUNMODE_COMMIT:
+        r = package->commit_action_running;
         break;
 
     default:

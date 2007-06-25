@@ -748,9 +748,9 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
         }
 
         if (UI)
-            rc = ACTION_PerformUIAction(package,action);
+            rc = ACTION_PerformUIAction(package,action,-1);
         else
-            rc = ACTION_PerformAction(package,action,FALSE);
+            rc = ACTION_PerformAction(package,action,-1,FALSE);
 end:
         msiobj_release(&row->hdr);
     }
@@ -789,9 +789,9 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
     }
 
     if (iap->UI)
-        rc = ACTION_PerformUIAction(iap->package,action);
+        rc = ACTION_PerformUIAction(iap->package,action,-1);
     else
-        rc = ACTION_PerformAction(iap->package,action,FALSE);
+        rc = ACTION_PerformAction(iap->package,action,-1,FALSE);
 
     msi_dialog_check_messages( NULL );
 
@@ -980,12 +980,12 @@ static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action,
 }
 
 static BOOL ACTION_HandleCustomAction( MSIPACKAGE* package, LPCWSTR action,
-                                       UINT* rc, BOOL force )
+                                       UINT* rc, UINT script, BOOL force )
 {
     BOOL ret=FALSE;
     UINT arc;
 
-    arc = ACTION_CustomAction(package,action, force);
+    arc = ACTION_CustomAction(package, action, script, force);
 
     if (arc != ERROR_CALL_NOT_IMPLEMENTED)
     {
@@ -1003,7 +1003,7 @@ static BOOL ACTION_HandleCustomAction( MSIPACKAGE* package, LPCWSTR action,
  * But until I get write access to the database that is hard, so I am going to
  * hack it to see if I can get something to run.
  */
-UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, BOOL force)
+UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, UINT script, BOOL force)
 {
     UINT rc = ERROR_SUCCESS; 
     BOOL handled;
@@ -1013,7 +1013,7 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, BOOL force)
     handled = ACTION_HandleStandardAction(package, action, &rc, force);
 
     if (!handled)
-        handled = ACTION_HandleCustomAction(package, action, &rc, force);
+        handled = ACTION_HandleCustomAction(package, action, &rc, script, force);
 
     if (!handled)
     {
@@ -1024,7 +1024,7 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, BOOL force)
     return rc;
 }
 
-UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action)
+UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UINT script)
 {
     UINT rc = ERROR_SUCCESS;
     BOOL handled = FALSE;
@@ -1034,7 +1034,7 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action)
     handled = ACTION_HandleStandardAction(package, action, &rc,TRUE);
 
     if (!handled)
-        handled = ACTION_HandleCustomAction(package, action, &rc, FALSE);
+        handled = ACTION_HandleCustomAction(package, action, &rc, script, FALSE);
 
     if( !handled && ACTION_DialogBox(package,action) == ERROR_SUCCESS )
         handled = TRUE;
@@ -1598,7 +1598,7 @@ static UINT execute_script(MSIPACKAGE *package, UINT script )
         action = package->script->Actions[script][i];
         ui_actionstart(package, action);
         TRACE("Executing Action (%s)\n",debugstr_w(action));
-        rc = ACTION_PerformAction(package, action, TRUE);
+        rc = ACTION_PerformAction(package, action, script, TRUE);
         if (rc != ERROR_SUCCESS)
             break;
     }

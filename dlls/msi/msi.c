@@ -1765,7 +1765,7 @@ UINT WINAPI MsiCollectUserInfoW(LPCWSTR szProduct)
         return ERROR_INVALID_PARAMETER;
 
     package = msihandle2msiinfo(handle, MSIHANDLETYPE_PACKAGE);
-    rc = ACTION_PerformUIAction(package, szFirstRun);
+    rc = ACTION_PerformUIAction(package, szFirstRun, -1);
     msiobj_release( &package->hdr );
 
     MsiCloseHandle(handle);
@@ -1787,7 +1787,7 @@ UINT WINAPI MsiCollectUserInfoA(LPCSTR szProduct)
         return ERROR_INVALID_PARAMETER;
 
     package = msihandle2msiinfo(handle, MSIHANDLETYPE_PACKAGE);
-    rc = ACTION_PerformUIAction(package, szFirstRun);
+    rc = ACTION_PerformUIAction(package, szFirstRun, -1);
     msiobj_release( &package->hdr );
 
     MsiCloseHandle(handle);
@@ -1869,7 +1869,7 @@ UINT WINAPI MsiConfigureFeatureW(LPCWSTR szProduct, LPCWSTR szFeature, INSTALLST
 
     MsiSetInternalUI( INSTALLUILEVEL_BASIC, NULL );
 
-    r = ACTION_PerformUIAction( package, szCostInit );
+    r = ACTION_PerformUIAction( package, szCostInit, -1 );
     if (r != ERROR_SUCCESS)
         goto end;
 
