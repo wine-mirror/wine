@@ -282,6 +282,8 @@ SRCDIR_INCLUDES = \
 	oleauto.h \
 	olectl.h \
 	oledlg.h \
+	pdh.h \
+	pdhmsg.h \
 	pktdef.h \
 	poppack.h \
 	powrprof.h \
@@ -359,6 +361,7 @@ SRCDIR_INCLUDES = \
 	winnls.h \
 	winnls32.h \
 	winnt.h \
+	winperf.h \
 	winreg.h \
 	winres.h \
 	winresrc.h \
