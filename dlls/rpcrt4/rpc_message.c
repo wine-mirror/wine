@@ -925,7 +925,7 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   if (bind->server) {
     if (pMsg->RpcFlags & WINE_RPCFLAG_EXCEPTION) {
       hdr = RPCRT4_BuildFaultHeader(pMsg->DataRepresentation,
-                                    RPC_S_CALL_FAILED);
+                                    *(DWORD *)pMsg->Buffer);
     } else {
       hdr = RPCRT4_BuildResponseHeader(pMsg->DataRepresentation,
                                        pMsg->BufferLength);
