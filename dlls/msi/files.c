@@ -282,6 +282,7 @@ static UINT msi_media_get_disk_info( MSIPACKAGE *package, struct media_info *mi 
 
     mi->disk_prompt = strdupW(MSI_RecordGetString(row, 3));
     mi->cabinet = strdupW(MSI_RecordGetString(row, 4));
+    mi->volume_label = strdupW(MSI_RecordGetString(row, 5));
 
     ptr = strrchrW(mi->source, '\\') + 1;
     lstrcpyW(ptr, mi->cabinet);
@@ -310,6 +311,8 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         UINT rc;
 
         msi_free(mi->disk_prompt);
+        msi_free(mi->cabinet);
+        msi_free(mi->volume_label);
 
         mi->disk_id++;
         mi->is_continuous = TRUE;
