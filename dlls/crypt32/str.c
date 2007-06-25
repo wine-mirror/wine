@@ -447,7 +447,7 @@ BOOL WINAPI CertStrToNameA(DWORD dwCertEncodingType, LPCSTR pszX500,
 
             *ppszError = pszX500;
             for (i = 0; i < errorStr - x500; i++)
-                CharNextA(*ppszError);
+                *ppszError = CharNextA(*ppszError);
         }
         CryptMemFree(x500);
     }
