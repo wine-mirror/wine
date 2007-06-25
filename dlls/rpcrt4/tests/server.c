@@ -560,7 +560,7 @@ array_tests(void)
   ok(sum_var_array(&c[2], 0) == 0, "RPC sum_conf_array\n");
 
   ok(dot_two_vectors(vs) == -4, "RPC dot_two_vectors\n");
-  cs = HeapAlloc(GetProcessHeap(), 0, offsetof(cs_t, ca) + 5 * sizeof cs->ca[0]);
+  cs = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(cs_t, ca[5]));
   cs->n = 5;
   cs->ca[0] = 3;
   cs->ca[1] = 5;
