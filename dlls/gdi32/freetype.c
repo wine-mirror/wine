@@ -590,8 +590,9 @@ static char **expand_mac_font(const char *path)
         unsigned short *num_faces_ptr, num_faces, face;
         AsscEntry *assoc;
         Handle fond;
+        ResType fond_res = 0x464f4e44; /* 'FOND' */
 
-        fond = Get1IndResource('FOND', idx);
+        fond = Get1IndResource(fond_res, idx);
         if(!fond) break;
         TRACE("got fond resource %d\n", idx);
         HLock(fond);
@@ -605,6 +606,7 @@ static char **expand_mac_font(const char *path)
         for(face = 0; face < num_faces; face++, assoc++)
         {
             Handle sfnt;
+            ResType sfnt_res = 0x73666e74; /* 'sfnt' */
             unsigned short size, font_id;
             char *output;
 
@@ -617,7 +619,7 @@ static char **expand_mac_font(const char *path)
             }
 
             TRACE("trying to load sfnt id %04x\n", font_id);
-            sfnt = GetResource('sfnt', font_id);
+            sfnt = GetResource(sfnt_res, font_id);
             if(!sfnt)
             {
                 TRACE("can't get sfnt resource %04x\n", font_id);
