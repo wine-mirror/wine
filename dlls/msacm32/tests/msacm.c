@@ -301,9 +301,8 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
             if (dwSize < sizeof(WAVEFORMATEX))
                 dwSize = sizeof(WAVEFORMATEX);
 
-            pwfx = (WAVEFORMATEX *) malloc(dwSize);
+            pwfx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwSize);
 
-            ZeroMemory(pwfx, dwSize);
             pwfx->cbSize = LOWORD(dwSize) - sizeof(WAVEFORMATEX);
             pwfx->wFormatTag = WAVE_FORMAT_UNKNOWN;
 
@@ -352,7 +351,7 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
                "acmFormatTagEnum(): rc = %08x, should be %08x\n",
                rc, MMSYSERR_NOERROR);
 
-            free(pwfx);
+            HeapFree(GetProcessHeap(), 0, pwfx);
 
             /* try invalid handle */
             rc = acmDriverClose((HACMDRIVER)1, 0);
