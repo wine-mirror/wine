@@ -1853,7 +1853,17 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       size = EmbeddedComplexSize(pStubMsg, desc);
       TRACE("embedded complex (size=%ld) <= %p\n", size, pMemory);
       m = NdrMarshaller[*desc & NDR_TABLE_MASK];
-      if (m) m(pStubMsg, pMemory, desc);
+      if (m)
+      {
+        /* for some reason interface pointers aren't generated as
+         * RPC_FC_POINTER, but instead as RPC_FC_EMBEDDED_COMPLEX, yet
+         * they still need the derefencing treatment that pointers are
+         * given */
+        if (*desc == RPC_FC_IP)
+          m(pStubMsg, *(unsigned char **)pMemory, desc);
+        else
+          m(pStubMsg, pMemory, desc);
+      }
       else FIXME("no marshaller for embedded type %02x\n", *desc);
       pMemory += size;
       pFormat += 2;
@@ -1961,7 +1971,17 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       TRACE("embedded complex (size=%ld) => %p\n", size, pMemory);
       m = NdrUnmarshaller[*desc & NDR_TABLE_MASK];
       memset(pMemory, 0, size); /* just in case */
-      if (m) m(pStubMsg, &pMemory, desc, FALSE);
+      if (m)
+      {
+        /* for some reason interface pointers aren't generated as
+         * RPC_FC_POINTER, but instead as RPC_FC_EMBEDDED_COMPLEX, yet
+         * they still need the derefencing treatment that pointers are
+         * given */
+        if (*desc == RPC_FC_IP)
+          m(pStubMsg, (unsigned char **)pMemory, desc, FALSE);
+        else
+          m(pStubMsg, &pMemory, desc, FALSE);
+      }
       else FIXME("no unmarshaller for embedded type %02x\n", *desc);
       pMemory += size;
       pFormat += 2;
@@ -2048,7 +2068,17 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       desc = pFormat + *(const SHORT*)pFormat;
       size = EmbeddedComplexSize(pStubMsg, desc);
       m = NdrBufferSizer[*desc & NDR_TABLE_MASK];
-      if (m) m(pStubMsg, pMemory, desc);
+      if (m)
+      {
+        /* for some reason interface pointers aren't generated as
+         * RPC_FC_POINTER, but instead as RPC_FC_EMBEDDED_COMPLEX, yet
+         * they still need the derefencing treatment that pointers are
+         * given */
+        if (*desc == RPC_FC_IP)
+          m(pStubMsg, *(unsigned char **)pMemory, desc);
+        else
+          m(pStubMsg, pMemory, desc);
+      }
       else FIXME("no buffersizer for embedded type %02x\n", *desc);
       pMemory += size;
       pFormat += 2;
@@ -2120,7 +2150,17 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
       desc = pFormat + *(const SHORT*)pFormat;
       size = EmbeddedComplexSize(pStubMsg, desc);
       m = NdrFreer[*desc & NDR_TABLE_MASK];
-      if (m) m(pStubMsg, pMemory, desc);
+      if (m)
+      {
+        /* for some reason interface pointers aren't generated as
+         * RPC_FC_POINTER, but instead as RPC_FC_EMBEDDED_COMPLEX, yet
+         * they still need the derefencing treatment that pointers are
+         * given */
+        if (*desc == RPC_FC_IP)
+          m(pStubMsg, *(unsigned char **)pMemory, desc);
+        else
+          m(pStubMsg, pMemory, desc);
+      }
       else FIXME("no freer for embedded type %02x\n", *desc);
       pMemory += size;
       pFormat += 2;
