@@ -369,7 +369,7 @@ LPWSTR WINAPI PathFindFileNameW(LPCWSTR lpszPath)
     if ((*lpszPath == '\\' || *lpszPath == '/' || *lpszPath == ':') &&
         lpszPath[1] && lpszPath[1] != '\\' && lpszPath[1] != '/')
       lastSlash = lpszPath + 1;
-    lpszPath = CharNextW(lpszPath);
+    lpszPath++;
   }
   return (LPWSTR)lastSlash;
 }
@@ -425,7 +425,7 @@ LPWSTR WINAPI PathFindExtensionW( LPCWSTR lpszPath )
         lastpoint = NULL;
       else if (*lpszPath == '.')
         lastpoint = lpszPath;
-      lpszPath = CharNextW(lpszPath);
+      lpszPath++;
     }
   }
   return (LPWSTR)(lastpoint ? lastpoint : lpszPath);
@@ -484,7 +484,7 @@ LPWSTR WINAPI PathGetArgsW(LPCWSTR lpszPath)
         return (LPWSTR)lpszPath + 1;
       if (*lpszPath == '"')
         bSeenQuote = !bSeenQuote;
-      lpszPath = CharNextW(lpszPath);
+      lpszPath++;
     }
   }
   return (LPWSTR)lpszPath;
@@ -610,8 +610,7 @@ BOOL WINAPI PathRemoveFileSpecW(LPWSTR lpszPath)
         if (*lpszPath == '\\')
           lpszFileSpec++;
       }
-      if (!(lpszPath = CharNextW(lpszPath)))
-        break;
+      lpszPath++;
     }
 
     if (*lpszFileSpec)
@@ -743,14 +742,8 @@ void WINAPI PathRemoveArgsW(LPWSTR lpszPath)
   if(lpszPath)
   {
     LPWSTR lpszArgs = PathGetArgsW(lpszPath);
-    if (*lpszArgs)
+    if (*lpszArgs || (lpszArgs > lpszPath && lpszArgs[-1] == ' '))
       lpszArgs[-1] = '\0';
-    else
-    {
-      LPWSTR lpszLastChar = CharPrevW(lpszPath, lpszArgs);
-      if(*lpszLastChar == ' ')
-        *lpszLastChar = '\0';
-    }
   }
 }
 
@@ -832,7 +825,8 @@ LPWSTR WINAPI PathRemoveBackslashW( LPWSTR lpszPath )
 
   if(lpszPath)
   {
-    szTemp = CharPrevW(lpszPath, lpszPath + strlenW(lpszPath));
+    szTemp = lpszPath + strlenW(lpszPath);
+    if (szTemp > lpszPath) szTemp--;
     if (!PathIsRootW(lpszPath) && *szTemp == '\\')
       *szTemp = '\0';
   }
@@ -1606,7 +1600,7 @@ BOOL WINAPI PathIsRootW(LPCWSTR lpszPath)
               return FALSE;
             bSeenSlash = TRUE;
           }
-          lpszPath = CharNextW(lpszPath);
+          lpszPath++;
         }
         return TRUE;
       }
@@ -1844,8 +1838,8 @@ static BOOL WINAPI PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
     if (toupperW(*mask) != toupperW(*name) && *mask != '?')
       return FALSE;
 
-    name = CharNextW(name);
-    mask = CharNextW(mask);
+    name++;
+    mask++;
   }
   if (!*name)
   {
@@ -2084,7 +2078,7 @@ BOOL WINAPI PathIsFileSpecW(LPCWSTR lpszPath)
   {
     if (*lpszPath == '\\' || *lpszPath == ':')
       return FALSE;
-    lpszPath = CharNextW(lpszPath);
+    lpszPath++;
   }
   return TRUE;
 }
@@ -2249,15 +2243,9 @@ BOOL WINAPI PathIsUNCServerW(LPCWSTR lpszPath)
 {
   TRACE("(%s)\n", debugstr_w(lpszPath));
 
-  if (lpszPath && *lpszPath++ == '\\' && *lpszPath++ == '\\')
+  if (lpszPath && lpszPath[0] == '\\' && lpszPath[1] == '\\')
   {
-    while (*lpszPath)
-    {
-      if (*lpszPath == '\\')
-        return FALSE;
-      lpszPath = CharNextW(lpszPath);
-    }
-    return TRUE;
+      return !strchrW( lpszPath + 2, '\\' );
   }
   return FALSE;
 }
@@ -2321,7 +2309,7 @@ BOOL WINAPI PathIsUNCServerShareW(LPCWSTR lpszPath)
           return FALSE;
         bSeenSlash = TRUE;
       }
-      lpszPath = CharNextW(lpszPath);
+      lpszPath++;
     }
     return bSeenSlash;
   }
@@ -2842,8 +2830,7 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
     DWORD dwEllipsesLen = 0, dwPathLen = 0;
 
     sFile = PathFindFileNameW(lpszPath);
-    if (sFile != lpszPath)
-      sFile = CharPrevW(lpszPath, sFile);
+    if (sFile != lpszPath) sFile--;
 
     /* Get the size of ellipses */
     GetTextExtentPointW(hDC, szEllipses, 3, &size);
@@ -2871,12 +2858,11 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
         dwTotalLen += size.cx;
         if (dwTotalLen <= dx)
           break;
-        sPath = CharPrevW(lpszPath, sPath);
+        sPath--;
         if (!bEllipses)
         {
           bEllipses = TRUE;
-          sPath = CharPrevW(lpszPath, sPath);
-          sPath = CharPrevW(lpszPath, sPath);
+          sPath -= 2;
         }
       } while (sPath > lpszPath);
 
