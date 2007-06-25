@@ -12,7 +12,7 @@
 @ stub PdhCalculateCounterFromRawValue
 @ stub PdhCloseLog
 @ stdcall PdhCloseQuery(ptr)
-@ stub PdhCollectQueryData
+@ stdcall PdhCollectQueryData(ptr)
 @ stub PdhCollectQueryDataEx
 @ stub PdhComputeCounterStatistics
 @ stub PdhConnectMachineA

@@ -246,6 +246,31 @@ PDH_STATUS WINAPI PdhCloseQuery( PDH_HQUERY handle )
 }
 
 /***********************************************************************
+ *              PdhCollectQueryData   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhCollectQueryData( PDH_HQUERY handle )
+{
+    struct query *query = handle;
+    struct list *item;
+
+    TRACE("%p\n", handle);
+
+    if (!query || (query->magic != PDH_MAGIC_QUERY)) return PDH_INVALID_HANDLE;
+
+    LIST_FOR_EACH( item, &query->counters )
+    {
+        SYSTEMTIME time;
+        struct counter *counter = LIST_ENTRY( item, struct counter, entry );
+
+        counter->collect( counter );
+
+        GetLocalTime( &time );
+        SystemTimeToFileTime( &time, &counter->stamp );
+    }
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
  *              PdhOpenQueryA   (PDH.@)
  */
 PDH_STATUS WINAPI PdhOpenQueryA( LPCSTR source, DWORD_PTR userdata, PDH_HQUERY *query )
