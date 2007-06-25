@@ -1464,8 +1464,7 @@ void __wine_enter_vm86( CONTEXT *context )
         {
         case VM86_UNKNOWN: /* unhandled GP fault - IO-instruction or similar */
             rec.ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
-            raise_segv_exception( &rec, context );
-            continue;
+            break;
         case VM86_TRAP: /* return due to DOS-debugger request */
             switch(VM86_ARG(res))
             {
