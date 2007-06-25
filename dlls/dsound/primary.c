@@ -100,6 +100,8 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 			merr = DSERR_OUTOFMEMORY;
 			/* but the old buffer might still exist and must be re-prepared */
 		} else {
+			device->playpos = 0;
+			device->mixpos = 0;
 			device->buffer = newbuf;
 			device->buflen = buflen;
 		}
@@ -139,6 +141,8 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 		if ((err == DS_OK) && (merr != DS_OK))
 			err = merr;
 	} else if (!device->hwbuf) {
+		device->playpos = 0;
+		device->mixpos = 0;
 		err = IDsDriver_CreateSoundBuffer(device->driver,device->pwfx,
 						  DSBCAPS_PRIMARYBUFFER,0,
 						  &(device->buflen),&(device->buffer),
@@ -190,6 +194,8 @@ HRESULT DSOUND_PrimaryCreate(DirectSoundDevice *device)
 	HRESULT err = DS_OK;
 	TRACE("(%p)\n", device);
 
+	device->playpos = 0;
+	device->mixpos = 0;
 	device->buflen = device->pwfx->nAvgBytesPerSec;
 
 	/* FIXME: verify that hardware capabilities (DSCAPS_PRIMARY flags) match */
@@ -299,6 +305,8 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 						device->pwfx, (DWORD_PTR)DSOUND_callback, (DWORD)device,
 						flags));
 			if (err == DS_OK) {
+				device->playpos = 0;
+				device->mixpos = 0;
 				err = IDsDriver_CreateSoundBuffer(device->driver,device->pwfx,
 								  DSBCAPS_PRIMARYBUFFER,0,
 								  &(device->buflen),&(device->buffer),
@@ -425,6 +433,8 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 		if (err == DSERR_BUFFERLOST) {
 			/* Wine-only: the driver wants us to recreate the HW buffer */
 			IDsDriverBuffer_Release(device->hwbuf);
+			device->playpos = 0;
+			device->mixpos = 0;
 			err = IDsDriver_CreateSoundBuffer(device->driver,device->pwfx,
 							  DSBCAPS_PRIMARYBUFFER,0,
 							  &(device->buflen),&(device->buffer),
