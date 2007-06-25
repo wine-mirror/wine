@@ -3951,32 +3951,38 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
     buffer = (BYTE *)relative;
     offset = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
 
-    if (owner && (info & OWNER_SECURITY_INFORMATION))
+    if (info & OWNER_SECURITY_INFORMATION)
     {
         memcpy( buffer + offset, &sidWorld, sizeof(sidWorld) );
         relative->Owner = offset;
-        *owner = buffer + offset;
+        if (owner)
+            *owner = buffer + offset;
         offset += sizeof(sidWorld);
     }
-    if (group && (info & GROUP_SECURITY_INFORMATION))
+    if (info & GROUP_SECURITY_INFORMATION)
     {
         memcpy( buffer + offset, &sidWorld, sizeof(sidWorld) );
         relative->Group = offset;
-        *group = buffer + offset;
+        if (group)
+            *group = buffer + offset;
         offset += sizeof(sidWorld);
     }
-    if (dacl && (info & DACL_SECURITY_INFORMATION))
+    if (info & DACL_SECURITY_INFORMATION)
     {
+        relative->Control |= SE_DACL_PRESENT;
         GetWorldAccessACL( (PACL)(buffer + offset) );
         relative->Dacl = offset;
-        *dacl = (PACL)(buffer + offset);
+        if (dacl)
+            *dacl = (PACL)(buffer + offset);
         offset += WINE_SIZE_OF_WORLD_ACCESS_ACL;
     }
-    if (sacl && (info & SACL_SECURITY_INFORMATION))
+    if (info & SACL_SECURITY_INFORMATION)
     {
+        relative->Control |= SE_SACL_PRESENT;
         GetWorldAccessACL( (PACL)(buffer + offset) );
         relative->Sacl = offset;
-        *sacl = (PACL)(buffer + offset);
+        if (sacl)
+            *sacl = (PACL)(buffer + offset);
     }
     return ERROR_SUCCESS;
 }

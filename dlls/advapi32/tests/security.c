@@ -1718,6 +1718,40 @@ static void test_SetEntriesInAcl(void)
     ok(acl == NULL, "acl=%p, expected NULL\n", acl);
 }
 
+static void test_GetNamedSecurityInfoA(void)
+{
+    PSECURITY_DESCRIPTOR pSecDesc;
+    DWORD revision;
+    SECURITY_DESCRIPTOR_CONTROL control;
+    PSID owner;
+    PSID group;
+    BOOL owner_defaulted;
+    BOOL group_defaulted;
+    DWORD error;
+    BOOL ret;
+    CHAR windows_dir[MAX_PATH];
+
+    ret = GetWindowsDirectoryA(windows_dir, MAX_PATH);
+    ok(ret, "GetWindowsDirectory failed with error %d\n", GetLastError());
+
+    error = GetNamedSecurityInfoA(windows_dir, SE_FILE_OBJECT,
+        OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
+        NULL, NULL, NULL, NULL, &pSecDesc);
+    ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
+
+    ret = GetSecurityDescriptorControl(pSecDesc, &control, &revision);
+    ok(ret, "GetSecurityDescriptorControl failed with error %d\n", GetLastError());
+    ok((control & (SE_SELF_RELATIVE|SE_DACL_PRESENT)) == (SE_SELF_RELATIVE|SE_DACL_PRESENT),
+        "control (0x%x) doesn't have (SE_SELF_RELATIVE|SE_DACL_PRESENT) flags set\n", control);
+    ok(revision == SECURITY_DESCRIPTOR_REVISION1, "revision was %d instead of 1\n", revision);
+    ret = GetSecurityDescriptorOwner(pSecDesc, &owner, &owner_defaulted);
+    ok(ret, "GetSecurityDescriptorOwner failed with error %d\n", GetLastError());
+    ok(owner != NULL, "owner should not be NULL\n");
+    ret = GetSecurityDescriptorGroup(pSecDesc, &group, &group_defaulted);
+    ok(ret, "GetSecurityDescriptorGroup failed with error %d\n", GetLastError());
+    ok(group != NULL, "group should not be NULL\n");
+}
+
 START_TEST(security)
 {
     init();
@@ -1739,4 +1773,5 @@ START_TEST(security)
     test_process_security();
     test_impersonation_level();
     test_SetEntriesInAcl();
+    test_GetNamedSecurityInfoA();
 }
