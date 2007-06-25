@@ -1097,7 +1097,7 @@ out_now:
     return status;
 }
 
-static NTSTATUS xmit_immediate(HANDLE hDevice, int fd, char* ptr)
+static NTSTATUS xmit_immediate(HANDLE hDevice, int fd, const char* ptr)
 {
     /* FIXME: not perfect as it should bypass the in-queue */
     WARN("(%p,'%c') not perfect!\n", hDevice, *ptr);

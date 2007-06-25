@@ -97,7 +97,7 @@ static NTSTATUS TAPE_GetStatus( int error )
 /******************************************************************
  *      TAPE_CreatePartition
  */
-static NTSTATUS TAPE_CreatePartition( int fd, TAPE_CREATE_PARTITION *data )
+static NTSTATUS TAPE_CreatePartition( int fd, const TAPE_CREATE_PARTITION *data )
 {
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
@@ -139,7 +139,7 @@ static NTSTATUS TAPE_CreatePartition( int fd, TAPE_CREATE_PARTITION *data )
 /******************************************************************
  *      TAPE_Erase
  */
-static NTSTATUS TAPE_Erase( int fd, TAPE_ERASE *data )
+static NTSTATUS TAPE_Erase( int fd, const TAPE_ERASE *data )
 {
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
@@ -300,7 +300,7 @@ static NTSTATUS TAPE_GetPosition( int fd, ULONG type, TAPE_GET_POSITION *data )
 /******************************************************************
  *      TAPE_Prepare
  */
-static NTSTATUS TAPE_Prepare( int fd, TAPE_PREPARE *data )
+static NTSTATUS TAPE_Prepare( int fd, const TAPE_PREPARE *data )
 {
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
@@ -353,7 +353,7 @@ static NTSTATUS TAPE_Prepare( int fd, TAPE_PREPARE *data )
 /******************************************************************
  *      TAPE_SetDriveParams
  */
-static NTSTATUS TAPE_SetDriveParams( int fd, TAPE_SET_DRIVE_PARAMETERS *data )
+static NTSTATUS TAPE_SetDriveParams( int fd, const TAPE_SET_DRIVE_PARAMETERS *data )
 {
 #if defined(HAVE_SYS_MTIO_H) && defined(MTCOMPRESSION)
     struct mtop cmd;
@@ -379,7 +379,7 @@ static NTSTATUS TAPE_SetDriveParams( int fd, TAPE_SET_DRIVE_PARAMETERS *data )
 /******************************************************************
  *      TAPE_SetMediaParams
  */
-static NTSTATUS TAPE_SetMediaParams( int fd, TAPE_SET_MEDIA_PARAMETERS *data )
+static NTSTATUS TAPE_SetMediaParams( int fd, const TAPE_SET_MEDIA_PARAMETERS *data )
 {
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
@@ -399,7 +399,7 @@ static NTSTATUS TAPE_SetMediaParams( int fd, TAPE_SET_MEDIA_PARAMETERS *data )
 /******************************************************************
  *      TAPE_SetPosition
  */
-static NTSTATUS TAPE_SetPosition( int fd, TAPE_SET_POSITION *data )
+static NTSTATUS TAPE_SetPosition( int fd, const TAPE_SET_POSITION *data )
 {
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
@@ -470,7 +470,7 @@ static NTSTATUS TAPE_SetPosition( int fd, TAPE_SET_POSITION *data )
 /******************************************************************
  *      TAPE_WriteMarks
  */
-static NTSTATUS TAPE_WriteMarks( int fd, TAPE_WRITE_MARKS *data )
+static NTSTATUS TAPE_WriteMarks( int fd, const TAPE_WRITE_MARKS *data )
 {
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
