@@ -35,6 +35,11 @@ typedef struct _RpcAuthInfo
   CredHandle cred;
   TimeStamp exp;
   ULONG cbMaxToken;
+  /* the auth identity pointer that the application passed us (freed by application) */
+  RPC_AUTH_IDENTITY_HANDLE *identity;
+  /* our copy of NT auth identity structure, if the authentication service
+   * takes an NT auth identity */
+  SEC_WINNT_AUTH_IDENTITY_W *nt_identity;
 } RpcAuthInfo;
 
 typedef struct _RpcQualityOfService
@@ -137,8 +142,10 @@ void RPCRT4_strfree(LPSTR src);
 
 ULONG RpcAuthInfo_AddRef(RpcAuthInfo *AuthInfo);
 ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo);
+BOOL RpcAuthInfo_IsEqual(const RpcAuthInfo *AuthInfo1, const RpcAuthInfo *AuthInfo2);
 ULONG RpcQualityOfService_AddRef(RpcQualityOfService *qos);
 ULONG RpcQualityOfService_Release(RpcQualityOfService *qos);
+BOOL RpcQualityOfService_IsEqual(const RpcQualityOfService *qos1, const RpcQualityOfService *qos2);
 
 RPC_STATUS RPCRT4_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCWSTR NetworkOptions, RpcAssoc **assoc);
 RpcConnection *RpcAssoc_GetIdleConnection(RpcAssoc *assoc, const RPC_SYNTAX_IDENTIFIER *InterfaceId, const RPC_SYNTAX_IDENTIFIER *TransferSyntax, const RpcAuthInfo *AuthInfo, const RpcQualityOfService *QOS);

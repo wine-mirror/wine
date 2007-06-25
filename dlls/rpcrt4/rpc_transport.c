@@ -1485,10 +1485,10 @@ RpcConnection *RpcAssoc_GetIdleConnection(RpcAssoc *assoc,
   /* try to find a compatible connection from the connection pool */
   EnterCriticalSection(&assoc->cs);
   LIST_FOR_EACH_ENTRY(Connection, &assoc->connection_pool, RpcConnection, conn_pool_entry)
-    if ((Connection->AuthInfo == AuthInfo) &&
-        (Connection->QOS == QOS) &&
-        !memcmp(&Connection->ActiveInterface, InterfaceId,
-                sizeof(RPC_SYNTAX_IDENTIFIER)))
+    if (!memcmp(&Connection->ActiveInterface, InterfaceId,
+                sizeof(RPC_SYNTAX_IDENTIFIER)) &&
+        RpcAuthInfo_IsEqual(Connection->AuthInfo, AuthInfo) &&
+        RpcQualityOfService_IsEqual(Connection->QOS, QOS))
     {
       list_remove(&Connection->conn_pool_entry);
       LeaveCriticalSection(&assoc->cs);
