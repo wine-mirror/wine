@@ -151,9 +151,14 @@ const NDR_MARSHALL NdrMarshaller[NDR_TABLE_SIZE] = {
   NdrXmitOrRepAsMarshall, NdrXmitOrRepAsMarshall,
   /* 0x2f */
   NdrInterfacePointerMarshall,
-  /* 0xb0 */
-  0, 0, 0, 0,
-  NdrUserMarshalMarshall
+  /* 0x30 */
+  0,
+  /* 0xb1 */
+  0, 0, 0,
+  NdrUserMarshalMarshall,
+  0, 0,
+  /* 0xb7 */
+  NdrRangeMarshall
 };
 const NDR_UNMARSHALL NdrUnmarshaller[NDR_TABLE_SIZE] = {
   0,
@@ -188,9 +193,14 @@ const NDR_UNMARSHALL NdrUnmarshaller[NDR_TABLE_SIZE] = {
   NdrXmitOrRepAsUnmarshall, NdrXmitOrRepAsUnmarshall,
   /* 0x2f */
   NdrInterfacePointerUnmarshall,
-  /* 0xb0 */
-  0, 0, 0, 0,
-  NdrUserMarshalUnmarshall
+  /* 0x30 */
+  0,
+  /* 0xb1 */
+  0, 0, 0,
+  NdrUserMarshalUnmarshall,
+  0, 0,
+  /* 0xb7 */
+  NdrRangeUnmarshall
 };
 const NDR_BUFFERSIZE NdrBufferSizer[NDR_TABLE_SIZE] = {
   0,
@@ -225,9 +235,14 @@ const NDR_BUFFERSIZE NdrBufferSizer[NDR_TABLE_SIZE] = {
   NdrXmitOrRepAsBufferSize, NdrXmitOrRepAsBufferSize,
   /* 0x2f */
   NdrInterfacePointerBufferSize,
-  /* 0xb0 */
-  0, 0, 0, 0,
-  NdrUserMarshalBufferSize
+  /* 0x30 */
+  0,
+  /* 0xb1 */
+  0, 0, 0,
+  NdrUserMarshalBufferSize,
+  0, 0,
+  /* 0xb7 */
+  NdrRangeBufferSize
 };
 const NDR_MEMORYSIZE NdrMemorySizer[NDR_TABLE_SIZE] = {
   0,
@@ -262,9 +277,14 @@ const NDR_MEMORYSIZE NdrMemorySizer[NDR_TABLE_SIZE] = {
   NdrXmitOrRepAsMemorySize, NdrXmitOrRepAsMemorySize,
   /* 0x2f */
   NdrInterfacePointerMemorySize,
-  /* 0xb0 */
-  0, 0, 0, 0,
-  NdrUserMarshalMemorySize
+  /* 0x30 */
+  0,
+  /* 0xb1 */
+  0, 0, 0,
+  NdrUserMarshalMemorySize,
+  0, 0,
+  /* 0xb7 */
+  NdrRangeMemorySize
 };
 const NDR_FREE NdrFreer[NDR_TABLE_SIZE] = {
   0,
@@ -298,9 +318,14 @@ const NDR_FREE NdrFreer[NDR_TABLE_SIZE] = {
   NdrXmitOrRepAsFree, NdrXmitOrRepAsFree,
   /* 0x2f */
   NdrInterfacePointerFree,
-  /* 0xb0 */
-  0, 0, 0, 0,
-  NdrUserMarshalFree
+  /* 0x30 */
+  0,
+  /* 0xb1 */
+  0, 0, 0,
+  NdrUserMarshalFree,
+  0, 0,
+  /* 0xb7 */
+  NdrRangeFree
 };
 
 void * WINAPI NdrAllocate(MIDL_STUB_MESSAGE *pStubMsg, size_t len)
@@ -5045,6 +5070,187 @@ void WINAPI NdrXmitOrRepAsFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     FIXME("stub\n");
+}
+
+#include "pshpack1.h"
+typedef struct
+{
+    unsigned char type;
+    unsigned char flags_type; /* flags in upper nibble, type in lower nibble */
+    ULONG low_value;
+    ULONG high_value;
+} NDR_RANGE;
+#include "poppack.h"
+
+/***********************************************************************
+ *           NdrRangeMarshall [internal]
+ */
+unsigned char *WINAPI NdrRangeMarshall(
+    PMIDL_STUB_MESSAGE pStubMsg,
+    unsigned char *pMemory,
+    PFORMAT_STRING pFormat)
+{
+    NDR_RANGE *pRange = (NDR_RANGE *)pFormat;
+    unsigned char base_type;
+
+    TRACE("pStubMsg %p, pMemory %p, type 0x%02x\n", pStubMsg, pMemory, *pFormat);
+
+    if (pRange->type != RPC_FC_RANGE)
+    {
+        ERR("invalid format type %x\n", pRange->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return NULL;
+    }
+
+    base_type = pRange->flags_type & 0xf;
+
+    return NdrBaseTypeMarshall(pStubMsg, pMemory, &base_type);
+}
+
+/***********************************************************************
+ *           NdrRangeUnmarshall
+ */
+unsigned char *WINAPI NdrRangeUnmarshall(
+    PMIDL_STUB_MESSAGE pStubMsg,
+    unsigned char **ppMemory,
+    PFORMAT_STRING pFormat,
+    unsigned char fMustAlloc)
+{
+    NDR_RANGE *pRange = (NDR_RANGE *)pFormat;
+    unsigned char base_type;
+
+    TRACE("pStubMsg: %p, ppMemory: %p, type: 0x%02x, fMustAlloc: %s\n", pStubMsg, ppMemory, *pFormat, fMustAlloc ? "true" : "false");
+
+    if (pRange->type != RPC_FC_RANGE)
+    {
+        ERR("invalid format type %x\n", pRange->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return NULL;
+    }
+    base_type = pRange->flags_type & 0xf;
+
+    TRACE("base_type = 0x%02x, low_value = %d, high_value = %d\n",
+        base_type, pRange->low_value, pRange->high_value);
+
+#define RANGE_UNMARSHALL(type, format_spec) \
+    do \
+    { \
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(type)); \
+        if (fMustAlloc || !*ppMemory) \
+            *ppMemory = NdrAllocate(pStubMsg, sizeof(type)); \
+        if ((*(type *)pStubMsg->Buffer < (type)pRange->low_value) || \
+            (*(type *)pStubMsg->Buffer > (type)pRange->high_value)) \
+        { \
+            ERR("value exceeded bounds: " format_spec ", low: " format_spec ", high: " format_spec "\n", \
+                *(type *)pStubMsg->Buffer, (type)pRange->low_value, \
+                (type)pRange->high_value); \
+            RpcRaiseException(RPC_S_INVALID_BOUND); \
+            return NULL; \
+        } \
+        TRACE("*ppMemory: %p\n", *ppMemory); \
+        **(type **)ppMemory = *(type *)pStubMsg->Buffer; \
+        pStubMsg->Buffer += sizeof(type); \
+    } while (0)
+
+    switch(base_type)
+    {
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+        RANGE_UNMARSHALL(UCHAR, "%d");
+        TRACE("value: 0x%02x\n", **(UCHAR **)ppMemory);
+        break;
+    case RPC_FC_BYTE:
+    case RPC_FC_USMALL:
+        RANGE_UNMARSHALL(CHAR, "%u");
+        TRACE("value: 0x%02x\n", **(UCHAR **)ppMemory);
+        break;
+    case RPC_FC_WCHAR: /* FIXME: valid? */
+    case RPC_FC_USHORT:
+        RANGE_UNMARSHALL(USHORT, "%u");
+        TRACE("value: 0x%04x\n", **(USHORT **)ppMemory);
+        break;
+    case RPC_FC_SHORT:
+        RANGE_UNMARSHALL(SHORT, "%d");
+        TRACE("value: 0x%04x\n", **(USHORT **)ppMemory);
+        break;
+    case RPC_FC_LONG:
+        RANGE_UNMARSHALL(LONG, "%d");
+        TRACE("value: 0x%08x\n", **(ULONG **)ppMemory);
+        break;
+    case RPC_FC_ULONG:
+        RANGE_UNMARSHALL(ULONG, "%u");
+        TRACE("value: 0x%08x\n", **(ULONG **)ppMemory);
+        break;
+    case RPC_FC_ENUM16:
+    case RPC_FC_ENUM32:
+        FIXME("Unhandled enum type\n");
+        break;
+    case RPC_FC_ERROR_STATUS_T: /* FIXME: valid? */
+    case RPC_FC_FLOAT:
+    case RPC_FC_DOUBLE:
+    case RPC_FC_HYPER:
+    default:
+        ERR("invalid range base type: 0x%02x\n", base_type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+    }
+
+    return NULL;
+}
+
+/***********************************************************************
+ *           NdrRangeBufferSize [internal]
+ */
+void WINAPI NdrRangeBufferSize(
+    PMIDL_STUB_MESSAGE pStubMsg,
+    unsigned char *pMemory,
+    PFORMAT_STRING pFormat)
+{
+    NDR_RANGE *pRange = (NDR_RANGE *)pFormat;
+    unsigned char base_type;
+
+    TRACE("pStubMsg %p, pMemory %p, type 0x%02x\n", pStubMsg, pMemory, *pFormat);
+
+    if (pRange->type != RPC_FC_RANGE)
+    {
+        ERR("invalid format type %x\n", pRange->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+    }
+    base_type = pRange->flags_type & 0xf;
+
+    NdrBaseTypeBufferSize(pStubMsg, pMemory, &base_type);
+}
+
+/***********************************************************************
+ *           NdrRangeMemorySize [internal]
+ */
+ULONG WINAPI NdrRangeMemorySize(
+    PMIDL_STUB_MESSAGE pStubMsg,
+    PFORMAT_STRING pFormat)
+{
+    NDR_RANGE *pRange = (NDR_RANGE *)pFormat;
+    unsigned char base_type;
+
+    if (pRange->type != RPC_FC_RANGE)
+    {
+        ERR("invalid format type %x\n", pRange->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return 0;
+    }
+    base_type = pRange->flags_type & 0xf;
+
+    return NdrBaseTypeMemorySize(pStubMsg, &base_type);
+}
+
+/***********************************************************************
+ *           NdrRangeFree [internal]
+ */
+void WINAPI NdrRangeFree(PMIDL_STUB_MESSAGE pStubMsg,
+                                unsigned char *pMemory,
+                                PFORMAT_STRING pFormat)
+{
+   TRACE("pStubMsg %p pMemory %p type 0x%02x\n", pStubMsg, pMemory, *pFormat);
+
+   /* nothing to do */
 }
 
 /***********************************************************************
