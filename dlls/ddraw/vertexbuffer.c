@@ -250,6 +250,7 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
         if(hr != D3D_OK)
         {
             ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr=%08x\n", This, hr);
+            LeaveCriticalSection(&ddraw_cs);
             return hr;
         }
         *Size = Desc.Size;
