@@ -307,6 +307,7 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
            "    buffer size changed after SetFormat() - "
            "previous size was %u, current size is %u\n",
            dsbcaps.dwBufferBytes, new_dsbcaps.dwBufferBytes);
+        dsbcaps.dwBufferBytes = new_dsbcaps.dwBufferBytes;
 
         /* Check for primary buffer flags change */
         ok(new_dsbcaps.dwFlags == dsbcaps.dwFlags,
