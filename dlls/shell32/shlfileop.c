@@ -748,9 +748,7 @@ int WINAPI SHCreateDirectoryExW(HWND hWnd, LPCWSTR path, LPSECURITY_ATTRIBUTES s
 
 	    while (*pSlash)
 	    {
-	      while (*pSlash && *pSlash != '\\')
-	        pSlash = CharNextW(pSlash);
-
+              while (*pSlash && *pSlash != '\\') pSlash++;
 	      if (*pSlash)
 	      {
 	        *pSlash = 0;    /* terminate path at separator */
