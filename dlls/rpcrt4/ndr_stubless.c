@@ -1339,10 +1339,6 @@ LONG WINAPI NdrStubCall2(
                     TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
                     TRACE("\tmemory addr (before): %p -> %p\n", pArg, *(unsigned char **)pArg);
 
-                    if (pParam->param_attributes.ServerAllocSize)
-                        FIXME("ServerAllocSize of %d ignored for parameter %d\n",
-                            pParam->param_attributes.ServerAllocSize * 8, i);
-
                     if (pParam->param_attributes.IsBasetype)
                     {
                         const unsigned char *pTypeFormat =
@@ -1360,9 +1356,12 @@ LONG WINAPI NdrStubCall2(
                                 else
                                     call_marshaller(&stubMsg, pArg, pTypeFormat);
                             }
-                            /* FIXME: call call_freer here */
                             break;
                         case STUBLESS_UNMARSHAL:
+                            if (pParam->param_attributes.ServerAllocSize)
+                                *(void **)pArg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                    pParam->param_attributes.ServerAllocSize * 8);
+
                             if (pParam->param_attributes.IsIn)
                             {
                                 if (pParam->param_attributes.IsSimpleRef)
@@ -1417,6 +1416,10 @@ LONG WINAPI NdrStubCall2(
                             /* FIXME: call call_freer here for IN types */
                             break;
                         case STUBLESS_UNMARSHAL:
+                            if (pParam->param_attributes.ServerAllocSize)
+                                *(void **)pArg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                    pParam->param_attributes.ServerAllocSize * 8);
+
                             if (pParam->param_attributes.IsIn)
                             {
                                 if (pParam->param_attributes.IsByValue)
@@ -1425,6 +1428,7 @@ LONG WINAPI NdrStubCall2(
                                     call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
                             }
                             else if (pParam->param_attributes.IsOut &&
+                                     !pParam->param_attributes.ServerAllocSize &&
                                      !pParam->param_attributes.IsByValue)
                             {
                                 DWORD size = calc_arg_size(&stubMsg, pTypeFormat);
