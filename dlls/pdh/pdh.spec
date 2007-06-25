@@ -1,8 +1,8 @@
 1 stub PdhPlaGetLogFileNameA
 @ stub PdhAdd009CounterA
 @ stub PdhAdd009CounterW
-@ stub PdhAddCounterA
-@ stub PdhAddCounterW
+@ stdcall PdhAddCounterA(ptr str long ptr)
+@ stdcall PdhAddCounterW(ptr wstr long ptr)
 @ stub PdhBindInputDataSourceA
 @ stub PdhBindInputDataSourceW
 @ stub PdhBrowseCountersA
@@ -120,7 +120,7 @@
 @ stub PdhReadRawLogRecord
 @ stub PdhRelogA
 @ stub PdhRelogW
-@ stub PdhRemoveCounter
+@ stdcall PdhRemoveCounter(ptr)
 @ stub PdhSelectDataSourceA
 @ stub PdhSelectDataSourceW
 @ stub PdhSetCounterScaleFactor

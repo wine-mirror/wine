@@ -111,6 +111,14 @@ struct counter
     } two;                                          /* second value */
 };
 
+static struct counter *create_counter( void )
+{
+    struct counter *counter;
+
+    if ((counter = pdh_alloc_zero( sizeof(struct counter) ))) return counter;
+    return NULL;
+}
+
 #define PDH_MAGIC_QUERY     0x50444830 /* 'PDH0' */
 
 struct query
@@ -142,6 +150,74 @@ struct source
     LONGLONG        base;                           /* samples per second */
 };
 
+/* counter source registry */
+static const struct source counter_sources[] =
+{
+    { NULL, NULL, 0, 0, 0 }
+};
+
+/***********************************************************************
+ *              PdhAddCounterA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhAddCounterA( PDH_HQUERY query, LPCSTR path,
+                                  DWORD_PTR userdata, PDH_HCOUNTER *counter )
+{
+    PDH_STATUS ret;
+    WCHAR *pathW;
+
+    TRACE("%p %s %lx %p\n", query, debugstr_a(path), userdata, counter);
+
+    if (!path) return PDH_INVALID_ARGUMENT;
+
+    if (!(pathW = pdh_strdup_aw( path )))
+        return PDH_MEMORY_ALLOCATION_FAILURE;
+
+    ret = PdhAddCounterW( query, pathW, userdata, counter );
+
+    pdh_free( pathW );
+    return ret;
+}
+
+/***********************************************************************
+ *              PdhAddCounterW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhAddCounterW( PDH_HQUERY hquery, LPCWSTR path,
+                                  DWORD_PTR userdata, PDH_HCOUNTER *hcounter )
+{
+    struct query *query = hquery;
+    struct counter *counter;
+    unsigned int i;
+
+    TRACE("%p %s %lx %p\n", hquery, debugstr_w(path), userdata, hcounter);
+
+    if (!path  || !hcounter) return PDH_INVALID_ARGUMENT;
+    if (!query || (query->magic != PDH_MAGIC_QUERY)) return PDH_INVALID_HANDLE;
+
+    *hcounter = NULL;
+    for (i = 0; i < sizeof(counter_sources) / sizeof(counter_sources[0]); i++)
+    {
+        if (strstrW( path, counter_sources[i].path ))
+        {
+            if ((counter = create_counter()))
+            {
+                counter->path         = pdh_strdup( counter_sources[i].path );
+                counter->collect      = counter_sources[i].collect;
+                counter->type         = counter_sources[i].type;
+                counter->defaultscale = counter_sources[i].scale;
+                counter->base         = counter_sources[i].base;
+                counter->queryuser    = query->user;
+                counter->user         = userdata;
+
+                list_add_tail( &query->counters, &counter->entry );
+
+                *hcounter = counter;
+                return ERROR_SUCCESS;
+            }
+            return PDH_MEMORY_ALLOCATION_FAILURE;
+        }
+    }
+    return PDH_CSTATUS_NO_COUNTER;
+}
 
 /***********************************************************************
  *              PdhCloseQuery   (PDH.@)
@@ -211,4 +287,23 @@ PDH_STATUS WINAPI PdhOpenQueryW( LPCWSTR source, DWORD_PTR userdata, PDH_HQUERY 
         return ERROR_SUCCESS;
     }
     return PDH_MEMORY_ALLOCATION_FAILURE;
+}
+
+/***********************************************************************
+ *              PdhRemoveCounter   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhRemoveCounter( PDH_HCOUNTER handle )
+{
+    struct counter *counter = handle;
+
+    TRACE("%p\n", handle);
+
+    if (!counter) return PDH_INVALID_HANDLE;
+
+    list_remove( &counter->entry );
+
+    pdh_free( counter->path );
+    pdh_free( counter );
+
+    return ERROR_SUCCESS;
 }
