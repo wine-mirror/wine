@@ -570,7 +570,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 gl_info->supported[ARB_FRAGMENT_PROGRAM] = TRUE;
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - GL_MAX_TEXTURE_IMAGE_UNITS_ARB=%u\n", gl_max);
-                gl_info->max_fragment_samplers = min(MAX_SAMPLERS, gl_max);
+                gl_info->max_fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, gl_max);
                 GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - max float constants=%u\n", gl_max);
                 gl_info->ps_arb_constantsF = gl_max;

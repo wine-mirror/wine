@@ -1810,7 +1810,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     /* TODO: Test if OpenGL is compiled in and loaded */
 
     /* Initialize the texture unit mapping to a 1:1 mapping */
-    for(state = 0; state < MAX_SAMPLERS; state++) {
+    for (state = 0; state < MAX_COMBINED_SAMPLERS; ++state) {
         if (state < GL_LIMITS(fragment_samplers)) {
             This->texUnitMap[state] = state;
             This->rev_tex_unit_map[state] = state;
@@ -1941,8 +1941,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
         This->cursorTexture = 0;
     }
 
-    for (sampler = 0; sampler < MAX_SAMPLERS; ++sampler) {
+    for (sampler = 0; sampler < MAX_FRAGMENT_SAMPLERS; ++sampler) {
         IWineD3DDevice_SetTexture(iface, sampler, NULL);
+    }
+    for (sampler = 0; sampler < MAX_VERTEX_SAMPLERS; ++sampler) {
+        IWineD3DDevice_SetTexture(iface, WINED3DVERTEXTEXTURESAMPLER0 + sampler, NULL);
     }
 
     /* Release the buffers (with sanity checks)*/
@@ -3215,7 +3218,7 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
     device_update_fixed_function_usage_map(This);
 
     if (This->stateBlock->lowest_disabled_stage <= GL_LIMITS(textures)) {
-        for (i = 0; i < MAX_SAMPLERS; ++i) {
+        for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
             if (This->texUnitMap[i] != i) {
                 device_map_stage(This, i, i);
                 IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
@@ -3269,7 +3272,7 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
 static void device_map_psamplers(IWineD3DDeviceImpl *This) {
     int i;
 
-    for (i = 0; i < MAX_SAMPLERS; ++i) {
+    for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
         if (This->texUnitMap[i] != i) {
             device_map_stage(This, i, i);
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
@@ -6263,7 +6266,7 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
         case WINED3DRTYPE_TEXTURE:
         case WINED3DRTYPE_CUBETEXTURE:
         case WINED3DRTYPE_VOLUMETEXTURE:
-                for (counter = 0; counter < MAX_SAMPLERS; counter++) {
+                for (counter = 0; counter < MAX_COMBINED_SAMPLERS; counter++) {
                     if (This->stateBlock != NULL && This->stateBlock->textures[counter] == (IWineD3DBaseTexture *)resource) {
                         WARN("Texture being released is still by a stateblock, Stage = %u Texture = %p\n", counter, resource);
                         This->stateBlock->textures[counter] = NULL;

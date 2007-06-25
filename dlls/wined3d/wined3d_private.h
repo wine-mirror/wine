@@ -74,13 +74,15 @@ void hash_table_put(hash_table_t *table, void *key, void *value);
 void hash_table_remove(hash_table_t *table, void *key);
 
 /* Device caps */
-#define MAX_PALETTES      256
-#define MAX_STREAMS       16
-#define MAX_TEXTURES      8
-#define MAX_SAMPLERS      16
-#define MAX_ACTIVE_LIGHTS 8
-#define MAX_CLIPPLANES    WINED3DMAXUSERCLIPPLANES
-#define MAX_LEVELS        256
+#define MAX_PALETTES            256
+#define MAX_STREAMS             16
+#define MAX_TEXTURES            8
+#define MAX_FRAGMENT_SAMPLERS   16
+#define MAX_VERTEX_SAMPLERS     4
+#define MAX_COMBINED_SAMPLERS   (MAX_FRAGMENT_SAMPLERS + MAX_VERTEX_SAMPLERS)
+#define MAX_ACTIVE_LIGHTS       8
+#define MAX_CLIPPLANES          WINED3DMAXUSERCLIPPLANES
+#define MAX_LEVELS              256
 
 #define MAX_CONST_I 16
 #define MAX_CONST_B 16
@@ -437,9 +439,9 @@ typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 
 /* + 1 because samplers start with 0 */
 #define STATE_SAMPLER(num) (STATE_TEXTURESTAGE(MAX_TEXTURES - 1, WINED3D_HIGHEST_TEXTURE_STATE) + 1 + (num))
-#define STATE_IS_SAMPLER(num) ((num) >= STATE_SAMPLER(0) && (num) <= STATE_SAMPLER(MAX_SAMPLERS - 1))
+#define STATE_IS_SAMPLER(num) ((num) >= STATE_SAMPLER(0) && (num) <= STATE_SAMPLER(MAX_COMBINED_SAMPLERS - 1))
 
-#define STATE_PIXELSHADER (STATE_SAMPLER(MAX_SAMPLERS - 1) + 1)
+#define STATE_PIXELSHADER (STATE_SAMPLER(MAX_COMBINED_SAMPLERS - 1) + 1)
 #define STATE_IS_PIXELSHADER(a) ((a) == STATE_PIXELSHADER)
 
 #define STATE_TRANSFORM(a) (STATE_PIXELSHADER + (a))
@@ -722,8 +724,8 @@ struct IWineD3DDeviceImpl
     float                       posFixup[4];
 
     /* With register combiners we can skip junk texture stages */
-    DWORD                     texUnitMap[MAX_SAMPLERS];
-    DWORD                     rev_tex_unit_map[MAX_SAMPLERS];
+    DWORD                     texUnitMap[MAX_COMBINED_SAMPLERS];
+    DWORD                     rev_tex_unit_map[MAX_COMBINED_SAMPLERS];
     BOOL                      fixed_function_usage_map[MAX_TEXTURES];
     BOOL                      oneToOneTexUnitMap;
 
@@ -1212,12 +1214,12 @@ typedef struct SAVEDSTATES {
         BOOL                      fvf;
         BOOL                      streamSource[MAX_STREAMS];
         BOOL                      streamFreq[MAX_STREAMS];
-        BOOL                      textures[MAX_SAMPLERS];
+        BOOL                      textures[MAX_COMBINED_SAMPLERS];
         BOOL                      transform[HIGHEST_TRANSFORMSTATE + 1];
         BOOL                      viewport;
         BOOL                      renderState[WINEHIGHEST_RENDER_STATE + 1];
         BOOL                      textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
-        BOOL                      samplerState[MAX_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
+        BOOL                      samplerState[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
         BOOL                      clipplane[MAX_CLIPPLANES];
         BOOL                      vertexDecl;
         BOOL                      pixelShader;
@@ -1310,14 +1312,14 @@ struct IWineD3DStateBlockImpl
     DWORD                     renderState[WINEHIGHEST_RENDER_STATE + 1];
 
     /* Texture */
-    IWineD3DBaseTexture      *textures[MAX_SAMPLERS];
-    int                       textureDimensions[MAX_SAMPLERS];
+    IWineD3DBaseTexture      *textures[MAX_COMBINED_SAMPLERS];
+    int                       textureDimensions[MAX_COMBINED_SAMPLERS];
 
     /* Texture State Stage */
     DWORD                     textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
     DWORD                     lowest_disabled_stage;
     /* Sampler States */
-    DWORD                     samplerState[MAX_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
+    DWORD                     samplerState[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
 
     /* Current GLSL Shader Program */
     struct glsl_shader_prog_link *glsl_program;
@@ -1560,7 +1562,7 @@ typedef struct shader_reg_maps {
 
     /* Sampler usage tokens 
      * Use 0 as default (bit 31 is always 1 on a valid token) */
-    DWORD samplers[MAX_SAMPLERS];
+    DWORD samplers[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     char bumpmat;
 
     /* Whether or not a loop is used in this shader */

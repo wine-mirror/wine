@@ -2247,7 +2247,7 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
              * may be disabled because of WINED3DTSS_COLOROP = WINED3DTOP_DISABLE
              * make sure to enable them
              */
-            for(i=0; i < MAX_SAMPLERS; i++) {
+            for(i=0; i < MAX_FRAGMENT_SAMPLERS; i++) {
                 if(!isStateDirty(context, STATE_SAMPLER(i))) {
                     sampler(STATE_SAMPLER(i), stateblock, context);
                 }
@@ -3960,6 +3960,10 @@ const struct StateEntry StateTable[] =
     { /*13, Sampler 13                              */      STATE_SAMPLER(13),                                  sampler             },
     { /*14, Sampler 14                              */      STATE_SAMPLER(14),                                  sampler             },
     { /*15, Sampler 15                              */      STATE_SAMPLER(15),                                  sampler             },
+    { /*16, Vertex sampler 0                        */      STATE_SAMPLER(16),                                  sampler             },
+    { /*17, Vertex sampler 1                        */      STATE_SAMPLER(17),                                  sampler             },
+    { /*18, Vertex sampler 2                        */      STATE_SAMPLER(18),                                  sampler             },
+    { /*19, Vertex sampler 3                        */      STATE_SAMPLER(19),                                  sampler             },
     /* Pixel shader */
     { /*  , Pixel Shader                            */      STATE_PIXELSHADER,                                  pixelshader         },
       /* Transform states follow                    */
