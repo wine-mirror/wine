@@ -204,7 +204,7 @@ static	DWORD 	WAVE_ConvertByteToTimeFormat(WINE_MCIWAVE* wmw, DWORD val, LPDWORD
 	ret = val;
 	break;
     case MCI_FORMAT_SAMPLES: /* FIXME: is this correct ? */
-	ret = (val * 8) / wmw->lpWaveFormat->wBitsPerSample;
+	ret = (val * 8) / (wmw->lpWaveFormat->wBitsPerSample ? wmw->lpWaveFormat->wBitsPerSample : 1);
 	break;
     default:
 	WARN("Bad time format %u!\n", wmw->dwMciTimeFormat);
