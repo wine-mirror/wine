@@ -494,7 +494,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
     gl_info->max_buffers        = 1;
     gl_info->max_textures       = 1;
     gl_info->max_texture_stages = 1;
-    gl_info->max_samplers       = 1;
+    gl_info->max_fragment_samplers = 1;
     gl_info->max_sampler_stages = 1;
     gl_info->ps_arb_version = PS_VERSION_NOT_SUPPORTED;
     gl_info->ps_arb_max_temps = 0;
@@ -568,7 +568,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 gl_info->supported[ARB_FRAGMENT_PROGRAM] = TRUE;
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - GL_MAX_TEXTURE_IMAGE_UNITS_ARB=%u\n", gl_max);
-                gl_info->max_samplers = min(MAX_SAMPLERS, gl_max);
+                gl_info->max_fragment_samplers = min(MAX_SAMPLERS, gl_max);
                 GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - max float constants=%u\n", gl_max);
                 gl_info->ps_arb_constantsF = gl_max;
@@ -596,7 +596,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 gl_info->supported[ARB_MULTITEXTURE] = TRUE;
                 gl_info->max_textures = min(MAX_TEXTURES, gl_max);
                 gl_info->max_texture_stages = min(MAX_TEXTURES, gl_max);
-                gl_info->max_samplers = max(gl_info->max_samplers, gl_max);
+                gl_info->max_fragment_samplers = max(gl_info->max_fragment_samplers, gl_max);
             } else if (strcmp(ThisExtn, "GL_ARB_texture_cube_map") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Texture Cube Map support\n");
                 gl_info->supported[ARB_TEXTURE_CUBE_MAP] = TRUE;
@@ -838,7 +838,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
     /* In some cases the number of texture stages can be larger than the number
      * of samplers. The GF4 for example can use only 2 samplers (no fragment
      * shaders), but 8 texture stages (register combiners). */
-    gl_info->max_sampler_stages = max(gl_info->max_samplers, gl_info->max_texture_stages);
+    gl_info->max_sampler_stages = max(gl_info->max_fragment_samplers, gl_info->max_texture_stages);
 
     /* We can only use ORM_FBO when the hardware supports it. */
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && !gl_info->supported[EXT_FRAMEBUFFER_OBJECT]) {

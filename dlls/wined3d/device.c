@@ -1811,7 +1811,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* Initialize the texture unit mapping to a 1:1 mapping */
     for(state = 0; state < MAX_SAMPLERS; state++) {
-        if (state < GL_LIMITS(samplers)) {
+        if (state < GL_LIMITS(fragment_samplers)) {
             This->texUnitMap[state] = state;
             This->rev_tex_unit_map[state] = state;
         } else {
