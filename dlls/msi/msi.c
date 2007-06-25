@@ -732,6 +732,17 @@ UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, DWORD attributes)
     return ERROR_SUCCESS;
 }
 
+UINT WINAPI MsiQueryComponentStateA(LPSTR szProductCode, LPSTR szUserSid, MSIINSTALLCONTEXT dwContext, LPCSTR szComponent, INSTALLSTATE *pdwState)
+{
+    FIXME("(%s, %s, %d, %s, %p): stub!\n", debugstr_a(szProductCode), debugstr_a(szUserSid), dwContext, debugstr_a(szComponent), pdwState);
+
+    if (!pdwState)
+        return ERROR_INVALID_PARAMETER;
+
+    *pdwState = INSTALLSTATE_UNKNOWN;
+    return ERROR_UNKNOWN_PRODUCT;
+}
+
 INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR szProduct)
 {
     LPWSTR szwProduct = NULL;

@@ -242,7 +242,7 @@
 246 stdcall MsiEnumProductsExW(wstr wstr long long ptr ptr ptr ptr)
 247 stub MsiGetProductInfoExA
 248 stub MsiGetProductInfoExW
-249 stub MsiQueryComponentStateA
+249 stdcall MsiQueryComponentStateA(str str long str ptr)
 250 stub MsiQueryComponentStateW
 251 stub MsiQueryFeatureStateExA
 252 stub MsiQueryFeatureStateExW

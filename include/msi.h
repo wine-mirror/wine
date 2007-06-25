@@ -425,6 +425,10 @@ UINT WINAPI MsiVerifyPackageA(LPCSTR);
 UINT WINAPI MsiVerifyPackageW(LPCWSTR);
 #define     MsiVerifyPackage WINELIB_NAME_AW(MsiVerifyPackage)
 
+UINT WINAPI MsiQueryComponentStateA(LPSTR,LPSTR,MSIINSTALLCONTEXT,LPCSTR,INSTALLSTATE*);
+UINT WINAPI MsiQueryComponentStateW(LPWSTR,LPWSTR,MSIINSTALLCONTEXT,LPCWSTR,INSTALLSTATE*);
+#define     MsiQueryComponentState WINELIB_NAME_AW(MsiQueryComponentState)
+
 INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR);
 INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR);
 #define      MsiQueryProductState WINELIB_NAME_AW(MsiQueryProductState)
