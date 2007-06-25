@@ -2259,7 +2259,7 @@ static void BltParamTest(void)
     /* Blt(non-fast) tests */
     memset(&BltFx, 0, sizeof(BltFx));
     BltFx.dwSize = sizeof(BltFx);
-    BltFx.dwFillColor = 0xaabbccdd;
+    U5(BltFx).dwFillColor = 0xaabbccdd;
 
     hr = IDirectDrawSurface_Blt(surface1, &valid, NULL, NULL, DDBLT_COLORFILL, &BltFx);
     ok(hr == DD_OK, "IDirectDrawSurface_Blt with a valid rectangle for color fill returned %08x\n", hr);

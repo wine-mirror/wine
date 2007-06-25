@@ -93,10 +93,10 @@ static BOOL CreateDirect3D(void)
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
-    ddsd.ddpfPixelFormat.dwZBufferBitDepth = 16;
-    ddsd.ddpfPixelFormat.dwZBitMask = 0x0000FFFF;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    U1(U4(ddsd).ddpfPixelFormat).dwZBufferBitDepth = 16;
+    U3(U4(ddsd).ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
     ddsd.dwWidth = 256;
     ddsd.dwHeight = 256;
     rc = IDirectDraw7_CreateSurface(lpDD, &ddsd, &lpDDSdepth, NULL);
