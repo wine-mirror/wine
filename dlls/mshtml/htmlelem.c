@@ -875,11 +875,52 @@ static HRESULT WINAPI HTMLElement_get_onfilterchange(IHTMLElement *iface, VARIAN
     return E_NOTIMPL;
 }
 
+static void create_child_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *buf)
+{
+    nsIDOMNodeList *nsnode_list;
+    nsIDOMNode *iter;
+    PRUint32 list_len = 0, i;
+    HTMLDOMNode *node;
+    nsresult nsres;
+
+    nsres = nsIDOMNode_GetChildNodes(elem->node->nsnode, &nsnode_list);
+    if(NS_FAILED(nsres)) {
+        ERR("GetChildNodes failed: %08x\n", nsres);
+        return;
+    }
+
+    nsIDOMNodeList_GetLength(nsnode_list, &list_len);
+    if(!list_len)
+        return;
+
+    buf->size = list_len;
+    buf->buf = mshtml_alloc(buf->size*sizeof(HTMLElement**));
+
+    for(i=0; i<list_len; i++) {
+        nsres = nsIDOMNodeList_Item(nsnode_list, i, &iter);
+        if(NS_FAILED(nsres)) {
+            ERR("Item failed: %08x\n", nsres);
+            continue;
+        }
+
+        node = get_node(doc, iter);
+        if(node->node_type != NT_HTMLELEM)
+            continue;
+
+        elem_vector_add(buf, (HTMLElement*)node->impl.elem);
+    }
+}
+
 static HRESULT WINAPI HTMLElement_get_children(IHTMLElement *iface, IDispatch **p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    elem_vector buf = {NULL, 0, 0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    create_child_list(This->node->doc, This, &buf);
+
+    return HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len, p);
 }
 
 static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *buf)
