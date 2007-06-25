@@ -4037,19 +4037,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTextureStageState(IWineD3DDevice *if
  * Get / Set Texture
  *****/
 static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage, IWineD3DBaseTexture* pTexture) {
-
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseTexture   *oldTexture;
+    IWineD3DBaseTexture *oldTexture;
+
+    TRACE("(%p) : Stage %#x, Texture %p\n", This, Stage, pTexture);
+
+    if (Stage >= WINED3DVERTEXTEXTURESAMPLER0 && Stage <= WINED3DVERTEXTEXTURESAMPLER3) {
+        Stage -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
+    }
 
     oldTexture = This->updateStateBlock->textures[Stage];
-    TRACE("(%p) : Stage(%d), Texture (%p)\n", This, Stage, pTexture);
-
-#if 0 /* TODO: check so vertex textures */
-    if (Stage >= D3DVERTEXTEXTURESAMPLER && Stage <= D3DVERTEXTEXTURESAMPLER3){
-        This->updateStateBlock->vertexTextures[Stage - D3DVERTEXTEXTURESAMPLER] = pTexture;
-        return WINED3D_OK;
-    }
-#endif
 
     if(pTexture != NULL) {
         /* SetTexture isn't allowed on textures in WINED3DPOOL_SCRATCH; 
@@ -4119,7 +4116,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
              * Shouldn't happen as long as apps bind a texture only to one stage
              */
             TRACE("Searcing for other sampler / stage id where the texture is bound to\n");
-            for(i = 0; i < GL_LIMITS(sampler_stages); i++) {
+            for(i = 0; i < MAX_COMBINED_SAMPLERS; i++) {
                 if(This->updateStateBlock->textures[i] == oldTexture) {
                     old->baseTexture.sampler = i;
                     break;
@@ -4135,11 +4132,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD Stage, IWineD3DBaseTexture** ppTexture) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : (%d /* Stage */,%p /* ppTexture */)\n", This, Stage, ppTexture);
+
+    TRACE("(%p) : Stage %#x, ppTexture %p\n", This, Stage, ppTexture);
+
+    if (Stage >= WINED3DVERTEXTEXTURESAMPLER0 && Stage <= WINED3DVERTEXTEXTURESAMPLER3) {
+        Stage -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
+    }
 
     *ppTexture=This->stateBlock->textures[Stage];
     if (*ppTexture)
         IWineD3DBaseTexture_AddRef(*ppTexture);
+
+    TRACE("(%p) : Returning %p\n", This, *ppTexture);
 
     return WINED3D_OK;
 }
