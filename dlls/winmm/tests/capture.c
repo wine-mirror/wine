@@ -191,7 +191,7 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
     /* Check that the position is 0 at start */
     check_position(device, win, 0, pwfx);
 
-    frag.lpData=malloc(pwfx->nAvgBytesPerSec);
+    frag.lpData=HeapAlloc(GetProcessHeap(), 0, pwfx->nAvgBytesPerSec);
     frag.dwBufferLength=pwfx->nAvgBytesPerSec;
     frag.dwBytesRecorded=0;
     frag.dwUser=0;
@@ -291,7 +291,7 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
             trace("Unable to play back the recorded sound\n");
     }
 
-    free(frag.lpData);
+    HeapFree(GetProcessHeap(), 0, frag.lpData);
     CloseHandle(hevent);
 }
 
@@ -371,7 +371,7 @@ static void wave_in_test_device(int device)
        "waveInMessage(%s): failed to get interface size: rc=%s\n",
        dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_NOERROR) {
-        nameW = (WCHAR *)malloc(size);
+        nameW = HeapAlloc(GetProcessHeap(), 0, size);
         rc=waveInMessage((HWAVEIN)device, DRV_QUERYDEVICEINTERFACE,
                          (DWORD_PTR)nameW, size);
         ok(rc==MMSYSERR_NOERROR,"waveInMessage(%s): failed to get interface "
@@ -379,11 +379,11 @@ static void wave_in_test_device(int device)
         ok(lstrlenW(nameW)+1==size/sizeof(WCHAR),
            "got an incorrect size %d\n", size);
         if (rc==MMSYSERR_NOERROR) {
-            nameA = malloc(size/sizeof(WCHAR));
+            nameA = HeapAlloc(GetProcessHeap(), 0, size/sizeof(WCHAR));
             WideCharToMultiByte(CP_ACP, 0, nameW, size/sizeof(WCHAR),
                                 nameA, size/sizeof(WCHAR), NULL, NULL);
         }
-        free(nameW);
+        HeapFree(GetProcessHeap(), 0, nameW);
     } else if (rc==MMSYSERR_NOTSUPPORTED) {
         nameA=strdup("not supported");
     }
@@ -394,7 +394,7 @@ static void wave_in_test_device(int device)
     trace("     channels=%d formats=%05x\n",
           capsA.wChannels,capsA.dwFormats);
 
-    free(nameA);
+    HeapFree(GetProcessHeap(), 0, nameA);
 
     for (f=0;f<NB_WIN_FORMATS;f++) {
         format.wFormatTag=WAVE_FORMAT_PCM;
