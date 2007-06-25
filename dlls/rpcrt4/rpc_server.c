@@ -235,7 +235,11 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
 
       sif = RPCRT4_find_interface(object_uuid, &conn->ActiveInterface, TRUE);
       if (!sif) {
-        /* FIXME: send fault packet? */
+        response = RPCRT4_BuildFaultHeader(NDR_LOCAL_DATA_REPRESENTATION,
+                                           RPC_S_UNKNOWN_IF);
+
+        RPCRT4_Send(conn, response, NULL, 0);
+        RPCRT4_FreeHeader(response);
         break;
       }
       msg->RpcInterfaceInformation = sif->If;
