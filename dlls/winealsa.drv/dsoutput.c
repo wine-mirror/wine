@@ -381,7 +381,11 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx, BOOL fo
             FIXME("Your alsa dmix period size is excessively high, unfortunately this is alsa default, try decreasing it to 512 or 256 (but double the amount of periods) if possible\n");
         This->mmap_writeahead = 3 * psize;
     }
-    else This->mmap_writeahead = 3 * 512;
+    else 
+    {
+    	This->mmap_writeahead = 3 * psize;
+    	while (This->mmap_writeahead <= 512) This->mmap_writeahead += psize;
+    }
 
     if (This->pcm)
     {
