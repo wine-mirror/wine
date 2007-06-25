@@ -1805,7 +1805,8 @@ int JACK_callback_wwi (nframes_t nframes, void *arg)
 #if JACK_CLOSE_HACK
 	if(wwi->in_use == FALSE)
 	{
-	  /* do nothing if nothing is being recorded */
+            /* do nothing if nothing is being recorded */
+            LeaveCriticalSection(&wwi->access_crst);
 	    return 0;
 	}
 #endif
