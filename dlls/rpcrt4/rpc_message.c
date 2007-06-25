@@ -952,6 +952,23 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   return status;
 }
 
+/* is this status something that the server can't recover from? */
+static inline BOOL is_hard_error(RPC_STATUS status)
+{
+    switch (status)
+    {
+    case 0: /* user-defined fault */
+    case ERROR_ACCESS_DENIED:
+    case ERROR_INVALID_PARAMETER:
+    case RPC_S_PROTOCOL_ERROR:
+    case RPC_S_CALL_FAILED:
+    case RPC_S_CALL_FAILED_DNE:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
 /***********************************************************************
  *           I_RpcReceive [RPCRT4.@]
  */
@@ -999,31 +1016,40 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
     goto fail;
   }
 
-  status = RPC_S_PROTOCOL_ERROR;
-
   switch (hdr->common.ptype) {
   case PKT_RESPONSE:
-    if (bind->server) goto fail;
+    if (bind->server) {
+        status = RPC_S_PROTOCOL_ERROR;
+        goto fail;
+    }
     break;
   case PKT_REQUEST:
-    if (!bind->server) goto fail;
+    if (!bind->server) {
+        status = RPC_S_PROTOCOL_ERROR;
+        goto fail;
+    }
     break;
   case PKT_FAULT:
     pMsg->RpcFlags |= WINE_RPCFLAG_EXCEPTION;
     ERR ("we got fault packet with status 0x%lx\n", hdr->fault.status);
     status = hdr->fault.status; /* FIXME: do translation from nca error codes */
-    goto fail;
+    if (is_hard_error(status))
+        goto fail;
+    break;
   default:
     WARN("bad packet type %d\n", hdr->common.ptype);
+    status = RPC_S_PROTOCOL_ERROR;
     goto fail;
   }
 
   /* success */
-  status = RPC_S_OK;
+  RPCRT4_CloseBinding(bind, conn);
+  RPCRT4_FreeHeader(hdr);
+  return status;
 
 fail:
   RPCRT4_FreeHeader(hdr);
-  RPCRT4_CloseBinding(bind, conn);
+  RPCRT4_DestroyConnection(conn);
   return status;
 }
 
