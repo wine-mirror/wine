@@ -2878,7 +2878,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, W
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD Value) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    DWORD oldValue = This->stateBlock->samplerState[Sampler][Type];
+    DWORD oldValue;
+
+    TRACE("(%p) : Sampler %#x, Type %s (%#x), Value %#x\n",
+            This, Sampler, debug_d3dsamplerstate(Type), Type, Value);
+
+    if (Sampler >= WINED3DVERTEXTEXTURESAMPLER0 && Sampler <= WINED3DVERTEXTEXTURESAMPLER3) {
+        Sampler -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
+    }
 
     /**
     * SetSampler is designed to allow for more than the standard up to 8 textures
@@ -2895,8 +2902,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
     * Ok GForce say it's ok to use glTexParameter/glGetTexParameter(...).
      ******************/
 
-    TRACE("(%p) : Sampler=%d, Type=%s(%d), Value=%d\n", This, Sampler,
-        debug_d3dsamplerstate(Type), Type, Value);
+    oldValue = This->stateBlock->samplerState[Sampler][Type];
     This->updateStateBlock->samplerState[Sampler][Type]         = Value;
     This->updateStateBlock->set.samplerState[Sampler][Type]     = Value;
     This->updateStateBlock->changed.samplerState[Sampler][Type] = Value;
@@ -2919,8 +2925,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD* Value) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    TRACE("(%p) : Sampler %#x, Type %s (%#x)\n",
+            This, Sampler, debug_d3dsamplerstate(Type), Type);
+
+    if (Sampler >= WINED3DVERTEXTEXTURESAMPLER0 && Sampler <= WINED3DVERTEXTEXTURESAMPLER3) {
+        Sampler -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
+    }
+
     *Value = This->stateBlock->samplerState[Sampler][Type];
-    TRACE("(%p) : Sampler %d Type %u Returning %d\n", This, Sampler, Type, *Value);
+    TRACE("(%p) : Returning %#x\n", This, *Value);
 
     return WINED3D_OK;
 }
