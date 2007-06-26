@@ -574,7 +574,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
             {
                 unsigned int align = 0;
                 /* FIXME: take alignment into account */
-                if (!strcmp(var->name, subexpr->u.sval))
+                if (var->name && !strcmp(var->name, subexpr->u.sval))
                 {
                     correlation_variable = var->type;
                     break;
