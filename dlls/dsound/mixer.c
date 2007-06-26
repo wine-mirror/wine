@@ -927,7 +927,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 			/* buffers are full. start stopping if applicable */
 			if(device->state == STATE_STOPPED){
-				TRACE("restarting primary buffer");
+				TRACE("restarting primary buffer\n");
 				if(DSOUND_PrimaryPlay(device) != DS_OK){
 					WARN("DSOUND_PrimaryPlay failed\n");
 				}
