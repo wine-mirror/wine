@@ -238,6 +238,8 @@ static const WCHAR szDependencies[] = {
        'D','e','p','e','n','d','e','n','c','i','e','s',0};
 static const WCHAR szDependOnService[] = {
        'D','e','p','e','n','d','O','n','S','e','r','v','i','c','e',0};
+static const WCHAR szObjectName[] = {
+       'O','b','j','e','c','t','N','a','m','e',0};
 
 struct reg_value {
     DWORD type;
@@ -1317,6 +1319,8 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     if( lpLoadOrderGroup )
         service_set_string( &val[n++], szGroup, lpLoadOrderGroup );
 
+    /* FIXME: lpDependencies is used to create both DependOnService and DependOnGroup
+     * There is no such key as what szDependencies refers to */
     if( lpDependencies )
         service_set_multi_string( &val[n++], szDependencies, lpDependencies );
 
@@ -1324,7 +1328,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         FIXME("Don't know how to add a Password for a service.\n");
 
     if( lpServiceStartName )
-        service_set_string( &val[n++], szDependOnService, lpServiceStartName );
+        service_set_string( &val[n++], szObjectName, lpServiceStartName );
 
     r = service_write_values( hKey, val, n );
     if( r != ERROR_SUCCESS )
@@ -2209,6 +2213,8 @@ BOOL WINAPI ChangeServiceConfigW( SC_HANDLE hService, DWORD dwServiceType,
     if( lpLoadOrderGroup )
         service_set_string( &val[n++], szGroup, lpLoadOrderGroup );
 
+    /* FIXME: lpDependencies is used to create/change both DependOnService and DependOnGroup
+     * There is no such key as what szDependencies refers to */
     if( lpDependencies )
         service_set_multi_string( &val[n++], szDependencies, lpDependencies );
 
@@ -2216,7 +2222,7 @@ BOOL WINAPI ChangeServiceConfigW( SC_HANDLE hService, DWORD dwServiceType,
         FIXME("ignoring password\n");
 
     if( lpServiceStartName )
-        service_set_string( &val[n++], szDependOnService, lpServiceStartName );
+        service_set_string( &val[n++], szObjectName, lpServiceStartName );
 
     r = service_write_values( hsvc->hkey, val, n );
 
