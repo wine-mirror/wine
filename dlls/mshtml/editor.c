@@ -43,6 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_CHARPREVIOUS "cmd_charPrevious"
 #define NSCMD_COPY         "cmd_copy"
 #define NSCMD_CUT          "cmd_cut"
+#define NSCMD_DELETECHARFORWARD   "cmd_deleteCharForward"
+#define NSCMD_DELETEWORDFORWARD   "cmd_deleteWordForward"
 #define NSCMD_FONTCOLOR    "cmd_fontColor"
 #define NSCMD_FONTFACE     "cmd_fontFace"
 #define NSCMD_INDENT       "cmd_indent"
@@ -75,10 +77,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSALIGN_LEFT   "left"
 #define NSALIGN_RIGHT  "right"
 
-#define DOM_VK_LEFT  VK_LEFT
-#define DOM_VK_UP    VK_UP
-#define DOM_VK_RIGHT VK_RIGHT
-#define DOM_VK_DOWN  VK_DOWN
+#define DOM_VK_LEFT     VK_LEFT
+#define DOM_VK_UP       VK_UP
+#define DOM_VK_RIGHT    VK_RIGHT
+#define DOM_VK_DOWN     VK_DOWN
+#define DOM_VK_DELETE   VK_DELETE
 
 static const WCHAR wszFont[] = {'f','o','n','t',0};
 static const WCHAR wszSize[] = {'s','i','z','e',0};
@@ -487,7 +490,8 @@ static void handle_arrow_key(HTMLDocument *This, nsIDOMKeyEvent *event, const ch
     if(b)
         i |= 2;
 
-    do_ns_editor_command(This->nscontainer, cmds[i]);
+    if(cmds[i])
+        do_ns_editor_command(This->nscontainer, cmds[i]);
 
     nsIDOMKeyEvent_PreventDefault(event);
 }
@@ -550,7 +554,18 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
         handle_arrow_key(This, key_event, cmds);
         break;
     }
-    };
+    case DOM_VK_DELETE: {
+        static const char *cmds[] = {
+            NSCMD_DELETECHARFORWARD,
+            NSCMD_DELETEWORDFORWARD,
+            NULL, NULL
+        };
+
+        TRACE("delete\n");
+        handle_arrow_key(This, key_event, cmds);
+        break;
+    }
+    }
 
     nsIDOMKeyEvent_Release(key_event);
 }
