@@ -1051,7 +1051,7 @@ static int write_pointer_description_offsets(
     int written = 0;
     unsigned int align;
 
-    if (is_ptr(type))
+    if (is_ptr(type) && type->ref->type != RPC_FC_IP)
     {
         if (offset_in_memory && offset_in_buffer)
         {
