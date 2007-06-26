@@ -178,8 +178,8 @@ RpcPktHdr *RPCRT4_BuildBindHeader(unsigned long DataRepresentation,
                                   unsigned short MaxTransmissionSize,
                                   unsigned short MaxReceiveSize,
                                   unsigned long  AssocGroupId,
-                                  RPC_SYNTAX_IDENTIFIER *AbstractId,
-                                  RPC_SYNTAX_IDENTIFIER *TransferId)
+                                  const RPC_SYNTAX_IDENTIFIER *AbstractId,
+                                  const RPC_SYNTAX_IDENTIFIER *TransferId)
 {
   RpcPktHdr *header;
 
@@ -240,10 +240,10 @@ RpcPktHdr *RPCRT4_BuildBindNackHeader(unsigned long DataRepresentation,
 RpcPktHdr *RPCRT4_BuildBindAckHeader(unsigned long DataRepresentation,
                                      unsigned short MaxTransmissionSize,
                                      unsigned short MaxReceiveSize,
-                                     LPSTR ServerAddress,
+                                     LPCSTR ServerAddress,
                                      unsigned long Result,
                                      unsigned long Reason,
-                                     RPC_SYNTAX_IDENTIFIER *TransferId)
+                                     const RPC_SYNTAX_IDENTIFIER *TransferId)
 {
   RpcPktHdr *header;
   unsigned long header_size;
