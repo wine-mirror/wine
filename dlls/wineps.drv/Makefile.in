@@ -8,47 +8,6 @@ EXTRAINCL = @FREETYPEINCL@
 
 SPEC_SRCS16 = wineps16.drv.spec
 
-FONTMETRICS = \
-	AvantGarde_Book \
-	AvantGarde_BookOblique \
-	AvantGarde_Demi \
-	AvantGarde_DemiOblique \
-	Bookman_Demi \
-	Bookman_DemiItalic \
-	Bookman_Light \
-	Bookman_LightItalic \
-	Courier \
-	Courier_Bold \
-	Courier_BoldOblique \
-	Courier_Oblique \
-	Helvetica \
-	Helvetica_Bold \
-	Helvetica_BoldOblique \
-	Helvetica_Narrow \
-	Helvetica_Narrow_Bold \
-	Helvetica_Narrow_BoldOblique \
-	Helvetica_Narrow_Oblique \
-	Helvetica_Oblique \
-	NewCenturySchlbk_Bold \
-	NewCenturySchlbk_BoldItalic \
-	NewCenturySchlbk_Italic \
-	NewCenturySchlbk_Roman \
-	Palatino_Bold \
-	Palatino_BoldItalic \
-	Palatino_Italic \
-	Palatino_Roman \
-	Symbol \
-	Times_Bold \
-	Times_BoldItalic \
-	Times_Italic \
-	Times_Roman \
-	ZapfChancery_MediumItalic \
-	ZapfDingbats \
-
-DATA_C_SRCS = \
-	data/agl.c \
-	$(FONTMETRICS:%=data/%.c)
-
 C_SRCS = \
 	afm.c \
 	bitblt.c \
@@ -57,6 +16,42 @@ C_SRCS = \
 	builtin.c \
 	clipping.c \
 	color.c \
+	data/AvantGarde_Book.c \
+	data/AvantGarde_BookOblique.c \
+	data/AvantGarde_Demi.c \
+	data/AvantGarde_DemiOblique.c \
+	data/Bookman_Demi.c \
+	data/Bookman_DemiItalic.c \
+	data/Bookman_Light.c \
+	data/Bookman_LightItalic.c \
+	data/Courier.c \
+	data/Courier_Bold.c \
+	data/Courier_BoldOblique.c \
+	data/Courier_Oblique.c \
+	data/Helvetica.c \
+	data/Helvetica_Bold.c \
+	data/Helvetica_BoldOblique.c \
+	data/Helvetica_Narrow.c \
+	data/Helvetica_Narrow_Bold.c \
+	data/Helvetica_Narrow_BoldOblique.c \
+	data/Helvetica_Narrow_Oblique.c \
+	data/Helvetica_Oblique.c \
+	data/NewCenturySchlbk_Bold.c \
+	data/NewCenturySchlbk_BoldItalic.c \
+	data/NewCenturySchlbk_Italic.c \
+	data/NewCenturySchlbk_Roman.c \
+	data/Palatino_Bold.c \
+	data/Palatino_BoldItalic.c \
+	data/Palatino_Italic.c \
+	data/Palatino_Roman.c \
+	data/Symbol.c \
+	data/Times_Bold.c \
+	data/Times_BoldItalic.c \
+	data/Times_Italic.c \
+	data/Times_Roman.c \
+	data/ZapfChancery_MediumItalic.c \
+	data/ZapfDingbats.c \
+	data/agl.c \
 	download.c \
 	driver.c \
 	encode.c \
@@ -73,8 +68,7 @@ C_SRCS = \
 	truetype.c \
 	type1.c \
 	type1afm.c \
-	type42.c \
-	$(DATA_C_SRCS)
+	type42.c
 
 RC_SRCS= rsrc.rc
 
