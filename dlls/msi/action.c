@@ -1987,13 +1987,14 @@ static LPWSTR msi_get_disk_file_version( LPCWSTR filename )
         msi_free( version );
         return NULL;
     }
-    msi_free( version );
 
     sprintfW( filever, name_fmt,
         HIWORD(lpVer->dwFileVersionMS),
         LOWORD(lpVer->dwFileVersionMS),
         HIWORD(lpVer->dwFileVersionLS),
         LOWORD(lpVer->dwFileVersionLS));
+
+    msi_free( version );
 
     return strdupW( filever );
 }
