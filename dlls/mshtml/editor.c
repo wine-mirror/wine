@@ -579,6 +579,17 @@ static void set_ns_fontname(NSContainer *This, const char *fontname)
     nsICommandParams_Release(nsparam);
 }
 
+static HRESULT exec_delete(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)->(%p %p)\n", This, in, out);
+
+    if(This->nscontainer)
+        do_ns_editor_command(This->nscontainer, NSCMD_DELETECHARFORWARD);
+
+    update_doc(This, UPDATE_UI);
+    return S_OK;
+}
+
 static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     TRACE("(%p)->(%p %p)\n", This, in, out);
@@ -1037,7 +1048,7 @@ static HRESULT query_edit_status(HTMLDocument *This, OLECMD *cmd)
 }
 
 const cmdtable_t editmode_cmds[] = {
-    {IDM_DELETE,          query_edit_status,    NULL},
+    {IDM_DELETE,          query_edit_status,    exec_delete},
     {IDM_FONTNAME,        query_edit_status,    exec_fontname},
     {IDM_FONTSIZE,        query_edit_status,    exec_fontsize},
     {IDM_FORECOLOR,       query_edit_status,    exec_forecolor},
