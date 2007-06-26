@@ -764,13 +764,16 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
     UINT rc;
     INSTALLSTATE rrc = INSTALLSTATE_UNKNOWN;
     HKEY hkey = 0;
-    static const WCHAR szWindowsInstaller[] = {
-         'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0 };
     DWORD sz;
+
+    static const int GUID_LEN = 38;
+    static const WCHAR szWindowsInstaller[] = {
+            'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0
+    };
 
     TRACE("%s\n", debugstr_w(szProduct));
 
-    if (!szProduct)
+    if (!szProduct || !*szProduct || lstrlenW(szProduct) != GUID_LEN)
         return INSTALLSTATE_INVALIDARG;
 
     rc = MSIREG_OpenUserProductsKey(szProduct,&hkey,FALSE);

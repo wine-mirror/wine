@@ -347,24 +347,15 @@ static void test_MsiQueryProductState(void)
 
     /* empty prodcode */
     state = MsiQueryProductStateA("");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
 
     /* garbage prodcode */
     state = MsiQueryProductStateA("garbage");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
 
     /* guid without brackets */
     state = MsiQueryProductStateA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
 
     /* guid with brackets */
     state = MsiQueryProductStateA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}");
