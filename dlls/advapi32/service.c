@@ -1815,7 +1815,7 @@ BOOL WINAPI QueryServiceConfigA( SC_HANDLE hService, LPQUERY_SERVICE_CONFIGA con
     MAP_STR( lpDisplayName );
 #undef MAP_STR
 
-    *needed = p - buffer;
+    *needed = p - (LPSTR)config;
     ret = TRUE;
 
 done:
