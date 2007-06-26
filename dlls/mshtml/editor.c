@@ -983,6 +983,10 @@ HRESULT editor_exec_paste(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VAR
 static HRESULT query_edit_status(HTMLDocument *This, OLECMD *cmd)
 {
     switch(cmd->cmdID) {
+    case IDM_DELETE:
+        TRACE("CGID_MSHTML: IDM_DELETE\n");
+        cmd->cmdf = query_ns_edit_status(This, NULL);
+        break;
     case IDM_FONTNAME:
         TRACE("CGID_MSHTML: IDM_FONTNAME\n");
         cmd->cmdf = query_ns_edit_status(This, NULL);
@@ -1033,6 +1037,7 @@ static HRESULT query_edit_status(HTMLDocument *This, OLECMD *cmd)
 }
 
 const cmdtable_t editmode_cmds[] = {
+    {IDM_DELETE,          query_edit_status,    NULL},
     {IDM_FONTNAME,        query_edit_status,    exec_fontname},
     {IDM_FONTSIZE,        query_edit_status,    exec_fontsize},
     {IDM_FORECOLOR,       query_edit_status,    exec_forecolor},
