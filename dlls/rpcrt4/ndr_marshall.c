@@ -4414,9 +4414,11 @@ static ULONG get_discriminant(unsigned char fc, unsigned char *pMemory)
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
+    case RPC_FC_ENUM16:
         return *(USHORT *)pMemory;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
+    case RPC_FC_ENUM32:
         return *(ULONG *)pMemory;
     default:
         FIXME("Unhandled base type: 0x%02x\n", fc);
