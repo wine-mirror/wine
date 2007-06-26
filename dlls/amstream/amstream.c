@@ -260,7 +260,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     hr = MediaStream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);
     if (SUCCEEDED(hr))
     {
-        pNewStreams = (IMediaStream**)CoTaskMemAlloc((This->nbStreams+1)*sizeof(IMediaStream*));
+        pNewStreams = CoTaskMemAlloc((This->nbStreams+1)*sizeof(IMediaStream*));
         if (!pNewStreams)
         {
             IMediaStream_Release(pStream);

@@ -94,7 +94,7 @@ static void test_CopyImage_Bitmap(int depth)
     unsigned int i;
 
     /* Create a device-independent bitmap (DIB) */
-    info = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+    info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
     info->bmiHeader.biSize = sizeof(info->bmiHeader);
     info->bmiHeader.biWidth = 2;
     info->bmiHeader.biHeight = 2;

@@ -605,7 +605,7 @@ static void test_StrCmpW(void)
 static WCHAR *CoDupStrW(const char* src)
 {
   INT len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
-  WCHAR* szTemp = (WCHAR*)CoTaskMemAlloc(len * sizeof(WCHAR));
+  WCHAR* szTemp = CoTaskMemAlloc(len * sizeof(WCHAR));
   MultiByteToWideChar(CP_ACP, 0, src, -1, szTemp, len);
   return szTemp;
 }

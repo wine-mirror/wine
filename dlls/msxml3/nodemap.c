@@ -150,7 +150,7 @@ xmlChar *xmlChar_from_wchar( LPWSTR str )
     xmlChar *xmlstr;
 
     len = WideCharToMultiByte( CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL );
-    xmlstr = (xmlChar*) HeapAlloc( GetProcessHeap(), 0, len );
+    xmlstr = HeapAlloc( GetProcessHeap(), 0, len );
     if ( xmlstr )
         WideCharToMultiByte( CP_UTF8, 0, str, -1, (LPSTR) xmlstr, len, NULL, NULL );
     return xmlstr;
