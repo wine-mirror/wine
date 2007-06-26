@@ -3618,7 +3618,11 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     }
 
 #ifdef HAVE_LIBXXSHM
-    if (descr->image && descr->useShm)
+
+    /* We must not call XShmGetImage() with a bitmap which is bigger than the avilable area.
+       If we do, XShmGetImage() will fail (X exception), as it checks for this internally. */
+    if((descr->image && descr->useShm) && (bmpImage->width <= (descr->width - descr->xSrc))
+      && (bmpImage->height <= (descr->height - descr->ySrc)))
     {
         int saveRed, saveGreen, saveBlue;
 
