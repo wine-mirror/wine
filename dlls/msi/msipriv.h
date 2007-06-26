@@ -577,7 +577,7 @@ extern MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR tabl
 extern UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
                                   USHORT **pdata, UINT *psz );
 extern UINT read_stream_data( IStorage *stg, LPCWSTR stname,
-                              USHORT **pdata, UINT *psz );
+                              BYTE **pdata, UINT *psz );
 extern UINT write_stream_data( IStorage *stg, LPCWSTR stname,
                                LPCVOID data, UINT sz, BOOL bTable );
 
