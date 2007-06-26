@@ -354,6 +354,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
     /* FIXME: do more checks? */
 
     NewConnection->MaxTransmissionSize = response_hdr->bind_ack.max_tsize;
+    NewConnection->assoc_group_id = response_hdr->bind_ack.assoc_gid;
     NewConnection->ActiveInterface = *InterfaceId;
     RPCRT4_FreeHeader(response_hdr);
   }
