@@ -1253,7 +1253,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
 
             TRACE( "allocate memory block (%d bytes)\n", size );
 
-            ptr = (BYTE *)DPMI_xalloc( size );
+            ptr = DPMI_xalloc( size );
             if (!ptr)
             {
                 SET_AX( context, 0x8012 );  /* linear memory not available */
@@ -1285,7 +1285,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
 
             TRACE( "resize memory block (0x%08x, %d bytes)\n", handle, size );
 
-            ptr = (BYTE *)DPMI_xrealloc( (void *)handle, size );
+            ptr = DPMI_xrealloc( (void *)handle, size );
             if (!ptr)
             {
                 SET_AX( context, 0x8012 );  /* linear memory not available */
