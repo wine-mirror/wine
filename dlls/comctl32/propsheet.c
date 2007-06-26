@@ -120,6 +120,7 @@ typedef struct tagPropSheetInfo
   BOOL hasHelp;
   BOOL hasApply;
   BOOL hasFinish;
+  BOOL usePropPage;
   BOOL useCallback;
   BOOL activeValid;
   PropPageInfo* proppage;
@@ -298,6 +299,7 @@ static void PROPSHEET_CollectSheetInfoCommon(PropSheetInfo * psInfo, DWORD dwFla
   psInfo->hasApply = !(dwFlags & PSH_NOAPPLYNOW);
   psInfo->hasFinish = dwFlags & PSH_WIZARDHASFINISH;
   psInfo->isModeless = dwFlags & PSH_MODELESS;
+  psInfo->usePropPage = dwFlags & PSH_PROPSHEETPAGE;
   if (psInfo->active_page < 0 || psInfo->active_page >= psInfo->nPages)
      psInfo->active_page = 0;
 
@@ -2829,7 +2831,7 @@ INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 
   for (n = i = 0; i < lppsh->nPages; i++, n++)
   {
-    if (!(lppsh->dwFlags & PSH_PROPSHEETPAGE))
+    if (!psInfo->usePropPage)
       psInfo->proppage[n].hpage = psInfo->ppshheader.u3.phpage[i];
     else
     {
@@ -2840,7 +2842,7 @@ INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
     if (!PROPSHEET_CollectPageInfo((LPCPROPSHEETPAGEW)psInfo->proppage[n].hpage,
                                psInfo, n))
     {
-	if (lppsh->dwFlags & PSH_PROPSHEETPAGE)
+	if (psInfo->usePropPage)
 	    DestroyPropertySheetPage(psInfo->proppage[n].hpage);
 	n--;
 	psInfo->nPages--;
@@ -2872,7 +2874,7 @@ INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 
   for (n = i = 0; i < lppsh->nPages; i++, n++)
   {
-    if (!(lppsh->dwFlags & PSH_PROPSHEETPAGE))
+    if (!psInfo->usePropPage)
       psInfo->proppage[n].hpage = psInfo->ppshheader.u3.phpage[i];
     else
     {
@@ -2883,7 +2885,7 @@ INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
     if (!PROPSHEET_CollectPageInfo((LPCPROPSHEETPAGEW)psInfo->proppage[n].hpage,
                                psInfo, n))
     {
-	if (lppsh->dwFlags & PSH_PROPSHEETPAGE)
+	if (psInfo->usePropPage)
 	    DestroyPropertySheetPage(psInfo->proppage[n].hpage);
 	n--;
 	psInfo->nPages--;
