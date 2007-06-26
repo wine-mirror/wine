@@ -5,8 +5,7 @@ VPATH     = @srcdir@
 MODULE    = ddraw.dll
 IMPORTLIB = libddraw.$(IMPLIBEXT)
 IMPORTS   = ole32 user32 gdi32 advapi32 kernel32 ntdll
-EXTRAINCL = @X_CFLAGS@
-EXTRALIBS = -ldxguid -luuid @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ 
+EXTRALIBS = -ldxguid -luuid
 
 C_SRCS = \
 	clipper.c \
