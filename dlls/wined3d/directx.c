@@ -36,6 +36,88 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 
+/* Extension detection */
+static const struct {
+    const char *extension_string;
+    GL_SupportedExt extension;
+} EXTENSION_MAP[] = {
+    /* APPLE */
+    {"GL_APPLE_client_storage",             APPLE_CLIENT_STORAGE},
+    {"GL_APPLE_fence",                      APPLE_FENCE},
+
+    /* ATI */
+    {"GL_ATI_separate_stencil",             ATI_SEPARATE_STENCIL},
+    {"GL_ATI_texture_env_combine3",         ATI_TEXTURE_ENV_COMBINE3},
+    {"GL_ATI_texture_mirror_once",          ATI_TEXTURE_MIRROR_ONCE},
+    {"GL_ATI_envmap_bumpmap",               ATI_ENVMAP_BUMPMAP},
+
+    /* ARB */
+    {"GL_ARB_draw_buffers",                 ARB_DRAW_BUFFERS},
+    {"GL_ARB_fragment_program",             ARB_FRAGMENT_PROGRAM},
+    {"GL_ARB_fragment_shader",              ARB_FRAGMENT_SHADER},
+    {"GL_ARB_half_float_pixel",             ARB_HALF_FLOAT_PIXEL},
+    {"GL_ARB_imaging",                      ARB_IMAGING},
+    {"GL_ARB_multisample",                  ARB_MULTISAMPLE}, /* needs GLX_ARB_MULTISAMPLE as well */
+    {"GL_ARB_multitexture",                 ARB_MULTITEXTURE},
+    {"GL_ARB_occlusion_query",              ARB_OCCLUSION_QUERY},
+    {"GL_ARB_pixel_buffer_object",          ARB_PIXEL_BUFFER_OBJECT},
+    {"GL_ARB_point_parameters",             ARB_POINT_PARAMETERS},
+    {"GL_ARB_point_sprite",                 ARB_POINT_SPRITE},
+    {"GL_ARB_texture_border_clamp",         ARB_TEXTURE_BORDER_CLAMP},
+    {"GL_ARB_texture_compression",          ARB_TEXTURE_COMPRESSION},
+    {"GL_ARB_texture_cube_map",             ARB_TEXTURE_CUBE_MAP},
+    {"GL_ARB_texture_env_add",              ARB_TEXTURE_ENV_ADD},
+    {"GL_ARB_texture_env_combine",          ARB_TEXTURE_ENV_COMBINE},
+    {"GL_ARB_texture_env_dot3",             ARB_TEXTURE_ENV_DOT3},
+    {"GL_ARB_texture_float",                ARB_TEXTURE_FLOAT},
+    {"GL_ARB_texture_mirrored_repeat",      ARB_TEXTURE_MIRRORED_REPEAT},
+    {"GL_ARB_texture_non_power_of_two",     ARB_TEXTURE_NON_POWER_OF_TWO},
+    {"GL_ARB_vertex_blend",                 ARB_VERTEX_BLEND},
+    {"GL_ARB_vertex_buffer_object",         ARB_VERTEX_BUFFER_OBJECT},
+    {"GL_ARB_vertex_program",               ARB_VERTEX_PROGRAM},
+    {"GL_ARB_vertex_shader",                ARB_VERTEX_SHADER},
+
+    /* EXT */
+    {"GL_EXT_blend_minmax",                 EXT_BLEND_MINMAX},
+    {"GL_EXT_fog_coord",                    EXT_FOG_COORD},
+    {"GL_EXT_framebuffer_blit",             EXT_FRAMEBUFFER_BLIT},
+    {"GL_EXT_framebuffer_object",           EXT_FRAMEBUFFER_OBJECT},
+    {"GL_EXT_paletted_texture",             EXT_PALETTED_TEXTURE},
+    {"GL_EXT_point_parameters",             EXT_POINT_PARAMETERS},
+    {"GL_EXT_secondary_color",              EXT_SECONDARY_COLOR},
+    {"GL_EXT_stencil_two_side",             EXT_STENCIL_TWO_SIDE},
+    {"GL_EXT_stencil_wrap",                 EXT_STENCIL_WRAP},
+    {"GL_EXT_texture3D",                    EXT_TEXTURE3D},
+    {"GL_EXT_texture_compression_s3tc",     EXT_TEXTURE_COMPRESSION_S3TC},
+    {"GL_EXT_texture_env_add",              EXT_TEXTURE_ENV_ADD},
+    {"GL_EXT_texture_env_combine",          EXT_TEXTURE_ENV_COMBINE},
+    {"GL_EXT_texture_env_dot3",             EXT_TEXTURE_ENV_DOT3},
+    {"GL_EXT_texture_sRGB",                 EXT_TEXTURE_SRGB},
+    {"GL_EXT_texture_filter_anisotropic",   EXT_TEXTURE_FILTER_ANISOTROPIC},
+    {"GL_EXT_texture_lod",                  EXT_TEXTURE_LOD},
+    {"GL_EXT_texture_lod_bias",             EXT_TEXTURE_LOD_BIAS},
+    {"GL_EXT_vertex_shader",                EXT_VERTEX_SHADER},
+    {"GL_EXT_vertex_weighting",             EXT_VERTEX_WEIGHTING},
+
+    /* NV */
+    {"GL_NV_fence",                         NV_FENCE},
+    {"GL_NV_fog_distance",                  NV_FOG_DISTANCE},
+    {"GL_NV_fragment_program",              NV_FRAGMENT_PROGRAM},
+    {"GL_NV_fragment_program2",             NV_FRAGMENT_PROGRAM2},
+    {"GL_NV_register_combiners",            NV_REGISTER_COMBINERS},
+    {"GL_NV_register_combiners2",           NV_REGISTER_COMBINERS2},
+    {"GL_NV_texgen_reflection",             NV_TEXGEN_REFLECTION},
+    {"GL_NV_texture_env_combine4",          NV_TEXTURE_ENV_COMBINE4},
+    {"GL_NV_texture_shader",                NV_TEXTURE_SHADER},
+    {"GL_NV_texture_shader2",               NV_TEXTURE_SHADER2},
+    {"GL_NV_texture_shader3",               NV_TEXTURE_SHADER3},
+    {"GL_NV_occlusion_query",               NV_OCCLUSION_QUERY},
+    {"GL_NV_vertex_program",                NV_VERTEX_PROGRAM},
+    {"GL_NV_vertex_program1_1",             NV_VERTEX_PROGRAM1_1},
+    {"GL_NV_vertex_program2",               NV_VERTEX_PROGRAM2},
+    {"GL_NV_vertex_program3",               NV_VERTEX_PROGRAM3},
+};
+
 /**********************************************************
  * Utility functions follow
  **********************************************************/
@@ -556,290 +638,142 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
             memcpy(ThisExtn, Start, (GL_Extensions - Start));
             TRACE_(d3d_caps)("- %s\n", ThisExtn);
 
-            /**
-             * ARB
-             */
-            if (strcmp(ThisExtn, "GL_ARB_draw_buffers") == 0) {
-                glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
-                TRACE_(d3d_caps)(" FOUND: ARB_draw_buffers support - max buffers=%u\n", gl_max);            
-                gl_info->supported[ARB_DRAW_BUFFERS] = TRUE;
-                gl_info->max_buffers = gl_max;
-            } else if (strcmp(ThisExtn, "GL_ARB_fragment_program") == 0) {
-                gl_info->ps_arb_version = PS_VERSION_11;
-                TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - version=%02x\n", gl_info->ps_arb_version);
-                gl_info->supported[ARB_FRAGMENT_PROGRAM] = TRUE;
-                glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
-                TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - GL_MAX_TEXTURE_IMAGE_UNITS_ARB=%u\n", gl_max);
-                gl_info->max_fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, gl_max);
-                GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
-                TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - max float constants=%u\n", gl_max);
-                gl_info->ps_arb_constantsF = gl_max;
-                GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_TEMPORARIES_ARB, &gl_max));
-                TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - max temporaries=%u\n", gl_max);
-                gl_info->ps_arb_max_temps = gl_max;
-                GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_INSTRUCTIONS_ARB, &gl_max));
-                TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - max instructions=%u\n", gl_max);
-                gl_info->ps_arb_max_instructions = gl_max;                
-            } else if (strcmp(ThisExtn, "GL_ARB_fragment_shader") == 0) {
-                gl_info->supported[ARB_FRAGMENT_SHADER] = TRUE;
-                glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &gl_max);
-                gl_max /= 4;
-                TRACE_(d3d_caps)(" FOUND: ARB_fragment_shader (GLSL) support - max float ps constants=%u\n", gl_max);
-                gl_info->ps_glsl_constantsF = gl_max;
-            } else if (strcmp(ThisExtn, "GL_ARB_imaging") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB imaging support\n");
-                gl_info->supported[ARB_IMAGING] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_multisample") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Multisample support\n");
-                gl_info->supported[ARB_MULTISAMPLE] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_multitexture") == 0) {
-                glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
-                TRACE_(d3d_caps)(" FOUND: ARB Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%u\n", gl_max);
-                gl_info->supported[ARB_MULTITEXTURE] = TRUE;
-                gl_info->max_textures = min(MAX_TEXTURES, gl_max);
-                gl_info->max_texture_stages = min(MAX_TEXTURES, gl_max);
-                gl_info->max_fragment_samplers = max(gl_info->max_fragment_samplers, gl_max);
-            } else if (strcmp(ThisExtn, "GL_ARB_texture_cube_map") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Texture Cube Map support\n");
-                gl_info->supported[ARB_TEXTURE_CUBE_MAP] = TRUE;
-                TRACE_(d3d_caps)(" IMPLIED: NVIDIA (NV) Texture Gen Reflection support\n");
-                gl_info->supported[NV_TEXGEN_REFLECTION] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_texture_compression") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Texture Compression support\n");
-                gl_info->supported[ARB_TEXTURE_COMPRESSION] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_texture_env_add") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Texture Env Add support\n");
-                gl_info->supported[ARB_TEXTURE_ENV_ADD] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_texture_env_combine") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Texture Env combine support\n");
-                gl_info->supported[ARB_TEXTURE_ENV_COMBINE] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_texture_env_dot3") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Dot3 support\n");
-                gl_info->supported[ARB_TEXTURE_ENV_DOT3] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_texture_float") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Float texture support\n");
-                gl_info->supported[ARB_TEXTURE_FLOAT] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_half_float_pixel") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Half-float pixel support\n");
-                gl_info->supported[ARB_HALF_FLOAT_PIXEL] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_texture_border_clamp") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Texture border clamp support\n");
-                gl_info->supported[ARB_TEXTURE_BORDER_CLAMP] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_texture_mirrored_repeat") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Texture mirrored repeat support\n");
-                gl_info->supported[ARB_TEXTURE_MIRRORED_REPEAT] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_texture_non_power_of_two") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB NPOT texture support\n");
-                gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = TRUE;
-            } else if (strcmp(ThisExtn, "GLX_ARB_multisample") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB multisample support\n");
-                gl_info->supported[ARB_MULTISAMPLE] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_pixel_buffer_object") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Pixel Buffer support\n");
-                gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_point_sprite") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB point sprite support\n");
-                gl_info->supported[ARB_POINT_SPRITE] = TRUE;
-            } else if (strstr(ThisExtn, "GL_ARB_vertex_program")) {
-                gl_info->vs_arb_version = VS_VERSION_11;
-                TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - version=%02x\n", gl_info->vs_arb_version);
-                gl_info->supported[ARB_VERTEX_PROGRAM] = TRUE;
-                GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
-                TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - max float constants=%u\n", gl_max);
-                gl_info->vs_arb_constantsF = gl_max;
-                GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_TEMPORARIES_ARB, &gl_max));
-                TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - max temporaries=%u\n", gl_max);
-                gl_info->vs_arb_max_temps = gl_max;
-                GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_INSTRUCTIONS_ARB, &gl_max));
-                TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - max instructions=%u\n", gl_max);
-                gl_info->vs_arb_max_instructions = gl_max;
-            } else if (strcmp(ThisExtn, "GL_ARB_vertex_shader") == 0) {
-                gl_info->supported[ARB_VERTEX_SHADER] = TRUE;
-                glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
-                gl_max /= 4;
-                TRACE_(d3d_caps)(" FOUND: ARB_vertex_shader (GLSL) support - max float vs constants=%u\n", gl_max);
-                gl_info->vs_glsl_constantsF = gl_max;
-                glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
-                TRACE_(d3d_caps)(" FOUND: ARB_vertex_shader (GLSL) support - GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB=%u\n", gl_max);
-                gl_info->max_vertex_samplers = gl_max;
-                glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
-                TRACE_(d3d_caps)(" FOUND: ARB_vertex_shader (GLSL) support - GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB=%u\n", gl_max);
-                gl_info->max_combined_samplers = gl_max;
-            } else if (strcmp(ThisExtn, "GL_ARB_vertex_blend") == 0) {
-                glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
-                TRACE_(d3d_caps)(" FOUND: ARB Vertex Blend support GL_MAX_VERTEX_UNITS_ARB %d\n", gl_max);
-                gl_info->max_blends = gl_max;
-                gl_info->supported[ARB_VERTEX_BLEND] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_vertex_buffer_object") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Vertex Buffer support\n");
-                gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_occlusion_query") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Occlusion Query support\n");
-                gl_info->supported[ARB_OCCLUSION_QUERY] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ARB_point_parameters") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ARB Point parameters support\n");
-                gl_info->supported[ARB_POINT_PARAMETERS] = TRUE;
-            /**
-             * EXT
-             */
-            } else if (strcmp(ThisExtn, "GL_EXT_fog_coord") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Fog coord support\n");
-                gl_info->supported[EXT_FOG_COORD] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_framebuffer_object") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Frame Buffer Object support\n");
-                gl_info->supported[EXT_FRAMEBUFFER_OBJECT] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_framebuffer_blit") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Frame Buffer Blit support\n");
-                gl_info->supported[EXT_FRAMEBUFFER_BLIT] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_blend_minmax") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Blend minmax support\n");
-                gl_info->supported[EXT_BLEND_MINMAX] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_paletted_texture") == 0) { /* handle paletted texture extensions */
-                TRACE_(d3d_caps)(" FOUND: EXT Paletted texture support\n");
-                gl_info->supported[EXT_PALETTED_TEXTURE] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_point_parameters") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Point parameters support\n");
-                gl_info->supported[EXT_POINT_PARAMETERS] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_secondary_color") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Secondary color support\n");
-                gl_info->supported[EXT_SECONDARY_COLOR] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_stencil_two_side") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Stencil two side support\n");
-                gl_info->supported[EXT_STENCIL_TWO_SIDE] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_stencil_wrap") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Stencil wrap support\n");
-                gl_info->supported[EXT_STENCIL_WRAP] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_texture3D") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT_texture3D support\n");
-                gl_info->supported[EXT_TEXTURE3D] = TRUE;
-                glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE_EXT, &gl_max);
-                TRACE_(d3d_caps)("Max texture3D size: %d\n", gl_max);
-                gl_info->max_texture3d_size = gl_max;
-            } else if (strcmp(ThisExtn, "GL_EXT_texture_compression_s3tc") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Texture S3TC compression support\n");
-                gl_info->supported[EXT_TEXTURE_COMPRESSION_S3TC] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_texture_env_add") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Texture Env Add support\n");
-                gl_info->supported[EXT_TEXTURE_ENV_ADD] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_texture_env_combine") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Texture Env combine support\n");
-                gl_info->supported[EXT_TEXTURE_ENV_COMBINE] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_texture_env_dot3") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Dot3 support\n");
-                gl_info->supported[EXT_TEXTURE_ENV_DOT3] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_texture_sRGB") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT sRGB support\n");
-                gl_info->supported[EXT_TEXTURE_SRGB] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_texture_filter_anisotropic") == 0) {
-                gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC] = TRUE;
-                glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
-                TRACE_(d3d_caps)(" FOUND: EXT Texture Anisotropic filter support. GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT %d\n", gl_max);
-                gl_info->max_anisotropy = gl_max;
-            } else if (strcmp(ThisExtn, "GL_EXT_texture_lod") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Texture LOD support\n");
-                gl_info->supported[EXT_TEXTURE_LOD] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_texture_lod_bias") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Texture LOD bias support\n");
-                gl_info->supported[EXT_TEXTURE_LOD_BIAS] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_vertex_weighting") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Vertex weighting support\n");
-                gl_info->supported[EXT_VERTEX_WEIGHTING] = TRUE;
-
-            /**
-             * NVIDIA
-             */
-            } else if (strstr(ThisExtn, "GL_NV_fog_distance")) {
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Fog Distance support\n");
-                gl_info->supported[NV_FOG_DISTANCE] = TRUE;
-            } else if (strstr(ThisExtn, "GL_NV_fragment_program")) {
-                gl_info->ps_nv_version = (strcmp(ThisExtn, "GL_NV_fragment_program2") == 0) ? PS_VERSION_30 : PS_VERSION_20;
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Pixel Shader support - version=%02x\n", gl_info->ps_nv_version);
-            } else if (strcmp(ThisExtn, "GL_NV_register_combiners") == 0) {
-                glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &gl_max);
-                gl_info->max_texture_stages = min(MAX_TEXTURES, gl_max);
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Register combiners (1) support - GL_MAX_GENERAL_COMBINERS_NV=%d\n", gl_max);
-                gl_info->supported[NV_REGISTER_COMBINERS] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_NV_register_combiners2") == 0) {
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Register combiners (2) support\n");
-                gl_info->supported[NV_REGISTER_COMBINERS2] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_NV_texgen_reflection") == 0) {
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Gen Reflection support\n");
-                gl_info->supported[NV_TEXGEN_REFLECTION] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_NV_texture_env_combine4") == 0) {
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Env combine (4) support\n");
-                gl_info->supported[NV_TEXTURE_ENV_COMBINE4] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_NV_texture_shader") == 0) {
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Shader (1) support\n");
-                gl_info->supported[NV_TEXTURE_SHADER] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_NV_texture_shader2") == 0) {
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Shader (2) support\n");
-                gl_info->supported[NV_TEXTURE_SHADER2] = TRUE;
-                /* Prevent both extensions to be used at the same time. I don't expect them to play nice together */
-                gl_info->supported[ATI_ENVMAP_BUMPMAP] = FALSE;
-            } else if (strcmp(ThisExtn, "GL_NV_texture_shader3") == 0) {
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Shader (3) support\n");
-                gl_info->supported[NV_TEXTURE_SHADER3] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_NV_occlusion_query") == 0) {
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Occlusion Query (3) support\n");
-                gl_info->supported[NV_OCCLUSION_QUERY] = TRUE;
-            } else if (strstr(ThisExtn, "GL_NV_vertex_program")) {
-                if(strcmp(ThisExtn, "GL_NV_vertex_program3") == 0)
-                    gl_info->vs_nv_version = VS_VERSION_30;
-                else if(strcmp(ThisExtn, "GL_NV_vertex_program2") == 0)
-                    gl_info->vs_nv_version = VS_VERSION_20;
-                else if(strcmp(ThisExtn, "GL_NV_vertex_program1_1") == 0)
-                    gl_info->vs_nv_version = VS_VERSION_11;
-                else
-                    gl_info->vs_nv_version = VS_VERSION_10;
-                TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Vertex Shader support - version=%02x\n", gl_info->vs_nv_version);
-                gl_info->supported[NV_VERTEX_PROGRAM] = TRUE;
-            } else if (strstr(ThisExtn, "GL_NV_fence")) {
-                if(!gl_info->supported[APPLE_FENCE]) {
-                    gl_info->supported[NV_FENCE] = TRUE;
+            for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i) {
+                if (!strcmp(ThisExtn, EXTENSION_MAP[i].extension_string)) {
+                    TRACE_(d3d_caps)(" FOUND: %s support\n", EXTENSION_MAP[i].extension_string);
+                    gl_info->supported[EXTENSION_MAP[i].extension] = TRUE;
+                    break;
                 }
-
-            /**
-             * ATI
-             */
-            /** TODO */
-            } else if (strcmp(ThisExtn, "GL_ATI_separate_stencil") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ATI Separate stencil support\n");
-                gl_info->supported[ATI_SEPARATE_STENCIL] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ATI_texture_env_combine3") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ATI Texture Env combine (3) support\n");
-                gl_info->supported[ATI_TEXTURE_ENV_COMBINE3] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ATI_texture_mirror_once") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ATI Texture Mirror Once support\n");
-                gl_info->supported[ATI_TEXTURE_MIRROR_ONCE] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_EXT_vertex_shader") == 0) {
-                gl_info->vs_ati_version = VS_VERSION_11;
-                TRACE_(d3d_caps)(" FOUND: ATI (EXT) Vertex Shader support - version=%02x\n", gl_info->vs_ati_version);
-                gl_info->supported[EXT_VERTEX_SHADER] = TRUE;
-            } else if (strcmp(ThisExtn, "GL_ATI_envmap_bumpmap") == 0) {
-                TRACE_(d3d_caps)(" FOUND: ATI Environment Bump Mapping support\n");
-                /* GL_ATI_envmap_bumpmap won't play nice with texture shaders, so disable it
-                 * Won't occur in any real world situation though
-                 */
-                if(!gl_info->supported[NV_TEXTURE_SHADER2]) {
-                    gl_info->supported[ATI_ENVMAP_BUMPMAP] = TRUE;
-                }
-            /**
-             * Apple
-             */
-            } else if (strstr(ThisExtn, "GL_APPLE_fence")) {
-                /* GL_NV_fence and GL_APPLE_fence provide the same functionality basically.
-                 * The apple extension interacts with some other apple exts. Disable the NV
-                 * extension if the apple one is support to prevent confusion in other parts
-                 * of the code
-                 */
-                gl_info->supported[NV_FENCE] = FALSE;
-                gl_info->supported[APPLE_FENCE] = TRUE;
-            } else if (strstr(ThisExtn, "GL_APPLE_client_storage")) {
-                gl_info->supported[APPLE_CLIENT_STORAGE] = TRUE;
             }
 
             if (*GL_Extensions == ' ') GL_Extensions++;
         }
+
+        if (gl_info->supported[APPLE_FENCE]) {
+            /* GL_NV_fence and GL_APPLE_fence provide the same functionality basically.
+             * The apple extension interacts with some other apple exts. Disable the NV
+             * extension if the apple one is support to prevent confusion in other parts
+             * of the code
+             */
+            gl_info->supported[NV_FENCE] = FALSE;
+        }
+        if (gl_info->supported[ARB_TEXTURE_CUBE_MAP]) {
+            TRACE_(d3d_caps)(" IMPLIED: NVIDIA (NV) Texture Gen Reflection support\n");
+            gl_info->supported[NV_TEXGEN_REFLECTION] = TRUE;
+        }
+        if (gl_info->supported[NV_TEXTURE_SHADER2]) {
+            /* GL_ATI_envmap_bumpmap won't play nice with texture shaders, so disable it
+             * Won't occur in any real world situation though
+             */
+            gl_info->supported[ATI_ENVMAP_BUMPMAP] = FALSE;
+        }
+        if (gl_info->supported[ARB_DRAW_BUFFERS]) {
+            glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
+            gl_info->max_buffers = gl_max;
+            TRACE_(d3d_caps)("Max draw buffers: %u\n", gl_max);
+        }
+        if (gl_info->supported[ARB_MULTITEXTURE]) {
+            glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
+            gl_info->max_textures = min(MAX_TEXTURES, gl_max);
+            TRACE_(d3d_caps)("Max textures: %d\n", gl_info->max_textures);
+
+            if (gl_info->supported[NV_REGISTER_COMBINERS]) {
+                GLint tmp;
+                glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &tmp);
+                gl_info->max_texture_stages = min(MAX_TEXTURES, tmp);
+            } else {
+                gl_info->max_texture_stages = min(MAX_TEXTURES, gl_max);
+            }
+            TRACE_(d3d_caps)("Max texture stages: %d\n", gl_info->max_texture_stages);
+
+            if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) {
+                GLint tmp;
+                glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
+                gl_info->max_fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, tmp);
+            } else {
+                gl_info->max_fragment_samplers = max(gl_info->max_fragment_samplers, gl_max);
+            }
+            TRACE_(d3d_caps)("Max fragment samplers: %d\n", gl_info->max_fragment_samplers);
+
+            if (gl_info->supported[ARB_VERTEX_SHADER]) {
+                GLint tmp;
+                glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
+                gl_info->max_vertex_samplers = tmp;
+                glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &tmp);
+                gl_info->max_combined_samplers = tmp;
+            } else {
+                gl_info->max_combined_samplers = gl_info->max_fragment_samplers;
+            }
+            TRACE_(d3d_caps)("Max vertex samplers: %u\n", gl_info->max_vertex_samplers);
+            TRACE_(d3d_caps)("Max combined samplers: %u\n", gl_info->max_combined_samplers);
+        }
+        if (gl_info->supported[ARB_VERTEX_BLEND]) {
+            glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
+            gl_info->max_blends = gl_max;
+            TRACE_(d3d_caps)("Max blends: %u\n", gl_info->max_blends);
+        }
+        if (gl_info->supported[EXT_TEXTURE3D]) {
+            glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE_EXT, &gl_max);
+            gl_info->max_texture3d_size = gl_max;
+            TRACE_(d3d_caps)("Max texture3D size: %d\n", gl_info->max_texture3d_size);
+        }
+        if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC]) {
+            glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
+            gl_info->max_anisotropy = gl_max;
+            TRACE_(d3d_caps)("Max anisotropy: %d\n", gl_info->max_anisotropy);
+        }
+        if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) {
+            gl_info->ps_arb_version = PS_VERSION_11;
+            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
+            gl_info->ps_arb_constantsF = gl_max;
+            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM float constants: %d\n", gl_info->ps_arb_constantsF);
+            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_TEMPORARIES_ARB, &gl_max));
+            gl_info->ps_arb_max_temps = gl_max;
+            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM temporaries: %d\n", gl_info->ps_arb_max_temps);
+            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_INSTRUCTIONS_ARB, &gl_max));
+            gl_info->ps_arb_max_instructions = gl_max;
+            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM instructions: %d\n", gl_info->ps_arb_max_instructions);
+        }
+        if (gl_info->supported[ARB_VERTEX_PROGRAM]) {
+            gl_info->vs_arb_version = VS_VERSION_11;
+            GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
+            gl_info->vs_arb_constantsF = gl_max;
+            TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM float constants: %d\n", gl_info->vs_arb_constantsF);
+            GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_TEMPORARIES_ARB, &gl_max));
+            gl_info->vs_arb_max_temps = gl_max;
+            TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM temporaries: %d\n", gl_info->vs_arb_max_temps);
+            GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_INSTRUCTIONS_ARB, &gl_max));
+            gl_info->vs_arb_max_instructions = gl_max;
+            TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM instructions: %d\n", gl_info->vs_arb_max_instructions);
+        }
+        if (gl_info->supported[ARB_VERTEX_SHADER]) {
+            glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
+            gl_info->vs_glsl_constantsF = gl_max / 4;
+            TRACE_(d3d_caps)("Max ARB_VERTEX_SHADER float constants: %u\n", gl_info->vs_glsl_constantsF);
+        }
+        if (gl_info->supported[ARB_FRAGMENT_SHADER]) {
+            glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &gl_max);
+            gl_info->ps_glsl_constantsF = gl_max / 4;
+            TRACE_(d3d_caps)("Max ARB_FRAGMENT_SHADER float constants: %u\n", gl_info->ps_glsl_constantsF);
+        }
+        if (gl_info->supported[EXT_VERTEX_SHADER]) {
+            gl_info->vs_ati_version = VS_VERSION_11;
+        }
+        if (gl_info->supported[NV_VERTEX_PROGRAM3]) {
+            gl_info->vs_nv_version = VS_VERSION_30;
+        } else if (gl_info->supported[NV_VERTEX_PROGRAM2]) {
+            gl_info->vs_nv_version = VS_VERSION_20;
+        } else if (gl_info->supported[NV_VERTEX_PROGRAM1_1]) {
+            gl_info->vs_nv_version = VS_VERSION_11;
+        } else if (gl_info->supported[NV_VERTEX_PROGRAM]) {
+            gl_info->vs_nv_version = VS_VERSION_10;
+        }
+        if (gl_info->supported[NV_FRAGMENT_PROGRAM2]) {
+            gl_info->ps_nv_version = PS_VERSION_30;
+        } else if (gl_info->supported[NV_FRAGMENT_PROGRAM]) {
+            gl_info->ps_nv_version = PS_VERSION_20;
+        }
+
     }
     checkGLcall("extension detection\n");
 
@@ -847,8 +781,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
      * of samplers. The GF4 for example can use only 2 samplers (no fragment
      * shaders), but 8 texture stages (register combiners). */
     gl_info->max_sampler_stages = max(gl_info->max_fragment_samplers, gl_info->max_texture_stages);
-
-    if (!gl_info->max_combined_samplers) gl_info->max_combined_samplers = gl_info->max_fragment_samplers;
 
     /* We can only use ORM_FBO when the hardware supports it. */
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && !gl_info->supported[EXT_FRAMEBUFFER_OBJECT]) {
