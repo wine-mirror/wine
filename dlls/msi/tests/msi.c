@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <msi.h>
 #include <msiquery.h>
+#include <sddl.h>
 
 #include "wine/test.h"
 
@@ -260,6 +261,190 @@ static void test_filehash(void)
     DeleteFile(name);
 }
 
+/* copied from dlls/msi/registry.c */
+BOOL squash_guid(LPCWSTR in, LPWSTR out)
+{
+    DWORD i,n=1;
+    GUID guid;
+
+    if (FAILED(CLSIDFromString((LPOLESTR)in, &guid)))
+        return FALSE;
+
+    for(i=0; i<8; i++)
+        out[7-i] = in[n++];
+    n++;
+    for(i=0; i<4; i++)
+        out[11-i] = in[n++];
+    n++;
+    for(i=0; i<4; i++)
+        out[15-i] = in[n++];
+    n++;
+    for(i=0; i<2; i++)
+    {
+        out[17+i*2] = in[n++];
+        out[16+i*2] = in[n++];
+    }
+    n++;
+    for( ; i<8; i++)
+    {
+        out[17+i*2] = in[n++];
+        out[16+i*2] = in[n++];
+    }
+    out[32]=0;
+    return TRUE;
+}
+
+static void create_test_guid(LPSTR prodcode, LPSTR squashed)
+{
+    WCHAR guidW[MAX_PATH];
+    WCHAR squashedW[MAX_PATH];
+    GUID guid;
+    HRESULT hr;
+    int size;
+
+    hr = CoCreateGuid(&guid);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+
+    size = StringFromGUID2(&guid, (LPOLESTR)guidW, MAX_PATH);
+    ok(size == 39, "Expected 39, got %d\n", hr);
+
+    WideCharToMultiByte(CP_ACP, 0, guidW, size, prodcode, MAX_PATH, NULL, NULL);
+    squash_guid(guidW, squashedW);
+    WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
+}
+
+static void get_user_sid(LPSTR *usersid)
+{
+    HANDLE token;
+    BYTE buf[1024];
+    DWORD size;
+    PTOKEN_USER user;
+
+    OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    size = sizeof(buf);
+    GetTokenInformation(token, TokenUser, (void *)buf, size, &size);
+    user = (PTOKEN_USER)buf;
+    ConvertSidToStringSid(user->User.Sid, usersid);
+}
+
+static void test_MsiQueryProductState(void)
+{
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    CHAR keypath[MAX_PATH*2];
+    LPSTR usersid;
+    INSTALLSTATE state;
+    LONG res;
+    HKEY userkey, localkey, props;
+    DWORD data;
+
+    create_test_guid(prodcode, prod_squashed);
+    get_user_sid(&usersid);
+
+    /* NULL prodcode */
+    state = MsiQueryProductStateA(NULL);
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+
+    /* empty prodcode */
+    state = MsiQueryProductStateA("");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+    }
+
+    /* garbage prodcode */
+    state = MsiQueryProductStateA("garbage");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+    }
+
+    /* guid without brackets */
+    state = MsiQueryProductStateA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+    }
+
+    /* guid with brackets */
+    state = MsiQueryProductStateA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* same length as guid, but random */
+    state = MsiQueryProductStateA("A938G02JF-2NF3N93-VN3-2NNF-3KGKALDNF93");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* created guid cannot possibly be an installed product code */
+    state = MsiQueryProductStateA(prodcode);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    state = MsiQueryProductStateA(prodcode);
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+    }
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &localkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local product key exists */
+    state = MsiQueryProductStateA(prodcode);
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+    }
+
+    res = RegCreateKeyA(localkey, "InstallProperties", &props);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* install properties key exists */
+    state = MsiQueryProductStateA(prodcode);
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+    }
+
+    data = 1;
+    res = RegSetValueExA(props, "WindowsInstaller", 0, REG_DWORD, (const BYTE *)&data, sizeof(DWORD));
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* WindowsInstaller value exists */
+    state = MsiQueryProductStateA(prodcode);
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
+    }
+
+    RegDeleteKeyA(userkey, "");
+
+    /* user product key does not exist */
+    state = MsiQueryProductStateA(prodcode);
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    }
+
+    LocalFree(usersid);
+    RegDeleteValueA(props, "WindowsInstaller");
+    RegDeleteKeyA(props, "");
+    RegDeleteKeyA(localkey, "");
+    RegCloseKey(userkey);
+    RegCloseKey(localkey);
+    RegCloseKey(props);
+}
+
 START_TEST(msi)
 {
     HMODULE hmod = GetModuleHandle("msi.dll");
@@ -278,4 +463,5 @@ START_TEST(msi)
     test_null();
     test_getcomponentpath();
     test_filehash();
+    test_MsiQueryProductState();
 }
