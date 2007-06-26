@@ -65,7 +65,7 @@ void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
      * that if there are errors. */
     if (infologLength > 1)
     {
-        infoLog = (char *)HeapAlloc(GetProcessHeap(), 0, infologLength);
+        infoLog = HeapAlloc(GetProcessHeap(), 0, infologLength);
         GL_EXTCALL(glGetInfoLogARB(obj, infologLength, NULL, infoLog));
         FIXME("Error received from GLSL shader #%u: %s\n", obj, debugstr_a(infoLog));
         HeapFree(GetProcessHeap(), 0, infoLog);

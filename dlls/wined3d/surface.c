@@ -1871,7 +1871,7 @@ static BOOL palette9_changed(IWineD3DSurfaceImpl *This) {
             return FALSE;
         }
     } else {
-        This->palette9 = (PALETTEENTRY *) HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * 256);
+        This->palette9 = HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * 256);
     }
     memcpy(This->palette9, &device->palettes[device->currentPalette], sizeof(PALETTEENTRY) * 256);
     return TRUE;
