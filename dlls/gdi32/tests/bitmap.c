@@ -1036,8 +1036,8 @@ static void test_GetDIBits_selected_DIB(UINT bpp)
 
     /* Create a DIB section with a color table */
 
-    info  = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + (1 << bpp) * sizeof(RGBQUAD));
-    info2 = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + (1 << bpp) * sizeof(RGBQUAD));
+    info  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + (1 << bpp) * sizeof(RGBQUAD));
+    info2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + (1 << bpp) * sizeof(RGBQUAD));
     assert(info);
     assert(info2);
 
@@ -1167,8 +1167,8 @@ static void test_GetDIBits_selected_DDB(BOOL monochrome)
     }
     SelectObject(ddb_dc, old_bmp);
 
-    info  = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
-    info2 = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+    info  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+    info2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
     assert(info);
     assert(info2);
 

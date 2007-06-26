@@ -1403,7 +1403,7 @@ static void test_SetWinMetaFileBits(void)
     return;
   }
 
-  buffer = (BYTE *)HeapAlloc(GetProcessHeap(), 0, buffer_size);
+  buffer = HeapAlloc(GetProcessHeap(), 0, buffer_size);
   ok(buffer != NULL, "HeapAlloc failed\n");
   if (!buffer)
   {
