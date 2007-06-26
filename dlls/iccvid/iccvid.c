@@ -457,13 +457,13 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
 
         for(i = cvinfo->strip_num; i < strips; i++)
             {
-            if((cvinfo->v4_codebook[i] = (cvid_codebook *)ICCVID_Alloc(sizeof(cvid_codebook), 260)) == NULL)
+            if((cvinfo->v4_codebook[i] = ICCVID_Alloc(sizeof(cvid_codebook), 260)) == NULL)
                 {
                 ERR("CVID: codebook v4 alloc err\n");
                 return;
                 }
 
-            if((cvinfo->v1_codebook[i] = (cvid_codebook *)ICCVID_Alloc(sizeof(cvid_codebook), 260)) == NULL)
+            if((cvinfo->v1_codebook[i] = ICCVID_Alloc(sizeof(cvid_codebook), 260)) == NULL)
                 {
                 ERR("CVID: codebook v1 alloc err\n");
                 return;
