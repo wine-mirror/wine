@@ -2101,7 +2101,13 @@ static unsigned int get_required_buffer_size_type(
     size_t size = 0;
 
     *alignment = 0;
-    if (!is_ptr(type))
+    if (is_user_type(type))
+    {
+        const char *uname;
+        const type_t *utype = get_user_type(type, &uname);
+        size = get_required_buffer_size_type(utype, uname, alignment);
+    }
+    else if (!is_ptr(type))
     {
         switch (type->type)
         {
