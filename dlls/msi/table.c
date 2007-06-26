@@ -125,6 +125,8 @@ void msi_table_set_strref(UINT bytes_per_strref)
 
 static inline UINT bytes_per_column( const MSICOLUMNINFO *col )
 {
+    if( MSITYPE_IS_BINARY(col->type) )
+        return 2;
     if( col->type & MSITYPE_STRING )
         return _Columns_cols[1].offset;
     if( (col->type & 0xff) > 4 )
