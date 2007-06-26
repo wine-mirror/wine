@@ -2780,6 +2780,31 @@ static INT do_loop(const PropSheetInfo *psInfo)
 }
 
 /******************************************************************************
+ *            PROPSHEET_PropertySheet
+ *
+ * Common code between PropertySheetA/W
+ */
+static INT_PTR PROPSHEET_PropertySheet(PropSheetInfo* psInfo, BOOL unicode)
+{
+  INT_PTR bRet = 0;
+  if (psInfo->active_page >= psInfo->nPages) psInfo->active_page = 0;
+  TRACE("startpage: %d of %d pages\n", psInfo->active_page, psInfo->nPages);
+
+  psInfo->unicode = unicode;
+  psInfo->ended = FALSE;
+
+  bRet = PROPSHEET_CreateDialog(psInfo);
+  if(!psInfo->isModeless)
+  {
+      HWND parent = GetParent(psInfo->hwnd);
+      if (parent) EnableWindow(parent, FALSE);
+      bRet = do_loop(psInfo);
+      if (parent) EnableWindow(parent, TRUE);
+  }
+  return bRet;
+}
+
+/******************************************************************************
  *            PropertySheet    (COMCTL32.@)
  *            PropertySheetA   (COMCTL32.@)
  *
@@ -2794,7 +2819,6 @@ static INT do_loop(const PropSheetInfo *psInfo)
  */
 INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 {
-  INT_PTR bRet = 0;
   PropSheetInfo* psInfo = (PropSheetInfo*) GlobalAlloc(GPTR,
                                                        sizeof(PropSheetInfo));
   UINT i, n;
@@ -2828,22 +2852,7 @@ INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
     }
   }
 
-  if (psInfo->active_page >= psInfo->nPages) psInfo->active_page = 0;
-  TRACE("startpage: %d of %d pages\n", psInfo->active_page, psInfo->nPages);
-
-  psInfo->unicode = FALSE;
-  psInfo->ended = FALSE;
-
-  bRet = PROPSHEET_CreateDialog(psInfo);
-  if(!psInfo->isModeless)
-  {
-      HWND parent = GetParent(psInfo->hwnd);
-      if (parent) EnableWindow(parent, FALSE);
-      bRet = do_loop(psInfo);
-      if (parent) EnableWindow(parent, TRUE);
-  }
-
-  return bRet;
+  return PROPSHEET_PropertySheet(psInfo, FALSE);
 }
 
 /******************************************************************************
@@ -2853,7 +2862,6 @@ INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
  */
 INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 {
-  INT_PTR bRet = 0;
   PropSheetInfo* psInfo = (PropSheetInfo*) GlobalAlloc(GPTR,
                                                        sizeof(PropSheetInfo));
   UINT i, n;
@@ -2887,17 +2895,7 @@ INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
     }
   }
 
-  if (psInfo->active_page >= psInfo->nPages) psInfo->active_page = 0;
-  TRACE("startpage: %d of %d pages\n", psInfo->active_page, psInfo->nPages);
-
-  psInfo->unicode = TRUE;
-  psInfo->ended = FALSE;
-
-  bRet = PROPSHEET_CreateDialog(psInfo);
-  if(!psInfo->isModeless)
-      bRet = do_loop(psInfo);
-
-  return bRet;
+  return PROPSHEET_PropertySheet(psInfo, TRUE);
 }
 
 static LPWSTR load_string( HINSTANCE instance, LPCWSTR str )
