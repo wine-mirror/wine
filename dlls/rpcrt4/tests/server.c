@@ -286,6 +286,18 @@ s_enum_ord(e_t e)
   }
 }
 
+double
+s_square_encue(encue_t *eue)
+{
+  switch (eue->t)
+  {
+  case E1: return eue->tagged_union.i1 * eue->tagged_union.i1;
+  case E2: return eue->tagged_union.f2 * eue->tagged_union.f2;
+  default:
+    return 0.0;
+  }
+}
+
 void
 s_stop(void)
 {
@@ -409,6 +421,7 @@ basic_tests(void)
 static void
 union_tests(void)
 {
+  encue_t eue;
   encu_t eu;
   sun_t su;
   int i;
@@ -437,6 +450,14 @@ union_tests(void)
   eu.t = ENCU_F;
   eu.tagged_union.f = 3.0;
   ok(square_encu(&eu) == 9.0, "RPC square_encu\n");
+
+  eue.t = E1;
+  eue.tagged_union.i1 = 8;
+  ok(square_encue(&eue) == 64.0, "RPC square_encue\n");
+
+  eue.t = E2;
+  eue.tagged_union.f2 = 10.0;
+  ok(square_encue(&eue) == 100.0, "RPC square_encue\n");
 }
 
 static test_list_t *

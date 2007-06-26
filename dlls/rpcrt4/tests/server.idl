@@ -165,9 +165,16 @@ interface IServer
     E4 = 64
   } e_t;
 
+  typedef union encue switch (e_t t)
+  {
+  case E1: int i1;
+  case E2: float f2;
+  } encue_t;
+
   double square_encu(encu_t *eu);
   int sum_parr(int *a[3]);
   int sum_pcarr([size_is(n)] int *a[], int n);
   int enum_ord(e_t e);
+  double square_encue(encue_t *eue);
   void stop(void);
 }
