@@ -14,7 +14,8 @@ CTESTS = \
 	crypt_sha.c \
 	lsa.c \
 	registry.c \
-	security.c
+	security.c \
+	service.c
 
 @MAKE_TEST_RULES@
 
