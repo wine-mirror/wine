@@ -706,7 +706,7 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
         regfilter2.dwVersion = 2;
         regfilter2.dwMerit = prf2->dwMerit;
         regfilter2.u.s1.cPins2 = prf2->u.s.cPins;
-        pregfp2 = (REGFILTERPINS2*) CoTaskMemAlloc(prf2->u.s.cPins * sizeof(REGFILTERPINS2));
+        pregfp2 = CoTaskMemAlloc(prf2->u.s.cPins * sizeof(REGFILTERPINS2));
         regfilter2.u.s1.rgPins2 = pregfp2;
         for (i = 0; i < prf2->u.s.cPins; i++)
         {

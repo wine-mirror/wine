@@ -588,7 +588,7 @@ static HRESULT register_filters(struct regsvr_filter const *list)
 	    rf2.dwVersion = 2;
 	    rf2.dwMerit = list->merit;
 	    rf2.u.s1.cPins2 = i;
-	    rf2.u.s1.rgPins2 = prfp2 = (REGFILTERPINS2*) CoTaskMemAlloc(i*sizeof(REGFILTERPINS2));
+	    rf2.u.s1.rgPins2 = prfp2 = CoTaskMemAlloc(i*sizeof(REGFILTERPINS2));
 	    if (!prfp2) {
 		hr = E_OUTOFMEMORY;
 		break;
@@ -600,7 +600,7 @@ static HRESULT register_filters(struct regsvr_filter const *list)
                 
 		for (nbmt = 0; list->pins[i].mediatypes[nbmt].majortype; nbmt++) ;
 		/* Allocate a single buffer for regpintypes struct and clsids */
-		lpMediatype = (REGPINTYPES*) CoTaskMemAlloc(nbmt*(sizeof(REGPINTYPES) + 2*sizeof(CLSID)));
+		lpMediatype = CoTaskMemAlloc(nbmt*(sizeof(REGPINTYPES) + 2*sizeof(CLSID)));
 		if (!lpMediatype) {
 		    hr = E_OUTOFMEMORY;
 		    break;

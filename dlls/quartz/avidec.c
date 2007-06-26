@@ -196,13 +196,13 @@ static HRESULT AVIDec_ConnectInput(TransformFilterImpl* pTransformFilter, const 
 
             /* Copy bitmap header from media type to 1 for input and 1 for output */
             bih_size = format->bmiHeader.biSize + format->bmiHeader.biClrUsed * 4;
-            This->pBihIn = (BITMAPINFOHEADER*)CoTaskMemAlloc(bih_size);
+            This->pBihIn = CoTaskMemAlloc(bih_size);
             if (!This->pBihIn)
             {
                 hr = E_OUTOFMEMORY;
                 goto failed;
             }
-            This->pBihOut = (BITMAPINFOHEADER*)CoTaskMemAlloc(bih_size);
+            This->pBihOut = CoTaskMemAlloc(bih_size);
             if (!This->pBihOut)
             {
                 hr = E_OUTOFMEMORY;

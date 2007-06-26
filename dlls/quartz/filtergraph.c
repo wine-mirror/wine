@@ -327,11 +327,11 @@ static HRESULT WINAPI GraphBuilder_AddFilter(IGraphBuilder *iface,
     int i,j;
     WCHAR* wszFilterName = NULL;
     int duplicate_name = FALSE;
-    
+
     TRACE("(%p/%p)->(%p, %s (%p))\n", This, iface, pFilter, debugstr_w(pName), pName);
 
-    wszFilterName = (WCHAR*) CoTaskMemAlloc( (pName ? strlenW(pName) + 6 : 5) * sizeof(WCHAR) );
-    
+    wszFilterName = CoTaskMemAlloc( (pName ? strlenW(pName) + 6 : 5) * sizeof(WCHAR) );
+
     if (pName)
     {
 	/* Check if name already exists */
