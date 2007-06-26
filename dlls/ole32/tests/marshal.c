@@ -1615,7 +1615,7 @@ static void test_proxybuffer(REFIID riid)
     LPVOID lpvtbl;
     ULONG refs;
     CLSID clsid;
-    HeapUnknown *pUnkOuter = (HeapUnknown *)HeapAlloc(GetProcessHeap(), 0, sizeof(*pUnkOuter));
+    HeapUnknown *pUnkOuter = HeapAlloc(GetProcessHeap(), 0, sizeof(*pUnkOuter));
 
     pUnkOuter->lpVtbl = &HeapUnknown_Vtbl;
     pUnkOuter->refs = 1;
