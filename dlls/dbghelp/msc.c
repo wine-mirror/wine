@@ -342,14 +342,13 @@ static int codeview_add_type(unsigned int typeno, struct symt* dt)
     {
         cv_current_module->num_defined_types += 0x100;
         if (cv_current_module->defined_types)
-            cv_current_module->defined_types = (struct symt**)
-                HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                            cv_current_module->defined_types,
+            cv_current_module->defined_types = HeapReAlloc(GetProcessHeap(),
+                            HEAP_ZERO_MEMORY, cv_current_module->defined_types,
                             cv_current_module->num_defined_types * sizeof(struct symt*));
         else
-            cv_current_module->defined_types = (struct symt**)
-                HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                          cv_current_module->num_defined_types * sizeof(struct symt*));
+            cv_current_module->defined_types = HeapAlloc(GetProcessHeap(),
+                            HEAP_ZERO_MEMORY,
+                            cv_current_module->num_defined_types * sizeof(struct symt*));
 
         if (cv_current_module->defined_types == NULL) return FALSE;
     }
@@ -1124,8 +1123,8 @@ static struct codeview_linetab* codeview_snarf_linetab(struct module* module,
      * There is one header for each segment, so that we can reach in
      * and pull bits as required.
      */
-    lt_hdr = (struct codeview_linetab*)
-        HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (nseg + 1) * sizeof(*lt_hdr));
+    lt_hdr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                (nseg + 1) * sizeof(*lt_hdr));
     if (lt_hdr == NULL)
     {
         goto leave;
