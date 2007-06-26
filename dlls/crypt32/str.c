@@ -876,8 +876,6 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
              sizeof(simpleAttributeOIDs[0]); i++)
                 nameAttr = CertFindRDNAttr(simpleAttributeOIDs[i], info);
         }
-        else
-            ret = 0;
         if (!nameAttr)
         {
             PCERT_EXTENSION ext = CertFindExtension(altNameOID,
@@ -895,13 +893,14 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
                      * Failing that, look for the first attribute.
                      */
                     FIXME("CERT_NAME_SIMPLE_DISPLAY_TYPE: stub\n");
-                    ret = 0;
                 }
             }
         }
         if (nameAttr)
             ret = CertRDNValueToStrW(nameAttr->dwValueType, &nameAttr->Value,
-             pszNameString, cchNameString);
+                                     pszNameString, cchNameString);
+        else
+            ret = 0;
         if (info)
             LocalFree(info);
         break;
