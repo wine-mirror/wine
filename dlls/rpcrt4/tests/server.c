@@ -677,7 +677,17 @@ START_TEST(server)
   progname = argv[0];
 
   if (argc == 3)
-    client(argv[2]);
+  {
+    RpcTryExcept
+    {
+      client(argv[2]);
+    }
+    RpcExcept(TRUE)
+    {
+      trace("Exception %d\n", RpcExceptionCode());
+    }
+    RpcEndExcept
+  }
   else
     server();
 }
