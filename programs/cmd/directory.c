@@ -342,7 +342,7 @@ void WCMD_directory (WCHAR *cmd) {
       }
 
       WINE_TRACE("Using path '%s'\n", wine_dbgstr_w(path));
-      thisEntry = (DIRECTORY_STACK *) HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
+      thisEntry = HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
       if (fullParms == NULL) fullParms = thisEntry;
       if (prevEntry != NULL) prevEntry->next = thisEntry;
       prevEntry = thisEntry;
@@ -370,7 +370,7 @@ void WCMD_directory (WCHAR *cmd) {
   /* If just 'dir' entered, a '*' parameter is assumed */
   if (fullParms == NULL) {
     WINE_TRACE("Inserting default '*'\n");
-    fullParms = (DIRECTORY_STACK *) HeapAlloc(GetProcessHeap(),0, sizeof(DIRECTORY_STACK));
+    fullParms = HeapAlloc(GetProcessHeap(),0, sizeof(DIRECTORY_STACK));
     fullParms->next = NULL;
     fullParms->dirName = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR) * (strlenW(cwd)+1));
     strcpyW(fullParms->dirName, cwd);
@@ -739,7 +739,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
             WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(string));
 
             /* Allocate memory, add to list */
-            thisDir = (DIRECTORY_STACK *) HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
+            thisDir = HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
             if (dirStack == NULL) dirStack = thisDir;
             if (lastEntry != NULL) lastEntry->next = thisDir;
             lastEntry = thisDir;

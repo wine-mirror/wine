@@ -487,7 +487,7 @@ BOOL WCMD_delete (WCHAR *command, BOOL expectDir) {
                 WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(subParm));
 
                 /* Allocate memory, add to list */
-                nextDir = (DIRECTORY_STACK *) HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
+                nextDir = HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
                 if (allDirs == NULL) allDirs = nextDir;
                 if (lastEntry != NULL) lastEntry->next = nextDir;
                 lastEntry = nextDir;
