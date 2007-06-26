@@ -579,7 +579,7 @@ static HRESULT register_current_module_typelib(void)
 
 static IWidget *Widget_Create(void)
 {
-    Widget *This = (Widget *)HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    Widget *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     HRESULT hr;
     ITypeLib *pTypeLib;
 
@@ -698,7 +698,7 @@ static IKindaEnumWidget *KindaEnumWidget_Create(void)
 {
     KindaEnum *This;
 
-    This = (KindaEnum *)HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return NULL;
     This->lpVtbl = &KindaEnumWidget_VTable;
     This->refs = 1;

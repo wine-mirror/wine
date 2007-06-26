@@ -192,7 +192,7 @@ static void test_marshal_LPSAFEARRAY(void)
     ok(size == 68, "size should be 68 bytes, not %ld\n", size);
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
     ok(size == 64, "size should be 64 bytes, not %ld\n", size);
-    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
     LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
 
     check_safearray(buffer, lpsa);
@@ -215,7 +215,7 @@ static void test_marshal_LPSAFEARRAY(void)
 
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
     ok(size == 4, "size should be 4 bytes, not %ld\n", size);
-    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
     LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
     check_safearray(buffer, lpsa);
 
@@ -238,7 +238,7 @@ static void test_marshal_LPSAFEARRAY(void)
     ok(size == 128, "size should be 128 bytes, not %ld\n", size);
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
     ok(size == 128, "size should be 128 bytes, not %ld\n", size);
-    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
     LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
 
     check_safearray(buffer, lpsa);
@@ -260,7 +260,7 @@ static void test_marshal_LPSAFEARRAY(void)
 
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
     ok(size == 432, "size %ld\n", size);
-    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
     LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
     check_safearray(buffer, lpsa);
     HeapFree(GetProcessHeap(), 0, buffer);
@@ -283,7 +283,7 @@ static void test_marshal_LPSAFEARRAY(void)
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
     todo_wine
     ok(size == 1388, "size %ld\n", size);
-    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
     LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
     check_safearray(buffer, lpsa);
     HeapFree(GetProcessHeap(), 0, buffer);
