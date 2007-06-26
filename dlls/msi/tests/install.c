@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define _WIN32_MSI 300
+
 #include <stdio.h>
 
 #include <windows.h>
@@ -120,14 +122,14 @@ static const CHAR property_dat[] = "Property\tValue\n"
                                    "InstallMode\tTypical\n"
                                    "Manufacturer\tWine\n"
                                    "PIDTemplate\t12345<###-%%%%%%%>@@@@@\n"
-                                   "ProductCode\t{F1C3AF50-8B56-4A69-A00C-00773FE42F30}\n"
+                                   "ProductCode\t{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}\n"
                                    "ProductID\tnone\n"
                                    "ProductLanguage\t1033\n"
                                    "ProductName\tMSITEST\n"
                                    "ProductVersion\t1.1.1\n"
                                    "PROMPTROLLBACKCOST\tP\n"
                                    "Setup\tSetup\n"
-                                   "UpgradeCode\t{CE067E8D-2E1A-4367-B734-4EB2BDAD6565}";
+                                   "UpgradeCode\t{4C0EAA15-0264-4E5A-8758-609EF142B92D}";
 
 static const CHAR registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
                                    "s72\ti2\tl255\tL255\tL0\ts72\n"
@@ -249,12 +251,14 @@ static const CHAR rof_component_dat[] = "Component\tComponentId\tDirectory_\tAtt
 static const CHAR rof_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
                                       "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
                                       "Feature\tFeature\n"
-                                      "feature\t\t\t\t2\t1\tTARGETDIR\t0";
+                                      "feature\t\tFeature\tFeature\t2\t1\tTARGETDIR\t0\n"
+                                      "montecristo\t\tFeature\tFeature\t2\t1\tTARGETDIR\t0";
 
 static const CHAR rof_feature_comp_dat[] = "Feature_\tComponent_\n"
                                            "s38\ts72\n"
                                            "FeatureComponents\tFeature_\tComponent_\n"
-                                           "feature\tmaximus";
+                                           "feature\tmaximus\n"
+                                           "montecristo\tmaximus";
 
 static const CHAR rof_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
                                    "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
@@ -338,7 +342,7 @@ static const CHAR ci_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComm
 static const CHAR ci_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
                                        "Component\tComponent\n"
-                                       "maximus\t\tMSITESTDIR\t0\tUILevel=5\tmaximus\n";
+                                       "maximus\t{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}\tMSITESTDIR\t0\tUILevel=5\tmaximus\n";
 
 static const CHAR ci2_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
                                         "s72\tS38\ts72\ti2\tS255\tS72\n"
@@ -381,6 +385,25 @@ static const CHAR spf_install_ui_seq_dat[] = "Action\tCondition\tSequence\n"
                                              "FileCost\t\t900\n"
                                              "CostFinalize\t\t1000\n"
                                              "ExecuteAction\t\t1100\n";
+
+static const CHAR pp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                              "s72\tS255\tI2\n"
+                                              "InstallExecuteSequence\tAction\n"
+                                              "ValidateProductID\t\t700\n"
+                                              "CostInitialize\t\t800\n"
+                                              "FileCost\t\t900\n"
+                                              "CostFinalize\t\t1000\n"
+                                              "InstallValidate\t\t1400\n"
+                                              "InstallInitialize\t\t1500\n"
+                                              "ProcessComponents\tPROCESS_COMPONENTS=1 Or FULL=1\t1600\n"
+                                              "UnpublishFeatures\tUNPUBLISH_FEATURES=1 Or FULL=1\t1800\n"
+                                              "RemoveFiles\t\t3500\n"
+                                              "InstallFiles\t\t4000\n"
+                                              "RegisterUser\t\t6000\n"
+                                              "RegisterProduct\tREGISTER_PRODUCT=1 Or FULL=1\t6100\n"
+                                              "PublishFeatures\tPUBLISH_FEATURES=1 Or FULL=1\t6300\n"
+                                              "PublishProduct\tPUBLISH_PRODUCT=1 Or FULL=1\t6400\n"
+                                              "InstallFinalize\t\t6600";
 
 typedef struct _msi_table
 {
@@ -554,6 +577,18 @@ static const msi_table spf_tables[] =
     ADD_TABLE(property),
     ADD_TABLE(spf_custom_action),
     ADD_TABLE(spf_install_ui_seq),
+};
+
+static const msi_table pp_tables[] =
+{
+    ADD_TABLE(ci_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rof_file),
+    ADD_TABLE(pp_install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
 };
 
 /* cabinet definitions */
@@ -880,7 +915,7 @@ static void write_msi_summary_info(MSIHANDLE db)
     MSIHANDLE summary;
     UINT r;
 
-    r = MsiGetSummaryInformationA(db, NULL, 4, &summary);
+    r = MsiGetSummaryInformationA(db, NULL, 5, &summary);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiSummaryInfoSetPropertyA(summary, PID_TEMPLATE, VT_LPSTR, 0, NULL, ";1033");
@@ -894,6 +929,9 @@ static void write_msi_summary_info(MSIHANDLE db)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiSummaryInfoSetPropertyA(summary, PID_WORDCOUNT, VT_I4, 0, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSummaryInfoSetPropertyA(summary, PID_TITLE, VT_LPSTR, 0, NULL, "MSITEST");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     /* write the summary changes back to the stream */
@@ -1504,6 +1542,623 @@ static void test_setpropertyfolder(void)
     RemoveDirectory("msitest");
 }
 
+static BOOL file_exists(LPCSTR file)
+{
+    return GetFileAttributes(file) != INVALID_FILE_ATTRIBUTES;
+}
+
+static BOOL pf_exists(LPCSTR file)
+{
+    CHAR path[MAX_PATH];
+
+    lstrcpyA(path, PROG_FILES_DIR);
+    lstrcatA(path, "\\");
+    lstrcatA(path, file);
+
+    return file_exists(path);
+}
+
+static void delete_pfmsitest_files(void)
+{
+    SHFILEOPSTRUCT shfl;
+    CHAR path[MAX_PATH+10];
+
+    lstrcpyA(path, PROG_FILES_DIR);
+    lstrcatA(path, "\\msitest\\*");
+    path[strlen(path) + 1] = '\0';
+
+    shfl.hwnd = NULL;
+    shfl.wFunc = FO_DELETE;
+    shfl.pFrom = path;
+    shfl.pTo = NULL;
+    shfl.fFlags = FOF_FILESONLY | FOF_NOCONFIRMATION | FOF_NORECURSION | FOF_SILENT;
+
+    SHFileOperation(&shfl);
+
+    lstrcpyA(path, PROG_FILES_DIR);
+    lstrcatA(path, "\\msitest");
+    RemoveDirectoryA(path);
+}
+
+static void test_publish(void)
+{
+    UINT r;
+    INSTALLSTATE state;
+    CHAR prodcode[] = "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\maximus", 500);
+
+    create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    if (state != INSTALLSTATE_UNKNOWN)
+    {
+        skip("Install database not in a clean state\n");
+        return;
+    }
+
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* nothing published */
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* install again */
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* try to uninstall */
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
+    ok(pf_exists("msitest\\maximus"), "File deleted\n");
+    ok(pf_exists("msitest"), "File deleted\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* PublishProduct */
+    r = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
+    }
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* try to uninstall after PublishProduct */
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File deleted\n");
+    ok(pf_exists("msitest"), "File deleted\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* PublishProduct and RegisterProduct */
+    r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1 PUBLISH_PRODUCT=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
+    }
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* try it again */
+    r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1 PUBLISH_PRODUCT=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* uninstall has a problem with this */
+    r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
+    ok(pf_exists("msitest\\maximus"), "File deleted\n");
+    ok(pf_exists("msitest"), "File deleted\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* PublishProduct and RegisterProduct and ProcessComponents */
+    r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1 PUBLISH_PRODUCT=1 PROCESS_COMPONENTS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    /* complete uninstall */
+    r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File deleted\n");
+    ok(pf_exists("msitest"), "File deleted\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* PublishProduct, RegisterProduct, ProcessComponents, PublishFeatures */
+    r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1 PUBLISH_PRODUCT=1 PROCESS_COMPONENTS=1 PUBLISH_FEATURES=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    /* complete uninstall */
+    r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!pf_exists("msitest\\maximus"), "File deleted\n");
+        ok(!pf_exists("msitest"), "File deleted\n");
+    }
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");\
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* complete install */
+    r = MsiInstallProductA(msifile, "FULL=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    /* no UnpublishFeatures */
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!pf_exists("msitest\\maximus"), "File deleted\n");
+        ok(!pf_exists("msitest"), "File deleted\n");
+    }
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* complete install */
+    r = MsiInstallProductA(msifile, "FULL=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    /* UnpublishFeatures, only feature removed.  Only works when entire product is removed */
+    r = MsiInstallProductA(msifile, "UNPUBLISH_FEATURES=1 REMOVE=feature");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File deleted\n");
+    ok(pf_exists("msitest"), "File deleted\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    /* complete install */
+    r = MsiInstallProductA(msifile, "FULL=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    /* UnpublishFeatures, both features removed */
+    r = MsiInstallProductA(msifile, "UNPUBLISH_FEATURES=1 REMOVE=feature,montecristo");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!pf_exists("msitest\\maximus"), "File not deleted\n");
+        ok(!pf_exists("msitest"), "File not deleted\n");
+    }
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* complete install */
+    r = MsiInstallProductA(msifile, "FULL=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    /* complete uninstall */
+    r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!pf_exists("msitest\\maximus"), "File not deleted\n");
+        ok(!pf_exists("msitest"), "File not deleted\n");
+    }
+
+    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    }
+
+    r = MsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* make sure 'Program Files\msitest' is removed */
+    delete_pfmsitest_files();
+
+    DeleteFile(msifile);
+    DeleteFile("msitest\\maximus");
+    RemoveDirectory("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -1534,6 +2189,7 @@ START_TEST(install)
     test_cabisextracted();
     test_concurrentinstall();
     test_setpropertyfolder();
+    test_publish();
 
     SetCurrentDirectoryA(prev_path);
 }
