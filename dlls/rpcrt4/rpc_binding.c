@@ -302,7 +302,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
   status = RPCRT4_CreateConnection(&NewConnection, Binding->server,
                                    Binding->Protseq, Binding->NetworkAddr,
                                    Binding->Endpoint, Binding->NetworkOptions,
-                                   Binding->AuthInfo, Binding->QOS, Binding);
+                                   Binding->AuthInfo, Binding->QOS);
   if (status != RPC_S_OK)
     return status;
 

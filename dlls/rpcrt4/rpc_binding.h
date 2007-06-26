@@ -58,7 +58,6 @@ typedef struct _RpcAssoc
     LPSTR NetworkAddr;
     LPSTR Endpoint;
     LPWSTR NetworkOptions;
-    RpcAuthInfo *AuthInfo;
 
     /* id of this association group */
     ULONG assoc_group_id;
@@ -72,7 +71,6 @@ struct connection_ops;
 typedef struct _RpcConnection
 {
   struct _RpcConnection* Next;
-  struct _RpcBinding* Used;
   BOOL server;
   LPSTR NetworkAddr;
   LPSTR Endpoint;
@@ -152,7 +150,7 @@ RpcConnection *RpcAssoc_GetIdleConnection(RpcAssoc *assoc, const RPC_SYNTAX_IDEN
 void RpcAssoc_ReleaseIdleConnection(RpcAssoc *assoc, RpcConnection *Connection);
 ULONG RpcAssoc_Release(RpcAssoc *assoc);
 
-RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCWSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcQualityOfService *QOS, RpcBinding* Binding);
+RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCWSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcQualityOfService *QOS);
 RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection);
 RPC_STATUS RPCRT4_OpenClientConnection(RpcConnection* Connection);
 RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection);
