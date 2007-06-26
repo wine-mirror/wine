@@ -286,28 +286,43 @@ static void PROPSHEET_AtoW(LPCWSTR *tostr, LPCSTR frstr)
 }
 
 /******************************************************************************
+ *            PROPSHEET_CollectSheetInfoCommon
+ *
+ * Common code for PROPSHEET_CollectSheetInfoA/W
+ */
+static void PROPSHEET_CollectSheetInfoCommon(PropSheetInfo * psInfo, DWORD dwFlags)
+{
+  PROPSHEET_UnImplementedFlags(dwFlags);
+
+  psInfo->hasHelp = dwFlags & PSH_HASHELP;
+  psInfo->hasApply = !(dwFlags & PSH_NOAPPLYNOW);
+  psInfo->hasFinish = dwFlags & PSH_WIZARDHASFINISH;
+  psInfo->isModeless = dwFlags & PSH_MODELESS;
+  if (psInfo->active_page < 0 || psInfo->active_page >= psInfo->nPages)
+     psInfo->active_page = 0;
+
+  psInfo->result = 0;
+  psInfo->hImageList = 0;
+  psInfo->activeValid = FALSE;
+}
+
+/******************************************************************************
  *            PROPSHEET_CollectSheetInfoA
  *
  * Collect relevant data.
  */
-static BOOL PROPSHEET_CollectSheetInfoA(LPCPROPSHEETHEADERA lppsh,
+static void PROPSHEET_CollectSheetInfoA(LPCPROPSHEETHEADERA lppsh,
                                        PropSheetInfo * psInfo)
 {
   DWORD dwSize = min(lppsh->dwSize,sizeof(PROPSHEETHEADERA));
   DWORD dwFlags = lppsh->dwFlags;
 
-  psInfo->hasHelp = dwFlags & PSH_HASHELP;
-  psInfo->hasApply = !(dwFlags & PSH_NOAPPLYNOW);
-  psInfo->hasFinish = dwFlags & PSH_WIZARDHASFINISH;
   psInfo->useCallback = (dwFlags & PSH_USECALLBACK )&& (lppsh->pfnCallback);
-  psInfo->isModeless = dwFlags & PSH_MODELESS;
 
   memcpy(&psInfo->ppshheader,lppsh,dwSize);
   TRACE("\n** PROPSHEETHEADER **\ndwSize\t\t%d\ndwFlags\t\t%08x\nhwndParent\t%p\nhInstance\t%p\npszCaption\t'%s'\nnPages\t\t%d\npfnCallback\t%p\n",
 	lppsh->dwSize, lppsh->dwFlags, lppsh->hwndParent, lppsh->hInstance,
 	debugstr_a(lppsh->pszCaption), lppsh->nPages, lppsh->pfnCallback);
-
-  PROPSHEET_UnImplementedFlags(lppsh->dwFlags);
 
   if (lppsh->dwFlags & INTRNL_ANY_WIZARD)
      psInfo->ppshheader.pszCaption = NULL;
@@ -332,14 +347,7 @@ static BOOL PROPSHEET_CollectSheetInfoA(LPCPROPSHEETHEADERA lppsh,
   else
     psInfo->active_page = lppsh->u2.nStartPage;
 
-  if (psInfo->active_page < 0 || psInfo->active_page >= psInfo->nPages)
-     psInfo->active_page = 0;
-
-  psInfo->result = 0;
-  psInfo->hImageList = 0;
-  psInfo->activeValid = FALSE;
-
-  return TRUE;
+  PROPSHEET_CollectSheetInfoCommon(psInfo, dwFlags);
 }
 
 /******************************************************************************
@@ -347,23 +355,17 @@ static BOOL PROPSHEET_CollectSheetInfoA(LPCPROPSHEETHEADERA lppsh,
  *
  * Collect relevant data.
  */
-static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
+static void PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
                                        PropSheetInfo * psInfo)
 {
   DWORD dwSize = min(lppsh->dwSize,sizeof(PROPSHEETHEADERW));
   DWORD dwFlags = lppsh->dwFlags;
 
-  psInfo->hasHelp = dwFlags & PSH_HASHELP;
-  psInfo->hasApply = !(dwFlags & PSH_NOAPPLYNOW);
-  psInfo->hasFinish = dwFlags & PSH_WIZARDHASFINISH;
   psInfo->useCallback = (dwFlags & PSH_USECALLBACK) && (lppsh->pfnCallback);
-  psInfo->isModeless = dwFlags & PSH_MODELESS;
 
   memcpy(&psInfo->ppshheader,lppsh,dwSize);
   TRACE("\n** PROPSHEETHEADER **\ndwSize\t\t%d\ndwFlags\t\t%08x\nhwndParent\t%p\nhInstance\t%p\npszCaption\t%s\nnPages\t\t%d\npfnCallback\t%p\n",
       lppsh->dwSize, lppsh->dwFlags, lppsh->hwndParent, lppsh->hInstance, debugstr_w(lppsh->pszCaption), lppsh->nPages, lppsh->pfnCallback);
-
-  PROPSHEET_UnImplementedFlags(lppsh->dwFlags);
 
   if (lppsh->dwFlags & INTRNL_ANY_WIZARD)
      psInfo->ppshheader.pszCaption = NULL;
@@ -387,14 +389,7 @@ static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
   else
     psInfo->active_page = lppsh->u2.nStartPage;
 
-  if (psInfo->active_page < 0 || psInfo->active_page >= psInfo->nPages)
-     psInfo->active_page = 0;
-
-  psInfo->result = 0;
-  psInfo->hImageList = 0;
-  psInfo->activeValid = FALSE;
-
-  return TRUE;
+  PROPSHEET_CollectSheetInfoCommon(psInfo, dwFlags);
 }
 
 /******************************************************************************
