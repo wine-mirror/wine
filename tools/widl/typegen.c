@@ -2122,12 +2122,14 @@ static unsigned int get_required_buffer_size_type(
         case RPC_FC_WCHAR:
         case RPC_FC_USHORT:
         case RPC_FC_SHORT:
+        case RPC_FC_ENUM16:
             *alignment = 4;
             size = 2;
             break;
 
         case RPC_FC_ULONG:
         case RPC_FC_LONG:
+        case RPC_FC_ENUM32:
         case RPC_FC_FLOAT:
         case RPC_FC_ERROR_STATUS_T:
             *alignment = 4;
@@ -2344,12 +2346,14 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
         case RPC_FC_WCHAR:
         case RPC_FC_USHORT:
         case RPC_FC_SHORT:
+        case RPC_FC_ENUM16:
             size = 2;
             alignment = 2;
             break;
 
         case RPC_FC_ULONG:
         case RPC_FC_LONG:
+        case RPC_FC_ENUM32:
         case RPC_FC_FLOAT:
         case RPC_FC_ERROR_STATUS_T:
             size = 4;

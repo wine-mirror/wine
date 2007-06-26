@@ -157,8 +157,17 @@ interface IServer
   case ENCU_F: float f;
   } encu_t;
 
+  typedef enum
+  {
+    E1 = 23,
+    E2 = 4,
+    E3 = 0,
+    E4 = 64
+  } e_t;
+
   double square_encu(encu_t *eu);
   int sum_parr(int *a[3]);
   int sum_pcarr([size_is(n)] int *a[], int n);
+  int enum_ord(e_t e);
   void stop(void);
 }

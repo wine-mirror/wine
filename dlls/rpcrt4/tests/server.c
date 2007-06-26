@@ -272,6 +272,20 @@ s_sum_pcarr(int *a[], int n)
   return s;
 }
 
+int
+s_enum_ord(e_t e)
+{
+  switch (e)
+  {
+  case E1: return 1;
+  case E2: return 2;
+  case E3: return 3;
+  case E4: return 4;
+  default:
+    return 0;
+  }
+}
+
 void
 s_stop(void)
 {
@@ -385,6 +399,11 @@ basic_tests(void)
   ok(dot_copy_vectors(vec1, vec2) == -21, "RPC dot_copy_vectors\n");
   ok(sum_fixed_array(f) == -2, "RPC sum_fixed_array\n");
   ok(sum_sp(&sp) == 29, "RPC sum_sp\n");
+
+  ok(enum_ord(E1) == 1, "RPC enum_ord\n");
+  ok(enum_ord(E2) == 2, "RPC enum_ord\n");
+  ok(enum_ord(E3) == 3, "RPC enum_ord\n");
+  ok(enum_ord(E4) == 4, "RPC enum_ord\n");
 }
 
 static void
