@@ -1982,7 +1982,11 @@ static LPWSTR msi_get_disk_file_version( LPCWSTR filename )
     version = msi_alloc( versize );
     GetFileVersionInfoW( filename, 0, versize, version );
 
-    VerQueryValueW( version, name, (LPVOID*)&lpVer, &sz );
+    if (!VerQueryValueW( version, name, (LPVOID*)&lpVer, &sz ))
+    {
+        msi_free( version );
+        return NULL;
+    }
     msi_free( version );
 
     sprintfW( filever, name_fmt,
