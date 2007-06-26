@@ -81,8 +81,8 @@ static void test_VirtualAllocEx(void)
         return;
     }
 
-    src = (char *) HeapAlloc( GetProcessHeap(), 0, alloc_size );
-    dst = (char *) HeapAlloc( GetProcessHeap(), 0, alloc_size );
+    src = HeapAlloc( GetProcessHeap(), 0, alloc_size );
+    dst = HeapAlloc( GetProcessHeap(), 0, alloc_size );
     for (i = 0; i < alloc_size; i++)
         src[i] = i & 0xff;
 

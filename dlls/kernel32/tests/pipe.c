@@ -848,7 +848,7 @@ static DWORD CALLBACK named_pipe_client_func(LPVOID p)
 
         ret = GetTokenInformation(process_token, TokenPrivileges, NULL, 0, &Size);
         ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetTokenInformation(TokenPrivileges) failed with %d\n", GetLastError());
-        Privileges = (TOKEN_PRIVILEGES *)HeapAlloc(GetProcessHeap(), 0, Size);
+        Privileges = HeapAlloc(GetProcessHeap(), 0, Size);
         ret = GetTokenInformation(process_token, TokenPrivileges, Privileges, Size, &Size);
         ok(ret, "GetTokenInformation(TokenPrivileges) failed with %d\n", GetLastError());
 
