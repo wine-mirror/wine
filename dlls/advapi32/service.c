@@ -1880,7 +1880,7 @@ QueryServiceConfigW( SC_HANDLE hService,
 	total += sizeof(WCHAR);
 
     sz = 0;
-    r = RegQueryValueExW( hKey, szStart, 0, &type, NULL, &sz );
+    r = RegQueryValueExW( hKey, szObjectName, 0, &type, NULL, &sz );
     if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
         total += sz;
 
