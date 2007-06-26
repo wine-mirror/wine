@@ -81,6 +81,12 @@ static string_table *init_stringtable( int entries, UINT codepage )
     string_table *st;
     int i;
 
+    if (codepage != CP_ACP && !IsValidCodePage(codepage))
+    {
+        ERR("invalid codepage %d\n", codepage);
+        return NULL;
+    }
+
     st = msi_alloc( sizeof (string_table) );
     if( !st )
         return NULL;    
@@ -269,7 +275,6 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, UINT r
     str = msi_alloc( (len+1)*sizeof(WCHAR) );
     if( !str )
         return -1;
-    TRACE("%d\n",__LINE__);
     memcpy( str, data, len*sizeof(WCHAR) );
     str[len] = 0;
 
@@ -516,8 +521,6 @@ string_table *msi_load_string_table( IStorage *stg, UINT *bytes_per_strref )
     UINT r, datasize = 0, poolsize = 0, codepage;
     DWORD i, count, offset, len, n, refs;
 
-    static const USHORT large_str_sig[] = { 0x0000, 0x8000 };
-
     r = read_stream_data( stg, szStringPool, &pool, &poolsize );
     if( r != ERROR_SUCCESS)
         goto end;
@@ -525,18 +528,19 @@ string_table *msi_load_string_table( IStorage *stg, UINT *bytes_per_strref )
     if( r != ERROR_SUCCESS)
         goto end;
 
-    if ( !memcmp(pool, large_str_sig, sizeof(large_str_sig)) )
+    if ( (poolsize > 4) && (pool[1] & 0x8000) )
         *bytes_per_strref = LONG_STR_BYTES;
     else
         *bytes_per_strref = sizeof(USHORT);
 
-    /* FIXME: don't know where the codepage is in large str tables */
     count = poolsize/4;
-    if( poolsize > 4 && *bytes_per_strref != LONG_STR_BYTES )
-        codepage = pool[0] | ( pool[1] << 16 );
+    if( poolsize > 4 )
+        codepage = pool[0] | ( (pool[1] & ~0x8000) << 16 );
     else
         codepage = CP_ACP;
     st = init_stringtable( count, codepage );
+    if (!st)
+        goto end;
 
     offset = 0;
     n = 1;
