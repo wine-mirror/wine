@@ -377,10 +377,7 @@ static void test_MsiQueryProductState(void)
 
     /* user product key exists */
     state = MsiQueryProductStateA(prodcode);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
     lstrcatA(keypath, usersid);
@@ -392,20 +389,14 @@ static void test_MsiQueryProductState(void)
 
     /* local product key exists */
     state = MsiQueryProductStateA(prodcode);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
     res = RegCreateKeyA(localkey, "InstallProperties", &props);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* install properties key exists */
     state = MsiQueryProductStateA(prodcode);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
     data = 1;
     res = RegSetValueExA(props, "WindowsInstaller", 0, REG_DWORD, (const BYTE *)&data, sizeof(DWORD));

@@ -762,7 +762,7 @@ INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR szProduct)
 INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
 {
     UINT rc;
-    INSTALLSTATE rrc = INSTALLSTATE_UNKNOWN;
+    INSTALLSTATE state = INSTALLSTATE_UNKNOWN;
     HKEY hkey = 0;
     DWORD sz;
 
@@ -780,31 +780,32 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
     if (rc != ERROR_SUCCESS)
         goto end;
 
+    state = INSTALLSTATE_ADVERTISED;
     RegCloseKey(hkey);
 
     rc = MSIREG_OpenUninstallKey(szProduct,&hkey,FALSE);
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    sz = sizeof(rrc);
-    rc = RegQueryValueExW(hkey,szWindowsInstaller,NULL,NULL,(LPVOID)&rrc, &sz);
+    sz = sizeof(state);
+    rc = RegQueryValueExW(hkey,szWindowsInstaller,NULL,NULL,(LPVOID)&state, &sz);
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    switch (rrc)
+    switch (state)
     {
     case 1:
         /* default */
-        rrc = INSTALLSTATE_DEFAULT;
+        state = INSTALLSTATE_DEFAULT;
         break;
     default:
-        FIXME("Unknown install state read from registry (%i)\n",rrc);
-        rrc = INSTALLSTATE_UNKNOWN;
+        FIXME("Unknown install state read from registry (%i)\n",state);
+        state = INSTALLSTATE_UNKNOWN;
         break;
     }
 end:
     RegCloseKey(hkey);
-    return rrc;
+    return state;
 }
 
 INSTALLUILEVEL WINAPI MsiSetInternalUI(INSTALLUILEVEL dwUILevel, HWND *phWnd)
