@@ -97,9 +97,6 @@ struct JoystickImpl
 
 	char				dev[32];
 
-	/* The 'parent' DInput */
-	IDirectInputImpl               *dinput;
-
 	/* joystick private */
 	int				joyfd;
 	DIJOYSTATE2			js;		/* wine data */
@@ -468,7 +465,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
 
     newDevice->base.lpVtbl = jvt;
     newDevice->base.ref = 1;
-    newDevice->dinput = dinput;
+    newDevice->base.dinput = dinput;
     CopyMemory(&newDevice->base.guid, rguid, sizeof(*rguid));
     InitializeCriticalSection(&newDevice->base.crit);
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
@@ -531,11 +528,11 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
         newDevice->props[i].lSaturation = 0;
     }
 
-    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);
+    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->base.dinput);
 
     newDevice->devcaps.dwSize = sizeof(newDevice->devcaps);
     newDevice->devcaps.dwFlags = DIDC_ATTACHED;
-    if (newDevice->dinput->dwVersion >= 0x0800)
+    if (newDevice->base.dinput->dwVersion >= 0x0800)
         newDevice->devcaps.dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
     else
         newDevice->devcaps.dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
@@ -666,7 +663,7 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     release_DataFormat(&This->base.data_format);
 
     This->base.crit.DebugInfo->Spare[0] = 0;
-    IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
+    IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->base.dinput);
     DeleteCriticalSection(&This->base.crit);
 
     HeapFree(GetProcessHeap(),0,This);
@@ -871,7 +868,7 @@ static void joy_polldev(JoystickImpl *This) {
         if (inst_id >= 0)
             queue_event((LPDIRECTINPUTDEVICE8A)This,
                         id_to_offset(&This->base.data_format, inst_id),
-                        value, jse.time, This->dinput->evsequence++);
+                        value, jse.time, This->base.dinput->evsequence++);
     }
 }
 

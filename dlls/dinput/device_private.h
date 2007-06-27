@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "dinput.h"
+#include "dinput_private.h"
 
 typedef struct
 {
@@ -53,6 +54,7 @@ struct IDirectInputDevice2AImpl
     LONG                        ref;
     GUID                        guid;
     CRITICAL_SECTION            crit;
+    IDirectInputImpl           *dinput;
     HANDLE                      hEvent;
     DWORD                       dwCoopLevel;
     HWND                        win;

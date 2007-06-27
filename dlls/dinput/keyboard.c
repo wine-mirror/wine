@@ -47,8 +47,6 @@ typedef struct SysKeyboardImpl SysKeyboardImpl;
 struct SysKeyboardImpl
 {
     struct IDirectInputDevice2AImpl base;
-
-    IDirectInputImpl*           dinput;
 };
 
 static SysKeyboardImpl* current_lock = NULL; 
@@ -87,7 +85,7 @@ static LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam
       
     dik_code = id_to_offset(&This->base.data_format, DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON);
     EnterCriticalSection(&This->base.crit);
-    queue_event((LPDIRECTINPUTDEVICE8A)This, dik_code, new_diks, hook->time, This->dinput->evsequence++);
+    queue_event((LPDIRECTINPUTDEVICE8A)This, dik_code, new_diks, hook->time, This->base.dinput->evsequence++);
     LeaveCriticalSection(&This->base.crit);
     
     return CallNextHookEx(0, code, wparam, lparam);
@@ -194,7 +192,7 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, const void *kvt, IDirectInpu
     newDevice->base.lpVtbl = kvt;
     newDevice->base.ref = 1;
     memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
-    newDevice->dinput = dinput;
+    newDevice->base.dinput = dinput;
     InitializeCriticalSection(&newDevice->base.crit);
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
 
@@ -216,7 +214,7 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, const void *kvt, IDirectInpu
     df->dwNumObjs = idx;
 
     newDevice->base.data_format.wine_df = df;
-    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);
+    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->base.dinput);
     return newDevice;
 
 failed:
@@ -290,7 +288,7 @@ static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     HeapFree(GetProcessHeap(), 0, This->base.data_format.wine_df);
     release_DataFormat(&This->base.data_format);
 
-    IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
+    IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->base.dinput);
     This->base.crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->base.crit);
     HeapFree(GetProcessHeap(), 0, This);
@@ -388,7 +386,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
     
     devcaps.dwSize = lpDIDevCaps->dwSize;
     devcaps.dwFlags = DIDC_ATTACHED;
-    if (This->dinput->dwVersion >= 0x0800)
+    if (This->base.dinput->dwVersion >= 0x0800)
 	devcaps.dwDevType = DI8DEVTYPE_KEYBOARD | (DI8DEVTYPEKEYBOARD_UNKNOWN << 8);
     else
 	devcaps.dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
@@ -465,7 +463,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceInfo(
 	return DI_OK;
     }
 
-    fill_keyboard_dideviceinstanceA(pdidi, This->dinput->dwVersion);
+    fill_keyboard_dideviceinstanceA(pdidi, This->base.dinput->dwVersion);
     
     return DI_OK;
 }
@@ -480,7 +478,7 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface
 	return DI_OK;
     }
 
-    fill_keyboard_dideviceinstanceW(pdidi, This->dinput->dwVersion);
+    fill_keyboard_dideviceinstanceW(pdidi, This->base.dinput->dwVersion);
     
     return DI_OK;
 }
