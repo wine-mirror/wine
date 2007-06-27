@@ -64,7 +64,7 @@ typedef struct msi_handle_info_t
 } msi_handle_info;
 
 static msi_handle_info *msihandletable = NULL;
-static int msihandletable_size = 0;
+static unsigned int msihandletable_size = 0;
 
 void msi_free_handle_table(void)
 {
@@ -158,8 +158,6 @@ void *msihandle2msiinfo(MSIHANDLE handle, UINT type)
 
     EnterCriticalSection( &MSI_handle_cs );
     handle--;
-    if( handle<0 )
-        goto out;
     if( handle >= msihandletable_size )
         goto out;
     if( msihandletable[handle].remote)
@@ -185,8 +183,6 @@ IUnknown *msi_get_remote( MSIHANDLE handle )
 
     EnterCriticalSection( &MSI_handle_cs );
     handle--;
-    if( handle<0 )
-        goto out;
     if( handle>=msihandletable_size )
         goto out;
     if( !msihandletable[handle].remote)
@@ -273,7 +269,6 @@ UINT WINAPI MsiCloseHandle(MSIHANDLE handle)
 {
     MSIOBJECTHDR *info = NULL;
     UINT ret = ERROR_INVALID_HANDLE;
-    IUnknown *unk;
 
     TRACE("%lx\n",handle);
 
@@ -282,16 +277,17 @@ UINT WINAPI MsiCloseHandle(MSIHANDLE handle)
 
     EnterCriticalSection( &MSI_handle_cs );
 
-    unk = msi_get_remote( handle );
-    if (unk)
+    handle--;
+    if (handle >= msihandletable_size)
+        goto out;
+
+    if (msihandletable[handle].remote)
     {
-        /* release once for handle, once for table entry */
-        IUnknown_Release( unk );
-        IUnknown_Release( unk );
+        IUnknown_Release( msihandletable[handle].u.unk );
     }
     else
     {
-        info = msihandle2msiinfo(handle, 0);
+        info = msihandletable[handle].u.obj;
         if( !info )
             goto out;
 
@@ -300,17 +296,15 @@ UINT WINAPI MsiCloseHandle(MSIHANDLE handle)
             ERR("Invalid handle!\n");
             goto out;
         }
-
-        msiobj_release( info );
     }
 
-    msihandletable[handle-1].u.obj = NULL;
-    msihandletable[handle-1].remote = 0;
-    msihandletable[handle-1].dwThreadId = 0;
+    msihandletable[handle].u.obj = NULL;
+    msihandletable[handle].remote = 0;
+    msihandletable[handle].dwThreadId = 0;
 
     ret = ERROR_SUCCESS;
 
-    TRACE("handle %lx Destroyed\n", handle);
+    TRACE("handle %lx destroyed\n", handle+1);
 out:
     LeaveCriticalSection( &MSI_handle_cs );
     if( info )
