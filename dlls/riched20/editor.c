@@ -227,6 +227,7 @@
 #define NO_SHLWAPI_STREAM 
 #include "shlwapi.h"
 #include "rtf.h"
+#include "imm.h"
 
 #define STACK_SIZE_DEFAULT  100
 #define STACK_SIZE_MAX     1000
@@ -2514,6 +2515,64 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     GetClientRect(hWnd, &editor->rcFormat);
     ME_RewrapRepaint(editor);
     return DefWindowProcW(hWnd, msg, wParam, lParam);
+  }
+  /* IME messages to make richedit controls IME aware */
+  case WM_IME_SETCONTEXT:
+  case WM_IME_CONTROL:
+  case WM_IME_SELECT:
+  case WM_IME_COMPOSITIONFULL:
+    return 0;
+  case WM_IME_STARTCOMPOSITION:
+  {
+    editor->imeStartIndex=ME_GetCursorOfs(editor,0);
+    ME_DeleteSelection(editor);
+    ME_CommitUndo(editor);
+    ME_UpdateRepaint(editor);
+    return 0;
+  }
+  case WM_IME_COMPOSITION:
+  {
+    HIMC hIMC;
+
+    ME_Style *style = ME_GetInsertStyle(editor, 0);
+    hIMC = ImmGetContext(hWnd);
+    ME_DeleteSelection(editor);
+    ME_CommitUndo(editor);
+    ME_SaveTempStyle(editor);
+    if (lParam & GCS_RESULTSTR)
+    {
+        LPWSTR lpCompStr = NULL;
+        DWORD dwBufLen;
+
+        dwBufLen = ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, NULL, 0);
+        lpCompStr = HeapAlloc(GetProcessHeap(),0,dwBufLen + sizeof(WCHAR));
+        ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, lpCompStr, dwBufLen);
+        lpCompStr[dwBufLen/sizeof(WCHAR)] = 0;
+        ME_InsertTextFromCursor(editor,0,lpCompStr,dwBufLen/sizeof(WCHAR),style);
+    }
+    else if (lParam & GCS_COMPSTR)
+    {
+        LPWSTR lpCompStr = NULL;
+        DWORD dwBufLen;
+
+        dwBufLen = ImmGetCompositionStringW(hIMC, GCS_COMPSTR, NULL, 0);
+        lpCompStr = HeapAlloc(GetProcessHeap(),0,dwBufLen + sizeof(WCHAR));
+        ImmGetCompositionStringW(hIMC, GCS_COMPSTR, lpCompStr, dwBufLen);
+        lpCompStr[dwBufLen/sizeof(WCHAR)] = 0;
+
+        ME_InsertTextFromCursor(editor,0,lpCompStr,dwBufLen/sizeof(WCHAR),style);
+        ME_SetSelection(editor,editor->imeStartIndex,
+                        editor->imeStartIndex + dwBufLen/sizeof(WCHAR));
+    }
+    ME_ReleaseStyle(style);
+    ME_UpdateRepaint(editor);
+    return 0;
+  }
+  case WM_IME_ENDCOMPOSITION:
+  {
+    ME_DeleteSelection(editor);
+    editor->imeStartIndex=-1;
+    return 0;
   }
   case EM_GETOLEINTERFACE:
   {

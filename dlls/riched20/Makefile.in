@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = riched20.dll
 IMPORTLIB = libriched20.$(IMPLIBEXT)
-IMPORTS   = ole32 user32 gdi32 kernel32
+IMPORTS   = ole32 imm32 user32 gdi32 kernel32
 EXTRALIBS = -luuid
 
 C_SRCS = \
