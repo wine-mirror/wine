@@ -116,6 +116,8 @@ static void test_sequence(void)
         "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
     ok(given == needed, "Expected the given (%d) and needed (%d) buffersizes to be equal\n", given, needed);
     }
+    ok(config->lpBinaryPathName && config->lpLoadOrderGroup && config->lpDependencies && config->lpServiceStartName &&
+        config->lpDisplayName, "Expected all string struct members to be non-NULL\n");
     ok(config->dwServiceType == (SERVICE_INTERACTIVE_PROCESS | SERVICE_WIN32_OWN_PROCESS),
         "Expected SERVICE_INTERACTIVE_PROCESS | SERVICE_WIN32_OWN_PROCESS, got %d\n", config->dwServiceType);
     ok(config->dwStartType == SERVICE_DISABLED, "Expected SERVICE_DISABLED, got %d\n", config->dwStartType);
@@ -125,11 +127,11 @@ static void test_sequence(void)
     ok(config->dwTagId == 0, "Expected 0, got %d\n", config->dwTagId);
     /* TODO: Show the double 0 terminated string */
     todo_wine
+    {
     ok(!memcmp(config->lpDependencies, dependencies, sizeof(dependencies)), "Wrong string\n");
-    if(config->lpServiceStartName) /* FIXME: Wine workaround, remove when fixed */
-        ok(!strcmp(config->lpServiceStartName, localsystem), "Expected 'LocalSystem', got '%s'\n", config->lpServiceStartName);
-    if(config->lpDisplayName) /* FIXME: Wine workaround, remove when fixed */
-        ok(!strcmp(config->lpDisplayName, displayname), "Expected '%s', got '%s'\n", displayname, config->lpDisplayName);
+    ok(!strcmp(config->lpServiceStartName, localsystem), "Expected 'LocalSystem', got '%s'\n", config->lpServiceStartName);
+    }
+    ok(!strcmp(config->lpDisplayName, displayname), "Expected '%s', got '%s'\n", displayname, config->lpDisplayName);
     
     SetLastError(0xdeadbeef);
     ret = DeleteService(svc_handle);
