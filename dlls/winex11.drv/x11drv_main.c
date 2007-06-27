@@ -158,7 +158,8 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "text/html",
     "text/plain",
     "text/rtf",
-    "text/richtext"
+    "text/richtext",
+    "text/uri-list"
 };
 
 /***********************************************************************
