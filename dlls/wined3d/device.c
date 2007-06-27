@@ -3297,7 +3297,69 @@ static void device_map_psamplers(IWineD3DDeviceImpl *This) {
     }
 }
 
+static BOOL device_unit_free_for_vs(IWineD3DDeviceImpl *This, DWORD *pshader_sampler_tokens, DWORD *vshader_sampler_tokens, int unit) {
+    int current_mapping = This->rev_tex_unit_map[unit];
+
+    if (current_mapping == -1) {
+        /* Not currently used */
+        return TRUE;
+    }
+
+    if (current_mapping < MAX_FRAGMENT_SAMPLERS) {
+        /* Used by a fragment sampler */
+
+        if (!pshader_sampler_tokens) {
+            /* No pixel shader, check fixed function */
+            return current_mapping >= MAX_TEXTURES || !This->fixed_function_usage_map[current_mapping];
+        }
+
+        /* Pixel shader, check the shader's sampler map */
+        return !pshader_sampler_tokens[current_mapping];
+    }
+
+    /* Used by a vertex sampler */
+    return !vshader_sampler_tokens[current_mapping];
+}
+
+static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
+    DWORD *vshader_sampler_tokens = ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.reg_maps.samplers;
+    DWORD *pshader_sampler_tokens = NULL;
+    int start = GL_LIMITS(combined_samplers) - 1;
+    int i;
+
+    if (ps) {
+        IWineD3DPixelShaderImpl *pshader = (IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader;
+
+        /* Make sure the shader's reg_maps are up to date. This is only relevant for 1.x pixelshaders. */
+        IWineD3DPixelShader_CompileShader((IWineD3DPixelShader *)pshader);
+        pshader_sampler_tokens = pshader->baseShader.reg_maps.samplers;
+    }
+
+    for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i) {
+        int vsampler_idx = i + MAX_FRAGMENT_SAMPLERS;
+        if (vshader_sampler_tokens[i]) {
+            if (This->texUnitMap[vsampler_idx] != -1) {
+                /* Already mapped somewhere */
+                continue;
+            }
+
+            while (start >= 0) {
+                if (device_unit_free_for_vs(This, pshader_sampler_tokens, vshader_sampler_tokens, start)) {
+                    device_map_stage(This, vsampler_idx, start);
+                    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(vsampler_idx));
+
+                    --start;
+                    break;
+                }
+
+                --start;
+            }
+        }
+    }
+}
+
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
+    BOOL vs = use_vs(This);
     BOOL ps = use_ps(This);
     /* This code can assume that GL_NV_register_combiners are supported, otherwise
      * it is never called.
@@ -3312,6 +3374,10 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
         device_map_psamplers(This);
     } else {
         device_map_fixed_function_samplers(This);
+    }
+
+    if (vs) {
+        device_map_vsamplers(This, ps);
     }
 }
 
