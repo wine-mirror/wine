@@ -88,42 +88,46 @@ struct IDsDriverBufferImpl
     snd_pcm_t *pcm;
     snd_pcm_hw_params_t *hw_params;
     snd_pcm_sw_params_t *sw_params;
-    snd_pcm_uframes_t mmap_buflen_frames, mmap_pos, mmap_writeahead;
+    snd_pcm_uframes_t mmap_buflen_frames, mmap_pos, mmap_commitahead, mmap_writeahead;
 };
 
 /** Fill buffers, for starting and stopping
  * Alsa won't start playing until everything is filled up
  * This also updates mmap_pos
+ *
+ * Returns: Amount of periods in use so snd_pcm_avail_update
+ * doesn't have to be called up to 4x in GetPosition()
  */
-static void CommitAll(IDsDriverBufferImpl *This)
+static snd_pcm_uframes_t CommitAll(IDsDriverBufferImpl *This)
 {
     const snd_pcm_channel_area_t *areas;
     snd_pcm_uframes_t used;
-    const snd_pcm_uframes_t writeahead = This->mmap_writeahead;
+    const snd_pcm_uframes_t commitahead = This->mmap_commitahead;
 
-    TRACE("%p want to %ld\n", This, writeahead);
     used = This->mmap_buflen_frames - snd_pcm_avail_update(This->pcm);
-    if (used < writeahead)
+    TRACE("%p needs to commit to %lu, used: %lu\n", This, commitahead, used);
+    if (used < commitahead)
     {
-        snd_pcm_uframes_t putin = writeahead - used;
+        snd_pcm_uframes_t done, putin = commitahead - used;
         snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
-        This->mmap_pos += snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
+        done = snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
+        This->mmap_pos += done;
+        used += done;
+        putin = commitahead - used;
 
-        used = This->mmap_buflen_frames - snd_pcm_avail_update(This->pcm);
-        if (This->mmap_pos == This->mmap_buflen_frames)
+        if (This->mmap_pos == This->mmap_buflen_frames && (snd_pcm_sframes_t)putin > 0)
         {
-            putin = writeahead;
-            used = This->mmap_buflen_frames - snd_pcm_avail_update(This->pcm);
-            putin -= used;
-
-            if ((snd_pcm_sframes_t)putin > 0)
-            {
-                snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
-                This->mmap_pos += snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
-            }
+            snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
+            done = snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
+            This->mmap_pos += done;
+            used += done;
         }
-
     }
+
+    if (This->mmap_pos == This->mmap_buflen_frames)
+        This->mmap_pos = 0;
+
+    return used;
 }
 
 static void CheckXRUN(IDsDriverBufferImpl* This)
@@ -175,9 +179,11 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
     mmap_mode = snd_pcm_type(pcm);
 
     if (mmap_mode == SND_PCM_TYPE_HW)
-        TRACE("mmap'd buffer is a hardware buffer.\n");
+        TRACE("mmap'd buffer is a direct hardware buffer.\n");
+    else if (mmap_mode == SND_PCM_TYPE_DMIX)
+        TRACE("mmap'd buffer is an ALSA dmix buffer\n");
     else
-        TRACE("mmap'd buffer is an ALSA emulation of hardware buffer.\n");
+        TRACE("mmap'd buffer is an ALSA type %d buffer\n", mmap_mode);
 
     err = snd_pcm_hw_params_get_period_size(hw_params, &psize, NULL);
 
@@ -375,16 +381,23 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx, BOOL fo
     err = snd_pcm_hw_params_get_period_size(hw_params, &psize, NULL);
     TRACE("Period size is: %lu\n", psize);
 
-    if (psize > 512)
+    /* If period size is 'high', try to commit less
+     * dmix needs at least 2 buffers to work succesfully but prefers 3
+     * however it seems to work ok if I just commit 2 1/2 buffers
+     */
+    if (psize >= 512)
     {
-        if (++warnonce == 1)
+        if (psize > 512 && ++warnonce == 1)
             FIXME("Your alsa dmix period size is excessively high, unfortunately this is alsa default, try decreasing it to 512 or 256 (but double the amount of periods) if possible\n");
-        This->mmap_writeahead = 3 * psize;
+        This->mmap_commitahead = 2 * psize + psize/2;
+        This->mmap_writeahead = 2 * psize;
     }
-    else 
+    else
     {
-    	This->mmap_writeahead = 3 * psize;
-    	while (This->mmap_writeahead <= 512) This->mmap_writeahead += psize;
+        This->mmap_commitahead = 3 * psize;
+        while (This->mmap_commitahead <= 512)
+            This->mmap_commitahead += psize;
+        This->mmap_writeahead = This->mmap_commitahead;
     }
 
     if (This->pcm)
@@ -404,6 +417,11 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx, BOOL fo
     err:
     if (err < 0)
         WARN("Failed to apply changes: %s\n", snd_strerror(err));
+
+    if (!This->pcm)
+        This->pcm = pcm;
+    else
+        snd_pcm_close(pcm);
 
     if (This->pcm)
         snd_pcm_hw_params_current(This->pcm, This->hw_params);
@@ -468,21 +486,24 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     }
 
     state = snd_pcm_state(This->pcm);
-    if (state == SND_PCM_STATE_RUNNING)
-    {
-        snd_pcm_uframes_t avail;
-        avail = snd_pcm_avail_update(This->pcm);
-        hw_pptr = This->mmap_pos + avail;
-        hw_pptr %= This->mmap_buflen_frames;
-        hw_wptr = hw_pptr + This->mmap_writeahead - 512;
-        hw_wptr %= This->mmap_buflen_frames;
-        WARN("At position: %ld (%ld) - Avail %ld\n", hw_pptr, This->mmap_pos, avail);
-        assert((snd_pcm_sframes_t)hw_pptr >= 0);
-    }
-    else WARN("%p: State = %d\n", lpdwPlay, state);
 
-    CheckXRUN(This);
-    CommitAll(This);
+    if (state != SND_PCM_STATE_RUNNING)
+        CheckXRUN(This);
+    else
+    {
+        snd_pcm_uframes_t used = CommitAll(This);
+
+        if (This->mmap_pos > used)
+            hw_pptr = This->mmap_pos - used;
+        else
+            hw_pptr = This->mmap_buflen_frames - used + This->mmap_pos;
+
+        hw_wptr = hw_pptr + (This->mmap_writeahead > used ? used : This->mmap_writeahead);
+        hw_wptr %= This->mmap_buflen_frames;
+        hw_pptr %= This->mmap_buflen_frames;
+
+        TRACE("At position: %ld (%ld) - Used %ld\n", hw_pptr, This->mmap_pos, used);
+    }
 
     LeaveCriticalSection(&This->pcm_crst);
 
@@ -738,16 +759,15 @@ DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
     TRACE("driver created\n");
 
     /* the HAL isn't much better than the HEL if we can't do mmap() */
-    if (!(WOutDev[wDevID].outcaps.dwSupport & WAVECAPS_DIRECTSOUND)) {
-	ERR("DirectSound flag not set\n");
-	MESSAGE("This sound card's driver does not support direct access\n");
-	MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
-	return MMSYSERR_NOTSUPPORTED;
+    if (!(WOutDev[wDevID].outcaps.dwSupport & WAVECAPS_DIRECTSOUND))
+    {
+        WARN("MMAP not supported for this device, falling back to waveout, should be harmless\n");
+        return MMSYSERR_NOTSUPPORTED;
     }
 
     *idrv = HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverImpl));
     if (!*idrv)
-	return MMSYSERR_NOMEM;
+        return MMSYSERR_NOMEM;
     (*idrv)->lpVtbl	= &dsdvt;
     (*idrv)->ref	= 1;
 
