@@ -156,7 +156,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {WINED3DSIO_LABEL,  "label",    NULL, 0, 1, NULL, shader_glsl_label,  WINED3DVS_VERSION(2,0), -1},
 
     {WINED3DSIO_SETP,   "setp",     GLNAME_REQUIRE_GLSL, 1, 3, NULL, NULL, 0, 0},
-    {WINED3DSIO_TEXLDL, "texdl",    GLNAME_REQUIRE_GLSL, 1, 3, NULL, NULL, 0, 0},
+    {WINED3DSIO_TEXLDL, "texldl",   NULL, 1, 3, NULL, shader_glsl_texldl, WINED3DVS_VERSION(3,0), -1},
     {0,                 NULL,       NULL,                0, 0, NULL, NULL, 0, 0}
 };
 

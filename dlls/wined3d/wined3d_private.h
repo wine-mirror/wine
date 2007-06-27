@@ -1737,6 +1737,7 @@ extern void shader_glsl_call(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_callnz(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_label(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_pow(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_texldl(SHADER_OPCODE_ARG* arg);
 
 /** GLSL Pixel Shader Prototypes */
 extern void pshader_glsl_tex(SHADER_OPCODE_ARG* arg);
