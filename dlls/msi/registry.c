@@ -36,6 +36,7 @@
 #include "wine/unicode.h"
 #include "winver.h"
 #include "winuser.h"
+#include "sddl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -139,6 +140,15 @@ static const WCHAR szInstaller_UserUpgradeCodes_fmt[] = {
 'I','n','s','t','a','l','l','e','r','\\',
 'U','p','g','r','a','d','e','C','o','d','e','s','\\',
 '%','s',0};
+
+static const WCHAR szUserDataProd_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'U','s','e','r','D','a','t','a','\\',
+'%','s','\\','P','r','o','d','u','c','t','s','\\','%','s',0};
 
 
 #define SQUISH_GUID_SIZE 33
@@ -497,6 +507,55 @@ UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
         rc = RegCreateKeyW(HKEY_CURRENT_USER,keypath,key);
     else
         rc = RegOpenKeyW(HKEY_CURRENT_USER,keypath,key);
+
+    return rc;
+}
+
+static UINT get_user_sid(LPWSTR *usersid)
+{
+    HANDLE token;
+    BYTE buf[1024];
+    DWORD size;
+    PTOKEN_USER user;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+        return ERROR_FUNCTION_FAILED;
+
+    size = sizeof(buf);
+    if (!GetTokenInformation(token, TokenUser, (void *)buf, size, &size))
+        return ERROR_FUNCTION_FAILED;
+
+    user = (PTOKEN_USER)buf;
+    if (!ConvertSidToStringSidW(user->User.Sid, usersid))
+        return ERROR_FUNCTION_FAILED;
+
+    return ERROR_SUCCESS;
+}
+
+UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, HKEY *key, BOOL create)
+{
+    UINT rc;
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+    LPWSTR usersid;
+
+    TRACE("%s\n", debugstr_w(szProduct));
+    squash_guid(szProduct, squished_pc);
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    rc = get_user_sid(&usersid);
+    if (rc != ERROR_SUCCESS || !usersid)
+    {
+        ERR("Failed to retrieve user SID: %d\n", rc);
+        return rc;
+    }
+
+    sprintfW(keypath, szUserDataProd_fmt, usersid, squished_pc);
+
+    if (create)
+        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+    else
+        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
 
     return rc;
 }

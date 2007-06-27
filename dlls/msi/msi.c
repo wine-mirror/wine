@@ -763,10 +763,13 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
 {
     UINT rc;
     INSTALLSTATE state = INSTALLSTATE_UNKNOWN;
-    HKEY hkey = 0;
+    HKEY hkey = 0, props = 0;
     DWORD sz;
 
     static const int GUID_LEN = 38;
+    static const WCHAR szInstallProperties[] = {
+            'I','n','s','t','a','l','l','P','r','o','p','e','r','t','i','e','s',0
+    };
     static const WCHAR szWindowsInstaller[] = {
             'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0
     };
@@ -783,12 +786,16 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
     state = INSTALLSTATE_ADVERTISED;
     RegCloseKey(hkey);
 
-    rc = MSIREG_OpenUninstallKey(szProduct,&hkey,FALSE);
+    rc = MSIREG_OpenUserDataProductKey(szProduct,&hkey,FALSE);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegOpenKeyW(hkey, szInstallProperties, &props);
     if (rc != ERROR_SUCCESS)
         goto end;
 
     sz = sizeof(state);
-    rc = RegQueryValueExW(hkey,szWindowsInstaller,NULL,NULL,(LPVOID)&state, &sz);
+    rc = RegQueryValueExW(props,szWindowsInstaller,NULL,NULL,(LPVOID)&state, &sz);
     if (rc != ERROR_SUCCESS)
         goto end;
 
@@ -804,6 +811,7 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
         break;
     }
 end:
+    RegCloseKey(props);
     RegCloseKey(hkey);
     return state;
 }

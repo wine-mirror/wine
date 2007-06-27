@@ -379,6 +379,27 @@ static void test_MsiQueryProductState(void)
     state = MsiQueryProductStateA(prodcode);
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\");
+    lstrcatA(keypath, prodcode);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &localkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local uninstall key exists */
+    state = MsiQueryProductStateA(prodcode);
+    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+
+    data = 1;
+    res = RegSetValueExA(localkey, "WindowsInstaller", 0, REG_DWORD, (const BYTE *)&data, sizeof(DWORD));
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* WindowsInstaller value exists */
+    state = MsiQueryProductStateA(prodcode);
+    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+
+    RegDeleteValueA(localkey, "WindowsInstaller");
+    RegDeleteKeyA(localkey, "");
+
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
     lstrcatA(keypath, usersid);
     lstrcatA(keypath, "\\Products\\");
@@ -404,10 +425,7 @@ static void test_MsiQueryProductState(void)
 
     /* WindowsInstaller value exists */
     state = MsiQueryProductStateA(prodcode);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
 
     RegDeleteKeyA(userkey, "");
 
