@@ -812,6 +812,7 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, F
         dc->CursPosX = x2;
         dc->CursPosY = y2;
     }
+    GDI_ReleaseObj( hdc );
     return result;
 }
 
