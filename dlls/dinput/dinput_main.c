@@ -297,62 +297,6 @@ static HRESULT WINAPI IDirectInputWImpl_QueryInterface(LPDIRECTINPUT7W iface, RE
 	return E_FAIL;
 }
 
-static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
-	LPDIRECTINPUT7A iface,REFGUID rguid,LPDIRECTINPUTDEVICEA* pdev,
-	LPUNKNOWN punk
-) {
-	IDirectInputImpl *This = (IDirectInputImpl *)iface;
-	HRESULT ret_value = DIERR_DEVICENOTREG;
-	int i;
-
-	TRACE("(this=%p,%s,%p,%p)\n",This,debugstr_guid(rguid),pdev,punk);
-
-	if (pdev == NULL) {
-		WARN("invalid pointer: pdev == NULL\n");
-		return E_POINTER;
-	}
-
-	if (rguid == NULL) {
-		WARN("invalid pointer: rguid == NULL\n");
-		return E_POINTER;
-	}
-
-	/* Loop on all the devices to see if anyone matches the given GUID */
-	for (i = 0; i < NB_DINPUT_DEVICES; i++) {
-	  HRESULT ret;
-	  if (!dinput_devices[i]->create_deviceA) continue;
-	  if ((ret = dinput_devices[i]->create_deviceA(This, rguid, NULL, pdev)) == DI_OK)
-	    return DI_OK;
-
-	  if (ret == DIERR_NOINTERFACE)
-	    ret_value = DIERR_NOINTERFACE;
-	}
-
-	return ret_value;
-}
-
-static HRESULT WINAPI IDirectInputWImpl_CreateDevice(LPDIRECTINPUT7W iface, 
-						     REFGUID rguid, LPDIRECTINPUTDEVICEW* pdev, LPUNKNOWN punk) {
-        IDirectInputImpl *This = (IDirectInputImpl *)iface;
-	HRESULT ret_value = DIERR_DEVICENOTREG;
-	int i;
-
-	TRACE("(this=%p,%s,%p,%p)\n",This,debugstr_guid(rguid),pdev,punk);
-
-	/* Loop on all the devices to see if anyone matches the given GUID */
-	for (i = 0; i < NB_DINPUT_DEVICES; i++) {
-	  HRESULT ret;
-	  if (!dinput_devices[i]->create_deviceW) continue;
-	  if ((ret = dinput_devices[i]->create_deviceW(This, rguid, NULL, pdev)) == DI_OK)
-	    return DI_OK;
-
-	  if (ret == DIERR_NOINTERFACE)
-	    ret_value = DIERR_NOINTERFACE;
-	}
-
-	return ret_value;
-}
-
 static HRESULT WINAPI IDirectInputAImpl_Initialize(LPDIRECTINPUT7A iface, HINSTANCE hinst, DWORD x) {
 	TRACE("(this=%p,%p,%x)\n",iface, hinst, x);
 	
@@ -406,6 +350,8 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
 
   TRACE("(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid(rguid), debugstr_guid(riid), pvOut, lpUnknownOuter);
 
+  if (!rguid || !pvOut) return E_POINTER;
+
   /* Loop on all the devices to see if anyone matches the given GUID */
   for (i = 0; i < NB_DINPUT_DEVICES; i++) {
     HRESULT ret;
@@ -429,6 +375,8 @@ static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx(LPDIRECTINPUT7W iface, R
 
   TRACE("(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid(rguid), debugstr_guid(riid), pvOut, lpUnknownOuter);
 
+  if (!rguid || !pvOut) return E_POINTER;
+
   /* Loop on all the devices to see if anyone matches the given GUID */
   for (i = 0; i < NB_DINPUT_DEVICES; i++) {
     HRESULT ret;
@@ -441,6 +389,18 @@ static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx(LPDIRECTINPUT7W iface, R
   }
 
   return ret_value;
+}
+
+static HRESULT WINAPI IDirectInputAImpl_CreateDevice(LPDIRECTINPUT7A iface, REFGUID rguid,
+                                                     LPDIRECTINPUTDEVICEA* pdev, LPUNKNOWN punk)
+{
+    return IDirectInput7AImpl_CreateDeviceEx(iface, rguid, NULL, (LPVOID*)pdev, punk);
+}
+
+static HRESULT WINAPI IDirectInputWImpl_CreateDevice(LPDIRECTINPUT7W iface, REFGUID rguid,
+                                                     LPDIRECTINPUTDEVICEW* pdev, LPUNKNOWN punk)
+{
+    return IDirectInput7WImpl_CreateDeviceEx(iface, rguid, NULL, (LPVOID*)pdev, punk);
 }
 
 static HRESULT WINAPI IDirectInput8AImpl_QueryInterface(LPDIRECTINPUT8A iface, REFIID riid, LPVOID *ppobj) {
