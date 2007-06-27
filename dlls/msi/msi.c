@@ -799,17 +799,11 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    switch (state)
-    {
-    case 1:
-        /* default */
+    if (state)
         state = INSTALLSTATE_DEFAULT;
-        break;
-    default:
-        FIXME("Unknown install state read from registry (%i)\n",state);
+    else
         state = INSTALLSTATE_UNKNOWN;
-        break;
-    }
+
 end:
     RegCloseKey(props);
     RegCloseKey(hkey);

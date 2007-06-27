@@ -427,6 +427,14 @@ static void test_MsiQueryProductState(void)
     state = MsiQueryProductStateA(prodcode);
     ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
 
+    data = 2;
+    res = RegSetValueExA(props, "WindowsInstaller", 0, REG_DWORD, (const BYTE *)&data, sizeof(DWORD));
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* WindowsInstaller value is not 1 */
+    state = MsiQueryProductStateA(prodcode);
+    ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
+
     RegDeleteKeyA(userkey, "");
 
     /* user product key does not exist */
