@@ -131,7 +131,7 @@ static inline NTSTATUS init_teb( TEB *teb )
  *
  * Make sure the unicode string doesn't point beyond the end pointer
  */
-static inline void fix_unicode_string( UNICODE_STRING *str, char *end_ptr )
+static inline void fix_unicode_string( UNICODE_STRING *str, const char *end_ptr )
 {
     if ((char *)str->Buffer >= end_ptr)
     {

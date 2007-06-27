@@ -366,9 +366,9 @@ static void add_reserved_area( void *addr, size_t size )
  *
  * Check if an address range goes beyond a given limit.
  */
-static inline int is_beyond_limit( void *addr, size_t size, void *limit )
+static inline int is_beyond_limit( const void *addr, size_t size, const void *limit )
 {
-    return (limit && (addr >= limit || (char *)addr + size > (char *)limit));
+    return (limit && (addr >= limit || (const char *)addr + size > (const char *)limit));
 }
 
 
