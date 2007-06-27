@@ -765,6 +765,7 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
     INSTALLSTATE state = INSTALLSTATE_UNKNOWN;
     HKEY hkey = 0, props = 0;
     DWORD sz;
+    BOOL userkey_exists = FALSE;
 
     static const int GUID_LEN = 38;
     static const WCHAR szInstallProperties[] = {
@@ -780,11 +781,12 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
         return INSTALLSTATE_INVALIDARG;
 
     rc = MSIREG_OpenUserProductsKey(szProduct,&hkey,FALSE);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    state = INSTALLSTATE_ADVERTISED;
-    RegCloseKey(hkey);
+    if (rc == ERROR_SUCCESS)
+    {
+        userkey_exists = TRUE;
+        state = INSTALLSTATE_ADVERTISED;
+        RegCloseKey(hkey);
+    }
 
     rc = MSIREG_OpenUserDataProductKey(szProduct,&hkey,FALSE);
     if (rc != ERROR_SUCCESS)
@@ -803,6 +805,9 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
         state = INSTALLSTATE_DEFAULT;
     else
         state = INSTALLSTATE_UNKNOWN;
+
+    if (state == INSTALLSTATE_DEFAULT && !userkey_exists)
+        state = INSTALLSTATE_ABSENT;
 
 end:
     RegCloseKey(props);

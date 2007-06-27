@@ -439,10 +439,7 @@ static void test_MsiQueryProductState(void)
 
     /* user product key does not exist */
     state = MsiQueryProductStateA(prodcode);
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
 
     LocalFree(usersid);
     RegDeleteValueA(props, "WindowsInstaller");
