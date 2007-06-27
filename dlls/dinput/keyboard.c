@@ -271,31 +271,6 @@ const struct dinput_device keyboard_device = {
   keyboarddev_create_deviceW
 };
 
-static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
-{
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-    ULONG ref;
-
-    ref = InterlockedDecrement(&This->base.ref);
-    if (ref) return ref;
-
-    IDirectInputDevice_Unacquire(iface);
-
-    HeapFree(GetProcessHeap(), 0, This->base.data_queue);
-
-    /* Free data format */
-    HeapFree(GetProcessHeap(), 0, This->base.data_format.wine_df->rgodf);
-    HeapFree(GetProcessHeap(), 0, This->base.data_format.wine_df);
-    release_DataFormat(&This->base.data_format);
-
-    IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->base.dinput);
-    This->base.crit.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&This->base.crit);
-    HeapFree(GetProcessHeap(), 0, This);
-
-    return DI_OK;
-}
-
 static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
 )
@@ -487,7 +462,7 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
 {
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
-	SysKeyboardAImpl_Release,
+        IDirectInputDevice2AImpl_Release,
 	SysKeyboardAImpl_GetCapabilities,
         IDirectInputDevice2AImpl_EnumObjects,
 	IDirectInputDevice2AImpl_GetProperty,
@@ -529,7 +504,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
 {
 	IDirectInputDevice2WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
-	XCAST(Release)SysKeyboardAImpl_Release,
+        XCAST(Release)IDirectInputDevice2AImpl_Release,
 	XCAST(GetCapabilities)SysKeyboardAImpl_GetCapabilities,
         IDirectInputDevice2WImpl_EnumObjects,
 	XCAST(GetProperty)IDirectInputDevice2AImpl_GetProperty,

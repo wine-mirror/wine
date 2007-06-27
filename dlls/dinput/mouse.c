@@ -254,35 +254,6 @@ const struct dinput_device mouse_device = {
  *	SysMouseA (DInput Mouse support)
  */
 
-/******************************************************************************
-  *     Release : release the mouse buffer.
-  */
-static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
-{
-    SysMouseImpl *This = (SysMouseImpl *)iface;
-    ULONG ref;
- 
-    ref = InterlockedDecrement(&This->base.ref);
-    if (ref)
-	return ref;
-
-    IDirectInputDevice_Unacquire(iface);
-
-    /* Free the data queue */
-    HeapFree(GetProcessHeap(), 0, This->base.data_queue);
-
-    /* Free data format */
-    HeapFree(GetProcessHeap(), 0, This->base.data_format.wine_df->rgodf);
-    HeapFree(GetProcessHeap(), 0, This->base.data_format.wine_df);
-    release_DataFormat(&This->base.data_format);
-
-    IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->base.dinput);
-    This->base.crit.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&This->base.crit);
-    HeapFree(GetProcessHeap(),0,This);
-    return 0;
-}
-
 /* low-level mouse hook */
 static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lparam )
 {
@@ -738,7 +709,7 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
 {
     IDirectInputDevice2AImpl_QueryInterface,
     IDirectInputDevice2AImpl_AddRef,
-    SysMouseAImpl_Release,
+    IDirectInputDevice2AImpl_Release,
     SysMouseAImpl_GetCapabilities,
     IDirectInputDevice2AImpl_EnumObjects,
     SysMouseAImpl_GetProperty,
@@ -780,7 +751,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
 {
     IDirectInputDevice2WImpl_QueryInterface,
     XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
-    XCAST(Release)SysMouseAImpl_Release,
+    XCAST(Release)IDirectInputDevice2AImpl_Release,
     XCAST(GetCapabilities)SysMouseAImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
     XCAST(GetProperty)SysMouseAImpl_GetProperty,

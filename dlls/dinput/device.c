@@ -677,8 +677,21 @@ ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     ref = InterlockedDecrement(&(This->ref));
     if (ref) return ref;
 
-    DeleteCriticalSection(&This->crit);
+    IDirectInputDevice_Unacquire(iface);
+    /* Reset the FF state, free all effects, etc */
+    IDirectInputDevice8_SendForceFeedbackCommand(iface, DISFFC_RESET);
+
     HeapFree(GetProcessHeap(), 0, This->data_queue);
+
+    /* Free data format */
+    HeapFree(GetProcessHeap(), 0, This->data_format.wine_df->rgodf);
+    HeapFree(GetProcessHeap(), 0, This->data_format.wine_df);
+    release_DataFormat(&This->data_format);
+
+    IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
+    This->crit.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&This->crit);
+
     HeapFree(GetProcessHeap(), 0, This);
 
     return DI_OK;
@@ -1173,9 +1186,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SendForceFeedbackCommand(
 	LPDIRECTINPUTDEVICE8A iface,
 	DWORD dwFlags)
 {
-    FIXME("(this=%p,0x%08x): stub!\n",
-	  iface, dwFlags);
-    return DI_OK;
+    TRACE("(%p) 0x%08x:\n", iface, dwFlags);
+    return DI_NOEFFECT;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_EnumCreatedEffectObjects(

@@ -632,45 +632,6 @@ const struct dinput_device joystick_linux_device = {
 };
 
 /******************************************************************************
- *	Joystick
- */
-static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
-{
-    JoystickImpl *This = (JoystickImpl *)iface;
-    ULONG ref;
-
-    ref = InterlockedDecrement(&This->base.ref);
-    if (ref)
-        return ref;
-
-    IDirectInputDevice_Unacquire(iface);
-
-    /* Free the device name */
-    HeapFree(GetProcessHeap(),0,This->name);
-
-    /* Free the axis map */
-    HeapFree(GetProcessHeap(),0,This->axis_map);
-
-    /* Free the data queue */
-    HeapFree(GetProcessHeap(), 0, This->base.data_queue);
-
-    /* Free the properties */
-    HeapFree(GetProcessHeap(), 0, This->props);
-
-    /* release the data transform filter */
-    HeapFree(GetProcessHeap(), 0, This->base.data_format.wine_df->rgodf);
-    HeapFree(GetProcessHeap(), 0, This->base.data_format.wine_df);
-    release_DataFormat(&This->base.data_format);
-
-    This->base.crit.DebugInfo->Spare[0] = 0;
-    IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->base.dinput);
-    DeleteCriticalSection(&This->base.crit);
-
-    HeapFree(GetProcessHeap(),0,This);
-    return 0;
-}
-
-/******************************************************************************
   *     Acquire : gets exclusive control of the joystick
   */
 static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
@@ -1214,7 +1175,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 {
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
-	JoystickAImpl_Release,
+        IDirectInputDevice2AImpl_Release,
 	JoystickAImpl_GetCapabilities,
         IDirectInputDevice2AImpl_EnumObjects,
 	JoystickAImpl_GetProperty,
@@ -1256,7 +1217,7 @@ static const IDirectInputDevice8WVtbl SysJoystickWvt =
 {
 	IDirectInputDevice2WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
-	XCAST(Release)JoystickAImpl_Release,
+        XCAST(Release)IDirectInputDevice2AImpl_Release,
 	XCAST(GetCapabilities)JoystickAImpl_GetCapabilities,
         IDirectInputDevice2WImpl_EnumObjects,
 	XCAST(GetProperty)JoystickAImpl_GetProperty,
