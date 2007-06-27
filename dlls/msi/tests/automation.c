@@ -2110,10 +2110,7 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
     /* Installer::ProductState for our product code, which has been installed */
     hr = Installer_ProductState(szProductCode, &iValue);
     ok(hr == S_OK, "Installer_ProductState failed, hresult 0x%08x\n", hr);
-    todo_wine
-    {
-        ok(iValue == INSTALLSTATE_DEFAULT, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_DEFAULT);
-    }
+    ok(iValue == INSTALLSTATE_DEFAULT, "Installer_ProductState returned %d, expected %d\n", iValue, INSTALLSTATE_DEFAULT);
 
     /* Installer::ProductInfo for our product code */
 
@@ -2218,7 +2215,7 @@ static void test_Installer_InstallProduct(LPCWSTR szPath)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = find_registry_key(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData", "05FA3C1F65B896A40AC00077F34EF203", &hkey);
-    todo_wine ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     if (res == ERROR_SUCCESS)
     {
         res = delete_registry_key(hkey, "05FA3C1F65B896A40AC00077F34EF203");

@@ -3242,12 +3242,17 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     /* for registry stuff */
     HKEY hkey=0;
     HKEY hukey=0;
+    HKEY hudkey=0, props=0;
     static const WCHAR szProductLanguage[] =
         {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
     static const WCHAR szARPProductIcon[] =
         {'A','R','P','P','R','O','D','U','C','T','I','C','O','N',0};
     static const WCHAR szProductVersion[] =
         {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
+    static const WCHAR szInstallProperties[] =
+        {'I','n','s','t','a','l','l','P','r','o','p','e','r','t','i','e','s',0};
+    static const WCHAR szWindowsInstaller[] =
+        {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
     DWORD langid;
     LPWSTR buffer;
     DWORD size;
@@ -3272,6 +3277,15 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto end;
 
+    rc = MSIREG_OpenUserDataProductKey(package->ProductCode,&hudkey,TRUE);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hudkey, szInstallProperties, &props);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    msi_reg_set_val_dword( props, szWindowsInstaller, 1 );
 
     buffer = msi_dup_property( package, INSTALLPROPERTY_PRODUCTNAMEW );
     msi_reg_set_val_str( hukey, INSTALLPROPERTY_PRODUCTNAMEW, buffer );
@@ -3335,9 +3349,10 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     }
 
 end:
-
     RegCloseKey(hkey);
     RegCloseKey(hukey);
+    RegCloseKey(hudkey);
+    RegCloseKey(props);
 
     return rc;
 }
