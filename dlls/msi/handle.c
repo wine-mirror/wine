@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -53,7 +55,11 @@ static CRITICAL_SECTION MSI_object_cs = { &MSI_object_cs_debug, -1, 0, 0, 0, 0 }
 
 typedef struct msi_handle_info_t
 {
-    MSIOBJECTHDR *obj;
+    BOOL remote;
+    union {
+        MSIOBJECTHDR *obj;
+        IUnknown *unk;
+    } u;
     DWORD dwThreadId;
 } msi_handle_info;
 
@@ -67,16 +73,13 @@ void msi_free_handle_table(void)
     msihandletable_size = 0;
 }
 
-MSIHANDLE alloc_msihandle( MSIOBJECTHDR *obj )
+static MSIHANDLE alloc_handle_table_entry(void)
 {
-    MSIHANDLE ret = 0;
     UINT i;
-
-    EnterCriticalSection( &MSI_handle_cs );
 
     /* find a slot */
     for(i=0; i<msihandletable_size; i++)
-        if( !msihandletable[i].obj )
+        if( !msihandletable[i].u.obj && !msihandletable[i].u.unk )
             break;
     if( i==msihandletable_size )
     {
@@ -94,19 +97,58 @@ MSIHANDLE alloc_msihandle( MSIOBJECTHDR *obj )
                             newsize*sizeof(msi_handle_info));
         }
         if (!p)
-            goto out;
+            return 0;
         msihandletable = p;
         msihandletable_size = newsize;
     }
+    return i + 1;
+}
 
-    msiobj_addref( obj );
-    msihandletable[i].obj = obj;
-    msihandletable[i].dwThreadId = GetCurrentThreadId();
-    ret = (MSIHANDLE) (i+1);
-out:
-    TRACE("%p -> %ld\n", obj, ret );
+MSIHANDLE alloc_msihandle( MSIOBJECTHDR *obj )
+{
+    msi_handle_info *entry;
+    MSIHANDLE ret;
+
+    EnterCriticalSection( &MSI_handle_cs );
+
+    ret = alloc_handle_table_entry();
+    if (ret)
+    {
+        entry = &msihandletable[ ret - 1 ];
+        msiobj_addref( obj );
+        entry->u.obj = obj;
+        entry->dwThreadId = GetCurrentThreadId();
+        entry->remote = FALSE;
+    }
 
     LeaveCriticalSection( &MSI_handle_cs );
+
+    TRACE("%p -> %ld\n", obj, ret );
+
+    return ret;
+}
+
+MSIHANDLE alloc_msi_remote_handle( IUnknown *unk )
+{
+    msi_handle_info *entry;
+    MSIHANDLE ret;
+
+    EnterCriticalSection( &MSI_handle_cs );
+
+    ret = alloc_handle_table_entry();
+    if (ret)
+    {
+        entry = &msihandletable[ ret - 1 ];
+        IUnknown_AddRef( unk );
+        entry->u.unk = unk;
+        entry->dwThreadId = GetCurrentThreadId();
+        entry->remote = TRUE;
+    }
+
+    LeaveCriticalSection( &MSI_handle_cs );
+
+    TRACE("%p -> %ld\n", unk, ret);
+
     return ret;
 }
 
@@ -118,21 +160,45 @@ void *msihandle2msiinfo(MSIHANDLE handle, UINT type)
     handle--;
     if( handle<0 )
         goto out;
-    if( handle>=msihandletable_size )
+    if( handle >= msihandletable_size )
         goto out;
-    if( !msihandletable[handle].obj )
+    if( msihandletable[handle].remote)
         goto out;
-    if( msihandletable[handle].obj->magic != MSIHANDLE_MAGIC )
+    if( !msihandletable[handle].u.obj )
         goto out;
-    if( type && (msihandletable[handle].obj->type != type) )
+    if( msihandletable[handle].u.obj->magic != MSIHANDLE_MAGIC )
         goto out;
-    ret = msihandletable[handle].obj;
+    if( type && (msihandletable[handle].u.obj->type != type) )
+        goto out;
+    ret = msihandletable[handle].u.obj;
     msiobj_addref( ret );
 
 out:
     LeaveCriticalSection( &MSI_handle_cs );
 
     return (void*) ret;
+}
+
+IUnknown *msi_get_remote( MSIHANDLE handle )
+{
+    IUnknown *unk = NULL;
+
+    EnterCriticalSection( &MSI_handle_cs );
+    handle--;
+    if( handle<0 )
+        goto out;
+    if( handle>=msihandletable_size )
+        goto out;
+    if( !msihandletable[handle].remote)
+        goto out;
+    unk = msihandletable[handle].u.unk;
+    if( unk )
+        IUnknown_AddRef( unk );
+
+out:
+    LeaveCriticalSection( &MSI_handle_cs );
+
+    return unk;
 }
 
 void *alloc_msiobject(UINT type, UINT size, msihandledestructor destroy )
@@ -205,8 +271,9 @@ int msiobj_release( MSIOBJECTHDR *info )
  */
 UINT WINAPI MsiCloseHandle(MSIHANDLE handle)
 {
-    MSIOBJECTHDR *info;
+    MSIOBJECTHDR *info = NULL;
     UINT ret = ERROR_INVALID_HANDLE;
+    IUnknown *unk;
 
     TRACE("%lx\n",handle);
 
@@ -215,18 +282,32 @@ UINT WINAPI MsiCloseHandle(MSIHANDLE handle)
 
     EnterCriticalSection( &MSI_handle_cs );
 
-    info = msihandle2msiinfo(handle, 0);
-    if( !info )
-        goto out;
-
-    if( info->magic != MSIHANDLE_MAGIC )
+    unk = msi_get_remote( handle );
+    if (unk)
     {
-        ERR("Invalid handle!\n");
-        goto out;
+        /* release once for handle, once for table entry */
+        IUnknown_Release( unk );
+        IUnknown_Release( unk );
+    }
+    else
+    {
+        info = msihandle2msiinfo(handle, 0);
+        if( !info )
+            goto out;
+
+        if( info->magic != MSIHANDLE_MAGIC )
+        {
+            ERR("Invalid handle!\n");
+            goto out;
+        }
+
+        msiobj_release( info );
     }
 
-    msiobj_release( info );
-    msihandletable[handle-1].obj = NULL;
+    msihandletable[handle-1].u.obj = NULL;
+    msihandletable[handle-1].remote = 0;
+    msihandletable[handle-1].dwThreadId = 0;
+
     ret = ERROR_SUCCESS;
 
     TRACE("handle %lx Destroyed\n", handle);
