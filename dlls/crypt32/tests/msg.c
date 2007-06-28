@@ -361,10 +361,48 @@ static void test_data_msg_update(void)
     CryptMsgClose(msg);
 }
 
+static void test_data_msg_get_param(void)
+{
+    HCRYPTMSG msg;
+    DWORD size;
+    BOOL ret;
+
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
+     NULL);
+
+    /* Content and bare content are always gettable */
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    /* But for this type of message, the signer and hash aren't applicable,
+     * and the type isn't available.
+     */
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
+    ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
+    }
+
+    CryptMsgClose(msg);
+}
+
 static void test_data_msg(void)
 {
     test_data_msg_open();
     test_data_msg_update();
+    test_data_msg_get_param();
 }
 
 START_TEST(msg)
