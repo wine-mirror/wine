@@ -40,6 +40,7 @@ typedef struct _CryptMsgBase
     LONG                 ref;
     DWORD                open_flags;
     PCMSG_STREAM_INFO    stream_info;
+    BOOL                 finalized;
     CryptMsgCloseFunc    close;
     CryptMsgUpdateFunc   update;
     CryptMsgGetParamFunc get_param;
@@ -51,6 +52,7 @@ static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags,
     msg->ref = 1;
     msg->open_flags = dwFlags;
     msg->stream_info = pStreamInfo;
+    msg->finalized = FALSE;
 }
 
 typedef struct _CDataEncodeMsg
