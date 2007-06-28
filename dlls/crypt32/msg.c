@@ -29,11 +29,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
  */
 typedef void (*CryptMsgCloseFunc)(HCRYPTMSG msg);
 
+typedef BOOL (*CryptMsgGetParamFunc)(HCRYPTMSG hCryptMsg, DWORD dwParamType,
+ DWORD dwIndex, void *pvData, DWORD *pcbData);
+
 typedef struct _CryptMsgBase
 {
-    LONG              ref;
-    DWORD             open_flags;
-    CryptMsgCloseFunc close;
+    LONG                 ref;
+    DWORD                open_flags;
+    CryptMsgCloseFunc    close;
+    CryptMsgGetParamFunc get_param;
 } CryptMsgBase;
 
 static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags)
@@ -174,7 +178,12 @@ BOOL WINAPI CryptMsgUpdate(HCRYPTMSG hCryptMsg, const BYTE *pbData,
 BOOL WINAPI CryptMsgGetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
-    FIXME("(%p, %d, %d, %p, %p): stub\n", hCryptMsg, dwParamType, dwIndex,
+    CryptMsgBase *msg = (CryptMsgBase *)hCryptMsg;
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %d, %d, %p, %p)\n", hCryptMsg, dwParamType, dwIndex,
      pvData, pcbData);
-    return FALSE;
+    if (msg && msg->get_param)
+        ret = msg->get_param(hCryptMsg, dwParamType, dwIndex, pvData, pcbData);
+    return ret;
 }
