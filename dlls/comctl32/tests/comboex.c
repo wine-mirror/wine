@@ -82,7 +82,7 @@ static void test_comboboxex(void) {
                  out_of_range_item[] = {'O','u','t',' ','o','f',' ','R','a','n','g','e',' ','I','t','e','m',0};
 
     /* Allocate space for result */
-    textBuffer = malloc(MAX_CHARS);
+    textBuffer = HeapAlloc(GetProcessHeap(), 0, MAX_CHARS);
 
     /* Basic comboboxex test */
     myHwnd = createComboEx(WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN);
@@ -168,7 +168,7 @@ static void test_comboboxex(void) {
 
 
     /* Cleanup */
-    free(textBuffer);
+    HeapFree(GetProcessHeap(), 0, textBuffer);
 
 }
 
