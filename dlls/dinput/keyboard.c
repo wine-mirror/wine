@@ -47,6 +47,7 @@ typedef struct SysKeyboardImpl SysKeyboardImpl;
 struct SysKeyboardImpl
 {
     struct IDirectInputDevice2AImpl base;
+    BYTE DInputKeyState[WINE_DINPUT_KEYBOARD_MAX_KEYS];
 };
 
 static SysKeyboardImpl* current_lock = NULL; 
@@ -56,8 +57,6 @@ static SysKeyboardImpl* current_lock = NULL;
  * I don't know what the rules are for multiple acquired keyboards,
  * but 'DI_LOSTFOCUS' and 'DI_UNACQUIRED' exist for a reason.
 */
-
-static BYTE DInputKeyState[WINE_DINPUT_KEYBOARD_MAX_KEYS]; /* array for 'GetDeviceState' */
 
 static LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
 {
@@ -77,11 +76,11 @@ static LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam
     new_diks = hook->flags & LLKHF_UP ? 0 : 0x80;
 
     /* returns now if key event already known */
-    if (new_diks == DInputKeyState[dik_code])
+    if (new_diks == This->DInputKeyState[dik_code])
         return CallNextHookEx(0, code, wparam, lparam);
 
-    DInputKeyState[dik_code] = new_diks;
-    TRACE(" setting %02X to %02X\n", dik_code, DInputKeyState[dik_code]);
+    This->DInputKeyState[dik_code] = new_diks;
+    TRACE(" setting %02X to %02X\n", dik_code, This->DInputKeyState[dik_code]);
       
     dik_code = id_to_offset(&This->base.data_format, DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON);
     EnterCriticalSection(&This->base.crit);
@@ -288,13 +287,12 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
     if (TRACE_ON(dinput)) {
 	int i;
 	for (i = 0; i < WINE_DINPUT_KEYBOARD_MAX_KEYS; i++) {
-	    if (DInputKeyState[i] != 0x00) {
-		TRACE(" - %02X: %02x\n", i, DInputKeyState[i]);
-	    }
+	    if (This->DInputKeyState[i] != 0x00)
+		TRACE(" - %02X: %02x\n", i, This->DInputKeyState[i]);
 	}
     }
     
-    memcpy(ptr, DInputKeyState, WINE_DINPUT_KEYBOARD_MAX_KEYS);
+    memcpy(ptr, This->DInputKeyState, WINE_DINPUT_KEYBOARD_MAX_KEYS);
     LeaveCriticalSection(&This->base.crit);
 
     return DI_OK;
