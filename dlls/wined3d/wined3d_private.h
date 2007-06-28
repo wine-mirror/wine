@@ -727,7 +727,6 @@ struct IWineD3DDeviceImpl
     DWORD                     texUnitMap[MAX_COMBINED_SAMPLERS];
     DWORD                     rev_tex_unit_map[MAX_COMBINED_SAMPLERS];
     BOOL                      fixed_function_usage_map[MAX_TEXTURES];
-    BOOL                      oneToOneTexUnitMap;
 
     /* Stream source management */
     WineDirect3DVertexStridedData strided_streams;

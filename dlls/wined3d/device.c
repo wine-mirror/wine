@@ -1819,7 +1819,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
             This->rev_tex_unit_map[state] = -1;
         }
     }
-    This->oneToOneTexUnitMap = TRUE;
 
     /* Setup the implicit swapchain */
     TRACE("Creating implicit swapchain\n");
