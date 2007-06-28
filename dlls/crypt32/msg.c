@@ -30,7 +30,7 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
 {
     FIXME("(%08x, %08x, %08x, %p, %s, %p): stub\n", dwMsgEncodingType, dwFlags,
      dwMsgType, pvMsgEncodeInfo, debugstr_a(pszInnerContentObjID), pStreamInfo);
-    return (HCRYPTMSG)1;
+    return NULL;
 }
 
 HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
@@ -39,7 +39,7 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
 {
     FIXME("(%08x, %08x, %08x, %08lx, %p, %p): stub\n", dwMsgEncodingType,
      dwFlags, dwMsgType, hCryptProv, pRecipientInfo, pStreamInfo);
-    return (HCRYPTMSG)2;
+    return NULL;
 }
 
 HCRYPTMSG WINAPI CryptMsgDuplicate(HCRYPTMSG hCryptMsg)
