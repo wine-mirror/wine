@@ -39,15 +39,18 @@ typedef struct _CryptMsgBase
 {
     LONG                 ref;
     DWORD                open_flags;
+    PCMSG_STREAM_INFO    stream_info;
     CryptMsgCloseFunc    close;
     CryptMsgUpdateFunc   update;
     CryptMsgGetParamFunc get_param;
 } CryptMsgBase;
 
-static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags)
+static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags,
+ PCMSG_STREAM_INFO pStreamInfo)
 {
     msg->ref = 1;
     msg->open_flags = dwFlags;
+    msg->stream_info = pStreamInfo;
 }
 
 typedef struct _CDataEncodeMsg
@@ -69,7 +72,7 @@ static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
     msg = CryptMemAlloc(sizeof(CDataEncodeMsg));
     if (msg)
     {
-        CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags);
+        CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo);
     }
     return (HCRYPTMSG)msg;
 }
