@@ -399,7 +399,7 @@ static BOOL StartLinkProcessor( LPCOLESTR szLink )
 {
     static const WCHAR szFormat[] = {
         'w','i','n','e','m','e','n','u','b','u','i','l','d','e','r','.','e','x','e',
-        ' ','-','r',' ','"','%','s','"',0 };
+        ' ','-','w',' ','"','%','s','"',0 };
     LONG len;
     LPWSTR buffer;
     STARTUPINFOW si;
@@ -417,11 +417,6 @@ static BOOL StartLinkProcessor( LPCOLESTR szLink )
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
     if (!CreateProcessW( NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) return FALSE;
-
-    /* wait for a while to throttle the creation of linker processes */
-    if( WAIT_OBJECT_0 != WaitForSingleObject( pi.hProcess, 10000 ) )
-        WARN("Timed out waiting for shell linker\n");
-
     CloseHandle( pi.hProcess );
     CloseHandle( pi.hThread );
 

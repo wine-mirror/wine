@@ -33,11 +33,11 @@
  * interface, then invoke wineshelllink with the appropriate arguments
  * to create a KDE/Gnome menu entry for the shortcut.
  *
- *  winemenubuilder [ -r ] <shortcut.lnk>
+ *  winemenubuilder [ -w ] <shortcut.lnk>
  *
- *  If the -r parameter is passed, and the shortcut cannot be created,
- * this program will add a RunOnce entry to invoke itself at the next
- * reboot.  This covers the case when a ShortCut is created before the
+ *  If the -w parameter is passed, and the shortcut cannot be created,
+ * this program will wait for the parent process to finish and then try
+ * again. This covers the case when a ShortCut is created before the
  * executable containing its icon.
  *
  * TODO
@@ -72,6 +72,7 @@
 #include <objidl.h>
 #include <shlguid.h>
 #include <appmgmt.h>
+#include <tlhelp32.h>
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -466,9 +467,8 @@ static unsigned short crc16(const char* string)
 }
 
 /* extract an icon from an exe or icon file; helper for IPersistFile_fnSave */
-static char *extract_icon( LPCWSTR path, int index)
+static char *extract_icon( LPCWSTR path, int index, BOOL bWait )
 {
-    int nodefault = 1;
     unsigned short crc;
     char *iconsdir, *ico_path, *ico_name, *xpm_path;
     char* s;
@@ -520,13 +520,6 @@ static char *extract_icon( LPCWSTR path, int index)
         return NULL;  /* No icon created */
     }
 
-    /* If icon path begins with a '*' then this is a deferred call */
-    if (path[0] == '*')
-    {
-        path++;
-        nodefault = 0;
-    }
-
     /* Determine the icon base name */
     n = WideCharToMultiByte(CP_UNIXCP, 0, path, -1, NULL, 0, NULL, NULL);
     ico_path = HeapAlloc(GetProcessHeap(), 0, n);
@@ -558,7 +551,7 @@ static char *extract_icon( LPCWSTR path, int index)
     sprintf(xpm_path,"%s/%04x_%s.xpm",iconsdir,crc,ico_name);
     if (ExtractFromICO( path, xpm_path))
         goto end;
-    if (!nodefault)
+    if (!bWait)
         if (create_default_icon( xpm_path, ico_path ))
             goto end;
 
@@ -569,46 +562,6 @@ static char *extract_icon( LPCWSTR path, int index)
     HeapFree(GetProcessHeap(), 0, iconsdir);
     HeapFree(GetProcessHeap(), 0, ico_path);
     return xpm_path;
-}
-
-static BOOL DeferToRunOnce(LPWSTR link)
-{
-    HKEY hkey;
-    LONG r, len;
-    static const WCHAR szRunOnce[] = {
-        'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'W','i','n','d','o','w','s','\\',
-        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-        'R','u','n','O','n','c','e',0
-    };
-    static const WCHAR szFormat[] = { '%','s',' ','"','%','s','"',0 };
-    LPWSTR buffer;
-    WCHAR szExecutable[MAX_PATH];
-
-    WINE_TRACE( "Deferring icon creation to reboot.\n");
-
-    len = GetModuleFileNameW( 0, szExecutable, MAX_PATH );
-    if (!len || len >= MAX_PATH) return FALSE;
-
-    len = ( lstrlenW( link ) + lstrlenW( szExecutable ) + 4)*sizeof(WCHAR);
-    buffer = HeapAlloc( GetProcessHeap(), 0, len );
-    if( !buffer )
-        return FALSE;
-
-    wsprintfW( buffer, szFormat, szExecutable, link );
-
-    r = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szRunOnce, 0,
-              NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hkey, NULL);
-    if ( r == ERROR_SUCCESS )
-    {
-        r = RegSetValueExW(hkey, link, 0, REG_SZ,
-                   (LPBYTE) buffer, (lstrlenW(buffer) + 1)*sizeof(WCHAR));
-        RegCloseKey(hkey);
-    }
-    HeapFree(GetProcessHeap(), 0, buffer);
-
-    return ! r;
 }
 
 /* This escapes \ in filenames */
@@ -897,7 +850,7 @@ static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
     return hr;
 }
 
-static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
+static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
 {
     static const WCHAR startW[] = {'\\','c','o','m','m','a','n','d',
                                    '\\','s','t','a','r','t','.','e','x','e',0};
@@ -953,14 +906,14 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
 
     /* extract the icon */
     if( szIconPath[0] )
-        icon_name = extract_icon( szIconPath , iIconId );
+        icon_name = extract_icon( szIconPath , iIconId, bWait );
     else
-        icon_name = extract_icon( szPath, iIconId );
+        icon_name = extract_icon( szPath, iIconId, bWait );
 
-    /* fail - try once again at reboot time */
+    /* fail - try once again after parent process exit */
     if( !icon_name )
     {
-        if (bAgain)
+        if (bWait)
         {
             WINE_WARN("Unable to extract icon, deferring.\n");
             goto cleanup;
@@ -1049,8 +1002,54 @@ cleanup:
     return TRUE;
 }
 
+static BOOL WaitForParentProcess( void )
+{
+    PROCESSENTRY32 procentry;
+    HANDLE hsnapshot = NULL, hprocess = NULL;
+    DWORD ourpid = GetCurrentProcessId();
+    BOOL ret = FALSE, rc;
 
-static BOOL Process_Link( LPCWSTR linkname, BOOL bAgain )
+    WINE_TRACE("Waiting for parent process\n");
+    if ((hsnapshot = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 )) ==
+        INVALID_HANDLE_VALUE)
+    {
+        WINE_ERR("CreateToolhelp32Snapshot failed, error %d\n", GetLastError());
+        goto done;
+    }
+
+    procentry.dwSize = sizeof(PROCESSENTRY32);
+    rc = Process32First( hsnapshot, &procentry );
+    while (rc)
+    {
+        if (procentry.th32ProcessID == ourpid) break;
+        rc = Process32Next( hsnapshot, &procentry );
+    }
+    if (!rc)
+    {
+        WINE_WARN("Unable to find current process id %d when listing processes\n", ourpid);
+        goto done;
+    }
+
+    if ((hprocess = OpenProcess( SYNCHRONIZE, FALSE, procentry.th32ParentProcessID )) ==
+        NULL)
+    {
+        WINE_WARN("OpenProcess failed pid=%d, error %d\n", procentry.th32ParentProcessID,
+                 GetLastError());
+        goto done;
+    }
+
+    if (WaitForSingleObject( hprocess, INFINITE ) == WAIT_OBJECT_0)
+        ret = TRUE;
+    else
+        WINE_ERR("Unable to wait for parent process, error %d\n", GetLastError());
+
+done:
+    if (hprocess) CloseHandle( hprocess );
+    if (hsnapshot) CloseHandle( hsnapshot );
+    return ret;
+}
+
+static BOOL Process_Link( LPCWSTR linkname, BOOL bWait )
 {
     IShellLinkW *sl;
     IPersistFile *pf;
@@ -1058,7 +1057,7 @@ static BOOL Process_Link( LPCWSTR linkname, BOOL bAgain )
     WCHAR fullname[MAX_PATH];
     DWORD len;
 
-    WINE_TRACE("%s, again %d\n", wine_dbgstr_w(linkname), bAgain);
+    WINE_TRACE("%s, wait %d\n", wine_dbgstr_w(linkname), bWait);
 
     if( !linkname[0] )
     {
@@ -1099,12 +1098,13 @@ static BOOL Process_Link( LPCWSTR linkname, BOOL bAgain )
     if( SUCCEEDED( r ) )
     {
         /* If something fails (eg. Couldn't extract icon)
-         * defer this menu entry to reboot via runonce
+         * wait for parent process and try again
          */
-        if( ! InvokeShellLinker( sl, fullname, bAgain ) && bAgain )
-            DeferToRunOnce( fullname );
-        else
-            WINE_TRACE("Success.\n");
+        if( ! InvokeShellLinker( sl, fullname, bWait ) && bWait )
+        {
+            WaitForParentProcess();
+            InvokeShellLinker( sl, fullname, FALSE );
+        }
     }
 
     IPersistFile_Release( pf );
@@ -1159,7 +1159,7 @@ static CHAR *next_token( LPSTR *p )
 int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     LPSTR token = NULL, p;
-    BOOL bAgain = FALSE;
+    BOOL bWait = FALSE;
     int ret = 0;
 
     for( p = cmdline; p && *p; )
@@ -1167,8 +1167,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
         token = next_token( &p );
 	if( !token )
 	    break;
-        if( !lstrcmpA( token, "-r" ) )
-            bAgain = TRUE;
+        if( !lstrcmpA( token, "-w" ) )
+            bWait = TRUE;
 	else if( token[0] == '-' )
 	{
 	    WINE_ERR( "unknown option %s\n",token);
@@ -1178,7 +1178,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
             WCHAR link[MAX_PATH];
 
             MultiByteToWideChar( CP_ACP, 0, token, -1, link, sizeof(link)/sizeof(WCHAR) );
-            if( !Process_Link( link, bAgain ) )
+            if( !Process_Link( link, bWait ) )
             {
 	        WINE_ERR( "failed to build menu item for %s\n",token);
 	        ret = 1;
