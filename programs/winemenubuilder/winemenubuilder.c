@@ -907,6 +907,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
     WCHAR szArgs[INFOTIPSIZE], szIconPath[MAX_PATH];
     int iIconId = 0, r = -1;
     DWORD csidl = -1;
+    HANDLE hsem = NULL;
 
     if ( !link )
     {
@@ -1015,11 +1016,23 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
     escaped_args = escape(szArgs);
     escaped_description = escape(szDescription);
 
+    /* running multiple instances of wineshelllink
+       at the same time may be dangerous */
+    hsem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
+    if( WAIT_OBJECT_0 != WaitForSingleObject( hsem, INFINITE ) )
+    {
+        WINE_ERR("failed wait for semaphore\n");
+        goto cleanup;
+    }
+
     r = fork_and_wait("wineshelllink", link_name, escaped_path,
                       in_desktop_dir(csidl), escaped_args, icon_name,
                       work_dir ? work_dir : "", escaped_description);
 
+    ReleaseSemaphore( hsem, 1, NULL );
+
 cleanup:
+    if (hsem) CloseHandle( hsem );
     HeapFree( GetProcessHeap(), 0, icon_name );
     HeapFree( GetProcessHeap(), 0, work_dir );
     HeapFree( GetProcessHeap(), 0, link_name );
@@ -1147,16 +1160,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 {
     LPSTR token = NULL, p;
     BOOL bAgain = FALSE;
-    HANDLE hsem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
     int ret = 0;
-
-    /* running multiple instances of wineshelllink
-       at the same time may be dangerous */
-    if( WAIT_OBJECT_0 != WaitForSingleObject( hsem, INFINITE ) )
-    {
-        CloseHandle(hsem);
-        return FALSE;
-    }
 
     for( p = cmdline; p && *p; )
     {
@@ -1181,9 +1185,6 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
             }
         }
     }
-
-    ReleaseSemaphore( hsem, 1, NULL );
-    CloseHandle( hsem );
 
     return ret;
 }
