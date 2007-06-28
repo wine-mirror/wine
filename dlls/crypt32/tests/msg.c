@@ -275,7 +275,6 @@ static void test_msg_close(void)
         ret = CryptMsgClose((HCRYPTMSG)1);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
      NULL);
-    todo_wine
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
     ret = CryptMsgClose(msg);
     ok(ret, "CryptMsgClose failed: %x\n", GetLastError());
@@ -290,13 +289,11 @@ static void test_data_msg_open(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, &hashInfo,
      NULL, NULL);
-    todo_wine {
     ok(!msg && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
      NULL);
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
-    }
     CryptMsgClose(msg);
 }
 

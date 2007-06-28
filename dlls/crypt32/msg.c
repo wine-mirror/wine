@@ -42,6 +42,30 @@ static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags)
     msg->open_flags = dwFlags;
 }
 
+typedef struct _CDataEncodeMsg
+{
+    CryptMsgBase base;
+} CDataEncodeMsg;
+
+static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
+ LPSTR pszInnerContentObjID, PCMSG_STREAM_INFO pStreamInfo)
+{
+    CDataEncodeMsg *msg;
+
+    if (pvMsgEncodeInfo)
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+    FIXME("semi-stub\n");
+    msg = CryptMemAlloc(sizeof(CDataEncodeMsg));
+    if (msg)
+    {
+        CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags);
+    }
+    return (HCRYPTMSG)msg;
+}
+
 static inline const char *MSG_TYPE_STR(DWORD type)
 {
     switch (type)
@@ -76,6 +100,9 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
     switch (dwMsgType)
     {
     case CMSG_DATA:
+        msg = CDataEncodeMsg_Open(dwFlags, pvMsgEncodeInfo,
+         pszInnerContentObjID, pStreamInfo);
+        break;
     case CMSG_SIGNED:
     case CMSG_ENVELOPED:
     case CMSG_HASHED:
