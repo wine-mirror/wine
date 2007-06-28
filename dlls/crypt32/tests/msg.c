@@ -281,6 +281,30 @@ static void test_msg_close(void)
     ok(ret, "CryptMsgClose failed: %x\n", GetLastError());
 }
 
+static void test_data_msg_open(void)
+{
+    HCRYPTMSG msg;
+    CMSG_HASHED_ENCODE_INFO hashInfo = { 0 };
+
+    /* The data message type takes no additional info */
+    SetLastError(0xdeadbeef);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, &hashInfo,
+     NULL, NULL);
+    todo_wine {
+    ok(!msg && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
+     NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    }
+    CryptMsgClose(msg);
+}
+
+static void test_data_msg(void)
+{
+    test_data_msg_open();
+}
+
 START_TEST(msg)
 {
     /* Basic parameter checking tests */
@@ -288,4 +312,7 @@ START_TEST(msg)
     test_msg_open_to_decode();
     test_msg_get_param();
     test_msg_close();
+
+    /* Message-type specific tests */
+    test_data_msg();
 }
