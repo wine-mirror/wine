@@ -224,6 +224,7 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
         ERR("Can't map sound device for direct access: %s\n", snd_strerror(err));
         return DSERR_GENERIC;
     }
+    snd_pcm_format_set_silence(format, areas->addr, pdbi->mmap_buflen_frames);
     err = snd_pcm_mmap_commit(pcm, ofs, avail);
     pdbi->mmap_buffer = areas->addr;
 
