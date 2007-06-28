@@ -2512,19 +2512,26 @@ static UINT ITERATE_LaunchConditions(MSIRECORD *row, LPVOID param)
     MSIPACKAGE* package = (MSIPACKAGE*)param;
     LPCWSTR cond = NULL; 
     LPCWSTR message = NULL;
+    UINT r;
+
     static const WCHAR title[]=
         {'I','n','s','t','a','l','l',' ','F','a', 'i','l','e','d',0};
 
     cond = MSI_RecordGetString(row,1);
 
-    if (MSI_EvaluateConditionW(package,cond) != MSICONDITION_TRUE)
+    r = MSI_EvaluateConditionW(package,cond);
+    if (r == MSICONDITION_FALSE)
     {
-        LPWSTR deformated;
-        message = MSI_RecordGetString(row,2);
-        deformat_string(package,message,&deformated); 
-        MessageBoxW(NULL,deformated,title,MB_OK);
-        msi_free(deformated);
-        return ERROR_FUNCTION_FAILED;
+        if ((gUILevel & INSTALLUILEVEL_MASK) != INSTALLUILEVEL_NONE)
+        {
+            LPWSTR deformated;
+            message = MSI_RecordGetString(row,2);
+            deformat_string(package,message,&deformated);
+            MessageBoxW(NULL,deformated,title,MB_OK);
+            msi_free(deformated);
+        }
+
+        return ERROR_INSTALL_FAILURE;
     }
 
     return ERROR_SUCCESS;

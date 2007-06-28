@@ -147,6 +147,15 @@ static UINT create_signature_table( MSIHANDLE hdb )
             "PRIMARY KEY `Signature`)" );
 }
 
+static UINT create_launchcondition_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `LaunchCondition` ("
+            "`Condition` CHAR(255) NOT NULL, "
+            "`Description` CHAR(255) NOT NULL "
+            "PRIMARY KEY `Condition`)" );
+}
+
 static UINT add_component_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `Component`  "
@@ -247,6 +256,22 @@ static UINT add_signature_entry( MSIHANDLE hdb, const char *values )
     char insert[] = "INSERT INTO `Signature` "
             "(`Signature`, `FileName`, `MinVersion`, `MaxVersion`,"
             " `MinSize`, `MaxSize`, `MinDate`, `MaxDate`, `Languages`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_launchcondition_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `LaunchCondition` "
+            "(`Condition`, `Description`) "
             "VALUES( %s )";
     char *query;
     UINT sz, r;
@@ -3229,6 +3254,50 @@ static void test_prop_path(void)
     DeleteFile(msifile);
 }
 
+static void test_launchconditions(void)
+{
+    MSIHANDLE hpkg;
+    MSIHANDLE hdb;
+    UINT r;
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    hdb = create_package_db();
+    ok( hdb, "failed to create package database\n" );
+
+    r = create_launchcondition_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create LaunchCondition table: %d\n", r );
+
+    r = add_launchcondition_entry( hdb, "'X = \"1\"', 'one'" );
+    ok( r == ERROR_SUCCESS, "cannot add launch condition: %d\n", r );
+
+    /* invalid condition */
+    r = add_launchcondition_entry( hdb, "'X != \"1\"', 'one'" );
+    ok( r == ERROR_SUCCESS, "cannot add launch condition: %d\n", r );
+
+    hpkg = package_from_db( hdb );
+    ok( hpkg, "failed to create package\n");
+
+    MsiCloseHandle( hdb );
+
+    r = MsiSetProperty( hpkg, "X", "1" );
+    ok( r == ERROR_SUCCESS, "failed to set property\n" );
+
+    /* invalid conditions are ignored */
+    r = MsiDoAction( hpkg, "LaunchConditions" );
+    ok( r == ERROR_SUCCESS, "cost init failed\n" );
+
+    /* verify LaunchConditions still does some verification */
+    r = MsiSetProperty( hpkg, "X", "2" );
+    ok( r == ERROR_SUCCESS, "failed to set property\n" );
+
+    r = MsiDoAction( hpkg, "LaunchConditions" );
+    ok( r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %d\n", r );
+
+    MsiCloseHandle( hpkg );
+    DeleteFile( msifile );
+}
+
 START_TEST(package)
 {
     test_createpackage();
@@ -3250,4 +3319,5 @@ START_TEST(package)
     test_installprops();
     test_sourcedirprop();
     test_prop_path();
+    test_launchconditions();
 }
