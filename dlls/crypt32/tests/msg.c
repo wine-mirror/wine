@@ -43,19 +43,16 @@ static void test_msg_open_to_encode(void)
     /* Bad encodings */
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(0, 0, 0, NULL, NULL, NULL);
-    todo_wine {
     ok(!msg && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(X509_ASN_ENCODING, 0, 0, NULL, NULL, NULL);
     ok(!msg && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
-    }
 
     /* Bad message types */
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, 0, NULL, NULL, NULL);
-    todo_wine {
     ok(!msg && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
     SetLastError(0xdeadbeef);
@@ -73,7 +70,6 @@ static void test_msg_open_to_encode(void)
      NULL, NULL);
     ok(!msg && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
-    }
 }
 
 static void test_msg_open_to_decode(void)
@@ -83,13 +79,11 @@ static void test_msg_open_to_decode(void)
 
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToDecode(0, 0, 0, 0, NULL, NULL);
-    todo_wine
     ok(!msg && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
 
     /* Bad encodings */
     SetLastError(0xdeadbeef);
-    todo_wine {
     msg = CryptMsgOpenToDecode(X509_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ok(!msg && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
@@ -97,7 +91,6 @@ static void test_msg_open_to_decode(void)
     msg = CryptMsgOpenToDecode(X509_ASN_ENCODING, 0, CMSG_DATA, 0, NULL, NULL);
     ok(!msg && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
-    }
 
     /* The message type can be explicit... */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, 0, NULL,

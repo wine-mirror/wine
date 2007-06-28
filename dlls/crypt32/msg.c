@@ -24,13 +24,52 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
+static inline const char *MSG_TYPE_STR(DWORD type)
+{
+    switch (type)
+    {
+#define _x(x) case (x): return #x
+        _x(CMSG_DATA);
+        _x(CMSG_SIGNED);
+        _x(CMSG_ENVELOPED);
+        _x(CMSG_SIGNED_AND_ENVELOPED);
+        _x(CMSG_HASHED);
+        _x(CMSG_ENCRYPTED);
+#undef _x
+        default:
+            return wine_dbg_sprintf("unknown (%d)", type);
+    }
+}
+
 HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
  DWORD dwMsgType, const void *pvMsgEncodeInfo, LPSTR pszInnerContentObjID,
  PCMSG_STREAM_INFO pStreamInfo)
 {
-    FIXME("(%08x, %08x, %08x, %p, %s, %p): stub\n", dwMsgEncodingType, dwFlags,
+    HCRYPTMSG msg = NULL;
+
+    TRACE("(%08x, %08x, %08x, %p, %s, %p)\n", dwMsgEncodingType, dwFlags,
      dwMsgType, pvMsgEncodeInfo, debugstr_a(pszInnerContentObjID), pStreamInfo);
-    return NULL;
+
+    if (GET_CMSG_ENCODING_TYPE(dwMsgEncodingType) != PKCS_7_ASN_ENCODING)
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+    switch (dwMsgType)
+    {
+    case CMSG_DATA:
+    case CMSG_SIGNED:
+    case CMSG_ENVELOPED:
+    case CMSG_HASHED:
+        FIXME("unimplemented for type %s\n", MSG_TYPE_STR(dwMsgType));
+        break;
+    case CMSG_SIGNED_AND_ENVELOPED:
+    case CMSG_ENCRYPTED:
+        /* defined but invalid, fall through */
+    default:
+        SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+    }
+    return msg;
 }
 
 HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
@@ -39,6 +78,12 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
 {
     FIXME("(%08x, %08x, %08x, %08lx, %p, %p): stub\n", dwMsgEncodingType,
      dwFlags, dwMsgType, hCryptProv, pRecipientInfo, pStreamInfo);
+
+    if (GET_CMSG_ENCODING_TYPE(dwMsgEncodingType) != PKCS_7_ASN_ENCODING)
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
     return NULL;
 }
 
