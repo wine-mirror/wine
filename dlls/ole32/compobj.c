@@ -76,8 +76,9 @@ HINSTANCE OLE32_hInstance = 0; /* FIXME: make static ... */
  * TODO: Most of these things will have to be made thread-safe.
  */
 
-static HRESULT COM_GetRegisteredClassObject(struct apartment *apt, REFCLSID rclsid, DWORD dwClsContext, LPUNKNOWN*  ppUnk);
-static void COM_RevokeAllClasses(struct apartment *apt);
+static HRESULT COM_GetRegisteredClassObject(const struct apartment *apt, REFCLSID rclsid,
+                                            DWORD dwClsContext, LPUNKNOWN*  ppUnk);
+static void COM_RevokeAllClasses(const struct apartment *apt);
 static HRESULT get_inproc_class_object(APARTMENT *apt, HKEY hkeydll, REFCLSID rclsid, REFIID riid, void **ppv);
 
 static APARTMENT *MTA; /* protected by csApartment */
@@ -327,7 +328,7 @@ static APARTMENT *apartment_get_or_create(DWORD model)
     return apt;
 }
 
-static inline BOOL apartment_is_model(APARTMENT *apt, DWORD model)
+static inline BOOL apartment_is_model(const APARTMENT *apt, DWORD model)
 {
     return (apt->multi_threaded == !(model & COINIT_APARTMENTTHREADED));
 }
@@ -728,7 +729,7 @@ HRESULT apartment_createwindowifneeded(struct apartment *apt)
     return S_OK;
 }
 
-HWND apartment_getwindow(struct apartment *apt)
+HWND apartment_getwindow(const struct apartment *apt)
 {
     assert(!apt->multi_threaded);
     return apt->win;
@@ -1754,11 +1755,8 @@ HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid)
  *                 to normal COM usage, this method will increase the
  *                 reference count on this object.
  */
-static HRESULT COM_GetRegisteredClassObject(
-        struct apartment *apt,
-	REFCLSID    rclsid,
-	DWORD       dwClsContext,
-	LPUNKNOWN*  ppUnk)
+static HRESULT COM_GetRegisteredClassObject(const struct apartment *apt, REFCLSID rclsid,
+                                            DWORD dwClsContext, LPUNKNOWN* ppUnk)
 {
   HRESULT hr = S_FALSE;
   RegisteredClass *curClass;
@@ -1951,7 +1949,7 @@ static void COM_RevokeRegisteredClassObject(RegisteredClass *curClass)
     HeapFree(GetProcessHeap(), 0, curClass);
 }
 
-static void COM_RevokeAllClasses(struct apartment *apt)
+static void COM_RevokeAllClasses(const struct apartment *apt)
 {
   RegisteredClass *curClass, *cursor;
 
