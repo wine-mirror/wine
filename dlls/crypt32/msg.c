@@ -32,11 +32,15 @@ typedef void (*CryptMsgCloseFunc)(HCRYPTMSG msg);
 typedef BOOL (*CryptMsgGetParamFunc)(HCRYPTMSG hCryptMsg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData);
 
+typedef BOOL (*CryptMsgUpdateFunc)(HCRYPTMSG hCryptMsg, const BYTE *pbData,
+ DWORD cbData, BOOL fFinal);
+
 typedef struct _CryptMsgBase
 {
     LONG                 ref;
     DWORD                open_flags;
     CryptMsgCloseFunc    close;
+    CryptMsgUpdateFunc   update;
     CryptMsgGetParamFunc get_param;
 } CryptMsgBase;
 
@@ -171,8 +175,13 @@ BOOL WINAPI CryptMsgClose(HCRYPTMSG hCryptMsg)
 BOOL WINAPI CryptMsgUpdate(HCRYPTMSG hCryptMsg, const BYTE *pbData,
  DWORD cbData, BOOL fFinal)
 {
-    FIXME("(%p, %p, %d, %d): stub\n", hCryptMsg, pbData, cbData, fFinal);
-    return TRUE;
+    CryptMsgBase *msg = (CryptMsgBase *)hCryptMsg;
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %p, %d, %d)\n", hCryptMsg, pbData, cbData, fFinal);
+    if (msg && msg->update)
+        ret = msg->update(hCryptMsg, pbData, cbData, fFinal);
+    return ret;
 }
 
 BOOL WINAPI CryptMsgGetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,

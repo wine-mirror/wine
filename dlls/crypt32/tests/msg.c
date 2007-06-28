@@ -314,6 +314,7 @@ static void test_data_msg_update(void)
      "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
     /* Updating it with final = TRUE succeeds */
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* Any subsequent update will fail, as the last was final */
     SetLastError(0xdeadbeef);
@@ -354,6 +355,7 @@ static void test_data_msg_update(void)
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 }
