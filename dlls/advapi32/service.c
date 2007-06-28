@@ -1915,22 +1915,22 @@ QueryServiceConfigW( SC_HANDLE hService,
 
     sz = sizeof val;
     r = RegQueryValueExW( hKey, szType, 0, &type, (LPBYTE)&val, &sz );
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_DWORD ) )
         lpServiceConfig->dwServiceType = val;
 
     sz = sizeof val;
     r = RegQueryValueExW( hKey, szStart, 0, &type, (LPBYTE)&val, &sz );
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_DWORD ) )
         lpServiceConfig->dwStartType = val;
 
     sz = sizeof val;
     r = RegQueryValueExW( hKey, szError, 0, &type, (LPBYTE)&val, &sz );
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_DWORD ) )
         lpServiceConfig->dwErrorControl = val;
 
     sz = sizeof val;
     r = RegQueryValueExW( hKey, szTag, 0, &type, (LPBYTE)&val, &sz );
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_DWORD ) )
         lpServiceConfig->dwTagId = val;
 
     /* now do the strings */
@@ -1958,7 +1958,7 @@ QueryServiceConfigW( SC_HANDLE hService,
     sz = n;
     r = RegQueryValueExW( hKey, szGroup, 0, &type, p, &sz );
     lpServiceConfig->lpLoadOrderGroup = (LPWSTR) p;
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
     {
         p += sz;
         n -= sz;
@@ -1973,7 +1973,7 @@ QueryServiceConfigW( SC_HANDLE hService,
     sz = n;
     r = RegQueryValueExW( hKey, szDependencies, 0, &type, p, &sz );
     lpServiceConfig->lpDependencies = (LPWSTR) p;
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
     {
         p += sz;
         n -= sz;
@@ -1988,7 +1988,7 @@ QueryServiceConfigW( SC_HANDLE hService,
     sz = n;
     r = RegQueryValueExW( hKey, szObjectName, 0, &type, p, &sz );
     lpServiceConfig->lpServiceStartName = (LPWSTR) p;
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
     {
         p += sz;
         n -= sz;
@@ -2003,7 +2003,7 @@ QueryServiceConfigW( SC_HANDLE hService,
     sz = n;
     r = RegQueryValueExW( hKey, szDisplayName, 0, &type, p, &sz );
     lpServiceConfig->lpDisplayName = (LPWSTR) p;
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
     {
         p += sz;
         n -= sz;
