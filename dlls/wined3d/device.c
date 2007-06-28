@@ -3291,10 +3291,11 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
 }
 
 static void device_map_psamplers(IWineD3DDeviceImpl *This) {
+    DWORD *sampler_tokens = ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.reg_maps.samplers;
     int i;
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
-        if (This->texUnitMap[i] != i) {
+        if (sampler_tokens[i] && This->texUnitMap[i] != i) {
             device_map_stage(This, i, i);
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
             if (i < MAX_TEXTURES) {
