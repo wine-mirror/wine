@@ -24,6 +24,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
+/* Called when a message's ref count reaches zero.  Free any message-specific
+ * data here.
+ */
+typedef void (*CryptMsgCloseFunc)(HCRYPTMSG msg);
+
+typedef struct _CryptMsgBase
+{
+    LONG              ref;
+    DWORD             open_flags;
+    CryptMsgCloseFunc close;
+} CryptMsgBase;
+
+static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags)
+{
+    msg->ref = 1;
+    msg->open_flags = dwFlags;
+}
+
 static inline const char *MSG_TYPE_STR(DWORD type)
 {
     switch (type)
@@ -89,13 +107,33 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
 
 HCRYPTMSG WINAPI CryptMsgDuplicate(HCRYPTMSG hCryptMsg)
 {
-    FIXME("(%p): stub\n", hCryptMsg);
+    TRACE("(%p)\n", hCryptMsg);
+
+    if (hCryptMsg)
+    {
+        CryptMsgBase *msg = (CryptMsgBase *)hCryptMsg;
+
+        InterlockedIncrement(&msg->ref);
+    }
     return hCryptMsg;
 }
 
 BOOL WINAPI CryptMsgClose(HCRYPTMSG hCryptMsg)
 {
-    FIXME("(%p): stub\n", hCryptMsg);
+    TRACE("(%p)\n", hCryptMsg);
+
+    if (hCryptMsg)
+    {
+        CryptMsgBase *msg = (CryptMsgBase *)hCryptMsg;
+
+        if (InterlockedDecrement(&msg->ref) == 0)
+        {
+            TRACE("freeing %p\n", msg);
+            if (msg->close)
+                msg->close(msg);
+            CryptMemFree(msg);
+        }
+    }
     return TRUE;
 }
 
