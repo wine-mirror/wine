@@ -76,10 +76,7 @@
 /* Exclusive comment eating... */
 %x comment
 /* Set when stripping c-junk */
-%x pp_stripe
-%x pp_strips
-%x pp_stripp
-%x pp_stripp_final
+%x pp_cstrip
 /* Set when scanning #line style directives */
 %x pp_line
 /* Set when scanning #pragma */
@@ -87,7 +84,7 @@
 %x pp_code_page
 
 %option stack
-%option nounput noyy_top_state
+%option nounput noyy_top_state noyywrap
 %option 8bit never-interactive
 %option prefix="parser_"
 
@@ -128,9 +125,6 @@ static int cbufalloc = 0;
 static WCHAR *wbuffer;
 static int wbufidx;
 static int wbufalloc = 0;
-static int stripslevel = 0;	/* Count {} during pp_strips/pp_stripe mode */
-static int stripplevel = 0;	/* Count () during pp_strips mode */
-static int cjunk_tagline;	/* Where did we start stripping (helps error tracking) */
 
 static int current_codepage = -1;  /* use language default */
 
@@ -321,10 +315,10 @@ static struct keyword *iskeyword(char *kw)
 	 * because we only want to know the linenumber and
 	 * filename.
 	 */
-<INITIAL,pp_strips,pp_stripp>^{ws}*\#{ws}*pragma{ws}+	yy_push_state(pp_pragma);
-<INITIAL,pp_strips,pp_stripp>^{ws}*\#{ws}*	yy_push_state(pp_line);
+<INITIAL,pp_cstrip>^{ws}*\#{ws}*pragma{ws}+	yy_push_state(pp_pragma);
+<INITIAL,pp_cstrip>^{ws}*\#{ws}*	yy_push_state(pp_line);
 <pp_line>[^\n]*	{
-		int lineno;
+		int lineno, len;
 		char *cptr;
 		char *fname;
 		yy_pop_state();
@@ -341,6 +335,12 @@ static struct keyword *iskeyword(char *kw)
 		*cptr = '\0';
 		line_number = lineno - 1;	/* We didn't read the newline */
 		input_name = xstrdup(fname);
+                /* ignore contents of C include files */
+                len = strlen(input_name);
+                if (len > 1 && !strcasecmp( input_name + len - 2, ".h" ))
+                    BEGIN(pp_cstrip);
+                else
+                    BEGIN(INITIAL);
 	}
 
 <pp_pragma>code_page[^\n]*	yyless(9); yy_pop_state(); yy_push_state(pp_code_page);
@@ -366,30 +366,8 @@ static struct keyword *iskeyword(char *kw)
 	 * into account braces {} for structures,
 	 * classes and enums.
 	 */
-<pp_strips>\{			stripslevel++;
-<pp_strips>\}			stripslevel--;
-<pp_strips>;			if(!stripslevel) yy_pop_state();
-<pp_strips>\/[^*\n]		; /* To catch comments */
-<pp_strips>[^\{\};\n#/]*	; /* Ignore rest */
-<pp_strips>\n			line_number++; char_number = 1;
-
-<pp_stripp>\(			stripplevel++;
-<pp_stripp>\)			{
-					stripplevel--;
-					if(!stripplevel)
-					{
-						yy_pop_state();
-						yy_push_state(pp_stripp_final);
-					}
-				}
-<pp_stripp>\/[^*\n]		; /* To catch comments */
-<pp_stripp>[^\(\);\n#/]*	; /* Ignore rest */
-<pp_stripp>\n			line_number++; char_number = 1;
-
-<pp_stripp_final>{ws}*		; /* Ignore */
-<pp_stripp_final>;		yy_pop_state(); /* Kill the semicolon */
-<pp_stripp_final>\n		line_number++; char_number = 1; yy_pop_state();
-<pp_stripp_final>.		yyless(0); yy_pop_state();
+<pp_cstrip>\n			line_number++; char_number = 1;
+<pp_cstrip>.			; /* ignore */
 
 \{			return tBEGIN;
 \}			return tEND;
@@ -546,7 +524,7 @@ L\"			{
 	 * Comment stripping
 	 * Should never occur after preprocessing
 	 */
-<INITIAL,pp_stripp,pp_strips>"/*"	{
+<INITIAL,pp_cstrip>"/*"	{
 				yy_push_state(comment);
 				save_wanted_id = wanted_id;
 				if(!no_preprocess)
@@ -574,13 +552,6 @@ L\"			{
 
 <INITIAL>.		return yytext[0];
 
-<<EOF>>			{
-				if(YY_START == pp_strips || YY_START == pp_stripe || YY_START == pp_stripp || YY_START == pp_stripp_final)
-					parser_error("Unexpected end of file during c-junk scanning (started at %d)", cjunk_tagline);
-				else
-					yyterminate();
-			}
-
 <*>.|\n			{
 				/* Catch all rule to find any unmatched text */
 				if(*yytext == '\n')
@@ -588,24 +559,11 @@ L\"			{
 					line_number++;
 					char_number = 1;
 				}
-				parser_warning("Unmatched text '%c' (0x%02x) YY_START=%d stripslevel=%d",
-					isprint(*yytext & 0xff) ? *yytext : '.', *yytext, YY_START,stripslevel);
+				parser_warning("Unmatched text '%c' (0x%02x) YY_START=%d",
+					isprint(*yytext & 0xff) ? *yytext : '.', *yytext, YY_START);
 			}
 
 %%
-
-#ifndef parser_wrap
-int parser_wrap(void)
-{
-#if 0
-	if(bufferstackidx > 0)
-	{
-		return 0;
- 	}
-#endif
-	return 1;
-}
-#endif
 
 /* These dup functions copy the enclosed '\0' from
  * the resource string.
