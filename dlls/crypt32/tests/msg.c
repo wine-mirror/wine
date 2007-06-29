@@ -384,12 +384,11 @@ static void test_data_msg_get_param(void)
     /* Content and bare content are always gettable */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
-    todo_wine {
+    todo_wine
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
-    }
     /* But for this type of message, the signer and hash aren't applicable,
      * and the type isn't available.
      */
@@ -425,38 +424,34 @@ static void test_data_msg_encoding(void)
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
      NULL);
-    todo_wine {
     check_param("data empty bare content", msg, CMSG_BARE_CONTENT_PARAM,
      dataEmptyBareContent, sizeof(dataEmptyBareContent));
+    todo_wine
     check_param("data empty content", msg, CMSG_CONTENT_PARAM, dataEmptyContent,
      sizeof(dataEmptyContent));
-    }
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
-    todo_wine {
     check_param("data bare content", msg, CMSG_BARE_CONTENT_PARAM,
      dataBareContent, sizeof(dataBareContent));
+    todo_wine
     check_param("data content", msg, CMSG_CONTENT_PARAM, dataContent,
      sizeof(dataContent));
-    }
     CryptMsgClose(msg);
     /* Same test, but with CMSG_BARE_CONTENT_FLAG set */
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_BARE_CONTENT_FLAG,
      CMSG_DATA, NULL, NULL, NULL);
-    todo_wine {
     check_param("data empty bare content", msg, CMSG_BARE_CONTENT_PARAM,
      dataEmptyBareContent, sizeof(dataEmptyBareContent));
+    todo_wine
     check_param("data empty content", msg, CMSG_CONTENT_PARAM, dataEmptyContent,
      sizeof(dataEmptyContent));
-    }
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
-    todo_wine {
     check_param("data bare content", msg, CMSG_BARE_CONTENT_PARAM,
      dataBareContent, sizeof(dataBareContent));
+    todo_wine
     check_param("data content", msg, CMSG_CONTENT_PARAM, dataContent,
      sizeof(dataContent));
-    }
     CryptMsgClose(msg);
 }
 

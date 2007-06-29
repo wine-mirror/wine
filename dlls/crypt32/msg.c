@@ -112,13 +112,31 @@ static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
 static BOOL CDataEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
+    CDataEncodeMsg *msg = (CDataEncodeMsg *)hCryptMsg;
     BOOL ret = FALSE;
 
     switch (dwParamType)
     {
     case CMSG_CONTENT_PARAM:
-    case CMSG_BARE_CONTENT_PARAM:
         FIXME("stub\n");
+        break;
+    case CMSG_BARE_CONTENT_PARAM:
+        if (!pvData)
+        {
+            *pcbData = msg->bare_content_len;
+            ret = TRUE;
+        }
+        else if (*pcbData < msg->bare_content_len)
+        {
+            *pcbData = msg->bare_content_len;
+            SetLastError(ERROR_MORE_DATA);
+        }
+        else
+        {
+            *pcbData = msg->bare_content_len;
+            memcpy(pvData, msg->bare_content, msg->bare_content_len);
+            ret = TRUE;
+        }
         break;
     default:
         SetLastError(CRYPT_E_INVALID_MSG_TYPE);
