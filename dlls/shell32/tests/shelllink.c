@@ -158,9 +158,10 @@ static void test_get_set(void)
     ok(SUCCEEDED(r), "GetPath failed (0x%08x)\n", r);
     ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
 
+    /* Win98 returns S_FALSE, but WinXP returns S_OK */
     str="c:\\nonexistent\\file";
     r = IShellLinkA_SetPath(sl, str);
-    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r==S_OK, "SetPath failed (0x%08x)\n", r);
 
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
@@ -211,28 +212,28 @@ static void test_get_set(void)
         ok(lstrcmpi(buffer, mypath)==0, "GetPath returned '%s'\n", buffer);
     }
 
-    /* test path with quotes */
+    /* test path with quotes (Win98 IShellLinkA_SetPath returns S_FALSE, WinXP returns S_OK) */
     r = IShellLinkA_SetPath(sl, "\"c:\\nonexistent\\file\"");
-    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
     ok(r==S_OK, "GetPath failed (0x%08x)\n", r);
     ok(!lstrcmp(buffer, "C:\\nonexistent\\file"), "case doesn't match\n");
 
     r = IShellLinkA_SetPath(sl, "\"c:\\foo");
-    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "\"\"c:\\foo");
-    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "c:\\foo\"");
-    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "\"\"c:\\foo\"");
-    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "\"\"c:\\foo\"\"");
-    ok(r==S_FALSE, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
 
     /* Test Getting / Setting the arguments */
     strcpy(buffer,"garbage");
