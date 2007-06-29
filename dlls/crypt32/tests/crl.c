@@ -87,22 +87,25 @@ static void init_function_pointers(void)
 static void testCreateCRL(void)
 {
     PCCRL_CONTEXT context;
+    DWORD GLE;
 
     context = CertCreateCRLContext(0, NULL, 0);
     ok(!context && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     context = CertCreateCRLContext(X509_ASN_ENCODING, NULL, 0);
-    ok(!context && GetLastError() == CRYPT_E_ASN1_EOD,
-     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    GLE = GetLastError();
+    ok(!context && (GLE == CRYPT_E_ASN1_EOD || GLE == OSS_MORE_INPUT),
+     "Expected CRYPT_E_ASN1_EOD or OSS_MORE_INPUT, got %08x\n", GLE);
     context = CertCreateCRLContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
-    ok(!context && GetLastError() == CRYPT_E_ASN1_CORRUPT,
-     "Expected CRYPT_E_ASN1_CORRUPT, got %08x\n", GetLastError());
+    GLE = GetLastError();
+    ok(!context && (GLE == CRYPT_E_ASN1_CORRUPT || GLE == OSS_DATA_ERROR),
+     "Expected CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n", GLE);
     context = CertCreateCRLContext(X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL) - 1);
-    ok(!context && (GetLastError() == CRYPT_E_ASN1_EOD ||
-     GetLastError() == CRYPT_E_ASN1_CORRUPT),
-     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT, got %08x\n",
-     GetLastError());
+    ok(!context && (GLE == CRYPT_E_ASN1_EOD || GLE == CRYPT_E_ASN1_CORRUPT ||
+     GLE == OSS_DATA_ERROR),
+     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n",
+     GLE);
     context = CertCreateCRLContext(X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL));
     ok(context != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());
@@ -120,6 +123,7 @@ static void testAddCRL(void)
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     PCCRL_CONTEXT context;
     BOOL ret;
+    DWORD GLE;
 
     if (!store) return;
 
@@ -148,11 +152,13 @@ static void testAddCRL(void)
 
     /* No CRL */
     ret = CertAddEncodedCRLToStore(0, X509_ASN_ENCODING, NULL, 0, 0, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
-     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    GLE = GetLastError();
+    ok(!ret && (GLE == CRYPT_E_ASN1_EOD || GLE == OSS_MORE_INPUT),
+     "Expected CRYPT_E_ASN1_EOD or OSS_MORE_INPUT, got %08x\n", GLE);
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, NULL, 0, 0, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
-     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    GLE = GetLastError();
+    ok(!ret && (GLE == CRYPT_E_ASN1_EOD || GLE == OSS_MORE_INPUT),
+     "Expected CRYPT_E_ASN1_EOD or OSS_MORE_INPUT, got %08x\n", GLE);
 
     /* Weird--bad add disposition leads to an access violation in Windows. */
     ret = CertAddEncodedCRLToStore(0, X509_ASN_ENCODING, signedCRL,
