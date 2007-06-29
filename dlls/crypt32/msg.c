@@ -118,8 +118,17 @@ static BOOL CDataEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
     switch (dwParamType)
     {
     case CMSG_CONTENT_PARAM:
-        FIXME("stub\n");
+    {
+        CRYPT_CONTENT_INFO info;
+        char rsa_data[] = "1.2.840.113549.1.7.1";
+
+        info.pszObjId = rsa_data;
+        info.Content.cbData = msg->bare_content_len;
+        info.Content.pbData = msg->bare_content;
+        ret = CryptEncodeObject(X509_ASN_ENCODING, PKCS_CONTENT_INFO, &info,
+         pvData, pcbData);
         break;
+    }
     case CMSG_BARE_CONTENT_PARAM:
         if (!pvData)
         {
