@@ -309,17 +309,14 @@ static void test_data_msg_update(void)
     /* Can't update a message that wasn't opened detached with final = FALSE */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
      "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
     /* Updating it with final = TRUE succeeds */
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* Any subsequent update will fail, as the last was final */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
      "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
     CryptMsgClose(msg);
@@ -329,7 +326,6 @@ static void test_data_msg_update(void)
     /* Can't update a message with no data */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-    todo_wine {
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
     /* Curiously, a valid update will now fail as well, presumably because of
@@ -338,7 +334,6 @@ static void test_data_msg_update(void)
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
      "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
-    }
     CryptMsgClose(msg);
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
@@ -346,16 +341,13 @@ static void test_data_msg_update(void)
     /* Dont appear to be able to update CMSG-DATA with non-final updates */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 }

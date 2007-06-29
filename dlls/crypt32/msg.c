@@ -58,7 +58,56 @@ static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags,
 typedef struct _CDataEncodeMsg
 {
     CryptMsgBase base;
+    DWORD        bare_content_len;
+    LPBYTE       bare_content;
 } CDataEncodeMsg;
+
+static const BYTE empty_data_content[] = { 0x04,0x00 };
+
+static void CDataEncodeMsg_Close(HCRYPTMSG hCryptMsg)
+{
+    CDataEncodeMsg *msg = (CDataEncodeMsg *)hCryptMsg;
+
+    if (msg->bare_content != empty_data_content)
+        LocalFree(msg->bare_content);
+}
+
+static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
+ DWORD cbData, BOOL fFinal)
+{
+    CDataEncodeMsg *msg = (CDataEncodeMsg *)hCryptMsg;
+    BOOL ret = FALSE;
+
+    if (msg->base.finalized)
+        SetLastError(CRYPT_E_MSG_ERROR);
+    else if (!fFinal)
+    {
+        if (msg->base.open_flags & CMSG_DETACHED_FLAG)
+            SetLastError(E_INVALIDARG);
+        else
+            SetLastError(CRYPT_E_MSG_ERROR);
+    }
+    else
+    {
+        msg->base.finalized = TRUE;
+        if (!cbData)
+            SetLastError(E_INVALIDARG);
+        else
+        {
+            CRYPT_DATA_BLOB blob = { cbData, (LPBYTE)pbData };
+
+            /* data messages don't allow non-final updates, don't bother
+             * checking whether data already exist, they can't.
+             */
+            ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
+             &blob, CRYPT_ENCODE_ALLOC_FLAG, NULL, &msg->bare_content,
+             &msg->bare_content_len);
+            if (ret && msg->base.stream_info)
+                FIXME("stream info unimplemented\n");
+        }
+    }
+    return ret;
+}
 
 static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
  LPSTR pszInnerContentObjID, PCMSG_STREAM_INFO pStreamInfo)
@@ -75,6 +124,10 @@ static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
     if (msg)
     {
         CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo);
+        msg->base.close = CDataEncodeMsg_Close;
+        msg->base.update = CDataEncodeMsg_Update;
+        msg->bare_content_len = sizeof(empty_data_content);
+        msg->bare_content = (LPBYTE)empty_data_content;
     }
     return (HCRYPTMSG)msg;
 }
