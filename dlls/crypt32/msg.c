@@ -109,6 +109,23 @@ static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
     return ret;
 }
 
+static BOOL CDataEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
+ DWORD dwIndex, void *pvData, DWORD *pcbData)
+{
+    BOOL ret = FALSE;
+
+    switch (dwParamType)
+    {
+    case CMSG_CONTENT_PARAM:
+    case CMSG_BARE_CONTENT_PARAM:
+        FIXME("stub\n");
+        break;
+    default:
+        SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+    }
+    return ret;
+}
+
 static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
  LPSTR pszInnerContentObjID, PCMSG_STREAM_INFO pStreamInfo)
 {
@@ -119,13 +136,13 @@ static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
         SetLastError(E_INVALIDARG);
         return NULL;
     }
-    FIXME("semi-stub\n");
     msg = CryptMemAlloc(sizeof(CDataEncodeMsg));
     if (msg)
     {
         CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo);
         msg->base.close = CDataEncodeMsg_Close;
         msg->base.update = CDataEncodeMsg_Update;
+        msg->base.get_param = CDataEncodeMsg_GetParam;
         msg->bare_content_len = sizeof(empty_data_content);
         msg->bare_content = (LPBYTE)empty_data_content;
     }

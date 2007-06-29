@@ -369,6 +369,7 @@ static void test_data_msg_get_param(void)
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    }
     /* But for this type of message, the signer and hash aren't applicable,
      * and the type isn't available.
      */
@@ -384,7 +385,6 @@ static void test_data_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, NULL, &size);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
-    }
 
     CryptMsgClose(msg);
 }
