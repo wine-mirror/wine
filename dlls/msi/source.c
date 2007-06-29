@@ -214,10 +214,22 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
 
     TRACE("%s %s\n", debugstr_w(szProduct), debugstr_w(szProperty));
 
-    if (!szProduct || lstrlenW(szProduct) > 39)
+    if (!szProduct || !*szProduct)
+        return ERROR_INVALID_PARAMETER;
+
+    if (lstrlenW(szProduct) != GUID_SIZE - 1 ||
+        (szProduct[0] != '{' && szProduct[GUID_SIZE - 2] != '}'))
         return ERROR_INVALID_PARAMETER;
 
     if (szValue && !pcchValue)
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwContext != MSIINSTALLCONTEXT_USERMANAGED &&
+        dwContext != MSIINSTALLCONTEXT_USERUNMANAGED &&
+        dwContext != MSIINSTALLCONTEXT_MACHINE)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!szProperty)
         return ERROR_INVALID_PARAMETER;
     
     if (dwOptions == MSICODE_PATCH)
