@@ -109,7 +109,7 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
         *ppvObject = HLNKTARGET(This);
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppvObject);
-        *ppvObject = CONPTCONT(This);
+        *ppvObject = CONPTCONT(&This->cp_container);
     }else if(IsEqualGUID(&IID_IPersistStreamInit, riid)) {
         TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppvObject);
         *ppvObject = PERSTRINIT(This);
@@ -171,7 +171,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
 
         release_nodes(This);
 
-        HTMLDocument_ConnectionPoints_Destroy(This);
+        ConnectionPointContainer_Destroy(&This->cp_container);
 
         if(This->nscontainer)
             NSContainer_Release(This->nscontainer);
@@ -1141,12 +1141,12 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     HTMLDocument_Window_Init(ret);
     HTMLDocument_Service_Init(ret);
     HTMLDocument_Hlink_Init(ret);
-    HTMLDocument_ConnectionPoints_Init(ret);
 
     ConnectionPoint_Init(&ret->cp_propnotif, ret, &IID_IPropertyNotifySink, NULL);
     ConnectionPoint_Init(&ret->cp_htmldocevents, ret, &DIID_HTMLDocumentEvents, &ret->cp_propnotif);
     ConnectionPoint_Init(&ret->cp_htmldocevents2, ret, &DIID_HTMLDocumentEvents2,
         &ret->cp_htmldocevents);
+    ConnectionPointContainer_Init(&ret->cp_container, &ret->cp_propnotif, (IUnknown*)HTMLDOC(ret));
 
     ret->nscontainer = NSContainer_Create(ret, NULL);
     ret->window = HTMLWindow_Create(ret);

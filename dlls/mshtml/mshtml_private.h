@@ -71,6 +71,13 @@ typedef enum {
     EDITMODE        
 } USERMODE;
 
+typedef struct {
+    const IConnectionPointContainerVtbl  *lpConnectionPointContainerVtbl;
+
+    ConnectionPoint *cp_list;
+    IUnknown *outer;
+} ConnectionPointContainer;
+
 struct ConnectionPoint {
     const IConnectionPointVtbl *lpConnectionPointVtbl;
 
@@ -104,7 +111,6 @@ struct HTMLDocument {
     const IOleCommandTargetVtbl           *lpOleCommandTargetVtbl;
     const IOleControlVtbl                 *lpOleControlVtbl;
     const IHlinkTargetVtbl                *lpHlinkTargetVtbl;
-    const IConnectionPointContainerVtbl   *lpConnectionPointContainerVtbl;
     const IPersistStreamInitVtbl          *lpPersistStreamInitVtbl;
 
     LONG ref;
@@ -137,6 +143,7 @@ struct HTMLDocument {
 
     DWORD update;
 
+    ConnectionPointContainer cp_container;
     ConnectionPoint cp_htmldocevents;
     ConnectionPoint cp_htmldocevents2;
     ConnectionPoint cp_propnotif;
@@ -338,11 +345,10 @@ void HTMLDocument_View_Init(HTMLDocument*);
 void HTMLDocument_Window_Init(HTMLDocument*);
 void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_Hlink_Init(HTMLDocument*);
-void HTMLDocument_ConnectionPoints_Init(HTMLDocument*);
-
-void HTMLDocument_ConnectionPoints_Destroy(HTMLDocument*);
 
 void ConnectionPoint_Init(ConnectionPoint*,HTMLDocument*,REFIID,ConnectionPoint*);
+void ConnectionPointContainer_Init(ConnectionPointContainer*,ConnectionPoint*,IUnknown*);
+void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
 
 NSContainer *NSContainer_Create(HTMLDocument*,NSContainer*);
 void NSContainer_Release(NSContainer*);
