@@ -84,6 +84,8 @@ struct ConnectionPoint {
     DWORD sinks_size;
 
     IID iid;
+
+    ConnectionPoint *next;
 };
 
 struct HTMLDocument {
@@ -339,6 +341,8 @@ void HTMLDocument_Hlink_Init(HTMLDocument*);
 void HTMLDocument_ConnectionPoints_Init(HTMLDocument*);
 
 void HTMLDocument_ConnectionPoints_Destroy(HTMLDocument*);
+
+void ConnectionPoint_Init(ConnectionPoint*,HTMLDocument*,REFIID,ConnectionPoint*);
 
 NSContainer *NSContainer_Create(HTMLDocument*,NSContainer*);
 void NSContainer_Release(NSContainer*);

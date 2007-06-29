@@ -184,13 +184,17 @@ static const IConnectionPointVtbl ConnectionPointVtbl =
     ConnectionPoint_EnumConnections
 };
 
-static void ConnectionPoint_Init(HTMLDocument *doc, REFIID riid, ConnectionPoint *cp)
+void ConnectionPoint_Init(ConnectionPoint *cp, HTMLDocument *doc, REFIID riid, ConnectionPoint *prev)
 {
     cp->lpConnectionPointVtbl = &ConnectionPointVtbl;
     cp->doc = doc;
     cp->sinks = NULL;
     cp->sinks_size = 0;
     cp->iid = *riid;
+    cp->next = NULL;
+
+    if(prev)
+        prev->next = cp;
 }
 
 static void ConnectionPoint_Destroy(ConnectionPoint *This)
@@ -238,18 +242,15 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
         REFIID riid, IConnectionPoint **ppCP)
 {
     HTMLDocument *This = CONPTCONT_THIS(iface);
+    ConnectionPoint *iter;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppCP);
 
     *ppCP = NULL;
 
-    if(IsEqualGUID(&DIID_HTMLDocumentEvents, riid)) {
-        TRACE("(%p)->(DIID_HTMLDocumentEvents %p)\n", This, ppCP);
-        *ppCP = CONPOINT(&This->cp_htmldocevents);
-    }else if(IsEqualGUID(&DIID_HTMLDocumentEvents2, riid)) {
-        TRACE("(%p)->(DIID_HTMLDocumentEvents2 %p)\n", This, ppCP);
-        *ppCP = CONPOINT(&This->cp_htmldocevents2);
-    }else if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
-        TRACE("(%p)->(IID_IPropertyNotifySink %p)\n", This, ppCP);
-        *ppCP = CONPOINT(&This->cp_propnotif);
+    for(iter = &This->cp_propnotif; iter; iter = iter->next) {
+        if(IsEqualGUID(&iter->iid, riid))
+            *ppCP = CONPOINT(iter);
     }
 
     if(*ppCP) {
@@ -257,7 +258,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
         return S_OK;
     }
 
-    FIXME("(%p)->(%s %p) unsupported riid\n", This, debugstr_guid(riid), ppCP);
+    FIXME("unsupported riid %s\n", debugstr_guid(riid));
     return CONNECT_E_NOCONNECTION;
 }
 
@@ -274,15 +275,14 @@ static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
 void HTMLDocument_ConnectionPoints_Init(HTMLDocument *This)
 {
     This->lpConnectionPointContainerVtbl = &ConnectionPointContainerVtbl;
-
-    ConnectionPoint_Init(This, &IID_IPropertyNotifySink, &This->cp_propnotif);
-    ConnectionPoint_Init(This, &DIID_HTMLDocumentEvents, &This->cp_htmldocevents);
-    ConnectionPoint_Init(This, &DIID_HTMLDocumentEvents2, &This->cp_htmldocevents2);
 }
 
 void HTMLDocument_ConnectionPoints_Destroy(HTMLDocument *This)
 {
-    ConnectionPoint_Destroy(&This->cp_propnotif);
-    ConnectionPoint_Destroy(&This->cp_htmldocevents);
-    ConnectionPoint_Destroy(&This->cp_htmldocevents2);
+    ConnectionPoint *iter = &This->cp_propnotif;
+
+    while(iter) {
+        ConnectionPoint_Destroy(iter);
+        iter = iter->next;
+    }
 }

@@ -1143,6 +1143,11 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     HTMLDocument_Hlink_Init(ret);
     HTMLDocument_ConnectionPoints_Init(ret);
 
+    ConnectionPoint_Init(&ret->cp_propnotif, ret, &IID_IPropertyNotifySink, NULL);
+    ConnectionPoint_Init(&ret->cp_htmldocevents, ret, &DIID_HTMLDocumentEvents, &ret->cp_propnotif);
+    ConnectionPoint_Init(&ret->cp_htmldocevents2, ret, &DIID_HTMLDocumentEvents2,
+        &ret->cp_htmldocevents);
+
     ret->nscontainer = NSContainer_Create(ret, NULL);
     ret->window = HTMLWindow_Create(ret);
 
