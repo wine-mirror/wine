@@ -254,6 +254,7 @@ HKLM,Software\Microsoft\DirectPlay\Service Providers\Serial Connection For Direc
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ComSpec",,"%11%\cmd.exe"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"PATH",2,"%11%;%10%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ProgramFiles",,"%16422%"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SystemDrive",2,"c:"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SYSTEMROOT",,"%10%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TEMP",,"%10%\temp"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TMP",,"%10%\temp"
