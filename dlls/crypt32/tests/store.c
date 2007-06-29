@@ -595,14 +595,16 @@ static void testRegStore(void)
     HCERTSTORE store;
     LONG rc;
     HKEY key = NULL;
-    DWORD disp;
+    DWORD disp, GLE;
 
     store = CertOpenStore(CERT_STORE_PROV_REG, 0, 0, 0, NULL);
-    ok(!store && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    GLE = GetLastError();
+    ok(!store && (GLE == ERROR_INVALID_HANDLE || GLE == ERROR_BADKEY),
+     "Expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %d\n", GLE);
     store = CertOpenStore(CERT_STORE_PROV_REG, 0, 0, 0, key);
-    ok(!store && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    GLE = GetLastError();
+    ok(!store && (GLE == ERROR_INVALID_HANDLE || GLE == ERROR_BADKEY),
+     "Expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %d\n", GLE);
 
     /* Opening up any old key works.. */
     key = HKEY_CURRENT_USER;
