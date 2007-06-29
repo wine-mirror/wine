@@ -63,12 +63,16 @@ static UINT OpenSourceKey(LPCWSTR szProduct, HKEY* key, BOOL user, BOOL create)
         rc = MSIREG_OpenProductsKey(szProduct, &rootkey, create);
 
     if (rc)
-        return rc;
+        return ERROR_UNKNOWN_PRODUCT;
 
     if (create)
         rc = RegCreateKeyW(rootkey, szSourceList, key);
     else
-        rc = RegOpenKeyW(rootkey,szSourceList, key); 
+    {
+        rc = RegOpenKeyW(rootkey,szSourceList, key);
+        if (rc != ERROR_SUCCESS)
+            rc = ERROR_BAD_CONFIGURATION;
+    }
 
     return rc;
 }
@@ -250,7 +254,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         rc = OpenSourceKey(szProduct, &sourcekey, TRUE, FALSE);
 
     if (rc != ERROR_SUCCESS)
-        return ERROR_UNKNOWN_PRODUCT;
+        return rc;
 
     if (strcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW) == 0)
     {
