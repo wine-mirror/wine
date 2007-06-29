@@ -15828,6 +15828,7 @@ fi
 
 
 
+
 for ac_func in \
 	_pclose \
 	_popen \
@@ -15857,6 +15858,7 @@ for ac_func in \
 	gettid \
 	gettimeofday \
 	getuid \
+	inet_pton \
 	kqueue \
 	lstat \
 	memmove \

@@ -1151,6 +1151,7 @@ AC_CHECK_FUNCS(\
 	gettid \
 	gettimeofday \
 	getuid \
+	inet_pton \
 	kqueue \
 	lstat \
 	memmove \
