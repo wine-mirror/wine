@@ -33,9 +33,7 @@ static BOOL (WINAPI * pCryptVerifyCertificateSignatureEx)
                         (HCRYPTPROV, DWORD, DWORD, void *, DWORD, void *, DWORD, void *);
 
 #define CRYPT_GET_PROC(func)                                       \
-    p ## func = (void *)GetProcAddress(hCrypt32, #func);           \
-    if(!p ## func)                                                 \
-        trace("GetProcAddress(hCrypt32, \"%s\") failed\n", #func); \
+    p ## func = (void *)GetProcAddress(hCrypt32, #func);
 
 static void init_function_pointers(void)
 {
@@ -968,22 +966,25 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
     DWORD size = 0;
     BOOL ret;
 
-    if(pCryptVerifyCertificateSignatureEx) {
-        ret = pCryptVerifyCertificateSignatureEx(0, 0, 0, NULL, 0, NULL, 0, NULL);
-        ok(!ret && GetLastError() == E_INVALIDARG,
-         "Expected E_INVALIDARG, got %08x\n", GetLastError());
-        ret = pCryptVerifyCertificateSignatureEx(csp, 0, 0, NULL, 0, NULL, 0, NULL);
-        ok(!ret && GetLastError() == E_INVALIDARG,
-         "Expected E_INVALIDARG, got %08x\n", GetLastError());
-        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING, 0, NULL, 0,
-         NULL, 0, NULL);
-        ok(!ret && GetLastError() == E_INVALIDARG,
-         "Expected E_INVALIDARG, got %08x\n", GetLastError());
-        /* This crashes
-        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
-         CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, NULL, 0, NULL, 0, NULL);
-         */
+    if (!pCryptVerifyCertificateSignatureEx)
+    {
+        skip("no CryptVerifyCertificateSignatureEx support\n");
+        return;
     }
+    ret = pCryptVerifyCertificateSignatureEx(0, 0, 0, NULL, 0, NULL, 0, NULL);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    ret = pCryptVerifyCertificateSignatureEx(csp, 0, 0, NULL, 0, NULL, 0, NULL);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING, 0, NULL, 0,
+     NULL, 0, NULL);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    /* This crashes
+    ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+     CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, NULL, 0, NULL, 0, NULL);
+     */
     info.ToBeSigned.cbData = toBeSigned->cbData;
     info.ToBeSigned.pbData = toBeSigned->pbData;
     info.SignatureAlgorithm.pszObjId = (LPSTR)sigOID;
@@ -999,34 +1000,32 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
         CRYPT_DATA_BLOB certBlob = { 0, NULL };
         PCERT_PUBLIC_KEY_INFO pubKeyInfo = NULL;
 
-        if(pCryptVerifyCertificateSignatureEx) {
-            ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
-             CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
-            ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
-             "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
-            certBlob.cbData = 1;
-            certBlob.pbData = (void *)0xdeadbeef;
-            ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
-             CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
-            ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-             "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
-            certBlob.cbData = size;
-            certBlob.pbData = cert;
-            ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
-             CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
-            ok(!ret && GetLastError() == E_INVALIDARG,
-             "Expected E_INVALIDARG, got %08x\n", GetLastError());
-            ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
-             CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
-             CRYPT_VERIFY_CERT_SIGN_ISSUER_NULL, NULL, 0, NULL);
-            ok(!ret && GetLastError() == E_INVALIDARG,
-             "Expected E_INVALIDARG, got %08x\n", GetLastError());
-            /* This crashes
-            ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
-             CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
-             CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY, NULL, 0, NULL);
-             */
-        }
+        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+         CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
+        ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+         "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+        certBlob.cbData = 1;
+        certBlob.pbData = (void *)0xdeadbeef;
+        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+         CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+        certBlob.cbData = size;
+        certBlob.pbData = cert;
+        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+         CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+         CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
+         CRYPT_VERIFY_CERT_SIGN_ISSUER_NULL, NULL, 0, NULL);
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+        /* This crashes
+        ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
+         CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
+         CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY, NULL, 0, NULL);
+         */
         CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE, X509_ASN_ENCODING,
          (LPSTR)sigOID, 0, NULL, NULL, &size);
         pubKeyInfo = HeapAlloc(GetProcessHeap(), 0, size);
@@ -1035,7 +1034,7 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
             ret = CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE,
              X509_ASN_ENCODING, (LPSTR)sigOID, 0, NULL, pubKeyInfo, &size);
             ok(ret, "CryptExportKey failed: %08x\n", GetLastError());
-            if (ret && pCryptVerifyCertificateSignatureEx)
+            if (ret)
             {
                 ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
                  CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
