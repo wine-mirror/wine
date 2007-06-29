@@ -1074,8 +1074,6 @@ static int WS2_recv( int fd, struct iovec* iov, int count,
     struct msghdr hdr;
     union generic_unix_sockaddr unix_sockaddr;
     int n;
-    TRACE( "fd %d, iovec %p, count %d addr %s, len %p, flags %x\n",
-           fd, iov, count, debugstr_sockaddr(lpFrom), lpFromlen, *lpFlags);
 
     hdr.msg_name = NULL;
 
@@ -1099,10 +1097,7 @@ static int WS2_recv( int fd, struct iovec* iov, int count,
 #endif
 
     if ( (n = recvmsg(fd, &hdr, *lpFlags)) == -1 )
-    {
-        TRACE( "recvmsg error %d\n", errno);
         return -1;
-    }
 
     if ( lpFrom &&
          ws_sockaddr_u2ws( &unix_sockaddr.addr, lpFrom, lpFromlen ) != 0 )
@@ -1110,10 +1105,8 @@ static int WS2_recv( int fd, struct iovec* iov, int count,
         /* The from buffer was too small, but we read the data
          * anyway. Is that really bad?
          */
-        WARN( "Address buffer too small\n" );
     }
 
-    TRACE("-> %d\n", n);
     return n;
 }
 
@@ -1127,8 +1120,6 @@ static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS stat
     ws2_async* wsa = user;
     int result = 0, fd;
 
-    TRACE( "(%p %p %x)\n", wsa, iosb, status );
-
     switch (status)
     {
     case STATUS_ALERTED:
@@ -1141,7 +1132,6 @@ static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS stat
         if (result >= 0)
         {
             status = STATUS_SUCCESS;
-            TRACE( "received %d bytes\n", result );
             _enable_event( wsa->hSocket, FD_READ, 0, 0 );
         }
         else
@@ -1150,13 +1140,11 @@ static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS stat
             {
                 status = STATUS_PENDING;
                 _enable_event( wsa->hSocket, FD_READ, 0, 0 );
-                TRACE( "still pending\n" );
             }
             else
             {
                 result = 0;
                 status = wsaErrno(); /* FIXME: is this correct ???? */
-                TRACE( "Error: %x\n", status );
             }
         }
         break;
@@ -1180,10 +1168,9 @@ static int WS2_send( int fd, struct iovec* iov, int count,
     struct msghdr hdr;
     union generic_unix_sockaddr unix_addr;
 
-    TRACE( "fd %d, iovec %p, count %d, addr %s, len %d, flags %x\n",
-           fd, iov, count, debugstr_sockaddr(to), tolen, dwFlags);
 
     hdr.msg_name = NULL;
+    hdr.msg_namelen = 0;
 
     if ( to )
     {
@@ -1195,10 +1182,9 @@ static int WS2_send( int fd, struct iovec* iov, int count,
             return -1;
         }
 
-#ifdef HAVE_IPX
+#if defined(HAVE_IPX) && defined(SOL_IPX)
         if(to->sa_family == WS_AF_IPX)
         {
-#ifdef SOL_IPX
             struct sockaddr_ipx* uipx = (struct sockaddr_ipx*)hdr.msg_name;
             int val=0;
             unsigned int len=sizeof(int);
@@ -1209,17 +1195,10 @@ static int WS2_send( int fd, struct iovec* iov, int count,
              *  ipx type in the sockaddr_opx structure with the stored value.
              */
             if(getsockopt(fd, SOL_IPX, IPX_TYPE, &val, &len) != -1)
-            {
-                TRACE("ptype: %d (fd:%d)\n", val, fd);
                 uipx->sipx_type = val;
-            }
-#endif
         }
 #endif
-
     }
-    else
-        hdr.msg_namelen = 0;
 
     hdr.msg_iov = iov;
     hdr.msg_iovlen = count;
@@ -1245,8 +1224,6 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
     ws2_async* wsa = user;
     int result = 0, fd;
 
-    TRACE( "(%p %p %x)\n", wsa, iosb, status );
-
     switch (status)
     {
     case STATUS_ALERTED:
@@ -1260,7 +1237,6 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
         if (result >= 0)
         {
             status = STATUS_SUCCESS;
-            TRACE( "sent %d bytes\n", result );
             _enable_event( wsa->hSocket, FD_WRITE, 0, 0 );
         }
         else
@@ -1269,7 +1245,6 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
             {
                 status = STATUS_PENDING;
                 _enable_event( wsa->hSocket, FD_WRITE, 0, 0 );
-                TRACE( "still pending\n" );
             }
             else
             {
@@ -1277,7 +1252,6 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
                    later in NtStatusToWSAError () */
                 status = wsaErrno();
                 result = 0;
-                TRACE( "Error: %x\n", status );
             }
         }
         break;
@@ -1300,7 +1274,6 @@ static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS 
     ws2_async* wsa = user;
     int fd, err = 1;
 
-    TRACE( "async %p %d\n", wsa, wsa->type );
     switch (status)
     {
     case STATUS_ALERTED:
