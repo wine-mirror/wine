@@ -993,13 +993,10 @@ cleanup:
     HeapFree( GetProcessHeap(), 0, escaped_path );
     HeapFree( GetProcessHeap(), 0, escaped_description );
 
-    if (r)
-    {
+    if (r && !bWait)
         WINE_ERR("failed to fork and exec wineshelllink\n" );
-        return FALSE;
-    }
 
-    return TRUE;
+    return ( r == 0 );
 }
 
 static BOOL WaitForParentProcess( void )
