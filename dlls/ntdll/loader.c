@@ -1806,7 +1806,11 @@ NTSTATUS WINAPI LdrGetDllHandle( LPCWSTR load_path, ULONG flags, const UNICODE_S
         if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
         if (status != STATUS_BUFFER_TOO_SMALL) break;
         /* grow the buffer and retry */
-        if (!(filename = RtlAllocateHeap( GetProcessHeap(), 0, size ))) return STATUS_NO_MEMORY;
+        if (!(filename = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+        {
+            status = STATUS_NO_MEMORY;
+            break;
+        }
     }
 
     if (status == STATUS_SUCCESS)
