@@ -3767,9 +3767,11 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     if (GetLastError() == WSAEACCES) /* raw socket denied */
     {
         if (type == SOCK_RAW)
-            MESSAGE("WARNING: Trying to create a socket of type SOCK_RAW, will fail unless running as root\n");
+            MESSAGE("WARNING: Trying to create a socket of type SOCK_RAW, this"
+                    " will fail unless you have special permissions.\n");
         else
-            MESSAGE("WS_SOCKET: not enough privileges to create socket, try running as root\n");
+            MESSAGE("WS_SOCKET: Failed to create socket, this requires"
+                    " special permissions.\n");
         SetLastError(WSAESOCKTNOSUPPORT);
     }
 
