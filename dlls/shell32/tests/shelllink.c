@@ -495,6 +495,7 @@ static void test_load_save(void)
     char mydir[MAX_PATH];
     char realpath[MAX_PATH];
     char* p;
+    HANDLE hf;
     DWORD r;
 
     /* Save an empty .lnk file */
@@ -557,6 +558,37 @@ static void test_load_save(void)
     SearchPathA( NULL, desc.path, NULL, MAX_PATH, realpath, NULL);
     desc.path=realpath;
     check_lnk(lnkfile, &desc, 0x0);
+
+    /* Create a temporary non-executable file */
+    r=GetTempPath(sizeof(mypath), mypath);
+    ok(r>=0 && r<sizeof(mypath), "GetTempPath failed (%d), err %d\n", r, GetLastError());
+    r=GetLongPathName(mypath, mydir, sizeof(mydir));
+    ok(r>=0 && r<sizeof(mydir), "GetLongPathName failed (%d), err %d\n", r, GetLastError());
+    p=strrchr(mydir, '\\');
+    if (p)
+        *p='\0';
+
+    strcpy(mypath, mydir);
+    strcat(mypath, "\\test.txt");
+    hf = CreateFile(mypath, GENERIC_WRITE, 0, NULL,
+                    CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    CloseHandle(hf);
+
+    /* Overwrite the existing lnk file and test link to an existing non-executable file */
+    desc.description="non-executable file";
+    desc.workdir=mydir;
+    desc.path=mypath;
+    desc.pidl=NULL;
+    desc.arguments="";
+    desc.showcmd=SW_SHOWNORMAL;
+    desc.icon=mypath;
+    desc.icon_id=0;
+    desc.hotkey=0x1234;
+    create_lnk(lnkfile, &desc, 0);
+    check_lnk(lnkfile, &desc, 0x4);
+
+    r = DeleteFileA(mypath);
+    ok(r, "failed to delete file %s (%d)\n", mypath, GetLastError());
 
     /* FIXME: Also test saving a .lnk pointing to a pidl that cannot be
      * represented as a path.
