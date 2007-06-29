@@ -81,7 +81,7 @@ typedef struct {
 struct ConnectionPoint {
     const IConnectionPointVtbl *lpConnectionPointVtbl;
 
-    HTMLDocument *doc;
+    IConnectionPointContainer *container;
 
     union {
         IUnknown *unk;
@@ -346,7 +346,7 @@ void HTMLDocument_Window_Init(HTMLDocument*);
 void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_Hlink_Init(HTMLDocument*);
 
-void ConnectionPoint_Init(ConnectionPoint*,HTMLDocument*,REFIID,ConnectionPoint*);
+void ConnectionPoint_Init(ConnectionPoint*,IConnectionPointContainer*,REFIID,ConnectionPoint*);
 void ConnectionPointContainer_Init(ConnectionPointContainer*,ConnectionPoint*,IUnknown*);
 void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
 

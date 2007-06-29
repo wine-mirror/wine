@@ -75,13 +75,13 @@ static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
 static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    return IHTMLDocument2_AddRef(HTMLDOC(This->doc));
+    return IConnectionPointContainer_AddRef(This->container);
 }
 
 static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    return IHTMLDocument2_Release(HTMLDOC(This->doc));
+    return IConnectionPointContainer_Release(This->container);
 }
 
 static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *pIID)
@@ -107,7 +107,7 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
     if(!ppCPC)
         return E_POINTER;
 
-    *ppCPC = CONPTCONT(&This->doc->cp_container);
+    *ppCPC = This->container;
     IConnectionPointContainer_AddRef(*ppCPC);
     return S_OK;
 }
@@ -184,10 +184,11 @@ static const IConnectionPointVtbl ConnectionPointVtbl =
     ConnectionPoint_EnumConnections
 };
 
-void ConnectionPoint_Init(ConnectionPoint *cp, HTMLDocument *doc, REFIID riid, ConnectionPoint *prev)
+void ConnectionPoint_Init(ConnectionPoint *cp, IConnectionPointContainer *container,
+        REFIID riid, ConnectionPoint *prev)
 {
     cp->lpConnectionPointVtbl = &ConnectionPointVtbl;
-    cp->doc = doc;
+    cp->container = container;
     cp->sinks = NULL;
     cp->sinks_size = 0;
     cp->iid = *riid;
