@@ -1191,16 +1191,6 @@ static void testFileStore(void)
     DeleteFileW(filename);
 }
 
-static void checkFileStoreFailure(LPCWSTR filename, DWORD dwEncodingType,
- DWORD dwFlags, DWORD expectedError)
-{
-    HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_FILENAME_W,
-     dwEncodingType, 0, dwFlags, filename);
-
-    ok(!store && GetLastError() == expectedError,
-     "Expected %08x, got %08x\n", expectedError, GetLastError());
-}
-
 static BOOL initFileFromData(LPCWSTR filename, const BYTE *pb, DWORD cb)
 {
     HANDLE file = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
@@ -1225,17 +1215,23 @@ static void testFileNameStore(void)
     WCHAR filename[MAX_PATH];
     HCERTSTORE store;
     BOOL ret;
+    DWORD GLE;
 
-    checkFileStoreFailure(NULL, 0, 0, ERROR_PATH_NOT_FOUND);
+    store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0, 0, NULL);
+    GLE = GetLastError();
+    ok(!store && (GLE == ERROR_PATH_NOT_FOUND || GLE == ERROR_INVALID_PARAMETER),
+     "Expected ERROR_PATH_NOT_FOUND or ERROR_INVALID_PARAMETER, got %08x\n",
+     GLE);
 
     if (!GetTempFileNameW(szDot, szPrefix, 0, filename))
        return;
     DeleteFileW(filename);
 
     /* The two flags are mutually exclusive */
-    checkFileStoreFailure(filename, 0,
-     CERT_FILE_STORE_COMMIT_ENABLE_FLAG | CERT_STORE_READONLY_FLAG,
-     E_INVALIDARG);
+    store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0,
+     CERT_FILE_STORE_COMMIT_ENABLE_FLAG | CERT_STORE_READONLY_FLAG, filename);
+    ok(!store && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
 
     /* In all of the following tests, the encoding type seems to be ignored */
     if (initFileFromData(filename, bigCert, sizeof(bigCert)))
