@@ -135,10 +135,10 @@ static void set_parsecomplete(HTMLDocument *doc)
     if(doc->usermode == EDITMODE)
         init_editor(doc);
 
-    call_property_onchanged(doc->cp_propnotif, 1005);
+    call_property_onchanged(&doc->cp_propnotif, 1005);
 
     doc->readystate = READYSTATE_INTERACTIVE;
-    call_property_onchanged(doc->cp_propnotif, DISPID_READYSTATE);
+    call_property_onchanged(&doc->cp_propnotif, DISPID_READYSTATE);
 
     if(doc->client)
         IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
@@ -163,7 +163,7 @@ static void set_parsecomplete(HTMLDocument *doc)
     }
 
     doc->readystate = READYSTATE_COMPLETE;
-    call_property_onchanged(doc->cp_propnotif, DISPID_READYSTATE);
+    call_property_onchanged(&doc->cp_propnotif, DISPID_READYSTATE);
 
     if(doc->frame) {
         static const WCHAR wszDone[] = {'D','o','n','e',0};

@@ -71,6 +71,21 @@ typedef enum {
     EDITMODE        
 } USERMODE;
 
+struct ConnectionPoint {
+    const IConnectionPointVtbl *lpConnectionPointVtbl;
+
+    HTMLDocument *doc;
+
+    union {
+        IUnknown *unk;
+        IDispatch *disp;
+        IPropertyNotifySink *propnotif;
+    } *sinks;
+    DWORD sinks_size;
+
+    IID iid;
+};
+
 struct HTMLDocument {
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
     const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
@@ -120,9 +135,9 @@ struct HTMLDocument {
 
     DWORD update;
 
-    ConnectionPoint *cp_htmldocevents;
-    ConnectionPoint *cp_htmldocevents2;
-    ConnectionPoint *cp_propnotif;
+    ConnectionPoint cp_htmldocevents;
+    ConnectionPoint cp_htmldocevents2;
+    ConnectionPoint cp_propnotif;
 
     HTMLDOMNode *nodes;
 };

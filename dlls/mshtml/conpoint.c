@@ -36,21 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define CONPOINT(x) ((IConnectionPoint*) &(x)->lpConnectionPointVtbl);
 
-struct ConnectionPoint {
-    const IConnectionPointVtbl *lpConnectionPointVtbl;
-
-    HTMLDocument *doc;
-
-    union {
-        IUnknown *unk;
-        IDispatch *disp;
-        IPropertyNotifySink *propnotif;
-    } *sinks;
-    DWORD sinks_size;
-
-    IID iid;
-};
-
 void call_property_onchanged(ConnectionPoint *This, DISPID dispid)
 {
     DWORD i;
@@ -199,17 +184,13 @@ static const IConnectionPointVtbl ConnectionPointVtbl =
     ConnectionPoint_EnumConnections
 };
 
-static void ConnectionPoint_Create(HTMLDocument *doc, REFIID riid, ConnectionPoint **cp)
+static void ConnectionPoint_Init(HTMLDocument *doc, REFIID riid, ConnectionPoint *cp)
 {
-    ConnectionPoint *ret = mshtml_alloc(sizeof(ConnectionPoint));
-
-    ret->lpConnectionPointVtbl = &ConnectionPointVtbl;
-    ret->doc = doc;
-    ret->sinks = NULL;
-    ret->sinks_size = 0;
-    memcpy(&ret->iid, riid, sizeof(IID));
-
-    *cp = ret;
+    cp->lpConnectionPointVtbl = &ConnectionPointVtbl;
+    cp->doc = doc;
+    cp->sinks = NULL;
+    cp->sinks_size = 0;
+    cp->iid = *riid;
 }
 
 static void ConnectionPoint_Destroy(ConnectionPoint *This)
@@ -222,7 +203,6 @@ static void ConnectionPoint_Destroy(ConnectionPoint *This)
     }
 
     mshtml_free(This->sinks);
-    mshtml_free(This);
 }
 
 #define CONPTCONT_THIS(iface) DEFINE_THIS(HTMLDocument, ConnectionPointContainer, iface)
@@ -263,13 +243,13 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
 
     if(IsEqualGUID(&DIID_HTMLDocumentEvents, riid)) {
         TRACE("(%p)->(DIID_HTMLDocumentEvents %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->cp_htmldocevents);
+        *ppCP = CONPOINT(&This->cp_htmldocevents);
     }else if(IsEqualGUID(&DIID_HTMLDocumentEvents2, riid)) {
         TRACE("(%p)->(DIID_HTMLDocumentEvents2 %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->cp_htmldocevents2);
+        *ppCP = CONPOINT(&This->cp_htmldocevents2);
     }else if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
         TRACE("(%p)->(IID_IPropertyNotifySink %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->cp_propnotif);
+        *ppCP = CONPOINT(&This->cp_propnotif);
     }
 
     if(*ppCP) {
@@ -295,14 +275,14 @@ void HTMLDocument_ConnectionPoints_Init(HTMLDocument *This)
 {
     This->lpConnectionPointContainerVtbl = &ConnectionPointContainerVtbl;
 
-    ConnectionPoint_Create(This, &IID_IPropertyNotifySink, &This->cp_propnotif);
-    ConnectionPoint_Create(This, &DIID_HTMLDocumentEvents, &This->cp_htmldocevents);
-    ConnectionPoint_Create(This, &DIID_HTMLDocumentEvents2, &This->cp_htmldocevents2);
+    ConnectionPoint_Init(This, &IID_IPropertyNotifySink, &This->cp_propnotif);
+    ConnectionPoint_Init(This, &DIID_HTMLDocumentEvents, &This->cp_htmldocevents);
+    ConnectionPoint_Init(This, &DIID_HTMLDocumentEvents2, &This->cp_htmldocevents2);
 }
 
 void HTMLDocument_ConnectionPoints_Destroy(HTMLDocument *This)
 {
-    ConnectionPoint_Destroy(This->cp_propnotif);
-    ConnectionPoint_Destroy(This->cp_htmldocevents);
-    ConnectionPoint_Destroy(This->cp_htmldocevents2);
+    ConnectionPoint_Destroy(&This->cp_propnotif);
+    ConnectionPoint_Destroy(&This->cp_htmldocevents);
+    ConnectionPoint_Destroy(&This->cp_htmldocevents2);
 }
