@@ -2187,8 +2187,6 @@ static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS st
     NTSTATUS ret = STATUS_SUCCESS;
     int len, action, i;
 
-    TRACE("%p %p %08x\n", info, iosb, status);
-
     SERVER_START_REQ( read_change )
     {
         req->handle = info->FileHandle;
@@ -2218,9 +2216,6 @@ static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS st
         pfni->Action = action;
         pfni->FileNameLength = len * sizeof (WCHAR);
         pfni->FileName[len] = 0;
-
-        TRACE("action = %d name = %s\n", pfni->Action,
-              debugstr_w(pfni->FileName) );
         len = sizeof (*pfni) - sizeof (DWORD) + pfni->FileNameLength;
     }
     else
