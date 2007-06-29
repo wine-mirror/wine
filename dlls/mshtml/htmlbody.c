@@ -41,6 +41,8 @@ typedef struct {
     HTMLTextContainer text_container;
 
     ConnectionPointContainer cp_container;
+    ConnectionPoint cp_propnotif;
+    ConnectionPoint cp_txtcontevents;
 
     HTMLElement *element;
     nsIDOMHTMLBodyElement *nsbody;
@@ -493,7 +495,11 @@ void HTMLBodyElement_Create(HTMLElement *element)
 
     HTMLTextContainer_Init(&ret->text_container, element);
 
-    ConnectionPointContainer_Init(&ret->cp_container, NULL, (IUnknown*)HTMLBODY(ret));
+    ConnectionPoint_Init(&ret->cp_propnotif, CONPTCONT(&ret->cp_container),
+            &IID_IPropertyNotifySink, NULL);
+    ConnectionPoint_Init(&ret->cp_txtcontevents, CONPTCONT(&ret->cp_container),
+            &DIID_HTMLTextContainerEvents, &ret->cp_propnotif);
+    ConnectionPointContainer_Init(&ret->cp_container, &ret->cp_propnotif, (IUnknown*)HTMLBODY(ret));
 
     nsres = nsIDOMHTMLElement_QueryInterface(element->nselem, &IID_nsIDOMHTMLBodyElement,
                                              (void**)&ret->nsbody);
