@@ -4429,7 +4429,6 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
                                LPINT lpAddressLength)
 {
     INT res=0;
-    struct in_addr inetaddr;
     LPSTR workBuffer=NULL,ptrPort;
 
     TRACE( "(%s, %x, %p, %p, %p)\n", AddressString, AddressFamily, lpProtocolInfo,
@@ -4437,63 +4436,84 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
 
     if (!lpAddressLength || !lpAddress) return SOCKET_ERROR;
 
-    if (AddressString)
+    if (!AddressString)
     {
-        workBuffer = HeapAlloc( GetProcessHeap(), 0, strlen(AddressString)+1 );
-        if (workBuffer)
-        {
-            strcpy(workBuffer,AddressString);
-            switch (AddressFamily)
-            {
-            case AF_INET:
-                /* caller wants to know the size of the socket buffer */
-                if (*lpAddressLength < sizeof(SOCKADDR_IN))
-                {
-                    *lpAddressLength = sizeof(SOCKADDR_IN);
-                    res = WSAEFAULT;
-                }
-                else
-                {
-                    /* caller wants to translate an AddressString into a SOCKADDR */
-                    if (lpAddress)
-                    {
-                        memset(lpAddress,0,sizeof(SOCKADDR_IN));
-                        ((LPSOCKADDR_IN)lpAddress)->sin_family = AF_INET;
-                        ptrPort = strchr(workBuffer,':');
-                        if (ptrPort)
-                        {
-                            ((LPSOCKADDR_IN)lpAddress)->sin_port = (WS_u_short)atoi(ptrPort+1);
-                            *ptrPort = '\0';
-                        }
-                        else
-                            ((LPSOCKADDR_IN)lpAddress)->sin_port = 0;
-                        if (inet_aton(workBuffer, &inetaddr) > 0)
-                        {
-                            ((LPSOCKADDR_IN)lpAddress)->sin_addr.WS_s_addr = inetaddr.s_addr;
-                            res = 0;
-                        }
-                        else
-                            res = WSAEINVAL;
-                    }
-                }
-                if (lpProtocolInfo)
-                    FIXME("(%s, %x, %p, %p, %p) - ProtocolInfo not implemented!\n",
-                        AddressString, AddressFamily,
-                        lpProtocolInfo, lpAddress, lpAddressLength);
+        WSASetLastError(WSAEINVAL);
+        return SOCKET_ERROR;
+    }
 
-                break;
-            default:
-                FIXME("(%s, %x, %p, %p, %p) - AddressFamiliy not implemented!\n",
-                    AddressString, AddressFamily,
-                    lpProtocolInfo, lpAddress, lpAddressLength);
-            }
-            HeapFree( GetProcessHeap(), 0, workBuffer );
+    if (lpProtocolInfo)
+        FIXME("ProtocolInfo not implemented.\n");
+
+    workBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                            strlen(AddressString) + 1);
+    if (!workBuffer)
+    {
+        WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
+        return SOCKET_ERROR;
+    }
+
+    strcpy(workBuffer, AddressString);
+
+    switch(AddressFamily)
+    {
+    case AF_INET:
+    {
+        struct in_addr inetaddr;
+
+        /* If lpAddressLength is too small, tell caller the size we need */
+        if (*lpAddressLength < sizeof(SOCKADDR_IN))
+        {
+            *lpAddressLength = sizeof(SOCKADDR_IN);
+            res = WSAEFAULT;
+            break;
+        }
+        memset(lpAddress, 0, sizeof(SOCKADDR_IN));
+
+        ((LPSOCKADDR_IN)lpAddress)->sin_family = AF_INET;
+
+        ptrPort = strchr(workBuffer, ':');
+        if(ptrPort)
+        {
+            ((LPSOCKADDR_IN)lpAddress)->sin_port = (WS_u_short)atoi(ptrPort+1);
+            *ptrPort = '\0';
         }
         else
-            res = WSA_NOT_ENOUGH_MEMORY;
+        {
+            ((LPSOCKADDR_IN)lpAddress)->sin_port = 0;
+        }
+
+        if(inet_aton(workBuffer, &inetaddr) > 0)
+        {
+            ((LPSOCKADDR_IN)lpAddress)->sin_addr.WS_s_addr = inetaddr.s_addr;
+            res = 0;
+        }
+        else
+            res = WSAEINVAL;
+
+        break;
+
     }
-    else
+    case AF_INET6:
+    {
+        /* If lpAddressLength is too small, tell caller the size we need */
+        if (*lpAddressLength < sizeof(SOCKADDR_IN6))
+        {
+            *lpAddressLength = sizeof(SOCKADDR_IN6);
+            res = WSAEFAULT;
+            break;
+        }
+        FIXME("We don't support IPv6 yet.\n");
         res = WSAEINVAL;
+        break;
+    }
+    default:
+        /* According to MSDN, only AF_INET and AF_INET6 are supported. */
+        TRACE("Unsupported address family specified: %d.\n", AddressFamily);
+        res = WSAEINVAL;
+    }
+
+    HeapFree(GetProcessHeap(), 0, workBuffer);
 
     if (!res) return 0;
     WSASetLastError(res);
