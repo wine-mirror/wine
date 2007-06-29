@@ -280,6 +280,26 @@ static void test_msg_close(void)
     ok(ret, "CryptMsgClose failed: %x\n", GetLastError());
 }
 
+static void check_param(LPCSTR test, HCRYPTMSG msg, DWORD param,
+ const BYTE *expected, DWORD expectedSize)
+{
+    DWORD size;
+    LPBYTE buf;
+    BOOL ret;
+
+    size = 0;
+    ret = CryptMsgGetParam(msg, param, 0, NULL, &size);
+    ok(ret, "%s: CryptMsgGetParam failed: %08x\n", test, GetLastError());
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = CryptMsgGetParam(msg, param, 0, buf, &size);
+    ok(ret, "%s: CryptMsgGetParam failed: %08x\n", test, GetLastError());
+    ok(size == expectedSize, "%s: expected size %d, got %d\n", test,
+     expectedSize, size);
+    if (size)
+        ok(!memcmp(buf, expected, size), "%s: unexpected data\n", test);
+    HeapFree(GetProcessHeap(), 0, buf);
+}
+
 static void test_data_msg_open(void)
 {
     HCRYPTMSG msg;
@@ -389,11 +409,63 @@ static void test_data_msg_get_param(void)
     CryptMsgClose(msg);
 }
 
+static const BYTE dataEmptyBareContent[] = { 0x04,0x00 };
+static const BYTE dataEmptyContent[] = {
+0x30,0x0f,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x01,0xa0,0x02,
+0x04,0x00 };
+static const BYTE dataBareContent[] = { 0x04,0x04,0x01,0x02,0x03,0x04 };
+static const BYTE dataContent[] = {
+0x30,0x13,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x01,0xa0,0x06,
+0x04,0x04,0x01,0x02,0x03,0x04 };
+
+static void test_data_msg_encoding(void)
+{
+    HCRYPTMSG msg;
+    BOOL ret;
+
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
+     NULL);
+    todo_wine {
+    check_param("data empty bare content", msg, CMSG_BARE_CONTENT_PARAM,
+     dataEmptyBareContent, sizeof(dataEmptyBareContent));
+    check_param("data empty content", msg, CMSG_CONTENT_PARAM, dataEmptyContent,
+     sizeof(dataEmptyContent));
+    }
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    todo_wine {
+    check_param("data bare content", msg, CMSG_BARE_CONTENT_PARAM,
+     dataBareContent, sizeof(dataBareContent));
+    check_param("data content", msg, CMSG_CONTENT_PARAM, dataContent,
+     sizeof(dataContent));
+    }
+    CryptMsgClose(msg);
+    /* Same test, but with CMSG_BARE_CONTENT_FLAG set */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_BARE_CONTENT_FLAG,
+     CMSG_DATA, NULL, NULL, NULL);
+    todo_wine {
+    check_param("data empty bare content", msg, CMSG_BARE_CONTENT_PARAM,
+     dataEmptyBareContent, sizeof(dataEmptyBareContent));
+    check_param("data empty content", msg, CMSG_CONTENT_PARAM, dataEmptyContent,
+     sizeof(dataEmptyContent));
+    }
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    todo_wine {
+    check_param("data bare content", msg, CMSG_BARE_CONTENT_PARAM,
+     dataBareContent, sizeof(dataBareContent));
+    check_param("data content", msg, CMSG_CONTENT_PARAM, dataContent,
+     sizeof(dataContent));
+    }
+    CryptMsgClose(msg);
+}
+
 static void test_data_msg(void)
 {
     test_data_msg_open();
     test_data_msg_update();
     test_data_msg_get_param();
+    test_data_msg_encoding();
 }
 
 START_TEST(msg)
