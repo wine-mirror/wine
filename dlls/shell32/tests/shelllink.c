@@ -586,7 +586,7 @@ static void test_load_save(void)
     desc.icon_id=0;
     desc.hotkey=0x1234;
     create_lnk(lnkfile, &desc, 0);
-    check_lnk(lnkfile, &desc, 0x4);
+    check_lnk(lnkfile, &desc, 0x0);
 
     r = DeleteFileA(mypath);
     ok(r, "failed to delete file %s (%d)\n", mypath, GetLastError());
