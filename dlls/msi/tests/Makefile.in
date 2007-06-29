@@ -14,6 +14,7 @@ CTESTS = \
 	msi.c \
 	package.c \
 	record.c \
+	source.c \
 	suminfo.c
 
 @MAKE_TEST_RULES@

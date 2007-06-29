@@ -262,7 +262,7 @@ static void test_filehash(void)
 }
 
 /* copied from dlls/msi/registry.c */
-BOOL squash_guid(LPCWSTR in, LPWSTR out)
+static BOOL squash_guid(LPCWSTR in, LPWSTR out)
 {
     DWORD i,n=1;
     GUID guid;
