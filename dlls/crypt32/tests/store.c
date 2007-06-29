@@ -99,6 +99,7 @@ static void testMemStore(void)
     HCERTSTORE store1, store2;
     PCCERT_CONTEXT context;
     BOOL ret;
+    DWORD GLE;
 
     /* NULL provider */
     store1 = CertOpenStore(0, 0, 0, 0, NULL);
@@ -124,13 +125,15 @@ static void testMemStore(void)
     context = NULL;
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING, emptyCert,
      sizeof(emptyCert), CERT_STORE_ADD_ALWAYS, &context);
-    /* Windows returns CRYPT_E_ASN1_EOD, but accept CRYPT_E_ASN1_CORRUPT as
-     * well (because matching errors is tough in this case)
+    /* Windows returns CRYPT_E_ASN1_EOD or OSS_DATA_ERROR, but accept
+     * CRYPT_E_ASN1_CORRUPT as well (because matching errors is tough in this
+     * case)
      */
-    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD || GetLastError() ==
-     CRYPT_E_ASN1_CORRUPT),
-     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT, got %08x\n",
-     GetLastError());
+    GLE = GetLastError();
+    ok(!ret && (GLE == CRYPT_E_ASN1_EOD || GLE == CRYPT_E_ASN1_CORRUPT ||
+     GLE == OSS_DATA_ERROR),
+     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n",
+     GLE);
     /* add a "signed" cert--the signature isn't a real signature, so this adds
      * without any check of the signature's validity
      */
@@ -152,10 +155,11 @@ static void testMemStore(void)
     /* try adding a "signed" CRL as a cert */
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING,
      signedCRL, sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, &context);
-    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG || GetLastError() ==
-     CRYPT_E_ASN1_CORRUPT),
-     "Expected CRYPT_E_ASN1_BADTAG or CRYPT_E_ASN1_CORRUPT, got %08x\n",
-     GetLastError());
+    GLE = GetLastError();
+    ok(!ret && (GLE == CRYPT_E_ASN1_BADTAG || GLE == CRYPT_E_ASN1_CORRUPT ||
+     GLE == OSS_DATA_ERROR),
+     "Expected CRYPT_E_ASN1_BADTAG or CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n",
+     GLE);
     /* add a cert to store1 */
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING, bigCert,
      sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
