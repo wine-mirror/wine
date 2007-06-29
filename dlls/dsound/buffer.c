@@ -444,13 +444,11 @@ DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This, DWORD pplay, DWORD p
 	TRACE("this back-offset=%d\n", pmix);
 
 	/* sanity */
-	if(pmix > This->buflen){
-		ERR("Bad length in CalcPlayPosition!\n");
-		return 0;
-	}
+	if(pmix > This->buflen)
+		WARN("Mixed length (%d) is longer then buffer length (%d)\n", pmix, This->buflen);
 
 	/* subtract from our last mixed position */
-	if (bplay < pmix) bplay += This->buflen; /* wraparound */
+	while (bplay < pmix) bplay += This->buflen; /* wraparound */
 	bplay -= pmix;
 
 	/* check for lead-in */
@@ -461,9 +459,9 @@ DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This, DWORD pplay, DWORD p
 	}
 
 	/* sanity */
-	if(bplay > This->buflen){
-		ERR("Bad play position in CalcPlayPosition!\n");
-		return 0;
+	if (bplay >= This->buflen){
+		FIXME("Bad play position. bplay: %d, buflen: %d\n", bplay, This->buflen);
+		bplay %= This->buflen;
 	}
 
 	/* return the result */
