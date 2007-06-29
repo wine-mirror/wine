@@ -150,6 +150,58 @@ static UINT find_given_source(HKEY key, LPCWSTR szSource, media_info *ss)
 }
 
 /******************************************************************
+ *  MsiSourceListGetInfoA   (MSI.@)
+ */
+UINT WINAPI MsiSourceListGetInfoA( LPCSTR szProduct, LPCSTR szUserSid,
+                                   MSIINSTALLCONTEXT dwContext, DWORD dwOptions,
+                                   LPCSTR szProperty, LPSTR szValue,
+                                   LPDWORD pcchValue)
+{
+    UINT ret;
+    LPWSTR product = NULL;
+    LPWSTR usersid = NULL;
+    LPWSTR property = NULL;
+    LPWSTR value = NULL;
+    DWORD len = 0;
+
+    if (szValue && !pcchValue)
+        return ERROR_INVALID_PARAMETER;
+
+    if (szProduct) product = strdupAtoW(szProduct);
+    if (szUserSid) usersid = strdupAtoW(szUserSid);
+    if (szProperty) property = strdupAtoW(szProperty);
+
+    ret = MsiSourceListGetInfoW(product, usersid, dwContext, dwOptions,
+                                property, NULL, &len);
+    if (ret != ERROR_SUCCESS)
+        goto done;
+
+    value = msi_alloc(++len * sizeof(WCHAR));
+    if (!value)
+        return ERROR_OUTOFMEMORY;
+
+    ret = MsiSourceListGetInfoW(product, usersid, dwContext, dwOptions,
+                                property, value, &len);
+    if (ret != ERROR_SUCCESS)
+        goto done;
+
+    len = WideCharToMultiByte(CP_ACP, 0, value, -1, NULL, 0, NULL, NULL);
+    if (*pcchValue >= len)
+        WideCharToMultiByte(CP_ACP, 0, value, -1, szValue, len, NULL, NULL);
+    else if (szValue)
+        ret = ERROR_MORE_DATA;
+
+    *pcchValue = len - 1;
+
+done:
+    msi_free(product);
+    msi_free(usersid);
+    msi_free(property);
+    msi_free(value);
+    return ret;
+}
+
+/******************************************************************
  *  MsiSourceListGetInfoW   (MSI.@)
  */
 UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
@@ -173,7 +225,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         FIXME("Unhandled options MSICODE_PATCH\n");
         return ERROR_FUNCTION_FAILED;
     }
-    
+
     if (szUserSid)
         FIXME("Unhandled UserSid %s\n",debugstr_w(szUserSid));
 

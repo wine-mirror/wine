@@ -258,7 +258,7 @@
 262 stub MsiSourceListForceResolutionExW
 263 stub MsiSourceListEnumSourcesA
 264 stub MsiSourceListEnumSourcesW
-265 stub MsiSourceListGetInfoA
+265 stdcall MsiSourceListGetInfoA(str str long long str ptr ptr)
 266 stub MsiSourceListGetInfoW
 267 stub MsiSourceListSetInfoA
 268 stub MsiSourceListSetInfoW
