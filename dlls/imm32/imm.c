@@ -590,6 +590,13 @@ LONG WINAPI ImmGetCompositionStringA(
         }
         rc = sizeof(DWORD)*2;
     }
+    else if (dwIndex == GCS_CURSORPOS)
+    {
+        TRACE("GSC_CURSORPOS\n");
+        rc = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)data->CompositionString,
+                                 data->dwCompStringLength/ sizeof(WCHAR), NULL,
+                                 0, NULL, NULL);
+    }
     else
     {
         FIXME("Unhandled index 0x%x\n",dwIndex);
@@ -667,6 +674,11 @@ LONG WINAPI ImmGetCompositionStringW(
         
         rc = data->dwCompReadStringSize;
     }   
+    else if (dwIndex == GCS_CURSORPOS)
+    {
+        TRACE("GSC_CURSORPOS\n");
+        rc = data->dwCompStringLength;
+    }
     else
     {
         FIXME("Unhandled index 0x%x\n",dwIndex);
