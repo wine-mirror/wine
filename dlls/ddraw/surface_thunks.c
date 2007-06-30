@@ -92,7 +92,7 @@ IDirectDrawSurface3Impl_AddAttachedSurface(LPDIRECTDRAWSURFACE3 iface,
         }
         /* OK */
     }
-    else if(This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE) &&
+    else if(This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE) &&
             Surf->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER))
     {
         /* OK */
