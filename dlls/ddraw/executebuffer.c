@@ -246,14 +246,19 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 		    if (!ci->u1.dlstLightStateType && (ci->u1.dlstLightStateType > D3DLIGHTSTATE_COLORVERTEX))
 			ERR("Unexpected Light State Type\n");
 		    else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */) {
-			IDirect3DMaterialImpl *mat = (IDirect3DMaterialImpl *) ci->u2.dwArg[0];
+            DWORD matHandle = ci->u2.dwArg[0];
 
-			if (mat != NULL) {
-			    mat->activate(mat);
-			} else {
-			    FIXME(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
-			}
+            if(!matHandle) {
+                FIXME(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
+            } else if(matHandle >= lpDevice->numHandles) {
+                WARN("Material handle %d is invalid\n", matHandle);
+            } else if(lpDevice->Handles[matHandle - 1].type != DDrawHandle_Material) {
+                WARN("Handle %d is not a material handle\n", matHandle);
+            } else {
+                IDirect3DMaterialImpl *mat = (IDirect3DMaterialImpl *) lpDevice->Handles[matHandle - 1].ptr;
+                mat->activate(mat);
 		    }
+            }
 		   else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
 			switch (ci->u2.dwArg[0]) {
 			    case D3DCOLOR_MONO:
