@@ -1672,11 +1672,8 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
     if (mapped_stage != -1) {
         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            if (mapped_stage >= GL_LIMITS(textures)) {
-                if (stateblock->textureState[stage][WINED3DTSS_COLOROP] != WINED3DTOP_DISABLE &&
-                        stateblock->textureState[stage][WINED3DTSS_COLOROP] != 0) {
-                    FIXME("Attempt to enable unsupported stage!\n");
-                }
+            if (tex_used && mapped_stage >= GL_LIMITS(textures)) {
+                FIXME("Attempt to enable unsupported stage!\n");
                 return;
             }
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
@@ -1758,17 +1755,15 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
+    BOOL tex_used = stateblock->wineD3DDevice->fixed_function_usage_map[stage];
     DWORD op, arg1, arg2, arg0;
 
     TRACE("Setting alpha op for stage %d\n", stage);
     /* Do not care for enabled / disabled stages, just assign the settigns. colorop disables / enables required stuff */
     if (mapped_stage != -1) {
         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            if (stage >= GL_LIMITS(textures)) {
-                if (stateblock->textureState[stage][WINED3DTSS_COLOROP] != WINED3DTOP_DISABLE &&
-                        stateblock->textureState[stage][WINED3DTSS_COLOROP] != 0) {
-                    FIXME("Attempt to enable unsupported stage!\n");
-                }
+            if (tex_used && mapped_stage >= GL_LIMITS(textures)) {
+                FIXME("Attempt to enable unsupported stage!\n");
                 return;
             }
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
