@@ -85,15 +85,17 @@ static void shader_glsl_load_psamplers(
     int i;
     char sampler_name[20];
 
-    for (i=0; i< GL_LIMITS(fragment_samplers); ++i) {
-        if (stateBlock->textures[i] != NULL) {
-            snprintf(sampler_name, sizeof(sampler_name), "Psampler%d", i);
-            name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
-            if (name_loc != -1) {
-                int mapped_unit = stateBlock->wineD3DDevice->texUnitMap[i];
+    for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
+        snprintf(sampler_name, sizeof(sampler_name), "Psampler%d", i);
+        name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
+        if (name_loc != -1) {
+            int mapped_unit = stateBlock->wineD3DDevice->texUnitMap[i];
+            if (mapped_unit != -1 && mapped_unit < GL_LIMITS(fragment_samplers)) {
                 TRACE("Loading %s for texture %d\n", sampler_name, mapped_unit);
                 GL_EXTCALL(glUniform1iARB(name_loc, mapped_unit));
                 checkGLcall("glUniform1iARB");
+            } else {
+                ERR("Trying to load sampler %s on unsupported unit %d\n", sampler_name, mapped_unit);
             }
         }
     }
