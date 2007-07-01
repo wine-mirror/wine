@@ -110,7 +110,8 @@ IDirectDrawSurfaceImpl_QueryInterface(IDirectDrawSurface7 *iface,
         return S_OK;
     }
     else if( IsEqualGUID(riid, &IID_D3DDEVICE_WineD3D) ||
-             IsEqualGUID(riid, &IID_IDirect3DHALDevice) )
+             IsEqualGUID(riid, &IID_IDirect3DHALDevice)||
+             IsEqualGUID(riid, &IID_IDirect3DRGBDevice) )
     {
         IDirect3DDevice7 *d3d;
 

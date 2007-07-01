@@ -818,6 +818,115 @@ static void CapsTest(void)
     IDirectDraw_Release(dd1);
 }
 
+static void ExecutebufferTest(void)
+{
+    IDirect3DDevice *dev1 = NULL;
+    IDirectDraw *dd;
+    IDirect3D *d3d;
+    IDirectDrawSurface *dds;
+    IDirect3DExecuteBuffer *exebuf;
+    IDirect3DViewport *vp;
+    HRESULT hr;
+    DDSURFACEDESC ddsd;
+    D3DEXECUTEBUFFERDESC desc;
+    D3DVIEWPORT vp_data;
+    D3DINSTRUCTION *instr;
+    D3DBRANCH *branch;
+    unsigned int idx = 0;
+
+    /* An IDirect3DDevice cannot be queryInterfaced from an IDirect3DDevice7 on windows */
+    hr = DirectDrawCreate(NULL, &dd, NULL);
+    ok(hr==DD_OK || hr==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreate returned: %x\n", hr);
+    if (!dd) {
+        trace("DirectDrawCreate() failed with an error %x\n", hr);
+        return;
+    }
+
+    hr = IDirectDraw_SetCooperativeLevel(dd, NULL, DDSCL_NORMAL);
+    ok(hr==DD_OK, "SetCooperativeLevel returned: %x\n", hr);
+
+    hr = IDirectDraw_QueryInterface(dd, &IID_IDirect3D, (void**) &d3d);
+    ok(hr==DD_OK, "QueryInterface returned: %x\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+    ddsd.dwWidth = 256;
+    ddsd.dwHeight = 256;
+    hr = IDirectDraw_CreateSurface(dd, &ddsd, &dds, NULL);
+    ok(hr==DD_OK, "CreateSurface returned: %x\n", hr);
+
+    dev1 = NULL;
+    hr = IDirectDrawSurface_QueryInterface(dds, &IID_IDirect3DRGBDevice, (void **) &dev1);
+    ok(hr==D3D_OK || hr==DDERR_NOPALETTEATTACHED || hr==E_OUTOFMEMORY, "CreateDevice returned: %x\n", hr);
+    if(!dev1) return;
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    desc.dwCaps = D3DDEBCAPS_VIDEOMEMORY;
+    desc.dwBufferSize = 128;
+    desc.lpData = NULL;
+    hr = IDirect3DDevice_CreateExecuteBuffer(dev1, &desc, &exebuf, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice_CreateExecuteBuffer failed: %08x\n", hr);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+
+    hr = IDirect3DExecuteBuffer_Lock(exebuf, &desc);
+    ok(hr == D3D_OK, "IDirect3DExecuteBuffer_Lock failed: %08x\n", hr);
+    instr = desc.lpData;
+    instr[idx].bOpcode = D3DOP_BRANCHFORWARD;
+    instr[idx].bSize = sizeof(*branch);
+    instr[idx].wCount = 1;
+    idx++;
+    branch = (D3DBRANCH *) &instr[idx];
+    branch->dwMask = 0x0;
+    branch->dwValue = 1;
+    branch->bNegate = TRUE;
+    branch->dwOffset = 0;
+    idx += (sizeof(*branch) / sizeof(*instr));
+    instr[idx].bOpcode = D3DOP_EXIT;
+    instr[idx].bSize = 0;
+    instr[idx].bSize = 0;
+    hr = IDirect3DExecuteBuffer_Unlock(exebuf);
+    ok(hr == D3D_OK, "IDirect3DExecuteBuffer_Unlock failed: %08x\n", hr);
+
+    hr = IDirect3D_CreateViewport(d3d, &vp, NULL);
+    ok(hr == D3D_OK, "IDirect3D_CreateViewport failed: %08x\n", hr);
+    hr = IDirect3DViewport_Initialize(vp, d3d);
+    ok(hr == DDERR_ALREADYINITIALIZED, "IDirect3DViewport_Initialize returned %08x\n", hr);
+    hr = IDirect3DDevice_AddViewport(dev1, vp);
+    ok(hr == D3D_OK, "IDirect3DDevice_AddViewport returned %08x\n", hr);
+    vp_data.dwSize = sizeof(vp_data);
+    vp_data.dwX = 0;
+    vp_data.dwY = 0;
+    vp_data.dwWidth = 256;
+    vp_data.dwHeight = 256;
+    vp_data.dvScaleX = 1;
+    vp_data.dvScaleY = 1;
+    vp_data.dvMaxX = 256;
+    vp_data.dvMaxY = 256;
+    vp_data.dvMinZ = 0;
+    vp_data.dvMaxZ = 1;
+    hr = IDirect3DViewport_SetViewport(vp, &vp_data);
+    ok(hr == D3D_OK, "IDirect3DViewport_SetViewport returned %08x\n", hr);
+
+    hr = IDirect3DDevice_Execute(dev1, exebuf, vp, D3DEXECUTE_CLIPPED);
+    ok(hr == D3D_OK, "IDirect3DDevice_Execute returned %08x\n", hr);
+
+    hr = IDirect3DDevice_DeleteViewport(dev1, vp);
+    ok(hr == D3D_OK, "IDirect3DDevice_AddViewport returned %08x\n", hr);
+    IDirect3DViewport_Release(vp);
+    IDirect3DExecuteBuffer_Release(exebuf);
+    IDirect3DDevice_Release(dev1);
+    IDirectDrawSurface_Release(dds);
+    IDirect3D_Release(d3d);
+    IDirectDraw_Release(dd);
+    return;
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -837,4 +946,5 @@ START_TEST(d3d)
     LimitTest();
     CapsTest();
     ReleaseDirect3D();
+    ExecutebufferTest();
 }

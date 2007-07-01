@@ -519,13 +519,11 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 		        if (!ci->bNegate) {
                             TRACE(" Branch to %d\n", ci->dwOffset);
 			    instr = (char*)current + ci->dwOffset;
-			    break;
 			}
 		    } else {
 		        if (ci->bNegate) {
                             TRACE(" Branch to %d\n", ci->dwOffset);
 			    instr = (char*)current + ci->dwOffset;
-			    break;
 			}
 		    }
 
