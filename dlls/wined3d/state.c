@@ -1658,6 +1658,7 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
 static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
+    BOOL tex_used = stateblock->wineD3DDevice->fixed_function_usage_map[stage];
 
     TRACE("Setting color op for stage %d\n", stage);
 
@@ -1718,7 +1719,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
      * if the sampler for this stage is dirty
      */
     if(!isStateDirty(context, STATE_SAMPLER(stage))) {
-        if (mapped_stage != -1) activate_dimensions(stage, stateblock, context);
+        if (tex_used) activate_dimensions(stage, stateblock, context);
     }
 
     /* Set the texture combiners */
