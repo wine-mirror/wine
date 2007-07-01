@@ -439,7 +439,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 
 			    dst->u1.sx = dst->u1.sx / dst->u4.rhw * Viewport->dwWidth / 2
 				       + Viewport->dwX + Viewport->dwWidth / 2;
-			    dst->u2.sy = dst->u2.sy / dst->u4.rhw * Viewport->dwHeight / 2
+			    dst->u2.sy = (-dst->u2.sy) / dst->u4.rhw * Viewport->dwHeight / 2
 				       + Viewport->dwY + Viewport->dwHeight / 2;
 			    dst->u3.sz /= dst->u4.rhw;
 			    dst->u4.rhw = 1 / dst->u4.rhw;
