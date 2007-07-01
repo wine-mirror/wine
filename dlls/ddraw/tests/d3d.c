@@ -818,7 +818,14 @@ static void CapsTest(void)
     IDirectDraw_Release(dd1);
 }
 
-static void ExecutebufferTest(void)
+struct v_in {
+    float x, y, z;
+};
+struct v_out {
+    float x, y, z, rhw;
+};
+
+static void Direct3D1Test(void)
 {
     IDirect3DDevice *dev1 = NULL;
     IDirectDraw *dd;
@@ -833,6 +840,21 @@ static void ExecutebufferTest(void)
     D3DINSTRUCTION *instr;
     D3DBRANCH *branch;
     unsigned int idx = 0;
+    static struct v_in testverts[] = {
+        {0.0, 0.0, 0.0},  { 1.0,  1.0,  1.0}, {-1.0, -1.0, -1.0},
+        {0.5, 0.5, 0.5},  {-0.5, -0.5, -0.5}, {-0.5, -0.5, 0.0},
+    };
+    static struct v_in cliptest[] = {
+        {25.59, 25.59, 1.0},  {-25.59, -25.59,  0.0},
+        {25.61, 25.61, 1.01}, {-25.60, -25.60, -0.01},
+    };
+    static struct v_in offscreentest[] = {
+        {128.1, 0.0, 0.0},
+    };
+    struct v_out out[sizeof(testverts) / sizeof(testverts[0])];
+    D3DHVERTEX outH[sizeof(testverts) / sizeof(testverts[0])];
+    D3DTRANSFORMDATA transformdata;
+    DWORD i = FALSE;
 
     /* An IDirect3DDevice cannot be queryInterfaced from an IDirect3DDevice7 on windows */
     hr = DirectDrawCreate(NULL, &dd, NULL);
@@ -897,6 +919,7 @@ static void ExecutebufferTest(void)
     ok(hr == D3D_OK, "IDirect3D_CreateViewport failed: %08x\n", hr);
     hr = IDirect3DViewport_Initialize(vp, d3d);
     ok(hr == DDERR_ALREADYINITIALIZED, "IDirect3DViewport_Initialize returned %08x\n", hr);
+
     hr = IDirect3DDevice_AddViewport(dev1, vp);
     ok(hr == D3D_OK, "IDirect3DDevice_AddViewport returned %08x\n", hr);
     vp_data.dwSize = sizeof(vp_data);
@@ -916,8 +939,262 @@ static void ExecutebufferTest(void)
     hr = IDirect3DDevice_Execute(dev1, exebuf, vp, D3DEXECUTE_CLIPPED);
     ok(hr == D3D_OK, "IDirect3DDevice_Execute returned %08x\n", hr);
 
+    memset(&transformdata, 0, sizeof(transformdata));
+    transformdata.dwSize = sizeof(transformdata);
+    transformdata.lpIn = (void *) testverts;
+    transformdata.dwInSize = sizeof(testverts[0]);
+    transformdata.lpOut = out;
+    transformdata.dwOutSize = sizeof(out[0]);
+
+    transformdata.lpHOut = NULL;
+    hr = IDirect3DViewport_TransformVertices(vp, sizeof(testverts) / sizeof(testverts[0]),
+                                             &transformdata, D3DTRANSFORM_UNCLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+
+    transformdata.lpHOut = outH;
+    memset(outH, 0xaa, sizeof(outH));
+    hr = IDirect3DViewport_TransformVertices(vp, sizeof(testverts) / sizeof(testverts[0]),
+                                             &transformdata, D3DTRANSFORM_UNCLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == 0, "Offscreen is %d\n", i);
+
+    for(i = 0; i < sizeof(testverts) / sizeof(testverts[0]); i++) {
+        static const struct v_out cmp[] = {
+            {128.0, 128.0, 0.0, 1}, {129.0, 127.0,  1.0, 1}, {127.0, 129.0, -1, 1},
+            {128.5, 127.5, 0.5, 1}, {127.5, 128.5, -0.5, 1}, {127.5, 128.5,  0, 1}
+        };
+
+        ok(cmp[i].x == out[i].x && cmp[i].y == out[i].y &&
+           cmp[i].z == out[i].z && cmp[i].rhw == out[i].rhw,
+           "Vertex %d differs. Got %f %f %f %f, expexted %f %f %f %f\n", i + 1,
+           out[i].x, out[i].y, out[i].z, out[i].rhw,
+           cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
+    }
+    for(i = 0; i < sizeof(outH); i++) {
+        if(((unsigned char *) outH)[i] != 0xaa) {
+            ok(FALSE, "Homogenous output was generated despite UNCLIPPED flag\n");
+            break;
+        }
+    }
+
+    vp_data.dvScaleX = 5;
+    vp_data.dvScaleY = 5;
+    vp_data.dvMinZ = -25;
+    vp_data.dvMaxZ = 60;
+    hr = IDirect3DViewport_SetViewport(vp, &vp_data);
+    ok(hr == D3D_OK, "IDirect3DViewport_SetViewport returned %08x\n", hr);
+    hr = IDirect3DViewport_TransformVertices(vp, sizeof(testverts) / sizeof(testverts[0]),
+                                             &transformdata, D3DTRANSFORM_UNCLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == 0, "Offscreen is %d\n", i);
+    for(i = 0; i < sizeof(testverts) / sizeof(testverts[0]); i++) {
+        static const struct v_out cmp[] = {
+            {128.0, 128.0, 0.0, 1}, {133.0, 123.0,  1.0, 1}, {123.0, 133.0, -1, 1},
+            {130.5, 125.5, 0.5, 1}, {125.5, 130.5, -0.5, 1}, {125.5, 130.5,  0, 1}
+        };
+        ok(cmp[i].x == out[i].x && cmp[i].y == out[i].y &&
+           cmp[i].z == out[i].z && cmp[i].rhw == out[i].rhw,
+           "Vertex %d differs. Got %f %f %f %f, expexted %f %f %f %f\n", i + 1,
+           out[i].x, out[i].y, out[i].z, out[i].rhw,
+           cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
+    }
+
+    vp_data.dwX = 10;
+    vp_data.dwY = 20;
+    hr = IDirect3DViewport_SetViewport(vp, &vp_data);
+    ok(hr == D3D_OK, "IDirect3DViewport_SetViewport returned %08x\n", hr);
+    hr = IDirect3DViewport_TransformVertices(vp, sizeof(testverts) / sizeof(testverts[0]),
+                                             &transformdata, D3DTRANSFORM_UNCLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == 0, "Offscreen is %d\n", i);
+    for(i = 0; i < sizeof(testverts) / sizeof(testverts[0]); i++) {
+        static const struct v_out cmp[] = {
+            {138.0, 148.0, 0.0, 1}, {143.0, 143.0,  1.0, 1}, {133.0, 153.0, -1, 1},
+            {140.5, 145.5, 0.5, 1}, {135.5, 150.5, -0.5, 1}, {135.5, 150.5,  0, 1}
+        };
+        ok(cmp[i].x == out[i].x && cmp[i].y == out[i].y &&
+           cmp[i].z == out[i].z && cmp[i].rhw == out[i].rhw,
+           "Vertex %d differs. Got %f %f %f %f, expexted %f %f %f %f\n", i + 1,
+           out[i].x, out[i].y, out[i].z, out[i].rhw,
+           cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
+    }
+
+    memset(out, 0xbb, sizeof(out));
+    hr = IDirect3DViewport_TransformVertices(vp, sizeof(testverts) / sizeof(testverts[0]),
+                                             &transformdata, D3DTRANSFORM_CLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == 0, "Offscreen is %d\n", i);
+    for(i = 0; i < sizeof(testverts) / sizeof(testverts[0]); i++) {
+        static const D3DHVERTEX cmpH[] = {
+            {0,             { 0.0}, { 0.0}, { 0.0}}, {0, { 1.0}, { 1.0}, {1.0}},
+            {D3DCLIP_FRONT, {-1.0}, {-1.0}, {-1.0}}, {0, { 0.5}, { 0.5}, {0.5}},
+            {D3DCLIP_FRONT, {-0.5}, {-0.5}, {-0.5}}, {0, {-0.5}, {-0.5}, {0.0}}
+        };
+        ok(cmpH[i].hx == outH[i].hx && cmpH[i].hy == outH[i].hy &&
+           cmpH[i].hz == outH[i].hz && cmpH[i].dwFlags == outH[i].dwFlags,
+           "HVertex %d differs. Got %08x %f %f %f, expexted %08x %f %f %f\n", i + 1,
+           outH[i].dwFlags, outH[i].hx, outH[i].hy, outH[i].hz,
+           cmpH[i].dwFlags, cmpH[i].hx, cmpH[i].hy, cmpH[i].hz);
+
+        /* No scheme has been found behind those return values. It seems to be
+         * whatever data windows has when throwing the vertex away. Modify the
+         * input test vertices to test this more. Depending on the input data
+         * it can happen that the z coord gets written into y, or simmilar things
+         */
+        if(0)
+        {
+            static const struct v_out cmp[] = {
+                {138.0, 148.0, 0.0, 1}, {143.0, 143.0,  1.0, 1}, { -1.0,  -1.0, 0.5, 1},
+                {140.5, 145.5, 0.5, 1}, { -0.5,  -0.5, -0.5, 1}, {135.5, 150.5, 0.0, 1}
+            };
+            ok(cmp[i].x == out[i].x && cmp[i].y == out[i].y &&
+               cmp[i].z == out[i].z && cmp[i].rhw == out[i].rhw,
+                "Vertex %d differs. Got %f %f %f %f, expexted %f %f %f %f\n", i + 1,
+               out[i].x, out[i].y, out[i].z, out[i].rhw,
+               cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
+        }
+    }
+    for(i = 0; i < sizeof(out) / sizeof(DWORD); i++) {
+        ok(((DWORD *) out)[i] != 0xbbbbbbbb,
+                "Regular output DWORD %d remained untouched\n", i);
+    }
+
+    transformdata.lpIn = (void *) cliptest;
+    transformdata.dwInSize = sizeof(cliptest[0]);
+    hr = IDirect3DViewport_TransformVertices(vp, sizeof(cliptest) / sizeof(cliptest[0]),
+                                             &transformdata, D3DTRANSFORM_CLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == 0, "Offscreen is %d\n", i);
+    for(i = 0; i < sizeof(cliptest) / sizeof(cliptest[0]); i++) {
+        DWORD Flags[sizeof(cliptest) / sizeof(cliptest[0])] =
+        {
+            0,
+            0,
+            D3DCLIP_RIGHT | D3DCLIP_BACK   | D3DCLIP_TOP,
+            D3DCLIP_LEFT  | D3DCLIP_BOTTOM | D3DCLIP_FRONT,
+        };
+        ok(Flags[i] == outH[i].dwFlags,
+           "Cliptest %d differs. Got %08x expexted %08x\n", i + 1,
+           outH[i].dwFlags, Flags[i]);
+    }
+
+    vp_data.dwWidth = 10;
+    vp_data.dwHeight = 1000;
+    hr = IDirect3DViewport_SetViewport(vp, &vp_data);
+    i = 10;
+    ok(hr == D3D_OK, "IDirect3DViewport_SetViewport returned %08x\n", hr);
+    hr = IDirect3DViewport_TransformVertices(vp, sizeof(cliptest) / sizeof(cliptest[0]),
+                                             &transformdata, D3DTRANSFORM_CLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == 0, "Offscreen is %d\n", i);
+    for(i = 0; i < sizeof(cliptest) / sizeof(cliptest[0]); i++) {
+        DWORD Flags[sizeof(cliptest) / sizeof(cliptest[0])] =
+        {
+            D3DCLIP_RIGHT,
+            D3DCLIP_LEFT,
+            D3DCLIP_RIGHT | D3DCLIP_BACK,
+            D3DCLIP_LEFT  | D3DCLIP_FRONT,
+        };
+        ok(Flags[i] == outH[i].dwFlags,
+           "Cliptest %d differs. Got %08x expexted %08x\n", i + 1,
+           outH[i].dwFlags, Flags[i]);
+    }
+    vp_data.dwWidth = 256;
+    vp_data.dwHeight = 256;
+    vp_data.dvScaleX = 1;
+    vp_data.dvScaleY = 1;
+    hr = IDirect3DViewport_SetViewport(vp, &vp_data);
+    ok(hr == D3D_OK, "IDirect3DViewport_SetViewport returned %08x\n", hr);
+    hr = IDirect3DViewport_TransformVertices(vp, sizeof(cliptest) / sizeof(cliptest[0]),
+                                             &transformdata, D3DTRANSFORM_CLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == 0, "Offscreen is %s\n", i ? "TRUE" : "FALSE");
+    for(i = 0; i < sizeof(cliptest) / sizeof(cliptest[0]); i++) {
+        DWORD Flags[sizeof(cliptest) / sizeof(cliptest[0])] =
+        {
+            0,
+            0,
+            D3DCLIP_BACK,
+            D3DCLIP_FRONT,
+        };
+        ok(Flags[i] == outH[i].dwFlags,
+           "Cliptest %d differs. Got %08x expexted %08x\n", i + 1,
+           outH[i].dwFlags, Flags[i]);
+    }
+
+    /* Finally try to figure out how the DWORD dwOffscreen works.
+     * Apparently no vertex is offscreen with clipping off,
+     * and with clipping on the offscreen flag is set if only one vertex
+     * is transformed, and this vertex is offscreen.
+     */
+    vp_data.dwWidth = 5;
+    vp_data.dwHeight = 5;
+    vp_data.dvScaleX = 10000;
+    vp_data.dvScaleY = 10000;
+    hr = IDirect3DViewport_SetViewport(vp, &vp_data);
+    ok(hr == D3D_OK, "IDirect3DViewport_SetViewport returned %08x\n", hr);
+    transformdata.lpIn = cliptest;
+    hr = IDirect3DViewport_TransformVertices(vp, 1,
+                                             &transformdata, D3DTRANSFORM_UNCLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == 0, "Offscreen is %d\n", i);
+    hr = IDirect3DViewport_TransformVertices(vp, 1,
+                                             &transformdata, D3DTRANSFORM_CLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == (D3DCLIP_RIGHT | D3DCLIP_TOP), "Offscreen is %d\n", i);
+    hr = IDirect3DViewport_TransformVertices(vp, 2,
+                                             &transformdata, D3DTRANSFORM_CLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == 0, "Offscreen is %d\n", i);
+    transformdata.lpIn = cliptest + 1;
+    hr = IDirect3DViewport_TransformVertices(vp, 1,
+                                             &transformdata, D3DTRANSFORM_CLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == (D3DCLIP_BOTTOM | D3DCLIP_LEFT), "Offscreen is %d\n", i);
+
+    transformdata.lpIn = (void *) offscreentest;
+    transformdata.dwInSize = sizeof(offscreentest[0]);
+    vp_data.dwWidth = 257;
+    vp_data.dwHeight = 257;
+    vp_data.dvScaleX = 1;
+    vp_data.dvScaleY = 1;
+    hr = IDirect3DViewport_SetViewport(vp, &vp_data);
+    i = 12345;
+    hr = IDirect3DViewport_TransformVertices(vp, sizeof(offscreentest) / sizeof(offscreentest[0]),
+                                             &transformdata, D3DTRANSFORM_CLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == 0, "Offscreen is %d\n", i);
+    vp_data.dwWidth = 256;
+    vp_data.dwHeight = 256;
+    hr = IDirect3DViewport_SetViewport(vp, &vp_data);
+    i = 12345;
+    hr = IDirect3DViewport_TransformVertices(vp, sizeof(offscreentest) / sizeof(offscreentest[0]),
+                                             &transformdata, D3DTRANSFORM_CLIPPED,
+                                             &i);
+    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+    ok(i == D3DCLIP_RIGHT, "Offscreen is %d\n", i);
+
+    hr = IDirect3DViewport_TransformVertices(vp, sizeof(testverts) / sizeof(testverts[0]),
+                                             &transformdata, 0,
+                                             &i);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
+
     hr = IDirect3DDevice_DeleteViewport(dev1, vp);
-    ok(hr == D3D_OK, "IDirect3DDevice_AddViewport returned %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice_DeleteViewport returned %08x\n", hr);
+
     IDirect3DViewport_Release(vp);
     IDirect3DExecuteBuffer_Release(exebuf);
     IDirect3DDevice_Release(dev1);
@@ -946,5 +1223,5 @@ START_TEST(d3d)
     LimitTest();
     CapsTest();
     ReleaseDirect3D();
-    ExecutebufferTest();
+    Direct3D1Test();
 }
