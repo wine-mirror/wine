@@ -3261,7 +3261,7 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
 
     device_update_fixed_function_usage_map(This);
 
-    if (This->stateBlock->lowest_disabled_stage <= GL_LIMITS(textures)) {
+    if (!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->lowest_disabled_stage <= GL_LIMITS(textures)) {
         for (i = 0; i < This->stateBlock->lowest_disabled_stage; ++i) {
             if (!This->fixed_function_usage_map[i]) continue;
 
@@ -3368,9 +3368,7 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
     BOOL vs = use_vs(This);
     BOOL ps = use_ps(This);
-    /* This code can assume that GL_NV_register_combiners are supported, otherwise
-     * it is never called.
-     *
+    /*
      * Rules are:
      * -> Pixel shaders need a 1:1 map. In theory the shader input could be mapped too, but
      * that would be really messy and require shader recompilation
