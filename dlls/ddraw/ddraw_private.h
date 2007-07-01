@@ -348,6 +348,7 @@ struct IDirect3DDeviceImpl
     /* Handle management */
     struct HandleEntry      *Handles;
     DWORD                    numHandles;
+    D3DMATRIXHANDLE          world, proj, view;
 };
 
 /* Vtables in various versions */

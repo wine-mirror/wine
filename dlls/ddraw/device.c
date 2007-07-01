@@ -1406,6 +1406,25 @@ IDirect3DDeviceImpl_1_SetMatrix(IDirect3DDevice *iface,
 
     *((D3DMATRIX *) This->Handles[D3DMatHandle - 1].ptr) = *D3DMatrix;
 
+    if(This->world == D3DMatHandle)
+    {
+        IWineD3DDevice_SetTransform(This->wineD3DDevice,
+                                    WINED3DTS_WORLDMATRIX(0),
+                                    (WINED3DMATRIX *) D3DMatrix);
+    }
+    if(This->view == D3DMatHandle)
+    {
+        IWineD3DDevice_SetTransform(This->wineD3DDevice,
+                                    WINED3DTS_VIEW,
+                                    (WINED3DMATRIX *) D3DMatrix);
+    }
+    if(This->proj == D3DMatHandle)
+    {
+        IWineD3DDevice_SetTransform(This->wineD3DDevice,
+                                    WINED3DTS_PROJECTION,
+                                    (WINED3DMATRIX *) D3DMatrix);
+    }
+
     LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }

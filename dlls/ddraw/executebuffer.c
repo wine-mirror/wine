@@ -227,6 +227,12 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
                     } else if(lpDevice->Handles[ci->u2.dwArg[0] - 1].type != DDrawHandle_Matrix) {
                         ERR("Handle %d is not a matrix handle\n", ci->u2.dwArg[0]);
                     } else {
+                        if(ci->u1.drstRenderStateType == D3DTRANSFORMSTATE_WORLD)
+                            lpDevice->world = ci->u2.dwArg[0];
+                        if(ci->u1.drstRenderStateType == D3DTRANSFORMSTATE_VIEW)
+                            lpDevice->view = ci->u2.dwArg[0];
+                        if(ci->u1.drstRenderStateType == D3DTRANSFORMSTATE_PROJECTION)
+                            lpDevice->proj = ci->u2.dwArg[0];
                         IDirect3DDevice7_SetTransform(ICOM_INTERFACE(lpDevice, IDirect3DDevice7),
                                                       ci->u1.drstRenderStateType, (LPD3DMATRIX) lpDevice->Handles[ci->u2.dwArg[0] - 1].ptr);
                     }
