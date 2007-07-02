@@ -30,27 +30,31 @@ AC_DEFUN([WINE_PATH_LDD],[AC_PATH_PROG(LDD,ldd,true,/sbin:/usr/sbin:$PATH)])
 
 dnl **** Extract the soname of a library ****
 dnl
-dnl Usage: WINE_GET_SONAME(LIBRARY, FUNCTION, [OTHER_LIBRARIES])
+dnl Usage: WINE_CHECK_SONAME(library, function, [action-if-found, [action-if-not-found, [other_libraries, [pattern]]]])
 dnl
-AC_DEFUN([WINE_GET_SONAME],
+AC_DEFUN([WINE_CHECK_SONAME],
 [AC_REQUIRE([WINE_PATH_LDD])dnl
 AS_VAR_PUSHDEF([ac_Lib],[ac_cv_lib_soname_$1])dnl
-AC_MSG_CHECKING([for -l$1 soname])
+m4_pushdef([ac_lib_pattern],m4_default([$6],[lib$1]))dnl
+AC_MSG_CHECKING([for -l$1])
 AC_CACHE_VAL(ac_Lib,
-[ac_get_soname_save_LIBS=$LIBS
-LIBS="-l$1 $3 $LIBS"
+[ac_check_soname_save_LIBS=$LIBS
+LIBS="-l$1 $5 $LIBS"
   AC_LINK_IFELSE([AC_LANG_CALL([], [$2])],
   [case "$LIBEXT" in
     dll) ;;
-    dylib) AS_VAR_SET(ac_Lib,[`otool -L conftest$ac_exeext | grep "lib$1\\.[[0-9A-Za-z.]]*dylib" | sed -e "s/^.*\/\(lib$1\.[[0-9A-Za-z.]]*dylib\).*$/\1/"';2,$d'`]) ;;
-    *) AS_VAR_SET(ac_Lib,[`$ac_cv_path_LDD conftest$ac_exeext | grep "lib$1\\.$LIBEXT" | sed -e "s/^.*\(lib$1\.$LIBEXT[[^	 ]]*\).*$/\1/"';2,$d'`]) ;;
+    dylib) AS_VAR_SET(ac_Lib,[`otool -L conftest$ac_exeext | grep "ac_lib_pattern\\.[[0-9A-Za-z.]]*dylib" | sed -e "s/^.*\/\(ac_lib_pattern\.[[0-9A-Za-z.]]*dylib\).*$/\1/"';2,$d'`]) ;;
+    *) AS_VAR_SET(ac_Lib,[`$ac_cv_path_LDD conftest$ac_exeext | grep "ac_lib_pattern\\.$LIBEXT" | sed -e "s/^.*\(ac_lib_pattern\.$LIBEXT[[^	 ]]*\).*$/\1/"';2,$d'`]) ;;
   esac])
-  LIBS=$ac_get_soname_save_LIBS])dnl
+  LIBS=$ac_check_soname_save_LIBS])dnl
 AS_IF([test "x]AS_VAR_GET(ac_Lib)[" = "x"],
-      [AC_MSG_RESULT([not found])],
+      [AC_MSG_RESULT([not found])
+       $4],
       [AC_MSG_RESULT(AS_VAR_GET(ac_Lib))
        AC_DEFINE_UNQUOTED(AS_TR_CPP(SONAME_LIB$1),["]AS_VAR_GET(ac_Lib)["],
-                          [Define to the soname of the lib$1 library.])])dnl
+                          [Define to the soname of the lib$1 library.])
+       $3])dnl
+m4_popdef([ac_lib_pattern])dnl
 AS_VAR_POPDEF([ac_Lib])])
 
 dnl **** Link C code with an assembly file ****
