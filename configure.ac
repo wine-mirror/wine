@@ -687,10 +687,10 @@ dnl **** Check which curses lib to use ***
 CURSESLIBS=""
 if test "$ac_cv_header_ncurses_h" = "yes"
 then
-    AC_CHECK_LIB(ncurses,waddch,[CURSESLIBS="-lncurses"])
+    WINE_CHECK_SONAME(ncurses,waddch,[CURSESLIBS="-lncurses"])
 elif test "$ac_cv_header_curses_h" = "yes"
 then
-    AC_CHECK_LIB(curses,waddch,[CURSESLIBS="-lcurses"])
+    WINE_CHECK_SONAME(curses,waddch,[CURSESLIBS="-lcurses"])
 fi
 ac_save_LIBS="$LIBS"
 LIBS="$LIBS $CURSESLIBS"
@@ -1122,8 +1122,6 @@ WINE_CHECK_SONAME(jack,jack_client_new)
 WINE_CHECK_SONAME(fontconfig,FcInit)
 WINE_CHECK_SONAME(ssl,SSL_library_init)
 WINE_CHECK_SONAME(crypto,BIO_new_socket)
-WINE_CHECK_SONAME(ncurses,waddch)
-WINE_CHECK_SONAME(curses,waddch)
 WINE_CHECK_SONAME(jpeg,jpeg_start_decompress)
 WINE_CHECK_SONAME(capi20,capi20_isinstalled)
 WINE_CHECK_SONAME(sane,sane_init)

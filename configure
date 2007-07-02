@@ -10933,14 +10933,14 @@ fi
 CURSESLIBS=""
 if test "$ac_cv_header_ncurses_h" = "yes"
 then
-    { echo "$as_me:$LINENO: checking for waddch in -lncurses" >&5
-echo $ECHO_N "checking for waddch in -lncurses... $ECHO_C" >&6; }
-if test "${ac_cv_lib_ncurses_waddch+set}" = set; then
+    { echo "$as_me:$LINENO: checking for -lncurses" >&5
+echo $ECHO_N "checking for -lncurses... $ECHO_C" >&6; }
+if test "${ac_cv_lib_soname_ncurses+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
+  ac_check_soname_save_LIBS=$LIBS
 LIBS="-lncurses  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -10980,34 +10980,47 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test ! -s conftest.err
        } && test -s conftest$ac_exeext &&
        $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_ncurses_waddch=yes
+  case "$LIBEXT" in
+    dll) ;;
+    dylib) ac_cv_lib_soname_ncurses=`otool -L conftest$ac_exeext | grep "libncurses\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libncurses\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_ncurses=`$ac_cv_path_LDD conftest$ac_exeext | grep "libncurses\\.$LIBEXT" | sed -e "s/^.*\(libncurses\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_ncurses_waddch=no
+
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+  LIBS=$ac_check_soname_save_LIBS
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_ncurses_waddch" >&5
-echo "${ECHO_T}$ac_cv_lib_ncurses_waddch" >&6; }
-if test $ac_cv_lib_ncurses_waddch = yes; then
-  CURSESLIBS="-lncurses"
+if test "x$ac_cv_lib_soname_ncurses" = "x"; then
+  { echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6; }
+
+else
+  { echo "$as_me:$LINENO: result: $ac_cv_lib_soname_ncurses" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_ncurses" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBNCURSES "$ac_cv_lib_soname_ncurses"
+_ACEOF
+
+       CURSESLIBS="-lncurses"
 fi
 
 elif test "$ac_cv_header_curses_h" = "yes"
 then
-    { echo "$as_me:$LINENO: checking for waddch in -lcurses" >&5
-echo $ECHO_N "checking for waddch in -lcurses... $ECHO_C" >&6; }
-if test "${ac_cv_lib_curses_waddch+set}" = set; then
+    { echo "$as_me:$LINENO: checking for -lcurses" >&5
+echo $ECHO_N "checking for -lcurses... $ECHO_C" >&6; }
+if test "${ac_cv_lib_soname_curses+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
+  ac_check_soname_save_LIBS=$LIBS
 LIBS="-lcurses  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -11047,22 +11060,35 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test ! -s conftest.err
        } && test -s conftest$ac_exeext &&
        $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_curses_waddch=yes
+  case "$LIBEXT" in
+    dll) ;;
+    dylib) ac_cv_lib_soname_curses=`otool -L conftest$ac_exeext | grep "libcurses\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libcurses\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_curses=`$ac_cv_path_LDD conftest$ac_exeext | grep "libcurses\\.$LIBEXT" | sed -e "s/^.*\(libcurses\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_curses_waddch=no
+
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+  LIBS=$ac_check_soname_save_LIBS
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_curses_waddch" >&5
-echo "${ECHO_T}$ac_cv_lib_curses_waddch" >&6; }
-if test $ac_cv_lib_curses_waddch = yes; then
-  CURSESLIBS="-lcurses"
+if test "x$ac_cv_lib_soname_curses" = "x"; then
+  { echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6; }
+
+else
+  { echo "$as_me:$LINENO: result: $ac_cv_lib_soname_curses" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_curses" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBCURSES "$ac_cv_lib_soname_curses"
+_ACEOF
+
+       CURSESLIBS="-lcurses"
 fi
 
 fi
@@ -15352,162 +15378,6 @@ echo "${ECHO_T}$ac_cv_lib_soname_crypto" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBCRYPTO "$ac_cv_lib_soname_crypto"
-_ACEOF
-
-
-fi
-
-{ echo "$as_me:$LINENO: checking for -lncurses" >&5
-echo $ECHO_N "checking for -lncurses... $ECHO_C" >&6; }
-if test "${ac_cv_lib_soname_ncurses+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lncurses  $LIBS"
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char waddch ();
-int
-main ()
-{
-return waddch ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  case "$LIBEXT" in
-    dll) ;;
-    dylib) ac_cv_lib_soname_ncurses=`otool -L conftest$ac_exeext | grep "libncurses\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libncurses\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_ncurses=`$ac_cv_path_LDD conftest$ac_exeext | grep "libncurses\\.$LIBEXT" | sed -e "s/^.*\(libncurses\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
-  esac
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if test "x$ac_cv_lib_soname_ncurses" = "x"; then
-  { echo "$as_me:$LINENO: result: not found" >&5
-echo "${ECHO_T}not found" >&6; }
-
-else
-  { echo "$as_me:$LINENO: result: $ac_cv_lib_soname_ncurses" >&5
-echo "${ECHO_T}$ac_cv_lib_soname_ncurses" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBNCURSES "$ac_cv_lib_soname_ncurses"
-_ACEOF
-
-
-fi
-
-{ echo "$as_me:$LINENO: checking for -lcurses" >&5
-echo $ECHO_N "checking for -lcurses... $ECHO_C" >&6; }
-if test "${ac_cv_lib_soname_curses+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lcurses  $LIBS"
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char waddch ();
-int
-main ()
-{
-return waddch ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  case "$LIBEXT" in
-    dll) ;;
-    dylib) ac_cv_lib_soname_curses=`otool -L conftest$ac_exeext | grep "libcurses\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libcurses\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_curses=`$ac_cv_path_LDD conftest$ac_exeext | grep "libcurses\\.$LIBEXT" | sed -e "s/^.*\(libcurses\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
-  esac
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if test "x$ac_cv_lib_soname_curses" = "x"; then
-  { echo "$as_me:$LINENO: result: not found" >&5
-echo "${ECHO_T}not found" >&6; }
-
-else
-  { echo "$as_me:$LINENO: result: $ac_cv_lib_soname_curses" >&5
-echo "${ECHO_T}$ac_cv_lib_soname_curses" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBCURSES "$ac_cv_lib_soname_curses"
 _ACEOF
 
 

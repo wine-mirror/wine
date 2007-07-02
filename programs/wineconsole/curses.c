@@ -60,18 +60,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(curses);
 
 #define PRIVATE(data)   ((struct inner_data_curse*)((data)->private))
 
-#if defined(HAVE_CURSES_H) || defined(HAVE_NCURSES_H)
+#if defined(SONAME_LIBCURSES) || defined(SONAME_LIBNCURSES)
 
 #ifdef HAVE_NCURSES_H
 # define CURSES_NAME "ncurses"
-# ifndef SONAME_LIBNCURSES
-# define SONAME_LIBNCURSES "libncurses" SONAME_EXT
-# endif
 #else
 # define CURSES_NAME "curses"
-# ifndef SONAME_LIBCURSES
-# define SONAME_LIBCURSES "libcurses" SONAME_EXT
-# endif
 #endif
 
 struct inner_data_curse 
@@ -135,7 +129,7 @@ MAKE_FUNCPTR(mousemask)
 
 static BOOL WCCURSES_bind_libcurses(void)
 {
-#ifdef HAVE_NCURSES_H
+#ifdef SONAME_LIBNCURSES
     static const char ncname[] = SONAME_LIBNCURSES;
 #else
     static const char ncname[] = SONAME_LIBCURSES;
