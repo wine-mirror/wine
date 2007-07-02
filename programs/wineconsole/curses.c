@@ -64,8 +64,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(curses);
 
 #ifdef HAVE_NCURSES_H
 # define CURSES_NAME "ncurses"
+# ifndef SONAME_LIBNCURSES
+# define SONAME_LIBNCURSES "libncurses" SONAME_EXT
+# endif
 #else
 # define CURSES_NAME "curses"
+# ifndef SONAME_LIBCURSES
+# define SONAME_LIBCURSES "libcurses" SONAME_EXT
+# endif
 #endif
 
 struct inner_data_curse 

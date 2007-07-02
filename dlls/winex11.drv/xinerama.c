@@ -73,6 +73,10 @@ static inline int monitor_to_index( HMONITOR handle )
 MAKE_FUNCPTR(XineramaQueryExtension);
 MAKE_FUNCPTR(XineramaQueryScreens);
 
+#ifndef SONAME_LIBXINERAMA
+#define SONAME_LIBXINERAMA "libXinerama" SONAME_EXT
+#endif
+
 static void load_xinerama(void)
 {
     void *handle;

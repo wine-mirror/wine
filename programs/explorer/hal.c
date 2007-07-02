@@ -75,6 +75,10 @@ DBUS_FUNCS;
 HAL_FUNCS;
 #undef DO_FUNC
 
+#ifndef SONAME_LIBHAL
+#define SONAME_LIBHAL "libhal" SONAME_EXT
+#endif
+
 static BOOL load_functions(void)
 {
     void *hal_handle;

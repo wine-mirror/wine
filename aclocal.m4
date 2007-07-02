@@ -35,22 +35,22 @@ dnl
 AC_DEFUN([WINE_GET_SONAME],
 [AC_REQUIRE([WINE_PATH_LDD])dnl
 AS_VAR_PUSHDEF([ac_Lib],[ac_cv_lib_soname_$1])dnl
-AC_CACHE_CHECK([for -l$1 soname], ac_Lib,
+AC_MSG_CHECKING([for -l$1 soname])
+AC_CACHE_VAL(ac_Lib,
 [ac_get_soname_save_LIBS=$LIBS
 LIBS="-l$1 $3 $LIBS"
   AC_LINK_IFELSE([AC_LANG_CALL([], [$2])],
   [case "$LIBEXT" in
-    dylib) AS_VAR_SET(ac_Lib,[`otool -L conftest$ac_exeext | grep lib$1\\.[[0-9A-Za-z.]]*dylib | sed -e "s/^.*\/\(lib$1\.[[0-9A-Za-z.]]*dylib\).*$/\1/"';2,$d'`]) ;;
-    so) AS_VAR_SET(ac_Lib,[`$ac_cv_path_LDD conftest$ac_exeext | grep lib$1\\.so | sed -e "s/^.*\(lib$1\.so[[^	 ]]*\).*$/\1/"';2,$d'`]) ;;
-  esac
-  if test "x$ac_Lib" = "x"
-  then
-     AS_VAR_SET(ac_Lib,"lib$1.$LIBEXT")
-  fi],
-  [AS_VAR_SET(ac_Lib,"lib$1.$LIBEXT")])
-  LIBS=$ac_get_soname_save_LIBS])
-AS_VAR_SET_IF(ac_Lib,[AC_DEFINE_UNQUOTED(AS_TR_CPP(SONAME_LIB$1),["]AS_VAR_GET(ac_Lib)["],
-                        [Define to the soname of the lib$1 library.])])dnl
+    dll) ;;
+    dylib) AS_VAR_SET(ac_Lib,[`otool -L conftest$ac_exeext | grep "lib$1\\.[[0-9A-Za-z.]]*dylib" | sed -e "s/^.*\/\(lib$1\.[[0-9A-Za-z.]]*dylib\).*$/\1/"';2,$d'`]) ;;
+    *) AS_VAR_SET(ac_Lib,[`$ac_cv_path_LDD conftest$ac_exeext | grep "lib$1\\.$LIBEXT" | sed -e "s/^.*\(lib$1\.$LIBEXT[[^	 ]]*\).*$/\1/"';2,$d'`]) ;;
+  esac])
+  LIBS=$ac_get_soname_save_LIBS])dnl
+AS_IF([test "x]AS_VAR_GET(ac_Lib)[" = "x"],
+      [AC_MSG_RESULT([not found])],
+      [AC_MSG_RESULT(AS_VAR_GET(ac_Lib))
+       AC_DEFINE_UNQUOTED(AS_TR_CPP(SONAME_LIB$1),["]AS_VAR_GET(ac_Lib)["],
+                          [Define to the soname of the lib$1 library.])])dnl
 AS_VAR_POPDEF([ac_Lib])])
 
 dnl **** Link C code with an assembly file ****
@@ -148,3 +148,7 @@ dnl Usage: WINE_CONFIG_EXTRA_DIR(dirname)
 dnl
 AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
 [AC_CONFIG_COMMANDS([$1],[test -d "$1" || (AC_MSG_NOTICE([creating $1]) && mkdir "$1")])])
+
+dnl Local Variables:
+dnl compile-command: "autoreconf --warnings=all"
+dnl End:
