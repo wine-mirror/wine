@@ -495,11 +495,127 @@ static void present_test(IDirect3DDevice8 *device)
     ok(color == 0x00ff0000, "Present failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
 }
 
+static void test_rcp_rsq(IDirect3DDevice8 *device)
+{
+    HRESULT hr;
+    DWORD shader;
+    DWORD color;
+    unsigned char c1, c2, c3;
+    float constant[4] = {1.0, 1.0, 1.0, 2.0};
+
+    static const float quad[][3] = {
+        {-1.0f, -1.0f, 0.0f},
+        {-1.0f,  1.0f, 0.0f},
+        { 1.0f, -1.0f, 0.0f},
+        { 1.0f,  1.0f, 0.0f},
+    };
+
+    const DWORD rcp_test[] = {
+        0xfffe0101,                                         /* vs.1.1 */
+
+        0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size. */
+        0x30303030, 0x30303030, 0x30303030,                 /* Add a filler comment. Usually D3DX8's*/
+        0x30303030, 0x30303030, 0x30303030,                 /* version comment makes the shader big */
+        0x00303030,                                         /* enough to make windows happy         */
+
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0 */
+        0x00000006, 0xd00f0000, 0xa0e40000,                 /* rcp oD0, c0 */
+        0x0000ffff                                          /* END */
+    };
+
+    const DWORD rsq_test[] = {
+        0xfffe0101,                                         /* vs.1.1 */
+
+        0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size. */
+        0x30303030, 0x30303030, 0x30303030,                 /* Add a filler comment. Usually D3DX8's*/
+        0x30303030, 0x30303030, 0x30303030,                 /* version comment makes the shader big */
+        0x00303030,                                         /* enough to make windows happy         */
+
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0 */
+        0x00000007, 0xd00f0000, 0xa0e40000,                 /* rsq oD0, c0 */
+        0x0000ffff                                          /* END */
+    };
+
+    DWORD decl[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT3),  /* D3DVSDE_POSITION, Register v0 */
+        D3DVSD_END()
+    };
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff800080, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %08x\n", hr);
+
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl, rcp_test, &shader, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned with %08x\n", hr);
+
+    IDirect3DDevice8_SetVertexShader(device, shader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %08x\n", hr);
+    IDirect3DDevice8_SetVertexShaderConstant(device, 0, constant, 1);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene returned %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], 3 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+        hr = IDirect3DDevice8_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene returned %08x\n", hr);
+    }
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (%08x)\n", hr);
+    color = getPixelColor(device, 320, 240);
+    c1 = (color & 0x00ff0000 )>> 16;
+    c2 = (color & 0x0000ff00 )>>  8;
+    c3 = (color & 0x000000ff )>>  0;
+    ok(c1 == c2 && c2 == c3, "Color components differ: c1 = %02x, c2 = %02x, c3 = %02x\n",
+       c1, c2, c3);
+    ok(c1 >= 0x7c && c1 <= 0x84, "Color component value is %02x\n", c1);
+
+    IDirect3DDevice8_SetVertexShader(device, 0);
+    IDirect3DDevice8_DeleteVertexShader(device, shader);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff800080, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %08x\n", hr);
+
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl, rsq_test, &shader, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned with %08x\n", hr);
+
+    IDirect3DDevice8_SetVertexShader(device, shader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %08x\n", hr);
+    IDirect3DDevice8_SetVertexShaderConstant(device, 0, constant, 1);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene returned %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], 3 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+        hr = IDirect3DDevice8_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene returned %08x\n", hr);
+    }
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (%08x)\n", hr);
+    color = getPixelColor(device, 320, 240);
+    c1 = (color & 0x00ff0000 )>> 16;
+    c2 = (color & 0x0000ff00 )>>  8;
+    c3 = (color & 0x000000ff )>>  0;
+    ok(c1 == c2 && c2 == c3, "Color components differ: c1 = %02x, c2 = %02x, c3 = %02x\n",
+       c1, c2, c3);
+    ok(c1 >= 0xb0 && c1 <= 0xb8, "Color component value is %02x\n", c1);
+
+    IDirect3DDevice8_SetVertexShader(device, 0);
+    IDirect3DDevice8_DeleteVertexShader(device, shader);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice8 *device_ptr;
     HRESULT hr;
     DWORD color;
+    D3DCAPS8 caps;
 
     d3d8_handle = LoadLibraryA("d3d8.dll");
     if (!d3d8_handle)
@@ -510,6 +626,8 @@ START_TEST(visual)
 
     device_ptr = init_d3d8();
     if (!device_ptr) return;
+
+    IDirect3DDevice8_GetDeviceCaps(device_ptr, &caps);
 
     /* Check for the reliability of the returned data */
     hr = IDirect3DDevice8_Clear(device_ptr, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
@@ -547,6 +665,15 @@ START_TEST(visual)
     clear_test(device_ptr);
     fog_test(device_ptr);
     present_test(device_ptr);
+
+    if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
+    {
+        test_rcp_rsq(device_ptr);
+    }
+    else
+    {
+        skip("No vs.1.1 support\n");
+    }
 
 cleanup:
     if(device_ptr) IDirect3DDevice8_Release(device_ptr);

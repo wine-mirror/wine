@@ -1054,7 +1054,6 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
     switch (curOpcode->opcode) {
         case WINED3DSIO_MIN: instruction = "min"; break;
         case WINED3DSIO_MAX: instruction = "max"; break;
-        case WINED3DSIO_RSQ: instruction = "inversesqrt"; break;
         case WINED3DSIO_ABS: instruction = "abs"; break;
         case WINED3DSIO_FRC: instruction = "fract"; break;
         case WINED3DSIO_NRM: instruction = "normalize"; break;
@@ -1132,12 +1131,30 @@ void shader_glsl_rcp(SHADER_OPCODE_ARG* arg) {
 
     write_mask = shader_glsl_append_dst(arg->buffer, arg);
     mask_size = shader_glsl_get_write_mask_size(write_mask);
-    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, &src_param);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_3, &src_param);
 
     if (mask_size > 1) {
         shader_addline(arg->buffer, "vec%d(1.0 / %s));\n", mask_size, src_param.param_str);
     } else {
         shader_addline(arg->buffer, "1.0 / %s);\n", src_param.param_str);
+    }
+}
+
+void shader_glsl_rsq(SHADER_OPCODE_ARG* arg) {
+    SHADER_BUFFER* buffer = arg->buffer;
+    glsl_src_param_t src_param;
+    DWORD write_mask;
+    size_t mask_size;
+
+    write_mask = shader_glsl_append_dst(buffer, arg);
+    mask_size = shader_glsl_get_write_mask_size(write_mask);
+
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_3, &src_param);
+
+    if (mask_size > 1) {
+        shader_addline(buffer, "vec%d(inversesqrt(%s)));\n", mask_size, src_param.param_str);
+    } else {
+        shader_addline(buffer, "inversesqrt(%s));\n", src_param.param_str);
     }
 }
 

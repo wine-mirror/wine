@@ -948,8 +948,10 @@ void vshader_hw_rsq_rcp(SHADER_OPCODE_ARG* arg) {
     strcat(tmpLine, ",");
     vshader_program_add_param(arg, src, TRUE, tmpLine);
     if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) == swizzle) {
-        /* Dx sdk says .x is used if no swizzle is given */
-        strcat(tmpLine, ".x");
+        /* Dx sdk says .x is used if no swizzle is given, but our test shows that
+         * .w is used
+         */
+        strcat(tmpLine, ".w");
     }
 
     shader_addline(buffer, "%s;\n", tmpLine);

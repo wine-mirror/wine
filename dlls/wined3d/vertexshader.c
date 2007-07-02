@@ -92,7 +92,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {WINED3DSIO_MAD,    "mad",  "MAD", 1, 4, vshader_hw_map2gl,   shader_glsl_mad, 0, 0},
     {WINED3DSIO_MUL,    "mul",  "MUL", 1, 3, vshader_hw_map2gl,   shader_glsl_arith, 0, 0},
     {WINED3DSIO_RCP,    "rcp",  "RCP", 1, 2, vshader_hw_rsq_rcp,  shader_glsl_rcp, 0, 0},
-    {WINED3DSIO_RSQ,    "rsq",  "RSQ", 1, 2, vshader_hw_rsq_rcp,  shader_glsl_map2gl, 0, 0},
+    {WINED3DSIO_RSQ,    "rsq",  "RSQ", 1, 2, vshader_hw_rsq_rcp,  shader_glsl_rsq, 0, 0},
     {WINED3DSIO_DP3,    "dp3",  "DP3", 1, 3, vshader_hw_map2gl,   shader_glsl_dot, 0, 0},
     {WINED3DSIO_DP4,    "dp4",  "DP4", 1, 3, vshader_hw_map2gl,   shader_glsl_dot, 0, 0},
     {WINED3DSIO_MIN,    "min",  "MIN", 1, 3, vshader_hw_map2gl,   shader_glsl_map2gl, 0, 0},
