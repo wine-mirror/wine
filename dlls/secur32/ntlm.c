@@ -524,12 +524,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             if((ret = encodeBase64((unsigned char*)helper->password,
                         helper->pwlen, buffer+3,
                         max_len-3, &buffer_len)) != SEC_E_OK)
-            {
-                TRACE("Deleting password!\n");
-                memset(helper->password, 0, helper->pwlen);
-                HeapFree(GetProcessHeap(), 0, helper->password);
                 goto isc_end;
-            }
 
         }
 
@@ -770,13 +765,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         helper->crypt.ntlm2.recv_seq_no = 0l;
     }
 
-    if(ret != SEC_I_CONTINUE_NEEDED)
-    {
-        TRACE("Deleting password!\n");
-        if(helper->password)
-            memset(helper->password, 0, helper->pwlen);
-        HeapFree(GetProcessHeap(), 0, helper->password);
-    }
 isc_end:
     HeapFree(GetProcessHeap(), 0, want_flags);
     HeapFree(GetProcessHeap(), 0, buffer);
@@ -1515,6 +1503,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(
         PNegoHelper helper = (PNegoHelper) phCredential->dwLower;
         phCredential->dwUpper = 0;
         phCredential->dwLower = 0;
+        if (helper->password)
+            memset(helper->password, 0, helper->pwlen);
+        HeapFree(GetProcessHeap(), 0, helper->password);
         cleanup_helper(helper);
         ret = SEC_E_OK;
     }
