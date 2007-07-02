@@ -1064,13 +1064,22 @@ If you are using Linux, you will need a newer binutils.]
 )
 fi
 
+AC_SUBST(LDPATH,"")
 case $build_os in
   cygwin*|mingw32*)
-    AC_SUBST(LDPATH,"PATH=\"\$(TOOLSDIR)/libs/wine:\$\$PATH\"") ;;
+    LDPATH="PATH=\"\$(TOOLSDIR)/libs/wine:\$\$PATH\""
+    ;;
   darwin*|macosx*)
-    AC_SUBST(LDPATH,"DYLD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$DYLD_LIBRARY_PATH\"") ;;
+    ;;
+  linux*|solaris*)  dnl FIXME: What other platforms support $ORIGIN?
+    if test -z "$LDRPATH_LOCAL"
+    then
+      LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$LD_LIBRARY_PATH\""
+    fi
+    ;;
   *)
-    AC_SUBST(LDPATH,"LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$LD_LIBRARY_PATH\"") ;;
+    LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$LD_LIBRARY_PATH\""
+    ;;
 esac
 
 dnl Mingw needs explicit msvcrt for linking libwine and winsock for wininet

@@ -14089,16 +14089,22 @@ If you are using Linux, you will need a newer binutils.
    { (exit 1); exit 1; }; }
 fi
 
+LDPATH=""
+
 case $build_os in
   cygwin*|mingw32*)
     LDPATH="PATH=\"\$(TOOLSDIR)/libs/wine:\$\$PATH\""
- ;;
+    ;;
   darwin*|macosx*)
-    LDPATH="DYLD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$DYLD_LIBRARY_PATH\""
- ;;
+    ;;
+  linux*|solaris*)      if test -z "$LDRPATH_LOCAL"
+    then
+      LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$LD_LIBRARY_PATH\""
+    fi
+    ;;
   *)
     LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$LD_LIBRARY_PATH\""
- ;;
+    ;;
 esac
 
 case $host_os in
