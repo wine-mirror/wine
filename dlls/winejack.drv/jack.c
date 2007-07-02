@@ -37,11 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jack);
 
-#ifdef HAVE_JACK_JACK_H
-
-#ifndef SONAME_LIBJACK
-#define SONAME_LIBJACK "libjack" SONAME_EXT
-#endif
+#ifdef SONAME_LIBJACK
 
 void *jackhandle = NULL;
 
@@ -114,7 +110,7 @@ static LRESULT JACK_drvClose(DWORD_PTR dwDevID)
   TRACE("(%08lx)\n", dwDevID);
   return 1;
 }
-#endif /* #ifdef HAVE_JACK_JACK_H */
+#endif /* #ifdef SONAME_LIBJACK */
 
 
 /**************************************************************************
@@ -137,7 +133,7 @@ LRESULT CALLBACK JACK_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
            wMsg, dwParam1, dwParam2);
     
     switch(wMsg) {
-#ifdef HAVE_JACK_JACK_H
+#ifdef SONAME_LIBJACK
     case DRV_LOAD:		return JACK_drvLoad();
     case DRV_FREE:		return JACK_drvFree();
     case DRV_OPEN:		return JACK_drvOpen((LPSTR)dwParam1);

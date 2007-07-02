@@ -63,7 +63,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
-#ifdef HAVE_JACK_JACK_H
+#ifdef SONAME_LIBJACK
 
 #define MAKE_FUNCPTR(f) static typeof(f) * fp_##f = NULL;
 
@@ -2386,7 +2386,7 @@ DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
   return MMSYSERR_NOTSUPPORTED;
 }
 
-#else /* !HAVE_JACK_JACK_H */
+#else /* !SONAME_LIBJACK */
 
 /**************************************************************************
  * 				widMessage (WINEJACK.6)
@@ -2408,4 +2408,4 @@ DWORD WINAPI JACK_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
   return MMSYSERR_NOTENABLED;
 }
 
-#endif /* HAVE_JACK_JACK_H */
+#endif /* SONAME_LIBJACK */
