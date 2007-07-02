@@ -23,7 +23,7 @@
 # error You must include config.h first
 #endif
 
-#ifdef HAVE_SANE
+#ifdef SONAME_LIBSANE
 # include <sane/sane.h>
 
 #define MAKE_FUNCPTR(f) typeof(f) * p##f;
@@ -63,7 +63,7 @@ struct tagActiveDS
     TW_UINT16		twCC;			/* condition code */
     HWND		hwndOwner;		/* window handle of the app */
     HWND		progressWnd;		/* window handle of the scanning window */
-#ifdef HAVE_SANE
+#ifdef SONAME_LIBSANE
     SANE_Handle		deviceHandle;		/* device handle */
     SANE_Parameters     sane_param;             /* parameters about the image
                                                    transferred */

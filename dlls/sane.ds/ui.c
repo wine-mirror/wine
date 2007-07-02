@@ -37,7 +37,7 @@
 #include "wine/debug.h"
 #include "resource.h"
 
-#ifdef HAVE_SANE
+#ifdef SONAME_LIBSANE
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
@@ -1056,11 +1056,11 @@ HWND ScanningDialogBox(HWND dialog, LONG progress)
     return dialog;
 }
 
-#else  /* HAVE_SANE */
+#else  /* SONAME_LIBSANE */
 
 BOOL DoScannerUI(void)
 {
     return FALSE;
 }
 
-#endif  /* HAVE_SANE */
+#endif  /* SONAME_LIBSANE */

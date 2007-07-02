@@ -549,9 +549,6 @@
 /* Define to 1 if you have the `rfork' function. */
 #undef HAVE_RFORK
 
-/* Define if we have SANE development environment */
-#undef HAVE_SANE
-
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
 

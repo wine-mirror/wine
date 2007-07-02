@@ -80,7 +80,7 @@ TW_UINT16 SANE_ImageFileXferGet (pTW_IDENTITY pOrigin,
 TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin, 
                               TW_MEMREF pData)
 {
-#ifndef HAVE_SANE
+#ifndef SONAME_LIBSANE
     return TWRC_FAILURE;
 #else
     TW_UINT16 twRC = TWRC_SUCCESS;
@@ -186,7 +186,7 @@ TW_UINT16 SANE_ImageLayoutSet (pTW_IDENTITY pOrigin,
 TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin, 
                                  TW_MEMREF pData)
 {
-#ifndef HAVE_SANE
+#ifndef SONAME_LIBSANE
     return TWRC_FAILURE;
 #else
     TW_UINT16 twRC = TWRC_SUCCESS;
@@ -321,7 +321,7 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
 TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin, 
                                     TW_MEMREF pData)
 {
-#ifndef HAVE_SANE
+#ifndef SONAME_LIBSANE
     return TWRC_FAILURE;
 #else
     TW_UINT16 twRC = TWRC_SUCCESS;

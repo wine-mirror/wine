@@ -699,15 +699,13 @@ LIBS="$ac_save_LIBS"
 
 dnl **** Check for SANE ****
 AC_CHECK_PROG(sane_devel,sane-config,sane-config,no)
-AC_SUBST(SANEINCL,"")
 if test "$sane_devel" != "no"
 then
-    SANEINCL="`$sane_devel --cflags`"
+    ac_sane_incl="`$sane_devel --cflags`"
     ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $SANEINCL"
+    CPPFLAGS="$CPPFLAGS $ac_sane_incl"
     AC_CHECK_HEADER(sane/sane.h,
-                    [AC_DEFINE(HAVE_SANE, 1, [Define if we have SANE development environment])],
-                    [SANEINCL=""])
+        [WINE_CHECK_SONAME(sane,sane_init,[AC_SUBST(SANEINCL,"$ac_sane_incl")])])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 
@@ -1123,7 +1121,6 @@ WINE_CHECK_SONAME(fontconfig,FcInit)
 WINE_CHECK_SONAME(ssl,SSL_library_init)
 WINE_CHECK_SONAME(crypto,BIO_new_socket)
 WINE_CHECK_SONAME(jpeg,jpeg_start_decompress)
-WINE_CHECK_SONAME(sane,sane_init)
 
 
 dnl **** Check for functions ****

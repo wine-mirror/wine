@@ -35,10 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 HINSTANCE SANE_instance;
 
-#ifdef HAVE_SANE
-#ifndef SONAME_LIBSANE
-#define SONAME_LIBSANE "libsane" SONAME_EXT
-#endif
+#ifdef SONAME_LIBSANE
 
 static void *libsane_handle;
 
@@ -85,7 +82,7 @@ static void *open_libsane(void)
     return h;
 }
 
-#endif /* HAVE_SANE */
+#endif /* SONAME_LIBSANE */
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -94,7 +91,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH: {
-#ifdef HAVE_SANE
+#ifdef SONAME_LIBSANE
 	    SANE_Status status;
 	    SANE_Int version_code;
 
@@ -109,7 +106,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             break;
 	}
         case DLL_PROCESS_DETACH:
-#ifdef HAVE_SANE
+#ifdef SONAME_LIBSANE
             TRACE("calling sane_exit()\n");
 	    psane_exit ();
 
@@ -123,7 +120,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-#ifdef HAVE_SANE
+#ifdef SONAME_LIBSANE
 static TW_UINT16 SANE_GetIdentity( pTW_IDENTITY, pTW_IDENTITY);
 static TW_UINT16 SANE_OpenDS( pTW_IDENTITY, pTW_IDENTITY);
 #endif
@@ -142,19 +139,19 @@ static TW_UINT16 SANE_SourceControlHandler (
 	    switch (MSG)
 	    {
 		case MSG_CLOSEDS:
-#ifdef HAVE_SANE
+#ifdef SONAME_LIBSANE
 		     psane_close (activeDS.deviceHandle);
 #endif
 		     break;
 		case MSG_OPENDS:
-#ifdef HAVE_SANE
+#ifdef SONAME_LIBSANE
 		     twRC = SANE_OpenDS( pOrigin, (pTW_IDENTITY)pData);
 #else
 		     twRC = TWRC_FAILURE;
 #endif
 		     break;
 		case MSG_GET:
-#ifdef HAVE_SANE
+#ifdef SONAME_LIBSANE
 		     twRC = SANE_GetIdentity( pOrigin, (pTW_IDENTITY)pData);
 #else
 		     twRC = TWRC_FAILURE;
@@ -566,7 +563,7 @@ DS_Entry ( pTW_IDENTITY pOrigin,
     return twRC;
 }
 
-#ifdef HAVE_SANE
+#ifdef SONAME_LIBSANE
 /* Sane returns device names that are longer than the 32 bytes allowed
    by TWAIN.  However, it colon separates them, and the last bit is
    the most interesting.  So we use the last bit, and add a signature
