@@ -676,10 +676,9 @@ then
     AC_CHECK_HEADERS([dbus/dbus.h hal/libhal.h])
     if test "$ac_cv_header_dbus_dbus_h" = "yes" -a "$ac_cv_header_hal_libhal_h" = "yes"
     then
-        AC_CHECK_LIB(hal, libhal_ctx_new,
-          [AC_CHECK_LIB(dbus-1, dbus_connection_close,
-            [AC_DEFINE(HAVE_LIBHAL, 1, [Define if you have the hal library])
-             HALINCL="$ac_hal_cflags"],,$ac_hal_libs)])
+        AC_CHECK_LIB(dbus-1, dbus_connection_close,
+          [WINE_CHECK_SONAME(hal, libhal_ctx_new,
+            [HALINCL="$ac_hal_cflags"],,[$ac_hal_libs])],,[$ac_hal_libs])
     fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
@@ -1117,7 +1116,6 @@ WINE_CHECK_SONAME(Xrandr,XRRQueryExtension,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS
 WINE_CHECK_SONAME(Xcursor,XcursorImageLoadCursor,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(freetype,FT_Init_FreeType,,,[$X_LIBS])
 WINE_CHECK_SONAME(GL,glXQueryExtension,,,[$X_LIBS $X_EXTRA_LIBS])
-WINE_CHECK_SONAME(hal,libhal_ctx_new)
 WINE_CHECK_SONAME(txc_dxtn,fetch_2d_texel_rgba_dxt1)
 WINE_CHECK_SONAME(cups,cupsGetDefault)
 WINE_CHECK_SONAME(jack,jack_client_new)

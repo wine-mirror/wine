@@ -10784,69 +10784,7 @@ done
 
     if test "$ac_cv_header_dbus_dbus_h" = "yes" -a "$ac_cv_header_hal_libhal_h" = "yes"
     then
-        { echo "$as_me:$LINENO: checking for libhal_ctx_new in -lhal" >&5
-echo $ECHO_N "checking for libhal_ctx_new in -lhal... $ECHO_C" >&6; }
-if test "${ac_cv_lib_hal_libhal_ctx_new+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lhal  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char libhal_ctx_new ();
-int
-main ()
-{
-return libhal_ctx_new ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_hal_libhal_ctx_new=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_hal_libhal_ctx_new=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_hal_libhal_ctx_new" >&5
-echo "${ECHO_T}$ac_cv_lib_hal_libhal_ctx_new" >&6; }
-if test $ac_cv_lib_hal_libhal_ctx_new = yes; then
-  { echo "$as_me:$LINENO: checking for dbus_connection_close in -ldbus-1" >&5
+        { echo "$as_me:$LINENO: checking for dbus_connection_close in -ldbus-1" >&5
 echo $ECHO_N "checking for dbus_connection_close in -ldbus-1... $ECHO_C" >&6; }
 if test "${ac_cv_lib_dbus_1_dbus_connection_close+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -10908,12 +10846,82 @@ fi
 { echo "$as_me:$LINENO: result: $ac_cv_lib_dbus_1_dbus_connection_close" >&5
 echo "${ECHO_T}$ac_cv_lib_dbus_1_dbus_connection_close" >&6; }
 if test $ac_cv_lib_dbus_1_dbus_connection_close = yes; then
+  { echo "$as_me:$LINENO: checking for -lhal" >&5
+echo $ECHO_N "checking for -lhal... $ECHO_C" >&6; }
+if test "${ac_cv_lib_soname_hal+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lhal $ac_hal_libs $LIBS"
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
 
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_LIBHAL 1
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char libhal_ctx_new ();
+int
+main ()
+{
+return libhal_ctx_new ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  case "$LIBEXT" in
+    dll) ;;
+    dylib) ac_cv_lib_soname_hal=`otool -L conftest$ac_exeext | grep "libhal\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libhal\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_hal=`$ac_cv_path_LDD conftest$ac_exeext | grep "libhal\\.$LIBEXT" | sed -e "s/^.*\(libhal\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if test "x$ac_cv_lib_soname_hal" = "x"; then
+  { echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6; }
+
+else
+  { echo "$as_me:$LINENO: result: $ac_cv_lib_soname_hal" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_hal" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBHAL "$ac_cv_lib_soname_hal"
 _ACEOF
 
-             HALINCL="$ac_hal_cflags"
+       HALINCL="$ac_hal_cflags"
 fi
 
 fi
@@ -14876,84 +14884,6 @@ echo "${ECHO_T}$ac_cv_lib_soname_GL" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBGL "$ac_cv_lib_soname_GL"
-_ACEOF
-
-
-fi
-
-{ echo "$as_me:$LINENO: checking for -lhal" >&5
-echo $ECHO_N "checking for -lhal... $ECHO_C" >&6; }
-if test "${ac_cv_lib_soname_hal+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lhal  $LIBS"
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char libhal_ctx_new ();
-int
-main ()
-{
-return libhal_ctx_new ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  case "$LIBEXT" in
-    dll) ;;
-    dylib) ac_cv_lib_soname_hal=`otool -L conftest$ac_exeext | grep "libhal\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libhal\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_hal=`$ac_cv_path_LDD conftest$ac_exeext | grep "libhal\\.$LIBEXT" | sed -e "s/^.*\(libhal\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
-  esac
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if test "x$ac_cv_lib_soname_hal" = "x"; then
-  { echo "$as_me:$LINENO: result: not found" >&5
-echo "${ECHO_T}not found" >&6; }
-
-else
-  { echo "$as_me:$LINENO: result: $ac_cv_lib_soname_hal" >&5
-echo "${ECHO_T}$ac_cv_lib_soname_hal" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBHAL "$ac_cv_lib_soname_hal"
 _ACEOF
 
 

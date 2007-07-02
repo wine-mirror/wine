@@ -297,9 +297,6 @@
 /* Define to 1 if you have the <libaudioio.h> header file. */
 #undef HAVE_LIBAUDIOIO_H
 
-/* Define if you have the hal library */
-#undef HAVE_LIBHAL
-
 /* Define to 1 if you have the `i386' library (-li386). */
 #undef HAVE_LIBI386
 
