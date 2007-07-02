@@ -1061,6 +1061,8 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
         case WINED3DSIO_LOG: instruction = "log2"; break;
         case WINED3DSIO_EXP: instruction = "exp2"; break;
         case WINED3DSIO_SGN: instruction = "sign"; break;
+        case WINED3DSIO_DSX: instruction = "dFdx"; break;
+        case WINED3DSIO_DSY: instruction = "dFdy"; break;
         default: instruction = "";
             FIXME("Opcode %s not yet handled in GLSL\n", curOpcode->name);
             break;
