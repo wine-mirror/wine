@@ -68,16 +68,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
  *    SSL stuff should use crypt32.dll
  */
 
-#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+#ifdef SONAME_LIBSSL
 
 #include <openssl/err.h>
-
-#ifndef SONAME_LIBSSL
-#define SONAME_LIBSSL "libssl" SONAME_EXT
-#endif
-#ifndef SONAME_LIBCRYPTO
-#define SONAME_LIBCRYPTO "libcrypto" SONAME_EXT
-#endif
 
 static void *OpenSSL_ssl_handle;
 static void *OpenSSL_crypto_handle;
@@ -120,7 +113,7 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     connection->socketFD = -1;
     if (useSSL)
     {
-#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+#ifdef SONAME_LIBSSL
         TRACE("using SSL connection\n");
 	if (OpenSSL_ssl_handle) /* already initialized everything */
             return TRUE;
@@ -278,7 +271,7 @@ static int sock_get_error( int err )
 BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,
 	      int type, int protocol)
 {
-#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+#ifdef SONAME_LIBSSL
     if (connection->useSSL)
         return FALSE;
 #endif
@@ -302,7 +295,7 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
 
     if (!NETCON_connected(connection)) return FALSE;
 
-#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+#ifdef SONAME_LIBSSL
     if (connection->useSSL)
     {
         HeapFree(GetProcessHeap(),0,connection->peek_msg_mem);
@@ -328,7 +321,7 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
     }
     return TRUE;
 }
-#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+#ifdef SONAME_LIBSSL
 static BOOL check_hostname(X509 *cert, char *hostname)
 {
     /* FIXME: implement */
@@ -341,7 +334,7 @@ static BOOL check_hostname(X509 *cert, char *hostname)
  */
 BOOL NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
 {
-#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+#ifdef SONAME_LIBSSL
     long verify_res;
     X509 *cert;
     int len;
@@ -479,7 +472,7 @@ BOOL NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len,
     }
     else
     {
-#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+#ifdef SONAME_LIBSSL
 	if (flags)
             FIXME("SSL_write doesn't support any flags (%08x)\n", flags);
 	*sent = pSSL_write(connection->ssl_s, msg, len);
@@ -516,7 +509,7 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
     }
     else
     {
-#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+#ifdef SONAME_LIBSSL
 	if (flags & ~(MSG_PEEK|MSG_WAITALL))
 	    FIXME("SSL_read does not support the following flag: %08x\n", flags);
 
@@ -583,7 +576,7 @@ BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *avail
         return FALSE;
 
     *available = 0;
-#if defined HAVE_OPENSSL_SSL_H
+#ifdef SONAME_LIBSSL
     if (connection->peek_msg) *available = connection->peek_len;
 #endif
 
@@ -664,7 +657,7 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
     }
     else
     {
-#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+#ifdef SONAME_LIBSSL
 	long prev_timeout;
 	DWORD nRecv = 0;
         BOOL success = TRUE;
@@ -708,8 +701,7 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 
 LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection)
 {
-
-#if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
+#ifdef SONAME_LIBSSL
     X509* cert;
     unsigned char* buffer,*p;
     INT len;

@@ -985,6 +985,13 @@ then
     WINE_CHECK_SONAME(fontconfig,FcInit)
 fi
 
+dnl **** Check for SSL ****
+if test "$ac_cv_header_openssl_err_h" = "yes" -a "$ac_cv_header_openssl_ssl_h" = "yes"
+then
+    WINE_CHECK_SONAME(ssl,SSL_library_init)
+    WINE_CHECK_SONAME(crypto,BIO_new_socket)
+fi
+
 dnl **** Check for gcc specific options ****
 
 AC_SUBST(EXTRACFLAGS,"")
@@ -1133,8 +1140,6 @@ WINE_CHECK_SONAME(Xcursor,XcursorImageLoadCursor,,,[$X_LIBS -lX11 $X_EXTRA_LIBS]
 WINE_CHECK_SONAME(freetype,FT_Init_FreeType,,,[$X_LIBS])
 WINE_CHECK_SONAME(GL,glXQueryExtension,,,[$X_LIBS $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(txc_dxtn,fetch_2d_texel_rgba_dxt1)
-WINE_CHECK_SONAME(ssl,SSL_library_init)
-WINE_CHECK_SONAME(crypto,BIO_new_socket)
 WINE_CHECK_SONAME(jpeg,jpeg_start_decompress)
 
 
