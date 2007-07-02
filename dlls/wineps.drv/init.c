@@ -45,11 +45,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-#ifndef SONAME_LIBCUPS
-#define SONAME_LIBCUPS "libcups" SONAME_EXT
-#endif
-
-#ifdef HAVE_CUPS_CUPS_H
+#ifdef SONAME_LIBCUPS
 static void *cupshandle = NULL;
 #endif
 
@@ -144,7 +140,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 		HeapDestroy(PSDRV_Heap);
 		return FALSE;
 	    }
-#ifdef HAVE_CUPS_CUPS_H
+#ifdef SONAME_LIBCUPS
 	    /* dynamically load CUPS if not yet loaded */
 	    if (!cupshandle) {
 		cupshandle = wine_dlopen(SONAME_LIBCUPS, RTLD_NOW, NULL, 0);
@@ -157,7 +153,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 
 	    DeleteObject( PSDRV_DefaultFont );
 	    HeapDestroy( PSDRV_Heap );
-#ifdef HAVE_CUPS_CUPS_H
+#ifdef SONAME_LIBCUPS
 	    if (cupshandle && (cupshandle != (void*)-1)) {
 		wine_dlclose(cupshandle, NULL, 0);
 		cupshandle = NULL;
@@ -580,7 +576,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	goto cleanup;
     }
 
-#ifdef HAVE_CUPS_CUPS_H
+#ifdef SONAME_LIBCUPS
     if (cupshandle != (void*)-1) {
 	typeof(cupsGetPPD) * pcupsGetPPD = NULL;
 

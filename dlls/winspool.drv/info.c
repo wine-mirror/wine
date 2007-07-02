@@ -38,9 +38,6 @@
 #include <signal.h>
 #ifdef HAVE_CUPS_CUPS_H
 # include <cups/cups.h>
-# ifndef SONAME_LIBCUPS
-#  define SONAME_LIBCUPS "libcups" SONAME_EXT
-# endif
 #endif
 
 #define NONAMELESSUNION
@@ -410,7 +407,7 @@ static BOOL add_printer_driver(const char *name)
     return TRUE;
 }
 
-#ifdef HAVE_CUPS_CUPS_H
+#ifdef SONAME_LIBCUPS
 static typeof(cupsGetDests)  *pcupsGetDests;
 static typeof(cupsGetPPD)    *pcupsGetPPD;
 static typeof(cupsPrintFile) *pcupsPrintFile;
@@ -1567,7 +1564,7 @@ void WINSPOOL_LoadSystemPrinters(void)
     }
 
 
-#ifdef HAVE_CUPS_CUPS_H
+#ifdef SONAME_LIBCUPS
     done = CUPS_LoadPrinters();
 #endif
 
@@ -7129,7 +7126,7 @@ static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
  */
 static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename, LPCWSTR document_title)
 {
-#if HAVE_CUPS_CUPS_H
+#ifdef SONAME_LIBCUPS
     if(pcupsPrintFile)
     {
         char *unixname, *queue, *doc_titleA;
