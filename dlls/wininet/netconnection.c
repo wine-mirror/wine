@@ -73,10 +73,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #include <openssl/err.h>
 
 #ifndef SONAME_LIBSSL
-#define SONAME_LIBSSL "libssl.so"
+#define SONAME_LIBSSL "libssl" SONAME_EXT
 #endif
 #ifndef SONAME_LIBCRYPTO
-#define SONAME_LIBCRYPTO "libcrypto.so"
+#define SONAME_LIBCRYPTO "libcrypto" SONAME_EXT
 #endif
 
 static void *OpenSSL_ssl_handle;

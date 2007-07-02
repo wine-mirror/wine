@@ -14124,6 +14124,12 @@ MAIN_BINARY="wine-pthread"
 esac
 
 
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_EXT ".$LIBEXT"
+_ACEOF
+
+
 if test "$LIBEXT" = "so" -o "$LIBEXT" = "dylib"
 then
   # Extract the first word of "ldd", so it can be a program name with args.

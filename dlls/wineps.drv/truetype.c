@@ -84,7 +84,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 				    FT_LOAD_LINEAR_DESIGN   	    )
 
 #ifndef SONAME_LIBFREETYPE
-#define SONAME_LIBFREETYPE "libfreetype.so"
+#define SONAME_LIBFREETYPE "libfreetype" SONAME_EXT
 #endif
 
 static void *ft_handle = NULL;

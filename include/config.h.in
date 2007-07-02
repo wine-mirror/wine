@@ -969,6 +969,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Define to the file extension of shared libraries. */
+#undef SONAME_EXT
+
 /* Define to the soname of the libcapi20 library. */
 #undef SONAME_LIBCAPI20
 

@@ -129,7 +129,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #endif
 
 #ifndef SONAME_LIBFREETYPE
-#define SONAME_LIBFREETYPE "libfreetype.so"
+#define SONAME_LIBFREETYPE "libfreetype" SONAME_EXT
 #endif
 
 #ifndef HAVE_FT_TRUETYPEENGINETYPE
@@ -196,7 +196,7 @@ MAKE_FUNCPTR(FcPatternDestroy);
 MAKE_FUNCPTR(FcPatternGetBool);
 MAKE_FUNCPTR(FcPatternGetString);
 #ifndef SONAME_LIBFONTCONFIG
-#define SONAME_LIBFONTCONFIG "libfontconfig.so"
+#define SONAME_LIBFONTCONFIG "libfontconfig" SONAME_EXT
 #endif
 #endif
 

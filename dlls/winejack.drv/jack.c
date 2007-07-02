@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(jack);
 #ifdef HAVE_JACK_JACK_H
 
 #ifndef SONAME_LIBJACK
-#define SONAME_LIBJACK "libjack.so"
+#define SONAME_LIBJACK "libjack" SONAME_EXT
 #endif
 
 void *jackhandle = NULL;

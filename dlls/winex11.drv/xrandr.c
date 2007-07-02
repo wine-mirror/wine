@@ -44,16 +44,16 @@ static void *xrandr_handle;
 
 /* some default values just in case */
 #ifndef SONAME_LIBX11
-#define SONAME_LIBX11 "libX11.so"
+#define SONAME_LIBX11 "libX11" SONAME_EXT
 #endif
 #ifndef SONAME_LIBXEXT
-#define SONAME_LIBXEXT "libXext.so"
+#define SONAME_LIBXEXT "libXext" SONAME_EXT
 #endif
 #ifndef SONAME_LIBXRENDER
-#define SONAME_LIBXRENDER "libXrender.so"
+#define SONAME_LIBXRENDER "libXrender" SONAME_EXT
 #endif
 #ifndef SONAME_LIBXRANDR
-#define SONAME_LIBXRANDR "libXrandr.so"
+#define SONAME_LIBXRANDR "libXrandr" SONAME_EXT
 #endif
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;

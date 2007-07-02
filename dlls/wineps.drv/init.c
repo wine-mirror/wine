@@ -46,7 +46,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
 #ifndef SONAME_LIBCUPS
-#define SONAME_LIBCUPS "libcups.so"
+#define SONAME_LIBCUPS "libcups" SONAME_EXT
 #endif
 
 #ifdef HAVE_CUPS_CUPS_H

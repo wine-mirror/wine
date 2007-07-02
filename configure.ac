@@ -1094,6 +1094,8 @@ esac
 
 dnl **** Get the soname for libraries that we load dynamically ****
 
+AC_DEFINE_UNQUOTED(SONAME_EXT,[".$LIBEXT"],[Define to the file extension of shared libraries.])
+
 if test "$LIBEXT" = "so" -o "$LIBEXT" = "dylib"
 then
   WINE_GET_SONAME(X11,XCreateWindow,[$X_LIBS $X_EXTRA_LIBS])

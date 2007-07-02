@@ -240,7 +240,7 @@ static INT              gNumCursors;
 
 
 #ifndef SONAME_LIBXI
-#define SONAME_LIBXI "libXi.so"
+#define SONAME_LIBXI "libXi" SONAME_EXT
 #endif
 
 /* XInput stuff */

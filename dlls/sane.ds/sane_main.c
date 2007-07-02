@@ -37,7 +37,7 @@ HINSTANCE SANE_instance;
 
 #ifdef HAVE_SANE
 #ifndef SONAME_LIBSANE
-#define SONAME_LIBSANE      "libsane.so"
+#define SONAME_LIBSANE "libsane" SONAME_EXT
 #endif
 
 static void *libsane_handle;

@@ -676,13 +676,6 @@ void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params )
 }
 
 
-/* No need to load any other libraries as according to the ABI, libGL should be self-sufficient and
-   include all dependencies
-*/
-#ifndef SONAME_LIBGL
-#define SONAME_LIBGL "libGL.so"
-#endif
-
 /* This is for brain-dead applications that use OpenGL functions before even
    creating a rendering context.... */
 static BOOL process_attach(void)

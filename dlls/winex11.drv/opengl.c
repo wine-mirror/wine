@@ -202,7 +202,7 @@ static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
    include all dependencies
 */
 #ifndef SONAME_LIBGL
-#define SONAME_LIBGL "libGL.so"
+#define SONAME_LIBGL "libGL" SONAME_EXT
 #endif
 
 #define PUSH1(attribs,att)        do { attribs[nAttribs++] = (att); } while (0)

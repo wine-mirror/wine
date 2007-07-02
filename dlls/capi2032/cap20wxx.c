@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(capi);
 #ifdef HAVE_CAPI4LINUX
 
 #ifndef SONAME_LIBCAPI20
-#define SONAME_LIBCAPI20 "libcapi20.so"
+#define SONAME_LIBCAPI20 "libcapi20" SONAME_EXT
 #endif
 
 static unsigned (*pcapi20_register)(unsigned, unsigned, unsigned, unsigned *) = NULL;

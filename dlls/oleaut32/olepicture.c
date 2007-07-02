@@ -78,7 +78,7 @@
 #undef jpeg_boolean
 #undef UINT16
 #ifndef SONAME_LIBJPEG
-#define SONAME_LIBJPEG "libjpeg.so"
+#define SONAME_LIBJPEG "libjpeg" SONAME_EXT
 #endif
 #endif
 

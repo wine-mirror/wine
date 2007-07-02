@@ -28,7 +28,7 @@
 #ifdef HAVE_X11_XCURSOR_XCURSOR_H
 # include <X11/Xcursor/Xcursor.h>
 # ifndef SONAME_LIBXCURSOR
-#  define SONAME_LIBXCURSOR "libXcursor.so"
+#  define SONAME_LIBXCURSOR "libXcursor" SONAME_EXT
 # endif
 static void *xcursor_handle;
 # define MAKE_FUNCPTR(f) static typeof(f) * p##f
