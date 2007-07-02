@@ -27,6 +27,64 @@
 
 #include "wine/test.h"
 
+static void test_open_scm(void)
+{
+    SC_HANDLE scm_handle;
+
+    /* No access rights */
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA(NULL, NULL, 0);
+    ok(scm_handle != NULL, "Expected success\n");
+    ok(GetLastError() == ERROR_SUCCESS    /* W2K3, Vista */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+    CloseServiceHandle(scm_handle);
+
+    /* Unknown database name */
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA(NULL, "DoesNotExist", SC_MANAGER_CONNECT);
+    ok(!scm_handle, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %d\n", GetLastError());
+    CloseServiceHandle(scm_handle); /* Just in case */
+
+    /* MSDN says only ServiceActive is allowed, or NULL */
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA(NULL, SERVICES_FAILED_DATABASEA, SC_MANAGER_CONNECT);
+    ok(!scm_handle, "Expected failure\n");
+    ok(GetLastError() == ERROR_DATABASE_DOES_NOT_EXIST, "Expected ERROR_DATABASE_DOES_NOT_EXIST, got %d\n", GetLastError());
+    CloseServiceHandle(scm_handle); /* Just in case */
+
+    /* Remote unknown host */
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA("DOESNOTEXIST", SERVICES_ACTIVE_DATABASEA, SC_MANAGER_CONNECT);
+    ok(!scm_handle, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE, "Expected RPC_S_SERVER_UNAVAILABLE, got %d\n", GetLastError());
+    CloseServiceHandle(scm_handle); /* Just in case */
+
+    /* Proper call with an empty hostname */
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA("", SERVICES_ACTIVE_DATABASEA, SC_MANAGER_CONNECT);
+    ok(scm_handle != NULL, "Expected success\n");
+    ok(GetLastError() == ERROR_SUCCESS          /* W2K3, Vista */ ||
+       GetLastError() == ERROR_ENVVAR_NOT_FOUND /* NT4 */ ||
+       GetLastError() == 0xdeadbeef             /* XP */ ||
+       GetLastError() == ERROR_IO_PENDING       /* W2K */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING, ERROR_ENVVAR_NOT_FOUND or 0xdeadbeef, got %d\n", GetLastError());
+    CloseServiceHandle(scm_handle);
+
+    /* Again a correct one */
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+    ok(scm_handle != NULL, "Expected success\n");
+    ok(GetLastError() == ERROR_SUCCESS    /* W2K3, Vista */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+    CloseServiceHandle(scm_handle);
+}
+
 static void test_sequence(void)
 {
     SC_HANDLE scm_handle, svc_handle;
@@ -44,12 +102,7 @@ static void test_sequence(void)
     SetLastError(0xdeadbeef);
     scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
 
-    if (!scm_handle && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
-    {
-        skip("OpenSCManagerA is not implemented\n");
-        return;
-    }
-    else if (!scm_handle && (GetLastError() == ERROR_ACCESS_DENIED))
+    if (!scm_handle && (GetLastError() == ERROR_ACCESS_DENIED))
     {
         skip("Not enough rights to get a handle to the manager\n");
         return;
@@ -147,6 +200,21 @@ static void test_sequence(void)
 
 START_TEST(service)
 {
+    SC_HANDLE scm_handle;
+
+    /* Bail out if we are on win98 */
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
+
+    if (!scm_handle && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("OpenSCManagerA is not implemented, we are most likely on win9x\n");
+        return;
+    }
+    CloseServiceHandle(scm_handle);
+
+    /* First some parameter checking */
+    test_open_scm();
     /* Test the creation, querying and deletion of a service */
     test_sequence();
 }
