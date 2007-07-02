@@ -323,6 +323,155 @@ AC_CHECK_HEADERS([linux/videodev.h],,,
 dnl Check for broken kernel header that doesn't define __user
 AC_CHECK_HEADERS([linux/capi.h],,,[#define __user])
 
+dnl **** Check for working dll ****
+
+AC_SUBST(DLLEXT,"")
+AC_SUBST(DLLFLAGS,"-D_REENTRANT")
+AC_SUBST(LDSHARED,"")
+AC_SUBST(LDDLLFLAGS,"")
+AC_SUBST(LIBEXT,"so")
+AC_SUBST(IMPLIBEXT,"def")
+AC_SUBST(LDRPATH_INSTALL,"")
+AC_SUBST(LDRPATH_LOCAL,"")
+WINE_PATH_LDD
+
+case $host_os in
+  cygwin*|mingw32*)
+    AC_CHECK_TOOL(DLLTOOL,dlltool,false)
+    AC_CHECK_TOOL(DLLWRAP,dllwrap,false)
+    AC_CHECK_TOOL(MINGWAR,ar,false)
+    if test "$DLLWRAP" = "false"; then
+      LIBEXT="a"
+    else
+      dnl FIXME - check whether dllwrap works correctly...
+      LIBEXT="dll"
+    fi
+    IMPLIBEXT="a"
+    dnl We can't build 16-bit NE dlls
+    WIN16_FILES=""
+    WIN16_INSTALL=""
+    ;;
+  darwin*|macosx*)
+    DLLEXT=".so"
+    LIBEXT="dylib"
+    DLLFLAGS="$DLLFLAGS -fPIC"
+    LDDLLFLAGS="-bundle -multiply_defined suppress"
+    LIBWINE_LDFLAGS="-multiply_defined suppress"
+    LDSHARED="\$(CC) -dynamiclib"
+    STRIP="$STRIP -x"
+    LDRPATH_LOCAL="&& install_name_tool -change @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/libwine.1.dylib @executable_path/\$(TOPOBJDIR)/libs/wine/libwine.1.dylib \$@ || \$(RM) \$@"
+    dnl declare needed frameworks
+    AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
+    AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
+    AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHARED_HEAP,0x7f000000"])
+    if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
+    then
+        dnl DiskArbitration API is not public on Darwin < 8.0, use it only if header found
+        AC_SUBST(DISKARBITRATIONLIB,"-framework DiskArbitration -framework CoreFoundation")
+    fi
+    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
+    then
+        dnl CoreServices needed by AudioUnit
+        AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI")
+    fi
+    case $host_cpu in
+      *powerpc*)
+        LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"  dnl FIXME
+        ;;
+    esac
+    dnl Enable quartz driver on Mac OS X
+    if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
+    then
+        AC_SUBST(CARBONLIB,"-framework Carbon")
+        QUARTZFILES='$(QUARTZFILES)'
+    fi
+    ;;
+  *)
+    DLLFLAGS="$DLLFLAGS -fPIC"
+    DLLEXT=".so"
+    AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
+        [WINE_TRY_SHLIB_FLAGS([-fPIC -shared -Wl,-Bsymbolic],
+                              ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")])
+    if test "$ac_cv_c_dll_gnuelf" = "yes"
+    then
+      LDSHARED="\$(CC) -shared"
+      LDDLLFLAGS="-shared -Wl,-Bsymbolic"
+      WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,confest.so.1],
+                      [LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"],
+                      [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-h,confest.so.1],
+                                       [LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"])])
+
+      WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs], [LDDLLFLAGS="$LDDLLFLAGS,-z,defs"])
+
+      WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini],
+                      [LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"])
+
+      echo '{ global: *; };' >conftest.map
+      WINE_TRY_CFLAGS([-fPIC -shared -Wl,--version-script=conftest.map],
+                      [LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"])
+      rm -f conftest.map
+
+      WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
+                      [AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])])
+
+      WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
+                      [LDRPATH_INSTALL="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+                       LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(TOPOBJDIR)/libs/wine"],
+          [WINE_TRY_CFLAGS([-fPIC -Wl,-R,\$ORIGIN/../lib],
+                           [LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+                            LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(TOPOBJDIR)/libs/wine"])])
+
+      case $host_cpu in
+        *i[[3456789]]86* | x86_64)
+          WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
+                          [LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"])
+          ;;
+      esac
+
+    else
+      AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll, ac_cv_c_dll_unixware,
+          [WINE_TRY_SHLIB_FLAGS([-fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic],
+                                ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")])
+      if test "$ac_cv_c_dll_unixware" = "yes"
+      then
+        LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
+        LDDLLFLAGS="-Wl,-G,-B,symbolic"
+
+      else
+        AC_CACHE_CHECK(whether we can build an HP-UX dll, ac_cv_c_dll_hpux,
+          [WINE_TRY_SHLIB_FLAGS([-shared], ac_cv_c_dll_hpux="yes", ac_cv_c_dll_hpux="no")])
+        if test "$ac_cv_c_dll_hpux" = "yes"
+        then
+          LIBEXT="sl"
+          DLLEXT=".sl"
+          LDDLLFLAGS="-shared -fPIC"
+          LDSHARED="\$(CC) -shared"
+        fi
+      fi
+    fi
+
+    dnl Check for cross compiler to build test programs
+    AC_SUBST(CROSSTEST,"")
+    if test "$cross_compiling" = "no"
+    then
+      WINE_CHECK_MINGW_PROG(CROSSCC,gcc,false)
+      WINE_CHECK_MINGW_PROG(DLLTOOL,dlltool,false)
+      WINE_CHECK_MINGW_PROG(CROSSWINDRES,windres,false)
+      WINE_CHECK_MINGW_PROG(MINGWAR,ar,false)
+      if test "$CROSSCC" != "false"; then CROSSTEST="\$(CROSSTEST)"; fi
+    fi
+    ;;
+esac
+
+if test "$LIBEXT" = "a"; then
+  AC_MSG_ERROR(
+[could not find a way to build shared libraries.
+It is currently not possible to build Wine without shared library
+(.so) support to allow transparent switch between .so and .dll files.
+If you are using Linux, you will need a newer binutils.]
+)
+fi
+
 dnl **** Check for X11 ****
 
 if test "$have_x" = "yes"
@@ -916,153 +1065,7 @@ else
   AC_DEFINE([__ASM_NAME(name)], [name])
 fi
 
-dnl **** Check for working dll ****
-
-AC_SUBST(DLLEXT,"")
-AC_SUBST(DLLFLAGS,"-D_REENTRANT")
-AC_SUBST(LDSHARED,"")
-AC_SUBST(LDDLLFLAGS,"")
-AC_SUBST(LIBEXT,"so")
-AC_SUBST(IMPLIBEXT,"def")
-AC_SUBST(LDRPATH_INSTALL,"")
-AC_SUBST(LDRPATH_LOCAL,"")
-
-case $host_os in
-  cygwin*|mingw32*)
-    AC_CHECK_TOOL(DLLTOOL,dlltool,false)
-    AC_CHECK_TOOL(DLLWRAP,dllwrap,false)
-    AC_CHECK_TOOL(MINGWAR,ar,false)
-    if test "$DLLWRAP" = "false"; then
-      LIBEXT="a"
-    else
-      dnl FIXME - check whether dllwrap works correctly...
-      LIBEXT="dll"
-    fi
-    IMPLIBEXT="a"
-    dnl We can't build 16-bit NE dlls
-    WIN16_FILES=""
-    WIN16_INSTALL=""
-    ;;
-  darwin*|macosx*)
-    DLLEXT=".so"
-    LIBEXT="dylib"
-    DLLFLAGS="$DLLFLAGS -fPIC"
-    LDDLLFLAGS="-bundle -multiply_defined suppress"
-    LIBWINE_LDFLAGS="-multiply_defined suppress"
-    LDSHARED="\$(CC) -dynamiclib"
-    STRIP="$STRIP -x"
-    LDRPATH_LOCAL="&& install_name_tool -change @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/libwine.1.dylib @executable_path/\$(TOPOBJDIR)/libs/wine/libwine.1.dylib \$@ || \$(RM) \$@"
-    dnl declare needed frameworks
-    AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
-    AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
-    AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHARED_HEAP,0x7f000000"])
-    if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
-    then
-        dnl DiskArbitration API is not public on Darwin < 8.0, use it only if header found
-        AC_SUBST(DISKARBITRATIONLIB,"-framework DiskArbitration -framework CoreFoundation")
-    fi
-    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
-    then
-        dnl CoreServices needed by AudioUnit
-        AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI")
-    fi
-    case $host_cpu in
-      *powerpc*)
-        LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"  dnl FIXME
-        ;;
-    esac
-    dnl Enable quartz driver on Mac OS X
-    if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
-    then
-        AC_SUBST(CARBONLIB,"-framework Carbon")
-        QUARTZFILES='$(QUARTZFILES)'
-    fi
-    ;;
-  *)
-    DLLFLAGS="$DLLFLAGS -fPIC"
-    DLLEXT=".so"
-    AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
-        [WINE_TRY_SHLIB_FLAGS([-fPIC -shared -Wl,-Bsymbolic],
-                              ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")])
-    if test "$ac_cv_c_dll_gnuelf" = "yes"
-    then
-      LDSHARED="\$(CC) -shared"
-      LDDLLFLAGS="-shared -Wl,-Bsymbolic"
-      WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,confest.so.1],
-                      [LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"],
-                      [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-h,confest.so.1],
-                                       [LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-h,%)"])])
-
-      WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs], [LDDLLFLAGS="$LDDLLFLAGS,-z,defs"])
-
-      WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini],
-                      [LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"])
-
-      echo '{ global: *; };' >conftest.map
-      WINE_TRY_CFLAGS([-fPIC -shared -Wl,--version-script=conftest.map],
-                      [LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"])
-      rm -f conftest.map
-
-      WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
-                      [AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])])
-
-      WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
-                      [LDRPATH_INSTALL="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
-                       LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(TOPOBJDIR)/libs/wine"],
-          [WINE_TRY_CFLAGS([-fPIC -Wl,-R,\$ORIGIN/../lib],
-                           [LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
-                            LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(TOPOBJDIR)/libs/wine"])])
-
-      case $host_cpu in
-        *i[[3456789]]86* | x86_64)
-          WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
-                          [LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"])
-          ;;
-      esac
-
-    else
-      AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll, ac_cv_c_dll_unixware,
-          [WINE_TRY_SHLIB_FLAGS([-fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic],
-                                ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")])
-      if test "$ac_cv_c_dll_unixware" = "yes"
-      then
-        LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
-        LDDLLFLAGS="-Wl,-G,-B,symbolic"
-
-      else
-        AC_CACHE_CHECK(whether we can build an HP-UX dll, ac_cv_c_dll_hpux,
-          [WINE_TRY_SHLIB_FLAGS([-shared], ac_cv_c_dll_hpux="yes", ac_cv_c_dll_hpux="no")])
-        if test "$ac_cv_c_dll_hpux" = "yes"
-        then
-          LIBEXT="sl"
-          DLLEXT=".sl"
-          LDDLLFLAGS="-shared -fPIC"
-          LDSHARED="\$(CC) -shared"
-        fi
-      fi
-    fi
-
-    dnl Check for cross compiler to build test programs
-    AC_SUBST(CROSSTEST,"")
-    if test "$cross_compiling" = "no"
-    then
-      WINE_CHECK_MINGW_PROG(CROSSCC,gcc,false)
-      WINE_CHECK_MINGW_PROG(DLLTOOL,dlltool,false)
-      WINE_CHECK_MINGW_PROG(CROSSWINDRES,windres,false)
-      WINE_CHECK_MINGW_PROG(MINGWAR,ar,false)
-      if test "$CROSSCC" != "false"; then CROSSTEST="\$(CROSSTEST)"; fi
-    fi
-    ;;
-esac
-
-if test "$LIBEXT" = "a"; then
-  AC_MSG_ERROR(
-[could not find a way to build shared libraries.
-It is currently not possible to build Wine without shared library
-(.so) support to allow transparent switch between .so and .dll files.
-If you are using Linux, you will need a newer binutils.]
-)
-fi
+dnl **** Platform-specific checks ****
 
 AC_SUBST(LDPATH,"")
 case $build_os in
