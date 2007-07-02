@@ -182,7 +182,7 @@ static FT_TrueTypeEngineType (*pFT_Get_TrueType_Engine_Type)(FT_Library);
 MAKE_FUNCPTR(FT_Get_WinFNT_Header);
 #endif
 
-#ifdef HAVE_FONTCONFIG_FONTCONFIG_H
+#ifdef SONAME_LIBFONTCONFIG
 #include <fontconfig/fontconfig.h>
 MAKE_FUNCPTR(FcConfigGetCurrent);
 MAKE_FUNCPTR(FcFontList);
@@ -195,9 +195,6 @@ MAKE_FUNCPTR(FcPatternCreate);
 MAKE_FUNCPTR(FcPatternDestroy);
 MAKE_FUNCPTR(FcPatternGetBool);
 MAKE_FUNCPTR(FcPatternGetString);
-#ifndef SONAME_LIBFONTCONFIG
-#define SONAME_LIBFONTCONFIG "libfontconfig" SONAME_EXT
-#endif
 #endif
 
 #undef MAKE_FUNCPTR
@@ -1481,7 +1478,7 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 
 static void load_fontconfig_fonts(void)
 {
-#ifdef HAVE_FONTCONFIG_FONTCONFIG_H
+#ifdef SONAME_LIBFONTCONFIG
     void *fc_handle = NULL;
     FcConfig *config;
     FcPattern *pat;
