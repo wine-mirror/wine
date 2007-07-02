@@ -966,7 +966,7 @@ dnl **** Check for capi4linux ****
 
 if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
 then
-    AC_CHECK_LIB(capi20,capi20_register,[AC_DEFINE(HAVE_CAPI4LINUX,1,[Define if you have capi4linux libs and headers])])
+    WINE_CHECK_SONAME(capi20,capi20_register)
 fi
 
 dnl **** Check for gcc specific options ****
@@ -1123,7 +1123,6 @@ WINE_CHECK_SONAME(fontconfig,FcInit)
 WINE_CHECK_SONAME(ssl,SSL_library_init)
 WINE_CHECK_SONAME(crypto,BIO_new_socket)
 WINE_CHECK_SONAME(jpeg,jpeg_start_decompress)
-WINE_CHECK_SONAME(capi20,capi20_isinstalled)
 WINE_CHECK_SONAME(sane,sane_init)
 
 

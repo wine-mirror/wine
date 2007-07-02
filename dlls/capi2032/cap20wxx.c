@@ -43,11 +43,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(capi);
 
-#ifdef HAVE_CAPI4LINUX
-
-#ifndef SONAME_LIBCAPI20
-#define SONAME_LIBCAPI20 "libcapi20" SONAME_EXT
-#endif
+#ifdef SONAME_LIBCAPI20
 
 static unsigned (*pcapi20_register)(unsigned, unsigned, unsigned, unsigned *) = NULL;
 static unsigned (*pcapi20_release)(unsigned) = NULL;
@@ -90,7 +86,7 @@ LOAD_FUNCPTR(capi20_get_version);
 \*===========================================================================*/
 
 DWORD WINAPI wrapCAPI_REGISTER (DWORD MessageBufferSize, DWORD maxLogicalConnection, DWORD maxBDataBlocks, DWORD maxBDataLen, DWORD *pApplID) {
-#ifdef HAVE_CAPI4LINUX
+#ifdef SONAME_LIBCAPI20
     unsigned aid = 0;
     DWORD fret;
 
@@ -110,7 +106,7 @@ DWORD WINAPI wrapCAPI_REGISTER (DWORD MessageBufferSize, DWORD maxLogicalConnect
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
 DWORD WINAPI wrapCAPI_RELEASE (DWORD ApplID) {
-#ifdef HAVE_CAPI4LINUX
+#ifdef SONAME_LIBCAPI20
     DWORD fret;
 
     load_functions();
@@ -127,7 +123,7 @@ DWORD WINAPI wrapCAPI_RELEASE (DWORD ApplID) {
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
 DWORD WINAPI wrapCAPI_PUT_MESSAGE (DWORD ApplID, PVOID pCAPIMessage) {
-#ifdef HAVE_CAPI4LINUX
+#ifdef SONAME_LIBCAPI20
     DWORD fret;
 
     load_functions();
@@ -144,7 +140,7 @@ DWORD WINAPI wrapCAPI_PUT_MESSAGE (DWORD ApplID, PVOID pCAPIMessage) {
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
 DWORD WINAPI wrapCAPI_GET_MESSAGE (DWORD ApplID, PVOID *ppCAPIMessage) {
-#ifdef HAVE_CAPI4LINUX
+#ifdef SONAME_LIBCAPI20
     DWORD fret;
 
     load_functions();
@@ -161,7 +157,7 @@ DWORD WINAPI wrapCAPI_GET_MESSAGE (DWORD ApplID, PVOID *ppCAPIMessage) {
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
 DWORD WINAPI wrapCAPI_WAIT_FOR_SIGNAL (DWORD ApplID) {
-#ifdef HAVE_CAPI4LINUX
+#ifdef SONAME_LIBCAPI20
     TRACE ("(%x)\n", ApplID);
 
     load_functions();
@@ -177,7 +173,7 @@ DWORD WINAPI wrapCAPI_WAIT_FOR_SIGNAL (DWORD ApplID) {
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
 DWORD WINAPI wrapCAPI_GET_MANUFACTURER (char *SzBuffer) {
-#ifdef HAVE_CAPI4LINUX
+#ifdef SONAME_LIBCAPI20
     DWORD fret;
 
     load_functions();
@@ -198,7 +194,7 @@ DWORD WINAPI wrapCAPI_GET_MANUFACTURER (char *SzBuffer) {
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
 DWORD WINAPI wrapCAPI_GET_VERSION (DWORD *pCAPIMajor, DWORD *pCAPIMinor, DWORD *pManufacturerMajor, DWORD *pManufacturerMinor) {
-#ifdef HAVE_CAPI4LINUX
+#ifdef SONAME_LIBCAPI20
     unsigned char version[4 * sizeof (unsigned)];
     DWORD fret;
 
@@ -221,7 +217,7 @@ DWORD WINAPI wrapCAPI_GET_VERSION (DWORD *pCAPIMajor, DWORD *pCAPIMinor, DWORD *
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
 DWORD WINAPI wrapCAPI_GET_SERIAL_NUMBER (char *SzBuffer) {
-#ifdef HAVE_CAPI4LINUX
+#ifdef SONAME_LIBCAPI20
     DWORD fret;
 
     load_functions();
@@ -238,7 +234,7 @@ DWORD WINAPI wrapCAPI_GET_SERIAL_NUMBER (char *SzBuffer) {
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
 DWORD WINAPI wrapCAPI_GET_PROFILE (PVOID SzBuffer, DWORD CtlrNr) {
-#ifdef HAVE_CAPI4LINUX
+#ifdef SONAME_LIBCAPI20
     DWORD fret;
 
     load_functions();
@@ -256,7 +252,7 @@ DWORD WINAPI wrapCAPI_GET_PROFILE (PVOID SzBuffer, DWORD CtlrNr) {
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
 DWORD WINAPI wrapCAPI_INSTALLED (void) {
-#ifdef HAVE_CAPI4LINUX
+#ifdef SONAME_LIBCAPI20
     DWORD fret;
 
     load_functions();

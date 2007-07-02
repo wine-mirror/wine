@@ -35,9 +35,6 @@
 /* Define to 1 if you have the <capi20.h> header file. */
 #undef HAVE_CAPI20_H
 
-/* Define if you have capi4linux libs and headers */
-#undef HAVE_CAPI4LINUX
-
 /* Define to 1 if you have the <Carbon/Carbon.h> header file. */
 #undef HAVE_CARBON_CARBON_H
 
