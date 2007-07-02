@@ -247,15 +247,18 @@ GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
 GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
     INT y1, INT x2, INT y2)
 {
-    HGDIOBJ old_obj;
+    INT save_state;
 
     if(!pen || !graphics)
         return InvalidParameter;
 
-    old_obj = SelectObject(graphics->hdc, pen->gdipen);
+    save_state = SaveDC(graphics->hdc);
+    SelectObject(graphics->hdc, pen->gdipen);
+
     MoveToEx(graphics->hdc, x1, y1, NULL);
     LineTo(graphics->hdc, x2, y2);
-    SelectObject(graphics->hdc, old_obj);
+
+    RestoreDC(graphics->hdc, save_state);
 
     return Ok;
 }
