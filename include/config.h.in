@@ -480,6 +480,9 @@
 /* Define to 1 if the system has the type `pid_t'. */
 #undef HAVE_PID_T
 
+/* Define to 1 if you have the <png.h> header file. */
+#undef HAVE_PNG_H
+
 /* Define to 1 if you have the `poll' function. */
 #undef HAVE_POLL
 
@@ -995,6 +998,9 @@
 
 /* Define to the soname of the libncurses library. */
 #undef SONAME_LIBNCURSES
+
+/* Define to the soname of the libpng library. */
+#undef SONAME_LIBPNG
 
 /* Define to the soname of the libsane library. */
 #undef SONAME_LIBSANE

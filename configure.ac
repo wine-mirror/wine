@@ -209,6 +209,7 @@ AC_CHECK_HEADERS(\
 	netinet/tcp_fsm.h \
 	openssl/err.h \
 	openssl/ssl.h \
+	png.h \
 	poll.h \
 	process.h \
 	pthread.h \
@@ -996,6 +997,12 @@ dnl **** Check for libjpeg ****
 if test "$ac_cv_header_jpeglib_h" = "yes"
 then
     WINE_CHECK_SONAME(jpeg,jpeg_start_decompress)
+fi
+
+dnl **** Check for libpng ****
+if test "$ac_cv_header_png_h" = "yes"
+then
+    WINE_CHECK_SONAME(png,png_create_read_struct,,,,[[libpng[[0-9]]*]])
 fi
 
 dnl **** Check for gcc specific options ****
