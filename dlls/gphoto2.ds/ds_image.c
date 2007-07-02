@@ -47,10 +47,6 @@ MAKE_FUNCPTR(jpeg_finish_decompress);
 MAKE_FUNCPTR(jpeg_destroy_decompress);
 #undef MAKE_FUNCPTR
 
-#ifndef SONAME_LIBJPEG
-#define SONAME_LIBJPEG "libjpeg" SONAME_EXT
-#endif
-
 static void *load_libjpeg(void)
 {
     if((libjpeg_handle = wine_dlopen(SONAME_LIBJPEG, RTLD_NOW, NULL, 0)) != NULL) {

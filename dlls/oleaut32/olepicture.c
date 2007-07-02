@@ -67,7 +67,7 @@
 
 #include "wine/wingdi16.h"
 
-#ifdef HAVE_JPEGLIB_H
+#ifdef SONAME_LIBJPEG
 /* This is a hack, so jpeglib.h does not redefine INT32 and the like*/
 #define XMD_H
 #define UINT8 JPEG_UINT8
@@ -77,9 +77,6 @@
 # include <jpeglib.h>
 #undef jpeg_boolean
 #undef UINT16
-#ifndef SONAME_LIBJPEG
-#define SONAME_LIBJPEG "libjpeg" SONAME_EXT
-#endif
 #endif
 
 #include "ungif.h"
@@ -937,7 +934,7 @@ static HRESULT WINAPI OLEPictureImpl_IsDirty(
   return E_NOTIMPL;
 }
 
-#ifdef HAVE_JPEGLIB_H
+#ifdef SONAME_LIBJPEG
 
 static void *libjpeg_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -991,7 +988,7 @@ static boolean _jpeg_resync_to_restart(j_decompress_ptr cinfo, int desired) {
     return FALSE;
 }
 static void _jpeg_term_source(j_decompress_ptr cinfo) { }
-#endif /* HAVE_JPEGLIB_H */
+#endif /* SONAME_LIBJPEG */
 
 struct gifdata {
     unsigned char *data;
@@ -1210,7 +1207,7 @@ static HRESULT OLEPictureImpl_LoadGif(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
 
 static HRESULT OLEPictureImpl_LoadJpeg(OLEPictureImpl *This, BYTE *xbuf, ULONG xread)
 {
-#ifdef HAVE_JPEGLIB_H
+#ifdef SONAME_LIBJPEG
     struct jpeg_decompress_struct	jd;
     struct jpeg_error_mgr		jerr;
     int					ret;

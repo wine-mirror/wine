@@ -24,7 +24,7 @@
 # error You must include config.h first
 #endif
 
-#if defined(HAVE_GPHOTO2) && !defined(HAVE_JPEGLIB_H)
+#if defined(HAVE_GPHOTO2) && !defined(SONAME_LIBJPEG)
 # warning "gphoto2 support in twain needs jpeg development headers"
 # undef HAVE_GPHOTO2
 #endif
@@ -38,7 +38,7 @@
 
 #include <stdio.h>
 
-#ifdef HAVE_JPEGLIB_H
+#ifdef SONAME_LIBJPEG
 /* This is a hack, so jpeglib.h does not redefine INT32 and the like*/
 # define XMD_H
 # define UINT8 JPEG_UINT8
@@ -46,9 +46,6 @@
 # undef FAR
 #  include <jpeglib.h>
 # undef UINT16
-# ifndef SONAME_LIBJPEG
-#  define SONAME_LIBJPEG "libjpeg" SONAME_EXT
-# endif
 #endif
 
 #include <stdarg.h>
@@ -96,7 +93,7 @@ struct tagActiveDS
 #ifdef HAVE_GPHOTO2
     CameraFile				*file;
 #endif
-#ifdef HAVE_JPEGLIB_H
+#ifdef SONAME_LIBJPEG
     struct jpeg_source_mgr		xjsm;
     struct jpeg_decompress_struct	jd;
     struct jpeg_error_mgr		jerr;
