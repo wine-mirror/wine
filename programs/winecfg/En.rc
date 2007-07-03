@@ -62,29 +62,29 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Window settings ",IDC_STATIC,8,4,244,180
+    GROUPBOX        " Window Settings ",IDC_STATIC,8,4,244,184
 
-    CONTROL	    "Allow DirectX apps to stop the mouse leaving their window",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
-    LTEXT 	    "If windows are managed by your window manager, then they will have the standard borders, they will respect your virtual desktop and appear in your window list. \n\nIf the windows are unmanaged, they will be disconnected from your window manager. This will mean the windows do not integrate as closely with your desktop, but the emulation will be more accurate so it can help some programs to work better.",
-    		    IDC_STATIC,15,37,228,80
-    CONTROL	    "Allow the window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
+    CONTROL         "Allow DirectX apps to stop the mouse leaving their window",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,19,230,8
     
-    LTEXT           "You can either choose to have all Windows applications confined to a single window acting as a virtual desktop, or to have them behave like your other applications.",
-                    IDC_STATIC,15,125,228,28
-    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,15,167,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
+    CONTROL	        "Allow the window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
+    LTEXT           "If windows are managed by your window manager, then they will have the standard borders, they will respect your virtual desktop and appear in your window list. \n\nIf the windows are unmanaged, they will be disconnected from your window manager. This will mean the windows do not integrate as closely with your desktop, but the emulation will be more accurate so it can help some programs to work better.",
+		           IDC_STATIC,19,51,225,80
+
     CONTROL         "Emulate a virtual desktop",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,152,230,10
-		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,128,230,10
+    LTEXT           "You can either choose to have all Windows applications confined to a single window acting as a virtual desktop, or to have them behave like your other applications.",
+                    IDC_STATIC,19,138,225,28
+    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,109,168,8,8,WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,50
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,195,244,48
 
-    LTEXT	    "Vertex Shader Support: ",IDC_STATIC,15,199,80,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,100,197,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Vertex Shader Support: ",IDC_STATIC,15,208,80,32
+    COMBOBOX        IDC_D3D_VSHADER_MODE,100,206,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL         "Allow Pixel Shader (if supported by hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,216,230,10
+    CONTROL         "Allow Pixel Shader (if supported by hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,224,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -304,65 +304,4 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Active Title Text"
     IDC_SYSPARAMS_INACTIVE_TITLE    "Inactive Title Bar"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inactive Title Text"
-END
-
-/****************************************************************/
-/* English neutral resources
-/****************************************************************/
-
-LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
-IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
-STYLE WS_CHILD | WS_DISABLED
-FONT 8, "MS Shell Dlg"
-BEGIN
-    GROUPBOX        " Window settings ",IDC_STATIC,8,4,244,110
-
-    CONTROL	    "Allow DirectX apps to stop the mouse leaving their window",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
-    CONTROL	    "Allow the window manager to manage created windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,34,230,8
-    
-    /* FIXME: the wording of this explanation could be a lot better */
-    LTEXT           "You can choose to emulate a windows desktop, where all the windows are confined to one 'virtual screen', or you can have the windows placed on your standard desktop.",
-                    IDC_STATIC,15,52,228,28
-    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,15,94,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,94,8,8,WS_DISABLED
-    CONTROL         "Emulate a virtual desktop",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,79,230,10
-		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,94,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,94,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,119,244,120
-
-    LTEXT	    "Vertex Shader Support: ",IDC_STATIC,15,129,80,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,100,127,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    CONTROL         "Allow Pixel Shader (if supported by hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,144,230,10
-END
-
-IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
-STYLE WS_CHILD | WS_DISABLED
-FONT 8, "MS Shell Dlg"
-BEGIN
-    GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
-    LTEXT           "Theme:",IDC_STATIC,15,16,130,8
-    COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Install theme...",IDC_THEME_INSTALL,152,23,93,14
-    LTEXT           "Color:",IDC_THEME_COLORTEXT,15,40,112,8
-    COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Size:",IDC_THEME_SIZETEXT,135,40,110,8
-    COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Item:",IDC_STATIC,15,64,112,8
-    COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
-    LTEXT           "Color:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
-    PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
-    LTEXT           "Size:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
-    EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
-    CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
-    PUSHBUTTON      "Font",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
-    GROUPBOX        " Shell Folder ",IDC_STATIC,8,114,244,100
-    CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
-                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-    CONTROL         "Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
-    EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "Browse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
