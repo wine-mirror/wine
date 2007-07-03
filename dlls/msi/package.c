@@ -1343,7 +1343,7 @@ static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
     static const WCHAR empty[] = {0};
     MSIPACKAGE *package;
     MSIRECORD *row = NULL;
-    UINT r;
+    UINT r = ERROR_FUNCTION_FAILED;
     LPCWSTR val = NULL;
 
     TRACE("%lu %s %p %p\n", handle, debugstr_w(name),
@@ -1354,7 +1354,50 @@ static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
 
     package = msihandle2msiinfo( handle, MSIHANDLETYPE_PACKAGE );
     if (!package)
-        return ERROR_INVALID_HANDLE;
+    {
+        HRESULT hr;
+        IWineMsiRemotePackage *remote_package;
+        LPWSTR value = NULL;
+        DWORD len;
+
+        remote_package = (IWineMsiRemotePackage *)msi_get_remote( handle );
+        if (!remote_package)
+            return ERROR_INVALID_HANDLE;
+
+        len = 0;
+        hr = IWineMsiRemotePackage_GetProperty( remote_package, (BSTR *)name, NULL, &len );
+        if (FAILED(hr))
+            goto done;
+
+        len++;
+        value = msi_alloc(len * sizeof(WCHAR));
+        if (!value)
+        {
+            r = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+
+        hr = IWineMsiRemotePackage_GetProperty( remote_package, (BSTR *)name, (BSTR *)value, &len );
+        if (FAILED(hr))
+            goto done;
+
+        r = msi_strcpy_to_awstring( value, szValueBuf, pchValueBuf );
+        *pchValueBuf *= sizeof(WCHAR); /* Bug required by Adobe installers */
+
+done:
+        IWineMsiRemotePackage_Release(remote_package);
+        msi_free(value);
+
+        if (FAILED(hr))
+        {
+            if (HRESULT_FACILITY(hr) == FACILITY_WIN32)
+                return HRESULT_CODE(hr);
+
+            return ERROR_FUNCTION_FAILED;
+        }
+
+        return r;
+    }
 
     row = MSI_GetPropertyRow( package, name );
     if (row)
