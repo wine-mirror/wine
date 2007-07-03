@@ -46,8 +46,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(xrender);
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
 
-static XRenderPictFormat *screen_format; /* format of screen */
-static XRenderPictFormat *mono_format; /* format of mono bitmap */
+
+enum drawable_depth_type {mono_drawable, color_drawable};
+static XRenderPictFormat *pict_formats[2];
 
 typedef struct
 {
@@ -203,8 +204,8 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
         if(pXRenderQueryExtension(gdi_display, &event_base, &xrender_error_base)) {
             X11DRV_XRender_Installed = TRUE;
             TRACE("Xrender is up and running error_base = %d\n", xrender_error_base);
-            screen_format = pXRenderFindVisualFormat(gdi_display, visual);
-            if(!screen_format)
+            pict_formats[color_drawable] = pXRenderFindVisualFormat(gdi_display, visual);
+            if(!pict_formats[color_drawable])
             {
                 /* Xrender doesn't like DirectColor visuals, try to find a TrueColor one instead */
                 if (visual->class == DirectColor)
@@ -213,12 +214,12 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
                     if (XMatchVisualInfo( gdi_display, DefaultScreen(gdi_display),
                                           screen_depth, TrueColor, &info ))
                     {
-                        screen_format = pXRenderFindVisualFormat(gdi_display, info.visual);
-                        if (screen_format) visual = info.visual;
+                        pict_formats[color_drawable] = pXRenderFindVisualFormat(gdi_display, info.visual);
+                        if (pict_formats[color_drawable]) visual = info.visual;
                     }
                 }
             }
-            if(!screen_format) /* This fails in buggy versions of libXrender.so */
+            if(!pict_formats[color_drawable]) /* This fails in buggy versions of libXrender.so */
             {
                 wine_tsx11_unlock();
                 WINE_MESSAGE(
@@ -232,10 +233,10 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
             pf.depth = 1;
             pf.direct.alpha = 0;
             pf.direct.alphaMask = 1;
-            mono_format = pXRenderFindFormat(gdi_display, PictFormatType |
-                                             PictFormatDepth | PictFormatAlpha |
-                                             PictFormatAlphaMask, &pf, 0);
-            if(!mono_format) {
+            pict_formats[mono_drawable] = pXRenderFindFormat(gdi_display, PictFormatType |
+                                                             PictFormatDepth | PictFormatAlpha |
+                                                             PictFormatAlphaMask, &pf, 0);
+            if(!pict_formats[mono_drawable]) {
                 ERR("mono_format == NULL?\n");
                 X11DRV_XRender_Installed = FALSE;
             }
@@ -1098,6 +1099,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     unsigned int idx;
     double cosEsc, sinEsc;
     LOGFONTW lf;
+    enum drawable_depth_type depth_type = (physDev->depth == 1) ? mono_drawable : color_drawable;
 
     /* Do we need to disable antialiasing because of palette mode? */
     if( !physDev->bitmap || GetObjectW( physDev->bitmap->hbitmap, sizeof(bmp), &bmp ) != sizeof(bmp) ) {
@@ -1176,8 +1178,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    wine_tsx11_lock();
 	    physDev->xrender->pict = pXRenderCreatePicture(gdi_display,
 							   physDev->drawable,
-							   (physDev->depth == 1) ?
-							   mono_format : screen_format,
+                                                           pict_formats[depth_type],
 							   CPSubwindowMode, &pa);
 	    wine_tsx11_unlock();
 
@@ -1204,7 +1205,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         if(!physDev->xrender->tile_xpm) {
 	    XRenderPictureAttributes pa;
 
-	    XRenderPictFormat *format = (physDev->depth == 1) ? mono_format : screen_format;
+	    XRenderPictFormat *format = pict_formats[depth_type];
 	    wine_tsx11_lock();
 	    physDev->xrender->tile_xpm = XCreatePixmap(gdi_display,
 						       root_window,
@@ -1534,6 +1535,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     POINT pts[2];
     BOOL top_down = FALSE;
     RGNDATA *rgndata;
+    enum drawable_depth_type dst_depth_type = (devDst->depth == 1) ? mono_drawable : color_drawable;
 
     if(!X11DRV_XRender_Installed) {
         FIXME("Unable to AlphaBlend without Xrender\n");
@@ -1616,8 +1618,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     /* FIXME use devDst->xrender->pict ? */
     dst_pict = pXRenderCreatePicture(gdi_display,
                                      devDst->drawable,
-                                     (devDst->depth == 1) ?
-                                     mono_format : screen_format,
+                                     pict_formats[dst_depth_type],
                                      CPSubwindowMode, &pa);
     TRACE("dst_pict %08lx\n", dst_pict);
     TRACE("src_drawable = %08lx\n", devSrc->drawable);
