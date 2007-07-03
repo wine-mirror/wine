@@ -253,6 +253,7 @@ GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
         return InvalidParameter;
 
     save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
     MoveToEx(graphics->hdc, x1, y1, NULL);
