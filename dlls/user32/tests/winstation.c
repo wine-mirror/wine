@@ -250,7 +250,7 @@ START_TEST(winstation)
     GetProcessWindowStation();
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        trace("WindowStation calls not supported on this platform\n");
+        skip("WindowStation calls not supported on this platform\n");
         return;
     }
 
