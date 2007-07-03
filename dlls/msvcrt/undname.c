@@ -254,7 +254,7 @@ static char* str_printf(struct parsed_symbol* sym, const char* format, ...)
         else len++;
     }
     va_end(args);
-    if (!(tmp = (char*)und_alloc(sym, len))) return NULL;
+    if (!(tmp = und_alloc(sym, len))) return NULL;
     va_start(args, format);
     for (p = tmp, i = 0; format[i]; i++)
     {

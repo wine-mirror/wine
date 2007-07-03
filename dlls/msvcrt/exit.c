@@ -79,7 +79,7 @@ MSVCRT__onexit_t CDECL __dllonexit(MSVCRT__onexit_t func, MSVCRT__onexit_t **sta
   if (++len <= 0)
     return NULL;
 
-  tmp = (MSVCRT__onexit_t *)MSVCRT_realloc(*start, len * sizeof(tmp));
+  tmp = MSVCRT_realloc(*start, len * sizeof(tmp));
   if (!tmp)
     return NULL;
   *start = tmp;

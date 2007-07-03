@@ -259,7 +259,7 @@ int CDECL _cprintf(const char* format, ...)
     resize = (written == -1 ? resize * 2 : written + 1);
     if (mem != buf)
       MSVCRT_free (mem);
-    if (!(mem = (char *)MSVCRT_malloc(resize)))
+    if (!(mem = MSVCRT_malloc(resize)))
       return MSVCRT_EOF;
     va_start( valist, format );
   }

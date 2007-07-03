@@ -3012,7 +3012,7 @@ int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, va_list valist)
     resize = (written == -1 ? resize * 2 : written + 1);
     if (mem != buf)
       MSVCRT_free (mem);
-    if (!(mem = (char *)MSVCRT_malloc(resize)))
+    if (!(mem = MSVCRT_malloc(resize)))
       return MSVCRT_EOF;
   }
   retval = MSVCRT_fwrite(mem, sizeof(*mem), written, file);
@@ -3038,7 +3038,7 @@ int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, va_l
     resize = (written == -1 ? resize * 2 : written + sizeof(MSVCRT_wchar_t));
     if (mem != buf)
       MSVCRT_free (mem);
-    if (!(mem = (MSVCRT_wchar_t *)MSVCRT_malloc(resize*sizeof(*mem))))
+    if (!(mem = MSVCRT_malloc(resize*sizeof(*mem))))
       return MSVCRT_EOF;
   }
   retval = MSVCRT_fwrite(mem, sizeof(*mem), written, file);

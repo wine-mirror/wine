@@ -106,7 +106,7 @@ static char* msvcrt_argvtos(const char* const* arg, char delim)
     a++;
   }
 
-  ret = (char*)MSVCRT_malloc(size + 1);
+  ret = MSVCRT_malloc(size + 1);
   if (!ret)
     return NULL;
 
@@ -161,7 +161,7 @@ static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
       arg = va_arg(alist, char*);
   } while (arg != NULL);
 
-  ret = (char*)MSVCRT_malloc(size + 1);
+  ret = MSVCRT_malloc(size + 1);
   if (!ret)
     return NULL;
 
