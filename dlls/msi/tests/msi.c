@@ -626,19 +626,13 @@ static void test_MsiQueryFeatureState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"apple", 1);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     RegDeleteValueA(compkey, prod_squashed);
     RegDeleteValueA(compkey, "");

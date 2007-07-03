@@ -103,6 +103,15 @@ static const WCHAR szUser_Components_fmt[] = {
 'C','o','m','p','o','n','e','n','t','s','\\',
 '%','s',0};
 
+static const WCHAR szUserDataComp_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'U','s','e','r','D','a','t','a','\\',
+'%','s','\\','C','o','m','p','o','n','e','n','t','s','\\','%','s',0};
+
 static const WCHAR szUninstall_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -628,6 +637,35 @@ UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
     else
         rc = RegOpenKeyW(HKEY_CURRENT_USER,keypath,key);
 
+    return rc;
+}
+
+UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, HKEY *key, BOOL create)
+{
+    UINT rc;
+    WCHAR comp[GUID_SIZE];
+    WCHAR keypath[0x200];
+    LPWSTR usersid;
+
+    TRACE("%s\n", debugstr_w(szComponent));
+    squash_guid(szComponent, comp);
+    TRACE("squished (%s)\n", debugstr_w(comp));
+
+    rc = get_user_sid(&usersid);
+    if (rc != ERROR_SUCCESS || !usersid)
+    {
+        ERR("Failed to retrieve user SID: %d\n", rc);
+        return rc;
+    }
+
+    sprintfW(keypath, szUserDataComp_fmt, usersid, comp);
+
+    if (create)
+        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+    else
+        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    msi_free(usersid);
     return rc;
 }
 

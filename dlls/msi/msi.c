@@ -1229,7 +1229,7 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 {
     WCHAR squishProduct[33], comp[GUID_SIZE];
     GUID guid;
-    LPWSTR components, p, parent_feature;
+    LPWSTR components, p, parent_feature, path;
     UINT rc;
     HKEY hkey;
     INSTALLSTATE r;
@@ -1284,17 +1284,18 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
         }
 
         StringFromGUID2(&guid, comp, GUID_SIZE);
-        r = MsiGetComponentPathW(szProduct, comp, NULL, 0);
-        TRACE("component %s state %d\n", debugstr_guid(&guid), r);
-        switch (r)
+        rc = MSIREG_OpenUserDataComponentKey(comp, &hkey, FALSE);
+        if (rc != ERROR_SUCCESS)
         {
-        case INSTALLSTATE_NOTUSED:
-        case INSTALLSTATE_LOCAL:
-        case INSTALLSTATE_SOURCE:
-            break;
-        default:
-            missing = TRUE;
+            msi_free(components);
+            return INSTALLSTATE_ADVERTISED;
         }
+
+        path = msi_reg_get_val_str(hkey, squishProduct);
+        if (!path)
+            missing = TRUE;
+
+        msi_free(path);
     }
 
     TRACE("%s %s -> %d\n", debugstr_w(szProduct), debugstr_w(szFeature), r);
