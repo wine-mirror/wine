@@ -84,7 +84,10 @@ static void test_lsa(void)
         PPOLICY_DNS_DOMAIN_INFO dns_domain_info;
 
         status = pLsaQueryInformationPolicy(handle, PolicyAuditEventsInformation, (PVOID*)&audit_events_info);
-        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyAuditEventsInformation) failed, returned 0x%08x\n", status);
+        if (status == STATUS_ACCESS_DENIED)
+            skip("Not enought rights to retrieve PolicyAuditEventsInformation\n");
+        else
+            ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyAuditEventsInformation) failed, returned 0x%08x\n", status);
         if (status == STATUS_SUCCESS) {
             pLsaFreeMemory((LPVOID)audit_events_info);
         }
