@@ -189,6 +189,7 @@ static const IClassFactoryVtbl MsiCF_Vtbl =
 };
 
 static IClassFactoryImpl MsiServer_CF = { &MsiCF_Vtbl, create_msiserver };
+static IClassFactoryImpl WineMsiRemotePackage_CF = { &MsiCF_Vtbl, create_msi_remote_package };
 
 /******************************************************************
  * DllGetClassObject          [MSI.@]
@@ -209,6 +210,12 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
         IsEqualCLSID (rclsid, &CLSID_IMsiServerX3) )
     {
         FIXME("create %s object\n", debugstr_guid( rclsid ));
+    }
+
+    if ( IsEqualCLSID (rclsid, &CLSID_IWineMsiRemotePackage) )
+    {
+        *ppv = (LPVOID) &WineMsiRemotePackage_CF;
+        return S_OK;
     }
 
     return CLASS_E_CLASSNOTAVAILABLE;

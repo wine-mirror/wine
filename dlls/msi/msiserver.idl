@@ -23,6 +23,23 @@ import "wtypes.idl";
 import "objidl.idl";
 import "oaidl.idl";
 
+cpp_quote("#if 0")
+typedef unsigned long MSIHANDLE;
+cpp_quote("#endif")
+
+[
+    uuid(902B3592-9D08-4dfd-A593-D07C52546421),
+    oleautomation,
+    object
+]
+interface IWineMsiRemotePackage : IUnknown
+{
+    HRESULT SetMsiHandle( [in] MSIHANDLE handle );
+    HRESULT GetActiveDatabase( [out] MSIHANDLE *handle );
+    HRESULT GetProperty( [in] BSTR *property, [out] BSTR *value, [out] DWORD *size );
+    HRESULT SetProperty( [in] BSTR *property, [in] BSTR *value );
+}
+
 [ uuid(000C1092-0000-0000-C000-000000000046), version(1.0) ]
 library WindowsInstaller
 {

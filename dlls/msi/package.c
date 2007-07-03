@@ -20,6 +20,7 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#define COBJMACROS
 
 #include <stdarg.h>
 #include "windef.h"
@@ -44,6 +45,7 @@
 #include "sddl.h"
 
 #include "msipriv.h"
+#include "msiserver.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -1392,4 +1394,111 @@ UINT WINAPI MsiGetPropertyW( MSIHANDLE hInstall, LPCWSTR szName,
     val.str.w = szValueBuf;
 
     return MSI_GetProperty( hInstall, szName, &val, pchValueBuf );
+}
+
+typedef struct _msi_remote_package_impl {
+    const IWineMsiRemotePackageVtbl *lpVtbl;
+    MSIHANDLE package;
+    LONG refs;
+} msi_remote_package_impl;
+
+static inline msi_remote_package_impl* mrp_from_IWineMsiRemotePackage( IWineMsiRemotePackage* iface )
+{
+    return (msi_remote_package_impl*) iface;
+}
+
+static HRESULT WINAPI mrp_QueryInterface( IWineMsiRemotePackage *iface,
+                REFIID riid,LPVOID *ppobj)
+{
+    if( IsEqualCLSID( riid, &IID_IUnknown ) ||
+        IsEqualCLSID( riid, &IID_IWineMsiRemotePackage ) )
+    {
+        IUnknown_AddRef( iface );
+        *ppobj = iface;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI mrp_AddRef( IWineMsiRemotePackage *iface )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+
+    return InterlockedIncrement( &This->refs );
+}
+
+static ULONG WINAPI mrp_Release( IWineMsiRemotePackage *iface )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    ULONG r;
+
+    r = InterlockedDecrement( &This->refs );
+    if (r == 0)
+    {
+        MsiCloseHandle( This->package );
+        msi_free( This );
+    }
+    return r;
+}
+
+static HRESULT WINAPI mrp_SetMsiHandle( IWineMsiRemotePackage *iface, MSIHANDLE handle )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    This->package = handle;
+    return S_OK;
+}
+
+HRESULT WINAPI mrp_GetActiveDatabase( IWineMsiRemotePackage *iface, MSIHANDLE *handle )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    *handle = MsiGetActiveDatabase(This->package);
+    return S_OK;
+}
+
+HRESULT WINAPI mrp_GetProperty( IWineMsiRemotePackage *iface, BSTR *property, BSTR *value, DWORD *size )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    UINT r;
+
+    r = MsiGetPropertyW(This->package, (LPWSTR)property, (LPWSTR)value, size);
+    if (r != ERROR_SUCCESS)
+        return HRESULT_FROM_WIN32(r);
+
+    return S_OK;
+}
+
+HRESULT WINAPI mrp_SetProperty( IWineMsiRemotePackage *iface, BSTR *property, BSTR *value )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    UINT r = MsiSetPropertyW(This->package, (LPWSTR)property, (LPWSTR)value);
+    return HRESULT_FROM_WIN32(r);
+}
+
+static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
+{
+    mrp_QueryInterface,
+    mrp_AddRef,
+    mrp_Release,
+    mrp_SetMsiHandle,
+    mrp_GetActiveDatabase,
+    mrp_GetProperty,
+    mrp_SetProperty,
+};
+
+HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj )
+{
+    msi_remote_package_impl* This;
+
+    This = msi_alloc( sizeof *This );
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->lpVtbl = &msi_remote_package_vtbl;
+    This->package = 0;
+    This->refs = 1;
+
+    *ppObj = This;
+
+    return S_OK;
 }
