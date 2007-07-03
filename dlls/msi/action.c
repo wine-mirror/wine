@@ -629,35 +629,43 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     if (szPackagePath)   
     {
-        LPWSTR p, check, path;
- 
-        path = strdupW(szPackagePath);
-        p = strrchrW(path,'\\');    
+        LPWSTR p, check, dir;
+
+        dir = strdupW(szPackagePath);
+        p = strrchrW(dir, '\\');
         if (p)
-        {
-            p++;
-            *p=0;
-        }
+            *(++p) = 0;
         else
         {
-            msi_free(path);
-            path = msi_alloc(MAX_PATH*sizeof(WCHAR));
-            GetCurrentDirectoryW(MAX_PATH,path);
-            strcatW(path,cszbs);
+            msi_free(dir);
+            dir = msi_alloc(MAX_PATH*sizeof(WCHAR));
+            GetCurrentDirectoryW(MAX_PATH, dir);
+            lstrcatW(dir, cszbs);
+            p = (LPWSTR)szPackagePath;
         }
+
+        msi_free( package->PackagePath );
+        package->PackagePath = msi_alloc((lstrlenW(dir) + lstrlenW(p) + 2) * sizeof(WCHAR));
+        if (!package->PackagePath)
+        {
+            msi_free(dir);
+            return ERROR_OUTOFMEMORY;
+        }
+
+        lstrcpyW(package->PackagePath, dir);
+        lstrcatW(package->PackagePath, cszbs);
+        lstrcatW(package->PackagePath, p);
 
         check = msi_dup_property( package, cszSourceDir );
         if (!check)
-            MSI_SetPropertyW(package, cszSourceDir, path);
+            MSI_SetPropertyW(package, cszSourceDir, dir);
         msi_free(check);
 
         check = msi_dup_property( package, cszSOURCEDIR );
         if (!check)
-            MSI_SetPropertyW(package, cszSOURCEDIR, path);
+            MSI_SetPropertyW(package, cszSOURCEDIR, dir);
 
-        msi_free( package->PackagePath );
-        package->PackagePath = path;
-
+        msi_free(dir);
         msi_free(check);
     }
 
