@@ -184,6 +184,7 @@ UINT WINAPI MsiSourceListGetInfoA( LPCSTR szProduct, LPCSTR szUserSid,
     if (!value)
         return ERROR_OUTOFMEMORY;
 
+    *value = '\0';
     ret = MsiSourceListGetInfoW(product, usersid, dwContext, dwOptions,
                                 property, value, &len);
     if (ret != ERROR_SUCCESS)
@@ -341,10 +342,21 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     }
     else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEW, szProperty)==0)
     {
-        rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_PACKAGENAMEW, 0, 0, 
-                (LPBYTE)szValue, pcchValue);
+        *pcchValue = *pcchValue * sizeof(WCHAR);
+        rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_PACKAGENAMEW, 0, 0,
+                              (LPBYTE)szValue, pcchValue);
         if (rc != ERROR_SUCCESS && rc != ERROR_MORE_DATA)
+        {
+            *pcchValue = 0;
             rc = ERROR_SUCCESS;
+        }
+        else
+        {
+            if (*pcchValue)
+                *pcchValue = (*pcchValue - 1) / sizeof(WCHAR);
+            if (szValue)
+                szValue[*pcchValue] = '\0';
+        }
     }
     else
     {
