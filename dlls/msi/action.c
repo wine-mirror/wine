@@ -3241,6 +3241,19 @@ static UINT ITERATE_PublishProduct(MSIRECORD *row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
+static BOOL msi_check_publish(MSIPACKAGE *package)
+{
+    MSIFEATURE *feature;
+
+    LIST_FOR_EACH_ENTRY(feature, &package->features, MSIFEATURE, entry)
+    {
+        if (feature->ActionRequest == INSTALLSTATE_LOCAL)
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 /*
  * 99% of the work done here is only done for 
  * advertised installs. However this is where the
@@ -3274,6 +3287,10 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     LPWSTR buffer;
     DWORD size;
     MSIHANDLE hDb, hSumInfo;
+
+    /* FIXME: also need to publish if the product is in advertise mode */
+    if (!msi_check_publish(package))
+        return ERROR_SUCCESS;
 
     /* write out icon files */
 
