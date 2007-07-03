@@ -450,6 +450,218 @@ static void test_MsiQueryProductState(void)
     RegCloseKey(props);
 }
 
+static const char table_enc85[] =
+"!$%&'()*+,-.0123456789=?@ABCDEFGHIJKLMNO"
+"PQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwx"
+"yz{}~";
+
+/*
+ *  Encodes a base85 guid given a GUID pointer
+ *  Caller should provide a 21 character buffer for the encoded string.
+ *
+ *  returns TRUE if successful, FALSE if not
+ */
+static BOOL encode_base85_guid( GUID *guid, LPWSTR str )
+{
+    unsigned int x, *p, i;
+
+    p = (unsigned int*) guid;
+    for( i=0; i<4; i++ )
+    {
+        x = p[i];
+        *str++ = table_enc85[x%85];
+        x = x/85;
+        *str++ = table_enc85[x%85];
+        x = x/85;
+        *str++ = table_enc85[x%85];
+        x = x/85;
+        *str++ = table_enc85[x%85];
+        x = x/85;
+        *str++ = table_enc85[x%85];
+    }
+    *str = 0;
+
+    return TRUE;
+}
+
+static void compose_base85_guid(LPSTR component, LPSTR comp_base85, LPSTR squashed)
+{
+    WCHAR guidW[MAX_PATH];
+    WCHAR base85W[MAX_PATH];
+    WCHAR squashedW[MAX_PATH];
+    GUID guid;
+    HRESULT hr;
+    int size;
+
+    hr = CoCreateGuid(&guid);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+
+    size = StringFromGUID2(&guid, (LPOLESTR)guidW, MAX_PATH);
+    ok(size == 39, "Expected 39, got %d\n", hr);
+
+    WideCharToMultiByte(CP_ACP, 0, guidW, size, component, MAX_PATH, NULL, NULL);
+    encode_base85_guid(&guid, base85W);
+    WideCharToMultiByte(CP_ACP, 0, base85W, -1, comp_base85, MAX_PATH, NULL, NULL);
+    squash_guid(guidW, squashedW);
+    WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
+}
+
+static void test_MsiQueryFeatureState(void)
+{
+    HKEY userkey, localkey, compkey;
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    CHAR component[MAX_PATH];
+    CHAR comp_base85[MAX_PATH];
+    CHAR comp_squashed[MAX_PATH];
+    CHAR keypath[MAX_PATH*2];
+    INSTALLSTATE state;
+    LPSTR usersid;
+    LONG res;
+
+    create_test_guid(prodcode, prod_squashed);
+    compose_base85_guid(component, comp_base85, comp_squashed);
+    get_user_sid(&usersid);
+
+    /* NULL prodcode */
+    state = MsiQueryFeatureStateA(NULL, "feature");
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+
+    /* empty prodcode */
+    state = MsiQueryFeatureStateA("", "feature");
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+
+    /* garbage prodcode */
+    state = MsiQueryFeatureStateA("garbage", "feature");
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+
+    /* guid without brackets */
+    state = MsiQueryFeatureStateA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D", "feature");
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+
+    /* guid with brackets */
+    state = MsiQueryFeatureStateA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}", "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* same length as guid, but random */
+    state = MsiQueryFeatureStateA("A938G02JF-2NF3N93-VN3-2NNF-3KGKALDNF93", "feature");
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+
+    /* NULL szFeature */
+    state = MsiQueryFeatureStateA(prodcode, NULL);
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+
+    /* empty szFeature */
+    state = MsiQueryFeatureStateA(prodcode, "");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    /* feature key does not exist yet */
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Features\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* feature key exists */
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    res = RegSetValueExA(userkey, "feature", 0, REG_SZ, (const BYTE *)"", 8);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+    }
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+    lstrcatA(keypath, "\\Features");
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &localkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+    }
+
+    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaa", 20);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_BADCONFIG, "Expected INSTALLSTATE_BADCONFIG, got %d\n", state);
+    }
+
+    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaaa", 21);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+    }
+
+    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaaaa", 22);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+    }
+
+    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)comp_base85, 21);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+    }
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Components\\");
+    lstrcatA(keypath, comp_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &compkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+    }
+
+    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"", 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    todo_wine
+    {
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    }
+
+    RegDeleteValueA(compkey, prod_squashed);
+    RegDeleteValueA(compkey, "");
+    RegDeleteValueA(localkey, "feature");
+    RegDeleteValueA(userkey, "feature");
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(compkey);
+    RegCloseKey(localkey);
+    RegCloseKey(userkey);
+}
+
 START_TEST(msi)
 {
     HMODULE hmod = GetModuleHandle("msi.dll");
@@ -469,4 +681,5 @@ START_TEST(msi)
     test_getcomponentpath();
     test_filehash();
     test_MsiQueryProductState();
+    test_MsiQueryFeatureState();
 }
