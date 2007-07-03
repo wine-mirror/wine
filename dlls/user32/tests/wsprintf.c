@@ -44,7 +44,10 @@ static void wsprintfWTest(void)
 
     rc=wsprintfW(buf, fmt, -1);
     if (rc==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("wsprintfW is not implemented\n");
         return;
+    }
     ok(rc == 10, "wsPrintfW length failure: rc=%d error=%d\n",rc,GetLastError());
     ok((lstrcmpW(buf, target) == 0),
        "wsprintfW zero padded negative value failure\n");
