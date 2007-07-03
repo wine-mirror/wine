@@ -166,6 +166,16 @@ static const WCHAR szUserDataProd_fmt[] = {
 'U','s','e','r','D','a','t','a','\\',
 '%','s','\\','P','r','o','d','u','c','t','s','\\','%','s',0};
 
+static const WCHAR szInstallProperties_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'U','s','e','r','D','a','t','a','\\',
+'%','s','\\','P','r','o','d','u','c','t','s','\\','%','s','\\',
+'I','n','s','t','a','l','l','P','r','o','p','e','r','t','i','e','s',0};
+
 
 #define SQUISH_GUID_SIZE 33
 
@@ -601,6 +611,35 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, HKEY *key, BOOL create)
     }
 
     sprintfW(keypath, szUserDataProd_fmt, usersid, squished_pc);
+
+    if (create)
+        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+    else
+        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    msi_free(usersid);
+    return rc;
+}
+
+UINT MSIREG_OpenInstallPropertiesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
+{
+    UINT rc;
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+    LPWSTR usersid;
+
+    TRACE("%s\n", debugstr_w(szProduct));
+    squash_guid(szProduct, squished_pc);
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    rc = get_user_sid(&usersid);
+    if (rc != ERROR_SUCCESS || !usersid)
+    {
+        ERR("Failed to retrieve user SID: %d\n", rc);
+        return rc;
+    }
+
+    sprintfW(keypath, szInstallProperties_fmt, usersid, squished_pc);
 
     if (create)
         rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);

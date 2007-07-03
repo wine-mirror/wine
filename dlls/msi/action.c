@@ -3279,10 +3279,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         {'A','R','P','P','R','O','D','U','C','T','I','C','O','N',0};
     static const WCHAR szProductVersion[] =
         {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
-    static const WCHAR szInstallProperties[] =
-        {'I','n','s','t','a','l','l','P','r','o','p','e','r','t','i','e','s',0};
-    static const WCHAR szWindowsInstaller[] =
-        {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
     DWORD langid;
     LPWSTR buffer;
     DWORD size;
@@ -3315,11 +3311,9 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    rc = RegCreateKeyW(hudkey, szInstallProperties, &props);
+    rc = MSIREG_OpenInstallPropertiesKey(package->ProductCode,&props,TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
-
-    msi_reg_set_val_dword( props, szWindowsInstaller, 1 );
 
     buffer = msi_dup_property( package, INSTALLPROPERTY_PRODUCTNAMEW );
     msi_reg_set_val_str( hukey, INSTALLPROPERTY_PRODUCTNAMEW, buffer );
@@ -3806,6 +3800,7 @@ static UINT msi_write_uninstall_property_vals( MSIPACKAGE *package, HKEY hkey )
 static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {
     HKEY hkey=0;
+    HKEY hudkey=0, props=0;
     LPWSTR buffer = NULL;
     UINT rc;
     DWORD size, langid;
@@ -3830,7 +3825,11 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     SYSTEMTIME systime;
     static const WCHAR date_fmt[] = {'%','i','%','i','%','i',0};
     LPWSTR upgrade_code;
-    WCHAR szDate[9]; 
+    WCHAR szDate[9];
+
+    /* FIXME: also need to publish if the product is in advertise mode */
+    if (!msi_check_publish(package))
+        return ERROR_SUCCESS;
 
     rc = MSIREG_OpenUninstallKey(package->ProductCode,&hkey,TRUE);
     if (rc != ERROR_SUCCESS)
@@ -3892,7 +3891,18 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     
     RegCloseKey(hkey);
 
-    /* FIXME: call ui_actiondata */
+    rc = MSIREG_OpenUserDataProductKey(package->ProductCode, &hudkey, TRUE);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    RegCloseKey(hudkey);
+
+    rc = MSIREG_OpenInstallPropertiesKey(package->ProductCode, &props, TRUE);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    msi_reg_set_val_dword( props, szWindowsInstaller, 1 );
+    RegCloseKey(props);
 
     return ERROR_SUCCESS;
 }
