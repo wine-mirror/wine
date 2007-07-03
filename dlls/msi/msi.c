@@ -1270,11 +1270,7 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     TRACE("rc = %d buffer = %s\n", rc, debugstr_w(components));
 
     if (!components)
-    {
-        ERR("components missing %s %s\n",
-            debugstr_w(szProduct), debugstr_w(szFeature));
-        return INSTALLSTATE_UNKNOWN;
-    }
+        return INSTALLSTATE_ADVERTISED;
 
     for( p = components; *p != 2 ; p += 20)
     {
