@@ -3885,9 +3885,59 @@ static UINT ACTION_InstallExecute(MSIPACKAGE *package)
     return execute_script(package,INSTALL_SCRIPT);
 }
 
+static UINT msi_unpublish_product(MSIPACKAGE *package)
+{
+    LPWSTR remove = NULL;
+    LPWSTR *features = NULL;
+    BOOL full_uninstall = TRUE;
+    MSIFEATURE *feature;
+
+    static const WCHAR szRemove[] = {'R','E','M','O','V','E',0};
+    static const WCHAR szAll[] = {'A','L','L',0};
+
+    remove = msi_dup_property(package, szRemove);
+    if (!remove)
+        return ERROR_SUCCESS;
+
+    features = msi_split_string(remove, ',');
+    if (!features)
+    {
+        msi_free(remove);
+        ERR("REMOVE feature list is empty!\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    if (!lstrcmpW(features[0], szAll))
+        full_uninstall = TRUE;
+    else
+    {
+        LIST_FOR_EACH_ENTRY(feature, &package->features, MSIFEATURE, entry)
+        {
+            if (feature->Action != INSTALLSTATE_ABSENT)
+                full_uninstall = FALSE;
+        }
+    }
+
+    if (!full_uninstall)
+        goto done;
+
+    MSIREG_DeleteProductKey(package->ProductCode);
+    MSIREG_DeleteUserProductKey(package->ProductCode);
+    MSIREG_DeleteUserDataProductKey(package->ProductCode);
+
+done:
+    msi_free(remove);
+    msi_free(features);
+    return ERROR_SUCCESS;
+}
+
 static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
 {
     UINT rc;
+
+    rc = msi_unpublish_product(package);
+    if (rc != ERROR_SUCCESS)
+        return rc;
 
     /* turn off scheduling */
     package->script->CurrentlyScripting= FALSE;

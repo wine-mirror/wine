@@ -437,6 +437,20 @@ UINT MSIREG_OpenUserProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     return rc;
 }
 
+UINT MSIREG_DeleteUserProductKey(LPCWSTR szProduct)
+{
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n",debugstr_w(szProduct));
+    squash_guid(szProduct,squished_pc);
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath,szUserProduct_fmt,squished_pc);
+
+    return RegDeleteTreeW(HKEY_CURRENT_USER, keypath);
+}
+
 UINT MSIREG_OpenUserPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create)
 {
     UINT rc;
@@ -593,7 +607,32 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, HKEY *key, BOOL create)
     else
         rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
 
+    msi_free(usersid);
     return rc;
+}
+
+UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct)
+{
+    UINT rc;
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+    LPWSTR usersid;
+
+    TRACE("%s\n", debugstr_w(szProduct));
+    squash_guid(szProduct, squished_pc);
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    rc = get_user_sid(&usersid);
+    if (rc != ERROR_SUCCESS || !usersid)
+    {
+        ERR("Failed to retrieve user SID: %d\n", rc);
+        return rc;
+    }
+
+    sprintfW(keypath, szUserDataProd_fmt, usersid, squished_pc);
+
+    msi_free(usersid);
+    return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
 
 UINT MSIREG_OpenProducts(HKEY* key)
@@ -619,6 +658,20 @@ UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
         rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,keypath,key);
 
     return rc;
+}
+
+UINT MSIREG_DeleteProductKey(LPCWSTR szProduct)
+{
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n", debugstr_w(szProduct));
+    squash_guid(szProduct, squished_pc);
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath, szInstaller_Products_fmt, squished_pc);
+
+    return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
 
 UINT MSIREG_OpenPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create)
