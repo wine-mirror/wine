@@ -113,6 +113,25 @@ typedef struct tagMSIRECORD
     MSIFIELD fields[1]; /* nb. array size is count+1 */
 } MSIRECORD;
 
+typedef struct tagMSISOURCELISTINFO
+{
+    struct list entry;
+    DWORD context;
+    DWORD options;
+    LPCWSTR property;
+    LPWSTR value;
+} MSISOURCELISTINFO;
+
+typedef struct tagMSIMEDIADISK
+{
+    struct list entry;
+    DWORD context;
+    DWORD options;
+    DWORD disk_id;
+    LPWSTR volume_label;
+    LPWSTR disk_prompt;
+} MSIMEDIADISK;
+
 typedef const struct tagMSICOLUMNHASHENTRY *MSIITERHANDLE;
 
 typedef struct tagMSIVIEWOPS
@@ -248,6 +267,9 @@ typedef struct tagMSIPACKAGE
     UINT WordCount;
 
     struct list subscriptions;
+
+    struct list sourcelist_info;
+    struct list sourcelist_media;
 
     unsigned char scheduled_action_running : 1;
     unsigned char commit_action_running : 1;
@@ -664,6 +686,8 @@ extern UINT MSI_GetComponentStateW( MSIPACKAGE *, LPCWSTR, INSTALLSTATE *, INSTA
 extern UINT MSI_GetFeatureStateW( MSIPACKAGE *, LPCWSTR, INSTALLSTATE *, INSTALLSTATE * );
 extern UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE*, LPCWSTR, INSTALLSTATE );
 extern LPCWSTR msi_download_file( LPCWSTR szUrl, LPWSTR filename );
+extern UINT msi_package_add_info(MSIPACKAGE *, DWORD, DWORD, LPCWSTR, LPWSTR);
+extern UINT msi_package_add_media_disk(MSIPACKAGE *, DWORD, DWORD, DWORD, LPWSTR, LPWSTR);
 
 /* for deformating */
 extern UINT MSI_FormatRecordW( MSIPACKAGE *, MSIRECORD *, LPWSTR, DWORD * );

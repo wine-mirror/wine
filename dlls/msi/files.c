@@ -580,14 +580,12 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
             lstrcatW(mi->source, mi->cabinet);
     }
 
-    MsiSourceListAddMediaDiskW(package->ProductCode, NULL,
-        MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT,
-        mi->disk_id, mi->volume_label, mi->disk_prompt);
+    msi_package_add_media_disk(package, MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT,
+                               mi->disk_id, mi->volume_label, mi->disk_prompt);
 
-    MsiSourceListSetInfoW(package->ProductCode, NULL,
-        MSIINSTALLCONTEXT_USERMANAGED,
-        MSICODE_PRODUCT | MSISOURCETYPE_MEDIA,
-        INSTALLPROPERTY_LASTUSEDSOURCEW, mi->source);
+    msi_package_add_info(package, MSIINSTALLCONTEXT_USERMANAGED,
+                         MSICODE_PRODUCT | MSISOURCETYPE_MEDIA,
+                         INSTALLPROPERTY_LASTUSEDSOURCEW, mi->source);
 
     msi_free(source_dir);
     return ERROR_SUCCESS;
@@ -754,10 +752,8 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     if (ptr)
     {
         ptr++;
-        MsiSourceListSetInfoW(package->ProductCode, NULL,
-                MSIINSTALLCONTEXT_USERMANAGED,
-                MSICODE_PRODUCT,
-                INSTALLPROPERTY_PACKAGENAMEW, ptr);
+        msi_package_add_info(package, MSIINSTALLCONTEXT_USERMANAGED,
+                             MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAMEW, ptr);
     }
 
     schedule_install_files(package);

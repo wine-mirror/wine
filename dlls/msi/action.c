@@ -3251,6 +3251,8 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 {
     UINT rc;
     MSIQUERY * view;
+    MSISOURCELISTINFO *info;
+    MSIMEDIADISK *disk;
     static const WCHAR Query[]=
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','I','c','o','n','`',0};
@@ -3361,6 +3363,21 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     {
         ERR("Unable to open Summary Information\n");
         rc = ERROR_SUCCESS;
+    }
+
+    /* publish the SourceList info */
+    LIST_FOR_EACH_ENTRY(info, &package->sourcelist_info, MSISOURCELISTINFO, entry)
+    {
+        MsiSourceListSetInfoW(package->ProductCode, NULL,
+                              info->context, info->options,
+                              info->property, info->value);
+    }
+
+    LIST_FOR_EACH_ENTRY(disk, &package->sourcelist_media, MSIMEDIADISK, entry)
+    {
+        MsiSourceListAddMediaDiskW(package->ProductCode, NULL,
+                                   disk->context, disk->options,
+                                   disk->disk_id, disk->volume_label, disk->disk_prompt);
     }
 
 end:

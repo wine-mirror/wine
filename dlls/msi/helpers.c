@@ -489,7 +489,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
 {
     INT i;
     struct list *item, *cursor;
-    
+
     TRACE("Freeing package action data\n");
 
     remove_tracked_tempfiles(package);
@@ -605,6 +605,25 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         msi_free( appid->ServiceParameters );
         msi_free( appid->DllSurrogate );
         msi_free( appid );
+    }
+
+    LIST_FOR_EACH_SAFE( item, cursor, &package->sourcelist_info )
+    {
+        MSISOURCELISTINFO *info = LIST_ENTRY( item, MSISOURCELISTINFO, entry );
+
+        list_remove( &info->entry );
+        msi_free( info->value );
+	msi_free( info );
+    }
+
+    LIST_FOR_EACH_SAFE( item, cursor, &package->sourcelist_media )
+    {
+        MSIMEDIADISK *info = LIST_ENTRY( item, MSIMEDIADISK, entry );
+
+        list_remove( &info->entry );
+        msi_free( info->volume_label );
+        msi_free( info->disk_prompt );
+	msi_free( info );
     }
 
     if (package->script)

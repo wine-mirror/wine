@@ -699,6 +699,8 @@ static MSIPACKAGE *msi_alloc_package( void )
         list_init( &package->extensions );
         list_init( &package->progids );
         list_init( &package->RunningActions );
+        list_init( &package->sourcelist_info );
+        list_init( &package->sourcelist_media );
 
         package->ActionFormat = NULL;
         package->LastAction = NULL;
@@ -1572,4 +1574,41 @@ HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj )
     *ppObj = This;
 
     return S_OK;
+}
+
+UINT msi_package_add_info(MSIPACKAGE *package, DWORD context, DWORD options,
+                          LPCWSTR property, LPWSTR value)
+{
+    MSISOURCELISTINFO *info;
+
+    info = msi_alloc(sizeof(MSISOURCELISTINFO));
+    if (!info)
+        return ERROR_OUTOFMEMORY;
+
+    info->context = context;
+    info->options = options;
+    info->property = property;
+    info->value = strdupW(value);
+    list_add_head(&package->sourcelist_info, &info->entry);
+
+    return ERROR_SUCCESS;
+}
+
+UINT msi_package_add_media_disk(MSIPACKAGE *package, DWORD context, DWORD options,
+                                DWORD disk_id, LPWSTR volume_label, LPWSTR disk_prompt)
+{
+    MSIMEDIADISK *disk;
+
+    disk = msi_alloc(sizeof(MSIMEDIADISK));
+    if (!disk)
+        return ERROR_OUTOFMEMORY;
+
+    disk->context = context;
+    disk->options = options;
+    disk->disk_id = disk_id;
+    disk->volume_label = strdupW(volume_label);
+    disk->disk_prompt = strdupW(disk_prompt);
+    list_add_head(&package->sourcelist_media, &disk->entry);
+
+    return ERROR_SUCCESS;
 }
