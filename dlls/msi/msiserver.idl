@@ -40,6 +40,17 @@ interface IWineMsiRemotePackage : IUnknown
     HRESULT SetProperty( [in] BSTR *property, [in] BSTR *value );
 }
 
+[
+    uuid(56D58B64-8780-4c22-A8BC-8B0B29E4A9F8),
+    oleautomation,
+    object
+]
+interface IWineMsiRemoteCustomAction : IUnknown
+{
+    HRESULT GetActionInfo( [in] LPCGUID guid, [out] MSIHANDLE *handle, [out] BSTR *dllname,
+                           [out] BSTR *function, [out] IWineMsiRemotePackage **package );
+}
+
 [ uuid(000C1092-0000-0000-C000-000000000046), version(1.0) ]
 library WindowsInstaller
 {

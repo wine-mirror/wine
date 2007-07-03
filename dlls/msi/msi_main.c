@@ -189,6 +189,7 @@ static const IClassFactoryVtbl MsiCF_Vtbl =
 };
 
 static IClassFactoryImpl MsiServer_CF = { &MsiCF_Vtbl, create_msiserver };
+static IClassFactoryImpl WineMsiCustomRemote_CF = { &MsiCF_Vtbl, create_msi_custom_remote };
 static IClassFactoryImpl WineMsiRemotePackage_CF = { &MsiCF_Vtbl, create_msi_remote_package };
 
 /******************************************************************
@@ -204,18 +205,24 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
         return S_OK;
     }
 
-    if( IsEqualCLSID (rclsid, &CLSID_IMsiServerMessage) ||
-        IsEqualCLSID (rclsid, &CLSID_IMsiServer) ||
-        IsEqualCLSID (rclsid, &CLSID_IMsiServerX1) ||
-        IsEqualCLSID (rclsid, &CLSID_IMsiServerX3) )
+    if ( IsEqualCLSID (rclsid, &CLSID_IWineMsiRemoteCustomAction) )
     {
-        FIXME("create %s object\n", debugstr_guid( rclsid ));
+        *ppv = (LPVOID) &WineMsiCustomRemote_CF;
+        return S_OK;
     }
 
     if ( IsEqualCLSID (rclsid, &CLSID_IWineMsiRemotePackage) )
     {
         *ppv = (LPVOID) &WineMsiRemotePackage_CF;
         return S_OK;
+    }
+
+    if( IsEqualCLSID (rclsid, &CLSID_IMsiServerMessage) ||
+        IsEqualCLSID (rclsid, &CLSID_IMsiServer) ||
+        IsEqualCLSID (rclsid, &CLSID_IMsiServerX1) ||
+        IsEqualCLSID (rclsid, &CLSID_IMsiServerX3) )
+    {
+        FIXME("create %s object\n", debugstr_guid( rclsid ));
     }
 
     return CLASS_E_CLASSNOTAVAILABLE;
