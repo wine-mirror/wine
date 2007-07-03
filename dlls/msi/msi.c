@@ -1272,13 +1272,17 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     if (!components)
         return INSTALLSTATE_ADVERTISED;
 
-    for( p = components; *p != 2 ; p += 20)
+    for( p = components; *p && *p != 2 ; p += 20)
     {
         if (!decode_base85_guid( p, &guid ))
         {
-            ERR("%s\n", debugstr_w(p));
-            break;
+            if (p != components)
+                break;
+
+            msi_free(components);
+            return INSTALLSTATE_BADCONFIG;
         }
+
         StringFromGUID2(&guid, comp, GUID_SIZE);
         r = MsiGetComponentPathW(szProduct, comp, NULL, 0);
         TRACE("component %s state %d\n", debugstr_guid(&guid), r);
