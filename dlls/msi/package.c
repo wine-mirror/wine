@@ -944,6 +944,7 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
 {
     MSIPACKAGE *package;
     MSIHANDLE handle = 0;
+    IWineMsiRemotePackage *remote_package;
 
     TRACE("(%ld)\n",hInstall);
 
@@ -952,6 +953,11 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
     {
         handle = alloc_msihandle( &package->db->hdr );
         msiobj_release( &package->hdr );
+    }
+    else if ((remote_package = (IWineMsiRemotePackage *)msi_get_remote( hInstall )))
+    {
+        IWineMsiRemotePackage_GetActiveDatabase(remote_package, &handle);
+        IWineMsiRemotePackage_Release(remote_package);
     }
 
     return handle;
