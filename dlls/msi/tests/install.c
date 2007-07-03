@@ -2159,6 +2159,114 @@ static void test_publish(void)
     RemoveDirectory("msitest");
 }
 
+static void test_publishsourcelist(void)
+{
+    UINT r;
+    DWORD size;
+    CHAR value[MAX_PATH];
+    CHAR prodcode[] = "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\maximus", 500);
+
+    create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    /* nothing published */
+    size = 0xdeadbeef;
+    r = MsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+        ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    }
+
+    r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    /* after RegisterProduct */
+    size = 0xdeadbeef;
+    r = MsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+        ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    }
+
+    r = MsiInstallProductA(msifile, "PROCESS_COMPONENTS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    /* after ProcessComponents */
+    size = 0xdeadbeef;
+    r = MsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+        ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    }
+
+    r = MsiInstallProductA(msifile, "PUBLISH_FEATURES=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    /* after PublishFeatures */
+    size = 0xdeadbeef;
+    r = MsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+        ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+    }
+
+    r = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    /* after PublishProduct */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(value, "msitest.msi"), "Expected 'msitest.msi', got %s\n", value);
+        ok(size == 11, "Expected 11, got %d\n", size);
+    }
+
+    /* complete uninstall */
+    r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!pf_exists("msitest\\maximus"), "File not deleted\n");
+        ok(!pf_exists("msitest"), "File not deleted\n");
+    }
+
+    /* make sure 'Program Files\msitest' is removed */
+    delete_pfmsitest_files();
+
+    DeleteFile(msifile);
+    DeleteFile("msitest\\maximus");
+    RemoveDirectory("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -2190,6 +2298,7 @@ START_TEST(install)
     test_concurrentinstall();
     test_setpropertyfolder();
     test_publish();
+    test_publishsourcelist();
 
     SetCurrentDirectoryA(prev_path);
 }
