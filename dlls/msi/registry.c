@@ -60,6 +60,16 @@ static const WCHAR szInstaller_Features[] = {
 'I','n','s','t','a','l','l','e','r','\\',
 'F','e','a','t','u','r','e','s',0 };
 
+static const WCHAR szUserDataFeatures_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'U','s','e','r','D','a','t','a','\\',
+'%','s','\\','P','r','o','d','u','c','t','s','\\',
+'%','s','\\','F','e','a','t','u','r','e','s',0};
+
 static const WCHAR szInstaller_Features_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -411,6 +421,27 @@ BOOL msi_reg_get_val_dword( HKEY hkey, LPCWSTR name, DWORD *val)
     return r == ERROR_SUCCESS && type == REG_DWORD;
 }
 
+static UINT get_user_sid(LPWSTR *usersid)
+{
+    HANDLE token;
+    BYTE buf[1024];
+    DWORD size;
+    PTOKEN_USER user;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+        return ERROR_FUNCTION_FAILED;
+
+    size = sizeof(buf);
+    if (!GetTokenInformation(token, TokenUser, (void *)buf, size, &size))
+        return ERROR_FUNCTION_FAILED;
+
+    user = (PTOKEN_USER)buf;
+    if (!ConvertSidToStringSidW(user->User.Sid, usersid))
+        return ERROR_FUNCTION_FAILED;
+
+    return ERROR_SUCCESS;
+}
+
 UINT MSIREG_OpenUninstallKey(LPCWSTR szProduct, HKEY* key, BOOL create)
 {
     UINT rc;
@@ -526,6 +557,35 @@ UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     return rc;
 }
 
+UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
+{
+    UINT rc;
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+    LPWSTR usersid;
+
+    TRACE("%s\n", debugstr_w(szProduct));
+    squash_guid(szProduct, squished_pc);
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    rc = get_user_sid(&usersid);
+    if (rc != ERROR_SUCCESS || !usersid)
+    {
+        ERR("Failed to retrieve user SID: %d\n", rc);
+        return rc;
+    }
+
+    sprintfW(keypath, szUserDataFeatures_fmt, usersid, squished_pc);
+
+    if (create)
+        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+    else
+        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    msi_free(usersid);
+    return rc;
+}
+
 UINT MSIREG_OpenComponents(HKEY* key)
 {
     return RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller_Components,key);
@@ -569,27 +629,6 @@ UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
         rc = RegOpenKeyW(HKEY_CURRENT_USER,keypath,key);
 
     return rc;
-}
-
-static UINT get_user_sid(LPWSTR *usersid)
-{
-    HANDLE token;
-    BYTE buf[1024];
-    DWORD size;
-    PTOKEN_USER user;
-
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
-        return ERROR_FUNCTION_FAILED;
-
-    size = sizeof(buf);
-    if (!GetTokenInformation(token, TokenUser, (void *)buf, size, &size))
-        return ERROR_FUNCTION_FAILED;
-
-    user = (PTOKEN_USER)buf;
-    if (!ConvertSidToStringSidW(user->User.Sid, usersid))
-        return ERROR_FUNCTION_FAILED;
-
-    return ERROR_SUCCESS;
 }
 
 UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, HKEY *key, BOOL create)

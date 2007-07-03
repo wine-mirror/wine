@@ -1260,9 +1260,9 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
         return r;
 
     /* now check if it's complete or advertised */
-    rc = MSIREG_OpenFeaturesKey(szProduct, &hkey, FALSE);
+    rc = MSIREG_OpenUserDataFeaturesKey(szProduct, &hkey, FALSE);
     if (rc != ERROR_SUCCESS)
-        return INSTALLSTATE_UNKNOWN;
+        return INSTALLSTATE_ADVERTISED;
 
     components = msi_reg_get_val_str( hkey, szFeature );
     RegCloseKey(hkey);
