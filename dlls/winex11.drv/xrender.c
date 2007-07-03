@@ -1207,7 +1207,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    XRenderPictFormat *format = (physDev->depth == 1) ? mono_format : screen_format;
 	    wine_tsx11_lock();
 	    physDev->xrender->tile_xpm = XCreatePixmap(gdi_display,
-						       physDev->drawable,
+						       root_window,
 						       1, 1,
 						       format->depth);
 	    pa.repeat = True;
@@ -1425,7 +1425,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 		  image_w, image_h, AllPlanes, ZPixmap,
 		  physDev->depth, image);
 	    if(!image) {
-	        Pixmap xpm = XCreatePixmap(gdi_display, physDev->drawable, image_w, image_h,
+	        Pixmap xpm = XCreatePixmap(gdi_display, root_window, image_w, image_h,
 					   physDev->depth);
 		GC gc;
 		XGCValues gcv;
@@ -1622,7 +1622,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     TRACE("dst_pict %08lx\n", dst_pict);
     TRACE("src_drawable = %08lx\n", devSrc->drawable);
     xpm = XCreatePixmap(gdi_display,
-                        devSrc->drawable,
+                        root_window,
                         widthSrc, heightSrc, 32);
     gcv.graphics_exposures = False;
     gc = XCreateGC(gdi_display, xpm, GCGraphicsExposures, &gcv);
