@@ -108,6 +108,13 @@ static const WCHAR szUserProduct_fmt[] = {
 'P','r','o','d','u','c','t','s','\\',
 '%','s',0};
 
+static const WCHAR szUserPatch_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'P','a','t','c','h','e','s','\\',
+'%','s',0};
+
 static const WCHAR szInstaller_Products[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -123,6 +130,15 @@ static const WCHAR szInstaller_Products_fmt[] = {
 'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
 'I','n','s','t','a','l','l','e','r','\\',
 'P','r','o','d','u','c','t','s','\\',
+'%','s',0};
+
+static const WCHAR szInstaller_Patches_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'P','a','t','c','h','e','s','\\',
 '%','s',0};
 
 static const WCHAR szInstaller_UpgradeCodes_fmt[] = {
@@ -421,6 +437,26 @@ UINT MSIREG_OpenUserProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     return rc;
 }
 
+UINT MSIREG_OpenUserPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create)
+{
+    UINT rc;
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n",debugstr_w(szPatch));
+    squash_guid(szPatch,squished_pc);
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath,szUserPatch_fmt,squished_pc);
+
+    if (create)
+        rc = RegCreateKeyW(HKEY_CURRENT_USER,keypath,key);
+    else
+        rc = RegOpenKeyW(HKEY_CURRENT_USER,keypath,key);
+
+    return rc;
+}
+
 UINT MSIREG_OpenUserFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create)
 {
     UINT rc;
@@ -576,6 +612,26 @@ UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath,szInstaller_Products_fmt,squished_pc);
+
+    if (create)
+        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,keypath,key);
+    else
+        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,keypath,key);
+
+    return rc;
+}
+
+UINT MSIREG_OpenPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create)
+{
+    UINT rc;
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n",debugstr_w(szPatch));
+    squash_guid(szPatch,squished_pc);
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath,szInstaller_Patches_fmt,squished_pc);
 
     if (create)
         rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,keypath,key);
