@@ -845,7 +845,8 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         break;
     case SystemModuleInformation:
         /* FIXME: should be system-wide */
-        ret = LdrQueryProcessModuleInformation( SystemInformation, Length, &len );
+        if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+        else ret = LdrQueryProcessModuleInformation( SystemInformation, Length, &len );
         break;
     case SystemHandleInformation:
         {
