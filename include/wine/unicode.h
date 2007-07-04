@@ -245,7 +245,7 @@ WINE_UNICODE_INLINE WCHAR *strcatW( WCHAR *dst, const WCHAR *src )
 WINE_UNICODE_INLINE WCHAR *strchrW( const WCHAR *str, WCHAR ch );
 WINE_UNICODE_INLINE WCHAR *strchrW( const WCHAR *str, WCHAR ch )
 {
-    do { if (*str == ch) return (WCHAR *)str; } while (*str++);
+    do { if (*str == ch) return (WCHAR *)(ULONG_PTR)str; } while (*str++);
     return NULL;
 }
 
@@ -253,14 +253,14 @@ WINE_UNICODE_INLINE WCHAR *strrchrW( const WCHAR *str, WCHAR ch );
 WINE_UNICODE_INLINE WCHAR *strrchrW( const WCHAR *str, WCHAR ch )
 {
     WCHAR *ret = NULL;
-    do { if (*str == ch) ret = (WCHAR *)str; } while (*str++);
+    do { if (*str == ch) ret = (WCHAR *)(ULONG_PTR)str; } while (*str++);
     return ret;
 }
 
 WINE_UNICODE_INLINE WCHAR *strpbrkW( const WCHAR *str, const WCHAR *accept );
 WINE_UNICODE_INLINE WCHAR *strpbrkW( const WCHAR *str, const WCHAR *accept )
 {
-    for ( ; *str; str++) if (strchrW( accept, *str )) return (WCHAR *)str;
+    for ( ; *str; str++) if (strchrW( accept, *str )) return (WCHAR *)(ULONG_PTR)str;
     return NULL;
 }
 
@@ -300,16 +300,17 @@ WINE_UNICODE_INLINE WCHAR *memchrW( const WCHAR *ptr, WCHAR ch, size_t n );
 WINE_UNICODE_INLINE WCHAR *memchrW( const WCHAR *ptr, WCHAR ch, size_t n )
 {
     const WCHAR *end;
-    for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) return (WCHAR *)ptr;
+    for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) return (WCHAR *)(ULONG_PTR)ptr;
     return NULL;
 }
 
 WINE_UNICODE_INLINE WCHAR *memrchrW( const WCHAR *ptr, WCHAR ch, size_t n );
 WINE_UNICODE_INLINE WCHAR *memrchrW( const WCHAR *ptr, WCHAR ch, size_t n )
 {
-    const WCHAR *end, *ret = NULL;
-    for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) ret = ptr;
-    return (WCHAR *)ret;
+    const WCHAR *end;
+    WCHAR *ret = NULL;
+    for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) ret = (WCHAR *)(ULONG_PTR)ptr;
+    return ret;
 }
 
 WINE_UNICODE_INLINE long int atolW( const WCHAR *str );
