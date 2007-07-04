@@ -544,7 +544,28 @@ UINT WINAPI MsiSetTargetPathW(MSIHANDLE hInstall, LPCWSTR szFolder,
 
     package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
     if (!package)
-        return ERROR_INVALID_HANDLE;
+    {
+        HRESULT hr;
+        IWineMsiRemotePackage *remote_package;
+
+        remote_package = (IWineMsiRemotePackage *)msi_get_remote( hInstall );
+        if (!remote_package)
+            return ERROR_INVALID_HANDLE;
+
+        hr = IWineMsiRemotePackage_SetTargetPath( remote_package, (BSTR *)szFolder, (BSTR *)szFolderPath );
+
+        IWineMsiRemotePackage_Release( remote_package );
+
+        if (FAILED(hr))
+        {
+            if (HRESULT_FACILITY(hr) == FACILITY_WIN32)
+                return HRESULT_CODE(hr);
+
+            return ERROR_FUNCTION_FAILED;
+        }
+
+        return ERROR_SUCCESS;
+    }
 
     ret = MSI_SetTargetPathW( package, szFolder, szFolderPath );
     msiobj_release( &package->hdr );

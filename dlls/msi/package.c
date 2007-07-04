@@ -1597,6 +1597,13 @@ HRESULT WINAPI mrp_GetTargetPath( IWineMsiRemotePackage *iface, BSTR *folder, BS
     return HRESULT_FROM_WIN32(r);
 }
 
+HRESULT WINAPI mrp_SetTargetPath( IWineMsiRemotePackage *iface, BSTR *folder, BSTR *value)
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    UINT r = MsiSetTargetPathW(This->package, (LPWSTR)folder, (LPWSTR)value);
+    return HRESULT_FROM_WIN32(r);
+}
+
 HRESULT WINAPI mrp_GetSourcePath( IWineMsiRemotePackage *iface, BSTR *folder, BSTR *value, DWORD *size )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
@@ -1617,6 +1624,7 @@ static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
     mrp_DoAction,
     mrp_Sequence,
     mrp_GetTargetPath,
+    mrp_SetTargetPath,
     mrp_GetSourcePath,
 };
 
