@@ -1002,9 +1002,6 @@
 /* Define to the soname of the libssl library. */
 #undef SONAME_LIBSSL
 
-/* Define to the soname of the libtxc_dxtn library. */
-#undef SONAME_LIBTXC_DXTN
-
 /* Define to the soname of the libX11 library. */
 #undef SONAME_LIBX11
 

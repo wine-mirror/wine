@@ -1150,7 +1150,6 @@ WINE_CHECK_SONAME(Xext,XextCreateExtension,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xi,XOpenDevice,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xcursor,XcursorImageLoadCursor,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(freetype,FT_Init_FreeType,,,[$X_LIBS])
-WINE_CHECK_SONAME(txc_dxtn,fetch_2d_texel_rgba_dxt1)
 
 
 dnl **** Check for functions ****
