@@ -154,7 +154,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     DWORD               frames_per_period;
 
     wwi->state = WINE_WS_STOPPED;
-    wwi->dwTotalRecorded = 0;
+    InterlockedExchange((LONG*)&wwi->dwTotalRecorded, 0);
     wwi->lpQueuePtr = NULL;
 
     SetEvent(wwi->hStartUpEvent);
@@ -198,7 +198,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		    {
 			/* update number of bytes recorded in current buffer and by this device */
                         lpWaveHdr->dwBytesRecorded += bytesRead;
-			wwi->dwTotalRecorded       += bytesRead;
+			InterlockedExchangeAdd((LONG*)&wwi->dwTotalRecorded, bytesRead);
 
 			/* buffer is full. notify client */
 			if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength)
@@ -247,7 +247,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
                         /* update number of bytes recorded in current buffer and by this device */
                         lpWaveHdr->dwBytesRecorded += dwToCopy;
-                        wwi->dwTotalRecorded += dwToCopy;
+                        InterlockedExchangeAdd((LONG*)&wwi->dwTotalRecorded, dwToCopy);
                         bytesRead -= dwToCopy;
                         pOffset   += dwToCopy;
 
@@ -385,10 +385,6 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		HeapFree(GetProcessHeap(), 0, buffer);
 		ExitThread(0);
 		/* shouldn't go here */
-	    case WINE_WM_UPDATE:
-		SetEvent(ev);
-		break;
-
 	    default:
 		FIXME("unknown message %d\n", msg);
 		break;
@@ -784,8 +780,6 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
     }
 
     wwi = &WInDev[wDevID];
-    ALSA_AddRingMessage(&wwi->msgRing, WINE_WM_UPDATE, 0, TRUE);
-
     return ALSA_bytes_to_mmtime(lpTime, wwi->dwTotalRecorded, &wwi->format);
 }
 
