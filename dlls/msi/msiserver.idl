@@ -27,6 +27,7 @@ cpp_quote("#if 0")
 typedef unsigned long MSIHANDLE;
 typedef int INSTALLMESSAGE;
 typedef int MSIRUNMODE;
+typedef int INSTALLSTATE;
 cpp_quote("#endif")
 
 [
@@ -47,6 +48,7 @@ interface IWineMsiRemotePackage : IUnknown
     HRESULT SetTargetPath( [in] BSTR *folder, [in] BSTR *value );
     HRESULT GetSourcePath( [in] BSTR *folder, [out] BSTR *value, [out] DWORD *size );
     HRESULT GetMode( [in] MSIRUNMODE mode, [out] BOOL *ret );
+    HRESULT SetFeatureState( [in] BSTR *feature, [in] INSTALLSTATE state );
 }
 
 [

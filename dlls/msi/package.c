@@ -1618,6 +1618,13 @@ HRESULT WINAPI mrp_GetMode( IWineMsiRemotePackage *iface, MSIRUNMODE mode, BOOL 
     return S_OK;
 }
 
+HRESULT WINAPI mrp_SetFeatureState( IWineMsiRemotePackage *iface, BSTR *feature, INSTALLSTATE state )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    UINT r = MsiSetFeatureStateW(This->package, (LPWSTR)feature, state);
+    return HRESULT_FROM_WIN32(r);
+}
+
 static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
 {
     mrp_QueryInterface,
@@ -1634,6 +1641,7 @@ static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
     mrp_SetTargetPath,
     mrp_GetSourcePath,
     mrp_GetMode,
+    mrp_SetFeatureState,
 };
 
 HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj )
