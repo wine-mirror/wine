@@ -25,6 +25,7 @@ import "oaidl.idl";
 
 cpp_quote("#if 0")
 typedef unsigned long MSIHANDLE;
+typedef int INSTALLMESSAGE;
 cpp_quote("#endif")
 
 [
@@ -38,6 +39,7 @@ interface IWineMsiRemotePackage : IUnknown
     HRESULT GetActiveDatabase( [out] MSIHANDLE *handle );
     HRESULT GetProperty( [in] BSTR *property, [out] BSTR *value, [out] DWORD *size );
     HRESULT SetProperty( [in] BSTR *property, [in] BSTR *value );
+    HRESULT ProcessMessage( [in] INSTALLMESSAGE message, [in] MSIHANDLE record );
 }
 
 [
