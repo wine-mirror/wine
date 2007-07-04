@@ -54,6 +54,7 @@ interface IWineMsiRemotePackage : IUnknown
     HRESULT GetComponentState( [in] BSTR *component, [out] INSTALLSTATE *installed, [out] INSTALLSTATE *action );
     HRESULT SetComponentState( [in] BSTR *component, [in] INSTALLSTATE state );
     HRESULT GetLanguage( [out] LANGID *language );
+    HRESULT SetInstallLevel( [in] int level );
 }
 
 [
