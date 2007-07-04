@@ -629,6 +629,27 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
 }
 
 /*****************************************************************************
+ * findThreadContextForSwapChain
+ *
+ * Searches a swapchain for all contexts and picks one for the thread tid.
+ * If none can be found the swapchain is requested to create a new context
+ *
+ *****************************************************************************/
+static WineD3DContext *findThreadContextForSwapChain(IWineD3DSwapChain *swapchain, DWORD tid) {
+    int i;
+
+    for(i = 0; i < ((IWineD3DSwapChainImpl *) swapchain)->num_contexts; i++) {
+        if(((IWineD3DSwapChainImpl *) swapchain)->context[i]->tid == tid) {
+            return ((IWineD3DSwapChainImpl *) swapchain)->context[i];
+        }
+
+    }
+
+    /* Create a new context for the thread */
+    return IWineD3DSwapChainImpl_CreateContextForThread(swapchain);
+}
+
+/*****************************************************************************
  * ActivateContext
  *
  * Finds a rendering context and drawable matching the device and render
@@ -660,17 +681,8 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         if(hr == WINED3D_OK && swapchain) {
             TRACE("Rendering onscreen\n");
 
-            context = NULL;
-            for(i = 0; i < ((IWineD3DSwapChainImpl *) swapchain)->num_contexts; i++) {
-                if(((IWineD3DSwapChainImpl *) swapchain)->context[i]->tid == tid) {
-                    context = ((IWineD3DSwapChainImpl *) swapchain)->context[i];
-                }
-            }
+            context = findThreadContextForSwapChain(swapchain, tid);
 
-            if(!context) {
-                /* Create a new context for the thread */
-                context = IWineD3DSwapChainImpl_CreateContextForThread(swapchain);
-            }
             This->render_offscreen = FALSE;
             /* The context != This->activeContext will catch a NOP context change. This can occur
              * if we are switching back to swapchain rendering in case of FBO or Back Buffer offscreen
@@ -684,6 +696,10 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                 } else {
                     glDrawBuffer(GL_FRONT);
                     checkGLcall("glDrawBuffer(GL_FRONT)");
+                }
+            } else if(wined3d_settings.offscreen_rendering_mode == ORM_PBUFFER) {
+                if(This->pbufferContext && tid == This->pbufferContext->tid) {
+                    This->pbufferContext->tid = 0;
                 }
             }
             IWineD3DSwapChain_Release(swapchain);
@@ -699,21 +715,20 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
             TRACE("Rendering offscreen\n");
             This->render_offscreen = TRUE;
 
-            if(tid != This->lastThread) {
-                FIXME("Offscreen rendering is only supported from the creation thread yet\n");
-                FIXME("Expect a crash now ...\n");
-            }
-
             switch(wined3d_settings.offscreen_rendering_mode) {
                 case ORM_FBO:
                     /* FBOs do not need a different context. Stay with whatever context is active at the moment */
-                    if(This->activeContext) {
+                    if(This->activeContext && tid == This->lastThread) {
                         context = This->activeContext;
                     } else {
                         /* This may happen if the app jumps streight into offscreen rendering
-                         * Start using the context of the primary swapchain
+                         * Start using the context of the primary swapchain. tid == 0 is no problem
+                         * for findThreadContextForSwapChain.
+                         *
+                         * Can also happen on thread switches - in that case findThreadContextForSwapChain
+                         * is perfect to call.
                          */
-                        context = ((IWineD3DSwapChainImpl *) This->swapchains[0])->context[0];
+                        context = findThreadContextForSwapChain(This->swapchains[0], tid);
                     }
                     break;
 
@@ -738,6 +753,10 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                     }
 
                     if(This->pbufferContext) {
+                        if(This->pbufferContext->tid != 0 && This->pbufferContext->tid != tid) {
+                            FIXME("The PBuffr context is only supported for one thread for now!\n");
+                        }
+                        This->pbufferContext->tid = tid;
                         context = This->pbufferContext;
                         break;
                     } else {
@@ -748,13 +767,17 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
                 case ORM_BACKBUFFER:
                     /* Stay with the currently active context for back buffer rendering */
-                    if(This->activeContext) {
+                    if(This->activeContext && tid == This->lastThread) {
                         context = This->activeContext;
                     } else {
                         /* This may happen if the app jumps streight into offscreen rendering
-                         * Start using the context of the primary swapchain
+                         * Start using the context of the primary swapchain. tid == 0 is no problem
+                         * for findThreadContextForSwapChain.
+                         *
+                         * Can also happen on thread switches - in that case findThreadContextForSwapChain
+                         * is perfect to call.
                          */
-                        context = ((IWineD3DSwapChainImpl *) This->swapchains[0])->context[0];
+                        context = findThreadContextForSwapChain(This->swapchains[0], tid);
                     }
                     glDrawBuffer(This->offscreenBuffer);
                     checkGLcall("glDrawBuffer(This->offscreenBuffer)");
