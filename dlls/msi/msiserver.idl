@@ -43,6 +43,7 @@ interface IWineMsiRemotePackage : IUnknown
     HRESULT DoAction( [in] BSTR *action );
     HRESULT Sequence( [in] BSTR *table, [in] int sequence );
     HRESULT GetTargetPath( [in] BSTR *folder, [out] BSTR *value, [out] DWORD *size );
+    HRESULT GetSourcePath( [in] BSTR *folder, [out] BSTR *value, [out] DWORD *size );
 }
 
 [
