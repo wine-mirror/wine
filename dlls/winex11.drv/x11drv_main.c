@@ -439,7 +439,7 @@ static BOOL process_attach(void)
     /* initialize XVidMode */
     X11DRV_XF86VM_Init();
 #endif
-#ifdef HAVE_LIBXRANDR
+#ifdef SONAME_LIBXRANDR
     /* initialize XRandR */
     X11DRV_XRandR_Init();
 #endif

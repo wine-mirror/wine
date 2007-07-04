@@ -312,9 +312,6 @@
 /* Define to 1 if you have the `xpg4' library (-lxpg4). */
 #undef HAVE_LIBXPG4
 
-/* Define if you have the Xrandr library */
-#undef HAVE_LIBXRANDR
-
 /* Define if you have the X Shape extension */
 #undef HAVE_LIBXSHAPE
 

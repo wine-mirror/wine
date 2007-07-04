@@ -24,10 +24,10 @@
 # error You must include config.h to use this header
 #endif
 
-#ifdef HAVE_LIBXRANDR
+#ifdef SONAME_LIBXRANDR
 
 void X11DRV_XRandR_Init(void);
 void X11DRV_XRandR_Cleanup(void);
 
-#endif /* HAVE_LIBXRANDR */
+#endif /* SONAME_LIBXRANDR */
 #endif /* __WINE_XRANDR_H */

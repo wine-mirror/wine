@@ -23,7 +23,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#ifdef HAVE_LIBXRANDR
+#ifdef SONAME_LIBXRANDR
 
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
@@ -51,9 +51,6 @@ static void *xrandr_handle;
 #endif
 #ifndef SONAME_LIBXRENDER
 #define SONAME_LIBXRENDER "libXrender" SONAME_EXT
-#endif
-#ifndef SONAME_LIBXRANDR
-#define SONAME_LIBXRANDR "libXrandr" SONAME_EXT
 #endif
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
@@ -332,4 +329,4 @@ void X11DRV_XRandR_Cleanup(void)
     real_xrandr_rates_count = NULL;
 }
 
-#endif /* HAVE_LIBXRANDR */
+#endif /* SONAME_LIBXRANDR */
