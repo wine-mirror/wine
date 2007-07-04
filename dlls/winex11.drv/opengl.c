@@ -37,7 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
-#if defined(HAVE_GL_GL_H) && defined(HAVE_GL_GLX_H)
+#ifdef SONAME_LIBGL
 
 #undef APIENTRY
 #undef CALLBACK
@@ -198,13 +198,6 @@ static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
   TRACE("\n");
 }
 
-/* No need to load any other libraries as according to the ABI, libGL should be self-sufficient and
-   include all dependencies
-*/
-#ifndef SONAME_LIBGL
-#define SONAME_LIBGL "libGL" SONAME_EXT
-#endif
-
 #define PUSH1(attribs,att)        do { attribs[nAttribs++] = (att); } while (0)
 #define PUSH2(attribs,att,value)  do { attribs[nAttribs++] = (att); attribs[nAttribs++] = (value); } while(0)
 
@@ -354,6 +347,8 @@ static BOOL has_opengl(void)
     if (init_done) return (opengl_handle != NULL);
     init_done = 1;
 
+    /* No need to load any other libraries as according to the ABI, libGL should be self-sufficient
+       and include all dependencies */
     opengl_handle = wine_dlopen(SONAME_LIBGL, RTLD_NOW|RTLD_GLOBAL, NULL, 0);
     if (opengl_handle == NULL) return FALSE;
 

@@ -397,9 +397,6 @@ INT X11DRV_DCICommand(INT cbInput, const DCICMD *lpCmd, LPVOID lpOutData)
 
       /* FIXME: get x11drv's hInstance */
       X11DRV_Settings_CreateDriver(&hal_info);
-#ifdef HAVE_OPENGL
-      /*X11DRV_GLX_CreateDriver(&hal_info);*/
-#endif
 
       (ddraw_fns->lpSetInfo)(&hal_info, FALSE);
       *lpInstance = hal_info.hInstance;

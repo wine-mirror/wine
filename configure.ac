@@ -579,12 +579,12 @@ then
 	    if test "$wine_cv_opengl_header_version_OK" = "yes"
             then
 		dnl Check for the presence of the library
-		AC_CHECK_LIB(GL,glXCreateContext,
+		WINE_CHECK_SONAME(GL,glXCreateContext,
 			     [OPENGL_LIBS="-lGL"
                              OPENGLFILES='$(OPENGLFILES)'
                              AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])]
 			     ,,
-			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
+			     [$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS])
 
 	        dnl Check for GLU32 library.
 		AC_CHECK_LIB(GLU,gluLookAt,
@@ -1151,7 +1151,6 @@ WINE_CHECK_SONAME(Xrender,XRenderQueryExtension,,,[$X_LIBS -lXext -lX11 $X_EXTRA
 WINE_CHECK_SONAME(Xrandr,XRRQueryExtension,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xcursor,XcursorImageLoadCursor,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(freetype,FT_Init_FreeType,,,[$X_LIBS])
-WINE_CHECK_SONAME(GL,glXQueryExtension,,,[$X_LIBS $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(txc_dxtn,fetch_2d_texel_rgba_dxt1)
 
 
