@@ -1863,7 +1863,8 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                       WINED3DDEVCAPS_TEXTURESYSTEMMEMORY |
                                       WINED3DDEVCAPS_CANRENDERAFTERFLIP  |
                                       WINED3DDEVCAPS_DRAWPRIMITIVES2     |
-                                      WINED3DDEVCAPS_DRAWPRIMITIVES2EX;
+                                      WINED3DDEVCAPS_DRAWPRIMITIVES2EX   |
+                                      WINED3DDEVCAPS_RTPATCHES;
 
     *pCaps->PrimitiveMiscCaps       = WINED3DPMISCCAPS_CULLNONE              |
                                       WINED3DPMISCCAPS_CULLCCW               |
@@ -2382,6 +2383,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     IWineD3DImpl       *This    = (IWineD3DImpl *)iface;
     HDC hDC;
     HRESULT temp_result;
+    int i;
 
     /* Validate the adapter number */
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
@@ -2472,6 +2474,9 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->ddraw_format = pixelformat_for_depth(GetDeviceCaps(hDC, BITSPIXEL) * GetDeviceCaps(hDC, PLANES));
     ReleaseDC(0, hDC);
 
+    for(i = 0; i < PATCHMAP_SIZE; i++) {
+        list_init(&object->patches[i]);
+    }
     return WINED3D_OK;
 create_device_error:
 

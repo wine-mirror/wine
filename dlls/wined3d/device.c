@@ -1930,6 +1930,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
     LEAVE_GL();
 
+    TRACE("Deleting high order patches\n");
+    for(i = 0; i < PATCHMAP_SIZE; i++) {
+        struct list *e1, *e2;
+        struct WineD3DRectPatch *patch;
+        LIST_FOR_EACH_SAFE(e1, e2, &This->patches[i]) {
+            patch = LIST_ENTRY(e1, struct WineD3DRectPatch, entry);
+            IWineD3DDevice_DeletePatch(iface, patch->Handle);
+        }
+    }
+
     /* Delete the pbuffer context if there is any */
     if(This->pbufferContext) DestroyContext(This, This->pbufferContext);
 
@@ -5194,20 +5204,87 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     return WINED3D_OK;
 }
 
-/* Implementation details at http://developer.nvidia.com/attach/6494
-and
-http://oss.sgi.com/projects/ogl-sample/registry/NV/evaluators.txt
-hmm.. no longer supported use
-OpenGL evaluators or  tessellate surfaces within your application.
-*/
-
-/* http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/DrawRectPatch.asp */
 static HRESULT WINAPI IWineD3DDeviceImpl_DrawRectPatch(IWineD3DDevice *iface, UINT Handle, CONST float* pNumSegs, CONST WINED3DRECTPATCH_INFO* pRectPatchInfo) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct WineD3DRectPatch *patch;
+    unsigned int i;
+    struct list *e;
+    BOOL found;
     TRACE("(%p) Handle(%d) noSegs(%p) rectpatch(%p)\n", This, Handle, pNumSegs, pRectPatchInfo);
-    FIXME("(%p) : Stub\n", This);
-    return WINED3D_OK;
 
+    if(!(Handle || pRectPatchInfo)) {
+        /* TODO: Write a test for the return value, thus the FIXME */
+        FIXME("Both Handle and pRectPatchInfo are NULL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if(Handle) {
+        i = PATCHMAP_HASHFUNC(Handle);
+        found = FALSE;
+        LIST_FOR_EACH(e, &This->patches[i]) {
+            patch = LIST_ENTRY(e, struct WineD3DRectPatch, entry);
+            if(patch->Handle == Handle) {
+                found = TRUE;
+                break;
+            }
+        }
+
+        if(!found) {
+            TRACE("Patch does not exist. Creating a new one\n");
+            patch = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*patch));
+            patch->Handle = Handle;
+            list_add_head(&This->patches[i], &patch->entry);
+        } else {
+            TRACE("Found existing patch %p\n", patch);
+        }
+    } else {
+        /* Since opengl does not load tesselated vertex attributes into numbered vertex
+         * attributes we have to tesselate, read back, and draw. This needs a patch
+         * management structure instance. Create one.
+         *
+         * A possible improvement is to check if a vertex shader is used, and if not directly
+         * draw the patch.
+         */
+        FIXME("Drawing an uncached patch. This is slow\n");
+        patch = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*patch));
+    }
+
+    if(pNumSegs[0] != patch->numSegs[0] || pNumSegs[1] != patch->numSegs[1] ||
+       pNumSegs[2] != patch->numSegs[2] || pNumSegs[3] != patch->numSegs[3] ||
+       (pRectPatchInfo && memcmp(pRectPatchInfo, &patch->RectPatchInfo, sizeof(*pRectPatchInfo)) != 0) ) {
+        HRESULT hr;
+        TRACE("Tesselation density or patch info changed, retesselating\n");
+
+        if(pRectPatchInfo) {
+            memcpy(&patch->RectPatchInfo, pRectPatchInfo, sizeof(*pRectPatchInfo));
+        }
+        patch->numSegs[0] = pNumSegs[0];
+        patch->numSegs[1] = pNumSegs[1];
+        patch->numSegs[2] = pNumSegs[2];
+        patch->numSegs[3] = pNumSegs[3];
+
+        hr = tesselate_rectpatch(This, patch);
+        if(FAILED(hr)) {
+            WARN("Patch tesselation failed\n");
+
+            /* Do not release the handle to store the params of the patch */
+            if(!Handle) {
+                HeapFree(GetProcessHeap(), 0, patch);
+            }
+            return hr;
+        }
+    }
+
+    This->currentPatch = patch;
+    IWineD3DDevice_DrawPrimitiveStrided(iface, WINED3DPT_TRIANGLELIST, patch->numSegs[0] * patch->numSegs[1] * 2, &patch->strided);
+    This->currentPatch = NULL;
+
+    /* Destroy uncached patches */
+    if(!Handle) {
+        HeapFree(GetProcessHeap(), 0, patch->mem);
+        HeapFree(GetProcessHeap(), 0, patch);
+    }
+    return WINED3D_OK;
 }
 
 /* http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/DrawTriPatch.asp */
@@ -5220,9 +5297,26 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawTriPatch(IWineD3DDevice *iface, UIN
 
 static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT Handle) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    int i;
+    struct WineD3DRectPatch *patch;
+    struct list *e;
     TRACE("(%p) Handle(%d)\n", This, Handle);
-    FIXME("(%p) : Stub\n", This);
-    return WINED3D_OK;
+
+    i = PATCHMAP_HASHFUNC(Handle);
+    LIST_FOR_EACH(e, &This->patches[i]) {
+        patch = LIST_ENTRY(e, struct WineD3DRectPatch, entry);
+        if(patch->Handle == Handle) {
+            TRACE("Deleting patch %p\n", patch);
+            list_remove(&patch->entry);
+            HeapFree(GetProcessHeap(), 0, patch->mem);
+            HeapFree(GetProcessHeap(), 0, patch);
+            return WINED3D_OK;
+        }
+    }
+
+    /* TODO: Write a test for the return value */
+    FIXME("Attempt to destroy nonexistant patch\n");
+    return WINED3DERR_INVALIDCALL;
 }
 
 static IWineD3DSwapChain *get_swapchain(IWineD3DSurface *target) {

@@ -1148,3 +1148,387 @@ if(stridedlcl.u.s.type.VBO) { \
     /* Control goes back to the device, stateblock values may change again */
     This->isInDraw = FALSE;
 }
+
+static void normalize_normal(float *n) {
+    float length = n[0] * n[0] + n[1] * n[1] + n[2] * n[2];
+    if(length == 0.0) return;
+    length = sqrt(length);
+    n[0] = n[0] / length;
+    n[1] = n[1] / length;
+    n[2] = n[2] / length;
+}
+
+/* Tesselates a high order rectangular patch into single triangles using gl evaluators
+ *
+ * The problem is that OpenGL does not offer a direct way to return the tesselated primitives,
+ * and they can't be sent off for rendering directly either. Tesselating is slow, so we want
+ * to chache the patches in a vertex buffer. But more importantly, gl can't bind generated
+ * attributes to numbered shader attributes, so we have to store them and rebind them as needed
+ * in drawprim.
+ *
+ * To read back, the opengl feedback mode is used. This creates a proplem because we want
+ * untransformed, unlit vertices, but feedback runs everything through transform and lighting.
+ * Thus disable lighting and set identity matrices to get unmodified colors and positions.
+ * To overcome clipping find the biggest x, y and z values of the vertices in the patch and scale
+ * them to [-1.0;+1.0] and set the viewport up to scale them back.
+ *
+ * Normals are more tricky: Draw white vertices with 3 directional lights, and calculate the
+ * resulting colors back to the normals.
+ *
+ * NOTE: This function activates a context for blitting, modifies matrices & viewport, but
+ * does not restore it because normally a draw follows immediately afterwards. The caller is
+ * responsible of taking care that either the gl states are restored, or the context activated
+ * for drawing to reset the lastWasBlit flag.
+ */
+HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
+                            struct WineD3DRectPatch *patch) {
+    unsigned int i, j, num_quads, out_vertex_size, buffer_size, d3d_out_vertex_size;
+    float max_x = 0.0, max_y = 0.0, max_z = 0.0, neg_z = 0.0;
+    WineDirect3DVertexStridedData strided;
+    BYTE *data;
+    WINED3DRECTPATCH_INFO *info = &patch->RectPatchInfo;
+    DWORD vtxStride;
+    GLenum feedback_type;
+    GLfloat *feedbuffer;
+
+    /* First, locate the position data. This is provided in a vertex buffer in the stateblock.
+     * Beware of vbos
+     */
+    memset(&strided, 0, sizeof(strided));
+    primitiveDeclarationConvertToStridedData((IWineD3DDevice *) This, FALSE, &strided, NULL);
+    if(strided.u.s.position.VBO) {
+        IWineD3DVertexBufferImpl *vb;
+        vb = (IWineD3DVertexBufferImpl *) This->stateBlock->streamSource[strided.u.s.position.streamNo];
+        strided.u.s.position.lpData = (BYTE *) ((unsigned long) strided.u.s.position.lpData +
+                                                (unsigned long) vb->resource.allocatedMemory);
+    }
+    vtxStride = strided.u.s.position.dwStride;
+    data = strided.u.s.position.lpData +
+           vtxStride * info->Stride * info->StartVertexOffsetHeight +
+           vtxStride * info->StartVertexOffsetWidth;
+
+    /* Not entirely sure about what happens with transformed vertices */
+    if(strided.u.s.position_transformed) {
+        FIXME("Transformed position in rectpatch generation\n");
+    }
+    if(vtxStride % sizeof(GLfloat)) {
+        /* glMap2f reads vertex sizes in GLfloats, the d3d stride is in bytes.
+         * I don't see how the stride could not be a multiple of 4, but make sure
+         * to check it
+         */
+        ERR("Vertex stride is not a multiple of sizeof(GLfloat)\n");
+    }
+    if(info->Basis != WINED3DBASIS_BEZIER) {
+        FIXME("Basis is %s, how to handle this?\n", debug_d3dbasis(info->Basis));
+    }
+    if(info->Degree != WINED3DDEGREE_CUBIC) {
+        FIXME("Degree is %s, how to handle this?\n", debug_d3ddegree(info->Degree));
+    }
+
+    /* First, get the boundary cube of the input data */
+    for(j = 0; j < info->Height; j++) {
+        for(i = 0; i < info->Width; i++) {
+            float *v = (float *) (data + vtxStride * i + vtxStride * info->Stride * j);
+            if(fabs(v[0]) > max_x) max_x = fabs(v[0]);
+            if(fabs(v[1]) > max_y) max_y = fabs(v[1]);
+            if(fabs(v[2]) > max_z) max_z = fabs(v[2]);
+            if(v[2] < neg_z) neg_z = v[2];
+        }
+    }
+
+    /* This needs some improvements in the vertex decl code */
+    FIXME("Cannot find data to generate. Only generating position and normals\n");
+    patch->has_normals = TRUE;
+    patch->has_texcoords = FALSE;
+
+    ENTER_GL();
+    /* Simply activate the context for blitting. This disables all the things we don't want and
+     * takes care for dirtifying. Dirtifying is prefered over pushing / popping, since drawing the
+     * patch(as opposed to normal draws) will most likely need different changes anyway
+     */
+    ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_BLIT);
+
+    glMatrixMode(GL_PROJECTION);
+    checkGLcall("glMatrixMode(GL_PROJECTION)");
+    glLoadIdentity();
+    checkGLcall("glLoadIndentity()");
+    glScalef(1 / (max_x) , 1 / (max_y), max_z == 0 ? 1 : 1 / ( 2 * max_z));
+    glTranslatef(0, 0, 0.5);
+    checkGLcall("glScalef");
+    glViewport(-max_x, -max_y, 2 * (max_x), 2 * (max_y));
+    checkGLcall("glViewport");
+
+    /* Some states to take care of. If we're in wireframe opengl will produce lines, and confuse
+     * our feedback buffer parser
+     */
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)");
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_FILLMODE));
+    if(patch->has_normals) {
+        float black[4] = {0, 0, 0, 0};
+        float red[4]   = {1, 0, 0, 0};
+        float green[4] = {0, 1, 0, 0};
+        float blue[4]  = {0, 0, 1, 0};
+        float white[4] = {1, 1, 1, 1};
+        glEnable(GL_LIGHTING);
+        checkGLcall("glEnable(GL_LIGHTING)");
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
+        checkGLcall("glLightModel for MODEL_AMBIENT");
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_AMBIENT));
+
+        for(i = 3; i < GL_LIMITS(lights); i++) {
+            glDisable(GL_LIGHT0 + i);
+            checkGLcall("glDisable(GL_LIGHT0 + i)");
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(i));
+        }
+
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(0));
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, red);
+        glLightfv(GL_LIGHT0, GL_SPECULAR, black);
+        glLightfv(GL_LIGHT0, GL_AMBIENT, black);
+        glLightfv(GL_LIGHT0, GL_POSITION, red);
+        glEnable(GL_LIGHT0);
+        checkGLcall("Setting up light 1\n");
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(1));
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, green);
+        glLightfv(GL_LIGHT1, GL_SPECULAR, black);
+        glLightfv(GL_LIGHT1, GL_AMBIENT, black);
+        glLightfv(GL_LIGHT1, GL_POSITION, green);
+        glEnable(GL_LIGHT1);
+        checkGLcall("Setting up light 2\n");
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(2));
+        glLightfv(GL_LIGHT2, GL_DIFFUSE, blue);
+        glLightfv(GL_LIGHT2, GL_SPECULAR, black);
+        glLightfv(GL_LIGHT2, GL_AMBIENT, black);
+        glLightfv(GL_LIGHT2, GL_POSITION, blue);
+        glEnable(GL_LIGHT2);
+        checkGLcall("Setting up light 3\n");
+
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_MATERIAL);
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORVERTEX));
+        glDisable(GL_COLOR_MATERIAL);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, white);
+        checkGLcall("Setting up materials\n");
+    }
+
+    /* Enable the needed maps.
+     * GL_MAP2_VERTEX_3 is needed for positional data.
+     * GL_AUTO_NORMAL to generate normals from the position. Do not use GL_MAP2_NORMAL.
+     * GL_MAP2_TEXTURE_COORD_4 for texture coords
+     */
+    num_quads = ceilf(patch->numSegs[0]) * ceilf(patch->numSegs[1]);
+    out_vertex_size = 3 /* position */;
+    d3d_out_vertex_size = 3;
+    glEnable(GL_MAP2_VERTEX_3);
+    if(patch->has_normals && patch->has_texcoords) {
+        FIXME("Texcoords not handled yet\n");
+        feedback_type = GL_3D_COLOR_TEXTURE;
+        out_vertex_size += 8;
+        d3d_out_vertex_size += 7;
+        glEnable(GL_AUTO_NORMAL);
+        glEnable(GL_MAP2_TEXTURE_COORD_4);
+    } else if(patch->has_texcoords) {
+        FIXME("Texcoords not handled yet\n");
+        feedback_type = GL_3D_COLOR_TEXTURE;
+        out_vertex_size += 7;
+        d3d_out_vertex_size += 4;
+        glEnable(GL_MAP2_TEXTURE_COORD_4);
+    } else if(patch->has_normals) {
+        feedback_type = GL_3D_COLOR;
+        out_vertex_size += 4;
+        d3d_out_vertex_size += 3;
+        glEnable(GL_AUTO_NORMAL);
+    } else {
+        feedback_type = GL_3D;
+    }
+    checkGLcall("glEnable vertex attrib generation");
+
+    buffer_size = num_quads * out_vertex_size * 2 /* triangle list */ * 3 /* verts per tri */
+                   + 4 * num_quads /* 2 triangle markers per quad + num verts in tri */;
+    feedbuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buffer_size * sizeof(float) * 8);
+
+    glMap2f(GL_MAP2_VERTEX_3,
+            0, 1, vtxStride / sizeof(float), info->Width,
+            0, 1, info->Stride * vtxStride / sizeof(float), info->Height,
+            (float *) data);
+    checkGLcall("glMap2f");
+    if(patch->has_texcoords) {
+        glMap2f(GL_MAP2_TEXTURE_COORD_4,
+                0, 1, vtxStride / sizeof(float), info->Width,
+                0, 1, info->Stride * vtxStride / sizeof(float), info->Height,
+                (float *) data);
+        checkGLcall("glMap2f");
+    }
+    glMapGrid2f(ceilf(patch->numSegs[0]), 0.0, 1.0, ceilf(patch->numSegs[1]), 0.0, 1.0);
+    checkGLcall("glMapGrid2f");
+
+    glFeedbackBuffer(buffer_size * 2, feedback_type, feedbuffer);
+    checkGLcall("glFeedbackBuffer");
+    glRenderMode(GL_FEEDBACK);
+
+    glEvalMesh2(GL_FILL, 0, ceilf(patch->numSegs[0]), 0, ceilf(patch->numSegs[1]));
+    checkGLcall("glEvalMesh2\n");
+
+    i = glRenderMode(GL_RENDER);
+    if(i == -1) {
+        ERR("Feedback failed. Expected %d elements back\n", buffer_size);
+        Sleep(10000);
+        HeapFree(GetProcessHeap(), 0, feedbuffer);
+        return WINED3DERR_DRIVERINTERNALERROR;
+    } else if(i != buffer_size) {
+        ERR("Unexpected amount of elements returned. Expected %d, got %d\n", buffer_size, i);
+        Sleep(10000);
+        HeapFree(GetProcessHeap(), 0, feedbuffer);
+        return WINED3DERR_DRIVERINTERNALERROR;
+    } else {
+        TRACE("Got %d elements as expected\n", i);
+    }
+
+    HeapFree(GetProcessHeap(), 0, patch->mem);
+    patch->mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, num_quads * 6 * d3d_out_vertex_size * sizeof(float) * 8);
+    i = 0;
+    for(j = 0; j < buffer_size; j += (3 /* num verts */ * out_vertex_size + 2 /* tri marker */)) {
+        if(feedbuffer[j] != GL_POLYGON_TOKEN) {
+            ERR("Unexpected token: %f\n", feedbuffer[j]);
+            continue;
+        }
+        if(feedbuffer[j + 1] != 3) {
+            ERR("Unexpected polygon: %f corners\n", feedbuffer[j + 1]);
+            continue;
+        }
+        /* Somehow there are different ideas about back / front facing, so fix up the
+         * vertex order
+         */
+        patch->mem[i + 0] =  feedbuffer[j + out_vertex_size * 2 + 2]; /* x, triangle 2 */
+        patch->mem[i + 1] =  feedbuffer[j + out_vertex_size * 2 + 3]; /* y, triangle 2 */
+        patch->mem[i + 2] = (feedbuffer[j + out_vertex_size * 2 + 4] - 0.5) * 4 * max_z; /* z, triangle 3 */
+        if(patch->has_normals) {
+            patch->mem[i + 3] = feedbuffer[j + out_vertex_size * 2 + 5];
+            patch->mem[i + 4] = feedbuffer[j + out_vertex_size * 2 + 6];
+            patch->mem[i + 5] = feedbuffer[j + out_vertex_size * 2 + 7];
+        }
+        i += d3d_out_vertex_size;
+
+        patch->mem[i + 0] =  feedbuffer[j + out_vertex_size * 1 + 2]; /* x, triangle 2 */
+        patch->mem[i + 1] =  feedbuffer[j + out_vertex_size * 1 + 3]; /* y, triangle 2 */
+        patch->mem[i + 2] = (feedbuffer[j + out_vertex_size * 1 + 4] - 0.5) * 4 * max_z; /* z, triangle 2 */
+        if(patch->has_normals) {
+            patch->mem[i + 3] = feedbuffer[j + out_vertex_size * 1 + 5];
+            patch->mem[i + 4] = feedbuffer[j + out_vertex_size * 1 + 6];
+            patch->mem[i + 5] = feedbuffer[j + out_vertex_size * 1 + 7];
+        }
+        i += d3d_out_vertex_size;
+
+        patch->mem[i + 0] =  feedbuffer[j + out_vertex_size * 0 + 2]; /* x, triangle 1 */
+        patch->mem[i + 1] =  feedbuffer[j + out_vertex_size * 0 + 3]; /* y, triangle 1 */
+        patch->mem[i + 2] = (feedbuffer[j + out_vertex_size * 0 + 4] - 0.5) * 4 * max_z; /* z, triangle 1 */
+        if(patch->has_normals) {
+            patch->mem[i + 3] = feedbuffer[j + out_vertex_size * 0 + 5];
+            patch->mem[i + 4] = feedbuffer[j + out_vertex_size * 0 + 6];
+            patch->mem[i + 5] = feedbuffer[j + out_vertex_size * 0 + 7];
+        }
+        i += d3d_out_vertex_size;
+    }
+
+    if(patch->has_normals) {
+        /* Now do the same with reverse light directions */
+        float x[4] = {-1,  0,  0, 0};
+        float y[4] = { 0, -1,  0, 0};
+        float z[4] = { 0,  0, -1, 0};
+        glLightfv(GL_LIGHT0, GL_POSITION, x);
+        glLightfv(GL_LIGHT1, GL_POSITION, y);
+        glLightfv(GL_LIGHT2, GL_POSITION, z);
+        checkGLcall("Setting up reverse light directions\n");
+
+        glRenderMode(GL_FEEDBACK);
+        checkGLcall("glRenderMode(GL_FEEDBACK)");
+        glEvalMesh2(GL_FILL, 0, ceilf(patch->numSegs[0]), 0, ceilf(patch->numSegs[1]));
+        checkGLcall("glEvalMesh2\n");
+        i = glRenderMode(GL_RENDER);
+        checkGLcall("glRenderMode(GL_RENDER)");
+
+        i = 0;
+        for(j = 0; j < buffer_size; j += (3 /* num verts */ * out_vertex_size + 2 /* tri marker */)) {
+            if(feedbuffer[j] != GL_POLYGON_TOKEN) {
+                ERR("Unexpected token: %f\n", feedbuffer[j]);
+                continue;
+            }
+            if(feedbuffer[j + 1] != 3) {
+                ERR("Unexpected polygon: %f corners\n", feedbuffer[j + 1]);
+                continue;
+            }
+            if(patch->mem[i + 3] == 0.0)
+                patch->mem[i + 3] = -feedbuffer[j + out_vertex_size * 2 + 5];
+            if(patch->mem[i + 4] == 0.0)
+                patch->mem[i + 4] = -feedbuffer[j + out_vertex_size * 2 + 6];
+            if(patch->mem[i + 5] == 0.0)
+                patch->mem[i + 5] = -feedbuffer[j + out_vertex_size * 2 + 7];
+            normalize_normal(patch->mem + i + 3);
+            i += d3d_out_vertex_size;
+
+            if(patch->mem[i + 3] == 0.0)
+                patch->mem[i + 3] = -feedbuffer[j + out_vertex_size * 1 + 5];
+            if(patch->mem[i + 4] == 0.0)
+                patch->mem[i + 4] = -feedbuffer[j + out_vertex_size * 1 + 6];
+            if(patch->mem[i + 5] == 0.0)
+                patch->mem[i + 5] = -feedbuffer[j + out_vertex_size * 1 + 7];
+            normalize_normal(patch->mem + i + 3);
+            i += d3d_out_vertex_size;
+
+            if(patch->mem[i + 3] == 0.0)
+                patch->mem[i + 3] = -feedbuffer[j + out_vertex_size * 0 + 5];
+            if(patch->mem[i + 4] == 0.0)
+                patch->mem[i + 4] = -feedbuffer[j + out_vertex_size * 0 + 6];
+            if(patch->mem[i + 5] == 0.0)
+                patch->mem[i + 5] = -feedbuffer[j + out_vertex_size * 0 + 7];
+            normalize_normal(patch->mem + i + 3);
+            i += d3d_out_vertex_size;
+        }
+    }
+
+    glDisable(GL_MAP2_VERTEX_3);
+    glDisable(GL_AUTO_NORMAL);
+    glDisable(GL_MAP2_NORMAL);
+    glDisable(GL_MAP2_TEXTURE_COORD_4);
+    checkGLcall("glDisable vertex attrib generation");
+    LEAVE_GL();
+
+    HeapFree(GetProcessHeap(), 0, feedbuffer);
+
+    vtxStride = 3 * sizeof(float);
+    if(patch->has_normals) {
+        vtxStride += 3 * sizeof(float);
+    }
+    if(patch->has_texcoords) {
+        vtxStride += 4 * sizeof(float);
+    }
+    memset(&patch->strided, 0, sizeof(&patch->strided));
+    patch->strided.u.s.position.lpData = (BYTE *) patch->mem;
+    patch->strided.u.s.position.dwStride = vtxStride;
+    patch->strided.u.s.position.dwType = WINED3DDECLTYPE_FLOAT3;
+    patch->strided.u.s.position.streamNo = 255;
+
+    if(patch->has_normals) {
+        patch->strided.u.s.normal.lpData = (BYTE *) patch->mem + 3 * sizeof(float) /* pos */;
+        patch->strided.u.s.normal.dwStride = vtxStride;
+        patch->strided.u.s.normal.dwType = WINED3DDECLTYPE_FLOAT3;
+        patch->strided.u.s.normal.streamNo = 255;
+    }
+    if(patch->has_texcoords) {
+        patch->strided.u.s.texCoords[0].lpData = (BYTE *) patch->mem + 3 * sizeof(float) /* pos */;
+        if(patch->has_normals) {
+            patch->strided.u.s.texCoords[0].lpData += 3 * sizeof(float);
+        }
+        patch->strided.u.s.texCoords[0].dwStride = vtxStride;
+        patch->strided.u.s.texCoords[0].dwType = WINED3DDECLTYPE_FLOAT4;
+        /* MAX_STREAMS index points to an unused element in stateblock->streamOffsets which
+         * always remains set to 0. Windows uses stream 255 here, but this is not visible to the
+         * application.
+         */
+        patch->strided.u.s.texCoords[0].streamNo = MAX_STREAMS;
+    }
+
+    return WINED3D_OK;
+}

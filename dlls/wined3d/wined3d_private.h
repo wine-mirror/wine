@@ -583,6 +583,22 @@ struct WineD3DAdapter
 extern BOOL InitAdapters(void);
 
 /*****************************************************************************
+ * High order patch management
+ */
+struct WineD3DRectPatch
+{
+    UINT                            Handle;
+    float                          *mem;
+    WineDirect3DVertexStridedData   strided;
+    WINED3DRECTPATCH_INFO           RectPatchInfo;
+    float                           numSegs[4];
+    char                            has_normals, has_texcoords;
+    struct list                     entry;
+};
+
+HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This, struct WineD3DRectPatch *patch);
+
+/*****************************************************************************
  * IWineD3D implementation structure
  */
 typedef struct IWineD3DImpl
@@ -741,6 +757,12 @@ struct IWineD3DDeviceImpl
     UINT                    numContexts;
     WineD3DContext          *pbufferContext;             /* The context that has a pbuffer as drawable */
     DWORD                   pbufferWidth, pbufferHeight; /* Size of the buffer drawable */
+
+    /* High level patch management */
+#define PATCHMAP_SIZE 43
+#define PATCHMAP_HASHFUNC(x) ((x) % PATCHMAP_SIZE) /* Primitive and simple function */
+    struct list             patches[PATCHMAP_SIZE];
+    struct WineD3DRectPatch *currentPatch;
 };
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
@@ -1271,10 +1293,10 @@ struct IWineD3DStateBlockImpl
     /* Stream Source */
     BOOL                      streamIsUP;
     UINT                      streamStride[MAX_STREAMS];
-    UINT                      streamOffset[MAX_STREAMS];
+    UINT                      streamOffset[MAX_STREAMS + 1 /* tesselated pseudo-stream */ ];
     IWineD3DVertexBuffer     *streamSource[MAX_STREAMS];
-    UINT                      streamFreq[MAX_STREAMS];
-    UINT                      streamFlags[MAX_STREAMS];     /*0 | WINED3DSTREAMSOURCE_INSTANCEDATA | WINED3DSTREAMSOURCE_INDEXEDDATA  */
+    UINT                      streamFreq[MAX_STREAMS + 1];
+    UINT                      streamFlags[MAX_STREAMS + 1];     /*0 | WINED3DSTREAMSOURCE_INSTANCEDATA | WINED3DSTREAMSOURCE_INDEXEDDATA  */
 
     /* Indices */
     IWineD3DIndexBuffer*      pIndexData;
@@ -1436,6 +1458,8 @@ const char* debug_d3dtstype(WINED3DTRANSFORMSTATETYPE tstype);
 const char* debug_d3dpool(WINED3DPOOL pool);
 const char *debug_fbostatus(GLenum status);
 const char *debug_glerror(GLenum error);
+const char *debug_d3dbasis(WINED3DBASISTYPE basis);
+const char *debug_d3ddegree(WINED3DDEGREETYPE order);
 
 /* Routines for GL <-> D3D values */
 GLenum StencilOp(DWORD op);

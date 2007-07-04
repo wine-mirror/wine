@@ -732,6 +732,25 @@ const char *debug_glerror(GLenum error) {
     }
 }
 
+const char *debug_d3dbasis(WINED3DBASISTYPE basis) {
+    switch(basis) {
+        case WINED3DBASIS_BEZIER:       return "WINED3DBASIS_BEZIER";
+        case WINED3DBASIS_BSPLINE:      return "WINED3DBASIS_BSPLINE";
+        case WINED3DBASIS_INTERPOLATE:  return "WINED3DBASIS_INTERPOLATE";
+        default:                        return "unrecognized";
+    }
+}
+
+const char *debug_d3ddegree(WINED3DDEGREETYPE degree) {
+    switch(degree) {
+        case WINED3DDEGREE_LINEAR:      return "WINED3DDEGREE_LINEAR";
+        case WINED3DDEGREE_QUADRATIC:   return "WINED3DDEGREE_QUADRATIC";
+        case WINED3DDEGREE_CUBIC:       return "WINED3DDEGREE_CUBIC";
+        case WINED3DDEGREE_QUINTIC:     return "WINED3DDEGREE_QUINTIC";
+        default:                        return "unrecognized";
+    }
+}
+
 /*****************************************************************************
  * Useful functions mapping GL <-> D3D values
  */
