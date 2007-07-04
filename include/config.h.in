@@ -300,9 +300,6 @@
 /* Define to 1 if you have the `ossaudio' library (-lossaudio). */
 #undef HAVE_LIBOSSAUDIO
 
-/* Define if you have the Xinerama library */
-#undef HAVE_LIBXINERAMA
-
 /* Define if you have the libxml2 library */
 #undef HAVE_LIBXML2
 

@@ -558,7 +558,7 @@ then
         then
                 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>
 #include <X11/extensions/Xinerama.h>]], [[static typeof(XineramaQueryScreens) * func;]])],
-                  [AC_DEFINE(HAVE_LIBXINERAMA, 1, [Define if you have the Xinerama library])],[])
+                  [WINE_CHECK_SONAME(Xinerama,XineramaQueryScreens,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
         fi
 
     dnl *** End of X11/Xlib.h check
@@ -1148,7 +1148,6 @@ AC_DEFINE_UNQUOTED(SONAME_EXT,[".$LIBEXT"],[Define to the file extension of shar
 WINE_CHECK_SONAME(X11,XCreateWindow,,,[$X_LIBS $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xext,XextCreateExtension,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xi,XOpenDevice,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
-WINE_CHECK_SONAME(Xinerama,XineramaQueryScreens,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xcursor,XcursorImageLoadCursor,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(freetype,FT_Init_FreeType,,,[$X_LIBS])
 WINE_CHECK_SONAME(txc_dxtn,fetch_2d_texel_rgba_dxt1)
