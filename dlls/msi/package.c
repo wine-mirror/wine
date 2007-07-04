@@ -1611,6 +1611,13 @@ HRESULT WINAPI mrp_GetSourcePath( IWineMsiRemotePackage *iface, BSTR *folder, BS
     return HRESULT_FROM_WIN32(r);
 }
 
+HRESULT WINAPI mrp_GetMode( IWineMsiRemotePackage *iface, MSIRUNMODE mode, BOOL *ret )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    *ret = MsiGetMode(This->package, mode);
+    return S_OK;
+}
+
 static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
 {
     mrp_QueryInterface,
@@ -1626,6 +1633,7 @@ static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
     mrp_GetTargetPath,
     mrp_SetTargetPath,
     mrp_GetSourcePath,
+    mrp_GetMode,
 };
 
 HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj )

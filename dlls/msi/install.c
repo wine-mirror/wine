@@ -612,7 +612,23 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
 
     package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
     if (!package)
+    {
+        BOOL ret;
+        HRESULT hr;
+        IWineMsiRemotePackage *remote_package;
+
+        remote_package = (IWineMsiRemotePackage *)msi_get_remote(hInstall);
+        if (!remote_package)
+            return FALSE;
+
+        hr = IWineMsiRemotePackage_GetMode(remote_package, iRunMode, &ret);
+        IWineMsiRemotePackage_Release(remote_package);
+
+        if (hr == S_OK)
+            return ret;
+
         return FALSE;
+    }
 
     switch (iRunMode)
     {
