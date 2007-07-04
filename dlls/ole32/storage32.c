@@ -91,7 +91,7 @@ static StorageInternalImpl* StorageInternalImpl_Construct(StorageImpl* ancestorS
                                                           DWORD openFlags, ULONG rootTropertyIndex);
 static void StorageImpl_Destroy(StorageBaseImpl* iface);
 static BOOL StorageImpl_ReadBigBlock(StorageImpl* This, ULONG blockIndex, void* buffer);
-static BOOL StorageImpl_WriteBigBlock(StorageImpl* This, ULONG blockIndex, void* buffer);
+static BOOL StorageImpl_WriteBigBlock(StorageImpl* This, ULONG blockIndex, const void* buffer);
 static void StorageImpl_SetNextBlockInChain(StorageImpl* This, ULONG blockIndex, ULONG nextBlock);
 static HRESULT StorageImpl_LoadFileHeader(StorageImpl* This);
 static void StorageImpl_SaveFileHeader(StorageImpl* This);
@@ -279,7 +279,7 @@ static HRESULT StorageImpl_ReadAt(StorageImpl* This,
 
 static HRESULT StorageImpl_WriteAt(StorageImpl* This,
   ULARGE_INTEGER offset,
-  void*          buffer,
+  const void*    buffer,
   const ULONG    size,
   ULONG*         bytesWritten)
 {
@@ -3373,9 +3373,9 @@ BOOL StorageImpl_ReadProperty(
  * Write the specified property into the property chain
  */
 BOOL StorageImpl_WriteProperty(
-  StorageImpl* This,
-  ULONG          index,
-  StgProperty*   buffer)
+  StorageImpl*          This,
+  ULONG                 index,
+  const StgProperty*    buffer)
 {
   BYTE           currentProperty[PROPSET_BLOCK_SIZE];
   ULARGE_INTEGER offsetInPropSet;
@@ -3492,9 +3492,9 @@ static BOOL StorageImpl_ReadDWordFromBigBlock(
 }
 
 static BOOL StorageImpl_WriteBigBlock(
-  StorageImpl* This,
-  ULONG          blockIndex,
-  void*          buffer)
+  StorageImpl*  This,
+  ULONG         blockIndex,
+  const void*   buffer)
 {
   ULARGE_INTEGER ulOffset;
   DWORD  wrote;
@@ -4337,9 +4337,9 @@ void StorageUtl_WriteGUID(BYTE* buffer, ULONG offset, const GUID* value)
 }
 
 void StorageUtl_CopyPropertyToSTATSTG(
-  STATSTG*     destination,
-  StgProperty* source,
-  int          statFlags)
+  STATSTG*              destination,
+  const StgProperty*    source,
+  int                   statFlags)
 {
   /*
    * The copy of the string occurs only when the flag is not set
@@ -6864,7 +6864,7 @@ static HRESULT OLECONVERT_SaveOLE10(OLECONVERT_OLESTREAM_DATA *pData, LPOLESTREA
  *
  *
  */
-static void OLECONVERT_GetOLE20FromOLE10(LPSTORAGE pDestStorage, BYTE *pBuffer, DWORD nBufferLength)
+static void OLECONVERT_GetOLE20FromOLE10(LPSTORAGE pDestStorage, const BYTE *pBuffer, DWORD nBufferLength)
 {
     HRESULT hRes;
     HANDLE hFile;
@@ -7414,7 +7414,7 @@ static void OLECONVERT_CreateOlePresStream(LPSTORAGE pStorage, DWORD dwExtentX, 
  *     Might need to verify the data and return appropriate error message
  *
  */
-static void OLECONVERT_CreateOle10NativeStream(LPSTORAGE pStorage, BYTE *pData, DWORD dwDataLength)
+static void OLECONVERT_CreateOle10NativeStream(LPSTORAGE pStorage, const BYTE *pData, DWORD dwDataLength)
 {
     HRESULT hRes;
     IStream *pStream;
