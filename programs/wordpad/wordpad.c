@@ -778,6 +778,11 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
     PARAFORMAT pf;
     int nAlignment = -1;
     REBARBANDINFOW rbbinfo;
+    int selFrom, selTo;
+
+    SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&selFrom, (LPARAM)&selTo);
+    EnableMenuItem(hMenu, ID_EDIT_COPY, MF_BYCOMMAND|(selFrom == selTo) ? MF_GRAYED : MF_ENABLED);
+    EnableMenuItem(hMenu, ID_EDIT_CUT, MF_BYCOMMAND|(selFrom == selTo) ? MF_GRAYED : MF_ENABLED);
 
     pf.cbSize = sizeof(PARAFORMAT);
     SendMessageW(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
