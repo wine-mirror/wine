@@ -49,9 +49,6 @@ static void *xrandr_handle;
 #ifndef SONAME_LIBXEXT
 #define SONAME_LIBXEXT "libXext" SONAME_EXT
 #endif
-#ifndef SONAME_LIBXRENDER
-#define SONAME_LIBXRENDER "libXrender" SONAME_EXT
-#endif
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
 MAKE_FUNCPTR(XRRConfigCurrentConfiguration)

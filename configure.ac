@@ -534,21 +534,23 @@ then
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
 
+        dnl *** Check for Transform functions in Xrender
+        if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes"
+        then
+            WINE_CHECK_SONAME(Xrender,XRenderQueryExtension,
+              [AC_CHECK_LIB(Xrender,XRenderSetPictureTransform,
+                [AC_DEFINE(HAVE_XRENDERSETPICTURETRANSFORM, 1,
+                 [Define if Xrender has the XRenderSetPictureTransform function])],,
+                [$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])],,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+
+        fi
+
         dnl *** Check for X RandR extension
-        if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes"
+        if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes" -a "x$ac_cv_lib_soname_Xrender" != "x"
         then
                 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>]], [[static typeof(XRRSetScreenConfigAndRate) * func;]])],
                   [WINE_CHECK_SONAME(Xrandr,XRRQueryExtension,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
-        fi
-
-        dnl *** Check for Transform functions in Xrender
-        if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes"
-        then
-              AC_CHECK_LIB(Xrender, XRenderSetPictureTransform,
-                [AC_DEFINE(HAVE_XRENDERSETPICTURETRANSFORM, 1,
-                 [Define if Xrender has the XRenderSetPictureTransform function])],,
-                $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
 
         dnl *** Check for Xinerama extension
@@ -1147,7 +1149,6 @@ WINE_CHECK_SONAME(X11,XCreateWindow,,,[$X_LIBS $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xext,XextCreateExtension,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xi,XOpenDevice,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xinerama,XineramaQueryScreens,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
-WINE_CHECK_SONAME(Xrender,XRenderQueryExtension,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xcursor,XcursorImageLoadCursor,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(freetype,FT_Init_FreeType,,,[$X_LIBS])
 WINE_CHECK_SONAME(txc_dxtn,fetch_2d_texel_rgba_dxt1)

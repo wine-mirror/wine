@@ -41,7 +41,7 @@ int using_client_side_fonts = FALSE;
 
 WINE_DEFAULT_DEBUG_CHANNEL(xrender);
 
-#ifdef HAVE_X11_EXTENSIONS_XRENDER_H
+#ifdef SONAME_LIBXRENDER
 
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
@@ -102,9 +102,6 @@ static int antialias = 1;
 #endif
 #ifndef SONAME_LIBXEXT
 #define SONAME_LIBXEXT "libXext" SONAME_EXT
-#endif
-#ifndef SONAME_LIBXRENDER
-#define SONAME_LIBXRENDER "libXrender" SONAME_EXT
 #endif
 
 static void *xrender_handle;
@@ -1678,7 +1675,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     return TRUE;
 }
 
-#else /* HAVE_X11_EXTENSIONS_XRENDER_H */
+#else /* SONAME_LIBXRENDER */
 
 void X11DRV_XRender_Init(void)
 {
@@ -1727,4 +1724,4 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
   return FALSE;
 }
 
-#endif /* HAVE_X11_EXTENSIONS_XRENDER_H */
+#endif /* SONAME_LIBXRENDER */
