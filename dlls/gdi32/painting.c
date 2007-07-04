@@ -823,7 +823,7 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
                        DWORD cCount)
 {
     DC *dc;
-    BOOL result;
+    BOOL result = FALSE;
     POINT lastmove;
     unsigned int i;
 
@@ -841,10 +841,8 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 	if( lpbTypes[i] != PT_MOVETO &&
 	    lpbTypes[i] & PT_BEZIERTO )
 	{
-	    if( cCount < i+3 ){
-		result = FALSE;
-                goto end;
-            }
+	    if( cCount < i+3 )
+		goto end;
 	    else
 		i += 2;
 	}
@@ -869,10 +867,8 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 	    PolyBezierTo( hdc, &lppt[i], 3 );
 	    i += 2;
 	}
-	else{
-	    result = FALSE;
-            goto end;
-        }
+	else
+	    goto end;
 
 	if( lpbTypes[i] & PT_CLOSEFIGURE )
 	{
