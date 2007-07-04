@@ -200,14 +200,58 @@ static UINT WINAPI MSI_GetTargetPath( MSIHANDLE hInstall, LPCWSTR szFolder,
 {
     MSIPACKAGE *package;
     LPWSTR path;
-    UINT r;
+    UINT r = ERROR_FUNCTION_FAILED;
 
     if (!szFolder)
         return ERROR_INVALID_PARAMETER;
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
     if (!package)
-        return ERROR_INVALID_HANDLE;
+    {
+        HRESULT hr;
+        IWineMsiRemotePackage *remote_package;
+        LPWSTR value = NULL;
+        DWORD len;
+
+        remote_package = (IWineMsiRemotePackage *)msi_get_remote( hInstall );
+        if (!remote_package)
+            return ERROR_INVALID_HANDLE;
+
+        len = 0;
+        hr = IWineMsiRemotePackage_GetTargetPath( remote_package, (BSTR *)szFolder,
+                                                  NULL, &len );
+        if (FAILED(hr))
+            goto done;
+
+        len++;
+        value = msi_alloc(len * sizeof(WCHAR));
+        if (!value)
+        {
+            r = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+
+        hr = IWineMsiRemotePackage_GetTargetPath( remote_package, (BSTR *)szFolder,
+                                                  (BSTR *)value, &len);
+        if (FAILED(hr))
+            goto done;
+
+        r = msi_strcpy_to_awstring( value, szPathBuf, pcchPathBuf );
+
+done:
+        IWineMsiRemotePackage_Release( remote_package );
+        msi_free( value );
+
+        if (FAILED(hr))
+        {
+            if (HRESULT_FACILITY(hr) == FACILITY_WIN32)
+                return HRESULT_CODE(hr);
+
+            return ERROR_FUNCTION_FAILED;
+        }
+
+        return r;
+    }
 
     path = resolve_folder( package, szFolder, FALSE, FALSE, TRUE, NULL );
     msiobj_release( &package->hdr );

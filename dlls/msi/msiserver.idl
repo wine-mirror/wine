@@ -42,6 +42,7 @@ interface IWineMsiRemotePackage : IUnknown
     HRESULT ProcessMessage( [in] INSTALLMESSAGE message, [in] MSIHANDLE record );
     HRESULT DoAction( [in] BSTR *action );
     HRESULT Sequence( [in] BSTR *table, [in] int sequence );
+    HRESULT GetTargetPath( [in] BSTR *folder, [out] BSTR *value, [out] DWORD *size );
 }
 
 [
