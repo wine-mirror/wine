@@ -416,7 +416,7 @@ static void *cupshandle;
 static BOOL CUPS_LoadPrinters(void)
 {
     int	                  i, nrofdests;
-    BOOL                  hadprinter = FALSE;
+    BOOL                  hadprinter = FALSE, haddefault = FALSE;
     cups_dest_t          *dests;
     PRINTER_INFO_2A       pinfo2a;
     char   *port,*devline;
@@ -494,9 +494,13 @@ static BOOL CUPS_LoadPrinters(void)
 	HeapFree(GetProcessHeap(),0,port);
 
         hadprinter = TRUE;
-        if (dests[i].is_default)
+        if (dests[i].is_default) {
             WINSPOOL_SetDefaultPrinter(dests[i].name, dests[i].name, TRUE);
+            haddefault = TRUE;
+        }
     }
+    if (hadprinter & !haddefault)
+        WINSPOOL_SetDefaultPrinter(dests[0].name, dests[0].name, TRUE);
     RegCloseKey(hkeyPrinters);
     return hadprinter;
 }
