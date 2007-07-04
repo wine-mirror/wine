@@ -833,18 +833,18 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
     if(dc->funcs->pPolyDraw)
     {
         result = dc->funcs->pPolyDraw( dc->physDev, lppt, lpbTypes, cCount );
-        GDI_ReleaseObj( hdc );
-        return result;
+        goto end;
     }
-    GDI_ReleaseObj( hdc );
 
     /* check for each bezierto if there are two more points */
     for( i = 0; i < cCount; i++ )
 	if( lpbTypes[i] != PT_MOVETO &&
 	    lpbTypes[i] & PT_BEZIERTO )
 	{
-	    if( cCount < i+3 )
-		return FALSE;
+	    if( cCount < i+3 ){
+		result = FALSE;
+                goto end;
+            }
 	    else
 		i += 2;
 	}
@@ -869,8 +869,10 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 	    PolyBezierTo( hdc, &lppt[i], 3 );
 	    i += 2;
 	}
-	else
-	    return FALSE;
+	else{
+	    result = FALSE;
+            goto end;
+        }
 
 	if( lpbTypes[i] & PT_CLOSEFIGURE )
 	{
@@ -881,7 +883,10 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 	}
     }
 
-    return TRUE;
+    result = TRUE;
+end:
+    GDI_ReleaseObj( hdc );
+    return result;
 }
 
 
