@@ -1648,6 +1648,13 @@ HRESULT WINAPI mrp_SetComponentState( IWineMsiRemotePackage *iface, BSTR *compon
     return HRESULT_FROM_WIN32(r);
 }
 
+HRESULT WINAPI mrp_GetLanguage( IWineMsiRemotePackage *iface, LANGID *language )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    *language = MsiGetLanguage(This->package);
+    return S_OK;
+}
+
 static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
 {
     mrp_QueryInterface,
@@ -1668,6 +1675,7 @@ static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
     mrp_SetFeatureState,
     mrp_GetComponentState,
     mrp_SetComponentState,
+    mrp_GetLanguage,
 };
 
 HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj )

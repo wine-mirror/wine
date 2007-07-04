@@ -28,6 +28,7 @@ typedef unsigned long MSIHANDLE;
 typedef int INSTALLMESSAGE;
 typedef int MSIRUNMODE;
 typedef int INSTALLSTATE;
+typedef WORD LANGID;
 cpp_quote("#endif")
 
 [
@@ -52,6 +53,7 @@ interface IWineMsiRemotePackage : IUnknown
     HRESULT SetFeatureState( [in] BSTR *feature, [in] INSTALLSTATE state );
     HRESULT GetComponentState( [in] BSTR *component, [out] INSTALLSTATE *installed, [out] INSTALLSTATE *action );
     HRESULT SetComponentState( [in] BSTR *component, [in] INSTALLSTATE state );
+    HRESULT GetLanguage( [out] LANGID *language );
 }
 
 [

@@ -1045,7 +1045,22 @@ LANGID WINAPI MsiGetLanguage(MSIHANDLE hInstall)
     
     package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
     if (!package)
-        return ERROR_INVALID_HANDLE;
+    {
+        HRESULT hr;
+        LANGID lang;
+        IWineMsiRemotePackage *remote_package;
+
+        remote_package = (IWineMsiRemotePackage *)msi_get_remote(hInstall);
+        if (!remote_package)
+            return ERROR_INVALID_HANDLE;
+
+        hr = IWineMsiRemotePackage_GetLanguage(remote_package, &lang);
+
+        if (SUCCEEDED(hr))
+            return lang;
+
+        return 0;
+    }
 
     langid = msi_get_property_int( package, szProductLanguage, 0 );
     msiobj_release( &package->hdr );
