@@ -1576,6 +1576,13 @@ HRESULT WINAPI mrp_ProcessMessage( IWineMsiRemotePackage *iface, INSTALLMESSAGE 
     return HRESULT_FROM_WIN32(r);
 }
 
+HRESULT WINAPI mrp_DoAction( IWineMsiRemotePackage *iface, BSTR *action )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    UINT r = MsiDoActionW(This->package, (LPWSTR)action);
+    return HRESULT_FROM_WIN32(r);
+}
+
 static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
 {
     mrp_QueryInterface,
@@ -1586,6 +1593,7 @@ static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
     mrp_GetProperty,
     mrp_SetProperty,
     mrp_ProcessMessage,
+    mrp_DoAction,
 };
 
 HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj )

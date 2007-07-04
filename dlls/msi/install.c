@@ -20,6 +20,8 @@
 
 /* Msi top level apis directly related to installs */
 
+#define COBJMACROS
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -28,7 +30,9 @@
 #include "wine/debug.h"
 #include "msi.h"
 #include "msidefs.h"
+
 #include "msipriv.h"
+#include "msiserver.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
@@ -67,7 +71,28 @@ UINT WINAPI MsiDoActionW( MSIHANDLE hInstall, LPCWSTR szAction )
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
     if (!package)
-        return ERROR_INVALID_HANDLE;
+    {
+        HRESULT hr;
+        IWineMsiRemotePackage *remote_package;
+
+        remote_package = (IWineMsiRemotePackage *)msi_get_remote( hInstall );
+        if (!remote_package)
+            return ERROR_INVALID_HANDLE;
+
+        hr = IWineMsiRemotePackage_DoAction( remote_package, (BSTR *)szAction );
+
+        IWineMsiRemotePackage_Release( remote_package );
+
+        if (FAILED(hr))
+        {
+            if (HRESULT_FACILITY(hr) == FACILITY_WIN32)
+                return HRESULT_CODE(hr);
+
+            return ERROR_FUNCTION_FAILED;
+        }
+
+        return ERROR_SUCCESS;
+    }
  
     ret = ACTION_PerformUIAction( package, szAction, -1 );
     msiobj_release( &package->hdr );
