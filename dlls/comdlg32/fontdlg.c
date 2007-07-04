@@ -621,6 +621,8 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
         ShowWindow(GetDlgItem(hDlg,pshHelp),SW_HIDE);
     if (!(lpcf->Flags & CF_APPLY))
         ShowWindow(GetDlgItem(hDlg,psh3),SW_HIDE);
+    if (lpcf->Flags & CF_NOSCRIPTSEL)
+        EnableWindow(GetDlgItem(hDlg,cmb5),FALSE);
     if (lpcf->Flags & CF_EFFECTS)
     {
         for (i=0;i<TEXT_COLORS;i++)
