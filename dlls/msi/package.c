@@ -1641,6 +1641,13 @@ HRESULT WINAPI mrp_GetComponentState( IWineMsiRemotePackage *iface, BSTR *compon
     return HRESULT_FROM_WIN32(r);
 }
 
+HRESULT WINAPI mrp_SetComponentState( IWineMsiRemotePackage *iface, BSTR *component, INSTALLSTATE state )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    UINT r = MsiSetFeatureStateW(This->package, (LPWSTR)component, state);
+    return HRESULT_FROM_WIN32(r);
+}
+
 static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
 {
     mrp_QueryInterface,
@@ -1660,6 +1667,7 @@ static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
     mrp_GetFeatureState,
     mrp_SetFeatureState,
     mrp_GetComponentState,
+    mrp_SetComponentState,
 };
 
 HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj )
