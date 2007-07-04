@@ -1196,6 +1196,69 @@ static void testAcquireCredentialsHandle(void)
     pFreeCredentialsHandle(&cred);
 }
 
+static void test_cred_multiple_use(void)
+{
+    static char test_user[] = "testuser",
+                workgroup[] = "WORKGROUP",
+                test_pass[] = "testpass",
+                sec_pkg_name[] = "NTLM";
+    SECURITY_STATUS ret;
+    SEC_WINNT_AUTH_IDENTITY id;
+    PSecPkgInfo             pkg_info = NULL;
+    CredHandle              cred;
+    CtxtHandle              ctxt1;
+    CtxtHandle              ctxt2;
+    SecBufferDesc           buffer_desc;
+    SecBuffer               buffers[1];
+    ULONG                   ctxt_attr;
+    TimeStamp               ttl;
+
+    if(pQuerySecurityPackageInfoA(sec_pkg_name, &pkg_info) != SEC_E_OK)
+    {
+        skip("NTLM package not installed, skipping test\n");
+        return;
+    }
+    buffers[0].cbBuffer = pkg_info->cbMaxToken;
+    buffers[0].BufferType = SECBUFFER_TOKEN;
+    buffers[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, buffers[0].cbBuffer);
+
+    pFreeContextBuffer(pkg_info);
+
+    id.User = (unsigned char*) test_user;
+    id.UserLength = strlen((char *) id.User);
+    id.Domain = (unsigned char *) workgroup;
+    id.DomainLength = strlen((char *) id.Domain);
+    id.Password = (unsigned char*) test_pass;
+    id.PasswordLength = strlen((char *) id.Password);
+    id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+
+    ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
+            NULL, &id, NULL, NULL, &cred, &ttl);
+    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+            getSecError(ret));
+
+    buffer_desc.ulVersion = SECBUFFER_VERSION;
+    buffer_desc.cBuffers = sizeof(buffers)/sizeof(buffers[0]);
+    buffer_desc.pBuffers = buffers;
+
+    ret = pInitializeSecurityContextA(&cred, NULL, NULL, ISC_REQ_CONNECTION,
+            0, SECURITY_NETWORK_DREP, NULL, 0, &ctxt1, &buffer_desc,
+            &ctxt_attr, &ttl);
+    ok(ret == SEC_I_CONTINUE_NEEDED, "InitializeSecurityContextA failed with error 0x%x\n", ret);
+
+    ret = pInitializeSecurityContextA(&cred, NULL, NULL, ISC_REQ_CONNECTION,
+            0, SECURITY_NETWORK_DREP, NULL, 0, &ctxt2, &buffer_desc,
+            &ctxt_attr, &ttl);
+    ok(ret == SEC_I_CONTINUE_NEEDED, "Second InitializeSecurityContextA on cred handle failed with error 0x%x\n", ret);
+
+    ret = pDeleteSecurityContext(&ctxt1);
+    ok(ret == SEC_E_OK, "DeleteSecurityContext failed with error 0x%x\n", ret);
+    ret = pDeleteSecurityContext(&ctxt2);
+    ok(ret == SEC_E_OK, "DeleteSecurityContext failed with error 0x%x\n", ret);
+    ret = pFreeCredentialsHandle(&cred);
+    ok(ret == SEC_E_OK, "FreeCredentialsHandle failed with error 0x%x\n", ret);
+}
+
 START_TEST(ntlm)
 {
     InitFunctionPtrs();
@@ -1217,6 +1280,8 @@ START_TEST(ntlm)
         if(pMakeSignature && pVerifySignature && pEncryptMessage &&
            pDecryptMessage)
             testSignSeal();
+
+        test_cred_multiple_use();
      }
 
     if(secdll)
