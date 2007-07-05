@@ -337,7 +337,7 @@ static struct list font_subst_list = LIST_INIT(font_subst_list);
 static struct list font_list = LIST_INIT(font_list);
 
 static const WCHAR defSerif[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n','\0'};
-static const WCHAR defSans[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
+static const WCHAR defSans[] = {'A','r','i','a','l','\0'};
 static const WCHAR defFixed[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0'};
 
 static const WCHAR RegularW[] = {'R','e','g','u','l','a','r','\0'};

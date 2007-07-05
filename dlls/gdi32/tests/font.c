@@ -1654,6 +1654,36 @@ static void test_GetTextMetrics(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_non_existent_font(void)
+{
+    LOGFONTA lf;
+    HDC hdc;
+    HFONT hfont;
+    char buf[LF_FACESIZE];
+
+    if (!is_truetype_font_installed("Arial Black"))
+    {
+        skip("Arial not installed\n");
+        return;
+    }
+
+    hdc = GetDC(0);
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfHeight = 100;
+    lf.lfWeight = FW_REGULAR;
+    lf.lfCharSet = ANSI_CHARSET;
+    lf.lfPitchAndFamily = FF_SWISS;
+    strcpy(lf.lfFaceName, "Non existent font");
+
+    hfont = CreateFontIndirectA(&lf);
+    hfont = SelectObject(hdc, hfont);
+    GetTextFaceA(hdc, sizeof(buf), buf);
+    ok(!lstrcmpiA(buf, "Arial"), "Got %s\n", buf);
+    DeleteObject(SelectObject(hdc, hfont));
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(font)
 {
     init();
@@ -1670,6 +1700,8 @@ START_TEST(font)
     test_SetTextJustification();
     test_font_charset();
     test_GetFontUnicodeRanges();
+    test_non_existent_font();
+
     /* On Windows Arial has a lot of default charset aliases such as Arial Cyr,
      * I'd like to avoid them in this test.
      */
