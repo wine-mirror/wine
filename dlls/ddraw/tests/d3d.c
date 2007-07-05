@@ -321,21 +321,21 @@ static void LightTest(void)
     rc = IDirect3DDevice7_SetMaterial(lpD3DDevice, &mat);
     ok(rc == D3D_OK, "IDirect3DDevice7_SetMaterial returned: %x\n", rc);
 
-    mat.power = 129.0;
+    U4(mat).power = 129.0;
     rc = IDirect3DDevice7_SetMaterial(lpD3DDevice, &mat);
     ok(rc == D3D_OK, "IDirect3DDevice7_SetMaterial(power = 129.0) returned: %x\n", rc);
     memset(&mat, 0, sizeof(mat));
     rc = IDirect3DDevice7_GetMaterial(lpD3DDevice, &mat);
     ok(rc == D3D_OK, "IDirect3DDevice7_GetMaterial returned: %x\n", rc);
-    ok(mat.power == 129, "Returned power is %f\n", mat.power);
+    ok(U4(mat).power == 129, "Returned power is %f\n", U4(mat).power);
 
-    mat.power = -1.0;
+    U4(mat).power = -1.0;
     rc = IDirect3DDevice7_SetMaterial(lpD3DDevice, &mat);
     ok(rc == D3D_OK, "IDirect3DDevice7_SetMaterial(power = -1.0) returned: %x\n", rc);
     memset(&mat, 0, sizeof(mat));
     rc = IDirect3DDevice7_GetMaterial(lpD3DDevice, &mat);
     ok(rc == D3D_OK, "IDirect3DDevice7_GetMaterial returned: %x\n", rc);
-    ok(mat.power == -1, "Returned power is %f\n", mat.power);
+    ok(U4(mat).power == -1, "Returned power is %f\n", U4(mat).power);
 }
 
 static void ProcessVerticesTest(void)
