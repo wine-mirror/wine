@@ -4643,10 +4643,6 @@ HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
     return STG_E_DOCFILECORRUPT;
   }
 
-  /*
-   * Here, I'm casting away the constness on the buffer variable
-   * This is OK since we don't intend to modify that buffer.
-   */
   *bytesWritten   = 0;
   bufferWalker = (const BYTE*)buffer;
 
@@ -4667,7 +4663,7 @@ HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
 
     StorageImpl_WriteAt(This->parentStorage,
          ulOffset,
-         (BYTE*)bufferWalker,
+         bufferWalker,
          bytesToWrite,
          &bytesWrittenAt);
 

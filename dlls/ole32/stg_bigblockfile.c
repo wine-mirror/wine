@@ -896,7 +896,7 @@ static HRESULT WINAPI ImplBIGBLOCKFILE_WriteAt(
 
         if (bytes_left)
         {
-            readPtr = (LPBYTE)readPtr + bytes_to_page;
+            readPtr = (const BYTE *)readPtr + bytes_to_page;
             page_index ++;
             offset_in_page = 0;
             if (bytes_left > PAGE_SIZE)

@@ -1775,8 +1775,8 @@ static BOOL PropertyStorage_PropertiesWriter(const void *key, const void *value,
     assert(value);
     assert(extra);
     assert(closure);
-    c->hr = PropertyStorage_WritePropertyToStream(This,
-     c->propNum++, (DWORD)key, (PROPVARIANT *)value, c->sectionOffset);
+    c->hr = PropertyStorage_WritePropertyToStream(This, c->propNum++,
+     (DWORD)key, value, c->sectionOffset);
     return SUCCEEDED(c->hr);
 }
 
