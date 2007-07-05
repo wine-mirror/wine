@@ -434,7 +434,7 @@ START_TEST(refcount)
     init_function_pointers();
     if(!pDirectDrawCreateEx)
     {
-        trace("function DirectDrawCreateEx not available, skipping tests\n");
+        skip("function DirectDrawCreateEx not available\n");
         return;
     }
     test_ddraw_objects();
