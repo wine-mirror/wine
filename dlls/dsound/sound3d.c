@@ -326,11 +326,6 @@ static void DSOUND_ChangeListener(IDirectSound3DListenerImpl *ds3dl)
 	TRACE("(%p)\n",ds3dl);
 	for (i = 0; i < ds3dl->device->nrofbuffers; i++)
 	{
-		/* some buffers don't have 3d buffer (Ultima IX seems to
-		crash without the following line) */
-		if (ds3dl->device->buffers[i]->ds3db == NULL)
-			continue;
-
 		/* check if this buffer is waiting for recalculation */
 		if (ds3dl->device->buffers[i]->ds3db_need_recalc)
 		{
