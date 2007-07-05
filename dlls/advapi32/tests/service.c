@@ -133,6 +133,33 @@ static void test_open_svc(void)
     CloseServiceHandle(scm_handle);
 }
 
+static void test_close(void)
+{
+    SC_HANDLE handle;
+    BOOL ret;
+
+    /* NULL handle */
+    SetLastError(0xdeadbeef);
+    ret = CloseServiceHandle(NULL);
+    todo_wine
+    {
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    }
+
+    /* TODO: Add some tests with invalid handles. These produce errors on Windows but crash on Wine */
+
+    /* Proper call */
+    handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+    SetLastError(0xdeadbeef);
+    ret = CloseServiceHandle(handle);
+    ok(ret, "Expected success\n");
+    ok(GetLastError() == ERROR_IO_PENDING /* W2K */ ||
+       GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+}
+
 static void test_sequence(void)
 {
     SC_HANDLE scm_handle, svc_handle;
@@ -264,6 +291,7 @@ START_TEST(service)
     /* First some parameter checking */
     test_open_scm();
     test_open_svc();
+    test_close();
     /* Test the creation, querying and deletion of a service */
     test_sequence();
 }
