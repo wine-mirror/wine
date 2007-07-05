@@ -1282,7 +1282,9 @@ START_TEST(ntlm)
             testSignSeal();
 
         test_cred_multiple_use();
-     }
+    }
+    else
+        skip("Needed functions are not available\n");
 
     if(secdll)
         FreeLibrary(secdll);
