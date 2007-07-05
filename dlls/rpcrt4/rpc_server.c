@@ -45,6 +45,7 @@
 #include "rpc_misc.h"
 #include "rpc_message.h"
 #include "rpc_defs.h"
+#include "ncastatus.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
@@ -219,6 +220,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
 
       /* fail if the connection isn't bound with an interface */
       if (UuidIsNil(&conn->ActiveInterface.SyntaxGUID, &status)) {
+        /* FIXME: should send BindNack instead */
         response = RPCRT4_BuildFaultHeader(NDR_LOCAL_DATA_REPRESENTATION,
                                            status);
 
@@ -237,7 +239,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
       if (!sif) {
         WARN("interface %s no longer registered, returning fault packet\n", debugstr_guid(&conn->ActiveInterface.SyntaxGUID));
         response = RPCRT4_BuildFaultHeader(NDR_LOCAL_DATA_REPRESENTATION,
-                                           RPC_S_UNKNOWN_IF);
+                                           NCA_S_UNK_IF);
 
         RPCRT4_Send(conn, response, NULL, 0);
         RPCRT4_FreeHeader(response);
@@ -277,12 +279,12 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
         if (msg->Buffer != buf) I_RpcFreeBuffer(msg);
         /* this will cause a failure packet to be sent in I_RpcSend */
         msg->RpcFlags |= WINE_RPCFLAG_EXCEPTION;
-        msg->BufferLength = sizeof(DWORD);
+        msg->BufferLength = sizeof(RPC_STATUS);
         I_RpcGetBuffer(msg);
         if (GetExceptionCode() == STATUS_ACCESS_VIOLATION)
-            *(DWORD*)msg->Buffer = ERROR_NOACCESS;
+            *(RPC_STATUS*)msg->Buffer = ERROR_NOACCESS;
         else
-            *(DWORD*)msg->Buffer = GetExceptionCode();
+            *(RPC_STATUS*)msg->Buffer = GetExceptionCode();
       } __ENDTRY
 
       /* send response packet */

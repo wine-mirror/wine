@@ -38,6 +38,7 @@
 #include "rpc_misc.h"
 #include "rpc_defs.h"
 #include "rpc_message.h"
+#include "ncastatus.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
@@ -282,6 +283,74 @@ RpcPktHdr *RPCRT4_BuildBindAckHeader(unsigned long DataRepresentation,
 VOID RPCRT4_FreeHeader(RpcPktHdr *Header)
 {
   HeapFree(GetProcessHeap(), 0, Header);
+}
+
+NCA_STATUS RPC2NCA_STATUS(RPC_STATUS status)
+{
+    switch (status)
+    {
+    case ERROR_INVALID_HANDLE:              return NCA_S_FAULT_CONTEXT_MISMATCH;
+    case ERROR_OUTOFMEMORY:                 return NCA_S_FAULT_REMOTE_NO_MEMORY;
+    case RPC_S_NOT_LISTENING:               return NCA_S_SERVER_TOO_BUSY;
+    case RPC_S_UNKNOWN_IF:                  return NCA_S_UNK_IF;
+    case RPC_S_SERVER_TOO_BUSY:             return NCA_S_SERVER_TOO_BUSY;
+    case RPC_S_CALL_FAILED:                 return NCA_S_FAULT_UNSPEC;
+    case RPC_S_CALL_FAILED_DNE:             return NCA_S_MANAGER_NOT_ENTERED;
+    case RPC_S_PROTOCOL_ERROR:              return NCA_S_PROTO_ERROR;
+    case RPC_S_UNSUPPORTED_TYPE:            return NCA_S_UNSUPPORTED_TYPE;
+    case RPC_S_INVALID_TAG:                 return NCA_S_FAULT_INVALID_TAG;
+    case RPC_S_INVALID_BOUND:               return NCA_S_FAULT_INVALID_BOUND;
+    case RPC_S_PROCNUM_OUT_OF_RANGE:        return NCA_S_OP_RNG_ERROR;
+    case RPC_X_SS_HANDLES_MISMATCH:         return NCA_S_FAULT_CONTEXT_MISMATCH;
+    case STATUS_FLOAT_DIVIDE_BY_ZERO:       return NCA_S_FAULT_FP_DIV_ZERO;
+    case STATUS_FLOAT_INVALID_OPERATION:    return NCA_S_FAULT_FP_ERROR;
+    case STATUS_FLOAT_OVERFLOW:             return NCA_S_FAULT_FP_OVERFLOW;
+    case STATUS_FLOAT_UNDERFLOW:            return NCA_S_FAULT_FP_UNDERFLOW;
+    case STATUS_INTEGER_DIVIDE_BY_ZERO:     return NCA_S_FAULT_INT_DIV_BY_ZERO;
+    case STATUS_INTEGER_OVERFLOW:           return NCA_S_FAULT_INT_OVERFLOW;
+    default:                                return status;
+    }
+}
+
+RPC_STATUS NCA2RPC_STATUS(NCA_STATUS status)
+{
+    switch (status)
+    {
+    case NCA_S_COMM_FAILURE:            return RPC_S_COMM_FAILURE;
+    case NCA_S_OP_RNG_ERROR:            return RPC_S_PROCNUM_OUT_OF_RANGE;
+    case NCA_S_UNK_IF:                  return RPC_S_UNKNOWN_IF;
+    case NCA_S_YOU_CRASHED:             return RPC_S_CALL_FAILED;
+    case NCA_S_PROTO_ERROR:             return RPC_S_PROTOCOL_ERROR;
+    case NCA_S_OUT_ARGS_TOO_BIG:        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+    case NCA_S_SERVER_TOO_BUSY:         return RPC_S_SERVER_TOO_BUSY;
+    case NCA_S_UNSUPPORTED_TYPE:        return RPC_S_UNSUPPORTED_TYPE;
+    case NCA_S_FAULT_INT_DIV_BY_ZERO:   return RPC_S_ZERO_DIVIDE;
+    case NCA_S_FAULT_ADDR_ERROR:        return RPC_S_ADDRESS_ERROR;
+    case NCA_S_FAULT_FP_DIV_ZERO:       return RPC_S_FP_DIV_ZERO;
+    case NCA_S_FAULT_FP_UNDERFLOW:      return RPC_S_FP_UNDERFLOW;
+    case NCA_S_FAULT_FP_OVERFLOW:       return RPC_S_FP_OVERFLOW;
+    case NCA_S_FAULT_INVALID_TAG:       return RPC_S_INVALID_TAG;
+    case NCA_S_FAULT_INVALID_BOUND:     return RPC_S_INVALID_BOUND;
+    case NCA_S_RPC_VERSION_MISMATCH:    return RPC_S_PROTOCOL_ERROR;
+    case NCA_S_UNSPEC_REJECT:           return RPC_S_CALL_FAILED_DNE;
+    case NCA_S_BAD_ACTID:               return RPC_S_CALL_FAILED_DNE;
+    case NCA_S_WHO_ARE_YOU_FAILED:      return RPC_S_CALL_FAILED;
+    case NCA_S_MANAGER_NOT_ENTERED:     return RPC_S_CALL_FAILED_DNE;
+    case NCA_S_FAULT_CANCEL:            return RPC_S_CALL_CANCELLED;
+    case NCA_S_FAULT_ILL_INST:          return RPC_S_ADDRESS_ERROR;
+    case NCA_S_FAULT_FP_ERROR:          return RPC_S_FP_OVERFLOW;
+    case NCA_S_FAULT_INT_OVERFLOW:      return RPC_S_ADDRESS_ERROR;
+    case NCA_S_FAULT_UNSPEC:            return RPC_S_CALL_FAILED;
+    case NCA_S_FAULT_PIPE_EMPTY:        return RPC_X_PIPE_EMPTY;
+    case NCA_S_FAULT_PIPE_CLOSED:       return RPC_X_PIPE_CLOSED;
+    case NCA_S_FAULT_PIPE_ORDER:        return RPC_X_WRONG_PIPE_ORDER;
+    case NCA_S_FAULT_PIPE_DISCIPLINE:   return RPC_X_PIPE_DISCIPLINE_ERROR;
+    case NCA_S_FAULT_PIPE_COMM_ERROR:   return RPC_S_COMM_FAILURE;
+    case NCA_S_FAULT_PIPE_MEMORY:       return ERROR_OUTOFMEMORY;
+    case NCA_S_FAULT_CONTEXT_MISMATCH:  return ERROR_INVALID_HANDLE;
+    case NCA_S_FAULT_REMOTE_NO_MEMORY:  return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+    default:                            return status;
+    }
 }
 
 static RPC_STATUS RPCRT4_SecurePacket(RpcConnection *Connection,
@@ -927,7 +996,7 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   if (bind->server) {
     if (pMsg->RpcFlags & WINE_RPCFLAG_EXCEPTION) {
       hdr = RPCRT4_BuildFaultHeader(pMsg->DataRepresentation,
-                                    *(DWORD *)pMsg->Buffer);
+                                    RPC2NCA_STATUS(*(RPC_STATUS *)pMsg->Buffer));
     } else {
       hdr = RPCRT4_BuildResponseHeader(pMsg->DataRepresentation,
                                        pMsg->BufferLength);
@@ -1034,7 +1103,7 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
   case PKT_FAULT:
     pMsg->RpcFlags |= WINE_RPCFLAG_EXCEPTION;
     ERR ("we got fault packet with status 0x%lx\n", hdr->fault.status);
-    status = hdr->fault.status; /* FIXME: do translation from nca error codes */
+    status = NCA2RPC_STATUS(hdr->fault.status);
     if (is_hard_error(status))
         goto fail;
     break;

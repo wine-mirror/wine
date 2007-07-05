@@ -24,6 +24,8 @@
 #include "wine/rpcss_shared.h"
 #include "rpc_defs.h"
 
+typedef unsigned int NCA_STATUS;
+
 RpcPktHdr *RPCRT4_BuildFaultHeader(unsigned long DataRepresentation, RPC_STATUS Status);
 RpcPktHdr *RPCRT4_BuildBindHeader(unsigned long DataRepresentation, unsigned short MaxTransmissionSize, unsigned short MaxReceiveSize, unsigned long AssocGroupId, const RPC_SYNTAX_IDENTIFIER *AbstractId, const RPC_SYNTAX_IDENTIFIER *TransferId);
 RpcPktHdr *RPCRT4_BuildBindNackHeader(unsigned long DataRepresentation, unsigned char RpcVersion, unsigned char RpcVersionMinor);
@@ -31,5 +33,7 @@ RpcPktHdr *RPCRT4_BuildBindAckHeader(unsigned long DataRepresentation, unsigned 
 VOID RPCRT4_FreeHeader(RpcPktHdr *Header);
 RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header, void *Buffer, unsigned int BufferLength);
 RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header, PRPC_MESSAGE pMsg);
+NCA_STATUS RPC2NCA_STATUS(RPC_STATUS status);
+RPC_STATUS NCA2RPC_STATUS(NCA_STATUS status);
 
 #endif
