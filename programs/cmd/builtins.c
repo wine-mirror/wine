@@ -734,7 +734,7 @@ void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
   }
 
 
-  /* If it didnt move the position, step to next command */
+  /* If it didn't move the position, step to next command */
   if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
 
   /* Process any other parts of the command */

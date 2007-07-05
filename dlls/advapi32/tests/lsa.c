@@ -85,7 +85,7 @@ static void test_lsa(void)
 
         status = pLsaQueryInformationPolicy(handle, PolicyAuditEventsInformation, (PVOID*)&audit_events_info);
         if (status == STATUS_ACCESS_DENIED)
-            skip("Not enought rights to retrieve PolicyAuditEventsInformation\n");
+            skip("Not enough rights to retrieve PolicyAuditEventsInformation\n");
         else
             ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyAuditEventsInformation) failed, returned 0x%08x\n", status);
         if (status == STATUS_SUCCESS) {

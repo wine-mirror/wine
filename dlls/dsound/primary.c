@@ -48,7 +48,7 @@ static void DSOUND_RecalcPrimary(DirectSoundDevice *device)
 		 * If DS_TIME_DEL is about 10 ms, 512 * nBlockAlign is roughly correct */
 		fraglen = 512 * nBlockAlign;
 
-		/* Compensate for only being rougly accurate */
+		/* Compensate for only being roughly accurate */
 		if (device->pwfx->nSamplesPerSec <= 26000)
 			fraglen /= 2;
 
@@ -324,7 +324,7 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 		}
 	} else {
 
-		/* dont call the wave system with the lock set */
+		/* don't call the wave system with the lock set */
 		LeaveCriticalSection(&(device->mixlock));
 		/* **** */
 

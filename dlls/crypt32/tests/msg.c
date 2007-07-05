@@ -358,7 +358,7 @@ static void test_data_msg_update(void)
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
      CMSG_DATA, NULL, NULL, NULL);
-    /* Dont appear to be able to update CMSG-DATA with non-final updates */
+    /* Doesn't appear to be able to update CMSG-DATA with non-final updates */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
     ok(!ret && GetLastError() == E_INVALIDARG,

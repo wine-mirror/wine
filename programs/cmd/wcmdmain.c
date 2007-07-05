@@ -497,7 +497,7 @@ void WCMD_process_command (WCHAR *command, CMD_LIST **cmdList)
     while ((p = strchrW(p, '%'))) {
       i = *(p+1) - '0';
 
-      /* Dont touch %% */
+      /* Don't touch %% */
       if (*(p+1) == '%') {
         p+=2;
 
@@ -1895,7 +1895,7 @@ void WCMD_DumpCommands(CMD_LIST *commands) {
  *
  *   Either uses supplied input or
  *     Reads a file from the handle, and then...
- *   Parse the text buffer, spliting into seperate commands
+ *   Parse the text buffer, spliting into separate commands
  *     - unquoted && strings split 2 commands but the 2nd is flagged as
  *            following an &&
  *     - ( as the first character just ups the bracket depth

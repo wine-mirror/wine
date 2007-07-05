@@ -32,7 +32,7 @@ extern "C" {
  * and pointer are 32-bit.
  *
  * Win64, however, will cause some problems when implemented under Unix.
- * Linux/{Alpha, Sparc64} and most (all?) other 64-bit Unices uses
+ * Linux/{Alpha, Sparc64} and most (all?) other 64-bit Unices use
  * the LP64 type model where int is 32-bit and long and pointer are
  * 64-bit. Win64 on the other hand uses the P64 (sometimes called LLP64)
  * type model where int and long are 32 bit and pointer is 64-bit.

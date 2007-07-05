@@ -2315,7 +2315,7 @@ static void StructSizeTest(void)
     union {
         DDSURFACEDESC desc1;
         DDSURFACEDESC2 desc2;
-        char blob[1024]; /* To get a buch of writeable memory */
+        char blob[1024]; /* To get a bunch of writable memory */
     } desc;
     DDSURFACEDESC create;
     HRESULT hr;

@@ -43,7 +43,7 @@ static char CURR_DIR[MAX_PATH];
  *   occurs (e.g., unquoted inf file with spaces, registry keys are written but last error is 6). Also, on Win98 last error
  *   is set to ERROR_SUCCESS even if install fails (e.g., quoted inf file with spaces, no registry keys set, MessageBox with
  *   "Installation Error" displayed). Thus, we must use functional tests (e.g., is registry key created) to determine whether
- *   or not installation occured.
+ *   or not installation occurred.
  * - On installation problems, a MessageBox() is displayed and a Beep() is issued. The MessageBox() is disabled with a
  *   CBT hook.
  */

@@ -131,7 +131,7 @@ VOID WINAPI PSetupDestroyMonitorInfo(HANDLE monitorinfo)
  *  index       [I]  Nr. of the Monitorname to copy
  *  buffer      [I]  Target, that receive the Monitorname
  *  psize       [IO] PTR to a DWORD that hold the size of the buffer and receive
- *                   the needed size, when the buffer is to small
+ *                   the needed size, when the buffer is too small
  *
  * RETURNS
  *  Success:  TRUE
