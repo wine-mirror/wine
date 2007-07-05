@@ -305,7 +305,11 @@ START_TEST(toolhelp)
     if (!pCreateToolhelp32Snapshot || 
         !pModule32First || !pModule32Next ||
         !pProcess32First || !pProcess32Next ||
-        !pThread32First || !pThread32Next) return;
+        !pThread32First || !pThread32Next)
+    {
+        skip("Needed functions are not available, most likely running on Windows NT\n");
+        return;
+    }
 
     r = init();
     ok(r == 0, "Basic init of sub-process test\n");
