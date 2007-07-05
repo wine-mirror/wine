@@ -1734,9 +1734,15 @@ static void test_GetNamedSecurityInfoA(void)
     ret = GetWindowsDirectoryA(windows_dir, MAX_PATH);
     ok(ret, "GetWindowsDirectory failed with error %d\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
     error = GetNamedSecurityInfoA(windows_dir, SE_FILE_OBJECT,
         OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
         NULL, NULL, NULL, NULL, &pSecDesc);
+    if (error != ERROR_SUCCESS && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("GetNamedSecurityInfoA is not implemented\n");
+        return;
+    }
     ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
 
     ret = GetSecurityDescriptorControl(pSecDesc, &control, &revision);
