@@ -85,6 +85,54 @@ static void test_open_scm(void)
     CloseServiceHandle(scm_handle);
 }
 
+static void test_open_svc(void)
+{
+    SC_HANDLE scm_handle, svc_handle;
+
+    /* All NULL (invalid access rights) */
+    SetLastError(0xdeadbeef);
+    svc_handle = OpenServiceA(NULL, NULL, 0);
+    ok(!svc_handle, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    /* TODO: Add some tests with invalid handles. These produce errors on Windows but crash on Wine */
+
+    /* NULL service */
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+    SetLastError(0xdeadbeef);
+    svc_handle = OpenServiceA(scm_handle, NULL, GENERIC_READ);
+    ok(!svc_handle, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, XP, W2K3, Vista */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* Non-existent service */
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+    SetLastError(0xdeadbeef);
+    svc_handle = OpenServiceA(scm_handle, "deadbeef", GENERIC_READ);
+    ok(!svc_handle, "Expected failure\n");
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST, "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
+    CloseServiceHandle(scm_handle);
+
+    /* Proper SCM handle but different access rights */
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+    SetLastError(0xdeadbeef);
+    svc_handle = OpenServiceA(scm_handle, "Spooler", GENERIC_WRITE);
+    if (!svc_handle && (GetLastError() == ERROR_ACCESS_DENIED))
+        skip("Not enough rights to get a handle to the service\n");
+    else
+    {
+        ok(svc_handle != NULL, "Expected success\n");
+        ok(GetLastError() == ERROR_SUCCESS    /* W2K3, Vista */ ||
+           GetLastError() == ERROR_IO_PENDING /* W2K */ ||
+           GetLastError() == 0xdeadbeef       /* XP, NT4 */,
+           "Expected ERROR_SUCCESS or 0xdeadbeef, got %d\n", GetLastError());
+        CloseServiceHandle(svc_handle);
+    }
+    CloseServiceHandle(scm_handle);
+}
+
 static void test_sequence(void)
 {
     SC_HANDLE scm_handle, svc_handle;
@@ -215,6 +263,7 @@ START_TEST(service)
 
     /* First some parameter checking */
     test_open_scm();
+    test_open_svc();
     /* Test the creation, querying and deletion of a service */
     test_sequence();
 }
