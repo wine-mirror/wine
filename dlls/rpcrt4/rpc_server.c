@@ -260,8 +260,12 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
         func = *sif->If->DispatchTable->DispatchTable;
       } else {
         if (msg->ProcNum >= sif->If->DispatchTable->DispatchTableCount) {
-          ERR("invalid procnum\n");
-          func = NULL;
+          WARN("invalid procnum (%d/%d)\n", msg->ProcNum, sif->If->DispatchTable->DispatchTableCount);
+          response = RPCRT4_BuildFaultHeader(NDR_LOCAL_DATA_REPRESENTATION,
+                                             NCA_S_OP_RNG_ERROR);
+
+          RPCRT4_Send(conn, response, NULL, 0);
+          RPCRT4_FreeHeader(response);
         }
         func = sif->If->DispatchTable->DispatchTable[msg->ProcNum];
       }
