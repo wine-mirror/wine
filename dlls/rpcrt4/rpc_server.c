@@ -42,7 +42,6 @@
 #include "wine/exception.h"
 
 #include "rpc_server.h"
-#include "rpc_misc.h"
 #include "rpc_message.h"
 #include "rpc_defs.h"
 #include "ncastatus.h"
@@ -171,6 +170,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
   RpcPktHdr *response;
   void *buf = msg->Buffer;
   RPC_STATUS status;
+  BOOL exception;
 
   switch (hdr->common.ptype) {
     case PKT_BIND:
@@ -272,23 +272,32 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
         MAKELONG( MAKEWORD(hdr->common.drep[0], hdr->common.drep[1]),
                   MAKEWORD(hdr->common.drep[2], hdr->common.drep[3]));
 
+      exception = FALSE;
+
       /* dispatch */
       __TRY {
         if (func) func(msg);
       } __EXCEPT(rpc_filter) {
-        if (msg->Buffer != buf) I_RpcFreeBuffer(msg);
-        /* this will cause a failure packet to be sent in I_RpcSend */
-        msg->RpcFlags |= WINE_RPCFLAG_EXCEPTION;
-        msg->BufferLength = sizeof(RPC_STATUS);
-        I_RpcGetBuffer(msg);
+        exception = TRUE;
         if (GetExceptionCode() == STATUS_ACCESS_VIOLATION)
-            *(RPC_STATUS*)msg->Buffer = ERROR_NOACCESS;
+            status = ERROR_NOACCESS;
         else
-            *(RPC_STATUS*)msg->Buffer = GetExceptionCode();
+            status = GetExceptionCode();
+        response = RPCRT4_BuildFaultHeader(msg->DataRepresentation,
+                                           RPC2NCA_STATUS(status));
       } __ENDTRY
 
+      if (!exception)
+        response = RPCRT4_BuildResponseHeader(msg->DataRepresentation,
+                                              msg->BufferLength);
+
       /* send response packet */
-      I_RpcSend(msg);
+      if (response) {
+        status = RPCRT4_Send(conn, response, exception ? NULL : msg->Buffer,
+                             exception ? 0 : msg->BufferLength);
+        RPCRT4_FreeHeader(response);
+      } else
+        ERR("out of memory\n");
 
       msg->RpcInterfaceInformation = NULL;
       RPCRT4_release_server_interface(sif);

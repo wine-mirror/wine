@@ -35,7 +35,6 @@
 #include "wine/debug.h"
 
 #include "rpc_binding.h"
-#include "rpc_misc.h"
 #include "rpc_defs.h"
 #include "rpc_message.h"
 #include "ncastatus.h"
@@ -141,7 +140,7 @@ static RpcPktHdr *RPCRT4_BuildRequestHeader(unsigned long DataRepresentation,
   return header;
 }
 
-static RpcPktHdr *RPCRT4_BuildResponseHeader(unsigned long DataRepresentation,
+RpcPktHdr *RPCRT4_BuildResponseHeader(unsigned long DataRepresentation,
                                       unsigned long BufferLength)
 {
   RpcPktHdr *header;
@@ -964,62 +963,42 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   RpcBinding* bind = (RpcBinding*)pMsg->Handle;
   RpcConnection* conn;
   RPC_CLIENT_INTERFACE* cif = NULL;
-  RPC_SERVER_INTERFACE* sif = NULL;
   RPC_STATUS status;
   RpcPktHdr *hdr;
 
   TRACE("(%p)\n", pMsg);
-  if (!bind) return RPC_S_INVALID_BINDING;
+  if (!bind || bind->server) return RPC_S_INVALID_BINDING;
 
-  if (bind->server) {
-    sif = pMsg->RpcInterfaceInformation;
-    if (!sif) return RPC_S_INTERFACE_NOT_FOUND; /* ? */
-    status = RPCRT4_OpenBinding(bind, &conn, &sif->TransferSyntax,
-                                &sif->InterfaceId);
-  } else {
-    cif = pMsg->RpcInterfaceInformation;
-    if (!cif) return RPC_S_INTERFACE_NOT_FOUND; /* ? */
+  cif = pMsg->RpcInterfaceInformation;
+  if (!cif) return RPC_S_INTERFACE_NOT_FOUND; /* ? */
 
-    if (!bind->Endpoint || !bind->Endpoint[0])
-    {
-      TRACE("automatically resolving partially bound binding\n");
-      status = RpcEpResolveBinding(bind, cif);
-      if (status != RPC_S_OK) return status;
-    }
-
-    status = RPCRT4_OpenBinding(bind, &conn, &cif->TransferSyntax,
-                                &cif->InterfaceId);
+  if (!bind->Endpoint || !bind->Endpoint[0])
+  {
+    TRACE("automatically resolving partially bound binding\n");
+    status = RpcEpResolveBinding(bind, cif);
+    if (status != RPC_S_OK) return status;
   }
 
+  status = RPCRT4_OpenBinding(bind, &conn, &cif->TransferSyntax,
+                              &cif->InterfaceId);
   if (status != RPC_S_OK) return status;
 
-  if (bind->server) {
-    if (pMsg->RpcFlags & WINE_RPCFLAG_EXCEPTION) {
-      hdr = RPCRT4_BuildFaultHeader(pMsg->DataRepresentation,
-                                    RPC2NCA_STATUS(*(RPC_STATUS *)pMsg->Buffer));
-    } else {
-      hdr = RPCRT4_BuildResponseHeader(pMsg->DataRepresentation,
-                                       pMsg->BufferLength);
-    }
-  } else {
-    hdr = RPCRT4_BuildRequestHeader(pMsg->DataRepresentation,
-                                    pMsg->BufferLength, pMsg->ProcNum,
-                                    &bind->ObjectUuid);
-    hdr->common.call_id = conn->NextCallId++;
+  hdr = RPCRT4_BuildRequestHeader(pMsg->DataRepresentation,
+                                  pMsg->BufferLength, pMsg->ProcNum,
+                                  &bind->ObjectUuid);
+  if (!hdr)
+  {
+    RPCRT4_CloseBinding(bind, conn);
+    return ERROR_OUTOFMEMORY;
   }
+  hdr->common.call_id = conn->NextCallId++;
 
   status = RPCRT4_Send(conn, hdr, pMsg->Buffer, pMsg->BufferLength);
 
   RPCRT4_FreeHeader(hdr);
 
-  /* success */
-  if (!bind->server) {
-    /* save the connection, so the response can be read from it */
-    pMsg->ReservedForRuntime = conn;
-    return status;
-  }
-  RPCRT4_CloseBinding(bind, conn);
-
+  /* save the connection, so the response can be read from it */
+  pMsg->ReservedForRuntime = conn;
   return status;
 }
 
@@ -1101,7 +1080,6 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
     }
     break;
   case PKT_FAULT:
-    pMsg->RpcFlags |= WINE_RPCFLAG_EXCEPTION;
     ERR ("we got fault packet with status 0x%lx\n", hdr->fault.status);
     status = NCA2RPC_STATUS(hdr->fault.status);
     if (is_hard_error(status))
