@@ -137,6 +137,7 @@ static void test_profile_sections(void)
     char *p;
     static const char content[]="[section1]\r\nname1=val1\r\nname2=\r\nname3\r\nname4=val4\r\n[section2]\r\n";
     static const char testfile4[]=".\\testwine4.ini";
+    BOOL on_win98 = FALSE;
 
     DeleteFileA( testfile4 );
     h = CreateFileA( testfile4, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -149,17 +150,25 @@ static void test_profile_sections(void)
     SetLastError(0xdeadbeef);
     ret = GetPrivateProfileSectionA( NULL, NULL, 0, NULL );
     ok( ret == 0, "expected return size 0, got %d\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok( GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == 0xdeadbeef /* Win98 */,
+        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    if (GetLastError() == 0xdeadbeef) on_win98 = TRUE;
 
     SetLastError(0xdeadbeef);
     ret = GetPrivateProfileSectionA( NULL, NULL, 0, testfile4 );
     ok( ret == 0, "expected return size 0, got %d\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok( GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == 0xdeadbeef /* Win98 */,
+        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
-    ret = GetPrivateProfileSectionA( "section1", NULL, 0, testfile4 );
-    ok( ret == 0, "expected return size 0, got %d\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    if (!on_win98)
+    {
+        SetLastError(0xdeadbeef);
+        ret = GetPrivateProfileSectionA( "section1", NULL, 0, testfile4 );
+        ok( ret == 0, "expected return size 0, got %d\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
 
     SetLastError(0xdeadbeef);
     ret = GetPrivateProfileSectionA( NULL, buf, sizeof(buf), testfile4 );
