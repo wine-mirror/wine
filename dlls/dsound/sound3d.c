@@ -272,13 +272,13 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	/* FIXME: Doppler Effect disabled since i have no idea which frequency to change and how to do it */
 #if 0	
 	/* doppler shift*/
-	if ((VectorMagnitude(&ds3db.vVelocity) == 0) && (VectorMagnitude(&dsb->device->ds3dl.vVelocity) == 0))
+	if ((VectorMagnitude(&ds3db_ds3db.vVelocity) == 0) && (VectorMagnitude(&dsb->device->ds3dl.vVelocity) == 0))
 	{
 		TRACE("doppler: Buffer and Listener don't have velocities\n");
 	}
 	else
 	{
-		/* calculate length of ds3db.vVelocity component which causes Doppler Effect
+		/* calculate length of ds3db_ds3db.vVelocity component which causes Doppler Effect
 		   NOTE: if buffer moves TOWARDS the listener, it's velocity component is NEGATIVE
 		         if buffer moves AWAY from listener, it's velocity component is POSITIVE */
 		flBufferVel = ProjectVector(&dsb->ds3db_ds3db.vVelocity, &vDistance);
