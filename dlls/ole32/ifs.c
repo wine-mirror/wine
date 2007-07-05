@@ -116,7 +116,7 @@ static int AddMemoryLocation(LPVOID * pMem)
         return 1;
 }
 
-static int RemoveMemoryLocation(LPVOID * pMem)
+static int RemoveMemoryLocation(LPCVOID pMem)
 {
         LPVOID * Current;
 
