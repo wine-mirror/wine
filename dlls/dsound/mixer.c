@@ -286,7 +286,7 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	/* New PerfectPitch(tm) Technology (c) 1998 Rob Riggs */
 	/* Patent Pending :-] */
 
-	/* Patent enhancements (c) 2000 Ove Kåven,
+	/* Patent enhancements (c) 2000 Ove Kï¿½ven,
 	 * TransGaming Technologies Inc. */
 
 	/* FIXME("(%p) Adjusting frequency: %ld -> %ld (need optimization)\n",
@@ -749,8 +749,8 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 	/* calculte the current wave write position */
 	wave_writepos = wave_fragpos * device->fraglen;
 
-	TRACE("wave_fragpos = %i, wave_writepos = %i, pwqueue = %i, ds_hel_queue= %i\n",
-		wave_fragpos, wave_writepos, device->pwqueue, ds_hel_queue);
+	TRACE("wave_fragpos = %i, wave_writepos = %i, pwqueue = %i, prebuf = %i\n",
+		wave_fragpos, wave_writepos, device->pwqueue, device->prebuf);
 
 	if(force == FALSE){
 		/* check remaining prebuffered frags */

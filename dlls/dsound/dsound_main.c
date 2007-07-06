@@ -61,11 +61,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 /* some stuff may get more responsive with lower values though... */
 #define DS_EMULDRIVER 0 /* some games (Quake 2, UT) refuse to accept
 				emulated dsound devices. set to 0 ! */
-#define DS_HEL_MARGIN 2 /* HEL only: number of waveOut fragments ahead to mix in new buffers
-			 * (keep this close or equal to DS_HEL_QUEUE for best results) */
-#define DS_HEL_QUEUE  2 /* HEL only: number of waveOut fragments ahead to queue to driver
-			 * (this will affect HEL sound reliability and latency) */
-
 #define DS_SND_QUEUE_MAX 10 /* max number of fragments to prebuffer */
 
 DirectSoundDevice*	DSOUND_renderer[MAXWAVEDRIVERS];
@@ -100,8 +95,6 @@ HRESULT mmErr(UINT err)
 }
 
 int ds_emuldriver = DS_EMULDRIVER;
-int ds_hel_margin = DS_HEL_MARGIN;
-int ds_hel_queue = DS_HEL_QUEUE;
 int ds_snd_queue_max = DS_SND_QUEUE_MAX;
 int ds_hw_accel = DS_HW_ACCEL_FULL;
 int ds_default_playback = 0;
@@ -159,12 +152,6 @@ void setup_dsound_options(void)
     if (!get_config_key( hkey, appkey, "EmulDriver", buffer, MAX_PATH ))
         ds_emuldriver = strcmp(buffer, "N");
 
-    if (!get_config_key( hkey, appkey, "HELmargin", buffer, MAX_PATH ))
-        ds_hel_margin = atoi(buffer);
-
-    if (!get_config_key( hkey, appkey, "HELqueue", buffer, MAX_PATH ))
-        ds_hel_queue = atoi(buffer);
-
     if (!get_config_key( hkey, appkey, "SndQueueMax", buffer, MAX_PATH ))
         ds_snd_queue_max = atoi(buffer);
 
@@ -196,10 +183,6 @@ void setup_dsound_options(void)
 
     if (ds_emuldriver != DS_EMULDRIVER )
        WARN("ds_emuldriver = %d (default=%d)\n",ds_emuldriver, DS_EMULDRIVER);
-    if (ds_hel_margin != DS_HEL_MARGIN )
-       WARN("ds_hel_margin = %d (default=%d)\n",ds_hel_margin, DS_HEL_MARGIN );
-    if (ds_hel_queue != DS_HEL_QUEUE )
-       WARN("ds_hel_queue = %d (default=%d)\n",ds_hel_queue, DS_HEL_QUEUE );
     if (ds_snd_queue_max != DS_SND_QUEUE_MAX)
        WARN("ds_snd_queue_max = %d (default=%d)\n",ds_snd_queue_max ,DS_SND_QUEUE_MAX);
     if (ds_hw_accel != DS_HW_ACCEL_FULL)

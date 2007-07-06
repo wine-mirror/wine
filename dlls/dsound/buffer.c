@@ -503,7 +503,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 				 * behind write cursor, hmm... */
 				/* let's just do what might work for Half-Life */
 				DWORD wp;
-				wp = (This->device->pwplay + ds_hel_margin) * This->device->fraglen;
+				wp = (This->device->pwplay + This->device->prebuf) * This->device->fraglen;
 				wp %= This->device->buflen;
 				*playpos = DSOUND_CalcPlayPosition(This, wp, pwrite);
 				TRACE("Using non-GETCURRENTPOSITION2\n");

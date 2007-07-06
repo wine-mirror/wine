@@ -34,8 +34,6 @@
 #define DS_HW_ACCEL_EMULATION   3
 
 extern int ds_emuldriver;
-extern int ds_hel_margin;
-extern int ds_hel_queue;
 extern int ds_snd_queue_max;
 extern int ds_hw_accel;
 extern int ds_default_playback;
