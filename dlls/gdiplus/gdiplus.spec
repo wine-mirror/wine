@@ -16,7 +16,7 @@
 @ stub GdipAddPathCurveI
 @ stub GdipAddPathEllipse
 @ stub GdipAddPathEllipseI
-@ stub GdipAddPathLine2
+@ stdcall GdipAddPathLine2(ptr ptr long)
 @ stub GdipAddPathLine2I
 @ stub GdipAddPathLine
 @ stub GdipAddPathLineI

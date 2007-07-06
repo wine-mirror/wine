@@ -52,9 +52,9 @@ struct GpSolidFill{
 
 struct GpPath{
     GpFillMode fill;
-    GpGraphics* graphics;
     GpPathData pathdata;
     BOOL newfigure; /* whether the next drawing action starts a new figure */
+    INT datalen; /* size of the arrays in pathdata */
 };
 
 #endif

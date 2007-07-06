@@ -62,12 +62,24 @@ enum LineCap
     LineCapAnchorMask       = 0xf0
 };
 
+enum PathPointType{
+    PathPointTypeStart          = 0,    /* start of a figure */
+    PathPointTypeLine           = 1,
+    PathPointTypeBezier         = 3,
+    PathPointTypePathTypeMask   = 7,
+    PathPointTypePathDashMode   = 16,   /* not used */
+    PathPointTypePathMarker     = 32,
+    PathPointTypeCloseSubpath   = 128,  /* end of a closed figure */
+    PathPointTypeBezier3        = 3
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
 typedef enum BrushType BrushType;
 typedef enum FillMode FillMode;
 typedef enum LineCap LineCap;
+typedef enum PathPointType PathPointType;
 
 #endif /* end of c typedefs */
 

@@ -30,11 +30,68 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+/* make sure path has enough space for len more points */
+static BOOL lengthen_path(GpPath *path, INT len)
+{
+    /* initial allocation */
+    if(path->datalen == 0){
+        path->datalen = len * 2;
+
+        path->pathdata.Points = GdipAlloc(path->datalen * sizeof(PointF));
+        if(!path->pathdata.Points)   return FALSE;
+
+        path->pathdata.Types = GdipAlloc(path->datalen);
+        if(!path->pathdata.Types){
+            GdipFree(path->pathdata.Points);
+            return FALSE;
+        }
+    }
+    /* reallocation, double size of arrays */
+    else if(path->datalen - path->pathdata.Count < len){
+        while(path->datalen - path->pathdata.Count < len)
+            path->datalen *= 2;
+
+        path->pathdata.Points = HeapReAlloc(GetProcessHeap(), 0,
+            path->pathdata.Points, path->datalen * sizeof(PointF));
+        if(!path->pathdata.Points)  return FALSE;
+
+        path->pathdata.Types = HeapReAlloc(GetProcessHeap(), 0,
+            path->pathdata.Types, path->datalen);
+        if(!path->pathdata.Types)   return FALSE;
+    }
+
+    return TRUE;
+}
+
+GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
+    INT count)
+{
+    INT i, old_count = path->pathdata.Count;
+
+    if(!path || !points)
+        return InvalidParameter;
+
+    if(!lengthen_path(path, count + (path->newfigure ? 1 : 0)))
+        return OutOfMemory;
+
+    for(i = 0; i < count; i++){
+        path->pathdata.Points[old_count + i].X = points[i].X;
+        path->pathdata.Points[old_count + i].Y = points[i].Y;
+        path->pathdata.Types[old_count + i] = PathPointTypeLine;
+    }
+
+    if(path->newfigure){
+        path->pathdata.Types[old_count] = PathPointTypeStart;
+        path->newfigure = FALSE;
+    }
+
+    path->pathdata.Count += count;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreatePath(GpFillMode fill, GpPath **path)
 {
-    HDC hdc;
-    GpStatus ret;
-
     if(!path)
         return InvalidParameter;
 
@@ -44,24 +101,14 @@ GpStatus WINGDIPAPI GdipCreatePath(GpFillMode fill, GpPath **path)
     (*path)->fill = fill;
     (*path)->newfigure = TRUE;
 
-    hdc = GetDC(0);
-    ret = GdipCreateFromHDC(hdc, &((*path)->graphics));
-
-    if(ret != Ok){
-        ReleaseDC(0, hdc);
-        GdipFree(*path);
-    }
-
-    return ret;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipDeletePath(GpPath *path)
 {
-    if(!path || !(path->graphics))
+    if(!path)
         return InvalidParameter;
 
-    ReleaseDC(0, path->graphics->hdc);
-    GdipDeleteGraphics(path->graphics);
     GdipFree(path);
 
     return Ok;
