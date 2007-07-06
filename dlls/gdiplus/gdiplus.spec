@@ -54,7 +54,7 @@
 @ stub GdipClonePen
 @ stub GdipCloneRegion
 @ stub GdipCloneStringFormat
-@ stub GdipClosePathFigure
+@ stdcall GdipClosePathFigure(ptr)
 @ stub GdipClosePathFigures
 @ stub GdipCombineRegionPath
 @ stub GdipCombineRegionRect

@@ -90,6 +90,19 @@ GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipClosePathFigure(GpPath* path)
+{
+    if(!path)
+        return InvalidParameter;
+
+    if(path->pathdata.Count > 0){
+        path->pathdata.Types[path->pathdata.Count - 1] |= PathPointTypeCloseSubpath;
+        path->newfigure = TRUE;
+    }
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreatePath(GpFillMode fill, GpPath **path)
 {
     if(!path)
