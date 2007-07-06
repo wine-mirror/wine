@@ -20,6 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include "config.h"
 
 #include <stdarg.h>
@@ -29,12 +31,15 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
-
 #include "msi.h"
 #include "msiquery.h"
+#include "objbase.h"
+#include "oleauto.h"
+
 #include "msipriv.h"
+#include "msiserver.h"
+#include "wine/debug.h"
+#include "wine/unicode.h"
 
 #define YYLEX_PARAM info
 #define YYPARSE_PARAM info
@@ -742,8 +747,39 @@ MSICONDITION WINAPI MsiEvaluateConditionW( MSIHANDLE hInstall, LPCWSTR szConditi
     UINT ret;
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE);
-    if( !package)
-        return MSICONDITION_ERROR;
+    if( !package )
+    {
+        HRESULT hr;
+        BSTR condition;
+        IWineMsiRemotePackage *remote_package;
+
+        remote_package = (IWineMsiRemotePackage *)msi_get_remote( hInstall );
+        if (!remote_package)
+            return MSICONDITION_ERROR;
+
+        condition = SysAllocString( szCondition );
+        if (!condition)
+        {
+            IWineMsiRemotePackage_Release( remote_package );
+            return ERROR_OUTOFMEMORY;
+        }
+
+        hr = IWineMsiRemotePackage_EvaluateCondition( remote_package, condition );
+
+        SysFreeString( condition );
+        IWineMsiRemotePackage_Release( remote_package );
+
+        if (FAILED(hr))
+        {
+            if (HRESULT_FACILITY(hr) == FACILITY_WIN32)
+                return HRESULT_CODE(hr);
+
+            return ERROR_FUNCTION_FAILED;
+        }
+
+        return ERROR_SUCCESS;
+    }
+
     ret = MSI_EvaluateConditionW( package, szCondition );
     msiobj_release( &package->hdr );
     return ret;

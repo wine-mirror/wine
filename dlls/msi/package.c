@@ -1692,6 +1692,13 @@ HRESULT WINAPI mrp_FormatRecord( IWineMsiRemotePackage *iface, MSIHANDLE record,
     return HRESULT_FROM_WIN32(r);
 }
 
+HRESULT WINAPI mrp_EvaluateCondition( IWineMsiRemotePackage *iface, BSTR condition )
+{
+    msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
+    UINT r = MsiEvaluateConditionW(This->package, (LPWSTR)condition);
+    return HRESULT_FROM_WIN32(r);
+}
+
 static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
 {
     mrp_QueryInterface,
@@ -1715,6 +1722,7 @@ static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
     mrp_GetLanguage,
     mrp_SetInstallLevel,
     mrp_FormatRecord,
+    mrp_EvaluateCondition,
 };
 
 HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj )
