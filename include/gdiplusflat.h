@@ -50,6 +50,7 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush*);
 
 GpStatus WINGDIPAPI GdipAddPathLine2(GpPath*,GDIPCONST GpPointF*,INT);
 GpStatus WINGDIPAPI GdipClosePathFigure(GpPath*);
+GpStatus WINGDIPAPI GdipClosePathFigures(GpPath*);
 GpStatus WINGDIPAPI GdipCreatePath(GpFillMode,GpPath**);
 GpStatus WINGDIPAPI GdipDeletePath(GpPath*);
 

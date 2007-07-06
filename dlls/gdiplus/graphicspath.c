@@ -103,6 +103,23 @@ GpStatus WINGDIPAPI GdipClosePathFigure(GpPath* path)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipClosePathFigures(GpPath* path)
+{
+    INT i;
+
+    if(!path)
+        return InvalidParameter;
+
+    for(i = 1; i < path->pathdata.Count; i++){
+        if(path->pathdata.Types[i] == PathPointTypeStart)
+            path->pathdata.Types[i-1] |= PathPointTypeCloseSubpath;
+    }
+
+    path->newfigure = TRUE;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreatePath(GpFillMode fill, GpPath **path)
 {
     if(!path)
