@@ -72,7 +72,7 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
 {
     HRESULT hr;
     LPDIRECTINPUTDEVICE pMouse = NULL;
-    DIMOUSESTATE2 m_state;
+    DIMOUSESTATE m_state;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysMouse, &pMouse, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
