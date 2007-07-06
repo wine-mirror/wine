@@ -33,8 +33,12 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/msifo
 #include "winerror.h"
 #include "wine/debug.h"
 #include "msi.h"
-#include "msipriv.h"
 #include "winnls.h"
+#include "objbase.h"
+#include "oleauto.h"
+
+#include "msipriv.h"
+#include "msiserver.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
@@ -713,6 +717,57 @@ UINT WINAPI MsiFormatRecordW( MSIHANDLE hInstall, MSIHANDLE hRecord,
 
     TRACE("%ld %ld %p %p\n", hInstall, hRecord, szResult, sz);
 
+    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
+    if (!package)
+    {
+        HRESULT hr;
+        IWineMsiRemotePackage *remote_package;
+        BSTR value = NULL;
+        DWORD len;
+        awstring wstr;
+
+        remote_package = (IWineMsiRemotePackage *)msi_get_remote( hInstall );
+        if (remote_package)
+        {
+            len = 0;
+            hr = IWineMsiRemotePackage_FormatRecord( remote_package, hRecord,
+                                                     NULL, &len );
+            if (FAILED(hr))
+                goto done;
+
+            len++;
+            value = SysAllocStringLen( NULL, len );
+            if (!value)
+            {
+                r = ERROR_OUTOFMEMORY;
+                goto done;
+            }
+
+            hr = IWineMsiRemotePackage_FormatRecord( remote_package, hRecord,
+                                                     value, &len );
+            if (FAILED(hr))
+                goto done;
+
+            wstr.unicode = TRUE;
+            wstr.str.w = szResult;
+            r = msi_strcpy_to_awstring( value, &wstr, sz );
+
+done:
+            IWineMsiRemotePackage_Release( remote_package );
+            SysFreeString( value );
+
+            if (FAILED(hr))
+            {
+                if (HRESULT_FACILITY(hr) == FACILITY_WIN32)
+                    return HRESULT_CODE(hr);
+
+                return ERROR_FUNCTION_FAILED;
+            }
+
+            return r;
+        }
+    }
+
     record = msihandle2msiinfo( hRecord, MSIHANDLETYPE_RECORD );
 
     if (!record)
@@ -725,8 +780,6 @@ UINT WINAPI MsiFormatRecordW( MSIHANDLE hInstall, MSIHANDLE hRecord,
         else
             return ERROR_SUCCESS;
     }
-
-    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
 
     r = MSI_FormatRecordW( package, record, szResult, sz );
     msiobj_release( &record->hdr );
