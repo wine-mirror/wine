@@ -68,6 +68,8 @@ crosstest:: @CROSSTEST@
 $(CROSSTEST): $(CROSSOBJS) Makefile.in
 	$(CROSSCC) $(CROSSOBJS) -o $@ $(ALL_LIBS)
 
+$(CROSSOBJS): $(IDL_GEN_HEADERS)
+
 # Rules for cleaning
 
 testclean::
