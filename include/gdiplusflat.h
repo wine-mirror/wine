@@ -54,6 +54,7 @@ GpStatus WINGDIPAPI GdipClosePathFigures(GpPath*);
 GpStatus WINGDIPAPI GdipCreatePath(GpFillMode,GpPath**);
 GpStatus WINGDIPAPI GdipDeletePath(GpPath*);
 GpStatus WINGDIPAPI GdipGetPathPoints(GpPath*,GpPointF*,INT);
+GpStatus WINGDIPAPI GdipGetPathTypes(GpPath*,BYTE*,INT);
 GpStatus WINGDIPAPI GdipGetPointCount(GpPath*,INT*);
 
 #ifdef __cplusplus
