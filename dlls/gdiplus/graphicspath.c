@@ -144,6 +144,19 @@ GpStatus WINGDIPAPI GdipDeletePath(GpPath *path)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPathPoints(GpPath *path, GpPointF* points, INT count)
+{
+    if(!path)
+        return InvalidParameter;
+
+    if(count < path->pathdata.Count)
+        return InsufficientBuffer;
+
+    memcpy(points, path->pathdata.Points, path->pathdata.Count);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPointCount(GpPath *path, INT *count)
 {
     if(!path)
