@@ -66,7 +66,7 @@ interface IWineMsiRemotePackage : IUnknown
 ]
 interface IWineMsiRemoteCustomAction : IUnknown
 {
-    HRESULT GetActionInfo( [in] LPCGUID guid, [out] MSIHANDLE *handle, [out] BSTR *dllname,
+    HRESULT GetActionInfo( [in] LPCGUID guid, [out] INT *type, [out] MSIHANDLE *handle, [out] BSTR *dllname,
                            [out] BSTR *function, [out] IWineMsiRemotePackage **package );
 }
 
