@@ -353,7 +353,7 @@
 @ stub GdipGetPenUnit
 @ stub GdipGetPenWidth
 @ stub GdipGetPixelOffsetMode
-@ stub GdipGetPointCount
+@ stdcall GdipGetPointCount(ptr ptr)
 @ stub GdipGetPropertyCount
 @ stub GdipGetPropertyIdList
 @ stub GdipGetPropertyItem

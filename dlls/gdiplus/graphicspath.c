@@ -143,3 +143,13 @@ GpStatus WINGDIPAPI GdipDeletePath(GpPath *path)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipGetPointCount(GpPath *path, INT *count)
+{
+    if(!path)
+        return InvalidParameter;
+
+    *count = path->pathdata.Count;
+
+    return Ok;
+}
