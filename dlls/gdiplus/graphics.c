@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 /* looks-right constants */
 #define TENSION_CONST (0.3)
 #define ANCHOR_WIDTH (2.0)
+#define MAX_ITERS (50)
 
 static inline INT roundr(REAL x)
 {
@@ -317,6 +318,72 @@ static void draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     GdipFree(pti);
 }
 
+/* Conducts a linear search to find the bezier points that will back off
+ * the endpoint of the curve by a distance of amt. Linear search works
+ * better than binary in this case because there are multiple solutions,
+ * and binary searches often find a bad one. I don't think this is what
+ * Windows does but short of rendering the bezier without GDI's help it's
+ * the best we can do. */
+static void shorten_bezier_amt(GpPointF * pt, REAL amt)
+{
+    GpPointF origpt[4];
+    REAL percent = 0.00, dx, dy, origx = pt[3].X, origy = pt[3].Y, diff = -1.0;
+    INT i;
+
+    memcpy(origpt, pt, sizeof(GpPointF) * 4);
+
+    for(i = 0; (i < MAX_ITERS) && (diff < amt); i++){
+        /* reset bezier points to original values */
+        memcpy(pt, origpt, sizeof(GpPointF) * 4);
+        /* Perform magic on bezier points. Order is important here.*/
+        shorten_line_percent(pt[2].X, pt[2].Y, &pt[3].X, &pt[3].Y, percent);
+        shorten_line_percent(pt[1].X, pt[1].Y, &pt[2].X, &pt[2].Y, percent);
+        shorten_line_percent(pt[2].X, pt[2].Y, &pt[3].X, &pt[3].Y, percent);
+        shorten_line_percent(pt[0].X, pt[0].Y, &pt[1].X, &pt[1].Y, percent);
+        shorten_line_percent(pt[1].X, pt[1].Y, &pt[2].X, &pt[2].Y, percent);
+        shorten_line_percent(pt[2].X, pt[2].Y, &pt[3].X, &pt[3].Y, percent);
+
+        dx = pt[3].X - origx;
+        dy = pt[3].Y - origy;
+
+        diff = sqrt(dx * dx + dy * dy);
+        percent += 0.0005 * amt;
+    }
+}
+
+/* Draws bezier curves between given points, and if caps is true then draws an
+ * endcap at the end of the last line.  FIXME: Startcaps not implemented. */
+static void draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
+    INT count, BOOL caps)
+{
+    POINT *pti = GdipAlloc(count * sizeof(POINT));
+    GpPointF *ptf = GdipAlloc(4 * sizeof(GpPointF));
+    INT i;
+
+    memcpy(ptf, &pt[count-4], 4 * sizeof(GpPointF));
+
+    if(caps){
+        if(pen->endcap == LineCapArrowAnchor)
+            shorten_bezier_amt(ptf, pen->width);
+
+        draw_cap(hdc, pen->color, pen->endcap, pen->width, ptf[3].X,
+            ptf[3].Y, pt[count - 1].X, pt[count - 1].Y);
+    }
+
+    for(i = 0; i < count - 4; i ++){
+        pti[i].x = roundr(pt[i].X);
+        pti[i].y = roundr(pt[i].Y);
+    }
+    for(i = 0; i < 4; i ++){
+        pti[i].x = roundr(ptf[i].X);
+        pti[i].y = roundr(ptf[i].Y);
+    }
+
+    PolyBezier(hdc, pti, count);
+    GdipFree(pti);
+    GdipFree(ptf);
+}
+
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 {
     if(hdc == NULL)
@@ -385,18 +452,28 @@ GpStatus WINGDIPAPI GdipDrawArc(GpGraphics *graphics, GpPen *pen, REAL x,
 GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
     REAL y1, REAL x2, REAL y2, REAL x3, REAL y3, REAL x4, REAL y4)
 {
-    HGDIOBJ old_pen;
-    POINT pt[4] = {{roundr(x1), roundr(y1)}, {roundr(x2), roundr(y2)},
-                   {roundr(x3), roundr(y3)}, {roundr(x4), roundr(y4)}};
+    INT save_state;
+    GpPointF pt[4];
 
     if(!graphics || !pen)
         return InvalidParameter;
 
-    old_pen = SelectObject(graphics->hdc, pen->gdipen);
+    pt[0].X = x1;
+    pt[0].Y = y1;
+    pt[1].X = x2;
+    pt[1].Y = y2;
+    pt[2].X = x3;
+    pt[2].Y = y3;
+    pt[3].X = x4;
+    pt[3].Y = y4;
 
-    PolyBezier(graphics->hdc, pt, 4);
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, pen->gdipen);
 
-    SelectObject(graphics->hdc, old_pen);
+    draw_polybezier(graphics->hdc, pen, pt, 4, TRUE);
+
+    RestoreDC(graphics->hdc, save_state);
 
     return Ok;
 }
