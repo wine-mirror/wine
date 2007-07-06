@@ -106,7 +106,7 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
  * "last played" position for the buffer (i.e. dsb->playpos) and "len" bytes
  * beyond that position.
  */
-void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
+void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, DWORD playpos, int len)
 {
 	int			i;
 	DWORD			offset;
@@ -117,7 +117,7 @@ void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 		return;
 
 	TRACE("(%p) buflen = %d, playpos = %d, len = %d\n",
-		dsb, dsb->buflen, dsb->playpos, len);
+		dsb, dsb->buflen, playpos, len);
 	for (i = 0; i < dsb->nrofnotifies ; i++) {
 		event = dsb->notifies + i;
 		offset = event->dwOffset;
@@ -136,14 +136,14 @@ void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 			} else
 				return;
 		}
-		if ((dsb->playpos + len) >= dsb->buflen) {
-			if ((offset < ((dsb->playpos + len) % dsb->buflen)) ||
-			    (offset >= dsb->playpos)) {
+		if ((playpos + len) >= dsb->buflen) {
+			if ((offset < ((playpos + len) % dsb->buflen)) ||
+			    (offset >= playpos)) {
 				TRACE("signalled event %p (%d)\n", event->hEventNotify, i);
 				SetEvent(event->hEventNotify);
 			}
 		} else {
-			if ((offset >= dsb->playpos) && (offset < (dsb->playpos + len))) {
+			if ((offset >= playpos) && (offset < (playpos + len))) {
 				TRACE("signalled event %p (%d)\n", event->hEventNotify, i);
 				SetEvent(event->hEventNotify);
 			}
@@ -594,15 +594,6 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	TRACE("writepos=%d, buf_mixpos=%d, primary_mixpos=%d, mixlen=%d\n", writepos, dsb->buf_mixpos, dsb->primary_mixpos, mixlen);
 	TRACE("looping=%d, startpos=%d, leadin=%d, buflen=%d\n", dsb->playflags, dsb->startpos, dsb->leadin, dsb->buflen);
 
-	/* check for notification positions */
-	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY &&
-	    dsb->state != STATE_STARTING) {
-		DSOUND_CheckEvent(dsb, mixlen);
-	}
-
-	/* save write position for non-GETCURRENTPOSITION2... */
-	dsb->playpos = writepos;
-
 	/* calculate how much pre-buffering has already been done for this buffer */
 	primary_done = DSOUND_BufPtrDiff(dsb->device->buflen, dsb->primary_mixpos, writepos);
 
@@ -627,6 +618,12 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	/* mix more data */
 	mixlen = DSOUND_MixInBuffer(dsb, dsb->primary_mixpos, mixlen);
 
+	/* check for notification positions */
+	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY &&
+	    dsb->state != STATE_STARTING) {
+		DSOUND_CheckEvent(dsb, writepos, mixlen);
+	}
+
 	/* increase mix position */
 	dsb->primary_mixpos += mixlen;
 	dsb->primary_mixpos %= dsb->device->buflen;
@@ -644,10 +641,8 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 		TRACE("Buffer reached end. Stopped\n");
 
 		dsb->state = STATE_STOPPED;
-		dsb->playpos = 0;
 		dsb->buf_mixpos = 0;
 		dsb->leadin = FALSE;
-		DSOUND_CheckEvent(dsb, mixlen);
 	}
 
 	/* Report back the total prebuffered amount for this buffer */
@@ -692,7 +687,7 @@ static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD playpos,
 			/* if buffer is stopping it is stopped now */
 			if (dsb->state == STATE_STOPPING) {
 				dsb->state = STATE_STOPPED;
-				DSOUND_CheckEvent(dsb, 0);
+				DSOUND_CheckEvent(dsb, 0, 0);
 			} else {
 
 				/* if recovering, reset the mix position */

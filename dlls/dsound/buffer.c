@@ -355,7 +355,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 		else
 			This->state = STATE_STOPPED;
 	}
-	DSOUND_CheckEvent(This, 0);
+	DSOUND_CheckEvent(This, 0, 0);
 
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
@@ -1030,8 +1030,6 @@ HRESULT IDirectSoundBufferImpl_Create(
 	dsb->lpVtbl = &dsbvt;
 	dsb->iks = NULL;
 
-	dsb->remix_pos = 0;
-
 	/* size depends on version */
 	CopyMemory(&dsb->dsbd, dsbd, dsbd->dwSize);
 
@@ -1135,7 +1133,6 @@ HRESULT IDirectSoundBufferImpl_Create(
 
 	/* It's not necessary to initialize values to zero since */
 	/* we allocated this structure with HEAP_ZERO_MEMORY... */
-	dsb->playpos = 0;
 	dsb->buf_mixpos = 0;
 	dsb->state = STATE_STOPPED;
 
@@ -1285,7 +1282,6 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
 
     dsb->ref = 0;
     dsb->state = STATE_STOPPED;
-    dsb->playpos = 0;
     dsb->buf_mixpos = 0;
     dsb->device = device;
     dsb->ds3db = NULL;

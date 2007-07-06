@@ -162,7 +162,7 @@ struct IDirectSoundBufferImpl
     PWAVEFORMATEX               pwfx;
     BufferMemory*               buffer;
     DWORD                       playflags,state,leadin;
-    DWORD                       playpos,startpos,writelead,buflen;
+    DWORD                       startpos,writelead,buflen;
     DWORD                       nAvgBytesPerSec;
     DWORD                       freq;
     DSVOLUMEPAN                 volpan;
@@ -170,7 +170,7 @@ struct IDirectSoundBufferImpl
     /* used for frequency conversion (PerfectPitch) */
     ULONG                       freqAdjust, freqAcc;
     /* used for intelligent (well, sort of) prebuffering */
-    DWORD                       primary_mixpos, buf_mixpos, last_playpos, remix_pos;
+    DWORD                       primary_mixpos, buf_mixpos, last_playpos;
 
     /* IDirectSoundNotifyImpl fields */
     IDirectSoundNotifyImpl*     notify;
@@ -433,7 +433,7 @@ DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This, DWORD pplay, DWORD p
 
 /* mixer.c */
 
-void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len);
+void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, DWORD playpos, int len);
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);
