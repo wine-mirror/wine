@@ -109,7 +109,7 @@ static BOOL wodUpdatePlayedTotal(WINE_WAVEDEV* wwo, snd_pcm_status_t* ps)
         WARN("Unexpected state (%d) or delay (%ld) while updating Total Played, resetting\n", state, delay);
         delay=0;
     }
-    wwo->dwPlayedTotal = wwo->dwWrittenTotal - snd_pcm_frames_to_bytes(wwo->pcm, delay);
+    InterlockedExchange((LONG*)&wwo->dwPlayedTotal, wwo->dwWrittenTotal - snd_pcm_frames_to_bytes(wwo->pcm, delay));
     return TRUE;
 }
 
@@ -444,10 +444,6 @@ static void wodPlayer_ProcessMessages(WINE_WAVEDEV* wwo)
 	    wodPlayer_Reset(wwo,TRUE);
 	    SetEvent(ev);
 	    break;
-        case WINE_WM_UPDATE:
-            wodUpdatePlayedTotal(wwo, NULL);
-	    SetEvent(ev);
-            break;
         case WINE_WM_BREAKLOOP:
             if (wwo->state == WINE_WS_PLAYING && wwo->lpLoopPtr != NULL) {
                 /* ensure exit at end of current loop */
@@ -1013,8 +1009,6 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
     if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
 
     wwo = &WOutDev[wDevID];
-    ALSA_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
-
     return ALSA_bytes_to_mmtime(lpTime, wwo->dwPlayedTotal, &wwo->format);
 }
 
