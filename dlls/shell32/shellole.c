@@ -621,10 +621,8 @@ UINT WINAPI DragQueryFileA(
 	}
 
 	i = strlen(lpDrop);
-	i++;
 	if (!lpszFile ) goto end;   /* needed buffer size */
-	i = (lLength > i) ? i : lLength;
-	lstrcpynA (lpszFile,  lpDrop,  i);
+	lstrcpynA (lpszFile, lpDrop, lLength);
 end:
 	GlobalUnlock(hDrop);
 	return i;
@@ -679,11 +677,8 @@ UINT WINAPI DragQueryFileW(
 	}
 
 	i = strlenW(lpwDrop);
-	i++;
 	if ( !lpszwFile) goto end;   /* needed buffer size */
-
-	i = (lLength > i) ? i : lLength;
-	lstrcpynW (lpszwFile, lpwDrop, i);
+	lstrcpynW (lpszwFile, lpwDrop, lLength);
 end:
 	GlobalUnlock(hDrop);
 	return i;

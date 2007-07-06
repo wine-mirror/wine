@@ -121,10 +121,8 @@ UINT16 WINAPI DragQueryFile16(
 	}
 
 	i = strlen(lpDrop);
-	i++;
 	if (!lpszFile ) goto end;   /* needed buffer size */
-	i = (wLength > i) ? i : wLength;
-	lstrcpynA (lpszFile,  lpDrop,  i);
+	lstrcpynA (lpszFile, lpDrop, wLength);
 end:
 	GlobalUnlock16(hDrop);
 	return i;
