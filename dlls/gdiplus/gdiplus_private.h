@@ -32,6 +32,7 @@ struct GpPen{
     GpUnit unit;
     REAL width;
     HPEN gdipen;
+    GpLineCap endcap;
 };
 
 struct GpGraphics{

@@ -550,7 +550,7 @@
 @ stub GdipSetPenDashCap197819
 @ stub GdipSetPenDashOffset
 @ stub GdipSetPenDashStyle
-@ stub GdipSetPenEndCap
+@ stdcall GdipSetPenEndCap(ptr long)
 @ stub GdipSetPenLineCap197819
 @ stub GdipSetPenLineJoin
 @ stub GdipSetPenMiterLimit

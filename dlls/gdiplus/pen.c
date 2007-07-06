@@ -43,6 +43,7 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
     gp_pen->color = ARGB2COLORREF(color);
     gp_pen->width = width;
     gp_pen->unit = unit;
+    gp_pen->endcap = LineCapFlat;
 
     /* FIXME: Currently only solid lines supported. */
     lb.lbStyle = BS_SOLID;
@@ -68,6 +69,20 @@ GpStatus WINGDIPAPI GdipDeletePen(GpPen *pen)
     if(!pen)    return InvalidParameter;
     DeleteObject(pen->gdipen);
     GdipFree(pen);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetPenEndCap(GpPen *pen, GpLineCap cap)
+{
+    if(!pen)    return InvalidParameter;
+
+    if(cap != LineCapFlat){
+        FIXME("Not implemented for non-flat EndCap\n");
+        return NotImplemented;
+    }
+
+    pen->endcap = cap;
 
     return Ok;
 }

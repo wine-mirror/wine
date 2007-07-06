@@ -45,11 +45,29 @@ enum FillMode
     FillModeWinding     = 1
 };
 
+enum LineCap
+{
+    LineCapFlat             = 0x00,
+    LineCapSquare           = 0x01,
+    LineCapRound            = 0x02,
+    LineCapTriangle         = 0x03,
+
+    LineCapNoAnchor         = 0x10,
+    LineCapSquareAnchor     = 0x11,
+    LineCapRoundAnchor      = 0x12,
+    LineCapDiamondAnchor    = 0x13,
+    LineCapArrowAnchor      = 0x14,
+
+    LineCapCustom           = 0xff,
+    LineCapAnchorMask       = 0xf0
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
 typedef enum BrushType BrushType;
 typedef enum FillMode FillMode;
+typedef enum LineCap LineCap;
 
 #endif /* end of c typedefs */
 

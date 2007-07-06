@@ -43,5 +43,6 @@ typedef BrushType GpBrushType;
 typedef PointF GpPointF;
 typedef FillMode GpFillMode;
 typedef PathData GpPathData;
+typedef LineCap GpLineCap;
 
 #endif
