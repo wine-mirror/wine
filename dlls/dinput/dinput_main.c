@@ -678,50 +678,89 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  *	DInput hook thread
  */
 
+static LRESULT CALLBACK LL_hook_proc( int code, WPARAM wparam, LPARAM lparam )
+{
+    IDirectInputImpl *dinput;
+
+    if (code != HC_ACTION) return CallNextHookEx( 0, code, wparam, lparam );
+
+    EnterCriticalSection( &dinput_hook_crit );
+    LIST_FOR_EACH_ENTRY( dinput, &direct_input_list, IDirectInputImpl, entry )
+    {
+        IDirectInputDevice2AImpl *dev;
+
+        EnterCriticalSection( &dinput->crit );
+        LIST_FOR_EACH_ENTRY( dev, &dinput->devices_list, IDirectInputDevice2AImpl, entry )
+            if (dev->acquired && dev->event_proc)
+            {
+                TRACE("calling %p->%p (%lx %lx)\n", dev, dev->event_proc, wparam, lparam);
+                dev->event_proc( (LPDIRECTINPUTDEVICE8A)dev, wparam, lparam );
+            }
+        LeaveCriticalSection( &dinput->crit );
+    }
+    LeaveCriticalSection( &dinput_hook_crit );
+
+    return CallNextHookEx( 0, code, wparam, lparam );
+}
+
 static LRESULT CALLBACK dinput_hook_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static HHOOK kbd_hook, mouse_hook;
-    BOOL res;
+    UINT kbd_cnt = 0, mice_cnt = 0;
 
     TRACE("got message %x %p %p\n", message, (LPVOID)wParam, (LPVOID)lParam);
     switch (message)
     {
     case WM_USER+0x10:
-        if (wParam == WH_KEYBOARD_LL)
         {
-            if (lParam)
-            {
-                if (kbd_hook) return 0;
-                kbd_hook = SetWindowsHookExW(WH_KEYBOARD_LL, (LPVOID)lParam, DINPUT_instance, 0);
-                return (LRESULT)kbd_hook;
-            }
-            else
-            {
-                if (!kbd_hook) return 0;
-                res = UnhookWindowsHookEx(kbd_hook);
-                kbd_hook = NULL;
-                return res;
-            }
-        }
-        else if (wParam == WH_MOUSE_LL)
-        {
-            if (lParam)
-            {
-                if (mouse_hook) return 0;
-                mouse_hook = SetWindowsHookExW(WH_MOUSE_LL, (LPVOID)lParam, DINPUT_instance, 0);
-                return (LRESULT)mouse_hook;
-            }
-            else
-            {
-                if (!mouse_hook) return 0;
-                res = UnhookWindowsHookEx(mouse_hook);
-                mouse_hook = NULL;
-                return res;
-            }
-        }
-        else if (!wParam && !lParam)
-            DestroyWindow(hWnd);
+            IDirectInputImpl *dinput;
 
+            if (!wParam && !lParam)
+            {
+                DestroyWindow( hWnd );
+                return 0;
+            }
+
+            EnterCriticalSection( &dinput_hook_crit );
+
+            /* Count acquired keyboards and mice*/
+            LIST_FOR_EACH_ENTRY( dinput, &direct_input_list, IDirectInputImpl, entry )
+            {
+                IDirectInputDevice2AImpl *dev;
+
+                EnterCriticalSection( &dinput->crit );
+                LIST_FOR_EACH_ENTRY( dev, &dinput->devices_list, IDirectInputDevice2AImpl, entry )
+                {
+                    if (!dev->acquired) continue;
+
+                    if (IsEqualGUID( &dev->guid, &GUID_SysKeyboard ) ||
+                        IsEqualGUID( &dev->guid, &DInput_Wine_Keyboard_GUID ))
+                        kbd_cnt++;
+                    else
+                        if (IsEqualGUID( &dev->guid, &GUID_SysMouse ) ||
+                            IsEqualGUID( &dev->guid, &DInput_Wine_Mouse_GUID ))
+                            mice_cnt++;
+                }
+                LeaveCriticalSection( &dinput->crit );
+            }
+            LeaveCriticalSection( &dinput_hook_crit );
+
+            if (kbd_cnt && !kbd_hook)
+                kbd_hook = SetWindowsHookExW( WH_KEYBOARD_LL, LL_hook_proc, DINPUT_instance, 0 );
+            else if (!kbd_cnt && kbd_hook)
+            {
+                UnhookWindowsHookEx( kbd_hook );
+                kbd_hook = NULL;
+            }
+
+            if (mice_cnt && !mouse_hook)
+                mouse_hook = SetWindowsHookExW( WH_MOUSE_LL, LL_hook_proc, DINPUT_instance, 0 );
+            else if (!mice_cnt && mouse_hook)
+            {
+                UnhookWindowsHookEx( mouse_hook );
+                mouse_hook = NULL;
+            }
+        }
         return 0;
 
     case WM_DESTROY:

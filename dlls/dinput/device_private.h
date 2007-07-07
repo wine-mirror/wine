@@ -61,6 +61,7 @@ struct IDirectInputDevice2AImpl
     DWORD                       dwCoopLevel;
     HWND                        win;
     int                         acquired;
+    DI_EVENT_PROC               event_proc;  /* function to receive mouse & keyboard events */
 
     LPDIDEVICEOBJECTDATA        data_queue;  /* buffer for 'GetDeviceData'.                 */
     int                         queue_len;   /* size of the queue - set in 'SetProperty'    */

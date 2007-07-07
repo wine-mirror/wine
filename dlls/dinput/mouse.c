@@ -68,8 +68,7 @@ struct SysMouseImpl
     DIMOUSESTATE2                   m_state;
 };
 
-/* FIXME: This is ugly and not thread safe :/ */
-static IDirectInputDevice8A* current_lock = NULL;
+static void dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam );
 
 const GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 */
     0x9e573ed8, 0x7734, 0x11d2, {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
@@ -174,6 +173,7 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
     InitializeCriticalSection(&newDevice->base.crit);
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysMouseImpl*->base.crit");
     newDevice->base.dinput = dinput;
+    newDevice->base.event_proc = dinput_mouse_hook;
 
     /* Create copy of default data format */
     if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIMouse2.dwSize))) goto failed;
@@ -252,14 +252,12 @@ const struct dinput_device mouse_device = {
  */
 
 /* low-level mouse hook */
-static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lparam )
+static void dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
 {
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
-    SysMouseImpl* This = (SysMouseImpl*) current_lock;
+    SysMouseImpl* This = (SysMouseImpl*) iface;
     DWORD dwCoop;
     int wdata = 0, inst_id = -1;
-
-    if (code != HC_ACTION) return CallNextHookEx( 0, code, wparam, lparam );
 
     EnterCriticalSection(&This->base.crit);
     dwCoop = This->base.dwCoopLevel;
@@ -345,12 +343,6 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
                     wdata, hook->time, This->base.dinput->evsequence++);
 
     LeaveCriticalSection(&This->base.crit);
-    
-    /* Ignore message */
-    if (dwCoop & DISCL_EXCLUSIVE) return 1;
-
-    /* Pass the events down to previous handlers (e.g. win32 input) */
-    return CallNextHookEx( 0, code, wparam, lparam );
 }
 
 static BOOL dinput_window_check(SysMouseImpl* This) {
@@ -387,9 +379,6 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 
     if ((res = IDirectInputDevice2AImpl_Acquire(iface)) != DI_OK) return res;
 
-    /* Store (in a global variable) the current lock */
-    current_lock = (IDirectInputDevice8A*)This;
-    
     /* Init the mouse state */
     GetCursorPos( &point );
     if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
@@ -447,12 +436,6 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     set_dinput_hook(WH_MOUSE_LL, NULL);
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
         ShowCursor(TRUE); /* show cursor */
-
-    /* No more locks */
-    if (current_lock == (IDirectInputDevice8A*) This)
-      current_lock = NULL;
-    else
-      ERR("this(%p) != current_lock(%p)\n", This, current_lock);
 
     /* And put the mouse cursor back where it was at acquire time */
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
