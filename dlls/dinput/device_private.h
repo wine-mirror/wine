@@ -91,6 +91,8 @@ typedef struct {
 
 extern BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA, LPVOID);
 
+extern const GUID DInput_Wine_Keyboard_GUID;
+extern const GUID DInput_Wine_Mouse_GUID;
 
 /* Various debug tools */
 extern void _dump_cooperativelevel_DI(DWORD dwFlags) ;
