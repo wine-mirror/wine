@@ -77,11 +77,6 @@ GpStatus WINGDIPAPI GdipSetPenEndCap(GpPen *pen, GpLineCap cap)
 {
     if(!pen)    return InvalidParameter;
 
-    if(cap != LineCapFlat){
-        FIXME("Not implemented for non-flat EndCap\n");
-        return NotImplemented;
-    }
-
     pen->endcap = cap;
 
     return Ok;
