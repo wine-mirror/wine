@@ -77,8 +77,9 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserv)
     return TRUE;
 }
 
-static BOOL create_hook_thread(void);
-static void release_hook_thread(void);
+static BOOL check_hook_thread(void);
+static CRITICAL_SECTION dinput_hook_crit;
+static struct list direct_input_list = LIST_INIT( direct_input_list );
 
 /******************************************************************************
  *	DirectInputCreateEx (DINPUT.@)
@@ -88,55 +89,48 @@ HRESULT WINAPI DirectInputCreateEx(
 	LPUNKNOWN punkOuter) 
 {
     IDirectInputImpl* This;
-    HRESULT res = DIERR_OLDDIRECTINPUTVERSION;
     LPCVOID vtable = NULL;
 
     TRACE("(%p,%04x,%s,%p,%p)\n", hinst, dwVersion, debugstr_guid(riid), ppDI, punkOuter);
 
-    if (IsEqualGUID(&IID_IDirectInputA,riid) ||
-        IsEqualGUID(&IID_IDirectInput2A,riid) ||
-        IsEqualGUID(&IID_IDirectInput7A,riid))
+    if      (IsEqualGUID( &IID_IDirectInputA,  riid ) ||
+             IsEqualGUID( &IID_IDirectInput2A, riid ) ||
+             IsEqualGUID( &IID_IDirectInput7A, riid ))   vtable = &ddi7avt;
+    else if (IsEqualGUID( &IID_IDirectInputW,  riid ) ||
+             IsEqualGUID( &IID_IDirectInput2W, riid ) ||
+             IsEqualGUID( &IID_IDirectInput7W, riid ))   vtable = &ddi7wvt;
+    else if (IsEqualGUID( &IID_IDirectInput8A, riid ))   vtable = &ddi8avt;
+    else if (IsEqualGUID( &IID_IDirectInput8W, riid ))   vtable = &ddi8wvt;
+    else
+        return DIERR_OLDDIRECTINPUTVERSION;
+
+    if (!(This = HeapAlloc( GetProcessHeap(), 0, sizeof(IDirectInputImpl) )))
+        return DIERR_OUTOFMEMORY;
+
+    This->lpVtbl      = vtable;
+    This->ref         = 1;
+    This->dwVersion   = dwVersion;
+    This->evsequence  = 1;
+
+
+    InitializeCriticalSection(&This->crit);
+    This->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectInputImpl*->crit");
+
+    list_init( &This->devices_list );
+
+    /* Add self to the list of the IDirectInputs */
+    EnterCriticalSection( &dinput_hook_crit );
+    list_add_head( &direct_input_list, &This->entry );
+    LeaveCriticalSection( &dinput_hook_crit );
+
+    if (!check_hook_thread())
     {
-        vtable = &ddi7avt;
-        res = DI_OK;
+        IUnknown_Release( (LPDIRECTINPUT7A)This );
+        return DIERR_GENERIC;
     }
 
-    if (IsEqualGUID(&IID_IDirectInputW,riid) ||
-        IsEqualGUID(&IID_IDirectInput2W,riid) ||
-        IsEqualGUID(&IID_IDirectInput7W,riid))
-    {
-        vtable = &ddi7wvt;
-        res = DI_OK;
-    }
-
-    if (IsEqualGUID(&IID_IDirectInput8A,riid))
-    {
-        vtable = &ddi8avt;
-        res = DI_OK;
-    }
-
-    if (IsEqualGUID(&IID_IDirectInput8W,riid))
-    {
-        vtable = &ddi8wvt;
-        res = DI_OK;
-    }
-
-    if (res == DI_OK && !create_hook_thread()) res = DIERR_GENERIC;
-    if (res == DI_OK)
-    {
-        This = HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectInputImpl));
-        This->lpVtbl = vtable;
-        This->ref = 1;
-        This->dwVersion = dwVersion;
-        This->evsequence = 1;
-        *ppDI = This;
-
-        InitializeCriticalSection(&This->crit);
-        This->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectInputImpl*->crit");
-
-        list_init( &This->devices_list );
-    }
-    return res;
+    *ppDI = This;
+    return DI_OK;
 }
 
 /******************************************************************************
@@ -266,7 +260,12 @@ static ULONG WINAPI IDirectInputAImpl_Release(LPDIRECTINPUT7A iface)
     ref = InterlockedDecrement( &This->ref );
     if (ref) return ref;
 
-    release_hook_thread();
+    /* Remove self from the list of the IDirectInputs */
+    EnterCriticalSection( &dinput_hook_crit );
+    list_remove( &This->entry );
+    LeaveCriticalSection( &dinput_hook_crit );
+
+    check_hook_thread();
 
     This->crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &This->crit );
@@ -734,7 +733,6 @@ static LRESULT CALLBACK dinput_hook_WndProc(HWND hWnd, UINT message, WPARAM wPar
 }
 
 static HWND hook_thread_hwnd;
-static LONG hook_thread_refcount;
 static HANDLE hook_thread;
 
 static const WCHAR classW[]={'H','o','o','k','_','L','L','_','C','L',0};
@@ -763,7 +761,6 @@ static DWORD WINAPI hook_thread_proc(void *param)
     return 0;
 }
 
-static CRITICAL_SECTION dinput_hook_crit;
 static CRITICAL_SECTION_DEBUG dinput_critsect_debug =
 {
     0, 0, &dinput_hook_crit,
@@ -772,15 +769,12 @@ static CRITICAL_SECTION_DEBUG dinput_critsect_debug =
 };
 static CRITICAL_SECTION dinput_hook_crit = { &dinput_critsect_debug, -1, 0, 0, 0, 0 };
 
-static BOOL create_hook_thread(void)
+static BOOL check_hook_thread(void)
 {
-    LONG ref;
-
     EnterCriticalSection(&dinput_hook_crit);
 
-    ref = ++hook_thread_refcount;
-    TRACE("Refcount %d\n", ref);
-    if (ref == 1)
+    TRACE("IDirectInputs left: %d\n", list_count(&direct_input_list));
+    if (!list_empty(&direct_input_list) && !hook_thread)
     {
         DWORD tid;
         HANDLE event;
@@ -806,19 +800,7 @@ static BOOL create_hook_thread(void)
         }
         CloseHandle(event);
     }
-    LeaveCriticalSection(&dinput_hook_crit);
-
-    return hook_thread_hwnd != 0;
-}
-
-static void release_hook_thread(void)
-{
-    LONG ref;
-
-    EnterCriticalSection(&dinput_hook_crit);
-    ref = --hook_thread_refcount;
-    TRACE("Releasing to %d\n", ref);
-    if (ref == 0) 
+    else if (list_empty(&direct_input_list) && hook_thread)
     {
         HWND hwnd = hook_thread_hwnd;
         hook_thread_hwnd = 0;
@@ -826,8 +808,11 @@ static void release_hook_thread(void)
         /* wait for hook thread to exit */
         WaitForSingleObject(hook_thread, INFINITE);
         CloseHandle(hook_thread);
+        hook_thread = NULL;
     }
     LeaveCriticalSection(&dinput_hook_crit);
+
+    return hook_thread_hwnd != 0;
 }
 
 HHOOK set_dinput_hook(int hook_id, LPVOID proc)

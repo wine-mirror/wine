@@ -34,6 +34,7 @@ struct IDirectInputImpl
     LONG                        ref;
 
     CRITICAL_SECTION            crit;
+    struct list                 entry;          /* entry into list of all IDirectInputs */
 
     DWORD                       evsequence;     /* unique sequence number for events */
     DWORD                       dwVersion;      /* direct input version number */
