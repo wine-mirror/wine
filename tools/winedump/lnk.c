@@ -143,7 +143,7 @@ static int dump_pidl(void)
 
     while(sz<pidl->size)
     {
-        lnk_string *segment = (lnk_string*) &pidl->str.a[sz];
+        const lnk_string *segment = (const lnk_string*) &pidl->str.a[sz];
 
         if(!segment->size)
             break;
