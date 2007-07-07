@@ -1035,11 +1035,11 @@ static void Direct3D1Test(void)
             {D3DCLIP_FRONT, {-1.0}, {-1.0}, {-1.0}}, {0, { 0.5}, { 0.5}, {0.5}},
             {D3DCLIP_FRONT, {-0.5}, {-0.5}, {-0.5}}, {0, {-0.5}, {-0.5}, {0.0}}
         };
-        ok(cmpH[i].hx == outH[i].hx && cmpH[i].hy == outH[i].hy &&
-           cmpH[i].hz == outH[i].hz && cmpH[i].dwFlags == outH[i].dwFlags,
+        ok(U1(cmpH[i]).hx == U1(outH[i]).hx && U2(cmpH[i]).hy == U2(outH[i]).hy &&
+           U3(cmpH[i]).hz == U3(outH[i]).hz && cmpH[i].dwFlags == outH[i].dwFlags,
            "HVertex %d differs. Got %08x %f %f %f, expexted %08x %f %f %f\n", i + 1,
-           outH[i].dwFlags, outH[i].hx, outH[i].hy, outH[i].hz,
-           cmpH[i].dwFlags, cmpH[i].hx, cmpH[i].hy, cmpH[i].hz);
+           outH[i].dwFlags, U1(outH[i]).hx, U2(outH[i]).hy, U3(outH[i]).hz,
+           cmpH[i].dwFlags, U1(cmpH[i]).hx, U2(cmpH[i]).hy, U3(cmpH[i]).hz);
 
         /* No scheme has been found behind those return values. It seems to be
          * whatever data windows has when throwing the vertex away. Modify the
