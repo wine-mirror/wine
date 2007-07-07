@@ -76,10 +76,12 @@ static void CFn_CHOOSEFONT16to32W(const CHOOSEFONT16 *chf16, LPCHOOSEFONTW chf32
   int len;
   if (chf16->Flags & CF_ENABLETEMPLATE)
   {
+      LPWSTR name32w;
+
       len = MultiByteToWideChar( CP_ACP, 0, MapSL(chf16->lpTemplateName), -1, NULL, 0);
-      chf32w->lpTemplateName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-      MultiByteToWideChar( CP_ACP, 0, MapSL(chf16->lpTemplateName),
-                           -1, (LPWSTR)chf32w->lpTemplateName, len);
+      name32w = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+      MultiByteToWideChar( CP_ACP, 0, MapSL(chf16->lpTemplateName), -1, name32w, len);
+      chf32w->lpTemplateName = name32w;
   }
   if (chf16->Flags & CF_USESTYLE)
   {
