@@ -61,11 +61,11 @@ struct pdb_reader
             const struct PDB_DS_TOC*    toc;
         } ds;
     } u;
-    const void* (*read_file)(struct pdb_reader*, DWORD);
+    void*       (*read_file)(struct pdb_reader*, DWORD);
     DWORD       file_used[1024];
 };
 
-static const void* pdb_jg_read(const struct PDB_JG_HEADER* pdb, const WORD* block_list, int size)
+static void* pdb_jg_read(const struct PDB_JG_HEADER* pdb, const WORD* block_list, int size)
 {
     int                 i, nBlocks;
     BYTE*               buffer;
@@ -82,7 +82,7 @@ static const void* pdb_jg_read(const struct PDB_JG_HEADER* pdb, const WORD* bloc
     return buffer;
 }
 
-static const void* pdb_jg_read_file(struct pdb_reader* reader, DWORD file_nr)
+static void* pdb_jg_read_file(struct pdb_reader* reader, DWORD file_nr)
 {
     const WORD*         block_list;
     DWORD               i;
@@ -132,7 +132,7 @@ static void pdb_exit(struct pdb_reader* reader)
 {
 #if 1
     unsigned            i;
-    const unsigned char*file;
+    unsigned char*      file;
     DWORD               size;
 
     for (i = 0; i < pdb_get_num_files(reader); i++)
@@ -146,7 +146,7 @@ static void pdb_exit(struct pdb_reader* reader)
 
         printf("File --unused-- #%d (%x)\n", i, size);
         dump_data(file, size, "    ");
-        free((char*)file);
+        free(file);
     }
 #endif
     if (reader->read_file == pdb_jg_read_file)
@@ -157,9 +157,9 @@ static void pdb_exit(struct pdb_reader* reader)
 
 static void pdb_dump_symbols(struct pdb_reader* reader)
 {
-    const PDB_SYMBOLS*  symbols;
-    const unsigned char*modimage;
-    const char*         file;
+    PDB_SYMBOLS*    symbols;
+    unsigned char*  modimage;
+    const char*     file;
 
     symbols = reader->read_file(reader, 3);
 
@@ -290,7 +290,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     {
         printf("\t------------globals-------------\n"); 
         codeview_dump_symbols(modimage, pdb_get_file_size(reader, symbols->gsym_file));
-        free((char*)modimage);
+        free(modimage);
     }
 
     /* Read per-module symbol / linenumber tables */
@@ -400,18 +400,18 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
             /* what's that part ??? */
             if (0)
                 dump_data(modimage + symbol_size + lineno_size, total_size - (symbol_size + lineno_size), "    ");
-            free((char*)modimage);
+            free(modimage);
         }
 
         file_name += strlen(file_name) + 1;
         file = (char*)((DWORD_PTR)(file_name + strlen(file_name) + 1 + 3) & ~3);
     }
-    free((char*)symbols);
+    free(symbols);
 }
 
 static void pdb_dump_types(struct pdb_reader* reader)
 {
-    const PDB_TYPES*            types = NULL;
+    PDB_TYPES*  types = NULL;
 
     types = reader->read_file(reader, 2);
 
@@ -459,15 +459,15 @@ static void pdb_dump_types(struct pdb_reader* reader)
            types->unknown_offset,
            types->unknown_len);
     codeview_dump_types_from_block((const char*)types + types->type_offset, types->type_size);
-    free((char*)types);
+    free(types);
 }
 
 static const char       pdb2[] = "Microsoft C/C++ program database 2.00";
 
 static void pdb_jg_dump(void)
 {
-    struct pdb_reader           reader;
-    const struct PDB_JG_ROOT*   root = NULL;
+    struct pdb_reader   reader;
+    struct PDB_JG_ROOT* root = NULL;
 
     /*
      * Read in TOC and well-known files
@@ -511,7 +511,7 @@ static void pdb_jg_dump(void)
         default:
             printf("-Unknown root block version %d\n", root->Version);
         }
-        free((char*)root);
+        free(root);
     }
     else printf("-Unable to get root\n");
 
@@ -543,7 +543,7 @@ static void pdb_jg_dump(void)
     pdb_exit(&reader);
 }
 
-static const void* pdb_ds_read(const struct PDB_DS_HEADER* header, const DWORD* block_list, int size)
+static void* pdb_ds_read(const struct PDB_DS_HEADER* header, const DWORD* block_list, int size)
 {
     int                 i, nBlocks;
     BYTE*               buffer;
@@ -560,7 +560,7 @@ static const void* pdb_ds_read(const struct PDB_DS_HEADER* header, const DWORD* 
     return buffer;
 }
 
-static const void* pdb_ds_read_file(struct pdb_reader* reader, DWORD file_number)
+static void* pdb_ds_read_file(struct pdb_reader* reader, DWORD file_number)
 {
     const DWORD*        block_list;
     DWORD               i;
@@ -595,8 +595,8 @@ static const char       pdb7[] = "Microsoft C/C++ MSF 7.00";
 
 static void pdb_ds_dump(void)
 {
-    struct pdb_reader           reader;
-    const struct PDB_DS_ROOT*   root;
+    struct pdb_reader   reader;
+    struct PDB_DS_ROOT* root;
 
     pdb_ds_init(&reader);
     printf("Header (DS)\n"
@@ -640,7 +640,7 @@ static void pdb_ds_dump(void)
         for (ptr = &root->names[0]; ptr < &root->names[0] + root->cbNames; ptr += strlen(ptr) + 1)
             printf("\tString:               %s\n", ptr);
         /* follows an unknown list of DWORDs */
-        free((char*)root);
+        free(root);
     }
     else printf("-Unable to get root\n");
 
