@@ -287,36 +287,6 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
     return DI_OK;
 }
 
-static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface);
-
-static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
-{
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-    HRESULT res;
-
-    TRACE("(%p)\n",This);
-
-    if ((res = IDirectInputDevice2AImpl_Acquire(iface)) != DI_OK) return res;
-
-    set_dinput_hook(WH_KEYBOARD_LL, KeyboardCallback);
-
-    return DI_OK;
-}
-
-static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
-{
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-    HRESULT res;
-
-    TRACE("(this=%p)\n",This);
-
-    if ((res = IDirectInputDevice2AImpl_Unacquire(iface)) != DI_OK) return res;
-
-    set_dinput_hook(WH_KEYBOARD_LL, NULL);
-
-    return DI_OK;
-}
-
 /******************************************************************************
   *     GetCapabilities : get the device capablitites
   */
@@ -442,8 +412,8 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
         IDirectInputDevice2AImpl_EnumObjects,
 	IDirectInputDevice2AImpl_GetProperty,
 	IDirectInputDevice2AImpl_SetProperty,
-	SysKeyboardAImpl_Acquire,
-	SysKeyboardAImpl_Unacquire,
+	IDirectInputDevice2AImpl_Acquire,
+	IDirectInputDevice2AImpl_Unacquire,
 	SysKeyboardAImpl_GetDeviceState,
 	IDirectInputDevice2AImpl_GetDeviceData,
 	IDirectInputDevice2AImpl_SetDataFormat,
@@ -484,8 +454,8 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
         IDirectInputDevice2WImpl_EnumObjects,
 	XCAST(GetProperty)IDirectInputDevice2AImpl_GetProperty,
 	XCAST(SetProperty)IDirectInputDevice2AImpl_SetProperty,
-	XCAST(Acquire)SysKeyboardAImpl_Acquire,
-	XCAST(Unacquire)SysKeyboardAImpl_Unacquire,
+	XCAST(Acquire)IDirectInputDevice2AImpl_Acquire,
+	XCAST(Unacquire)IDirectInputDevice2AImpl_Unacquire,
 	XCAST(GetDeviceState)SysKeyboardAImpl_GetDeviceState,
 	XCAST(GetDeviceData)IDirectInputDevice2AImpl_GetDeviceData,
 	XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,

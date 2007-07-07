@@ -57,7 +57,7 @@ extern const struct dinput_device joystick_linuxinput_device;
 
 extern HINSTANCE DINPUT_instance;
 
-extern HHOOK set_dinput_hook(int hook_id, LPVOID proc);
+extern void check_dinput_hooks(LPDIRECTINPUTDEVICE8A);
 typedef void (*DI_EVENT_PROC)(LPDIRECTINPUTDEVICE8A, WPARAM, LPARAM);
 
 #endif /* __WINE_DLLS_DINPUT_DINPUT_PRIVATE_H */

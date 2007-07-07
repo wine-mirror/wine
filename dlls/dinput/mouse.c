@@ -398,7 +398,6 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     /* Install our mouse hook */
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
       ShowCursor(FALSE); /* hide cursor */
-    set_dinput_hook(WH_MOUSE_LL, dinput_mouse_hook);
     
     /* Get the window dimension and find the center */
     GetWindowRect(This->base.win, &rect);
@@ -433,7 +432,6 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 
     if ((res = IDirectInputDevice2AImpl_Unacquire(iface)) != DI_OK) return res;
 
-    set_dinput_hook(WH_MOUSE_LL, NULL);
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
         ShowCursor(TRUE); /* show cursor */
 

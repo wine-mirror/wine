@@ -854,12 +854,12 @@ static BOOL check_hook_thread(void)
     return hook_thread_hwnd != 0;
 }
 
-HHOOK set_dinput_hook(int hook_id, LPVOID proc)
+void check_dinput_hooks(LPDIRECTINPUTDEVICE8A iface)
 {
     HWND hwnd;
 
     EnterCriticalSection(&dinput_hook_crit);
     hwnd = hook_thread_hwnd;
     LeaveCriticalSection(&dinput_hook_crit);
-    return (HHOOK)SendMessageW(hwnd, WM_USER+0x10, (WPARAM)hook_id, (LPARAM)proc);
+    SendMessageW(hwnd, WM_USER+0x10, 1, 0);
 }
