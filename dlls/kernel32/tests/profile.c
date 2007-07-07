@@ -237,6 +237,7 @@ static void test_profile_sections_names(void)
     /* Test with sufficiently large buffer */
     SetLastError(0xdeadbeef);
     ret = GetPrivateProfileSectionNamesW( bufW, 29, testfile3W );
+    if (ret == 0 && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
         skip("GetPrivateProfileSectionNamesW is not implemented\n");
         DeleteFileA( testfile3 );
