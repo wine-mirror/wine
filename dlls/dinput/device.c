@@ -688,6 +688,10 @@ ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     HeapFree(GetProcessHeap(), 0, This->data_format.wine_df);
     release_DataFormat(&This->data_format);
 
+    EnterCriticalSection( &This->dinput->crit );
+    list_remove( &This->entry );
+    LeaveCriticalSection( &This->dinput->crit );
+
     IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
     This->crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->crit);

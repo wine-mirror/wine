@@ -24,18 +24,20 @@
 #include "windef.h"
 #include "winbase.h"
 #include "dinput.h"
+#include "wine/list.h"
 
 /* Implementation specification */
 typedef struct IDirectInputImpl IDirectInputImpl;
 struct IDirectInputImpl
 {
-   const void *lpVtbl;
-   LONG  ref;
+    const void                 *lpVtbl;
+    LONG                        ref;
 
-   /* Used to have an unique sequence number for all the events */
-   DWORD evsequence;
+    CRITICAL_SECTION            crit;
 
-   DWORD dwVersion;
+    DWORD                       evsequence;     /* unique sequence number for events */
+    DWORD                       dwVersion;      /* direct input version number */
+    struct list                 devices_list;   /* list of all created dinput devices */
 };
 
 /* Function called by all devices that Wine supports */

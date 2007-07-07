@@ -43,6 +43,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "dinput_private.h"
+#include "device_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
@@ -129,6 +130,11 @@ HRESULT WINAPI DirectInputCreateEx(
         This->dwVersion = dwVersion;
         This->evsequence = 1;
         *ppDI = This;
+
+        InitializeCriticalSection(&This->crit);
+        This->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectInputImpl*->crit");
+
+        list_init( &This->devices_list );
     }
     return res;
 }
@@ -254,15 +260,19 @@ static ULONG WINAPI IDirectInputAImpl_AddRef(LPDIRECTINPUT7A iface)
 
 static ULONG WINAPI IDirectInputAImpl_Release(LPDIRECTINPUT7A iface)
 {
-	IDirectInputImpl *This = (IDirectInputImpl *)iface;
-	ULONG ref;
-	ref = InterlockedDecrement(&(This->ref));
-	if (ref == 0)
-        {
-            HeapFree(GetProcessHeap(), 0, This);
-            release_hook_thread();
-        }
-	return ref;
+    IDirectInputImpl *This = (IDirectInputImpl *)iface;
+    ULONG ref;
+
+    ref = InterlockedDecrement( &This->ref );
+    if (ref) return ref;
+
+    release_hook_thread();
+
+    This->crit.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection( &This->crit );
+    HeapFree( GetProcessHeap(), 0, This );
+
+    return 0;
 }
 
 static HRESULT WINAPI IDirectInputAImpl_QueryInterface(LPDIRECTINPUT7A iface, REFIID riid, LPVOID *ppobj) {
@@ -355,9 +365,15 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
   /* Loop on all the devices to see if anyone matches the given GUID */
   for (i = 0; i < NB_DINPUT_DEVICES; i++) {
     HRESULT ret;
+
     if (!dinput_devices[i]->create_deviceA) continue;
     if ((ret = dinput_devices[i]->create_deviceA(This, rguid, riid, (LPDIRECTINPUTDEVICEA*) pvOut)) == DI_OK)
+    {
+      EnterCriticalSection( &This->crit );
+      list_add_tail( &This->devices_list, &(*(IDirectInputDevice2AImpl**)pvOut)->entry );
+      LeaveCriticalSection( &This->crit );
       return DI_OK;
+    }
 
     if (ret == DIERR_NOINTERFACE)
       ret_value = DIERR_NOINTERFACE;
@@ -380,9 +396,15 @@ static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx(LPDIRECTINPUT7W iface, R
   /* Loop on all the devices to see if anyone matches the given GUID */
   for (i = 0; i < NB_DINPUT_DEVICES; i++) {
     HRESULT ret;
+
     if (!dinput_devices[i]->create_deviceW) continue;
     if ((ret = dinput_devices[i]->create_deviceW(This, rguid, riid, (LPDIRECTINPUTDEVICEW*) pvOut)) == DI_OK)
+    {
+      EnterCriticalSection( &This->crit );
+      list_add_tail( &This->devices_list, &(*(IDirectInputDevice2AImpl**)pvOut)->entry );
+      LeaveCriticalSection( &This->crit );
       return DI_OK;
+    }
 
     if (ret == DIERR_NOINTERFACE)
       ret_value = DIERR_NOINTERFACE;
