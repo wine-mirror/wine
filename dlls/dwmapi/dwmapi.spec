@@ -33,7 +33,7 @@
 @ stub DwmGetGraphicsStreamTransformHint
 @ stub DwmGetTransportAttributes
 @ stub DwmGetWindowAttribute
-@ stub DwmIsCompositionEnabled
+@ stdcall DwmIsCompositionEnabled(ptr)
 @ stub DwmModifyPreviousDxFrameDuration
 @ stub DwmQueryThumbnailSourceSize
 @ stub DwmRegisterThumbnail

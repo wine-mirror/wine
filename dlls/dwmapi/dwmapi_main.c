@@ -47,3 +47,14 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     }
     return TRUE;
 }
+
+/**********************************************************************
+ *           DwmIsCompositionEnabled         (DWMAPI.@)
+ */
+HRESULT WINAPI DwmIsCompositionEnabled(BOOL *enabled)
+{
+    FIXME("%p\n", enabled);
+
+    *enabled = FALSE;
+    return S_OK;
+}
