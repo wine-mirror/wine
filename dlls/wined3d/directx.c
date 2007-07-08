@@ -1550,8 +1550,24 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
      * See http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/IDirect3D9__CheckDeviceFormat.asp
      * and http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/D3DUSAGE_QUERY.asp */
     if (Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
-        TRACE_(d3d_caps)("[FAILED]\n");
-        return WINED3DERR_NOTAVAILABLE;     /* Enable when fully supported */
+        if (!GL_LIMITS(vertex_samplers)) {
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
+        switch (CheckFormat) {
+            case WINED3DFMT_A32B32G32R32F:
+                if (!GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
+                    TRACE_(d3d_caps)("[FAILED]\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+                TRACE_(d3d_caps)("[OK]\n");
+                return WINED3D_OK;
+
+            default:
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return WINED3DERR_NOTAVAILABLE;
+        }
     }
 
     if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
