@@ -81,3 +81,9 @@ BEGIN
     STRING_TEXT_FILES_TXT,      "텍스트 파일 (*.txt)"
     STRING_ALL_FILES,           "모둔 문서 (*.*)"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_DEFAULT_FILENAME,     "Document"
+    STRING_PROMPT_SAVE_CHANGES,  "Save changes to '%s'?"
+END

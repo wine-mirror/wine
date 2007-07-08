@@ -75,3 +75,9 @@ BEGIN
         END
     END
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_DEFAULT_FILENAME,     "Document"
+    STRING_PROMPT_SAVE_CHANGES,  "Save changes to '%s'?"
+END

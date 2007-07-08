@@ -81,3 +81,9 @@ BEGIN
     STRING_TEXT_FILES_TXT,      "Dokument tekstowy (*.txt)"
     STRING_ALL_FILES,           "Wszystkie dokumenty (*.*)"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_DEFAULT_FILENAME,     "Document"
+    STRING_PROMPT_SAVE_CHANGES,  "Save changes to '%s'?"
+END

@@ -47,6 +47,8 @@ static HWND hMainWnd;
 static HWND hEditorWnd;
 
 static WCHAR wszFilter[MAX_STRING_LEN];
+static WCHAR wszDefaultFileName[MAX_STRING_LEN];
+static WCHAR wszSaveChanges[MAX_STRING_LEN];
 
 static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam );
 
@@ -72,6 +74,12 @@ static void DoLoadStrings(void)
     lstrcpyW(p, files_all);
     p += lstrlenW(p) + 1;
     *p = '\0';
+
+    p = wszDefaultFileName;
+    LoadStringW(hInstance, STRING_DEFAULT_FILENAME, p, MAX_STRING_LEN);
+
+    p = wszSaveChanges;
+    LoadStringW(hInstance, STRING_PROMPT_SAVE_CHANGES, p, MAX_STRING_LEN);
 }
 
 static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
@@ -136,31 +144,27 @@ static WCHAR wszFileName[MAX_PATH];
 static void set_caption(LPCWSTR wszNewFileName)
 {
     static const WCHAR wszSeparator[] = {' ','-',' '};
+    WCHAR *wszCaption;
+    SIZE_T length = 0;
 
-    if(wszNewFileName)
-    {
-        WCHAR *wszCaption;
-        SIZE_T length = 0;
+    if(!wszNewFileName)
+        wszNewFileName = wszDefaultFileName;
 
-        wszCaption = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    lstrlenW(wszNewFileName)*sizeof(WCHAR)+sizeof(wszSeparator)+sizeof(wszAppTitle));
+    wszCaption = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                lstrlenW(wszNewFileName)*sizeof(WCHAR)+sizeof(wszSeparator)+sizeof(wszAppTitle));
 
-        if(!wszCaption)
-            return;
+    if(!wszCaption)
+        return;
 
-        memcpy(wszCaption, wszNewFileName, lstrlenW(wszNewFileName)*sizeof(WCHAR));
-        length += lstrlenW(wszNewFileName);
-        memcpy(wszCaption + length, wszSeparator, sizeof(wszSeparator));
-        length += sizeof(wszSeparator) / sizeof(WCHAR);
-        memcpy(wszCaption + length, wszAppTitle, sizeof(wszAppTitle));
+    memcpy(wszCaption, wszNewFileName, lstrlenW(wszNewFileName)*sizeof(WCHAR));
+    length += lstrlenW(wszNewFileName);
+    memcpy(wszCaption + length, wszSeparator, sizeof(wszSeparator));
+    length += sizeof(wszSeparator) / sizeof(WCHAR);
+    memcpy(wszCaption + length, wszAppTitle, sizeof(wszAppTitle));
 
-        SetWindowTextW(hMainWnd, wszCaption);
+    SetWindowTextW(hMainWnd, wszCaption);
 
-        HeapFree(GetProcessHeap(), 0, wszCaption);
-    } else
-    {
-        SetWindowTextW(hMainWnd, wszAppTitle);
-    }
+    HeapFree(GetProcessHeap(), 0, wszCaption);
 }
 
 static void DoOpenFile(LPCWSTR szOpenFileName)
@@ -186,27 +190,7 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
     set_caption(szOpenFileName);
 
     lstrcpyW(wszFileName, szOpenFileName);
-}
-
-static void DialogOpenFile(void)
-{
-    OPENFILENAMEW ofn;
-
-    WCHAR wszFile[MAX_PATH] = {'\0'};
-    static const WCHAR wszDefExt[] = {'r','t','f','\0'};
-
-    ZeroMemory(&ofn, sizeof(ofn));
-
-    ofn.lStructSize = sizeof(ofn);
-    ofn.Flags = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
-    ofn.hwndOwner = hMainWnd;
-    ofn.lpstrFilter = wszFilter;
-    ofn.lpstrFile = wszFile;
-    ofn.nMaxFile = MAX_PATH;
-    ofn.lpstrDefExt = wszDefExt;
-
-    if(GetOpenFileNameW(&ofn))
-        DoOpenFile(ofn.lpstrFile);
+    SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
 }
 
 static void DoSaveFile(LPCWSTR wszSaveFileName)
@@ -236,6 +220,7 @@ static void DoSaveFile(LPCWSTR wszSaveFileName)
 
     lstrcpyW(wszFileName, wszSaveFileName);
     set_caption(wszFileName);
+    SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
 }
 
 static void DialogSaveFile(void)
@@ -259,6 +244,86 @@ static void DialogSaveFile(void)
         return;
 
     DoSaveFile(sfn.lpstrFile);
+}
+
+static BOOL prompt_save_changes(void)
+{
+    if(!wszFileName[0])
+    {
+        GETTEXTLENGTHEX gt;
+        gt.flags = GTL_NUMCHARS;
+        gt.codepage = 1200;
+        if(!SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0))
+            return TRUE;
+    }
+
+    if(!SendMessageW(hEditorWnd, EM_GETMODIFY, 0, 0))
+    {
+        return TRUE;
+    } else
+    {
+        LPWSTR displayFileName;
+        WCHAR *text;
+        int ret;
+
+        if(!wszFileName[0])
+            displayFileName = wszDefaultFileName;
+        else
+            displayFileName = wszFileName;
+
+        text = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         (lstrlenW(displayFileName)+lstrlenW(wszSaveChanges))*sizeof(WCHAR));
+
+        if(!text)
+            return FALSE;
+
+        wsprintfW(text, wszSaveChanges, displayFileName);
+
+        ret = MessageBoxW(hMainWnd, text, wszAppTitle, MB_YESNOCANCEL | MB_ICONEXCLAMATION);
+
+        HeapFree(GetProcessHeap(), 0, text);
+
+        switch(ret)
+        {
+            case IDNO:
+                return TRUE;
+            break;
+
+            case IDYES:
+                if(wszFileName[0])
+                    DoSaveFile(wszFileName);
+                else
+                    DialogSaveFile();
+                return TRUE;
+
+            default:
+                return FALSE;
+        }
+    }
+}
+
+static void DialogOpenFile(void)
+{
+    OPENFILENAMEW ofn;
+
+    WCHAR wszFile[MAX_PATH] = {'\0'};
+    static const WCHAR wszDefExt[] = {'r','t','f','\0'};
+
+    ZeroMemory(&ofn, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.Flags = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+    ofn.hwndOwner = hMainWnd;
+    ofn.lpstrFilter = wszFilter;
+    ofn.lpstrFile = wszFile;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrDefExt = wszDefExt;
+
+    if(GetOpenFileNameW(&ofn))
+    {
+        prompt_save_changes();
+        DoOpenFile(ofn.lpstrFile);
+    }
 }
 
 static void HandleCommandLine(LPWSTR cmdline)
@@ -473,6 +538,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     DoDefaultFont();
 
     DoLoadStrings();
+    SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
 
     return 0;
 }
@@ -559,10 +625,14 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     case ID_FILE_NEW:
-        set_caption(NULL);
-        wszFileName[0] = '\0';
-        SetWindowTextW(hwndEditor, wszFileName);
-        /* FIXME: set default format too */
+        if(prompt_save_changes())
+        {
+            set_caption(NULL);
+            wszFileName[0] = '\0';
+            SetWindowTextW(hwndEditor, wszFileName);
+            SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
+            /* FIXME: set default format too */
+        }
         break;
 
     case ID_FILE_OPEN:
@@ -887,6 +957,11 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
         PostQuitMessage(0);
         break;
 
+    case WM_CLOSE:
+        if(prompt_save_changes())
+            PostQuitMessage(0);
+        break;
+
     case WM_ACTIVATE:
         if (LOWORD(wParam))
             SetFocus(GetDlgItem(hWnd, IDC_EDITOR));
@@ -933,6 +1008,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     hMainWnd = CreateWindowExW(0, wszMainWndClass, wszAppTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, hInstance, NULL);
     ShowWindow(hMainWnd, SW_SHOWDEFAULT);
+
+    set_caption(NULL);
 
     HandleCommandLine(GetCommandLineW());
 
