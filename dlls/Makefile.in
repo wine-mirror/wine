@@ -274,6 +274,7 @@ TESTSUBDIRS = \
 	odbccp32/tests \
 	ole32/tests \
 	oleaut32/tests \
+	pdh/tests \
 	psapi/tests \
 	quartz/tests \
 	riched20/tests \
@@ -550,6 +551,7 @@ IMPORT_LIBS = \
 	olepro32/libolepro32.$(IMPLIBEXT) \
 	olesvr32/libolesvr32.$(IMPLIBEXT) \
 	opengl32/libopengl32.$(IMPLIBEXT) \
+	pdh/libpdh.$(IMPLIBEXT) \
 	powrprof/libpowrprof.$(IMPLIBEXT) \
 	psapi/libpsapi.$(IMPLIBEXT) \
 	quartz/libquartz.$(IMPLIBEXT) \
@@ -839,6 +841,9 @@ olesvr32/libolesvr32.$(IMPLIBEXT): olesvr32/olesvr32.spec $(WINEBUILD)
 
 opengl32/libopengl32.$(IMPLIBEXT): opengl32/opengl32.spec $(WINEBUILD)
 	@cd opengl32 && $(MAKE) libopengl32.$(IMPLIBEXT)
+
+pdh/libpdh.$(IMPLIBEXT): pdh/pdh.spec $(WINEBUILD)
+	@cd pdh && $(MAKE) libpdh.$(IMPLIBEXT)
 
 powrprof/libpowrprof.$(IMPLIBEXT): powrprof/powrprof.spec $(WINEBUILD)
 	@cd powrprof && $(MAKE) libpowrprof.$(IMPLIBEXT)

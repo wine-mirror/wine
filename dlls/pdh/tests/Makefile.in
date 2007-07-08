@@ -1,14 +1,13 @@
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
+TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = pdh.dll
-IMPORTLIB = libpdh.$(IMPLIBEXT)
-IMPORTS   = kernel32
+TESTDLL   = pdh.dll
+IMPORTS   = pdh kernel32
 
-C_SRCS = \
-	pdh_main.c
+CTESTS = \
+	pdh.c
 
-@MAKE_DLL_RULES@
+@MAKE_TEST_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
