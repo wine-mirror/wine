@@ -170,7 +170,7 @@ struct IDirectSoundBufferImpl
     /* used for frequency conversion (PerfectPitch) */
     ULONG                       freqAdjust, freqAcc;
     /* used for intelligent (well, sort of) prebuffering */
-    DWORD                       primary_mixpos, buf_mixpos, last_playpos;
+    DWORD                       primary_mixpos, buf_mixpos;
 
     /* IDirectSoundNotifyImpl fields */
     IDirectSoundNotifyImpl*     notify;
@@ -426,10 +426,6 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 /* duplex.c */
  
 HRESULT DSOUND_FullDuplexCreate(REFIID riid, LPDIRECTSOUNDFULLDUPLEX* ppDSFD);
-
-/* buffer.c */
-
-DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This, DWORD pplay, DWORD pwrite);
 
 /* mixer.c */
 

@@ -409,47 +409,9 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
     return ref;
 }
 
-DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This, DWORD pplay, DWORD pwrite)
+static DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This)
 {
 	DWORD bplay = This->buf_mixpos;
-	DWORD pmix = This->primary_mixpos;
-        DirectSoundDevice * device = This->device;
-	TRACE("(%p, pplay=%u, pwrite=%u)\n", This, pplay, pwrite);
-
-	/* the actual primary play position (pplay) is always behind last mixed (pmix),
-	 * unless the computer is too slow or something */
-	/* we need to know how far away we are from there */
-	if (pmix < pplay) pmix += device->buflen; /* wraparound */
-	pmix -= pplay;
-
-	/* detect buffer underrun (sanity) */
-	if (pwrite < pplay) pwrite += device->buflen; /* wraparound */
-	pwrite -= pplay;
-	if (pmix > (ds_snd_queue_max * device->fraglen + pwrite + device->writelead)) {
-		ERR("detected an underrun: primary queue was %d\n",pmix);
-		pmix = 0;
-	}
-
-	TRACE("primary back-samples=%d\n",pmix);
-
-	/* divide the offset by its sample size */
-	pmix /= device->pwfx->nBlockAlign;
-
-	/* adjust for our frequency */
-	pmix = (pmix * This->freqAdjust) >> DSOUND_FREQSHIFT;
-
-	/* multiply by our own sample size */
-	pmix *= This->pwfx->nBlockAlign;
-
-	TRACE("this back-offset=%d\n", pmix);
-
-	/* sanity */
-	if(pmix > This->buflen)
-		WARN("Mixed length (%d) is longer then buffer length (%d)\n", pmix, This->buflen);
-
-	/* subtract from our last mixed position */
-	while (bplay < pmix) bplay += This->buflen; /* wraparound */
-	bplay -= pmix;
 
 	/* check for lead-in */
 	if (This->leadin && ((bplay < This->startpos) || (bplay > This->buf_mixpos))) {
@@ -481,38 +443,13 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 		    return hres;
 		}
 	} else {
-		if (playpos && (This->state != STATE_PLAYING)) {
+		if (playpos && (This->state != STATE_PLAYING))
 			/* we haven't been merged into the primary buffer (yet) */
 			*playpos = This->buf_mixpos;
-		} else if (playpos) {
-			DWORD pplay, pwrite;
-
-			/* get primary lock, before messing with primary/device data */
-			EnterCriticalSection(&(This->device->mixlock));
-
-			/* let's get this exact; first, recursively call GetPosition on the primary */
-			if (DSOUND_PrimaryGetPosition(This->device, &pplay, &pwrite) != DS_OK)
-				WARN("DSOUND_PrimaryGetPosition failed\n");
-			if ((This->dsbd.dwFlags & DSBCAPS_GETCURRENTPOSITION2) || This->device->hwbuf) {
-				/* calculate play position using this */
-				*playpos = DSOUND_CalcPlayPosition(This, pplay, pwrite);
-			} else {
-				/* (unless the app isn't using GETCURRENTPOSITION2) */
-				/* don't know exactly how this should be handled...
-				 * the docs says that play cursor is reported as directly
-				 * behind write cursor, hmm... */
-				/* let's just do what might work for Half-Life */
-				DWORD wp;
-				wp = (This->device->pwplay + This->device->prebuf) * This->device->fraglen;
-				wp %= This->device->buflen;
-				*playpos = DSOUND_CalcPlayPosition(This, wp, pwrite);
-				TRACE("Using non-GETCURRENTPOSITION2\n");
-			}
-
-			LeaveCriticalSection(&(This->device->mixlock));
-		}
+		else if (playpos)
+			*playpos = DSOUND_CalcPlayPosition(This);
 		if (writepos)
-                    *writepos = This->buf_mixpos;
+                    *writepos = (playpos ? *playpos : This->buf_mixpos);
 	}
 	if (writepos) {
 		if (This->state != STATE_STOPPED) {
@@ -521,11 +458,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 		}
 		*writepos %= This->buflen;
 	}
-	if (playpos)
-            This->last_playpos = *playpos;
 
 	TRACE("playpos = %d, writepos = %d, buflen=%d (%p, time=%d)\n",
-		playpos?*playpos:0, writepos?*writepos:0, This->buflen, This, GetTickCount());
+		playpos?*playpos:-1, writepos?*writepos:-1, This->buflen, This, GetTickCount());
 
 	return DS_OK;
 }
