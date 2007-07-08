@@ -270,7 +270,9 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
             if(tested_protocol == BIND_TEST)
                 ok(szStatusText == expect_wsz, "unexpected szStatusText\n");
             else
-                ok(!lstrcmpW(szStatusText, text_html), "szStatusText != text/html\n");
+                ok(lstrlenW(text_html) <= lstrlenW(szStatusText) &&
+                   !memcmp(szStatusText, text_html, lstrlenW(text_html)*sizeof(WCHAR)),
+                   "szStatusText != text/html\n");
         }
         break;
     case BINDSTATUS_DIRECTBIND:
