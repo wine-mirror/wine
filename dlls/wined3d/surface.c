@@ -3464,13 +3464,14 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
         This->glRect.bottom = This->pow2Height;
     }
 
-    if(GL_SUPPORT(APPLE_CLIENT_STORAGE) && This->resource.allocatedMemory == NULL) {
-        /* Make sure that memory is allocated from the start if we are going to use GL_APPLE_client_storage.
-         * Otherwise a glTexImage2D with a NULL pointer may be done, e.g. when blitting or with offscreen render
-         * targets, thus the client storage wouldn't be used for that texture
+    if(This->resource.allocatedMemory == NULL) {
+        /* Make sure memory exists from the start, and it is initialized properly. D3D initializes surfaces,
+         * gl does not, so we need to upload zeroes to init the gl texture.
          */
         This->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->resource.size + 4);
     }
+    This->Flags |= SFLAG_INSYSMEM;
+
     return WINED3D_OK;
 }
 
