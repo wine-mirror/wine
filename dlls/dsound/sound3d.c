@@ -238,6 +238,9 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 			/* my test show that for my way of calc., we need only half of angles */
 			DWORD dwInsideConeAngle = dsb->ds3db_ds3db.dwInsideConeAngle/2;
 			DWORD dwOutsideConeAngle = dsb->ds3db_ds3db.dwOutsideConeAngle/2;
+			if (dwOutsideConeAngle == dwInsideConeAngle)
+				++dwOutsideConeAngle;
+
 			/* full volume */
 			if (flAngle < dwInsideConeAngle)
 				flAngle = dwInsideConeAngle;
