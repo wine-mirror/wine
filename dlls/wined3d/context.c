@@ -840,6 +840,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
     if(This->lastActiveRenderTarget != target || tid != This->lastThread) {
         context = FindContext(This, target, tid);
         This->lastActiveRenderTarget = target;
+        This->lastThread = tid;
     } else {
         /* Stick to the old context */
         context = This->activeContext;
