@@ -842,6 +842,19 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
             /* This does not require any special states to be set up */
             break;
 
+        case CTXUSAGE_CLEAR:
+            if(context->last_was_blit && GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+                glEnable(GL_TEXTURE_SHADER_NV);
+                checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
+            }
+
+            glEnable(GL_SCISSOR_TEST);
+            checkGLcall("glEnable GL_SCISSOR_TEST");
+            context->last_was_blit = FALSE;
+            Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+            Context_MarkStateDirty(context, STATE_SCISSORRECT);
+            break;
+
         case CTXUSAGE_DRAWPRIM:
             /* This needs all dirty states applied */
             if(context->last_was_blit && GL_SUPPORT(NV_TEXTURE_SHADER2)) {

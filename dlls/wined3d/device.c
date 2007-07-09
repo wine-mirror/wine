@@ -4463,12 +4463,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         apply_fbo_state(iface);
     }
 
-    ActivateContext(This, This->render_targets[0], CTXUSAGE_RESOURCELOAD);
-
-    glEnable(GL_SCISSOR_TEST);
-    checkGLcall("glEnable GL_SCISSOR_TEST");
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SCISSORRECT);
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+    ActivateContext(This, This->render_targets[0], CTXUSAGE_CLEAR);
 
     if (Count > 0 && pRects) {
         curRect = pRects;

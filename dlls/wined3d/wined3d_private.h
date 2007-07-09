@@ -527,6 +527,7 @@ typedef enum ContextUsage {
     CTXUSAGE_RESOURCELOAD       = 1,    /* Only loads textures: No State is applied */
     CTXUSAGE_DRAWPRIM           = 2,    /* OpenGL states are set up for blitting DirectDraw surfacs */
     CTXUSAGE_BLIT               = 3,    /* OpenGL states are set up 3D drawing */
+    CTXUSAGE_CLEAR              = 4,    /* Drawable and states are set up for clearing */
 } ContextUsage;
 
 void ActivateContext(IWineD3DDeviceImpl *device, IWineD3DSurface *target, ContextUsage usage);
