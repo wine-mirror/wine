@@ -39,7 +39,8 @@ typedef struct _CryptMsgBase
 {
     LONG                 ref;
     DWORD                open_flags;
-    PCMSG_STREAM_INFO    stream_info;
+    BOOL                 streamed;
+    CMSG_STREAM_INFO     stream_info;
     BOOL                 finalized;
     CryptMsgCloseFunc    close;
     CryptMsgUpdateFunc   update;
@@ -52,7 +53,16 @@ static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags,
 {
     msg->ref = 1;
     msg->open_flags = dwFlags;
-    msg->stream_info = pStreamInfo;
+    if (pStreamInfo)
+    {
+        msg->streamed = TRUE;
+        memcpy(&msg->stream_info, pStreamInfo, sizeof(msg->stream_info));
+    }
+    else
+    {
+        msg->streamed = FALSE;
+        memset(&msg->stream_info, 0, sizeof(msg->stream_info));
+    }
     msg->close = close;
     msg->get_param = get_param;
     msg->update = update;
@@ -106,7 +116,7 @@ static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
             ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
              &blob, CRYPT_ENCODE_ALLOC_FLAG, NULL, &msg->bare_content,
              &msg->bare_content_len);
-            if (ret && msg->base.stream_info)
+            if (ret && msg->base.streamed)
                 FIXME("stream info unimplemented\n");
         }
     }
