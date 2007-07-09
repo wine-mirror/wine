@@ -345,6 +345,12 @@ static void test_data_msg_open(void)
 
 static const BYTE msgData[] = { 1, 2, 3, 4 };
 
+static BOOL WINAPI nop_stream_output(const void *pvArg, BYTE *pb, DWORD cb,
+ BOOL final)
+{
+    return TRUE;
+}
+
 static void test_data_msg_update(void)
 {
     HCRYPTMSG msg;
@@ -403,11 +409,12 @@ static void test_data_msg_get_param(void)
     HCRYPTMSG msg;
     DWORD size;
     BOOL ret;
+    CMSG_STREAM_INFO streamInfo = { 0, nop_stream_output, NULL };
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
      NULL);
 
-    /* Content and bare content are always gettable */
+    /* Content and bare content are always gettable when not streaming */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
@@ -429,6 +436,19 @@ static void test_data_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, NULL, &size);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* Can't get content or bare content when streaming */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL,
+     NULL, &streamInfo);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
     CryptMsgClose(msg);
 }
 
