@@ -57,7 +57,7 @@
 @ stub PdhGetDllVersion
 @ stub PdhGetFormattedCounterArrayA
 @ stub PdhGetFormattedCounterArrayW
-@ stub PdhGetFormattedCounterValue
+@ stdcall PdhGetFormattedCounterValue(ptr long ptr ptr)
 @ stub PdhGetLogFileSize
 @ stub PdhGetLogFileTypeA
 @ stub PdhGetLogFileTypeW
@@ -123,7 +123,7 @@
 @ stdcall PdhRemoveCounter(ptr)
 @ stub PdhSelectDataSourceA
 @ stub PdhSelectDataSourceW
-@ stub PdhSetCounterScaleFactor
+@ stdcall PdhSetCounterScaleFactor(ptr long)
 @ stub PdhSetDefaultRealTimeDataSource
 @ stub PdhSetLogSetRunID
 @ stub PdhSetQueryTimeRange

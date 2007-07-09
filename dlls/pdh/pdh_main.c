@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -283,6 +284,49 @@ PDH_STATUS WINAPI PdhCollectQueryData( PDH_HQUERY handle )
 }
 
 /***********************************************************************
+ *              PdhGetFormattedCounterValue   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetFormattedCounterValue( PDH_HCOUNTER handle, DWORD format,
+                                               LPDWORD type, PPDH_FMT_COUNTERVALUE value )
+{
+    LONG factor;
+    struct counter *counter = handle;
+
+    TRACE("%p %x %p %p\n", handle, format, type, value);
+
+    if (!value)   return PDH_INVALID_ARGUMENT;
+    if (!counter) return PDH_INVALID_HANDLE;
+
+    if (counter->status) return PDH_INVALID_DATA;
+
+    factor = counter->scale ? counter->scale : counter->defaultscale;
+    if (format & PDH_FMT_LONG)
+    {
+        if (format & PDH_FMT_1000) value->u.longValue = counter->two.longvalue * 1000;
+        else value->u.longValue = counter->two.longvalue * pow( 10, factor );
+    }
+    else if (format & PDH_FMT_LARGE)
+    {
+        if (format & PDH_FMT_1000) value->u.longValue = counter->two.largevalue * 1000;
+        else value->u.largeValue = counter->two.largevalue * pow( 10, factor );
+    }
+    else if (format & PDH_FMT_DOUBLE)
+    {
+        if (format & PDH_FMT_1000) value->u.longValue = counter->two.doublevalue * 1000;
+        else value->u.doubleValue = counter->two.doublevalue * pow( 10, factor );
+    }
+    else
+    {
+        WARN("unknown format %x\n", format);
+        return PDH_INVALID_ARGUMENT;
+    }
+    value->CStatus = ERROR_SUCCESS;
+
+    if (type) *type = counter->type;
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
  *              PdhOpenQueryA   (PDH.@)
  */
 PDH_STATUS WINAPI PdhOpenQueryA( LPCSTR source, DWORD_PTR userdata, PDH_HQUERY *query )
@@ -342,5 +386,21 @@ PDH_STATUS WINAPI PdhRemoveCounter( PDH_HCOUNTER handle )
     pdh_free( counter->path );
     pdh_free( counter );
 
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *              PdhSetCounterScaleFactor   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhSetCounterScaleFactor( PDH_HCOUNTER handle, LONG factor )
+{
+    struct counter *counter = handle;
+
+    TRACE("%p\n", handle);
+
+    if (!counter) return PDH_INVALID_HANDLE;
+    if (factor < PDH_MIN_SCALE || factor > PDH_MAX_SCALE) return PDH_INVALID_ARGUMENT;
+
+    counter->scale = factor;
     return ERROR_SUCCESS;
 }

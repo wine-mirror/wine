@@ -95,8 +95,94 @@ static void test_add_remove_counter( void )
     ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
 }
 
+static void test_PdhGetFormattedCounterValue( void )
+{
+    PDH_STATUS ret;
+    PDH_HQUERY query;
+    PDH_HCOUNTER counter;
+    PDH_FMT_COUNTERVALUE value;
+
+    ret = PdhOpenQueryA( NULL, 0, &query );
+    ok(ret == ERROR_SUCCESS, "PdhOpenQueryA failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterA( query, "\\System\\System Up Time", 0, &counter );
+    ok(ret == ERROR_SUCCESS, "PdhAddCounterA failed 0x%08x\n", ret);
+
+    ret = PdhGetFormattedCounterValue( NULL, PDH_FMT_LARGE, NULL, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhGetFormattedCounterValue failed 0x%08x\n", ret);
+
+    ret = PdhGetFormattedCounterValue( NULL, PDH_FMT_LARGE, NULL, &value );
+    ok(ret == PDH_INVALID_HANDLE, "PdhGetFormattedCounterValue failed 0x%08x\n", ret);
+
+    ret = PdhGetFormattedCounterValue( counter, PDH_FMT_LARGE, NULL, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhGetFormattedCounterValue failed 0x%08x\n", ret);
+
+    ret = PdhGetFormattedCounterValue( counter, PDH_FMT_LARGE, NULL, &value );
+    ok(ret == ERROR_SUCCESS, "PdhGetFormattedCounterValue failed 0x%08x\n", ret);
+
+    ret = PdhCollectQueryData( query );
+    ok(ret == ERROR_SUCCESS, "PdhCollectQueryData failed 0x%08x\n", ret);
+
+    ret = PdhGetFormattedCounterValue( counter, PDH_FMT_LARGE, NULL, &value );
+    ok(ret == ERROR_SUCCESS, "PdhGetFormattedCounterValue failed 0x%08x\n", ret);
+
+    ret = PdhGetFormattedCounterValue( counter, PDH_FMT_LARGE | PDH_FMT_NOSCALE, NULL, &value );
+    ok(ret == ERROR_SUCCESS, "PdhGetFormattedCounterValue failed 0x%08x\n", ret);
+
+    ret = PdhGetFormattedCounterValue( counter, PDH_FMT_LARGE | PDH_FMT_NOCAP100, NULL, &value );
+    ok(ret == ERROR_SUCCESS, "PdhGetFormattedCounterValue failed 0x%08x\n", ret);
+
+    ret = PdhGetFormattedCounterValue( counter, PDH_FMT_LARGE | PDH_FMT_1000, NULL, &value );
+    ok(ret == ERROR_SUCCESS, "PdhGetFormattedCounterValue failed 0x%08x\n", ret);
+
+    ret = PdhSetCounterScaleFactor( counter, 2 );
+    ok(ret == ERROR_SUCCESS, "PdhSetCounterScaleFactor failed 0x%08x\n", ret);
+
+    ret = PdhGetFormattedCounterValue( counter, PDH_FMT_LARGE, NULL, &value );
+    ok(ret == ERROR_SUCCESS, "PdhGetFormattedCounterValue failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
+}
+
+static void test_PdhSetCounterScaleFactor( void )
+{
+    PDH_STATUS ret;
+    PDH_HQUERY query;
+    PDH_HCOUNTER counter;
+
+    ret = PdhOpenQueryA( NULL, 0, &query );
+    ok(ret == ERROR_SUCCESS, "PdhOpenQueryA failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterA( query, "\\System\\System Up Time", 0, &counter );
+    ok(ret == ERROR_SUCCESS, "PdhAddCounterA failed 0x%08x\n", ret);
+
+    ret = PdhSetCounterScaleFactor( NULL, 8 );
+    ok(ret == PDH_INVALID_HANDLE, "PdhSetCounterScaleFactor failed 0x%08x\n", ret);
+
+    ret = PdhSetCounterScaleFactor( NULL, 1 );
+    ok(ret == PDH_INVALID_HANDLE, "PdhSetCounterScaleFactor failed 0x%08x\n", ret);
+
+    ret = PdhSetCounterScaleFactor( counter, 8 );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhSetCounterScaleFactor failed 0x%08x\n", ret);
+
+    ret = PdhSetCounterScaleFactor( counter, -8 );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhSetCounterScaleFactor failed 0x%08x\n", ret);
+
+    ret = PdhSetCounterScaleFactor( counter, 7 );
+    ok(ret == ERROR_SUCCESS, "PdhSetCounterScaleFactor failed 0x%08x\n", ret);
+
+    ret = PdhSetCounterScaleFactor( counter, 0 );
+    ok(ret == ERROR_SUCCESS, "PdhSetCounterScaleFactor failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
+}
+
 START_TEST(pdh)
 {
     test_open_close_query();
     test_add_remove_counter();
+    test_PdhGetFormattedCounterValue();
+    test_PdhSetCounterScaleFactor();
 }
