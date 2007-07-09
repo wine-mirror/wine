@@ -632,12 +632,20 @@ static void test_data_msg(void)
     test_data_msg_encoding();
 }
 
+static CRYPT_DATA_BLOB b4 = { 0, NULL };
+static const struct update_accum a4 = { 1, &b4 };
+
+static const BYTE bogusOIDContent[] = {
+0x30,0x0f,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x07,0xa0,0x02,
+0x04,0x00 };
+
 static void test_decode_msg_update(void)
 {
     HCRYPTMSG msg;
     BOOL ret;
     CMSG_STREAM_INFO streamInfo = { 0 };
     DWORD i;
+    struct update_accum accum = { 0, NULL };
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     /* Update with a full message in a final update */
@@ -686,15 +694,105 @@ static void test_decode_msg_update(void)
      "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
     CryptMsgClose(msg);
 
-    /* Updating the message byte by byte is legal */
+    /* Empty non-final updates are allowed when streaming.. */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
-    todo_wine {
+    ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    /* but final updates aren't when not enough data has been received. */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_STREAM_INSUFFICIENT_DATA,
+     "Expected CRYPT_E_STREAM_INSUFFICIENT_DATA, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* Updating the message byte by byte is legal */
+    streamInfo.pfnStreamOutput = accumulating_stream_output;
+    streamInfo.pvArg = &accum;
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
     for (i = 0, ret = TRUE; ret && i < sizeof(dataEmptyContent); i++)
         ret = CryptMsgUpdate(msg, &dataEmptyContent[i], 1, FALSE);
+    todo_wine {
     ok(ret, "CryptMsgUpdate failed on byte %d: %x\n", i, GetLastError());
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
     ok(ret, "CryptMsgUpdate failed on byte %d: %x\n", i, GetLastError());
     }
+    CryptMsgClose(msg);
+    todo_wine
+    check_updates("byte-by-byte empty content", &a4, &accum);
+    free_updates(&accum);
+
+    /* Decoding bogus content fails in non-streaming mode.. */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* and as the final update in streaming mode.. */
+    streamInfo.pfnStreamOutput = nop_stream_output;
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* and even as a non-final update in streaming mode. */
+    streamInfo.pfnStreamOutput = nop_stream_output;
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* An empty message can be opened with indetermined type.. */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
+     TRUE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    /* but decoding it as an explicitly typed message fails. */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, 0, NULL,
+     NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
+     TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* On the other hand, decoding the bare content of an empty message fails
+     * with unspecified type..
+     */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, dataEmptyBareContent,
+     sizeof(dataEmptyBareContent), TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* but succeeds with explicit type. */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, 0, NULL,
+     NULL);
+    ret = CryptMsgUpdate(msg, dataEmptyBareContent,
+     sizeof(dataEmptyBareContent), TRUE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* Decoding valid content with an unsupported OID fails */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, bogusOIDContent, sizeof(bogusOIDContent), TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
     CryptMsgClose(msg);
 }
 
