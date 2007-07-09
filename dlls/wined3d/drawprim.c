@@ -199,9 +199,11 @@ void primitiveDeclarationConvertToStridedData(
             data    = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[element->Stream], 0, &streamVBO);
             if(fixup) {
                 if( streamVBO != 0) *fixup = TRUE;
-                else if(*fixup && !useVertexShaderFunction) {
+                else if(*fixup && !useVertexShaderFunction &&
+                       (element->Usage == WINED3DDECLUSAGE_COLOR ||
+                        element->Usage == WINED3DDECLUSAGE_POSITIONT)) {
                     /* This may be bad with the fixed function pipeline */
-                    FIXME("Missing fixed and unfixed vertices, expect graphics glitches\n");
+                    FIXME("Missing vbo streams with unfixed colors or transformed position, expect problems\n");
                 }
             }
         }
