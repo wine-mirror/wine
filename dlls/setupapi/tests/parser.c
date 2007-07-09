@@ -167,7 +167,7 @@ static void test_invalid_files(void)
             ok( hinf != INVALID_HANDLE_VALUE, "file %u: Open failed\n", i );
             ok( err == 0, "file %u: Error code set to %u\n", i, err );
         }
-        if (hinf != INVALID_HANDLE_VALUE) SetupCloseInfFile( hinf );
+        SetupCloseInfFile( hinf );
     }
 }
 
