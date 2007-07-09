@@ -1138,11 +1138,6 @@ case $host_cpu in
     ;;
 esac
 
-dnl **** Get the soname for libraries that we load dynamically ****
-
-AC_DEFINE_UNQUOTED(SONAME_EXT,[".$LIBEXT"],[Define to the file extension of shared libraries.])
-
-
 dnl **** Check for functions ****
 
 AC_CHECK_FUNCS(\

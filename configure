@@ -15377,14 +15377,6 @@ esac
 
 
 
-cat >>confdefs.h <<_ACEOF
-#define SONAME_EXT ".$LIBEXT"
-_ACEOF
-
-
-
-
-
 
 
 
