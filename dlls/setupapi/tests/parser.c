@@ -405,6 +405,11 @@ static void test_close_inf_file(void)
     SetLastError(0xdeadbeef);
     SetupCloseInfFile(NULL);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    SetupCloseInfFile(INVALID_HANDLE_VALUE);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %u\n", GetLastError());
+
 }
 
 static const char *contents = "[Version]\n"
