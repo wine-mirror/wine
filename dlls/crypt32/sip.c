@@ -568,9 +568,14 @@ BOOL WINAPI CryptSIPLoad
 BOOL WINAPI CryptSIPCreateIndirectData(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pcbIndirectData,
                                        SIP_INDIRECT_DATA* pIndirectData)
 {
-    FIXME("(%p %p %p) stub\n", pSubjectInfo, pcbIndirectData, pIndirectData);
+    WINE_SIP_PROVIDER *sip;
+    BOOL ret = FALSE;
 
-    return FALSE;
+    TRACE("(%p %p %p)\n", pSubjectInfo, pcbIndirectData, pIndirectData);
+
+    if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
+        ret = sip->info.pfCreate(pSubjectInfo, pcbIndirectData, pIndirectData);
+    return ret;
 }
 
 /***********************************************************************
@@ -579,10 +584,16 @@ BOOL WINAPI CryptSIPCreateIndirectData(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pcb
 BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEncodingType,
                                        DWORD dwIndex, DWORD* pcbSignedDataMsg, BYTE* pbSignedDataMsg)
 {
-    FIXME("(%p %p %d %p %p) stub\n", pSubjectInfo, pdwEncodingType, dwIndex,
+    WINE_SIP_PROVIDER *sip;
+    BOOL ret = FALSE;
+
+    TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
           pcbSignedDataMsg, pbSignedDataMsg);
 
-    return FALSE;
+    if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
+        ret = sip->info.pfGet(pSubjectInfo, pdwEncodingType, dwIndex,
+         pcbSignedDataMsg, pbSignedDataMsg);
+    return ret;
 }
 
 /***********************************************************************
@@ -591,10 +602,16 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
 BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEncodingType,
                                        DWORD* pdwIndex, DWORD cbSignedDataMsg, BYTE* pbSignedDataMsg)
 {
-    FIXME("(%p %d %p %d %p) stub\n", pSubjectInfo, pdwEncodingType, pdwIndex,
+    WINE_SIP_PROVIDER *sip;
+    BOOL ret = FALSE;
+
+    TRACE("(%p %d %p %d %p)\n", pSubjectInfo, pdwEncodingType, pdwIndex,
           cbSignedDataMsg, pbSignedDataMsg);
 
-    return FALSE;
+    if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
+        ret = sip->info.pfPut(pSubjectInfo, pdwEncodingType, pdwIndex,
+         cbSignedDataMsg, pbSignedDataMsg);
+    return ret;
 }
 
 /***********************************************************************
@@ -603,9 +620,14 @@ BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEnc
 BOOL WINAPI CryptSIPRemoveSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo,
                                        DWORD dwIndex)
 {
-    FIXME("(%p %d) stub\n", pSubjectInfo, dwIndex);
+    WINE_SIP_PROVIDER *sip;
+    BOOL ret = FALSE;
 
-    return FALSE;
+    TRACE("(%p %d)\n", pSubjectInfo, dwIndex);
+
+    if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
+        ret = sip->info.pfRemove(pSubjectInfo, dwIndex);
+    return ret;
 }
 
 /***********************************************************************
@@ -614,7 +636,12 @@ BOOL WINAPI CryptSIPRemoveSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo,
 BOOL WINAPI CryptSIPVerifyIndirectData(SIP_SUBJECTINFO* pSubjectInfo,
                                        SIP_INDIRECT_DATA* pIndirectData)
 {
-    FIXME("(%p %p) stub\n", pSubjectInfo, pIndirectData);
+    WINE_SIP_PROVIDER *sip;
+    BOOL ret = FALSE;
 
-    return FALSE;
+    TRACE("(%p %p)\n", pSubjectInfo, pIndirectData);
+
+    if ((sip = CRYPT_GetCachedSIP(pSubjectInfo->pgSubjectType)))
+        ret = sip->info.pfVerify(pSubjectInfo, pIndirectData);
+    return ret;
 }
