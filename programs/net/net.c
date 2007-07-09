@@ -19,9 +19,22 @@
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
+#include "resources.h"
 
 #define NET_START 0001
 #define NET_STOP  0002
+
+int output_string(int msg, ...)
+{
+    char msg_buffer[8192];
+    va_list arguments;
+
+    LoadString(GetModuleHandle(NULL), msg, msg_buffer, sizeof(msg_buffer));
+    va_start(arguments, msg);
+    vprintf(msg_buffer, arguments);
+    va_end(arguments);
+    return 0;
+}
 
 static BOOL StopService(SC_HANDLE SCManager, SC_HANDLE serviceHandle)
 {
@@ -41,11 +54,11 @@ static BOOL StopService(SC_HANDLE SCManager, SC_HANDLE serviceHandle)
         {
             for(counter = 0; counter < count; counter++)
             {
-                printf("Stopping dependent service: %s\n", dependencies[counter].lpDisplayName);
+                output_string(STRING_STOP_DEP, dependencies[counter].lpDisplayName);
                 dependent_serviceHandle = OpenService(SCManager, dependencies[counter].lpServiceName, SC_MANAGER_ALL_ACCESS);
                 if(dependent_serviceHandle) result = StopService(SCManager, dependent_serviceHandle);
                 CloseServiceHandle(dependent_serviceHandle);
-                if(!result) printf("Could not stop service %s\n", dependencies[counter].lpDisplayName);
+                if(!result) output_string(STRING_CANT_STOP, dependencies[counter].lpDisplayName);
            }
         }
     }
@@ -65,13 +78,13 @@ static BOOL net_service(int operation, char *service_name)
     SCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if(!SCManager)
     {
-        printf("Couldn't get handle to SCManager.\n");
+        output_string(STRING_NO_SCM);
         return FALSE;
     }
     serviceHandle = OpenService(SCManager, service_name, SC_MANAGER_ALL_ACCESS);
     if(!serviceHandle)
     {
-        printf("Couldn't get handle to service.\n");
+        output_string(STRING_NO_SVCHANDLE);
         CloseServiceHandle(SCManager);
         return FALSE;
     }
@@ -83,20 +96,18 @@ static BOOL net_service(int operation, char *service_name)
     switch(operation)
     {
     case NET_START:
-        printf("The %s service is starting.\n", service_display_name);
+        output_string(STRING_START_SVC, service_display_name);
         result = StartService(serviceHandle, 0, NULL);
 
-        printf("The %s service ", service_display_name);
-        if(!result) printf("failed to start.\n");
-        else printf("was started successfully.\n");
+        if(result) output_string(STRING_START_SVC_SUCCESS);
+        else output_string(STRING_START_SVC_FAIL);
         break;
     case NET_STOP:
-        printf("The %s service is stopping.\n", service_display_name);
+        output_string(STRING_STOP_SVC, service_display_name);
         result = StopService(SCManager, serviceHandle);
 
-        printf("The %s service ", service_display_name);
-        if(!result) printf("failed to stop.\n");
-        else printf("was stopped successfully.\n");
+        if(result) output_string(STRING_STOP_SVC_SUCCESS, service_display_name);
+        else output_string(STRING_STOP_SVC_FAIL, service_display_name);
         break;
     }
 
@@ -107,27 +118,22 @@ static BOOL net_service(int operation, char *service_name)
 
 int main(int argc, char *argv[])
 {
-
     if (argc < 2)
     {
-        printf("The syntax of this command is:\n\n");
-        printf("NET [ HELP | START | STOP ]\n");
+        output_string(STRING_USAGE);
         return 1;
     }
 
     if(!strcasecmp(argv[1], "help"))
     {
-        printf("The syntax of this command is:\n\n");
-        printf("NET HELP command\n    -or-\nNET command /HELP\n\n");
-        printf("   Commands available are:\n");
-        printf("   NET HELP    NET START    NET STOP\n");
+        output_string(STRING_HELP_USAGE);
     }
 
     if(!strcasecmp(argv[1], "start"))
     {
         if(argc < 3)
         {
-            printf("Specify service name to start.\n");
+            output_string(STRING_START_USAGE);
             return 1;
         }
 
@@ -142,7 +148,7 @@ int main(int argc, char *argv[])
     {
         if(argc < 3)
         {
-            printf("Specify service name to stop.\n");
+            output_string(STRING_STOP_USAGE);
             return 1;
         }
 
