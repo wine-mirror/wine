@@ -47,11 +47,15 @@ typedef struct _CryptMsgBase
 } CryptMsgBase;
 
 static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags,
- PCMSG_STREAM_INFO pStreamInfo)
+ PCMSG_STREAM_INFO pStreamInfo, CryptMsgCloseFunc close,
+ CryptMsgGetParamFunc get_param, CryptMsgUpdateFunc update)
 {
     msg->ref = 1;
     msg->open_flags = dwFlags;
     msg->stream_info = pStreamInfo;
+    msg->close = close;
+    msg->get_param = get_param;
+    msg->update = update;
     msg->finalized = FALSE;
 }
 
@@ -166,10 +170,8 @@ static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
     msg = CryptMemAlloc(sizeof(CDataEncodeMsg));
     if (msg)
     {
-        CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo);
-        msg->base.close = CDataEncodeMsg_Close;
-        msg->base.update = CDataEncodeMsg_Update;
-        msg->base.get_param = CDataEncodeMsg_GetParam;
+        CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
+         CDataEncodeMsg_Close, CDataEncodeMsg_GetParam, CDataEncodeMsg_Update);
         msg->bare_content_len = sizeof(empty_data_content);
         msg->bare_content = (LPBYTE)empty_data_content;
     }
