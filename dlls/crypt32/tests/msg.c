@@ -155,14 +155,12 @@ static void test_msg_get_param(void)
     /* For decoded messages, the type is always available */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, NULL, &size);
-    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     /* For this (empty) message, the type isn't set */
     ok(value == 0, "Expected type 0, got %d\n", value);
-    }
     CryptMsgClose(msg);
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, 0, NULL,
@@ -171,10 +169,8 @@ static void test_msg_get_param(void)
     /* For explicitly typed messages, the type is known. */
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
-    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_DATA, "Expected CMSG_DATA, got %d\n", value);
-    }
     for (i = CMSG_CONTENT_PARAM; i <= CMSG_CMS_SIGNER_INFO_PARAM; i++)
     {
         size = 0;
@@ -188,10 +184,8 @@ static void test_msg_get_param(void)
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
-    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_ENVELOPED, "Expected CMSG_ENVELOPED, got %d\n", value);
-    }
     for (i = CMSG_CONTENT_PARAM; i <= CMSG_CMS_SIGNER_INFO_PARAM; i++)
     {
         size = 0;
@@ -205,10 +199,8 @@ static void test_msg_get_param(void)
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
-    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_HASHED, "Expected CMSG_HASHED, got %d\n", value);
-    }
     for (i = CMSG_CONTENT_PARAM; i <= CMSG_CMS_SIGNER_INFO_PARAM; i++)
     {
         size = 0;
@@ -222,10 +214,8 @@ static void test_msg_get_param(void)
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
-    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_SIGNED, "Expected CMSG_SIGNED, got %d\n", value);
-    }
     for (i = CMSG_CONTENT_PARAM; i <= CMSG_CMS_SIGNER_INFO_PARAM; i++)
     {
         size = 0;
@@ -240,20 +230,16 @@ static void test_msg_get_param(void)
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
-    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_ENCRYPTED, "Expected CMSG_ENCRYPTED, got %d\n", value);
-    }
     CryptMsgClose(msg);
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 1000, 0, NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
-    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == 1000, "Expected 1000, got %d\n", value);
-    }
     CryptMsgClose(msg);
 }
 

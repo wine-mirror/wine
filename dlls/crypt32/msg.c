@@ -269,9 +269,34 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
 static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
-    FIXME("(%p, %d, %d, %p, %p): stub\n", hCryptMsg, dwParamType, dwIndex,
-     pvData, pcbData);
-    return FALSE;
+    CDecodeMsg *msg = (CDecodeMsg *)hCryptMsg;
+    BOOL ret = FALSE;
+
+    switch (dwParamType)
+    {
+    case CMSG_TYPE_PARAM:
+        if (!pvData)
+        {
+            *pcbData = sizeof(DWORD);
+            ret = TRUE;
+        }
+        else if (*pcbData < sizeof(DWORD))
+        {
+            *pcbData = sizeof(DWORD);
+            SetLastError(ERROR_MORE_DATA);
+        }
+        else
+        {
+            *pcbData = sizeof(DWORD);
+            *(DWORD *)pvData = msg->type;
+            ret = TRUE;
+        }
+        break;
+    default:
+        FIXME("unimplemented for parameter %d\n", dwParamType);
+        SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+    }
+    return ret;
 }
 
 HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
