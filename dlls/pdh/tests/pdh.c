@@ -48,7 +48,55 @@ static void test_open_close_query( void )
     ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
 }
 
+static void test_add_remove_counter( void )
+{
+    PDH_STATUS ret;
+    PDH_HQUERY query;
+    PDH_HCOUNTER counter;
+
+    ret = PdhOpenQueryA( NULL, 0, &query );
+    ok(ret == ERROR_SUCCESS, "PdhOpenQueryA failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterA( NULL, "\\System\\System Up Time", 0, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddCounterA failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterA( NULL, "\\System\\System Up Time", 0, &counter );
+    ok(ret == PDH_INVALID_HANDLE, "PdhAddCounterA failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterA( query, NULL, 0, &counter );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddCounterA failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterA( query, "\\System\\System Up Time", 0, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddCounterA failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterA( query, "\\System\\System Down Time", 0, &counter );
+    ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhAddCounterA failed 0x%08x\n", ret);
+    ok(!counter, "PdhAddCounterA failed %p\n", counter);
+
+    ret = PdhAddCounterA( query, "\\System\\System Up Time", 0, &counter );
+    ok(ret == ERROR_SUCCESS, "PdhAddCounterA failed 0x%08x\n", ret);
+
+    ret = PdhCollectQueryData( NULL );
+    ok(ret == PDH_INVALID_HANDLE, "PdhCollectQueryData failed 0x%08x\n", ret);
+
+    ret = PdhCollectQueryData( counter );
+    ok(ret == PDH_INVALID_HANDLE, "PdhCollectQueryData failed 0x%08x\n", ret);
+
+    ret = PdhCollectQueryData( query );
+    ok(ret == ERROR_SUCCESS, "PdhCollectQueryData failed 0x%08x\n", ret);
+
+    ret = PdhRemoveCounter( NULL );
+    ok(ret == PDH_INVALID_HANDLE, "PdhRemoveCounter failed 0x%08x\n", ret);
+
+    ret = PdhRemoveCounter( counter );
+    ok(ret == ERROR_SUCCESS, "PdhRemoveCounter failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
+}
+
 START_TEST(pdh)
 {
     test_open_close_query();
+    test_add_remove_counter();
 }
