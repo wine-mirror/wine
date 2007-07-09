@@ -213,7 +213,7 @@ typedef struct tagWTPACKET {
 } WTPACKET, *LPWTPACKET;
 
 
-#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
+#ifdef SONAME_LIBXI
 
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>
@@ -238,10 +238,6 @@ static WTI_DEVICES_INFO gSysDevice;
 static WTI_CURSORS_INFO gSysCursor[CURSORMAX];
 static INT              gNumCursors;
 
-
-#ifndef SONAME_LIBXI
-#define SONAME_LIBXI "libXi" SONAME_EXT
-#endif
 
 /* XInput stuff */
 static void *xinput_handle;
@@ -1168,7 +1164,7 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
     return rc;
 }
 
-#else /* HAVE_X11_EXTENSIONS_XINPUT_H */
+#else /* SONAME_LIBXI */
 
 /***********************************************************************
  *		AttachEventQueueToTablet (X11DRV.@)
@@ -1201,4 +1197,4 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
     return 0;
 }
 
-#endif /* HAVE_X11_EXTENSIONS_XINPUT_H */
+#endif /* SONAME_LIBXI */
