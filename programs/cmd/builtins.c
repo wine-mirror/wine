@@ -2303,7 +2303,7 @@ BOOL WCMD_ask_confirm (WCHAR *message, BOOL showSureText, BOOL *optionAll) {
       WCMD_output_asis (endBkt);
       WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer,
                      sizeof(answer)/sizeof(WCHAR), &count, NULL);
-      answer[0] = toupper(answer[0]);
+      answer[0] = toupperW(answer[0]);
     }
 
     /* Return the answer */
