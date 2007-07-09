@@ -95,7 +95,6 @@ static void test_msg_open_to_decode(void)
     /* The message type can be explicit... */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, 0, NULL,
      NULL);
-    todo_wine {
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     CryptMsgClose(msg);
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED, 0, NULL,
@@ -125,7 +124,6 @@ static void test_msg_open_to_decode(void)
     CryptMsgClose(msg);
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 1000, 0, NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
-    }
     CryptMsgClose(msg);
 
     /* And even though the stream info parameter "must be set to NULL" for
@@ -133,7 +131,6 @@ static void test_msg_open_to_decode(void)
      */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
      &streamInfo);
-    todo_wine
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 }
@@ -154,7 +151,6 @@ static void test_msg_get_param(void)
 
     /* Decoded messages */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
-    todo_wine
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     /* For decoded messages, the type is always available */
     size = 0;
@@ -171,7 +167,6 @@ static void test_msg_get_param(void)
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, 0, NULL,
      NULL);
-    todo_wine
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     /* For explicitly typed messages, the type is known. */
     size = sizeof(value);
@@ -190,10 +185,10 @@ static void test_msg_get_param(void)
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_ENVELOPED, 0, NULL,
      NULL);
-    todo_wine {
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
+    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_ENVELOPED, "Expected CMSG_ENVELOPED, got %d\n", value);
     }
@@ -207,10 +202,10 @@ static void test_msg_get_param(void)
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
      NULL);
-    todo_wine {
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
+    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_HASHED, "Expected CMSG_HASHED, got %d\n", value);
     }
@@ -224,10 +219,10 @@ static void test_msg_get_param(void)
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, 0, NULL,
      NULL);
-    todo_wine {
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
+    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_SIGNED, "Expected CMSG_SIGNED, got %d\n", value);
     }
@@ -242,20 +237,20 @@ static void test_msg_get_param(void)
     /* Explicitly typed messages get their types set, even if they're invalid */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_ENCRYPTED, 0, NULL,
      NULL);
-    todo_wine {
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
+    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_ENCRYPTED, "Expected CMSG_ENCRYPTED, got %d\n", value);
     }
     CryptMsgClose(msg);
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 1000, 0, NULL, NULL);
-    todo_wine {
     ok(msg != NULL, "CryptMsgOpenToDecode failed: %x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, (LPBYTE)&value, &size);
+    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == 1000, "Expected 1000, got %d\n", value);
     }

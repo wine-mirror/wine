@@ -244,11 +244,43 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
     return msg;
 }
 
+typedef struct _CDecodeMsg
+{
+    CryptMsgBase base;
+    DWORD        type;
+    HCRYPTPROV   crypt_prov;
+} CDecodeMsg;
+
+static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
+{
+    CDecodeMsg *msg = (CDecodeMsg *)hCryptMsg;
+
+    if (msg->base.open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
+        CryptReleaseContext(msg->crypt_prov, 0);
+}
+
+static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
+ DWORD cbData, BOOL fFinal)
+{
+    FIXME("(%p, %p, %d, %d): stub\n", hCryptMsg, pbData, cbData, fFinal);
+    return FALSE;
+}
+
+static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
+ DWORD dwIndex, void *pvData, DWORD *pcbData)
+{
+    FIXME("(%p, %d, %d, %p, %p): stub\n", hCryptMsg, dwParamType, dwIndex,
+     pvData, pcbData);
+    return FALSE;
+}
+
 HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
  DWORD dwMsgType, HCRYPTPROV hCryptProv, PCERT_INFO pRecipientInfo,
  PCMSG_STREAM_INFO pStreamInfo)
 {
-    FIXME("(%08x, %08x, %08x, %08lx, %p, %p): stub\n", dwMsgEncodingType,
+    CDecodeMsg *msg;
+
+    TRACE("(%08x, %08x, %08x, %08lx, %p, %p)\n", dwMsgEncodingType,
      dwFlags, dwMsgType, hCryptProv, pRecipientInfo, pStreamInfo);
 
     if (GET_CMSG_ENCODING_TYPE(dwMsgEncodingType) != PKCS_7_ASN_ENCODING)
@@ -256,7 +288,14 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
         SetLastError(E_INVALIDARG);
         return NULL;
     }
-    return NULL;
+    msg = CryptMemAlloc(sizeof(CDecodeMsg));
+    if (msg)
+    {
+        CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
+         CDecodeMsg_Close, CDecodeMsg_GetParam, CDecodeMsg_Update);
+        msg->type = dwMsgType;
+    }
+    return msg;
 }
 
 HCRYPTMSG WINAPI CryptMsgDuplicate(HCRYPTMSG hCryptMsg)
