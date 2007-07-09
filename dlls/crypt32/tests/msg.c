@@ -441,11 +441,113 @@ static const BYTE dataContent[] = {
 0x30,0x13,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x01,0xa0,0x06,
 0x04,0x04,0x01,0x02,0x03,0x04 };
 
+struct update_accum
+{
+    DWORD cUpdates;
+    CRYPT_DATA_BLOB *updates;
+};
+
+static BOOL WINAPI accumulating_stream_output(const void *pvArg, BYTE *pb,
+ DWORD cb, BOOL final)
+{
+    struct update_accum *accum = (struct update_accum *)pvArg;
+    BOOL ret = FALSE;
+
+    if (accum->cUpdates)
+        accum->updates = CryptMemRealloc(accum->updates,
+         (accum->cUpdates + 1) * sizeof(CRYPT_DATA_BLOB));
+    else
+        accum->updates = CryptMemAlloc(sizeof(CRYPT_DATA_BLOB));
+    if (accum->updates)
+    {
+        CRYPT_DATA_BLOB *blob = &accum->updates[accum->cUpdates];
+
+        blob->pbData = CryptMemAlloc(cb);
+        if (blob->pbData)
+        {
+            memcpy(blob->pbData, pb, cb);
+            blob->cbData = cb;
+            ret = TRUE;
+        }
+        accum->cUpdates++;
+    }
+    return ret;
+}
+
+/* The updates of a (bogus) definite-length encoded message */
+static BYTE u1[] = { 0x30,0x0f,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+ 0x07,0x01,0xa0,0x02,0x04,0x00 };
+static BYTE u2[] = { 0x01,0x02,0x03,0x04 };
+static CRYPT_DATA_BLOB b1[] = {
+    { sizeof(u1), u1 },
+    { sizeof(u2), u2 },
+    { sizeof(u2), u2 },
+};
+static const struct update_accum a1 = { sizeof(b1) / sizeof(b1[0]), b1 };
+/* The updates of a definite-length encoded message */
+static BYTE u3[] = { 0x30,0x13,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+ 0x07,0x01,0xa0,0x06,0x04,0x04 };
+static CRYPT_DATA_BLOB b2[] = {
+    { sizeof(u3), u3 },
+    { sizeof(u2), u2 },
+};
+static const struct update_accum a2 = { sizeof(b2) / sizeof(b2[0]), b2 };
+/* The updates of an indefinite-length encoded message */
+static BYTE u4[] = { 0x30,0x80,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+ 0x07,0x01,0xa0,0x80,0x24,0x80 };
+static BYTE u5[] = { 0x04,0x04 };
+static BYTE u6[] = { 0x00,0x00,0x00,0x00,0x00,0x00 };
+static CRYPT_DATA_BLOB b3[] = {
+    { sizeof(u4), u4 },
+    { sizeof(u5), u5 },
+    { sizeof(u2), u2 },
+    { sizeof(u5), u5 },
+    { sizeof(u2), u2 },
+    { sizeof(u6), u6 },
+};
+static const struct update_accum a3 = { sizeof(b3) / sizeof(b3[0]), b3 };
+
+static void check_updates(LPCSTR header, const struct update_accum *expected,
+ const struct update_accum *got)
+{
+    DWORD i;
+
+    ok(expected->cUpdates == got->cUpdates,
+     "%s: expected %d updates, got %d\n", header, expected->cUpdates,
+     got->cUpdates);
+    if (expected->cUpdates == got->cUpdates)
+        for (i = 0; i < min(expected->cUpdates, got->cUpdates); i++)
+        {
+            ok(expected->updates[i].cbData == got->updates[i].cbData,
+             "%s, update %d: expected %d bytes, got %d\n", header, i,
+             expected->updates[i].cbData, got->updates[i].cbData);
+            if (expected->updates[i].cbData && expected->updates[i].cbData ==
+             got->updates[i].cbData)
+                ok(!memcmp(expected->updates[i].pbData, got->updates[i].pbData,
+                 got->updates[i].cbData), "%s, update %d: unexpected value\n",
+                 header, i);
+        }
+}
+
+/* Frees the updates stored in accum */
+static void free_updates(struct update_accum *accum)
+{
+    DWORD i;
+
+    for (i = 0; i < accum->cUpdates; i++)
+        CryptMemFree(accum->updates[i].pbData);
+    CryptMemFree(accum->updates);
+    accum->updates = NULL;
+    accum->cUpdates = 0;
+}
+
 static void test_data_msg_encoding(void)
 {
     HCRYPTMSG msg;
     BOOL ret;
     static char oid[] = "1.2.3";
+    struct update_accum accum = { 0, NULL };
+    CMSG_STREAM_INFO streamInfo = { 0, accumulating_stream_output, &accum };
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
      NULL);
@@ -488,6 +590,37 @@ static void test_data_msg_encoding(void)
     check_param("data content", msg, CMSG_CONTENT_PARAM, dataContent,
      sizeof(dataContent));
     CryptMsgClose(msg);
+    /* A streaming message is DER encoded if the length is not 0xffffffff, but
+     * curiously, updates aren't validated to make sure they don't exceed the
+     * stated length.  (The resulting output will of course fail to decode.)
+     */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL,
+     NULL, &streamInfo);
+    CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    CryptMsgClose(msg);
+    todo_wine
+    check_updates("bogus data message with definite length", &a1, &accum);
+    free_updates(&accum);
+    /* A valid definite-length encoding: */
+    streamInfo.cbContent = sizeof(msgData);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL,
+     NULL, &streamInfo);
+    CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    CryptMsgClose(msg);
+    todo_wine
+    check_updates("data message with definite length", &a2, &accum);
+    free_updates(&accum);
+    /* An indefinite-length encoding: */
+    streamInfo.cbContent = 0xffffffff;
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL,
+     NULL, &streamInfo);
+    CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    CryptMsgClose(msg);
+    todo_wine
+    check_updates("data message with indefinite length", &a3, &accum);
+    free_updates(&accum);
 }
 
 static void test_data_msg(void)
