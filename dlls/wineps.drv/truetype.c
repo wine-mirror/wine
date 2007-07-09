@@ -83,10 +83,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
     	    	    	    	    FT_LOAD_IGNORE_TRANSFORM	|   \
 				    FT_LOAD_LINEAR_DESIGN   	    )
 
-#ifndef SONAME_LIBFREETYPE
-#define SONAME_LIBFREETYPE "libfreetype" SONAME_EXT
-#endif
-
 static void *ft_handle = NULL;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL;

@@ -810,33 +810,17 @@ then
 fi
 
 dnl **** Check for FreeType 2 ****
-AC_SUBST(FREETYPELIBS,"")
-AC_SUBST(FREETYPEINCL,"")
-AC_CHECK_PROG(ft_devel,freetype-config,freetype-config,no)
-if test "$ft_devel" = "no"
+wine_cv_msg_freetype=yes
+AC_CHECK_PROGS(ft_devel,[freetype-config freetype2-config],false)
+if test "$ft_devel" != "false"
 then
-    AC_CHECK_PROG(ft_devel2,freetype2-config,freetype2-config,no)
-    if test "$ft_devel2" = "freetype2-config"
+    ac_freetype_libs=`$ft_devel --libs`
+    ac_freetype_incl=`$ft_devel --cflags`
+    WINE_CHECK_SONAME(freetype,FT_Init_FreeType,[ft_lib=yes],[ft_lib=no],[$ac_freetype_libs])
+    if test "$ft_lib" = "yes"
     then
-	ft_devel=$ft_devel2
-    fi
-fi
-
-if test "$ft_devel" = "no"
-then
-    wine_cv_msg_freetype=yes
-else
-    FREETYPELIBS=`$ft_devel --libs`
-    FREETYPEINCL=`$ft_devel --cflags`
-    AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no,$FREETYPELIBS)
-    if test "$ft_lib" = "no"
-    then
-	wine_cv_msg_freetype=yes
-	FREETYPELIBS=""
-	FREETYPEINCL=""
-    else
 	ac_save_CPPFLAGS="$CPPFLAGS"
-	CPPFLAGS="$FREETYPEINCL $CPPFLAGS"
+	CPPFLAGS="$ac_freetype_incl $CPPFLAGS"
 	AC_CHECK_HEADERS(ft2build.h \
                          freetype/freetype.h \
                          freetype/ftglyph.h \
@@ -857,7 +841,7 @@ else
                     wine_cv_fttrigon=yes],[wine_cv_fttrigon=no])
         AC_CHECK_TYPES(FT_TrueTypeEngineType,,,[#include <freetype/ftmodapi.h>])
         ac_save_CFLAGS="$CFLAGS"
-        CFLAGS="$CFLAGS $FREETYPELIBS"
+        CFLAGS="$CFLAGS $ac_freetype_libs"
         AC_CHECK_FUNCS(FT_Load_Sfnt_Table)
         CFLAGS="$ac_save_CFLAGS"
 	CPPFLAGS="$ac_save_CPPFLAGS"
@@ -865,11 +849,9 @@ else
 	if test "$ac_cv_header_freetype_freetype_h" = "yes" -a "$wine_cv_fttrigon" = "yes"
 	then
 	    AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
+            AC_SUBST(FREETYPELIBS,"$ac_freetype_libs")
+            AC_SUBST(FREETYPEINCL,"$ac_freetype_incl")
 	    wine_cv_msg_freetype=no
-	else
-	    FREETYPELIBS=""
-	    FREETYPEINCL=""
-	    wine_cv_msg_freetype=yes
 	fi
     fi
 fi
@@ -1159,7 +1141,6 @@ AC_DEFINE_UNQUOTED(SONAME_EXT,[".$LIBEXT"],[Define to the file extension of shar
 
 WINE_CHECK_SONAME(X11,XCreateWindow,,,[$X_LIBS $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xext,XextCreateExtension,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
-WINE_CHECK_SONAME(freetype,FT_Init_FreeType,,,[$X_LIBS])
 
 
 dnl **** Check for functions ****

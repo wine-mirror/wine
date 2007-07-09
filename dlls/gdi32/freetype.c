@@ -128,10 +128,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #include <freetype/ftmodapi.h>
 #endif
 
-#ifndef SONAME_LIBFREETYPE
-#define SONAME_LIBFREETYPE "libfreetype" SONAME_EXT
-#endif
-
 #ifndef HAVE_FT_TRUETYPEENGINETYPE
 typedef enum
 {
