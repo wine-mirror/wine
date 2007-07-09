@@ -93,7 +93,6 @@ static void test_open_svc(void)
     SetLastError(0xdeadbeef);
     svc_handle = OpenServiceA(NULL, NULL, 0);
     ok(!svc_handle, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     /* TODO: Add some tests with invalid handles. These produce errors on Windows but crash on Wine */

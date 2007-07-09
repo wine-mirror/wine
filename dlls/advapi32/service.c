@@ -1228,17 +1228,17 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 
     TRACE("%p %s %d\n", hSCManager, debugstr_w(lpServiceName), dwDesiredAccess);
 
-    if (!lpServiceName)
-    {
-        SetLastError(ERROR_INVALID_ADDRESS);
-        return NULL;
-    }
-
     hscm = sc_handle_get_handle_data( hSCManager, SC_HTYPE_MANAGER );
     if (!hscm)
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
+    }
+
+    if (!lpServiceName)
+    {
+        SetLastError(ERROR_INVALID_ADDRESS);
+        return NULL;
     }
 
     r = RegOpenKeyExW( hscm->hkey, lpServiceName, 0, KEY_ALL_ACCESS, &hKey );
