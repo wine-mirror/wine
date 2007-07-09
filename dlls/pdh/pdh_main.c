@@ -327,6 +327,30 @@ PDH_STATUS WINAPI PdhGetFormattedCounterValue( PDH_HCOUNTER handle, DWORD format
 }
 
 /***********************************************************************
+ *              PdhGetRawCounterValue   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetRawCounterValue( PDH_HCOUNTER handle, LPDWORD type,
+                                         PPDH_RAW_COUNTER value )
+{
+    struct counter *counter = handle;
+
+    TRACE("%p %p %p\n", handle, type, value);
+
+    if (!value)   return PDH_INVALID_ARGUMENT;
+    if (!counter) return PDH_INVALID_HANDLE;
+
+    value->CStatus                  = counter->status;
+    value->TimeStamp.dwLowDateTime  = counter->stamp.dwLowDateTime;
+    value->TimeStamp.dwHighDateTime = counter->stamp.dwHighDateTime;
+    value->FirstValue               = counter->one.largevalue;;
+    value->SecondValue              = counter->two.largevalue;
+    value->MultiCount               = 1; /* FIXME */
+
+    if (type) *type = counter->type;
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
  *              PdhOpenQueryA   (PDH.@)
  */
 PDH_STATUS WINAPI PdhOpenQueryA( LPCSTR source, DWORD_PTR userdata, PDH_HQUERY *query )

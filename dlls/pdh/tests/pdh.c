@@ -145,6 +145,40 @@ static void test_PdhGetFormattedCounterValue( void )
     ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
 }
 
+static void test_PdhGetRawCounterValue( void )
+{
+    PDH_STATUS ret;
+    PDH_HQUERY query;
+    PDH_HCOUNTER counter;
+    PDH_RAW_COUNTER value;
+
+    ret = PdhOpenQueryA( NULL, 0, &query );
+    ok(ret == ERROR_SUCCESS, "PdhOpenQueryA failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterA( query, "\\System\\System Up Time", 0, &counter );
+    ok(ret == ERROR_SUCCESS, "PdhAddCounterA failed 0x%08x\n", ret);
+
+    ret = PdhGetRawCounterValue( NULL, NULL, &value );
+    ok(ret == PDH_INVALID_HANDLE, "PdhGetRawCounterValue failed 0x%08x\n", ret);
+
+    ret = PdhGetRawCounterValue( counter, NULL, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhGetRawCounterValue failed 0x%08x\n", ret);
+
+    ret = PdhGetRawCounterValue( counter, NULL, &value );
+    ok(ret == ERROR_SUCCESS, "PdhGetRawCounterValue failed 0x%08x\n", ret);
+    ok(value.CStatus == ERROR_SUCCESS, "expected ERROR_SUCCESS got %x", value.CStatus);
+
+    ret = PdhCollectQueryData( query );
+    ok(ret == ERROR_SUCCESS, "PdhCollectQueryData failed 0x%08x\n", ret);
+
+    ret = PdhGetRawCounterValue( counter, NULL, &value );
+    ok(ret == ERROR_SUCCESS, "PdhGetRawCounterValue failed 0x%08x\n", ret);
+    ok(value.CStatus == ERROR_SUCCESS, "expected ERROR_SUCCESS got %x", value.CStatus);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
+}
+
 static void test_PdhSetCounterScaleFactor( void )
 {
     PDH_STATUS ret;
@@ -184,5 +218,6 @@ START_TEST(pdh)
     test_open_close_query();
     test_add_remove_counter();
     test_PdhGetFormattedCounterValue();
+    test_PdhGetRawCounterValue();
     test_PdhSetCounterScaleFactor();
 }

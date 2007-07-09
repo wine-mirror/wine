@@ -64,7 +64,7 @@
 @ stub PdhGetLogSetGUID
 @ stub PdhGetRawCounterArrayA
 @ stub PdhGetRawCounterArrayW
-@ stub PdhGetRawCounterValue
+@ stdcall PdhGetRawCounterValue(ptr ptr ptr)
 @ stub PdhIsRealTimeQuery
 @ stub PdhListLogFileHeaderA
 @ stub PdhListLogFileHeaderW
