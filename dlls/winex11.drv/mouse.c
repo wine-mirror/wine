@@ -25,18 +25,15 @@
 #include <X11/Xlib.h>
 #include <stdarg.h>
 
-#ifdef HAVE_X11_XCURSOR_XCURSOR_H
+#ifdef SONAME_LIBXCURSOR
 # include <X11/Xcursor/Xcursor.h>
-# ifndef SONAME_LIBXCURSOR
-#  define SONAME_LIBXCURSOR "libXcursor" SONAME_EXT
-# endif
 static void *xcursor_handle;
 # define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(XcursorImageCreate);
 MAKE_FUNCPTR(XcursorImageDestroy);
 MAKE_FUNCPTR(XcursorImageLoadCursor);
 # undef MAKE_FUNCPTR
-#endif /* HAVE_X11_XCURSOR_XCURSOR_H */
+#endif /* SONAME_LIBXCURSOR */
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -99,7 +96,7 @@ BOOL X11DRV_SetCursorPos( INT x, INT y );
  */
 void X11DRV_Xcursor_Init(void)
 {
-#ifdef HAVE_X11_XCURSOR_XCURSOR_H
+#ifdef SONAME_LIBXCURSOR
     xcursor_handle = wine_dlopen(SONAME_LIBXCURSOR, RTLD_NOW, NULL, 0);
     if (!xcursor_handle)  /* wine_dlopen failed. */
     {
@@ -113,7 +110,7 @@ void X11DRV_Xcursor_Init(void)
     LOAD_FUNCPTR(XcursorImageDestroy);
     LOAD_FUNCPTR(XcursorImageLoadCursor);
 #undef LOAD_FUNCPTR
-#endif /* HAVE_X11_XCURSOR_XCURSOR_H */
+#endif /* SONAME_LIBXCURSOR */
 }
 
 
@@ -394,7 +391,7 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
 }
 
 
-#ifdef HAVE_X11_XCURSOR_XCURSOR_H
+#ifdef SONAME_LIBXCURSOR
 
 /***********************************************************************
  *              create_cursor_image
@@ -550,7 +547,7 @@ static Cursor create_xcursor_cursor( Display *display, CURSORICONINFO *ptr )
     return cursor;
 }
 
-#endif /* HAVE_X11_XCURSOR_XCURSOR_H */
+#endif /* SONAME_LIBXCURSOR */
 
 
 /***********************************************************************
@@ -566,7 +563,7 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
     POINT hotspot;
     char *bitMask32 = NULL;
 
-#ifdef HAVE_X11_XCURSOR_XCURSOR_H
+#ifdef SONAME_LIBXCURSOR
     if (pXcursorImageLoadCursor) return create_xcursor_cursor( display, ptr );
 #endif
 

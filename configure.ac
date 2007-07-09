@@ -508,6 +508,12 @@ then
               $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
 
+        dnl *** Check for X cursor
+        if test "$ac_cv_header_X11_Xcursor_Xcursor_h" = "yes"
+        then
+            WINE_CHECK_SONAME(Xcursor,XcursorImageLoadCursor,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+        fi
+
         dnl *** Check for X Shm extension
         if test "$ac_cv_header_X11_extensions_XShm_h" = "yes"
         then
@@ -1148,7 +1154,6 @@ AC_DEFINE_UNQUOTED(SONAME_EXT,[".$LIBEXT"],[Define to the file extension of shar
 WINE_CHECK_SONAME(X11,XCreateWindow,,,[$X_LIBS $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xext,XextCreateExtension,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(Xi,XOpenDevice,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
-WINE_CHECK_SONAME(Xcursor,XcursorImageLoadCursor,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
 WINE_CHECK_SONAME(freetype,FT_Init_FreeType,,,[$X_LIBS])
 
 
