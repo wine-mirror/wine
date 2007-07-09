@@ -40,9 +40,9 @@
 @ stub PdhExpandWildCardPathHW
 @ stub PdhExpandWildCardPathW
 @ stub PdhFormatFromRawValue
-@ stub PdhGetCounterInfoA
-@ stub PdhGetCounterInfoW
-@ stub PdhGetCounterTimeBase
+@ stdcall PdhGetCounterInfoA(ptr long ptr ptr)
+@ stdcall PdhGetCounterInfoW(ptr long ptr ptr)
+@ stdcall PdhGetCounterTimeBase(ptr ptr)
 @ stub PdhGetDataSourceTimeRangeA
 @ stub PdhGetDataSourceTimeRangeH
 @ stub PdhGetDataSourceTimeRangeW

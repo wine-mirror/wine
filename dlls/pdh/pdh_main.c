@@ -2,6 +2,7 @@
  * Performance Data Helper (pdh.dll)
  *
  * Copyright 2007 Andrey Turkin
+ * Copyright 2007 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -280,6 +281,84 @@ PDH_STATUS WINAPI PdhCollectQueryData( PDH_HQUERY handle )
         GetLocalTime( &time );
         SystemTimeToFileTime( &time, &counter->stamp );
     }
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *              PdhGetCounterInfoA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetCounterInfoA( PDH_HCOUNTER handle, BOOLEAN text, LPDWORD size, PPDH_COUNTER_INFO_A info )
+{
+    struct counter *counter = handle;
+
+    TRACE("%p %d %p %p\n", handle, text, size, info);
+
+    if (!counter) return PDH_INVALID_HANDLE;
+    if (!size)    return PDH_INVALID_ARGUMENT;
+
+    if (*size < sizeof(PDH_COUNTER_INFO_A))
+    {
+        *size = sizeof(PDH_COUNTER_INFO_A);
+        return PDH_MORE_DATA;
+    }
+
+    memset( info, 0, sizeof(PDH_COUNTER_INFO_A) );
+
+    info->dwType          = counter->type;
+    info->CStatus         = counter->status;
+    info->lScale          = counter->scale;
+    info->lDefaultScale   = counter->defaultscale;
+    info->dwUserData      = counter->user;
+    info->dwQueryUserData = counter->queryuser;
+
+    *size = sizeof(PDH_COUNTER_INFO_A);
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *              PdhGetCounterInfoW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetCounterInfoW( PDH_HCOUNTER handle, BOOLEAN text, LPDWORD size, PPDH_COUNTER_INFO_W info )
+{
+    struct counter *counter = handle;
+
+    TRACE("%p %d %p %p\n", handle, text, size, info);
+
+    if (!size)    return PDH_INVALID_ARGUMENT;
+    if (!counter) return PDH_INVALID_HANDLE;
+
+    if (*size < sizeof(PDH_COUNTER_INFO_W))
+    {
+        *size = sizeof(PDH_COUNTER_INFO_W);
+        return PDH_MORE_DATA;
+    }
+
+    memset( info, 0, sizeof(PDH_COUNTER_INFO_W) );
+
+    info->dwType          = counter->type;
+    info->CStatus         = counter->status;
+    info->lScale          = counter->scale;
+    info->lDefaultScale   = counter->defaultscale;
+    info->dwUserData      = counter->user;
+    info->dwQueryUserData = counter->queryuser;
+
+    *size = sizeof(PDH_COUNTER_INFO_A);
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *              PdhGetCounterTimeBase   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetCounterTimeBase( PDH_HCOUNTER handle, LONGLONG *base )
+{
+    struct counter *counter = handle;
+
+    TRACE("%p %p\n", handle, base);
+
+    if (!base)    return PDH_INVALID_ARGUMENT;
+    if (!counter) return PDH_INVALID_HANDLE;
+
+    *base = counter->base;
     return ERROR_SUCCESS;
 }
 
