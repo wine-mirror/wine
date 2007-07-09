@@ -96,14 +96,6 @@ static INT mru = -1;
 
 static int antialias = 1;
 
-/* some default values just in case */
-#ifndef SONAME_LIBX11
-#define SONAME_LIBX11 "libX11" SONAME_EXT
-#endif
-#ifndef SONAME_LIBXEXT
-#define SONAME_LIBXEXT "libXext" SONAME_EXT
-#endif
-
 static void *xrender_handle;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
