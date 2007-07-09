@@ -162,6 +162,7 @@ dlls/cryptdll/libcryptdll.def
 dlls/ctl3d.dll16
 dlls/ctl3d32/libctl3d32.def
 dlls/ctl3dv2.dll16
+dlls/d3d10/version.res
 dlls/d3d8/libd3d8.def
 dlls/d3d8/tests/*.ok
 dlls/d3d8/tests/d3d8_crosstest.exe
