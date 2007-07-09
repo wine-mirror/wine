@@ -304,6 +304,8 @@ static void test_data_msg_open(void)
 {
     HCRYPTMSG msg;
     CMSG_HASHED_ENCODE_INFO hashInfo = { 0 };
+    CMSG_STREAM_INFO streamInfo = { 0 };
+    char oid[] = "1.2.3";
 
     /* The data message type takes no additional info */
     SetLastError(0xdeadbeef);
@@ -313,6 +315,30 @@ static void test_data_msg_open(void)
      "Expected E_INVALIDARG, got %x\n", GetLastError());
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
      NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* An empty stream info is allowed. */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
+     &streamInfo);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* Passing a bogus inner OID succeeds for a non-streamed message.. */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, oid,
+     NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* and still succeeds when CMSG_DETACHED_FLAG is passed.. */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
+     CMSG_DATA, NULL, oid, NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* and when a stream info is given, even though you're not supposed to be
+     * able to use anything but szOID_RSA_data when streaming is being used.
+     */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
+     CMSG_DATA, NULL, oid, &streamInfo);
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 }
