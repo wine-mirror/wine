@@ -429,7 +429,6 @@ static void test_data_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, NULL, &size);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
-
     CryptMsgClose(msg);
 }
 
@@ -446,6 +445,7 @@ static void test_data_msg_encoding(void)
 {
     HCRYPTMSG msg;
     BOOL ret;
+    static char oid[] = "1.2.3";
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
      NULL);
@@ -467,6 +467,20 @@ static void test_data_msg_encoding(void)
      dataEmptyBareContent, sizeof(dataEmptyBareContent));
     check_param("data empty content", msg, CMSG_CONTENT_PARAM, dataEmptyContent,
      sizeof(dataEmptyContent));
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    check_param("data bare content", msg, CMSG_BARE_CONTENT_PARAM,
+     dataBareContent, sizeof(dataBareContent));
+    check_param("data content", msg, CMSG_CONTENT_PARAM, dataContent,
+     sizeof(dataContent));
+    CryptMsgClose(msg);
+    /* The inner OID is apparently ignored */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, oid,
+     NULL);
+    check_param("data bogus oid bare content", msg, CMSG_BARE_CONTENT_PARAM,
+     dataEmptyBareContent, sizeof(dataEmptyBareContent));
+    check_param("data bogus oid content", msg, CMSG_CONTENT_PARAM,
+     dataEmptyContent, sizeof(dataEmptyContent));
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     check_param("data bare content", msg, CMSG_BARE_CONTENT_PARAM,
