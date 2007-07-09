@@ -632,6 +632,77 @@ static void test_data_msg(void)
     test_data_msg_encoding();
 }
 
+static void test_decode_msg_update(void)
+{
+    HCRYPTMSG msg;
+    BOOL ret;
+    CMSG_STREAM_INFO streamInfo = { 0 };
+    DWORD i;
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    /* Update with a full message in a final update */
+    ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent), TRUE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    /* Can't update after a final update */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent), TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
+     "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    /* Can't send a non-final update without streaming */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
+     FALSE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
+     "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
+    /* A subsequent final update succeeds */
+    ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent), TRUE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
+    /* Updating a message that has a NULL stream callback fails */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
+     FALSE);
+    todo_wine
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    /* Changing the callback pointer after the fact yields the same error (so
+     * the message must copy the stream info, not just store a pointer to it)
+     */
+    streamInfo.pfnStreamOutput = nop_stream_output;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
+     FALSE);
+    todo_wine
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* Updating the message byte by byte is legal */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
+    todo_wine {
+    for (i = 0, ret = TRUE; ret && i < sizeof(dataEmptyContent); i++)
+        ret = CryptMsgUpdate(msg, &dataEmptyContent[i], 1, FALSE);
+    ok(ret, "CryptMsgUpdate failed on byte %d: %x\n", i, GetLastError());
+    ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    ok(ret, "CryptMsgUpdate failed on byte %d: %x\n", i, GetLastError());
+    }
+    CryptMsgClose(msg);
+}
+
+static void test_decode_msg(void)
+{
+    test_decode_msg_update();
+}
+
 START_TEST(msg)
 {
     /* Basic parameter checking tests */
@@ -642,4 +713,5 @@ START_TEST(msg)
 
     /* Message-type specific tests */
     test_data_msg();
+    test_decode_msg();
 }
