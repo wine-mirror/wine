@@ -150,10 +150,22 @@ struct source
     LONGLONG        base;                           /* samples per second */
 };
 
+static const WCHAR path_uptime[] =
+    {'\\','S','y','s','t','e','m', '\\', 'S','y','s','t','e','m',' ','U','p',' ','T','i','m','e',0};
+
+static void CALLBACK collect_uptime( struct counter *counter )
+{
+    counter->two.largevalue = GetTickCount(); /* FIXME */
+    counter->status = PDH_CSTATUS_VALID_DATA;
+}
+
+#define TYPE_UPTIME \
+    (PERF_SIZE_LARGE | PERF_TYPE_COUNTER | PERF_COUNTER_ELAPSED | PERF_OBJECT_TIMER | PERF_DISPLAY_SECONDS)
+
 /* counter source registry */
 static const struct source counter_sources[] =
 {
-    { NULL, NULL, 0, 0, 0 }
+    { path_uptime, collect_uptime, TYPE_UPTIME, -3, 1000 }
 };
 
 /***********************************************************************
