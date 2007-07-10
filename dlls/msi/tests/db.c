@@ -2049,30 +2049,21 @@ static void test_try_transform(void)
     hrec = 0;
     query = "select `NOO`,`OOO` from `MOO` where `NOO` = 1 AND `OOO` = 'c'";
     r = do_query(hdb, query, &hrec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "select query failed\n");
-    }
+    ok(r == ERROR_SUCCESS, "select query failed\n");
     MsiCloseHandle(hrec);
 
     /* check unchanged value */
     hrec = 0;
     query = "select `NOO`,`OOO` from `MOO` where `NOO` = 2 AND `OOO` = 'b'";
     r = do_query(hdb, query, &hrec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "select query failed\n");
-    }
+    ok(r == ERROR_SUCCESS, "select query failed\n");
     MsiCloseHandle(hrec);
 
     /* check deleted value */
     hrec = 0;
     query = "select * from `MOO` where `NOO` = 3";
     r = do_query(hdb, query, &hrec);
-    todo_wine
-    {
-        ok(r == ERROR_NO_MORE_ITEMS, "select query failed\n");
-    }
+    ok(r == ERROR_NO_MORE_ITEMS, "select query failed\n");
     if (hrec) MsiCloseHandle(hrec);
 
     /* check added stream */
@@ -2093,67 +2084,40 @@ static void test_try_transform(void)
     hrec = 0;
     query = "select * from `MOO`";
     r = MsiDatabaseOpenView(hdb, query, &hview);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "open view failed\n");
-    }
+    ok(r == ERROR_SUCCESS, "open view failed\n");
 
     r = MsiViewExecute(hview, 0);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "view execute failed\n");
-    }
+    ok(r == ERROR_SUCCESS, "view execute failed\n");
 
     r = MsiViewFetch(hview, &hrec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "view fetch failed\n");
-    }
+    ok(r == ERROR_SUCCESS, "view fetch failed\n");
 
     r = MsiRecordGetInteger(hrec, 1);
-    todo_wine
-    {
-        ok(r == 1, "Expected 1, got %d\n", r);
-    }
+    ok(r == 1, "Expected 1, got %d\n", r);
 
     sz = sizeof buffer;
     r = MsiRecordGetString(hrec, 2, buffer, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "record get string failed\n");
-        ok(!lstrcmpA(buffer, "c"), "Expected c, got %s\n", buffer);
-    }
+    ok(r == ERROR_SUCCESS, "record get string failed\n");
+    ok(!lstrcmpA(buffer, "c"), "Expected c, got %s\n", buffer);
 
     r = MsiRecordGetInteger(hrec, 3);
     ok(r == 0x80000000, "Expected 0x80000000, got %d\n", r);
 
     r = MsiRecordGetInteger(hrec, 4);
-    todo_wine
-    {
-        ok(r == 5, "Expected 5, got %d\n", r);
-    }
+    ok(r == 5, "Expected 5, got %d\n", r);
 
     MsiCloseHandle(hrec);
 
     r = MsiViewFetch(hview, &hrec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "view fetch failed\n");
-    }
+    ok(r == ERROR_SUCCESS, "view fetch failed\n");
 
     r = MsiRecordGetInteger(hrec, 1);
-    todo_wine
-    {
-        ok(r == 2, "Expected 2, got %d\n", r);
-    }
+    ok(r == 2, "Expected 2, got %d\n", r);
 
     sz = sizeof buffer;
     r = MsiRecordGetString(hrec, 2, buffer, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "record get string failed\n");
-        ok(!lstrcmpA(buffer, "b"), "Expected b, got %s\n", buffer);
-    }
+    ok(r == ERROR_SUCCESS, "record get string failed\n");
+    ok(!lstrcmpA(buffer, "b"), "Expected b, got %s\n", buffer);
 
     r = MsiRecordGetInteger(hrec, 3);
     ok(r == 0x80000000, "Expected 0x80000000, got %d\n", r);
@@ -2164,10 +2128,7 @@ static void test_try_transform(void)
     MsiCloseHandle(hrec);
 
     r = MsiViewFetch(hview, &hrec);
-    todo_wine
-    {
-        ok(r == ERROR_NO_MORE_ITEMS, "view fetch succeeded\n");
-    }
+    ok(r == ERROR_NO_MORE_ITEMS, "view fetch succeeded\n");
 
     MsiCloseHandle(hrec);
     MsiCloseHandle(hview);

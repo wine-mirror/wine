@@ -1944,8 +1944,34 @@ static UINT msi_table_find_row( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *row )
     return r;
 }
 
+static void msi_update_table_columns( MSIDATABASE *db, LPWSTR name )
+{
+    MSITABLE *table;
+    UINT size, offset;
+    int n;
+
+    table = find_cached_table( db, name );
+    msi_free( table->colinfo );
+    table_get_column_info( db, name, &table->colinfo, &table->col_count );
+
+    size = msi_table_get_row_size( table->colinfo, table->col_count );
+    offset = table->colinfo[table->col_count - 1].offset;
+
+    for ( n = 0; n < table->row_count; n++ )
+    {
+        table->data[n] = msi_realloc( table->data[n], size );
+        table->data[n][offset] = (BYTE)MSI_NULL_INTEGER;
+    }
+}
+
+typedef struct
+{
+    struct list entry;
+    LPWSTR name;
+} TRANSFORMDATA;
+
 static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
-                                      string_table *st, LPCWSTR name,
+                                      string_table *st, TRANSFORMDATA *transform,
                                       UINT bytes_per_strref )
 {
     UINT rawsize = 0;
@@ -1955,6 +1981,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
     MSIRECORD *rec = NULL;
     UINT colcol = 0;
     WCHAR coltable[32];
+    LPWSTR name = transform->name;
 
     coltable[0] = 0;
     TRACE("%p %p %p %s\n", db, stg, st, debugstr_w(name) );
@@ -2038,34 +2065,41 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
         {
             if ( mask & 1 )
             {
+                WCHAR table[32];
+                DWORD sz = 32;
+                UINT number = MSI_NULL_INTEGER;
+
                 TRACE("inserting record\n");
 
-                /*
-                 * Native msi seems writes nul into the
-                 * Number (2nd) column of the _Columns table.
-                 * Not sure that it's deliberate...
-                 */
                 if (!lstrcmpW(name, szColumns))
                 {
-                    WCHAR table[32];
-                    DWORD sz = 32;
-
                     MSI_RecordGetStringW( rec, 1, table, &sz );
+                    number = MSI_RecordGetInteger( rec, 2 );
 
-                    /* reset the column number on a new table */
-                    if ( lstrcmpW(coltable, table) )
+                    /*
+                     * Native msi seems writes nul into the Number (2nd) column of
+                     * the _Columns table, only when the columns are from a new table
+                     */
+                    if ( number == MSI_NULL_INTEGER )
                     {
-                        colcol = 0;
-                        lstrcpyW( coltable, table );
-                    }
+                        /* reset the column number on a new table */
+                        if ( lstrcmpW(coltable, table) )
+                        {
+                            colcol = 0;
+                            lstrcpyW( coltable, table );
+                        }
 
-                    /* fix nul column numbers */
-                    MSI_RecordSetInteger( rec, 2, ++colcol );
+                        /* fix nul column numbers */
+                        MSI_RecordSetInteger( rec, 2, ++colcol );
+                    }
                 }
 
                 r = TABLE_insert_row( &tv->view, rec, FALSE );
                 if (r != ERROR_SUCCESS)
                     ERR("insert row failed\n");
+
+                if ( number != MSI_NULL_INTEGER && !lstrcmpW(name, szColumns) )
+                    msi_update_table_columns( db, table );
             }
             else
             {
@@ -2108,11 +2142,12 @@ err:
  */
 UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
 {
+    struct list transforms;
     IEnumSTATSTG *stgenum = NULL;
+    TRANSFORMDATA *transform;
+    TRANSFORMDATA *tables = NULL, *columns = NULL;
     HRESULT r;
     STATSTG stat;
-    ULONG count;
-    WCHAR name[0x40];
     string_table *strings;
     UINT ret = ERROR_FUNCTION_FAILED;
     UINT bytes_per_strref;
@@ -2127,40 +2162,84 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
     if( FAILED( r ) )
         goto end;
 
-    /*
-     * Apply _Tables and _Columns transforms first so that
-     * the table metadata is correct, and empty tables exist.
-     */
-    ret = msi_table_load_transform( db, stg, strings, szTables, bytes_per_strref );
-    if (ret != ERROR_SUCCESS && ret != ERROR_INVALID_TABLE)
-        goto end;
+    list_init(&transforms);
 
-    ret = msi_table_load_transform( db, stg, strings, szColumns, bytes_per_strref );
-    if (ret != ERROR_SUCCESS && ret != ERROR_INVALID_TABLE)
-        goto end;
-
-    ret = ERROR_SUCCESS;
-
-    while( r == ERROR_SUCCESS )
+    while ( TRUE )
     {
-        count = 0;
+        MSITABLEVIEW *tv = NULL;
+        WCHAR name[0x40];
+        ULONG count = 0;
+
         r = IEnumSTATSTG_Next( stgenum, 1, &stat, &count );
-        if( FAILED( r ) || !count )
+        if ( FAILED( r ) || !count )
             break;
 
         decode_streamname( stat.pwcsName, name );
         if ( name[0] != 0x4840 )
             continue;
 
-        TRACE("transform contains stream %s\n", debugstr_w(name));
-
         if ( !lstrcmpW( name+1, szStringPool ) ||
-             !lstrcmpW( name+1, szStringData ) ||
-             !lstrcmpW( name+1, szColumns ) ||
-             !lstrcmpW( name+1, szTables ) )
+             !lstrcmpW( name+1, szStringData ) )
             continue;
 
-        ret = msi_table_load_transform( db, stg, strings, name+1, bytes_per_strref );
+        transform = msi_alloc_zero( sizeof(TRANSFORMDATA) );
+        if ( !transform )
+            break;
+
+        list_add_tail( &transforms, &transform->entry );
+
+        transform->name = strdupW( name + 1 );
+
+        if ( !lstrcmpW( transform->name, szTables ) )
+            tables = transform;
+        else if (!lstrcmpW( transform->name, szColumns ) )
+            columns = transform;
+
+        TRACE("transform contains stream %s\n", debugstr_w(name));
+
+        /* load the table */
+        r = TABLE_CreateView( db, transform->name, (MSIVIEW**) &tv );
+        if( r != ERROR_SUCCESS )
+            continue;
+
+        r = tv->view.ops->execute( &tv->view, NULL );
+        if( r != ERROR_SUCCESS )
+        {
+            tv->view.ops->delete( &tv->view );
+            continue;
+        }
+
+        tv->view.ops->delete( &tv->view );
+    }
+
+    /*
+     * Apply _Tables and _Columns transforms first so that
+     * the table metadata is correct, and empty tables exist.
+     */
+    ret = msi_table_load_transform( db, stg, strings, tables, bytes_per_strref );
+    if (ret != ERROR_SUCCESS && ret != ERROR_INVALID_TABLE)
+        goto end;
+
+    ret = msi_table_load_transform( db, stg, strings, columns, bytes_per_strref );
+    if (ret != ERROR_SUCCESS && ret != ERROR_INVALID_TABLE)
+        goto end;
+
+    ret = ERROR_SUCCESS;
+
+    while ( !list_empty( &transforms ) )
+    {
+        transform = LIST_ENTRY( list_head( &transforms ), TRANSFORMDATA, entry );
+
+        if ( lstrcmpW( transform->name, szColumns ) &&
+             lstrcmpW( transform->name, szTables ) &&
+             ret == ERROR_SUCCESS )
+        {
+            ret = msi_table_load_transform( db, stg, strings, transform, bytes_per_strref );
+        }
+
+        list_remove( &transform->entry );
+        msi_free( transform->name );
+        msi_free( transform );
     }
 
     if ( ret == ERROR_SUCCESS )
