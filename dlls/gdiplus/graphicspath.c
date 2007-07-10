@@ -71,7 +71,7 @@ GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
     if(!path || !points)
         return InvalidParameter;
 
-    if(!lengthen_path(path, count + (path->newfigure ? 1 : 0)))
+    if(!lengthen_path(path, count))
         return OutOfMemory;
 
     for(i = 0; i < count; i++){
