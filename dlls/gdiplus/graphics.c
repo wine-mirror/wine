@@ -376,8 +376,8 @@ static void draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
         pti[i].y = roundr(pt[i].Y);
     }
     for(i = 0; i < 4; i ++){
-        pti[i].x = roundr(ptf[i].X);
-        pti[i].y = roundr(ptf[i].Y);
+        pti[i + count - 4].x = roundr(ptf[i].X);
+        pti[i + count - 4].y = roundr(ptf[i].Y);
     }
 
     PolyBezier(hdc, pti, count);
