@@ -45,6 +45,13 @@ static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
 static const WCHAR  szSCMLock[] = {'A','D','V','A','P','I','_','S','C','M',
                                    'L','O','C','K',0};
 
+static const GENERIC_MAPPING scm_generic = {
+    (STANDARD_RIGHTS_READ | SC_MANAGER_ENUMERATE_SERVICE | SC_MANAGER_QUERY_LOCK_STATUS),
+    (STANDARD_RIGHTS_WRITE | SC_MANAGER_CREATE_SERVICE | SC_MANAGER_MODIFY_BOOT_CONFIG),
+    (STANDARD_RIGHTS_EXECUTE | SC_MANAGER_CONNECT | SC_MANAGER_LOCK),
+    SC_MANAGER_ALL_ACCESS
+};
+
 typedef struct service_start_info_t
 {
     DWORD cmd;
@@ -1041,6 +1048,7 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     struct sc_manager *manager;
     HKEY hReg;
     LONG r;
+    DWORD new_mask = dwDesiredAccess;
 
     TRACE("(%s,%s,0x%08x)\n", debugstr_w(lpMachineName),
           debugstr_w(lpDatabaseName), dwDesiredAccess);
@@ -1077,8 +1085,9 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     if (r!=ERROR_SUCCESS)
         goto error;
 
-    manager->dwAccess = dwDesiredAccess;
-    TRACE("returning %p\n", manager);
+    RtlMapGenericMask(&new_mask, &scm_generic);
+    manager->dwAccess = new_mask;
+    TRACE("returning %p (access : 0x%08x)\n", manager, manager->dwAccess);
 
     return (SC_HANDLE) &manager->hdr;
 
