@@ -1981,7 +1981,12 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
     MSIRECORD *rec = NULL;
     UINT colcol = 0;
     WCHAR coltable[32];
-    LPWSTR name = transform->name;
+    LPWSTR name;
+
+    if (!transform)
+        return ERROR_SUCCESS;
+
+    name = transform->name;
 
     coltable[0] = 0;
     TRACE("%p %p %p %s\n", db, stg, st, debugstr_w(name) );
