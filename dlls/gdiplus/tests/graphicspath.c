@@ -21,7 +21,7 @@
 #include "windows.h"
 #include "gdiplus.h"
 #include "wine/test.h"
-#include "math.h"
+#include <math.h>
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 #define POINT_TYPE_MAX_LEN (75)
