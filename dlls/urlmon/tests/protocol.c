@@ -1057,9 +1057,7 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
     SET_EXPECT(GetRootSecurityId);
 
     hres = IInternetProtocol_Start(http_protocol, url, &protocol_sink, &bind_info, 0, 0);
-    todo_wine {
-        ok(hres == S_OK, "Start failed: %08x\n", hres);
-    }
+    ok(hres == S_OK, "Start failed: %08x\n", hres);
     if(FAILED(hres))
         return FALSE;
 
