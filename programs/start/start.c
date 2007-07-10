@@ -107,12 +107,21 @@ static char *build_args( int argc, char **argv )
 	char *ret, *p;
 
 	for (i = 0; i < argc; i++ )
+	{
 		len += strlen(argv[i]) + 1;
+		if (strchr(argv[i], ' '))
+			len += 2;
+	}
 	ret = HeapAlloc( GetProcessHeap(), 0, len );
 	ret[0] = 0;
 
 	for (i = 0, p = ret; i < argc; i++ )
-		p += sprintf(p, " %s", argv[i]);
+	{
+		if (strchr(argv[i], ' '))
+			p += sprintf(p, " \"%s\"", argv[i]);
+		else
+			p += sprintf(p, " %s", argv[i]);
+	}
 	return ret;
 }
 
