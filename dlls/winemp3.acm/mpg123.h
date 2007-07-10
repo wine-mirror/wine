@@ -61,7 +61,7 @@
 #ifndef FALSE
 #define         FALSE                   0
 #endif
-#ifndef FALSE
+#ifndef TRUE
 #define         TRUE                    1
 #endif
 
