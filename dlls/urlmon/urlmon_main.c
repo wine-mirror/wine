@@ -304,13 +304,18 @@ HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPSTR pcszUAOut, DWORD *cbS
 {
     FIXME("(%d, %p, %p): stub\n", dwOption, pcszUAOut, cbSize);
 
-    if(dwOption) {
-      ERR("dwOption: %d, must be zero\n", dwOption);
+    if (pcszUAOut == NULL || cbSize == NULL)
+        return E_INVALIDARG;
+
+    if (*cbSize < sizeof(Agent))
+    {
+        *cbSize = sizeof(Agent);
+        return E_OUTOFMEMORY;
     }
 
     if (sizeof(Agent) < *cbSize)
         *cbSize = sizeof(Agent);
-    lstrcpynA(pcszUAOut, Agent, *cbSize); 
+    lstrcpynA(pcszUAOut, Agent, *cbSize);
 
     return S_OK;
 }
