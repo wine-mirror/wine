@@ -530,6 +530,8 @@ then
               AC_DEFINE(HAVE_LIBXXSHM, 1, [Define if you have the X Shm extension]),,
               $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
+        WINE_NOTICE_IF([test "$ac_cv_lib_Xext_XShmQueryExtension" != "yes"],[XShm development files not found.
+Wine will be built without XShm support. (winex11.drv)])
 
         dnl *** Check for X shape extension
         if test "$ac_cv_header_X11_extensions_shape_h" = "yes"
@@ -538,6 +540,8 @@ then
 	      AC_DEFINE(HAVE_LIBXSHAPE, 1, [Define if you have the X Shape extension]),,
 	      $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
+        WINE_NOTICE_IF([test "$ac_cv_lib_Xext_XShapeQueryExtension" != "yes"],[XShape development files not found.
+Wine will be built without XShape support. (winex11.drv)])
 
         dnl *** Check for XFree86 VMODE extension
         if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
@@ -548,6 +552,8 @@ then
                   ],,
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
+        WINE_NOTICE_IF([test "$ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension" != "yes"],[Xxf86vm development files not found.
+Wine will be built without XF86 Vidmode support. (winex11.drv)])
 
         dnl *** Check for Transform functions in Xrender
         if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes" -a "x$ac_cv_lib_soname_X11" != "x" -a "x$ac_cv_lib_soname_Xext" != "x"
@@ -559,6 +565,8 @@ then
                 [$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])],,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
 
         fi
+        WINE_NOTICE_IF([test "x$ac_cv_lib_soname_Xrender" = "x"],[XRender development files not found.
+Wine will be built without XRender support. (winex11.drv)])
 
         dnl *** Check for X RandR extension
         if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes" -a "x$ac_cv_lib_soname_Xrender" != "x"
@@ -567,6 +575,8 @@ then
 #include <X11/extensions/Xrandr.h>]], [[static typeof(XRRSetScreenConfigAndRate) * func;]])],
                   [WINE_CHECK_SONAME(Xrandr,XRRQueryExtension,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
         fi
+        WINE_NOTICE_IF([test "x$ac_cv_lib_soname_Xrandr" = "x"],[XRandr development files not found.
+Wine will be built without XRandr support. (winex11.drv)])
 
         dnl *** Check for Xinerama extension
         if test "$ac_cv_header_X11_extensions_Xinerama_h" = "yes"
@@ -575,6 +585,8 @@ then
 #include <X11/extensions/Xinerama.h>]], [[static typeof(XineramaQueryScreens) * func;]])],
                   [WINE_CHECK_SONAME(Xinerama,XineramaQueryScreens,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
         fi
+        WINE_NOTICE_IF([test "x$ac_cv_lib_soname_Xinerama" = "x"],[Xinerama development files not found.
+Wine will be built without Xinerama support. (winex11.drv)])
 
     dnl *** End of X11/Xlib.h check
 
@@ -599,22 +611,33 @@ then
 		WINE_CHECK_SONAME(GL,glXCreateContext,
 			     [OPENGL_LIBS="-lGL"
                              OPENGLFILES='$(OPENGLFILES)'
-                             AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])]
-			     ,,
-			     [$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS])
+                             AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])],
+                             [if test -f /usr/X11R6/lib/libGL.a
+                              then
+                                  WINE_WARNING([/usr/X11R6/lib/libGL.a is present on your system.
+This probably prevents linking to OpenGL. Try deleting the file and restarting configure.])
+                              else
+                                  WINE_WARNING([No OpenGL library found on this system.
+Wine will be build without OpenGL or Direct3D support.])
+                              fi],
+			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
 	        dnl Check for GLU32 library.
 		AC_CHECK_LIB(GLU,gluLookAt,
 			     [OPENGL_LIBS="$OPENGL_LIBS -lGLU"
 			     GLU32FILES='$(GLU32FILES)']
 			     ,,
-			     $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
-		)
+			     $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
+             else
+                 WINE_WARNING([Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/).
+Wine will be build without OpenGL or Direct3D support.])
 	     fi
          else
-             wine_cv_opengl_headers_found="no"
+             WINE_WARNING([OpenGL development headers not found.
+Wine will be build without OpenGL or Direct3D support.])
 	 fi
     fi
+
     dnl **** Check for NAS ****
     AC_SUBST(NASLIBS,"")
     AC_CHECK_HEADERS(audio/audiolib.h,
@@ -634,6 +657,9 @@ else
     XLIB=""
     X_CFLAGS=""
     X_LIBS=""
+    WINE_WARNING([X development files not found. Wine will be built
+without X support, which probably isn't what you want. You will need to install
+development packages of Xlib/Xfree86 at the very least.])
 fi
 
 dnl **** Check for libxml2 ****
@@ -663,6 +689,9 @@ AC_CHECK_HEADERS(libxml/parser.h,
             [AC_DEFINE(HAVE_XMLNEWDOCPI,1,[Define if libxml2 has the xmlNewDocPI function])],,$ac_xml_libs)
     ])
 CPPFLAGS="$ac_save_CPPFLAGS"
+WINE_NOTICE_IF([test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"],[libxml2 development files not found.
+Wine will be built without XML support. (msxml.dll)])
+
 if test "$PKG_CONFIG" != "false"
 then
     ac_xslt_libs="`$PKG_CONFIG --libs libxslt 2>/dev/null`"
@@ -682,6 +711,8 @@ AC_CHECK_HEADERS([libxslt/pattern.h libxslt/transform.h],
 # include <libxslt/pattern.h>
 #endif])
 CPPFLAGS="$ac_save_CPPFLAGS"
+WINE_NOTICE_IF([test "$ac_cv_lib_xslt_xsltCompilePattern" != "yes"],[libxslt development files not found.
+Wine will be built without xslt support. (msxml.dll)])
 
 dnl **** Check for libhal ****
 AC_SUBST(HALINCL,"")
@@ -700,6 +731,8 @@ then
     fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
+WINE_NOTICE_IF([test "x$ac_cv_lib_soname_hal" = "x"],[libhal development files not found.
+Wine will be built without dynamic device support. (explorer.exe)])
 
 dnl **** Check which curses lib to use ***
 CURSESLIBS=""
@@ -714,6 +747,8 @@ ac_save_LIBS="$LIBS"
 LIBS="$LIBS $CURSESLIBS"
 AC_CHECK_FUNCS(mousemask)
 LIBS="$ac_save_LIBS"
+WINE_NOTICE_IF([test "x$ac_cv_lib_soname_curses$ac_cv_lib_soname_ncurses" = "x"],[lib(n)curses development files not found.
+Wine will be built without (n)curses support. (wineconsole.exe)])
 
 dnl **** Check for SANE ****
 AC_CHECK_PROG(sane_devel,sane-config,sane-config,no)
@@ -726,37 +761,36 @@ then
         [WINE_CHECK_SONAME(sane,sane_init,[AC_SUBST(SANEINCL,"$ac_sane_incl")])])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
+WINE_NOTICE_IF([test "x$ac_cv_lib_soname_sane" = "x"],[libsane development files not found.
+Wine will be built without scanner support. (sane.ds/twain_32.dll)])
 
 dnl **** Check for libgphoto2 ****
 AC_CHECK_PROG(gphoto2_devel,gphoto2-config,gphoto2-config,no)
 AC_CHECK_PROG(gphoto2port_devel,gphoto2-port-config,gphoto2-port-config,no)
-AC_SUBST(GPHOTO2LIBS,"")
-AC_SUBST(GPHOTO2INCL,"")
 if test "$gphoto2_devel" != "no" -a "$gphoto2port_devel" != "no"
 then
-    GPHOTO2INCL="`$gphoto2_devel --cflags` `$gphoto2port_devel --cflags`"
-    GPHOTO2LIBS=""
+    ac_gphoto2_incl="`$gphoto2_devel --cflags` `$gphoto2port_devel --cflags`"
+    ac_gphoto2_libs=""
     for i in `$gphoto2_devel --libs` `$gphoto2port_devel --libs`
     do
       case "$i" in
         -L/usr/lib|-L/usr/lib64) ;;
-        -L*|-l*) GPHOTO2LIBS="$GPHOTO2LIBS $i";;
+        -L*|-l*) ac_gphoto2_libs="$ac_gphoto2_libs $i";;
       esac
     done
     ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_save_LIBS="$LIBS"
-    CPPFLAGS="$CPPFLAGS $GPHOTO2INCL"
-    LIBS="$LIBS $GPHOTO2LIBS"
+    CPPFLAGS="$CPPFLAGS $ac_gphoto2_incl"
     AC_CHECK_HEADER(gphoto2-camera.h,
                     [AC_CHECK_LIB(gphoto2,gp_camera_new,
-                                  [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have libgphoto2 development environment])],
-                                  [GPHOTO2LIBS=""
-                                  GPHOTO2INCL=""])],
-                    [GPHOTO2LIBS=""
-                    GPHOTO2INCL=""])
-    LIBS="$ac_save_LIBS"
+                                  [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have libgphoto2 development environment])
+                                   AC_SUBST(GPHOTO2LIBS,"$ac_gphoto2_libs")
+                                   AC_SUBST(GPHOTO2INCL,"$ac_gphoto2_incl")],,
+                                  [$GPHOTO2LIBS])])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
+WINE_NOTICE_IF([test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"],[libgphoto2 development files not found.
+Wine will be built without Digital Camera support. (gphoto2.ds/twain_32.dll)])
+
 
 dnl **** Check for the ICU library ****
 if test "$ac_cv_header_unicode_ubidi_h" = "yes"
@@ -775,6 +809,8 @@ then
                  AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)],[AC_MSG_RESULT(no)])
     LIBS="$saved_libs"
 fi
+WINE_NOTICE_IF([test "x$ICULIBS" = "x"],[libicu development files not found.
+Wine will be built without bidi (Right to Left) support. (gdi32.dll)])
 
 dnl **** Check for resolver library ***
 AC_SUBST(RESOLVLIBS,"")
@@ -793,6 +829,8 @@ then
         [AC_DEFINE(HAVE_LCMS, 1, [Define if you have the LittleCMS development environment])
          LCMSLIBS="-llcms"])
 fi
+WINE_NOTICE_IF([test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" = "yes"],[liblcms development files not found.
+Wine will be built without Color Management support. (mscms.dll)])
 
 dnl **** Check for OpenLDAP ***
 AC_SUBST(LDAPLIBS,"")
@@ -811,9 +849,10 @@ then
 	ldap_parse_reference,
         [$LDAPLIBS $LIBPTHREAD])
 fi
+WINE_NOTICE_IF([test "x$LDAPLIBS" = "x"],[libldap (OpenLDAP) development files not found.
+Wine will be built without LDAP support. (wldap32.dll)])
 
 dnl **** Check for FreeType 2 ****
-wine_cv_msg_freetype=yes
 AC_CHECK_PROGS(ft_devel,[freetype-config freetype2-config],false)
 if test "$ft_devel" != "false"
 then
@@ -854,14 +893,20 @@ then
 	    AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
             AC_SUBST(FREETYPELIBS,"$ac_freetype_libs")
             AC_SUBST(FREETYPEINCL,"$ac_freetype_incl")
-	    wine_cv_msg_freetype=no
 	fi
     fi
 fi
 
 dnl Only build the fonts dir if we have both freetype and fontforge
-if test "$FONTFORGE" != "false" -a -n "$FREETYPELIBS"
+if test "$FONTFORGE" = "false"
 then
+    WINE_WARNING([FontForge is missing.
+Fonts will not be built. Dialog text may be invisible or unaligned.])
+elif test "x$FREETYPELIBS" = "x"
+then
+    WINE_WARNING([FreeType development files not found.
+Fonts will not be built. Dialog text may be invisible or unaligned.])
+else
   AC_SUBST(FONTSSUBDIRS,"fonts")
 fi
 
@@ -951,7 +996,6 @@ then
 fi
 
 dnl **** Check for libaudioio (which can be used to get solaris audio support) ****
-
 AC_SUBST(AUDIOIOLIBS,"")
 if test "$ac_cv_header_libaudioio_h" = "yes"
 then
@@ -966,12 +1010,16 @@ if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
 then
     WINE_CHECK_SONAME(capi20,capi20_register)
 fi
+WINE_NOTICE_IF([test "x$ac_cv_lib_soname_capi20" = "x"],[libcapi20 development files not found.
+Wine will be built without ISDN support. (capi2032.dll)])
 
 dnl **** Check for cups ****
 if test "$ac_cv_header_cups_cups_h" = "yes"
 then
     WINE_CHECK_SONAME(cups,cupsGetDefault)
 fi
+WINE_NOTICE_IF([test "x$ac_cv_lib_soname_cups" = "x"],[libcups development files not found.
+Wine will be built without CUPS support.])
 
 dnl **** Check for jack ****
 if test "$ac_cv_header_jack_jack_h" = "yes"
@@ -1003,6 +1051,13 @@ if test "$ac_cv_header_png_h" = "yes"
 then
     WINE_CHECK_SONAME(png,png_create_read_struct,,,,[[libpng[[0-9]]*]])
 fi
+
+dnl **** Check for any sound system ****
+WINE_WARNING_IF([test "x$ALSALIBS$AUDIOIOLIBS$COREAUDIO$NASLIBS$ESD_LIBS$ac_cv_lib_soname_jack" = "x" -a \
+                 "$ac_cv_header_sys_soundcard_h" != "yes" -a \
+                 "$ac_cv_header_machine_soundcard_h" != "yes" -a \
+                 "$ac_cv_header_soundcard_h" != "yes"],
+[No sound system was found. Windows applications will be silent.])
 
 dnl **** Check for gcc specific options ****
 
@@ -1816,221 +1871,12 @@ AC_CONFIG_FILES([tools/wrc/Makefile])
 
 AC_OUTPUT
 
-dnl **** Display messages about additional packages ***
-
 if test "$no_create" = "yes"
 then
   exit 0
 fi
 
-if test "$verbose" = "yes"
-then
-  dnl **** libcapi20-dev devel package ***
-  if test "$ac_cv_header_capi20_h" != "yes" -o "$ac_cv_header_linux_capi_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([libcapi20 development files not found.])
-    AC_MSG_NOTICE([Wine will be built without ISDN support. (capi2032.dll)])
-  fi
-
-  dnl **** libcupsys-dev devel package ***
-  if test "$ac_cv_header_cups_cups_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([libcups development files not found.])
-    AC_MSG_NOTICE([Wine will be built without CUPS support.])
-  fi
-
-  dnl **** libcurses devel package: see libncurses ***
-  dnl **** libdbus-1 devel package ***
-  dnl **** libdbus-1-dev is required for libhal-dev ***
-
-  dnl **** libgphoto2 devel package ***
-  if test "$ac_cv_header_gphoto2_camera_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([libgphoto2 development files not found.])
-    if test "$ac_cv_header_sane_sane_h" = "yes"
-    then
-      AC_MSG_NOTICE([Wine will be built with limited Digital Camera support. (twain_32.dll)])
-    else
-      AC_MSG_NOTICE([Wine will be built without Digital Camera support. (gphoto2.ds/twain_32.dll)])
-    fi
-  fi
-
-  dnl **** libhal devel package ***
-  dnl **** libhal-dev depends on libdbus-1-dev ***
-  if test "$ac_cv_header_hal_libhal_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([libhal development files not found.])
-    AC_MSG_NOTICE([Wine will be built without dynamic device support. (explorer.exe)])
-  fi
-
-  dnl **** libicu devel package ****
-  if test "$ac_cv_header_unicode_ubidi_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([libicu development files not found.])
-    AC_MSG_NOTICE([Wine will be built without bidi (Right to Left) support. (gdi32.dll)])
-  fi
-
-  dnl **** liblcms devel package ****
-  if test "$ac_cv_header_lcms_h" != "yes" -a "$ac_cv_header_lcms_lcms_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([liblcms development files not found.])
-    AC_MSG_NOTICE([Wine will be built without Color Management support. (mscms.dll)])
-  fi
-
-  dnl **** libldap devel package ****
-  if test "$ac_cv_header_ldap_h" != "yes" -o "$ac_cv_header_lber_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([libldap (OpenLDAP) development files not found.])
-    AC_MSG_NOTICE([Wine will be built without LDAP support. (wldap32.dll)])
-  fi
-
-  dnl **** libncurses / libcurses devel package ***
-  if test "x$with_curses" != "xno" -a "$ac_cv_header_ncurses_h" != "yes" -a "$ac_cv_header_curses_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([lib(n)curses development files not found.])
-    AC_MSG_NOTICE([Wine will be built without (n)curses support. (wineconsole.exe)])
-  fi
-
-  dnl **** libsane devel package ***
-  if test "$ac_cv_header_sane_sane_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([libsane development files not found.])
-    AC_MSG_NOTICE([Wine will be built without Scanner support. (sane.ds/twain_32.dll)])
-  fi
-
-  dnl **** libX11-dev includes Xlib.h and Xutil.h and depends on ***
-  dnl **** x11proto-input-dev (extensions/XInput.h) and x11proto-kb-dev (XKBlib.h) ***
-  if test "$have_x" = "yes"
-  then
-    dnl **** libX11 - extension: Xext ***
-    if test "$ac_cv_header_X11_extensions_shape_h" != "yes" -o "$ac_cv_header_X11_extensions_XShm_h" != "yes"
-    then
-      echo >&2
-      AC_MSG_NOTICE([libxext development files not found.])
-      AC_MSG_NOTICE([Wine will be built without Shm / Shape support. (winex11.drv)])
-    fi
-
-    dnl **** libX11 - extension: Xrandr ***
-    if test "$ac_cv_header_X11_extensions_Xrandr_h" != "yes"
-    then
-      echo >&2
-      AC_MSG_NOTICE([libXrandr development files not found.])
-      AC_MSG_NOTICE([Wine will be built without Xrandr support. (winex11.drv)])
-    fi
-
-    dnl **** libX11 - extension: Xrender ***
-    if test "$ac_cv_header_X11_extensions_Xrender_h" != "yes"
-    then
-      echo >&2
-      AC_MSG_NOTICE([libXrender development files not found.])
-      AC_MSG_NOTICE([Wine will be built without Xrender support. (winex11.drv)])
-    fi
-
-    dnl **** libX11 - extension: Xxf86vm ***
-    if test "$ac_cv_header_X11_extensions_xf86vmode_h" != "yes"
-    then
-      echo >&2
-      AC_MSG_NOTICE([libXxf86vm development files not found.])
-      AC_MSG_NOTICE([Wine will be built without XFree86-VidMode support. (winex11.drv)])
-    fi
-  fi
-
-  dnl **** libxml2 devel package ***
-  if test "$ac_cv_header_libxml_parser_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([libxml2 development files not found.])
-    AC_MSG_NOTICE([Wine will be built without XML support. (msxml.dll)])
-  fi
-
-  dnl **** libxslt devel package ***
-  if test "$ac_cv_header_libxslt_pattern_h" != "yes" -o "$ac_cv_header_libxslt_transform_h" != "yes"
-  then
-    echo >&2
-    AC_MSG_NOTICE([libxslt development files not found.])
-    AC_MSG_NOTICE([Wine will be built without xslt support. (msxml.dll)])
-  fi
-fi
-
-
-dnl **** Display warnings about important packages ***
-if test "$have_x" = "no"
-then
-  echo >&2
-  AC_MSG_WARN([X development files not found. Wine will be built without])
-  AC_MSG_WARN([X support, which currently does not work, and probably])
-  AC_MSG_WARN([isn't what you want anyway. You will need to install devel])
-  AC_MSG_WARN([ packages of Xlib/Xfree86 at the very least.])
-fi
-
-if test -z "$OPENGLFILES"
-then
-  echo >&2
-  AC_MSG_WARN([Wine will be build without OpenGL or Direct3D support])
-  AC_MSG_WARN([because something is wrong with the OpenGL setup:])
-  if test "$wine_cv_opengl_headers_found" = "no"
-  then
-    AC_MSG_WARN([No OpenGL development headers were found])
-  fi
-  if test "$wine_cv_opengl_header_version_OK" = "no"
-  then
-    AC_MSG_WARN([Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/).])
-  elif test "$ac_cv_lib_GL_glXCreateContext" = "no"
-  then
-     if test -f /usr/X11R6/lib/libGL.a
-     then 
-        AC_MSG_WARN([/usr/X11R6/lib/libGL.a is present on your system.
-This probably prevents linking to OpenGL. Try deleting the file and restarting configure.])
-     else
-        AC_MSG_WARN([No OpenGL library found on this system.])
-     fi
-  fi
-fi
-
-if test "$wine_cv_msg_freetype" = "yes"
-then
-  echo >&2
-  AC_MSG_WARN([Your system appears to have the FreeType 2 runtime libraries])
-  AC_MSG_WARN([installed, but 'freetype-config' is not in your PATH. Install])
-  AC_MSG_WARN([the freetype-devel package (or its equivalent on your distribution)])
-  AC_MSG_WARN([to enable Wine to use TrueType fonts.])
-fi
-
-if test -z "$FONTSSUBDIRS"
-then
-  echo >&2
-  if test "$FONTFORGE" = "false"
-  then
-    AC_MSG_WARN([FontForge is missing.])
-  else
-    AC_MSG_WARN([FreeType is missing.])
-  fi
-  AC_MSG_WARN([Fonts will not be built. Dialog text may be invisible or unaligned.])
-fi
-
-if test -z "$ALSALIBS" -a \
-        -z "$AUDIOIOLIBS" -a \
-        -z "$NASLIBS" -a \
-        -z "$ESD_LIBS" -a \
-        -z "$ac_cv_lib_soname_jack" -a \
-        "$ac_cv_header_sys_soundcard_h" != "yes" -a \
-        "$ac_cv_header_machine_soundcard_h" != "yes" -a \
-        "$ac_cv_header_soundcard_h" != "yes"
-then
-  echo >&2
-  AC_MSG_WARN([No sound system was found. Windows applications will be silent.])
-  AC_MSG_WARN([The currently supported sound systems are:])
-  AC_MSG_WARN([ALSA, EsounD, AudioIO, Jack, NAS and OSS])
-fi
+WINE_PRINT_MESSAGES
 
 echo
 echo "Configure finished.  Do '${ac_make} depend && ${ac_make}' to compile Wine."

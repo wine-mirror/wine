@@ -9495,6 +9495,11 @@ _ACEOF
 fi
 
         fi
+        if test "$ac_cv_lib_Xext_XShmQueryExtension" != "yes"; then
+  wine_notices="$wine_notices|XShm development files not found.
+Wine will be built without XShm support. (winex11.drv)"
+fi
+
 
                 if test "$ac_cv_header_X11_extensions_shape_h" = "yes"
         then
@@ -9568,6 +9573,11 @@ _ACEOF
 fi
 
         fi
+        if test "$ac_cv_lib_Xext_XShapeQueryExtension" != "yes"; then
+  wine_notices="$wine_notices|XShape development files not found.
+Wine will be built without XShape support. (winex11.drv)"
+fi
+
 
                 if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
         then
@@ -9643,6 +9653,11 @@ _ACEOF
 fi
 
         fi
+        if test "$ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension" != "yes"; then
+  wine_notices="$wine_notices|Xxf86vm development files not found.
+Wine will be built without XF86 Vidmode support. (winex11.drv)"
+fi
+
 
                 if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes" -a "x$ac_cv_lib_soname_X11" != "x" -a "x$ac_cv_lib_soname_Xext" != "x"
         then
@@ -9794,6 +9809,11 @@ fi
 
 
         fi
+        if test "x$ac_cv_lib_soname_Xrender" = "x"; then
+  wine_notices="$wine_notices|XRender development files not found.
+Wine will be built without XRender support. (winex11.drv)"
+fi
+
 
                 if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes" -a "x$ac_cv_lib_soname_Xrender" != "x"
         then
@@ -9917,6 +9937,11 @@ fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
         fi
+        if test "x$ac_cv_lib_soname_Xrandr" = "x"; then
+  wine_notices="$wine_notices|XRandr development files not found.
+Wine will be built without XRandr support. (winex11.drv)"
+fi
+
 
                 if test "$ac_cv_header_X11_extensions_Xinerama_h" = "yes"
         then
@@ -10040,6 +10065,11 @@ fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
         fi
+        if test "x$ac_cv_lib_soname_Xinerama" = "x"; then
+  wine_notices="$wine_notices|Xinerama development files not found.
+Wine will be built without Xinerama support. (winex11.drv)"
+fi
+
 
 
         if test "x$with_opengl" != "xno"
@@ -10227,7 +10257,14 @@ fi
 if test "x$ac_cv_lib_soname_GL" = "x"; then
   { echo "$as_me:$LINENO: result: not found" >&5
 echo "${ECHO_T}not found" >&6; }
-
+       if test -f /usr/X11R6/lib/libGL.a
+                              then
+                                  wine_warnings="$wine_warnings|/usr/X11R6/lib/libGL.a is present on your system.
+This probably prevents linking to OpenGL. Try deleting the file and restarting configure."
+                              else
+                                  wine_warnings="$wine_warnings|No OpenGL library found on this system.
+Wine will be build without OpenGL or Direct3D support."
+                              fi
 else
   { echo "$as_me:$LINENO: result: $ac_cv_lib_soname_GL" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_GL" >&6; }
@@ -10243,7 +10280,6 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_OPENGL 1
 _ACEOF
 
-
 fi
 
 
@@ -10253,8 +10289,7 @@ if test "${ac_cv_lib_GLU_gluLookAt+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lGLU $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
-		 $LIBS"
+LIBS="-lGLU $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -10315,11 +10350,16 @@ if test $ac_cv_lib_GLU_gluLookAt = yes; then
 
 fi
 
+             else
+                 wine_warnings="$wine_warnings|Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/).
+Wine will be build without OpenGL or Direct3D support."
 	     fi
          else
-             wine_cv_opengl_headers_found="no"
+             wine_warnings="$wine_warnings|OpenGL development headers not found.
+Wine will be build without OpenGL or Direct3D support."
 	 fi
     fi
+
         NASLIBS=""
 
 
@@ -10668,6 +10708,9 @@ else
     XLIB=""
     X_CFLAGS=""
     X_LIBS=""
+    wine_warnings="$wine_warnings|X development files not found. Wine will be built
+without X support, which probably isn't what you want. You will need to install
+development packages of Xlib/Xfree86 at the very least."
 fi
 
 
@@ -11044,6 +11087,12 @@ fi
 done
 
 CPPFLAGS="$ac_save_CPPFLAGS"
+if test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"; then
+  wine_notices="$wine_notices|libxml2 development files not found.
+Wine will be built without XML support. (msxml.dll)"
+fi
+
+
 if test "$PKG_CONFIG" != "false"
 then
     ac_xslt_libs="`$PKG_CONFIG --libs libxslt 2>/dev/null`"
@@ -11186,6 +11235,11 @@ fi
 done
 
 CPPFLAGS="$ac_save_CPPFLAGS"
+if test "$ac_cv_lib_xslt_xsltCompilePattern" != "yes"; then
+  wine_notices="$wine_notices|libxslt development files not found.
+Wine will be built without xslt support. (msxml.dll)"
+fi
+
 
 HALINCL=""
 
@@ -11488,6 +11542,11 @@ fi
     fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
+if test "x$ac_cv_lib_soname_hal" = "x"; then
+  wine_notices="$wine_notices|libhal development files not found.
+Wine will be built without dynamic device support. (explorer.exe)"
+fi
+
 
 CURSESLIBS=""
 if test "$ac_cv_header_ncurses_h" = "yes"
@@ -11748,6 +11807,11 @@ fi
 done
 
 LIBS="$ac_save_LIBS"
+if test "x$ac_cv_lib_soname_curses$ac_cv_lib_soname_ncurses" = "x"; then
+  wine_notices="$wine_notices|lib(n)curses development files not found.
+Wine will be built without (n)curses support. (wineconsole.exe)"
+fi
+
 
 # Extract the first word of "sane-config", so it can be a program name with args.
 set dummy sane-config; ac_word=$2
@@ -12007,6 +12071,11 @@ fi
 
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
+if test "x$ac_cv_lib_soname_sane" = "x"; then
+  wine_notices="$wine_notices|libsane development files not found.
+Wine will be built without scanner support. (sane.ds/twain_32.dll)"
+fi
+
 
 # Extract the first word of "gphoto2-config", so it can be a program name with args.
 set dummy gphoto2-config; ac_word=$2
@@ -12084,25 +12153,19 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-GPHOTO2LIBS=""
-
-GPHOTO2INCL=""
-
 if test "$gphoto2_devel" != "no" -a "$gphoto2port_devel" != "no"
 then
-    GPHOTO2INCL="`$gphoto2_devel --cflags` `$gphoto2port_devel --cflags`"
-    GPHOTO2LIBS=""
+    ac_gphoto2_incl="`$gphoto2_devel --cflags` `$gphoto2port_devel --cflags`"
+    ac_gphoto2_libs=""
     for i in `$gphoto2_devel --libs` `$gphoto2port_devel --libs`
     do
       case "$i" in
         -L/usr/lib|-L/usr/lib64) ;;
-        -L*|-l*) GPHOTO2LIBS="$GPHOTO2LIBS $i";;
+        -L*|-l*) ac_gphoto2_libs="$ac_gphoto2_libs $i";;
       esac
     done
     ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_save_LIBS="$LIBS"
-    CPPFLAGS="$CPPFLAGS $GPHOTO2INCL"
-    LIBS="$LIBS $GPHOTO2LIBS"
+    CPPFLAGS="$CPPFLAGS $ac_gphoto2_incl"
     if test "${ac_cv_header_gphoto2_camera_h+set}" = set; then
   { echo "$as_me:$LINENO: checking for gphoto2-camera.h" >&5
 echo $ECHO_N "checking for gphoto2-camera.h... $ECHO_C" >&6; }
@@ -12240,7 +12303,7 @@ if test "${ac_cv_lib_gphoto2_gp_camera_new+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgphoto2  $LIBS"
+LIBS="-lgphoto2 $GPHOTO2LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -12301,20 +12364,23 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_GPHOTO2 1
 _ACEOF
 
-else
-  GPHOTO2LIBS=""
-                                  GPHOTO2INCL=""
+                                   GPHOTO2LIBS="$ac_gphoto2_libs"
+
+                                   GPHOTO2INCL="$ac_gphoto2_incl"
+
 fi
 
-else
-  GPHOTO2LIBS=""
-                    GPHOTO2INCL=""
 fi
 
 
-    LIBS="$ac_save_LIBS"
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
+if test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"; then
+  wine_notices="$wine_notices|libgphoto2 development files not found.
+Wine will be built without Digital Camera support. (gphoto2.ds/twain_32.dll)"
+fi
+
+
 
 if test "$ac_cv_header_unicode_ubidi_h" = "yes"
 then
@@ -12390,6 +12456,11 @@ fi
 
     LIBS="$saved_libs"
 fi
+if test "x$ICULIBS" = "x"; then
+  wine_notices="$wine_notices|libicu development files not found.
+Wine will be built without bidi (Right to Left) support. (gdi32.dll)"
+fi
+
 
 RESOLVLIBS=""
 
@@ -12542,6 +12613,11 @@ _ACEOF
 fi
 
 fi
+if test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" = "yes"; then
+  wine_notices="$wine_notices|liblcms development files not found.
+Wine will be built without Color Management support. (mscms.dll)"
+fi
+
 
 LDAPLIBS=""
 
@@ -12786,8 +12862,12 @@ done
 
 LIBS="$ac_wine_check_funcs_save_LIBS"
 fi
+if test "x$LDAPLIBS" = "x"; then
+  wine_notices="$wine_notices|libldap (OpenLDAP) development files not found.
+Wine will be built without LDAP support. (wldap32.dll)"
+fi
 
-wine_cv_msg_freetype=yes
+
 for ac_prog in freetype-config freetype2-config
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -13208,13 +13288,19 @@ _ACEOF
 
             FREETYPEINCL="$ac_freetype_incl"
 
-	    wine_cv_msg_freetype=no
 	fi
     fi
 fi
 
-if test "$FONTFORGE" != "false" -a -n "$FREETYPELIBS"
+if test "$FONTFORGE" = "false"
 then
+    wine_warnings="$wine_warnings|FontForge is missing.
+Fonts will not be built. Dialog text may be invisible or unaligned."
+elif test "x$FREETYPELIBS" = "x"
+then
+    wine_warnings="$wine_warnings|FreeType development files not found.
+Fonts will not be built. Dialog text may be invisible or unaligned."
+else
   FONTSSUBDIRS="fonts"
 
 fi
@@ -13942,7 +14028,6 @@ fi
 
 fi
 
-
 AUDIOIOLIBS=""
 
 if test "$ac_cv_header_libaudioio_h" = "yes"
@@ -14101,6 +14186,11 @@ _ACEOF
 fi
 
 fi
+if test "x$ac_cv_lib_soname_capi20" = "x"; then
+  wine_notices="$wine_notices|libcapi20 development files not found.
+Wine will be built without ISDN support. (capi2032.dll)"
+fi
+
 
 if test "$ac_cv_header_cups_cups_h" = "yes"
 then
@@ -14183,6 +14273,11 @@ _ACEOF
 fi
 
 fi
+if test "x$ac_cv_lib_soname_cups" = "x"; then
+  wine_notices="$wine_notices|libcups development files not found.
+Wine will be built without CUPS support."
+fi
+
 
 if test "$ac_cv_header_jack_jack_h" = "yes"
 then
@@ -14671,6 +14766,14 @@ _ACEOF
 fi
 
 fi
+
+if test "x$ALSALIBS$AUDIOIOLIBS$COREAUDIO$NASLIBS$ESD_LIBS$ac_cv_lib_soname_jack" = "x" -a \
+                 "$ac_cv_header_sys_soundcard_h" != "yes" -a \
+                 "$ac_cv_header_machine_soundcard_h" != "yes" -a \
+                 "$ac_cv_header_soundcard_h" != "yes"; then
+  wine_warnings="$wine_warnings|No sound system was found. Windows applications will be silent."
+fi
+
 
 
 EXTRACFLAGS=""
@@ -22331,250 +22434,30 @@ if test "$no_create" != yes; then
 fi
 
 
-
 if test "$no_create" = "yes"
 then
   exit 0
 fi
 
-if test "$verbose" = "yes"
-then
-    if test "$ac_cv_header_capi20_h" != "yes" -o "$ac_cv_header_linux_capi_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: libcapi20 development files not found." >&5
-echo "$as_me: libcapi20 development files not found." >&6;}
-    { echo "$as_me:$LINENO: Wine will be built without ISDN support. (capi2032.dll)" >&5
-echo "$as_me: Wine will be built without ISDN support. (capi2032.dll)" >&6;}
-  fi
-
-    if test "$ac_cv_header_cups_cups_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: libcups development files not found." >&5
-echo "$as_me: libcups development files not found." >&6;}
-    { echo "$as_me:$LINENO: Wine will be built without CUPS support." >&5
-echo "$as_me: Wine will be built without CUPS support." >&6;}
-  fi
-
-
-    if test "$ac_cv_header_gphoto2_camera_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: libgphoto2 development files not found." >&5
-echo "$as_me: libgphoto2 development files not found." >&6;}
-    if test "$ac_cv_header_sane_sane_h" = "yes"
-    then
-      { echo "$as_me:$LINENO: Wine will be built with limited Digital Camera support. (twain_32.dll)" >&5
-echo "$as_me: Wine will be built with limited Digital Camera support. (twain_32.dll)" >&6;}
-    else
-      { echo "$as_me:$LINENO: Wine will be built without Digital Camera support. (gphoto2.ds/twain_32.dll)" >&5
-echo "$as_me: Wine will be built without Digital Camera support. (gphoto2.ds/twain_32.dll)" >&6;}
+ac_save_IFS="$IFS"
+IFS="|"
+if test "$verbose" = "yes"; then
+    for msg in $wine_notices; do
+        if test -n "$msg"; then
+            echo >&2
+            { echo "$as_me:$LINENO: $msg" >&5
+echo "$as_me: $msg" >&6;}
+        fi
+    done
+fi
+for msg in $wine_warnings; do
+    if test -n "$msg"; then
+        echo >&2
+        { echo "$as_me:$LINENO: WARNING: $msg" >&5
+echo "$as_me: WARNING: $msg" >&2;}
     fi
-  fi
-
-      if test "$ac_cv_header_hal_libhal_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: libhal development files not found." >&5
-echo "$as_me: libhal development files not found." >&6;}
-    { echo "$as_me:$LINENO: Wine will be built without dynamic device support. (explorer.exe)" >&5
-echo "$as_me: Wine will be built without dynamic device support. (explorer.exe)" >&6;}
-  fi
-
-    if test "$ac_cv_header_unicode_ubidi_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: libicu development files not found." >&5
-echo "$as_me: libicu development files not found." >&6;}
-    { echo "$as_me:$LINENO: Wine will be built without bidi (Right to Left) support. (gdi32.dll)" >&5
-echo "$as_me: Wine will be built without bidi (Right to Left) support. (gdi32.dll)" >&6;}
-  fi
-
-    if test "$ac_cv_header_lcms_h" != "yes" -a "$ac_cv_header_lcms_lcms_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: liblcms development files not found." >&5
-echo "$as_me: liblcms development files not found." >&6;}
-    { echo "$as_me:$LINENO: Wine will be built without Color Management support. (mscms.dll)" >&5
-echo "$as_me: Wine will be built without Color Management support. (mscms.dll)" >&6;}
-  fi
-
-    if test "$ac_cv_header_ldap_h" != "yes" -o "$ac_cv_header_lber_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: libldap (OpenLDAP) development files not found." >&5
-echo "$as_me: libldap (OpenLDAP) development files not found." >&6;}
-    { echo "$as_me:$LINENO: Wine will be built without LDAP support. (wldap32.dll)" >&5
-echo "$as_me: Wine will be built without LDAP support. (wldap32.dll)" >&6;}
-  fi
-
-    if test "x$with_curses" != "xno" -a "$ac_cv_header_ncurses_h" != "yes" -a "$ac_cv_header_curses_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: lib(n)curses development files not found." >&5
-echo "$as_me: lib(n)curses development files not found." >&6;}
-    { echo "$as_me:$LINENO: Wine will be built without (n)curses support. (wineconsole.exe)" >&5
-echo "$as_me: Wine will be built without (n)curses support. (wineconsole.exe)" >&6;}
-  fi
-
-    if test "$ac_cv_header_sane_sane_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: libsane development files not found." >&5
-echo "$as_me: libsane development files not found." >&6;}
-    { echo "$as_me:$LINENO: Wine will be built without Scanner support. (sane.ds/twain_32.dll)" >&5
-echo "$as_me: Wine will be built without Scanner support. (sane.ds/twain_32.dll)" >&6;}
-  fi
-
-      if test "$have_x" = "yes"
-  then
-        if test "$ac_cv_header_X11_extensions_shape_h" != "yes" -o "$ac_cv_header_X11_extensions_XShm_h" != "yes"
-    then
-      echo >&2
-      { echo "$as_me:$LINENO: libxext development files not found." >&5
-echo "$as_me: libxext development files not found." >&6;}
-      { echo "$as_me:$LINENO: Wine will be built without Shm / Shape support. (winex11.drv)" >&5
-echo "$as_me: Wine will be built without Shm / Shape support. (winex11.drv)" >&6;}
-    fi
-
-        if test "$ac_cv_header_X11_extensions_Xrandr_h" != "yes"
-    then
-      echo >&2
-      { echo "$as_me:$LINENO: libXrandr development files not found." >&5
-echo "$as_me: libXrandr development files not found." >&6;}
-      { echo "$as_me:$LINENO: Wine will be built without Xrandr support. (winex11.drv)" >&5
-echo "$as_me: Wine will be built without Xrandr support. (winex11.drv)" >&6;}
-    fi
-
-        if test "$ac_cv_header_X11_extensions_Xrender_h" != "yes"
-    then
-      echo >&2
-      { echo "$as_me:$LINENO: libXrender development files not found." >&5
-echo "$as_me: libXrender development files not found." >&6;}
-      { echo "$as_me:$LINENO: Wine will be built without Xrender support. (winex11.drv)" >&5
-echo "$as_me: Wine will be built without Xrender support. (winex11.drv)" >&6;}
-    fi
-
-        if test "$ac_cv_header_X11_extensions_xf86vmode_h" != "yes"
-    then
-      echo >&2
-      { echo "$as_me:$LINENO: libXxf86vm development files not found." >&5
-echo "$as_me: libXxf86vm development files not found." >&6;}
-      { echo "$as_me:$LINENO: Wine will be built without XFree86-VidMode support. (winex11.drv)" >&5
-echo "$as_me: Wine will be built without XFree86-VidMode support. (winex11.drv)" >&6;}
-    fi
-  fi
-
-    if test "$ac_cv_header_libxml_parser_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: libxml2 development files not found." >&5
-echo "$as_me: libxml2 development files not found." >&6;}
-    { echo "$as_me:$LINENO: Wine will be built without XML support. (msxml.dll)" >&5
-echo "$as_me: Wine will be built without XML support. (msxml.dll)" >&6;}
-  fi
-
-    if test "$ac_cv_header_libxslt_pattern_h" != "yes" -o "$ac_cv_header_libxslt_transform_h" != "yes"
-  then
-    echo >&2
-    { echo "$as_me:$LINENO: libxslt development files not found." >&5
-echo "$as_me: libxslt development files not found." >&6;}
-    { echo "$as_me:$LINENO: Wine will be built without xslt support. (msxml.dll)" >&5
-echo "$as_me: Wine will be built without xslt support. (msxml.dll)" >&6;}
-  fi
-fi
-
-
-if test "$have_x" = "no"
-then
-  echo >&2
-  { echo "$as_me:$LINENO: WARNING: X development files not found. Wine will be built without" >&5
-echo "$as_me: WARNING: X development files not found. Wine will be built without" >&2;}
-  { echo "$as_me:$LINENO: WARNING: X support, which currently does not work, and probably" >&5
-echo "$as_me: WARNING: X support, which currently does not work, and probably" >&2;}
-  { echo "$as_me:$LINENO: WARNING: isn't what you want anyway. You will need to install devel" >&5
-echo "$as_me: WARNING: isn't what you want anyway. You will need to install devel" >&2;}
-  { echo "$as_me:$LINENO: WARNING:  packages of Xlib/Xfree86 at the very least." >&5
-echo "$as_me: WARNING:  packages of Xlib/Xfree86 at the very least." >&2;}
-fi
-
-if test -z "$OPENGLFILES"
-then
-  echo >&2
-  { echo "$as_me:$LINENO: WARNING: Wine will be build without OpenGL or Direct3D support" >&5
-echo "$as_me: WARNING: Wine will be build without OpenGL or Direct3D support" >&2;}
-  { echo "$as_me:$LINENO: WARNING: because something is wrong with the OpenGL setup:" >&5
-echo "$as_me: WARNING: because something is wrong with the OpenGL setup:" >&2;}
-  if test "$wine_cv_opengl_headers_found" = "no"
-  then
-    { echo "$as_me:$LINENO: WARNING: No OpenGL development headers were found" >&5
-echo "$as_me: WARNING: No OpenGL development headers were found" >&2;}
-  fi
-  if test "$wine_cv_opengl_header_version_OK" = "no"
-  then
-    { echo "$as_me:$LINENO: WARNING: Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)." >&5
-echo "$as_me: WARNING: Old Mesa headers detected. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)." >&2;}
-  elif test "$ac_cv_lib_GL_glXCreateContext" = "no"
-  then
-     if test -f /usr/X11R6/lib/libGL.a
-     then
-        { echo "$as_me:$LINENO: WARNING: /usr/X11R6/lib/libGL.a is present on your system.
-This probably prevents linking to OpenGL. Try deleting the file and restarting configure." >&5
-echo "$as_me: WARNING: /usr/X11R6/lib/libGL.a is present on your system.
-This probably prevents linking to OpenGL. Try deleting the file and restarting configure." >&2;}
-     else
-        { echo "$as_me:$LINENO: WARNING: No OpenGL library found on this system." >&5
-echo "$as_me: WARNING: No OpenGL library found on this system." >&2;}
-     fi
-  fi
-fi
-
-if test "$wine_cv_msg_freetype" = "yes"
-then
-  echo >&2
-  { echo "$as_me:$LINENO: WARNING: Your system appears to have the FreeType 2 runtime libraries" >&5
-echo "$as_me: WARNING: Your system appears to have the FreeType 2 runtime libraries" >&2;}
-  { echo "$as_me:$LINENO: WARNING: installed, but 'freetype-config' is not in your PATH. Install" >&5
-echo "$as_me: WARNING: installed, but 'freetype-config' is not in your PATH. Install" >&2;}
-  { echo "$as_me:$LINENO: WARNING: the freetype-devel package (or its equivalent on your distribution)" >&5
-echo "$as_me: WARNING: the freetype-devel package (or its equivalent on your distribution)" >&2;}
-  { echo "$as_me:$LINENO: WARNING: to enable Wine to use TrueType fonts." >&5
-echo "$as_me: WARNING: to enable Wine to use TrueType fonts." >&2;}
-fi
-
-if test -z "$FONTSSUBDIRS"
-then
-  echo >&2
-  if test "$FONTFORGE" = "false"
-  then
-    { echo "$as_me:$LINENO: WARNING: FontForge is missing." >&5
-echo "$as_me: WARNING: FontForge is missing." >&2;}
-  else
-    { echo "$as_me:$LINENO: WARNING: FreeType is missing." >&5
-echo "$as_me: WARNING: FreeType is missing." >&2;}
-  fi
-  { echo "$as_me:$LINENO: WARNING: Fonts will not be built. Dialog text may be invisible or unaligned." >&5
-echo "$as_me: WARNING: Fonts will not be built. Dialog text may be invisible or unaligned." >&2;}
-fi
-
-if test -z "$ALSALIBS" -a \
-        -z "$AUDIOIOLIBS" -a \
-        -z "$NASLIBS" -a \
-        -z "$ESD_LIBS" -a \
-        -z "$ac_cv_lib_soname_jack" -a \
-        "$ac_cv_header_sys_soundcard_h" != "yes" -a \
-        "$ac_cv_header_machine_soundcard_h" != "yes" -a \
-        "$ac_cv_header_soundcard_h" != "yes"
-then
-  echo >&2
-  { echo "$as_me:$LINENO: WARNING: No sound system was found. Windows applications will be silent." >&5
-echo "$as_me: WARNING: No sound system was found. Windows applications will be silent." >&2;}
-  { echo "$as_me:$LINENO: WARNING: The currently supported sound systems are:" >&5
-echo "$as_me: WARNING: The currently supported sound systems are:" >&2;}
-  { echo "$as_me:$LINENO: WARNING: ALSA, EsounD, AudioIO, Jack, NAS and OSS" >&5
-echo "$as_me: WARNING: ALSA, EsounD, AudioIO, Jack, NAS and OSS" >&2;}
-fi
+done
+IFS="$ac_save_IFS"
 
 echo
 echo "Configure finished.  Do '${ac_make} depend && ${ac_make}' to compile Wine."
