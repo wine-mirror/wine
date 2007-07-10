@@ -939,7 +939,8 @@ static const char *get_resource_type( unsigned int id )
         "VXD",
         "ANICURSOR",
         "ANIICON",
-        "HTML"
+        "HTML",
+        "RT_MANIFEST"
     };
 
     if ((size_t)id < sizeof(types)/sizeof(types[0])) return types[id];
