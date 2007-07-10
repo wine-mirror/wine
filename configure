@@ -14442,6 +14442,11 @@ _ACEOF
 fi
 
 fi
+if test "x$ac_cv_lib_soname_fontconfig" = "x"; then
+  wine_notices="$wine_notices|fontconfig development files not found.
+Wine will be built without fontconfig support."
+fi
+
 
 if test "$ac_cv_header_openssl_err_h" = "yes" -a "$ac_cv_header_openssl_ssl_h" = "yes"
 then
@@ -14602,6 +14607,11 @@ _ACEOF
 fi
 
 fi
+if test "x$ac_cv_lib_soname_ssl" = "x"; then
+  wine_notices="$wine_notices|OpenSSL development files not found.
+Wine will be built without SSL support. (wininet.dll)"
+fi
+
 
 if test "$ac_cv_header_jpeglib_h" = "yes"
 then
@@ -14684,6 +14694,11 @@ _ACEOF
 fi
 
 fi
+if test "x$ac_cv_lib_soname_jpeg" = "x"; then
+  wine_notices="$wine_notices|libjpeg development files not found.
+Wine will be built without JPEG support. (oleaut32.dll)"
+fi
+
 
 if test "$ac_cv_header_png_h" = "yes"
 then
@@ -14766,6 +14781,11 @@ _ACEOF
 fi
 
 fi
+if test "x$ac_cv_lib_soname_png" = "x"; then
+  wine_notices="$wine_notices|libpng development files not found.
+Wine will be built without PNG support. (oleaut32.dll)"
+fi
+
 
 if test "x$ALSALIBS$AUDIOIOLIBS$COREAUDIO$NASLIBS$ESD_LIBS$ac_cv_lib_soname_jack" = "x" -a \
                  "$ac_cv_header_sys_soundcard_h" != "yes" -a \

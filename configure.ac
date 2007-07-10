@@ -1032,6 +1032,8 @@ if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
 then
     WINE_CHECK_SONAME(fontconfig,FcInit)
 fi
+WINE_NOTICE_IF([test "x$ac_cv_lib_soname_fontconfig" = "x"],[fontconfig development files not found.
+Wine will be built without fontconfig support.])
 
 dnl **** Check for SSL ****
 if test "$ac_cv_header_openssl_err_h" = "yes" -a "$ac_cv_header_openssl_ssl_h" = "yes"
@@ -1039,18 +1041,24 @@ then
     WINE_CHECK_SONAME(ssl,SSL_library_init)
     WINE_CHECK_SONAME(crypto,BIO_new_socket)
 fi
+WINE_NOTICE_IF([test "x$ac_cv_lib_soname_ssl" = "x"],[OpenSSL development files not found.
+Wine will be built without SSL support. (wininet.dll)])
 
 dnl **** Check for libjpeg ****
 if test "$ac_cv_header_jpeglib_h" = "yes"
 then
     WINE_CHECK_SONAME(jpeg,jpeg_start_decompress)
 fi
+WINE_NOTICE_IF([test "x$ac_cv_lib_soname_jpeg" = "x"],[libjpeg development files not found.
+Wine will be built without JPEG support. (oleaut32.dll)])
 
 dnl **** Check for libpng ****
 if test "$ac_cv_header_png_h" = "yes"
 then
     WINE_CHECK_SONAME(png,png_create_read_struct,,,,[[libpng[[0-9]]*]])
 fi
+WINE_NOTICE_IF([test "x$ac_cv_lib_soname_png" = "x"],[libpng development files not found.
+Wine will be built without PNG support. (oleaut32.dll)])
 
 dnl **** Check for any sound system ****
 WINE_WARNING_IF([test "x$ALSALIBS$AUDIOIOLIBS$COREAUDIO$NASLIBS$ESD_LIBS$ac_cv_lib_soname_jack" = "x" -a \
