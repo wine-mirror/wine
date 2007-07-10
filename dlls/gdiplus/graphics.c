@@ -590,31 +590,19 @@ GpStatus WINGDIPAPI GdipDrawPie(GpGraphics *graphics, GpPen *pen, REAL x,
 GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
     INT y, INT width, INT height)
 {
-    LOGBRUSH lb;
-    HPEN hpen;
-    HGDIOBJ old_obj;
+    INT save_state;
 
     if(!pen || !graphics)
         return InvalidParameter;
 
-    lb.lbStyle = BS_SOLID;
-    lb.lbColor = pen->color;
-    lb.lbHatch = 0;
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, pen->gdipen);
+    SelectObject(graphics->hdc, GetStockObject(NULL_BRUSH));
 
-    hpen = ExtCreatePen(PS_GEOMETRIC | PS_ENDCAP_SQUARE, (INT) pen->width,
-        &lb, 0, NULL);
+    Rectangle(graphics->hdc, x, y, x + width, y + height);
 
-    old_obj = SelectObject(graphics->hdc, hpen);
-
-    /* assume pen aligment centered */
-    MoveToEx(graphics->hdc, x, y, NULL);
-    LineTo(graphics->hdc, x+width, y);
-    LineTo(graphics->hdc, x+width, y+height);
-    LineTo(graphics->hdc, x, y+height);
-    LineTo(graphics->hdc, x, y);
-
-    SelectObject(graphics->hdc, old_obj);
-    DeleteObject(hpen);
+    RestoreDC(graphics->hdc, save_state);
 
     return Ok;
 }
