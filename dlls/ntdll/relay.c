@@ -650,7 +650,7 @@ void SNOOP_SetupDLL(HMODULE hmod)
     if (!init_done) init_debug_lists();
 
     exports = RtlImageDirectoryEntryToData( hmod, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size32 );
-    if (!exports) return;
+    if (!exports || !exports->NumberOfFunctions) return;
     name = (char *)hmod + exports->Name;
     size = size32;
 
