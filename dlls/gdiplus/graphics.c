@@ -60,14 +60,16 @@ static void deg2xy(REAL angle, REAL x_0, REAL y_0, REAL *x, REAL *y)
 static GpStatus draw_pie(GpGraphics *graphics, HBRUSH gdibrush, HPEN gdipen,
     REAL x, REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
 {
-    HGDIOBJ old_pen, old_brush;
+    INT save_state;
     REAL x_0, y_0, x_1, y_1, x_2, y_2;
 
     if(!graphics)
         return InvalidParameter;
 
-    old_pen = SelectObject(graphics->hdc, gdipen);
-    old_brush = SelectObject(graphics->hdc, gdibrush);
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, gdipen);
+    SelectObject(graphics->hdc, gdibrush);
 
     x_0 = x + (width/2.0);
     y_0 = y + (height/2.0);
@@ -78,8 +80,7 @@ static GpStatus draw_pie(GpGraphics *graphics, HBRUSH gdibrush, HPEN gdipen,
     Pie(graphics->hdc, roundr(x), roundr(y), roundr(x+width), roundr(y+height),
         roundr(x_1), roundr(y_1), roundr(x_2), roundr(y_2));
 
-    SelectObject(graphics->hdc, old_pen);
-    SelectObject(graphics->hdc, old_brush);
+    RestoreDC(graphics->hdc, save_state);
 
     return Ok;
 }
