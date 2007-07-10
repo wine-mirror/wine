@@ -152,7 +152,7 @@ GpStatus WINGDIPAPI GdipGetPathPoints(GpPath *path, GpPointF* points, INT count)
     if(count < path->pathdata.Count)
         return InsufficientBuffer;
 
-    memcpy(points, path->pathdata.Points, path->pathdata.Count);
+    memcpy(points, path->pathdata.Points, path->pathdata.Count * sizeof(GpPointF));
 
     return Ok;
 }
