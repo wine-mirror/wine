@@ -1872,7 +1872,7 @@ static const WCHAR data5[] = { /* _StringPool */
 /* update row, 0x0002 is a bitmask of present column data, keys are excluded */
 static const WCHAR data6[] = { /* MOO */
     0x0002, 0x8001, 0x0001, /* update row */
-    0x0000, 0x8002,         /* delete row */
+    0x0000, 0x8003,         /* delete row */
 };
 
 static const WCHAR data7[] = { /* BINARY */
@@ -2037,14 +2037,14 @@ static void test_try_transform(void)
 
     /* check unchanged value */
     hrec = 0;
-    query = "select `NOO`,`OOO` from `MOO` where `NOO` = 3 AND `OOO` = 'c'";
+    query = "select `NOO`,`OOO` from `MOO` where `NOO` = 2 AND `OOO` = 'b'";
     r = do_query(hdb, query, &hrec);
     ok(r == ERROR_SUCCESS, "select query failed\n");
     MsiCloseHandle(hrec);
 
     /* check deleted value */
     hrec = 0;
-    query = "select * from `MOO` where `NOO` = 2";
+    query = "select * from `MOO` where `NOO` = 3";
     r = do_query(hdb, query, &hrec);
     ok(r == ERROR_NO_MORE_ITEMS, "select query failed\n");
     if (hrec) MsiCloseHandle(hrec);
@@ -2089,12 +2089,12 @@ static void test_try_transform(void)
     ok(r == ERROR_SUCCESS, "view fetch failed\n");
 
     r = MsiRecordGetInteger(hrec, 1);
-    ok(r == 3, "Expected 3, got %d\n", r);
+    ok(r == 2, "Expected 2, got %d\n", r);
 
     sz = sizeof buffer;
     r = MsiRecordGetString(hrec, 2, buffer, &sz);
     ok(r == ERROR_SUCCESS, "record get string failed\n");
-    ok(!lstrcmpA(buffer, "c"), "Expected b, got %s\n", buffer);
+    ok(!lstrcmpA(buffer, "b"), "Expected b, got %s\n", buffer);
 
     MsiCloseHandle(hrec);
 
