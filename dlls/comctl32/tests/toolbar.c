@@ -74,6 +74,9 @@ static LRESULT MyWnd_Notify(LPARAM lParam)
             break;
 
         case TBN_GETDISPINFOA:
+            ok(FALSE, "TBN_GETDISPINFOA received\n");
+            break;
+
         case TBN_GETDISPINFOW:
             nmdisp = (NMTBDISPINFOA *)lParam;
 
@@ -992,14 +995,30 @@ static void test_dispinfo(void)
         {-1, 20, TBSTATE_ENABLED, 0, {0, }, 0, -1},
         {0,  21, TBSTATE_ENABLED, 0, {0, }, 0, -1},
     };
+    BOOL ret;
 
     rebuild_toolbar(&hToolbar);
     SendMessageA(hToolbar, TB_LOADIMAGES, IDB_HIST_SMALL_COLOR, (LPARAM)HINST_COMMCTRL);
     SendMessageA(hToolbar, TB_ADDBUTTONS, 2, (LPARAM)buttons_disp);
     g_dwExpectedDispInfoMask = 1;
-    /* some TBN_GETDISPINFO tests will be done in MyWnd_Notify function */
+    /* Some TBN_GETDISPINFO tests will be done in MyWnd_Notify function.
+     * We will receive TBN_GETDISPINFOW even if the control is ANSI */
+    compare((BOOL)SendMessageA(hToolbar, CCM_GETUNICODEFORMAT, 0, 0), 0, "%d");
     ShowWindow(hToolbar, SW_SHOW);
     UpdateWindow(hToolbar);
+
+    ret = (BOOL)SendMessageA(hToolbar, CCM_SETUNICODEFORMAT, TRUE, 0);
+    compare(ret, FALSE, "%d");
+    compare(SendMessageA(hToolbar, CCM_GETUNICODEFORMAT, 0, 0), 1L, "%ld");
+    InvalidateRect(hToolbar, NULL, FALSE);
+    UpdateWindow(hToolbar);
+
+    ret = (BOOL)SendMessageA(hToolbar, CCM_SETUNICODEFORMAT, FALSE, 0);
+    compare(ret, TRUE, "%d");
+    compare(SendMessageA(hToolbar, CCM_GETUNICODEFORMAT, 0, 0), 0L, "%ld");
+    InvalidateRect(hToolbar, NULL, FALSE);
+    UpdateWindow(hToolbar);
+
     DestroyWindow(hToolbar);
     g_dwExpectedDispInfoMask = 0;
 }

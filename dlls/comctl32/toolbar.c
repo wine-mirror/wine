@@ -360,15 +360,15 @@ TOOLBAR_GetBitmapIndex(const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr)
     if (ret == I_IMAGECALLBACK)
     {
         /* issue TBN_GETDISPINFO */
-        NMTBDISPINFOA nmgd;
+        NMTBDISPINFOW nmgd;
 
         memset(&nmgd, 0, sizeof(nmgd));
         nmgd.idCommand = btnPtr->idCommand;
         nmgd.lParam = btnPtr->dwData;
         nmgd.dwMask = TBNF_IMAGE;
         nmgd.iImage = -1;
-        TOOLBAR_SendNotify(&nmgd.hdr, infoPtr,
-			infoPtr->bUnicode ? TBN_GETDISPINFOW : TBN_GETDISPINFOA);
+        /* Windows also send TBN_GETDISPINFOW even if the control is ANSI */
+        TOOLBAR_SendNotify(&nmgd.hdr, infoPtr, TBN_GETDISPINFOW);
         if (nmgd.dwMask & TBNF_DI_SETITEM)
             btnPtr->iBitmap = nmgd.iImage;
         ret = nmgd.iImage;
