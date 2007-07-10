@@ -66,13 +66,15 @@ static BOOL lengthen_path(GpPath *path, INT len)
 GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
     INT count)
 {
-    INT i, old_count = path->pathdata.Count;
+    INT i, old_count;
 
     if(!path || !points)
         return InvalidParameter;
 
     if(!lengthen_path(path, count))
         return OutOfMemory;
+
+    old_count = path->pathdata.Count;
 
     for(i = 0; i < count; i++){
         path->pathdata.Points[old_count + i].X = points[i].X;
