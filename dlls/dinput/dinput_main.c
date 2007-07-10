@@ -766,6 +766,7 @@ static LRESULT CALLBACK dinput_hook_WndProc(HWND hWnd, UINT message, WPARAM wPar
     case WM_DESTROY:
         if (kbd_hook) UnhookWindowsHookEx(kbd_hook);
         if (mouse_hook) UnhookWindowsHookEx(mouse_hook);
+        kbd_hook = mouse_hook = NULL;
         PostQuitMessage(0);
     }
     return DefWindowProcW(hWnd, message, wParam, lParam);
