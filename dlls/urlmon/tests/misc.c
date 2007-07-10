@@ -1093,6 +1093,63 @@ static void test_UrlMkGetSessionOption(void)
     ok(encoding == 0xdeadbeef, "encoding = %08x, exepcted 0xdeadbeef\n", encoding);
 }
 
+static void test_ObtainUserAgentString(void)
+{
+    static const CHAR expected[] = "Mozilla/4.0 (compatible; MSIE ";
+    static CHAR str[3];
+    LPSTR str2 = NULL;
+    HRESULT hres;
+    DWORD size, saved;
+
+    hres = ObtainUserAgentString(0, NULL, NULL);
+    ok(hres == E_INVALIDARG, "ObtainUserAgentString failed: %08x\n", hres);
+
+    size = 100;
+    hres = ObtainUserAgentString(0, NULL, &size);
+    ok(hres == E_INVALIDARG, "ObtainUserAgentString failed: %08x\n", hres);
+    ok(size == 100, "size=%d, expected %d\n", size, 100);
+
+    size = 0;
+    hres = ObtainUserAgentString(0, str, &size);
+    ok(hres == E_OUTOFMEMORY, "ObtainUserAgentString failed: %08x\n", hres);
+    ok(size > 0, "size=%d, expected non-zero\n", size);
+
+    size = 2;
+    str[0] = 'a';
+    hres = ObtainUserAgentString(0, str, &size);
+    ok(hres == E_OUTOFMEMORY, "ObtainUserAgentString failed: %08x\n", hres);
+    ok(size > 0, "size=%d, expected non-zero\n", size);
+    ok(str[0] == 'a', "str[0]=%c, expected 'a'\n", str[0]);
+
+    size = 0;
+    hres = ObtainUserAgentString(1, str, &size);
+    ok(hres == E_OUTOFMEMORY, "ObtainUserAgentString failed: %08x\n", hres);
+    ok(size > 0, "size=%d, expected non-zero\n", size);
+
+    str2 = HeapAlloc(GetProcessHeap(), 0, (size+20)*sizeof(CHAR));
+    if (!str2)
+    {
+        skip("skipping rest of ObtainUserAgent tests, out of memory\n");
+    }
+    else
+    {
+        saved = size;
+        hres = ObtainUserAgentString(0, str2, &size);
+        ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
+        ok(size == saved, "size=%d, expected %d\n", size, saved);
+        ok(strlen(expected) <= strlen(str2) &&
+           !memcmp(expected, str2, strlen(expected)*sizeof(CHAR)),
+           "user agent was \"%s\", expected to start with \"%s\"\n",
+           str2, expected);
+
+        size = saved+10;
+        hres = ObtainUserAgentString(0, str2, &size);
+        ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
+        ok(size == saved, "size=%d, expected %d\n", size, saved);
+    }
+    HeapFree(GetProcessHeap(), 0, str2);
+}
+
 START_TEST(misc)
 {
     OleInitialize(NULL);
@@ -1109,6 +1166,7 @@ START_TEST(misc)
     test_NameSpace();
     test_ReleaseBindInfo();
     test_UrlMkGetSessionOption();
+    test_ObtainUserAgentString();
 
     OleUninitialize();
 }
