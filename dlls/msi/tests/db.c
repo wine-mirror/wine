@@ -3172,6 +3172,8 @@ static void test_update(void)
     ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed\n");
     r = MsiCloseHandle(hdb);
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    DeleteFile(msifile);
 }
 
 static void test_special_tables(void)
@@ -3321,6 +3323,8 @@ static void test_select_markers(void)
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
     r = MsiCloseHandle(hdb);
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    DeleteFile(msifile);
 }
 
 START_TEST(db)
