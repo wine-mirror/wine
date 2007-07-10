@@ -483,50 +483,52 @@ GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
 GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     GDIPCONST GpPointF *points, INT count, REAL tension)
 {
-    HGDIOBJ old_pen;
-
     /* PolyBezier expects count*3-2 points. */
-    int i, len_pt = count*3-2;
-    POINT pt[len_pt];
+    INT i, len_pt = count*3-2, save_state;
+    GpPointF *pt;
     REAL x1, x2, y1, y2;
 
     if(!graphics || !pen)
         return InvalidParameter;
 
+    pt = GdipAlloc(len_pt * sizeof(GpPointF));
     tension = tension * TENSION_CONST;
 
     calc_curve_bezier_endp(points[0].X, points[0].Y, points[1].X, points[1].Y,
         tension, &x1, &y1);
 
-    pt[0].x = roundr(points[0].X);
-    pt[0].y = roundr(points[0].Y);
-    pt[1].x = roundr(x1);
-    pt[1].y = roundr(y1);
+    pt[0].X = points[0].X;
+    pt[0].Y = points[0].Y;
+    pt[1].X = x1;
+    pt[1].Y = y1;
 
     for(i = 0; i < count-2; i++){
         calc_curve_bezier(&(points[i]), tension, &x1, &y1, &x2, &y2);
 
-        pt[3*i+2].x = roundr(x1);
-        pt[3*i+2].y = roundr(y1);
-        pt[3*i+3].x = roundr(points[i+1].X);
-        pt[3*i+3].y = roundr(points[i+1].Y);
-        pt[3*i+4].x = roundr(x2);
-        pt[3*i+4].y = roundr(y2);
+        pt[3*i+2].X = x1;
+        pt[3*i+2].Y = y1;
+        pt[3*i+3].X = points[i+1].X;
+        pt[3*i+3].Y = points[i+1].Y;
+        pt[3*i+4].X = x2;
+        pt[3*i+4].Y = y2;
     }
 
     calc_curve_bezier_endp(points[count-1].X, points[count-1].Y,
         points[count-2].X, points[count-2].Y, tension, &x1, &y1);
 
-    pt[len_pt-2].x = x1;
-    pt[len_pt-2].y = y1;
-    pt[len_pt-1].x = roundr(points[count-1].X);
-    pt[len_pt-1].y = roundr(points[count-1].Y);
+    pt[len_pt-2].X = x1;
+    pt[len_pt-2].Y = y1;
+    pt[len_pt-1].X = points[count-1].X;
+    pt[len_pt-1].Y = points[count-1].Y;
 
-    old_pen = SelectObject(graphics->hdc, pen->gdipen);
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, pen->gdipen);
 
-    PolyBezier(graphics->hdc, pt, len_pt);
+    draw_polybezier(graphics->hdc, pen, pt, len_pt, TRUE);
 
-    SelectObject(graphics->hdc, old_pen);
+    GdipFree(pt);
+    RestoreDC(graphics->hdc, save_state);
 
     return Ok;
 }
