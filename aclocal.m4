@@ -153,6 +153,37 @@ dnl
 AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
 [AC_CONFIG_COMMANDS([$1],[test -d "$1" || (AC_MSG_NOTICE([creating $1]) && mkdir "$1")])])
 
+dnl **** Add a message to the list displayed at the end ****
+dnl
+dnl Usage: WINE_NOTICE(notice)
+dnl Usage: WINE_NOTICE_IF(test, notice)
+dnl Usage: WINE_WARNING(warning)
+dnl Usage: WINE_WARNING_IF(test, warning)
+dnl Usage: WINE_PRINT_MESSAGES
+dnl
+AC_DEFUN([WINE_NOTICE],[wine_notices="$wine_notices|$1"])
+AC_DEFUN([WINE_NOTICE_IF],[AS_IF([$1],[WINE_NOTICE([$2],[$3])])])
+AC_DEFUN([WINE_WARNING],[wine_warnings="$wine_warnings|$1"])
+AC_DEFUN([WINE_WARNING_IF],[AS_IF([$1],[WINE_WARNING([$2],[$3])])])
+
+AC_DEFUN([WINE_PRINT_MESSAGES],[ac_save_IFS="$IFS"
+IFS="|"
+if test "$verbose" = "yes"; then
+    for msg in $wine_notices; do
+        if test -n "$msg"; then
+            echo >&2
+            AC_MSG_NOTICE([$msg])
+        fi
+    done
+fi
+for msg in $wine_warnings; do
+    if test -n "$msg"; then
+        echo >&2
+        AC_MSG_WARN([$msg])
+    fi
+done
+IFS="$ac_save_IFS"])
+
 dnl Local Variables:
 dnl compile-command: "autoreconf --warnings=all"
 dnl End:
