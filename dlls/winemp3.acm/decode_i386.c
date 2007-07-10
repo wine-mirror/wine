@@ -31,22 +31,20 @@
 #include "mpg123.h"
 #include "mpglib.h"
 
-extern struct mpstr *gmp;
-
  /* old WRITE_SAMPLE */
 #define WRITE_SAMPLE(samples,sum,clip) \
   if( (sum) > 32767.0) { *(samples) = 0x7fff; (clip)++; } \
   else if( (sum) < -32768.0) { *(samples) = -0x8000; (clip)++; } \
   else { *(samples) = sum; }
 
-int synth_1to1_mono(real *bandPtr,unsigned char *samples,int *pnt)
+int synth_1to1_mono(struct mpstr *mp,real *bandPtr,unsigned char *samples,int *pnt)
 {
   short samples_tmp[64];
   short *tmp1 = samples_tmp;
   int i,ret;
   int pnt1 = 0;
 
-  ret = synth_1to1(bandPtr,0,(unsigned char *) samples_tmp,&pnt1);
+  ret = synth_1to1(mp,bandPtr,0,(unsigned char *) samples_tmp,&pnt1);
   samples += *pnt;
 
   for(i=0;i<32;i++) {
@@ -60,7 +58,7 @@ int synth_1to1_mono(real *bandPtr,unsigned char *samples,int *pnt)
 }
 
 
-int synth_1to1(real *bandPtr,int channel,unsigned char *out,int *pnt)
+int synth_1to1(struct mpstr *mp,real *bandPtr,int channel,unsigned char *out,int *pnt)
 {
   static const int step = 2;
   int bo;
@@ -70,16 +68,16 @@ int synth_1to1(real *bandPtr,int channel,unsigned char *out,int *pnt)
   int clip = 0;
   int bo1;
 
-  bo = gmp->synth_bo;
+  bo = mp->synth_bo;
 
   if(!channel) {
     bo--;
     bo &= 0xf;
-    buf = gmp->synth_buffs[0];
+    buf = mp->synth_buffs[0];
   }
   else {
     samples++;
-    buf = gmp->synth_buffs[1];
+    buf = mp->synth_buffs[1];
   }
 
   if(bo & 0x1) {
@@ -93,7 +91,7 @@ int synth_1to1(real *bandPtr,int channel,unsigned char *out,int *pnt)
     dct64(buf[0]+bo,buf[1]+bo+1,bandPtr);
   }
 
-  gmp->synth_bo = bo;
+  mp->synth_bo = bo;
 
   {
     register int j;

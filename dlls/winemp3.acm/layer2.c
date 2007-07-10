@@ -286,12 +286,12 @@ int do_layer2(struct frame *fr,unsigned char *pcm_sample,int *pcm_point)
     II_step_two(bit_alloc,fraction,scale,fr,i>>2);
     for (j=0;j<3;j++) {
       if(single >= 0) {
-        clip += synth_1to1_mono(fraction[0][j],pcm_sample,pcm_point);
+        clip += synth_1to1_mono(fr->mp,fraction[0][j],pcm_sample,pcm_point);
       }
       else {
         int p1 = *pcm_point;
-        clip += synth_1to1(fraction[0][j],0,pcm_sample,&p1);
-        clip += synth_1to1(fraction[1][j],1,pcm_sample,pcm_point);
+        clip += synth_1to1(fr->mp,fraction[0][j],0,pcm_sample,&p1);
+        clip += synth_1to1(fr->mp,fraction[1][j],1,pcm_sample,pcm_point);
       }
 
     }

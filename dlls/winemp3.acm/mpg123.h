@@ -105,6 +105,8 @@ struct frame {
     /* layer2 stuff */
     int II_sblimit;
     const struct al_table *alloc;
+
+    struct mpstr *mp;
 };
 
 struct parameter {
@@ -117,7 +119,7 @@ struct parameter {
 extern unsigned int   get1bit(void);
 extern unsigned int   getbits(int);
 extern unsigned int   getbits_fast(int);
-extern int set_pointer(long);
+extern int set_pointer(struct mpstr *,long);
 
 extern unsigned char *wordpointer;
 extern int bitindex;
@@ -160,9 +162,9 @@ struct III_sideinfo
   } ch[2];
 };
 
-extern int synth_1to1 (real *,int,unsigned char *,int *);
+extern int synth_1to1 (struct mpstr *,real *,int,unsigned char *,int *);
 extern int synth_1to1_8bit (real *,int,unsigned char *,int *);
-extern int synth_1to1_mono (real *,unsigned char *,int *);
+extern int synth_1to1_mono (struct mpstr *,real *,unsigned char *,int *);
 extern int synth_1to1_mono2stereo (real *,unsigned char *,int *);
 extern int synth_1to1_8bit_mono (real *,unsigned char *,int *);
 extern int synth_1to1_8bit_mono2stereo (real *,unsigned char *,int *);
