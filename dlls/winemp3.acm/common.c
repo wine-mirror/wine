@@ -53,7 +53,6 @@ int pcm_point = 0;
 
 #define HDRCMPMASK 0xfffffd00
 
-#if 0
 int head_check(unsigned long head)
 {
     if( (head & 0xffe00000) != 0xffe00000)
@@ -66,7 +65,6 @@ int head_check(unsigned long head)
 	return FALSE;
     return TRUE;
 }
-#endif
 
 
 /*
@@ -75,6 +73,9 @@ int head_check(unsigned long head)
  */
 int decode_header(struct frame *fr,unsigned long newhead)
 {
+    if(head_check(newhead) == FALSE)
+      return (0);
+
     if( newhead & (1<<20) ) {
       fr->lsf = (newhead & (1<<19)) ? 0x0 : 0x1;
       fr->mpeg25 = 0;
@@ -85,10 +86,6 @@ int decode_header(struct frame *fr,unsigned long newhead)
     }
 
     fr->lay = 4-((newhead>>17)&3);
-    if( ((newhead>>10)&0x3) == 0x3) {
-      fprintf(stderr,"Stream error\n");
-      return (0);
-    }
     if(fr->mpeg25) {
       fr->sampling_frequency = 6 + ((newhead>>10)&0x3);
     }
