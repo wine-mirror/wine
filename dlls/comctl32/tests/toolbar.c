@@ -38,6 +38,7 @@ static BOOL g_fBlockHotItemChange;
 static BOOL g_fReceivedHotItemChange;
 static BOOL g_fExpectedHotItemOld;
 static BOOL g_fExpectedHotItemNew;
+static DWORD g_dwExpectedDispInfoMask;
 
 #define check_rect(name, val, exp) ok(val.top == exp.top && val.bottom == exp.bottom && \
     val.left == exp.left && val.right == exp.right, "invalid rect (" name ") (%d,%d) (%d,%d) - expected (%d,%d) (%d,%d)\n", \
@@ -57,6 +58,7 @@ static LRESULT MyWnd_Notify(LPARAM lParam)
 {
     NMHDR *hdr = (NMHDR *)lParam;
     NMTBHOTITEM *nmhi;
+    NMTBDISPINFO *nmdisp;
     switch (hdr->code)
     {
         case TBN_HOTITEMCHANGE:
@@ -70,6 +72,15 @@ static LRESULT MyWnd_Notify(LPARAM lParam)
             if (g_fBlockHotItemChange)
                 return 1;
             break;
+
+        case TBN_GETDISPINFOA:
+        case TBN_GETDISPINFOW:
+            nmdisp = (NMTBDISPINFOA *)lParam;
+
+            compare(nmdisp->dwMask, g_dwExpectedDispInfoMask, "%x");
+            compare(nmdisp->iImage, -1, "%d");
+            ok(nmdisp->pszText == NULL, "pszText is not NULL\n");
+        break;
     }
     return 0;
 }
@@ -974,6 +985,25 @@ static void test_createtoolbarex()
     DestroyWindow(hToolbar);
 }
 
+static void test_dispinfo(void)
+{
+    HWND hToolbar = NULL;
+    const TBBUTTON buttons_disp[] = {
+        {-1, 20, TBSTATE_ENABLED, 0, {0, }, 0, -1},
+        {0,  21, TBSTATE_ENABLED, 0, {0, }, 0, -1},
+    };
+
+    rebuild_toolbar(&hToolbar);
+    SendMessageA(hToolbar, TB_LOADIMAGES, IDB_HIST_SMALL_COLOR, (LPARAM)HINST_COMMCTRL);
+    SendMessageA(hToolbar, TB_ADDBUTTONS, 2, (LPARAM)buttons_disp);
+    g_dwExpectedDispInfoMask = 1;
+    /* some TBN_GETDISPINFO tests will be done in MyWnd_Notify function */
+    ShowWindow(hToolbar, SW_SHOW);
+    UpdateWindow(hToolbar);
+    DestroyWindow(hToolbar);
+    g_dwExpectedDispInfoMask = 0;
+}
+
 
 START_TEST(toolbar)
 {
@@ -1007,6 +1037,7 @@ START_TEST(toolbar)
     test_sizes();
     test_getbuttoninfo();
     test_createtoolbarex();
+    test_dispinfo();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {

@@ -366,6 +366,7 @@ TOOLBAR_GetBitmapIndex(const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr)
         nmgd.idCommand = btnPtr->idCommand;
         nmgd.lParam = btnPtr->dwData;
         nmgd.dwMask = TBNF_IMAGE;
+        nmgd.iImage = -1;
         TOOLBAR_SendNotify(&nmgd.hdr, infoPtr,
 			infoPtr->bUnicode ? TBN_GETDISPINFOW : TBN_GETDISPINFOA);
         if (nmgd.dwMask & TBNF_DI_SETITEM)
