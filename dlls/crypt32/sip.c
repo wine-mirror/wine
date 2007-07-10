@@ -30,6 +30,7 @@
 #include "winuser.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
@@ -354,6 +355,165 @@ cleanup3:
     return bRet;
 }
 
+static LONG CRYPT_OpenSIPFunctionKey(const GUID *guid, LPCWSTR function,
+ HKEY *key)
+{
+    WCHAR szFullKey[ 0x100 ];
+
+    lstrcpyW(szFullKey, szOID);
+    lstrcatW(szFullKey, function);
+    CRYPT_guid2wstr(guid, &szFullKey[lstrlenW(szFullKey)]);
+    return RegOpenKeyExW(HKEY_LOCAL_MACHINE, szFullKey, 0, KEY_READ, key);
+}
+
+/* Loads the function named function for the SIP specified by pgSubject, and
+ * returns it if found.  Returns NULL on error.  If the function is loaded,
+ * *pLib is set to the library in which it is found.
+ */
+static void *CRYPT_LoadSIPFunc(const GUID *pgSubject, LPCWSTR function,
+ HMODULE *pLib)
+{
+    LONG r;
+    HKEY key = NULL;
+    DWORD size;
+    WCHAR dllName[MAX_PATH];
+    char functionName[MAX_PATH];
+    HMODULE lib;
+    void *func = NULL;
+
+    TRACE("(%s, %s)\n", debugstr_guid(pgSubject), debugstr_w(function));
+
+    r = CRYPT_OpenSIPFunctionKey(pgSubject, function, &key);
+    if (r) goto error;
+
+    /* Read the DLL entry */
+    size = sizeof(dllName);
+    r = RegQueryValueExW(key, szDllName, NULL, NULL, (LPBYTE)dllName, &size);
+    if (r) goto error;
+
+    /* Read the Function entry */
+    size = sizeof(functionName);
+    r = RegQueryValueExA(key, "FuncName", NULL, NULL, (LPBYTE)functionName,
+     &size);
+    if (r) goto error;
+
+    lib = LoadLibraryW(dllName);
+    if (!lib)
+        goto error;
+    func = GetProcAddress(lib, functionName);
+    if (func)
+        *pLib = lib;
+    else
+        FreeLibrary(lib);
+
+error:
+    RegCloseKey(key);
+    TRACE("returning %p\n", func);
+    return func;
+}
+
+typedef struct _WINE_SIP_PROVIDER {
+    GUID              subject;
+    SIP_DISPATCH_INFO info;
+    struct list       entry;
+} WINE_SIP_PROVIDER;
+
+static struct list providers = { &providers, &providers };
+static CRITICAL_SECTION providers_cs;
+static CRITICAL_SECTION_DEBUG providers_cs_debug =
+{
+    0, 0, &providers_cs,
+    { &providers_cs_debug.ProcessLocksList,
+    &providers_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": providers_cs") }
+};
+static CRITICAL_SECTION providers_cs = { &providers_cs_debug, -1, 0, 0, 0, 0 };
+
+static void CRYPT_CacheSIP(const GUID *pgSubject, SIP_DISPATCH_INFO *info)
+{
+    WINE_SIP_PROVIDER *prov = CryptMemAlloc(sizeof(WINE_SIP_PROVIDER));
+
+    if (prov)
+    {
+        memcpy(&prov->subject, pgSubject, sizeof(prov->subject));
+        memcpy(&prov->info, info, sizeof(prov->info));
+        EnterCriticalSection(&providers_cs);
+        list_add_tail(&providers, &prov->entry);
+        LeaveCriticalSection(&providers_cs);
+    }
+}
+
+static WINE_SIP_PROVIDER *CRYPT_GetCachedSIP(const GUID *pgSubject)
+{
+    WINE_SIP_PROVIDER *provider = NULL, *ret = NULL;
+
+    EnterCriticalSection(&providers_cs);
+    LIST_FOR_EACH_ENTRY(provider, &providers, WINE_SIP_PROVIDER, entry)
+    {
+        if (IsEqualGUID(pgSubject, &provider->subject))
+            break;
+    }
+    if (provider && IsEqualGUID(pgSubject, &provider->subject))
+        ret = provider;
+    LeaveCriticalSection(&providers_cs);
+    return ret;
+}
+
+static inline BOOL CRYPT_IsSIPCached(const GUID *pgSubject)
+{
+    return CRYPT_GetCachedSIP(pgSubject) != NULL;
+}
+
+void crypt_sip_free(void)
+{
+    WINE_SIP_PROVIDER *prov, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(prov, next, &providers, WINE_SIP_PROVIDER, entry)
+    {
+        list_remove(&prov->entry);
+        FreeLibrary(prov->info.hSIP);
+        CryptMemFree(prov);
+    }
+}
+
+/* Loads the SIP for pgSubject into the global cache.  Returns FALSE if the
+ * SIP isn't registered or is invalid.
+ */
+static BOOL CRYPT_LoadSIP(const GUID *pgSubject)
+{
+    SIP_DISPATCH_INFO sip = { 0 };
+    HMODULE lib, temp = NULL;
+
+    sip.pfGet = CRYPT_LoadSIPFunc(pgSubject, szGetSigned, &lib);
+    if (!sip.pfGet)
+        goto error;
+    sip.pfPut = CRYPT_LoadSIPFunc(pgSubject, szPutSigned, &temp);
+    if (!sip.pfPut || temp != lib)
+        goto error;
+    FreeLibrary(temp);
+    sip.pfCreate = CRYPT_LoadSIPFunc(pgSubject, szCreate, &temp);
+    if (!sip.pfCreate || temp != lib)
+        goto error;
+    FreeLibrary(temp);
+    sip.pfVerify = CRYPT_LoadSIPFunc(pgSubject, szVerify, &temp);
+    if (!sip.pfVerify || temp != lib)
+        goto error;
+    FreeLibrary(temp);
+    sip.pfRemove = CRYPT_LoadSIPFunc(pgSubject, szRemoveSigned, &temp);
+    if (!sip.pfRemove || temp != lib)
+        goto error;
+    FreeLibrary(temp);
+    sip.hSIP = lib;
+    CRYPT_CacheSIP(pgSubject, &sip);
+    return TRUE;
+
+error:
+    FreeLibrary(lib);
+    FreeLibrary(temp);
+    SetLastError(TRUST_E_SUBJECT_FORM_UNKNOWN);
+    return FALSE;
+}
+
 /***********************************************************************
  *             CryptSIPLoad (CRYPT32.@)
  *
@@ -382,15 +542,24 @@ cleanup3:
 BOOL WINAPI CryptSIPLoad
        (const GUID *pgSubject, DWORD dwFlags, SIP_DISPATCH_INFO *pSipDispatch)
 {
-    FIXME("(%s %d %p) stub!\n", debugstr_guid(pgSubject), dwFlags, pSipDispatch);
+    TRACE("(%s %d %p)\n", debugstr_guid(pgSubject), dwFlags, pSipDispatch);
 
     if (!pgSubject || dwFlags != 0 || !pSipDispatch)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+    if (!CRYPT_IsSIPCached(pgSubject) && !CRYPT_LoadSIP(pgSubject))
+        return FALSE;
 
-    return FALSE;
+    pSipDispatch->hSIP = NULL;
+    pSipDispatch->pfGet = CryptSIPGetSignedDataMsg;
+    pSipDispatch->pfPut = CryptSIPPutSignedDataMsg;
+    pSipDispatch->pfCreate = CryptSIPCreateIndirectData;
+    pSipDispatch->pfVerify = CryptSIPVerifyIndirectData;
+    pSipDispatch->pfRemove = CryptSIPRemoveSignedDataMsg;
+
+    return TRUE;
 }
 
 /***********************************************************************

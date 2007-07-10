@@ -50,6 +50,7 @@ HCRYPTPROV CRYPT_GetDefaultProvider(void);
 
 void crypt_oid_init(HINSTANCE hinst);
 void crypt_oid_free(void);
+void crypt_sip_free(void);
 
 /* Some typedefs that make it easier to abstract which type of context we're
  * working with.

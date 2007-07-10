@@ -283,9 +283,8 @@ static void test_SIPLoad(void)
     sdi.pfGet = (pCryptSIPGetSignedDataMsg)0xdeadbeef;
     ret = CryptSIPLoad(&dummySubject, 0, &sdi);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
-    todo_wine
-        ok ( GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN,
-            "Expected TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08x\n", GetLastError());
+    ok ( GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN,
+        "Expected TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08x\n", GetLastError());
     ok( sdi.pfGet == (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected no change to the function pointer\n");
 
     hCrypt = LoadLibraryA("crypt32.dll");
@@ -306,16 +305,13 @@ static void test_SIPLoad(void)
     sdi.cbSize = sizeof(SIP_DISPATCH_INFO);
     sdi.pfGet = (pCryptSIPGetSignedDataMsg)0xdeadbeef;
     ret = CryptSIPLoad(&unknown, 0, &sdi);
-    todo_wine
-    {
-        ok ( ret, "Expected CryptSIPLoad to succeed\n");
-        /* On native the last error will always be ERROR_PROC_NOT_FOUND as native searches for the function DllCanUnloadNow
-         * in WINTRUST.DLL (in this case). This function is not available in WINTRUST.DLL.
-         * For now there's no need to implement this is Wine as I doubt any program will rely on
-         * this last error when the call succeeded.
-         */
-        ok( sdi.pfGet != (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected a function pointer to be loaded.\n");
-    }
+    ok ( ret, "Expected CryptSIPLoad to succeed\n");
+    /* On native the last error will always be ERROR_PROC_NOT_FOUND as native searches for the function DllCanUnloadNow
+     * in WINTRUST.DLL (in this case). This function is not available in WINTRUST.DLL.
+     * For now there's no need to implement this is Wine as I doubt any program will rely on
+     * this last error when the call succeeded.
+     */
+    ok( sdi.pfGet != (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected a function pointer to be loaded.\n");
 
     /* The function addresses returned by CryptSIPLoad are actually the addresses of
      * crypt32's own functions. A function calling these addresses will end up first
@@ -324,13 +320,12 @@ static void test_SIPLoad(void)
      */
     if (funcCryptSIPGetSignedDataMsg && funcCryptSIPPutSignedDataMsg && funcCryptSIPCreateIndirectData &&
         funcCryptSIPVerifyIndirectData && funcCryptSIPRemoveSignedDataMsg)
-        todo_wine
-            ok (sdi.pfGet == funcCryptSIPGetSignedDataMsg &&
-                sdi.pfPut == funcCryptSIPPutSignedDataMsg &&
-                sdi.pfCreate == funcCryptSIPCreateIndirectData &&
-                sdi.pfVerify == funcCryptSIPVerifyIndirectData &&
-                sdi.pfRemove == funcCryptSIPRemoveSignedDataMsg,
-                "Expected function addresses to be from crypt32\n");
+        ok (sdi.pfGet == funcCryptSIPGetSignedDataMsg &&
+            sdi.pfPut == funcCryptSIPPutSignedDataMsg &&
+            sdi.pfCreate == funcCryptSIPCreateIndirectData &&
+            sdi.pfVerify == funcCryptSIPVerifyIndirectData &&
+            sdi.pfRemove == funcCryptSIPRemoveSignedDataMsg,
+            "Expected function addresses to be from crypt32\n");
     else
         trace("Couldn't load function pointers\n");
 
@@ -340,16 +335,12 @@ static void test_SIPLoad(void)
     sdi.cbSize = sizeof(SIP_DISPATCH_INFO);
     sdi.pfGet = (pCryptSIPGetSignedDataMsg)0xdeadbeef;
     ret = CryptSIPLoad(&unknown2, 0, &sdi);
-    todo_wine
-    {
-        ok ( ret, "Expected CryptSIPLoad to succeed\n");
-        /* This call on its own would have resulted in an ERROR_PROC_NOT_FOUND, but the previous
-         * call to CryptSIPLoad already loaded wintrust.dll. As this information is cached,
-         * CryptSIPLoad will not try to search for the already mentioned DllCanUnloadNow.
-         */
-    }
-    todo_wine
-        ok( sdi.pfGet != (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected a function pointer to be loaded.\n");
+    ok ( ret, "Expected CryptSIPLoad to succeed\n");
+    /* This call on its own would have resulted in an ERROR_PROC_NOT_FOUND, but the previous
+     * call to CryptSIPLoad already loaded wintrust.dll. As this information is cached,
+     * CryptSIPLoad will not try to search for the already mentioned DllCanUnloadNow.
+     */
+    ok( sdi.pfGet != (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected a function pointer to be loaded.\n");
 
     /* All OK, but other SIP */
     SetLastError(0xdeadbeef);
