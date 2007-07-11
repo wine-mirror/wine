@@ -1135,13 +1135,13 @@ static INT AddFontFileToList(const char *file, char *fake_family, const WCHAR *t
                         TRACE("This font is a replacement but the original really exists, so we'll skip the replacement\n");
                         HeapFree(GetProcessHeap(), 0, StyleW);
                         pFT_Done_Face(ft_face);
-                        return 0;
+                        return 1;
                     }
                     if(!pHeader || pHeader->Font_Revision <= face->font_version) {
                         TRACE("Original font is newer so skipping this one\n");
                         HeapFree(GetProcessHeap(), 0, StyleW);
                         pFT_Done_Face(ft_face);
-                        return 0;
+                        return 1;
                     } else {
                         TRACE("Replacing original with this one\n");
                         list_remove(&face->entry);
