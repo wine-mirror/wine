@@ -1262,7 +1262,10 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                             sizeof (struct sc_service) + len*sizeof(WCHAR),
                             sc_handle_destroy_service );
     if (!hsvc)
+    {
+        RegCloseKey(hKey);
         return NULL;
+    }
     strcpyW( hsvc->name, lpServiceName );
     hsvc->hkey = hKey;
     hsvc->dwAccess = dwDesiredAccess;
