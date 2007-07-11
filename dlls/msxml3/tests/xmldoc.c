@@ -268,11 +268,14 @@ static void test_createElement(void)
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
     ok(element != NULL, "Expected non-NULL element\n");
 
-    hr = IXMLElement_get_type(element, &type);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
-    ok(type == XMLELEMTYPE_OTHER, "Expected XMLELEMTYPE_OTHER, got %ld\n", type);
+    if (element != NULL)
+    {
+        hr = IXMLElement_get_type(element, &type);
+        ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+        ok(type == XMLELEMTYPE_OTHER, "Expected XMLELEMTYPE_OTHER, got %ld\n", type);
 
-    IXMLElement_Release(element);
+        IXMLElement_Release(element);
+    }
 
     /* invalid vName type */
     V_VT(&vType) = VT_I4;
