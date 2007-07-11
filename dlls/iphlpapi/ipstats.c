@@ -1316,7 +1316,7 @@ DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, DWORD maxEntries, HANDLE heap,
          if (ptr && *ptr) {
             ptr++;
             table->table[table->dwNumEntries].dwLocalPort =
-               strtoul(ptr, &endPtr, 16);
+               htons ((unsigned short)strtoul(ptr, &endPtr, 16));
             ptr = endPtr;
          }
          if (ptr && *ptr) {
@@ -1327,7 +1327,7 @@ DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, DWORD maxEntries, HANDLE heap,
          if (ptr && *ptr) {
             ptr++;
             table->table[table->dwNumEntries].dwRemotePort =
-               strtoul(ptr, &endPtr, 16);
+               htons ((unsigned short)strtoul(ptr, &endPtr, 16));
             ptr = endPtr;
          }
          if (ptr && *ptr) {

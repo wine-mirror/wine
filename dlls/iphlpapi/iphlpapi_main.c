@@ -296,13 +296,15 @@ static int TcpTableSorter(const void *a, const void *b)
     const MIB_TCPROW* rowA = a;
     const MIB_TCPROW* rowB = b;
 
-    ret = rowA->dwLocalAddr - rowB->dwLocalAddr;
+    ret = ntohl (rowA->dwLocalAddr) - ntohl (rowB->dwLocalAddr);
     if (ret == 0) {
-      ret = rowA->dwLocalPort - rowB->dwLocalPort;
+       ret = ntohs ((unsigned short)rowA->dwLocalPort) -
+          ntohs ((unsigned short)rowB->dwLocalPort);
       if (ret == 0) {
-        ret = rowA->dwRemoteAddr - rowB->dwRemoteAddr;
+         ret = ntohl (rowA->dwRemoteAddr) - ntohl (rowB->dwRemoteAddr);
         if (ret == 0)
-          ret = rowA->dwRemotePort - rowB->dwRemotePort;
+           ret = ntohs ((unsigned short)rowA->dwRemotePort) -
+              ntohs ((unsigned short)rowB->dwRemotePort);
       }
     }
   }
