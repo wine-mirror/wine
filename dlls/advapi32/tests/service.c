@@ -137,6 +137,7 @@ static void test_create_delete_svc(void)
     SC_HANDLE scm_handle, svc_handle1;
     static const CHAR servicename         [] = "Winetest";
     static const CHAR pathname            [] = "we_dont_care.exe";
+    static const CHAR empty               [] = "";
 
     /* All NULL */
     SetLastError(0xdeadbeef);
@@ -173,13 +174,19 @@ static void test_create_delete_svc(void)
     /* Both servicename and binary name (We only have connect rights) */
     SetLastError(0xdeadbeef);
     svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, 0, 0, 0, 0, pathname, NULL, NULL, NULL, NULL, NULL);
-    todo_wine
-    {
     ok(!svc_handle1, "Expected failure\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
-    DeleteService(svc_handle1);      /* Wine doesn't care (yet) about access rights, line can be removed when fixed */
-    CloseServiceHandle(svc_handle1); /* Wine doesn't care (yet) about access rights, line can be removed when fixed */
-    }
+
+    /* They can even be empty at this stage of parameter checking */
+    SetLastError(0xdeadbeef);
+    svc_handle1 = CreateServiceA(scm_handle, empty, NULL, 0, 0, 0, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    ok(!svc_handle1, "Expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, 0, 0, 0, 0, empty, NULL, NULL, NULL, NULL, NULL);
+    ok(!svc_handle1, "Expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
 
     CloseServiceHandle(scm_handle);
 }
