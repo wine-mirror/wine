@@ -1376,25 +1376,25 @@ BOOL WINAPI DisconnectNamedPipe(HANDLE hPipe)
  *  should be done as a single operation in the wineserver or kernel
  */
 BOOL WINAPI TransactNamedPipe(
-    HANDLE handle, LPVOID lpInput, DWORD dwInputSize, LPVOID lpOutput,
-    DWORD dwOutputSize, LPDWORD lpBytesRead, LPOVERLAPPED lpOverlapped)
+    HANDLE handle, LPVOID write_buf, DWORD write_size, LPVOID read_buf,
+    DWORD read_size, LPDWORD bytes_read, LPOVERLAPPED overlapped)
 {
     BOOL r;
     DWORD count;
 
     TRACE("%p %p %d %p %d %p %p\n",
-          handle, lpInput, dwInputSize, lpOutput,
-          dwOutputSize, lpBytesRead, lpOverlapped);
+          handle, write_buf, write_size, read_buf,
+          read_size, bytes_read, overlapped);
 
-    if (lpOverlapped)
+    if (overlapped)
     {
         FIXME("Doesn't support overlapped operation as yet\n");
         return FALSE;
     }
 
-    r = WriteFile(handle, lpOutput, dwOutputSize, &count, NULL);
+    r = WriteFile(handle, write_buf, write_size, &count, NULL);
     if (r)
-        r = ReadFile(handle, lpInput, dwInputSize, lpBytesRead, NULL);
+        r = ReadFile(handle, read_buf, read_size, bytes_read, NULL);
 
     return r;
 }
