@@ -19,6 +19,7 @@
  */
 
 #define _WIN32_MSI 300
+#define COBJMACROS
 
 #include <stdio.h>
 
@@ -27,10 +28,13 @@
 #include <msidefs.h>
 #include <msi.h>
 #include <fci.h>
+#include <objidl.h>
 
 #include "wine/test.h"
 
 static const char *msifile = "msitest.msi";
+static const char *msifile2 = "winetest2.msi";
+static const char *mstfile = "winetest.mst";
 CHAR CURR_DIR[MAX_PATH];
 CHAR PROG_FILES_DIR[MAX_PATH];
 
@@ -405,6 +409,11 @@ static const CHAR pp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "PublishProduct\tPUBLISH_PRODUCT=1 Or FULL=1\t6400\n"
                                               "InstallFinalize\t\t6600";
 
+static const CHAR tp_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                       "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                       "Component\tComponent\n"
+                                       "augustus\t\tMSITESTDIR\t0\tprop=\"val\"\taugustus\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -587,6 +596,18 @@ static const msi_table pp_tables[] =
     ADD_TABLE(rof_feature_comp),
     ADD_TABLE(rof_file),
     ADD_TABLE(pp_install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table tp_tables[] =
+{
+    ADD_TABLE(tp_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(ci2_feature_comp),
+    ADD_TABLE(ci2_file),
+    ADD_TABLE(install_exec_seq),
     ADD_TABLE(rof_media),
     ADD_TABLE(property),
 };
@@ -2231,6 +2252,219 @@ static void test_publishsourcelist(void)
     RemoveDirectory("msitest");
 }
 
+static UINT run_query(MSIHANDLE hdb, MSIHANDLE hrec, const char *query)
+{
+    MSIHANDLE hview = 0;
+    UINT r;
+
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    if(r != ERROR_SUCCESS)
+        return r;
+
+    r = MsiViewExecute(hview, hrec);
+    if(r == ERROR_SUCCESS)
+        r = MsiViewClose(hview);
+    MsiCloseHandle(hview);
+    return r;
+}
+
+static void set_transform_summary_info(void)
+{
+    UINT r;
+    MSIHANDLE suminfo;
+
+    /* build summmary info */
+    r = MsiGetSummaryInformation(0, mstfile, 3, &suminfo);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS , "Failed to open summaryinfo\n");
+    }
+
+    r = MsiSummaryInfoSetProperty(suminfo, PID_TITLE, VT_LPSTR, 0, NULL, "MSITEST");
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Failed to set summary info\n");
+    }
+
+    r = MsiSummaryInfoSetProperty(suminfo, PID_REVNUMBER, VT_LPSTR, 0, NULL,
+                        "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}1.1.1;"
+                        "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}1.1.1;"
+                        "{4C0EAA15-0264-4E5A-8758-609EF142B92D}");
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS , "Failed to set summary info\n");
+    }
+
+    r = MsiSummaryInfoSetProperty(suminfo, PID_PAGECOUNT, VT_I4, 100, NULL, NULL);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Failed to set summary info\n");
+    }
+
+    r = MsiSummaryInfoPersist(suminfo);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS , "Failed to make summary info persist\n");
+    }
+
+    r = MsiCloseHandle(suminfo);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS , "Failed to close suminfo\n");
+    }
+}
+
+static void generate_transform(void)
+{
+    MSIHANDLE hdb1, hdb2;
+    LPCSTR query;
+    UINT r;
+
+    /* start with two identical databases */
+    CopyFile(msifile, msifile2, FALSE);
+
+    r = MsiOpenDatabase(msifile2, MSIDBOPEN_TRANSACT, &hdb1);
+    ok(r == ERROR_SUCCESS , "Failed to create database\n");
+
+    r = MsiDatabaseCommit(hdb1);
+    ok(r == ERROR_SUCCESS , "Failed to commit database\n");
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_READONLY, &hdb2);
+    ok(r == ERROR_SUCCESS , "Failed to create database\n");
+
+    query = "INSERT INTO `Property` ( `Property`, `Value` ) VALUES ( 'prop', 'val' )";
+    r = run_query(hdb1, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add property\n");
+
+    /* database needs to be committed */
+    MsiDatabaseCommit(hdb1);
+
+    r = MsiDatabaseGenerateTransform(hdb1, hdb2, mstfile, 0, 0);
+    ok(r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r);
+
+    r = MsiCreateTransformSummaryInfo(hdb2, hdb2, mstfile, 0, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    MsiCloseHandle(hdb1);
+    MsiCloseHandle(hdb2);
+}
+
+/* data for generating a transform */
+
+/* tables transform names - encoded as they would be in an msi database file */
+static const WCHAR name1[] = { 0x4840, 0x3f3f, 0x4577, 0x446c, 0x3b6a, 0x45e4, 0x4824, 0 }; /* _StringData */
+static const WCHAR name2[] = { 0x4840, 0x3f3f, 0x4577, 0x446c, 0x3e6a, 0x44b2, 0x482f, 0 }; /* _StringPool */
+static const WCHAR name3[] = { 0x4840, 0x4559, 0x44f2, 0x4568, 0x4737, 0 }; /* Property */
+
+/* data in each table */
+static const char data1[] = /* _StringData */
+    "propval";  /* all the strings squashed together */
+
+static const WCHAR data2[] = { /* _StringPool */
+/*  len, refs */
+    0,   0,    /* string 0 ''     */
+    4,   1,    /* string 1 'prop' */
+    3,   1,    /* string 2 'val'  */
+};
+
+static const WCHAR data3[] = { /* Property */
+    0x0201, 0x0001, 0x0002,
+};
+
+static const struct {
+    LPCWSTR name;
+    const void *data;
+    DWORD size;
+} table_transform_data[] =
+{
+    { name1, data1, sizeof data1 - 1 },
+    { name2, data2, sizeof data2 },
+    { name3, data3, sizeof data3 },
+};
+
+#define NUM_TRANSFORM_TABLES (sizeof table_transform_data/sizeof table_transform_data[0])
+
+static void generate_transform_manual(void)
+{
+    IStorage *stg = NULL;
+    IStream *stm;
+    WCHAR name[0x20];
+    HRESULT r;
+    DWORD i, count;
+    const DWORD mode = STGM_CREATE|STGM_READWRITE|STGM_DIRECT|STGM_SHARE_EXCLUSIVE;
+
+    const CLSID CLSID_MsiTransform = { 0xc1082,0,0,{0xc0,0,0,0,0,0,0,0x46}};
+
+    MultiByteToWideChar(CP_ACP, 0, mstfile, -1, name, 0x20);
+
+    r = StgCreateDocfile(name, mode, 0, &stg);
+    ok(r == S_OK, "failed to create storage\n");
+    if (!stg)
+        return;
+
+    r = IStorage_SetClass(stg, &CLSID_MsiTransform);
+    ok(r == S_OK, "failed to set storage type\n");
+
+    for (i=0; i<NUM_TRANSFORM_TABLES; i++)
+    {
+        r = IStorage_CreateStream(stg, table_transform_data[i].name,
+                            STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+        if (FAILED(r))
+        {
+            ok(0, "failed to create stream %08x\n", r);
+            continue;
+        }
+
+        r = IStream_Write(stm, table_transform_data[i].data,
+                          table_transform_data[i].size, &count);
+        if (FAILED(r) || count != table_transform_data[i].size)
+            ok(0, "failed to write stream\n");
+        IStream_Release(stm);
+    }
+
+    IStorage_Release(stg);
+
+    set_transform_summary_info();
+}
+
+static void test_transformprop(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    CreateDirectoryA("msitest\\msitest", NULL);
+    create_file("msitest\\augustus", 500);
+
+    create_database(msifile, tp_tables, sizeof(tp_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    ok(!delete_pf("msitest", FALSE), "File installed\n");
+
+    if (0)
+        generate_transform();
+    else
+        generate_transform_manual();
+
+    r = MsiInstallProductA(msifile, "TRANSFORMS=winetest.mst");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    todo_wine
+    {
+        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+        ok(delete_pf("msitest", FALSE), "File not installed\n");
+    }
+
+    /* Delete the files in the temp (current) folder */
+    DeleteFile(msifile);
+    DeleteFile(msifile2);
+    DeleteFile(mstfile);
+    DeleteFile("msitest\\augustus");
+    RemoveDirectory("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -2263,6 +2497,7 @@ START_TEST(install)
     test_setpropertyfolder();
     test_publish();
     test_publishsourcelist();
+    test_transformprop();
 
     SetCurrentDirectoryA(prev_path);
 }

@@ -249,6 +249,10 @@ UINT WINAPI MsiPreviewBillboardA(MSIHANDLE, LPCSTR, LPCSTR);
 UINT WINAPI MsiPreviewBillboardW(MSIHANDLE, LPCWSTR, LPCWSTR);
 #define     MsiPreviewBillboard WINELIB_NAME_AW(MsiPreviewBillboard)
 
+UINT WINAPI MsiCreateTransformSummaryInfoA(MSIHANDLE, MSIHANDLE, LPCSTR, int, int);
+UINT WINAPI MsiCreateTransformSummaryInfoW(MSIHANDLE, MSIHANDLE, LPCWSTR, int, int);
+#define     MsiCreateTransformSummaryInfo WINELIB_NAME_AW(MsiCreateTransformSummaryInfo)
+
 UINT WINAPI MsiGetSummaryInformationA(MSIHANDLE, LPCSTR, UINT, MSIHANDLE *);
 UINT WINAPI MsiGetSummaryInformationW(MSIHANDLE, LPCWSTR, UINT, MSIHANDLE *);
 #define     MsiGetSummaryInformation WINELIB_NAME_AW(MsiGetSummaryInformation)
