@@ -1679,6 +1679,7 @@ DWORD       WINAPI GetTempPathA(DWORD,LPSTR);
 DWORD       WINAPI GetTempPathW(DWORD,LPWSTR);
 #define     GetTempPath WINELIB_NAME_AW(GetTempPath)
 DWORD       WINAPI GetTickCount(void);
+ULONGLONG   WINAPI GetTickCount64(void);
 DWORD       WINAPI GetTimeZoneInformation(LPTIME_ZONE_INFORMATION);
 BOOL        WINAPI GetThreadContext(HANDLE,CONTEXT *);
 INT         WINAPI GetThreadPriority(HANDLE);
