@@ -386,12 +386,12 @@ PDH_STATUS WINAPI PdhGetFormattedCounterValue( PDH_HCOUNTER handle, DWORD format
     }
     else if (format & PDH_FMT_LARGE)
     {
-        if (format & PDH_FMT_1000) value->u.longValue = counter->two.largevalue * 1000;
+        if (format & PDH_FMT_1000) value->u.largeValue = counter->two.largevalue * 1000;
         else value->u.largeValue = counter->two.largevalue * pow( 10, factor );
     }
     else if (format & PDH_FMT_DOUBLE)
     {
-        if (format & PDH_FMT_1000) value->u.longValue = counter->two.doublevalue * 1000;
+        if (format & PDH_FMT_1000) value->u.doubleValue = counter->two.doublevalue * 1000;
         else value->u.doubleValue = counter->two.doublevalue * pow( 10, factor );
     }
     else
