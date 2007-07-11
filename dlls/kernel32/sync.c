@@ -1538,11 +1538,15 @@ BOOL WINAPI CallNamedPipeW(
 
     mode = PIPE_READMODE_MESSAGE;
     ret = SetNamedPipeHandleState(pipe, &mode, NULL, NULL);
+
+    /* Currently SetNamedPipeHandleState() is a stub returning FALSE */
+    if (ret) FIXME("Now that SetNamedPipeHandleState() is more than a stub, please update CallNamedPipeW\n");
+    /*
     if (!ret)
     {
         CloseHandle(pipe);
         return FALSE;
-    }
+    }*/
 
     ret = TransactNamedPipe(pipe, lpInput, lpInputSize, lpOutput, lpOutputSize, lpBytesRead, NULL);
     CloseHandle(pipe);
