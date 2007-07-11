@@ -208,8 +208,8 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
 
             /* Using roundr here can make the triangle float off the end of the
              * line. */
-            pt[0].x = ((x2 - x1) >= 0 ? floor(x2 - dx) : ceil(x2 - dx));
-            pt[0].y = ((y2 - y1) >= 0 ? floor(y2 - dy) : ceil(y2 - dy));
+            pt[0].x = ((x2 - x1) >= 0 ? floorf(x2 - dx) : ceilf(x2 - dx));
+            pt[0].y = ((y2 - y1) >= 0 ? floorf(y2 - dy) : ceilf(y2 - dy));
             pt[1].x = roundr(pt[0].x + 2.0 * dx);
             pt[1].y = roundr(pt[0].y + 2.0 * dy);
 
@@ -226,8 +226,8 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
             dx = -cos(M_PI_2 + theta) * size * invert;
             dy = -sin(M_PI_2 + theta) * size * invert;
 
-            pt[0].x = ((x2 - x1) >= 0 ? floor(x2 - dx) : ceil(x2 - dx));
-            pt[0].y = ((y2 - y1) >= 0 ? floor(y2 - dy) : ceil(y2 - dy));
+            pt[0].x = ((x2 - x1) >= 0 ? floorf(x2 - dx) : ceilf(x2 - dx));
+            pt[0].y = ((y2 - y1) >= 0 ? floorf(y2 - dy) : ceilf(y2 - dy));
             pt[1].x = roundr(pt[0].x + 2.0 * dx);
             pt[1].y = roundr(pt[0].y + 2.0 * dy);
 
