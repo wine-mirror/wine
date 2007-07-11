@@ -157,7 +157,7 @@ static const WCHAR path_uptime[] =
 
 static void CALLBACK collect_uptime( struct counter *counter )
 {
-    counter->two.largevalue = GetTickCount(); /* FIXME */
+    counter->two.largevalue = GetTickCount64();
     counter->status = PDH_CSTATUS_VALID_DATA;
 }
 
@@ -421,7 +421,7 @@ PDH_STATUS WINAPI PdhGetRawCounterValue( PDH_HCOUNTER handle, LPDWORD type,
     value->CStatus                  = counter->status;
     value->TimeStamp.dwLowDateTime  = counter->stamp.dwLowDateTime;
     value->TimeStamp.dwHighDateTime = counter->stamp.dwHighDateTime;
-    value->FirstValue               = counter->one.largevalue;;
+    value->FirstValue               = counter->one.largevalue;
     value->SecondValue              = counter->two.largevalue;
     value->MultiCount               = 1; /* FIXME */
 
