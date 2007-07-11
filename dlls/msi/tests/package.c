@@ -30,6 +30,28 @@
 
 static const char msifile[] = "winetest.msi";
 
+static UINT do_query(MSIHANDLE hdb, const char *query, MSIHANDLE *phrec)
+{
+    MSIHANDLE hview = 0;
+    UINT r, ret;
+
+    /* open a select query */
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    if (r != ERROR_SUCCESS)
+        return r;
+    r = MsiViewExecute(hview, 0);
+    if (r != ERROR_SUCCESS)
+        return r;
+    ret = MsiViewFetch(hview, phrec);
+    r = MsiViewClose(hview);
+    if (r != ERROR_SUCCESS)
+        return r;
+    r = MsiCloseHandle(hview);
+    if (r != ERROR_SUCCESS)
+        return r;
+    return ret;
+}
+
 static UINT run_query( MSIHANDLE hdb, const char *query )
 {
     MSIHANDLE hview = 0;
@@ -154,6 +176,15 @@ static UINT create_launchcondition_table( MSIHANDLE hdb )
             "`Condition` CHAR(255) NOT NULL, "
             "`Description` CHAR(255) NOT NULL "
             "PRIMARY KEY `Condition`)" );
+}
+
+static UINT create_property_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `Property` ("
+            "`Property` CHAR(72) NOT NULL, "
+            "`Value` CHAR(0) "
+            "PRIMARY KEY `Property`)" );
 }
 
 static UINT add_component_entry( MSIHANDLE hdb, const char *values )
@@ -284,6 +315,22 @@ static UINT add_launchcondition_entry( MSIHANDLE hdb, const char *values )
     return r;
 }
 
+static UINT add_property_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `Property` "
+            "(`Property`, `Value`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
 static UINT set_summary_info(MSIHANDLE hdb)
 {
     UINT res;
@@ -366,10 +413,12 @@ static MSIHANDLE package_from_db(MSIHANDLE hdb)
 
     sprintf(szPackage,"#%li",hdb);
     res = MsiOpenPackage(szPackage,&hPackage);
-    ok( res == ERROR_SUCCESS , "Failed to open package\n" );
+    if (res != ERROR_SUCCESS)
+        return 0;
 
     res = MsiCloseHandle(hdb);
-    ok( res == ERROR_SUCCESS , "Failed to close db handle\n" );
+    if (res != ERROR_SUCCESS)
+        return 0;
 
     return hPackage;
 }
@@ -1568,13 +1617,52 @@ static void test_props(void)
     DeleteFile(msifile);
 }
 
-static void test_properties_table(void)
+static BOOL find_prop_in_property(MSIHANDLE hdb, LPCSTR prop, LPCSTR val)
+{
+    MSIHANDLE hview, hrec;
+    BOOL found;
+    CHAR buffer[MAX_PATH];
+    DWORD sz;
+    UINT r;
+
+    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `_Property`", &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    found = FALSE;
+    while (r == ERROR_SUCCESS && !found)
+    {
+        r = MsiViewFetch(hview, &hrec);
+        if (r != ERROR_SUCCESS) break;
+
+        sz = MAX_PATH;
+        r = MsiRecordGetString(hrec, 1, buffer, &sz);
+        if (r == ERROR_SUCCESS && !lstrcmpA(buffer, prop))
+        {
+            sz = MAX_PATH;
+            r = MsiRecordGetString(hrec, 2, buffer, &sz);
+            if (r == ERROR_SUCCESS && !lstrcmpA(buffer, val))
+                found = TRUE;
+        }
+
+        MsiCloseHandle(hrec);
+    }
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    return found;
+}
+
+static void test_property_table(void)
 {
     const char *query;
     UINT r;
-    MSIHANDLE hpkg, hdb;
-    char buffer[0x10];
+    MSIHANDLE hpkg, hdb, hrec;
+    char buffer[MAX_PATH];
     DWORD sz;
+    BOOL found;
 
     hdb = create_package_db();
     ok( hdb, "failed to create package\n");
@@ -1582,45 +1670,98 @@ static void test_properties_table(void)
     hpkg = package_from_db(hdb);
     ok( hpkg, "failed to create package\n");
 
-    query = "CREATE TABLE `_Properties` ( "
+    MsiCloseHandle(hdb);
+
+    hdb = MsiGetActiveDatabase(hpkg);
+
+    query = "CREATE TABLE `_Property` ( "
         "`foo` INT NOT NULL, `bar` INT LOCALIZABLE PRIMARY KEY `foo`)";
     r = run_query(hdb, query);
-    ok(r == ERROR_INVALID_HANDLE, "failed to create table\n");
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
 
-    MsiCloseHandle( hpkg );
+    MsiCloseHandle(hdb);
+    MsiCloseHandle(hpkg);
     DeleteFile(msifile);
 
     hdb = create_package_db();
     ok( hdb, "failed to create package\n");
 
-    query = "CREATE TABLE `_Properties` ( "
+    query = "CREATE TABLE `_Property` ( "
         "`foo` INT NOT NULL, `bar` INT LOCALIZABLE PRIMARY KEY `foo`)";
     r = run_query(hdb, query);
     ok(r == ERROR_SUCCESS, "failed to create table\n");
 
-    query = "ALTER `_Properties` ADD `foo` INTEGER";
+    query = "ALTER `_Property` ADD `foo` INTEGER";
     r = run_query(hdb, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to add column\n");
 
-    query = "ALTER TABLE `_Properties` ADD `foo` INTEGER";
+    query = "ALTER TABLE `_Property` ADD `foo` INTEGER";
     r = run_query(hdb, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to add column\n");
 
-    query = "ALTER TABLE `_Properties` ADD `extra` INTEGER";
+    query = "ALTER TABLE `_Property` ADD `extra` INTEGER";
     r = run_query(hdb, query);
     todo_wine ok(r == ERROR_SUCCESS, "failed to add column\n");
 
     hpkg = package_from_db(hdb);
-    ok( hpkg, "failed to create package\n");
+    todo_wine
+    {
+        ok(!hpkg, "package should not be created\n");
+    }
 
-    r = MsiSetProperty( hpkg, "foo", "bar");
-    ok(r == ERROR_SUCCESS, "failed to create table\n");
+    MsiCloseHandle(hdb);
+    MsiCloseHandle(hpkg);
+    DeleteFile(msifile);
 
-    sz = sizeof buffer;
-    r = MsiGetProperty( hpkg, "foo", buffer, &sz);
-    ok(r == ERROR_SUCCESS, "failed to create table\n");
+    hdb = create_package_db();
+    ok (hdb, "failed to create package database\n");
 
-    MsiCloseHandle( hpkg );
+    r = create_property_table(hdb);
+    ok(r == ERROR_SUCCESS, "cannot create Property table: %d\n", r);
+
+    r = add_property_entry(hdb, "'prop', 'val'");
+    ok(r == ERROR_SUCCESS, "cannot add property: %d\n", r);
+
+    hpkg = package_from_db(hdb);
+    ok(hpkg, "failed to create package\n");
+
+    MsiCloseHandle(hdb);
+
+    sz = MAX_PATH;
+    r = MsiGetProperty(hpkg, "prop", buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buffer, "val"), "Expected val, got %s\n", buffer);
+
+    hdb = MsiGetActiveDatabase(hpkg);
+
+    found = find_prop_in_property(hdb, "prop", "val");
+    ok(found, "prop should be in the _Property table\n");
+
+    r = add_property_entry(hdb, "'dantes', 'mercedes'");
+    ok(r == ERROR_SUCCESS, "cannot add property: %d\n", r);
+
+    query = "SELECT * FROM `_Property` WHERE `Property` = 'dantes'";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    found = find_prop_in_property(hdb, "dantes", "mercedes");
+    ok(found == FALSE, "dantes should not be in the _Property table\n");
+
+    sz = MAX_PATH;
+    lstrcpy(buffer, "aaa");
+    r = MsiGetProperty(hpkg, "dantes", buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(lstrlenA(buffer) == 0, "Expected empty string, got %s\n", buffer);
+
+    r = MsiSetProperty(hpkg, "dantes", "mercedes");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    found = find_prop_in_property(hdb, "dantes", "mercedes");
+    ok(found == TRUE, "dantes should be in the _Property table\n");
+
+    MsiCloseHandle(hdb);
+    MsiCloseHandle(hrec);
+    MsiCloseHandle(hpkg);
     DeleteFile(msifile);
 }
 
@@ -3307,7 +3448,7 @@ START_TEST(package)
     test_gettargetpath_bad();
     test_settargetpath();
     test_props();
-    test_properties_table();
+    test_property_table();
     test_condition();
     test_msipackage();
     test_formatrecord2();
