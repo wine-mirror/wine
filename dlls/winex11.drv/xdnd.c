@@ -69,7 +69,6 @@ static void X11DRV_XDND_SendDropFiles(HWND hwnd);
 static void X11DRV_XDND_FreeDragDropOp(void);
 static unsigned int X11DRV_XDND_UnixToDos(char** lpdest, char* lpsrc, int len);
 static WCHAR* X11DRV_XDND_URIToDOS(char *encodedURI);
-static DROPFILES* X11DRV_XDND_BuildDropFiles(char* filename, unsigned int len, POINT pt);
 
 static CRITICAL_SECTION xdnd_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -442,49 +441,15 @@ static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len)
  */
 static int X11DRV_XDND_DeconstructTextPlain(int property, void* data, int len)
 {
-    char *p = (char*) data;
     char* dostext;
-    int count = 0;
 
     /* Always suppply plain text */
     X11DRV_XDND_UnixToDos(&dostext, (char*)data, len);
     X11DRV_XDND_InsertXDNDData(property, CF_TEXT, dostext, strlen(dostext));
-    count++;
 
     TRACE("CF_TEXT (%d): %s\n", CF_TEXT, dostext);
 
-    /* Check for additional mappings */
-    while (*p != '\0' && *p != ':') /* Advance to end of protocol */
-        p++;
-
-    if (*p == ':')
-    {
-        if (!strncasecmp(data, "http", 4))
-        {
-            X11DRV_XDND_InsertXDNDData(property, RegisterClipboardFormatA("UniformResourceLocator"),
-                strdup(dostext), strlen(dostext));
-                count++;
-
-            TRACE("UniformResourceLocator: %s\n", dostext);
-        }
-        else if (!strncasecmp(data, "file", 4))
-        {
-            DROPFILES* pdf;
-
-            pdf = X11DRV_XDND_BuildDropFiles(p+1, len - 5, XDNDxy);
-            if (pdf)
-            {
-                unsigned int size = HeapSize(GetProcessHeap(), 0, pdf);
-
-                X11DRV_XDND_InsertXDNDData(property, CF_HDROP, pdf, size);
-                count++;
-            }
-
-            TRACE("CF_HDROP: %p\n", pdf);
-        }
-    }
-
-    return count;
+    return 1;
 }
 
 
@@ -575,57 +540,6 @@ static void X11DRV_XDND_FreeDragDropOp(void)
     LeaveCriticalSection(&xdnd_cs);
 }
 
-
-
-/**************************************************************************
- * X11DRV_XDND_BuildDropFiles
- */
-static DROPFILES* X11DRV_XDND_BuildDropFiles(char* filename, unsigned int len, POINT pt)
-{
-    char* pfn;
-    int pathlen;
-    char path[MAX_PATH];
-    DROPFILES *lpDrop = NULL;
-
-    /* Advance to last starting slash */
-    pfn = filename + 1;
-    while (*pfn && (*pfn == '\\' || *pfn =='/'))
-    {
-        pfn++;
-        filename++;
-    }
-
-    /* Remove any trailing \r or \n */
-    while (*pfn)
-    {
-        if (*pfn == '\r' || *pfn == '\n')
-        {
-            *pfn = 0;
-            break;
-        }
-        pfn++;
-    }
-
-    TRACE("%s\n", filename);
-
-    pathlen = GetLongPathNameA(filename, path, MAX_PATH);
-    if (pathlen)
-    {
-        lpDrop = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DROPFILES) + pathlen + 1);
-
-        lpDrop->pFiles = sizeof(DROPFILES);
-        lpDrop->pt.x = pt.x;
-        lpDrop->pt.y = pt.y;
-        lpDrop->fNC = 0;
-        lpDrop->fWide = FALSE;
-
-        strcpy(((char*)lpDrop)+lpDrop->pFiles, path);
-    }
-
-    TRACE("resolved %s\n", lpDrop ? filename : NULL);
-
-    return lpDrop;
-}
 
 
 /**************************************************************************
@@ -741,4 +655,3 @@ static WCHAR* X11DRV_XDND_URIToDOS(char *encodedURI)
     HeapFree(GetProcessHeap(), 0, uri);
     return ret;
 }
-
