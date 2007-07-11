@@ -1422,11 +1422,6 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 BOOL WINAPI DeleteService( SC_HANDLE hService )
 {
     struct sc_service *hsvc;
-    HKEY hKey;
-    WCHAR valname[MAX_PATH+1];
-    INT index = 0;
-    LONG rc;
-    DWORD size;
 
     hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
     if (!hsvc)
@@ -1434,24 +1429,14 @@ BOOL WINAPI DeleteService( SC_HANDLE hService )
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    hKey = hsvc->hkey;
 
-    size = MAX_PATH+1; 
-    /* Clean out the values */
-    rc = RegEnumValueW(hKey, index, valname,&size,0,0,0,0);
-    while (rc == ERROR_SUCCESS)
-    {
-        RegDeleteValueW(hKey,valname);
-        index++;
-        size = MAX_PATH+1; 
-        rc = RegEnumValueW(hKey, index, valname, &size,0,0,0,0);
-    }
+    /* Close the key to the service */
+    RegCloseKey(hsvc->hkey);
 
-    RegCloseKey(hKey);
+    /* Delete the service under the Service Control Manager key */
+    RegDeleteTreeW(hsvc->scm->hkey, hsvc->name);
+
     hsvc->hkey = NULL;
-
-    /* delete the key */
-    RegDeleteKeyW(hsvc->scm->hkey, hsvc->name);
 
     return TRUE;
 }
