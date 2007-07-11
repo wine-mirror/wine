@@ -132,6 +132,59 @@ static void test_open_svc(void)
     CloseServiceHandle(scm_handle);
 }
 
+static void test_create_delete_svc(void)
+{
+    SC_HANDLE scm_handle, svc_handle1;
+    static const CHAR servicename         [] = "Winetest";
+    static const CHAR pathname            [] = "we_dont_care.exe";
+
+    /* All NULL */
+    SetLastError(0xdeadbeef);
+    svc_handle1 = CreateServiceA(NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    ok(!svc_handle1, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+
+    /* Only a valid handle to the Service Control Manager */
+    SetLastError(0xdeadbeef);
+    svc_handle1 = CreateServiceA(scm_handle, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    ok(!svc_handle1, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, W2K3, XP, Vista */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* Now with a servicename */
+    SetLastError(0xdeadbeef);
+    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    ok(!svc_handle1, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, W2K3, XP, Vista */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* Or just a binary name */
+    SetLastError(0xdeadbeef);
+    svc_handle1 = CreateServiceA(scm_handle, NULL, NULL, 0, 0, 0, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    ok(!svc_handle1, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, W2K3, XP, Vista */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* Both servicename and binary name (We only have connect rights) */
+    SetLastError(0xdeadbeef);
+    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, 0, 0, 0, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    todo_wine
+    {
+    ok(!svc_handle1, "Expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+    DeleteService(svc_handle1);      /* Wine doesn't care (yet) about access rights, line can be removed when fixed */
+    CloseServiceHandle(svc_handle1); /* Wine doesn't care (yet) about access rights, line can be removed when fixed */
+    }
+
+    CloseServiceHandle(scm_handle);
+}
+
+
 static void test_close(void)
 {
     SC_HANDLE handle;
@@ -290,6 +343,7 @@ START_TEST(service)
     /* First some parameter checking */
     test_open_scm();
     test_open_svc();
+    test_create_delete_svc();
     test_close();
     /* Test the creation, querying and deletion of a service */
     test_sequence();

@@ -1309,6 +1309,12 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         return NULL;
     }
 
+    if (!lpServiceName || !lpBinaryPathName)
+    {
+        SetLastError(ERROR_INVALID_ADDRESS);
+        return NULL;
+    }
+
     r = RegCreateKeyExW(hscm->hkey, lpServiceName, 0, NULL,
                        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dp);
     if (r!=ERROR_SUCCESS)
