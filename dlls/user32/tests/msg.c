@@ -5868,7 +5868,7 @@ static void test_accelerators(void)
     rc.top += (rc.bottom - rc.top)/2;
     SetCursorPos(rc.left, rc.top);
 
-    pump_msg_loop(hwnd, 0);
+    flush_events();
     flush_sequence();
     keybd_event(VK_MENU, 0, 0, 0);
     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
@@ -8554,7 +8554,7 @@ static void test_TrackMouseEvent(void)
      * window and hittest, otherwise TrackMouseEvent calls don't have any
      * effect.
      */
-    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    flush_events();
     flush_sequence();
 
     track_query(0, NULL, 0);
