@@ -426,14 +426,23 @@
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
+/* Define to 1 if you have the <netinet/in_pcb.h> header file. */
+#undef HAVE_NETINET_IN_PCB_H
+
 /* Define to 1 if you have the <netinet/in_systm.h> header file. */
 #undef HAVE_NETINET_IN_SYSTM_H
+
+/* Define to 1 if you have the <netinet/ip_var.h> header file. */
+#undef HAVE_NETINET_IP_VAR_H
 
 /* Define to 1 if you have the <netinet/tcp_fsm.h> header file. */
 #undef HAVE_NETINET_TCP_FSM_H
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
+
+/* Define to 1 if you have the <netinet/tcp_var.h> header file. */
+#undef HAVE_NETINET_TCP_VAR_H
 
 /* Define to 1 if you have the <netipx/ipx.h> header file. */
 #undef HAVE_NETIPX_IPX_H
@@ -776,6 +785,9 @@
 
 /* Define to 1 if you have the <sys/signal.h> header file. */
 #undef HAVE_SYS_SIGNAL_H
+
+/* Define to 1 if you have the <sys/socketvar.h> header file. */
+#undef HAVE_SYS_SOCKETVAR_H
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
 #undef HAVE_SYS_SOCKET_H

@@ -336,7 +336,9 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable,
 
   TRACE("ppTcpTable %p, bOrder %d, heap %p, flags 0x%08x\n",
    ppTcpTable, bOrder, heap, flags);
-  ret = getTcpTable(ppTcpTable, heap, flags);
+
+  *ppTcpTable = NULL;
+  ret = getTcpTable(ppTcpTable, 0, heap, flags);
   if (!ret && bOrder)
     qsort((*ppTcpTable)->table, (*ppTcpTable)->dwNumEntries,
      sizeof(MIB_TCPROW), TcpTableSorter);
@@ -1545,25 +1547,16 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
       ret = ERROR_INSUFFICIENT_BUFFER;
     }
     else {
-      PMIB_TCPTABLE table;
-
-      ret = getTcpTable(&table, GetProcessHeap(), 0);
+      ret = getTcpTable(&pTcpTable, numEntries, 0, 0);
       if (!ret) {
-        size = sizeof(MIB_TCPTABLE) + (table->dwNumEntries - 1) *
+        size = sizeof(MIB_TCPTABLE) + (pTcpTable->dwNumEntries - 1) *
          sizeof(MIB_TCPROW);
-        if (*pdwSize < size) {
-          *pdwSize = size;
-          ret = ERROR_INSUFFICIENT_BUFFER;
-        }
-        else {
-          *pdwSize = size;
-          memcpy(pTcpTable, table, size);
+        *pdwSize = size;
+
           if (bOrder)
-            qsort(pTcpTable->table, pTcpTable->dwNumEntries,
-             sizeof(MIB_TCPROW), TcpTableSorter);
+             qsort(pTcpTable->table, pTcpTable->dwNumEntries,
+                   sizeof(MIB_TCPROW), TcpTableSorter);
           ret = NO_ERROR;
-        }
-        HeapFree(GetProcessHeap(), 0, table);
       }
       else
         ret = ERROR_OUTOFMEMORY;

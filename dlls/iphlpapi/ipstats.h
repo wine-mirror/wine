@@ -83,6 +83,7 @@ DWORD getNumTcpEntries(void);
 /* Allocates the TCP state table from heap and returns it to you in *ppTcpTable.
  * Returns NO_ERROR on success, something else on failure.
  */
-DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, HANDLE heap, DWORD flags);
+DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, DWORD maxEntries, HANDLE heap,
+                  DWORD flags);
 
 #endif /* ndef WINE_IPSTATS_H_ */

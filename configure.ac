@@ -249,6 +249,7 @@ AC_CHECK_HEADERS(\
 	sys/shm.h \
 	sys/signal.h \
 	sys/socket.h \
+	sys/socketvar.h \
 	sys/sockio.h \
 	sys/soundcard.h \
 	sys/statvfs.h \
@@ -278,10 +279,28 @@ AC_CHECK_HEADERS([sys/mount.h sys/statfs.h sys/user.h sys/vfs.h],,,
      # include <sys/param.h>
      #endif])
 
-AC_CHECK_HEADERS([net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h netipx/ipx.h],,,
+AC_CHECK_HEADERS([netinet/in_pcb.h netinet/ip_var.h net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h netipx/ipx.h],,,
     [#include <sys/types.h>
      #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
+     #endif])
+     #if HAVE_SYS_SOCKETVAR_H
+     # include <sys/socketvar.h>
+     #endif
+
+AC_CHECK_HEADERS([netinet/tcp_var.h],,,
+    [#include <sys/types.h>
+     #if HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif
+     #if HAVE_SYS_SOCKETVAR_H
+     # include <sys/socketvar.h>
+     #endif
+     #if HAVE_NETINET_IN_H
+     # include <netinet/in.h>
+     #endif
+     #ifdef HAVE_NETINET_TCP_H
+     # include <netinet/tcp.h>
      #endif])
 
 AC_CHECK_HEADERS([linux/ipx.h],,,
