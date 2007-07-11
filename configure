@@ -12613,7 +12613,7 @@ _ACEOF
 fi
 
 fi
-if test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" = "yes"; then
+if test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"; then
   wine_notices="$wine_notices|liblcms development files not found.
 Wine will be built without Color Management support. (mscms.dll)"
 fi

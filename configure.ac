@@ -829,7 +829,7 @@ then
         [AC_DEFINE(HAVE_LCMS, 1, [Define if you have the LittleCMS development environment])
          LCMSLIBS="-llcms"])
 fi
-WINE_NOTICE_IF([test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" = "yes"],[liblcms development files not found.
+WINE_NOTICE_IF([test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"],[liblcms development files not found.
 Wine will be built without Color Management support. (mscms.dll)])
 
 dnl **** Check for OpenLDAP ***
