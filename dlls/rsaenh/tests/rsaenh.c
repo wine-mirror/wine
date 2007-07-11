@@ -165,6 +165,9 @@ static void test_hashes(void)
     static const unsigned char md4hash[16] = {
         0x8e, 0x2a, 0x58, 0xbf, 0xf2, 0xf5, 0x26, 0x23, 
         0x79, 0xd2, 0x92, 0x36, 0x1b, 0x23, 0xe3, 0x81 };
+    static const unsigned char empty_md5hash[16] = {
+        0xd4, 0x1d, 0x8c, 0xd9, 0x8f, 0x00, 0xb2, 0x04,
+        0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e };
     static const unsigned char md5hash[16] = { 
         0x15, 0x76, 0xa9, 0x4d, 0x6c, 0xb3, 0x34, 0xdd, 
         0x12, 0x6c, 0xb1, 0xc2, 0x7f, 0x19, 0xe0, 0xf2 };    
@@ -227,18 +230,48 @@ static void test_hashes(void)
     result = CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash);
     ok(result, "%08x\n", GetLastError());
 
-    result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
-    ok(result, "%08x\n", GetLastError());
-
     len = sizeof(DWORD);
     result = CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE*)&hashlen, &len, 0);
     ok(result && (hashlen == 16), "%08x, hashlen: %d\n", GetLastError(), hashlen);
+
+    result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
+    ok(result, "%08x\n", GetLastError());
 
     len = 16;
     result = CryptGetHashParam(hHash, HP_HASHVAL, pbHashValue, &len, 0);
     ok(result, "%08x\n", GetLastError());
 
     ok(!memcmp(pbHashValue, md5hash, 16), "Wrong MD5 hash!\n");
+
+    result = CryptDestroyHash(hHash);
+    ok(result, "%08x\n", GetLastError());
+
+    result = CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash);
+    ok(result, "%08x\n", GetLastError());
+
+    /* The hash is available even if CryptHashData hasn't been called */
+    len = 16;
+    result = CryptGetHashParam(hHash, HP_HASHVAL, pbHashValue, &len, 0);
+    ok(result, "%08x\n", GetLastError());
+
+    ok(!memcmp(pbHashValue, empty_md5hash, 16), "Wrong MD5 hash!\n");
+
+    /* It's also stable:  getting it twice results in the same value */
+    result = CryptGetHashParam(hHash, HP_HASHVAL, pbHashValue, &len, 0);
+    ok(result, "%08x\n", GetLastError());
+
+    ok(!memcmp(pbHashValue, empty_md5hash, 16), "Wrong MD5 hash!\n");
+
+    /* Can't add data after the hash been retrieved */
+    SetLastError(0xdeadbeef);
+    result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
+    ok(!result && GetLastError() == NTE_BAD_HASH_STATE, "%08x\n", GetLastError());
+
+    /* You can still retrieve the hash, its value just hasn't changed */
+    result = CryptGetHashParam(hHash, HP_HASHVAL, pbHashValue, &len, 0);
+    ok(result, "%08x\n", GetLastError());
+
+    ok(!memcmp(pbHashValue, empty_md5hash, 16), "Wrong MD5 hash!\n");
 
     result = CryptDestroyHash(hHash);
     ok(result, "%08x\n", GetLastError());

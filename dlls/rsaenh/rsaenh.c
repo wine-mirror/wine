@@ -44,7 +44,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
  */
 #define RSAENH_MAGIC_HASH           0x85938417u
 #define RSAENH_MAX_HASH_SIZE        104
-#define RSAENH_HASHSTATE_IDLE       0
 #define RSAENH_HASHSTATE_HASHING    1
 #define RSAENH_HASHSTATE_FINISHED   2
 typedef struct _RSAENH_TLS1PRF_PARAMS
@@ -1598,7 +1597,7 @@ BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, 
     pCryptHash->aiAlgid = Algid;
     pCryptHash->hKey = hKey;
     pCryptHash->hProv = hProv;
-    pCryptHash->dwState = RSAENH_HASHSTATE_IDLE;
+    pCryptHash->dwState = RSAENH_HASHSTATE_HASHING;
     pCryptHash->pHMACInfo = (PHMAC_INFO)NULL;
     pCryptHash->dwHashSize = peaAlgidInfo->dwDefaultLen >> 3;
     init_data_blob(&pCryptHash->tpPRFParams.blobLabel);
@@ -2629,11 +2628,6 @@ BOOL WINAPI RSAENH_CPGetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
                 return TRUE;
             }
 
-            if (pCryptHash->dwState == RSAENH_HASHSTATE_IDLE) {
-                SetLastError(NTE_BAD_HASH_STATE);
-                return FALSE;
-            }
-            
             if (pbData && (pCryptHash->dwState != RSAENH_HASHSTATE_FINISHED))
             {
                 finalize_hash(pCryptHash);
@@ -3289,9 +3283,6 @@ BOOL WINAPI RSAENH_CPHashData(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST BYTE *pb
         SetLastError(NTE_BAD_ALGID);
         return FALSE;
     }
-    
-    if (pCryptHash->dwState == RSAENH_HASHSTATE_IDLE)
-        pCryptHash->dwState = RSAENH_HASHSTATE_HASHING;
     
     if (pCryptHash->dwState != RSAENH_HASHSTATE_HASHING)
     {
