@@ -584,7 +584,7 @@
 @ stub GdipTestControl
 @ stdcall GdipTransformMatrixPoints(ptr ptr long)
 @ stub GdipTransformMatrixPointsI
-@ stub GdipTransformPath
+@ stdcall GdipTransformPath(ptr ptr)
 @ stub GdipTransformPoints
 @ stub GdipTransformPointsI
 @ stub GdipTransformRegion
