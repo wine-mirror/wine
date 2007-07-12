@@ -19,8 +19,11 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
+#include "snmp.h"
 
 #include "wine/debug.h"
+#include "wine/exception.h"
+#include "crypt32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
@@ -74,6 +77,7 @@ typedef struct _CDataEncodeMsg
     CryptMsgBase base;
     DWORD        bare_content_len;
     LPBYTE       bare_content;
+    BOOL         begun;
 } CDataEncodeMsg;
 
 static const BYTE empty_data_content[] = { 0x04,0x00 };
@@ -86,6 +90,71 @@ static void CDataEncodeMsg_Close(HCRYPTMSG hCryptMsg)
         LocalFree(msg->bare_content);
 }
 
+static WINAPI BOOL CRYPT_EncodeContentLength(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    const CDataEncodeMsg *msg = (const CDataEncodeMsg *)pvStructInfo;
+    DWORD lenBytes;
+    BOOL ret = TRUE;
+
+    /* Trick:  report bytes needed based on total message length, even though
+     * the message isn't available yet.  The caller will use the length
+     * reported here to encode its length.
+     */
+    CRYPT_EncodeLen(msg->base.stream_info.cbContent, NULL, &lenBytes);
+    if (!pbEncoded)
+        *pcbEncoded = 1 + lenBytes + msg->base.stream_info.cbContent;
+    else
+    {
+        if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded,
+         pcbEncoded, 1 + lenBytes)))
+        {
+            if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+                pbEncoded = *(BYTE **)pbEncoded;
+            *pbEncoded++ = ASN_OCTETSTRING;
+            CRYPT_EncodeLen(msg->base.stream_info.cbContent, pbEncoded,
+             &lenBytes);
+        }
+    }
+    return ret;
+}
+
+static BOOL CRYPT_EncodeDataContentInfoHeader(CDataEncodeMsg *msg,
+ CRYPT_DATA_BLOB *header)
+{
+    BOOL ret;
+
+    if (msg->base.streamed && msg->base.stream_info.cbContent == 0xffffffff)
+    {
+        FIXME("unimplemented for indefinite-length encoding\n");
+        header->cbData = 0;
+        header->pbData = NULL;
+        ret = TRUE;
+    }
+    else
+    {
+        struct AsnConstructedItem constructed = { 0, msg,
+         CRYPT_EncodeContentLength };
+        struct AsnEncodeSequenceItem items[2] = {
+         { szOID_RSA_data, CRYPT_AsnEncodeOid, 0 },
+         { &constructed,   CRYPT_AsnEncodeConstructed, 0 },
+        };
+
+        ret = CRYPT_AsnEncodeSequence(X509_ASN_ENCODING, items,
+         sizeof(items) / sizeof(items[0]), CRYPT_ENCODE_ALLOC_FLAG, NULL,
+         (LPBYTE)&header->pbData, &header->cbData);
+        if (ret)
+        {
+            /* Trick:  subtract the content length from the reported length,
+             * as the actual content hasn't come yet.
+             */
+            header->cbData -= msg->base.stream_info.cbContent;
+        }
+    }
+    return ret;
+}
+
 static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
  DWORD cbData, BOOL fFinal)
 {
@@ -94,30 +163,80 @@ static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
 
     if (msg->base.finalized)
         SetLastError(CRYPT_E_MSG_ERROR);
-    else if (!fFinal)
+    else if (msg->base.streamed)
     {
-        if (msg->base.open_flags & CMSG_DETACHED_FLAG)
-            SetLastError(E_INVALIDARG);
-        else
-            SetLastError(CRYPT_E_MSG_ERROR);
+        if (fFinal)
+            msg->base.finalized = TRUE;
+        __TRY
+        {
+            if (!msg->begun)
+            {
+                CRYPT_DATA_BLOB header;
+
+                msg->begun = TRUE;
+                ret = CRYPT_EncodeDataContentInfoHeader(msg, &header);
+                if (ret)
+                {
+                    ret = msg->base.stream_info.pfnStreamOutput(
+                     msg->base.stream_info.pvArg, header.pbData, header.cbData,
+                     FALSE);
+                    LocalFree(header.pbData);
+                }
+            }
+            if (!fFinal)
+                ret = msg->base.stream_info.pfnStreamOutput(
+                 msg->base.stream_info.pvArg, (BYTE *)pbData, cbData,
+                 FALSE);
+            else
+            {
+                if (msg->base.stream_info.cbContent == 0xffffffff)
+                {
+                    BYTE indefinite_trailer[6] = { 0 };
+
+                    ret = msg->base.stream_info.pfnStreamOutput(
+                     msg->base.stream_info.pvArg, (BYTE *)pbData, cbData,
+                     FALSE);
+                    if (ret)
+                        ret = msg->base.stream_info.pfnStreamOutput(
+                         msg->base.stream_info.pvArg, indefinite_trailer,
+                         sizeof(indefinite_trailer), TRUE);
+                }
+                else
+                    ret = msg->base.stream_info.pfnStreamOutput(
+                     msg->base.stream_info.pvArg, (BYTE *)pbData, cbData, TRUE);
+            }
+        }
+        __EXCEPT_PAGE_FAULT
+        {
+            SetLastError(STATUS_ACCESS_VIOLATION);
+        }
+        __ENDTRY;
     }
     else
     {
-        msg->base.finalized = TRUE;
-        if (!cbData)
-            SetLastError(E_INVALIDARG);
+        if (!fFinal)
+        {
+            if (msg->base.open_flags & CMSG_DETACHED_FLAG)
+                SetLastError(E_INVALIDARG);
+            else
+                SetLastError(CRYPT_E_MSG_ERROR);
+        }
         else
         {
-            CRYPT_DATA_BLOB blob = { cbData, (LPBYTE)pbData };
+            msg->base.finalized = TRUE;
+            if (!cbData)
+                SetLastError(E_INVALIDARG);
+            else
+            {
+                CRYPT_DATA_BLOB blob = { cbData, (LPBYTE)pbData };
 
-            /* data messages don't allow non-final updates, don't bother
-             * checking whether data already exist, they can't.
-             */
-            ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
-             &blob, CRYPT_ENCODE_ALLOC_FLAG, NULL, &msg->bare_content,
-             &msg->bare_content_len);
-            if (ret && msg->base.streamed)
-                FIXME("stream info unimplemented\n");
+                /* non-streamed data messages don't allow non-final updates,
+                 * don't bother checking whether data already exist, they can't.
+                 */
+                ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
+                 &blob, CRYPT_ENCODE_ALLOC_FLAG, NULL, &msg->bare_content,
+                 &msg->bare_content_len);
+            }
         }
     }
     return ret;
@@ -189,6 +308,7 @@ static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
          CDataEncodeMsg_Close, CDataEncodeMsg_GetParam, CDataEncodeMsg_Update);
         msg->bare_content_len = sizeof(empty_data_content);
         msg->bare_content = (LPBYTE)empty_data_content;
+        msg->begun = FALSE;
     }
     return (HCRYPTMSG)msg;
 }

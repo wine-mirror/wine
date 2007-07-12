@@ -336,6 +336,7 @@ static void test_data_msg_update(void)
 {
     HCRYPTMSG msg;
     BOOL ret;
+    CMSG_STREAM_INFO streamInfo = { 0 };
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
      NULL);
@@ -380,6 +381,28 @@ static void test_data_msg_update(void)
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* Calling update after opening with an empty stream info (with a bogus
+     * output function) yields an error:
+     */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
+     &streamInfo);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* Calling update with a valid output function succeeds, even if the data
+     * exceeds the size specified in the stream info.
+     */
+    streamInfo.pfnStreamOutput = nop_stream_output;
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
+     &streamInfo);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
@@ -600,7 +623,6 @@ static void test_data_msg_encoding(void)
     CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
     CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     CryptMsgClose(msg);
-    todo_wine
     check_updates("bogus data message with definite length", &a1, &accum);
     free_updates(&accum);
     /* A valid definite-length encoding: */
@@ -609,7 +631,6 @@ static void test_data_msg_encoding(void)
      NULL, &streamInfo);
     CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     CryptMsgClose(msg);
-    todo_wine
     check_updates("data message with definite length", &a2, &accum);
     free_updates(&accum);
     /* An indefinite-length encoding: */
