@@ -621,23 +621,17 @@ BOOL WINAPI CryptMsgUpdate(HCRYPTMSG hCryptMsg, const BYTE *pbData,
  DWORD cbData, BOOL fFinal)
 {
     CryptMsgBase *msg = (CryptMsgBase *)hCryptMsg;
-    BOOL ret = FALSE;
 
     TRACE("(%p, %p, %d, %d)\n", hCryptMsg, pbData, cbData, fFinal);
-    if (msg && msg->update)
-        ret = msg->update(hCryptMsg, pbData, cbData, fFinal);
-    return ret;
+    return msg->update(hCryptMsg, pbData, cbData, fFinal);
 }
 
 BOOL WINAPI CryptMsgGetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
     CryptMsgBase *msg = (CryptMsgBase *)hCryptMsg;
-    BOOL ret = FALSE;
 
     TRACE("(%p, %d, %d, %p, %p)\n", hCryptMsg, dwParamType, dwIndex,
      pvData, pcbData);
-    if (msg && msg->get_param)
-        ret = msg->get_param(hCryptMsg, dwParamType, dwIndex, pvData, pcbData);
-    return ret;
+    return msg->get_param(hCryptMsg, dwParamType, dwIndex, pvData, pcbData);
 }
