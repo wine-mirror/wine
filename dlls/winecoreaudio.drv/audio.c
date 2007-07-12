@@ -2180,6 +2180,35 @@ static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 
 
 /**************************************************************************
+ *                              widDsCreate                     [internal]
+ */
+static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
+{
+    TRACE("(%d,%p)\n",wDevID,drv);
+
+    FIXME("DirectSoundCapture not implemented\n");
+    FIXME("The (slower) DirectSound HEL mode will be used instead.\n");
+    return MMSYSERR_NOTSUPPORTED;
+}
+
+/**************************************************************************
+ *                              widDsDesc                       [internal]
+ */
+static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
+{
+    /* The DirectSound HEL will automatically wrap a non-DirectSound-capable
+     * driver in a DirectSound adaptor, thus allowing the driver to be used by
+     * DirectSound clients.  However, it only does this if we respond
+     * successfully to the DRV_QUERYDSOUNDDESC message.  It's enough to fill in
+     * the driver and device names of the description output parameter. */
+    memset(desc, 0, sizeof(*desc));
+    lstrcpynA(desc->szDrvname, "winecoreaudio.drv", sizeof(desc->szDrvname) - 1);
+    lstrcpynA(desc->szDesc, WInDev[wDevID].interface_name, sizeof(desc->szDesc) - 1);
+    return MMSYSERR_NOERROR;
+}
+
+
+/**************************************************************************
  *                              widMessage (WINECOREAUDIO.6)
  */
 DWORD WINAPI CoreAudio_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
@@ -2208,6 +2237,8 @@ DWORD WINAPI CoreAudio_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
         case WIDM_STOP:             return widStop          (wDevID);
         case DRV_QUERYDEVICEINTERFACESIZE: return widDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
         case DRV_QUERYDEVICEINTERFACE:     return widDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
+        case DRV_QUERYDSOUNDIFACE:  return widDsCreate   (wDevID, (PIDSCDRIVER*)dwParam1);
+        case DRV_QUERYDSOUNDDESC:   return widDsDesc     (wDevID, (PDSDRIVERDESC)dwParam1);
         default:
             FIXME("unknown message %d!\n", wMsg);
     }
