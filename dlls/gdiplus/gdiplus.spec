@@ -178,7 +178,7 @@
 @ stdcall GdipDrawLineI(ptr ptr long long long long)
 @ stdcall GdipDrawLines(ptr ptr ptr long)
 @ stub GdipDrawLinesI
-@ stub GdipDrawPath
+@ stdcall GdipDrawPath(ptr ptr ptr)
 @ stdcall GdipDrawPie(ptr ptr long long long long long long)
 @ stub GdipDrawPieI
 @ stub GdipDrawPolygon

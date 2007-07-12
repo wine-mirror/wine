@@ -375,6 +375,120 @@ static void draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     GdipFree(ptf);
 }
 
+/* Converts from gdiplus path point type to gdi path point type. */
+static BYTE convert_path_point_type(BYTE type)
+{
+    BYTE ret;
+
+    switch(type & PathPointTypePathTypeMask){
+        case PathPointTypeBezier:
+            ret = PT_BEZIERTO;
+            break;
+        case PathPointTypeLine:
+            ret = PT_LINETO;
+            break;
+        case PathPointTypeStart:
+            ret = PT_MOVETO;
+            break;
+        default:
+            ERR("Bad point type\n");
+            return 0;
+    }
+
+    if(type & PathPointTypeCloseSubpath)
+        ret |= PT_CLOSEFIGURE;
+
+    return ret;
+}
+
+/* Draws a combination of bezier curves and lines between points. */
+static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
+    GDIPCONST BYTE * types, INT count, BOOL caps)
+{
+    POINT *pti = GdipAlloc(count * sizeof(POINT));
+    BYTE *tp = GdipAlloc(count);
+    GpPointF *ptf = NULL;
+    REAL x = pt[count - 1].X, y = pt[count - 1].Y;
+    INT i;
+    GpStatus status = GenericError;
+
+    if(!count){
+        status = Ok;
+        goto end;
+    }
+    if(!pti || !tp){
+        status = OutOfMemory;
+        goto end;
+    }
+
+    for(i = 0; i < count; i++){
+        if((types[i] & PathPointTypePathTypeMask) == PathPointTypeBezier){
+            if((i + 2 >= count) || !(types[i + 1] & PathPointTypeBezier)
+                || !(types[i + 1] & PathPointTypeBezier)){
+                ERR("Bad bezier points\n");
+                goto end;
+            }
+
+            i += 2;
+        }
+    }
+
+    if((types[count - 1] & PathPointTypePathTypeMask) == PathPointTypeBezier){
+        ptf = GdipAlloc(4 * sizeof(GpPointF));
+        memcpy(ptf, &pt[count-4], 4 * sizeof(GpPointF));
+
+        if(caps){
+            if(pen->endcap == LineCapArrowAnchor)
+                shorten_bezier_amt(ptf, pen->width);
+
+            draw_cap(hdc, pen->color, pen->endcap, pen->width, ptf[3].X,
+                ptf[3].Y, pt[count - 1].X, pt[count - 1].Y);
+        }
+        for(i = 0; i < 4; i ++){
+            pti[i + count - 4].x = roundr(ptf[i].X);
+            pti[i + count - 4].y = roundr(ptf[i].Y);
+        }
+        for(i = 0; i < count - 4; i ++){
+            pti[i].x = roundr(pt[i].X);
+            pti[i].y = roundr(pt[i].Y);
+        }
+    }
+    else if((types[count - 1] & PathPointTypePathTypeMask) == PathPointTypeLine){
+        if(caps){
+            if(pen->endcap == LineCapArrowAnchor)
+                shorten_line_amt(pt[count-2].X, pt[count-2].Y, &x, &y, pen->width);
+
+            draw_cap(hdc, pen->color, pen->endcap, pen->width, pt[count-2].X,
+                pt[count-2].Y, pt[count - 1].X, pt[count - 1].Y);
+        }
+        pti[count - 1].x = roundr(x);
+        pti[count - 1].y = roundr(y);
+        for(i = 0; i < count - 1; i ++){
+            pti[i].x = roundr(pt[i].X);
+            pti[i].y = roundr(pt[i].Y);
+        }
+    }
+    else{
+        ERR("Bad path last point\n");
+        goto end;
+    }
+
+    for(i = 0; i < count; i++){
+        tp[i] = convert_path_point_type(types[i]);
+    }
+
+    PolyDraw(hdc, pti, tp, count);
+
+    status = Ok;
+
+end:
+    GdipFree(pti);
+    GdipFree(ptf);
+    GdipFree(tp);
+
+    return status;
+}
+
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 {
     if(hdc == NULL)
@@ -562,6 +676,40 @@ GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
     RestoreDC(graphics->hdc, save_state);
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
+{
+    INT save_state, i, this_fig = 0;
+    GpStatus retval;
+
+    if(!pen || !graphics)
+        return InvalidParameter;
+
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, pen->gdipen);
+
+    for(i = 0; i < path->pathdata.Count; i++){
+        if(path->pathdata.Types[i] == PathPointTypeStart){
+            retval = draw_poly(graphics->hdc, pen,
+                         &path->pathdata.Points[this_fig],
+                         &path->pathdata.Types[this_fig], i - this_fig, TRUE);
+            this_fig = i;
+
+            if(retval != Ok)
+                goto end;
+        }
+    }
+
+    retval = draw_poly(graphics->hdc, pen, &path->pathdata.Points[this_fig],
+                       &path->pathdata.Types[this_fig], path->pathdata.Count - this_fig,
+                       TRUE);
+
+end:
+    RestoreDC(graphics->hdc, save_state);
+
+    return retval;
 }
 
 GpStatus WINGDIPAPI GdipDrawPie(GpGraphics *graphics, GpPen *pen, REAL x,
