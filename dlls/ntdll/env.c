@@ -29,6 +29,7 @@
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "thread.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(environ);
@@ -431,7 +432,13 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
     RtlAcquirePebLock();
     cur_params = NtCurrentTeb()->Peb->ProcessParameters;
     if (!DllPath) DllPath = &cur_params->DllPath;
-    if (!CurrentDirectoryName) CurrentDirectoryName = &cur_params->CurrentDirectory.DosPath;
+    if (!CurrentDirectoryName)
+    {
+        if (NtCurrentTeb()->Tib.SubSystemTib)  /* FIXME: hack */
+            CurrentDirectoryName = &((WIN16_SUBSYSTEM_TIB *)NtCurrentTeb()->Tib.SubSystemTib)->curdir.DosPath;
+        else
+            CurrentDirectoryName = &cur_params->CurrentDirectory.DosPath;
+    }
     if (!CommandLine) CommandLine = ImagePathName;
     if (!Environment) Environment = cur_params->Environment;
     if (!WindowTitle) WindowTitle = &empty_str;
