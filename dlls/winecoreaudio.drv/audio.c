@@ -1424,6 +1424,32 @@ static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 }
 
 /**************************************************************************
+ *                              widDsCreate                     [internal]
+ */
+static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
+{
+    TRACE("(%d,%p)\n",wDevID,drv);
+
+    FIXME("DirectSound not implemented\n");
+    FIXME("The (slower) DirectSound HEL mode will be used instead.\n");
+    return MMSYSERR_NOTSUPPORTED;
+}
+
+/**************************************************************************
+*                              wodDsDesc                 [internal]
+*/
+static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
+{
+    /* The DirectSound HEL will automatically wrap a non-DirectSound-capable
+     * driver in a DirectSound adaptor, thus allowing the driver to be used by
+     * DirectSound clients.  However, it only does this if we respond
+     * successfully to the DRV_QUERYDSOUNDDESC message.  It's enough to fill in
+     * the driver and device names of the description output parameter. */
+    memcpy(desc, &(WOutDev[wDevID].cadev->ds_desc), sizeof(DSDRIVERDESC));
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
 * 				wodMessage (WINECOREAUDIO.7)
 */
 DWORD WINAPI CoreAudio_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
@@ -1463,9 +1489,8 @@ DWORD WINAPI CoreAudio_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
             
         case DRV_QUERYDEVICEINTERFACESIZE:  return wodDevInterfaceSize (wDevID, (LPDWORD)dwParam1);
         case DRV_QUERYDEVICEINTERFACE:      return wodDevInterface (wDevID, (PWCHAR)dwParam1, dwParam2);
-        case DRV_QUERYDSOUNDIFACE:	
-        case DRV_QUERYDSOUNDDESC:	
-            return MMSYSERR_NOTSUPPORTED;
+        case DRV_QUERYDSOUNDIFACE:  return wodDsCreate  (wDevID, (PIDSDRIVER*)dwParam1);
+        case DRV_QUERYDSOUNDDESC:   return wodDsDesc    (wDevID, (PDSDRIVERDESC)dwParam1);
             
         default:
             FIXME("unknown message %d!\n", wMsg);
