@@ -1473,15 +1473,63 @@ ULONG RpcAssoc_Release(RpcAssoc *assoc)
   return refs;
 }
 
-RpcConnection *RpcAssoc_GetIdleConnection(RpcAssoc *assoc,
+static RPC_STATUS RpcAssoc_BindConnection(RpcAssoc *assoc, RpcConnection *conn,
+                                          const RPC_SYNTAX_IDENTIFIER *InterfaceId,
+                                          const RPC_SYNTAX_IDENTIFIER *TransferSyntax)
+{
+  RpcPktHdr *hdr;
+  RpcPktHdr *response_hdr;
+  RPC_MESSAGE msg;
+  RPC_STATUS status;
+
+  TRACE("sending bind request to server\n");
+
+  hdr = RPCRT4_BuildBindHeader(NDR_LOCAL_DATA_REPRESENTATION,
+                               RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE,
+                               assoc->assoc_group_id,
+                               InterfaceId, TransferSyntax);
+
+  status = RPCRT4_Send(conn, hdr, NULL, 0);
+  RPCRT4_FreeHeader(hdr);
+  if (status != RPC_S_OK)
+    return status;
+
+  status = RPCRT4_Receive(conn, &response_hdr, &msg);
+  if (status != RPC_S_OK)
+  {
+    ERR("receive failed\n");
+    return status;
+  }
+
+  if (response_hdr->common.ptype != PKT_BIND_ACK)
+  {
+    ERR("failed to bind for interface %s, %d.%d\n",
+      debugstr_guid(&InterfaceId->SyntaxGUID),
+      InterfaceId->SyntaxVersion.MajorVersion,
+      InterfaceId->SyntaxVersion.MinorVersion);
+    RPCRT4_FreeHeader(response_hdr);
+    return RPC_S_PROTOCOL_ERROR;
+  }
+
+  /* FIXME: do more checks? */
+
+  conn->assoc_group_id = response_hdr->bind_ack.assoc_gid;
+  conn->MaxTransmissionSize = response_hdr->bind_ack.max_tsize;
+  conn->ActiveInterface = *InterfaceId;
+  RPCRT4_FreeHeader(response_hdr);
+  return RPC_S_OK;
+}
+
+static RpcConnection *RpcAssoc_GetIdleConnection(RpcAssoc *assoc,
     const RPC_SYNTAX_IDENTIFIER *InterfaceId,
     const RPC_SYNTAX_IDENTIFIER *TransferSyntax, const RpcAuthInfo *AuthInfo,
     const RpcQualityOfService *QOS)
 {
   RpcConnection *Connection;
-  /* try to find a compatible connection from the connection pool */
   EnterCriticalSection(&assoc->cs);
+  /* try to find a compatible connection from the connection pool */
   LIST_FOR_EACH_ENTRY(Connection, &assoc->connection_pool, RpcConnection, conn_pool_entry)
+  {
     if (!memcmp(&Connection->ActiveInterface, InterfaceId,
                 sizeof(RPC_SYNTAX_IDENTIFIER)) &&
         RpcAuthInfo_IsEqual(Connection->AuthInfo, AuthInfo) &&
@@ -1492,9 +1540,49 @@ RpcConnection *RpcAssoc_GetIdleConnection(RpcAssoc *assoc,
       TRACE("got connection from pool %p\n", Connection);
       return Connection;
     }
+  }
 
   LeaveCriticalSection(&assoc->cs);
   return NULL;
+}
+
+RPC_STATUS RpcAssoc_GetClientConnection(RpcAssoc *assoc,
+    const RPC_SYNTAX_IDENTIFIER *InterfaceId,
+    const RPC_SYNTAX_IDENTIFIER *TransferSyntax, RpcAuthInfo *AuthInfo,
+    RpcQualityOfService *QOS, RpcConnection **Connection)
+{
+  RpcConnection *NewConnection;
+  RPC_STATUS status;
+
+  *Connection = RpcAssoc_GetIdleConnection(assoc, InterfaceId, TransferSyntax, AuthInfo, QOS);
+  if (*Connection)
+    return RPC_S_OK;
+
+  /* create a new connection */
+  status = RPCRT4_CreateConnection(&NewConnection, FALSE /* is this a server connection? */,
+                                   assoc->Protseq, assoc->NetworkAddr,
+                                   assoc->Endpoint, assoc->NetworkOptions,
+                                   AuthInfo, QOS);
+  if (status != RPC_S_OK)
+    return status;
+
+  status = RPCRT4_OpenClientConnection(NewConnection);
+  if (status != RPC_S_OK)
+  {
+    RPCRT4_DestroyConnection(NewConnection);
+    return status;
+  }
+
+  status = RpcAssoc_BindConnection(assoc, NewConnection, InterfaceId, TransferSyntax);
+  if (status != RPC_S_OK)
+  {
+    RPCRT4_DestroyConnection(NewConnection);
+    return status;
+  }
+
+  *Connection = NewConnection;
+
+  return RPC_S_OK;
 }
 
 void RpcAssoc_ReleaseIdleConnection(RpcAssoc *assoc, RpcConnection *Connection)

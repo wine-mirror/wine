@@ -277,93 +277,21 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
                               PRPC_SYNTAX_IDENTIFIER TransferSyntax,
                               PRPC_SYNTAX_IDENTIFIER InterfaceId)
 {
-  RpcConnection* NewConnection;
-  RPC_STATUS status;
-
   TRACE("(Binding == ^%p)\n", Binding);
 
   if (!Binding->server) {
-    /* try to find a compatible connection from the connection pool */
-    NewConnection = RpcAssoc_GetIdleConnection(Binding->Assoc, InterfaceId,
-        TransferSyntax, Binding->AuthInfo, Binding->QOS);
-    if (NewConnection) {
-      *Connection = NewConnection;
-      return RPC_S_OK;
-    }
+     return RpcAssoc_GetClientConnection(Binding->Assoc, InterfaceId,
+         TransferSyntax, Binding->AuthInfo, Binding->QOS, Connection);
   } else {
     /* we already have a connection with acceptable binding, so use it */
     if (Binding->FromConn) {
       *Connection = Binding->FromConn;
       return RPC_S_OK;
+    } else {
+       ERR("no connection in binding\n");
+       return RPC_S_INTERNAL_ERROR;
     }
   }
-  
-  /* create a new connection */
-  status = RPCRT4_CreateConnection(&NewConnection, Binding->server,
-                                   Binding->Protseq, Binding->NetworkAddr,
-                                   Binding->Endpoint, Binding->NetworkOptions,
-                                   Binding->AuthInfo, Binding->QOS);
-  if (status != RPC_S_OK)
-    return status;
-
-  status = RPCRT4_OpenClientConnection(NewConnection);
-  if (status != RPC_S_OK)
-  {
-    RPCRT4_DestroyConnection(NewConnection);
-    return status;
-  }
- 
-  /* we need to send a binding packet if we are client. */
-  if (!NewConnection->server) {
-    RpcPktHdr *hdr;
-    RpcPktHdr *response_hdr;
-    RPC_MESSAGE msg;
-
-    TRACE("sending bind request to server\n");
-
-    hdr = RPCRT4_BuildBindHeader(NDR_LOCAL_DATA_REPRESENTATION,
-                                 RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE,
-                                 Binding->Assoc->assoc_group_id,
-                                 InterfaceId, TransferSyntax);
-
-    status = RPCRT4_Send(NewConnection, hdr, NULL, 0);
-    RPCRT4_FreeHeader(hdr);
-    if (status != RPC_S_OK) {
-      RPCRT4_DestroyConnection(NewConnection);
-      return status;
-    }
-
-    status = RPCRT4_Receive(NewConnection, &response_hdr, &msg);
-    if (status != RPC_S_OK) {
-      ERR("receive failed\n");
-      RPCRT4_DestroyConnection(NewConnection);
-      return status;
-    }
-
-    if (response_hdr->common.ptype != PKT_BIND_ACK ||
-        response_hdr->bind_ack.max_tsize < RPC_MIN_PACKET_SIZE) {
-      ERR("failed to bind for interface %s, %d.%d\n",
-        debugstr_guid(&InterfaceId->SyntaxGUID),
-        InterfaceId->SyntaxVersion.MajorVersion,
-        InterfaceId->SyntaxVersion.MinorVersion);
-      RPCRT4_FreeHeader(response_hdr);
-      RPCRT4_DestroyConnection(NewConnection);
-      return RPC_S_PROTOCOL_ERROR;
-    }
-
-    /* FIXME: do more checks? */
-
-    NewConnection->MaxTransmissionSize = response_hdr->bind_ack.max_tsize;
-    NewConnection->assoc_group_id = response_hdr->bind_ack.assoc_gid;
-    NewConnection->ActiveInterface = *InterfaceId;
-    RPCRT4_FreeHeader(response_hdr);
-  }
-
-  if (Binding->server)
-    Binding->FromConn = NewConnection;
-  *Connection = NewConnection;
-
-  return RPC_S_OK;
 }
 
 RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding, RpcConnection* Connection)
