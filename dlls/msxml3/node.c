@@ -553,6 +553,9 @@ static HRESULT WINAPI xmlnode_get_text(
     }
 
     case XML_TEXT_NODE:
+    case XML_CDATA_SECTION_NODE:
+    case XML_PI_NODE:
+    case XML_COMMENT_NODE:
         str = bstr_from_xmlChar( This->node->content );
         break;
 
