@@ -663,30 +663,25 @@ static void test_hash_msg_open(void)
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
      NULL, NULL);
-    todo_wine
     ok(!msg && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
     hashInfo.cbSize = sizeof(hashInfo);
     SetLastError(0xdeadbeef);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
      NULL, NULL);
-    todo_wine
     ok(!msg && GetLastError() == CRYPT_E_UNKNOWN_ALGO,
      "Expected CRYPT_E_UNKNOWN_ALGO, got %x\n", GetLastError());
     hashInfo.HashAlgorithm.pszObjId = oid_rsa_md5;
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
      NULL, NULL);
-    todo_wine
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
     CryptMsgClose(msg);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
      CMSG_HASHED, &hashInfo, NULL, NULL);
-    todo_wine
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
     CryptMsgClose(msg);
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
      CMSG_HASHED, &hashInfo, NULL, &streamInfo);
-    todo_wine
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 }

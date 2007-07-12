@@ -313,6 +313,78 @@ static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
     return (HCRYPTMSG)msg;
 }
 
+typedef struct _CHashEncodeMsg
+{
+    CryptMsgBase base;
+    HCRYPTPROV   prov;
+    HCRYPTHASH   hash;
+} CHashEncodeMsg;
+
+static void CHashEncodeMsg_Close(HCRYPTMSG hCryptMsg)
+{
+    CHashEncodeMsg *msg = (CHashEncodeMsg *)hCryptMsg;
+
+    CryptDestroyHash(msg->hash);
+    if (msg->base.open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
+        CryptReleaseContext(msg->prov, 0);
+}
+
+static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
+ DWORD dwIndex, void *pvData, DWORD *pcbData)
+{
+    FIXME("(%p, %d, %d, %p, %p): stub\n", hCryptMsg, dwParamType, dwIndex,
+     pvData, pcbData);
+    return FALSE;
+}
+
+static BOOL CHashEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
+ DWORD cbData, BOOL fFinal)
+{
+    FIXME("(%p, %p, %d, %d): stub\n", hCryptMsg, pbData, cbData, fFinal);
+    return FALSE;
+}
+
+static HCRYPTMSG CHashEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
+ LPSTR pszInnerContentObjID, PCMSG_STREAM_INFO pStreamInfo)
+{
+    CHashEncodeMsg *msg;
+    const CMSG_HASHED_ENCODE_INFO *info =
+     (const CMSG_HASHED_ENCODE_INFO *)pvMsgEncodeInfo;
+    HCRYPTPROV prov;
+    ALG_ID algID;
+
+    if (info->cbSize != sizeof(CMSG_HASHED_ENCODE_INFO))
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+    if (!(algID = CertOIDToAlgId(info->HashAlgorithm.pszObjId)))
+    {
+        SetLastError(CRYPT_E_UNKNOWN_ALGO);
+        return NULL;
+    }
+    if (info->hCryptProv)
+        prov = info->hCryptProv;
+    else
+    {
+        prov = CRYPT_GetDefaultProvider();
+        dwFlags &= ~CMSG_CRYPT_RELEASE_CONTEXT_FLAG;
+    }
+    msg = CryptMemAlloc(sizeof(CHashEncodeMsg));
+    if (msg)
+    {
+        CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
+         CHashEncodeMsg_Close, CHashEncodeMsg_GetParam, CHashEncodeMsg_Update);
+        msg->prov = prov;
+        if (!CryptCreateHash(prov, algID, 0, 0, &msg->hash))
+        {
+            CryptMsgClose(msg);
+            msg = NULL;
+        }
+    }
+    return (HCRYPTMSG)msg;
+}
+
 static inline const char *MSG_TYPE_STR(DWORD type)
 {
     switch (type)
@@ -350,9 +422,12 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
         msg = CDataEncodeMsg_Open(dwFlags, pvMsgEncodeInfo,
          pszInnerContentObjID, pStreamInfo);
         break;
+    case CMSG_HASHED:
+        msg = CHashEncodeMsg_Open(dwFlags, pvMsgEncodeInfo,
+         pszInnerContentObjID, pStreamInfo);
+        break;
     case CMSG_SIGNED:
     case CMSG_ENVELOPED:
-    case CMSG_HASHED:
         FIXME("unimplemented for type %s\n", MSG_TYPE_STR(dwMsgType));
         break;
     case CMSG_SIGNED_AND_ENVELOPED:
