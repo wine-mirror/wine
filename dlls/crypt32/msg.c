@@ -315,15 +315,17 @@ static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
 
 typedef struct _CHashEncodeMsg
 {
-    CryptMsgBase base;
-    HCRYPTPROV   prov;
-    HCRYPTHASH   hash;
+    CryptMsgBase    base;
+    HCRYPTPROV      prov;
+    HCRYPTHASH      hash;
+    CRYPT_DATA_BLOB data;
 } CHashEncodeMsg;
 
 static void CHashEncodeMsg_Close(HCRYPTMSG hCryptMsg)
 {
     CHashEncodeMsg *msg = (CHashEncodeMsg *)hCryptMsg;
 
+    CryptMemFree(msg->data.pbData);
     CryptDestroyHash(msg->hash);
     if (msg->base.open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
         CryptReleaseContext(msg->prov, 0);
@@ -400,9 +402,22 @@ static BOOL CHashEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
             else
             {
                 ret = CryptHashData(msg->hash, pbData, cbData, 0);
-                /* Still a stub, as content isn't modified */
-                FIXME("(%p, %p, %d, %d): stub\n", hCryptMsg, pbData, cbData,
-                 fFinal);
+                if (ret)
+                {
+                    if (msg->data.pbData)
+                        msg->data.pbData = CryptMemRealloc(msg->data.pbData,
+                         msg->data.cbData + cbData);
+                    else
+                        msg->data.pbData = CryptMemAlloc(cbData);
+                    if (msg->data.pbData)
+                    {
+                        memcpy(msg->data.pbData + msg->data.cbData, pbData,
+                         cbData);
+                        msg->data.cbData += cbData;
+                    }
+                    else
+                        ret = FALSE;
+                }
             }
         }
     }
@@ -441,6 +456,8 @@ static HCRYPTMSG CHashEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
         CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
          CHashEncodeMsg_Close, CHashEncodeMsg_GetParam, CHashEncodeMsg_Update);
         msg->prov = prov;
+        msg->data.cbData = 0;
+        msg->data.pbData = NULL;
         if (!CryptCreateHash(prov, algID, 0, 0, &msg->hash))
         {
             CryptMsgClose(msg);
