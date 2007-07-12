@@ -344,6 +344,27 @@ static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         ret = CryptGetHashParam(msg->hash, HP_HASHVAL, (BYTE *)pvData, pcbData,
          0);
         break;
+    case CMSG_VERSION_PARAM:
+        if (!msg->base.finalized)
+            SetLastError(CRYPT_E_MSG_ERROR);
+        else if (!pvData)
+        {
+            *pcbData = sizeof(DWORD);
+            ret = TRUE;
+        }
+        else if (*pcbData < sizeof(DWORD))
+        {
+            SetLastError(ERROR_MORE_DATA);
+            *pcbData = sizeof(DWORD);
+        }
+        else
+        {
+            /* FIXME: under what circumstances is this CMSG_HASHED_DATA_V2? */
+            *(DWORD *)pvData = CMSG_HASHED_DATA_PKCS_1_5_VERSION;
+            *pcbData = sizeof(DWORD);
+            ret = TRUE;
+        }
+        break;
     default:
         FIXME("%d: stub\n", dwParamType);
         ret = FALSE;

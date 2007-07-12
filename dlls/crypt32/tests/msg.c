@@ -790,14 +790,11 @@ static void test_hash_msg_get_param(void)
     /* The version is also available, and should be zero for this message. */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, NULL, &size);
-    todo_wine
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, (LPBYTE)&value, &size);
-    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     ok(value == 0, "Expected version 0, got %d\n", value);
-    }
     /* As usual, the type isn't available. */
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, NULL, &size);
     todo_wine
