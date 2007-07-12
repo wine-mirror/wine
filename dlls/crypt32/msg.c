@@ -348,7 +348,7 @@ static BOOL CRYPT_EncodePKCSDigestedData(CHashEncodeMsg *msg, void *pvData,
     if (ret)
     {
         CRYPT_ALGORITHM_IDENTIFIER algoId = { 0 };
-        DWORD version = 0; /* FIXME */
+        DWORD version = CMSG_HASHED_DATA_PKCS_1_5_VERSION;
         struct AsnEncodeSequenceItem items[7] = { { 0 } };
         DWORD cItem = 0;
         CRYPT_DATA_BLOB hash = { 0, NULL };
@@ -455,9 +455,11 @@ static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
             SetLastError(CRYPT_E_MSG_ERROR);
         else
         {
-            /* FIXME: under what circumstances is this CMSG_HASHED_DATA_V2? */
             DWORD version = CMSG_HASHED_DATA_PKCS_1_5_VERSION;
 
+            /* Since the data are always encoded as octets, the version is
+             * always 0 (see rfc3852, section 7)
+             */
             ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&version,
              sizeof(version));
         }
