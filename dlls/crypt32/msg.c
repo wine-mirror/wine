@@ -354,8 +354,38 @@ static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
 static BOOL CHashEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
  DWORD cbData, BOOL fFinal)
 {
-    FIXME("(%p, %p, %d, %d): stub\n", hCryptMsg, pbData, cbData, fFinal);
-    return FALSE;
+    CHashEncodeMsg *msg = (CHashEncodeMsg *)hCryptMsg;
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %p, %d, %d)\n", hCryptMsg, pbData, cbData, fFinal);
+
+    if (msg->base.finalized)
+        SetLastError(CRYPT_E_MSG_ERROR);
+    else
+    {
+        if (fFinal)
+            msg->base.finalized = TRUE;
+        if (msg->base.streamed)
+        {
+            /* Doesn't do anything, as stream output is never called, and you
+             * can't get the content.
+             */
+            ret = CryptHashData(msg->hash, pbData, cbData, 0);
+        }
+        else
+        {
+            if (!(msg->base.open_flags & CMSG_DETACHED_FLAG) && !fFinal)
+                SetLastError(CRYPT_E_MSG_ERROR);
+            else
+            {
+                ret = CryptHashData(msg->hash, pbData, cbData, 0);
+                /* Still a stub, as content isn't modified */
+                FIXME("(%p, %p, %d, %d): stub\n", hCryptMsg, pbData, cbData,
+                 fFinal);
+            }
+        }
+    }
+    return ret;
 }
 
 static HCRYPTMSG CHashEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,

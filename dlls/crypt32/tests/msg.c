@@ -701,25 +701,20 @@ static void test_hash_msg_update(void)
      * updates..
      */
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* including non-final updates with no data.. */
     ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* and final updates with no data. */
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* But no updates are allowed after the final update. */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
      "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
      "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
     CryptMsgClose(msg);
@@ -730,19 +725,16 @@ static void test_hash_msg_update(void)
      NULL, NULL);
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
      "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
     /* Final updates (including empty ones) are allowed. */
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
     /* And, of course, streaming mode allows non-final updates */
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
      NULL, &streamInfo);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
     /* Setting pfnStreamOutput to NULL results in no error.  (In what appears
@@ -752,7 +744,6 @@ static void test_hash_msg_update(void)
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
      NULL, &streamInfo);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     CryptMsgClose(msg);
 }
@@ -794,7 +785,6 @@ static void test_hash_msg_get_param(void)
     /* By getting the hash, further updates are not allowed */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    todo_wine
     ok(!ret && GetLastError() == NTE_BAD_HASH_STATE,
      "Expected NTE_BAD_HASH_STATE, got %x\n", GetLastError());
     /* The version is also available, and should be zero for this message. */
@@ -837,6 +827,13 @@ static void test_hash_msg_get_param(void)
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     if (size == sizeof(buf))
         ok(!memcmp(buf, emptyHashParam, size), "Unexpected value\n");
+    /* After updating the hash, further updates aren't allowed on streamed
+     * messages either.
+     */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(!ret && GetLastError() == NTE_BAD_HASH_STATE,
+     "Expected NTE_BAD_HASH_STATE, got %x\n", GetLastError());
     CryptMsgClose(msg);
 }
 
