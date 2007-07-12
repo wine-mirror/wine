@@ -384,8 +384,13 @@ static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
         if(pen->endcap == LineCapArrowAnchor)
             shorten_bezier_amt(ptf, pen->width);
 
-        draw_cap(hdc, pen->color, pen->endcap, pen->width, ptf[3].X,
-            ptf[3].Y, pt[count - 1].X, pt[count - 1].Y);
+        /* the direction of the line cap is parallel to the direction at the
+         * end of the bezier (which, if it has been shortened, is not the same
+         * as the direction from pt[count-2] to pt[count-1]) */
+        draw_cap(hdc, pen->color, pen->endcap, pen->width,
+            pt[count - 1].X - (ptf[3].X - ptf[2].X),
+            pt[count - 1].Y - (ptf[3].Y - ptf[2].Y),
+            pt[count - 1].X, pt[count - 1].Y);
     }
 
     for(i = 0; i < count - 4; i ++){
@@ -474,8 +479,10 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
             if(pen->endcap == LineCapArrowAnchor)
                 shorten_bezier_amt(ptf, pen->width);
 
-            draw_cap(hdc, pen->color, pen->endcap, pen->width, ptf[3].X,
-                ptf[3].Y, pt[count - 1].X, pt[count - 1].Y);
+            draw_cap(hdc, pen->color, pen->endcap, pen->width,
+                pt[count - 1].X - (ptf[3].X - ptf[2].X),
+                pt[count - 1].Y - (ptf[3].Y - ptf[2].Y),
+                pt[count - 1].X, pt[count - 1].Y);
         }
         for(i = 0; i < 4; i ++){
             pti[i + count - 4].x = roundr(ptf[i].X);
