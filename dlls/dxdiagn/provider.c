@@ -31,6 +31,7 @@
 #include "strmif.h"
 #include "vfw.h"
 #include "mmddk.h"
+#include <ddraw.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
@@ -137,6 +138,32 @@ HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, R
   provider->ref = 0; /* will be inited with QueryInterface */
   return IDxDiagProviderImpl_QueryInterface ((PDXDIAGPROVIDER)provider, riid, ppobj);
 } 
+
+static inline HRESULT add_prop_str( IDxDiagContainer* cont, LPCWSTR prop, LPCWSTR str )
+{
+    HRESULT hr;
+    VARIANT var;
+
+    V_VT( &var ) = VT_BSTR;
+    V_BSTR( &var ) = SysAllocString( str );
+    hr = IDxDiagContainerImpl_AddProp( cont, prop, &var );
+    VariantClear( &var );
+
+    return hr;
+}
+
+static inline HRESULT add_prop_ui4( IDxDiagContainer* cont, LPCWSTR prop, DWORD data )
+{
+    HRESULT hr;
+    VARIANT var;
+
+    V_VT( &var ) = VT_UI4;
+    V_UI4( &var ) = data;
+    hr = IDxDiagContainerImpl_AddProp( cont, prop, &var );
+    VariantClear( &var );
+
+    return hr;
+}
 
 /**
  * @param szFilePath: usually GetSystemDirectoryW
@@ -389,21 +416,78 @@ static HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont
   return hr;
 }
 
-static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont) {
-  HRESULT hr = S_OK;
-  /*
-  static const WCHAR szDescription[] = {'s','z','D','e','s','c','r','i','p','t','i','o','n',0};
-  static const WCHAR szDeviceName[] = {'s','z','D','e','v','i','c','e','N','a','m','e',0};
-  static const WCHAR szKeyDeviceID[] = {'s','z','K','e','y','D','e','v','i','c','e','I','D',0};
-  static const WCHAR szKeyDeviceKey[] = {'s','z','K','e','y','D','e','v','i','c','e','K','e','y',0};
-  WCHAR szAdapterName[512];
-  VARIANT v;
-  IDxDiagContainer* pDisplayAdapterSubCont = NULL;
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pDisplayAdapterSubCont);
-  if (FAILED(hr)) { return hr; }
-  hr = IDxDiagContainerImpl_AddChildContainer(pSubCont, szAdapterName, pDisplayAdapterSubCont);  
-  */
-  return hr;
+static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont)
+{
+    static const WCHAR szDescription[] = {'s','z','D','e','s','c','r','i','p','t','i','o','n',0};
+    static const WCHAR szDeviceName[] = {'s','z','D','e','v','i','c','e','N','a','m','e',0};
+    static const WCHAR szKeyDeviceID[] = {'s','z','K','e','y','D','e','v','i','c','e','I','D',0};
+    static const WCHAR szKeyDeviceKey[] = {'s','z','K','e','y','D','e','v','i','c','e','K','e','y',0};
+    static const WCHAR szVendorId[] = {'s','z','V','e','n','d','o','r','I','d',0};
+    static const WCHAR szDeviceId[] = {'s','z','D','e','v','i','c','e','I','d',0};
+    static const WCHAR dwWidth[] = {'d','w','W','i','d','t','h',0};
+    static const WCHAR dwHeight[] = {'d','w','H','e','i','g','h','t',0};
+    static const WCHAR dwBpp[] = {'d','w','B','p','p',0};
+    static const WCHAR szDisplayMemoryLocalized[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szDisplayMemoryEnglish[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
+
+    static const WCHAR szAdapterID[] = {'0',0};
+    static const WCHAR szEmpty[] = {0};
+
+    HRESULT                 hr;
+    IDxDiagContainer       *pDisplayAdapterSubCont = NULL;
+
+    IDirectDraw7           *pDirectDraw;
+    DDSCAPS2                dd_caps;
+    DISPLAY_DEVICEW         disp_dev;
+    DDSURFACEDESC2          surface_descr;
+    DWORD                   tmp;
+    WCHAR                   buffer[256];
+
+    hr = DXDiag_CreateDXDiagContainer( &IID_IDxDiagContainer, (void**) &pDisplayAdapterSubCont );
+    if (FAILED( hr )) return hr;
+    hr = IDxDiagContainerImpl_AddChildContainer( pSubCont, szAdapterID, pDisplayAdapterSubCont );
+    if (FAILED( hr )) return hr;
+
+    if (EnumDisplayDevicesW( NULL, 0, &disp_dev, 0 ))
+    {
+        add_prop_str( pDisplayAdapterSubCont, szDeviceName, disp_dev.DeviceName );
+        add_prop_str( pDisplayAdapterSubCont, szDescription, disp_dev.DeviceString );
+    }
+
+    hr = DirectDrawCreateEx( NULL, (LPVOID *)&pDirectDraw, &IID_IDirectDraw7, NULL);
+    if (FAILED( hr )) return hr;
+
+    dd_caps.dwCaps = DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
+    dd_caps.dwCaps2 = dd_caps.dwCaps3 = dd_caps.dwCaps4 = 0;
+    hr = IDirectDraw7_GetAvailableVidMem( pDirectDraw, &dd_caps, &tmp, NULL );
+    if (SUCCEEDED(hr))
+    {
+        static const WCHAR mem_fmt[] = {'%','.','1','f',' ','M','B',0};
+
+        snprintfW( buffer, sizeof(buffer), mem_fmt, ((float)tmp) / 1000000.0 );
+        add_prop_str( pDisplayAdapterSubCont, szDisplayMemoryLocalized, buffer );
+        add_prop_str( pDisplayAdapterSubCont, szDisplayMemoryEnglish, buffer );
+    }
+
+    surface_descr.dwSize = sizeof(surface_descr);
+    hr = IDirectDraw7_GetDisplayMode( pDirectDraw, &surface_descr );
+    if (SUCCEEDED(hr))
+    {
+        if (surface_descr.dwFlags & DDSD_WIDTH)
+            add_prop_ui4( pDisplayAdapterSubCont, dwWidth, surface_descr.dwWidth );
+        if (surface_descr.dwFlags & DDSD_HEIGHT)
+            add_prop_ui4( pDisplayAdapterSubCont, dwHeight, surface_descr.dwHeight );
+        if (surface_descr.dwFlags & DDSD_PIXELFORMAT)
+            add_prop_ui4( pDisplayAdapterSubCont, dwBpp, surface_descr.ddpfPixelFormat.dwRGBBitCount );
+    }
+
+    add_prop_str( pDisplayAdapterSubCont, szVendorId, szEmpty );
+    add_prop_str( pDisplayAdapterSubCont, szDeviceId, szEmpty );
+    add_prop_str( pDisplayAdapterSubCont, szKeyDeviceKey, szEmpty );
+    add_prop_str( pDisplayAdapterSubCont, szKeyDeviceID, szEmpty );
+
+    IUnknown_Release( pDirectDraw );
+    return hr;
 }
 
 static HRESULT DXDiag_InitDXDiagDirectSoundContainer(IDxDiagContainer* pSubCont) {
