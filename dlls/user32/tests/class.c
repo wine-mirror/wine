@@ -602,7 +602,7 @@ static void test_defwndproc()
                 (void *)GetClassLongPtrA(hwnd, GCLP_WNDPROC), pDefWindowProcA);
         }
         else
-        todo_wine {
+        {
             ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
                 (void *)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), pDefWindowProcA);
             ok(GetClassLongPtrA(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
@@ -617,7 +617,7 @@ static void test_defwndproc()
                 (void *)GetClassLongPtrW(hwnd, GCLP_WNDPROC), pDefWindowProcW);
         }
         else
-        todo_wine {
+        {
             ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
                 (void *)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), pDefWindowProcW);
             ok(GetClassLongPtrW(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",

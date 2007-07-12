@@ -416,6 +416,9 @@ void CLASS_RegisterBuiltinClasses(void)
     register_builtin( &MENU_builtin_class );
     register_builtin( &SCROLL_builtin_class );
     register_builtin( &STATIC_builtin_class );
+
+    /* the DefWindowProc winprocs are magic too */
+    WINPROC_AllocProc( DefWindowProcA, DefWindowProcW );
 }
 
 
