@@ -30,7 +30,11 @@
 typedef struct IDirectInputImpl IDirectInputImpl;
 struct IDirectInputImpl
 {
-    const void                 *lpVtbl;
+    const IDirectInput7AVtbl   *lpVtbl;
+    const IDirectInput7WVtbl   *lpVtbl7w;
+    const IDirectInput8AVtbl   *lpVtbl8a;
+    const IDirectInput8WVtbl   *lpVtbl8w;
+
     LONG                        ref;
 
     CRITICAL_SECTION            crit;
