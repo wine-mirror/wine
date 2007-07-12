@@ -745,6 +745,16 @@ static void test_hash_msg_update(void)
     todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
+    /* Setting pfnStreamOutput to NULL results in no error.  (In what appears
+     * to be a bug, it isn't actually used - see encoding tests.)
+     */
+    streamInfo.pfnStreamOutput = NULL;
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, &streamInfo);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    CryptMsgClose(msg);
 }
 
 static const BYTE emptyHashParam[] = {
