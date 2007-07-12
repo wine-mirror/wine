@@ -60,6 +60,9 @@ GpStatus WINGDIPAPI GdipGetPathTypes(GpPath*,BYTE*,INT);
 GpStatus WINGDIPAPI GdipGetPointCount(GpPath*,INT*);
 GpStatus WINGDIPAPI GdipStartPathFigure(GpPath*);
 
+GpStatus WINGDIPAPI GdipCreateMatrix2(REAL,REAL,REAL,REAL,REAL,REAL,GpMatrix**);
+GpStatus WINGDIPAPI GdipDeleteMatrix(GpMatrix*);
+
 #ifdef __cplusplus
 }
 #endif

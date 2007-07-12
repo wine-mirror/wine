@@ -95,7 +95,7 @@
 @ stub GdipCreateLineBrushFromRectWithAngle
 @ stub GdipCreateLineBrushFromRectWithAngleI
 @ stub GdipCreateLineBrushI
-@ stub GdipCreateMatrix2
+@ stdcall GdipCreateMatrix2(long long long long long long ptr)
 @ stub GdipCreateMatrix3
 @ stub GdipCreateMatrix3I
 @ stub GdipCreateMatrix
@@ -133,7 +133,7 @@
 @ stub GdipDeleteFont
 @ stub GdipDeleteFontFamily
 @ stdcall GdipDeleteGraphics(ptr)
-@ stub GdipDeleteMatrix
+@ stdcall GdipDeleteMatrix(ptr)
 @ stdcall GdipDeletePath(ptr)
 @ stub GdipDeletePathIter
 @ stdcall GdipDeletePen(ptr)

@@ -71,4 +71,8 @@ struct GpPath{
     INT datalen; /* size of the arrays in pathdata */
 };
 
+struct GpMatrix{
+    REAL matrix[6];
+};
+
 #endif

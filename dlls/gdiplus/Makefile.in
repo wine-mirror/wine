@@ -11,6 +11,7 @@ C_SRCS = \
 	gdiplus.c \
 	graphics.c \
 	graphicspath.c \
+	matrix.c \
 	pen.c
 
 @MAKE_DLL_RULES@
