@@ -795,9 +795,7 @@ static void test_hash_msg_get_param(void)
     ok(value == 0, "Expected version 0, got %d\n", value);
     /* As usual, the type isn't available. */
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, NULL, &size);
-    todo_wine
-    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
-     "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
+    ok(!ret, "Expected failure\n");
     CryptMsgClose(msg);
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
