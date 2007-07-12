@@ -432,6 +432,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 		int secondary_remainder = dsb->buflen - dsb->buf_mixpos;
 		int adjusted_remainder = MulDiv(dsb->device->pwfx->nAvgBytesPerSec, secondary_remainder, dsb->nAvgBytesPerSec);
 		assert(adjusted_remainder >= 0);
+		adjusted_remainder -= adjusted_remainder % dsb->device->pwfx->nBlockAlign; /* data alignment */
 			/* The adjusted remainder must be at least one sample,
 			 * otherwise we will never reach the end of the
 			 * secondary buffer, as there will perpetually be a
@@ -588,7 +589,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 {
 	/* The buffer's primary_mixpos may be before or after the the device
 	 * buffer's mixpos, but both must be ahead of writepos. */
-	DWORD primary_done;
+	DWORD primary_done, buflen = dsb->buflen / dsb->pwfx->nBlockAlign * dsb->device->pwfx->nBlockAlign;
 
 	TRACE("(%p,%d,%d,%d)\n",dsb,playpos,writepos,mixlen);
 	TRACE("writepos=%d, buf_mixpos=%d, primary_mixpos=%d, mixlen=%d\n", writepos, dsb->buf_mixpos, dsb->primary_mixpos, mixlen);
@@ -611,7 +612,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	TRACE("mixlen (primary) = %i\n", mixlen);
 
 	/* clip to valid length */
-	mixlen = (dsb->buflen < mixlen) ? dsb->buflen : mixlen;
+	mixlen = (buflen < mixlen) ? buflen : mixlen;
 
 	TRACE("primary_done=%d, mixlen (buffer)=%d\n", primary_done, mixlen);
 
