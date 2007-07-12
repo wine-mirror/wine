@@ -19,12 +19,23 @@
 #ifndef __WINE_GP_PRIVATE_H_
 #define __WINE_GP_PRIVATE_H_
 
+#include <math.h>
 #include "windef.h"
 #include "gdiplus.h"
 
 #define GP_DEFAULT_PENSTYLE (PS_GEOMETRIC | PS_ENDCAP_FLAT | PS_JOIN_MITER)
 
 COLORREF ARGB2COLORREF(ARGB color);
+
+static inline INT roundr(REAL x)
+{
+    return (INT) floorf(x + 0.5);
+}
+
+static inline REAL deg2rad(REAL degrees)
+{
+    return M_PI * degrees / 180.0;
+}
 
 struct GpPen{
     UINT style;

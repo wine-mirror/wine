@@ -34,16 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 #define ANCHOR_WIDTH (2.0)
 #define MAX_ITERS (50)
 
-static inline INT roundr(REAL x)
-{
-    return (INT) floor(x+0.5);
-}
-
-static inline REAL deg2rad(REAL degrees)
-{
-    return (M_PI*2.0) * degrees / 360.0;
-}
-
 /* Converts angle (in degrees) to x/y coordinates */
 static void deg2xy(REAL angle, REAL x_0, REAL y_0, REAL *x, REAL *y)
 {
