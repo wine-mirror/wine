@@ -702,6 +702,21 @@ interface nsIDOMRange : nsISupports
 
 [
     object,
+    uuid(a6cf90f2-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMNSRange : nsISupports
+{
+    nsresult CreateContextualFragment([in] const nsAString *fragment, [out] nsIDOMDocumentFragment **_retval);
+    nsresult IsPointInRange([in] nsIDOMNode *parent, [in] PRInt32 offset, [out] PRBool *_retval);
+    nsresult ComparePoint([in] nsIDOMNode *parent, [in] PRInt32 offset, [out] PRInt16 *_retval);
+    nsresult IntersectsNode([in] nsIDOMNode *n, [out] PRBool *_retval);
+    nsresult CompareNode([in] nsIDOMNode *n, [out] PRUint16 *_retval);
+    nsresult nSDetach();
+}
+
+
+[
+    object,
     uuid(7b9badc6-c9bc-447a-8670-dbd195aed24b)
     /* FROZEN */
 ]

@@ -683,20 +683,171 @@ static HRESULT WINAPI HTMLElement_get_outerText(IHTMLElement *iface, BSTR *p)
     return E_NOTIMPL;
 }
 
+static HRESULT HTMLElement_InsertAdjacentNode(HTMLElement *This, BSTR where, nsIDOMNode *nsnode)
+{
+    static const WCHAR wszBeforeBegin[] = {'b','e','f','o','r','e','B','e','g','i','n',0};
+    static const WCHAR wszAfterBegin[] = {'a','f','t','e','r','B','e','g','i','n',0};
+    static const WCHAR wszBeforeEnd[] = {'b','e','f','o','r','e','E','n','d',0};
+    static const WCHAR wszAfterEnd[] = {'a','f','t','e','r','E','n','d',0};
+    nsresult nsres;
+
+    if (!strcmpiW(where, wszBeforeBegin))
+    {
+        nsIDOMNode *unused;
+        nsIDOMNode *parent;
+        nsres = nsIDOMNode_GetParentNode(This->nselem, &parent);
+        if (!parent) return E_INVALIDARG;
+        nsres = nsIDOMNode_InsertBefore(parent, nsnode,
+                                        (nsIDOMNode *)This->nselem, &unused);
+        if (unused) nsIDOMNode_Release(unused);
+        nsIDOMNode_Release(parent);
+    }
+    else if (!strcmpiW(where, wszAfterBegin))
+    {
+        nsIDOMNode *unused;
+        nsIDOMNode *first_child;
+        nsIDOMNode_GetFirstChild(This->nselem, &first_child);
+        nsres = nsIDOMNode_InsertBefore(This->nselem, nsnode, first_child, &unused);
+        if (unused) nsIDOMNode_Release(unused);
+        if (first_child) nsIDOMNode_Release(first_child);
+    }
+    else if (!strcmpiW(where, wszBeforeEnd))
+    {
+        nsIDOMNode *unused;
+        nsres = nsIDOMNode_AppendChild(This->nselem, nsnode, &unused);
+        if (unused) nsIDOMNode_Release(unused);
+    }
+    else if (!strcmpiW(where, wszAfterEnd))
+    {
+        nsIDOMNode *unused;
+        nsIDOMNode *next_sibling;
+        nsIDOMNode *parent;
+        nsIDOMNode_GetParentNode(This->nselem, &parent);
+        if (!parent) return E_INVALIDARG;
+
+        nsIDOMNode_GetNextSibling(This->nselem, &next_sibling);
+        if (next_sibling)
+        {
+            nsres = nsIDOMNode_InsertBefore(parent, nsnode, next_sibling, &unused);
+            nsIDOMNode_Release(next_sibling);
+        }
+        else
+            nsres = nsIDOMNode_AppendChild(parent, nsnode, &unused);
+        nsIDOMNode_Release(parent);
+        if (unused) nsIDOMNode_Release(unused);
+    }
+    else
+    {
+        ERR("invalid where: %s\n", debugstr_w(where));
+        return E_INVALIDARG;
+    }
+
+    if (NS_FAILED(nsres))
+        return E_FAIL;
+    else
+        return S_OK;
+}
+
 static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR where,
                                                      BSTR html)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%s %s)\n", This, debugstr_w(where), debugstr_w(html));
-    return E_NOTIMPL;
+    nsresult nsres;
+    nsIDOMDocument *nsdoc;
+    nsIDOMDocumentRange *nsdocrange;
+    nsIDOMRange *range;
+    nsIDOMNSRange *nsrange;
+    nsIDOMNode *nsnode;
+    nsAString ns_html;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(where), debugstr_w(html));
+
+    nsres = nsIWebNavigation_GetDocument(This->node->doc->nscontainer->navigation, &nsdoc);
+    if(NS_FAILED(nsres))
+    {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentRange, (void **)&nsdocrange);
+    nsIDOMDocument_Release(nsdoc);
+    if(NS_FAILED(nsres))
+    {
+        ERR("getting nsIDOMDocumentRange failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &range);
+    nsIDOMDocumentRange_Release(nsdocrange);
+    if(NS_FAILED(nsres))
+    {
+        ERR("CreateRange failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsIDOMRange_SetStartBefore(range, (nsIDOMNode *)This->nselem);
+
+    nsIDOMRange_QueryInterface(range, &IID_nsIDOMNSRange, (void **)&nsrange);
+    nsIDOMRange_Release(range);
+    if(NS_FAILED(nsres))
+    {
+        ERR("getting nsIDOMNSRange failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsAString_Init(&ns_html, html);
+
+    nsres = nsIDOMNSRange_CreateContextualFragment(nsrange, &ns_html, (nsIDOMDocumentFragment **)&nsnode);
+    nsIDOMNSRange_Release(nsrange);
+    nsAString_Finish(&ns_html);
+
+    if(NS_FAILED(nsres) || !nsnode)
+    {
+        ERR("CreateTextNode failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hr = HTMLElement_InsertAdjacentNode(This, where, nsnode);
+    nsIDOMNode_Release(nsnode);
+
+    return hr;
 }
 
 static HRESULT WINAPI HTMLElement_insertAdjacentText(IHTMLElement *iface, BSTR where,
                                                      BSTR text)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%s %s)\n", This, debugstr_w(where), debugstr_w(text));
-    return E_NOTIMPL;
+    nsresult nsres;
+    nsIDOMDocument *nsdoc;
+    nsIDOMNode *nsnode;
+    nsAString ns_text;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(where), debugstr_w(text));
+
+    nsres = nsIWebNavigation_GetDocument(This->node->doc->nscontainer->navigation, &nsdoc);
+    if(NS_FAILED(nsres) || !nsdoc)
+    {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsAString_Init(&ns_text, text);
+
+    nsres = nsIDOMDocument_CreateTextNode(nsdoc, &ns_text, (nsIDOMText **)&nsnode);
+    nsIDOMDocument_Release(nsdoc);
+    nsAString_Finish(&ns_text);
+
+    if(NS_FAILED(nsres) || !nsnode)
+    {
+        ERR("CreateTextNode failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hr = HTMLElement_InsertAdjacentNode(This, where, nsnode);
+    nsIDOMNode_Release(nsnode);
+
+    return hr;
 }
 
 static HRESULT WINAPI HTMLElement_get_parentTextEdit(IHTMLElement *iface, IHTMLElement **p)
