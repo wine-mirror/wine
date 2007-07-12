@@ -327,6 +327,7 @@ typedef struct _CHashEncodeMsg
     HCRYPTPROV      prov;
     HCRYPTHASH      hash;
     CRYPT_DATA_BLOB data;
+    BOOL            begun;
 } CHashEncodeMsg;
 
 static void CHashEncodeMsg_Close(HCRYPTMSG hCryptMsg)
@@ -337,6 +338,70 @@ static void CHashEncodeMsg_Close(HCRYPTMSG hCryptMsg)
     CryptDestroyHash(msg->hash);
     if (msg->base.open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
         CryptReleaseContext(msg->prov, 0);
+}
+
+static BOOL CRYPT_EncodePKCSDigestedData(CHashEncodeMsg *msg, void *pvData,
+ DWORD *pcbData)
+{
+    BOOL ret;
+    ALG_ID algID;
+    DWORD size = sizeof(algID);
+
+    ret = CryptGetHashParam(msg->hash, HP_ALGID, (BYTE *)&algID, &size, 0);
+    if (ret)
+    {
+        CRYPT_ALGORITHM_IDENTIFIER algoId = { 0 };
+        DWORD version = 0; /* FIXME */
+        struct AsnEncodeSequenceItem items[7] = { { 0 } };
+        DWORD cItem = 0;
+        CRYPT_DATA_BLOB hash = { 0, NULL };
+        CRYPT_CONTENT_INFO contentInfo = { NULL, { 0, NULL } };
+        char oid_rsa_data[] = szOID_RSA_data;
+
+        items[cItem].pvStructInfo = &version;
+        items[cItem].encodeFunc = CRYPT_AsnEncodeInt;
+        cItem++;
+        algoId.pszObjId = (LPSTR)CertAlgIdToOID(algID);
+        /* FIXME: what about algoId.Parameters? */
+        items[cItem].pvStructInfo = &algoId;
+        items[cItem].encodeFunc = CRYPT_AsnEncodeAlgorithmIdWithNullParams;
+        cItem++;
+        /* Quirk:  OID is only encoded messages if an update has happened */
+        if (msg->begun)
+            contentInfo.pszObjId = oid_rsa_data;
+        if (!(msg->base.open_flags & CMSG_DETACHED_FLAG) && msg->data.cbData)
+        {
+            ret = CRYPT_AsnEncodeOctets(0, NULL, &msg->data,
+             CRYPT_ENCODE_ALLOC_FLAG, NULL,
+             (LPBYTE)&contentInfo.Content.pbData,
+             &contentInfo.Content.cbData);
+        }
+        items[cItem].pvStructInfo = &contentInfo;
+        items[cItem].encodeFunc =
+         CRYPT_AsnEncodePKCSContentInfoInternal;
+        cItem++;
+        if (msg->base.finalized)
+        {
+            size = sizeof(DWORD);
+            ret = CryptGetHashParam(msg->hash, HP_HASHSIZE,
+             (LPBYTE)&hash.cbData, &size, 0);
+            if (ret)
+            {
+                hash.pbData = CryptMemAlloc(hash.cbData);
+                ret = CryptGetHashParam(msg->hash, HP_HASHVAL, hash.pbData,
+                 &hash.cbData, 0);
+            }
+        }
+        items[cItem].pvStructInfo = &hash;
+        items[cItem].encodeFunc = CRYPT_AsnEncodeOctets;
+        cItem++;
+        if (ret)
+            ret = CRYPT_AsnEncodeSequence(X509_ASN_ENCODING, items, cItem,
+             0, NULL, pvData, pcbData);
+        CryptMemFree(hash.pbData);
+        LocalFree(contentInfo.Content.pbData);
+    }
+    return ret;
 }
 
 static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
@@ -350,6 +415,40 @@ static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
 
     switch (dwParamType)
     {
+    case CMSG_BARE_CONTENT_PARAM:
+        if (msg->base.streamed)
+            SetLastError(E_INVALIDARG);
+        else
+            ret = CRYPT_EncodePKCSDigestedData(msg, pvData, pcbData);
+        break;
+    case CMSG_CONTENT_PARAM:
+    {
+        CRYPT_CONTENT_INFO info;
+
+        ret = CryptMsgGetParam(hCryptMsg, CMSG_BARE_CONTENT_PARAM, 0, NULL,
+         &info.Content.cbData);
+        if (ret)
+        {
+            info.Content.pbData = CryptMemAlloc(info.Content.cbData);
+            if (info.Content.pbData)
+            {
+                ret = CryptMsgGetParam(hCryptMsg, CMSG_BARE_CONTENT_PARAM, 0,
+                 info.Content.pbData, &info.Content.cbData);
+                if (ret)
+                {
+                    char oid_rsa_hashed[] = szOID_RSA_hashedData;
+
+                    info.pszObjId = oid_rsa_hashed;
+                    ret = CryptEncodeObjectEx(X509_ASN_ENCODING,
+                     PKCS_CONTENT_INFO, &info, 0, NULL, pvData, pcbData);
+                }
+                CryptMemFree(info.Content.pbData);
+            }
+            else
+                ret = FALSE;
+        }
+        break;
+    }
     case CMSG_COMPUTED_HASH_PARAM:
         ret = CryptGetHashParam(msg->hash, HP_HASHVAL, (BYTE *)pvData, pcbData,
          0);
@@ -367,7 +466,6 @@ static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         }
         break;
     default:
-        FIXME("%d: stub\n", dwParamType);
         ret = FALSE;
     }
     return ret;
@@ -385,6 +483,7 @@ static BOOL CHashEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
         SetLastError(CRYPT_E_MSG_ERROR);
     else
     {
+        msg->begun = TRUE;
         if (fFinal)
             msg->base.finalized = TRUE;
         if (msg->base.streamed || (msg->base.open_flags & CMSG_DETACHED_FLAG))
@@ -453,6 +552,7 @@ static HCRYPTMSG CHashEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
         msg->prov = prov;
         msg->data.cbData = 0;
         msg->data.pbData = NULL;
+        msg->begun = FALSE;
         if (!CryptCreateHash(prov, algID, 0, 0, &msg->hash))
         {
             CryptMsgClose(msg);

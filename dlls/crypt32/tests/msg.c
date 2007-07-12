@@ -768,12 +768,10 @@ static void test_hash_msg_get_param(void)
     /* Content and bare content are always gettable for non-streamed messages */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
-    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
-    }
     /* The hash is also available. */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
@@ -807,14 +805,12 @@ static void test_hash_msg_get_param(void)
     /* Streamed messages don't allow you to get the content or bare content. */
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
-    todo_wine {
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %x\n", GetLastError());
-    }
     /* The hash is still available. */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
@@ -886,72 +882,56 @@ static void test_hash_msg_encoding(void)
     hashInfo.HashAlgorithm.pszObjId = oid_rsa_md5;
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
      NULL, NULL);
-    todo_wine {
     check_param("hash empty bare content", msg, CMSG_BARE_CONTENT_PARAM,
      hashEmptyBareContent, sizeof(hashEmptyBareContent));
     check_param("hash empty content", msg, CMSG_CONTENT_PARAM,
      hashEmptyContent, sizeof(hashEmptyContent));
-    }
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
-    todo_wine {
     check_param("hash bare content", msg, CMSG_BARE_CONTENT_PARAM,
      hashBareContent, sizeof(hashBareContent));
     check_param("hash content", msg, CMSG_CONTENT_PARAM,
      hashContent, sizeof(hashContent));
-    }
     CryptMsgClose(msg);
     /* Same test, but with CMSG_BARE_CONTENT_FLAG set */
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_BARE_CONTENT_FLAG,
      CMSG_HASHED, &hashInfo, NULL, NULL);
-    todo_wine {
     check_param("hash empty bare content", msg, CMSG_BARE_CONTENT_PARAM,
      hashEmptyBareContent, sizeof(hashEmptyBareContent));
     check_param("hash empty content", msg, CMSG_CONTENT_PARAM,
      hashEmptyContent, sizeof(hashEmptyContent));
-    }
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
-    todo_wine {
     check_param("hash bare content", msg, CMSG_BARE_CONTENT_PARAM,
      hashBareContent, sizeof(hashBareContent));
     check_param("hash content", msg, CMSG_CONTENT_PARAM,
      hashContent, sizeof(hashContent));
-    }
     CryptMsgClose(msg);
     /* Same test, but with CMSG_DETACHED_FLAG set */
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
      CMSG_HASHED, &hashInfo, NULL, NULL);
-    todo_wine {
     check_param("detached hash empty bare content", msg,
      CMSG_BARE_CONTENT_PARAM, hashEmptyBareContent,
      sizeof(hashEmptyBareContent));
     check_param("detached hash empty content", msg, CMSG_CONTENT_PARAM,
      hashEmptyContent, sizeof(hashEmptyContent));
-    }
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
-    todo_wine {
     check_param("detached hash not final bare content", msg,
      CMSG_BARE_CONTENT_PARAM, detachedHashNonFinalBareContent,
      sizeof(detachedHashNonFinalBareContent));
     check_param("detached hash not final content", msg, CMSG_CONTENT_PARAM,
      detachedHashNonFinalContent, sizeof(detachedHashNonFinalContent));
-    }
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
-    todo_wine {
     check_param("detached hash bare content", msg, CMSG_BARE_CONTENT_PARAM,
      detachedHashBareContent, sizeof(detachedHashBareContent));
     check_param("detached hash content", msg, CMSG_CONTENT_PARAM,
      detachedHashContent, sizeof(detachedHashContent));
-    }
-    todo_wine {
     check_param("detached hash bare content", msg, CMSG_BARE_CONTENT_PARAM,
      detachedHashBareContent, sizeof(detachedHashBareContent));
     check_param("detached hash content", msg, CMSG_CONTENT_PARAM,
      detachedHashContent, sizeof(detachedHashContent));
-    }
     CryptMsgClose(msg);
     /* In what appears to be a bug, streamed updates to hash messages don't
      * call the output function.

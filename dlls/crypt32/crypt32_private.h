@@ -64,8 +64,23 @@ struct AsnConstructedItem
 BOOL WINAPI CRYPT_AsnEncodeConstructed(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded);
-
 BOOL WINAPI CRYPT_AsnEncodeOid(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded);
+BOOL WINAPI CRYPT_AsnEncodeInt(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded);
+/* Like CRYPT_AsnEncodeAlgorithmId, but encodes parameters as an asn.1 NULL
+ * if they are empty.
+ */
+BOOL WINAPI CRYPT_AsnEncodeAlgorithmIdWithNullParams(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded);
+/* Like CRYPT_AsnEncodePKCSContentInfo, but allows the OID to be NULL */
+BOOL WINAPI CRYPT_AsnEncodePKCSContentInfoInternal(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded);
+BOOL WINAPI CRYPT_AsnEncodeOctets(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded);
 
