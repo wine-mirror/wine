@@ -994,7 +994,6 @@ static void test_decode_msg_update(void)
     /* Can't update after a final update */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent), TRUE);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
      "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
     CryptMsgClose(msg);
