@@ -61,6 +61,16 @@ NTSTATUS WINAPI NtDuplicateToken(
         ImpersonationLevel, TokenType, NewToken);
         dump_ObjectAttributes(ObjectAttributes);
 
+    if (ObjectAttributes && ObjectAttributes->SecurityQualityOfService)
+    {
+        SECURITY_QUALITY_OF_SERVICE *SecurityQOS = ObjectAttributes->SecurityQualityOfService;
+        TRACE("ObjectAttributes->SecurityQualityOfService = {%d, %d, %d, %s}\n",
+            SecurityQOS->Length, SecurityQOS->ImpersonationLevel,
+            SecurityQOS->ContextTrackingMode,
+            SecurityQOS->EffectiveOnly ? "TRUE" : "FALSE");
+        ImpersonationLevel = SecurityQOS->ImpersonationLevel;
+    }
+
     SERVER_START_REQ( duplicate_token )
     {
         req->handle              = ExistingToken;
