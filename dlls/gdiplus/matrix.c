@@ -56,3 +56,24 @@ GpStatus WINGDIPAPI GdipDeleteMatrix(GpMatrix *matrix)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipTransformMatrixPoints(GpMatrix *matrix, GpPointF *pts,
+                                              INT count)
+{
+    REAL x, y;
+    INT i;
+
+    if(!matrix || !pts)
+        return InvalidParameter;
+
+    for(i = 0; i < count; i++)
+    {
+        x = pts[i].X;
+        y = pts[i].Y;
+
+        pts[i].X = x * matrix->matrix[0] + y * matrix->matrix[2] + matrix->matrix[4];
+        pts[i].Y = x * matrix->matrix[1] + y * matrix->matrix[3] + matrix->matrix[5];
+    }
+
+    return Ok;
+}

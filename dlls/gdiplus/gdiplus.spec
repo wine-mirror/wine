@@ -582,7 +582,7 @@
 @ stub GdipStringFormatGetGenericDefault
 @ stub GdipStringFormatGetGenericTypographic
 @ stub GdipTestControl
-@ stub GdipTransformMatrixPoints
+@ stdcall GdipTransformMatrixPoints(ptr ptr long)
 @ stub GdipTransformMatrixPointsI
 @ stub GdipTransformPath
 @ stub GdipTransformPoints
