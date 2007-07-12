@@ -674,6 +674,9 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     msi_apply_transforms( package );
     msi_apply_patches( package );
 
+    /* properties may have been added by a transform */
+    msi_clone_properties( package );
+
     if ( (msi_get_property_int(package, szUILevel, 0) & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED )
     {
         package->script->InWhatSequence |= SEQUENCE_UI;

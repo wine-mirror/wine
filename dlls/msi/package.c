@@ -60,10 +60,11 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
     ACTION_free_package_structures(package);
 }
 
-static UINT clone_properties(MSIPACKAGE *package)
+static UINT create_temp_property_table(MSIPACKAGE *package)
 {
-    MSIQUERY * view = NULL;
+    MSIQUERY *view = NULL;
     UINT rc;
+
     static const WCHAR CreateSql[] = {
        'C','R','E','A','T','E',' ','T','A','B','L','E',' ','`','_','P','r','o',
        'p','e','r','t','y','`',' ','(',' ','`','_','P','r','o','p','e','r','t',
@@ -73,6 +74,22 @@ static UINT clone_properties(MSIPACKAGE *package)
        'U','L','L',' ','T','E','M','P','O','R','A','R','Y',' ','P','R','I','M',
        'A','R','Y',' ','K','E','Y',' ','`','_','P','r','o','p','e','r','t','y',
         '`',')',0};
+
+    rc = MSI_DatabaseOpenViewW(package->db, CreateSql, &view);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MSI_ViewExecute(view, 0);
+    MSI_ViewClose(view);
+    msiobj_release(&view->hdr);
+    return rc;
+}
+
+UINT msi_clone_properties(MSIPACKAGE *package)
+{
+    MSIQUERY *view = NULL;
+    UINT rc;
+
     static const WCHAR Query[] = {
        'S','E','L','E','C','T',' ','*',' ',
        'F','R','O','M',' ','`','P','r','o','p','e','r','t','y','`',0};
@@ -82,17 +99,6 @@ static UINT clone_properties(MSIPACKAGE *package)
        '(','`','_','P','r','o','p','e','r','t','y','`',',',
        '`','V','a','l','u','e','`',')',' ',
        'V','A','L','U','E','S',' ','(','?',',','?',')',0};
-
-    /* create the temporary properties table */
-    rc = MSI_DatabaseOpenViewW(package->db, CreateSql, &view);
-    if (rc != ERROR_SUCCESS)
-        return rc;
-
-    rc = MSI_ViewExecute(view, 0);
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
-    if (rc != ERROR_SUCCESS)
-        return rc;
 
     /* clone the existing properties */
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
@@ -735,7 +741,8 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         package->PackagePath = strdupW( db->path );
         package->BaseURL = strdupW( base_url );
 
-        clone_properties( package );
+        create_temp_property_table( package );
+        msi_clone_properties( package );
         set_installer_properties(package);
         sprintfW(uilevel,szpi,gUILevel);
         MSI_SetPropertyW(package, szLevel, uilevel);

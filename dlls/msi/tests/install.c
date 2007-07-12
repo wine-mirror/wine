@@ -2453,11 +2453,8 @@ static void test_transformprop(void)
 
     r = MsiInstallProductA(msifile, "TRANSFORMS=winetest.mst");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    todo_wine
-    {
-        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
-        ok(delete_pf("msitest", FALSE), "File not installed\n");
-    }
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     /* Delete the files in the temp (current) folder */
     DeleteFile(msifile);

@@ -688,6 +688,7 @@ extern UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE*, LPCWSTR, INSTALLSTATE );
 extern LPCWSTR msi_download_file( LPCWSTR szUrl, LPWSTR filename );
 extern UINT msi_package_add_info(MSIPACKAGE *, DWORD, DWORD, LPCWSTR, LPWSTR);
 extern UINT msi_package_add_media_disk(MSIPACKAGE *, DWORD, DWORD, DWORD, LPWSTR, LPWSTR);
+extern UINT msi_clone_properties(MSIPACKAGE *);
 
 /* for deformating */
 extern UINT MSI_FormatRecordW( MSIPACKAGE *, MSIRECORD *, LPWSTR, DWORD * );
