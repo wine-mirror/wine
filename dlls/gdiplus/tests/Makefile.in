@@ -8,6 +8,7 @@ IMPORTS   = gdiplus kernel32
 CTESTS = \
 	brush.c \
 	graphicspath.c \
+	matrix.c \
 	pen.c
 
 @MAKE_TEST_RULES@
