@@ -834,11 +834,139 @@ static void test_hash_msg_get_param(void)
     CryptMsgClose(msg);
 }
 
+static const BYTE hashEmptyBareContent[] = {
+0x30,0x17,0x02,0x01,0x00,0x30,0x0c,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,0x0d,
+0x02,0x05,0x05,0x00,0x30,0x02,0x06,0x00,0x04,0x00 };
+static const BYTE hashEmptyContent[] = {
+0x30,0x26,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x05,0xa0,0x19,
+0x30,0x17,0x02,0x01,0x00,0x30,0x0c,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,0x0d,
+0x02,0x05,0x05,0x00,0x30,0x02,0x06,0x00,0x04,0x00 };
+static const BYTE hashBareContent[] = {
+0x30,0x38,0x02,0x01,0x00,0x30,0x0c,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,0x0d,
+0x02,0x05,0x05,0x00,0x30,0x13,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+0x07,0x01,0xa0,0x06,0x04,0x04,0x01,0x02,0x03,0x04,0x04,0x10,0x08,0xd6,0xc0,
+0x5a,0x21,0x51,0x2a,0x79,0xa1,0xdf,0xeb,0x9d,0x2a,0x8f,0x26,0x2f };
+static const BYTE hashContent[] = {
+0x30,0x47,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x05,0xa0,0x3a,
+0x30,0x38,0x02,0x01,0x00,0x30,0x0c,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,0x0d,
+0x02,0x05,0x05,0x00,0x30,0x13,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+0x07,0x01,0xa0,0x06,0x04,0x04,0x01,0x02,0x03,0x04,0x04,0x10,0x08,0xd6,0xc0,
+0x5a,0x21,0x51,0x2a,0x79,0xa1,0xdf,0xeb,0x9d,0x2a,0x8f,0x26,0x2f };
+
+static const BYTE detachedHashBareContent[] = {
+0x30,0x30,0x02,0x01,0x00,0x30,0x0c,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,0x0d,
+0x02,0x05,0x05,0x00,0x30,0x0b,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+0x07,0x01,0x04,0x10,0x08,0xd6,0xc0,0x5a,0x21,0x51,0x2a,0x79,0xa1,0xdf,0xeb,
+0x9d,0x2a,0x8f,0x26,0x2f };
+static const BYTE detachedHashContent[] = {
+0x30,0x3f,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x05,0xa0,0x32,
+0x30,0x30,0x02,0x01,0x00,0x30,0x0c,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,0x0d,
+0x02,0x05,0x05,0x00,0x30,0x0b,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+0x07,0x01,0x04,0x10,0x08,0xd6,0xc0,0x5a,0x21,0x51,0x2a,0x79,0xa1,0xdf,0xeb,
+0x9d,0x2a,0x8f,0x26,0x2f };
+
+static void test_hash_msg_encoding(void)
+{
+    HCRYPTMSG msg;
+    CMSG_HASHED_ENCODE_INFO hashInfo = { sizeof(hashInfo), 0 };
+    BOOL ret;
+    struct update_accum accum = { 0, NULL }, empty_accum = { 0, NULL };
+    CMSG_STREAM_INFO streamInfo = { 0, accumulating_stream_output, &accum };
+    static char oid_rsa_md5[] = szOID_RSA_MD5;
+
+    hashInfo.HashAlgorithm.pszObjId = oid_rsa_md5;
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, NULL);
+    todo_wine {
+    check_param("hash empty bare content", msg, CMSG_BARE_CONTENT_PARAM,
+     hashEmptyBareContent, sizeof(hashEmptyBareContent));
+    check_param("hash empty content", msg, CMSG_CONTENT_PARAM,
+     hashEmptyContent, sizeof(hashEmptyContent));
+    }
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    todo_wine {
+    check_param("hash bare content", msg, CMSG_BARE_CONTENT_PARAM,
+     hashBareContent, sizeof(hashBareContent));
+    check_param("hash content", msg, CMSG_CONTENT_PARAM,
+     hashContent, sizeof(hashContent));
+    }
+    CryptMsgClose(msg);
+    /* Same test, but with CMSG_BARE_CONTENT_FLAG set */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_BARE_CONTENT_FLAG,
+     CMSG_HASHED, &hashInfo, NULL, NULL);
+    todo_wine {
+    check_param("hash empty bare content", msg, CMSG_BARE_CONTENT_PARAM,
+     hashEmptyBareContent, sizeof(hashEmptyBareContent));
+    check_param("hash empty content", msg, CMSG_CONTENT_PARAM,
+     hashEmptyContent, sizeof(hashEmptyContent));
+    }
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    todo_wine {
+    check_param("hash bare content", msg, CMSG_BARE_CONTENT_PARAM,
+     hashBareContent, sizeof(hashBareContent));
+    check_param("hash content", msg, CMSG_CONTENT_PARAM,
+     hashContent, sizeof(hashContent));
+    }
+    CryptMsgClose(msg);
+    /* Same test, but with CMSG_DETACHED_FLAG set */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
+     CMSG_HASHED, &hashInfo, NULL, NULL);
+    todo_wine {
+    check_param("detached hash empty bare content", msg,
+     CMSG_BARE_CONTENT_PARAM, hashEmptyBareContent,
+     sizeof(hashEmptyBareContent));
+    check_param("detached hash empty content", msg, CMSG_CONTENT_PARAM,
+     hashEmptyContent, sizeof(hashEmptyContent));
+    }
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    todo_wine {
+    check_param("detached hash bare content", msg, CMSG_BARE_CONTENT_PARAM,
+     detachedHashBareContent, sizeof(detachedHashBareContent));
+    check_param("detached hash content", msg, CMSG_CONTENT_PARAM,
+     detachedHashContent, sizeof(detachedHashContent));
+    }
+    CryptMsgClose(msg);
+    /* In what appears to be a bug, streamed updates to hash messages don't
+     * call the output function.
+     */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, &streamInfo);
+    ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+    check_updates("empty hash message", &empty_accum, &accum);
+    free_updates(&accum);
+
+    streamInfo.cbContent = sizeof(msgData);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, &streamInfo);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+    check_updates("hash message", &empty_accum, &accum);
+    free_updates(&accum);
+
+    streamInfo.cbContent = sizeof(msgData);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
+     CMSG_HASHED, &hashInfo, NULL, &streamInfo);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+    check_updates("detached hash message", &empty_accum, &accum);
+    free_updates(&accum);
+}
+
 static void test_hash_msg(void)
 {
     test_hash_msg_open();
     test_hash_msg_update();
     test_hash_msg_get_param();
+    test_hash_msg_encoding();
 }
 
 static CRYPT_DATA_BLOB b4 = { 0, NULL };
