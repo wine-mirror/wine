@@ -242,6 +242,27 @@ static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
     return ret;
 }
 
+static BOOL CRYPT_CopyParam(void *pvData, DWORD *pcbData, const BYTE *src,
+ DWORD len)
+{
+    BOOL ret = TRUE;
+
+    if (!pvData)
+        *pcbData = len;
+    else if (*pcbData < len)
+    {
+        *pcbData = len;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        *pcbData = len;
+        memcpy(pvData, src, len);
+    }
+    return ret;
+}
+
 static BOOL CDataEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
@@ -268,22 +289,9 @@ static BOOL CDataEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
     case CMSG_BARE_CONTENT_PARAM:
         if (msg->base.streamed)
             SetLastError(E_INVALIDARG);
-        else if (!pvData)
-        {
-            *pcbData = msg->bare_content_len;
-            ret = TRUE;
-        }
-        else if (*pcbData < msg->bare_content_len)
-        {
-            *pcbData = msg->bare_content_len;
-            SetLastError(ERROR_MORE_DATA);
-        }
         else
-        {
-            *pcbData = msg->bare_content_len;
-            memcpy(pvData, msg->bare_content, msg->bare_content_len);
-            ret = TRUE;
-        }
+            ret = CRYPT_CopyParam(pvData, pcbData, msg->bare_content,
+             msg->bare_content_len);
         break;
     default:
         SetLastError(CRYPT_E_INVALID_MSG_TYPE);
@@ -349,22 +357,13 @@ static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
     case CMSG_VERSION_PARAM:
         if (!msg->base.finalized)
             SetLastError(CRYPT_E_MSG_ERROR);
-        else if (!pvData)
-        {
-            *pcbData = sizeof(DWORD);
-            ret = TRUE;
-        }
-        else if (*pcbData < sizeof(DWORD))
-        {
-            SetLastError(ERROR_MORE_DATA);
-            *pcbData = sizeof(DWORD);
-        }
         else
         {
             /* FIXME: under what circumstances is this CMSG_HASHED_DATA_V2? */
-            *(DWORD *)pvData = CMSG_HASHED_DATA_PKCS_1_5_VERSION;
-            *pcbData = sizeof(DWORD);
-            ret = TRUE;
+            DWORD version = CMSG_HASHED_DATA_PKCS_1_5_VERSION;
+
+            ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&version,
+             sizeof(version));
         }
         break;
     default:
@@ -552,22 +551,8 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
     switch (dwParamType)
     {
     case CMSG_TYPE_PARAM:
-        if (!pvData)
-        {
-            *pcbData = sizeof(DWORD);
-            ret = TRUE;
-        }
-        else if (*pcbData < sizeof(DWORD))
-        {
-            *pcbData = sizeof(DWORD);
-            SetLastError(ERROR_MORE_DATA);
-        }
-        else
-        {
-            *pcbData = sizeof(DWORD);
-            *(DWORD *)pvData = msg->type;
-            ret = TRUE;
-        }
+        ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&msg->type,
+         sizeof(msg->type));
         break;
     default:
         FIXME("unimplemented for parameter %d\n", dwParamType);
