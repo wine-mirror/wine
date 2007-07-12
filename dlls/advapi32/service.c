@@ -1344,6 +1344,39 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         return NULL;
     }
 
+    /* ServiceType can only be one value (except for SERVICE_INTERACTIVE_PROCESS which can be used
+     * together with SERVICE_WIN32_OWN_PROCESS or SERVICE_WIN32_SHARE_PROCESS when the service
+     * runs under the LocalSystem account)
+     */
+    switch (dwServiceType)
+    {
+    case SERVICE_KERNEL_DRIVER:
+    case SERVICE_FILE_SYSTEM_DRIVER:
+    case SERVICE_WIN32_OWN_PROCESS:
+    case SERVICE_WIN32_SHARE_PROCESS:
+        /* No problem */
+        break;
+    case SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS:
+    case SERVICE_WIN32_SHARE_PROCESS | SERVICE_INTERACTIVE_PROCESS:
+        /* FIXME : Do we need a more thorough check? */
+        if (lpServiceStartName)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return NULL;
+        }
+        break;
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    /* StartType can only be a single value (if several values are mixed the result is probably not what was intended) */
+    if (dwStartType > SERVICE_DISABLED)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
     r = RegCreateKeyExW(hscm->hkey, lpServiceName, 0, NULL,
                        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dp);
     if (r!=ERROR_SUCCESS)
