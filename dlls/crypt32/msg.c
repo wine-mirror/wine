@@ -332,9 +332,23 @@ static void CHashEncodeMsg_Close(HCRYPTMSG hCryptMsg)
 static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
-    FIXME("(%p, %d, %d, %p, %p): stub\n", hCryptMsg, dwParamType, dwIndex,
+    CHashEncodeMsg *msg = (CHashEncodeMsg *)hCryptMsg;
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %d, %d, %p, %p)\n", hCryptMsg, dwParamType, dwIndex,
      pvData, pcbData);
-    return FALSE;
+
+    switch (dwParamType)
+    {
+    case CMSG_COMPUTED_HASH_PARAM:
+        ret = CryptGetHashParam(msg->hash, HP_HASHVAL, (BYTE *)pvData, pcbData,
+         0);
+        break;
+    default:
+        FIXME("%d: stub\n", dwParamType);
+        ret = FALSE;
+    }
+    return ret;
 }
 
 static BOOL CHashEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
