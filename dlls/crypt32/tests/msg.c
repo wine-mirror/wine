@@ -653,6 +653,38 @@ static void test_data_msg(void)
     test_data_msg_encoding();
 }
 
+static void test_hash_msg_open(void)
+{
+    HCRYPTMSG msg;
+    CMSG_HASHED_ENCODE_INFO hashInfo = { 0 };
+    static char oid_rsa_md5[] = szOID_RSA_MD5;
+
+    SetLastError(0xdeadbeef);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, NULL);
+    todo_wine
+    ok(!msg && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    hashInfo.cbSize = sizeof(hashInfo);
+    SetLastError(0xdeadbeef);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, NULL);
+    todo_wine
+    ok(!msg && GetLastError() == CRYPT_E_UNKNOWN_ALGO,
+     "Expected CRYPT_E_UNKNOWN_ALGO, got %x\n", GetLastError());
+    hashInfo.HashAlgorithm.pszObjId = oid_rsa_md5;
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, NULL);
+    todo_wine
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+}
+
+static void test_hash_msg(void)
+{
+    test_hash_msg_open();
+}
+
 static CRYPT_DATA_BLOB b4 = { 0, NULL };
 static const struct update_accum a4 = { 1, &b4 };
 
@@ -832,5 +864,6 @@ START_TEST(msg)
 
     /* Message-type specific tests */
     test_data_msg();
+    test_hash_msg();
     test_decode_msg();
 }
