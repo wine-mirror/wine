@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 
 #include "windef.h"
 #include "gdiplus.h"
@@ -42,6 +43,53 @@ static void test_constructor_destructor(void)
     expect(Ok, status);
 }
 
+typedef struct{
+    REAL X;
+    REAL Y;
+} real_point;
+
+static real_point transform_points[] = {
+    {1000.00, 2600.00}, /*0*/
+    {855.00, 2390.00}, /*1*/
+    {700.00, 2200.00}, /*2*/
+    {565.00, 1970.00}, /*3*/
+    {400.00, 1800.00}, /*4*/
+    {275.00, 1550.00}, /*5*/
+    {100.00, 1400.00}, /*6*/
+    {-15.00, 1130.00}, /*7*/
+    {-200.00, 1000.00}, /*8*/
+    {-305.00, 710.00} /*9*/
+    };
+
+static void test_transform(void)
+{
+    GpStatus status;
+    GpMatrix *matrix = NULL;
+    GpPointF pts[10];
+    INT i;
+    BOOL match;
+
+    for(i = 0; i < 10; i ++){
+        pts[i].X = i * 5.0 * (REAL)(i % 2);
+        pts[i].Y = 50.0 - i * 5.0;
+    }
+
+    GdipCreateMatrix2(1.0, -2.0, 30.0, 40.0, -500.0, 600.0, &matrix);
+
+    status = GdipTransformMatrixPoints(matrix, pts, 10);
+    expect(Ok, status);
+
+    for(i = 0; i < 10; i ++){
+        match = fabs(transform_points[i].X - pts[i].X) < 2.0
+            && fabs(transform_points[i].Y -  pts[i].Y) < 2.0;
+
+        ok(match, "Expected #%d to be (%.2f, %.2f) but got (%.2f, %.2f)\n", i,
+           transform_points[i].X, transform_points[i].Y, pts[i].X, pts[i].Y);
+    }
+
+    GdipDeleteMatrix(matrix);
+}
+
 START_TEST(matrix)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -55,6 +103,7 @@ START_TEST(matrix)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_constructor_destructor();
+    test_transform();
 
     GdiplusShutdown(gdiplusToken);
 }
