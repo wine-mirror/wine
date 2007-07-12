@@ -109,8 +109,7 @@ static char **split_hostnames( const char *hostnames )
     return res;
 
 oom:
-    for (--i; i >= 0; i--)
-        strfreeU( res[i] );
+    while (i > 0) strfreeU( res[--i] );
 
     HeapFree( GetProcessHeap(), 0, res );
     HeapFree( GetProcessHeap(), 0, str );

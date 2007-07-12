@@ -190,9 +190,7 @@ static char **bv2str_array( struct berval **bv )
         str[i] = bv2str( *p );
         if (!str[i])
         {
-            for (--i; i >= 0; i--)
-                HeapFree( GetProcessHeap(), 0, str[i] );
-
+            while (i > 0) HeapFree( GetProcessHeap(), 0, str[--i] );
             HeapFree( GetProcessHeap(), 0, str );
             return NULL;
         } 
