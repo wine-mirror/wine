@@ -24,6 +24,7 @@
 #include <math.h>
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
+#define expectf(expected, got) ok(fabs(expected - got) < 2.0, "Expected %.2f, got %.2f\n", expected, got)
 #define POINT_TYPE_MAX_LEN (75)
 
 static void stringify_point_type(PathPointType type, char * name)
@@ -254,6 +255,64 @@ static void test_arc(void)
     ok_path(path, arc_path, sizeof(arc_path)/sizeof(path_test_t), FALSE);
 }
 
+static void test_worldbounds(void)
+{
+    GpStatus status;
+    GpPath *path;
+    GpPen *pen;
+    GpMatrix *matrix;
+    GpRectF bounds;
+    GpPointF line2_points[10];
+    int i;
+
+    for(i = 0; i < 10; i ++){
+        line2_points[i].X = 200.0 + i * 50.0 * (i % 2);
+        line2_points[i].Y = 200.0 + i * 50.0 * !(i % 2);
+    }
+    GdipCreatePen1((ARGB)0xdeadbeef, 20.0, UnitWorld, &pen);
+    GdipSetPenEndCap(pen, LineCapSquareAnchor);
+    GdipCreateMatrix2(1.5, 0.0, 1.0, 1.2, 10.4, 10.2, &matrix);
+
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 0.0, 100.0);
+    GdipAddPathLine2(path, &(line2_points[0]), 10);
+    status = GdipGetPathWorldBounds(path, &bounds, NULL, NULL);
+    expect(Ok, status);
+    GdipDeletePath(path);
+
+    expectf(200.0, bounds.X);
+    expectf(200.0, bounds.Y);
+    expectf(450.0, bounds.Width);
+    expectf(600.0, bounds.Height);
+
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 0.0, 100.0);
+    GdipAddPathLine2(path, &(line2_points[0]), 10);
+    status = GdipGetPathWorldBounds(path, &bounds, matrix, NULL);
+    expect(Ok, status);
+    GdipDeletePath(path);
+
+    expectf(510.4, bounds.X);
+    expectf(250.2, bounds.Y);
+    expectf(1275.0, bounds.Width);
+    expectf(720.0, bounds.Height);
+
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 0.0, 100.0);
+    GdipAddPathLine2(path, &(line2_points[0]), 10);
+    status = GdipGetPathWorldBounds(path, &bounds, NULL, pen);
+    todo_wine
+        expect(Ok, status);
+    GdipDeletePath(path);
+
+    todo_wine{
+        expectf(100.0, bounds.X);
+        expectf(100.0, bounds.Y);
+        expectf(650.0, bounds.Width);
+        expectf(800.0, bounds.Height);
+    }
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -269,6 +328,7 @@ START_TEST(graphicspath)
     test_constructor_destructor();
     test_line2();
     test_arc();
+    test_worldbounds();
 
     GdiplusShutdown(gdiplusToken);
 }
