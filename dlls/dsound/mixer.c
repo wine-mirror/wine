@@ -543,6 +543,12 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 		dsb->leadin = FALSE;
 	}
 
+	/* check for notification positions */
+	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY &&
+	    dsb->state != STATE_STARTING) {
+		DSOUND_CheckEvent(dsb, dsb->buf_mixpos, ilen);
+	}
+
 	dsb->buf_mixpos += ilen;
 
 	if (dsb->buf_mixpos >= dsb->buflen) {
@@ -557,6 +563,9 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 		}
 	}
 
+	/* increase mix position */
+	dsb->primary_mixpos += len;
+	dsb->primary_mixpos %= dsb->device->buflen;
 	return len;
 }
 
@@ -607,27 +616,32 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	}
 
 	/* take into acount already mixed data */
-	mixlen = mixlen - primary_done;
+	mixlen -= primary_done;
 
-	TRACE("mixlen (primary) = %i\n", mixlen);
+	TRACE("primary_done=%d, mixlen (primary) = %i\n", primary_done, mixlen);
+
+	if ((dsb->playflags & DSBPLAY_LOOPING) && mixlen > buflen)
+	{
+		while (mixlen > buflen)
+		{
+			DWORD mixedlength = DSOUND_MixInBuffer(dsb, dsb->primary_mixpos, buflen);
+			mixlen -= buflen;
+			if (!mixedlength)
+			{
+				mixlen = 0;
+				break;
+			}
+		}
+
+	}
 
 	/* clip to valid length */
 	mixlen = (buflen < mixlen) ? buflen : mixlen;
+	TRACE("mixlen (buffer)=%d\n", mixlen);
 
-	TRACE("primary_done=%d, mixlen (buffer)=%d\n", primary_done, mixlen);
-
-	/* mix more data */
-	mixlen = DSOUND_MixInBuffer(dsb, dsb->primary_mixpos, mixlen);
-
-	/* check for notification positions */
-	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY &&
-	    dsb->state != STATE_STARTING) {
-		DSOUND_CheckEvent(dsb, writepos, mixlen	/ dsb->device->pwfx->nBlockAlign * dsb->pwfx->nBlockAlign);
-	}
-
-	/* increase mix position */
-	dsb->primary_mixpos += mixlen;
-	dsb->primary_mixpos %= dsb->device->buflen;
+	if (mixlen)
+		/* mix more data */
+		mixlen = DSOUND_MixInBuffer(dsb, dsb->primary_mixpos, mixlen);
 
 	TRACE("new primary_mixpos=%d, mixed data len=%d, buffer left = %d\n",
 		dsb->primary_mixpos, mixlen, (dsb->buflen - dsb->buf_mixpos));
