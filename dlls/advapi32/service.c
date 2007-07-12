@@ -52,6 +52,13 @@ static const GENERIC_MAPPING scm_generic = {
     SC_MANAGER_ALL_ACCESS
 };
 
+static const GENERIC_MAPPING svc_generic = {
+    (STANDARD_RIGHTS_READ | SERVICE_QUERY_CONFIG | SERVICE_QUERY_STATUS | SERVICE_INTERROGATE | SERVICE_ENUMERATE_DEPENDENTS),
+    (STANDARD_RIGHTS_WRITE | SERVICE_CHANGE_CONFIG),
+    (STANDARD_RIGHTS_EXECUTE | SERVICE_START | SERVICE_STOP | SERVICE_PAUSE_CONTINUE | SERVICE_USER_DEFINED_CONTROL),
+    SERVICE_ALL_ACCESS
+};
+
 typedef struct service_start_info_t
 {
     DWORD cmd;
@@ -1234,6 +1241,7 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     HKEY hKey;
     long r;
     DWORD len;
+    DWORD new_mask = dwDesiredAccess;
 
     TRACE("%p %s %d\n", hSCManager, debugstr_w(lpServiceName), dwDesiredAccess);
 
@@ -1268,7 +1276,9 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     }
     strcpyW( hsvc->name, lpServiceName );
     hsvc->hkey = hKey;
-    hsvc->dwAccess = dwDesiredAccess;
+
+    RtlMapGenericMask(&new_mask, &svc_generic);
+    hsvc->dwAccess = new_mask;
 
     /* add reference to SCM handle */
     hscm->hdr.ref_count++;
@@ -1298,6 +1308,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     DWORD dp, len;
     struct reg_value val[10];
     int n = 0;
+    DWORD new_mask = dwDesiredAccess;
 
     TRACE("%p %s %s\n", hSCManager, 
           debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
@@ -1379,6 +1390,10 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         goto error;
     lstrcpyW( hsvc->name, lpServiceName );
     hsvc->hkey = hKey;
+
+    RtlMapGenericMask(&new_mask, &svc_generic);
+    hsvc->dwAccess = new_mask;
+
     hsvc->scm = hscm;
     hscm->hdr.ref_count++;
 
