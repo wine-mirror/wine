@@ -344,12 +344,24 @@ static void shorten_bezier_amt(GpPointF * pt, REAL amt)
 
 /* Draws bezier curves between given points, and if caps is true then draws an
  * endcap at the end of the last line.  FIXME: Startcaps not implemented. */
-static void draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
+static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     INT count, BOOL caps)
 {
-    POINT *pti = GdipAlloc(count * sizeof(POINT));
-    GpPointF *ptf = GdipAlloc(4 * sizeof(GpPointF));
+    POINT *pti;
+    GpPointF *ptf;
     INT i;
+    GpStatus status = GenericError;
+
+    if(!count)
+        return Ok;
+
+    pti = GdipAlloc(count * sizeof(POINT));
+    ptf = GdipAlloc(4 * sizeof(GpPointF));
+
+    if(!pti || !ptf){
+        status = OutOfMemory;
+        goto end;
+    }
 
     memcpy(ptf, &pt[count-4], 4 * sizeof(GpPointF));
 
@@ -371,8 +383,14 @@ static void draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     }
 
     PolyBezier(hdc, pti, count);
+
+    status = Ok;
+
+end:
     GdipFree(pti);
     GdipFree(ptf);
+
+    return status;
 }
 
 /* Converts from gdiplus path point type to gdi path point type. */
@@ -534,6 +552,7 @@ GpStatus WINGDIPAPI GdipDrawArc(GpGraphics *graphics, GpPen *pen, REAL x,
 {
     INT save_state, num_pts;
     GpPointF points[MAX_ARC_PTS];
+    GpStatus retval;
 
     if(!graphics || !pen)
         return InvalidParameter;
@@ -544,11 +563,11 @@ GpStatus WINGDIPAPI GdipDrawArc(GpGraphics *graphics, GpPen *pen, REAL x,
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    draw_polybezier(graphics->hdc, pen, points, num_pts, TRUE);
+    retval = draw_polybezier(graphics->hdc, pen, points, num_pts, TRUE);
 
     RestoreDC(graphics->hdc, save_state);
 
-    return Ok;
+    return retval;
 }
 
 GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
@@ -556,6 +575,7 @@ GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
 {
     INT save_state;
     GpPointF pt[4];
+    GpStatus retval;
 
     if(!graphics || !pen)
         return InvalidParameter;
@@ -573,11 +593,11 @@ GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    draw_polybezier(graphics->hdc, pen, pt, 4, TRUE);
+    retval = draw_polybezier(graphics->hdc, pen, pt, 4, TRUE);
 
     RestoreDC(graphics->hdc, save_state);
 
-    return Ok;
+    return retval;
 }
 
 /* Approximates cardinal spline with Bezier curves. */
@@ -588,6 +608,7 @@ GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     INT i, len_pt = count*3-2, save_state;
     GpPointF *pt;
     REAL x1, x2, y1, y2;
+    GpStatus retval;
 
     if(!graphics || !pen)
         return InvalidParameter;
@@ -626,12 +647,12 @@ GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    draw_polybezier(graphics->hdc, pen, pt, len_pt, TRUE);
+    retval = draw_polybezier(graphics->hdc, pen, pt, len_pt, TRUE);
 
     GdipFree(pt);
     RestoreDC(graphics->hdc, save_state);
 
-    return Ok;
+    return retval;
 }
 
 GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
