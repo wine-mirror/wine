@@ -394,10 +394,38 @@ static BOOL WINAPI CRYPT_AsnEncodeValidity(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeAlgorithmId(
+/* Like CRYPT_AsnEncodeAlgorithmId, but encodes parameters as an asn.1 NULL
+ * if they are empty.
+ */
+static BOOL WINAPI CRYPT_AsnEncodeAlgorithmIdWithNullParams(
  DWORD dwCertEncodingType, LPCSTR lpszStructType, const void *pvStructInfo,
  DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
+{
+    const CRYPT_ALGORITHM_IDENTIFIER *algo =
+     (const CRYPT_ALGORITHM_IDENTIFIER *)pvStructInfo;
+    static const BYTE asn1Null[] = { ASN_NULL, 0 };
+    static const CRYPT_DATA_BLOB nullBlob = { sizeof(asn1Null),
+     (LPBYTE)asn1Null };
+    BOOL ret;
+    struct AsnEncodeSequenceItem items[2] = {
+     { algo->pszObjId, CRYPT_AsnEncodeOid, 0 },
+     { NULL,           CRYPT_CopyEncodedBlob, 0 },
+    };
+
+    if (algo->Parameters.cbData)
+        items[1].pvStructInfo = &algo->Parameters;
+    else
+        items[1].pvStructInfo = &nullBlob;
+    ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+     sizeof(items) / sizeof(items[0]), dwFlags, pEncodePara, pbEncoded,
+     pcbEncoded);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnEncodeAlgorithmId(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
     const CRYPT_ALGORITHM_IDENTIFIER *algo =
      (const CRYPT_ALGORITHM_IDENTIFIER *)pvStructInfo;
@@ -1455,7 +1483,6 @@ static BOOL WINAPI CRYPT_AsnEncodePKCSContentInfo(DWORD dwCertEncodingType,
             ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
              cItem, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
         }
-
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -3098,8 +3125,10 @@ static BOOL WINAPI CRYPT_AsnEncodePKCSSignerInfo(DWORD dwCertEncodingType,
             struct AsnEncodeSequenceItem items[7] = {
              { &info->dwVersion,     CRYPT_AsnEncodeInt, 0 },
              { &info->Issuer,        CRYPT_AsnEncodeIssuerSerialNumber, 0 },
-             { &info->HashAlgorithm, CRYPT_AsnEncodeAlgorithmId, 0 },
-             { &info->HashEncryptionAlgorithm, CRYPT_AsnEncodeAlgorithmId, 0 },
+             { &info->HashAlgorithm, CRYPT_AsnEncodeAlgorithmIdWithNullParams,
+               0 },
+             { &info->HashEncryptionAlgorithm,
+               CRYPT_AsnEncodeAlgorithmIdWithNullParams, 0 },
             };
             DWORD cItem = 4;
 
