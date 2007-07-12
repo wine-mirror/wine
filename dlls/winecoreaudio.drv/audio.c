@@ -1059,12 +1059,16 @@ static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
  */
 static void wodHelper_NotifyDoneForList(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 {
-    for ( ; lpWaveHdr; lpWaveHdr = lpWaveHdr->lpNext)
+    while (lpWaveHdr)
     {
+        LPWAVEHDR lpNext = lpWaveHdr->lpNext;
+
+        lpWaveHdr->lpNext = NULL;
         lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
         lpWaveHdr->dwFlags |= WHDR_DONE;
-
         wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
+
+        lpWaveHdr = lpNext;
     }
 }
 
@@ -1670,12 +1674,17 @@ static void widHelper_NotifyCompletions(WINE_WAVEIN* wwi)
     OSSpinLockUnlock(&wwi->lock);
 
     /* Now, send the "done" notification for each header in our list. */
-    for (lpWaveHdr = lpFirstDoneWaveHdr; lpWaveHdr; lpWaveHdr = lpWaveHdr->lpNext)
+    lpWaveHdr = lpFirstDoneWaveHdr;
+    while (lpWaveHdr)
     {
+        LPWAVEHDR lpNext = lpWaveHdr->lpNext;
+
+        lpWaveHdr->lpNext = NULL;
         lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
         lpWaveHdr->dwFlags |= WHDR_DONE;
-
         widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+
+        lpWaveHdr = lpNext;
     }
 }
 
@@ -2074,6 +2083,7 @@ static DWORD widStop(WORD wDevID)
 
     if (lpWaveHdr)
     {
+        lpWaveHdr->lpNext = NULL;
         lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
         lpWaveHdr->dwFlags |= WHDR_DONE;
         widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
@@ -2130,6 +2140,7 @@ static DWORD widReset(WORD wDevID)
     {
         WAVEHDR* lpNext = lpWaveHdr->lpNext;
 
+        lpWaveHdr->lpNext = NULL;
         lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
         lpWaveHdr->dwFlags |= WHDR_DONE;
         widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
