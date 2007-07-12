@@ -190,8 +190,9 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
 
 static inline LPWSTR strndupW(LPWSTR string, int len)
 {
-    LPWSTR ret = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
-    if (ret)
+    LPWSTR ret = NULL;
+    if (string &&
+        (ret = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR))) != NULL)
     {
         memcpy(ret, string, len*sizeof(WCHAR));
         ret[len] = 0;
@@ -304,7 +305,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     url.dwStructSize = sizeof(url);
     url.dwSchemeLength = url.dwHostNameLength = url.dwUrlPathLength = url.dwUserNameLength =
         url.dwPasswordLength = 1;
-    if (!InternetCrackUrlW(szUrl, 0, ICU_ESCAPE, &url))
+    if (!InternetCrackUrlW(szUrl, 0, 0, &url))
     {
         hres = MK_E_SYNTAX;
         goto done;
