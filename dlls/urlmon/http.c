@@ -62,12 +62,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
  * if OnResponse does not return S_OK, Continue will not report data, and Read
  * will report BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION when all
  * data has been read.
+ *
+ * FLAG_CALLED_SWITCH is set before calling the protocol sink Switch function and
+ * unset by our Continue function to ensure that Switch is not called again until
+ * Continue is executed by the protocol sink.
  */
 #define FLAG_REQUEST_COMPLETE 0x1
 #define FLAG_FIRST_DATA_REPORTED 0x2
 #define FLAG_ALL_DATA_READ 0x4
 #define FLAG_LAST_DATA_REPORTED 0x8
 #define FLAG_RESULT_REPORTED 0x10
+#define FLAG_CALLED_SWITCH 0x20
 
 typedef struct {
     const IInternetProtocolVtbl *lpInternetProtocolVtbl;
@@ -173,11 +178,22 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
         ulStatusCode = BINDSTATUS_SENDINGREQUEST;
         break;
     case INTERNET_STATUS_REQUEST_COMPLETE:
-        This->flags |= FLAG_REQUEST_COMPLETE;
+        if (This->flags & FLAG_CALLED_SWITCH)
+            return;
+        This->flags |= FLAG_CALLED_SWITCH;
+
         /* PROTOCOLDATA same as native */
         memset(&data, 0, sizeof(data));
         data.dwState = 0xf1000000;
-        data.pData = (LPVOID)BINDSTATUS_DOWNLOADINGDATA;
+        if (!(This->flags & FLAG_REQUEST_COMPLETE))
+        {
+            This->flags |= FLAG_REQUEST_COMPLETE;
+            data.pData = (LPVOID)BINDSTATUS_DOWNLOADINGDATA;
+        }
+        else
+        {
+            data.pData = (LPVOID)BINDSTATUS_ENDDOWNLOADCOMPONENTS;
+        }
         IInternetProtocolSink_Switch(This->protocol_sink, &data);
         return;
     default:
@@ -483,14 +499,29 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
     TRACE("(%p)->(%p)\n", This, pProtocolData);
 
     if (!pProtocolData)
+    {
         WARN("Expected pProtocolData to be non-NULL\n");
+        goto done;
+    }
     else if (!This->request)
+    {
         WARN("Expected request to be non-NULL\n");
+        goto done;
+    }
     else if (!This->http_negotiate)
+    {
         WARN("Expected IHttpNegotiate pointer to be non-NULL\n");
+        goto done;
+    }
     else if (!This->protocol_sink)
+    {
         WARN("Expected IInternetProtocolSink pointer to be non-NULL\n");
-    else if (pProtocolData->pData == (LPVOID)BINDSTATUS_DOWNLOADINGDATA)
+        goto done;
+    }
+
+    This->flags &= ~FLAG_CALLED_SWITCH;
+
+    if (pProtocolData->pData == (LPVOID)BINDSTATUS_DOWNLOADINGDATA)
     {
         if (!HttpQueryInfoW(This->request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
                             &status_code, &len, NULL))
@@ -552,7 +583,10 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         {
             This->content_length = atoiW(content_length);
         }
+    }
 
+    if (pProtocolData->pData >= (LPVOID)BINDSTATUS_DOWNLOADINGDATA)
+    {
         if (!InternetQueryDataAvailable(This->request, &This->available_bytes, 0, 0))
         {
             WARN("InternetQueryDataAvailable failed: %d\n", GetLastError());
@@ -622,9 +656,16 @@ static HRESULT WINAPI HttpProtocol_Read(IInternetProtocol *iface, void *pv,
         {
             if (!InternetQueryDataAvailable(This->request, &This->available_bytes, 0, 0))
             {
-                WARN("InternetQueryDataAvailable failed: %d\n", GetLastError());
-                hres = INET_E_DATA_NOT_AVAILABLE;
-                HTTPPROTOCOL_ReportResult(This, hres);
+                if (GetLastError() == ERROR_IO_PENDING)
+                {
+                    hres = E_PENDING;
+                }
+                else
+                {
+                    WARN("InternetQueryDataAvailable failed: %d\n", GetLastError());
+                    hres = INET_E_DATA_NOT_AVAILABLE;
+                    HTTPPROTOCOL_ReportResult(This, hres);
+                }
                 goto done;
             }
             else if (This->available_bytes == 0)
