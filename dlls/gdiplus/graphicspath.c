@@ -63,6 +63,37 @@ static BOOL lengthen_path(GpPath *path, INT len)
     return TRUE;
 }
 
+GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
+    REAL y2, REAL startAngle, REAL sweepAngle)
+{
+    INT count, old_count, i;
+
+    if(!path)
+        return InvalidParameter;
+
+    count = arc2polybezier(NULL, x1, y1, x2, y2, startAngle, sweepAngle);
+
+    if(count == 0)
+        return Ok;
+    if(!lengthen_path(path, count))
+        return OutOfMemory;
+
+    old_count = path->pathdata.Count;
+    arc2polybezier(&path->pathdata.Points[old_count], x1, y1, x2, y2,
+                   startAngle, sweepAngle);
+
+    for(i = 0; i < count; i++){
+        path->pathdata.Types[old_count + i] = PathPointTypeBezier;
+    }
+
+    path->pathdata.Types[old_count] =
+        (path->newfigure ? PathPointTypeStart : PathPointTypeLine);
+    path->newfigure = FALSE;
+    path->pathdata.Count += count;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
     INT count)
 {

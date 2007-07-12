@@ -1,4 +1,4 @@
-@ stub GdipAddPathArc
+@ stdcall GdipAddPathArc(ptr long long long long long long)
 @ stub GdipAddPathArcI
 @ stub GdipAddPathBezier
 @ stub GdipAddPathBezierI

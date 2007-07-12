@@ -48,6 +48,7 @@ GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB,GpSolidFill**);
 GpStatus WINGDIPAPI GdipGetBrushType(GpBrush*,GpBrushType*);
 GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush*);
 
+GpStatus WINGDIPAPI GdipAddPathArc(GpPath*,REAL,REAL,REAL,REAL,REAL,REAL);
 GpStatus WINGDIPAPI GdipAddPathLine2(GpPath*,GDIPCONST GpPointF*,INT);
 GpStatus WINGDIPAPI GdipClosePathFigure(GpPath*);
 GpStatus WINGDIPAPI GdipClosePathFigures(GpPath*);
