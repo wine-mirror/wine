@@ -1647,10 +1647,10 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start) {
         *(colonpos+1) = savedchar;
       }
 
-      s = WCMD_strdupW(endOfVar + 1);
-
       /* Command line - just ignore this */
       if (context == NULL) return endOfVar+1;
+
+      s = WCMD_strdupW(endOfVar + 1);
 
       /* Batch - replace unknown env var with nothing */
       if (colonpos == NULL) {
