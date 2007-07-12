@@ -172,6 +172,8 @@ GpStatus WINGDIPAPI GdipDeletePath(GpPath *path)
     if(!path)
         return InvalidParameter;
 
+    GdipFree(path->pathdata.Points);
+    GdipFree(path->pathdata.Types);
     GdipFree(path);
 
     return Ok;
