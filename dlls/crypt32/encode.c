@@ -51,15 +51,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 typedef BOOL (WINAPI *CryptEncodeObjectFunc)(DWORD, LPCSTR, const void *,
  BYTE *, DWORD *);
-typedef BOOL (WINAPI *CryptEncodeObjectExFunc)(DWORD, LPCSTR, const void *,
- DWORD, PCRYPT_ENCODE_PARA, BYTE *, DWORD *);
 
 /* Prototypes for built-in encoders.  They follow the Ex style prototypes.
  * The dwCertEncodingType and lpszStructType are ignored by the built-in
  * functions, but the parameters are retained to simplify CryptEncodeObjectEx,
  * since it must call functions in external DLLs that follow these signatures.
  */
-static BOOL WINAPI CRYPT_AsnEncodeOid(DWORD dwCertEncodingType,
+BOOL WINAPI CRYPT_AsnEncodeOid(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded);
 static BOOL WINAPI CRYPT_AsnEncodeExtensions(DWORD dwCertEncodingType,
@@ -134,14 +132,8 @@ BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     return ret;
 }
 
-/* Helper function to check *pcbEncoded, set it to the required size, and
- * optionally to allocate memory.  Assumes pbEncoded is not NULL.
- * If CRYPT_ENCODE_ALLOC_FLAG is set in dwFlags, *pbEncoded will be set to a
- * pointer to the newly allocated memory.
- */
-static BOOL CRYPT_EncodeEnsureSpace(DWORD dwFlags,
- PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded,
- DWORD bytesNeeded)
+BOOL CRYPT_EncodeEnsureSpace(DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara,
+ BYTE *pbEncoded, DWORD *pcbEncoded, DWORD bytesNeeded)
 {
     BOOL ret = TRUE;
 
@@ -167,7 +159,7 @@ static BOOL CRYPT_EncodeEnsureSpace(DWORD dwFlags,
     return ret;
 }
 
-static BOOL CRYPT_EncodeLen(DWORD len, BYTE *pbEncoded, DWORD *pcbEncoded)
+BOOL CRYPT_EncodeLen(DWORD len, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
     DWORD bytesNeeded, significantBytes = 0;
 
@@ -209,14 +201,7 @@ static BOOL CRYPT_EncodeLen(DWORD len, BYTE *pbEncoded, DWORD *pcbEncoded)
     return TRUE;
 }
 
-struct AsnEncodeSequenceItem
-{
-    const void             *pvStructInfo;
-    CryptEncodeObjectExFunc encodeFunc;
-    DWORD                   size; /* used during encoding, not for your use */
-};
-
-static BOOL WINAPI CRYPT_AsnEncodeSequence(DWORD dwCertEncodingType,
+BOOL WINAPI CRYPT_AsnEncodeSequence(DWORD dwCertEncodingType,
  struct AsnEncodeSequenceItem items[], DWORD cItem, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
@@ -270,14 +255,7 @@ static BOOL WINAPI CRYPT_AsnEncodeSequence(DWORD dwCertEncodingType,
     return ret;
 }
 
-struct AsnConstructedItem
-{
-    BYTE                    tag;
-    const void             *pvStructInfo;
-    CryptEncodeObjectExFunc encodeFunc;
-};
-
-static BOOL WINAPI CRYPT_AsnEncodeConstructed(DWORD dwCertEncodingType,
+BOOL WINAPI CRYPT_AsnEncodeConstructed(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
@@ -798,7 +776,7 @@ static BOOL WINAPI CRYPT_AsnEncodeExtensions(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeOid(DWORD dwCertEncodingType,
+BOOL WINAPI CRYPT_AsnEncodeOid(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
