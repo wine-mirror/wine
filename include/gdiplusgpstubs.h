@@ -46,5 +46,6 @@ typedef PointF GpPointF;
 typedef FillMode GpFillMode;
 typedef PathData GpPathData;
 typedef LineCap GpLineCap;
+typedef RectF GpRectF;
 
 #endif

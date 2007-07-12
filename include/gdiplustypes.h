@@ -122,6 +122,16 @@ public:
     BYTE* Types;
 };
 
+/* FIXME: missing the methods. */
+class RectF
+{
+public:
+    REAL X;
+    REAL Y;
+    REAL Width;
+    REAL Height;
+};
+
 #else /* end of c++ typedefs */
 
 typedef struct PointF
@@ -136,6 +146,14 @@ typedef struct PathData
     PointF* Points;
     BYTE* Types;
 } PathData;
+
+typedef struct RectF
+{
+    REAL X;
+    REAL Y;
+    REAL Width;
+    REAL Height;
+} RectF;
 
 typedef enum Status Status;
 

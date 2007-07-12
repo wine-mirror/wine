@@ -203,6 +203,58 @@ GpStatus WINGDIPAPI GdipGetPathTypes(GpPath *path, BYTE* types, INT count)
     return Ok;
 }
 
+/* Windows expands the bounding box to the maximum possible bounding box
+ * for a given pen.  For example, if a line join can extend past the point
+ * it's joining by x units, the bounding box is extended by x units in every
+ * direction (even though this is too conservative for most cases). */
+GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath* path, GpRectF* bounds,
+    GDIPCONST GpMatrix *matrix, GDIPCONST GpPen *pen)
+{
+    /* extrema[0] is upper left corner of bounding box,
+     * extrema[1] is lower right corner */
+    GpPointF extrema[2];
+    GpPointF * points;
+    INT count, i;
+
+    /* Matrix and pen can be null. */
+    if(!path || !bounds)
+        return InvalidParameter;
+
+    /* If path is empty just return. */
+    count = path->pathdata.Count;
+    if(count == 0){
+        bounds->X = bounds->Y = bounds->Width = bounds->Height = 0.0;
+        return Ok;
+    }
+
+    /* FIXME: implement case where pen is non-NULL. */
+    if(pen)
+        return NotImplemented;
+
+    points = path->pathdata.Points;
+    extrema[0].X = extrema[1].X  = points[0].X;
+    extrema[0].Y = extrema[1].Y = points[0].Y;
+
+    for(i = 1; i < count; i++){
+        extrema[0].X = min(points[i].X, extrema[0].X);
+        extrema[0].Y = min(points[i].Y, extrema[0].Y);
+        extrema[1].X = max(points[i].X, extrema[1].X);
+        extrema[1].Y = max(points[i].Y, extrema[1].Y);
+    }
+
+    /* If matrix is non-null transform the points. */
+    if(matrix){
+        GdipTransformMatrixPoints((GpMatrix*)matrix, extrema, 2);
+    }
+
+    bounds->X = extrema[0].X;
+    bounds->Y = extrema[0].Y;
+    bounds->Width = extrema[1].X - extrema[0].X;
+    bounds->Height = extrema[1].Y - extrema[0].Y;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPointCount(GpPath *path, INT *count)
 {
     if(!path)
