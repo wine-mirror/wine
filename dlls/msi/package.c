@@ -1666,7 +1666,7 @@ HRESULT WINAPI mrp_GetComponentState( IWineMsiRemotePackage *iface, BSTR compone
 HRESULT WINAPI mrp_SetComponentState( IWineMsiRemotePackage *iface, BSTR component, INSTALLSTATE state )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
-    UINT r = MsiSetFeatureStateW(This->package, (LPWSTR)component, state);
+    UINT r = MsiSetComponentStateW(This->package, (LPWSTR)component, state);
     return HRESULT_FROM_WIN32(r);
 }
 
