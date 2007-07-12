@@ -747,10 +747,153 @@ static void test_hash_msg_update(void)
     CryptMsgClose(msg);
 }
 
+static const BYTE emptyHashParam[] = {
+0xd4,0x1d,0x8c,0xd9,0x8f,0x00,0xb2,0x04,0xe9,0x80,0x09,0x98,0xec,0xf8,0x42,
+0x7e };
+
+static void test_hash_msg_get_param(void)
+{
+    HCRYPTMSG msg;
+    BOOL ret;
+    static char oid_rsa_md5[] = szOID_RSA_MD5;
+    CMSG_HASHED_ENCODE_INFO hashInfo = { sizeof(hashInfo), 0,
+     { oid_rsa_md5, { 0, NULL } }, NULL };
+    DWORD size, value;
+    CMSG_STREAM_INFO streamInfo = { 0, nop_stream_output, NULL };
+    BYTE buf[16];
+
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, NULL);
+    /* Content and bare content are always gettable for non-streamed messages */
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    }
+    /* The hash is also available. */
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(size == sizeof(buf), "Unexpected size %d\n", size);
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, buf, &size);
+    }
+    if (size == sizeof(buf))
+        ok(!memcmp(buf, emptyHashParam, size), "Unexpected value\n");
+
+    CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(size == sizeof(buf), "Unexpected size %d\n", size);
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, buf, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    }
+    /* Oddly, the hash doesn't seem to change even after an update */
+    ok(!memcmp(buf, emptyHashParam, size), "Unexpected value\n");
+    /* So is the version. */
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, NULL, &size);
+    todo_wine
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    size = sizeof(value);
+    ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, (LPBYTE)&value, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(value == 0, "Expected version 0, got %d\n", value);
+    }
+    /* As usual, the type isn't available. */
+    ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, NULL, &size);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, &streamInfo);
+    /* Streamed messages don't allow you to get the content or bare content. */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
+    todo_wine {
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    }
+    /* The hash is still available. */
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(size == sizeof(buf), "Unexpected size %d\n", size);
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, buf, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    }
+    if (size == sizeof(buf))
+        ok(!memcmp(buf, emptyHashParam, size), "Unexpected value\n");
+    /* An empty update has no effect on the hash */
+    CryptMsgUpdate(msg, NULL, 0, FALSE);
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(size == sizeof(buf), "Unexpected size %d\n", size);
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, buf, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    }
+    if (size == sizeof(buf))
+        ok(!memcmp(buf, emptyHashParam, size), "Unexpected value\n");
+    /* A non-empty update doesn't appear to either? */
+    CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(size == sizeof(buf), "Unexpected size %d\n", size);
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, buf, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    }
+    if (size == sizeof(buf))
+        ok(!memcmp(buf, emptyHashParam, size), "Unexpected value\n");
+    CryptMsgClose(msg);
+    /* A detached message similarly has a non-updating hash */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
+     CMSG_HASHED, &hashInfo, NULL, NULL);
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(size == sizeof(buf), "Unexpected size %d\n", size);
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, buf, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    }
+    if (size == sizeof(buf))
+        ok(!memcmp(buf, emptyHashParam, size), "Unexpected value\n");
+    CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(size == sizeof(buf), "Unexpected size %d\n", size);
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, buf, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    }
+    if (size == sizeof(buf))
+        ok(!memcmp(buf, emptyHashParam, size), "Unexpected value\n");
+    CryptMsgClose(msg);
+}
+
 static void test_hash_msg(void)
 {
     test_hash_msg_open();
     test_hash_msg_update();
+    test_hash_msg_get_param();
 }
 
 static CRYPT_DATA_BLOB b4 = { 0, NULL };
