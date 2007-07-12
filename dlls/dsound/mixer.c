@@ -622,7 +622,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	/* check for notification positions */
 	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY &&
 	    dsb->state != STATE_STARTING) {
-		DSOUND_CheckEvent(dsb, writepos, mixlen);
+		DSOUND_CheckEvent(dsb, writepos, mixlen	/ dsb->device->pwfx->nBlockAlign * dsb->pwfx->nBlockAlign);
 	}
 
 	/* increase mix position */
