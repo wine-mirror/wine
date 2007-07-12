@@ -282,12 +282,23 @@ static void shorten_line_amt(REAL x1, REAL y1, REAL *x2, REAL *y2, REAL amt)
 
 /* Draws lines between the given points, and if caps is true then draws an endcap
  * at the end of the last line.  FIXME: Startcaps not implemented. */
-static void draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
+static GpStatus draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     INT count, BOOL caps)
 {
-    POINT *pti = GdipAlloc(count * sizeof(POINT));
+    POINT *pti;
     REAL x = pt[count - 1].X, y = pt[count - 1].Y;
     INT i;
+    GpStatus status = GenericError;
+
+    if(!count)
+        return Ok;
+
+    pti = GdipAlloc(count * sizeof(POINT));
+
+    if(!pti){
+        status = OutOfMemory;
+        goto end;
+    }
 
     if(caps){
         if(pen->endcap == LineCapArrowAnchor)
@@ -306,7 +317,11 @@ static void draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     pti[i].y = roundr(y);
 
     Polyline(hdc, pti, count);
+
+end:
     GdipFree(pti);
+
+    return status;
 }
 
 /* Conducts a linear search to find the bezier points that will back off
@@ -660,6 +675,7 @@ GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
 {
     INT save_state;
     GpPointF pt[2];
+    GpStatus retval;
 
     if(!pen || !graphics)
         return InvalidParameter;
@@ -673,17 +689,18 @@ GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    draw_polyline(graphics->hdc, pen, pt, 2, TRUE);
+    retval = draw_polyline(graphics->hdc, pen, pt, 2, TRUE);
 
     RestoreDC(graphics->hdc, save_state);
 
-    return Ok;
+    return retval;
 }
 
 GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
     GpPointF *points, INT count)
 {
     INT save_state;
+    GpStatus retval;
 
     if(!pen || !graphics || (count < 2))
         return InvalidParameter;
@@ -692,11 +709,11 @@ GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    draw_polyline(graphics->hdc, pen, points, count, TRUE);
+    retval = draw_polyline(graphics->hdc, pen, points, count, TRUE);
 
     RestoreDC(graphics->hdc, save_state);
 
-    return Ok;
+    return retval;
 }
 
 GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
