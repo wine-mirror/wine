@@ -212,3 +212,13 @@ GpStatus WINGDIPAPI GdipGetPointCount(GpPath *path, INT *count)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipStartPathFigure(GpPath *path)
+{
+    if(!path)
+        return InvalidParameter;
+
+    path->newfigure = TRUE;
+
+    return Ok;
+}

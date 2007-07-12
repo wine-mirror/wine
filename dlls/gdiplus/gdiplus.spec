@@ -578,7 +578,7 @@
 @ stub GdipSetTextureWrapMode
 @ stub GdipSetWorldTransform
 @ stub GdipShearMatrix
-@ stub GdipStartPathFigure
+@ stdcall GdipStartPathFigure(ptr)
 @ stub GdipStringFormatGetGenericDefault
 @ stub GdipStringFormatGetGenericTypographic
 @ stub GdipTestControl
