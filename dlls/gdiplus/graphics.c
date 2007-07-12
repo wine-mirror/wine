@@ -548,20 +548,18 @@ GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
 GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
     GpPointF *points, INT count)
 {
-    HGDIOBJ old_obj;
-    INT i;
+    INT save_state;
 
     if(!pen || !graphics || (count < 2))
         return InvalidParameter;
 
-    old_obj = SelectObject(graphics->hdc, pen->gdipen);
-    MoveToEx(graphics->hdc, roundr(points[0].X), roundr(points[0].Y), NULL);
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, pen->gdipen);
 
-    for(i = 1; i < count; i++){
-        LineTo(graphics->hdc, roundr(points[i].X), roundr(points[i].Y));
-    }
+    draw_polyline(graphics->hdc, pen, points, count, TRUE);
 
-    SelectObject(graphics->hdc, old_obj);
+    RestoreDC(graphics->hdc, save_state);
 
     return Ok;
 }
