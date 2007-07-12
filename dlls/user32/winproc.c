@@ -98,8 +98,9 @@ static inline WINDOWPROC *find_winproc( WNDPROC funcA, WNDPROC funcW )
 
     for (i = 0; i < winproc_used; i++)
     {
-        if (funcA && winproc_array[i].procA != funcA) continue;
-        if (funcW && winproc_array[i].procW != funcW) continue;
+        /* match either proc, some apps confuse A and W */
+        if (funcA && winproc_array[i].procA != funcA && winproc_array[i].procW != funcA) continue;
+        if (funcW && winproc_array[i].procA != funcW && winproc_array[i].procW != funcW) continue;
         return &winproc_array[i];
     }
     return NULL;
