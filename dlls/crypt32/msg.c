@@ -387,27 +387,23 @@ static BOOL CHashEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
     {
         if (fFinal)
             msg->base.finalized = TRUE;
-        if (msg->base.streamed)
+        if (msg->base.streamed || (msg->base.open_flags & CMSG_DETACHED_FLAG))
         {
-            /* Doesn't do anything, as stream output is never called, and you
+            /* Doesn't do much, as stream output is never called, and you
              * can't get the content.
              */
             ret = CryptHashData(msg->hash, pbData, cbData, 0);
         }
         else
         {
-            if (!(msg->base.open_flags & CMSG_DETACHED_FLAG) && !fFinal)
+            if (!fFinal)
                 SetLastError(CRYPT_E_MSG_ERROR);
             else
             {
                 ret = CryptHashData(msg->hash, pbData, cbData, 0);
                 if (ret)
                 {
-                    if (msg->data.pbData)
-                        msg->data.pbData = CryptMemRealloc(msg->data.pbData,
-                         msg->data.cbData + cbData);
-                    else
-                        msg->data.pbData = CryptMemAlloc(cbData);
+                    msg->data.pbData = CryptMemAlloc(cbData);
                     if (msg->data.pbData)
                     {
                         memcpy(msg->data.pbData + msg->data.cbData, pbData,
