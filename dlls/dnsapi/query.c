@@ -418,8 +418,7 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, W
             r->Data.TXT.pStringArray[i] = dns_str_from_rdata( pos );
             if (!r->Data.TXT.pStringArray[i])
             {
-                for (--i; i >= 0; i--)
-                    dns_free( r->Data.TXT.pStringArray[i] );
+                while (i > 0) dns_free( r->Data.TXT.pStringArray[--i] );
                 return ERROR_NOT_ENOUGH_MEMORY;
             }
             i++;

@@ -443,8 +443,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
 
             if (!dst->Data.TXT.pStringArray[i])
             {
-                for (--i; i >= 0; i--)
-                    dns_free( dst->Data.TXT.pStringArray[i] );
+                while (i > 0) dns_free( dst->Data.TXT.pStringArray[--i] );
                 goto error;
             }
         }
