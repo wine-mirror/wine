@@ -185,6 +185,75 @@ static void test_line2(void)
     ok_path(path, line2_path, sizeof(line2_path)/sizeof(path_test_t), FALSE);
 }
 
+static path_test_t arc_path[] = {
+    {600.0, 450.0, PathPointTypeStart, 0, 0}, /*0*/
+    {600.0, 643.3, PathPointTypeBezier, 0, 0}, /*1*/
+    {488.1, 800.0, PathPointTypeBezier, 0, 0}, /*2*/
+    {350.0, 800.0, PathPointTypeBezier, 0, 0}, /*3*/
+    {600.0, 450.0, PathPointTypeLine, 0, 0}, /*4*/
+    {600.0, 643.3, PathPointTypeBezier, 0, 0}, /*5*/
+    {488.1, 800.0, PathPointTypeBezier, 0, 0}, /*6*/
+    {350.0, 800.0, PathPointTypeBezier, 0, 0}, /*7*/
+    {329.8, 800.0, PathPointTypeBezier, 0, 0}, /*8*/
+    {309.7, 796.6, PathPointTypeBezier, 0, 0}, /*9*/
+    {290.1, 789.8, PathPointTypeBezier, 0, 0}, /*10*/
+    {409.9, 110.2, PathPointTypeLine, 0, 0}, /*11*/
+    {544.0, 156.5, PathPointTypeBezier, 0, 0}, /*12*/
+    {625.8, 346.2, PathPointTypeBezier, 0, 0}, /*13*/
+    {592.7, 533.9, PathPointTypeBezier, 0, 0}, /*14*/
+    {592.5, 535.3, PathPointTypeBezier, 0, 0}, /*15*/
+    {592.2, 536.7, PathPointTypeBezier, 0, 0}, /*16*/
+    {592.0, 538.1, PathPointTypeBezier, 0, 0}, /*17*/
+    {409.9, 789.8, PathPointTypeLine, 0, 0}, /*18*/
+    {544.0, 743.5, PathPointTypeBezier, 0, 0}, /*19*/
+    {625.8, 553.8, PathPointTypeBezier, 0, 0}, /*20*/
+    {592.7, 366.1, PathPointTypeBezier, 0, 0}, /*21*/
+    {592.5, 364.7, PathPointTypeBezier, 0, 0}, /*22*/
+    {592.2, 363.3, PathPointTypeBezier, 0, 0}, /*23*/
+    {592.0, 361.9, PathPointTypeBezier, 0, 0}, /*24*/
+    {540.4, 676.9, PathPointTypeLine, 0, 0}, /*25*/
+    {629.9, 529.7, PathPointTypeBezier, 0, 0}, /*26*/
+    {617.2, 308.8, PathPointTypeBezier, 0, 0}, /*27*/
+    {512.1, 183.5, PathPointTypeBezier, 0, 0}, /*28*/
+    {406.9, 58.2, PathPointTypeBezier, 0, 0}, /*29*/
+    {249.1, 75.9, PathPointTypeBezier, 0, 0}, /*30*/
+    {159.6, 223.1, PathPointTypeBezier, 0, 0}, /*31*/
+    {70.1, 370.3, PathPointTypeBezier, 0, 0}, /*32*/
+    {82.8, 591.2, PathPointTypeBezier, 0, 0}, /*33*/
+    {187.9, 716.5, PathPointTypeBezier, 0, 0}, /*34*/
+    {293.1, 841.8, PathPointTypeBezier, 0, 0}, /*35*/
+    {450.9, 824.1, PathPointTypeBezier, 0, 0}, /*36*/
+    {540.4, 676.9, PathPointTypeBezier, 0, 0} /*37*/
+    };
+
+static void test_arc(void)
+{
+    GpStatus status;
+    GpPath* path;
+
+    GdipCreatePath(FillModeAlternate, &path);
+    /* Exactly 90 degrees */
+    status = GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 0.0, 90.0);
+    expect(Ok, status);
+    /* Over 90 degrees */
+    status = GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 0.0, 100.0);
+    expect(Ok, status);
+    /* Negative start angle */
+    status = GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, -80.0, 100.0);
+    expect(Ok, status);
+    /* Negative sweep angle */
+    status = GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 80.0, -100.0);
+    expect(Ok, status);
+    /* More than a full revolution */
+    status = GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 50.0, -400.0);
+    expect(Ok, status);
+    /* 0 sweep angle */
+    status = GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 50.0, 0.0);
+    expect(Ok, status);
+
+    ok_path(path, arc_path, sizeof(arc_path)/sizeof(path_test_t), FALSE);
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -199,6 +268,7 @@ START_TEST(graphicspath)
 
     test_constructor_destructor();
     test_line2();
+    test_arc();
 
     GdiplusShutdown(gdiplusToken);
 }
