@@ -680,9 +680,71 @@ static void test_hash_msg_open(void)
     CryptMsgClose(msg);
 }
 
+static void test_hash_msg_update(void)
+{
+    HCRYPTMSG msg;
+    BOOL ret;
+    static char oid_rsa_md5[] = szOID_RSA_MD5;
+    CMSG_HASHED_ENCODE_INFO hashInfo = { sizeof(hashInfo), 0,
+     { oid_rsa_md5, { 0, NULL } }, NULL };
+    CMSG_STREAM_INFO streamInfo = { 0, nop_stream_output, NULL };
+
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
+     CMSG_HASHED, &hashInfo, NULL, NULL);
+    /* Detached hashed messages opened in non-streaming mode allow non-final
+     * updates..
+     */
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    /* including non-final updates with no data.. */
+    ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    /* and final updates with no data. */
+    ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    /* But no updates are allowed after the final update. */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
+     "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
+     "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* Non-detached messages, in contrast, don't allow non-final updates in
+     * non-streaming mode.
+     */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
+     "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
+    /* Final updates (including empty ones) are allowed. */
+    ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* And, of course, streaming mode allows non-final updates */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, &hashInfo,
+     NULL, &streamInfo);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+}
+
 static void test_hash_msg(void)
 {
     test_hash_msg_open();
+    test_hash_msg_update();
 }
 
 static CRYPT_DATA_BLOB b4 = { 0, NULL };
