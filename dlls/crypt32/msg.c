@@ -40,6 +40,7 @@ typedef BOOL (*CryptMsgUpdateFunc)(HCRYPTMSG hCryptMsg, const BYTE *pbData,
 
 typedef enum _CryptMsgState {
     MsgStateInit,
+    MsgStateUpdated,
     MsgStateFinalized
 } CryptMsgState;
 
@@ -82,7 +83,6 @@ typedef struct _CDataEncodeMsg
     CryptMsgBase base;
     DWORD        bare_content_len;
     LPBYTE       bare_content;
-    BOOL         begun;
 } CDataEncodeMsg;
 
 static const BYTE empty_data_content[] = { 0x04,0x00 };
@@ -170,11 +170,10 @@ static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
     {
         __TRY
         {
-            if (!msg->begun)
+            if (msg->base.state != MsgStateUpdated)
             {
                 CRYPT_DATA_BLOB header;
 
-                msg->begun = TRUE;
                 ret = CRYPT_EncodeDataContentInfoHeader(msg, &header);
                 if (ret)
                 {
@@ -316,7 +315,6 @@ static HCRYPTMSG CDataEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
          CDataEncodeMsg_Close, CDataEncodeMsg_GetParam, CDataEncodeMsg_Update);
         msg->bare_content_len = sizeof(empty_data_content);
         msg->bare_content = (LPBYTE)empty_data_content;
-        msg->begun = FALSE;
     }
     return (HCRYPTMSG)msg;
 }
@@ -327,7 +325,6 @@ typedef struct _CHashEncodeMsg
     HCRYPTPROV      prov;
     HCRYPTHASH      hash;
     CRYPT_DATA_BLOB data;
-    BOOL            begun;
 } CHashEncodeMsg;
 
 static void CHashEncodeMsg_Close(HCRYPTMSG hCryptMsg)
@@ -367,7 +364,7 @@ static BOOL CRYPT_EncodePKCSDigestedData(CHashEncodeMsg *msg, void *pvData,
         items[cItem].encodeFunc = CRYPT_AsnEncodeAlgorithmIdWithNullParams;
         cItem++;
         /* Quirk:  OID is only encoded messages if an update has happened */
-        if (msg->begun)
+        if (msg->base.state != MsgStateInit)
             contentInfo.pszObjId = oid_rsa_data;
         if (!(msg->base.open_flags & CMSG_DETACHED_FLAG) && msg->data.cbData)
         {
@@ -479,7 +476,6 @@ static BOOL CHashEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
 
     TRACE("(%p, %p, %d, %d)\n", hCryptMsg, pbData, cbData, fFinal);
 
-    msg->begun = TRUE;
     if (msg->base.streamed || (msg->base.open_flags & CMSG_DETACHED_FLAG))
     {
         /* Doesn't do much, as stream output is never called, and you
@@ -544,7 +540,6 @@ static HCRYPTMSG CHashEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
         msg->prov = prov;
         msg->data.cbData = 0;
         msg->data.pbData = NULL;
-        msg->begun = FALSE;
         if (!CryptCreateHash(prov, algID, 0, 0, &msg->hash))
         {
             CryptMsgClose(msg);
@@ -718,6 +713,7 @@ BOOL WINAPI CryptMsgUpdate(HCRYPTMSG hCryptMsg, const BYTE *pbData,
     else
     {
         ret = msg->update(hCryptMsg, pbData, cbData, fFinal);
+        msg->state = MsgStateUpdated;
         if (fFinal)
             msg->state = MsgStateFinalized;
     }
