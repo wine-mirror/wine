@@ -189,6 +189,7 @@ typedef struct {
 
     AudioUnit       audioUnit;
     AudioBufferList*bufferList;
+    AudioBufferList*bufferListCopy;
 
     /* Record state of debug channels at open.  Used to control fprintf's since
      * we can't use Wine debug channel calls in non-Wine AudioUnit threads. */
@@ -1728,6 +1729,8 @@ static void widHelper_DestroyAudioBufferList(AudioBufferList* list)
 }
 
 
+#define AUDIOBUFFERLISTSIZE(numBuffers) (offsetof(AudioBufferList, mBuffers) + (numBuffers) * sizeof(AudioBuffer))
+
 /**************************************************************************
  *                    widHelper_AllocateAudioBufferList          [internal]
  * Convenience function to allocate our audio buffers
@@ -1756,7 +1759,7 @@ static AudioBufferList* widHelper_AllocateAudioBufferList(UInt32 numChannels, UI
     bytesPerFrame = bitsPerChannel * channelsPerFrame / 8;
     bytesPerBuffer = bytesPerFrame * bufferFrames;
 
-    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, offsetof(AudioBufferList, mBuffers) + numBuffers * sizeof(AudioBuffer));
+    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, AUDIOBUFFERLISTSIZE(numBuffers));
     if (list == NULL)
         return NULL;
 
@@ -1871,6 +1874,20 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return MMSYSERR_NOMEM;
     }
 
+    /* Keep a copy of the buffer list structure (but not the buffers themselves)
+     * in case AudioUnitRender clobbers the original, as it is wont to do. */
+    wwi->bufferListCopy = HeapAlloc(GetProcessHeap(), 0, AUDIOBUFFERLISTSIZE(wwi->bufferList->mNumberBuffers));
+    if (wwi->bufferListCopy == NULL)
+    {
+        ERR("Failed to allocate buffer list copy\n");
+        widHelper_DestroyAudioBufferList(wwi->bufferList);
+        AudioUnitUninitialize(wwi->audioUnit);
+        AudioUnit_CloseAudioUnit(wwi->audioUnit);
+        OSSpinLockUnlock(&wwi->lock);
+        return MMSYSERR_NOMEM;
+    }
+    memcpy(wwi->bufferListCopy, wwi->bufferList, AUDIOBUFFERLISTSIZE(wwi->bufferList->mNumberBuffers));
+
     OSSpinLockUnlock(&wwi->lock);
 
     return widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
@@ -1931,6 +1948,8 @@ static DWORD widClose(WORD wDevID)
         /* Dellocate our audio buffers */
         widHelper_DestroyAudioBufferList(wwi->bufferList);
         wwi->bufferList = NULL;
+        HeapFree(GetProcessHeap(), 0, wwi->bufferListCopy);
+        wwi->bufferListCopy = NULL;
 
         ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
     }
@@ -2349,6 +2368,11 @@ OSStatus CoreAudio_wiAudioUnitIOProc(void *inRefCon,
     }
 
     OSSpinLockUnlock(&wwi->lock);
+
+    /* Restore the audio buffer list structure from backup, in case
+     * AudioUnitRender clobbered it.  (It modifies mDataByteSize and may even
+     * give us a different mData buffer to avoid a copy.) */
+    memcpy(wwi->bufferList, wwi->bufferListCopy, AUDIOBUFFERLISTSIZE(wwi->bufferList->mNumberBuffers));
 
     if (needNotify) wodSendNotifyInputCompletionsMessage(wwi);
     return err;
