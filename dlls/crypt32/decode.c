@@ -297,15 +297,21 @@ struct AsnDecodeSequenceItem
     DWORD                   size;
 };
 
+/* Decodes the items in a sequence, where the items are described in items,
+ * the encoded data are in pbEncoded with length cbEncoded.  Decodes into
+ * pvStructInfo.  nextData is a pointer to the memory location at which the
+ * first decoded item with a dynamic pointer should point.
+ * Upon decoding, *cbDecoded is the total number of bytes decoded.
+ */
 static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
  struct AsnDecodeSequenceItem items[], DWORD cItem, const BYTE *pbEncoded,
- DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, BYTE *nextData)
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, BYTE *nextData,
+ DWORD *cbDecoded)
 {
     BOOL ret;
-    DWORD i;
-    const BYTE *ptr;
+    DWORD i, decoded = 0;
+    const BYTE *ptr = pbEncoded;
 
-    ptr = pbEncoded + 1 + GET_LEN_BYTES(pbEncoded[1]);
     for (i = 0, ret = TRUE; ret && i < cItem; i++)
     {
         if (cbEncoded - (ptr - pbEncoded) != 0)
@@ -353,6 +359,7 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
                                 items[i].size += sizeof(DWORD) -
                                  items[i].size % sizeof(DWORD);
                             ptr += 1 + nextItemLenBytes + nextItemLen;
+                            decoded += 1 + nextItemLenBytes + nextItemLen;
                         }
                         else if (items[i].optional &&
                          GetLastError() == CRYPT_E_ASN1_BADTAG)
@@ -367,7 +374,10 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
                              GetLastError());
                     }
                     else
+                    {
+                        decoded += 1 + nextItemLenBytes + nextItemLen;
                         items[i].size = items[i].minSize;
+                    }
                 }
                 else if (items[i].optional)
                 {
@@ -395,13 +405,8 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
             ret = FALSE;
         }
     }
-    if (cbEncoded - (ptr - pbEncoded) != 0)
-    {
-        TRACE("%d remaining bytes, failing\n", cbEncoded -
-         (ptr - pbEncoded));
-        SetLastError(CRYPT_E_ASN1_CORRUPT);
-        ret = FALSE;
-    }
+    if (ret)
+        *cbDecoded = decoded;
     return ret;
 }
 
@@ -412,7 +417,6 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
  * data will be stored.  If you know the starting offset, you may pass it
  * here.  Otherwise, pass NULL, and one will be inferred from the items.
  * Each item decoder is never called with CRYPT_DECODE_ALLOC_FLAG set.
- * If any undecoded data are left over, fails with CRYPT_E_ASN1_CORRUPT.
  */
 static BOOL CRYPT_AsnDecodeSequence(DWORD dwCertEncodingType,
  struct AsnDecodeSequenceItem items[], DWORD cItem, const BYTE *pbEncoded,
@@ -431,13 +435,30 @@ static BOOL CRYPT_AsnDecodeSequence(DWORD dwCertEncodingType,
 
         if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
         {
-            DWORD i;
+            DWORD lenBytes = GET_LEN_BYTES(pbEncoded[1]), cbDecoded;
+            const BYTE *ptr = pbEncoded + 1 + lenBytes;
 
-            ret = CRYPT_AsnDecodeSequenceItems(dwFlags, items, cItem, pbEncoded,
-             cbEncoded, dwFlags, NULL, NULL);
+            cbEncoded -= 1 + lenBytes;
+            if (cbEncoded < dataLen)
+            {
+                TRACE("dataLen %d exceeds cbEncoded %d, failing\n", dataLen,
+                 cbEncoded);
+                SetLastError(CRYPT_E_ASN1_CORRUPT);
+                ret = FALSE;
+            }
+            else
+                ret = CRYPT_AsnDecodeSequenceItems(dwFlags, items, cItem, ptr,
+                 cbEncoded, dwFlags, NULL, NULL, &cbDecoded);
+            if (ret && cbDecoded != dataLen)
+            {
+                TRACE("expected %d decoded, got %d, failing\n", dataLen,
+                 cbDecoded);
+                SetLastError(CRYPT_E_ASN1_CORRUPT);
+                ret = FALSE;
+            }
             if (ret)
             {
-                DWORD bytesNeeded = 0, structSize = 0;
+                DWORD i, bytesNeeded = 0, structSize = 0;
 
                 for (i = 0; i < cItem; i++)
                 {
@@ -459,7 +480,8 @@ static BOOL CRYPT_AsnDecodeSequence(DWORD dwCertEncodingType,
                         nextData = (BYTE *)pvStructInfo + structSize;
                     memset(pvStructInfo, 0, structSize);
                     ret = CRYPT_AsnDecodeSequenceItems(dwFlags, items, cItem,
-                     pbEncoded, cbEncoded, dwFlags, pvStructInfo, nextData);
+                     ptr, cbEncoded, dwFlags, pvStructInfo, nextData,
+                     &cbDecoded);
                 }
             }
         }
@@ -872,6 +894,24 @@ static BOOL WINAPI CRYPT_AsnDecodeCertInfo(DWORD dwCertEncodingType,
     ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
      pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+    if (ret && pvStructInfo)
+    {
+        CERT_INFO *info;
+
+        if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+            info = *(CERT_INFO **)pvStructInfo;
+        else
+            info = (CERT_INFO *)pvStructInfo;
+        if (!info->SerialNumber.cbData || !info->Issuer.cbData ||
+         !info->Subject.cbData)
+        {
+            SetLastError(CRYPT_E_ASN1_CORRUPT);
+            /* Don't need to deallocate, because it should have failed on the
+             * first pass (and no memory was allocated.)
+             */
+            ret = FALSE;
+        }
+    }
 
     TRACE("Returning %d (%08x)\n", ret, GetLastError());
     return ret;

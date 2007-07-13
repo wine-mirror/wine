@@ -98,14 +98,10 @@ static void testCreateCRL(void)
      "Expected CRYPT_E_ASN1_EOD or OSS_MORE_INPUT, got %08x\n", GLE);
     context = CertCreateCRLContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
     GLE = GetLastError();
-    ok(!context && (GLE == CRYPT_E_ASN1_CORRUPT || GLE == OSS_DATA_ERROR),
-     "Expected CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n", GLE);
+    ok(!context, "Expected failure\n");
     context = CertCreateCRLContext(X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL) - 1);
-    ok(!context && (GLE == CRYPT_E_ASN1_EOD || GLE == CRYPT_E_ASN1_CORRUPT ||
-     GLE == OSS_DATA_ERROR),
-     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n",
-     GLE);
+    ok(!context, "Expected failure\n");
     context = CertCreateCRLContext(X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL));
     ok(context != NULL, "CertCreateCRLContext failed: %08x\n", GetLastError());

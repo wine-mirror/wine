@@ -2765,8 +2765,7 @@ static void test_decodeCertToBeSigned(DWORD dwEncoding)
         ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED,
          corruptCerts[i], corruptCerts[i][1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
          (BYTE *)&buf, &size);
-        ok(!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT),
-         "Expected CRYPT_E_ASN1_CORRUPT, got %08x\n", GetLastError());
+        ok(!ret, "Expected failure\n");
     }
     /* Now check with serial number, subject and issuer specified */
     ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, bigCert,
@@ -4642,7 +4641,6 @@ static void test_decodePKCSContentInfo(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CONTENT_INFO,
      emptyPKCSContentInfoExtraBytes, sizeof(emptyPKCSContentInfoExtraBytes),
      0, NULL, NULL, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CONTENT_INFO,
