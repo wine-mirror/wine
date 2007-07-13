@@ -66,9 +66,17 @@ static void test_AddRemoveProvider(void)
     /* nonexistent provider should result in a registry error */
     SetLastError(0xdeadbeef);
     ret = CryptSIPRemoveProvider(&actionid);
-    ok (!ret, "Expected CryptSIPRemoveProvider to fail.\n");
-    ok (GetLastError() == ERROR_FILE_NOT_FOUND,
-        "Expected ERROR_FILE_NOT_FOUND, got %d.\n", GetLastError());
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        /* Apparently the needed rights are checked before the existence of the provider */
+        skip("Need admin rights\n");
+    }
+    else
+    {
+        ok (!ret, "Expected CryptSIPRemoveProvider to fail.\n");
+        ok (GetLastError() == ERROR_FILE_NOT_FOUND,
+            "Expected ERROR_FILE_NOT_FOUND, got %d.\n", GetLastError());
+    }
 
     /* Everything OK, pwszIsFunctionName and pwszIsFunctionNameFmt2 are left NULL
      * as allowed */
