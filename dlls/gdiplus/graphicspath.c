@@ -123,6 +123,35 @@ GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipAddPathPath(GpPath *path, GDIPCONST GpPath* addingPath,
+    BOOL connect)
+{
+    INT old_count, count;
+
+    if(!path || !addingPath)
+        return InvalidParameter;
+
+    old_count = path->pathdata.Count;
+    count = addingPath->pathdata.Count;
+
+    if(!lengthen_path(path, count))
+        return OutOfMemory;
+
+    memcpy(&path->pathdata.Points[old_count], addingPath->pathdata.Points,
+           count * sizeof(GpPointF));
+    memcpy(&path->pathdata.Types[old_count], addingPath->pathdata.Types, count);
+
+    if(path->newfigure || !connect)
+        path->pathdata.Types[old_count] = PathPointTypeStart;
+    else
+        path->pathdata.Types[old_count] = PathPointTypeLine;
+
+    path->newfigure = FALSE;
+    path->pathdata.Count += count;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipClosePathFigure(GpPath* path)
 {
     if(!path)
