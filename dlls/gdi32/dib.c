@@ -972,11 +972,15 @@ INT WINAPI GetDIBits(
                     break;
                     
                 case 16:
+                    if (bits)
+                    {
+                        /* Add color only when bits is given, as per MSDN */
+                        ((PDWORD)info->bmiColors)[0] = 0xf800;
+                        ((PDWORD)info->bmiColors)[1] = 0x07e0;
+                        ((PDWORD)info->bmiColors)[2] = 0x001f;
+                    }
                     info->bmiHeader.biBitCount = 16;
                     info->bmiHeader.biCompression = BI_BITFIELDS;
-                    ((PDWORD)info->bmiColors)[0] = 0xf800;
-                    ((PDWORD)info->bmiColors)[1] = 0x07e0;
-                    ((PDWORD)info->bmiColors)[2] = 0x001f;
                     break;
     
                 default:
