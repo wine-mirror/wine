@@ -233,6 +233,11 @@ typedef unsigned short UHALF_PTR, *PUHALF_PTR;
 
 #endif /* defined(_WIN64) || defined(_WIN32) */
 
+#define HandleToUlong(h)        HandleToULong(h)
+#define UlongToHandle(ul)       ULongToHandle(ul)
+#define UintToPtr(ui)           UIntToPtr(ui)
+#define UlongToPtr(ul)          ULongToPtr(ul)
+
 typedef LONG_PTR SSIZE_T, *PSSIZE_T;
 typedef ULONG_PTR SIZE_T, *PSIZE_T;
 
