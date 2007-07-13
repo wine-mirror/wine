@@ -666,6 +666,13 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
         CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
          CDecodeMsg_Close, CDecodeMsg_GetParam, CDecodeMsg_Update);
         msg->type = dwMsgType;
+        if (hCryptProv)
+            msg->crypt_prov = hCryptProv;
+        else
+        {
+            msg->crypt_prov = CRYPT_GetDefaultProvider();
+            msg->base.open_flags &= ~CMSG_CRYPT_RELEASE_CONTEXT_FLAG;
+        }
     }
     return msg;
 }
