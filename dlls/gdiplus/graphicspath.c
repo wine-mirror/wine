@@ -212,12 +212,9 @@ GpStatus WINGDIPAPI GdipGetPathTypes(GpPath *path, BYTE* types, INT count)
 GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath* path, GpRectF* bounds,
     GDIPCONST GpMatrix *matrix, GDIPCONST GpPen *pen)
 {
-    /* extrema[0] is upper left corner of bounding box,
-     * extrema[1] is lower right corner */
-    GpPointF extrema[2];
-    GpPointF * points;
+    GpPointF * points, temp_pts[4];
     INT count, i;
-    REAL path_width;
+    REAL path_width = 1.0, width, height, temp, low_x, low_y, high_x, high_y;
 
     /* Matrix and pen can be null. */
     if(!path || !bounds)
@@ -231,33 +228,64 @@ GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath* path, GpRectF* bounds,
     }
 
     points = path->pathdata.Points;
-    extrema[0].X = extrema[1].X  = points[0].X;
-    extrema[0].Y = extrema[1].Y = points[0].Y;
+
+    low_x = high_x = points[0].X;
+    low_y = high_y = points[0].Y;
 
     for(i = 1; i < count; i++){
-        extrema[0].X = min(points[i].X, extrema[0].X);
-        extrema[0].Y = min(points[i].Y, extrema[0].Y);
-        extrema[1].X = max(points[i].X, extrema[1].X);
-        extrema[1].Y = max(points[i].Y, extrema[1].Y);
+        low_x = min(low_x, points[i].X);
+        low_y = min(low_y, points[i].Y);
+        high_x = max(high_x, points[i].X);
+        high_y = max(high_y, points[i].Y);
     }
 
-    /* If matrix is non-null transform the points. */
+    width = high_x - low_x;
+    height = high_y - low_y;
+
+    /* This looks unusual but it's the only way I can imitate windows. */
     if(matrix){
-        GdipTransformMatrixPoints((GpMatrix*)matrix, extrema, 2);
+        temp_pts[0].X = low_x;
+        temp_pts[0].Y = low_y;
+        temp_pts[1].X = low_x;
+        temp_pts[1].Y = high_y;
+        temp_pts[2].X = high_x;
+        temp_pts[2].Y = high_y;
+        temp_pts[3].X = high_x;
+        temp_pts[3].Y = low_y;
+
+        GdipTransformMatrixPoints((GpMatrix*)matrix, temp_pts, 4);
+        low_x = temp_pts[0].X;
+        low_y = temp_pts[0].Y;
+
+        for(i = 1; i < 4; i++){
+            low_x = min(low_x, temp_pts[i].X);
+            low_y = min(low_y, temp_pts[i].Y);
+        }
+
+        temp = width;
+        width = height * fabs(matrix->matrix[2]) + width * fabs(matrix->matrix[0]);
+        height = height * fabs(matrix->matrix[3]) + temp * fabs(matrix->matrix[1]);
     }
 
     if(pen){
-        path_width = pen->width * pen->miterlimit / 2.0;
-        extrema[0].X -= path_width;
-        extrema[0].Y -= path_width;
-        extrema[1].X += path_width;
-        extrema[1].Y += path_width;
+        path_width = pen->width / 2.0;
+
+        if(count > 2)
+            path_width = max(path_width,  pen->width * pen->miterlimit / 2.0);
+        /* FIXME: this should probably also check for the startcap */
+        if(pen->endcap & LineCapNoAnchor)
+            path_width = max(path_width,  pen->width * 2.2);
+
+        low_x -= path_width;
+        low_y -= path_width;
+        width += 2.0 * path_width;
+        height += 2.0 * path_width;
     }
 
-    bounds->X = extrema[0].X;
-    bounds->Y = extrema[0].Y;
-    bounds->Width = extrema[1].X - extrema[0].X;
-    bounds->Height = extrema[1].Y - extrema[0].Y;
+    bounds->X = low_x;
+    bounds->Y = low_y;
+    bounds->Width = width;
+    bounds->Height = height;
 
     return Ok;
 }

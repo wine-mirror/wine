@@ -315,12 +315,10 @@ static void test_worldbounds(void)
     expect(Ok, status);
     GdipDeletePath(path);
 
-    todo_wine{
-        expectf(156.0, bounds.X);
-        expectf(156.0, bounds.Y);
-        expectf(138.0, bounds.Width);
-        expectf(88.0, bounds.Height);
-    }
+    expectf(156.0, bounds.X);
+    expectf(156.0, bounds.Y);
+    expectf(138.0, bounds.Width);
+    expectf(88.0, bounds.Height);
 
     line2_points[2].X = 2 * line2_points[1].X - line2_points[0].X;
     line2_points[2].Y = 2 * line2_points[1].Y - line2_points[0].Y;
@@ -379,12 +377,10 @@ static void test_worldbounds(void)
     expect(Ok, status);
     GdipDeletePath(path);
 
-    todo_wine{
-        expectf(-209.6, bounds.X);
-        expectf(-1274.8, bounds.Y);
-        expectf(705.0, bounds.Width);
-        expectf(945.0, bounds.Height);
-    }
+    expectf(-209.6, bounds.X);
+    expectf(-1274.8, bounds.Y);
+    expectf(705.0, bounds.Width);
+    expectf(945.0, bounds.Height);
 }
 
 START_TEST(graphicspath)
