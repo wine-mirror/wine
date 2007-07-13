@@ -396,8 +396,8 @@
 396 stub -noname MLHtmlHelpA
 397 stub -noname MLWinHelpW
 398 stub -noname MLHtmlHelpW
-399 stdcall -noname StrCpyNXA(str str long)
-400 stdcall -noname StrCpyNXW(wstr wstr long)
+399 stdcall -noname StrCpyNXA(ptr str long)
+400 stdcall -noname StrCpyNXW(ptr wstr long)
 401 stdcall -noname PageSetupDlgWrapW(ptr)
 402 stdcall -noname PrintDlgWrapW(ptr)
 403 stdcall -noname GetOpenFileNameWrapW(ptr)
@@ -766,7 +766,7 @@
 @ stdcall StrCmpNIW (wstr wstr long)
 @ stdcall StrCmpNW (wstr wstr long)
 @ stdcall StrCmpW (wstr wstr)
-@ stdcall StrCpyNW (wstr wstr long)
+@ stdcall StrCpyNW (ptr wstr long)
 @ stdcall StrCpyW (ptr wstr)
 @ stdcall StrDupA (str)
 @ stdcall StrDupW (wstr)
