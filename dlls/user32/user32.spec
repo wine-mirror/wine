@@ -614,7 +614,7 @@
 @ stub SetCursorContents
 @ stdcall SetCursorPos(long long)
 @ stdcall SetDebugErrorLevel(long)
-@ stdcall SetDeskWallPaper(str)
+@ stdcall SetDeskWallPaper(ptr)
 # @ stub SetDeskWallpaper
 # @ stub SetDesktopBitmap
 @ stdcall SetDlgItemInt(long long long long)
