@@ -1791,6 +1791,46 @@ static void test_bitmapinfoheadersize(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_get16dibits(void)
+{
+    BYTE bits[4 * (16 / sizeof(BYTE))];
+    HBITMAP hbmp;
+    HDC screen_dc = GetDC(NULL);
+    int ret;
+    BITMAPINFO * info;
+    int info_len = sizeof(BITMAPINFOHEADER) + 1024;
+    BYTE *p;
+    int overwritten_bytes = 0;
+
+    memset(bits, 0, sizeof(bits));
+    hbmp = CreateBitmap(2, 2, 1, 16, bits);
+    ok(hbmp != NULL, "CreateBitmap failed\n");
+
+    info  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, info_len);
+    assert(info);
+
+    memset(info, '!', info_len);
+    memset(info, 0, sizeof(info->bmiHeader));
+
+    info->bmiHeader.biSize = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth = 2;
+    info->bmiHeader.biHeight = 2;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biCompression = BI_RGB;
+
+    ret = GetDIBits(screen_dc, hbmp, 0, 0, NULL, info, 0);
+    ok(ret != 0, "GetDIBits failed\n");
+
+    for (p = ((BYTE *) info) + sizeof(info->bmiHeader); (p - ((BYTE *) info)) < info_len; p++)
+        if (*p != '!')
+            overwritten_bytes++;
+    ok(overwritten_bytes == 0, "GetDIBits wrote past the buffer given\n");
+
+    DeleteObject(hbmp);
+    ReleaseDC(NULL, screen_dc);
+}
+
+
 START_TEST(bitmap)
 {
     is_win9x = GetWindowLongPtrW(GetDesktopWindow(), GWLP_WNDPROC) == 0;
@@ -1809,4 +1849,5 @@ START_TEST(bitmap)
     test_select_object();
     test_CreateBitmap();
     test_bitmapinfoheadersize();
+    test_get16dibits();
 }
