@@ -217,6 +217,7 @@ GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath* path, GpRectF* bounds,
     GpPointF extrema[2];
     GpPointF * points;
     INT count, i;
+    REAL path_width;
 
     /* Matrix and pen can be null. */
     if(!path || !bounds)
@@ -228,10 +229,6 @@ GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath* path, GpRectF* bounds,
         bounds->X = bounds->Y = bounds->Width = bounds->Height = 0.0;
         return Ok;
     }
-
-    /* FIXME: implement case where pen is non-NULL. */
-    if(pen)
-        return NotImplemented;
 
     points = path->pathdata.Points;
     extrema[0].X = extrema[1].X  = points[0].X;
@@ -247,6 +244,14 @@ GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath* path, GpRectF* bounds,
     /* If matrix is non-null transform the points. */
     if(matrix){
         GdipTransformMatrixPoints((GpMatrix*)matrix, extrema, 2);
+    }
+
+    if(pen){
+        path_width = pen->width * pen->miterlimit / 2.0;
+        extrema[0].X -= path_width;
+        extrema[0].Y -= path_width;
+        extrema[1].X += path_width;
+        extrema[1].Y += path_width;
     }
 
     bounds->X = extrema[0].X;

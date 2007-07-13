@@ -301,16 +301,13 @@ static void test_worldbounds(void)
     GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 0.0, 100.0);
     GdipAddPathLine2(path, &(line2_points[0]), 10);
     status = GdipGetPathWorldBounds(path, &bounds, NULL, pen);
-    todo_wine
-        expect(Ok, status);
+    expect(Ok, status);
     GdipDeletePath(path);
 
-    todo_wine{
-        expectf(100.0, bounds.X);
-        expectf(100.0, bounds.Y);
-        expectf(650.0, bounds.Width);
-        expectf(800.0, bounds.Height);
-    }
+    expectf(100.0, bounds.X);
+    expectf(100.0, bounds.Y);
+    expectf(650.0, bounds.Width);
+    expectf(800.0, bounds.Height);
 }
 
 START_TEST(graphicspath)
