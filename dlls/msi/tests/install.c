@@ -414,6 +414,11 @@ static const CHAR tp_component_dat[] = "Component\tComponentId\tDirectory_\tAttr
                                        "Component\tComponent\n"
                                        "augustus\t\tMSITESTDIR\t0\tprop=\"val\"\taugustus\n";
 
+static const CHAR cwd_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "augustus\t\tMSITESTDIR\t0\t\taugustus\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -603,6 +608,18 @@ static const msi_table pp_tables[] =
 static const msi_table tp_tables[] =
 {
     ADD_TABLE(tp_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(ci2_feature_comp),
+    ADD_TABLE(ci2_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table cwd_tables[] =
+{
+    ADD_TABLE(cwd_component),
     ADD_TABLE(directory),
     ADD_TABLE(rof_feature),
     ADD_TABLE(ci2_feature_comp),
@@ -2464,6 +2481,63 @@ static void test_transformprop(void)
     RemoveDirectory("msitest");
 }
 
+static void test_currentworkingdir(void)
+{
+    UINT r;
+    CHAR path[MAX_PATH];
+    LPSTR ptr, ptr2;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\augustus", 500);
+
+    create_database(msifile, cwd_tables, sizeof(cwd_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    CreateDirectoryA("diffdir", NULL);
+    SetCurrentDirectoryA("diffdir");
+
+    sprintf(path, "..\\%s", msifile);
+    r = MsiInstallProductA(path, NULL);
+    todo_wine
+    {
+        ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
+        ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+        ok(!delete_pf("msitest", FALSE), "File installed\n");
+    }
+
+    sprintf(path, "%s\\%s", CURR_DIR, msifile);
+    r = MsiInstallProductA(path, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    lstrcpyA(path, CURR_DIR);
+    if (path[lstrlenA(path) - 1] != '\\')
+        lstrcatA(path, "\\");
+    lstrcatA(path, "msitest.msi");
+
+    ptr2 = strrchr(path, '\\');
+    *ptr2 = '\0';
+    ptr = strrchr(path, '\\');
+    *ptr2 = '\\';
+    *(ptr++) = '\0';
+
+    SetCurrentDirectoryA(path);
+
+    r = MsiInstallProductA(ptr, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    SetCurrentDirectoryA(CURR_DIR);
+
+    DeleteFile(msifile);
+    DeleteFile("msitest\\augustus");
+    RemoveDirectory("msitest");
+    RemoveDirectory("diffdir");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -2497,6 +2571,7 @@ START_TEST(install)
     test_publish();
     test_publishsourcelist();
     test_transformprop();
+    test_currentworkingdir();
 
     SetCurrentDirectoryA(prev_path);
 }
