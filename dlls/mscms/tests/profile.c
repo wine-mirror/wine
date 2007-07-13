@@ -653,7 +653,13 @@ static void test_GetStandardColorSpaceProfileA(void)
         ret = pGetStandardColorSpaceProfileA( NULL, SPACE_RGB, oldprofile, &size );
         ok( ret, "GetStandardColorSpaceProfileA() failed (%d)\n", GetLastError() );
 
+        SetLastError(0xdeadbeef);
         ret = pSetStandardColorSpaceProfileA( NULL, SPACE_RGB, standardprofile );
+        if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
+        {
+            skip("Not enough rights for SetStandardColorSpaceProfileA\n");
+            return;
+        }
         ok( ret, "SetStandardColorSpaceProfileA() failed (%d)\n", GetLastError() );
 
         size = sizeof(newprofile);
@@ -730,7 +736,13 @@ static void test_GetStandardColorSpaceProfileW(void)
         ret = pGetStandardColorSpaceProfileW( NULL, SPACE_RGB, oldprofile, &size );
         ok( ret, "GetStandardColorSpaceProfileW() failed (%d)\n", GetLastError() );
 
+        SetLastError(0xdeadbeef);
         ret = pSetStandardColorSpaceProfileW( NULL, SPACE_RGB, standardprofileW );
+        if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
+        {
+            skip("Not enough rights for SetStandardColorSpaceProfileW\n");
+            return;
+        }
         ok( ret, "SetStandardColorSpaceProfileW() failed (%d)\n", GetLastError() );
 
         size = sizeof(newprofile);
@@ -871,7 +883,13 @@ static void test_InstallColorProfileA(void)
         CHAR slash[] = "\\";
         HANDLE handle;
 
+        SetLastError(0xdeadbeef);
         ret = pInstallColorProfileA( NULL, testprofile );
+        if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
+        {
+            skip("Not enough rights for InstallColorProfileA\n");
+            return;
+        }
         ok( ret, "InstallColorProfileA() failed (%d)\n", GetLastError() );
 
         ret = pGetColorDirectoryA( NULL, dest, &size );
@@ -922,7 +940,13 @@ static void test_InstallColorProfileW(void)
         WCHAR slash[] = { '\\', 0 };
         HANDLE handle;
 
+        SetLastError(0xdeadbeef);
         ret = pInstallColorProfileW( NULL, testprofileW );
+        if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
+        {
+            skip("Not enough rights for InstallColorProfileW\n");
+            return;
+        }
         ok( ret, "InstallColorProfileW() failed (%d)\n", GetLastError() );
 
         ret = pGetColorDirectoryW( NULL, dest, &size );
@@ -1237,7 +1261,13 @@ static void test_UninstallColorProfileA(void)
         CHAR slash[] = "\\";
         HANDLE handle;
 
+        SetLastError(0xdeadbeef);
         ret = pInstallColorProfileA( NULL, testprofile );
+        if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
+        {
+            skip("Not enough rights for InstallColorProfileA\n");
+            return;
+        }
         ok( ret, "InstallColorProfileA() failed (%d)\n", GetLastError() );
 
         ret = pGetColorDirectoryA( NULL, dest, &size );
@@ -1281,7 +1311,13 @@ static void test_UninstallColorProfileW(void)
         HANDLE handle;
         int bytes_copied;
 
+        SetLastError(0xdeadbeef);
         ret = pInstallColorProfileW( NULL, testprofileW );
+        if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
+        {
+            skip("Not enough rights for InstallColorProfileW\n");
+            return;
+        }
         ok( ret, "InstallColorProfileW() failed (%d)\n", GetLastError() );
 
         ret = pGetColorDirectoryW( NULL, dest, &size );
