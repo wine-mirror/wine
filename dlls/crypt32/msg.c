@@ -607,9 +607,10 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
 
 typedef struct _CDecodeMsg
 {
-    CryptMsgBase base;
-    DWORD        type;
-    HCRYPTPROV   crypt_prov;
+    CryptMsgBase    base;
+    DWORD           type;
+    HCRYPTPROV      crypt_prov;
+    CRYPT_DATA_BLOB msg_data;
 } CDecodeMsg;
 
 static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
@@ -618,13 +619,111 @@ static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
 
     if (msg->base.open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
         CryptReleaseContext(msg->crypt_prov, 0);
+    CryptMemFree(msg->msg_data.pbData);
+}
+
+static BOOL CDecodeMsg_CopyData(CDecodeMsg *msg, const BYTE *pbData,
+ DWORD cbData)
+{
+    BOOL ret = TRUE;
+
+    if (cbData)
+    {
+        if (msg->msg_data.cbData)
+            msg->msg_data.pbData = CryptMemRealloc(msg->msg_data.pbData,
+             msg->msg_data.cbData + cbData);
+        else
+            msg->msg_data.pbData = CryptMemAlloc(cbData);
+        if (msg->msg_data.pbData)
+        {
+            memcpy(msg->msg_data.pbData + msg->msg_data.cbData, pbData, cbData);
+            msg->msg_data.cbData += cbData;
+        }
+        else
+            ret = FALSE;
+    }
+    return ret;
+}
+
+/* Decodes the content in blob as the type given, and updates the value
+ * (type, parameters, etc.) of msg based on what blob contains.
+ * It doesn't just use msg's type, to allow a recursive call from an implicitly
+ * typed message once the outer content info has been decoded.
+ */
+static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
+ DWORD type)
+{
+    BOOL ret;
+
+    switch (type)
+    {
+    case CMSG_DATA:
+    case CMSG_HASHED:
+    case CMSG_ENVELOPED:
+    case CMSG_SIGNED:
+        FIXME("unimplemented for type %s\n", MSG_TYPE_STR(type));
+        ret = TRUE;
+        break;
+    default:
+    {
+        CRYPT_CONTENT_INFO *info;
+        DWORD size;
+
+        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, PKCS_CONTENT_INFO,
+         msg->msg_data.pbData, msg->msg_data.cbData, CRYPT_DECODE_ALLOC_FLAG,
+         NULL, (LPBYTE)&info, &size);
+        if (ret)
+        {
+            if (!strcmp(info->pszObjId, szOID_RSA_data))
+                ret = CDecodeMsg_DecodeContent(msg, &info->Content, CMSG_DATA);
+            else if (!strcmp(info->pszObjId, szOID_RSA_digestedData))
+                ret = CDecodeMsg_DecodeContent(msg, &info->Content,
+                 CMSG_HASHED);
+            else if (!strcmp(info->pszObjId, szOID_RSA_envelopedData))
+                ret = CDecodeMsg_DecodeContent(msg, &info->Content,
+                 CMSG_ENVELOPED);
+            else if (!strcmp(info->pszObjId, szOID_RSA_signedData))
+                ret = CDecodeMsg_DecodeContent(msg, &info->Content,
+                 CMSG_SIGNED);
+            else
+            {
+                SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+                ret = FALSE;
+            }
+            LocalFree(info);
+        }
+    }
+    }
+    return ret;
 }
 
 static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
  DWORD cbData, BOOL fFinal)
 {
-    FIXME("(%p, %p, %d, %d): stub\n", hCryptMsg, pbData, cbData, fFinal);
-    return FALSE;
+    CDecodeMsg *msg = (CDecodeMsg *)hCryptMsg;
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %p, %d, %d)\n", hCryptMsg, pbData, cbData, fFinal);
+
+    if (msg->base.streamed)
+    {
+        ret = CDecodeMsg_CopyData(msg, pbData, cbData);
+        FIXME("(%p, %p, %d, %d): streamed update stub\n", hCryptMsg, pbData,
+         cbData, fFinal);
+    }
+    else
+    {
+        if (!fFinal)
+            SetLastError(CRYPT_E_MSG_ERROR);
+        else
+        {
+            ret = CDecodeMsg_CopyData(msg, pbData, cbData);
+            if (ret)
+                ret = CDecodeMsg_DecodeContent(msg, &msg->msg_data, msg->type);
+
+        }
+    }
+    return ret;
 }
 
 static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
@@ -673,6 +772,8 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
             msg->crypt_prov = CRYPT_GetDefaultProvider();
             msg->base.open_flags &= ~CMSG_CRYPT_RELEASE_CONTEXT_FLAG;
         }
+        msg->msg_data.cbData = 0;
+        msg->msg_data.pbData = NULL;
     }
     return msg;
 }

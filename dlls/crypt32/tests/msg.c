@@ -989,7 +989,6 @@ static void test_decode_msg_update(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     /* Update with a full message in a final update */
     ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent), TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* Can't update after a final update */
     SetLastError(0xdeadbeef);
@@ -1003,12 +1002,10 @@ static void test_decode_msg_update(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
      FALSE);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
      "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
     /* A subsequent final update succeeds */
     ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent), TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 
@@ -1035,7 +1032,6 @@ static void test_decode_msg_update(void)
     /* Empty non-final updates are allowed when streaming.. */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
     ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* but final updates aren't when not enough data has been received. */
     SetLastError(0xdeadbeef);
@@ -1051,11 +1047,9 @@ static void test_decode_msg_update(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
     for (i = 0, ret = TRUE; ret && i < sizeof(dataEmptyContent); i++)
         ret = CryptMsgUpdate(msg, &dataEmptyContent[i], 1, FALSE);
-    todo_wine {
     ok(ret, "CryptMsgUpdate failed on byte %d: %x\n", i, GetLastError());
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
     ok(ret, "CryptMsgUpdate failed on byte %d: %x\n", i, GetLastError());
-    }
     CryptMsgClose(msg);
     todo_wine
     check_updates("byte-by-byte empty content", &a4, &accum);
@@ -1065,7 +1059,6 @@ static void test_decode_msg_update(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
      "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
     CryptMsgClose(msg);
@@ -1092,7 +1085,6 @@ static void test_decode_msg_update(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
      TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* but decoding it as an explicitly typed message fails. */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, 0, NULL,
@@ -1111,7 +1103,6 @@ static void test_decode_msg_update(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, dataEmptyBareContent,
      sizeof(dataEmptyBareContent), TRUE);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
      "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
     CryptMsgClose(msg);
@@ -1120,7 +1111,6 @@ static void test_decode_msg_update(void)
      NULL);
     ret = CryptMsgUpdate(msg, dataEmptyBareContent,
      sizeof(dataEmptyBareContent), TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 
@@ -1128,7 +1118,6 @@ static void test_decode_msg_update(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, bogusOIDContent, sizeof(bogusOIDContent), TRUE);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
     CryptMsgClose(msg);
