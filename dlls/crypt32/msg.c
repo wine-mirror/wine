@@ -607,10 +607,11 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
 
 typedef struct _CDecodeMsg
 {
-    CryptMsgBase    base;
-    DWORD           type;
-    HCRYPTPROV      crypt_prov;
-    CRYPT_DATA_BLOB msg_data;
+    CryptMsgBase     base;
+    DWORD            type;
+    HCRYPTPROV       crypt_prov;
+    CRYPT_DATA_BLOB  msg_data;
+    PCRYPT_DATA_BLOB data; /* for type == CMSG_DATA */
 } CDecodeMsg;
 
 static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
@@ -620,6 +621,7 @@ static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
     if (msg->base.open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
         CryptReleaseContext(msg->crypt_prov, 0);
     CryptMemFree(msg->msg_data.pbData);
+    LocalFree(msg->data);
 }
 
 static BOOL CDecodeMsg_CopyData(CDecodeMsg *msg, const BYTE *pbData,
@@ -654,10 +656,17 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
  DWORD type)
 {
     BOOL ret;
+    DWORD size;
 
     switch (type)
     {
     case CMSG_DATA:
+        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
+         blob->pbData, blob->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
+         (LPBYTE)&msg->data, &size);
+        if (ret)
+            msg->type = CMSG_DATA;
+        break;
     case CMSG_HASHED:
     case CMSG_ENVELOPED:
     case CMSG_SIGNED:
@@ -667,7 +676,6 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
     default:
     {
         CRYPT_CONTENT_INFO *info;
-        DWORD size;
 
         ret = CryptDecodeObjectEx(X509_ASN_ENCODING, PKCS_CONTENT_INFO,
          msg->msg_data.pbData, msg->msg_data.cbData, CRYPT_DECODE_ALLOC_FLAG,
@@ -774,6 +782,7 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
         }
         msg->msg_data.cbData = 0;
         msg->msg_data.pbData = NULL;
+        msg->data = NULL;
     }
     return msg;
 }
