@@ -851,6 +851,8 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
     int i = 0;
     MIDISource *src = NULL;
     DWORD sendData = 0;
+    int pos = 0;
+    DWORD currentTime;
 
     switch (msgid)
     {
@@ -886,17 +888,32 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
                 goto done;
             }
             EnterCriticalSection(&midiInLock);
-            if (msg->length == 3)
+            currentTime = GetTickCount() - src->startTime;
+
+            while (pos < msg->length)
             {
-                sendData = (msg->data[2] << 16) |
-                            (msg->data[1] <<  8) |
-                            (msg->data[0] <<  0);
+                sendData = 0;
+                switch (msg->data[pos] & 0xF0)
+                {
+                    case 0xF0:
+                        sendData = (msg->data[pos] <<  0);
+                        pos++;
+                        break;
+
+                    case 0xC0:
+                    case 0xD0:
+                        sendData = (msg->data[pos + 1] <<  8) | (msg->data[pos] <<  0);
+                        pos += 2;
+                        break;
+                    default:
+                        sendData = (msg->data[pos + 2] << 16) |
+                                    (msg->data[pos + 1] <<  8) |
+                                    (msg->data[pos] <<  0);
+                        pos += 3;
+                        break;
+                }
+                MIDI_NotifyClient(msg->devID, MIM_DATA, sendData, currentTime);
             }
-            if (msg->length == 2)
-            {
-                sendData = (msg->data[1] <<  8) | (msg->data[0] <<  0);
-            }
-            MIDI_NotifyClient(msg->devID, MIM_DATA, sendData, GetTickCount() - src->startTime);
             LeaveCriticalSection(&midiInLock);
             break;
         default:
