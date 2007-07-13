@@ -398,13 +398,13 @@ static void test_enum_providers(void)
 	
 	if(!pCryptEnumProvidersA)
 	{
-	    trace("skipping CryptEnumProviders tests\n");
+	    skip("CryptEnumProvidersA is not available\n");
 	    return;
 	}
 	
 	if (!FindProvRegVals(dwIndex, &dwType, &pszProvName, &cbName, &provCount))
 	{
-	    trace("could not find providers in registry, skipping the test\n");
+	    skip("Could not find providers in registry\n");
 	    return;
 	}
 	
@@ -526,13 +526,13 @@ static void test_enum_provider_types(void)
 	
 	if(!pCryptEnumProviderTypesA)
 	{
-	    trace("skipping CryptEnumProviderTypes tests\n");
+	    skip("CryptEnumProviderTypesA is not available\n");
 	    return;
 	}
 	
 	if (!FindProvTypesRegVals(index, &dwProvType, &pszTypeName, &cbTypeName, &dwTypeCount))
 	{
-	    trace("could not find provider types in registry, skipping the test\n");
+	    skip("Could not find provider types in registry\n");
 	    return;
 	}
 	
@@ -664,13 +664,13 @@ static void test_get_default_provider(void)
 	
 	if(!pCryptGetDefaultProviderA)
 	{
-	    trace("skipping CryptGetDefaultProvider tests\n");
+	    skip("CryptGetDefaultProviderA is not available\n");
 	    return;
 	}
 	
 	if(!FindDfltProvRegVals(dwProvType, dwFlags, &pszProvName, &cbProvName))
 	{
-	    trace("could not find default provider in registry, skipping the test\n");
+	    skip("Could not find default provider in registry\n");
 	    return;
 	}
 	
@@ -738,7 +738,7 @@ static void test_set_provider_ex(void)
 	
 	if(!pCryptGetDefaultProviderA || !pCryptSetProviderExA)
 	{
-	    trace("skipping CryptSetProviderEx tests\n");
+	    skip("CryptGetDefaultProviderA and/or CryptSetProviderExA are not available\n");
 	    return;
 	}
 
