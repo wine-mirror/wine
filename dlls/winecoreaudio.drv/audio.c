@@ -1805,7 +1805,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
         lpDesc->lpFormat->nChannels == 0 ||
-        lpDesc->lpFormat->nSamplesPerSec == 0
+        lpDesc->lpFormat->nSamplesPerSec == 0 ||
+        lpDesc->lpFormat->nSamplesPerSec != AudioUnit_GetInputDeviceSampleRate()
         )
     {
         WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d wBitsPerSample=%d !\n",
