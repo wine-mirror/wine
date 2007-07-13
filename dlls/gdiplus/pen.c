@@ -27,6 +27,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+static DWORD gdip_to_gdi_join(GpLineJoin join)
+{
+    switch(join){
+        case LineJoinRound:
+            return PS_JOIN_ROUND;
+        case LineJoinBevel:
+            return PS_JOIN_BEVEL;
+        case LineJoinMiter:
+        case LineJoinMiterClipped:
+            return PS_JOIN_MITER;
+        default:
+            ERR("Not a member of GpLineJoin enumeration\n");
+            return 0;
+    }
+}
+
 GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
     GpPen **pen)
 {
@@ -44,6 +60,8 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
     gp_pen->width = width;
     gp_pen->unit = unit;
     gp_pen->endcap = LineCapFlat;
+    gp_pen->join = LineJoinMiter;
+    gp_pen->miterlimit = 10.0;
 
     /* FIXME: Currently only solid lines supported. */
     lb.lbStyle = BS_SOLID;
@@ -78,6 +96,28 @@ GpStatus WINGDIPAPI GdipSetPenEndCap(GpPen *pen, GpLineCap cap)
     if(!pen)    return InvalidParameter;
 
     pen->endcap = cap;
+
+    return Ok;
+}
+
+/* FIXME: Miter line joins behave a bit differently than they do in windows.
+ * Both kinds of miter joins clip if the angle is less than 11 degrees. */
+GpStatus WINGDIPAPI GdipSetPenLineJoin(GpPen *pen, GpLineJoin join)
+{
+    LOGBRUSH lb;
+
+    if(!pen)    return InvalidParameter;
+
+    DeleteObject(pen->gdipen);
+    pen->join = join;
+    pen->style &= ~(PS_JOIN_ROUND | PS_JOIN_BEVEL | PS_JOIN_MITER);
+    pen->style |= gdip_to_gdi_join(join);
+
+    lb.lbStyle = BS_SOLID;
+    lb.lbColor = pen->color;
+    lb.lbHatch = 0;
+
+    pen->gdipen = ExtCreatePen(pen->style, (INT) pen->width, &lb, 0, NULL);
 
     return Ok;
 }

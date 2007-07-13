@@ -73,6 +73,14 @@ enum PathPointType{
     PathPointTypeBezier3        = 3
 };
 
+enum LineJoin
+{
+    LineJoinMiter           = 0,
+    LineJoinBevel           = 1,
+    LineJoinRound           = 2,
+    LineJoinMiterClipped    = 3
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -80,6 +88,7 @@ typedef enum BrushType BrushType;
 typedef enum FillMode FillMode;
 typedef enum LineCap LineCap;
 typedef enum PathPointType PathPointType;
+typedef enum LineJoin LineJoin;
 
 #endif /* end of c typedefs */
 

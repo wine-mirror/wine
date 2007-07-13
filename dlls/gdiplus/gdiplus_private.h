@@ -47,6 +47,8 @@ struct GpPen{
     REAL width;
     HPEN gdipen;
     GpLineCap endcap;
+    GpLineJoin join;
+    REAL miterlimit;
 };
 
 struct GpGraphics{
