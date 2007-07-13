@@ -2489,7 +2489,6 @@ static void test_transformprop(void)
     UINT r;
 
     CreateDirectoryA("msitest", NULL);
-    CreateDirectoryA("msitest\\msitest", NULL);
     create_file("msitest\\augustus", 500);
 
     create_database(msifile, tp_tables, sizeof(tp_tables) / sizeof(msi_table));
