@@ -383,6 +383,56 @@ static void test_worldbounds(void)
     expectf(945.0, bounds.Height);
 }
 
+static path_test_t pathpath_path[] = {
+    {600.00, 450.00, PathPointTypeStart, 0, 0}, /*0*/
+    {600.00, 643.30, PathPointTypeBezier, 0, 0}, /*1*/
+    {488.07, 800.00, PathPointTypeBezier, 0, 0}, /*2*/
+    {350.00, 800.00, PathPointTypeBezier, 0, 0}, /*3*/
+    {319.61, 797.40, PathPointTypeStart, 0, 0}, /*4*/
+    {182.56, 773.90, PathPointTypeBezier, 0, 0}, /*5*/
+    {85.07, 599.31, PathPointTypeBezier, 0, 0}, /*6*/
+    {101.85, 407.45, PathPointTypeBezier, 0, 0}, /*7*/
+    {102.54, 399.66, PathPointTypeBezier, 0, 0}, /*8*/
+    {103.40, 391.91, PathPointTypeBezier, 0, 0}, /*9*/
+    {104.46, 384.21, PathPointTypeBezier, 0, 0}, /*10*/
+    {409.92, 110.20, PathPointTypeLine, 0, 0}, /*11*/
+    {543.96, 156.53, PathPointTypeBezier, 0, 0}, /*12*/
+    {625.80, 346.22, PathPointTypeBezier, 0, 0}, /*13*/
+    {592.71, 533.88, PathPointTypeBezier, 0, 0}, /*14*/
+    {592.47, 535.28, PathPointTypeBezier, 0, 0}, /*15*/
+    {592.22, 536.67, PathPointTypeBezier, 0, 0}, /*16*/
+    {591.96, 538.06, PathPointTypeBezier, 0, 0}, /*17*/
+    {319.61, 797.40, PathPointTypeLine, 0, 0}, /*18*/
+    {182.56, 773.90, PathPointTypeBezier, 0, 0}, /*19*/
+    {85.07, 599.31, PathPointTypeBezier, 0, 0}, /*20*/
+    {101.85, 407.45, PathPointTypeBezier, 0, 0}, /*21*/
+    {102.54, 399.66, PathPointTypeBezier, 0, 0}, /*22*/
+    {103.40, 391.91, PathPointTypeBezier, 0, 0}, /*23*/
+    {104.46, 384.21, PathPointTypeBezier, 0, 0} /*24*/
+    };
+
+static void test_pathpath(void)
+{
+    GpStatus status;
+    GpPath* path1, *path2;
+
+    GdipCreatePath(FillModeAlternate, &path2);
+    GdipAddPathArc(path2, 100.0, 100.0, 500.0, 700.0, 95.0, 100.0);
+
+    GdipCreatePath(FillModeAlternate, &path1);
+    GdipAddPathArc(path1, 100.0, 100.0, 500.0, 700.0, 0.0, 90.0);
+    status = GdipAddPathPath(path1, path2, FALSE);
+    expect(Ok, status);
+    GdipAddPathArc(path1, 100.0, 100.0, 500.0, 700.0, -80.0, 100.0);
+    status = GdipAddPathPath(path1, path2, TRUE);
+    expect(Ok, status);
+
+    ok_path(path1, pathpath_path, sizeof(pathpath_path)/sizeof(path_test_t), FALSE);
+
+    GdipDeletePath(path1);
+    GdipDeletePath(path2);
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -399,6 +449,7 @@ START_TEST(graphicspath)
     test_line2();
     test_arc();
     test_worldbounds();
+    test_pathpath();
 
     GdiplusShutdown(gdiplusToken);
 }
