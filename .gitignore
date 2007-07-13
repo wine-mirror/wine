@@ -703,10 +703,13 @@ include/austream.h
 include/comcat.h
 include/config.h
 include/control.h
+include/d3d10.h
 include/ddstream.h
 include/dispex.h
 include/docobj.h
 include/downloadmgr.h
+include/dxgi.h
+include/dxgitype.h
 include/exdisp.h
 include/hlink.h
 include/htiframe.h

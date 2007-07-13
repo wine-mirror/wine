@@ -11,10 +11,13 @@ IDL_H_SRCS = \
 	austream.idl \
 	comcat.idl \
 	control.idl \
+	d3d10.idl \
 	ddstream.idl \
 	dispex.idl \
 	docobj.idl \
 	downloadmgr.idl \
+	dxgi.idl \
+	dxgitype.idl \
 	exdisp.idl \
 	hlink.idl \
 	htiframe.idl \
