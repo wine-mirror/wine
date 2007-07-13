@@ -308,6 +308,83 @@ static void test_worldbounds(void)
     expectf(100.0, bounds.Y);
     expectf(650.0, bounds.Width);
     expectf(800.0, bounds.Height);
+
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathLine2(path, &(line2_points[0]), 2);
+    status = GdipGetPathWorldBounds(path, &bounds, NULL, pen);
+    expect(Ok, status);
+    GdipDeletePath(path);
+
+    todo_wine{
+        expectf(156.0, bounds.X);
+        expectf(156.0, bounds.Y);
+        expectf(138.0, bounds.Width);
+        expectf(88.0, bounds.Height);
+    }
+
+    line2_points[2].X = 2 * line2_points[1].X - line2_points[0].X;
+    line2_points[2].Y = 2 * line2_points[1].Y - line2_points[0].Y;
+
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathLine2(path, &(line2_points[0]), 3);
+    status = GdipGetPathWorldBounds(path, &bounds, NULL, pen);
+    expect(Ok, status);
+    GdipDeletePath(path);
+
+    expectf(100.0, bounds.X);
+    expectf(100.0, bounds.Y);
+    expectf(300.0, bounds.Width);
+    expectf(200.0, bounds.Height);
+
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 45.0, 20.0);
+    status = GdipGetPathWorldBounds(path, &bounds, NULL, pen);
+    expect(Ok, status);
+    GdipDeletePath(path);
+
+    expectf(386.7, bounds.X);
+    expectf(553.4, bounds.Y);
+    expectf(266.8, bounds.Width);
+    expectf(289.6, bounds.Height);
+
+    GdipCreatePath(FillModeAlternate, &path);
+    status = GdipGetPathWorldBounds(path, &bounds, matrix, pen);
+    expect(Ok, status);
+    GdipDeletePath(path);
+
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf(0.0, bounds.Width);
+    expectf(0.0, bounds.Height);
+
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathLine2(path, &(line2_points[0]), 2);
+    status = GdipGetPathWorldBounds(path, &bounds, matrix, pen);
+    expect(Ok, status);
+    GdipDeletePath(path);
+
+    todo_wine{
+        expectf(427.9, bounds.X);
+        expectf(167.7, bounds.Y);
+        expectf(239.9, bounds.Width);
+        expectf(164.9, bounds.Height);
+    }
+
+    GdipDeleteMatrix(matrix);
+    GdipCreateMatrix2(0.9, -0.5, -0.5, -1.2, 10.4, 10.2, &matrix);
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 0.0, 100.0);
+    GdipAddPathLine2(path, &(line2_points[0]), 10);
+    status = GdipGetPathWorldBounds(path, &bounds, matrix, NULL);
+    expect(Ok, status);
+    GdipDeletePath(path);
+
+    todo_wine{
+        expectf(-209.6, bounds.X);
+        expectf(-1274.8, bounds.Y);
+        expectf(705.0, bounds.Width);
+        expectf(945.0, bounds.Height);
+    }
 }
 
 START_TEST(graphicspath)
