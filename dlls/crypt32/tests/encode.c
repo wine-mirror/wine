@@ -200,6 +200,7 @@ static void test_decodeInt(DWORD dwEncoding)
     static const BYTE testStr[] = { 0x16, 4, 't', 'e', 's', 't' };
     static const BYTE longForm[] = { 2, 0x81, 0x01, 0x01 };
     static const BYTE bigBogus[] = { 0x02, 0x84, 0x01, 0xff, 0xff, 0xf9 };
+    static const BYTE extraBytes[] = { 2, 1, 1, 0, 0, 0, 0 };
     BYTE *buf = NULL;
     DWORD bufSize = 0;
     int i;
@@ -304,6 +305,15 @@ static void test_decodeInt(DWORD dwEncoding)
     /* Decode the value 1 with long-form length */
     ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, longForm,
      sizeof(longForm), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        ok(*(int *)buf == 1, "Expected 1, got %d\n", *(int *)buf);
+        LocalFree(buf);
+    }
+    /* check with extra bytes at the end */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_INTEGER, extraBytes,
+     sizeof(extraBytes), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -969,6 +979,11 @@ static void compareNames(const CERT_NAME_INFO *expected,
     }
 }
 
+static const BYTE twoRDNsExtraBytes[] = {
+    0x30,0x23,0x31,0x21,0x30,0x0c,0x06,0x03,0x55,0x04,0x04,
+    0x13,0x05,0x4c,0x61,0x6e,0x67,0x00,0x30,0x11,0x06,0x03,0x55,0x04,0x03,
+    0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0,0,0,0,0,0};
+
 static void test_decodeName(DWORD dwEncoding)
 {
     BYTE *buf = NULL;
@@ -1035,6 +1050,11 @@ static void test_decodeName(DWORD dwEncoding)
         compareNames(&info, (CERT_NAME_INFO *)buf);
         LocalFree(buf);
     }
+    /* test that two RDN attrs with extra bytes succeeds */
+    bufSize = 0;
+    ret = CryptDecodeObjectEx(dwEncoding, X509_NAME, twoRDNsExtraBytes,
+     sizeof(twoRDNsExtraBytes), 0, NULL, NULL, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     /* And, a slightly more complicated name */
     buf = NULL;
     bufSize = 0;
@@ -1257,6 +1277,7 @@ static void test_decodeNameValue(DWORD dwEncoding)
 }
 
 static const BYTE emptyURL[] = { 0x30, 0x02, 0x86, 0x00 };
+static const BYTE emptyURLExtraBytes[] = { 0x30, 0x02, 0x86, 0x00, 0, 0, 0 };
 static const WCHAR url[] = { 'h','t','t','p',':','/','/','w','i','n','e',
  'h','q','.','o','r','g',0 };
 static const BYTE encodedURL[] = { 0x30, 0x13, 0x86, 0x11, 0x68, 0x74,
@@ -1412,6 +1433,9 @@ static void test_decodeAltName(DWORD dwEncoding)
          "Expected empty URL\n");
         LocalFree(buf);
     }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME,
+     emptyURLExtraBytes, sizeof(emptyURLExtraBytes), 0, NULL, NULL, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     ret = CryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, encodedURL,
      encodedURL[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
      &bufSize);
@@ -4535,6 +4559,8 @@ static void test_decodeAuthorityKeyId2(DWORD dwEncoding)
 }
 
 static const BYTE emptyPKCSContentInfo[] = { 0x30,0x04,0x06,0x02,0x2a,0x03 };
+static const BYTE emptyPKCSContentInfoExtraBytes[] = { 0x30,0x04,0x06,0x02,0x2a,
+ 0x03,0,0,0,0,0,0 };
 static const BYTE bogusPKCSContentInfo[] = { 0x30,0x07,0x06,0x02,0x2a,0x03,
  0xa0,0x01,0x01 };
 static const BYTE intPKCSContentInfo[] = { 0x30,0x09,0x06,0x02,0x2a,0x03,0xa0,
@@ -4613,6 +4639,11 @@ static void test_decodePKCSContentInfo(DWORD dwEncoding)
          info->Content.cbData);
         LocalFree(buf);
     }
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CONTENT_INFO,
+     emptyPKCSContentInfoExtraBytes, sizeof(emptyPKCSContentInfoExtraBytes),
+     0, NULL, NULL, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CONTENT_INFO,
      bogusPKCSContentInfo, sizeof(bogusPKCSContentInfo),
