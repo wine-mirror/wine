@@ -1732,21 +1732,40 @@ static void widHelper_DestroyAudioBufferList(AudioBufferList* list)
  *                    widHelper_AllocateAudioBufferList          [internal]
  * Convenience function to allocate our audio buffers
  */
-static AudioBufferList* widHelper_AllocateAudioBufferList(UInt32 numChannels, UInt32 size)
+static AudioBufferList* widHelper_AllocateAudioBufferList(UInt32 numChannels, UInt32 bitsPerChannel, UInt32 bufferFrames, BOOL interleaved)
 {
+    UInt32                      numBuffers;
+    UInt32                      channelsPerFrame;
+    UInt32                      bytesPerFrame;
+    UInt32                      bytesPerBuffer;
     AudioBufferList*            list;
     UInt32                      i;
 
-    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AudioBufferList) + numChannels * sizeof(AudioBuffer));
+    if (interleaved)
+    {
+        /* For interleaved audio, we allocate one buffer for all channels. */
+        numBuffers = 1;
+        channelsPerFrame = numChannels;
+    }
+    else
+    {
+        numBuffers = numChannels;
+        channelsPerFrame = 1;
+    }
+
+    bytesPerFrame = bitsPerChannel * channelsPerFrame / 8;
+    bytesPerBuffer = bytesPerFrame * bufferFrames;
+
+    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, offsetof(AudioBufferList, mBuffers) + numBuffers * sizeof(AudioBuffer));
     if (list == NULL)
         return NULL;
 
-    list->mNumberBuffers = numChannels;
-    for (i = 0; i < numChannels; ++i)
+    list->mNumberBuffers = numBuffers;
+    for (i = 0; i < numBuffers; ++i)
     {
-        list->mBuffers[i].mNumberChannels = 1;
-        list->mBuffers[i].mDataByteSize = size;
-        list->mBuffers[i].mData = HeapAlloc(GetProcessHeap(), 0, size);
+        list->mBuffers[i].mNumberChannels = channelsPerFrame;
+        list->mBuffers[i].mDataByteSize = bytesPerBuffer;
+        list->mBuffers[i].mData = HeapAlloc(GetProcessHeap(), 0, bytesPerBuffer);
         if (list->mBuffers[i].mData == NULL)
         {
             widHelper_DestroyAudioBufferList(list);
@@ -1764,7 +1783,6 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     WINE_WAVEIN*    wwi;
     UInt32          frameCount;
-    UInt32          bytesPerFrame;
 
     TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL)
@@ -1842,9 +1860,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     /* Allocate our audio buffers */
-    /* For interleaved audio, we allocate one buffer for all channels. */
-    bytesPerFrame = wwi->format.wBitsPerSample * wwi->format.wf.nChannels / 8;
-    wwi->bufferList = widHelper_AllocateAudioBufferList(1, wwi->format.wf.nChannels * frameCount * bytesPerFrame);
+    wwi->bufferList = widHelper_AllocateAudioBufferList(wwi->format.wf.nChannels,
+        wwi->format.wBitsPerSample, frameCount, TRUE);
     if (wwi->bufferList == NULL)
     {
         ERR("Failed to allocate buffer list\n");
