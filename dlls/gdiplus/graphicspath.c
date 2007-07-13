@@ -179,6 +179,16 @@ GpStatus WINGDIPAPI GdipDeletePath(GpPath *path)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPathFillMode(GpPath *path, GpFillMode *fillmode)
+{
+    if(!path || !fillmode)
+        return InvalidParameter;
+
+    *fillmode = path->fill;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPathPoints(GpPath *path, GpPointF* points, INT count)
 {
     if(!path)

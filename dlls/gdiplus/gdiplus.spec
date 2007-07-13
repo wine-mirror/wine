@@ -308,7 +308,7 @@
 @ stub GdipGetPageScale
 @ stub GdipGetPageUnit
 @ stub GdipGetPathData
-@ stub GdipGetPathFillMode
+@ stdcall GdipGetPathFillMode(ptr ptr)
 @ stub GdipGetPathGradientBlend
 @ stub GdipGetPathGradientBlendCount
 @ stub GdipGetPathGradientCenterColor
