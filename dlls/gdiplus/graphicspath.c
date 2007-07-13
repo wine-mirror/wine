@@ -320,6 +320,18 @@ GpStatus WINGDIPAPI GdipStartPathFigure(GpPath *path)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipResetPath(GpPath *path)
+{
+    if(!path)
+        return InvalidParameter;
+
+    path->pathdata.Count = 0;
+    path->newfigure = TRUE;
+    path->fill = FillModeAlternate;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipTransformPath(GpPath *path, GpMatrix *matrix)
 {
     if(!path)

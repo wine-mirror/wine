@@ -458,7 +458,7 @@
 @ stub GdipResetImageAttributes
 @ stub GdipResetLineTransform
 @ stub GdipResetPageTransform
-@ stub GdipResetPath
+@ stdcall GdipResetPath(ptr)
 @ stub GdipResetPathGradientTransform
 @ stub GdipResetPenTransform
 @ stub GdipResetTextureTransform
