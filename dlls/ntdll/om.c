@@ -188,8 +188,6 @@ NtQuerySecurityObject(
 
 	RequestedInformation &= 0x0000000f;
 
-	if (RequestedInformation & SACL_SECURITY_INFORMATION) return STATUS_ACCESS_DENIED;
-
 	ZeroMemory(Buffer, 256);
 	RtlCreateSecurityDescriptor((PSECURITY_DESCRIPTOR)psd, SECURITY_DESCRIPTOR_REVISION);
 	psd->Control = SE_SELF_RELATIVE |
