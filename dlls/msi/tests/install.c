@@ -133,7 +133,8 @@ static const CHAR property_dat[] = "Property\tValue\n"
                                    "ProductVersion\t1.1.1\n"
                                    "PROMPTROLLBACKCOST\tP\n"
                                    "Setup\tSetup\n"
-                                   "UpgradeCode\t{4C0EAA15-0264-4E5A-8758-609EF142B92D}";
+                                   "UpgradeCode\t{4C0EAA15-0264-4E5A-8758-609EF142B92D}\n"
+                                   "AdminProperties\tPOSTADMIN\n";
 
 static const CHAR registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
                                    "s72\ti2\tl255\tL255\tL0\ts72\n"
@@ -419,6 +420,29 @@ static const CHAR cwd_component_dat[] = "Component\tComponentId\tDirectory_\tAtt
                                         "Component\tComponent\n"
                                         "augustus\t\tMSITESTDIR\t0\t\taugustus\n";
 
+static const CHAR adm_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "augustus\t\tMSITESTDIR\t0\tPOSTADMIN=1\taugustus";
+
+static const CHAR adm_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComments\n"
+                                            "s72\ti2\tS64\tS0\tS255\n"
+                                            "CustomAction\tAction\n"
+                                            "SetPOSTADMIN\t51\tPOSTADMIN\t1\t";
+
+static const CHAR adm_admin_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                             "s72\tS255\tI2\n"
+                                             "AdminExecuteSequence\tAction\n"
+                                             "CostFinalize\t\t1000\n"
+                                             "CostInitialize\t\t800\n"
+                                             "FileCost\t\t900\n"
+                                             "SetPOSTADMIN\t\t950\n"
+                                             "InstallFiles\t\t4000\n"
+                                             "InstallFinalize\t\t6600\n"
+                                             "InstallInitialize\t\t1500\n"
+                                             "InstallValidate\t\t1400\n"
+                                             "LaunchConditions\t\t100";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -627,6 +651,20 @@ static const msi_table cwd_tables[] =
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(rof_media),
     ADD_TABLE(property),
+};
+
+static const msi_table adm_tables[] =
+{
+    ADD_TABLE(adm_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(ci2_feature_comp),
+    ADD_TABLE(ci2_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+    ADD_TABLE(adm_custom_action),
+    ADD_TABLE(adm_admin_exec_seq),
 };
 
 /* cabinet definitions */
@@ -2538,6 +2576,66 @@ static void test_currentworkingdir(void)
     RemoveDirectory("diffdir");
 }
 
+static void set_admin_summary_info(const CHAR *name)
+{
+    MSIHANDLE db, summary;
+    UINT r;
+
+    r = MsiOpenDatabaseA(name, MSIDBOPEN_DIRECT, &db);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiGetSummaryInformationA(db, NULL, 1, &summary);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSummaryInfoSetPropertyA(summary, PID_WORDCOUNT, VT_I4, 5, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    /* write the summary changes back to the stream */
+    r = MsiSummaryInfoPersist(summary);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    MsiCloseHandle(summary);
+
+    r = MsiDatabaseCommit(db);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    MsiCloseHandle(db);
+}
+
+static void test_admin(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\augustus", 500);
+
+    create_database(msifile, adm_tables, sizeof(adm_tables) / sizeof(msi_table));
+    set_admin_summary_info(msifile);
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    ok(!delete_pf("msitest", FALSE), "File installed\n");
+    ok(!DeleteFile("c:\\msitest\\augustus"), "File installed\n");
+    ok(!RemoveDirectory("c:\\msitest"), "File installed\n");
+
+    r = MsiInstallProductA(msifile, "ACTION=ADMIN");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    ok(!delete_pf("msitest", FALSE), "File installed\n");
+    todo_wine
+    {
+        ok(DeleteFile("c:\\msitest\\augustus"), "File not installed\n");
+        ok(RemoveDirectory("c:\\msitest"), "File not installed\n");
+    }
+
+    DeleteFile(msifile);
+    DeleteFile("msitest\\augustus");
+    RemoveDirectory("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -2572,6 +2670,7 @@ START_TEST(install)
     test_publishsourcelist();
     test_transformprop();
     test_currentworkingdir();
+    test_admin();
 
     SetCurrentDirectoryA(prev_path);
 }
