@@ -543,6 +543,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
     (*graphics)->hdc = hdc;
     (*graphics)->hwnd = NULL;
     (*graphics)->smoothing = SmoothingModeDefault;
+    (*graphics)->compqual = CompositingQualityDefault;
 
     return Ok;
 }
@@ -798,6 +799,18 @@ GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
         width, height, startAngle, sweepAngle);
 }
 
+/* FIXME: Compositing quality is not used anywhere except the getter/setter. */
+GpStatus WINGDIPAPI GdipGetCompositingQuality(GpGraphics *graphics,
+    CompositingQuality *quality)
+{
+    if(!graphics || !quality)
+        return InvalidParameter;
+
+    *quality = graphics->compqual;
+
+    return Ok;
+}
+
 /* FIXME: Smoothing mode is not used anywhere except the getter/setter. */
 GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics *graphics, SmoothingMode *mode)
 {
@@ -805,6 +818,17 @@ GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics *graphics, SmoothingMode *mo
         return InvalidParameter;
 
     *mode = graphics->smoothing;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetCompositingQuality(GpGraphics *graphics,
+    CompositingQuality quality)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    graphics->compqual = quality;
 
     return Ok;
 }

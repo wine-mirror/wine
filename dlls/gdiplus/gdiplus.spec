@@ -235,7 +235,7 @@
 @ stub GdipGetClipBounds
 @ stub GdipGetClipBoundsI
 @ stub GdipGetCompositingMode
-@ stub GdipGetCompositingQuality
+@ stdcall GdipGetCompositingQuality(ptr ptr)
 @ stub GdipGetCustomLineCapBaseCap
 @ stub GdipGetCustomLineCapBaseInset
 @ stub GdipGetCustomLineCapStrokeCaps
@@ -493,7 +493,7 @@
 @ stub GdipSetClipRectI
 @ stub GdipSetClipRegion
 @ stub GdipSetCompositingMode
-@ stub GdipSetCompositingQuality
+@ stdcall GdipSetCompositingQuality(ptr long)
 @ stub GdipSetCustomLineCapBaseCap
 @ stub GdipSetCustomLineCapBaseInset
 @ stub GdipSetCustomLineCapStrokeCaps

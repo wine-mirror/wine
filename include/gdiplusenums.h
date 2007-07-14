@@ -99,6 +99,16 @@ enum SmoothingMode
     SmoothingModeAntiAlias
 };
 
+enum CompositingQuality
+{
+    CompositingQualityInvalid          = QualityModeInvalid,
+    CompositingQualityDefault          = QualityModeDefault,
+    CompositingQualityHighSpeed        = QualityModeLow,
+    CompositingQualityHighQuality      = QualityModeHigh,
+    CompositingQualityGammaCorrected,
+    CompositingQualityAssumeLinear
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -109,6 +119,7 @@ typedef enum PathPointType PathPointType;
 typedef enum LineJoin LineJoin;
 typedef enum QualityMode QualityMode;
 typedef enum SmoothingMode SmoothingMode;
+typedef enum CompositingQuality CompositingQuality;
 
 #endif /* end of c typedefs */
 
