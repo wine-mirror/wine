@@ -848,6 +848,26 @@ GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics *graphics, SmoothingMode *mo
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics *graphics, GraphicsState state)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    FIXME("graphics state not implemented\n");
+
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics *graphics, GraphicsState *state)
+{
+    if(!graphics || !state)
+        return InvalidParameter;
+
+    FIXME("graphics state not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetCompositingQuality(GpGraphics *graphics,
     CompositingQuality quality)
 {

@@ -19,6 +19,8 @@
 #ifndef _GDIPLUSENUMS_H
 #define _GDIPLUSENUMS_H
 
+typedef UINT GraphicsState;
+
 enum Unit
 {
     UnitWorld       = 0,

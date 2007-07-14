@@ -463,7 +463,7 @@
 @ stub GdipResetPenTransform
 @ stub GdipResetTextureTransform
 @ stub GdipResetWorldTransform
-@ stub GdipRestoreGraphics
+@ stdcall GdipRestoreGraphics(ptr long)
 @ stub GdipReversePath
 @ stub GdipRotateLineTransform
 @ stub GdipRotateMatrix
@@ -473,7 +473,7 @@
 @ stub GdipRotateWorldTransform
 @ stub GdipSaveAdd
 @ stub GdipSaveAddImage
-@ stub GdipSaveGraphics
+@ stdcall GdipSaveGraphics(ptr ptr)
 @ stub GdipSaveImageToFile
 @ stub GdipSaveImageToStream
 @ stub GdipScaleLineTransform
