@@ -785,6 +785,38 @@ GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *path)
+{
+    INT save_state;
+    GpStatus retval;
+
+    if(!brush || !graphics || !path)
+        return InvalidParameter;
+
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, brush->gdibrush);
+    SetPolyFillMode(graphics->hdc, (path->fill == FillModeAlternate ? ALTERNATE
+                                                                    : WINDING));
+
+    BeginPath(graphics->hdc);
+    retval = draw_poly(graphics->hdc, NULL, path->pathdata.Points,
+                       path->pathdata.Types, path->pathdata.Count, FALSE);
+
+    if(retval != Ok)
+        goto end;
+
+    EndPath(graphics->hdc);
+    FillPath(graphics->hdc);
+
+    retval = Ok;
+
+end:
+    RestoreDC(graphics->hdc, save_state);
+
+    return retval;
+}
+
 GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
     REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
 {
