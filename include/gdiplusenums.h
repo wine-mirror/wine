@@ -81,6 +81,24 @@ enum LineJoin
     LineJoinMiterClipped    = 3
 };
 
+enum QualityMode
+{
+    QualityModeInvalid  = -1,
+    QualityModeDefault  = 0,
+    QualityModeLow      = 1,
+    QualityModeHigh     = 2
+};
+
+enum SmoothingMode
+{
+    SmoothingModeInvalid     = QualityModeInvalid,
+    SmoothingModeDefault     = QualityModeDefault,
+    SmoothingModeHighSpeed   = QualityModeLow,
+    SmoothingModeHighQuality = QualityModeHigh,
+    SmoothingModeNone,
+    SmoothingModeAntiAlias
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -89,6 +107,8 @@ typedef enum FillMode FillMode;
 typedef enum LineCap LineCap;
 typedef enum PathPointType PathPointType;
 typedef enum LineJoin LineJoin;
+typedef enum QualityMode QualityMode;
+typedef enum SmoothingMode SmoothingMode;
 
 #endif /* end of c typedefs */
 

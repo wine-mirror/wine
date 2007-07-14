@@ -54,6 +54,7 @@ struct GpPen{
 struct GpGraphics{
     HDC hdc;
     HWND hwnd;
+    SmoothingMode smoothing;
 };
 
 struct GpBrush{

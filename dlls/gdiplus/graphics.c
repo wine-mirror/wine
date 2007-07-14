@@ -542,6 +542,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 
     (*graphics)->hdc = hdc;
     (*graphics)->hwnd = NULL;
+    (*graphics)->smoothing = SmoothingModeDefault;
 
     return Ok;
 }
@@ -795,4 +796,25 @@ GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
 
     return draw_pie(graphics, brush->gdibrush, GetStockObject(NULL_PEN), x, y,
         width, height, startAngle, sweepAngle);
+}
+
+/* FIXME: Smoothing mode is not used anywhere except the getter/setter. */
+GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics *graphics, SmoothingMode *mode)
+{
+    if(!graphics || !mode)
+        return InvalidParameter;
+
+    *mode = graphics->smoothing;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics *graphics, SmoothingMode mode)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    graphics->smoothing = mode;
+
+    return Ok;
 }
