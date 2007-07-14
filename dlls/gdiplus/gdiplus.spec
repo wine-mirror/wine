@@ -526,7 +526,7 @@
 @ stub GdipSetMetafileDownLevelRasterizationLimit
 @ stub GdipSetPageScale
 @ stub GdipSetPageUnit
-@ stub GdipSetPathFillMode
+@ stdcall GdipSetPathFillMode(ptr long)
 @ stub GdipSetPathGradientBlend
 @ stub GdipSetPathGradientCenterColor
 @ stub GdipSetPathGradientCenterPoint

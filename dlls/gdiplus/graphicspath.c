@@ -361,6 +361,16 @@ GpStatus WINGDIPAPI GdipResetPath(GpPath *path)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetPathFillMode(GpPath *path, GpFillMode fill)
+{
+    if(!path)
+        return InvalidParameter;
+
+    path->fill = fill;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipTransformPath(GpPath *path, GpMatrix *matrix)
 {
     if(!path)
