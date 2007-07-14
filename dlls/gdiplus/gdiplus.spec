@@ -352,7 +352,7 @@
 @ stub GdipGetPenTransform
 @ stub GdipGetPenUnit
 @ stub GdipGetPenWidth
-@ stub GdipGetPixelOffsetMode
+@ stdcall GdipGetPixelOffsetMode(ptr ptr)
 @ stdcall GdipGetPointCount(ptr ptr)
 @ stub GdipGetPropertyCount
 @ stub GdipGetPropertyIdList
@@ -559,7 +559,7 @@
 @ stub GdipSetPenTransform
 @ stub GdipSetPenUnit
 @ stub GdipSetPenWidth
-@ stub GdipSetPixelOffsetMode
+@ stdcall GdipSetPixelOffsetMode(ptr long)
 @ stub GdipSetPropertyItem
 @ stub GdipSetRenderingOrigin
 @ stdcall GdipSetSmoothingMode(ptr long)

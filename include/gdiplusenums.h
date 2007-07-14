@@ -122,6 +122,16 @@ enum InterpolationMode
     InterpolationModeHighQualityBicubic
 };
 
+enum PixelOffsetMode
+{
+    PixelOffsetModeInvalid     = QualityModeInvalid,
+    PixelOffsetModeDefault     = QualityModeDefault,
+    PixelOffsetModeHighSpeed   = QualityModeLow,
+    PixelOffsetModeHighQuality = QualityModeHigh,
+    PixelOffsetModeNone,
+    PixelOffsetModeHalf
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -134,6 +144,7 @@ typedef enum QualityMode QualityMode;
 typedef enum SmoothingMode SmoothingMode;
 typedef enum CompositingQuality CompositingQuality;
 typedef enum InterpolationMode InterpolationMode;
+typedef enum PixelOffsetMode PixelOffsetMode;
 
 #endif /* end of c typedefs */
 

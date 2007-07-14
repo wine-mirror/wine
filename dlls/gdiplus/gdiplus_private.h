@@ -57,6 +57,7 @@ struct GpGraphics{
     SmoothingMode smoothing;
     CompositingQuality compqual;
     InterpolationMode interpolation;
+    PixelOffsetMode pixeloffset;
 };
 
 struct GpBrush{
