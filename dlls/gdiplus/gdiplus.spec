@@ -283,7 +283,7 @@
 @ stub GdipGetImageType
 @ stub GdipGetImageVerticalResolution
 @ stub GdipGetImageWidth
-@ stub GdipGetInterpolationMode
+@ stdcall GdipGetInterpolationMode(ptr ptr)
 @ stub GdipGetLineBlend
 @ stub GdipGetLineBlendCount
 @ stub GdipGetLineColors
@@ -513,7 +513,7 @@
 @ stub GdipSetImageAttributesWrapMode
 @ stub GdipSetImagePalette
 @ stub GdipSetInfinite
-@ stub GdipSetInterpolationMode
+@ stdcall GdipSetInterpolationMode(ptr long)
 @ stub GdipSetLineBlend
 @ stub GdipSetLineColors
 @ stub GdipSetLineGammaCorrection

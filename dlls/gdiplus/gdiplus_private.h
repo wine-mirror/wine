@@ -56,6 +56,7 @@ struct GpGraphics{
     HWND hwnd;
     SmoothingMode smoothing;
     CompositingQuality compqual;
+    InterpolationMode interpolation;
 };
 
 struct GpBrush{

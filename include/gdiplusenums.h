@@ -109,6 +109,19 @@ enum CompositingQuality
     CompositingQualityAssumeLinear
 };
 
+enum InterpolationMode
+{
+    InterpolationModeInvalid        = QualityModeInvalid,
+    InterpolationModeDefault        = QualityModeDefault,
+    InterpolationModeLowQuality     = QualityModeLow,
+    InterpolationModeHighQuality    = QualityModeHigh,
+    InterpolationModeBilinear,
+    InterpolationModeBicubic,
+    InterpolationModeNearestNeighbor,
+    InterpolationModeHighQualityBilinear,
+    InterpolationModeHighQualityBicubic
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -120,6 +133,7 @@ typedef enum LineJoin LineJoin;
 typedef enum QualityMode QualityMode;
 typedef enum SmoothingMode SmoothingMode;
 typedef enum CompositingQuality CompositingQuality;
+typedef enum InterpolationMode InterpolationMode;
 
 #endif /* end of c typedefs */
 

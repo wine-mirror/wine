@@ -544,6 +544,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
     (*graphics)->hwnd = NULL;
     (*graphics)->smoothing = SmoothingModeDefault;
     (*graphics)->compqual = CompositingQualityDefault;
+    (*graphics)->interpolation = InterpolationModeDefault;
 
     return Ok;
 }
@@ -811,6 +812,18 @@ GpStatus WINGDIPAPI GdipGetCompositingQuality(GpGraphics *graphics,
     return Ok;
 }
 
+/* FIXME: Interpolation mode is not used anywhere except the getter/setter. */
+GpStatus WINGDIPAPI GdipGetInterpolationMode(GpGraphics *graphics,
+    InterpolationMode *mode)
+{
+    if(!graphics || !mode)
+        return InvalidParameter;
+
+    *mode = graphics->interpolation;
+
+    return Ok;
+}
+
 /* FIXME: Smoothing mode is not used anywhere except the getter/setter. */
 GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics *graphics, SmoothingMode *mode)
 {
@@ -829,6 +842,17 @@ GpStatus WINGDIPAPI GdipSetCompositingQuality(GpGraphics *graphics,
         return InvalidParameter;
 
     graphics->compqual = quality;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetInterpolationMode(GpGraphics *graphics,
+    InterpolationMode mode)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    graphics->interpolation = mode;
 
     return Ok;
 }
