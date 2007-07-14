@@ -466,51 +466,59 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                 ERR("Bad bezier points\n");
                 goto end;
             }
-
             i += 2;
         }
     }
 
-    if((types[count - 1] & PathPointTypePathTypeMask) == PathPointTypeBezier){
-        ptf = GdipAlloc(4 * sizeof(GpPointF));
-        memcpy(ptf, &pt[count-4], 4 * sizeof(GpPointF));
-
-        if(caps){
-            if(pen->endcap == LineCapArrowAnchor)
-                shorten_bezier_amt(ptf, pen->width);
-
-            draw_cap(hdc, pen->color, pen->endcap, pen->width,
-                pt[count - 1].X - (ptf[3].X - ptf[2].X),
-                pt[count - 1].Y - (ptf[3].Y - ptf[2].Y),
-                pt[count - 1].X, pt[count - 1].Y);
-        }
-        for(i = 0; i < 4; i ++){
-            pti[i + count - 4].x = roundr(ptf[i].X);
-            pti[i + count - 4].y = roundr(ptf[i].Y);
-        }
-        for(i = 0; i < count - 4; i ++){
-            pti[i].x = roundr(pt[i].X);
-            pti[i].y = roundr(pt[i].Y);
-        }
+    for(i = 0; i < count; i++){
+        pti[i].x = roundr(pt[i].X);
+        pti[i].y = roundr(pt[i].Y);
     }
-    else if((types[count - 1] & PathPointTypePathTypeMask) == PathPointTypeLine){
-        if(caps){
-            if(pen->endcap == LineCapArrowAnchor)
-                shorten_line_amt(pt[count-2].X, pt[count-2].Y, &x, &y, pen->width);
 
-            draw_cap(hdc, pen->color, pen->endcap, pen->width, pt[count-2].X,
-                pt[count-2].Y, pt[count - 1].X, pt[count - 1].Y);
+    /* If we are drawing caps, go through the points and adjust them accordingly,
+     * and draw the caps. */
+    if(caps){
+        switch(types[count - 1] & PathPointTypePathTypeMask){
+            case PathPointTypeBezier:
+                ptf = GdipAlloc(4 * sizeof(GpPointF));
+                if(!ptf){
+                    status = OutOfMemory;
+                    goto end;
+                }
+                memcpy(ptf, &pt[count - 4], 4 * sizeof(GpPointF));
+
+                if(pen->endcap == LineCapArrowAnchor)
+                    shorten_bezier_amt(ptf, pen->width);
+
+
+                draw_cap(hdc, pen->color, pen->endcap, pen->width,
+                    pt[count - 1].X - (ptf[3].X - ptf[2].X),
+                    pt[count - 1].Y - (ptf[3].Y - ptf[2].Y),
+                    pt[count - 1].X, pt[count - 1].Y);
+
+                for(i = 0; i < 4; i++){
+                    pti[i + count - 4].x = roundr(ptf[i].X);
+                    pti[i + count - 4].y = roundr(ptf[i].Y);
+                }
+
+                break;
+
+            case PathPointTypeLine:
+                if(pen->endcap == LineCapArrowAnchor)
+                    shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
+                                     pen->width);
+
+                draw_cap(hdc, pen->color, pen->endcap, pen->width, pt[count - 2].X,
+                         pt[count - 2].Y, pt[count - 1].X, pt[count - 1].Y);
+
+                pti[count - 1].x = roundr(x);
+                pti[count - 1].y = roundr(y);
+
+                break;
+            default:
+                ERR("Bad path last point\n");
+                goto end;
         }
-        pti[count - 1].x = roundr(x);
-        pti[count - 1].y = roundr(y);
-        for(i = 0; i < count - 1; i ++){
-            pti[i].x = roundr(pt[i].X);
-            pti[i].y = roundr(pt[i].Y);
-        }
-    }
-    else{
-        ERR("Bad path last point\n");
-        goto end;
     }
 
     for(i = 0; i < count; i++){
@@ -729,7 +737,7 @@ GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
 
 GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 {
-    INT save_state, i, this_fig = 0;
+    INT save_state;
     GpStatus retval;
 
     if(!pen || !graphics)
@@ -739,23 +747,9 @@ GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    for(i = 0; i < path->pathdata.Count; i++){
-        if(path->pathdata.Types[i] == PathPointTypeStart){
-            retval = draw_poly(graphics->hdc, pen,
-                         &path->pathdata.Points[this_fig],
-                         &path->pathdata.Types[this_fig], i - this_fig, TRUE);
-            this_fig = i;
+    retval = draw_poly(graphics->hdc, pen, path->pathdata.Points,
+                       path->pathdata.Types, path->pathdata.Count, TRUE);
 
-            if(retval != Ok)
-                goto end;
-        }
-    }
-
-    retval = draw_poly(graphics->hdc, pen, &path->pathdata.Points[this_fig],
-                       &path->pathdata.Types[this_fig], path->pathdata.Count - this_fig,
-                       TRUE);
-
-end:
     RestoreDC(graphics->hdc, save_state);
 
     return retval;
