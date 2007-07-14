@@ -627,8 +627,8 @@ static void chm_set_param(struct chmFile *h,
                 int     i;
 
                 /* allocate new cached blocks */
-                newBlocks = malloc(paramVal * sizeof (UChar *));
-                newIndices = malloc(paramVal * sizeof (UInt64));
+                newBlocks = HeapAlloc(GetProcessHeap(), 0, paramVal * sizeof (UChar *));
+                newIndices = HeapAlloc(GetProcessHeap(), 0, paramVal * sizeof (UInt64));
                 for (i=0; i<paramVal; i++)
                 {
                     newBlocks[i] = NULL;
@@ -647,7 +647,7 @@ static void chm_set_param(struct chmFile *h,
                             /* in case of collision, destroy newcomer */
                             if (newBlocks[newSlot])
                             {
-                                free(h->cache_blocks[i]);
+                                HeapFree(GetProcessHeap(), 0, h->cache_blocks[i]);
                                 h->cache_blocks[i] = NULL;
                             }
                             else
@@ -659,8 +659,8 @@ static void chm_set_param(struct chmFile *h,
                         }
                     }
 
-                    free(h->cache_blocks);
-                    free(h->cache_block_indices);
+                    HeapFree(GetProcessHeap(), 0, h->cache_blocks);
+                    HeapFree(GetProcessHeap(), 0, h->cache_block_indices);
                 }
 
                 /* now, set new values */
@@ -692,7 +692,7 @@ struct chmFile *chm_openW(const WCHAR *filename)
     struct chmLzxcControlData   ctlData;
 
     /* allocate handle */
-    newHandle = malloc(sizeof(struct chmFile));
+    newHandle = HeapAlloc(GetProcessHeap(), 0, sizeof(struct chmFile));
     newHandle->fd = CHM_NULL_FD;
     newHandle->lzx_state = NULL;
     newHandle->cache_blocks = NULL;
@@ -708,7 +708,7 @@ struct chmFile *chm_openW(const WCHAR *filename)
                                    FILE_ATTRIBUTE_NORMAL,
                                    NULL)) == CHM_NULL_FD)
     {
-        free(newHandle);
+        HeapFree(GetProcessHeap(), 0, newHandle);
         return NULL;
     }
 
@@ -855,16 +855,16 @@ void chm_close(struct chmFile *h)
             for (i=0; i<h->cache_num_blocks; i++)
             {
                 if (h->cache_blocks[i])
-                    free(h->cache_blocks[i]);
+                    HeapFree(GetProcessHeap(), 0, h->cache_blocks[i]);
             }
-            free(h->cache_blocks);
+            HeapFree(GetProcessHeap(), 0, h->cache_blocks);
             h->cache_blocks = NULL;
         }
 
-        free(h->cache_block_indices);
+        HeapFree(GetProcessHeap(), 0, h->cache_block_indices);
         h->cache_block_indices = NULL;
 
-        free(h);
+        HeapFree(GetProcessHeap(), 0, h);
     }
 }
 
@@ -1193,7 +1193,9 @@ static Int64 _chm_decompress_block(struct chmFile *h,
                 indexSlot = (int)((curBlockIdx) % h->cache_num_blocks);
                 h->cache_block_indices[indexSlot] = curBlockIdx;
                 if (! h->cache_blocks[indexSlot])
-                    h->cache_blocks[indexSlot] = malloc( (unsigned int)(h->reset_table.block_len));
+                    h->cache_blocks[indexSlot] =
+                      HeapAlloc(GetProcessHeap(), 0,
+                                (unsigned int)(h->reset_table.block_len));
                 lbuffer = h->cache_blocks[indexSlot];
 
                 /* decompress the previous block */
@@ -1231,7 +1233,8 @@ static Int64 _chm_decompress_block(struct chmFile *h,
     indexSlot = (int)(block % h->cache_num_blocks);
     h->cache_block_indices[indexSlot] = block;
     if (! h->cache_blocks[indexSlot])
-        h->cache_blocks[indexSlot] = malloc( ((unsigned int)h->reset_table.block_len));
+        h->cache_blocks[indexSlot] =
+          HeapAlloc(GetProcessHeap(), 0, ((unsigned int)h->reset_table.block_len));
     lbuffer = h->cache_blocks[indexSlot];
     *ubuffer = lbuffer;
 
