@@ -95,7 +95,6 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     SetActiveWindow( 0 );
 
     hr = IDirectInputDevice_GetDeviceState(pMouse, sizeof(m_state), &m_state);
-    todo_wine
     ok(hr == DIERR_NOTACQUIRED, "GetDeviceState() should have failed: %s\n", DXGetErrorString8(hr));
     /* Workaround so we can test other things. Remove when Wine is fixed */
     IDirectInputDevice_Unacquire(pMouse);

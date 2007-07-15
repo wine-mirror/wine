@@ -848,6 +848,41 @@ static LRESULT CALLBACK LL_hook_proc( int code, WPARAM wparam, LPARAM lparam )
     return CallNextHookEx( 0, code, wparam, lparam );
 }
 
+static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam )
+{
+    CWPSTRUCT *msg = (CWPSTRUCT *)lparam;
+    IDirectInputImpl *dinput;
+    HWND foreground;
+
+    if (code != HC_ACTION || msg->message != WM_KILLFOCUS)
+        return CallNextHookEx( 0, code, wparam, lparam );
+
+    foreground = GetForegroundWindow();
+
+    EnterCriticalSection( &dinput_hook_crit );
+
+    LIST_FOR_EACH_ENTRY( dinput, &direct_input_list, IDirectInputImpl, entry )
+    {
+        IDirectInputDevice2AImpl *dev;
+
+        EnterCriticalSection( &dinput->crit );
+        LIST_FOR_EACH_ENTRY( dev, &dinput->devices_list, IDirectInputDevice2AImpl, entry )
+        {
+            if (!dev->acquired) continue;
+
+            if (msg->hwnd == dev->win && msg->hwnd != foreground)
+            {
+                TRACE( "%p window is not foreground - unacquiring %p\n", dev->win, dev );
+                IDirectInputDevice_Unacquire( (LPDIRECTINPUTDEVICE8A)dev );
+            }
+        }
+        LeaveCriticalSection( &dinput->crit );
+    }
+    LeaveCriticalSection( &dinput_hook_crit );
+
+    return CallNextHookEx( 0, code, wparam, lparam );
+}
+
 static DWORD WINAPI hook_thread_proc(void *param)
 {
     static HHOOK kbd_hook, mouse_hook;
@@ -976,7 +1011,30 @@ static BOOL check_hook_thread(void)
 
 void check_dinput_hooks(LPDIRECTINPUTDEVICE8A iface)
 {
+    static HHOOK callwndproc_hook;
+    static ULONG foreground_cnt;
+    IDirectInputDevice2AImpl *dev = (IDirectInputDevice2AImpl *)iface;
+
     EnterCriticalSection(&dinput_hook_crit);
+
+    if (dev->dwCoopLevel & DISCL_FOREGROUND)
+    {
+        if (dev->acquired)
+            foreground_cnt++;
+        else
+            foreground_cnt--;
+    }
+
+    if (foreground_cnt && !callwndproc_hook)
+        callwndproc_hook = SetWindowsHookExW( WH_CALLWNDPROC, callwndproc_proc,
+                                              DINPUT_instance, GetCurrentThreadId() );
+    else if (!foreground_cnt && callwndproc_hook)
+    {
+        UnhookWindowsHookEx( callwndproc_hook );
+        callwndproc_hook = NULL;
+    }
+
     PostThreadMessageW( hook_thread_id, WM_USER+0x10, 1, 0 );
+
     LeaveCriticalSection(&dinput_hook_crit);
 }
