@@ -3251,10 +3251,40 @@ lend:
  * Determines how much data is available to be read.
  *
  * RETURNS
- *   If there is data available then TRUE, otherwise if there
- *   is not or an error occurred then FALSE. Use GetLastError() to
- *   check for ERROR_NO_MORE_FILES to see if it was the former.
+ *   TRUE on success, FALSE if an error occurred. If
+ *   INTERNET_FLAG_ASYNC was specified in InternetOpen, and
+ *   no data is presently available, FALSE is returned with
+ *   the last error ERROR_IO_PENDING; a callback with status
+ *   INTERNET_STATUS_REQUEST_COMPLETE will be sent when more
+ *   data is available.
  */
+void AsyncInternetQueryDataAvailableProc(WORKREQUEST *workRequest)
+{
+    LPWININETHTTPREQW lpwhr;
+    INTERNET_ASYNC_RESULT iar;
+    char buffer[4048];
+
+    TRACE("INTERNETQUERYDATAAVAILABLE %p\n", workRequest->hdr);
+
+    switch (workRequest->hdr->htype)
+    {
+    case WH_HHTTPREQ:
+        lpwhr = (LPWININETHTTPREQW)workRequest->hdr;
+        iar.dwResult = NETCON_recv(&lpwhr->netConnection, buffer,
+                                   min(sizeof(buffer),
+                                       lpwhr->dwContentLength - lpwhr->dwContentRead),
+                                   MSG_PEEK, (int *)&iar.dwError);
+        INTERNET_SendCallback(workRequest->hdr, workRequest->hdr->dwContext,
+                              INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                              sizeof(INTERNET_ASYNC_RESULT));
+        break;
+
+    default:
+        FIXME("unsupported file type\n");
+        break;
+    }
+}
+
 BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
                                 LPDWORD lpdwNumberOfBytesAvailble,
                                 DWORD dwFlags, DWORD dwConext)
@@ -3278,20 +3308,45 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
         if (NETCON_query_data_available(&lpwhr->netConnection,
                                         lpdwNumberOfBytesAvailble))
         {
-            if (!*lpdwNumberOfBytesAvailble &&
-                !NETCON_recv(&lpwhr->netConnection, buffer,
-                         min(sizeof(buffer), lpwhr->dwContentLength - lpwhr->dwContentRead),
-                         MSG_PEEK, (int *)lpdwNumberOfBytesAvailble))
-            {
-                INTERNET_SetLastError(ERROR_NO_MORE_FILES);
-                retval = FALSE;
-            }
             retval = TRUE;
+            if (!*lpdwNumberOfBytesAvailble)
+            {
+                /* Even if we are in async mode, we need to determine whether
+                 * there is actually more data available. We do this by trying
+                 * to peek only a single byte in async mode. */
+                BOOL async = (lpwhr->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC);
+                if (!NETCON_recv(&lpwhr->netConnection, buffer,
+                                 async ? 1 : min(sizeof(buffer),
+                                                 lpwhr->dwContentLength - lpwhr->dwContentRead),
+                                 MSG_PEEK, (int *)lpdwNumberOfBytesAvailble))
+                {
+                    INTERNET_SetLastError(ERROR_NO_MORE_FILES);
+                    retval = FALSE;
+                }
+                else if (async && *lpdwNumberOfBytesAvailble)
+                {
+                    WORKREQUEST workRequest;
+
+                    *lpdwNumberOfBytesAvailble = 0;
+                    workRequest.asyncproc = AsyncInternetQueryDataAvailableProc;
+                    workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
+
+                    retval = INTERNET_AsyncCall(&workRequest);
+                    if (!retval)
+                    {
+                        WININET_Release( &lpwhr->hdr );
+                    }
+                    else
+                    {
+                        INTERNET_SetLastError(ERROR_IO_PENDING);
+                        retval = FALSE;
+                    }
+                }
+            }
         }
         else
         {
             INTERNET_SetLastError(ERROR_NO_MORE_FILES);
-            retval = FALSE;
         }
         break;
 
