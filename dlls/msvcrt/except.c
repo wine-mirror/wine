@@ -84,7 +84,16 @@ static inline int call_filter( int (*func)(PEXCEPTION_POINTERS), void *arg, void
 static inline int call_unwind_func( int (*func)(void), void *ebp )
 {
     int ret;
-    __asm__ __volatile__ ("pushl %%ebp; movl %2,%%ebp; call *%0; popl %%ebp"
+    __asm__ __volatile__ ("pushl %%ebp\n\t"
+                          "pushl %%ebx\n\t"
+                          "pushl %%esi\n\t"
+                          "pushl %%edi\n\t"
+                          "movl %2,%%ebp\n\t"
+                          "call *%0\n\t"
+                          "popl %%edi\n\t"
+                          "popl %%esi\n\t"
+                          "popl %%ebx\n\t"
+                          "popl %%ebp"
                           : "=a" (ret)
                           : "0" (func), "r" (ebp)
                           : "ecx", "edx", "memory" );
