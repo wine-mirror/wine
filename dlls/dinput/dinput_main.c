@@ -848,22 +848,31 @@ static LRESULT CALLBACK LL_hook_proc( int code, WPARAM wparam, LPARAM lparam )
     return CallNextHookEx( 0, code, wparam, lparam );
 }
 
-static LRESULT CALLBACK dinput_hook_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static DWORD WINAPI hook_thread_proc(void *param)
 {
     static HHOOK kbd_hook, mouse_hook;
-    UINT kbd_cnt = 0, mice_cnt = 0;
+    MSG msg;
 
-    TRACE("got message %x %p %p\n", message, (LPVOID)wParam, (LPVOID)lParam);
-    switch (message)
+    /* Force creation of the message queue */
+    PeekMessageW( &msg, 0, 0, 0, PM_NOREMOVE );
+    SetEvent(*(LPHANDLE)param);
+
+    while (GetMessageW( &msg, 0, 0, 0 ))
     {
-    case WM_USER+0x10:
+        UINT kbd_cnt = 0, mice_cnt = 0;
+
+        if (msg.message == WM_USER+0x10)
         {
             IDirectInputImpl *dinput;
 
-            if (!wParam && !lParam)
+            TRACE( "Processing hook change notification lp:%ld\n", msg.lParam );
+
+            if (!msg.wParam && !msg.lParam)
             {
-                DestroyWindow( hWnd );
-                return 0;
+                if (kbd_hook) UnhookWindowsHookEx( kbd_hook );
+                if (mouse_hook) UnhookWindowsHookEx( mouse_hook );
+                kbd_hook = mouse_hook = NULL;
+                break;
             }
 
             EnterCriticalSection( &dinput_hook_crit );
@@ -906,45 +915,14 @@ static LRESULT CALLBACK dinput_hook_WndProc(HWND hWnd, UINT message, WPARAM wPar
                 mouse_hook = NULL;
             }
         }
-        return 0;
-
-    case WM_DESTROY:
-        if (kbd_hook) UnhookWindowsHookEx(kbd_hook);
-        if (mouse_hook) UnhookWindowsHookEx(mouse_hook);
-        kbd_hook = mouse_hook = NULL;
-        PostQuitMessage(0);
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
     }
-    return DefWindowProcW(hWnd, message, wParam, lParam);
-}
 
-static HWND hook_thread_hwnd;
-static HANDLE hook_thread;
-
-static const WCHAR classW[]={'H','o','o','k','_','L','L','_','C','L',0};
-
-static DWORD WINAPI hook_thread_proc(void *param)
-{
-    MSG msg;
-    HWND hwnd;
-
-    hwnd = CreateWindowExW(0, classW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, 0);
-    hook_thread_hwnd = hwnd;
-
-    SetEvent(*(LPHANDLE)param);
-    if (hwnd)
-    {
-        while (GetMessageW(&msg, 0, 0, 0))
-        {
-            TranslateMessage(&msg);
-            DispatchMessageW(&msg);
-        }
-        DestroyWindow(hwnd);
-    }
-    else ERR("Error creating message window\n");
-
-    UnregisterClassW(classW, DINPUT_instance);
     return 0;
 }
+
+static DWORD hook_thread_id;
 
 static CRITICAL_SECTION_DEBUG dinput_critsect_debug =
 {
@@ -956,26 +934,17 @@ static CRITICAL_SECTION dinput_hook_crit = { &dinput_critsect_debug, -1, 0, 0, 0
 
 static BOOL check_hook_thread(void)
 {
+    static HANDLE hook_thread;
+
     EnterCriticalSection(&dinput_hook_crit);
 
     TRACE("IDirectInputs left: %d\n", list_count(&direct_input_list));
     if (!list_empty(&direct_input_list) && !hook_thread)
     {
-        DWORD tid;
         HANDLE event;
 
-        /* Create window class */
-        WNDCLASSEXW wcex;
-        memset(&wcex, 0, sizeof(wcex));
-        wcex.cbSize = sizeof(wcex);
-        wcex.lpfnWndProc = dinput_hook_WndProc;
-        wcex.lpszClassName = classW;
-        wcex.hInstance = DINPUT_instance;
-        if (!RegisterClassExW(&wcex))
-            ERR("Error registering window class\n");
-
         event = CreateEventW(NULL, FALSE, FALSE, NULL);
-        hook_thread = CreateThread(NULL, 0, hook_thread_proc, &event, 0, &tid);
+        hook_thread = CreateThread(NULL, 0, hook_thread_proc, &event, 0, &hook_thread_id);
         if (event && hook_thread)
         {
             HANDLE handles[2];
@@ -983,29 +952,31 @@ static BOOL check_hook_thread(void)
             handles[1] = hook_thread;
             WaitForMultipleObjects(2, handles, FALSE, INFINITE);
         }
+        LeaveCriticalSection(&dinput_hook_crit);
         CloseHandle(event);
     }
     else if (list_empty(&direct_input_list) && hook_thread)
     {
-        HWND hwnd = hook_thread_hwnd;
-        hook_thread_hwnd = 0;
-        SendMessageW(hwnd, WM_USER+0x10, 0, 0);
+        DWORD tid = hook_thread_id;
+
+        hook_thread_id = 0;
+        PostThreadMessageW(tid, WM_USER+0x10, 0, 0);
+        LeaveCriticalSection(&dinput_hook_crit);
+
         /* wait for hook thread to exit */
         WaitForSingleObject(hook_thread, INFINITE);
         CloseHandle(hook_thread);
         hook_thread = NULL;
     }
-    LeaveCriticalSection(&dinput_hook_crit);
+    else
+        LeaveCriticalSection(&dinput_hook_crit);
 
-    return hook_thread_hwnd != 0;
+    return hook_thread_id != 0;
 }
 
 void check_dinput_hooks(LPDIRECTINPUTDEVICE8A iface)
 {
-    HWND hwnd;
-
     EnterCriticalSection(&dinput_hook_crit);
-    hwnd = hook_thread_hwnd;
+    PostThreadMessageW( hook_thread_id, WM_USER+0x10, 1, 0 );
     LeaveCriticalSection(&dinput_hook_crit);
-    SendMessageW(hwnd, WM_USER+0x10, 1, 0);
 }
