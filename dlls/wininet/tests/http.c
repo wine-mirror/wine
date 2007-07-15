@@ -271,11 +271,18 @@ static void InternetReadFile_test(int flags)
     length = 100;
     trace("Entering Query loop\n");
 
-    while (length)
+    while (TRUE)
     {
         rc = InternetQueryDataAvailable(hor,&length,0x0,0x0);
         ok(!(rc == 0 && length != 0),"InternetQueryDataAvailable failed\n");
-
+        if (flags & INTERNET_FLAG_ASYNC)
+        {
+            if (rc == 0 && GetLastError() == ERROR_IO_PENDING)
+            {
+                WaitForSingleObject(hCompleteEvent, INFINITE);
+                continue;
+            }
+        }
         if (length)
         {
             char *buffer;
@@ -289,6 +296,8 @@ static void InternetReadFile_test(int flags)
 
             HeapFree(GetProcessHeap(),0,buffer);
         }
+        if (length == 0)
+            break;
     }
 abort:
     if (hor != 0x0) {
