@@ -1377,6 +1377,14 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         return NULL;
     }
 
+    /* SERVICE_BOOT_START and SERVICE_SYSTEM_START or only allowed for driver services */
+    if (((dwStartType == SERVICE_BOOT_START) || (dwStartType == SERVICE_SYSTEM_START)) &&
+        ((dwServiceType & SERVICE_WIN32_OWN_PROCESS) || (dwServiceType & SERVICE_WIN32_SHARE_PROCESS)))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
     r = RegCreateKeyExW(hscm->hkey, lpServiceName, 0, NULL,
                        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dp);
     if (r!=ERROR_SUCCESS)

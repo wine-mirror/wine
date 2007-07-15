@@ -142,7 +142,7 @@ static void test_create_delete_svc(void)
     static const CHAR servicename         [] = "Winetest";
     static const CHAR pathname            [] = "we_dont_care.exe";
     static const CHAR empty               [] = "";
-    static const CHAR spooler             [] = "Spooler";
+    static const CHAR spooler             [] = "Spooler";           /* Should be available on all platforms */
     static const CHAR password            [] = "secret";
 
     /* Get the username and turn it into an account to be used in some tests */
@@ -267,9 +267,11 @@ static void test_create_delete_svc(void)
     ok(!svc_handle1, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    /* TODO: Add check for illegal combination of service-type and start-type */
-
-    /* TODO: Add check for displayname, it must be unique (or NULL/empty) */
+    /* Illegal (SERVICE_BOOT_START and SERVICE_SYSTEM_START or only allowed for driver services) */
+    SetLastError(0xdeadbeef);
+    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, 0, SERVICE_WIN32_OWN_PROCESS, SERVICE_BOOT_START, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    ok(!svc_handle1, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* The service already exists (check first, just in case) */
     svc_handle1 = OpenServiceA(scm_handle, spooler, GENERIC_READ);
@@ -283,6 +285,8 @@ static void test_create_delete_svc(void)
     }
     else
         skip("Spooler service doesn't exist\n");
+
+    /* TODO: Add check for displayname, it must be unique (or NULL/empty) */
 
     CloseServiceHandle(scm_handle);
 }
