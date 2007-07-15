@@ -33,9 +33,69 @@
 
 #define TEST_URL "http://www.winehq.org/site/about"
 
+static BOOL first_connection_to_test_url = TRUE;
+
+/* Adapted from dlls/urlmon/tests/protocol.c */
+
+#define SET_EXPECT2(status, num) \
+    expect[status] = num
+
+#define SET_EXPECT(status) \
+    SET_EXPECT2(status, 1)
+
+/* SET_WINE_ALLOW's should be used with an appropriate
+ * todo_wine CHECK_NOTIFIED at a later point in the code */
+#define SET_WINE_ALLOW2(status, num) \
+    wine_allow[status] = num
+
+#define SET_WINE_ALLOW(status) \
+    SET_WINE_ALLOW2(status, 1)
+
+#define CHECK_EXPECT(status) \
+    do { \
+        if (!expect[status] && wine_allow[status]) \
+        { \
+            todo_wine ok(expect[status], "unexpected status %d (%s)\n", status, \
+                         status < MAX_INTERNET_STATUS && status_string[status][0] != 0 ? \
+                         status_string[status] : "unknown");            \
+            wine_allow[status]--; \
+        } \
+        else \
+        { \
+            ok(expect[status], "unexpected status %d (%s)\n", status,   \
+               status < MAX_INTERNET_STATUS && status_string[status][0] != 0 ? \
+               status_string[status] : "unknown");                      \
+            expect[status]--;                                           \
+        } \
+        notified[status]++; \
+    }while(0)
+
+/* CLEAR_NOTIFIED used in cases when notification behavior
+ * differs between Windows versions */
+#define CLEAR_NOTIFIED(status) \
+    expect[status] = wine_allow[status] = notified[status] = 0;
+
+#define CHECK_NOTIFIED2(status, num) \
+    do { \
+        ok(notified[status] == (num), "expected status %d (%s) %d times, received %d times\n", \
+           status, status < MAX_INTERNET_STATUS && status_string[status][0] != 0 ? \
+           status_string[status] : "unknown", (num), notified[status]); \
+        CLEAR_NOTIFIED(status);                                         \
+    }while(0)
+
+#define CHECK_NOTIFIED(status) \
+    CHECK_NOTIFIED2(status, 1)
+
+#define CHECK_NOT_NOTIFIED(status) \
+    CHECK_NOTIFIED2(status, 0)
+
+#define MAX_INTERNET_STATUS (INTERNET_STATUS_COOKIE_HISTORY+1)
+#define MAX_STATUS_NAME 50
+static int expect[MAX_INTERNET_STATUS], wine_allow[MAX_INTERNET_STATUS],
+    notified[MAX_INTERNET_STATUS];
+static CHAR status_string[MAX_INTERNET_STATUS][MAX_STATUS_NAME];
+
 static HANDLE hCompleteEvent;
-static BOOL bResponseReceived;
-static BOOL bReceivingResponse;
 
 static INTERNET_STATUS_CALLBACK (WINAPI *pInternetSetStatusCallbackA)(HINTERNET ,INTERNET_STATUS_CALLBACK);
 static BOOL (WINAPI *pInternetTimeFromSystemTimeA)(CONST SYSTEMTIME *,DWORD ,LPSTR ,DWORD);
@@ -52,6 +112,7 @@ static VOID WINAPI callback(
      DWORD dwStatusInformationLength
 )
 {
+    CHECK_EXPECT(dwInternetStatus);
     switch (dwInternetStatus)
     {
         case INTERNET_STATUS_RESOLVING_NAME:
@@ -95,7 +156,6 @@ static VOID WINAPI callback(
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_RECEIVING_RESPONSE %p %d\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 lpvStatusInformation,dwStatusInformationLength);
-            bReceivingResponse = TRUE;
             break;
         case INTERNET_STATUS_RESPONSE_RECEIVED:
             ok(dwStatusInformationLength == sizeof(DWORD),
@@ -104,7 +164,6 @@ static VOID WINAPI callback(
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_RESPONSE_RECEIVED 0x%x %d\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 *(DWORD *)lpvStatusInformation,dwStatusInformationLength);
-            bResponseReceived = TRUE;
             break;
         case INTERNET_STATUS_CTL_RESPONSE_RECEIVED:
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CTL_RESPONSE_RECEIVED %p %d\n",
@@ -194,6 +253,8 @@ static void InternetReadFile_test(int flags)
 
     pInternetSetStatusCallbackA(hi,&callback);
 
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+
     trace("InternetConnectA <--\n");
     hic=InternetConnectA(hi, "www.winehq.org", INTERNET_INVALID_PORT_NUMBER,
                          NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
@@ -201,6 +262,11 @@ static void InternetReadFile_test(int flags)
     trace("InternetConnectA -->\n");
 
     if (hic == 0x0) goto abort;
+
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    SET_WINE_ALLOW(INTERNET_STATUS_RESOLVING_NAME);
+    SET_WINE_ALLOW(INTERNET_STATUS_NAME_RESOLVED);
 
     trace("HttpOpenRequestA <--\n");
     hor = HttpOpenRequestA(hic, "GET", "/about/", NULL, NULL, types,
@@ -220,6 +286,36 @@ static void InternetReadFile_test(int flags)
 
     if (hor == 0x0) goto abort;
 
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+    todo_wine
+    {
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+    }
+    if (first_connection_to_test_url)
+    {
+        SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
+        SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
+    }
+    else
+    {
+        SET_WINE_ALLOW(INTERNET_STATUS_RESOLVING_NAME);
+        SET_WINE_ALLOW(INTERNET_STATUS_NAME_RESOLVED);
+    }
+    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_EXPECT2(INTERNET_STATUS_SENDING_REQUEST, 2);
+    SET_EXPECT2(INTERNET_STATUS_REQUEST_SENT, 2);
+    SET_EXPECT2(INTERNET_STATUS_RECEIVING_RESPONSE, 2);
+    SET_EXPECT2(INTERNET_STATUS_RESPONSE_RECEIVED, 2);
+    SET_EXPECT(INTERNET_STATUS_REDIRECT);
+    if (flags & INTERNET_FLAG_ASYNC)
+        SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    else
+        SET_WINE_ALLOW(INTERNET_STATUS_REQUEST_COMPLETE);
+
     trace("HttpSendRequestA -->\n");
     SetLastError(0xdeadbeef);
     rc = HttpSendRequestA(hor, "", -1, NULL, 0);
@@ -233,6 +329,29 @@ static void InternetReadFile_test(int flags)
 
     if (flags & INTERNET_FLAG_ASYNC)
         WaitForSingleObject(hCompleteEvent, INFINITE);
+
+    if (first_connection_to_test_url)
+    {
+        CHECK_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
+        CHECK_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+    }
+    else todo_wine
+    {
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+    }
+    CHECK_NOTIFIED2(INTERNET_STATUS_SENDING_REQUEST, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_REQUEST_SENT, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_RECEIVING_RESPONSE, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_RESPONSE_RECEIVED, 2);
+    CHECK_NOTIFIED(INTERNET_STATUS_REDIRECT);
+    if (flags & INTERNET_FLAG_ASYNC)
+        CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    else
+        todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    /* Sent on WinXP only if first_connection_to_test_url is TRUE, on Win98 always sent */
+    CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
 
     length = 4;
     rc = InternetQueryOptionA(hor,INTERNET_OPTION_REQUEST_FLAGS,&out,&length);
@@ -271,15 +390,24 @@ static void InternetReadFile_test(int flags)
     length = 100;
     trace("Entering Query loop\n");
 
+    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
     while (TRUE)
     {
+        if (flags & INTERNET_FLAG_ASYNC)
+            SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
         rc = InternetQueryDataAvailable(hor,&length,0x0,0x0);
         ok(!(rc == 0 && length != 0),"InternetQueryDataAvailable failed\n");
         if (flags & INTERNET_FLAG_ASYNC)
         {
-            if (rc == 0 && GetLastError() == ERROR_IO_PENDING)
+            if (rc != 0)
+            {
+                CHECK_NOT_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+            }
+            else if (GetLastError() == ERROR_IO_PENDING)
             {
                 WaitForSingleObject(hCompleteEvent, INFINITE);
+                CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
                 continue;
             }
         }
@@ -299,8 +427,14 @@ static void InternetReadFile_test(int flags)
         if (length == 0)
             break;
     }
+    /* WinXP does not send, but Win98 does */
+    CLEAR_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
 abort:
+    SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     if (hor != 0x0) {
+        SET_WINE_ALLOW(INTERNET_STATUS_CLOSING_CONNECTION);
+        SET_WINE_ALLOW(INTERNET_STATUS_CONNECTION_CLOSED);
         SetLastError(0xdeadbeef);
         rc = InternetCloseHandle(hor);
         ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
@@ -316,12 +450,25 @@ abort:
         ok ((rc != 0), "InternetCloseHandle of handle opened by InternetConnectA failed\n");
     }
     if (hi != 0x0) {
+      SET_WINE_ALLOW(INTERNET_STATUS_HANDLE_CLOSING);
       rc = InternetCloseHandle(hi);
       ok ((rc != 0), "InternetCloseHandle of handle opened by InternetOpenA failed\n");
       if (flags & INTERNET_FLAG_ASYNC)
           Sleep(100);
     }
+    todo_wine CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
+    if (hor != 0x0) todo_wine
+    {
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+    }
+    else
+    {
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+    }
     CloseHandle(hCompleteEvent);
+    first_connection_to_test_url = FALSE;
 }
 
 static void InternetReadFileExA_test(int flags)
@@ -345,6 +492,8 @@ static void InternetReadFileExA_test(int flags)
 
     pInternetSetStatusCallbackA(hi,&callback);
 
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+
     trace("InternetConnectA <--\n");
     hic=InternetConnectA(hi, "www.winehq.org", INTERNET_INVALID_PORT_NUMBER,
                          NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
@@ -352,6 +501,11 @@ static void InternetReadFileExA_test(int flags)
     trace("InternetConnectA -->\n");
 
     if (hic == 0x0) goto abort;
+
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    SET_WINE_ALLOW(INTERNET_STATUS_RESOLVING_NAME);
+    SET_WINE_ALLOW(INTERNET_STATUS_NAME_RESOLVED);
 
     trace("HttpOpenRequestA <--\n");
     hor = HttpOpenRequestA(hic, "GET", "/about/", NULL, NULL, types,
@@ -371,6 +525,36 @@ static void InternetReadFileExA_test(int flags)
 
     if (hor == 0x0) goto abort;
 
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+    todo_wine
+    {
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+    }
+    if (first_connection_to_test_url)
+    {
+        SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
+        SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
+    }
+    else
+    {
+        SET_WINE_ALLOW(INTERNET_STATUS_RESOLVING_NAME);
+        SET_WINE_ALLOW(INTERNET_STATUS_NAME_RESOLVED);
+    }
+    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_EXPECT2(INTERNET_STATUS_SENDING_REQUEST, 2);
+    SET_EXPECT2(INTERNET_STATUS_REQUEST_SENT, 2);
+    SET_EXPECT2(INTERNET_STATUS_RECEIVING_RESPONSE, 2);
+    SET_EXPECT2(INTERNET_STATUS_RESPONSE_RECEIVED, 2);
+    SET_EXPECT(INTERNET_STATUS_REDIRECT);
+    if (flags & INTERNET_FLAG_ASYNC)
+        SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    else
+        SET_WINE_ALLOW(INTERNET_STATUS_REQUEST_COMPLETE);
+
     trace("HttpSendRequestA -->\n");
     SetLastError(0xdeadbeef);
     rc = HttpSendRequestA(hor, "", -1, NULL, 0);
@@ -384,6 +568,29 @@ static void InternetReadFileExA_test(int flags)
 
     if (!rc && (GetLastError() == ERROR_IO_PENDING))
         WaitForSingleObject(hCompleteEvent, INFINITE);
+
+    if (first_connection_to_test_url)
+    {
+        CHECK_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
+        CHECK_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+    }
+    else todo_wine
+    {
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+    }
+    CHECK_NOTIFIED2(INTERNET_STATUS_SENDING_REQUEST, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_REQUEST_SENT, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_RECEIVING_RESPONSE, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_RESPONSE_RECEIVED, 2);
+    CHECK_NOTIFIED(INTERNET_STATUS_REDIRECT);
+    if (flags & INTERNET_FLAG_ASYNC)
+        CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    else
+        todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    /* Sent on WinXP only if first_connection_to_test_url is TRUE, on Win98 always sent */
+    CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
 
     /* tests invalid dwStructSize */
     inetbuffers.dwStructSize = sizeof(INTERNET_BUFFERS)+1;
@@ -407,8 +614,15 @@ static void InternetReadFileExA_test(int flags)
     inetbuffers.lpvBuffer = NULL;
     inetbuffers.dwOffsetHigh = 1234;
     inetbuffers.dwOffsetLow = 5678;
+    SET_WINE_ALLOW(INTERNET_STATUS_RECEIVING_RESPONSE);
+    SET_WINE_ALLOW(INTERNET_STATUS_RESPONSE_RECEIVED);
     rc = InternetReadFileEx(hor, &inetbuffers, 0, 0xdeadcafe);
     ok(rc, "InternetReadFileEx failed with error %u\n", GetLastError());
+    todo_wine
+    {
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
+        CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+    }
 
     rc = InternetReadFileEx(NULL, &inetbuffers, 0, 0xdeadcafe);
     ok(!rc && (GetLastError() == ERROR_INVALID_HANDLE),
@@ -418,6 +632,8 @@ static void InternetReadFileExA_test(int flags)
     length = 0;
     trace("Entering Query loop\n");
 
+    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
     while (TRUE)
     {
         inetbuffers.dwStructSize = sizeof(INTERNET_BUFFERS);
@@ -426,17 +642,19 @@ static void InternetReadFileExA_test(int flags)
         inetbuffers.dwOffsetHigh = 1234;
         inetbuffers.dwOffsetLow = 5678;
 
-        bReceivingResponse = FALSE;
-        bResponseReceived = FALSE;
+        SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
+        SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+        SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
         rc = InternetReadFileExA(hor, &inetbuffers, IRF_ASYNC | IRF_USE_CONTEXT, 0xcafebabe);
         if (!rc)
         {
             if (GetLastError() == ERROR_IO_PENDING)
             {
                 trace("InternetReadFileEx -> PENDING\n");
-                ok(bReceivingResponse, "INTERNET_STATUS_RECEIVING_RESPONSE should have been sent to callback function\n");
+                CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
                 WaitForSingleObject(hCompleteEvent, INFINITE);
-                ok(!bResponseReceived, "INTERNET_STATUS_RESPONSE_RECEIVED should not have been sent to callback function\n");
+                CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+                CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
             }
             else
             {
@@ -447,8 +665,18 @@ static void InternetReadFileExA_test(int flags)
         else
         {
             trace("InternetReadFileEx -> SUCCEEDED\n");
-            ok(bReceivingResponse, "INTERNET_STATUS_RECEIVING_RESPONSE should have been sent to callback function\n");
-            ok(bResponseReceived, "INTERNET_STATUS_RESPONSE_RECEIVED should have been sent to callback function\n");
+            CHECK_NOT_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+            if (inetbuffers.dwBufferLength)
+            {
+                CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
+                CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+            }
+            else
+            {
+                /* Win98 still sends these when 0 bytes are read, WinXP does not */
+                CLEAR_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
+                CLEAR_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+            }
         }
 
         trace("read %i bytes\n", inetbuffers.dwBufferLength);
@@ -468,7 +696,11 @@ static void InternetReadFileExA_test(int flags)
     ok(length > 0, "failed to read any of the document\n");
     trace("Finished. Read %d bytes\n", length);
 
+    /* WinXP does not send, but Win98 does */
+    CLEAR_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
 abort:
+    SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     if (hor) {
         rc = InternetCloseHandle(hor);
         ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
@@ -480,12 +712,15 @@ abort:
         ok ((rc != 0), "InternetCloseHandle of handle opened by InternetConnectA failed\n");
     }
     if (hi) {
+      SET_WINE_ALLOW(INTERNET_STATUS_HANDLE_CLOSING);
       rc = InternetCloseHandle(hi);
       ok ((rc != 0), "InternetCloseHandle of handle opened by InternetOpenA failed\n");
       if (flags & INTERNET_FLAG_ASYNC)
           Sleep(100);
+      todo_wine CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     }
     CloseHandle(hCompleteEvent);
+    first_connection_to_test_url = FALSE;
 }
 
 static void InternetOpenUrlA_test(void)
@@ -1160,6 +1395,45 @@ static void test_http_connection(void)
     CloseHandle(hThread);
 }
 
+#define STATUS_STRING(status) \
+    memcpy(status_string[status], #status, sizeof(CHAR) * \
+           (strlen(#status) < MAX_STATUS_NAME ? \
+            strlen(#status) : \
+            MAX_STATUS_NAME - 1))
+static void init_status_tests(void)
+{
+    memset(expect, 0, sizeof(expect));
+    memset(wine_allow, 0, sizeof(wine_allow));
+    memset(notified, 0, sizeof(notified));
+    memset(status_string, 0, sizeof(status_string));
+    STATUS_STRING(INTERNET_STATUS_RESOLVING_NAME);
+    STATUS_STRING(INTERNET_STATUS_NAME_RESOLVED);
+    STATUS_STRING(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    STATUS_STRING(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    STATUS_STRING(INTERNET_STATUS_SENDING_REQUEST);
+    STATUS_STRING(INTERNET_STATUS_REQUEST_SENT);
+    STATUS_STRING(INTERNET_STATUS_RECEIVING_RESPONSE);
+    STATUS_STRING(INTERNET_STATUS_RESPONSE_RECEIVED);
+    STATUS_STRING(INTERNET_STATUS_CTL_RESPONSE_RECEIVED);
+    STATUS_STRING(INTERNET_STATUS_PREFETCH);
+    STATUS_STRING(INTERNET_STATUS_CLOSING_CONNECTION);
+    STATUS_STRING(INTERNET_STATUS_CONNECTION_CLOSED);
+    STATUS_STRING(INTERNET_STATUS_HANDLE_CREATED);
+    STATUS_STRING(INTERNET_STATUS_HANDLE_CLOSING);
+    STATUS_STRING(INTERNET_STATUS_REQUEST_COMPLETE);
+    STATUS_STRING(INTERNET_STATUS_REDIRECT);
+    STATUS_STRING(INTERNET_STATUS_INTERMEDIATE_RESPONSE);
+    STATUS_STRING(INTERNET_STATUS_USER_INPUT_REQUIRED);
+    STATUS_STRING(INTERNET_STATUS_STATE_CHANGE);
+    STATUS_STRING(INTERNET_STATUS_COOKIE_SENT);
+    STATUS_STRING(INTERNET_STATUS_COOKIE_RECEIVED);
+    STATUS_STRING(INTERNET_STATUS_PRIVACY_IMPACTED);
+    STATUS_STRING(INTERNET_STATUS_P3P_HEADER);
+    STATUS_STRING(INTERNET_STATUS_P3P_POLICYREF);
+    STATUS_STRING(INTERNET_STATUS_COOKIE_HISTORY);
+}
+#undef STATUS_STRING
+
 START_TEST(http)
 {
     HMODULE hdll;
@@ -1174,6 +1448,7 @@ START_TEST(http)
         skip("skipping the InternetReadFile tests\n");
     else
     {
+        init_status_tests();
         InternetReadFile_test(INTERNET_FLAG_ASYNC);
         InternetReadFile_test(0);
         InternetReadFileExA_test(INTERNET_FLAG_ASYNC);
