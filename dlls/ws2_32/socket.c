@@ -2717,13 +2717,11 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             if (n > 0)
             {
                 *lpNumberOfBytesSent += n;
-                if (iovec[first_buff].iov_len > n)
-                    iovec[first_buff].iov_len -= n;
-                else
-                {
-                    while (n > 0) n -= iovec[first_buff++].iov_len;
-                    if (first_buff >= dwBufferCount) break;
-                }
+                while (first_buff < dwBufferCount && iovec[first_buff].iov_len <= n)
+                    n -= iovec[first_buff++].iov_len;
+                if (first_buff >= dwBufferCount) break;
+                iovec[first_buff].iov_base = (char*)iovec[first_buff].iov_base + n;
+                iovec[first_buff].iov_len -= n;
             }
 
             if (timeout != -1)
