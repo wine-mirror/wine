@@ -50,6 +50,28 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL (shell);
 
+static CRITICAL_SECTION SHELL32_SF_ClassCacheCS;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &SHELL32_SF_ClassCacheCS,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": SHELL32_SF_ClassCacheCS") }
+};
+static CRITICAL_SECTION SHELL32_SF_ClassCacheCS = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+/* IShellFolder class cache */
+struct _sf_cls_cache_entry
+{
+    CLSID clsid;
+    LPVOID pv;
+};
+
+static struct _sf_class_cache
+{
+    DWORD allocated, used;
+    struct _sf_cls_cache_entry *sf_cls_cache_entry;
+} sf_cls_cache;
+
 static const WCHAR wszDotShellClassInfo[] = {
     '.','S','h','e','l','l','C','l','a','s','s','I','n','f','o',0};
 
@@ -182,6 +204,66 @@ HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc,
     return hr;
 }
 
+static BOOL get_iface_from_cache(REFCLSID clsid, LPVOID *ppvOut)
+{
+    BOOL ret = FALSE;
+    int i;
+
+    EnterCriticalSection(&SHELL32_SF_ClassCacheCS);
+
+    for (i = 0; i < sf_cls_cache.used; i++)
+    {
+        if (IsEqualIID(&sf_cls_cache.sf_cls_cache_entry[i].clsid, clsid))
+        {
+            *ppvOut = sf_cls_cache.sf_cls_cache_entry[i].pv;
+            /* Pin it */
+            IUnknown_AddRef((IUnknown *)*ppvOut);
+            ret = TRUE;
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&SHELL32_SF_ClassCacheCS);
+    return ret;
+}
+
+static void add_iface_to_cache(REFCLSID clsid, LPVOID pv)
+{
+    EnterCriticalSection(&SHELL32_SF_ClassCacheCS);
+
+    if (sf_cls_cache.used >= sf_cls_cache.allocated)
+    {
+        DWORD allocated;
+        struct _sf_cls_cache_entry *sf_cls_cache_entry;
+
+        if (!sf_cls_cache.allocated)
+        {
+            allocated = 4;
+            sf_cls_cache_entry = HeapAlloc(GetProcessHeap(), 0,
+                                           4 * sizeof(*sf_cls_cache_entry));
+        }
+        else
+        {
+            allocated = sf_cls_cache.allocated * 2;
+            sf_cls_cache_entry = HeapReAlloc(GetProcessHeap(), 0, sf_cls_cache.sf_cls_cache_entry,
+                                             allocated * sizeof(*sf_cls_cache_entry));
+        }
+        if (!sf_cls_cache_entry) return;
+
+        sf_cls_cache.allocated = allocated;
+        sf_cls_cache.sf_cls_cache_entry = sf_cls_cache_entry;
+    }
+
+    /* Pin it */
+    IUnknown_AddRef((IUnknown *)pv);
+
+    sf_cls_cache.sf_cls_cache_entry[sf_cls_cache.used].clsid = *clsid;
+    sf_cls_cache.sf_cls_cache_entry[sf_cls_cache.used].pv = pv;
+    sf_cls_cache.used++;
+
+    LeaveCriticalSection(&SHELL32_SF_ClassCacheCS);
+}
+
 /***********************************************************************
  *	SHELL32_CoCreateInitSF
  *
@@ -193,13 +275,26 @@ HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc,
  *   In this case the absolute path is built from pidlChild (eg. C:)
  */
 static HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot, LPCWSTR pathRoot,
-    LPCITEMIDLIST pidlChild, REFCLSID clsid, REFIID riid, LPVOID * ppvOut)
+                LPCITEMIDLIST pidlChild, REFCLSID clsid, LPVOID * ppvOut)
 {
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE ("%p %s %p\n", pidlRoot, debugstr_w(pathRoot), pidlChild);
 
-    if (SUCCEEDED ((hr = SHCoCreateInstance (NULL, clsid, NULL, riid, ppvOut)))) {
+    if (!get_iface_from_cache(clsid, ppvOut))
+    {
+        hr = SHCoCreateInstance(NULL, clsid, NULL, &IID_IShellFolder, ppvOut);
+        if (SUCCEEDED(hr))
+        {
+            TRACE("loaded %p %s\n", *ppvOut, wine_dbgstr_guid(clsid));
+            add_iface_to_cache(clsid, *ppvOut);
+        }
+    }
+    else
+        TRACE("found in the cache %p %s\n", *ppvOut, wine_dbgstr_guid(clsid));
+
+    if (SUCCEEDED (hr))
+    {
 	LPITEMIDLIST pidlAbsolute = ILCombine (pidlRoot, pidlChild);
 	IPersistFolder *pPF;
 	IPersistFolder3 *ppf;
@@ -275,7 +370,7 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
 
     if ((clsid = _ILGetGUIDPointer (pidlChild))) {
         /* virtual folder */
-        hr = SHELL32_CoCreateInitSF (pidlRoot, pathRoot, pidlChild, clsid, &IID_IShellFolder, (LPVOID *) & pSF);
+        hr = SHELL32_CoCreateInitSF (pidlRoot, pathRoot, pidlChild, clsid, (LPVOID *)&pSF);
     } else {
         /* file system folder */
         CLSID clsidFolder = CLSID_ShellFSFolder;
@@ -294,8 +389,8 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
             wszDotShellClassInfo, wszCLSID, wszCLSIDValue, CHARS_IN_GUID))
             CLSIDFromString (wszCLSIDValue, &clsidFolder);
 
-		hr = SHELL32_CoCreateInitSF (pidlRoot, pathRoot, pidlChild,
-            &clsidFolder, &IID_IShellFolder, (LPVOID *)&pSF);
+        hr = SHELL32_CoCreateInitSF (pidlRoot, pathRoot, pidlChild,
+                                     &clsidFolder, (LPVOID *)&pSF);
     }
     ILFree (pidlChild);
 
