@@ -1257,6 +1257,82 @@ static void test_impersonation(void)
     CloseHandle(hClientToken);
 }
 
+struct overlapped_server_args
+{
+    HANDLE pipe_created;
+};
+
+static DWORD CALLBACK overlapped_server(LPVOID arg)
+{
+    OVERLAPPED ol;
+    HANDLE pipe;
+    int ret, err;
+    struct overlapped_server_args *a = (struct overlapped_server_args*)arg;
+    DWORD num;
+    char buf[100];
+
+    pipe = CreateNamedPipeA("\\\\.\\pipe\\my pipe", FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 1, 0, 0, 100000, NULL);
+    ok(pipe != NULL, "pipe NULL\n");
+
+    ol.hEvent = CreateEventA(0, 1, 0, 0);
+    ok(ol.hEvent != NULL, "event NULL\n");
+    ret = ConnectNamedPipe(pipe, &ol);
+    err = GetLastError();
+    ok(ret == 0, "ret %d\n", ret);
+    ok(err == ERROR_IO_PENDING, "gle %d\n", err);
+    SetEvent(a->pipe_created);
+
+    ret = WaitForSingleObjectEx(ol.hEvent, INFINITE, 1);
+    if(ret == WAIT_IO_COMPLETION)
+        todo_wine ok(ret == WAIT_OBJECT_0, "ret %x\n", ret);
+    else
+        ok(ret == WAIT_OBJECT_0, "ret %x\n", ret);
+
+    ret = GetOverlappedResult(pipe, &ol, &num, 1);
+    ok(ret == 1, "ret %d\n", ret);
+
+    /* This should block */
+    ret = ReadFile(pipe, buf, sizeof(buf), &num, NULL);
+    if(ret == 0)
+        todo_wine ok(ret == 1, "ret %d\n", ret);
+    else
+        ok(ret == 1, "ret %d\n", ret);
+
+    DisconnectNamedPipe(pipe);
+    CloseHandle(ol.hEvent);
+    CloseHandle(pipe);
+    return 1;
+}
+
+static void test_overlapped(void)
+{
+    DWORD tid, num;
+    HANDLE thread, pipe;
+    int ret;
+    struct overlapped_server_args args;
+
+    args.pipe_created = CreateEventA(0, 1, 0, 0);
+    thread = CreateThread(NULL, 0, overlapped_server, &args, 0, &tid);
+
+    WaitForSingleObject(args.pipe_created, INFINITE);
+    pipe = CreateFileA("\\\\.\\pipe\\my pipe", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(pipe != INVALID_HANDLE_VALUE, "cf failed\n");
+
+    /* Sleep to try to get the ReadFile in the server to occur before the following WriteFile */
+    Sleep(1);
+
+    ret = WriteFile(pipe, "x", 1, &num, NULL);
+    if(ret == 0)
+        todo_wine ok(ret == 1, "ret %d\n", ret);
+    else
+        ok(ret == 1, "ret %d\n", ret);
+
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(pipe);
+    CloseHandle(args.pipe_created);
+    CloseHandle(thread);
+}
+
 START_TEST(pipe)
 {
     HMODULE hmod;
@@ -1264,20 +1340,13 @@ START_TEST(pipe)
     hmod = GetModuleHandle("advapi32.dll");
     pDuplicateTokenEx = (void *) GetProcAddress(hmod, "DuplicateTokenEx");
 
-    trace("test 1 of 7:\n");
     if (test_DisconnectNamedPipe())
         return;
-    trace("test 2 of 7:\n");
     test_CreateNamedPipe_instances_must_match();
-    trace("test 3 of 7:\n");
     test_NamedPipe_2();
-    trace("test 4 of 7:\n");
     test_CreateNamedPipe(PIPE_TYPE_BYTE);
-    trace("test 5 of 7\n");
     test_CreateNamedPipe(PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE);
-    trace("test 6 of 7\n");
     test_CreatePipe();
-    trace("test 7 of 7\n");
     test_impersonation();
-    trace("all tests done\n");
+    test_overlapped();
 }
