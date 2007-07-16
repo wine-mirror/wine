@@ -80,7 +80,7 @@
 @ stub PdhMakeCounterPathW
 @ stub PdhOpenLogA
 @ stub PdhOpenLogW
-@ stub PdhOpenQuery
+@ stdcall PdhOpenQuery(wstr long ptr) PdhOpenQueryW
 @ stdcall PdhOpenQueryA(str long ptr)
 @ stub PdhOpenQueryH
 @ stdcall PdhOpenQueryW(wstr long ptr)
