@@ -197,7 +197,7 @@
 @ stub NetShareGetInfo
 @ stub NetShareSetInfo
 @ stdcall NetStatisticsGet(wstr wstr long long ptr)
-@ stub NetUseAdd
+@ stdcall NetUseAdd(wstr long ptr ptr)
 @ stub NetUseDel
 @ stub NetUseEnum
 @ stub NetUseGetInfo
