@@ -5354,7 +5354,7 @@ static unsigned char *WINAPI NdrBaseTypeMarshall(
         break;
     case RPC_FC_ENUM16:
         /* only 16-bits on the wire, so do a sanity check */
-        if (*(UINT *)pMemory > USHRT_MAX)
+        if (*(UINT *)pMemory > SHRT_MAX)
             RpcRaiseException(RPC_X_ENUM_VALUE_OUT_OF_RANGE);
         ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT));
         *(USHORT *)pStubMsg->Buffer = *(UINT *)pMemory;

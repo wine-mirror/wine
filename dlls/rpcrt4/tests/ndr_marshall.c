@@ -418,8 +418,9 @@ static void test_simple_types(void)
     test_pointer_marshal(fmtstr_up_short, &s, 2, wiredata, 6, NULL, 0, "up_short");
     test_pointer_marshal(fmtstr_up_ushort, &s, 2, wiredata, 6, NULL, 0, "up_ushort");
 
-    i = s;
+    i = 0x7fff;
     *(void**)wiredata = &i;
+    *(unsigned short*)(wiredata + sizeof(void*)) = i;
     test_pointer_marshal(fmtstr_up_enum16, &i, 2, wiredata, 6, NULL, 0, "up_enum16");
 
     l = 0xcafebabe;
