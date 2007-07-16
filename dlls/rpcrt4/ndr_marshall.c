@@ -4556,7 +4556,7 @@ static unsigned char *union_arm_unmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     if((type & 0xff00) == 0x8000)
     {
         unsigned char basetype = LOBYTE(type);
-        return NdrBaseTypeUnmarshall(pStubMsg, ppMemory, &basetype, fMustAlloc);
+        return NdrBaseTypeUnmarshall(pStubMsg, ppMemory, &basetype, FALSE);
     }
     else
     {
