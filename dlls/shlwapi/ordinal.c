@@ -3088,24 +3088,10 @@ BOOL WINAPI PlaySoundWrapW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound)
 /*************************************************************************
  *      @	[SHLWAPI.294]
  */
-BOOL WINAPI SHGetIniStringW(LPSTR str1, LPSTR str2, LPSTR pStr, DWORD some_len,  LPCSTR lpStr2)
+BOOL WINAPI SHGetIniStringW(LPCWSTR str1, LPCWSTR str2, LPWSTR pStr, DWORD some_len, LPCWSTR lpStr2)
 {
-    /*
-     * str1:		"I"	"I"	pushl esp+0x20
-     * str2:		"U"	"I"	pushl 0x77c93810
-     * (is "I" and "U" "integer" and "unsigned" ??)
-     *
-     * pStr:		""	""	pushl eax
-     * some_len:	0x824	0x104	pushl 0x824
-     * lpStr2:		"%l"	"%l"	pushl esp+0xc
-     *
-     * shlwapi. StrCpyNW(lpStr2, irrelevant_var, 0x104);
-     * LocalAlloc(0x00, some_len) -> irrelevant_var
-     * LocalAlloc(0x40, irrelevant_len) -> pStr
-     * shlwapi.294(str1, str2, pStr, some_len, lpStr2);
-     * shlwapi.PathRemoveBlanksW(pStr);
-     */
-    FIXME("('%s', '%s', '%s', %08x, '%s'): stub!\n", str1, str2, pStr, some_len, lpStr2);
+    FIXME("(%s,%s,%p,%08x,%s): stub!\n", debugstr_w(str1), debugstr_w(str2),
+        pStr, some_len, debugstr_w(lpStr2));
     return TRUE;
 }
 

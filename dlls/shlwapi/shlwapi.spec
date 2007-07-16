@@ -291,7 +291,7 @@
 291 stdcall -noname SHMessageBoxCheckExA(ptr ptr ptr ptr ptr long str)
 292 stdcall -noname SHMessageBoxCheckExW(ptr ptr ptr ptr ptr long wstr)
 293 stub -noname SHCancelUserWorkItems
-294 stdcall -noname SHGetIniStringW(long long long long long)
+294 stdcall -noname SHGetIniStringW(wstr wstr ptr long wstr)
 295 stdcall -noname SHSetIniStringW(wstr ptr wstr wstr)
 296 stub -noname CreateURLFileContentsW
 297 stub -noname CreateURLFileContentsA
