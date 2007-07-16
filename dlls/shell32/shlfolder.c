@@ -248,7 +248,11 @@ static void add_iface_to_cache(REFCLSID clsid, LPVOID pv)
             sf_cls_cache_entry = HeapReAlloc(GetProcessHeap(), 0, sf_cls_cache.sf_cls_cache_entry,
                                              allocated * sizeof(*sf_cls_cache_entry));
         }
-        if (!sf_cls_cache_entry) return;
+        if (!sf_cls_cache_entry)
+        {
+            LeaveCriticalSection(&SHELL32_SF_ClassCacheCS);
+            return;
+        }
 
         sf_cls_cache.allocated = allocated;
         sf_cls_cache.sf_cls_cache_entry = sf_cls_cache_entry;
