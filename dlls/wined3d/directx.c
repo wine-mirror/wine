@@ -2471,10 +2471,6 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
         object->shader_backend = &none_shader_backend;
     }
 
-    /* This function should *not* be modifying GL caps
-     * TODO: move the functionality where it belongs */
-    select_shader_max_constants(object->ps_selected_mode, object->vs_selected_mode, &GLINFO_LOCATION);
-
     /* set the state of the device to valid */
     object->state = WINED3D_OK;
 
@@ -2522,6 +2518,7 @@ ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
 BOOL InitAdapters(void) {
     HDC     device_context;
     BOOL ret;
+    int ps_selected_mode, vs_selected_mode;
 
     /* No need to hold any lock. The calling library makes sure only one thread calls
      * wined3d simultaneously
@@ -2559,6 +2556,9 @@ BOOL InitAdapters(void) {
         }
         Adapters[0].driver = "Display";
         Adapters[0].description = "Direct3D HAL";
+
+        select_shader_mode(&Adapters[0].gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
+        select_shader_max_constants(ps_selected_mode, vs_selected_mode, &Adapters[0].gl_info);
     }
     numAdapters = 1;
     TRACE("%d adapters successfully initialized\n", numAdapters);
