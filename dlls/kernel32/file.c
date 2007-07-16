@@ -376,6 +376,7 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     offset.u.HighPart = overlapped->u.s.OffsetHigh;
     io_status = (PIO_STATUS_BLOCK)overlapped;
     io_status->u.Status = STATUS_PENDING;
+    io_status->Information = 0;
 
     status = NtReadFile(hFile, NULL, FILE_ReadWriteApc, lpCompletionRoutine,
                         io_status, buffer, bytesToRead, &offset, NULL);
@@ -465,6 +466,7 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 
     io_status = (PIO_STATUS_BLOCK)overlapped;
     io_status->u.Status = STATUS_PENDING;
+    io_status->Information = 0;
 
     status = NtWriteFile(hFile, NULL, FILE_ReadWriteApc, lpCompletionRoutine,
                          io_status, buffer, bytesToWrite, &offset, NULL);

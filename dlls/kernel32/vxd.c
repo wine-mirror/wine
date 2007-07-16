@@ -351,6 +351,8 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 
     if (lpOverlapped)
     {
+        lpOverlapped->Internal = STATUS_PENDING;
+        lpOverlapped->InternalHigh = 0;
         if (HIWORD(dwIoControlCode) == FILE_DEVICE_FILE_SYSTEM)
             status = NtFsControlFile(hDevice, lpOverlapped->hEvent,
                                      NULL, NULL, (PIO_STATUS_BLOCK)lpOverlapped,
