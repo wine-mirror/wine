@@ -136,7 +136,9 @@ int main(int argc, char *argv[])
 	sei.lpVerb = "open";
 	sei.nShow = SW_SHOWNORMAL;
 	/* Dunno what these mean, but it looks like winMe's start uses them */
-	sei.fMask = SEE_MASK_FLAG_DDEWAIT|SEE_MASK_FLAG_NO_UI;
+	sei.fMask = SEE_MASK_FLAG_DDEWAIT|
+	            SEE_MASK_FLAG_NO_UI|
+	            SEE_MASK_NO_CONSOLE;
 
 	/* Canonical Microsoft commandline flag processing:
 	 * flags start with /, are case insensitive,
