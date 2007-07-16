@@ -1283,10 +1283,7 @@ static DWORD CALLBACK overlapped_server(LPVOID arg)
     SetEvent(a->pipe_created);
 
     ret = WaitForSingleObjectEx(ol.hEvent, INFINITE, 1);
-    if(ret == WAIT_IO_COMPLETION)
-        todo_wine ok(ret == WAIT_OBJECT_0, "ret %x\n", ret);
-    else
-        ok(ret == WAIT_OBJECT_0, "ret %x\n", ret);
+    ok(ret == WAIT_OBJECT_0, "ret %x\n", ret);
 
     ret = GetOverlappedResult(pipe, &ol, &num, 1);
     ok(ret == 1, "ret %d\n", ret);

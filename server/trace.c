@@ -301,6 +301,18 @@ static void dump_varargs_ints( data_size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_apc_result( data_size_t size )
+{
+    const apc_result_t *result = cur_data;
+
+    if (size >= sizeof(*result))
+    {
+        dump_apc_result( result );
+        size = sizeof(*result);
+    }
+    remove_data( size );
+}
+
 static void dump_varargs_handles( data_size_t size )
 {
     const obj_handle_t *data = cur_data;
@@ -1014,21 +1026,6 @@ static void dump_queue_apc_reply( const struct queue_apc_reply *req )
     fprintf( stderr, " self=%d", req->self );
 }
 
-static void dump_get_apc_request( const struct get_apc_request *req )
-{
-    fprintf( stderr, " alertable=%d,", req->alertable );
-    fprintf( stderr, " prev=%p,", req->prev );
-    fprintf( stderr, " result=" );
-    dump_apc_result( &req->result );
-}
-
-static void dump_get_apc_reply( const struct get_apc_reply *req )
-{
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " call=" );
-    dump_apc_call( &req->call );
-}
-
 static void dump_get_apc_result_request( const struct get_apc_result_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -1103,17 +1100,25 @@ static void dump_select_request( const struct select_request *req )
     fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " cookie=%p,", req->cookie );
     fprintf( stderr, " signal=%p,", req->signal );
+    fprintf( stderr, " prev_apc=%p,", req->prev_apc );
     fprintf( stderr, " timeout=" );
     dump_timeout( &req->timeout );
     fprintf( stderr, "," );
+    fprintf( stderr, " result=" );
+    dump_varargs_apc_result( cur_size );
+    fputc( ',', stderr );
     fprintf( stderr, " handles=" );
     dump_varargs_handles( cur_size );
 }
 
 static void dump_select_reply( const struct select_reply *req )
 {
+    fprintf( stderr, " apc_handle=%p,", req->apc_handle );
     fprintf( stderr, " timeout=" );
     dump_timeout( &req->timeout );
+    fprintf( stderr, "," );
+    fprintf( stderr, " call=" );
+    dump_apc_call( &req->call );
 }
 
 static void dump_create_event_request( const struct create_event_request *req )
@@ -3558,7 +3563,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_load_dll_request,
     (dump_func)dump_unload_dll_request,
     (dump_func)dump_queue_apc_request,
-    (dump_func)dump_get_apc_request,
     (dump_func)dump_get_apc_result_request,
     (dump_func)dump_close_handle_request,
     (dump_func)dump_set_handle_info_request,
@@ -3781,7 +3785,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_queue_apc_reply,
-    (dump_func)dump_get_apc_reply,
     (dump_func)dump_get_apc_result_reply,
     (dump_func)0,
     (dump_func)dump_set_handle_info_reply,
@@ -4004,7 +4007,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "load_dll",
     "unload_dll",
     "queue_apc",
-    "get_apc",
     "get_apc_result",
     "close_handle",
     "set_handle_info",

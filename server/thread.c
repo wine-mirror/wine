@@ -1149,8 +1149,65 @@ DECL_HANDLER(resume_thread)
 /* select on a handle list */
 DECL_HANDLER(select)
 {
-    unsigned int count = get_req_data_size() / sizeof(obj_handle_t);
-    reply->timeout = select_on( count, req->cookie, get_req_data(), req->flags, req->timeout, req->signal );
+    struct thread_apc *apc;
+    unsigned int count;
+    const apc_result_t *result = get_req_data();
+    const obj_handle_t *handles = (const obj_handle_t *)(result + 1);
+
+    if (get_req_data_size() < sizeof(*result))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    count = (get_req_data_size() - sizeof(*result)) / sizeof(obj_handle_t);
+
+    /* first store results of previous apc */
+    if (req->prev_apc)
+    {
+        if (!(apc = (struct thread_apc *)get_handle_obj( current->process, req->prev_apc,
+                                                         0, &thread_apc_ops ))) return;
+        apc->result = *result;
+        apc->executed = 1;
+        if (apc->result.type == APC_CREATE_THREAD)  /* transfer the handle to the caller process */
+        {
+            obj_handle_t handle = duplicate_handle( current->process, apc->result.create_thread.handle,
+                                                    apc->caller->process, 0, 0, DUP_HANDLE_SAME_ACCESS );
+            close_handle( current->process, apc->result.create_thread.handle );
+            apc->result.create_thread.handle = handle;
+            clear_error();  /* ignore errors from the above calls */
+        }
+        else if (apc->result.type == APC_ASYNC_IO)
+        {
+            if (apc->owner) async_set_result( apc->owner, apc->result.async_io.status );
+        }
+        wake_up( &apc->obj, 0 );
+        close_handle( current->process, req->prev_apc );
+        release_object( apc );
+    }
+
+    reply->timeout = select_on( count, req->cookie, handles, req->flags, req->timeout, req->signal );
+
+    if (get_error() == STATUS_USER_APC)
+    {
+        for (;;)
+        {
+            if (!(apc = thread_dequeue_apc( current, !(req->flags & SELECT_ALERTABLE) )))
+                break;
+            /* Optimization: ignore APC_NONE calls, they are only used to
+             * wake up a thread, but since we got here the thread woke up already.
+             */
+            if (apc->call.type != APC_NONE)
+            {
+                if ((reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
+                    reply->call = apc->call;
+                release_object( apc );
+                break;
+            }
+            apc->executed = 1;
+            wake_up( &apc->obj, 0 );
+            release_object( apc );
+        }
+    }
 }
 
 /* queue an APC for a thread or process */
@@ -1231,59 +1288,6 @@ DECL_HANDLER(queue_apc)
         release_object( process );
     }
 
-    release_object( apc );
-}
-
-/* get next APC to call */
-DECL_HANDLER(get_apc)
-{
-    struct thread_apc *apc;
-    int system_only = !req->alertable;
-
-    if (req->prev)
-    {
-        if (!(apc = (struct thread_apc *)get_handle_obj( current->process, req->prev,
-                                                         0, &thread_apc_ops ))) return;
-        apc->result = req->result;
-        apc->executed = 1;
-        if (apc->result.type == APC_CREATE_THREAD)  /* transfer the handle to the caller process */
-        {
-            obj_handle_t handle = duplicate_handle( current->process, apc->result.create_thread.handle,
-                                                    apc->caller->process, 0, 0, DUP_HANDLE_SAME_ACCESS );
-            close_handle( current->process, apc->result.create_thread.handle );
-            apc->result.create_thread.handle = handle;
-            clear_error();  /* ignore errors from the above calls */
-        }
-        else if (apc->result.type == APC_ASYNC_IO)
-        {
-            if (apc->owner) async_set_result( apc->owner, apc->result.async_io.status );
-        }
-        wake_up( &apc->obj, 0 );
-        close_handle( current->process, req->prev );
-        release_object( apc );
-    }
-
-    if (current->suspend + current->process->suspend > 0) system_only = 1;
-
-    for (;;)
-    {
-        if (!(apc = thread_dequeue_apc( current, system_only )))
-        {
-            /* no more APCs */
-            set_error( STATUS_PENDING );
-            return;
-        }
-        /* Optimization: ignore APC_NONE calls, they are only used to
-         * wake up a thread, but since we got here the thread woke up already.
-         */
-        if (apc->call.type != APC_NONE) break;
-        apc->executed = 1;
-        wake_up( &apc->obj, 0 );
-        release_object( apc );
-    }
-
-    if ((reply->handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
-        reply->call = apc->call;
     release_object( apc );
 }
 

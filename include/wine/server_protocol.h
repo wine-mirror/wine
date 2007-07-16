@@ -738,22 +738,6 @@ struct queue_apc_reply
 
 
 
-struct get_apc_request
-{
-    struct request_header __header;
-    int          alertable;
-    obj_handle_t prev;
-    apc_result_t result;
-};
-struct get_apc_reply
-{
-    struct reply_header __header;
-    obj_handle_t handle;
-    apc_call_t   call;
-};
-
-
-
 struct get_apc_result_request
 {
     struct request_header __header;
@@ -853,13 +837,17 @@ struct select_request
     int          flags;
     void*        cookie;
     obj_handle_t signal;
+    obj_handle_t prev_apc;
     timeout_t    timeout;
+    /* VARARG(result,apc_result); */
     /* VARARG(handles,handles); */
 };
 struct select_reply
 {
     struct reply_header __header;
+    obj_handle_t apc_handle;
     timeout_t    timeout;
+    apc_call_t   call;
 };
 #define SELECT_ALL           1
 #define SELECT_ALERTABLE     2
@@ -4086,7 +4074,6 @@ enum request
     REQ_load_dll,
     REQ_unload_dll,
     REQ_queue_apc,
-    REQ_get_apc,
     REQ_get_apc_result,
     REQ_close_handle,
     REQ_set_handle_info,
@@ -4313,7 +4300,6 @@ union generic_request
     struct load_dll_request load_dll_request;
     struct unload_dll_request unload_dll_request;
     struct queue_apc_request queue_apc_request;
-    struct get_apc_request get_apc_request;
     struct get_apc_result_request get_apc_result_request;
     struct close_handle_request close_handle_request;
     struct set_handle_info_request set_handle_info_request;
@@ -4538,7 +4524,6 @@ union generic_reply
     struct load_dll_reply load_dll_reply;
     struct unload_dll_reply unload_dll_reply;
     struct queue_apc_reply queue_apc_reply;
-    struct get_apc_reply get_apc_reply;
     struct get_apc_result_reply get_apc_result_reply;
     struct close_handle_reply close_handle_reply;
     struct set_handle_info_reply set_handle_info_reply;
@@ -4742,6 +4727,6 @@ union generic_reply
     struct make_process_system_reply make_process_system_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 306
+#define SERVER_PROTOCOL_VERSION 307
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

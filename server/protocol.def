@@ -658,17 +658,6 @@ typedef union
 @END
 
 
-/* Get next APC to call */
-@REQ(get_apc)
-    int          alertable;    /* is thread alertable? */
-    obj_handle_t prev;         /* handle to previous APC */
-    apc_result_t result;       /* result of previous APC */
-@REPLY
-    obj_handle_t handle;       /* handle to APC */
-    apc_call_t   call;         /* call arguments */
-@END
-
-
 /* Get the result of an APC call */
 @REQ(get_apc_result)
     obj_handle_t handle;       /* handle to the APC */
@@ -736,10 +725,14 @@ typedef union
     int          flags;        /* wait flags (see below) */
     void*        cookie;       /* magic cookie to return to client */
     obj_handle_t signal;       /* object to signal (0 if none) */
+    obj_handle_t prev_apc;     /* handle to previous APC */
     timeout_t    timeout;      /* timeout */
+    VARARG(result,apc_result); /* result of previous APC */
     VARARG(handles,handles);   /* handles to select on */
 @REPLY
+    obj_handle_t apc_handle;   /* handle to next APC */
     timeout_t    timeout;      /* timeout converted to absolute */
+    apc_call_t   call;         /* APC call arguments */
 @END
 #define SELECT_ALL           1
 #define SELECT_ALERTABLE     2

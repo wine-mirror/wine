@@ -658,6 +658,8 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
 
     switch (call->type)
     {
+    case APC_NONE:
+        break;
     case APC_USER:
         call->user.func( call->user.args[0], call->user.args[1], call->user.args[2] );
         user_apc = TRUE;
@@ -787,43 +789,6 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
 }
 
 /***********************************************************************
- *              call_apcs
- *
- * Call outstanding APCs. Return TRUE if a user APC has been run.
- */
-static BOOL call_apcs( BOOL alertable )
-{
-    BOOL user_apc = FALSE;
-    NTSTATUS ret;
-    apc_call_t call;
-    apc_result_t result;
-    HANDLE handle = 0;
-
-    memset( &result, 0, sizeof(result) );
-
-    for (;;)
-    {
-        SERVER_START_REQ( get_apc )
-        {
-            req->alertable = alertable;
-            req->prev      = handle;
-            req->result    = result;
-            if (!(ret = wine_server_call( req )))
-            {
-                handle = reply->handle;
-                call   = reply->call;
-            }
-        }
-        SERVER_END_REQ;
-
-        if (ret) return user_apc;  /* no more APCs */
-
-        user_apc = invoke_apc( &call, &result );
-    }
-}
-
-
-/***********************************************************************
  *           NTDLL_queue_process_apc
  */
 NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result )
@@ -880,31 +845,49 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
 {
     NTSTATUS ret;
     int cookie;
+    BOOL user_apc = FALSE;
+    obj_handle_t apc_handle = 0;
+    apc_call_t call;
+    apc_result_t result;
     timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
+
+    memset( &result, 0, sizeof(result) );
 
     for (;;)
     {
         SERVER_START_REQ( select )
         {
-            req->flags   = flags;
-            req->cookie  = &cookie;
-            req->signal  = signal_object;
-            req->timeout = abs_timeout;
+            req->flags    = flags;
+            req->cookie   = &cookie;
+            req->signal   = signal_object;
+            req->prev_apc = apc_handle;
+            req->timeout  = abs_timeout;
+            wine_server_add_data( req, &result, sizeof(result) );
             wine_server_add_data( req, handles, count * sizeof(HANDLE) );
             ret = wine_server_call( req );
             abs_timeout = reply->timeout;
+            apc_handle  = reply->apc_handle;
+            call        = reply->call;
         }
         SERVER_END_REQ;
         if (ret == STATUS_PENDING) ret = wait_reply( &cookie );
         if (ret != STATUS_USER_APC) break;
-        if (call_apcs( (flags & SELECT_ALERTABLE) != 0 )) break;
+        if (invoke_apc( &call, &result ))
+        {
+            /* if we ran a user apc we have to check once more if an object got signaled,
+             * but we don't want to wait */
+            abs_timeout = 0;
+            user_apc = TRUE;
+        }
         signal_object = 0;  /* don't signal it multiple times */
     }
+
+    if (ret == STATUS_TIMEOUT && user_apc) ret = STATUS_USER_APC;
 
     /* A test on Windows 2000 shows that Windows always yields during
        a wait, but a wait that is hit by an event gets a priority
        boost as well.  This seems to model that behavior the closest.  */
-    if (ret == WAIT_TIMEOUT) NtYieldExecution();
+    if (ret == STATUS_TIMEOUT) NtYieldExecution();
 
     return ret;
 }
