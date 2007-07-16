@@ -1056,31 +1056,6 @@ HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
   return hr;
 }
 
-/* On COM finalization for a STA thread, the message queue is flushed to ensure no
-   pending RPCs are ignored. Non-COM messages are discarded at this point.
- */
-static void COM_FlushMessageQueue(void)
-{
-    MSG message;
-    APARTMENT *apt = COM_CurrentApt();
-
-    if (!apt || !apt->win) return;
-
-    TRACE("Flushing STA message queue\n");
-
-    while (PeekMessageA(&message, NULL, 0, 0, PM_REMOVE))
-    {
-        if (message.hwnd != apt->win)
-        {
-            WARN("discarding message 0x%x for window %p\n", message.message, message.hwnd);
-            continue;
-        }
-
-        TranslateMessage(&message);
-        DispatchMessageA(&message);
-    }
-}
-
 /***********************************************************************
  *           CoUninitialize   [OLE32.@]
  *
@@ -1131,12 +1106,6 @@ void WINAPI CoUninitialize(void)
     TRACE("() - Releasing the COM libraries\n");
 
     RunningObjectTableImpl_UnInitialize();
-
-    /* This will free the loaded COM Dlls  */
-    CoFreeAllLibraries();
-
-    /* This ensures we deal with any pending RPCs */
-    COM_FlushMessageQueue();
   }
   else if (lCOMRefCnt<1) {
     ERR( "CoUninitialize() - not CoInitialized.\n" );
