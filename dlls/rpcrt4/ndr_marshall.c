@@ -21,7 +21,6 @@
  * TODO:
  *  - Non-conformant strings
  *  - String structs
- *  - Encapsulated unions
  *  - Byte count pointers
  *  - transmit_as/represent as
  *  - Multi-dimensional arrays
@@ -351,6 +350,8 @@ static inline BOOL IsConformanceOrVariancePresent(PFORMAT_STRING pFormat)
 static PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
 {
   ALIGN_POINTER(pStubMsg->Buffer, 4);
+  if (pStubMsg->Buffer + 4 > pStubMsg->BufferEnd)
+      RpcRaiseException(RPC_X_BAD_STUB_DATA);
   pStubMsg->MaxCount = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
   pStubMsg->Buffer += 4;
   TRACE("unmarshalled conformance is %ld\n", pStubMsg->MaxCount);
@@ -370,6 +371,8 @@ static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_S
   }
 
   ALIGN_POINTER(pStubMsg->Buffer, 4);
+  if (pStubMsg->Buffer + 8 > pStubMsg->BufferEnd)
+    RpcRaiseException(RPC_X_BAD_STUB_DATA);
   pStubMsg->Offset      = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
   pStubMsg->Buffer += 4;
   TRACE("offset is %d\n", pStubMsg->Offset);
@@ -571,6 +574,24 @@ static inline ULONG safe_multiply(ULONG a, ULONG b)
     return ret;
 }
 
+static inline void safe_buffer_increment(MIDL_STUB_MESSAGE *pStubMsg, ULONG size)
+{
+    if ((pStubMsg->Buffer + size < pStubMsg->Buffer) || /* integer overflow of pStubMsg->Buffer */
+        (pStubMsg->Buffer + size > pStubMsg->BufferEnd))
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    pStubMsg->Buffer += size;
+}
+
+/* copies data from the buffer, checking that there is enough data in the buffer
+ * to do so */
+static inline void safe_buffer_copy(MIDL_STUB_MESSAGE *pStubMsg, void *p, ULONG size)
+{
+    if ((pStubMsg->Buffer + size < pStubMsg->Buffer) || /* integer overflow of pStubMsg->Buffer */
+        (pStubMsg->Buffer + size > pStubMsg->BufferEnd))
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    memcpy(p, pStubMsg->Buffer, size);
+    pStubMsg->Buffer += size;
+}
 
 /*
  * NdrConformantString:
@@ -735,6 +756,17 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
     RpcRaiseException(RPC_S_INVALID_BOUND);
     return NULL;
   }
+
+  /* verify the buffer is safe to access */
+  if ((pStubMsg->Buffer + bufsize < pStubMsg->Buffer) ||
+      (pStubMsg->Buffer + bufsize < pStubMsg->BufferEnd))
+  {
+    ERR("bufsize 0x%x exceeded buffer end %p of buffer %p\n", bufsize,
+        pStubMsg->BufferEnd, pStubMsg->Buffer);
+    RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    return NULL;
+  }
+
   for (i = bufsize - esize; i < bufsize; i++)
     if (pStubMsg->Buffer[i] != 0)
     {
@@ -747,9 +779,7 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
   if (fMustAlloc || !*ppMemory)
     *ppMemory = NdrAllocate(pStubMsg, memsize);
 
-  memcpy(*ppMemory, pStubMsg->Buffer, bufsize);
-
-  pStubMsg->Buffer += bufsize;
+  safe_buffer_copy(pStubMsg, *ppMemory, bufsize);
 
   if (*pFormat == RPC_FC_C_CSTRING) {
     TRACE("string=%s\n", debugstr_a((char*)*ppMemory));
@@ -1539,7 +1569,7 @@ unsigned char * WINAPI NdrPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   {
     ALIGN_POINTER(pStubMsg->Buffer, 4);
     Buffer = pStubMsg->Buffer;
-    pStubMsg->Buffer += 4;
+    safe_buffer_increment(pStubMsg, 4);
   }
   else
     Buffer = pStubMsg->Buffer;
@@ -1894,31 +1924,27 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_CHAR:
     case RPC_FC_SMALL:
     case RPC_FC_USMALL:
-      memcpy(pMemory, pStubMsg->Buffer, 1);
+      safe_buffer_copy(pStubMsg, pMemory, 1);
       TRACE("byte=%d => %p\n", *(WORD*)pMemory, pMemory);
-      pStubMsg->Buffer += 1;
       pMemory += 1;
       break;
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
-      memcpy(pMemory, pStubMsg->Buffer, 2);
+      safe_buffer_copy(pStubMsg, pMemory, 2);
       TRACE("short=%d => %p\n", *(WORD*)pMemory, pMemory);
-      pStubMsg->Buffer += 2;
       pMemory += 2;
       break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
-      memcpy(pMemory, pStubMsg->Buffer, 4);
+      safe_buffer_copy(pStubMsg, pMemory, 4);
       TRACE("long=%d => %p\n", *(DWORD*)pMemory, pMemory);
-      pStubMsg->Buffer += 4;
       pMemory += 4;
       break;
     case RPC_FC_HYPER:
-      memcpy(pMemory, pStubMsg->Buffer, 8);
+      safe_buffer_copy(pStubMsg, pMemory, 8);
       TRACE("longlong=%s => %p\n", wine_dbgstr_longlong(*(ULONGLONG*)pMemory), pMemory);
-      pStubMsg->Buffer += 8;
       pMemory += 8;
       break;
     case RPC_FC_POINTER:
@@ -2547,10 +2573,8 @@ unsigned char * WINAPI NdrConformantArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
-  memcpy(*ppMemory, pStubMsg->Buffer, size);
-
   pStubMsg->BufferMark = pStubMsg->Buffer;
-  pStubMsg->Buffer += size;
+  safe_buffer_copy(pStubMsg, *ppMemory, size);
 
   EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -2697,8 +2721,7 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
 
     if (!*ppMemory || fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, memsize);
-    memcpy(*ppMemory + pStubMsg->Offset, pStubMsg->Buffer, bufsize);
-    pStubMsg->Buffer += bufsize;
+    safe_buffer_copy(pStubMsg, *ppMemory + pStubMsg->Offset, bufsize);
 
     EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -3436,8 +3459,7 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
 
     /* now copy the data */
     pStubMsg->BufferMark = pStubMsg->Buffer;
-    memcpy(*ppMemory, pStubMsg->Buffer, pCStructFormat->memory_size + bufsize);
-    pStubMsg->Buffer += pCStructFormat->memory_size + bufsize;
+    safe_buffer_copy(pStubMsg, *ppMemory, pCStructFormat->memory_size + bufsize);
 
     if (pCStructFormat->type == RPC_FC_CPSTRUCT)
         EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
@@ -3659,8 +3681,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
 
     /* copy the constant data */
     pStubMsg->BufferMark = pStubMsg->Buffer;
-    memcpy(*ppMemory, pStubMsg->Buffer, pCVStructFormat->memory_size);
-    pStubMsg->Buffer += pCVStructFormat->memory_size;
+    safe_buffer_copy(pStubMsg, *ppMemory, pCVStructFormat->memory_size);
 
     pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat, pStubMsg->MaxCount);
 
@@ -3688,9 +3709,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
     }
 
     /* copy the array data */
-    memcpy(*ppMemory + pCVStructFormat->memory_size, pStubMsg->Buffer,
-           bufsize);
-    pStubMsg->Buffer += bufsize;
+    safe_buffer_copy(pStubMsg, *ppMemory + pCVStructFormat->memory_size, bufsize);
 
     if (cvarray_type == RPC_FC_C_CSTRING)
         TRACE("string=%s\n", debugstr_a((char *)(*ppMemory + pCVStructFormat->memory_size)));
@@ -3999,9 +4018,8 @@ unsigned char *  WINAPI NdrFixedArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     if (fMustAlloc || !*ppMemory)
         *ppMemory = NdrAllocate(pStubMsg, total_size);
-    memcpy(*ppMemory, pStubMsg->Buffer, total_size);
     pStubMsg->BufferMark = pStubMsg->Buffer;
-    pStubMsg->Buffer += total_size;
+    safe_buffer_copy(pStubMsg, *ppMemory, total_size);
 
     pFormat = EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -4234,8 +4252,7 @@ unsigned char *  WINAPI NdrVaryingArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     if (!*ppMemory || fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, size);
-    memcpy(*ppMemory + pStubMsg->Offset, pStubMsg->Buffer, bufsize);
-    pStubMsg->Buffer += bufsize;
+    safe_buffer_copy(pStubMsg, *ppMemory + pStubMsg->Offset, bufsize);
 
     EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -4566,6 +4583,9 @@ static unsigned char *union_arm_unmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                 }
                 else
                   pStubMsg->Buffer += 4; /* for pointer ID */
+
+                if (saved_buffer + 4 > pStubMsg->BufferEnd)
+                    RpcRaiseException(RPC_X_BAD_STUB_DATA);
 
                 PointerUnmarshall(pStubMsg, saved_buffer, *(unsigned char ***)ppMemory, desc, fMustAlloc);
                 if (pointer_buffer_mark_set)
@@ -4900,22 +4920,31 @@ static long unmarshall_discriminant(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_CHAR:
     case RPC_FC_SMALL:
     case RPC_FC_USMALL:
-        discriminant = *(UCHAR *)pStubMsg->Buffer;
-        pStubMsg->Buffer += sizeof(UCHAR);
+    {
+        UCHAR d;
+        safe_buffer_copy(pStubMsg, &d, sizeof(d));
+        discriminant = d;
         break;
+    }
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
+    {
+        USHORT d;
         ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT));
-        discriminant = *(USHORT *)pStubMsg->Buffer;
-        pStubMsg->Buffer += sizeof(USHORT);
+        safe_buffer_copy(pStubMsg, &d, sizeof(d));
+        discriminant = d;
         break;
+    }
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
+    {
+        ULONG d;
         ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG));
-        discriminant = *(ULONG *)pStubMsg->Buffer;
-        pStubMsg->Buffer += sizeof(ULONG);
+        safe_buffer_copy(pStubMsg, &d, sizeof(d));
+        discriminant = d;
         break;
+    }
     default:
         FIXME("Unhandled base type: 0x%02x\n", **ppFormat);
     }
@@ -5654,6 +5683,9 @@ void WINAPI NdrClientContextUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     TRACE("(%p, %p, %p)\n", pStubMsg, pContextHandle, BindHandle);
 
     ALIGN_POINTER(pStubMsg->Buffer, 4);
+
+    if (pStubMsg->Buffer + cbNDRContext > pStubMsg->BufferEnd)
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
 
     NDRCContextUnmarshall(pContextHandle,
                           BindHandle,
