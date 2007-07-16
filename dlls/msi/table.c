@@ -262,7 +262,7 @@ void enum_stream_names( IStorage *stg )
     IEnumSTATSTG_Release( stgenum );
 }
 
-UINT read_stream_data( IStorage *stg, LPCWSTR stname,
+UINT read_stream_data( IStorage *stg, LPCWSTR stname, BOOL table,
                        BYTE **pdata, UINT *psz )
 {
     HRESULT r;
@@ -273,7 +273,7 @@ UINT read_stream_data( IStorage *stg, LPCWSTR stname,
     STATSTG stat;
     LPWSTR encname;
 
-    encname = encode_streamname(TRUE, stname);
+    encname = encode_streamname(table, stname);
 
     TRACE("%s -> %s\n",debugstr_w(stname),debugstr_w(encname));
 
@@ -506,7 +506,7 @@ static UINT read_table_from_storage( MSITABLE *t, IStorage *stg )
     row_size = msi_table_get_row_size( t->colinfo, t->col_count );
 
     /* if we can't read the table, just assume that it's empty */
-    read_stream_data( stg, t->name, &rawdata, &rawsize );
+    read_stream_data( stg, t->name, TRUE, &rawdata, &rawsize );
     if( !rawdata )
         return ERROR_SUCCESS;
 
@@ -1992,7 +1992,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
     TRACE("%p %p %p %s\n", db, stg, st, debugstr_w(name) );
 
     /* read the transform data */
-    read_stream_data( stg, name, &rawdata, &rawsize );
+    read_stream_data( stg, name, TRUE, &rawdata, &rawsize );
     if ( !rawdata )
     {
         TRACE("table %s empty\n", debugstr_w(name) );

@@ -443,6 +443,11 @@ static const CHAR adm_admin_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                              "InstallValidate\t\t1400\n"
                                              "LaunchConditions\t\t100";
 
+static const CHAR amp_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "augustus\t\tMSITESTDIR\t0\tMYPROP=2718\taugustus\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -665,6 +670,18 @@ static const msi_table adm_tables[] =
     ADD_TABLE(property),
     ADD_TABLE(adm_custom_action),
     ADD_TABLE(adm_admin_exec_seq),
+};
+
+static const msi_table amp_tables[] =
+{
+    ADD_TABLE(amp_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(ci2_feature_comp),
+    ADD_TABLE(ci2_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
 };
 
 /* cabinet definitions */
@@ -2635,6 +2652,59 @@ static void test_admin(void)
     RemoveDirectory("msitest");
 }
 
+static void set_admin_property_stream(LPCSTR file)
+{
+    IStorage *stg;
+    IStream *stm;
+    WCHAR fileW[MAX_PATH];
+    HRESULT hr;
+    DWORD count;
+    const DWORD mode = STGM_DIRECT | STGM_READWRITE | STGM_SHARE_EXCLUSIVE;
+
+    /* AdminProperties */
+    static const WCHAR stmname[] = {0x41ca,0x4330,0x3e71,0x44b5,0x4233,0x45f5,0x422c,0x4836,0};
+    static const WCHAR data[] = {'M','Y','P','R','O','P','=','2','7','1','8',0};
+
+    MultiByteToWideChar(CP_ACP, 0, file, -1, fileW, MAX_PATH);
+
+    hr = StgOpenStorage(fileW, NULL, mode, NULL, 0, &stg);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    if (!stg)
+        return;
+
+    hr = IStorage_CreateStream(stg, stmname, STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+
+    hr = IStream_Write(stm, data, sizeof(data) - 1, &count);
+    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+
+    IStream_Release(stm);
+    IStorage_Release(stg);
+}
+
+static void test_adminprops(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\augustus", 500);
+
+    create_database(msifile, amp_tables, sizeof(amp_tables) / sizeof(msi_table));
+    set_admin_summary_info(msifile);
+    set_admin_property_stream(msifile);
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "File installed\n");
+
+    DeleteFile(msifile);
+    DeleteFile("msitest\\augustus");
+    RemoveDirectory("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -2670,6 +2740,7 @@ START_TEST(install)
     test_transformprop();
     test_currentworkingdir();
     test_admin();
+    test_adminprops();
 
     SetCurrentDirectoryA(prev_path);
 }

@@ -293,7 +293,7 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
     msiobj_release(&row->hdr);
 }
 
-static UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
+UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
 {
     LPCWSTR ptr,ptr2;
     BOOL quote;

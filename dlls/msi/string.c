@@ -521,10 +521,10 @@ string_table *msi_load_string_table( IStorage *stg, UINT *bytes_per_strref )
     UINT r, datasize = 0, poolsize = 0, codepage;
     DWORD i, count, offset, len, n, refs;
 
-    r = read_stream_data( stg, szStringPool, (BYTE **)&pool, &poolsize );
+    r = read_stream_data( stg, szStringPool, TRUE, (BYTE **)&pool, &poolsize );
     if( r != ERROR_SUCCESS)
         goto end;
-    r = read_stream_data( stg, szStringData, (BYTE **)&data, &datasize );
+    r = read_stream_data( stg, szStringData, TRUE, (BYTE **)&data, &datasize );
     if( r != ERROR_SUCCESS)
         goto end;
 

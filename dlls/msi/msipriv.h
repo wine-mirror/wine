@@ -605,7 +605,7 @@ extern MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR tabl
 
 extern UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
                                   USHORT **pdata, UINT *psz );
-extern UINT read_stream_data( IStorage *stg, LPCWSTR stname,
+extern UINT read_stream_data( IStorage *stg, LPCWSTR stname, BOOL table,
                               BYTE **pdata, UINT *psz );
 extern UINT write_stream_data( IStorage *stg, LPCWSTR stname,
                                LPCVOID data, UINT sz, BOOL bTable );
@@ -623,6 +623,7 @@ extern UINT ACTION_DialogBox( MSIPACKAGE*, LPCWSTR);
 extern UINT ACTION_ForceReboot(MSIPACKAGE *package);
 extern UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR szTable, INT iSequenceMode );
 extern UINT MSI_SetFeatureStates( MSIPACKAGE *package );
+extern UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine );
 
 /* record internals */
 extern UINT MSI_RecordSetIStream( MSIRECORD *, unsigned int, IStream *);
