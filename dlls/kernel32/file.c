@@ -424,6 +424,12 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 
     status = NtReadFile(hFile, hEvent, NULL, NULL, io_status, buffer, bytesToRead, poffset, NULL);
 
+    if (status == STATUS_PENDING && !overlapped)
+    {
+        WaitForSingleObject( hFile, INFINITE );
+        status = io_status->u.Status;
+    }
+
     if (status != STATUS_PENDING && bytesRead)
         *bytesRead = io_status->Information;
 
@@ -508,6 +514,12 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         if (status != STATUS_INVALID_USER_BUFFER)
             FIXME("Could not access memory (%p,%d) at first, now OK. Protected by DIBSection code?\n",
                   buffer, bytesToWrite);
+    }
+
+    if (status == STATUS_PENDING && !overlapped)
+    {
+        WaitForSingleObject( hFile, INFINITE );
+        status = piosb->u.Status;
     }
 
     if (status != STATUS_PENDING && bytesWritten)

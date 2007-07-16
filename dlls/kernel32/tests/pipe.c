@@ -1293,10 +1293,7 @@ static DWORD CALLBACK overlapped_server(LPVOID arg)
 
     /* This should block */
     ret = ReadFile(pipe, buf, sizeof(buf), &num, NULL);
-    if(ret == 0)
-        todo_wine ok(ret == 1, "ret %d\n", ret);
-    else
-        ok(ret == 1, "ret %d\n", ret);
+    ok(ret == 1, "ret %d\n", ret);
 
     DisconnectNamedPipe(pipe);
     CloseHandle(ol.hEvent);
@@ -1322,10 +1319,7 @@ static void test_overlapped(void)
     Sleep(1);
 
     ret = WriteFile(pipe, "x", 1, &num, NULL);
-    if(ret == 0)
-        todo_wine ok(ret == 1, "ret %d\n", ret);
-    else
-        ok(ret == 1, "ret %d\n", ret);
+    ok(ret == 1, "ret %d\n", ret);
 
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(pipe);
