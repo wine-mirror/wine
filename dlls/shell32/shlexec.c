@@ -305,6 +305,7 @@ static UINT_PTR SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
     UINT_PTR retval = SE_ERR_NOASSOC;
     UINT gcdret = 0;
     WCHAR curdir[MAX_PATH];
+    DWORD dwCreationFlags;
 
     TRACE("Execute %s from directory %s\n", debugstr_w(lpCmd), debugstr_w(psei->lpDirectory));
     /* ShellExecute specifies the command from psei->lpDirectory
@@ -317,7 +318,10 @@ static UINT_PTR SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
     startup.cb = sizeof(STARTUPINFOW);
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = psei->nShow;
-    if (CreateProcessW(NULL, (LPWSTR)lpCmd, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT, env,
+    dwCreationFlags = CREATE_UNICODE_ENVIRONMENT;
+    if (psei->fMask & SEE_MASK_NO_CONSOLE)
+        dwCreationFlags |= CREATE_NEW_CONSOLE;
+    if (CreateProcessW(NULL, (LPWSTR)lpCmd, NULL, NULL, FALSE, dwCreationFlags, env,
                        psei->lpDirectory && *psei->lpDirectory ? psei->lpDirectory : NULL,
                        &startup, &info))
     {
@@ -1289,8 +1293,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     static const DWORD unsupportedFlags =
         SEE_MASK_INVOKEIDLIST  | SEE_MASK_ICON         | SEE_MASK_HOTKEY |
         SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI |
-        SEE_MASK_UNICODE       | SEE_MASK_NO_CONSOLE   | SEE_MASK_ASYNCOK |
-        SEE_MASK_HMONITOR;
+        SEE_MASK_UNICODE       | SEE_MASK_ASYNCOK      | SEE_MASK_HMONITOR;
 
     WCHAR *wszApplicationName, wszParameters[1024], wszDir[MAX_PATH];
     DWORD dwApplicationNameLen = MAX_PATH+2;
