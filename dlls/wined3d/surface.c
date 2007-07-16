@@ -3435,6 +3435,36 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Fla
 static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     /** Check against the maximum texture sizes supported by the video card **/
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    unsigned int pow2Width, pow2Height;
+
+    /* Non-power2 support */
+    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO)) {
+        pow2Width = This->currentDesc.Width;
+        pow2Height = This->currentDesc.Height;
+    } else {
+        /* Find the nearest pow2 match */
+        pow2Width = pow2Height = 1;
+        while (pow2Width < This->currentDesc.Width) pow2Width <<= 1;
+        while (pow2Height < This->currentDesc.Height) pow2Height <<= 1;
+    }
+    This->pow2Width  = pow2Width;
+    This->pow2Height = pow2Height;
+
+    if (pow2Width > This->currentDesc.Width || pow2Height > This->currentDesc.Height) {
+        WINED3DFORMAT Format = This->resource.format;
+        /** TODO: add support for non power two compressed textures **/
+        if (Format == WINED3DFMT_DXT1 || Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3
+            || Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
+            FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d)\n",
+                  This, This->currentDesc.Width, This->currentDesc.Height);
+            return WINED3DERR_NOTAVAILABLE;
+        }
+    }
+
+    if(pow2Width != This->currentDesc.Width ||
+       pow2Height != This->currentDesc.Height) {
+        This->Flags |= SFLAG_NONPOW2;
+    }
 
     TRACE("%p\n", This);
     if ((This->pow2Width > GL_LIMITS(texture_size) || This->pow2Height > GL_LIMITS(texture_size)) && !(This->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL))) {

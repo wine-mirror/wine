@@ -575,7 +575,6 @@ If this flag is set, the contents of the depth stencil buffer will be invalid af
 static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height, WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **ppSurface,WINED3DRESOURCETYPE Type, DWORD Usage, WINED3DPOOL Pool, WINED3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality, HANDLE* pSharedHandle, WINED3DSURFTYPE Impl, IUnknown *parent) {
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;    
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
-    unsigned int pow2Width, pow2Height;
     unsigned int Size       = 1;
     const PixelFormatDesc *tableEntry = getFormatDescEntry(Format);
     TRACE("(%p) Create surface\n",This);
@@ -616,27 +615,6 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     *    by the device.
       *******************************/
 
-    /* Non-power2 support */
-    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO)) {
-        pow2Width = Width;
-        pow2Height = Height;
-    } else {
-        /* Find the nearest pow2 match */
-        pow2Width = pow2Height = 1;
-        while (pow2Width < Width) pow2Width <<= 1;
-        while (pow2Height < Height) pow2Height <<= 1;
-    }
-
-    if (pow2Width > Width || pow2Height > Height) {
-         /** TODO: add support for non power two compressed textures (OpenGL 2 provices support for * non-power-two textures gratis) **/
-        if (Format == WINED3DFMT_DXT1 || Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3
-               || Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
-            FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d)\n",
-                    This, Width, Height);
-            return WINED3DERR_NOTAVAILABLE;
-        }
-    }
-
     /** DXTn mipmaps use the same number of 'levels' down to eg. 8x1, but since
      *  it is based around 4x4 pixel blocks it requires padding, so allocate enough
      *  space!
@@ -675,13 +653,8 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     object->glDescription.level            = Level;
     object->glDescription.target           = GL_TEXTURE_2D;
 
-    /* Internal data */
-    object->pow2Width  = pow2Width;
-    object->pow2Height = pow2Height;
-
     /* Flags */
     object->Flags      = 0;
-    object->Flags     |= (pow2Width != Width || pow2Height != Height) ? SFLAG_NONPOW2 : 0;
     object->Flags     |= Discard ? SFLAG_DISCARD : 0;
     object->Flags     |= (WINED3DFMT_D16_LOCKABLE == Format) ? SFLAG_LOCKABLE : 0;
     object->Flags     |= Lockable ? SFLAG_LOCKABLE : 0;

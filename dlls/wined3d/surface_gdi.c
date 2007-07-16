@@ -1513,7 +1513,6 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     HRESULT hr;
     HDC hdc;
-    long oldsize = This->resource.size;
 
     if(This->resource.usage & WINED3DUSAGE_OVERLAY)
     {
@@ -1527,13 +1526,8 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     This->resource.allocatedMemory = NULL;
 
     /* We don't mind the nonpow2 stuff in GDI */
-    This->resource.size = IWineD3DSurface_GetPitch(iface) * This->currentDesc.Height;
     This->pow2Width = This->currentDesc.Width;
     This->pow2Height = This->currentDesc.Height;
-    This->Flags &= ~SFLAG_NONPOW2;
-
-    /* Adjust the opengl mem counter */
-    globalChangeGlRam(This->resource.size - oldsize);
 
     /* Call GetDC to create a DIB section. We will use that
      * DIB section for rendering
