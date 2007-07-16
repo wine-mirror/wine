@@ -62,8 +62,11 @@ IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *p
     IWineD3DImpl* object;
 
     if (!InitAdapters()) {
-        ERR("Failed to initialize direct3d adapters\n");
-        return NULL;
+        WARN("Failed to initialize direct3d adapters, Direct3D will not be available\n");
+        if(dxVersion > 7) {
+            ERR("Direct3D%d is not available without opengl\n", dxVersion);
+            return NULL;
+        }
     }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DImpl));

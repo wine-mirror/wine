@@ -2418,8 +2418,10 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     HDC hDC;
     int i;
 
-    /* Validate the adapter number */
-    if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
+    /* Validate the adapter number. If no adapters are available(no GL), ignore the adapter
+     * number and create a device without a 3D adapter for 2D only operation.
+     */
+    if (IWineD3D_GetAdapterCount(iface) && Adapter >= IWineD3D_GetAdapterCount(iface)) {
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -2435,7 +2437,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->lpVtbl  = &IWineD3DDevice_Vtbl;
     object->ref     = 1;
     object->wineD3D = iface;
-    object->adapter = &Adapters[Adapter];
+    object->adapter = numAdapters ? &Adapters[Adapter] : NULL;
     IWineD3D_AddRef(object->wineD3D);
     object->parent  = parent;
 

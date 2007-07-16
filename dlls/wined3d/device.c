@@ -716,7 +716,13 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     /* Look at the implementation and set the correct Vtable */
     switch(Impl) {
         case SURFACE_OPENGL:
-            /* Nothing to do, it's set already */
+            /* Check if a 3D adapter is available when creating gl surfaces */
+            if(!This->adapter) {
+                ERR("OpenGL surfaces are not available without opengl\n");
+                HeapFree(GetProcessHeap(), 0, object->resource.allocatedMemory);
+                HeapFree(GetProcessHeap(), 0, object);
+                return WINED3DERR_NOTAVAILABLE;
+            }
             break;
 
         case SURFACE_GDI:
