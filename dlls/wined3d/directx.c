@@ -2475,10 +2475,6 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
      * TODO: move the functionality where it belongs */
     select_shader_max_constants(object->ps_selected_mode, object->vs_selected_mode, &GLINFO_LOCATION);
 
-    object->render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
-    object->fbo_color_attachments = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
-    object->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GLenum) * GL_LIMITS(buffers));
-
     /* set the state of the device to valid */
     object->state = WINED3D_OK;
 

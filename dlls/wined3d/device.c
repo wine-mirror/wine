@@ -192,10 +192,6 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
             GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->dst_fbo));
         }
 
-        HeapFree(GetProcessHeap(), 0, This->render_targets);
-        HeapFree(GetProcessHeap(), 0, This->fbo_color_attachments);
-        HeapFree(GetProcessHeap(), 0, This->draw_buffers);
-
         if (This->glsl_program_lookup) hash_table_destroy(This->glsl_program_lookup);
 
         /* TODO: Clean up all the surfaces and textures! */
@@ -1809,6 +1805,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     if (WINED3D_OK != hr)
         return hr;
 
+    This->render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
+    This->fbo_color_attachments = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
+    This->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GLenum) * GL_LIMITS(buffers));
+
     /* Initialize the texture unit mapping to a 1:1 mapping */
     for (state = 0; state < MAX_COMBINED_SAMPLERS; ++state) {
         if (state < GL_LIMITS(fragment_samplers)) {
@@ -2009,6 +2009,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
             FIXME("(%p) Something's still holding the Update stateblock\n",This);
         }
     }
+
+    HeapFree(GetProcessHeap(), 0, This->render_targets);
+    HeapFree(GetProcessHeap(), 0, This->fbo_color_attachments);
+    HeapFree(GetProcessHeap(), 0, This->draw_buffers);
+    This->render_targets = NULL;
+    This->fbo_color_attachments = NULL;
+    This->draw_buffers = NULL;
+
 
     This->d3d_initialized = FALSE;
     return WINED3D_OK;
