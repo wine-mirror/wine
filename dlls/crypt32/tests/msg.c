@@ -1208,10 +1208,14 @@ static void test_decode_msg_get_param(void)
 {
     HCRYPTMSG msg;
     BOOL ret;
+    DWORD size = 0;
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
     ret = CryptMsgUpdate(msg, dataContent, sizeof(dataContent), TRUE);
-    todo_wine
     check_param("data content", msg, CMSG_CONTENT_PARAM, msgData,
      sizeof(msgData));
     CryptMsgClose(msg);

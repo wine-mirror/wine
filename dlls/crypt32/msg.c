@@ -743,6 +743,13 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&msg->type,
          sizeof(msg->type));
         break;
+    case CMSG_CONTENT_PARAM:
+        if (msg->data)
+            ret = CRYPT_CopyParam(pvData, pcbData, msg->data->pbData,
+             msg->data->cbData);
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
     default:
         FIXME("unimplemented for parameter %d\n", dwParamType);
         SetLastError(CRYPT_E_INVALID_MSG_TYPE);
