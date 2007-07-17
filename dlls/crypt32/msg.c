@@ -652,6 +652,19 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
             msg->type = CMSG_DATA;
         break;
     case CMSG_HASHED:
+    {
+        CRYPT_DIGESTED_DATA *digestedData;
+
+        ret = CRYPT_AsnDecodePKCSDigestedData(blob->pbData, blob->cbData,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, (CRYPT_DIGESTED_DATA *)&digestedData,
+         &size);
+        if (ret)
+        {
+            FIXME("need to store data for CMSG_HASHED\n");
+            LocalFree(digestedData);
+        }
+        break;
+    }
     case CMSG_ENVELOPED:
     case CMSG_SIGNED:
         FIXME("unimplemented for type %s\n", MSG_TYPE_STR(type));
