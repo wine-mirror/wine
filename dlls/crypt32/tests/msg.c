@@ -977,6 +977,12 @@ static const struct update_accum a4 = { 1, &b4 };
 static const BYTE bogusOIDContent[] = {
 0x30,0x0f,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x07,0xa0,0x02,
 0x04,0x00 };
+static const BYTE bogusHashContent[] = {
+0x30,0x47,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x05,0xa0,0x3a,
+0x30,0x38,0x02,0x01,0x00,0x30,0x0c,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,0x0d,
+0x02,0x05,0x05,0x00,0x30,0x13,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+0x07,0x01,0xa0,0x06,0x04,0x04,0x01,0x02,0x03,0x04,0x04,0x10,0x00,0xd6,0xc0,
+0x5a,0x21,0x51,0x2a,0x79,0xa1,0xdf,0xeb,0x9d,0x2a,0x8f,0x26,0x2f };
 
 static void test_decode_msg_update(void)
 {
@@ -1119,6 +1125,81 @@ static void test_decode_msg_update(void)
     ret = CryptMsgUpdate(msg, bogusOIDContent, sizeof(bogusOIDContent), TRUE);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* Similarly, opening an empty hash with unspecified type succeeds.. */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, hashEmptyContent, sizeof(hashEmptyContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* while with specified type it fails. */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
+     NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, hashEmptyContent, sizeof(hashEmptyContent), TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* On the other hand, decoding the bare content of an empty hash message
+     * fails with unspecified type..
+     */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, hashEmptyBareContent,
+     sizeof(hashEmptyBareContent), TRUE);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* but succeeds with explicit type. */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
+     NULL);
+    ret = CryptMsgUpdate(msg, hashEmptyBareContent,
+     sizeof(hashEmptyBareContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* And again, opening a (non-empty) hash message with unspecified type
+     * succeeds..
+     */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, hashContent, sizeof(hashContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* while with specified type it fails.. */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
+     NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, hashContent, sizeof(hashContent), TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* and decoding the bare content of a non-empty hash message fails with
+     * unspecified type..
+     */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, hashBareContent, sizeof(hashBareContent), TRUE);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* but succeeds with explicit type. */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
+     NULL);
+    ret = CryptMsgUpdate(msg, hashBareContent, sizeof(hashBareContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* Opening a (non-empty) hash message with unspecified type and a bogus
+     * hash value succeeds..
+     */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, bogusHashContent, sizeof(bogusHashContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     CryptMsgClose(msg);
 }
 
