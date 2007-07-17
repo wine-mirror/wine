@@ -431,7 +431,7 @@
 @ stub GdipMultiplyWorldTransform
 @ stub GdipNewInstalledFontCollection
 @ stub GdipNewPrivateFontCollection
-@ stub GdipPathIterCopyData
+@ stdcall GdipPathIterCopyData(ptr ptr ptr ptr long long)
 @ stub GdipPathIterEnumerate
 @ stub GdipPathIterGetCount
 @ stub GdipPathIterGetSubpathCount

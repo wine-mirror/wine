@@ -62,3 +62,24 @@ GpStatus WINGDIPAPI GdipDeletePathIter(GpPathIterator *iter)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipPathIterCopyData(GpPathIterator* iterator,
+    INT* resultCount, GpPointF* points, BYTE* types, INT startIndex, INT endIndex)
+{
+    if(!iterator || !types || !points)
+        return InvalidParameter;
+
+    if(endIndex > iterator->pathdata.Count - 1 || startIndex < 0 ||
+        endIndex < startIndex){
+        *resultCount = 0;
+        return Ok;
+    }
+
+    *resultCount = endIndex - startIndex + 1;
+
+    memcpy(types, &(iterator->pathdata.Types[startIndex]), *resultCount);
+    memcpy(points, &(iterator->pathdata.Points[startIndex]),
+        *resultCount * sizeof(PointF));
+
+    return Ok;
+}
