@@ -1208,7 +1208,7 @@ static void test_decode_msg_get_param(void)
 {
     HCRYPTMSG msg;
     BOOL ret;
-    DWORD size = 0;
+    DWORD size = 0, version;
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     SetLastError(0xdeadbeef);
@@ -1241,6 +1241,14 @@ static void test_decode_msg_get_param(void)
     todo_wine
     check_param("hash computed hash", msg, CMSG_COMPUTED_HASH_PARAM,
      hashParam, sizeof(hashParam));
+    size = strlen(szOID_RSA_data) + 1;
+    todo_wine
+    check_param("hash inner OID", msg, CMSG_INNER_CONTENT_TYPE_PARAM,
+     (const BYTE *)szOID_RSA_data, strlen(szOID_RSA_data) + 1);
+    version = CMSG_HASHED_DATA_V0;
+    todo_wine
+    check_param("hash version", msg, CMSG_VERSION_PARAM, (const BYTE *)&version,
+     sizeof(version));
     CryptMsgClose(msg);
 }
 
