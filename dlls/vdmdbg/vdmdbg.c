@@ -19,6 +19,20 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "vdmdbg.h"
+
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(vdmdbg);
+
+/***********************************************************************
+ *      VDMEnumTaskWOW  (VDMDBG.@)
+ */
+INT WINAPI VDMEnumTaskWOW(DWORD dwProcessId, TASKENUMPROC fp, LPARAM lparam)
+{
+    FIXME("(%d, %p): stub!\n", dwProcessId, fp);
+    return 0;
+}
 
 /***********************************************************************
  *		DllMain  (VDMDBG.@)
