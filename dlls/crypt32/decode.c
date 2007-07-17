@@ -2339,7 +2339,6 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSContentInfo(DWORD dwCertEncodingType,
     }
     __ENDTRY
     return ret;
-    return ret;
 }
 
 static BOOL WINAPI CRYPT_AsnDecodeAltName(DWORD dwCertEncodingType,
