@@ -591,11 +591,11 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
 
 typedef struct _CDecodeMsg
 {
-    CryptMsgBase     base;
-    DWORD            type;
-    HCRYPTPROV       crypt_prov;
-    CRYPT_DATA_BLOB  msg_data;
-    PCRYPT_DATA_BLOB data; /* for type == CMSG_DATA */
+    CryptMsgBase           base;
+    DWORD                  type;
+    HCRYPTPROV             crypt_prov;
+    CRYPT_DATA_BLOB        msg_data;
+    PCONTEXT_PROPERTY_LIST properties;
 } CDecodeMsg;
 
 static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
@@ -605,7 +605,7 @@ static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
     if (msg->base.open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
         CryptReleaseContext(msg->crypt_prov, 0);
     CryptMemFree(msg->msg_data.pbData);
-    LocalFree(msg->data);
+    ContextPropertyList_Free(msg->properties);
 }
 
 static BOOL CDecodeMsg_CopyData(CDecodeMsg *msg, const BYTE *pbData,
@@ -645,12 +645,21 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
     switch (type)
     {
     case CMSG_DATA:
+    {
+        CRYPT_DATA_BLOB *data;
+
         ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
          blob->pbData, blob->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
-         (LPBYTE)&msg->data, &size);
+         (LPBYTE)&data, &size);
         if (ret)
+        {
+            ret = ContextPropertyList_SetProperty(msg->properties,
+             CMSG_CONTENT_PARAM, data->pbData, data->cbData);
+            LocalFree(data);
             msg->type = CMSG_DATA;
+        }
         break;
+    }
     case CMSG_HASHED:
     {
         CRYPT_DIGESTED_DATA *digestedData;
@@ -743,16 +752,17 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&msg->type,
          sizeof(msg->type));
         break;
-    case CMSG_CONTENT_PARAM:
-        if (msg->data)
-            ret = CRYPT_CopyParam(pvData, pcbData, msg->data->pbData,
-             msg->data->cbData);
+    default:
+    {
+        CRYPT_DATA_BLOB blob;
+
+        ret = ContextPropertyList_FindProperty(msg->properties, dwParamType,
+         &blob);
+        if (ret)
+            ret = CRYPT_CopyParam(pvData, pcbData, blob.pbData, blob.cbData);
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
-        break;
-    default:
-        FIXME("unimplemented for parameter %d\n", dwParamType);
-        SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+    }
     }
     return ret;
 }
@@ -786,7 +796,7 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
         }
         msg->msg_data.cbData = 0;
         msg->msg_data.pbData = NULL;
-        msg->data = NULL;
+        msg->properties = ContextPropertyList_Create();
     }
     return msg;
 }
