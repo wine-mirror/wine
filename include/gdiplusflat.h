@@ -30,6 +30,7 @@ extern "C" {
 GpStatus WINGDIPAPI GdipCreatePen1(ARGB,REAL,GpUnit,GpPen**);
 GpStatus WINGDIPAPI GdipDeletePen(GpPen*);
 GpStatus WINGDIPAPI GdipSetPenEndCap(GpPen*,GpLineCap);
+GpStatus WINGDIPAPI GdipSetPenLineCap197819(GpPen*,GpLineCap,GpLineCap,GpDashCap);
 GpStatus WINGDIPAPI GdipSetPenLineJoin(GpPen*,GpLineJoin);
 
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC,GpGraphics**);

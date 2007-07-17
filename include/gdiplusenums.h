@@ -134,6 +134,13 @@ enum PixelOffsetMode
     PixelOffsetModeHalf
 };
 
+enum DashCap
+{
+    DashCapFlat     = 0,
+    DashCapRound    = 2,
+    DashCapTriangle = 3
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -147,6 +154,7 @@ typedef enum SmoothingMode SmoothingMode;
 typedef enum CompositingQuality CompositingQuality;
 typedef enum InterpolationMode InterpolationMode;
 typedef enum PixelOffsetMode PixelOffsetMode;
+typedef enum DashCap DashCap;
 
 #endif /* end of c typedefs */
 

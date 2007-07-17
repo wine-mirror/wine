@@ -48,5 +48,6 @@ typedef PathData GpPathData;
 typedef LineCap GpLineCap;
 typedef RectF GpRectF;
 typedef LineJoin GpLineJoin;
+typedef DashCap GpDashCap;
 
 #endif

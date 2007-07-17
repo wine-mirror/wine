@@ -100,6 +100,20 @@ GpStatus WINGDIPAPI GdipSetPenEndCap(GpPen *pen, GpLineCap cap)
     return Ok;
 }
 
+/* FIXME: startcap, dashcap not used. */
+GpStatus WINGDIPAPI GdipSetPenLineCap197819(GpPen *pen, GpLineCap start,
+    GpLineCap end, GpDashCap dash)
+{
+    if(!pen)
+        return InvalidParameter;
+
+    pen->startcap = start;
+    pen->endcap = end;
+    pen->dashcap = dash;
+
+    return Ok;
+}
+
 /* FIXME: Miter line joins behave a bit differently than they do in windows.
  * Both kinds of miter joins clip if the angle is less than 11 degrees. */
 GpStatus WINGDIPAPI GdipSetPenLineJoin(GpPen *pen, GpLineJoin join)
