@@ -933,6 +933,73 @@ BOOL PATH_PolyBezier(DC *dc, const POINT *pts, DWORD cbPoints)
    return TRUE;
 }
 
+/* PATH_PolyDraw
+ *
+ * Should be called when a call to PolyDraw is performed on a DC that has
+ * an open path. Returns TRUE if successful, else FALSE.
+ */
+BOOL PATH_PolyDraw(DC *dc, const POINT *pts, const BYTE *types,
+    DWORD cbPoints)
+{
+        GdiPath     *pPath = &dc->path;
+        POINT       lastmove, orig_pos;
+        INT         i;
+
+        lastmove.x = orig_pos.x = dc->CursPosX;
+        lastmove.y = orig_pos.y = dc->CursPosY;
+
+        for(i = pPath->numEntriesUsed - 1; i >= 0; i--){
+            if(pPath->pFlags[i] == PT_MOVETO){
+                lastmove.x = pPath->pPoints[i].x;
+                lastmove.y = pPath->pPoints[i].y;
+                if(!DPtoLP(dc->hSelf, &lastmove, 1))
+                    return FALSE;
+                break;
+            }
+        }
+
+        for(i = 0; i < cbPoints; i++){
+            if(types[i] == PT_MOVETO){
+                pPath->newStroke = TRUE;
+                lastmove.x = pts[i].x;
+                lastmove.y = pts[i].y;
+            }
+            else if((types[i] & ~PT_CLOSEFIGURE) == PT_LINETO){
+                PATH_LineTo(dc, pts[i].x, pts[i].y);
+            }
+            else if(types[i] == PT_BEZIERTO){
+                if(!((i + 2 < cbPoints) && (types[i + 1] == PT_BEZIERTO)
+                    && ((types[i + 2] & ~PT_CLOSEFIGURE) == PT_BEZIERTO)))
+                    goto err;
+                PATH_PolyBezierTo(dc, &(pts[i]), 3);
+                i += 2;
+            }
+            else
+                goto err;
+
+            dc->CursPosX = pts[i].x;
+            dc->CursPosY = pts[i].y;
+
+            if(types[i] & PT_CLOSEFIGURE){
+                pPath->pFlags[pPath->numEntriesUsed-1] |= PT_CLOSEFIGURE;
+                pPath->newStroke = TRUE;
+                dc->CursPosX = lastmove.x;
+                dc->CursPosY = lastmove.y;
+            }
+        }
+
+        return TRUE;
+
+err:
+        if((dc->CursPosX != orig_pos.x) || (dc->CursPosY != orig_pos.y)){
+            pPath->newStroke = TRUE;
+            dc->CursPosX = orig_pos.x;
+            dc->CursPosY = orig_pos.y;
+        }
+
+        return FALSE;
+}
+
 BOOL PATH_Polyline(DC *dc, const POINT *pts, DWORD cbPoints)
 {
    GdiPath     *pPath = &dc->path;

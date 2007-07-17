@@ -481,6 +481,7 @@ extern BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
                      INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines);
 extern BOOL PATH_PolyBezierTo(DC *dc, const POINT *pt, DWORD cbCount);
 extern BOOL PATH_PolyBezier(DC *dc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_PolyDraw(DC *dc, const POINT *pts, const BYTE *types, DWORD cbCount);
 extern BOOL PATH_PolylineTo(DC *dc, const POINT *pt, DWORD cbCount);
 extern BOOL PATH_Polyline(DC *dc, const POINT *pt, DWORD cbCount);
 extern BOOL PATH_Polygon(DC *dc, const POINT *pt, DWORD cbCount);
