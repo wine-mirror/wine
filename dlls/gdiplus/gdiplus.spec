@@ -442,7 +442,7 @@
 @ stub GdipPathIterNextPathType
 @ stdcall GdipPathIterNextSubpath(ptr ptr ptr ptr ptr)
 @ stub GdipPathIterNextSubpathPath
-@ stub GdipPathIterRewind
+@ stdcall GdipPathIterRewind(ptr)
 @ stub GdipPlayMetafileRecord
 @ stub GdipPrivateAddFontFile
 @ stub GdipPrivateAddMemoryFont

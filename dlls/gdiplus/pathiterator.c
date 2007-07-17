@@ -117,3 +117,14 @@ GpStatus WINGDIPAPI GdipPathIterNextSubpath(GpPathIterator* iterator,
 
     return Ok;
 }
+GpStatus WINGDIPAPI GdipPathIterRewind(GpPathIterator *iterator)
+{
+    if(!iterator)
+        return InvalidParameter;
+
+    iterator->subpath_pos = 0;
+    iterator->marker_pos = 0;
+    iterator->pathtype_pos = 0;
+
+    return Ok;
+}
