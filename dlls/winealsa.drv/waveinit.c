@@ -307,10 +307,22 @@ static int ALSA_ComputeCaps(snd_ctl_t *ctl, snd_pcm_t *pcm,
 
     /* check for volume control support */
     if (ctl) {
-        *supports |= WAVECAPS_VOLUME;
-
-        if (chmin <= 2 && 2 <= chmax)
-            *supports |= WAVECAPS_LRVOLUME;
+        if (snd_ctl_name(ctl))
+        {
+            snd_hctl_t *hctl;
+            if (snd_hctl_open(&hctl, snd_ctl_name(ctl), 0) >= 0)
+            {
+                snd_hctl_load(hctl);
+                if (!ALSA_CheckSetVolume( hctl, NULL, NULL, NULL, NULL, NULL, NULL, NULL ))
+                {
+                    *supports |= WAVECAPS_VOLUME;
+                    if (chmin <= 2 && 2 <= chmax)
+                        *supports |= WAVECAPS_LRVOLUME;
+                }
+                snd_hctl_free(hctl);
+                snd_hctl_close(hctl);
+            }
+        }
     }
 
     if (*formats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
