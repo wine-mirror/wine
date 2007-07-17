@@ -268,7 +268,7 @@ static void check_param(LPCSTR test, HCRYPTMSG msg, DWORD param,
     LPBYTE buf;
     BOOL ret;
 
-    size = 0;
+    size = 0xdeadbeef;
     ret = CryptMsgGetParam(msg, param, 0, NULL, &size);
     ok(ret, "%s: CryptMsgGetParam failed: %08x\n", test, GetLastError());
     buf = HeapAlloc(GetProcessHeap(), 0, size);
@@ -276,7 +276,7 @@ static void check_param(LPCSTR test, HCRYPTMSG msg, DWORD param,
     ok(ret, "%s: CryptMsgGetParam failed: %08x\n", test, GetLastError());
     ok(size == expectedSize, "%s: expected size %d, got %d\n", test,
      expectedSize, size);
-    if (size)
+    if (size == expectedSize && size)
         ok(!memcmp(buf, expected, size), "%s: unexpected data\n", test);
     HeapFree(GetProcessHeap(), 0, buf);
 }
@@ -1201,9 +1201,49 @@ static void test_decode_msg_update(void)
     CryptMsgClose(msg);
 }
 
+static const BYTE hashParam[] = { 0x08,0xd6,0xc0,0x5a,0x21,0x51,0x2a,0x79,0xa1,
+ 0xdf,0xeb,0x9d,0x2a,0x8f,0x26,0x2f };
+
+static void test_decode_msg_get_param(void)
+{
+    HCRYPTMSG msg;
+    BOOL ret;
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    ret = CryptMsgUpdate(msg, dataContent, sizeof(dataContent), TRUE);
+    todo_wine
+    check_param("data content", msg, CMSG_CONTENT_PARAM, msgData,
+     sizeof(msgData));
+    CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    ret = CryptMsgUpdate(msg, hashEmptyContent, sizeof(hashEmptyContent), TRUE);
+    todo_wine
+    check_param("empty hash content", msg, CMSG_CONTENT_PARAM, NULL, 0);
+    todo_wine
+    check_param("empty hash hash data", msg, CMSG_HASH_DATA_PARAM, NULL, 0);
+    todo_wine
+    check_param("empty hash computed hash", msg, CMSG_COMPUTED_HASH_PARAM,
+     emptyHashParam, sizeof(emptyHashParam));
+    CryptMsgClose(msg);
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    ret = CryptMsgUpdate(msg, hashContent, sizeof(hashContent), TRUE);
+    todo_wine
+    check_param("hash content", msg, CMSG_CONTENT_PARAM, msgData,
+     sizeof(msgData));
+    todo_wine
+    check_param("hash hash data", msg, CMSG_HASH_DATA_PARAM, hashParam,
+     sizeof(hashParam));
+    todo_wine
+    check_param("hash computed hash", msg, CMSG_COMPUTED_HASH_PARAM,
+     hashParam, sizeof(hashParam));
+    CryptMsgClose(msg);
+}
+
 static void test_decode_msg(void)
 {
     test_decode_msg_update();
+    test_decode_msg_get_param();
 }
 
 START_TEST(msg)
