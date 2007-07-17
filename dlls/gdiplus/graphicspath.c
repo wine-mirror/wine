@@ -94,6 +94,33 @@ GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipAddPathBeziers(GpPath *path, GDIPCONST GpPointF *points,
+    INT count)
+{
+    INT i, old_count;
+
+    if(!path || !points || ((count - 1) % 3))
+        return InvalidParameter;
+
+    if(!lengthen_path(path, count))
+        return OutOfMemory;
+
+    old_count = path->pathdata.Count;
+
+    for(i = 0; i < count; i++){
+        path->pathdata.Points[old_count + i].X = points[i].X;
+        path->pathdata.Points[old_count + i].Y = points[i].Y;
+        path->pathdata.Types[old_count + i] = PathPointTypeBezier;
+    }
+
+    path->pathdata.Types[old_count] =
+        (path->newfigure ? PathPointTypeStart : PathPointTypeLine);
+    path->newfigure = FALSE;
+    path->pathdata.Count += count;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
     INT count)
 {
