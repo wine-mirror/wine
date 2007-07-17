@@ -29,6 +29,7 @@ int	[0-9]+
 hexd	[0-9a-fA-F]
 hex	0x{hexd}+
 uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
+double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 
 %x QUOTE
 %x ATTR
@@ -149,6 +150,10 @@ static UUID* parse_uuid(const char*u)
 <INITIAL,ATTR>{int}	{
 				parser_lval.num = strtoul(yytext, NULL, 0);
 				return aNUM;
+			}
+<INITIAL>{double}	{
+				parser_lval.dbl = strtod(yytext, NULL);
+				return aDOUBLE;
 			}
 SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 {cident}		return kw_token(yytext);

@@ -135,6 +135,7 @@ enum expr_type
     EXPR_VOID,
     EXPR_NUM,
     EXPR_HEXNUM,
+    EXPR_DOUBLE,
     EXPR_IDENTIFIER,
     EXPR_NEG,
     EXPR_NOT,
@@ -188,6 +189,7 @@ struct _expr_t {
   const expr_t *ref;
   union {
     long lval;
+    double dval;
     const char *sval;
     const expr_t *ext;
     type_t *tref;

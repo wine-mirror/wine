@@ -83,6 +83,7 @@ static attr_t *make_attrv(enum attr_type type, unsigned long val);
 static attr_t *make_attrp(enum attr_type type, void *val);
 static expr_t *make_expr(enum expr_type type);
 static expr_t *make_exprl(enum expr_type type, long val);
+static expr_t *make_exprd(enum expr_type type, double val);
 static expr_t *make_exprs(enum expr_type type, char *val);
 static expr_t *make_exprt(enum expr_type type, type_t *tref, expr_t *expr);
 static expr_t *make_expr1(enum expr_type type, expr_t *expr);
@@ -151,11 +152,13 @@ static void check_all_user_types(ifref_list_t *ifaces);
 	char *str;
 	UUID *uuid;
 	unsigned int num;
+	double dbl;
 }
 
 %token <str> aIDENTIFIER
 %token <str> aKNOWNTYPE
 %token <num> aNUM aHEXNUM
+%token <dbl> aDOUBLE
 %token <str> aSTRING
 %token <uuid> aUUID
 %token aEOF
@@ -581,6 +584,7 @@ m_expr:						{ $$ = make_expr(EXPR_VOID); }
 
 expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| aHEXNUM				{ $$ = make_exprl(EXPR_HEXNUM, $1); }
+	| aDOUBLE				{ $$ = make_exprd(EXPR_DOUBLE, $1); }
 	| tFALSE				{ $$ = make_exprl(EXPR_TRUEFALSE, 0); }
 	| tTRUE					{ $$ = make_exprl(EXPR_TRUEFALSE, 1); }
 	| aIDENTIFIER				{ $$ = make_exprs(EXPR_IDENTIFIER, $1); }
@@ -1030,6 +1034,17 @@ static expr_t *make_exprl(enum expr_type type, long val)
     e->is_const = TRUE;
     e->cval = val;
   }
+  return e;
+}
+
+static expr_t *make_exprd(enum expr_type type, double val)
+{
+  expr_t *e = xmalloc(sizeof(expr_t));
+  e->type = type;
+  e->ref = NULL;
+  e->u.dval = val;
+  e->is_const = TRUE;
+  e->cval = val;
   return e;
 }
 

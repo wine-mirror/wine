@@ -358,6 +358,9 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
   case EXPR_HEXNUM:
     fprintf(h, "0x%lx", e->u.lval);
     break;
+  case EXPR_DOUBLE:
+    fprintf(h, "%#.15g", e->u.dval);
+    break;
   case EXPR_TRUEFALSE:
     if (e->u.lval == 0)
       fprintf(h, "FALSE");
