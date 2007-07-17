@@ -278,9 +278,9 @@ static BOOL CRYPT_DecodeEnsureSpace(DWORD dwFlags,
  *     If true, and the tag doesn't match the expected tag for this item,
  *     or the decodeFunc fails with CRYPT_E_ASN1_BADTAG, then minSize space is
  *     filled with 0 for this member.
- * hasPointer, pointerOffset, minSize:
+ * hasPointer, pointerOffset:
  *     If the item has dynamic data, set hasPointer to TRUE, pointerOffset to
- *     the offset within the (outer) struct of the data pointer (or to the
+ *     the offset within the struct of the data pointer (or to the
  *     first data pointer, if more than one exist).
  * size:
  *     Used by CRYPT_AsnDecodeSequence, not for your use.
