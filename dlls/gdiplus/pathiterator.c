@@ -83,3 +83,37 @@ GpStatus WINGDIPAPI GdipPathIterCopyData(GpPathIterator* iterator,
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipPathIterNextSubpath(GpPathIterator* iterator,
+    INT *resultCount, INT* startIndex, INT* endIndex, BOOL* isClosed)
+{
+    INT i, count;
+
+    if(!iterator)
+        return InvalidParameter;
+
+    count = iterator->pathdata.Count;
+
+    if(iterator->subpath_pos == count){
+        *startIndex = *endIndex = *resultCount = 0;
+        *isClosed = 1;
+        return Ok;
+    }
+
+    *startIndex = iterator->subpath_pos;
+
+    for(i = iterator->subpath_pos + 1; i < count &&
+        !(iterator->pathdata.Types[i] == PathPointTypeStart); i++);
+
+    *endIndex = i - 1;
+    iterator->subpath_pos = i;
+
+    *resultCount = *endIndex - *startIndex + 1;
+
+    if(iterator->pathdata.Types[*endIndex] & PathPointTypeCloseSubpath)
+        *isClosed = TRUE;
+    else
+        *isClosed = FALSE;
+
+    return Ok;
+}

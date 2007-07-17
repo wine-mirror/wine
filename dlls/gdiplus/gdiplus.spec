@@ -440,7 +440,7 @@
 @ stub GdipPathIterNextMarker
 @ stub GdipPathIterNextMarkerPath
 @ stub GdipPathIterNextPathType
-@ stub GdipPathIterNextSubpath
+@ stdcall GdipPathIterNextSubpath(ptr ptr ptr ptr ptr)
 @ stub GdipPathIterNextSubpathPath
 @ stub GdipPathIterRewind
 @ stub GdipPlayMetafileRecord
