@@ -347,56 +347,40 @@ static BOOL CRYPT_EncodePKCSDigestedData(CHashEncodeMsg *msg, void *pvData,
     ret = CryptGetHashParam(msg->hash, HP_ALGID, (BYTE *)&algID, &size, 0);
     if (ret)
     {
-        CRYPT_ALGORITHM_IDENTIFIER algoId = { 0 };
-        DWORD version = CMSG_HASHED_DATA_PKCS_1_5_VERSION;
-        struct AsnEncodeSequenceItem items[7] = { { 0 } };
-        DWORD cItem = 0;
-        CRYPT_DATA_BLOB hash = { 0, NULL };
-        CRYPT_CONTENT_INFO contentInfo = { NULL, { 0, NULL } };
+        CRYPT_DIGESTED_DATA digestedData = { 0 };
         char oid_rsa_data[] = szOID_RSA_data;
 
-        items[cItem].pvStructInfo = &version;
-        items[cItem].encodeFunc = CRYPT_AsnEncodeInt;
-        cItem++;
-        algoId.pszObjId = (LPSTR)CertAlgIdToOID(algID);
-        /* FIXME: what about algoId.Parameters? */
-        items[cItem].pvStructInfo = &algoId;
-        items[cItem].encodeFunc = CRYPT_AsnEncodeAlgorithmIdWithNullParams;
-        cItem++;
+        digestedData.version = CMSG_HASHED_DATA_PKCS_1_5_VERSION;
+        digestedData.DigestAlgorithm.pszObjId = (LPSTR)CertAlgIdToOID(algID);
+        /* FIXME: what about digestedData.DigestAlgorithm.Parameters? */
         /* Quirk:  OID is only encoded messages if an update has happened */
         if (msg->base.state != MsgStateInit)
-            contentInfo.pszObjId = oid_rsa_data;
+            digestedData.ContentInfo.pszObjId = oid_rsa_data;
         if (!(msg->base.open_flags & CMSG_DETACHED_FLAG) && msg->data.cbData)
         {
             ret = CRYPT_AsnEncodeOctets(0, NULL, &msg->data,
              CRYPT_ENCODE_ALLOC_FLAG, NULL,
-             (LPBYTE)&contentInfo.Content.pbData,
-             &contentInfo.Content.cbData);
+             (LPBYTE)&digestedData.ContentInfo.Content.pbData,
+             &digestedData.ContentInfo.Content.cbData);
         }
-        items[cItem].pvStructInfo = &contentInfo;
-        items[cItem].encodeFunc =
-         CRYPT_AsnEncodePKCSContentInfoInternal;
-        cItem++;
         if (msg->base.state == MsgStateFinalized)
         {
             size = sizeof(DWORD);
             ret = CryptGetHashParam(msg->hash, HP_HASHSIZE,
-             (LPBYTE)&hash.cbData, &size, 0);
+             (LPBYTE)&digestedData.hash.cbData, &size, 0);
             if (ret)
             {
-                hash.pbData = CryptMemAlloc(hash.cbData);
-                ret = CryptGetHashParam(msg->hash, HP_HASHVAL, hash.pbData,
-                 &hash.cbData, 0);
+                digestedData.hash.pbData = CryptMemAlloc(
+                 digestedData.hash.cbData);
+                ret = CryptGetHashParam(msg->hash, HP_HASHVAL,
+                 digestedData.hash.pbData, &digestedData.hash.cbData, 0);
             }
         }
-        items[cItem].pvStructInfo = &hash;
-        items[cItem].encodeFunc = CRYPT_AsnEncodeOctets;
-        cItem++;
         if (ret)
-            ret = CRYPT_AsnEncodeSequence(X509_ASN_ENCODING, items, cItem,
-             0, NULL, pvData, pcbData);
-        CryptMemFree(hash.pbData);
-        LocalFree(contentInfo.Content.pbData);
+            ret = CRYPT_AsnEncodePKCSDigestedData(&digestedData, pvData,
+             pcbData);
+        CryptMemFree(digestedData.hash.pbData);
+        LocalFree(digestedData.ContentInfo.Content.pbData);
     }
     return ret;
 }
