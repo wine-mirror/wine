@@ -3169,7 +3169,7 @@ typedef struct _CMSG_CTRL_DEL_SIGNER_UNAUTH_ATTR_PARA
 #define CMSG_TYPE_PARAM                  1
 #define CMSG_CONTENT_PARAM               2
 #define CMSG_BARE_CONTENT_PARAM          3
-#define CMSG_INNER_CONTENT_PARAM         4
+#define CMSG_INNER_CONTENT_TYPE_PARAM    4
 #define CMSG_SIGNER_COUNT_PARAM          5
 #define CMSG_SIGNER_INFO_PARAM           6
 #define CMSG_SIGNER_CERT_INFO_PARAM      7
