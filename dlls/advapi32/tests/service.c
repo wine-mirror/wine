@@ -144,6 +144,10 @@ static void test_create_delete_svc(void)
     static const CHAR empty               [] = "";
     static const CHAR spooler             [] = "Spooler";           /* Should be available on all platforms */
     static const CHAR password            [] = "secret";
+    BOOL spooler_exists = FALSE;
+    BOOL ret;
+    CHAR display[4096];
+    DWORD display_size = sizeof(display);
 
     /* Get the username and turn it into an account to be used in some tests */
     GetUserNameA(username, &user_size);
@@ -277,6 +281,7 @@ static void test_create_delete_svc(void)
     svc_handle1 = OpenServiceA(scm_handle, spooler, GENERIC_READ);
     if (svc_handle1)
     {
+        spooler_exists = TRUE;
         CloseServiceHandle(svc_handle1);
         SetLastError(0xdeadbeef);
         svc_handle1 = CreateServiceA(scm_handle, spooler, NULL, 0, SERVICE_WIN32_OWN_PROCESS, SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
@@ -286,7 +291,35 @@ static void test_create_delete_svc(void)
     else
         skip("Spooler service doesn't exist\n");
 
-    /* TODO: Add check for displayname, it must be unique (or NULL/empty) */
+    /* To find an existing displayname we check the 'Spooler' service. Although the registry doesn't show DisplayName on NT4, this call
+     * will return a displayname which is equal to the servicename and can't be used as well for a new displayname.
+     */
+    if (spooler_exists)
+    {
+        ret = GetServiceDisplayNameA(scm_handle, spooler, display, &display_size);
+
+        if (!ret)
+            skip("Could not retrieve a displayname for the Spooler service\n");
+        else
+        {
+            svc_handle1 = CreateServiceA(scm_handle, servicename, display, 0, SERVICE_WIN32_OWN_PROCESS, SERVICE_DISABLED, 0,
+                                         pathname, NULL, NULL, NULL, NULL, NULL);
+            todo_wine
+            {
+            ok(!svc_handle1, "Expected failure\n");
+            ok(GetLastError() == ERROR_DUPLICATE_SERVICE_NAME, "Expected ERROR_DUPLICATE_SERVICE_NAME, got %d\n", GetLastError());
+            }
+        }
+    }
+    else
+        skip("Could not retrieve a displayname (Spooler service doesn't exist)\n");
+
+    /* FIXME: Remove this when Wine is fixed */
+    if (svc_handle1)
+    {
+        DeleteService(svc_handle1);
+        CloseServiceHandle(svc_handle1);
+    }
 
     CloseServiceHandle(scm_handle);
 }
