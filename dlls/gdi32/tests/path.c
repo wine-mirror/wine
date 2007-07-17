@@ -31,6 +31,8 @@
 #include "winuser.h"
 #include "winerror.h"
 
+#define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
+
 static void test_widenpath(void)
 {
     HDC hdc = GetDC(0);
@@ -291,9 +293,110 @@ done:
     ReleaseDC(0, hdc);
 }
 
+static const path_test_t polydraw_path[] = {
+    {0, 0, PT_MOVETO, 0, 0}, /*0*/
+    {10, 10, PT_LINETO, 0, 0}, /*1*/
+    {10, 15, PT_LINETO | PT_CLOSEFIGURE, 0, 0}, /*2*/
+    {100, 100, PT_MOVETO, 0, 0}, /*3*/
+    {95, 95, PT_LINETO, 0, 0}, /*4*/
+    {10, 10, PT_LINETO, 0, 0}, /*5*/
+    {10, 15, PT_LINETO | PT_CLOSEFIGURE, 0, 0}, /*6*/
+    {100, 100, PT_MOVETO, 0, 1}, /*7*/
+    {15, 15, PT_LINETO, 0, 0}, /*8*/
+    {25, 25, PT_MOVETO, 0, 1}, /*9*/
+    {25, 30, PT_LINETO, 0, 1}, /*10*/
+    {100, 100, PT_MOVETO, 0, 1}, /*11*/
+    {30, 30, PT_BEZIERTO, 0, 0}, /*12*/
+    {30, 35, PT_BEZIERTO, 0, 0}, /*13*/
+    {35, 35, PT_BEZIERTO, 0, 0}, /*14*/
+    {35, 40, PT_LINETO, 0, 0}, /*15*/
+    {40, 40, PT_MOVETO, 0, 0}, /*16*/
+    {40, 45, PT_LINETO, 0, 0}, /*17*/
+    {35, 40, PT_MOVETO, 0, 1}, /*18*/
+    {45, 50, PT_LINETO, 0, 1}, /*19*/
+    {35, 40, PT_MOVETO, 0, 1}, /*20*/
+    {50, 55, PT_LINETO, 0, 0}, /*21*/
+    {45, 50, PT_LINETO, 0, 0}, /*22*/
+    {35, 40, PT_MOVETO, 0, 1}, /*23*/
+    {60, 60, PT_LINETO, 0, 1}, /*24*/
+    {60, 65, PT_MOVETO, 0, 1}, /*25*/
+    {65, 65, PT_LINETO, 0, 0} /*26*/
+    };
+
+static POINT polydraw_pts[] = {
+    {10, 10}, {10, 15},
+    {15, 15}, {15, 20}, {20, 20}, {20, 25},
+    {25, 25}, {25, 30},
+    {30, 30}, {30, 35}, {35, 35}, {35, 40},
+    {40, 40}, {40, 45}, {45, 45},
+    {45, 50}, {50, 50},
+    {50, 55}, {45, 50}, {55, 60},
+    {60, 60}, {60, 65}, {65, 65}};
+
+static BYTE polydraw_tps[] =
+    {PT_LINETO, PT_CLOSEFIGURE | PT_LINETO, /* 2 */
+     PT_LINETO, PT_BEZIERTO, PT_LINETO, PT_LINETO, /* 6 */
+     PT_MOVETO, PT_LINETO, /* 8 */
+     PT_BEZIERTO, PT_BEZIERTO, PT_BEZIERTO, PT_LINETO, /* 12 */
+     PT_MOVETO, PT_LINETO, PT_CLOSEFIGURE, /* 15 */
+     PT_LINETO, PT_MOVETO | PT_CLOSEFIGURE, /* 17 */
+     PT_LINETO, PT_LINETO, PT_MOVETO | PT_CLOSEFIGURE, /* 20 */
+     PT_LINETO, PT_MOVETO | PT_LINETO, PT_LINETO}; /* 23 */
+
+static void test_polydraw(void)
+{
+    BOOL retb;
+    HDC hdc = GetDC(0);
+    BeginPath(hdc);
+
+    /* closefigure with no previous moveto */
+    if (!(retb = PolyDraw(hdc, polydraw_pts, polydraw_tps, 2)) &&
+        GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        /* PolyDraw is only available on Win2k and later */
+        skip("PolyDraw is not available\n");
+        goto done;
+    }
+    expect(TRUE, retb);
+
+    MoveToEx(hdc, 100, 100, NULL);
+    LineTo(hdc, 95, 95);
+    /* closefigure with previous moveto */
+    retb = PolyDraw(hdc, polydraw_pts, polydraw_tps, 2);
+    expect(TRUE, retb);
+    /* bad bezier points */
+    retb = PolyDraw(hdc, &(polydraw_pts[2]), &(polydraw_tps[2]), 4);
+    todo_wine
+        expect(FALSE, retb);
+    retb = PolyDraw(hdc, &(polydraw_pts[6]), &(polydraw_tps[6]), 4);
+    expect(FALSE, retb);
+    /* good bezier points */
+    retb = PolyDraw(hdc, &(polydraw_pts[8]), &(polydraw_tps[8]), 4);
+    expect(TRUE, retb);
+    /* does lineto or bezierto take precedence? */
+    retb = PolyDraw(hdc, &(polydraw_pts[12]), &(polydraw_tps[12]), 4);
+    expect(FALSE, retb);
+    /* bad point type, has already moved cursor position */
+    retb = PolyDraw(hdc, &(polydraw_pts[15]), &(polydraw_tps[15]), 4);
+    todo_wine
+        expect(FALSE, retb);
+    /* bad point type, cursor position is moved, but back to its original spot */
+    retb = PolyDraw(hdc, &(polydraw_pts[17]), &(polydraw_tps[17]), 4);
+    expect(FALSE, retb);
+    /* does lineto or moveto take precedence? */
+    retb = PolyDraw(hdc, &(polydraw_pts[20]), &(polydraw_tps[20]), 3);
+    expect(TRUE, retb);
+
+    EndPath(hdc);
+    ok_path(hdc, "polydraw_path", polydraw_path, sizeof(polydraw_path)/sizeof(path_test_t), 1);
+done:
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(path)
 {
     test_widenpath();
     test_arcto();
     test_anglearc();
+    test_polydraw();
 }
