@@ -17,13 +17,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- */
-/*
+ *
  * Most thread locking is complete. There may be a few race
  * conditions still lurking.
- *
- * Tested with a Soundblaster clone, a Gravis UltraSound Classic,
- * and a Turtle Beach Tropez+.
  *
  * TODO:
  *	Implement SetCooperativeLevel properly (need to address focus issues)
@@ -32,8 +28,8 @@
  *      Add critical section locking inside Release and AddRef methods
  *      Handle static buffers - put those in hardware, non-static not in hardware
  *      Hardware DuplicateSoundBuffer
- *      Proper volume calculation, and setting volume in HEL primary buffer
- *      Optimize WINMM and negotiate fragment size, decrease DS_HEL_MARGIN
+ *      Proper volume calculation for 3d buffers
+ *      Remove DS_HEL_FRAGS and use mixer fragment length for it
  */
 
 #include <stdarg.h>
@@ -57,11 +53,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-/* these are eligible for tuning... they must be high on slow machines... */
-/* some stuff may get more responsive with lower values though... */
-#define DS_EMULDRIVER 0 /* some games (Quake 2, UT) refuse to accept
-				emulated dsound devices. set to 0 ! */
-#define DS_SND_QUEUE_MAX 10 /* max number of fragments to prebuffer */
+#define DS_SND_QUEUE_MAX 10 /* max number of fragments to prebuffer, each fragment is approximately 10 ms long */
 
 DirectSoundDevice*	DSOUND_renderer[MAXWAVEDRIVERS];
 GUID                    DSOUND_renderer_guids[MAXWAVEDRIVERS];
@@ -94,7 +86,7 @@ HRESULT mmErr(UINT err)
 	}
 }
 
-int ds_emuldriver = DS_EMULDRIVER;
+int ds_emuldriver = 0;
 int ds_snd_queue_max = DS_SND_QUEUE_MAX;
 int ds_hw_accel = DS_HW_ACCEL_FULL;
 int ds_default_playback = 0;
@@ -181,8 +173,8 @@ void setup_dsound_options(void)
     if (appkey) RegCloseKey( appkey );
     if (hkey) RegCloseKey( hkey );
 
-    if (ds_emuldriver != DS_EMULDRIVER )
-       WARN("ds_emuldriver = %d (default=%d)\n",ds_emuldriver, DS_EMULDRIVER);
+    if (ds_emuldriver)
+       WARN("ds_emuldriver = %d (default=0)\n",ds_emuldriver);
     if (ds_snd_queue_max != DS_SND_QUEUE_MAX)
        WARN("ds_snd_queue_max = %d (default=%d)\n",ds_snd_queue_max ,DS_SND_QUEUE_MAX);
     if (ds_hw_accel != DS_HW_ACCEL_FULL)
