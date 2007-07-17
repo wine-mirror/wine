@@ -872,7 +872,7 @@ LONG FD31_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   	ofn->nFilterIndex = 1;
   SendDlgItemMessageW(hWnd, cmb1, CB_SETCURSEL, ofn->nFilterIndex - 1, 0);
   lstrcpynW(tmpstr, FD31_GetFileType(ofn->lpstrCustomFilter,
-	     (LPWSTR)ofn->lpstrFilter, ofn->nFilterIndex - 1),BUFFILE);
+	     ofn->lpstrFilter, ofn->nFilterIndex - 1),BUFFILE);
   TRACE("nFilterIndex = %d, SetText of edt1 to %s\n",
   			ofn->nFilterIndex, debugstr_w(tmpstr));
   SetDlgItemTextW( hWnd, edt1, tmpstr );
