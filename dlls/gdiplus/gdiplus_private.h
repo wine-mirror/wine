@@ -83,4 +83,11 @@ struct GpMatrix{
     REAL matrix[6];
 };
 
+struct GpPathIterator{
+    GpPathData pathdata;
+    INT subpath_pos;    /* for NextSubpath methods */
+    INT marker_pos;     /* for NextMarker methods */
+    INT pathtype_pos;   /* for NextPathType methods */
+};
+
 #endif

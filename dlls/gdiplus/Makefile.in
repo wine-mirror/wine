@@ -12,6 +12,7 @@ C_SRCS = \
 	graphics.c \
 	graphicspath.c \
 	matrix.c \
+	pathiterator.c \
 	pen.c
 
 @MAKE_DLL_RULES@
