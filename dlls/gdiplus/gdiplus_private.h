@@ -23,7 +23,7 @@
 #include "windef.h"
 #include "gdiplus.h"
 
-#define GP_DEFAULT_PENSTYLE (PS_GEOMETRIC | PS_ENDCAP_FLAT | PS_JOIN_MITER)
+#define GP_DEFAULT_PENSTYLE (PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_FLAT | PS_JOIN_MITER)
 #define MAX_ARC_PTS (13)
 
 COLORREF ARGB2COLORREF(ARGB color);
@@ -51,6 +51,7 @@ struct GpPen{
     GpDashCap dashcap;
     GpLineJoin join;
     REAL miterlimit;
+    GpDashStyle dash;
 };
 
 struct GpGraphics{

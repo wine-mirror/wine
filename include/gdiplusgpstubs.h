@@ -51,5 +51,6 @@ typedef LineCap GpLineCap;
 typedef RectF GpRectF;
 typedef LineJoin GpLineJoin;
 typedef DashCap GpDashCap;
+typedef DashStyle GpDashStyle;
 
 #endif

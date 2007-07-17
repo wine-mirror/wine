@@ -27,6 +27,28 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+static DWORD gdip_to_gdi_dash(GpDashStyle dash)
+{
+    switch(dash){
+        case DashStyleSolid:
+            return PS_SOLID;
+        case DashStyleDash:
+            return PS_DASH;
+        case DashStyleDot:
+            return PS_DOT;
+        case DashStyleDashDot:
+            return PS_DASHDOT;
+        case DashStyleDashDotDot:
+            return PS_DASHDOTDOT;
+        case DashStyleCustom:
+            FIXME("DashStyleCustom not implemented\n");
+            return PS_SOLID;
+        default:
+            ERR("Not a member of GpDashStyle enumeration\n");
+            return 0;
+    }
+}
+
 static DWORD gdip_to_gdi_join(GpLineJoin join)
 {
     switch(join){
@@ -87,6 +109,28 @@ GpStatus WINGDIPAPI GdipDeletePen(GpPen *pen)
     if(!pen)    return InvalidParameter;
     DeleteObject(pen->gdipen);
     GdipFree(pen);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetPenDashStyle(GpPen *pen, GpDashStyle dash)
+{
+    LOGBRUSH lb;
+
+    if(!pen)
+        return InvalidParameter;
+
+    DeleteObject(pen->gdipen);
+    pen->dash = dash;
+    pen->style &= ~(PS_ALTERNATE | PS_SOLID | PS_DASH | PS_DOT | PS_DASHDOT |
+                    PS_DASHDOTDOT | PS_NULL | PS_USERSTYLE | PS_INSIDEFRAME);
+    pen->style |= gdip_to_gdi_dash(dash);
+
+    lb.lbStyle = BS_SOLID;
+    lb.lbColor = pen->color;
+    lb.lbHatch = 0;
+
+    pen->gdipen = ExtCreatePen(pen->style, (INT) pen->width, &lb, 0, NULL);
 
     return Ok;
 }

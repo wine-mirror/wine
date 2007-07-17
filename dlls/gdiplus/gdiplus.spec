@@ -549,7 +549,7 @@
 @ stub GdipSetPenDashArray
 @ stub GdipSetPenDashCap197819
 @ stub GdipSetPenDashOffset
-@ stub GdipSetPenDashStyle
+@ stdcall GdipSetPenDashStyle(ptr long)
 @ stdcall GdipSetPenEndCap(ptr long)
 @ stdcall GdipSetPenLineCap197819(ptr long long long)
 @ stdcall GdipSetPenLineJoin(ptr long)

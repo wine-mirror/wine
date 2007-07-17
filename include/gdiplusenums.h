@@ -141,6 +141,16 @@ enum DashCap
     DashCapTriangle = 3
 };
 
+enum DashStyle
+{
+    DashStyleSolid,
+    DashStyleDash,
+    DashStyleDot,
+    DashStyleDashDot,
+    DashStyleDashDotDot,
+    DashStyleCustom
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -155,6 +165,7 @@ typedef enum CompositingQuality CompositingQuality;
 typedef enum InterpolationMode InterpolationMode;
 typedef enum PixelOffsetMode PixelOffsetMode;
 typedef enum DashCap DashCap;
+typedef enum DashStyle DashStyle;
 
 #endif /* end of c typedefs */
 
