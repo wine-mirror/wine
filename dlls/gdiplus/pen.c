@@ -135,3 +135,13 @@ GpStatus WINGDIPAPI GdipSetPenLineJoin(GpPen *pen, GpLineJoin join)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipSetPenMiterLimit(GpPen *pen, REAL limit)
+{
+    if(!pen)
+        return InvalidParameter;
+
+    pen->miterlimit = limit;
+
+    return Ok;
+}

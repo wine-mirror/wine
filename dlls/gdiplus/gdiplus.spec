@@ -553,7 +553,7 @@
 @ stdcall GdipSetPenEndCap(ptr long)
 @ stdcall GdipSetPenLineCap197819(ptr long long long)
 @ stdcall GdipSetPenLineJoin(ptr long)
-@ stub GdipSetPenMiterLimit
+@ stdcall GdipSetPenMiterLimit(ptr long)
 @ stub GdipSetPenMode
 @ stub GdipSetPenStartCap
 @ stub GdipSetPenTransform
