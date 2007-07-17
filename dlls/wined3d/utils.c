@@ -615,7 +615,6 @@ const char* debug_d3dtexturestate(DWORD state) {
   case 12:
     /* Note WINED3DTSS are not consecutive, so skip these */
     return "unused";
-    break;
   default:
     FIXME("Unrecognized %u texture state!\n", state);
     return "unrecognized";
@@ -2518,11 +2517,11 @@ int D3DFmtMakeGlCfg(WINED3DFORMAT BackBufferFormat, WINED3DFORMAT StencilBufferF
 /* DirectDraw stuff */
 WINED3DFORMAT pixelformat_for_depth(DWORD depth) {
     switch(depth) {
-        case 8:  return WINED3DFMT_P8; break;
-        case 15: return WINED3DFMT_X1R5G5B5; break;
-        case 16: return WINED3DFMT_R5G6B5; break;
-        case 24: return WINED3DFMT_R8G8B8; break;
-        case 32: return WINED3DFMT_X8R8G8B8; break;
+        case 8:  return WINED3DFMT_P8;
+        case 15: return WINED3DFMT_X1R5G5B5;
+        case 16: return WINED3DFMT_R5G6B5;
+        case 24: return WINED3DFMT_R8G8B8;
+        case 32: return WINED3DFMT_X8R8G8B8;
         default: return WINED3DFMT_UNKNOWN;
     }
 }
