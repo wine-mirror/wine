@@ -552,7 +552,7 @@
 @ stub GdipSetPenDashStyle
 @ stdcall GdipSetPenEndCap(ptr long)
 @ stdcall GdipSetPenLineCap197819(ptr long long long)
-@ stub GdipSetPenLineJoin
+@ stdcall GdipSetPenLineJoin(ptr long)
 @ stub GdipSetPenMiterLimit
 @ stub GdipSetPenMode
 @ stub GdipSetPenStartCap
