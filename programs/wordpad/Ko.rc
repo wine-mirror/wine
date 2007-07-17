@@ -53,11 +53,11 @@ BEGIN
             MENUITEM "텍스트 얻기(&G)",                   ID_EDIT_GETTEXT
         END
     END
-    POPUP "&View"
+    POPUP "보기(&V)"
     BEGIN
-        MENUITEM "&Toolbar",        ID_TOGGLE_TOOLBAR
-        MENUITEM "&Formatbar",      ID_TOGGLE_FORMATBAR
-        MENUITEM "&Statusbar",      ID_TOGGLE_STATUSBAR
+        MENUITEM "도구바(&T)",        ID_TOGGLE_TOOLBAR
+        MENUITEM "형식바(&F)",      ID_TOGGLE_FORMATBAR
+        MENUITEM "상태바(&S)",      ID_TOGGLE_STATUSBAR
     END
     POPUP "형식(&O)"
     BEGIN
@@ -79,11 +79,11 @@ STRINGTABLE DISCARDABLE
 BEGIN
     STRING_RICHTEXT_FILES_RTF,  "리치 텍스트 파일형식 (*.rtf)"
     STRING_TEXT_FILES_TXT,      "텍스트 파일 (*.txt)"
-    STRING_ALL_FILES,           "모둔 문서 (*.*)"
+    STRING_ALL_FILES,           "모든 문서 (*.*)"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    STRING_DEFAULT_FILENAME,     "Document"
-    STRING_PROMPT_SAVE_CHANGES,  "Save changes to '%s'?"
+    STRING_DEFAULT_FILENAME,     "문서"
+    STRING_PROMPT_SAVE_CHANGES,  "'%s'의 바뀐 것을 저장하겠습니까?"
 END
