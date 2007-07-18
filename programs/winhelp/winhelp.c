@@ -440,7 +440,8 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
         /* case HELP_PARTIALKEY: */
         /* case HELP_MULTIKEY: */
         /* case HELP_SETWINPOS: */
-            WINE_FIXME("Unknown command (%x) for remote winhelp control\n", wh->command);
+        default:
+            WINE_FIXME("Unhandled command (%x) for remote winhelp control\n", wh->command);
             break;
         }
     }
