@@ -203,7 +203,9 @@ static void test_create_delete_svc(void)
     ok(!svc_handle1, "Expected failure\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
 
-    /* Open the Service Control Manager with minimal rights for creation (verified with 'SC_MANAGER_ALL_ACCESS &~ SC_MANAGER_CREATE_SERVICE') */
+    /* Open the Service Control Manager with minimal rights for creation
+     * (Verified with 'SC_MANAGER_ALL_ACCESS &~ SC_MANAGER_CREATE_SERVICE')
+     */
     CloseServiceHandle(scm_handle);
     SetLastError(0xdeadbeef);
     scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
@@ -231,15 +233,20 @@ static void test_create_delete_svc(void)
     ok(!svc_handle1, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %d\n", GetLastError());
 
-    /* Valid call (as we will see later) except for the empty binary name (to proof it's indeed an ERROR_INVALID_PARAMETER */
+    /* Valid call (as we will see later) except for the empty binary name (to proof it's indeed
+     * an ERROR_INVALID_PARAMETER)
+     */
     SetLastError(0xdeadbeef);
-    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, 0, SERVICE_WIN32_OWN_PROCESS, SERVICE_DISABLED, 0, empty, NULL, NULL, NULL, NULL, NULL);
+    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, 0, SERVICE_WIN32_OWN_PROCESS,
+                                 SERVICE_DISABLED, 0, empty, NULL, NULL, NULL, NULL, NULL);
     ok(!svc_handle1, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* Windows checks if the 'service type', 'access type' and the combination of them are valid, so let's test that */
 
-    /* Illegal (service-type, which is used as a mask can't have a mix. Except the one with SERVICE_INTERACTIVE_PROCESS which is tested below) */
+    /* Illegal (service-type, which is used as a mask can't have a mix. Except the one with
+     * SERVICE_INTERACTIVE_PROCESS which will be tested below in a valid call)
+     */
     SetLastError(0xdeadbeef);
     svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL, SERVICE_WIN32_OWN_PROCESS | SERVICE_WIN32_SHARE_PROCESS,
                                  SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
@@ -263,17 +270,19 @@ static void test_create_delete_svc(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* Illegal (start-type is not a mask and should only be one of the possibilities)
-     * Remark : 'OR'-ing them could result in a valid possibility (but doesn't make sense as it's most likely not the wanted start-type)
+     * Remark : 'OR'-ing them could result in a valid possibility (but doesn't make sense as
+     * it's most likely not the wanted start-type)
      */
     SetLastError(0xdeadbeef);
-    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START | SERVICE_DISABLED,
-                                 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL, SERVICE_WIN32_OWN_PROCESS,
+                                 SERVICE_AUTO_START | SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
     ok(!svc_handle1, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    /* Illegal (SERVICE_BOOT_START and SERVICE_SYSTEM_START or only allowed for driver services) */
+    /* Illegal (SERVICE_BOOT_START and SERVICE_SYSTEM_START are only allowed for driver services) */
     SetLastError(0xdeadbeef);
-    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, 0, SERVICE_WIN32_OWN_PROCESS, SERVICE_BOOT_START, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, 0, SERVICE_WIN32_OWN_PROCESS,
+                                 SERVICE_BOOT_START, 0, pathname, NULL, NULL, NULL, NULL, NULL);
     ok(!svc_handle1, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
@@ -284,15 +293,17 @@ static void test_create_delete_svc(void)
         spooler_exists = TRUE;
         CloseServiceHandle(svc_handle1);
         SetLastError(0xdeadbeef);
-        svc_handle1 = CreateServiceA(scm_handle, spooler, NULL, 0, SERVICE_WIN32_OWN_PROCESS, SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+        svc_handle1 = CreateServiceA(scm_handle, spooler, NULL, 0, SERVICE_WIN32_OWN_PROCESS,
+                                     SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
         ok(!svc_handle1, "Expected failure\n");
         ok(GetLastError() == ERROR_SERVICE_EXISTS, "Expected ERROR_SERVICE_EXISTS, got %d\n", GetLastError());
     }
     else
         skip("Spooler service doesn't exist\n");
 
-    /* To find an existing displayname we check the 'Spooler' service. Although the registry doesn't show DisplayName on NT4, this call
-     * will return a displayname which is equal to the servicename and can't be used as well for a new displayname.
+    /* To find an existing displayname we check the 'Spooler' service. Although the registry
+     * doesn't show DisplayName on NT4, this call will return a displayname which is equal
+     * to the servicename and can't be used as well for a new displayname.
      */
     if (spooler_exists)
     {
@@ -302,12 +313,13 @@ static void test_create_delete_svc(void)
             skip("Could not retrieve a displayname for the Spooler service\n");
         else
         {
-            svc_handle1 = CreateServiceA(scm_handle, servicename, display, 0, SERVICE_WIN32_OWN_PROCESS, SERVICE_DISABLED, 0,
-                                         pathname, NULL, NULL, NULL, NULL, NULL);
+            svc_handle1 = CreateServiceA(scm_handle, servicename, display, 0, SERVICE_WIN32_OWN_PROCESS,
+                                         SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
             todo_wine
             {
             ok(!svc_handle1, "Expected failure\n");
-            ok(GetLastError() == ERROR_DUPLICATE_SERVICE_NAME, "Expected ERROR_DUPLICATE_SERVICE_NAME, got %d\n", GetLastError());
+            ok(GetLastError() == ERROR_DUPLICATE_SERVICE_NAME,
+               "Expected ERROR_DUPLICATE_SERVICE_NAME, got %d\n", GetLastError());
             }
         }
     }
