@@ -52,5 +52,6 @@ typedef RectF GpRectF;
 typedef LineJoin GpLineJoin;
 typedef DashCap GpDashCap;
 typedef DashStyle GpDashStyle;
+typedef MatrixOrder GpMatrixOrder;
 
 #endif

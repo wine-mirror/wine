@@ -424,7 +424,7 @@
 @ stub GdipMeasureDriverString
 @ stub GdipMeasureString
 @ stub GdipMultiplyLineTransform
-@ stub GdipMultiplyMatrix
+@ stdcall GdipMultiplyMatrix(ptr ptr long)
 @ stub GdipMultiplyPathGradientTransform
 @ stub GdipMultiplyPenTransform
 @ stub GdipMultiplyTextureTransform

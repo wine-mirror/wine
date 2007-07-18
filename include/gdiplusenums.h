@@ -151,6 +151,12 @@ enum DashStyle
     DashStyleCustom
 };
 
+enum MatrixOrder
+{
+    MatrixOrderPrepend = 0,
+    MatrixOrderAppend  = 1
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -166,6 +172,7 @@ typedef enum InterpolationMode InterpolationMode;
 typedef enum PixelOffsetMode PixelOffsetMode;
 typedef enum DashCap DashCap;
 typedef enum DashStyle DashStyle;
+typedef enum MatrixOrder MatrixOrder;
 
 #endif /* end of c typedefs */
 
