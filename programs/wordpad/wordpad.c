@@ -677,7 +677,12 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     SendMessageW(hReBarWnd, RB_INSERTBAND, BANDID_FORMATBAR, (LPARAM)&rbb);
 
     hDLL = LoadLibraryW(wszRichEditDll);
-    assert(hDLL);
+    if(!hDLL)
+    {
+        MessageBoxW(hWnd, MAKEINTRESOURCEW(STRING_LOAD_RICHED_FAILED), wszAppTitle,
+                    MB_OK | MB_ICONEXCLAMATION);
+        PostQuitMessage(1);
+    }
 
     hEditorWnd = CreateWindowExW(WS_EX_CLIENTEDGE, wszRichEditClass, NULL,
       WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_AUTOVSCROLL|ES_WANTRETURN|WS_VSCROLL,

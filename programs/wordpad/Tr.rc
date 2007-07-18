@@ -106,4 +106,5 @@ BEGIN
     STRING_DEFAULT_FILENAME,     "Document"
     STRING_PROMPT_SAVE_CHANGES,  "Save changes to '%s'?"
     STRING_SEARCH_FINISHED,      "Finished searching the document."
+    STRING_LOAD_RICHED_FAILED,   "Failed to load the RichEdit library."
 END

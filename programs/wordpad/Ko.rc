@@ -105,4 +105,5 @@ BEGIN
     STRING_DEFAULT_FILENAME,     "문서"
     STRING_PROMPT_SAVE_CHANGES,  "'%s'의 바뀐 것을 저장하겠습니까?"
     STRING_SEARCH_FINISHED,      "Finished searching the document."
+    STRING_LOAD_RICHED_FAILED,   "Failed to load the RichEdit library."
 END
