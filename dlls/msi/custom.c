@@ -647,7 +647,7 @@ static UINT get_action_info( const GUID *guid, INT *type, MSIHANDLE *handle,
     return ERROR_SUCCESS;
 }
 
-static DWORD WINAPI ACTION_CallRemoteDllFunction( const GUID *guid )
+static DWORD WINAPI ACTION_CallDllFunction( const GUID *guid )
 {
     MsiCustomActionEntryPoint fn;
     MSIHANDLE hPackage, handle;
@@ -710,82 +710,6 @@ static DWORD WINAPI ACTION_CallRemoteDllFunction( const GUID *guid )
     SysFreeString( function );
     MsiCloseHandle( handle );
 
-    return r;
-}
-
-static DWORD WINAPI ACTION_CallLocalDllFunction( msi_custom_action_info *info )
-{
-    MsiCustomActionEntryPoint fn;
-    MSIHANDLE hPackage;
-    HANDLE hModule;
-    LPSTR proc;
-    UINT r = ERROR_FUNCTION_FAILED;
-
-    TRACE("%s %s\n", debugstr_w( info->source ), debugstr_w( info->target ) );
-
-    hModule = LoadLibraryW( info->source );
-    if (!hModule)
-    {
-        ERR("failed to load dll %s\n", debugstr_w( info->source ) );
-        return r;
-    }
-
-    proc = strdupWtoA( info->target );
-    fn = (MsiCustomActionEntryPoint) GetProcAddress( hModule, proc );
-    msi_free( proc );
-    if (fn)
-    {
-        hPackage = alloc_msihandle( &info->package->hdr );
-        if (hPackage)
-        {
-            TRACE("calling %s\n", debugstr_w( info->target ) );
-            handle_msi_break( info->target );
-
-            __TRY
-            {
-                r = fn( hPackage );
-            }
-            __EXCEPT_PAGE_FAULT
-            {
-                ERR("Custom action (%s:%s) caused a page fault: %08x\n",
-                    debugstr_w(info->source), debugstr_w(info->target), GetExceptionCode());
-                r = ERROR_SUCCESS;
-            }
-            __ENDTRY;
-
-            MsiCloseHandle( hPackage );
-        }
-        else
-            ERR("failed to create handle for %p\n", info->package );
-    }
-    else
-        ERR("GetProcAddress(%s) failed\n", debugstr_w( info->target ) );
-
-    FreeLibrary(hModule);
-
-    return r;
-}
-
-static DWORD WINAPI ACTION_CallDllFunction(const GUID *guid)
-{
-    msi_custom_action_info *info;
-    UINT r;
-
-    info = find_action_by_guid(guid);
-    if (!info)
-    {
-        ERR("failed to find action %s\n", debugstr_guid(guid));
-        return ERROR_FUNCTION_FAILED;
-    }
-
-    TRACE("%s %s\n", debugstr_w(info->source), debugstr_w(info->target));
-
-    if (info->type & msidbCustomActionTypeInScript)
-        r = ACTION_CallRemoteDllFunction(guid);
-    else
-        r = ACTION_CallLocalDllFunction(info);
-
-    release_custom_action_data(info);
     return r;
 }
 
