@@ -9178,6 +9178,9 @@ static void test_dialog_messages(void)
     check_selection(hedit2, 0, 3);
 
     EndDialog(hdlg, 0);
+    DestroyWindow(hedit1);
+    DestroyWindow(hedit2);
+    DestroyWindow(hdlg);
     flush_sequence();
 
 #undef set_selection
@@ -9194,12 +9197,14 @@ static void test_dialog_messages(void)
     ok(IsWindow(hdlg), "CreateDialogParam failed\n");
     ok_sequence(WmCreateDialogParamSeq_1, "CreateDialogParam_1", FALSE);
     EndDialog(hdlg, 0);
+    DestroyWindow(hdlg);
     flush_sequence();
 
     hdlg = CreateDialogParam(0, "CLASS_TEST_DIALOG_2", 0, NULL, 0);
     ok(IsWindow(hdlg), "CreateDialogParam failed\n");
     ok_sequence(WmCreateDialogParamSeq_2, "CreateDialogParam_2", FALSE);
     EndDialog(hdlg, 0);
+    DestroyWindow(hdlg);
     flush_sequence();
 
     UnregisterClass(cls.lpszClassName, cls.hInstance);
