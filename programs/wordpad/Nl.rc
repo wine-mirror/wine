@@ -58,6 +58,10 @@ BEGIN
         MENUITEM "&Formatbar",      ID_TOGGLE_FORMATBAR
         MENUITEM "&Statusbar",      ID_TOGGLE_STATUSBAR
     END
+    POPUP "&Insert"
+    BEGIN
+        MENUITEM "&Date and time . . .",  ID_DATETIME
+    END
     POPUP "&Opmaak"
     BEGIN
         POPUP "&Achtergrond"
@@ -72,6 +76,24 @@ BEGIN
             MENUITEM "&Rechts\tCtrl+R",       ID_ALIGN_RIGHT
         END
     END
+END
+
+IDD_DATETIME DIALOG DISCARDABLE 30, 20, 130, 80
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Date and time"
+FONT 10, "MS Sans Serif"
+BEGIN
+    LTEXT        "Available formats",0,3,2,100,15
+    LISTBOX      IDC_DATETIME,3,12,80,65,LBS_NOINTEGRALHEIGHT
+    PUSHBUTTON   "&OK",IDOK,87,12,40,12
+    PUSHBUTTON   "&Cancel",IDCANCEL,87,26,40,12
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_RICHTEXT_FILES_RTF,  "Rich text format (*.rtf)"
+    STRING_TEXT_FILES_TXT,      "Text files (*.txt)"
+    STRING_ALL_FILES,           "All documents (*.*)"
 END
 
 STRINGTABLE DISCARDABLE
