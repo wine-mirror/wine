@@ -511,7 +511,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     hToolBarWnd = CreateToolbarEx(hReBarWnd, CCS_NOPARENTALIGN|CCS_NOMOVEY|WS_VISIBLE|WS_CHILD|TBSTYLE_TOOLTIPS|TBSTYLE_BUTTON,
       IDC_TOOLBAR,
-      0, hInstance, 0,
+      1, hInstance, IDB_TOOLBAR,
       NULL, 0,
       24, 24, 16, 16, sizeof(TBBUTTON));
 
@@ -533,6 +533,8 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     AddButton(hToolBarWnd, nStdBitmaps+STD_PASTE, ID_EDIT_PASTE);
     AddButton(hToolBarWnd, nStdBitmaps+STD_UNDO, ID_EDIT_UNDO);
     AddButton(hToolBarWnd, nStdBitmaps+STD_REDOW, ID_EDIT_REDO);
+    AddSeparator(hToolBarWnd);
+    AddButton(hToolBarWnd, 0, ID_DATETIME);
 
     SendMessageW(hToolBarWnd, TB_AUTOSIZE, 0, 0);
 

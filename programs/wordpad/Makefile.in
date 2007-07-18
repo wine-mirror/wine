@@ -16,6 +16,7 @@ RC_SRCS = rsrc.rc
 RC_BINSRC = rsrc.rc
 RC_BINARIES = \
 	formatbar.bmp \
+	toolbar.bmp \
 	wordpad.ico
 
 @MAKE_PROG_RULES@
