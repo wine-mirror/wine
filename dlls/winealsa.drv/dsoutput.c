@@ -157,7 +157,7 @@ static void CheckXRUN(IDsDriverBufferImpl* This)
                 ERR("recovery from suspend failed, prepare failed: %s\n", snd_strerror(err));
         }
     } else if ( state != SND_PCM_STATE_RUNNING ) {
-        WARN("Unhandled state: %d\n", state);
+        FIXME("Unhandled state: %d\n", state);
     }
 }
 
@@ -490,9 +490,12 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 
     state = snd_pcm_state(This->pcm);
 
-    if (state != SND_PCM_STATE_RUNNING)
+    if (state != SND_PCM_STATE_PREPARED && state != SND_PCM_STATE_RUNNING)
+    {
         CheckXRUN(This);
-    else
+        state = snd_pcm_state(This->pcm);
+    }
+    if (state == SND_PCM_STATE_RUNNING)
     {
         snd_pcm_uframes_t used = CommitAll(This);
 
