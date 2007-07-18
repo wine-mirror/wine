@@ -106,8 +106,8 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
     gp_pen->endcap = LineCapFlat;
     gp_pen->join = LineJoinMiter;
     gp_pen->miterlimit = 10.0;
+    gp_pen->dash = DashStyleSolid;
 
-    /* FIXME: Currently only solid lines supported. */
     lb.lbStyle = BS_SOLID;
     lb.lbColor = gp_pen->color;
     lb.lbHatch = 0;
@@ -131,6 +131,16 @@ GpStatus WINGDIPAPI GdipDeletePen(GpPen *pen)
     if(!pen)    return InvalidParameter;
     DeleteObject(pen->gdipen);
     GdipFree(pen);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetPenDashStyle(GpPen *pen, GpDashStyle *dash)
+{
+    if(!pen || !dash)
+        return InvalidParameter;
+
+    *dash = pen->dash;
 
     return Ok;
 }
