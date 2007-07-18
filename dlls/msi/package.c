@@ -1475,7 +1475,10 @@ static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
             goto done;
 
         r = msi_strcpy_to_awstring( value, szValueBuf, pchValueBuf );
-        *pchValueBuf *= sizeof(WCHAR); /* Bug required by Adobe installers */
+
+        /* Bug required by Adobe installers */
+        if (!szValueBuf->unicode)
+            *pchValueBuf *= sizeof(WCHAR);
 
 done:
         IWineMsiRemotePackage_Release(remote_package);
