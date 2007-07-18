@@ -1758,6 +1758,103 @@ static void test_GetNamedSecurityInfoA(void)
     ok(group != NULL, "group should not be NULL\n");
 }
 
+static void test_ConvertSecurityStringSecurityDescriptor(void)
+{
+    BOOL ret;
+    PSECURITY_DESCRIPTOR pSD;
+
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(A;;GA;;;WD)", 0xdeadbeef, &pSD, NULL);
+    ok(!ret && GetLastError() == ERROR_UNKNOWN_REVISION,
+        "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_UNKNOWN_REVISION instead of %d\n",
+        GetLastError());
+
+    /* test ACE string type */
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(A;;GA;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+    LocalFree(pSD);
+
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(D;;GA;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+    LocalFree(pSD);
+
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "ERROR:(D;;GA;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+        "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_PARAMETER instead of %d\n",
+        GetLastError());
+
+    /* test ACE string access rights */
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(A;;GA;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+    LocalFree(pSD);
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(A;;GRGWGX;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+    LocalFree(pSD);
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(A;;RCSDWDWO;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+    LocalFree(pSD);
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(A;;RPWPCCDCLCSWLODTCR;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    todo_wine
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+    LocalFree(pSD);
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(A;;FAFRFWFX;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    todo_wine
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+    LocalFree(pSD);
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(A;;KAKRKWKX;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    todo_wine
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+    LocalFree(pSD);
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(A;;0xFFFFFFFF;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+    LocalFree(pSD);
+
+    /* test ACE string access right error case */
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(A;;ROB;;;WD)", SDDL_REVISION_1, &pSD, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_ACL,
+        "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_ACL instead of %d\n",
+        GetLastError());
+
+    /* test ACE string SID */
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(D;;GA;;;S-1-0-0)", SDDL_REVISION_1, &pSD, NULL);
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+    LocalFree(pSD);
+
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+        "D:(D;;GA;;;Non existant account)", SDDL_REVISION_1, &pSD, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_ACL,
+        "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_ACL instead of %d\n",
+        GetLastError());
+}
+
 START_TEST(security)
 {
     init();
@@ -1780,4 +1877,5 @@ START_TEST(security)
     test_impersonation_level();
     test_SetEntriesInAcl();
     test_GetNamedSecurityInfoA();
+    test_ConvertSecurityStringSecurityDescriptor();
 }
