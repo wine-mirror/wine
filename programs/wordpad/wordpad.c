@@ -429,6 +429,16 @@ static void registry_set_filelist(LPCWSTR newFile)
     registry_read_filelist(hMainWnd);
 }
 
+static void clear_formatting(void)
+{
+    PARAFORMAT2 pf;
+
+    pf.cbSize = sizeof(pf);
+    pf.dwMask = PFM_ALIGNMENT;
+    pf.wAlignment = PFA_LEFT;
+    SendMessageW(hEditorWnd, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
+}
+
 static int fileformat_number(WPARAM format)
 {
     int number = 0;
@@ -928,6 +938,49 @@ BOOL CALLBACK datetime_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
     return FALSE;
 }
 
+BOOL CALLBACK newfile_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch(message)
+    {
+        case WM_INITDIALOG:
+            {
+                HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
+                WCHAR buffer[MAX_STRING_LEN];
+                HWND hListWnd = GetDlgItem(hWnd, IDC_NEWFILE);
+
+                LoadStringW(hInstance, STRING_NEWFILE_RICHTEXT, (LPWSTR)buffer, MAX_STRING_LEN);
+                SendMessageW(hListWnd, LB_ADDSTRING, 0, (LPARAM)&buffer);
+                LoadStringW(hInstance, STRING_NEWFILE_TXT, (LPWSTR)buffer, MAX_STRING_LEN);
+                SendMessageW(hListWnd, LB_ADDSTRING, 0, (LPARAM)&buffer);
+                LoadStringW(hInstance, STRING_NEWFILE_TXT_UNICODE, (LPWSTR)buffer, MAX_STRING_LEN);
+                SendMessageW(hListWnd, LB_ADDSTRING, 0, (LPARAM)&buffer);
+
+                SendMessageW(hListWnd, LB_SETSEL, TRUE, 0);
+            }
+            break;
+
+        case WM_COMMAND:
+            switch(LOWORD(wParam))
+            {
+                case IDOK:
+                    {
+                        LRESULT index;
+                        HWND hListWnd = GetDlgItem(hWnd, IDC_NEWFILE);
+                        index = SendMessageW(hListWnd, LB_GETCURSEL, 0, 0);
+
+                        if(index != LB_ERR)
+                            EndDialog(hWnd, MAKELONG(fileformat_flags(index),0));
+                    }
+                    return TRUE;
+
+                case IDCANCEL:
+                    EndDialog(hWnd, MAKELONG(ID_NEWFILE_ABORT,0));
+                    return TRUE;
+            }
+    }
+    return FALSE;
+}
+
 static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     HWND hToolBarWnd, hFormatBarWnd,  hReBarWnd;
@@ -1137,13 +1190,30 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     case ID_FILE_NEW:
-        if(prompt_save_changes())
         {
-            set_caption(NULL);
-            wszFileName[0] = '\0';
-            SetWindowTextW(hwndEditor, wszFileName);
-            SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
-            fileFormat = SF_RTF;
+            HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
+            int ret = DialogBox(hInstance, MAKEINTRESOURCE(IDD_NEWFILE), hWnd,
+                                (DLGPROC)newfile_proc);
+
+            if(ret != ID_NEWFILE_ABORT)
+            {
+                if(prompt_save_changes())
+                {
+                    SETTEXTEX st;
+
+                    set_caption(NULL);
+                    wszFileName[0] = '\0';
+
+                    st.flags = ST_DEFAULT;
+                    st.codepage = 1200;
+                    SendMessageW(hEditorWnd, EM_SETTEXTEX, (WPARAM)&st, 0);
+
+                    clear_formatting();
+
+                    SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
+                    set_fileformat(ret);
+                }
+            }
         }
         break;
 
