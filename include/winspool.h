@@ -474,6 +474,68 @@ DECL_WINELIB_TYPE_AW(DRIVER_INFO_6)
 DECL_WINELIB_TYPE_AW(PDRIVER_INFO_6)
 DECL_WINELIB_TYPE_AW(LPDRIVER_INFO_6)
 
+/* DRIVER_INFO_7 is not defined in native winspool.h and not found in the www */
+
+typedef struct _DRIVER_INFO_8A {
+  DWORD     cVersion;
+  LPSTR     pName;
+  LPSTR     pEnvironment;
+  LPSTR     pDriverPath;
+  LPSTR     pDataFile;
+  LPSTR     pConfigFile;
+  LPSTR     pHelpFile;
+  LPSTR     pDependentFiles;
+  LPSTR     pMonitorName;
+  LPSTR     pDefaultDataType;
+  LPSTR     pszzPreviousNames;
+  FILETIME  ftDriverDate;
+  DWORDLONG dwlDriverVersion;
+  LPSTR     pszMfgName;
+  LPSTR     pszOEMUrl;
+  LPSTR     pszHardwareID;
+  LPSTR     pszProvider;
+  LPSTR     pszPrintProcessor;
+  LPSTR     pszVendorSetup;
+  LPSTR     pszzColorProfiles;
+  LPSTR     pszInfPath;
+  DWORD     dwPrinterDriverAttributes;
+  LPSTR     pszzCoreDriverDependencies;
+  FILETIME  ftMinInboxDriverVerDate;
+  DWORDLONG dwlMinInboxDriverVerVersion;
+} DRIVER_INFO_8A, *PDRIVER_INFO_8A, *LPDRIVER_INFO_8A;
+
+typedef struct _DRIVER_INFO_8W {
+  DWORD     cVersion;
+  LPWSTR    pName;
+  LPWSTR    pEnvironment;
+  LPWSTR    pDriverPath;
+  LPWSTR    pDataFile;
+  LPWSTR    pConfigFile;
+  LPWSTR    pHelpFile;
+  LPWSTR    pDependentFiles;
+  LPWSTR    pMonitorName;
+  LPWSTR    pDefaultDataType;
+  LPWSTR    pszzPreviousNames;
+  FILETIME  ftDriverDate;
+  DWORDLONG dwlDriverVersion;
+  LPWSTR    pszMfgName;
+  LPWSTR    pszOEMUrl;
+  LPWSTR    pszHardwareID;
+  LPWSTR    pszProvider;
+  LPWSTR    pszPrintProcessor;
+  LPWSTR    pszVendorSetup;
+  LPWSTR    pszzColorProfiles;
+  LPWSTR    pszInfPath;
+  DWORD     dwPrinterDriverAttributes;
+  LPWSTR    pszzCoreDriverDependencies;
+  FILETIME  ftMinInboxDriverVerDate;
+  DWORDLONG dwlMinInboxDriverVerVersion;
+} DRIVER_INFO_8W, *PDRIVER_INFO_8W, *LPDRIVER_INFO_8W;
+
+DECL_WINELIB_TYPE_AW(DRIVER_INFO_8)
+DECL_WINELIB_TYPE_AW(PDRIVER_INFO_8)
+DECL_WINELIB_TYPE_AW(LPDRIVER_INFO_8)
+
 
 typedef struct _PRINTER_INFO_1A {
   DWORD   Flags;
