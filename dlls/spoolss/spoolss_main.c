@@ -143,6 +143,19 @@ BOOL WINAPI DllFreeSplStr(LPWSTR pwstr)
     return HeapFree(GetProcessHeap(), 0, pwstr);
 }
 
+
+/******************************************************************
+ *   ImpersonatePrinterClient   [SPOOLSS.@]
+ */
+BOOL WINAPI ImpersonatePrinterClient(HANDLE hToken)
+{
+    FIXME("(%p) stub\n", hToken);
+    return TRUE;
+}
+
+/******************************************************************
+ *   RevertToPrinterSelf   [SPOOLSS.@]
+ */
 HANDLE WINAPI RevertToPrinterSelf(void)
 {
     FIXME("() stub\n");
