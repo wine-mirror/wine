@@ -3451,6 +3451,7 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorW(
 
     psd = *SecurityDescriptor = (SECURITY_DESCRIPTOR*) LocalAlloc(
         GMEM_ZEROINIT, cBytes);
+    if (!psd) goto lend;
 
     psd->Revision = SID_REVISION;
     psd->Control |= SE_SELF_RELATIVE;
