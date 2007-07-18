@@ -3266,7 +3266,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
     LPBYTE lpNext = NULL;
     DWORD len;
 
-    *cBytes = 0;
+    *cBytes = sizeof(SECURITY_DESCRIPTOR);
 
     if (SecurityDescriptor)
         lpNext = ((LPBYTE) SecurityDescriptor) + sizeof(SECURITY_DESCRIPTOR);
