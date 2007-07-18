@@ -978,7 +978,6 @@ TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                 pRC->bottom = pRC->top + nMinimumHeight;
         }
         return TRUE;
-        break;
 
     case WM_SIZE:
         /* Handle the window sizing in it's own function */

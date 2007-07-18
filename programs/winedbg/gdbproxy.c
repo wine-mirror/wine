@@ -2154,7 +2154,6 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
         case -1: /* error in parent... */
             fprintf(stderr, "Cannot create gdb\n");
             return FALSE;
-            break;
         default: /* in parent... success */
             break;
         case 0: /* in child... and alive */

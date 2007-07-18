@@ -446,7 +446,6 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
     }
     default:
         return CallWindowProc(g_orgListWndProc, hWnd, message, wParam, lParam);
-        break;
     }
     return 0;
 }

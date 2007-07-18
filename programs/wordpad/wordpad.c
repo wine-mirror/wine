@@ -287,7 +287,6 @@ static BOOL prompt_save_changes(void)
         {
             case IDNO:
                 return TRUE;
-            break;
 
             case IDYES:
                 if(wszFileName[0])

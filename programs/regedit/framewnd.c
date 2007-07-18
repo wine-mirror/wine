@@ -735,7 +735,6 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	    StartValueRename(g_pChildWnd->hListWnd);
 	}
 	break;
-    break;
     case ID_REGISTRY_PRINTERSETUP:
         /*PRINTDLG pd;*/
         /*PrintDlg(&pd);*/

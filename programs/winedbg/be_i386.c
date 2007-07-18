@@ -63,7 +63,6 @@ static void* be_i386_linearize(HANDLE hThread, const ADDRESS64* addr)
         return (void*)((le.HighWord.Bits.BaseHi << 24) + 
                        (le.HighWord.Bits.BaseMid << 16) + le.BaseLow +
                        (DWORD)addr->Offset);
-        break;
     case AddrModeFlat:
         return (void*)(DWORD)addr->Offset;
     }
