@@ -493,9 +493,10 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
             port.c_cflag |= B38400;
         }
         break;
-#endif    /* Don't have linux/serial.h or lack TIOCSSERIAL */
+#else     /* Don't have linux/serial.h or lack TIOCSSERIAL */
         ERR("baudrate %d\n", sbr->BaudRate);
         return STATUS_NOT_SUPPORTED;
+#endif    /* Don't have linux/serial.h or lack TIOCSSERIAL */
     }
 #elif !defined(__EMX__)
     switch (sbr->BaudRate)
@@ -911,9 +912,10 @@ static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
     }
     TRACE("TIOCGICOUNT err %s\n", strerror(errno));
     return FILE_GetNtStatus();
-#endif
+#else
     memset(irq_info,0, sizeof(serial_irq_info));
     return STATUS_NOT_IMPLEMENTED;
+#endif
 }
 
 

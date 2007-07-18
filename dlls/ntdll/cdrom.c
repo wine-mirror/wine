@@ -1036,9 +1036,10 @@ static NTSTATUS CDROM_Verify(int dev, int fd)
         return STATUS_SUCCESS;
     else
         return STATUS_NO_MEDIA_IN_DEVICE;
-#endif
+#else
     FIXME("not implemented for non-linux\n");
     return STATUS_NOT_SUPPORTED;
+#endif
 }
 
 /******************************************************************
