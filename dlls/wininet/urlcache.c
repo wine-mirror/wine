@@ -2885,3 +2885,31 @@ void WINAPI DeleteIE3Cache(HWND hWnd, HINSTANCE hInst, LPSTR lpszCmdLine, int nC
 {
     FIXME("(%p, %p, %s, %d)\n", hWnd, hInst, debugstr_a(lpszCmdLine), nCmdShow);
 }
+
+/***********************************************************************
+ *           IsUrlCacheEntryExpiredA (WININET.@)
+ *
+ * PARAMS
+ *   url        [I]    Url
+ *   b                 Unknown
+ *   c                 Unknown ptr
+ */
+DWORD WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD b, void *c )
+{
+    FIXME("(%s, %08x, %p) stub\n", debugstr_a(url), b, c);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           IsUrlCacheEntryExpiredW (WININET.@)
+ *
+ * PARAMS
+ *   url        [I]    Url
+ *   b                 Unknown
+ *   c                 Unknown ptr
+ */
+DWORD WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD b, void *c )
+{
+    FIXME("(%s, %08x, %p) stub\n", debugstr_w(url), b, c);
+    return FALSE;
+}

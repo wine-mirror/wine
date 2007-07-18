@@ -209,8 +209,8 @@
 @ stub InternetWriteFileExA
 @ stub InternetWriteFileExW
 @ stdcall IsHostInProxyBypassList(long str long)
-@ stub IsUrlCacheEntryExpiredA
-@ stub IsUrlCacheEntryExpiredW
+@ stdcall IsUrlCacheEntryExpiredA(str long ptr)
+@ stdcall IsUrlCacheEntryExpiredW(wstr long ptr)
 @ stub LoadUrlCacheContent
 @ stub ParseX509EncodedCertificateForListBoxEntry
 @ stub PrivacyGetZonePreferenceW # (long long ptr ptr ptr)
