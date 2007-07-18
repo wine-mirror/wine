@@ -228,7 +228,6 @@ int symbol_demangle (parsed_symbol *sym)
     FREE_CT (ct);
     free (function_name);
     return 0;
-    break;
 
   case '6' : /* compiler generated static */
   case '7' : /* compiler generated static */
@@ -247,7 +246,6 @@ int symbol_demangle (parsed_symbol *sym)
     }
     free (function_name);
     return -1;
-    break;
 
   /* Functions */
 

@@ -501,7 +501,6 @@ static void do_field(const unsigned char* start, const unsigned char* end)
         default:
             printf(">>> Unsupported field-id %x\n", fieldtype->generic.id);
             dump_data((const void*)fieldtype, 0x30, "\t");
-            return;
             break;
         }
     }
