@@ -6443,18 +6443,20 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
         case WINED3DRTYPE_SURFACE: {
             unsigned int i;
 
-            /* Cleanup any FBO attachments */
-            for (i = 0; i < GL_LIMITS(buffers); ++i) {
-                if (This->fbo_color_attachments[i] == (IWineD3DSurface *)resource) {
-                    bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->fbo);
-                    set_render_target_fbo(iface, i, NULL);
-                    This->fbo_color_attachments[i] = NULL;
+            /* Cleanup any FBO attachments if d3d is enabled */
+            if(This->d3d_initialized) {
+                for (i = 0; i < GL_LIMITS(buffers); ++i) {
+                    if (This->fbo_color_attachments[i] == (IWineD3DSurface *)resource) {
+                        bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->fbo);
+                        set_render_target_fbo(iface, i, NULL);
+                        This->fbo_color_attachments[i] = NULL;
+                    }
                 }
-            }
-            if (This->fbo_depth_attachment == (IWineD3DSurface *)resource) {
-                bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->fbo);
-                set_depth_stencil_fbo(iface, NULL);
-                This->fbo_depth_attachment = NULL;
+                if (This->fbo_depth_attachment == (IWineD3DSurface *)resource) {
+                    bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->fbo);
+                    set_depth_stencil_fbo(iface, NULL);
+                    This->fbo_depth_attachment = NULL;
+                }
             }
 
             break;
