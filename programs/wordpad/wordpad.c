@@ -55,7 +55,7 @@ static HWND hFindWnd;
 
 static UINT ID_FINDMSGSTRING;
 
-static WCHAR wszFilter[MAX_STRING_LEN];
+static WCHAR wszFilter[MAX_STRING_LEN*4+6*3+5];
 static WCHAR wszDefaultFileName[MAX_STRING_LEN];
 static WCHAR wszSaveChanges[MAX_STRING_LEN];
 
@@ -75,6 +75,10 @@ static void DoLoadStrings(void)
     lstrcpyW(p, files_rtf);
     p += lstrlenW(p) + 1;
     LoadStringW(hInstance, STRING_TEXT_FILES_TXT, p, MAX_STRING_LEN);
+    p += lstrlenW(p) + 1;
+    lstrcpyW(p, files_txt);
+    p += lstrlenW(p) + 1;
+    LoadStringW(hInstance, STRING_TEXT_FILES_UNICODE_TXT, p, MAX_STRING_LEN);
     p += lstrlenW(p) + 1;
     lstrcpyW(p, files_txt);
     p += lstrlenW(p) + 1;
@@ -165,6 +169,7 @@ static LPWSTR file_basename(LPWSTR path)
 }
 
 static WCHAR wszFileName[MAX_PATH];
+static WPARAM fileFormat = SF_RTF;
 
 static void set_caption(LPCWSTR wszNewFileName)
 {
@@ -424,21 +429,63 @@ static void registry_set_filelist(LPCWSTR newFile)
     registry_read_filelist(hMainWnd);
 }
 
+static int fileformat_number(WPARAM format)
+{
+    int number = 0;
+
+    if(format == SF_TEXT)
+    {
+        number = 1;
+    } else if (format == (SF_TEXT | SF_UNICODE))
+    {
+        number = 2;
+    }
+    return number;
+}
+
+static WPARAM fileformat_flags(int format)
+{
+    WPARAM flags[] = { SF_RTF , SF_TEXT , SF_TEXT | SF_UNICODE };
+
+    return flags[format];
+}
+
+static void set_fileformat(WPARAM format)
+{
+    fileFormat = format;
+}
+
 static void DoOpenFile(LPCWSTR szOpenFileName)
 {
     HANDLE hFile;
     EDITSTREAM es;
+    char fileStart[5];
+    DWORD readOut;
+    WPARAM format = SF_TEXT;
 
     hFile = CreateFileW(szOpenFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
         return;
 
+    ReadFile(hFile, fileStart, 5, &readOut, NULL);
+    SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+
+    if(readOut >= 2 && (BYTE)fileStart[0] == 0xff && (BYTE)fileStart[1] == 0xfe)
+    {
+        format = SF_TEXT | SF_UNICODE;
+        SetFilePointer(hFile, 2, NULL, FILE_BEGIN);
+    } else if(readOut >= 5)
+    {
+        static const char header[] = "{\\rtf";
+        if(!memcmp(header, fileStart, 5))
+            format = SF_RTF;
+    }
+
     es.dwCookie = (DWORD_PTR)hFile;
     es.pfnCallback = stream_in;
 
-    /* FIXME: Handle different file formats */
-    SendMessageW(hEditorWnd, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+    SendMessageW(hEditorWnd, EM_STREAMIN, format, (LPARAM)&es);
 
     CloseHandle(hFile);
 
@@ -449,9 +496,10 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
     lstrcpyW(wszFileName, szOpenFileName);
     SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
     registry_set_filelist(szOpenFileName);
+    set_fileformat(format);
 }
 
-static void DoSaveFile(LPCWSTR wszSaveFileName)
+static void DoSaveFile(LPCWSTR wszSaveFileName, WPARAM format)
 {
     HANDLE hFile;
     EDITSTREAM stream;
@@ -463,11 +511,20 @@ static void DoSaveFile(LPCWSTR wszSaveFileName)
     if(hFile == INVALID_HANDLE_VALUE)
         return;
 
+    if(format == (SF_TEXT | SF_UNICODE))
+    {
+        static const BYTE unicode[] = {0xff,0xfe};
+        DWORD writeOut;
+        WriteFile(hFile, &unicode, sizeof(unicode), &writeOut, 0);
+
+        if(writeOut != sizeof(unicode))
+            return;
+    }
+
     stream.dwCookie = (DWORD_PTR)hFile;
     stream.pfnCallback = stream_out;
 
-    /* FIXME: Handle different formats */
-    ret = SendMessageW(hEditorWnd, EM_STREAMOUT, SF_RTF, (LPARAM)&stream);
+    ret = SendMessageW(hEditorWnd, EM_STREAMOUT, format, (LPARAM)&stream);
 
     CloseHandle(hFile);
 
@@ -486,6 +543,7 @@ static void DoSaveFile(LPCWSTR wszSaveFileName)
     lstrcpyW(wszFileName, wszSaveFileName);
     set_caption(wszFileName);
     SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
+    set_fileformat(format);
 }
 
 static void DialogSaveFile(void)
@@ -498,17 +556,33 @@ static void DialogSaveFile(void)
     ZeroMemory(&sfn, sizeof(sfn));
 
     sfn.lStructSize = sizeof(sfn);
-    sfn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
+    sfn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
     sfn.hwndOwner = hMainWnd;
     sfn.lpstrFilter = wszFilter;
     sfn.lpstrFile = wszFile;
     sfn.nMaxFile = MAX_PATH;
     sfn.lpstrDefExt = wszDefExt;
+    sfn.nFilterIndex = fileformat_number(fileFormat)+1;
 
-    if(!GetSaveFileNameW(&sfn))
-        return;
-
-    DoSaveFile(sfn.lpstrFile);
+    while(GetSaveFileNameW(&sfn))
+    {
+        if(fileformat_flags(sfn.nFilterIndex-1) != SF_RTF)
+        {
+            if(MessageBoxW(hMainWnd, MAKEINTRESOURCEW(STRING_SAVE_LOSEFORMATTING),
+                           wszAppTitle, MB_YESNO | MB_ICONEXCLAMATION) != IDYES)
+            {
+                continue;
+            } else
+            {
+                DoSaveFile(sfn.lpstrFile, fileformat_flags(sfn.nFilterIndex-1));
+                break;
+            }
+        } else
+        {
+            DoSaveFile(sfn.lpstrFile, fileformat_flags(sfn.nFilterIndex-1));
+            break;
+        }
+    }
 }
 
 static BOOL prompt_save_changes(void)
@@ -555,7 +629,7 @@ static BOOL prompt_save_changes(void)
 
             case IDYES:
                 if(wszFileName[0])
-                    DoSaveFile(wszFileName);
+                    DoSaveFile(wszFileName, fileFormat);
                 else
                     DialogSaveFile();
                 return TRUE;
@@ -582,6 +656,7 @@ static void DialogOpenFile(void)
     ofn.lpstrFile = wszFile;
     ofn.nMaxFile = MAX_PATH;
     ofn.lpstrDefExt = wszDefExt;
+    ofn.nFilterIndex = fileformat_number(fileFormat)+1;
 
     if(GetOpenFileNameW(&ofn))
     {
@@ -1068,7 +1143,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
             wszFileName[0] = '\0';
             SetWindowTextW(hwndEditor, wszFileName);
             SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
-            /* FIXME: set default format too */
+            fileFormat = SF_RTF;
         }
         break;
 
@@ -1079,7 +1154,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_FILE_SAVE:
         if(wszFileName[0])
         {
-            DoSaveFile(wszFileName);
+            DoSaveFile(wszFileName, fileFormat);
             break;
         }
         /* Fall through */

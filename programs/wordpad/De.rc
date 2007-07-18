@@ -95,9 +95,10 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    STRING_RICHTEXT_FILES_RTF,  "Rich-Text-Format (*.rtf)"
-    STRING_TEXT_FILES_TXT,      "Textdateien (*.txt)"
-    STRING_ALL_FILES,           "Alle Dokumente (*.*)"
+    STRING_RICHTEXT_FILES_RTF,     "Rich-Text-Format (*.rtf)"
+    STRING_TEXT_FILES_TXT,         "Textdateien (*.txt)"
+    STRING_TEXT_FILES_UNICODE_TXT, "Unicode text document (*.txt)"
+    STRING_ALL_FILES,              "Alle Dokumente (*.*)"
 END
 
 STRINGTABLE DISCARDABLE
@@ -106,4 +107,7 @@ BEGIN
     STRING_PROMPT_SAVE_CHANGES,  "Save changes to '%s'?"
     STRING_SEARCH_FINISHED,      "Finished searching the document."
     STRING_LOAD_RICHED_FAILED,   "Failed to load the RichEdit library."
+    STRING_SAVE_LOSEFORMATTING,  "You have chosen to save in plain text format, " \
+                                 "which will cause all formatting to be lost. " \
+                                 "Are you sure that you wish to do this?"
 END
