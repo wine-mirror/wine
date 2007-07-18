@@ -656,11 +656,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     hFormatBarWnd = CreateToolbarEx(hReBarWnd,
          CCS_NOPARENTALIGN | CCS_NOMOVEY | WS_VISIBLE | TBSTYLE_TOOLTIPS | TBSTYLE_BUTTON,
-         IDC_FORMATBAR, 6, hInstance, IDB_FORMATBAR, NULL, 0, 24, 24, 16, 16, sizeof(TBBUTTON));
-
-    ab.hInst = HINST_COMMCTRL;
-    ab.nID = IDB_STD_SMALL_COLOR;
-    nStdBitmaps = SendMessageW(hFormatBarWnd, TB_ADDBITMAP, 6, (LPARAM)&ab);
+         IDC_FORMATBAR, 6, hInstance, IDB_FORMATBAR, NULL, 0, 16, 16, 16, 16, sizeof(TBBUTTON));
 
     AddButton(hFormatBarWnd, 0, ID_FORMAT_BOLD);
     AddButton(hFormatBarWnd, 1, ID_FORMAT_ITALIC);
