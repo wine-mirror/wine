@@ -214,6 +214,11 @@ static void test_null(void)
   ok( sz == lstrlenW(buffer), "sz wrong\n");
   ok( !lstrcmpW(szExpect, buffer), "cookie data wrong\n");
   }
+
+  sz = sizeof(buffer);
+  r = InternetQueryOptionA(NULL, INTERNET_OPTION_CONNECTED_STATE, buffer, &sz);
+  ok(r == TRUE, "ret %d\n", r);
+
 }
 
 START_TEST(internet)

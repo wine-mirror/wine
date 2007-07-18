@@ -1943,11 +1943,6 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
     TRACE("(%p, 0x%08x, %p, %p)\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
 
     lpwhh = (LPWININETHANDLEHEADER) WININET_GetObject( hInternet );
-    if (!lpwhh)
-    {
-        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
 
     switch (dwOption)
     {
@@ -2214,6 +2209,11 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             break;
 
         case INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT:
+            if (!lpwhh)
+            {
+                INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+                return FALSE;
+            }
             if (*lpdwBufferLength < sizeof(INTERNET_CERTIFICATE_INFOW))
             {
                 *lpdwBufferLength = sizeof(INTERNET_CERTIFICATE_INFOW);
