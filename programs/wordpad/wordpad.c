@@ -495,6 +495,7 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
     es.dwCookie = (DWORD_PTR)hFile;
     es.pfnCallback = stream_in;
 
+    clear_formatting();
     SendMessageW(hEditorWnd, EM_STREAMIN, format, (LPARAM)&es);
 
     CloseHandle(hFile);
