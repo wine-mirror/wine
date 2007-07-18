@@ -46,8 +46,11 @@ static const WCHAR wszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a',
 
 static const WCHAR key_recentfiles[] = {'R','e','c','e','n','t',' ','f','i','l','e',
                                         ' ','l','i','s','t',0};
+static const WCHAR key_options[] = {'O','p','t','i','o','n','s',0};
 
 static const WCHAR var_file[] = {'F','i','l','e','%','d',0};
+static const WCHAR var_framerect[] = {'F','r','a','m','e','R','e','c','t',0};
+
 
 static HWND hMainWnd;
 static HWND hEditorWnd;
@@ -236,6 +239,42 @@ static LRESULT registry_get_handle(HKEY *hKey, LPDWORD action, LPCWSTR subKey)
         HeapFree(GetProcessHeap(), 0, key);
 
     return ret;
+}
+
+static void registry_set_winrect(void)
+{
+    HKEY hKey;
+    DWORD action;
+
+    if(registry_get_handle(&hKey, &action, (LPWSTR)key_options) == ERROR_SUCCESS)
+    {
+        RECT rc;
+
+        GetWindowRect(hMainWnd, &rc);
+
+        RegSetValueExW(hKey, var_framerect, 0, REG_BINARY, (LPBYTE)&rc, sizeof(RECT));
+    }
+}
+
+static RECT registry_read_winrect(void)
+{
+    HKEY hKey;
+    RECT rc;
+    DWORD size = sizeof(RECT);
+
+    ZeroMemory(&rc, sizeof(RECT));
+    if(registry_get_handle(&hKey, 0, (LPWSTR)key_options) != ERROR_SUCCESS ||
+       RegQueryValueExW(hKey, var_framerect, 0, NULL, (LPBYTE)&rc, &size) !=
+       ERROR_SUCCESS || size != sizeof(RECT))
+    {
+        rc.top = 0;
+        rc.left = 0;
+        rc.bottom = 300;
+        rc.right = 600;
+    }
+
+    RegCloseKey(hKey);
+    return rc;
 }
 
 static void truncate_path(LPWSTR file, LPWSTR out, LPWSTR pos1, LPWSTR pos2)
@@ -1621,7 +1660,10 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 
     case WM_CLOSE:
         if(prompt_save_changes())
+        {
+            registry_set_winrect();
             PostQuitMessage(0);
+        }
         break;
 
     case WM_ACTIVATE:
@@ -1648,6 +1690,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     HACCEL hAccel;
     WNDCLASSW wc;
     MSG msg;
+    RECT rc;
     static const WCHAR wszAccelTable[] = {'M','A','I','N','A','C','C','E','L',
                                           'T','A','B','L','E','\0'};
 
@@ -1667,8 +1710,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     wc.lpszClassName = wszMainWndClass;
     RegisterClassW(&wc);
 
+    rc = registry_read_winrect();
     hMainWnd = CreateWindowExW(0, wszMainWndClass, wszAppTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, hInstance, NULL);
+      rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, NULL, NULL, hInstance, NULL);
     ShowWindow(hMainWnd, SW_SHOWDEFAULT);
 
     set_caption(NULL);
