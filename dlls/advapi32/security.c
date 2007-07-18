@@ -3743,9 +3743,7 @@ BOOL WINAPI EnumDependentServicesW(
  */
 static DWORD ComputeStringSidSize(LPCWSTR StringSid)
 {
-    DWORD size = sizeof(SID);
-
-    if (StringSid[0] == 'S' && StringSid[1] == '-') /* S-R-I-S-S */
+    if (StringSid[0] == 'S' && StringSid[1] == '-') /* S-R-I(-S)+ */
     {
         int ctok = 0;
         while (*StringSid)
@@ -3755,8 +3753,8 @@ static DWORD ComputeStringSidSize(LPCWSTR StringSid)
             StringSid++;
         }
 
-        if (ctok > 3)
-            size += (ctok - 3) * sizeof(DWORD);
+        if (ctok >= 3)
+            return GetSidLengthRequired(ctok - 2);
     }
     else /* String constant format  - Only available in winxp and above */
     {
@@ -3764,10 +3762,10 @@ static DWORD ComputeStringSidSize(LPCWSTR StringSid)
 
         for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)
             if (!strncmpW(WellKnownSids[i].wstr, StringSid, 2))
-                size += (WellKnownSids[i].Sid.SubAuthorityCount - 1) * sizeof(DWORD);
+                return GetSidLengthRequired(WellKnownSids[i].Sid.SubAuthorityCount);
     }
 
-    return size;
+    return GetSidLengthRequired(0);
 }
 
 /******************************************************************************
@@ -3796,7 +3794,7 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
     if (StringSid[0] == 'S' && StringSid[1] == '-') /* S-R-I-S-S */
     {
         DWORD i = 0, identAuth;
-        DWORD csubauth = ((*cBytes - sizeof(SID)) / sizeof(DWORD)) + 1;
+        DWORD csubauth = ((*cBytes - GetSidLengthRequired(0)) / sizeof(DWORD));
 
         StringSid += 2; /* Advance to Revision */
         pisid->Revision = atoiW(StringSid);
