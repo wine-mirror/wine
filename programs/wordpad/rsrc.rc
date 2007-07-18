@@ -28,6 +28,8 @@ BEGIN
     "L",          ID_ALIGN_LEFT,      VIRTKEY, CONTROL    
     "E",          ID_ALIGN_CENTER,    VIRTKEY, CONTROL    
     "R",          ID_ALIGN_RIGHT,     VIRTKEY, CONTROL    
+    "F",          ID_FIND,            VIRTKEY, CONTROL
+    VK_F3,        ID_FIND_NEXT,       VIRTKEY
     "A",          ID_EDIT_SELECTALL,  VIRTKEY, CONTROL    
     "X",          ID_EDIT_CUT,        VIRTKEY, CONTROL    
     "C",          ID_EDIT_COPY,       VIRTKEY, CONTROL    

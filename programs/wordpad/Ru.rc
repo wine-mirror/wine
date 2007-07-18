@@ -38,6 +38,9 @@ BEGIN
         MENUITEM "&Вырезать\tCtrl+X",           ID_EDIT_CUT
         MENUITEM "&Копировать\tCtrl+C",         ID_EDIT_COPY
         MENUITEM SEPARATOR
+        MENUITEM "&Find . . .\tCrtl+F",         ID_FIND
+        MENUITEM "Find &next\tF3",              ID_FIND_NEXT
+        MENUITEM SEPARATOR
         MENUITEM "&Только для чтения",          ID_EDIT_READONLY
         MENUITEM "&Изменен",                    ID_EDIT_MODIFIED
         MENUITEM SEPARATOR
@@ -98,4 +101,5 @@ STRINGTABLE DISCARDABLE
 BEGIN
     STRING_DEFAULT_FILENAME,     "Document"
     STRING_PROMPT_SAVE_CHANGES,  "Save changes to '%s'?"
+    STRING_SEARCH_FINISHED,      "Finished searching the document."
 END

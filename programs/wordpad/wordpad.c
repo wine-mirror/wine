@@ -45,6 +45,9 @@ static const WCHAR wszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a',
 
 static HWND hMainWnd;
 static HWND hEditorWnd;
+static HWND hFindWnd;
+
+static UINT ID_FINDMSGSTRING;
 
 static WCHAR wszFilter[MAX_STRING_LEN];
 static WCHAR wszDefaultFileName[MAX_STRING_LEN];
@@ -375,6 +378,109 @@ static void HandleCommandLine(LPWSTR cmdline)
         MessageBox(hMainWnd, "Printing not implemented", "WordPad", MB_OK);
 }
 
+static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
+{
+    if(pFr->Flags & FR_DIALOGTERM)
+    {
+        hFindWnd = 0;
+        pFr->Flags = FR_FINDNEXT;
+        return 0;
+    } else if(pFr->Flags & FR_FINDNEXT)
+    {
+        DWORD flags = FR_DOWN;
+        FINDTEXTW ft;
+        static CHARRANGE cr;
+        LRESULT end, ret;
+        GETTEXTLENGTHEX gt;
+        LRESULT length;
+        int startPos;
+        HMENU hMenu = GetMenu(hMainWnd);
+        MENUITEMINFOW mi;
+
+        mi.cbSize = sizeof(mi);
+        mi.fMask = MIIM_DATA;
+        mi.dwItemData = 1;
+        SetMenuItemInfoW(hMenu, ID_FIND_NEXT, FALSE, &mi);
+
+        gt.flags = GTL_NUMCHARS;
+        gt.codepage = 1200;
+
+        length = SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0);
+
+        if(pFr->lCustData == -1)
+        {
+            SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&startPos, (LPARAM)&end);
+            cr.cpMin = startPos;
+            pFr->lCustData = startPos;
+            cr.cpMax = length;
+            if(cr.cpMin == length)
+                cr.cpMin = 0;
+        } else
+        {
+            startPos = pFr->lCustData;
+        }
+
+        if(cr.cpMax > length)
+        {
+            startPos = 0;
+            cr.cpMin = 0;
+            cr.cpMax = length;
+        }
+
+        ft.chrg = cr;
+        ft.lpstrText = pFr->lpstrFindWhat;
+
+        if(pFr->Flags & FR_MATCHCASE)
+            flags |= FR_MATCHCASE;
+        if(pFr->Flags & FR_WHOLEWORD)
+            flags |= FR_WHOLEWORD;
+
+        ret = SendMessageW(hEditorWnd, EM_FINDTEXTW, (WPARAM)flags, (LPARAM)&ft);
+
+        if(ret == -1)
+        {
+            if(cr.cpMax == length && cr.cpMax != startPos)
+            {
+                ft.chrg.cpMin = cr.cpMin = 0;
+                ft.chrg.cpMax = cr.cpMax = startPos;
+
+                ret = SendMessageW(hEditorWnd, EM_FINDTEXTW, (WPARAM)flags, (LPARAM)&ft);
+            }
+        }
+
+        if(ret == -1)
+        {
+            pFr->lCustData = -1;
+            MessageBoxW(hMainWnd, MAKEINTRESOURCEW(STRING_SEARCH_FINISHED), wszAppTitle,
+                        MB_OK | MB_ICONASTERISK);
+        } else
+        {
+            end = ret + lstrlenW(pFr->lpstrFindWhat);
+            cr.cpMin = end;
+            SendMessageW(hEditorWnd, EM_SETSEL, (WPARAM)ret, (LPARAM)end);
+            SendMessageW(hEditorWnd, EM_SCROLLCARET, 0, 0);
+        }
+    }
+
+    return 0;
+}
+
+static void dialog_find(LPFINDREPLACEW fr)
+{
+    static WCHAR findBuffer[MAX_STRING_LEN];
+
+    ZeroMemory(fr, sizeof(FINDREPLACEW));
+    fr->lStructSize = sizeof(FINDREPLACEW);
+    fr->hwndOwner = hMainWnd;
+    fr->Flags = FR_HIDEUPDOWN;
+    fr->lpstrFindWhat = findBuffer;
+    fr->lCustData = -1;
+    fr->wFindWhatLen = MAX_STRING_LEN*sizeof(WCHAR);
+
+    hFindWnd = FindTextW(fr);
+}
+
+
 static void DoDefaultFont(void)
 {
     static const WCHAR szFaceName[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
@@ -592,6 +698,8 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     DoLoadStrings();
     SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
 
+    ID_FINDMSGSTRING = RegisterWindowMessageW(FINDMSGSTRINGW);
+
     return 0;
 }
 
@@ -604,12 +712,19 @@ static LRESULT OnUser( HWND hWnd, WPARAM wParam, LPARAM lParam)
     int from, to;
     CHARFORMAT2W fmt;
     PARAFORMAT2 pf;
+    GETTEXTLENGTHEX gt;
 
     ZeroMemory(&fmt, sizeof(fmt));
     fmt.cbSize = sizeof(fmt);
 
     ZeroMemory(&pf, sizeof(pf));
     pf.cbSize = sizeof(pf);
+
+    gt.flags = GTL_NUMCHARS;
+    gt.codepage = 1200;
+
+    SendMessageW(hwndToolBar, TB_ENABLEBUTTON, ID_FIND,
+                 SendMessageW(hwndEditor, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0) ? 1 : 0);
 
     SendMessageW(hwndEditor, EM_GETCHARFORMAT, TRUE, (LPARAM)&fmt);
 
@@ -666,12 +781,14 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndEditor = GetDlgItem(hWnd, IDC_EDITOR);
     HWND hwndStatus = GetDlgItem(hWnd, IDC_STATUSBAR);
+    static FINDREPLACEW findreplace;
 
     if ((HWND)lParam == hwndEditor)
         return 0;
 
     switch(LOWORD(wParam))
     {
+
     case ID_FILE_EXIT:
         PostMessageW(hWnd, WM_CLOSE, 0, 0);
         break;
@@ -703,9 +820,16 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         DialogSaveFile();
         break;
 
+    case ID_FIND:
+        dialog_find(&findreplace);
+        break;
+
+    case ID_FIND_NEXT:
+        handle_findmsg(&findreplace);
+        break;
+
     case ID_PRINT:
     case ID_PREVIEW:
-    case ID_FIND:
         {
             static const WCHAR wszNotImplemented[] = {'N','o','t',' ',
                                                       'i','m','p','l','e','m','e','n','t','e','d','\0'};
@@ -908,6 +1032,9 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
     int nAlignment = -1;
     REBARBANDINFOW rbbinfo;
     int selFrom, selTo;
+    GETTEXTLENGTHEX gt;
+    LRESULT textLength;
+    MENUITEMINFOW mi;
 
     SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&selFrom, (LPARAM)&selTo);
     EnableMenuItem(hMenu, ID_EDIT_COPY, MF_BYCOMMAND|(selFrom == selTo) ? MF_GRAYED : MF_ENABLED);
@@ -946,6 +1073,19 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
 
     CheckMenuItem(hMenu, ID_TOGGLE_STATUSBAR, MF_BYCOMMAND|IsWindowVisible(hwndStatus) ?
             MF_CHECKED : MF_UNCHECKED);
+
+    gt.flags = GTL_NUMCHARS;
+    gt.codepage = 1200;
+    textLength = SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0);
+    EnableMenuItem(hMenu, ID_FIND, MF_BYCOMMAND|(textLength ? MF_ENABLED : MF_GRAYED));
+
+    mi.cbSize = sizeof(mi);
+    mi.fMask = MIIM_DATA;
+
+    GetMenuItemInfoW(hMenu, ID_FIND_NEXT, FALSE, &mi);
+
+    EnableMenuItem(hMenu, ID_FIND_NEXT, MF_BYCOMMAND|((textLength && mi.dwItemData) ?
+                   MF_ENABLED : MF_GRAYED));
     return 0;
 }
 
@@ -1003,6 +1143,9 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
 
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    if(msg == ID_FINDMSGSTRING)
+        return handle_findmsg((LPFINDREPLACEW)lParam);
+
     switch(msg)
     {
     case WM_CREATE:
@@ -1079,6 +1222,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
 
     while(GetMessageW(&msg,0,0,0))
     {
+        if (IsDialogMessage(hFindWnd, &msg))
+            continue;
+
         if (TranslateAcceleratorW(hMainWnd, hAccel, &msg))
             continue;
         TranslateMessage(&msg);

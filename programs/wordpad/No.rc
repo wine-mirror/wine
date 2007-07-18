@@ -40,7 +40,10 @@ BEGIN
         MENUITEM "&Fjern\tDEL",               ID_EDIT_CLEAR
         MENUITEM "&Merk alt\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
-        MENUITEM "&Skrivebeskyttet",          ID_EDIT_READONLY
+        MENUITEM "&Søk etter . . .\tCrtl+F",  ID_FIND
+        MENUITEM "Søk etter &neste\tF3",      ID_FIND_NEXT
+        MENUITEM SEPARATOR
+        MENUITEM "Sk&rivebeskyttet",          ID_EDIT_READONLY
         MENUITEM "E&ndret",                   ID_EDIT_MODIFIED
         MENUITEM SEPARATOR
         POPUP "&Ekstra"
@@ -100,4 +103,5 @@ STRINGTABLE DISCARDABLE
 BEGIN
     STRING_DEFAULT_FILENAME,     "Dokument"
     STRING_PROMPT_SAVE_CHANGES,  "Lagre endringer i «%s»?"
+    STRING_SEARCH_FINISHED,      "Ferdig med å søke i dokumentet."
 END

@@ -41,6 +41,9 @@ BEGIN
         MENUITEM "지우기(&C)\tDEL",                 ID_EDIT_CLEAR
         MENUITEM "모두 선택(&S)\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
+        MENUITEM "&Find . . .\tCrtl+F",         ID_FIND
+        MENUITEM "Find &next\tF3",              ID_FIND_NEXT
+        MENUITEM SEPARATOR
         MENUITEM "읽기 전용(&O)",                  ID_EDIT_READONLY
         MENUITEM "수정 가능(&M)",                   ID_EDIT_MODIFIED
         MENUITEM SEPARATOR
@@ -101,4 +104,5 @@ STRINGTABLE DISCARDABLE
 BEGIN
     STRING_DEFAULT_FILENAME,     "문서"
     STRING_PROMPT_SAVE_CHANGES,  "'%s'의 바뀐 것을 저장하겠습니까?"
+    STRING_SEARCH_FINISHED,      "Finished searching the document."
 END
