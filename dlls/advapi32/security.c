@@ -3178,7 +3178,7 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
 	return FALSE;
 
     if (pAcl) /* pAce is only useful if we're setting values */
-        pAce = (PACCESS_ALLOWED_ACE) ((LPBYTE)pAcl + sizeof(PACL));
+        pAce = (PACCESS_ALLOWED_ACE) (pAcl + 1);
 
     /* Parse ACL flags */
     *lpdwFlags = ParseAclStringFlags(&StringAcl);
