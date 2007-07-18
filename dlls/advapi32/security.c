@@ -3125,10 +3125,10 @@ static DWORD ParseAceStringRights(LPCWSTR* StringAcl)
 	while (*p && *p != ';')
             p++;
 
-	if (p - szAcl <= 8)
+	if (p - szAcl <= 10 /* 8 hex digits + "0x" */ )
 	{
 	    rights = strtoulW(szAcl, NULL, 16);
-	    *StringAcl = p;
+	    szAcl = p;
 	}
 	else
             WARN("Invalid rights string format: %s\n", debugstr_wn(szAcl, p - szAcl));
