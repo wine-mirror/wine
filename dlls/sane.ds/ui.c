@@ -982,7 +982,6 @@ static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
             return InitializeDialog(hwndDlg);
         case WM_HSCROLL:
             return ProcessScroll(hwndDlg, wParam, lParam);
-            break;
         case WM_NOTIFY:
             {
                 LPPSHNOTIFY psn = (LPPSHNOTIFY)lParam;

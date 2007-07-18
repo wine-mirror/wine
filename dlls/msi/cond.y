@@ -597,7 +597,6 @@ static int COND_GetOne( struct cond_str *str, COND_input *cond )
     case '%': rc = COND_PERCENT; break;
     case ' ': rc = COND_SPACE; break;
     case '=': rc = COND_EQ; break;
-        break;
 
     case '~':
     case '<':

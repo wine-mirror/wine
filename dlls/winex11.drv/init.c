@@ -431,7 +431,6 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
                     return TRUE;
                 }
                 return FALSE;
-                break;
             }
         }
         break;

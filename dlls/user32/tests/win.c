@@ -3326,7 +3326,6 @@ static LRESULT WINAPI redraw_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LP
             return 1;
         }
         return 0;
-        break;
     }
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
