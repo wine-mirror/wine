@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "winsvc.h"
 #include "lmcons.h"
 
@@ -323,9 +324,58 @@ static void test_create_delete_svc(void)
     else
         skip("Could not retrieve a displayname (Spooler service doesn't exist)\n");
 
-    CloseServiceHandle(scm_handle);
-}
+    /* Windows doesn't care about the access rights for creation (which makes
+     * sense as there is no service yet) as long as there are sufficient
+     * rights to the manager.
+     */
+    SetLastError(0xdeadbeef);
+    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, 0, SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
+                                 SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    ok(svc_handle1 != NULL, "Could not create the service : %d\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS    /* W2K3, Vista */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
 
+    /* DeleteService however must have proper rights */
+    SetLastError(0xdeadbeef);
+    ret = DeleteService(svc_handle1);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED,
+       "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+
+    /* Open the service with minimal rights for deletion.
+     * (Verified with 'SERVICE_ALL_ACCESS &~ DELETE')
+     */
+    CloseServiceHandle(svc_handle1);
+    svc_handle1 = OpenServiceA(scm_handle, servicename, DELETE);
+
+    /* Now that we have the proper rights, we should be able to delete */
+    SetLastError(0xdeadbeef);
+    ret = DeleteService(svc_handle1);
+    ok(ret, "Expected success\n");
+    ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+
+    CloseServiceHandle(svc_handle1);
+
+    CloseServiceHandle(scm_handle);
+
+    /* Wait a while. One of the following tests also does a CreateService for the
+     * same servicename and this would result in an ERROR_SERVICE_MARKED_FOR_DELETE
+     * error if we do this to quick. Vista seems more picky then the others.
+     */
+    Sleep(1000);
+
+    /* And a final NULL check */
+    SetLastError(0xdeadbeef);
+    ret = DeleteService(NULL);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+}
 
 static void test_close(void)
 {

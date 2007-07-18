@@ -1558,6 +1558,12 @@ BOOL WINAPI DeleteService( SC_HANDLE hService )
         return FALSE;
     }
 
+    if (!(hsvc->dwAccess & DELETE))
+    {
+        SetLastError(ERROR_ACCESS_DENIED);
+        return FALSE;
+    }
+
     /* Close the key to the service */
     RegCloseKey(hsvc->hkey);
 
