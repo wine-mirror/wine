@@ -219,7 +219,14 @@ static void DoSaveFile(LPCWSTR wszSaveFileName)
     SetFocus(hEditorWnd);
 
     if(!ret)
-        return;
+    {
+        GETTEXTLENGTHEX gt;
+        gt.flags = GTL_DEFAULT;
+        gt.codepage = 1200;
+
+        if(SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0))
+            return;
+    }
 
     lstrcpyW(wszFileName, wszSaveFileName);
     set_caption(wszFileName);
