@@ -1309,6 +1309,9 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     struct reg_value val[10];
     int n = 0;
     DWORD new_mask = dwDesiredAccess;
+    DWORD index = 0;
+    WCHAR buffer[MAX_PATH];
+    BOOL displayname_exists = FALSE;
 
     TRACE("%p %s %s\n", hSCManager, 
           debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
@@ -1385,15 +1388,57 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         return NULL;
     }
 
+    /* Loop through the registry to check if the service already exists and to
+     * check if we can use the given displayname.
+     * FIXME: Should we use EnumServicesStatusEx?
+     */
+    len = sizeof(buffer);
+    while (RegEnumKeyExW(hscm->hkey, index, buffer, &len, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+    {
+        HKEY service_key;
+
+        /* The service already exists, so bail out */
+        if(!lstrcmpiW(lpServiceName, buffer))
+        {
+            SetLastError(ERROR_SERVICE_EXISTS);
+            return NULL;
+        }
+
+        /* The given displayname matches the found servicename. We don't bail out
+         * as servicename is checked before a duplicate displayname
+         */
+        if(!lstrcmpiW(lpDisplayName, buffer))
+            displayname_exists = TRUE;
+
+        if (RegOpenKeyExW(hscm->hkey, buffer, 0, KEY_READ, &service_key) == ERROR_SUCCESS)
+        {
+            WCHAR name[MAX_PATH];
+            DWORD size = sizeof(name);
+
+            if (RegQueryValueExW(service_key, szDisplayName, NULL, NULL, (LPBYTE)name, &size) == ERROR_SUCCESS)
+            {
+                /* The given displayname matches the found displayname */
+                if (!lstrcmpiW(lpDisplayName, name))
+                    displayname_exists = TRUE;
+            }
+            RegCloseKey(service_key);
+        }
+        index++;
+        len = sizeof(buffer);
+    }
+
+    if (lpDisplayName && displayname_exists)
+    {
+        SetLastError(ERROR_DUPLICATE_SERVICE_NAME);
+        return NULL;
+    }
+
     r = RegCreateKeyExW(hscm->hkey, lpServiceName, 0, NULL,
                        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dp);
     if (r!=ERROR_SUCCESS)
-        return NULL;
-
-    if (dp != REG_CREATED_NEW_KEY)
     {
-        SetLastError(ERROR_SERVICE_EXISTS);
-        goto error;
+        /* FIXME: Should we set an error? */
+        return NULL;
     }
 
     if( lpDisplayName )

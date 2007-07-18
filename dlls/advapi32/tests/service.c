@@ -315,23 +315,13 @@ static void test_create_delete_svc(void)
         {
             svc_handle1 = CreateServiceA(scm_handle, servicename, display, 0, SERVICE_WIN32_OWN_PROCESS,
                                          SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
-            todo_wine
-            {
             ok(!svc_handle1, "Expected failure\n");
             ok(GetLastError() == ERROR_DUPLICATE_SERVICE_NAME,
                "Expected ERROR_DUPLICATE_SERVICE_NAME, got %d\n", GetLastError());
-            }
         }
     }
     else
         skip("Could not retrieve a displayname (Spooler service doesn't exist)\n");
-
-    /* FIXME: Remove this when Wine is fixed */
-    if (svc_handle1)
-    {
-        DeleteService(svc_handle1);
-        CloseServiceHandle(svc_handle1);
-    }
 
     CloseServiceHandle(scm_handle);
 }
