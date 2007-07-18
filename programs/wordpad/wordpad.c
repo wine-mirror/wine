@@ -986,6 +986,11 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
             rebarRows--;
 
         rebarHeight = rebarRows ? SendMessageW(hwndReBar, RB_GETBARHEIGHT, 0, 0) : 0;
+
+        rc.top = rc.left = 0;
+        rc.bottom = rebarHeight;
+        rc.right = LOWORD(lParam);
+        SendMessageW(hwndReBar, RB_SIZETORECT, 0, (LPARAM)&rc);
     }
     if (hwndEditor)
     {
