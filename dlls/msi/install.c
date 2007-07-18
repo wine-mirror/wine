@@ -688,6 +688,7 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
             r = TRUE;
         break;
 
+    case MSIRUNMODE_OPERATIONS:
     case MSIRUNMODE_RESERVED11:
     case MSIRUNMODE_RESERVED14:
     case MSIRUNMODE_RESERVED15:
