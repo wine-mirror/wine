@@ -1574,37 +1574,103 @@ void WINAPI SHFreeNameMappings(HANDLE hNameMapping)
 /*************************************************************************
  * SheGetDirA [SHELL32.@]
  *
- */
-HRESULT WINAPI SheGetDirA(LPSTR u, LPSTR v)
-{   FIXME("%p %p stub\n",u,v);
+ * drive = 0: returns the current directory path
+ * drive > 0: returns the current directory path of the specified drive
+ *            drive=1 -> A:  drive=2 -> B:  ...
+ * returns 0 if successfull
+*/
+DWORD WINAPI SheGetDirA(DWORD drive, LPSTR buffer)
+{
+    WCHAR org_path[MAX_PATH];
+    DWORD ret;
+    char drv_path[3];
+
+    /* change current directory to the specified drive */
+    if (drive) {
+        strcpy(drv_path, "A:");
+        drv_path[0] += (char)drive-1;
+
+        GetCurrentDirectoryW(MAX_PATH, org_path);
+
+        SetCurrentDirectoryA(drv_path);
+    }
+
+    /* query current directory path of the specified drive */
+    ret = GetCurrentDirectoryA(MAX_PATH, buffer);
+
+    /* back to the original drive */
+    if (drive)
+        SetCurrentDirectoryW(org_path);
+
+    if (!ret)
+        return GetLastError();
+
     return 0;
 }
 
 /*************************************************************************
  * SheGetDirW [SHELL32.@]
  *
+ * drive = 0: returns the current directory path
+ * drive > 0: returns the current directory path of the specified drive
+ *            drive=1 -> A:  drive=2 -> B:  ...
+ * returns 0 if successfull
  */
-HRESULT WINAPI SheGetDirW(LPWSTR u, LPWSTR v)
-{	FIXME("%p %p stub\n",u,v);
-	return 0;
+DWORD WINAPI SheGetDirW(DWORD drive, LPWSTR buffer)
+{
+    WCHAR org_path[MAX_PATH];
+    DWORD ret;
+    char drv_path[3];
+
+    /* change current directory to the specified drive */
+    if (drive) {
+        strcpy(drv_path, "A:");
+        drv_path[0] += (char)drive-1;
+
+        GetCurrentDirectoryW(MAX_PATH, org_path);
+
+        SetCurrentDirectoryA(drv_path);
+    }
+
+    /* query current directory path of the specified drive */
+    ret = GetCurrentDirectoryW(MAX_PATH, buffer);
+
+    /* back to the original drive */
+    if (drive)
+        SetCurrentDirectoryW(org_path);
+
+    if (!ret)
+        return GetLastError();
+
+    return 0;
 }
 
 /*************************************************************************
  * SheChangeDirA [SHELL32.@]
  *
+ * changes the current directory to the specified path
+ * and returns 0 if successfull
  */
-HRESULT WINAPI SheChangeDirA(LPSTR u)
-{   FIXME("(%s),stub\n",debugstr_a(u));
-    return 0;
+DWORD WINAPI SheChangeDirA(LPSTR path)
+{
+    if (SetCurrentDirectoryA(path))
+        return 0;
+    else
+        return GetLastError();
 }
 
 /*************************************************************************
  * SheChangeDirW [SHELL32.@]
  *
+ * changes the current directory to the specified path
+ * and returns 0 if successfull
  */
-HRESULT WINAPI SheChangeDirW(LPWSTR u)
-{	FIXME("(%s),stub\n",debugstr_w(u));
-	return 0;
+DWORD WINAPI SheChangeDirW(LPWSTR path)
+{
+    if (SetCurrentDirectoryW(path))
+        return 0;
+    else
+        return GetLastError();
 }
 
 /*************************************************************************
