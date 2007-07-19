@@ -124,6 +124,7 @@ struct entity
 struct dll_redirect
 {
     WCHAR                *name;
+    WCHAR                *hash;
     struct entity        *entities;
     unsigned int          num_entities;
     unsigned int          allocated_entities;
@@ -177,6 +178,8 @@ struct actctx_loader
 #define ELEM_END(elem) "/" elem
 
 #define CLSID_ATTR                      "clsid"
+#define HASH_ATTR                       "hash"
+#define HASHALG_ATTR                    "hashalg"
 #define HELPDIR_ATTR                    "helpdir"
 #define IID_ATTR                        "iid"
 #define MANIFESTVERSION_ATTR            "manifestVersion"
@@ -414,6 +417,7 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
                 for (k = 0; k < dll->num_entities; k++) free_entity(&dll->entities[k]);
                 RtlFreeHeap( GetProcessHeap(), 0, dll->entities );
                 RtlFreeHeap( GetProcessHeap(), 0, dll->name );
+                RtlFreeHeap( GetProcessHeap(), 0, dll->hash );
             }
             RtlFreeHeap( GetProcessHeap(), 0, assembly->dlls );
             RtlFreeHeap( GetProcessHeap(), 0, assembly->manifest.info );
@@ -847,6 +851,15 @@ static BOOL parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
         {
             if (!(dll->name = xmlstrdupW(&attr_value))) return FALSE;
             TRACE("name=%s\n", debugstr_xmlstr(&attr_value));
+        }
+        else if (xmlstr_cmp(&attr_name, HASH_ATTR))
+        {
+            if (!(dll->hash = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, HASHALG_ATTR))
+        {
+            if (!xmlstr_cmp(&attr_value, "SHA1"))
+                FIXME("hashalg should be SHA1, got %s\n", debugstr_xmlstr(&attr_value));
         }
         else
         {
