@@ -66,6 +66,7 @@
 DEFINE_EXPECT(GetBindInfo);
 DEFINE_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
 DEFINE_EXPECT(ReportProgress_DIRECTBIND);
+DEFINE_EXPECT(ReportProgress_RAWMIMETYPE);
 DEFINE_EXPECT(ReportProgress_FINDINGRESOURCE);
 DEFINE_EXPECT(ReportProgress_CONNECTING);
 DEFINE_EXPECT(ReportProgress_SENDINGREQUEST);
@@ -288,6 +289,14 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         CHECK_EXPECT2(ReportProgress_DIRECTBIND);
         ok(szStatusText == NULL, "szStatusText != NULL\n");
         break;
+    case BINDSTATUS_RAWMIMETYPE:
+        CHECK_EXPECT2(ReportProgress_RAWMIMETYPE);
+        ok(szStatusText != NULL, "szStatusText == NULL\n");
+        if(szStatusText)
+            ok(lstrlenW(szStatusText) < lstrlenW(text_html) ||
+               !memcmp(szStatusText, text_html, lstrlenW(text_html)*sizeof(WCHAR)),
+               "szStatusText != text/html\n");
+        break;
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
         CHECK_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
@@ -363,6 +372,10 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
                || grfBSCF == (BSCF_LASTDATANOTIFICATION|BSCF_INTERMEDIATEDATANOTIFICATION),
                "grcfBSCF = %08x\n", grfBSCF);
         }
+
+        if (!(grfBSCF & BSCF_LASTDATANOTIFICATION) &&
+            !(bindf & BINDF_FROMURLMON))
+            SendMessage(protocol_hwnd, WM_USER, 0, 0);
     }
     return S_OK;
 }
@@ -1061,6 +1074,8 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
     state = 0;
 
     SET_EXPECT(GetBindInfo);
+    if (!(bindf & BINDF_FROMURLMON))
+        SET_EXPECT(ReportProgress_DIRECTBIND);
     SET_EXPECT(GetBindString_USER_AGENT);
     SET_EXPECT(GetBindString_ACCEPT_MIMES);
     SET_EXPECT(QueryService_HttpNegotiate);
@@ -1073,6 +1088,8 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
         return FALSE;
 
     CHECK_CALLED(GetBindInfo);
+    if (!(bindf & BINDF_FROMURLMON))
+        CHECK_CALLED(ReportProgress_DIRECTBIND);
     if (!got_user_agent)
     {
         CHECK_CALLED(GetBindString_USER_AGENT);
@@ -1130,13 +1147,17 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
         DWORD cb;
         MSG msg;
 
-        bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
-
         test_priority(http_protocol);
 
         SET_EXPECT(ReportProgress_FINDINGRESOURCE);
         SET_EXPECT(ReportProgress_CONNECTING);
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
+        if(!(bindf & BINDF_FROMURLMON))
+        {
+            SET_EXPECT(OnResponse);
+            SET_EXPECT(ReportProgress_RAWMIMETYPE);
+            SET_EXPECT(ReportData);
+        }
 
         if(!http_protocol_start(url, is_first))
             return;
@@ -1145,14 +1166,19 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
         ok(hres == E_PENDING, "Read failed: %08x, expected E_PENDING\n", hres);
         ok(!cb, "cb=%d, expected 0\n", cb);
 
-        SET_EXPECT(Switch);
+        if(bindf & BINDF_FROMURLMON)
+            SET_EXPECT(Switch);
         SET_EXPECT(ReportResult);
         expect_hrResult = S_OK;
 
         GetMessage(&msg, NULL, 0, 0);
 
-        CHECK_CALLED(Switch);
+        if(bindf & BINDF_FROMURLMON)
+            CHECK_CALLED(Switch);
         CHECK_CALLED(ReportResult);
+
+        hres = IInternetProtocol_Terminate(http_protocol, 0);
+        ok(hres == S_OK, "Terminate failed: %08x\n", hres);
 
         IInternetProtocol_Release(http_protocol);
     }
@@ -1167,7 +1193,9 @@ static void test_http_protocol(void)
             'o','r','g','/','s','i','t','e','/','a','b','o','u','t',0};
 
     tested_protocol = HTTP_TEST;
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
     test_http_protocol_url(winehq_url, TRUE);
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
     test_http_protocol_url(winehq_url, FALSE);
 
 }
@@ -1175,12 +1203,15 @@ static void test_http_protocol(void)
 static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if(msg == WM_USER) {
+        BOOL first_call = FALSE;
         HRESULT hres;
         DWORD cb;
         BYTE buf[3600];
 
-        SET_EXPECT(ReportData);
         if(!state) {
+            first_call = TRUE;
+            state = 1;
+
             if (http_is_first)
             {
                 CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
@@ -1192,18 +1223,30 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
                 CHECK_NOT_CALLED(ReportProgress_CONNECTING);
             }
             CHECK_CALLED(ReportProgress_SENDINGREQUEST);
-
-            SET_EXPECT(OnResponse);
-            SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+            if(!(bindf & BINDF_FROMURLMON))
+            {
+                CHECK_CALLED(OnResponse);
+                CHECK_CALLED(ReportProgress_RAWMIMETYPE);
+                CHECK_CALLED(ReportData);
+            }
+            else
+            {
+                SET_EXPECT(OnResponse);
+                SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+            }
         }
+        SET_EXPECT(ReportData);
 
-        hres = IInternetProtocol_Continue(http_protocol, (PROTOCOLDATA*)lParam);
-        ok(hres == S_OK, "Continue failed: %08x\n", hres);
+        if (bindf & BINDF_FROMURLMON)
+        {
+            hres = IInternetProtocol_Continue(http_protocol, (PROTOCOLDATA*)lParam);
+            ok(hres == S_OK, "Continue failed: %08x\n", hres);
 
-        CHECK_CALLED(ReportData);
-        if(!state) {
-            CHECK_CALLED(OnResponse);
-            CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+            CHECK_CALLED(ReportData);
+            if(first_call) {
+                CHECK_CALLED(OnResponse);
+                CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+            }
         }
 
         do hres = IInternetProtocol_Read(http_protocol, buf, sizeof(buf), &cb);
@@ -1214,9 +1257,7 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         if(hres == S_FALSE)
             PostMessage(protocol_hwnd, WM_USER+1, 0, 0);
 
-        if(!state) {
-            state = 1;
-
+        if(first_call) {
             hres = IInternetProtocol_LockRequest(http_protocol, 0);
             ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
 
