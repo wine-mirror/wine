@@ -541,14 +541,31 @@ static BOOL next_xml_elem(xmlbuf_t* xmlbuf, xmlstr_t* elem)
 {
     const char* ptr;
 
-    ptr = memchr(xmlbuf->ptr, '<', xmlbuf->end - xmlbuf->ptr);
-    if (!ptr)
+    for (;;)
     {
-        xmlbuf->ptr = xmlbuf->end;
-        return FALSE;
+        ptr = memchr(xmlbuf->ptr, '<', xmlbuf->end - xmlbuf->ptr);
+        if (!ptr)
+        {
+            xmlbuf->ptr = xmlbuf->end;
+            return FALSE;
+        }
+        ptr++;
+        if (ptr + 3 < xmlbuf->end && !strncmp( ptr, "!--", 3 )) /* skip comment */
+        {
+            for (ptr += 3; ptr + 3 <= xmlbuf->end; ptr++)
+                if (ptr[0] == '-' && ptr[1] == '-' && ptr[2] == '>') break;
+
+            if (ptr + 3 > xmlbuf->end)
+            {
+                xmlbuf->ptr = xmlbuf->end;
+                return FALSE;
+            }
+            xmlbuf->ptr = ptr + 3;
+        }
+        else break;
     }
 
-    xmlbuf->ptr = ++ptr;
+    xmlbuf->ptr = ptr;
     while (ptr < xmlbuf->end && !isxmlspace(*ptr) && *ptr != '>')
         ptr++;
 
