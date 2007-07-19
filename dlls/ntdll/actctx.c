@@ -151,6 +151,7 @@ struct assembly
     struct dll_redirect     *dlls;
     unsigned int             num_dlls;
     unsigned int             allocated_dlls;
+    struct entity_array      entities;
 };
 
 typedef struct _ACTIVATION_CONTEXT
@@ -175,6 +176,7 @@ struct actctx_loader
 #define ASSEMBLY_ELEM                   "assembly"
 #define ASSEMBLYIDENTITY_ELEM           "assemblyIdentity"
 #define COMCLASS_ELEM                   "comClass"
+#define COMINTERFACEEXTERNALPROXYSTUB_ELEM "comInterfaceExternalProxyStub"
 #define COMINTERFACEPROXYSTUB_ELEM      "comInterfaceProxyStub"
 #define DEPENDENCY_ELEM                 "dependency"
 #define DEPENDENTASSEMBLY_ELEM          "dependentAssembly"
@@ -438,6 +440,7 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
             }
             RtlFreeHeap( GetProcessHeap(), 0, assembly->dlls );
             RtlFreeHeap( GetProcessHeap(), 0, assembly->manifest.info );
+            free_entity_array( &assembly->entities );
             free_assembly_identity(&assembly->id);
         }
         RtlFreeHeap( GetProcessHeap(), 0, actctx->config.info );
@@ -823,6 +826,39 @@ static BOOL parse_description_elem(xmlbuf_t* xmlbuf)
     return ret;
 }
 
+static BOOL parse_com_interface_external_proxy_stub_elem(xmlbuf_t* xmlbuf,
+                                                         struct assembly* assembly)
+{
+    xmlstr_t            attr_name, attr_value;
+    BOOL                end = FALSE, error;
+    struct entity*      entity;
+
+    entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION);
+    if (!entity) return FALSE;
+
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, IID_ATTR))
+        {
+            if (!(entity->u.proxy.iid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        if (xmlstr_cmp(&attr_name, NAME_ATTR))
+        {
+            if (!(entity->u.proxy.name = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else
+        {
+            WARN("wrong attr %s=%s\n", debugstr_xmlstr(&attr_name),
+                 debugstr_xmlstr(&attr_value));
+            return FALSE;
+        }
+    }
+
+    if (error || end) return end;
+    return parse_expect_elem(xmlbuf, ELEM_END(COMINTERFACEEXTERNALPROXYSTUB_ELEM)) &&
+        parse_end_element(xmlbuf);
+}
+
 static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf,
                                           struct actctx_loader* acl)
 {
@@ -1061,6 +1097,10 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         else if (xmlstr_cmp(&elem, DESCRIPTION_ELEM))
         {
             ret = parse_description_elem(xmlbuf);
+        }
+        else if (xmlstr_cmp(&elem, COMINTERFACEEXTERNALPROXYSTUB_ELEM))
+        {
+            ret = parse_com_interface_external_proxy_stub_elem(xmlbuf, assembly);
         }
         else if (xmlstr_cmp(&elem, DEPENDENCY_ELEM))
         {
