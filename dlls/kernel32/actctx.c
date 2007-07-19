@@ -28,31 +28,14 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(actctx);
 
 
-#define ACTCTX_FLAGS_ALL (\
- ACTCTX_FLAG_PROCESSOR_ARCHITECTURE_VALID |\
- ACTCTX_FLAG_LANGID_VALID |\
- ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID |\
- ACTCTX_FLAG_RESOURCE_NAME_VALID |\
- ACTCTX_FLAG_SET_PROCESS_DEFAULT |\
- ACTCTX_FLAG_APPLICATION_NAME_VALID |\
- ACTCTX_FLAG_SOURCE_IS_ASSEMBLYREF |\
- ACTCTX_FLAG_HMODULE_VALID )
-
 #define ACTCTX_FAKE_HANDLE ((HANDLE) 0xf00baa)
 #define ACTCTX_FAKE_COOKIE ((ULONG_PTR) 0xf00bad)
-
-#define ACTCTX_MAGIC       0xC07E3E11
-
-struct actctx
-{
-    ULONG               magic;
-    LONG                ref_count;
-};
 
 /***********************************************************************
  * CreateActCtxA (KERNEL32.@)
@@ -68,8 +51,7 @@ HANDLE WINAPI CreateActCtxA(PCACTCTXA pActCtx)
 
     TRACE("%p %08x\n", pActCtx, pActCtx ? pActCtx->dwFlags : 0);
 
-    if (!pActCtx || pActCtx->cbSize != sizeof(*pActCtx) ||
-        (pActCtx->dwFlags & ~ACTCTX_FLAGS_ALL))
+    if (!pActCtx || pActCtx->cbSize != sizeof(*pActCtx))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
@@ -138,44 +120,17 @@ done:
  */
 HANDLE WINAPI CreateActCtxW(PCACTCTXW pActCtx)
 {
-    struct actctx*      actctx;
-    DWORD               ret = ERROR_SUCCESS;
+    NTSTATUS    status;
+    HANDLE      hActCtx;
 
     TRACE("%p %08x\n", pActCtx, pActCtx ? pActCtx->dwFlags : 0);
 
-    if (!pActCtx || pActCtx->cbSize != sizeof(*pActCtx) ||
-        (pActCtx->dwFlags & ~ACTCTX_FLAGS_ALL))
+    if ((status = RtlCreateActivationContext(&hActCtx, pActCtx)))
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError(RtlNtStatusToDosError(status));
         return INVALID_HANDLE_VALUE;
     }
-    actctx = HeapAlloc(GetProcessHeap(), 0, sizeof(*actctx));
-    if (!actctx) return INVALID_HANDLE_VALUE;
-
-    actctx->magic = ACTCTX_MAGIC;
-    actctx->ref_count = 1;
-
-    if (ret == ERROR_SUCCESS)
-    {
-        return (HANDLE)actctx;
-    }
-
-    ReleaseActCtx((HANDLE)actctx);
-    SetLastError(ret);
-    return INVALID_HANDLE_VALUE;
-}
-
-static struct actctx* check_actctx(HANDLE h)
-{
-    struct actctx*      actctx = (struct actctx*)h;
-
-    switch (actctx->magic)
-    {
-    case ACTCTX_MAGIC: return actctx;
-    default:
-        SetLastError(ERROR_INVALID_HANDLE);
-        return NULL;
-    }
+    return hActCtx;
 }
 
 /***********************************************************************
@@ -241,12 +196,7 @@ BOOL WINAPI GetCurrentActCtx(HANDLE* phActCtx)
  */
 void WINAPI AddRefActCtx(HANDLE hActCtx)
 {
-    struct actctx*      actctx;
-
-    TRACE("%p\n", hActCtx);
-
-    if ((actctx = check_actctx(hActCtx)))
-        InterlockedIncrement( &actctx->ref_count );
+    RtlAddRefActivationContext(hActCtx);
 }
 
 /***********************************************************************
@@ -256,18 +206,7 @@ void WINAPI AddRefActCtx(HANDLE hActCtx)
  */
 void WINAPI ReleaseActCtx(HANDLE hActCtx)
 {
-    struct actctx*      actctx;
-
-    TRACE("%p\n", hActCtx);
-
-    if ((actctx = check_actctx(hActCtx)))
-    {
-        if (!InterlockedDecrement( &actctx->ref_count ))
-        {
-            actctx->magic = 0;
-            HeapFree(GetProcessHeap(), 0, actctx);
-        }
-    }
+    RtlReleaseActivationContext(hActCtx);
 }
 
 /***********************************************************************

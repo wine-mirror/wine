@@ -407,7 +407,7 @@
 # @ stub RtlAddAuditAccessObjectAce
 # @ stub RtlAddCompoundAce
 # @ stub RtlAddRange
-# @ stub RtlAddRefActivationContext
+@ stdcall RtlAddRefActivationContext(ptr)
 # @ stub RtlAddRefMemoryStream
 @ stdcall RtlAddVectoredExceptionHandler(long ptr)
 # @ stub RtlAddressInSectionTable
@@ -475,7 +475,7 @@
 @ stdcall RtlCopyString(ptr ptr)
 @ stdcall RtlCopyUnicodeString(ptr ptr)
 @ stdcall RtlCreateAcl(ptr long long)
-# @ stub RtlCreateActivationContext
+@ stdcall RtlCreateActivationContext(ptr ptr)
 @ stub RtlCreateAndSetSD
 @ stdcall RtlCreateAtomTable(long ptr)
 # @ stub RtlCreateBootStatusDataFile
@@ -794,7 +794,7 @@
 @ stub RtlRealSuccessor
 @ stub RtlRegisterSecureMemoryCacheCallback
 @ stub RtlRegisterWait
-@ stub RtlReleaseActivationContext
+@ stdcall RtlReleaseActivationContext(ptr)
 @ stub RtlReleaseMemoryStream
 @ stdcall RtlReleasePebLock()
 @ stdcall RtlReleaseResource(ptr)
