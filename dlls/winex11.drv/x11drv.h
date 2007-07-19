@@ -62,6 +62,7 @@ typedef int Status;
 #include "wine/list.h"
 
 #define MAX_PIXELFORMATS 8
+#define MAX_DASHLEN 16
 
 struct tagCURSORICONINFO;
 struct dce;
@@ -77,9 +78,10 @@ typedef struct
     int          linejoin;
     int          pixel;
     int          width;
-    char *       dashes;
+    char         dashes[MAX_DASHLEN];
     int          dash_len;
     int          type;          /* GEOMETRIC || COSMETIC */
+    int          ext;           /* extended pen - 1, otherwise - 0 */
 } X_PHYSPEN;
 
   /* X physical brush */

@@ -36,6 +36,11 @@ HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
     static char PEN_dashdot[]    = { 12,8,4,8 };
     static char PEN_dashdotdot[] = { 12,4,4,4,4,4 };
     static char PEN_alternate[]  = { 1,1 };
+    static char EXTPEN_dash[]       = { 3,1 };
+    static char EXTPEN_dot[]        = { 1,1 };
+    static char EXTPEN_dashdot[]    = { 3,1,1,1 };
+    static char EXTPEN_dashdotdot[] = { 3,1,1,1,1,1 };
+    int i;
 
     if (!GetObjectW( hpen, sizeof(logpen), &logpen ))
     {
@@ -45,6 +50,7 @@ HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
 
         if (!size) return 0;
 
+        physDev->pen.ext = 1;
         elp = HeapAlloc( GetProcessHeap(), 0, size );
 
         GetObjectW( hpen, size, elp );
@@ -56,6 +62,8 @@ HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
 
         HeapFree( GetProcessHeap(), 0, elp );
     }
+    else
+        physDev->pen.ext = 0;
 
     physDev->pen.style = logpen.lopnStyle & PS_STYLE_MASK;
     physDev->pen.type = logpen.lopnStyle & PS_TYPE_MASK;
@@ -76,33 +84,41 @@ HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
     switch(logpen.lopnStyle & PS_STYLE_MASK)
     {
       case PS_DASH:
-	physDev->pen.dashes = PEN_dash;
-	physDev->pen.dash_len = sizeof(PEN_dash)/sizeof(*PEN_dash);
-	break;
+            physDev->pen.dash_len = sizeof(PEN_dash)/sizeof(*PEN_dash);
+            memcpy(physDev->pen.dashes, physDev->pen.ext ? EXTPEN_dash : PEN_dash,
+                   physDev->pen.dash_len);
+            break;
       case PS_DOT:
-	physDev->pen.dashes = PEN_dot;
-	physDev->pen.dash_len = sizeof(PEN_dot)/sizeof(*PEN_dot);
-	break;
+            physDev->pen.dash_len = sizeof(PEN_dot)/sizeof(*PEN_dot);
+            memcpy(physDev->pen.dashes, physDev->pen.ext ? EXTPEN_dot : PEN_dot,
+                   physDev->pen.dash_len);
+            break;
       case PS_DASHDOT:
-	physDev->pen.dashes = PEN_dashdot;
-	physDev->pen.dash_len = sizeof(PEN_dashdot)/sizeof(*PEN_dashdot);
-	break;
+            physDev->pen.dash_len = sizeof(PEN_dashdot)/sizeof(*PEN_dashdot);
+            memcpy(physDev->pen.dashes, physDev->pen.ext ? EXTPEN_dashdot : PEN_dashdot,
+                   physDev->pen.dash_len);
+            break;
       case PS_DASHDOTDOT:
-	physDev->pen.dashes = PEN_dashdotdot;
-	physDev->pen.dash_len = sizeof(PEN_dashdotdot)/sizeof(*PEN_dashdotdot);
-	break;
+            physDev->pen.dash_len = sizeof(PEN_dashdotdot)/sizeof(*PEN_dashdotdot);
+            memcpy(physDev->pen.dashes, physDev->pen.ext ? EXTPEN_dashdotdot : PEN_dashdotdot,
+                   physDev->pen.dash_len);
+            break;
       case PS_ALTERNATE:
-	physDev->pen.dashes = PEN_alternate;
-	physDev->pen.dash_len = sizeof(PEN_alternate)/sizeof(*PEN_alternate);
-	break;
+            physDev->pen.dash_len = sizeof(PEN_alternate)/sizeof(*PEN_alternate);
+            memcpy(physDev->pen.dashes, PEN_alternate, physDev->pen.dash_len);
+            break;
       case PS_USERSTYLE:
         FIXME("PS_USERSTYLE is not supported\n");
         /* fall through */
       default:
-        physDev->pen.dashes = NULL;
         physDev->pen.dash_len = 0;
         break;
     }
+    if(physDev->pen.ext && physDev->pen.dash_len &&
+        (logpen.lopnStyle & PS_STYLE_MASK) != PS_ALTERNATE)
+        for(i = 0; i < physDev->pen.dash_len; i++)
+            physDev->pen.dashes[i] *= (physDev->pen.width ? physDev->pen.width : 1);
+
     return hpen;
 }
 
