@@ -517,6 +517,101 @@ static void test_sequence(void)
     CloseServiceHandle(scm_handle);
 }
 
+static void test_refcount(void)
+{
+    SC_HANDLE scm_handle, svc_handle1, svc_handle2, svc_handle3, svc_handle4, svc_handle5;
+    static const CHAR servicename         [] = "Winetest";
+    static const CHAR pathname            [] = "we_dont_care.exe";
+    BOOL ret;
+
+    /* Get a handle to the Service Control Manager */
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
+    if (!scm_handle && (GetLastError() == ERROR_ACCESS_DENIED))
+    {
+        skip("Not enough rights to get a handle to the manager\n");
+        return;
+    }
+
+    /* Create a service */
+    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL,
+                                 SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
+                                 SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    ok(svc_handle1 != NULL, "Expected success\n");
+
+    /* Get a handle to this new service */
+    svc_handle2 = OpenServiceA(scm_handle, servicename, GENERIC_READ);
+    ok(svc_handle2 != NULL, "Expected success\n");
+
+    /* Get another handle to this new service */
+    svc_handle3 = OpenServiceA(scm_handle, servicename, GENERIC_READ);
+    ok(svc_handle3 != NULL, "Expected success\n");
+
+    /* Check if we can close the handle to the Service Control Manager */
+    ret = CloseServiceHandle(scm_handle);
+    ok(ret, "Expected success\n");
+
+    /* Get a new handle to the Service Control Manager */
+    scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
+    ok(scm_handle != NULL, "Expected success\n");
+
+    /* Get a handle to this new service */
+    svc_handle4 = OpenServiceA(scm_handle, servicename, GENERIC_ALL);
+    ok(svc_handle4 != NULL, "Expected success\n");
+
+    /* Delete the service */
+    ret = DeleteService(svc_handle4);
+    ok(ret, "Expected success\n");
+
+    /* We cannot create the same service again as it's still marked as 'being deleted'.
+     * The reason is that we still have 4 open handles to this service eventhough we
+     * closed the handle to the Service Control Manager in between.
+     */
+    SetLastError(0xdeadbeef);
+    svc_handle5 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL,
+                                 SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
+                                 SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    todo_wine
+    {
+    ok(!svc_handle5, "Expected failure\n");
+    ok(GetLastError() == ERROR_SERVICE_MARKED_FOR_DELETE,
+       "Expected ERROR_SERVICE_MARKED_FOR_DELETE, got %d\n", GetLastError());
+    }
+
+    /* FIXME: Remove this when Wine is fixed */
+    if (svc_handle5)
+    {
+        DeleteService(svc_handle5);
+        CloseServiceHandle(svc_handle5);
+    }
+
+    /* Close all the handles to the service and try again */
+    ret = CloseServiceHandle(svc_handle4);
+    ok(ret, "Expected success\n");
+    ret = CloseServiceHandle(svc_handle3);
+    ok(ret, "Expected success\n");
+    ret = CloseServiceHandle(svc_handle2);
+    ok(ret, "Expected success\n");
+    ret = CloseServiceHandle(svc_handle1);
+    ok(ret, "Expected success\n");
+
+    /* We succeed now as all handles are closed (tested this also with a long SLeep() */
+    svc_handle5 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL,
+                                 SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
+                                 SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    ok(svc_handle5 != NULL, "Expected success\n");
+
+    /* Delete the service */
+    ret = DeleteService(svc_handle5);
+    ok(ret, "Expected success\n");
+
+    /* Wait a while. Just in case one of the following tests does a CreateService again */
+    Sleep(1000);
+
+    CloseServiceHandle(svc_handle5);
+    CloseServiceHandle(scm_handle);
+}
+
 START_TEST(service)
 {
     SC_HANDLE scm_handle;
@@ -539,4 +634,8 @@ START_TEST(service)
     test_close();
     /* Test the creation, querying and deletion of a service */
     test_sequence();
+    /* The main reason for this test is to check if any refcounting is used
+     * and what the rules are
+     */
+    test_refcount();
 }
