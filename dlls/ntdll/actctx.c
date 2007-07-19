@@ -173,6 +173,7 @@ struct actctx_loader
 #define COMINTERFACEPROXYSTUB_ELEM      "comInterfaceProxyStub"
 #define DEPENDENCY_ELEM                 "dependency"
 #define DEPENDENTASSEMBLY_ELEM          "dependentAssembly"
+#define DESCRIPTION_ELEM                "description"
 #define FILE_ELEM                       "file"
 #define NOINHERIT_ELEM                  "noInherit"
 #define NOINHERITABLE_ELEM              "noInheritable"
@@ -784,6 +785,34 @@ static BOOL parse_window_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
     return ret;
 }
 
+static BOOL parse_description_elem(xmlbuf_t* xmlbuf)
+{
+    xmlstr_t    elem, content;
+    BOOL        end = FALSE, ret = TRUE;
+
+    if (!parse_expect_no_attr(xmlbuf, &end) || end ||
+        !parse_text_content(xmlbuf, &content))
+        return FALSE;
+
+    TRACE("Got description %s\n", debugstr_xmlstr(&content));
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp(&elem, ELEM_END(DESCRIPTION_ELEM)))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else
+        {
+            WARN("wrong elem %s\n", debugstr_xmlstr(&elem));
+            ret = FALSE;
+        }
+    }
+
+    return ret;
+}
+
 static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf,
                                           struct actctx_loader* acl)
 {
@@ -1018,6 +1047,10 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         {
             ret = parse_end_element(xmlbuf);
             break;
+        }
+        else if (xmlstr_cmp(&elem, DESCRIPTION_ELEM))
+        {
+            ret = parse_description_elem(xmlbuf);
         }
         else if (xmlstr_cmp(&elem, DEPENDENCY_ELEM))
         {
