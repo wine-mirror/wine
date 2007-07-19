@@ -824,8 +824,8 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 {
     DC *dc;
     BOOL result = FALSE;
-    POINT lastmove;
-    unsigned int i;
+    POINT * line_pts = NULL, * bzr_pts = NULL, bzr[4];
+    INT i, num_pts, num_bzr_pts, space, size;
 
     dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
@@ -835,47 +835,76 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
     else if(dc->funcs->pPolyDraw)
         result = dc->funcs->pPolyDraw( dc->physDev, lppt, lpbTypes, cCount );
     else {
-    /* check for each bezierto if there are two more points */
-    for( i = 0; i < cCount; i++ )
-	if( lpbTypes[i] != PT_MOVETO &&
-	    lpbTypes[i] & PT_BEZIERTO )
-	{
-	    if( cCount < i+3 )
-		goto end;
-	    else
-		i += 2;
-	}
+        /* check for valid point types */
+        for(i = 0; i < cCount; i++) {
+            switch(lpbTypes[i]) {
+                case PT_MOVETO:
+                case PT_LINETO | PT_CLOSEFIGURE:
+                case PT_LINETO:
+                    break;
+                case PT_BEZIERTO:
+                    if((i + 2 < cCount) && (lpbTypes[i + 1] == PT_BEZIERTO) &&
+                        ((lpbTypes[i + 2] & ~PT_CLOSEFIGURE) == PT_BEZIERTO)){
+                        i += 2;
+                        break;
+                    }
+                default:
+                    goto end;
+            }
+        }
 
-    /* if no moveto occurs, we will close the figure here */
-    lastmove.x = dc->CursPosX;
-    lastmove.y = dc->CursPosY;
+        space = cCount + 300;
+        line_pts = HeapAlloc(GetProcessHeap(), 0, space * sizeof(POINT));
+        num_pts = 1;
 
-    /* now let's draw */
-    for( i = 0; i < cCount; i++ )
-    {
-	if( lpbTypes[i] == PT_MOVETO )
-	{
-	    MoveToEx( hdc, lppt[i].x, lppt[i].y, NULL );
-	    lastmove.x = dc->CursPosX;
-	    lastmove.y = dc->CursPosY;
-	}
-	else if( lpbTypes[i] & PT_LINETO )
-	    LineTo( hdc, lppt[i].x, lppt[i].y );
-	else if( lpbTypes[i] & PT_BEZIERTO )
-	{
-	    PolyBezierTo( hdc, &lppt[i], 3 );
-	    i += 2;
-	}
-	else
-	    goto end;
+        line_pts[0].x = dc->CursPosX;
+        line_pts[0].y = dc->CursPosY;
 
-	if( lpbTypes[i] & PT_CLOSEFIGURE )
-	{
-		LineTo( hdc, lastmove.x, lastmove.y );
-	}
-    }
+        for(i = 0; i < cCount; i++) {
+            switch(lpbTypes[i]) {
+                case PT_MOVETO:
+                    if(num_pts >= 2)
+                        Polyline(dc->hSelf, line_pts, num_pts);
+                    num_pts = 0;
+                    line_pts[num_pts++] = lppt[i];
+                    break;
+                case PT_LINETO:
+                case (PT_LINETO | PT_CLOSEFIGURE):
+                    line_pts[num_pts++] = lppt[i];
+                    break;
+                case PT_BEZIERTO:
+                    bzr[0].x = line_pts[num_pts - 1].x;
+                    bzr[0].y = line_pts[num_pts - 1].y;
+                    memcpy(&bzr[1], &lppt[i], 3 * sizeof(POINT));
 
-    result = TRUE;
+                    bzr_pts = GDI_Bezier(bzr, 4, &num_bzr_pts);
+
+                    size = num_pts + (cCount - i) + num_bzr_pts;
+                    if(space < size){
+                        space = size * 2;
+                        line_pts = HeapReAlloc(GetProcessHeap(), 0, line_pts,
+                            space * sizeof(POINT));
+                    }
+                    memcpy(&line_pts[num_pts], &bzr_pts[1],
+                        (num_bzr_pts - 1) * sizeof(POINT));
+                    num_pts += num_bzr_pts - 1;
+                    HeapFree(GetProcessHeap(), 0, bzr_pts);
+                    i += 2;
+                    break;
+                default:
+                    goto end;
+            }
+
+            if(lpbTypes[i] & PT_CLOSEFIGURE)
+                line_pts[num_pts++] = line_pts[0];
+        }
+
+        if(num_pts >= 2)
+            Polyline(dc->hSelf, line_pts, num_pts);
+
+        MoveToEx(dc->hSelf, line_pts[num_pts - 1].x, line_pts[num_pts - 1].y, NULL);
+
+        result = TRUE;
     }
 
 end:
