@@ -122,13 +122,18 @@ struct entity
     } u;
 };
 
+struct entity_array
+{
+    struct entity        *base;
+    unsigned int          num;
+    unsigned int          allocated;
+};
+
 struct dll_redirect
 {
     WCHAR                *name;
     WCHAR                *hash;
-    struct entity        *entities;
-    unsigned int          num_entities;
-    unsigned int          allocated_entities;
+    struct entity_array   entities;
 };
 
 enum assembly_type
@@ -302,56 +307,62 @@ static void free_assembly_identity(struct assembly_identity *ai)
     RtlFreeHeap( GetProcessHeap(), 0, ai->language );
 }
 
-static struct entity* add_entity(struct dll_redirect* dll, DWORD kind)
+static struct entity* add_entity(struct entity_array *array, DWORD kind)
 {
     struct entity*      entity;
 
-    if (dll->num_entities == dll->allocated_entities)
+    if (array->num == array->allocated)
     {
         void *ptr;
         unsigned int new_count;
-        if (dll->entities)
+        if (array->base)
         {
-            new_count = dll->allocated_entities * 2;
+            new_count = array->allocated * 2;
             ptr = RtlReAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                     dll->entities, new_count * sizeof(*dll->entities) );
+                                     array->base, new_count * sizeof(*array->base) );
         }
         else
         {
             new_count = 4;
-            ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, new_count * sizeof(*dll->entities) );
+            ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, new_count * sizeof(*array->base) );
         }
         if (!ptr) return NULL;
-        dll->entities = ptr;
-        dll->allocated_entities = new_count;
+        array->base = ptr;
+        array->allocated = new_count;
     }
-    entity = &dll->entities[dll->num_entities++];
+    entity = &array->base[array->num++];
     entity->kind = kind;
     return entity;
 }
 
-static void free_entity(struct entity* entity)
+static void free_entity_array(struct entity_array *array)
 {
-    switch (entity->kind)
+    unsigned int i;
+    for (i = 0; i < array->num; i++)
     {
-    case ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION:
-        RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.clsid);
-        break;
-    case ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION:
-        RtlFreeHeap(GetProcessHeap(), 0, entity->u.proxy.iid);
-        RtlFreeHeap(GetProcessHeap(), 0, entity->u.proxy.name);
-        break;
-    case ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION:
-        RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.tlbid);
-        RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.version);
-        RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.helpdir);
-        break;
-    case ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION:
-        RtlFreeHeap(GetProcessHeap(), 0, entity->u.class.name);
-        break;
-    default:
-        FIXME("Unknown entity kind %d\n", entity->kind);
+        struct entity *entity = &array->base[i];
+        switch (entity->kind)
+        {
+        case ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION:
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.clsid);
+            break;
+        case ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION:
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.proxy.iid);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.proxy.name);
+            break;
+        case ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION:
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.tlbid);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.version);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.helpdir);
+            break;
+        case ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION:
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.class.name);
+            break;
+        default:
+            FIXME("Unknown entity kind %d\n", entity->kind);
+        }
     }
+    RtlFreeHeap( GetProcessHeap(), 0, array->base );
 }
 
 static BOOL add_dependent_assembly_id(struct actctx_loader* acl,
@@ -413,7 +424,7 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
 {
     if (interlocked_xchg_add( &actctx->ref_count, -1 ) == 1)
     {
-        unsigned int i, j, k;
+        unsigned int i, j;
 
         for (i = 0; i < actctx->num_assemblies; i++)
         {
@@ -421,8 +432,7 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
             for (j = 0; j < assembly->num_dlls; j++)
             {
                 struct dll_redirect *dll = &assembly->dlls[j];
-                for (k = 0; k < dll->num_entities; k++) free_entity(&dll->entities[k]);
-                RtlFreeHeap( GetProcessHeap(), 0, dll->entities );
+                free_entity_array( &dll->entities );
                 RtlFreeHeap( GetProcessHeap(), 0, dll->name );
                 RtlFreeHeap( GetProcessHeap(), 0, dll->hash );
             }
@@ -669,7 +679,7 @@ static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
     BOOL        end = FALSE, error;
     struct entity*      entity;
 
-    entity = add_entity(dll, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION);
+    entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION);
 
     while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
     {
@@ -695,7 +705,7 @@ static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redi
     BOOL        end = FALSE, error;
     struct entity*      entity;
 
-    entity = add_entity(dll, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION);
+    entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION);
 
     while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
     {
@@ -725,7 +735,7 @@ static BOOL parse_typelib_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
     BOOL        end = FALSE, error;
     struct entity*      entity;
 
-    entity = add_entity(dll, ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION);
+    entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION);
 
     while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
     {
@@ -759,7 +769,7 @@ static BOOL parse_window_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
     BOOL        end = FALSE, ret = TRUE;
     struct entity*      entity;
 
-    entity = add_entity(dll, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION);
+    entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION);
 
     if (!parse_expect_no_attr(xmlbuf, &end)) return FALSE;
     if (end) return FALSE;
