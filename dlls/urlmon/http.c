@@ -74,7 +74,7 @@ typedef struct {
     const IInternetProtocolVtbl *lpInternetProtocolVtbl;
     const IInternetPriorityVtbl *lpInternetPriorityVtbl;
 
-    DWORD flags;
+    DWORD flags, grfBINDF;
     IInternetProtocolSink *protocol_sink;
     IHttpNegotiate *http_negotiate;
     HINTERNET internet, connect, request;
@@ -192,7 +192,10 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
             data.pData = (LPVOID)BINDSTATUS_ENDDOWNLOADCOMPONENTS;
         else
             data.pData = (LPVOID)BINDSTATUS_DOWNLOADINGDATA;
-        IInternetProtocolSink_Switch(This->protocol_sink, &data);
+        if (This->grfBINDF & BINDF_FROMURLMON)
+            IInternetProtocolSink_Switch(This->protocol_sink, &data);
+        else
+            IInternetProtocol_Continue((IInternetProtocol *)This, &data);
         return;
     default:
         WARN("Unhandled Internet status callback %d\n", dwInternetStatus);
@@ -283,7 +286,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     HttpProtocol *This = PROTOCOL_THIS(iface);
     URL_COMPONENTSW url;
     BINDINFO bindinfo;
-    DWORD grfBINDF = 0, len = 0;
+    DWORD len = 0;
     ULONG num = 0;
     IServiceProvider *service_provider = 0;
     IHttpNegotiate2 *http_negotiate2 = 0;
@@ -301,7 +304,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(BINDINFO);
-    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
+    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &This->grfBINDF, &bindinfo);
     if (hres != S_OK)
     {
         WARN("GetBindInfo failed: %08x\n", hres);
@@ -330,6 +333,9 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     pass = strndupW(url.lpszPassword, url.dwPasswordLength);
     if (!url.nPort)
         url.nPort = INTERNET_DEFAULT_HTTP_PORT;
+
+    if(!(This->grfBINDF & BINDF_FROMURLMON))
+        IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_DIRECTBIND, NULL);
 
     hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_USER_AGENT, &user_agent,
                                            1, &num);
@@ -556,13 +562,17 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         {
             WARN("HttpQueryInfo failed: %d\n", GetLastError());
             IInternetProtocolSink_ReportProgress(This->protocol_sink,
-                                                 BINDSTATUS_MIMETYPEAVAILABLE,
+                                                 (This->grfBINDF & BINDF_FROMURLMON) ?
+                                                 BINDSTATUS_MIMETYPEAVAILABLE :
+                                                 BINDSTATUS_RAWMIMETYPE,
                                                  wszDefaultContentType);
         }
         else
         {
             IInternetProtocolSink_ReportProgress(This->protocol_sink,
-                                                 BINDSTATUS_MIMETYPEAVAILABLE,
+                                                 (This->grfBINDF & BINDF_FROMURLMON) ?
+                                                 BINDSTATUS_MIMETYPEAVAILABLE :
+                                                 BINDSTATUS_RAWMIMETYPE,
                                                  content_type);
         }
 
@@ -831,7 +841,7 @@ HRESULT HttpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 
     ret->lpInternetProtocolVtbl = &HttpProtocolVtbl;
     ret->lpInternetPriorityVtbl = &HttpPriorityVtbl;
-    ret->flags = 0;
+    ret->flags = ret->grfBINDF = 0;
     ret->protocol_sink = 0;
     ret->http_negotiate = 0;
     ret->internet = ret->connect = ret->request = 0;
