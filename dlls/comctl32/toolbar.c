@@ -3840,7 +3840,7 @@ TOOLBAR_IsButtonChecked (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
-	return FALSE;
+	return -1;
 
     return (infoPtr->buttons[nIndex].fsState & TBSTATE_CHECKED);
 }
@@ -3854,7 +3854,7 @@ TOOLBAR_IsButtonEnabled (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
-	return FALSE;
+	return -1;
 
     return (infoPtr->buttons[nIndex].fsState & TBSTATE_ENABLED);
 }
@@ -3868,7 +3868,7 @@ TOOLBAR_IsButtonHidden (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
-	return TRUE;
+	return -1;
 
     return (infoPtr->buttons[nIndex].fsState & TBSTATE_HIDDEN);
 }
@@ -3882,7 +3882,7 @@ TOOLBAR_IsButtonHighlighted (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
-	return FALSE;
+	return -1;
 
     return (infoPtr->buttons[nIndex].fsState & TBSTATE_MARKED);
 }
@@ -3896,7 +3896,7 @@ TOOLBAR_IsButtonIndeterminate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
-	return FALSE;
+	return -1;
 
     return (infoPtr->buttons[nIndex].fsState & TBSTATE_INDETERMINATE);
 }
@@ -3910,7 +3910,7 @@ TOOLBAR_IsButtonPressed (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
-	return FALSE;
+	return -1;
 
     return (infoPtr->buttons[nIndex].fsState & TBSTATE_PRESSED);
 }
