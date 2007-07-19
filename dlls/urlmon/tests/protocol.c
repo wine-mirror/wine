@@ -54,6 +54,9 @@
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
+
 DEFINE_EXPECT(GetBindInfo);
 DEFINE_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
 DEFINE_EXPECT(ReportProgress_DIRECTBIND);
@@ -246,7 +249,7 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
 {
     CHECK_EXPECT2(Switch);
     ok(pProtocolData != NULL, "pProtocolData == NULL\n");
-    SendMessageW(protocol_hwnd, WM_USER, 0, (LPARAM)pProtocolData);
+    SendMessage(protocol_hwnd, WM_USER, 0, (LPARAM)pProtocolData);
     return S_OK;
 }
 
@@ -1066,7 +1069,8 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
     CHECK_CALLED(GetBindString_ACCEPT_MIMES);
     CHECK_CALLED(QueryService_HttpNegotiate);
     CHECK_CALLED(BeginningTransaction);
-    CHECK_CALLED(GetRootSecurityId);
+    /* GetRootSecurityId called on WinXP but not on Win98 */
+    CLEAR_CALLED(GetRootSecurityId);
 
     return TRUE;
 }
@@ -1125,7 +1129,7 @@ static void test_http_protocol_url(LPCWSTR url)
         SET_EXPECT(ReportResult);
         expect_hrResult = S_OK;
 
-        GetMessageW(&msg, NULL, 0, 0);
+        GetMessage(&msg, NULL, 0, 0);
 
         CHECK_CALLED(Switch);
         CHECK_CALLED(ReportResult);
@@ -1179,7 +1183,7 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         ok(hres == S_FALSE || hres == E_PENDING, "Read failed: %08x\n", hres);
 
         if(hres == S_FALSE)
-            PostMessageW(protocol_hwnd, WM_USER+1, 0, 0);
+            PostMessage(protocol_hwnd, WM_USER+1, 0, 0);
 
         if(!state) {
             state = 1;
@@ -1198,19 +1202,17 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 static HWND create_protocol_window(void)
 {
-    static const WCHAR wszProtocolWindow[] =
-        {'P','r','o','t','o','c','o','l','W','i','n','d','o','w',0};
-    static WNDCLASSEXW wndclass = {
-        sizeof(WNDCLASSEXW),
+    static WNDCLASSEX wndclass = {
+        sizeof(WNDCLASSEX),
         0,
         wnd_proc,
         0, 0, NULL, NULL, NULL, NULL, NULL,
-        wszProtocolWindow,
+        "ProtocolWindow",
         NULL
     };
 
-    RegisterClassExW(&wndclass);
-    return CreateWindowW(wszProtocolWindow, wszProtocolWindow,
+    RegisterClassEx(&wndclass);
+    return CreateWindow("ProtocolWindow", "ProtocolWindow",
                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                          CW_USEDEFAULT, NULL, NULL, NULL, NULL);
 }
