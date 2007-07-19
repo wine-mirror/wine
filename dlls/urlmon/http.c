@@ -633,8 +633,11 @@ static HRESULT WINAPI HttpProtocol_Abort(IInternetProtocol *iface, HRESULT hrRea
 static HRESULT WINAPI HttpProtocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08x)\n", This, dwOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%08x)\n", This, dwOptions);
+    HTTPPROTOCOL_Close(This);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HttpProtocol_Suspend(IInternetProtocol *iface)
