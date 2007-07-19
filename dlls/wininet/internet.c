@@ -3927,3 +3927,9 @@ BOOL WINAPI ResumeSuspendedDownload( HINTERNET hInternet, DWORD dwError )
     FIXME("(%p, 0x%08x) stub\n", hInternet, dwError);
     return FALSE;
 }
+
+DWORD WINAPI InternetQueryFortezzaStatus(void *a, DWORD b)
+{
+    FIXME("(%p, %08x) stub\n", a, b);
+    return 0;
+}

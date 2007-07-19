@@ -169,7 +169,7 @@
 @ stdcall InternetOpenUrlW(ptr wstr wstr long long long)
 @ stdcall InternetOpenW(wstr long wstr wstr long)
 @ stdcall InternetQueryDataAvailable(ptr ptr long long)
-@ stub InternetQueryFortezzaStatus
+@ stdcall InternetQueryFortezzaStatus(ptr long)
 @ stdcall InternetQueryOptionA(ptr long ptr ptr)
 @ stdcall InternetQueryOptionW(ptr long ptr ptr)
 @ stdcall InternetReadFile(ptr ptr long ptr)
