@@ -336,17 +336,11 @@ static void TOOLTIPS_GetDispInfoA(HWND hwnd, TOOLTIPS_INFO *infoPtr, TTTOOL_INFO
         infoPtr->szTipText[0] = '\0';
     }
     else if (ttnmdi.lpszText != LPSTR_TEXTCALLBACKA) {
-        INT max_len = (ttnmdi.lpszText == &ttnmdi.szText[0]) ? 
-                sizeof(ttnmdi.szText)/sizeof(ttnmdi.szText[0]) : -1;
-        MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText, max_len,
-                            infoPtr->szTipText, INFOTIPSIZE);
+        Str_GetPtrAtoW(ttnmdi.lpszText, infoPtr->szTipText, INFOTIPSIZE);
         if (ttnmdi.uFlags & TTF_DI_SETITEM) {
-            INT len = MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText,
-					  max_len, NULL, 0);
             toolPtr->hinst = 0;
-            toolPtr->lpszText =	Alloc (len * sizeof(WCHAR));
-            MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText, -1,
-                                toolPtr->lpszText, len);
+            toolPtr->lpszText = NULL;
+            Str_SetPtrW(&toolPtr->lpszText, infoPtr->szTipText);
         }
     }
     else {
@@ -385,14 +379,11 @@ static void TOOLTIPS_GetDispInfoW(HWND hwnd, TOOLTIPS_INFO *infoPtr, TTTOOL_INFO
         infoPtr->szTipText[0] = '\0';
     }
     else if (ttnmdi.lpszText != LPSTR_TEXTCALLBACKW) {
-        INT max_len = (ttnmdi.lpszText == &ttnmdi.szText[0]) ? 
-                sizeof(ttnmdi.szText)/sizeof(ttnmdi.szText[0]) : INFOTIPSIZE-1;
-        lstrcpynW(infoPtr->szTipText, ttnmdi.lpszText, max_len);
+        Str_GetPtrW(ttnmdi.lpszText, infoPtr->szTipText, INFOTIPSIZE);
         if (ttnmdi.uFlags & TTF_DI_SETITEM) {
-            INT len = max(strlenW(ttnmdi.lpszText), max_len);
             toolPtr->hinst = 0;
-            toolPtr->lpszText =	Alloc ((len+1) * sizeof(WCHAR));
-            memcpy(toolPtr->lpszText, ttnmdi.lpszText, (len+1) * sizeof(WCHAR));
+            toolPtr->lpszText = NULL;
+            Str_SetPtrW(&toolPtr->lpszText, infoPtr->szTipText);
         }
     }
     else {
