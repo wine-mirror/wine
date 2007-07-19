@@ -594,35 +594,16 @@ static void test_defwndproc()
 
         hwnd = CreateWindowA(classA, NULL, 0, 0, 0, 100, 100, NULL, NULL, GetModuleHandle(NULL), NULL);
         ok(hwnd != NULL, "Couldn't create window i=%d\n", i);
-        if ((i & 1) && (i & 2))
-        {
-            ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
-                (void *)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), pDefWindowProcA);
-            ok(GetClassLongPtrA(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
-                (void *)GetClassLongPtrA(hwnd, GCLP_WNDPROC), pDefWindowProcA);
-        }
-        else
-        {
-            ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
-                (void *)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), pDefWindowProcA);
-            ok(GetClassLongPtrA(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
-                (void *)GetClassLongPtrA(hwnd, GCLP_WNDPROC), pDefWindowProcA);
-        }
 
-        if (!(i & 1) && !(i & 2))
-        {
-            ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
-                (void *)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), pDefWindowProcW);
-            ok(GetClassLongPtrW(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
-                (void *)GetClassLongPtrW(hwnd, GCLP_WNDPROC), pDefWindowProcW);
-        }
-        else
-        {
-            ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
-                (void *)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), pDefWindowProcW);
-            ok(GetClassLongPtrW(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
-                (void *)GetClassLongPtrW(hwnd, GCLP_WNDPROC), pDefWindowProcW);
-        }
+        ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
+            (void *)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), pDefWindowProcA);
+        ok(GetClassLongPtrA(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
+            (void *)GetClassLongPtrA(hwnd, GCLP_WNDPROC), pDefWindowProcA);
+
+        ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
+            (void *)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), pDefWindowProcW);
+        ok(GetClassLongPtrW(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
+            (void *)GetClassLongPtrW(hwnd, GCLP_WNDPROC), pDefWindowProcW);
 
         DestroyWindow(hwnd);
         UnregisterClass((LPSTR)(DWORD_PTR)atom, GetModuleHandle(NULL));
