@@ -759,7 +759,7 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
 
   /* verify the buffer is safe to access */
   if ((pStubMsg->Buffer + bufsize < pStubMsg->Buffer) ||
-      (pStubMsg->Buffer + bufsize < pStubMsg->BufferEnd))
+      (pStubMsg->Buffer + bufsize > pStubMsg->BufferEnd))
   {
     ERR("bufsize 0x%x exceeded buffer end %p of buffer %p\n", bufsize,
         pStubMsg->BufferEnd, pStubMsg->Buffer);
