@@ -91,6 +91,7 @@ struct assembly_identity
     WCHAR                *name;
     WCHAR                *arch;
     WCHAR                *public_key;
+    WCHAR                *language;
     struct version        version;
     enum assembly_id_type type;
 };
@@ -185,6 +186,7 @@ struct actctx_loader
 #define HASHALG_ATTR                    "hashalg"
 #define HELPDIR_ATTR                    "helpdir"
 #define IID_ATTR                        "iid"
+#define LANGUAGE_ATTR                   "language"
 #define MANIFESTVERSION_ATTR            "manifestVersion"
 #define NAME_ATTR                       "name"
 #define PROCESSORARCHITECTURE_ATTR      "processorArchitecture"
@@ -296,6 +298,7 @@ static void free_assembly_identity(struct assembly_identity *ai)
     RtlFreeHeap( GetProcessHeap(), 0, ai->name );
     RtlFreeHeap( GetProcessHeap(), 0, ai->arch );
     RtlFreeHeap( GetProcessHeap(), 0, ai->public_key );
+    RtlFreeHeap( GetProcessHeap(), 0, ai->language );
 }
 
 static struct entity* add_entity(struct dll_redirect* dll, DWORD kind)
@@ -640,6 +643,12 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
         else if (xmlstr_cmp(&attr_name, PUBLICKEYTOKEN_ATTR))
         {
             if (!(ai->public_key = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, LANGUAGE_ATTR))
+        {
+            WARN("Unsupported yet language attribute (%s)\n",
+                 debugstr_xmlstr(&attr_value));
+            if (!(ai->language = xmlstrdupW(&attr_value))) return FALSE;
         }
         else
         {
