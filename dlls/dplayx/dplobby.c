@@ -694,7 +694,7 @@ extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, L
     /* Invoke the enum method. If false is returned, stop enumeration */
     if ( !lpEnumAddressCallback( &lpElements->guidDataType,
                                  lpElements->dwDataSize,
-                                 (BYTE*)lpElements + sizeof( DPADDRESS ),
+                                 (const BYTE *)lpElements + sizeof( DPADDRESS ),
                                  lpContext ) )
     {
       break;
