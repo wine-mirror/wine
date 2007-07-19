@@ -147,10 +147,20 @@ static void HTTPPROTOCOL_Close(HttpProtocol *This)
         This->http_negotiate = 0;
     }
     if (This->request)
+    {
         InternetCloseHandle(This->request);
-    CloseHandle(This->connect);
-    CloseHandle(This->internet);
-    This->request = This->connect = This->internet = 0;
+        This->request = 0;
+    }
+    if (This->connect)
+    {
+        InternetCloseHandle(This->connect);
+        This->connect = 0;
+    }
+    if (This->internet)
+    {
+        InternetCloseHandle(This->internet);
+        This->internet = 0;
+    }
     This->flags = 0;
 }
 
