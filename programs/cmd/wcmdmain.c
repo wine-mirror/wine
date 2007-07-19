@@ -1263,7 +1263,7 @@ int p = 0;
       case '/':
         *q++ = *s++;
 	while ((*s != '\0') && (*s != ' ') && *s != '/') {
-	  *q++ = toupper (*s++);
+	  *q++ = toupperW (*s++);
 	}
         *q = '\0';
 	break;
