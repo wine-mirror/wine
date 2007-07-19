@@ -94,6 +94,11 @@ struct assembly_identity
     enum assembly_id_type type;
 };
 
+struct dll_redirect
+{
+    WCHAR                *name;
+};
+
 enum assembly_type
 {
     APPLICATION_MANIFEST,
@@ -105,6 +110,9 @@ struct assembly
     enum assembly_type       type;
     struct assembly_identity id;
     struct file_info         manifest;
+    struct dll_redirect     *dlls;
+    unsigned int             num_dlls;
+    unsigned int             allocated_dlls;
 };
 
 typedef struct _ACTIVATION_CONTEXT
@@ -130,6 +138,7 @@ struct actctx_loader
 #define ASSEMBLYIDENTITY_ELEM           "assemblyIdentity"
 #define DEPENDENCY_ELEM                 "dependency"
 #define DEPENDENTASSEMBLY_ELEM          "dependentAssembly"
+#define FILE_ELEM                       "file"
 
 #define ELEM_END(elem) "/" elem
 
@@ -213,6 +222,30 @@ static struct assembly *add_assembly(ACTIVATION_CONTEXT *actctx, enum assembly_t
     return assembly;
 }
 
+static struct dll_redirect* add_dll_redirect(struct assembly* assembly)
+{
+    if (assembly->num_dlls == assembly->allocated_dlls)
+    {
+        void *ptr;
+        unsigned int new_count;
+        if (assembly->dlls)
+        {
+            new_count = assembly->allocated_dlls * 2;
+            ptr = RtlReAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                     assembly->dlls, new_count * sizeof(*assembly->dlls) );
+        }
+        else
+        {
+            new_count = 4;
+            ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, new_count * sizeof(*assembly->dlls) );
+        }
+        if (!ptr) return NULL;
+        assembly->dlls = ptr;
+        assembly->allocated_dlls = new_count;
+    }
+    return &assembly->dlls[assembly->num_dlls++];
+}
+
 static void free_assembly_identity(struct assembly_identity *ai)
 {
     RtlFreeHeap( GetProcessHeap(), 0, ai->name );
@@ -278,12 +311,19 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
 {
     if (interlocked_xchg_add( &actctx->ref_count, -1 ) == 1)
     {
-        unsigned int i;
+        unsigned int i, j;
 
         for (i = 0; i < actctx->num_assemblies; i++)
         {
-            RtlFreeHeap( GetProcessHeap(), 0, actctx->assemblies[i].manifest.info );
-            free_assembly_identity(&actctx->assemblies[i].id);
+            struct assembly *assembly = &actctx->assemblies[i];
+            for (j = 0; j < assembly->num_dlls; j++)
+            {
+                struct dll_redirect *dll = &assembly->dlls[j];
+                RtlFreeHeap( GetProcessHeap(), 0, dll->name );
+            }
+            RtlFreeHeap( GetProcessHeap(), 0, assembly->dlls );
+            RtlFreeHeap( GetProcessHeap(), 0, assembly->manifest.info );
+            free_assembly_identity(&assembly->id);
         }
         RtlFreeHeap( GetProcessHeap(), 0, actctx->config.info );
         RtlFreeHeap( GetProcessHeap(), 0, actctx->appdir.info );
@@ -560,6 +600,49 @@ static BOOL parse_dependency_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl)
     return ret;
 }
 
+static BOOL parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
+{
+    xmlstr_t    attr_name, attr_value, elem;
+    BOOL        end = FALSE, error, ret = TRUE;
+    struct dll_redirect* dll;
+
+    if (!(dll = add_dll_redirect(assembly))) return FALSE;
+
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, NAME_ATTR))
+        {
+            if (!(dll->name = xmlstrdupW(&attr_value))) return FALSE;
+            TRACE("name=%s\n", debugstr_xmlstr(&attr_value));
+        }
+        else
+        {
+            WARN("wrong attr %s=%s\n", debugstr_xmlstr(&attr_name),
+                 debugstr_xmlstr(&attr_value));
+            return FALSE;
+        }
+    }
+
+    if (error || !dll->name) return FALSE;
+    if (end) return TRUE;
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp(&elem, ELEM_END(FILE_ELEM)))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else
+        {
+            WARN("wrong elem %s\n", debugstr_xmlstr(&elem));
+            ret = FALSE;
+        }
+    }
+
+    return ret;
+}
+
 static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
                                 struct assembly* assembly,
                                 struct assembly_identity* expected_ai)
@@ -632,6 +715,10 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         else if (xmlstr_cmp(&elem, DEPENDENCY_ELEM))
         {
             ret = parse_dependency_elem(xmlbuf, acl);
+        }
+        else if (xmlstr_cmp(&elem, FILE_ELEM))
+        {
+            ret = parse_file_elem(xmlbuf, assembly);
         }
         else
         {
