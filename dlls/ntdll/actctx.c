@@ -128,6 +128,8 @@ struct actctx_loader
 
 #define ASSEMBLY_ELEM                   "assembly"
 #define ASSEMBLYIDENTITY_ELEM           "assemblyIdentity"
+#define DEPENDENCY_ELEM                 "dependency"
+#define DEPENDENTASSEMBLY_ELEM          "dependentAssembly"
 
 #define ELEM_END(elem) "/" elem
 
@@ -493,6 +495,71 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
     return parse_expect_elem(xmlbuf, ELEM_END(ASSEMBLYIDENTITY_ELEM)) && parse_end_element(xmlbuf);
 }
 
+static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf,
+                                          struct actctx_loader* acl)
+{
+    struct assembly_identity    ai;
+    xmlstr_t                    elem;
+    BOOL                        end = FALSE, ret = TRUE;
+
+    TRACE("\n");
+
+    if (!parse_expect_no_attr(xmlbuf, &end) || end) return end;
+
+    if (!parse_expect_elem(xmlbuf, ASSEMBLYIDENTITY_ELEM) ||
+        !parse_assembly_identity_elem(xmlbuf, acl->actctx, &ai))
+        return FALSE;
+
+    /* store the newly found identity for later loading */
+    if (!add_dependent_assembly_id(acl, &ai)) return FALSE;
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp(&elem, ELEM_END(DEPENDENTASSEMBLY_ELEM)))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else
+        {
+            WARN("wrong elem %s\n", debugstr_xmlstr(&elem));
+            ret = FALSE;
+        }
+    }
+
+    return ret;
+}
+
+static BOOL parse_dependency_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl)
+{
+    xmlstr_t elem;
+    BOOL end = FALSE, ret = TRUE;
+
+    TRACE("\n");
+
+    if (!parse_expect_no_attr(xmlbuf, &end) || end) return end;
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp(&elem, ELEM_END(DEPENDENCY_ELEM)))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else if (xmlstr_cmp(&elem, DEPENDENTASSEMBLY_ELEM))
+        {
+            ret = parse_dependent_assembly_elem(xmlbuf, acl);
+        }
+        else
+        {
+            WARN("wrong element %s\n", debugstr_xmlstr(&elem));
+            ret = FALSE;
+        }
+    }
+
+    return ret;
+}
+
 static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
                                 struct assembly* assembly,
                                 struct assembly_identity* expected_ai)
@@ -561,6 +628,10 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         {
             ret = parse_end_element(xmlbuf);
             break;
+        }
+        else if (xmlstr_cmp(&elem, DEPENDENCY_ELEM))
+        {
+            ret = parse_dependency_elem(xmlbuf, acl);
         }
         else
         {
