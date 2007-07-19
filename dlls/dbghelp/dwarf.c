@@ -2207,10 +2207,10 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
         dwarf2_comp_unit_t comp_unit;
     
         comp_unit_stream = (const dwarf2_comp_unit_stream_t*) comp_unit_cursor;
-        comp_unit.length = *(unsigned long*)  comp_unit_stream->length;
-        comp_unit.version = *(unsigned short*) comp_unit_stream->version;
-        comp_unit.abbrev_offset = *(unsigned long*) comp_unit_stream->abbrev_offset;
-        comp_unit.word_size = *(unsigned char*) comp_unit_stream->word_size;
+        comp_unit.length = *(const unsigned long*)  comp_unit_stream->length;
+        comp_unit.version = *(const unsigned short*) comp_unit_stream->version;
+        comp_unit.abbrev_offset = *(const unsigned long*) comp_unit_stream->abbrev_offset;
+        comp_unit.word_size = *(const unsigned char*) comp_unit_stream->word_size;
 
         dwarf2_parse_compilation_unit(section, &comp_unit, module,
                                       thunks, comp_unit_cursor, load_offset);
