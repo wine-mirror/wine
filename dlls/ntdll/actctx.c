@@ -141,6 +141,7 @@ struct assembly
     enum assembly_type       type;
     struct assembly_identity id;
     struct file_info         manifest;
+    BOOL                     no_inherit;
     struct dll_redirect     *dlls;
     unsigned int             num_dlls;
     unsigned int             allocated_dlls;
@@ -172,6 +173,8 @@ struct actctx_loader
 #define DEPENDENCY_ELEM                 "dependency"
 #define DEPENDENTASSEMBLY_ELEM          "dependentAssembly"
 #define FILE_ELEM                       "file"
+#define NOINHERIT_ELEM                  "noInherit"
+#define NOINHERITABLE_ELEM              "noInheritable"
 #define TYPELIB_ELEM                    "typelib"
 #define WINDOWCLASS_ELEM                "windowClass"
 
@@ -837,6 +840,24 @@ static BOOL parse_dependency_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl)
     return ret;
 }
 
+static BOOL parse_noinherit_elem(xmlbuf_t* xmlbuf)
+{
+    BOOL end = FALSE;
+
+    if (!parse_expect_no_attr(xmlbuf, &end)) return FALSE;
+    return end ||
+        (parse_expect_elem(xmlbuf, ELEM_END(NOINHERIT_ELEM)) && parse_end_element(xmlbuf));
+}
+
+static BOOL parse_noinheritable_elem(xmlbuf_t* xmlbuf)
+{
+    BOOL end = FALSE;
+
+    if (!parse_expect_no_attr(xmlbuf, &end)) return FALSE;
+    return end ||
+        (parse_expect_elem(xmlbuf, ELEM_END(NOINHERITABLE_ELEM)) && parse_end_element(xmlbuf));
+}
+
 static BOOL parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
 {
     xmlstr_t    attr_name, attr_value, elem;
@@ -945,6 +966,21 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
 
     if (error || end || !xmlns || !version) return FALSE;
     if (!next_xml_elem(xmlbuf, &elem)) return FALSE;
+
+    if (assembly->type == APPLICATION_MANIFEST && xmlstr_cmp(&elem, NOINHERIT_ELEM))
+    {
+        if (!parse_noinherit_elem(xmlbuf) || !next_xml_elem(xmlbuf, &elem))
+            return FALSE;
+        assembly->no_inherit = TRUE;
+    }
+
+    if (xmlstr_cmp(&elem, NOINHERITABLE_ELEM))
+    {
+        if (!parse_noinheritable_elem(xmlbuf) || !next_xml_elem(xmlbuf, &elem))
+            return FALSE;
+    }
+    else if (assembly->type == ASSEMBLY_MANIFEST && assembly->no_inherit)
+        return FALSE;
 
     if (!xmlstr_cmp(&elem, ASSEMBLYIDENTITY_ELEM))
     {
