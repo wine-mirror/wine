@@ -50,12 +50,94 @@ WINE_DEFAULT_DEBUG_CHANNEL(actctx);
 
 #define ACTCTX_MAGIC       0xC07E3E11
 
+struct file_info
+{
+    ULONG               type;
+    WCHAR              *info;
+};
+
+struct version
+{
+    USHORT              major;
+    USHORT              minor;
+    USHORT              build;
+    USHORT              revision;
+};
+
+struct assembly_identity
+{
+    WCHAR              *name;
+    struct version      version;
+};
+
+enum assembly_type
+{
+    APPLICATION_MANIFEST,
+    ASSEMBLY_MANIFEST
+};
+
+struct assembly
+{
+    enum assembly_type       type;
+    struct assembly_identity id;
+    struct file_info         manifest;
+};
+
 typedef struct _ACTIVATION_CONTEXT
 {
     ULONG               magic;
     int                 ref_count;
+    struct file_info    config;
+    struct file_info    appdir;
+    struct assembly    *assemblies;
+    unsigned int        num_assemblies;
+    unsigned int        allocated_assemblies;
 } ACTIVATION_CONTEXT;
 
+
+static WCHAR *strdupW(const WCHAR* str)
+{
+    WCHAR*      ptr;
+
+    if (!str) return NULL;
+    if (!(ptr = RtlAllocateHeap(GetProcessHeap(), 0, (strlenW(str) + 1) * sizeof(WCHAR))))
+        return NULL;
+    return strcpyW(ptr, str);
+}
+
+static struct assembly *add_assembly(ACTIVATION_CONTEXT *actctx, enum assembly_type at)
+{
+    struct assembly *assembly;
+
+    if (actctx->num_assemblies == actctx->allocated_assemblies)
+    {
+        void *ptr;
+        unsigned int new_count;
+        if (actctx->assemblies)
+        {
+            new_count = actctx->allocated_assemblies * 2;
+            ptr = RtlReAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                     actctx->assemblies, new_count * sizeof(*assembly) );
+        }
+        else
+        {
+            new_count = 4;
+            ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, new_count * sizeof(*assembly) );
+        }
+        if (!ptr) return NULL;
+        actctx->assemblies = ptr;
+        actctx->allocated_assemblies = new_count;
+    }
+
+    assembly = &actctx->assemblies[actctx->num_assemblies++];
+    assembly->type = at;
+    return assembly;
+}
+
+static void free_assembly_identity(struct assembly_identity *ai)
+{
+    RtlFreeHeap( GetProcessHeap(), 0, ai->name );
+}
 
 static ACTIVATION_CONTEXT *check_actctx( HANDLE h )
 {
@@ -80,6 +162,16 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
 {
     if (interlocked_xchg_add( &actctx->ref_count, -1 ) == 1)
     {
+        unsigned int i;
+
+        for (i = 0; i < actctx->num_assemblies; i++)
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, actctx->assemblies[i].manifest.info );
+            free_assembly_identity(&actctx->assemblies[i].id);
+        }
+        RtlFreeHeap( GetProcessHeap(), 0, actctx->config.info );
+        RtlFreeHeap( GetProcessHeap(), 0, actctx->appdir.info );
+        RtlFreeHeap( GetProcessHeap(), 0, actctx->assemblies );
         actctx->magic = 0;
         RtlFreeHeap( GetProcessHeap(), 0, actctx );
     }
@@ -97,6 +189,7 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
 {
     const ACTCTXW *pActCtx = ptr;  /* FIXME: not the right structure */
     ACTIVATION_CONTEXT *actctx;
+    struct assembly *assembly;
 
     TRACE("%p %08x\n", pActCtx, pActCtx ? pActCtx->dwFlags : 0);
 
@@ -104,14 +197,35 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
         (pActCtx->dwFlags & ~ACTCTX_FLAGS_ALL))
         return STATUS_INVALID_PARAMETER;
 
-    if (!(actctx = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*actctx) )))
+    if (!(actctx = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*actctx) )))
         return STATUS_NO_MEMORY;
 
     actctx->magic = ACTCTX_MAGIC;
     actctx->ref_count = 1;
 
+    if (!(assembly = add_assembly( actctx, APPLICATION_MANIFEST ))) goto error;
+    if (!(assembly->id.name = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR) )))
+        goto error;
+    assembly->id.version.major = 1;
+    assembly->id.version.minor = 0;
+    assembly->id.version.build = 0;
+    assembly->id.version.revision = 0;
+    assembly->manifest.type = ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE;
+    assembly->manifest.info = NULL;
+
+    actctx->config.type = ACTIVATION_CONTEXT_PATH_TYPE_NONE;
+    actctx->config.info = NULL;
+    actctx->appdir.type = ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE;
+    if (pActCtx->dwFlags & ACTCTX_FLAG_APPLICATION_NAME_VALID)
+        actctx->appdir.info = strdupW( pActCtx->lpApplicationName );
+
     *handle = actctx;
     return STATUS_SUCCESS;
+
+error:
+    RtlFreeHeap( GetProcessHeap(), 0, assembly );
+    RtlFreeHeap( GetProcessHeap(), 0, actctx );
+    return STATUS_NO_MEMORY;
 }
 
 
