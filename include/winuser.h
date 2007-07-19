@@ -4813,6 +4813,7 @@ UINT        WINAPI PrivateExtractIconExW(LPCWSTR,int,HICON*,HICON*,UINT);
 UINT        WINAPI PrivateExtractIconsA(LPCSTR,int,int,int,HICON*,UINT*,UINT,UINT);
 UINT        WINAPI PrivateExtractIconsW(LPCWSTR,int,int,int,HICON*,UINT*,UINT,UINT);
 BOOL        WINAPI PtInRect(const RECT*,POINT);
+HWND        WINAPI RealChildWindowFromPoint(HWND,POINT);
 UINT        WINAPI RealGetWindowClassA(HWND,LPSTR,UINT);
 UINT        WINAPI RealGetWindowClassW(HWND,LPWSTR,UINT);
 #define     RealGetWindowClass WINELIB_NAME_AW(RealGetWindowClass)
