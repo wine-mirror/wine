@@ -232,7 +232,9 @@ static const MSIVIEWOPS insert_ops =
     INSERT_get_column_info,
     INSERT_modify,
     INSERT_delete,
-    INSERT_find_matching_rows
+    INSERT_find_matching_rows,
+    NULL,
+    NULL,
 };
 
 static UINT count_column_info( const column_info *ci )

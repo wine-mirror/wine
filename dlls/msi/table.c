@@ -71,6 +71,7 @@ struct tagMSITABLE
     MSICOLUMNINFO *colinfo;
     UINT col_count;
     BOOL persistent;
+    INT ref_count;
     WCHAR name[1];
 };
 
@@ -632,6 +633,7 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
     if( !table )
         return ERROR_FUNCTION_FAILED;
 
+    table->ref_count = 1;
     table->row_count = 0;
     table->data = NULL;
     table->nonpersistent_row_count = 0;
@@ -1642,6 +1644,35 @@ static UINT TABLE_find_matching_rows( struct tagMSIVIEW *view, UINT col,
     return ERROR_SUCCESS;
 }
 
+static UINT TABLE_add_ref(struct tagMSIVIEW *view)
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
+
+    TRACE("%p %d\n", view, tv->table->ref_count);
+
+    return InterlockedIncrement(&tv->table->ref_count);
+}
+
+static UINT TABLE_release(struct tagMSIVIEW *view)
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
+    INT ref = tv->table->ref_count;
+
+    TRACE("%p %d\n", view, ref);
+
+    ref = InterlockedDecrement(&tv->table->ref_count);
+    if (ref == 0)
+    {
+        if (!tv->table->row_count)
+        {
+            list_remove(&tv->table->entry);
+            free_table(tv->table);
+            TABLE_delete(view);
+        }
+    }
+
+    return ref;
+}
 
 static const MSIVIEWOPS table_ops =
 {
@@ -1656,7 +1687,9 @@ static const MSIVIEWOPS table_ops =
     TABLE_get_column_info,
     TABLE_modify,
     TABLE_delete,
-    TABLE_find_matching_rows
+    TABLE_find_matching_rows,
+    TABLE_add_ref,
+    TABLE_release,
 };
 
 UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view )

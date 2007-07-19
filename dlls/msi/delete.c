@@ -192,7 +192,9 @@ static const MSIVIEWOPS delete_ops =
     DELETE_get_column_info,
     DELETE_modify,
     DELETE_delete,
-    DELETE_find_matching_rows
+    DELETE_find_matching_rows,
+    NULL,
+    NULL,
 };
 
 UINT DELETE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table )

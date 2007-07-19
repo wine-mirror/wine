@@ -38,6 +38,8 @@ typedef struct tagMSIALTERVIEW
 {
     MSIVIEW        view;
     MSIDATABASE   *db;
+    MSIVIEW       *table;
+    INT hold;
 } MSIALTERVIEW;
 
 static UINT ALTER_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *val )
@@ -62,7 +64,12 @@ static UINT ALTER_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIALTERVIEW *av = (MSIALTERVIEW*)view;
 
-    FIXME("%p %p\n", av, record);
+    TRACE("%p %p\n", av, record);
+
+    if (av->hold == 1)
+        av->table->ops->add_ref(av->table);
+    else if (av->hold == -1)
+        av->table->ops->release(av->table);
 
     return ERROR_SUCCESS;
 }
@@ -111,6 +118,7 @@ static UINT ALTER_delete( struct tagMSIVIEW *view )
 
     TRACE("%p\n", av );
     msi_free( av );
+    av->table->ops->delete( av->table );
 
     return ERROR_SUCCESS;
 }
@@ -122,7 +130,6 @@ static UINT ALTER_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 
     return ERROR_FUNCTION_FAILED;
 }
-
 
 static const MSIVIEWOPS alter_ops =
 {
@@ -137,22 +144,30 @@ static const MSIVIEWOPS alter_ops =
     ALTER_get_column_info,
     ALTER_modify,
     ALTER_delete,
-    ALTER_find_matching_rows
+    ALTER_find_matching_rows,
+    NULL,
+    NULL,
 };
 
 UINT ALTER_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name, int hold )
 {
     MSIALTERVIEW *av;
+    UINT r;
 
-    TRACE("%p\n", view );
+    TRACE("%p %s %d\n", view, debugstr_w(name), hold );
 
     av = msi_alloc_zero( sizeof *av );
     if( !av )
         return ERROR_FUNCTION_FAILED;
 
+    r = TABLE_CreateView( db, name, &av->table );
+    if (r != ERROR_SUCCESS || !av->table)
+        return r;
+
     /* fill the structure */
     av->view.ops = &alter_ops;
     av->db = db;
+    av->hold = hold;
 
     *view = &av->view;
 

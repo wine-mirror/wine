@@ -184,7 +184,9 @@ static const MSIVIEWOPS update_ops =
     UPDATE_get_column_info,
     UPDATE_modify,
     UPDATE_delete,
-    UPDATE_find_matching_rows
+    UPDATE_find_matching_rows,
+    NULL,
+    NULL,
 };
 
 UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR table,

@@ -221,6 +221,16 @@ typedef struct tagMSIVIEWOPS
      *  first call and continued to be passed in to subsequent calls.
      */
     UINT (*find_matching_rows)( struct tagMSIVIEW *view, UINT col, UINT val, UINT *row, MSIITERHANDLE *handle );
+
+    /*
+     * add_ref - increases the reference count of the table
+     */
+    UINT (*add_ref)( struct tagMSIVIEW *view );
+
+    /*
+     * release - decreases the reference count of the table
+     */
+    UINT (*release)( struct tagMSIVIEW *view );
 } MSIVIEWOPS;
 
 struct tagMSIVIEW

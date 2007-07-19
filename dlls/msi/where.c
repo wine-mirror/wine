@@ -446,7 +446,9 @@ static const MSIVIEWOPS where_ops =
     WHERE_get_column_info,
     WHERE_modify,
     WHERE_delete,
-    WHERE_find_matching_rows
+    WHERE_find_matching_rows,
+    NULL,
+    NULL,
 };
 
 static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr *cond,

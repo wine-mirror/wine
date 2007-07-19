@@ -274,7 +274,9 @@ static const MSIVIEWOPS select_ops =
     SELECT_get_column_info,
     SELECT_modify,
     SELECT_delete,
-    SELECT_find_matching_rows
+    SELECT_find_matching_rows,
+    NULL,
+    NULL,
 };
 
 static UINT SELECT_AddColumn( MSISELECTVIEW *sv, LPCWSTR name )

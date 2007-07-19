@@ -336,7 +336,9 @@ static const MSIVIEWOPS streams_ops =
     STREAMS_get_column_info,
     STREAMS_modify,
     STREAMS_delete,
-    STREAMS_find_matching_rows
+    STREAMS_find_matching_rows,
+    NULL,
+    NULL,
 };
 
 static UINT add_streams_to_table(MSISTREAMSVIEW *sv)

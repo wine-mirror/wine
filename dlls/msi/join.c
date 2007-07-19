@@ -252,7 +252,9 @@ static const MSIVIEWOPS join_ops =
     JOIN_get_column_info,
     JOIN_modify,
     JOIN_delete,
-    JOIN_find_matching_rows
+    JOIN_find_matching_rows,
+    NULL,
+    NULL,
 };
 
 UINT JOIN_CreateView( MSIDATABASE *db, MSIVIEW **view,

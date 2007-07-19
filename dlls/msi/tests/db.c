@@ -2932,7 +2932,6 @@ static void test_alter(void)
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "failed to free table\n");
 
-    todo_wine {
     query = "ALTER TABLE `T` FREE";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to free table\n");
@@ -2940,15 +2939,11 @@ static void test_alter(void)
     query = "ALTER TABLE `T` HOLD";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to hold table %d\n", r);
-    }
 
     /* table T is removed */
     query = "SELECT * FROM `T`";
     r = run_query(hdb, 0, query);
-    todo_wine
-    {
-        ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
-    }
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
 
     /* create the table again */
     query = "CREATE TABLE `U` ( `A` INTEGER, `B` INTEGER PRIMARY KEY `B`)";

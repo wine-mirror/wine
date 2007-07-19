@@ -117,7 +117,6 @@ static UINT CREATE_delete( struct tagMSIVIEW *view )
     return ERROR_SUCCESS;
 }
 
-
 static const MSIVIEWOPS create_ops =
 {
     CREATE_fetch_int,
@@ -130,7 +129,9 @@ static const MSIVIEWOPS create_ops =
     CREATE_get_dimensions,
     CREATE_get_column_info,
     CREATE_modify,
-    CREATE_delete
+    CREATE_delete,
+    NULL,
+    NULL,
 };
 
 static UINT check_columns( column_info *col_info )
