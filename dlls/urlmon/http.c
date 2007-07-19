@@ -62,18 +62,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
  * if OnResponse does not return S_OK, Continue will not report data, and Read
  * will report BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION when all
  * data has been read.
- *
- * FLAG_CALLED_SWITCH is set before calling the protocol sink Switch function and
- * unset by our Continue function to ensure that Switch is not called again until
- * Continue is executed by the protocol sink.
  */
 #define FLAG_REQUEST_COMPLETE 0x1
-#define FLAG_CALLED_SWITCH 0x2
-#define FLAG_FIRST_CONTINUE_COMPLETE 0x4
-#define FLAG_FIRST_DATA_REPORTED 0x8
-#define FLAG_ALL_DATA_READ 0x10
-#define FLAG_LAST_DATA_REPORTED 0x20
-#define FLAG_RESULT_REPORTED 0x40
+#define FLAG_FIRST_CONTINUE_COMPLETE 0x2
+#define FLAG_FIRST_DATA_REPORTED 0x4
+#define FLAG_ALL_DATA_READ 0x8
+#define FLAG_LAST_DATA_REPORTED 0x10
+#define FLAG_RESULT_REPORTED 0x20
 
 typedef struct {
     const IInternetProtocolVtbl *lpInternetProtocolVtbl;
@@ -179,10 +174,7 @@ static void CALLBACK HTTPPROTOCOL_InternetStatusCallback(
         ulStatusCode = BINDSTATUS_SENDINGREQUEST;
         break;
     case INTERNET_STATUS_REQUEST_COMPLETE:
-        if (This->flags & FLAG_CALLED_SWITCH)
-            return;
-        This->flags |= FLAG_CALLED_SWITCH | FLAG_REQUEST_COMPLETE;
-
+        This->flags |= FLAG_REQUEST_COMPLETE;
         /* PROTOCOLDATA same as native */
         memset(&data, 0, sizeof(data));
         data.dwState = 0xf1000000;
@@ -514,8 +506,6 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         WARN("Expected IInternetProtocolSink pointer to be non-NULL\n");
         goto done;
     }
-
-    This->flags &= ~FLAG_CALLED_SWITCH;
 
     if (pProtocolData->pData == (LPVOID)BINDSTATUS_DOWNLOADINGDATA)
     {
