@@ -1032,6 +1032,8 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 
 	case WM_IME_COMPOSITION:
+	{
+		int caret_pos = es->selection_end;
 		if (es->composition_len == 0)
 		{
 			if (es->selection_start != es->selection_end)
@@ -1043,7 +1045,9 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 			es->composition_start = es->selection_end;
 		}
 		EDIT_ImeComposition(hwnd,lParam,es);
+		EDIT_SetCaretPos(es, caret_pos, es->flags & EF_AFTER_WRAP);
 		break;
+	}
 
 	case WM_IME_ENDCOMPOSITION:
 		es->composition_len= 0;
