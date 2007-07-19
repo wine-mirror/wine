@@ -185,6 +185,7 @@ struct actctx_loader
 
 #define ASSEMBLY_ELEM                   "assembly"
 #define ASSEMBLYIDENTITY_ELEM           "assemblyIdentity"
+#define BINDINGREDIRECT_ELEM            "bindingRedirect"
 #define CLRCLASS_ELEM                   "clrClass"
 #define CLRSURROGATE_ELEM               "clrSurrogate"
 #define COMCLASS_ELEM                   "comClass"
@@ -209,6 +210,8 @@ struct actctx_loader
 #define LANGUAGE_ATTR                   "language"
 #define MANIFESTVERSION_ATTR            "manifestVersion"
 #define NAME_ATTR                       "name"
+#define NEWVERSION_ATTR                 "newVersion"
+#define OLDVERSION_ATTR                 "oldVersion"
 #define PROCESSORARCHITECTURE_ATTR      "processorArchitecture"
 #define PUBLICKEYTOKEN_ATTR             "publicKeyToken"
 #define TLBID_ATTR                      "tlbid"
@@ -818,6 +821,33 @@ static BOOL parse_window_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
     return ret;
 }
 
+static BOOL parse_binding_redirect_elem(xmlbuf_t* xmlbuf)
+{
+    xmlstr_t    attr_name, attr_value;
+    BOOL        end = FALSE, error;
+
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, OLDVERSION_ATTR))
+        {
+            FIXME("Not stored yet oldVersion=%s\n", debugstr_xmlstr(&attr_value));
+        }
+        else if (xmlstr_cmp(&attr_name, NEWVERSION_ATTR))
+        {
+            FIXME("Not stored yet newVersion=%s\n", debugstr_xmlstr(&attr_value));
+        }
+        else
+        {
+            WARN("wrong attr %s=%s\n", debugstr_xmlstr(&attr_name),
+                 debugstr_xmlstr(&attr_value));
+            return FALSE;
+        }
+    }
+
+    if (error || end) return end;
+    return parse_expect_elem(xmlbuf, ELEM_END(BINDINGREDIRECT_ELEM)) && parse_end_element(xmlbuf);
+}
+
 static BOOL parse_description_elem(xmlbuf_t* xmlbuf)
 {
     xmlstr_t    elem, content;
@@ -965,6 +995,10 @@ static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf,
         {
             ret = parse_end_element(xmlbuf);
             break;
+        }
+        else if (xmlstr_cmp(&elem, BINDINGREDIRECT_ELEM))
+        {
+            ret = parse_binding_redirect_elem(xmlbuf);
         }
         else
         {
