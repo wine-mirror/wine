@@ -2942,8 +2942,176 @@ static void test_alter(void)
     ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to hold table %d\n", r);
     }
 
-    MsiCloseHandle( hdb );
+    /* table T is removed */
+    query = "SELECT * FROM `T`";
+    r = run_query(hdb, 0, query);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    }
 
+    /* create the table again */
+    query = "CREATE TABLE `U` ( `A` INTEGER, `B` INTEGER PRIMARY KEY `B`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* up the ref count */
+    query = "ALTER TABLE `U` HOLD";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to free table\n");
+
+    /* add column, no data type */
+    query = "ALTER TABLE `U` ADD `C`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "ALTER TABLE `U` ADD `C` INTEGER";
+    r = run_query(hdb, 0, query);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    /* add column C again */
+    query = "ALTER TABLE `U` ADD `C` INTEGER";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "ALTER TABLE `U` ADD `D` INTEGER TEMPORARY";
+    r = run_query(hdb, 0, query);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    query = "INSERT INTO `U` ( `A`, `B`, `C`, `D` ) VALUES ( 1, 2, 3, 4 )";
+    r = run_query(hdb, 0, query);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    query = "ALTER TABLE `U` ADD `D` INTEGER TEMPORARY HOLD";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "INSERT INTO `U` ( `A`, `B`, `C`, `D` ) VALUES ( 5, 6, 7, 8 )";
+    r = run_query(hdb, 0, query);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    query = "SELECT * FROM `U` WHERE `D` = 8";
+    r = run_query(hdb, 0, query);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    query = "ALTER TABLE `U` ADD `D` INTEGER TEMPORARY FREE";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "ALTER COLUMN `D` FREE";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    /* drop the ref count */
+    query = "ALTER TABLE `U` FREE";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* table is not empty */
+    query = "SELECT * FROM `U`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* column D is removed */
+    query = "SELECT * FROM `U` WHERE `D` = 8";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "INSERT INTO `U` ( `A`, `B`, `C`, `D` ) VALUES ( 9, 10, 11, 12 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    /* add the column again */
+    query = "ALTER TABLE `U` ADD `E` INTEGER TEMPORARY HOLD";
+    r = run_query(hdb, 0, query);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    /* up the ref count */
+    query = "ALTER TABLE `U` HOLD";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `U` ( `A`, `B`, `C`, `E` ) VALUES ( 13, 14, 15, 16 )";
+    r = run_query(hdb, 0, query);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    query = "SELECT * FROM `U` WHERE `E` = 16";
+    r = run_query(hdb, 0, query);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    /* drop the ref count */
+    query = "ALTER TABLE `U` FREE";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `U` ( `A`, `B`, `C`, `E` ) VALUES ( 17, 18, 19, 20 )";
+    r = run_query(hdb, 0, query);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    query = "SELECT * FROM `U` WHERE `E` = 20";
+    r = run_query(hdb, 0, query);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    /* drop the ref count */
+    query = "ALTER TABLE `U` FREE";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* table still exists */
+    query = "SELECT * FROM `U`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* col E is removed */
+    query = "SELECT * FROM `U` WHERE `E` = 20";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "INSERT INTO `U` ( `A`, `B`, `C`, `E` ) VALUES ( 20, 21, 22, 23 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    /* drop the ref count once more */
+    query = "ALTER TABLE `U` FREE";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* table still exists */
+    query = "SELECT * FROM `U`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    MsiCloseHandle( hdb );
     DeleteFile(msifile);
 }
 
