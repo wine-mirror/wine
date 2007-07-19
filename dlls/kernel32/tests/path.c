@@ -961,6 +961,40 @@ static void test_GetLongPathNameW(void)
     }
 }
 
+static void test_GetShortPathNameW(void)
+{
+    WCHAR test_path[] = { 'L', 'o', 'n', 'g', 'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 'N', 'a', 'm', 'e',  0 };
+    WCHAR path[MAX_PATH];
+    WCHAR short_path[MAX_PATH];
+    DWORD length;
+    HANDLE file;
+    int ret;
+    WCHAR name[] = { 't', 'e', 's', 't', 0 };
+    WCHAR backSlash[] = { '\\', 0 };
+
+    GetTempPathW( MAX_PATH, path );
+    lstrcatW( path, test_path );
+    lstrcatW( path, backSlash );
+    ret = CreateDirectoryW( path, NULL );
+    ok( ret, "Directory was not created. LastError = %d\n", GetLastError() );
+
+    /* Starting a main part of test */
+    length = GetShortPathNameW( path, short_path, 0 );
+    ok( length, "GetShortPathNameW returned 0.\n" );
+    ret = GetShortPathNameW( path, short_path, length );
+    ok( ret, "GetShortPathNameW returned 0.\n" );
+    lstrcatW( short_path, name );
+    file = CreateFileW( short_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "File was not created.\n" );
+
+    /* End test */
+    CloseHandle( file );
+    ret = DeleteFileW( short_path );
+    ok( ret, "Can not delete file.\n" );
+    ret = RemoveDirectoryW( path );
+    ok( ret, "Can not delete directory.\n" );
+}
+
 static void test_GetSystemDirectory(void)
 {
     CHAR    buffer[MAX_PATH + 4];
@@ -1136,6 +1170,7 @@ START_TEST(path)
     test_CleanupPathA(origdir,curdir);
     test_GetTempPath();
     test_GetLongPathNameW();
+    test_GetShortPathNameW();
     test_GetSystemDirectory();
     test_GetWindowsDirectory();
     if (pNeedCurrentDirectoryForExePathA)
