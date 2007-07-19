@@ -119,6 +119,16 @@ struct entity
         {
             WCHAR *name;
         } class;
+        struct
+        {
+            WCHAR *name;
+            WCHAR *clsid;
+        } clrclass;
+        struct
+        {
+            WCHAR *name;
+            WCHAR *clsid;
+        } clrsurrogate;
     } u;
 };
 
@@ -175,6 +185,8 @@ struct actctx_loader
 
 #define ASSEMBLY_ELEM                   "assembly"
 #define ASSEMBLYIDENTITY_ELEM           "assemblyIdentity"
+#define CLRCLASS_ELEM                   "clrClass"
+#define CLRSURROGATE_ELEM               "clrSurrogate"
 #define COMCLASS_ELEM                   "comClass"
 #define COMINTERFACEEXTERNALPROXYSTUB_ELEM "comInterfaceExternalProxyStub"
 #define COMINTERFACEPROXYSTUB_ELEM      "comInterfaceProxyStub"
@@ -359,6 +371,14 @@ static void free_entity_array(struct entity_array *array)
             break;
         case ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.class.name);
+            break;
+        case ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION:
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrclass.name);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrclass.clsid);
+            break;
+        case ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES:
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrsurrogate.name);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.clrsurrogate.clsid);
             break;
         default:
             FIXME("Unknown entity kind %d\n", entity->kind);
@@ -859,6 +879,68 @@ static BOOL parse_com_interface_external_proxy_stub_elem(xmlbuf_t* xmlbuf,
         parse_end_element(xmlbuf);
 }
 
+static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
+{
+    xmlstr_t    attr_name, attr_value;
+    BOOL        end = FALSE, error;
+    struct entity*      entity;
+
+    entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION);
+    if (!entity) return FALSE;
+
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, NAME_ATTR))
+        {
+            if (!(entity->u.clrclass.name = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, CLSID_ATTR))
+        {
+            if (!(entity->u.clrclass.clsid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else
+        {
+            WARN("wrong attr %s=%s\n", debugstr_xmlstr(&attr_name),
+                 debugstr_xmlstr(&attr_value));
+            return FALSE;
+        }
+    }
+
+    if (error || end) return end;
+    return parse_expect_elem(xmlbuf, ELEM_END(CLRCLASS_ELEM)) && parse_end_element(xmlbuf);
+}
+
+static BOOL parse_clr_surrogate_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
+{
+    xmlstr_t    attr_name, attr_value;
+    BOOL        end = FALSE, error;
+    struct entity*      entity;
+
+    entity = add_entity(&assembly->entities, ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES);
+    if (!entity) return FALSE;
+
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, NAME_ATTR))
+        {
+            if (!(entity->u.clrsurrogate.name = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, CLSID_ATTR))
+        {
+            if (!(entity->u.clrsurrogate.clsid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else
+        {
+            WARN("wrong attr %s=%s\n", debugstr_xmlstr(&attr_name),
+                 debugstr_xmlstr(&attr_value));
+            return FALSE;
+        }
+    }
+
+    if (error || end) return end;
+    return parse_expect_elem(xmlbuf, ELEM_END(CLRSURROGATE_ELEM)) && parse_end_element(xmlbuf);
+}
+
 static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf,
                                           struct actctx_loader* acl)
 {
@@ -1109,6 +1191,14 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         else if (xmlstr_cmp(&elem, FILE_ELEM))
         {
             ret = parse_file_elem(xmlbuf, assembly);
+        }
+        else if (xmlstr_cmp(&elem, CLRCLASS_ELEM))
+        {
+            ret = parse_clr_class_elem(xmlbuf, assembly);
+        }
+        else if (xmlstr_cmp(&elem, CLRSURROGATE_ELEM))
+        {
+            ret = parse_clr_surrogate_elem(xmlbuf, assembly);
         }
         else
         {
