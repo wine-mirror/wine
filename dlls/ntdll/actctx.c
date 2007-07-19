@@ -217,6 +217,42 @@ static void free_assembly_identity(struct assembly_identity *ai)
     RtlFreeHeap( GetProcessHeap(), 0, ai->arch );
 }
 
+static BOOL add_dependent_assembly_id(struct actctx_loader* acl,
+                                      struct assembly_identity* ai)
+{
+    /* FIXME: should check that the passed ai isn't already in the list */
+    if (acl->num_dependencies == acl->allocated_dependencies)
+    {
+        void *ptr;
+        unsigned int new_count;
+        if (acl->dependencies)
+        {
+            new_count = acl->allocated_dependencies * 2;
+            ptr = RtlReAllocateHeap(GetProcessHeap(), 0, acl->dependencies,
+                                    new_count * sizeof(acl->dependencies[0]));
+        }
+        else
+        {
+            new_count = 4;
+            ptr = RtlAllocateHeap(GetProcessHeap(), 0, new_count * sizeof(acl->dependencies[0]));
+        }
+        if (!ptr) return FALSE;
+        acl->dependencies = ptr;
+        acl->allocated_dependencies = new_count;
+    }
+    acl->dependencies[acl->num_dependencies++] = *ai;
+
+    return TRUE;
+}
+
+static void free_depend_manifests(struct actctx_loader* acl)
+{
+    unsigned int i;
+    for (i = 0; i < acl->num_dependencies; i++)
+        free_assembly_identity(&acl->dependencies[i]);
+    RtlFreeHeap(GetProcessHeap(), 0, acl->dependencies);
+}
+
 static ACTIVATION_CONTEXT *check_actctx( HANDLE h )
 {
     ACTIVATION_CONTEXT *actctx = h;
@@ -802,6 +838,85 @@ static NTSTATUS get_manifest_in_associated_manifest( struct actctx_loader* acl, 
     return status;
 }
 
+static NTSTATUS lookup_assembly(struct actctx_loader* acl,
+                                struct assembly_identity* ai)
+{
+    static const WCHAR dotDllW[] = {'.','d','l','l',0};
+    unsigned int i;
+    WCHAR *buffer, *p;
+    NTSTATUS status;
+    UNICODE_STRING nameW;
+    HANDLE file;
+
+    /* FIXME: add support for language specific lookup */
+
+    nameW.Buffer = NULL;
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0,
+                                    (strlenW(acl->actctx->appdir.info) + 2 * strlenW(ai->name) + 2) * sizeof(WCHAR) + sizeof(dotManifestW) )))
+        return STATUS_NO_MEMORY;
+
+    /* lookup in appdir\name.dll
+     *           appdir\name.manifest
+     *           appdir\name\name.dll
+     *           appdir\name\name.manifest
+     */
+    strcpyW( buffer, acl->actctx->appdir.info );
+    p = buffer + strlenW(buffer);
+    for (i = 0; i < 2; i++)
+    {
+        *p++ = '\\';
+        strcpyW( p, ai->name );
+        p += strlenW(p);
+
+        strcpyW( p, dotDllW );
+        if (RtlDosPathNameToNtPathName_U( buffer, &nameW, NULL, NULL ))
+        {
+            status = open_nt_file( &file, &nameW );
+            if (!status)
+            {
+                status = get_manifest_in_pe_file( acl, ai, nameW.Buffer, file,
+                                                  (LPCWSTR)CREATEPROCESS_MANIFEST_RESOURCE_ID, 0 );
+                NtClose( file );
+                break;
+            }
+            RtlFreeUnicodeString( &nameW );
+        }
+
+        strcpyW( p, dotManifestW );
+        if (RtlDosPathNameToNtPathName_U( buffer, &nameW, NULL, NULL ))
+        {
+            status = open_nt_file( &file, &nameW );
+            if (!status)
+            {
+                status = get_manifest_in_manifest_file( acl, ai, nameW.Buffer, file );
+                NtClose( file );
+                break;
+            }
+            RtlFreeUnicodeString( &nameW );
+        }
+    }
+    RtlFreeUnicodeString( &nameW );
+    return STATUS_SXS_ASSEMBLY_NOT_FOUND;
+}
+
+static NTSTATUS parse_depend_manifests(struct actctx_loader* acl)
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    unsigned int i;
+
+    for (i = 0; i < acl->num_dependencies; i++)
+    {
+        if (lookup_assembly(acl, &acl->dependencies[i]) != STATUS_SUCCESS)
+        {
+            FIXME( "Could not find assembly %s\n", debugstr_w(acl->dependencies[i].name) );
+            status = STATUS_SXS_CANT_GEN_ACTCTX;
+            break;
+        }
+    }
+    /* FIXME should now iterate through all refs */
+    return status;
+}
+
 
 /***********************************************************************
  * RtlCreateActivationContext (NTDLL.@)
@@ -913,6 +1028,10 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
 
     if (file) NtClose( file );
     RtlFreeUnicodeString( &nameW );
+
+    if (status == STATUS_SUCCESS) status = parse_depend_manifests(&acl);
+    free_depend_manifests( &acl );
+
     if (status == STATUS_SUCCESS) *handle = actctx;
     else actctx_release( actctx );
     return status;
