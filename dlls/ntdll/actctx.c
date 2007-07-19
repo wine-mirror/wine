@@ -57,6 +57,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(actctx);
 typedef struct
 {
     const char*         ptr;
+    unsigned int        len;
+} xmlstr_t;
+
+typedef struct
+{
+    const char*         ptr;
     const char*         end;
 } xmlbuf_t;
 
@@ -74,10 +80,17 @@ struct version
     USHORT              revision;
 };
 
+enum assembly_id_type
+{
+    TYPE_NONE,
+    TYPE_WIN32
+};
+
 struct assembly_identity
 {
-    WCHAR              *name;
-    struct version      version;
+    WCHAR                *name;
+    struct version        version;
+    enum assembly_id_type type;
 };
 
 enum assembly_type
@@ -112,6 +125,18 @@ struct actctx_loader
     unsigned int              allocated_dependencies;
 };
 
+#define ASSEMBLY_ELEM                   "assembly"
+#define ASSEMBLYIDENTITY_ELEM           "assemblyIdentity"
+
+#define ELEM_END(elem) "/" elem
+
+#define MANIFESTVERSION_ATTR            "manifestVersion"
+#define NAME_ATTR                       "name"
+#define TYPE_ATTR                       "type"
+#define XMLNS_ATTR                      "xmlns"
+
+#define MANIFEST_NAMESPACE              "urn:schemas-microsoft-com:asm.v1"
+
 static const WCHAR dotManifestW[] = {'.','m','a','n','i','f','e','s','t',0};
 
 
@@ -123,6 +148,35 @@ static WCHAR *strdupW(const WCHAR* str)
     if (!(ptr = RtlAllocateHeap(GetProcessHeap(), 0, (strlenW(str) + 1) * sizeof(WCHAR))))
         return NULL;
     return strcpyW(ptr, str);
+}
+
+static WCHAR *xmlstrdupW(const xmlstr_t* str)
+{
+    WCHAR *strW;
+    int len = wine_utf8_mbstowcs( 0, str->ptr, str->len, NULL, 0 );
+
+    if (len == -1) return NULL;
+    if ((strW = RtlAllocateHeap(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR))))
+    {
+        wine_utf8_mbstowcs( 0, str->ptr, str->len, strW, len );
+        strW[len] = 0;
+    }
+    return strW;
+}
+
+static inline BOOL xmlstr_cmp(const xmlstr_t* xmlstr, const char* str)
+{
+    return !strncmp(xmlstr->ptr, str, xmlstr->len) && !str[xmlstr->len];
+}
+
+static inline BOOL isxmlspace( char ch )
+{
+    return (ch == ' ' || ch == '\r' || ch == '\n' || ch == '\t');
+}
+
+static inline const char* debugstr_xmlstr(const xmlstr_t* str)
+{
+    return debugstr_an(str->ptr, str->len);
 }
 
 static struct assembly *add_assembly(ACTIVATION_CONTEXT *actctx, enum assembly_type at)
@@ -197,10 +251,288 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
     }
 }
 
+static BOOL next_xml_attr(xmlbuf_t* xmlbuf, xmlstr_t* name, xmlstr_t* value,
+                          BOOL* error, BOOL* end)
+{
+    const char* ptr;
+
+    *error = TRUE;
+
+    while (xmlbuf->ptr < xmlbuf->end && isxmlspace(*xmlbuf->ptr))
+        xmlbuf->ptr++;
+
+    if (xmlbuf->ptr == xmlbuf->end) return FALSE;
+
+    if (*xmlbuf->ptr == '/')
+    {
+        xmlbuf->ptr++;
+        if (xmlbuf->ptr == xmlbuf->end || *xmlbuf->ptr != '>')
+            return FALSE;
+
+        xmlbuf->ptr++;
+        *end = TRUE;
+        *error = FALSE;
+        return FALSE;
+    }
+
+    if (*xmlbuf->ptr == '>')
+    {
+        xmlbuf->ptr++;
+        *error = FALSE;
+        return FALSE;
+    }
+
+    ptr = xmlbuf->ptr;
+    while (ptr < xmlbuf->end && *ptr != '=' && *ptr != '>' && !isxmlspace(*ptr)) ptr++;
+
+    if (ptr == xmlbuf->end || *ptr != '=') return FALSE;
+
+    name->ptr = xmlbuf->ptr;
+    name->len = ptr-xmlbuf->ptr;
+    xmlbuf->ptr = ptr;
+
+    ptr++;
+    if (ptr == xmlbuf->end || *ptr != '\"') return FALSE;
+
+    value->ptr = ++ptr;
+    if (ptr == xmlbuf->end) return FALSE;
+
+    ptr = memchr(ptr, '\"', xmlbuf->end - ptr);
+    if (!ptr)
+    {
+        xmlbuf->ptr = xmlbuf->end;
+        return FALSE;
+    }
+
+    value->len = ptr - value->ptr;
+    xmlbuf->ptr = ptr + 1;
+
+    if (xmlbuf->ptr == xmlbuf->end) return FALSE;
+
+    *error = FALSE;
+    return TRUE;
+}
+
+static BOOL next_xml_elem(xmlbuf_t* xmlbuf, xmlstr_t* elem)
+{
+    const char* ptr;
+
+    ptr = memchr(xmlbuf->ptr, '<', xmlbuf->end - xmlbuf->ptr);
+    if (!ptr)
+    {
+        xmlbuf->ptr = xmlbuf->end;
+        return FALSE;
+    }
+
+    xmlbuf->ptr = ++ptr;
+    while (ptr < xmlbuf->end && !isxmlspace(*ptr) && *ptr != '>')
+        ptr++;
+
+    elem->ptr = xmlbuf->ptr;
+    elem->len = ptr - xmlbuf->ptr;
+    xmlbuf->ptr = ptr;
+    return xmlbuf->ptr != xmlbuf->end;
+}
+
+static BOOL parse_xml_header(xmlbuf_t* xmlbuf)
+{
+    /* FIXME: parse attributes */
+    const char *ptr;
+
+    for (ptr = xmlbuf->ptr; ptr < xmlbuf->end - 1; ptr++)
+    {
+        if (ptr[0] == '?' && ptr[1] == '>')
+        {
+            xmlbuf->ptr = ptr + 2;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static BOOL parse_expect_elem(xmlbuf_t* xmlbuf, const char* name)
+{
+    xmlstr_t    elem;
+    return next_xml_elem(xmlbuf, &elem) && xmlstr_cmp(&elem, name);
+}
+
+static BOOL parse_expect_no_attr(xmlbuf_t* xmlbuf, BOOL* end)
+{
+    xmlstr_t    attr_name, attr_value;
+    BOOL        error;
+
+    if (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, end))
+    {
+        WARN("unexpected attr %s=%s\n", debugstr_xmlstr(&attr_name),
+             debugstr_xmlstr(&attr_value));
+        return FALSE;
+    }
+
+    return !error;
+}
+
+static BOOL parse_end_element(xmlbuf_t *xmlbuf)
+{
+    BOOL end = FALSE;
+    return parse_expect_no_attr(xmlbuf, &end) && !end;
+}
+
+static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* actctx,
+                                         struct assembly_identity* ai)
+{
+    xmlstr_t    attr_name, attr_value;
+    BOOL        end = FALSE, error;
+
+    TRACE("\n");
+
+    memset(ai, 0, sizeof(*ai));
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, NAME_ATTR))
+        {
+            if (!(ai->name = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, TYPE_ATTR))
+        {
+            if (!xmlstr_cmp(&attr_value, "win32"))
+            {
+                WARN("wrong type attr %s\n", debugstr_xmlstr(&attr_value));
+                return FALSE;
+            }
+            ai->type = TYPE_WIN32;
+        }
+        else
+        {
+            WARN("unknown attr %s=%s\n", debugstr_xmlstr(&attr_name),
+                 debugstr_xmlstr(&attr_value));
+            return FALSE;
+        }
+    }
+
+    if (error || end) return end;
+    return parse_expect_elem(xmlbuf, ELEM_END(ASSEMBLYIDENTITY_ELEM)) && parse_end_element(xmlbuf);
+}
+
+static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
+                                struct assembly* assembly,
+                                struct assembly_identity* expected_ai)
+{
+    xmlstr_t    attr_name, attr_value, elem;
+    BOOL        end = FALSE, error, version = FALSE, xmlns = FALSE, ret = TRUE;
+    struct assembly_identity ai;
+
+    TRACE("(%p)\n", xmlbuf);
+
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, MANIFESTVERSION_ATTR))
+        {
+            if (!xmlstr_cmp(&attr_value, "1.0"))
+            {
+                WARN("wrong version %s\n", debugstr_xmlstr(&attr_value));
+                return FALSE;
+            }
+            version = TRUE;
+        }
+        else if (xmlstr_cmp(&attr_name, XMLNS_ATTR))
+        {
+            if (!xmlstr_cmp(&attr_value, MANIFEST_NAMESPACE))
+            {
+                WARN("wrong namespace %s\n", debugstr_xmlstr(&attr_value));
+                return FALSE;
+            }
+            xmlns = TRUE;
+        }
+        else
+        {
+            WARN("wrong attr %s=%s\n", debugstr_xmlstr(&attr_name),
+                 debugstr_xmlstr(&attr_value));
+            return FALSE;
+        }
+    }
+
+    if (error || end || !xmlns || !version) return FALSE;
+    if (!next_xml_elem(xmlbuf, &elem)) return FALSE;
+
+    if (!xmlstr_cmp(&elem, ASSEMBLYIDENTITY_ELEM))
+    {
+        WARN("expected assemblyIdentity element, got %s\n", debugstr_xmlstr(&elem));
+        return FALSE;
+    }
+
+    if (!parse_assembly_identity_elem(xmlbuf, acl->actctx, &ai)) return FALSE;
+
+    if (expected_ai)
+    {
+        /* FIXME: more tests */
+        if (assembly->type == ASSEMBLY_MANIFEST &&
+            memcmp(&ai.version, &expected_ai->version, sizeof(ai.version)))
+        {
+            WARN("wrong version\n");
+            return FALSE;
+        }
+    }
+
+    assembly->id = ai;
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp(&elem, ELEM_END(ASSEMBLY_ELEM)))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else
+        {
+            WARN("wrong element %s\n", debugstr_xmlstr(&elem));
+            ret = FALSE;
+        }
+    }
+
+    return ret;
+}
+
 static NTSTATUS parse_manifest( struct actctx_loader* acl, struct assembly_identity* ai,
                                 LPCWSTR filename, xmlbuf_t* xmlbuf )
 {
+    xmlstr_t            elem;
+    struct assembly*    assembly;
+
     TRACE( "parsing manifest loaded from %s\n", debugstr_w(filename) );
+
+    if (!(assembly = add_assembly(acl->actctx, ASSEMBLY_MANIFEST)))
+        return STATUS_SXS_CANT_GEN_ACTCTX;
+
+    if (filename) assembly->manifest.info = strdupW( filename + 4 /* skip \??\ prefix */ );
+    assembly->manifest.type = assembly->manifest.info ? ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE
+                                                      : ACTIVATION_CONTEXT_PATH_TYPE_NONE;
+
+    if (!next_xml_elem(xmlbuf, &elem)) return STATUS_SXS_CANT_GEN_ACTCTX;
+
+    if (xmlstr_cmp(&elem, "?xml") &&
+        (!parse_xml_header(xmlbuf) || !next_xml_elem(xmlbuf, &elem)))
+        return STATUS_SXS_CANT_GEN_ACTCTX;
+
+    if (!xmlstr_cmp(&elem, ASSEMBLY_ELEM))
+    {
+        WARN("root element is %s, not <assembly>\n", debugstr_xmlstr(&elem));
+        return STATUS_SXS_CANT_GEN_ACTCTX;
+    }
+
+    if (!parse_assembly_elem(xmlbuf, acl, assembly, ai))
+        return STATUS_SXS_CANT_GEN_ACTCTX;
+
+    if (next_xml_elem(xmlbuf, &elem))
+    {
+        WARN("unexpected element %s\n", debugstr_xmlstr(&elem));
+        return STATUS_SXS_CANT_GEN_ACTCTX;
+    }
+
+    if (xmlbuf->ptr != xmlbuf->end)
+    {
+        WARN("parse error\n");
+        return STATUS_SXS_CANT_GEN_ACTCTX;
+    }
     return STATUS_SUCCESS;
 }
 
