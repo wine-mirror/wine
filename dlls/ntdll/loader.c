@@ -91,6 +91,7 @@ static UINT tls_module_count;      /* number of modules with TLS directory */
 static UINT tls_total_size;        /* total size of TLS storage */
 static const IMAGE_TLS_DIRECTORY **tls_dirs;  /* array of TLS directories */
 
+UNICODE_STRING windows_dir = { 0, 0, NULL };  /* windows directory */
 UNICODE_STRING system_dir = { 0, 0, NULL };  /* system directory */
 
 static RTL_CRITICAL_SECTION loader_section;
@@ -2312,6 +2313,7 @@ void __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir )
     PLIST_ENTRY mark, entry;
     LPWSTR buffer, p;
 
+    RtlCreateUnicodeString( &windows_dir, windir );
     RtlCreateUnicodeString( &system_dir, sysdir );
     strcpyW( user_shared_data->NtSystemRoot, windir );
 

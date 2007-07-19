@@ -76,6 +76,7 @@ extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY 
                                      FARPROC origfun, DWORD ordinal, const WCHAR *user );
 extern void RELAY_SetupDLL( HMODULE hmod );
 extern void SNOOP_SetupDLL( HMODULE hmod );
+extern UNICODE_STRING windows_dir;
 extern UNICODE_STRING system_dir;
 
 /* redefine these to make sure we don't reference kernel symbols */
