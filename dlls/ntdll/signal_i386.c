@@ -543,7 +543,7 @@ static inline void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
 {
     void *stack = (void *)(ESP_sig(sigcontext) & ~3);
     TEB *teb = get_current_teb();
-    struct ntdll_thread_regs *thread_regs = (struct ntdll_thread_regs *)teb->SpareBytes1;
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
 
     /* get %fs and %gs at time of the fault */
 #ifdef FS_sig
@@ -557,7 +557,7 @@ static inline void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
     *gs = wine_get_gs();
 #endif
 
-    wine_set_fs( thread_regs->fs );
+    wine_set_fs( thread_data->fs );
 
     /* now restore a proper %gs for the fault handler */
     if (!wine_ldt_is_system(CS_sig(sigcontext)) ||
@@ -570,7 +570,7 @@ static inline void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
          * SS is still non-system segment. This is why both CS and SS
          * are checked.
          */
-        wine_set_gs( thread_regs->gs );
+        wine_set_gs( thread_data->gs );
         stack = teb->WOW32Reserved;
     }
 #ifdef __HAVE_VM86

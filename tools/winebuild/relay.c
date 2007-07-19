@@ -48,7 +48,7 @@
 #define STACKOFFSET 0xc0  /* STRUCTOFFSET(TEB,WOW32Reserved) */
 
 /* fix this if the ntdll_thread_regs structure is changed */
-#define GS_OFFSET  0x1b0  /* STRUCTOFFSET(TEB,SpareBytes1) + STRUCTOFFSET(ntdll_thread_regs,gs) */
+#define GS_OFFSET  0x1d8  /* STRUCTOFFSET(TEB,SystemReserved2) + STRUCTOFFSET(ntdll_thread_data,gs) */
 
 static void function_header( const char *name )
 {

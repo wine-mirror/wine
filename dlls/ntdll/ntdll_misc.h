@@ -146,15 +146,18 @@ struct debug_info
     char  output[1024];  /* current output line */
 };
 
+/* thread private data, stored in NtCurrentTeb()->SystemReserved2 */
 struct ntdll_thread_data
 {
-    struct debug_info *debug_info;    /* info for debugstr functions */
-    int                request_fd;    /* fd for sending server requests */
-    int                reply_fd;      /* fd for receiving server replies */
-    int                wait_fd[2];    /* fd for sleeping server requests */
-    void              *vm86_ptr;      /* data for vm86 mode */
+    DWORD              fs;            /* 1d4 TEB selector */
+    DWORD              gs;            /* 1d8 libc selector; update winebuild if you move this! */
+    struct debug_info *debug_info;    /* 1dc info for debugstr functions */
+    int                request_fd;    /* 1e0 fd for sending server requests */
+    int                reply_fd;      /* 1e4 fd for receiving server replies */
+    int                wait_fd[2];    /* 1e8 fd for sleeping server requests */
+    void              *vm86_ptr;      /* 1f0 data for vm86 mode */
 
-    void              *pad[4];        /* change this if you add fields! */
+    void              *pad[2];        /* 1f4 change this if you add fields! */
 };
 
 static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
@@ -162,18 +165,15 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
     return (struct ntdll_thread_data *)NtCurrentTeb()->SystemReserved2;
 }
 
-/* thread registers, stored in NtCurrentTeb()->SpareBytes1 */
+/* thread debug_registers, stored in NtCurrentTeb()->SpareBytes1 */
 struct ntdll_thread_regs
 {
-    DWORD              fs;            /* 00 TEB selector */
-    DWORD              gs;            /* 04 libc selector; update winebuild if you move this! */
-    DWORD              dr0;           /* 08 debug registers */
-    DWORD              dr1;           /* 0c */
-    DWORD              dr2;           /* 10 */
-    DWORD              dr3;           /* 14 */
-    DWORD              dr6;           /* 18 */
-    DWORD              dr7;           /* 1c */
-    DWORD              spare[2];      /* 20 change this if you add fields! */
+    DWORD dr0;
+    DWORD dr1;
+    DWORD dr2;
+    DWORD dr3;
+    DWORD dr6;
+    DWORD dr7;
 };
 
 static inline struct ntdll_thread_regs *ntdll_get_thread_regs(void)

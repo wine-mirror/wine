@@ -47,9 +47,9 @@ typedef struct _TEB
     ULONG        CurrentLocale;                /* 0c4 */
     ULONG        FpSoftwareStatusRegister;     /* 0c8 */
     PVOID        SystemReserved1[54];          /* 0cc */
-    PVOID        Spare1;                       /* 1a4 */
-    LONG         ExceptionCode;                /* 1a8 */
-    BYTE         SpareBytes1[40];              /* 1ac */
+    LONG         ExceptionCode;                /* 1a4 */
+    ACTIVATION_CONTEXT_STACK ActivationContextStack; /* 1a8 */
+    BYTE         SpareBytes1[24];              /* 1bc */
     PVOID        SystemReserved2[10];          /* 1d4 */
 
     /* The following are Wine-specific fields (NT: GdiTebBatch) */

@@ -200,6 +200,21 @@ typedef struct _GDI_TEB_BATCH
     ULONG  Buffer[0x136];
 } GDI_TEB_BATCH;
 
+typedef struct _RTL_ACTIVATION_CONTEXT_STACK_FRAME
+{
+    struct _RTL_ACTIVATION_CONTEXT_STACK_FRAME *Previous;
+    struct _ACTIVATION_CONTEXT                 *ActivationContext;
+    ULONG                                       Flags;
+} RTL_ACTIVATION_CONTEXT_STACK_FRAME, *PRTL_ACTIVATION_CONTEXT_STACK_FRAME;
+
+typedef struct _ACTIVATION_CONTEXT_STACK
+{
+    ULONG                               Flags;
+    ULONG                               NextCookieSequenceNumber;
+    RTL_ACTIVATION_CONTEXT_STACK_FRAME *ActiveFrame;
+    LIST_ENTRY                          FrameListCache;
+} ACTIVATION_CONTEXT_STACK, *PACTIVATION_CONTEXT_STACK;
+
 /***********************************************************************
  * PEB data structure
  */
@@ -286,9 +301,9 @@ typedef struct _TEB
     ULONG           CurrentLocale;              /* 0c4 */
     ULONG           FpSoftwareStatusRegister;   /* 0c8 */
     PVOID           SystemReserved1[54];        /* 0cc used for kernel32 private data in Wine */
-    PVOID           Spare1;                     /* 1a4 */
-    LONG            ExceptionCode;              /* 1a8 */
-    BYTE            SpareBytes1[40];            /* 1ac used for ntdll private data in Wine */
+    LONG            ExceptionCode;              /* 1a4 */
+    ACTIVATION_CONTEXT_STACK ActivationContextStack; /* 1a8 */
+    BYTE            SpareBytes1[24];            /* 1bc used for ntdll private data in Wine */
     PVOID           SystemReserved2[10];        /* 1d4 used for ntdll private data in Wine */
     GDI_TEB_BATCH   GdiTebBatch;                /* 1fc */
     ULONG           gdiRgn;                     /* 6dc */
