@@ -649,6 +649,48 @@ static BOOL CDecodeMsg_DecodeDataContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob)
     return ret;
 }
 
+static void CDecodeMsg_SaveAlgorithmID(CDecodeMsg *msg, DWORD param,
+ const CRYPT_ALGORITHM_IDENTIFIER *id)
+{
+    static const BYTE nullParams[] = { ASN_NULL, 0 };
+    CRYPT_ALGORITHM_IDENTIFIER *copy;
+    DWORD len = sizeof(CRYPT_ALGORITHM_IDENTIFIER);
+
+    /* Linearize algorithm id */
+    len += strlen(id->pszObjId) + 1;
+    len += id->Parameters.cbData;
+    copy = CryptMemAlloc(len);
+    if (copy)
+    {
+        copy->pszObjId =
+         (LPSTR)((BYTE *)copy + sizeof(CRYPT_ALGORITHM_IDENTIFIER));
+        strcpy(copy->pszObjId, id->pszObjId);
+        copy->Parameters.pbData = (BYTE *)copy->pszObjId + strlen(id->pszObjId)
+         + 1;
+        /* Trick:  omit NULL parameters */
+        if (id->Parameters.cbData == sizeof(nullParams) &&
+         !memcmp(id->Parameters.pbData, nullParams, sizeof(nullParams)))
+        {
+            copy->Parameters.cbData = 0;
+            len -= sizeof(nullParams);
+        }
+        else
+            copy->Parameters.cbData = id->Parameters.cbData;
+        if (copy->Parameters.cbData)
+            memcpy(copy->Parameters.pbData, id->Parameters.pbData,
+             id->Parameters.cbData);
+        ContextPropertyList_SetProperty(msg->properties, param, (BYTE *)copy,
+         len);
+        CryptMemFree(copy);
+    }
+}
+
+static inline void CRYPT_FixUpAlgorithmID(CRYPT_ALGORITHM_IDENTIFIER *id)
+{
+    id->pszObjId = (LPSTR)((BYTE *)id + sizeof(CRYPT_ALGORITHM_IDENTIFIER));
+    id->Parameters.pbData = (BYTE *)id->pszObjId + strlen(id->pszObjId) + 1;
+}
+
 /* Decodes the content in blob as the type given, and updates the value
  * (type, parameters, etc.) of msg based on what blob contains.
  * It doesn't just use msg's type, to allow a recursive call from an implicitly
@@ -679,6 +721,8 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
             ContextPropertyList_SetProperty(msg->properties,
              CMSG_VERSION_PARAM, (const BYTE *)&digestedData->version,
              sizeof(digestedData->version));
+            CDecodeMsg_SaveAlgorithmID(msg, CMSG_HASH_ALGORITHM_PARAM,
+             &digestedData->DigestAlgorithm);
             ContextPropertyList_SetProperty(msg->properties,
              CMSG_INNER_CONTENT_TYPE_PARAM,
              (const BYTE *)digestedData->ContentInfo.pszObjId,
@@ -775,6 +819,22 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&msg->type,
          sizeof(msg->type));
         break;
+    case CMSG_HASH_ALGORITHM_PARAM:
+    {
+        CRYPT_DATA_BLOB blob;
+
+        ret = ContextPropertyList_FindProperty(msg->properties, dwParamType,
+         &blob);
+        if (ret)
+        {
+            ret = CRYPT_CopyParam(pvData, pcbData, blob.pbData, blob.cbData);
+            if (ret && pvData)
+                CRYPT_FixUpAlgorithmID((CRYPT_ALGORITHM_IDENTIFIER *)pvData);
+        }
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    }
     default:
     {
         CRYPT_DATA_BLOB blob;
