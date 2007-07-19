@@ -168,7 +168,11 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
         LdrShutdownProcess();
         exit( code );
     }
-    else RtlExitUserThread( code );
+    else
+    {
+        RtlFreeThreadActivationContextStack();
+        RtlExitUserThread( code );
+    }
 }
 
 

@@ -135,3 +135,108 @@ void WINAPI RtlReleaseActivationContext( HANDLE handle )
 
     if ((actctx = check_actctx( handle ))) actctx_release( actctx );
 }
+
+
+/******************************************************************
+ *		RtlActivateActivationContext (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlActivateActivationContext( ULONG unknown, HANDLE handle, ULONG_PTR *cookie )
+{
+    RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
+
+    TRACE( "%p %p\n", handle, cookie );
+
+    if (!(frame = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*frame) )))
+        return STATUS_NO_MEMORY;
+
+    frame->Previous = NtCurrentTeb()->ActivationContextStack.ActiveFrame;
+    frame->ActivationContext = handle;
+    frame->Flags = 0;
+    NtCurrentTeb()->ActivationContextStack.ActiveFrame = frame;
+    RtlAddRefActivationContext( handle );
+
+    *cookie = (ULONG_PTR)frame;
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *		RtlDeactivateActivationContext (NTDLL.@)
+ */
+void WINAPI RtlDeactivateActivationContext( ULONG flags, ULONG_PTR cookie )
+{
+    RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame, *top;
+
+    TRACE( "%x %lx\n", flags, cookie );
+
+    /* find the right frame */
+    top = NtCurrentTeb()->ActivationContextStack.ActiveFrame;
+    for (frame = top; frame; frame = frame->Previous)
+        if ((ULONG_PTR)frame == cookie) break;
+
+    if (!frame)
+        RtlRaiseStatus( STATUS_SXS_INVALID_DEACTIVATION );
+
+    if (frame != top && !(flags & DEACTIVATE_ACTCTX_FLAG_FORCE_EARLY_DEACTIVATION))
+        RtlRaiseStatus( STATUS_SXS_EARLY_DEACTIVATION );
+
+    /* pop everything up to and including frame */
+    NtCurrentTeb()->ActivationContextStack.ActiveFrame = frame->Previous;
+
+    while (top != NtCurrentTeb()->ActivationContextStack.ActiveFrame)
+    {
+        frame = top->Previous;
+        RtlReleaseActivationContext( top->ActivationContext );
+        RtlFreeHeap( GetProcessHeap(), 0, top );
+        top = frame;
+    }
+}
+
+
+/******************************************************************
+ *		RtlFreeThreadActivationContextStack (NTDLL.@)
+ */
+void WINAPI RtlFreeThreadActivationContextStack(void)
+{
+    RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
+
+    frame = NtCurrentTeb()->ActivationContextStack.ActiveFrame;
+    while (frame)
+    {
+        RTL_ACTIVATION_CONTEXT_STACK_FRAME *prev = frame->Previous;
+        RtlReleaseActivationContext( frame->ActivationContext );
+        RtlFreeHeap( GetProcessHeap(), 0, frame );
+        frame = prev;
+    }
+    NtCurrentTeb()->ActivationContextStack.ActiveFrame = NULL;
+}
+
+
+/******************************************************************
+ *		RtlGetActiveActivationContext (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetActiveActivationContext( HANDLE *handle )
+{
+    if (NtCurrentTeb()->ActivationContextStack.ActiveFrame)
+    {
+        *handle = NtCurrentTeb()->ActivationContextStack.ActiveFrame->ActivationContext;
+        RtlAddRefActivationContext( *handle );
+    }
+    else
+        *handle = 0;
+
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************
+ *		RtlIsActivationContextActive (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlIsActivationContextActive( HANDLE handle )
+{
+    RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
+
+    for (frame = NtCurrentTeb()->ActivationContextStack.ActiveFrame; frame; frame = frame->Previous)
+        if (frame->ActivationContext == handle) return TRUE;
+    return FALSE;
+}

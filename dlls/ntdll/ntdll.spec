@@ -389,7 +389,7 @@
 @ stdcall RtlAcquirePebLock()
 @ stdcall RtlAcquireResourceExclusive(ptr long)
 @ stdcall RtlAcquireResourceShared(ptr long)
-@ stub RtlActivateActivationContext
+@ stdcall RtlActivateActivationContext(long ptr ptr)
 @ stub RtlActivateActivationContextEx
 @ stub RtlActivateActivationContextUnsafeFast
 @ stdcall RtlAddAccessAllowedAce(ptr long long ptr)
@@ -498,7 +498,7 @@
 @ stub RtlCustomCPToUnicodeN
 @ stub RtlCutoverTimeToSystemTime
 @ stdcall RtlDeNormalizeProcessParams(ptr)
-@ stub RtlDeactivateActivationContext
+@ stdcall RtlDeactivateActivationContext(long long)
 @ stub RtlDeactivateActivationContextUnsafeFast
 @ stub RtlDebugPrintTimes
 @ stdcall RtlDecodePointer(ptr)
@@ -604,13 +604,13 @@
 @ stdcall RtlFreeOemString(ptr)
 # @ stub RtlFreeRangeList
 @ stdcall RtlFreeSid (long)
-# @ stub RtlFreeThreadActivationContextStack
+@ stdcall RtlFreeThreadActivationContextStack()
 @ stdcall RtlFreeUnicodeString(ptr)
 @ stub RtlFreeUserThreadStack
 @ stdcall RtlGUIDFromString(ptr ptr)
 @ stub RtlGenerate8dot3Name
 @ stdcall RtlGetAce(ptr long ptr)
-# @ stub RtlGetActiveActivationContext
+@ stdcall RtlGetActiveActivationContext(ptr)
 @ stub RtlGetCallersAddress
 @ stub RtlGetCompressionWorkSpaceSize
 @ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr)
@@ -699,7 +699,7 @@
 # @ stub RtlIpv6StringToAddressExA
 # @ stub RtlIpv6StringToAddressExW
 # @ stub RtlIpv6StringToAddressW
-# @ stub RtlIsActivationContextActive
+@ stdcall RtlIsActivationContextActive(ptr)
 @ stdcall RtlIsDosDeviceName_U(wstr)
 @ stub RtlIsGenericTableEmpty
 # @ stub RtlIsGenericTableEmptyAvl

@@ -35,7 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(actctx);
 
 
 #define ACTCTX_FAKE_HANDLE ((HANDLE) 0xf00baa)
-#define ACTCTX_FAKE_COOKIE ((ULONG_PTR) 0xf00bad)
 
 /***********************************************************************
  * CreateActCtxA (KERNEL32.@)
@@ -140,19 +139,14 @@ HANDLE WINAPI CreateActCtxW(PCACTCTXW pActCtx)
  */
 BOOL WINAPI ActivateActCtx(HANDLE hActCtx, ULONG_PTR *ulCookie)
 {
-  static BOOL reported = FALSE;
+    NTSTATUS status;
 
-  if (reported)
-    TRACE("%p %p\n", hActCtx, ulCookie);
-  else
-  {
-    FIXME("%p %p\n", hActCtx, ulCookie);
-    reported = TRUE;
-  }
-
-  if (ulCookie)
-    *ulCookie = ACTCTX_FAKE_COOKIE;
-  return TRUE;
+    if ((status = RtlActivateActivationContext( 0, hActCtx, ulCookie )))
+    {
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /***********************************************************************
@@ -162,19 +156,8 @@ BOOL WINAPI ActivateActCtx(HANDLE hActCtx, ULONG_PTR *ulCookie)
  */
 BOOL WINAPI DeactivateActCtx(DWORD dwFlags, ULONG_PTR ulCookie)
 {
-  static BOOL reported = FALSE;
-
-  if (reported)
-    TRACE("%08x %08lx\n", dwFlags, ulCookie);
-  else
-  {
-    FIXME("%08x %08lx\n", dwFlags, ulCookie);
-    reported = TRUE;
-  }
-
-  if (ulCookie != ACTCTX_FAKE_COOKIE)
-    return FALSE;
-  return TRUE;
+    RtlDeactivateActivationContext( dwFlags, ulCookie );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -184,9 +167,14 @@ BOOL WINAPI DeactivateActCtx(DWORD dwFlags, ULONG_PTR ulCookie)
  */
 BOOL WINAPI GetCurrentActCtx(HANDLE* phActCtx)
 {
-  FIXME("%p\n", phActCtx);
-  *phActCtx = ACTCTX_FAKE_HANDLE;
-  return TRUE;
+    NTSTATUS status;
+
+    if ((status = RtlGetActiveActivationContext(phActCtx)))
+    {
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /***********************************************************************
