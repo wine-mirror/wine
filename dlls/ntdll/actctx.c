@@ -94,9 +94,38 @@ struct assembly_identity
     enum assembly_id_type type;
 };
 
+struct entity
+{
+    DWORD kind;
+    union
+    {
+        struct
+        {
+            WCHAR *tlbid;
+            WCHAR *version;
+            WCHAR *helpdir;
+	} typelib;
+        struct
+        {
+            WCHAR *clsid;
+	} comclass;
+	struct {
+            WCHAR *iid;
+            WCHAR *name;
+	} proxy;
+        struct
+        {
+            WCHAR *name;
+        } class;
+    } u;
+};
+
 struct dll_redirect
 {
     WCHAR                *name;
+    struct entity        *entities;
+    unsigned int          num_entities;
+    unsigned int          allocated_entities;
 };
 
 enum assembly_type
@@ -136,17 +165,25 @@ struct actctx_loader
 
 #define ASSEMBLY_ELEM                   "assembly"
 #define ASSEMBLYIDENTITY_ELEM           "assemblyIdentity"
+#define COMCLASS_ELEM                   "comClass"
+#define COMINTERFACEPROXYSTUB_ELEM      "comInterfaceProxyStub"
 #define DEPENDENCY_ELEM                 "dependency"
 #define DEPENDENTASSEMBLY_ELEM          "dependentAssembly"
 #define FILE_ELEM                       "file"
+#define TYPELIB_ELEM                    "typelib"
+#define WINDOWCLASS_ELEM                "windowClass"
 
 #define ELEM_END(elem) "/" elem
 
+#define CLSID_ATTR                      "clsid"
+#define HELPDIR_ATTR                    "helpdir"
+#define IID_ATTR                        "iid"
 #define MANIFESTVERSION_ATTR            "manifestVersion"
 #define NAME_ATTR                       "name"
+#define PROCESSORARCHITECTURE_ATTR      "processorArchitecture"
+#define TLBID_ATTR                      "tlbid"
 #define TYPE_ATTR                       "type"
 #define VERSION_ATTR                    "version"
-#define PROCESSORARCHITECTURE_ATTR      "processorArchitecture"
 #define XMLNS_ATTR                      "xmlns"
 
 #define MANIFEST_NAMESPACE              "urn:schemas-microsoft-com:asm.v1"
@@ -252,6 +289,58 @@ static void free_assembly_identity(struct assembly_identity *ai)
     RtlFreeHeap( GetProcessHeap(), 0, ai->arch );
 }
 
+static struct entity* add_entity(struct dll_redirect* dll, DWORD kind)
+{
+    struct entity*      entity;
+
+    if (dll->num_entities == dll->allocated_entities)
+    {
+        void *ptr;
+        unsigned int new_count;
+        if (dll->entities)
+        {
+            new_count = dll->allocated_entities * 2;
+            ptr = RtlReAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                     dll->entities, new_count * sizeof(*dll->entities) );
+        }
+        else
+        {
+            new_count = 4;
+            ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, new_count * sizeof(*dll->entities) );
+        }
+        if (!ptr) return NULL;
+        dll->entities = ptr;
+        dll->allocated_entities = new_count;
+    }
+    entity = &dll->entities[dll->num_entities++];
+    entity->kind = kind;
+    return entity;
+}
+
+static void free_entity(struct entity* entity)
+{
+    switch (entity->kind)
+    {
+    case ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION:
+        RtlFreeHeap(GetProcessHeap(), 0, entity->u.comclass.clsid);
+        break;
+    case ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION:
+        RtlFreeHeap(GetProcessHeap(), 0, entity->u.proxy.iid);
+        RtlFreeHeap(GetProcessHeap(), 0, entity->u.proxy.name);
+        break;
+    case ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION:
+        RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.tlbid);
+        RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.version);
+        RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.helpdir);
+        break;
+    case ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION:
+        RtlFreeHeap(GetProcessHeap(), 0, entity->u.class.name);
+        break;
+    default:
+        FIXME("Unknown entity kind %d\n", entity->kind);
+    }
+}
+
 static BOOL add_dependent_assembly_id(struct actctx_loader* acl,
                                       struct assembly_identity* ai)
 {
@@ -311,7 +400,7 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
 {
     if (interlocked_xchg_add( &actctx->ref_count, -1 ) == 1)
     {
-        unsigned int i, j;
+        unsigned int i, j, k;
 
         for (i = 0; i < actctx->num_assemblies; i++)
         {
@@ -319,6 +408,8 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
             for (j = 0; j < assembly->num_dlls; j++)
             {
                 struct dll_redirect *dll = &assembly->dlls[j];
+                for (k = 0; k < dll->num_entities; k++) free_entity(&dll->entities[k]);
+                RtlFreeHeap( GetProcessHeap(), 0, dll->entities );
                 RtlFreeHeap( GetProcessHeap(), 0, dll->name );
             }
             RtlFreeHeap( GetProcessHeap(), 0, assembly->dlls );
@@ -432,6 +523,19 @@ static BOOL parse_xml_header(xmlbuf_t* xmlbuf)
     return FALSE;
 }
 
+static BOOL parse_text_content(xmlbuf_t* xmlbuf, xmlstr_t* content)
+{
+    const char *ptr = memchr(xmlbuf->ptr, '<', xmlbuf->end - xmlbuf->ptr);
+
+    if (!ptr) return FALSE;
+
+    content->ptr = xmlbuf->ptr;
+    content->len = ptr - xmlbuf->ptr;
+    xmlbuf->ptr = ptr;
+
+    return TRUE;
+}
+
 static BOOL parse_version(const xmlstr_t *str, struct version *version)
 {
     unsigned int ver[4];
@@ -535,6 +639,128 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
     return parse_expect_elem(xmlbuf, ELEM_END(ASSEMBLYIDENTITY_ELEM)) && parse_end_element(xmlbuf);
 }
 
+static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
+{
+    xmlstr_t    attr_name, attr_value;
+    BOOL        end = FALSE, error;
+    struct entity*      entity;
+
+    entity = add_entity(dll, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION);
+
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, CLSID_ATTR))
+        {
+            if (!(entity->u.comclass.clsid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else
+        {
+            WARN("wrong attr %s=%s\n", debugstr_xmlstr(&attr_name),
+                 debugstr_xmlstr(&attr_value));
+            return FALSE;
+        }
+    }
+
+    if (error || end) return end;
+    return parse_expect_elem(xmlbuf, ELEM_END(COMCLASS_ELEM)) && parse_end_element(xmlbuf);
+}
+
+static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
+{
+    xmlstr_t    attr_name, attr_value;
+    BOOL        end = FALSE, error;
+    struct entity*      entity;
+
+    entity = add_entity(dll, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION);
+
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, IID_ATTR))
+        {
+            if (!(entity->u.proxy.iid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        if (xmlstr_cmp(&attr_name, NAME_ATTR))
+        {
+            if (!(entity->u.proxy.name = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else
+        {
+            WARN("wrong attr %s=%s\n", debugstr_xmlstr(&attr_name),
+                 debugstr_xmlstr(&attr_value));
+            return FALSE;
+        }
+    }
+
+    if (error || end) return end;
+    return parse_expect_elem(xmlbuf, ELEM_END(COMINTERFACEPROXYSTUB_ELEM)) && parse_end_element(xmlbuf);
+}
+
+static BOOL parse_typelib_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
+{
+    xmlstr_t    attr_name, attr_value;
+    BOOL        end = FALSE, error;
+    struct entity*      entity;
+
+    entity = add_entity(dll, ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION);
+
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, TLBID_ATTR))
+        {
+            if (!(entity->u.typelib.tlbid = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        if (xmlstr_cmp(&attr_name, VERSION_ATTR))
+        {
+            if (!(entity->u.typelib.version = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        if (xmlstr_cmp(&attr_name, HELPDIR_ATTR))
+        {
+            if (!(entity->u.typelib.helpdir = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else
+        {
+            WARN("wrong attr %s=%s\n", debugstr_xmlstr(&attr_name),
+                 debugstr_xmlstr(&attr_value));
+            return FALSE;
+        }
+    }
+
+    if (error || end) return end;
+    return parse_expect_elem(xmlbuf, ELEM_END(TYPELIB_ELEM)) && parse_end_element(xmlbuf);
+}
+
+static BOOL parse_window_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
+{
+    xmlstr_t    elem, content;
+    BOOL        end = FALSE, ret = TRUE;
+    struct entity*      entity;
+
+    entity = add_entity(dll, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION);
+
+    if (!parse_expect_no_attr(xmlbuf, &end)) return FALSE;
+    if (end) return FALSE;
+
+    if (!parse_text_content(xmlbuf, &content)) return FALSE;
+
+    if (!(entity->u.class.name = xmlstrdupW(&content))) return FALSE;
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp(&elem, ELEM_END(WINDOWCLASS_ELEM)))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else
+        {
+            WARN("wrong elem %s\n", debugstr_xmlstr(&elem));
+            ret = FALSE;
+        }
+    }
+
+    return ret;
+}
+
 static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf,
                                           struct actctx_loader* acl)
 {
@@ -632,6 +858,22 @@ static BOOL parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
         {
             ret = parse_end_element(xmlbuf);
             break;
+        }
+        else if (xmlstr_cmp(&elem, COMCLASS_ELEM))
+        {
+            ret = parse_com_class_elem(xmlbuf, dll);
+        }
+        else if (xmlstr_cmp(&elem, COMINTERFACEPROXYSTUB_ELEM))
+        {
+            ret = parse_cominterface_proxy_stub_elem(xmlbuf, dll);
+        }
+        else if (xmlstr_cmp(&elem, TYPELIB_ELEM))
+        {
+            ret = parse_typelib_elem(xmlbuf, dll);
+        }
+        else if (xmlstr_cmp(&elem, WINDOWCLASS_ELEM))
+        {
+            ret = parse_window_class_elem(xmlbuf, dll);
         }
         else
         {
