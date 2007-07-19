@@ -195,6 +195,7 @@ struct actctx_loader
 #define DEPENDENTASSEMBLY_ELEM          "dependentAssembly"
 #define DESCRIPTION_ELEM                "description"
 #define FILE_ELEM                       "file"
+#define HASH_ELEM                       "asmv2:hash"
 #define NOINHERIT_ELEM                  "noInherit"
 #define NOINHERITABLE_ELEM              "noInheritable"
 #define TYPELIB_ELEM                    "typelib"
@@ -643,6 +644,25 @@ static BOOL parse_end_element(xmlbuf_t *xmlbuf)
 {
     BOOL end = FALSE;
     return parse_expect_no_attr(xmlbuf, &end) && !end;
+}
+
+static BOOL parse_unknown_elem(xmlbuf_t *xmlbuf, const char *name)
+{
+    xmlstr_t attr_name, attr_value, elem;
+    BOOL end = FALSE, error, ret = TRUE;
+
+    while(next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end));
+    if(error || end) return end;
+
+    while(ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if(*elem.ptr == '/' && !strncmp(elem.ptr+1, name, elem.len-1))
+            break;
+        else
+            ret = parse_unknown_elem(xmlbuf, elem.ptr);
+    }
+
+    return ret && parse_end_element(xmlbuf);
 }
 
 static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* actctx,
@@ -1107,6 +1127,11 @@ static BOOL parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
         else if (xmlstr_cmp(&elem, COMINTERFACEPROXYSTUB_ELEM))
         {
             ret = parse_cominterface_proxy_stub_elem(xmlbuf, dll);
+        }
+        else if (xmlstr_cmp(&elem, HASH_ELEM))
+        {
+            WARN(HASH_ELEM " (undocumented) not supported\n");
+            ret = parse_unknown_elem(xmlbuf, HASH_ELEM);
         }
         else if (xmlstr_cmp(&elem, TYPELIB_ELEM))
         {
