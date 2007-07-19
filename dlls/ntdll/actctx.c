@@ -1174,7 +1174,6 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
 {
     xmlstr_t    attr_name, attr_value, elem;
     BOOL        end = FALSE, error, version = FALSE, xmlns = FALSE, ret = TRUE;
-    struct assembly_identity ai;
 
     TRACE("(%p)\n", xmlbuf);
 
@@ -1224,28 +1223,24 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
     else if (assembly->type == ASSEMBLY_MANIFEST && assembly->no_inherit)
         return FALSE;
 
-    if (!xmlstr_cmp(&elem, ASSEMBLYIDENTITY_ELEM))
+    if (xmlstr_cmp(&elem, ASSEMBLYIDENTITY_ELEM))
     {
-        WARN("expected assemblyIdentity element, got %s\n", debugstr_xmlstr(&elem));
-        return FALSE;
-    }
+        if (!parse_assembly_identity_elem(xmlbuf, acl->actctx, &assembly->id)) return FALSE;
+        ret = next_xml_elem(xmlbuf, &elem);
 
-    if (!parse_assembly_identity_elem(xmlbuf, acl->actctx, &ai)) return FALSE;
-
-    if (expected_ai)
-    {
-        /* FIXME: more tests */
-        if (assembly->type == ASSEMBLY_MANIFEST &&
-            memcmp(&ai.version, &expected_ai->version, sizeof(ai.version)))
+        if (expected_ai)
         {
-            WARN("wrong version\n");
-            return FALSE;
+            /* FIXME: more tests */
+            if (assembly->type == ASSEMBLY_MANIFEST &&
+                memcmp(&assembly->id.version, &expected_ai->version, sizeof(assembly->id.version)))
+            {
+                FIXME("wrong version\n");
+                return FALSE;
+            }
         }
     }
 
-    assembly->id = ai;
-
-    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    while (ret)
     {
         if (xmlstr_cmp(&elem, ELEM_END(ASSEMBLY_ELEM)))
         {
@@ -1281,6 +1276,7 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
             WARN("wrong element %s\n", debugstr_xmlstr(&elem));
             ret = FALSE;
         }
+        if (ret) ret = next_xml_elem(xmlbuf, &elem);
     }
 
     return ret;
