@@ -90,6 +90,7 @@ struct assembly_identity
 {
     WCHAR                *name;
     WCHAR                *arch;
+    WCHAR                *public_key;
     struct version        version;
     enum assembly_id_type type;
 };
@@ -181,6 +182,7 @@ struct actctx_loader
 #define MANIFESTVERSION_ATTR            "manifestVersion"
 #define NAME_ATTR                       "name"
 #define PROCESSORARCHITECTURE_ATTR      "processorArchitecture"
+#define PUBLICKEYTOKEN_ATTR             "publicKeyToken"
 #define TLBID_ATTR                      "tlbid"
 #define TYPE_ATTR                       "type"
 #define VERSION_ATTR                    "version"
@@ -287,6 +289,7 @@ static void free_assembly_identity(struct assembly_identity *ai)
 {
     RtlFreeHeap( GetProcessHeap(), 0, ai->name );
     RtlFreeHeap( GetProcessHeap(), 0, ai->arch );
+    RtlFreeHeap( GetProcessHeap(), 0, ai->public_key );
 }
 
 static struct entity* add_entity(struct dll_redirect* dll, DWORD kind)
@@ -626,6 +629,10 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
         else if (xmlstr_cmp(&attr_name, PROCESSORARCHITECTURE_ATTR))
         {
             if (!(ai->arch = xmlstrdupW(&attr_value))) return FALSE;
+        }
+        else if (xmlstr_cmp(&attr_name, PUBLICKEYTOKEN_ATTR))
+        {
+            if (!(ai->public_key = xmlstrdupW(&attr_value))) return FALSE;
         }
         else
         {
