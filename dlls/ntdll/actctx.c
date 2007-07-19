@@ -50,6 +50,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(actctx);
 
 #define ACTCTX_MAGIC       0xC07E3E11
 
+/* we don't want to include winuser.h */
+#define RT_MANIFEST                        ((ULONG_PTR)24)
+#define CREATEPROCESS_MANIFEST_RESOURCE_ID ((ULONG_PTR)1)
+
+typedef struct
+{
+    const char*         ptr;
+    const char*         end;
+} xmlbuf_t;
+
 struct file_info
 {
     ULONG               type;
@@ -93,6 +103,16 @@ typedef struct _ACTIVATION_CONTEXT
     unsigned int        num_assemblies;
     unsigned int        allocated_assemblies;
 } ACTIVATION_CONTEXT;
+
+struct actctx_loader
+{
+    ACTIVATION_CONTEXT       *actctx;
+    struct assembly_identity *dependencies;
+    unsigned int              num_dependencies;
+    unsigned int              allocated_dependencies;
+};
+
+static const WCHAR dotManifestW[] = {'.','m','a','n','i','f','e','s','t',0};
 
 
 static WCHAR *strdupW(const WCHAR* str)
@@ -177,6 +197,235 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
     }
 }
 
+static NTSTATUS parse_manifest( struct actctx_loader* acl, struct assembly_identity* ai,
+                                LPCWSTR filename, xmlbuf_t* xmlbuf )
+{
+    TRACE( "parsing manifest loaded from %s\n", debugstr_w(filename) );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS open_nt_file( HANDLE handle, UNICODE_STRING *name )
+{
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    return NtOpenFile( handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_ALERT );
+}
+
+static NTSTATUS get_module_filename( HMODULE module, UNICODE_STRING *str, unsigned int extra_len )
+{
+    NTSTATUS status;
+    ULONG magic;
+    LDR_MODULE *pldr;
+
+    LdrLockLoaderLock(0, NULL, &magic);
+    status = LdrFindEntryForAddress( module, &pldr );
+    if (status == STATUS_SUCCESS)
+    {
+        if ((str->Buffer = RtlAllocateHeap( GetProcessHeap(), 0,
+                                            pldr->FullDllName.Length + extra_len + sizeof(WCHAR) )))
+        {
+            memcpy( str->Buffer, pldr->FullDllName.Buffer, pldr->FullDllName.Length + sizeof(WCHAR) );
+            str->Length = pldr->FullDllName.Length;
+            str->MaximumLength = pldr->FullDllName.Length + extra_len + sizeof(WCHAR);
+        }
+        else status = STATUS_NO_MEMORY;
+    }
+    LdrUnlockLoaderLock(0, magic);
+    return status;
+}
+
+static NTSTATUS get_manifest_in_module( struct actctx_loader* acl, struct assembly_identity* ai,
+                                        LPCWSTR filename, HANDLE hModule, LPCWSTR resname, ULONG lang )
+{
+    NTSTATUS status;
+    UNICODE_STRING nameW;
+    LDR_RESOURCE_INFO info;
+    const IMAGE_RESOURCE_DATA_ENTRY* entry = NULL;
+    void *ptr;
+
+    TRACE( "looking for res %s in module %p %s\n", debugstr_w(resname), hModule, debugstr_w(filename) );
+
+    if (!resname) return STATUS_INVALID_PARAMETER;
+
+    info.Type = RT_MANIFEST;
+    info.Language = lang;
+    if (!((ULONG_PTR)resname >> 16))
+    {
+        info.Name = (ULONG_PTR)resname;
+        status = LdrFindResource_U(hModule, &info, 3, &entry);
+    }
+    else if (resname[0] == '#')
+    {
+        ULONG value;
+        RtlInitUnicodeString(&nameW, resname + 1);
+        if (RtlUnicodeStringToInteger(&nameW, 10, &value) != STATUS_SUCCESS || HIWORD(value))
+            return STATUS_INVALID_PARAMETER;
+        info.Name = value;
+        status = LdrFindResource_U(hModule, &info, 3, &entry);
+    }
+    else
+    {
+        RtlCreateUnicodeString(&nameW, resname);
+        RtlUpcaseUnicodeString(&nameW, &nameW, FALSE);
+        info.Name = (ULONG_PTR)nameW.Buffer;
+        status = LdrFindResource_U(hModule, &info, 3, &entry);
+        RtlFreeUnicodeString(&nameW);
+    }
+    if (status == STATUS_SUCCESS) status = LdrAccessResource(hModule, entry, &ptr, NULL);
+
+    if (status == STATUS_SUCCESS)
+    {
+        xmlbuf_t buf;
+        buf.ptr = ptr;
+        buf.end = buf.ptr + entry->Size;
+        status = parse_manifest(acl, ai, filename, &buf);
+    }
+    return status;
+}
+
+static NTSTATUS get_manifest_in_pe_file( struct actctx_loader* acl, struct assembly_identity* ai,
+                                         LPCWSTR filename, HANDLE file, LPCWSTR resname, ULONG lang )
+{
+    HANDLE              mapping;
+    OBJECT_ATTRIBUTES   attr;
+    LARGE_INTEGER       size;
+    LARGE_INTEGER       offset;
+    NTSTATUS            status;
+    SIZE_T              count;
+    void               *base;
+
+    TRACE( "looking for res %s in %s\n", debugstr_w(resname), debugstr_w(filename) );
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    size.QuadPart = 0;
+    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
+                              &attr, &size, PAGE_READONLY, SEC_COMMIT, file );
+    if (status != STATUS_SUCCESS) return status;
+
+    offset.QuadPart = 0;
+    count = 0;
+    base = NULL;
+    status = NtMapViewOfSection( mapping, GetCurrentProcess(), &base, 0, 0, &offset,
+                                 &count, ViewShare, 0, PAGE_READONLY );
+    NtClose( mapping );
+    if (status != STATUS_SUCCESS) return status;
+
+    if (RtlImageNtHeader(base)) /* we got a PE file */
+    {
+        HANDLE module = (HMODULE)((ULONG_PTR)base | 1);  /* make it a LOAD_LIBRARY_AS_DATAFILE handle */
+        status = get_manifest_in_module( acl, ai, filename, module, resname, lang );
+    }
+    else status = STATUS_INVALID_IMAGE_FORMAT;
+
+    NtUnmapViewOfSection( GetCurrentProcess(), base );
+    return status;
+}
+
+static NTSTATUS get_manifest_in_manifest_file( struct actctx_loader* acl, struct assembly_identity* ai,
+                                               LPCWSTR filename, HANDLE file )
+{
+    HANDLE              mapping;
+    OBJECT_ATTRIBUTES   attr;
+    LARGE_INTEGER       size;
+    LARGE_INTEGER       offset;
+    NTSTATUS            status;
+    SIZE_T              count;
+    void               *base;
+    xmlbuf_t            buf;
+
+    TRACE( "loading manifest file %s\n", debugstr_w(filename) );
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    size.QuadPart = 0;
+    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
+                              &attr, &size, PAGE_READONLY, SEC_COMMIT, file );
+    if (status != STATUS_SUCCESS) return status;
+
+    offset.QuadPart = 0;
+    count = 0;
+    base = NULL;
+    status = NtMapViewOfSection( mapping, GetCurrentProcess(), &base, 0, 0, &offset,
+                                 &count, ViewShare, 0, PAGE_READONLY );
+    NtClose( mapping );
+    if (status != STATUS_SUCCESS) return status;
+
+    buf.ptr = base;
+    buf.end = buf.ptr + count;
+    status = parse_manifest(acl, ai, filename, &buf);
+
+    NtUnmapViewOfSection( GetCurrentProcess(), base );
+    return status;
+}
+
+/* try to load the .manifest file associated to the file */
+static NTSTATUS get_manifest_in_associated_manifest( struct actctx_loader* acl, struct assembly_identity* ai,
+                                                     LPCWSTR filename, HMODULE module, LPCWSTR resname )
+{
+    static const WCHAR fmtW[] = { '.','%','l','u',0 };
+    WCHAR *buffer;
+    NTSTATUS status;
+    UNICODE_STRING nameW;
+    HANDLE file;
+    ULONG_PTR resid = CREATEPROCESS_MANIFEST_RESOURCE_ID;
+
+    if (!((ULONG_PTR)resname >> 16)) resid = (ULONG_PTR)resname & 0xffff;
+
+    TRACE( "looking for manifest associated with %s id %lu\n", debugstr_w(filename), resid );
+
+    if (module) /* use the module filename */
+    {
+        UNICODE_STRING name;
+
+        if (!(status = get_module_filename( module, &name, sizeof(dotManifestW) + 10*sizeof(WCHAR) )))
+        {
+            if (resid != 1) sprintfW( name.Buffer + strlenW(name.Buffer), fmtW, resid );
+            strcatW( name.Buffer, dotManifestW );
+            if (!RtlDosPathNameToNtPathName_U( name.Buffer, &nameW, NULL, NULL ))
+                status = STATUS_NO_SUCH_FILE;
+            RtlFreeUnicodeString( &name );
+        }
+        if (status) return status;
+    }
+    else
+    {
+        if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0,
+                                        (strlenW(filename) + 10) * sizeof(WCHAR) + sizeof(dotManifestW) )))
+            return STATUS_NO_MEMORY;
+        strcpyW( buffer, filename );
+        if (resid != 1) sprintfW( buffer + strlenW(buffer), fmtW, resid );
+        strcatW( buffer, dotManifestW );
+        RtlInitUnicodeString( &nameW, buffer );
+    }
+
+    status = open_nt_file( &file, &nameW );
+    if (status == STATUS_SUCCESS)
+    {
+        status = get_manifest_in_manifest_file( acl, ai, nameW.Buffer, file );
+        NtClose( file );
+    }
+    RtlFreeUnicodeString( &nameW );
+    return status;
+}
+
 
 /***********************************************************************
  * RtlCreateActivationContext (NTDLL.@)
@@ -189,7 +438,12 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
 {
     const ACTCTXW *pActCtx = ptr;  /* FIXME: not the right structure */
     ACTIVATION_CONTEXT *actctx;
+    UNICODE_STRING nameW;
     struct assembly *assembly;
+    ULONG lang = 0;
+    NTSTATUS status = STATUS_NO_MEMORY;
+    HANDLE file = 0;
+    struct actctx_loader acl;
 
     TRACE("%p %08x\n", pActCtx, pActCtx ? pActCtx->dwFlags : 0);
 
@@ -217,15 +471,80 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
     actctx->config.info = NULL;
     actctx->appdir.type = ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE;
     if (pActCtx->dwFlags & ACTCTX_FLAG_APPLICATION_NAME_VALID)
-        actctx->appdir.info = strdupW( pActCtx->lpApplicationName );
+    {
+        if (!(actctx->appdir.info = strdupW( pActCtx->lpApplicationName ))) goto error;
+    }
+    else
+    {
+        UNICODE_STRING dir;
+        WCHAR *p;
 
-    *handle = actctx;
-    return STATUS_SUCCESS;
+        if ((status = get_module_filename( NtCurrentTeb()->Peb->ImageBaseAddress, &dir, 0 )))
+            goto error;
+        if ((p = strrchrW( dir.Buffer, '\\' ))) *p = 0;
+        actctx->appdir.info = dir.Buffer;
+    }
+
+    nameW.Buffer = NULL;
+    if (pActCtx->lpSource)
+    {
+        if (!RtlDosPathNameToNtPathName_U(pActCtx->lpSource, &nameW, NULL, NULL))
+        {
+            status = STATUS_NO_SUCH_FILE;
+            goto error;
+        }
+        status = open_nt_file( &file, &nameW );
+        if (status)
+        {
+            RtlFreeUnicodeString( &nameW );
+            goto error;
+        }
+    }
+
+    acl.actctx = actctx;
+    acl.dependencies = NULL;
+    acl.num_dependencies = 0;
+    acl.allocated_dependencies = 0;
+
+    if (pActCtx->dwFlags & ACTCTX_FLAG_LANGID_VALID) lang = pActCtx->wLangId;
+
+    if (pActCtx->dwFlags & ACTCTX_FLAG_RESOURCE_NAME_VALID)
+    {
+        /* if we have a resource it's a PE file */
+        if (pActCtx->dwFlags & ACTCTX_FLAG_HMODULE_VALID)
+        {
+            status = get_manifest_in_module( &acl, NULL, NULL, pActCtx->hModule,
+                                             pActCtx->lpResourceName, lang );
+            if (status)
+                /* FIXME: what to do if pActCtx->lpSource is set */
+                status = get_manifest_in_associated_manifest( &acl, NULL, NULL, pActCtx->hModule,
+                                                              pActCtx->lpResourceName );
+        }
+        else if (pActCtx->lpSource)
+        {
+            status = get_manifest_in_pe_file( &acl, NULL, nameW.Buffer, file,
+                                              pActCtx->lpResourceName, lang );
+            if (status)
+                status = get_manifest_in_associated_manifest( &acl, NULL, nameW.Buffer, NULL,
+                                                              pActCtx->lpResourceName );
+        }
+        else status = STATUS_INVALID_PARAMETER;
+    }
+    else
+    {
+        status = get_manifest_in_manifest_file( &acl, NULL, nameW.Buffer, file );
+    }
+
+    if (file) NtClose( file );
+    RtlFreeUnicodeString( &nameW );
+    if (status == STATUS_SUCCESS) *handle = actctx;
+    else actctx_release( actctx );
+    return status;
 
 error:
-    RtlFreeHeap( GetProcessHeap(), 0, assembly );
-    RtlFreeHeap( GetProcessHeap(), 0, actctx );
-    return STATUS_NO_MEMORY;
+    if (file) NtClose( file );
+    actctx_release( actctx );
+    return status;
 }
 
 
