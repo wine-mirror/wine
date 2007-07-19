@@ -631,6 +631,24 @@ static BOOL CDecodeMsg_CopyData(CDecodeMsg *msg, const BYTE *pbData,
     return ret;
 }
 
+static BOOL CDecodeMsg_DecodeDataContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob)
+{
+    BOOL ret;
+    CRYPT_DATA_BLOB *data;
+    DWORD size;
+
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
+     blob->pbData, blob->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, (LPBYTE)&data,
+     &size);
+    if (ret)
+    {
+        ret = ContextPropertyList_SetProperty(msg->properties,
+         CMSG_CONTENT_PARAM, data->pbData, data->cbData);
+        LocalFree(data);
+    }
+    return ret;
+}
+
 /* Decodes the content in blob as the type given, and updates the value
  * (type, parameters, etc.) of msg based on what blob contains.
  * It doesn't just use msg's type, to allow a recursive call from an implicitly
@@ -645,21 +663,9 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
     switch (type)
     {
     case CMSG_DATA:
-    {
-        CRYPT_DATA_BLOB *data;
-
-        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
-         blob->pbData, blob->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
-         (LPBYTE)&data, &size);
-        if (ret)
-        {
-            ret = ContextPropertyList_SetProperty(msg->properties,
-             CMSG_CONTENT_PARAM, data->pbData, data->cbData);
-            LocalFree(data);
+        if ((ret = CDecodeMsg_DecodeDataContent(msg, blob)))
             msg->type = CMSG_DATA;
-        }
         break;
-    }
     case CMSG_HASHED:
     {
         CRYPT_DIGESTED_DATA *digestedData;
@@ -669,7 +675,24 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
          &size);
         if (ret)
         {
-            FIXME("need to store data for CMSG_HASHED\n");
+            msg->type = CMSG_HASHED;
+            ContextPropertyList_SetProperty(msg->properties,
+             CMSG_VERSION_PARAM, (const BYTE *)&digestedData->version,
+             sizeof(digestedData->version));
+            ContextPropertyList_SetProperty(msg->properties,
+             CMSG_INNER_CONTENT_TYPE_PARAM,
+             (const BYTE *)digestedData->ContentInfo.pszObjId,
+             digestedData->ContentInfo.pszObjId ?
+             strlen(digestedData->ContentInfo.pszObjId) + 1 : 0);
+            if (digestedData->ContentInfo.Content.cbData)
+                CDecodeMsg_DecodeDataContent(msg,
+                 &digestedData->ContentInfo.Content);
+            else
+                ContextPropertyList_SetProperty(msg->properties,
+                 CMSG_CONTENT_PARAM, NULL, 0);
+            ContextPropertyList_SetProperty(msg->properties,
+             CMSG_HASH_DATA_PARAM, digestedData->hash.pbData,
+             digestedData->hash.cbData);
             LocalFree(digestedData);
         }
         break;

@@ -1222,9 +1222,7 @@ static void test_decode_msg_get_param(void)
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ret = CryptMsgUpdate(msg, hashEmptyContent, sizeof(hashEmptyContent), TRUE);
-    todo_wine
     check_param("empty hash content", msg, CMSG_CONTENT_PARAM, NULL, 0);
-    todo_wine
     check_param("empty hash hash data", msg, CMSG_HASH_DATA_PARAM, NULL, 0);
     todo_wine
     check_param("empty hash computed hash", msg, CMSG_COMPUTED_HASH_PARAM,
@@ -1232,21 +1230,17 @@ static void test_decode_msg_get_param(void)
     CryptMsgClose(msg);
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ret = CryptMsgUpdate(msg, hashContent, sizeof(hashContent), TRUE);
-    todo_wine
     check_param("hash content", msg, CMSG_CONTENT_PARAM, msgData,
      sizeof(msgData));
-    todo_wine
     check_param("hash hash data", msg, CMSG_HASH_DATA_PARAM, hashParam,
      sizeof(hashParam));
     todo_wine
     check_param("hash computed hash", msg, CMSG_COMPUTED_HASH_PARAM,
      hashParam, sizeof(hashParam));
     size = strlen(szOID_RSA_data) + 1;
-    todo_wine
     check_param("hash inner OID", msg, CMSG_INNER_CONTENT_TYPE_PARAM,
      (const BYTE *)szOID_RSA_data, strlen(szOID_RSA_data) + 1);
     version = CMSG_HASHED_DATA_V0;
-    todo_wine
     check_param("hash version", msg, CMSG_VERSION_PARAM, (const BYTE *)&version,
      sizeof(version));
     CryptMsgClose(msg);
