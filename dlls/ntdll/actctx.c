@@ -134,6 +134,7 @@ struct actctx_loader
 #define MANIFESTVERSION_ATTR            "manifestVersion"
 #define NAME_ATTR                       "name"
 #define TYPE_ATTR                       "type"
+#define VERSION_ATTR                    "version"
 #define PROCESSORARCHITECTURE_ATTR      "processorArchitecture"
 #define XMLNS_ATTR                      "xmlns"
 
@@ -353,6 +354,38 @@ static BOOL parse_xml_header(xmlbuf_t* xmlbuf)
     return FALSE;
 }
 
+static BOOL parse_version(const xmlstr_t *str, struct version *version)
+{
+    unsigned int ver[4];
+    unsigned int pos;
+    const char *curr;
+
+    /* major.minor.build.revision */
+    ver[0] = ver[1] = ver[2] = ver[3] = pos = 0;
+    for (curr = str->ptr; curr < str->ptr + str->len; curr++)
+    {
+        if (*curr >= '0' && *curr <= '9')
+        {
+            ver[pos] = ver[pos] * 10 + *curr - '0';
+            if (ver[pos] >= 0x10000) goto error;
+        }
+        else if (*curr == '.')
+        {
+            if (++pos >= 4) goto error;
+        }
+        else goto error;
+    }
+    version->major = ver[0];
+    version->minor = ver[1];
+    version->build = ver[2];
+    version->revision = ver[3];
+    return TRUE;
+
+error:
+    FIXME( "Wrong version definition in manifest file (%s)\n", debugstr_xmlstr(str) );
+    return FALSE;
+}
+
 static BOOL parse_expect_elem(xmlbuf_t* xmlbuf, const char* name)
 {
     xmlstr_t    elem;
@@ -403,6 +436,10 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
                 return FALSE;
             }
             ai->type = TYPE_WIN32;
+        }
+        else if (xmlstr_cmp(&attr_name, VERSION_ATTR))
+        {
+            if (!parse_version(&attr_value, &ai->version)) return FALSE;
         }
         else if (xmlstr_cmp(&attr_name, PROCESSORARCHITECTURE_ATTR))
         {
