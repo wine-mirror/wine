@@ -330,8 +330,8 @@ static void DialogOpenFile(void)
 
     if(GetOpenFileNameW(&ofn))
     {
-        prompt_save_changes();
-        DoOpenFile(ofn.lpstrFile);
+        if(prompt_save_changes())
+            DoOpenFile(ofn.lpstrFile);
     }
 }
 
