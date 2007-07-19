@@ -3523,7 +3523,6 @@ HRESULT WINAPI VarCyFromR8(double dblIn, CY* pCyOut)
 
   if (result_fpstatus & 0x9) /* Overflow | Invalid */
     return DISP_E_OVERFLOW;
-  return S_OK;
 #else
   /* This version produces slightly different results for boundary cases */
   if (dblIn < -922337203685477.5807 || dblIn >= 922337203685477.5807)
