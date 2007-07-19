@@ -1531,7 +1531,9 @@ LRESULT WINAPI SetPathWordBreakProc(HWND hwnd, BOOL bSet)
 int WINAPI DrawShadowText(HDC hdc, LPCWSTR pszText, UINT cch, const RECT *pRect, DWORD dwFlags,
                           COLORREF crText, COLORREF crShadow, int ixOffset, int iyOffset)
 {
+    RECT rect = *pRect;
+
     FIXME("(%p, %s, %d, %p, %d, 0x%08x, 0x%08x, %d, %d): stub\n", hdc, debugstr_w(pszText), cch, pRect, dwFlags,
                                                                   crText, crShadow, ixOffset, iyOffset);
-    return DrawTextW(hdc, pszText, cch, (LPRECT)pRect, DT_LEFT);
+    return DrawTextW(hdc, pszText, cch, &rect, DT_LEFT);
 }
