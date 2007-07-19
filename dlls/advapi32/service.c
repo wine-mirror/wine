@@ -1448,8 +1448,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     service_set_dword( &val[n++], szStart, &dwStartType );
     service_set_dword( &val[n++], szError, &dwErrorControl );
 
-    if( lpBinaryPathName )
-        service_set_string( &val[n++], szImagePath, lpBinaryPathName );
+    service_set_string( &val[n++], szImagePath, lpBinaryPathName );
 
     if( lpLoadOrderGroup )
         service_set_string( &val[n++], szGroup, lpLoadOrderGroup );
