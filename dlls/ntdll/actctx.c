@@ -89,6 +89,7 @@ enum assembly_id_type
 struct assembly_identity
 {
     WCHAR                *name;
+    WCHAR                *arch;
     struct version        version;
     enum assembly_id_type type;
 };
@@ -133,6 +134,7 @@ struct actctx_loader
 #define MANIFESTVERSION_ATTR            "manifestVersion"
 #define NAME_ATTR                       "name"
 #define TYPE_ATTR                       "type"
+#define PROCESSORARCHITECTURE_ATTR      "processorArchitecture"
 #define XMLNS_ATTR                      "xmlns"
 
 #define MANIFEST_NAMESPACE              "urn:schemas-microsoft-com:asm.v1"
@@ -211,6 +213,7 @@ static struct assembly *add_assembly(ACTIVATION_CONTEXT *actctx, enum assembly_t
 static void free_assembly_identity(struct assembly_identity *ai)
 {
     RtlFreeHeap( GetProcessHeap(), 0, ai->name );
+    RtlFreeHeap( GetProcessHeap(), 0, ai->arch );
 }
 
 static ACTIVATION_CONTEXT *check_actctx( HANDLE h )
@@ -400,6 +403,10 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
                 return FALSE;
             }
             ai->type = TYPE_WIN32;
+        }
+        else if (xmlstr_cmp(&attr_name, PROCESSORARCHITECTURE_ATTR))
+        {
+            if (!(ai->arch = xmlstrdupW(&attr_value))) return FALSE;
         }
         else
         {
