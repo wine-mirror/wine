@@ -359,6 +359,7 @@ MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
 MMRESULT WINAPI timeKillEvent(UINT wID)
 {
     WINE_TIMERENTRY *lpSelf = NULL, *lpTimer;
+    DWORD wFlags;
 
     TRACE("(%u)\n", wID);
     EnterCriticalSection(&WINMM_cs);
@@ -378,10 +379,11 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
         WARN("wID=%u is not a valid timer ID\n", wID);
         return MMSYSERR_INVALPARAM;
     }
-    if (lpSelf->wFlags & TIME_KILL_SYNCHRONOUS)
+    wFlags = lpSelf->wFlags;
+    if (wFlags & TIME_KILL_SYNCHRONOUS)
         EnterCriticalSection(&TIME_cbcrst);
     HeapFree(GetProcessHeap(), 0, lpSelf);
-    if (lpSelf->wFlags & TIME_KILL_SYNCHRONOUS)
+    if (wFlags & TIME_KILL_SYNCHRONOUS)
         LeaveCriticalSection(&TIME_cbcrst);
     return TIMERR_NOERROR;
 }
