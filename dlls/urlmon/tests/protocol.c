@@ -54,6 +54,12 @@
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CHECK_NOT_CALLED(func) \
+    do { \
+        ok(!called_ ## func, "unexpected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
 #define CLEAR_CALLED(func) \
     expect_ ## func = called_ ## func = FALSE
 
@@ -89,7 +95,7 @@ static const WCHAR index_url[] =
 static HRESULT expect_hrResult;
 static LPCWSTR file_name, http_url, expect_wsz;
 static IInternetProtocol *http_protocol = NULL;
-static BOOL first_data_notif = FALSE;
+static BOOL first_data_notif = FALSE, http_is_first = FALSE;
 static HWND protocol_hwnd;
 static int state = 0;
 static DWORD bindf = 0;
@@ -1048,9 +1054,11 @@ static void test_file_protocol(void) {
 
 static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
 {
+    static BOOL got_user_agent = FALSE;
     HRESULT hres;
 
     first_data_notif = TRUE;
+    state = 0;
 
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(GetBindString_USER_AGENT);
@@ -1065,7 +1073,16 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
         return FALSE;
 
     CHECK_CALLED(GetBindInfo);
-    CHECK_CALLED(GetBindString_USER_AGENT);
+    if (!got_user_agent)
+    {
+        CHECK_CALLED(GetBindString_USER_AGENT);
+        got_user_agent = TRUE;
+    }
+    else todo_wine
+    {
+        /* user agent only retrieved once, even with different URLs */
+        CHECK_NOT_CALLED(GetBindString_USER_AGENT);
+    }
     CHECK_CALLED(GetBindString_ACCEPT_MIMES);
     CHECK_CALLED(QueryService_HttpNegotiate);
     CHECK_CALLED(BeginningTransaction);
@@ -1075,7 +1092,9 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
     return TRUE;
 }
 
-static void test_http_protocol_url(LPCWSTR url)
+/* is_first refers to whether this is the first call to this function
+ * _for this url_ */
+static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
 {
     IInternetProtocolInfo *protocol_info;
     IClassFactory *factory;
@@ -1084,6 +1103,7 @@ static void test_http_protocol_url(LPCWSTR url)
 
     trace("Testing http protocol...\n");
     http_url = url;
+    http_is_first = is_first;
 
     hres = CoGetClassObject(&CLSID_HttpProtocol, CLSCTX_INPROC_SERVER, NULL,
             &IID_IUnknown, (void**)&unk);
@@ -1118,7 +1138,7 @@ static void test_http_protocol_url(LPCWSTR url)
         SET_EXPECT(ReportProgress_CONNECTING);
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
 
-        if(!http_protocol_start(url, TRUE))
+        if(!http_protocol_start(url, is_first))
             return;
 
         hres = IInternetProtocol_Read(http_protocol, buf, 2, &cb);
@@ -1147,7 +1167,8 @@ static void test_http_protocol(void)
             'o','r','g','/','s','i','t','e','/','a','b','o','u','t',0};
 
     tested_protocol = HTTP_TEST;
-    test_http_protocol_url(winehq_url);
+    test_http_protocol_url(winehq_url, TRUE);
+    test_http_protocol_url(winehq_url, FALSE);
 
 }
 
@@ -1160,8 +1181,16 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
         SET_EXPECT(ReportData);
         if(!state) {
-            CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
-            CHECK_CALLED(ReportProgress_CONNECTING);
+            if (http_is_first)
+            {
+                CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
+                CHECK_CALLED(ReportProgress_CONNECTING);
+            }
+            else todo_wine
+            {
+                CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
+                CHECK_NOT_CALLED(ReportProgress_CONNECTING);
+            }
             CHECK_CALLED(ReportProgress_SENDINGREQUEST);
 
             SET_EXPECT(OnResponse);
