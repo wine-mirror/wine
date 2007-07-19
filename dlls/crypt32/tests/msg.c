@@ -1224,7 +1224,6 @@ static void test_decode_msg_get_param(void)
     ret = CryptMsgUpdate(msg, hashEmptyContent, sizeof(hashEmptyContent), TRUE);
     check_param("empty hash content", msg, CMSG_CONTENT_PARAM, NULL, 0);
     check_param("empty hash hash data", msg, CMSG_HASH_DATA_PARAM, NULL, 0);
-    todo_wine
     check_param("empty hash computed hash", msg, CMSG_COMPUTED_HASH_PARAM,
      emptyHashParam, sizeof(emptyHashParam));
     CryptMsgClose(msg);
@@ -1234,7 +1233,6 @@ static void test_decode_msg_get_param(void)
      sizeof(msgData));
     check_param("hash hash data", msg, CMSG_HASH_DATA_PARAM, hashParam,
      sizeof(hashParam));
-    todo_wine
     check_param("hash computed hash", msg, CMSG_COMPUTED_HASH_PARAM,
      hashParam, sizeof(hashParam));
     size = strlen(szOID_RSA_data) + 1;
