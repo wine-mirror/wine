@@ -1535,6 +1535,146 @@ static NTSTATUS get_manifest_in_associated_manifest( struct actctx_loader* acl, 
     return status;
 }
 
+static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
+{
+    static const WCHAR lookup_fmtW[] =
+        {'%','s','_','%','s','_','%','s','_','%','u','.','%','u','.','*','.','*','_',
+         '*', /* FIXME */
+         '.','m','a','n','i','f','e','s','t',0};
+
+    WCHAR *lookup, *ret = NULL;
+    UNICODE_STRING lookup_us;
+    IO_STATUS_BLOCK io;
+    unsigned int data_pos = 0, data_len;
+    char buffer[8192];
+
+    if (!(lookup = RtlAllocateHeap( GetProcessHeap(), 0,
+                                    (strlenW(ai->arch) + strlenW(ai->name)
+                                     + strlenW(ai->public_key) + 20) * sizeof(WCHAR)
+                                    + sizeof(lookup_fmtW) )))
+        return NULL;
+
+    sprintfW( lookup, lookup_fmtW, ai->arch, ai->name, ai->public_key, ai->version.major, ai->version.minor);
+    RtlInitUnicodeString( &lookup_us, lookup );
+
+    NtQueryDirectoryFile( dir, 0, NULL, NULL, &io, buffer, sizeof(buffer),
+                          FileBothDirectoryInformation, FALSE, &lookup_us, TRUE );
+    if (io.u.Status == STATUS_SUCCESS)
+    {
+        FILE_BOTH_DIR_INFORMATION *dir_info;
+        WCHAR *tmp;
+        ULONG build, revision;
+
+        data_len = io.Information;
+
+        for (;;)
+        {
+            if (data_pos >= data_len)
+            {
+                NtQueryDirectoryFile( dir, 0, NULL, NULL, &io, buffer, sizeof(buffer),
+                                      FileBothDirectoryInformation, FALSE, &lookup_us, FALSE );
+                if (io.u.Status != STATUS_SUCCESS) break;
+                data_len = io.Information;
+                data_pos = 0;
+            }
+            dir_info = (FILE_BOTH_DIR_INFORMATION*)(buffer + data_pos);
+
+            if (dir_info->NextEntryOffset) data_pos += dir_info->NextEntryOffset;
+            else data_pos = data_len;
+
+            tmp = (WCHAR *)dir_info->FileName + (strchrW(lookup, '*') - lookup);
+            build = atoiW(tmp);
+            if (build < ai->version.build) continue;
+            tmp = strchrW(tmp, '.') + 1;
+            revision = atoiW(tmp);
+            if (build == ai->version.build && revision < ai->version.revision)
+                continue;
+            ai->version.build = build;
+            ai->version.revision = revision;
+            if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, dir_info->FileNameLength + sizeof(WCHAR) )))
+            {
+                memcpy( ret, dir_info->FileName, dir_info->FileNameLength );
+                ret[dir_info->FileNameLength/sizeof(WCHAR)] = 0;
+            }
+            break;
+        }
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, lookup );
+    return ret;
+}
+
+static NTSTATUS lookup_winsxs(struct actctx_loader* acl, struct assembly_identity* ai)
+{
+    struct assembly_identity    sxs_ai;
+    UNICODE_STRING              path_us;
+    OBJECT_ATTRIBUTES           attr;
+    IO_STATUS_BLOCK             io;
+    WCHAR *path, *file = NULL;
+    HANDLE handle;
+
+    static const WCHAR manifest_dirW[] =
+        {'\\','w','i','n','s','x','s','\\','m','a','n','i','f','e','s','t','s',0};
+
+    if (!ai->arch || !ai->name || !ai->public_key) return STATUS_NO_SUCH_FILE;
+
+    if (!(path = RtlAllocateHeap( GetProcessHeap(), 0, windows_dir.Length + sizeof(manifest_dirW) )))
+        return STATUS_NO_MEMORY;
+
+    memcpy( path, windows_dir.Buffer, windows_dir.Length );
+    memcpy( path + windows_dir.Length/sizeof(WCHAR), manifest_dirW, sizeof(manifest_dirW) );
+
+    if (!RtlDosPathNameToNtPathName_U( path, &path_us, NULL, NULL ))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, path );
+        return STATUS_NO_SUCH_FILE;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, path );
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &path_us;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (!NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                     FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT ))
+    {
+        sxs_ai = *ai;
+        file = lookup_manifest_file( handle, &sxs_ai );
+        NtClose( handle );
+    }
+    if (!file)
+    {
+        RtlFreeUnicodeString( &path_us );
+        return STATUS_NO_SUCH_FILE;
+    }
+
+    /* append file name to directory path */
+    if (!(path = RtlReAllocateHeap( GetProcessHeap(), 0, path_us.Buffer,
+                                    path_us.Length + (strlenW(file) + 2) * sizeof(WCHAR) )))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, file );
+        RtlFreeUnicodeString( &path_us );
+        return STATUS_NO_MEMORY;
+    }
+
+    path[path_us.Length/sizeof(WCHAR)] = '\\';
+    strcpyW( path + path_us.Length/sizeof(WCHAR) + 1, file );
+    RtlFreeHeap( GetProcessHeap(), 0, file );
+    RtlInitUnicodeString( &path_us, path );
+
+    if (!open_nt_file( &handle, &path_us ))
+    {
+        io.u.Status = get_manifest_in_manifest_file(acl, &sxs_ai, path_us.Buffer, handle);
+        NtClose( handle );
+    }
+    else io.u.Status = STATUS_NO_SUCH_FILE;
+
+    RtlFreeUnicodeString( &path_us );
+    return io.u.Status;
+}
+
 static NTSTATUS lookup_assembly(struct actctx_loader* acl,
                                 struct assembly_identity* ai)
 {
@@ -1544,6 +1684,8 @@ static NTSTATUS lookup_assembly(struct actctx_loader* acl,
     NTSTATUS status;
     UNICODE_STRING nameW;
     HANDLE file;
+
+    if ((status = lookup_winsxs(acl, ai)) != STATUS_NO_SUCH_FILE) return status;
 
     /* FIXME: add support for language specific lookup */
 
