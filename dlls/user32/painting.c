@@ -527,6 +527,18 @@ HWND WINAPI WindowFromDC( HDC hDC )
 
 /***********************************************************************
  *		LockWindowUpdate (USER32.@)
+ *
+ * Enables or disables painting in the chosen window.
+ *
+ * PARAMS
+ *  hwnd [I] handle to a window.
+ *
+ * RETURNS
+ *  If successful, returns nonzero value. Otherwise,
+ *  returns 0.
+ *
+ * NOTES
+ *  You can lock only one window at a time.
  */
 BOOL WINAPI LockWindowUpdate( HWND hwnd )
 {
