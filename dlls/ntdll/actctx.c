@@ -94,6 +94,7 @@ struct assembly_identity
     WCHAR                *language;
     struct version        version;
     enum assembly_id_type type;
+    BOOL                  optional;
 };
 
 struct entity
@@ -213,6 +214,7 @@ struct actctx_loader
 #define NAME_ATTR                       "name"
 #define NEWVERSION_ATTR                 "newVersion"
 #define OLDVERSION_ATTR                 "oldVersion"
+#define OPTIONAL_ATTR                   "optional"
 #define PROCESSORARCHITECTURE_ATTR      "processorArchitecture"
 #define PUBLICKEYTOKEN_ATTR             "publicKeyToken"
 #define TLBID_ATTR                      "tlbid"
@@ -690,7 +692,6 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
 
     TRACE("\n");
 
-    memset(ai, 0, sizeof(*ai));
     while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
     {
         if (xmlstr_cmp(&attr_name, NAME_ATTR))
@@ -1008,8 +1009,7 @@ static BOOL parse_clr_surrogate_elem(xmlbuf_t* xmlbuf, struct assembly* assembly
     return parse_expect_elem(xmlbuf, ELEM_END(CLRSURROGATE_ELEM)) && parse_end_element(xmlbuf);
 }
 
-static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf,
-                                          struct actctx_loader* acl)
+static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl, BOOL optional)
 {
     struct assembly_identity    ai;
     xmlstr_t                    elem;
@@ -1018,6 +1018,9 @@ static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf,
     TRACE("\n");
 
     if (!parse_expect_no_attr(xmlbuf, &end) || end) return end;
+
+    memset(&ai, 0, sizeof(ai));
+    ai.optional = optional;
 
     if (!parse_expect_elem(xmlbuf, ASSEMBLYIDENTITY_ELEM) ||
         !parse_assembly_identity_elem(xmlbuf, acl->actctx, &ai))
@@ -1049,12 +1052,23 @@ static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf,
 
 static BOOL parse_dependency_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl)
 {
-    xmlstr_t elem;
-    BOOL end = FALSE, ret = TRUE;
+    xmlstr_t attr_name, attr_value, elem;
+    BOOL end = FALSE, ret = TRUE, error, optional = FALSE;
 
     TRACE("\n");
 
-    if (!parse_expect_no_attr(xmlbuf, &end) || end) return end;
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, OPTIONAL_ATTR))
+        {
+            optional = xmlstr_cmp( &attr_value, "yes" );
+            TRACE("optional=%s\n", debugstr_xmlstr(&attr_value));
+        }
+        else
+        {
+            WARN("unknown attr %s=%s\n", debugstr_xmlstr(&attr_name), debugstr_xmlstr(&attr_value));
+        }
+    }
 
     while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
     {
@@ -1065,7 +1079,7 @@ static BOOL parse_dependency_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl)
         }
         else if (xmlstr_cmp(&elem, DEPENDENTASSEMBLY_ELEM))
         {
-            ret = parse_dependent_assembly_elem(xmlbuf, acl);
+            ret = parse_dependent_assembly_elem(xmlbuf, acl, optional);
         }
         else
         {
@@ -1760,9 +1774,12 @@ static NTSTATUS parse_depend_manifests(struct actctx_loader* acl)
     {
         if (lookup_assembly(acl, &acl->dependencies[i]) != STATUS_SUCCESS)
         {
-            FIXME( "Could not find assembly %s\n", debugstr_w(acl->dependencies[i].name) );
-            status = STATUS_SXS_CANT_GEN_ACTCTX;
-            break;
+            if (!acl->dependencies[i].optional)
+            {
+                FIXME( "Could not find dependent assembly %s\n", debugstr_w(acl->dependencies[i].name) );
+                status = STATUS_SXS_CANT_GEN_ACTCTX;
+                break;
+            }
         }
     }
     /* FIXME should now iterate through all refs */
