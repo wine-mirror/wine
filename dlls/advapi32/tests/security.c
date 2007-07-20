@@ -1758,7 +1758,7 @@ static void test_GetNamedSecurityInfoA(void)
     ok(group != NULL, "group should not be NULL\n");
 }
 
-static void test_ConvertSecurityStringSecurityDescriptor(void)
+static void test_ConvertStringSecurityDescriptor(void)
 {
     BOOL ret;
     PSECURITY_DESCRIPTOR pSD;
@@ -1877,5 +1877,5 @@ START_TEST(security)
     test_impersonation_level();
     test_SetEntriesInAcl();
     test_GetNamedSecurityInfoA();
-    test_ConvertSecurityStringSecurityDescriptor();
+    test_ConvertStringSecurityDescriptor();
 }
