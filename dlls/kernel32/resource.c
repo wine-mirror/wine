@@ -968,7 +968,7 @@ static void *address_from_rva( void *base, DWORD mapping_size, DWORD rva, DWORD 
         return NULL;
 
     if (rva + len <= (DWORD)sec->VirtualAddress + sec->SizeOfRawData)
-        return (void*)((const BYTE*) base + (sec->PointerToRawData + rva - sec->VirtualAddress));
+        return (void*)((LPBYTE) base + (sec->PointerToRawData + rva - sec->VirtualAddress));
 
     return NULL;
 }
