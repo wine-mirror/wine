@@ -67,8 +67,6 @@ static DWORD gdip_to_gdi_join(GpLineJoin join)
 
 GpStatus WINGDIPAPI GdipClonePen(GpPen *pen, GpPen **clonepen)
 {
-    LOGBRUSH lb;
-
     if(!pen || !clonepen)
         return InvalidParameter;
 
@@ -77,12 +75,13 @@ GpStatus WINGDIPAPI GdipClonePen(GpPen *pen, GpPen **clonepen)
 
     memcpy(*clonepen, pen, sizeof(GpPen));
 
-    lb.lbStyle = BS_SOLID;
-    lb.lbColor = (*clonepen)->color;
-    lb.lbHatch = 0;
+    GdipCloneCustomLineCap(pen->customstart, &(*clonepen)->customstart);
+    GdipCloneCustomLineCap(pen->customend, &(*clonepen)->customend);
+    GdipCloneBrush(pen->brush, &(*clonepen)->brush);
 
     (*clonepen)->gdipen = ExtCreatePen((*clonepen)->style,
-                                       roundr((*clonepen)->width), &lb, 0, NULL);
+                                       roundr((*clonepen)->width),
+                                       &(*clonepen)->brush->lb, 0, NULL);
 
     return Ok;
 }
