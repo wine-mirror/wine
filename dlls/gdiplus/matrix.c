@@ -93,6 +93,29 @@ GpStatus WINGDIPAPI GdipMultiplyMatrix(GpMatrix *matrix, GpMatrix* matrix2,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipScaleMatrix(GpMatrix *matrix, REAL scaleX, REAL scaleY,
+    GpMatrixOrder order)
+{
+    REAL scale[6];
+
+    if(!matrix)
+        return InvalidParameter;
+
+    scale[0] = scaleX;
+    scale[1] = 0.0;
+    scale[2] = 0.0;
+    scale[3] = scaleY;
+    scale[4] = 0.0;
+    scale[5] = 0.0;
+
+    if(order == MatrixOrderAppend)
+        matrix_multiply(matrix->matrix, scale, matrix->matrix);
+    else
+        matrix_multiply(scale, matrix->matrix, matrix->matrix);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipTransformMatrixPoints(GpMatrix *matrix, GpPointF *pts,
                                               INT count)
 {

@@ -477,7 +477,7 @@
 @ stub GdipSaveImageToFile
 @ stub GdipSaveImageToStream
 @ stub GdipScaleLineTransform
-@ stub GdipScaleMatrix
+@ stdcall GdipScaleMatrix(ptr long long long)
 @ stub GdipScalePathGradientTransform
 @ stub GdipScalePenTransform
 @ stub GdipScaleTextureTransform
