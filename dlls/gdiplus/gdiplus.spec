@@ -98,7 +98,7 @@
 @ stdcall GdipCreateMatrix2(long long long long long long ptr)
 @ stub GdipCreateMatrix3
 @ stub GdipCreateMatrix3I
-@ stub GdipCreateMatrix
+@ stdcall GdipCreateMatrix(ptr)
 @ stub GdipCreateMetafileFromEmf
 @ stub GdipCreateMetafileFromFile
 @ stub GdipCreateMetafileFromStream

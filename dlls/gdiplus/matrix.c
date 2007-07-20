@@ -70,6 +70,24 @@ GpStatus WINGDIPAPI GdipCreateMatrix2(REAL m11, REAL m12, REAL m21, REAL m22,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreateMatrix(GpMatrix **matrix)
+{
+    if(!matrix)
+        return InvalidParameter;
+
+    *matrix = GdipAlloc(sizeof(GpMatrix));
+    if(!*matrix)    return OutOfMemory;
+
+    (*matrix)->matrix[0] = 1.0;
+    (*matrix)->matrix[1] = 0.0;
+    (*matrix)->matrix[2] = 0.0;
+    (*matrix)->matrix[3] = 1.0;
+    (*matrix)->matrix[4] = 0.0;
+    (*matrix)->matrix[5] = 0.0;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipDeleteMatrix(GpMatrix *matrix)
 {
     if(!matrix)
