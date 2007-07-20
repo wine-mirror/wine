@@ -21,6 +21,21 @@
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 
+GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
+{
+    if(!brush || !clone)
+        return InvalidParameter;
+
+    *clone = GdipAlloc(sizeof(GpBrush));
+    if (!*clone) return OutOfMemory;
+
+    memcpy(*clone, brush, sizeof(GpBrush));
+
+    (*clone)->gdibrush = CreateBrushIndirect(&(*clone)->lb);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
 {
     COLORREF col = ARGB2COLORREF(color);

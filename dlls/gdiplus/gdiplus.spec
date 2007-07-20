@@ -43,7 +43,7 @@
 @ stub GdipClearPathMarkers
 @ stub GdipCloneBitmapArea
 @ stub GdipCloneBitmapAreaI
-@ stub GdipCloneBrush
+@ stdcall GdipCloneBrush(ptr ptr)
 @ stdcall GdipCloneCustomLineCap(ptr ptr)
 @ stub GdipCloneFont
 @ stub GdipCloneFontFamily
