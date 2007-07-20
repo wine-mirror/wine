@@ -544,8 +544,8 @@
 @ stub GdipSetPenBrushFill
 @ stub GdipSetPenColor
 @ stub GdipSetPenCompoundArray
-@ stub GdipSetPenCustomEndCap
-@ stub GdipSetPenCustomStartCap
+@ stdcall GdipSetPenCustomEndCap(ptr ptr)
+@ stdcall GdipSetPenCustomStartCap(ptr ptr)
 @ stub GdipSetPenDashArray
 @ stub GdipSetPenDashCap197819
 @ stub GdipSetPenDashOffset

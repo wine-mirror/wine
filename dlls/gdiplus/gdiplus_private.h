@@ -49,6 +49,8 @@ struct GpPen{
     GpLineCap endcap;
     GpLineCap startcap;
     GpDashCap dashcap;
+    GpCustomLineCap *customstart;
+    GpCustomLineCap *customend;
     GpLineJoin join;
     REAL miterlimit;
     GpDashStyle dash;

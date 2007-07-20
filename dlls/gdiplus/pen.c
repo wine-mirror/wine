@@ -130,6 +130,9 @@ GpStatus WINGDIPAPI GdipDeletePen(GpPen *pen)
 {
     if(!pen)    return InvalidParameter;
     DeleteObject(pen->gdipen);
+
+    GdipDeleteCustomLineCap(pen->customstart);
+    GdipDeleteCustomLineCap(pen->customend);
     GdipFree(pen);
 
     return Ok;
@@ -143,6 +146,38 @@ GpStatus WINGDIPAPI GdipGetPenDashStyle(GpPen *pen, GpDashStyle *dash)
     *dash = pen->dash;
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetPenCustomEndCap(GpPen *pen, GpCustomLineCap* customCap)
+{
+    GpCustomLineCap * cap;
+    GpStatus ret;
+
+    if(!pen || !customCap) return InvalidParameter;
+
+    if((ret = GdipCloneCustomLineCap(customCap, &cap)) == Ok){
+        GdipDeleteCustomLineCap(pen->customend);
+        pen->endcap = LineCapCustom;
+        pen->customend = cap;
+    }
+
+    return ret;
+}
+
+GpStatus WINGDIPAPI GdipSetPenCustomStartCap(GpPen *pen, GpCustomLineCap* customCap)
+{
+    GpCustomLineCap * cap;
+    GpStatus ret;
+
+    if(!pen || !customCap) return InvalidParameter;
+
+    if((ret = GdipCloneCustomLineCap(customCap, &cap)) == Ok){
+        GdipDeleteCustomLineCap(pen->customstart);
+        pen->startcap = LineCapCustom;
+        pen->customstart = cap;
+    }
+
+    return ret;
 }
 
 GpStatus WINGDIPAPI GdipSetPenDashStyle(GpPen *pen, GpDashStyle dash)
@@ -171,6 +206,9 @@ GpStatus WINGDIPAPI GdipSetPenEndCap(GpPen *pen, GpLineCap cap)
 {
     if(!pen)    return InvalidParameter;
 
+    /* The old custom cap gets deleted even if the new style is LineCapCustom. */
+    GdipDeleteCustomLineCap(pen->customend);
+    pen->customend = NULL;
     pen->endcap = cap;
 
     return Ok;
@@ -182,6 +220,11 @@ GpStatus WINGDIPAPI GdipSetPenLineCap197819(GpPen *pen, GpLineCap start,
 {
     if(!pen)
         return InvalidParameter;
+
+    GdipDeleteCustomLineCap(pen->customend);
+    GdipDeleteCustomLineCap(pen->customstart);
+    pen->customend = NULL;
+    pen->customstart = NULL;
 
     pen->startcap = start;
     pen->endcap = end;
