@@ -90,6 +90,7 @@ GpStatus WINGDIPAPI GdipDeleteMatrix(GpMatrix*);
 GpStatus WINGDIPAPI GdipMultiplyMatrix(GpMatrix*,GpMatrix*,GpMatrixOrder);
 GpStatus WINGDIPAPI GdipScaleMatrix(GpMatrix*,REAL,REAL,GpMatrixOrder);
 GpStatus WINGDIPAPI GdipTransformMatrixPoints(GpMatrix*,GpPointF*,INT);
+GpStatus WINGDIPAPI GdipTranslateMatrix(GpMatrix*,REAL,REAL,GpMatrixOrder);
 
 GpStatus WINGDIPAPI GdipCreatePathIter(GpPathIterator**,GpPath*);
 GpStatus WINGDIPAPI GdipDeletePathIter(GpPathIterator*);

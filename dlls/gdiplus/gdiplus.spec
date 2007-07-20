@@ -591,7 +591,7 @@
 @ stub GdipTranslateClip
 @ stub GdipTranslateClipI
 @ stub GdipTranslateLineTransform
-@ stub GdipTranslateMatrix
+@ stdcall GdipTranslateMatrix(ptr long long long)
 @ stub GdipTranslatePathGradientTransform
 @ stub GdipTranslatePenTransform
 @ stub GdipTranslateRegion
