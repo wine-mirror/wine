@@ -569,7 +569,7 @@ static BOOL next_xml_elem(xmlbuf_t* xmlbuf, xmlstr_t* elem)
     }
 
     xmlbuf->ptr = ptr;
-    while (ptr < xmlbuf->end && !isxmlspace(*ptr) && *ptr != '>')
+    while (ptr < xmlbuf->end && !isxmlspace(*ptr) && *ptr != '>' && (*ptr != '/' || ptr == xmlbuf->ptr))
         ptr++;
 
     elem->ptr = xmlbuf->ptr;
