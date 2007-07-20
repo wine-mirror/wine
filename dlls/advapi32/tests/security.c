@@ -51,6 +51,8 @@ typedef VOID (WINAPI *fnBuildTrusteeWithObjectsAndSidA)( PTRUSTEEA pTrustee,
 typedef LPSTR (WINAPI *fnGetTrusteeNameA)( PTRUSTEEA pTrustee );
 typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
+static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorA)(LPCSTR, DWORD,
+                                                                            PSECURITY_DESCRIPTOR*, PULONG );
 typedef BOOL (WINAPI *fnGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
                                           PSECURITY_DESCRIPTOR, DWORD, LPDWORD);
 typedef DWORD (WINAPI *fnRtlAdjustPrivilege)(ULONG,BOOLEAN,BOOLEAN,PBOOLEAN);
@@ -92,12 +94,16 @@ struct sidRef
 
 static void init(void)
 {
-    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    HMODULE hntdll;
+
+    hntdll = GetModuleHandleA("ntdll.dll");
+    pNtQueryObject = (void *)GetProcAddress( hntdll, "NtQueryObject" );
 
     hmod = GetModuleHandle("advapi32.dll");
-    myARGC = winetest_get_mainargs( &myARGV );
+    pConvertStringSecurityDescriptorToSecurityDescriptorA =
+        (void *)GetProcAddress(hmod, "ConvertStringSecurityDescriptorToSecurityDescriptorA" );
 
-    pNtQueryObject = (void *)GetProcAddress( hntdll, "NtQueryObject" );
+    myARGC = winetest_get_mainargs( &myARGV );
 }
 
 static void test_str_sid(const char *str_sid)
@@ -1763,8 +1769,14 @@ static void test_ConvertStringSecurityDescriptor(void)
     BOOL ret;
     PSECURITY_DESCRIPTOR pSD;
 
+    if (!pConvertStringSecurityDescriptorToSecurityDescriptorA)
+    {
+        skip("ConvertStringSecurityDescriptorToSecurityDescriptor is not available\n");
+        return;
+    }
+
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;GA;;;WD)", 0xdeadbeef, &pSD, NULL);
     ok(!ret && GetLastError() == ERROR_UNKNOWN_REVISION,
         "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_UNKNOWN_REVISION instead of %d\n",
@@ -1772,19 +1784,19 @@ static void test_ConvertStringSecurityDescriptor(void)
 
     /* test ACE string type */
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;GA;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
 
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(D;;GA;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
 
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "ERROR:(D;;GA;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
         "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_PARAMETER instead of %d\n",
@@ -1792,47 +1804,47 @@ static void test_ConvertStringSecurityDescriptor(void)
 
     /* test ACE string access rights */
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;GA;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;GRGWGX;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;RCSDWDWO;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;RPWPCCDCLCSWLODTCR;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     todo_wine
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;FAFRFWFX;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     todo_wine
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;KAKRKWKX;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     todo_wine
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;0xFFFFFFFF;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
 
     /* test ACE string access right error case */
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;ROB;;;WD)", SDDL_REVISION_1, &pSD, NULL);
     todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_ACL,
@@ -1841,13 +1853,13 @@ static void test_ConvertStringSecurityDescriptor(void)
 
     /* test ACE string SID */
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(D;;GA;;;S-1-0-0)", SDDL_REVISION_1, &pSD, NULL);
     ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
     LocalFree(pSD);
 
     SetLastError(0xdeadbeef);
-    ret = ConvertStringSecurityDescriptorToSecurityDescriptor(
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(D;;GA;;;Non existant account)", SDDL_REVISION_1, &pSD, NULL);
     todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_ACL,
