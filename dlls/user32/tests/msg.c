@@ -9250,7 +9250,7 @@ static void test_SetForegroundWindow(void)
     trace("SetForegroundWindow( GetDesktopWindow() )\n");
     SetForegroundWindow( GetDesktopWindow() );
     ok_sequence(SetForegroundWindowSeq, "SetForegroundWindow( desktop ) away from "
-                                        "foreground top level window", TRUE);
+                                        "foreground top level window", FALSE);
     trace("done\n");
 
     DestroyWindow(hwnd);
