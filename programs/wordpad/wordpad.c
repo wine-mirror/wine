@@ -976,6 +976,30 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         SendMessageW(hwndEditor, EM_REDO, 0, 0);
         return 0;
 
+    case ID_BULLET:
+        {
+            PARAFORMAT pf;
+
+            pf.cbSize = sizeof(pf);
+            pf.dwMask = PFM_NUMBERING;
+            SendMessageW(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
+
+            pf.dwMask |=  PFM_OFFSET;
+
+            if(pf.wNumbering == PFN_BULLET)
+            {
+                pf.wNumbering = 0;
+                pf.dxOffset = 0;
+            } else
+            {
+                pf.wNumbering = PFN_BULLET;
+                pf.dxOffset = 720;
+            }
+
+            SendMessageW(hwndEditor, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
+        }
+        break;
+
     case ID_ALIGN_LEFT:
     case ID_ALIGN_CENTER:
     case ID_ALIGN_RIGHT:
@@ -1062,6 +1086,8 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam, LPARAM lParam )
             MF_CHECKED : MF_UNCHECKED);
     CheckMenuItem(hMenu, ID_ALIGN_RIGHT, MF_BYCOMMAND|(nAlignment == PFA_RIGHT) ?
             MF_CHECKED : MF_UNCHECKED);
+    CheckMenuItem(hMenu, ID_BULLET, MF_BYCOMMAND | ((pf.wNumbering == PFN_BULLET) ?
+            MF_CHECKED : MF_UNCHECKED));
     EnableMenuItem(hMenu, ID_EDIT_UNDO, MF_BYCOMMAND|(SendMessageW(hwndEditor, EM_CANUNDO, 0, 0)) ?
             MF_ENABLED : MF_GRAYED);
     EnableMenuItem(hMenu, ID_EDIT_REDO, MF_BYCOMMAND|(SendMessageW(hwndEditor, EM_CANREDO, 0, 0)) ?

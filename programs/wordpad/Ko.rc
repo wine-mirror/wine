@@ -68,6 +68,7 @@ BEGIN
     END
     POPUP "형식(&O)"
     BEGIN
+        MENUITEM "B&ullet points"                ID_BULLET
         POPUP "배경(&B)"
         BEGIN
             MENUITEM "시스템(&S)\tCtrl+1",         ID_BACK_1

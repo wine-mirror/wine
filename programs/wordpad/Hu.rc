@@ -67,6 +67,7 @@ BEGIN
     END
     POPUP "F&ormátum"
     BEGIN
+        MENUITEM "&Bullet points"                ID_BULLET
         POPUP "&Háttér"
         BEGIN
             MENUITEM "&Rendszer\tCtrl+1",         ID_BACK_1

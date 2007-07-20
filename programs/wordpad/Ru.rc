@@ -65,6 +65,7 @@ BEGIN
     END
     POPUP "Фор&мат"
     BEGIN
+        MENUITEM "B&ullet points"                ID_BULLET
         POPUP "&Фон"
         BEGIN
             MENUITEM "&Системный\tCtrl+1",              ID_BACK_1

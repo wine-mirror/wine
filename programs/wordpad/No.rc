@@ -67,6 +67,7 @@ BEGIN
     END
     POPUP "F&ormat"
     BEGIN
+        MENUITEM "&Punktmerking"                ID_BULLET
         POPUP "&Bakgrunn"
         BEGIN
             MENUITEM "&System\tCtrl+1",         ID_BACK_1

@@ -67,6 +67,7 @@ BEGIN
     END
     POPUP "Forma&t"
     BEGIN
+        MENUITEM "&Bullet points"                ID_BULLET
         POPUP "&Fond"
         BEGIN
             MENUITEM "&Système\tCtrl+1",         ID_BACK_1

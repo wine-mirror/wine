@@ -67,6 +67,7 @@ BEGIN
     END
     POPUP "&Opmaak"
     BEGIN
+        MENUITEM "&Bullet points"                ID_BULLET
         POPUP "&Achtergrond"
         BEGIN
             MENUITEM "&Systeem\tCtrl+1",   ID_BACK_1

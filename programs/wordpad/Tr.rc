@@ -69,6 +69,7 @@ BEGIN
     END
     POPUP "&Biçim"
     BEGIN
+        MENUITEM "&Bullet points"                ID_BULLET
         POPUP "&Arkaplan"
         BEGIN
             MENUITEM "S&istem\tCtrl+1",         ID_BACK_1
