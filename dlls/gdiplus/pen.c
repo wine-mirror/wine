@@ -248,3 +248,14 @@ GpStatus WINGDIPAPI GdipSetPenMiterLimit(GpPen *pen, REAL limit)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipSetPenStartCap(GpPen *pen, GpLineCap cap)
+{
+    if(!pen)    return InvalidParameter;
+
+    GdipDeleteCustomLineCap(pen->customstart);
+    pen->customstart = NULL;
+    pen->startcap = cap;
+
+    return Ok;
+}

@@ -38,6 +38,7 @@ GpStatus WINGDIPAPI GdipSetPenEndCap(GpPen*,GpLineCap);
 GpStatus WINGDIPAPI GdipSetPenLineCap197819(GpPen*,GpLineCap,GpLineCap,GpDashCap);
 GpStatus WINGDIPAPI GdipSetPenLineJoin(GpPen*,GpLineJoin);
 GpStatus WINGDIPAPI GdipSetPenMiterLimit(GpPen*,REAL);
+GpStatus WINGDIPAPI GdipSetPenStartCap(GpPen*,GpLineCap);
 
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC,GpGraphics**);
 GpStatus WINGDIPAPI GdipCreateFromHWND(HWND,GpGraphics**);
