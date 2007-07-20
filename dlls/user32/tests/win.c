@@ -2211,6 +2211,15 @@ static void test_SetForegroundWindow(HWND hwnd)
     SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
+    hwnd2 = GetForegroundWindow();
+    ok(hwnd2 == hwnd, "Wrong foreground window %p\n", hwnd2);
+    todo_wine
+    {
+    ok(SetForegroundWindow( GetDesktopWindow() ), "SetForegroundWindow(desktop) error: %d\n", GetLastError());
+    hwnd2 = GetForegroundWindow();
+    ok(hwnd2 != hwnd, "Wrong foreground window %p\n", hwnd2);
+    }
+
     ShowWindow(hwnd, SW_HIDE);
     check_wnd_state(0, 0, 0, 0);
 
