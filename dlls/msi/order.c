@@ -284,6 +284,7 @@ static const MSIVIEWOPS order_ops =
     ORDER_find_matching_rows,
     NULL,
     NULL,
+    NULL,
 };
 
 static UINT ORDER_AddColumn( MSIORDERVIEW *ov, LPCWSTR name )

@@ -277,6 +277,7 @@ static const MSIVIEWOPS select_ops =
     SELECT_find_matching_rows,
     NULL,
     NULL,
+    NULL,
 };
 
 static UINT SELECT_AddColumn( MSISELECTVIEW *sv, LPCWSTR name )

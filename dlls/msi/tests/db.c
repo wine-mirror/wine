@@ -2962,10 +2962,7 @@ static void test_alter(void)
 
     query = "ALTER TABLE `U` ADD `C` INTEGER";
     r = run_query(hdb, 0, query);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* add column C again */
     query = "ALTER TABLE `U` ADD `C` INTEGER";
@@ -2974,17 +2971,11 @@ static void test_alter(void)
 
     query = "ALTER TABLE `U` ADD `D` INTEGER TEMPORARY";
     r = run_query(hdb, 0, query);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "INSERT INTO `U` ( `A`, `B`, `C`, `D` ) VALUES ( 1, 2, 3, 4 )";
     r = run_query(hdb, 0, query);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "ALTER TABLE `U` ADD `D` INTEGER TEMPORARY HOLD";
     r = run_query(hdb, 0, query);
@@ -2992,17 +2983,11 @@ static void test_alter(void)
 
     query = "INSERT INTO `U` ( `A`, `B`, `C`, `D` ) VALUES ( 5, 6, 7, 8 )";
     r = run_query(hdb, 0, query);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "SELECT * FROM `U` WHERE `D` = 8";
     r = run_query(hdb, 0, query);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "ALTER TABLE `U` ADD `D` INTEGER TEMPORARY FREE";
     r = run_query(hdb, 0, query);
@@ -3025,11 +3010,17 @@ static void test_alter(void)
     /* column D is removed */
     query = "SELECT * FROM `U` WHERE `D` = 8";
     r = run_query(hdb, 0, query);
-    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    }
 
     query = "INSERT INTO `U` ( `A`, `B`, `C`, `D` ) VALUES ( 9, 10, 11, 12 )";
     r = run_query(hdb, 0, query);
-    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    }
 
     /* add the column again */
     query = "ALTER TABLE `U` ADD `E` INTEGER TEMPORARY HOLD";

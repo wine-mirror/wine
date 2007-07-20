@@ -38,6 +38,7 @@ struct Keyword {
 
 #define MAX_TOKEN_LEN 11
 
+static const WCHAR ADD_W[] = { 'A','D','D',0 };
 static const WCHAR ALTER_W[] = { 'A','L','T','E','R',0 };
 static const WCHAR AND_W[] = { 'A','N','D',0 };
 static const WCHAR BY_W[] = { 'B','Y',0 };
@@ -78,6 +79,7 @@ static const WCHAR WHERE_W[] = { 'W','H','E','R','E',0 };
 ** These are the keywords
 */
 static const Keyword aKeywordTable[] = {
+  { ADD_W, TK_ADD },
   { ALTER_W, TK_ALTER },
   { AND_W, TK_AND },
   { BY_W, TK_BY },

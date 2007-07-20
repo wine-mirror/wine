@@ -1701,7 +1701,7 @@ static void test_property_table(void)
 
     query = "ALTER TABLE `_Property` ADD `extra` INTEGER";
     r = run_query(hdb, query);
-    todo_wine ok(r == ERROR_SUCCESS, "failed to add column\n");
+    ok(r == ERROR_SUCCESS, "failed to add column\n");
 
     hpkg = package_from_db(hdb);
     todo_wine

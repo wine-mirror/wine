@@ -231,6 +231,11 @@ typedef struct tagMSIVIEWOPS
      * release - decreases the reference count of the table
      */
     UINT (*release)( struct tagMSIVIEW *view );
+
+    /*
+     * add_column - adds a column to the table
+     */
+    UINT (*add_column)( struct tagMSIVIEW *view, LPCWSTR table, UINT number, LPCWSTR column, UINT type );
 } MSIVIEWOPS;
 
 struct tagMSIVIEW

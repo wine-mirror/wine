@@ -97,8 +97,8 @@ static const WCHAR szType[]    = { 'T','y','p','e',0 };
  * Do not mark them const.
  */
 static MSICOLUMNINFO _Columns_cols[4] = {
-    { szColumns, 1, szTable,  MSITYPE_VALID | MSITYPE_STRING | 64, 0 },
-    { szColumns, 2, szNumber, MSITYPE_VALID | 2,                   2 },
+    { szColumns, 1, szTable,  MSITYPE_VALID | MSITYPE_STRING | MSITYPE_KEY | 64, 0 },
+    { szColumns, 2, szNumber, MSITYPE_VALID | MSITYPE_KEY | 2,     2 },
     { szColumns, 3, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 4 },
     { szColumns, 4, szType,   MSITYPE_VALID | 2,                   6 },
 };
@@ -1035,6 +1035,26 @@ static UINT get_tablecolumns( MSIDATABASE *db,
     return ERROR_SUCCESS;
 }
 
+static void msi_update_table_columns( MSIDATABASE *db, LPCWSTR name )
+{
+    MSITABLE *table;
+    UINT size, offset;
+    int n;
+
+    table = find_cached_table( db, name );
+    msi_free( table->colinfo );
+    table_get_column_info( db, name, &table->colinfo, &table->col_count );
+
+    size = msi_table_get_row_size( table->colinfo, table->col_count );
+    offset = table->colinfo[table->col_count - 1].offset;
+
+    for ( n = 0; n < table->row_count; n++ )
+    {
+        table->data[n] = msi_realloc( table->data[n], size );
+        table->data[n][offset] = (BYTE)MSI_NULL_INTEGER;
+    }
+}
+
 /* try to find the table name in the _Tables table */
 BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name )
 {
@@ -1674,6 +1694,32 @@ static UINT TABLE_release(struct tagMSIVIEW *view)
     return ref;
 }
 
+static UINT TABLE_add_column(struct tagMSIVIEW *view, LPCWSTR table, UINT number, LPCWSTR column, UINT type)
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
+    MSIRECORD *rec;
+    UINT r;
+
+    rec = MSI_CreateRecord(4);
+    if (!rec)
+        return ERROR_OUTOFMEMORY;
+
+    MSI_RecordSetStringW(rec, 1, table);
+    MSI_RecordSetInteger(rec, 2, number);
+    MSI_RecordSetStringW(rec, 3, column);
+    MSI_RecordSetInteger(rec, 4, type);
+
+    r = TABLE_insert_row(&tv->view, rec, FALSE);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    msi_update_table_columns(tv->db, table);
+
+done:
+    msiobj_release(&rec->hdr);
+    return r;
+}
+
 static const MSIVIEWOPS table_ops =
 {
     TABLE_fetch_int,
@@ -1690,6 +1736,7 @@ static const MSIVIEWOPS table_ops =
     TABLE_find_matching_rows,
     TABLE_add_ref,
     TABLE_release,
+    TABLE_add_column,
 };
 
 UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view )
@@ -1975,26 +2022,6 @@ static UINT msi_table_find_row( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *row )
     }
     msi_free( data );
     return r;
-}
-
-static void msi_update_table_columns( MSIDATABASE *db, LPWSTR name )
-{
-    MSITABLE *table;
-    UINT size, offset;
-    int n;
-
-    table = find_cached_table( db, name );
-    msi_free( table->colinfo );
-    table_get_column_info( db, name, &table->colinfo, &table->col_count );
-
-    size = msi_table_get_row_size( table->colinfo, table->col_count );
-    offset = table->colinfo[table->col_count - 1].offset;
-
-    for ( n = 0; n < table->row_count; n++ )
-    {
-        table->data[n] = msi_realloc( table->data[n], size );
-        table->data[n][offset] = (BYTE)MSI_NULL_INTEGER;
-    }
 }
 
 typedef struct

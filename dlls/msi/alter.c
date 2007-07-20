@@ -39,6 +39,7 @@ typedef struct tagMSIALTERVIEW
     MSIVIEW        view;
     MSIDATABASE   *db;
     MSIVIEW       *table;
+    column_info   *colinfo;
     INT hold;
 } MSIALTERVIEW;
 
@@ -60,6 +61,78 @@ static UINT ALTER_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     return ERROR_FUNCTION_FAILED;
 }
 
+static UINT ITERATE_columns(MSIRECORD *row, LPVOID param)
+{
+    (*(UINT *)param)++;
+    return ERROR_SUCCESS;
+}
+
+static BOOL check_column_exists(MSIDATABASE *db, MSIVIEW *columns, LPCWSTR table, LPCWSTR column)
+{
+    MSIQUERY *view;
+    MSIRECORD *rec;
+    UINT r;
+
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','_','C','o','l','u','m','n','s','`',' ','W','H','E','R','E',' ',
+        '`','T','a','b','l','e','`','=','\'','%','s','\'',' ','A','N','D',' ',
+        '`','N','a','m','e','`','=','\'','%','s','\'',0
+    };
+
+    r = MSI_OpenQuery(db, &view, query, table, column);
+    if (r != ERROR_SUCCESS)
+        return FALSE;
+
+    r = MSI_ViewExecute(view, NULL);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    r = MSI_ViewFetch(view, &rec);
+    if (r == ERROR_SUCCESS)
+        msiobj_release(&rec->hdr);
+
+done:
+    msiobj_release(&view->hdr);
+    return (r == ERROR_SUCCESS);
+}
+
+static UINT alter_add_column(MSIALTERVIEW *av)
+{
+    UINT r, colnum = 1;
+    MSIQUERY *view;
+    MSIVIEW *columns;
+
+    static const WCHAR szColumns[] = {'_','C','o','l','u','m','n','s',0};
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','_','C','o','l','u','m','n','s','`',' ','W','H','E','R','E',' ',
+        '`','T','a','b','l','e','`','=','\'','%','s','\'',' ','O','R','D','E','R',' ',
+        'B','Y',' ','`','N','u','m','b','e','r','`',0
+    };
+
+    r = TABLE_CreateView(av->db, szColumns, &columns);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    if (check_column_exists(av->db, columns, av->colinfo->table, av->colinfo->column))
+        return ERROR_BAD_QUERY_SYNTAX;
+
+    r = MSI_OpenQuery(av->db, &view, query, av->colinfo->table, av->colinfo->column);
+    if (r == ERROR_SUCCESS)
+    {
+        r = MSI_IterateRecords(view, NULL, ITERATE_columns, &colnum);
+        msiobj_release(&view->hdr);
+    }
+
+    r = columns->ops->add_column(columns, av->colinfo->table,
+                                 colnum, av->colinfo->column,
+                                 av->colinfo->type);
+
+    msiobj_release(&columns->hdr);
+    return r;
+}
+
 static UINT ALTER_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIALTERVIEW *av = (MSIALTERVIEW*)view;
@@ -70,6 +143,8 @@ static UINT ALTER_execute( struct tagMSIVIEW *view, MSIRECORD *record )
         av->table->ops->add_ref(av->table);
     else if (av->hold == -1)
         av->table->ops->release(av->table);
+    else
+        return alter_add_column(av);
 
     return ERROR_SUCCESS;
 }
@@ -147,9 +222,10 @@ static const MSIVIEWOPS alter_ops =
     ALTER_find_matching_rows,
     NULL,
     NULL,
+    NULL,
 };
 
-UINT ALTER_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name, int hold )
+UINT ALTER_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name, column_info *colinfo, int hold )
 {
     MSIALTERVIEW *av;
     UINT r;
@@ -164,10 +240,14 @@ UINT ALTER_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name, int hold )
     if (r != ERROR_SUCCESS || !av->table)
         return r;
 
+    if (colinfo)
+        colinfo->table = name;
+
     /* fill the structure */
     av->view.ops = &alter_ops;
     av->db = db;
     av->hold = hold;
+    av->colinfo = colinfo;
 
     *view = &av->view;
 

@@ -255,6 +255,7 @@ static const MSIVIEWOPS join_ops =
     JOIN_find_matching_rows,
     NULL,
     NULL,
+    NULL,
 };
 
 UINT JOIN_CreateView( MSIDATABASE *db, MSIVIEW **view,
