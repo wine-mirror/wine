@@ -24,6 +24,34 @@
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 
+GpStatus WINGDIPAPI GdipCloneCustomLineCap(GpCustomLineCap* from,
+    GpCustomLineCap** to)
+{
+    if(!from || !to)
+        return InvalidParameter;
+
+    *to = GdipAlloc(sizeof(GpCustomLineCap));
+    if(!*to)   return OutOfMemory;
+
+    memcpy(*to, from, sizeof(GpCustomLineCap));
+
+    (*to)->pathdata.Points = GdipAlloc(from->pathdata.Count * sizeof(PointF));
+    (*to)->pathdata.Types = GdipAlloc(from->pathdata.Count);
+
+    if((!(*to)->pathdata.Types  || !(*to)->pathdata.Points) && (*to)->pathdata.Count){
+        GdipFree((*to)->pathdata.Points);
+        GdipFree((*to)->pathdata.Types);
+        GdipFree(*to);
+        return OutOfMemory;
+    }
+
+    memcpy((*to)->pathdata.Points, from->pathdata.Points, from->pathdata.Count
+           * sizeof(PointF));
+    memcpy((*to)->pathdata.Types, from->pathdata.Types, from->pathdata.Count);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath* fillPath, GpPath* strokePath,
     GpLineCap baseCap, REAL baseInset, GpCustomLineCap **customCap)
 {

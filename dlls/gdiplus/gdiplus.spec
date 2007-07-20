@@ -44,7 +44,7 @@
 @ stub GdipCloneBitmapArea
 @ stub GdipCloneBitmapAreaI
 @ stub GdipCloneBrush
-@ stub GdipCloneCustomLineCap
+@ stdcall GdipCloneCustomLineCap(ptr ptr)
 @ stub GdipCloneFont
 @ stub GdipCloneFontFamily
 @ stub GdipCloneImage
