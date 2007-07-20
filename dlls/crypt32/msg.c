@@ -693,6 +693,41 @@ static inline void CRYPT_FixUpAlgorithmID(CRYPT_ALGORITHM_IDENTIFIER *id)
     id->Parameters.pbData = (BYTE *)id->pszObjId + strlen(id->pszObjId) + 1;
 }
 
+static BOOL CDecodeMsg_DecodeHashedContent(CDecodeMsg *msg,
+ CRYPT_DER_BLOB *blob)
+{
+    BOOL ret;
+    CRYPT_DIGESTED_DATA *digestedData;
+    DWORD size;
+
+    ret = CRYPT_AsnDecodePKCSDigestedData(blob->pbData, blob->cbData,
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (CRYPT_DIGESTED_DATA *)&digestedData,
+     &size);
+    if (ret)
+    {
+        msg->type = CMSG_HASHED;
+        ContextPropertyList_SetProperty(msg->properties, CMSG_VERSION_PARAM,
+         (const BYTE *)&digestedData->version, sizeof(digestedData->version));
+        CDecodeMsg_SaveAlgorithmID(msg, CMSG_HASH_ALGORITHM_PARAM,
+         &digestedData->DigestAlgorithm);
+        ContextPropertyList_SetProperty(msg->properties,
+         CMSG_INNER_CONTENT_TYPE_PARAM,
+         (const BYTE *)digestedData->ContentInfo.pszObjId,
+         digestedData->ContentInfo.pszObjId ?
+         strlen(digestedData->ContentInfo.pszObjId) + 1 : 0);
+        if (digestedData->ContentInfo.Content.cbData)
+            CDecodeMsg_DecodeDataContent(msg,
+             &digestedData->ContentInfo.Content);
+        else
+            ContextPropertyList_SetProperty(msg->properties,
+             CMSG_CONTENT_PARAM, NULL, 0);
+        ContextPropertyList_SetProperty(msg->properties, CMSG_HASH_DATA_PARAM,
+         digestedData->hash.pbData, digestedData->hash.cbData);
+        LocalFree(digestedData);
+    }
+    return ret;
+}
+
 /* Decodes the content in blob as the type given, and updates the value
  * (type, parameters, etc.) of msg based on what blob contains.
  * It doesn't just use msg's type, to allow a recursive call from an implicitly
@@ -702,7 +737,6 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
  DWORD type)
 {
     BOOL ret;
-    DWORD size;
 
     switch (type)
     {
@@ -711,38 +745,9 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
             msg->type = CMSG_DATA;
         break;
     case CMSG_HASHED:
-    {
-        CRYPT_DIGESTED_DATA *digestedData;
-
-        ret = CRYPT_AsnDecodePKCSDigestedData(blob->pbData, blob->cbData,
-         CRYPT_DECODE_ALLOC_FLAG, NULL, (CRYPT_DIGESTED_DATA *)&digestedData,
-         &size);
-        if (ret)
-        {
+        if ((ret = CDecodeMsg_DecodeHashedContent(msg, blob)))
             msg->type = CMSG_HASHED;
-            ContextPropertyList_SetProperty(msg->properties,
-             CMSG_VERSION_PARAM, (const BYTE *)&digestedData->version,
-             sizeof(digestedData->version));
-            CDecodeMsg_SaveAlgorithmID(msg, CMSG_HASH_ALGORITHM_PARAM,
-             &digestedData->DigestAlgorithm);
-            ContextPropertyList_SetProperty(msg->properties,
-             CMSG_INNER_CONTENT_TYPE_PARAM,
-             (const BYTE *)digestedData->ContentInfo.pszObjId,
-             digestedData->ContentInfo.pszObjId ?
-             strlen(digestedData->ContentInfo.pszObjId) + 1 : 0);
-            if (digestedData->ContentInfo.Content.cbData)
-                CDecodeMsg_DecodeDataContent(msg,
-                 &digestedData->ContentInfo.Content);
-            else
-                ContextPropertyList_SetProperty(msg->properties,
-                 CMSG_CONTENT_PARAM, NULL, 0);
-            ContextPropertyList_SetProperty(msg->properties,
-             CMSG_HASH_DATA_PARAM, digestedData->hash.pbData,
-             digestedData->hash.cbData);
-            LocalFree(digestedData);
-        }
         break;
-    }
     case CMSG_ENVELOPED:
     case CMSG_SIGNED:
         FIXME("unimplemented for type %s\n", MSG_TYPE_STR(type));
@@ -751,6 +756,7 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
     default:
     {
         CRYPT_CONTENT_INFO *info;
+        DWORD size;
 
         ret = CryptDecodeObjectEx(X509_ASN_ENCODING, PKCS_CONTENT_INFO,
          msg->msg_data.pbData, msg->msg_data.cbData, CRYPT_DECODE_ALLOC_FLAG,
