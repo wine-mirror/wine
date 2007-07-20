@@ -101,6 +101,10 @@ GpStatus WINGDIPAPI GdipPathIterCopyData(GpPathIterator*,INT*,GpPointF*,BYTE*,
 GpStatus WINGDIPAPI GdipPathIterNextSubpath(GpPathIterator*,INT*,INT*,INT*,BOOL*);
 GpStatus WINGDIPAPI GdipPathIterRewind(GpPathIterator*);
 
+GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath*,GpPath*,GpLineCap,REAL,
+    GpCustomLineCap**);
+GpStatus WINGDIPAPI GdipDeleteCustomLineCap(GpCustomLineCap*);
+
 #ifdef __cplusplus
 }
 #endif

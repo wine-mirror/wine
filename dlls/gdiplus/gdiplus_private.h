@@ -91,4 +91,11 @@ struct GpPathIterator{
     INT pathtype_pos;   /* for NextPathType methods */
 };
 
+struct GpCustomLineCap{
+    GpPathData pathdata;
+    BOOL fill;      /* TRUE for fill, FALSE for stroke */
+    GpLineCap cap;  /* as far as I can tell, this value is ignored */
+    REAL inset;     /* how much to adjust the end of the line */
+};
+
 #endif

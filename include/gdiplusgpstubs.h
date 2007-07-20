@@ -28,6 +28,7 @@ class GpSolidFill {};
 class GpPath {};
 class GpMatrix {};
 class GpPathIterator {};
+class GpCustomLineCap {};
 
 #else /* end of c++ declarations */
 
@@ -38,6 +39,7 @@ typedef struct GpSolidFill GpSolidFill;
 typedef struct GpPath GpPath;
 typedef struct GpMatrix GpMatrix;
 typedef struct GpPathIterator GpPathIterator;
+typedef struct GpCustomLineCap GpCustomLineCap;
 
 #endif /* end of c declarations */
 

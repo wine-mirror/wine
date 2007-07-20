@@ -74,7 +74,7 @@
 @ stub GdipCreateBitmapFromStream
 @ stub GdipCreateBitmapFromStreamICM
 @ stub GdipCreateCachedBitmap
-@ stub GdipCreateCustomLineCap
+@ stdcall GdipCreateCustomLineCap(ptr ptr long long ptr)
 @ stub GdipCreateFont
 @ stub GdipCreateFontFamilyFromName
 @ stub GdipCreateFontFromDC
@@ -129,7 +129,7 @@
 @ stub GdipCreateTextureIAI
 @ stdcall GdipDeleteBrush(ptr)
 @ stub GdipDeleteCachedBitmap
-@ stub GdipDeleteCustomLineCap
+@ stdcall GdipDeleteCustomLineCap(ptr)
 @ stub GdipDeleteFont
 @ stub GdipDeleteFontFamily
 @ stdcall GdipDeleteGraphics(ptr)
