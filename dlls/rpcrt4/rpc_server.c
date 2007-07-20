@@ -198,7 +198,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
                                              RPC_MAX_PACKET_SIZE,
                                              RPC_MAX_PACKET_SIZE,
                                              conn->Endpoint,
-                                             RESULT_ACCEPT, NO_REASON,
+                                             RESULT_ACCEPT, REASON_NONE,
                                              &sif->If->TransferSyntax);
 
         /* save the interface for later use */

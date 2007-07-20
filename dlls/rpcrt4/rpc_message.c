@@ -230,6 +230,7 @@ RpcPktHdr *RPCRT4_BuildBindNackHeader(unsigned long DataRepresentation,
 
   RPCRT4_BuildCommonHeader(header, PKT_BIND_NACK, DataRepresentation);
   header->common.frag_len = sizeof(header->bind_nack);
+  header->bind_nack.reject_reason = REJECT_REASON_NOT_SPECIFIED;
   header->bind_nack.protocols_count = 1;
   header->bind_nack.protocols[0].rpc_ver = RpcVersion;
   header->bind_nack.protocols[0].rpc_ver_minor = RpcVersionMinor;
