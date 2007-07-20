@@ -112,17 +112,16 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
     HBRUSH brush;
     HPEN pen;
     POINT pt[4];
-    REAL theta, dsmall, dbig, dx, dy, invert;
+    REAL theta, dsmall, dbig, dx, dy;
 
     if(x2 != x1)
-        theta = atan((y2 - y1) / (x2 - x1));
+        theta = atan2(y2 - y1, x2 - x1);
     else if(y2 != y1){
         theta = M_PI_2 * (y2 > y1 ? 1.0 : -1.0);
     }
     else
         return;
 
-    invert = ((x2 - x1) >= 0.0 ? 1.0 : -1.0);
     brush = CreateSolidBrush(color);
     pen = CreatePen(PS_SOLID, 1, color);
     oldbrush = SelectObject(hdc, brush);
@@ -164,14 +163,14 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
         case LineCapArrowAnchor:
             size = size * 4.0 / sqrt(3.0);
 
-            dx = cos(M_PI / 6.0 + theta) * size * invert;
-            dy = sin(M_PI / 6.0 + theta) * size * invert;
+            dx = cos(M_PI / 6.0 + theta) * size;
+            dy = sin(M_PI / 6.0 + theta) * size;
 
             pt[0].x = roundr(x2 - dx);
             pt[0].y = roundr(y2 - dy);
 
-            dx = cos(- M_PI / 6.0 + theta) * size * invert;
-            dy = sin(- M_PI / 6.0 + theta) * size * invert;
+            dx = cos(- M_PI / 6.0 + theta) * size;
+            dy = sin(- M_PI / 6.0 + theta) * size;
 
             pt[1].x = roundr(x2 - dx);
             pt[1].y = roundr(y2 - dy);
@@ -203,8 +202,8 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
             pt[1].x = roundr(pt[0].x + 2.0 * dx);
             pt[1].y = roundr(pt[0].y + 2.0 * dy);
 
-            dx = cos(theta) * size * invert;
-            dy = sin(theta) * size * invert;
+            dx = cos(theta) * size;
+            dy = sin(theta) * size;
 
             pt[2].x = roundr(x2 + dx);
             pt[2].y = roundr(y2 + dy);
@@ -213,8 +212,8 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
 
             break;
         case LineCapRound:
-            dx = -cos(M_PI_2 + theta) * size * invert;
-            dy = -sin(M_PI_2 + theta) * size * invert;
+            dx = -cos(M_PI_2 + theta) * size;
+            dy = -sin(M_PI_2 + theta) * size;
 
             pt[0].x = ((x2 - x1) >= 0 ? floorf(x2 - dx) : ceilf(x2 - dx));
             pt[0].y = ((y2 - y1) >= 0 ? floorf(y2 - dy) : ceilf(y2 - dy));
