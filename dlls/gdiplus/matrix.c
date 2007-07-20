@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -89,6 +90,33 @@ GpStatus WINGDIPAPI GdipMultiplyMatrix(GpMatrix *matrix, GpMatrix* matrix2,
         matrix_multiply(matrix->matrix, matrix2->matrix, matrix->matrix);
     else
         matrix_multiply(matrix2->matrix, matrix->matrix, matrix->matrix);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipRotateMatrix(GpMatrix *matrix, REAL angle,
+    GpMatrixOrder order)
+{
+    REAL cos_theta, sin_theta, rotate[6];
+
+    if(!matrix)
+        return InvalidParameter;
+
+    angle = deg2rad(angle);
+    cos_theta = cos(angle);
+    sin_theta = sin(angle);
+
+    rotate[0] = cos_theta;
+    rotate[1] = sin_theta;
+    rotate[2] = -sin_theta;
+    rotate[3] = cos_theta;
+    rotate[4] = 0.0;
+    rotate[5] = 0.0;
+
+    if(order == MatrixOrderAppend)
+        matrix_multiply(matrix->matrix, rotate, matrix->matrix);
+    else
+        matrix_multiply(rotate, matrix->matrix, matrix->matrix);
 
     return Ok;
 }
