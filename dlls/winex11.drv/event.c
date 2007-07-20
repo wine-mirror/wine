@@ -570,8 +570,8 @@ static void EVENT_FocusOut( HWND hwnd, XEvent *xev )
            case we don't have to change the foreground window to 0 */
         if (hwnd == GetForegroundWindow())
         {
-            TRACE( "lost focus, setting fg to 0\n" );
-            SetForegroundWindow( 0 );
+            TRACE( "lost focus, setting fg to desktop\n" );
+            SetForegroundWindow( GetDesktopWindow() );
         }
     }
 }
