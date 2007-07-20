@@ -46,6 +46,32 @@ static void deg2xy(REAL angle, REAL x_0, REAL y_0, REAL *x, REAL *y)
     *y = y_0 + sin(radAngle) * hypotenuse;
 }
 
+/* Converts from gdiplus path point type to gdi path point type. */
+static BYTE convert_path_point_type(BYTE type)
+{
+    BYTE ret;
+
+    switch(type & PathPointTypePathTypeMask){
+        case PathPointTypeBezier:
+            ret = PT_BEZIERTO;
+            break;
+        case PathPointTypeLine:
+            ret = PT_LINETO;
+            break;
+        case PathPointTypeStart:
+            ret = PT_MOVETO;
+            break;
+        default:
+            ERR("Bad point type\n");
+            return 0;
+    }
+
+    if(type & PathPointTypeCloseSubpath)
+        ret |= PT_CLOSEFIGURE;
+
+    return ret;
+}
+
 /* GdipDrawPie/GdipFillPie helper function */
 static GpStatus draw_pie(GpGraphics *graphics, HBRUSH gdibrush, HPEN gdipen,
     REAL x, REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
@@ -106,13 +132,18 @@ static void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
 /* Draws the linecap the specified color and size on the hdc.  The linecap is in
  * direction of the line from x1, y1 to x2, y2 and is anchored on x2, y2. */
 static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
-    REAL x1, REAL y1, REAL x2, REAL y2)
+    const GpCustomLineCap *custom, REAL x1, REAL y1, REAL x2, REAL y2)
 {
     HGDIOBJ oldbrush, oldpen;
+    GpMatrix *matrix = NULL;
     HBRUSH brush;
     HPEN pen;
-    POINT pt[4];
+    PointF *custptf = NULL;
+    POINT pt[4], *custpt = NULL;
+    BYTE *tp = NULL;
     REAL theta, dsmall, dbig, dx, dy;
+    INT i, count;
+    LOGBRUSH lb;
 
     if(x2 != x1)
         theta = atan2(y2 - y1, x2 - x1);
@@ -123,7 +154,11 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
         return;
 
     brush = CreateSolidBrush(color);
-    pen = CreatePen(PS_SOLID, 1, color);
+    lb.lbStyle = BS_SOLID;
+    lb.lbColor = color;
+    lb.lbHatch = 0;
+    pen = ExtCreatePen(PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_FLAT,
+                       (cap == LineCapCustom ? size : 1), &lb, 0, NULL);
     oldbrush = SelectObject(hdc, brush);
     oldpen = SelectObject(hdc, pen);
 
@@ -229,7 +264,44 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
                 roundr(y2 + 2.0 * dy), pt[0].x, pt[0].y, pt[1].x, pt[1].y);
             break;
         case LineCapCustom:
-            FIXME("line cap not implemented\n");
+            if(!custom)
+                break;
+
+            if(custom->fill){
+                FIXME("fill-path custom line caps not implemented\n");
+                break;
+            }
+
+            count = custom->pathdata.Count;
+            custptf = GdipAlloc(count * sizeof(PointF));
+            custpt = GdipAlloc(count * sizeof(POINT));
+            tp = GdipAlloc(count);
+
+            if(!custptf || !custpt || !tp || (GdipCreateMatrix(&matrix) != Ok))
+                goto custend;
+
+            memcpy(custptf, custom->pathdata.Points, count * sizeof(PointF));
+
+            GdipScaleMatrix(matrix, size, size, MatrixOrderAppend);
+            GdipRotateMatrix(matrix, (180.0 / M_PI) * (theta - M_PI_2),
+                             MatrixOrderAppend);
+            GdipTranslateMatrix(matrix, x2, y2, MatrixOrderAppend);
+            GdipTransformMatrixPoints(matrix, custptf, count);
+
+            for(i = 0; i < count; i++){
+                custpt[i].x = roundr(custptf[i].X);
+                custpt[i].y = roundr(custptf[i].Y);
+                tp[i] = convert_path_point_type(custom->pathdata.Types[i]);
+            }
+
+            PolyDraw(hdc, custpt, tp, count);
+
+custend:
+            GdipFree(custptf);
+            GdipFree(custpt);
+            GdipFree(tp);
+            GdipDeleteMatrix(matrix);
+            break;
         default:
             break;
     }
@@ -303,8 +375,8 @@ static GpStatus draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
         if(pen->endcap == LineCapArrowAnchor)
             shorten_line_amt(pt[count-2].X, pt[count-2].Y, &x, &y, pen->width);
 
-        draw_cap(hdc, pen->color, pen->endcap, pen->width, pt[count-2].X,
-            pt[count-2].Y, pt[count - 1].X, pt[count - 1].Y);
+        draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
+                 pt[count-2].X, pt[count-2].Y, pt[count - 1].X, pt[count - 1].Y);
     }
 
     for(i = 0; i < count - 1; i ++){
@@ -386,7 +458,7 @@ static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
         /* the direction of the line cap is parallel to the direction at the
          * end of the bezier (which, if it has been shortened, is not the same
          * as the direction from pt[count-2] to pt[count-1]) */
-        draw_cap(hdc, pen->color, pen->endcap, pen->width,
+        draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
             pt[count - 1].X - (ptf[3].X - ptf[2].X),
             pt[count - 1].Y - (ptf[3].Y - ptf[2].Y),
             pt[count - 1].X, pt[count - 1].Y);
@@ -410,32 +482,6 @@ end:
     GdipFree(ptf);
 
     return status;
-}
-
-/* Converts from gdiplus path point type to gdi path point type. */
-static BYTE convert_path_point_type(BYTE type)
-{
-    BYTE ret;
-
-    switch(type & PathPointTypePathTypeMask){
-        case PathPointTypeBezier:
-            ret = PT_BEZIERTO;
-            break;
-        case PathPointTypeLine:
-            ret = PT_LINETO;
-            break;
-        case PathPointTypeStart:
-            ret = PT_MOVETO;
-            break;
-        default:
-            ERR("Bad point type\n");
-            return 0;
-    }
-
-    if(type & PathPointTypeCloseSubpath)
-        ret |= PT_CLOSEFIGURE;
-
-    return ret;
 }
 
 /* Draws a combination of bezier curves and lines between points. */
@@ -489,8 +535,7 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                 if(pen->endcap == LineCapArrowAnchor)
                     shorten_bezier_amt(ptf, pen->width);
 
-
-                draw_cap(hdc, pen->color, pen->endcap, pen->width,
+                draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
                     pt[count - 1].X - (ptf[3].X - ptf[2].X),
                     pt[count - 1].Y - (ptf[3].Y - ptf[2].Y),
                     pt[count - 1].X, pt[count - 1].Y);
@@ -507,8 +552,9 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                     shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
                                      pen->width);
 
-                draw_cap(hdc, pen->color, pen->endcap, pen->width, pt[count - 2].X,
-                         pt[count - 2].Y, pt[count - 1].X, pt[count - 1].Y);
+                draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
+                         pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X,
+                         pt[count - 1].Y);
 
                 pti[count - 1].x = roundr(x);
                 pti[count - 1].y = roundr(y);
