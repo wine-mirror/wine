@@ -21,6 +21,7 @@
 
 #include <math.h>
 #include "windef.h"
+#include "wingdi.h"
 #include "gdiplus.h"
 
 #define GP_DEFAULT_PENSTYLE (PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_FLAT | PS_JOIN_MITER)
@@ -54,6 +55,7 @@ struct GpPen{
     GpLineJoin join;
     REAL miterlimit;
     GpDashStyle dash;
+    GpBrush *brush;
 };
 
 struct GpGraphics{
@@ -69,6 +71,7 @@ struct GpBrush{
     HBRUSH gdibrush;
     GpBrushType bt;
     COLORREF color;
+    LOGBRUSH lb;
 };
 
 struct GpSolidFill{

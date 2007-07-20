@@ -30,6 +30,10 @@ GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
     *sf = GdipAlloc(sizeof(GpSolidFill));
     if (!*sf) return OutOfMemory;
 
+    (*sf)->brush.lb.lbStyle = BS_SOLID;
+    (*sf)->brush.lb.lbColor = col;
+    (*sf)->brush.lb.lbHatch = 0;
+
     (*sf)->brush.gdibrush = CreateSolidBrush(col);
     (*sf)->brush.bt = BrushTypeSolidColor;
     (*sf)->brush.color = col;

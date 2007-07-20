@@ -90,7 +90,6 @@ GpStatus WINGDIPAPI GdipClonePen(GpPen *pen, GpPen **clonepen)
 GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
     GpPen **pen)
 {
-    LOGBRUSH lb;
     GpPen *gp_pen;
 
     if(!pen)
@@ -107,14 +106,11 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
     gp_pen->join = LineJoinMiter;
     gp_pen->miterlimit = 10.0;
     gp_pen->dash = DashStyleSolid;
-
-    lb.lbStyle = BS_SOLID;
-    lb.lbColor = gp_pen->color;
-    lb.lbHatch = 0;
+    GdipCreateSolidFill(color, (GpSolidFill **)(&gp_pen->brush));
 
     if((gp_pen->unit == UnitWorld) || (gp_pen->unit == UnitPixel)) {
-        gp_pen->gdipen = ExtCreatePen(gp_pen->style, (INT) gp_pen->width, &lb,
-            0, NULL);
+        gp_pen->gdipen = ExtCreatePen(gp_pen->style, (INT) gp_pen->width,
+                                      &gp_pen->brush->lb, 0, NULL);
     } else {
         FIXME("UnitWorld, UnitPixel only supported units\n");
         GdipFree(gp_pen);
@@ -131,6 +127,7 @@ GpStatus WINGDIPAPI GdipDeletePen(GpPen *pen)
     if(!pen)    return InvalidParameter;
     DeleteObject(pen->gdipen);
 
+    GdipDeleteBrush(pen->brush);
     GdipDeleteCustomLineCap(pen->customstart);
     GdipDeleteCustomLineCap(pen->customend);
     GdipFree(pen);
@@ -182,8 +179,6 @@ GpStatus WINGDIPAPI GdipSetPenCustomStartCap(GpPen *pen, GpCustomLineCap* custom
 
 GpStatus WINGDIPAPI GdipSetPenDashStyle(GpPen *pen, GpDashStyle dash)
 {
-    LOGBRUSH lb;
-
     if(!pen)
         return InvalidParameter;
 
@@ -193,11 +188,7 @@ GpStatus WINGDIPAPI GdipSetPenDashStyle(GpPen *pen, GpDashStyle dash)
                     PS_DASHDOTDOT | PS_NULL | PS_USERSTYLE | PS_INSIDEFRAME);
     pen->style |= gdip_to_gdi_dash(dash);
 
-    lb.lbStyle = BS_SOLID;
-    lb.lbColor = pen->color;
-    lb.lbHatch = 0;
-
-    pen->gdipen = ExtCreatePen(pen->style, (INT) pen->width, &lb, 0, NULL);
+    pen->gdipen = ExtCreatePen(pen->style, (INT) pen->width, &pen->brush->lb, 0, NULL);
 
     return Ok;
 }
@@ -237,8 +228,6 @@ GpStatus WINGDIPAPI GdipSetPenLineCap197819(GpPen *pen, GpLineCap start,
  * Both kinds of miter joins clip if the angle is less than 11 degrees. */
 GpStatus WINGDIPAPI GdipSetPenLineJoin(GpPen *pen, GpLineJoin join)
 {
-    LOGBRUSH lb;
-
     if(!pen)    return InvalidParameter;
 
     DeleteObject(pen->gdipen);
@@ -246,11 +235,7 @@ GpStatus WINGDIPAPI GdipSetPenLineJoin(GpPen *pen, GpLineJoin join)
     pen->style &= ~(PS_JOIN_ROUND | PS_JOIN_BEVEL | PS_JOIN_MITER);
     pen->style |= gdip_to_gdi_join(join);
 
-    lb.lbStyle = BS_SOLID;
-    lb.lbColor = pen->color;
-    lb.lbHatch = 0;
-
-    pen->gdipen = ExtCreatePen(pen->style, (INT) pen->width, &lb, 0, NULL);
+    pen->gdipen = ExtCreatePen(pen->style, (INT) pen->width, &pen->brush->lb, 0, NULL);
 
     return Ok;
 }
