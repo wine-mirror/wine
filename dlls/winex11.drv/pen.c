@@ -30,16 +30,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
  */
 HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
 {
+    static const char PEN_dash[]          = { 16,8 };
+    static const char PEN_dot[]           = { 4,4 };
+    static const char PEN_dashdot[]       = { 12,8,4,8 };
+    static const char PEN_dashdotdot[]    = { 12,4,4,4,4,4 };
+    static const char PEN_alternate[]     = { 1,1 };
+    static const char EXTPEN_dash[]       = { 3,1 };
+    static const char EXTPEN_dot[]        = { 1,1 };
+    static const char EXTPEN_dashdot[]    = { 3,1,1,1 };
+    static const char EXTPEN_dashdotdot[] = { 3,1,1,1,1,1 };
     LOGPEN logpen;
-    static char PEN_dash[]       = { 16,8 };
-    static char PEN_dot[]        = { 4,4 };
-    static char PEN_dashdot[]    = { 12,8,4,8 };
-    static char PEN_dashdotdot[] = { 12,4,4,4,4,4 };
-    static char PEN_alternate[]  = { 1,1 };
-    static char EXTPEN_dash[]       = { 3,1 };
-    static char EXTPEN_dot[]        = { 1,1 };
-    static char EXTPEN_dashdot[]    = { 3,1,1,1 };
-    static char EXTPEN_dashdotdot[] = { 3,1,1,1,1,1 };
     int i;
 
     if (!GetObjectW( hpen, sizeof(logpen), &logpen ))
