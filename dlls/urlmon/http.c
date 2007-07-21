@@ -290,7 +290,8 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     ULONG num = 0;
     IServiceProvider *service_provider = 0;
     IHttpNegotiate2 *http_negotiate2 = 0;
-    LPWSTR host = 0, path = 0, user = 0, pass = 0, addl_header = 0;
+    LPWSTR host = 0, path = 0, user = 0, pass = 0,
+        addl_header = 0, full_header = 0;
     BYTE security_id[512];
     LPOLESTR user_agent, accept_mimes[257];
     HRESULT hres;
@@ -435,6 +436,23 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         WARN("IHttpNegotiate_BeginningTransaction failed: %08x\n", hres);
         goto done;
     }
+    else if (addl_header == NULL)
+    {
+        full_header = (LPWSTR)wszHeaders;
+    }
+    else
+    {
+        full_header = HeapAlloc(GetProcessHeap(), 0,
+                                (lstrlenW(addl_header)+sizeof(wszHeaders))*sizeof(WCHAR));
+        if (!full_header)
+        {
+            WARN("Out of memory\n");
+            hres = E_OUTOFMEMORY;
+            goto done;
+        }
+        lstrcpyW(full_header, addl_header);
+        lstrcpyW(&full_header[lstrlenW(addl_header)], wszHeaders);
+    }
 
     hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate2,
                                          &IID_IHttpNegotiate2, (void **)&http_negotiate2);
@@ -456,7 +474,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     /* FIXME: Handle security_id. Native calls undocumented function IsHostInProxyBypassList. */
 
-    if (!HttpSendRequestW(This->request, wszHeaders, lstrlenW(wszHeaders), NULL, 0) &&
+    if (!HttpSendRequestW(This->request, full_header, lstrlenW(full_header), NULL, 0) &&
         GetLastError() != ERROR_IO_PENDING)
     {
         WARN("HttpSendRequest failed: %d\n", GetLastError());
@@ -472,6 +490,8 @@ done:
         HTTPPROTOCOL_Close(This);
     }
 
+    if (full_header != wszHeaders)
+        HeapFree(GetProcessHeap(), 0, full_header);
     CoTaskMemFree(addl_header);
     if (http_negotiate2)
         IHttpNegotiate2_Release(http_negotiate2);
