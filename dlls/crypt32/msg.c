@@ -535,6 +535,119 @@ static HCRYPTMSG CHashEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
     return (HCRYPTMSG)msg;
 }
 
+typedef struct _CMSG_SIGNER_ENCODE_INFO_WITH_CMS
+{
+    DWORD                      cbSize;
+    PCERT_INFO                 pCertInfo;
+    HCRYPTPROV                 hCryptProv;
+    DWORD                      dwKeySpec;
+    CRYPT_ALGORITHM_IDENTIFIER HashAlgorithm;
+    void                      *pvHashAuxInfo;
+    DWORD                      cAuthAttr;
+    PCRYPT_ATTRIBUTE           rgAuthAttr;
+    DWORD                      cUnauthAttr;
+    PCRYPT_ATTRIBUTE           rgUnauthAttr;
+    CERT_ID                    SignerId;
+    CRYPT_ALGORITHM_IDENTIFIER HashEncryptionAlgorithm;
+    void                      *pvHashEncryptionAuxInfo;
+} CMSG_SIGNER_ENCODE_INFO_WITH_CMS, *PCMSG_SIGNER_ENCODE_INFO_WITH_CMS;
+
+typedef struct _CMSG_SIGNED_ENCODE_INFO_WITH_CMS
+{
+    DWORD                             cbSize;
+    DWORD                             cSigners;
+    PCMSG_SIGNER_ENCODE_INFO_WITH_CMS rgSigners;
+    DWORD                             cCertEncoded;
+    PCERT_BLOB                        rgCertEncoded;
+    DWORD                             cCrlEncoded;
+    PCRL_BLOB                         rgCrlEncoded;
+    DWORD                             cAttrCertEncoded;
+    PCERT_BLOB                        rgAttrCertEncoded;
+} CMSG_SIGNED_ENCODE_INFO_WITH_CMS, *PCMSG_SIGNED_ENCODE_INFO_WITH_CMS;
+
+static BOOL CRYPT_IsValidSigner(CMSG_SIGNER_ENCODE_INFO_WITH_CMS *signer)
+{
+    if (!signer->pCertInfo->SerialNumber.cbData)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (!signer->pCertInfo->Issuer.cbData)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (!signer->hCryptProv)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (!CertOIDToAlgId(signer->HashAlgorithm.pszObjId))
+    {
+        SetLastError(CRYPT_E_UNKNOWN_ALGO);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+typedef struct _CSignedEncodeMsg
+{
+    CryptMsgBase base;
+} CSignedEncodeMsg;
+
+static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
+{
+    FIXME("(%p)\n", hCryptMsg);
+}
+
+static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
+ DWORD dwIndex, void *pvData, DWORD *pcbData)
+{
+    FIXME("(%p, %d, %d, %p, %p)\n", hCryptMsg, dwParamType, dwIndex, pvData,
+     pcbData);
+    return FALSE;
+}
+
+static BOOL CSignedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
+ DWORD cbData, BOOL fFinal)
+{
+    FIXME("(%p, %p, %d, %d)\n", hCryptMsg, pbData, cbData, fFinal);
+    return FALSE;
+}
+
+static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
+ const void *pvMsgEncodeInfo, LPSTR pszInnerContentObjID,
+ PCMSG_STREAM_INFO pStreamInfo)
+{
+    const CMSG_SIGNED_ENCODE_INFO_WITH_CMS *info =
+     (const CMSG_SIGNED_ENCODE_INFO_WITH_CMS *)pvMsgEncodeInfo;
+    DWORD i;
+    CSignedEncodeMsg *msg;
+
+    if (info->cbSize != sizeof(CMSG_SIGNED_ENCODE_INFO) &&
+     info->cbSize != sizeof(CMSG_SIGNED_ENCODE_INFO_WITH_CMS))
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+    if (info->cbSize == sizeof(CMSG_SIGNED_ENCODE_INFO_WITH_CMS))
+    {
+        FIXME("CMSG_SIGNED_ENCODE_INFO with CMS fields unsupported\n");
+        return NULL;
+    }
+    for (i = 0; i < info->cSigners; i++)
+        if (!CRYPT_IsValidSigner(&info->rgSigners[i]))
+            return NULL;
+    msg = CryptMemAlloc(sizeof(CSignedEncodeMsg));
+    if (msg)
+    {
+        CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
+         CSignedEncodeMsg_Close, CSignedEncodeMsg_GetParam,
+         CSignedEncodeMsg_Update);
+    }
+    return msg;
+}
+
 static inline const char *MSG_TYPE_STR(DWORD type)
 {
     switch (type)
@@ -577,6 +690,9 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
          pszInnerContentObjID, pStreamInfo);
         break;
     case CMSG_SIGNED:
+        msg = CSignedEncodeMsg_Open(dwFlags, pvMsgEncodeInfo,
+         pszInnerContentObjID, pStreamInfo);
+        break;
     case CMSG_ENVELOPED:
         FIXME("unimplemented for type %s\n", MSG_TYPE_STR(dwMsgType));
         break;
