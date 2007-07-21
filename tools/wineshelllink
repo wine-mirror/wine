@@ -89,6 +89,7 @@ desktop_entry()
 Name=$linkname
 Exec=env WINEPREFIX="${WINEPREFIX:-$HOME/.wine}" wine "$path" $args
 Type=Application
+StartupWMClass=Wine
 EOF
     [ -z "$descr"   ] || echo "Comment=$descr"
     [ -z "$workdir" ] || echo "Path=$workdir"
