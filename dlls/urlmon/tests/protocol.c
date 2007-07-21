@@ -402,7 +402,7 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
     }else if(tested_protocol == HTTP_TEST) {
         if(!(grfBSCF & BSCF_LASTDATANOTIFICATION))
             CHECK_EXPECT(ReportData);
-        else if (http_post_test) todo_wine
+        else if (http_post_test)
             ok(ulProgress == 13, "Read %u bytes instead of 13\n", ulProgress);
 
         ok(ulProgress, "ulProgress == 0\n");
@@ -1174,7 +1174,7 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
     CHECK_CALLED(BeginningTransaction);
     /* GetRootSecurityId called on WinXP but not on Win98 */
     CLEAR_CALLED(GetRootSecurityId);
-    if (http_post_test) todo_wine
+    if (http_post_test)
         CHECK_CALLED(GetBindString_POST_COOKIE);
 
     return TRUE;

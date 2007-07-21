@@ -20,7 +20,6 @@
 /*
  * TODO:
  * - Handle redirects as native.
- * - Add support for non-GET requests (e.g., POST).
  */
 
 #include <stdarg.h>
@@ -290,8 +289,8 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     ULONG num = 0;
     IServiceProvider *service_provider = 0;
     IHttpNegotiate2 *http_negotiate2 = 0;
-    LPWSTR host = 0, path = 0, user = 0, pass = 0,
-        addl_header = 0, full_header = 0;
+    LPWSTR host = 0, path = 0, user = 0, pass = 0, addl_header = 0,
+        full_header = 0, post_cookie = 0, optional = 0;
     BYTE security_id[512];
     LPOLESTR user_agent, accept_mimes[257];
     HRESULT hres;
@@ -299,6 +298,10 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     static const WCHAR wszHttp[] = {'h','t','t','p',':'};
     static const WCHAR wszHeaders[] = {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',
                                        ':',' ','g','z','i','p',',',' ','d','e','f','l','a','t','e',0};
+    static const WCHAR wszBindVerb[BINDVERB_CUSTOM][5] =
+        {{'G','E','T',0},
+         {'P','O','S','T',0},
+         {'P','U','T',0}};
 
     TRACE("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
@@ -404,8 +407,10 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     if (This->grfBINDF & BINDF_NOWRITECACHE)
         request_flags |= INTERNET_FLAG_NO_CACHE_WRITE;
-    This->request = HttpOpenRequestW(This->connect, NULL, path, NULL, NULL,
-                                     (LPCWSTR *)accept_mimes, request_flags, (DWORD)This);
+    This->request = HttpOpenRequestW(This->connect, bindinfo.dwBindVerb < BINDVERB_CUSTOM ?
+                                     wszBindVerb[bindinfo.dwBindVerb] : bindinfo.szCustomVerb,
+                                     path, NULL, NULL, (LPCWSTR *)accept_mimes,
+                                     request_flags, (DWORD)This);
     if (!This->request)
     {
         WARN("HttpOpenRequest failed: %d\n", GetLastError());
@@ -474,7 +479,32 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     /* FIXME: Handle security_id. Native calls undocumented function IsHostInProxyBypassList. */
 
-    if (!HttpSendRequestW(This->request, full_header, lstrlenW(full_header), NULL, 0) &&
+    if (bindinfo.dwBindVerb == BINDVERB_POST)
+    {
+        num = 0;
+        hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_POST_COOKIE, &post_cookie,
+                                               1, &num);
+        if (hres == S_OK && num &&
+            !InternetSetOptionW(This->request, INTERNET_OPTION_SECONDARY_CACHE_KEY,
+                                post_cookie, lstrlenW(post_cookie)))
+        {
+            WARN("InternetSetOption INTERNET_OPTION_SECONDARY_CACHE_KEY failed: %d\n",
+                 GetLastError());
+        }
+    }
+
+    if (bindinfo.dwBindVerb != BINDVERB_GET)
+    {
+        /* Native does not use GlobalLock/GlobalUnlock, so we won't either */
+        if (bindinfo.stgmedData.tymed != TYMED_HGLOBAL)
+            WARN("Expected bindinfo.stgmedData.tymed to be TYMED_HGLOBAL, not %d\n",
+                 bindinfo.stgmedData.tymed);
+        else
+            optional = (LPWSTR)bindinfo.stgmedData.hGlobal;
+    }
+    if (!HttpSendRequestW(This->request, full_header, lstrlenW(full_header),
+                          optional,
+                          optional ? bindinfo.cbstgmedData : 0) &&
         GetLastError() != ERROR_IO_PENDING)
     {
         WARN("HttpSendRequest failed: %d\n", GetLastError());
@@ -490,6 +520,7 @@ done:
         HTTPPROTOCOL_Close(This);
     }
 
+    CoTaskMemFree(post_cookie);
     if (full_header != wszHeaders)
         HeapFree(GetProcessHeap(), 0, full_header);
     CoTaskMemFree(addl_header);
