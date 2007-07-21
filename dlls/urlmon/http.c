@@ -286,7 +286,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     HttpProtocol *This = PROTOCOL_THIS(iface);
     URL_COMPONENTSW url;
     BINDINFO bindinfo;
-    DWORD len = 0;
+    DWORD len = 0, request_flags = INTERNET_FLAG_KEEP_CONNECTION;
     ULONG num = 0;
     IServiceProvider *service_provider = 0;
     IHttpNegotiate2 *http_negotiate2 = 0;
@@ -401,8 +401,10 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     }
     accept_mimes[num] = 0;
 
+    if (This->grfBINDF & BINDF_NOWRITECACHE)
+        request_flags |= INTERNET_FLAG_NO_CACHE_WRITE;
     This->request = HttpOpenRequestW(This->connect, NULL, path, NULL, NULL,
-                                     (LPCWSTR *)accept_mimes, 0, (DWORD)This);
+                                     (LPCWSTR *)accept_mimes, request_flags, (DWORD)This);
     if (!This->request)
     {
         WARN("HttpOpenRequest failed: %d\n", GetLastError());
