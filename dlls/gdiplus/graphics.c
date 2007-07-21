@@ -146,13 +146,10 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
     INT i, count;
     LOGBRUSH lb;
 
-    if(x2 != x1)
-        theta = atan2(y2 - y1, x2 - x1);
-    else if(y2 != y1){
-        theta = M_PI_2 * (y2 > y1 ? 1.0 : -1.0);
-    }
-    else
+    if((x1 == x2) && (y1 == y2))
         return;
+
+    theta = gdiplus_atan2(y2 - y1, x2 - x1);
 
     brush = CreateSolidBrush(color);
     lb.lbStyle = BS_SOLID;
@@ -327,7 +324,7 @@ static void shorten_line_percent(REAL x1, REAL  y1, REAL *x2, REAL *y2, REAL per
         return;
 
     dist = sqrt((*x2 - x1) * (*x2 - x1) + (*y2 - y1) * (*y2 - y1)) * -percent;
-    theta = (*x2 == x1 ? M_PI_2 : atan2((*y2 - y1), (*x2 - x1)));
+    theta = gdiplus_atan2((*y2 - y1), (*x2 - x1));
     dx = cos(theta) * dist;
     dy = sin(theta) * dist;
 
