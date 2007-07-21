@@ -317,7 +317,8 @@ custend:
 }
 
 /* Shortens the line by the given percent by changing x2, y2.
- * If percent is > 1.0 then the line will change direction. */
+ * If percent is > 1.0 then the line will change direction.
+ * If percent is negative it can lengthen the line. */
 static void shorten_line_percent(REAL x1, REAL  y1, REAL *x2, REAL *y2, REAL percent)
 {
     REAL dist, theta, dx, dy;
@@ -325,17 +326,18 @@ static void shorten_line_percent(REAL x1, REAL  y1, REAL *x2, REAL *y2, REAL per
     if((y1 == *y2) && (x1 == *x2))
         return;
 
-    dist = sqrt((*x2 - x1) * (*x2 - x1) + (*y2 - y1) * (*y2 - y1)) * percent;
-    theta = (*x2 == x1 ? M_PI_2 : atan((*y2 - y1) / (*x2 - x1)));
+    dist = sqrt((*x2 - x1) * (*x2 - x1) + (*y2 - y1) * (*y2 - y1)) * -percent;
+    theta = (*x2 == x1 ? M_PI_2 : atan2((*y2 - y1), (*x2 - x1)));
     dx = cos(theta) * dist;
     dy = sin(theta) * dist;
 
-    *x2 = *x2 + fabs(dx) * (*x2 > x1 ? -1.0 : 1.0);
-    *y2 = *y2 + fabs(dy) * (*y2 > y1 ? -1.0 : 1.0);
+    *x2 = *x2 + dx;
+    *y2 = *y2 + dy;
 }
 
 /* Shortens the line by the given amount by changing x2, y2.
- * If the amount is greater than the distance, the line will become length 0. */
+ * If the amount is greater than the distance, the line will become length 0.
+ * If the amount is negative, it can lengthen the line. */
 static void shorten_line_amt(REAL x1, REAL y1, REAL *x2, REAL *y2, REAL amt)
 {
     REAL dx, dy, percent;
@@ -378,6 +380,9 @@ static GpStatus draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     if(caps){
         if(pen->endcap == LineCapArrowAnchor)
             shorten_line_amt(pt[count-2].X, pt[count-2].Y, &x, &y, pen->width);
+        else if((pen->endcap == LineCapCustom) && pen->customend)
+            shorten_line_amt(pt[count-2].X, pt[count-2].Y, &x, &y,
+                             pen->customend->inset * pen->width);
 
         draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
                  pt[count-2].X, pt[count-2].Y, pt[count - 1].X, pt[count - 1].Y);
@@ -437,9 +442,10 @@ static void shorten_bezier_amt(GpPointF * pt, REAL amt)
 static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     INT count, BOOL caps)
 {
-    POINT *pti;
+    POINT *pti, curpos;
     GpPointF *ptf;
     INT i;
+    REAL x, y;
     GpStatus status = GenericError;
 
     if(!count)
@@ -458,6 +464,18 @@ static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     if(caps){
         if(pen->endcap == LineCapArrowAnchor)
             shorten_bezier_amt(ptf, pen->width);
+        /* FIXME The following is seemingly correct only for baseinset < 0 or
+         * baseinset > ~3. With smaller baseinsets, windows actually
+         * lengthens the bezier line instead of shortening it. */
+        else if((pen->endcap == LineCapCustom) && pen->customend){
+            x = pt[count - 1].X;
+            y = pt[count - 1].Y;
+            shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
+                             pen->width * pen->customend->inset);
+            MoveToEx(hdc, roundr(pt[count - 1].X), roundr(pt[count - 1].Y), &curpos);
+            LineTo(hdc, roundr(x), roundr(y));
+            MoveToEx(hdc, curpos.x, curpos.y, NULL);
+        }
 
         /* the direction of the line cap is parallel to the direction at the
          * end of the bezier (which, if it has been shortened, is not the same
@@ -492,7 +510,7 @@ end:
 static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     GDIPCONST BYTE * types, INT count, BOOL caps)
 {
-    POINT *pti = GdipAlloc(count * sizeof(POINT));
+    POINT *pti = GdipAlloc(count * sizeof(POINT)), curpos;
     BYTE *tp = GdipAlloc(count);
     GpPointF *ptf = NULL;
     REAL x = pt[count - 1].X, y = pt[count - 1].Y;
@@ -538,6 +556,15 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
 
                 if(pen->endcap == LineCapArrowAnchor)
                     shorten_bezier_amt(ptf, pen->width);
+                else if((pen->endcap == LineCapCustom) && pen->customend){
+                    x = pt[count - 1].X;
+                    y = pt[count - 1].Y;
+                    shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
+                                     pen->width * pen->customend->inset);
+                    MoveToEx(hdc, roundr(pt[count - 1].X), roundr(pt[count - 1].Y), &curpos);
+                    LineTo(hdc, roundr(x), roundr(y));
+                    MoveToEx(hdc, curpos.x, curpos.y, NULL);
+                }
 
                 draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
                     pt[count - 1].X - (ptf[3].X - ptf[2].X),
@@ -555,6 +582,9 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                 if(pen->endcap == LineCapArrowAnchor)
                     shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
                                      pen->width);
+                else if((pen->endcap == LineCapCustom) && pen->customend)
+                    shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
+                                     pen->customend->inset * pen->width);
 
                 draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
                          pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X,
