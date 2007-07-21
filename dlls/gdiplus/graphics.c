@@ -362,8 +362,8 @@ static void shorten_line_amt(REAL x1, REAL y1, REAL *x2, REAL *y2, REAL amt)
 static GpStatus draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     INT count, BOOL caps)
 {
-    POINT *pti;
-    REAL x = pt[count - 1].X, y = pt[count - 1].Y;
+    POINT *pti = NULL;
+    GpPointF *ptcopy = NULL;
     INT i;
     GpStatus status = GenericError;
 
@@ -371,35 +371,48 @@ static GpStatus draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
         return Ok;
 
     pti = GdipAlloc(count * sizeof(POINT));
+    ptcopy = GdipAlloc(count * sizeof(GpPointF));
 
-    if(!pti){
+    if(!pti || !ptcopy){
         status = OutOfMemory;
         goto end;
     }
 
+    memcpy(ptcopy, pt, count * sizeof(GpPointF));
+
     if(caps){
         if(pen->endcap == LineCapArrowAnchor)
-            shorten_line_amt(pt[count-2].X, pt[count-2].Y, &x, &y, pen->width);
+            shorten_line_amt(ptcopy[count-2].X, ptcopy[count-2].Y,
+                             &ptcopy[count-1].X, &ptcopy[count-1].Y, pen->width);
         else if((pen->endcap == LineCapCustom) && pen->customend)
-            shorten_line_amt(pt[count-2].X, pt[count-2].Y, &x, &y,
+            shorten_line_amt(ptcopy[count-2].X, ptcopy[count-2].Y,
+                             &ptcopy[count-1].X, &ptcopy[count-1].Y,
+                             pen->customend->inset * pen->width);
+
+        if(pen->startcap == LineCapArrowAnchor)
+            shorten_line_amt(ptcopy[1].X, ptcopy[1].Y,
+                             &ptcopy[0].X, &ptcopy[0].Y, pen->width);
+        else if((pen->startcap == LineCapCustom) && pen->customstart)
+            shorten_line_amt(ptcopy[1].X, ptcopy[1].Y,
+                             &ptcopy[0].X, &ptcopy[0].Y,
                              pen->customend->inset * pen->width);
 
         draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
-                 pt[count-2].X, pt[count-2].Y, pt[count - 1].X, pt[count - 1].Y);
+                 pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X, pt[count - 1].Y);
+        draw_cap(hdc, pen->color, pen->startcap, pen->width, pen->customstart,
+                         pt[1].X, pt[1].Y, pt[0].X, pt[0].Y);
     }
 
-    for(i = 0; i < count - 1; i ++){
-        pti[i].x = roundr(pt[i].X);
-        pti[i].y = roundr(pt[i].Y);
+    for(i = 0; i < count; i ++){
+        pti[i].x = roundr(ptcopy[i].X);
+        pti[i].y = roundr(ptcopy[i].Y);
     }
-
-    pti[i].x = roundr(x);
-    pti[i].y = roundr(y);
 
     Polyline(hdc, pti, count);
 
 end:
     GdipFree(pti);
+    GdipFree(ptcopy);
 
     return status;
 }
@@ -409,28 +422,38 @@ end:
  * better than binary in this case because there are multiple solutions,
  * and binary searches often find a bad one. I don't think this is what
  * Windows does but short of rendering the bezier without GDI's help it's
- * the best we can do. */
-static void shorten_bezier_amt(GpPointF * pt, REAL amt)
+ * the best we can do. If rev then work from the start of the passed points
+ * instead of the end. */
+static void shorten_bezier_amt(GpPointF * pt, REAL amt, BOOL rev)
 {
     GpPointF origpt[4];
-    REAL percent = 0.00, dx, dy, origx = pt[3].X, origy = pt[3].Y, diff = -1.0;
-    INT i;
+    REAL percent = 0.00, dx, dy, origx, origy, diff = -1.0;
+    INT i, first = 0, second = 1, third = 2, fourth = 3;
 
+    if(rev){
+        first = 3;
+        second = 2;
+        third = 1;
+        fourth = 0;
+    }
+
+    origx = pt[fourth].X;
+    origy = pt[fourth].Y;
     memcpy(origpt, pt, sizeof(GpPointF) * 4);
 
     for(i = 0; (i < MAX_ITERS) && (diff < amt); i++){
         /* reset bezier points to original values */
         memcpy(pt, origpt, sizeof(GpPointF) * 4);
         /* Perform magic on bezier points. Order is important here.*/
-        shorten_line_percent(pt[2].X, pt[2].Y, &pt[3].X, &pt[3].Y, percent);
-        shorten_line_percent(pt[1].X, pt[1].Y, &pt[2].X, &pt[2].Y, percent);
-        shorten_line_percent(pt[2].X, pt[2].Y, &pt[3].X, &pt[3].Y, percent);
-        shorten_line_percent(pt[0].X, pt[0].Y, &pt[1].X, &pt[1].Y, percent);
-        shorten_line_percent(pt[1].X, pt[1].Y, &pt[2].X, &pt[2].Y, percent);
-        shorten_line_percent(pt[2].X, pt[2].Y, &pt[3].X, &pt[3].Y, percent);
+        shorten_line_percent(pt[third].X, pt[third].Y, &pt[fourth].X, &pt[fourth].Y, percent);
+        shorten_line_percent(pt[second].X, pt[second].Y, &pt[third].X, &pt[third].Y, percent);
+        shorten_line_percent(pt[third].X, pt[third].Y, &pt[fourth].X, &pt[fourth].Y, percent);
+        shorten_line_percent(pt[first].X, pt[first].Y, &pt[second].X, &pt[second].Y, percent);
+        shorten_line_percent(pt[second].X, pt[second].Y, &pt[third].X, &pt[third].Y, percent);
+        shorten_line_percent(pt[third].X, pt[third].Y, &pt[fourth].X, &pt[fourth].Y, percent);
 
-        dx = pt[3].X - origx;
-        dy = pt[3].Y - origy;
+        dx = pt[fourth].X - origx;
+        dy = pt[fourth].Y - origy;
 
         diff = sqrt(dx * dx + dy * dy);
         percent += 0.0005 * amt;
@@ -443,7 +466,7 @@ static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
     INT count, BOOL caps)
 {
     POINT *pti, curpos;
-    GpPointF *ptf;
+    GpPointF *ptcopy;
     INT i;
     REAL x, y;
     GpStatus status = GenericError;
@@ -452,18 +475,18 @@ static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
         return Ok;
 
     pti = GdipAlloc(count * sizeof(POINT));
-    ptf = GdipAlloc(4 * sizeof(GpPointF));
+    ptcopy = GdipAlloc(count * sizeof(GpPointF));
 
-    if(!pti || !ptf){
+    if(!pti || !ptcopy){
         status = OutOfMemory;
         goto end;
     }
 
-    memcpy(ptf, &pt[count-4], 4 * sizeof(GpPointF));
+    memcpy(ptcopy, pt, count * sizeof(GpPointF));
 
     if(caps){
         if(pen->endcap == LineCapArrowAnchor)
-            shorten_bezier_amt(ptf, pen->width);
+            shorten_bezier_amt(&ptcopy[count-4], pen->width, FALSE);
         /* FIXME The following is seemingly correct only for baseinset < 0 or
          * baseinset > ~3. With smaller baseinsets, windows actually
          * lengthens the bezier line instead of shortening it. */
@@ -477,22 +500,34 @@ static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
             MoveToEx(hdc, curpos.x, curpos.y, NULL);
         }
 
+        if(pen->startcap == LineCapArrowAnchor)
+            shorten_bezier_amt(ptcopy, pen->width, TRUE);
+        else if((pen->startcap == LineCapCustom) && pen->customstart){
+            x = ptcopy[0].X;
+            y = ptcopy[0].Y;
+            shorten_line_amt(ptcopy[1].X, ptcopy[1].Y, &x, &y,
+                             pen->width * pen->customend->inset);
+            MoveToEx(hdc, roundr(pt[0].X), roundr(pt[0].Y), &curpos);
+            LineTo(hdc, roundr(x), roundr(y));
+            MoveToEx(hdc, curpos.x, curpos.y, NULL);
+        }
+
         /* the direction of the line cap is parallel to the direction at the
          * end of the bezier (which, if it has been shortened, is not the same
          * as the direction from pt[count-2] to pt[count-1]) */
         draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
-            pt[count - 1].X - (ptf[3].X - ptf[2].X),
-            pt[count - 1].Y - (ptf[3].Y - ptf[2].Y),
+            pt[count - 1].X - (ptcopy[count - 1].X - ptcopy[count - 2].X),
+            pt[count - 1].Y - (ptcopy[count - 1].Y - ptcopy[count - 2].Y),
             pt[count - 1].X, pt[count - 1].Y);
+
+        draw_cap(hdc, pen->color, pen->startcap, pen->width, pen->customstart,
+            pt[0].X - (ptcopy[0].X - ptcopy[1].X),
+            pt[0].Y - (ptcopy[0].Y - ptcopy[1].Y), pt[0].X, pt[0].Y);
     }
 
-    for(i = 0; i < count - 4; i ++){
-        pti[i].x = roundr(pt[i].X);
-        pti[i].y = roundr(pt[i].Y);
-    }
-    for(i = 0; i < 4; i ++){
-        pti[i + count - 4].x = roundr(ptf[i].X);
-        pti[i + count - 4].y = roundr(ptf[i].Y);
+    for(i = 0; i < count; i ++){
+        pti[i].x = roundr(ptcopy[i].X);
+        pti[i].y = roundr(ptcopy[i].Y);
     }
 
     PolyBezier(hdc, pti, count);
@@ -501,7 +536,7 @@ static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
 
 end:
     GdipFree(pti);
-    GdipFree(ptf);
+    GdipFree(ptcopy);
 
     return status;
 }
@@ -512,21 +547,21 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
 {
     POINT *pti = GdipAlloc(count * sizeof(POINT)), curpos;
     BYTE *tp = GdipAlloc(count);
-    GpPointF *ptf = NULL;
+    GpPointF *ptcopy = GdipAlloc(count * sizeof(GpPointF));
     REAL x = pt[count - 1].X, y = pt[count - 1].Y;
-    INT i;
+    INT i, j;
     GpStatus status = GenericError;
 
     if(!count){
         status = Ok;
         goto end;
     }
-    if(!pti || !tp){
+    if(!pti || !tp || !ptcopy){
         status = OutOfMemory;
         goto end;
     }
 
-    for(i = 0; i < count; i++){
+    for(i = 1; i < count; i++){
         if((types[i] & PathPointTypePathTypeMask) == PathPointTypeBezier){
             if((i + 2 >= count) || !(types[i + 1] & PathPointTypeBezier)
                 || !(types[i + 1] & PathPointTypeBezier)){
@@ -537,25 +572,15 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
         }
     }
 
-    for(i = 0; i < count; i++){
-        pti[i].x = roundr(pt[i].X);
-        pti[i].y = roundr(pt[i].Y);
-    }
-
     /* If we are drawing caps, go through the points and adjust them accordingly,
      * and draw the caps. */
     if(caps){
+        memcpy(ptcopy, pt, count * sizeof(GpPointF));
+
         switch(types[count - 1] & PathPointTypePathTypeMask){
             case PathPointTypeBezier:
-                ptf = GdipAlloc(4 * sizeof(GpPointF));
-                if(!ptf){
-                    status = OutOfMemory;
-                    goto end;
-                }
-                memcpy(ptf, &pt[count - 4], 4 * sizeof(GpPointF));
-
                 if(pen->endcap == LineCapArrowAnchor)
-                    shorten_bezier_amt(ptf, pen->width);
+                    shorten_bezier_amt(&ptcopy[count - 4], pen->width, FALSE);
                 else if((pen->endcap == LineCapCustom) && pen->customend){
                     x = pt[count - 1].X;
                     y = pt[count - 1].Y;
@@ -567,38 +592,84 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                 }
 
                 draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
-                    pt[count - 1].X - (ptf[3].X - ptf[2].X),
-                    pt[count - 1].Y - (ptf[3].Y - ptf[2].Y),
+                    pt[count - 1].X - (ptcopy[count - 1].X - ptcopy[count - 2].X),
+                    pt[count - 1].Y - (ptcopy[count - 1].Y - ptcopy[count - 2].Y),
                     pt[count - 1].X, pt[count - 1].Y);
 
-                for(i = 0; i < 4; i++){
-                    pti[i + count - 4].x = roundr(ptf[i].X);
-                    pti[i + count - 4].y = roundr(ptf[i].Y);
-                }
-
                 break;
-
             case PathPointTypeLine:
                 if(pen->endcap == LineCapArrowAnchor)
-                    shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
+                    shorten_line_amt(ptcopy[count - 2].X, ptcopy[count - 2].Y,
+                                     &ptcopy[count - 1].X, &ptcopy[count - 1].Y,
                                      pen->width);
                 else if((pen->endcap == LineCapCustom) && pen->customend)
-                    shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
+                    shorten_line_amt(ptcopy[count - 2].X, ptcopy[count - 2].Y,
+                                     &ptcopy[count - 1].X, &ptcopy[count - 1].Y,
                                      pen->customend->inset * pen->width);
 
                 draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
                          pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X,
                          pt[count - 1].Y);
 
-                pti[count - 1].x = roundr(x);
-                pti[count - 1].y = roundr(y);
-
                 break;
             default:
                 ERR("Bad path last point\n");
                 goto end;
         }
+
+        /* Find start of points */
+        for(j = 1; j < count && ((types[j] & PathPointTypePathTypeMask)
+            == PathPointTypeStart); j++);
+
+        switch(types[j] & PathPointTypePathTypeMask){
+            case PathPointTypeBezier:
+                if(pen->startcap == LineCapArrowAnchor)
+                    shorten_bezier_amt(&ptcopy[j - 1], pen->width, TRUE);
+                else if((pen->startcap == LineCapCustom) && pen->customstart){
+                    x = pt[j - 1].X;
+                    y = pt[j - 1].Y;
+                    shorten_line_amt(ptcopy[j].X, ptcopy[j].Y, &x, &y,
+                                     pen->width * pen->customstart->inset);
+                    MoveToEx(hdc, roundr(pt[j - 1].X), roundr(pt[j - 1].Y), &curpos);
+                    LineTo(hdc, roundr(x), roundr(y));
+                    MoveToEx(hdc, curpos.x, curpos.y, NULL);
+                }
+
+                draw_cap(hdc, pen->color, pen->startcap, pen->width, pen->customstart,
+                    pt[j - 1].X - (ptcopy[j - 1].X - ptcopy[j].X),
+                    pt[j - 1].Y - (ptcopy[j - 1].Y - ptcopy[j].Y),
+                    pt[j - 1].X, pt[j - 1].Y);
+
+                break;
+            case PathPointTypeLine:
+                if(pen->startcap == LineCapArrowAnchor)
+                    shorten_line_amt(ptcopy[j].X, ptcopy[j].Y,
+                                     &ptcopy[j - 1].X, &ptcopy[j - 1].Y,
+                                     pen->width);
+                else if((pen->startcap == LineCapCustom) && pen->customstart)
+                    shorten_line_amt(ptcopy[j].X, ptcopy[j].Y,
+                                     &ptcopy[j - 1].X, &ptcopy[j - 1].Y,
+                                     pen->customstart->inset * pen->width);
+
+                draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customstart,
+                         pt[j].X, pt[j].Y, pt[j - 1].X,
+                         pt[j - 1].Y);
+
+                break;
+            default:
+                ERR("Bad path points\n");
+                goto end;
+        }
+        for(i = 0; i < count; i++){
+            pti[i].x = roundr(ptcopy[i].X);
+            pti[i].y = roundr(ptcopy[i].Y);
+        }
     }
+    else
+        for(i = 0; i < count; i++){
+            pti[i].x = roundr(pt[i].X);
+            pti[i].y = roundr(pt[i].Y);
+        }
 
     for(i = 0; i < count; i++){
         tp[i] = convert_path_point_type(types[i]);
@@ -610,7 +681,7 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
 
 end:
     GdipFree(pti);
-    GdipFree(ptf);
+    GdipFree(ptcopy);
     GdipFree(tp);
 
     return status;
