@@ -127,7 +127,7 @@ static UINT alter_add_column(MSIALTERVIEW *av)
 
     r = columns->ops->add_column(columns, av->colinfo->table,
                                  colnum, av->colinfo->column,
-                                 av->colinfo->type);
+                                 av->colinfo->type, (av->hold == 1));
 
     msiobj_release(&columns->hdr);
     return r;
@@ -143,7 +143,8 @@ static UINT ALTER_execute( struct tagMSIVIEW *view, MSIRECORD *record )
         av->table->ops->add_ref(av->table);
     else if (av->hold == -1)
         av->table->ops->release(av->table);
-    else
+
+    if (av->colinfo)
         return alter_add_column(av);
 
     return ERROR_SUCCESS;
@@ -223,6 +224,7 @@ static const MSIVIEWOPS alter_ops =
     NULL,
     NULL,
     NULL,
+    NULL,
 };
 
 UINT ALTER_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name, column_info *colinfo, int hold )
@@ -230,7 +232,7 @@ UINT ALTER_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name, column_inf
     MSIALTERVIEW *av;
     UINT r;
 
-    TRACE("%p %s %d\n", view, debugstr_w(name), hold );
+    TRACE("%p %p %s %d\n", view, colinfo, debugstr_w(name), hold );
 
     av = msi_alloc_zero( sizeof *av );
     if( !av )

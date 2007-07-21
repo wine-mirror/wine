@@ -196,6 +196,7 @@ static const MSIVIEWOPS delete_ops =
     NULL,
     NULL,
     NULL,
+    NULL,
 };
 
 UINT DELETE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table )

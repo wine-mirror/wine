@@ -39,6 +39,7 @@
 #define MSITYPE_STRING   0x0800
 #define MSITYPE_NULLABLE 0x1000
 #define MSITYPE_KEY      0x2000
+#define MSITYPE_TEMPORARY 0x4000
 
 /* Word Count masks */
 #define MSIWORDCOUNT_SHORTFILENAMES     0x0001
@@ -235,7 +236,12 @@ typedef struct tagMSIVIEWOPS
     /*
      * add_column - adds a column to the table
      */
-    UINT (*add_column)( struct tagMSIVIEW *view, LPCWSTR table, UINT number, LPCWSTR column, UINT type );
+    UINT (*add_column)( struct tagMSIVIEW *view, LPCWSTR table, UINT number, LPCWSTR column, UINT type, BOOL hold );
+
+    /*
+     * remove_column - removes the column represented by table name and column number from the table
+     */
+    UINT (*remove_column)( struct tagMSIVIEW *view, LPCWSTR table, UINT number );
 } MSIVIEWOPS;
 
 struct tagMSIVIEW

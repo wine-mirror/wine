@@ -340,6 +340,7 @@ static const MSIVIEWOPS streams_ops =
     NULL,
     NULL,
     NULL,
+    NULL,
 };
 
 static UINT add_streams_to_table(MSISTREAMSVIEW *sv)

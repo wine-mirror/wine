@@ -285,6 +285,7 @@ static const MSIVIEWOPS order_ops =
     NULL,
     NULL,
     NULL,
+    NULL,
 };
 
 static UINT ORDER_AddColumn( MSIORDERVIEW *ov, LPCWSTR name )

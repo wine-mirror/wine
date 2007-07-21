@@ -58,6 +58,7 @@ typedef struct tagMSICOLUMNINFO
     LPCWSTR colname;
     UINT   type;
     UINT   offset;
+    INT    ref_count;
     MSICOLUMNHASHENTRY **hash_table;
 } MSICOLUMNINFO;
 
@@ -660,6 +661,7 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
         table->colinfo[ i ].colname = strdupW( col->column );
         table->colinfo[ i ].type = col->type;
         table->colinfo[ i ].offset = 0;
+        table->colinfo[ i ].ref_count = 0;
         table->colinfo[ i ].hash_table = NULL;
     }
     table_calc_column_offsets( table->colinfo, table->col_count);
@@ -1015,6 +1017,7 @@ static UINT get_tablecolumns( MSIDATABASE *db,
             colinfo[ col - 1 ].colname = msi_makestring( db, id );
             colinfo[ col - 1 ].type = read_table_int(table->data, i, _Columns_cols[3].offset, sizeof(USHORT)) - (1<<15);
             colinfo[ col - 1 ].offset = 0;
+            colinfo[ col - 1 ].ref_count = 0;
             colinfo[ col - 1 ].hash_table = NULL;
         }
         n++;
@@ -1667,18 +1670,76 @@ static UINT TABLE_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 static UINT TABLE_add_ref(struct tagMSIVIEW *view)
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
+    int i;
 
     TRACE("%p %d\n", view, tv->table->ref_count);
 
+    for (i = 0; i < tv->table->col_count; i++)
+    {
+        if (tv->table->colinfo[i].type & MSITYPE_TEMPORARY)
+            InterlockedIncrement(&tv->table->colinfo[i].ref_count);
+    }
+
     return InterlockedIncrement(&tv->table->ref_count);
+}
+
+static UINT TABLE_remove_column(struct tagMSIVIEW *view, LPCWSTR table, UINT number)
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
+    MSIRECORD *rec;
+    MSIVIEW *columns = NULL;
+    UINT row, r;
+
+    rec = MSI_CreateRecord(2);
+    if (!rec)
+        return ERROR_OUTOFMEMORY;
+
+    MSI_RecordSetStringW(rec, 1, table);
+    MSI_RecordSetInteger(rec, 2, number);
+
+    r = TABLE_CreateView(tv->db, szColumns, &columns);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = msi_table_find_row((MSITABLEVIEW *)columns, rec, &row);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    r = TABLE_delete_row(columns, row);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    msi_update_table_columns(tv->db, table);
+
+done:
+    msiobj_release(&rec->hdr);
+    if (columns) msiobj_release(&columns->hdr);
+    return r;
 }
 
 static UINT TABLE_release(struct tagMSIVIEW *view)
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
     INT ref = tv->table->ref_count;
+    int i;
+    UINT r;
 
     TRACE("%p %d\n", view, ref);
+
+    for (i = 0; i < tv->table->col_count; i++)
+    {
+        if (tv->table->colinfo[i].type & MSITYPE_TEMPORARY)
+        {
+            ref = InterlockedDecrement(&tv->table->colinfo[i].ref_count);
+            if (ref == 0)
+            {
+                r = TABLE_remove_column(view, tv->table->colinfo[i].tablename,
+                                        tv->table->colinfo[i].number);
+                if (r != ERROR_SUCCESS)
+                    break;
+            }
+        }
+    }
 
     ref = InterlockedDecrement(&tv->table->ref_count);
     if (ref == 0)
@@ -1694,11 +1755,13 @@ static UINT TABLE_release(struct tagMSIVIEW *view)
     return ref;
 }
 
-static UINT TABLE_add_column(struct tagMSIVIEW *view, LPCWSTR table, UINT number, LPCWSTR column, UINT type)
+static UINT TABLE_add_column(struct tagMSIVIEW *view, LPCWSTR table, UINT number,
+                             LPCWSTR column, UINT type, BOOL hold)
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
+    MSITABLE *msitable;
     MSIRECORD *rec;
-    UINT r;
+    UINT r, i;
 
     rec = MSI_CreateRecord(4);
     if (!rec)
@@ -1714,6 +1777,19 @@ static UINT TABLE_add_column(struct tagMSIVIEW *view, LPCWSTR table, UINT number
         goto done;
 
     msi_update_table_columns(tv->db, table);
+
+    if (!hold)
+        goto done;
+
+    msitable = find_cached_table(tv->db, table);
+    for (i = 0; i < msitable->col_count; i++)
+    {
+        if (!lstrcmpW(msitable->colinfo[i].colname, column))
+        {
+            InterlockedIncrement(&msitable->colinfo[i].ref_count);
+            break;
+        }
+    }
 
 done:
     msiobj_release(&rec->hdr);
@@ -1737,6 +1813,7 @@ static const MSIVIEWOPS table_ops =
     TABLE_add_ref,
     TABLE_release,
     TABLE_add_column,
+    TABLE_remove_column,
 };
 
 UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view )

@@ -40,8 +40,6 @@ static int sql_error(const char *str);
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-#define MSITYPE_TEMPORARY 0x8000
-
 typedef struct tag_SQL_input
 {
     MSIDATABASE *db;
@@ -246,6 +244,16 @@ onealter:
                 YYABORT;
             $$ = alter;
         }
+  | TK_ALTER TK_TABLE table TK_ADD column_and_type TK_HOLD
+        {
+            SQL_input *sql = (SQL_input *)info;
+            MSIVIEW *alter = NULL;
+
+            ALTER_CreateView( sql->db, &alter, $3, $5, 1 );
+            if (!alter)
+                YYABORT;
+            $$ = alter;
+        }
     ;
 
 alterop:
@@ -290,7 +298,7 @@ column_and_type:
     column column_type
         {
             $$ = $1;
-            $$->type = ($2 | MSITYPE_VALID) & ~MSITYPE_TEMPORARY;
+            $$->type = ($2 | MSITYPE_VALID);
             $$->temporary = $2 & MSITYPE_TEMPORARY ? TRUE : FALSE;
         }
     ;
