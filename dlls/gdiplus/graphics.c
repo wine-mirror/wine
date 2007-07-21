@@ -130,7 +130,8 @@ static void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
 }
 
 /* Draws the linecap the specified color and size on the hdc.  The linecap is in
- * direction of the line from x1, y1 to x2, y2 and is anchored on x2, y2. */
+ * direction of the line from x1, y1 to x2, y2 and is anchored on x2, y2. Probably
+ * should not be called on an hdc that has a path you care about. */
 static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
     const GpCustomLineCap *custom, REAL x1, REAL y1, REAL x2, REAL y2)
 {
@@ -158,7 +159,8 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
     lb.lbColor = color;
     lb.lbHatch = 0;
     pen = ExtCreatePen(PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_FLAT,
-                       (cap == LineCapCustom ? size : 1), &lb, 0, NULL);
+               ((cap == LineCapCustom) && custom && (custom->fill)) ? size : 1,
+               &lb, 0, NULL);
     oldbrush = SelectObject(hdc, brush);
     oldpen = SelectObject(hdc, pen);
 
@@ -267,11 +269,6 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
             if(!custom)
                 break;
 
-            if(custom->fill){
-                FIXME("fill-path custom line caps not implemented\n");
-                break;
-            }
-
             count = custom->pathdata.Count;
             custptf = GdipAlloc(count * sizeof(PointF));
             custpt = GdipAlloc(count * sizeof(POINT));
@@ -294,7 +291,14 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
                 tp[i] = convert_path_point_type(custom->pathdata.Types[i]);
             }
 
-            PolyDraw(hdc, custpt, tp, count);
+            if(custom->fill){
+                BeginPath(hdc);
+                PolyDraw(hdc, custpt, tp, count);
+                EndPath(hdc);
+                StrokeAndFillPath(hdc);
+            }
+            else
+                PolyDraw(hdc, custpt, tp, count);
 
 custend:
             GdipFree(custptf);

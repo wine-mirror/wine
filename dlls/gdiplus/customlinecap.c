@@ -23,6 +23,9 @@
 
 #include "gdiplus.h"
 #include "gdiplus_private.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 GpStatus WINGDIPAPI GdipCloneCustomLineCap(GpCustomLineCap* from,
     GpCustomLineCap** to)
@@ -52,10 +55,14 @@ GpStatus WINGDIPAPI GdipCloneCustomLineCap(GpCustomLineCap* from,
     return Ok;
 }
 
+/* FIXME: Sometimes when fillPath is non-null and stroke path is null, the native
+ * version of this function returns NotImplemented. I cannot figure out why. */
 GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath* fillPath, GpPath* strokePath,
     GpLineCap baseCap, REAL baseInset, GpCustomLineCap **customCap)
 {
     GpPathData *pathdata;
+
+    TRACE("%p %p %d %f %p\n", fillPath, strokePath, baseCap, baseInset, customCap);
 
     if(!customCap || !(fillPath || strokePath))
         return InvalidParameter;
