@@ -27,6 +27,11 @@
 
 #include "wine/test.h"
 
+static const WCHAR processor_time[] =
+    {'%',' ','P','r','o','c','e','s','s','o','r',' ','T','i','m','e',0};
+static const WCHAR uptime[] =
+    {'S','y','s','t','e','m',' ','U','p',' ','T','i','m','e',0};
+
 static const WCHAR system_uptime[] =
     {'\\','S','y','s','t','e','m','\\','S','y','s','t','e','m',' ','U','p',' ','T','i','m','e',0};
 static const WCHAR system_downtime[] = /* does not exist */
@@ -432,6 +437,143 @@ static void test_PdhGetCounterInfoW( void )
     ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
 }
 
+static void test_PdhLookupPerfIndexByNameA( void )
+{
+    PDH_STATUS ret;
+    DWORD index;
+
+    ret = PdhLookupPerfIndexByNameA( NULL, NULL, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfIndexByNameA failed 0x%08x\n", ret);
+
+    ret = PdhLookupPerfIndexByNameA( NULL, NULL, &index );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfIndexByNameA failed 0x%08x\n", ret);
+
+    ret = PdhLookupPerfIndexByNameA( NULL, "No Counter", &index );
+    ok(ret == PDH_STRING_NOT_FOUND, "PdhLookupPerfIndexByNameA failed 0x%08x\n", ret);
+
+    ret = PdhLookupPerfIndexByNameA( NULL, "% Processor Time", NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfIndexByNameA failed 0x%08x\n", ret);
+
+    ret = PdhLookupPerfIndexByNameA( NULL, "% Processor Time", &index );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfIndexByNameA failed 0x%08x\n", ret);
+    ok(index == 6, "PdhLookupPerfIndexByNameA failed %d\n", index);
+
+    ret = PdhLookupPerfIndexByNameA( NULL, "System Up Time", &index );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfIndexByNameA failed 0x%08x\n", ret);
+    ok(index == 674, "PdhLookupPerfIndexByNameA failed %d\n", index);
+}
+
+static void test_PdhLookupPerfIndexByNameW( void )
+{
+    PDH_STATUS ret;
+    DWORD index;
+
+    static const WCHAR no_counter[] = {'N','o',' ','C','o','u','n','t','e','r',0};
+
+    ret = PdhLookupPerfIndexByNameW( NULL, NULL, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfIndexByNameW failed 0x%08x\n", ret);
+
+    ret = PdhLookupPerfIndexByNameW( NULL, NULL, &index );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfIndexByNameW failed 0x%08x\n", ret);
+
+    ret = PdhLookupPerfIndexByNameW( NULL, no_counter, &index );
+    ok(ret == PDH_STRING_NOT_FOUND, "PdhLookupPerfIndexByNameW failed 0x%08x\n", ret);
+
+    ret = PdhLookupPerfIndexByNameW( NULL, processor_time, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfIndexByNameW failed 0x%08x\n", ret);
+
+    ret = PdhLookupPerfIndexByNameW( NULL, processor_time, &index );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfIndexByNameW failed 0x%08x\n", ret);
+    ok(index == 6, "PdhLookupPerfIndexByNameW failed %d\n", index);
+
+    ret = PdhLookupPerfIndexByNameW( NULL, uptime, &index );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfIndexByNameW failed 0x%08x\n", ret);
+    ok(index == 674, "PdhLookupPerfIndexByNameW failed %d\n", index);
+}
+
+static void test_PdhLookupPerfNameByIndexA( void )
+{
+    PDH_STATUS ret;
+    char buffer[PDH_MAX_COUNTER_NAME] = "!!";
+    DWORD size;
+
+    ret = PdhLookupPerfNameByIndexA( NULL, 0, NULL, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfNameByIndexA failed 0x%08x\n", ret);
+
+    size = 1;
+    ret = PdhLookupPerfNameByIndexA( NULL, 0, NULL, &size );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfNameByIndexA failed 0x%08x\n", ret);
+    ok(size == 1, "PdhLookupPerfNameByIndexA failed %d\n", size);
+
+    size = sizeof(buffer);
+    ret = PdhLookupPerfNameByIndexA( NULL, 0, buffer, &size );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfNameByIndexA failed 0x%08x\n", ret);
+    ok(!strcmp(buffer, "!!"), "PdhLookupPerfNameByIndexA failed %s\n", buffer);
+
+    size = 0;
+    ret = PdhLookupPerfNameByIndexA( NULL, 6, buffer, &size );
+    ok(ret == PDH_MORE_DATA, "PdhLookupPerfNameByIndexA failed 0x%08x\n", ret);
+    ok(size == sizeof("% Processor Time"), "PdhLookupPerfNameByIndexA failed %d\n", size);
+
+    size = sizeof(buffer);
+    ret = PdhLookupPerfNameByIndexA( NULL, 6, buffer, &size );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfNameByIndexA failed 0x%08x\n", ret);
+    ok(!lstrcmpA( buffer, "% Processor Time" ),
+       "PdhLookupPerfNameByIndexA failed, got %s expected \'%% Processor Time\'\n", buffer);
+    ok(size == sizeof("% Processor Time"), "PdhLookupPerfNameByIndexA failed %d\n", size);
+
+    size = 0;
+    ret = PdhLookupPerfNameByIndexA( NULL, 674, NULL, &size );
+    ok(ret == PDH_MORE_DATA, "PdhLookupPerfNameByIndexA failed 0x%08x\n", ret);
+    ok(size == sizeof("System Up Time"), "PdhLookupPerfNameByIndexA failed %d\n", size);
+
+    size = sizeof(buffer);
+    ret = PdhLookupPerfNameByIndexA( NULL, 674, buffer, &size );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfNameByIndexA failed 0x%08x\n", ret);
+    ok(!lstrcmpA( buffer, "System Up Time" ),
+       "PdhLookupPerfNameByIndexA failed, got %s expected \'System Up Time\'\n", buffer);
+    ok(size == sizeof("System Up Time"), "PdhLookupPerfNameByIndexA failed %d\n", size);
+}
+
+static void test_PdhLookupPerfNameByIndexW( void )
+{
+    PDH_STATUS ret;
+    WCHAR buffer[PDH_MAX_COUNTER_NAME];
+    DWORD size;
+
+    ret = PdhLookupPerfNameByIndexW( NULL, 0, NULL, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfNameByIndexW failed 0x%08x\n", ret);
+
+    size = 1;
+    ret = PdhLookupPerfNameByIndexW( NULL, 0, NULL, &size );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfNameByIndexW failed 0x%08x\n", ret);
+    ok(size == 1, "PdhLookupPerfNameByIndexW failed %d\n", size);
+
+    size = sizeof(buffer) / sizeof(WCHAR);
+    ret = PdhLookupPerfNameByIndexW( NULL, 0, buffer, &size );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfNameByIndexW failed 0x%08x\n", ret);
+
+    size = 0;
+    ret = PdhLookupPerfNameByIndexW( NULL, 6, buffer, &size );
+    ok(ret == PDH_MORE_DATA, "PdhLookupPerfNameByIndexW failed 0x%08x\n", ret);
+    ok(size == sizeof(processor_time) / sizeof(WCHAR), "PdhLookupPerfNameByIndexW failed %d\n", size);
+
+    size = sizeof(buffer) / sizeof(WCHAR);
+    ret = PdhLookupPerfNameByIndexW( NULL, 6, buffer, &size );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfNameByIndexW failed 0x%08x\n", ret);
+    ok(size == sizeof(processor_time) / sizeof(WCHAR), "PdhLookupPerfNameByIndexW failed %d\n", size);
+
+    size = 0;
+    ret = PdhLookupPerfNameByIndexW( NULL, 674, NULL, &size );
+    ok(ret == PDH_MORE_DATA, "PdhLookupPerfNameByIndexW failed 0x%08x\n", ret);
+    ok(size == sizeof(uptime) / sizeof(WCHAR), "PdhLookupPerfNameByIndexW failed %d\n", size);
+
+    size = sizeof(buffer) / sizeof(WCHAR);
+    ret = PdhLookupPerfNameByIndexW( NULL, 674, buffer, &size );
+    ok(ret == ERROR_SUCCESS, "PdhLookupPerfNameByIndexW failed 0x%08x\n", ret);
+    ok(size == sizeof(uptime) / sizeof(WCHAR), "PdhLookupPerfNameByIndexW failed %d\n", size);
+}
+
 START_TEST(pdh)
 {
     test_PdhOpenQueryA();
@@ -447,4 +589,10 @@ START_TEST(pdh)
 
     test_PdhGetCounterInfoA();
     test_PdhGetCounterInfoW();
+
+    test_PdhLookupPerfIndexByNameA();
+    test_PdhLookupPerfIndexByNameW();
+
+    test_PdhLookupPerfNameByIndexA();
+    test_PdhLookupPerfNameByIndexW();
 }

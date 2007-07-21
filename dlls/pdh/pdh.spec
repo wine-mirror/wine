@@ -72,10 +72,10 @@
 @ stub PdhLogServiceCommandW
 @ stub PdhLogServiceControlA
 @ stub PdhLogServiceControlW
-@ stub PdhLookupPerfIndexByNameA
-@ stub PdhLookupPerfIndexByNameW
-@ stub PdhLookupPerfNameByIndexA
-@ stub PdhLookupPerfNameByIndexW
+@ stdcall PdhLookupPerfIndexByNameA(str str ptr)
+@ stdcall PdhLookupPerfIndexByNameW(wstr wstr ptr)
+@ stdcall PdhLookupPerfNameByIndexA(str long ptr ptr)
+@ stdcall PdhLookupPerfNameByIndexW(wstr long ptr ptr)
 @ stub PdhMakeCounterPathA
 @ stub PdhMakeCounterPathW
 @ stub PdhOpenLogA

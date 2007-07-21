@@ -22,11 +22,14 @@
 #define _PDH_MSG_H_
 
 #define PDH_CSTATUS_VALID_DATA          0x00000000
+#define PDH_CSTATUS_NO_MACHINE          0x800007d0
 #define PDH_MORE_DATA                   0x800007d2
+#define PDH_NO_DATA                     0x800007d5
 #define PDH_CSTATUS_NO_COUNTER          0xc0000bb9
 #define PDH_MEMORY_ALLOCATION_FAILURE   0xc0000bbb
 #define PDH_INVALID_HANDLE              0xc0000bbc
 #define PDH_INVALID_ARGUMENT            0xc0000bbd
 #define PDH_INVALID_DATA                0xc0000bc6
+#define PDH_STRING_NOT_FOUND            0xc0000bd4
 
 #endif /* _PDH_MSG_H_ */
