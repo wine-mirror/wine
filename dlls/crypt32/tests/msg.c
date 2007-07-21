@@ -971,6 +971,106 @@ static void test_hash_msg(void)
     test_hash_msg_encoding();
 }
 
+static const WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e',
+ 'm','p',0 };
+static BYTE serialNum[] = { 1 };
+static BYTE encodedCommonName[] = { 0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,
+ 0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
+
+static void test_signed_msg_open(void)
+{
+    HCRYPTMSG msg;
+    BOOL ret;
+    CMSG_SIGNED_ENCODE_INFO signInfo = { 0 };
+    CMSG_SIGNER_ENCODE_INFO signer = { sizeof(signer), 0 };
+    CERT_INFO certInfo = { 0 };
+    static char oid_rsa_md5[] = szOID_RSA_MD5;
+
+    SetLastError(0xdeadbeef);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    todo_wine
+    ok(!msg && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    signInfo.cbSize = sizeof(signInfo);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    todo_wine
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    signInfo.cSigners = 1;
+    signInfo.rgSigners = &signer;
+    /* With signer.pCertInfo unset, attempting to open this message this
+     * crashes.
+     */
+    signer.pCertInfo = &certInfo;
+    /* The cert info must contain a serial number and an issuer. */
+    SetLastError(0xdeadbeef);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    todo_wine
+    ok(!msg && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    certInfo.SerialNumber.cbData = sizeof(serialNum);
+    certInfo.SerialNumber.pbData = serialNum;
+    SetLastError(0xdeadbeef);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    todo_wine
+    ok(!msg && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    certInfo.Issuer.cbData = sizeof(encodedCommonName);
+    certInfo.Issuer.pbData = encodedCommonName;
+    SetLastError(0xdeadbeef);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    todo_wine
+    ok(!msg && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+
+    /* The signer's hCryptProv must be set to something.  Whether it's usable
+     * or not will be checked after the hash algorithm is checked (see next
+     * test.)
+     */
+    signer.hCryptProv = 1;
+    SetLastError(0xdeadbeef);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    todo_wine
+    ok(!msg && GetLastError() == CRYPT_E_UNKNOWN_ALGO,
+     "Expected CRYPT_E_UNKNOWN_ALGO, got %x\n", GetLastError());
+    /* The signer's hash algorithm must also be set. */
+    signer.HashAlgorithm.pszObjId = oid_rsa_md5;
+    SetLastError(0xdeadbeef);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    todo_wine
+    ok(!msg && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+    /* The signer's hCryptProv must also be valid. */
+    ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+     PROV_RSA_FULL, CRYPT_NEWKEYSET);
+    if (!ret && GetLastError() == NTE_EXISTS)
+        ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+         PROV_RSA_FULL, 0);
+    ok(ret, "CryptAcquireContextW failed: %x\n", GetLastError());
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    todo_wine
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    CryptReleaseContext(signer.hCryptProv, 0);
+    CryptAcquireContextW(&signer.hCryptProv, cspNameW, MS_DEF_PROV_W,
+     PROV_RSA_FULL, CRYPT_DELETEKEYSET);
+}
+
+static void test_signed_msg(void)
+{
+    test_signed_msg_open();
+}
+
 static CRYPT_DATA_BLOB b4 = { 0, NULL };
 static const struct update_accum a4 = { 1, &b4 };
 
@@ -1261,5 +1361,6 @@ START_TEST(msg)
     /* Message-type specific tests */
     test_data_msg();
     test_hash_msg();
+    test_signed_msg();
     test_decode_msg();
 }
