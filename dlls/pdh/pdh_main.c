@@ -253,13 +253,13 @@ PDH_STATUS WINAPI PdhAddCounterW( PDH_HQUERY hquery, LPCWSTR path,
 PDH_STATUS WINAPI PdhCloseQuery( PDH_HQUERY handle )
 {
     struct query *query = handle;
-    struct list *item;
+    struct list *item, *next;
 
     TRACE("%p\n", handle);
 
     if (!query || (query->magic != PDH_MAGIC_QUERY)) return PDH_INVALID_HANDLE;
 
-    LIST_FOR_EACH( item, &query->counters )
+    LIST_FOR_EACH_SAFE( item, next, &query->counters )
     {
         struct counter *counter = LIST_ENTRY( item, struct counter, entry );
 
@@ -269,7 +269,9 @@ PDH_STATUS WINAPI PdhCloseQuery( PDH_HQUERY handle )
         pdh_free( counter );
     }
 
+    query->magic = 0;
     pdh_free( query );
+
     return ERROR_SUCCESS;
 }
 
@@ -338,8 +340,8 @@ PDH_STATUS WINAPI PdhGetCounterInfoW( PDH_HCOUNTER handle, BOOLEAN text, LPDWORD
 
     TRACE("%p %d %p %p\n", handle, text, size, info);
 
-    if (!size)    return PDH_INVALID_ARGUMENT;
     if (!counter) return PDH_INVALID_HANDLE;
+    if (!size)    return PDH_INVALID_ARGUMENT;
 
     if (*size < sizeof(PDH_COUNTER_INFO_W))
     {
@@ -356,7 +358,7 @@ PDH_STATUS WINAPI PdhGetCounterInfoW( PDH_HCOUNTER handle, BOOLEAN text, LPDWORD
     info->dwUserData      = counter->user;
     info->dwQueryUserData = counter->queryuser;
 
-    *size = sizeof(PDH_COUNTER_INFO_A);
+    *size = sizeof(PDH_COUNTER_INFO_W);
     return ERROR_SUCCESS;
 }
 

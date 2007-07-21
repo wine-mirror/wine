@@ -27,7 +27,15 @@
 
 #include "wine/test.h"
 
-static void test_open_close_query( void )
+static const WCHAR system_uptime[] =
+    {'\\','S','y','s','t','e','m','\\','S','y','s','t','e','m',' ','U','p',' ','T','i','m','e',0};
+static const WCHAR system_downtime[] = /* does not exist */
+    {'\\','S','y','s','t','e','m','\\','S','y','s','t','e','m',' ','D','o','w','n',' ','T','i','m','e',0};
+static const WCHAR percentage_processor_time[] =
+    {'\\','P','r','o','c','e','s','s','o','r','(','_','T','o','t','a','l',')',
+     '\\','%',' ','P','r','o','c','e','s','s','o','r',' ','T','i','m','e',0};
+
+static void test_PdhOpenQueryA( void )
 {
     PDH_STATUS ret;
     PDH_HQUERY query;
@@ -46,9 +54,36 @@ static void test_open_close_query( void )
 
     ret = PdhCloseQuery( query );
     ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == PDH_INVALID_HANDLE, "PdhCloseQuery failed 0x%08x\n", ret);
 }
 
-static void test_add_remove_counter( void )
+static void test_PdhOpenQueryW( void )
+{
+    PDH_STATUS ret;
+    PDH_HQUERY query;
+
+    ret = PdhOpenQueryW( NULL, 0, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhOpenQueryW failed 0x%08x\n", ret);
+
+    ret = PdhOpenQueryW( NULL, 0, &query );
+    ok(ret == ERROR_SUCCESS, "PdhOpenQueryW failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( NULL );
+    ok(ret == PDH_INVALID_HANDLE, "PdhCloseQuery failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( &query );
+    ok(ret == PDH_INVALID_HANDLE, "PdhCloseQuery failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == PDH_INVALID_HANDLE, "PdhCloseQuery failed 0x%08x\n", ret);
+}
+
+static void test_PdhAddCounterA( void )
 {
     PDH_STATUS ret;
     PDH_HQUERY query;
@@ -75,6 +110,53 @@ static void test_add_remove_counter( void )
 
     ret = PdhAddCounterA( query, "\\System\\System Up Time", 0, &counter );
     ok(ret == ERROR_SUCCESS, "PdhAddCounterA failed 0x%08x\n", ret);
+
+    ret = PdhCollectQueryData( NULL );
+    ok(ret == PDH_INVALID_HANDLE, "PdhCollectQueryData failed 0x%08x\n", ret);
+
+    ret = PdhCollectQueryData( counter );
+    ok(ret == PDH_INVALID_HANDLE, "PdhCollectQueryData failed 0x%08x\n", ret);
+
+    ret = PdhCollectQueryData( query );
+    ok(ret == ERROR_SUCCESS, "PdhCollectQueryData failed 0x%08x\n", ret);
+
+    ret = PdhRemoveCounter( NULL );
+    ok(ret == PDH_INVALID_HANDLE, "PdhRemoveCounter failed 0x%08x\n", ret);
+
+    ret = PdhRemoveCounter( counter );
+    ok(ret == ERROR_SUCCESS, "PdhRemoveCounter failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
+}
+
+static void test_PdhAddCounterW( void )
+{
+    PDH_STATUS ret;
+    PDH_HQUERY query;
+    PDH_HCOUNTER counter;
+
+    ret = PdhOpenQueryW( NULL, 0, &query );
+    ok(ret == ERROR_SUCCESS, "PdhOpenQueryW failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterW( NULL, percentage_processor_time, 0, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddCounterW failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterW( NULL, percentage_processor_time, 0, &counter );
+    ok(ret == PDH_INVALID_HANDLE, "PdhAddCounterW failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterW( query, NULL, 0, &counter );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddCounterW failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterW( query, percentage_processor_time, 0, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddCounterW failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterW( query, system_downtime, 0, &counter );
+    ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhAddCounterW failed 0x%08x\n", ret);
+    ok(!counter, "PdhAddCounterW failed %p\n", counter);
+
+    ret = PdhAddCounterW( query, percentage_processor_time, 0, &counter );
+    ok(ret == ERROR_SUCCESS, "PdhAddCounterW failed 0x%08x\n", ret);
 
     ret = PdhCollectQueryData( NULL );
     ok(ret == PDH_INVALID_HANDLE, "PdhCollectQueryData failed 0x%08x\n", ret);
@@ -242,7 +324,7 @@ static void test_PdhGetCounterTimeBase( void )
     ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
 }
 
-static void test_PdhGetCounterInfo( void )
+static void test_PdhGetCounterInfoA( void )
 {
     PDH_STATUS ret;
     PDH_HQUERY query;
@@ -296,13 +378,73 @@ static void test_PdhGetCounterInfo( void )
     ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
 }
 
+static void test_PdhGetCounterInfoW( void )
+{
+    PDH_STATUS ret;
+    PDH_HQUERY query;
+    PDH_HCOUNTER counter;
+    PDH_COUNTER_INFO_W info;
+    DWORD size;
+
+    ret = PdhOpenQueryW( NULL, 0, &query );
+    ok(ret == ERROR_SUCCESS, "PdhOpenQueryW failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterW( query, percentage_processor_time, 0, &counter );
+    ok(ret == ERROR_SUCCESS, "PdhAddCounterW failed 0x%08x\n", ret);
+
+    ret = PdhGetCounterInfoW( NULL, 0, NULL, NULL );
+    ok(ret == PDH_INVALID_HANDLE, "PdhGetCounterInfoW failed 0x%08x\n", ret);
+
+    ret = PdhGetCounterInfoW( counter, 0, NULL, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhGetCounterInfoW failed 0x%08x\n", ret);
+
+    ret = PdhGetCounterInfoW( counter, 0, NULL, &info );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhGetCounterInfoW failed 0x%08x\n", ret);
+
+    size = sizeof(info) - 1;
+    ret = PdhGetCounterInfoW( counter, 0, &size, NULL );
+    ok(ret == PDH_MORE_DATA, "PdhGetCounterInfoW failed 0x%08x\n", ret);
+
+    size = sizeof(info);
+    ret = PdhGetCounterInfoW( counter, 0, &size, &info );
+    ok(ret == ERROR_SUCCESS, "PdhGetCounterInfoW failed 0x%08x\n", ret);
+    ok(size == sizeof(info), "PdhGetCounterInfoW failed %d\n", size);
+
+    ret = PdhGetCounterInfoW( counter, 0, &size, &info );
+    ok(ret == ERROR_SUCCESS, "PdhGetCounterInfoW failed 0x%08x\n", ret);
+    ok(info.lScale == 0, "lScale %d\n", info.lScale);
+
+    ret = PdhSetCounterScaleFactor( counter, 0 );
+    ok(ret == ERROR_SUCCESS, "PdhSetCounterScaleFactor failed 0x%08x\n", ret);
+
+    ret = PdhGetCounterInfoW( counter, 0, &size, &info );
+    ok(ret == ERROR_SUCCESS, "PdhGetCounterInfoW failed 0x%08x\n", ret);
+    ok(info.lScale == 0, "lScale %d\n", info.lScale);
+
+    ret = PdhSetCounterScaleFactor( counter, -5 );
+    ok(ret == ERROR_SUCCESS, "PdhSetCounterScaleFactor failed 0x%08x\n", ret);
+
+    ret = PdhGetCounterInfoW( counter, 0, &size, &info );
+    ok(ret == ERROR_SUCCESS, "PdhGetCounterInfoW failed 0x%08x\n", ret);
+    ok(info.lScale == -5, "lScale %d\n", info.lScale);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
+}
+
 START_TEST(pdh)
 {
-    test_open_close_query();
-    test_add_remove_counter();
+    test_PdhOpenQueryA();
+    test_PdhOpenQueryW();
+
+    test_PdhAddCounterA();
+    test_PdhAddCounterW();
+
     test_PdhGetFormattedCounterValue();
     test_PdhGetRawCounterValue();
     test_PdhSetCounterScaleFactor();
     test_PdhGetCounterTimeBase();
-    test_PdhGetCounterInfo();
+
+    test_PdhGetCounterInfoA();
+    test_PdhGetCounterInfoW();
 }
