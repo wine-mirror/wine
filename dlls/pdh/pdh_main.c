@@ -152,8 +152,17 @@ struct source
     LONGLONG        base;                           /* samples per second */
 };
 
+static const WCHAR path_processor_time[] =
+    {'\\','P','r','o','c','e','s','s','o','r','(','_','T','o','t','a','l',')',
+     '\\','%',' ','P','r','o','c','e','s','s','o','r',' ','T','i','m','e',0};
 static const WCHAR path_uptime[] =
     {'\\','S','y','s','t','e','m', '\\', 'S','y','s','t','e','m',' ','U','p',' ','T','i','m','e',0};
+
+static void CALLBACK collect_processor_time( struct counter *counter )
+{
+    counter->two.largevalue = 500000; /* FIXME */
+    counter->status = PDH_CSTATUS_VALID_DATA;
+}
 
 static void CALLBACK collect_uptime( struct counter *counter )
 {
@@ -161,12 +170,17 @@ static void CALLBACK collect_uptime( struct counter *counter )
     counter->status = PDH_CSTATUS_VALID_DATA;
 }
 
+#define TYPE_PROCESSOR_TIME \
+    (PERF_SIZE_LARGE | PERF_TYPE_COUNTER | PERF_COUNTER_RATE | PERF_TIMER_100NS | PERF_DELTA_COUNTER | \
+     PERF_INVERSE_COUNTER | PERF_DISPLAY_PERCENT)
+
 #define TYPE_UPTIME \
     (PERF_SIZE_LARGE | PERF_TYPE_COUNTER | PERF_COUNTER_ELAPSED | PERF_OBJECT_TIMER | PERF_DISPLAY_SECONDS)
 
 /* counter source registry */
 static const struct source counter_sources[] =
 {
+    { path_processor_time, collect_processor_time, TYPE_PROCESSOR_TIME, -5, 10000000 },
     { path_uptime, collect_uptime, TYPE_UPTIME, -3, 1000 }
 };
 
