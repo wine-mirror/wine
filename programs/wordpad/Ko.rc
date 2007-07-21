@@ -59,9 +59,9 @@ BEGIN
         MENUITEM "형식바(&F)",      ID_TOGGLE_FORMATBAR
         MENUITEM "상태바(&S)",      ID_TOGGLE_STATUSBAR
     END
-    POPUP "&Insert"
+    POPUP "집어넣기(&I)"
     BEGIN
-        MENUITEM "&Date and time . . .",  ID_DATETIME
+        MENUITEM "날짜와 시간(&D) . . .",  ID_DATETIME
     END
     POPUP "형식(&O)"
     BEGIN
@@ -81,13 +81,13 @@ END
 
 IDD_DATETIME DIALOG DISCARDABLE 30, 20, 130, 80
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Date and time"
+CAPTION "날짜와 시간"
 FONT 10, "MS Sans Serif"
 BEGIN
-    LTEXT        "Available formats",0,3,2,100,15
+    LTEXT        "가능한 형식",0,3,2,100,15
     LISTBOX      IDC_DATETIME,3,12,80,65,LBS_NOINTEGRALHEIGHT
-    PUSHBUTTON   "&OK",IDOK,87,12,40,12
-    PUSHBUTTON   "&Cancel",IDCANCEL,87,26,40,12
+    PUSHBUTTON   "확인(&O)",IDOK,87,12,40,12
+    PUSHBUTTON   "취소(&C)",IDCANCEL,87,26,40,12
 END
 
 STRINGTABLE DISCARDABLE
