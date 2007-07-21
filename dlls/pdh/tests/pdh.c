@@ -27,6 +27,22 @@
 
 #include "wine/test.h"
 
+static HMODULE pdh;
+
+static PDH_STATUS   (WINAPI *pPdhAddEnglishCounterA)(PDH_HQUERY, LPCSTR, DWORD_PTR, PDH_HCOUNTER *);
+static PDH_STATUS   (WINAPI *pPdhAddEnglishCounterW)(PDH_HQUERY, LPCWSTR, DWORD_PTR, PDH_HCOUNTER *);
+static PDH_STATUS   (WINAPI *pPdhCollectQueryDataWithTime)(PDH_HQUERY, LONGLONG *);
+
+#define GETFUNCPTR(func) p##func = (void *)GetProcAddress( pdh, #func );
+
+static void init_function_ptrs( void )
+{
+    pdh = GetModuleHandle( "pdh" );
+    GETFUNCPTR( PdhAddEnglishCounterA )
+    GETFUNCPTR( PdhAddEnglishCounterW )
+    GETFUNCPTR( PdhCollectQueryDataWithTime )
+}
+
 static const WCHAR processor_time[] =
     {'%',' ','P','r','o','c','e','s','s','o','r',' ','T','i','m','e',0};
 static const WCHAR uptime[] =
@@ -177,6 +193,111 @@ static void test_PdhAddCounterW( void )
 
     ret = PdhRemoveCounter( counter );
     ok(ret == ERROR_SUCCESS, "PdhRemoveCounter failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
+}
+
+static void test_PdhAddEnglishCounterA( void )
+{
+    PDH_STATUS ret;
+    PDH_HQUERY query;
+    PDH_HCOUNTER counter;
+
+    ret = PdhOpenQueryA( NULL, 0, &query );
+    ok(ret == ERROR_SUCCESS, "PdhOpenQueryA failed 0x%08x\n", ret);
+
+    ret = pPdhAddEnglishCounterA( NULL, "\\System\\System Up Time", 0, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
+
+    ret = pPdhAddEnglishCounterA( NULL, "\\System\\System Up Time", 0, &counter );
+    ok(ret == PDH_INVALID_HANDLE, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
+
+    ret = pPdhAddEnglishCounterA( query, NULL, 0, &counter );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
+
+    ret = pPdhAddEnglishCounterA( query, "\\System\\System Up Time", 0, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
+
+    ret = pPdhAddEnglishCounterA( query, "\\System\\System Down Time", 0, &counter );
+    ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
+    ok(!counter, "PdhAddEnglishCounterA failed %p\n", counter);
+
+    ret = pPdhAddEnglishCounterA( query, "\\System\\System Up Time", 0, &counter );
+    ok(ret == ERROR_SUCCESS, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
+
+    ret = PdhCollectQueryData( query );
+    ok(ret == ERROR_SUCCESS, "PdhCollectQueryData failed 0x%08x\n", ret);
+
+    ret = PdhRemoveCounter( counter );
+    ok(ret == ERROR_SUCCESS, "PdhRemoveCounter failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
+}
+
+static void test_PdhAddEnglishCounterW( void )
+{
+    PDH_STATUS ret;
+    PDH_HQUERY query;
+    PDH_HCOUNTER counter;
+
+    ret = PdhOpenQueryW( NULL, 0, &query );
+    ok(ret == ERROR_SUCCESS, "PdhOpenQueryW failed 0x%08x\n", ret);
+
+    ret = pPdhAddEnglishCounterW( NULL, system_uptime, 0, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
+
+    ret = pPdhAddEnglishCounterW( NULL, system_uptime, 0, &counter );
+    ok(ret == PDH_INVALID_HANDLE, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
+
+    ret = pPdhAddEnglishCounterW( query, NULL, 0, &counter );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
+
+    ret = pPdhAddEnglishCounterW( query, system_uptime, 0, NULL );
+    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
+
+    ret = pPdhAddEnglishCounterW( query, system_downtime, 0, &counter );
+    ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
+    ok(!counter, "PdhAddEnglishCounterA failed %p\n", counter);
+
+    ret = pPdhAddEnglishCounterW( query, system_uptime, 0, &counter );
+    ok(ret == ERROR_SUCCESS, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
+
+    ret = PdhCollectQueryData( query );
+    ok(ret == ERROR_SUCCESS, "PdhCollectQueryData failed 0x%08x\n", ret);
+
+    ret = PdhRemoveCounter( counter );
+    ok(ret == ERROR_SUCCESS, "PdhRemoveCounter failed 0x%08x\n", ret);
+
+    ret = PdhCloseQuery( query );
+    ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
+}
+
+static void test_PdhCollectQueryDataWithTime( void )
+{
+    PDH_STATUS ret;
+    PDH_HQUERY query;
+    PDH_HCOUNTER counter;
+    LONGLONG time;
+
+    ret = PdhOpenQueryA( NULL, 0, &query );
+    ok(ret == ERROR_SUCCESS, "PdhOpenQueryA failed 0x%08x\n", ret);
+
+    ret = PdhAddCounterA( query, "\\System\\System Up Time", 0, &counter );
+    ok(ret == ERROR_SUCCESS, "PdhAddCounterA failed 0x%08x\n", ret);
+
+    ret = pPdhCollectQueryDataWithTime( NULL, NULL );
+    ok(ret == PDH_INVALID_HANDLE, "PdhCollectQueryDataWithTime failed 0x%08x\n", ret);
+
+    ret = pPdhCollectQueryDataWithTime( query, NULL );
+    ok(ret == ERROR_SUCCESS, "PdhCollectQueryDataWithTime failed 0x%08x\n", ret);
+
+    ret = pPdhCollectQueryDataWithTime( NULL, &time );
+    ok(ret == PDH_INVALID_HANDLE, "PdhCollectQueryDataWithTime failed 0x%08x\n", ret);
+
+    ret = pPdhCollectQueryDataWithTime( query, &time );
+    ok(ret == ERROR_SUCCESS, "PdhCollectQueryDataWithTime failed 0x%08x\n", ret);
 
     ret = PdhCloseQuery( query );
     ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
@@ -576,11 +697,17 @@ static void test_PdhLookupPerfNameByIndexW( void )
 
 START_TEST(pdh)
 {
+    init_function_ptrs();
+
     test_PdhOpenQueryA();
     test_PdhOpenQueryW();
 
     test_PdhAddCounterA();
     test_PdhAddCounterW();
+
+    if (pPdhAddEnglishCounterA) test_PdhAddEnglishCounterA();
+    if (pPdhAddEnglishCounterW) test_PdhAddEnglishCounterW();
+    if (pPdhCollectQueryDataWithTime) test_PdhCollectQueryDataWithTime();
 
     test_PdhGetFormattedCounterValue();
     test_PdhGetRawCounterValue();

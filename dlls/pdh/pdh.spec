@@ -3,6 +3,8 @@
 @ stub PdhAdd009CounterW
 @ stdcall PdhAddCounterA(ptr str long ptr)
 @ stdcall PdhAddCounterW(ptr wstr long ptr)
+@ stdcall PdhAddEnglishCounterA(ptr str long ptr)
+@ stdcall PdhAddEnglishCounterW(ptr wstr long ptr)
 @ stub PdhBindInputDataSourceA
 @ stub PdhBindInputDataSourceW
 @ stub PdhBrowseCountersA
@@ -13,6 +15,7 @@
 @ stub PdhCloseLog
 @ stdcall PdhCloseQuery(ptr)
 @ stdcall PdhCollectQueryData(ptr)
+@ stdcall PdhCollectQueryDataWithTime(ptr ptr)
 @ stub PdhCollectQueryDataEx
 @ stub PdhComputeCounterStatistics
 @ stub PdhConnectMachineA
@@ -135,6 +138,8 @@
 @ stub PdhUpdateLogFileCatalog
 @ stub PdhUpdateLogW
 @ stub PdhValidatePathA
+@ stub PdhValidatePathExA
+@ stub PdhValidatePathExW
 @ stub PdhValidatePathW
 @ stub PdhVbAddCounter
 @ stub PdhVbCreateCounterPathList

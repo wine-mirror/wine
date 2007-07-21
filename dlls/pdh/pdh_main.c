@@ -259,6 +259,24 @@ PDH_STATUS WINAPI PdhAddCounterW( PDH_HQUERY hquery, LPCWSTR path,
 }
 
 /***********************************************************************
+ *              PdhAddEnglishCounterA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhAddEnglishCounterA( PDH_HQUERY query, LPCSTR path,
+                                         DWORD_PTR userdata, PDH_HCOUNTER *counter )
+{
+    return PdhAddCounterA( query, path, userdata, counter );
+}
+
+/***********************************************************************
+ *              PdhAddEnglishCounterW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhAddEnglishCounterW( PDH_HQUERY query, LPCWSTR path,
+                                         DWORD_PTR userdata, PDH_HCOUNTER *counter )
+{
+    return PdhAddCounterW( query, path, userdata, counter );
+}
+
+/***********************************************************************
  *              PdhCloseQuery   (PDH.@)
  */
 PDH_STATUS WINAPI PdhCloseQuery( PDH_HQUERY handle )
@@ -309,6 +327,31 @@ PDH_STATUS WINAPI PdhCollectQueryData( PDH_HQUERY handle )
         SystemTimeToFileTime( &time, &counter->stamp );
     }
     return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *              PdhCollectQueryDataWithTime   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhCollectQueryDataWithTime( PDH_HQUERY handle, LONGLONG *timestamp )
+{
+    PDH_STATUS ret;
+    struct query *query = handle;
+
+    TRACE("%p %p\n", handle, timestamp);
+
+    if (!query || (query->magic != PDH_MAGIC_QUERY)) return PDH_INVALID_HANDLE;
+
+    if (list_empty( &query->counters )) return PDH_NO_DATA;
+
+    ret = PdhCollectQueryData( query );
+    if (!ret && timestamp)
+    {
+        struct list *item = list_head( &query->counters );
+        struct counter *counter = LIST_ENTRY( item, struct counter, entry );
+
+        *timestamp = ((LONGLONG)counter->stamp.dwHighDateTime << 32) | counter->stamp.dwLowDateTime;
+    }
+    return ret;
 }
 
 /***********************************************************************
