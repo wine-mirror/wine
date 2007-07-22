@@ -377,6 +377,104 @@ static void test_create_delete_svc(void)
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 }
 
+static void test_get_displayname(void)
+{
+    SC_HANDLE scm_handle, svc_handle;
+    BOOL ret;
+    CHAR displayname[4096];
+    WCHAR displaynameW[2048];
+    DWORD displaysize, tempsize, tempsizeW;
+    static const CHAR spooler[] = "Spooler";
+    static const WCHAR spoolerW[] = {'S','p','o','o','l','e','r',0};
+
+    /* Having NULL for the size of the buffer will crash on W2K3 */
+
+    SetLastError(0xdeadbeef);
+    ret = GetServiceDisplayNameA(NULL, NULL, NULL, &displaysize);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+
+    SetLastError(0xdeadbeef);
+    ret = GetServiceDisplayNameA(scm_handle, NULL, NULL, &displaysize);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, XP, W2K3, Vista */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    displaysize = sizeof(displayname);
+    ret = GetServiceDisplayNameA(scm_handle, NULL, displayname, &displaysize);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, XP, W2K3, Vista */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* Check if 'Spooler' exists */
+    svc_handle = OpenServiceA(scm_handle, spooler, GENERIC_READ);
+    if (!svc_handle)
+    {
+        skip("Spooler service doesn't exist\n");
+        return;
+    }
+    CloseServiceHandle(svc_handle);
+
+    /* Retrieve the needed size for the buffer */
+    SetLastError(0xdeadbeef);
+    displaysize = -1;
+    ret = GetServiceDisplayNameA(scm_handle, spooler, NULL, &displaysize);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    tempsize = displaysize;
+    displaysize *= 2;
+    ret = GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
+    ok(ret, "Expected success\n");
+    ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+    /* Test that shows that if the buffersize is enough, it's not changed */
+    ok(displaysize == tempsize * 2, "Didn't expect a change in the needed size of the buffer\n");
+    todo_wine
+    ok(lstrlen(displayname) == tempsize/2,
+       "Expected the buffer to be twice the length of the string\n") ;
+
+    /* Do the last 2 tests also for GetServiceDisplayNameW */
+    SetLastError(0xdeadbeef);
+    displaysize = -1;
+    ret = GetServiceDisplayNameW(scm_handle, spoolerW, NULL, &displaysize);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    tempsizeW = displaysize;
+    displaysize *= 2;
+    ret = GetServiceDisplayNameW(scm_handle, spoolerW, displaynameW, &displaysize);
+    ok(ret, "Expected success\n");
+    ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+    /* Test that shows that the buffersize is changed to the needed size */
+    todo_wine
+    {
+    ok(displaysize == tempsizeW, "Did expect a change in the needed size of the buffer\n");
+    ok(lstrlenW(displaynameW) == displaysize,
+       "Expected the buffer to be the length of the string\n") ;
+    ok(tempsize / 2 == tempsizeW,
+       "Expected the needed buffersize (in bytes) to be the same for the A and W call\n");
+    }
+
+    CloseServiceHandle(scm_handle);
+}
+
 static void test_close(void)
 {
     SC_HANDLE handle;
@@ -514,6 +612,10 @@ static void test_sequence(void)
         "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
     
     CloseServiceHandle(svc_handle);
+
+    /* Wait a while. The following test does a CreateService again */
+    Sleep(1000);
+
     CloseServiceHandle(scm_handle);
 }
 
@@ -595,6 +697,11 @@ static void test_refcount(void)
     ret = CloseServiceHandle(svc_handle1);
     ok(ret, "Expected success\n");
 
+    /* Wait a while. Doing a CreateService to soon will result again
+     * in an ERROR_SERVICE_MARKED_FOR_DELETE error.
+     */
+    Sleep(1000);
+
     /* We succeed now as all handles are closed (tested this also with a long SLeep() */
     svc_handle5 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL,
                                  SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
@@ -631,6 +738,7 @@ START_TEST(service)
     test_open_scm();
     test_open_svc();
     test_create_delete_svc();
+    test_get_displayname();
     test_close();
     /* Test the creation, querying and deletion of a service */
     test_sequence();
