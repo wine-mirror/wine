@@ -202,24 +202,6 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         /* NOTE: You must release the parent if the object was created via a callback
         ** ***************************/
 
-        /* Release the update stateblock */
-        if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
-            if(This->updateStateBlock != This->stateBlock)
-                FIXME("(%p) Something's still holding the Update stateblock\n",This);
-        }
-        This->updateStateBlock = NULL;
-        { /* because were not doing proper internal refcounts releasing the primary state block
-            causes recursion with the extra checks in ResourceReleased, to avoid this we have
-            to set this->stateBlock = NULL; first */
-            IWineD3DStateBlock *stateBlock = (IWineD3DStateBlock *)This->stateBlock;
-            This->stateBlock = NULL;
-
-            /* Release the stateblock */
-            if(IWineD3DStateBlock_Release(stateBlock) > 0){
-                    FIXME("(%p) Something's still holding the Update stateblock\n",This);
-            }
-        }
-
         if (This->resources != NULL ) {
             FIXME("(%p) Device released with resources still bound, acceptable but unexpected\n", This);
             dumpResources(This->resources);
@@ -1809,6 +1791,24 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* TODO: Test if OpenGL is compiled in and loaded */
 
+    TRACE("(%p) : Creating stateblock\n", This);
+    /* Creating the startup stateBlock - Note Special Case: 0 => Don't fill in yet! */
+    hr = IWineD3DDevice_CreateStateBlock(iface,
+                                         WINED3DSBT_INIT,
+                                         (IWineD3DStateBlock **)&This->stateBlock,
+                                         NULL);
+    if (WINED3D_OK != hr) {   /* Note: No parent needed for initial internal stateblock */
+        WARN("Failed to create stateblock\n");
+        return hr;
+    }
+    TRACE("(%p) : Created stateblock (%p)\n", This, This->stateBlock);
+    This->updateStateBlock = This->stateBlock;
+    IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)This->updateStateBlock);
+
+    hr = allocate_shader_constants(This->updateStateBlock);
+    if (WINED3D_OK != hr)
+        return hr;
+
     /* Initialize the texture unit mapping to a 1:1 mapping */
     for (state = 0; state < MAX_COMBINED_SAMPLERS; ++state) {
         if (state < GL_LIMITS(fragment_samplers)) {
@@ -1990,6 +1990,25 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     HeapFree(GetProcessHeap(), 0, This->swapchains);
     This->swapchains = NULL;
     This->NumberOfSwapChains = 0;
+
+    /* Release the update stateblock */
+    if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
+        if(This->updateStateBlock != This->stateBlock)
+            FIXME("(%p) Something's still holding the Update stateblock\n",This);
+    }
+    This->updateStateBlock = NULL;
+
+    { /* because were not doing proper internal refcounts releasing the primary state block
+        causes recursion with the extra checks in ResourceReleased, to avoid this we have
+        to set this->stateBlock = NULL; first */
+        IWineD3DStateBlock *stateBlock = (IWineD3DStateBlock *)This->stateBlock;
+        This->stateBlock = NULL;
+
+        /* Release the stateblock */
+        if(IWineD3DStateBlock_Release(stateBlock) > 0){
+            FIXME("(%p) Something's still holding the Update stateblock\n",This);
+        }
+    }
 
     This->d3d_initialized = FALSE;
     return WINED3D_OK;
