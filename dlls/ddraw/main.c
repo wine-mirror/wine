@@ -319,13 +319,6 @@ DDRAW_Create(const GUID *guid,
     list_init(&This->surface_list);
     list_add_head(&global_ddraw_list, &This->ddraw_list_entry);
 
-    This->decls = HeapAlloc(GetProcessHeap(), 0, 0);
-    if(!This->decls)
-    {
-        ERR("Error allocating an empty array for the converted vertex decls\n");
-        goto err_out;
-    }
-
     /* Call QueryInterface to get the pointer to the requested interface. This also initializes
      * The required refcount
      */

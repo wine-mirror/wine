@@ -252,14 +252,6 @@ IDirectDrawImpl_AddRef(IDirectDraw7 *iface)
 void
 IDirectDrawImpl_Destroy(IDirectDrawImpl *This)
 {
-    int i;
-
-    for(i = 0; i < This->numConvertedDecls; i++)
-    {
-        IWineD3DVertexDeclaration_Release(This->decls[i].decl);
-    }
-    HeapFree(GetProcessHeap(), 0, This->decls);
-
     /* Clear the cooplevel to restore window and display mode */
     IDirectDraw7_SetCooperativeLevel(ICOM_INTERFACE(This, IDirectDraw7),
                                         NULL,
@@ -3084,6 +3076,20 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
     {
         This->wineD3DDevice = NULL;
         return hr;
+    }
+
+    This->declArraySize = 2;
+    This->decls = HeapAlloc(GetProcessHeap(),
+                            HEAP_ZERO_MEMORY,
+                            sizeof(*This->decls) * This->declArraySize);
+    if(!This->decls)
+    {
+        ERR("Error allocating an array for the converted vertex decls\n");
+        This->declArraySize = 0;
+        hr = IWineD3DDevice_Uninit3D(This->wineD3DDevice,
+                                     D3D7CB_DestroyDepthStencilSurface,
+                                     D3D7CB_DestroySwapChain);
+        return E_OUTOFMEMORY;
     }
 
     /* Create an Index Buffer parent */

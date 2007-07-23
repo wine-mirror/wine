@@ -314,6 +314,13 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
             /* Unset any index buffer, just to be sure */
             IWineD3DDevice_SetIndices(ddraw->wineD3DDevice, NULL);
             IWineD3DDevice_SetDepthStencilSurface(ddraw->wineD3DDevice, NULL);
+            IWineD3DDevice_SetVertexDeclaration(ddraw->wineD3DDevice, NULL);
+            for(i = 0; i < ddraw->numConvertedDecls; i++)
+            {
+                IWineD3DVertexDeclaration_Release(ddraw->decls[i].decl);
+            }
+            HeapFree(GetProcessHeap(), 0, ddraw->decls);
+            ddraw->numConvertedDecls = 0;
 
             if(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice, D3D7CB_DestroyDepthStencilSurface, D3D7CB_DestroySwapChain) != D3D_OK)
             {
@@ -334,6 +341,14 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
 
             ddraw->d3d_initialized = FALSE;
             ddraw->d3d_target = NULL;
+
+            /* Reset to the default surface implementation type. This is needed if apps use
+             * non render target surfaces and expect blits to work after destroying the render
+             * target.
+             *
+             * TODO: Recreate existing offscreen surfaces
+             */
+            ddraw->ImplType = DefaultSurfaceType;
 
             /* Write a trace because D3D unloading was the reason for many
              * crashes during development.
