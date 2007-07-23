@@ -221,10 +221,10 @@ void primitiveDeclarationConvertToStridedData(
 
         if (stride_used) {
             TRACE("Loaded %s array %u [usage=%s, usage_idx=%u, "
-                    "stream=%u, offset=%u, stride=%u, VBO=%u]\n",
+                    "stream=%u, offset=%u, stride=%u, type=%s, VBO=%u]\n",
                     useVertexShaderFunction? "shader": "fixed function", idx,
                     debug_d3ddeclusage(element->Usage), element->UsageIndex,
-                    element->Stream, element->Offset, stride, streamVBO);
+                    element->Stream, element->Offset, stride, debug_d3ddecltype(element->Type), streamVBO);
 
             strided->u.input[idx].lpData = data;
             strided->u.input[idx].dwType = element->Type;
