@@ -265,7 +265,8 @@ static HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IWi
 static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, int gl_level, BOOL srgb_mode) {
     IWineD3DVolumeImpl *This     = (IWineD3DVolumeImpl *)iface;
     WINED3DFORMAT format = This->resource.format;
-    const PixelFormatDesc *formatEntry = getFormatDescEntry(format);
+    const GlPixelFormatDesc *glDesc;
+    getFormatDescEntry(format, &glDesc);
 
     TRACE("(%p) : level %u, format %s (0x%08x)\n", This, gl_level, debug_d3dformat(format), format);
 
@@ -273,23 +274,23 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, int 
         TRACE("Calling glTexImage3D %x level=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
                 GL_TEXTURE_3D,
                 gl_level,
-                formatEntry->glInternal,
+                glDesc->glInternal,
                 This->currentDesc.Width,
                 This->currentDesc.Height,
                 This->currentDesc.Depth,
                 0,
-                formatEntry->glFormat,
-                formatEntry->glType,
+                glDesc->glFormat,
+                glDesc->glType,
                 This->resource.allocatedMemory);
         GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D,
                     gl_level,
-                    formatEntry->glInternal,
+                    glDesc->glInternal,
                     This->currentDesc.Width,
                     This->currentDesc.Height,
                     This->currentDesc.Depth,
                     0,
-                    formatEntry->glFormat,
-                    formatEntry->glType,
+                    glDesc->glFormat,
+                    glDesc->glType,
                     This->resource.allocatedMemory));
         checkGLcall("glTexImage3D");
     } else

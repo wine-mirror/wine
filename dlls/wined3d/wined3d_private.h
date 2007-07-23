@@ -2038,10 +2038,15 @@ typedef struct {
     DWORD                   alphaMask, redMask, greenMask, blueMask;
     UINT                    bpp;
     BOOL                    isFourcc;
-    GLint                   glInternal, glGammaInternal, glFormat, glType;
-} PixelFormatDesc;
+} StaticPixelFormatDesc;
 
-const PixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt);
+typedef struct {
+    /* Array uses the same indices as the static pixelformat */
+    GLint                   glInternal, glGammaInternal, glFormat, glType;
+} GlPixelFormatDesc;
+
+const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt,
+        const GlPixelFormatDesc **glDesc);
 
 static inline BOOL use_vs(IWineD3DDeviceImpl *device) {
     return (device->vs_selected_mode != SHADER_NONE

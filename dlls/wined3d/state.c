@@ -347,7 +347,7 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)stateblock->textures[0])->surfaces[0];
 
         if(surf->CKeyFlags & WINEDDSD_CKSRCBLT) {
-            const PixelFormatDesc *fmt = getFormatDescEntry(surf->resource.format);
+            const StaticPixelFormatDesc *fmt = getFormatDescEntry(surf->resource.format, NULL);
             /* The surface conversion does not do color keying conversion for surfaces that have an alpha
              * channel on their own. Likewise, the alpha test shouldn't be set up for color keying if the
              * surface has alpha bits
@@ -1783,7 +1783,7 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *) stateblock->textures[0])->surfaces[0];
 
         if(surf->CKeyFlags & WINEDDSD_CKSRCBLT &&
-           getFormatDescEntry(surf->resource.format)->alphaMask == 0x00000000) {
+           getFormatDescEntry(surf->resource.format, NULL)->alphaMask == 0x00000000) {
 
             /* Color keying needs to pass alpha values from the texture through to have the alpha test work properly.
              * On the other hand applications can still use texture combiners apparently. This code takes care that apps

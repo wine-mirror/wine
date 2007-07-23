@@ -576,7 +576,8 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;    
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
     unsigned int Size       = 1;
-    const PixelFormatDesc *tableEntry = getFormatDescEntry(Format);
+    const GlPixelFormatDesc *glDesc;
+    const StaticPixelFormatDesc *tableEntry = getFormatDescEntry(Format, &glDesc);
     TRACE("(%p) Create surface\n",This);
     
     /** FIXME: Check ranges on the inputs are valid 
@@ -645,9 +646,9 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     object->currentDesc.MultiSampleQuality = MultisampleQuality;
 
     /* Setup some glformat defaults */
-    object->glDescription.glFormat         = tableEntry->glFormat;
-    object->glDescription.glFormatInternal = tableEntry->glInternal;
-    object->glDescription.glType           = tableEntry->glType;
+    object->glDescription.glFormat         = glDesc->glFormat;
+    object->glDescription.glFormatInternal = glDesc->glInternal;
+    object->glDescription.glType           = glDesc->glType;
 
     object->glDescription.textureName      = 0;
     object->glDescription.level            = Level;
@@ -922,7 +923,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
 
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeImpl        *object; /** NOTE: impl ref allowed since this is a create function **/
-    const PixelFormatDesc *formatDesc  = getFormatDescEntry(Format);
+    const StaticPixelFormatDesc *formatDesc  = getFormatDescEntry(Format, NULL);
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, Volume, WINED3DRTYPE_VOLUME, ((Width * formatDesc->bpp) * Height * Depth))
 
@@ -2028,7 +2029,6 @@ static void WINAPI IWineD3DDeviceImpl_SetFullscreen(IWineD3DDevice *iface, BOOL 
  */
 static void WINAPI IWineD3DDeviceImpl_SetMultithreaded(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    FIXME("No thread safety in wined3d yet\n");
 
     /*For now just store the flag(needed in case of ddraw) */
     This->createParms.BehaviorFlags |= WINED3DCREATE_MULTITHREADED;
@@ -2040,7 +2040,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
     DEVMODEW devmode;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     LONG ret;
-    const PixelFormatDesc *formatDesc  = getFormatDescEntry(pMode->Format);
+    const StaticPixelFormatDesc *formatDesc  = getFormatDescEntry(pMode->Format, NULL);
     RECT clip_rc;
 
     TRACE("(%p)->(%d,%p) Mode=%dx%dx@%d, %s\n", This, iSwapChain, pMode, pMode->Width, pMode->Height, pMode->RefreshRate, debug_d3dformat(pMode->Format));
@@ -5985,11 +5985,12 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
             This->cursorHeight = pSur->currentDesc.Height;
             if (SUCCEEDED(IWineD3DSurface_LockRect(pCursorBitmap, &rect, NULL, WINED3DLOCK_READONLY)))
             {
-                const PixelFormatDesc *tableEntry = getFormatDescEntry(WINED3DFMT_A8R8G8B8);
+                const GlPixelFormatDesc *glDesc;
+                const StaticPixelFormatDesc *tableEntry = getFormatDescEntry(WINED3DFMT_A8R8G8B8, &glDesc);
                 char *mem, *bits = (char *)rect.pBits;
-                GLint intfmt = tableEntry->glInternal;
-                GLint format = tableEntry->glFormat;
-                GLint type = tableEntry->glType;
+                GLint intfmt = glDesc->glInternal;
+                GLint format = glDesc->glFormat;
+                GLint type = glDesc->glType;
                 INT height = This->cursorHeight;
                 INT width = This->cursorWidth;
                 INT bpp = tableEntry->bpp;
@@ -6455,7 +6456,6 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
 
             break;
         }
-
         case WINED3DRTYPE_TEXTURE:
         case WINED3DRTYPE_CUBETEXTURE:
         case WINED3DRTYPE_VOLUMETEXTURE:
