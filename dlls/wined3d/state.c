@@ -306,12 +306,10 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         glEnable(GL_LINE_SMOOTH);
         checkGLcall("glEnable(GL_LINE_SMOOTH)");
         if(srcBlend != GL_SRC_ALPHA) {
-            FIXME("WINED3DRS_EDGEANTIALIAS enabled, but incompatible src blending param - what to do?\n");
-            srcBlend = GL_SRC_ALPHA;
+            WARN("WINED3DRS_EDGEANTIALIAS enabled, but unexpected src blending param\n");
         }
-        if(dstBlend != GL_ONE_MINUS_SRC_ALPHA) {
-            FIXME("WINED3DRS_EDGEANTIALIAS enabled, but incompatible dst blending param - what to do?\n");
-            dstBlend = GL_ONE_MINUS_SRC_ALPHA;
+        if(dstBlend != GL_ONE_MINUS_SRC_ALPHA && dstBlend != GL_ONE) {
+            WARN("WINED3DRS_EDGEANTIALIAS enabled, but unexpected dst blending param\n");
         }
     } else {
         glDisable(GL_LINE_SMOOTH);
