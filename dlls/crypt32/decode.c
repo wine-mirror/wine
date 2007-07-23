@@ -193,6 +193,12 @@ static BOOL WINAPI CRYPT_GetLen(const BYTE *pbEncoded, DWORD cbEncoded,
             ret = TRUE;
         }
     }
+    else if (pbEncoded[1] == 0x80)
+    {
+        FIXME("unimplemented for indefinite-length encoding\n");
+        SetLastError(CRYPT_E_ASN1_CORRUPT);
+        ret = FALSE;
+    }
     else
     {
         BYTE lenLen = GET_LEN_BYTES(pbEncoded[1]);
