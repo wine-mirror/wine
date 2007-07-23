@@ -726,13 +726,17 @@ static LONG MDICascade( HWND client, MDICLIENTINFO *ci )
         /* walk the list (backwards) and move windows */
         for (i = total - 1; i >= 0; i--)
         {
+            LONG style;
+            LONG posOptions = SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER;
 
             MDI_CalcDefaultChildPos(client, n++, pos, delta, NULL);
             TRACE("move %p to (%d,%d) size [%d,%d]\n",
                   win_array[i], pos[0].x, pos[0].y, pos[1].x, pos[1].y);
+            style = GetWindowLongW(win_array[i], GWL_STYLE);
 
+            if (!(style & WS_SIZEBOX)) posOptions |= SWP_NOSIZE;
             SetWindowPos( win_array[i], 0, pos[0].x, pos[0].y, pos[1].x, pos[1].y,
-                          SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
+                           posOptions);
         }
     }
     HeapFree( GetProcessHeap(), 0, win_array );
@@ -812,8 +816,11 @@ static void MDITile( HWND client, MDICLIENTINFO *ci, WPARAM wParam )
             y = 0;
             for (r = 1; r <= rows && *pWnd; r++, i++)
             {
-                SetWindowPos(*pWnd, 0, x, y, xsize, ysize,
-                             SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
+                LONG posOptions = SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER;
+                LONG style = GetWindowLongW(win_array[i], GWL_STYLE);
+                if (!(style & WS_SIZEBOX)) posOptions |= SWP_NOSIZE;
+
+                SetWindowPos(*pWnd, 0, x, y, xsize, ysize, posOptions);
                 y += ysize;
                 pWnd++;
             }
