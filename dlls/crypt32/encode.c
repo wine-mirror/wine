@@ -1210,6 +1210,91 @@ static BOOL WINAPI CRYPT_DEREncodeSet(DWORD dwCertEncodingType,
     return ret;
 }
 
+struct DERSetDescriptor
+{
+    DWORD                   cItems;
+    const void             *items;
+    size_t                  itemSize;
+    off_t                   itemOffset;
+    CryptEncodeObjectExFunc encode;
+};
+
+static BOOL WINAPI CRYPT_DEREncodeItemsAsSet(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    const struct DERSetDescriptor *desc =
+     (const struct DERSetDescriptor *)pvStructInfo;
+    CRYPT_SET_OF setOf = { 0, NULL };
+    BOOL ret = TRUE;
+    DWORD i;
+
+    if (desc->cItems)
+    {
+        setOf.rgValue = CryptMemAlloc(setOf.cValue * sizeof(CRYPT_DER_BLOB));
+        if (!setOf.rgValue)
+            ret = FALSE;
+        else
+        {
+            setOf.cValue = desc->cItems;
+            memset(setOf.rgValue, 0, setOf.cValue * sizeof(CRYPT_DER_BLOB));
+        }
+    }
+    for (i = 0; ret && i < setOf.cValue; i++)
+    {
+        ret = desc->encode(dwCertEncodingType, lpszStructType,
+         (const BYTE *)desc->items + i * desc->itemSize + desc->itemOffset,
+         0, NULL, NULL, &setOf.rgValue[i].cbData);
+        if (ret)
+        {
+            setOf.rgValue[i].pbData = CryptMemAlloc(setOf.rgValue[i].cbData);
+            if (!setOf.rgValue[i].pbData)
+                ret = FALSE;
+            else
+                ret = desc->encode(dwCertEncodingType, lpszStructType,
+                 (const BYTE *)desc->items + i * desc->itemSize +
+                 desc->itemOffset, 0, NULL, setOf.rgValue[i].pbData,
+                 &setOf.rgValue[i].cbData);
+        }
+        /* Some functions propagate their errors through the size */
+        if (!ret)
+            *pcbEncoded = setOf.rgValue[i].cbData;
+    }
+    if (ret)
+    {
+        DWORD bytesNeeded = 0, lenBytes;
+        BOOL ret;
+
+        for (i = 0; i < setOf.cValue; i++)
+            bytesNeeded += setOf.rgValue[i].cbData;
+        CRYPT_EncodeLen(bytesNeeded, NULL, &lenBytes);
+        bytesNeeded += 1 + lenBytes;
+        if (!pbEncoded)
+            *pcbEncoded = bytesNeeded;
+        else if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara,
+         pbEncoded, pcbEncoded, bytesNeeded)))
+        {
+            if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+                pbEncoded = *(BYTE **)pbEncoded;
+            qsort(setOf.rgValue, setOf.cValue, sizeof(CRYPT_DER_BLOB),
+             BLOBComp);
+            *pbEncoded++ = ASN_CONSTRUCTOR | ASN_SETOF;
+            CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded, &lenBytes);
+            pbEncoded += lenBytes;
+            for (i = 0; i < setOf.cValue; i++)
+            {
+                memcpy(pbEncoded, setOf.rgValue[i].pbData,
+                 setOf.rgValue[i].cbData);
+                pbEncoded += setOf.rgValue[i].cbData;
+            }
+        }
+    }
+    for (i = 0; i < setOf.cValue; i++)
+        CryptMemFree(setOf.rgValue[i].pbData);
+    CryptMemFree(setOf.rgValue);
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
  CryptEncodeObjectExFunc nameValueEncodeFunc, BYTE *pbEncoded,
  DWORD *pcbEncoded)
@@ -1394,55 +1479,22 @@ static BOOL WINAPI CRYPT_AsnEncodePKCSAttributes(DWORD dwCertEncodingType,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
     BOOL ret = FALSE;
-    CRYPT_SET_OF setOf = { 0, NULL };
 
     __TRY
     {
-        DWORD i;
         const CRYPT_ATTRIBUTES *attributes =
          (const CRYPT_ATTRIBUTES *)pvStructInfo;
+        struct DERSetDescriptor desc = { attributes->cAttr, attributes->rgAttr,
+         sizeof(CRYPT_ATTRIBUTE), 0, CRYPT_AsnEncodePKCSAttribute };
 
-        ret = TRUE;
-        if (attributes->cAttr)
-        {
-            setOf.cValue = attributes->cAttr;
-            setOf.rgValue = CryptMemAlloc(attributes->cAttr *
-             sizeof(CRYPT_DER_BLOB));
-            if (!setOf.rgValue)
-                ret = FALSE;
-            else
-                memset(setOf.rgValue, 0, setOf.cValue * sizeof(CRYPT_DER_BLOB));
-        }
-        for (i = 0; ret && i < attributes->cAttr; i++)
-        {
-            ret = CRYPT_AsnEncodePKCSAttribute(dwCertEncodingType, NULL,
-             &attributes->rgAttr[i], 0, NULL, NULL, &setOf.rgValue[i].cbData);
-            if (ret)
-            {
-                setOf.rgValue[i].pbData =
-                 CryptMemAlloc(setOf.rgValue[i].cbData);
-                if (!setOf.rgValue[i].pbData)
-                    ret = FALSE;
-                else
-                {
-                    ret = CRYPT_AsnEncodePKCSAttribute(dwCertEncodingType, NULL,
-                     &attributes->rgAttr[i], 0, NULL, setOf.rgValue[i].pbData,
-                     &setOf.rgValue[i].cbData);
-                }
-            }
-        }
-        if (ret)
-            ret = CRYPT_DEREncodeSet(X509_ASN_ENCODING, NULL, &setOf, dwFlags,
-             pEncodePara, pbEncoded, pcbEncoded);
-        for (i = 0; i < setOf.cValue; i++)
-            CryptMemFree(setOf.rgValue[i].pbData);
+        ret = CRYPT_DEREncodeItemsAsSet(X509_ASN_ENCODING, lpszStructType,
+         &desc, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
     }
     __EXCEPT_PAGE_FAULT
     {
         SetLastError(STATUS_ACCESS_VIOLATION);
     }
     __ENDTRY
-    CryptMemFree(setOf.rgValue);
     return ret;
 }
 
