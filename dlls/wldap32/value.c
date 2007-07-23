@@ -272,8 +272,9 @@ struct WLDAP32_berval ** CDECL ldap_get_values_lenA( WLDAP32_LDAP *ld,
     strfreeW( attrW );
     return ret;
 
-#endif
+#else
     return NULL;
+#endif
 }
 
 /***********************************************************************
@@ -314,8 +315,9 @@ struct WLDAP32_berval ** CDECL ldap_get_values_lenW( WLDAP32_LDAP *ld,
     strfreeU( attrU );
     return (struct WLDAP32_berval **)ret;
 
-#endif
+#else
     return NULL;
+#endif
 }
 
 /***********************************************************************

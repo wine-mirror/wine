@@ -236,8 +236,9 @@ exit:
     strfreeW( hostnameW );
     return ld;
 
-#endif
+#else
     return NULL;
+#endif
 }
 
 /***********************************************************************
@@ -288,8 +289,9 @@ exit:
     strfreeU( url );
     return ld;
 
-#endif
+#else
     return NULL;
+#endif
 }
 
 /***********************************************************************
@@ -342,8 +344,9 @@ exit:
     strfreeW( hostnameW );
     return ld;
 
-#endif
+#else
     return NULL;
+#endif
 }
 
 /***********************************************************************
@@ -395,8 +398,9 @@ exit:
     strfreeU( url );
     return ld;
 
-#endif
+#else
     return NULL;
+#endif
 }
 
 /***********************************************************************
@@ -423,8 +427,9 @@ exit:
     strfreeW( hostnameW );
     return ld;
 
-#endif
+#else
     return NULL;
+#endif
 }
 
 /***********************************************************************
@@ -475,8 +480,9 @@ exit:
     strfreeU( url );
     return ld;
 
-#endif
+#else
     return NULL;
+#endif
 }
 
 /***********************************************************************
@@ -502,8 +508,9 @@ WLDAP32_LDAP * CDECL ldap_sslinitA( PCHAR hostname, ULONG portnumber, int secure
     strfreeW( hostnameW );
     return ld;
 
-#endif
+#else
     return NULL;
+#endif
 }
 
 /***********************************************************************
@@ -559,8 +566,9 @@ exit:
     strfreeU( url );
     return ld;
 
-#endif
+#else
     return NULL;
+#endif
 }
 
 /***********************************************************************
