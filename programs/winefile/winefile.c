@@ -319,7 +319,7 @@ static LPCWSTR my_wcsrchr(LPCWSTR str, WCHAR c)
 /* allocate and initialise a directory entry */
 static Entry* alloc_entry(void)
 {
-	Entry* entry = (Entry*) malloc(sizeof(Entry));
+	Entry* entry = HeapAlloc(GetProcessHeap(), 0, sizeof(Entry));
 
 #ifdef _SHELL_FOLDERS
 	entry->pidl = NULL;
@@ -344,7 +344,7 @@ static void free_entry(Entry* entry)
 		IMalloc_Free(Globals.iMalloc, entry->pidl);
 #endif
 
-	free(entry);
+	HeapFree(GetProcessHeap(), 0, entry);
 }
 
 /* recursively free all child entries */
@@ -1437,7 +1437,7 @@ static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 	TCHAR b1[BUFFER_LEN];
 	static const TCHAR sAsterics[] = {'*', '\0'};
 
-	ChildWnd* child = (ChildWnd*) malloc(sizeof(ChildWnd));
+	ChildWnd* child = HeapAlloc(GetProcessHeap(), 0, sizeof(ChildWnd));
 	Root* root = &child->root;
 	Entry* entry;
 
@@ -1504,7 +1504,7 @@ static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 static void free_child_window(ChildWnd* child)
 {
 	free_entries(&child->root.entry);
-	free(child);
+	HeapFree(GetProcessHeap(), 0, child);
 }
 
 
@@ -1927,7 +1927,7 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCTSTR st
 	DWORD dwVersionDataLen = GetFileVersionInfoSize(strFilename, NULL);
 
 	if (dwVersionDataLen) {
-		dlg->pVersionData = malloc(dwVersionDataLen);
+		dlg->pVersionData = HeapAlloc(GetProcessHeap(), 0, dwVersionDataLen);
 
 		if (GetFileVersionInfo(strFilename, 0, dwVersionDataLen, dlg->pVersionData)) {
 			LPVOID pVal;
@@ -2045,7 +2045,7 @@ static INT_PTR CALLBACK PropertiesDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wpa
 			return 1;}
 
 		case WM_NCDESTROY:
-			free(dlg->pVersionData);
+			HeapFree(GetProcessHeap(), 0, dlg->pVersionData);
 			dlg->pVersionData = NULL;
 			break;
 	}
@@ -2291,7 +2291,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 				child = alloc_child_window(path, NULL, hwnd);
 
 				if (!create_child_window(child))
-					free(child);
+					HeapFree(GetProcessHeap(), 0, child);
 			} else switch(cmd) {
 				case ID_FILE_EXIT:
 					SendMessage(hwnd, WM_CLOSE, 0, 0);
@@ -2305,7 +2305,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					child = alloc_child_window(path, NULL, hwnd);
 
 					if (!create_child_window(child))
-						free(child);
+						HeapFree(GetProcessHeap(), 0, child);
 					break;}
 
 				case ID_REFRESH:
@@ -2472,7 +2472,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					child = alloc_child_window(path, NULL, hwnd);
 
 					if (!create_child_window(child))
-						free(child);
+						HeapFree(GetProcessHeap(), 0, child);
 					break;}
 #endif
 #ifdef _SHELL_FOLDERS
@@ -2487,7 +2487,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					child = alloc_child_window(path, get_path_pidl(path,hwnd), hwnd);
 
 					if (!create_child_window(child))
-						free(child);
+						HeapFree(GetProcessHeap(), 0, child);
 					break;}
 #endif
 #endif
@@ -4434,7 +4434,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					ChildWnd* new_child = alloc_child_window(child->path, NULL, hwnd);
 
 					if (!create_child_window(new_child))
-						free(new_child);
+						HeapFree(GetProcessHeap(), 0, new_child);
 
 					break;}
 
@@ -4860,7 +4860,7 @@ static void show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 	child->pos.rcNormalPosition.bottom = 280;
 
 	if (!create_child_window(child))
-		free(child);
+		HeapFree(GetProcessHeap(), 0, child);
 
 	SetWindowPlacement(child->hwnd, &child->pos);
 
