@@ -245,28 +245,28 @@ static void display_network_error(HWND hwnd)
 
 static VOID WineLicense(HWND Wnd)
 {
-	TCHAR cap[20], text[1024];
-	LoadString(Globals.hInstance, IDS_LICENSE, text, 1024);
-	LoadString(Globals.hInstance, IDS_LICENSE_CAPTION, cap, 20);
-	MessageBox(Wnd, text, cap, MB_ICONINFORMATION | MB_OK);
+	WCHAR cap[20], text[1024];
+	LoadStringW(Globals.hInstance, IDS_LICENSE, text, 1024);
+	LoadStringW(Globals.hInstance, IDS_LICENSE_CAPTION, cap, 20);
+	MessageBoxW(Wnd, text, cap, MB_ICONINFORMATION | MB_OK);
 }
 
 static VOID WineWarranty(HWND Wnd)
 {
-	TCHAR cap[20], text[1024];
-	LoadString(Globals.hInstance, IDS_WARRANTY, text, 1024);
-	LoadString(Globals.hInstance, IDS_WARRANTY_CAPTION, cap, 20);
-	MessageBox(Wnd, text, cap, MB_ICONEXCLAMATION | MB_OK);
+	WCHAR cap[20], text[1024];
+	LoadStringW(Globals.hInstance, IDS_WARRANTY, text, 1024);
+	LoadStringW(Globals.hInstance, IDS_WARRANTY_CAPTION, cap, 20);
+	MessageBoxW(Wnd, text, cap, MB_ICONEXCLAMATION | MB_OK);
 }
 
 static inline BOOL get_check(HWND hwnd, INT id)
 {
-	return BST_CHECKED&SendMessage(GetDlgItem(hwnd, id), BM_GETSTATE, 0, 0);
+	return BST_CHECKED&SendMessageW(GetDlgItem(hwnd, id), BM_GETSTATE, 0, 0);
 }
 
 static inline INT set_check(HWND hwnd, INT id, BOOL on)
 {
-	return SendMessage(GetDlgItem(hwnd, id), BM_SETCHECK, on?BST_CHECKED:BST_UNCHECKED, 0);
+	return SendMessageW(GetDlgItem(hwnd, id), BM_SETCHECK, on?BST_CHECKED:BST_UNCHECKED, 0);
 }
 
 #ifdef __WINE__
