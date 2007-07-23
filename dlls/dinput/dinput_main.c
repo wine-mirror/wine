@@ -854,7 +854,8 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
     IDirectInputImpl *dinput;
     HWND foreground;
 
-    if (code != HC_ACTION || msg->message != WM_KILLFOCUS)
+    if (code != HC_ACTION || (msg->message != WM_KILLFOCUS &&
+        msg->message != WM_ACTIVATEAPP && msg->message != WM_ACTIVATE))
         return CallNextHookEx( 0, code, wparam, lparam );
 
     foreground = GetForegroundWindow();
