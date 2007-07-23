@@ -630,22 +630,26 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     if (szPackagePath)   
     {
         LPWSTR p, check, dir;
+        LPCWSTR file;
 
         dir = strdupW(szPackagePath);
         p = strrchrW(dir, '\\');
         if (p)
+        {
             *(++p) = 0;
+            file = szPackagePath + (p - dir);
+        }
         else
         {
             msi_free(dir);
             dir = msi_alloc(MAX_PATH*sizeof(WCHAR));
             GetCurrentDirectoryW(MAX_PATH, dir);
             lstrcatW(dir, cszbs);
-            p = (LPWSTR)szPackagePath;
+            file = szPackagePath;
         }
 
         msi_free( package->PackagePath );
-        package->PackagePath = msi_alloc((lstrlenW(dir) + lstrlenW(p) + 2) * sizeof(WCHAR));
+        package->PackagePath = msi_alloc((lstrlenW(dir) + lstrlenW(file) + 1) * sizeof(WCHAR));
         if (!package->PackagePath)
         {
             msi_free(dir);
@@ -653,8 +657,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
         }
 
         lstrcpyW(package->PackagePath, dir);
-        lstrcatW(package->PackagePath, cszbs);
-        lstrcatW(package->PackagePath, p);
+        lstrcatW(package->PackagePath, file);
 
         check = msi_dup_property( package, cszSourceDir );
         if (!check)
