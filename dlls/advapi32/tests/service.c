@@ -392,7 +392,6 @@ static void test_get_displayname(void)
     SetLastError(0xdeadbeef);
     ret = GetServiceDisplayNameA(NULL, NULL, NULL, &displaysize);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_HANDLE,
        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
