@@ -305,7 +305,6 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE profile, PBYTE buffer, PDWORD si
  */
 BOOL WINAPI GetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
 {
-    BOOL ret = FALSE;
 #ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
 
@@ -316,8 +315,9 @@ BOOL WINAPI GetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
     MSCMS_get_profile_header( iccprofile, header );
     return TRUE;
 
+#else
+    return FALSE;
 #endif /* HAVE_LCMS */
-    return ret;
 }
 
 /******************************************************************************
@@ -1065,7 +1065,6 @@ BOOL WINAPI SetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
  */
 BOOL WINAPI SetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
 {
-    BOOL ret = FALSE;
 #ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
     DWORD access = MSCMS_hprofile2access( profile );
@@ -1078,8 +1077,9 @@ BOOL WINAPI SetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
     MSCMS_set_profile_header( iccprofile, header );
     return TRUE;
 
+#else
+    return FALSE;
 #endif /* HAVE_LCMS */
-    return ret;
 }
 
 /******************************************************************************
