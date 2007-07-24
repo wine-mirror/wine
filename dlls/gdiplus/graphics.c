@@ -701,6 +701,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
     (*graphics)->compqual = CompositingQualityDefault;
     (*graphics)->interpolation = InterpolationModeDefault;
     (*graphics)->pixeloffset = PixelOffsetModeDefault;
+    (*graphics)->unit = UnitDisplay;
 
     return Ok;
 }
@@ -1018,6 +1019,16 @@ GpStatus WINGDIPAPI GdipGetInterpolationMode(GpGraphics *graphics,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPageUnit(GpGraphics *graphics, GpUnit *unit)
+{
+    if(!graphics || !unit)
+        return InvalidParameter;
+
+    *unit = graphics->unit;
+
+    return Ok;
+}
+
 /* FIXME: Pixel offset mode is not used anywhere except the getter/setter. */
 GpStatus WINGDIPAPI GdipGetPixelOffsetMode(GpGraphics *graphics, PixelOffsetMode
     *mode)
@@ -1079,6 +1090,16 @@ GpStatus WINGDIPAPI GdipSetInterpolationMode(GpGraphics *graphics,
         return InvalidParameter;
 
     graphics->interpolation = mode;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetPageUnit(GpGraphics *graphics, GpUnit unit)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    graphics->unit = unit;
 
     return Ok;
 }

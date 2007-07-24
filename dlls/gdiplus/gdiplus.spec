@@ -306,7 +306,7 @@
 @ stub GdipGetMetafileHeaderFromWmf
 @ stub GdipGetNearestColor
 @ stub GdipGetPageScale
-@ stub GdipGetPageUnit
+@ stdcall GdipGetPageUnit(ptr ptr)
 @ stub GdipGetPathData
 @ stdcall GdipGetPathFillMode(ptr ptr)
 @ stub GdipGetPathGradientBlend
@@ -525,7 +525,7 @@
 @ stub GdipSetMatrixElements
 @ stub GdipSetMetafileDownLevelRasterizationLimit
 @ stub GdipSetPageScale
-@ stub GdipSetPageUnit
+@ stdcall GdipSetPageUnit(ptr long)
 @ stdcall GdipSetPathFillMode(ptr long)
 @ stub GdipSetPathGradientBlend
 @ stub GdipSetPathGradientCenterColor

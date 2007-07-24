@@ -65,6 +65,7 @@ struct GpGraphics{
     CompositingQuality compqual;
     InterpolationMode interpolation;
     PixelOffsetMode pixeloffset;
+    GpUnit unit;    /* page unit */
 };
 
 struct GpBrush{
