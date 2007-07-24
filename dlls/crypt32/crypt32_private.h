@@ -82,6 +82,23 @@ typedef struct _CRYPT_DIGESTED_DATA
 BOOL CRYPT_AsnEncodePKCSDigestedData(CRYPT_DIGESTED_DATA *digestedData,
  void *pvData, DWORD *pcbData);
 
+typedef struct _CRYPT_SIGNED_INFO
+{
+    DWORD              version;
+    DWORD              cCertEncoded;
+    PCERT_BLOB         rgCertEncoded;
+    DWORD              cCrlEncoded;
+    PCRL_BLOB          rgCrlEncoded;
+    DWORD              cAttrCertEncoded;
+    PCERT_BLOB         rgAttrCertEncoded;
+    CRYPT_CONTENT_INFO content;
+    DWORD              cSignerInfo;
+    PCMSG_SIGNER_INFO  rgSignerInfo;
+} CRYPT_SIGNED_INFO;
+
+BOOL CRYPT_AsnEncodePKCSSignedInfo(CRYPT_SIGNED_INFO *, void *pvData,
+ DWORD *pcbData);
+
 /* Helper function to check *pcbEncoded, set it to the required size, and
  * optionally to allocate memory.  Assumes pbEncoded is not NULL.
  * If CRYPT_ENCODE_ALLOC_FLAG is set in dwFlags, *pbEncoded will be set to a

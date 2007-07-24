@@ -627,30 +627,51 @@ static BOOL CRYPT_CopyBlob(CRYPT_DATA_BLOB *out, const CRYPT_DATA_BLOB *in)
     return ret;
 }
 
-static BOOL CRYPT_CopyAttribute(CRYPT_ATTRIBUTE *out, const CRYPT_ATTRIBUTE *in)
+typedef struct _BlobArray
+{
+    DWORD            cBlobs;
+    PCRYPT_DATA_BLOB blobs;
+} BlobArray;
+
+static BOOL CRYPT_CopyBlobArray(BlobArray *out, const BlobArray *in)
 {
     BOOL ret = TRUE;
 
-    /* Assumption:  algorithm IDs will point to static strings, not stack-based
-     * ones, so copying the pointer values is safe.
-     */
-    out->pszObjId = in->pszObjId;
-    out->cValue = in->cValue;
-    if (out->cValue)
+    out->cBlobs = in->cBlobs;
+    if (out->cBlobs)
     {
-        out->rgValue = CryptMemAlloc(out->cValue * sizeof(CRYPT_DATA_BLOB));
-        if (out->rgValue)
+        out->blobs = CryptMemAlloc(out->cBlobs * sizeof(CRYPT_DATA_BLOB));
+        if (out->blobs)
         {
             DWORD i;
 
-            memset(out->rgValue, 0, out->cValue * sizeof(CRYPT_DATA_BLOB));
-            for (i = 0; ret && i < out->cValue; i++)
-                ret = CRYPT_CopyBlob(&out->rgValue[i], &in->rgValue[i]);
+            memset(out->blobs, 0, out->cBlobs * sizeof(CRYPT_DATA_BLOB));
+            for (i = 0; ret && i < out->cBlobs; i++)
+                ret = CRYPT_CopyBlob(&out->blobs[i], &in->blobs[i]);
         }
         else
             ret = FALSE;
     }
     return ret;
+}
+
+static void CRYPT_FreeBlobArray(BlobArray *array)
+{
+    DWORD i;
+
+    for (i = 0; i < array->cBlobs; i++)
+        CryptMemFree(array->blobs[i].pbData);
+    CryptMemFree(array->blobs);
+}
+
+static BOOL CRYPT_CopyAttribute(CRYPT_ATTRIBUTE *out, const CRYPT_ATTRIBUTE *in)
+{
+    /* Assumption:  algorithm IDs will point to static strings, not stack-based
+     * ones, so copying the pointer values is safe.
+     */
+    out->pszObjId = in->pszObjId;
+    return CRYPT_CopyBlobArray((BlobArray *)&out->cValue,
+     (const BlobArray *)&in->cValue);
 }
 
 static BOOL CRYPT_CopyAttributes(CRYPT_ATTRIBUTES *out,
@@ -749,6 +770,10 @@ typedef struct _CSignedEncodeMsg
     CRYPT_DATA_BLOB data;
     DWORD           cSigners;
     CSignerInfo    *signers;
+    DWORD           cCertEncoded;
+    PCERT_BLOB      rgCertEncoded;
+    DWORD           cCrlEncoded;
+    PCRL_BLOB       rgCrlEncoded;
 } CSignedEncodeMsg;
 
 static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
@@ -757,6 +782,8 @@ static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
     DWORD i;
 
     CryptMemFree(msg->data.pbData);
+    CRYPT_FreeBlobArray((BlobArray *)&msg->cCertEncoded);
+    CRYPT_FreeBlobArray((BlobArray *)&msg->cCrlEncoded);
     for (i = 0; i < msg->cSigners; i++)
         CSignerInfo_Free(&msg->signers[i]);
     CryptMemFree(msg->signers);
@@ -770,6 +797,55 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
 
     switch (dwParamType)
     {
+    case CMSG_BARE_CONTENT_PARAM:
+    {
+        CRYPT_SIGNED_INFO info;
+        char oid_rsa_data[] = szOID_RSA_data;
+
+        /* Note: needs to change if CMS fields are supported */
+        info.version = CMSG_SIGNED_DATA_V1;
+        info.cCertEncoded = msg->cCertEncoded;
+        info.rgCertEncoded = msg->rgCertEncoded;
+        info.cCrlEncoded = msg->cCrlEncoded;
+        info.rgCrlEncoded = msg->rgCrlEncoded;
+        info.cAttrCertEncoded = 0;
+        info.cSignerInfo = msg->cSigners;
+        /* Quirk:  OID is only encoded messages if an update has happened */
+        if (msg->base.state != MsgStateInit)
+            info.content.pszObjId = oid_rsa_data;
+        else
+            info.content.pszObjId = NULL;
+        if (msg->data.cbData)
+        {
+            CRYPT_DATA_BLOB blob = { msg->data.cbData, msg->data.pbData };
+
+            ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
+             &blob, CRYPT_ENCODE_ALLOC_FLAG, NULL,
+             &info.content.Content.pbData, &info.content.Content.cbData);
+        }
+        else
+        {
+            info.content.Content.cbData = 0;
+            info.content.Content.pbData = NULL;
+            ret = TRUE;
+        }
+        if (ret)
+        {
+            info.rgSignerInfo =
+             CryptMemAlloc(msg->cSigners * sizeof(CMSG_SIGNER_INFO));
+            if (info.rgSignerInfo)
+            {
+                DWORD i;
+
+                for (i = 0; i < info.cSignerInfo; i++)
+                    info.rgSignerInfo[i] = msg->signers[i].info;
+                ret = CRYPT_AsnEncodePKCSSignedInfo(&info, pvData, pcbData);
+                CryptMemFree(info.rgSignerInfo);
+            }
+            LocalFree(info.content.Content.pbData);
+        }
+        break;
+    }
     case CMSG_COMPUTED_HASH_PARAM:
         if (dwIndex >= msg->cSigners)
             SetLastError(CRYPT_E_INVALID_INDEX);
@@ -931,6 +1007,12 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
             else
                 ret = FALSE;
         }
+        if (ret)
+            ret = CRYPT_CopyBlobArray((BlobArray *)&msg->cCertEncoded,
+             (const BlobArray *)&info->cCertEncoded);
+        if (ret)
+            ret = CRYPT_CopyBlobArray((BlobArray *)&msg->cCrlEncoded,
+             (const BlobArray *)&info->cCrlEncoded);
         if (!ret)
         {
             CSignedEncodeMsg_Close(msg);

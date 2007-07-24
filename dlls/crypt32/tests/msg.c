@@ -1289,7 +1289,6 @@ static void test_signed_msg_encoding(void)
      CMSG_DETACHED_FLAG, CMSG_SIGNED, &signInfo, NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
 
-    todo_wine
     check_param("detached signed empty bare content", msg,
      CMSG_BARE_CONTENT_PARAM, signedEmptyBareContent,
      sizeof(signedEmptyBareContent));
@@ -1300,7 +1299,6 @@ static void test_signed_msg_encoding(void)
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     check_param("detached signed hash", msg, CMSG_COMPUTED_HASH_PARAM,
      signedHash, sizeof(signedHash));
-    todo_wine
     check_param("detached signed bare content", msg, CMSG_BARE_CONTENT_PARAM,
      detachedSignedBareContent, sizeof(detachedSignedBareContent));
     todo_wine
@@ -1317,7 +1315,6 @@ static void test_signed_msg_encoding(void)
      NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
 
-    todo_wine
     check_param("signed empty bare content", msg, CMSG_BARE_CONTENT_PARAM,
      signedEmptyBareContent, sizeof(signedEmptyBareContent));
     todo_wine
@@ -1325,7 +1322,6 @@ static void test_signed_msg_encoding(void)
      signedEmptyContent, sizeof(signedEmptyContent));
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
-    todo_wine
     check_param("signed bare content", msg, CMSG_BARE_CONTENT_PARAM,
      signedBareContent, sizeof(signedBareContent));
     todo_wine
