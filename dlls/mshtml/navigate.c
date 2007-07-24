@@ -815,6 +815,11 @@ HRESULT start_binding(BSCallback *bscallback)
 
     IMoniker_Release(bscallback->mon);
     bscallback->mon = NULL;
+
+    /* events are reset when a new document URI is loaded, so re-initialise them here */
+    if(bscallback->doc && bscallback->doc->nscontainer)
+        init_nsevents(bscallback->doc->nscontainer);
+
     return S_OK;
 }
 
