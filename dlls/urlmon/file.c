@@ -122,7 +122,13 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(BINDINFO);
-    IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
+    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
+    if(FAILED(hres)) {
+        WARN("GetBindInfo failed: %08x\n", hres);
+        return hres;
+    }
+
+    ReleaseBindInfo(&bindinfo);
 
     if(lstrlenW(szUrl) < sizeof(wszFile)/sizeof(WCHAR)
             || memcmp(szUrl, wszFile, sizeof(wszFile)))
