@@ -854,6 +854,7 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
                 return 0;
 
             uaddrlen = sizeof(struct sockaddr_ipx);
+            memset( uaddr, 0, uaddrlen );
             uipx->sipx_family=AF_IPX;
             uipx->sipx_port=wsipx->sa_socket;
             /* copy sa_netnum and sa_nodenum to sipx_network and sipx_node
@@ -876,6 +877,7 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
          */
         if (wsaddrlen >= sizeof(struct WS_sockaddr_in6_old)) {
             uaddrlen = sizeof(struct sockaddr_in6);
+            memset( uaddr, 0, uaddrlen );
             uin6->sin6_family   = AF_INET6;
             uin6->sin6_port     = win6->sin6_port;
             uin6->sin6_flowinfo = win6->sin6_flowinfo;
@@ -895,6 +897,7 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
         if (wsaddrlen<sizeof(struct WS_sockaddr_in))
             return 0;
         uaddrlen = sizeof(struct sockaddr_in);
+        memset( uaddr, 0, uaddrlen );
         uin->sin_family = AF_INET;
         uin->sin_port   = win->sin_port;
         memcpy(&uin->sin_addr,&win->sin_addr,4); /* 4 bytes = 32 address bits */
