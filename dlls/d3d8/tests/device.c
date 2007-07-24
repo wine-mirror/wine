@@ -472,8 +472,15 @@ static void test_refcount(void)
             CHECK_REFCOUNT        ( pTextureLevel, tmp   );
         }
     }
-    hr = IDirect3DDevice8_CreateCubeTexture( pDevice, 32, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pCubeTexture );
-    CHECK_CALL( hr, "CreateCubeTexture", pDevice, ++refcount );
+    if(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP)
+    {
+        hr = IDirect3DDevice8_CreateCubeTexture( pDevice, 32, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pCubeTexture );
+        CHECK_CALL( hr, "CreateCubeTexture", pDevice, ++refcount );
+    }
+    else
+    {
+        skip("Cube textures not supported\n");
+    }
     hr = IDirect3DDevice8_CreateVolumeTexture( pDevice, 32, 32, 2, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pVolumeTexture );
     CHECK_CALL( hr, "CreateVolumeTexture", pDevice, ++refcount );
     if (pVolumeTexture)
