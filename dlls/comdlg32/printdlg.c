@@ -2413,21 +2413,19 @@ _c_size2strA(PageSetupDataA *pda,DWORD size,LPSTR strout) {
 }
 static void
 _c_size2strW(PageSetupDataW *pda,DWORD size,LPWSTR strout) {
-    static const WCHAR UNDEF[] = { '<', 'u', 'n', 'd', 'e', 'f', '>', 0 };
-    static const WCHAR mm_fmt[] = { '%', '.', '2', 'f', 'm', 'm', 0 };
-    static const WCHAR in_fmt[] = { '%', '.', '2', 'f', 'i', 'n', 0 };
-    lstrcpyW(strout, UNDEF);
+    static const char mm_fmt[] = "%.2f mm";
+    static const char in_fmt[] = "%.2f in";
+    char buf[20];
     if (pda->dlga->Flags & PSD_INHUNDREDTHSOFMILLIMETERS) {
-	wsprintfW(strout,mm_fmt,(size*1.0)/100.0);
-	return;
+        sprintf(buf, mm_fmt, (size * 1.0) / 100.0);
+    } else if (pda->dlga->Flags & PSD_INTHOUSANDTHSOFINCHES) {
+        sprintf(buf, in_fmt, (size * 1.0) / 1000.0);
+    } else {
+        pda->dlga->Flags |= PSD_INHUNDREDTHSOFMILLIMETERS;
+        sprintf(buf, mm_fmt, (size * 1.0) / 100.0);
     }
-    if (pda->dlga->Flags & PSD_INTHOUSANDTHSOFINCHES) {
-	wsprintfW(strout,in_fmt,(size*1.0)/1000.0);
-	return;
-    }
-    pda->dlga->Flags |= PSD_INHUNDREDTHSOFMILLIMETERS;
-    wsprintfW(strout,mm_fmt,(size*1.0)/100.0);
-    return;
+
+    MultiByteToWideChar(CP_ACP, 0, buf, -1, strout, 20);
 }
 
 static DWORD
