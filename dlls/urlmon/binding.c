@@ -996,6 +996,9 @@ static HRESULT WINAPI InternetBindInfo_GetBindInfo(IInternetBindInfo *iface,
     if(pbindinfo->szExtraInfo || pbindinfo->szCustomVerb)
         FIXME("copy strings\n");
 
+    if(pbindinfo->stgmedData.pUnkForRelease)
+        IUnknown_AddRef(pbindinfo->stgmedData.pUnkForRelease);
+
     if(pbindinfo->pUnk)
         IUnknown_AddRef(pbindinfo->pUnk);
 
