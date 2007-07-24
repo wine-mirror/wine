@@ -1593,25 +1593,25 @@ static windowOptions load_registry_settings(void)
 	HKEY hKey;
 	windowOptions opts;
 
-	RegOpenKeyEx( HKEY_CURRENT_USER, registry_key,
-	              0, KEY_QUERY_VALUE, &hKey );
+        RegOpenKeyExW( HKEY_CURRENT_USER, registry_key,
+                       0, KEY_QUERY_VALUE, &hKey );
 
 	size = sizeof(DWORD);
 
-        if( RegQueryValueEx( hKey, reg_start_x, NULL, &type,
-                             (LPBYTE) &opts.start_x, &size ) != ERROR_SUCCESS )
+        if( RegQueryValueExW( hKey, reg_start_x, NULL, &type,
+                              (LPBYTE) &opts.start_x, &size ) != ERROR_SUCCESS )
 		opts.start_x = CW_USEDEFAULT;
 
-        if( RegQueryValueEx( hKey, reg_start_y, NULL, &type,
-                             (LPBYTE) &opts.start_y, &size ) != ERROR_SUCCESS )
+        if( RegQueryValueExW( hKey, reg_start_y, NULL, &type,
+                              (LPBYTE) &opts.start_y, &size ) != ERROR_SUCCESS )
 		opts.start_y = CW_USEDEFAULT;
 
-        if( RegQueryValueEx( hKey, reg_width, NULL, &type,
-                             (LPBYTE) &opts.width, &size ) != ERROR_SUCCESS )
+        if( RegQueryValueExW( hKey, reg_width, NULL, &type,
+                              (LPBYTE) &opts.width, &size ) != ERROR_SUCCESS )
 		opts.width = CW_USEDEFAULT;
 
-        if( RegQueryValueEx( hKey, reg_height, NULL, &type,
-                             (LPBYTE) &opts.height, &size ) != ERROR_SUCCESS )
+        if( RegQueryValueExW( hKey, reg_height, NULL, &type,
+                              (LPBYTE) &opts.height, &size ) != ERROR_SUCCESS )
 		opts.height = CW_USEDEFAULT;
 
 	RegCloseKey( hKey );
@@ -1630,27 +1630,27 @@ static void save_registry_settings(void)
 	width = wi.rcWindow.right - wi.rcWindow.left;
 	height = wi.rcWindow.bottom - wi.rcWindow.top;
 
-	if ( RegOpenKeyEx( HKEY_CURRENT_USER, registry_key,
-	                   0, KEY_SET_VALUE, &hKey ) != ERROR_SUCCESS )
+	if ( RegOpenKeyExW( HKEY_CURRENT_USER, registry_key,
+                            0, KEY_SET_VALUE, &hKey ) != ERROR_SUCCESS )
 	{
 		/* Unable to save registry settings - try to create key */
-		if ( RegCreateKeyEx( HKEY_CURRENT_USER, registry_key,
-		                     0, NULL, REG_OPTION_NON_VOLATILE,
-		                     KEY_SET_VALUE, NULL, &hKey, NULL ) != ERROR_SUCCESS )
+                if ( RegCreateKeyExW( HKEY_CURRENT_USER, registry_key,
+                                      0, NULL, REG_OPTION_NON_VOLATILE,
+                                      KEY_SET_VALUE, NULL, &hKey, NULL ) != ERROR_SUCCESS )
 		{
 			/* FIXME: Cannot create key */
 			return;
 		}
 	}
 	/* Save all of the settings */
-	RegSetValueEx( hKey, reg_start_x, 0, REG_DWORD,
-	               (LPBYTE) &wi.rcWindow.left, sizeof(DWORD) );
-	RegSetValueEx( hKey, reg_start_y, 0, REG_DWORD,
-	               (LPBYTE) &wi.rcWindow.top, sizeof(DWORD) );
-	RegSetValueEx( hKey, reg_width, 0, REG_DWORD,
-	               (LPBYTE) &width, sizeof(DWORD) );
-	RegSetValueEx( hKey, reg_height, 0, REG_DWORD,
-	               (LPBYTE) &height, sizeof(DWORD) );
+        RegSetValueExW( hKey, reg_start_x, 0, REG_DWORD,
+                        (LPBYTE) &wi.rcWindow.left, sizeof(DWORD) );
+        RegSetValueExW( hKey, reg_start_y, 0, REG_DWORD,
+                        (LPBYTE) &wi.rcWindow.top, sizeof(DWORD) );
+        RegSetValueExW( hKey, reg_width, 0, REG_DWORD,
+                        (LPBYTE) &width, sizeof(DWORD) );
+        RegSetValueExW( hKey, reg_height, 0, REG_DWORD,
+                        (LPBYTE) &height, sizeof(DWORD) );
 
 	/* TODO: Save more settings here (List vs. Detailed View, etc.) */
 	RegCloseKey( hKey );
