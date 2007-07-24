@@ -61,6 +61,7 @@ static LPBYTE CompositionString = NULL;
 static DWORD dwCompStringSize = 0;
 static LPBYTE ResultString = NULL;
 static DWORD dwResultStringSize = 0;
+static DWORD dwPreeditPos = 0;
 
 static HMODULE hImmDll = NULL;
 static HIMC (WINAPI *pImmAssociateContext)(HWND,HIMC);
@@ -276,6 +277,8 @@ static int XIMPreEditStartCallback(XIC ic, XPointer client_data, XPointer call_d
     TRACE("PreEditStartCallback %p\n",ic);
     X11DRV_ImmSetOpenStatus(TRUE);
     ximInComposeMode = TRUE;
+    SendMessageW(((InputContextData*)root_context)->IMC.hWnd,
+                 EM_GETSEL, 0, (LPARAM)&dwPreeditPos);
     return -1;
 }
 
@@ -284,6 +287,7 @@ static void XIMPreEditDoneCallback(XIC ic, XPointer client_data, XPointer call_d
     TRACE("PreeditDoneCallback %p\n",ic);
     ximInComposeMode = FALSE;
     X11DRV_ImmSetOpenStatus(FALSE);
+    dwPreeditPos = 0;
 }
 
 static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
@@ -362,7 +366,7 @@ static void XIMPreEditCaretCallback(XIC ic, XPointer client_data,
                 break;
         }
         SendMessageW(((InputContextData*)root_context)->IMC.hWnd,
-                     EM_SETSEL, pos, pos);
+                     EM_SETSEL, dwPreeditPos + pos, dwPreeditPos + pos);
         P_C->position = pos;
     }
     TRACE("Finished\n");
