@@ -865,6 +865,10 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
             ret = CryptGetHashParam(msg->signerHandles[dwIndex].hash,
              HP_HASHVAL, pvData, pcbData, 0);
         break;
+    case CMSG_VERSION_PARAM:
+        ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&msg->info.version,
+         sizeof(msg->info.version));
+        break;
     default:
         FIXME("unimplemented for %d\n", dwParamType);
         SetLastError(CRYPT_E_INVALID_MSG_TYPE);

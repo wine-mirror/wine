@@ -1355,14 +1355,11 @@ static void test_signed_msg_get_param(void)
     /* For "signed" messages, so is the version. */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, NULL, &size);
-    todo_wine
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, (LPBYTE)&value, &size);
-    todo_wine {
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     ok(value == CMSG_SIGNED_DATA_V1, "Expected version 1, got %d\n", value);
-    }
     /* But for this message, with no signers, the hash and signer aren't
      * available.
      */
