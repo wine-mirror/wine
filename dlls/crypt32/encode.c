@@ -1231,7 +1231,7 @@ static BOOL WINAPI CRYPT_DEREncodeItemsAsSet(DWORD dwCertEncodingType,
 
     if (desc->cItems)
     {
-        setOf.rgValue = CryptMemAlloc(setOf.cValue * sizeof(CRYPT_DER_BLOB));
+        setOf.rgValue = CryptMemAlloc(desc->cItems * sizeof(CRYPT_DER_BLOB));
         if (!setOf.rgValue)
             ret = FALSE;
         else
