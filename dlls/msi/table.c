@@ -1686,7 +1686,7 @@ static UINT TABLE_add_ref(struct tagMSIVIEW *view)
 static UINT TABLE_remove_column(struct tagMSIVIEW *view, LPCWSTR table, UINT number)
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
-    MSIRECORD *rec;
+    MSIRECORD *rec = NULL;
     MSIVIEW *columns = NULL;
     UINT row, r;
 
@@ -1713,7 +1713,7 @@ static UINT TABLE_remove_column(struct tagMSIVIEW *view, LPCWSTR table, UINT num
 
 done:
     msiobj_release(&rec->hdr);
-    if (columns) msiobj_release(&columns->hdr);
+    if (columns) columns->ops->delete(columns);
     return r;
 }
 

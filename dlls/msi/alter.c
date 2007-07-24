@@ -129,7 +129,7 @@ static UINT alter_add_column(MSIALTERVIEW *av)
                                  colnum, av->colinfo->column,
                                  av->colinfo->type, (av->hold == 1));
 
-    msiobj_release(&columns->hdr);
+    columns->ops->delete(columns);
     return r;
 }
 
