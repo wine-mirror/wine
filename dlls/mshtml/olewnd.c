@@ -101,6 +101,9 @@ static HRESULT WINAPI OleInPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceAc
     if(This->hostui)
         IDocHostUIHandler_OnFrameWindowActivate(This->hostui, fActivate);
 
+    if(fActivate && This->nscontainer)
+        nsIWebBrowserFocus_Activate(This->nscontainer->focus);
+
     return S_OK;
 }
 
