@@ -137,7 +137,7 @@ static BOOL check_execution_scheduling_options(MSIPACKAGE *package, LPCWSTR acti
 
 /* stores the following properties before the action:
  *
- *    [CustomActionData;UserSID;ProductCode]Action
+ *    [CustomActionData][UserSID][ProductCode]Action
  */
 static LPWSTR msi_get_deferred_action(LPCWSTR action, LPCWSTR actiondata,
                                       LPCWSTR usersid, LPCWSTR prodcode)
@@ -145,7 +145,7 @@ static LPWSTR msi_get_deferred_action(LPCWSTR action, LPCWSTR actiondata,
     LPWSTR deferred;
     DWORD len;
 
-    static const WCHAR format[] = {'[','%','s',';','%','s',';','%','s',']','%','s',0};
+    static const WCHAR format[] = {'[','%','s',']','[','%','s',']','[','%','s',']','%','s',0};
 
     if (!actiondata)
         return strdupW(action);
@@ -162,15 +162,15 @@ static void set_deferred_action_props(MSIPACKAGE *package, LPWSTR deferred_data)
 {
     LPWSTR end, beg = deferred_data + 1;
 
-    end = strchrW(beg, ';');
+    end = strchrW(beg, ']');
     *end = '\0';
     MSI_SetPropertyW(package, szActionData, beg);
-    beg = end + 1;
+    beg = end + 2;
 
-    end = strchrW(beg, ';');
+    end = strchrW(beg, ']');
     *end = '\0';
     MSI_SetPropertyW(package, UserSID, beg);
-    beg = end + 1;
+    beg = end + 2;
 
     end = strchrW(beg, ']');
     *end = '\0';
@@ -193,7 +193,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
     WCHAR *deformated=NULL;
 
     /* deferred action: [properties]Action */
-    if ((ptr = strchrW(action_copy, ']')))
+    if ((ptr = strrchrW(action_copy, ']')))
     {
         deferred_data = action_copy;
         action = ptr + 1;
