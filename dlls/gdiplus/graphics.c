@@ -974,6 +974,26 @@ GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
         width, height, startAngle, sweepAngle);
 }
 
+GpStatus WINGDIPAPI GdipFillPolygonI(GpGraphics *graphics, GpBrush *brush,
+    GDIPCONST GpPoint *points, INT count, GpFillMode fillMode)
+{
+    INT save_state;
+
+    if(!graphics || !brush || !points || !count)
+        return InvalidParameter;
+
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, brush->gdibrush);
+    SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
+    SetPolyFillMode(graphics->hdc, (fillMode == FillModeAlternate ? ALTERNATE
+                                                                  : WINDING));
+    Polygon(graphics->hdc, (GDIPCONST POINT*) points, count);
+
+    RestoreDC(graphics->hdc, save_state);
+    return Ok;
+}
+
 /* FIXME: Compositing quality is not used anywhere except the getter/setter. */
 GpStatus WINGDIPAPI GdipGetCompositingQuality(GpGraphics *graphics,
     CompositingQuality *quality)

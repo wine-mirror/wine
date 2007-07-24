@@ -47,6 +47,48 @@ enum Status{
 
 #ifdef __cplusplus
 
+class Point
+{
+public:
+   Point()
+   {
+       X = Y = 0;
+   }
+
+   Point(IN const Point &pt)
+   {
+       X = pt.X;
+       Y = pt.Y;
+   }
+
+   /* FIXME: missing constructor that takes a Size */
+
+   Point(IN INT x, IN INT y)
+   {
+       X = x;
+       Y = y;
+   }
+
+   Point operator+(IN const Point& pt) const
+   {
+       return Point(X + pt.X, Y + pt.Y);
+   }
+
+   Point operator-(IN const Point& pt) const
+   {
+       return Point(X - pt.X, Y - pt.Y);
+   }
+
+   BOOL Equals(IN const Point& pt)
+   {
+       return (X == pt.X) && (Y == pt.Y);
+   }
+
+public:
+    INT X;
+    INT Y;
+};
+
 class PointF
 {
 public:
@@ -133,6 +175,12 @@ public:
 };
 
 #else /* end of c++ typedefs */
+
+typedef struct Point
+{
+    INT X;
+    INT Y;
+} Point;
 
 typedef struct PointF
 {
