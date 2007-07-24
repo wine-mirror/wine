@@ -1112,11 +1112,9 @@ static void test_signed_msg_update(void)
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
     /* CMSG_SIGNED allows non-final updates. */
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* CMSG_SIGNED also allows non-final updates with no data. */
     ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* The final update requires a private key in the hCryptProv, in order to
      * generate the signature.
@@ -1143,17 +1141,14 @@ static void test_signed_msg_update(void)
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
     /* CMSG_SIGNED allows non-final updates. */
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* CMSG_SIGNED also allows non-final updates with no data. */
     ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* Now that the private key exists, the final update can succeed (even
      * with no data.)
      */
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* But no updates are allowed after the final update. */
     SetLastError(0xdeadbeef);
@@ -1282,7 +1277,6 @@ static void test_signed_msg_encoding(void)
     check_param("detached signed empty content", msg, CMSG_CONTENT_PARAM,
      signedEmptyContent, sizeof(signedEmptyContent));
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     todo_wine
     check_param("detached signed hash", msg, CMSG_COMPUTED_HASH_PARAM,
@@ -1312,7 +1306,6 @@ static void test_signed_msg_encoding(void)
     check_param("signed empty content", msg, CMSG_CONTENT_PARAM,
      signedEmptyContent, sizeof(signedEmptyContent));
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     todo_wine
     check_param("signed bare content", msg, CMSG_BARE_CONTENT_PARAM,

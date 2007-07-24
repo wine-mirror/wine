@@ -592,12 +592,15 @@ static BOOL CRYPT_IsValidSigner(CMSG_SIGNER_ENCODE_INFO_WITH_CMS *signer)
 
 typedef struct _CSignedEncodeMsg
 {
-    CryptMsgBase base;
+    CryptMsgBase    base;
+    CRYPT_DATA_BLOB data;
 } CSignedEncodeMsg;
 
 static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
 {
-    FIXME("(%p)\n", hCryptMsg);
+    CSignedEncodeMsg *msg = (CSignedEncodeMsg *)hCryptMsg;
+
+    CryptMemFree(msg->data.pbData);
 }
 
 static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
@@ -611,8 +614,37 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
 static BOOL CSignedEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
  DWORD cbData, BOOL fFinal)
 {
-    FIXME("(%p, %p, %d, %d)\n", hCryptMsg, pbData, cbData, fFinal);
-    return FALSE;
+    CSignedEncodeMsg *msg = (CSignedEncodeMsg *)hCryptMsg;
+    BOOL ret = FALSE;
+
+    if (msg->base.streamed || (msg->base.open_flags & CMSG_DETACHED_FLAG))
+    {
+        FIXME("streamed / detached update unimplemented\n");
+        ret = TRUE;
+    }
+    else
+    {
+        if (!fFinal)
+            SetLastError(CRYPT_E_MSG_ERROR);
+        else
+        {
+            if (cbData)
+            {
+                msg->data.pbData = CryptMemAlloc(cbData);
+                if (msg->data.pbData)
+                {
+                    memcpy(msg->data.pbData, pbData, cbData);
+                    msg->data.cbData = cbData;
+                    ret = TRUE;
+                }
+            }
+            else
+                ret = TRUE;
+            if (ret)
+                FIXME("non-streamed final update:  partial stub\n");
+        }
+    }
+    return ret;
 }
 
 static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
@@ -644,6 +676,8 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
         CryptMsgBase_Init((CryptMsgBase *)msg, dwFlags, pStreamInfo,
          CSignedEncodeMsg_Close, CSignedEncodeMsg_GetParam,
          CSignedEncodeMsg_Update);
+        msg->data.cbData = 0;
+        msg->data.pbData = NULL;
     }
     return msg;
 }
