@@ -383,12 +383,29 @@ struct thread *get_thread_from_pid( int pid )
     return NULL;
 }
 
+#define THREAD_PRIORITY_REALTIME_HIGHEST 6
+#define THREAD_PRIORITY_REALTIME_LOWEST -7
+
 /* set all information about a thread */
 static void set_thread_info( struct thread *thread,
                              const struct set_thread_info_request *req )
 {
     if (req->mask & SET_THREAD_INFO_PRIORITY)
-        thread->priority = req->priority;
+    {
+        int max = THREAD_PRIORITY_HIGHEST;
+        int min = THREAD_PRIORITY_LOWEST;
+        if (thread->process->priority == PROCESS_PRIOCLASS_REALTIME)
+        {
+            max = THREAD_PRIORITY_REALTIME_HIGHEST;
+            min = THREAD_PRIORITY_REALTIME_LOWEST;
+        }
+        if ((req->priority >= min && req->priority <= max) ||
+            req->priority == THREAD_PRIORITY_IDLE ||
+            req->priority == THREAD_PRIORITY_TIME_CRITICAL)
+            thread->priority = req->priority;
+        else
+            set_error( STATUS_INVALID_PARAMETER );
+    }
     if (req->mask & SET_THREAD_INFO_AFFINITY)
     {
         if (req->affinity != 1) set_error( STATUS_INVALID_PARAMETER );

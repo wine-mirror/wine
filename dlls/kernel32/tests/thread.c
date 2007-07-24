@@ -594,25 +594,21 @@ static VOID test_thread_priority(void)
    SetLastError(0xdeadbeef);
    rc = SetThreadPriority(curthread,min_priority-1);
 
-   todo_wine {
-     ok(rc == FALSE, "SetThreadPriority passed with a bad argument\n");
-     ok(GetLastError() == ERROR_INVALID_PARAMETER,
-        "SetThreadPriority error %d, expected ERROR_INVALID_PARAMETER (87)\n", GetLastError());
-     ok(GetThreadPriority(curthread)==min_priority,
-        "GetThreadPriority didn't return min_priority\n");
-   }
+   ok(rc == FALSE, "SetThreadPriority passed with a bad argument\n");
+   ok(GetLastError() == ERROR_INVALID_PARAMETER,
+      "SetThreadPriority error %d, expected ERROR_INVALID_PARAMETER (87)\n", GetLastError());
+   ok(GetThreadPriority(curthread)==min_priority,
+      "GetThreadPriority didn't return min_priority\n");
 
    SetThreadPriority(curthread,max_priority);
    SetLastError(0xdeadbeef);
    rc = SetThreadPriority(curthread,max_priority+1);
 
-   todo_wine {
-     ok(rc == FALSE, "SetThreadPriority passed with a bad argument\n");
-     ok(GetLastError() == ERROR_INVALID_PARAMETER,
-        "SetThreadPriority error %d, expected ERROR_INVALID_PARAMETER (87)\n", GetLastError());
-     ok(GetThreadPriority(curthread)==max_priority,
-        "GetThreadPriority didn't return max_priority\n");
-   }
+   ok(rc == FALSE, "SetThreadPriority passed with a bad argument\n");
+   ok(GetLastError() == ERROR_INVALID_PARAMETER,
+      "SetThreadPriority error %d, expected ERROR_INVALID_PARAMETER (87)\n", GetLastError());
+   ok(GetThreadPriority(curthread)==max_priority,
+      "GetThreadPriority didn't return max_priority\n");
 
 /* Check thread priority boost */
    if (!pGetThreadPriorityBoost || !pSetThreadPriorityBoost) 
