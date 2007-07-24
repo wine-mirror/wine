@@ -125,10 +125,13 @@ DEFINE_EXPECT(UnlockRequest);
 DEFINE_EXPECT(OnFocus_TRUE);
 DEFINE_EXPECT(OnFocus_FALSE);
 DEFINE_EXPECT(RequestUIActivate);
+DEFINE_EXPECT(InPlaceFrame_SetBorderSpace);
+DEFINE_EXPECT(InPlaceUIWindow_SetActiveObject);
 
 static IUnknown *doc_unk;
 static BOOL expect_LockContainer_fLock;
-static BOOL expect_SetActiveObject_active, ipsex;
+static BOOL expect_SetActiveObject_active, expect_InPlaceUIWindow_SetActiveObject_active;
+static BOOL ipsex;
 static BOOL set_clientsite = FALSE, container_locked = FALSE;
 static BOOL readystate_set_loading = FALSE, load_from_stream;
 static BOOL editmode = FALSE;
@@ -1115,15 +1118,28 @@ static HRESULT WINAPI InPlaceFrame_RequestBorderSpace(IOleInPlaceFrame *iface,
 static HRESULT WINAPI InPlaceFrame_SetBorderSpace(IOleInPlaceFrame *iface,
         LPCBORDERWIDTHS pborderwidths)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(InPlaceFrame_SetBorderSpace);
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceUIWindow_SetActiveObject(IOleInPlaceFrame *iface,
         IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    static const WCHAR wszHTML_Document[] =
+        {'H','T','M','L',' ','D','o','c','u','m','e','n','t',0};
+
+    CHECK_EXPECT2(InPlaceUIWindow_SetActiveObject);
+
+    if(expect_InPlaceUIWindow_SetActiveObject_active) {
+        ok(pActiveObject != NULL, "pActiveObject = NULL\n");
+        if(pActiveObject && PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ENGLISH)
+            ok(!lstrcmpW(wszHTML_Document, pszObjName), "pszObjName != \"HTML Document\"\n");
+    }
+    else {
+        ok(pActiveObject == NULL, "pActiveObject=%p, expected NULL\n", pActiveObject);
+        ok(pszObjName == NULL, "pszObjName=%p, expected NULL\n", pszObjName);
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
@@ -1468,7 +1484,14 @@ static ULONG WINAPI DocumentSite_Release(IOleDocumentSite *iface)
     return 1;
 }
 
-static BOOL call_UIActivate = TRUE;
+typedef enum
+{
+    CallUIActivate_None,
+    CallUIActivate_ActivateMe,
+    CallUIActivate_AfterShow,
+} CallUIActivate;
+
+static BOOL call_UIActivate = CallUIActivate_ActivateMe;
 static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocumentView *pViewToActivate)
 {
     IOleDocument *document;
@@ -1512,7 +1535,7 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 ok(hwnd == NULL, "hwnd=%p, expeted NULL\n", hwnd);
             }
             
-            if(call_UIActivate) {
+            if(call_UIActivate == CallUIActivate_ActivateMe) {
                 SET_EXPECT(CanInPlaceActivate);
                 SET_EXPECT(GetWindowContext);
                 SET_EXPECT(GetWindow);
@@ -1572,7 +1595,7 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
             hres = IOleDocumentView_SetRect(view, &rect);
             ok(hres == S_OK, "SetRect failed: %08x\n", hres);
 
-            if(call_UIActivate) {
+            if(call_UIActivate == CallUIActivate_ActivateMe) {
                 hres = IOleDocumentView_Show(view, TRUE);
                 ok(hres == S_OK, "Show failed: %08x\n", hres);
             }else {
@@ -1685,7 +1708,7 @@ static HRESULT WINAPI OleControlSite_OnFocus(IOleControlSite *iface, BOOL fGotFo
     if(fGotFocus)
         CHECK_EXPECT(OnFocus_TRUE);
     else
-        CHECK_EXPECT(OnFocus_FALSE);
+        CHECK_EXPECT2(OnFocus_FALSE);
     return S_OK;
 }
 
@@ -1759,7 +1782,10 @@ static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD d
     ok(pActiveObject != NULL, "pActiveObject = NULL\n");
     ok(pCommandTarget != NULL, "pCommandTarget = NULL\n");
     ok(pFrame == &InPlaceFrame, "pFrame=%p, expected %p\n", pFrame, &InPlaceFrame);
-    ok(pDoc == NULL, "pDoc=%p, expected NULL\n", pDoc);
+    if (expect_InPlaceUIWindow_SetActiveObject_active)
+        ok(pDoc == (IOleInPlaceUIWindow *)&InPlaceUIWindow, "pDoc=%p, expected %p\n", pDoc, &InPlaceUIWindow);
+    else
+        ok(pDoc == NULL, "pDoc=%p, expected NULL\n", pDoc);
 
     return S_OK;
 }
@@ -3236,6 +3262,7 @@ static void test_InPlaceDeactivate(IUnknown *unk, BOOL expect_call)
 static HRESULT test_Activate(IUnknown *unk, DWORD flags)
 {
     IOleObject *oleobj = NULL;
+    IOleDocumentView *docview;
     GUID guid;
     HRESULT hres;
 
@@ -3263,6 +3290,31 @@ static HRESULT test_Activate(IUnknown *unk, DWORD flags)
     test_InPlaceDeactivate(unk, FALSE);
 
     hres = test_DoVerb(oleobj);
+
+    if(call_UIActivate == CallUIActivate_AfterShow) {
+        hres = IOleObject_QueryInterface(oleobj, &IID_IOleDocumentView, (void **)&docview);
+        ok(hres == S_OK, "IOleObject_QueryInterface failed with error 0x%08x\n", hres);
+
+        SET_EXPECT(OnFocus_TRUE);
+        SET_EXPECT(SetActiveObject);
+        SET_EXPECT(ShowUI);
+        SET_EXPECT(InPlaceUIWindow_SetActiveObject);
+        SET_EXPECT(InPlaceFrame_SetBorderSpace);
+        expect_InPlaceUIWindow_SetActiveObject_active = TRUE;
+        expect_SetActiveObject_active = TRUE;
+        expect_status_text = NULL;
+
+        hres = IOleDocumentView_UIActivate(docview, TRUE);
+        ok(hres == S_OK, "IOleDocumentView_UIActivate failed with error 0x%08x\n", hres);
+
+        CHECK_CALLED(OnFocus_TRUE);
+        CHECK_CALLED(SetActiveObject);
+        CHECK_CALLED(ShowUI);
+        CHECK_CALLED(InPlaceUIWindow_SetActiveObject);
+        CHECK_CALLED(InPlaceFrame_SetBorderSpace);
+
+        IOleDocumentView_Release(docview);
+    }
 
     IOleObject_Release(oleobj);
 
@@ -3321,20 +3373,27 @@ static void test_UIDeactivate(void)
 {
     HRESULT hres;
 
-    if(call_UIActivate) {
+    if(call_UIActivate == CallUIActivate_AfterShow) {
+        SET_EXPECT(InPlaceUIWindow_SetActiveObject);
+    }
+    if(call_UIActivate != CallUIActivate_None) {
         SET_EXPECT(SetActiveObject);
         SET_EXPECT(HideUI);
         SET_EXPECT(OnUIDeactivate);
     }
 
     expect_SetActiveObject_active = FALSE;
+    expect_InPlaceUIWindow_SetActiveObject_active = FALSE;
     hres = IOleDocumentView_UIActivate(view, FALSE);
     ok(hres == S_OK, "UIActivate failed: %08x\n", hres);
 
-    if(call_UIActivate) {
+    if(call_UIActivate != CallUIActivate_None) {
         CHECK_CALLED(SetActiveObject);
         CHECK_CALLED(HideUI);
         CHECK_CALLED(OnUIDeactivate);
+    }
+    if(call_UIActivate == CallUIActivate_AfterShow) {
+        CHECK_CALLED(InPlaceUIWindow_SetActiveObject);
     }
 }
 
@@ -3431,7 +3490,7 @@ static void init_test(enum load_state_t ls) {
     hwnd = last_hwnd = NULL;
     set_clientsite = FALSE;
     load_from_stream = FALSE;
-    call_UIActivate = FALSE;
+    call_UIActivate = CallUIActivate_None;
     load_state = ls;
     editmode = FALSE;
     stream_read = 0;
@@ -3503,7 +3562,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     test_Close(unk, FALSE);
 
     /* Activate HTMLDocument again, this time without UIActivate */
-    call_UIActivate = FALSE;
+    call_UIActivate = CallUIActivate_None;
     test_Activate(unk, CLIENTSITE_SETNULL);
     test_Window(unk, TRUE);
     test_UIDeactivate();
@@ -3513,6 +3572,18 @@ static void test_HTMLDocument(enum load_state_t ls)
     test_Close(unk, TRUE);
     test_OnAmbientPropertyChange2(unk);
     test_GetCurMoniker(unk, load_state == LD_NO ? NULL : &Moniker, NULL);
+
+    if(ls != LD_DOLOAD) {
+        /* Activate HTMLDocument again, calling UIActivate after showing the window */
+        call_UIActivate = CallUIActivate_AfterShow;
+        test_Activate(unk, 0);
+        test_Window(unk, TRUE);
+        test_OleCommandTarget(unk);
+        test_UIDeactivate();
+        test_InPlaceDeactivate(unk, TRUE);
+        test_Close(unk, FALSE);
+        call_UIActivate = CallUIActivate_None;
+    }
 
     if(view)
         IOleDocumentView_Release(view);

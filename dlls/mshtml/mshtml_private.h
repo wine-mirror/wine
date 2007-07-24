@@ -122,6 +122,7 @@ struct HTMLDocument {
     IDocHostUIHandler *hostui;
     IOleInPlaceSite *ipsite;
     IOleInPlaceFrame *frame;
+    IOleInPlaceUIWindow *ip_window;
 
     BSCallback *bscallback;
     IMoniker *mon;

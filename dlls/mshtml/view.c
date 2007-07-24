@@ -93,7 +93,6 @@ static void activate_gecko(NSContainer *This)
 
     nsIBaseWindow_SetVisibility(This->window, TRUE);
     nsIBaseWindow_SetEnabled(This->window, TRUE);
-    nsIWebBrowserFocus_Activate(This->focus);
 }
 
 void update_doc(HTMLDocument *This, DWORD flags)
@@ -214,6 +213,8 @@ static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         break;
     case WM_TIMER:
         return on_timer(This);
+    case WM_MOUSEACTIVATE:
+        return MA_ACTIVATE;
     }
         
     return DefWindowProcW(hwnd, msg, wParam, lParam);
@@ -235,7 +236,6 @@ static void register_serverwnd_class(void)
 
 static HRESULT activate_window(HTMLDocument *This)
 {
-    IOleInPlaceUIWindow *pIPWnd;
     IOleInPlaceFrame *pIPFrame;
     IOleCommandTarget *cmdtrg;
     IOleInPlaceSiteEx *ipsiteex;
@@ -253,17 +253,15 @@ static HRESULT activate_window(HTMLDocument *This)
         return FAILED(hres) ? hres : E_FAIL;
     }
 
-    hres = IOleInPlaceSite_GetWindowContext(This->ipsite, &pIPFrame, &pIPWnd,
+    hres = IOleInPlaceSite_GetWindowContext(This->ipsite, &pIPFrame, &This->ip_window,
             &posrect, &cliprect, &frameinfo);
     if(FAILED(hres)) {
         WARN("GetWindowContext failed: %08x\n", hres);
         return hres;
     }
 
-    if(pIPWnd)
-        IOleInPlaceUIWindow_Release(pIPWnd);
     TRACE("got window context: %p %p {%d %d %d %d} {%d %d %d %d} {%d %x %p %p %d}\n",
-            pIPFrame, pIPWnd, posrect.left, posrect.top, posrect.right, posrect.bottom,
+            pIPFrame, This->ip_window, posrect.left, posrect.top, posrect.right, posrect.bottom,
             cliprect.left, cliprect.top, cliprect.right, cliprect.bottom,
             frameinfo.cb, frameinfo.fMDIApp, frameinfo.hwndFrame, frameinfo.haccel, frameinfo.cAccelEntries);
 
@@ -292,7 +290,6 @@ static HRESULT activate_window(HTMLDocument *This)
         SetWindowPos(This->hwnd, NULL, 0, 0, 0, 0,
                 SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_SHOWWINDOW);
         RedrawWindow(This->hwnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN);
-        SetFocus(This->hwnd);
 
         /* NOTE:
          * Windows implementation calls:
@@ -545,6 +542,10 @@ static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
         ShowWindow(This->hwnd, SW_SHOW);
     }else {
         ShowWindow(This->hwnd, SW_HIDE);
+        if(This->ip_window) {
+            IOleInPlaceUIWindow_Release(This->ip_window);
+            This->ip_window = NULL;
+        }
     }
 
     return S_OK;
@@ -563,6 +564,9 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
     }
 
     if(fUIActivate) {
+        OLECHAR wszHTMLDocument[30];
+        RECT rcBorderWidths;
+
         if(This->ui_active)
             return S_OK;
 
@@ -572,13 +576,17 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
                 return hres;
         }
 
+        This->focus = TRUE;
+        nsIWebBrowserFocus_Activate(This->nscontainer->focus);
+        notif_focus(This);
+
         update_doc(This, UPDATE_UI);
+
+        LoadStringW(hInst, IDS_HTMLDOCUMENT, wszHTMLDocument,
+                    sizeof(wszHTMLDocument)/sizeof(WCHAR));
 
         hres = IOleInPlaceSite_OnUIActivate(This->ipsite);
         if(SUCCEEDED(hres)) {
-            OLECHAR wszHTMLDocument[30];
-            LoadStringW(hInst, IDS_HTMLDOCUMENT, wszHTMLDocument,
-                    sizeof(wszHTMLDocument)/sizeof(WCHAR));
             IOleInPlaceFrame_SetActiveObject(This->frame, ACTOBJ(This), wszHTMLDocument);
         }else {
             FIXME("OnUIActivate failed: %08x\n", hres);
@@ -589,15 +597,23 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
         }
 
         hres = IDocHostUIHandler_ShowUI(This->hostui, 0, ACTOBJ(This), CMDTARGET(This),
-                This->frame, NULL);
+                This->frame, This->ip_window);
         if(FAILED(hres))
             IDocHostUIHandler_HideUI(This->hostui);
+
+        if(This->ip_window)
+            IOleInPlaceUIWindow_SetActiveObject(This->ip_window, ACTOBJ(This), wszHTMLDocument);
+
+        memset(&rcBorderWidths, 0, sizeof(rcBorderWidths));
+        IOleInPlaceFrame_SetBorderSpace(This->frame, &rcBorderWidths);
 
         This->ui_active = TRUE;
     }else {
         This->window_active = FALSE;
         if(This->ui_active) {
             This->ui_active = FALSE;
+            if(This->ip_window)
+                IOleInPlaceUIWindow_SetActiveObject(This->ip_window, NULL, NULL);
             if(This->frame)
                 IOleInPlaceFrame_SetActiveObject(This->frame, NULL, NULL);
             if(This->hostui)
@@ -778,6 +794,7 @@ void HTMLDocument_View_Init(HTMLDocument *This)
 
     This->ipsite = NULL;
     This->frame = NULL;
+    This->ip_window = NULL;
     This->hwnd = NULL;
     This->tooltips_hwnd = NULL;
 
