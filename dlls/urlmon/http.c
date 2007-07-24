@@ -725,11 +725,14 @@ static HRESULT WINAPI HttpProtocol_Read(IInternetProtocol *iface, void *pv,
     {
         if (This->available_bytes == 0)
         {
+            /* InternetQueryDataAvailable may immediately fork and perform its asynchronous
+             * read, so clear the flag _before_ calling so it does not incorrectly get cleared
+             * after the status callback is called */
+            This->flags &= ~FLAG_REQUEST_COMPLETE;
             if (!InternetQueryDataAvailable(This->request, &This->available_bytes, 0, 0))
             {
                 if (GetLastError() == ERROR_IO_PENDING)
                 {
-                    This->flags &= ~FLAG_REQUEST_COMPLETE;
                     hres = E_PENDING;
                 }
                 else
@@ -777,6 +780,9 @@ static HRESULT WINAPI HttpProtocol_Read(IInternetProtocol *iface, void *pv,
 done:
     if (pcbRead)
         *pcbRead = read;
+
+    if (hres != E_PENDING)
+        This->flags |= FLAG_REQUEST_COMPLETE;
 
     return hres;
 }
