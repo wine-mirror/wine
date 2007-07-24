@@ -56,6 +56,18 @@
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CHECK_NOT_CALLED(func) \
+    do { \
+        ok(!called_ ## func, "unexpected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
+
+DEFINE_EXPECT(QueryInterface_IServiceProvider);
+DEFINE_EXPECT(QueryInterface_IHttpNegotiate);
+DEFINE_EXPECT(QueryInterface_IHttpNegotiate2);
 DEFINE_EXPECT(GetBindInfo);
 DEFINE_EXPECT(OnStartBinding);
 DEFINE_EXPECT(OnProgress_FINDINGRESOURCE);
@@ -372,6 +384,18 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFII
             return E_NOINTERFACE;
         }
     }
+    else if (IsEqualGUID(&IID_IServiceProvider, riid))
+    {
+        CHECK_EXPECT(QueryInterface_IServiceProvider);
+    }
+    else if (IsEqualGUID(&IID_IHttpNegotiate, riid))
+    {
+        CHECK_EXPECT(QueryInterface_IHttpNegotiate);
+    }
+    else if (IsEqualGUID(&IID_IHttpNegotiate2, riid))
+    {
+        CHECK_EXPECT(QueryInterface_IHttpNegotiate2);
+    }
 
     return E_NOINTERFACE;
 }
@@ -561,8 +585,10 @@ static void test_CreateAsyncBindCtx(void)
     hres = CreateAsyncBindCtx(0, NULL, NULL, NULL);
     ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed. expected: E_INVALIDARG, got: %08x\n", hres);
 
+    SET_EXPECT(QueryInterface_IServiceProvider);
     hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
     ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n", hres);
+    todo_wine CHECK_CALLED(QueryInterface_IServiceProvider);
 
     bindopts.cbStruct = sizeof(bindopts);
     hres = IBindCtx_GetBindOptions(bctx, &bindopts);
@@ -627,8 +653,10 @@ static void test_CreateAsyncBindCtxEx(void)
 
     IBindCtx_Release(bctx_arg);
 
+    SET_EXPECT(QueryInterface_IServiceProvider);
     hres = CreateAsyncBindCtxEx(NULL, 0, &bsc, NULL, &bctx, 0);
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
+    todo_wine CHECK_CALLED(QueryInterface_IServiceProvider);
 
     if(SUCCEEDED(hres))
         IBindCtx_Release(bctx);
@@ -648,14 +676,23 @@ static void test_BindToStorage(int protocol, BOOL emul)
     test_protocol = protocol;
     emulate_protocol = emul;
 
+    SET_EXPECT(QueryInterface_IServiceProvider);
     hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
     ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n\n", hres);
     if(FAILED(hres))
         return;
+    if(test_protocol == HTTP_TEST ||
+       test_protocol == ABOUT_TEST ||
+       (emul && test_protocol == FILE_TEST)) todo_wine
+        CHECK_CALLED(QueryInterface_IServiceProvider);
+    else
+        CHECK_CALLED(QueryInterface_IServiceProvider);
 
+    SET_EXPECT(QueryInterface_IServiceProvider);
     hres = RegisterBindStatusCallback(bctx, &bsc, &previousclb, 0);
     ok(SUCCEEDED(hres), "RegisterBindStatusCallback failed: %08x\n", hres);
     ok(previousclb == &bsc, "previousclb(%p) != sclb(%p)\n", previousclb, &bsc);
+    todo_wine CHECK_CALLED(QueryInterface_IServiceProvider);
     if(previousclb)
         IBindStatusCallback_Release(previousclb);
 
@@ -678,6 +715,7 @@ static void test_BindToStorage(int protocol, BOOL emul)
     ok(hres == S_OK, "GetDisplayName failed %08x\n", hres);
     ok(!lstrcmpW(display_name, urls[test_protocol]), "GetDisplayName got wrong name\n");
 
+    SET_EXPECT(QueryInterface_IServiceProvider);
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(OnStartBinding);
     if(emulate_protocol) {
@@ -685,6 +723,8 @@ static void test_BindToStorage(int protocol, BOOL emul)
         SET_EXPECT(UnlockRequest);
     }else {
         if(test_protocol == HTTP_TEST) {
+            SET_EXPECT(QueryInterface_IHttpNegotiate);
+            SET_EXPECT(QueryInterface_IHttpNegotiate2);
             SET_EXPECT(OnProgress_FINDINGRESOURCE);
             SET_EXPECT(OnProgress_CONNECTING);
         }
@@ -730,11 +770,15 @@ static void test_BindToStorage(int protocol, BOOL emul)
         CHECK_CALLED(UnlockRequest);
     }else {
         if(test_protocol == HTTP_TEST) {
+            todo_wine CHECK_CALLED(QueryInterface_IHttpNegotiate);
+            /* QueryInterface_IHttpNegotiate2 called on WinXP but not on Win98 */
+            CLEAR_CALLED(QueryInterface_IHttpNegotiate2);
             CHECK_CALLED(OnProgress_FINDINGRESOURCE);
             CHECK_CALLED(OnProgress_CONNECTING);
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
             todo_wine { CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE); }
         }else {
+            todo_wine CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
             CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
         }
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
