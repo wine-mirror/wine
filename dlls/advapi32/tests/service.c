@@ -385,6 +385,7 @@ static void test_get_displayname(void)
     WCHAR displaynameW[2048];
     DWORD displaysize, tempsize, tempsizeW;
     static const CHAR spooler[] = "Spooler";
+    static const CHAR deadbeef[] = "Deadbeef";
     static const WCHAR spoolerW[] = {'S','p','o','o','l','e','r',0};
 
     /* Having NULL for the size of the buffer will crash on W2K3 */
@@ -411,6 +412,15 @@ static void test_get_displayname(void)
     ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, XP, W2K3, Vista */ ||
        GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
        "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* Test for non-existing service */
+    SetLastError(0xdeadbeef);
+    displaysize = -1;
+    ret = GetServiceDisplayNameA(scm_handle, deadbeef, NULL, &displaysize);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
+       "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
 
     /* Check if 'Spooler' exists */
     svc_handle = OpenServiceA(scm_handle, spooler, GENERIC_READ);
