@@ -369,7 +369,7 @@
 @ stub GdipGetRegionScansI
 @ stub GdipGetRenderingOrigin
 @ stdcall GdipGetSmoothingMode(ptr ptr)
-@ stub GdipGetSolidFillColor
+@ stdcall GdipGetSolidFillColor(ptr ptr)
 @ stub GdipGetStringFormatAlign
 @ stub GdipGetStringFormatDigitSubstitution
 @ stub GdipGetStringFormatFlags
@@ -563,7 +563,7 @@
 @ stub GdipSetPropertyItem
 @ stub GdipSetRenderingOrigin
 @ stdcall GdipSetSmoothingMode(ptr long)
-@ stub GdipSetSolidFillColor
+@ stdcall GdipSetSolidFillColor(ptr ptr)
 @ stub GdipSetStringFormatAlign
 @ stub GdipSetStringFormatDigitSubstitution
 @ stub GdipSetStringFormatFlags

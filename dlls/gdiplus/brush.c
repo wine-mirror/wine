@@ -74,3 +74,19 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
+{
+    if(!sf || !argb)
+        return InvalidParameter;
+
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
+{
+    if(!sf)
+        return InvalidParameter;
+
+    return NotImplemented;
+}
