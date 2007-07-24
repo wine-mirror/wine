@@ -427,6 +427,7 @@ static void test_get_displayname(void)
     if (!svc_handle)
     {
         skip("Spooler service doesn't exist\n");
+        CloseServiceHandle(scm_handle);
         return;
     }
     CloseServiceHandle(svc_handle);
