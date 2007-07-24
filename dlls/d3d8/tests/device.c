@@ -481,8 +481,16 @@ static void test_refcount(void)
     {
         skip("Cube textures not supported\n");
     }
-    hr = IDirect3DDevice8_CreateVolumeTexture( pDevice, 32, 32, 2, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pVolumeTexture );
-    CHECK_CALL( hr, "CreateVolumeTexture", pDevice, ++refcount );
+    if(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP)
+    {
+        hr = IDirect3DDevice8_CreateVolumeTexture( pDevice, 32, 32, 2, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pVolumeTexture );
+        CHECK_CALL( hr, "CreateVolumeTexture", pDevice, ++refcount );
+    }
+    else
+    {
+        skip("Volume textures not supported\n");
+    }
+
     if (pVolumeTexture)
     {
         tmp = get_refcount( (IUnknown *)pVolumeTexture );
