@@ -765,9 +765,23 @@ static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
 static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
-    FIXME("(%p, %d, %d, %p, %p)\n", hCryptMsg, dwParamType, dwIndex, pvData,
-     pcbData);
-    return FALSE;
+    CSignedEncodeMsg *msg = (CSignedEncodeMsg *)hCryptMsg;
+    BOOL ret = FALSE;
+
+    switch (dwParamType)
+    {
+    case CMSG_COMPUTED_HASH_PARAM:
+        if (dwIndex >= msg->cSigners)
+            SetLastError(CRYPT_E_INVALID_INDEX);
+        else
+            ret = CryptGetHashParam(msg->signers[dwIndex].hash, HP_HASHVAL,
+             pvData, pcbData, 0);
+        break;
+    default:
+        FIXME("unimplemented for %d\n", dwParamType);
+        SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+    }
+    return ret;
 }
 
 static BOOL CSignedEncodeMsg_UpdateHash(CSignedEncodeMsg *msg,

@@ -1298,7 +1298,6 @@ static void test_signed_msg_encoding(void)
      signedEmptyContent, sizeof(signedEmptyContent));
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
-    todo_wine
     check_param("detached signed hash", msg, CMSG_COMPUTED_HASH_PARAM,
      signedHash, sizeof(signedHash));
     todo_wine
@@ -1309,7 +1308,6 @@ static void test_signed_msg_encoding(void)
      detachedSignedContent, sizeof(detachedSignedContent));
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 1, NULL, &size);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_INDEX,
      "Expected CRYPT_E_INVALID_INDEX, got %x\n", GetLastError());
 
