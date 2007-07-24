@@ -146,10 +146,9 @@ static void fill_stream_buffer(ProtocolStream *This)
 
     This->hres = IInternetProtocol_Read(This->protocol, This->buf+This->buf_size,
             sizeof(This->buf)-This->buf_size, &read);
-    if(SUCCEEDED(This->hres)) {
-        This->buf_size += read;
+    This->buf_size += read;
+    if(read > 0)
         This->init_buf = TRUE;
-    }
 }
 
 static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
