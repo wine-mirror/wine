@@ -541,7 +541,7 @@
 @ stub GdipSetPathGradientTransform
 @ stub GdipSetPathGradientWrapMode
 @ stub GdipSetPathMarker
-@ stub GdipSetPenBrushFill
+@ stdcall GdipSetPenBrushFill(ptr ptr)
 @ stub GdipSetPenColor
 @ stub GdipSetPenCompoundArray
 @ stdcall GdipSetPenCustomEndCap(ptr ptr)

@@ -144,6 +144,25 @@ GpStatus WINGDIPAPI GdipGetPenDashStyle(GpPen *pen, GpDashStyle *dash)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen *pen, GpBrush *brush)
+{
+    GpStatus retval;
+
+    if(!pen || !brush)
+        return InvalidParameter;
+
+    GdipDeleteBrush(pen->brush);
+    retval = GdipCloneBrush(brush, &pen->brush);
+    if(retval != Ok)
+        return retval;
+
+    DeleteObject(pen->gdipen);
+    pen->gdipen = ExtCreatePen(pen->style, roundr(pen->width), &pen->brush->lb, 0,
+                               NULL);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetPenCustomEndCap(GpPen *pen, GpCustomLineCap* customCap)
 {
     GpCustomLineCap * cap;
