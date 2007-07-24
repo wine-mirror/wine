@@ -292,6 +292,7 @@ static void test_refcount(void)
     IDirect3DSurface8           *pBackBuffer        = NULL;
     DWORD                       dStateBlock         = -1;
     IDirect3DSwapChain8         *pSwapChain         = NULL;
+    D3DCAPS8                    caps;
 
     D3DPRESENT_PARAMETERS        d3dpp;
     D3DDISPLAYMODE               d3ddm;
@@ -326,6 +327,7 @@ static void test_refcount(void)
         trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
         goto cleanup;
     }
+    IDirect3DDevice8_GetDeviceCaps(pDevice, &caps);
 
     refcount = get_refcount( (IUnknown *)pDevice );
     ok(refcount == 1, "Invalid device RefCount %d\n", refcount);
@@ -435,8 +437,11 @@ static void test_refcount(void)
     /* Shaders */
     hr = IDirect3DDevice8_CreateVertexShader( pDevice, decl, simple_vs, &dVertexShader, 0 );
     CHECK_CALL( hr, "CreateVertexShader", pDevice, refcount );
-    hr = IDirect3DDevice8_CreatePixelShader( pDevice, simple_ps, &dPixelShader );
-    CHECK_CALL( hr, "CreatePixelShader", pDevice, refcount );
+    if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 0))
+    {
+        hr = IDirect3DDevice8_CreatePixelShader( pDevice, simple_ps, &dPixelShader );
+        CHECK_CALL( hr, "CreatePixelShader", pDevice, refcount );
+    }
     /* Textures */
     hr = IDirect3DDevice8_CreateTexture( pDevice, 32, 32, 3, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pTexture );
     CHECK_CALL( hr, "CreateTexture", pDevice, ++refcount );
