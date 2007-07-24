@@ -364,6 +364,7 @@ static void fog_test(IDirect3DDevice7 *device)
     HRESULT hr;
     DWORD color;
     float start = 0.0, end = 1.0;
+    D3DDEVICEDESC7 caps;
 
     /* Gets full z based fog with linear fog, no fog with specular color */
     struct sVertex unstransformed_1[] = {
@@ -396,6 +397,9 @@ static void fog_test(IDirect3DDevice7 *device)
     };
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
 
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice7_GetCaps(device, &caps);
+    ok(hr == D3D_OK, "IDirect3DDevice7_GetCaps returned %08x\n", hr);
     hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice7_Clear returned %08x\n", hr);
 
@@ -466,8 +470,20 @@ static void fog_test(IDirect3DDevice7 *device)
     ok(color == 0x0000FF00, "Untransformed vertex with linear vertex fog has color %08x\n", color);
     color = getPixelColor(device, 480, 120);
     ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
-    color = getPixelColor(device, 480, 360);
-    ok(color == 0x0000FF00, "Transformed vertex with linear table fog has color %08x\n", color);
+    if(caps.dpcTriCaps.dwRasterCaps & D3DPRASTERCAPS_FOGTABLE)
+    {
+        color = getPixelColor(device, 480, 360);
+        ok(color == 0x0000FF00, "Transformed vertex with linear table fog has color %08x\n", color);
+    }
+    else
+    {
+        /* Without fog table support the vertex fog is still applied, even though table fog is turned on.
+         * The settings above result in no fogging with vertex fog
+         */
+        color = getPixelColor(device, 480, 120);
+        ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
+        trace("Info: Table fog not supported by this device\n");
+    }
 
     /* Turn off the fog master switch to avoid confusing other tests */
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
