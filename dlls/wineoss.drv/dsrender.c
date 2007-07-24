@@ -579,7 +579,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 	    *lpdwWrite = ptr + 32;
 	else
 	    *lpdwWrite = ptr + WOutDev[This->drv->wDevID].dwFragmentSize;
-	while (*lpdwWrite > This->buflen)
+	while (*lpdwWrite >= This->buflen)
 	    *lpdwWrite -= This->buflen;
     }
     TRACE("playpos=%d, writepos=%d\n", lpdwPlay?*lpdwPlay:0, lpdwWrite?*lpdwWrite:0);
