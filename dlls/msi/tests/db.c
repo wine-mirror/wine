@@ -774,12 +774,12 @@ static void test_viewmodify(void)
     /* insert a valid record */
     hrec = MsiCreateRecord(3);
 
-    r = MsiRecordSetInteger(hrec, 2, 1);
+    r = MsiRecordSetInteger(hrec, 1, 1);
     ok(r == ERROR_SUCCESS, "failed to set integer\n");
     r = MsiRecordSetString(hrec, 2, "bob");
-    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+    ok(r == ERROR_SUCCESS, "failed to set string\n");
     r = MsiRecordSetString(hrec, 3, "7654321");
-    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+    ok(r == ERROR_SUCCESS, "failed to set string\n");
 
     r = MsiViewExecute(hview, 0);
     ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
@@ -799,6 +799,207 @@ static void test_viewmodify(void)
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
 
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    query = "SELECT * FROM `phone`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+
+    r = MsiRecordGetInteger(hrec, 1);
+    ok(r == 1, "Expected 1, got %d\n", r);
+
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 2, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "MsiRecordGetString failed\n");
+    ok(!lstrcmp(buffer, "bob"), "Expected bob, got %s\n", buffer);
+
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 3, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "MsiRecordGetString failed\n");
+    ok(!lstrcmp(buffer, "7654321"), "Expected 7654321, got %s\n", buffer);
+
+    /* update the view, non-primary key */
+    r = MsiRecordSetString(hrec, 3, "3141592");
+    ok(r == ERROR_SUCCESS, "MsiRecordSetString failed\n");
+
+    r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "MsiViewModify failed\n");
+    }
+
+    /* do it again */
+    r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "MsiViewModify failed: %d\n", r);
+    }
+
+    /* update the view, primary key */
+    r = MsiRecordSetInteger(hrec, 1, 5);
+    ok(r == ERROR_SUCCESS, "MsiRecordSetInteger failed\n");
+
+    r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
+    todo_wine
+    {
+        ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
+    }
+
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    query = "SELECT * FROM `phone`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+
+    r = MsiRecordGetInteger(hrec, 1);
+    ok(r == 1, "Expected 1, got %d\n", r);
+
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 2, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "MsiRecordGetString failed\n");
+    ok(!lstrcmp(buffer, "bob"), "Expected bob, got %s\n", buffer);
+
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 3, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "MsiRecordGetString failed\n");
+    todo_wine
+    {
+        ok(!lstrcmp(buffer, "3141592"), "Expected 3141592, got %s\n", buffer);
+    }
+
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    /* use a record that doesn't come from a view fetch */
+    hrec = MsiCreateRecord(3);
+    ok(hrec != 0, "MsiCreateRecord failed\n");
+
+    r = MsiRecordSetInteger(hrec, 1, 3);
+    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+    r = MsiRecordSetString(hrec, 2, "jane");
+    ok(r == ERROR_SUCCESS, "failed to set string\n");
+    r = MsiRecordSetString(hrec, 3, "112358");
+    ok(r == ERROR_SUCCESS, "failed to set string\n");
+
+    r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
+    todo_wine
+    {
+        ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
+    }
+
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    /* use a record that doesn't come from a view fetch, primary key matches */
+    hrec = MsiCreateRecord(3);
+    ok(hrec != 0, "MsiCreateRecord failed\n");
+
+    r = MsiRecordSetInteger(hrec, 1, 1);
+    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+    r = MsiRecordSetString(hrec, 2, "jane");
+    ok(r == ERROR_SUCCESS, "failed to set string\n");
+    r = MsiRecordSetString(hrec, 3, "112358");
+    ok(r == ERROR_SUCCESS, "failed to set string\n");
+
+    r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
+    todo_wine
+    {
+        ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
+    }
+
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    hrec = MsiCreateRecord(3);
+
+    r = MsiRecordSetInteger(hrec, 1, 2);
+    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+    r = MsiRecordSetString(hrec, 2, "nick");
+    ok(r == ERROR_SUCCESS, "failed to set string\n");
+    r = MsiRecordSetString(hrec, 3, "141421");
+    ok(r == ERROR_SUCCESS, "failed to set string\n");
+
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+    r = MsiViewModify(hview, MSIMODIFY_INSERT_TEMPORARY, hrec );
+    ok(r == ERROR_SUCCESS, "MsiViewModify failed\n");
+
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    query = "SELECT * FROM `phone` WHERE `id` = 1";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+
+    /* change the id to match the second row */
+    r = MsiRecordSetInteger(hrec, 1, 2);
+    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+    r = MsiRecordSetString(hrec, 2, "jerry");
+    ok(r == ERROR_SUCCESS, "failed to set string\n");
+
+    r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
+    todo_wine
+    {
+        ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
+    }
+
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* broader search */
+    query = "SELECT * FROM `phone` ORDER BY `id`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+
+    /* change the id to match the second row */
+    r = MsiRecordSetInteger(hrec, 1, 2);
+    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+    r = MsiRecordSetString(hrec, 2, "jerry");
+    ok(r == ERROR_SUCCESS, "failed to set string\n");
+
+    r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
+    todo_wine
+    {
+        ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
+    }
+
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
     r = MsiViewClose(hview);
     ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
     r = MsiCloseHandle(hview);
