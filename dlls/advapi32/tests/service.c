@@ -29,6 +29,8 @@
 
 #include "wine/test.h"
 
+static const CHAR spooler[] = "Spooler"; /* Should be available on all platforms */
+
 static void test_open_scm(void)
 {
     SC_HANDLE scm_handle;
@@ -143,7 +145,6 @@ static void test_create_delete_svc(void)
     static const CHAR servicename         [] = "Winetest";
     static const CHAR pathname            [] = "we_dont_care.exe";
     static const CHAR empty               [] = "";
-    static const CHAR spooler             [] = "Spooler";           /* Should be available on all platforms */
     static const CHAR password            [] = "secret";
     BOOL spooler_exists = FALSE;
     BOOL ret;
@@ -384,7 +385,6 @@ static void test_get_displayname(void)
     CHAR displayname[4096];
     WCHAR displaynameW[2048];
     DWORD displaysize, tempsize, tempsizeW;
-    static const CHAR spooler[] = "Spooler";
     static const CHAR deadbeef[] = "Deadbeef";
     static const WCHAR spoolerW[] = {'S','p','o','o','l','e','r',0};
 
@@ -480,6 +480,95 @@ static void test_get_displayname(void)
        "Expected the buffer to be the length of the string\n") ;
     ok(tempsize / 2 == tempsizeW,
        "Expected the needed buffersize (in bytes) to be the same for the A and W call\n");
+    }
+
+    CloseServiceHandle(scm_handle);
+}
+
+static void test_get_servicekeyname(void)
+{
+    SC_HANDLE scm_handle, svc_handle;
+    CHAR servicename[4096];
+    CHAR displayname[4096];
+    DWORD servicesize, displaysize, tempsize;
+    BOOL ret;
+    static const CHAR deadbeef[] = "Deadbeef";
+
+    /* Having NULL for the size of the buffer will crash on W2K3 */
+
+    SetLastError(0xdeadbeef);
+    ret = GetServiceKeyNameA(NULL, NULL, NULL, &servicesize);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+
+    SetLastError(0xdeadbeef);
+    ret = GetServiceKeyNameA(scm_handle, NULL, NULL, &servicesize);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, XP, W2K3, Vista */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* Valid handle and buffer but no displayname */
+    SetLastError(0xdeadbeef);
+    ret = GetServiceKeyNameA(scm_handle, NULL, servicename, &servicesize);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, XP, W2K3, Vista */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* Test for non-existing displayname */
+    SetLastError(0xdeadbeef);
+    ret = GetServiceKeyNameA(scm_handle, deadbeef, NULL, &servicesize);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
+       "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
+
+    /* Check if 'Spooler' exists */
+    svc_handle = OpenServiceA(scm_handle, spooler, GENERIC_READ);
+    if (!svc_handle)
+    {
+        skip("Spooler service doesn't exist\n");
+        CloseServiceHandle(scm_handle);
+        return;
+    }
+    CloseServiceHandle(svc_handle);
+
+    /* Get the displayname for the 'Spooler' service */
+    GetServiceDisplayNameA(scm_handle, spooler, NULL, &displaysize);
+    GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
+
+    /* Retrieve the needed size for the buffer */
+    SetLastError(0xdeadbeef);
+    servicesize = 0;
+    ret = GetServiceKeyNameA(scm_handle, displayname, NULL, &servicesize);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    /* Valid call with the correct buffersize */
+    SetLastError(0xdeadbeef);
+    tempsize = servicesize;
+    servicesize *= 2;
+    ret = GetServiceKeyNameA(scm_handle, displayname, servicename, &servicesize);
+    todo_wine
+    ok(ret, "Expected success\n");
+    ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+    todo_wine
+    {
+    ok(lstrlen(servicename) == tempsize/2,
+       "Expected the buffer to be twice the length of the string\n") ;
+    ok(!lstrcmpi(servicename, spooler), "Expected %s, got %s\n", spooler, servicename);
     }
 
     CloseServiceHandle(scm_handle);
@@ -749,6 +838,7 @@ START_TEST(service)
     test_open_svc();
     test_create_delete_svc();
     test_get_displayname();
+    test_get_servicekeyname();
     test_close();
     /* Test the creation, querying and deletion of a service */
     test_sequence();
