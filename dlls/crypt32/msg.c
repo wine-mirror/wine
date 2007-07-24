@@ -797,6 +797,34 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
 
     switch (dwParamType)
     {
+    case CMSG_CONTENT_PARAM:
+    {
+        CRYPT_CONTENT_INFO info;
+
+        ret = CryptMsgGetParam(hCryptMsg, CMSG_BARE_CONTENT_PARAM, 0, NULL,
+         &info.Content.cbData);
+        if (ret)
+        {
+            info.Content.pbData = CryptMemAlloc(info.Content.cbData);
+            if (info.Content.pbData)
+            {
+                ret = CryptMsgGetParam(hCryptMsg, CMSG_BARE_CONTENT_PARAM, 0,
+                 info.Content.pbData, &info.Content.cbData);
+                if (ret)
+                {
+                    char oid_rsa_signed[] = szOID_RSA_signedData;
+
+                    info.pszObjId = oid_rsa_signed;
+                    ret = CryptEncodeObjectEx(X509_ASN_ENCODING,
+                     PKCS_CONTENT_INFO, &info, 0, NULL, pvData, pcbData);
+                }
+                CryptMemFree(info.Content.pbData);
+            }
+            else
+                ret = FALSE;
+        }
+        break;
+    }
     case CMSG_BARE_CONTENT_PARAM:
     {
         CRYPT_SIGNED_INFO info;

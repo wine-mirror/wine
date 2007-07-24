@@ -1292,7 +1292,6 @@ static void test_signed_msg_encoding(void)
     check_param("detached signed empty bare content", msg,
      CMSG_BARE_CONTENT_PARAM, signedEmptyBareContent,
      sizeof(signedEmptyBareContent));
-    todo_wine
     check_param("detached signed empty content", msg, CMSG_CONTENT_PARAM,
      signedEmptyContent, sizeof(signedEmptyContent));
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
@@ -1301,7 +1300,6 @@ static void test_signed_msg_encoding(void)
      signedHash, sizeof(signedHash));
     check_param("detached signed bare content", msg, CMSG_BARE_CONTENT_PARAM,
      detachedSignedBareContent, sizeof(detachedSignedBareContent));
-    todo_wine
     check_param("detached signed content", msg, CMSG_CONTENT_PARAM,
      detachedSignedContent, sizeof(detachedSignedContent));
     SetLastError(0xdeadbeef);
@@ -1317,14 +1315,12 @@ static void test_signed_msg_encoding(void)
 
     check_param("signed empty bare content", msg, CMSG_BARE_CONTENT_PARAM,
      signedEmptyBareContent, sizeof(signedEmptyBareContent));
-    todo_wine
     check_param("signed empty content", msg, CMSG_CONTENT_PARAM,
      signedEmptyContent, sizeof(signedEmptyContent));
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     check_param("signed bare content", msg, CMSG_BARE_CONTENT_PARAM,
      signedBareContent, sizeof(signedBareContent));
-    todo_wine
     check_param("signed content", msg, CMSG_CONTENT_PARAM,
      signedContent, sizeof(signedContent));
 
