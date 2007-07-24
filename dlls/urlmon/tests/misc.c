@@ -235,6 +235,7 @@ static void test_RegisterFormatEnumerator(void)
     hres = IBindCtx_GetObjectParam(bctx, wszEnumFORMATETC, &unk);
     ok(hres == E_FAIL, "GetObjectParam failed: %08x, expected E_FAIL\n", hres);
 
+    IEnumFORMATETC_Release(format);
     IBindCtx_Release(bctx);
 }
 
@@ -766,6 +767,7 @@ static void register_protocols(void)
                                        wszAbout, 0, NULL, 0);
     IClassFactory_Release(factory);
 
+    IInternetSession_Release(session);
 }
 
 static HRESULT WINAPI InternetProtocolInfo_QueryInterface(IInternetProtocolInfo *iface,
