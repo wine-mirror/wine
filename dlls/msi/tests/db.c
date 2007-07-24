@@ -832,17 +832,11 @@ static void test_viewmodify(void)
     ok(r == ERROR_SUCCESS, "MsiRecordSetString failed\n");
 
     r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "MsiViewModify failed\n");
-    }
+    ok(r == ERROR_SUCCESS, "MsiViewModify failed\n");
 
     /* do it again */
     r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "MsiViewModify failed: %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "MsiViewModify failed: %d\n", r);
 
     /* update the view, primary key */
     r = MsiRecordSetInteger(hrec, 1, 5);
@@ -883,10 +877,7 @@ static void test_viewmodify(void)
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 3, buffer, &sz);
     ok(r == ERROR_SUCCESS, "MsiRecordGetString failed\n");
-    todo_wine
-    {
-        ok(!lstrcmp(buffer, "3141592"), "Expected 3141592, got %s\n", buffer);
-    }
+    ok(!lstrcmp(buffer, "3141592"), "Expected 3141592, got %s\n", buffer);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
@@ -965,10 +956,7 @@ static void test_viewmodify(void)
     ok(r == ERROR_SUCCESS, "failed to set string\n");
 
     r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
-    todo_wine
-    {
-        ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
-    }
+    ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
@@ -993,10 +981,7 @@ static void test_viewmodify(void)
     ok(r == ERROR_SUCCESS, "failed to set string\n");
 
     r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
-    todo_wine
-    {
-        ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
-    }
+    ok(r == ERROR_FUNCTION_FAILED, "MsiViewModify failed\n");
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");

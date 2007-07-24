@@ -1532,6 +1532,29 @@ static UINT TABLE_delete_row( struct tagMSIVIEW *view, UINT row )
     return ERROR_SUCCESS;
 }
 
+static UINT msi_table_update(struct tagMSIVIEW *view, MSIRECORD *rec)
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW *)view;
+    UINT r, row;
+
+    /* FIXME: MsiViewFetch should set rec index 0 to some ID that
+     * sets the fetched record apart from other records
+     */
+
+    if (!tv->table)
+        return ERROR_INVALID_PARAMETER;
+
+    r = msi_table_find_row(tv, rec, &row);
+    if (r != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    /* the row cannot be changed */
+    if (row != 0)
+        return ERROR_FUNCTION_FAILED;
+
+    return TABLE_set_row(view, row, rec, (1 << tv->num_cols) - 1);
+}
+
 static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
                 MSIRECORD *rec)
 {
@@ -1553,9 +1576,12 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
         r = TABLE_insert_row( view, rec, TRUE );
         break;
 
+    case MSIMODIFY_UPDATE:
+        r = msi_table_update( view, rec );
+        break;
+
     case MSIMODIFY_REFRESH:
     case MSIMODIFY_INSERT:
-    case MSIMODIFY_UPDATE:
     case MSIMODIFY_ASSIGN:
     case MSIMODIFY_REPLACE:
     case MSIMODIFY_MERGE:
