@@ -442,6 +442,7 @@ void handle_edit_event(HTMLDocument*,nsIDOMEvent*);
 HRESULT editor_exec_copy(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
 HRESULT editor_exec_cut(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
 HRESULT editor_exec_paste(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
+void handle_edit_load(HTMLDocument *This);
 
 extern DWORD mshtml_tls;
 

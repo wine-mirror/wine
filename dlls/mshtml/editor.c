@@ -34,6 +34,7 @@
 #include "wine/unicode.h"
 
 #include "mshtml_private.h"
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -568,6 +569,34 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
     }
 
     nsIDOMKeyEvent_Release(key_event);
+}
+
+void handle_edit_load(HTMLDocument *This)
+{
+    This->nscontainer->editor_controller = get_editor_controller(This->nscontainer);
+
+    if(This->ui_active) {
+        OLECHAR wszHTMLDocument[30];
+        RECT rcBorderWidths;
+
+        if(This->ip_window)
+            IOleInPlaceUIWindow_SetActiveObject(This->ip_window, NULL, NULL);
+        if(This->hostui)
+            IDocHostUIHandler_HideUI(This->hostui);
+
+        if(This->hostui)
+            IDocHostUIHandler_ShowUI(This->hostui, DOCHOSTUITYPE_AUTHOR, ACTOBJ(This), CMDTARGET(This),
+                This->frame, This->ip_window);
+
+        LoadStringW(hInst, IDS_HTMLDOCUMENT, wszHTMLDocument,
+                    sizeof(wszHTMLDocument)/sizeof(WCHAR));
+
+        if(This->ip_window)
+            IOleInPlaceUIWindow_SetActiveObject(This->ip_window, ACTOBJ(This), wszHTMLDocument);
+
+        memset(&rcBorderWidths, 0, sizeof(rcBorderWidths));
+        IOleInPlaceFrame_SetBorderSpace(This->frame, &rcBorderWidths);
+    }
 }
 
 static void set_ns_fontname(NSContainer *This, const char *fontname)

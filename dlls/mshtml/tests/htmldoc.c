@@ -130,7 +130,7 @@ DEFINE_EXPECT(InPlaceUIWindow_SetActiveObject);
 
 static IUnknown *doc_unk;
 static BOOL expect_LockContainer_fLock;
-static BOOL expect_SetActiveObject_active, expect_InPlaceUIWindow_SetActiveObject_active;
+static BOOL expect_SetActiveObject_active, expect_InPlaceUIWindow_SetActiveObject_active = TRUE;
 static BOOL ipsex;
 static BOOL set_clientsite = FALSE, container_locked = FALSE;
 static BOOL readystate_set_loading = FALSE, load_from_stream;
@@ -1139,6 +1139,7 @@ static HRESULT WINAPI InPlaceUIWindow_SetActiveObject(IOleInPlaceFrame *iface,
         ok(pActiveObject == NULL, "pActiveObject=%p, expected NULL\n", pActiveObject);
         ok(pszObjName == NULL, "pszObjName=%p, expected NULL\n", pszObjName);
     }
+    expect_InPlaceUIWindow_SetActiveObject_active = !expect_InPlaceUIWindow_SetActiveObject_active;
     return S_OK;
 }
 
@@ -1778,7 +1779,10 @@ static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD d
 {
     CHECK_EXPECT(ShowUI);
 
-    ok(dwID == DOCHOSTUITYPE_BROWSE, "dwID=%d, expected DOCHOSTUITYPE_BROWSE\n", dwID);
+    if (editmode)
+        ok(dwID == DOCHOSTUITYPE_AUTHOR, "dwID=%d, expected DOCHOSTUITYPE_AUTHOR\n", dwID);
+    else
+        ok(dwID == DOCHOSTUITYPE_BROWSE, "dwID=%d, expected DOCHOSTUITYPE_BROWSE\n", dwID);
     ok(pActiveObject != NULL, "pActiveObject = NULL\n");
     ok(pCommandTarget != NULL, "pCommandTarget = NULL\n");
     ok(pFrame == &InPlaceFrame, "pFrame=%p, expected %p\n", pFrame, &InPlaceFrame);
@@ -2862,6 +2866,10 @@ static void test_exec_editmode(IUnknown *unk)
     SET_EXPECT(Invoke_AMBIENT_SILENT);
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     SET_EXPECT(OnChanged_READYSTATE);
+    SET_EXPECT(InPlaceUIWindow_SetActiveObject);
+    SET_EXPECT(HideUI);
+    SET_EXPECT(ShowUI);
+    SET_EXPECT(InPlaceFrame_SetBorderSpace);
     expect_status_text = NULL;
     readystate_set_loading = TRUE;
 
@@ -2875,6 +2883,10 @@ static void test_exec_editmode(IUnknown *unk)
     CHECK_CALLED(Invoke_AMBIENT_SILENT);
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(OnChanged_READYSTATE);
+    CHECK_CALLED(InPlaceUIWindow_SetActiveObject);
+    CHECK_CALLED(HideUI);
+    CHECK_CALLED(ShowUI);
+    CHECK_CALLED(InPlaceFrame_SetBorderSpace);
 
     test_timer(EXPECT_UPDATEUI|EXPECT_SETTITLE);
 
@@ -3300,7 +3312,6 @@ static HRESULT test_Activate(IUnknown *unk, DWORD flags)
         SET_EXPECT(ShowUI);
         SET_EXPECT(InPlaceUIWindow_SetActiveObject);
         SET_EXPECT(InPlaceFrame_SetBorderSpace);
-        expect_InPlaceUIWindow_SetActiveObject_active = TRUE;
         expect_SetActiveObject_active = TRUE;
         expect_status_text = NULL;
 
@@ -3383,7 +3394,6 @@ static void test_UIDeactivate(void)
     }
 
     expect_SetActiveObject_active = FALSE;
-    expect_InPlaceUIWindow_SetActiveObject_active = FALSE;
     hres = IOleDocumentView_UIActivate(view, FALSE);
     ok(hres == S_OK, "UIActivate failed: %08x\n", hres);
 
@@ -3686,6 +3696,34 @@ static void test_HTMLDocument_StreamLoad(void)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
+static void test_edit_uiactivate(IOleObject *oleobj)
+{
+    IOleDocumentView *docview;
+    HRESULT hres;
+
+    hres = IOleObject_QueryInterface(oleobj, &IID_IOleDocumentView, (void **)&docview);
+    ok(hres == S_OK, "IOleObject_QueryInterface failed with error 0x%08x\n", hres);
+
+    SET_EXPECT(OnFocus_TRUE);
+    SET_EXPECT(SetActiveObject);
+    SET_EXPECT(ShowUI);
+    SET_EXPECT(InPlaceUIWindow_SetActiveObject);
+    SET_EXPECT(InPlaceFrame_SetBorderSpace);
+    expect_SetActiveObject_active = TRUE;
+    expect_status_text = NULL;
+
+    hres = IOleDocumentView_UIActivate(docview, TRUE);
+    ok(hres == S_OK, "IOleDocumentView_UIActivate failed with error 0x%08x\n", hres);
+
+    CHECK_CALLED(OnFocus_TRUE);
+    CHECK_CALLED(SetActiveObject);
+    CHECK_CALLED(ShowUI);
+    CHECK_CALLED(InPlaceUIWindow_SetActiveObject);
+    CHECK_CALLED(InPlaceFrame_SetBorderSpace);
+
+    IOleDocumentView_Release(docview);
+}
+
 static void test_editing_mode(void)
 {
     IUnknown *unk;
@@ -3696,6 +3734,7 @@ static void test_editing_mode(void)
     trace("Testing HTMLDocument (edit)...\n");
 
     init_test(LD_DOLOAD);
+    call_UIActivate = CallUIActivate_AfterShow;
 
     hres = create_document(&unk);
     if(FAILED(hres))
@@ -3709,11 +3748,15 @@ static void test_editing_mode(void)
     test_ConnectionPointContainer(unk);
     test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
     test_DoVerb(oleobj);
+    test_edit_uiactivate(oleobj);
+
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
 
+    test_exec_editmode(unk);
+    test_UIDeactivate();
+    call_UIActivate = CallUIActivate_None;
     IOleObject_Release(oleobj);
 
-    test_exec_editmode(unk);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_download(TRUE, FALSE);
     test_timer(EXPECT_UPDATEUI);

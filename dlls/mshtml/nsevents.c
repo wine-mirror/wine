@@ -142,7 +142,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     }
 
     if(This->doc->usermode == EDITMODE)
-        This->editor_controller = get_editor_controller(This);
+        handle_edit_load(This->doc);
 
     task = mshtml_alloc(sizeof(task_t));
 
