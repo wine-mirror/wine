@@ -3240,13 +3240,11 @@ BOOL CRYPT_AsnEncodePKCSSignedInfo(CRYPT_SIGNED_INFO *signedInfo, void *pvData,
      { &signedInfo->version, CRYPT_AsnEncodeInt, 0 },
     };
     struct DERSetDescriptor digestAlgorithmsSet = { 0 }, certSet = { 0 };
-    struct DERSetDescriptor signerSet = { 0 };
+    struct DERSetDescriptor crlSet = { 0 }, signerSet = { 0 };
     struct AsnEncodeTagSwappedItem swapped[2] = { { 0 } };
     DWORD cItem = 1, cSwapped = 0;
     BOOL ret = TRUE;
 
-    if (signedInfo->cCrlEncoded)
-        FIXME("unimplemented for CRLs\n");
     if (signedInfo->cAttrCertEncoded)
         FIXME("unimplemented for attr certs\n");
     if (signedInfo->cSignerInfo)
@@ -3273,6 +3271,21 @@ BOOL CRYPT_AsnEncodePKCSSignedInfo(CRYPT_SIGNED_INFO *signedInfo, void *pvData,
         certSet.encode = CRYPT_CopyEncodedBlob;
         swapped[cSwapped].tag = ASN_CONSTRUCTOR | ASN_CONTEXT | 0;
         swapped[cSwapped].pvStructInfo = &certSet;
+        swapped[cSwapped].encodeFunc = CRYPT_DEREncodeItemsAsSet;
+        items[cItem].pvStructInfo = &swapped[cSwapped];
+        items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+        cSwapped++;
+        cItem++;
+    }
+    if (signedInfo->cCrlEncoded)
+    {
+        crlSet.cItems = signedInfo->cCrlEncoded;
+        crlSet.items = signedInfo->rgCrlEncoded;
+        crlSet.itemSize = sizeof(CRL_BLOB);
+        crlSet.itemOffset = 0;
+        crlSet.encode = CRYPT_CopyEncodedBlob;
+        swapped[cSwapped].tag = ASN_CONSTRUCTOR | ASN_CONTEXT | 1;
+        swapped[cSwapped].pvStructInfo = &crlSet;
         swapped[cSwapped].encodeFunc = CRYPT_DEREncodeItemsAsSet;
         items[cItem].pvStructInfo = &swapped[cSwapped];
         items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
