@@ -1110,10 +1110,10 @@ static void test_signed_msg_update(void)
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING,
      CMSG_DETACHED_FLAG, CMSG_SIGNED, &signInfo, NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
-    /* CMSG_SIGNED allows non-final updates. */
+    /* Detached CMSG_SIGNED allows non-final updates. */
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
-    /* CMSG_SIGNED also allows non-final updates with no data. */
+    /* Detached CMSG_SIGNED also allows non-final updates with no data. */
     ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* The final update requires a private key in the hCryptProv, in order to
@@ -1139,10 +1139,10 @@ static void test_signed_msg_update(void)
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING,
      CMSG_DETACHED_FLAG, CMSG_SIGNED, &signInfo, NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
-    /* CMSG_SIGNED allows non-final updates. */
+    /* Detached CMSG_SIGNED allows non-final updates. */
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
-    /* CMSG_SIGNED also allows non-final updates with no data. */
+    /* Detached CMSG_SIGNED also allows non-final updates with no data. */
     ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     /* Now that the private key exists, the final update can succeed (even
@@ -1159,6 +1159,26 @@ static void test_signed_msg_update(void)
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
     ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
      "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    /* Non-detached messages don't allow non-final updates.. */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
+     "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
+    /* but they do allow final ones. */
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    CryptMsgClose(msg);
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    /* They also allow final updates with no data. */
+    ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     CryptMsgClose(msg);
 
     CryptDestroyKey(key);
