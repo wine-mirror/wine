@@ -1540,88 +1540,6 @@ BOOL CRYPT_AsnEncodePKCSDigestedData(CRYPT_DIGESTED_DATA *digestedData,
      sizeof(items) / sizeof(items[0]), 0, NULL, pvData, pcbData);
 }
 
-BOOL CRYPT_AsnEncodePKCSSignedInfo(CRYPT_SIGNED_INFO *signedInfo, void *pvData,
- DWORD *pcbData)
-{
-    struct AsnEncodeSequenceItem items[7] = {
-     { &signedInfo->version, CRYPT_AsnEncodeInt, 0 },
-    };
-    CRYPT_SET_OF digestAlgorithmsSet = { 0, NULL }, signerSet = { 0, NULL };
-    DWORD i, cItem = 1;
-    BOOL ret = TRUE;
-
-    if (signedInfo->cCertEncoded)
-        FIXME("unimplemented for certs\n");
-    if (signedInfo->cCrlEncoded)
-        FIXME("unimplemented for CRLs\n");
-    if (signedInfo->cAttrCertEncoded)
-        FIXME("unimplemented for attr certs\n");
-    if (signedInfo->cSignerInfo)
-    {
-        digestAlgorithmsSet.cValue = signedInfo->cSignerInfo;
-        digestAlgorithmsSet.rgValue =
-         CryptMemAlloc(digestAlgorithmsSet.cValue * sizeof(CRYPT_DER_BLOB));
-        if (digestAlgorithmsSet.rgValue)
-        {
-            memset(digestAlgorithmsSet.rgValue, 0,
-             digestAlgorithmsSet.cValue * sizeof(CRYPT_DER_BLOB));
-            for (i = 0; ret && i < digestAlgorithmsSet.cValue; i++)
-                ret = CRYPT_AsnEncodeAlgorithmIdWithNullParams(0, NULL,
-                 &signedInfo->rgSignerInfo[i].HashAlgorithm,
-                 CRYPT_ENCODE_ALLOC_FLAG, NULL,
-                 (BYTE *)&digestAlgorithmsSet.rgValue[i].pbData,
-                 &digestAlgorithmsSet.rgValue[i].cbData);
-        }
-        else
-            ret = FALSE;
-        if (ret)
-        {
-            items[cItem].pvStructInfo = &digestAlgorithmsSet;
-            items[cItem].encodeFunc = CRYPT_DEREncodeSet;
-            cItem++;
-        }
-    }
-    items[cItem].pvStructInfo = &signedInfo->content;
-    items[cItem].encodeFunc = CRYPT_AsnEncodePKCSContentInfoInternal;
-    cItem++;
-    if (ret && signedInfo->cSignerInfo)
-    {
-        signerSet.cValue = signedInfo->cSignerInfo;
-        signerSet.rgValue =
-         CryptMemAlloc(signerSet.cValue * sizeof(CRYPT_DER_BLOB));
-        if (signerSet.rgValue)
-        {
-            memset(signerSet.rgValue, 0,
-             signerSet.cValue * sizeof(CRYPT_DER_BLOB));
-            for (i = 0; ret && i < signerSet.cValue; i++)
-                ret = CryptEncodeObjectEx(
-                 X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS7_SIGNER_INFO,
-                 &signedInfo->rgSignerInfo[i], CRYPT_ENCODE_ALLOC_FLAG, NULL,
-                 &signerSet.rgValue[i].pbData, &signerSet.rgValue[i].cbData);
-        }
-        else
-            ret = FALSE;
-        if (ret)
-        {
-            items[cItem].pvStructInfo = &signerSet;
-            items[cItem].encodeFunc = CRYPT_DEREncodeSet;
-            cItem++;
-        }
-    }
-    if (ret)
-        ret = CRYPT_AsnEncodeSequence(X509_ASN_ENCODING, items, cItem, 0, NULL,
-         pvData, pcbData);
-
-    for (i = 0; i < digestAlgorithmsSet.cValue; i++)
-        LocalFree(digestAlgorithmsSet.rgValue[i].pbData);
-    CryptMemFree(digestAlgorithmsSet.rgValue);
-    for (i = 0; i < signerSet.cValue; i++)
-        LocalFree(signerSet.rgValue[i].pbData);
-    CryptMemFree(signerSet.rgValue);
-
-    return ret;
-}
-
 static BOOL WINAPI CRYPT_AsnEncodePKCSContentInfo(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -3312,6 +3230,55 @@ static BOOL WINAPI CRYPT_AsnEncodePKCSSignerInfo(DWORD dwCertEncodingType,
         SetLastError(STATUS_ACCESS_VIOLATION);
     }
     __ENDTRY
+    return ret;
+}
+
+BOOL CRYPT_AsnEncodePKCSSignedInfo(CRYPT_SIGNED_INFO *signedInfo, void *pvData,
+ DWORD *pcbData)
+{
+    struct AsnEncodeSequenceItem items[7] = {
+     { &signedInfo->version, CRYPT_AsnEncodeInt, 0 },
+    };
+    struct DERSetDescriptor digestAlgorithmsSet = { 0 }, signerSet = { 0 };
+    DWORD cItem = 1;
+    BOOL ret = TRUE;
+
+    if (signedInfo->cCertEncoded)
+        FIXME("unimplemented for certs\n");
+    if (signedInfo->cCrlEncoded)
+        FIXME("unimplemented for CRLs\n");
+    if (signedInfo->cAttrCertEncoded)
+        FIXME("unimplemented for attr certs\n");
+    if (signedInfo->cSignerInfo)
+    {
+        digestAlgorithmsSet.cItems = signedInfo->cSignerInfo;
+        digestAlgorithmsSet.items = signedInfo->rgSignerInfo;
+        digestAlgorithmsSet.itemSize = sizeof(CMSG_SIGNER_INFO);
+        digestAlgorithmsSet.itemOffset =
+         offsetof(CMSG_SIGNER_INFO, HashAlgorithm);
+        digestAlgorithmsSet.encode = CRYPT_AsnEncodeAlgorithmIdWithNullParams;
+        items[cItem].pvStructInfo = &digestAlgorithmsSet;
+        items[cItem].encodeFunc = CRYPT_DEREncodeItemsAsSet;
+        cItem++;
+    }
+    items[cItem].pvStructInfo = &signedInfo->content;
+    items[cItem].encodeFunc = CRYPT_AsnEncodePKCSContentInfoInternal;
+    cItem++;
+    if (ret && signedInfo->cSignerInfo)
+    {
+        signerSet.cItems = signedInfo->cSignerInfo;
+        signerSet.items = signedInfo->rgSignerInfo;
+        signerSet.itemSize = sizeof(CMSG_SIGNER_INFO);
+        signerSet.itemOffset = 0;
+        signerSet.encode = CRYPT_AsnEncodePKCSSignerInfo;
+        items[cItem].pvStructInfo = &signerSet;
+        items[cItem].encodeFunc = CRYPT_DEREncodeItemsAsSet;
+        cItem++;
+    }
+    if (ret)
+        ret = CRYPT_AsnEncodeSequence(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+         items, cItem, 0, NULL, pvData, pcbData);
+
     return ret;
 }
 
