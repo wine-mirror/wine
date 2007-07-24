@@ -72,6 +72,53 @@ static void test_constructor_destructor(void)
     expect(Ok, status);
 }
 
+static void test_brushfill(void)
+{
+    GpStatus status;
+    GpPen *pen;
+    GpBrush *brush, *brush2;
+    GpBrushType type;
+    ARGB color = 0;
+
+    /* default solid */
+    GdipCreatePen1(0xdeadbeef, 4.5, UnitWorld, &pen);
+    status = GdipGetPenBrushFill(pen, &brush);
+    expect(Ok, status);
+    GdipGetBrushType(brush, &type);
+    expect(BrushTypeSolidColor, type);
+    GdipGetPenColor(pen, &color);
+    todo_wine
+        expect(0xdeadbeef, color);
+    GdipDeleteBrush(brush);
+
+    /* color controlled by brush */
+    GdipCreateSolidFill(0xabaddeed, (GpSolidFill**)&brush);
+    status = GdipSetPenBrushFill(pen, brush);
+    expect(Ok, status);
+    GdipGetPenColor(pen, &color);
+    todo_wine
+        expect(0xabaddeed, color);
+    GdipDeleteBrush(brush);
+    color = 0;
+
+    /* get returns a clone, not a reference */
+    GdipGetPenBrushFill(pen, &brush);
+    GdipSetSolidFillColor((GpSolidFill*)brush, 0xbeadfeed);
+    GdipGetPenBrushFill(pen, &brush2);
+    ok(brush != brush2, "Expected to get a clone, not a copy of the reference\n");
+    GdipGetSolidFillColor((GpSolidFill*)brush2, &color);
+    todo_wine
+        expect(0xabaddeed, color);
+    GdipDeleteBrush(brush);
+    GdipDeleteBrush(brush2);
+
+    /* brush cannot be NULL */
+    status = GdipSetPenBrushFill(pen, NULL);
+    expect(InvalidParameter, status);
+
+    GdipDeletePen(pen);
+}
+
 START_TEST(pen)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -87,6 +134,7 @@ START_TEST(pen)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_constructor_destructor();
+    test_brushfill();
 
     GdiplusShutdown(gdiplusToken);
 }
