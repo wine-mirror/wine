@@ -122,13 +122,10 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
 
   LocalFree ((HANDLE)context);
   if ((prev_context != NULL) && (!called)) {
-    CloseHandle (prev_context -> h);
-    context = prev_context -> prev_context;
-    LocalFree ((HANDLE)prev_context);
-  }
-  else {
+    prev_context -> skip_rest = TRUE;
     context = prev_context;
   }
+  context = prev_context;
 }
 
 /*******************************************************************
