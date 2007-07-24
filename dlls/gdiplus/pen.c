@@ -98,7 +98,6 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
     if(!gp_pen)    return OutOfMemory;
 
     gp_pen->style = GP_DEFAULT_PENSTYLE;
-    gp_pen->color = ARGB2COLORREF(color);
     gp_pen->width = width;
     gp_pen->unit = unit;
     gp_pen->endcap = LineCapFlat;
@@ -147,7 +146,10 @@ GpStatus WINGDIPAPI GdipGetPenColor(GpPen *pen, ARGB *argb)
     if(!pen || !argb)
         return InvalidParameter;
 
-    return NotImplemented;
+    if(pen->brush->bt != BrushTypeSolidColor)
+        return NotImplemented;
+
+    return GdipGetSolidFillColor(((GpSolidFill*)pen->brush), argb);
 }
 
 GpStatus WINGDIPAPI GdipGetPenDashStyle(GpPen *pen, GpDashStyle *dash)
@@ -177,6 +179,17 @@ GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen *pen, GpBrush *brush)
                                NULL);
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetPenColor(GpPen *pen, ARGB argb)
+{
+    if(!pen)
+        return InvalidParameter;
+
+    if(pen->brush->bt != BrushTypeSolidColor)
+        return NotImplemented;
+
+    return GdipSetSolidFillColor(((GpSolidFill*)pen->brush), argb);
 }
 
 GpStatus WINGDIPAPI GdipSetPenCustomEndCap(GpPen *pen, GpCustomLineCap* customCap)

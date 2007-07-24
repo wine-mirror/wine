@@ -44,7 +44,6 @@ static inline REAL deg2rad(REAL degrees)
 
 struct GpPen{
     UINT style;
-    COLORREF color;
     GpUnit unit;
     REAL width;
     HPEN gdipen;

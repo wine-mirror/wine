@@ -394,9 +394,9 @@ static GpStatus draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                              &ptcopy[0].X, &ptcopy[0].Y,
                              pen->customend->inset * pen->width);
 
-        draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
+        draw_cap(hdc, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
                  pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X, pt[count - 1].Y);
-        draw_cap(hdc, pen->color, pen->startcap, pen->width, pen->customstart,
+        draw_cap(hdc, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
                          pt[1].X, pt[1].Y, pt[0].X, pt[0].Y);
     }
 
@@ -512,12 +512,12 @@ static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
         /* the direction of the line cap is parallel to the direction at the
          * end of the bezier (which, if it has been shortened, is not the same
          * as the direction from pt[count-2] to pt[count-1]) */
-        draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
+        draw_cap(hdc, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
             pt[count - 1].X - (ptcopy[count - 1].X - ptcopy[count - 2].X),
             pt[count - 1].Y - (ptcopy[count - 1].Y - ptcopy[count - 2].Y),
             pt[count - 1].X, pt[count - 1].Y);
 
-        draw_cap(hdc, pen->color, pen->startcap, pen->width, pen->customstart,
+        draw_cap(hdc, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
             pt[0].X - (ptcopy[0].X - ptcopy[1].X),
             pt[0].Y - (ptcopy[0].Y - ptcopy[1].Y), pt[0].X, pt[0].Y);
     }
@@ -588,7 +588,7 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                     MoveToEx(hdc, curpos.x, curpos.y, NULL);
                 }
 
-                draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
+                draw_cap(hdc, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
                     pt[count - 1].X - (ptcopy[count - 1].X - ptcopy[count - 2].X),
                     pt[count - 1].Y - (ptcopy[count - 1].Y - ptcopy[count - 2].Y),
                     pt[count - 1].X, pt[count - 1].Y);
@@ -604,7 +604,7 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                                      &ptcopy[count - 1].X, &ptcopy[count - 1].Y,
                                      pen->customend->inset * pen->width);
 
-                draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customend,
+                draw_cap(hdc, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
                          pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X,
                          pt[count - 1].Y);
 
@@ -632,7 +632,7 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                     MoveToEx(hdc, curpos.x, curpos.y, NULL);
                 }
 
-                draw_cap(hdc, pen->color, pen->startcap, pen->width, pen->customstart,
+                draw_cap(hdc, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
                     pt[j - 1].X - (ptcopy[j - 1].X - ptcopy[j].X),
                     pt[j - 1].Y - (ptcopy[j - 1].Y - ptcopy[j].Y),
                     pt[j - 1].X, pt[j - 1].Y);
@@ -648,7 +648,7 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                                      &ptcopy[j - 1].X, &ptcopy[j - 1].Y,
                                      pen->customstart->inset * pen->width);
 
-                draw_cap(hdc, pen->color, pen->endcap, pen->width, pen->customstart,
+                draw_cap(hdc, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customstart,
                          pt[j].X, pt[j].Y, pt[j - 1].X,
                          pt[j - 1].Y);
 

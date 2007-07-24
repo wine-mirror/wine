@@ -87,8 +87,7 @@ static void test_brushfill(void)
     GdipGetBrushType(brush, &type);
     expect(BrushTypeSolidColor, type);
     GdipGetPenColor(pen, &color);
-    todo_wine
-        expect(0xdeadbeef, color);
+    expect(0xdeadbeef, color);
     GdipDeleteBrush(brush);
 
     /* color controlled by brush */
@@ -96,8 +95,7 @@ static void test_brushfill(void)
     status = GdipSetPenBrushFill(pen, brush);
     expect(Ok, status);
     GdipGetPenColor(pen, &color);
-    todo_wine
-        expect(0xabaddeed, color);
+    expect(0xabaddeed, color);
     GdipDeleteBrush(brush);
     color = 0;
 
