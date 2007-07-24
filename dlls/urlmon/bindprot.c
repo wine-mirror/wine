@@ -493,6 +493,8 @@ HRESULT create_binding_protocol(LPCWSTR url, IInternetProtocol **protocol)
     ret->protocol_sink = NULL;
     ret->priority = 0;
 
+    URLMON_LockModule();
+
     *protocol = PROTOCOL(ret);
     return S_OK;
 }
