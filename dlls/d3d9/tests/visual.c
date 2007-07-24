@@ -429,6 +429,7 @@ static void fog_test(IDirect3DDevice9 *device)
     HRESULT hr;
     DWORD color;
     float start = 0.0f, end = 1.0f;
+    D3DCAPS9 caps;
 
     /* Gets full z based fog with linear fog, no fog with specular color */
     struct sVertex unstransformed_1[] = {
@@ -461,6 +462,9 @@ static void fog_test(IDirect3DDevice9 *device)
     };
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
 
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps returned %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
 
@@ -538,8 +542,20 @@ static void fog_test(IDirect3DDevice9 *device)
     ok(color == 0x0000FF00, "Untransformed vertex with linear vertex fog has color %08x\n", color);
     color = getPixelColor(device, 480, 120);
     ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
-    color = getPixelColor(device, 480, 360);
-    ok(color == 0x0000FF00, "Transformed vertex with linear table fog has color %08x\n", color);
+    if(caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE)
+    {
+        color = getPixelColor(device, 480, 360);
+        ok(color == 0x0000FF00, "Transformed vertex with linear table fog has color %08x\n", color);
+    }
+    else
+    {
+        /* Without fog table support the vertex fog is still applied, even though table fog is turned on.
+         * The settings above result in no fogging with vertex fog
+         */
+        color = getPixelColor(device, 480, 120);
+        ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
+        trace("Info: Table fog not supported by this device\n");
+    }
 
     /* Turn off the fog master switch to avoid confusing other tests */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
@@ -1222,7 +1238,12 @@ START_TEST(visual)
     lighting_test(device_ptr);
     clear_test(device_ptr);
     fog_test(device_ptr);
-    test_cube_wrap(device_ptr);
+    if(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP)
+    {
+        test_cube_wrap(device_ptr);
+    } else {
+        skip("No cube texture support\n");
+    }
     present_test(device_ptr);
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0))
@@ -1231,13 +1252,13 @@ START_TEST(visual)
     }
     else skip("No vs_2_0 support\n");
 
-    if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1) && caps.PixelShaderVersion >= D3DVS_VERSION(1, 1))
+    if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1) && caps.PixelShaderVersion >= D3DPS_VERSION(1, 1))
     {
         fog_with_shader_test(device_ptr);
     }
     else skip("No vs_1_1 and ps_1_1 support\n");
 
-    if (caps.PixelShaderVersion >= D3DVS_VERSION(1, 1))
+    if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 1))
     {
         texbem_test(device_ptr);
     }
