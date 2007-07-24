@@ -120,7 +120,7 @@ static IDirect3DDevice9 *init_d3d9(void)
     present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
 
     hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-    ok(hr == D3D_OK, "IDirect3D_CreateDevice returned: %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D_CreateDevice returned: %s\n", DXGetErrorString9(hr));
 
     return device_ptr;
 }
@@ -1199,7 +1199,11 @@ START_TEST(visual)
     }
 
     device_ptr = init_d3d9();
-    if (!device_ptr) return;
+    if (!device_ptr)
+    {
+        skip("Creating the device failed\n");
+        return;
+    }
 
     IDirect3DDevice9_GetDeviceCaps(device_ptr, &caps);
 

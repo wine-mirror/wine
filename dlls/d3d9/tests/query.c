@@ -96,8 +96,12 @@ static void test_query_support(IDirect3D9 *pD3d, HWND hwnd)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
-    if (FAILED(hr)) goto cleanup;
+    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+    if (FAILED(hr))
+    {
+        skip("Failed to create a d3d device\n");
+        goto cleanup;
+    }
 
     for(i = 0; i < sizeof(queries) / sizeof(queries[0]); i++)
     {

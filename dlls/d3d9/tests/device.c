@@ -739,7 +739,7 @@ static void test_reset(void)
 
     if(FAILED(hr))
     {
-        trace("could not create device, IDirect3D9_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D9_CreateDevice returned %#x\n", hr);
         goto cleanup;
     }
 
@@ -975,8 +975,12 @@ static void test_scene(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
-    if(!pDevice) goto cleanup;
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    if(!pDevice)
+    {
+        skip("Failed to create a d3d device\n");
+        goto cleanup;
+    }
 
     /* Get the caps, they will be needed to tell if an operation is supposed to be valid */
     memset(&caps, 0, sizeof(caps));
@@ -1124,8 +1128,12 @@ static void test_limits(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
-    if(!pDevice) goto cleanup;
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    if(!pDevice)
+    {
+        skip("Failed to create a d3d device\n");
+        goto cleanup;
+    }
 
     hr = IDirect3DDevice9_CreateTexture(pDevice, 16, 16, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed with %s\n", DXGetErrorString9(hr));
@@ -1187,8 +1195,12 @@ static void test_depthstenciltest(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
-    if(!pDevice) goto cleanup;
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    if(!pDevice)
+    {
+        skip("Failed to create a d3d device\n");
+        goto cleanup;
+    }
 
     hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pDepthStencil);
     ok(hr == D3D_OK && pDepthStencil != NULL, "IDirect3DDevice9_GetDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));

@@ -57,7 +57,7 @@ static IDirect3DDevice9 *init_d3d9(HMODULE d3d9_handle)
 
     if(FAILED(hr))
     {
-        trace("could not create device, IDirect3D9_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D9_CreateDevice returned %#x\n", hr);
         return NULL;
     }
 
