@@ -26,12 +26,18 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
     if(!brush || !clone)
         return InvalidParameter;
 
-    *clone = GdipAlloc(sizeof(GpBrush));
-    if (!*clone) return OutOfMemory;
+    switch(brush->bt){
+        case BrushTypeSolidColor:
+            *clone = GdipAlloc(sizeof(GpSolidFill));
+            if (!*clone) return OutOfMemory;
 
-    memcpy(*clone, brush, sizeof(GpBrush));
+            memcpy(*clone, brush, sizeof(GpSolidFill));
 
-    (*clone)->gdibrush = CreateBrushIndirect(&(*clone)->lb);
+            (*clone)->gdibrush = CreateBrushIndirect(&(*clone)->lb);
+            break;
+        default:
+            return NotImplemented;
+    }
 
     return Ok;
 }
@@ -51,7 +57,7 @@ GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
 
     (*sf)->brush.gdibrush = CreateSolidBrush(col);
     (*sf)->brush.bt = BrushTypeSolidColor;
-    (*sf)->brush.color = col;
+    (*sf)->color = color;
 
     return Ok;
 }
@@ -80,7 +86,9 @@ GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
     if(!sf || !argb)
         return InvalidParameter;
 
-    return NotImplemented;
+    *argb = sf->color;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
@@ -88,5 +96,11 @@ GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
     if(!sf)
         return InvalidParameter;
 
-    return NotImplemented;
+    sf->color = argb;
+    sf->brush.lb.lbColor = ARGB2COLORREF(argb);
+
+    DeleteObject(sf->brush.gdibrush);
+    sf->brush.gdibrush = CreateSolidBrush(sf->brush.lb.lbColor);
+
+    return Ok;
 }

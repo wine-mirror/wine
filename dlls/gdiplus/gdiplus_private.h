@@ -71,12 +71,12 @@ struct GpGraphics{
 struct GpBrush{
     HBRUSH gdibrush;
     GpBrushType bt;
-    COLORREF color;
     LOGBRUSH lb;
 };
 
 struct GpSolidFill{
     GpBrush brush;
+    ARGB color;
 };
 
 struct GpPath{

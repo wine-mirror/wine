@@ -107,8 +107,7 @@ static void test_brushfill(void)
     GdipGetPenBrushFill(pen, &brush2);
     ok(brush != brush2, "Expected to get a clone, not a copy of the reference\n");
     GdipGetSolidFillColor((GpSolidFill*)brush2, &color);
-    todo_wine
-        expect(0xabaddeed, color);
+    expect(0xabaddeed, color);
     GdipDeleteBrush(brush);
     GdipDeleteBrush(brush2);
 
