@@ -2714,7 +2714,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             struct pollfd pfd;
             int timeout = GET_SNDTIMEO(fd);
 
-            if (n > 0)
+            if (n >= 0)
             {
                 *lpNumberOfBytesSent += n;
                 while (first_buff < dwBufferCount && iovec[first_buff].iov_len <= n)
