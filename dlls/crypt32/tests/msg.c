@@ -1121,9 +1121,9 @@ static void test_signed_msg_update(void)
      */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-    todo_wine
-    ok(!ret && GetLastError() == NTE_BAD_KEYSET,
-     "Expected NTE_BAD_KEYSET, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == NTE_BAD_KEYSET ||
+     GetLastError() == NTE_NO_KEY),
+     "Expected NTE_BAD_KEYSET or NTE_NO_KEY, got %x\n", GetLastError());
     ret = CryptImportKey(signer.hCryptProv, (LPBYTE)privKey, sizeof(privKey),
      0, 0, &key);
     ok(ret, "CryptImportKey failed: %08x\n", GetLastError());
