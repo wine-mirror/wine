@@ -229,7 +229,7 @@ static HRESULT WINAPI xmlelem_getAttribute(IXMLElement *iface, BSTR strPropertyN
     ptr = This->node->properties;
     while (ptr)
     {
-        if (!lstrcmpiA((LPSTR)name, (LPSTR)ptr->name))
+        if (!lstrcmpiA((LPSTR)name, (LPCSTR)ptr->name))
         {
             val = xmlNodeListGetString(ptr->doc, ptr->children, 1);
             break;
