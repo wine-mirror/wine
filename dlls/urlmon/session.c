@@ -151,6 +151,7 @@ HRESULT get_protocol_handler(LPCWSTR url, CLSID *clsid, IClassFactory **ret)
     ns = find_name_space(schema);
     if(ns) {
         *ret = ns->cf;
+        IClassFactory_AddRef(*ret);
         if(clsid)
             *clsid = ns->clsid;
         return S_OK;
