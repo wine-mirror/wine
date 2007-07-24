@@ -567,6 +567,17 @@ typedef struct _CMSG_SIGNED_ENCODE_INFO_WITH_CMS
 
 static BOOL CRYPT_IsValidSigner(CMSG_SIGNER_ENCODE_INFO_WITH_CMS *signer)
 {
+    if (signer->cbSize != sizeof(CMSG_SIGNER_ENCODE_INFO) &&
+     signer->cbSize != sizeof(CMSG_SIGNER_ENCODE_INFO_WITH_CMS))
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (signer->cbSize == sizeof(CMSG_SIGNER_ENCODE_INFO_WITH_CMS))
+    {
+        FIXME("CMSG_SIGNER_ENCODE_INFO with CMS fields unsupported\n");
+        return FALSE;
+    }
     if (!signer->pCertInfo->SerialNumber.cbData)
     {
         SetLastError(E_INVALIDARG);
