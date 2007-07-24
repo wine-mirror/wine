@@ -3152,7 +3152,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, RECT *
 {
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
 
-    if (Flags & WINEDDBLT_DEPTHFILL) {
+    if (Flags & WINEDDBLT_DEPTHFILL)
         return IWineD3DDevice_Clear((IWineD3DDevice *) myDevice,
                                     DestRect == NULL ? 0 : 1,
                                     (WINED3DRECT *) DestRect,
@@ -3160,9 +3160,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, RECT *
                                     0x00000000,
                                     (float) DDBltFx->u5.dwFillDepth / (float) MAXDWORD,
                                     0x00000000);
-
-        return WINED3D_OK;
-    }
 
     FIXME("(%p): Unsupp depthstencil blit\n", This);
     return WINED3DERR_INVALIDCALL;
