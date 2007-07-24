@@ -596,8 +596,9 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
             return hres;
         }
 
-        hres = IDocHostUIHandler_ShowUI(This->hostui, 0, ACTOBJ(This), CMDTARGET(This),
-                This->frame, This->ip_window);
+        hres = IDocHostUIHandler_ShowUI(This->hostui,
+                This->usermode == EDITMODE ? DOCHOSTUITYPE_AUTHOR : DOCHOSTUITYPE_BROWSE,
+                ACTOBJ(This), CMDTARGET(This), This->frame, This->ip_window);
         if(FAILED(hres))
             IDocHostUIHandler_HideUI(This->hostui);
 
@@ -609,7 +610,6 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
 
         This->ui_active = TRUE;
     }else {
-        This->window_active = FALSE;
         if(This->ui_active) {
             This->ui_active = FALSE;
             if(This->ip_window)
