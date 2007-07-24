@@ -134,6 +134,14 @@ GpStatus WINGDIPAPI GdipDeletePen(GpPen *pen)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPenBrushFill(GpPen *pen, GpBrush **brush)
+{
+    if(!pen || !brush)
+        return InvalidParameter;
+
+    return GdipCloneBrush(pen->brush, brush);
+}
+
 GpStatus WINGDIPAPI GdipGetPenColor(GpPen *pen, ARGB *argb)
 {
     if(!pen || !argb)
