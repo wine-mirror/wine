@@ -61,8 +61,12 @@ static BOOL createObjects(void)
         hr = IDirectDraw7_SetDisplayMode(DirectDraw, 640, 480, 24, 0, 0);
 
     }
-    ok(hr == DD_OK, "IDirectDraw7_SetDisplayMode failed with %08x\n", hr);
-    if(FAILED(hr)) goto err;
+    ok(hr == DD_OK || hr == DDERR_UNSUPPORTED, "IDirectDraw7_SetDisplayMode failed with %08x\n", hr);
+    if(FAILED(hr)) {
+        /* use trace, the caller calls skip() */
+        trace("SetDisplayMode failed\n");
+        goto err;
+    }
 
     hr = IDirectDraw7_QueryInterface(DirectDraw, &IID_IDirect3D7, (void**) &Direct3D);
     if (hr == E_NOINTERFACE) goto err;

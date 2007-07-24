@@ -614,7 +614,7 @@ IDirectDrawImpl_SetDisplayMode(IDirectDraw7 *iface,
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
-        case WINED3DERR_NOTAVAILABLE:       return DDERR_INVALIDMODE;
+        case WINED3DERR_NOTAVAILABLE:       return DDERR_UNSUPPORTED;
         default:                            return hr;
     };
 }
