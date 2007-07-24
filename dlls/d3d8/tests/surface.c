@@ -59,7 +59,7 @@ static IDirect3DDevice8 *init_d3d8(HMODULE d3d8_handle)
 
     if(FAILED(hr))
     {
-        trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
         return NULL;
     }
 

@@ -136,7 +136,7 @@ static void test_mipmap_levels(void)
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     if(FAILED(hr))
     {
-        trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
         goto cleanup;
     }
 
@@ -181,7 +181,7 @@ static void test_swapchain(void)
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     if(FAILED(hr))
     {
-        trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
         goto cleanup;
     }
 
@@ -324,7 +324,7 @@ static void test_refcount(void)
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     if(FAILED(hr))
     {
-        trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
         goto cleanup;
     }
     IDirect3DDevice8_GetDeviceCaps(pDevice, &caps);
@@ -638,7 +638,7 @@ static void test_cursor(void)
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     if(FAILED(hr))
     {
-        trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
         goto cleanup;
     }
 
@@ -717,7 +717,7 @@ static void test_states(void)
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     if(FAILED(hr))
     {
-        trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
         goto cleanup;
     }
 
@@ -741,10 +741,12 @@ static void test_shader_versions(void)
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     if (pD3d != NULL) {
         hr = IDirect3D8_GetDeviceCaps(pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &d3dcaps);
-        ok(SUCCEEDED(hr), "Failed to get D3D8 caps (%s)\n", DXGetErrorString8(hr));
+        ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to get D3D8 caps (%08x)\n", hr);
         if (SUCCEEDED(hr)) {
             ok(d3dcaps.VertexShaderVersion <= D3DVS_VERSION(1,1), "Unexpected VertexShaderVersion (%#x > %#x)\n", d3dcaps.VertexShaderVersion, D3DVS_VERSION(1,1));
             ok(d3dcaps.PixelShaderVersion <= D3DPS_VERSION(1,4), "Unexpected PixelShaderVersion (%#x > %#x)\n", d3dcaps.PixelShaderVersion, D3DPS_VERSION(1,4));
+        } else {
+            skip("No Direct3D support\n");
         }
         IDirect3D8_Release(pD3d);
     }
@@ -805,8 +807,12 @@ static void test_scene(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK, "IDirect3D8_CreateDevice failed with %s\n", DXGetErrorString8(hr));
-    if(!pDevice) goto cleanup;
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %08x\n", hr);
+    if(!pDevice)
+    {
+        skip("could not create device, IDirect3D8_CreateDevice returned %08x\n", hr);
+        goto cleanup;
+    }
 
     /* Test an EndScene without beginscene. Should return an error */
     hr = IDirect3DDevice8_EndScene(pDevice);
@@ -885,8 +891,12 @@ static void test_shader(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK, "IDirect3D8_CreateDevice failed with %s\n", DXGetErrorString8(hr));
-    if(!pDevice) goto cleanup;
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %08x\n", hr);
+    if(!pDevice)
+    {
+        skip("could not create device, IDirect3D8_CreateDevice returned %08x\n", hr);
+        goto cleanup;
+    }
     IDirect3DDevice8_GetDeviceCaps(pDevice, &caps);
 
     /* First create a vertex shader */
@@ -1053,8 +1063,12 @@ static void test_limits(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK, "IDirect3D8_CreateDevice failed with %s\n", DXGetErrorString8(hr));
-    if(!pDevice) goto cleanup;
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "IDirect3D8_CreateDevice failed with %08x\n", hr);
+    if(!pDevice)
+    {
+        skip("could not create device, IDirect3D8_CreateDevice returned %08x\n", hr);
+        goto cleanup;
+    }
 
     hr = IDirect3DDevice8_CreateTexture(pDevice, 16, 16, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture);
     ok(hr == D3D_OK, "IDirect3DDevice8_CreateTexture failed with %s\n", DXGetErrorString8(hr));
