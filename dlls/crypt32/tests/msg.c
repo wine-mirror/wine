@@ -1332,11 +1332,112 @@ static void test_signed_msg_encoding(void)
      CRYPT_DELETEKEYSET);
 }
 
+static void test_signed_msg_get_param(void)
+{
+    BOOL ret;
+    HCRYPTMSG msg;
+    DWORD size, value = 0;
+    CMSG_SIGNED_ENCODE_INFO signInfo = { sizeof(signInfo), 0 };
+    CMSG_SIGNER_ENCODE_INFO signer = { sizeof(signer), 0 };
+    CERT_INFO certInfo = { 0 };
+
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+
+    /* Content and bare content are always gettable */
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    /* For "signed" messages, so is the version. */
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, NULL, &size);
+    todo_wine
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    size = sizeof(value);
+    ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, (LPBYTE)&value, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(value == CMSG_SIGNED_DATA_V1, "Expected version 1, got %d\n", value);
+    }
+    /* But for this message, with no signers, the hash and signer aren't
+     * available.
+     */
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 0, NULL, &size);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_INDEX,
+     "Expected CRYPT_E_INVALID_INDEX, got %x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_INDEX,
+     "Expected CRYPT_E_INVALID_INDEX, got %x\n", GetLastError());
+    /* As usual, the type isn't available. */
+    ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
+
+    CryptMsgClose(msg);
+
+    certInfo.SerialNumber.cbData = sizeof(serialNum);
+    certInfo.SerialNumber.pbData = serialNum;
+    certInfo.Issuer.cbData = sizeof(encodedCommonName);
+    certInfo.Issuer.pbData = encodedCommonName;
+    signer.pCertInfo = &certInfo;
+    signer.HashAlgorithm.pszObjId = oid_rsa_md5;
+    signInfo.cSigners = 1;
+    signInfo.rgSigners = &signer;
+    ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+     PROV_RSA_FULL, CRYPT_NEWKEYSET);
+    if (!ret && GetLastError() == NTE_EXISTS)
+        ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+         PROV_RSA_FULL, 0);
+    ok(ret, "CryptAcquireContextW failed: %x\n", GetLastError());
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+
+    /* This message, with one signer, has the hash and signer for index 0
+     * available, but not for other indexes.
+     */
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 0, NULL, &size);
+    todo_wine
+    ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 1, NULL, &size);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_INDEX,
+     "Expected CRYPT_E_INVALID_INDEX, got %x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 1, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_INDEX,
+     "Expected CRYPT_E_INVALID_INDEX, got %x\n", GetLastError());
+    /* As usual, the type isn't available. */
+    ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
+
+    CryptMsgClose(msg);
+
+    CryptReleaseContext(signer.hCryptProv, 0);
+    CryptAcquireContextW(&signer.hCryptProv, cspNameW, MS_DEF_PROV_W,
+     PROV_RSA_FULL, CRYPT_DELETEKEYSET);
+}
+
 static void test_signed_msg(void)
 {
     test_signed_msg_open();
     test_signed_msg_update();
     test_signed_msg_encoding();
+    test_signed_msg_get_param();
 }
 
 static CRYPT_DATA_BLOB b4 = { 0, NULL };
