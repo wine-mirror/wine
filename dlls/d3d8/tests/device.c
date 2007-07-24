@@ -854,6 +854,7 @@ static void test_shader(void)
     DWORD                        hPixelShader = 0, hVertexShader = 0;
     DWORD                        hPixelShader2 = 0, hVertexShader2 = 0;
     DWORD                        hTempHandle;
+    D3DCAPS8                     caps;
     DWORD data_size;
     void *data;
 
@@ -886,6 +887,7 @@ static void test_shader(void)
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     ok(hr == D3D_OK, "IDirect3D8_CreateDevice failed with %s\n", DXGetErrorString8(hr));
     if(!pDevice) goto cleanup;
+    IDirect3DDevice8_GetDeviceCaps(pDevice, &caps);
 
     /* First create a vertex shader */
     hr = IDirect3DDevice8_CreateVertexShader(pDevice, dwVertexDecl, simple_vs, &hVertexShader, 0);
@@ -940,42 +942,65 @@ static void test_shader(void)
     ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %s\n", DXGetErrorString8(hr));
     ok(hTempHandle == 0, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, 0);
 
-    /* The same with a pixel shader */
-    hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
-    /* Msdn says that the new pixel shader is set immediately. This is wrong, apparently */
-    hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
-    ok(hTempHandle == 0, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, 0);
-    /* Assign the shader, then verify that GetPixelShader works */
-    hr = IDirect3DDevice8_SetPixelShader(pDevice, hPixelShader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader returned %s\n", DXGetErrorString8(hr));
-    hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
-    ok(hTempHandle == hPixelShader, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, hPixelShader);
-    /* Verify that we can retrieve the shader function */
-    hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, NULL, &data_size);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShaderFucntion returned %s\n", DXGetErrorString8(hr));
-    ok(data_size == simple_ps_size, "Got data_size %u, expected %u\n", data_size, simple_ps_size);
-    data = HeapAlloc(GetProcessHeap(), 0, simple_ps_size);
-    data_size = 1;
-    hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, data, &data_size);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_GetPixelShaderFunction returned %s (0x%#x), "
-            "expected D3DERR_INVALIDCALL\n", DXGetErrorString8(hr), hr);
-    ok(data_size == 1, "Got data_size %u, expected 1\n", data_size);
-    data_size = simple_ps_size;
-    hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, data, &data_size);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShaderFunction returned %s\n", DXGetErrorString8(hr));
-    ok(data_size == simple_ps_size, "Got data_size %u, expected %u\n", data_size, simple_ps_size);
-    ok(!memcmp(data, simple_ps, simple_ps_size), "data not equal to shader function\n");
-    HeapFree(GetProcessHeap(), 0, data);
-    /* Delete the assigned shader. This is supposed to work */
-    hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
-    /* The shader should be unset now */
-    hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
-    ok(hTempHandle == 0, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, 0);
+    if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 0))
+    {
+        /* The same with a pixel shader */
+        hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader);
+        ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
+        /* Msdn says that the new pixel shader is set immediately. This is wrong, apparently */
+        hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hTempHandle == 0, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, 0);
+        /* Assign the shader, then verify that GetPixelShader works */
+        hr = IDirect3DDevice8_SetPixelShader(pDevice, hPixelShader);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader returned %s\n", DXGetErrorString8(hr));
+        hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hTempHandle == hPixelShader, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, hPixelShader);
+        /* Verify that we can retrieve the shader function */
+        hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, NULL, &data_size);
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShaderFucntion returned %s\n", DXGetErrorString8(hr));
+        ok(data_size == simple_ps_size, "Got data_size %u, expected %u\n", data_size, simple_ps_size);
+        data = HeapAlloc(GetProcessHeap(), 0, simple_ps_size);
+        data_size = 1;
+        hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, data, &data_size);
+        ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_GetPixelShaderFunction returned %s (0x%#x), "
+                "expected D3DERR_INVALIDCALL\n", DXGetErrorString8(hr), hr);
+        ok(data_size == 1, "Got data_size %u, expected 1\n", data_size);
+        data_size = simple_ps_size;
+        hr = IDirect3DDevice8_GetPixelShaderFunction(pDevice, hPixelShader, data, &data_size);
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShaderFunction returned %s\n", DXGetErrorString8(hr));
+        ok(data_size == simple_ps_size, "Got data_size %u, expected %u\n", data_size, simple_ps_size);
+        ok(!memcmp(data, simple_ps, simple_ps_size), "data not equal to shader function\n");
+        HeapFree(GetProcessHeap(), 0, data);
+        /* Delete the assigned shader. This is supposed to work */
+        hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
+        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
+        /* The shader should be unset now */
+        hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hTempHandle == 0, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, 0);
+
+        /* What happens if a non-bound shader is deleted? */
+        hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader);
+        ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
+        hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader2);
+        ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
+
+        hr = IDirect3DDevice8_SetPixelShader(pDevice, hPixelShader);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader returned %s\n", DXGetErrorString8(hr));
+        hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader2);
+        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
+        hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
+        ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+        ok(hTempHandle == hPixelShader, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, hPixelShader);
+        hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
+        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
+    }
+    else
+    {
+        skip("Pixel shaders not supported\n");
+    }
 
     /* What happens if a non-bound shader is deleted? */
     hr = IDirect3DDevice8_CreateVertexShader(pDevice, dwVertexDecl, NULL, &hVertexShader, 0);
@@ -992,22 +1017,6 @@ static void test_shader(void)
     ok(hTempHandle == hVertexShader, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, hVertexShader);
     hr = IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
     ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %s\n", DXGetErrorString8(hr));
-
-    /* Now for pixel shaders */
-    hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
-    hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader2);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
-
-    hr = IDirect3DDevice8_SetPixelShader(pDevice, hPixelShader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader returned %s\n", DXGetErrorString8(hr));
-    hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader2);
-    ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
-    hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
-    ok(hTempHandle == hPixelShader, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, hPixelShader);
-    hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
 
 cleanup:
     if(pD3d) IDirect3D8_Release(pD3d);
