@@ -75,6 +75,7 @@ static HRESULT parse_canonicalize_url(LPCWSTR url, DWORD flags, LPWSTR result,
     if(protocol_info) {
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, url, PARSE_CANONICALIZE,
                 flags, result, size, rsize, 0);
+        IInternetProtocolInfo_Release(protocol_info);
         if(SUCCEEDED(hres))
             return hres;
     }
@@ -98,6 +99,7 @@ static HRESULT parse_security_url(LPCWSTR url, DWORD flags, LPWSTR result, DWORD
     if(protocol_info) {
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, url, PARSE_SECURITY_URL,
                 flags, result, size, rsize, 0);
+        IInternetProtocolInfo_Release(protocol_info);
         return hres;
     }
 
@@ -117,6 +119,7 @@ static HRESULT parse_encode(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size,
     if(protocol_info) {
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, url, PARSE_ENCODE,
                 flags, result, size, rsize, 0);
+        IInternetProtocolInfo_Release(protocol_info);
         if(SUCCEEDED(hres))
             return hres;
     }
@@ -143,6 +146,7 @@ static HRESULT parse_path_from_url(LPCWSTR url, DWORD flags, LPWSTR result, DWOR
     if(protocol_info) {
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, url, PARSE_PATH_FROM_URL,
                 flags, result, size, rsize, 0);
+        IInternetProtocolInfo_Release(protocol_info);
         if(SUCCEEDED(hres))
             return hres;
     }
@@ -168,6 +172,7 @@ static HRESULT parse_security_domain(LPCWSTR url, DWORD flags, LPWSTR result,
     if(protocol_info) {
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, url, PARSE_SECURITY_DOMAIN,
                 flags, result, size, rsize, 0);
+        IInternetProtocolInfo_Release(protocol_info);
         if(SUCCEEDED(hres))
             return hres;
     }
@@ -224,6 +229,7 @@ HRESULT WINAPI CoInternetCombineUrl(LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl,
     if(protocol_info) {
         hres = IInternetProtocolInfo_CombineUrl(protocol_info, pwzBaseUrl, pwzRelativeUrl,
                 dwCombineFlags, pwzResult, cchResult, pcchResult, dwReserved);
+        IInternetProtocolInfo_Release(protocol_info);
         if(SUCCEEDED(hres))
             return hres;
     }
@@ -251,6 +257,7 @@ HRESULT WINAPI CoInternetCompareUrl(LPCWSTR pwzUrl1, LPCWSTR pwzUrl2, DWORD dwCo
 
     if(protocol_info) {
         hres = IInternetProtocolInfo_CompareUrl(protocol_info, pwzUrl1, pwzUrl2, dwCompareFlags);
+        IInternetProtocolInfo_Release(protocol_info);
         if(SUCCEEDED(hres))
             return hres;
     }
