@@ -588,6 +588,32 @@ static VOID test_thread_priority(void)
        "GetThreadPriority Failed\n");
    ok(SetThreadPriority(curthread,0)!=0,"SetThreadPriority Failed\n");
 
+/* Check that the thread priority is not changed if SetThreadPriority
+   is called with a value outside of the max/min range */
+   SetThreadPriority(curthread,min_priority);
+   SetLastError(0xdeadbeef);
+   rc = SetThreadPriority(curthread,min_priority-1);
+
+   todo_wine {
+     ok(rc == FALSE, "SetThreadPriority passed with a bad argument\n");
+     ok(GetLastError() == ERROR_INVALID_PARAMETER,
+        "SetThreadPriority error %d, expected ERROR_INVALID_PARAMETER (87)\n", GetLastError());
+     ok(GetThreadPriority(curthread)==min_priority,
+        "GetThreadPriority didn't return min_priority\n");
+   }
+
+   SetThreadPriority(curthread,max_priority);
+   SetLastError(0xdeadbeef);
+   rc = SetThreadPriority(curthread,max_priority+1);
+
+   todo_wine {
+     ok(rc == FALSE, "SetThreadPriority passed with a bad argument\n");
+     ok(GetLastError() == ERROR_INVALID_PARAMETER,
+        "SetThreadPriority error %d, expected ERROR_INVALID_PARAMETER (87)\n", GetLastError());
+     ok(GetThreadPriority(curthread)==max_priority,
+        "GetThreadPriority didn't return max_priority\n");
+   }
+
 /* Check thread priority boost */
    if (!pGetThreadPriorityBoost || !pSetThreadPriorityBoost) 
      return; /* Win9x */
