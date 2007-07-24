@@ -72,12 +72,45 @@ static BYTE convert_path_point_type(BYTE type)
     return ret;
 }
 
+/* This helper applies all the changes that the points listed in ptf need in
+ * order to be drawn on the device context.  In the end, this should include at
+ * least:
+ *  -scaling by page unit
+ *  -applying world transformation
+ *  -converting from float to int
+ * Native gdiplus uses gdi32 to do all this (via SetMapMode, SetViewportExtEx,
+ * SetWindowExtEx, SetWorldTransform, etc.) but we cannot because we are using
+ * gdi to draw, and these functions would irreparably mess with line widths.
+ */
+static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
+    GDIPCONST GpPointF *ptf, INT count)
+{
+    REAL unitscale;
+    int i;
+
+    switch(graphics->unit)
+    {
+        case UnitInch:
+            unitscale = GetDeviceCaps(graphics->hdc, LOGPIXELSX);
+            break;
+        default:
+            unitscale = 1.0;
+            break;
+    }
+
+    for(i = 0; i < count; i++){
+        pti[i].x = roundr(unitscale * ptf[i].X);
+        pti[i].y = roundr(unitscale * ptf[i].Y);
+    }
+}
+
 /* GdipDrawPie/GdipFillPie helper function */
 static GpStatus draw_pie(GpGraphics *graphics, HBRUSH gdibrush, HPEN gdipen,
     REAL x, REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
 {
     INT save_state;
-    REAL x_0, y_0, x_1, y_1, x_2, y_2;
+    GpPointF ptf[4];
+    POINT pti[4];
 
     if(!graphics)
         return InvalidParameter;
@@ -87,14 +120,18 @@ static GpStatus draw_pie(GpGraphics *graphics, HBRUSH gdibrush, HPEN gdipen,
     SelectObject(graphics->hdc, gdipen);
     SelectObject(graphics->hdc, gdibrush);
 
-    x_0 = x + (width/2.0);
-    y_0 = y + (height/2.0);
+    ptf[0].X = x;
+    ptf[0].Y = y;
+    ptf[1].X = x + width;
+    ptf[1].Y = y + height;
 
-    deg2xy(startAngle+sweepAngle, x_0, y_0, &x_1, &y_1);
-    deg2xy(startAngle, x_0, y_0, &x_2, &y_2);
+    deg2xy(startAngle+sweepAngle, x + width / 2.0, y + width / 2.0, &ptf[2].X, &ptf[2].Y);
+    deg2xy(startAngle, x + width / 2.0, y + width / 2.0, &ptf[3].X, &ptf[3].Y);
 
-    Pie(graphics->hdc, roundr(x), roundr(y), roundr(x+width), roundr(y+height),
-        roundr(x_1), roundr(y_1), roundr(x_2), roundr(y_2));
+    transform_and_round_points(graphics, pti, ptf, 4);
+
+    Pie(graphics->hdc, pti[0].x, pti[0].y, pti[1].x, pti[1].y, pti[2].x,
+        pti[2].y, pti[3].x, pti[3].y);
 
     RestoreDC(graphics->hdc, save_state);
 
@@ -132,17 +169,17 @@ static void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
 /* Draws the linecap the specified color and size on the hdc.  The linecap is in
  * direction of the line from x1, y1 to x2, y2 and is anchored on x2, y2. Probably
  * should not be called on an hdc that has a path you care about. */
-static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
+static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL size,
     const GpCustomLineCap *custom, REAL x1, REAL y1, REAL x2, REAL y2)
 {
     HGDIOBJ oldbrush, oldpen;
     GpMatrix *matrix = NULL;
     HBRUSH brush;
     HPEN pen;
-    PointF *custptf = NULL;
+    PointF ptf[4], *custptf = NULL;
     POINT pt[4], *custpt = NULL;
     BYTE *tp = NULL;
-    REAL theta, dsmall, dbig, dx, dy;
+    REAL theta, dsmall, dbig, dx, dy = 0.0;
     INT i, count;
     LOGBRUSH lb;
 
@@ -158,8 +195,8 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
     pen = ExtCreatePen(PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_FLAT,
                ((cap == LineCapCustom) && custom && (custom->fill)) ? size : 1,
                &lb, 0, NULL);
-    oldbrush = SelectObject(hdc, brush);
-    oldpen = SelectObject(hdc, pen);
+    oldbrush = SelectObject(graphics->hdc, brush);
+    oldpen = SelectObject(graphics->hdc, pen);
 
     switch(cap){
         case LineCapFlat:
@@ -177,21 +214,20 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
                 dbig = sin(theta + M_PI_4) * size;
             }
 
-            /* calculating the latter points from the earlier points makes them
-             * look a little better because of rounding issues */
-            pt[0].x = roundr(x2 - dsmall);
-            pt[1].x = roundr(((REAL)pt[0].x) + dbig + dsmall);
+            ptf[0].X = x2 - dsmall;
+            ptf[1].X = x2 + dbig;
 
-            pt[0].y = roundr(y2 - dbig);
-            pt[3].y = roundr(((REAL)pt[0].y) + dsmall + dbig);
+            ptf[0].Y = y2 - dbig;
+            ptf[3].Y = y2 + dsmall;
 
-            pt[1].y = roundr(y2 - dsmall);
-            pt[2].y = roundr(dbig + dsmall + ((REAL)pt[1].y));
+            ptf[1].Y = y2 - dsmall;
+            ptf[2].Y = y2 + dbig;
 
-            pt[3].x = roundr(x2 - dbig);
-            pt[2].x = roundr(((REAL)pt[3].x) + dsmall + dbig);
+            ptf[3].X = x2 - dbig;
+            ptf[2].X = x2 + dsmall;
 
-            Polygon(hdc, pt, 4);
+            transform_and_round_points(graphics, pt, ptf, 4);
+            Polygon(graphics->hdc, pt, 4);
 
             break;
         case LineCapArrowAnchor:
@@ -200,67 +236,74 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
             dx = cos(M_PI / 6.0 + theta) * size;
             dy = sin(M_PI / 6.0 + theta) * size;
 
-            pt[0].x = roundr(x2 - dx);
-            pt[0].y = roundr(y2 - dy);
+            ptf[0].X = x2 - dx;
+            ptf[0].Y = y2 - dy;
 
             dx = cos(- M_PI / 6.0 + theta) * size;
             dy = sin(- M_PI / 6.0 + theta) * size;
 
-            pt[1].x = roundr(x2 - dx);
-            pt[1].y = roundr(y2 - dy);
+            ptf[1].X = x2 - dx;
+            ptf[1].Y = y2 - dy;
 
-            pt[2].x = roundr(x2);
-            pt[2].y = roundr(y2);
+            ptf[2].X = x2;
+            ptf[2].Y = y2;
 
-            Polygon(hdc, pt, 3);
+            transform_and_round_points(graphics, pt, ptf, 3);
+            Polygon(graphics->hdc, pt, 3);
 
             break;
         case LineCapRoundAnchor:
             dx = dy = ANCHOR_WIDTH * size / 2.0;
 
-            x2 = (REAL) roundr(x2 - dx);
-            y2 = (REAL) roundr(y2 - dy);
+            ptf[0].X = x2 - dx;
+            ptf[0].Y = y2 - dy;
+            ptf[1].X = x2 + dx;
+            ptf[1].Y = y2 + dy;
 
-            Ellipse(hdc, (INT) x2, (INT) y2, roundr(x2 + 2.0 * dx),
-                roundr(y2 + 2.0 * dy));
+            transform_and_round_points(graphics, pt, ptf, 2);
+            Ellipse(graphics->hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
+
             break;
         case LineCapTriangle:
             size = size / 2.0;
             dx = cos(M_PI_2 + theta) * size;
             dy = sin(M_PI_2 + theta) * size;
 
-            /* Using roundr here can make the triangle float off the end of the
-             * line. */
-            pt[0].x = ((x2 - x1) >= 0 ? floorf(x2 - dx) : ceilf(x2 - dx));
-            pt[0].y = ((y2 - y1) >= 0 ? floorf(y2 - dy) : ceilf(y2 - dy));
-            pt[1].x = roundr(pt[0].x + 2.0 * dx);
-            pt[1].y = roundr(pt[0].y + 2.0 * dy);
+            ptf[0].X = x2 - dx;
+            ptf[0].Y = y2 - dy;
+            ptf[1].X = x2 + dx;
+            ptf[1].Y = y2 + dy;
 
             dx = cos(theta) * size;
             dy = sin(theta) * size;
 
-            pt[2].x = roundr(x2 + dx);
-            pt[2].y = roundr(y2 + dy);
+            ptf[2].X = x2 + dx;
+            ptf[2].Y = y2 + dy;
 
-            Polygon(hdc, pt, 3);
+            transform_and_round_points(graphics, pt, ptf, 3);
+            Polygon(graphics->hdc, pt, 3);
 
             break;
         case LineCapRound:
+            dx = dy = size / 2.0;
+
+            ptf[0].X = x2 - dx;
+            ptf[0].Y = y2 - dy;
+            ptf[1].X = x2 + dx;
+            ptf[1].Y = y2 + dy;
+
             dx = -cos(M_PI_2 + theta) * size;
             dy = -sin(M_PI_2 + theta) * size;
 
-            pt[0].x = ((x2 - x1) >= 0 ? floorf(x2 - dx) : ceilf(x2 - dx));
-            pt[0].y = ((y2 - y1) >= 0 ? floorf(y2 - dy) : ceilf(y2 - dy));
-            pt[1].x = roundr(pt[0].x + 2.0 * dx);
-            pt[1].y = roundr(pt[0].y + 2.0 * dy);
+            ptf[2].X = x2 - dx;
+            ptf[2].Y = y2 - dy;
+            ptf[3].X = x2 + dx;
+            ptf[3].Y = y2 + dy;
 
-            dx = dy = size / 2.0;
+            transform_and_round_points(graphics, pt, ptf, 4);
+            Pie(graphics->hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y, pt[2].x,
+                pt[2].y, pt[3].x, pt[3].y);
 
-            x2 = (REAL) roundr(x2 - dx);
-            y2 = (REAL) roundr(y2 - dy);
-
-            Pie(hdc, (INT) x2, (INT) y2, roundr(x2 + 2.0 * dx),
-                roundr(y2 + 2.0 * dy), pt[0].x, pt[0].y, pt[1].x, pt[1].y);
             break;
         case LineCapCustom:
             if(!custom)
@@ -282,20 +325,19 @@ static void draw_cap(HDC hdc, COLORREF color, GpLineCap cap, REAL size,
             GdipTranslateMatrix(matrix, x2, y2, MatrixOrderAppend);
             GdipTransformMatrixPoints(matrix, custptf, count);
 
-            for(i = 0; i < count; i++){
-                custpt[i].x = roundr(custptf[i].X);
-                custpt[i].y = roundr(custptf[i].Y);
+            transform_and_round_points(graphics, custpt, custptf, count);
+
+            for(i = 0; i < count; i++)
                 tp[i] = convert_path_point_type(custom->pathdata.Types[i]);
-            }
 
             if(custom->fill){
-                BeginPath(hdc);
-                PolyDraw(hdc, custpt, tp, count);
-                EndPath(hdc);
-                StrokeAndFillPath(hdc);
+                BeginPath(graphics->hdc);
+                PolyDraw(graphics->hdc, custpt, tp, count);
+                EndPath(graphics->hdc);
+                StrokeAndFillPath(graphics->hdc);
             }
             else
-                PolyDraw(hdc, custpt, tp, count);
+                PolyDraw(graphics->hdc, custpt, tp, count);
 
 custend:
             GdipFree(custptf);
@@ -307,8 +349,8 @@ custend:
             break;
     }
 
-    SelectObject(hdc, oldbrush);
-    SelectObject(hdc, oldpen);
+    SelectObject(graphics->hdc, oldbrush);
+    SelectObject(graphics->hdc, oldpen);
     DeleteObject(brush);
     DeleteObject(pen);
 }
@@ -356,12 +398,11 @@ static void shorten_line_amt(REAL x1, REAL y1, REAL *x2, REAL *y2, REAL amt)
 
 /* Draws lines between the given points, and if caps is true then draws an endcap
  * at the end of the last line.  FIXME: Startcaps not implemented. */
-static GpStatus draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
-    INT count, BOOL caps)
+static GpStatus draw_polyline(GpGraphics *graphics, GpPen *pen,
+    GDIPCONST GpPointF * pt, INT count, BOOL caps)
 {
     POINT *pti = NULL;
     GpPointF *ptcopy = NULL;
-    INT i;
     GpStatus status = GenericError;
 
     if(!count)
@@ -375,9 +416,9 @@ static GpStatus draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
         goto end;
     }
 
-    memcpy(ptcopy, pt, count * sizeof(GpPointF));
-
     if(caps){
+        memcpy(ptcopy, pt, count * sizeof(GpPointF));
+
         if(pen->endcap == LineCapArrowAnchor)
             shorten_line_amt(ptcopy[count-2].X, ptcopy[count-2].Y,
                              &ptcopy[count-1].X, &ptcopy[count-1].Y, pen->width);
@@ -394,18 +435,17 @@ static GpStatus draw_polyline(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                              &ptcopy[0].X, &ptcopy[0].Y,
                              pen->customend->inset * pen->width);
 
-        draw_cap(hdc, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
+        draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
                  pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X, pt[count - 1].Y);
-        draw_cap(hdc, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
-                         pt[1].X, pt[1].Y, pt[0].X, pt[0].Y);
-    }
+        draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
+                         pt[1].X, pt[1].Y, pt[0].X, pt[0].Y);\
 
-    for(i = 0; i < count; i ++){
-        pti[i].x = roundr(ptcopy[i].X);
-        pti[i].y = roundr(ptcopy[i].Y);
+        transform_and_round_points(graphics, pti, ptcopy, count);
     }
+    else
+        transform_and_round_points(graphics, pti, pt, count);
 
-    Polyline(hdc, pti, count);
+    Polyline(graphics->hdc, pti, count);
 
 end:
     GdipFree(pti);
@@ -459,12 +499,11 @@ static void shorten_bezier_amt(GpPointF * pt, REAL amt, BOOL rev)
 
 /* Draws bezier curves between given points, and if caps is true then draws an
  * endcap at the end of the last line.  FIXME: Startcaps not implemented. */
-static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
-    INT count, BOOL caps)
+static GpStatus draw_polybezier(GpGraphics *graphics, GpPen *pen,
+    GDIPCONST GpPointF * pt, INT count, BOOL caps)
 {
     POINT *pti, curpos;
     GpPointF *ptcopy;
-    INT i;
     REAL x, y;
     GpStatus status = GenericError;
 
@@ -479,9 +518,9 @@ static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
         goto end;
     }
 
-    memcpy(ptcopy, pt, count * sizeof(GpPointF));
-
     if(caps){
+        memcpy(ptcopy, pt, count * sizeof(GpPointF));
+
         if(pen->endcap == LineCapArrowAnchor)
             shorten_bezier_amt(&ptcopy[count-4], pen->width, FALSE);
         /* FIXME The following is seemingly correct only for baseinset < 0 or
@@ -492,9 +531,9 @@ static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
             y = pt[count - 1].Y;
             shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
                              pen->width * pen->customend->inset);
-            MoveToEx(hdc, roundr(pt[count - 1].X), roundr(pt[count - 1].Y), &curpos);
-            LineTo(hdc, roundr(x), roundr(y));
-            MoveToEx(hdc, curpos.x, curpos.y, NULL);
+            MoveToEx(graphics->hdc, roundr(pt[count - 1].X), roundr(pt[count - 1].Y), &curpos);
+            LineTo(graphics->hdc, roundr(x), roundr(y));
+            MoveToEx(graphics->hdc, curpos.x, curpos.y, NULL);
         }
 
         if(pen->startcap == LineCapArrowAnchor)
@@ -504,30 +543,29 @@ static GpStatus draw_polybezier(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
             y = ptcopy[0].Y;
             shorten_line_amt(ptcopy[1].X, ptcopy[1].Y, &x, &y,
                              pen->width * pen->customend->inset);
-            MoveToEx(hdc, roundr(pt[0].X), roundr(pt[0].Y), &curpos);
-            LineTo(hdc, roundr(x), roundr(y));
-            MoveToEx(hdc, curpos.x, curpos.y, NULL);
+            MoveToEx(graphics->hdc, roundr(pt[0].X), roundr(pt[0].Y), &curpos);
+            LineTo(graphics->hdc, roundr(x), roundr(y));
+            MoveToEx(graphics->hdc, curpos.x, curpos.y, NULL);
         }
 
         /* the direction of the line cap is parallel to the direction at the
          * end of the bezier (which, if it has been shortened, is not the same
          * as the direction from pt[count-2] to pt[count-1]) */
-        draw_cap(hdc, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
+        draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
             pt[count - 1].X - (ptcopy[count - 1].X - ptcopy[count - 2].X),
             pt[count - 1].Y - (ptcopy[count - 1].Y - ptcopy[count - 2].Y),
             pt[count - 1].X, pt[count - 1].Y);
 
-        draw_cap(hdc, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
+        draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
             pt[0].X - (ptcopy[0].X - ptcopy[1].X),
             pt[0].Y - (ptcopy[0].Y - ptcopy[1].Y), pt[0].X, pt[0].Y);
-    }
 
-    for(i = 0; i < count; i ++){
-        pti[i].x = roundr(ptcopy[i].X);
-        pti[i].y = roundr(ptcopy[i].Y);
+        transform_and_round_points(graphics, pti, ptcopy, count);
     }
+    else
+        transform_and_round_points(graphics, pti, pt, count);
 
-    PolyBezier(hdc, pti, count);
+    PolyBezier(graphics->hdc, pti, count);
 
     status = Ok;
 
@@ -539,7 +577,7 @@ end:
 }
 
 /* Draws a combination of bezier curves and lines between points. */
-static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
+static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF * pt,
     GDIPCONST BYTE * types, INT count, BOOL caps)
 {
     POINT *pti = GdipAlloc(count * sizeof(POINT)), curpos;
@@ -583,12 +621,13 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                     y = pt[count - 1].Y;
                     shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
                                      pen->width * pen->customend->inset);
-                    MoveToEx(hdc, roundr(pt[count - 1].X), roundr(pt[count - 1].Y), &curpos);
-                    LineTo(hdc, roundr(x), roundr(y));
-                    MoveToEx(hdc, curpos.x, curpos.y, NULL);
+                    MoveToEx(graphics->hdc, roundr(pt[count - 1].X),
+                             roundr(pt[count - 1].Y), &curpos);
+                    LineTo(graphics->hdc, roundr(x), roundr(y));
+                    MoveToEx(graphics->hdc, curpos.x, curpos.y, NULL);
                 }
 
-                draw_cap(hdc, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
+                draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
                     pt[count - 1].X - (ptcopy[count - 1].X - ptcopy[count - 2].X),
                     pt[count - 1].Y - (ptcopy[count - 1].Y - ptcopy[count - 2].Y),
                     pt[count - 1].X, pt[count - 1].Y);
@@ -604,7 +643,7 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                                      &ptcopy[count - 1].X, &ptcopy[count - 1].Y,
                                      pen->customend->inset * pen->width);
 
-                draw_cap(hdc, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
+                draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
                          pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X,
                          pt[count - 1].Y);
 
@@ -627,12 +666,12 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                     y = pt[j - 1].Y;
                     shorten_line_amt(ptcopy[j].X, ptcopy[j].Y, &x, &y,
                                      pen->width * pen->customstart->inset);
-                    MoveToEx(hdc, roundr(pt[j - 1].X), roundr(pt[j - 1].Y), &curpos);
-                    LineTo(hdc, roundr(x), roundr(y));
-                    MoveToEx(hdc, curpos.x, curpos.y, NULL);
+                    MoveToEx(graphics->hdc, roundr(pt[j - 1].X), roundr(pt[j - 1].Y), &curpos);
+                    LineTo(graphics->hdc, roundr(x), roundr(y));
+                    MoveToEx(graphics->hdc, curpos.x, curpos.y, NULL);
                 }
 
-                draw_cap(hdc, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
+                draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
                     pt[j - 1].X - (ptcopy[j - 1].X - ptcopy[j].X),
                     pt[j - 1].Y - (ptcopy[j - 1].Y - ptcopy[j].Y),
                     pt[j - 1].X, pt[j - 1].Y);
@@ -648,7 +687,7 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                                      &ptcopy[j - 1].X, &ptcopy[j - 1].Y,
                                      pen->customstart->inset * pen->width);
 
-                draw_cap(hdc, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customstart,
+                draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customstart,
                          pt[j].X, pt[j].Y, pt[j - 1].X,
                          pt[j - 1].Y);
 
@@ -657,22 +696,16 @@ static GpStatus draw_poly(HDC hdc, GpPen *pen, GDIPCONST GpPointF * pt,
                 ERR("Bad path points\n");
                 goto end;
         }
-        for(i = 0; i < count; i++){
-            pti[i].x = roundr(ptcopy[i].X);
-            pti[i].y = roundr(ptcopy[i].Y);
-        }
+        transform_and_round_points(graphics, pti, ptcopy, count);
     }
     else
-        for(i = 0; i < count; i++){
-            pti[i].x = roundr(pt[i].X);
-            pti[i].y = roundr(pt[i].Y);
-        }
+        transform_and_round_points(graphics, pti, pt, count);
 
     for(i = 0; i < count; i++){
         tp[i] = convert_path_point_type(types[i]);
     }
 
-    PolyDraw(hdc, pti, tp, count);
+    PolyDraw(graphics->hdc, pti, tp, count);
 
     status = Ok;
 
@@ -745,7 +778,7 @@ GpStatus WINGDIPAPI GdipDrawArc(GpGraphics *graphics, GpPen *pen, REAL x,
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    retval = draw_polybezier(graphics->hdc, pen, points, num_pts, TRUE);
+    retval = draw_polybezier(graphics, pen, points, num_pts, TRUE);
 
     RestoreDC(graphics->hdc, save_state);
 
@@ -775,7 +808,7 @@ GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    retval = draw_polybezier(graphics->hdc, pen, pt, 4, TRUE);
+    retval = draw_polybezier(graphics, pen, pt, 4, TRUE);
 
     RestoreDC(graphics->hdc, save_state);
 
@@ -829,7 +862,7 @@ GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    retval = draw_polybezier(graphics->hdc, pen, pt, len_pt, TRUE);
+    retval = draw_polybezier(graphics, pen, pt, len_pt, TRUE);
 
     GdipFree(pt);
     RestoreDC(graphics->hdc, save_state);
@@ -856,7 +889,7 @@ GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    retval = draw_polyline(graphics->hdc, pen, pt, 2, TRUE);
+    retval = draw_polyline(graphics, pen, pt, 2, TRUE);
 
     RestoreDC(graphics->hdc, save_state);
 
@@ -876,7 +909,7 @@ GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    retval = draw_polyline(graphics->hdc, pen, points, count, TRUE);
+    retval = draw_polyline(graphics, pen, points, count, TRUE);
 
     RestoreDC(graphics->hdc, save_state);
 
@@ -895,7 +928,7 @@ GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
     EndPath(graphics->hdc);
     SelectObject(graphics->hdc, pen->gdipen);
 
-    retval = draw_poly(graphics->hdc, pen, path->pathdata.Points,
+    retval = draw_poly(graphics, pen, path->pathdata.Points,
                        path->pathdata.Types, path->pathdata.Count, TRUE);
 
     RestoreDC(graphics->hdc, save_state);
@@ -948,7 +981,7 @@ GpStatus WINGDIPAPI GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *p
                                                                     : WINDING));
 
     BeginPath(graphics->hdc);
-    retval = draw_poly(graphics->hdc, NULL, path->pathdata.Points,
+    retval = draw_poly(graphics, NULL, path->pathdata.Points,
                        path->pathdata.Types, path->pathdata.Count, FALSE);
 
     if(retval != Ok)
@@ -978,10 +1011,25 @@ GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
 GpStatus WINGDIPAPI GdipFillPolygonI(GpGraphics *graphics, GpBrush *brush,
     GDIPCONST GpPoint *points, INT count, GpFillMode fillMode)
 {
-    INT save_state;
+    INT save_state, i;
+    GpPointF *ptf = NULL;
+    POINT *pti = NULL;
+    GpStatus retval = Ok;
 
     if(!graphics || !brush || !points || !count)
         return InvalidParameter;
+
+    ptf = GdipAlloc(count * sizeof(GpPointF));
+    pti = GdipAlloc(count * sizeof(POINT));
+    if(!ptf || !pti){
+        retval = OutOfMemory;
+        goto end;
+    }
+
+    for(i = 0; i < count; i ++){
+        ptf[i].X = (REAL) points[i].X;
+        ptf[i].Y = (REAL) points[i].Y;
+    }
 
     save_state = SaveDC(graphics->hdc);
     EndPath(graphics->hdc);
@@ -989,10 +1037,17 @@ GpStatus WINGDIPAPI GdipFillPolygonI(GpGraphics *graphics, GpBrush *brush,
     SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
     SetPolyFillMode(graphics->hdc, (fillMode == FillModeAlternate ? ALTERNATE
                                                                   : WINDING));
-    Polygon(graphics->hdc, (GDIPCONST POINT*) points, count);
+
+    transform_and_round_points(graphics, pti, ptf, count);
+    Polygon(graphics->hdc, pti, count);
 
     RestoreDC(graphics->hdc, save_state);
-    return Ok;
+
+end:
+    GdipFree(ptf);
+    GdipFree(pti);
+
+    return retval;
 }
 
 /* FIXME: Compositing quality is not used anywhere except the getter/setter. */
