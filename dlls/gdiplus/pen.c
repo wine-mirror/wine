@@ -134,6 +134,14 @@ GpStatus WINGDIPAPI GdipDeletePen(GpPen *pen)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPenColor(GpPen *pen, ARGB *argb)
+{
+    if(!pen || !argb)
+        return InvalidParameter;
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipGetPenDashStyle(GpPen *pen, GpDashStyle *dash)
 {
     if(!pen || !dash)

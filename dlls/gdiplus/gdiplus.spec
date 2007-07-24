@@ -333,7 +333,7 @@
 @ stdcall GdipGetPathWorldBounds(ptr ptr ptr ptr)
 @ stub GdipGetPathWorldBoundsI
 @ stub GdipGetPenBrushFill
-@ stub GdipGetPenColor
+@ stdcall GdipGetPenColor(ptr ptr)
 @ stub GdipGetPenCompoundArray
 @ stub GdipGetPenCompoundCount
 @ stub GdipGetPenCustomEndCap
