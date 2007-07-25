@@ -48,6 +48,10 @@ WINE_DECLARE_DEBUG_CHANNEL(snoop);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 WINE_DECLARE_DEBUG_CHANNEL(imports);
 
+/* we don't want to include winuser.h */
+#define RT_MANIFEST                         ((ULONG_PTR)24)
+#define ISOLATIONAWARE_MANIFEST_RESOURCE_ID ((ULONG_PTR)2)
+
 typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 
 static int process_detaching = 0;  /* set on process detach to avoid deadlocks with thread detach */
@@ -578,6 +582,32 @@ done:
 }
 
 
+/***********************************************************************
+ *           create_module_activation_context
+ */
+static NTSTATUS create_module_activation_context( LDR_MODULE *module )
+{
+    NTSTATUS status;
+    LDR_RESOURCE_INFO info;
+    const IMAGE_RESOURCE_DATA_ENTRY *entry;
+
+    info.Type = RT_MANIFEST;
+    info.Name = ISOLATIONAWARE_MANIFEST_RESOURCE_ID;
+    info.Language = 0;
+    if (!(status = LdrFindResource_U( module->BaseAddress, &info, 3, &entry )))
+    {
+        ACTCTXW ctx;
+        ctx.cbSize   = sizeof(ctx);
+        ctx.lpSource = NULL;
+        ctx.dwFlags  = ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID;
+        ctx.hModule  = module->BaseAddress;
+        ctx.lpResourceName = (LPCWSTR)ISOLATIONAWARE_MANIFEST_RESOURCE_ID;
+        status = RtlCreateActivationContext( &module->ActivationContext, &ctx );
+    }
+    return status;
+}
+
+
 /****************************************************************
  *       fixup_imports
  *
@@ -594,6 +624,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
 
     if (!(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS)) return STATUS_SUCCESS;  /* already done */
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
+    create_module_activation_context( &wm->ldr );
 
     if (!(imports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
                                                   IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
@@ -651,6 +682,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     wm->ldr.SectionHandle = NULL;
     wm->ldr.CheckSum      = 0;
     wm->ldr.TimeDateStamp = 0;
+    wm->ldr.ActivationContext = 0;
 
     RtlCreateUnicodeString( &wm->ldr.FullDllName, filename );
     if ((p = strrchrW( wm->ldr.FullDllName.Buffer, '\\' ))) p++;
@@ -1983,6 +2015,7 @@ static void free_modref( WINE_MODREF *wm )
     }
     SERVER_END_REQ;
 
+    RtlReleaseActivationContext( wm->ldr.ActivationContext );
     NtUnmapViewOfSection( NtCurrentProcess(), wm->ldr.BaseAddress );
     if (wm->ldr.Flags & LDR_WINE_INTERNAL) wine_dll_unload( wm->ldr.SectionHandle );
     if (cached_modref == wm) cached_modref = NULL;

@@ -2357,6 +2357,7 @@ typedef struct _LDR_MODULE
     HANDLE              SectionHandle;
     ULONG               CheckSum;
     ULONG               TimeDateStamp;
+    HANDLE              ActivationContext;
 } LDR_MODULE, *PLDR_MODULE;
 
 /* those defines are (some of the) regular LDR_MODULE.Flags values */
