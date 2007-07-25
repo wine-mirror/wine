@@ -2387,6 +2387,47 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
         break;
 
     case FileInformationInAssemblyOfAssemblyInActivationContext:
+        {
+            const ACTIVATION_CONTEXT_QUERY_INDEX *acqi = subinst;
+            ASSEMBLY_FILE_DETAILED_INFORMATION *afdi = buffer;
+            struct assembly *assembly;
+            struct dll_redirect *dll;
+            SIZE_T len, dll_len = 0;
+            LPWSTR ptr;
+
+            if (!(actctx = check_actctx(handle))) return STATUS_INVALID_PARAMETER;
+            if (!acqi) return STATUS_INVALID_PARAMETER;
+
+            if (acqi->ulAssemblyIndex >= actctx->num_assemblies)
+                return STATUS_INVALID_PARAMETER;
+            assembly = &actctx->assemblies[acqi->ulAssemblyIndex];
+
+            if (acqi->ulFileIndexInAssembly >= assembly->num_dlls)
+                return STATUS_INVALID_PARAMETER;
+            dll = &assembly->dlls[acqi->ulFileIndexInAssembly];
+
+            if (dll->name) dll_len = strlenW(dll->name) + 1;
+            len = sizeof(*afdi) + dll_len * sizeof(WCHAR);
+
+            if (!buffer || bufsize < len)
+            {
+                if (retlen) *retlen = len;
+                return STATUS_BUFFER_TOO_SMALL;
+            }
+            if (retlen) *retlen = 0; /* yes that's what native does !! */
+            afdi->ulFlags = ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION;
+            afdi->ulFilenameLength = dll_len ? (dll_len - 1) * sizeof(WCHAR) : 0;
+            afdi->ulPathLength = 0; /* FIXME */
+            ptr = (LPWSTR)(afdi + 1);
+            if (dll_len)
+            {
+                afdi->lpFileName = ptr;
+                memcpy( ptr, dll->name, dll_len * sizeof(WCHAR) );
+            } else afdi->lpFileName = NULL;
+            afdi->lpFilePath = NULL; /* FIXME */
+        }
+        break;
+
     default:
         FIXME( "class %u not implemented\n", class );
         return STATUS_NOT_IMPLEMENTED;
