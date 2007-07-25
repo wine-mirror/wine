@@ -250,7 +250,6 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     /* Check if the GL extension required by the function is available */
     if(!is_extension_supported(ext_ret->extension)) {
         WARN("Extension '%s' required by function '%s' not supported!\n", ext_ret->extension, lpszProc);
-        return NULL;
     }
 
     local_func = wine_wgl.p_wglGetProcAddress(ext_ret->name);
