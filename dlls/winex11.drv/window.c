@@ -76,7 +76,7 @@ static inline BOOL is_window_managed( HWND hwnd )
     if (ex_style & WS_EX_TRAYWINDOW) return TRUE;
     /* child windows are not managed */
     style = GetWindowLongW( hwnd, GWL_STYLE );
-    if (style & WS_CHILD) return FALSE;
+    if ((style & (WS_CHILD|WS_POPUP)) == WS_CHILD) return FALSE;
     /* windows with caption are managed */
     if ((style & WS_CAPTION) == WS_CAPTION) return TRUE;
     /* tool windows are not managed  */
