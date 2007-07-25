@@ -767,7 +767,7 @@
 @ stdcall RtlQueryEnvironmentVariable_U(ptr ptr ptr)
 @ stub RtlQueryHeapInformation
 @ stdcall RtlQueryInformationAcl(ptr ptr long long)
-@ stub RtlQueryInformationActivationContext
+@ stdcall RtlQueryInformationActivationContext(long long ptr ptr long ptr long ptr)
 @ stub RtlQueryInformationActiveActivationContext
 @ stub RtlQueryInterfaceMemoryStream
 @ stub RtlQueryProcessBackTraceInformation

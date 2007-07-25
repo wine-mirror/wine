@@ -293,9 +293,13 @@ BOOL WINAPI QueryActCtxW(DWORD dwFlags, HANDLE hActCtx, PVOID pvSubInst,
                          ULONG ulClass, PVOID pvBuff, SIZE_T cbBuff,
                          SIZE_T *pcbLen)
 {
-  FIXME("%08x %p %p %u %p %ld %p\n", dwFlags, hActCtx,
-       pvSubInst, ulClass, pvBuff, cbBuff, pcbLen);
-  /* this makes Adobe Photoshop 7.0 happy */
-  SetLastError( ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    NTSTATUS status;
+
+    if ((status = RtlQueryInformationActivationContext( dwFlags, hActCtx, pvSubInst, ulClass,
+                                                        pvBuff, cbBuff, pcbLen )))
+    {
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
+    }
+    return TRUE;
 }

@@ -1893,6 +1893,37 @@ static NTSTATUS parse_depend_manifests(struct actctx_loader* acl)
     return status;
 }
 
+/* find the appropriate activation context for RtlQueryInformationActivationContext */
+static NTSTATUS find_query_actctx( HANDLE *handle, DWORD flags )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (flags & QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX)
+    {
+        if (NtCurrentTeb()->ActivationContextStack.ActiveFrame)
+            *handle = NtCurrentTeb()->ActivationContextStack.ActiveFrame->ActivationContext;
+    }
+    else if (flags & (QUERY_ACTCTX_FLAG_ACTCTX_IS_ADDRESS|QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE))
+    {
+        ULONG magic;
+        LDR_MODULE *pldr;
+
+        LdrLockLoaderLock( 0, NULL, &magic );
+        if (!LdrFindEntryForAddress( *handle, &pldr ))
+        {
+            if ((flags & QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE) && *handle != pldr->BaseAddress)
+                status = STATUS_DLL_NOT_FOUND;
+            else
+                *handle = pldr->ActivationContext;
+        }
+        else status = STATUS_DLL_NOT_FOUND;
+        LdrUnlockLoaderLock( 0, magic );
+    }
+    else if (!*handle) *handle = process_actctx;
+
+    return status;
+}
+
 /* initialize the activation context for the current process */
 void actctx_init(void)
 {
@@ -2148,4 +2179,47 @@ BOOLEAN WINAPI RtlIsActivationContextActive( HANDLE handle )
     for (frame = NtCurrentTeb()->ActivationContextStack.ActiveFrame; frame; frame = frame->Previous)
         if (frame->ActivationContext == handle) return TRUE;
     return FALSE;
+}
+
+
+/***********************************************************************
+ *		RtlQueryInformationActivationContext (NTDLL.@)
+ *
+ * Get information about an activation context.
+ * FIXME: function signature/prototype may be wrong
+ */
+NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle, PVOID subinst,
+                                                      ULONG class, PVOID buffer,
+                                                      SIZE_T bufsize, SIZE_T *retlen )
+{
+    NTSTATUS status;
+
+    TRACE("%08x %p %p %u %p %ld %p\n", flags, handle,
+          subinst, class, buffer, bufsize, retlen);
+
+    if ((status = find_query_actctx( &handle, flags ))) return status;
+
+    switch (class)
+    {
+    case ActivationContextBasicInformation:
+        {
+            ACTIVATION_CONTEXT_BASIC_INFORMATION *info = buffer;
+
+            if (retlen) *retlen = sizeof(*info);
+            if (!info || bufsize < sizeof(*info)) return STATUS_BUFFER_TOO_SMALL;
+
+            info->hActCtx = handle;
+            info->dwFlags = 0;  /* FIXME */
+            if (!(flags & QUERY_ACTCTX_FLAG_NO_ADDREF)) RtlAddRefActivationContext( handle );
+        }
+        break;
+
+    case ActivationContextDetailedInformation:
+    case AssemblyDetailedInformationInActivationContext:
+    case FileInformationInAssemblyOfAssemblyInActivationContext:
+    default:
+        FIXME( "class %u not implemented\n", class );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    return STATUS_SUCCESS;
 }
