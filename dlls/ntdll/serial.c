@@ -259,7 +259,6 @@ static NTSTATUS get_line_control(int fd, SERIAL_LINE_CONTROL* slc)
 #ifdef CMSPAR
     case PARENB|CMSPAR:         slc->Parity = MARKPARITY;       break;
     case PARENB|PARODD|CMSPAR:  slc->Parity = SPACEPARITY;      break;
-        break;
 #endif
     }
     switch (port.c_cflag & CSIZE)
