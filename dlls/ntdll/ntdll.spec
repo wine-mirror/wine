@@ -574,7 +574,7 @@
 @ stdcall RtlFillMemoryUlong(ptr long long)
 @ stub RtlFinalReleaseOutOfProcessMemoryStream
 @ stub RtlFindActivationContextSectionGuid
-@ stub RtlFindActivationContextSectionString
+@ stdcall RtlFindActivationContextSectionString(long ptr long ptr ptr)
 @ stdcall RtlFindCharInUnicodeString(long ptr ptr ptr)
 @ stdcall RtlFindClearBits(ptr long long)
 @ stdcall RtlFindClearBitsAndSet(ptr long long)

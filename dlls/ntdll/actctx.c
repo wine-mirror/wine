@@ -1972,6 +1972,102 @@ static NTSTATUS find_query_actctx( HANDLE *handle, DWORD flags )
     return status;
 }
 
+static NTSTATUS fill_keyed_data(PACTCTX_SECTION_KEYED_DATA data, PVOID v1, PVOID v2, unsigned int i)
+{
+    data->ulDataFormatVersion = 1;
+    data->lpData = v1;
+    data->ulLength = 20; /* FIXME */
+    data->lpSectionGlobalData = NULL; /* FIXME */
+    data->ulSectionGlobalDataLength = 0; /* FIXME */
+    data->lpSectionBase = v2;
+    data->ulSectionTotalLength = 0; /* FIXME */
+    data->hActCtx = NULL;
+    if (data->cbSize >= offsetof(ACTCTX_SECTION_KEYED_DATA, ulAssemblyRosterIndex) + sizeof(ULONG))
+        data->ulAssemblyRosterIndex = i + 1;
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS find_dll_redirection(ACTIVATION_CONTEXT* actctx, const UNICODE_STRING *section_name,
+                                     PACTCTX_SECTION_KEYED_DATA data)
+{
+    unsigned int i, j, snlen = section_name->Length / sizeof(WCHAR);
+
+    for (i = 0; i < actctx->num_assemblies; i++)
+    {
+        struct assembly *assembly = &actctx->assemblies[i];
+        for (j = 0; j < assembly->num_dlls; j++)
+        {
+            struct dll_redirect *dll = &assembly->dlls[j];
+            if (!strncmpiW(section_name->Buffer, dll->name, snlen) && !dll->name[snlen])
+                return fill_keyed_data(data, dll, assembly, i);
+        }
+    }
+    return STATUS_SXS_KEY_NOT_FOUND;
+}
+
+static NTSTATUS find_window_class(ACTIVATION_CONTEXT* actctx, const UNICODE_STRING *section_name,
+                                  PACTCTX_SECTION_KEYED_DATA data)
+{
+    unsigned int i, j, k, snlen = section_name->Length / sizeof(WCHAR);
+
+    for (i = 0; i < actctx->num_assemblies; i++)
+    {
+        struct assembly *assembly = &actctx->assemblies[i];
+        for (j = 0; j < assembly->num_dlls; j++)
+        {
+            struct dll_redirect *dll = &assembly->dlls[j];
+            for (k = 0; k < dll->entities.num; k++)
+            {
+                struct entity *entity = &dll->entities.base[k];
+                if (entity->kind == ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION)
+                {
+                    if (!strncmpiW(section_name->Buffer, entity->u.class.name, snlen) && !entity->u.class.name[snlen])
+                        return fill_keyed_data(data, entity, dll, i);
+                }
+            }
+        }
+    }
+    return STATUS_SXS_KEY_NOT_FOUND;
+}
+
+static NTSTATUS find_string(ACTIVATION_CONTEXT* actctx, ULONG section_kind,
+                            const UNICODE_STRING *section_name,
+                            DWORD flags, PACTCTX_SECTION_KEYED_DATA data)
+{
+    NTSTATUS status;
+
+    switch (section_kind)
+    {
+    case ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION:
+        status = find_dll_redirection(actctx, section_name, data);
+        break;
+    case ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION:
+        status = find_window_class(actctx, section_name, data);
+        break;
+    case ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION:
+    case ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION:
+    case ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION:
+    case ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION:
+    case ACTIVATION_CONTEXT_SECTION_GLOBAL_OBJECT_RENAME_TABLE:
+    case ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES:
+        FIXME("Unsupported yet section_kind %x\n", section_kind);
+        return STATUS_SXS_SECTION_NOT_FOUND;
+    default:
+        WARN("Unknown section_kind %x\n", section_kind);
+        return STATUS_SXS_SECTION_NOT_FOUND;
+    }
+
+    if (status != STATUS_SUCCESS) return status;
+
+    if (flags & FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX)
+    {
+        actctx_addref(actctx);
+        data->hActCtx = actctx;
+    }
+    return STATUS_SUCCESS;
+}
+
 /* initialize the activation context for the current process */
 void actctx_init(void)
 {
@@ -2433,4 +2529,48 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
         return STATUS_NOT_IMPLEMENTED;
     }
     return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *		RtlFindActivationContextSectionString (NTDLL.@)
+ *
+ * Find information about a string in an activation context.
+ * FIXME: function signature/prototype may be wrong
+ */
+NTSTATUS WINAPI RtlFindActivationContextSectionString( ULONG flags, const GUID *guid, ULONG section_kind,
+                                                       const UNICODE_STRING *section_name, PVOID ptr )
+{
+    PACTCTX_SECTION_KEYED_DATA data = ptr;
+    NTSTATUS status = STATUS_SXS_KEY_NOT_FOUND;
+
+    TRACE("%08x %s %u %s %p\n", flags, debugstr_guid(guid), section_kind,
+          debugstr_us(section_name), data);
+
+    if (guid)
+    {
+        FIXME("expected guid == NULL\n");
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (flags & ~FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX)
+    {
+        FIXME("unknown flags %08x\n", flags);
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (!data || data->cbSize < offsetof(ACTCTX_SECTION_KEYED_DATA, ulAssemblyRosterIndex) ||
+        !section_name || !section_name->Buffer)
+    {
+        WARN("invalid parameter\n");
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    if (NtCurrentTeb()->ActivationContextStack.ActiveFrame)
+    {
+        ACTIVATION_CONTEXT *actctx = check_actctx(NtCurrentTeb()->ActivationContextStack.ActiveFrame->ActivationContext);
+        if (actctx) status = find_string( actctx, section_kind, section_name, flags, data );
+    }
+
+    if (status != STATUS_SUCCESS)
+        status = find_string( process_actctx, section_kind, section_name, flags, data );
+
+    return status;
 }
