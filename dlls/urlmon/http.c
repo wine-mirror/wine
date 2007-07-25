@@ -558,22 +558,22 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
     if (!pProtocolData)
     {
         WARN("Expected pProtocolData to be non-NULL\n");
-        goto done;
+        return S_OK;
     }
     else if (!This->request)
     {
         WARN("Expected request to be non-NULL\n");
-        goto done;
+        return S_OK;
     }
     else if (!This->http_negotiate)
     {
         WARN("Expected IHttpNegotiate pointer to be non-NULL\n");
-        goto done;
+        return S_OK;
     }
     else if (!This->protocol_sink)
     {
         WARN("Expected IInternetProtocolSink pointer to be non-NULL\n");
-        goto done;
+        return S_OK;
     }
 
     if (pProtocolData->pData == (LPVOID)BINDSTATUS_DOWNLOADINGDATA)
