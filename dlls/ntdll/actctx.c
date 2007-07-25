@@ -1840,7 +1840,6 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
     const ACTCTXW *pActCtx = ptr;  /* FIXME: not the right structure */
     ACTIVATION_CONTEXT *actctx;
     UNICODE_STRING nameW;
-    struct assembly *assembly;
     ULONG lang = 0;
     NTSTATUS status = STATUS_NO_MEMORY;
     HANDLE file = 0;
@@ -1857,17 +1856,6 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
 
     actctx->magic = ACTCTX_MAGIC;
     actctx->ref_count = 1;
-
-    if (!(assembly = add_assembly( actctx, APPLICATION_MANIFEST ))) goto error;
-    if (!(assembly->id.name = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR) )))
-        goto error;
-    assembly->id.version.major = 1;
-    assembly->id.version.minor = 0;
-    assembly->id.version.build = 0;
-    assembly->id.version.revision = 0;
-    assembly->manifest.type = ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE;
-    assembly->manifest.info = NULL;
-
     actctx->config.type = ACTIVATION_CONTEXT_PATH_TYPE_NONE;
     actctx->config.info = NULL;
     actctx->appdir.type = ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE;
