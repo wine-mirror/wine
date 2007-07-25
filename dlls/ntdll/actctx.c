@@ -1629,7 +1629,7 @@ static NTSTATUS get_manifest_in_associated_manifest( struct actctx_loader* acl, 
             if (resid != 1) sprintfW( name.Buffer + strlenW(name.Buffer), fmtW, resid );
             strcatW( name.Buffer, dotManifestW );
             if (!RtlDosPathNameToNtPathName_U( name.Buffer, &nameW, NULL, NULL ))
-                status = STATUS_NO_SUCH_FILE;
+                status = STATUS_RESOURCE_DATA_NOT_FOUND;
             RtlFreeUnicodeString( &name );
         }
         if (status) return status;
@@ -1645,12 +1645,12 @@ static NTSTATUS get_manifest_in_associated_manifest( struct actctx_loader* acl, 
         RtlInitUnicodeString( &nameW, buffer );
     }
 
-    status = open_nt_file( &file, &nameW );
-    if (status == STATUS_SUCCESS)
+    if (!open_nt_file( &file, &nameW ))
     {
         status = get_manifest_in_manifest_file( acl, ai, nameW.Buffer, directory, file );
         NtClose( file );
     }
+    else status = STATUS_RESOURCE_DATA_NOT_FOUND;
     RtlFreeUnicodeString( &nameW );
     return status;
 }
@@ -1987,7 +1987,7 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
         {
             status = get_manifest_in_module( &acl, NULL, NULL, directory, pActCtx->hModule,
                                              pActCtx->lpResourceName, lang );
-            if (status)
+            if (status && status != STATUS_SXS_CANT_GEN_ACTCTX)
                 /* FIXME: what to do if pActCtx->lpSource is set */
                 status = get_manifest_in_associated_manifest( &acl, NULL, NULL, directory,
                                                               pActCtx->hModule, pActCtx->lpResourceName );
@@ -1996,7 +1996,7 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
         {
             status = get_manifest_in_pe_file( &acl, NULL, nameW.Buffer, directory,
                                               file, pActCtx->lpResourceName, lang );
-            if (status)
+            if (status && status != STATUS_SXS_CANT_GEN_ACTCTX)
                 status = get_manifest_in_associated_manifest( &acl, NULL, nameW.Buffer, directory,
                                                               NULL, pActCtx->lpResourceName );
         }
