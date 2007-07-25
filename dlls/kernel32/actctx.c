@@ -219,10 +219,27 @@ BOOL WINAPI FindActCtxSectionStringA(DWORD dwFlags, const GUID* lpExtGuid,
                                     ULONG ulId, LPCSTR lpSearchStr,
                                     PACTCTX_SECTION_KEYED_DATA pInfo)
 {
-  FIXME("%08x %s %u %s %p\n", dwFlags, debugstr_guid(lpExtGuid),
-       ulId, debugstr_a(lpSearchStr), pInfo);
-  SetLastError( ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    LPWSTR  search_str;
+    DWORD   len;
+    BOOL    ret;
+
+    TRACE("%08x %s %u %s %p\n", dwFlags, debugstr_guid(lpExtGuid),
+          ulId, debugstr_a(lpSearchStr), pInfo);
+
+    if (!lpSearchStr)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    len = MultiByteToWideChar(CP_ACP, 0, lpSearchStr, -1, NULL, 0);
+    search_str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, lpSearchStr, -1, search_str, len);
+
+    ret = FindActCtxSectionStringW(dwFlags, lpExtGuid, ulId, search_str, pInfo);
+
+    HeapFree(GetProcessHeap(), 0, search_str);
+    return ret;
 }
 
 /***********************************************************************
