@@ -1200,20 +1200,26 @@ GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
 
 GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics *graphics, GraphicsState state)
 {
+    static int calls;
+
     if(!graphics)
         return InvalidParameter;
 
-    FIXME("graphics state not implemented\n");
+    if(!(calls++))
+        FIXME("graphics state not implemented\n");
 
     return NotImplemented;
 }
 
 GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics *graphics, GraphicsState *state)
 {
+    static int calls;
+
     if(!graphics || !state)
         return InvalidParameter;
 
-    FIXME("graphics state not implemented\n");
+    if(!(calls++))
+        FIXME("graphics state not implemented\n");
 
     return NotImplemented;
 }
