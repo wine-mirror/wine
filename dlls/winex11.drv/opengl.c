@@ -135,7 +135,7 @@ typedef struct wine_glpixelformat {
 
 static Wine_GLContext *context_list;
 static struct WineGLInfo WineGLInfo = { 0 };
-static int use_render_texture_emulation = 0;
+static int use_render_texture_emulation = 1;
 static int use_render_texture_ati = 0;
 static int swap_interval = 1;
 
@@ -207,6 +207,7 @@ MAKE_FUNCPTR(glXChooseVisual)
 MAKE_FUNCPTR(glXCreateContext)
 MAKE_FUNCPTR(glXCreateGLXPixmap)
 MAKE_FUNCPTR(glXGetCurrentContext)
+MAKE_FUNCPTR(glXGetCurrentDrawable)
 MAKE_FUNCPTR(glXDestroyContext)
 MAKE_FUNCPTR(glXDestroyGLXPixmap)
 MAKE_FUNCPTR(glXGetConfig)
@@ -259,7 +260,9 @@ MAKE_FUNCPTR(glGetString)
 MAKE_FUNCPTR(glIsEnabled)
 MAKE_FUNCPTR(glNewList)
 MAKE_FUNCPTR(glPixelStorei)
+MAKE_FUNCPTR(glReadPixels)
 MAKE_FUNCPTR(glScissor)
+MAKE_FUNCPTR(glTexImage2D)
 MAKE_FUNCPTR(glViewport)
 #undef MAKE_FUNCPTR
 
@@ -364,6 +367,7 @@ LOAD_FUNCPTR(glXChooseVisual)
 LOAD_FUNCPTR(glXCreateContext)
 LOAD_FUNCPTR(glXCreateGLXPixmap)
 LOAD_FUNCPTR(glXGetCurrentContext)
+LOAD_FUNCPTR(glXGetCurrentDrawable)
 LOAD_FUNCPTR(glXDestroyContext)
 LOAD_FUNCPTR(glXDestroyGLXPixmap)
 LOAD_FUNCPTR(glXGetConfig)
@@ -401,7 +405,9 @@ LOAD_FUNCPTR(glGetString)
 LOAD_FUNCPTR(glIsEnabled)
 LOAD_FUNCPTR(glNewList)
 LOAD_FUNCPTR(glPixelStorei)
+LOAD_FUNCPTR(glReadPixels)
 LOAD_FUNCPTR(glScissor)
+LOAD_FUNCPTR(glTexImage2D)
 LOAD_FUNCPTR(glViewport)
 #undef LOAD_FUNCPTR
 
@@ -2650,37 +2656,39 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
         SetLastError(ERROR_INVALID_HANDLE);
         return GL_FALSE;
     }
-/* Disable WGL_ARB_render_texture support until it is implemented properly
- * using pbuffers or FBOs */
-#if 0
+
     if (!use_render_texture_ati && 1 == use_render_texture_emulation) {
-        int do_init = 0;
-        GLint prev_binded_tex;
-        pglGetIntegerv(object->texture_target, &prev_binded_tex);
-        if (NULL == object->render_ctx) {
-            object->render_hdc = X11DRV_wglGetPbufferDCARB(hPbuffer);
-            /* FIXME: This is routed through gdi32.dll to winex11.drv, replace this with GLX calls */
-            object->render_ctx = wglCreateContext(object->render_hdc);
-            do_init = 1;
-        }
-        object->prev_hdc = wglGetCurrentDC();
-        object->prev_ctx = wglGetCurrentContext();
-        /* FIXME: This is routed through gdi32.dll to winex11.drv, replace this with GLX calls */
-        wglMakeCurrent(object->render_hdc, object->render_ctx);
-        /*
-        if (do_init) {
-            glBindTexture(object->texture_target, object->texture);
-            if (GL_RGBA == object->use_render_texture) {
-                glTexImage2D(object->texture_target, 0, GL_RGBA8, object->width, object->height, 0, GL_RGBA, GL_FLOAT, NULL);
-            } else {
-                glTexImage2D(object->texture_target, 0, GL_RGB8, object->width, object->height, 0, GL_RGB, GL_FLOAT, NULL);
-            }
-        }
+        void *buf;
+        static int init = 0;
+        GLXContext prev_context = pglXGetCurrentContext();
+        Drawable prev_drawable = pglXGetCurrentDrawable();
+
+        /* Our render_texture emulation is basic and lacks some features (1D/Cube support).
+           This is mostly due to lack of demos/games using them. Further the use of glReadPixels
+           isn't ideal performance wise but I wasn't able to get other ways working.
         */
-        object->texture = prev_binded_tex;
-        return GL_TRUE;
+        if(!init) {
+            init = 1; /* Only show the FIXME once for performance reasons */
+            FIXME("partial stub!\n");
+        }
+
+        buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 4*object->width*object->height);
+        if(!buf) {
+            ERR("Unable to allocate a buffer for render_texture emulation\n");
+            return GL_FALSE;
+        }
+
+        /* Switch to our pbuffer and readback its contents */
+        pglXMakeCurrent(gdi_display, object->drawable, prev_context);
+        pglReadPixels(0, 0, object->width, object->height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+
+        /* Switch back to the original drawable and upload the pbuffer-texture */
+        pglXMakeCurrent(object->display, prev_drawable, prev_context);
+        pglTexImage2D(object->texture_target, 0, GL_RGBA8, object->width, object->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+
+        HeapFree(GetProcessHeap(), 0, buf);
     }
-#endif
+
     if (NULL != pglXBindTexImageARB) {
         return pglXBindTexImageARB(object->display, object->drawable, iBuffer);
     }
@@ -2705,26 +2713,6 @@ static GLboolean WINAPI X11DRV_wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int i
         return GL_FALSE;
     }
     if (!use_render_texture_ati && 1 == use_render_texture_emulation) {
-    /*
-        GLint prev_binded_tex;
-        glGetIntegerv(object->texture_target, &prev_binded_tex);    
-        if (GL_TEXTURE_1D == object->texture_target) {
-            glCopyTexSubImage1D(object->texture_target, object->texture_level, 0, 0, 0, object->width);
-        } else {
-            glCopyTexSubImage2D(object->texture_target, object->texture_level, 0, 0, 0, 0, object->width,       object->height);
-        }
-        glBindTexture(object->texture_target, prev_binded_tex);
-        SwapBuffers(object->render_hdc);
-        */
-        pglBindTexture(object->texture_target, object->texture);
-        if (GL_TEXTURE_1D == object->texture_target) {
-            pglCopyTexSubImage1D(object->texture_target, object->texture_level, 0, 0, 0, object->width);
-        } else {
-            pglCopyTexSubImage2D(object->texture_target, object->texture_level, 0, 0, 0, 0, object->width, object->height);
-        }
-
-        /* FIXME: This is routed through gdi32.dll to winex11.drv, replace this with GLX calls */
-        wglMakeCurrent(object->prev_hdc, object->prev_ctx);
         return GL_TRUE;
     }
     if (NULL != pglXReleaseTexImageARB) {
@@ -2965,8 +2953,10 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     register_extension(&WGL_ARB_pixel_format);
 
+    /* Support WGL_ARB_render_texture when there's support or pbuffer based emulation */
     if (glxRequireExtension("GLX_ATI_render_texture") ||
-        glxRequireExtension("GLX_ARB_render_texture"))
+        glxRequireExtension("GLX_ARB_render_texture") ||
+        (glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer") && use_render_texture_emulation))
         register_extension(&WGL_ARB_render_texture);
 
     /* EXT Extensions */
