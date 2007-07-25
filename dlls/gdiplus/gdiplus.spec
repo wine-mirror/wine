@@ -386,7 +386,7 @@
 @ stub GdipGetTextureWrapMode
 @ stub GdipGetVisibleClipBounds
 @ stub GdipGetVisibleClipBoundsI
-@ stub GdipGetWorldTransform
+@ stdcall GdipGetWorldTransform(ptr ptr)
 @ stub GdipGraphicsClear
 @ stub GdipImageForceValidation
 @ stub GdipImageGetFrameCount
@@ -576,7 +576,7 @@
 @ stub GdipSetTextRenderingHint
 @ stub GdipSetTextureTransform
 @ stub GdipSetTextureWrapMode
-@ stub GdipSetWorldTransform
+@ stdcall GdipSetWorldTransform(ptr ptr)
 @ stub GdipShearMatrix
 @ stdcall GdipStartPathFigure(ptr)
 @ stub GdipStringFormatGetGenericDefault

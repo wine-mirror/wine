@@ -66,6 +66,7 @@ GpStatus WINGDIPAPI GdipGetPageScale(GpGraphics*,REAL*);
 GpStatus WINGDIPAPI GdipGetPageUnit(GpGraphics*,GpUnit*);
 GpStatus WINGDIPAPI GdipGetPixelOffsetMode(GpGraphics*,PixelOffsetMode*);
 GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics*,SmoothingMode*);
+GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics*,GpMatrix*);
 GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics*,GraphicsState);
 GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics*,GraphicsState*);
 GpStatus WINGDIPAPI GdipSetCompositingQuality(GpGraphics*,CompositingQuality);
@@ -74,6 +75,7 @@ GpStatus WINGDIPAPI GdipSetPageScale(GpGraphics*,REAL);
 GpStatus WINGDIPAPI GdipSetPageUnit(GpGraphics*,GpUnit);
 GpStatus WINGDIPAPI GdipSetPixelOffsetMode(GpGraphics*,PixelOffsetMode);
 GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics*,SmoothingMode);
+GpStatus WINGDIPAPI GdipSetWorldTransform(GpGraphics*,GpMatrix*);
 
 GpStatus WINGDIPAPI GdipCloneBrush(GpBrush*,GpBrush**);
 GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB,GpSolidFill**);

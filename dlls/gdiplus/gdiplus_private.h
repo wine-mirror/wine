@@ -67,6 +67,7 @@ struct GpGraphics{
     PixelOffsetMode pixeloffset;
     GpUnit unit;    /* page unit */
     REAL scale;     /* page scale */
+    GpMatrix * worldtrans; /* world transform */
 };
 
 struct GpBrush{

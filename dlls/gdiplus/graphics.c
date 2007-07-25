@@ -734,6 +734,8 @@ end:
 
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 {
+    GpStatus retval;
+
     if(hdc == NULL)
         return OutOfMemory;
 
@@ -742,6 +744,11 @@ GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 
     *graphics = GdipAlloc(sizeof(GpGraphics));
     if(!*graphics)  return OutOfMemory;
+
+    if((retval = GdipCreateMatrix(&(*graphics)->worldtrans)) != Ok){
+        GdipFree(*graphics);
+        return retval;
+    }
 
     (*graphics)->hdc = hdc;
     (*graphics)->hwnd = NULL;
@@ -773,6 +780,7 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
     if(graphics->hwnd)
         ReleaseDC(graphics->hwnd, graphics->hdc);
 
+    GdipDeleteMatrix(graphics->worldtrans);
     HeapFree(GetProcessHeap(), 0, graphics);
 
     return Ok;
@@ -1133,6 +1141,15 @@ GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics *graphics, SmoothingMode *mo
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics *graphics, GpMatrix *matrix)
+{
+    if(!graphics || !matrix)
+        return InvalidParameter;
+
+    memcpy(matrix, graphics->worldtrans, sizeof(GpMatrix));
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics *graphics, GraphicsState state)
 {
     if(!graphics)
@@ -1214,4 +1231,13 @@ GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics *graphics, SmoothingMode mod
     graphics->smoothing = mode;
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetWorldTransform(GpGraphics *graphics, GpMatrix *matrix)
+{
+    if(!graphics || !matrix)
+        return InvalidParameter;
+
+    GdipDeleteMatrix(graphics->worldtrans);
+    return GdipCloneMatrix(matrix, &graphics->worldtrans);
 }
