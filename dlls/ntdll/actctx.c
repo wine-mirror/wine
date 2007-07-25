@@ -394,10 +394,58 @@ static void free_entity_array(struct entity_array *array)
     RtlFreeHeap( GetProcessHeap(), 0, array->base );
 }
 
+static BOOL is_matching_string( const WCHAR *str1, const WCHAR *str2 )
+{
+    if (!str1) return !str2;
+    return str2 && !strcmpiW( str1, str2 );
+}
+
+static BOOL is_matching_identity( const struct assembly_identity *id1,
+                                  const struct assembly_identity *id2 )
+{
+    if (!is_matching_string( id1->name, id2->name )) return FALSE;
+    if (!is_matching_string( id1->arch, id2->arch )) return FALSE;
+    if (!is_matching_string( id1->public_key, id2->public_key )) return FALSE;
+
+    if (id1->language && id2->language && strcmpiW( id1->language, id2->language ))
+    {
+        static const WCHAR wildcardW[] = {'*',0};
+        if (strcmpW( wildcardW, id1->language ) && strcmpW( wildcardW, id2->language ))
+            return FALSE;
+    }
+    if (id1->version.major != id2->version.major) return FALSE;
+    if (id1->version.minor != id2->version.minor) return FALSE;
+    if (id1->version.build > id2->version.build) return FALSE;
+    if (id1->version.build == id2->version.build &&
+        id1->version.revision > id2->version.revision) return FALSE;
+    return TRUE;
+}
+
 static BOOL add_dependent_assembly_id(struct actctx_loader* acl,
                                       struct assembly_identity* ai)
 {
-    /* FIXME: should check that the passed ai isn't already in the list */
+    unsigned int i;
+
+    /* check if we already have that assembly */
+
+    for (i = 0; i < acl->actctx->num_assemblies; i++)
+        if (is_matching_identity( ai, &acl->actctx->assemblies[i].id ))
+        {
+            TRACE( "reusing existing assembly for %s arch %s version %u.%u.%u.%u\n",
+                   debugstr_w(ai->name), debugstr_w(ai->arch), ai->version.major, ai->version.minor,
+                   ai->version.build, ai->version.revision );
+            return TRUE;
+        }
+
+    for (i = 0; i < acl->num_dependencies; i++)
+        if (is_matching_identity( ai, &acl->dependencies[i] ))
+        {
+            TRACE( "reusing existing dependency for %s arch %s version %u.%u.%u.%u\n",
+                   debugstr_w(ai->name), debugstr_w(ai->arch), ai->version.major, ai->version.minor,
+                   ai->version.build, ai->version.revision );
+            return TRUE;
+        }
+
     if (acl->num_dependencies == acl->allocated_dependencies)
     {
         void *ptr;
