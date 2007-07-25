@@ -101,6 +101,7 @@ GpStatus WINGDIPAPI GdipResetPath(GpPath*);
 GpStatus WINGDIPAPI GdipSetPathFillMode(GpPath*,GpFillMode);
 GpStatus WINGDIPAPI GdipTransformPath(GpPath*,GpMatrix*);
 
+GpStatus WINGDIPAPI GdipCloneMatrix(GpMatrix*,GpMatrix**);
 GpStatus WINGDIPAPI GdipCreateMatrix2(REAL,REAL,REAL,REAL,REAL,REAL,GpMatrix**);
 GpStatus WINGDIPAPI GdipCreateMatrix(GpMatrix**);
 GpStatus WINGDIPAPI GdipDeleteMatrix(GpMatrix*);

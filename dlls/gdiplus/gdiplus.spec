@@ -49,7 +49,7 @@
 @ stub GdipCloneFontFamily
 @ stub GdipCloneImage
 @ stub GdipCloneImageAttributes
-@ stub GdipCloneMatrix
+@ stdcall GdipCloneMatrix(ptr ptr)
 @ stub GdipClonePath
 @ stdcall GdipClonePen(ptr ptr)
 @ stub GdipCloneRegion

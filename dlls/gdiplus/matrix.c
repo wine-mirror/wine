@@ -70,6 +70,19 @@ GpStatus WINGDIPAPI GdipCreateMatrix2(REAL m11, REAL m12, REAL m21, REAL m22,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCloneMatrix(GpMatrix *matrix, GpMatrix **clone)
+{
+    if(!matrix || !clone)
+        return InvalidParameter;
+
+    *clone = GdipAlloc(sizeof(GpMatrix));
+    if(!*clone)    return OutOfMemory;
+
+    memcpy(*clone, matrix, sizeof(GpMatrix));
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreateMatrix(GpMatrix **matrix)
 {
     if(!matrix)
