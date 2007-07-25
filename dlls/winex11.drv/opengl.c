@@ -2153,6 +2153,8 @@ HDC X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *physDev, HPBUFFERARB hPbuffer)
      * All formats in our pixelformat list are compatible with each other and the main drawable. */
     physDev->current_pf = object->pixelFormat;
     physDev->drawable = object->drawable;
+    SetRect( &physDev->drawable_rect, 0, 0, object->width, object->height );
+    physDev->dc_rect = physDev->drawable_rect;
 
     TRACE("(%p)->(%p)\n", hPbuffer, physDev->hdc);
     return physDev->hdc;
