@@ -1571,8 +1571,6 @@ static void test_text_metrics(const LOGFONTA *lf)
         test_char = min(last_unicode_char, 255);
         ok(tmA.tmLastChar == test_char, "A: tmLastChar for %s %02x != %02x\n",
            font_name, tmA.tmLastChar, test_char);
-        ok(tmA.tmDefaultChar == 0x1f, "A: tmDefaultChar for %s %02x != 0x1f\n",
-           font_name, tmA.tmDefaultChar);
         ok(tmA.tmBreakChar == 0x20, "A: tmBreakChar for %s %02x != 0x20\n",
            font_name, tmA.tmBreakChar);
     }
