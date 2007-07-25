@@ -99,10 +99,21 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
     HPEN gdipen;
     REAL width;
     INT save_state = SaveDC(graphics->hdc);
+    GpPointF pt[2];
 
     EndPath(graphics->hdc);
 
-    width = pen->width * convert_unit(graphics->hdc,
+    /* Get an estimate for the amount the pen width is affected by the world
+     * transform. (This is similar to what some of the wine drivers do.) */
+    pt[0].X = 0.0;
+    pt[0].Y = 0.0;
+    pt[1].X = 1.0;
+    pt[1].Y = 1.0;
+    GdipTransformMatrixPoints(graphics->worldtrans, pt, 2);
+    width = sqrt((pt[1].X - pt[0].X) * (pt[1].X - pt[0].X) +
+                 (pt[1].Y - pt[0].Y) * (pt[1].Y - pt[0].Y)) / sqrt(2.0);
+
+    width *= pen->width * convert_unit(graphics->hdc,
                           pen->unit == UnitWorld ? graphics->unit : pen->unit);
 
     gdipen = ExtCreatePen(pen->style, roundr(width), &pen->brush->lb, 0, NULL);
@@ -205,31 +216,35 @@ static void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
 static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL size,
     const GpCustomLineCap *custom, REAL x1, REAL y1, REAL x2, REAL y2)
 {
-    HGDIOBJ oldbrush, oldpen;
+    HGDIOBJ oldbrush = NULL, oldpen = NULL;
     GpMatrix *matrix = NULL;
-    HBRUSH brush;
-    HPEN pen;
+    HBRUSH brush = NULL;
+    HPEN pen = NULL;
     PointF ptf[4], *custptf = NULL;
     POINT pt[4], *custpt = NULL;
     BYTE *tp = NULL;
     REAL theta, dsmall, dbig, dx, dy = 0.0;
     INT i, count;
     LOGBRUSH lb;
+    BOOL customstroke;
 
     if((x1 == x2) && (y1 == y2))
         return;
 
     theta = gdiplus_atan2(y2 - y1, x2 - x1);
 
-    brush = CreateSolidBrush(color);
-    lb.lbStyle = BS_SOLID;
-    lb.lbColor = color;
-    lb.lbHatch = 0;
-    pen = ExtCreatePen(PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_FLAT,
-               ((cap == LineCapCustom) && custom && (custom->fill)) ? size : 1,
-               &lb, 0, NULL);
-    oldbrush = SelectObject(graphics->hdc, brush);
-    oldpen = SelectObject(graphics->hdc, pen);
+    customstroke = (cap == LineCapCustom) && custom && (!custom->fill);
+    if(!customstroke){
+        brush = CreateSolidBrush(color);
+        lb.lbStyle = BS_SOLID;
+        lb.lbColor = color;
+        lb.lbHatch = 0;
+        pen = ExtCreatePen(PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_FLAT |
+                           PS_JOIN_MITER, 1, &lb, 0,
+                           NULL);
+        oldbrush = SelectObject(graphics->hdc, brush);
+        oldpen = SelectObject(graphics->hdc, pen);
+    }
 
     switch(cap){
         case LineCapFlat:
@@ -382,10 +397,12 @@ custend:
             break;
     }
 
-    SelectObject(graphics->hdc, oldbrush);
-    SelectObject(graphics->hdc, oldpen);
-    DeleteObject(brush);
-    DeleteObject(pen);
+    if(!customstroke){
+        SelectObject(graphics->hdc, oldbrush);
+        SelectObject(graphics->hdc, oldpen);
+        DeleteObject(brush);
+        DeleteObject(pen);
+    }
 }
 
 /* Shortens the line by the given percent by changing x2, y2.
