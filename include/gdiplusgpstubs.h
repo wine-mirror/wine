@@ -29,6 +29,8 @@ class GpPath {};
 class GpMatrix {};
 class GpPathIterator {};
 class GpCustomLineCap {};
+class GpImage {};
+class GpMetafile : public GpImage {};
 
 #else /* end of c++ declarations */
 
@@ -40,6 +42,8 @@ typedef struct GpPath GpPath;
 typedef struct GpMatrix GpMatrix;
 typedef struct GpPathIterator GpPathIterator;
 typedef struct GpCustomLineCap GpCustomLineCap;
+typedef struct GpImage GpImage;
+typedef struct GpMetafile GpMetafile;
 
 #endif /* end of c declarations */
 

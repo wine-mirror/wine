@@ -804,6 +804,20 @@ GpStatus WINGDIPAPI GdipCreateFromHWND(HWND hwnd, GpGraphics **graphics)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
+    GpMetafile **metafile)
+{
+    static int calls;
+
+    if(!hemf || !metafile)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
 {
     if(!graphics) return InvalidParameter;
