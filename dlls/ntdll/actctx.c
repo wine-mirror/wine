@@ -227,6 +227,8 @@ struct actctx_loader
 
 static const WCHAR dotManifestW[] = {'.','m','a','n','i','f','e','s','t',0};
 
+static ACTIVATION_CONTEXT system_actctx = { ACTCTX_MAGIC, 1 };
+static ACTIVATION_CONTEXT *process_actctx = &system_actctx;
 
 static WCHAR *strdupW(const WCHAR* str)
 {
@@ -1825,6 +1827,21 @@ static NTSTATUS parse_depend_manifests(struct actctx_loader* acl)
     }
     /* FIXME should now iterate through all refs */
     return status;
+}
+
+/* initialize the activation context for the current process */
+void actctx_init(void)
+{
+    ACTCTXW ctx;
+    HANDLE handle;
+
+    ctx.cbSize   = sizeof(ctx);
+    ctx.lpSource = NULL;
+    ctx.dwFlags  = ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID;
+    ctx.hModule  = NtCurrentTeb()->Peb->ImageBaseAddress;
+    ctx.lpResourceName = (LPCWSTR)CREATEPROCESS_MANIFEST_RESOURCE_ID;
+
+    if (!RtlCreateActivationContext( &handle, &ctx )) process_actctx = check_actctx(handle);
 }
 
 
