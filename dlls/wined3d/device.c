@@ -4509,11 +4509,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     if (!curRect) {
         /* In drawable flag is set below */
 
-        glScissor(This->stateBlock->viewport.X,
-                  (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height -
-                  (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)),
-                   This->stateBlock->viewport.Width,
-                   This->stateBlock->viewport.Height);
+        if (This->render_offscreen) {
+            glScissor(This->stateBlock->viewport.X,
+                       This->stateBlock->viewport.Y,
+                       This->stateBlock->viewport.Width,
+                       This->stateBlock->viewport.Height);
+        } else {
+            glScissor(This->stateBlock->viewport.X,
+                      (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height -
+                      (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)),
+                       This->stateBlock->viewport.Width,
+                       This->stateBlock->viewport.Height);
+        }
         checkGLcall("glScissor");
         glClear(glMask);
         checkGLcall("glClear");

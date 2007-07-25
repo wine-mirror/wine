@@ -3442,7 +3442,12 @@ static void scissorrect(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     winHeight = windowRect.bottom - windowRect.top;
     TRACE("(%p) Setting new Scissor Rect to %d:%d-%d:%d\n", stateblock->wineD3DDevice, pRect->left, pRect->bottom - winHeight,
           pRect->right - pRect->left, pRect->bottom - pRect->top);
-    glScissor(pRect->left, winHeight - pRect->bottom, pRect->right - pRect->left, pRect->bottom - pRect->top);
+
+    if (stateblock->wineD3DDevice->render_offscreen) {
+        glScissor(pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top);
+    } else {
+        glScissor(pRect->left, winHeight - pRect->bottom, pRect->right - pRect->left, pRect->bottom - pRect->top);
+    }
     checkGLcall("glScissor");
 }
 
