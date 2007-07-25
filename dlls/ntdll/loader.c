@@ -1578,6 +1578,70 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
 
 
 /***********************************************************************
+ *	find_actctx_dll
+ *
+ * Find the full path (if any) of the dll from the activation context.
+ */
+static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
+{
+    static const WCHAR winsxsW[] = {'\\','w','i','n','s','x','s','\\'};
+
+    ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION *info;
+    ACTCTX_SECTION_KEYED_DATA data;
+    UNICODE_STRING nameW;
+    NTSTATUS status;
+    SIZE_T needed, size = 1024;
+    WCHAR *p;
+
+    RtlInitUnicodeString( &nameW, libname );
+    data.cbSize = sizeof(data);
+    status = RtlFindActivationContextSectionString( FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
+                                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
+                                                    &nameW, &data );
+    if (status != STATUS_SUCCESS) return status;
+
+    for (;;)
+    {
+        if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+        {
+            status = STATUS_NO_MEMORY;
+            goto done;
+        }
+        status = RtlQueryInformationActivationContext( 0, data.hActCtx, &data.ulAssemblyRosterIndex,
+                                                       AssemblyDetailedInformationInActivationContext,
+                                                       info, size, &needed );
+        if (status == STATUS_SUCCESS) break;
+        if (status != STATUS_BUFFER_TOO_SMALL) goto done;
+        RtlFreeHeap( GetProcessHeap(), 0, info );
+        size = needed;
+        /* restart with larger buffer */
+    }
+
+    needed = (windows_dir.Length + sizeof(winsxsW) + info->ulAssemblyDirectoryNameLength +
+              nameW.Length + 2*sizeof(WCHAR));
+
+    if (!(*fullname = p = RtlAllocateHeap( GetProcessHeap(), 0, needed )))
+    {
+        status = STATUS_NO_MEMORY;
+        goto done;
+    }
+    memcpy( p, windows_dir.Buffer, windows_dir.Length );
+    p += windows_dir.Length / sizeof(WCHAR);
+    memcpy( p, winsxsW, sizeof(winsxsW) );
+    p += sizeof(winsxsW) / sizeof(WCHAR);
+    memcpy( p, info->lpAssemblyDirectoryName, info->ulAssemblyDirectoryNameLength );
+    p += info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
+    *p++ = '\\';
+    strcpyW( p, libname );
+    TRACE ("found %s for %s\n", debugstr_w(*fullname), debugstr_w(libname) );
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, info );
+    RtlReleaseActivationContext( data.hActCtx );
+    return status;
+}
+
+
+/***********************************************************************
  *	find_dll_file
  *
  * Find the file (or already loaded module) for a given dll name.
@@ -1608,7 +1672,22 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
 
     if (!contains_path( libname ))
     {
+        NTSTATUS status;
+        WCHAR *fullname;
+
         if ((*pwm = find_basename_module( libname )) != NULL) goto found;
+
+        status = find_actctx_dll( libname, &fullname );
+        if (status == STATUS_SUCCESS)
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, dllname );
+            libname = dllname = fullname;
+        }
+        else if (status != STATUS_SXS_KEY_NOT_FOUND)
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, dllname );
+            return status;
+        }
     }
 
     if (RtlDetermineDosPathNameType_U( libname ) == RELATIVE_PATH)
