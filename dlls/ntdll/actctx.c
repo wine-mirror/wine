@@ -227,6 +227,7 @@ struct actctx_loader
 #define MANIFESTV3_NAMESPACE            "urn:schemas-microsoft-com:asm.v3"
 
 static const WCHAR dotManifestW[] = {'.','m','a','n','i','f','e','s','t',0};
+static const WCHAR version_formatW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
 
 static ACTIVATION_CONTEXT system_actctx = { ACTCTX_MAGIC, 1 };
 static ACTIVATION_CONTEXT *process_actctx = &system_actctx;
@@ -490,7 +491,6 @@ static WCHAR *build_assembly_dir(struct assembly_identity* ai)
     static const WCHAR undW[] = {'_',0};
     static const WCHAR noneW[] = {'n','o','n','e',0};
     static const WCHAR mskeyW[] = {'d','e','a','d','b','e','e','f',0};
-    static const WCHAR versionW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
 
     const WCHAR *key = ai->public_key ? ai->public_key : noneW;
     const WCHAR *lang = ai->language ? ai->language : noneW;
@@ -506,12 +506,60 @@ static WCHAR *build_assembly_dir(struct assembly_identity* ai)
     strcatW( ret, undW );
     strcatW( ret, key );
     strcatW( ret, undW );
-    sprintfW( ret + strlenW(ret), versionW,
+    sprintfW( ret + strlenW(ret), version_formatW,
               ai->version.major, ai->version.minor, ai->version.build, ai->version.revision );
     strcatW( ret, undW );
     strcatW( ret, lang );
     strcatW( ret, undW );
     strcatW( ret, mskeyW );
+    return ret;
+}
+
+static inline void append_string( WCHAR *buffer, const WCHAR *prefix, const WCHAR *str )
+{
+    WCHAR *p = buffer;
+
+    if (!str) return;
+    strcatW( buffer, prefix );
+    p += strlenW(p);
+    *p++ = '"';
+    strcpyW( p, str );
+    p += strlenW(p);
+    *p++ = '"';
+    *p = 0;
+}
+
+static WCHAR *build_assembly_id( const struct assembly_identity *ai )
+{
+    static const WCHAR archW[] =
+        {',','p','r','o','c','e','s','s','o','r','A','r','c','h','i','t','e','c','t','u','r','e','=',0};
+    static const WCHAR public_keyW[] =
+        {',','p','u','b','l','i','c','K','e','y','T','o','k','e','n','=','"',0};
+    static const WCHAR typeW[] =
+        {',','t','y','p','e','=','"','w','i','n','3','2','"',0};
+    static const WCHAR versionW[] =
+        {',','v','e','r','s','i','o','n','=',0};
+
+    WCHAR version[64], *ret;
+    SIZE_T size = 0;
+
+    sprintfW( version, version_formatW,
+              ai->version.major, ai->version.minor, ai->version.build, ai->version.revision );
+    if (ai->name) size += strlenW(ai->name) * sizeof(WCHAR);
+    if (ai->arch) size += strlenW(archW) + strlenW(ai->arch) + 2;
+    if (ai->public_key) size += strlenW(public_keyW) + strlenW(ai->public_key) + 2;
+    if (ai->type == TYPE_WIN32) size += strlenW(typeW);
+    size += strlenW(versionW) + strlenW(version) + 2;
+
+    if (!(ret = RtlAllocateHeap( GetProcessHeap(), 0, (size + 1) * sizeof(WCHAR) )))
+        return NULL;
+
+    if (ai->name) strcpyW( ret, ai->name );
+    else *ret = 0;
+    append_string( ret, archW, ai->arch );
+    append_string( ret, public_keyW, ai->public_key );
+    if (ai->type == TYPE_WIN32) strcatW( ret, typeW );
+    append_string( ret, versionW, version );
     return ret;
 }
 
@@ -2269,6 +2317,75 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
         break;
 
     case AssemblyDetailedInformationInActivationContext:
+        {
+            ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION *afdi = buffer;
+            struct assembly *assembly;
+            WCHAR *assembly_id;
+            DWORD index;
+            SIZE_T len, id_len = 0, ad_len = 0, path_len = 0;
+            LPWSTR ptr;
+
+            if (!(actctx = check_actctx(handle))) return STATUS_INVALID_PARAMETER;
+            if (!subinst) return STATUS_INVALID_PARAMETER;
+
+            index = *(DWORD*)subinst;
+            if (!index || index > actctx->num_assemblies) return STATUS_INVALID_PARAMETER;
+
+            assembly = &actctx->assemblies[index - 1];
+
+            if (!(assembly_id = build_assembly_id( &assembly->id ))) return STATUS_NO_MEMORY;
+            id_len = strlenW(assembly_id) + 1;
+            if (assembly->directory) ad_len = strlenW(assembly->directory) + 1;
+
+            if (assembly->manifest.info && assembly->type == ASSEMBLY_MANIFEST)
+                path_len  = strlenW(assembly->manifest.info) + 1;
+
+            len = sizeof(*afdi) + (id_len + ad_len + path_len) * sizeof(WCHAR);
+
+            if (retlen) *retlen = len;
+            if (!buffer || bufsize < len)
+            {
+                RtlFreeHeap( GetProcessHeap(), 0, assembly_id );
+                return STATUS_BUFFER_TOO_SMALL;
+            }
+
+            /* FIXME: this is a big HACK */
+            afdi->ulFlags = (index > 1) ? 16 : ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION;
+            afdi->ulEncodedAssemblyIdentityLength = (id_len - 1) * sizeof(WCHAR);
+            afdi->ulManifestPathType = assembly->manifest.type;
+            afdi->ulManifestPathLength = assembly->manifest.info ? (path_len - 1) * sizeof(WCHAR) : 0;
+            /* FIXME afdi->liManifestLastWriteTime = 0; */
+            afdi->ulPolicyPathType = ACTIVATION_CONTEXT_PATH_TYPE_NONE; /* FIXME */
+            afdi->ulPolicyPathLength = 0;
+            /* FIXME afdi->liPolicyLastWriteTime = 0; */
+            afdi->ulMetadataSatelliteRosterIndex = 0; /* FIXME */
+            afdi->ulManifestVersionMajor = 1;
+            afdi->ulManifestVersionMinor = 0;
+            afdi->ulPolicyVersionMajor = 0; /* FIXME */
+            afdi->ulPolicyVersionMinor = 0; /* FIXME */
+            afdi->ulAssemblyDirectoryNameLength = ad_len ? (ad_len - 1) * sizeof(WCHAR) : 0;
+            ptr = (LPWSTR)(afdi + 1);
+            afdi->lpAssemblyEncodedAssemblyIdentity = ptr;
+            memcpy( ptr, assembly_id, id_len * sizeof(WCHAR) );
+            ptr += id_len;
+            if (path_len)
+            {
+                afdi->lpAssemblyManifestPath = ptr;
+                memcpy(ptr, assembly->manifest.info, path_len * sizeof(WCHAR));
+                ptr += path_len;
+            } else afdi->lpAssemblyManifestPath = NULL;
+            afdi->lpAssemblyPolicyPath = NULL; /* FIXME */
+            if (ad_len)
+            {
+                afdi->lpAssemblyDirectoryName = ptr;
+                memcpy(ptr, assembly->directory, ad_len * sizeof(WCHAR));
+                ptr += ad_len;
+            }
+            else afdi->lpAssemblyDirectoryName = NULL;
+            RtlFreeHeap( GetProcessHeap(), 0, assembly_id );
+        }
+        break;
+
     case FileInformationInAssemblyOfAssemblyInActivationContext:
     default:
         FIXME( "class %u not implemented\n", class );
