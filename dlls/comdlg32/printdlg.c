@@ -324,6 +324,11 @@ static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
 	else
 	    lppd->Flags &= ~PD_PAGENUMS;
 
+        if (IsDlgButtonChecked(hDlg, rad2) == BST_CHECKED) /* Selection */
+            lppd->Flags |= PD_SELECTION;
+        else
+            lppd->Flags &= ~PD_SELECTION;
+
 	if (IsDlgButtonChecked(hDlg, chx1) == BST_CHECKED) {/* Print to file */
 	    static char file[] = "FILE:";
 	    lppd->Flags |= PD_PRINTTOFILE;
@@ -401,6 +406,11 @@ static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
 	}
 	else
 	    lppd->Flags &= ~PD_PAGENUMS;
+
+        if (IsDlgButtonChecked(hDlg, rad2) == BST_CHECKED) /* Selection */
+            lppd->Flags |= PD_SELECTION;
+        else
+            lppd->Flags &= ~PD_SELECTION;
 
 	if (IsDlgButtonChecked(hDlg, chx1) == BST_CHECKED) {/* Print to file */
 	    static WCHAR file[] = {'F','I','L','E',':',0};
