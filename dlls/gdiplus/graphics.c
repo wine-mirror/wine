@@ -72,6 +72,51 @@ static BYTE convert_path_point_type(BYTE type)
     return ret;
 }
 
+static REAL convert_unit(HDC hdc, GpUnit unit)
+{
+    switch(unit)
+    {
+        case UnitInch:
+            return (REAL) GetDeviceCaps(hdc, LOGPIXELSX);
+        case UnitPoint:
+            return ((REAL)GetDeviceCaps(hdc, LOGPIXELSX)) / 72.0;
+        case UnitDocument:
+            return ((REAL)GetDeviceCaps(hdc, LOGPIXELSX)) / 300.0;
+        case UnitMillimeter:
+            return ((REAL)GetDeviceCaps(hdc, LOGPIXELSX)) / 25.4;
+        case UnitWorld:
+            ERR("cannot convert UnitWorld\n");
+            return 0.0;
+        case UnitPixel:
+        case UnitDisplay:
+        default:
+            return 1.0;
+    }
+}
+
+static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
+{
+    HPEN gdipen;
+    REAL width;
+    INT save_state = SaveDC(graphics->hdc);
+
+    EndPath(graphics->hdc);
+
+    width = pen->width * convert_unit(graphics->hdc,
+                          pen->unit == UnitWorld ? graphics->unit : pen->unit);
+
+    gdipen = ExtCreatePen(pen->style, roundr(width), &pen->brush->lb, 0, NULL);
+    SelectObject(graphics->hdc, gdipen);
+
+    return save_state;
+}
+
+static void restore_dc(GpGraphics *graphics, INT state)
+{
+    DeleteObject(SelectObject(graphics->hdc, GetStockObject(NULL_PEN)));
+    RestoreDC(graphics->hdc, state);
+}
+
 /* This helper applies all the changes that the points listed in ptf need in
  * order to be drawn on the device context.  In the end, this should include at
  * least:
@@ -89,26 +134,7 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
     GpMatrix *matrix;
     int i;
 
-    switch(graphics->unit)
-    {
-        case UnitInch:
-            unitscale = GetDeviceCaps(graphics->hdc, LOGPIXELSX);
-            break;
-        case UnitPoint:
-            unitscale = ((REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSX)) / 72.0;
-            break;
-        case UnitDocument:
-            unitscale = ((REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSX)) / 300.0;
-            break;
-        case UnitMillimeter:
-            unitscale = ((REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSX)) / 25.4;
-            break;
-        case UnitPixel:
-        case UnitDisplay:
-        default:
-            unitscale = 1.0;
-            break;
-    }
+    unitscale = convert_unit(graphics->hdc, graphics->unit);
 
     /* apply page scale */
     if(graphics->unit != UnitDisplay)
@@ -125,20 +151,11 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
 }
 
 /* GdipDrawPie/GdipFillPie helper function */
-static GpStatus draw_pie(GpGraphics *graphics, HBRUSH gdibrush, HPEN gdipen,
-    REAL x, REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
+static void draw_pie(GpGraphics *graphics, REAL x, REAL y, REAL width,
+    REAL height, REAL startAngle, REAL sweepAngle)
 {
-    INT save_state;
     GpPointF ptf[4];
     POINT pti[4];
-
-    if(!graphics)
-        return InvalidParameter;
-
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, gdipen);
-    SelectObject(graphics->hdc, gdibrush);
 
     ptf[0].X = x;
     ptf[0].Y = y;
@@ -152,10 +169,6 @@ static GpStatus draw_pie(GpGraphics *graphics, HBRUSH gdibrush, HPEN gdipen,
 
     Pie(graphics->hdc, pti[0].x, pti[0].y, pti[1].x, pti[1].y, pti[2].x,
         pti[2].y, pti[3].x, pti[3].y);
-
-    RestoreDC(graphics->hdc, save_state);
-
-    return Ok;
 }
 
 /* GdipDrawCurve helper function.
@@ -798,13 +811,11 @@ GpStatus WINGDIPAPI GdipDrawArc(GpGraphics *graphics, GpPen *pen, REAL x,
 
     num_pts = arc2polybezier(points, x, y, width, height, startAngle, sweepAngle);
 
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, pen->gdipen);
+    save_state = prepare_dc(graphics, pen);
 
     retval = draw_polybezier(graphics, pen, points, num_pts, TRUE);
 
-    RestoreDC(graphics->hdc, save_state);
+    restore_dc(graphics, save_state);
 
     return retval;
 }
@@ -828,13 +839,11 @@ GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics *graphics, GpPen *pen, REAL x1,
     pt[3].X = x4;
     pt[3].Y = y4;
 
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, pen->gdipen);
+    save_state = prepare_dc(graphics, pen);
 
     retval = draw_polybezier(graphics, pen, pt, 4, TRUE);
 
-    RestoreDC(graphics->hdc, save_state);
+    restore_dc(graphics, save_state);
 
     return retval;
 }
@@ -882,14 +891,12 @@ GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     pt[len_pt-1].X = points[count-1].X;
     pt[len_pt-1].Y = points[count-1].Y;
 
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, pen->gdipen);
+    save_state = prepare_dc(graphics, pen);
 
     retval = draw_polybezier(graphics, pen, pt, len_pt, TRUE);
 
     GdipFree(pt);
-    RestoreDC(graphics->hdc, save_state);
+    restore_dc(graphics, save_state);
 
     return retval;
 }
@@ -909,13 +916,11 @@ GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
     pt[1].X = (REAL)x2;
     pt[1].Y = (REAL)y2;
 
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, pen->gdipen);
+    save_state = prepare_dc(graphics, pen);
 
     retval = draw_polyline(graphics, pen, pt, 2, TRUE);
 
-    RestoreDC(graphics->hdc, save_state);
+    restore_dc(graphics, save_state);
 
     return retval;
 }
@@ -929,13 +934,11 @@ GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
     if(!pen || !graphics || (count < 2))
         return InvalidParameter;
 
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, pen->gdipen);
+    save_state = prepare_dc(graphics, pen);
 
     retval = draw_polyline(graphics, pen, points, count, TRUE);
 
-    RestoreDC(graphics->hdc, save_state);
+    restore_dc(graphics, save_state);
 
     return retval;
 }
@@ -948,14 +951,12 @@ GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
     if(!pen || !graphics)
         return InvalidParameter;
 
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, pen->gdipen);
+    save_state = prepare_dc(graphics, pen);
 
     retval = draw_poly(graphics, pen, path->pathdata.Points,
                        path->pathdata.Types, path->pathdata.Count, TRUE);
 
-    RestoreDC(graphics->hdc, save_state);
+    restore_dc(graphics, save_state);
 
     return retval;
 }
@@ -963,11 +964,19 @@ GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 GpStatus WINGDIPAPI GdipDrawPie(GpGraphics *graphics, GpPen *pen, REAL x,
     REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
 {
-    if(!pen)
+    INT save_state;
+
+    if(!graphics || !pen)
         return InvalidParameter;
 
-    return draw_pie(graphics, GetStockObject(NULL_BRUSH), pen->gdipen, x, y,
-        width, height, startAngle, sweepAngle);
+    save_state = prepare_dc(graphics, pen);
+    SelectObject(graphics->hdc, GetStockObject(NULL_BRUSH));
+
+    draw_pie(graphics, x, y, width, height, startAngle, sweepAngle);
+
+    restore_dc(graphics, save_state);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
@@ -978,14 +987,12 @@ GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
     if(!pen || !graphics)
         return InvalidParameter;
 
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, pen->gdipen);
+    save_state = prepare_dc(graphics, pen);
     SelectObject(graphics->hdc, GetStockObject(NULL_BRUSH));
 
     Rectangle(graphics->hdc, x, y, x + width, y + height);
 
-    RestoreDC(graphics->hdc, save_state);
+    restore_dc(graphics, save_state);
 
     return Ok;
 }
@@ -1025,11 +1032,21 @@ end:
 GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
     REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
 {
-    if(!brush)
+    INT save_state;
+
+    if(!graphics || !brush)
         return InvalidParameter;
 
-    return draw_pie(graphics, brush->gdibrush, GetStockObject(NULL_PEN), x, y,
-        width, height, startAngle, sweepAngle);
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, brush->gdibrush);
+    SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
+
+    draw_pie(graphics, x, y, width, height, startAngle, sweepAngle);
+
+    RestoreDC(graphics->hdc, save_state);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipFillPolygonI(GpGraphics *graphics, GpBrush *brush,

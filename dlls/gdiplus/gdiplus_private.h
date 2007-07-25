@@ -46,7 +46,6 @@ struct GpPen{
     UINT style;
     GpUnit unit;
     REAL width;
-    HPEN gdipen;
     GpLineCap endcap;
     GpLineCap startcap;
     GpDashCap dashcap;

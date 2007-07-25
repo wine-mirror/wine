@@ -79,10 +79,6 @@ GpStatus WINGDIPAPI GdipClonePen(GpPen *pen, GpPen **clonepen)
     GdipCloneCustomLineCap(pen->customend, &(*clonepen)->customend);
     GdipCloneBrush(pen->brush, &(*clonepen)->brush);
 
-    (*clonepen)->gdipen = ExtCreatePen((*clonepen)->style,
-                                       roundr((*clonepen)->width),
-                                       &(*clonepen)->brush->lb, 0, NULL);
-
     return Ok;
 }
 
@@ -106,10 +102,7 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
     gp_pen->dash = DashStyleSolid;
     GdipCreateSolidFill(color, (GpSolidFill **)(&gp_pen->brush));
 
-    if((gp_pen->unit == UnitWorld) || (gp_pen->unit == UnitPixel)) {
-        gp_pen->gdipen = ExtCreatePen(gp_pen->style, (INT) gp_pen->width,
-                                      &gp_pen->brush->lb, 0, NULL);
-    } else {
+    if(!((gp_pen->unit == UnitWorld) || (gp_pen->unit == UnitPixel))) {
         FIXME("UnitWorld, UnitPixel only supported units\n");
         GdipFree(gp_pen);
         return NotImplemented;
@@ -123,7 +116,6 @@ GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
 GpStatus WINGDIPAPI GdipDeletePen(GpPen *pen)
 {
     if(!pen)    return InvalidParameter;
-    DeleteObject(pen->gdipen);
 
     GdipDeleteBrush(pen->brush);
     GdipDeleteCustomLineCap(pen->customstart);
@@ -164,21 +156,11 @@ GpStatus WINGDIPAPI GdipGetPenDashStyle(GpPen *pen, GpDashStyle *dash)
 
 GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen *pen, GpBrush *brush)
 {
-    GpStatus retval;
-
     if(!pen || !brush)
         return InvalidParameter;
 
     GdipDeleteBrush(pen->brush);
-    retval = GdipCloneBrush(brush, &pen->brush);
-    if(retval != Ok)
-        return retval;
-
-    DeleteObject(pen->gdipen);
-    pen->gdipen = ExtCreatePen(pen->style, roundr(pen->width), &pen->brush->lb, 0,
-                               NULL);
-
-    return Ok;
+    return GdipCloneBrush(brush, &pen->brush);
 }
 
 GpStatus WINGDIPAPI GdipSetPenColor(GpPen *pen, ARGB argb)
@@ -229,13 +211,10 @@ GpStatus WINGDIPAPI GdipSetPenDashStyle(GpPen *pen, GpDashStyle dash)
     if(!pen)
         return InvalidParameter;
 
-    DeleteObject(pen->gdipen);
     pen->dash = dash;
     pen->style &= ~(PS_ALTERNATE | PS_SOLID | PS_DASH | PS_DOT | PS_DASHDOT |
                     PS_DASHDOTDOT | PS_NULL | PS_USERSTYLE | PS_INSIDEFRAME);
     pen->style |= gdip_to_gdi_dash(dash);
-
-    pen->gdipen = ExtCreatePen(pen->style, (INT) pen->width, &pen->brush->lb, 0, NULL);
 
     return Ok;
 }
@@ -277,12 +256,9 @@ GpStatus WINGDIPAPI GdipSetPenLineJoin(GpPen *pen, GpLineJoin join)
 {
     if(!pen)    return InvalidParameter;
 
-    DeleteObject(pen->gdipen);
     pen->join = join;
     pen->style &= ~(PS_JOIN_ROUND | PS_JOIN_BEVEL | PS_JOIN_MITER);
     pen->style |= gdip_to_gdi_join(join);
-
-    pen->gdipen = ExtCreatePen(pen->style, (INT) pen->width, &pen->brush->lb, 0, NULL);
 
     return Ok;
 }
