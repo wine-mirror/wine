@@ -93,6 +93,17 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
         case UnitInch:
             unitscale = GetDeviceCaps(graphics->hdc, LOGPIXELSX);
             break;
+        case UnitPoint:
+            unitscale = ((REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSX)) / 72.0;
+            break;
+        case UnitDocument:
+            unitscale = ((REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSX)) / 300.0;
+            break;
+        case UnitMillimeter:
+            unitscale = ((REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSX)) / 25.4;
+            break;
+        case UnitPixel:
+        case UnitDisplay:
         default:
             unitscale = 1.0;
             break;
@@ -1151,7 +1162,7 @@ GpStatus WINGDIPAPI GdipSetInterpolationMode(GpGraphics *graphics,
 
 GpStatus WINGDIPAPI GdipSetPageUnit(GpGraphics *graphics, GpUnit unit)
 {
-    if(!graphics)
+    if(!graphics || (unit == UnitWorld))
         return InvalidParameter;
 
     graphics->unit = unit;
