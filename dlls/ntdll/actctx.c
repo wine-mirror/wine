@@ -158,6 +158,7 @@ struct assembly
     enum assembly_type       type;
     struct assembly_identity id;
     struct file_info         manifest;
+    WCHAR                   *directory;
     BOOL                     no_inherit;
     struct dll_redirect     *dlls;
     unsigned int             num_dlls;
@@ -234,7 +235,6 @@ static WCHAR *strdupW(const WCHAR* str)
 {
     WCHAR*      ptr;
 
-    if (!str) return NULL;
     if (!(ptr = RtlAllocateHeap(GetProcessHeap(), 0, (strlenW(str) + 1) * sizeof(WCHAR))))
         return NULL;
     return strcpyW(ptr, str);
@@ -480,6 +480,36 @@ static void free_depend_manifests(struct actctx_loader* acl)
     RtlFreeHeap(GetProcessHeap(), 0, acl->dependencies);
 }
 
+static WCHAR *build_assembly_dir(struct assembly_identity* ai)
+{
+    static const WCHAR undW[] = {'_',0};
+    static const WCHAR noneW[] = {'n','o','n','e',0};
+    static const WCHAR mskeyW[] = {'d','e','a','d','b','e','e','f',0};
+    static const WCHAR versionW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
+
+    const WCHAR *key = ai->public_key ? ai->public_key : noneW;
+    const WCHAR *lang = ai->language ? ai->language : noneW;
+    SIZE_T size = (strlenW(ai->arch) + 1 + strlenW(ai->name) + 1 + strlenW(key) + 24 + 1 +
+                   strlenW(lang) + 1) * sizeof(WCHAR) + sizeof(mskeyW);
+    WCHAR *ret;
+
+    if (!(ret = RtlAllocateHeap( GetProcessHeap(), 0, size ))) return NULL;
+
+    strcpyW( ret, ai->arch );
+    strcatW( ret, undW );
+    strcatW( ret, ai->name );
+    strcatW( ret, undW );
+    strcatW( ret, key );
+    strcatW( ret, undW );
+    sprintfW( ret + strlenW(ret), versionW,
+              ai->version.major, ai->version.minor, ai->version.build, ai->version.revision );
+    strcatW( ret, undW );
+    strcatW( ret, lang );
+    strcatW( ret, undW );
+    strcatW( ret, mskeyW );
+    return ret;
+}
+
 static ACTIVATION_CONTEXT *check_actctx( HANDLE h )
 {
     ACTIVATION_CONTEXT *actctx = h;
@@ -517,6 +547,7 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
             }
             RtlFreeHeap( GetProcessHeap(), 0, assembly->dlls );
             RtlFreeHeap( GetProcessHeap(), 0, assembly->manifest.info );
+            RtlFreeHeap( GetProcessHeap(), 0, assembly->directory );
             free_entity_array( &assembly->entities );
             free_assembly_identity(&assembly->id);
         }
@@ -1336,15 +1367,18 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
 }
 
 static NTSTATUS parse_manifest( struct actctx_loader* acl, struct assembly_identity* ai,
-                                LPCWSTR filename, xmlbuf_t* xmlbuf )
+                                LPCWSTR filename, LPCWSTR directory, xmlbuf_t* xmlbuf )
 {
     xmlstr_t            elem;
     struct assembly*    assembly;
 
-    TRACE( "parsing manifest loaded from %s\n", debugstr_w(filename) );
+    TRACE( "parsing manifest loaded from %s base dir %s\n", debugstr_w(filename), debugstr_w(directory) );
 
     if (!(assembly = add_assembly(acl->actctx, ASSEMBLY_MANIFEST)))
         return STATUS_SXS_CANT_GEN_ACTCTX;
+
+    if (directory && !(assembly->directory = strdupW(directory)))
+        return STATUS_NO_MEMORY;
 
     if (filename) assembly->manifest.info = strdupW( filename + 4 /* skip \??\ prefix */ );
     assembly->manifest.type = assembly->manifest.info ? ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE
@@ -1420,7 +1454,8 @@ static NTSTATUS get_module_filename( HMODULE module, UNICODE_STRING *str, unsign
 }
 
 static NTSTATUS get_manifest_in_module( struct actctx_loader* acl, struct assembly_identity* ai,
-                                        LPCWSTR filename, HANDLE hModule, LPCWSTR resname, ULONG lang )
+                                        LPCWSTR filename, LPCWSTR directory, HANDLE hModule,
+                                        LPCWSTR resname, ULONG lang )
 {
     NTSTATUS status;
     UNICODE_STRING nameW;
@@ -1463,13 +1498,14 @@ static NTSTATUS get_manifest_in_module( struct actctx_loader* acl, struct assemb
         xmlbuf_t buf;
         buf.ptr = ptr;
         buf.end = buf.ptr + entry->Size;
-        status = parse_manifest(acl, ai, filename, &buf);
+        status = parse_manifest(acl, ai, filename, directory, &buf);
     }
     return status;
 }
 
 static NTSTATUS get_manifest_in_pe_file( struct actctx_loader* acl, struct assembly_identity* ai,
-                                         LPCWSTR filename, HANDLE file, LPCWSTR resname, ULONG lang )
+                                         LPCWSTR filename, LPCWSTR directory, HANDLE file,
+                                         LPCWSTR resname, ULONG lang )
 {
     HANDLE              mapping;
     OBJECT_ATTRIBUTES   attr;
@@ -1504,7 +1540,7 @@ static NTSTATUS get_manifest_in_pe_file( struct actctx_loader* acl, struct assem
     if (RtlImageNtHeader(base)) /* we got a PE file */
     {
         HANDLE module = (HMODULE)((ULONG_PTR)base | 1);  /* make it a LOAD_LIBRARY_AS_DATAFILE handle */
-        status = get_manifest_in_module( acl, ai, filename, module, resname, lang );
+        status = get_manifest_in_module( acl, ai, filename, directory, module, resname, lang );
     }
     else status = STATUS_INVALID_IMAGE_FORMAT;
 
@@ -1513,7 +1549,7 @@ static NTSTATUS get_manifest_in_pe_file( struct actctx_loader* acl, struct assem
 }
 
 static NTSTATUS get_manifest_in_manifest_file( struct actctx_loader* acl, struct assembly_identity* ai,
-                                               LPCWSTR filename, HANDLE file )
+                                               LPCWSTR filename, LPCWSTR directory, HANDLE file )
 {
     HANDLE              mapping;
     OBJECT_ATTRIBUTES   attr;
@@ -1548,7 +1584,7 @@ static NTSTATUS get_manifest_in_manifest_file( struct actctx_loader* acl, struct
 
     buf.ptr = base;
     buf.end = buf.ptr + count;
-    status = parse_manifest(acl, ai, filename, &buf);
+    status = parse_manifest(acl, ai, filename, directory, &buf);
 
     NtUnmapViewOfSection( GetCurrentProcess(), base );
     return status;
@@ -1556,7 +1592,7 @@ static NTSTATUS get_manifest_in_manifest_file( struct actctx_loader* acl, struct
 
 /* try to load the .manifest file associated to the file */
 static NTSTATUS get_manifest_in_associated_manifest( struct actctx_loader* acl, struct assembly_identity* ai,
-                                                     LPCWSTR filename, HMODULE module, LPCWSTR resname )
+                                                     LPCWSTR filename, LPCWSTR directory, HMODULE module, LPCWSTR resname )
 {
     static const WCHAR fmtW[] = { '.','%','l','u',0 };
     WCHAR *buffer;
@@ -1597,7 +1633,7 @@ static NTSTATUS get_manifest_in_associated_manifest( struct actctx_loader* acl, 
     status = open_nt_file( &file, &nameW );
     if (status == STATUS_SUCCESS)
     {
-        status = get_manifest_in_manifest_file( acl, ai, nameW.Buffer, file );
+        status = get_manifest_in_manifest_file( acl, ai, nameW.Buffer, directory, file );
         NtClose( file );
     }
     RtlFreeUnicodeString( &nameW );
@@ -1731,16 +1767,17 @@ static NTSTATUS lookup_winsxs(struct actctx_loader* acl, struct assembly_identit
 
     path[path_us.Length/sizeof(WCHAR)] = '\\';
     strcpyW( path + path_us.Length/sizeof(WCHAR) + 1, file );
-    RtlFreeHeap( GetProcessHeap(), 0, file );
     RtlInitUnicodeString( &path_us, path );
+    *strrchrW(file, '.') = 0;  /* remove .manifest extension */
 
     if (!open_nt_file( &handle, &path_us ))
     {
-        io.u.Status = get_manifest_in_manifest_file(acl, &sxs_ai, path_us.Buffer, handle);
+        io.u.Status = get_manifest_in_manifest_file(acl, &sxs_ai, path_us.Buffer, file, handle);
         NtClose( handle );
     }
     else io.u.Status = STATUS_NO_SUCH_FILE;
 
+    RtlFreeHeap( GetProcessHeap(), 0, file );
     RtlFreeUnicodeString( &path_us );
     return io.u.Status;
 }
@@ -1750,7 +1787,7 @@ static NTSTATUS lookup_assembly(struct actctx_loader* acl,
 {
     static const WCHAR dotDllW[] = {'.','d','l','l',0};
     unsigned int i;
-    WCHAR *buffer, *p;
+    WCHAR *buffer, *p, *directory;
     NTSTATUS status;
     UNICODE_STRING nameW;
     HANDLE file;
@@ -1763,6 +1800,12 @@ static NTSTATUS lookup_assembly(struct actctx_loader* acl,
     if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0,
                                     (strlenW(acl->actctx->appdir.info) + 2 * strlenW(ai->name) + 2) * sizeof(WCHAR) + sizeof(dotManifestW) )))
         return STATUS_NO_MEMORY;
+
+    if (!(directory = build_assembly_dir( ai )))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        return STATUS_NO_MEMORY;
+    }
 
     /* lookup in appdir\name.dll
      *           appdir\name.manifest
@@ -1783,7 +1826,7 @@ static NTSTATUS lookup_assembly(struct actctx_loader* acl,
             status = open_nt_file( &file, &nameW );
             if (!status)
             {
-                status = get_manifest_in_pe_file( acl, ai, nameW.Buffer, file,
+                status = get_manifest_in_pe_file( acl, ai, nameW.Buffer, directory, file,
                                                   (LPCWSTR)CREATEPROCESS_MANIFEST_RESOURCE_ID, 0 );
                 NtClose( file );
                 break;
@@ -1797,15 +1840,18 @@ static NTSTATUS lookup_assembly(struct actctx_loader* acl,
             status = open_nt_file( &file, &nameW );
             if (!status)
             {
-                status = get_manifest_in_manifest_file( acl, ai, nameW.Buffer, file );
+                status = get_manifest_in_manifest_file( acl, ai, nameW.Buffer, directory, file );
                 NtClose( file );
                 break;
             }
             RtlFreeUnicodeString( &nameW );
         }
+        status = STATUS_SXS_ASSEMBLY_NOT_FOUND;
     }
     RtlFreeUnicodeString( &nameW );
-    return STATUS_SXS_ASSEMBLY_NOT_FOUND;
+    RtlFreeHeap( GetProcessHeap(), 0, directory );
+    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    return status;
 }
 
 static NTSTATUS parse_depend_manifests(struct actctx_loader* acl)
@@ -1855,6 +1901,7 @@ void actctx_init(void)
 NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
 {
     const ACTCTXW *pActCtx = ptr;  /* FIXME: not the right structure */
+    const WCHAR *directory = NULL;
     ACTIVATION_CONTEXT *actctx;
     UNICODE_STRING nameW;
     ULONG lang = 0;
@@ -1913,32 +1960,33 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
     acl.allocated_dependencies = 0;
 
     if (pActCtx->dwFlags & ACTCTX_FLAG_LANGID_VALID) lang = pActCtx->wLangId;
+    if (pActCtx->dwFlags & ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID) directory = pActCtx->lpAssemblyDirectory;
 
     if (pActCtx->dwFlags & ACTCTX_FLAG_RESOURCE_NAME_VALID)
     {
         /* if we have a resource it's a PE file */
         if (pActCtx->dwFlags & ACTCTX_FLAG_HMODULE_VALID)
         {
-            status = get_manifest_in_module( &acl, NULL, NULL, pActCtx->hModule,
+            status = get_manifest_in_module( &acl, NULL, NULL, directory, pActCtx->hModule,
                                              pActCtx->lpResourceName, lang );
             if (status)
                 /* FIXME: what to do if pActCtx->lpSource is set */
-                status = get_manifest_in_associated_manifest( &acl, NULL, NULL, pActCtx->hModule,
-                                                              pActCtx->lpResourceName );
+                status = get_manifest_in_associated_manifest( &acl, NULL, NULL, directory,
+                                                              pActCtx->hModule, pActCtx->lpResourceName );
         }
         else if (pActCtx->lpSource)
         {
-            status = get_manifest_in_pe_file( &acl, NULL, nameW.Buffer, file,
-                                              pActCtx->lpResourceName, lang );
+            status = get_manifest_in_pe_file( &acl, NULL, nameW.Buffer, directory,
+                                              file, pActCtx->lpResourceName, lang );
             if (status)
-                status = get_manifest_in_associated_manifest( &acl, NULL, nameW.Buffer, NULL,
-                                                              pActCtx->lpResourceName );
+                status = get_manifest_in_associated_manifest( &acl, NULL, nameW.Buffer, directory,
+                                                              NULL, pActCtx->lpResourceName );
         }
         else status = STATUS_INVALID_PARAMETER;
     }
     else
     {
-        status = get_manifest_in_manifest_file( &acl, NULL, nameW.Buffer, file );
+        status = get_manifest_in_manifest_file( &acl, NULL, nameW.Buffer, directory, file );
     }
 
     if (file) NtClose( file );
