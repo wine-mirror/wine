@@ -47,6 +47,8 @@ GpStatus WINGDIPAPI GdipSetPenStartCap(GpPen*,GpLineCap);
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC,GpGraphics**);
 GpStatus WINGDIPAPI GdipCreateFromHWND(HWND,GpGraphics**);
 GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE,BOOL,GpMetafile**);
+GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE,BOOL,
+    GDIPCONST WmfPlaceableFileHeader*,GpMetafile**);
 GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *);
 GpStatus WINGDIPAPI GdipDrawArc(GpGraphics*,GpPen*,REAL,REAL,REAL,REAL,REAL,REAL);
 GpStatus WINGDIPAPI GdipDrawBezier(GpGraphics*,GpPen*,REAL,REAL,REAL,REAL,REAL,

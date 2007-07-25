@@ -818,6 +818,20 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
+    GDIPCONST WmfPlaceableFileHeader * placeable, GpMetafile **metafile)
+{
+    static int calls;
+
+    if(!hwmf || !metafile || !placeable)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
 {
     if(!graphics) return InvalidParameter;

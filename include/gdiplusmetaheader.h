@@ -16,44 +16,29 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _GDIPLUS_H
-#define _GDIPLUS_H
+#ifndef _GDIPLUSMETAHEADER_H
+#define _GDIPLUSMETAHEADER_H
 
-#ifdef __cplusplus
+#include <pshpack2.h>
 
-namespace Gdiplus
+typedef struct
 {
-    namespace DllExports
-    {
-#include "gdiplusmem.h"
-    };
+    INT16  Left;
+    INT16  Top;
+    INT16  Right;
+    INT16  Bottom;
+} PWMFRect16;
 
-#include "gdiplustypes.h"
-#include "gdiplusenums.h"
-#include "gdiplusinit.h"
-#include "gdipluspixelformats.h"
-#include "gdiplusmetaheader.h"
-#include "gdiplusgpstubs.h"
+typedef struct
+{
+    UINT32     Key;
+    INT16      Hmf;
+    PWMFRect16 BoundingBox;
+    INT16      Inch;
+    UINT32     Reserved;
+    INT16      Checksum;
+} WmfPlaceableFileHeader;
 
-    namespace DllExports
-    {
-#include "gdiplusflat.h"
-    };
-};
+#include <poppack.h>
 
-#else /* end c++ includes */
-
-#include "gdiplusmem.h"
-
-#include "gdiplustypes.h"
-#include "gdiplusenums.h"
-#include "gdiplusinit.h"
-#include "gdipluspixelformats.h"
-#include "gdiplusmetaheader.h"
-#include "gdiplusgpstubs.h"
-
-#include "gdiplusflat.h"
-
-#endif /* end c includes */
-
-#endif /* _GDIPLUS_H_ */
+#endif /* _GDIPLUSMETAHEADER_H */

@@ -102,7 +102,7 @@
 @ stdcall GdipCreateMetafileFromEmf(ptr long ptr)
 @ stub GdipCreateMetafileFromFile
 @ stub GdipCreateMetafileFromStream
-@ stub GdipCreateMetafileFromWmf
+@ stdcall GdipCreateMetafileFromWmf(ptr long ptr ptr)
 @ stub GdipCreateMetafileFromWmfFile
 @ stub GdipCreatePath2
 @ stub GdipCreatePath2I
