@@ -187,7 +187,7 @@ static int last_split;
 
 /* some common string constants */
 static const TCHAR sEmpty[] = {'\0'};
-static const TCHAR sSpace[] = {' ', '\0'};
+static const WCHAR sSpace[] = {' ', '\0'};
 static const TCHAR sNumFmt[] = {'%','d','\0'};
 static const TCHAR sQMarks[] = {'?','?','?','\0'};
 
@@ -271,9 +271,9 @@ static inline INT set_check(HWND hwnd, INT id, BOOL on)
 
 static inline void choose_font(HWND hwnd)
 {
-        TCHAR dlg_name[BUFFER_LEN], dlg_info[BUFFER_LEN];
-        CHOOSEFONT chFont;
-        LOGFONT lFont;
+        WCHAR dlg_name[BUFFER_LEN], dlg_info[BUFFER_LEN];
+        CHOOSEFONTW chFont;
+        LOGFONTW lFont;
 
         HDC hdc = GetDC(hwnd);
         chFont.lStructSize = sizeof(CHOOSEFONT);
@@ -291,22 +291,22 @@ static inline void choose_font(HWND hwnd)
         chFont.nSizeMin = 0;
         chFont.nSizeMax = 24;
 
-        if (ChooseFont(&chFont)) {
+        if (ChooseFontW(&chFont)) {
                 HWND childWnd;
                 HFONT hFontOld;
 
                 DeleteObject(Globals.hfont);
-                Globals.hfont = CreateFontIndirect(&lFont);
+                Globals.hfont = CreateFontIndirectW(&lFont);
                 hFontOld = SelectObject(hdc, Globals.hfont);
-                GetTextExtentPoint32(hdc, sSpace, 1, &Globals.spaceSize);
+                GetTextExtentPoint32W(hdc, sSpace, 1, &Globals.spaceSize);
 
                 /* change font in all open child windows */
                 for(childWnd=GetWindow(Globals.hmdiclient,GW_CHILD); childWnd; childWnd=GetNextWindow(childWnd,GW_HWNDNEXT)) {
-                        ChildWnd* child = (ChildWnd*) GetWindowLongPtr(childWnd, GWLP_USERDATA);
-                        SendMessage(child->left.hwnd, WM_SETFONT, (WPARAM)Globals.hfont, TRUE);
-                        SendMessage(child->right.hwnd, WM_SETFONT, (WPARAM)Globals.hfont, TRUE);
-                        SendMessage(child->left.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
-                        SendMessage(child->right.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+                        ChildWnd* child = (ChildWnd*) GetWindowLongPtrW(childWnd, GWLP_USERDATA);
+                        SendMessageW(child->left.hwnd, WM_SETFONT, (WPARAM)Globals.hfont, TRUE);
+                        SendMessageW(child->right.hwnd, WM_SETFONT, (WPARAM)Globals.hfont, TRUE);
+                        SendMessageW(child->left.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+                        SendMessageW(child->right.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
                         InvalidateRect(child->left.hwnd, NULL, TRUE);
                         InvalidateRect(child->right.hwnd, NULL, TRUE);
                 }
@@ -314,9 +314,9 @@ static inline void choose_font(HWND hwnd)
                 SelectObject(hdc, hFontOld);
         }
         else if (CommDlgExtendedError()) {
-                LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_NAME, dlg_name, BUFFER_LEN);
-                LoadString(Globals.hInstance, IDS_FONT_SEL_ERROR, dlg_info, BUFFER_LEN);
-                MessageBox(hwnd, dlg_info, dlg_name, MB_OK);
+                LoadStringW(Globals.hInstance, IDS_FONT_SEL_DLG_NAME, dlg_name, BUFFER_LEN);
+                LoadStringW(Globals.hInstance, IDS_FONT_SEL_ERROR, dlg_info, BUFFER_LEN);
+                MessageBoxW(hwnd, dlg_info, dlg_name, MB_OK);
         }
 
         ReleaseDC(hwnd, hdc);
@@ -2646,19 +2646,18 @@ static HWND create_header(HWND parent, Pane* pane, int id)
 
 static void init_output(HWND hwnd)
 {
-	static const TCHAR s1000[] = {'1','0','0','0','\0'};
-
-	TCHAR b[16];
+	static const WCHAR s1000[] = {'1','0','0','0','\0'};
+	WCHAR b[16];
 	HFONT old_font;
 	HDC hdc = GetDC(hwnd);
 
-	if (GetNumberFormat(LOCALE_USER_DEFAULT, 0, s1000, 0, b, 16) > 4)
+	if (GetNumberFormatW(LOCALE_USER_DEFAULT, 0, s1000, 0, b, 16) > 4)
 		Globals.num_sep = b[1];
 	else
 		Globals.num_sep = '.';
 
 	old_font = SelectObject(hdc, Globals.hfont);
-	GetTextExtentPoint32(hdc, sSpace, 1, &Globals.spaceSize);
+	GetTextExtentPoint32W(hdc, sSpace, 1, &Globals.spaceSize);
 	SelectObject(hdc, old_font);
 	ReleaseDC(hwnd, hdc);
 }
