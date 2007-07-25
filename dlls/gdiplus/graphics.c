@@ -83,9 +83,10 @@ static BYTE convert_path_point_type(BYTE type)
  * gdi to draw, and these functions would irreparably mess with line widths.
  */
 static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
-    GDIPCONST GpPointF *ptf, INT count)
+    GpPointF *ptf, INT count)
 {
     REAL unitscale;
+    GpMatrix *matrix;
     int i;
 
     switch(graphics->unit)
@@ -113,9 +114,13 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
     if(graphics->unit != UnitDisplay)
         unitscale *= graphics->scale;
 
+    GdipCloneMatrix(graphics->worldtrans, &matrix);
+    GdipScaleMatrix(matrix, unitscale, unitscale, MatrixOrderAppend);
+    GdipTransformMatrixPoints(matrix, ptf, count);
+
     for(i = 0; i < count; i++){
-        pti[i].x = roundr(unitscale * ptf[i].X);
-        pti[i].y = roundr(unitscale * ptf[i].Y);
+        pti[i].x = roundr(ptf[i].X);
+        pti[i].y = roundr(ptf[i].Y);
     }
 }
 
@@ -431,9 +436,9 @@ static GpStatus draw_polyline(GpGraphics *graphics, GpPen *pen,
         goto end;
     }
 
-    if(caps){
-        memcpy(ptcopy, pt, count * sizeof(GpPointF));
+    memcpy(ptcopy, pt, count * sizeof(GpPointF));
 
+    if(caps){
         if(pen->endcap == LineCapArrowAnchor)
             shorten_line_amt(ptcopy[count-2].X, ptcopy[count-2].Y,
                              &ptcopy[count-1].X, &ptcopy[count-1].Y, pen->width);
@@ -454,11 +459,9 @@ static GpStatus draw_polyline(GpGraphics *graphics, GpPen *pen,
                  pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X, pt[count - 1].Y);
         draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
                          pt[1].X, pt[1].Y, pt[0].X, pt[0].Y);\
-
-        transform_and_round_points(graphics, pti, ptcopy, count);
     }
-    else
-        transform_and_round_points(graphics, pti, pt, count);
+
+    transform_and_round_points(graphics, pti, ptcopy, count);
 
     Polyline(graphics->hdc, pti, count);
 
@@ -533,9 +536,9 @@ static GpStatus draw_polybezier(GpGraphics *graphics, GpPen *pen,
         goto end;
     }
 
-    if(caps){
-        memcpy(ptcopy, pt, count * sizeof(GpPointF));
+    memcpy(ptcopy, pt, count * sizeof(GpPointF));
 
+    if(caps){
         if(pen->endcap == LineCapArrowAnchor)
             shorten_bezier_amt(&ptcopy[count-4], pen->width, FALSE);
         /* FIXME The following is seemingly correct only for baseinset < 0 or
@@ -574,11 +577,9 @@ static GpStatus draw_polybezier(GpGraphics *graphics, GpPen *pen,
         draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
             pt[0].X - (ptcopy[0].X - ptcopy[1].X),
             pt[0].Y - (ptcopy[0].Y - ptcopy[1].Y), pt[0].X, pt[0].Y);
-
-        transform_and_round_points(graphics, pti, ptcopy, count);
     }
-    else
-        transform_and_round_points(graphics, pti, pt, count);
+
+    transform_and_round_points(graphics, pti, ptcopy, count);
 
     PolyBezier(graphics->hdc, pti, count);
 
@@ -622,11 +623,11 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
         }
     }
 
+    memcpy(ptcopy, pt, count * sizeof(GpPointF));
+
     /* If we are drawing caps, go through the points and adjust them accordingly,
      * and draw the caps. */
     if(caps){
-        memcpy(ptcopy, pt, count * sizeof(GpPointF));
-
         switch(types[count - 1] & PathPointTypePathTypeMask){
             case PathPointTypeBezier:
                 if(pen->endcap == LineCapArrowAnchor)
@@ -711,10 +712,9 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
                 ERR("Bad path points\n");
                 goto end;
         }
-        transform_and_round_points(graphics, pti, ptcopy, count);
     }
-    else
-        transform_and_round_points(graphics, pti, pt, count);
+
+    transform_and_round_points(graphics, pti, ptcopy, count);
 
     for(i = 0; i < count; i++){
         tp[i] = convert_path_point_type(types[i]);
