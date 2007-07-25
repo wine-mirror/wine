@@ -157,6 +157,13 @@ enum MatrixOrder
     MatrixOrderAppend  = 1
 };
 
+enum ImageType
+{
+    ImageTypeUnknown,
+    ImageTypeBitmap,
+    ImageTypeMetafile
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -173,6 +180,7 @@ typedef enum PixelOffsetMode PixelOffsetMode;
 typedef enum DashCap DashCap;
 typedef enum DashStyle DashStyle;
 typedef enum MatrixOrder MatrixOrder;
+typedef enum ImageType ImageType;
 
 #endif /* end of c typedefs */
 

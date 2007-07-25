@@ -280,7 +280,7 @@
 @ stub GdipGetImagePixelFormat
 @ stdcall GdipGetImageRawFormat(ptr ptr)
 @ stub GdipGetImageThumbnail
-@ stub GdipGetImageType
+@ stdcall GdipGetImageType(ptr ptr)
 @ stdcall GdipGetImageVerticalResolution(ptr ptr)
 @ stdcall GdipGetImageWidth(ptr ptr)
 @ stdcall GdipGetInterpolationMode(ptr ptr)
