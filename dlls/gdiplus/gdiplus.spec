@@ -140,7 +140,7 @@
 @ stub GdipDeletePrivateFontCollection
 @ stub GdipDeleteRegion
 @ stub GdipDeleteStringFormat
-@ stub GdipDisposeImage
+@ stdcall GdipDisposeImage(ptr)
 @ stub GdipDisposeImageAttributes
 @ stdcall GdipDrawArc(ptr ptr long long long long long long)
 @ stub GdipDrawArcI

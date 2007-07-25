@@ -24,6 +24,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
+{
+    static int calls;
+
+     if(!image)
+         return InvalidParameter;
+
+     if(!(calls++))
+         FIXME("not implemented\n");
+
+     return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipGetImageHeight(GpImage *image, UINT *height)
 {
     static int calls;
