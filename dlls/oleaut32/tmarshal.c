@@ -96,7 +96,7 @@ xbuf_resize(marshal_state *buf, DWORD newsize)
 }
 
 static HRESULT
-xbuf_add(marshal_state *buf, LPBYTE stuff, DWORD size)
+xbuf_add(marshal_state *buf, const BYTE *stuff, DWORD size)
 {
     HRESULT hr;
 
@@ -523,7 +523,7 @@ _argsize(DWORD vt) {
 }
 
 static int
-_xsize(TYPEDESC *td) {
+_xsize(const TYPEDESC *td) {
     switch (td->vt) {
     case VT_DATE:
 	return sizeof(DATE);
@@ -531,7 +531,7 @@ _xsize(TYPEDESC *td) {
 	return sizeof(VARIANT)+3;
     case VT_CARRAY: {
 	int i, arrsize = 1;
-	ARRAYDESC *adesc = td->u.lpadesc;
+	const ARRAYDESC *adesc = td->u.lpadesc;
 
 	for (i=0;i<adesc->cDims;i++)
 	    arrsize *= adesc->rgbounds[i].cElements;
