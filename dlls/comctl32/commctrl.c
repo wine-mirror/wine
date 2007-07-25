@@ -704,7 +704,7 @@ CreateToolbarEx (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
 
 
 	/* add bitmaps */
-	if (nBitmaps > 0)
+	if (nBitmaps > 0 || hBMInst == HINST_COMMCTRL)
 	{
 	    tbab.hInst = hBMInst;
 	    tbab.nID   = wBMID;
