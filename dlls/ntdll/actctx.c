@@ -2192,6 +2192,7 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
                                                       ULONG class, PVOID buffer,
                                                       SIZE_T bufsize, SIZE_T *retlen )
 {
+    ACTIVATION_CONTEXT *actctx;
     NTSTATUS status;
 
     TRACE("%08x %p %p %u %p %ld %p\n", flags, handle,
@@ -2215,6 +2216,58 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
         break;
 
     case ActivationContextDetailedInformation:
+        {
+            ACTIVATION_CONTEXT_DETAILED_INFORMATION *acdi = buffer;
+            struct assembly *assembly = NULL;
+            SIZE_T len, manifest_len = 0, config_len = 0, appdir_len = 0;
+            LPWSTR ptr;
+
+            if (!(actctx = check_actctx(handle))) return STATUS_INVALID_PARAMETER;
+
+            if (actctx->num_assemblies) assembly = actctx->assemblies;
+
+            if (assembly && assembly->manifest.info)
+                manifest_len = strlenW(assembly->manifest.info) + 1;
+            if (actctx->config.info) config_len = strlenW(actctx->config.info) + 1;
+            if (actctx->appdir.info) appdir_len = strlenW(actctx->appdir.info) + 1;
+            len = sizeof(*acdi) + (manifest_len + config_len + appdir_len) * sizeof(WCHAR);
+
+            if (retlen) *retlen = len;
+            if (!buffer || bufsize < len) return STATUS_BUFFER_TOO_SMALL;
+
+            acdi->dwFlags = 0;
+            acdi->ulFormatVersion = assembly ? 1 : 0; /* FIXME */
+            acdi->ulAssemblyCount = actctx->num_assemblies;
+            acdi->ulRootManifestPathType = assembly ? assembly->manifest.type : 0 /* FIXME */;
+            acdi->ulRootManifestPathChars = assembly && assembly->manifest.info ? manifest_len - 1 : 0;
+            acdi->ulRootConfigurationPathType = actctx->config.type;
+            acdi->ulRootConfigurationPathChars = actctx->config.info ? config_len - 1 : 0;
+            acdi->ulAppDirPathType = actctx->appdir.type;
+            acdi->ulAppDirPathChars = actctx->appdir.info ? appdir_len - 1 : 0;
+            ptr = (LPWSTR)(acdi + 1);
+            if (manifest_len)
+            {
+                acdi->lpRootManifestPath = ptr;
+                memcpy(ptr, assembly->manifest.info, manifest_len * sizeof(WCHAR));
+                ptr += manifest_len;
+            }
+            else acdi->lpRootManifestPath = NULL;
+            if (config_len)
+            {
+                acdi->lpRootConfigurationPath = ptr;
+                memcpy(ptr, actctx->config.info, config_len * sizeof(WCHAR));
+                ptr += config_len;
+            }
+            else acdi->lpRootConfigurationPath = NULL;
+            if (appdir_len)
+            {
+                acdi->lpAppDirPath = ptr;
+                memcpy(ptr, actctx->appdir.info, appdir_len * sizeof(WCHAR));
+            }
+            else acdi->lpAppDirPath = NULL;
+        }
+        break;
+
     case AssemblyDetailedInformationInActivationContext:
     case FileInformationInAssemblyOfAssemblyInActivationContext:
     default:
