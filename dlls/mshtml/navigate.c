@@ -249,6 +249,12 @@ static void add_nsrequest(BSCallback *This)
     }
 }
 
+static void on_stop_nsrequest(BSCallback *This) {
+    if(This->nslistener)
+        nsIStreamListener_OnStopRequest(This->nslistener, (nsIRequest*)NSCHANNEL(This->nschannel),
+                This->nscontext, NS_OK);
+}
+
 #define STATUSCLB_THIS(iface) DEFINE_THIS(BSCallback, BindStatusCallback, iface)
 
 static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *iface,
@@ -391,10 +397,9 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
         This->binding = NULL;
     }
 
-    if(This->nslistener) {
-        nsIStreamListener_OnStopRequest(This->nslistener, (nsIRequest*)NSCHANNEL(This->nschannel),
-                This->nscontext, NS_OK);
+    on_stop_nsrequest(This);
 
+    if(This->nslistener) {
         if(This->nschannel->load_group) {
             nsresult nsres;
 
@@ -796,8 +801,7 @@ HRESULT start_binding(BSCallback *bscallback)
     hres = CreateAsyncBindCtx(0, STATUSCLB(bscallback), NULL, &bctx);
     if(FAILED(hres)) {
         WARN("CreateAsyncBindCtx failed: %08x\n", hres);
-        nsIStreamListener_OnStopRequest(bscallback->nslistener, (nsIRequest*)NSCHANNEL(bscallback->nschannel),
-                bscallback->nscontext, NS_OK);
+        on_stop_nsrequest(bscallback);
         return hres;
     }
 
@@ -805,8 +809,7 @@ HRESULT start_binding(BSCallback *bscallback)
     IBindCtx_Release(bctx);
     if(FAILED(hres)) {
         WARN("BindToStorage failed: %08x\n", hres);
-        nsIStreamListener_OnStopRequest(bscallback->nslistener, (nsIRequest*)NSCHANNEL(bscallback->nschannel),
-                bscallback->nscontext, NS_OK);
+        on_stop_nsrequest(bscallback);
         return hres;
     }
 
