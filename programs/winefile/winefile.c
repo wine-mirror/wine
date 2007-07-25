@@ -269,6 +269,59 @@ static inline INT set_check(HWND hwnd, INT id, BOOL on)
 	return SendMessageW(GetDlgItem(hwnd, id), BM_SETCHECK, on?BST_CHECKED:BST_UNCHECKED, 0);
 }
 
+static inline void choose_font(HWND hwnd)
+{
+        TCHAR dlg_name[BUFFER_LEN], dlg_info[BUFFER_LEN];
+        CHOOSEFONT chFont;
+        LOGFONT lFont;
+
+        HDC hdc = GetDC(hwnd);
+        chFont.lStructSize = sizeof(CHOOSEFONT);
+        chFont.hwndOwner = hwnd;
+        chFont.hDC = NULL;
+        chFont.lpLogFont = &lFont;
+        chFont.Flags = CF_SCREENFONTS | CF_FORCEFONTEXIST | CF_LIMITSIZE | CF_NOSCRIPTSEL;
+        chFont.rgbColors = RGB(0,0,0);
+        chFont.lCustData = 0;
+        chFont.lpfnHook = NULL;
+        chFont.lpTemplateName = NULL;
+        chFont.hInstance = Globals.hInstance;
+        chFont.lpszStyle = NULL;
+        chFont.nFontType = SIMULATED_FONTTYPE;
+        chFont.nSizeMin = 0;
+        chFont.nSizeMax = 24;
+
+        if (ChooseFont(&chFont)) {
+                HWND childWnd;
+                HFONT hFontOld;
+
+                DeleteObject(Globals.hfont);
+                Globals.hfont = CreateFontIndirect(&lFont);
+                hFontOld = SelectObject(hdc, Globals.hfont);
+                GetTextExtentPoint32(hdc, sSpace, 1, &Globals.spaceSize);
+
+                /* change font in all open child windows */
+                for(childWnd=GetWindow(Globals.hmdiclient,GW_CHILD); childWnd; childWnd=GetNextWindow(childWnd,GW_HWNDNEXT)) {
+                        ChildWnd* child = (ChildWnd*) GetWindowLongPtr(childWnd, GWLP_USERDATA);
+                        SendMessage(child->left.hwnd, WM_SETFONT, (WPARAM)Globals.hfont, TRUE);
+                        SendMessage(child->right.hwnd, WM_SETFONT, (WPARAM)Globals.hfont, TRUE);
+                        SendMessage(child->left.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+                        SendMessage(child->right.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+                        InvalidateRect(child->left.hwnd, NULL, TRUE);
+                        InvalidateRect(child->right.hwnd, NULL, TRUE);
+                }
+
+                SelectObject(hdc, hFontOld);
+        }
+        else if (CommDlgExtendedError()) {
+                LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_NAME, dlg_name, BUFFER_LEN);
+                LoadString(Globals.hInstance, IDS_FONT_SEL_ERROR, dlg_info, BUFFER_LEN);
+                MessageBox(hwnd, dlg_info, dlg_name, MB_OK);
+        }
+
+        ReleaseDC(hwnd, hdc);
+}
+
 #ifdef __WINE__
 
 #ifdef UNICODE
@@ -2328,58 +2381,9 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					SendMessage(Globals.hmdiclient, WM_MDIICONARRANGE, 0, 0);
 					break;
 
-				case ID_SELECT_FONT: {
-					TCHAR dlg_name[BUFFER_LEN], dlg_info[BUFFER_LEN];
-					CHOOSEFONT chFont;
-					LOGFONT lFont;
-
-					HDC hdc = GetDC(hwnd);
-					chFont.lStructSize = sizeof(CHOOSEFONT);
-					chFont.hwndOwner = hwnd;
-					chFont.hDC = NULL;
-					chFont.lpLogFont = &lFont;
-					chFont.Flags = CF_SCREENFONTS | CF_FORCEFONTEXIST | CF_LIMITSIZE | CF_NOSCRIPTSEL;
-					chFont.rgbColors = RGB(0,0,0);
-					chFont.lCustData = 0;
-					chFont.lpfnHook = NULL;
-					chFont.lpTemplateName = NULL;
-					chFont.hInstance = Globals.hInstance;
-					chFont.lpszStyle = NULL;
-					chFont.nFontType = SIMULATED_FONTTYPE;
-					chFont.nSizeMin = 0;
-					chFont.nSizeMax = 24;
-
-					if (ChooseFont(&chFont)) {
-						HWND childWnd;
-						HFONT hFontOld;
-
-						DeleteObject(Globals.hfont);
-						Globals.hfont = CreateFontIndirect(&lFont);
-						hFontOld = SelectObject(hdc, Globals.hfont);
-						GetTextExtentPoint32(hdc, sSpace, 1, &Globals.spaceSize);
-
-						/* change font in all open child windows */
-						for(childWnd=GetWindow(Globals.hmdiclient,GW_CHILD); childWnd; childWnd=GetNextWindow(childWnd,GW_HWNDNEXT)) {
-							ChildWnd* child = (ChildWnd*) GetWindowLongPtr(childWnd, GWLP_USERDATA);
-							SendMessage(child->left.hwnd, WM_SETFONT, (WPARAM)Globals.hfont, TRUE);
-							SendMessage(child->right.hwnd, WM_SETFONT, (WPARAM)Globals.hfont, TRUE);
-							SendMessage(child->left.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
-							SendMessage(child->right.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
-							InvalidateRect(child->left.hwnd, NULL, TRUE);
-							InvalidateRect(child->right.hwnd, NULL, TRUE);
-						}
-
-						SelectObject(hdc, hFontOld);
-					}
-					else if (CommDlgExtendedError()) {
-						LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_NAME, dlg_name, BUFFER_LEN);
-						LoadString(Globals.hInstance, IDS_FONT_SEL_ERROR, dlg_info, BUFFER_LEN);
-						MessageBox(hwnd, dlg_info, dlg_name, MB_OK);
-					}
-
-					ReleaseDC(hwnd, hdc);
-					break;
-				}
+				case ID_SELECT_FONT:
+                                        choose_font(hwnd);
+                                        break;
 
 				case ID_VIEW_TOOL_BAR:
 					toggle_child(hwnd, cmd, Globals.htoolbar);
