@@ -403,10 +403,15 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
             break;
 
             case WINED3DSAMP_MINFILTER:
-                This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] = samplerStates[WINED3DSAMP_MIPFILTER];
+            case WINED3DSAMP_MAXMIPLEVEL:
             case WINED3DSAMP_MIPFILTER: /* fall through */
                 {
                     GLint glValue;
+
+                    This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] = samplerStates[WINED3DSAMP_MIPFILTER];
+                    This->baseTexture.states[WINED3DTEXSTA_MINFILTER] = samplerStates[WINED3DSAMP_MINFILTER];
+                    This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL] = samplerStates[WINED3DSAMP_MAXMIPLEVEL];
+
                     *state = samplerStates[textureObjectSamplerStates[i].state];
                     if (This->baseTexture.states[WINED3DTEXSTA_MINFILTER] < WINED3DTEXF_NONE ||
                         This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] < WINED3DTEXF_NONE ||
@@ -428,14 +433,17 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
                             This->baseTexture.states[WINED3DTEXSTA_MIPFILTER], glValue);
                     glTexParameteri(textureDimensions, GL_TEXTURE_MIN_FILTER, glValue);
                     checkGLcall("glTexParameter GL_TEXTURE_MIN_FILTER, ...");
+
+                    if(This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] == WINED3DTEXF_NONE) {
+                        glValue = 0;
+                    } else if(This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL] >= This->baseTexture.levels) {
+                        glValue = This->baseTexture.levels - 1;
+                    } else {
+                        glValue = This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL];
+                    }
+                    glTexParameteri(textureDimensions, GL_TEXTURE_BASE_LEVEL, glValue);
                 }
             break;
-            case WINED3DSAMP_MAXMIPLEVEL:
-                *state = samplerStates[textureObjectSamplerStates[i].state];
-                /**
-                * Not really the same, but the more apprioprate than nothing
-                */
-                glTexParameteri(textureDimensions, GL_TEXTURE_BASE_LEVEL, *state);
             break;
             case WINED3DSAMP_MAXANISOTROPY:
                 *state = samplerStates[textureObjectSamplerStates[i].state];
