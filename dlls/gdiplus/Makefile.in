@@ -12,6 +12,7 @@ C_SRCS = \
 	gdiplus.c \
 	graphics.c \
 	graphicspath.c \
+	image.c \
 	matrix.c \
 	pathiterator.c \
 	pen.c

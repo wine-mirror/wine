@@ -273,16 +273,16 @@
 @ stub GdipGetImageEncodersSize
 @ stub GdipGetImageFlags
 @ stub GdipGetImageGraphicsContext
-@ stub GdipGetImageHeight
-@ stub GdipGetImageHorizontalResolution
+@ stdcall GdipGetImageHeight(ptr ptr)
+@ stdcall GdipGetImageHorizontalResolution(ptr ptr)
 @ stub GdipGetImagePalette
 @ stub GdipGetImagePaletteSize
 @ stub GdipGetImagePixelFormat
-@ stub GdipGetImageRawFormat
+@ stdcall GdipGetImageRawFormat(ptr ptr)
 @ stub GdipGetImageThumbnail
 @ stub GdipGetImageType
-@ stub GdipGetImageVerticalResolution
-@ stub GdipGetImageWidth
+@ stdcall GdipGetImageVerticalResolution(ptr ptr)
+@ stdcall GdipGetImageWidth(ptr ptr)
 @ stdcall GdipGetInterpolationMode(ptr ptr)
 @ stub GdipGetLineBlend
 @ stub GdipGetLineBlendCount
@@ -389,7 +389,7 @@
 @ stdcall GdipGetWorldTransform(ptr ptr)
 @ stub GdipGraphicsClear
 @ stub GdipImageForceValidation
-@ stub GdipImageGetFrameCount
+@ stdcall GdipImageGetFrameCount(ptr ptr ptr)
 @ stub GdipImageGetFrameDimensionsCount
 @ stub GdipImageGetFrameDimensionsList
 @ stub GdipImageRotateFlip
