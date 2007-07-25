@@ -16,8 +16,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
+#include "objbase.h"
+
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 #include "wine/debug.h"
@@ -121,6 +126,19 @@ GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
     static int calls;
 
     if(!image || !dimensionID || !count)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipLoadImageFromStreamICM(IStream* stream, GpImage **image)
+{
+    static int calls;
+
+    if(!stream || !image)
         return InvalidParameter;
 
     if(!(calls++))

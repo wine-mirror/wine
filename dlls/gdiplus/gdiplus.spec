@@ -419,7 +419,7 @@
 @ stub GdipLoadImageFromFile
 @ stub GdipLoadImageFromFileICM
 @ stub GdipLoadImageFromStream
-@ stub GdipLoadImageFromStreamICM
+@ stdcall GdipLoadImageFromStreamICM(ptr ptr)
 @ stub GdipMeasureCharacterRanges
 @ stub GdipMeasureDriverString
 @ stub GdipMeasureString
