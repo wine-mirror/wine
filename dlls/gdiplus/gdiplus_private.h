@@ -66,6 +66,7 @@ struct GpGraphics{
     InterpolationMode interpolation;
     PixelOffsetMode pixeloffset;
     GpUnit unit;    /* page unit */
+    REAL scale;     /* page scale */
 };
 
 struct GpBrush{

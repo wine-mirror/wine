@@ -62,6 +62,7 @@ GpStatus WINGDIPAPI GdipFillPolygonI(GpGraphics*,GpBrush*,GDIPCONST GpPoint*,INT
     GpFillMode);
 GpStatus WINGDIPAPI GdipGetCompositingQuality(GpGraphics*,CompositingQuality*);
 GpStatus WINGDIPAPI GdipGetInterpolationMode(GpGraphics*,InterpolationMode*);
+GpStatus WINGDIPAPI GdipGetPageScale(GpGraphics*,REAL*);
 GpStatus WINGDIPAPI GdipGetPageUnit(GpGraphics*,GpUnit*);
 GpStatus WINGDIPAPI GdipGetPixelOffsetMode(GpGraphics*,PixelOffsetMode*);
 GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics*,SmoothingMode*);
@@ -69,6 +70,7 @@ GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics*,GraphicsState);
 GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics*,GraphicsState*);
 GpStatus WINGDIPAPI GdipSetCompositingQuality(GpGraphics*,CompositingQuality);
 GpStatus WINGDIPAPI GdipSetInterpolationMode(GpGraphics*,InterpolationMode);
+GpStatus WINGDIPAPI GdipSetPageScale(GpGraphics*,REAL);
 GpStatus WINGDIPAPI GdipSetPageUnit(GpGraphics*,GpUnit);
 GpStatus WINGDIPAPI GdipSetPixelOffsetMode(GpGraphics*,PixelOffsetMode);
 GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics*,SmoothingMode);

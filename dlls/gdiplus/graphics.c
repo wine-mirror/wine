@@ -109,6 +109,10 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
             break;
     }
 
+    /* apply page scale */
+    if(graphics->unit != UnitDisplay)
+        unitscale *= graphics->scale;
+
     for(i = 0; i < count; i++){
         pti[i].x = roundr(unitscale * ptf[i].X);
         pti[i].y = roundr(unitscale * ptf[i].Y);
@@ -746,6 +750,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
     (*graphics)->interpolation = InterpolationModeDefault;
     (*graphics)->pixeloffset = PixelOffsetModeDefault;
     (*graphics)->unit = UnitDisplay;
+    (*graphics)->scale = 1.0;
 
     return Ok;
 }
@@ -1085,6 +1090,16 @@ GpStatus WINGDIPAPI GdipGetInterpolationMode(GpGraphics *graphics,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPageScale(GpGraphics *graphics, REAL *scale)
+{
+    if(!graphics || !scale)
+        return InvalidParameter;
+
+    *scale = graphics->scale;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPageUnit(GpGraphics *graphics, GpUnit *unit)
 {
     if(!graphics || !unit)
@@ -1156,6 +1171,16 @@ GpStatus WINGDIPAPI GdipSetInterpolationMode(GpGraphics *graphics,
         return InvalidParameter;
 
     graphics->interpolation = mode;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetPageScale(GpGraphics *graphics, REAL scale)
+{
+    if(!graphics || (scale <= 0.0))
+        return InvalidParameter;
+
+    graphics->scale = scale;
 
     return Ok;
 }
