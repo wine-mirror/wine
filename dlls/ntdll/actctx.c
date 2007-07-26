@@ -653,12 +653,12 @@ static BOOL next_xml_attr(xmlbuf_t* xmlbuf, xmlstr_t* name, xmlstr_t* value,
     xmlbuf->ptr = ptr;
 
     ptr++;
-    if (ptr == xmlbuf->end || *ptr != '\"') return FALSE;
+    if (ptr == xmlbuf->end || (*ptr != '"' && *ptr != '\'')) return FALSE;
 
     value->ptr = ++ptr;
     if (ptr == xmlbuf->end) return FALSE;
 
-    ptr = memchr(ptr, '\"', xmlbuf->end - ptr);
+    ptr = memchr(ptr, ptr[-1], xmlbuf->end - ptr);
     if (!ptr)
     {
         xmlbuf->ptr = xmlbuf->end;
