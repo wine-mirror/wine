@@ -433,6 +433,77 @@ static void test_pathpath(void)
     GdipDeletePath(path2);
 }
 
+static path_test_t ellipse_path[] = {
+    {30.00, 125.25, PathPointTypeStart, 0, 0}, /*0*/
+    {30.00, 139.20, PathPointTypeBezier, 0, 0}, /*1*/
+    {25.52, 150.50, PathPointTypeBezier, 0, 0}, /*2*/
+    {20.00, 150.50, PathPointTypeBezier, 0, 0}, /*3*/
+    {14.48, 150.50, PathPointTypeBezier, 0, 0}, /*4*/
+    {10.00, 139.20, PathPointTypeBezier, 0, 0}, /*5*/
+    {10.00, 125.25, PathPointTypeBezier, 0, 0}, /*6*/
+    {10.00, 111.30, PathPointTypeBezier, 0, 0}, /*7*/
+    {14.48, 100.00, PathPointTypeBezier, 0, 0}, /*8*/
+    {20.00, 100.00, PathPointTypeBezier, 0, 0}, /*9*/
+    {25.52, 100.00, PathPointTypeBezier, 0, 0}, /*10*/
+    {30.00, 111.30, PathPointTypeBezier, 0, 0}, /*11*/
+    {30.00, 125.25, PathPointTypeBezier | PathPointTypeCloseSubpath, 0, 0}, /*12*/
+    {7.00, 11.00, PathPointTypeStart, 0, 0}, /*13*/
+    {13.00, 17.00, PathPointTypeLine, 0, 1}, /*14*/
+    {5.00, 195.00, PathPointTypeStart, 0, 1}, /*15*/
+    {5.00, 192.24, PathPointTypeBezier, 0, 1}, /*16*/
+    {6.12, 190.00, PathPointTypeBezier, 0, 1}, /*17*/
+    {7.50, 190.00, PathPointTypeBezier, 0, 1}, /*18*/
+    {8.88, 190.00, PathPointTypeBezier, 0, 1}, /*19*/
+    {10.00, 192.24, PathPointTypeBezier, 0, 1}, /*20*/
+    {10.00, 195.00, PathPointTypeBezier, 0, 1}, /*21*/
+    {10.00, 197.76, PathPointTypeBezier, 0, 1}, /*22*/
+    {8.88, 200.00, PathPointTypeBezier, 0, 1}, /*23*/
+    {7.50, 200.00, PathPointTypeBezier, 0, 1}, /*24*/
+    {6.12, 200.00, PathPointTypeBezier, 0, 1}, /*25*/
+    {5.00, 197.76, PathPointTypeBezier, 0, 1}, /*26*/
+    {5.00, 195.00, PathPointTypeBezier | PathPointTypeCloseSubpath, 0, 1}, /*27*/
+    {10.00, 300.50, PathPointTypeStart, 0, 0}, /*28*/
+    {10.00, 300.78, PathPointTypeBezier, 0, 0}, /*29*/
+    {10.00, 301.00, PathPointTypeBezier, 0, 0}, /*30*/
+    {10.00, 301.00, PathPointTypeBezier, 0, 0}, /*31*/
+    {10.00, 301.00, PathPointTypeBezier, 0, 0}, /*32*/
+    {10.00, 300.78, PathPointTypeBezier, 0, 0}, /*33*/
+    {10.00, 300.50, PathPointTypeBezier, 0, 0}, /*34*/
+    {10.00, 300.22, PathPointTypeBezier, 0, 0}, /*35*/
+    {10.00, 300.00, PathPointTypeBezier, 0, 0}, /*36*/
+    {10.00, 300.00, PathPointTypeBezier, 0, 0}, /*37*/
+    {10.00, 300.00, PathPointTypeBezier, 0, 0}, /*38*/
+    {10.00, 300.22, PathPointTypeBezier, 0, 0}, /*39*/
+    {10.00, 300.50, PathPointTypeBezier | PathPointTypeCloseSubpath, 0, 0} /*40*/
+    };
+
+static void test_ellipse(void)
+{
+    GpStatus status;
+    GpPath *path;
+    GpPointF points[2];
+
+    points[0].X = 7.0;
+    points[0].Y = 11.0;
+    points[1].X = 13.0;
+    points[1].Y = 17.0;
+
+    GdipCreatePath(FillModeAlternate, &path);
+    status = GdipAddPathEllipse(path, 10.0, 100.0, 20.0, 50.5);
+    expect(Ok, status);
+    GdipAddPathLine2(path, points, 2);
+    status = GdipAddPathEllipse(path, 10.0, 200.0, -5.0, -10.0);
+    todo_wine
+        expect(Ok, status);
+    GdipClosePathFigure(path);
+    status = GdipAddPathEllipse(path, 10.0, 300.0, 0.0, 1.0);
+    expect(Ok, status);
+
+    ok_path(path, ellipse_path, sizeof(ellipse_path)/sizeof(path_test_t), TRUE);
+
+    GdipDeletePath(path);
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -450,6 +521,7 @@ START_TEST(graphicspath)
     test_arc();
     test_worldbounds();
     test_pathpath();
+    test_ellipse();
 
     GdiplusShutdown(gdiplusToken);
 }
