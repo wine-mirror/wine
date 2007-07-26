@@ -366,6 +366,8 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
                                  items[i].size % sizeof(DWORD);
                             ptr += 1 + nextItemLenBytes + nextItemLen;
                             decoded += 1 + nextItemLenBytes + nextItemLen;
+                            TRACE("item %d: decoded %d bytes\n", i,
+                             1 + nextItemLenBytes + nextItemLen);
                         }
                         else if (items[i].optional &&
                          GetLastError() == CRYPT_E_ASN1_BADTAG)
@@ -381,6 +383,8 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
                     }
                     else
                     {
+                        TRACE("item %d: decoded %d bytes\n", i,
+                         1 + nextItemLenBytes + nextItemLen);
                         ptr += 1 + nextItemLenBytes + nextItemLen;
                         decoded += 1 + nextItemLenBytes + nextItemLen;
                         items[i].size = items[i].minSize;
@@ -393,8 +397,8 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
                 }
                 else
                 {
-                    TRACE("tag %02x doesn't match expected %02x\n",
-                     ptr[0], items[i].tag);
+                    TRACE("item %d: tag %02x doesn't match expected %02x\n",
+                     i, ptr[0], items[i].tag);
                     SetLastError(CRYPT_E_ASN1_BADTAG);
                     ret = FALSE;
                 }
