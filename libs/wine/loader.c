@@ -182,13 +182,11 @@ static char *next_dll_path( struct dll_path_context *context )
     case 1:  /* try dlls dir with subdir prefix */
         if (namelen > 4 && !memcmp( context->name + namelen - 4, ".dll", 4 )) namelen -= 4;
         path = prepend( path, context->name, namelen );
-        /* fall through */
-    case 2:  /* try dlls dir without prefix */
         path = prepend( path, "/dlls", sizeof("/dlls") - 1 );
         path = prepend( path, build_dir, strlen(build_dir) );
         return path;
     default:
-        index -= 3;
+        index -= 2;
         if (index < nb_dll_paths)
             return prepend( context->name, dll_paths[index], strlen( dll_paths[index] ));
         break;
@@ -204,7 +202,7 @@ static char *first_dll_path( const char *name, const char *ext, struct dll_path_
     int namelen = strlen( name );
 
     context->buffer = malloc( dll_path_maxlen + 2 * namelen + strlen(ext) + 3 );
-    context->index = build_dir ? 0 : 3;  /* if no build dir skip all the build dir magic cases */
+    context->index = build_dir ? 0 : 2;  /* if no build dir skip all the build dir magic cases */
     context->name = context->buffer + dll_path_maxlen + namelen + 1;
     context->namelen = namelen + 1;
 
@@ -655,7 +653,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
         if ((ntdll = wine_dlopen( path, RTLD_NOW, error, error_size )))
         {
             /* if we didn't use the default dll dir, remove it from the search path */
-            if (default_dlldir[0] && context.index < nb_dll_paths) nb_dll_paths--;
+            if (default_dlldir[0] && context.index < nb_dll_paths + 2) nb_dll_paths--;
             break;
         }
     }
