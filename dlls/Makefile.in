@@ -73,6 +73,7 @@ BASEDIRS = \
 	dswave \
 	dwmapi \
 	dxdiagn \
+	faultrep \
 	gdi32 \
 	gdiplus \
 	gphoto2.ds \

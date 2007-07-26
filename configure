@@ -20416,6 +20416,8 @@ ac_config_files="$ac_config_files dlls/dxerr9/Makefile"
 
 ac_config_files="$ac_config_files dlls/dxguid/Makefile"
 
+ac_config_files="$ac_config_files dlls/faultrep/Makefile"
+
 ac_config_files="$ac_config_files dlls/gdi32/Makefile"
 
 ac_config_files="$ac_config_files dlls/gdi32/tests/Makefile"
@@ -21607,6 +21609,7 @@ do
     "dlls/dxerr8/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxerr8/Makefile" ;;
     "dlls/dxerr9/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxerr9/Makefile" ;;
     "dlls/dxguid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxguid/Makefile" ;;
+    "dlls/faultrep/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/faultrep/Makefile" ;;
     "dlls/gdi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/Makefile" ;;
     "dlls/gdi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/tests/Makefile" ;;
     "dlls/gdiplus/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdiplus/Makefile" ;;

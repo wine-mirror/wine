@@ -1,0 +1,14 @@
+@ stub AddERExcludedApplicationA
+@ stub AddERExcludedApplicationW
+@ stub CreateMinidumpA
+@ stub CreateMinidumpW
+@ stub ReportEREvent
+@ stub ReportEREventDW
+@ stub ReportFault
+@ stub ReportFaultDWM
+@ stub ReportFaultFromQueue
+@ stub ReportFaultToQueue
+@ stub ReportHang
+@ stub ReportKernelFaultA
+@ stub ReportKernelFaultDWW
+@ stub ReportKernelFaultW
