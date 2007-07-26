@@ -1843,6 +1843,24 @@ static void test_decode_msg_update(void)
     ret = CryptMsgUpdate(msg, bogusHashContent, sizeof(bogusHashContent), TRUE);
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    ret = CryptMsgUpdate(msg, signedContent, sizeof(signedContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    CryptMsgClose(msg);
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, signedWithCertAndCrlBareContent,
+     sizeof(signedWithCertAndCrlBareContent), TRUE);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+    CryptMsgClose(msg);
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, 0, NULL,
+     NULL);
+    ret = CryptMsgUpdate(msg, signedWithCertAndCrlBareContent,
+     sizeof(signedWithCertAndCrlBareContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    CryptMsgClose(msg);
 }
 
 static const BYTE hashParam[] = { 0x08,0xd6,0xc0,0x5a,0x21,0x51,0x2a,0x79,0xa1,
