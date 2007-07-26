@@ -1847,9 +1847,8 @@ static BOOL WINAPI CRYPT_DecodeDERArray(DWORD dwCertEncodingType,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
     BOOL ret;
-    struct AsnArrayDescriptor arrayDesc = { ASN_CONSTRUCTOR | ASN_SETOF,
-     CRYPT_AsnDecodeCopyBytes, sizeof(CRYPT_DER_BLOB), TRUE,
-     offsetof(CRYPT_DER_BLOB, pbData) };
+    struct AsnArrayDescriptor arrayDesc = { 0, CRYPT_AsnDecodeCopyBytes,
+     sizeof(CRYPT_DER_BLOB), TRUE, offsetof(CRYPT_DER_BLOB, pbData) };
     struct GenericArray *array = (struct GenericArray *)pvStructInfo;
 
     TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
