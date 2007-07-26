@@ -154,6 +154,7 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
     GdipCloneMatrix(graphics->worldtrans, &matrix);
     GdipScaleMatrix(matrix, unitscale, unitscale, MatrixOrderAppend);
     GdipTransformMatrixPoints(matrix, ptf, count);
+    GdipDeleteMatrix(matrix);
 
     for(i = 0; i < count; i++){
         pti[i].x = roundr(ptf[i].X);
