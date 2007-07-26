@@ -70,7 +70,7 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 typedef struct wine_glcontext {
     HDC hdc;
     XVisualInfo *vis;
-    GLXFBConfig fb_conf;
+    GLXFBConfig fbconfig;
     GLXContext ctx;
     BOOL do_escape;
     X11DRV_PDEVICE *physDev;
@@ -227,6 +227,7 @@ MAKE_FUNCPTR(glXQueryServerString)
 MAKE_FUNCPTR(glXGetFBConfigs)
 MAKE_FUNCPTR(glXChooseFBConfig)
 MAKE_FUNCPTR(glXCreatePbuffer)
+MAKE_FUNCPTR(glXCreateNewContext)
 MAKE_FUNCPTR(glXDestroyPbuffer)
 MAKE_FUNCPTR(glXGetFBConfigAttrib)
 MAKE_FUNCPTR(glXGetVisualFromFBConfig)
@@ -385,6 +386,7 @@ LOAD_FUNCPTR(glXQueryServerString)
 
 /* GLX 1.3 */
 LOAD_FUNCPTR(glXCreatePbuffer)
+LOAD_FUNCPTR(glXCreateNewContext)
 LOAD_FUNCPTR(glXDestroyPbuffer)
 LOAD_FUNCPTR(glXMakeContextCurrent)
 LOAD_FUNCPTR(glXGetCurrentReadDrawable)
@@ -564,9 +566,9 @@ static int describeContext(Wine_GLContext* ctx) {
     int tmp;
     int ctx_vis_id;
     TRACE(" Context %p have (vis:%p):\n", ctx, ctx->vis);
-    pglXGetFBConfigAttrib(gdi_display, ctx->fb_conf, GLX_FBCONFIG_ID, &tmp);
+    pglXGetFBConfigAttrib(gdi_display, ctx->fbconfig, GLX_FBCONFIG_ID, &tmp);
     TRACE(" - FBCONFIG_ID 0x%x\n", tmp);
-    pglXGetFBConfigAttrib(gdi_display, ctx->fb_conf, GLX_VISUAL_ID, &tmp);
+    pglXGetFBConfigAttrib(gdi_display, ctx->fbconfig, GLX_VISUAL_ID, &tmp);
     TRACE(" - VISUAL_ID 0x%x\n", tmp);
     ctx_vis_id = tmp;
     return ctx_vis_id;
@@ -1312,11 +1314,13 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
     /* First, get the visual in use by the X11DRV */
     if (!gdi_display) return 0;
 
-    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, hdcPF, FALSE /* Offscreen */, &fmt_count);
-    /* We can only render using the iPixelFormat (1) of Wine's Main visual, we need to get the corresponding GLX format.
-    * If this fails something is very wrong on the system. */
+    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, hdcPF, TRUE /* Offscreen */, &fmt_count);
+    /* We can render using the iPixelFormat (1) of Wine's Main visual AND using some offscreen formats.
+     * Note that standard WGL-calls don't recognize offscreen-only formats. For that reason pbuffers
+     * use a sort of 'proxy' HDC (wglGetPbufferDCARB).
+     * If this fails something is very wrong on the system. */
     if(!fmt) {
-        ERR("Cannot get FB Config for main iPixelFormat 1, expect problems!\n");
+        ERR("Cannot get FB Config for iPixelFormat %d, expect problems!\n", hdcPF);
         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
         return NULL;
     }
@@ -1340,7 +1344,7 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
     wine_tsx11_unlock();
     ret->hdc = hdc;
     ret->physDev = physDev;
-    ret->fb_conf = fmt->fbconfig;
+    ret->fbconfig = fmt->fbconfig;
     /*ret->vis = vis;*/
     ret->vis = pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
 
@@ -1527,7 +1531,11 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
              * We are certain that the drawable and context are compatible as we only allow compatible formats.
              */
             TRACE(" Creating GLX Context\n");
-            ctx->ctx = pglXCreateContext(gdi_display, ctx->vis, NULL, type == OBJ_MEMDC ? False : True);
+            if(ctx->vis)
+                ctx->ctx = pglXCreateContext(gdi_display, ctx->vis, NULL, type == OBJ_MEMDC ? False : True);
+            else /* Create a GLX Context for a pbuffer */
+                ctx->ctx = pglXCreateNewContext(gdi_display, ctx->fbconfig, GLX_RGBA_TYPE, NULL, True);
+
             TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
         }
         TRACE(" make current for dis %p, drawable %p, ctx %p\n", gdi_display, (void*) drawable, ctx->ctx);
@@ -1617,7 +1625,11 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
         if (org->ctx == NULL) {
             wine_tsx11_lock();
             describeContext(org);
-            org->ctx = pglXCreateContext(gdi_display, org->vis, NULL, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
+
+            if(org->vis)
+                org->ctx = pglXCreateContext(gdi_display, org->vis, NULL, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
+            else /* Create a GLX Context for a pbuffer */
+                org->ctx = pglXCreateNewContext(gdi_display, org->fbconfig, GLX_RGBA_TYPE, NULL, True);
             wine_tsx11_unlock();
             TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
         }
@@ -1625,7 +1637,10 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
             wine_tsx11_lock();
             describeContext(dest);
             /* Create the destination context with display lists shared */
-            dest->ctx = pglXCreateContext(gdi_display, dest->vis, org->ctx, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
+            if(dest->vis)
+                dest->ctx = pglXCreateContext(gdi_display, dest->vis, org->ctx, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
+            else /* Create a GLX Context for a pbuffer */
+                dest->ctx = pglXCreateNewContext(gdi_display, dest->fbconfig, GLX_RGBA_TYPE, org->ctx, True);
             wine_tsx11_unlock();
             TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
             return TRUE;
@@ -1860,7 +1875,7 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
             GLXContext gl_ctx = pglXGetCurrentContext();
             Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
 
-            pglXGetFBConfigAttrib(gdi_display, ret->fb_conf, GLX_ALPHA_SIZE, params);
+            pglXGetFBConfigAttrib(gdi_display, ret->fbconfig, GLX_ALPHA_SIZE, params);
             TRACE("returns GL_ALPHA_BITS as '%d'\n", *params);
             break;
         }
@@ -1953,7 +1968,7 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
     }
 
     /* Convert the WGL pixelformat to a GLX format, if it fails then the format is invalid */
-    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, FALSE /* Offscreen */, &nCfgs);
+    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, TRUE /* Offscreen */, &nCfgs);
     if(!fmt) {
         ERR("(%p): unexpected iPixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, iPixelFormat, nCfgs);
         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
@@ -2395,7 +2410,7 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
     /* Convert the WGL pixelformat to a GLX one, if this fails then most likely the iPixelFormat isn't supoprted.
     * We don't have to fail yet as a program can specify an invaled iPixelFormat (lets say 0) if it wants to query
     * the number of supported WGL formats. Whether the iPixelFormat is valid is handled in the for-loop below. */
-    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, FALSE /* Offscreen */, &nWGLFormats);
+    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, TRUE /* Offscreen */, &nWGLFormats);
     if(!fmt) {
         WARN("Unable to convert iPixelFormat %d to a GLX one!\n", iPixelFormat);
     }
