@@ -440,9 +440,49 @@ static void test_get_displayname(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
+    /* Buffer is too small */
     SetLastError(0xdeadbeef);
     tempsize = displaysize;
-    displaysize *= 2;
+    displaysize = (tempsize / 2);
+    ret = GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
+    ok(!ret, "Expected failure\n");
+    ok(displaysize == tempsize, "Expected the needed buffersize\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    /* First try with a buffer that should be big enough to hold
+     * the ANSI string (and terminating character). This succeeds on Windows
+     *  although when asked (see above 2 tests) it will return twice the needed size.
+     */
+    SetLastError(0xdeadbeef);
+    displaysize = (tempsize / 2) + 1;
+    ret = GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
+    todo_wine
+    {
+    ok(ret, "Expected success\n");
+    ok(displaysize == ((tempsize / 2) + 1), "Expected no change for the needed buffer size\n");
+    ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+    }
+
+    /* Now with the original returned size */
+    SetLastError(0xdeadbeef);
+    displaysize = tempsize;
+    ret = GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
+    todo_wine
+    ok(ret, "Expected success\n");
+    ok(displaysize == tempsize, "Expected no change for the needed buffer size\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+
+    /* And with a bigger then needed buffer */
+    SetLastError(0xdeadbeef);
+    displaysize = tempsize * 2;
     ret = GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
     ok(ret, "Expected success\n");
     ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
@@ -450,12 +490,12 @@ static void test_get_displayname(void)
        GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
        "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
     /* Test that shows that if the buffersize is enough, it's not changed */
-    ok(displaysize == tempsize * 2, "Didn't expect a change in the needed size of the buffer\n");
+    ok(displaysize == tempsize * 2, "Expected no change for the needed buffer size\n");
     todo_wine
     ok(lstrlen(displayname) == tempsize/2,
        "Expected the buffer to be twice the length of the string\n") ;
 
-    /* Do the last 2 tests also for GetServiceDisplayNameW */
+    /* Do the buffer(size) tests also for GetServiceDisplayNameW */
     SetLastError(0xdeadbeef);
     displaysize = -1;
     ret = GetServiceDisplayNameW(scm_handle, spoolerW, NULL, &displaysize);
@@ -463,19 +503,37 @@ static void test_get_displayname(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
+    /* Buffer is too small */
     SetLastError(0xdeadbeef);
     tempsizeW = displaysize;
-    displaysize *= 2;
+    displaysize = tempsizeW / 2;
+    ret = GetServiceDisplayNameW(scm_handle, spoolerW, displaynameW, &displaysize);
+    ok(!ret, "Expected failure\n");
+    ok(displaysize = tempsizeW, "Expected the needed buffersize\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    /* Now with the original returned size */
+    SetLastError(0xdeadbeef);
+    displaysize = tempsizeW;
+    ret = GetServiceDisplayNameW(scm_handle, spoolerW, displaynameW, &displaysize);
+    ok(!ret, "Expected failure\n");
+    ok(displaysize = tempsizeW, "Expected the needed buffersize\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    /* And with a bigger then needed buffer */
+    SetLastError(0xdeadbeef);
+    displaysize = tempsizeW + 1; /* This caters for the null terminating character */
     ret = GetServiceDisplayNameW(scm_handle, spoolerW, displaynameW, &displaysize);
     ok(ret, "Expected success\n");
     ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
        GetLastError() == ERROR_IO_PENDING /* W2K */ ||
        GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
        "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
-    /* Test that shows that the buffersize is changed to the needed size */
     todo_wine
     {
-    ok(displaysize == tempsizeW, "Did expect a change in the needed size of the buffer\n");
+    ok(displaysize == tempsizeW, "Expected the needed buffersize\n");
     ok(lstrlenW(displaynameW) == displaysize,
        "Expected the buffer to be the length of the string\n") ;
     ok(tempsize / 2 == tempsizeW,
