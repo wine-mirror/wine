@@ -54,6 +54,8 @@ struct GpPen{
     GpLineJoin join;
     REAL miterlimit;
     GpDashStyle dash;
+    REAL *dashes;
+    INT numdashes;
     GpBrush *brush;
 };
 

@@ -123,6 +123,7 @@ GpStatus WINGDIPAPI GdipDeletePen(GpPen *pen)
     GdipDeleteBrush(pen->brush);
     GdipDeleteCustomLineCap(pen->customstart);
     GdipDeleteCustomLineCap(pen->customend);
+    GdipFree(pen->dashes);
     GdipFree(pen);
 
     return Ok;
@@ -145,6 +146,20 @@ GpStatus WINGDIPAPI GdipGetPenColor(GpPen *pen, ARGB *argb)
         return NotImplemented;
 
     return GdipGetSolidFillColor(((GpSolidFill*)pen->brush), argb);
+}
+
+GpStatus WINGDIPAPI GdipGetPenDashArray(GpPen *pen, REAL *dash, INT count)
+{
+    if(!pen || !dash || count > pen->numdashes)
+        return InvalidParameter;
+
+    /* note: if you pass a negative value for count, it crashes native gdiplus. */
+    if(count < 0)
+        return GenericError;
+
+    memcpy(dash, pen->dashes, count * sizeof(REAL));
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetPenDashStyle(GpPen *pen, GpDashStyle *dash)
@@ -209,10 +224,39 @@ GpStatus WINGDIPAPI GdipSetPenCustomStartCap(GpPen *pen, GpCustomLineCap* custom
     return ret;
 }
 
+GpStatus WINGDIPAPI GdipSetPenDashArray(GpPen *pen, GDIPCONST REAL *dash,
+    INT count)
+{
+    if(!pen || !dash)
+        return InvalidParameter;
+
+    GdipFree(pen->dashes);
+    pen->dashes = NULL;
+
+    if(count > 0)
+        pen->dashes = GdipAlloc(count * sizeof(REAL));
+    if(!pen->dashes){
+        pen->numdashes = 0;
+        return OutOfMemory;
+    }
+
+    pen->dash = DashStyleCustom;
+    memcpy(pen->dashes, dash, count * sizeof(REAL));
+    pen->numdashes = count;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetPenDashStyle(GpPen *pen, GpDashStyle dash)
 {
     if(!pen)
         return InvalidParameter;
+
+    if(dash != DashStyleCustom){
+        GdipFree(pen->dashes);
+        pen->dashes = NULL;
+        pen->numdashes = 0;
+    }
 
     pen->dash = dash;
     pen->style &= ~(PS_ALTERNATE | PS_SOLID | PS_DASH | PS_DOT | PS_DASHDOT |
