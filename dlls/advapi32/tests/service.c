@@ -459,24 +459,19 @@ static void test_get_displayname(void)
     SetLastError(0xdeadbeef);
     displaysize = (tempsize / 2) + 1;
     ret = GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
-    todo_wine
-    {
     ok(ret, "Expected success\n");
     ok(displaysize == ((tempsize / 2) + 1), "Expected no change for the needed buffer size\n");
     ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
        GetLastError() == ERROR_IO_PENDING /* W2K */ ||
        GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
        "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
-    }
 
     /* Now with the original returned size */
     SetLastError(0xdeadbeef);
     displaysize = tempsize;
     ret = GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
-    todo_wine
     ok(ret, "Expected success\n");
     ok(displaysize == tempsize, "Expected no change for the needed buffer size\n");
-    todo_wine
     ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
        GetLastError() == ERROR_IO_PENDING /* W2K */ ||
        GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
@@ -493,7 +488,6 @@ static void test_get_displayname(void)
        "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
     /* Test that shows that if the buffersize is enough, it's not changed */
     ok(displaysize == tempsize * 2, "Expected no change for the needed buffer size\n");
-    todo_wine
     ok(lstrlen(displayname) == tempsize/2,
        "Expected the buffer to be twice the length of the string\n") ;
 
@@ -538,9 +532,9 @@ static void test_get_displayname(void)
     ok(displaysize == tempsizeW, "Expected the needed buffersize\n");
     ok(lstrlenW(displaynameW) == displaysize,
        "Expected the buffer to be the length of the string\n") ;
+    }
     ok(tempsize / 2 == tempsizeW,
        "Expected the needed buffersize (in bytes) to be the same for the A and W call\n");
-    }
 
     CloseServiceHandle(scm_handle);
 

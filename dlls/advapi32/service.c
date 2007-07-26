@@ -2266,45 +2266,50 @@ BOOL WINAPI QueryServiceLockStatusW( SC_HANDLE hSCManager,
 BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
   LPSTR lpDisplayName, LPDWORD lpcchBuffer)
 {
-    struct sc_manager *hscm;
-    DWORD type, size;
-    LONG ret;
+    LPWSTR lpServiceNameW, lpDisplayNameW = NULL;
+    DWORD size, sizeW, GLE;
+    BOOL ret;
 
     TRACE("%p %s %p %p\n", hSCManager,
           debugstr_a(lpServiceName), lpDisplayName, lpcchBuffer);
 
-    hscm = sc_handle_get_handle_data(hSCManager, SC_HTYPE_MANAGER);
-    if (!hscm)
+    lpServiceNameW = SERV_dup(lpServiceName);
+    lpDisplayNameW = HeapAlloc(GetProcessHeap(), 0, *lpcchBuffer * sizeof(WCHAR));
+
+    size = sizeW = *lpcchBuffer;
+    ret = GetServiceDisplayNameW(hSCManager, lpServiceNameW,
+                                 lpDisplayName ? lpDisplayNameW : NULL,
+                                 &sizeW);
+    /* Last error will be set by GetServiceDisplayNameW and must be preserved */
+    GLE = GetLastError();
+
+    if (!lpDisplayName && lpcchBuffer && !ret && (GLE == ERROR_INSUFFICIENT_BUFFER))
     {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
+        /* Request for buffersize.
+         *
+         * Only set the size for ERROR_INSUFFICIENT_BUFFER
+         */
+        size = sizeW * 2;
+    }
+    else if (lpDisplayName && lpcchBuffer && !ret)
+    {
+        /* Request for displayname.
+         *
+         * size only has to be set if this fails
+         */
+        size = sizeW * 2;
     }
 
-    if (!lpServiceName)
-    {
-        SetLastError(ERROR_INVALID_ADDRESS);
-        return FALSE;
-    }
+    WideCharToMultiByte(CP_ACP, 0, lpDisplayNameW, (sizeW + 1), lpDisplayName,
+                        *lpcchBuffer, NULL, NULL );
 
-    size = *lpcchBuffer;
-    ret = RegGetValueA(hscm->hkey, lpServiceName, "DisplayName", RRF_RT_REG_SZ, &type, lpDisplayName, &size);
-    if (!ret && !lpDisplayName && size)
-        ret = ERROR_MORE_DATA;
+    *lpcchBuffer = size;
 
-    if (ret)
-    {
-        if (lpDisplayName && *lpcchBuffer) *lpDisplayName = 0;
+    HeapFree(GetProcessHeap(), 0, lpDisplayNameW);
+    SERV_free(lpServiceNameW);
 
-        if (ret == ERROR_MORE_DATA)
-        {
-            SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            *lpcchBuffer = size - 1;
-        }
-        else
-            SetLastError(ret);
-        return FALSE;
-    }
-    return TRUE;
+    SetLastError(GLE);
+    return ret;
 }
 
 /******************************************************************************
