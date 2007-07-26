@@ -771,6 +771,9 @@ BOOL WINAPI VerQueryValueA( LPCVOID pBlock, LPCSTR lpSubBlock,
     TRACE("(%p,%s,%p,%p)\n",
                 pBlock, debugstr_a(lpSubBlock), lplpBuffer, puLen );
 
+     if (!pBlock)
+        return FALSE;
+
     if ( !VersionInfoIs16( info ) )
     {
         BOOL ret;
@@ -822,6 +825,9 @@ BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
 
     TRACE("(%p,%s,%p,%p)\n",
                 pBlock, debugstr_w(lpSubBlock), lplpBuffer, puLen );
+
+    if (!pBlock)
+        return FALSE;
 
     if ( VersionInfoIs16( info ) )
     {
