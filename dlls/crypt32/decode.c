@@ -381,6 +381,7 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
                     }
                     else
                     {
+                        ptr += 1 + nextItemLenBytes + nextItemLen;
                         decoded += 1 + nextItemLenBytes + nextItemLen;
                         items[i].size = items[i].minSize;
                     }
