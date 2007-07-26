@@ -3201,26 +3201,36 @@ static BOOL WINAPI CRYPT_AsnEncodePKCSSignerInfo(DWORD dwCertEncodingType,
              { &info->Issuer,        CRYPT_AsnEncodeIssuerSerialNumber, 0 },
              { &info->HashAlgorithm, CRYPT_AsnEncodeAlgorithmIdWithNullParams,
                0 },
-             { &info->HashEncryptionAlgorithm,
-               CRYPT_AsnEncodeAlgorithmIdWithNullParams, 0 },
             };
-            DWORD cItem = 4;
+            struct AsnEncodeTagSwappedItem swapped[2] = { { 0 } };
+            DWORD cItem = 3, cSwapped = 0;
 
             if (info->AuthAttrs.cAttr)
             {
-                items[cItem].pvStructInfo = &info->AuthAttrs;
-                items[cItem].encodeFunc = CRYPT_AsnEncodePKCSAttributes;
+                swapped[cSwapped].tag = ASN_CONTEXT | ASN_CONSTRUCTOR | 0;
+                swapped[cSwapped].pvStructInfo = &info->AuthAttrs;
+                swapped[cSwapped].encodeFunc = CRYPT_AsnEncodePKCSAttributes;
+                items[cItem].pvStructInfo = &swapped[cSwapped];
+                items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+                cSwapped++;
                 cItem++;
             }
-            if (info->UnauthAttrs.cAttr)
-            {
-                items[cItem].pvStructInfo = &info->UnauthAttrs;
-                items[cItem].encodeFunc = CRYPT_AsnEncodePKCSAttributes;
-                cItem++;
-            }
+            items[cItem].pvStructInfo = &info->HashEncryptionAlgorithm;
+            items[cItem].encodeFunc = CRYPT_AsnEncodeAlgorithmIdWithNullParams;
+            cItem++;
             items[cItem].pvStructInfo = &info->EncryptedHash;
             items[cItem].encodeFunc = CRYPT_AsnEncodeOctets;
             cItem++;
+            if (info->UnauthAttrs.cAttr)
+            {
+                swapped[cSwapped].tag = ASN_CONTEXT | ASN_CONSTRUCTOR | 1;
+                swapped[cSwapped].pvStructInfo = &info->UnauthAttrs;
+                swapped[cSwapped].encodeFunc = CRYPT_AsnEncodePKCSAttributes;
+                items[cItem].pvStructInfo = &swapped[cSwapped];
+                items[cItem].encodeFunc = CRYPT_AsnEncodeSwapTag;
+                cSwapped++;
+                cItem++;
+            }
             ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items, cItem,
              dwFlags, pEncodePara, pbEncoded, pcbEncoded);
         }

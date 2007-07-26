@@ -1896,9 +1896,8 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSAttributesInternal(
  DWORD cbEncoded, DWORD dwFlags, PCRYPT_DECODE_PARA pDecodePara,
  void *pvStructInfo, DWORD *pcbStructInfo)
 {
-    struct AsnArrayDescriptor arrayDesc = { ASN_CONSTRUCTOR | ASN_SETOF,
-     CRYPT_AsnDecodePKCSAttribute, sizeof(CRYPT_ATTRIBUTE), TRUE,
-     offsetof(CRYPT_ATTRIBUTE, pszObjId) };
+    struct AsnArrayDescriptor arrayDesc = { 0, CRYPT_AsnDecodePKCSAttribute,
+     sizeof(CRYPT_ATTRIBUTE), TRUE, offsetof(CRYPT_ATTRIBUTE, pszObjId) };
     PCRYPT_ATTRIBUTES attrs = (PCRYPT_ATTRIBUTES)pvStructInfo;
     BOOL ret;
 
@@ -1921,8 +1920,12 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSAttributes(DWORD dwCertEncodingType,
     {
         DWORD bytesNeeded;
 
-        if ((ret = CRYPT_AsnDecodePKCSAttributesInternal(dwCertEncodingType,
-         lpszStructType, pbEncoded, cbEncoded,
+        if (!cbEncoded)
+            SetLastError(CRYPT_E_ASN1_EOD);
+        else if (pbEncoded[0] != (ASN_CONSTRUCTOR | ASN_SETOF))
+            SetLastError(CRYPT_E_ASN1_CORRUPT);
+        else if ((ret = CRYPT_AsnDecodePKCSAttributesInternal(
+         dwCertEncodingType, lpszStructType, pbEncoded, cbEncoded,
          dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded)))
         {
             if (!pvStructInfo)
@@ -3813,19 +3816,21 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSSignerInfo(DWORD dwCertEncodingType,
          { ASN_SEQUENCEOF, offsetof(CMSG_SIGNER_INFO, HashAlgorithm),
            CRYPT_AsnDecodeAlgorithmId, sizeof(CRYPT_ALGORITHM_IDENTIFIER),
            FALSE, TRUE, offsetof(CMSG_SIGNER_INFO, HashAlgorithm.pszObjId), 0 },
+         { ASN_CONSTRUCTOR | ASN_CONTEXT | 0,
+           offsetof(CMSG_SIGNER_INFO, AuthAttrs),
+           CRYPT_AsnDecodePKCSAttributesInternal, sizeof(CRYPT_ATTRIBUTES),
+           TRUE, TRUE, offsetof(CMSG_SIGNER_INFO, AuthAttrs.rgAttr), 0 },
          { ASN_SEQUENCEOF, offsetof(CMSG_SIGNER_INFO, HashEncryptionAlgorithm),
            CRYPT_AsnDecodeAlgorithmId, sizeof(CRYPT_ALGORITHM_IDENTIFIER),
            FALSE, TRUE, offsetof(CMSG_SIGNER_INFO,
            HashEncryptionAlgorithm.pszObjId), 0 },
-         { ASN_CONSTRUCTOR | ASN_SETOF, offsetof(CMSG_SIGNER_INFO, AuthAttrs),
-           CRYPT_AsnDecodePKCSAttributesInternal, sizeof(CRYPT_ATTRIBUTES),
-           TRUE, TRUE, offsetof(CMSG_SIGNER_INFO, AuthAttrs.rgAttr), 0 },
-         { ASN_CONSTRUCTOR | ASN_SETOF, offsetof(CMSG_SIGNER_INFO, UnauthAttrs),
-           CRYPT_AsnDecodePKCSAttributesInternal, sizeof(CRYPT_ATTRIBUTES),
-           TRUE, TRUE, offsetof(CMSG_SIGNER_INFO, UnauthAttrs.rgAttr), 0 },
          { ASN_OCTETSTRING, offsetof(CMSG_SIGNER_INFO, EncryptedHash),
            CRYPT_AsnDecodeOctetsInternal, sizeof(CRYPT_DER_BLOB),
            FALSE, TRUE, offsetof(CMSG_SIGNER_INFO, EncryptedHash.pbData), 0 },
+         { ASN_CONSTRUCTOR | ASN_CONTEXT | 1,
+           offsetof(CMSG_SIGNER_INFO, UnauthAttrs),
+           CRYPT_AsnDecodePKCSAttributesInternal, sizeof(CRYPT_ATTRIBUTES),
+           TRUE, TRUE, offsetof(CMSG_SIGNER_INFO, UnauthAttrs.rgAttr), 0 },
         };
 
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,

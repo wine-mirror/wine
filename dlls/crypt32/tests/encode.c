@@ -4924,6 +4924,14 @@ static const BYTE PKCSSignerWithHash[] = {
  0x01,0x01,0x30,0x06,0x06,0x02,0x2a,0x03,0x05,0x00,0x30,0x06,0x06,0x02,0x2d,
  0x06,0x05,0x00,0x04,0x10,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,
  0x0a,0x0b,0x0c,0x0d,0x0e,0x0f };
+static const BYTE PKCSSignerWithAuthAttr[] = {
+0x30,0x62,0x02,0x01,0x00,0x30,0x19,0x30,0x14,0x31,0x12,0x30,0x10,0x06,0x03,
+0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x02,
+0x01,0x01,0x30,0x06,0x06,0x02,0x2a,0x03,0x05,0x00,0xa0,0x20,0x30,0x1e,0x06,
+0x03,0x55,0x04,0x03,0x31,0x17,0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,
+0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00,0x30,
+0x06,0x06,0x02,0x2d,0x06,0x05,0x00,0x04,0x10,0x00,0x01,0x02,0x03,0x04,0x05,
+0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f };
 
 static void test_encodePKCSSignerInfo(DWORD dwEncoding)
 {
@@ -4932,6 +4940,10 @@ static void test_encodePKCSSignerInfo(DWORD dwEncoding)
     LPBYTE buf = NULL;
     DWORD size = 0;
     CMSG_SIGNER_INFO info = { 0 };
+    char oid_common_name[] = szOID_COMMON_NAME;
+    CRYPT_ATTR_BLOB commonName = { sizeof(encodedCommonName),
+     (LPBYTE)encodedCommonName };
+    CRYPT_ATTRIBUTE attr = { oid_common_name, 1, &commonName };
 
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO, &info,
@@ -5053,6 +5065,29 @@ static void test_encodePKCSSignerInfo(DWORD dwEncoding)
             LocalFree(buf);
         }
     }
+    info.AuthAttrs.cAttr = 1;
+    info.AuthAttrs.rgAttr = &attr;
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (!(dwEncoding & PKCS_7_ASN_ENCODING))
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    else
+    {
+        ok(ret, "CryptEncodeObjectEx failed: %x\n", GetLastError());
+        if (buf)
+        {
+            ok(size == sizeof(PKCSSignerWithAuthAttr), "Unexpected size %d\n",
+             size);
+            if (size == sizeof(PKCSSignerWithAuthAttr))
+                ok(!memcmp(buf, PKCSSignerWithAuthAttr, size),
+                 "Unexpected value\n");
+            else
+                ok(0, "Unexpected value\n");
+            LocalFree(buf);
+        }
+    }
 }
 
 static void test_decodePKCSSignerInfo(DWORD dwEncoding)
@@ -5155,6 +5190,26 @@ static void test_decodePKCSSignerInfo(DWORD dwEncoding)
          info->EncryptedHash.cbData);
         ok(!memcmp(info->EncryptedHash.pbData, hash, sizeof(hash)),
          "Unexpected value\n");
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO,
+     PKCSSignerWithAuthAttr, sizeof(PKCSSignerWithAuthAttr),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (buf)
+    {
+        info = (CMSG_SIGNER_INFO *)buf;
+        ok(info->AuthAttrs.cAttr == 1, "Expected 1 attribute, got %d\n",
+         info->AuthAttrs.cAttr);
+        ok(!strcmp(info->AuthAttrs.rgAttr[0].pszObjId, szOID_COMMON_NAME),
+         "Expected %s, got %s\n", szOID_COMMON_NAME,
+         info->AuthAttrs.rgAttr[0].pszObjId);
+        ok(info->AuthAttrs.rgAttr[0].cValue == 1, "Expected 1 value, got %d\n",
+         info->AuthAttrs.rgAttr[0].cValue);
+        ok(info->AuthAttrs.rgAttr[0].rgValue[0].cbData ==
+         sizeof(encodedCommonName), "Unexpected size %d\n",
+         info->AuthAttrs.rgAttr[0].rgValue[0].cbData);
+        ok(!memcmp(info->AuthAttrs.rgAttr[0].rgValue[0].pbData,
+         encodedCommonName, sizeof(encodedCommonName)), "Unexpected value\n");
         LocalFree(buf);
     }
 }
