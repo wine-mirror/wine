@@ -245,6 +245,10 @@ static const WCHAR LPR_Port[] = {'L','P','R',':',0};
 static const WCHAR default_doc_title[] = {'L','o','c','a','l',' ','D','o','w','n','l','e','v','e','l',' ',
                                           'D','o','c','u','m','e','n','t',0};
 
+static const DWORD di_sizeof[] = {0, sizeof(DRIVER_INFO_1W), sizeof(DRIVER_INFO_2W),
+                                     sizeof(DRIVER_INFO_3W), sizeof(DRIVER_INFO_4W),
+                                     sizeof(DRIVER_INFO_5W), sizeof(DRIVER_INFO_6W),
+                                  0, sizeof(DRIVER_INFO_8W)};
 
 /******************************************************************
  *  validate the user-supplied printing-environment [internal]
@@ -4371,6 +4375,8 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
           debugstr_w(DriverName), env,
           Level, di, pDriverStrings, cbBuf, unicode);
 
+    if (di) ZeroMemory(di, di_sizeof[Level]);
+
     if (unicode) {
         *pcbNeeded = (lstrlenW(DriverName) + 1) * sizeof(WCHAR);
         if (*pcbNeeded <= cbBuf)
@@ -4540,14 +4546,13 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPCWSTR pEnvironment,
     TRACE("(%p,%s,%d,%p,%d,%p)\n",hPrinter,debugstr_w(pEnvironment),
 	  Level,pDriverInfo,cbBuf, pcbNeeded);
 
-    ZeroMemory(pDriverInfo, cbBuf);
 
     if (!(name = get_opened_printer_name(hPrinter))) {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    if(Level < 1 || Level > 6) {
+    if (Level < 1 || Level == 7 || Level > 8) {
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
@@ -4584,36 +4589,12 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPCWSTR pEnvironment,
 	return FALSE;
     }
 
-    switch(Level) {
-    case 1:
-        size = sizeof(DRIVER_INFO_1W);
-	break;
-    case 2:
-        size = sizeof(DRIVER_INFO_2W);
-	break;
-    case 3:
-        size = sizeof(DRIVER_INFO_3W);
-	break;
-    case 4:
-        size = sizeof(DRIVER_INFO_4W);
-	break;
-    case 5:
-        size = sizeof(DRIVER_INFO_5W);
-	break;
-    case 6:
-        size = sizeof(DRIVER_INFO_6W);
-	break;
-    default:
-        ERR("Invalid level\n");
-	return FALSE;
-    }
-
-    if(size <= cbBuf)
+    size = di_sizeof[Level];
+    if ((size <= cbBuf) && pDriverInfo)
         ptr = pDriverInfo + size;
 
     if(!WINSPOOL_GetDriverInfoFromReg(hkeyDrivers, DriverName,
-                         env, Level, pDriverInfo,
-                         (cbBuf < size) ? NULL : ptr,
+                         env, Level, pDriverInfo, ptr,
                          (cbBuf < size) ? 0 : cbBuf - size,
                          &needed, unicode)) {
             RegCloseKey(hkeyDrivers);
@@ -5044,8 +5025,7 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPCWSTR pEnvironment,
     if (!env) return FALSE;     /* SetLastError() is in validate_envW */
 
     /* check input parameter */
-    if((Level < 1) || (Level > 3)) {
-        ERR("unsupported level %d\n", Level);
+    if ((Level < 1) || (Level == 7) || (Level > 8)) {
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
@@ -5073,17 +5053,7 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPCWSTR pEnvironment,
     /* get size of single struct
      * unicode and ascii structure have the same size
      */
-    switch (Level) {
-        case 1:
-            size = sizeof(DRIVER_INFO_1A);
-            break;
-        case 2:
-            size = sizeof(DRIVER_INFO_2A);
-            break;
-        case 3:
-            size = sizeof(DRIVER_INFO_3A);
-            break;
-    }
+    size = di_sizeof[Level];
 
     /* calculate required buffer size */
     *pcbNeeded = size * number;
