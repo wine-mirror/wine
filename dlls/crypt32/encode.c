@@ -1215,7 +1215,7 @@ struct DERSetDescriptor
     DWORD                   cItems;
     const void             *items;
     size_t                  itemSize;
-    off_t                   itemOffset;
+    size_t                  itemOffset;
     CryptEncodeObjectExFunc encode;
 };
 
