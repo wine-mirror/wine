@@ -200,6 +200,7 @@ static const WCHAR Version3_SubdirW[] = {'\\','3',0};
 static const WCHAR spooldriversW[] = {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\',0};
 static const WCHAR spoolprtprocsW[] = {'\\','s','p','o','o','l','\\','p','r','t','p','r','o','c','s','\\',0};
 
+static const WCHAR backslashW[] = {'\\',0};
 static const WCHAR Configuration_FileW[] = {'C','o','n','f','i','g','u','r','a','t',
 				      'i','o','n',' ','F','i','l','e',0};
 static const WCHAR DatatypeW[] = {'D','a','t','a','t','y','p','e',0};
@@ -3416,6 +3417,112 @@ static DWORD WINSPOOL_GetDWORDFromReg(HKEY hkey, LPCSTR ValueName)
     return value;
 }
 
+
+/*****************************************************************************
+ * get_filename_from_reg [internal]
+ *
+ * Get ValueName from hkey storing result in out
+ * when the Value in the registry has only a filename, use driverdir as prefix
+ * outlen is space left in out
+ * String is stored either as unicode or ascii
+ *
+ */
+
+static BOOL get_filename_from_reg(HKEY hkey, LPCWSTR driverdir, DWORD dirlen, LPCWSTR ValueName,
+                                  LPBYTE out, DWORD outlen, LPDWORD needed, BOOL unicode)
+{
+    WCHAR   filename[MAX_PATH];
+    DWORD   size;
+    DWORD   type;
+    LONG    ret;
+    LPWSTR  buffer = filename;
+    LPWSTR  ptr;
+
+    *needed = 0;
+    size = sizeof(filename);
+    buffer[0] = '\0';
+    ret = RegQueryValueExW(hkey, ValueName, NULL, &type, (LPBYTE) buffer, &size);
+    if (ret == ERROR_MORE_DATA) {
+        TRACE("need dynamic buffer: %u\n", size);
+        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!buffer) {
+            /* No Memory is bad */
+            return FALSE;
+        }
+        buffer[0] = '\0';
+        ret = RegQueryValueExW(hkey, ValueName, NULL, &type, (LPBYTE) buffer, &size);
+    }
+
+    if ((ret != ERROR_SUCCESS) || (!buffer[0])) {
+        if (buffer != filename) HeapFree(GetProcessHeap(), 0, buffer);
+        return FALSE;
+    }
+
+    ptr = buffer;
+    while (ptr) {
+        /* do we have a full path ? */
+        ret = (((buffer[0] == '\\') && (buffer[1] == '\\')) ||
+                (buffer[0] && (buffer[1] == ':') && (buffer[2] == '\\')) );
+
+        if (!ret) {
+            /* we must build the full Path */
+            *needed += dirlen;
+            if ((out) && (outlen > dirlen)) {
+                if (unicode) {
+                    lstrcpyW((LPWSTR)out, driverdir);
+                }
+                else
+                {
+                    WideCharToMultiByte(CP_ACP, 0, driverdir, -1, (LPSTR)out, outlen, NULL, NULL);
+                }
+                out += dirlen;
+                outlen -= dirlen;
+            }
+            else
+                out = NULL;
+        }
+
+        /* write the filename */
+        if (unicode) {
+            size = (lstrlenW(ptr) + 1) * sizeof(WCHAR);
+            if ((out) && (outlen >= size)) {
+                lstrcpyW((LPWSTR)out, ptr);
+                out += size;
+                outlen -= size;
+            }
+            else
+                out = NULL;
+        }
+        else
+        {
+            size = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+            if ((out) && (outlen >= size)) {
+                WideCharToMultiByte(CP_ACP, 0, ptr, -1, (LPSTR)out, outlen, NULL, NULL);
+                out += size;
+                outlen -= size;
+            }
+            else
+                out = NULL;
+        }
+        *needed += size;
+        ptr +=  lstrlenW(ptr)+1;
+        if ((type != REG_MULTI_SZ) || (!ptr[0]))  ptr = NULL;
+    }
+
+    if (buffer != filename) HeapFree(GetProcessHeap(), 0, buffer);
+
+    /* write the multisz-termination */
+    if (type == REG_MULTI_SZ) {
+        size = (unicode) ? sizeof(WCHAR) : 1;
+
+        *needed += size;
+        if (out && (outlen >= size)) {
+            memset (out, 0, size);
+        }
+    }
+    return TRUE;
+}
+
 /*****************************************************************************
  *    WINSPOOL_GetStringFromReg
  *
@@ -4255,6 +4362,8 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
 {
     DWORD  size, tmp;
     HKEY   hkeyDriver;
+    WCHAR  driverdir[MAX_PATH];
+    DWORD  dirlen;
     LPBYTE strPtr = pDriverStrings;
     LPDRIVER_INFO_8W di = (LPDRIVER_INFO_8W) ptr;
 
@@ -4287,6 +4396,19 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         strPtr = (pDriverStrings) ? (pDriverStrings + (*pcbNeeded)) : NULL;
     }
 
+    /* Reserve Space for the largest subdir and a Backslash*/
+    size = sizeof(driverdir) - sizeof(Version3_SubdirW) - sizeof(WCHAR);
+    if (!GetPrinterDriverDirectoryW(NULL, (LPWSTR) env->envname, 1, (LPBYTE) driverdir, size, &size)) {
+        /* Should never Fail */
+        return FALSE;
+    }
+    lstrcatW(driverdir, env->versionsubdir);
+    lstrcatW(driverdir, backslashW);
+
+    /* dirlen must not include the terminating zero */
+    dirlen = (unicode) ? lstrlenW(driverdir) * sizeof(WCHAR) :
+             WideCharToMultiByte(CP_ACP, 0, driverdir, -1, NULL, 0, NULL, NULL) -1;
+
     if (!DriverName[0] || RegOpenKeyW(hkeyDrivers, DriverName, &hkeyDriver) != ERROR_SUCCESS) {
         ERR("Can't find driver %s in registry\n", debugstr_w(DriverName));
         SetLastError(ERROR_UNKNOWN_PRINTER_DRIVER); /* ? */
@@ -4312,15 +4434,14 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         strPtr = (pDriverStrings) ? (pDriverStrings + (*pcbNeeded)) : NULL;
     }
 
-
-    if(WINSPOOL_GetStringFromReg(hkeyDriver, DriverW, strPtr, 0, &size,
-			         unicode)) {
+    /* .pDriverPath is the Graphics rendering engine.
+        The full Path is required to avoid a crash in some apps */
+    if (get_filename_from_reg(hkeyDriver, driverdir, dirlen, DriverW, strPtr, 0, &size, unicode)) {
         *pcbNeeded += size;
-        if(*pcbNeeded <= cbBuf)
-            WINSPOOL_GetStringFromReg(hkeyDriver, DriverW, strPtr, size, &tmp,
-                                      unicode);
-        if(ptr)
-            ((PDRIVER_INFO_2W) ptr)->pDriverPath = (LPWSTR)strPtr;
+        if (*pcbNeeded <= cbBuf)
+            get_filename_from_reg(hkeyDriver, driverdir, dirlen, DriverW, strPtr, size, &tmp, unicode);
+
+        if (di) di->pDriverPath = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? (pDriverStrings + (*pcbNeeded)) : NULL;
     }
 
