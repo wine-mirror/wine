@@ -1231,7 +1231,6 @@ static BOOL CDecodeMsg_DecodeHashedContent(CDecodeMsg *msg,
      &size);
     if (ret)
     {
-        msg->type = CMSG_HASHED;
         ContextPropertyList_SetProperty(msg->properties, CMSG_VERSION_PARAM,
          (const BYTE *)&digestedData->version, sizeof(digestedData->version));
         CDecodeMsg_SaveAlgorithmID(msg, CMSG_HASH_ALGORITHM_PARAM,
