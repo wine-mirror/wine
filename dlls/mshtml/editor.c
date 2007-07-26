@@ -39,6 +39,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define NSCMD_ALIGN        "cmd_align"
+#define NSCMD_BEGINLINE    "cmd_beginLine"
 #define NSCMD_BOLD         "cmd_bold"
 #define NSCMD_CHARNEXT     "cmd_charNext"
 #define NSCMD_CHARPREVIOUS "cmd_charPrevious"
@@ -46,6 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_CUT          "cmd_cut"
 #define NSCMD_DELETECHARFORWARD   "cmd_deleteCharForward"
 #define NSCMD_DELETEWORDFORWARD   "cmd_deleteWordForward"
+#define NSCMD_ENDLINE      "cmd_endLine"
 #define NSCMD_FONTCOLOR    "cmd_fontColor"
 #define NSCMD_FONTFACE     "cmd_fontFace"
 #define NSCMD_INDENT       "cmd_indent"
@@ -53,17 +55,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_ITALIC       "cmd_italic"
 #define NSCMD_LINENEXT     "cmd_lineNext"
 #define NSCMD_LINEPREVIOUS "cmd_linePrevious"
+#define NSCMD_MOVEBOTTOM   "cmd_moveBottom"
 #define NSCMD_MOVEPAGEDOWN "cmd_movePageDown"
 #define NSCMD_MOVEPAGEUP   "cmd_movePageUp"
+#define NSCMD_MOVETOP      "cmd_moveTop"
 #define NSCMD_OL           "cmd_ol"
 #define NSCMD_OUTDENT      "cmd_outdent"
 #define NSCMD_PASTE        "cmd_paste"
+#define NSCMD_SELECTBEGINLINE     "cmd_selectBeginLine"
+#define NSCMD_SELECTBOTTOM        "cmd_selectBottom"
 #define NSCMD_SELECTCHARNEXT      "cmd_selectCharNext"
 #define NSCMD_SELECTCHARPREVIOUS  "cmd_selectCharPrevious"
+#define NSCMD_SELECTENDLINE       "cmd_selectEndLine"
 #define NSCMD_SELECTLINENEXT      "cmd_selectLineNext"
 #define NSCMD_SELECTLINEPREVIOUS  "cmd_selectLinePrevious"
 #define NSCMD_SELECTPAGEDOWN      "cmd_selectPageDown"
 #define NSCMD_SELECTPAGEUP        "cmd_selectPageUp"
+#define NSCMD_SELECTTOP           "cmd_selectTop"
 #define NSCMD_SELECTWORDNEXT      "cmd_selectWordNext"
 #define NSCMD_SELECTWORDPREVIOUS  "cmd_selectWordPrevious"
 #define NSCMD_UL           "cmd_ul"
@@ -83,6 +91,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define DOM_VK_RIGHT    VK_RIGHT
 #define DOM_VK_DOWN     VK_DOWN
 #define DOM_VK_DELETE   VK_DELETE
+#define DOM_VK_HOME     VK_HOME
+#define DOM_VK_END      VK_END
 
 static const WCHAR wszFont[] = {'f','o','n','t',0};
 static const WCHAR wszSize[] = {'s','i','z','e',0};
@@ -478,7 +488,7 @@ static nsIDOMNode *get_child_text_node(nsIDOMNode *node, BOOL first)
     return NULL;
 }
 
-static void handle_arrow_key(HTMLDocument *This, nsIDOMKeyEvent *event, const char **cmds)
+static void handle_arrow_key(HTMLDocument *This, nsIDOMKeyEvent *event, const char *cmds[4])
 {
     int i=0;
     PRBool b;
@@ -563,6 +573,30 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
         };
 
         TRACE("delete\n");
+        handle_arrow_key(This, key_event, cmds);
+        break;
+    }
+    case DOM_VK_HOME: {
+        static const char *cmds[] = {
+            NSCMD_BEGINLINE,
+            NSCMD_MOVETOP,
+            NSCMD_SELECTBEGINLINE,
+            NSCMD_SELECTTOP
+        };
+
+        TRACE("home\n");
+        handle_arrow_key(This, key_event, cmds);
+        break;
+    }
+    case DOM_VK_END: {
+        static const char *cmds[] = {
+            NSCMD_ENDLINE,
+            NSCMD_MOVEBOTTOM,
+            NSCMD_SELECTENDLINE,
+            NSCMD_SELECTBOTTOM
+        };
+
+        TRACE("end\n");
         handle_arrow_key(This, key_event, cmds);
         break;
     }
