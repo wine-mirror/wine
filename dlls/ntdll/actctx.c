@@ -534,7 +534,7 @@ static WCHAR *build_assembly_id( const struct assembly_identity *ai )
     static const WCHAR archW[] =
         {',','p','r','o','c','e','s','s','o','r','A','r','c','h','i','t','e','c','t','u','r','e','=',0};
     static const WCHAR public_keyW[] =
-        {',','p','u','b','l','i','c','K','e','y','T','o','k','e','n','=','"',0};
+        {',','p','u','b','l','i','c','K','e','y','T','o','k','e','n','=',0};
     static const WCHAR typeW[] =
         {',','t','y','p','e','=','"','w','i','n','3','2','"',0};
     static const WCHAR versionW[] =
@@ -2127,7 +2127,7 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
 
         if ((status = get_module_filename( NtCurrentTeb()->Peb->ImageBaseAddress, &dir, 0 )))
             goto error;
-        if ((p = strrchrW( dir.Buffer, '\\' ))) *p = 0;
+        if ((p = strrchrW( dir.Buffer, '\\' ))) p[1] = 0;
         actctx->appdir.info = dir.Buffer;
     }
 
@@ -2445,8 +2445,7 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
                 return STATUS_BUFFER_TOO_SMALL;
             }
 
-            /* FIXME: this is a big HACK */
-            afdi->ulFlags = (index > 1) ? 16 : ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION;
+            afdi->ulFlags = 0;  /* FIXME */
             afdi->ulEncodedAssemblyIdentityLength = (id_len - 1) * sizeof(WCHAR);
             afdi->ulManifestPathType = assembly->manifest.type;
             afdi->ulManifestPathLength = assembly->manifest.info ? (path_len - 1) * sizeof(WCHAR) : 0;

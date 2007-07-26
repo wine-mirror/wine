@@ -6,6 +6,7 @@ TESTDLL   = kernel32.dll
 IMPORTS   = advapi32 kernel32
 
 CTESTS = \
+	actctx.c \
 	alloc.c \
 	atom.c \
 	change.c \
