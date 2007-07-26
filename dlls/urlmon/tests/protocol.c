@@ -104,6 +104,7 @@ static int state = 0;
 static DWORD bindf = 0;
 static IInternetBindInfo *prot_bind_info;
 static void *expect_pv;
+static HANDLE received_data;
 
 static enum {
     FILE_TEST,
@@ -416,9 +417,8 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
                "grcfBSCF = %08x\n", grfBSCF);
         }
 
-        if (!(grfBSCF & BSCF_LASTDATANOTIFICATION) &&
-            !(bindf & BINDF_FROMURLMON))
-            SendMessage(protocol_hwnd, WM_USER, 0, 0);
+        if (!(bindf & BINDF_FROMURLMON))
+            SetEvent(received_data);
     }
     return S_OK;
 }
@@ -1233,19 +1233,25 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
         if(!http_protocol_start(url, is_first))
             return;
 
-        hres = IInternetProtocol_Read(http_protocol, buf, 2, &cb);
-        ok(hres == E_PENDING, "Read failed: %08x, expected E_PENDING\n", hres);
-        ok(!cb, "cb=%d, expected 0\n", cb);
-
-        if(bindf & BINDF_FROMURLMON)
-            SET_EXPECT(Switch);
         SET_EXPECT(ReportResult);
         expect_hrResult = S_OK;
 
-        GetMessage(&msg, NULL, 0, 0);
-
         if(bindf & BINDF_FROMURLMON)
+        {
+            hres = IInternetProtocol_Read(http_protocol, buf, 2, &cb);
+            ok(hres == E_PENDING, "Read failed: %08x, expected E_PENDING\n", hres);
+            ok(!cb, "cb=%d, expected 0\n", cb);
+
+            SET_EXPECT(Switch);
+            GetMessage(&msg, NULL, 0, 0);
             CHECK_CALLED(Switch);
+        }
+        else
+        {
+            WaitForSingleObject(received_data, INFINITE);
+            SendMessage(protocol_hwnd, WM_USER, 0, 0);
+        }
+
         CHECK_CALLED(ReportResult);
 
         hres = IInternetProtocol_Terminate(http_protocol, 0);
@@ -1281,18 +1287,31 @@ static void test_http_protocol(void)
     http_post_test = FALSE;
 }
 
+static HRESULT http_protocol_read(void)
+{
+    HRESULT hres;
+    DWORD cb;
+    BYTE buf[3600];
+
+    while(1) {
+        hres = IInternetProtocol_Read(http_protocol, buf, sizeof(buf), &cb);
+        if(!(bindf & BINDF_FROMURLMON) &&
+           hres == E_PENDING) {
+            WaitForSingleObject(received_data, INFINITE);
+            CHECK_CALLED(ReportData);
+            SET_EXPECT(ReportData);
+        } else if(cb == 0) break;
+    }
+
+    return hres;
+}
+
 static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if(msg == WM_USER) {
-        BOOL first_call = FALSE;
         HRESULT hres;
-        DWORD cb;
-        BYTE buf[3600];
 
         if(!state) {
-            first_call = TRUE;
-            state = 1;
-
             if (http_is_first)
             {
                 CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
@@ -1324,26 +1343,26 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             ok(hres == S_OK, "Continue failed: %08x\n", hres);
 
             CHECK_CALLED(ReportData);
-            if(first_call) {
+            if(!state) {
                 CHECK_CALLED(OnResponse);
                 CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
             }
         }
 
-        do hres = IInternetProtocol_Read(http_protocol, buf, sizeof(buf), &cb);
-        while(cb);
-
+        hres = http_protocol_read();
         ok(hres == S_FALSE || hres == E_PENDING, "Read failed: %08x\n", hres);
 
-        if(hres == S_FALSE)
+        if(hres == S_FALSE &&
+           (bindf & BINDF_FROMURLMON))
             PostMessage(protocol_hwnd, WM_USER+1, 0, 0);
 
-        if(first_call) {
+        if(!state) {
+            state = 1;
+
             hres = IInternetProtocol_LockRequest(http_protocol, 0);
             ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
 
-            do hres = IInternetProtocol_Read(http_protocol, buf, sizeof(buf), &cb);
-            while(cb);
+            hres = http_protocol_read();
             ok(hres == S_FALSE || hres == E_PENDING, "Read failed: %08x\n", hres);
         }
     }
@@ -1533,6 +1552,7 @@ START_TEST(protocol)
 {
     OleInitialize(NULL);
 
+    received_data = CreateEvent(NULL, FALSE, FALSE, NULL);
     protocol_hwnd = create_protocol_window();
 
     test_file_protocol();
@@ -1541,6 +1561,7 @@ START_TEST(protocol)
     test_CreateBinding();
 
     DestroyWindow(protocol_hwnd);
+    CloseHandle(received_data);
 
     OleUninitialize();
 }
