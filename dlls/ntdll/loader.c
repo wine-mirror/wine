@@ -621,10 +621,12 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     WINE_MODREF *prev;
     DWORD size;
     NTSTATUS status;
+    ULONG_PTR cookie;
 
     if (!(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS)) return STATUS_SUCCESS;  /* already done */
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
-    create_module_activation_context( &wm->ldr );
+    if (!create_module_activation_context( &wm->ldr ))
+        RtlActivateActivationContext( 0, wm->ldr.ActivationContext, &cookie );
 
     if (!(imports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
                                                   IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
@@ -651,6 +653,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
             status = STATUS_DLL_NOT_FOUND;
     }
     current_modref = prev;
+    if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
     return status;
 }
 
@@ -927,6 +930,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
 static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    ULONG_PTR cookie;
     int i;
 
     if (process_detaching) return status;
@@ -940,6 +944,7 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
 
     /* Tag current MODREF to prevent recursive loop */
     wm->ldr.Flags |= LDR_LOAD_IN_PROGRESS;
+    if (wm->ldr.ActivationContext) RtlActivateActivationContext( 0, wm->ldr.ActivationContext, &cookie );
 
     /* Recursively attach all DLLs this one depends on */
     for ( i = 0; i < wm->nDeps; i++ )
@@ -971,6 +976,7 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
         InsertTailList(&NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList,
                        &wm->ldr.InInitializationOrderModuleList);
 
+    if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
     /* Remove recursion flag */
     wm->ldr.Flags &= ~LDR_LOAD_IN_PROGRESS;
 
