@@ -159,6 +159,7 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
             addl_headers = CoTaskMemAlloc(sizeof(wszHeaders));
             if (!addl_headers)
             {
+                http_post_test = FALSE;
                 skip("Out of memory\n");
                 return E_OUTOFMEMORY;
             }
@@ -504,18 +505,19 @@ static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfB
 
     if (http_post_test)
     {
-        pbindinfo->dwBindVerb = BINDVERB_POST;
-        pbindinfo->stgmedData.tymed = TYMED_HGLOBAL;
         /* Must be GMEM_FIXED, GMEM_MOVABLE does not work properly
          * with urlmon on native (Win98 and WinXP) */
         pbindinfo->stgmedData.hGlobal = GlobalAlloc(GPTR, sizeof(szPostData));
         if (!pbindinfo->stgmedData.hGlobal)
         {
+            http_post_test = FALSE;
             skip("Out of memory\n");
             return E_OUTOFMEMORY;
         }
         lstrcpy((LPSTR)pbindinfo->stgmedData.hGlobal, szPostData);
         pbindinfo->cbstgmedData = sizeof(szPostData)-1;
+        pbindinfo->dwBindVerb = BINDVERB_POST;
+        pbindinfo->stgmedData.tymed = TYMED_HGLOBAL;
     }
 
     return S_OK;
