@@ -1253,6 +1253,23 @@ static BOOL CDecodeMsg_DecodeHashedContent(CDecodeMsg *msg,
     return ret;
 }
 
+static BOOL CDecodeMsg_DecodeSignedContent(CDecodeMsg *msg,
+ CRYPT_DER_BLOB *blob)
+{
+    BOOL ret;
+    CRYPT_SIGNED_INFO *signedInfo;
+    DWORD size;
+
+    ret = CRYPT_AsnDecodePKCSSignedInfo(blob->pbData, blob->cbData,
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (CRYPT_SIGNED_INFO *)&signedInfo,
+     &size);
+    if (ret)
+    {
+        FIXME("store properties in message\n");
+        LocalFree(signedInfo);
+    }
+    return ret;
+}
 /* Decodes the content in blob as the type given, and updates the value
  * (type, parameters, etc.) of msg based on what blob contains.
  * It doesn't just use msg's type, to allow a recursive call from an implicitly
@@ -1274,9 +1291,12 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
             msg->type = CMSG_HASHED;
         break;
     case CMSG_ENVELOPED:
-    case CMSG_SIGNED:
         FIXME("unimplemented for type %s\n", MSG_TYPE_STR(type));
         ret = TRUE;
+        break;
+    case CMSG_SIGNED:
+        if ((ret = CDecodeMsg_DecodeSignedContent(msg, blob)))
+            msg->type = CMSG_HASHED;
         break;
     default:
     {

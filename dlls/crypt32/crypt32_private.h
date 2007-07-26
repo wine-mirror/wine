@@ -99,6 +99,10 @@ typedef struct _CRYPT_SIGNED_INFO
 BOOL CRYPT_AsnEncodePKCSSignedInfo(CRYPT_SIGNED_INFO *, void *pvData,
  DWORD *pcbData);
 
+BOOL CRYPT_AsnDecodePKCSSignedInfo(const BYTE *pbEncoded, DWORD cbEncoded,
+ DWORD dwFlags, PCRYPT_DECODE_PARA pDecodePara,
+ CRYPT_SIGNED_INFO *signedInfo, DWORD *pcbSignedInfo);
+
 /* Helper function to check *pcbEncoded, set it to the required size, and
  * optionally to allocate memory.  Assumes pbEncoded is not NULL.
  * If CRYPT_ENCODE_ALLOC_FLAG is set in dwFlags, *pbEncoded will be set to a

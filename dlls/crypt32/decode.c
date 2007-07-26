@@ -3841,6 +3841,62 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSSignerInfo(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_DecodeSignerArray(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret;
+    struct AsnArrayDescriptor arrayDesc = { ASN_CONSTRUCTOR | ASN_SETOF,
+     CRYPT_AsnDecodePKCSSignerInfo, sizeof(CMSG_SIGNER_INFO), TRUE,
+     offsetof(CMSG_SIGNER_INFO, Issuer.pbData) };
+    struct GenericArray *array = (struct GenericArray *)pvStructInfo;
+
+    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, *pcbStructInfo);
+
+    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, pcbStructInfo, array ? array->rgItems : NULL);
+    return ret;
+}
+
+BOOL CRYPT_AsnDecodePKCSSignedInfo(const BYTE *pbEncoded, DWORD cbEncoded,
+ DWORD dwFlags, PCRYPT_DECODE_PARA pDecodePara,
+ CRYPT_SIGNED_INFO *signedInfo, DWORD *pcbSignedInfo)
+{
+    BOOL ret = FALSE;
+    struct AsnDecodeSequenceItem items[] = {
+     { ASN_INTEGER, offsetof(CRYPT_SIGNED_INFO, version), CRYPT_AsnDecodeInt,
+       sizeof(DWORD), FALSE, FALSE, 0, 0 },
+     /* Placeholder for the hash algorithms - redundant with those in the
+      * signers, so just ignore them.
+      */
+     { ASN_CONSTRUCTOR | ASN_SETOF, 0, NULL, 0, TRUE, FALSE, 0, 0 },
+     { ASN_SEQUENCE, offsetof(CRYPT_SIGNED_INFO, content),
+       CRYPT_AsnDecodePKCSContentInfoInternal, sizeof(CRYPT_CONTENT_INFO),
+       FALSE, TRUE, offsetof(CRYPT_SIGNED_INFO, content.pszObjId), 0 },
+     { ASN_CONSTRUCTOR | ASN_CONTEXT | 0,
+       offsetof(CRYPT_SIGNED_INFO, cCertEncoded),
+       CRYPT_DecodeDERArray, sizeof(struct GenericArray), TRUE, TRUE,
+       offsetof(CRYPT_SIGNED_INFO, rgCertEncoded), 0 },
+     { ASN_CONSTRUCTOR | ASN_CONTEXT | 1,
+       offsetof(CRYPT_SIGNED_INFO, cCrlEncoded), CRYPT_DecodeDERArray,
+       sizeof(struct GenericArray), TRUE, TRUE,
+       offsetof(CRYPT_SIGNED_INFO, rgCrlEncoded), 0 },
+     { ASN_CONSTRUCTOR | ASN_SETOF, offsetof(CRYPT_SIGNED_INFO, cSignerInfo),
+       CRYPT_DecodeSignerArray, sizeof(struct GenericArray), TRUE, TRUE,
+       offsetof(CRYPT_SIGNED_INFO, rgSignerInfo), 0 },
+    };
+
+    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, signedInfo, *pcbSignedInfo);
+
+    ret = CRYPT_AsnDecodeSequence(X509_ASN_ENCODING, items,
+     sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, signedInfo, pcbSignedInfo, NULL);
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
 BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
