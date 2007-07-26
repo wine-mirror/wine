@@ -205,28 +205,27 @@ static const WCHAR Configuration_FileW[] = {'C','o','n','f','i','g','u','r','a',
 				      'i','o','n',' ','F','i','l','e',0};
 static const WCHAR DatatypeW[] = {'D','a','t','a','t','y','p','e',0};
 static const WCHAR Data_FileW[] = {'D','a','t','a',' ','F','i','l','e',0};
-static const WCHAR Default_DevModeW[] = {'D','e','f','a','u','l','t',' ','D','e','v',
-				   'M','o','d','e',0};
-static const WCHAR Dependent_FilesW[] = {'D','e','p','e','n','d','e','n','t',' ','F',
-				   'i','l','e','s',0};
+static const WCHAR Default_DevModeW[] = {'D','e','f','a','u','l','t',' ','D','e','v','M','o','d','e',0};
+static const WCHAR Dependent_FilesW[] = {'D','e','p','e','n','d','e','n','t',' ','F','i','l','e','s',0};
 static const WCHAR DescriptionW[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR DriverW[] = {'D','r','i','v','e','r',0};
+static const WCHAR HardwareIDW[] = {'H','a','r','d','w','a','r','e','I','D',0};
 static const WCHAR Help_FileW[] = {'H','e','l','p',' ','F','i','l','e',0};
 static const WCHAR LocationW[] = {'L','o','c','a','t','i','o','n',0};
+static const WCHAR ManufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
 static const WCHAR MonitorW[] = {'M','o','n','i','t','o','r',0};
 static const WCHAR MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
 static const WCHAR NameW[] = {'N','a','m','e',0};
+static const WCHAR OEM_UrlW[] = {'O','E','M',' ','U','r','l',0};
 static const WCHAR ParametersW[] = {'P','a','r','a','m','e','t','e','r','s',0};
 static const WCHAR PortW[] = {'P','o','r','t',0};
 static const WCHAR bs_Ports_bsW[] = {'\\','P','o','r','t','s','\\',0};
-static const WCHAR Print_ProcessorW[] = {'P','r','i','n','t',' ','P','r','o','c','e',
-				   's','s','o','r',0};
-static const WCHAR Printer_DriverW[] = {'P','r','i','n','t','e','r',' ','D','r','i',
-				  'v','e','r',0};
-static const WCHAR PrinterDriverDataW[] = {'P','r','i','n','t','e','r','D','r','i',
-				     'v','e','r','D','a','t','a',0};
-static const WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ','F',
-				  'i','l','e',0};
+static const WCHAR Previous_NamesW[] = {'P','r','e','v','i','o','u','s',' ','N','a','m','e','s',0};
+static const WCHAR Print_ProcessorW[] = {'P','r','i','n','t',' ','P','r','o','c','e','s','s','o','r',0};
+static const WCHAR Printer_DriverW[] = {'P','r','i','n','t','e','r',' ','D','r','i','v','e','r',0};
+static const WCHAR PrinterDriverDataW[] = {'P','r','i','n','t','e','r','D','r','i','v','e','r','D','a','t','a',0};
+static const WCHAR ProviderW[] = {'P','r','o','v','i','d','e','r',0};
+static const WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ','F','i','l','e',0};
 static const WCHAR Share_NameW[] = {'S','h','a','r','e',' ','N','a','m','e',0};
 static const WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
 static const WCHAR deviceW[]  = {'d','e','v','i','c','e',0};
@@ -4522,6 +4521,79 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
         if (di) di->pDefaultDataType = (LPWSTR)strPtr;
         strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
     }
+
+    if (Level == 3 ) {
+        RegCloseKey(hkeyDriver);
+        TRACE("buffer space %d required %d\n", cbBuf, *pcbNeeded);
+        return TRUE;
+    }
+
+    /* .pszzPreviousNames */
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, Previous_NamesW, strPtr, 0, &size, unicode)) {
+        *pcbNeeded += size;
+        if(*pcbNeeded <= cbBuf)
+            WINSPOOL_GetStringFromReg(hkeyDriver, Previous_NamesW, strPtr, size, &size, unicode);
+
+        if (di) di->pszzPreviousNames = (LPWSTR)strPtr;
+        strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
+    }
+
+    if (Level == 4 ) {
+        RegCloseKey(hkeyDriver);
+        TRACE("buffer space %d required %d\n", cbBuf, *pcbNeeded);
+        return TRUE;
+    }
+
+    /* support is missing, but not important enough for a FIXME */
+    TRACE("%s: DriverDate + DriverVersion not supported\n", debugstr_w(DriverName));
+
+    /* .pszMfgName */
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, ManufacturerW, strPtr, 0, &size, unicode)) {
+        *pcbNeeded += size;
+        if(*pcbNeeded <= cbBuf)
+            WINSPOOL_GetStringFromReg(hkeyDriver, ManufacturerW, strPtr, size, &size, unicode);
+
+        if (di) di->pszMfgName = (LPWSTR)strPtr;
+        strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
+    }
+
+    /* .pszOEMUrl */
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, OEM_UrlW, strPtr, 0, &size, unicode)) {
+        *pcbNeeded += size;
+        if(*pcbNeeded <= cbBuf)
+            WINSPOOL_GetStringFromReg(hkeyDriver, OEM_UrlW, strPtr, size, &size, unicode);
+
+        if (di) di->pszOEMUrl = (LPWSTR)strPtr;
+        strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
+    }
+
+    /* .pszHardwareID */
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, HardwareIDW, strPtr, 0, &size, unicode)) {
+        *pcbNeeded += size;
+        if(*pcbNeeded <= cbBuf)
+            WINSPOOL_GetStringFromReg(hkeyDriver, HardwareIDW, strPtr, size, &size, unicode);
+
+        if (di) di->pszHardwareID = (LPWSTR)strPtr;
+        strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
+    }
+
+    /* .pszProvider */
+    if (WINSPOOL_GetStringFromReg(hkeyDriver, ProviderW, strPtr, 0, &size, unicode)) {
+        *pcbNeeded += size;
+        if(*pcbNeeded <= cbBuf)
+            WINSPOOL_GetStringFromReg(hkeyDriver, ProviderW, strPtr, size, &size, unicode);
+
+        if (di) di->pszProvider = (LPWSTR)strPtr;
+        strPtr = (pDriverStrings) ? pDriverStrings + (*pcbNeeded) : NULL;
+    }
+
+    if (Level == 6 ) {
+        RegCloseKey(hkeyDriver);
+        return TRUE;
+    }
+
+    /* support is missing, but not important enough for a FIXME */
+    TRACE("level 8: incomplete\n");
 
     TRACE("buffer space %d required %d\n", cbBuf, *pcbNeeded);
     RegCloseKey(hkeyDriver);
