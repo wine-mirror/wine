@@ -192,6 +192,8 @@ static const WCHAR envname_win40W[] = {'W','i','n','d','o','w','s',' ','4','.','
 static const WCHAR envname_x86W[] =   {'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0};
 static const WCHAR subdir_win40W[] = {'w','i','n','4','0',0};
 static const WCHAR subdir_x86W[] =   {'w','3','2','x','8','6',0};
+static const WCHAR Version0_RegPathW[] = {'\\','V','e','r','s','i','o','n','-','0',0};
+static const WCHAR Version0_SubdirW[] = {'\\','0',0};
 static const WCHAR Version3_RegPathW[] = {'\\','V','e','r','s','i','o','n','-','3',0};
 static const WCHAR Version3_SubdirW[] = {'\\','3',0};
 
@@ -264,7 +266,8 @@ static const  printenv_t * validate_envW(LPCWSTR env)
     static const printenv_t env_x86 =   {envname_x86W, subdir_x86W,
                                          3, Version3_RegPathW, Version3_SubdirW};
     static const printenv_t env_win40 = {envname_win40W, subdir_win40W,
-                                         0, emptyStringW, emptyStringW};
+                                         0, Version0_RegPathW, Version0_SubdirW};
+
     static const printenv_t * const all_printenv[]={&env_x86, &env_win40};
 
     const printenv_t *result = NULL;
