@@ -19,12 +19,14 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 
 #include "windef.h"
 #include "gdiplus.h"
 #include "wine/test.h"
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
+#define expectf(expected, got) ok(fabs(got - expected) < 0.1, "Expected %.2f, got %.2f\n", expected, got)
 
 static void test_startup(void)
 {
@@ -116,6 +118,71 @@ static void test_brushfill(void)
     GdipDeletePen(pen);
 }
 
+static void test_dasharray(void)
+{
+    GpPen *pen;
+    GpDashStyle style;
+    GpStatus status;
+    REAL dashes[12];
+
+    GdipCreatePen1(0xdeadbeef, 10.0, UnitWorld, &pen);
+    dashes[0] = 10.0;
+    dashes[1] = 11.0;
+    dashes[2] = 12.0;
+    dashes[3] = 13.0;
+    dashes[4] = 14.0;
+    dashes[5] = -100.0;
+    dashes[6] = -100.0;
+
+    /* setting the array sets the type to custom */
+    GdipGetPenDashStyle(pen, &style);
+    expect(DashStyleSolid, style);
+    status = GdipSetPenDashArray(pen, dashes, 2);
+    expect(Ok, status);
+    GdipGetPenDashStyle(pen, &style);
+    expect(DashStyleCustom, style);
+
+    /* Getting the array on a non-custom pen returns invalid parameter (unless
+     * you are getting 0 elements).*/
+    GdipSetPenDashStyle(pen, DashStyleSolid);
+    status = GdipGetPenDashArray(pen, &dashes[5], 2);
+    expect(InvalidParameter, status);
+    status = GdipGetPenDashArray(pen, &dashes[5], 0);
+    expect(Ok, status);
+
+    /* What does setting DashStyleCustom do to the array length? */
+    GdipSetPenDashArray(pen, dashes, 2);
+    GdipSetPenDashStyle(pen, DashStyleCustom);
+    status = GdipGetPenDashArray(pen, &dashes[5], 2);
+    expect(Ok, status);
+    expectf(10.0, dashes[5]);
+    expectf(11.0, dashes[6]);
+
+    /* Set the array, then get with different sized buffers. */
+    status = GdipSetPenDashArray(pen, dashes, 5);
+    expect(Ok, status);
+    dashes[5] = -100.0;
+    dashes[6] = -100.0;
+    status = GdipGetPenDashArray(pen, &dashes[5], 1);
+    expect(Ok, status); /* not InsufficientBuffer! */
+    expectf(10.0, dashes[5]);
+    expectf(-100.0, dashes[6]);
+    dashes[5] = -100.0;
+    status = GdipGetPenDashArray(pen, &dashes[5], 6);
+    expect(InvalidParameter, status); /* not Ok! */
+    expectf(-100.0, dashes[5]);
+    expectf(-100.0, dashes[6]);
+
+    /* Try to set with count = 0. */
+    GdipSetPenDashStyle(pen, DashStyleDot);
+    status = GdipSetPenDashArray(pen, dashes, 0);
+    expect(OutOfMemory, status);
+    GdipGetPenDashStyle(pen, &style);
+    expect(DashStyleDot, style);
+
+    GdipDeletePen(pen);
+}
+
 START_TEST(pen)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -132,6 +199,7 @@ START_TEST(pen)
 
     test_constructor_destructor();
     test_brushfill();
+    test_dasharray();
 
     GdiplusShutdown(gdiplusToken);
 }
