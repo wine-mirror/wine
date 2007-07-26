@@ -387,6 +387,8 @@ static void test_get_displayname(void)
     DWORD displaysize, tempsize, tempsizeW;
     static const CHAR deadbeef[] = "Deadbeef";
     static const WCHAR spoolerW[] = {'S','p','o','o','l','e','r',0};
+    static const CHAR servicename[] = "Winetest";
+    static const CHAR pathname[] = "we_dont_care.exe";
 
     /* Having NULL for the size of the buffer will crash on W2K3 */
 
@@ -541,6 +543,65 @@ static void test_get_displayname(void)
     }
 
     CloseServiceHandle(scm_handle);
+
+    /* Test for a service without a displayname (which is valid). This should return
+     * the servicename itself.
+     */
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
+    if (!scm_handle && (GetLastError() == ERROR_ACCESS_DENIED))
+    {
+        skip("Not enough rights to get a handle to the manager\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    svc_handle = CreateServiceA(scm_handle, servicename, NULL, DELETE,
+                                SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
+                                SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    ok(svc_handle != NULL, "Could not create the service : %d\n", GetLastError());
+    if (!svc_handle)
+    {
+        CloseServiceHandle(scm_handle);
+        return;
+    }
+
+    /* Retrieve the needed size for the buffer */
+    SetLastError(0xdeadbeef);
+    displaysize = -1;
+    ret = GetServiceDisplayNameA(scm_handle, servicename, NULL, &displaysize);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    {
+    ok(displaysize == lstrlen(servicename) * 2,
+       "Expected the displaysize to be twice the size of the servicename\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    }
+
+    /* Get the displayname */
+    SetLastError(0xdeadbeef);
+    ret = GetServiceDisplayNameA(scm_handle, servicename, displayname, &displaysize);
+    todo_wine
+    {
+    ok(ret, "Expected success\n");
+    ok(!lstrcmpi(displayname, servicename),
+       "Expected displayname to be %s, got %s\n", servicename, displayname);
+    ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+    }
+
+    /* Delete the service */
+    ret = DeleteService(svc_handle);
+    ok(ret, "Expected success\n");
+
+    CloseServiceHandle(svc_handle);
+    CloseServiceHandle(scm_handle);
+
+    /* Wait a while. Just in case one of the following tests does a CreateService again */
+    Sleep(1000);
 }
 
 static void test_get_servicekeyname(void)
