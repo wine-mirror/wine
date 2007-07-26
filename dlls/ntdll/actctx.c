@@ -269,6 +269,11 @@ static inline const char* debugstr_xmlstr(const xmlstr_t* str)
     return debugstr_an(str->ptr, str->len);
 }
 
+static inline const char* debugstr_version(const struct version *ver)
+{
+    return wine_dbg_sprintf("%u.%u.%u.%u", ver->major, ver->minor, ver->build, ver->revision);
+}
+
 static struct assembly *add_assembly(ACTIVATION_CONTEXT *actctx, enum assembly_type at)
 {
     struct assembly *assembly;
@@ -774,8 +779,6 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
     xmlstr_t    attr_name, attr_value;
     BOOL        end = FALSE, error;
 
-    TRACE("\n");
-
     while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
     {
         if (xmlstr_cmp(&attr_name, NAME_ATTR))
@@ -815,6 +818,9 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
                  debugstr_xmlstr(&attr_value));
         }
     }
+
+    TRACE( "name=%s version=%s arch=%s\n",
+           debugstr_w(ai->name), debugstr_version(&ai->version), debugstr_w(ai->arch) );
 
     if (error || end) return end;
     return parse_expect_elem(xmlbuf, ELEM_END(ASSEMBLYIDENTITY_ELEM)) && parse_end_element(xmlbuf);
@@ -1097,7 +1103,8 @@ static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader
         !parse_assembly_identity_elem(xmlbuf, acl->actctx, &ai))
         return FALSE;
 
-    TRACE( "adding %s\n", debugstr_w(ai.name) );
+    TRACE( "adding name=%s version=%s arch=%s\n",
+           debugstr_w(ai.name), debugstr_version(&ai.version), debugstr_w(ai.arch) );
 
     /* store the newly found identity for later loading */
     if (!add_dependent_assembly_id(acl, &ai)) return FALSE;
@@ -1127,8 +1134,6 @@ static BOOL parse_dependency_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl)
 {
     xmlstr_t attr_name, attr_value, elem;
     BOOL end = FALSE, ret = TRUE, error, optional = FALSE;
-
-    TRACE("\n");
 
     while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
     {
@@ -1463,7 +1468,17 @@ static NTSTATUS get_manifest_in_module( struct actctx_loader* acl, struct assemb
     const IMAGE_RESOURCE_DATA_ENTRY* entry = NULL;
     void *ptr;
 
-    TRACE( "looking for res %s in module %p %s\n", debugstr_w(resname), hModule, debugstr_w(filename) );
+    if (TRACE_ON(actctx))
+    {
+        if (!filename && !get_module_filename( hModule, &nameW, 0 ))
+        {
+            TRACE( "looking for res %s in module %p %s\n", debugstr_w(resname),
+                   hModule, debugstr_w(nameW.Buffer) );
+            RtlFreeUnicodeString( &nameW );
+        }
+        else TRACE( "looking for res %s in module %p %s\n", debugstr_w(resname),
+                    hModule, debugstr_w(filename) );
+    }
 
     if (!resname) return STATUS_INVALID_PARAMETER;
 
@@ -1791,6 +1806,9 @@ static NTSTATUS lookup_assembly(struct actctx_loader* acl,
     NTSTATUS status;
     UNICODE_STRING nameW;
     HANDLE file;
+
+    TRACE( "looking for name=%s version=%s arch=%s\n",
+           debugstr_w(ai->name), debugstr_version(&ai->version), debugstr_w(ai->arch) );
 
     if ((status = lookup_winsxs(acl, ai)) != STATUS_NO_SUCH_FILE) return status;
 
