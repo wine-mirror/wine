@@ -2356,6 +2356,10 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
             SetLastError(ret);
         return FALSE;
     }
+
+    /* Always return the correct needed size on success */
+    *lpcchBuffer = (size / sizeof(WCHAR)) - 1;
+
     return TRUE;
 }
 

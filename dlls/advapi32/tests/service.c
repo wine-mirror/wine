@@ -527,12 +527,9 @@ static void test_get_displayname(void)
        GetLastError() == ERROR_IO_PENDING /* W2K */ ||
        GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
        "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
-    todo_wine
-    {
     ok(displaysize == tempsizeW, "Expected the needed buffersize\n");
     ok(lstrlenW(displaynameW) == displaysize,
        "Expected the buffer to be the length of the string\n") ;
-    }
     ok(tempsize / 2 == tempsizeW,
        "Expected the needed buffersize (in bytes) to be the same for the A and W call\n");
 
