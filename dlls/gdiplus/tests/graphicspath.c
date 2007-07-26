@@ -448,20 +448,20 @@ static path_test_t ellipse_path[] = {
     {30.00, 111.30, PathPointTypeBezier, 0, 0}, /*11*/
     {30.00, 125.25, PathPointTypeBezier | PathPointTypeCloseSubpath, 0, 0}, /*12*/
     {7.00, 11.00, PathPointTypeStart, 0, 0}, /*13*/
-    {13.00, 17.00, PathPointTypeLine, 0, 1}, /*14*/
-    {5.00, 195.00, PathPointTypeStart, 0, 1}, /*15*/
-    {5.00, 192.24, PathPointTypeBezier, 0, 1}, /*16*/
-    {6.12, 190.00, PathPointTypeBezier, 0, 1}, /*17*/
-    {7.50, 190.00, PathPointTypeBezier, 0, 1}, /*18*/
-    {8.88, 190.00, PathPointTypeBezier, 0, 1}, /*19*/
-    {10.00, 192.24, PathPointTypeBezier, 0, 1}, /*20*/
-    {10.00, 195.00, PathPointTypeBezier, 0, 1}, /*21*/
-    {10.00, 197.76, PathPointTypeBezier, 0, 1}, /*22*/
-    {8.88, 200.00, PathPointTypeBezier, 0, 1}, /*23*/
-    {7.50, 200.00, PathPointTypeBezier, 0, 1}, /*24*/
-    {6.12, 200.00, PathPointTypeBezier, 0, 1}, /*25*/
-    {5.00, 197.76, PathPointTypeBezier, 0, 1}, /*26*/
-    {5.00, 195.00, PathPointTypeBezier | PathPointTypeCloseSubpath, 0, 1}, /*27*/
+    {13.00, 17.00, PathPointTypeLine, 0, 0}, /*14*/
+    {5.00, 195.00, PathPointTypeStart, 0, 0}, /*15*/
+    {5.00, 192.24, PathPointTypeBezier, 0, 0}, /*16*/
+    {6.12, 190.00, PathPointTypeBezier, 0, 0}, /*17*/
+    {7.50, 190.00, PathPointTypeBezier, 0, 0}, /*18*/
+    {8.88, 190.00, PathPointTypeBezier, 0, 0}, /*19*/
+    {10.00, 192.24, PathPointTypeBezier, 0, 0}, /*20*/
+    {10.00, 195.00, PathPointTypeBezier, 0, 0}, /*21*/
+    {10.00, 197.76, PathPointTypeBezier, 0, 0}, /*22*/
+    {8.88, 200.00, PathPointTypeBezier, 0, 0}, /*23*/
+    {7.50, 200.00, PathPointTypeBezier, 0, 0}, /*24*/
+    {6.12, 200.00, PathPointTypeBezier, 0, 0}, /*25*/
+    {5.00, 197.76, PathPointTypeBezier, 0, 0}, /*26*/
+    {5.00, 195.00, PathPointTypeBezier | PathPointTypeCloseSubpath, 0, 0}, /*27*/
     {10.00, 300.50, PathPointTypeStart, 0, 0}, /*28*/
     {10.00, 300.78, PathPointTypeBezier, 0, 0}, /*29*/
     {10.00, 301.00, PathPointTypeBezier, 0, 0}, /*30*/
@@ -493,13 +493,12 @@ static void test_ellipse(void)
     expect(Ok, status);
     GdipAddPathLine2(path, points, 2);
     status = GdipAddPathEllipse(path, 10.0, 200.0, -5.0, -10.0);
-    todo_wine
-        expect(Ok, status);
+    expect(Ok, status);
     GdipClosePathFigure(path);
     status = GdipAddPathEllipse(path, 10.0, 300.0, 0.0, 1.0);
     expect(Ok, status);
 
-    ok_path(path, ellipse_path, sizeof(ellipse_path)/sizeof(path_test_t), TRUE);
+    ok_path(path, ellipse_path, sizeof(ellipse_path)/sizeof(path_test_t), FALSE);
 
     GdipDeletePath(path);
 }

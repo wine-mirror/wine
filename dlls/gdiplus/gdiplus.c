@@ -151,10 +151,10 @@ static void unstretch_angle(REAL * angle, REAL rad_x, REAL rad_y)
 
     *angle = deg2rad(*angle);
 
-    if(cos(*angle) == 0 || sin(*angle) == 0)
+    if(fabs(cos(*angle)) < 0.00001 || fabs(sin(*angle)) < 0.00001)
         return;
 
-    stretched = gdiplus_atan2(sin(*angle) / rad_y, cos(*angle) / rad_x);
+    stretched = gdiplus_atan2(sin(*angle) / fabs(rad_y), cos(*angle) / fabs(rad_x));
     revs_off = roundr(*angle / (2.0 * M_PI)) - roundr(stretched / (2.0 * M_PI));
     stretched += ((REAL)revs_off) * M_PI * 2.0;
     *angle = stretched;
