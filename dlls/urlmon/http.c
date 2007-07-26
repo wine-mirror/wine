@@ -74,15 +74,21 @@ typedef struct {
     const IInternetPriorityVtbl *lpInternetPriorityVtbl;
 
     DWORD flags, grfBINDF;
+    BINDINFO bind_info;
     IInternetProtocolSink *protocol_sink;
     IHttpNegotiate *http_negotiate;
     HINTERNET internet, connect, request;
+    LPWSTR full_header;
     HANDLE lock;
     ULONG current_position, content_length, available_bytes;
     LONG priority;
 
     LONG ref;
 } HttpProtocol;
+
+/* Default headers from native */
+static const WCHAR wszHeaders[] = {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',
+                                   ':',' ','g','z','i','p',',',' ','d','e','f','l','a','t','e',0};
 
 /*
  * Helpers
@@ -159,6 +165,17 @@ static void HTTPPROTOCOL_Close(HttpProtocol *This)
     {
         InternetCloseHandle(This->internet);
         This->internet = 0;
+    }
+    if (This->full_header)
+    {
+        if (This->full_header != wszHeaders)
+            HeapFree(GetProcessHeap(), 0, This->full_header);
+        This->full_header = 0;
+    }
+    if (This->bind_info.cbSize)
+    {
+        ReleaseBindInfo(&This->bind_info);
+        memset(&This->bind_info, 0, sizeof(This->bind_info));
     }
     This->flags = 0;
 }
@@ -284,20 +301,17 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
     URL_COMPONENTSW url;
-    BINDINFO bindinfo;
     DWORD len = 0, request_flags = INTERNET_FLAG_KEEP_CONNECTION;
     ULONG num = 0;
     IServiceProvider *service_provider = 0;
     IHttpNegotiate2 *http_negotiate2 = 0;
     LPWSTR host = 0, path = 0, user = 0, pass = 0, addl_header = 0,
-        full_header = 0, post_cookie = 0, optional = 0;
+        post_cookie = 0, optional = 0;
     BYTE security_id[512];
     LPOLESTR user_agent, accept_mimes[257];
     HRESULT hres;
 
     static const WCHAR wszHttp[] = {'h','t','t','p',':'};
-    static const WCHAR wszHeaders[] = {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',
-                                       ':',' ','g','z','i','p',',',' ','d','e','f','l','a','t','e',0};
     static const WCHAR wszBindVerb[BINDVERB_CUSTOM][5] =
         {{'G','E','T',0},
          {'P','O','S','T',0},
@@ -306,9 +320,9 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     TRACE("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
 
-    memset(&bindinfo, 0, sizeof(bindinfo));
-    bindinfo.cbSize = sizeof(BINDINFO);
-    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &This->grfBINDF, &bindinfo);
+    memset(&This->bind_info, 0, sizeof(This->bind_info));
+    This->bind_info.cbSize = sizeof(BINDINFO);
+    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &This->grfBINDF, &This->bind_info);
     if (hres != S_OK)
     {
         WARN("GetBindInfo failed: %08x\n", hres);
@@ -407,8 +421,9 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     if (This->grfBINDF & BINDF_NOWRITECACHE)
         request_flags |= INTERNET_FLAG_NO_CACHE_WRITE;
-    This->request = HttpOpenRequestW(This->connect, bindinfo.dwBindVerb < BINDVERB_CUSTOM ?
-                                     wszBindVerb[bindinfo.dwBindVerb] : bindinfo.szCustomVerb,
+    This->request = HttpOpenRequestW(This->connect, This->bind_info.dwBindVerb < BINDVERB_CUSTOM ?
+                                     wszBindVerb[This->bind_info.dwBindVerb] :
+                                     This->bind_info.szCustomVerb,
                                      path, NULL, NULL, (LPCWSTR *)accept_mimes,
                                      request_flags, (DWORD)This);
     if (!This->request)
@@ -443,20 +458,21 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     }
     else if (addl_header == NULL)
     {
-        full_header = (LPWSTR)wszHeaders;
+        This->full_header = (LPWSTR)wszHeaders;
     }
     else
     {
-        full_header = HeapAlloc(GetProcessHeap(), 0,
-                                (lstrlenW(addl_header)+sizeof(wszHeaders))*sizeof(WCHAR));
-        if (!full_header)
+        int len_addl_header = lstrlenW(addl_header);
+        This->full_header = HeapAlloc(GetProcessHeap(), 0,
+                                      len_addl_header*sizeof(WCHAR)+sizeof(wszHeaders));
+        if (!This->full_header)
         {
             WARN("Out of memory\n");
             hres = E_OUTOFMEMORY;
             goto done;
         }
-        lstrcpyW(full_header, addl_header);
-        lstrcpyW(&full_header[lstrlenW(addl_header)], wszHeaders);
+        lstrcpyW(This->full_header, addl_header);
+        lstrcpyW(&This->full_header[len_addl_header], wszHeaders);
     }
 
     hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate2,
@@ -479,7 +495,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     /* FIXME: Handle security_id. Native calls undocumented function IsHostInProxyBypassList. */
 
-    if (bindinfo.dwBindVerb == BINDVERB_POST)
+    if (This->bind_info.dwBindVerb == BINDVERB_POST)
     {
         num = 0;
         hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_POST_COOKIE, &post_cookie,
@@ -493,18 +509,18 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         }
     }
 
-    if (bindinfo.dwBindVerb != BINDVERB_GET)
+    if (This->bind_info.dwBindVerb != BINDVERB_GET)
     {
         /* Native does not use GlobalLock/GlobalUnlock, so we won't either */
-        if (bindinfo.stgmedData.tymed != TYMED_HGLOBAL)
-            WARN("Expected bindinfo.stgmedData.tymed to be TYMED_HGLOBAL, not %d\n",
-                 bindinfo.stgmedData.tymed);
+        if (This->bind_info.stgmedData.tymed != TYMED_HGLOBAL)
+            WARN("Expected This->bind_info.stgmedData.tymed to be TYMED_HGLOBAL, not %d\n",
+                 This->bind_info.stgmedData.tymed);
         else
-            optional = (LPWSTR)bindinfo.stgmedData.hGlobal;
+            optional = (LPWSTR)This->bind_info.stgmedData.hGlobal;
     }
-    if (!HttpSendRequestW(This->request, full_header, lstrlenW(full_header),
+    if (!HttpSendRequestW(This->request, This->full_header, lstrlenW(This->full_header),
                           optional,
-                          optional ? bindinfo.cbstgmedData : 0) &&
+                          optional ? This->bind_info.cbstgmedData : 0) &&
         GetLastError() != ERROR_IO_PENDING)
     {
         WARN("HttpSendRequest failed: %d\n", GetLastError());
@@ -521,8 +537,6 @@ done:
     }
 
     CoTaskMemFree(post_cookie);
-    if (full_header != wszHeaders)
-        HeapFree(GetProcessHeap(), 0, full_header);
     CoTaskMemFree(addl_header);
     if (http_negotiate2)
         IHttpNegotiate2_Release(http_negotiate2);
@@ -538,8 +552,6 @@ done:
     HeapFree(GetProcessHeap(), 0, user);
     HeapFree(GetProcessHeap(), 0, path);
     HeapFree(GetProcessHeap(), 0, host);
-
-    ReleaseBindInfo(&bindinfo);
 
     return hres;
 }
@@ -904,9 +916,11 @@ HRESULT HttpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
     ret->lpInternetProtocolVtbl = &HttpProtocolVtbl;
     ret->lpInternetPriorityVtbl = &HttpPriorityVtbl;
     ret->flags = ret->grfBINDF = 0;
+    memset(&ret->bind_info, 0, sizeof(ret->bind_info));
     ret->protocol_sink = 0;
     ret->http_negotiate = 0;
     ret->internet = ret->connect = ret->request = 0;
+    ret->full_header = 0;
     ret->lock = 0;
     ret->current_position = ret->content_length = ret->available_bytes = 0;
     ret->priority = 0;
