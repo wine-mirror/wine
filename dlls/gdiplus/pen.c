@@ -29,8 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 static DWORD gdip_to_gdi_dash(GpDashStyle dash)
 {
-    static int calls;
-
     switch(dash){
         case DashStyleSolid:
             return PS_SOLID;
@@ -43,9 +41,7 @@ static DWORD gdip_to_gdi_dash(GpDashStyle dash)
         case DashStyleDashDotDot:
             return PS_DASHDOTDOT;
         case DashStyleCustom:
-            if(!(calls++))
-                FIXME("DashStyleCustom not implemented\n");
-            return PS_SOLID;
+            return PS_USERSTYLE;
         default:
             ERR("Not a member of GpDashStyle enumeration\n");
             return 0;
@@ -240,7 +236,7 @@ GpStatus WINGDIPAPI GdipSetPenDashArray(GpPen *pen, GDIPCONST REAL *dash,
         return OutOfMemory;
     }
 
-    pen->dash = DashStyleCustom;
+    GdipSetPenDashStyle(pen, DashStyleCustom);
     memcpy(pen->dashes, dash, count * sizeof(REAL));
     pen->numdashes = count;
 

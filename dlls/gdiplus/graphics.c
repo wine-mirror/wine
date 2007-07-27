@@ -98,8 +98,9 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
 {
     HPEN gdipen;
     REAL width;
-    INT save_state = SaveDC(graphics->hdc);
+    INT save_state = SaveDC(graphics->hdc), i, numdashes;
     GpPointF pt[2];
+    DWORD dash_array[MAX_DASHLEN];
 
     EndPath(graphics->hdc);
 
@@ -116,7 +117,22 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
     width *= pen->width * convert_unit(graphics->hdc,
                           pen->unit == UnitWorld ? graphics->unit : pen->unit);
 
-    gdipen = ExtCreatePen(pen->style, roundr(width), &pen->brush->lb, 0, NULL);
+    if(pen->dash == DashStyleCustom){
+        numdashes = min(pen->numdashes, MAX_DASHLEN);
+
+        TRACE("dashes are: ");
+        for(i = 0; i < numdashes; i++){
+            dash_array[i] = roundr(width * pen->dashes[i]);
+            TRACE("%d, ", dash_array[i]);
+        }
+        TRACE("\n and the pen style is %x\n", pen->style);
+
+        gdipen = ExtCreatePen(pen->style, roundr(width), &pen->brush->lb,
+                              numdashes, dash_array);
+    }
+    else
+        gdipen = ExtCreatePen(pen->style, roundr(width), &pen->brush->lb, 0, NULL);
+
     SelectObject(graphics->hdc, gdipen);
 
     return save_state;
