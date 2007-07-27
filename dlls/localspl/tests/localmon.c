@@ -1086,7 +1086,10 @@ START_TEST(localmon)
 
     /* This DLL does not exist on Win9x */
     hdll = LoadLibraryA("localspl.dll");
-    if (!hdll) return;
+    if (!hdll) {
+        skip("localspl.dll cannot be loaded, most likely running on Win9x\n");
+        return;
+    }
 
     tempdirW[0] = '\0';
     tempfileW[0] = '\0';
