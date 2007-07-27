@@ -2246,9 +2246,9 @@ static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAtt
                     return GL_FALSE;
                 }
                 switch (object->texture_target) {
-                    case GL_TEXTURE_1D:       *piValue = WGL_TEXTURE_CUBE_MAP_ARB; break;
-                    case GL_TEXTURE_2D:       *piValue = WGL_TEXTURE_1D_ARB; break;
-                    case GL_TEXTURE_CUBE_MAP: *piValue = WGL_TEXTURE_2D_ARB; break;
+                    case GL_TEXTURE_1D:       *piValue = WGL_TEXTURE_1D_ARB; break;
+                    case GL_TEXTURE_2D:       *piValue = WGL_TEXTURE_2D_ARB; break;
+                    case GL_TEXTURE_CUBE_MAP: *piValue = WGL_TEXTURE_CUBE_MAP_ARB; break;
                 }
             }
         }
