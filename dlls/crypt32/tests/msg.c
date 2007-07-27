@@ -1907,7 +1907,7 @@ static void test_decode_msg_get_param(void)
 {
     HCRYPTMSG msg;
     BOOL ret;
-    DWORD size = 0, version;
+    DWORD size = 0, value;
     LPBYTE buf;
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
@@ -1950,9 +1950,55 @@ static void test_decode_msg_get_param(void)
     }
     check_param("hash inner OID", msg, CMSG_INNER_CONTENT_TYPE_PARAM,
      (const BYTE *)szOID_RSA_data, strlen(szOID_RSA_data) + 1);
-    version = CMSG_HASHED_DATA_V0;
-    check_param("hash version", msg, CMSG_VERSION_PARAM, (const BYTE *)&version,
-     sizeof(version));
+    value = CMSG_HASHED_DATA_V0;
+    check_param("hash version", msg, CMSG_VERSION_PARAM, (const BYTE *)&value,
+     sizeof(value));
+    CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    ret = CryptMsgUpdate(msg, signedContent, sizeof(signedContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    size = sizeof(value);
+    value = 2112;
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_COUNT_PARAM, 0, &value, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(value == 1, "Expected 1 signer, got %d\n", value);
+    }
+    /* index is ignored when getting signer count */
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_COUNT_PARAM, 1, &value, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(value == 1, "Expected 1 signer, got %d\n", value);
+    }
+    ret = CryptMsgGetParam(msg, CMSG_CERT_COUNT_PARAM, 0, &value, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(value == 0, "Expected 0 certs, got %d\n", value);
+    }
+    ret = CryptMsgGetParam(msg, CMSG_CRL_COUNT_PARAM, 0, &value, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(value == 0, "Expected 0 CRLs, got %d\n", value);
+    }
+    CryptMsgClose(msg);
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, 0, NULL,
+     NULL);
+    ret = CryptMsgUpdate(msg, signedWithCertAndCrlBareContent,
+     sizeof(signedWithCertAndCrlBareContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    ret = CryptMsgGetParam(msg, CMSG_CERT_COUNT_PARAM, 0, &value, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(value == 1, "Expected 1 cert, got %d\n", value);
+    check_param("cert", msg, CMSG_CERT_PARAM, cert, sizeof(cert));
+    }
+    ret = CryptMsgGetParam(msg, CMSG_CRL_COUNT_PARAM, 0, &value, &size);
+    todo_wine {
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(value == 1, "Expected 1 CRL, got %d\n", value);
+    check_param("crl", msg, CMSG_CRL_PARAM, crl, sizeof(crl));
+    }
     CryptMsgClose(msg);
 }
 
