@@ -919,8 +919,8 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
 
             /* We have found an offscreen rendering format :) */
             if(tmp_vis_id == 0) {
-                TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", tmp_fmt_id, WineGLPixelFormatListSize, i);
-                WineGLPixelFormatList[WineGLPixelFormatListSize].iPixelFormat = WineGLPixelFormatListSize;
+                TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", tmp_fmt_id, WineGLPixelFormatListSize+1, i);
+                WineGLPixelFormatList[WineGLPixelFormatListSize].iPixelFormat = WineGLPixelFormatListSize+1; /* The index starts at 1 */
                 WineGLPixelFormatList[WineGLPixelFormatListSize].fbconfig = cfgs[i];
                 WineGLPixelFormatList[WineGLPixelFormatListSize].fmt_id = tmp_fmt_id;
                 WineGLPixelFormatList[WineGLPixelFormatListSize].offscreenOnly = TRUE;
