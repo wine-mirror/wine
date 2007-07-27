@@ -272,7 +272,7 @@ void* CDECL MSVCRT_malloc(MSVCRT_size_t size)
 {
   void *ret = HeapAlloc(GetProcessHeap(),0,size);
   if (!ret)
-    msvcrt_set_errno(GetLastError());
+    msvcrt_set_errno(MSVCRT_ENOMEM);
   return ret;
 }
 
