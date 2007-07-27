@@ -1239,7 +1239,9 @@ typedef struct _CDecodeMsg
     CryptMsgBase           base;
     DWORD                  type;
     HCRYPTPROV             crypt_prov;
-    HCRYPTHASH             hash;
+    union {
+        HCRYPTHASH             hash;
+    } u;
     CRYPT_DATA_BLOB        msg_data;
     PCONTEXT_PROPERTY_LIST properties;
 } CDecodeMsg;
@@ -1250,7 +1252,12 @@ static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
 
     if (msg->base.open_flags & CMSG_CRYPT_RELEASE_CONTEXT_FLAG)
         CryptReleaseContext(msg->crypt_prov, 0);
-    CryptDestroyHash(msg->hash);
+    switch (msg->type)
+    {
+    case CMSG_HASHED:
+        CryptDestroyHash(msg->u.hash);
+        break;
+    }
     CryptMemFree(msg->msg_data.pbData);
     ContextPropertyList_Free(msg->properties);
 }
@@ -1479,10 +1486,9 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
     return ret;
 }
 
-static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
+static BOOL CDecodeHashMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
-    CDecodeMsg *msg = (CDecodeMsg *)hCryptMsg;
     BOOL ret = FALSE;
 
     switch (dwParamType)
@@ -1508,7 +1514,7 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         break;
     }
     case CMSG_COMPUTED_HASH_PARAM:
-        if (!msg->hash)
+        if (!msg->u.hash)
         {
             CRYPT_ALGORITHM_IDENTIFIER *hashAlgoID = NULL;
             DWORD size = 0;
@@ -1520,7 +1526,7 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
              hashAlgoID, &size);
             if (ret)
                 algID = CertOIDToAlgId(hashAlgoID->pszObjId);
-            ret = CryptCreateHash(msg->crypt_prov, algID, 0, 0, &msg->hash);
+            ret = CryptCreateHash(msg->crypt_prov, algID, 0, 0, &msg->u.hash);
             if (ret)
             {
                 CRYPT_DATA_BLOB content;
@@ -1528,7 +1534,7 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
                 ret = ContextPropertyList_FindProperty(msg->properties,
                  CMSG_CONTENT_PARAM, &content);
                 if (ret)
-                    ret = CryptHashData(msg->hash, content.pbData,
+                    ret = CryptHashData(msg->u.hash, content.pbData,
                      content.cbData, 0);
             }
             CryptMemFree(hashAlgoID);
@@ -1536,7 +1542,8 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         else
             ret = TRUE;
         if (ret)
-            ret = CryptGetHashParam(msg->hash, HP_HASHVAL, pvData, pcbData, 0);
+            ret = CryptGetHashParam(msg->u.hash, HP_HASHVAL, pvData, pcbData,
+             0);
         break;
     default:
     {
@@ -1549,6 +1556,42 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
     }
+    }
+    return ret;
+}
+
+static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
+ DWORD dwIndex, void *pvData, DWORD *pcbData)
+{
+    CDecodeMsg *msg = (CDecodeMsg *)hCryptMsg;
+    BOOL ret = FALSE;
+
+    switch (msg->type)
+    {
+    case CMSG_HASHED:
+        ret = CDecodeHashMsg_GetParam(msg, dwParamType, dwIndex, pvData,
+         pcbData);
+        break;
+    default:
+        switch (dwParamType)
+        {
+        case CMSG_TYPE_PARAM:
+            ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&msg->type,
+             sizeof(msg->type));
+            break;
+        default:
+        {
+            CRYPT_DATA_BLOB blob;
+
+            ret = ContextPropertyList_FindProperty(msg->properties, dwParamType,
+             &blob);
+            if (ret)
+                ret = CRYPT_CopyParam(pvData, pcbData, blob.pbData,
+                 blob.cbData);
+            else
+                SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        }
+        }
     }
     return ret;
 }
@@ -1580,7 +1623,7 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
             msg->crypt_prov = CRYPT_GetDefaultProvider();
             msg->base.open_flags &= ~CMSG_CRYPT_RELEASE_CONTEXT_FLAG;
         }
-        msg->hash = 0;
+        memset(&msg->u, 0, sizeof(msg->u));
         msg->msg_data.cbData = 0;
         msg->msg_data.pbData = NULL;
         msg->properties = ContextPropertyList_Create();
