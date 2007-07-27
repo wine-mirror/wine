@@ -1422,7 +1422,7 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
         break;
     case CMSG_SIGNED:
         if ((ret = CDecodeMsg_DecodeSignedContent(msg, blob)))
-            msg->type = CMSG_HASHED;
+            msg->type = CMSG_SIGNED;
         break;
     default:
     {
