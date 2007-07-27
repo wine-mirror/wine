@@ -727,6 +727,15 @@ static const struct message WmHideChildSeq[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { 0 }
 };
+/* ShowWindow(SW_HIDE) for a visible child window checking all parent events*/
+static const struct message WmHideChildSeq2[] = {
+    { WM_SHOWWINDOW, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
+    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_ERASEBKGND, sent|parent },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { 0 }
+};
 /* SetWindowPos(SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE)
  * for a not visible child window
  */
@@ -3978,6 +3987,15 @@ static void test_messages(void)
 
     /* test WM_SETREDRAW on a not visible child window */
     test_WM_SETREDRAW(hchild);
+
+    ShowWindow(hchild, SW_SHOW);
+    ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOW):child", FALSE);
+
+    /* check parent messages too */
+    log_all_parent_messages++;
+    ShowWindow(hchild, SW_HIDE);
+    ok_sequence(WmHideChildSeq2, "ShowWindow(SW_HIDE):child", TRUE);
+    log_all_parent_messages--;
 
     ShowWindow(hchild, SW_SHOW);
     ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOW):child", FALSE);
