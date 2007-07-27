@@ -3037,8 +3037,9 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     register_extension(&WGL_EXT_extensions_string);
 
-    if (glxRequireExtension("GLX_SGI_swap_control"))
-        register_extension(&WGL_EXT_swap_control);
+    /* Load this extension even when it isn't backed by a GLX extension because it is has been around for ages.
+     * Games like Call of Duty and K.O.T.O.R. rely on it. Further our emulation is good enough. */
+    register_extension(&WGL_EXT_swap_control);
 
     /* The OpenGL extension GL_NV_vertex_array_range adds wgl/glX functions which aren't exported as 'real' wgl/glX extensions. */
     if(strstr(WineGLInfo.glExtensions, "GL_NV_vertex_array_range") != NULL)
