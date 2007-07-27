@@ -2069,12 +2069,10 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
 
                 /* Ignore open brackets inside the for set */
                 if (curLen == 0 && !inIn) {
-                    WINE_TRACE("@@@4\n");
                   curDepth++;
 
                 /* If in quotes, ignore brackets */
                 } else if (inQuotes) {
-                    WINE_TRACE("@@@3\n");
                   curString[curLen++] = *curPos;
 
                 /* In a FOR loop, an unquoted '(' may occur straight after
@@ -2088,7 +2086,6 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                            (inElse && lastWasElse && onlyWhiteSpace) ||
                            (inFor && (lastWasIn || lastWasDo) && onlyWhiteSpace)) {
 
-                  WINE_TRACE("@@@2\n");
                    /* If entering into an 'IN', set inIn */
                   if (inFor && lastWasIn && onlyWhiteSpace) {
                     WINE_TRACE("Inside an IN\n");
@@ -2114,7 +2111,6 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
 
                   curDepth++;
                 } else {
-                  WINE_TRACE("@@@1\n");
                   curString[curLen++] = *curPos;
                 }
                 break;
