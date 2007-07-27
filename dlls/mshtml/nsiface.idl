@@ -120,7 +120,7 @@ typedef nsISupports nsIControllerCommandTable;
 interface nsIServiceManager : nsISupports
 {
     nsresult GetService(nsCIDRef aClass, nsIIDRef aIID, void **result);
-    nsresult GetServiceByContactID(const char *aContactID, nsIIDRef aIID, void **result);
+    nsresult GetServiceByContractID(const char *aContractID, nsIIDRef aIID, void **result);
     nsresult IsServiceInstantiated(nsCIDRef aClass, nsIIDRef aIID, BOOL *_retval);
     nsresult IsServiceInstantiatedByContractID(const char *aContractID, nsIIDRef aIID, BOOL *_retval);
 }

@@ -259,8 +259,8 @@ static void set_profile(void)
 
     static const WCHAR wszMSHTML[] = {'M','S','H','T','M','L',0};
 
-    nsres = nsIServiceManager_GetServiceByContactID(pServMgr, NS_PROFILE_CONTRACTID,
-                                         &IID_nsIProfile, (void**)&profile);
+    nsres = nsIServiceManager_GetServiceByContractID(pServMgr, NS_PROFILE_CONTRACTID,
+            &IID_nsIProfile, (void**)&profile);
     if(NS_FAILED(nsres)) {
         ERR("Could not get profile service: %08x\n", nsres);
         return;

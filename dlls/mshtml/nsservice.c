@@ -465,7 +465,7 @@ void register_nsservice(nsIComponentRegistrar *registrar, nsIServiceManager *ser
     if(NS_FAILED(nsres))
         ERR("RegisterFactory failed: %08x\n", nsres);
 
-    nsres = nsIServiceManager_GetServiceByContactID(service_manager, NS_WINDOWWATCHER_CONTRACTID,
+    nsres = nsIServiceManager_GetServiceByContractID(service_manager, NS_WINDOWWATCHER_CONTRACTID,
             &IID_nsIWindowWatcher, (void**)&window_watcher);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIWindowWatcher_SetWindowCreator(window_watcher,
