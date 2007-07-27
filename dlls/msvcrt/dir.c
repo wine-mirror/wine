@@ -419,11 +419,10 @@ char* CDECL _getcwd(char * buf, int size)
 
   if (!buf)
   {
-    if (size < 0)
-      return _strdup(dir);
-    return msvcrt_strndup(dir,size);
+      if (size <= dir_len) size = dir_len + 1;
+      if (!(buf = MSVCRT_malloc( size ))) return NULL;
   }
-  if (dir_len >= size)
+  else if (dir_len >= size)
   {
     *MSVCRT__errno() = MSVCRT_ERANGE;
     return NULL; /* buf too small */
@@ -447,9 +446,8 @@ MSVCRT_wchar_t* CDECL _wgetcwd(MSVCRT_wchar_t * buf, int size)
 
   if (!buf)
   {
-    if (size < 0)
-      return _wcsdup(dir);
-    return msvcrt_wstrndup(dir,size);
+      if (size <= dir_len) size = dir_len + 1;
+      if (!(buf = MSVCRT_malloc( size * sizeof(WCHAR) ))) return NULL;
   }
   if (dir_len >= size)
   {
