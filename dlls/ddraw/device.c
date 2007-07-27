@@ -3621,12 +3621,110 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
                                                   DWORD Flags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p)->(%08x,%08x,%p,%08x,%p,%08x,%08x): stub!\n", This, PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Indices, IndexCount, Flags);
+    WineDirect3DVertexStridedData WineD3DStrided;
+    int i;
+    UINT PrimitiveCount;
+    HRESULT hr;
 
-    /* I'll implement it as soon as I find a app to test it.
-     * This needs an additional method in IWineD3DDevice.
+    TRACE("(%p)->(%08x,%08x,%p,%08x,%p,%08x,%08x)\n", This, PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Indices, IndexCount, Flags);
+
+    memset(&WineD3DStrided, 0, sizeof(WineD3DStrided));
+    /* Get the strided data right. the wined3d structure is a bit bigger
+     * Watch out: The contents of the strided data are determined by the fvf,
+     * not by the members set in D3DDrawPrimStrideData. So it's valid
+     * to have diffuse.lpvData set to 0xdeadbeef if the diffuse flag is
+     * not set in the fvf.
      */
-    return D3D_OK;
+    if(VertexType & D3DFVF_POSITION_MASK)
+    {
+        WineD3DStrided.u.s.position.lpData = D3DDrawPrimStrideData->position.lpvData;
+        WineD3DStrided.u.s.position.dwStride = D3DDrawPrimStrideData->position.dwStride;
+        WineD3DStrided.u.s.position.dwType = WINED3DDECLTYPE_FLOAT3;
+        if (VertexType & D3DFVF_XYZRHW)
+        {
+            WineD3DStrided.u.s.position.dwType = WINED3DDECLTYPE_FLOAT4;
+            WineD3DStrided.u.s.position_transformed = TRUE;
+        } else
+            WineD3DStrided.u.s.position_transformed = FALSE;
+    }
+
+    if(VertexType & D3DFVF_NORMAL)
+    {
+        WineD3DStrided.u.s.normal.lpData = D3DDrawPrimStrideData->normal.lpvData;
+        WineD3DStrided.u.s.normal.dwStride = D3DDrawPrimStrideData->normal.dwStride;
+        WineD3DStrided.u.s.normal.dwType = WINED3DDECLTYPE_FLOAT3;
+    }
+
+    if(VertexType & D3DFVF_DIFFUSE)
+    {
+        WineD3DStrided.u.s.diffuse.lpData = D3DDrawPrimStrideData->diffuse.lpvData;
+        WineD3DStrided.u.s.diffuse.dwStride = D3DDrawPrimStrideData->diffuse.dwStride;
+        WineD3DStrided.u.s.diffuse.dwType = WINED3DDECLTYPE_SHORT4;
+    }
+
+    if(VertexType & D3DFVF_SPECULAR)
+    {
+        WineD3DStrided.u.s.specular.lpData = D3DDrawPrimStrideData->specular.lpvData;
+        WineD3DStrided.u.s.specular.dwStride = D3DDrawPrimStrideData->specular.dwStride;
+        WineD3DStrided.u.s.specular.dwType = WINED3DDECLTYPE_SHORT4;
+    }
+
+    for( i = 0; i < GET_TEXCOUNT_FROM_FVF(VertexType); i++)
+    {
+        WineD3DStrided.u.s.texCoords[i].lpData = D3DDrawPrimStrideData->textureCoords[i].lpvData;
+        WineD3DStrided.u.s.texCoords[i].dwStride = D3DDrawPrimStrideData->textureCoords[i].dwStride;
+        switch(GET_TEXCOORD_SIZE_FROM_FVF(VertexType, i))
+        {
+            case 1: WineD3DStrided.u.s.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT1; break;
+            case 2: WineD3DStrided.u.s.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT2; break;
+            case 3: WineD3DStrided.u.s.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT3; break;
+            case 4: WineD3DStrided.u.s.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT4; break;
+            default: ERR("Unexpected texture coordinate size %d\n",
+                         GET_TEXCOORD_SIZE_FROM_FVF(VertexType, i));
+        }
+    }
+
+    /* Get the primitive count */
+    switch(PrimitiveType)
+    {
+        case D3DPT_POINTLIST:
+            PrimitiveCount = IndexCount;
+            break;
+
+        case D3DPT_LINELIST:
+            PrimitiveCount = IndexCount / 2;
+            break;
+
+        case D3DPT_LINESTRIP:
+            PrimitiveCount = IndexCount - 1;
+            break;
+
+        case D3DPT_TRIANGLELIST:
+            PrimitiveCount = IndexCount / 3;
+            break;
+
+        case D3DPT_TRIANGLESTRIP:
+            PrimitiveCount = IndexCount - 2;
+            break;
+
+        case D3DPT_TRIANGLEFAN:
+            PrimitiveCount = IndexCount - 2;
+            break;
+
+            default: return DDERR_INVALIDPARAMS;
+    }
+
+    /* WineD3D doesn't need the FVF here */
+    EnterCriticalSection(&ddraw_cs);
+    hr = IWineD3DDevice_DrawIndexedPrimitiveStrided(This->wineD3DDevice,
+                                                    PrimitiveType,
+                                                    PrimitiveCount,
+                                                    &WineD3DStrided,
+                                                    VertexCount,
+                                                    Indices,
+                                                    WINED3DFMT_INDEX16);
+    LeaveCriticalSection(&ddraw_cs);
+    return hr;
 }
 
 static HRESULT WINAPI

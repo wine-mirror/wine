@@ -4755,7 +4755,27 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided (IWineD3DDevice *i
     This->up_strided = NULL;
     return WINED3D_OK;
 }
- /* Yet another way to update a texture, some apps use this to load default textures instead of using surface/texture lock/unlock */
+
+static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveStrided(IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, WineDirect3DVertexStridedData *DrawPrimStrideData, UINT NumVertices, CONST void *pIndexData, WINED3DFORMAT IndexDataFormat) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    DWORD idxSize = (IndexDataFormat == WINED3DFMT_INDEX32 ? 4 : 2);
+
+    /* Mark the state dirty until we have nicer tracking
+     * its fine to change baseVertexIndex because that call is only called by ddraw which does not need
+     * that value.
+     */
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
+    This->stateBlock->streamIsUP = TRUE;
+    This->stateBlock->baseVertexIndex = 0;
+    This->up_strided = DrawPrimStrideData;
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* startvertexidx */, 0 /* numindices */, 0 /* startidx */, idxSize, pIndexData, 0 /* minindex */);
+    This->up_strided = NULL;
+    return WINED3D_OK;
+}
+
+
+/* Yet another way to update a texture, some apps use this to load default textures instead of using surface/texture lock/unlock */
 static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3DBaseTexture *pSourceTexture,  IWineD3DBaseTexture *pDestinationTexture){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     HRESULT hr = WINED3D_OK;
@@ -6667,6 +6687,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_DrawPrimitiveUP,
     IWineD3DDeviceImpl_DrawIndexedPrimitiveUP,
     IWineD3DDeviceImpl_DrawPrimitiveStrided,
+    IWineD3DDeviceImpl_DrawIndexedPrimitiveStrided,
     IWineD3DDeviceImpl_DrawRectPatch,
     IWineD3DDeviceImpl_DrawTriPatch,
     IWineD3DDeviceImpl_DeletePatch,
