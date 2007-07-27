@@ -99,7 +99,6 @@ static LPCWSTR file_name, http_url, expect_wsz;
 static IInternetProtocol *http_protocol = NULL;
 static BOOL first_data_notif = FALSE, http_is_first = FALSE,
     http_post_test = FALSE;
-static HWND protocol_hwnd;
 static int state = 0;
 static DWORD bindf = 0;
 static IInternetBindInfo *prot_bind_info;
@@ -278,9 +277,35 @@ static ULONG WINAPI ProtocolSink_Release(IInternetProtocolSink *iface)
 
 static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOLDATA *pProtocolData)
 {
-    CHECK_EXPECT2(Switch);
+    HRESULT hres;
+
+    CHECK_EXPECT(Switch);
     ok(pProtocolData != NULL, "pProtocolData == NULL\n");
-    SendMessage(protocol_hwnd, WM_USER, 0, (LPARAM)pProtocolData);
+    if (!state) {
+        if (http_is_first) {
+            CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
+            CHECK_CALLED(ReportProgress_CONNECTING);
+        } else todo_wine {
+            CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
+            CHECK_NOT_CALLED(ReportProgress_CONNECTING);
+        }
+        CHECK_CALLED(ReportProgress_SENDINGREQUEST);
+        SET_EXPECT(OnResponse);
+        SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+    }
+
+    SET_EXPECT(ReportData);
+    hres = IInternetProtocol_Continue(http_protocol, pProtocolData);
+    ok(hres == S_OK, "Continue failed: %08x\n", hres);
+    CHECK_CALLED(ReportData);
+
+    if (!state) {
+        state = 1;
+        CHECK_CALLED(OnResponse);
+        CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+    }
+
+    SetEvent(event_complete);
     return S_OK;
 }
 
@@ -418,8 +443,23 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
                "grcfBSCF = %08x\n", grfBSCF);
         }
 
-        if (!(bindf & BINDF_FROMURLMON))
+        if(!(bindf & BINDF_FROMURLMON) &&
+           !(grfBSCF & BSCF_LASTDATANOTIFICATION)) {
+            if(!state) {
+                state = 1;
+                if(http_is_first) {
+                    CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
+                    CHECK_CALLED(ReportProgress_CONNECTING);
+                } else todo_wine {
+                    CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
+                    CHECK_NOT_CALLED(ReportProgress_CONNECTING);
+                }
+                CHECK_CALLED(ReportProgress_SENDINGREQUEST);
+                CHECK_CALLED(OnResponse);
+                CHECK_CALLED(ReportProgress_RAWMIMETYPE);
+            }
             SetEvent(event_complete);
+        }
     }
     return S_OK;
 }
@@ -1216,20 +1256,21 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
                                         (void**)&http_protocol);
     ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
     if(SUCCEEDED(hres)) {
-        BYTE buf[512];
+        BYTE buf[3600];
         DWORD cb;
-        MSG msg;
+        int *called = (bindf & BINDF_FROMURLMON) ? &called_Switch : &called_ReportData;
 
         test_priority(http_protocol);
 
         SET_EXPECT(ReportProgress_FINDINGRESOURCE);
         SET_EXPECT(ReportProgress_CONNECTING);
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
-        if(!(bindf & BINDF_FROMURLMON))
-        {
+        if(!(bindf & BINDF_FROMURLMON)) {
             SET_EXPECT(OnResponse);
             SET_EXPECT(ReportProgress_RAWMIMETYPE);
             SET_EXPECT(ReportData);
+        } else {
+            SET_EXPECT(Switch);
         }
 
         if(!http_protocol_start(url, is_first))
@@ -1238,26 +1279,63 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
         SET_EXPECT(ReportResult);
         expect_hrResult = S_OK;
 
+        hres = IInternetProtocol_Read(http_protocol, buf, 1, &cb);
+        ok((!*called && hres == E_PENDING && cb==0) ||
+           (*called && hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
+
+        WaitForSingleObject(event_complete, INFINITE);
         if(bindf & BINDF_FROMURLMON)
-        {
-            hres = IInternetProtocol_Read(http_protocol, buf, 2, &cb);
-            ok(hres == E_PENDING, "Read failed: %08x, expected E_PENDING\n", hres);
-            ok(!cb, "cb=%d, expected 0\n", cb);
-
-            SET_EXPECT(Switch);
-            GetMessage(&msg, NULL, 0, 0);
             CHECK_CALLED(Switch);
-        }
         else
-        {
-            WaitForSingleObject(event_complete, INFINITE);
-            SendMessage(protocol_hwnd, WM_USER, 0, 0);
-        }
+            CHECK_CALLED(ReportData);
 
+        while(1) {
+            if(bindf & BINDF_FROMURLMON)
+                SET_EXPECT(Switch);
+            else
+                SET_EXPECT(ReportData);
+            hres = IInternetProtocol_Read(http_protocol, buf, sizeof(buf), &cb);
+            if(hres == E_PENDING) {
+                hres = IInternetProtocol_Read(http_protocol, buf, 1, &cb);
+                ok((!*called && hres == E_PENDING && cb==0) ||
+                   (*called && hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
+                WaitForSingleObject(event_complete, INFINITE);
+                if(bindf & BINDF_FROMURLMON)
+                    CHECK_CALLED(Switch);
+                else
+                    CHECK_CALLED(ReportData);
+            } else {
+                if(bindf & BINDF_FROMURLMON)
+                    CHECK_NOT_CALLED(Switch);
+                else
+                    CHECK_NOT_CALLED(ReportData);
+                if(cb == 0) break;
+            }
+        }
+        ok(hres == S_FALSE, "Read failed: %08x\n", hres);
         CHECK_CALLED(ReportResult);
+
+        hres = IInternetProtocol_LockRequest(http_protocol, 0);
+        ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
+
+        hres = IInternetProtocol_Read(http_protocol, buf, 1, &cb);
+        ok(hres == S_FALSE, "Read failed: %08x\n", hres);
 
         hres = IInternetProtocol_Terminate(http_protocol, 0);
         ok(hres == S_OK, "Terminate failed: %08x\n", hres);
+
+        /* This wait is to give the internet handles being freed in Terminate
+         * enough time to actually terminate in all cases. Internet handles
+         * terminate asynchronously and native reuses the main InternetOpen
+         * handle. The only case in which this seems to be necessary is on
+         * wine with native wininet and urlmon, resulting in the next time
+         * test_http_protocol_url being called the first data notification actually
+         * being an extra last data notification from the previous connection
+         * about once out of every ten times. */
+        Sleep(100);
+
+        hres = IInternetProtocol_UnlockRequest(http_protocol);
+        ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
 
         IInternetProtocol_Release(http_protocol);
     }
@@ -1287,106 +1365,6 @@ static void test_http_protocol(void)
     bindf |= BINDF_NOWRITECACHE;
     test_http_protocol_url(posttest_url, TRUE);
     http_post_test = FALSE;
-}
-
-static HRESULT http_protocol_read(void)
-{
-    HRESULT hres;
-    DWORD cb;
-    BYTE buf[3600];
-
-    while(1) {
-        hres = IInternetProtocol_Read(http_protocol, buf, sizeof(buf), &cb);
-        if(!(bindf & BINDF_FROMURLMON) &&
-           hres == E_PENDING) {
-            WaitForSingleObject(event_complete, INFINITE);
-            CHECK_CALLED(ReportData);
-            SET_EXPECT(ReportData);
-        } else if(cb == 0) break;
-    }
-
-    return hres;
-}
-
-static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    if(msg == WM_USER) {
-        HRESULT hres;
-
-        if(!state) {
-            if (http_is_first)
-            {
-                CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
-                CHECK_CALLED(ReportProgress_CONNECTING);
-            }
-            else todo_wine
-            {
-                CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
-                CHECK_NOT_CALLED(ReportProgress_CONNECTING);
-            }
-            CHECK_CALLED(ReportProgress_SENDINGREQUEST);
-            if(!(bindf & BINDF_FROMURLMON))
-            {
-                CHECK_CALLED(OnResponse);
-                CHECK_CALLED(ReportProgress_RAWMIMETYPE);
-                CHECK_CALLED(ReportData);
-            }
-            else
-            {
-                SET_EXPECT(OnResponse);
-                SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
-            }
-        }
-        SET_EXPECT(ReportData);
-
-        if (bindf & BINDF_FROMURLMON)
-        {
-            hres = IInternetProtocol_Continue(http_protocol, (PROTOCOLDATA*)lParam);
-            ok(hres == S_OK, "Continue failed: %08x\n", hres);
-
-            CHECK_CALLED(ReportData);
-            if(!state) {
-                CHECK_CALLED(OnResponse);
-                CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
-            }
-        }
-
-        hres = http_protocol_read();
-        ok(hres == S_FALSE || hres == E_PENDING, "Read failed: %08x\n", hres);
-
-        if(hres == S_FALSE &&
-           (bindf & BINDF_FROMURLMON))
-            PostMessage(protocol_hwnd, WM_USER+1, 0, 0);
-
-        if(!state) {
-            state = 1;
-
-            hres = IInternetProtocol_LockRequest(http_protocol, 0);
-            ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
-
-            hres = http_protocol_read();
-            ok(hres == S_FALSE || hres == E_PENDING, "Read failed: %08x\n", hres);
-        }
-    }
-
-    return DefWindowProc(hwnd, msg, wParam, lParam);
-}
-
-static HWND create_protocol_window(void)
-{
-    static WNDCLASSEX wndclass = {
-        sizeof(WNDCLASSEX),
-        0,
-        wnd_proc,
-        0, 0, NULL, NULL, NULL, NULL, NULL,
-        "ProtocolWindow",
-        NULL
-    };
-
-    RegisterClassEx(&wndclass);
-    return CreateWindow("ProtocolWindow", "ProtocolWindow",
-                         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                         CW_USEDEFAULT, NULL, NULL, NULL, NULL);
 }
 
 static void test_mk_protocol(void)
@@ -1555,14 +1533,12 @@ START_TEST(protocol)
     OleInitialize(NULL);
 
     event_complete = CreateEvent(NULL, FALSE, FALSE, NULL);
-    protocol_hwnd = create_protocol_window();
 
     test_file_protocol();
     test_http_protocol();
     test_mk_protocol();
     test_CreateBinding();
 
-    DestroyWindow(protocol_hwnd);
     CloseHandle(event_complete);
 
     OleUninitialize();
