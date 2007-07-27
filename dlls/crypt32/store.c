@@ -175,6 +175,14 @@ typedef struct _WINE_FILESTOREINFO
     BOOL                 dirty;
 } WINE_FILESTOREINFO, *PWINE_FILESTOREINFO;
 
+typedef struct _WINE_MSGSTOREINFO
+{
+    DWORD                dwOpenFlags;
+    HCRYPTPROV           cryptProv;
+    PWINECRYPT_CERTSTORE memStore;
+    HCRYPTMSG            msg;
+} WINE_MSGSTOREINFO, *PWINE_MSGSTOREINFO;
+
 typedef struct _WINE_STORE_LIST_ENTRY
 {
     PWINECRYPT_CERTSTORE store;
@@ -1920,6 +1928,158 @@ static PWINECRYPT_CERTSTORE CRYPT_FileNameOpenStoreA(HCRYPTPROV hCryptProv,
     return ret;
 }
 
+static void WINAPI CRYPT_MsgCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
+{
+    PWINE_MSGSTOREINFO store = (PWINE_MSGSTOREINFO)hCertStore;
+
+    TRACE("(%p, %08x)\n", store, dwFlags);
+    CertCloseStore(store->memStore, dwFlags);
+    CryptMsgClose(store->msg);
+    CryptMemFree(store);
+}
+
+static void *msgProvFuncs[] = {
+    CRYPT_MsgCloseStore,
+    NULL, /* CERT_STORE_PROV_READ_CERT_FUNC */
+    NULL, /* CERT_STORE_PROV_WRITE_CERT_FUNC */
+    NULL, /* CERT_STORE_PROV_DELETE_CERT_FUNC */
+    NULL, /* CERT_STORE_PROV_SET_CERT_PROPERTY_FUNC */
+    NULL, /* CERT_STORE_PROV_READ_CRL_FUNC */
+    NULL, /* CERT_STORE_PROV_WRITE_CRL_FUNC */
+    NULL, /* CERT_STORE_PROV_DELETE_CRL_FUNC */
+    NULL, /* CERT_STORE_PROV_SET_CRL_PROPERTY_FUNC */
+    NULL, /* CERT_STORE_PROV_READ_CTL_FUNC */
+    NULL, /* CERT_STORE_PROV_WRITE_CTL_FUNC */
+    NULL, /* CERT_STORE_PROV_DELETE_CTL_FUNC */
+    NULL, /* CERT_STORE_PROV_SET_CTL_PROPERTY_FUNC */
+    NULL, /* CERT_STORE_PROV_CONTROL_FUNC */
+};
+
+static PWINECRYPT_CERTSTORE CRYPT_MsgOpenStore(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara)
+{
+    PWINECRYPT_CERTSTORE store = NULL;
+    HCRYPTMSG msg = (HCRYPTMSG)pvPara;
+    PWINECRYPT_CERTSTORE memStore;
+
+    TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
+
+    memStore = CRYPT_MemOpenStore(hCryptProv, dwFlags, NULL);
+    if (memStore)
+    {
+        BOOL ret;
+        DWORD size, count, i;
+
+        size = sizeof(count);
+        ret = CryptMsgGetParam(msg, CMSG_CERT_COUNT_PARAM, 0, &count, &size);
+        for (i = 0; ret && i < count; i++)
+        {
+            size = 0;
+            ret = CryptMsgGetParam(msg, CMSG_CERT_PARAM, i, NULL, &size);
+            if (ret)
+            {
+                LPBYTE buf = CryptMemAlloc(size);
+
+                if (buf)
+                {
+                    ret = CryptMsgGetParam(msg, CMSG_CERT_PARAM, i, buf, &size);
+                    if (ret)
+                        ret = CertAddEncodedCertificateToStore(memStore,
+                         X509_ASN_ENCODING, buf, size, CERT_STORE_ADD_ALWAYS,
+                         NULL);
+                    CryptMemFree(buf);
+                }
+            }
+        }
+        size = sizeof(count);
+        ret = CryptMsgGetParam(msg, CMSG_CRL_COUNT_PARAM, 0, &count, &size);
+        for (i = 0; ret && i < count; i++)
+        {
+            size = 0;
+            ret = CryptMsgGetParam(msg, CMSG_CRL_PARAM, i, NULL, &size);
+            if (ret)
+            {
+                LPBYTE buf = CryptMemAlloc(size);
+
+                if (buf)
+                {
+                    ret = CryptMsgGetParam(msg, CMSG_CRL_PARAM, i, buf, &size);
+                    if (ret)
+                        ret = CertAddEncodedCRLToStore(memStore,
+                         X509_ASN_ENCODING, buf, size, CERT_STORE_ADD_ALWAYS,
+                         NULL);
+                    CryptMemFree(buf);
+                }
+            }
+        }
+        if (ret)
+        {
+            PWINE_MSGSTOREINFO info = CryptMemAlloc(sizeof(WINE_MSGSTOREINFO));
+
+            if (info)
+            {
+                CERT_STORE_PROV_INFO provInfo = { 0 };
+
+                info->dwOpenFlags = dwFlags;
+                info->cryptProv = hCryptProv;
+                info->memStore = memStore;
+                info->msg = CryptMsgDuplicate(msg);
+                provInfo.cbSize = sizeof(provInfo);
+                provInfo.cStoreProvFunc = sizeof(msgProvFuncs) /
+                 sizeof(msgProvFuncs[0]);
+                provInfo.rgpvStoreProvFunc = msgProvFuncs;
+                provInfo.hStoreProv = info;
+                store = CRYPT_ProvCreateStore(hCryptProv, dwFlags, memStore,
+                 &provInfo);
+            }
+            else
+                CertCloseStore(memStore, 0);
+        }
+        else
+            CertCloseStore(memStore, 0);
+    }
+    TRACE("returning %p\n", store);
+    return store;
+}
+
+static PWINECRYPT_CERTSTORE CRYPT_PKCSOpenStore(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara)
+{
+    HCRYPTMSG msg;
+    PWINECRYPT_CERTSTORE store = NULL;
+    const CRYPT_DATA_BLOB *data = (const CRYPT_DATA_BLOB *)pvPara;
+    BOOL ret;
+
+    TRACE("(%ld, %08x, %p)\n", hCryptProv, dwFlags, pvPara);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, 0, NULL,
+     NULL);
+    ret = CryptMsgUpdate(msg, data->pbData, data->cbData, TRUE);
+    if (!ret)
+    {
+        CryptMsgClose(msg);
+        msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+        ret = CryptMsgUpdate(msg, data->pbData, data->cbData, TRUE);
+        if (ret)
+        {
+            DWORD type, size = sizeof(type);
+
+            /* Only signed messages are allowed, check type */
+            ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, &type, &size);
+            if (ret && type != CMSG_SIGNED)
+            {
+                SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+                ret = FALSE;
+            }
+        }
+    }
+    if (ret)
+        store = CRYPT_MsgOpenStore(hCryptProv, dwFlags, msg);
+    CryptMsgClose(msg);
+    TRACE("returning %p\n", store);
+    return store;
+}
+
 static PWINECRYPT_CERTSTORE CRYPT_PhysOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
@@ -1945,11 +2105,17 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
     {
         switch (LOWORD(lpszStoreProvider))
         {
+        case (int)CERT_STORE_PROV_MSG:
+            openFunc = CRYPT_MsgOpenStore;
+            break;
         case (int)CERT_STORE_PROV_MEMORY:
             openFunc = CRYPT_MemOpenStore;
             break;
         case (int)CERT_STORE_PROV_FILE:
             openFunc = CRYPT_FileOpenStore;
+            break;
+        case (int)CERT_STORE_PROV_PKCS7:
+            openFunc = CRYPT_PKCSOpenStore;
             break;
         case (int)CERT_STORE_PROV_REG:
             openFunc = CRYPT_RegOpenStore;

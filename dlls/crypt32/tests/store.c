@@ -1398,12 +1398,10 @@ static void testMessageStore(void)
      */
     SetLastError(0xdeadbeef);
     store = CertOpenStore(CERT_STORE_PROV_MSG, 0, 0, 0, msg);
-    todo_wine
     ok(!store && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     CryptMsgUpdate(msg, signedContent, sizeof(signedContent), TRUE);
     store = CertOpenStore(CERT_STORE_PROV_MSG, 0, 0, 0, msg);
-    todo_wine
     ok(store != NULL, "CertOpenStore failed: %08x\n", GetLastError());
     if (store)
     {
@@ -1452,7 +1450,6 @@ static void testMessageStore(void)
     store = CertOpenStore(CERT_STORE_PROV_PKCS7, 0, 0, 0, NULL);
      */
     store = CertOpenStore(CERT_STORE_PROV_PKCS7, 0, 0, 0, &blob);
-    todo_wine
     ok(store != NULL, "CertOpenStore failed: %08x\n", GetLastError());
     if (store)
     {
@@ -1479,7 +1476,6 @@ static void testMessageStore(void)
     /* Encoding appears to be ignored */
     store = CertOpenStore(CERT_STORE_PROV_PKCS7, X509_ASN_ENCODING, 0, 0,
      &blob);
-    todo_wine
     ok(store != NULL, "CertOpenStore failed: %08x\n", GetLastError());
     if (store)
         CertCloseStore(store, 0);
@@ -1488,14 +1484,12 @@ static void testMessageStore(void)
     blob.pbData = (LPBYTE)hashContent;
     SetLastError(0xdeadbeef);
     store = CertOpenStore(CERT_STORE_PROV_PKCS7, 0, 0, 0, &blob);
-    todo_wine
     ok(!store && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     blob.cbData = sizeof(hashBareContent);
     blob.pbData = (LPBYTE)hashBareContent;
     SetLastError(0xdeadbeef);
     store = CertOpenStore(CERT_STORE_PROV_PKCS7, 0, 0, 0, &blob);
-    todo_wine
     ok(!store && GetLastError() == CRYPT_E_ASN1_BADTAG,
      "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
 }
