@@ -108,7 +108,7 @@ void WCMD_change_tty (void) {
  * WCMD_copy
  *
  * Copy a file or wildcarded set.
- * FIXME: No wildcard support
+ * FIXME: Add support for a+b+c type syntax
  */
 
 void WCMD_copy (void) {
@@ -116,21 +116,52 @@ void WCMD_copy (void) {
   WIN32_FIND_DATA fd;
   HANDLE hff;
   BOOL force, status;
-  WCHAR outpath[MAX_PATH], inpath[MAX_PATH], *infile, copycmd[3];
+  WCHAR outpath[MAX_PATH], srcpath[MAX_PATH], copycmd[3];
   DWORD len;
   static const WCHAR copyCmdW[] = {'C','O','P','Y','C','M','D','\0'};
+  BOOL copyToDir = FALSE;
+  BOOL copyFromDir = FALSE;
+  WCHAR srcspec[MAX_PATH];
+  DWORD attribs;
+  WCHAR drive[10];
+  WCHAR dir[MAX_PATH];
+  WCHAR fname[MAX_PATH];
+  WCHAR ext[MAX_PATH];
 
   if (param1[0] == 0x00) {
     WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
     return;
   }
 
-  if ((strchrW(param1,'*') != NULL) && (strchrW(param1,'%') != NULL)) {
-    WCMD_output (WCMD_LoadMessage(WCMD_NYI));
-    return;
+  /* Convert source into full spec */
+  WINE_TRACE("Copy source (supplied): '%s'\n", wine_dbgstr_w(param1));
+  GetFullPathName (param1, sizeof(srcpath)/sizeof(WCHAR), srcpath, NULL);
+  if (srcpath[strlenW(srcpath) - 1] == '\\')
+      srcpath[strlenW(srcpath) - 1] = '\0';
+
+  if ((strchrW(srcpath,'*') == NULL) && (strchrW(srcpath,'?') == NULL)) {
+    attribs = GetFileAttributes(srcpath);
+  } else {
+    attribs = 0;
+  }
+  strcpyW(srcspec, srcpath);
+
+  /* If a directory, then add \* on the end when searching */
+  if (attribs & FILE_ATTRIBUTE_DIRECTORY) {
+    strcatW(srcpath, slashW);
+    copyFromDir = TRUE;
+    strcatW(srcspec, slashW);
+    strcatW(srcspec, starW);
+  } else {
+    WCMD_splitpath(srcpath, drive, dir, fname, ext);
+    strcpyW(srcpath, drive);
+    strcatW(srcpath, dir);
   }
 
+  WINE_TRACE("Copy source (calculated): path: '%s'\n", wine_dbgstr_w(srcpath));
+
   /* If no destination supplied, assume current directory */
+  WINE_TRACE("Copy destination (supplied): '%s'\n", wine_dbgstr_w(param2));
   if (param2[0] == 0x00) {
       strcpyW(param2, dotW);
   }
@@ -138,15 +169,13 @@ void WCMD_copy (void) {
   GetFullPathName (param2, sizeof(outpath)/sizeof(WCHAR), outpath, NULL);
   if (outpath[strlenW(outpath) - 1] == '\\')
       outpath[strlenW(outpath) - 1] = '\0';
-  hff = FindFirstFile (outpath, &fd);
-  if (hff != INVALID_HANDLE_VALUE) {
-    if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-      GetFullPathName (param1, sizeof(inpath)/sizeof(WCHAR), inpath, &infile);
-      strcatW (outpath, slashW);
-      strcatW (outpath, infile);
-    }
-    FindClose (hff);
+  attribs = GetFileAttributes(outpath);
+  if (attribs & FILE_ATTRIBUTE_DIRECTORY) {
+    strcatW (outpath, slashW);
+    copyToDir = TRUE;
   }
+  WINE_TRACE("Copy destination (calculated): '%s'(%d)\n",
+             wine_dbgstr_w(outpath), copyToDir);
 
   /* /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
   if (strstrW (quals, parmNoY))
@@ -158,21 +187,53 @@ void WCMD_copy (void) {
     force = (len && len < (sizeof(copycmd)/sizeof(WCHAR)) && ! lstrcmpiW (copycmd, parmY));
   }
 
-  if (!force) {
-    hff = FindFirstFile (outpath, &fd);
-    if (hff != INVALID_HANDLE_VALUE) {
-      WCHAR buffer[MAXSTRING];
+  /* Loop through all source files */
+  WINE_TRACE("Searching for: '%s'\n", wine_dbgstr_w(srcspec));
+  hff = FindFirstFile (srcspec, &fd);
+  if (hff != INVALID_HANDLE_VALUE) {
+      do {
+        WCHAR outname[MAX_PATH];
+        WCHAR srcname[MAX_PATH];
+        BOOL  overwrite = force;
 
+        /* Destination is either supplied filename, or source name in
+           supplied destination directory                             */
+        strcpyW(outname, outpath);
+        if (copyToDir) strcatW(outname, fd.cFileName);
+        strcpyW(srcname, srcpath);
+        strcatW(srcname, fd.cFileName);
+
+        WINE_TRACE("Copying from : '%s'\n", wine_dbgstr_w(srcname));
+        WINE_TRACE("Copying to : '%s'\n", wine_dbgstr_w(outname));
+
+        /* Skip . and .., and directories */
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+          overwrite = FALSE;
+          WINE_TRACE("Skipping directories\n");
+        }
+
+        /* Prompt before overwriting */
+        else if (!overwrite) {
+          attribs = GetFileAttributes(outname);
+          if (attribs != INVALID_FILE_ATTRIBUTES) {
+            WCHAR buffer[MAXSTRING];
+            wsprintf(buffer, WCMD_LoadMessage(WCMD_OVERWRITE), outname);
+            overwrite = WCMD_ask_confirm(buffer, FALSE, NULL);
+          }
+          else overwrite = TRUE;
+        }
+
+        /* Do the copy as appropriate */
+        if (overwrite) {
+          status = CopyFile (srcname, outname, FALSE);
+          if (!status) WCMD_print_error ();
+        }
+
+      } while (FindNextFile(hff, &fd) != 0);
       FindClose (hff);
-
-      wsprintf(buffer, WCMD_LoadMessage(WCMD_OVERWRITE), outpath);
-      force = WCMD_ask_confirm(buffer, FALSE, NULL);
-    }
-    else force = TRUE;
-  }
-  if (force) {
-    status = CopyFile (param1, outpath, FALSE);
-    if (!status) WCMD_print_error ();
+  } else {
+      status = ERROR_FILE_NOT_FOUND;
+      WCMD_print_error ();
   }
 }
 
