@@ -276,7 +276,7 @@ void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int wi
 
     if (!renderbuffer) {
         const GlPixelFormatDesc *glDesc;
-        getFormatDescEntry(This->resource.format, &glDesc);
+        getFormatDescEntry(This->resource.format, &GLINFO_LOCATION, &glDesc);
 
         GL_EXTCALL(glGenRenderbuffersEXT(1, &renderbuffer));
         GL_EXTCALL(glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, renderbuffer));
@@ -1262,7 +1262,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     DWORD *masks;
     HRESULT hr;
     RGBQUAD col[256];
-    const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format, NULL);
+    const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format, NULL, NULL);
 
     TRACE("(%p)->(%p)\n",This,pHDC);
 
@@ -1484,7 +1484,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
 static HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp, BOOL srgb_mode) {
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
     const GlPixelFormatDesc *glDesc;
-    getFormatDescEntry(This->resource.format, &glDesc);
+    getFormatDescEntry(This->resource.format, &GLINFO_LOCATION, &glDesc);
 
     /* Default values: From the surface */
     *format = glDesc->glFormat;
@@ -2251,7 +2251,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3D
 HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     const GlPixelFormatDesc *glDesc;
-    const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(format, &glDesc);
+    const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(format, &GLINFO_LOCATION, &glDesc);
 
     if (This->resource.format != WINED3DFMT_UNKNOWN) {
         FIXME("(%p) : The format of the surface must be WINED3DFORMAT_UNKNOWN\n", This);
@@ -3439,6 +3439,16 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     /** Check against the maximum texture sizes supported by the video card **/
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     unsigned int pow2Width, pow2Height;
+    const GlPixelFormatDesc *glDesc;
+    const StaticPixelFormatDesc *tableEntry = getFormatDescEntry(This->resource.format, &GLINFO_LOCATION, &glDesc);
+
+    /* Setup some glformat defaults */
+    This->glDescription.glFormat         = glDesc->glFormat;
+    This->glDescription.glFormatInternal = glDesc->glInternal;
+    This->glDescription.glType           = glDesc->glType;
+
+    This->glDescription.textureName      = 0;
+    This->glDescription.target           = GL_TEXTURE_2D;
 
     /* Non-power2 support */
     if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO)) {

@@ -1948,6 +1948,11 @@ typedef enum _GL_SupportedExt {
 /****************************************************
  * Structures       
  ****************************************************/
+
+typedef struct {
+    GLint                   glInternal, glGammaInternal, glFormat, glType;
+} GlPixelFormatDesc;
+
 #define USE_GL_FUNC(type, pfn) type pfn;
 typedef struct _WineD3D_GL_Info {
 
@@ -2005,6 +2010,8 @@ typedef struct _WineD3D_GL_Info {
   /** OpenGL 2.0 functions ptr */
   /* GL2_FUNCS_GEN; */
   /**/
+
+  GlPixelFormatDesc *gl_formats;
 } WineD3D_GL_Info;
 #undef USE_GL_FUNC
 

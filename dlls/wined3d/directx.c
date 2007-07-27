@@ -2556,11 +2556,20 @@ BOOL InitAdapters(void) {
             HeapFree(GetProcessHeap(), 0, Adapters);
             return FALSE;
         }
+        ret = initPixelFormats(&Adapters[0].gl_info);
+        if(!ret) {
+            ERR("Failed to init gl formats\n");
+            XFree(Adapters[0].cfgs);
+            HeapFree(GetProcessHeap(), 0, Adapters);
+            return FALSE;
+        }
+
         Adapters[0].driver = "Display";
         Adapters[0].description = "Direct3D HAL";
 
         select_shader_mode(&Adapters[0].gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &Adapters[0].gl_info);
+
     }
     numAdapters = 1;
     TRACE("%d adapters successfully initialized\n", numAdapters);

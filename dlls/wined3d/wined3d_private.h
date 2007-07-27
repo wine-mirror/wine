@@ -570,6 +570,7 @@ struct PLIGHTINFOEL {
 extern const WINED3DLIGHT WINED3D_default_light;
 
 /* The adapter structure */
+typedef struct GLPixelFormatDesc GLPixelFormatDesc;
 struct WineD3DAdapter
 {
     POINT                   monitorPoint;
@@ -582,6 +583,7 @@ struct WineD3DAdapter
 };
 
 extern BOOL InitAdapters(void);
+extern BOOL initPixelFormats(WineD3D_GL_Info *gl_info);
 
 /*****************************************************************************
  * High order patch management
@@ -2040,12 +2042,8 @@ typedef struct {
     BOOL                    isFourcc;
 } StaticPixelFormatDesc;
 
-typedef struct {
-    /* Array uses the same indices as the static pixelformat */
-    GLint                   glInternal, glGammaInternal, glFormat, glType;
-} GlPixelFormatDesc;
-
 const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt,
+        WineD3D_GL_Info *gl_info,
         const GlPixelFormatDesc **glDesc);
 
 static inline BOOL use_vs(IWineD3DDeviceImpl *device) {

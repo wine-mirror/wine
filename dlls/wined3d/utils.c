@@ -185,30 +185,50 @@ GlPixelFormatDesc gl_formats[] = {
     {GL_COLOR_INDEX                   ,GL_COLOR_INDEX                         ,GL_COLOR_INDEX ,GL_UNSIGNED_SHORT }
 };
 
-const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const GlPixelFormatDesc **glDesc)
-{
+static inline int getFmtIdx(WINED3DFORMAT fmt) {
     /* First check if the format is at the position of its value.
      * This will catch the argb formats before the loop is entered
      */
     if(fmt < (sizeof(formats) / sizeof(formats[0])) && formats[fmt].format == fmt) {
-        if(glDesc) *glDesc = &gl_formats[fmt];
-        return &formats[fmt];
+        return fmt;
     } else {
         unsigned int i;
         for(i = 0; i < (sizeof(formats) / sizeof(formats[0])); i++) {
             if(formats[i].format == fmt) {
-                if(glDesc) *glDesc = &gl_formats[i];
-                return &formats[i];
+                return i;
             }
         }
     }
-    FIXME("Can't find format %s(%d) in the format lookup table\n", debug_d3dformat(fmt), fmt);
-    if(fmt == WINED3DFMT_UNKNOWN) {
-        ERR("Format table corrupt - Can't find WINED3DFMT_UNKNOWN\n");
-        return NULL;
+    return -1;
+}
+
+BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
+{
+    /* Will be replaced with some more sophisticated initialization later */
+    gl_info->gl_formats = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(gl_formats));
+    if(!gl_info->gl_formats) return FALSE;
+
+    memcpy(gl_info->gl_formats, &gl_formats, sizeof(gl_formats));
+    return TRUE;
+}
+
+const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, WineD3D_GL_Info *gl_info, const GlPixelFormatDesc **glDesc)
+{
+    int idx = getFmtIdx(fmt);
+
+    if(idx == -1) {
+        FIXME("Can't find format %s(%d) in the format lookup table\n", debug_d3dformat(fmt), fmt);
+        /* Get the caller a valid pointer */
+        idx = getFmtIdx(WINED3DFMT_UNKNOWN);
     }
-    /* Get the caller a valid pointer */
-    return getFormatDescEntry(WINED3DFMT_UNKNOWN, glDesc);
+    if(glDesc) {
+        if(!gl_info) {
+            ERR("OpenGL pixel format information was requested, but no gl info structure passed\n");
+            return NULL;
+        }
+        *glDesc = &gl_info->gl_formats[idx];
+    }
+    return &formats[idx];
 }
 
 /*****************************************************************************
