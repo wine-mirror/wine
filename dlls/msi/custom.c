@@ -842,6 +842,7 @@ static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
 
     static const WCHAR backslash[] = {'\\',0};
 
+    size = MAX_PATH;
     MSI_GetPropertyW(package, cszSourceDir, package_path, &size);
     lstrcatW(package_path, backslash);
     lstrcatW(package_path, source);
