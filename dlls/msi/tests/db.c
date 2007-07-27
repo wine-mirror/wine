@@ -3703,68 +3703,41 @@ static void test_select_markers(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewExecute(view, rec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewFetch(view, &res);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     size = MAX_PATH;
     r = MsiRecordGetString(res, 1, buf, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmp(buf, "apple"), "Expected apple, got %s\n", buf);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buf, "apple"), "Expected apple, got %s\n", buf);
 
     size = MAX_PATH;
     r = MsiRecordGetString(res, 2, buf, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmp(buf, "two"), "Expected two, got %s\n", buf);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buf, "two"), "Expected two, got %s\n", buf);
 
     r = MsiRecordGetInteger(res, 3);
-    todo_wine
-    {
-        ok(r == 1, "Expected 1, got %d\n", r);
-    }
+    ok(r == 1, "Expected 1, got %d\n", r);
 
     MsiCloseHandle(res);
 
     r = MsiViewFetch(view, &res);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     size = MAX_PATH;
     r = MsiRecordGetString(res, 1, buf, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmp(buf, "apple"), "Expected apple, got %s\n", buf);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buf, "apple"), "Expected apple, got %s\n", buf);
 
     size = MAX_PATH;
     r = MsiRecordGetString(res, 2, buf, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmp(buf, "two"), "Expected two, got %s\n", buf);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buf, "two"), "Expected two, got %s\n", buf);
 
     r = MsiRecordGetInteger(res, 3);
-    todo_wine
-    {
-        ok(r == 2, "Expected 2, got %d\n", r);
-    }
+    ok(r == 2, "Expected 2, got %d\n", r);
 
     MsiCloseHandle(res);
 

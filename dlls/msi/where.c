@@ -46,6 +46,7 @@ typedef struct tagMSIWHEREVIEW
     UINT           row_count;
     UINT          *reorder;
     struct expr   *cond;
+    UINT           rec_index;
 } MSIWHEREVIEW;
 
 static UINT WHERE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *val )
@@ -156,24 +157,25 @@ static INT INT_evaluate_unary( INT lval, UINT op )
     return 0;
 }
 
-static const WCHAR *STRING_evaluate( const string_table *st,
-              MSIVIEW *table, UINT row, const struct expr *expr, const MSIRECORD *record )
+static const WCHAR *STRING_evaluate( MSIWHEREVIEW *wv, UINT row,
+                                     const struct expr *expr,
+                                     const MSIRECORD *record )
 {
     UINT val = 0, r;
 
     switch( expr->type )
     {
     case EXPR_COL_NUMBER_STRING:
-        r = table->ops->fetch_int( table, row, expr->u.col_number, &val );
+        r = wv->table->ops->fetch_int( wv->table, row, expr->u.col_number, &val );
         if( r != ERROR_SUCCESS )
             return NULL;
-        return msi_string_lookup_id( st, val );
+        return msi_string_lookup_id( wv->db->strings, val );
 
     case EXPR_SVAL:
         return expr->u.sval;
 
     case EXPR_WILDCARD:
-        return MSI_RecordGetString( record, 1 );
+        return MSI_RecordGetString( record, ++wv->rec_index );
 
     default:
         ERR("Invalid expression type\n");
@@ -182,14 +184,14 @@ static const WCHAR *STRING_evaluate( const string_table *st,
     return NULL;
 }
 
-static UINT STRCMP_Evaluate( const string_table *st, MSIVIEW *table, UINT row,
-                             const struct expr *cond, INT *val, const MSIRECORD *record )
+static UINT STRCMP_Evaluate( MSIWHEREVIEW *wv, UINT row, const struct expr *cond,
+                             INT *val, const MSIRECORD *record )
 {
     int sr;
     const WCHAR *l_str, *r_str;
 
-    l_str = STRING_evaluate( st, table, row, cond->u.expr.left, record );
-    r_str = STRING_evaluate( st, table, row, cond->u.expr.right, record );
+    l_str = STRING_evaluate( wv, row, cond->u.expr.left, record );
+    r_str = STRING_evaluate( wv, row, cond->u.expr.right, record );
     if( l_str == r_str )
         sr = 0;
     else if( l_str && ! r_str )
@@ -206,8 +208,8 @@ static UINT STRCMP_Evaluate( const string_table *st, MSIVIEW *table, UINT row,
     return ERROR_SUCCESS;
 }
 
-static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row, 
-                             const struct expr *cond, INT *val, MSIRECORD *record )
+static UINT WHERE_evaluate( MSIWHEREVIEW *wv, UINT row,
+                            struct expr *cond, INT *val, MSIRECORD *record )
 {
     UINT r, tval;
     INT lval, rval;
@@ -218,12 +220,12 @@ static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row,
     switch( cond->type )
     {
     case EXPR_COL_NUMBER:
-        r = table->ops->fetch_int( table, row, cond->u.col_number, &tval );
+        r = wv->table->ops->fetch_int( wv->table, row, cond->u.col_number, &tval );
         *val = tval - 0x8000;
         return ERROR_SUCCESS;
 
     case EXPR_COL_NUMBER32:
-        r = table->ops->fetch_int( table, row, cond->u.col_number, &tval );
+        r = wv->table->ops->fetch_int( wv->table, row, cond->u.col_number, &tval );
         *val = tval - 0x80000000;
         return r;
 
@@ -232,27 +234,27 @@ static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row,
         return ERROR_SUCCESS;
 
     case EXPR_COMPLEX:
-        r = WHERE_evaluate( db, table, row, cond->u.expr.left, &lval, record );
+        r = WHERE_evaluate( wv, row, cond->u.expr.left, &lval, record );
         if( r != ERROR_SUCCESS )
             return r;
-        r = WHERE_evaluate( db, table, row, cond->u.expr.right, &rval, record );
+        r = WHERE_evaluate( wv, row, cond->u.expr.right, &rval, record );
         if( r != ERROR_SUCCESS )
             return r;
         *val = INT_evaluate_binary( lval, cond->u.expr.op, rval );
         return ERROR_SUCCESS;
 
     case EXPR_UNARY:
-        r = table->ops->fetch_int( table, row, cond->u.expr.left->u.col_number, &tval );
+        r = wv->table->ops->fetch_int( wv->table, row, cond->u.expr.left->u.col_number, &tval );
         if( r != ERROR_SUCCESS )
             return r;
         *val = INT_evaluate_unary( tval, cond->u.expr.op );
         return ERROR_SUCCESS;
 
     case EXPR_STRCMP:
-        return STRCMP_Evaluate( db->strings, table, row, cond, val, record );
+        return STRCMP_Evaluate( wv, row, cond, val, record );
 
     case EXPR_WILDCARD:
-        *val = MSI_RecordGetInteger( record, 1 );
+        *val = MSI_RecordGetInteger( record, ++wv->rec_index );
         return ERROR_SUCCESS;
 
     default:
@@ -338,7 +340,8 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     for( i=0; i<count; i++ )
     {
         val = 0;
-        r = WHERE_evaluate( wv->db, table, i, wv->cond, &val, record );
+        wv->rec_index = 0;
+        r = WHERE_evaluate( wv, i, wv->cond, &val, record );
         if( r != ERROR_SUCCESS )
             return r;
         if( val )
@@ -603,6 +606,7 @@ UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
     wv->row_count = 0;
     wv->reorder = NULL;
     wv->cond = cond;
+    wv->rec_index = 0;
     *view = (MSIVIEW*) wv;
 
     return ERROR_SUCCESS;
