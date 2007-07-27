@@ -241,7 +241,7 @@ static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
     return ret;
 }
 
-static BOOL CRYPT_CopyParam(void *pvData, DWORD *pcbData, const BYTE *src,
+static BOOL CRYPT_CopyParam(void *pvData, DWORD *pcbData, const void *src,
  DWORD len)
 {
     BOOL ret = TRUE;
@@ -444,8 +444,7 @@ static BOOL CHashEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
             /* Since the data are always encoded as octets, the version is
              * always 0 (see rfc3852, section 7)
              */
-            ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&version,
-             sizeof(version));
+            ret = CRYPT_CopyParam(pvData, pcbData, &version, sizeof(version));
         }
         break;
     default:
@@ -887,7 +886,7 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
              pvData, pcbData);
         break;
     case CMSG_VERSION_PARAM:
-        ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&msg->info.version,
+        ret = CRYPT_CopyParam(pvData, pcbData, &msg->info.version,
          sizeof(msg->info.version));
         break;
     default:
@@ -1495,8 +1494,7 @@ static BOOL CDecodeHashMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
     switch (dwParamType)
     {
     case CMSG_TYPE_PARAM:
-        ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&msg->type,
-         sizeof(msg->type));
+        ret = CRYPT_CopyParam(pvData, pcbData, &msg->type, sizeof(msg->type));
         break;
     case CMSG_HASH_ALGORITHM_PARAM:
     {
@@ -1577,7 +1575,7 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         switch (dwParamType)
         {
         case CMSG_TYPE_PARAM:
-            ret = CRYPT_CopyParam(pvData, pcbData, (const BYTE *)&msg->type,
+            ret = CRYPT_CopyParam(pvData, pcbData, &msg->type,
              sizeof(msg->type));
             break;
         default:
