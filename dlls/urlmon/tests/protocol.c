@@ -104,7 +104,7 @@ static int state = 0;
 static DWORD bindf = 0;
 static IInternetBindInfo *prot_bind_info;
 static void *expect_pv;
-static HANDLE received_data;
+static HANDLE event_complete;
 
 static enum {
     FILE_TEST,
@@ -419,7 +419,7 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
         }
 
         if (!(bindf & BINDF_FROMURLMON))
-            SetEvent(received_data);
+            SetEvent(event_complete);
     }
     return S_OK;
 }
@@ -1250,7 +1250,7 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
         }
         else
         {
-            WaitForSingleObject(received_data, INFINITE);
+            WaitForSingleObject(event_complete, INFINITE);
             SendMessage(protocol_hwnd, WM_USER, 0, 0);
         }
 
@@ -1299,7 +1299,7 @@ static HRESULT http_protocol_read(void)
         hres = IInternetProtocol_Read(http_protocol, buf, sizeof(buf), &cb);
         if(!(bindf & BINDF_FROMURLMON) &&
            hres == E_PENDING) {
-            WaitForSingleObject(received_data, INFINITE);
+            WaitForSingleObject(event_complete, INFINITE);
             CHECK_CALLED(ReportData);
             SET_EXPECT(ReportData);
         } else if(cb == 0) break;
@@ -1554,7 +1554,7 @@ START_TEST(protocol)
 {
     OleInitialize(NULL);
 
-    received_data = CreateEvent(NULL, FALSE, FALSE, NULL);
+    event_complete = CreateEvent(NULL, FALSE, FALSE, NULL);
     protocol_hwnd = create_protocol_window();
 
     test_file_protocol();
@@ -1563,7 +1563,7 @@ START_TEST(protocol)
     test_CreateBinding();
 
     DestroyWindow(protocol_hwnd);
-    CloseHandle(received_data);
+    CloseHandle(event_complete);
 
     OleUninitialize();
 }
