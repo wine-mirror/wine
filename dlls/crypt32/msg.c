@@ -1241,6 +1241,7 @@ typedef struct _CDecodeMsg
     HCRYPTPROV             crypt_prov;
     union {
         HCRYPTHASH             hash;
+        CRYPT_SIGNED_INFO     *signedInfo;
     } u;
     CRYPT_DATA_BLOB        msg_data;
     PCONTEXT_PROPERTY_LIST properties;
@@ -1256,6 +1257,9 @@ static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
     {
     case CMSG_HASHED:
         CryptDestroyHash(msg->u.hash);
+        break;
+    case CMSG_SIGNED:
+        LocalFree(msg->u.signedInfo);
         break;
     }
     CryptMemFree(msg->msg_data.pbData);
@@ -1390,10 +1394,7 @@ static BOOL CDecodeMsg_DecodeSignedContent(CDecodeMsg *msg,
      CRYPT_DECODE_ALLOC_FLAG, NULL, (CRYPT_SIGNED_INFO *)&signedInfo,
      &size);
     if (ret)
-    {
-        FIXME("store properties in message\n");
-        LocalFree(signedInfo);
-    }
+        msg->u.signedInfo = signedInfo;
     return ret;
 }
 /* Decodes the content in blob as the type given, and updates the value
