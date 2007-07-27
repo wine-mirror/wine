@@ -770,8 +770,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
  *
  * Execute a command, and any && or bracketed follow on to the command. The
  * first command to be executed may not be at the front of the
- * commands->thiscommand string (eg. it may point after a DO or ELSE
- * Returns TRUE if something like exit or goto has aborted all processing
+ * commands->thiscommand string (eg. it may point after a DO or ELSE)
  */
 void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
                        WCHAR *value, BOOL isIF, BOOL conditionTRUE) {
