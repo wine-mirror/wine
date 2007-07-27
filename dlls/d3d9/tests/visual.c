@@ -700,6 +700,119 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(surface);
 }
 
+static void offscreen_test(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3DTexture9 *offscreenTexture = NULL;
+    IDirect3DSurface9 *backbuffer = NULL, *offscreen = NULL;
+    DWORD color;
+
+    static const float quad[][5] = {
+        {-0.5f, -0.5f, 0.1f, 0.0f, 0.0f},
+        {-0.5f,  0.5f, 0.1f, 0.0f, 1.0f},
+        { 0.5f, -0.5f, 0.1f, 1.0f, 0.0f},
+        { 0.5f,  0.5f, 0.1f, 1.0f, 1.0f},
+    };
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+    ok(hr == D3D_OK, "Clear failed, hr = %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
+    ok(hr == D3D_OK || D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %s\n", DXGetErrorString9(hr));
+    if(!offscreenTexture) {
+        trace("Failed to create an X8R8G8B8 offscreen texture, trying R5G6B5\n");
+        hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
+        ok(hr == D3D_OK || D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %s\n", DXGetErrorString9(hr));
+        if(!offscreenTexture) {
+            skip("Cannot create an offscreen render target\n");
+            goto out;
+        }
+    }
+
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(hr == D3D_OK, "Can't get back buffer, hr = %s\n", DXGetErrorString9(hr));
+    if(!backbuffer) {
+        goto out;
+    }
+
+    hr = IDirect3DTexture9_GetSurfaceLevel(offscreenTexture, 0, &offscreen);
+    ok(hr == D3D_OK, "Can't get offscreen surface, hr = %s\n", DXGetErrorString9(hr));
+    if(!offscreen) {
+        goto out;
+    }
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(hr == D3D_OK, "SetFVF failed, hr = %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_NONE);
+    ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_MINFILTER failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_NONE);
+    ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_MAGFILTER failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+    if(IDirect3DDevice9_BeginScene(device) == D3D_OK) {
+        hr = IDirect3DDevice9_SetRenderTarget(device, 0, offscreen);
+        ok(hr == D3D_OK, "SetRenderTarget failed, hr = %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
+        ok(hr == D3D_OK, "Clear failed, hr = %s\n", DXGetErrorString9(hr));
+
+        /* Draw without textures - Should resut in a white quad */
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+        ok(hr == D3D_OK, "SetRenderTarget failed, hr = %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) offscreenTexture);
+        ok(hr == D3D_OK, "SetTexture failed, %s\n", DXGetErrorString9(hr));
+
+        /* This time with the texture */
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %s\n", DXGetErrorString9(hr));
+
+        IDirect3DDevice9_EndScene(device);
+    }
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    /* Center quad - should be white */
+    color = getPixelColor(device, 320, 240);
+    ok(color == 0x00ffffff, "Offscreen failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    /* Some quad in the cleared part of the texture */
+    color = getPixelColor(device, 170, 240);
+    ok(color == 0x00ff00ff, "Offscreen failed: Got color 0x%08x, expected 0x00ff00ff.\n", color);
+    /* Part of the originally cleared back buffer */
+    color = getPixelColor(device, 10, 10);
+    ok(color == 0x00ff0000, "Offscreen failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+    if(0) {
+        /* Lower left corner of the screen, where back buffer offscreen rendering draws the offscreen texture.
+         * It should be red, but the offscreen texture may leave some junk there. Not tested yet. Depending on
+         * the offscreen rendering mode this test would succeed or fail
+         */
+        color = getPixelColor(device, 10, 470);
+        ok(color == 0x00ff0000, "Offscreen failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+    }
+
+out:
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+
+    /* restore things */
+    if(backbuffer) {
+        IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+        IDirect3DSurface9_Release(backbuffer);
+    }
+    if(offscreenTexture) {
+        IDirect3DTexture9_Release(offscreenTexture);
+    }
+    if(offscreen) {
+        IDirect3DSurface9_Release(offscreen);
+    }
+}
+
 /* This test tests fog in combination with shaders.
  * What's tested: linear fog (vertex and table) with pixel shader
  *                linear table fog with non foggy vertex shader
@@ -1437,6 +1550,7 @@ START_TEST(visual)
     {
         skip("No mipmap support\n");
     }
+    offscreen_test(device_ptr);
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0))
     {

@@ -610,6 +610,125 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
     IDirect3DDevice8_DeleteVertexShader(device, shader);
 }
 
+static void offscreen_test(IDirect3DDevice8 *device)
+{
+    HRESULT hr;
+    IDirect3DTexture8 *offscreenTexture = NULL;
+    IDirect3DSurface8 *backbuffer = NULL, *offscreen = NULL, *depthstencil = NULL;
+    DWORD color;
+
+    static const float quad[][5] = {
+        {-0.5f, -0.5f, 0.1f, 0.0f, 0.0f},
+        {-0.5f,  0.5f, 0.1f, 0.0f, 1.0f},
+        { 0.5f, -0.5f, 0.1f, 1.0f, 0.0f},
+        { 0.5f,  0.5f, 0.1f, 1.0f, 1.0f},
+    };
+
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &depthstencil);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetDepthStencilSurface failed, hr = %08x\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+    ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
+
+    hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture);
+    ok(hr == D3D_OK || D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %08x\n", hr);
+    if(!offscreenTexture) {
+        trace("Failed to create an X8R8G8B8 offscreen texture, trying R5G6B5\n");
+        hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &offscreenTexture);
+        ok(hr == D3D_OK || D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %08x\n", hr);
+        if(!offscreenTexture) {
+            skip("Cannot create an offscreen render target\n");
+            goto out;
+        }
+    }
+
+    hr = IDirect3DDevice8_GetBackBuffer(device, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
+    if(!backbuffer) {
+        goto out;
+    }
+
+    hr = IDirect3DTexture8_GetSurfaceLevel(offscreenTexture, 0, &offscreen);
+    ok(hr == D3D_OK, "Can't get offscreen surface, hr = %08x\n", hr);
+    if(!offscreen) {
+        goto out;
+    }
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(hr == D3D_OK, "SetVertexShader failed, hr = %08x\n", hr);
+
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MINFILTER, D3DTEXF_NONE);
+    ok(SUCCEEDED(hr), "SetTextureStageState D3DSAMP_MINFILTER failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAGFILTER, D3DTEXF_NONE);
+    ok(SUCCEEDED(hr), "SetTextureStageState D3DSAMP_MAGFILTER failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %s\n", DXGetErrorString8(hr));
+
+    if(IDirect3DDevice8_BeginScene(device) == D3D_OK) {
+        hr = IDirect3DDevice8_SetRenderTarget(device, offscreen, depthstencil);
+        ok(hr == D3D_OK, "SetRenderTarget failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
+        ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
+
+        /* Draw without textures - Should resut in a white quad */
+        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice8_SetRenderTarget(device, backbuffer, depthstencil);
+        ok(hr == D3D_OK, "SetRenderTarget failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *) offscreenTexture);
+        ok(hr == D3D_OK, "SetTexture failed, %s\n", DXGetErrorString8(hr));
+
+        /* This time with the texture */
+        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %08x\n", hr);
+
+        IDirect3DDevice8_EndScene(device);
+    }
+
+    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+
+    /* Center quad - should be white */
+    color = getPixelColor(device, 320, 240);
+    ok(color == 0x00ffffff, "Offscreen failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    /* Some quad in the cleared part of the texture */
+    color = getPixelColor(device, 170, 240);
+    ok(color == 0x00ff00ff, "Offscreen failed: Got color 0x%08x, expected 0x00ff00ff.\n", color);
+    /* Part of the originally cleared back buffer */
+    color = getPixelColor(device, 10, 10);
+    ok(color == 0x00ff0000, "Offscreen failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+    if(0) {
+        /* Lower left corner of the screen, where back buffer offscreen rendering draws the offscreen texture.
+        * It should be red, but the offscreen texture may leave some junk there. Not tested yet. Depending on
+        * the offscreen rendering mode this test would succeed or fail
+        */
+        color = getPixelColor(device, 10, 470);
+        ok(color == 0x00ff0000, "Offscreen failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
+    }
+
+out:
+    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
+
+    /* restore things */
+    if(backbuffer) {
+        hr = IDirect3DDevice8_SetRenderTarget(device, backbuffer, depthstencil);
+        IDirect3DSurface8_Release(backbuffer);
+    }
+    if(offscreenTexture) {
+        IDirect3DTexture8_Release(offscreenTexture);
+    }
+    if(offscreen) {
+        IDirect3DSurface8_Release(offscreen);
+    }
+    if(depthstencil) {
+        IDirect3DSurface8_Release(depthstencil);
+    }
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice8 *device_ptr;
@@ -669,6 +788,7 @@ START_TEST(visual)
     clear_test(device_ptr);
     fog_test(device_ptr);
     present_test(device_ptr);
+    offscreen_test(device_ptr);
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
     {
