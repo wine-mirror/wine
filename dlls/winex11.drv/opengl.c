@@ -123,9 +123,12 @@ typedef struct wine_glpbuffer {
     int*       attribList;
     HDC        hdc;
 
-    int        use_render_texture;
+    int        use_render_texture; /* This is also the internal texture format */
+    int        texture_bind_target;
+    int        texture_bpp;
+    GLint      texture_format;
     GLuint     texture_target;
-    GLuint     texture_bind_target;
+    GLenum     texture_type;
     GLuint     texture;
     int        texture_level;
 } Wine_GLPBuffer;
@@ -2027,23 +2030,41 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
                         switch (attr_v) {
                             case WGL_TEXTURE_RGB_ARB:
                                 object->use_render_texture = GL_RGB;
+                                object->texture_bpp = 3;
+                                object->texture_format = GL_RGB;
+                                object->texture_type = GL_UNSIGNED_BYTE;
                                 break;
                             case WGL_TEXTURE_RGBA_ARB:
                                 object->use_render_texture = GL_RGBA;
+                                object->texture_bpp = 4;
+                                object->texture_format = GL_RGBA;
+                                object->texture_type = GL_UNSIGNED_BYTE;
                                 break;
 
                             /* WGL_FLOAT_COMPONENTS_NV */
                             case WGL_TEXTURE_FLOAT_R_NV:
                                 object->use_render_texture = GL_FLOAT_R_NV;
+                                object->texture_bpp = 4;
+                                object->texture_format = GL_RED;
+                                object->texture_type = GL_FLOAT;
                                 break;
                             case WGL_TEXTURE_FLOAT_RG_NV:
                                 object->use_render_texture = GL_FLOAT_RG_NV;
+                                object->texture_bpp = 8;
+                                object->texture_format = GL_LUMINANCE_ALPHA;
+                                object->texture_type = GL_FLOAT;
                                 break;
                             case WGL_TEXTURE_FLOAT_RGB_NV:
                                 object->use_render_texture = GL_FLOAT_RGB_NV;
+                                object->texture_bpp = 12;
+                                object->texture_format = GL_RGB;
+                                object->texture_type = GL_FLOAT;
                                 break;
                             case WGL_TEXTURE_FLOAT_RGBA_NV:
                                 object->use_render_texture = GL_FLOAT_RGBA_NV;
+                                object->texture_bpp = 16;
+                                object->texture_format = GL_RGBA;
+                                object->texture_type = GL_FLOAT;
                                 break;
                             default:
                                 ERR("Unknown texture format: %x\n", attr_v);
@@ -2703,7 +2724,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
             FIXME("partial stub!\n");
         }
 
-        buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 4*object->width*object->height);
+        buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->texture_bpp*object->width*object->height);
         if(!buf) {
             ERR("Unable to allocate a buffer for render_texture emulation\n");
             return GL_FALSE;
@@ -2714,11 +2735,11 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
 
         /* Switch to our pbuffer and readback its contents */
         pglXMakeCurrent(gdi_display, object->drawable, tmp_context);
-        pglReadPixels(0, 0, object->width, object->height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+        pglReadPixels(0, 0, object->width, object->height, object->texture_format, object->texture_type, buf);
 
         /* Switch back to the original drawable and upload the pbuffer-texture */
         pglXMakeCurrent(object->display, prev_drawable, prev_context);
-        pglTexImage2D(object->texture_target, 0, GL_RGBA8, object->width, object->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+        pglTexImage2D(object->texture_target, 0, object->use_render_texture, object->width, object->height, 0, object->texture_format, object->texture_type, buf);
 
         pglXDestroyContext(gdi_display, tmp_context);
         HeapFree(GetProcessHeap(), 0, buf);
