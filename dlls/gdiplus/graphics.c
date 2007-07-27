@@ -750,7 +750,7 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
                                      &ptcopy[j - 1].X, &ptcopy[j - 1].Y,
                                      pen->customstart->inset * pen->width);
 
-                draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customstart,
+                draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
                          pt[j].X, pt[j].Y, pt[j - 1].X,
                          pt[j - 1].Y);
 
