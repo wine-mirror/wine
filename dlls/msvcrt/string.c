@@ -30,23 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-/* INTERNAL: MSVCRT_malloc() based strndup */
-char* msvcrt_strndup(const char* buf, unsigned int size)
-{
-  char* ret;
-  unsigned int len = strlen(buf), max_len;
-
-  max_len = size <= len? size : len + 1;
-
-  ret = MSVCRT_malloc(max_len);
-  if (ret)
-  {
-    memcpy(ret,buf,max_len);
-    ret[max_len] = 0;
-  }
-  return ret;
-}
-
 /*********************************************************************
  *		_mbsdup (MSVCRT.@)
  *		_strdup (MSVCRT.@)

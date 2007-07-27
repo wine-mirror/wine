@@ -115,8 +115,6 @@ extern thread_data_t *msvcrt_get_thread_data(void);
 extern int MSVCRT___lc_codepage;
 
 void   msvcrt_set_errno(int);
-char*  msvcrt_strndup(const char*,unsigned int);
-MSVCRT_wchar_t *msvcrt_wstrndup(const MSVCRT_wchar_t*, unsigned int);
 
 void   _purecall(void);
 void   _amsg_exit(int errnum);
