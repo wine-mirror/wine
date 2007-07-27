@@ -1,3 +1,1738 @@
+2007-07-26  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/advapi32/service.c, dlls/advapi32/tests/service.c:
+	advapi32/service: Fix buffersize calculations for GetServiceDisplayNameW.
+
+	* dlls/advapi32/service.c, dlls/advapi32/tests/service.c:
+	advapi32/service: Forward GetServiceDisplayNameA to GetServiceDisplayNameW.
+
+	* dlls/advapi32/tests/service.c:
+	advapi32/service: Test GetServiceDisplayNameA for service with no displayname.
+
+	* dlls/advapi32/tests/service.c:
+	advapi32/service: More tests for GetServiceDisplayName.
+
+2007-07-26  Aric Stewart <aric@codeweavers.com>
+
+	* dlls/wininet/http.c:
+	wininet: Strip Accept-Encoding from http/1.0 requests.
+
+2007-07-26  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/winspool.drv/info.c:
+	winspool: Return most fields for DRIVER_INFO_4 and 6.
+
+	* dlls/winspool.drv/info.c:
+	winspool: Return the full path in DRIVER_INFO_2 and 3.
+
+	* dlls/winspool.drv/info.c:
+	winspool: Enable all levels for EnumPrinterDrivers + GetPrinterDriver.
+
+	* dlls/winspool.drv/info.c:
+	winspool: Return the full path for the driver.
+
+	* dlls/winspool.drv/info.c:
+	winspool: Use correct path for 16bit drivers.
+
+2007-07-27  Misha Koshelev <mk144210@bcm.edu>
+
+	* dlls/urlmon/tests/protocol.c:
+	urlmon/tests: Make http protocol tests refractory to timing issues.
+
+	* dlls/urlmon/tests/protocol.c:
+	urlmon/tests: Rename received_data event to more general name event_complete.
+
+2007-07-27  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/nsembed.c, dlls/mshtml/nsiface.idl, dlls/mshtml/nsservice.c:
+	mshtml: Fixed a typo.
+
+2007-07-26  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/alter.c, dlls/msi/create.c, dlls/msi/delete.c,
+	  dlls/msi/distinct.c, dlls/msi/insert.c, dlls/msi/join.c,
+	  dlls/msi/msipriv.h, dlls/msi/msiquery.c, dlls/msi/order.c,
+	  dlls/msi/select.c, dlls/msi/streams.c, dlls/msi/table.c,
+	  dlls/msi/tests/db.c, dlls/msi/update.c, dlls/msi/where.c:
+	msi: Implement the MSIMODIFY_UPDATE command in the SELECT view.
+
+	* dlls/msi/custom.c:
+	msi: Initialize the size parameter.
+
+	* dlls/msi/tests/db.c:
+	msi: Add more tests for MSIMODIFY_UPDATE.
+
+2007-07-12  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/dsound/mixer.c:
+	dsound: Allow mixing the same buffer multiple times if we are looping.
+
+2007-07-19  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/winmm/time.c:
+	winmm: Don't operate on freed data in timer.
+
+2007-07-24  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/wineoss.drv/dsrender.c:
+	wineoss: Make sure writepos < buflen for dsrender.
+
+2007-07-19  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/winealsa.drv/dsoutput.c:
+	winealsa: Minor fixes to ds output.
+
+2007-07-17  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/dsound/dsound_main.c:
+	dsound: Some cosmetic changes.
+
+2007-07-12  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/dsound/mixer.c:
+	dsound: Fix CheckEvent in mixer.
+
+	* dlls/dsound/mixer.c:
+	dsound: Make sure secondary_remainder and buflen are aligned to primary buffer
+	in mixer.
+
+2007-07-26  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/oleaut32/typelib2.c:
+	oleaut32: Constify some variables.
+
+2007-07-26  Steven Edwards <winehacker@gmail.com>
+
+	* dlls/version/info.c:
+	version: VerQueryValueA/W NULL pointer check.
+
+2007-07-27  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/winex11.drv/opengl.c:
+	wgl: Fix a typo in the WGL_TEXTURE_TARGET_ARB emulation code.
+
+2007-07-26  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/winex11.drv/opengl.c:
+	wgl: Enable offscreen pixelformats for pbuffers.
+
+	* dlls/winex11.drv/opengl.c:
+	wgl: Replace the GLXFBConfigIDs in the pixelformat list with real GLXFBConfigs.
+
+	* dlls/winex11.drv/opengl.c:
+	wgl: Fill the format table with offscreen pixelformats which are needed for
+	pbuffers.
+
+2007-07-27  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/msvcrt/msvcrt.h, dlls/msvcrt/string.c, dlls/msvcrt/wcs.c:
+	msvcrt: Get rid of the now unused strndup/wstrndup functions.
+
+	* dlls/msvcrt/heap.c:
+	msvcrt: Fixed errno setting in malloc, HeapAlloc doesn't set last error.
+
+	* dlls/msvcrt/dir.c:
+	msvcrt: Fixed buffer allocation in _getcwd/_wgetcwd.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Simply store the assembly type without interpreting it.
+
+2007-07-26  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/kernel32/tests/Makefile.in, dlls/kernel32/tests/actctx.c,
+	  dlls/ntdll/actctx.c:
+	kernel32: Added a number of activation context tests.
+
+2007-07-25  Evan Stade <estade@gmail.com>
+
+	* dlls/gdiplus/tests/pen.c:
+	gdiplus/tests: Added pen dash array tests.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/pen.c, include/gdiplusflat.h:
+	gdiplus: Added GdipSetPenDashArray/GdipGetPenDashArray.
+
+	* dlls/gdiplus/gdiplus.c, dlls/gdiplus/tests/graphicspath.c:
+	gdiplus: Fix arc2polybezier.
+
+	* dlls/gdiplus/tests/graphicspath.c:
+	gdiplus/tests: Added GdipAddPathEllipse test.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/graphicspath.c,
+	  include/gdiplusflat.h:
+	gdiplus: Added GdipAddPathEllipse.
+
+	* dlls/gdiplus/graphics.c:
+	gdiplus: Fix memory leak.
+
+2007-07-25  Juan Lang <juan.lang@gmail.com>
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Test and implement encoding signed messages with authenticated
+	attributes.
+
+	* dlls/crypt32/decode.c:
+	crypt32: Trace a few more items when decoding.
+
+	* dlls/crypt32/decode.c, dlls/crypt32/encode.c,
+	  dlls/crypt32/tests/encode.c:
+	crypt32: Test and fix encoding and decoding of attributes in PKCS signers.
+
+	* dlls/crypt32/crypt32_private.h, dlls/crypt32/decode.c,
+	  dlls/crypt32/msg.c:
+	crypt32: Partially implement decoding of signed messages.
+
+	* dlls/crypt32/decode.c:
+	crypt32: Don't check tag in CRYPT_DecodeDERArray, caller already does.
+
+	* dlls/crypt32/decode.c:
+	crypt32: Actually skip content when skipping an item in a sequence.
+
+	* dlls/crypt32/msg.c:
+	crypt32: Remove redundant assignment.
+
+	* dlls/crypt32/tests/msg.c:
+	crypt32: Add initial tests for decoding signed messages.
+
+	* dlls/crypt32/tests/msg.c:
+	crypt32: Test getting the hash from a hash message with an invalid index.
+
+2007-07-26  Misha Koshelev <mk144210@bcm.edu>
+
+	* dlls/urlmon/tests/protocol.c:
+	urlmon/tests: Don't proceed with POST operation (that will fail) if we run
+	out of memory.
+
+	* dlls/urlmon/tests/protocol.c:
+	urlmon/tests: Fix http protocol tests with absence of BINDF_FROMURLMON to
+	properly expect ReportData.
+
+2007-07-25  Misha Koshelev <mk144210@bcm.edu>
+
+	* dlls/urlmon/http.c:
+	urlmon: Don't free structures that are used by asynchronous HttpSendRequest
+	until we are sure they won't be used.
+
+2007-07-26  Alexandre Julliard <julliard@winehq.org>
+
+	* libs/wine/loader.c:
+	libwine: Get rid of the lookup in the top dlls/ dir, all dlls are named
+	correctly now.
+
+	* dlls/crypt32/encode.c:
+	crypt32: Don't use off_t for memory offsets.
+
+2007-07-25  Rob Shearman <rob@codeweavers.com>
+
+	* dlls/mshtml/editor.c:
+	mshtml: Handle Ctrl-Home and Ctrl-End in edit mode.
+
+2007-07-26  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/wined3d/context.c, dlls/wined3d/device.c, dlls/wined3d/state.c:
+	wined3d: Flip the scissor rect when rendering offscreen.
+
+	* dlls/d3d9/texture.c:
+	d3d9: Trace the Format parameter to IDirect3DDevice9Impl_CreateTexture as
+	hexadecimal.
+
+2007-07-26  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/navigate.c:
+	mshtml: Make sure we have associated listener before calling OnStopRequest.
+
+	* dlls/urlmon/http.c:
+	urlmon: Change some gotos to return.
+
+2007-07-25  Michael Stefaniuc <mstefani@redhat.de>
+
+	* dlls/ntdll/serial.c:
+	ntdll: Remove a break after a break. Found by Smatch.
+
+	* programs/winefile/winefile.c:
+	winefile: Change choose_font() and init_output() to the W form.
+
+	* programs/winefile/winefile.c:
+	winefile: Move the font choosing code to a separate function.
+
+2007-07-25  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/winex11.drv/opengl.c:
+	wgl: Set pbuffer dimensions in HDC.
+
+	* dlls/winex11.drv/opengl.c:
+	opengl: WGL_ARB_render_texture support.
+
+	* dlls/opengl32/wgl.c:
+	opengl32: Relax extension checking.
+
+2007-07-25  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/oleaut32/tmarshal.c:
+	oleaut32: Constify some variables.
+
+2007-07-25  Jason Edmeades <jason.edmeades@googlemail.com>
+
+	* dlls/comctl32/commctrl.c:
+	comctl32: Fix missing toolbar button with HINST_COMMCTRL.
+
+2007-07-16  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/device.c, dlls/wined3d/directx.c,
+	  dlls/wined3d/wined3d_main.c:
+	wined3d: Do not fail if the adapter info can't be initialized.
+
+	* dlls/wined3d/device.c, dlls/wined3d/surface.c,
+	  dlls/wined3d/surface_gdi.c:
+	wined3d: Set the pow2 sizes in gl surface private setup.
+
+	* dlls/wined3d/directx.c:
+	wined3d: Find the shader constant limit at adapter init time.
+
+	* dlls/wined3d/device.c, dlls/wined3d/directx.c:
+	wined3d: Allocate render target management members in Init3D.
+
+2007-07-18  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/device.c:
+	wined3d: Attempt to clean up fbos only if a gl surface is destroyed.
+
+2007-07-26  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Support single quotes around XML attribute values.
+
+	* dlls/ntdll/loader.c:
+	ntdll: Activate the module's activation context while resolving imports and
+	attaching.
+
+2007-07-25  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/loader.c:
+	ntdll: Use activation contexts information to load dlls (based on a patch by
+	Jacek Caban).
+
+2007-07-25  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/kernel32/actctx.c:
+	kernel32: Added FindActCtxSectionStringA implementation.
+
+2007-07-25  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* dlls/kernel32/actctx.c, dlls/ntdll/actctx.c, dlls/ntdll/ntdll.spec,
+	  include/winternl.h:
+	ntdll: Implemented RtlFindActivationContextSectionString.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Implemented FileInformationInAssemblyOfAssemblyInActivationContext
+	option in RtlQueryInformationActivationContext.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Implemented AssemblyDetailedInformationInActivationContext option in
+	RtlQueryInformationActivationContext.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Implemented ActivationContextDetailedInformation option in
+	RtlQueryInformationActivationContext.
+
+2007-07-25  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/kernel32/actctx.c, dlls/ntdll/actctx.c, dlls/ntdll/ntdll.spec,
+	  include/winternl.h:
+	ntdll: Initial implementation of RtlQueryInformationActivationContext.
+	Partially based on a patch by Eric Pouech.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Fix return status when failing to load the associated manifest for
+	a module.
+
+2007-07-26  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Improve some activation context traces.
+
+2007-07-25  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Store the base directory for an assembly (based on a patch by Eric
+	Pouech).
+
+	* dlls/ntdll/loader.c, include/winternl.h:
+	ntdll: Create the per-module activation context at module load time.
+
+	* dlls/ntdll/actctx.c, dlls/ntdll/loader.c, dlls/ntdll/ntdll_misc.h:
+	ntdll: Create the process activation context at initialization time.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Don't add an empty assembly when creating an activation context.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Check existing dependencies in activation context before adding a new one.
+
+2007-07-25  Peter Dons Tychsen <donpedro@tdcadsl.dk>
+
+	* dlls/winex11.drv/window.c:
+	x11drv: Fix the special case where windows have WS_CHILD and WS_POPUP.
+
+2007-07-24  Matt Jones <mattj@google.com>
+
+	* dlls/kernel32/tests/thread.c, server/thread.c:
+	server: Only commit SetThreadPriority if new priority is correct.
+
+	* dlls/kernel32/tests/thread.c:
+	kernel32: Added test for bad arguments to SetThreadPriority, test for correct
+	error value.
+
+2007-07-24  Evan Stade <estade@gmail.com>
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/image.c:
+	gdiplus: Added GdipLoadImageFromStreamICM stub.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/image.c, include/gdiplusflat.h:
+	gdiplus: Added GdipDisposeImage stub.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/graphics.c, include/Makefile.in,
+	  include/gdiplus.h, include/gdiplusflat.h,
+	  include/gdiplusmetaheader.h:
+	gdiplus: Added GdipCreateMetafileFromWmf stub.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/image.c, include/gdiplusenums.h,
+	  include/gdiplusflat.h:
+	gdiplus: Added GdipGetImageType stub.
+
+	* dlls/gdiplus/graphics.c, dlls/gdiplus/pen.c:
+	gdiplus: Limit fixme output.
+
+	* dlls/gdiplus/Makefile.in, dlls/gdiplus/gdiplus.spec,
+	  dlls/gdiplus/image.c, include/gdiplusflat.h:
+	gdiplus: Image getter stubs.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/graphics.c,
+	  include/gdiplusflat.h, include/gdiplusgpstubs.h:
+	gdiplus: Added GdipCreateMetafileFromEmf stub.
+
+	* dlls/gdiplus/graphics.c:
+	gdiplus: Make pen width depend on world transform.
+
+	* dlls/gdiplus/gdiplus_private.h, dlls/gdiplus/graphics.c,
+	  dlls/gdiplus/pen.c:
+	gdiplus: Create gdi pen every time gdi+ pen is used.
+
+	* dlls/gdiplus/graphics.c:
+	gdiplus: Use world transform when drawing points.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/graphics.c, include/gdiplusflat.h:
+	gdiplus: Added GdipSetWorldTransform/GdipGetWorldTransform.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/matrix.c, include/gdiplusflat.h:
+	gdiplus: Added GdipCloneMatrix.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/graphics.c, include/gdiplusflat.h:
+	gdiplus: Added GdipSetPageScale/GdipGetPageScale.
+
+	* dlls/gdiplus/graphics.c:
+	gdiplus: Added support for more page units.
+
+2007-07-25  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user32/tests/win.c:
+	user32/tests: Flush events more aggressively in mouse input test.
+
+	* dlls/gdi32/tests/font.c:
+	gdi32/tests: Don't test default char, it doesn't have to be always the same.
+
+2007-07-24  Nigel Liang <ncliang@gmail.com>
+
+	* dlls/winex11.drv/xim.c:
+	winex11.drv: Take into account position of preedit area in PreEditCaretCallback.
+
+2007-07-24  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/custom.c:
+	msi: Use a different separator as a semi-colon may separate values in the
+	CustomActionData.
+
+2007-07-24  Jason Edmeades <jason.edmeades@googlemail.com>
+
+	* programs/cmd/batch.c:
+	cmd: Fix trap when batch pgm runs another batch pgm.
+
+2007-07-24  Rob Shearman <rob@codeweavers.com>
+
+	* dlls/mshtml/navigate.c:
+	mshtml: Events are reset when a new document URI is loaded, so re-initialise
+	them in start_binding.
+
+	* dlls/mshtml/olewnd.c:
+	mshtml: Set focus to the Gecko window in
+	OleInPlaceActiveObject_OnFrameWindowActivate.
+
+	* dlls/mshtml/editor.c, dlls/mshtml/mshtml_private.h,
+	  dlls/mshtml/nsevents.c, dlls/mshtml/tests/htmldoc.c:
+	mshtml: Call IDocHostUIHandler_HideUI and IDocHostUIHandler_ShowUI when changing
+	an UI active window to be in edit mode.
+	Add tests for the behaviour of changing edit mode when a UI window is active.
+
+	* dlls/mshtml/view.c:
+	mshtml: Pass the correct DOCHOSTUITYPE value to IDocHostUIHandler_ShowUI.
+	Don't reset window_active in OleDocumentView_UIActivate.
+
+	* dlls/mshtml/mshtml_private.h, dlls/mshtml/tests/htmldoc.c,
+	  dlls/mshtml/view.c:
+	mshtml: OleDocumentView_UIActivate should call
+	IOleInPlaceUIWindow_SetActiveObject and IOleInPlaceFrame_SetBorderSpace.
+	Add a test to show this behaviour.
+	Don't call nsIWebBrowserFocus_Activate when just activating the window.
+	Instead call it when UI-activating the window.
+
+2007-07-24  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/wined3d/wined3d_private.h:
+	wined3d: Fix the stretch_rect_fbo() declaration to match the implementation.
+
+	* dlls/wined3d/drawprim.c:
+	wined3d: Pass the correct target to glMultiTexCoord.
+
+2007-07-24  Michael Stefaniuc <mstefani@redhat.de>
+
+	* dlls/wined3d/surface.c:
+	wined3d: Remove a return after a return. Found by Smatch.
+
+	* dlls/mscms/profile.c:
+	mscms: Don't produce unreachable code during conditional compilation.
+
+	* programs/winefile/winefile.c:
+	winefile: Change the settings functions to use the W registry functions.
+
+2007-07-24  Juan Lang <juan.lang@gmail.com>
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Test and implement getting the encoded signers from an encoded
+	signed message.
+
+2007-07-24  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/msxml3/xmlelem.c:
+	msxml3: Cast-qual warning fix.
+
+2007-07-24  Konstantin Kondratyuk <kondratyuk@etersoft.ru>
+
+	* dlls/ntdll/time.c:
+	ntdll: Add Samara time zone.
+
+2007-07-24  Marcus Meissner <marcus@jet.franken.de>
+
+	* dlls/crypt32/encode.c:
+	crypt32: Fixed wrong allocation size.
+
+2007-07-24  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/advapi32/tests/service.c:
+	advapi32/service: Add tests for GetServiceKeyName.
+
+	* dlls/advapi32/tests/service.c:
+	advapi32/service: Close a handle on failure.
+
+	* dlls/advapi32/tests/service.c:
+	advapi32/service: Add another test for GetServiceDisplayName.
+
+2007-07-24  Aric Stewart <aric@codeweavers.com>
+
+	* dlls/ws2_32/socket.c:
+	ws2_32: Initialize the address to 0 in ws_sockaddr_ws2u.
+
+2007-07-22  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/wined3d/device.c, dlls/wined3d/directx.c:
+	wined3d: Create the stateblock in Init3D.
+
+2007-07-23  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/ddraw/ddraw.c, dlls/ddraw/main.c, dlls/ddraw/surface.c:
+	ddraw: Some d3d-only code fixes.
+	Vertex declarations are a d3d feature, thus they should be destroyed
+	before d3d is shut down in wined3d. The surface type should be reset
+	afterwards to prevent avoid gl surface afterwards and before a new
+	render target is created.
+
+2007-07-24  Misha Koshelev <mk144210@bcm.edu>
+
+	* dlls/urlmon/tests/misc.c:
+	urlmon/tests: Release two objects that should be released but are not.
+
+	* dlls/urlmon/internet.c:
+	urlmon: Release IInternetProtocolInfo returned from get_protocol_info when
+	finished with it.
+
+	* dlls/urlmon/bindprot.c:
+	urlmon: LockModule in create_binding_protocol as we ReleaseModule when the
+	object is released.
+
+	* dlls/urlmon/session.c:
+	urlmon: If we are using an internal protocol ClassFactory, call its AddRef as
+	the caller must Release the object.
+
+2007-07-23  Evan Stade <estade@gmail.com>
+
+	* dlls/gdiplus/graphics.c:
+	gdiplus: Use page unit when drawing.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/graphics.c, include/gdiplusflat.h:
+	gdiplus: Added GdipSetPageUnit.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/graphics.c,
+	  include/gdiplusflat.h, include/gdiplusgpstubs.h,
+	  include/gdiplustypes.h:
+	gdiplus: Added GdipFillPolygonI.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/graphics.c, dlls/gdiplus/pen.c,
+	  dlls/gdiplus/tests/pen.c, include/gdiplusflat.h:
+	gdiplus: Implemented GdipSetPenColor.
+
+	* dlls/gdiplus/brush.c, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/tests/pen.c:
+	gdiplus: Implemented GdipSetSolidFillColor/GdipGetSolidFillColor.
+
+	* dlls/gdiplus/tests/pen.c:
+	gdiplus/tests: Added pen brush fill test.
+
+	* dlls/gdiplus/brush.c, dlls/gdiplus/gdiplus.spec, include/gdiplusflat.h:
+	gdiplus: Added GdipSetSolidFillColor and GdipGetSolidFillColor stubs.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/pen.c, include/gdiplusflat.h:
+	gdiplus: Added GdipGetPenBrushFill.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/pen.c, include/gdiplusflat.h:
+	gdiplus: Added GdipGetPenColor stub.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/pen.c, include/gdiplusflat.h:
+	gdiplus: Added GdipSetPenBrushFill.
+
+2007-07-23  Misha Koshelev <mk144210@bcm.edu>
+
+	* dlls/urlmon/binding.c:
+	urlmon: Wrap IHttpNegotiate2 interface exposed by IBindStatusCallback as done
+	by native.
+
+	* dlls/urlmon/tests/url.c:
+	urlmon/tests: Add tests for calls to IHttpNegotiate interfaces as exposed
+	by IBindStatusCallback.
+	Add more tests for specific arguments passed to IHttpNegotiate and
+	IHttpNegotiate2. Note that
+	for OnResponse pszAdditionalHeaders is NULL when called directly from
+	IInternetProtocol (for
+	example as seen in our protocol tests) but non-NULL when these interfaces are
+	exposed by
+	IBindStatusCallback as seen here. Tests conform on Win98 and Winxp.
+
+	* dlls/urlmon/tests/url.c:
+	urlmon/tests: Add tests for calls to IBindStatusCallback_QueryInterface.
+
+	* dlls/urlmon/binding.c:
+	urlmon: Add a reference to the IUnknown for Release of STGMEDIUM to account
+	for extra call to ReleaseBindInfo.
+
+	* dlls/urlmon/file.c:
+	urlmon: ReleaseBindInfo in FileProtocol.
+
+	* dlls/urlmon/binding.c:
+	urlmon: Don't ignore bytes read from IInternetProtocol_Read if hres is not S_OK
+	(e.g., E_PENDING).
+	Bytes can still be read with E_PENDING returned if the whole request could
+	not be satisfied, don't
+	ignore those.
+
+	* dlls/urlmon/http.c:
+	urlmon: Fix timing issue with FLAG_REQUEST_COMPLETE and
+	InternetQueryDataAvailable in HttpProtocol.
+
+2007-07-24  Damjan Jovanovic <damjan.jov@gmail.com>
+
+	* dlls/ws2_32/socket.c:
+	ws2_32: Sending 0 bytes shouldn't cause an infinite loop.
+
+2007-07-23  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/table.c, dlls/msi/tests/db.c:
+	msi: Add handling for the MSIMODIFY_UPDATE command.
+
+	* dlls/msi/tests/db.c:
+	msi: Add tests for the MSIMODIFY_UPDATE command.
+
+	* dlls/msi/alter.c, dlls/msi/table.c:
+	msi: Properly delete the columns view.
+
+2007-07-23  Juan Lang <juan.lang@gmail.com>
+
+	* dlls/crypt32/encode.c, dlls/crypt32/tests/msg.c:
+	crypt32: Test and implement encoding signed data messages with CRLs.
+
+	* dlls/crypt32/encode.c, dlls/crypt32/tests/msg.c:
+	crypt32: Test and implement encoding signed messages with certificates.
+
+	* dlls/crypt32/encode.c:
+	crypt32: Use set encoding function for encoding PKCS signed info.
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Implement getting version from an encoded signed message.
+
+	* dlls/crypt32/tests/msg.c:
+	crypt32: Add tests for getting an encoded signed message's parameters.
+
+	* dlls/crypt32/msg.c:
+	crypt32: Use consistent types for storing and encoding signed encode data.
+
+	* dlls/crypt32/msg.c:
+	crypt32: Separate signer handles from signer info to avoid unnecessary memory
+	allocation.
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Implement getting outer content of a signed message.
+
+	* dlls/crypt32/crypt32_private.h, dlls/crypt32/encode.c,
+	  dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Partially implement encoding signed messages.
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Implement getting the hash for each signer of a signed encoded message.
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Hash and sign data when updating signed messages.
+
+	* dlls/crypt32/msg.c:
+	crypt32: More parameter checking for opening signed encoded messages.
+
+	* dlls/crypt32/tests/msg.c:
+	crypt32: Add tests for opening non-detached signed messages, and clarify
+	detached open.
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Add a partial stub for updating a signed encoded message.
+
+	* dlls/crypt32/tests/msg.c:
+	crypt32: Add tests for signed message encoding.
+
+	* dlls/crypt32/tests/msg.c:
+	crypt32: Add tests for updating signed encoded messages.
+
+	* dlls/crypt32/decode.c:
+	crypt32: Check for and fail on indefinite-length encoding.
+
+	* dlls/crypt32/encode.c:
+	crypt32: Introduce function to encode an array of items as a set.
+
+2007-07-20  Juan Lang <juan.lang@gmail.com>
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Add stub encoded signed message.
+
+	* dlls/crypt32/tests/msg.c:
+	crypt32: Add tests for opening signed message to encode.
+
+2007-07-23  Jason Edmeades <jason.edmeades@googlemail.com>
+
+	* dlls/user32/mdi.c:
+	user32: MDI tile and cascade should not resize non-resizable windows.
+
+	* dlls/user32/mdi.c:
+	user32: Correct trace to log calculated values rather than uninitialized ones.
+
+2007-07-23  Michael Stefaniuc <mstefani@redhat.de>
+
+	* programs/winefile/winefile.c:
+	winefile: Move some self contained functions to use explicit W functions.
+
+	* dlls/wldap32/init.c, dlls/wldap32/misc.c, dlls/wldap32/page.c,
+	  dlls/wldap32/value.c:
+	wldap32: Don't produce unreachable code during conditional compilation. Found
+	bySmatch.
+
+	* programs/winefile/winefile.c:
+	winefile: Replace malloc with HeapAlloc.
+
+2007-07-23  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/advapi32/service.c, dlls/advapi32/tests/service.c:
+	advapi32/service: Handle is checked before servicename.
+
+2007-07-23  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/wined3d/drawprim.c:
+	wined3d: Trace the declaration element type in
+	primitiveDeclarationConvertToStridedData().
+
+	* dlls/wined3d/state.c:
+	wined3d: Don't modify the blending parameters in state_blend().
+
+2007-07-23  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/msi/action.c:
+	msi: Cast-qual warning fix.
+
+2007-07-22  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/dinput/dinput_main.c:
+	dinput: Use more messages as a possible indication of the foreground window
+	changes.
+
+2007-07-20  Evan Stade <estade@gmail.com>
+
+	* dlls/gdiplus/gdiplus.c, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/graphics.c:
+	gdiplus: Change atan2 to gdiplus_arctan2.
+
+	* dlls/gdiplus/graphics.c:
+	gdiplus: Added startcap rendering.
+
+	* dlls/gdiplus/graphics.c:
+	gdiplus: Use base inset for custom line caps.
+
+	* dlls/gdiplus/customlinecap.c, dlls/gdiplus/graphics.c:
+	gdiplus: Added rendering of fill-path type custom line caps.
+
+2007-07-21  Hans Leidekker <hans@it.vu.nl>
+
+	* dlls/pdh/pdh.spec, dlls/pdh/pdh_main.c, dlls/pdh/tests/pdh.c,
+	  include/pdh.h:
+	pdh: Implement and test PdhAddEnglishCounter{A, W} and
+	PdhCollectQueryDataWithTime.
+
+	* dlls/pdh/pdh.spec, dlls/pdh/pdh_main.c, dlls/pdh/tests/pdh.c,
+	  include/pdh.h, include/pdhmsg.h:
+	pdh: Implement and test PdhLookupPerfIndexByName{A, W} and
+	PdhLookupPerfNameByIndex{A, W}.
+
+	* dlls/pdh/pdh_main.c, dlls/pdh/tests/pdh.c:
+	pdh: Add more tests and make them pass.
+
+	* dlls/pdh/pdh_main.c:
+	pdh: Add a stub processor time counter.
+
+2007-07-22  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/winspool.drv/info.c:
+	winspool: Use printenv_t for GetDriverInfoFromReg.
+
+2007-07-22  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/wined3d/pixelshader.c:
+	wined3d: Fix the shader version on some instruction tokens.
+
+	* dlls/wined3d/wined3d_private.h:
+	wined3d: Correctly handle normalized vertex declaration data types.
+
+2007-07-21  Hwang YunSong(황윤성) <hys545@dreamwiz.com>
+
+	* programs/net/Ko.rc, programs/net/rsrc.rc:
+	net: New Korean resource.
+
+	* programs/wordpad/Ko.rc:
+	wordpad: Updated Korean resource.
+
+	* dlls/localui/localui.rc, dlls/localui/ui_Ko.rc:
+	localui: New Korean resource.
+
+2007-07-21  Damjan Jovanovic <damjan.jov@gmail.com>
+
+	* tools/wineshelllink:
+	tools: Add basic support for the startup notifications standard.
+
+	* tools/wine.desktop:
+	tools: Associate wine with the application/x-executable MIME type.
+
+2007-07-20  Misha Koshelev <mk144210@bcm.edu>
+
+	* dlls/urlmon/http.c, dlls/urlmon/tests/protocol.c:
+	urlmon: Add support for non-GET requests (e.g., POST) in HttpProtocol.
+
+	* dlls/urlmon/http.c:
+	urlmon: Actually send the additional headers returned by
+	IHttpNegotiate::BeginningTransaction.
+
+	* dlls/urlmon/http.c:
+	urlmon: Call HttpOpenRequest with INTERNET_FLAG_KEEP_CONNECTION,
+	INTERNET_FLAG_NO_CACHE_WRITE if appropriate.
+
+	* dlls/urlmon/tests/protocol.c:
+	urlmon/tests: Add test for BINDVERB_POST in http_protocol.
+
+2007-07-20  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/alter.c, dlls/msi/create.c, dlls/msi/delete.c,
+	  dlls/msi/distinct.c, dlls/msi/insert.c, dlls/msi/join.c,
+	  dlls/msi/msipriv.h, dlls/msi/order.c, dlls/msi/select.c,
+	  dlls/msi/sql.y, dlls/msi/streams.c, dlls/msi/table.c,
+	  dlls/msi/tests/db.c, dlls/msi/update.c, dlls/msi/where.c:
+	msi: Ref count temporary columns and release them when necessary.
+
+	* dlls/msi/alter.c, dlls/msi/create.c, dlls/msi/delete.c,
+	  dlls/msi/distinct.c, dlls/msi/insert.c, dlls/msi/join.c,
+	  dlls/msi/msipriv.h, dlls/msi/order.c, dlls/msi/query.h,
+	  dlls/msi/select.c, dlls/msi/sql.y, dlls/msi/streams.c,
+	  dlls/msi/table.c, dlls/msi/tests/db.c, dlls/msi/tests/package.c,
+	  dlls/msi/tokenize.c, dlls/msi/update.c, dlls/msi/where.c:
+	msi: Implement adding columns using the ALTER command.
+
+2007-07-20  Juan Lang <juan.lang@gmail.com>
+
+	* dlls/crypt32/msg.c:
+	crypt32: Move decoding hash messages to a helper function.
+
+2007-07-20  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/comcat/information.c:
+	comcat: Cast-qual warning fix.
+
+	* dlls/kernel32/resource.c:
+	kernel32: Cast-qual warning fix.
+
+2007-07-20  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/winex11.drv/event.c:
+	winex11drv: Correctly react to focus loss away from Wine.
+
+	* dlls/user32/tests/msg.c, dlls/user32/tests/win.c, server/window.c:
+	server: Treat desktop as a top-level window.
+
+	* dlls/user32/tests/win.c:
+	user32: Add test for SetForegroundWindow(desktop).
+
+2007-07-22  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/advapi32/tests/service.c:
+	advapi32/service: Add tests for GetDisplayName.
+
+2007-07-20  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/advapi32/tests/security.c:
+	advapi32/tests: Run on NT4 again.
+
+2007-07-20  Rob Shearman <rob@codeweavers.com>
+
+	* dlls/rpcrt4/rpc_defs.h, dlls/rpcrt4/rpc_message.c,
+	  dlls/rpcrt4/rpc_server.c, dlls/rpcrt4/rpc_transport.c:
+	rpcrt4: Convert bind ack and nack reject reasons into RPC status codes when
+	binding.
+
+2007-07-20  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/advapi32/tests/security.c:
+	advapi32: Rename the test to better represent the tested functionality.
+
+	* dlls/winex11.drv/pen.c:
+	winex11.drv: Constify the pen dash data.
+
+2007-07-19  Nigel Liang <ncliang@gmail.com>
+
+	* dlls/user32/edit.c, dlls/winex11.drv/xim.c:
+	winex11.drv: Implement XIMPreEditCaretCallback.
+
+2007-07-19  Evan Stade <estade@gmail.com>
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/pen.c, include/gdiplusflat.h:
+	gdiplus: Added GdipSetPenStartCap.
+
+	* dlls/gdiplus/pen.c:
+	gdiplus: Updated GdipClonePen to clone pen's members by value, not reference.
+
+	* dlls/gdiplus/brush.c, dlls/gdiplus/gdiplus.spec, include/gdiplusflat.h:
+	gdiplus: Added GdipCloneBrush.
+
+	* dlls/gdiplus/brush.c, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/pen.c:
+	gdiplus: Associate a brush with a pen.
+
+	* dlls/gdiplus/graphics.c:
+	gdiplus: Added rendering of custom line caps.
+
+	* dlls/gdiplus/graphics.c:
+	gdiplus: Use atan2 instead of atan.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/pen.c, include/gdiplusflat.h:
+	gdiplus: Added custom line cap setters.
+
+	* dlls/gdiplus/customlinecap.c, dlls/gdiplus/gdiplus.spec,
+	  include/gdiplusflat.h:
+	gdiplus: Added GdipCloneCustomLineCap.
+
+	* dlls/gdiplus/Makefile.in, dlls/gdiplus/customlinecap.c,
+	  dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  include/gdiplusflat.h, include/gdiplusgpstubs.h:
+	gdiplus: Initial custom line caps implementation.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/matrix.c, include/gdiplusflat.h:
+	gdiplus: Added GdipCreateMatrix.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/matrix.c, include/gdiplusflat.h:
+	gdiplus: Added GdipRotateMatrix.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/matrix.c, include/gdiplusflat.h:
+	gdiplus: Added GdipTranslateMatrix.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/matrix.c, include/gdiplusflat.h:
+	gdiplus: Added GdipScaleMatrix.
+
+2007-07-19  Alexander Nicolaysen Sørnes <alex@thehandofagony.com>
+
+	* programs/wordpad/wordpad.c:
+	wordpad: Resize rebar control on window resize.
+
+2007-07-19  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/comctl32/commctrl.c:
+	comctl32: Cast-qual warning fix.
+
+	* dlls/dbghelp/dwarf.c:
+	dbghelp: Cast-qual warnings fix.
+
+	* dlls/dplayx/dplobby.c:
+	dplayx: Cast-qual warning fix.
+
+2007-07-19  Michael Stefaniuc <mstefani@redhat.de>
+
+	* dlls/oleaut32/vartype.c:
+	oleaut32: Remove a return after return.
+
+2007-07-19  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/advapi32/tests/service.c:
+	advapi32/service: Some 'refcount' tests.
+
+	* dlls/advapi32/service.c:
+	advapi32/service: lpBinaryPathName is mandatory.
+
+2007-07-19  Anatoly Lyutin <vostok@etersoft.ru>
+
+	* dlls/kernel32/tests/path.c:
+	kernel32/tests: Add test for GetShortPathNameW.
+
+	* programs/cmd/wcmdmain.c:
+	cmd: Use toupperW instead of toupper.
+
+	* dlls/user32/painting.c:
+	user32: Add comment to a function.
+
+2007-07-19  Juan Lang <juan.lang@gmail.com>
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Implement querying computed hash of a decoded hash message.
+
+	* dlls/crypt32/msg.c:
+	crypt32: Store hash algorithm ID along with other parameters when decoding a
+	hash message.
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Store (most) parameters of a decoded hash message.
+
+2007-07-19  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/user32/tests/class.c:
+	user32/tests: Simplify a test.
+
+	* dlls/comctl32/comctl32.h, dlls/comctl32/comctl32undoc.c,
+	  dlls/comctl32/tooltips.c:
+	comctl32: tooltips: Remove broken support for non-NULL-terminated strings in
+	TOOLTIPS_GetDispInfo[AW].
+
+	* dlls/comctl32/tests/toolbar.c, dlls/comctl32/toolbar.c:
+	comctl32: toolbar: Test and fix invalid indexes passed in TB_ISBUTTON*.
+
+2007-07-19  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* include/winuser.h:
+	winuser.h: Add RealChildWindowFromPoint declaration.
+
+2007-07-20  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Add support for abbreviated empty elements in manifests.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Don't fail to load manifests that contain unknown elements or attributes.
+	Print FIXMEs for errors that really cause the loading to fail.
+
+2007-07-19  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Add support for optional flag in dependencies.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Cope with missing assemblyIdentity elements in manifests.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Skip xml comments in manifests.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added manifest lookup in global winsxs directory (based on a patch by
+	Jacek Caban).
+
+2007-07-19  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/ntdll/loader.c, dlls/ntdll/ntdll_misc.h:
+	ntdll: Store the windows directory too.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added parsing of the asmv2:hash element in manifests.
+
+2007-07-19  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added parsing of the binding redirect element in manifests.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added parsing of the clrClass and clrSurrogate elements in manifests.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added parsing of the external proxy element in manifests.
+
+2007-07-19  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Abstract the entity array type as we need it for assemblies too.
+
+2007-07-19  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added parsing of the description element in manifests.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added parsing of the language attribute in manifests.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added parsing of the inheritance flags in manifests.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added parsing of hash attributes in manifests.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added parsing of public key token in manifests.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added support for the assembly leaves of activation contexts.
+
+2007-07-19  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added parsing of file elements in manifests.
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Add parsing of dependencies in manifests.
+
+2007-07-19  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Add infrastructure for loading manifest dependencies (based on a patch
+	by Eric Pouech).
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Add parsing of the version in manifests (based on a patch by Jacek Caban).
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Add parsing of the processor architecture in manifests.
+
+2007-07-19  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Beginnings of manifest parsing.
+
+2007-07-19  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Add infrastructure for loading a manifest file or resource.
+	Partially based on a patch by Eric Pouech.
+
+2007-07-19  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* dlls/ntdll/actctx.c:
+	ntdll: Added basic structures for storing activation context assembly
+	information.
+
+2007-07-19  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/kernel32/actctx.c, dlls/kernel32/thread.c, dlls/ntdll/actctx.c,
+	  dlls/ntdll/ntdll.spec, include/winternl.h:
+	ntdll: Implemented handling of the per-thread activation context stack.
+
+	* dlls/kernel32/actctx.c, dlls/ntdll/Makefile.in, dlls/ntdll/actctx.c,
+	  dlls/ntdll/ntdll.spec, include/winternl.h:
+	kernel32: Move activation context creation to ntdll (based on a patch by
+	Eric Pouech).
+
+	* dlls/ntdll/ntdll_misc.h, dlls/ntdll/signal_i386.c, dlls/ntdll/thread.c,
+	  include/thread.h, include/winternl.h, tools/winebuild/relay.c:
+	ntdll: Move private data to make room in the TEB for the activation context data.
+
+2007-07-18  Martin Fuchs <martin-fuchs@gmx.net>
+
+	* dlls/shell32/shlfileop.c:
+	shell32: Implementation of SheGetDirA/W and SheChangeDirA/W.
+
+2007-07-18  Alexander Nicolaysen Sørnes <alex@thehandofagony.com>
+
+	* .gitignore, programs/wordpad/Makefile.in, programs/wordpad/resource.h,
+	  programs/wordpad/rsrc.rc, programs/wordpad/wordpad.c:
+	wordpad: Add date/time toolbar button.
+
+	* programs/wordpad/De.rc, programs/wordpad/En.rc, programs/wordpad/Fr.rc,
+	  programs/wordpad/Hu.rc, programs/wordpad/Ko.rc,
+	  programs/wordpad/Nl.rc, programs/wordpad/No.rc,
+	  programs/wordpad/Pl.rc, programs/wordpad/Ru.rc,
+	  programs/wordpad/Tr.rc, programs/wordpad/resource.h,
+	  programs/wordpad/wordpad.c:
+	wordpad: Add date/time dialog.
+
+2007-07-18  Evan Stade <estade@gmail.com>
+
+	* dlls/gdi32/painting.c:
+	gdi32: Improved PolyDraw in path closed case.
+
+2007-07-19  Huw Davies <huw@codeweavers.com>
+
+	* dlls/wininet/internet.c, dlls/wininet/wininet.spec:
+	wininet: Stub for InternetQueryFortezzaStatus().
+
+2007-07-18  Juan Lang <juan.lang@gmail.com>
+
+	* dlls/msi/install.c:
+	msi: Return FALSE from MsiGetMode for MSIRUNMODE_OPERATIONS.
+
+	* include/wincrypt.h:
+	wincrypt: Add more missing definitions.
+
+2007-07-12  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/msxml3/tests/xmldoc.c:
+	msxml3/tests: Avoid a crash that happens on some native systems.
+
+2007-07-18  Evan Stade <estade@gmail.com>
+
+	* dlls/winex11.drv/graphics.c, dlls/winex11.drv/pen.c,
+	  dlls/winex11.drv/x11drv.h:
+	winex11.drv: Draw dashed lines for extended pens.
+
+2007-07-19  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Fix the buffer bounds check.
+
+2007-07-18  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/alter.c, dlls/msi/create.c, dlls/msi/delete.c,
+	  dlls/msi/distinct.c, dlls/msi/insert.c, dlls/msi/join.c,
+	  dlls/msi/msipriv.h, dlls/msi/order.c, dlls/msi/select.c,
+	  dlls/msi/streams.c, dlls/msi/table.c, dlls/msi/tests/db.c,
+	  dlls/msi/update.c, dlls/msi/where.c:
+	msi: Implement reference counting for tables, manipulated with the HOLD and
+	FREE sql commands.
+
+	* dlls/msi/tests/db.c:
+	msi: Add more tests for the ALTER command.
+
+2007-07-18  Misha Koshelev <mk144210@bcm.edu>
+
+	* dlls/urlmon/tests/protocol.c:
+	urlmon/tests: Add tests for HttpProtocol behavior when it is called without
+	the BINDF_FROMURLMON flag.
+
+	* dlls/urlmon/http.c:
+	urlmon: Implement HttpProtocol::Terminate.
+
+	* dlls/urlmon/http.c:
+	urlmon: Fix HttpProtocol behavior when it is called without the BINDF_FROMURLMON
+	flag.
+
+	* dlls/urlmon/tests/protocol.c:
+	urlmon/tests: Fix http_protocol tests to succeed when called more than once.
+
+	* dlls/urlmon/tests/protocol.c:
+	urlmon/tests: Fix http_protocol tests to succeed on Win98.
+
+	* dlls/urlmon/http.c:
+	urlmon: Use InternetCloseHandle instead of CloseHandle.
+
+	* dlls/urlmon/http.c:
+	urlmon: Remove FLAG_CALLED_SWITCH, which is now redundant.
+
+2007-07-19  Michael Stefaniuc <mstefani@redhat.de>
+
+	* tools/winedump/msc.c, tools/winedump/msmangle.c:
+	tools: Remove unreachable break after return/break. Found by Smatch.
+
+	* programs/notepad/dialog.c, programs/regedit/framewnd.c,
+	  programs/regedit/listview.c, programs/taskmgr/taskmgr.c,
+	  programs/winedbg/be_i386.c, programs/winedbg/gdbproxy.c,
+	  programs/wordpad/wordpad.c:
+	programs: Remove unreachable break after return/break. Found by Smatch.
+
+	* dlls/comctl32/ipaddress.c, dlls/msi/cond.y, dlls/sane.ds/ui.c,
+	  dlls/user32/tests/win.c, dlls/winex11.drv/init.c:
+	dlls: Remove unreachable break after return/break. Found by Smatch.
+
+2007-07-18  Michael Stefaniuc <mstefani@redhat.de>
+
+	* programs/winhelp/winhelp.c:
+	winhelp: Add missing case label "default". Found by Smatch (unreached code).
+
+	* dlls/ntdll/cdrom.c, dlls/ntdll/serial.c:
+	ntdll: Don't produce unreachable code during conditional compilation. Found
+	by Smatch.
+
+2007-07-19  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/wined3d/swapchain.c:
+	wined3d: glXSwapBuffers needs a GLX context.
+
+2007-07-18  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/spoolss/spoolss.spec, dlls/spoolss/spoolss_main.c:
+	spoolss: Add a stub for ImpersonatePrinterClient.
+
+2007-07-18  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/advapi32/service.c, dlls/advapi32/tests/service.c:
+	advapi32/service: Some tests for DeleteService.
+
+	* dlls/advapi32/service.c, dlls/advapi32/tests/service.c:
+	advapi32/service: Check for duplicate displayname.
+
+	* dlls/advapi32/tests/service.c:
+	advapi32/service: Cleanup (long lines and a typo).
+
+2007-07-18  Rob Shearman <rob@codeweavers.com>
+
+	* dlls/advapi32/tests/security.c:
+	advapi32: Add tests for ConvertStringSecurityDescriptorToSecurityDescriptor.
+
+	* dlls/advapi32/security.c:
+	advapi32: Set the right pointer so that StringAcl is updated correct in
+	ParseAceStringRights.
+	The number of allowed hex digits should be 8, not 6.
+
+	* dlls/advapi32/security.c:
+	advapi32: Don't crash in ConvertStringSecurityDescriptorToSecurityDescriptorW
+	if LocalAlloc fails.
+
+	* dlls/advapi32/security.c:
+	advapi32: Add the size of the security descriptor structure to the size of
+	memory required in ParseStringSecurityDescriptorToSecurityDescriptor.
+
+	* dlls/advapi32/security.c:
+	advapi32: Fix a typo in ParseStringAclToAcl which caused the ACE to be written
+	inside of the ACL memory.
+
+	* dlls/advapi32/security.c:
+	advapi32: Fix ComputeStringSidSize to work with SIDs with one sub authority.
+	Use GetSidLengthRequired instead of computing the length in a way that
+	won't always be correct.
+
+2007-07-18  Huw Davies <huw@codeweavers.com>
+
+	* dlls/wininet/urlcache.c, dlls/wininet/wininet.spec:
+	wininet: Stubs for IsUrlCacheEntryExpired[AW].
+
+	* dlls/wininet/internet.c, dlls/wininet/tests/internet.c:
+	wininet: Certain options of InternetQueryOption can take a NULL handle, so
+	don't do the NULL handle check at the beginning.
+
+2007-07-18  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/user32/tests/msg.c:
+	user32/test: Destroy no longer needed test dialog windows.
+
+2007-07-17  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/advapi32/tests/service.c:
+	advapi32/service: Test for duplicate displayname.
+
+2007-07-17  Hwang YunSong(황윤성) <hys545@dreamwiz.com>
+
+	* programs/wordpad/Ko.rc:
+	wordpad: Updated Korean resource.
+
+	* programs/cmd/Ko.rc:
+	cmd: Updated Korean resource.
+
+2007-07-17  Evan Stade <estade@gmail.com>
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/matrix.c,
+	  include/gdiplusenums.h, include/gdiplusflat.h,
+	  include/gdiplusgpstubs.h:
+	gdiplus: Added GdipMultiplyMatrix.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/pen.c, include/gdiplusflat.h:
+	gdiplus: Added GdipGetPenDashStyle.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/pen.c, include/gdiplusflat.h:
+	gdiplus: Added GdipClonePen.
+
+2007-07-18  Detlef Riekenberg <wine.dev@web.de>
+
+	* include/winspool.h:
+	include/winspool.h: Add missing struct.
+
+2007-07-17  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/package.c:
+	msi: Only double the size if the remote call is from MsiGetPropertyA.
+
+	* dlls/msi/custom.c:
+	Revert "msi: Only call a custom action remotely if the type is
+	msidbCustomActionTypeInScript."
+	This reverts f2ae31000b6d6c105838fad36c17ba1fb1f5524b commit.
+
+2007-07-18  Michael Stefaniuc <mstefani@redhat.de>
+
+	* dlls/wined3d/utils.c:
+	wined3d: Remove unreachable code: break after return. Found by Smatch.
+
+2007-07-17  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/comdlg32/filedlg31.c:
+	comdlg32: Cast-qual warning fix.
+
+2007-07-17  Juan Lang <juan.lang@gmail.com>
+
+	* dlls/crypt32/tests/msg.c:
+	crypt32: Add a couple more parameter tests for hash messages.
+
+	* include/wincrypt.h:
+	crypt32: Fix typo.
+
+	* dlls/crypt32/msg.c:
+	crypt32: Use property list for decoded message parameters.
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Implement getting content of a data message.
+
+	* dlls/crypt32/tests/msg.c:
+	crypt32: Add a few tests for decoded message parameters.
+
+	* dlls/crypt32/decode.c:
+	crypt32: Fix a bad comment.
+
+	* dlls/crypt32/crypt32_private.h, dlls/crypt32/decode.c,
+	  dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Implement decoding hash messages.
+
+	* dlls/crypt32/decode.c:
+	crypt32: Remove a redundant line.
+
+	* dlls/crypt32/tests/msg.c:
+	crypt32: Add tests for decoding a hash message.
+
+	* dlls/crypt32/crypt32_private.h, dlls/crypt32/encode.c,
+	  dlls/crypt32/msg.c:
+	crypt32: Move digested data encoding to encode.c.
+
+2007-07-17  Rob Shearman <rob@codeweavers.com>
+
+	* dlls/rpcrt4/rpc_message.c:
+	rpcrt4: Add some more RPC to NCA status code mappings.
+	Add RPC_S_SEC_PKG_ERROR to the list of "hard" errors.
+
+2007-07-16  Evan Stade <estade@gmail.com>
+
+	* dlls/gdi32/gdi_private.h, dlls/gdi32/painting.c, dlls/gdi32/path.c,
+	  dlls/gdi32/tests/path.c:
+	gdi32: Added PATH_PolyDraw.
+
+	* dlls/gdi32/tests/path.c:
+	gdi32: Added PolyDraw tests.
+
+2007-07-17  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/winealsa.drv/waveinit.c:
+	winealsa: Make sure we can set volume before reporting WAVECAPS_VOLUME.
+
+2007-07-16  James Hawkins <truiken@gmail.com>
+
+	* dlls/vdmdbg/vdmdbg.c, dlls/vdmdbg/vdmdbg.spec, include/Makefile.in,
+	  include/vdmdbg.h:
+	vdmdbg: Add a stub implementation of VDMEnumTaskWOW.
+
+2007-07-13  Kovács András <andras@csevego.net>
+
+	* .gitignore, include/Makefile.in, include/d3d10.idl, include/dxgi.idl,
+	  include/dxgitype.idl:
+	include: Add some idl headers for d3d10.
+
+2007-07-17  Alexandre Julliard <julliard@winehq.org>
+
+	* tools/widl/header.c, tools/widl/parser.l, tools/widl/parser.y,
+	  tools/widl/typegen.c, tools/widl/widltypes.h:
+	widl: Added support for floating-point constants.
+
+2007-07-16  Evan Stade <estade@gmail.com>
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/graphicspath.c,
+	  include/gdiplusflat.h:
+	gdiplus: Added GdipAddPathBeziers.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/pen.c, include/gdiplusenums.h, include/gdiplusflat.h,
+	  include/gdiplusgpstubs.h:
+	gdiplus: Added GdipSetPenDashStyle.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/pathiterator.c,
+	  include/gdiplusflat.h:
+	gdiplus: Added GdipPathIterRewind.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/pathiterator.c,
+	  include/gdiplusflat.h:
+	gdiplus: Added GdipPathIterNextSubpath.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/pathiterator.c,
+	  include/gdiplusflat.h:
+	gdiplus: Added GdipPathIterCopyData.
+
+	* dlls/gdiplus/Makefile.in, dlls/gdiplus/gdiplus.spec,
+	  dlls/gdiplus/gdiplus_private.h, dlls/gdiplus/pathiterator.c,
+	  include/gdiplusflat.h, include/gdiplusgpstubs.h:
+	gdiplus: Initial path iterator implementation.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/pen.c, include/gdiplusflat.h:
+	gdiplus: Added GdipSetPenMiterLimit.
+
+	* dlls/gdiplus/gdiplus.spec:
+	gdiplus: Export GdipSetPenLineJoin.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/pen.c, include/gdiplusenums.h, include/gdiplusflat.h,
+	  include/gdiplusgpstubs.h:
+	gdiplus: Added GdipSetPenLineCap197819.
+
+2007-07-16  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/custom.c:
+	msi: Only call a custom action remotely if the type is
+	msidbCustomActionTypeInScript.
+
+	* dlls/msi/action.c, dlls/msi/msipriv.h, dlls/msi/package.c,
+	  dlls/msi/string.c, dlls/msi/table.c, dlls/msi/tests/install.c:
+	msi: Load the AdminProperties stream if the package is an Admin package.
+
+2007-07-15  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/dinput/dinput_main.c, dlls/dinput/tests/mouse.c:
+	dinput: Use CALLWINDPROC hook to monitor focus loses away from acquired windows.
+
+	* dlls/dinput/dinput_main.c:
+	dinput: Use PostMessage instead of SendMessage. Remove message window.
+
+2007-07-16  Tim Schwartz <tim@sanityinternet.com>
+
+	* dlls/netapi32/access.c, dlls/netapi32/netapi32.spec:
+	netapi32: Add NetUseAdd() stub.
+
+2007-07-16  Kirill K. Smirnov <lich@math.spbu.ru>
+
+	* programs/start/start.c:
+	programs/start: use SEE_MASK_NO_CONSOLE flag as default.
+	Allows to start console applications in a new window (as Windows does).
+
+	* dlls/shell32/shlexec.c:
+	shell32: Add support for SEE_MASK_NO_CONSOLE flag.
+
+2007-07-16  Michael Stefaniuc <mstefani@redhat.de>
+
+	* dlls/shell32/shlfolder.c:
+	shell32: Fix missing unlock on an error path. Found by Smatch.
+
+2007-07-15  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/advapi32/service.c, dlls/advapi32/tests/service.c:
+	advapi32/service: Check combination of service-type and start-type.
+
+2007-07-16  Rob Shearman <rob@codeweavers.com>
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Never allocate memory for the discriminant in union_arm_unmarshall as
+	the memory is part of the union and has already been allocated.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Check to make sure there is enough data in the buffer during
+	unmarshalling, so that the code doesn't try to read beyound the end of the
+	buffer.
+
+	* dlls/rpcrt4/ndr_marshall.c, dlls/rpcrt4/tests/ndr_marshall.c:
+	rpcrt4: Even though FC_ENUM16 is an unsigned type, the highest allowable value
+	that can be marshalled is SHRT_MAX, not USHRT_MAX.
+
+	* dlls/ole32/compobj.c:
+	ole32: Remove some dead code.
+	CoFreeUnusedLibraries doesn't do anything and COM_FlushMessageQueue
+	won't actually allow any RPCs to be processed as the apartment has
+	already been destroyed.
+
+2007-07-16  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/pdh/pdh.spec:
+	pdh: Forward PdhOpenQuery to PdhOpenQueryW.
+
+2007-07-16  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/kernel32/file.c, dlls/kernel32/sync.c, dlls/kernel32/vxd.c:
+	kernel32: Always clear the I/O status block count before calling ntdll functions.
+
+	* dlls/kernel32/tests/pipe.c, dlls/ntdll/sync.c,
+	  include/wine/server_protocol.h, server/protocol.def,
+	  server/request.h, server/thread.c, server/trace.c:
+	server: Merge APC processing into the select request.
+	This is needed to return the correct value when one of the handles
+	being waited on is set to signaled state by the APC.
+
+	* dlls/kernel32/file.c, dlls/kernel32/tests/pipe.c:
+	kernel32: Wait in overlapped Read/WriteFile even when no overlapped structure
+	is passed.
+
+2007-07-13  Evan Stade <estade@gmail.com>
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/graphics.c,
+	  include/gdiplusflat.h:
+	gdiplus: Added GdipFillPath.
+
+	* dlls/gdiplus/graphics.c:
+	gdiplus: Simplified GdipDrawPath by moving more of the code to the helpers.
+
+	* dlls/gdiplus/tests/graphics.c:
+	gdiplus: Added GpGraphics save/restore tests.
+
+	* dlls/gdiplus/tests/Makefile.in, dlls/gdiplus/tests/graphics.c:
+	gdiplus: Constructor tests for GpGraphics.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/graphics.c,
+	  include/gdiplusenums.h, include/gdiplusflat.h:
+	gdiplus: GdipSaveGraphics/GdipRestoreGraphics stubs.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/graphics.c, include/gdiplusenums.h,
+	  include/gdiplusflat.h:
+	gdiplus: Added pixel offset mode.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/graphics.c, include/gdiplusenums.h,
+	  include/gdiplusflat.h:
+	gdiplus: Added interpolation mode.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/graphics.c, include/gdiplusenums.h,
+	  include/gdiplusflat.h:
+	gdiplus: Added compositing quality.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/gdiplus_private.h,
+	  dlls/gdiplus/graphics.c, include/gdiplusenums.h,
+	  include/gdiplusflat.h:
+	gdiplus: Added smoothing modes.
+
+	* dlls/gdiplus/gdiplus.spec, dlls/gdiplus/graphicspath.c,
+	  include/gdiplusflat.h:
+	gdiplus: Added GdipSetPathFillMode.
+
+2007-07-16  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/shell32/shlfolder.c:
+	shell32: Add a cache for queried shell folder interfaces.
+
+2007-07-15  Misha Koshelev <mk144210@bcm.edu>
+
+	* dlls/wininet/internet.c:
+	wininet: Fix behavior of InternetQueryDataAvailable if INTERNET_FLAG_ASYNC
+	is set.
+
+	* dlls/urlmon/http.c:
+	urlmon: Fix HttpProtocol behavior when InternetQueryDataAvailable returns
+	ERROR_IO_PENDING.
+
+	* dlls/wininet/tests/http.c:
+	wininet/tests: Add testing framework and tests for internet status callbacks.
+
+	* dlls/wininet/tests/http.c:
+	wininet/tests: Properly handle ERROR_IO_PENDING from InternetQueryDataAvailable.
+
+2007-07-14  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/msvcrt/except.c:
+	msvcrt: Preserve registers when calling unwind function.
+
+2007-07-16  Huw Davies <huw@codeweavers.com>
+
+	* dlls/kernel32/tests/pipe.c:
+	kernel32: Overlapped pipe tests.
+
+2007-07-16  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/shlwapi/ordinal.c, dlls/shlwapi/shlwapi.spec:
+	shlwapi: Fix parameter types of SHGetIniStringW.
+
+2007-07-15  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/wined3d/wined3d_private.h:
+	wined3d: Fix STATE_IS_ACTIVELIGHT.
+
+2007-07-14  Alec Berryman <alec@thened.net>
+
+	* dlls/itss/chm_lib.c:
+	itss: Replace malloc/free with HeapAlloc/HeapFree.
+
+2007-07-13  Juan Lang <juan.lang@gmail.com>
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Implement decoding data messages (when opened in non-streaming mode).
+
+	* dlls/crypt32/msg.c, dlls/crypt32/tests/msg.c:
+	crypt32: Partially implement updating decode messages.
+
+	* dlls/crypt32/msg.c:
+	crypt32: Store crypt provider in decode message.
+
+	* dlls/crypt32/decode.c, dlls/crypt32/tests/crl.c,
+	  dlls/crypt32/tests/encode.c:
+	crypt32: Fix decoding sequences with extra trailing data.
+
+	* dlls/crypt32/tests/encode.c:
+	crypt32: Add test showing extra trailing bytes should be tolerated in encoded
+	data.
+
+2007-07-15  Damjan Jovanovic <damjan.jov@gmail.com>
+
+	* dlls/ws2_32/socket.c:
+	ws2_32: Update WSASendTo's iovec properly.
+
+2007-07-13  Jeremy White <jwhite@codeweavers.com>
+
+	* dlls/gdi32/tests/bitmap.c:
+	gdi32: Added a test for the case where lpvBits in GetDIBits is NULL and the
+	bitcount is 0.
+
+	* dlls/gdi32/dib.c:
+	gdi32:	Do not fill in the color table if lpvBits is NULL.
+
+2007-07-13  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* tools/winedump/search.c:
+	winedump: Cast-qual warnings fix.
+
+2007-07-13  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/msi/tests/install.c:
+	msi/tests: Don't create a directory that's not needed.
+
+2007-07-13  Aric Stewart <aric@codeweavers.com>
+
+	* dlls/user32/user32.spec:
+	user32: Change SetDeskWallPaper spec.
+
+2007-07-13  Alexandre Julliard <julliard@winehq.org>
+
+	* ANNOUNCE, ChangeLog, VERSION, configure:
+	Release 0.9.41.
+
+----------------------------------------------------------------
 2007-07-13  Paul Vriens <paul.vriens.wine@gmail.com>
 
 	* dlls/mscms/tests/profile.c:
