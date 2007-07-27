@@ -759,9 +759,17 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
         }
       }
       break ;
-
+    case WGL_FLOAT_COMPONENTS_NV:
+      pop = iWGLAttr[++cur];
+      PUSH2(oGLXAttr, GLX_FLOAT_COMPONENTS_NV, pop);
+      TRACE("pAttr[%d] = GLX_FLOAT_COMPONENTS_NV: %x\n", cur, pop);
+      break ;
     case WGL_BIND_TO_TEXTURE_RGB_ARB:
     case WGL_BIND_TO_TEXTURE_RGBA_ARB:
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_R_NV:
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_RG_NV:
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_RGB_NV:
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_RGBA_NV:
       pop = iWGLAttr[++cur];
       /** cannot be converted, see direct handling on 
        *   - wglGetPixelFormatAttribivARB
@@ -2023,7 +2031,22 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
                             case WGL_TEXTURE_RGBA_ARB:
                                 object->use_render_texture = GL_RGBA;
                                 break;
+
+                            /* WGL_FLOAT_COMPONENTS_NV */
+                            case WGL_TEXTURE_FLOAT_R_NV:
+                                object->use_render_texture = GL_FLOAT_R_NV;
+                                break;
+                            case WGL_TEXTURE_FLOAT_RG_NV:
+                                object->use_render_texture = GL_FLOAT_RG_NV;
+                                break;
+                            case WGL_TEXTURE_FLOAT_RGB_NV:
+                                object->use_render_texture = GL_FLOAT_RGB_NV;
+                                break;
+                            case WGL_TEXTURE_FLOAT_RGBA_NV:
+                                object->use_render_texture = GL_FLOAT_RGBA_NV;
+                                break;
                             default:
+                                ERR("Unknown texture format: %x\n", attr_v);
                                 SetLastError(ERROR_INVALID_DATA);
                                 goto create_failed;
                         }
@@ -2080,7 +2103,13 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
                                 object->texture_bind_target = GL_TEXTURE_2D;
                                 break;
                             }
+                            case WGL_TEXTURE_RECTANGLE_NV: {
+                                object->texture_target = GL_TEXTURE_RECTANGLE_NV;
+                                object->texture_bind_target = GL_TEXTURE_BINDING_RECTANGLE_NV;
+                                break;
+                            }
                             default:
+                                ERR("Unknown texture target: %x\n", attr_v);
                                 SetLastError(ERROR_INVALID_DATA);
                                 goto create_failed;
                         }
@@ -2212,10 +2241,28 @@ static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAtt
                         SetLastError(ERROR_INVALID_HANDLE);
                         return GL_FALSE;
                     }
-                    if (GL_RGBA == object->use_render_texture) {
-                        *piValue = WGL_TEXTURE_RGBA_ARB;
-                    } else {
-                        *piValue = WGL_TEXTURE_RGB_ARB;
+                    switch(object->use_render_texture) {
+                        case GL_RGB:
+                            *piValue = WGL_TEXTURE_RGB_ARB;
+                            break;
+                        case GL_RGBA:
+                            *piValue = WGL_TEXTURE_RGBA_ARB;
+                            break;
+                        /* WGL_FLOAT_COMPONENTS_NV */
+                        case GL_FLOAT_R_NV:
+                            *piValue = WGL_TEXTURE_FLOAT_R_NV;
+                            break;
+                        case GL_FLOAT_RG_NV:
+                            *piValue = WGL_TEXTURE_FLOAT_RG_NV;
+                            break;
+                        case GL_FLOAT_RGB_NV:
+                            *piValue = WGL_TEXTURE_FLOAT_RGB_NV;
+                            break;
+                        case GL_FLOAT_RGBA_NV:
+                            *piValue = WGL_TEXTURE_FLOAT_RGBA_NV;
+                            break;
+                        default:
+                            ERR("Unknown texture format: %x\n", object->use_render_texture);
                     }
                 }
             }
@@ -2245,6 +2292,7 @@ static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAtt
                     case GL_TEXTURE_1D:       *piValue = WGL_TEXTURE_1D_ARB; break;
                     case GL_TEXTURE_2D:       *piValue = WGL_TEXTURE_2D_ARB; break;
                     case GL_TEXTURE_CUBE_MAP: *piValue = WGL_TEXTURE_CUBE_MAP_ARB; break;
+                    case GL_TEXTURE_RECTANGLE_NV: *piValue = WGL_TEXTURE_RECTANGLE_NV; break;
                 }
             }
         }
@@ -2792,6 +2840,14 @@ static BOOL glxRequireExtension(const char *requiredExtension)
     return TRUE;
 }
 
+static void register_extension_string(const char *ext)
+{
+    strcat(WineGLInfo.wglExtensions, " ");
+    strcat(WineGLInfo.wglExtensions, ext);
+
+    TRACE("'%s'\n", ext);
+}
+
 static BOOL register_extension(const WineGLExtension * ext)
 {
     int i;
@@ -2944,7 +3000,17 @@ static void X11DRV_WineGL_LoadExtensions(void)
     if (glxRequireExtension("GLX_ATI_render_texture") ||
         glxRequireExtension("GLX_ARB_render_texture") ||
         (glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer") && use_render_texture_emulation))
+    {
         register_extension(&WGL_ARB_render_texture);
+
+        /* The WGL version of GLX_NV_float_buffer requires render_texture */
+        if(glxRequireExtension("GLX_NV_float_buffer"))
+            register_extension_string("WGL_NV_float_buffer");
+
+        /* Again there's no GLX equivalent for this extension, so depend on the required GL extension */
+        if(strstr(WineGLInfo.glExtensions, "GL_NV_texture_rectangle") != NULL)
+            register_extension_string("WGL_NV_texture_rectangle");
+    }
 
     /* EXT Extensions */
 

@@ -139,6 +139,44 @@
 #define WGL_AUX8_ARB                        0x208F 
 #define WGL_AUX9_ARB                        0x2090
 
+/** WGL_NV_render_texture_rectangle */
+#define WGL_BIND_TO_TEXTURE_RECTANGLE_RGB_NV 0x20A0
+#define WGL_BIND_TO_TEXTURE_RECTANGLE_RGBA_NV 0x20A1
+#define WGL_TEXTURE_RECTANGLE_NV       0x20A2
+/** WGL_NV_render_depth_texture */
+#define WGL_BIND_TO_TEXTURE_DEPTH_NV   0x20A3
+#define WGL_BIND_TO_TEXTURE_RECTANGLE_DEPTH_NV 0x20A4
+#define WGL_DEPTH_TEXTURE_FORMAT_NV    0x20A5
+#define WGL_TEXTURE_DEPTH_COMPONENT_NV 0x20A6
+#define WGL_DEPTH_COMPONENT_NV         0x20A7
+/** WGL_NV_float_buffer */
+#define WGL_FLOAT_COMPONENTS_NV        0x20B0
+#define WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_R_NV 0x20B1
+#define WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_RG_NV 0x20B2
+#define WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_RGB_NV 0x20B3
+#define WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_RGBA_NV 0x20B4
+#define WGL_TEXTURE_FLOAT_R_NV         0x20B5
+#define WGL_TEXTURE_FLOAT_RG_NV        0x20B6
+#define WGL_TEXTURE_FLOAT_RGB_NV       0x20B7
+#define WGL_TEXTURE_FLOAT_RGBA_NV      0x20B8
+/** GL_NV_float_buffer */
+#define GL_FLOAT_R_NV                     0x8880
+#define GL_FLOAT_RG_NV                    0x8881
+#define GL_FLOAT_RGB_NV                   0x8882
+#define GL_FLOAT_RGBA_NV                  0x8883
+#define GL_FLOAT_R16_NV                   0x8884
+#define GL_FLOAT_R32_NV                   0x8885
+#define GL_FLOAT_RG16_NV                  0x8886
+#define GL_FLOAT_RG32_NV                  0x8887
+#define GL_FLOAT_RGB16_NV                 0x8888
+#define GL_FLOAT_RGB32_NV                 0x8889
+#define GL_FLOAT_RGBA16_NV                0x888A
+#define GL_FLOAT_RGBA32_NV                0x888B
+#define GL_TEXTURE_FLOAT_COMPONENTS_NV    0x888C
+#define GL_FLOAT_CLEAR_COLOR_VALUE_NV     0x888D
+#define GL_FLOAT_RGBA_MODE_NV             0x888E
+
+
 /** 
  * WGL_ATI_pixel_format_float / WGL_ARB_color_buffer_float
  */
@@ -189,3 +227,5 @@
 #define GLX_AUX9_ATI                        0x9820
 #define GLX_BIND_TO_TEXTURE_LUMINANCE_ATI   0x9821
 #define GLX_BIND_TO_TEXTURE_INTENSITY_ATI   0x9822
+/** GLX_NV_float_buffer */
+#define GLX_FLOAT_COMPONENTS_NV            0x20B0
