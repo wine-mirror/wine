@@ -200,6 +200,7 @@ SRCDIR_INCLUDES = \
 	lmserver.h \
 	lmshare.h \
 	lmstats.h \
+	lmuse.h \
 	lmwksta.h \
 	lzexpand.h \
 	mapi.h \
