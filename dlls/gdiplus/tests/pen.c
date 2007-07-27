@@ -176,12 +176,10 @@ static void test_dasharray(void)
 
     /* Some invalid array values. */
     status = GdipSetPenDashArray(pen, &dashes[7], 5);
-    todo_wine
-        expect(InvalidParameter, status);
+    expect(InvalidParameter, status);
     dashes[9] = -1.0;
     status = GdipSetPenDashArray(pen, &dashes[7], 5);
-    todo_wine
-        expect(InvalidParameter, status);
+    expect(InvalidParameter, status);
 
     /* Try to set with count = 0. */
     GdipSetPenDashStyle(pen, DashStyleDot);

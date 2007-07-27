@@ -223,7 +223,19 @@ GpStatus WINGDIPAPI GdipSetPenCustomStartCap(GpPen *pen, GpCustomLineCap* custom
 GpStatus WINGDIPAPI GdipSetPenDashArray(GpPen *pen, GDIPCONST REAL *dash,
     INT count)
 {
+    INT i;
+    REAL sum = 0;
+
     if(!pen || !dash)
+        return InvalidParameter;
+
+    for(i = 0; i < count; i++){
+        sum += dash[i];
+        if(dash[i] < 0.0)
+            return InvalidParameter;
+    }
+
+    if(sum == 0.0 && count)
         return InvalidParameter;
 
     GdipFree(pen->dashes);
