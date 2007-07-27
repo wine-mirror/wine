@@ -1255,7 +1255,8 @@ static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
     switch (msg->type)
     {
     case CMSG_HASHED:
-        CryptDestroyHash(msg->u.hash);
+        if (msg->u.hash)
+            CryptDestroyHash(msg->u.hash);
         break;
     case CMSG_SIGNED:
         LocalFree(msg->u.signedInfo);
