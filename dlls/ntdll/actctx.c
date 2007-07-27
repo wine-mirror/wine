@@ -80,20 +80,14 @@ struct version
     USHORT              revision;
 };
 
-enum assembly_id_type
-{
-    TYPE_NONE,
-    TYPE_WIN32
-};
-
 struct assembly_identity
 {
     WCHAR                *name;
     WCHAR                *arch;
     WCHAR                *public_key;
     WCHAR                *language;
+    WCHAR                *type;
     struct version        version;
-    enum assembly_id_type type;
     BOOL                  optional;
 };
 
@@ -536,7 +530,7 @@ static WCHAR *build_assembly_id( const struct assembly_identity *ai )
     static const WCHAR public_keyW[] =
         {',','p','u','b','l','i','c','K','e','y','T','o','k','e','n','=',0};
     static const WCHAR typeW[] =
-        {',','t','y','p','e','=','"','w','i','n','3','2','"',0};
+        {',','t','y','p','e','=',0};
     static const WCHAR versionW[] =
         {',','v','e','r','s','i','o','n','=',0};
 
@@ -548,7 +542,7 @@ static WCHAR *build_assembly_id( const struct assembly_identity *ai )
     if (ai->name) size += strlenW(ai->name) * sizeof(WCHAR);
     if (ai->arch) size += strlenW(archW) + strlenW(ai->arch) + 2;
     if (ai->public_key) size += strlenW(public_keyW) + strlenW(ai->public_key) + 2;
-    if (ai->type == TYPE_WIN32) size += strlenW(typeW);
+    if (ai->type) size += strlenW(typeW) + strlenW(ai->type) + 2;
     size += strlenW(versionW) + strlenW(version) + 2;
 
     if (!(ret = RtlAllocateHeap( GetProcessHeap(), 0, (size + 1) * sizeof(WCHAR) )))
@@ -558,7 +552,7 @@ static WCHAR *build_assembly_id( const struct assembly_identity *ai )
     else *ret = 0;
     append_string( ret, archW, ai->arch );
     append_string( ret, public_keyW, ai->public_key );
-    if (ai->type == TYPE_WIN32) strcatW( ret, typeW );
+    append_string( ret, typeW, ai->type );
     append_string( ret, versionW, version );
     return ret;
 }
@@ -835,12 +829,7 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
         }
         else if (xmlstr_cmp(&attr_name, TYPE_ATTR))
         {
-            if (!xmlstr_cmp(&attr_value, "win32"))
-            {
-                FIXME("wrong type attr %s\n", debugstr_xmlstr(&attr_value));
-                return FALSE;
-            }
-            ai->type = TYPE_WIN32;
+            if (!(ai->type = xmlstrdupW(&attr_value))) return FALSE;
         }
         else if (xmlstr_cmp(&attr_name, VERSION_ATTR))
         {
