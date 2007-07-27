@@ -660,7 +660,7 @@ struct token *token_create_admin( void )
             { SeSystemProfilePrivilege       , 0                    },
             { SeProfileSingleProcessPrivilege, 0                    },
             { SeIncreaseBasePriorityPrivilege, 0                    },
-            { SeLoadDriverPrivilege          , 0                    },
+            { SeLoadDriverPrivilege          , SE_PRIVILEGE_ENABLED },
             { SeCreatePagefilePrivilege      , 0                    },
             { SeIncreaseQuotaPrivilege       , 0                    },
             { SeUndockPrivilege              , 0                    },
