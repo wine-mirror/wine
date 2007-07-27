@@ -420,7 +420,6 @@ static void test_get_displayname(void)
     displaysize = -1;
     ret = GetServiceDisplayNameA(scm_handle, deadbeef, NULL, &displaysize);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
 

@@ -2352,6 +2352,8 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
             SetLastError(ERROR_INSUFFICIENT_BUFFER);
             *lpcchBuffer = (size / sizeof(WCHAR)) - 1;
         }
+        else if (ret == ERROR_FILE_NOT_FOUND)
+            SetLastError(ERROR_SERVICE_DOES_NOT_EXIST);
         else
             SetLastError(ret);
         return FALSE;
