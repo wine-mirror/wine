@@ -142,6 +142,20 @@ static UINT ORDER_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
     return ov->table->ops->fetch_int( ov->table, row, col, val );
 }
 
+static UINT ORDER_get_row( struct tagMSIVIEW *view, UINT row, MSIRECORD **rec )
+{
+    MSIORDERVIEW *ov = (MSIORDERVIEW *)view;
+
+    TRACE("%p %d %p\n", ov, row, rec );
+
+    if (!ov->table)
+        return ERROR_FUNCTION_FAILED;
+
+    row = ov->reorder[row];
+
+    return ov->table->ops->get_row(ov->table, row, rec);
+}
+
 static UINT ORDER_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIORDERVIEW *ov = (MSIORDERVIEW*)view;
@@ -219,7 +233,7 @@ static UINT ORDER_get_column_info( struct tagMSIVIEW *view,
 }
 
 static UINT ORDER_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
-                MSIRECORD *rec )
+                          MSIRECORD *rec, UINT row )
 {
     MSIORDERVIEW *ov = (MSIORDERVIEW*)view;
 
@@ -228,7 +242,7 @@ static UINT ORDER_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
     if( !ov->table )
          return ERROR_FUNCTION_FAILED;
 
-    return ov->table->ops->modify( ov->table, eModifyMode, rec );
+    return ov->table->ops->modify( ov->table, eModifyMode, rec, row );
 }
 
 static UINT ORDER_delete( struct tagMSIVIEW *view )
@@ -272,6 +286,7 @@ static const MSIVIEWOPS order_ops =
 {
     ORDER_fetch_int,
     NULL,
+    ORDER_get_row,
     NULL,
     NULL,
     NULL,

@@ -3841,10 +3841,7 @@ static void test_viewmodify_update(void)
     r = MsiRecordGetInteger(hrec, 1);
     ok(r == 1, "Expected 1, got %d\n", r);
     r = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(r == 0, "Expected 0, got %d\n", r);
-    }
+    ok(r == 0, "Expected 0, got %d\n", r);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
@@ -3918,10 +3915,7 @@ static void test_viewmodify_update(void)
     r = MsiRecordGetInteger(hrec, 1);
     ok(r == 1, "Expected 1, got %d\n", r);
     r = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(r == 0, "Expected 0, got %d\n", r);
-    }
+    ok(r == 0, "Expected 0, got %d\n", r);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
@@ -3932,10 +3926,7 @@ static void test_viewmodify_update(void)
     r = MsiRecordGetInteger(hrec, 1);
     ok(r == 3, "Expected 3, got %d\n", r);
     r = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(r == 0, "Expected 0, got %d\n", r);
-    }
+    ok(r == 0, "Expected 0, got %d\n", r);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
@@ -3946,10 +3937,7 @@ static void test_viewmodify_update(void)
     r = MsiRecordGetInteger(hrec, 1);
     ok(r == 5, "Expected 5, got %d\n", r);
     r = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(r == 0, "Expected 0, got %d\n", r);
-    }
+    ok(r == 0, "Expected 0, got %d\n", r);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");

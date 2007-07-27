@@ -138,7 +138,7 @@ static UINT UPDATE_get_column_info( struct tagMSIVIEW *view,
 }
 
 static UINT UPDATE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
-                MSIRECORD *rec )
+                           MSIRECORD *rec, UINT row )
 {
     MSIUPDATEVIEW *uv = (MSIUPDATEVIEW*)view;
 
@@ -174,6 +174,7 @@ static UINT UPDATE_find_matching_rows( struct tagMSIVIEW *view, UINT col, UINT v
 static const MSIVIEWOPS update_ops =
 {
     UPDATE_fetch_int,
+    NULL,
     NULL,
     NULL,
     NULL,

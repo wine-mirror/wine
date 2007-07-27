@@ -265,11 +265,88 @@ UINT WINAPI MsiDatabaseOpenViewW(MSIHANDLE hdb,
     return ret;
 }
 
+UINT msi_view_get_row(MSIDATABASE *db, MSIVIEW *view, UINT row, MSIRECORD **rec)
+{
+    UINT row_count = 0, col_count = 0, i, ival, ret, type;
+
+    TRACE("%p %p %d %p\n", db, view, row, rec);
+
+    ret = view->ops->get_dimensions(view, &row_count, &col_count);
+    if (ret)
+        return ret;
+
+    if (!col_count)
+        return ERROR_INVALID_PARAMETER;
+
+    if (row >= row_count)
+        return ERROR_NO_MORE_ITEMS;
+
+    *rec = MSI_CreateRecord(col_count);
+    if (!*rec)
+        return ERROR_FUNCTION_FAILED;
+
+    for (i = 1; i <= col_count; i++)
+    {
+        ret = view->ops->get_column_info(view, i, NULL, &type);
+        if (ret)
+        {
+            ERR("Error getting column type for %d\n", i);
+            continue;
+        }
+
+        if (MSITYPE_IS_BINARY(type))
+        {
+            IStream *stm = NULL;
+
+            ret = view->ops->fetch_stream(view, row, i, &stm);
+            if ((ret == ERROR_SUCCESS) && stm)
+            {
+                MSI_RecordSetIStream(*rec, i, stm);
+                IStream_Release(stm);
+            }
+            else
+                ERR("failed to get stream\n");
+
+            continue;
+        }
+
+        ret = view->ops->fetch_int(view, row, i, &ival);
+        if (ret)
+        {
+            ERR("Error fetching data for %d\n", i);
+            continue;
+        }
+
+        if (! (type & MSITYPE_VALID))
+            ERR("Invalid type!\n");
+
+        /* check if it's nul (0) - if so, don't set anything */
+        if (!ival)
+            continue;
+
+        if (type & MSITYPE_STRING)
+        {
+            LPCWSTR sval;
+
+            sval = msi_string_lookup_id(db->strings, ival);
+            MSI_RecordSetStringW(*rec, i, sval);
+        }
+        else
+        {
+            if ((type & MSI_DATASIZEMASK) == 2)
+                MSI_RecordSetInteger(*rec, i, ival - (1<<15));
+            else
+                MSI_RecordSetInteger(*rec, i, ival - (1<<31));
+        }
+    }
+
+    return ERROR_SUCCESS;
+}
+
 UINT MSI_ViewFetch(MSIQUERY *query, MSIRECORD **prec)
 {
     MSIVIEW *view;
-    MSIRECORD *rec;
-    UINT row_count = 0, col_count = 0, i, ival, ret, type;
+    UINT r;
 
     TRACE("%p %p\n", query, prec );
 
@@ -277,76 +354,11 @@ UINT MSI_ViewFetch(MSIQUERY *query, MSIRECORD **prec)
     if( !view )
         return ERROR_FUNCTION_FAILED;
 
-    ret = view->ops->get_dimensions( view, &row_count, &col_count );
-    if( ret )
-        return ret;
-    if( !col_count )
-        return ERROR_INVALID_PARAMETER;
+    r = msi_view_get_row(query->db, view, query->row, prec);
+    if (r == ERROR_SUCCESS)
+        query->row ++;
 
-    if( query->row >= row_count )
-        return ERROR_NO_MORE_ITEMS;
-
-    rec = MSI_CreateRecord( col_count );
-    if( !rec )
-        return ERROR_FUNCTION_FAILED;
-
-    for( i=1; i<=col_count; i++ )
-    {
-        ret = view->ops->get_column_info( view, i, NULL, &type );
-        if( ret )
-        {
-            ERR("Error getting column type for %d\n", i );
-            continue;
-        }
-        if (!MSITYPE_IS_BINARY(type))
-        {
-            ret = view->ops->fetch_int( view, query->row, i, &ival );
-            if( ret )
-            {
-                ERR("Error fetching data for %d\n", i );
-                continue;
-            }
-            if( ! (type & MSITYPE_VALID ) )
-                ERR("Invalid type!\n");
-
-            /* check if it's nul (0) - if so, don't set anything */
-            if( !ival )
-                continue;
-
-            if( type & MSITYPE_STRING )
-            {
-                LPCWSTR sval;
-
-                sval = msi_string_lookup_id( query->db->strings, ival );
-                MSI_RecordSetStringW( rec, i, sval );
-            }
-            else
-            {
-                if( (type & MSI_DATASIZEMASK) == 2 )
-                    MSI_RecordSetInteger( rec, i, ival - (1<<15) );
-                else
-                    MSI_RecordSetInteger( rec, i, ival - (1<<31) );
-            }
-        }
-        else
-        {
-            IStream *stm = NULL;
-
-            ret = view->ops->fetch_stream( view, query->row, i, &stm );
-            if( ( ret == ERROR_SUCCESS ) && stm )
-            {
-                MSI_RecordSetIStream( rec, i, stm );
-                IStream_Release( stm );
-            }
-            else
-                ERR("failed to get stream\n");
-        }
-    }
-    query->row ++;
-
-    *prec = rec;
-
-    return ERROR_SUCCESS;
+    return r;
 }
 
 UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
@@ -563,7 +575,7 @@ UINT MSI_ViewModify( MSIQUERY *query, MSIMODIFY mode, MSIRECORD *rec )
     if ( !view  || !view->ops->modify)
         return ERROR_FUNCTION_FAILED;
 
-    return view->ops->modify( view, mode, rec );
+    return view->ops->modify( view, mode, rec, query->row );
 }
 
 UINT WINAPI MsiViewModify( MSIHANDLE hView, MSIMODIFY eModifyMode,

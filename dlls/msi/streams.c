@@ -129,6 +129,15 @@ static UINT STREAMS_fetch_stream(struct tagMSIVIEW *view, UINT row, UINT col, IS
     return ERROR_SUCCESS;
 }
 
+static UINT STREAMS_get_row( struct tagMSIVIEW *view, UINT row, MSIRECORD **rec )
+{
+    MSISTREAMSVIEW *sv = (MSISTREAMSVIEW *)view;
+
+    FIXME("%p %d %p\n", sv, row, rec);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UINT mask)
 {
     FIXME("(%p, %d, %p, %d): stub!\n", view, row, rec, mask);
@@ -269,7 +278,7 @@ static UINT STREAMS_get_column_info(struct tagMSIVIEW *view,
     return ERROR_SUCCESS;
 }
 
-static UINT STREAMS_modify(struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRECORD *rec)
+static UINT STREAMS_modify(struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRECORD *rec, UINT row)
 {
     FIXME("(%p, %d, %p): stub!\n", view, eModifyMode, rec);
     return ERROR_SUCCESS;
@@ -327,6 +336,7 @@ static const MSIVIEWOPS streams_ops =
 {
     STREAMS_fetch_int,
     STREAMS_fetch_stream,
+    STREAMS_get_row,
     STREAMS_set_row,
     STREAMS_insert_row,
     STREAMS_delete_row,

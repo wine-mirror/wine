@@ -157,6 +157,12 @@ typedef struct tagMSIVIEWOPS
     UINT (*fetch_stream)( struct tagMSIVIEW *view, UINT row, UINT col, IStream **stm );
 
     /*
+     * get_row - gets values from a row
+     *
+     */
+    UINT (*get_row)( struct tagMSIVIEW *view, UINT row, MSIRECORD **rec );
+
+    /*
      * set_row - sets values in a row as specified by mask
      *
      *  Similar semantics to fetch_int
@@ -203,7 +209,7 @@ typedef struct tagMSIVIEWOPS
     /*
      * modify - not yet implemented properly
      */
-    UINT (*modify)( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRECORD *record );
+    UINT (*modify)( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRECORD *record, UINT row );
 
     /*
      * delete - destroys the structure completely
@@ -690,7 +696,7 @@ extern UINT MSI_ViewClose( MSIQUERY* );
 extern UINT MSI_ViewGetColumnInfo(MSIQUERY *, MSICOLINFO, MSIRECORD **);
 extern UINT MSI_ViewModify( MSIQUERY *, MSIMODIFY, MSIRECORD * );
 extern UINT VIEW_find_column( MSIVIEW *, LPCWSTR, UINT * );
-
+extern UINT msi_view_get_row(MSIDATABASE *, MSIVIEW *, UINT, MSIRECORD **);
 
 /* install internals */
 extern UINT MSI_SetInstallLevel( MSIPACKAGE *package, int iInstallLevel );

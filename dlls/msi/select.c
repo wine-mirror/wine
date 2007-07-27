@@ -82,6 +82,18 @@ static UINT SELECT_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, IS
     return sv->table->ops->fetch_stream( sv->table, row, col, stm );
 }
 
+static UINT SELECT_get_row( struct tagMSIVIEW *view, UINT row, MSIRECORD **rec )
+{
+    MSISELECTVIEW *sv = (MSISELECTVIEW *)view;
+
+    TRACE("%p %d %p\n", sv, row, rec );
+
+    if( !sv->table )
+         return ERROR_FUNCTION_FAILED;
+
+    return msi_view_get_row(sv->db, view, row, rec);
+}
+
 static UINT SELECT_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UINT mask )
 {
     MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
@@ -214,17 +226,79 @@ static UINT SELECT_get_column_info( struct tagMSIVIEW *view,
     return sv->table->ops->get_column_info( sv->table, n, name, type );
 }
 
+static UINT msi_select_update(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row)
+{
+    MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
+    UINT r, i, num_columns, col, type, val;
+    LPWSTR name;
+    LPCWSTR str;
+    MSIRECORD *mod;
+
+    r = SELECT_get_dimensions(view, NULL, &num_columns);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = sv->table->ops->get_row(sv->table, row - 1, &mod);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    for (i = 0; i < num_columns; i++)
+    {
+        col = sv->cols[i];
+
+        r = SELECT_get_column_info(view, i + 1, &name, &type);
+        msi_free(name);
+        if (r != ERROR_SUCCESS)
+        {
+            ERR("Failed to get column information: %d\n", r);
+            goto done;
+        }
+
+        if (MSITYPE_IS_BINARY(type))
+        {
+            ERR("Cannot modify binary data!\n");
+            r = ERROR_FUNCTION_FAILED;
+            goto done;
+        }
+        else if (type & MSITYPE_STRING)
+        {
+            str = MSI_RecordGetString(rec, i + 1);
+            r = MSI_RecordSetStringW(mod, col, str);
+        }
+        else
+        {
+            val = MSI_RecordGetInteger(rec, i + 1);
+            r = MSI_RecordSetInteger(mod, col, val);
+        }
+
+        if (r != ERROR_SUCCESS)
+        {
+            ERR("Failed to modify record: %d\n", r);
+            goto done;
+        }
+    }
+
+    r = sv->table->ops->modify(sv->table, MSIMODIFY_UPDATE, mod, row);
+
+done:
+    msiobj_release(&mod->hdr);
+    return r;
+}
+
 static UINT SELECT_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
-                MSIRECORD *rec )
+                           MSIRECORD *rec, UINT row )
 {
     MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
 
-    TRACE("%p %d %p\n", sv, eModifyMode, rec );
+    TRACE("%p %d %p %d\n", sv, eModifyMode, rec, row );
 
     if( !sv->table )
          return ERROR_FUNCTION_FAILED;
 
-    return sv->table->ops->modify( sv->table, eModifyMode, rec );
+    if (eModifyMode == MSIMODIFY_UPDATE)
+        return msi_select_update(view, rec, row);
+
+    return sv->table->ops->modify( sv->table, eModifyMode, rec, row );
 }
 
 static UINT SELECT_delete( struct tagMSIVIEW *view )
@@ -265,6 +339,7 @@ static const MSIVIEWOPS select_ops =
 {
     SELECT_fetch_int,
     SELECT_fetch_stream,
+    SELECT_get_row,
     SELECT_set_row,
     SELECT_insert_row,
     NULL,

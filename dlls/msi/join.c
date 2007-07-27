@@ -104,6 +104,33 @@ static UINT JOIN_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, IStr
     return table->ops->fetch_stream( table, row, col, stm );
 }
 
+static UINT JOIN_get_row( struct tagMSIVIEW *view, UINT row, MSIRECORD **rec )
+{
+    MSIJOINVIEW *jv = (MSIJOINVIEW*)view;
+    MSIVIEW *table;
+
+    TRACE("%p %d %p\n", jv, row, rec );
+
+    if( !jv->left || !jv->right )
+             return ERROR_FUNCTION_FAILED;
+
+    if( row >= jv->left_rows * jv->right_rows )
+         return ERROR_FUNCTION_FAILED;
+
+    if( row <= jv->left_count )
+    {
+        table = jv->left;
+        row = (row/jv->right_rows);
+    }
+    else
+    {
+        table = jv->right;
+        row = (row % jv->right_rows);
+    }
+
+    return table->ops->get_row(table, row, rec);
+}
+
 static UINT JOIN_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIJOINVIEW *jv = (MSIJOINVIEW*)view;
@@ -201,7 +228,7 @@ static UINT JOIN_get_column_info( struct tagMSIVIEW *view,
 }
 
 static UINT JOIN_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
-                MSIRECORD *rec )
+                         MSIRECORD *rec, UINT row )
 {
     MSIJOINVIEW *jv = (MSIJOINVIEW*)view;
 
@@ -243,6 +270,7 @@ static const MSIVIEWOPS join_ops =
 {
     JOIN_fetch_int,
     JOIN_fetch_stream,
+    JOIN_get_row,
     NULL,
     NULL,
     NULL,

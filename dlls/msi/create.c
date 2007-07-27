@@ -96,7 +96,7 @@ static UINT CREATE_get_column_info( struct tagMSIVIEW *view,
 }
 
 static UINT CREATE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
-                MSIRECORD *rec)
+                           MSIRECORD *rec, UINT row)
 {
     MSICREATEVIEW *cv = (MSICREATEVIEW*)view;
 
@@ -120,6 +120,7 @@ static UINT CREATE_delete( struct tagMSIVIEW *view )
 static const MSIVIEWOPS create_ops =
 {
     CREATE_fetch_int,
+    NULL,
     NULL,
     NULL,
     NULL,

@@ -185,7 +185,7 @@ static UINT INSERT_get_column_info( struct tagMSIVIEW *view,
     return sv->ops->get_column_info( sv, n, name, type );
 }
 
-static UINT INSERT_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRECORD *rec)
+static UINT INSERT_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRECORD *rec, UINT row)
 {
     MSIINSERTVIEW *iv = (MSIINSERTVIEW*)view;
 
@@ -222,6 +222,7 @@ static UINT INSERT_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 static const MSIVIEWOPS insert_ops =
 {
     INSERT_fetch_int,
+    NULL,
     NULL,
     NULL,
     NULL,

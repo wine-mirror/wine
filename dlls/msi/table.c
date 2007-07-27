@@ -1277,6 +1277,16 @@ static UINT TABLE_set_int( MSITABLEVIEW *tv, UINT row, UINT col, UINT val )
     return ERROR_SUCCESS;
 }
 
+static UINT TABLE_get_row( struct tagMSIVIEW *view, UINT row, MSIRECORD **rec )
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW *)view;
+
+    if (!tv->table)
+        return ERROR_INVALID_PARAMETER;
+
+    return msi_view_get_row(tv->db, view, row, rec);
+}
+
 static UINT TABLE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UINT mask )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
@@ -1532,10 +1542,10 @@ static UINT TABLE_delete_row( struct tagMSIVIEW *view, UINT row )
     return ERROR_SUCCESS;
 }
 
-static UINT msi_table_update(struct tagMSIVIEW *view, MSIRECORD *rec)
+static UINT msi_table_update(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row)
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW *)view;
-    UINT r, row;
+    UINT r, new_row;
 
     /* FIXME: MsiViewFetch should set rec index 0 to some ID that
      * sets the fetched record apart from other records
@@ -1544,19 +1554,22 @@ static UINT msi_table_update(struct tagMSIVIEW *view, MSIRECORD *rec)
     if (!tv->table)
         return ERROR_INVALID_PARAMETER;
 
-    r = msi_table_find_row(tv, rec, &row);
+    r = msi_table_find_row(tv, rec, &new_row);
     if (r != ERROR_SUCCESS)
+    {
+        ERR("can't find row to modify\n");
         return ERROR_SUCCESS;
+    }
 
     /* the row cannot be changed */
-    if (row != 0)
+    if (row != new_row + 1)
         return ERROR_FUNCTION_FAILED;
 
-    return TABLE_set_row(view, row, rec, (1 << tv->num_cols) - 1);
+    return TABLE_set_row(view, new_row, rec, (1 << tv->num_cols) - 1);
 }
 
 static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
-                MSIRECORD *rec)
+                          MSIRECORD *rec, UINT row)
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
     UINT r;
@@ -1577,7 +1590,7 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
         break;
 
     case MSIMODIFY_UPDATE:
-        r = msi_table_update( view, rec );
+        r = msi_table_update( view, rec, row );
         break;
 
     case MSIMODIFY_REFRESH:
@@ -1826,6 +1839,7 @@ static const MSIVIEWOPS table_ops =
 {
     TABLE_fetch_int,
     TABLE_fetch_stream,
+    TABLE_get_row,
     TABLE_set_row,
     TABLE_insert_row,
     TABLE_delete_row,
