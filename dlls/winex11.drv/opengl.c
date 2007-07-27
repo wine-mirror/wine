@@ -81,26 +81,6 @@ typedef struct wine_glcontext {
     struct wine_glcontext *prev;
 } Wine_GLContext;
 
-typedef struct wine_glpbuffer {
-    Drawable   drawable;
-    Display*   display;
-    int        pixelFormat;
-    int        width;
-    int        height;
-    int*       attribList;
-    HDC        hdc;
-
-    int        use_render_texture;
-    GLuint     texture_target;
-    GLuint     texture_bind_target;
-    GLuint     texture;
-    int        texture_level;
-    HDC        prev_hdc;
-    HGLRC      prev_ctx;
-    HDC        render_hdc;
-    HGLRC      render_ctx;
-} Wine_GLPBuffer;
-
 typedef struct wine_glextension {
     const char *extName;
     struct {
@@ -133,6 +113,22 @@ typedef struct wine_glpixelformat {
     int         fmt_id;
     BOOL        offscreenOnly;
 } WineGLPixelFormat;
+
+typedef struct wine_glpbuffer {
+    Drawable   drawable;
+    Display*   display;
+    WineGLPixelFormat* fmt;
+    int        width;
+    int        height;
+    int*       attribList;
+    HDC        hdc;
+
+    int        use_render_texture;
+    GLuint     texture_target;
+    GLuint     texture_bind_target;
+    GLuint     texture;
+    int        texture_level;
+} Wine_GLPBuffer;
 
 static Wine_GLContext *context_list;
 static struct WineGLInfo WineGLInfo = { 0 };
@@ -1984,7 +1980,7 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
     object->display = gdi_display;
     object->width = iWidth;
     object->height = iHeight;
-    object->pixelFormat = iPixelFormat;
+    object->fmt = fmt;
 
     nAttribs = ConvertAttribWGLtoGLX(piAttribList, attribs, object);
     if (-1 == nAttribs) {
@@ -2163,7 +2159,7 @@ HDC X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *physDev, HPBUFFERARB hPbuffer)
 
     /* The function wglGetPbufferDCARB returns a DC to which the pbuffer can be connected.
      * All formats in our pixelformat list are compatible with each other and the main drawable. */
-    physDev->current_pf = object->pixelFormat;
+    physDev->current_pf = object->fmt->iPixelFormat;
     physDev->drawable = object->drawable;
     SetRect( &physDev->drawable_rect, 0, 0, object->width, object->height );
     physDev->dc_rect = physDev->drawable_rect;
@@ -2648,6 +2644,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
         static int init = 0;
         GLXContext prev_context = pglXGetCurrentContext();
         Drawable prev_drawable = pglXGetCurrentDrawable();
+        GLXContext tmp_context;
 
         /* Our render_texture emulation is basic and lacks some features (1D/Cube support).
            This is mostly due to lack of demos/games using them. Further the use of glReadPixels
@@ -2664,14 +2661,18 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
             return GL_FALSE;
         }
 
+        TRACE("drawable=%p, context=%p\n", (void*)object->drawable, prev_context);
+        tmp_context = pglXCreateNewContext(gdi_display, object->fmt->fbconfig, GLX_RGBA_TYPE, NULL, True);
+
         /* Switch to our pbuffer and readback its contents */
-        pglXMakeCurrent(gdi_display, object->drawable, prev_context);
+        pglXMakeCurrent(gdi_display, object->drawable, tmp_context);
         pglReadPixels(0, 0, object->width, object->height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 
         /* Switch back to the original drawable and upload the pbuffer-texture */
         pglXMakeCurrent(object->display, prev_drawable, prev_context);
         pglTexImage2D(object->texture_target, 0, GL_RGBA8, object->width, object->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 
+        pglXDestroyContext(gdi_display, tmp_context);
         HeapFree(GetProcessHeap(), 0, buf);
     }
 
