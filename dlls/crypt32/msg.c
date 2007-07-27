@@ -1559,6 +1559,90 @@ static BOOL CDecodeHashMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
     return ret;
 }
 
+static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
+ DWORD dwIndex, void *pvData, DWORD *pcbData)
+{
+    BOOL ret = FALSE;
+
+    switch (dwParamType)
+    {
+    case CMSG_TYPE_PARAM:
+        ret = CRYPT_CopyParam(pvData, pcbData, &msg->type, sizeof(msg->type));
+        break;
+    case CMSG_SIGNER_COUNT_PARAM:
+        if (msg->u.signedInfo)
+            ret = CRYPT_CopyParam(pvData, pcbData,
+             &msg->u.signedInfo->cSignerInfo, sizeof(DWORD));
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    case CMSG_CERT_COUNT_PARAM:
+        if (msg->u.signedInfo)
+            ret = CRYPT_CopyParam(pvData, pcbData,
+             &msg->u.signedInfo->cCertEncoded, sizeof(DWORD));
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    case CMSG_CERT_PARAM:
+        if (msg->u.signedInfo)
+        {
+            if (dwIndex >= msg->u.signedInfo->cCertEncoded)
+                SetLastError(CRYPT_E_INVALID_INDEX);
+            else
+                ret = CRYPT_CopyParam(pvData, pcbData,
+                 msg->u.signedInfo->rgCertEncoded[dwIndex].pbData,
+                 msg->u.signedInfo->rgCertEncoded[dwIndex].cbData);
+        }
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    case CMSG_CRL_COUNT_PARAM:
+        if (msg->u.signedInfo)
+            ret = CRYPT_CopyParam(pvData, pcbData,
+             &msg->u.signedInfo->cCrlEncoded, sizeof(DWORD));
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    case CMSG_CRL_PARAM:
+        if (msg->u.signedInfo)
+        {
+            if (dwIndex >= msg->u.signedInfo->cCrlEncoded)
+                SetLastError(CRYPT_E_INVALID_INDEX);
+            else
+                ret = CRYPT_CopyParam(pvData, pcbData,
+                 msg->u.signedInfo->rgCrlEncoded[dwIndex].pbData,
+                 msg->u.signedInfo->rgCrlEncoded[dwIndex].cbData);
+        }
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    case CMSG_ATTR_CERT_COUNT_PARAM:
+        if (msg->u.signedInfo)
+            ret = CRYPT_CopyParam(pvData, pcbData,
+             &msg->u.signedInfo->cAttrCertEncoded, sizeof(DWORD));
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    case CMSG_ATTR_CERT_PARAM:
+        if (msg->u.signedInfo)
+        {
+            if (dwIndex >= msg->u.signedInfo->cAttrCertEncoded)
+                SetLastError(CRYPT_E_INVALID_INDEX);
+            else
+                ret = CRYPT_CopyParam(pvData, pcbData,
+                 msg->u.signedInfo->rgAttrCertEncoded[dwIndex].pbData,
+                 msg->u.signedInfo->rgAttrCertEncoded[dwIndex].cbData);
+        }
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    default:
+        FIXME("unimplemented for %d\n", dwParamType);
+        SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+    }
+    return ret;
+}
+
 static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
@@ -1569,6 +1653,10 @@ static BOOL CDecodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
     {
     case CMSG_HASHED:
         ret = CDecodeHashMsg_GetParam(msg, dwParamType, dwIndex, pvData,
+         pcbData);
+        break;
+    case CMSG_SIGNED:
+        ret = CDecodeSignedMsg_GetParam(msg, dwParamType, dwIndex, pvData,
          pcbData);
         break;
     default:
