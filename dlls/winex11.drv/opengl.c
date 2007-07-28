@@ -2770,6 +2770,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
 
         pglXDestroyContext(gdi_display, tmp_context);
         HeapFree(GetProcessHeap(), 0, buf);
+        return GL_TRUE;
     }
 
     if (NULL != pglXBindTexImageARB) {
