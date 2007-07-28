@@ -163,6 +163,11 @@
 @ cdecl _adj_fptan()
 @ extern _adjust_fdiv MSVCRT__adjust_fdiv 
 # extern _aexit_rtn
+@ cdecl _aligned_free(ptr)
+@ cdecl _aligned_malloc(long long)
+@ cdecl _aligned_offset_malloc(long long long)
+@ cdecl _aligned_offset_realloc(ptr long long long)
+@ cdecl _aligned_realloc(ptr long long)
 @ cdecl _amsg_exit(long)
 @ cdecl _assert(str str long) MSVCRT__assert
 @ stub _atodbl #(ptr str)
