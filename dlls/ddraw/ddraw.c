@@ -516,8 +516,6 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
 
     if(cooplevel & DDSCL_MULTITHREADED && !(This->cooperative_level & DDSCL_MULTITHREADED))
     {
-        FIXME("DirectDraw is not fully thread safe yet\n");
-
         /* Enable thread safety in wined3d */
         IWineD3DDevice_SetMultithreaded(This->wineD3DDevice);
     }
