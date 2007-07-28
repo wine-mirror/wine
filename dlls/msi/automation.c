@@ -426,8 +426,8 @@ static HRESULT WINAPI AutomationObject_Invoke(
 
             memset(pExcepInfo, 0, sizeof(EXCEPINFO));
             pExcepInfo->wCode = 1000;
-            pExcepInfo->bstrSource = szExceptionSource;
-            pExcepInfo->bstrDescription = szExceptionDescription;
+            pExcepInfo->bstrSource = SysAllocString(szExceptionSource);
+            pExcepInfo->bstrDescription = SysAllocString(szExceptionDescription);
             hr = DISP_E_EXCEPTION;
         }
     }

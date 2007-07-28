@@ -433,6 +433,10 @@ static WCHAR szSource[] = {'M','s','i',' ','A','P','I',' ','E','r','r','o','r',0
         ok(excepinfo.bstrDescription != NULL, "Exception description was NULL\n"); \
         if (excepinfo.bstrDescription) \
             ok_w2("Exception description was \"%s\" but expected to be \"%s\"\n", excepinfo.bstrDescription, szDescription); \
+\
+        SysFreeString(excepinfo.bstrSource); \
+        SysFreeString(excepinfo.bstrDescription); \
+        SysFreeString(excepinfo.bstrHelpFile); \
     }
 
 static DISPID get_dispid( IDispatch *disp, const char *name )

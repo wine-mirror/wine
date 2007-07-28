@@ -336,9 +336,15 @@ static HRESULT WINAPI MsiActiveScriptSite_OnScriptError(IActiveScriptSite* iface
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pscripterror);
 
+    memset(&exception, 0, sizeof(EXCEPINFO));
     hr = IActiveScriptError_GetExceptionInfo(pscripterror, &exception);
     if (SUCCEEDED(hr))
+    {
         ERR("script error: %s\n", debugstr_w(exception.bstrDescription));
+        SysFreeString(exception.bstrSource);
+        SysFreeString(exception.bstrDescription);
+        SysFreeString(exception.bstrHelpFile);
+    }
 
     return S_OK;
 }
