@@ -67,20 +67,6 @@ WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
-typedef struct wine_glcontext {
-    HDC hdc;
-    XVisualInfo *vis;
-    GLXFBConfig fbconfig;
-    GLXContext ctx;
-    BOOL do_escape;
-    X11DRV_PDEVICE *physDev;
-    RECT viewport;
-    RECT scissor;
-    BOOL scissor_enabled;
-    struct wine_glcontext *next;
-    struct wine_glcontext *prev;
-} Wine_GLContext;
-
 typedef struct wine_glextension {
     const char *extName;
     struct {
@@ -111,8 +97,23 @@ typedef struct wine_glpixelformat {
     int         iPixelFormat;
     GLXFBConfig fbconfig;
     int         fmt_id;
+    int         render_type;
     BOOL        offscreenOnly;
 } WineGLPixelFormat;
+
+typedef struct wine_glcontext {
+    HDC hdc;
+    XVisualInfo *vis;
+    WineGLPixelFormat *fmt;
+    GLXContext ctx;
+    BOOL do_escape;
+    X11DRV_PDEVICE *physDev;
+    RECT viewport;
+    RECT scissor;
+    BOOL scissor_enabled;
+    struct wine_glcontext *next;
+    struct wine_glcontext *prev;
+} Wine_GLContext;
 
 typedef struct wine_glpbuffer {
     Drawable   drawable;
@@ -565,9 +566,9 @@ static int describeContext(Wine_GLContext* ctx) {
     int tmp;
     int ctx_vis_id;
     TRACE(" Context %p have (vis:%p):\n", ctx, ctx->vis);
-    pglXGetFBConfigAttrib(gdi_display, ctx->fbconfig, GLX_FBCONFIG_ID, &tmp);
+    pglXGetFBConfigAttrib(gdi_display, ctx->fmt->fbconfig, GLX_FBCONFIG_ID, &tmp);
     TRACE(" - FBCONFIG_ID 0x%x\n", tmp);
-    pglXGetFBConfigAttrib(gdi_display, ctx->fbconfig, GLX_VISUAL_ID, &tmp);
+    pglXGetFBConfigAttrib(gdi_display, ctx->fmt->fbconfig, GLX_VISUAL_ID, &tmp);
     TRACE(" - VISUAL_ID 0x%x\n", tmp);
     ctx_vis_id = tmp;
     return ctx_vis_id;
@@ -669,7 +670,8 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       switch (pop) {
       case WGL_TYPE_COLORINDEX_ARB: pop = GLX_COLOR_INDEX_BIT; isColor = 1; break ;
       case WGL_TYPE_RGBA_ARB: pop = GLX_RGBA_BIT; break ;
-      case WGL_TYPE_RGBA_FLOAT_ATI: pop = GLX_RGBA_FLOAT_ATI_BIT; break ;
+      /* This is the same as WGL_TYPE_RGBA_FLOAT_ATI but the GLX constants differ, only the ARB GLX one is widely supported so use that */
+      case WGL_TYPE_RGBA_FLOAT_ATI: pop = GLX_RGBA_FLOAT_BIT_ARB; break ;
       default:
         ERR("unexpected PixelType(%x)\n", pop);	
         pop = 0;
@@ -826,6 +828,27 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
   return nAttribs;
 }
 
+static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
+{
+    int render_type=0, render_type_bit;
+    pglXGetFBConfigAttrib(display, fbconfig, GLX_RENDER_TYPE, &render_type_bit);
+    switch(render_type_bit)
+    {
+        case GLX_RGBA_BIT:
+            render_type = GLX_RGBA_TYPE;
+            break;
+        case GLX_COLOR_INDEX_BIT:
+            render_type = GLX_COLOR_INDEX_TYPE;
+            break;
+        case GLX_RGBA_FLOAT_BIT_ARB:
+            render_type = GLX_RGBA_FLOAT_TYPE_ARB;
+            break;
+        default:
+            ERR("Unknown render_type: %x\n", render_type);
+    }
+    return render_type;
+}
+
 static BOOL get_fbconfig_from_visualid(Display *display, Visual *visual, GLXFBConfig *fbconfig, int *fmt_id)
 {
     GLXFBConfig* cfgs = NULL;
@@ -896,6 +919,7 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
         WineGLPixelFormatList[0].iPixelFormat = 1;
         WineGLPixelFormatList[0].fbconfig = fbconfig;
         WineGLPixelFormatList[0].fmt_id = fmt_id;
+        WineGLPixelFormatList[0].render_type = get_render_type_from_fbconfig(display, fbconfig);
         WineGLPixelFormatList[0].offscreenOnly = FALSE;
         WineGLPixelFormatListSize = 1;
     }
@@ -916,6 +940,7 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
         WineGLPixelFormatList[0].iPixelFormat = 1;
         WineGLPixelFormatList[0].fbconfig = fbconfig;
         WineGLPixelFormatList[0].fmt_id = fmt_id;
+        WineGLPixelFormatList[0].render_type = get_render_type_from_fbconfig(display, fbconfig);
         WineGLPixelFormatList[0].offscreenOnly = FALSE;
         WineGLPixelFormatListSize = 1;
 
@@ -930,6 +955,7 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
                 WineGLPixelFormatList[WineGLPixelFormatListSize].iPixelFormat = WineGLPixelFormatListSize+1; /* The index starts at 1 */
                 WineGLPixelFormatList[WineGLPixelFormatListSize].fbconfig = cfgs[i];
                 WineGLPixelFormatList[WineGLPixelFormatListSize].fmt_id = tmp_fmt_id;
+                WineGLPixelFormatList[WineGLPixelFormatListSize].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
                 WineGLPixelFormatList[WineGLPixelFormatListSize].offscreenOnly = TRUE;
                 WineGLPixelFormatListSize++;
             }
@@ -1351,7 +1377,8 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
     wine_tsx11_unlock();
     ret->hdc = hdc;
     ret->physDev = physDev;
-    ret->fbconfig = fmt->fbconfig;
+    ret->fmt = fmt;
+
     /*ret->vis = vis;*/
     ret->vis = pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
 
@@ -1541,7 +1568,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
             if(ctx->vis)
                 ctx->ctx = pglXCreateContext(gdi_display, ctx->vis, NULL, type == OBJ_MEMDC ? False : True);
             else /* Create a GLX Context for a pbuffer */
-                ctx->ctx = pglXCreateNewContext(gdi_display, ctx->fbconfig, GLX_RGBA_TYPE, NULL, True);
+                ctx->ctx = pglXCreateNewContext(gdi_display, ctx->fmt->fbconfig, ctx->fmt->render_type, NULL, True);
 
             TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
         }
@@ -1636,7 +1663,7 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
             if(org->vis)
                 org->ctx = pglXCreateContext(gdi_display, org->vis, NULL, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
             else /* Create a GLX Context for a pbuffer */
-                org->ctx = pglXCreateNewContext(gdi_display, org->fbconfig, GLX_RGBA_TYPE, NULL, True);
+                org->ctx = pglXCreateNewContext(gdi_display, org->fmt->fbconfig, org->fmt->render_type, NULL, True);
             wine_tsx11_unlock();
             TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
         }
@@ -1647,7 +1674,7 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
             if(dest->vis)
                 dest->ctx = pglXCreateContext(gdi_display, dest->vis, org->ctx, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
             else /* Create a GLX Context for a pbuffer */
-                dest->ctx = pglXCreateNewContext(gdi_display, dest->fbconfig, GLX_RGBA_TYPE, org->ctx, True);
+                dest->ctx = pglXCreateNewContext(gdi_display, dest->fmt->fbconfig, dest->fmt->render_type, org->ctx, True);
             wine_tsx11_unlock();
             TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
             return TRUE;
@@ -1882,7 +1909,7 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
             GLXContext gl_ctx = pglXGetCurrentContext();
             Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
 
-            pglXGetFBConfigAttrib(gdi_display, ret->fbconfig, GLX_ALPHA_SIZE, params);
+            pglXGetFBConfigAttrib(gdi_display, ret->fmt->fbconfig, GLX_ALPHA_SIZE, params);
             TRACE("returns GL_ALPHA_BITS as '%d'\n", *params);
             break;
         }
@@ -2731,7 +2758,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
         }
 
         TRACE("drawable=%p, context=%p\n", (void*)object->drawable, prev_context);
-        tmp_context = pglXCreateNewContext(gdi_display, object->fmt->fbconfig, GLX_RGBA_TYPE, NULL, True);
+        tmp_context = pglXCreateNewContext(gdi_display, object->fmt->fbconfig, object->fmt->render_type, NULL, True);
 
         /* Switch to our pbuffer and readback its contents */
         pglXMakeCurrent(gdi_display, object->drawable, tmp_context);
@@ -2992,6 +3019,12 @@ static void X11DRV_WineGL_LoadExtensions(void)
     register_extension(&WGL_internal_functions);
 
     /* ARB Extensions */
+
+    if(glxRequireExtension("GLX_ARB_fbconfig_float"))
+    {
+        register_extension_string("WGL_ARB_pixel_format_float");
+        register_extension_string("WGL_ATI_pixel_format_float");
+    }
 
     register_extension(&WGL_ARB_extensions_string);
 
