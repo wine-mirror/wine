@@ -147,7 +147,7 @@ static void FromLEDWords(void *p_Val, int p_iSize)
 /*
  * Find a typelib key which matches a requested maj.min version.
  */
-static BOOL find_typelib_key( REFGUID guid, WORD *wMaj, WORD *wMin )
+static BOOL find_typelib_key( REFGUID guid, WORD wMaj, WORD *wMin )
 {
     static const WCHAR typelibW[] = {'T','y','p','e','l','i','b','\\',0};
     WCHAR buffer[60];
@@ -172,7 +172,7 @@ static BOOL find_typelib_key( REFGUID guid, WORD *wMaj, WORD *wMin )
         {
             TRACE("found %s: %x.%x\n", debugstr_w(buffer), v_maj, v_min);
 
-            if (*wMaj == v_maj)
+            if (wMaj == v_maj)
             {
                 if (*wMin == v_min)
                 {
@@ -274,7 +274,7 @@ HRESULT WINAPI QueryPathOfRegTypeLib(
 
     TRACE_(typelib)("(%s, %x.%x, 0x%x, %p)\n", debugstr_guid(guid), wMaj, wMin, lcid, path);
 
-    if (!find_typelib_key( guid, &wMaj, &wMin )) return TYPE_E_LIBNOTREGISTERED;
+    if (!find_typelib_key( guid, wMaj, &wMin )) return TYPE_E_LIBNOTREGISTERED;
     get_typelib_key( guid, wMaj, wMin, buffer );
 
     res = RegOpenKeyExW( HKEY_CLASSES_ROOT, buffer, 0, KEY_READ, &hkey );
@@ -1425,7 +1425,7 @@ static void *TLB_CopyTypeDesc( TYPEDESC *dest, const TYPEDESC *src, void *buffer
  *
  *  Functions for reading MSFT typelibs (those created by CreateTypeLib2)
  */
-static inline unsigned int MSFT_Tell(TLBContext *pcx)
+static inline unsigned int MSFT_Tell(const TLBContext *pcx)
 {
     return pcx->pos;
 }
@@ -2588,7 +2588,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 }
 
 
-static BSTR TLB_MultiByteToBSTR(char *ptr)
+static BSTR TLB_MultiByteToBSTR(const char *ptr)
 {
     DWORD len;
     WCHAR *nameW;
@@ -2602,7 +2602,7 @@ static BSTR TLB_MultiByteToBSTR(char *ptr)
     return ret;
 }
 
-static BOOL TLB_GUIDFromString(char *str, GUID *guid)
+static BOOL TLB_GUIDFromString(const char *str, GUID *guid)
 {
   char b[3];
   int i;
@@ -2624,14 +2624,14 @@ static BOOL TLB_GUIDFromString(char *str, GUID *guid)
   return TRUE;
 }
 
-static WORD SLTG_ReadString(char *ptr, BSTR *pBstr)
+static WORD SLTG_ReadString(const char *ptr, BSTR *pBstr)
 {
     WORD bytelen;
     DWORD len;
     WCHAR *nameW;
 
     *pBstr = NULL;
-    bytelen = *(WORD*)ptr;
+    bytelen = *(const WORD*)ptr;
     if(bytelen == 0xffff) return 2;
     len = MultiByteToWideChar(CP_ACP, 0, ptr + 2, bytelen, NULL, 0);
     nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
@@ -2641,12 +2641,12 @@ static WORD SLTG_ReadString(char *ptr, BSTR *pBstr)
     return bytelen + 2;
 }
 
-static WORD SLTG_ReadStringA(char *ptr, char **str)
+static WORD SLTG_ReadStringA(const char *ptr, char **str)
 {
     WORD bytelen;
 
     *str = NULL;
-    bytelen = *(WORD*)ptr;
+    bytelen = *(const WORD*)ptr;
     if(bytelen == 0xffff) return 2;
     *str = HeapAlloc(GetProcessHeap(), 0, bytelen + 1);
     memcpy(*str, ptr + 2, bytelen);
