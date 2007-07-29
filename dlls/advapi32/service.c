@@ -2353,7 +2353,32 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
             *lpcchBuffer = (size / sizeof(WCHAR)) - 1;
         }
         else if (ret == ERROR_FILE_NOT_FOUND)
-            SetLastError(ERROR_SERVICE_DOES_NOT_EXIST);
+        {
+            HKEY hkey;
+
+            if (!RegOpenKeyW(hscm->hkey, lpServiceName, &hkey))
+            {
+                INT len = lstrlenW(lpServiceName);
+                BOOL r = FALSE;
+
+                if ((*lpcchBuffer <= len) || (!lpDisplayName && *lpcchBuffer))
+                    SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                else if (lpDisplayName && *lpcchBuffer)
+                {
+                    /* No displayname, but the service exists and the buffer
+                     * is big enough. We should return the servicename.
+                     */
+                    lstrcpyW(lpDisplayName, lpServiceName);
+                    r = TRUE;
+                }
+
+                *lpcchBuffer = len;
+                RegCloseKey(hkey);
+                return r;
+            }
+            else
+                SetLastError(ERROR_SERVICE_DOES_NOT_EXIST);
+        }
         else
             SetLastError(ret);
         return FALSE;

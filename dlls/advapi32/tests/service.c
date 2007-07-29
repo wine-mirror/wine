@@ -561,13 +561,10 @@ static void test_get_displayname(void)
     displaysize = -1;
     ret = GetServiceDisplayNameA(scm_handle, servicename, NULL, &displaysize);
     ok(!ret, "Expected failure\n");
-    todo_wine
-    {
     ok(displaysize == lstrlen(servicename) * 2,
        "Expected the displaysize to be twice the size of the servicename\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-    }
 
     /* Buffer is too small */
     SetLastError(0xdeadbeef);
@@ -575,18 +572,13 @@ static void test_get_displayname(void)
     displaysize = (tempsize / 2);
     ret = GetServiceDisplayNameA(scm_handle, servicename, displayname, &displaysize);
     ok(!ret, "Expected failure\n");
-    todo_wine
-    {
     ok(displaysize == tempsize, "Expected the needed buffersize\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-    }
 
     /* Get the displayname */
     SetLastError(0xdeadbeef);
     ret = GetServiceDisplayNameA(scm_handle, servicename, displayname, &displaysize);
-    todo_wine
-    {
     ok(ret, "Expected success\n");
     ok(!lstrcmpi(displayname, servicename),
        "Expected displayname to be %s, got %s\n", servicename, displayname);
@@ -594,7 +586,6 @@ static void test_get_displayname(void)
        GetLastError() == ERROR_IO_PENDING /* W2K */ ||
        GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
        "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
-    }
 
     /* Delete the service */
     ret = DeleteService(svc_handle);
