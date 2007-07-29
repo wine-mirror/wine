@@ -891,7 +891,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		}
 
 		if (lock)
-			IDsDriverBuffer_Lock(device->hwbuf, &buf1, &size1, &buf2, &size2, device->mixpos, maxq, 0);
+			IDsDriverBuffer_Lock(device->hwbuf, &buf1, &size1, &buf2, &size2, writepos, maxq, 0);
 
 		/* do the mixing */
 		frag = DSOUND_MixToPrimary(device, writepos, maxq, recover, &all_stopped);
@@ -960,9 +960,11 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 	} else {
 
 		/* update the wave queue if using wave system */
-		if(device->hwbuf == NULL){
+		if(device->hwbuf == NULL)
 			DSOUND_WaveQueue(device, TRUE);
-		}
+		else
+			/* Keep alsa happy, which needs GetPosition called once every 10 ms */
+			IDsDriverBuffer_GetPosition(device->hwbuf, NULL, NULL);
 
 		/* in the DSSCL_WRITEPRIMARY mode, the app is totally in charge... */
 		if (device->state == STATE_STARTING) {
