@@ -297,7 +297,7 @@ NTSTATUS WINAPI NtPulseEvent( HANDLE handle, PULONG PulseCount )
  */
 NTSTATUS WINAPI NtQueryEvent (
 	IN  HANDLE EventHandle,
-	IN  UINT EventInformationClass,
+	IN  EVENT_INFORMATION_CLASS EventInformationClass,
 	OUT PVOID EventInformation,
 	IN  ULONG EventInformationLength,
 	OUT PULONG  ReturnLength)
