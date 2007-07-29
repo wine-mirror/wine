@@ -587,20 +587,19 @@ static inline DWORD DSOUND_BufPtrDiff(DWORD buflen, DWORD ptr1, DWORD ptr2)
  * primary buffer.
  *
  * dsb = the secondary buffer
- * playpos = the current play position in the device buffer (primary buffer)
  * writepos = the current safe-to-write position in the device buffer
  * mixlen = the maximum number of bytes in the primary buffer to mix, from the
  *          current writepos.
  *
  * Returns: the number of bytes beyond the writepos that were mixed.
  */
-static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD writepos, DWORD mixlen)
+static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mixlen)
 {
 	/* The buffer's primary_mixpos may be before or after the the device
 	 * buffer's mixpos, but both must be ahead of writepos. */
 	DWORD primary_done, buflen = dsb->buflen / dsb->pwfx->nBlockAlign * dsb->device->pwfx->nBlockAlign;
 
-	TRACE("(%p,%d,%d,%d)\n",dsb,playpos,writepos,mixlen);
+	TRACE("(%p,%d,%d)\n",dsb,writepos,mixlen);
 	TRACE("writepos=%d, buf_mixpos=%d, primary_mixpos=%d, mixlen=%d\n", writepos, dsb->buf_mixpos, dsb->primary_mixpos, mixlen);
 	TRACE("looping=%d, startpos=%d, leadin=%d, buflen=%d\n", dsb->playflags, dsb->startpos, dsb->leadin, dsb->buflen);
 
@@ -611,7 +610,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	if(mixlen < primary_done)
 	{
 		/* Should *NEVER* happen */
-		ERR("Fatal error. Under/Overflow? primary_done=%d, mixpos=%d, primary_mixpos=%d, writepos=%d, playpos=%d\n", primary_done,dsb->buf_mixpos,dsb->primary_mixpos, writepos, playpos);
+		ERR("Fatal error. Under/Overflow? primary_done=%d, mixpos=%d, primary_mixpos=%d, writepos=%d, mixlen=%d\n", primary_done,dsb->buf_mixpos,dsb->primary_mixpos, writepos, mixlen);
 		return 0;
 	}
 
@@ -679,7 +678,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
  * Returns:  the length beyond the writepos that was mixed to.
  */
 
-static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD playpos, DWORD writepos,
+static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos,
                                  DWORD mixlen, BOOL recover, BOOL *all_stopped)
 {
 	INT i, len;
@@ -689,7 +688,7 @@ static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD playpos,
 	/* unless we find a running buffer, all have stopped */
 	*all_stopped = TRUE;
 
-	TRACE("(%d,%d,%d,%d)\n", playpos, writepos, mixlen, recover);
+	TRACE("(%d,%d,%d)\n", writepos, mixlen, recover);
 	for (i = 0; i < device->nrofbuffers; i++) {
 		dsb = device->buffers[i];
 
@@ -711,7 +710,7 @@ static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD playpos,
 				}
 
 				/* mix next buffer into the main buffer */
-				len = DSOUND_MixOne(dsb, playpos, writepos, mixlen);
+				len = DSOUND_MixOne(dsb, writepos, mixlen);
 
 				/* if the buffer was starting, it must be playing now */
 				if (dsb->state == STATE_STARTING)
@@ -873,7 +872,6 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		writelead = DSOUND_BufPtrDiff(device->buflen, writepos, playpos);
 
 		/* find the maximum we can prebuffer from current write position */
-		maxq = prebuff_max - prebuff_left;
 		maxq = (writelead < prebuff_max) ? (prebuff_max - writelead) : 0;
 
 		TRACE("prebuff_left = %d, prebuff_max = %dx%d=%d, writelead=%d\n",
@@ -881,7 +879,9 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 		/* check for underrun. underrun occurs when the write position passes the mix position */
 		if((prebuff_left > prebuff_max) || (device->state == STATE_STOPPED) || (device->state == STATE_STARTING)){
-			TRACE("Buffer starting or buffer underrun\n");
+			if (device->state == STATE_STOPPING || device->state == STATE_PLAYING)
+				WARN("Probable buffer underrun\n");
+			else TRACE("Buffer starting or buffer underrun\n");
 
 			/* recover mixing for all buffers */
 			recover = TRUE;
@@ -894,7 +894,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 			IDsDriverBuffer_Lock(device->hwbuf, &buf1, &size1, &buf2, &size2, device->mixpos, maxq, 0);
 
 		/* do the mixing */
-		frag = DSOUND_MixToPrimary(device, playpos, writepos, maxq, recover, &all_stopped);
+		frag = DSOUND_MixToPrimary(device, writepos, maxq, recover, &all_stopped);
 
 		/* update the mix position, taking wrap-around into acount */
 		device->mixpos = writepos + frag;
