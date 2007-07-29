@@ -569,6 +569,19 @@ static void test_get_displayname(void)
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
     }
 
+    /* Buffer is too small */
+    SetLastError(0xdeadbeef);
+    tempsize = displaysize;
+    displaysize = (tempsize / 2);
+    ret = GetServiceDisplayNameA(scm_handle, servicename, displayname, &displaysize);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    {
+    ok(displaysize == tempsize, "Expected the needed buffersize\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    }
+
     /* Get the displayname */
     SetLastError(0xdeadbeef);
     ret = GetServiceDisplayNameA(scm_handle, servicename, displayname, &displaysize);
