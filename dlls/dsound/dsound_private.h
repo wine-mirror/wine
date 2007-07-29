@@ -84,7 +84,7 @@ struct DirectSoundDevice
     PWAVEFORMATEX               pwfx;
     HWAVEOUT                    hwo;
     LPWAVEHDR                   pwave[DS_HEL_FRAGS];
-    UINT                        timerID, pwplay, pwwrite, pwqueue, prebuf, precount;
+    UINT                        timerID, pwplay, pwqueue, prebuf;
     DWORD                       fraglen;
     PIDSDRIVERBUFFER            hwbuf;
     LPBYTE                      buffer;

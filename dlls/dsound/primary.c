@@ -134,7 +134,6 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 			}
 
 			device->pwplay = 0;
-			device->pwwrite = 0;
 			device->pwqueue = 0;
 			device->playpos = 0;
 			device->mixpos = 0;
