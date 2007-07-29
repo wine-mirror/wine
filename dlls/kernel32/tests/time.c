@@ -2,6 +2,7 @@
  * Unit test suite for time functions
  *
  * Copyright 2004 Uwe Bonnes
+ * Copyright 2007 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +21,9 @@
 
 #include "wine/test.h"
 #include "winbase.h"
+
+static BOOL (WINAPI *pTzSpecificLocalTimeToSystemTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
+static BOOL (WINAPI *pSystemTimeToTzSpecificLocalTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
 
 #define SECSPERMIN         60
 #define SECSPERDAY        86400
@@ -181,12 +185,86 @@ static void test_invalid_arg(void)
 
     ok( !SystemTimeToFileTime(&st, &ft), "bad minute\n");
 }
+
+static LONGLONG system_time_to_minutes(const SYSTEMTIME *st)
+{
+    BOOL ret;
+    FILETIME ft;
+    LONGLONG minutes;
+
+    SetLastError(0xdeadbeef);
+    ret = SystemTimeToFileTime(st, &ft);
+    ok(ret, "SystemTimeToFileTime error %u\n", GetLastError());
+
+    minutes = ((LONGLONG)ft.dwHighDateTime << 32) + ft.dwLowDateTime;
+    minutes /= (LONGLONG)600000000; /* convert to minutes */
+    return minutes;
+}
+
+static LONG get_tz_bias(const TIME_ZONE_INFORMATION *tzinfo, DWORD tz_id)
+{
+    switch (tz_id)
+    {
+    case TIME_ZONE_ID_DAYLIGHT:
+        return tzinfo->DaylightBias;
+
+    case TIME_ZONE_ID_STANDARD:
+        return tzinfo->StandardBias;
+
+    default:
+        trace("unknown time zone id %d\n", tz_id);
+        /* fall through */
+    case TIME_ZONE_ID_UNKNOWN:
+        return 0;
+    }
+}
  
 static void test_GetTimeZoneInformation(void)
 {
     TIME_ZONE_INFORMATION tzinfo, tzinfo1;
-    DWORD res =  GetTimeZoneInformation(&tzinfo);
-    ok(res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
+    BOOL res;
+    DWORD tz_id;
+    SYSTEMTIME st, current, utc, local;
+    FILETIME l_ft, s_ft;
+    LONGLONG l_time, s_time;
+    LONG diff;
+
+    GetSystemTime(&st);
+    s_time = system_time_to_minutes(&st);
+
+    SetLastError(0xdeadbeef);
+    res = SystemTimeToFileTime(&st, &s_ft);
+    ok(res, "SystemTimeToFileTime error %u\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    res = FileTimeToLocalFileTime(&s_ft, &l_ft);
+    ok(res, "FileTimeToLocalFileTime error %u\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    res = FileTimeToSystemTime(&l_ft, &local);
+    ok(res, "FileTimeToSystemTime error %u\n", GetLastError());
+    l_time = system_time_to_minutes(&local);
+
+    tz_id = GetTimeZoneInformation(&tzinfo);
+    ok(tz_id != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
+
+    trace("bias %d\n", tzinfo.Bias);
+    trace("standard (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
+        tzinfo.StandardDate.wDay, tzinfo.StandardDate.wMonth,
+        tzinfo.StandardDate.wYear, tzinfo.StandardDate.wDayOfWeek,
+        tzinfo.StandardDate.wHour, tzinfo.StandardDate.wMinute,
+        tzinfo.StandardDate.wSecond, tzinfo.StandardDate.wMilliseconds,
+        tzinfo.StandardBias);
+    trace("daylight (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
+        tzinfo.DaylightDate.wDay, tzinfo.DaylightDate.wMonth,
+        tzinfo.DaylightDate.wYear, tzinfo.DaylightDate.wDayOfWeek,
+        tzinfo.DaylightDate.wHour, tzinfo.DaylightDate.wMinute,
+        tzinfo.DaylightDate.wSecond, tzinfo.DaylightDate.wMilliseconds,
+        tzinfo.DaylightBias);
+
+    diff = (LONG)(s_time - l_time);
+    ok(diff == tzinfo.Bias + get_tz_bias(&tzinfo, tz_id),
+       "system/local diff %d != tz bias %d\n",
+       diff, tzinfo.Bias + get_tz_bias(&tzinfo, tz_id));
+
     ok(SetEnvironmentVariableA("TZ","GMT0") != 0,
        "SetEnvironmentVariableA failed\n");
     res =  GetTimeZoneInformation(&tzinfo1);
@@ -198,7 +276,37 @@ static void test_GetTimeZoneInformation(void)
        "Bias influenced by TZ variable\n"); 
     ok(SetEnvironmentVariableA("TZ",NULL) != 0,
        "SetEnvironmentVariableA failed\n");
-        
+
+    diff = get_tz_bias(&tzinfo, tz_id);
+
+    utc = st;
+    SetLastError(0xdeadbeef);
+    res = pSystemTimeToTzSpecificLocalTime(&tzinfo, &utc, &current);
+    ok(res, "SystemTimeToTzSpecificLocalTime error %u\n", GetLastError());
+    s_time = system_time_to_minutes(&current);
+
+    tzinfo.StandardBias -= 123;
+    tzinfo.DaylightBias += 456;
+
+    res = pSystemTimeToTzSpecificLocalTime(&tzinfo, &utc, &local);
+    ok(res, "SystemTimeToTzSpecificLocalTime error %u\n", GetLastError());
+    l_time = system_time_to_minutes(&local);
+    ok(l_time - s_time == diff - get_tz_bias(&tzinfo, tz_id), "got %d, expected %d\n",
+       (LONG)(l_time - s_time), diff - get_tz_bias(&tzinfo, tz_id));
+
+    /* pretend that there is no transition dates */
+    tzinfo.DaylightDate.wDay = 0;
+    tzinfo.DaylightDate.wMonth = 0;
+    tzinfo.DaylightDate.wYear = 0;
+    tzinfo.StandardDate.wDay = 0;
+    tzinfo.StandardDate.wMonth = 0;
+    tzinfo.StandardDate.wYear = 0;
+
+    res = pSystemTimeToTzSpecificLocalTime(&tzinfo, &utc, &local);
+    ok(res, "SystemTimeToTzSpecificLocalTime error %u\n", GetLastError());
+    l_time = system_time_to_minutes(&local);
+    ok(l_time - s_time == diff, "got %d, expected %d\n",
+       (LONG)(l_time - s_time), diff);
 }
 
 static void test_FileTimeToSystemTime(void)
@@ -275,12 +383,6 @@ static void test_FileTimeToLocalFileTime(void)
        "SetEnvironmentVariableA failed\n");
 }
 
-
-/* test TzSpecificLocalTimeToSystemTime and SystemTimeToTzSpecificLocalTime
- * these are in winXP and later */
-typedef HANDLE (WINAPI *fnTzSpecificLocalTimeToSystemTime)( LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
-typedef HANDLE (WINAPI *fnSystemTimeToTzSpecificLocalTime)( LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
-
 typedef struct {
     int nr;             /* test case number for easier lookup */
     TIME_ZONE_INFORMATION *ptz; /* ptr to timezone */
@@ -290,17 +392,16 @@ typedef struct {
 
 static void test_TzSpecificLocalTimeToSystemTime(void)
 {    
-    HMODULE hKernel = GetModuleHandle("kernel32");
-    fnTzSpecificLocalTimeToSystemTime pTzSpecificLocalTimeToSystemTime;
-    fnSystemTimeToTzSpecificLocalTime pSystemTimeToTzSpecificLocalTime = NULL;
     TIME_ZONE_INFORMATION tzE, tzW, tzS;
     SYSTEMTIME result;
     int i, j, year;
-    pTzSpecificLocalTimeToSystemTime = (fnTzSpecificLocalTimeToSystemTime) GetProcAddress( hKernel, "TzSpecificLocalTimeToSystemTime");
-    if(pTzSpecificLocalTimeToSystemTime)
-        pSystemTimeToTzSpecificLocalTime = (fnTzSpecificLocalTimeToSystemTime) GetProcAddress( hKernel, "SystemTimeToTzSpecificLocalTime");
-    if( !pSystemTimeToTzSpecificLocalTime)
+
+    if (!pTzSpecificLocalTimeToSystemTime || !pSystemTimeToTzSpecificLocalTime)
+    {
+        skip("TzSpecificLocalTimeToSystemTime or SystemTimeToTzSpecificLocalTime not present\n");
         return;
+    }
+
     ZeroMemory( &tzE, sizeof(tzE));
     ZeroMemory( &tzW, sizeof(tzW));
     ZeroMemory( &tzS, sizeof(tzS));
@@ -473,6 +574,10 @@ static void test_TzSpecificLocalTimeToSystemTime(void)
 
 START_TEST(time)
 {
+    HMODULE hKernel = GetModuleHandle("kernel32");
+    pTzSpecificLocalTimeToSystemTime = (void *)GetProcAddress(hKernel, "TzSpecificLocalTimeToSystemTime");
+    pSystemTimeToTzSpecificLocalTime = (void *)GetProcAddress( hKernel, "SystemTimeToTzSpecificLocalTime");
+
     test_conversions();
     test_invalid_arg();
     test_GetTimeZoneInformation();
