@@ -20468,6 +20468,8 @@ ac_config_files="$ac_config_files dlls/msftedit/Makefile"
 
 ac_config_files="$ac_config_files dlls/msg711.acm/Makefile"
 
+ac_config_files="$ac_config_files dlls/mshtml.tlb/Makefile"
+
 ac_config_files="$ac_config_files dlls/mshtml/Makefile"
 
 ac_config_files="$ac_config_files dlls/mshtml/tests/Makefile"
@@ -21593,6 +21595,7 @@ do
     "dlls/msdmo/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msdmo/Makefile" ;;
     "dlls/msftedit/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msftedit/Makefile" ;;
     "dlls/msg711.acm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msg711.acm/Makefile" ;;
+    "dlls/mshtml.tlb/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mshtml.tlb/Makefile" ;;
     "dlls/mshtml/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mshtml/Makefile" ;;
     "dlls/mshtml/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mshtml/tests/Makefile" ;;
     "dlls/msi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msi/Makefile" ;;

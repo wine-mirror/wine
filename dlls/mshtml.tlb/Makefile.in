@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = mshtml.tlb
+IMPORTS   = kernel32
+
+RC_SRCS = rsrc.rc
+IDL_TLB_SRCS = mshtml_tlb.idl
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

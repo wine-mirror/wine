@@ -115,6 +115,7 @@ BASEDIRS = \
 	msftedit \
 	msg711.acm \
 	mshtml \
+	mshtml.tlb \
 	msi \
 	msimg32 \
 	msisys.ocx \

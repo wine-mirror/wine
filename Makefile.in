@@ -289,6 +289,7 @@ ALL_MAKEFILES = \
 	dlls/msdmo/Makefile \
 	dlls/msftedit/Makefile \
 	dlls/msg711.acm/Makefile \
+	dlls/mshtml.tlb/Makefile \
 	dlls/mshtml/Makefile \
 	dlls/mshtml/tests/Makefile \
 	dlls/msi/Makefile \
@@ -649,6 +650,7 @@ dlls/mscoree/Makefile: dlls/mscoree/Makefile.in dlls/Makedll.rules
 dlls/msdmo/Makefile: dlls/msdmo/Makefile.in dlls/Makedll.rules
 dlls/msftedit/Makefile: dlls/msftedit/Makefile.in dlls/Makedll.rules
 dlls/msg711.acm/Makefile: dlls/msg711.acm/Makefile.in dlls/Makedll.rules
+dlls/mshtml.tlb/Makefile: dlls/mshtml.tlb/Makefile.in dlls/Makedll.rules
 dlls/mshtml/Makefile: dlls/mshtml/Makefile.in dlls/Makedll.rules
 dlls/mshtml/tests/Makefile: dlls/mshtml/tests/Makefile.in dlls/Maketest.rules
 dlls/msi/Makefile: dlls/msi/Makefile.in dlls/Makedll.rules

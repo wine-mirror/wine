@@ -329,6 +329,8 @@ dlls/mscms/tests/testlist.c
 dlls/mscms/version.res
 dlls/msdmo/libmsdmo.def
 dlls/msdmo/rsrc.res
+dlls/mshtml.tlb/mshtml_tlb.tlb
+dlls/mshtml.tlb/rsrc.res
 dlls/mshtml/libmshtml.def
 dlls/mshtml/nsiface.h
 dlls/mshtml/rsrc.res
