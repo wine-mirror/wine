@@ -27,6 +27,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <string.h>
 #include <limits.h>
 #include <time.h>
@@ -881,7 +882,10 @@ static const WCHAR* TIME_GetTZAsStr (time_t utc, int bias, int dst)
    unsigned int i;
 
    if (!strftime (psTZName, 7, "%Z", ptm))
-      return (NULL);
+   {
+      WARN("strftime error %d\n", errno);
+      return NULL;
+   }
 
    for (i=0; i<(sizeof(TZ_INFO) / sizeof(struct tagTZ_INFO)); i++)
    {
@@ -975,10 +979,13 @@ NTSTATUS WINAPI RtlQueryTimeZoneInformation(RTL_TIME_ZONE_INFORMATION *tzinfo)
 
     memset(tzinfo, 0, sizeof(RTL_TIME_ZONE_INFORMATION));
 
-    if( !TIME_GetTimeZoneInfoFromReg(tzinfo)) {
+    if( !TIME_GetTimeZoneInfoFromReg(tzinfo))
+    {
+        WARN("TIME_GetTimeZoneInfoFromReg failed\n");
 
         gmt = time(NULL);
         bias = TIME_GetBias(gmt, &daylight);
+        TRACE("bias %d, daylight %d\n", -bias/60, daylight);
 
         tzinfo->Bias = -bias / 60;
         tzinfo->StandardBias = 0;
