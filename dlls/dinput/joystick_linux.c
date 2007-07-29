@@ -159,7 +159,6 @@ static INT find_joystick_devices(void)
 
     return joystick_devices_count;
 }
-#undef MAX_JOYSTICKS
 
 static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
 {
@@ -400,7 +399,8 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
     return DI_OK;
 }
 
-static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *dinput, LPDIRECTINPUTDEVICEA* pdev)
+static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *dinput,
+    LPDIRECTINPUTDEVICEA* pdev, unsigned short index)
 {
     DWORD i;
     JoystickImpl* newDevice;
@@ -416,7 +416,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
         return DIERR_OUTOFMEMORY;
     }
 
-    if (!lstrcpynA(newDevice->dev, joystick_devices[rguid->Data3], sizeof(newDevice->dev)) ||
+    if (!lstrcpynA(newDevice->dev, joystick_devices[index], sizeof(newDevice->dev)) ||
         (newDevice->joyfd = open(newDevice->dev, O_RDONLY)) < 0)
     {
         WARN("open(%s, O_RDONLY) failed: %s\n", newDevice->dev, strerror(errno));
@@ -561,7 +561,10 @@ FAILED1:
     return hr;
 }
 
-static BOOL IsJoystickGUID(REFGUID guid)
+/******************************************************************************
+  *     get_joystick_index : Get the joystick index from a given GUID
+  */
+static unsigned short get_joystick_index(REFGUID guid)
 {
     GUID wine_joystick = DInput_Wine_Joystick_GUID;
     GUID dev_guid = *guid;
@@ -569,19 +572,26 @@ static BOOL IsJoystickGUID(REFGUID guid)
     wine_joystick.Data3 = 0;
     dev_guid.Data3 = 0;
 
-    return IsEqualGUID(&wine_joystick, &dev_guid);
+    /* for the standard joystick GUID use index 0 */
+    if(IsEqualGUID(&GUID_Joystick,guid)) return 0;
+
+    /* for the wine joystick GUIDs use the index stored in Data3 */
+    if(IsEqualGUID(&wine_joystick, &dev_guid)) return guid->Data3;
+
+    return MAX_JOYSTICKS;
 }
 
 static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev)
 {
-  if ((IsEqualGUID(&GUID_Joystick,rguid)) ||
-      (IsJoystickGUID(rguid))) {
+  unsigned short index;
+
+  if ((index = get_joystick_index(rguid)) < MAX_JOYSTICKS) {
     if ((riid == NULL) ||
 	IsEqualGUID(&IID_IDirectInputDeviceA,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice7A,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
-      return alloc_device(rguid, &JoystickAvt, dinput, pdev);
+      return alloc_device(rguid, &JoystickAvt, dinput, pdev, index);
     } else {
       WARN("no interface\n");
       *pdev = 0;
@@ -596,14 +606,15 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
 
 static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEW* pdev)
 {
-  if ((IsEqualGUID(&GUID_Joystick,rguid)) ||
-      (IsJoystickGUID(rguid))) {
+  unsigned short index;
+
+  if ((index = get_joystick_index(rguid)) < MAX_JOYSTICKS) {
     if ((riid == NULL) ||
 	IsEqualGUID(&IID_IDirectInputDeviceW,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice2W,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice7W,riid) ||
 	IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
-      return alloc_device(rguid, &JoystickWvt, dinput, (LPDIRECTINPUTDEVICEA *)pdev);
+      return alloc_device(rguid, &JoystickWvt, dinput, (LPDIRECTINPUTDEVICEA *)pdev, index);
     } else {
       WARN("no interface\n");
       *pdev = 0;
@@ -615,6 +626,8 @@ static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, RE
   *pdev = 0;
   return DIERR_DEVICENOTREG;
 }
+
+#undef MAX_JOYSTICKS
 
 const struct dinput_device joystick_linux_device = {
   "Wine Linux joystick driver",

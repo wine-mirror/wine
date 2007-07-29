@@ -239,6 +239,7 @@ static void find_joydevs(void)
     }
 
     if (fd!=-1) {
+
       if ((-1==ioctl(fd,EVIOCGBIT(0,sizeof(joydev.evbits)),joydev.evbits))) {
         perror("EVIOCGBIT 0");
         close(fd);
@@ -391,7 +392,7 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
   return FALSE;
 }
 
-static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *dinput, struct JoyDev *joydev)
+static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *dinput, unsigned short index)
 {
     JoystickImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
@@ -407,7 +408,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
   newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
   newDevice->joyfd = -1;
   newDevice->base.dinput = dinput;
-  newDevice->joydev = joydev;
+  newDevice->joydev = &joydevs[index];
 #ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
   newDevice->ff_state = FF_STATUS_STOPPED;
 #endif
@@ -475,22 +476,39 @@ failed:
     return NULL;
 }
 
+/******************************************************************************
+  *     get_joystick_index : Get the joystick index from a given GUID
+  */
+static unsigned short get_joystick_index(REFGUID guid)
+{
+    GUID wine_joystick = DInput_Wine_Joystick_Base_GUID;
+    GUID dev_guid = *guid;
+
+    wine_joystick.Data3 = 0;
+    dev_guid.Data3 = 0;
+
+    /* for the standard joystick GUID use index 0 */
+    if(IsEqualGUID(&GUID_Joystick,guid)) return 0;
+
+    /* for the wine joystick GUIDs use the index stored in Data3 */
+    if(IsEqualGUID(&wine_joystick, &dev_guid)) return guid->Data3 - DInput_Wine_Joystick_Base_GUID.Data3;
+
+    return MAX_JOYDEV;
+}
+
 static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev)
 {
-  int i;
+    unsigned short index;
 
-  find_joydevs();
+    find_joydevs();
 
-  for (i=0; i<have_joydevs; i++) {
-    if (IsEqualGUID(&GUID_Joystick,rguid) ||
-        IsEqualGUID(&joydevs[i].guid,rguid)
-        ) {
+    if ((index = get_joystick_index(rguid)) < MAX_JOYDEV) {
       if ((riid == NULL) ||
-          IsEqualGUID(&IID_IDirectInputDeviceA,riid) ||
-          IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
-          IsEqualGUID(&IID_IDirectInputDevice7A,riid) ||
-          IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
-        *pdev = (IDirectInputDeviceA*) alloc_device(rguid, &JoystickAvt, dinput, &joydevs[i]);
+      IsEqualGUID(&IID_IDirectInputDeviceA,riid) ||
+      IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
+      IsEqualGUID(&IID_IDirectInputDevice7A,riid) ||
+      IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
+        *pdev = (IDirectInputDeviceA*) alloc_device(rguid, &JoystickAvt, dinput, index);
         TRACE("Creating a Joystick device (%p)\n", *pdev);
         if (*pdev==0) {
           ERR("out of memory\n");
@@ -501,28 +519,24 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
         return DIERR_NOINTERFACE;
       }
     }
-  }
 
-  return DIERR_DEVICENOTREG;
+    return DIERR_DEVICENOTREG;
 }
 
 
 static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEW* pdev)
 {
-  int i;
+    unsigned short index;
 
-  find_joydevs();
+    find_joydevs();
 
-  for (i=0; i<have_joydevs; i++) {
-    if (IsEqualGUID(&GUID_Joystick,rguid) ||
-        IsEqualGUID(&joydevs[i].guid,rguid)
-        ) {
+    if ((index = get_joystick_index(rguid)) < MAX_JOYDEV) {
       if ((riid == NULL) ||
-          IsEqualGUID(&IID_IDirectInputDeviceW,riid) ||
-          IsEqualGUID(&IID_IDirectInputDevice2W,riid) ||
-          IsEqualGUID(&IID_IDirectInputDevice7W,riid) ||
-          IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
-        *pdev = (IDirectInputDeviceW*) alloc_device(rguid, &JoystickWvt, dinput, &joydevs[i]);
+      IsEqualGUID(&IID_IDirectInputDeviceW,riid) ||
+      IsEqualGUID(&IID_IDirectInputDevice2W,riid) ||
+      IsEqualGUID(&IID_IDirectInputDevice7W,riid) ||
+      IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
+        *pdev = (IDirectInputDeviceW*) alloc_device(rguid, &JoystickWvt, dinput, index);
         TRACE("Creating a Joystick device (%p)\n", *pdev);
         if (*pdev==0) {
           ERR("out of memory\n");
@@ -533,9 +547,8 @@ static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, RE
         return DIERR_NOINTERFACE;
       }
     }
-  }
 
-  return DIERR_DEVICENOTREG;
+    return DIERR_DEVICENOTREG;
 }
 
 const struct dinput_device joystick_linuxinput_device = {
