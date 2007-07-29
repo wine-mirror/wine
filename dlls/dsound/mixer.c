@@ -106,7 +106,7 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
  * "last played" position for the buffer (i.e. dsb->playpos) and "len" bytes
  * beyond that position.
  */
-void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, DWORD playpos, int len)
+void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len)
 {
 	int			i;
 	DWORD			offset;
