@@ -1208,12 +1208,12 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 };
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(SysJoystickWvt.fun))
+# define XCAST(fun)	(typeof(JoystickWvt.fun))
 #else
 # define XCAST(fun)	(void*)
 #endif
 
-static const IDirectInputDevice8WVtbl SysJoystickWvt =
+static const IDirectInputDevice8WVtbl JoystickWvt =
 {
 	IDirectInputDevice2WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
