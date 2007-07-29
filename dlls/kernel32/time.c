@@ -148,7 +148,7 @@ static int TIME_DayLightCompareDate( const SYSTEMTIME *date,
  *      TIME_ZONE_ID_STANDARD   Current time is standard time
  *      TIME_ZONE_ID_DAYLIGHT   Current time is dayligh saving time
  */
-static BOOL TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
+static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
     FILETIME *lpFileTime, BOOL islocal )
 {
     int ret;
