@@ -607,20 +607,19 @@ static int TIME_GetBias(time_t utc, int *pdaylight)
     int ret;
 
     RtlEnterCriticalSection( &TIME_GetBias_section );
-    if(utc == last_utc)
-    {
-        *pdaylight = last_daylight;
-        ret = last_bias;	
-    } else
+    if (utc != last_utc)
     {
         ptm = localtime(&utc);
-	*pdaylight = last_daylight =
-            ptm->tm_isdst; /* daylight for local timezone */
+	last_daylight = ptm->tm_isdst; /* daylight for local timezone */
 	ptm = gmtime(&utc);
-	ptm->tm_isdst = *pdaylight; /* use local daylight, not that of Greenwich */
+	ptm->tm_isdst = last_daylight; /* use local daylight, not that of Greenwich */
 	last_utc = utc;
-	ret = last_bias = (int)(utc-mktime(ptm));
+	last_bias = (int)(utc - mktime(ptm));
     }
+
+    *pdaylight = last_daylight;
+    ret = last_bias;
+
     RtlLeaveCriticalSection( &TIME_GetBias_section );
     return ret;
 }
