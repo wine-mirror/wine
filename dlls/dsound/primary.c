@@ -952,9 +952,7 @@ static HRESULT WINAPI PrimaryBufferImpl_Initialize(
 	LPDIRECTSOUNDBUFFER iface,LPDIRECTSOUND dsound,LPCDSBUFFERDESC dbsd
 ) {
 	PrimaryBufferImpl *This = (PrimaryBufferImpl *)iface;
-	FIXME("(%p,%p,%p):stub\n",This,dsound,dbsd);
-	DPRINTF("Re-Init!!!\n");
-	WARN("already initialized\n");
+	WARN("(%p) already initialized\n", This);
 	return DSERR_ALREADYINITIALIZED;
 }
 

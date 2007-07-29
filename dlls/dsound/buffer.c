@@ -793,9 +793,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Initialize(
 	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND dsound,LPCDSBUFFERDESC dbsd
 ) {
 	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
-	FIXME("(%p,%p,%p):stub\n",This,dsound,dbsd);
-	DPRINTF("Re-Init!!!\n");
-	WARN("already initialized\n");
+	WARN("(%p) already initialized\n", This);
 	return DSERR_ALREADYINITIALIZED;
 }
 
