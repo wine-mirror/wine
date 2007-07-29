@@ -316,6 +316,13 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 								  (LPVOID)&(device->hwbuf));
 				if (err != DS_OK)
 					WARN("IDsDriver_CreateSoundBuffer failed\n");
+				else if (device->state == STATE_STOPPING)
+					device->state = STATE_STOPPED;
+				else if (device->state == STATE_PLAYING)
+					device->state = STATE_STARTING;
+				if (err == DS_OK)
+					FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
+
 			} else {
 				WARN("waveOutOpen failed\n");
 			}
