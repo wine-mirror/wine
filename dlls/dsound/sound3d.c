@@ -279,7 +279,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	{
 		TRACE("doppler: Buffer and Listener don't have velocities\n");
 	}
-	else
+	else if (ds3db_ds3db.vVelocity != dsb->device->ds3dl.vVelocity)
 	{
 		/* calculate length of ds3db_ds3db.vVelocity component which causes Doppler Effect
 		   NOTE: if buffer moves TOWARDS the listener, it's velocity component is NEGATIVE
@@ -296,6 +296,8 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 		      dsb->freq, flFreq);
 		/* FIXME: replace following line with correct frequency setting ! */
 		dsb->freq = flFreq;
+		DSOUND_RecalcFormat(dsb);
+		DSOUND_MixToTemporary(dsb, 0, dsb->buflen);
 	}
 #endif	
 	

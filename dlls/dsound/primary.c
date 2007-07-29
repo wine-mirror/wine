@@ -378,7 +378,7 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 {
 	HRESULT err = DS_OK;
 	int i, alloc_size, cp_size;
-	DWORD nSamplesPerSec;
+	DWORD nSamplesPerSec, bpp, chans;
 	TRACE("(%p,%p)\n", device, wfex);
 
 	if (device->priolevel == DSSCL_NORMAL) {
@@ -410,6 +410,8 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
         device->pwfx = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,device->pwfx,alloc_size);
 
 	nSamplesPerSec = device->pwfx->nSamplesPerSec;
+	bpp = device->pwfx->wBitsPerSample;
+	chans = device->pwfx->nChannels;
 
         CopyMemory(device->pwfx, wfex, cp_size);
 
@@ -459,14 +461,15 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 		DSOUND_RecalcPrimary(device);
 	}
 
-	if (nSamplesPerSec != device->pwfx->nSamplesPerSec) {
+	if (nSamplesPerSec != device->pwfx->nSamplesPerSec || bpp != device->pwfx->wBitsPerSample || chans != device->pwfx->nChannels) {
 		IDirectSoundBufferImpl** dsb = device->buffers;
 		for (i = 0; i < device->nrofbuffers; i++, dsb++) {
 			/* **** */
 			RtlAcquireResourceExclusive(&(*dsb)->lock, TRUE);
 
-			(*dsb)->freqAdjust = ((*dsb)->freq << DSOUND_FREQSHIFT) /
-				wfex->nSamplesPerSec;
+			(*dsb)->freqAdjust = ((DWORD64)(*dsb)->freq << DSOUND_FREQSHIFT) / device->pwfx->nSamplesPerSec;
+			DSOUND_RecalcFormat((*dsb));
+			DSOUND_MixToTemporary((*dsb), 0, (*dsb)->buflen);
 
 			RtlReleaseResource(&(*dsb)->lock);
 			/* **** */
@@ -769,7 +772,7 @@ static HRESULT WINAPI PrimaryBufferImpl_Lock(
 		     writecursor, device->buflen);
                 return DSERR_INVALIDPARAM;
         }
-                                                                                
+
         if (writebytes > device->buflen) {
                 WARN("Invalid parameter, writebytes: %u > buflen: %u\n",
 		     writebytes, device->buflen);
