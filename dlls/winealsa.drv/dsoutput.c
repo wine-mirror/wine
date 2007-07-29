@@ -296,8 +296,6 @@ static HRESULT WINAPI IDsDriverBufferImpl_Unlock(PIDSDRIVERBUFFER iface,
     return DSERR_UNSUPPORTED;
 }
 
-static int warnonce;
-
 static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx, BOOL forced)
 {
     snd_pcm_t *pcm = NULL;
@@ -382,26 +380,11 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx, BOOL fo
     err = snd_pcm_hw_params_get_period_size(hw_params, &psize, NULL);
     TRACE("Period size is: %lu\n", psize);
 
-    /* If period size is 'high', try to commit less
-     * dmix needs at least 2 buffers to work successfully but prefers 3
-     * however it seems to work ok if I just commit 2 1/2 buffers
-     */
-    if (psize >= 512)
-    {
-        if (psize == 1024 && ++warnonce == 1)
-            FIXME("Your alsa dmix period size is 1024, try decreasing it to 512 if possible\n");
-        else if (psize > 512)
-            WARN("Your alsa period size is excessively high (%lu)\n", psize);
-        This->mmap_commitahead = 2 * psize + psize/2;
-        This->mmap_writeahead = 2 * psize;
-    }
-    else
-    {
-        This->mmap_commitahead = 3 * psize;
-        while (This->mmap_commitahead <= 512)
-            This->mmap_commitahead += psize;
-        This->mmap_writeahead = This->mmap_commitahead;
-    }
+    /* ALSA needs at least 3 buffers to work succesfully */
+    This->mmap_commitahead = 3 * psize;
+    while (This->mmap_commitahead <= 512)
+        This->mmap_commitahead += psize;
+    This->mmap_writeahead = This->mmap_commitahead;
 
     if (This->pcm)
     {
