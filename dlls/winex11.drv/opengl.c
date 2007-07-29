@@ -250,6 +250,7 @@ static void  (*pglXFreeMemoryNV)(GLvoid *pointer);
 MAKE_FUNCPTR(glBindTexture)
 MAKE_FUNCPTR(glBitmap)
 MAKE_FUNCPTR(glCopyTexSubImage1D)
+MAKE_FUNCPTR(glCopyTexImage2D)
 MAKE_FUNCPTR(glCopyTexSubImage2D)
 MAKE_FUNCPTR(glDisable)
 MAKE_FUNCPTR(glDrawBuffer)
@@ -396,6 +397,7 @@ LOAD_FUNCPTR(glXGetFBConfigs)
 LOAD_FUNCPTR(glBindTexture)
 LOAD_FUNCPTR(glBitmap)
 LOAD_FUNCPTR(glCopyTexSubImage1D)
+LOAD_FUNCPTR(glCopyTexImage2D)
 LOAD_FUNCPTR(glCopyTexSubImage2D)
 LOAD_FUNCPTR(glDisable)
 LOAD_FUNCPTR(glDrawBuffer)
@@ -2134,7 +2136,7 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
                                     goto create_failed;
                                 }
                                 object->texture_target = GL_TEXTURE_CUBE_MAP;
-                                object->texture_bind_target = GL_TEXTURE_CUBE_MAP;
+                                object->texture_bind_target = GL_TEXTURE_BINDING_CUBE_MAP;
                                break;
                             }
                             case WGL_TEXTURE_1D_ARB: {
@@ -2143,12 +2145,12 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
                                     goto create_failed;
                                 }
                                 object->texture_target = GL_TEXTURE_1D;
-                                object->texture_bind_target = GL_TEXTURE_1D;
+                                object->texture_bind_target = GL_TEXTURE_BINDING_1D;
                                 break;
                             }
                             case WGL_TEXTURE_2D_ARB: {
                                 object->texture_target = GL_TEXTURE_2D;
-                                object->texture_bind_target = GL_TEXTURE_2D;
+                                object->texture_bind_target = GL_TEXTURE_BINDING_2D;
                                 break;
                             }
                             case WGL_TEXTURE_RECTANGLE_NV: {
@@ -2736,8 +2738,8 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
     }
 
     if (!use_render_texture_ati && 1 == use_render_texture_emulation) {
-        void *buf;
         static int init = 0;
+        int prev_binded_texture = 0;
         GLXContext prev_context = pglXGetCurrentContext();
         Drawable prev_drawable = pglXGetCurrentDrawable();
         GLXContext tmp_context;
@@ -2751,25 +2753,22 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
             FIXME("partial stub!\n");
         }
 
-        buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->texture_bpp*object->width*object->height);
-        if(!buf) {
-            ERR("Unable to allocate a buffer for render_texture emulation\n");
-            return GL_FALSE;
-        }
-
         TRACE("drawable=%p, context=%p\n", (void*)object->drawable, prev_context);
-        tmp_context = pglXCreateNewContext(gdi_display, object->fmt->fbconfig, object->fmt->render_type, NULL, True);
+        tmp_context = pglXCreateNewContext(gdi_display, object->fmt->fbconfig, object->fmt->render_type, prev_context, True);
 
-        /* Switch to our pbuffer and readback its contents */
+        pglGetIntegerv(object->texture_bind_target, &prev_binded_texture);
+
+        /* Switch to our pbuffer */
         pglXMakeCurrent(gdi_display, object->drawable, tmp_context);
-        pglReadPixels(0, 0, object->width, object->height, object->texture_format, object->texture_type, buf);
+
+        /* Make sure that the prev_binded_texture is set as the current texture state isn't shared between contexts.
+         * After that upload the pbuffer texture data. */
+        pglBindTexture(object->texture_target, prev_binded_texture);
+        pglCopyTexImage2D(object->texture_target, 0, object->use_render_texture, 0, 0, object->width, object->height, 0);
 
         /* Switch back to the original drawable and upload the pbuffer-texture */
         pglXMakeCurrent(object->display, prev_drawable, prev_context);
-        pglTexImage2D(object->texture_target, 0, object->use_render_texture, object->width, object->height, 0, object->texture_format, object->texture_type, buf);
-
         pglXDestroyContext(gdi_display, tmp_context);
-        HeapFree(GetProcessHeap(), 0, buf);
         return GL_TRUE;
     }
 
