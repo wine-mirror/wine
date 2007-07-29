@@ -1160,6 +1160,20 @@ static int encode_var(
     return 0;
 }
 
+static unsigned long get_ulong_val(unsigned long val, int vt)
+{
+    switch(vt) {
+    case VT_I2:
+    case VT_BOOL:
+    case VT_UI2:
+        return val & 0xffff;
+    case VT_I1:
+    case VT_UI1:
+        return val & 0xff;
+    }
+
+    return val;
+}
 
 static void write_value(msft_typelib_t* typelib, int *out, int vt, void *value)
 {
@@ -1177,11 +1191,11 @@ static void write_value(msft_typelib_t* typelib, int *out, int vt, void *value)
     case VT_HRESULT:
     case VT_PTR:
       {
-        unsigned long *lv = value;
-        if((*lv & 0x3ffffff) == *lv) {
+        const unsigned long lv = get_ulong_val(*(unsigned long*)value, vt);
+        if((lv & 0x3ffffff) == lv) {
             *out = 0x80000000;
             *out |= vt << 26;
-            *out |= *lv;
+            *out |= lv;
         } else {
             int offset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATA, 8, 0);
             *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
