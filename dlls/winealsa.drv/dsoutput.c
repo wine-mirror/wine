@@ -88,7 +88,7 @@ struct IDsDriverBufferImpl
     snd_pcm_t *pcm;
     snd_pcm_hw_params_t *hw_params;
     snd_pcm_sw_params_t *sw_params;
-    snd_pcm_uframes_t mmap_buflen_frames, mmap_pos, mmap_commitahead, mmap_writeahead;
+    snd_pcm_uframes_t mmap_buflen_frames, mmap_pos, mmap_commitahead;
 };
 
 /** Fill buffers, for starting and stopping
@@ -225,7 +225,7 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
         return DSERR_GENERIC;
     }
     snd_pcm_format_set_silence(format, areas->addr, pdbi->mmap_buflen_frames);
-    err = snd_pcm_mmap_commit(pcm, ofs, avail);
+    pdbi->mmap_pos = ofs + snd_pcm_mmap_commit(pcm, ofs, 0);
     pdbi->mmap_buffer = areas->addr;
 
     TRACE("created mmap buffer of %ld frames (%d bytes) at %p\n",
@@ -284,16 +284,88 @@ static HRESULT WINAPI IDsDriverBufferImpl_Lock(PIDSDRIVERBUFFER iface,
 					       DWORD dwWritePosition,DWORD dwWriteLen,
 					       DWORD dwFlags)
 {
-    FIXME("(%p) stub\n", iface);
-    return DSERR_UNSUPPORTED;
+    IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
+    snd_pcm_uframes_t writepos;
+
+    TRACE("%d bytes from %d\n", dwWriteLen, dwWritePosition);
+
+    /* **** */
+    EnterCriticalSection(&This->pcm_crst);
+
+    if (dwWriteLen > This->mmap_buflen_bytes || dwWritePosition >= This->mmap_buflen_bytes)
+    {
+        /* **** */
+        LeaveCriticalSection(&This->pcm_crst);
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (ppvAudio2) *ppvAudio2 = NULL;
+    if (pdwLen2) *pdwLen2 = 0;
+
+    *ppvAudio1 = (LPBYTE)This->mmap_buffer + dwWritePosition;
+    *pdwLen1 = dwWriteLen;
+
+    if (dwWritePosition+dwWriteLen > This->mmap_buflen_bytes)
+    {
+        DWORD remainder = This->mmap_buflen_bytes - dwWritePosition;
+        *pdwLen1 = remainder;
+
+        if (ppvAudio2 && pdwLen2)
+        {
+            *ppvAudio2 = This->mmap_buffer;
+            *pdwLen2 = dwWriteLen - remainder;
+        }
+        else dwWriteLen = remainder;
+    }
+
+    writepos = snd_pcm_bytes_to_frames(This->pcm, dwWritePosition);
+    if (writepos == This->mmap_pos && snd_pcm_state(This->pcm) == SND_PCM_STATE_RUNNING)
+    {
+        const snd_pcm_channel_area_t *areas;
+        snd_pcm_uframes_t writelen = snd_pcm_bytes_to_frames(This->pcm, dwWriteLen), putin = writelen;
+        TRACE("Hit mmap_pos, locking data!\n");
+        snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
+    }
+
+    LeaveCriticalSection(&This->pcm_crst);
+    /* **** */
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsDriverBufferImpl_Unlock(PIDSDRIVERBUFFER iface,
 						 LPVOID pvAudio1,DWORD dwLen1,
 						 LPVOID pvAudio2,DWORD dwLen2)
 {
-    FIXME("(%p) stub\n", iface);
-    return DSERR_UNSUPPORTED;
+    IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
+    snd_pcm_uframes_t writepos;
+
+    if (!dwLen1)
+        return DS_OK;
+
+    /* **** */
+    EnterCriticalSection(&This->pcm_crst);
+
+    writepos = snd_pcm_bytes_to_frames(This->pcm, (DWORD_PTR)pvAudio1 - (DWORD_PTR)This->mmap_buffer);
+    if (writepos == This->mmap_pos)
+    {
+        const snd_pcm_channel_area_t *areas;
+        snd_pcm_uframes_t writelen = snd_pcm_bytes_to_frames(This->pcm, dwLen1);
+        TRACE("Committing data\n");
+        This->mmap_pos += snd_pcm_mmap_commit(This->pcm, This->mmap_pos, writelen);
+        if (This->mmap_pos == This->mmap_buflen_frames)
+            This->mmap_pos = 0;
+        if (!This->mmap_pos && dwLen2)
+        {
+            writelen = snd_pcm_bytes_to_frames(This->pcm, dwLen2);
+            snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &writelen);
+            This->mmap_pos += snd_pcm_mmap_commit(This->pcm, This->mmap_pos, writelen);
+            assert(This->mmap_pos < This->mmap_buflen_frames);
+        }
+    }
+    LeaveCriticalSection(&This->pcm_crst);
+    /* **** */
+
+    return DS_OK;
 }
 
 static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx, BOOL forced)
@@ -384,7 +456,6 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx, BOOL fo
     This->mmap_commitahead = 3 * psize;
     while (This->mmap_commitahead <= 512)
         This->mmap_commitahead += psize;
-    This->mmap_writeahead = This->mmap_commitahead;
 
     if (This->pcm)
     {
@@ -462,6 +533,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     snd_pcm_uframes_t hw_pptr=0, hw_wptr=0;
     snd_pcm_state_t state;
 
+    /* **** */
     EnterCriticalSection(&This->pcm_crst);
 
     if (!This->pcm)
@@ -470,6 +542,9 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
         LeaveCriticalSection(&This->pcm_crst);
         return DSERR_GENERIC;
     }
+
+    if (!lpdwPlay && !lpdwWrite)
+        CommitAll(This);
 
     state = snd_pcm_state(This->pcm);
 
@@ -480,21 +555,20 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     }
     if (state == SND_PCM_STATE_RUNNING)
     {
-        snd_pcm_uframes_t used = CommitAll(This);
+        snd_pcm_uframes_t used = This->mmap_buflen_frames - snd_pcm_avail_update(This->pcm);
 
         if (This->mmap_pos > used)
             hw_pptr = This->mmap_pos - used;
         else
-            hw_pptr = This->mmap_buflen_frames - used + This->mmap_pos;
-
-        hw_wptr = hw_pptr + (This->mmap_writeahead > used ? used : This->mmap_writeahead);
-        hw_wptr %= This->mmap_buflen_frames;
+            hw_pptr = This->mmap_buflen_frames + This->mmap_pos - used;
         hw_pptr %= This->mmap_buflen_frames;
+        hw_wptr = This->mmap_pos;
 
         TRACE("At position: %ld (%ld) - Used %ld\n", hw_pptr, This->mmap_pos, used);
     }
 
     LeaveCriticalSection(&This->pcm_crst);
+    /* **** */
 
     if (lpdwPlay)
         *lpdwPlay = snd_pcm_frames_to_bytes(This->pcm, hw_pptr);
@@ -512,8 +586,8 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 
     /* **** */
     EnterCriticalSection(&This->pcm_crst);
-    snd_pcm_start(This->pcm);
     CommitAll(This);
+    snd_pcm_start(This->pcm);
     /* **** */
     LeaveCriticalSection(&This->pcm_crst);
     return DS_OK;
@@ -521,13 +595,22 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 
 static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
 {
+    const snd_pcm_channel_area_t *areas;
+    snd_pcm_uframes_t avail;
+    snd_pcm_format_t format;
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     TRACE("(%p)\n",iface);
 
     /* **** */
     EnterCriticalSection(&This->pcm_crst);
+    avail = This->mmap_buflen_frames;
     snd_pcm_drop(This->pcm);
     snd_pcm_prepare(This->pcm);
+    snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &avail);
+    snd_pcm_hw_params_get_format(This->hw_params, &format);
+    snd_pcm_format_set_silence(format, areas->addr, This->mmap_buflen_frames);
+    This->mmap_pos += snd_pcm_mmap_commit(This->pcm, This->mmap_pos, avail);
+
     /* **** */
     LeaveCriticalSection(&This->pcm_crst);
     return DS_OK;
@@ -585,7 +668,7 @@ static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDES
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
     TRACE("(%p,%p)\n",iface,pDesc);
     memcpy(pDesc, &(WOutDev[This->wDevID].ds_desc), sizeof(DSDRIVERDESC));
-    pDesc->dwFlags		= DSDDESC_DONTNEEDPRIMARYLOCK | DSDDESC_DONTNEEDSECONDARYLOCK | DSDDESC_DONTNEEDWRITELEAD;
+    pDesc->dwFlags		= DSDDESC_DONTNEEDSECONDARYLOCK | DSDDESC_DONTNEEDWRITELEAD;
     pDesc->dnDevNode		= WOutDev[This->wDevID].waveDesc.dnDevNode;
     pDesc->wVxdId		= 0;
     pDesc->wReserved		= 0;
