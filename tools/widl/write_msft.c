@@ -1311,6 +1311,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
     if (func->def->attrs) LIST_FOR_EACH_ENTRY( attr, func->def->attrs, const attr_t, entry ) {
         expr_t *expr = attr->u.pval;
         switch(attr->type) {
+        case ATTR_BINDABLE:
+            funcflags |= 0x4; /* FUNCFLAG_BINDABLE */
+            break;
         case ATTR_DISPLAYBIND:
             funcflags |= 0x10; /* FUNCFLAG_DISPLAYBIND */
             break;
@@ -1357,9 +1360,6 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
             break;
         case ATTR_RESTRICTED:
             funcflags |= 0x1; /* FUNCFLAG_FRESTRICTED */
-            break;
-        case ATTR_BINDABLE:
-            funcflags |= 0x4; /* FUNCFLAG_BINDABLE */
             break;
         case ATTR_VARARG:
             if (num_optional || num_defaults)
