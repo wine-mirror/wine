@@ -1338,6 +1338,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
         case ATTR_ID:
             id = expr->cval;
             break;
+        case ATTR_NONBROWSABLE:
+            funcflags |= 0x400; /* FUNCFLAG_NONBROWSABLE */
+            break;
         case ATTR_OUT:
             break;
         case ATTR_PROPGET:
