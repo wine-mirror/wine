@@ -1311,6 +1311,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
     if (func->def->attrs) LIST_FOR_EACH_ENTRY( attr, func->def->attrs, const attr_t, entry ) {
         expr_t *expr = attr->u.pval;
         switch(attr->type) {
+        case ATTR_DISPLAYBIND:
+            funcflags |= 0x10; /* FUNCFLAG_DISPLAYBIND */
+            break;
         case ATTR_ENTRY_ORDINAL:
             extra_attr = max(extra_attr, 3);
             entry = expr->cval;
