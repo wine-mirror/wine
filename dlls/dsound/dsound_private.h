@@ -157,7 +157,7 @@ struct IDirectSoundBufferImpl
     /* IDirectSoundBufferImpl fields */
     SecondaryBufferImpl*        secondary;
     DirectSoundDevice*          device;
-    CRITICAL_SECTION            lock;
+    RTL_RWLOCK                  lock;
     PIDSDRIVERBUFFER            hwbuf;
     PWAVEFORMATEX               pwfx;
     BufferMemory*               buffer;

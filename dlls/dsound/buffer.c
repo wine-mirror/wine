@@ -216,7 +216,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 	}
 
 	/* **** */
-	EnterCriticalSection(&(This->lock));
+	RtlAcquireResourceExclusive(&This->lock, TRUE);
 
 	if (This->dsbd.dwFlags & DSBCAPS_CTRL3D) {
 		oldVol = This->ds3db_lVolume;
@@ -239,7 +239,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 		}
 	}
 
-	LeaveCriticalSection(&(This->lock));
+	RtlReleaseResource(&This->lock);
 	/* **** */
 
 	return hres;
@@ -288,7 +288,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 	}
 
 	/* **** */
-	EnterCriticalSection(&(This->lock));
+	RtlAcquireResourceExclusive(&This->lock, TRUE);
 
 	oldFreq = This->freq;
 	This->freq = freq;
@@ -298,7 +298,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 		DSOUND_RecalcFormat(This);
 	}
 
-	LeaveCriticalSection(&(This->lock));
+	RtlReleaseResource(&This->lock);
 	/* **** */
 
 	return DS_OK;
@@ -312,7 +312,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(
 	TRACE("(%p,%08x,%08x,%08x)\n",This,reserved1,reserved2,flags);
 
 	/* **** */
-	EnterCriticalSection(&(This->lock));
+	RtlAcquireResourceExclusive(&This->lock, TRUE);
 
 	This->playflags = flags;
 	if (This->state == STATE_STOPPED) {
@@ -329,7 +329,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(
 			This->state = STATE_PLAYING;
 	}
 
-	LeaveCriticalSection(&(This->lock));
+	RtlReleaseResource(&This->lock);
 	/* **** */
 
 	return hres;
@@ -342,7 +342,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 	TRACE("(%p)\n",This);
 
 	/* **** */
-	EnterCriticalSection(&(This->lock));
+	RtlAcquireResourceExclusive(&This->lock, TRUE);
 
 	if (This->state == STATE_PLAYING)
 		This->state = STATE_STOPPING;
@@ -357,7 +357,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 	}
 	DSOUND_CheckEvent(This, 0, 0);
 
-	LeaveCriticalSection(&(This->lock));
+	RtlReleaseResource(&This->lock);
 	/* **** */
 
 	return hres;
@@ -380,8 +380,7 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
     if (!ref) {
 	DirectSoundDevice_RemoveBuffer(This->device, This);
 
-	This->lock.DebugInfo->Spare[0] = 0;
-	DeleteCriticalSection(&(This->lock));
+	RtlDeleteResource(&This->lock);
 
 	if (This->hwbuf) {
 		IDsDriverBuffer_Release(This->hwbuf);
@@ -568,7 +567,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
         }
 
 	/* **** */
-	EnterCriticalSection(&(This->lock));
+	RtlAcquireResourceShared(&This->lock, TRUE);
 
 	if (!(This->device->drvdesc.dwFlags & DSDDESC_DONTNEEDSECONDARYLOCK) && This->hwbuf) {
 		hres = IDsDriverBuffer_Lock(This->hwbuf,
@@ -578,7 +577,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 				     0);
 		if (hres != DS_OK) {
 			WARN("IDsDriverBuffer_Lock failed\n");
-			LeaveCriticalSection(&(This->lock));
+			RtlReleaseResource(&This->lock);
 			return hres;
 		}
 	} else {
@@ -603,7 +602,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 		}
 	}
 
-	LeaveCriticalSection(&(This->lock));
+	RtlReleaseResource(&This->lock);
 	/* **** */
 
 	return DS_OK;
@@ -617,7 +616,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(
 	TRACE("(%p,%d)\n",This,newpos);
 
 	/* **** */
-	EnterCriticalSection(&(This->lock));
+	RtlAcquireResourceExclusive(&This->lock, TRUE);
 
 	/* start mixing from this new location instead */
 	newpos %= This->buflen;
@@ -634,7 +633,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(
 			WARN("IDsDriverBuffer_SetPosition failed\n");
 	}
 
-	LeaveCriticalSection(&(This->lock));
+	RtlReleaseResource(&This->lock);
 	/* **** */
 
 	return hres;
@@ -661,7 +660,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 	}
 
 	/* **** */
-	EnterCriticalSection(&(This->lock));
+	RtlAcquireResourceExclusive(&This->lock, TRUE);
 
 	if (This->volpan.lPan != pan) {
 		This->volpan.lPan = pan;
@@ -674,7 +673,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 		}
 	}
 
-	LeaveCriticalSection(&(This->lock));
+	RtlReleaseResource(&This->lock);
 	/* **** */
 
 	return hres;
@@ -710,7 +709,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 	TRACE("(%p,%p,%d,%p,%d)\n", This,p1,x1,p2,x2);
 
 	/* **** */
-	EnterCriticalSection(&(This->lock));
+	RtlAcquireResourceShared(&This->lock, TRUE);
 
 	if (!(This->device->drvdesc.dwFlags & DSDDESC_DONTNEEDSECONDARYLOCK) && This->hwbuf) {
 		hres = IDsDriverBuffer_Unlock(This->hwbuf, p1, x1, p2, x2);
@@ -718,7 +717,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 			WARN("IDsDriverBuffer_Unlock failed\n");
 	}
 
-	LeaveCriticalSection(&(This->lock));
+	RtlReleaseResource(&This->lock);
 	/* **** */
 
 	return hres;
@@ -1099,8 +1098,7 @@ HRESULT IDirectSoundBufferImpl_Create(
 	} else
 		DSOUND_RecalcVolPan(&(dsb->volpan));
 
-	InitializeCriticalSection(&(dsb->lock));
-        dsb->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectSoundBufferImpl.lock");
+	RtlInitializeResource(&dsb->lock);
 
 	/* register buffer if not primary */
 	if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER)) {
@@ -1108,8 +1106,7 @@ HRESULT IDirectSoundBufferImpl_Create(
 		if (err != DS_OK) {
 			HeapFree(GetProcessHeap(),0,dsb->buffer->memory);
 			HeapFree(GetProcessHeap(),0,dsb->buffer);
-        		dsb->lock.DebugInfo->Spare[0] = 0;
-			DeleteCriticalSection(&(dsb->lock));
+			RtlDeleteResource(&dsb->lock);
 			HeapFree(GetProcessHeap(),0,dsb->pwfx);
 			HeapFree(GetProcessHeap(),0,dsb);
 			dsb = NULL;
@@ -1237,14 +1234,12 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
 
     CopyMemory(dsb->pwfx, pdsb->pwfx, size);
 
-    InitializeCriticalSection(&(dsb->lock));
-    dsb->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectSoundBufferImpl.lock");
+    RtlInitializeResource(&dsb->lock);
 
     /* register buffer */
     hres = DirectSoundDevice_AddBuffer(device, dsb);
     if (hres != DS_OK) {
-        dsb->lock.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&(dsb->lock));
+        RtlDeleteResource(&dsb->lock);
         HeapFree(GetProcessHeap(),0,dsb->buffer);
         HeapFree(GetProcessHeap(),0,dsb->pwfx);
         HeapFree(GetProcessHeap(),0,dsb);

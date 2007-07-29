@@ -697,7 +697,7 @@ static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD playpos,
 
 		if (dsb->buflen && dsb->state && !dsb->hwbuf) {
 			TRACE("Checking %p, mixlen=%d\n", dsb, mixlen);
-			EnterCriticalSection(&(dsb->lock));
+			RtlAcquireResourceShared(&dsb->lock, TRUE);
 
 			/* if buffer is stopping it is stopped now */
 			if (dsb->state == STATE_STOPPING) {
@@ -729,7 +729,7 @@ static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD playpos,
 				*all_stopped = FALSE;
 			}
 
-			LeaveCriticalSection(&(dsb->lock));
+			RtlReleaseResource(&dsb->lock);
 		}
 	}
 

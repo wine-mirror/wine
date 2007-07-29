@@ -460,12 +460,12 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 		IDirectSoundBufferImpl** dsb = device->buffers;
 		for (i = 0; i < device->nrofbuffers; i++, dsb++) {
 			/* **** */
-			EnterCriticalSection(&((*dsb)->lock));
+			RtlAcquireResourceExclusive(&(*dsb)->lock, TRUE);
 
 			(*dsb)->freqAdjust = ((*dsb)->freq << DSOUND_FREQSHIFT) /
 				wfex->nSamplesPerSec;
 
-			LeaveCriticalSection(&((*dsb)->lock));
+			RtlReleaseResource(&(*dsb)->lock);
 			/* **** */
 		}
 	}
