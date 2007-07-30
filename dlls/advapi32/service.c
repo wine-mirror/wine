@@ -2283,7 +2283,7 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     /* Last error will be set by GetServiceDisplayNameW and must be preserved */
     GLE = GetLastError();
 
-    if (!lpDisplayName && lpcchBuffer && !ret && (GLE == ERROR_INSUFFICIENT_BUFFER))
+    if (!lpDisplayName && *lpcchBuffer && !ret && (GLE == ERROR_INSUFFICIENT_BUFFER))
     {
         /* Request for buffersize.
          *
@@ -2291,7 +2291,7 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
          */
         size = sizeW * 2;
     }
-    else if (lpDisplayName && lpcchBuffer && !ret)
+    else if (lpDisplayName && *lpcchBuffer && !ret)
     {
         /* Request for displayname.
          *
