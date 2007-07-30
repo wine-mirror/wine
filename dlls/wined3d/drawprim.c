@@ -160,14 +160,9 @@ void primitiveDeclarationConvertToStridedData(
     DWORD *streams = vertexDeclaration->streams;
 
     /* Check for transformed vertices, disable vertex shader if present */
-    strided->u.s.position_transformed = FALSE;
-    for (i = 0; i < vertexDeclaration->declarationWNumElements - 1; ++i) {
-        element = vertexDeclaration->pDeclarationWine + i;
-
-        if (element->Usage == WINED3DDECLUSAGE_POSITIONT) {
-            strided->u.s.position_transformed = TRUE;
-            useVertexShaderFunction = FALSE;
-        }
+    strided->u.s.position_transformed = vertexDeclaration->position_transformed;
+    if(vertexDeclaration->position_transformed) {
+        useVertexShaderFunction = FALSE;
     }
 
     /* Translate the declaration into strided data */

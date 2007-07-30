@@ -1228,6 +1228,7 @@ typedef struct IWineD3DVertexDeclarationImpl {
 
     DWORD                   streams[MAX_STREAMS];
     UINT                    num_streams;
+    BOOL                    position_transformed;
 } IWineD3DVertexDeclarationImpl;
 
 extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;

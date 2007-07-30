@@ -143,14 +143,18 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVerte
 
     /* Do some static analysis on the elements to make reading the declaration more comfortable
      * for the drawing code
-     *
-     * First, find the Streams used in the declaration. The vertex buffers have to be loaded
-     * when drawing.
      */
     This->num_streams = 0;
+    This->position_transformed = FALSE;
     for (i = 0; i < element_count; ++i) {
 
-        /* Filter tesselation pseudo streams*/
+        if(This->pDeclarationWine[i].Usage == WINED3DDECLUSAGE_POSITIONT) {
+            This->position_transformed = TRUE;
+        }
+
+        /* Find the Streams used in the declaration. The vertex buffers have to be loaded
+         * when drawing, but filter tesselation pseudo streams
+         */
         if(This->pDeclarationWine[i].Stream >= MAX_STREAMS) continue;
 
         if(!isPreLoaded[This->pDeclarationWine[i].Stream]) {
