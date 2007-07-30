@@ -8657,6 +8657,65 @@ fi
 fi
 
 
+      { echo "$as_me:$LINENO: checking whether the compiler supports -Wl,--enable-new-dtags" >&5
+echo $ECHO_N "checking whether the compiler supports -Wl,--enable-new-dtags... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__Wl___enable_new_dtags+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,--enable-new-dtags"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_cflags__Wl___enable_new_dtags=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_cflags__Wl___enable_new_dtags=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__Wl___enable_new_dtags" >&5
+echo "${ECHO_T}$ac_cv_cflags__Wl___enable_new_dtags" >&6; }
+if test $ac_cv_cflags__Wl___enable_new_dtags = yes; then
+  LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"
+fi
+
+
       case $host_cpu in
         *i[3456789]86* | x86_64)
           { echo "$as_me:$LINENO: checking whether the compiler supports -Wl,--section-start,.interp=0x7bf00400" >&5

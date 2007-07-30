@@ -441,6 +441,9 @@ case $host_os in
                            [LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
                             LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(TOPOBJDIR)/libs/wine"])])
 
+      WINE_TRY_CFLAGS([-Wl,--enable-new-dtags],
+                      [LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"])
+
       case $host_cpu in
         *i[[3456789]]86* | x86_64)
           WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
