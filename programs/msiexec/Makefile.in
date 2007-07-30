@@ -7,7 +7,8 @@ APPMODE   = -mconsole
 IMPORTS   = msi ole32 advapi32 user32 kernel32
 
 C_SRCS = \
-	msiexec.c
+	msiexec.c \
+	service.c
 
 RC_SRCS = rsrc.rc
 RC_BINSRC = rsrc.rc
