@@ -23,7 +23,6 @@
 #define DS_TIME_RES 2  /* Resolution of multimedia timer */
 #define DS_TIME_DEL 10  /* Delay of multimedia timer callback, and duration of HEL fragment */
 
-#define DS_HEL_BUFLEN 0x8000 /* HEL: The buffer length of the emulated buffer */
 #define DS_HEL_FRAGS 0x10 /* HEL only: number of waveOut fragments in primary buffer
 			 * (changing this won't help you) */
 
@@ -34,6 +33,7 @@
 #define DS_HW_ACCEL_EMULATION   3
 
 extern int ds_emuldriver;
+extern int ds_hel_buflen;
 extern int ds_snd_queue_max;
 extern int ds_hw_accel;
 extern int ds_default_playback;

@@ -88,7 +88,7 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 
 		/* on original windows, the buffer it set to a fixed size, no matter what the settings are.
 		   on windows this size is always fixed (tested on win-xp) */
-		buflen = DS_HEL_BUFLEN;
+		buflen = ds_hel_buflen;
 
 		TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
 
