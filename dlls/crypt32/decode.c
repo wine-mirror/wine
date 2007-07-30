@@ -351,19 +351,13 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
                          : NULL, &items[i].size);
                         if (ret)
                         {
-                            if (nextData && items[i].hasPointer &&
-                             items[i].size > items[i].minSize)
-                            {
-                                nextData += items[i].size - items[i].minSize;
-                                /* align nextData to DWORD boundaries */
-                                if (items[i].size % sizeof(DWORD))
-                                    nextData += sizeof(DWORD) - items[i].size %
-                                     sizeof(DWORD);
-                            }
                             /* Account for alignment padding */
                             if (items[i].size % sizeof(DWORD))
                                 items[i].size += sizeof(DWORD) -
                                  items[i].size % sizeof(DWORD);
+                            if (nextData && items[i].hasPointer &&
+                             items[i].size > items[i].minSize)
+                                nextData += items[i].size - items[i].minSize;
                             ptr += 1 + nextItemLenBytes + nextItemLen;
                             decoded += 1 + nextItemLenBytes + nextItemLen;
                             TRACE("item %d: decoded %d bytes\n", i,
