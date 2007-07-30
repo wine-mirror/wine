@@ -3998,8 +3998,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     DWORD oldValue = This->updateStateBlock->textureState[Stage][Type];
 
-    /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
-
     TRACE("(%p) : Stage=%d, Type=%s(%d), Value=%d\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
 
     if (Stage >= MAX_TEXTURES) {
