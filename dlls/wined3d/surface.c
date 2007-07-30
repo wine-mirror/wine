@@ -3440,8 +3440,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     unsigned int pow2Width, pow2Height;
     const GlPixelFormatDesc *glDesc;
-    const StaticPixelFormatDesc *tableEntry = getFormatDescEntry(This->resource.format, &GLINFO_LOCATION, &glDesc);
 
+    getFormatDescEntry(This->resource.format, &GLINFO_LOCATION, &glDesc);
     /* Setup some glformat defaults */
     This->glDescription.glFormat         = glDesc->glFormat;
     This->glDescription.glFormatInternal = glDesc->glInternal;
