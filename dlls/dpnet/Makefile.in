@@ -11,6 +11,7 @@ C_SRCS = \
 	address.c \
 	client.c \
 	dpnet_main.c \
+	lobbiedapp.c \
 	peer.c \
 	regsvr.c \
 	server.c

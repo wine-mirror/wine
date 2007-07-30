@@ -30,6 +30,7 @@
 
 #include "initguid.h"
 #include "dplay8.h"
+#include "dplobby8.h"
 
 #include "wine/debug.h"
 
@@ -542,6 +543,16 @@ static struct regsvr_coclass const coclass_list[] = {
 	NULL,
 	"DirectPlay8.Address.1",
 	"DirectPlay8.Address"
+    },
+    {
+	&CLSID_DirectPlay8LobbiedApplication,
+	"DirectPlay8LobbiedApplication Object",
+	NULL,
+	"dpnet.dll",
+	"Both",
+	"DirectPlay8.LobbiedApplication.1",
+	"DirectPlay8.LobbiedApplication",
+        NULL
     },
     { NULL }			/* list terminator */
 };

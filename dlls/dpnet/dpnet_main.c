@@ -31,8 +31,8 @@
 #include "wine/debug.h"
 
 #include "dplay8.h"
-/*
- *#include "dplobby8.h"
+#include "dplobby8.h"
+ /*
  *#include "dplay8sp.h"
  */
 #include "dpnet_private.h"
@@ -114,6 +114,7 @@ static IClassFactoryImpl DPNET_CFS[] = {
   { &DICF_Vtbl, 1, &CLSID_DirectPlay8Server,  DPNET_CreateDirectPlay8Server },
   { &DICF_Vtbl, 1, &CLSID_DirectPlay8Peer,    DPNET_CreateDirectPlay8Peer },
   { &DICF_Vtbl, 1, &CLSID_DirectPlay8Address, DPNET_CreateDirectPlay8Address },
+  { &DICF_Vtbl, 1, &CLSID_DirectPlay8LobbiedApplication, (void *)DPNET_CreateDirectPlay8LobbiedApp },
   { NULL, 0, NULL, NULL }
 };
 

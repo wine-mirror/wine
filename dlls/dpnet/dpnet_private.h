@@ -26,14 +26,15 @@
 #endif
 
 #include "dplay8.h"
+#include "dplobby8.h"
 /*
- *#include "dplobby8.h"
  *#include "dplay8sp.h"
  */
 
 /* DirectPlay8 Interfaces: */
 typedef struct IDirectPlay8ClientImpl IDirectPlay8ClientImpl;
 typedef struct IDirectPlay8AddressImpl IDirectPlay8AddressImpl;
+typedef struct IDirectPlay8LobbiedApplicationImpl IDirectPlay8LobbiedApplicationImpl;
 
 /* ------------------ */
 /* IDirectPlay8Client */
@@ -67,6 +68,17 @@ struct IDirectPlay8AddressImpl
   const WCHAR *url;
 };
 
+/*****************************************************************************
+ * IDirectPlay8LobbiedApplication implementation structure
+ */
+struct IDirectPlay8LobbiedApplicationImpl
+{
+  /* IUnknown fields */
+  const IDirectPlay8LobbiedApplicationVtbl *lpVtbl;
+  LONG          ref;
+  /* IDirectPlay8LobbiedApplication fields */
+};
+
 /**
  * factories
  */
@@ -74,6 +86,7 @@ extern HRESULT DPNET_CreateDirectPlay8Client(LPCLASSFACTORY iface, LPUNKNOWN pun
 extern HRESULT DPNET_CreateDirectPlay8Server(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 extern HRESULT DPNET_CreateDirectPlay8Peer(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 extern HRESULT DPNET_CreateDirectPlay8Address(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
+extern HRESULT DPNET_CreateDirectPlay8LobbiedApp(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 
 /**
  * debug
