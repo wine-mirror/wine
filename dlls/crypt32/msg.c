@@ -1570,6 +1570,27 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
     case CMSG_TYPE_PARAM:
         ret = CRYPT_CopyParam(pvData, pcbData, &msg->type, sizeof(msg->type));
         break;
+    case CMSG_CONTENT_PARAM:
+        if (msg->u.signedInfo)
+        {
+            CRYPT_DATA_BLOB *blob;
+            DWORD size;
+
+            /* FIXME: does this depend on inner content type? */
+            ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
+             msg->u.signedInfo->content.Content.pbData,
+             msg->u.signedInfo->content.Content.cbData, CRYPT_DECODE_ALLOC_FLAG,
+             NULL, (LPBYTE)&blob, &size);
+            if (ret)
+            {
+                ret = CRYPT_CopyParam(pvData, pcbData, blob->pbData,
+                 blob->cbData);
+                LocalFree(blob);
+            }
+        }
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
     case CMSG_SIGNER_COUNT_PARAM:
         if (msg->u.signedInfo)
             ret = CRYPT_CopyParam(pvData, pcbData,

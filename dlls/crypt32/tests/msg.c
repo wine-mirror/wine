@@ -1976,7 +1976,6 @@ static void test_decode_msg_get_param(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ret = CryptMsgUpdate(msg, signedContent, sizeof(signedContent), TRUE);
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
-    todo_wine
     check_param("signed content", msg, CMSG_CONTENT_PARAM, msgData,
      sizeof(msgData));
     todo_wine
