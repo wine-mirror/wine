@@ -753,7 +753,7 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 	TRACE("(%p)\n", device);
 
 	/* calculate the current wave frag position */
-	wave_fragpos = (device->pwplay + device->pwqueue) % DS_HEL_FRAGS;
+	wave_fragpos = (device->pwplay + device->pwqueue) % device->helfrags;
 
 	/* calculte the current wave write position */
 	wave_writepos = wave_fragpos * device->fraglen;
@@ -787,9 +787,9 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 	/* queue up the new buffers */
 	for(i=0; i<prebuf_frags; i++){
 		TRACE("queueing wave buffer %i\n", wave_fragpos);
-		waveOutWrite(device->hwo, device->pwave[wave_fragpos], sizeof(WAVEHDR));
+		waveOutWrite(device->hwo, &device->pwave[wave_fragpos], sizeof(WAVEHDR));
 		wave_fragpos++;
-		wave_fragpos %= DS_HEL_FRAGS;
+		wave_fragpos %= device->helfrags;
 	}
 
 	/* **** */
@@ -1030,7 +1030,7 @@ void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, D
 
 		/* update playpos */
 		device->pwplay++;
-		device->pwplay %= DS_HEL_FRAGS;
+		device->pwplay %= device->helfrags;
 
 		/* sanity */
 		if(device->pwqueue == 0){

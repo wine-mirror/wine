@@ -23,9 +23,6 @@
 #define DS_TIME_RES 2  /* Resolution of multimedia timer */
 #define DS_TIME_DEL 10  /* Delay of multimedia timer callback, and duration of HEL fragment */
 
-#define DS_HEL_FRAGS 0x10 /* HEL only: number of waveOut fragments in primary buffer
-			 * (changing this won't help you) */
-
 /* direct sound hardware acceleration levels */
 #define DS_HW_ACCEL_FULL        0	/* default on Windows 98 */
 #define DS_HW_ACCEL_STANDARD    1	/* default on Windows 2000 */
@@ -83,8 +80,8 @@ struct DirectSoundDevice
     DWORD                       priolevel;
     PWAVEFORMATEX               pwfx;
     HWAVEOUT                    hwo;
-    LPWAVEHDR                   pwave[DS_HEL_FRAGS];
-    UINT                        timerID, pwplay, pwqueue, prebuf;
+    LPWAVEHDR                   pwave;
+    UINT                        timerID, pwplay, pwqueue, prebuf, helfrags;
     DWORD                       fraglen;
     PIDSDRIVERBUFFER            hwbuf;
     LPBYTE                      buffer;
