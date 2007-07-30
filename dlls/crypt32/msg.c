@@ -1833,21 +1833,18 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
         break;
     case CMSG_ATTR_CERT_COUNT_PARAM:
         if (msg->u.signedInfo)
+        {
+            DWORD attrCertCount = 0;
+
             ret = CRYPT_CopyParam(pvData, pcbData,
-             &msg->u.signedInfo->cAttrCertEncoded, sizeof(DWORD));
+             &attrCertCount, sizeof(DWORD));
+        }
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
     case CMSG_ATTR_CERT_PARAM:
         if (msg->u.signedInfo)
-        {
-            if (dwIndex >= msg->u.signedInfo->cAttrCertEncoded)
-                SetLastError(CRYPT_E_INVALID_INDEX);
-            else
-                ret = CRYPT_CopyParam(pvData, pcbData,
-                 msg->u.signedInfo->rgAttrCertEncoded[dwIndex].pbData,
-                 msg->u.signedInfo->rgAttrCertEncoded[dwIndex].cbData);
-        }
+            SetLastError(CRYPT_E_INVALID_INDEX);
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;

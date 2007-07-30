@@ -3255,8 +3255,6 @@ BOOL CRYPT_AsnEncodePKCSSignedInfo(CRYPT_SIGNED_INFO *signedInfo, void *pvData,
     DWORD cItem = 1, cSwapped = 0;
     BOOL ret = TRUE;
 
-    if (signedInfo->cAttrCertEncoded)
-        FIXME("unimplemented for attr certs\n");
     if (signedInfo->cSignerInfo)
     {
         digestAlgorithmsSet.cItems = signedInfo->cSignerInfo;

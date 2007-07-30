@@ -89,8 +89,6 @@ typedef struct _CRYPT_SIGNED_INFO
     PCERT_BLOB         rgCertEncoded;
     DWORD              cCrlEncoded;
     PCRL_BLOB          rgCrlEncoded;
-    DWORD              cAttrCertEncoded;
-    PCERT_BLOB         rgAttrCertEncoded;
     CRYPT_CONTENT_INFO content;
     DWORD              cSignerInfo;
     PCMSG_SIGNER_INFO  rgSignerInfo;
