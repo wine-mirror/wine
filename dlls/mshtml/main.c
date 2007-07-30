@@ -376,6 +376,26 @@ static HRESULT register_server(BOOL do_register)
     for(i=0; i < sizeof(pse)/sizeof(pse[0]); i++)
         mshtml_free(pse[i].pszValue);
 
+    if(FAILED(hres)) {
+        ERR("RegInstall failed: %08x\n", hres);
+        return hres;
+    }
+
+    if(do_register) {
+        ITypeLib *typelib;
+
+        static const WCHAR wszMSHTML[] = {'m','s','h','t','m','l','.','t','l','b',0};
+
+        hres = LoadTypeLibEx(wszMSHTML, REGKIND_REGISTER, &typelib);
+        if(SUCCEEDED(hres))
+            ITypeLib_Release(typelib);
+    }else {
+        hres = UnRegisterTypeLib(&LIBID_MSHTML, 4, 0, LOCALE_SYSTEM_DEFAULT, SYS_WIN32);
+    }
+
+    if(FAILED(hres))
+        ERR("typelib registration failed: %08x\n", hres);
+
     return hres;
 }
 
