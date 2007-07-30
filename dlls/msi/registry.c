@@ -233,6 +233,8 @@ BOOL squash_guid(LPCWSTR in, LPWSTR out)
     DWORD i,n=1;
     GUID guid;
 
+    out[0] = 0;
+
     if (FAILED(CLSIDFromString((LPOLESTR)in, &guid)))
         return FALSE;
 
@@ -474,7 +476,8 @@ UINT MSIREG_OpenUserProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     WCHAR keypath[0x200];
 
     TRACE("%s\n",debugstr_w(szProduct));
-    squash_guid(szProduct,squished_pc);
+    if (!squash_guid(szProduct,squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath,szUserProduct_fmt,squished_pc);
@@ -493,7 +496,8 @@ UINT MSIREG_DeleteUserProductKey(LPCWSTR szProduct)
     WCHAR keypath[0x200];
 
     TRACE("%s\n",debugstr_w(szProduct));
-    squash_guid(szProduct,squished_pc);
+    if (!squash_guid(szProduct,squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath,szUserProduct_fmt,squished_pc);
@@ -508,7 +512,8 @@ UINT MSIREG_OpenUserPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create)
     WCHAR keypath[0x200];
 
     TRACE("%s\n",debugstr_w(szPatch));
-    squash_guid(szPatch,squished_pc);
+    if (!squash_guid(szPatch,squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath,szUserPatch_fmt,squished_pc);
@@ -528,7 +533,8 @@ UINT MSIREG_OpenUserFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     WCHAR keypath[0x200];
 
     TRACE("%s\n",debugstr_w(szProduct));
-    squash_guid(szProduct,squished_pc);
+    if (!squash_guid(szProduct,squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath,szUserFeatures_fmt,squished_pc);
@@ -553,7 +559,8 @@ UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     WCHAR keypath[0x200];
 
     TRACE("%s\n",debugstr_w(szProduct));
-    squash_guid(szProduct,squished_pc);
+    if (!squash_guid(szProduct,squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath,szInstaller_Features_fmt,squished_pc);
@@ -574,7 +581,8 @@ UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
     LPWSTR usersid;
 
     TRACE("%s\n", debugstr_w(szProduct));
-    squash_guid(szProduct, squished_pc);
+    if (!squash_guid(szProduct, squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     rc = get_user_sid(&usersid);
@@ -607,7 +615,8 @@ UINT MSIREG_OpenComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
     WCHAR keypath[0x200];
 
     TRACE("%s\n",debugstr_w(szComponent));
-    squash_guid(szComponent,squished_cc);
+    if (!squash_guid(szComponent,squished_cc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_cc));
 
     sprintfW(keypath,szInstaller_Components_fmt,squished_cc);
@@ -627,7 +636,8 @@ UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
     WCHAR keypath[0x200];
 
     TRACE("%s\n",debugstr_w(szComponent));
-    squash_guid(szComponent,squished_cc);
+    if (!squash_guid(szComponent,squished_cc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_cc));
 
     sprintfW(keypath,szUser_Components_fmt,squished_cc);
@@ -648,7 +658,8 @@ UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, HKEY *key, BOOL create
     LPWSTR usersid;
 
     TRACE("%s\n", debugstr_w(szComponent));
-    squash_guid(szComponent, comp);
+    if (!squash_guid(szComponent, comp))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(comp));
 
     rc = get_user_sid(&usersid);
@@ -677,7 +688,8 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, HKEY *key, BOOL create)
     LPWSTR usersid;
 
     TRACE("%s\n", debugstr_w(szProduct));
-    squash_guid(szProduct, squished_pc);
+    if (!squash_guid(szProduct, squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     rc = get_user_sid(&usersid);
@@ -706,7 +718,8 @@ UINT MSIREG_OpenInstallPropertiesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
     LPWSTR usersid;
 
     TRACE("%s\n", debugstr_w(szProduct));
-    squash_guid(szProduct, squished_pc);
+    if (!squash_guid(szProduct, squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     rc = get_user_sid(&usersid);
@@ -735,7 +748,8 @@ UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct)
     LPWSTR usersid;
 
     TRACE("%s\n", debugstr_w(szProduct));
-    squash_guid(szProduct, squished_pc);
+    if (!squash_guid(szProduct, squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     rc = get_user_sid(&usersid);
@@ -763,7 +777,8 @@ UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     WCHAR keypath[0x200];
 
     TRACE("%s\n",debugstr_w(szProduct));
-    squash_guid(szProduct,squished_pc);
+    if (!squash_guid(szProduct,squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath,szInstaller_Products_fmt,squished_pc);
@@ -782,7 +797,8 @@ UINT MSIREG_DeleteProductKey(LPCWSTR szProduct)
     WCHAR keypath[0x200];
 
     TRACE("%s\n", debugstr_w(szProduct));
-    squash_guid(szProduct, squished_pc);
+    if (!squash_guid(szProduct, squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath, szInstaller_Products_fmt, squished_pc);
@@ -797,7 +813,8 @@ UINT MSIREG_OpenPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create)
     WCHAR keypath[0x200];
 
     TRACE("%s\n",debugstr_w(szPatch));
-    squash_guid(szPatch,squished_pc);
+    if (!squash_guid(szPatch,squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath,szInstaller_Patches_fmt,squished_pc);
@@ -817,7 +834,8 @@ UINT MSIREG_OpenUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY* key, BOOL create)
     WCHAR keypath[0x200];
 
     TRACE("%s\n",debugstr_w(szUpgradeCode));
-    squash_guid(szUpgradeCode,squished_pc);
+    if (!squash_guid(szUpgradeCode,squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath,szInstaller_UpgradeCodes_fmt,squished_pc);
@@ -837,7 +855,8 @@ UINT MSIREG_OpenUserUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY* key, BOOL creat
     WCHAR keypath[0x200];
 
     TRACE("%s\n",debugstr_w(szUpgradeCode));
-    squash_guid(szUpgradeCode,squished_pc);
+    if (!squash_guid(szUpgradeCode,squished_pc))
+        return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath,szInstaller_UserUpgradeCodes_fmt,squished_pc);
