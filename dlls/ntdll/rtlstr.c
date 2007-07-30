@@ -1636,7 +1636,7 @@ BOOLEAN WINAPI RtlIsTextUnicode( LPCVOID buf, INT len, INT *pf )
     {
         for (i = 0; i < len; i++)
         {
-            if (!s[i])
+            if (!(s[i] & 0xff) || !(s[i] >> 8))
             {
                 out_flags |= IS_TEXT_UNICODE_NULL_BYTES;
                 break;
