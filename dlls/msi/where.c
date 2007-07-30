@@ -192,7 +192,8 @@ static UINT STRCMP_Evaluate( MSIWHEREVIEW *wv, UINT row, const struct expr *cond
 
     l_str = STRING_evaluate( wv, row, cond->u.expr.left, record );
     r_str = STRING_evaluate( wv, row, cond->u.expr.right, record );
-    if( l_str == r_str )
+    if( l_str == r_str ||
+        ((!l_str || !*l_str) && (!r_str || !*r_str)) )
         sr = 0;
     else if( l_str && ! r_str )
         sr = 1;

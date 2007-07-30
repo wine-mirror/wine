@@ -1562,6 +1562,24 @@ static void test_where(void)
     ok( r == ERROR_SUCCESS, "query failed: %d\n", r );
     MsiCloseHandle( rec );
 
+    rec = MsiCreateRecord(1);
+    MsiRecordSetString(rec, 1, "");
+
+    query = "SELECT * FROM `Media` WHERE `DiskPrompt` = ?";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewExecute(view, rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    MsiCloseHandle(rec);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    MsiCloseHandle(rec);
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+
     MsiCloseHandle( hdb );
     DeleteFile(msifile);
 }
