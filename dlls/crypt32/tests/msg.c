@@ -1978,7 +1978,6 @@ static void test_decode_msg_get_param(void)
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     check_param("signed content", msg, CMSG_CONTENT_PARAM, msgData,
      sizeof(msgData));
-    todo_wine
     check_param("inner content", msg, CMSG_INNER_CONTENT_TYPE_PARAM,
      (const BYTE *)szOID_RSA_data, strlen(szOID_RSA_data) + 1);
     size = sizeof(value);
