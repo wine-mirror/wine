@@ -212,6 +212,7 @@ BASEDIRS = \
 	wineoss.drv \
 	wineps.drv \
 	wing32 \
+	winhttp \
 	wininet \
 	winmm \
 	winnls32 \

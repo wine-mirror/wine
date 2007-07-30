@@ -20799,6 +20799,8 @@ ac_config_files="$ac_config_files dlls/winex11.drv/Makefile"
 
 ac_config_files="$ac_config_files dlls/wing32/Makefile"
 
+ac_config_files="$ac_config_files dlls/winhttp/Makefile"
+
 ac_config_files="$ac_config_files dlls/wininet/Makefile"
 
 ac_config_files="$ac_config_files dlls/wininet/tests/Makefile"
@@ -21790,6 +21792,7 @@ do
     "dlls/winequartz.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winequartz.drv/Makefile" ;;
     "dlls/winex11.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winex11.drv/Makefile" ;;
     "dlls/wing32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wing32/Makefile" ;;
+    "dlls/winhttp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winhttp/Makefile" ;;
     "dlls/wininet/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wininet/Makefile" ;;
     "dlls/wininet/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wininet/tests/Makefile" ;;
     "dlls/winmm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winmm/Makefile" ;;

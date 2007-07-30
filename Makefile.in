@@ -425,6 +425,7 @@ ALL_MAKEFILES = \
 	dlls/winequartz.drv/Makefile \
 	dlls/winex11.drv/Makefile \
 	dlls/wing32/Makefile \
+	dlls/winhttp/Makefile \
 	dlls/wininet/Makefile \
 	dlls/wininet/tests/Makefile \
 	dlls/winmm/Makefile \
@@ -786,6 +787,7 @@ dlls/wineps.drv/Makefile: dlls/wineps.drv/Makefile.in dlls/Makedll.rules
 dlls/winequartz.drv/Makefile: dlls/winequartz.drv/Makefile.in dlls/Makedll.rules
 dlls/winex11.drv/Makefile: dlls/winex11.drv/Makefile.in dlls/Makedll.rules
 dlls/wing32/Makefile: dlls/wing32/Makefile.in dlls/Makedll.rules
+dlls/winhttp/Makefile: dlls/winhttp/Makefile.in dlls/Makedll.rules
 dlls/wininet/Makefile: dlls/wininet/Makefile.in dlls/Makedll.rules
 dlls/wininet/tests/Makefile: dlls/wininet/tests/Makefile.in dlls/Maketest.rules
 dlls/winmm/Makefile: dlls/winmm/Makefile.in dlls/Makedll.rules
