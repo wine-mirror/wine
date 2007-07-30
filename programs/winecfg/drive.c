@@ -168,10 +168,10 @@ static DWORD get_drive_type( char letter )
         if (!RegQueryValueExA( hKey, driveValue, NULL, NULL, (LPBYTE)buffer, &size ))
         {
             WINE_TRACE("Got type '%s' for %s\n", buffer, driveValue );
-            if (!strcasecmp( buffer, "hd" )) ret = DRIVE_FIXED;
-            else if (!strcasecmp( buffer, "network" )) ret = DRIVE_REMOTE;
-            else if (!strcasecmp( buffer, "floppy" )) ret = DRIVE_REMOVABLE;
-            else if (!strcasecmp( buffer, "cdrom" )) ret = DRIVE_CDROM;
+            if (!lstrcmpi( buffer, "hd" )) ret = DRIVE_FIXED;
+            else if (!lstrcmpi( buffer, "network" )) ret = DRIVE_REMOTE;
+            else if (!lstrcmpi( buffer, "floppy" )) ret = DRIVE_REMOVABLE;
+            else if (!lstrcmpi( buffer, "cdrom" )) ret = DRIVE_CDROM;
         }
         RegCloseKey(hKey);
     }

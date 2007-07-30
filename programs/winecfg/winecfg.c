@@ -317,9 +317,9 @@ char *get_reg_key(HKEY root, const char *path, const char *name, const char *def
         s = LIST_ENTRY(cursor, struct setting, entry);
 
         if (root != s->root) continue;
-        if (strcasecmp(path, s->path) != 0) continue;
+        if (lstrcmpi(path, s->path) != 0) continue;
         if (!s->name) continue;
-        if (strcasecmp(name, s->name) != 0) continue;
+        if (lstrcmpi(name, s->name) != 0) continue;
 
         WINE_TRACE("found %s:%s in settings list, returning %s\n", path, name, s->value);
         return s->value ? strdupA(s->value) : NULL;
@@ -363,8 +363,8 @@ static void set_reg_key_ex(HKEY root, const char *path, const char *name, const 
         struct setting *s = LIST_ENTRY(cursor, struct setting, entry);
 
         if (root != s->root) continue;
-        if (strcasecmp(s->path, path) != 0) continue;
-        if ((s->name && name) && strcasecmp(s->name, name) != 0) continue;
+        if (lstrcmpi(s->path, path) != 0) continue;
+        if ((s->name && name) && lstrcmpi(s->name, name) != 0) continue;
 
         /* are we attempting a double delete? */
         if (!s->name && !name) return;
@@ -463,8 +463,8 @@ char **enumerate_values(HKEY root, char *path)
             LIST_FOR_EACH( cursor, settings )
             {
                 struct setting *s = LIST_ENTRY(cursor, struct setting, entry);
-                if (strcasecmp(s->path, path) != 0) continue;
-                if (strcasecmp(s->name, name) != 0) continue;
+                if (lstrcmpi(s->path, path) != 0) continue;
+                if (lstrcmpi(s->name, name) != 0) continue;
 
                 if (!s->value)
                 {
@@ -503,13 +503,13 @@ char **enumerate_values(HKEY root, char *path)
         struct setting *setting = LIST_ENTRY(cursor, struct setting, entry);
         BOOL found = FALSE;
 
-        if (strcasecmp(setting->path, path) != 0) continue;
+        if (lstrcmpi(setting->path, path) != 0) continue;
 
         if (!setting->value) continue;
 
         for (i = 0; i < valueslen; i++)
         {
-            if (strcasecmp(setting->name, values[i]) == 0)
+            if (lstrcmpi(setting->name, values[i]) == 0)
             {
                 found = TRUE;
                 break;

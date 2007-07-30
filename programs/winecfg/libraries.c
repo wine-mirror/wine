@@ -21,6 +21,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #define NONAMELESSUNION
 #define WIN32_LEAN_AND_MEAN
