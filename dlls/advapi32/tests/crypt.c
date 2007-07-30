@@ -748,7 +748,13 @@ static void test_set_provider_ex(void)
 		ERROR_INVALID_PARAMETER, GetLastError());
 
 	/* remove the default provider and then set it to MS_DEF_PROV/PROV_RSA_FULL */
+        SetLastError(0xdeadbeef);
 	result = pCryptSetProviderExA(MS_DEF_PROV, PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT | CRYPT_DELETE_DEFAULT);
+	if (!result && (GetLastError() == ERROR_ACCESS_DENIED))
+	{
+		skip("Not enough rights to remove the default provider\n");
+		return;
+	}
 	ok(result, "%d\n", GetLastError());
 
 	result = pCryptSetProviderExA(MS_DEF_PROV, PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT);
