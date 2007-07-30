@@ -169,6 +169,19 @@ static UINT find_given_source(HKEY key, LPCWSTR szSource, media_info *ss)
 }
 
 /******************************************************************
+ *  MsiSourceListEnumSourcesA   (MSI.@)
+ */
+UINT WINAPI MsiSourceListEnumSourcesA(LPCSTR szProductCodeOrPatch, LPCSTR szUserSid,
+                                      MSIINSTALLCONTEXT dwContext,
+                                      DWORD dwOptions, DWORD dwIndex,
+                                      LPSTR szSource, LPDWORD pcchSource)
+{
+    FIXME("(%s, %s, %d, %d, %d, %p, %p): stub!\n", szProductCodeOrPatch, szUserSid,
+          dwContext, dwOptions, dwIndex, szSource, pcchSource);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************
  *  MsiSourceListGetInfoA   (MSI.@)
  */
 UINT WINAPI MsiSourceListGetInfoA( LPCSTR szProduct, LPCSTR szUserSid,
