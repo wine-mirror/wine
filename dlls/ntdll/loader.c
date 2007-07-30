@@ -625,8 +625,6 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
 
     if (!(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS)) return STATUS_SUCCESS;  /* already done */
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
-    if (!create_module_activation_context( &wm->ldr ))
-        RtlActivateActivationContext( 0, wm->ldr.ActivationContext, &cookie );
 
     if (!(imports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
                                                   IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
@@ -636,6 +634,9 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     while (imports[nb_imports].Name && imports[nb_imports].FirstThunk) nb_imports++;
 
     if (!nb_imports) return STATUS_SUCCESS;  /* no imports */
+
+    if (!create_module_activation_context( &wm->ldr ))
+        RtlActivateActivationContext( 0, wm->ldr.ActivationContext, &cookie );
 
     /* Allocate module dependency list */
     wm->nDeps = nb_imports;
