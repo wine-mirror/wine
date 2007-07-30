@@ -42,14 +42,10 @@ HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object) {
     /* Allocate space for floating point constants */
     object->pixelShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(float) * GL_LIMITS(pshader_constantsF) * 4);
     WINED3D_MEMCHECK(object->pixelShaderConstantF);
-    object->set.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(pshader_constantsF) );
-    WINED3D_MEMCHECK(object->set.pixelShaderConstantsF);
     object->changed.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(pshader_constantsF));
     WINED3D_MEMCHECK(object->changed.pixelShaderConstantsF);
     object->vertexShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(float) * GL_LIMITS(vshader_constantsF) * 4);
     WINED3D_MEMCHECK(object->vertexShaderConstantF);
-    object->set.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(vshader_constantsF));
-    WINED3D_MEMCHECK(object->set.vertexShaderConstantsF);
     object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(vshader_constantsF));
     WINED3D_MEMCHECK(object->changed.vertexShaderConstantsF);
 
@@ -155,7 +151,6 @@ void stateblock_copy(
     Dest->blockType             = This->blockType;
 
     /* Saved states */
-    stateblock_savedstates_copy(source, &Dest->set, &This->set);
     stateblock_savedstates_copy(source, &Dest->changed, &This->changed);
 
     /* Single items */
@@ -278,10 +273,8 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
         }
 
         HeapFree(GetProcessHeap(), 0, This->vertexShaderConstantF);
-        HeapFree(GetProcessHeap(), 0, This->set.vertexShaderConstantsF);
         HeapFree(GetProcessHeap(), 0, This->changed.vertexShaderConstantsF);
         HeapFree(GetProcessHeap(), 0, This->pixelShaderConstantF);
-        HeapFree(GetProcessHeap(), 0, This->set.pixelShaderConstantsF);
         HeapFree(GetProcessHeap(), 0, This->changed.pixelShaderConstantsF);
 
         LIST_FOR_EACH_ENTRY_SAFE(constant, constant2, &This->set_vconstantsF, constants_entry, entry) {
@@ -357,7 +350,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         /* Vertex Shader Float Constants */
         for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
-            if (This->set.vertexShaderConstantsF[i]) {
+            if (This->changed.vertexShaderConstantsF[i]) {
                 TRACE("Setting %p from %p %d to { %f, %f, %f, %f }\n", This, targetStateBlock, i,
                     targetStateBlock->vertexShaderConstantF[i * 4],
                     targetStateBlock->vertexShaderConstantF[i * 4 + 1],
@@ -373,7 +366,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         
         /* Vertex Shader Integer Constants */
         for (i = 0; i < MAX_CONST_I; ++i) {
-            if (This->set.vertexShaderConstantsI[i]) {
+            if (This->changed.vertexShaderConstantsI[i]) {
                 TRACE("Setting %p from %p %d to { %d, %d, %d, %d }\n", This, targetStateBlock, i,
                     targetStateBlock->vertexShaderConstantI[i * 4],
                     targetStateBlock->vertexShaderConstantI[i * 4 + 1],
@@ -389,7 +382,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         
         /* Vertex Shader Boolean Constants */
         for (i = 0; i < MAX_CONST_B; ++i) {
-            if (This->set.vertexShaderConstantsB[i]) {
+            if (This->changed.vertexShaderConstantsB[i]) {
                 TRACE("Setting %p from %p %d to %s\n", This, targetStateBlock, i,
                     targetStateBlock->vertexShaderConstantB[i]? "TRUE":"FALSE");
 
@@ -453,7 +446,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         /* Pixel Shader Float Constants */
         for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
-            if (This->set.pixelShaderConstantsF[i]) {
+            if (This->changed.pixelShaderConstantsF[i]) {
                 TRACE("Setting %p from %p %d to { %f, %f, %f, %f }\n", This, targetStateBlock, i,
                     targetStateBlock->pixelShaderConstantF[i * 4],
                     targetStateBlock->pixelShaderConstantF[i * 4 + 1],
@@ -469,7 +462,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         
         /* Pixel Shader Integer Constants */
         for (i = 0; i < MAX_CONST_I; ++i) {
-            if (This->set.pixelShaderConstantsI[i]) {
+            if (This->changed.pixelShaderConstantsI[i]) {
                 TRACE("Setting %p from %p %d to { %d, %d, %d, %d }\n", This, targetStateBlock, i,
                     targetStateBlock->pixelShaderConstantI[i * 4],
                     targetStateBlock->pixelShaderConstantI[i * 4 + 1],
@@ -485,7 +478,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         
         /* Pixel Shader Boolean Constants */
         for (i = 0; i < MAX_CONST_B; ++i) {
-            if (This->set.pixelShaderConstantsB[i]) {
+            if (This->changed.pixelShaderConstantsB[i]) {
                 TRACE("Setting %p from %p %d to %s\n", This, targetStateBlock, i,
                     targetStateBlock->pixelShaderConstantB[i]? "TRUE":"FALSE");
 
@@ -495,7 +488,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         /* Others + Render & Texture */
         for (i = 1; i <= HIGHEST_TRANSFORMSTATE; i++) {
-            if (This->set.transform[i] && memcmp(&targetStateBlock->transforms[i],
+            if (This->changed.transform[i] && memcmp(&targetStateBlock->transforms[i],
                                     &This->transforms[i],
                                     sizeof(WINED3DMATRIX)) != 0) {
                 TRACE("Updating transform %d\n", i);
@@ -503,7 +496,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
             }
         }
 
-        if (This->set.indices && ((This->pIndexData != targetStateBlock->pIndexData)
+        if (This->changed.indices && ((This->pIndexData != targetStateBlock->pIndexData)
                         || (This->baseVertexIndex != targetStateBlock->baseVertexIndex))) {
             TRACE("Updating pindexData to %p, baseVertexIndex to %d\n",
             targetStateBlock->pIndexData, targetStateBlock->baseVertexIndex);
@@ -511,31 +504,31 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
             This->baseVertexIndex = targetStateBlock->baseVertexIndex;
         }
 
-        if(This->set.vertexDecl && This->vertexDecl != targetStateBlock->vertexDecl){
+        if(This->changed.vertexDecl && This->vertexDecl != targetStateBlock->vertexDecl){
             TRACE("Updating vertex declaration from %p to %p\n", This->vertexDecl, targetStateBlock->vertexDecl);
 
             This->vertexDecl = targetStateBlock->vertexDecl;
         }
 
-        if(This->set.fvf && This->fvf != targetStateBlock->fvf){
+        if(This->changed.fvf && This->fvf != targetStateBlock->fvf){
             This->fvf = targetStateBlock->fvf;
         }
 
-        if (This->set.material && memcmp(&targetStateBlock->material,
+        if (This->changed.material && memcmp(&targetStateBlock->material,
                                                     &This->material,
                                                     sizeof(WINED3DMATERIAL)) != 0) {
             TRACE("Updating material\n");
             memcpy(&This->material, &targetStateBlock->material, sizeof(WINED3DMATERIAL));
         }
 
-        if (This->set.viewport && memcmp(&targetStateBlock->viewport,
+        if (This->changed.viewport && memcmp(&targetStateBlock->viewport,
                                                     &This->viewport,
                                                     sizeof(WINED3DVIEWPORT)) != 0) {
             TRACE("Updating viewport\n");
             memcpy(&This->viewport, &targetStateBlock->viewport, sizeof(WINED3DVIEWPORT));
         }
 
-        if(This->set.scissorRect && memcmp(&targetStateBlock->scissorRect,
+        if(This->changed.scissorRect && memcmp(&targetStateBlock->scissorRect,
                                            &This->scissorRect,
                                            sizeof(targetStateBlock->scissorRect)))
         {
@@ -544,7 +537,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         }
 
         for (i = 0; i < MAX_STREAMS; i++) {
-            if (This->set.streamSource[i] &&
+            if (This->changed.streamSource[i] &&
                             ((This->streamStride[i] != targetStateBlock->streamStride[i]) ||
                             (This->streamSource[i] != targetStateBlock->streamSource[i]))) {
                 TRACE("Updating stream source %d to %p, stride to %d\n", i, targetStateBlock->streamSource[i],
@@ -553,7 +546,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 This->streamSource[i] = targetStateBlock->streamSource[i];
             }
 
-            if (This->set.streamFreq[i] &&
+            if (This->changed.streamFreq[i] &&
             (This->streamFreq[i] != targetStateBlock->streamFreq[i]
             || This->streamFlags[i] != targetStateBlock->streamFlags[i])){
                     TRACE("Updating stream frequency %d to %d flags to %d\n", i ,  targetStateBlock->streamFreq[i] ,
@@ -564,7 +557,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         }
 
         for (i = 0; i < GL_LIMITS(clipplanes); i++) {
-            if (This->set.clipplane[i] && memcmp(&targetStateBlock->clipplane[i],
+            if (This->changed.clipplane[i] && memcmp(&targetStateBlock->clipplane[i],
                                                         &This->clipplane[i],
                                                         sizeof(This->clipplane)) != 0) {
 
@@ -577,7 +570,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         /* Render */
         for (i = 1; i <= WINEHIGHEST_RENDER_STATE; i++) {
 
-            if (This->set.renderState[i] && (This->renderState[i] != targetStateBlock->renderState[i])) {
+            if (This->changed.renderState[i] && (This->renderState[i] != targetStateBlock->renderState[i])) {
                 TRACE("Updating renderState %d to %d\n", i, targetStateBlock->renderState[i]);
                 This->renderState[i] = targetStateBlock->renderState[i];
             }
@@ -587,7 +580,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         for (j = 0; j < MAX_TEXTURES; j++) {
             /* TODO: move over to using memcpy */
             for (i = 1; i <= WINED3D_HIGHEST_TEXTURE_STATE ; i++) {
-                if (This->set.textureState[j][i]) {
+                if (This->changed.textureState[j][i]) {
                     TRACE("Updating texturestagestate %d,%d to %d (was %d)\n", j,i, targetStateBlock->textureState[j][i],
                     This->textureState[j][i]);
                     This->textureState[j][i]         =  targetStateBlock->textureState[j][i];
@@ -598,12 +591,12 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         /* Samplers */
         /* TODO: move over to using memcpy */
         for (j = 0; j < MAX_COMBINED_SAMPLERS; j++) {
-            if (This->set.textures[j]) {
+            if (This->changed.textures[j]) {
                 TRACE("Updating texture %d to %p (was %p)\n", j, targetStateBlock->textures[j],  This->textures[j]);
                 This->textures[j] = targetStateBlock->textures[j];
             }
             for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE ; i++){ /* States are 1 based */
-                if (This->set.samplerState[j][i]) {
+                if (This->changed.samplerState[j][i]) {
                     TRACE("Updating sampler state %d,%d to %d (was %d)\n",
                     j, i, targetStateBlock->samplerState[j][i],
                     This->samplerState[j][i]);
@@ -651,23 +644,23 @@ should really perform a delta so that only the changes get updated*/
         }
 
         /* Vertex Shader */
-        if (This->set.vertexShader && This->changed.vertexShader) {
+        if (This->changed.vertexShader) {
             IWineD3DDevice_SetVertexShader(pDevice, This->vertexShader);
         }
 
         /* Vertex Shader Constants */
         for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
-            if (This->set.vertexShaderConstantsF[i] && This->changed.vertexShaderConstantsF[i])
+            if (This->changed.vertexShaderConstantsF[i])
                 IWineD3DDevice_SetVertexShaderConstantF(pDevice, i, This->vertexShaderConstantF + i * 4, 1);
         }
         
         for (i = 0; i < MAX_CONST_I; i++) {
-            if (This->set.vertexShaderConstantsI[i] && This->changed.vertexShaderConstantsI[i])
+            if (This->changed.vertexShaderConstantsI[i])
                 IWineD3DDevice_SetVertexShaderConstantI(pDevice, i, This->vertexShaderConstantI + i * 4, 1);
         }
         
         for (i = 0; i < MAX_CONST_B; i++) {
-            if (This->set.vertexShaderConstantsB[i] && This->changed.vertexShaderConstantsB[i])
+            if (This->changed.vertexShaderConstantsB[i])
                 IWineD3DDevice_SetVertexShaderConstantB(pDevice, i, This->vertexShaderConstantB + i, 1);
         }
     }
@@ -675,67 +668,67 @@ should really perform a delta so that only the changes get updated*/
     if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */ This->blockType == WINED3DSBT_ALL || This->blockType == WINED3DSBT_PIXELSTATE) {
 
         /* Pixel Shader */
-        if (This->set.pixelShader && This->changed.pixelShader) {
+        if (This->changed.pixelShader) {
             IWineD3DDevice_SetPixelShader(pDevice, This->pixelShader);
         }
 
         /* Pixel Shader Constants */
         for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
-            if (This->set.pixelShaderConstantsF[i] && This->changed.pixelShaderConstantsF[i])
+            if (This->changed.pixelShaderConstantsF[i])
                 IWineD3DDevice_SetPixelShaderConstantF(pDevice, i, This->pixelShaderConstantF + i * 4, 1);
         }
 
         for (i = 0; i < MAX_CONST_I; ++i) {
-            if (This->set.pixelShaderConstantsI[i] && This->changed.pixelShaderConstantsI[i])
+            if (This->changed.pixelShaderConstantsI[i])
                 IWineD3DDevice_SetPixelShaderConstantI(pDevice, i, This->pixelShaderConstantI + i * 4, 1);
         }
         
         for (i = 0; i < MAX_CONST_B; ++i) {
-            if (This->set.pixelShaderConstantsB[i] && This->changed.pixelShaderConstantsB[i])
+            if (This->changed.pixelShaderConstantsB[i])
                 IWineD3DDevice_SetPixelShaderConstantB(pDevice, i, This->pixelShaderConstantB + i, 1);
         }
     }
 
-    if (This->set.fvf && This->changed.fvf) {
+    if (This->changed.fvf) {
         IWineD3DDevice_SetFVF(pDevice, This->fvf);
     }
 
-    if (This->set.vertexDecl && This->changed.vertexDecl) {
+    if (This->changed.vertexDecl) {
         IWineD3DDevice_SetVertexDeclaration(pDevice, This->vertexDecl);
     }
 
     /* Others + Render & Texture */
     if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */ This->blockType == WINED3DSBT_ALL || This->blockType == WINED3DSBT_INIT) {
         for (i = 1; i <= HIGHEST_TRANSFORMSTATE; i++) {
-            if (This->set.transform[i] && This->changed.transform[i])
+            if (This->changed.transform[i])
                 IWineD3DDevice_SetTransform(pDevice, i, &This->transforms[i]);
         }
 
-        if (This->set.indices && This->changed.indices) {
+        if (This->changed.indices) {
             IWineD3DDevice_SetIndices(pDevice, This->pIndexData);
             IWineD3DDevice_SetBaseVertexIndex(pDevice, This->baseVertexIndex);
         }
 
-        if (This->set.material && This->changed.material )
+        if (This->changed.material )
             IWineD3DDevice_SetMaterial(pDevice, &This->material);
 
-        if (This->set.viewport && This->changed.viewport)
+        if (This->changed.viewport)
             IWineD3DDevice_SetViewport(pDevice, &This->viewport);
 
-        if (This->set.scissorRect && This->changed.scissorRect)
+        if (This->changed.scissorRect)
             IWineD3DDevice_SetScissorRect(pDevice, &This->scissorRect);
 
         /* TODO: Proper implementation using SetStreamSource offset (set to 0 for the moment)\n") */
         for (i=0; i<MAX_STREAMS; i++) {
-            if (This->set.streamSource[i] && This->changed.streamSource[i])
+            if (This->changed.streamSource[i])
                 IWineD3DDevice_SetStreamSource(pDevice, i, This->streamSource[i], 0, This->streamStride[i]);
 
-            if (This->set.streamFreq[i] && This->changed.streamFreq[i])
+            if (This->changed.streamFreq[i])
                 IWineD3DDevice_SetStreamSourceFreq(pDevice, i, This->streamFreq[i] | This->streamFlags[i]);
         }
 
         for (i = 0; i < GL_LIMITS(clipplanes); i++) {
-            if (This->set.clipplane[i] && This->changed.clipplane[i]) {
+            if (This->changed.clipplane[i]) {
                 float clip[4];
 
                 clip[0] = This->clipplane[i][0];
@@ -748,7 +741,7 @@ should really perform a delta so that only the changes get updated*/
 
         /* Render */
         for (i = 1; i <= WINEHIGHEST_RENDER_STATE; i++) {
-            if (This->set.renderState[i] && This->changed.renderState[i])
+            if (This->changed.renderState[i])
                 IWineD3DDevice_SetRenderState(pDevice, i, This->renderState[i]);
         }
 
@@ -756,9 +749,8 @@ should really perform a delta so that only the changes get updated*/
         for (j = 0; j < MAX_TEXTURES; j++) { /* Set The texture first, just in case it resets the states? */
             /* TODO: move over to memcpy */
             for (i = 1; i <= WINED3D_HIGHEST_TEXTURE_STATE; i++) {
-                if (This->set.textureState[j][i] && This->changed.textureState[j][i]) { /* tb_dx9_10 failes without this test */
+                if (This->changed.textureState[j][i]) { /* tb_dx9_10 failes without this test */
                     ((IWineD3DDeviceImpl *)pDevice)->stateBlock->textureState[j][i]         = This->textureState[j][i];
-                    ((IWineD3DDeviceImpl *)pDevice)->stateBlock->set.textureState[j][i]     = TRUE;
                     ((IWineD3DDeviceImpl *)pDevice)->stateBlock->changed.textureState[j][i] = TRUE;
                     /* TODO: Record a display list to apply all gl states. For now apply by brute force */
                     IWineD3DDeviceImpl_MarkStateDirty((IWineD3DDeviceImpl *)pDevice, STATE_TEXTURESTAGE(j, i));
@@ -769,7 +761,7 @@ should really perform a delta so that only the changes get updated*/
         /* Samplers */
         /* TODO: move over to memcpy */
         for (j = 0 ; j < MAX_COMBINED_SAMPLERS; j++){
-            if (This->set.textures[j] && This->changed.textures[j]) {
+            if (This->changed.textures[j]) {
                 if (j < MAX_FRAGMENT_SAMPLERS) {
                     IWineD3DDevice_SetTexture(pDevice, j, This->textures[j]);
                 } else {
@@ -777,9 +769,8 @@ should really perform a delta so that only the changes get updated*/
                 }
             }
             for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE; i++){
-                if (This->set.samplerState[j][i] && This->changed.samplerState[j][i]) {
+                if (This->changed.samplerState[j][i]) {
                     ((IWineD3DDeviceImpl *)pDevice)->stateBlock->samplerState[j][i]         = This->samplerState[j][i];
-                    ((IWineD3DDeviceImpl *)pDevice)->stateBlock->set.samplerState[j][i]     = TRUE;
                     ((IWineD3DDeviceImpl *)pDevice)->stateBlock->changed.samplerState[j][i] = TRUE;
                 }
             }
@@ -790,7 +781,7 @@ should really perform a delta so that only the changes get updated*/
     } else if (This->blockType == WINED3DSBT_PIXELSTATE) {
 
         for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
-            if (This->set.renderState[SavedPixelStates_R[i]] && This->changed.renderState[SavedPixelStates_R[i]])
+            if (This->changed.renderState[SavedPixelStates_R[i]])
                 IWineD3DDevice_SetRenderState(pDevice, SavedPixelStates_R[i], This->renderState[SavedPixelStates_R[i]]);
 
         }
@@ -811,7 +802,7 @@ should really perform a delta so that only the changes get updated*/
     } else if (This->blockType == WINED3DSBT_VERTEXSTATE) {
 
         for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
-            if ( This->set.renderState[SavedVertexStates_R[i]] && This->changed.renderState[SavedVertexStates_R[i]])
+            if (This->changed.renderState[SavedVertexStates_R[i]])
                 IWineD3DDevice_SetRenderState(pDevice, SavedVertexStates_R[i], This->renderState[SavedVertexStates_R[i]]);
         }
 
@@ -1070,7 +1061,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         GLubyte white = 255;
 
         /* Note this avoids calling settexture, so pretend it has been called */
-        This->set.textures[i]     = TRUE;
         This->changed.textures[i] = TRUE;
         This->textures[i]         = NULL;
 

@@ -652,32 +652,20 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *c
         return;
     }
 
-    if( stateblock->set.renderState[WINED3DRS_STENCILENABLE] )
-        onesided_enable = stateblock->renderState[WINED3DRS_STENCILENABLE];
-    if( stateblock->set.renderState[WINED3DRS_TWOSIDEDSTENCILMODE] )
-        twosided_enable = stateblock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE];
-    if( stateblock->set.renderState[WINED3DRS_STENCILFUNC] )
-        if( !( func = CompareFunc(stateblock->renderState[WINED3DRS_STENCILFUNC]) ) )
-            func = GL_ALWAYS;
-    if( stateblock->set.renderState[WINED3DRS_CCW_STENCILFUNC] )
-        if( !( func_ccw = CompareFunc(stateblock->renderState[WINED3DRS_CCW_STENCILFUNC]) ) )
-            func = GL_ALWAYS;
-    if( stateblock->set.renderState[WINED3DRS_STENCILREF] )
-        ref = stateblock->renderState[WINED3DRS_STENCILREF];
-    if( stateblock->set.renderState[WINED3DRS_STENCILMASK] )
-        mask = stateblock->renderState[WINED3DRS_STENCILMASK];
-    if( stateblock->set.renderState[WINED3DRS_STENCILFAIL] )
-        stencilFail = StencilOp(stateblock->renderState[WINED3DRS_STENCILFAIL]);
-    if( stateblock->set.renderState[WINED3DRS_STENCILZFAIL] )
-        depthFail = StencilOp(stateblock->renderState[WINED3DRS_STENCILZFAIL]);
-    if( stateblock->set.renderState[WINED3DRS_STENCILPASS] )
-        stencilPass = StencilOp(stateblock->renderState[WINED3DRS_STENCILPASS]);
-    if( stateblock->set.renderState[WINED3DRS_CCW_STENCILFAIL] )
-        stencilFail_ccw = StencilOp(stateblock->renderState[WINED3DRS_CCW_STENCILFAIL]);
-    if( stateblock->set.renderState[WINED3DRS_CCW_STENCILZFAIL] )
-        depthFail_ccw = StencilOp(stateblock->renderState[WINED3DRS_CCW_STENCILZFAIL]);
-    if( stateblock->set.renderState[WINED3DRS_CCW_STENCILPASS] )
-        stencilPass_ccw = StencilOp(stateblock->renderState[WINED3DRS_CCW_STENCILPASS]);
+    onesided_enable = stateblock->renderState[WINED3DRS_STENCILENABLE];
+    twosided_enable = stateblock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE];
+    if( !( func = CompareFunc(stateblock->renderState[WINED3DRS_STENCILFUNC]) ) )
+        func = GL_ALWAYS;
+    if( !( func_ccw = CompareFunc(stateblock->renderState[WINED3DRS_CCW_STENCILFUNC]) ) )
+        func = GL_ALWAYS;
+    ref = stateblock->renderState[WINED3DRS_STENCILREF];
+    mask = stateblock->renderState[WINED3DRS_STENCILMASK];
+    stencilFail = StencilOp(stateblock->renderState[WINED3DRS_STENCILFAIL]);
+    depthFail = StencilOp(stateblock->renderState[WINED3DRS_STENCILZFAIL]);
+    stencilPass = StencilOp(stateblock->renderState[WINED3DRS_STENCILPASS]);
+    stencilFail_ccw = StencilOp(stateblock->renderState[WINED3DRS_CCW_STENCILFAIL]);
+    depthFail_ccw = StencilOp(stateblock->renderState[WINED3DRS_CCW_STENCILZFAIL]);
+    stencilPass_ccw = StencilOp(stateblock->renderState[WINED3DRS_CCW_STENCILPASS]);
 
     TRACE("(onesided %d, twosided %d, ref %x, mask %x, "
           "GL_FRONT: func: %x, fail %x, zfail %x, zpass %x "

@@ -1283,7 +1283,6 @@ struct IWineD3DStateBlockImpl
 
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
-    SAVEDSTATES               set;
     struct list               set_vconstantsF;
     struct list               set_pconstantsF;
 

@@ -343,12 +343,12 @@ void shader_glsl_load_constants(
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
         shader_glsl_load_constantsI(vshader, gl_info, programId, MAX_CONST_I,
                                     stateBlock->vertexShaderConstantI,
-                                    stateBlock->set.vertexShaderConstantsI);
+                                    stateBlock->changed.vertexShaderConstantsI);
 
         /* Load DirectX 9 boolean constants/uniforms for vertex shader */
         shader_glsl_load_constantsB(vshader, gl_info, programId, MAX_CONST_B,
                                     stateBlock->vertexShaderConstantB,
-                                    stateBlock->set.vertexShaderConstantsB);
+                                    stateBlock->changed.vertexShaderConstantsB);
 
         /* Upload the position fixup params */
         pos = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
@@ -374,12 +374,12 @@ void shader_glsl_load_constants(
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
         shader_glsl_load_constantsI(pshader, gl_info, programId, MAX_CONST_I,
                                     stateBlock->pixelShaderConstantI, 
-                                    stateBlock->set.pixelShaderConstantsI);
+                                    stateBlock->changed.pixelShaderConstantsI);
 
         /* Load DirectX 9 boolean constants/uniforms for pixel shader */
         shader_glsl_load_constantsB(pshader, gl_info, programId, MAX_CONST_B,
                                     stateBlock->pixelShaderConstantB, 
-                                    stateBlock->set.pixelShaderConstantsB);
+                                    stateBlock->changed.pixelShaderConstantsB);
 
         /* Upload the environment bump map matrix if needed. The needsbumpmat member specifies the texture stage to load the matrix from.
          * It can't be 0 for a valid texbem instruction.

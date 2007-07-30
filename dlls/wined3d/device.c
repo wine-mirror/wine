@@ -2099,7 +2099,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD fvf
 
     /* Update the current state block */
     This->updateStateBlock->changed.fvf      = TRUE;
-    This->updateStateBlock->set.fvf          = TRUE;
 
     if(This->updateStateBlock->fvf == fvf) {
         TRACE("Application is setting the old fvf over, nothing to do\n");
@@ -2136,7 +2135,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     TRACE("(%p) : StreamNo: %u, OldStream (%p), NewStream (%p), OffsetInBytes %u, NewStride %u\n", This, StreamNumber, oldSrc, pStreamData, OffsetInBytes, Stride);
 
     This->updateStateBlock->changed.streamSource[StreamNumber] = TRUE;
-    This->updateStateBlock->set.streamSource[StreamNumber]     = TRUE;
 
     if(oldSrc == pStreamData &&
        This->updateStateBlock->streamStride[StreamNumber] == Stride &&
@@ -2207,7 +2205,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *ifa
     This->updateStateBlock->streamFlags[StreamNumber] = Divider & (WINED3DSTREAMSOURCE_INSTANCEDATA  | WINED3DSTREAMSOURCE_INDEXEDDATA );
 
     This->updateStateBlock->changed.streamFreq[StreamNumber]  = TRUE;
-    This->updateStateBlock->set.streamFreq[StreamNumber]      = TRUE;
     This->updateStateBlock->streamFreq[StreamNumber]          = Divider & 0x7FFFFF;
 
     if(This->updateStateBlock->streamFreq[StreamNumber] != oldFreq ||
@@ -2242,7 +2239,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
         This->updateStateBlock->changed.transform[d3dts] = TRUE;
-        This->updateStateBlock->set.transform[d3dts]     = TRUE;
         memcpy(&This->updateStateBlock->transforms[d3dts], lpmatrix, sizeof(WINED3DMATRIX));
         return WINED3D_OK;
     }
@@ -2598,7 +2594,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWO
     }
 
     This->updateStateBlock->changed.clipplane[Index] = TRUE;
-    This->updateStateBlock->set.clipplane[Index] = TRUE;
 
     if(This->updateStateBlock->clipplane[Index][0] == pPlane[0] &&
        This->updateStateBlock->clipplane[Index][1] == pPlane[1] &&
@@ -2674,7 +2669,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONS
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     This->updateStateBlock->changed.material = TRUE;
-    This->updateStateBlock->set.material = TRUE;
     memcpy(&This->updateStateBlock->material, pMaterial, sizeof(WINED3DMATERIAL));
 
     /* Handle recording of state blocks */
@@ -2714,7 +2708,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWine
     oldIdxs = This->updateStateBlock->pIndexData;
 
     This->updateStateBlock->changed.indices = TRUE;
-    This->updateStateBlock->set.indices = TRUE;
     This->updateStateBlock->pIndexData = pIndexData;
 
     /* Handle recording of state blocks */
@@ -2786,7 +2779,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONS
 
     TRACE("(%p)\n", This);
     This->updateStateBlock->changed.viewport = TRUE;
-    This->updateStateBlock->set.viewport = TRUE;
     memcpy(&This->updateStateBlock->viewport, pViewport, sizeof(WINED3DVIEWPORT));
 
     /* Handle recording of state blocks */
@@ -2822,7 +2814,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     TRACE("(%p)->state = %s(%d), value = %d\n", This, debug_d3drenderstate(State), State, Value);
 
     This->updateStateBlock->changed.renderState[State] = TRUE;
-    This->updateStateBlock->set.renderState[State] = TRUE;
     This->updateStateBlock->renderState[State] = Value;
 
     /* Handle recording of state blocks */
@@ -2881,7 +2872,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
 
     oldValue = This->stateBlock->samplerState[Sampler][Type];
     This->updateStateBlock->samplerState[Sampler][Type]         = Value;
-    This->updateStateBlock->set.samplerState[Sampler][Type]     = Value;
     This->updateStateBlock->changed.samplerState[Sampler][Type] = Value;
 
     /* Handle recording of state blocks */
@@ -2919,7 +2909,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, CONST RECT* pRect) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    This->updateStateBlock->set.scissorRect = TRUE;
     This->updateStateBlock->changed.scissorRect = TRUE;
     if(EqualRect(&This->updateStateBlock->scissorRect, pRect)) {
         TRACE("App is setting the old scissor rectangle over, nothing to do\n");
@@ -2953,7 +2942,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* if
 
     This->updateStateBlock->vertexDecl = pDecl;
     This->updateStateBlock->changed.vertexDecl = TRUE;
-    This->updateStateBlock->set.vertexDecl = TRUE;
 
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
@@ -2984,7 +2972,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
 
     This->updateStateBlock->vertexShader         = pShader;
     This->updateStateBlock->changed.vertexShader = TRUE;
-    This->updateStateBlock->set.vertexShader     = TRUE;
 
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
@@ -3037,7 +3024,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.vertexShaderConstantsB[i] = TRUE;
-        This->updateStateBlock->set.vertexShaderConstantsB[i]     = TRUE;
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
@@ -3086,7 +3072,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.vertexShaderConstantsI[i] = TRUE;
-        This->updateStateBlock->set.vertexShaderConstantsI[i]     = TRUE;
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
@@ -3137,16 +3122,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
     }
 
     for (i = start; i < count + start; ++i) {
-        if (!This->updateStateBlock->set.vertexShaderConstantsF[i]) {
+        if (!This->updateStateBlock->changed.vertexShaderConstantsF[i]) {
             constants_entry *ptr = LIST_ENTRY(list_head(&This->updateStateBlock->set_vconstantsF), constants_entry, entry);
             if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx)) {
                 ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
                 list_add_head(&This->updateStateBlock->set_vconstantsF, &ptr->entry);
             }
             ptr->idx[ptr->count++] = i;
-            This->updateStateBlock->set.vertexShaderConstantsF[i] = TRUE;
+            This->updateStateBlock->changed.vertexShaderConstantsF[i] = TRUE;
         }
-        This->updateStateBlock->changed.vertexShaderConstantsF[i] = TRUE;
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
@@ -3369,7 +3353,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
     IWineD3DPixelShader *oldShader  = This->updateStateBlock->pixelShader;
     This->updateStateBlock->pixelShader         = pShader;
     This->updateStateBlock->changed.pixelShader = TRUE;
-    This->updateStateBlock->set.pixelShader     = TRUE;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -3429,7 +3412,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.pixelShaderConstantsB[i] = TRUE;
-        This->updateStateBlock->set.pixelShaderConstantsB[i]     = TRUE;
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
@@ -3478,7 +3460,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.pixelShaderConstantsI[i] = TRUE;
-        This->updateStateBlock->set.pixelShaderConstantsI[i]     = TRUE;
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
@@ -3529,16 +3510,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
     }
 
     for (i = start; i < count + start; ++i) {
-        if (!This->updateStateBlock->set.pixelShaderConstantsF[i]) {
+        if (!This->updateStateBlock->changed.pixelShaderConstantsF[i]) {
             constants_entry *ptr = LIST_ENTRY(list_head(&This->updateStateBlock->set_pconstantsF), constants_entry, entry);
             if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx)) {
                 ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
                 list_add_head(&This->updateStateBlock->set_pconstantsF, &ptr->entry);
             }
             ptr->idx[ptr->count++] = i;
-            This->updateStateBlock->set.pixelShaderConstantsF[i] = TRUE;
+            This->updateStateBlock->changed.pixelShaderConstantsF[i] = TRUE;
         }
-        This->updateStateBlock->changed.pixelShaderConstantsF[i] = TRUE;
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
@@ -4006,7 +3986,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
     }
 
     This->updateStateBlock->changed.textureState[Stage][Type] = TRUE;
-    This->updateStateBlock->set.textureState[Stage][Type]     = TRUE;
     This->updateStateBlock->textureState[Stage][Type]         = Value;
 
     if (This->isRecordingState) {
@@ -4106,7 +4085,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
     TRACE("GL_LIMITS %d\n",GL_LIMITS(sampler_stages));
     TRACE("(%p) : oldtexture(%p)\n", This,oldTexture);
 
-    This->updateStateBlock->set.textures[Stage]     = TRUE;
     This->updateStateBlock->changed.textures[Stage] = TRUE;
     TRACE("(%p) : setting new texture to %p\n", This, pTexture);
     This->updateStateBlock->textures[Stage]         = pTexture;
