@@ -3822,7 +3822,7 @@ DWORD WINAPI CryptMsgCalculateEncodedLength(DWORD dwMsgEncodingType,
 
 BOOL WINAPI CryptMsgClose(HCRYPTMSG hCryptMsg);
 
-DWORD WINAPI CryptMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
+BOOL WINAPI CryptMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
  DWORD dwCtrlType, const void *pvCtrlPara);
 
 BOOL WINAPI CryptMsgCountersign(HCRYPTMSG hCryptMsg, DWORD dwIndex,

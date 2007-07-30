@@ -1994,3 +1994,11 @@ BOOL WINAPI CryptMsgGetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
      pvData, pcbData);
     return msg->get_param(hCryptMsg, dwParamType, dwIndex, pvData, pcbData);
 }
+
+BOOL WINAPI CryptMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
+ DWORD dwCtrlType, const void *pvCtrlPara)
+{
+    FIXME("(%p, %08x, %d, %p): stub\n", hCryptMsg, dwFlags, dwCtrlType,
+     pvCtrlPara);
+    return TRUE;
+}
