@@ -318,6 +318,9 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
     DWORD i, decoded = 0;
     const BYTE *ptr = pbEncoded;
 
+    TRACE("%p, %d, %p, %d, %08x, %p, %p, %p\n", items, cItem, pbEncoded,
+     cbEncoded, dwFlags, pvStructInfo, nextData, cbDecoded);
+
     for (i = 0, ret = TRUE; ret && i < cItem; i++)
     {
         if (cbEncoded - (ptr - pbEncoded) != 0)
@@ -355,6 +358,7 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
                             if (items[i].size % sizeof(DWORD))
                                 items[i].size += sizeof(DWORD) -
                                  items[i].size % sizeof(DWORD);
+                            TRACE("item %d size: %d\n", i, items[i].size);
                             if (nextData && items[i].hasPointer &&
                              items[i].size > items[i].minSize)
                                 nextData += items[i].size - items[i].minSize;
@@ -412,6 +416,7 @@ static BOOL CRYPT_AsnDecodeSequenceItems(DWORD dwCertEncodingType,
     }
     if (ret)
         *cbDecoded = decoded;
+    TRACE("returning %d\n", ret);
     return ret;
 }
 
@@ -2330,10 +2335,15 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSContentInfoInternal(
        sizeof(CRYPT_DER_BLOB), TRUE, TRUE,
        offsetof(CRYPT_CONTENT_INFO, Content.pbData), 0 },
     };
+    BOOL ret;
 
-    return CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
+    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, *pcbStructInfo);
+
+    ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
      sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
      pDecodePara, pvStructInfo, pcbStructInfo, info ? info->pszObjId : NULL);
+    return ret;
 }
 
 static BOOL WINAPI CRYPT_AsnDecodePKCSContentInfo(DWORD dwCertEncodingType,
