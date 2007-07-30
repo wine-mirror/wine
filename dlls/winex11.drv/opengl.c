@@ -673,7 +673,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       case WGL_TYPE_COLORINDEX_ARB: pop = GLX_COLOR_INDEX_BIT; isColor = 1; break ;
       case WGL_TYPE_RGBA_ARB: pop = GLX_RGBA_BIT; break ;
       /* This is the same as WGL_TYPE_RGBA_FLOAT_ATI but the GLX constants differ, only the ARB GLX one is widely supported so use that */
-      case WGL_TYPE_RGBA_FLOAT_ATI: pop = GLX_RGBA_FLOAT_BIT_ARB; break ;
+      case WGL_TYPE_RGBA_FLOAT_ATI: pop = GLX_RGBA_FLOAT_BIT; break ;
       default:
         ERR("unexpected PixelType(%x)\n", pop);	
         pop = 0;
@@ -842,8 +842,8 @@ static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
         case GLX_COLOR_INDEX_BIT:
             render_type = GLX_COLOR_INDEX_TYPE;
             break;
-        case GLX_RGBA_FLOAT_BIT_ARB:
-            render_type = GLX_RGBA_FLOAT_TYPE_ARB;
+        case GLX_RGBA_FLOAT_BIT:
+            render_type = GLX_RGBA_FLOAT_TYPE;
             break;
         default:
             ERR("Unknown render_type: %x\n", render_type);
