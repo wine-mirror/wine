@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -139,8 +140,8 @@ static void test_open_svc(void)
 static void test_create_delete_svc(void)
 {
     SC_HANDLE scm_handle, svc_handle1;
-    CHAR username[UNLEN + 1];
-    DWORD user_size = UNLEN + 1;
+    CHAR username[UNLEN + 1], *domain;
+    DWORD user_size = UNLEN + 1, domain_size = 0;
     CHAR account[UNLEN + 3];
     static const CHAR servicename         [] = "Winetest";
     static const CHAR pathname            [] = "we_dont_care.exe";
@@ -153,8 +154,15 @@ static void test_create_delete_svc(void)
 
     /* Get the username and turn it into an account to be used in some tests */
     GetUserNameA(username, &user_size);
-    lstrcpy(account, ".\\");
-    lstrcat(account, username);
+    /* Get the domainname to cater for that situation */
+    GetComputerNameEx(ComputerNameDnsDomain, NULL, &domain_size);
+    domain = HeapAlloc(GetProcessHeap(), 0, domain_size);
+    GetComputerNameEx(ComputerNameDnsDomain, domain, &domain_size);
+    if (domain_size > 1)
+        sprintf(account, "%s\\%s", domain, username);
+    else
+        sprintf(account, ".\\%s", username);
+    HeapFree(GetProcessHeap(), 0, domain);
 
     /* All NULL */
     SetLastError(0xdeadbeef);
