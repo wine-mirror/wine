@@ -3230,6 +3230,13 @@ typedef struct _CMSG_ENCRYPTED_ENCODE_INFO
 #define CMSG_CTRL_DEL_CERT               11
 #define CMSG_CTRL_ADD_CRL                12
 #define CMSG_CTRL_DEL_CRL                13
+#define CMSG_CTRL_ADD_ATTR_CERT          14
+#define CMSG_CTRL_DEL_ATTR_CERT          15
+#define CMSG_CTRL_KEY_TRANS_DECRYPT      16
+#define CMSG_CTRL_KEY_AGREE_DECRYPT      17
+#define CMSG_CTRL_MAIL_LIST_DECRYPT      18
+#define CMSG_CTRL_VERIFY_SIGNATURE_EX    19
+#define CMSG_CTRL_ADD_CMS_SIGNER_INFO    20
 
 typedef struct _CMSG_CTRL_DECRYPT_PARA
 {
@@ -3254,6 +3261,19 @@ typedef struct _CMSG_CTRL_DEL_SIGNER_UNAUTH_ATTR_PARA
     DWORD           dwUnauthAttrIndex;
 } CMSG_CTRL_DEL_SIGNER_UNAUTH_ATTR_PARA,
  *PCMSG_CTRL_DEL_SIGNER_UNAUTH_ATTR_PARA;
+
+typedef struct _CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA {
+    DWORD      cbSize;
+    HCRYPTPROV hCryptProv;
+    DWORD      dwSignerIndex;
+    DWORD      dwSignerType;
+    void      *pvSigner;
+} CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA, *PCMSG_CTRL_VERIFY_SIGNATURE_EX_PARA;
+
+#define CMSG_VERIFY_SIGNER_PUBKEY 1
+#define CMSG_VERIFY_SIGNER_CERT   2
+#define CMSG_VERIFY_SIGNER_CHAIN  3
+#define CMSG_VERIFY_SIGNER_NULL   4
 
 #define CMSG_TYPE_PARAM                  1
 #define CMSG_CONTENT_PARAM               2
