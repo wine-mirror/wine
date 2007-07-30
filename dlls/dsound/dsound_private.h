@@ -32,6 +32,7 @@
 extern int ds_emuldriver;
 extern int ds_hel_buflen;
 extern int ds_snd_queue_max;
+extern int ds_snd_queue_min;
 extern int ds_hw_accel;
 extern int ds_default_playback;
 extern int ds_default_capture;

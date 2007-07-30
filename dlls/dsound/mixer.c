@@ -667,10 +667,10 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mi
  * For a DirectSoundDevice, go through all the currently playing buffers and
  * mix them in to the device buffer.
  *
- * playpos = the current play position in the primary buffer
  * writepos = the current safe-to-write position in the primary buffer
  * mixlen = the maximum amount to mix into the primary buffer
  *          (beyond the current writepos)
+ * mustlock = Do we have to fight for lock because we otherwise risk an underrun?
  * recover = true if the sound device may have been reset and the write
  *           position in the device buffer changed
  * all_stopped = reports back if all buffers have stopped
@@ -678,12 +678,12 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mi
  * Returns:  the length beyond the writepos that was mixed to.
  */
 
-static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos,
-                                 DWORD mixlen, BOOL recover, BOOL *all_stopped)
+static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos, DWORD mixlen, BOOL mustlock, BOOL recover, BOOL *all_stopped)
 {
 	INT i, len;
 	DWORD minlen = 0;
 	IDirectSoundBufferImpl	*dsb;
+	BOOL gotall = TRUE;
 
 	/* unless we find a running buffer, all have stopped */
 	*all_stopped = TRUE;
@@ -696,8 +696,11 @@ static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos
 
 		if (dsb->buflen && dsb->state && !dsb->hwbuf) {
 			TRACE("Checking %p, mixlen=%d\n", dsb, mixlen);
-			RtlAcquireResourceShared(&dsb->lock, TRUE);
-
+			if (!RtlAcquireResourceShared(&dsb->lock, mustlock))
+			{
+				gotall = FALSE;
+				continue;
+			}
 			/* if buffer is stopping it is stopped now */
 			if (dsb->state == STATE_STOPPING) {
 				dsb->state = STATE_STOPPED;
@@ -733,7 +736,7 @@ static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos
 	}
 
 	TRACE("Mixed at least %d from all buffers\n", minlen);
-
+	if (!gotall) return 0;
 	return minlen;
 }
 
@@ -816,6 +819,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		DWORD playpos, writepos, writelead, maxq, frag, prebuff_max, prebuff_left, size1, size2;
 		LPVOID buf1, buf2;
 		BOOL lock = (device->hwbuf && !(device->drvdesc.dwFlags & DSDDESC_DONTNEEDPRIMARYLOCK));
+		BOOL mustlock = FALSE;
 		int nfiller;
 
 		/* the sound of silence */
@@ -890,11 +894,15 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 			device->mixpos = writepos;
 		}
 
+		/* Do we risk an 'underrun' if we don't advance pointer? */
+		if (writelead/device->fraglen <= ds_snd_queue_min || recover)
+			mustlock = TRUE;
+
 		if (lock)
 			IDsDriverBuffer_Lock(device->hwbuf, &buf1, &size1, &buf2, &size2, writepos, maxq, 0);
 
 		/* do the mixing */
-		frag = DSOUND_MixToPrimary(device, writepos, maxq, recover, &all_stopped);
+		frag = DSOUND_MixToPrimary(device, writepos, maxq, mustlock, recover, &all_stopped);
 
 		/* update the mix position, taking wrap-around into acount */
 		device->mixpos = writepos + frag;
