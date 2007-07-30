@@ -914,15 +914,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILFAIL,      WINED3DSTENCILOP_KEEP);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILZFAIL,     WINED3DSTENCILOP_KEEP);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILPASS,      WINED3DSTENCILOP_KEEP);
-
-    /* Setting stencil func also uses values for stencil ref/mask, so manually set defaults
-     * so only a single call performed (and ensure defaults initialized before making that call)
-     *
-     * IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILREF, 0);
-     * IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILMASK, 0xFFFFFFFF);
-     */
-    This->renderState[WINED3DRS_STENCILREF] = 0;
-    This->renderState[WINED3DRS_STENCILMASK] = 0xFFFFFFFF;
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILREF,       0);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILMASK,      0xFFFFFFFF);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILFUNC,      WINED3DCMP_ALWAYS);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILWRITEMASK, 0xFFFFFFFF);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_TEXTUREFACTOR,    0xFFFFFFFF);
