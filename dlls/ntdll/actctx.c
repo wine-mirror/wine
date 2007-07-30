@@ -885,8 +885,8 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
 
 static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
 {
-    xmlstr_t    attr_name, attr_value;
-    BOOL        end = FALSE, error;
+    xmlstr_t elem, attr_name, attr_value;
+    BOOL ret, end = FALSE, error;
     struct entity*      entity;
 
     if (!(entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION)))
@@ -905,7 +905,21 @@ static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
     }
 
     if (error || end) return end;
-    return parse_expect_end_elem(xmlbuf, comClassW);
+
+    while ((ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp_end(&elem, comClassW))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else
+        {
+            WARN("unknown elem %s\n", debugstr_xmlstr(&elem));
+            ret = parse_unknown_elem(xmlbuf, &elem);
+        }
+    }
+    return ret;
 }
 
 static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
