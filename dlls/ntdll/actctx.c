@@ -1652,6 +1652,8 @@ static NTSTATUS get_manifest_in_pe_file( struct actctx_loader* acl, struct assem
 static NTSTATUS get_manifest_in_manifest_file( struct actctx_loader* acl, struct assembly_identity* ai,
                                                LPCWSTR filename, LPCWSTR directory, HANDLE file )
 {
+    FILE_END_OF_FILE_INFORMATION info;
+    IO_STATUS_BLOCK io;
     HANDLE              mapping;
     OBJECT_ATTRIBUTES   attr;
     LARGE_INTEGER       size;
@@ -1682,7 +1684,9 @@ static NTSTATUS get_manifest_in_manifest_file( struct actctx_loader* acl, struct
     NtClose( mapping );
     if (status != STATUS_SUCCESS) return status;
 
-    status = parse_manifest(acl, ai, filename, directory, base, count);
+    status = NtQueryInformationFile( file, &io, &info, sizeof(info), FileEndOfFileInformation );
+    if (status == STATUS_SUCCESS)
+        status = parse_manifest(acl, ai, filename, directory, base, info.EndOfFile.QuadPart);
 
     NtUnmapViewOfSection( GetCurrentProcess(), base );
     return status;
