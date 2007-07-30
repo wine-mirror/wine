@@ -36,7 +36,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #define RES_MAXLEN 5 /* the maximum number of characters in a screen dimension. 5 digits should be plenty, what kind of crazy person runs their screen >10,000 pixels across? */
+#define MINDPI 96
+#define MAXDPI 120
+#define DEFDPI 96
 
+static const char logpixels_reg[] = "System\\CurrentControlSet\\Hardware Profiles\\Current\\Software\\Fonts";
 
 static struct SHADERMODE
 {
@@ -237,12 +241,48 @@ static void on_d3d_pshader_mode_clicked(HWND dialog) {
     else
         set_reg_key(config_key, keypath("Direct3D"), "PixelShaderMode", "disabled");
 }
+static INT read_logpixels_reg(void)
+{
+    DWORD dwLogPixels;
+    char *buf  = get_reg_key(HKEY_LOCAL_MACHINE, logpixels_reg,
+                             "LogPixels", (const char *)MAXDPI);
+    dwLogPixels = *buf;
+    HeapFree(GetProcessHeap(), 0, buf);
+    return dwLogPixels;
+}
+
+static void init_dpi_editbox(HWND hDlg)
+{
+    HWND hDpiEditBox = GetDlgItem(hDlg, IDC_RES_DPIEDIT);
+    DWORD dwLogpixels;
+    char szLogpixels[MAXBUFLEN];
+
+    dwLogpixels = read_logpixels_reg();
+    WINE_TRACE("%d\n", (int) dwLogpixels);
+
+    szLogpixels[0] = 0;
+    sprintf(szLogpixels, "%d", dwLogpixels);
+    SendMessage(hDpiEditBox, WM_SETTEXT, 0, (LPARAM) szLogpixels);
+}
+
+static void init_trackbar(HWND hDlg)
+{
+    HWND hTrackBar = GetDlgItem(hDlg, IDC_RES_TRACKBAR);
+    DWORD dwLogpixels;
+
+    dwLogpixels = read_logpixels_reg();
+
+    SendMessageW(hTrackBar, TBM_SETRANGE, TRUE, MAKELONG(MINDPI, MAXDPI));
+    SendMessageW(hTrackBar, TBM_SETPOS, TRUE, dwLogpixels);
+}
 
 INT_PTR CALLBACK
 GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
 	case WM_INITDIALOG:
+	    init_dpi_editbox(hDlg);
+	    init_trackbar(hDlg);
 	    break;
 
         case WM_SHOWWINDOW:
@@ -290,12 +330,27 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    break;
 		}
 		case PSN_APPLY: {
+		    int i = SendMessageW(GetDlgItem(hDlg, IDC_RES_TRACKBAR), TBM_GETPOS, 0, 0);
+		    set_reg_key_dword(HKEY_LOCAL_MACHINE, logpixels_reg, "LogPixels", i);
                     apply();
 		    SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
 		    break;
 		}
 		case PSN_SETACTIVE: {
 		    init_dialog (hDlg);
+		    break;
+		}
+	    }
+	    break;
+
+	case WM_HSCROLL:
+	    switch (wParam) {
+		default: {
+		    char buf[MAXBUFLEN];
+		    int i = SendMessageW(GetDlgItem(hDlg, IDC_RES_TRACKBAR), TBM_GETPOS, 0, 0);
+		    buf[0] = 0;
+		    sprintf(buf, "%d", i);
+		    SendMessage(GetDlgItem(hDlg, IDC_RES_DPIEDIT), WM_SETTEXT, 0, (LPARAM) buf);
 		    break;
 		}
 	    }

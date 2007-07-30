@@ -152,6 +152,9 @@
 #define IDS_SHADER_MODE_HARDWARE        8100
 #define IDS_SHADER_MODE_NONE            8101
 
+#define IDC_RES_TRACKBAR                1107
+#define IDC_RES_DPIEDIT                 1108
+
 /* applications tab */
 #define IDC_APP_LISTVIEW                1200
 #define IDC_APP_ADDAPP                  1201

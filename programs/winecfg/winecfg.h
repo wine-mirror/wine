@@ -142,6 +142,7 @@ static inline void set_text(HWND dialog, WORD id, const char *text)
 }
 
 #define WINE_KEY_ROOT "Software\\Wine"
+#define MAXBUFLEN 256
 
 extern HMENU     hPopupMenus;
 
