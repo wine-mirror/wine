@@ -1679,7 +1679,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
     if (!contains_path( libname ))
     {
         NTSTATUS status;
-        WCHAR *fullname;
+        WCHAR *fullname = NULL;
 
         if ((*pwm = find_basename_module( libname )) != NULL) goto found;
 
