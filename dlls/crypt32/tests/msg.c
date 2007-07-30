@@ -1903,6 +1903,24 @@ static void test_decode_msg_update(void)
 static const BYTE hashParam[] = { 0x08,0xd6,0xc0,0x5a,0x21,0x51,0x2a,0x79,0xa1,
  0xdf,0xeb,0x9d,0x2a,0x8f,0x26,0x2f };
 
+static void compare_signer_info(const CMSG_SIGNER_INFO *got,
+ const CMSG_SIGNER_INFO *expected)
+{
+    ok(got->dwVersion == expected->dwVersion, "Expected version %d, got %d\n",
+     expected->dwVersion, got->dwVersion);
+    ok(got->Issuer.cbData == expected->Issuer.cbData,
+     "Expected issuer size %d, got %d\n", expected->Issuer.cbData,
+     got->Issuer.cbData);
+    ok(!memcmp(got->Issuer.pbData, got->Issuer.pbData, got->Issuer.cbData),
+     "Unexpected issuer\n");
+    ok(got->SerialNumber.cbData == expected->SerialNumber.cbData,
+     "Expected serial number size %d, got %d\n", expected->SerialNumber.cbData,
+     got->SerialNumber.cbData);
+    ok(!memcmp(got->SerialNumber.pbData, got->SerialNumber.pbData,
+     got->SerialNumber.cbData), "Unexpected serial number\n");
+    /* FIXME: check more things */
+}
+
 static void test_decode_msg_get_param(void)
 {
     HCRYPTMSG msg;
@@ -1958,12 +1976,41 @@ static void test_decode_msg_get_param(void)
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ret = CryptMsgUpdate(msg, signedContent, sizeof(signedContent), TRUE);
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    todo_wine
+    check_param("signed content", msg, CMSG_CONTENT_PARAM, msgData,
+     sizeof(msgData));
+    todo_wine
+    check_param("inner content", msg, CMSG_INNER_CONTENT_TYPE_PARAM,
+     (const BYTE *)szOID_RSA_data, strlen(szOID_RSA_data) + 1);
     size = sizeof(value);
     value = 2112;
     ret = CryptMsgGetParam(msg, CMSG_SIGNER_COUNT_PARAM, 0, &value, &size);
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     ok(value == 1, "Expected 1 signer, got %d\n", value);
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &size);
+    todo_wine
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    if (ret)
+        buf = CryptMemAlloc(size);
+    else
+        buf = NULL;
+    if (buf)
+    {
+        CMSG_SIGNER_INFO signer = { 0 };
+
+        signer.dwVersion = 1;
+        signer.Issuer.cbData = sizeof(encodedCommonName);
+        signer.Issuer.pbData = encodedCommonName;
+        signer.SerialNumber.cbData = sizeof(serialNum);
+        signer.SerialNumber.pbData = serialNum;
+        signer.HashAlgorithm.pszObjId = oid_rsa_md5;
+        CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, buf, &size);
+        compare_signer_info((CMSG_SIGNER_INFO *)buf, &signer);
+        CryptMemFree(buf);
+    }
     /* index is ignored when getting signer count */
+    size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_SIGNER_COUNT_PARAM, 1, &value, &size);
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     ok(value == 1, "Expected 1 signer, got %d\n", value);
