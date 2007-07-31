@@ -141,6 +141,11 @@ GpStatus WINGDIPAPI GdipGetImageVerticalResolution(GpImage*,REAL*);
 GpStatus WINGDIPAPI GdipGetImageWidth(GpImage*,UINT*);
 GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage*,GDIPCONST GUID*,UINT*);
 
+GpStatus WINGDIPAPI GdipCreateImageAttributes(GpImageAttributes**);
+GpStatus WINGDIPAPI GdipDisposeImageAttributes(GpImageAttributes*);
+GpStatus WINGDIPAPI GdipSetImageAttributesWrapMode(GpImageAttributes*,WrapMode,
+    ARGB,BOOL);
+
 #ifdef __cplusplus
 }
 #endif

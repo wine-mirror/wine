@@ -14,6 +14,7 @@ C_SRCS = \
 	graphics.c \
 	graphicspath.c \
 	image.c \
+	imageattributes.c \
 	matrix.c \
 	pathiterator.c \
 	pen.c

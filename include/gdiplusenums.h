@@ -164,6 +164,15 @@ enum ImageType
     ImageTypeMetafile
 };
 
+enum WrapMode
+{
+    WrapModeTile,
+    WrapModeTileFlipX,
+    WrapModeTileFlipY,
+    WrapModeTileFlipXY,
+    WrapModeClamp
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -181,6 +190,7 @@ typedef enum DashCap DashCap;
 typedef enum DashStyle DashStyle;
 typedef enum MatrixOrder MatrixOrder;
 typedef enum ImageType ImageType;
+typedef enum WrapMode WrapMode;
 
 #endif /* end of c typedefs */
 

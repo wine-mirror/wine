@@ -88,7 +88,7 @@
 @ stub GdipCreateHICONFromBitmap
 @ stub GdipCreateHalftonePalette
 @ stub GdipCreateHatchBrush
-@ stub GdipCreateImageAttributes
+@ stdcall GdipCreateImageAttributes(ptr)
 @ stub GdipCreateLineBrush
 @ stub GdipCreateLineBrushFromRect
 @ stub GdipCreateLineBrushFromRectI
@@ -141,7 +141,7 @@
 @ stub GdipDeleteRegion
 @ stub GdipDeleteStringFormat
 @ stdcall GdipDisposeImage(ptr)
-@ stub GdipDisposeImageAttributes
+@ stdcall GdipDisposeImageAttributes(ptr)
 @ stdcall GdipDrawArc(ptr ptr long long long long long long)
 @ stub GdipDrawArcI
 @ stdcall GdipDrawBezier(ptr ptr long long long long long long long long)
@@ -510,7 +510,7 @@
 @ stub GdipSetImageAttributesRemapTable
 @ stub GdipSetImageAttributesThreshold
 @ stub GdipSetImageAttributesToIdentity
-@ stub GdipSetImageAttributesWrapMode
+@ stdcall GdipSetImageAttributesWrapMode(ptr long long long)
 @ stub GdipSetImagePalette
 @ stub GdipSetInfinite
 @ stdcall GdipSetInterpolationMode(ptr long)
