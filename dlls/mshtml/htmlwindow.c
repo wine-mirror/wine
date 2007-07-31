@@ -662,8 +662,15 @@ static HRESULT WINAPI HTMLWindow2_resizeBy(IHTMLWindow2 *iface, long x, long y)
 static HRESULT WINAPI HTMLWindow2_get_external(IHTMLWindow2 *iface, IDispatch **p)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = NULL;
+
+    if(!This->doc->hostui)
+        return S_OK;
+
+    return IDocHostUIHandler_GetExternal(This->doc->hostui, p);
 }
 
 #undef HTMLWINDOW2_THIS

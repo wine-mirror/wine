@@ -127,6 +127,7 @@ DEFINE_EXPECT(OnFocus_FALSE);
 DEFINE_EXPECT(RequestUIActivate);
 DEFINE_EXPECT(InPlaceFrame_SetBorderSpace);
 DEFINE_EXPECT(InPlaceUIWindow_SetActiveObject);
+DEFINE_EXPECT(GetExternal);
 
 static IUnknown *doc_unk;
 static BOOL expect_LockContainer_fLock;
@@ -1861,8 +1862,9 @@ static HRESULT WINAPI DocHostUIHandler_GetDropTarget(IDocHostUIHandler2 *iface,
 
 static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface, IDispatch **ppDispatch)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(GetExternal);
+    *ppDispatch = (void*)1;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface, DWORD dwTranslate,
@@ -3444,6 +3446,36 @@ static void test_Navigate(IUnknown *unk)
     IHlinkTarget_Release(hlink);
 }
 
+static void test_external(IUnknown *unk, BOOL initialized)
+{
+    IDispatch *external;
+    IHTMLDocument2 *doc;
+    IHTMLWindow2 *htmlwin;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDocument2, (void**)&doc);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLWindow2) failed: %08x\n", hres);
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &htmlwin);
+    IHTMLDocument2_Release(doc);
+    ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+
+    if(initialized)
+        SET_EXPECT(GetExternal);
+    external = (void*)0xdeadbeef;
+    hres = IHTMLWindow2_get_external(htmlwin, &external);
+    if(initialized) {
+        ok(hres == S_FALSE, "get_external failed: %08x\n", hres);
+        CHECK_CALLED(GetExternal);
+        ok(external == (void*)1, "external != NULL\n");
+    }else {
+        ok(hres == S_OK, "get_external failed: %08x\n", hres);
+        ok(external == NULL, "external != NULL\n");
+    }
+
+    IHTMLWindow2_Release(htmlwin);
+}
+
 static void test_StreamLoad(IUnknown *unk)
 {
     IPersistStreamInit *init;
@@ -3528,6 +3560,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     test_QueryInterface(unk);
     test_IsDirty(unk, S_FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
+    test_external(unk, FALSE);
     test_ConnectionPointContainer(unk);
     test_GetCurMoniker(unk, NULL, NULL);
     test_Persist(unk);
@@ -3550,6 +3583,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     test_OleCommandTarget(unk);
     test_OnAmbientPropertyChange(unk);
     test_Window(unk, TRUE);
+    test_external(unk, TRUE);
 
     test_UIDeactivate();
     test_OleCommandTarget(unk);
