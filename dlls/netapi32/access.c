@@ -131,7 +131,7 @@ NET_API_STATUS WINAPI NetUserAdd(LPCWSTR servername,
         /* Fall through */
     case 2:
         FIXME("Level 2 not implemented.\n");
-        /* Fall throught */
+        /* Fall through */
     case 1:
     {
         PUSER_INFO_1 ui = (PUSER_INFO_1) bufptr;

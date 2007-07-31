@@ -1577,7 +1577,7 @@ void WINAPI SHFreeNameMappings(HANDLE hNameMapping)
  * drive = 0: returns the current directory path
  * drive > 0: returns the current directory path of the specified drive
  *            drive=1 -> A:  drive=2 -> B:  ...
- * returns 0 if successfull
+ * returns 0 if successful
 */
 DWORD WINAPI SheGetDirA(DWORD drive, LPSTR buffer)
 {
@@ -1614,7 +1614,7 @@ DWORD WINAPI SheGetDirA(DWORD drive, LPSTR buffer)
  * drive = 0: returns the current directory path
  * drive > 0: returns the current directory path of the specified drive
  *            drive=1 -> A:  drive=2 -> B:  ...
- * returns 0 if successfull
+ * returns 0 if successful
  */
 DWORD WINAPI SheGetDirW(DWORD drive, LPWSTR buffer)
 {
@@ -1649,7 +1649,7 @@ DWORD WINAPI SheGetDirW(DWORD drive, LPWSTR buffer)
  * SheChangeDirA [SHELL32.@]
  *
  * changes the current directory to the specified path
- * and returns 0 if successfull
+ * and returns 0 if successful
  */
 DWORD WINAPI SheChangeDirA(LPSTR path)
 {
@@ -1663,7 +1663,7 @@ DWORD WINAPI SheChangeDirA(LPSTR path)
  * SheChangeDirW [SHELL32.@]
  *
  * changes the current directory to the specified path
- * and returns 0 if successfull
+ * and returns 0 if successful
  */
 DWORD WINAPI SheChangeDirW(LPWSTR path)
 {

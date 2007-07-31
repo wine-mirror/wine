@@ -111,7 +111,7 @@ static void test_open_svc(void)
        GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
        "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    /* Non-existent service */
+    /* Nonexistent service */
     scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
     SetLastError(0xdeadbeef);
     svc_handle = OpenServiceA(scm_handle, "deadbeef", GENERIC_READ);
@@ -423,7 +423,7 @@ static void test_get_displayname(void)
        GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
        "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    /* Test for non-existing service */
+    /* Test for nonexistent service */
     SetLastError(0xdeadbeef);
     displaysize = -1;
     ret = GetServiceDisplayNameA(scm_handle, deadbeef, NULL, &displaysize);
@@ -484,7 +484,7 @@ static void test_get_displayname(void)
        GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
        "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
 
-    /* And with a bigger then needed buffer */
+    /* And with a bigger than needed buffer */
     SetLastError(0xdeadbeef);
     displaysize = tempsize * 2;
     ret = GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
@@ -525,7 +525,7 @@ static void test_get_displayname(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
-    /* And with a bigger then needed buffer */
+    /* And with a bigger than needed buffer */
     SetLastError(0xdeadbeef);
     displaysize = tempsizeW + 1; /* This caters for the null terminating character */
     ret = GetServiceDisplayNameW(scm_handle, spoolerW, displaynameW, &displaysize);
@@ -643,7 +643,7 @@ static void test_get_servicekeyname(void)
        GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
        "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    /* Test for non-existing displayname */
+    /* Test for nonexistent displayname */
     SetLastError(0xdeadbeef);
     ret = GetServiceKeyNameA(scm_handle, deadbeef, NULL, &servicesize);
     ok(!ret, "Expected failure\n");
@@ -886,7 +886,7 @@ static void test_refcount(void)
     ok(ret, "Expected success\n");
 
     /* We cannot create the same service again as it's still marked as 'being deleted'.
-     * The reason is that we still have 4 open handles to this service eventhough we
+     * The reason is that we still have 4 open handles to this service even though we
      * closed the handle to the Service Control Manager in between.
      */
     SetLastError(0xdeadbeef);
@@ -917,7 +917,7 @@ static void test_refcount(void)
     ret = CloseServiceHandle(svc_handle1);
     ok(ret, "Expected success\n");
 
-    /* Wait a while. Doing a CreateService to soon will result again
+    /* Wait a while. Doing a CreateService too soon will result again
      * in an ERROR_SERVICE_MARKED_FOR_DELETE error.
      */
     Sleep(1000);

@@ -325,12 +325,12 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
  *
  * Transforms vertices by the transformation matrix.
  *
- * This function is pretty simmilar to IDirect3DVertexBuffer7::ProcessVertices,
- * so its tempting to forward it to ProcessVertices. However, there are some
+ * This function is pretty similar to IDirect3DVertexBuffer7::ProcessVertices,
+ * so it's tempting to forward it to there. However, there are some
  * tiny differences. First, the lpOffscreen flag that is reported back,
  * then there is the homogenous vertex that is generated. Also there's a lack
  * of FVFs, but still a custom stride. Last, the d3d1 - d3d3 viewport has some
- * settings(scale) that d3d7 and wined3d do not have. All in all wrapping to
+ * settings (scale) that d3d7 and wined3d do not have. All in all wrapping to
  * ProcessVertices doesn't pay of in terms of wrapper code needed and code
  * reused.
  *
@@ -431,7 +431,7 @@ IDirect3DViewportImpl_TransformVertices(IDirect3DViewport3 *iface,
                 /* Looks like native just drops the vertex, leaves whatever data
                  * it has in the output buffer and goes on with the next vertex.
                  * The exact scheme hasn't been figured out yet, but windows
-                 * definitly writes something there.
+                 * definitely writes something there.
                  */
                 out[0] = x;
                 out[1] = y;

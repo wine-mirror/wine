@@ -990,9 +990,9 @@ static void test_GetShortPathNameW(void)
     /* End test */
     CloseHandle( file );
     ret = DeleteFileW( short_path );
-    ok( ret, "Can not delete file.\n" );
+    ok( ret, "Cannot delete file.\n" );
     ret = RemoveDirectoryW( path );
-    ok( ret, "Can not delete directory.\n" );
+    ok( ret, "Cannot delete directory.\n" );
 }
 
 static void test_GetSystemDirectory(void)

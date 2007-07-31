@@ -452,7 +452,7 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx, BOOL fo
     err = snd_pcm_hw_params_get_period_size(hw_params, &psize, NULL);
     TRACE("Period size is: %lu\n", psize);
 
-    /* ALSA needs at least 3 buffers to work succesfully */
+    /* ALSA needs at least 3 buffers to work successfully */
     This->mmap_commitahead = 3 * psize;
     while (This->mmap_commitahead <= 512)
         This->mmap_commitahead += psize;

@@ -1860,7 +1860,7 @@ static void test_ConvertStringSecurityDescriptor(void)
 
     SetLastError(0xdeadbeef);
     ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
-        "D:(D;;GA;;;Non existant account)", SDDL_REVISION_1, &pSD, NULL);
+        "D:(D;;GA;;;Nonexistent account)", SDDL_REVISION_1, &pSD, NULL);
     todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_ACL,
         "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_ACL instead of %d\n",

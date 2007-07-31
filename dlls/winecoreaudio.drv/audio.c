@@ -1876,7 +1876,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     /* Keep a copy of the buffer list structure (but not the buffers themselves)
-     * in case AudioUnitRender clobbers the original, as it is wont to do. */
+     * in case AudioUnitRender clobbers the original, as it won't to do. */
     wwi->bufferListCopy = HeapAlloc(GetProcessHeap(), 0, AUDIOBUFFERLISTSIZE(wwi->bufferList->mNumberBuffers));
     if (wwi->bufferListCopy == NULL)
     {

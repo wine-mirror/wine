@@ -1652,7 +1652,7 @@ static void test_GetTextMetrics(void)
     ReleaseDC(0, hdc);
 }
 
-static void test_non_existent_font(void)
+static void test_nonexistent_font(void)
 {
     LOGFONTA lf;
     HDC hdc;
@@ -1672,7 +1672,7 @@ static void test_non_existent_font(void)
     lf.lfWeight = FW_REGULAR;
     lf.lfCharSet = ANSI_CHARSET;
     lf.lfPitchAndFamily = FF_SWISS;
-    strcpy(lf.lfFaceName, "Non existent font");
+    strcpy(lf.lfFaceName, "Nonexistent font");
 
     hfont = CreateFontIndirectA(&lf);
     hfont = SelectObject(hdc, hfont);
@@ -1698,7 +1698,7 @@ START_TEST(font)
     test_SetTextJustification();
     test_font_charset();
     test_GetFontUnicodeRanges();
-    test_non_existent_font();
+    test_nonexistent_font();
 
     /* On Windows Arial has a lot of default charset aliases such as Arial Cyr,
      * I'd like to avoid them in this test.

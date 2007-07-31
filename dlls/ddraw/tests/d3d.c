@@ -1044,7 +1044,7 @@ static void Direct3D1Test(void)
         /* No scheme has been found behind those return values. It seems to be
          * whatever data windows has when throwing the vertex away. Modify the
          * input test vertices to test this more. Depending on the input data
-         * it can happen that the z coord gets written into y, or simmilar things
+         * it can happen that the z coord gets written into y, or similar things
          */
         if(0)
         {
