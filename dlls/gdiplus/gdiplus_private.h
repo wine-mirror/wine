@@ -126,4 +126,8 @@ struct GpMetafile{
     GpImage image;
 };
 
+struct GpImageAttributes{
+    WrapMode wrap;
+};
+
 #endif

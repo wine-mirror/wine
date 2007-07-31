@@ -26,15 +26,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 GpStatus WINGDIPAPI GdipCreateImageAttributes(GpImageAttributes **imageattr)
 {
-    static int calls;
-
     if(!imageattr)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    *imageattr = GdipAlloc(sizeof(GpImageAttributes));
+    if(!*imageattr)    return OutOfMemory;
 
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipDisposeImageAttributes(GpImageAttributes *imageattr)
