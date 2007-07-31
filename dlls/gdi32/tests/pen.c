@@ -409,12 +409,6 @@ test_geometric_pens:
             ok(ext_pen.elp.elpPenStyle == pen[i].ret_style, "expected %x, got %x\n", pen[i].ret_style, ext_pen.elp.elpPenStyle);
         else
         {
-if (pen[i].style == PS_USERSTYLE)
-{
-    todo_wine
-            ok(ext_pen.elp.elpPenStyle == (PS_GEOMETRIC | pen[i].style), "expected %x, got %x\n", PS_GEOMETRIC | pen[i].style, ext_pen.elp.elpPenStyle);
-}
-else
             ok(ext_pen.elp.elpPenStyle == (PS_GEOMETRIC | pen[i].style), "expected %x, got %x\n", PS_GEOMETRIC | pen[i].style, ext_pen.elp.elpPenStyle);
         }
 
@@ -510,8 +504,7 @@ static void test_ps_userstyle(void)
 
     pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 0, style);
     ok(pen == 0, "ExtCreatePen should fail\n");
-    todo_wine
-        expect(0xdeadbeef, GetLastError());
+    expect(0xdeadbeef, GetLastError());
     DeleteObject(pen);
     SetLastError(0xdeadbeef);
 
@@ -523,24 +516,19 @@ static void test_ps_userstyle(void)
 
     pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, -1, style);
     ok(pen == 0, "ExtCreatePen should fail\n");
-    todo_wine
-        expect(0xdeadbeef, GetLastError());
+    expect(0xdeadbeef, GetLastError());
     DeleteObject(pen);
     SetLastError(0xdeadbeef);
 
     pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 5, bad_style);
-    todo_wine
-        ok(pen == 0, "ExtCreatePen should fail\n");
-    todo_wine
-        expect(ERROR_INVALID_PARAMETER, GetLastError());
+    ok(pen == 0, "ExtCreatePen should fail\n");
+    expect(ERROR_INVALID_PARAMETER, GetLastError());
     DeleteObject(pen);
     SetLastError(0xdeadbeef);
 
     pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 5, bad_style2);
-    todo_wine
-        ok(pen == 0, "ExtCreatePen should fail\n");
-    todo_wine
-        expect(ERROR_INVALID_PARAMETER, GetLastError());
+    ok(pen == 0, "ExtCreatePen should fail\n");
+    expect(ERROR_INVALID_PARAMETER, GetLastError());
     DeleteObject(pen);
     SetLastError(0xdeadbeef);
 
