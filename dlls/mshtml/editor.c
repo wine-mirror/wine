@@ -488,7 +488,7 @@ static nsIDOMNode *get_child_text_node(nsIDOMNode *node, BOOL first)
     return NULL;
 }
 
-static void handle_arrow_key(HTMLDocument *This, nsIDOMKeyEvent *event, const char *cmds[4])
+static void handle_arrow_key(HTMLDocument *This, nsIDOMKeyEvent *event, const char * const cmds[4])
 {
     int i=0;
     PRBool b;
@@ -518,7 +518,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
 
     switch(code) {
     case DOM_VK_LEFT: {
-        static const char *cmds[] = {
+        static const char * const cmds[] = {
             NSCMD_CHARPREVIOUS,
             NSCMD_WORDPREVIOUS,
             NSCMD_SELECTCHARPREVIOUS,
@@ -530,7 +530,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
         break;
     }
     case DOM_VK_RIGHT: {
-        static const char *cmds[] = {
+        static const char * const cmds[] = {
             NSCMD_CHARNEXT,
             NSCMD_WORDNEXT,
             NSCMD_SELECTCHARNEXT,
@@ -542,7 +542,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
         break;
     }
     case DOM_VK_UP: {
-        static const char *cmds[] = {
+        static const char * const cmds[] = {
             NSCMD_LINEPREVIOUS,
             NSCMD_MOVEPAGEUP,
             NSCMD_SELECTLINEPREVIOUS,
@@ -554,7 +554,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
         break;
     }
     case DOM_VK_DOWN: {
-        static const char *cmds[] = {
+        static const char * const cmds[] = {
             NSCMD_LINENEXT,
             NSCMD_MOVEPAGEDOWN,
             NSCMD_SELECTLINENEXT,
@@ -566,7 +566,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
         break;
     }
     case DOM_VK_DELETE: {
-        static const char *cmds[] = {
+        static const char * const cmds[] = {
             NSCMD_DELETECHARFORWARD,
             NSCMD_DELETEWORDFORWARD,
             NULL, NULL
@@ -577,7 +577,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
         break;
     }
     case DOM_VK_HOME: {
-        static const char *cmds[] = {
+        static const char * const cmds[] = {
             NSCMD_BEGINLINE,
             NSCMD_MOVETOP,
             NSCMD_SELECTBEGINLINE,
@@ -589,7 +589,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
         break;
     }
     case DOM_VK_END: {
-        static const char *cmds[] = {
+        static const char * const cmds[] = {
             NSCMD_ENDLINE,
             NSCMD_MOVEBOTTOM,
             NSCMD_SELECTENDLINE,
