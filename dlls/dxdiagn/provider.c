@@ -20,9 +20,9 @@
  */
 
 #include "config.h"
-#include "wine/debug.h"
 
 #define COBJMACROS
+#define NONAMELESSUNION
 #include "dxdiag_private.h"
 #include "wine/unicode.h"
 #include "winver.h"
@@ -32,6 +32,8 @@
 #include "vfw.h"
 #include "mmddk.h"
 #include <ddraw.h>
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
@@ -478,7 +480,7 @@ static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont)
         if (surface_descr.dwFlags & DDSD_HEIGHT)
             add_prop_ui4( pDisplayAdapterSubCont, dwHeight, surface_descr.dwHeight );
         if (surface_descr.dwFlags & DDSD_PIXELFORMAT)
-            add_prop_ui4( pDisplayAdapterSubCont, dwBpp, surface_descr.ddpfPixelFormat.dwRGBBitCount );
+            add_prop_ui4( pDisplayAdapterSubCont, dwBpp, surface_descr.u4.ddpfPixelFormat.u1.dwRGBBitCount );
     }
 
     add_prop_str( pDisplayAdapterSubCont, szVendorId, szEmpty );
