@@ -4373,8 +4373,9 @@ DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
     FT_ULong len;
     FT_Error err;
 
-    TRACE("font=%p, table=%08x, offset=%08x, buf=%p, cbData=%x\n",
-	font, table, offset, buf, cbData);
+    TRACE("font=%p, table=%c%c%c%c, offset=0x%x, buf=%p, cbData=0x%x\n",
+	font, LOBYTE(LOWORD(table)), HIBYTE(LOWORD(table)),
+        LOBYTE(HIWORD(table)), HIBYTE(HIWORD(table)), offset, buf, cbData);
 
     if(!FT_IS_SFNT(ft_face))
         return GDI_ERROR;
