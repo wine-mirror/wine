@@ -307,4 +307,5 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Активное окно - текст"
     IDC_SYSPARAMS_INACTIVE_TITLE    "Пассивное окно"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Пассивное окно - текст"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
 END

@@ -307,6 +307,7 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Text bară de titlu activă"
     IDC_SYSPARAMS_INACTIVE_TITLE    "Bară de titlu inactivă"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Text bară de titlu inactivă"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
 END
 
 #pragma code_page(default)

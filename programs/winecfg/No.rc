@@ -305,4 +305,5 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Aktiv titteltekst"
     IDC_SYSPARAMS_INACTIVE_TITLE    "Inaktiv tittellinje"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inaktiv titteltekst"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
 END

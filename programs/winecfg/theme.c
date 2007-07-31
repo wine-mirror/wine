@@ -835,6 +835,7 @@ static struct
     const char *color_reg;
     int size;
     COLORREF color;
+    LOGFONTW lf;
 } metrics[] =
 {
     {-1,                COLOR_BTNFACE,          "ButtonFace"    }, /* IDC_SYSPARAMS_BUTTON */
@@ -852,7 +853,8 @@ static struct
     {SM_CXSIZE,         COLOR_ACTIVECAPTION,    "ActiveTitle"   }, /* IDC_SYSPARAMS_ACTIVE_TITLE */
     {-1,                COLOR_CAPTIONTEXT,      "TitleText"     }, /* IDC_SYSPARAMS_ACTIVE_TITLE_TEXT */
     {-1,                COLOR_INACTIVECAPTION,  "InactiveTitle" }, /* IDC_SYSPARAMS_INACTIVE_TITLE */
-    {-1,                COLOR_INACTIVECAPTIONTEXT,"InactiveTitleText" }  /* IDC_SYSPARAMS_INACTIVE_TITLE_TEXT */
+    {-1,                COLOR_INACTIVECAPTIONTEXT,"InactiveTitleText" }, /* IDC_SYSPARAMS_INACTIVE_TITLE_TEXT */
+    {-1,                -1,                     "MsgBoxText"    } /* IDC_SYSPARAMS_MSGBOX_TEXT */
 };
 
 static void save_sys_color(int idx, COLORREF clr)
@@ -867,6 +869,7 @@ static void read_sysparams(HWND hDlg)
 {
     WCHAR buffer[256];
     HWND list = GetDlgItem(hDlg, IDC_SYSPARAM_COMBO);
+    NONCLIENTMETRICSW nonclient_metrics;
     int i, idx;
 
     for (i = 0; i < sizeof(metrics) / sizeof(metrics[0]); i++)
@@ -881,6 +884,18 @@ static void read_sysparams(HWND hDlg)
         if (metrics[i].color_idx != -1)
             metrics[i].color = GetSysColor(metrics[i].color_idx);
     }
+
+    nonclient_metrics.cbSize = sizeof(NONCLIENTMETRICSW);
+    SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &nonclient_metrics, 0);
+
+    memcpy(&(metrics[IDC_SYSPARAMS_MENU_TEXT - IDC_SYSPARAMS_BUTTON].lf),
+           &(nonclient_metrics.lfMenuFont), sizeof(LOGFONTW));
+    memcpy(&(metrics[IDC_SYSPARAMS_ACTIVE_TITLE_TEXT - IDC_SYSPARAMS_BUTTON].lf),
+           &(nonclient_metrics.lfCaptionFont), sizeof(LOGFONTW));
+    memcpy(&(metrics[IDC_SYSPARAMS_TOOLTIP_TEXT - IDC_SYSPARAMS_BUTTON].lf),
+           &(nonclient_metrics.lfStatusFont), sizeof(LOGFONTW));
+    memcpy(&(metrics[IDC_SYSPARAMS_MSGBOX_TEXT - IDC_SYSPARAMS_BUTTON].lf),
+           &(nonclient_metrics.lfMessageFont), sizeof(LOGFONTW));
 }
 
 static void apply_sysparams(void)
@@ -899,6 +914,19 @@ static void apply_sysparams(void)
             metrics[IDC_SYSPARAMS_ACTIVE_TITLE - IDC_SYSPARAMS_BUTTON].size;
     nonclient_metrics.iScrollWidth = nonclient_metrics.iScrollHeight =
             metrics[IDC_SYSPARAMS_SCROLLBAR - IDC_SYSPARAMS_BUTTON].size;
+
+    memcpy(&(nonclient_metrics.lfMenuFont),
+           &(metrics[IDC_SYSPARAMS_MENU_TEXT - IDC_SYSPARAMS_BUTTON].lf),
+           sizeof(LOGFONTW));
+    memcpy(&(nonclient_metrics.lfCaptionFont),
+           &(metrics[IDC_SYSPARAMS_ACTIVE_TITLE_TEXT - IDC_SYSPARAMS_BUTTON].lf),
+           sizeof(LOGFONTW));
+    memcpy(&(nonclient_metrics.lfStatusFont),
+           &(metrics[IDC_SYSPARAMS_TOOLTIP_TEXT - IDC_SYSPARAMS_BUTTON].lf),
+           sizeof(LOGFONTW));
+    memcpy(&(nonclient_metrics.lfMessageFont),
+           &(metrics[IDC_SYSPARAMS_MSGBOX_TEXT - IDC_SYSPARAMS_BUTTON].lf),
+           sizeof(LOGFONTW));
 
     SystemParametersInfoW(SPI_SETNONCLIENTMETRICS, sizeof(nonclient_metrics), &nonclient_metrics,
                           SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
@@ -931,6 +959,13 @@ static void on_sysparam_change(HWND hDlg)
         SendDlgItemMessageW(hDlg, IDC_SYSPARAM_SIZE_UD, UDM_SETPOS, 0, MAKELONG(metrics[index].size, 0));
     else
         set_text(hDlg, IDC_SYSPARAM_SIZE, "");
+
+    EnableWindow(GetDlgItem(hDlg, IDC_SYSPARAM_FONT),
+        index == IDC_SYSPARAMS_MENU_TEXT-IDC_SYSPARAMS_BUTTON ||
+        index == IDC_SYSPARAMS_ACTIVE_TITLE_TEXT-IDC_SYSPARAMS_BUTTON ||
+        index == IDC_SYSPARAMS_TOOLTIP_TEXT-IDC_SYSPARAMS_BUTTON ||
+        index == IDC_SYSPARAMS_MSGBOX_TEXT-IDC_SYSPARAMS_BUTTON
+    );
 
     updating_ui = FALSE;
 }
@@ -968,6 +1003,21 @@ static void on_draw_item(HWND hDlg, WPARAM wParam, LPARAM lParam)
             DeleteObject(brush);
         }
     }
+}
+
+static void on_select_font(HWND hDlg)
+{
+    CHOOSEFONTW cf;
+    int index = SendDlgItemMessageW(hDlg, IDC_SYSPARAM_COMBO, CB_GETCURSEL, 0, 0);
+    index = SendDlgItemMessageW(hDlg, IDC_SYSPARAM_COMBO, CB_GETITEMDATA, index, 0);
+
+    ZeroMemory(&cf, sizeof(cf));
+    cf.lStructSize = sizeof(CHOOSEFONTW);
+    cf.hwndOwner = hDlg;
+    cf.lpLogFont = &(metrics[index].lf);
+    cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT | CF_NOSCRIPTSEL;
+
+    ChooseFontW(&cf);
 }
 
 INT_PTR CALLBACK
@@ -1028,6 +1078,10 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     {
                         case IDC_THEME_INSTALL:
                             on_theme_install (hDlg);
+                            break;
+
+                        case IDC_SYSPARAM_FONT:
+                            on_select_font(hDlg);
                             break;
 
                         case IDC_BROWSE_SFPATH:

@@ -311,4 +311,5 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Písmo titulku aktivního okna"
     IDC_SYSPARAMS_INACTIVE_TITLE    "Pozadí titulku neaktivného okna"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Písmo titulku neaktivního okna"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
 END

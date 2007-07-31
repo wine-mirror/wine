@@ -311,4 +311,5 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Tytu³ aktywnego okna"
     IDC_SYSPARAMS_INACTIVE_TITLE    "T³o nag³ówka nieaktywnego okna"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Tytu³ nieaktywnego okna"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
 END

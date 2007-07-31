@@ -308,4 +308,5 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Active Title Text"
     IDC_SYSPARAMS_INACTIVE_TITLE    "Inactive Title Bar"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inactive Title Text"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
 END
