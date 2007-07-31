@@ -1352,7 +1352,7 @@ static BOOL CRYPT_VerifyCertSignatureFromPublicKeyInfo(HCRYPTPROV hCryptProv,
     ALG_ID pubKeyID, hashID;
 
     info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
-     pubKeyInfo->Algorithm.pszObjId, 0);
+     signedCert->SignatureAlgorithm.pszObjId, 0);
     if (!info || (info->dwGroupId != CRYPT_PUBKEY_ALG_OID_GROUP_ID &&
      info->dwGroupId != CRYPT_SIGN_ALG_OID_GROUP_ID))
     {
