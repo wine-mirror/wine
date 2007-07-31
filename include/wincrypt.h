@@ -24,6 +24,9 @@
 extern "C" {
 #endif
 
+/* FIXME: #include <bcrypt.h> */
+/* FIXME: #include <ncrypt.h> */
+
 /* some typedefs for function parameters */
 typedef unsigned int ALG_ID;
 typedef unsigned long HCRYPTPROV;
