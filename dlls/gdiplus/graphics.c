@@ -1016,6 +1016,22 @@ GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     return retval;
 }
 
+GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image,
+    GDIPCONST GpPointF *points, INT count, REAL srcx, REAL srcy, REAL srcwidth,
+    REAL srcheight, GpUnit srcUnit, GDIPCONST GpImageAttributes* imageAttributes,
+    DrawImageAbort callback, VOID * callbackData)
+{
+    static int calls;
+
+    if(!graphics || !image || !points || !imageAttributes)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
     INT y1, INT x2, INT y2)
 {

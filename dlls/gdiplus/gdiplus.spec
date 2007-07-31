@@ -168,7 +168,7 @@
 @ stub GdipDrawImagePointRectI
 @ stub GdipDrawImagePoints
 @ stub GdipDrawImagePointsI
-@ stub GdipDrawImagePointsRect
+@ stdcall GdipDrawImagePointsRect(ptr ptr ptr long long long long long long ptr ptr ptr)
 @ stub GdipDrawImagePointsRectI
 @ stub GdipDrawImageRect
 @ stub GdipDrawImageRectI

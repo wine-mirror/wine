@@ -21,6 +21,9 @@
 
 typedef float REAL;
 
+typedef BOOL (CALLBACK * ImageAbort)(VOID *);
+typedef ImageAbort DrawImageAbort;
+
 enum Status{
     Ok                          = 0,
     GenericError                = 1,
