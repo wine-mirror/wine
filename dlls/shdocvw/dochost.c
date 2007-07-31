@@ -406,7 +406,13 @@ static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface,
         IDispatch **ppDispatch)
 {
     DocHost *This = DOCHOSTUI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, ppDispatch);
+
+    TRACE("(%p)->(%p)\n", This, ppDispatch);
+
+    if(This->hostui)
+        return IDocHostUIHandler_GetExternal(This->hostui, ppDispatch);
+
+    FIXME("default action not implemented\n");
     return E_NOTIMPL;
 }
 
