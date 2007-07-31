@@ -277,6 +277,12 @@ static void test_GetTimeZoneInformation(void)
     ok(SetEnvironmentVariableA("TZ",NULL) != 0,
        "SetEnvironmentVariableA failed\n");
 
+    if (!pSystemTimeToTzSpecificLocalTime)
+    {
+        skip("SystemTimeToTzSpecificLocalTime not present\n");
+        return;
+    }
+
     diff = get_tz_bias(&tzinfo, tz_id);
 
     utc = st;
