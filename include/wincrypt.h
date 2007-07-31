@@ -2182,7 +2182,25 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define CERT_ARCHIVED_KEY_HASH_PROP_ID             65
 #define CERT_AUTO_ENROLL_RETRY_PROP_ID             66
 #define CERT_AIA_URL_RETRIEVED_PROP_ID             67
-#define CERT_FIRST_RESERVED_PROP_ID                68
+#define CERT_AUTHORITY_INFO_ACCESS_PROP_ID         68
+#define CERT_BACKED_UP_PROP_ID                     69
+#define CERT_OCSP_RESPONSE_PROP_ID                 70
+#define CERT_REQUEST_ORIGINATOR_PROP_ID            71
+#define CERT_SOURCE_LOCATION_PROP_ID               72
+#define CERT_SOURCE_URL_PROP_ID                    73
+#define CERT_NEW_KEY_PROP_ID                       74
+#define CERT_OCSP_CACHE_PREFIX_PROP_ID             75
+#define CERT_SMART_CARD_ROOT_INFO_PROP_ID          76
+#define CERT_NO_AUTO_EXPIRE_CHECK_PROP_ID          77
+#define CERT_NCRYPT_KEY_HANDLE_PROP_ID             78
+#define CERT_HCRYPTPROV_OR_NCRYPT_KEY_HANDLE_PROP_ID 79
+#define CERT_SUBJECT_INFO_ACCESS_PROP_ID           80
+#define CERT_CA_OCSP_AUTHORITY_INFO_ACCESS_PROP_ID 81
+#define CERT_CA_DISABLE_CRL_PROP_ID                82
+#define CERT_ROOT_PROGRAM_CERT_POLICIES_PROP_ID    83
+#define CERT_ROOT_PROGRAM_NAME_CONSTRAINTS_PROP_ID 84
+
+#define CERT_FIRST_RESERVED_PROP_ID                85
 #define CERT_LAST_RESERVED_PROP_ID                 0x00007fff
 #define CERT_FIRST_USER_PROP_ID                    0x00008000
 #define CERT_LAST_USER_PROP_ID                     0x0000ffff
