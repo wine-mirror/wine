@@ -2090,45 +2090,6 @@ sub parse_c_variable($$$$$$$) {
 
     # $output->write("$type: $name: '$_'\n");
 
-    if(1 || $finished) {
-	# Nothing
-    } elsif($self->_parse_c('(?:struct\s+)?ICOM_VTABLE\s*\(.*?\)', \$_, \$line, \$column, \$match)) {
-	$type = "<type>";
-	$name = "<name>";
-    } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+)\s*
-		(?:\*\s*)*(\w+|\s*\*?\s*\w+\s*\))\s*(?:\[[^\]]*\]|\([^\)]*\))?
-		(?:,\s*(?:\*\s*)*(\w+)\s*(?:\[[^\]]*\])?)*
-	    \s*(?:=|$)//sx)
-    {
-	$self->_update_c_position($&, \$line, \$column);
-
-	$type = $1;
-	$name = $2;
-
-	$type =~ s/\s//g;
-	$type =~ s/^struct/struct /;
-    } elsif(/^(enum|interface|struct|union)(?:\s+(\w+))?\s*\{.*?\}\s*((?:\*\s*)*)(\w+)\s*(?:=|$)/s) {
-	$self->_update_c_position($&, \$line, \$column);
-
-	my $kind = $1;
-	my $_name= $2;
-	my $stars = $3;
-	$name = $4;
-
-	if(defined($_name)) {
-	    $type = "struct $_name { }";
-	} else {
-	    $type = "struct { }";
-	}
-
-	$stars =~ s/\s//g;
-	if($stars) {
-	    $type .= " $type";
-	}
-    } else {
-	return 0;
-    }
-
     $$refcurrent = $_;
     $$refline = $line;
     $$refcolumn = $column;
