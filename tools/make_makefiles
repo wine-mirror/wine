@@ -373,6 +373,7 @@ sub update_dlls(@)
         }
         else
         {
+            die "invalid module $module" unless $module =~ /\./;
             (my $mod = $module) =~ s/\.dll$//;
             die "invalid directory $dir for module $module\n" unless $mod eq $dir;
             $directories{$module} = $dir;
