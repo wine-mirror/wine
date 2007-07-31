@@ -213,6 +213,7 @@ extern HBRUSH SYSCOLOR_55AABrush;
 extern BOOL CLIPBOARD_ReleaseOwner(void);
 extern BOOL FOCUS_MouseActivate( HWND hwnd );
 extern BOOL HOOK_IsHooked( INT id );
+extern void erase_now( HWND hwnd, UINT rdw_flags );
 extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam );
 extern LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
                                                UINT msg, WPARAM wparam, LPARAM lparam,

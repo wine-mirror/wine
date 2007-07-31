@@ -1604,13 +1604,19 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
                             &newWindowRect, &newClientRect, orig_flags, valid_rects ))
         return FALSE;
 
-    /* Windows doesn't redraw a window if it is being just moved */
-    if (!(orig_flags & SWP_SHOWWINDOW) &&
-        (winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOGEOMETRYCHANGE)
+    /* erase parent if hiding child */
+    if (!(orig_flags & SWP_DEFERERASE))
     {
-        UINT rdw_flags = RDW_FRAME | RDW_ERASE;
-        if ( !(orig_flags & SWP_DEFERERASE) ) rdw_flags |= RDW_ERASENOW;
-        RedrawWindow( winpos->hwnd, NULL, NULL, rdw_flags );
+        if (orig_flags & SWP_HIDEWINDOW)
+        {
+            HWND parent = GetAncestor( winpos->hwnd, GA_PARENT );
+            erase_now( parent, RDW_NOCHILDREN );
+        }
+        else if (!(orig_flags & SWP_SHOWWINDOW) &&
+                 (winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOGEOMETRYCHANGE)
+        {
+            erase_now( winpos->hwnd, 0 );
+        }
     }
 
     if( winpos->flags & SWP_HIDEWINDOW )

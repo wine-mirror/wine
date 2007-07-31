@@ -280,7 +280,7 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
  *
  * Implementation of RDW_ERASENOW behavior.
  */
-static void erase_now( HWND hwnd, UINT rdw_flags )
+void erase_now( HWND hwnd, UINT rdw_flags )
 {
     HWND child = 0;
     HRGN hrgn;

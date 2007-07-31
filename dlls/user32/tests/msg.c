@@ -3994,7 +3994,7 @@ static void test_messages(void)
     /* check parent messages too */
     log_all_parent_messages++;
     ShowWindow(hchild, SW_HIDE);
-    ok_sequence(WmHideChildSeq2, "ShowWindow(SW_HIDE):child", TRUE);
+    ok_sequence(WmHideChildSeq2, "ShowWindow(SW_HIDE):child", FALSE);
     log_all_parent_messages--;
 
     ShowWindow(hchild, SW_SHOW);
