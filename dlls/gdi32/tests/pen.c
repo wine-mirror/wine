@@ -482,8 +482,83 @@ static void test_ps_alternate(void)
     DeleteDC(hdc);
 }
 
+static void test_ps_userstyle(void)
+{
+    static DWORD style[17] = {0, 2, 0, 4, 5, 0, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 17};
+    static DWORD bad_style[5] = {0, 0, 0, 0, 0};
+    static DWORD bad_style2[5] = {4, 7, 8, 3, -1};
+
+    LOGBRUSH lb;
+    HPEN pen;
+    INT size, i;
+
+    struct
+    {
+        EXTLOGPEN elp;
+        DWORD style_data[15];
+    } ext_pen;
+
+    lb.lbColor = 0x00ff0000;
+    lb.lbStyle = BS_SOLID;
+    lb.lbHatch = 0;
+
+    pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 3, NULL);
+    ok(pen == 0, "ExtCreatePen should fail\n");
+    expect(ERROR_INVALID_PARAMETER, GetLastError());
+    DeleteObject(pen);
+    SetLastError(0xdeadbeef);
+
+    pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 0, style);
+    ok(pen == 0, "ExtCreatePen should fail\n");
+    todo_wine
+        expect(0xdeadbeef, GetLastError());
+    DeleteObject(pen);
+    SetLastError(0xdeadbeef);
+
+    pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 17, style);
+    ok(pen == 0, "ExtCreatePen should fail\n");
+    expect(ERROR_INVALID_PARAMETER, GetLastError());
+    DeleteObject(pen);
+    SetLastError(0xdeadbeef);
+
+    pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, -1, style);
+    ok(pen == 0, "ExtCreatePen should fail\n");
+    todo_wine
+        expect(0xdeadbeef, GetLastError());
+    DeleteObject(pen);
+    SetLastError(0xdeadbeef);
+
+    pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 5, bad_style);
+    todo_wine
+        ok(pen == 0, "ExtCreatePen should fail\n");
+    todo_wine
+        expect(ERROR_INVALID_PARAMETER, GetLastError());
+    DeleteObject(pen);
+    SetLastError(0xdeadbeef);
+
+    pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 5, bad_style2);
+    todo_wine
+        ok(pen == 0, "ExtCreatePen should fail\n");
+    todo_wine
+        expect(ERROR_INVALID_PARAMETER, GetLastError());
+    DeleteObject(pen);
+    SetLastError(0xdeadbeef);
+
+    pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 16, style);
+    ok(pen != 0, "ExtCreatePen should not fail\n");
+
+    size = GetObject(pen, sizeof(ext_pen), &ext_pen);
+    expect(88, size);
+
+    for(i = 0; i < 16; i++)
+        expect(style[i], ext_pen.elp.elpStyleEntry[i]);
+
+    DeleteObject(pen);
+}
+
 START_TEST(pen)
 {
     test_logpen();
     test_ps_alternate();
+    test_ps_userstyle();
 }
