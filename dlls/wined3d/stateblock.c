@@ -807,7 +807,6 @@ should really perform a delta so that only the changes get updated*/
                                       This->renderState[This->contained_render_states[i]]);
     }
 
-    stateblock_savedstates_copy(iface, &((IWineD3DDeviceImpl*)pDevice)->stateBlock->changed, &This->changed);
     ((IWineD3DDeviceImpl *)pDevice)->stateBlock->lowest_disabled_stage = MAX_TEXTURES - 1;
     for(j = 0; j < MAX_TEXTURES - 1; j++) {
         if(((IWineD3DDeviceImpl *)pDevice)->stateBlock->textureState[j][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
