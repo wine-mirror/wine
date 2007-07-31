@@ -253,6 +253,7 @@ ALL_MAKEFILES = \
 	dlls/imm32/Makefile \
 	dlls/infosoft/Makefile \
 	dlls/infosoft/tests/Makefile \
+	dlls/inkobj/Makefile \
 	dlls/inseng/Makefile \
 	dlls/iphlpapi/Makefile \
 	dlls/iphlpapi/tests/Makefile \
@@ -617,6 +618,7 @@ dlls/imagehlp/Makefile: dlls/imagehlp/Makefile.in dlls/Makedll.rules
 dlls/imm32/Makefile: dlls/imm32/Makefile.in dlls/Makedll.rules
 dlls/infosoft/Makefile: dlls/infosoft/Makefile.in dlls/Makedll.rules
 dlls/infosoft/tests/Makefile: dlls/infosoft/tests/Makefile.in dlls/Maketest.rules
+dlls/inkobj/Makefile: dlls/inkobj/Makefile.in dlls/Makedll.rules
 dlls/inseng/Makefile: dlls/inseng/Makefile.in dlls/Makedll.rules
 dlls/iphlpapi/Makefile: dlls/iphlpapi/Makefile.in dlls/Makedll.rules
 dlls/iphlpapi/tests/Makefile: dlls/iphlpapi/tests/Makefile.in dlls/Maketest.rules
