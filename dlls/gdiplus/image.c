@@ -42,6 +42,20 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
      return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetImageBounds(GpImage *image, GpRectF *srcRect,
+    GpUnit *srcUnit)
+{
+    static int calls;
+
+    if(!image || !srcRect || !srcUnit)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipGetImageHeight(GpImage *image, UINT *height)
 {
     static int calls;

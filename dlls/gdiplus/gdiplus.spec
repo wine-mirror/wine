@@ -265,7 +265,7 @@
 @ stub GdipGetHatchStyle
 @ stub GdipGetHemfFromMetafile
 @ stub GdipGetImageAttributesAdjustedPalette
-@ stub GdipGetImageBounds
+@ stdcall GdipGetImageBounds(ptr ptr ptr)
 @ stub GdipGetImageDecoders
 @ stub GdipGetImageDecodersSize
 @ stub GdipGetImageDimension
