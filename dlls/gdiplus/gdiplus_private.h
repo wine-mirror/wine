@@ -124,6 +124,8 @@ struct GpImage{
 
 struct GpMetafile{
     GpImage image;
+    GpRectF bounds;
+    GpUnit unit;
 };
 
 struct GpImageAttributes{

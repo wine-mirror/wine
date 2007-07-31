@@ -45,15 +45,18 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
 GpStatus WINGDIPAPI GdipGetImageBounds(GpImage *image, GpRectF *srcRect,
     GpUnit *srcUnit)
 {
-    static int calls;
-
     if(!image || !srcRect || !srcUnit)
         return InvalidParameter;
+    if(image->type == ImageTypeMetafile){
+        memcpy(srcRect, &((GpMetafile*)image)->bounds, sizeof(GpRectF));
+        *srcUnit = ((GpMetafile*)image)->unit;
+    }
+    else{
+        FIXME("not implemented for bitmaps\n");
+        return NotImplemented;
+    }
 
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetImageHeight(GpImage *image, UINT *height)
