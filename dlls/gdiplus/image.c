@@ -97,15 +97,13 @@ GpStatus WINGDIPAPI GdipGetImageRawFormat(GpImage *image, GUID *format)
 
 GpStatus WINGDIPAPI GdipGetImageType(GpImage *image, ImageType *type)
 {
-    static int calls;
-
     if(!image || !type)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    /* FIXME: get correct image type. */
+    *type = ImageTypeUnknown;
 
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetImageVerticalResolution(GpImage *image, REAL *res)
