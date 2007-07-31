@@ -685,11 +685,11 @@ static void test_get_servicekeyname(void)
        GetLastError() == ERROR_IO_PENDING /* W2K */ ||
        GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
        "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
-    todo_wine
+    if (ret)
     {
-    ok(lstrlen(servicename) == tempsize/2,
-       "Expected the buffer to be twice the length of the string\n") ;
-    ok(!lstrcmpi(servicename, spooler), "Expected %s, got %s\n", spooler, servicename);
+        ok(lstrlen(servicename) == tempsize/2,
+           "Expected the buffer to be twice the length of the string\n") ;
+        ok(!lstrcmpi(servicename, spooler), "Expected %s, got %s\n", spooler, servicename);
     }
 
     CloseServiceHandle(scm_handle);
