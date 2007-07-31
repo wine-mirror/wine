@@ -36,9 +36,7 @@ static LPCWSTR (WINAPI *pSetupGetField)(PINFCONTEXT,DWORD);
 
 static void init_function_pointers(void)
 {
-    hSetupAPI = LoadLibraryA("setupapi.dll");
-    if (!hSetupAPI)
-        return;
+    hSetupAPI = GetModuleHandleA("setupapi.dll");
 
     pSetupGetField = (void *)GetProcAddress(hSetupAPI, "pSetupGetField"); 
 }

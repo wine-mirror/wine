@@ -38,18 +38,15 @@ CHAR WIN_DIR[MAX_PATH];
 
 static void init_function_pointers(void)
 {
-    hSetupAPI = LoadLibraryA("setupapi.dll");
+    hSetupAPI = GetModuleHandleA("setupapi.dll");
 
-    if (hSetupAPI)
-    {
-        pSetupCloseInfFile = (void *)GetProcAddress(hSetupAPI, "SetupCloseInfFile");
-        pSetupGetInfInformationA = (void *)GetProcAddress(hSetupAPI, "SetupGetInfInformationA");
-        pSetupOpenInfFileA = (void *)GetProcAddress(hSetupAPI, "SetupOpenInfFileA");
-        pSetupQueryInfFileInformationA = (void *)GetProcAddress(hSetupAPI, "SetupQueryInfFileInformationA");
-        pSetupGetSourceFileLocationA = (void *)GetProcAddress(hSetupAPI, "SetupGetSourceFileLocationA");
-        pSetupGetSourceInfoA = (void *)GetProcAddress(hSetupAPI, "SetupGetSourceInfoA");
-        pSetupGetTargetPathA = (void *)GetProcAddress(hSetupAPI, "SetupGetTargetPathA");
-    }
+    pSetupCloseInfFile = (void *)GetProcAddress(hSetupAPI, "SetupCloseInfFile");
+    pSetupGetInfInformationA = (void *)GetProcAddress(hSetupAPI, "SetupGetInfInformationA");
+    pSetupOpenInfFileA = (void *)GetProcAddress(hSetupAPI, "SetupOpenInfFileA");
+    pSetupQueryInfFileInformationA = (void *)GetProcAddress(hSetupAPI, "SetupQueryInfFileInformationA");
+    pSetupGetSourceFileLocationA = (void *)GetProcAddress(hSetupAPI, "SetupGetSourceFileLocationA");
+    pSetupGetSourceInfoA = (void *)GetProcAddress(hSetupAPI, "SetupGetSourceInfoA");
+    pSetupGetTargetPathA = (void *)GetProcAddress(hSetupAPI, "SetupGetTargetPathA");
 }
 
 static void get_directories(void)
