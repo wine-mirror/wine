@@ -2040,7 +2040,7 @@ static void _SHCreateSymbolicLinks(void)
             for (i = 0; i < sizeof(aidsMyStuff)/sizeof(aidsMyStuff[0]); i++) {
                 strcpy(szMyStuffTarget, szPersonalTarget);
                 if (_SHAppendToUnixPath(szMyStuffTarget, MAKEINTRESOURCEW(aidsMyStuff[i])))
-                    mkdir(szMyStuffTarget, S_IRWXU|S_IRWXG|S_IRWXO);
+                    mkdir(szMyStuffTarget, 0777);
             }
         } 
         else
@@ -2061,7 +2061,7 @@ static void _SHCreateSymbolicLinks(void)
         for (i = 0; i < sizeof(aidsMyStuff)/sizeof(aidsMyStuff[0]); i++) {
             strcpy(szMyStuffTarget, szPersonalTarget);
             if (_SHAppendToUnixPath(szMyStuffTarget, MAKEINTRESOURCEW(aidsMyStuff[i])))
-                mkdir(szMyStuffTarget, S_IRWXU|S_IRWXG|S_IRWXO);
+                mkdir(szMyStuffTarget, 0777);
         }
     }
 

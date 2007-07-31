@@ -813,7 +813,7 @@ static void apply_shell_folder_changes(void) {
             if (!lstat(szBackupPath, &statPath) && S_ISDIR(statPath.st_mode)) {
                 rename(szBackupPath, szUnixPath);
             } else {
-                mkdir(szUnixPath, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+                mkdir(szUnixPath, 0777);
             }
         }
     }
