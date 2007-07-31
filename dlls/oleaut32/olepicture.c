@@ -1693,6 +1693,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
           if (!memcmp(&(header[0]), "GIF8",     4) ||   /* GIF header */
               !memcmp(&(header[0]), "BM",       2) ||   /* BMP header */
               !memcmp(&(header[0]), "\xff\xd8", 2) ||   /* JPEG header */
+              (header[0] == EMR_HEADER)            ||   /* EMF header */
               (header[1] > statstg.cbSize.QuadPart)||   /* invalid size */
               (header[1]==0)
           ) {/* Found start of bitmap data */
