@@ -1024,20 +1024,43 @@ GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     return retval;
 }
 
+/* FIXME: partially implemented */
 GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image,
-    GDIPCONST GpPointF *points, INT count, REAL srcx, REAL srcy, REAL srcwidth,
-    REAL srcheight, GpUnit srcUnit, GDIPCONST GpImageAttributes* imageAttributes,
-    DrawImageAbort callback, VOID * callbackData)
+     GDIPCONST GpPointF *points, INT count, REAL srcx, REAL srcy, REAL srcwidth,
+     REAL srcheight, GpUnit srcUnit, GDIPCONST GpImageAttributes* imageAttributes,
+     DrawImageAbort callback, VOID * callbackData)
 {
-    static int calls;
+    GpPointF ptf[3];
+    POINT pti[3];
 
-    if(!graphics || !image || !points || !imageAttributes)
-        return InvalidParameter;
+    TRACE("%p %p %p %d %f %f %f %f %d %p %p %p\n", graphics, image, points, count,
+          srcx, srcy, srcwidth, srcheight, srcUnit, imageAttributes, callback,
+          callbackData);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if(!graphics || !image || !points || !imageAttributes || count != 3)
+         return InvalidParameter;
 
-    return NotImplemented;
+    if(image->type != ImageTypeMetafile)
+        return NotImplemented;
+    if((points[0].X != points[2].X) || (points[0].Y != points[1].Y))
+        return NotImplemented;
+    if(srcUnit != UnitInch)
+        return NotImplemented;
+
+    memcpy(ptf, points, 3 * sizeof(GpPointF));
+    transform_and_round_points(graphics, pti, ptf, 3);
+
+    if(IPicture_Render(image->picture, graphics->hdc,
+        pti[0].x, pti[0].y, pti[1].x - pti[0].x, pti[2].y - pti[0].y,
+        srcx * INCH_HIMETRIC, srcy * INCH_HIMETRIC,
+        srcwidth * INCH_HIMETRIC, srcheight * INCH_HIMETRIC,
+        NULL) != S_OK){
+        if(callback)
+            callback(callbackData);
+        return GenericError;
+    }
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
