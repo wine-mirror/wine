@@ -568,12 +568,12 @@ BOOL WINAPI CryptContextAddRef (HCRYPTPROV hProv, DWORD *pdwReserved, DWORD dwFl
  *  Success: TRUE
  *  Failure: FALSE
  */
-BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags)
+BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, ULONG_PTR dwFlags)
 {
 	PCRYPTPROV pProv = (PCRYPTPROV)hProv;
 	BOOL ret = TRUE;
 
-	TRACE("(0x%lx, %08x)\n", hProv, dwFlags);
+	TRACE("(0x%lx, %08lx)\n", hProv, dwFlags);
 
 	if (!pProv)
 	{

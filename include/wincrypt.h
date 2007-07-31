@@ -3383,7 +3383,7 @@ BOOL WINAPI CryptHashData (HCRYPTHASH hHash, CONST BYTE *pbData, DWORD dwDataLen
 BOOL WINAPI CryptHashSessionKey (HCRYPTHASH hHash, HCRYPTKEY hKey, DWORD dwFlags);
 BOOL WINAPI CryptImportKey (HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
 		HCRYPTKEY hPubKey, DWORD dwFlags, HCRYPTKEY *phKey);
-BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags);
+BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, ULONG_PTR dwFlags);
 BOOL WINAPI CryptSetHashParam (HCRYPTHASH hHash, DWORD dwParam, CONST BYTE *pbData, DWORD dwFlags);
 BOOL WINAPI CryptSetKeyParam (HCRYPTKEY hKey, DWORD dwParam, CONST BYTE *pbData, DWORD dwFlags);
 BOOL WINAPI CryptSetProviderA (LPCSTR pszProvName, DWORD dwProvType);
