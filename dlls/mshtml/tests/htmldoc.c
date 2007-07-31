@@ -2273,6 +2273,8 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &OleControlSite;
     else if(IsEqualGUID(&IID_IDocHostShowUI, riid))
         return E_NOINTERFACE; /* TODO */
+    else if(IsEqualGUID(&IID_IProxyManager, riid))
+        return E_NOINTERFACE; /* ? */
     else if(IsEqualGUID(&IID_unk1, riid))
         return E_NOINTERFACE; /* HTMLWindow2 ? */
     else if(IsEqualGUID(&IID_unk2, riid))
