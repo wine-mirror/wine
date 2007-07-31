@@ -244,8 +244,8 @@
 @ stdcall GetAltTabInfoA(long long ptr ptr long)
 @ stdcall GetAltTabInfoW(long long ptr ptr long)
 @ stdcall GetAncestor(long long)
-# @ stub GetAppCompatFlags2
 @ stdcall GetAppCompatFlags(long)
+@ stdcall GetAppCompatFlags2(long)
 @ stdcall GetAsyncKeyState(long)
 @ stdcall GetCapture()
 @ stdcall GetCaretBlinkTime()

@@ -575,7 +575,16 @@ BOOL  WINAPI UnregisterDeviceNotification(HDEVNOTIFY hnd)
  */
 DWORD WINAPI GetAppCompatFlags( HTASK hTask )
 {
-    FIXME("stub\n");
+    FIXME("(%p) stub\n", hTask);
+    return 0;
+}
+
+/***********************************************************************
+ *           GetAppCompatFlags2   (USER32.@)
+ */
+DWORD WINAPI GetAppCompatFlags2( HTASK hTask )
+{
+    FIXME("(%p) stub\n", hTask);
     return 0;
 }
 
