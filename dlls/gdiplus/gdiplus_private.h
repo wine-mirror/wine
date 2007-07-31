@@ -20,13 +20,22 @@
 #define __WINE_GP_PRIVATE_H_
 
 #include <math.h>
+#include <stdarg.h>
+
 #include "windef.h"
 #include "wingdi.h"
+#include "winbase.h"
+#include "winuser.h"
+
+#include "objbase.h"
+#include "ocidl.h"
+
 #include "gdiplus.h"
 
 #define GP_DEFAULT_PENSTYLE (PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_FLAT | PS_JOIN_MITER)
 #define MAX_ARC_PTS (13)
 #define MAX_DASHLEN (16) /* this is a limitation of gdi */
+#define INCH_HIMETRIC (2540)
 
 COLORREF ARGB2COLORREF(ARGB color);
 extern INT arc2polybezier(GpPointF * points, REAL x1, REAL y1, REAL x2, REAL y2,
@@ -106,6 +115,15 @@ struct GpCustomLineCap{
     BOOL fill;      /* TRUE for fill, FALSE for stroke */
     GpLineCap cap;  /* as far as I can tell, this value is ignored */
     REAL inset;     /* how much to adjust the end of the line */
+};
+
+struct GpImage{
+    IPicture* picture;
+    ImageType type;
+};
+
+struct GpMetafile{
+    GpImage image;
 };
 
 #endif

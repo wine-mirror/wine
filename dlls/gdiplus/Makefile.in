@@ -4,7 +4,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gdiplus.dll
 IMPORTLIB = libgdiplus.$(IMPLIBEXT)
-IMPORTS   = user32 gdi32 advapi32 kernel32 ntdll
+IMPORTS   = oleaut32 ole32 user32 gdi32 advapi32 kernel32 ntdll
+EXTRALIBS = -luuid
 
 C_SRCS = \
 	brush.c \

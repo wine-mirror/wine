@@ -23,6 +23,13 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wingdi.h"
+
+#define COBJMACROS
+#include "objbase.h"
+#include "ocidl.h"
+#include "olectl.h"
+#include "ole2.h"
+
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 #include "wine/debug.h"
@@ -839,14 +846,60 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     GDIPCONST WmfPlaceableFileHeader * placeable, GpMetafile **metafile)
 {
     static int calls;
+    IStream *stream;
+    UINT read;
+    BYTE* copy;
+    METAFILEPICT mfp;
+    HENHMETAFILE hemf;
 
     if(!hwmf || !metafile || !placeable)
         return InvalidParameter;
 
     if(!(calls++))
-        FIXME("not implemented\n");
+        FIXME("partially implemented\n");
 
-    return NotImplemented;
+    if(placeable->Inch != INCH_HIMETRIC)
+        return NotImplemented;
+
+    mfp.mm   = MM_HIMETRIC;
+    mfp.xExt = placeable->BoundingBox.Right - placeable->BoundingBox.Left;
+    mfp.yExt = placeable->BoundingBox.Bottom - placeable->BoundingBox.Top;
+    mfp.hMF  = NULL;
+
+    read = GetMetaFileBitsEx(hwmf, 0, NULL);
+    if(!read)
+        return GenericError;
+    copy = GdipAlloc(read);
+    GetMetaFileBitsEx(hwmf, read, copy);
+
+    hemf = SetWinMetaFileBits(read, copy, NULL, &mfp);
+    GdipFree(copy);
+
+    read = GetEnhMetaFileBits(hemf, 0, NULL);
+    copy = GdipAlloc(read);
+    GetEnhMetaFileBits(hemf, read, copy);
+    DeleteEnhMetaFile(hemf);
+
+    if(CreateStreamOnHGlobal(copy, TRUE, &stream) != S_OK){
+        ERR("could not make stream\n");
+        return GenericError;
+    }
+
+    *metafile = GdipAlloc(sizeof(GpMetafile));
+    if(!*metafile)  return OutOfMemory;
+
+    if(OleLoadPicture(stream, 0, FALSE, &IID_IPicture,
+        (LPVOID*) &((*metafile)->image.picture)) != S_OK){
+        GdipFree(*metafile);
+        return GenericError;
+    }
+
+    (*metafile)->image.type = ImageTypeMetafile;
+
+    if(delete)
+        DeleteMetaFile(hwmf);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
