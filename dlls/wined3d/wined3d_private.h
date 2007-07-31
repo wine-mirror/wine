@@ -1356,6 +1356,10 @@ struct IWineD3DStateBlockImpl
 
     /* Scissor test rectangle */
     RECT                      scissorRect;
+
+    /* Contained state management */
+    DWORD                     contained_render_states[WINEHIGHEST_RENDER_STATE + 1];
+    unsigned int              num_contained_render_states;
 };
 
 extern void stateblock_savedstates_set(

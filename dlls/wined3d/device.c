@@ -466,6 +466,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
                 light->enabledChanged = TRUE;
             }
         }
+        for(j = 1; j <= WINEHIGHEST_RENDER_STATE; j++) {
+            object->contained_render_states[j - 1] = j;
+        }
+        object->num_contained_render_states = WINEHIGHEST_RENDER_STATE;
+
     } else if (Type == WINED3DSBT_PIXELSTATE) {
 
         TRACE("PIXELSTATE => Pretend all pixel shates have changed\n");
@@ -480,10 +485,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
             object->changed.pixelShaderConstantsB[i] = TRUE;
         for (i = 0; i < MAX_CONST_I; ++i)
             object->changed.pixelShaderConstantsI[i] = TRUE;
-        
+
         for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
             object->changed.renderState[SavedPixelStates_R[i]] = TRUE;
+            object->contained_render_states[i] = SavedPixelStates_R[i];
         }
+        object->num_contained_render_states = NUM_SAVEDPIXELSTATES_R;
         for (j = 0; j < MAX_TEXTURES; j++) {
             for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
                 object->changed.textureState[j][SavedPixelStates_T[i]] = TRUE;
@@ -510,10 +517,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
             object->changed.vertexShaderConstantsB[i] = TRUE;
         for (i = 0; i < MAX_CONST_I; ++i)
             object->changed.vertexShaderConstantsI[i] = TRUE;
- 
+
         for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
             object->changed.renderState[SavedVertexStates_R[i]] = TRUE;
+            object->contained_render_states[i] = SavedVertexStates_R[i];
         }
+        object->num_contained_render_states = NUM_SAVEDVERTEXSTATES_R;
         for (j = 0; j < MAX_TEXTURES; j++) {
             for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
                 object->changed.textureState[j][SavedVertexStates_T[i]] = TRUE;
@@ -4301,6 +4310,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) 
 
 static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IWineD3DStateBlock** ppStateBlock) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    unsigned int i;
+    IWineD3DStateBlockImpl *object = This->updateStateBlock;
 
     if (!This->isRecordingState) {
         FIXME("(%p) not recording! returning error\n", This);
@@ -4308,7 +4319,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
         return WINED3DERR_INVALIDCALL;
     }
 
-    *ppStateBlock = (IWineD3DStateBlock*)This->updateStateBlock;
+    for(i = 1; i <= WINEHIGHEST_RENDER_STATE; i++) {
+        if(object->changed.renderState[i]) {
+            object->contained_render_states[object->num_contained_render_states] = i;
+            object->num_contained_render_states++;
+        }
+    }
+
+    *ppStateBlock = (IWineD3DStateBlock*) object;
     This->isRecordingState = FALSE;
     This->updateStateBlock = This->stateBlock;
     IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)This->updateStateBlock);

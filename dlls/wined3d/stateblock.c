@@ -566,12 +566,10 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         }
 
         /* Render */
-        for (i = 1; i <= WINEHIGHEST_RENDER_STATE; i++) {
-
-            if (This->changed.renderState[i] && (This->renderState[i] != targetStateBlock->renderState[i])) {
-                TRACE("Updating renderState %d to %d\n", i, targetStateBlock->renderState[i]);
-                This->renderState[i] = targetStateBlock->renderState[i];
-            }
+        for (i = 0; i <= This->num_contained_render_states; i++) {
+            TRACE("Updating renderState %d to %d\n",
+                  This->contained_render_states[i], targetStateBlock->renderState[This->contained_render_states[i]]);
+            This->renderState[This->contained_render_states[i]] = targetStateBlock->renderState[This->contained_render_states[i]];
         }
 
         /* Texture states */
@@ -737,12 +735,6 @@ should really perform a delta so that only the changes get updated*/
             }
         }
 
-        /* Render */
-        for (i = 1; i <= WINEHIGHEST_RENDER_STATE; i++) {
-            if (This->changed.renderState[i])
-                IWineD3DDevice_SetRenderState(pDevice, i, This->renderState[i]);
-        }
-
         /* Texture states */
         for (j = 0; j < MAX_TEXTURES; j++) { /* Set The texture first, just in case it resets the states? */
             /* TODO: move over to memcpy */
@@ -778,12 +770,6 @@ should really perform a delta so that only the changes get updated*/
 
     } else if (This->blockType == WINED3DSBT_PIXELSTATE) {
 
-        for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
-            if (This->changed.renderState[SavedPixelStates_R[i]])
-                IWineD3DDevice_SetRenderState(pDevice, SavedPixelStates_R[i], This->renderState[SavedPixelStates_R[i]]);
-
-        }
-
         for (j = 0; j < MAX_TEXTURES; j++) {
             for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
                 ((IWineD3DDeviceImpl *)pDevice)->stateBlock->textureState[j][SavedPixelStates_T[i]] = This->textureState[j][SavedPixelStates_T[i]];
@@ -798,11 +784,6 @@ should really perform a delta so that only the changes get updated*/
         }
 
     } else if (This->blockType == WINED3DSBT_VERTEXSTATE) {
-
-        for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
-            if (This->changed.renderState[SavedVertexStates_R[i]])
-                IWineD3DDevice_SetRenderState(pDevice, SavedVertexStates_R[i], This->renderState[SavedVertexStates_R[i]]);
-        }
 
         for (j = 0; j < MAX_TEXTURES; j++) {
             for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
@@ -821,6 +802,13 @@ should really perform a delta so that only the changes get updated*/
     } else {
         FIXME("Unrecognized state block type %d\n", This->blockType);
     }
+
+    /* Render */
+    for (i = 0; i <= This->num_contained_render_states; i++) {
+        IWineD3DDevice_SetRenderState(pDevice, This->contained_render_states[i],
+                                      This->renderState[This->contained_render_states[i]]);
+    }
+
     stateblock_savedstates_copy(iface, &((IWineD3DDeviceImpl*)pDevice)->stateBlock->changed, &This->changed);
     ((IWineD3DDeviceImpl *)pDevice)->stateBlock->lowest_disabled_stage = MAX_TEXTURES - 1;
     for(j = 0; j < MAX_TEXTURES - 1; j++) {
