@@ -123,7 +123,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
 
     if ((style & PS_STYLE_MASK) == PS_USERSTYLE)
     {
-        if (!style_count || !style_bits)
+        if (!style_count || (style_count > 16) || !style_bits)
         {
             SetLastError(ERROR_INVALID_PARAMETER);
             return 0;
