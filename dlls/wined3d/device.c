@@ -469,7 +469,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         for(j = 1; j <= WINEHIGHEST_RENDER_STATE; j++) {
             object->contained_render_states[j - 1] = j;
         }
-        object->num_contained_render_states = WINEHIGHEST_RENDER_STATE;
+        /* TODO: Filter unused transforms between TEXTURE8 and WORLD0? */
+        for(j = 1; j <= HIGHEST_TRANSFORMSTATE; j++) {
+            object->contained_transform_states[j - 1] = j;
+        }
+        object->num_contained_transform_states = HIGHEST_TRANSFORMSTATE;
 
     } else if (Type == WINED3DSBT_PIXELSTATE) {
 
@@ -4322,6 +4326,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
         if(object->changed.renderState[i]) {
             object->contained_render_states[object->num_contained_render_states] = i;
             object->num_contained_render_states++;
+        }
+    }
+    for(i = 1; i <= HIGHEST_TRANSFORMSTATE; i++) {
+        if(object->changed.transform[i]) {
+            object->contained_transform_states[object->num_contained_transform_states] = i;
+            object->num_contained_transform_states++;
         }
     }
 

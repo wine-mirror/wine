@@ -485,13 +485,11 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         }
 
         /* Others + Render & Texture */
-        for (i = 1; i <= HIGHEST_TRANSFORMSTATE; i++) {
-            if (This->changed.transform[i] && memcmp(&targetStateBlock->transforms[i],
-                                    &This->transforms[i],
-                                    sizeof(WINED3DMATRIX)) != 0) {
-                TRACE("Updating transform %d\n", i);
-                memcpy(&This->transforms[i], &targetStateBlock->transforms[i], sizeof(WINED3DMATRIX));
-            }
+        for (i = 0; i < This->num_contained_transform_states; i++) {
+            TRACE("Updating transform %d\n", i);
+            memcpy(&This->transforms[This->contained_transform_states[i]],
+                   &targetStateBlock->transforms[This->contained_transform_states[i]],
+                   sizeof(WINED3DMATRIX));
         }
 
         if (This->changed.indices && ((This->pIndexData != targetStateBlock->pIndexData)
@@ -695,9 +693,9 @@ should really perform a delta so that only the changes get updated*/
 
     /* Others + Render & Texture */
     if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */ This->blockType == WINED3DSBT_ALL || This->blockType == WINED3DSBT_INIT) {
-        for (i = 1; i <= HIGHEST_TRANSFORMSTATE; i++) {
-            if (This->changed.transform[i])
-                IWineD3DDevice_SetTransform(pDevice, i, &This->transforms[i]);
+        for (i = 0; i < This->num_contained_transform_states; i++) {
+            IWineD3DDevice_SetTransform(pDevice, This->contained_transform_states[i],
+                                        &This->transforms[This->contained_transform_states[i]]);
         }
 
         if (This->changed.indices) {
