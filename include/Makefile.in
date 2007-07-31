@@ -30,6 +30,7 @@ IDL_H_SRCS = \
 	mmstream.idl \
 	mshtmhst.idl \
 	mshtml.idl \
+	msinkaut.idl \
 	msxml.idl \
 	msxml2.idl \
 	netfw.idl \

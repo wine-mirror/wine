@@ -727,6 +727,7 @@ include/mlang.h
 include/mmstream.h
 include/mshtmhst.h
 include/mshtml.h
+include/msinkaut.h
 include/msxml.h
 include/msxml2.h
 include/netfw.h
