@@ -1353,37 +1353,16 @@ static BOOL CRYPT_VerifyCertSignatureFromPublicKeyInfo(HCRYPTPROV hCryptProv,
 
     info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
      signedCert->SignatureAlgorithm.pszObjId, 0);
-    if (!info || (info->dwGroupId != CRYPT_PUBKEY_ALG_OID_GROUP_ID &&
-     info->dwGroupId != CRYPT_SIGN_ALG_OID_GROUP_ID))
+    if (!info || info->dwGroupId != CRYPT_SIGN_ALG_OID_GROUP_ID)
     {
         SetLastError(NTE_BAD_ALGID);
         return FALSE;
     }
-    if (info->dwGroupId == CRYPT_PUBKEY_ALG_OID_GROUP_ID)
-    {
-        switch (info->u.Algid)
-        {
-            case CALG_RSA_KEYX:
-                pubKeyID = CALG_RSA_SIGN;
-                hashID = CALG_SHA1;
-                break;
-            case CALG_RSA_SIGN:
-                pubKeyID = CALG_RSA_SIGN;
-                hashID = CALG_SHA1;
-                break;
-            default:
-                FIXME("unimplemented for %s\n", pubKeyInfo->Algorithm.pszObjId);
-                return FALSE;
-        }
-    }
+    hashID = info->u.Algid;
+    if (info->ExtraInfo.cbData >= sizeof(ALG_ID))
+        pubKeyID = *(ALG_ID *)info->ExtraInfo.pbData;
     else
-    {
-        hashID = info->u.Algid;
-        if (info->ExtraInfo.cbData >= sizeof(ALG_ID))
-            pubKeyID = *(ALG_ID *)info->ExtraInfo.pbData;
-        else
-            pubKeyID = hashID;
-    }
+        pubKeyID = hashID;
     /* Load the default provider if necessary */
     if (!hCryptProv)
         hCryptProv = CRYPT_GetDefaultProvider();
