@@ -473,7 +473,7 @@
 @ stub GdipRecordMetafileStream
 @ stub GdipRecordMetafileStreamI
 @ stub GdipReleaseDC
-@ stub GdipRemovePropertyItem
+@ stdcall GdipRemovePropertyItem(ptr long)
 @ stub GdipResetClip
 @ stub GdipResetImageAttributes
 @ stub GdipResetLineTransform

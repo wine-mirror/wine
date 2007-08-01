@@ -287,6 +287,19 @@ GpStatus WINGDIPAPI GdipLoadImageFromStreamICM(IStream* stream, GpImage **image)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipRemovePropertyItem(GpImage *image, PROPID propId)
+{
+    static int calls;
+
+    if(!image)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {
