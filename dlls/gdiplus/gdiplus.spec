@@ -105,7 +105,7 @@
 @ stub GdipCreateLineBrushFromRectWithAngleI
 @ stub GdipCreateLineBrushI
 @ stdcall GdipCreateMatrix2(long long long long long long ptr)
-@ stub GdipCreateMatrix3
+@ stdcall GdipCreateMatrix3(ptr ptr ptr)
 @ stub GdipCreateMatrix3I
 @ stdcall GdipCreateMatrix(ptr)
 @ stdcall GdipCreateMetafileFromEmf(ptr long ptr)
