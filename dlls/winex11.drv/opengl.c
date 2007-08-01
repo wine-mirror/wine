@@ -687,12 +687,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
 
     case WGL_SUPPORT_GDI_ARB:
       pop = iWGLAttr[++cur];
-      /* We only support a limited number of formats which are all renderable by X (similar to GDI).
-       * Ignore this attribute to prevent us from not finding a match due to the limited
-       * amount of formats supported right now. This option could be matched to GLX_X_RENDERABLE
-       * but the issue is that when a program asks for no GDI support, there's no format we can return
-       * as all our supported formats are renderable by X.
-       */
+      PUSH2(oGLXAttr, GLX_X_RENDERABLE, pop);
       TRACE("pAttr[%d] = WGL_SUPPORT_GDI_ARB: %d\n", cur, pop);
       break;
 
@@ -2655,16 +2650,23 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
             case WGL_AUX_BUFFERS_ARB:
                 curGLXAttr = GLX_AUX_BUFFERS;
                 break;
+
             case WGL_SUPPORT_GDI_ARB:
+                curGLXAttr = GLX_X_RENDERABLE;
+                break;
+
             case WGL_DRAW_TO_WINDOW_ARB:
             case WGL_DRAW_TO_BITMAP_ARB:
-                /* We only supported a limited number of formats right now which are all renderable by X 'GLX_X_RENDERABLE' */
-                piValues[i] = GL_TRUE;
-                continue;
             case WGL_DRAW_TO_PBUFFER_ARB:
+                if (!fmt) goto pix_error;
                 hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &tmp);
                 if (hTest) goto get_error;
-                    piValues[i] = (tmp & GLX_PBUFFER_BIT) ? GL_TRUE : GL_FALSE;
+                if((curWGLAttr == WGL_DRAW_TO_WINDOW_ARB && (tmp&GLX_WINDOW_BIT)) ||
+                   (curWGLAttr == WGL_DRAW_TO_BITMAP_ARB && (tmp&GLX_PIXMAP_BIT)) ||
+                   (curWGLAttr == WGL_DRAW_TO_PBUFFER_ARB && (tmp&GLX_PBUFFER_BIT)))
+                    piValues[i] = GL_TRUE;
+                else
+                    piValues[i] = GL_FALSE;
                 continue;
 
             case WGL_PBUFFER_LARGEST_ARB:
