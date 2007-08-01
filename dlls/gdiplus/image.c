@@ -21,6 +21,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+
+#define COBJMACROS
 #include "objbase.h"
 
 #include "gdiplus.h"
@@ -31,15 +33,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
 {
-    static int calls;
+    if(!image)
+        return InvalidParameter;
 
-     if(!image)
-         return InvalidParameter;
+    IPicture_Release(image->picture);
+    GdipFree(image);
 
-     if(!(calls++))
-         FIXME("not implemented\n");
-
-     return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetImageBounds(GpImage *image, GpRectF *srcRect,
