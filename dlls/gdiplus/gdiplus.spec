@@ -317,7 +317,7 @@
 @ stub GdipGetMetafileDownLevelRasterizationLimit
 @ stub GdipGetMetafileHeaderFromEmf
 @ stub GdipGetMetafileHeaderFromFile
-@ stub GdipGetMetafileHeaderFromMetafile
+@ stdcall GdipGetMetafileHeaderFromMetafile(ptr ptr)
 @ stub GdipGetMetafileHeaderFromStream
 @ stub GdipGetMetafileHeaderFromWmf
 @ stub GdipGetNearestColor

@@ -20,6 +20,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 
 #include "gdiplus.h"
 #include "gdiplus_private.h"

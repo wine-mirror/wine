@@ -17,6 +17,7 @@
  */
 
 #include "windef.h"
+#include "wingdi.h"
 
 #include "gdiplus.h"
 #include "gdiplus_private.h"

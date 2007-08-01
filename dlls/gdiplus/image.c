@@ -134,6 +134,20 @@ GpStatus WINGDIPAPI GdipGetImageWidth(GpImage *image, UINT *width)
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,
+    MetafileHeader * header)
+{
+    static int calls;
+
+    if(!metafile || !header)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
     GDIPCONST GUID* dimensionID, UINT* count)
 {

@@ -23,6 +23,8 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/debug.h"
+#include "wingdi.h"
+
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 
