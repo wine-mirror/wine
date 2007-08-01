@@ -37,15 +37,12 @@ GpStatus WINGDIPAPI GdipCreateImageAttributes(GpImageAttributes **imageattr)
 
 GpStatus WINGDIPAPI GdipDisposeImageAttributes(GpImageAttributes *imageattr)
 {
-    static int calls;
-
     if(!imageattr)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    GdipFree(imageattr);
 
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetImageAttributesWrapMode(GpImageAttributes *imageAttr,
