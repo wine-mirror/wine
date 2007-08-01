@@ -151,6 +151,43 @@ static void test_pbuffers(HDC hdc)
     else skip("Pbuffer test for offscreen pixelformat skipped as no offscreen-only format with pbuffer capabilities has been found\n");
 }
 
+static void test_setpixelformat(void)
+{
+    int res = 0;
+    int pf;
+    PIXELFORMATDESCRIPTOR pfd = {
+        sizeof(PIXELFORMATDESCRIPTOR),
+        1,                     /* version */
+        PFD_DRAW_TO_WINDOW |
+        PFD_SUPPORT_OPENGL |
+        PFD_DOUBLEBUFFER,
+        PFD_TYPE_RGBA,
+        24,                    /* 24-bit color depth */
+        0, 0, 0, 0, 0, 0,      /* color bits */
+        0,                     /* alpha buffer */
+        0,                     /* shift bit */
+        0,                     /* accumulation buffer */
+        0, 0, 0, 0,            /* accum bits */
+        32,                    /* z-buffer */
+        0,                     /* stencil buffer */
+        0,                     /* auxiliary buffer */
+        PFD_MAIN_PLANE,        /* main layer */
+        0,                     /* reserved */
+        0, 0, 0                /* layer masks */
+    };
+
+    HDC hdc = GetDC(0);
+    ok(hdc != 0, "GetDC(0) failed!\n");
+
+    /* This should pass even on the main device context */
+    pf = ChoosePixelFormat(hdc, &pfd);
+    ok(pf != 0, "ChoosePixelFormat failed on main device context");
+
+    /* SetPixelFormat on the main device context 'X root window' should fail */
+    res = SetPixelFormat(hdc, pf, &pfd);
+    ok(res == 0, "SetPixelFormat on main device context should fail\n");
+}
+
 START_TEST(opengl)
 {
     HWND hwnd;
@@ -197,6 +234,8 @@ START_TEST(opengl)
         res = wglMakeCurrent(hdc, hglrc);
         ok(res, "wglMakeCurrent failed!\n");
         init_functions();
+
+        test_setpixelformat();
 
         wgl_extensions = pwglGetExtensionsStringARB(hdc);
         if(wgl_extensions == NULL) skip("Skipping opengl32 tests because this OpenGL implementation doesn't support WGL extensions!\n");

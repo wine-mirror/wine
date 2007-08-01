@@ -1298,6 +1298,13 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
     return 0;
   }
 
+  /* SetPixelFormat is not allowed on the X root_window e.g. GetDC(0) */
+  if(get_glxdrawable(physDev) == root_window)
+  {
+    ERR("Invalid operation on root_window\n");
+    return 0;
+  }
+
   /* Check if iPixelFormat is in our list of supported formats to see if it is supported. */
   fmt = ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, FALSE /* Offscreen */, &value);
   if(!fmt) {
