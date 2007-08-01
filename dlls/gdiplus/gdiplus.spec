@@ -373,7 +373,7 @@
 @ stub GdipGetPropertyCount
 @ stub GdipGetPropertyIdList
 @ stub GdipGetPropertyItem
-@ stub GdipGetPropertyItemSize
+@ stdcall GdipGetPropertyItemSize(ptr long ptr)
 @ stub GdipGetPropertySize
 @ stub GdipGetRegionBounds
 @ stub GdipGetRegionBoundsI

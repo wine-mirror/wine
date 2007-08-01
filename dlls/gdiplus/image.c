@@ -222,6 +222,22 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetPropertyItemSize(GpImage *image, PROPID pid,
+    UINT* size)
+{
+    static int calls;
+
+    TRACE("%p %x %p\n", image, pid, size);
+
+    if(!size || !image)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
     GDIPCONST GUID* dimensionID, UINT* count)
 {
