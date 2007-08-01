@@ -186,6 +186,22 @@ GpStatus WINGDIPAPI GdipScaleMatrix(GpMatrix *matrix, REAL scaleX, REAL scaleY,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetMatrixElements(GpMatrix *matrix, REAL m11, REAL m12,
+    REAL m21, REAL m22, REAL dx, REAL dy)
+{
+    if(!matrix)
+        return InvalidParameter;
+
+    matrix->matrix[0] = m11;
+    matrix->matrix[1] = m12;
+    matrix->matrix[2] = m21;
+    matrix->matrix[3] = m22;
+    matrix->matrix[4] = dx;
+    matrix->matrix[5] = dy;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipTransformMatrixPoints(GpMatrix *matrix, GpPointF *pts,
                                               INT count)
 {

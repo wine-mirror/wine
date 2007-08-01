@@ -543,7 +543,7 @@
 @ stub GdipSetLineSigmaBlend
 @ stub GdipSetLineTransform
 @ stub GdipSetLineWrapMode
-@ stub GdipSetMatrixElements
+@ stdcall GdipSetMatrixElements(ptr long long long long long long)
 @ stub GdipSetMetafileDownLevelRasterizationLimit
 @ stdcall GdipSetPageScale(ptr long)
 @ stdcall GdipSetPageUnit(ptr long)
