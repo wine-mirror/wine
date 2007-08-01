@@ -495,7 +495,7 @@
 @ stub GdipSaveAddImage
 @ stdcall GdipSaveGraphics(ptr ptr)
 @ stub GdipSaveImageToFile
-@ stub GdipSaveImageToStream
+@ stdcall GdipSaveImageToStream(ptr ptr ptr)
 @ stub GdipScaleLineTransform
 @ stdcall GdipScaleMatrix(ptr long long long)
 @ stub GdipScalePathGradientTransform

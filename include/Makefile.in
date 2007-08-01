@@ -167,6 +167,7 @@ SRCDIR_INCLUDES = \
 	gdiplusenums.h \
 	gdiplusflat.h \
 	gdiplusgpstubs.h \
+	gdiplusimaging.h \
 	gdiplusinit.h \
 	gdiplusmem.h \
 	gdiplusmetaheader.h \

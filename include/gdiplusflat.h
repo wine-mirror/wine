@@ -152,6 +152,8 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile*,MetafileHeader
 GpStatus WINGDIPAPI GdipGetPropertyItemSize(GpImage*,PROPID,UINT*);
 GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage*,GDIPCONST GUID*,UINT*);
 GpStatus WINGDIPAPI GdipLoadImageFromStreamICM(IStream*,GpImage**);
+GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage*,IStream*,
+    GDIPCONST CLSID*,GDIPCONST EncoderParameters*);
 
 GpStatus WINGDIPAPI GdipCreateImageAttributes(GpImageAttributes**);
 GpStatus WINGDIPAPI GdipDisposeImageAttributes(GpImageAttributes*);

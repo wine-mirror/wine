@@ -273,3 +273,16 @@ GpStatus WINGDIPAPI GdipLoadImageFromStreamICM(IStream* stream, GpImage **image)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
+    GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
+{
+    if(!image || !stream)
+        return InvalidParameter;
+
+    /* FIXME: CLSID, EncoderParameters not used */
+
+    IPicture_SaveAsFile(image->picture, stream, FALSE, NULL);
+
+    return Ok;
+}

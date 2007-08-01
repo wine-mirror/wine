@@ -16,46 +16,41 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _GDIPLUS_H
-#define _GDIPLUS_H
+#ifndef _GDIPLUSIMAGING_H
+#define _GDIPLUSIMAGING_H
 
 #ifdef __cplusplus
-
-namespace Gdiplus
+class EncoderParameter
 {
-    namespace DllExports
-    {
-#include "gdiplusmem.h"
-    };
-
-#include "gdiplustypes.h"
-#include "gdiplusenums.h"
-#include "gdiplusinit.h"
-#include "gdipluspixelformats.h"
-#include "gdiplusmetaheader.h"
-#include "gdiplusimaging.h"
-#include "gdiplusgpstubs.h"
-
-    namespace DllExports
-    {
-#include "gdiplusflat.h"
-    };
+public:
+    GUID    Guid;
+    ULONG   NumberOfValues;
+    ULONG   Type;
+    VOID*   Value;
 };
 
-#else /* end c++ includes */
+class EncoderParameters
+{
+public:
+    UINT Count;
+    EncoderParameter Parameter[1];
+};
+#else /* end of c++ typedefs */
 
-#include "gdiplusmem.h"
+typedef struct EncoderParameter
+{
+    GUID Guid;
+    ULONG NumberOfValues;
+    ULONG Type;
+    VOID* Value;
+} EncoderParameter;
 
-#include "gdiplustypes.h"
-#include "gdiplusenums.h"
-#include "gdiplusinit.h"
-#include "gdipluspixelformats.h"
-#include "gdiplusmetaheader.h"
-#include "gdiplusimaging.h"
-#include "gdiplusgpstubs.h"
+typedef struct EncoderParameters
+{
+    UINT Count;
+    EncoderParameter Parameter[1];
+} EncoderParameters;
 
-#include "gdiplusflat.h"
+#endif /* end of c typedefs */
 
-#endif /* end c includes */
-
-#endif /* _GDIPLUS_H_ */
+#endif /* _GDIPLUSIMAGING_H */
