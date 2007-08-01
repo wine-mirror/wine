@@ -846,11 +846,12 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     GDIPCONST WmfPlaceableFileHeader * placeable, GpMetafile **metafile)
 {
     static int calls;
-    IStream *stream;
+    IStream *stream = NULL;
     UINT read;
     BYTE* copy;
     METAFILEPICT mfp;
     HENHMETAFILE hemf;
+    GpStatus retval = GenericError;
 
     if(!hwmf || !metafile || !placeable)
         return InvalidParameter;
@@ -882,16 +883,19 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
 
     if(CreateStreamOnHGlobal(copy, TRUE, &stream) != S_OK){
         ERR("could not make stream\n");
-        return GenericError;
+        goto end;
     }
 
     *metafile = GdipAlloc(sizeof(GpMetafile));
-    if(!*metafile)  return OutOfMemory;
+    if(!*metafile){
+        retval = OutOfMemory;
+        goto end;
+    }
 
     if(OleLoadPicture(stream, 0, FALSE, &IID_IPicture,
         (LPVOID*) &((*metafile)->image.picture)) != S_OK){
         GdipFree(*metafile);
-        return GenericError;
+        goto end;
     }
 
     (*metafile)->image.type = ImageTypeMetafile;
@@ -903,11 +907,15 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
                    - placeable->BoundingBox.Top)) / ((REAL) placeable->Inch);
     (*metafile)->unit = UnitInch;
 
-
     if(delete)
         DeleteMetaFile(hwmf);
 
-    return Ok;
+    retval = Ok;
+
+end:
+    IStream_Release(stream);
+    GdipFree(copy);
+    return retval;
 }
 
 GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
