@@ -20,5 +20,6 @@
 #define _GDIPLUSPIXELFORMATS_H
 
 typedef DWORD ARGB;
+typedef INT PixelFormat;
 
 #endif

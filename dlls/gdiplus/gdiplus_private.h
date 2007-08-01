@@ -128,6 +128,10 @@ struct GpMetafile{
     GpUnit unit;
 };
 
+struct GpBitmap{
+    GpImage image;
+};
+
 struct GpImageAttributes{
     WrapMode wrap;
 };

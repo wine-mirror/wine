@@ -78,7 +78,7 @@
 @ stub GdipCreateBitmapFromHBITMAP
 @ stub GdipCreateBitmapFromHICON
 @ stub GdipCreateBitmapFromResource
-@ stub GdipCreateBitmapFromScan0
+@ stdcall GdipCreateBitmapFromScan0(long long long long ptr ptr)
 @ stub GdipCreateBitmapFromStream
 @ stub GdipCreateBitmapFromStreamICM
 @ stub GdipCreateCachedBitmap

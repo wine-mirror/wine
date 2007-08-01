@@ -138,6 +138,8 @@ GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath*,GpPath*,GpLineCap,REAL,
     GpCustomLineCap**);
 GpStatus WINGDIPAPI GdipDeleteCustomLineCap(GpCustomLineCap*);
 
+GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT,INT,INT,PixelFormat,BYTE*,
+    GpBitmap**);
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage*);
 GpStatus WINGDIPAPI GdipGetImageBounds(GpImage*,GpRectF*,GpUnit*);
 GpStatus WINGDIPAPI GdipGetImageHeight(GpImage*,UINT*);

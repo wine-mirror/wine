@@ -26,6 +26,7 @@
 #define COBJMACROS
 #include "objbase.h"
 #include "olectl.h"
+#include "ole2.h"
 
 #include "gdiplus.h"
 #include "gdiplus_private.h"
@@ -34,6 +35,67 @@
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 typedef void ImageItemData;
+
+GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
+    PixelFormat format, BYTE* scan0, GpBitmap** bitmap)
+{
+    BITMAPFILEHEADER *bmfh;
+    BITMAPINFOHEADER *bmih;
+    BYTE *buff;
+    INT datalen = stride * height, size;
+    IStream *stream;
+
+    TRACE("%d %d %d %d %p %p\n", width, height, stride, format, scan0, bitmap);
+
+    if(!scan0 || !bitmap)
+        return InvalidParameter;
+
+    *bitmap = GdipAlloc(sizeof(GpBitmap));
+    if(!*bitmap)    return OutOfMemory;
+
+    size = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + datalen;
+    buff = GdipAlloc(size);
+    if(!buff){
+        GdipFree(*bitmap);
+        return OutOfMemory;
+    }
+
+    bmfh = (BITMAPFILEHEADER*) buff;
+    bmih = (BITMAPINFOHEADER*) (bmfh + 1);
+
+    bmfh->bfType    = (((WORD)'M') << 8) + (WORD)'B';
+    bmfh->bfSize    = size;
+    bmfh->bfOffBits = size - datalen;
+
+    bmih->biSize            = sizeof(BITMAPINFOHEADER);
+    bmih->biWidth           = width;
+    bmih->biHeight          = height;
+    /* FIXME: use the rest of the data from format */
+    bmih->biBitCount        = format >> 8;
+    bmih->biCompression     = BI_RGB;
+
+    memcpy(bmih + 1, scan0, datalen);
+
+    if(CreateStreamOnHGlobal(buff, TRUE, &stream) != S_OK){
+        ERR("could not make stream\n");
+        GdipFree(*bitmap);
+        GdipFree(buff);
+        return GenericError;
+    }
+
+    if(OleLoadPicture(stream, 0, FALSE, &IID_IPicture,
+        (LPVOID*) &((*bitmap)->image.picture)) != S_OK){
+        TRACE("Could not load picture\n");
+        IStream_Release(stream);
+        GdipFree(*bitmap);
+        GdipFree(buff);
+        return GenericError;
+    }
+
+    (*bitmap)->image.type = ImageTypeBitmap;
+
+    return Ok;
+}
 
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
 {

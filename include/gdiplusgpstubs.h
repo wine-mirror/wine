@@ -32,6 +32,7 @@ class GpCustomLineCap {};
 class GpImage {};
 class GpMetafile : public GpImage {};
 class GpImageAttributes {};
+class GpBitmap : public GpImage {};
 
 #else /* end of c++ declarations */
 
@@ -46,6 +47,7 @@ typedef struct GpCustomLineCap GpCustomLineCap;
 typedef struct GpImage GpImage;
 typedef struct GpMetafile GpMetafile;
 typedef struct GpImageAttributes GpImageAttributes;
+typedef struct GpBitmap GpBitmap;
 
 #endif /* end of c declarations */
 
