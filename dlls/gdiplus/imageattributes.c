@@ -48,6 +48,20 @@ GpStatus WINGDIPAPI GdipDisposeImageAttributes(GpImageAttributes *imageattr)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetImageAttributesColorKeys(GpImageAttributes *imageattr,
+    ColorAdjustType type, BOOL enableFlag, ARGB colorLow, ARGB colorHigh)
+{
+    static int calls;
+
+    if(!imageattr)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetImageAttributesWrapMode(GpImageAttributes *imageAttr,
     WrapMode wrap, ARGB argb, BOOL clamp)
 {

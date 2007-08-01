@@ -160,6 +160,8 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage*,IStream*,
 
 GpStatus WINGDIPAPI GdipCreateImageAttributes(GpImageAttributes**);
 GpStatus WINGDIPAPI GdipDisposeImageAttributes(GpImageAttributes*);
+GpStatus WINGDIPAPI GdipSetImageAttributesColorKeys(GpImageAttributes*,
+    ColorAdjustType,BOOL,ARGB,ARGB);
 GpStatus WINGDIPAPI GdipSetImageAttributesWrapMode(GpImageAttributes*,WrapMode,
     ARGB,BOOL);
 

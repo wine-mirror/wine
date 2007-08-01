@@ -16,48 +16,24 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _GDIPLUS_H
-#define _GDIPLUS_H
+#ifndef _GDIPLUSCOLORMATRIX_H
+#define _GDIPLUSCOLORMATRIX_H
 
-#ifdef __cplusplus
-
-namespace Gdiplus
+enum ColorAdjustType
 {
-    namespace DllExports
-    {
-#include "gdiplusmem.h"
-    };
-
-#include "gdiplustypes.h"
-#include "gdiplusenums.h"
-#include "gdiplusinit.h"
-#include "gdipluspixelformats.h"
-#include "gdiplusmetaheader.h"
-#include "gdiplusimaging.h"
-#include "gdipluscolormatrix.h"
-#include "gdiplusgpstubs.h"
-
-    namespace DllExports
-    {
-#include "gdiplusflat.h"
-    };
+    ColorAdjustTypeDefault,
+    ColorAdjustTypeBitmap,
+    ColorAdjustTypeBrush,
+    ColorAdjustTypePen,
+    ColorAdjustTypeText,
+    ColorAdjustTypeCount,
+    ColorAdjustTypeAny
 };
 
-#else /* end c++ includes */
+#ifndef __cplusplus
 
-#include "gdiplusmem.h"
+typedef enum ColorAdjustType ColorAdjustType;
 
-#include "gdiplustypes.h"
-#include "gdiplusenums.h"
-#include "gdiplusinit.h"
-#include "gdipluspixelformats.h"
-#include "gdiplusmetaheader.h"
-#include "gdiplusimaging.h"
-#include "gdipluscolormatrix.h"
-#include "gdiplusgpstubs.h"
+#endif  /* end of c typedefs */
 
-#include "gdiplusflat.h"
-
-#endif /* end c includes */
-
-#endif /* _GDIPLUS_H_ */
+#endif  /* _GDIPLUSCOLORMATRIX_H */

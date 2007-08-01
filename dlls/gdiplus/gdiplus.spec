@@ -522,7 +522,7 @@
 @ stub GdipSetEffectParameters
 @ stub GdipSetEmpty
 @ stub GdipSetImageAttributesCachedBackground
-@ stub GdipSetImageAttributesColorKeys
+@ stdcall GdipSetImageAttributesColorKeys(ptr long long long)
 @ stub GdipSetImageAttributesColorMatrix
 @ stub GdipSetImageAttributesGamma
 @ stub GdipSetImageAttributesNoOp
