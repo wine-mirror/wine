@@ -1040,6 +1040,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 {
     GpPointF ptf[3];
     POINT pti[3];
+    REAL dx, dy;
 
     TRACE("%p %p %p %d %f %f %f %f %d %p %p %p\n", graphics, image, points, count,
           srcx, srcy, srcwidth, srcheight, srcUnit, imageAttributes, callback,
@@ -1048,20 +1049,33 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     if(!graphics || !image || !points || !imageAttributes || count != 3)
          return InvalidParameter;
 
-    if(image->type != ImageTypeMetafile)
-        return NotImplemented;
-    if((points[0].X != points[2].X) || (points[0].Y != points[1].Y))
-        return NotImplemented;
-    if(srcUnit != UnitInch)
+    if(srcUnit == UnitInch)
+        dx = dy = (REAL) INCH_HIMETRIC;
+    else if(srcUnit == UnitPixel){
+        dx = ((REAL) INCH_HIMETRIC) /
+             ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSX));
+        dy = ((REAL) INCH_HIMETRIC) /
+             ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSY));
+    }
+    else
         return NotImplemented;
 
     memcpy(ptf, points, 3 * sizeof(GpPointF));
     transform_and_round_points(graphics, pti, ptf, 3);
 
+    /* IPicture renders bitmaps with the y-axis reversed
+     * FIXME: flipping for unknown image type might not be correct. */
+    if(image->type != ImageTypeMetafile){
+        INT temp;
+        temp = pti[0].y;
+        pti[0].y = pti[2].y;
+        pti[2].y = temp;
+    }
+
     if(IPicture_Render(image->picture, graphics->hdc,
         pti[0].x, pti[0].y, pti[1].x - pti[0].x, pti[2].y - pti[0].y,
-        srcx * INCH_HIMETRIC, srcy * INCH_HIMETRIC,
-        srcwidth * INCH_HIMETRIC, srcheight * INCH_HIMETRIC,
+        srcx * dx, srcy * dy,
+        srcwidth * dx, srcheight * dy,
         NULL) != S_OK){
         if(callback)
             callback(callbackData);
