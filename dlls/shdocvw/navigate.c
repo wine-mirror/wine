@@ -528,15 +528,13 @@ HRESULT navigate_url(DocHost *This, BSTR url, VARIANT *Flags, VARIANT *TargetFra
        || (TargetFrameName && V_VT(TargetFrameName) != VT_EMPTY))
         FIXME("Unsupported arguments\n");
 
-    if(PostData && V_VT(PostData) != VT_EMPTY && V_VT(PostData) != VT_ERROR) {
-        if(V_VT(PostData) != (VT_ARRAY | VT_UI1)
-           || V_ARRAY(PostData)->cDims != 1) {
-            WARN("Invalid PostData\n");
-            return E_INVALIDARG;
-        }
+    if(PostData) {
+        TRACE("PostData vt=%d\n", V_VT(PostData));
 
-        SafeArrayAccessData(V_ARRAY(PostData), (void**)&post_data);
-        post_data_len = V_ARRAY(PostData)->rgsabound[0].cElements;
+        if(V_VT(PostData) == (VT_ARRAY | VT_UI1)) {
+            SafeArrayAccessData(V_ARRAY(PostData), (void**)&post_data);
+            post_data_len = V_ARRAY(PostData)->rgsabound[0].cElements;
+        }
     }
 
     if(Headers && V_VT(Headers) != VT_EMPTY && V_VT(Headers) != VT_ERROR) {
