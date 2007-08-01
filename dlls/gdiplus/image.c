@@ -31,6 +31,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+typedef void ImageItemData;
+
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
 {
     if(!image)
@@ -40,6 +42,14 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
     GdipFree(image);
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipFindFirstImageItem(GpImage *image, ImageItemData* item)
+{
+    if(!image || !item)
+        return InvalidParameter;
+
+    return NotImplemented;
 }
 
 GpStatus WINGDIPAPI GdipGetImageBounds(GpImage *image, GpRectF *srcRect,

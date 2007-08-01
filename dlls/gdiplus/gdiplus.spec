@@ -231,7 +231,7 @@
 @ stub GdipFillRectangles
 @ stub GdipFillRectanglesI
 @ stub GdipFillRegion
-@ stub GdipFindFirstImageItem
+@ stdcall GdipFindFirstImageItem(ptr ptr)
 @ stub GdipFindNextImageItem
 @ stub GdipFlattenPath
 @ stub GdipFlush
