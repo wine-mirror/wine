@@ -36,6 +36,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 typedef void ImageItemData;
 
+GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
+    ARGB *color)
+{
+    static int calls;
+    TRACE("%p %d %d %p\n", bitmap, x, y, color);
+
+    if(!bitmap || !color)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    *color = 0xdeadbeef;
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     PixelFormat format, BYTE* scan0, GpBitmap** bitmap)
 {

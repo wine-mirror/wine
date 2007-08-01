@@ -40,7 +40,7 @@
 @ stub GdipBitmapCreateApplyEffect
 @ stub GdipBitmapGetHistogram
 @ stub GdipBitmapGetHistogramSize
-@ stub GdipBitmapGetPixel
+@ stdcall GdipBitmapGetPixel(ptr long long ptr)
 @ stub GdipBitmapLockBits
 @ stub GdipBitmapSetPixel
 @ stub GdipBitmapSetResolution
