@@ -36,6 +36,39 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 typedef void ImageItemData;
 
+static INT ipicture_pixel_height(IPicture *pic)
+{
+    HDC hdcref;
+    OLE_YSIZE_HIMETRIC y;
+
+    IPicture_get_Height(pic, &y);
+
+    hdcref = GetDC(0);
+
+    y = (UINT)(((REAL)y) * ((REAL)GetDeviceCaps(hdcref, LOGPIXELSY)) /
+              ((REAL)INCH_HIMETRIC));
+    ReleaseDC(0, hdcref);
+
+    return y;
+}
+
+static INT ipicture_pixel_width(IPicture *pic)
+{
+    HDC hdcref;
+    OLE_XSIZE_HIMETRIC x;
+
+    IPicture_get_Width(pic, &x);
+
+    hdcref = GetDC(0);
+
+    x = (UINT)(((REAL)x) * ((REAL)GetDeviceCaps(hdcref, LOGPIXELSX)) /
+              ((REAL)INCH_HIMETRIC));
+
+    ReleaseDC(0, hdcref);
+
+    return x;
+}
+
 GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     ARGB *color)
 {
@@ -110,6 +143,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     }
 
     (*bitmap)->image.type = ImageTypeBitmap;
+    (*bitmap)->width = width;
+    (*bitmap)->height = height;
 
     return Ok;
 }
@@ -121,10 +156,14 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromStreamICM(IStream* stream,
 
     stat = GdipLoadImageFromStreamICM(stream, (GpImage**) bitmap);
 
-    if(stat == Ok)
-        (*bitmap)->image.type = ImageTypeBitmap;
+    if(stat != Ok)
+        return stat;
 
-    return stat;
+    (*bitmap)->image.type = ImageTypeBitmap;
+    (*bitmap)->width = ipicture_pixel_width((*bitmap)->image.picture);
+    (*bitmap)->height = ipicture_pixel_height((*bitmap)->image.picture);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
@@ -155,25 +194,42 @@ GpStatus WINGDIPAPI GdipGetImageBounds(GpImage *image, GpRectF *srcRect,
         memcpy(srcRect, &((GpMetafile*)image)->bounds, sizeof(GpRectF));
         *srcUnit = ((GpMetafile*)image)->unit;
     }
-    else{
-        FIXME("not implemented for bitmaps\n");
-        return NotImplemented;
+    else if(image->type == ImageTypeBitmap){
+        srcRect->X = srcRect->Y = 0.0;
+        srcRect->Width = (REAL) ((GpBitmap*)image)->width;
+        srcRect->Height = (REAL) ((GpBitmap*)image)->height;
+        *srcUnit = UnitPixel;
     }
+    else{
+        srcRect->X = srcRect->Y = 0.0;
+        srcRect->Width = ipicture_pixel_width(image->picture);
+        srcRect->Height = ipicture_pixel_height(image->picture);
+        *srcUnit = UnitPixel;
+    }
+
+    TRACE("returning (%f, %f) (%f, %f) unit type %d\n", srcRect->X, srcRect->Y,
+          srcRect->Width, srcRect->Height, *srcUnit);
 
     return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetImageHeight(GpImage *image, UINT *height)
 {
-    static int calls;
-
     if(!image || !height)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if(image->type == ImageTypeMetafile){
+        FIXME("not implemented for metafiles\n");
+        return NotImplemented;
+    }
+    else if(image->type == ImageTypeBitmap)
+        *height = ((GpBitmap*)image)->height;
+    else
+        *height = ipicture_pixel_height(image->picture);
 
-    return NotImplemented;
+    TRACE("returning %d\n", *height);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetImageHorizontalResolution(GpImage *image, REAL *res)
@@ -227,15 +283,21 @@ GpStatus WINGDIPAPI GdipGetImageVerticalResolution(GpImage *image, REAL *res)
 
 GpStatus WINGDIPAPI GdipGetImageWidth(GpImage *image, UINT *width)
 {
-    static int calls;
-
     if(!image || !width)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if(image->type == ImageTypeMetafile){
+        FIXME("not implemented for metafiles\n");
+        return NotImplemented;
+    }
+    else if(image->type == ImageTypeBitmap)
+        *width = ((GpBitmap*)image)->width;
+    else
+        *width = ipicture_pixel_width(image->picture);
 
-    return NotImplemented;
+    TRACE("returning %d\n", *width);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,

@@ -130,6 +130,8 @@ struct GpMetafile{
 
 struct GpBitmap{
     GpImage image;
+    INT width;
+    INT height;
 };
 
 struct GpImageAttributes{
