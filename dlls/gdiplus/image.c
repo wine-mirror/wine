@@ -103,8 +103,7 @@ GpStatus WINGDIPAPI GdipGetImageType(GpImage *image, ImageType *type)
     if(!image || !type)
         return InvalidParameter;
 
-    /* FIXME: get correct image type. */
-    *type = ImageTypeUnknown;
+    *type = image->type;
 
     return Ok;
 }
