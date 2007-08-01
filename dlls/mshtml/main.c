@@ -86,6 +86,20 @@ static void thread_detach(void)
 {
     thread_data_t *thread_data;
 
+    thread_data = get_thread_data(FALSE);
+    if(!thread_data)
+        return;
+
+    if(thread_data->thread_hwnd)
+        DestroyWindow(thread_data->thread_hwnd);
+
+    mshtml_free(thread_data);
+}
+
+static void process_detach(void)
+{
+    close_gecko();
+
     if(typelib) {
         unsigned i;
 
@@ -96,14 +110,10 @@ static void thread_detach(void)
         ITypeLib_Release(typelib);
     }
 
-    thread_data = get_thread_data(FALSE);
-    if(!thread_data)
-        return;
-
-    if(thread_data->thread_hwnd)
-        DestroyWindow(thread_data->thread_hwnd);
-
-    mshtml_free(thread_data);
+    if(shdoclc)
+        FreeLibrary(shdoclc);
+    if(mshtml_tls)
+        TlsFree(mshtml_tls);
 }
 
 HINSTANCE get_shdoclc(void)
@@ -124,11 +134,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         hInst = hInstDLL;
         break;
     case DLL_PROCESS_DETACH:
-        close_gecko();
-        if(shdoclc)
-            FreeLibrary(shdoclc);
-        if(mshtml_tls)
-            TlsFree(mshtml_tls);
+        process_detach();
         break;
     case DLL_THREAD_DETACH:
         thread_detach();
