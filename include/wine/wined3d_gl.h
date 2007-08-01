@@ -986,6 +986,60 @@ typedef void (APIENTRY * PGLFNGETCOMPRESSEDTEXIMAGEPROC) (GLenum target, GLint l
 #define GL_VERTEX_WEIGHT_ARRAY_STRIDE_EXT 0x850F
 #define GL_VERTEX_WEIGHT_ARRAY_POINTER_EXT 0x8510
 #endif
+
+/* GL_NV_half_float */
+#ifndef GL_NV_half_float
+#define GL_NV_half_float 1
+typedef unsigned short GLhalfNV;
+#define GL_HALF_FLOAT_NV                  0x140B
+#endif
+typedef void (APIENTRY * PGLFNVERTEX2HNVPROC) (GLhalfNV x, GLhalfNV y);
+typedef void (APIENTRY * PGLFNVERTEX2HVNVPROC) (const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNVERTEX3HNVPROC) (GLhalfNV x, GLhalfNV y, GLhalfNV z);
+typedef void (APIENTRY * PGLFNVERTEX3HVNVPROC) (const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNVERTEX4HNVPROC) (GLhalfNV x, GLhalfNV y, GLhalfNV z, GLhalfNV w);
+typedef void (APIENTRY * PGLFNVERTEX4HVNVPROC) (const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNNORMAL3HNVPROC) (GLhalfNV nx, GLhalfNV ny, GLhalfNV nz);
+typedef void (APIENTRY * PGLFNNORMAL3HVNVPROC) (const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNCOLOR3HNVPROC) (GLhalfNV red, GLhalfNV green, GLhalfNV blue);
+typedef void (APIENTRY * PGLFNCOLOR3HVNVPROC) (const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNCOLOR4HNVPROC) (GLhalfNV red, GLhalfNV green, GLhalfNV blue, GLhalfNV alpha);
+typedef void (APIENTRY * PGLFNCOLOR4HVNVPROC) (const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNTEXCOORD1HNVPROC) (GLhalfNV s);
+typedef void (APIENTRY * PGLFNTEXCOORD1HVNVPROC) (const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNTEXCOORD2HNVPROC) (GLhalfNV s, GLhalfNV t);
+typedef void (APIENTRY * PGLFNTEXCOORD2HVNVPROC) (const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNTEXCOORD3HNVPROC) (GLhalfNV s, GLhalfNV t, GLhalfNV r);
+typedef void (APIENTRY * PGLFNTEXCOORD3HVNVPROC) (const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNTEXCOORD4HNVPROC) (GLhalfNV s, GLhalfNV t, GLhalfNV r, GLhalfNV q);
+typedef void (APIENTRY * PGLFNTEXCOORD4HVNVPROC) (const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNMULTITEXCOORD1HNVPROC) (GLenum target, GLhalfNV s);
+typedef void (APIENTRY * PGLFNMULTITEXCOORD1HVNVPROC) (GLenum target, const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNMULTITEXCOORD2HNVPROC) (GLenum target, GLhalfNV s, GLhalfNV t);
+typedef void (APIENTRY * PGLFNMULTITEXCOORD2HVNVPROC) (GLenum target, const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNMULTITEXCOORD3HNVPROC) (GLenum target, GLhalfNV s, GLhalfNV t, GLhalfNV r);
+typedef void (APIENTRY * PGLFNMULTITEXCOORD3HVNVPROC) (GLenum target, const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNMULTITEXCOORD4HNVPROC) (GLenum target, GLhalfNV s, GLhalfNV t, GLhalfNV r, GLhalfNV q);
+typedef void (APIENTRY * PGLFNMULTITEXCOORD4HVNVPROC) (GLenum target, const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNFOGCOORDHNVPROC) (GLhalfNV fog);
+typedef void (APIENTRY * PGLFNFOGCOORDHVNVPROC) (const GLhalfNV *fog);
+typedef void (APIENTRY * PGLFNSECONDARYCOLOR3HNVPROC) (GLhalfNV red, GLhalfNV green, GLhalfNV blue);
+typedef void (APIENTRY * PGLFNSECONDARYCOLOR3HVNVPROC) (const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNVERTEXWEIGHTHNVPROC) (GLhalfNV weight);
+typedef void (APIENTRY * PGLFNVERTEXWEIGHTHVNVPROC) (const GLhalfNV *weight);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1HNVPROC) (GLuint index, GLhalfNV x);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1HVNVPROC) (GLuint index, const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2HNVPROC) (GLuint index, GLhalfNV x, GLhalfNV y);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2HVNVPROC) (GLuint index, const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3HNVPROC) (GLuint index, GLhalfNV x, GLhalfNV y, GLhalfNV z);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3HVNVPROC) (GLuint index, const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4HNVPROC) (GLuint index, GLhalfNV x, GLhalfNV y, GLhalfNV z, GLhalfNV w);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4HVNVPROC) (GLuint index, const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIBS1HVNVPROC) (GLuint index, GLsizei n, const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIBS2HVNVPROC) (GLuint index, GLsizei n, const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIBS3HVNVPROC) (GLuint index, GLsizei n, const GLhalfNV *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIBS4HVNVPROC) (GLuint index, GLsizei n, const GLhalfNV *v);
+
 /* GL_NV_fog_distance */
 #ifndef GL_NV_fog_distance
 #define GL_NV_fog_distance 1
@@ -1675,6 +1729,7 @@ typedef enum _GL_SupportedExt {
   EXT_TEXTURE_SRGB,
   EXT_VERTEX_WEIGHTING,
   /* NVIDIA */
+  NV_HALF_FLOAT,
   NV_FOG_DISTANCE,
   NV_FRAGMENT_PROGRAM,
   NV_FRAGMENT_PROGRAM2,
@@ -1898,6 +1953,53 @@ typedef enum _GL_SupportedExt {
     /* GL_ATI_separate_stencil */ \
     USE_GL_FUNC(PGLFNSTENCILOPSEPARATEATIPROC, glStencilOpSeparateATI); \
     USE_GL_FUNC(PGLFNSTENCILFUNCSEPARATEATIPROC, glStencilFuncSeparateATI); \
+    /* GL_NV_half_float */ \
+    USE_GL_FUNC(PGLFNVERTEX2HNVPROC,                            glVertex2hNV); \
+    USE_GL_FUNC(PGLFNVERTEX2HVNVPROC,                           glVertex2hvNV); \
+    USE_GL_FUNC(PGLFNVERTEX3HNVPROC,                            glVertex3hNV); \
+    USE_GL_FUNC(PGLFNVERTEX3HVNVPROC,                           glVertex3hvNV); \
+    USE_GL_FUNC(PGLFNVERTEX4HNVPROC,                            glVertex4hNV); \
+    USE_GL_FUNC(PGLFNVERTEX4HVNVPROC,                           glVertex4hvNV); \
+    USE_GL_FUNC(PGLFNNORMAL3HNVPROC,                            glNormal3hNV); \
+    USE_GL_FUNC(PGLFNNORMAL3HVNVPROC,                           glNormal3hvNV); \
+    USE_GL_FUNC(PGLFNCOLOR3HNVPROC,                             glColor3hNV); \
+    USE_GL_FUNC(PGLFNCOLOR3HVNVPROC,                            glColor3hvNV); \
+    USE_GL_FUNC(PGLFNCOLOR4HNVPROC,                             glColor4hNV); \
+    USE_GL_FUNC(PGLFNCOLOR4HVNVPROC,                            glColor4hvNV); \
+    USE_GL_FUNC(PGLFNTEXCOORD1HNVPROC,                          glTexCoord1hNV); \
+    USE_GL_FUNC(PGLFNTEXCOORD1HVNVPROC,                         glTexCoord1hvNV); \
+    USE_GL_FUNC(PGLFNTEXCOORD2HNVPROC,                          glTexCoord2hNV); \
+    USE_GL_FUNC(PGLFNTEXCOORD2HVNVPROC,                         glTexCoord2hvNV); \
+    USE_GL_FUNC(PGLFNTEXCOORD3HNVPROC,                          glTexCoord3hNV); \
+    USE_GL_FUNC(PGLFNTEXCOORD3HVNVPROC,                         glTexCoord3hvNV); \
+    USE_GL_FUNC(PGLFNTEXCOORD4HNVPROC,                          glTexCoord4hNV); \
+    USE_GL_FUNC(PGLFNTEXCOORD4HVNVPROC,                         glTexCoord4hvNV); \
+    USE_GL_FUNC(PGLFNMULTITEXCOORD1HNVPROC,                     glMultiTexCoord1hNV); \
+    USE_GL_FUNC(PGLFNMULTITEXCOORD1HVNVPROC,                    glMultiTexCoord1hvNV); \
+    USE_GL_FUNC(PGLFNMULTITEXCOORD2HNVPROC,                     glMultiTexCoord2hNV); \
+    USE_GL_FUNC(PGLFNMULTITEXCOORD2HVNVPROC,                    glMultiTexCoord2hvNV); \
+    USE_GL_FUNC(PGLFNMULTITEXCOORD3HNVPROC,                     glMultiTexCoord3hNV); \
+    USE_GL_FUNC(PGLFNMULTITEXCOORD3HVNVPROC,                    glMultiTexCoord3hvNV); \
+    USE_GL_FUNC(PGLFNMULTITEXCOORD4HNVPROC,                     glMultiTexCoord4hNV); \
+    USE_GL_FUNC(PGLFNMULTITEXCOORD4HVNVPROC,                    glMultiTexCoord4hvNV); \
+    USE_GL_FUNC(PGLFNFOGCOORDHNVPROC,                           glFogCoordhNV); \
+    USE_GL_FUNC(PGLFNFOGCOORDHVNVPROC,                          glFogCoordhvNV); \
+    USE_GL_FUNC(PGLFNSECONDARYCOLOR3HNVPROC,                    glSecondaryColor3hNV); \
+    USE_GL_FUNC(PGLFNSECONDARYCOLOR3HVNVPROC,                   glSecondaryColor3hvNV); \
+    USE_GL_FUNC(PGLFNVERTEXWEIGHTHNVPROC,                       glVertexWeighthNV); \
+    USE_GL_FUNC(PGLFNVERTEXWEIGHTHVNVPROC,                      glVertexWeighthvNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB1HNVPROC,                      glVertexAttrib1hNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB1HVNVPROC,                     glVertexAttrib1hvNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB2HNVPROC,                      glVertexAttrib2hNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB2HVNVPROC,                     glVertexAttrib2hvNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB3HNVPROC,                      glVertexAttrib3hNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB3HVNVPROC,                     glVertexAttrib3hvNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4HNVPROC,                      glVertexAttrib4hNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4HVNVPROC,                     glVertexAttrib4hvNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBS1HVNVPROC,                    glVertexAttribs1hvNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBS2HVNVPROC,                    glVertexAttribs2hvNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBS3HVNVPROC,                    glVertexAttribs3hvNV); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBS4HVNVPROC,                    glVertexAttribs4hvNV); \
     /* GL_NV_register_combiners */ \
     USE_GL_FUNC(PGLFNCOMBINERINPUTNVPROC,                       glCombinerInputNV); \
     USE_GL_FUNC(PGLFNCOMBINEROUTPUTNVPROC,                      glCombinerOutputNV); \

@@ -100,6 +100,7 @@ static const struct {
     {"GL_EXT_vertex_weighting",             EXT_VERTEX_WEIGHTING},
 
     /* NV */
+    {"GL_NV_half_float",                    NV_HALF_FLOAT},
     {"GL_NV_fence",                         NV_FENCE},
     {"GL_NV_fog_distance",                  NV_FOG_DISTANCE},
     {"GL_NV_fragment_program",              NV_FRAGMENT_PROGRAM},
