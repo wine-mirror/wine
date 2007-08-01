@@ -763,8 +763,14 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         }
     }
 
-    if((Flags & WINED3DLOCK_DISCARD) || (This->Flags & SFLAG_INSYSMEM)) {
-        TRACE("WINED3DLOCK_DISCARD flag passed, or local copy is up to date, not downloading data\n");
+    if (Flags & WINED3DLOCK_DISCARD) {
+        /* Set SFLAG_INSYSMEM, so we'll never try to download the data from the texture. */
+        TRACE("WINED3DLOCK_DISCARD flag passed, marking local copy as up to date\n");
+        This->Flags |= SFLAG_INSYSMEM;
+    }
+
+    if (This->Flags & SFLAG_INSYSMEM) {
+        TRACE("Local copy is up to date, not downloading data\n");
         goto lock_end;
     }
 
