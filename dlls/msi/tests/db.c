@@ -2463,6 +2463,16 @@ struct join_res_4col
     const CHAR four[MAX_PATH];
 };
 
+struct join_res_uint
+{
+    UINT one;
+    UINT two;
+    UINT three;
+    UINT four;
+    UINT five;
+    UINT six;
+};
+
 static const struct join_res join_res_first[] =
 {
     { "alveolar", "procerus" },
@@ -2519,6 +2529,16 @@ static const struct join_res_4col join_res_eighth[] =
     { "msvcr.dll", "msvcr.dll.56789", "msvcr.dll.56789", "ijklmnop" },
     { "msvcp.dll", "msvcp.dll.01234", "single.dll.31415", "msvcp.dll" },
     { "msvcr.dll", "msvcr.dll.56789", "single.dll.31415", "msvcp.dll" },
+};
+
+static const struct join_res_uint join_res_ninth[] =
+{
+    { 1, 2, 3, 4, 7, 8 },
+    { 1, 2, 5, 6, 7, 8 },
+    { 1, 2, 3, 4, 9, 10 },
+    { 1, 2, 5, 6, 9, 10 },
+    { 1, 2, 3, 4, 11, 12 },
+    { 1, 2, 5, 6, 11, 12 },
 };
 
 static void test_join(void)
@@ -2589,6 +2609,58 @@ static void test_join(void)
 
     r = add_binary_entry( hdb, "'single.dll.31415', 'msvcp.dll'" );
     ok( r == ERROR_SUCCESS, "cannot add binary: %d\n", r );
+
+    query = "CREATE TABLE `One` (`A` SHORT, `B` SHORT PRIMARY KEY `A`)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot create table: %d\n", r );
+
+    query = "CREATE TABLE `Two` (`C` SHORT, `D` SHORT PRIMARY KEY `C`)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot create table: %d\n", r );
+
+    query = "CREATE TABLE `Three` (`E` SHORT, `F` SHORT PRIMARY KEY `E`)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot create table: %d\n", r );
+
+    query = "INSERT INTO `One` (`A`, `B`) VALUES (1, 2)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot insert into table: %d\n", r );
+
+    query = "INSERT INTO `Two` (`C`, `D`) VALUES (3, 4)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot insert into table: %d\n", r );
+
+    query = "INSERT INTO `Two` (`C`, `D`) VALUES (5, 6)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot insert into table: %d\n", r );
+
+    query = "INSERT INTO `Three` (`E`, `F`) VALUES (7, 8)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot insert into table: %d\n", r );
+
+    query = "INSERT INTO `Three` (`E`, `F`) VALUES (9, 10)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot insert into table: %d\n", r );
+
+    query = "INSERT INTO `Three` (`E`, `F`) VALUES (11, 12)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot insert into table: %d\n", r );
+
+    query = "CREATE TABLE `Four` (`G` SHORT, `H` SHORT PRIMARY KEY `G`)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot create table: %d\n", r );
+
+    query = "CREATE TABLE `Five` (`I` SHORT, `J` SHORT PRIMARY KEY `I`)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot create table: %d\n", r );
+
+    query = "INSERT INTO `Five` (`I`, `J`) VALUES (13, 14)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot insert into table: %d\n", r );
+
+    query = "INSERT INTO `Five` (`I`, `J`) VALUES (15, 16)";
+    r = run_query( hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "cannot insert into table: %d\n", r );
 
     query = "SELECT `Component`.`ComponentId`, `FeatureComponents`.`Feature_` "
             "FROM `Component`, `FeatureComponents` "
@@ -2980,6 +3052,71 @@ static void test_join(void)
 
     ok( i == 6, "Expected 6 rows, got %d\n", i );
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    query = "SELECT * FROM `One`, `Two`, `Three` ";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    todo_wine ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+
+    r = MsiViewExecute(hview, 0);
+    todo_wine ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+
+    i = 0;
+    data_correct = TRUE;
+    while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
+    {
+        count = MsiRecordGetFieldCount( hrec );
+        ok( count == 6, "Expected 6 record fields, got %d\n", count );
+
+        r = MsiRecordGetInteger( hrec, 1 );
+        if( r != join_res_ninth[i].one )
+            data_correct = FALSE;
+
+        r = MsiRecordGetInteger( hrec, 2 );
+        if( r != join_res_ninth[i].two )
+            data_correct = FALSE;
+
+        r = MsiRecordGetInteger( hrec, 3 );
+        if( r != join_res_ninth[i].three )
+            data_correct = FALSE;
+
+        r = MsiRecordGetInteger( hrec, 4 );
+        if( r != join_res_ninth[i].four )
+            data_correct = FALSE;
+
+        r = MsiRecordGetInteger( hrec, 5 );
+        if( r != join_res_ninth[i].five )
+            data_correct = FALSE;
+
+        r = MsiRecordGetInteger( hrec, 6);
+        if( r != join_res_ninth[i].six )
+            data_correct = FALSE;
+
+        i++;
+        MsiCloseHandle(hrec);
+    }
+    ok( data_correct, "data returned in the wrong order\n");
+
+    todo_wine
+    {
+        ok( i == 6, "Expected 6 rows, got %d\n", i );
+        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
+    }
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    query = "SELECT * FROM `Four`, `Five`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+
+    r = MsiViewExecute(hview, 0);
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
