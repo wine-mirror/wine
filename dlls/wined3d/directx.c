@@ -2301,10 +2301,12 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
             *pCaps->DeclTypes = WINED3DDTCAPS_UBYTE4    |
                                 WINED3DDTCAPS_UBYTE4N   |
                                 WINED3DDTCAPS_SHORT2N   |
-                                WINED3DDTCAPS_SHORT4N   |
+                                WINED3DDTCAPS_SHORT4N;
+            if (GL_SUPPORT(NV_HALF_FLOAT)) {
+                *pCaps->DeclTypes |=
                                 WINED3DDTCAPS_FLOAT16_2 |
                                 WINED3DDTCAPS_FLOAT16_4;
-
+            }
         } else
             *pCaps->DeclTypes                         = 0;
 
