@@ -2679,6 +2679,10 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
                 curGLXAttr = GLX_SAMPLES_ARB;
                 break;
 
+            case WGL_FLOAT_COMPONENTS_NV:
+                curGLXAttr = GLX_FLOAT_COMPONENTS_NV;
+                break;
+
             default:
                 FIXME("unsupported %x WGL Attribute\n", curWGLAttr);
         }
