@@ -277,6 +277,7 @@ TESTSUBDIRS = \
 	odbccp32/tests \
 	ole32/tests \
 	oleaut32/tests \
+	opengl32/tests \
 	pdh/tests \
 	psapi/tests \
 	quartz/tests \

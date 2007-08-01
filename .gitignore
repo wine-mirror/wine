@@ -433,6 +433,9 @@ dlls/olepro32/version.res
 dlls/olesvr.dll16
 dlls/olesvr32/libolesvr32.def
 dlls/opengl32/libopengl32.def
+dlls/opengl32/tests/*.ok
+dlls/opengl32/tests/opengl32_crosstest.exe
+dlls/opengl32/tests/testlist.c
 dlls/opengl32/version.res
 dlls/pdh/libpdh.def
 dlls/pdh/tests/*.ok
@@ -894,6 +897,7 @@ programs/winetest/ntprint_test.exe
 programs/winetest/odbccp32_test.exe
 programs/winetest/ole32_test.exe
 programs/winetest/oleaut32_test.exe
+programs/winetest/opengl32_test.exe
 programs/winetest/pdh_test.exe
 programs/winetest/psapi_test.exe
 programs/winetest/quartz_test.exe

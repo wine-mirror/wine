@@ -20616,6 +20616,8 @@ ac_config_files="$ac_config_files dlls/olesvr32/Makefile"
 
 ac_config_files="$ac_config_files dlls/opengl32/Makefile"
 
+ac_config_files="$ac_config_files dlls/opengl32/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/pdh/Makefile"
 
 ac_config_files="$ac_config_files dlls/pdh/tests/Makefile"
@@ -21701,6 +21703,7 @@ do
     "dlls/olepro32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olepro32/Makefile" ;;
     "dlls/olesvr32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/olesvr32/Makefile" ;;
     "dlls/opengl32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/opengl32/Makefile" ;;
+    "dlls/opengl32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/opengl32/tests/Makefile" ;;
     "dlls/pdh/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pdh/Makefile" ;;
     "dlls/pdh/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pdh/tests/Makefile" ;;
     "dlls/powrprof/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/powrprof/Makefile" ;;

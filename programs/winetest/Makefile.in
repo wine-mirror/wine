@@ -64,6 +64,7 @@ TESTBINS = \
 	odbccp32_test.exe \
 	ole32_test.exe \
 	oleaut32_test.exe \
+	opengl32_test.exe \
 	pdh_test.exe \
 	psapi_test.exe \
 	quartz_test.exe \
@@ -172,6 +173,8 @@ ole32_test.exe: $(DLLDIR)/ole32/tests/ole32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/ole32/tests/ole32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 oleaut32_test.exe: $(DLLDIR)/oleaut32/tests/oleaut32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/oleaut32/tests/oleaut32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+opengl32_test.exe: $(DLLDIR)/opengl32/tests/opengl32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/opengl32/tests/opengl32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 pdh_test.exe: $(DLLDIR)/pdh/tests/pdh_test.exe$(DLLEXT)
 	cp $(DLLDIR)/pdh/tests/pdh_test.exe$(DLLEXT) $@ && $(STRIP) $@
 psapi_test.exe: $(DLLDIR)/psapi/tests/psapi_test.exe$(DLLEXT)

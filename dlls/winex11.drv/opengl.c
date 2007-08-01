@@ -1257,9 +1257,27 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
  * Get the pixel-format id used by this DC
  */
 int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) {
-  TRACE("(%p): returns %d\n", physDev, physDev->current_pf);
+  WineGLPixelFormat *fmt;
+  int tmp;
+  TRACE("(%p)\n", physDev);
+
+  fmt = ConvertPixelFormatWGLtoGLX(gdi_display, physDev->current_pf, TRUE, &tmp);
+  if(!fmt)
+  {
+    /* This happens on HDCs on which SetPixelFormat wasn't called yet */
+    ERR("Unable to find a WineGLPixelFormat for iPixelFormat=%d\n", physDev->current_pf);
+    return 0;
+  }
+  else if(fmt->offscreenOnly)
+  {
+    /* Offscreen formats can't be used with traditional WGL calls.
+     * As has been verified on Windows GetPixelFormat doesn't fail but returns iPixelFormat=1. */
+     TRACE("Returning iPixelFormat=1 for offscreen format: %d\n", fmt->iPixelFormat);
+    return 1;
+  }
 
   return physDev->current_pf;
+  TRACE("(%p): returns %d\n", physDev, physDev->current_pf);
 }
 
 /**
