@@ -80,7 +80,7 @@
 @ stub GdipCreateBitmapFromResource
 @ stdcall GdipCreateBitmapFromScan0(long long long long ptr ptr)
 @ stub GdipCreateBitmapFromStream
-@ stub GdipCreateBitmapFromStreamICM
+@ stdcall GdipCreateBitmapFromStreamICM(ptr ptr)
 @ stub GdipCreateCachedBitmap
 @ stdcall GdipCreateCustomLineCap(ptr ptr long long ptr)
 @ stub GdipCreateEffect

@@ -97,6 +97,19 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreateBitmapFromStreamICM(IStream* stream,
+    GpBitmap **bitmap)
+{
+    GpStatus stat;
+
+    stat = GdipLoadImageFromStreamICM(stream, (GpImage**) bitmap);
+
+    if(stat == Ok)
+        (*bitmap)->image.type = ImageTypeBitmap;
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
 {
     if(!image)
