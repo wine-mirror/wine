@@ -2890,10 +2890,7 @@ static void test_join(void)
     ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
 
     r = MsiViewExecute(hview, 0);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
 
     i = 0;
     data_correct = TRUE;
@@ -2919,10 +2916,7 @@ static void test_join(void)
     }
     ok( data_correct, "data returned in the wrong order\n");
 
-    todo_wine
-    {
-        ok( i == 6, "Expected 6 rows, got %d\n", i );
-    }
+    ok( i == 6, "Expected 6 rows, got %d\n", i );
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
@@ -3000,7 +2994,7 @@ static void test_join(void)
         MsiCloseHandle(hrec);
     }
 
-    todo_wine ok( data_correct, "data returned in the wrong order\n");
+    ok( data_correct, "data returned in the wrong order\n");
     ok( i == 6, "Expected 6 rows, got %d\n", i );
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
@@ -3048,7 +3042,7 @@ static void test_join(void)
         i++;
         MsiCloseHandle(hrec);
     }
-    todo_wine ok( data_correct, "data returned in the wrong order\n");
+    ok( data_correct, "data returned in the wrong order\n");
 
     ok( i == 6, "Expected 6 rows, got %d\n", i );
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
@@ -3058,10 +3052,10 @@ static void test_join(void)
 
     query = "SELECT * FROM `One`, `Two`, `Three` ";
     r = MsiDatabaseOpenView(hdb, query, &hview);
-    todo_wine ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
 
     r = MsiViewExecute(hview, 0);
-    todo_wine ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
 
     i = 0;
     data_correct = TRUE;
@@ -3099,11 +3093,8 @@ static void test_join(void)
     }
     ok( data_correct, "data returned in the wrong order\n");
 
-    todo_wine
-    {
-        ok( i == 6, "Expected 6 rows, got %d\n", i );
-        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
-    }
+    ok( i == 6, "Expected 6 rows, got %d\n", i );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);

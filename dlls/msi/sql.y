@@ -53,6 +53,7 @@ static LPWSTR SQL_getstring( void *info, const struct sql_str *str );
 static INT SQL_getint( void *info );
 static int sql_lex( void *SQL_lval, SQL_input *info );
 
+static LPWSTR parser_add_table( LPWSTR list, LPWSTR table );
 static void *parser_alloc( void *info, unsigned int sz );
 static column_info *parser_alloc_column( void *info, LPCWSTR table, LPCWSTR column );
 
@@ -101,7 +102,7 @@ static struct expr * EXPR_wildcard( void *info );
 %nonassoc END_OF_FILE ILLEGAL SPACE UNCLOSED_STRING COMMENT FUNCTION
           COLUMN AGG_FUNCTION.
 
-%type <string> table id
+%type <string> table tablelist id
 %type <column_list> selcollist column column_and_type column_def table_def
 %type <column_list> column_assignment update_assign_list constlist
 %type <query> query from fromtable selectfrom unorderedsel
@@ -466,14 +467,28 @@ fromtable:
             if( r != ERROR_SUCCESS || !$$ )
                 YYABORT;
         }
-  | TK_FROM table TK_COMMA table
+  | TK_FROM tablelist
         {
             SQL_input* sql = (SQL_input*) info;
             UINT r;
 
-            /* only support inner joins on two tables */
-            r = JOIN_CreateView( sql->db, &$$, $2, $4 );
+            r = JOIN_CreateView( sql->db, &$$, $2 );
+            msi_free( $2 );
             if( r != ERROR_SUCCESS )
+                YYABORT;
+        }
+    ;
+
+tablelist:
+    table
+        {
+            $$ = strdupW($1);
+        }
+  |
+    table TK_COMMA tablelist
+        {
+            $$ = parser_add_table($3, $1);
+            if (!$$)
                 YYABORT;
         }
     ;
@@ -662,6 +677,19 @@ number:
     ;
 
 %%
+
+static LPWSTR parser_add_table(LPWSTR list, LPWSTR table)
+{
+    DWORD size = lstrlenW(list) + lstrlenW(table) + 2;
+    static const WCHAR space[] = {' ',0};
+
+    list = msi_realloc(list, size * sizeof(WCHAR));
+    if (!list) return NULL;
+
+    lstrcatW(list, space);
+    lstrcatW(list, table);
+    return list;
+}
 
 static void *parser_alloc( void *info, unsigned int sz )
 {
