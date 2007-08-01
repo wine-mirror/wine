@@ -763,7 +763,7 @@ static void joy_polldev(JoystickImpl *This) {
 
             if (number < 12)
             {
-                inst_id = DIDFT_MAKEINSTANCE(jse.number) | (number < 8 ? DIDFT_ABSAXIS : DIDFT_POV);
+                inst_id = DIDFT_MAKEINSTANCE(number) | (number < 8 ? DIDFT_ABSAXIS : DIDFT_POV);
                 value = map_axis(This, jse.value, number);
                 /* FIXME do deadzone and saturation here */
 
