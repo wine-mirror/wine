@@ -35,6 +35,11 @@
 @ stub GdipBeginContainer2
 @ stub GdipBeginContainer
 @ stub GdipBeginContainerI
+@ stub GdipBitmapApplyEffect
+@ stub GdipBitmapConvertFormat
+@ stub GdipBitmapCreateApplyEffect
+@ stub GdipBitmapGetHistogram
+@ stub GdipBitmapGetHistogramSize
 @ stub GdipBitmapGetPixel
 @ stub GdipBitmapLockBits
 @ stub GdipBitmapSetPixel
@@ -61,6 +66,9 @@
 @ stub GdipCombineRegionRectI
 @ stub GdipCombineRegionRegion
 @ stub GdipComment
+@ stub GdipConvertToEmfPlus
+@ stub GdipConvertToEmfPlusToFile
+@ stub GdipConvertToEmfPlusToStream
 @ stub GdipCreateAdjustableArrowCap
 @ stub GdipCreateBitmapFromDirectDrawSurface
 @ stub GdipCreateBitmapFromFile
@@ -75,6 +83,7 @@
 @ stub GdipCreateBitmapFromStreamICM
 @ stub GdipCreateCachedBitmap
 @ stdcall GdipCreateCustomLineCap(ptr ptr long long ptr)
+@ stub GdipCreateEffect
 @ stub GdipCreateFont
 @ stub GdipCreateFontFamilyFromName
 @ stub GdipCreateFontFromDC
@@ -130,6 +139,7 @@
 @ stdcall GdipDeleteBrush(ptr)
 @ stub GdipDeleteCachedBitmap
 @ stdcall GdipDeleteCustomLineCap(ptr)
+@ stub GdipDeleteEffect
 @ stub GdipDeleteFont
 @ stub GdipDeleteFontFamily
 @ stdcall GdipDeleteGraphics(ptr)
@@ -163,6 +173,7 @@
 @ stub GdipDrawEllipse
 @ stub GdipDrawEllipseI
 @ stub GdipDrawImage
+@ stub GdipDrawImageFX
 @ stub GdipDrawImageI
 @ stub GdipDrawImagePointRect
 @ stub GdipDrawImagePointRectI
@@ -220,6 +231,8 @@
 @ stub GdipFillRectangles
 @ stub GdipFillRectanglesI
 @ stub GdipFillRegion
+@ stub GdipFindFirstImageItem
+@ stub GdipFindNextImageItem
 @ stub GdipFlattenPath
 @ stub GdipFlush
 @ stdcall GdipFree(ptr)
@@ -245,6 +258,8 @@
 @ stub GdipGetDC
 @ stub GdipGetDpiX
 @ stub GdipGetDpiY
+@ stub GdipGetEffectParameterSize
+@ stub GdipGetEffectParameters
 @ stub GdipGetEmHeight
 @ stub GdipGetEncoderParameterList
 @ stub GdipGetEncoderParameterListSize
@@ -275,6 +290,7 @@
 @ stub GdipGetImageGraphicsContext
 @ stdcall GdipGetImageHeight(ptr ptr)
 @ stdcall GdipGetImageHorizontalResolution(ptr ptr)
+@ stub GdipGetImageItemData
 @ stub GdipGetImagePalette
 @ stub GdipGetImagePaletteSize
 @ stub GdipGetImagePixelFormat
@@ -388,12 +404,15 @@
 @ stub GdipGetVisibleClipBoundsI
 @ stdcall GdipGetWorldTransform(ptr ptr)
 @ stub GdipGraphicsClear
+@ stub GdipGraphicsSetAbort
 @ stub GdipImageForceValidation
 @ stdcall GdipImageGetFrameCount(ptr ptr ptr)
 @ stub GdipImageGetFrameDimensionsCount
 @ stub GdipImageGetFrameDimensionsList
 @ stub GdipImageRotateFlip
 @ stub GdipImageSelectActiveFrame
+@ stub GdipImageSetAbort
+@ stub GdipInitializePalette
 @ stub GdipInvertMatrix
 @ stub GdipIsClipEmpty
 @ stub GdipIsEmptyRegion
@@ -444,6 +463,7 @@
 @ stub GdipPathIterNextSubpathPath
 @ stdcall GdipPathIterRewind(ptr)
 @ stub GdipPlayMetafileRecord
+@ stub GdipPlayTSClientRecord
 @ stub GdipPrivateAddFontFile
 @ stub GdipPrivateAddMemoryFont
 @ stub GdipRecordMetafile
@@ -499,6 +519,7 @@
 @ stub GdipSetCustomLineCapStrokeCaps
 @ stub GdipSetCustomLineCapStrokeJoin
 @ stub GdipSetCustomLineCapWidthScale
+@ stub GdipSetEffectParameters
 @ stub GdipSetEmpty
 @ stub GdipSetImageAttributesCachedBackground
 @ stub GdipSetImageAttributesColorKeys
