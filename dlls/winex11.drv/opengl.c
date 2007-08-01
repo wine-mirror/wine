@@ -987,7 +987,6 @@ static WineGLPixelFormat* ConvertPixelFormatWGLtoGLX(Display *display, int iPixe
      * iPixelFormat in case of probing the number of pixelformats.
      */
     if((iPixelFormat <= 0) || (iPixelFormat > WineGLPixelFormatListSize)) {
-        ERR("invalid iPixelFormat %d\n", iPixelFormat);
         if(AllowOffscreen)
             *fmt_count = WineGLPixelFormatListSize;
         else
