@@ -62,7 +62,7 @@ HRESULT OLEAUTPS_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
                               &CLSID_PSDispatch, &PSFactoryBuffer);
 }
 
-static void dump_user_flags(ULONG *pFlags)
+static void dump_user_flags(const ULONG *pFlags)
 {
     if (HIWORD(*pFlags) == NDR_LOCAL_DATA_REPRESENTATION)
         TRACE("MAKELONG(NDR_LOCAL_REPRESENTATION, ");
@@ -220,7 +220,7 @@ typedef struct
     DWORD switch_is;
 } variant_wire_t;
 
-static unsigned int get_type_size(ULONG *pFlags, VARIANT *pvar)
+static unsigned int get_type_size(ULONG *pFlags, const VARIANT *pvar)
 {
     if (V_VT(pvar) & VT_ARRAY) return 4;
 
@@ -277,7 +277,7 @@ static unsigned int get_type_alignment(ULONG *pFlags, VARIANT *pvar)
     return 7;
 }
 
-static unsigned interface_variant_size(ULONG *pFlags, REFIID riid, IUnknown *punk)
+static unsigned interface_variant_size(const ULONG *pFlags, REFIID riid, IUnknown *punk)
 {
   ULONG size;
   HRESULT hr;
@@ -382,7 +382,8 @@ static unsigned char* interface_variant_marshal(ULONG *pFlags, unsigned char *Bu
 }
 
 /* helper: called for VT_DISPATCH / VT_UNKNOWN variants to unmarshal the buffer. returns Buffer on failure, new position otherwise */
-static unsigned char *interface_variant_unmarshal(ULONG *pFlags, unsigned char *Buffer, REFIID riid, IUnknown **ppunk)
+static unsigned char *interface_variant_unmarshal(const ULONG *pFlags, unsigned char *Buffer,
+                                                  REFIID riid, IUnknown **ppunk)
 {
   IStream *working;
   HGLOBAL working_mem;
