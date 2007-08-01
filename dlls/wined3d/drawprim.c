@@ -818,10 +818,18 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVerte
                     /* Are those 16 bit floats. C doesn't have a 16 bit float type. I could read the single bits and calculate a 4
                      * byte float according to the IEEE standard
                      */
-                    FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_2\n");
+                    if (GL_SUPPORT(NV_HALF_FLOAT)) {
+                        GL_EXTCALL(glVertexAttrib2hvNV(instancedData[j], (GLhalfNV *)ptr));
+                    } else {
+                        FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_2\n");
+                    }
                     break;
                 case WINED3DDECLTYPE_FLOAT16_4:
-                    FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_4\n");
+                    if (GL_SUPPORT(NV_HALF_FLOAT)) {
+                        GL_EXTCALL(glVertexAttrib4hvNV(instancedData[j], (GLhalfNV *)ptr));
+                    } else {
+                        FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_4\n");
+                    }
                     break;
 
                 case WINED3DDECLTYPE_UNUSED:

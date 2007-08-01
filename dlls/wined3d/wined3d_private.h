@@ -139,8 +139,11 @@ static WINED3DGLTYPE const glTypeLookup[WINED3DDECLTYPE_UNUSED] = {
                                   {WINED3DDECLTYPE_USHORT4N,  4, GL_UNSIGNED_SHORT  , GL_TRUE  ,sizeof(short int)},
                                   {WINED3DDECLTYPE_UDEC3,     3, GL_UNSIGNED_SHORT  , GL_FALSE ,sizeof(short int)},
                                   {WINED3DDECLTYPE_DEC3N,     3, GL_SHORT           , GL_TRUE  ,sizeof(short int)},
-                                  {WINED3DDECLTYPE_FLOAT16_2, 2, GL_FLOAT           , GL_FALSE ,sizeof(short int)},
-                                  {WINED3DDECLTYPE_FLOAT16_4, 4, GL_FLOAT           , GL_FALSE ,sizeof(short int)}};
+                                  /* We should do an extension check for NV_HALF_FLOAT. However, without NV_HALF_FLOAT
+                                   * we won't be able to load the data at all, so at least for the moment it wouldn't
+                                   * gain us much. */
+                                  {WINED3DDECLTYPE_FLOAT16_2, 2, GL_HALF_FLOAT_NV   , GL_FALSE ,sizeof(GLhalfNV)},
+                                  {WINED3DDECLTYPE_FLOAT16_4, 4, GL_HALF_FLOAT_NV   , GL_FALSE ,sizeof(GLhalfNV)}};
 
 #define WINED3D_ATR_TYPE(type)          glTypeLookup[type].d3dType
 #define WINED3D_ATR_SIZE(type)          glTypeLookup[type].size
