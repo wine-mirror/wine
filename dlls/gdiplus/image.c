@@ -20,10 +20,12 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "wingdi.h"
 
 #define COBJMACROS
 #include "objbase.h"
+#include "olectl.h"
 
 #include "gdiplus.h"
 #include "gdiplus_private.h"
@@ -172,15 +174,24 @@ GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
     return NotImplemented;
 }
 
+/* FIXME: no ICM */
 GpStatus WINGDIPAPI GdipLoadImageFromStreamICM(IStream* stream, GpImage **image)
 {
-    static int calls;
-
     if(!stream || !image)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    *image = GdipAlloc(sizeof(GpImage));
+    if(!*image) return OutOfMemory;
 
-    return NotImplemented;
+    if(OleLoadPicture(stream, 0, FALSE, &IID_IPicture,
+        (LPVOID*) &((*image)->picture)) != S_OK){
+        TRACE("Could not load picture\n");
+        GdipFree(*image);
+        return GenericError;
+    }
+
+    /* FIXME: use IPicture_get_Type to get image type */
+    (*image)->type = ImageTypeUnknown;
+
+    return Ok;
 }

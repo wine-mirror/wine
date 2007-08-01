@@ -19,6 +19,8 @@
 #include "windef.h"
 #include "wingdi.h"
 
+#include "objbase.h"
+
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 #include "wine/debug.h"

@@ -25,6 +25,8 @@
 #include "wine/debug.h"
 #include "wingdi.h"
 
+#include "objbase.h"
+
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 
