@@ -7,7 +7,7 @@ DEFS = \
 	-DAS="\"$(AS)\"" \
 	-DCC="\"$(CC)\"" \
 	-DCPP="\"@CPPBIN@\"" \
-	-DCXX="\"$(CXX)\"" \
+	-DCXX="\"@CXX@\"" \
 	-DLD="\"$(LD)\"" \
 	-DPRELINK="\"$(PRELINK)\""
 
