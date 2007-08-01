@@ -116,6 +116,7 @@ GpStatus WINGDIPAPI GdipCloneMatrix(GpMatrix*,GpMatrix**);
 GpStatus WINGDIPAPI GdipCreateMatrix2(REAL,REAL,REAL,REAL,REAL,REAL,GpMatrix**);
 GpStatus WINGDIPAPI GdipCreateMatrix(GpMatrix**);
 GpStatus WINGDIPAPI GdipDeleteMatrix(GpMatrix*);
+GpStatus WINGDIPAPI GdipGetMatrixElements(GDIPCONST GpMatrix*,REAL*);
 GpStatus WINGDIPAPI GdipMultiplyMatrix(GpMatrix*,GpMatrix*,GpMatrixOrder);
 GpStatus WINGDIPAPI GdipRotateMatrix(GpMatrix*,REAL,GpMatrixOrder);
 GpStatus WINGDIPAPI GdipScaleMatrix(GpMatrix*,REAL,REAL,GpMatrixOrder);

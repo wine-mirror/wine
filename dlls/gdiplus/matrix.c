@@ -111,6 +111,17 @@ GpStatus WINGDIPAPI GdipDeleteMatrix(GpMatrix *matrix)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetMatrixElements(GDIPCONST GpMatrix *matrix,
+    REAL *out)
+{
+    if(!matrix || !out)
+        return InvalidParameter;
+
+    memcpy(out, matrix->matrix, sizeof(matrix->matrix));
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipMultiplyMatrix(GpMatrix *matrix, GpMatrix* matrix2,
     GpMatrixOrder order)
 {
