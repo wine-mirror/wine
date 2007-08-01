@@ -617,15 +617,15 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
   unsigned cur = 0; 
   int pop;
   int drawattrib = 0;
+  int nvfloatattrib = GLX_DONT_CARE;
+  int pixelattrib = 0;
   int isColor = 0;
   int wantColorBits = 0;
   int sz_alpha = 0;
 
-  /* The list of WGL attributes is allowed to be NULL, so don't return -1 (error) but just 0 */
-  if(iWGLAttr == NULL)
-    return 0;
-
-  while (0 != iWGLAttr[cur]) {
+  /* The list of WGL attributes is allowed to be NULL. We don't return here for NULL
+   * because we need to do fixups for GLX_DRAWABLE_TYPE/GLX_RENDER_TYPE/GLX_FLOAT_COMPONENTS_NV. */
+  while (iWGLAttr && 0 != iWGLAttr[cur]) {
     TRACE("pAttr[%d] = %x\n", cur, iWGLAttr[cur]);
 
     switch (iWGLAttr[cur]) {
@@ -672,17 +672,16 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
 
     case WGL_PIXEL_TYPE_ARB:
       pop = iWGLAttr[++cur];
+      TRACE("pAttr[%d] = WGL_PIXEL_TYPE_ARB: %d\n", cur, pop);
       switch (pop) {
-      case WGL_TYPE_COLORINDEX_ARB: pop = GLX_COLOR_INDEX_BIT; isColor = 1; break ;
-      case WGL_TYPE_RGBA_ARB: pop = GLX_RGBA_BIT; break ;
+      case WGL_TYPE_COLORINDEX_ARB: pixelattrib = GLX_COLOR_INDEX_BIT; isColor = 1; break ;
+      case WGL_TYPE_RGBA_ARB: pixelattrib = GLX_RGBA_BIT; break ;
       /* This is the same as WGL_TYPE_RGBA_FLOAT_ATI but the GLX constants differ, only the ARB GLX one is widely supported so use that */
-      case WGL_TYPE_RGBA_FLOAT_ATI: pop = GLX_RGBA_FLOAT_BIT; break ;
+      case WGL_TYPE_RGBA_FLOAT_ATI: pixelattrib = GLX_RGBA_FLOAT_BIT; break ;
       default:
         ERR("unexpected PixelType(%x)\n", pop);	
         pop = 0;
       }
-      PUSH2(oGLXAttr, GLX_RENDER_TYPE, pop);
-      TRACE("pAttr[%d] = GLX_RENDER_TYPE: %d\n", cur, pop);
       break;
 
     case WGL_SUPPORT_GDI_ARB:
@@ -765,9 +764,8 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       }
       break ;
     case WGL_FLOAT_COMPONENTS_NV:
-      pop = iWGLAttr[++cur];
-      PUSH2(oGLXAttr, GLX_FLOAT_COMPONENTS_NV, pop);
-      TRACE("pAttr[%d] = GLX_FLOAT_COMPONENTS_NV: %x\n", cur, pop);
+      nvfloatattrib = iWGLAttr[++cur];
+      TRACE("pAttr[%d] = WGL_FLOAT_COMPONENTS_NV: %x\n", cur, nvfloatattrib);
       break ;
     case WGL_BIND_TO_TEXTURE_RGB_ARB:
     case WGL_BIND_TO_TEXTURE_RGBA_ARB:
@@ -819,10 +817,19 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
     TRACE("pAttr[%d] = WGL_COLOR_BITS_ARB: %d\n", cur, wantColorBits);
   }
 
-  /* Apply the OR'd drawable type bitmask now. */
-  if (drawattrib) {
-    PUSH2(oGLXAttr, GLX_DRAWABLE_TYPE, drawattrib);
-    TRACE("pAttr[?] = GLX_DRAWABLE_TYPE: %#x\n", drawattrib);
+  /* Apply the OR'd drawable type bitmask now EVEN when WGL_DRAW_TO* is unset.
+   * It is needed in all cases because GLX_DRAWABLE_TYPE default to GLX_WINDOW_BIT. */
+  PUSH2(oGLXAttr, GLX_DRAWABLE_TYPE, drawattrib);
+  TRACE("pAttr[?] = GLX_DRAWABLE_TYPE: %#x\n", drawattrib);
+
+  /* Set GLX_RENDER_TYPE all the time */
+  PUSH2(oGLXAttr, GLX_RENDER_TYPE, pixelattrib);
+  TRACE("pAttr[?] = GLX_RENDER_TYPE: %#x\n", pixelattrib);
+
+  /* Set GLX_FLOAT_COMPONENTS_NV all the time */
+  if(strstr(WineGLInfo.glxExtensions, "GLX_NV_float_buffer")) {
+    PUSH2(oGLXAttr, GLX_FLOAT_COMPONENTS_NV, nvfloatattrib);
+    TRACE("pAttr[?] = GLX_FLOAT_COMPONENTS_NV: %#x\n", nvfloatattrib);
   }
 
   return nAttribs;
@@ -2456,10 +2463,6 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
     int nCfgs = 0;
     UINT it;
     int fmt_id;
-
-    GLXFBConfig* cfgs_fmt = NULL;
-    int nCfgs_fmt = 0;
-
     int fmt = 0;
     int pfmt_it = 0;
 
@@ -2482,17 +2485,9 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
         return GL_FALSE;
     }
 
-    /* Get a list of all FB configurations */
-    cfgs_fmt = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &nCfgs_fmt);
-    if (NULL == cfgs_fmt) {
-        ERR("Failed to get All FB Configs\n");
-        XFree(cfgs);
-        return GL_FALSE;
-    }
-
     /* Loop through all matching formats and check if they are suitable.
     * Note that this function should at max return nMaxFormats different formats */
-    for (it = 0; pfmt_it < nMaxFormats && it < nCfgs; ++it) {
+    for (it = 0; it < nCfgs; ++it) {
         gl_test = pglXGetFBConfigAttrib(gdi_display, cfgs[it], GLX_FBCONFIG_ID, &fmt_id);
         if (gl_test) {
             ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
@@ -2504,15 +2499,16 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
         if(!fmt)
             continue;
 
-        piFormats[pfmt_it] = fmt;
-        TRACE("at %d/%d found FBCONFIG_ID 0x%x (%d/%d)\n", it + 1, nCfgs, fmt_id, piFormats[pfmt_it], nCfgs_fmt);
+        if(pfmt_it < nMaxFormats) {
+            piFormats[pfmt_it] = fmt;
+            TRACE("at %d/%d found FBCONFIG_ID 0x%x (%d)\n", it + 1, nCfgs, fmt_id, piFormats[pfmt_it]);
+        }
         pfmt_it++;
     }
 
     *nNumFormats = pfmt_it;
     /** free list */
     XFree(cfgs);
-    XFree(cfgs_fmt);
     return GL_TRUE;
 }
 
