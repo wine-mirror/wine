@@ -399,6 +399,20 @@ GpStatus WINGDIPAPI GdipGetPointCount(GpPath *path, INT *count)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipIsOutlineVisiblePathPointI(GpPath* path, INT x, INT y,
+    GpPen *pen, GpGraphics *graphics, BOOL *result)
+{
+    static int calls;
+
+    if(!path || !pen)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipStartPathFigure(GpPath *path)
 {
     if(!path)
