@@ -67,6 +67,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     (*grad)->brush.gdibrush = CreateSolidBrush(col);
     (*grad)->brush.bt = BrushTypeSolidColor;
     (*grad)->centercolor = 0xffffffff;
+    (*grad)->wrap = WrapModeClamp;
 
     return Ok;
 }
@@ -131,6 +132,17 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
 
     DeleteObject(grad->brush.gdibrush);
     grad->brush.gdibrush = CreateSolidBrush(grad->brush.lb.lbColor);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetPathGradientWrapMode(GpPathGradient *grad,
+    GpWrapMode wrap)
+{
+    if(!grad)
+        return InvalidParameter;
+
+    grad->wrap = wrap;
 
     return Ok;
 }

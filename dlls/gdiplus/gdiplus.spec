@@ -560,7 +560,7 @@
 @ stub GdipSetPathGradientSigmaBlend
 @ stub GdipSetPathGradientSurroundColorsWithCount
 @ stub GdipSetPathGradientTransform
-@ stub GdipSetPathGradientWrapMode
+@ stdcall GdipSetPathGradientWrapMode(ptr long)
 @ stub GdipSetPathMarker
 @ stdcall GdipSetPenBrushFill(ptr ptr)
 @ stdcall GdipSetPenColor(ptr long)

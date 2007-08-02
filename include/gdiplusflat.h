@@ -95,6 +95,7 @@ GpStatus WINGDIPAPI GdipGetBrushType(GpBrush*,GpBrushType*);
 GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush*);
 GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill*,ARGB*);
 GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient*,ARGB);
+GpStatus WINGDIPAPI GdipSetPathGradientWrapMode(GpPathGradient*,GpWrapMode);
 GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill*,ARGB);
 
 GpStatus WINGDIPAPI GdipAddPathArc(GpPath*,REAL,REAL,REAL,REAL,REAL,REAL);
