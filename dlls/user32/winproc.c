@@ -53,9 +53,11 @@ typedef struct tagWINDOWPROC
 
 #define WINPROC_HANDLE (~0UL >> 16)
 #define MAX_WINPROCS  8192
+#define BUILTIN_WINPROCS 8  /* first BUILTIN_WINPROCS entries are reserved for builtin procs */
 
 static WINDOWPROC winproc_array[MAX_WINPROCS];
-static UINT winproc_used;
+static UINT builtin_used;
+static UINT winproc_used = BUILTIN_WINPROCS;
 
 static CRITICAL_SECTION winproc_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -83,7 +85,7 @@ static inline WINDOWPROC *find_winproc16( WNDPROC16 func )
 {
     unsigned int i;
 
-    for (i = 0; i < winproc_used; i++)
+    for (i = BUILTIN_WINPROCS; i < winproc_used; i++)
     {
         if (winproc_array[i].proc16 == func) return &winproc_array[i];
     }
@@ -96,12 +98,31 @@ static inline WINDOWPROC *find_winproc( WNDPROC funcA, WNDPROC funcW )
 {
     unsigned int i;
 
-    for (i = 0; i < winproc_used; i++)
+    for (i = 0; i < builtin_used; i++)
     {
         /* match either proc, some apps confuse A and W */
         if (funcA && winproc_array[i].procA != funcA && winproc_array[i].procW != funcA) continue;
         if (funcW && winproc_array[i].procA != funcW && winproc_array[i].procW != funcW) continue;
         return &winproc_array[i];
+    }
+    for (i = BUILTIN_WINPROCS; i < winproc_used; i++)
+    {
+        if (funcA && winproc_array[i].procA != funcA) continue;
+        if (funcW && winproc_array[i].procW != funcW) continue;
+        return &winproc_array[i];
+    }
+    return NULL;
+}
+
+/* find an existing builtin winproc */
+static inline WINDOWPROC *find_builtin_proc( WNDPROC func )
+{
+    unsigned int i;
+
+    for (i = 0; i < builtin_used; i++)
+    {
+        if (winproc_array[i].procA == func || winproc_array[i].procW == func)
+            return &winproc_array[i];
     }
     return NULL;
 }
@@ -136,13 +157,23 @@ static inline WINDOWPROC *alloc_winproc( WNDPROC funcA, WNDPROC funcW )
     /* check if we already have a winproc for that function */
     if (!(proc = find_winproc( funcA, funcW )))
     {
-        if (winproc_used < MAX_WINPROCS)
+        if (funcA && funcW)
+        {
+            assert( builtin_used < BUILTIN_WINPROCS );
+            proc = &winproc_array[builtin_used++];
+            proc->procA = funcA;
+            proc->procW = funcW;
+            TRACE( "allocated %p for builtin %p/%p (%d/%d used)\n",
+                   proc_to_handle(proc), funcA, funcW, builtin_used, BUILTIN_WINPROCS );
+        }
+        else if (winproc_used < MAX_WINPROCS)
         {
             proc = &winproc_array[winproc_used++];
             proc->procA = funcA;
             proc->procW = funcW;
-            TRACE( "allocated %p for %p/%p (%d/%d used)\n",
-                   proc_to_handle(proc), funcA, funcW, winproc_used, MAX_WINPROCS );
+            TRACE( "allocated %p for %c %p (%d/%d used)\n",
+                   proc_to_handle(proc), funcA ? 'A' : 'W', funcA ? funcA : funcW,
+                   winproc_used, MAX_WINPROCS );
         }
         else FIXME( "too many winprocs, cannot allocate one for %p/%p\n", funcA, funcW );
     }
@@ -2226,7 +2257,7 @@ LRESULT WINAPI CallWindowProcA(
 
     if (!func) return 0;
 
-    if (!(proc = handle_to_proc( func )))
+    if (!(proc = handle_to_proc( func )) && !(proc = find_builtin_proc( func )))
         call_window_proc( hwnd, msg, wParam, lParam, &result, func );
     else if (proc->procA)
         call_window_proc( hwnd, msg, wParam, lParam, &result, proc->procA );
@@ -2251,7 +2282,7 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
 
     if (!func) return 0;
 
-    if (!(proc = handle_to_proc( func )))
+    if (!(proc = handle_to_proc( func )) && !(proc = find_builtin_proc( func )))
         call_window_proc( hwnd, msg, wParam, lParam, &result, func );
     else if (proc->procW)
         call_window_proc( hwnd, msg, wParam, lParam, &result, proc->procW );
@@ -2309,7 +2340,7 @@ INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
 
     if (!func) return 0;
 
-    if (!(proc = handle_to_proc( (WNDPROC)func )))
+    if (!(proc = handle_to_proc( func )) && !(proc = find_builtin_proc( func )))
         ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
     else if (proc->procA)
         ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procA );
@@ -2338,7 +2369,7 @@ INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
 
     if (!func) return 0;
 
-    if (!(proc = handle_to_proc( (WNDPROC)func )))
+    if (!(proc = handle_to_proc( func )) && !(proc = find_builtin_proc( func )))
         ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
     else if (proc->procW)
         ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procW );
