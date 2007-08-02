@@ -100,22 +100,23 @@ WCHAR* load_string (UINT id)
  * not. Caller is responsible for releasing the result.
  *
  */
-static char *get_config_key (HKEY root, const char *subkey, const char *name, const char *def)
+static WCHAR *get_config_key (HKEY root, const WCHAR *subkey, const WCHAR *name, const WCHAR *def)
 {
-    LPSTR buffer = NULL;
+    LPWSTR buffer = NULL;
     DWORD len;
     HKEY hSubKey = NULL;
     DWORD res;
 
-    WINE_TRACE("subkey=%s, name=%s, def=%s\n", subkey, name, def);
+    WINE_TRACE("subkey=%s, name=%s, def=%s\n", wine_dbgstr_w(subkey),
+               wine_dbgstr_w(name), wine_dbgstr_w(def));
 
-    res = RegOpenKey(root, subkey, &hSubKey);
+    res = RegOpenKeyW(root, subkey, &hSubKey);
     if (res != ERROR_SUCCESS)
     {
         if (res == ERROR_FILE_NOT_FOUND)
         {
             WINE_TRACE("Section key not present - using default\n");
-            return def ? strdupA(def) : NULL;
+            return def ? strdupW(def) : NULL;
         }
         else
         {
@@ -124,11 +125,11 @@ static char *get_config_key (HKEY root, const char *subkey, const char *name, co
         goto end;
     }
 
-    res = RegQueryValueExA(hSubKey, name, NULL, NULL, NULL, &len);
+    res = RegQueryValueExW(hSubKey, name, NULL, NULL, NULL, &len);
     if (res == ERROR_FILE_NOT_FOUND)
     {
         WINE_TRACE("Value not present - using default\n");
-        buffer = def ? strdupA(def) : NULL;
+        buffer = def ? strdupW(def) : NULL;
 	goto end;
     } else if (res != ERROR_SUCCESS)
     {
@@ -136,11 +137,11 @@ static char *get_config_key (HKEY root, const char *subkey, const char *name, co
         goto end;
     }
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, len + 1);
+    buffer = HeapAlloc(GetProcessHeap(), 0, len + sizeof(WCHAR));
 
-    RegQueryValueEx(hSubKey, name, NULL, NULL, (LPBYTE) buffer, &len);
+    RegQueryValueExW(hSubKey, name, NULL, NULL, (LPBYTE) buffer, &len);
 
-    WINE_TRACE("buffer=%s\n", buffer);
+    WINE_TRACE("buffer=%s\n", wine_dbgstr_w(buffer));
 end:
     if (hSubKey && hSubKey != root) RegCloseKey(hSubKey);
 
@@ -158,17 +159,18 @@ end:
  *
  * If valueName or value is NULL, an empty section will be created
  */
-static int set_config_key(HKEY root, const char *subkey, const char *name, const void *value, DWORD type) {
+static int set_config_key(HKEY root, const WCHAR *subkey, const WCHAR *name, const void *value, DWORD type) {
     DWORD res = 1;
     HKEY key = NULL;
 
-    WINE_TRACE("subkey=%s: name=%s, value=%p, type=%d\n", subkey, name, value, type);
+    WINE_TRACE("subkey=%s: name=%s, value=%p, type=%d\n", wine_dbgstr_w(subkey),
+               wine_dbgstr_w(name), value, type);
 
     assert( subkey != NULL );
 
     if (subkey[0])
     {
-        res = RegCreateKey(root, subkey, &key);
+        res = RegCreateKeyW(root, subkey, &key);
         if (res != ERROR_SUCCESS) goto end;
     }
     else key = root;
@@ -176,69 +178,71 @@ static int set_config_key(HKEY root, const char *subkey, const char *name, const
 
     switch (type)
     {
-        case REG_SZ: res = RegSetValueEx(key, name, 0, REG_SZ, value, strlen(value) + 1); break;
-        case REG_DWORD: res = RegSetValueEx(key, name, 0, REG_DWORD, value, sizeof(DWORD)); break;
+        case REG_SZ: res = RegSetValueExW(key, name, 0, REG_SZ, value, (lstrlenW(value)+1)*sizeof(WCHAR)); break;
+        case REG_DWORD: res = RegSetValueExW(key, name, 0, REG_DWORD, value, sizeof(DWORD)); break;
     }
     if (res != ERROR_SUCCESS) goto end;
 
     res = 0;
 end:
     if (key && key != root) RegCloseKey(key);
-    if (res != 0) WINE_ERR("Unable to set configuration key %s in section %s, res=%d\n", name, subkey, res);
+    if (res != 0)
+        WINE_ERR("Unable to set configuration key %s in section %s, res=%d\n",
+                 wine_dbgstr_w(name), wine_dbgstr_w(subkey), res);
     return res;
 }
 
 /* removes the requested value from the registry, however, does not
  * remove the section if empty. Returns S_OK (0) on success.
  */
-static HRESULT remove_value(HKEY root, const char *subkey, const char *name)
+static HRESULT remove_value(HKEY root, const WCHAR *subkey, const WCHAR *name)
 {
     HRESULT hr;
     HKEY key;
 
-    WINE_TRACE("subkey=%s, name=%s\n", subkey, name);
+    WINE_TRACE("subkey=%s, name=%s\n", wine_dbgstr_w(subkey), wine_dbgstr_w(name));
 
-    hr = RegOpenKey(root, subkey, &key);
+    hr = RegOpenKeyW(root, subkey, &key);
     if (hr != S_OK) return hr;
 
-    hr = RegDeleteValue(key, name);
+    hr = RegDeleteValueW(key, name);
     if (hr != ERROR_SUCCESS) return hr;
 
     return S_OK;
 }
 
 /* removes the requested subkey from the registry, assuming it exists */
-static LONG remove_path(HKEY root, char *section) {
+static LONG remove_path(HKEY root, WCHAR *section) {
     HKEY branch_key;
     DWORD max_sub_key_len;
     DWORD subkeys;
     DWORD curr_len;
     LONG ret = ERROR_SUCCESS;
     long int i;
-    char *buffer;
+    WCHAR *buffer;
 
-    WINE_TRACE("section=%s\n", section);
+    WINE_TRACE("section=%s\n", wine_dbgstr_w(section));
 
-    if ((ret = RegOpenKey(root, section, &branch_key)) != ERROR_SUCCESS)
+    if ((ret = RegOpenKeyW(root, section, &branch_key)) != ERROR_SUCCESS)
         return ret;
 
     /* get size information and resize the buffers if necessary */
-    if ((ret = RegQueryInfoKey(branch_key, NULL, NULL, NULL,
+    if ((ret = RegQueryInfoKeyW(branch_key, NULL, NULL, NULL,
                                &subkeys, &max_sub_key_len,
                                NULL, NULL, NULL, NULL, NULL, NULL
                               )) != ERROR_SUCCESS)
         return ret;
 
-    curr_len = strlen(section);
-    buffer = HeapAlloc(GetProcessHeap(), 0, max_sub_key_len + curr_len + 1);
-    strcpy(buffer, section);
+    curr_len = lstrlenW(section);
+    buffer = HeapAlloc(GetProcessHeap(), 0, (max_sub_key_len + curr_len + 1)*sizeof(WCHAR));
+    lstrcpyW(buffer, section);
 
     buffer[curr_len] = '\\';
     for (i = subkeys - 1; i >= 0; i--)
     {
         DWORD buf_len = max_sub_key_len - curr_len - 1;
 
-        ret = RegEnumKeyEx(branch_key, i, buffer + curr_len + 1,
+        ret = RegEnumKeyExW(branch_key, i, buffer + curr_len + 1,
                            &buf_len, NULL, NULL, NULL, NULL);
         if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA &&
             ret != ERROR_NO_MORE_ITEMS)
@@ -249,7 +253,7 @@ static LONG remove_path(HKEY root, char *section) {
     HeapFree(GetProcessHeap(), 0, buffer);
     RegCloseKey(branch_key);
 
-    return RegDeleteKey(root, section);
+    return RegDeleteKeyW(root, section);
 }
 
 
@@ -271,9 +275,9 @@ struct setting
 {
     struct list entry;
     HKEY root;    /* the key on which path is rooted */
-    char *path;   /* path in the registry rooted at root  */
-    char *name;   /* name of the registry value. if null, this means delete the key  */
-    char *value;  /* contents of the registry value. if null, this means delete the value  */
+    WCHAR *path;   /* path in the registry rooted at root  */
+    WCHAR *name;   /* name of the registry value. if null, this means delete the key  */
+    WCHAR *value;  /* contents of the registry value. if null, this means delete the value  */
     DWORD type;   /* type of registry value. REG_SZ or REG_DWORD for now */
 };
 
@@ -284,8 +288,9 @@ static void free_setting(struct setting *setting)
     assert( setting != NULL );
     assert( setting->path );
 
-    WINE_TRACE("destroying %p: %s\n", setting, setting->path);
-    
+    WINE_TRACE("destroying %p: %s\n", setting,
+               wine_dbgstr_w(setting->path));
+
     HeapFree(GetProcessHeap(), 0, setting->path);
     HeapFree(GetProcessHeap(), 0, setting->name);
     HeapFree(GetProcessHeap(), 0, setting->value);
@@ -303,13 +308,14 @@ static void free_setting(struct setting *setting)
  * If already in the list, the contents as given there will be
  * returned. You are expected to HeapFree the result.
  */
-char *get_reg_key(HKEY root, const char *path, const char *name, const char *def)
+WCHAR *get_reg_keyW(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *def)
 {
     struct list *cursor;
     struct setting *s;
-    char *val;
+    WCHAR *val;
 
-    WINE_TRACE("path=%s, name=%s, def=%s\n", path, name, def);
+    WINE_TRACE("path=%s, name=%s, def=%s\n", wine_dbgstr_w(path),
+               wine_dbgstr_w(name), wine_dbgstr_w(def));
 
     /* check if it's in the list */
     LIST_FOR_EACH( cursor, settings )
@@ -317,20 +323,56 @@ char *get_reg_key(HKEY root, const char *path, const char *name, const char *def
         s = LIST_ENTRY(cursor, struct setting, entry);
 
         if (root != s->root) continue;
-        if (lstrcmpi(path, s->path) != 0) continue;
+        if (lstrcmpiW(path, s->path) != 0) continue;
         if (!s->name) continue;
-        if (lstrcmpi(name, s->name) != 0) continue;
+        if (lstrcmpiW(name, s->name) != 0) continue;
 
-        WINE_TRACE("found %s:%s in settings list, returning %s\n", path, name, s->value);
-        return s->value ? strdupA(s->value) : NULL;
+        WINE_TRACE("found %s:%s in settings list, returning %s\n",
+                   wine_dbgstr_w(path), wine_dbgstr_w(name),
+                   wine_dbgstr_w(s->value));
+        return s->value ? strdupW(s->value) : NULL;
     }
 
     /* no, so get from the registry */
     val = get_config_key(root, path, name, def);
 
-    WINE_TRACE("returning %s\n", val);
+    WINE_TRACE("returning %s\n", wine_dbgstr_w(val));
 
     return val;
+}
+
+char *get_reg_key(HKEY root, const char *path, const char *name, const char *def)
+{
+    WCHAR *wpath, *wname, *wdef = NULL, *wRet = NULL;
+    char *szRet = NULL;
+    int len;
+
+    WINE_TRACE("path=%s, name=%s, def=%s\n", path, name, def);
+
+    wpath = HeapAlloc(GetProcessHeap(), 0, (strlen(path)+1)*sizeof(WCHAR));
+    wname = HeapAlloc(GetProcessHeap(), 0, (strlen(name)+1)*sizeof(WCHAR));
+
+    MultiByteToWideChar(CP_ACP, 0, path, -1, wpath, strlen(path)+1);
+    MultiByteToWideChar(CP_ACP, 0, name, -1, wname, strlen(name)+1);
+
+    if (def)
+    {
+        wdef = HeapAlloc(GetProcessHeap(), 0, (strlen(def)+1)*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, def, -1, wdef, strlen(def)+1);
+    }
+
+    wRet = get_reg_keyW(root, wpath, wname, wdef);
+
+    len = WideCharToMultiByte(CP_ACP, 0, wRet, -1, szRet, 0, NULL, NULL);
+    szRet = HeapAlloc(GetProcessHeap(), 0, len);
+    WideCharToMultiByte(CP_ACP, 0, wRet, -1, szRet, len, NULL, NULL);
+
+    HeapFree(GetProcessHeap(), 0, wpath);
+    HeapFree(GetProcessHeap(), 0, wname);
+    HeapFree(GetProcessHeap(), 0, wdef);
+    HeapFree(GetProcessHeap(), 0, wRet);
+
+    return szRet;
 }
 
 /**
@@ -348,14 +390,15 @@ char *get_reg_key(HKEY root, const char *path, const char *name, const char *def
  *
  * These values will be copied when necessary.
  */
-static void set_reg_key_ex(HKEY root, const char *path, const char *name, const void *value, DWORD type)
+static void set_reg_key_ex(HKEY root, const WCHAR *path, const WCHAR *name, const void *value, DWORD type)
 {
     struct list *cursor;
     struct setting *s;
 
     assert( path != NULL );
 
-    WINE_TRACE("path=%s, name=%s, value=%p\n", path, name, value);
+    WINE_TRACE("path=%s, name=%s, value=%p\n", wine_dbgstr_w(path),
+               wine_dbgstr_w(name), wine_dbgstr_w(value));
 
     /* firstly, see if we already set this setting  */
     LIST_FOR_EACH( cursor, settings )
@@ -363,14 +406,14 @@ static void set_reg_key_ex(HKEY root, const char *path, const char *name, const 
         struct setting *s = LIST_ENTRY(cursor, struct setting, entry);
 
         if (root != s->root) continue;
-        if (lstrcmpi(s->path, path) != 0) continue;
-        if ((s->name && name) && lstrcmpi(s->name, name) != 0) continue;
+        if (lstrcmpiW(s->path, path) != 0) continue;
+        if ((s->name && name) && lstrcmpiW(s->name, name) != 0) continue;
 
         /* are we attempting a double delete? */
         if (!s->name && !name) return;
 
         /* do we want to undelete this key? */
-        if (!s->name && name) s->name = strdupA(name);
+        if (!s->name && name) s->name = strdupW(name);
 
         /* yes, we have already set it, so just replace the content and return  */
         HeapFree(GetProcessHeap(), 0, s->value);
@@ -378,7 +421,7 @@ static void set_reg_key_ex(HKEY root, const char *path, const char *name, const 
         switch (type)
         {
             case REG_SZ:
-                s->value = value ? strdupA(value) : NULL;
+                s->value = value ? strdupW(value) : NULL;
                 break;
             case REG_DWORD:
                 s->value = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD));
@@ -402,13 +445,13 @@ static void set_reg_key_ex(HKEY root, const char *path, const char *name, const 
     /* otherwise add a new setting for it  */
     s = HeapAlloc(GetProcessHeap(), 0, sizeof(struct setting));
     s->root  = root;
-    s->path  = strdupA(path);
-    s->name  = name  ? strdupA(name)  : NULL;
+    s->path  = strdupW(path);
+    s->name  = name  ? strdupW(name)  : NULL;
     s->type  = type;
     switch (type)
     {
         case REG_SZ:
-            s->value = value ? strdupA(value) : NULL;
+            s->value = value ? strdupW(value) : NULL;
             break;
         case REG_DWORD:
             s->value = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD));
@@ -421,12 +464,37 @@ static void set_reg_key_ex(HKEY root, const char *path, const char *name, const 
 
 void set_reg_key(HKEY root, const char *path, const char *name, const char *value)
 {
-    set_reg_key_ex(root, path, name, value, REG_SZ);
+    WCHAR *wpath, *wname, *wvalue;
+
+    wpath = HeapAlloc(GetProcessHeap(), 0, (strlen(path)+1)*sizeof(WCHAR));
+    wname = HeapAlloc(GetProcessHeap(), 0, (strlen(name)+1)*sizeof(WCHAR));
+    wvalue = HeapAlloc(GetProcessHeap(), 0, (strlen(value)+1)*sizeof(WCHAR));
+
+    MultiByteToWideChar(CP_ACP, 0, path, -1, wpath, strlen(path)+1);
+    MultiByteToWideChar(CP_ACP, 0, name, -1, wname, strlen(name)+1);
+    MultiByteToWideChar(CP_ACP, 0, value, -1, wvalue, strlen(value)+1);
+
+    set_reg_key_ex(root, wpath, wname, wvalue, REG_SZ);
+
+    HeapFree(GetProcessHeap(), 0, wpath);
+    HeapFree(GetProcessHeap(), 0, wname);
+    HeapFree(GetProcessHeap(), 0, wvalue);
 }
 
 void set_reg_key_dword(HKEY root, const char *path, const char *name, DWORD value)
 {
-    set_reg_key_ex(root, path, name, &value, REG_DWORD);
+    WCHAR *wpath, *wname;
+
+    wpath = HeapAlloc(GetProcessHeap(), 0, (strlen(path)+1)*sizeof(WCHAR));
+    wname = HeapAlloc(GetProcessHeap(), 0, (strlen(name)+1)*sizeof(WCHAR));
+
+    MultiByteToWideChar(CP_ACP, 0, path, -1, wpath, strlen(path)+1);
+    MultiByteToWideChar(CP_ACP, 0, name, -1, wname, strlen(name)+1);
+
+    set_reg_key_ex(root, wpath, wname, &value, REG_DWORD);
+
+    HeapFree(GetProcessHeap(), 0, wpath);
+    HeapFree(GetProcessHeap(), 0, wname);
 }
 
 /**
@@ -436,35 +504,35 @@ void set_reg_key_dword(HKEY root, const char *path, const char *name, DWORD valu
  * you are expected to HeapFree each element of the array, which is null
  * terminated, as well as the array itself.
  */
-char **enumerate_values(HKEY root, char *path)
+WCHAR **enumerate_valuesW(HKEY root, WCHAR *path)
 {
     HKEY key;
     DWORD res, i = 0;
-    char **values = NULL;
+    WCHAR **values = NULL;
     int valueslen = 0;
     struct list *cursor;
 
-    res = RegOpenKey(root, path, &key);
+    res = RegOpenKeyW(root, path, &key);
     if (res == ERROR_SUCCESS)
     {
         while (TRUE)
         {
-            char name[1024];
+            WCHAR name[1024];
             DWORD namesize = sizeof(name);
             BOOL removed = FALSE;
 
             /* find out the needed size, allocate a buffer, read the value  */
-            if ((res = RegEnumValue(key, i, name, &namesize, NULL, NULL, NULL, NULL)) != ERROR_SUCCESS)
+            if ((res = RegEnumValueW(key, i, name, &namesize, NULL, NULL, NULL, NULL)) != ERROR_SUCCESS)
                 break;
 
-            WINE_TRACE("name=%s\n", name);
+            WINE_TRACE("name=%s\n", wine_dbgstr_w(name));
 
             /* check if this value name has been removed in the settings list  */
             LIST_FOR_EACH( cursor, settings )
             {
                 struct setting *s = LIST_ENTRY(cursor, struct setting, entry);
-                if (lstrcmpi(s->path, path) != 0) continue;
-                if (lstrcmpi(s->name, name) != 0) continue;
+                if (lstrcmpiW(s->path, path) != 0) continue;
+                if (lstrcmpiW(s->name, name) != 0) continue;
 
                 if (!s->value)
                 {
@@ -482,17 +550,18 @@ char **enumerate_values(HKEY root, char *path)
             }
 
             /* grow the array if necessary, add buffer to it, iterate  */
-            if (values) values = HeapReAlloc(GetProcessHeap(), 0, values, sizeof(char*) * (valueslen + 1));
-            else values = HeapAlloc(GetProcessHeap(), 0, sizeof(char*));
+            if (values) values = HeapReAlloc(GetProcessHeap(), 0, values, sizeof(WCHAR*) * (valueslen + 1));
+            else values = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR*));
 
-            values[valueslen++] = strdupA(name);
+            values[valueslen++] = strdupW(name);
             WINE_TRACE("valueslen is now %d\n", valueslen);
             i++;
         }
     }
     else
     {
-        WINE_WARN("failed opening registry key %s, res=0x%x\n", path, res);
+        WINE_WARN("failed opening registry key %s, res=0x%x\n",
+                  wine_dbgstr_w(path), res);
     }
 
     WINE_TRACE("adding settings in list but not registry\n");
@@ -503,13 +572,13 @@ char **enumerate_values(HKEY root, char *path)
         struct setting *setting = LIST_ENTRY(cursor, struct setting, entry);
         BOOL found = FALSE;
 
-        if (lstrcmpi(setting->path, path) != 0) continue;
+        if (lstrcmpiW(setting->path, path) != 0) continue;
 
         if (!setting->value) continue;
 
         for (i = 0; i < valueslen; i++)
         {
-            if (lstrcmpi(setting->name, values[i]) == 0)
+            if (lstrcmpiW(setting->name, values[i]) == 0)
             {
                 found = TRUE;
                 break;
@@ -518,25 +587,59 @@ char **enumerate_values(HKEY root, char *path)
 
         if (found) continue;
 
-        WINE_TRACE("%s in list but not registry\n", setting->name);
+        WINE_TRACE("%s in list but not registry\n", wine_dbgstr_w(setting->name));
 
         /* otherwise it's been set by the user but isn't in the registry */
-        if (values) values = HeapReAlloc(GetProcessHeap(), 0, values, sizeof(char*) * (valueslen + 1));
-        else values = HeapAlloc(GetProcessHeap(), 0, sizeof(char*));
+        if (values) values = HeapReAlloc(GetProcessHeap(), 0, values, sizeof(WCHAR*) * (valueslen + 1));
+        else values = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR*));
 
-        values[valueslen++] = strdupA(setting->name);
+        values[valueslen++] = strdupW(setting->name);
     }
 
     WINE_TRACE("adding null terminator\n");
     if (values)
     {
-        values = HeapReAlloc(GetProcessHeap(), 0, values, sizeof(char*) * (valueslen + 1));
+        values = HeapReAlloc(GetProcessHeap(), 0, values, sizeof(WCHAR*) * (valueslen + 1));
         values[valueslen] = NULL;
     }
 
     RegCloseKey(key);
 
     return values;
+}
+
+char **enumerate_values(HKEY root, char *path)
+{
+    WCHAR *wpath;
+    WCHAR **wret;
+    char **ret=NULL;
+    int i=0, len=0;
+
+    wpath = HeapAlloc(GetProcessHeap(), 0, (strlen(path)+1)*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, path, -1, wpath, strlen(path)+1);
+
+    wret = enumerate_valuesW(root, wpath);
+
+    if (wret)
+    {
+        for(len=0; wret[len]; len++);
+        ret = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(char*));
+
+        /* convert WCHAR ** to char ** and HeapFree each WCHAR * element on our way */
+        for (i=0; i<len; i++)
+        {
+            ret[i] = HeapAlloc(GetProcessHeap(), 0,
+                               (lstrlenW(wret[i]) + 1) * sizeof(char));
+            WideCharToMultiByte(CP_ACP, 0, wret[i], -1, ret[i],
+                                lstrlenW(wret[i]) + 1, NULL, NULL);
+            HeapFree(GetProcessHeap(), 0, wret[i]);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, wpath);
+    HeapFree(GetProcessHeap(), 0, wret);
+
+    return ret;
 }
 
 /**
@@ -560,7 +663,8 @@ static void process_setting(struct setting *s)
 {
     if (s->value)
     {
-	WINE_TRACE("Setting %s:%s to '%s'\n", s->path, s->name, s->value);
+	WINE_TRACE("Setting %s:%s to '%s'\n", wine_dbgstr_w(s->path),
+                   wine_dbgstr_w(s->name), wine_dbgstr_w(s->value));
         set_config_key(s->root, s->path, s->name, s->value, s->type);
     }
     else

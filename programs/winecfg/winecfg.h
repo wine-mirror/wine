@@ -51,6 +51,11 @@ extern WCHAR* current_app; /* NULL means editing global settings  */
    be copied, so free them too when necessary.
  */
 
+void set_reg_keyW(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *value);
+void set_reg_key_dwordW(HKEY root, const WCHAR *path, const WCHAR *name, DWORD value);
+WCHAR *get_reg_keyW(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *def);
+WCHAR **enumerate_valuesW(HKEY root, WCHAR *path);
+
 void set_reg_key(HKEY root, const char *path, const char *name, const char *value);
 void set_reg_key_dword(HKEY root, const char *path, const char *name, DWORD value);
 char *get_reg_key(HKEY root, const char *path, const char *name, const char *def);
