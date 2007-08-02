@@ -2092,7 +2092,7 @@ static PWINECRYPT_CERTSTORE CRYPT_PhysOpenStoreW(HCRYPTPROV hCryptProv,
 }
 
 HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
- DWORD dwMsgAndCertEncodingType, HCRYPTPROV hCryptProv, DWORD dwFlags,
+ DWORD dwMsgAndCertEncodingType, HCRYPTPROV_LEGACY hCryptProv, DWORD dwFlags,
  const void* pvPara)
 {
     WINECRYPT_CERTSTORE *hcs;
@@ -2173,7 +2173,7 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
     return (HCERTSTORE)hcs;
 }
 
-HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV hProv,
+HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv,
  LPCSTR szSubSystemProtocol)
 {
     if (!szSubSystemProtocol)
@@ -2185,7 +2185,7 @@ HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV hProv,
      CERT_SYSTEM_STORE_CURRENT_USER, szSubSystemProtocol);
 }
 
-HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV hProv,
+HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv,
  LPCWSTR szSubSystemProtocol)
 {
     if (!szSubSystemProtocol)
