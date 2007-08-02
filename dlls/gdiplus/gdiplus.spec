@@ -495,7 +495,7 @@
 @ stub GdipSaveAddImage
 @ stdcall GdipSaveGraphics(ptr ptr)
 @ stub GdipSaveImageToFile
-@ stdcall GdipSaveImageToStream(ptr ptr ptr)
+@ stdcall GdipSaveImageToStream(ptr ptr ptr ptr)
 @ stub GdipScaleLineTransform
 @ stdcall GdipScaleMatrix(ptr long long long)
 @ stub GdipScalePathGradientTransform
@@ -522,7 +522,7 @@
 @ stub GdipSetEffectParameters
 @ stub GdipSetEmpty
 @ stub GdipSetImageAttributesCachedBackground
-@ stdcall GdipSetImageAttributesColorKeys(ptr long long long)
+@ stdcall GdipSetImageAttributesColorKeys(ptr long long long long)
 @ stub GdipSetImageAttributesColorMatrix
 @ stub GdipSetImageAttributesGamma
 @ stub GdipSetImageAttributesNoOp
