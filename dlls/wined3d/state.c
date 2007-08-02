@@ -1370,7 +1370,7 @@ static void state_multisampleaa(DWORD state, IWineD3DStateBlockImpl *stateblock,
         }
     } else {
         if(stateblock->renderState[WINED3DRS_MULTISAMPLEANTIALIAS]) {
-            ERR("Multisample antialiasing not supported by gl\n");
+            WARN("Multisample antialiasing not supported by gl\n");
         }
     }
 }
