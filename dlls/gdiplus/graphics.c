@@ -849,7 +849,6 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     IStream *stream = NULL;
     UINT read;
     BYTE* copy;
-    METAFILEPICT mfp;
     HENHMETAFILE hemf;
     GpStatus retval = GenericError;
 
@@ -859,21 +858,13 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     if(!(calls++))
         FIXME("partially implemented\n");
 
-    if(placeable->Inch != INCH_HIMETRIC)
-        return NotImplemented;
-
-    mfp.mm   = MM_HIMETRIC;
-    mfp.xExt = placeable->BoundingBox.Right - placeable->BoundingBox.Left;
-    mfp.yExt = placeable->BoundingBox.Bottom - placeable->BoundingBox.Top;
-    mfp.hMF  = NULL;
-
     read = GetMetaFileBitsEx(hwmf, 0, NULL);
     if(!read)
         return GenericError;
     copy = GdipAlloc(read);
     GetMetaFileBitsEx(hwmf, read, copy);
 
-    hemf = SetWinMetaFileBits(read, copy, NULL, &mfp);
+    hemf = SetWinMetaFileBits(read, copy, NULL, NULL);
     GdipFree(copy);
 
     read = GetEnhMetaFileBits(hemf, 0, NULL);
