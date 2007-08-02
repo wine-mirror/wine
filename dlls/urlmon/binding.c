@@ -939,6 +939,9 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         end_download = TRUE;
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                 BINDSTATUS_ENDDOWNLOADDATA, This->url);
+    } else if(bscf & BSCF_INTERMEDIATEDATANOTIFICATION) {
+        IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
+                BINDSTATUS_DOWNLOADINGDATA, This->url);
     }
 
     if(!This->request_locked) {
