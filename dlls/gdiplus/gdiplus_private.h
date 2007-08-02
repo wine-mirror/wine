@@ -92,6 +92,11 @@ struct GpSolidFill{
     ARGB color;
 };
 
+struct GpPathGradient{
+    GpBrush brush;
+    ARGB centercolor;
+};
+
 struct GpPath{
     GpFillMode fill;
     GpPathData pathdata;

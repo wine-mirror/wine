@@ -23,6 +23,9 @@
 
 #include "gdiplus.h"
 #include "gdiplus_private.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
 {
@@ -41,6 +44,29 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
         default:
             return NotImplemented;
     }
+
+    return Ok;
+}
+
+/* FIXME: path gradient brushes not truly supported (drawn as solid brushes) */
+GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
+    GpPathGradient **grad)
+{
+    COLORREF col = ARGB2COLORREF(0xffffffff);
+
+    if(!path || !grad)
+        return InvalidParameter;
+
+    *grad = GdipAlloc(sizeof(GpPathGradient));
+    if (!*grad) return OutOfMemory;
+
+    (*grad)->brush.lb.lbStyle = BS_SOLID;
+    (*grad)->brush.lb.lbColor = col;
+    (*grad)->brush.lb.lbHatch = 0;
+
+    (*grad)->brush.gdibrush = CreateSolidBrush(col);
+    (*grad)->brush.bt = BrushTypeSolidColor;
+    (*grad)->centercolor = 0xffffffff;
 
     return Ok;
 }

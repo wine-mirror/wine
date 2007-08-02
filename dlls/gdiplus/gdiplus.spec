@@ -117,7 +117,7 @@
 @ stub GdipCreatePath2I
 @ stdcall GdipCreatePath(long ptr)
 @ stub GdipCreatePathGradient
-@ stub GdipCreatePathGradientFromPath
+@ stdcall GdipCreatePathGradientFromPath(ptr ptr)
 @ stub GdipCreatePathGradientI
 @ stdcall GdipCreatePathIter(ptr ptr)
 @ stdcall GdipCreatePen1(long long long ptr)

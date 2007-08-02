@@ -24,7 +24,7 @@
 class GpGraphics {};
 class GpGraphics {};
 class GpBrush {};
-class GpSolidFill {};
+class GpSolidFill : public GpBrush {};
 class GpPath {};
 class GpMatrix {};
 class GpPathIterator {};
@@ -33,6 +33,7 @@ class GpImage {};
 class GpMetafile : public GpImage {};
 class GpImageAttributes {};
 class GpBitmap : public GpImage {};
+class GpPathGradient : public GpBrush {};
 
 #else /* end of c++ declarations */
 
@@ -48,6 +49,7 @@ typedef struct GpImage GpImage;
 typedef struct GpMetafile GpMetafile;
 typedef struct GpImageAttributes GpImageAttributes;
 typedef struct GpBitmap GpBitmap;
+typedef struct GpPathGradient GpPathGradient;
 
 #endif /* end of c declarations */
 
