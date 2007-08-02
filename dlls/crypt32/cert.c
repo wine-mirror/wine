@@ -242,6 +242,33 @@ static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
             FIXME("CERT_SIGNATURE_HASH_PROP_ID unimplemented\n");
             SetLastError(CRYPT_E_NOT_FOUND);
             break;
+        case CERT_KEY_IDENTIFIER_PROP_ID:
+        {
+            PCERT_EXTENSION ext = CertFindExtension(
+             szOID_SUBJECT_KEY_IDENTIFIER, pCertContext->pCertInfo->cExtension,
+             pCertContext->pCertInfo->rgExtension);
+
+            if (ext)
+            {
+                CRYPT_DATA_BLOB *value;
+                DWORD size;
+
+                ret = CryptDecodeObjectEx(X509_ASN_ENCODING,
+                 szOID_SUBJECT_KEY_IDENTIFIER, ext->Value.pbData,
+                 ext->Value.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &value,
+                 &size);
+                if (ret)
+                {
+                    ret = CertContext_CopyParam(pvData, pcbData, value->pbData,
+                     value->cbData);
+                    CertContext_SetProperty(context, dwPropId, 0, value);
+                    LocalFree(value);
+                }
+            }
+            else
+                SetLastError(ERROR_INVALID_DATA);
+            break;
+        }
         default:
             SetLastError(CRYPT_E_NOT_FOUND);
         }
@@ -299,12 +326,6 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
 
             ret = CertContext_CopyParam(pvData, pcbData, &state, sizeof(state));
         }
-        break;
-    case CERT_KEY_IDENTIFIER_PROP_ID:
-        ret = CertContext_GetProperty((void *)pCertContext, dwPropId,
-         pvData, pcbData);
-        if (!ret)
-            SetLastError(ERROR_INVALID_DATA);
         break;
     case CERT_KEY_PROV_HANDLE_PROP_ID:
     {
