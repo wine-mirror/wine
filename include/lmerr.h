@@ -21,6 +21,8 @@
 #ifndef __WINE_LMERR_H
 #define __WINE_LMERR_H
 
+#include <winerror.h>
+
 #define NERR_Success    0
 
 #define NERR_BASE                         2100

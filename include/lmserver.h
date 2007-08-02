@@ -19,6 +19,7 @@
 #define _LMSERVER_
 
 #include <winsvc.h>
+#include <lmcons.h>
 
 #ifdef __cplusplus
 extern "C" {
