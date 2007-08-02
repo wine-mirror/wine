@@ -2111,11 +2111,6 @@ static BOOL WINAPI CRYPT_AsnDecodeAltNameEntry(DWORD dwCertEncodingType,
         SetLastError(CRYPT_E_ASN1_CORRUPT);
         return FALSE;
     }
-    if ((pbEncoded[0] & ASN_FLAGS_MASK) != ASN_CONTEXT)
-    {
-        SetLastError(CRYPT_E_ASN1_BADTAG);
-        return FALSE;
-    }
     lenBytes = GET_LEN_BYTES(pbEncoded[1]);
     if (1 + lenBytes > cbEncoded)
     {
@@ -2138,16 +2133,18 @@ static BOOL WINAPI CRYPT_AsnDecodeAltNameEntry(DWORD dwCertEncodingType,
             /* FIXME: decode as OID */
         case 0: /* otherName */
         case 4: /* directoryName */
-            FIXME("stub\n");
+            FIXME("%d: stub\n", pbEncoded[0] & ASN_TYPE_MASK);
             SetLastError(CRYPT_E_ASN1_BADTAG);
             ret = FALSE;
             break;
         case 3: /* x400Address, unimplemented */
         case 5: /* ediPartyName, unimplemented */
+            TRACE("type %d unimplemented\n", pbEncoded[0] & ASN_TYPE_MASK);
             SetLastError(CRYPT_E_ASN1_BADTAG);
             ret = FALSE;
             break;
         default:
+            TRACE("type %d bad\n", pbEncoded[0] & ASN_TYPE_MASK);
             SetLastError(CRYPT_E_ASN1_CORRUPT);
             ret = FALSE;
         }
