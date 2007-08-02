@@ -78,7 +78,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  * bool seems always passed as 0 or 1, but other values work as well.... 
  * toto       result?
  */
-HRESULT WINAPI ValidateVertexShader(DWORD* vertexshader, DWORD* reserved1, DWORD* reserved2, int bool, DWORD* toto)
+HRESULT WINAPI ValidateVertexShader(DWORD* vertexshader, DWORD* reserved1, DWORD* reserved2, BOOL bool, DWORD* toto)
 { 
   HRESULT ret;
   FIXME("(%p %p %p %d %p): stub\n", vertexshader, reserved1, reserved2, bool, toto);
@@ -108,7 +108,7 @@ HRESULT WINAPI ValidateVertexShader(DWORD* vertexshader, DWORD* reserved1, DWORD
  * PARAMS
  * toto       result?
  */
-HRESULT WINAPI ValidatePixelShader(DWORD* pixelshader, DWORD* reserved1, int bool, DWORD* toto)
+HRESULT WINAPI ValidatePixelShader(DWORD* pixelshader, DWORD* reserved1, BOOL bool, DWORD* toto)
 {
   HRESULT ret;
   FIXME("(%p %p %d %p): stub\n", pixelshader, reserved1, bool, toto);

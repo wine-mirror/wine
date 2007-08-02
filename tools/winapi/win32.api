@@ -792,8 +792,8 @@ UINT
 
 %ptr
 
+DWORD *
 IDirect3D8 *
-LPVOID
 
 %void
 
