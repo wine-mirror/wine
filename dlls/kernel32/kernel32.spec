@@ -901,7 +901,7 @@
 @ stdcall RequestWakeupLatency(long)
 @ stdcall ResetEvent(long)
 @ stub ResetWriteWatch
-# @ stub RestoreLastError ( -> ntdll.RtlRestoreLastWin32Error)
+@ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error
 @ stdcall ResumeThread(long)
 # @ stub RtlCaptureContext ( -> ntdll.RtlCaptureContext)
 # @ stub RtlCaptureStackBackTrace ( -> ntdll.RtlCaptureStackBackTrace)
