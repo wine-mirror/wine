@@ -40,7 +40,7 @@
 COLORREF ARGB2COLORREF(ARGB color);
 extern INT arc2polybezier(GpPointF * points, REAL x1, REAL y1, REAL x2, REAL y2,
     REAL startAngle, REAL sweepAngle);
-extern FLOAT gdiplus_atan2(FLOAT dy, FLOAT dx);
+extern REAL gdiplus_atan2(REAL dy, REAL dx);
 
 static inline INT roundr(REAL x)
 {

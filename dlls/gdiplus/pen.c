@@ -84,7 +84,7 @@ GpStatus WINGDIPAPI GdipClonePen(GpPen *pen, GpPen **clonepen)
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, FLOAT width, GpUnit unit,
+GpStatus WINGDIPAPI GdipCreatePen1(ARGB color, REAL width, GpUnit unit,
     GpPen **pen)
 {
     GpPen *gp_pen;

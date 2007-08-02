@@ -218,7 +218,7 @@ COLORREF ARGB2COLORREF(ARGB color)
 }
 
 /* Like atan2, but puts angle in correct quadrant if dx is 0. */
-FLOAT gdiplus_atan2(FLOAT dy, FLOAT dx)
+REAL gdiplus_atan2(REAL dy, REAL dx)
 {
     if((dx == 0.0) && (dy != 0.0))
         return dy > 0.0 ? M_PI_2 : -M_PI_2;
