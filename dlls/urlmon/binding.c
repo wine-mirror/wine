@@ -949,8 +949,6 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         This->request_locked = SUCCEEDED(hres);
     }
 
-    fill_stream_buffer(This->stream);
-
     IBindStatusCallback_OnDataAvailable(This->callback, bscf, progress,
             &formatetc, &This->stgmed);
 
