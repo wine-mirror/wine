@@ -951,7 +951,7 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
 
     fill_stream_buffer(This->stream);
 
-    IBindStatusCallback_OnDataAvailable(This->callback, bscf, This->stream->buf_size,
+    IBindStatusCallback_OnDataAvailable(This->callback, bscf, progress,
             &formatetc, &This->stgmed);
 
     if(end_download) {
