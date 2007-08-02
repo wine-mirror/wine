@@ -3064,6 +3064,10 @@ typedef struct _CERT_ID
     } DUMMYUNIONNAME;
 } CERT_ID, *PCERT_ID;
 
+#define CERT_ID_ISSUER_SERIAL_NUMBER 1
+#define CERT_ID_KEY_IDENTIFIER       2
+#define CERT_ID_SHA1_HASH            3
+
 #undef CMSG_DATA /* may be defined by sys/socket.h */
 #define CMSG_DATA                 1
 #define CMSG_SIGNED               2
