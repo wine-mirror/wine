@@ -122,7 +122,9 @@ START_TEST(volume)
 {
     HMODULE d3d9_handle;
     IDirect3DDevice9 *device_ptr;
+    D3DCAPS9 caps;
 
+    memset(&caps, 0, sizeof(caps));
     d3d9_handle = LoadLibraryA("d3d9.dll");
     if (!d3d9_handle)
     {
@@ -132,6 +134,12 @@ START_TEST(volume)
 
     device_ptr = init_d3d9(d3d9_handle);
     if (!device_ptr) return;
+    IDirect3DDevice9_GetDeviceCaps(device_ptr, &caps);
+
+    if(!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP)) {
+        skip("No volume texture support\n");
+        return;
+    }
 
     test_volume_get_container(device_ptr);
 }
