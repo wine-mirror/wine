@@ -55,7 +55,7 @@
 @ stub GdipCloneImage
 @ stub GdipCloneImageAttributes
 @ stdcall GdipCloneMatrix(ptr ptr)
-@ stub GdipClonePath
+@ stdcall GdipClonePath(ptr ptr)
 @ stdcall GdipClonePen(ptr ptr)
 @ stub GdipCloneRegion
 @ stub GdipCloneStringFormat

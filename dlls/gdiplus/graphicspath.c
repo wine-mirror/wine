@@ -212,6 +212,32 @@ GpStatus WINGDIPAPI GdipAddPathPath(GpPath *path, GDIPCONST GpPath* addingPath,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipClonePath(GpPath* path, GpPath **clone)
+{
+    if(!path || !clone)
+        return InvalidParameter;
+
+    *clone = GdipAlloc(sizeof(GpPath));
+    if(!*clone) return OutOfMemory;
+
+    memcpy(*clone, path, sizeof(GpPath));
+
+    (*clone)->pathdata.Points = GdipAlloc(path->datalen * sizeof(PointF));
+    (*clone)->pathdata.Types = GdipAlloc(path->datalen);
+    if(!(*clone)->pathdata.Points || !(*clone)->pathdata.Types){
+        GdipFree(*clone);
+        GdipFree((*clone)->pathdata.Points);
+        GdipFree((*clone)->pathdata.Types);
+        return OutOfMemory;
+    }
+
+    memcpy((*clone)->pathdata.Points, path->pathdata.Points,
+           path->datalen * sizeof(PointF));
+    memcpy((*clone)->pathdata.Types, path->pathdata.Types, path->datalen);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipClosePathFigure(GpPath* path)
 {
     if(!path)
