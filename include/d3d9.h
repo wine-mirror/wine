@@ -1479,9 +1479,18 @@ DECLARE_INTERFACE_(IDirect3DDevice9,IUnknown)
 #define IDirect3DDevice9_CreateQuery(p,a,b)                            (p)->CreateQuery(a,b)
 #endif
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif  /* defined(__cplusplus) */
+
+int         WINAPI D3DPERF_BeginEvent(D3DCOLOR,LPCWSTR);
+int         WINAPI D3DPERF_EndEvent(void);
+DWORD       WINAPI D3DPERF_GetStatus(void);
+BOOL        WINAPI D3DPERF_QueryRepeatFrame(void);
+void        WINAPI D3DPERF_SetMarker(D3DCOLOR,LPCWSTR);
+void        WINAPI D3DPERF_SetOptions(DWORD);
+void        WINAPI D3DPERF_SetRegion(D3DCOLOR,LPCWSTR);
 
 /* Define the main entrypoint as well */
 IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion);
