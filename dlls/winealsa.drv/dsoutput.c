@@ -319,7 +319,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Lock(PIDSDRIVERBUFFER iface,
     }
 
     writepos = snd_pcm_bytes_to_frames(This->pcm, dwWritePosition);
-    if (writepos == This->mmap_pos && snd_pcm_state(This->pcm) == SND_PCM_STATE_RUNNING)
+    if (writepos == This->mmap_pos)
     {
         const snd_pcm_channel_area_t *areas;
         snd_pcm_uframes_t writelen = snd_pcm_bytes_to_frames(This->pcm, dwWriteLen), putin = writelen;
