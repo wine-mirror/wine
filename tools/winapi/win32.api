@@ -810,6 +810,8 @@ void
 %long
 
 BOOL
+D3DCOLOR
+DWORD
 HRESULT
 UINT
 int
@@ -817,7 +819,14 @@ int
 %ptr
 
 IDirect3D9 *
-LPVOID
+
+%wstr
+
+LPCWSTR
+
+%void
+
+void
 
 %%d3dx8.dll
 
