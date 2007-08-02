@@ -65,6 +65,10 @@ WELL_KNOWN_SID_TYPE
 WORD
 unsigned int
 
+%long --pointer
+
+ULONG_PTR
+
 %ptr
 
 BYTE *
