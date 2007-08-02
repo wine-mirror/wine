@@ -911,8 +911,55 @@ static BOOL compare_cert_by_subject_cert(PCCERT_CONTEXT pCertContext,
      &pCertInfo->Issuer, &pCertContext->pCertInfo->Subject);
 }
 
-static BOOL compare_cert_by_issuer(PCCERT_CONTEXT pCertContext,
- DWORD dwType, DWORD dwFlags, const void *pvPara)
+static BOOL compare_cert_by_cert_id(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    CERT_ID *id = (CERT_ID *)pvPara;
+    BOOL ret;
+
+    switch (id->dwIdChoice)
+    {
+    case CERT_ID_ISSUER_SERIAL_NUMBER:
+        ret = CertCompareCertificateName(pCertContext->dwCertEncodingType,
+         &pCertContext->pCertInfo->Issuer, &id->u.IssuerSerialNumber.Issuer);
+        if (ret)
+            ret = CertCompareIntegerBlob(&pCertContext->pCertInfo->SerialNumber,
+             &id->u.IssuerSerialNumber.SerialNumber);
+        break;
+    case CERT_ID_SHA1_HASH:
+        ret = compare_cert_by_sha1_hash(pCertContext, dwType, dwFlags,
+         &id->u.HashId);
+        break;
+    case CERT_ID_KEY_IDENTIFIER:
+    {
+        DWORD size = 0;
+
+        ret = CertGetCertificateContextProperty(pCertContext,
+         CERT_KEY_IDENTIFIER_PROP_ID, NULL, &size);
+        if (ret && size == id->u.KeyId.cbData)
+        {
+            LPBYTE buf = CryptMemAlloc(size);
+
+            if (buf)
+            {
+                CertGetCertificateContextProperty(pCertContext,
+                 CERT_KEY_IDENTIFIER_PROP_ID, buf, &size);
+                ret = !memcmp(buf, id->u.KeyId.pbData, size);
+                CryptMemFree(buf);
+            }
+        }
+        else
+            ret = FALSE;
+    }
+    default:
+        ret = FALSE;
+        break;
+    }
+    return ret;
+}
+
+static BOOL compare_cert_by_issuer(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
 {
     return compare_cert_by_subject_cert(pCertContext, dwType, dwFlags,
      ((PCCERT_CONTEXT)pvPara)->pCertInfo);
@@ -944,6 +991,9 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
         break;
     case CERT_COMPARE_SUBJECT_CERT:
         compare = compare_cert_by_subject_cert;
+        break;
+    case CERT_COMPARE_CERT_ID:
+        compare = compare_cert_by_cert_id;
         break;
     case CERT_COMPARE_ISSUER_OF:
         compare = compare_cert_by_issuer;
