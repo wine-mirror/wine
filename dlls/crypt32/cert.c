@@ -167,6 +167,27 @@ static BOOL CertContext_GetHashProp(void *context, DWORD dwPropId,
     return ret;
 }
 
+static BOOL CertContext_CopyParam(void *pvData, DWORD *pcbData, const void *pb,
+ DWORD cb)
+{
+    BOOL ret = TRUE;
+
+    if (!pvData)
+        *pcbData = cb;
+    else if (*pcbData < cb)
+    {
+        SetLastError(ERROR_MORE_DATA);
+        *pcbData = cb;
+        ret = FALSE;
+    }
+    else
+    {
+        memcpy(pvData, pb, cb);
+        *pcbData = cb;
+    }
+    return ret;
+}
+
 static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
  void *pvData, DWORD *pcbData)
 {
@@ -183,21 +204,7 @@ static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
     else
         ret = FALSE;
     if (ret)
-    {
-        if (!pvData)
-            *pcbData = blob.cbData;
-        else if (*pcbData < blob.cbData)
-        {
-            SetLastError(ERROR_MORE_DATA);
-            *pcbData = blob.cbData;
-            ret = FALSE;
-        }
-        else
-        {
-            memcpy(pvData, blob.pbData, blob.cbData);
-            *pcbData = blob.cbData;
-        }
-    }
+        ret = CertContext_CopyParam(pvData, pcbData, blob.pbData, blob.cbData);
     else
     {
         /* Implicit properties */
@@ -283,25 +290,14 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
         ret = FALSE;
         break;
     case CERT_ACCESS_STATE_PROP_ID:
-        if (!pvData)
-        {
-            *pcbData = sizeof(DWORD);
-            ret = TRUE;
-        }
-        else if (*pcbData < sizeof(DWORD))
-        {
-            SetLastError(ERROR_MORE_DATA);
-            *pcbData = sizeof(DWORD);
-            ret = FALSE;
-        }
+        if (pCertContext->hCertStore)
+            ret = CertGetStoreProperty(pCertContext->hCertStore, dwPropId,
+             pvData, pcbData);
         else
         {
-            if (pCertContext->hCertStore)
-                ret = CertGetStoreProperty(pCertContext->hCertStore, dwPropId,
-                 pvData, pcbData);
-            else
-                *(DWORD *)pvData = 0;
-            ret = TRUE;
+            DWORD state = 0;
+
+            ret = CertContext_CopyParam(pvData, pcbData, &state, sizeof(state));
         }
         break;
     case CERT_KEY_IDENTIFIER_PROP_ID:
@@ -318,18 +314,8 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
         ret = CertContext_GetProperty((void *)pCertContext,
          CERT_KEY_CONTEXT_PROP_ID, &keyContext, &size);
         if (ret)
-        {
-            if (!pvData)
-                *pcbData = sizeof(HCRYPTPROV);
-            else if (*pcbData < sizeof(HCRYPTPROV))
-            {
-                SetLastError(ERROR_MORE_DATA);
-                *pcbData = sizeof(HCRYPTPROV);
-                ret = FALSE;
-            }
-            else
-                *(HCRYPTPROV *)pvData = keyContext.hCryptProv;
-        }
+            ret = CertContext_CopyParam(pvData, pcbData, &keyContext.hCryptProv,
+             sizeof(keyContext.hCryptProv));
         break;
     }
     case CERT_KEY_PROV_INFO_PROP_ID:
