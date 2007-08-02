@@ -60,6 +60,7 @@ GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics*,GpPen*,GDIPCONST GpPointF*,INT,RE
 GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics*,GpImage*,
     GDIPCONST GpPointF*,INT,REAL,REAL,REAL,REAL,GpUnit,
     GDIPCONST GpImageAttributes*,DrawImageAbort,VOID*);
+GpStatus WINGDIPAPI GdipDrawLine(GpGraphics *graphics,GpPen*,REAL,REAL,REAL,REAL);
 GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics*,GpPen*,INT,INT,INT,INT);
 GpStatus WINGDIPAPI GdipDrawLines(GpGraphics*,GpPen*,GDIPCONST GpPointF*,INT);
 GpStatus WINGDIPAPI GdipDrawPath(GpGraphics*,GpPen*,GpPath*);

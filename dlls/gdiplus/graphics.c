@@ -1076,6 +1076,30 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipDrawLine(GpGraphics *graphics, GpPen *pen, REAL x1,
+    REAL y1, REAL x2, REAL y2)
+{
+    INT save_state;
+    GpPointF pt[2];
+    GpStatus retval;
+
+    if(!pen || !graphics)
+        return InvalidParameter;
+
+    pt[0].X = x1;
+    pt[0].Y = y1;
+    pt[1].X = x2;
+    pt[1].Y = y2;
+
+    save_state = prepare_dc(graphics, pen);
+
+    retval = draw_polyline(graphics, pen, pt, 2, TRUE);
+
+    restore_dc(graphics, save_state);
+
+    return retval;
+}
+
 GpStatus WINGDIPAPI GdipDrawLineI(GpGraphics *graphics, GpPen *pen, INT x1,
     INT y1, INT x2, INT y2)
 {

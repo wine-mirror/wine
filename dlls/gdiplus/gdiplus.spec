@@ -185,7 +185,7 @@
 @ stub GdipDrawImageRectI
 @ stub GdipDrawImageRectRect
 @ stub GdipDrawImageRectRectI
-@ stub GdipDrawLine
+@ stdcall GdipDrawLine(ptr ptr long long long long)
 @ stdcall GdipDrawLineI(ptr ptr long long long long)
 @ stdcall GdipDrawLines(ptr ptr ptr long)
 @ stub GdipDrawLinesI
