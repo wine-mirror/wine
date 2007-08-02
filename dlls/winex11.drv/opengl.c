@@ -1226,7 +1226,18 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
     ppfd->cAlphaBits = 0;
     ppfd->cAlphaShift = 0;
   }
-  /* Accums : to do ... */
+
+  /* Accum RGBA bits */
+  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_RED_SIZE, &rb);
+  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_GREEN_SIZE, &gb);
+  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_BLUE_SIZE, &bb);
+  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_ALPHA_SIZE, &ab);
+
+  ppfd->cAccumBits = rb+gb+bb+ab;
+  ppfd->cAccumRedBits = rb;
+  ppfd->cAccumGreenBits = gb;
+  ppfd->cAccumBlueBits = bb;
+  ppfd->cAccumAlphaBits = ab;
 
   /* Depth bits */
   pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DEPTH_SIZE, &value);
@@ -2684,6 +2695,34 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
             case WGL_FLOAT_COMPONENTS_NV:
                 curGLXAttr = GLX_FLOAT_COMPONENTS_NV;
                 break;
+
+            case WGL_ACCUM_RED_BITS_ARB:
+                curGLXAttr = GLX_ACCUM_RED_SIZE;
+                break;
+            case WGL_ACCUM_GREEN_BITS_ARB:
+                curGLXAttr = GLX_ACCUM_GREEN_SIZE;
+                break;
+            case WGL_ACCUM_BLUE_BITS_ARB:
+                curGLXAttr = GLX_ACCUM_BLUE_SIZE;
+                break;
+            case WGL_ACCUM_ALPHA_BITS_ARB:
+                curGLXAttr = GLX_ACCUM_ALPHA_SIZE;
+                break;
+            case WGL_ACCUM_BITS_ARB:
+                if (!fmt) goto pix_error;
+                hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_RED_SIZE, &tmp);
+                if (hTest) goto get_error;
+                piValues[i] = tmp;
+                hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_GREEN_SIZE, &tmp);
+                if (hTest) goto get_error;
+                piValues[i] += tmp;
+                hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_BLUE_SIZE, &tmp);
+                if (hTest) goto get_error;
+                piValues[i] += tmp;
+                hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_ALPHA_SIZE, &tmp);
+                if (hTest) goto get_error;
+                piValues[i] += tmp;
+                continue;
 
             default:
                 FIXME("unsupported %x WGL Attribute\n", curWGLAttr);
