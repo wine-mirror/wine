@@ -334,7 +334,6 @@ static void testCertProperties(void)
     BYTE hash[20] = { 0 }, hashProperty[20];
     CRYPT_DATA_BLOB blob;
     CERT_KEY_CONTEXT keyContext;
-    HCRYPTPROV csp;
 
     ok(context != NULL, "CertCreateCertificateContext failed: %08x\n",
      GetLastError());
@@ -442,50 +441,38 @@ static void testCertProperties(void)
      context->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData,
      CALG_MD5, context, CERT_SUBJECT_PUBLIC_KEY_MD5_HASH_PROP_ID);
 
-    /* Test key identifiers and handles and such */
+    /* Test key contexts and handles and such */
     size = 0;
-    ret = CertGetCertificateContextProperty(context,
-     CERT_KEY_IDENTIFIER_PROP_ID, NULL, &size);
-    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-     "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
+    ret = CertGetCertificateContextProperty(context, CERT_KEY_CONTEXT_PROP_ID,
+     NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     size = sizeof(CERT_KEY_CONTEXT);
-    ret = CertGetCertificateContextProperty(context,
-     CERT_KEY_IDENTIFIER_PROP_ID, NULL, &size);
-    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-     "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
-    ret = CertGetCertificateContextProperty(context,
-     CERT_KEY_IDENTIFIER_PROP_ID, &keyContext, &size);
-    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-     "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
+    ret = CertGetCertificateContextProperty(context, CERT_KEY_CONTEXT_PROP_ID,
+     NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    ret = CertGetCertificateContextProperty(context, CERT_KEY_CONTEXT_PROP_ID,
+     &keyContext, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     /* Key context with an invalid size */
     keyContext.cbSize = 0;
-    ret = CertSetCertificateContextProperty(context,
-     CERT_KEY_IDENTIFIER_PROP_ID, 0, &keyContext);
-    ok(ret, "CertSetCertificateContextProperty failed: %08x\n",
-     GetLastError());
+    ret = CertSetCertificateContextProperty(context, CERT_KEY_CONTEXT_PROP_ID,
+     0, &keyContext);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     size = sizeof(keyContext);
-    ret = CertGetCertificateContextProperty(context,
-     CERT_KEY_IDENTIFIER_PROP_ID, &keyContext, &size);
-    ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
-     GetLastError());
+    ret = CertGetCertificateContextProperty(context, CERT_KEY_CONTEXT_PROP_ID,
+     &keyContext, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     keyContext.cbSize = sizeof(keyContext);
     keyContext.hCryptProv = 0;
     keyContext.dwKeySpec = AT_SIGNATURE;
-    /* Crash
-    ret = CertSetCertificateContextProperty(context,
-     CERT_KEY_IDENTIFIER_PROP_ID, 0, &keyContext);
-    ret = CertSetCertificateContextProperty(context,
-     CERT_KEY_IDENTIFIER_PROP_ID, CERT_STORE_NO_CRYPT_RELEASE_FLAG,
-     &keyContext);
-     */
-    ret = CryptAcquireContextW(&csp, cspNameW,
-     MS_DEF_PROV_W, PROV_RSA_FULL, CRYPT_NEWKEYSET);
-    ok(ret, "CryptAcquireContextW failed: %08x\n", GetLastError());
-    keyContext.hCryptProv = csp;
-    ret = CertSetCertificateContextProperty(context,
-     CERT_KEY_CONTEXT_PROP_ID, 0, &keyContext);
-    ok(ret, "CertSetCertificateContextProperty failed: %08x\n",
-     GetLastError());
+    ret = CertSetCertificateContextProperty(context, CERT_KEY_CONTEXT_PROP_ID,
+     0, &keyContext);
+    ok(ret, "CertSetCertificateContextProperty failed: %08x\n", GetLastError());
     /* Now that that's set, the key prov handle property is also gettable.
      */
     size = sizeof(DWORD);
@@ -505,8 +492,6 @@ static void testCertProperties(void)
     ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
      GetLastError());
     ok(keyContext.hCryptProv == 0, "Expected no hCryptProv\n");
-
-    CryptReleaseContext(csp, 0);
 
     CertFreeCertificateContext(context);
 }

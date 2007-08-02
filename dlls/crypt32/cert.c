@@ -476,8 +476,14 @@ static BOOL WINAPI CertContext_SetProperty(void *context, DWORD dwPropId,
             {
                 const CERT_KEY_CONTEXT *keyContext = (const CERT_KEY_CONTEXT *)pvData;
 
-                ret = ContextPropertyList_SetProperty(properties, dwPropId,
-                 (const BYTE *)keyContext, keyContext->cbSize);
+                if (keyContext->cbSize != sizeof(CERT_KEY_CONTEXT))
+                {
+                    SetLastError(E_INVALIDARG);
+                    ret = FALSE;
+                }
+                else
+                    ret = ContextPropertyList_SetProperty(properties, dwPropId,
+                     (const BYTE *)keyContext, keyContext->cbSize);
             }
             else
             {
