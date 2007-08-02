@@ -341,3 +341,12 @@ GpStatus WINGDIPAPI GdipSetPenStartCap(GpPen *pen, GpLineCap cap)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipSetPenWidth(GpPen *pen, REAL width)
+{
+    if(!pen)    return InvalidParameter;
+
+    pen->width = width;
+
+    return Ok;
+}
