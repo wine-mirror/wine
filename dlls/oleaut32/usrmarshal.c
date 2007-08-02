@@ -268,7 +268,7 @@ static unsigned int get_type_size(ULONG *pFlags, const VARIANT *pvar)
     }
 }
 
-static unsigned int get_type_alignment(ULONG *pFlags, VARIANT *pvar)
+static unsigned int get_type_alignment(ULONG *pFlags, const VARIANT *pvar)
 {
     unsigned int size = get_type_size(pFlags, pvar);
     if(V_VT(pvar) & VT_BYREF) return 3;
@@ -333,7 +333,8 @@ static ULONG wire_extra_user_size(ULONG *pFlags, ULONG Start, VARIANT *pvar)
 }
 
 /* helper: called for VT_DISPATCH variants to marshal the IDispatch* into the buffer. returns Buffer on failure, new position otherwise */
-static unsigned char* interface_variant_marshal(ULONG *pFlags, unsigned char *Buffer, REFIID riid, IUnknown *punk)
+static unsigned char* interface_variant_marshal(const ULONG *pFlags, unsigned char *Buffer,
+                                                REFIID riid, IUnknown *punk)
 {
   IStream *working; 
   HGLOBAL working_mem;

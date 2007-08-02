@@ -107,7 +107,7 @@ typedef struct GifFilePrivateType {
 static int DGifGetWord(GifFileType *GifFile, GifWord *Word);
 static int DGifSetupDecompress(GifFileType *GifFile);
 static int DGifDecompressLine(GifFileType *GifFile, GifPixelType *Line, int LineLen);
-static int DGifGetPrefixChar(GifPrefixType *Prefix, int Code, int ClearCode);
+static int DGifGetPrefixChar(const GifPrefixType *Prefix, int Code, int ClearCode);
 static int DGifDecompressInput(GifFileType *GifFile, int *Code);
 static int DGifBufferedInput(GifFileType *GifFile, GifByteType *Buf,
                              GifByteType *NextByte);
@@ -192,7 +192,7 @@ FreeMapObject(ColorMapObject * Object) {
 static int
 AddExtensionBlock(SavedImage * New,
                   int Len,
-                  unsigned char ExtData[]) {
+                  const unsigned char ExtData[]) {
 
     ExtensionBlock *ep;
 
@@ -723,7 +723,7 @@ DGifDecompressLine(GifFileType * GifFile,
  * the maximum possible if image O.k. - LZ_MAX_CODE times.
  *****************************************************************************/
 static int
-DGifGetPrefixChar(GifPrefixType *Prefix,
+DGifGetPrefixChar(const GifPrefixType *Prefix,
                   int Code,
                   int ClearCode) {
 
