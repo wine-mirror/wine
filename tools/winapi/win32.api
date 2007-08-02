@@ -1288,7 +1288,6 @@ REFIID
 BOOL
 COLORREF
 DWORD
-FLOAT
 HANDLE
 HBITMAP
 HBRUSH
@@ -1315,6 +1314,10 @@ UINT
 ULONG
 WORD
 int
+
+%float
+
+FLOAT
 
 %ptr
 
@@ -3269,6 +3272,7 @@ double
 %float
 
 float
+FLOAT
 
 %long
 
@@ -3277,7 +3281,6 @@ BYTE
 CALLCONV
 DISPID
 DWORD
-FLOAT
 HCURSOR
 HICON
 HINSTANCE
@@ -3507,11 +3510,14 @@ LPCSTR
 GLclampd
 GLdouble
 
+%float
+
+FLOAT
+
 %long
 
 BOOL
 DWORD
-FLOAT
 GLbitfield
 GLboolean
 GLbyte
