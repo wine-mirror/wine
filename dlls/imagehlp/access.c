@@ -48,6 +48,8 @@ static LOADED_IMAGE IMAGEHLP_EmptyLoadedImage = {
   1,          /* Characteristics */
   FALSE,      /* fSystemImage */
   FALSE,      /* fDOSImage */
+  FALSE,      /* fReadOnly */
+  0,          /* Version */
   { &IMAGEHLP_EmptyLoadedImage.Links, &IMAGEHLP_EmptyLoadedImage.Links }, /* Links */
   148,        /* SizeOfImage; */
 };

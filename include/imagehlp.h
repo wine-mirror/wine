@@ -158,19 +158,22 @@ typedef enum {
  * Structures
  */
 
-typedef struct _LOADED_IMAGE {
-  LPSTR                   ModuleName;
-  HANDLE                hFile;
-  PUCHAR                  MappedAddress;
-  PIMAGE_NT_HEADERS     FileHeader;
-  PIMAGE_SECTION_HEADER LastRvaSection;
-  ULONG                   NumberOfSections;
-  PIMAGE_SECTION_HEADER Sections;
-  ULONG                   Characteristics;
-  BOOLEAN                 fSystemImage;
-  BOOLEAN                 fDOSImage;
-  LIST_ENTRY            Links;
-  ULONG                   SizeOfImage;
+typedef struct _LOADED_IMAGE
+{
+    PSTR                        ModuleName;
+    HANDLE                      hFile;
+    PUCHAR                      MappedAddress;
+    PIMAGE_NT_HEADERS           FileHeader;
+    PIMAGE_SECTION_HEADER       LastRvaSection;
+    ULONG                       NumberOfSections;
+    PIMAGE_SECTION_HEADER       Sections;
+    ULONG                       Characteristics;
+    BOOLEAN                     fSystemImage;
+    BOOLEAN                     fDOSImage;
+    BOOLEAN                     fReadOnly;
+    UCHAR                       Version;
+    LIST_ENTRY                  Links;
+    ULONG                       SizeOfImage;
 } LOADED_IMAGE, *PLOADED_IMAGE;
 
 typedef struct _WIN_CERTIFICATE {

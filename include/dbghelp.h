@@ -27,7 +27,7 @@ extern "C" {
 
 typedef struct _LOADED_IMAGE
 {
-    LPSTR                       ModuleName;
+    PSTR                        ModuleName;
     HANDLE                      hFile;
     PUCHAR                      MappedAddress;
     PIMAGE_NT_HEADERS           FileHeader;
@@ -37,6 +37,8 @@ typedef struct _LOADED_IMAGE
     ULONG                       Characteristics;
     BOOLEAN                     fSystemImage;
     BOOLEAN                     fDOSImage;
+    BOOLEAN                     fReadOnly;
+    UCHAR                       Version;
     LIST_ENTRY                  Links;
     ULONG                       SizeOfImage;
 } LOADED_IMAGE, *PLOADED_IMAGE;
