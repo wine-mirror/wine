@@ -1522,7 +1522,6 @@ static void test_decodeAltName(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, encodedOidName,
      sizeof(encodedOidName), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
      &bufSize);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -1540,7 +1539,6 @@ static void test_decodeAltName(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME,
      encodedDirectoryName, sizeof(encodedDirectoryName),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {

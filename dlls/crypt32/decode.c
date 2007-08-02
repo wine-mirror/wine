@@ -2143,13 +2143,22 @@ static BOOL WINAPI CRYPT_AsnDecodeAltNameEntry(DWORD dwCertEncodingType,
         case 6: /* uniformResourceIdentifier */
             bytesNeeded += (dataLen + 1) * sizeof(WCHAR);
             break;
+        case 4: /* directoryName */
         case 7: /* iPAddress */
             bytesNeeded += dataLen;
             break;
         case 8: /* registeredID */
-            /* FIXME: decode as OID */
+            ret = CRYPT_AsnDecodeOidIgnoreTag(dwCertEncodingType, NULL,
+             pbEncoded, cbEncoded, 0, NULL, NULL, &dataLen);
+            if (ret)
+            {
+                /* FIXME: ugly, shouldn't need to know internals of OID decode
+                 * function to use it.
+                 */
+                bytesNeeded += dataLen - sizeof(LPSTR);
+            }
+            break;
         case 0: /* otherName */
-        case 4: /* directoryName */
             FIXME("%d: stub\n", pbEncoded[0] & ASN_TYPE_MASK);
             SetLastError(CRYPT_E_ASN1_BADTAG);
             ret = FALSE;
@@ -2196,6 +2205,11 @@ static BOOL WINAPI CRYPT_AsnDecodeAltNameEntry(DWORD dwCertEncodingType,
                      debugstr_w(entry->u.pwszURL));
                     break;
                 }
+                case 4: /* directoryName */
+                    entry->dwAltNameChoice = CERT_ALT_NAME_DIRECTORY_NAME;
+                    /* The data are memory-equivalent with the IPAddress case,
+                     * fall-through
+                     */
                 case 7: /* iPAddress */
                     /* The next data pointer is in the pwszURL spot, that is,
                      * the first 4 bytes.  Need to move it to the next spot.
@@ -2204,6 +2218,11 @@ static BOOL WINAPI CRYPT_AsnDecodeAltNameEntry(DWORD dwCertEncodingType,
                     entry->u.IPAddress.cbData = dataLen;
                     memcpy(entry->u.IPAddress.pbData, pbEncoded + 1 + lenBytes,
                      dataLen);
+                    break;
+                case 8: /* registeredID */
+                    ret = CRYPT_AsnDecodeOidIgnoreTag(dwCertEncodingType, NULL,
+                     pbEncoded, cbEncoded, 0, NULL, &entry->u.pszRegisteredID,
+                     &dataLen);
                     break;
                 }
             }
