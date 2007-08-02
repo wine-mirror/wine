@@ -2055,16 +2055,19 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
     object->height = iHeight;
     object->fmt = fmt;
 
-    nAttribs = ConvertAttribWGLtoGLX(piAttribList, attribs, object);
-    if (-1 == nAttribs) {
-        WARN("Cannot convert WGL to GLX attributes\n");
-        goto create_failed;
-    }
     PUSH2(attribs, GLX_PBUFFER_WIDTH,  iWidth);
     PUSH2(attribs, GLX_PBUFFER_HEIGHT, iHeight); 
     while (piAttribList && 0 != *piAttribList) {
         int attr_v;
         switch (*piAttribList) {
+            case WGL_PBUFFER_LARGEST_ARB: {
+                ++piAttribList;
+                attr_v = *piAttribList;
+                TRACE("WGL_LARGEST_PBUFFER_ARB = %d\n", attr_v);
+                PUSH2(attribs, GLX_LARGEST_PBUFFER, attr_v);
+                break;
+            }
+
             case WGL_TEXTURE_FORMAT_ARB: {
                 ++piAttribList;
                 attr_v = *piAttribList;
