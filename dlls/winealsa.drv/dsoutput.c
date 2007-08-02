@@ -587,7 +587,6 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 
     /* **** */
     EnterCriticalSection(&This->pcm_crst);
-    CommitAll(This);
     snd_pcm_start(This->pcm);
     /* **** */
     LeaveCriticalSection(&This->pcm_crst);
@@ -607,10 +606,11 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
     avail = This->mmap_buflen_frames;
     snd_pcm_drop(This->pcm);
     snd_pcm_prepare(This->pcm);
+    avail = snd_pcm_avail_update(This->pcm);
     snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &avail);
     snd_pcm_hw_params_get_format(This->hw_params, &format);
     snd_pcm_format_set_silence(format, areas->addr, This->mmap_buflen_frames);
-    This->mmap_pos += snd_pcm_mmap_commit(This->pcm, This->mmap_pos, avail);
+    snd_pcm_mmap_commit(This->pcm, This->mmap_pos, 0);
 
     /* **** */
     LeaveCriticalSection(&This->pcm_crst);
