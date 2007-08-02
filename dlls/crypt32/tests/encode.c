@@ -1291,6 +1291,12 @@ static const BYTE encodedDnsName[] = { 0x30, 0x0c, 0x82, 0x0a, 0x77, 0x69,
 static const BYTE localhost[] = { 127, 0, 0, 1 };
 static const BYTE encodedIPAddr[] = { 0x30, 0x06, 0x87, 0x04, 0x7f, 0x00, 0x00,
  0x01 };
+static const unsigned char encodedCommonName[] = {
+    0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,'J','u','a','n',' ','L','a','n','g',0};
+static const BYTE encodedOidName[] = { 0x30,0x04,0x88,0x02,0x2a,0x03 };
+static const BYTE encodedDirectoryName[] = {
+0x30,0x19,0xa4,0x17,0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,
+0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0x00 };
 
 static void test_encodeAltName(DWORD dwEncoding)
 {
@@ -1299,6 +1305,7 @@ static void test_encodeAltName(DWORD dwEncoding)
     BYTE *buf = NULL;
     DWORD size = 0;
     BOOL ret;
+    char oid[] = "1.2.3";
 
     /* Test with empty info */
     ret = CryptEncodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, &info,
@@ -1377,6 +1384,29 @@ static void test_encodeAltName(DWORD dwEncoding)
     {
         ok(size == sizeof(encodedIPAddr), "Wrong size %d\n", size);
         ok(!memcmp(buf, encodedIPAddr, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* Test with OID */
+    entry.dwAltNameChoice = CERT_ALT_NAME_REGISTERED_ID;
+    U(entry).pszRegisteredID = oid;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (buf)
+    {
+        ok(size == sizeof(encodedOidName), "Wrong size %d\n", size);
+        ok(!memcmp(buf, encodedOidName, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* Test with directory name */
+    entry.dwAltNameChoice = CERT_ALT_NAME_DIRECTORY_NAME;
+    U(entry).DirectoryName.cbData = sizeof(encodedCommonName);
+    U(entry).DirectoryName.pbData = (LPBYTE)encodedCommonName;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (buf)
+    {
+        ok(size == sizeof(encodedDirectoryName), "Wrong size %d\n", size);
+        ok(!memcmp(buf, encodedDirectoryName, size), "Unexpected value\n");
         LocalFree(buf);
     }
 }
@@ -1487,6 +1517,46 @@ static void test_decodeAltName(DWORD dwEncoding)
           U(info->rgAltEntry[0]).IPAddress.cbData);
         ok(!memcmp(U(info->rgAltEntry[0]).IPAddress.pbData, localhost,
          sizeof(localhost)), "Unexpected IP address value\n");
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, encodedOidName,
+     sizeof(encodedOidName), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+     &bufSize);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        info = (CERT_ALT_NAME_INFO *)buf;
+
+        ok(info->cAltEntry == 1, "Expected 1 entries, got %d\n",
+         info->cAltEntry);
+        ok(info->rgAltEntry[0].dwAltNameChoice == CERT_ALT_NAME_REGISTERED_ID,
+         "Expected CERT_ALT_NAME_REGISTERED_ID, got %d\n",
+         info->rgAltEntry[0].dwAltNameChoice);
+        ok(!strcmp(info->rgAltEntry[0].pszRegisteredID, "1.2.3"),
+         "Expected OID 1.2.3, got %s\n", info->rgAltEntry[0].pszRegisteredID);
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME,
+     encodedDirectoryName, sizeof(encodedDirectoryName),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        info = (CERT_ALT_NAME_INFO *)buf;
+
+        ok(info->cAltEntry == 1, "Expected 1 entries, got %d\n",
+         info->cAltEntry);
+        ok(info->rgAltEntry[0].dwAltNameChoice == CERT_ALT_NAME_DIRECTORY_NAME,
+         "Expected CERT_ALT_NAME_DIRECTORY_NAME, got %d\n",
+         info->rgAltEntry[0].dwAltNameChoice);
+        ok(U(info->rgAltEntry[0]).DirectoryName.cbData ==
+         sizeof(encodedCommonName), "Unexpected directory name length %d\n",
+          U(info->rgAltEntry[0]).DirectoryName.cbData);
+        ok(!memcmp(U(info->rgAltEntry[0]).DirectoryName.pbData,
+         encodedCommonName, sizeof(encodedCommonName)),
+         "Unexpected directory name value\n");
         LocalFree(buf);
     }
 }
@@ -1981,8 +2051,6 @@ static void test_encodeBasicConstraints(DWORD dwEncoding)
 }
 
 static const unsigned char bin63[] = { 0x30,0x06,0x01,0x01,0x01,0x02,0x01,0x01 };
-static const unsigned char encodedCommonName[] = {
-    0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,'J','u','a','n',' ','L','a','n','g',0};
 
 static void test_decodeBasicConstraints(DWORD dwEncoding)
 {
