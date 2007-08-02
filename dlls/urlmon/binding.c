@@ -122,10 +122,12 @@ static void push_task(Binding *binding, task_header_t *task, task_proc_t proc)
 
     EnterCriticalSection(&binding->section);
 
-    if(binding->task_queue_tail)
+    if(binding->task_queue_tail) {
         binding->task_queue_tail->next = task;
-    else
+        binding->task_queue_tail = task;
+    }else {
         binding->task_queue_tail = binding->task_queue_head = task;
+    }
 
     LeaveCriticalSection(&binding->section);
 }
