@@ -1224,6 +1224,45 @@ GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipFillPolygon(GpGraphics *graphics, GpBrush *brush,
+    GDIPCONST GpPointF *points, INT count, GpFillMode fillMode)
+{
+    INT save_state;
+    GpPointF *ptf = NULL;
+    POINT *pti = NULL;
+    GpStatus retval = Ok;
+
+    if(!graphics || !brush || !points || !count)
+        return InvalidParameter;
+
+    ptf = GdipAlloc(count * sizeof(GpPointF));
+    pti = GdipAlloc(count * sizeof(POINT));
+    if(!ptf || !pti){
+        retval = OutOfMemory;
+        goto end;
+    }
+
+    memcpy(ptf, points, count * sizeof(GpPointF));
+
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, brush->gdibrush);
+    SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
+    SetPolyFillMode(graphics->hdc, (fillMode == FillModeAlternate ? ALTERNATE
+                                                                  : WINDING));
+
+    transform_and_round_points(graphics, pti, ptf, count);
+    Polygon(graphics->hdc, pti, count);
+
+    RestoreDC(graphics->hdc, save_state);
+
+end:
+    GdipFree(ptf);
+    GdipFree(pti);
+
+    return retval;
+}
+
 GpStatus WINGDIPAPI GdipFillPolygonI(GpGraphics *graphics, GpBrush *brush,
     GDIPCONST GpPoint *points, INT count, GpFillMode fillMode)
 {
