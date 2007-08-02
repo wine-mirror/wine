@@ -31,7 +31,7 @@
 #include "strmif.h"
 #include "vfw.h"
 #include "mmddk.h"
-#include <ddraw.h>
+#include "ddraw.h"
 
 #include "wine/debug.h"
 
