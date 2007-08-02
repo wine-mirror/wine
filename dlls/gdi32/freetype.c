@@ -4435,7 +4435,10 @@ DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
     }
 #endif
     if(err) {
-        TRACE("Can't find table %08x.\n", table);
+        TRACE("Can't find table %c%c%c%c\n",
+              /* bytes were reversed */
+              HIBYTE(HIWORD(table)), LOBYTE(HIWORD(table)),
+              HIBYTE(LOWORD(table)), LOBYTE(LOWORD(table)));
 	return GDI_ERROR;
     }
     return len;
