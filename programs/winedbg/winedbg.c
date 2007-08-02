@@ -345,7 +345,7 @@ struct mod_loader_info
     IMAGEHLP_MODULE*    imh_mod;
 };
 
-static BOOL CALLBACK mod_loader_cb(PSTR mod_name, DWORD base, void* ctx)
+static BOOL CALLBACK mod_loader_cb(PCSTR mod_name, ULONG base, PVOID ctx)
 {
     struct mod_loader_info*     mli = (struct mod_loader_info*)ctx;
 

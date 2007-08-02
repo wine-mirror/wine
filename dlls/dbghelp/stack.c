@@ -465,7 +465,7 @@ done_err:
  *		StackWalk (DBGHELP.@)
  */
 BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
-                      LPSTACKFRAME frame, LPVOID ctx,
+                      LPSTACKFRAME frame, PVOID ctx,
                       PREAD_PROCESS_MEMORY_ROUTINE f_read_mem,
                       PFUNCTION_TABLE_ACCESS_ROUTINE FunctionTableAccessRoutine,
                       PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,
@@ -501,7 +501,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
  *		StackWalk64 (DBGHELP.@)
  */
 BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
-                        LPSTACKFRAME64 frame64, LPVOID ctx,
+                        LPSTACKFRAME64 frame64, PVOID ctx,
                         PREAD_PROCESS_MEMORY_ROUTINE64 f_read_mem,
                         PFUNCTION_TABLE_ACCESS_ROUTINE64 FunctionTableAccessRoutine,
                         PGET_MODULE_BASE_ROUTINE64 GetModuleBaseRoutine,

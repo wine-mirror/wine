@@ -248,8 +248,8 @@ static BOOL add_module(struct dump_context* dc, const WCHAR* name,
  *
  * Callback for accumulating in dump_context a PE modules set
  */
-static BOOL WINAPI fetch_pe_module_info_cb(WCHAR* name, DWORD64 base, DWORD size,
-                                           void* user)
+static BOOL WINAPI fetch_pe_module_info_cb(PCWSTR name, DWORD64 base, ULONG size,
+                                           PVOID user)
 {
     struct dump_context*        dc = (struct dump_context*)user;
     IMAGE_NT_HEADERS            nth;
@@ -813,9 +813,9 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
  *
  *
  */
-BOOL WINAPI MiniDumpReadDumpStream(void* base, ULONG str_idx,
+BOOL WINAPI MiniDumpReadDumpStream(PVOID base, ULONG str_idx,
                                    PMINIDUMP_DIRECTORY* pdir,
-                                   void** stream, ULONG* size)
+                                   PVOID* stream, ULONG* size)
 {
     MINIDUMP_HEADER*    mdHead = (MINIDUMP_HEADER*)base;
 

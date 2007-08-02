@@ -566,7 +566,7 @@ static BOOL CALLBACK print_types_cb(PSYMBOL_INFO sym, ULONG size, void* ctx)
     return TRUE;
 }
 
-static BOOL CALLBACK print_types_mod_cb(PSTR mod_name, DWORD base, void* ctx)
+static BOOL CALLBACK print_types_mod_cb(PCSTR mod_name, ULONG base, PVOID ctx)
 {
     return SymEnumTypes(dbg_curr_process->handle, base, print_types_cb, ctx);
 }

@@ -88,7 +88,7 @@ HANDLE WINAPI FindDebugInfoFileEx(PCSTR FileName, PCSTR SymbolPath,
  *
  */
 HANDLE WINAPI FindExecutableImageExW(PCWSTR FileName, PCWSTR SymbolPath, PWSTR ImageFilePath,
-                                     PFIND_EXE_FILE_CALLBACKW Callback, void* user)
+                                     PFIND_EXE_FILE_CALLBACKW Callback, PVOID user)
 {
     HANDLE h;
 
@@ -105,7 +105,7 @@ HANDLE WINAPI FindExecutableImageExW(PCWSTR FileName, PCWSTR SymbolPath, PWSTR I
  *
  */
 HANDLE WINAPI FindExecutableImageEx(PCSTR FileName, PCSTR SymbolPath, PSTR ImageFilePath,
-                                    PFIND_EXE_FILE_CALLBACK Callback, void* user)
+                                    PFIND_EXE_FILE_CALLBACK Callback, PVOID user)
 {
     HANDLE h;
 
@@ -129,7 +129,7 @@ HANDLE WINAPI FindExecutableImage(PCSTR FileName, PCSTR SymbolPath, PSTR ImageFi
 /***********************************************************************
  *           MakeSureDirectoryPathExists (DBGHELP.@)
  */
-BOOL WINAPI MakeSureDirectoryPathExists(LPCSTR DirPath)
+BOOL WINAPI MakeSureDirectoryPathExists(PCSTR DirPath)
 {
     char path[MAX_PATH];
     const char *p = DirPath;
@@ -157,11 +157,11 @@ BOOL WINAPI MakeSureDirectoryPathExists(LPCSTR DirPath)
  *		SymMatchFileNameW (DBGHELP.@)
  *
  */
-BOOL WINAPI SymMatchFileNameW(WCHAR* file, WCHAR* match,
-                              WCHAR** filestop, WCHAR** matchstop)
+BOOL WINAPI SymMatchFileNameW(PCWSTR file, PCWSTR match,
+                              PWSTR* filestop, PWSTR* matchstop)
 {
-    WCHAR*      fptr;
-    WCHAR*      mptr;
+    PCWSTR fptr;
+    PCWSTR mptr;
 
     TRACE("(%s %s %p %p)\n",
           debugstr_w(file), debugstr_w(match), filestop, matchstop);
@@ -175,8 +175,8 @@ BOOL WINAPI SymMatchFileNameW(WCHAR* file, WCHAR* match,
             break;
         fptr--; mptr--;
     }
-    if (filestop) *filestop = fptr;
-    if (matchstop) *matchstop = mptr;
+    if (filestop) *filestop = (PWSTR)fptr;
+    if (matchstop) *matchstop = (PWSTR)mptr;
 
     return mptr == match - 1;
 }
@@ -185,11 +185,11 @@ BOOL WINAPI SymMatchFileNameW(WCHAR* file, WCHAR* match,
  *		SymMatchFileName (DBGHELP.@)
  *
  */
-BOOL WINAPI SymMatchFileName(char* file, char* match,
-                             char** filestop, char** matchstop)
+BOOL WINAPI SymMatchFileName(PCSTR file, PCSTR match,
+                             PSTR* filestop, PSTR* matchstop)
 {
-    char*       fptr;
-    char*       mptr;
+    PCSTR fptr;
+    PCSTR mptr;
 
     TRACE("(%s %s %p %p)\n", file, match, filestop, matchstop);
 
@@ -202,14 +202,14 @@ BOOL WINAPI SymMatchFileName(char* file, char* match,
             break;
         fptr--; mptr--;
     }
-    if (filestop) *filestop = fptr;
-    if (matchstop) *matchstop = mptr;
+    if (filestop) *filestop = (PSTR)fptr;
+    if (matchstop) *matchstop = (PSTR)mptr;
 
     return mptr == match - 1;
 }
 
-static BOOL do_searchW(const WCHAR* file, WCHAR* buffer, BOOL recurse,
-                       PENUMDIRTREE_CALLBACKW cb, void* user)
+static BOOL do_searchW(PCWSTR file, PWSTR buffer, BOOL recurse,
+                       PENUMDIRTREE_CALLBACKW cb, PVOID user)
 {
     HANDLE              h;
     WIN32_FIND_DATAW    fd;
@@ -280,7 +280,7 @@ BOOL WINAPI SearchTreeForFile(PCSTR root, PCSTR file, PSTR buffer)
  *
  */
 BOOL WINAPI EnumDirTreeW(HANDLE hProcess, PCWSTR root, PCWSTR file,
-                        LPWSTR buffer, PENUMDIRTREE_CALLBACKW cb, PVOID user)
+                        PWSTR buffer, PENUMDIRTREE_CALLBACKW cb, PVOID user)
 {
     TRACE("(%p %s %s %p %p %p)\n",
           hProcess, debugstr_w(root), debugstr_w(file), buffer, cb, user);
@@ -301,7 +301,7 @@ struct enum_dir_treeWA
     char                        name[MAX_PATH];
 };
 
-static BOOL CALLBACK enum_dir_treeWA(LPCWSTR name, PVOID user)
+static BOOL CALLBACK enum_dir_treeWA(PCWSTR name, PVOID user)
 {
     struct enum_dir_treeWA*     edt = user;
 
@@ -310,7 +310,7 @@ static BOOL CALLBACK enum_dir_treeWA(LPCWSTR name, PVOID user)
 }
 
 BOOL WINAPI EnumDirTree(HANDLE hProcess, PCSTR root, PCSTR file,
-                        LPSTR buffer, PENUMDIRTREE_CALLBACK cb, PVOID user)
+                        PSTR buffer, PENUMDIRTREE_CALLBACK cb, PVOID user)
 {
     WCHAR                       rootW[MAX_PATH];
     WCHAR                       fileW[MAX_PATH];
@@ -348,9 +348,9 @@ struct sffip
 /* checks that buffer (as found by matching the name) matches the info
  * (information is based on file type)
  * returns TRUE when file is found, FALSE to continue searching
- * (NB this is the opposite conventions as for SymFindFileInPathProc)
+ * (NB this is the opposite convention of SymFindFileInPathProc)
  */
-static BOOL CALLBACK sffip_cb(LPCWSTR buffer, void* user)
+static BOOL CALLBACK sffip_cb(PCWSTR buffer, PVOID user)
 {
     struct sffip*       s = (struct sffip*)user;
     DWORD               size, checksum;
@@ -469,7 +469,7 @@ static BOOL CALLBACK sffip_cb(LPCWSTR buffer, void* user)
  */
 BOOL WINAPI SymFindFileInPathW(HANDLE hProcess, PCWSTR searchPath, PCWSTR full_path,
                                PVOID id, DWORD two, DWORD three, DWORD flags,
-                               LPWSTR buffer, PFINDFILEINPATHCALLBACKW cb,
+                               PWSTR buffer, PFINDFILEINPATHCALLBACKW cb,
                                PVOID user)
 {
     struct sffip        s;
@@ -531,7 +531,7 @@ BOOL WINAPI SymFindFileInPathW(HANDLE hProcess, PCWSTR searchPath, PCWSTR full_p
  */
 BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR searchPath, PCSTR full_path,
                               PVOID id, DWORD two, DWORD three, DWORD flags,
-                              LPSTR buffer, PFINDFILEINPATHCALLBACK cb,
+                              PSTR buffer, PFINDFILEINPATHCALLBACK cb,
                               PVOID user)
 {
     WCHAR                       searchPathW[MAX_PATH];

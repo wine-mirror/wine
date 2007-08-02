@@ -175,7 +175,7 @@ BOOL WINAPI SymSetSearchPath(HANDLE hProcess, PCSTR searchPath)
 /***********************************************************************
  *		SymGetSearchPathW (DBGHELP.@)
  */
-BOOL WINAPI SymGetSearchPathW(HANDLE hProcess, LPWSTR szSearchPath, 
+BOOL WINAPI SymGetSearchPathW(HANDLE hProcess, PWSTR szSearchPath,
                               DWORD SearchPathLength)
 {
     struct process* pcs = process_find_by_handle(hProcess);
@@ -188,7 +188,7 @@ BOOL WINAPI SymGetSearchPathW(HANDLE hProcess, LPWSTR szSearchPath,
 /***********************************************************************
  *		SymGetSearchPath (DBGHELP.@)
  */
-BOOL WINAPI SymGetSearchPath(HANDLE hProcess, LPSTR szSearchPath, 
+BOOL WINAPI SymGetSearchPath(HANDLE hProcess, PSTR szSearchPath,
                              DWORD SearchPathLength)
 {
     WCHAR*      buffer = HeapAlloc(GetProcessHeap(), 0, SearchPathLength * sizeof(WCHAR));

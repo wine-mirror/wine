@@ -1531,7 +1531,7 @@ PVOID WINAPI SymFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase)
 /***********************************************************************
  *		SymUnDName (DBGHELP.@)
  */
-BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL sym, LPSTR UnDecName, DWORD UnDecNameLength)
+BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL sym, PSTR UnDecName, DWORD UnDecNameLength)
 {
     TRACE("(%p %s %u)\n", sym, UnDecName, UnDecNameLength);
     return UnDecorateSymbolName(sym->Name, UnDecName, UnDecNameLength,
@@ -1544,7 +1544,7 @@ static void  und_free (void* ptr)  { HeapFree(GetProcessHeap(), 0, ptr); }
 /***********************************************************************
  *		UnDecorateSymbolName (DBGHELP.@)
  */
-DWORD WINAPI UnDecorateSymbolName(LPCSTR DecoratedName, LPSTR UnDecoratedName,
+DWORD WINAPI UnDecorateSymbolName(PCSTR DecoratedName, PSTR UnDecoratedName,
                                   DWORD UndecoratedLength, DWORD Flags)
 {
     /* undocumented from msvcrt */

@@ -370,7 +370,7 @@ static BOOL module_is_elf_container_loaded(const struct process* pcs,
 {
     size_t              len;
     struct module*      module;
-    LPCWSTR             filename, modname;
+    PCWSTR              filename, modname;
 
     if (!base) return FALSE;
     filename = get_filename(ImageName, NULL);
@@ -428,8 +428,8 @@ enum module_type module_get_type_by_name(const WCHAR* name)
 /***********************************************************************
  *			SymLoadModule (DBGHELP.@)
  */
-DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, const char* ImageName,
-                           const char* ModuleName, DWORD BaseOfDll, DWORD SizeOfDll)
+DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
+                           PCSTR ModuleName, DWORD BaseOfDll, DWORD SizeOfDll)
 {
     return SymLoadModuleEx(hProcess, hFile, ImageName, ModuleName, BaseOfDll,
                            SizeOfDll, NULL, 0);
@@ -442,7 +442,7 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
                                 PCSTR ModuleName, DWORD64 BaseOfDll, DWORD DllSize,
                                 PMODLOAD_DATA Data, DWORD Flags)
 {
-    LPWSTR      wImageName, wModuleName;
+    PWSTR       wImageName, wModuleName;
     unsigned    len;
     DWORD64     ret;
 
@@ -636,7 +636,7 @@ struct enum_modW64_32
     char                        module[MAX_PATH];
 };
 
-static BOOL CALLBACK enum_modW64_32(PWSTR name, DWORD64 base, PVOID user)
+static BOOL CALLBACK enum_modW64_32(PCWSTR name, DWORD64 base, PVOID user)
 {
     struct enum_modW64_32*      x = user;
 
@@ -667,7 +667,7 @@ struct enum_modW64_64
     char                        module[MAX_PATH];
 };
 
-static BOOL CALLBACK enum_modW64_64(PWSTR name, DWORD64 base, PVOID user)
+static BOOL CALLBACK enum_modW64_64(PCWSTR name, DWORD64 base, PVOID user)
 {
     struct enum_modW64_64*      x = user;
 
@@ -722,7 +722,7 @@ struct enum_load_modW64_64
     char                                module[MAX_PATH];
 };
 
-static BOOL CALLBACK enum_load_modW64_64(PWSTR name, DWORD64 base, ULONG size,
+static BOOL CALLBACK enum_load_modW64_64(PCWSTR name, DWORD64 base, ULONG size,
                                          PVOID user)
 {
     struct enum_load_modW64_64* x = user;
@@ -754,7 +754,7 @@ struct enum_load_modW64_32
     char                                module[MAX_PATH];
 };
 
-static BOOL CALLBACK enum_load_modW64_32(PWSTR name, DWORD64 base, ULONG size,
+static BOOL CALLBACK enum_load_modW64_32(PCWSTR name, DWORD64 base, ULONG size,
                                          PVOID user)
 {
     struct enum_load_modW64_32* x = user;

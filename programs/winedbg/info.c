@@ -176,7 +176,7 @@ static inline BOOL module_is_container(const IMAGEHLP_MODULE64* wmod_cntnr,
         wmod_child->BaseOfImage + wmod_child->ImageSize;
 }
 
-static BOOL CALLBACK info_mod_cb(PSTR mod_name, DWORD64 base, void* ctx)
+static BOOL CALLBACK info_mod_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
 {
     struct info_module* im = (struct info_module*)ctx;
 
