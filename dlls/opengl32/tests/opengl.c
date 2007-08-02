@@ -181,7 +181,7 @@ static void test_setpixelformat(void)
 
     /* This should pass even on the main device context */
     pf = ChoosePixelFormat(hdc, &pfd);
-    ok(pf != 0, "ChoosePixelFormat failed on main device context");
+    ok(pf != 0, "ChoosePixelFormat failed on main device context\n");
 
     /* SetPixelFormat on the main device context 'X root window' should fail */
     res = SetPixelFormat(hdc, pf, &pfd);
