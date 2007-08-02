@@ -683,7 +683,7 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
 
   case PICTYPE_ENHMETAFILE:
   {
-    RECT rc = { x, y, cx, cy };
+    RECT rc = { x, y, x + cx, y + cy };
     PlayEnhMetaFile(hdc, This->desc.u.emf.hemf, &rc);
     break;
   }
