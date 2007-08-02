@@ -833,7 +833,7 @@ NET_API_STATUS WINAPI NetUserChangePassword(LPCWSTR domainname, LPCWSTR username
     return NERR_Success;
 }
 
-NET_API_STATUS NetUseAdd(LMSTR servername, DWORD level, LPBYTE bufptr, LPDWORD parm_err)
+NET_API_STATUS WINAPI NetUseAdd(LMSTR servername, DWORD level, LPBYTE bufptr, LPDWORD parm_err)
 {
     FIXME("%s %d %p %p stub\n", debugstr_w(servername), level, bufptr, parm_err);
     return NERR_Success;
