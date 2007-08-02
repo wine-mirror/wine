@@ -20400,6 +20400,8 @@ ac_config_files="$ac_config_files dlls/dpnet/Makefile"
 
 ac_config_files="$ac_config_files dlls/dpnhpast/Makefile"
 
+ac_config_files="$ac_config_files dlls/dpnlobby/Makefile"
+
 ac_config_files="$ac_config_files dlls/dsound/Makefile"
 
 ac_config_files="$ac_config_files dlls/dsound/tests/Makefile"
@@ -21601,6 +21603,7 @@ do
     "dlls/dpnaddr/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnaddr/Makefile" ;;
     "dlls/dpnet/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnet/Makefile" ;;
     "dlls/dpnhpast/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnhpast/Makefile" ;;
+    "dlls/dpnlobby/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnlobby/Makefile" ;;
     "dlls/dsound/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dsound/Makefile" ;;
     "dlls/dsound/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dsound/tests/Makefile" ;;
     "dlls/dswave/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dswave/Makefile" ;;

@@ -226,6 +226,7 @@ dlls/dpnaddr/version.res
 dlls/dpnet/libdpnet.def
 dlls/dpnet/version.res
 dlls/dpnhpast/version.res
+dlls/dpnlobby/version.res
 dlls/dsound/libdsound.def
 dlls/dsound/tests/*.ok
 dlls/dsound/tests/dsound_crosstest.exe

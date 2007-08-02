@@ -69,6 +69,7 @@ BASEDIRS = \
 	dpnaddr \
 	dpnet \
 	dpnhpast \
+	dpnlobby \
 	dsound \
 	dswave \
 	dwmapi \
