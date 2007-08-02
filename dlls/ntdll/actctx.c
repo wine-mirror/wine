@@ -2157,7 +2157,7 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
 
     TRACE("%p %08x\n", pActCtx, pActCtx ? pActCtx->dwFlags : 0);
 
-    if (!pActCtx || pActCtx->cbSize != sizeof(*pActCtx) ||
+    if (!pActCtx || pActCtx->cbSize < sizeof(*pActCtx) ||
         (pActCtx->dwFlags & ~ACTCTX_FLAGS_ALL))
         return STATUS_INVALID_PARAMETER;
 
