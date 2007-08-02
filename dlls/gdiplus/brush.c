@@ -120,6 +120,21 @@ GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
+    ARGB argb)
+{
+    if(!grad)
+        return InvalidParameter;
+
+    grad->centercolor = argb;
+    grad->brush.lb.lbColor = ARGB2COLORREF(argb);
+
+    DeleteObject(grad->brush.gdibrush);
+    grad->brush.gdibrush = CreateSolidBrush(grad->brush.lb.lbColor);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
 {
     if(!sf)
