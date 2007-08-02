@@ -530,7 +530,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 						      LPDWORD lpdwPlay, LPDWORD lpdwWrite)
 {
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
-    snd_pcm_uframes_t hw_pptr=0, hw_wptr=0;
+    snd_pcm_uframes_t hw_pptr, hw_wptr;
     snd_pcm_state_t state;
 
     /* **** */
@@ -562,10 +562,11 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
         else
             hw_pptr = This->mmap_buflen_frames + This->mmap_pos - used;
         hw_pptr %= This->mmap_buflen_frames;
-        hw_wptr = This->mmap_pos;
 
         TRACE("At position: %ld (%ld) - Used %ld\n", hw_pptr, This->mmap_pos, used);
     }
+    else hw_pptr = This->mmap_pos;
+    hw_wptr = This->mmap_pos;
 
     LeaveCriticalSection(&This->pcm_crst);
     /* **** */
