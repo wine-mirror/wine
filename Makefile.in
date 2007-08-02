@@ -493,6 +493,7 @@ ALL_MAKEFILES = \
 	programs/winhelp/Makefile \
 	programs/winver/Makefile \
 	programs/wordpad/Makefile \
+	programs/write/Makefile \
 	programs/xcopy/Makefile \
 	server/Makefile \
 	tools/Makefile \
@@ -856,6 +857,7 @@ programs/winevdm/Makefile: programs/winevdm/Makefile.in programs/Makeprog.rules
 programs/winhelp/Makefile: programs/winhelp/Makefile.in programs/Makeprog.rules
 programs/winver/Makefile: programs/winver/Makefile.in programs/Makeprog.rules
 programs/wordpad/Makefile: programs/wordpad/Makefile.in programs/Makeprog.rules
+programs/write/Makefile: programs/write/Makefile.in programs/Makeprog.rules
 programs/xcopy/Makefile: programs/xcopy/Makefile.in programs/Makeprog.rules
 server/Makefile: server/Makefile.in Make.rules
 tools/Makefile: tools/Makefile.in Make.rules

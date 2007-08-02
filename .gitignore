@@ -936,6 +936,8 @@ programs/wordpad/rsrc.res
 programs/wordpad/toolbar.bmp
 programs/wordpad/wordpad
 programs/wordpad/wordpad.ico
+programs/write/rsrc.res
+programs/write/write
 programs/xcopy/rsrc.res
 programs/xcopy/xcopy
 server/wineserver

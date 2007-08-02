@@ -20936,6 +20936,8 @@ ac_config_files="$ac_config_files programs/winver/Makefile"
 
 ac_config_files="$ac_config_files programs/wordpad/Makefile"
 
+ac_config_files="$ac_config_files programs/write/Makefile"
+
 ac_config_files="$ac_config_files programs/xcopy/Makefile"
 
 ac_config_files="$ac_config_files server/Makefile"
@@ -21863,6 +21865,7 @@ do
     "programs/winhelp/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winhelp/Makefile" ;;
     "programs/winver/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winver/Makefile" ;;
     "programs/wordpad/Makefile") CONFIG_FILES="$CONFIG_FILES programs/wordpad/Makefile" ;;
+    "programs/write/Makefile") CONFIG_FILES="$CONFIG_FILES programs/write/Makefile" ;;
     "programs/xcopy/Makefile") CONFIG_FILES="$CONFIG_FILES programs/xcopy/Makefile" ;;
     "server/Makefile") CONFIG_FILES="$CONFIG_FILES server/Makefile" ;;
     "tools/Makefile") CONFIG_FILES="$CONFIG_FILES tools/Makefile" ;;

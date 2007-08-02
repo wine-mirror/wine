@@ -45,6 +45,7 @@ SUBDIRS = \
 	winhelp \
 	winver \
 	wordpad \
+	write \
 	xcopy
 
 # Sub-directories to run make install into
@@ -85,6 +86,7 @@ INSTALLSUBDIRS = \
 	winhelp \
 	winver \
 	wordpad \
+	write \
 	xcopy
 
 # Programs to install in bin directory

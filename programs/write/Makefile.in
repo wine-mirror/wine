@@ -1,0 +1,15 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = write.exe
+APPMODE   = -mwindows
+IMPORTS   = user32 gdi32 kernel32
+
+C_SRCS = write.c
+
+RC_SRCS = rsrc.rc
+
+@MAKE_PROG_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
