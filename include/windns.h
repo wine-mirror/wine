@@ -155,7 +155,7 @@ typedef enum _DnsSection
     DnsSectionAddtional
 } DNS_SECTION;
 
-typedef long DNS_STATUS;
+typedef LONG DNS_STATUS, *PDNS_STATUS;
 typedef DWORD IP4_ADDRESS;
 
 typedef struct

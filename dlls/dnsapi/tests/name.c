@@ -161,7 +161,7 @@ static void test_DnsValidateName_A( void )
     for (i = 0; i < sizeof(test_data) / sizeof(test_data[0]); i++)
     {
         status = pDnsValidateName_A( test_data[i].name, test_data[i].format );
-        ok( status == test_data[i].status, "%d: \'%s\': got %ld, expected %ld\n",
+        ok( status == test_data[i].status, "%d: \'%s\': got %d, expected %d\n",
             i, test_data[i].name, status, test_data[i].status );
     }
 }
