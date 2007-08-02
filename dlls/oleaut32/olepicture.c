@@ -545,7 +545,7 @@ static HRESULT WINAPI OLEPictureImpl_get_hPal(IPicture *iface,
     return E_POINTER;
 
   switch (This->desc.picType) {
-    case PICTYPE_UNINITIALIZED:
+    case (UINT)PICTYPE_UNINITIALIZED:
     case PICTYPE_NONE:
       *phandle = 0;
       hres = S_FALSE;
