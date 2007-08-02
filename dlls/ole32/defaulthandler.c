@@ -164,7 +164,7 @@ static void DefaultHandler_Destroy(DefaultHandler* This);
  *
  * See Windows documentation for more details on IUnknown methods.
  *
- * This version of QueryInterface will not delegate it's implementation
+ * This version of QueryInterface will not delegate its implementation
  * to the outer unknown.
  */
 static HRESULT WINAPI DefaultHandler_NDIUnknown_QueryInterface(
@@ -221,7 +221,7 @@ static HRESULT WINAPI DefaultHandler_NDIUnknown_QueryInterface(
  *
  * See Windows documentation for more details on IUnknown methods.
  *
- * This version of QueryInterface will not delegate it's implementation
+ * This version of QueryInterface will not delegate its implementation
  * to the outer unknown.
  */
 static ULONG WINAPI DefaultHandler_NDIUnknown_AddRef(
@@ -236,7 +236,7 @@ static ULONG WINAPI DefaultHandler_NDIUnknown_AddRef(
  *
  * See Windows documentation for more details on IUnknown methods.
  *
- * This version of QueryInterface will not delegate it's implementation
+ * This version of QueryInterface will not delegate its implementation
  * to the outer unknown.
  */
 static ULONG WINAPI DefaultHandler_NDIUnknown_Release(
@@ -740,7 +740,7 @@ static HRESULT WINAPI DefaultHandler_GetExtent(
    *
    * Here we would build a valid DVTARGETDEVICE structure
    * but, since we are calling into the data cache, we
-   * know it's implementation and we'll skip this
+   * know its implementation and we'll skip this
    * extra work until later.
    */
   targetDevice = NULL;
@@ -1224,7 +1224,7 @@ static HRESULT WINAPI DefaultHandler_IRunnableObject_QueryInterface(
 }
 
 /************************************************************************
- * DefaultHandler_IRunnableObject_QueryInterface (IUnknown)
+ * DefaultHandler_IRunnableObject_AddRef (IUnknown)
  *
  * See Windows documentation for more details on IUnknown methods.
  */
@@ -1237,7 +1237,7 @@ static ULONG WINAPI DefaultHandler_IRunnableObject_AddRef(
 }
 
 /************************************************************************
- * DefaultHandler_IRunnableObject_QueryInterface (IUnknown)
+ * DefaultHandler_IRunnableObject_Release (IUnknown)
  *
  * See Windows documentation for more details on IUnknown methods.
  */
@@ -1557,7 +1557,7 @@ static DefaultHandler* DefaultHandler_Construct(
   /*
    * Initialize the outer unknown
    * We don't keep a reference on the outer unknown since, the way
-   * aggregation works, our lifetime is at least as large as it's
+   * aggregation works, our lifetime is at least as large as its
    * lifetime.
    */
   if (!pUnkOuter)
