@@ -67,6 +67,12 @@ typedef struct {
     HRESULT hres;
 } ProtocolStream;
 
+typedef enum {
+    BEFORE_DOWNLOAD,
+    DOWNLOADING,
+    END_DOWNLOAD
+} download_state_t;
+
 struct Binding {
     const IBindingVtbl               *lpBindingVtbl;
     const IInternetProtocolSinkVtbl  *lpInternetProtocolSinkVtbl;
@@ -88,6 +94,7 @@ struct Binding {
     BOOL report_mime;
     DWORD continue_call;
     BOOL request_locked;
+    download_state_t download_state;
 
     DWORD apartment_thread;
     HWND notif_hwnd;
@@ -905,9 +912,11 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
 static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progress_max)
 {
     FORMATETC formatetc = {0, NULL, 1, -1, TYMED_ISTREAM};
-    BOOL end_download = FALSE;
 
     TRACE("(%p)->(%d %u %u)\n", This, bscf, progress, progress_max);
+
+    if(This->download_state == END_DOWNLOAD)
+        return;
 
     if(GetCurrentThreadId() != This->apartment_thread)
         FIXME("called from worked hread\n");
@@ -926,17 +935,15 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
                 BINDSTATUS_MIMETYPEAVAILABLE, mime);
     }
 
-    if(bscf & BSCF_FIRSTDATANOTIFICATION) {
+    if(This->download_state == BEFORE_DOWNLOAD) {
         fill_stream_buffer(This->stream);
 
+        This->download_state = DOWNLOADING;
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                 BINDSTATUS_BEGINDOWNLOADDATA, This->url);
     }
 
-    if((bscf & BSCF_LASTDATANOTIFICATION) ||
-       (bscf & BSCF_DATAFULLYAVAILABLE) ||
-        progress == progress_max) {
-        end_download = TRUE;
+    if(This->stream->hres == S_FALSE || (bscf & BSCF_LASTDATANOTIFICATION)) {
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                 BINDSTATUS_ENDDOWNLOADDATA, This->url);
     }
@@ -949,7 +956,8 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
     IBindStatusCallback_OnDataAvailable(This->callback, bscf, progress,
             &formatetc, &This->stgmed);
 
-    if(end_download) {
+    if(This->stream->hres == S_FALSE) {
+        This->download_state = END_DOWNLOAD;
         IBindStatusCallback_OnStopBinding(This->callback, S_OK, NULL);
     }
 }
@@ -1302,6 +1310,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->report_mime = TRUE;
     ret->continue_call = 0;
     ret->request_locked = FALSE;
+    ret->download_state = BEFORE_DOWNLOAD;
     ret->task_queue_head = ret->task_queue_tail = NULL;
 
     memset(&ret->bindinfo, 0, sizeof(BINDINFO));
