@@ -253,10 +253,8 @@ HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device)
 			if (IDsDriverBuffer_Release(device->hwbuf) == 0)
 				device->hwbuf = 0;
 		}
-	} else {
-		if (device->pwave)
-			HeapFree(GetProcessHeap(),0,device->pwave);
-	}
+	} else
+                HeapFree(GetProcessHeap(),0,device->pwave);
         HeapFree(GetProcessHeap(),0,device->pwfx);
         device->pwfx=NULL;
 
