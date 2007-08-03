@@ -93,6 +93,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF*,INT,GpWrapMode,
 GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath*,
     GpPathGradient**);
 GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB,GpSolidFill**);
+GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush*);
 GpStatus WINGDIPAPI GdipGetBrushType(GpBrush*,GpBrushType*);
 GpStatus WINGDIPAPI GdipGetPathGradientCenterPoint(GpPathGradient*,GpPointF*);
 GpStatus WINGDIPAPI GdipGetPathGradientFocusScales(GpPathGradient*,REAL*,REAL*);
@@ -100,7 +101,6 @@ GpStatus WINGDIPAPI GdipGetPathGradientGammaCorrection(GpPathGradient*,BOOL*);
 GpStatus WINGDIPAPI GdipGetPathGradientPointCount(GpPathGradient*,INT*);
 GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorsWithCount(GpPathGradient*,
     ARGB*,INT*);
-GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush*);
 GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill*,ARGB*);
 GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient*,ARGB);
 GpStatus WINGDIPAPI GdipSetPathGradientCenterPoint(GpPathGradient*,GpPointF*);
@@ -132,16 +132,16 @@ GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath*,GpRectF*,GDIPCONST GpMatrix*,
 GpStatus WINGDIPAPI GdipGetPointCount(GpPath*,INT*);
 GpStatus WINGDIPAPI GdipIsOutlineVisiblePathPointI(GpPath*,INT,INT,GpPen*,
     GpGraphics*,BOOL*);
-GpStatus WINGDIPAPI GdipStartPathFigure(GpPath*);
 GpStatus WINGDIPAPI GdipResetPath(GpPath*);
 GpStatus WINGDIPAPI GdipSetPathFillMode(GpPath*,GpFillMode);
+GpStatus WINGDIPAPI GdipStartPathFigure(GpPath*);
 GpStatus WINGDIPAPI GdipTransformPath(GpPath*,GpMatrix*);
 
 GpStatus WINGDIPAPI GdipCloneMatrix(GpMatrix*,GpMatrix**);
+GpStatus WINGDIPAPI GdipCreateMatrix(GpMatrix**);
 GpStatus WINGDIPAPI GdipCreateMatrix2(REAL,REAL,REAL,REAL,REAL,REAL,GpMatrix**);
 GpStatus WINGDIPAPI GdipCreateMatrix3(GDIPCONST GpRectF *,GDIPCONST GpPointF*,
     GpMatrix**);
-GpStatus WINGDIPAPI GdipCreateMatrix(GpMatrix**);
 GpStatus WINGDIPAPI GdipDeleteMatrix(GpMatrix*);
 GpStatus WINGDIPAPI GdipGetMatrixElements(GDIPCONST GpMatrix*,REAL*);
 GpStatus WINGDIPAPI GdipMultiplyMatrix(GpMatrix*,GpMatrix*,GpMatrixOrder);
