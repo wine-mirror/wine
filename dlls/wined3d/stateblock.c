@@ -455,31 +455,29 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 This->pixelShaderConstantF[i * 4 + 3]  = targetStateBlock->pixelShaderConstantF[i * 4 + 3];
             }
         }
-        
+
         /* Pixel Shader Integer Constants */
-        for (i = 0; i < MAX_CONST_I; ++i) {
-            if (This->changed.pixelShaderConstantsI[i]) {
-                TRACE("Setting %p from %p %d to { %d, %d, %d, %d }\n", This, targetStateBlock, i,
-                    targetStateBlock->pixelShaderConstantI[i * 4],
-                    targetStateBlock->pixelShaderConstantI[i * 4 + 1],
-                    targetStateBlock->pixelShaderConstantI[i * 4 + 2],
-                    targetStateBlock->pixelShaderConstantI[i * 4 + 3]);
+        for (j = 0; j < This->num_contained_ps_consts_i; ++j) {
+            i = This->contained_ps_consts_i[j];
+            TRACE("Setting %p from %p %d to { %d, %d, %d, %d }\n", This, targetStateBlock, i,
+                targetStateBlock->pixelShaderConstantI[i * 4],
+                targetStateBlock->pixelShaderConstantI[i * 4 + 1],
+                targetStateBlock->pixelShaderConstantI[i * 4 + 2],
+                targetStateBlock->pixelShaderConstantI[i * 4 + 3]);
 
-                This->pixelShaderConstantI[i * 4]      = targetStateBlock->pixelShaderConstantI[i * 4];
-                This->pixelShaderConstantI[i * 4 + 1]  = targetStateBlock->pixelShaderConstantI[i * 4 + 1];
-                This->pixelShaderConstantI[i * 4 + 2]  = targetStateBlock->pixelShaderConstantI[i * 4 + 2];
-                This->pixelShaderConstantI[i * 4 + 3]  = targetStateBlock->pixelShaderConstantI[i * 4 + 3];
-            }
+            This->pixelShaderConstantI[i * 4]      = targetStateBlock->pixelShaderConstantI[i * 4];
+            This->pixelShaderConstantI[i * 4 + 1]  = targetStateBlock->pixelShaderConstantI[i * 4 + 1];
+            This->pixelShaderConstantI[i * 4 + 2]  = targetStateBlock->pixelShaderConstantI[i * 4 + 2];
+            This->pixelShaderConstantI[i * 4 + 3]  = targetStateBlock->pixelShaderConstantI[i * 4 + 3];
         }
-        
-        /* Pixel Shader Boolean Constants */
-        for (i = 0; i < MAX_CONST_B; ++i) {
-            if (This->changed.pixelShaderConstantsB[i]) {
-                TRACE("Setting %p from %p %d to %s\n", This, targetStateBlock, i,
-                    targetStateBlock->pixelShaderConstantB[i]? "TRUE":"FALSE");
 
-                This->pixelShaderConstantB[i] =  targetStateBlock->pixelShaderConstantB[i];
-            }
+        /* Pixel Shader Boolean Constants */
+        for (j = 0; j < This->num_contained_ps_consts_b; ++j) {
+            i = This->contained_ps_consts_b[j];
+            TRACE("Setting %p from %p %d to %s\n", This, targetStateBlock, i,
+                targetStateBlock->pixelShaderConstantB[i]? "TRUE":"FALSE");
+
+            This->pixelShaderConstantB[i] =  targetStateBlock->pixelShaderConstantB[i];
         }
 
         /* Others + Render & Texture */
@@ -670,14 +668,14 @@ should really perform a delta so that only the changes get updated*/
                 IWineD3DDevice_SetPixelShaderConstantF(pDevice, i, This->pixelShaderConstantF + i * 4, 1);
         }
 
-        for (i = 0; i < MAX_CONST_I; ++i) {
-            if (This->changed.pixelShaderConstantsI[i])
-                IWineD3DDevice_SetPixelShaderConstantI(pDevice, i, This->pixelShaderConstantI + i * 4, 1);
+        for (i = 0; i < This->num_contained_ps_consts_i; i++) {
+            IWineD3DDevice_SetPixelShaderConstantI(pDevice, This->contained_ps_consts_i[i],
+                    This->pixelShaderConstantI + This->contained_ps_consts_i[i] * 4, 1);
         }
-        
-        for (i = 0; i < MAX_CONST_B; ++i) {
-            if (This->changed.pixelShaderConstantsB[i])
-                IWineD3DDevice_SetPixelShaderConstantB(pDevice, i, This->pixelShaderConstantB + i, 1);
+
+        for (i = 0; i < This->num_contained_ps_consts_b; i++) {
+            IWineD3DDevice_SetPixelShaderConstantB(pDevice, This->contained_ps_consts_b[i],
+                    This->pixelShaderConstantB + This->contained_ps_consts_b[i], 1);
         }
     }
 
