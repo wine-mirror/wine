@@ -497,6 +497,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
                 object->num_contained_tss_states++;
             }
         }
+        for(i = 0; i < MAX_COMBINED_SAMPLERS; i++) {
+            for(j = 1; j <= WINED3D_HIGHEST_SAMPLER_STATE; j++) {
+                object->contained_sampler_states[object->num_contained_sampler_states].stage = i;
+                object->contained_sampler_states[object->num_contained_sampler_states].state = j;
+                object->num_contained_sampler_states++;
+            }
+        }
 
     } else if (Type == WINED3DSBT_PIXELSTATE) {
 
@@ -532,10 +539,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
                 object->num_contained_tss_states++;
             }
         }
-        for (j = 0 ; j < 16; j++) {
+        for (j = 0 ; j < MAX_COMBINED_SAMPLERS; j++) {
             for (i =0; i < NUM_SAVEDPIXELSTATES_S;i++) {
-
                 object->changed.samplerState[j][SavedPixelStates_S[i]] = TRUE;
+                object->contained_sampler_states[object->num_contained_sampler_states].stage = j;
+                object->contained_sampler_states[object->num_contained_sampler_states].state = SavedPixelStates_S[i];
+                object->num_contained_sampler_states++;
             }
         }
 
@@ -572,9 +581,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
                 object->num_contained_tss_states++;
             }
         }
-        for (j = 0 ; j < 16; j++){
+        for (j = 0 ; j < MAX_COMBINED_SAMPLERS; j++){
             for (i =0; i < NUM_SAVEDVERTEXSTATES_S;i++) {
                 object->changed.samplerState[j][SavedVertexStates_S[i]] = TRUE;
+                object->contained_sampler_states[object->num_contained_sampler_states].stage = j;
+                object->contained_sampler_states[object->num_contained_sampler_states].state = SavedVertexStates_S[i];
+                object->num_contained_sampler_states++;
             }
         }
 
@@ -4404,6 +4416,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
                 object->contained_tss_states[object->num_contained_tss_states].stage = i;
                 object->contained_tss_states[object->num_contained_tss_states].state = j;
                 object->num_contained_tss_states++;
+            }
+        }
+    }
+    for(i = 0; i < MAX_COMBINED_SAMPLERS; i++){
+        for (j = 1; j < WINED3D_HIGHEST_SAMPLER_STATE; j++) {
+            if(object->changed.samplerState[i][j]) {
+                object->contained_sampler_states[object->num_contained_sampler_states].stage = i;
+                object->contained_sampler_states[object->num_contained_sampler_states].state = j;
+                object->num_contained_sampler_states++;
             }
         }
     }

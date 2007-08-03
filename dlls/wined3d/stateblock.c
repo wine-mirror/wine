@@ -583,14 +583,15 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 TRACE("Updating texture %d to %p (was %p)\n", j, targetStateBlock->textures[j],  This->textures[j]);
                 This->textures[j] = targetStateBlock->textures[j];
             }
-            for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE ; i++){ /* States are 1 based */
-                if (This->changed.samplerState[j][i]) {
-                    TRACE("Updating sampler state %d,%d to %d (was %d)\n",
-                    j, i, targetStateBlock->samplerState[j][i],
-                    This->samplerState[j][i]);
-                    This->samplerState[j][i]         = targetStateBlock->samplerState[j][i];
-                }
-            }
+        }
+
+        for (j = 0; j < This->num_contained_sampler_states; j++) {
+            DWORD stage = This->contained_sampler_states[j].stage;
+            DWORD state = This->contained_sampler_states[j].state;
+            TRACE("Updating sampler state %d,%d to %d (was %d)\n",
+                stage, state, targetStateBlock->samplerState[stage][state],
+                This->samplerState[stage][state]);
+            This->samplerState[stage][state] = targetStateBlock->samplerState[stage][state];
         }
     }
 
@@ -738,32 +739,11 @@ should really perform a delta so that only the changes get updated*/
                     IWineD3DDevice_SetTexture(pDevice, WINED3DVERTEXTEXTURESAMPLER0 + j - MAX_FRAGMENT_SAMPLERS, This->textures[j]);
                 }
             }
-            for (i = 1; i <= WINED3D_HIGHEST_SAMPLER_STATE; i++){
-                if (This->changed.samplerState[j][i]) {
-                    ((IWineD3DDeviceImpl *)pDevice)->stateBlock->samplerState[j][i]         = This->samplerState[j][i];
-                    ((IWineD3DDeviceImpl *)pDevice)->stateBlock->changed.samplerState[j][i] = TRUE;
-                }
-            }
-            /* SetTexture catches nop changes, so the above call does not assure that the sampler is updated */
-            IWineD3DDeviceImpl_MarkStateDirty((IWineD3DDeviceImpl *)pDevice, STATE_SAMPLER(j));
         }
 
     } else if (This->blockType == WINED3DSBT_PIXELSTATE) {
 
-        for (j = 0; j < MAX_COMBINED_SAMPLERS; j++) {
-            for (i = 0; i < NUM_SAVEDPIXELSTATES_S; i++) {
-                ((IWineD3DDeviceImpl *)pDevice)->stateBlock->samplerState[j][SavedPixelStates_S[i]] = This->samplerState[j][SavedPixelStates_S[i]];
-            }
-        }
-
     } else if (This->blockType == WINED3DSBT_VERTEXSTATE) {
-
-        for (j = 0; j < MAX_COMBINED_SAMPLERS; j++) {
-            for (i = 0; i < NUM_SAVEDVERTEXSTATES_S; i++) {
-                ((IWineD3DDeviceImpl *)pDevice)->stateBlock->samplerState[j][SavedVertexStates_S[i]] = This->samplerState[j][SavedVertexStates_S[i]];
-            }
-        }
-
 
     } else {
         FIXME("Unrecognized state block type %d\n", This->blockType);
@@ -782,6 +762,14 @@ should really perform a delta so that only the changes get updated*/
         ((IWineD3DDeviceImpl *)pDevice)->stateBlock->changed.textureState[stage][state] = TRUE;
         /* TODO: Record a display list to apply all gl states. For now apply by brute force */
         IWineD3DDeviceImpl_MarkStateDirty((IWineD3DDeviceImpl *)pDevice, STATE_TEXTURESTAGE(stage, state));
+    }
+    /* Sampler states */
+    for (i = 0; i < This->num_contained_sampler_states; i++) {
+        DWORD stage = This->contained_sampler_states[i].stage;
+        DWORD state = This->contained_sampler_states[i].state;
+        ((IWineD3DDeviceImpl *)pDevice)->stateBlock->samplerState[stage][state]         = This->samplerState[stage][state];
+        ((IWineD3DDeviceImpl *)pDevice)->stateBlock->changed.samplerState[stage][state] = TRUE;
+        IWineD3DDeviceImpl_MarkStateDirty((IWineD3DDeviceImpl *)pDevice, STATE_SAMPLER(stage));
     }
 
     ((IWineD3DDeviceImpl *)pDevice)->stateBlock->lowest_disabled_stage = MAX_TEXTURES - 1;

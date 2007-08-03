@@ -1386,6 +1386,8 @@ struct IWineD3DStateBlockImpl
     unsigned int              num_contained_ps_consts_b;
     struct StageState         contained_tss_states[MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE)];
     unsigned int              num_contained_tss_states;
+    struct StageState         contained_sampler_states[MAX_COMBINED_SAMPLERS * WINED3D_HIGHEST_SAMPLER_STATE];
+    unsigned int              num_contained_sampler_states;
 };
 
 extern void stateblock_savedstates_set(
