@@ -619,9 +619,6 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
   int drawattrib = 0;
   int nvfloatattrib = GLX_DONT_CARE;
   int pixelattrib = 0;
-  int isColor = 0;
-  int wantColorBits = 0;
-  int sz_alpha = 0;
 
   /* The list of WGL attributes is allowed to be NULL. We don't return here for NULL
    * because we need to do fixups for GLX_DRAWABLE_TYPE/GLX_RENDER_TYPE/GLX_FLOAT_COMPONENTS_NV. */
@@ -631,7 +628,8 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
     switch (iWGLAttr[cur]) {
     case WGL_COLOR_BITS_ARB:
       pop = iWGLAttr[++cur];
-      wantColorBits = pop; /** see end */
+      PUSH2(oGLXAttr, GLX_BUFFER_SIZE, pop);
+      TRACE("pAttr[%d] = GLX_BUFFER_SIZE: %d\n", cur, pop);
       break;
     case WGL_BLUE_BITS_ARB:
       pop = iWGLAttr[++cur];
@@ -650,7 +648,6 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       break;
     case WGL_ALPHA_BITS_ARB:
       pop = iWGLAttr[++cur];
-      sz_alpha = pop;
       PUSH2(oGLXAttr, GLX_ALPHA_SIZE, pop);
       TRACE("pAttr[%d] = GLX_ALPHA_SIZE: %d\n", cur, pop);
       break;
@@ -674,7 +671,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       pop = iWGLAttr[++cur];
       TRACE("pAttr[%d] = WGL_PIXEL_TYPE_ARB: %d\n", cur, pop);
       switch (pop) {
-      case WGL_TYPE_COLORINDEX_ARB: pixelattrib = GLX_COLOR_INDEX_BIT; isColor = 1; break ;
+      case WGL_TYPE_COLORINDEX_ARB: pixelattrib = GLX_COLOR_INDEX_BIT; break ;
       case WGL_TYPE_RGBA_ARB: pixelattrib = GLX_RGBA_BIT; break ;
       /* This is the same as WGL_TYPE_RGBA_FLOAT_ATI but the GLX constants differ, only the ARB GLX one is widely supported so use that */
       case WGL_TYPE_RGBA_FLOAT_ATI: pixelattrib = GLX_RGBA_FLOAT_BIT; break ;
@@ -785,36 +782,6 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       break;
     }
     ++cur;
-  }
-
-  /**
-   * Trick as WGL_COLOR_BITS_ARB != GLX_BUFFER_SIZE
-   *    WGL_COLOR_BITS_ARB + WGL_ALPHA_BITS_ARB == GLX_BUFFER_SIZE
-   *
-   *  WGL_COLOR_BITS_ARB
-   *     The number of color bitplanes in each color buffer. For RGBA
-   *     pixel types, it is the size of the color buffer, excluding the
-   *     alpha bitplanes. For color-index pixels, it is the size of the
-   *     color index buffer.
-   *
-   *  GLX_BUFFER_SIZE   
-   *     This attribute defines the number of bits per color buffer. 
-   *     For GLX FBConfigs that correspond to a PseudoColor or StaticColor visual, 
-   *     this is equal to the depth value reported in the X11 visual. 
-   *     For GLX FBConfigs that correspond to TrueColor or DirectColor visual, 
-   *     this is the sum of GLX_RED_SIZE, GLX_GREEN_SIZE, GLX_BLUE_SIZE, and GLX_ALPHA_SIZE.
-   * 
-   */
-  if (0 < wantColorBits) {
-    if (!isColor) { 
-      wantColorBits += sz_alpha; 
-    }
-    if (32 < wantColorBits) {
-      ERR("buggy %d GLX_BUFFER_SIZE default to 32\n", wantColorBits);
-      wantColorBits = 32;
-    }
-    PUSH2(oGLXAttr, GLX_BUFFER_SIZE, wantColorBits);
-    TRACE("pAttr[%d] = WGL_COLOR_BITS_ARB: %d\n", cur, wantColorBits);
   }
 
   /* Apply the OR'd drawable type bitmask now EVEN when WGL_DRAW_TO* is unset.
@@ -2595,16 +2562,8 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
                 continue;
 
             case WGL_COLOR_BITS_ARB:
-                /** see ConvertAttribWGLtoGLX for explain */
-                if (!fmt) goto pix_error;
-                hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_BUFFER_SIZE, piValues + i);
-                if (hTest) goto get_error;
-                TRACE("WGL_COLOR_BITS_ARB: GLX_BUFFER_SIZE = %d\n", piValues[i]);
-                hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ALPHA_SIZE, &tmp);
-                if (hTest) goto get_error;
-                TRACE("WGL_COLOR_BITS_ARB: GLX_ALPHA_SIZE = %d\n", tmp);
-                piValues[i] = piValues[i] - tmp;
-                continue;
+                curGLXAttr = GLX_BUFFER_SIZE;
+                break;
 
             case WGL_BIND_TO_TEXTURE_RGB_ARB:
                 if (use_render_texture_ati) {

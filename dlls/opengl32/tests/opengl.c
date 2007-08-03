@@ -30,7 +30,13 @@ static const char* (WINAPI *pwglGetExtensionsStringARB)(HDC);
 static int (WINAPI *pwglReleasePbufferDCARB)(HPBUFFERARB, HDC);
 
 /* WGL_ARB_pixel_format */
+#define WGL_COLOR_BITS_ARB 0x2014
+#define WGL_RED_BITS_ARB   0x2015
+#define WGL_GREEN_BITS_ARB 0x2017
+#define WGL_BLUE_BITS_ARB  0x2019
+#define WGL_ALPHA_BITS_ARB 0x201B
 static BOOL (WINAPI *pwglChoosePixelFormatARB)(HDC, const int *, const FLOAT *, UINT, int *, UINT *);
+static BOOL (WINAPI *pwglGetPixelFormatAttribivARB)(HDC, int, int, UINT, const int *, int *);
 
 /* WGL_ARB_pbuffer */
 #define WGL_DRAW_TO_PBUFFER_ARB 0x202D
@@ -46,6 +52,7 @@ static void init_functions(void)
 
     /* WGL_ARB_pixel_format */
     pwglChoosePixelFormatARB = (void*)wglGetProcAddress("wglChoosePixelFormatARB");
+    pwglGetPixelFormatAttribivARB = (void*)wglGetProcAddress("wglGetPixelFormatAttribivARB");
 
     /* WGL_ARB_pbuffer */
     pwglCreatePbufferARB = (void*)wglGetProcAddress("wglCreatePbufferARB");
@@ -188,6 +195,36 @@ static void test_setpixelformat(void)
     ok(res == 0, "SetPixelFormat on main device context should fail\n");
 }
 
+static void test_colorbits(HDC hdc)
+{
+    const int iAttribList[] = { WGL_COLOR_BITS_ARB, WGL_RED_BITS_ARB, WGL_GREEN_BITS_ARB,
+                                WGL_BLUE_BITS_ARB, WGL_ALPHA_BITS_ARB };
+    int iAttribRet[sizeof(iAttribList)/sizeof(iAttribList[0])];
+    const int iAttribs[] = { WGL_ALPHA_BITS_ARB, 1, 0 };
+    unsigned int nFormats;
+    int res;
+    int iPixelFormat = 0;
+
+    /* We need a pixel format with at least one bit of alpha */
+    res = pwglChoosePixelFormatARB(hdc, iAttribs, NULL, 1, &iPixelFormat, &nFormats);
+    if(res == FALSE || nFormats == 0)
+    {
+        skip("No suitable pixel formats found\n");
+        return;
+    }
+
+    res = pwglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0,
+              sizeof(iAttribList)/sizeof(iAttribList[0]), iAttribList, iAttribRet);
+    if(res == FALSE)
+    {
+        skip("wglGetPixelFormatAttribivARB failed\n");
+        return;
+    }
+    iAttribRet[1] += iAttribRet[2]+iAttribRet[3]+iAttribRet[4];
+    ok(iAttribRet[0] == iAttribRet[1], "WGL_COLOR_BITS_ARB (%d) does not equal R+G+B+A (%d)!\n",
+                                       iAttribRet[0], iAttribRet[1]);
+}
+
 START_TEST(opengl)
 {
     HWND hwnd;
@@ -236,6 +273,7 @@ START_TEST(opengl)
         init_functions();
 
         test_setpixelformat();
+        test_colorbits(hdc);
 
         wgl_extensions = pwglGetExtensionsStringARB(hdc);
         if(wgl_extensions == NULL) skip("Skipping opengl32 tests because this OpenGL implementation doesn't support WGL extensions!\n");
