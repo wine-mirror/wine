@@ -474,6 +474,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
             object->contained_transform_states[j - 1] = j;
         }
         object->num_contained_transform_states = HIGHEST_TRANSFORMSTATE;
+        for(j = 0; j < MAX_CONST_I; j++) {
+            object->contained_vs_consts_i[j] = j;
+        }
+        object->num_contained_vs_consts_i = MAX_CONST_I;
+        for(j = 0; j < MAX_CONST_B; j++) {
+            object->contained_vs_consts_b[j] = j;
+        }
+        object->num_contained_vs_consts_b = MAX_CONST_B;
 
     } else if (Type == WINED3DSBT_PIXELSTATE) {
 
@@ -517,11 +525,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         /* Vertex Shader Constants */
         for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i)
             object->changed.vertexShaderConstantsF[i] = TRUE;
-        for (i = 0; i < MAX_CONST_B; ++i)
+        for (i = 0; i < MAX_CONST_B; ++i) {
             object->changed.vertexShaderConstantsB[i] = TRUE;
-        for (i = 0; i < MAX_CONST_I; ++i)
+            object->contained_vs_consts_b[i] = i;
+        }
+        object->num_contained_vs_consts_b = MAX_CONST_B;
+        for (i = 0; i < MAX_CONST_I; ++i) {
             object->changed.vertexShaderConstantsI[i] = TRUE;
-
+            object->contained_vs_consts_i[i] = i;
+        }
+        object->num_contained_vs_consts_i = MAX_CONST_I;
         for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
             object->changed.renderState[SavedVertexStates_R[i]] = TRUE;
             object->contained_render_states[i] = SavedVertexStates_R[i];
@@ -4332,6 +4345,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
         if(object->changed.transform[i]) {
             object->contained_transform_states[object->num_contained_transform_states] = i;
             object->num_contained_transform_states++;
+        }
+    }
+    for(i = 0; i < MAX_CONST_I; i++) {
+        if(object->changed.vertexShaderConstantsI[i]) {
+            object->contained_vs_consts_i[object->num_contained_vs_consts_i] = i;
+            object->num_contained_vs_consts_i++;
+        }
+    }
+    for(i = 0; i < MAX_CONST_B; i++) {
+        if(object->changed.vertexShaderConstantsB[i]) {
+            object->contained_vs_consts_b[object->num_contained_vs_consts_b] = i;
+            object->num_contained_vs_consts_b++;
         }
     }
 

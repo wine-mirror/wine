@@ -1371,6 +1371,10 @@ struct IWineD3DStateBlockImpl
     unsigned int              num_contained_render_states;
     DWORD                     contained_transform_states[WINEHIGHEST_RENDER_STATE + 1];
     unsigned int              num_contained_transform_states;
+    DWORD                     contained_vs_consts_i[MAX_CONST_I];
+    unsigned int              num_contained_vs_consts_i;
+    DWORD                     contained_vs_consts_b[MAX_CONST_B];
+    unsigned int              num_contained_vs_consts_b;
 };
 
 extern void stateblock_savedstates_set(

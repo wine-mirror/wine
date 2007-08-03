@@ -363,29 +363,27 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         }
         
         /* Vertex Shader Integer Constants */
-        for (i = 0; i < MAX_CONST_I; ++i) {
-            if (This->changed.vertexShaderConstantsI[i]) {
-                TRACE("Setting %p from %p %d to { %d, %d, %d, %d }\n", This, targetStateBlock, i,
-                    targetStateBlock->vertexShaderConstantI[i * 4],
-                    targetStateBlock->vertexShaderConstantI[i * 4 + 1],
-                    targetStateBlock->vertexShaderConstantI[i * 4 + 2],
-                    targetStateBlock->vertexShaderConstantI[i * 4 + 3]);
+        for (j = 0; j < This->num_contained_vs_consts_i; ++j) {
+            i = This->contained_vs_consts_i[j];
+            TRACE("Setting %p from %p %d to { %d, %d, %d, %d }\n", This, targetStateBlock, i,
+                targetStateBlock->vertexShaderConstantI[i * 4],
+                targetStateBlock->vertexShaderConstantI[i * 4 + 1],
+                targetStateBlock->vertexShaderConstantI[i * 4 + 2],
+                targetStateBlock->vertexShaderConstantI[i * 4 + 3]);
 
-                This->vertexShaderConstantI[i * 4]      = targetStateBlock->vertexShaderConstantI[i * 4];
-                This->vertexShaderConstantI[i * 4 + 1]  = targetStateBlock->vertexShaderConstantI[i * 4 + 1];
-                This->vertexShaderConstantI[i * 4 + 2]  = targetStateBlock->vertexShaderConstantI[i * 4 + 2];
-                This->vertexShaderConstantI[i * 4 + 3]  = targetStateBlock->vertexShaderConstantI[i * 4 + 3];
-            }
+            This->vertexShaderConstantI[i * 4]      = targetStateBlock->vertexShaderConstantI[i * 4];
+            This->vertexShaderConstantI[i * 4 + 1]  = targetStateBlock->vertexShaderConstantI[i * 4 + 1];
+            This->vertexShaderConstantI[i * 4 + 2]  = targetStateBlock->vertexShaderConstantI[i * 4 + 2];
+            This->vertexShaderConstantI[i * 4 + 3]  = targetStateBlock->vertexShaderConstantI[i * 4 + 3];
         }
-        
-        /* Vertex Shader Boolean Constants */
-        for (i = 0; i < MAX_CONST_B; ++i) {
-            if (This->changed.vertexShaderConstantsB[i]) {
-                TRACE("Setting %p from %p %d to %s\n", This, targetStateBlock, i,
-                    targetStateBlock->vertexShaderConstantB[i]? "TRUE":"FALSE");
 
-                This->vertexShaderConstantB[i] =  targetStateBlock->vertexShaderConstantB[i];
-            }
+        /* Vertex Shader Boolean Constants */
+        for (j = 0; j < This->num_contained_vs_consts_b; ++j) {
+            i = This->contained_vs_consts_b[j];
+            TRACE("Setting %p from %p %d to %s\n", This, targetStateBlock, i,
+                targetStateBlock->vertexShaderConstantB[i]? "TRUE":"FALSE");
+
+            This->vertexShaderConstantB[i] =  targetStateBlock->vertexShaderConstantB[i];
         }
 
         /* Lights... For a recorded state block, we just had a chain of actions to perform,
@@ -647,15 +645,15 @@ should really perform a delta so that only the changes get updated*/
             if (This->changed.vertexShaderConstantsF[i])
                 IWineD3DDevice_SetVertexShaderConstantF(pDevice, i, This->vertexShaderConstantF + i * 4, 1);
         }
-        
-        for (i = 0; i < MAX_CONST_I; i++) {
-            if (This->changed.vertexShaderConstantsI[i])
-                IWineD3DDevice_SetVertexShaderConstantI(pDevice, i, This->vertexShaderConstantI + i * 4, 1);
+
+        for (i = 0; i < This->num_contained_vs_consts_i; i++) {
+            IWineD3DDevice_SetVertexShaderConstantI(pDevice, This->contained_vs_consts_i[i],
+                    This->vertexShaderConstantI + This->contained_vs_consts_i[i] * 4, 1);
         }
-        
-        for (i = 0; i < MAX_CONST_B; i++) {
-            if (This->changed.vertexShaderConstantsB[i])
-                IWineD3DDevice_SetVertexShaderConstantB(pDevice, i, This->vertexShaderConstantB + i, 1);
+
+        for (i = 0; i < This->num_contained_vs_consts_b; i++) {
+            IWineD3DDevice_SetVertexShaderConstantB(pDevice, This->contained_vs_consts_b[i],
+                    This->vertexShaderConstantB + This->contained_vs_consts_b[i], 1);
         }
     }
 
