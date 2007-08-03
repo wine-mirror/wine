@@ -1026,7 +1026,7 @@
 @ stub ZwImpersonateClientOfPort
 @ stub ZwImpersonateThread
 @ stub ZwInitializeRegistry
-# @ stub ZwInitiatePowerAction
+@ stdcall ZwInitiatePowerAction(long long long long) NtInitiatePowerAction
 # @ stub ZwIsProcessInJob
 # @ stub ZwIsSystemResumeAutomatic
 @ stdcall ZwListenPort(ptr ptr) NtListenPort
@@ -1067,7 +1067,7 @@
 # @ stub ZwOpenThreadTokenEx
 @ stdcall ZwOpenTimer(ptr long ptr) NtOpenTimer
 @ stub ZwPlugPlayControl
-# @ stub ZwPowerInformation
+@ stdcall ZwPowerInformation(long ptr long ptr long) NtPowerInformation
 @ stdcall ZwPrivilegeCheck(ptr ptr ptr) NtPrivilegeCheck
 @ stub ZwPrivilegeObjectAuditAlarm
 @ stub ZwPrivilegedServiceAuditAlarm
@@ -1083,7 +1083,7 @@
 @ stdcall ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
 @ stub ZwQueryEaFile
 @ stdcall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
-# @ stub ZwQueryFullAttributesFile
+@ stdcall ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
 @ stdcall ZwQueryInformationAtom(long long ptr long ptr) NtQueryInformationAtom
 @ stdcall ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
 # @ stub ZwQueryInformationJobObject
@@ -1095,7 +1095,7 @@
 @ stub ZwQueryIntervalProfile
 @ stdcall ZwQueryIoCompletion(long long ptr long ptr) NtQueryIoCompletion
 @ stdcall ZwQueryKey(long long ptr long ptr) NtQueryKey
-# @ stub ZwQueryMultipleValueKey
+@ stdcall ZwQueryMultipleValueKey(long ptr long ptr long ptr) NtQueryMultipleValueKey
 @ stdcall ZwQueryMutant(long long ptr long ptr) NtQueryMutant
 @ stdcall ZwQueryObject(long long long long long) NtQueryObject
 @ stub ZwQueryOpenSubKeys
@@ -1115,7 +1115,7 @@
 @ stdcall ZwQueryValueKey(long ptr long ptr long ptr) NtQueryValueKey
 @ stdcall ZwQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
 @ stdcall ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
-# @ stub ZwQueueApcThread
+@ stdcall ZwQueueApcThread(long ptr long long long) NtQueueApcThread
 @ stdcall ZwRaiseException(ptr ptr long) NtRaiseException
 @ stub ZwRaiseHardError
 @ stdcall ZwReadFile(long long long long long long long long long) NtReadFile
@@ -1190,7 +1190,7 @@
 @ stdcall ZwSetValueKey(long long long long long long) NtSetValueKey
 @ stdcall ZwSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile
 @ stdcall ZwShutdownSystem(long) NtShutdownSystem
-# @ stub ZwSignalAndWaitForSingleObject
+@ stdcall ZwSignalAndWaitForSingleObject(long long long ptr) NtSignalAndWaitForSingleObject
 @ stub ZwStartProfile
 @ stub ZwStopProfile
 # @ stub ZwSuspendProcess
