@@ -1411,13 +1411,11 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
 
     *ppDevice = device;
     device->guid = devGUID;
+    device->driver = NULL;
 
     /* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
-    waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&device->driver, 0);
-
-    /* Disable the direct sound driver to force emulation if requested. */
-    if (ds_hw_accel == DS_HW_ACCEL_EMULATION)
-        device->driver = NULL;
+    if (ds_hw_accel > DS_HW_ACCEL_EMULATION)
+        waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&device->driver, 0);
 
     /* Get driver description */
     if (device->driver) {
@@ -1441,7 +1439,7 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
         DWORD flags = CALLBACK_FUNCTION;
 
         /* disable direct sound if requested */
-        if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
+        if (device->driver)
             flags |= WAVE_DIRECTSOUND;
 
         hr = mmErr(waveOutOpen(&(device->hwo),

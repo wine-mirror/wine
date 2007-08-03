@@ -290,9 +290,7 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 	if (device->hwbuf) {
 		err = IDsDriverBuffer_Stop(device->hwbuf);
 		if (err == DSERR_BUFFERLOST) {
-			DWORD flags = CALLBACK_FUNCTION;
-			if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
-				flags |= WAVE_DIRECTSOUND;
+			DWORD flags = CALLBACK_FUNCTION | WAVE_DIRECTSOUND;
 			/* Wine-only: the driver wants us to reopen the device */
 			/* FIXME: check for errors */
 			IDsDriverBuffer_Release(device->hwbuf);
@@ -415,7 +413,7 @@ HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 
 	if (device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMSETFORMAT) {
 		DWORD flags = CALLBACK_FUNCTION;
-		if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
+		if (device->driver)
 			flags |= WAVE_DIRECTSOUND;
 		/* FIXME: check for errors */
 		DSOUND_PrimaryClose(device);
