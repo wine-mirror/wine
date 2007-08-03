@@ -1380,10 +1380,14 @@ struct IWineD3DStateBlockImpl
     unsigned int              num_contained_vs_consts_i;
     DWORD                     contained_vs_consts_b[MAX_CONST_B];
     unsigned int              num_contained_vs_consts_b;
+    DWORD                     *contained_vs_consts_f;
+    unsigned int              num_contained_vs_consts_f;
     DWORD                     contained_ps_consts_i[MAX_CONST_I];
     unsigned int              num_contained_ps_consts_i;
     DWORD                     contained_ps_consts_b[MAX_CONST_B];
     unsigned int              num_contained_ps_consts_b;
+    DWORD                     *contained_ps_consts_f;
+    unsigned int              num_contained_ps_consts_f;
     struct StageState         contained_tss_states[MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE)];
     unsigned int              num_contained_tss_states;
     struct StageState         contained_sampler_states[MAX_COMBINED_SAMPLERS * WINED3D_HIGHEST_SAMPLER_STATE];

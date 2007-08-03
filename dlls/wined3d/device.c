@@ -474,6 +474,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
             object->contained_transform_states[j - 1] = j;
         }
         object->num_contained_transform_states = HIGHEST_TRANSFORMSTATE;
+        for(j = 0; j < GL_LIMITS(vshader_constantsF); j++) {
+            object->contained_vs_consts_f[j] = j;
+        }
+        object->num_contained_vs_consts_f = GL_LIMITS(vshader_constantsF);
         for(j = 0; j < MAX_CONST_I; j++) {
             object->contained_vs_consts_i[j] = j;
         }
@@ -482,6 +486,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
             object->contained_vs_consts_b[j] = j;
         }
         object->num_contained_vs_consts_b = MAX_CONST_B;
+        for(j = 0; j < GL_LIMITS(pshader_constantsF); j++) {
+            object->contained_ps_consts_f[j] = j;
+        }
+        object->num_contained_ps_consts_f = GL_LIMITS(pshader_constantsF);
         for(j = 0; j < MAX_CONST_I; j++) {
             object->contained_ps_consts_i[j] = j;
         }
@@ -513,8 +521,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         object->changed.pixelShader = TRUE;
 
         /* Pixel Shader Constants */
-        for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i)
+        for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
+            object->contained_ps_consts_f[i] = i;
             object->changed.pixelShaderConstantsF[i] = TRUE;
+        }
+        object->num_contained_ps_consts_f = GL_LIMITS(vshader_constantsF);
         for (i = 0; i < MAX_CONST_B; ++i) {
             object->contained_ps_consts_b[i] = i;
             object->changed.pixelShaderConstantsB[i] = TRUE;
@@ -556,8 +567,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         object->changed.vertexShader = TRUE;
 
         /* Vertex Shader Constants */
-        for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i)
+        for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
             object->changed.vertexShaderConstantsF[i] = TRUE;
+            object->contained_vs_consts_f[i] = i;
+        }
+        object->num_contained_vs_consts_f = GL_LIMITS(vshader_constantsF);
         for (i = 0; i < MAX_CONST_B; ++i) {
             object->changed.vertexShaderConstantsB[i] = TRUE;
             object->contained_vs_consts_b[i] = i;
@@ -4384,6 +4398,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
         if(object->changed.transform[i]) {
             object->contained_transform_states[object->num_contained_transform_states] = i;
             object->num_contained_transform_states++;
+        }
+    }
+    for(i = 0; i < GL_LIMITS(vshader_constantsF); i++) {
+        if(object->changed.vertexShaderConstantsF[i]) {
+            object->contained_vs_consts_f[object->num_contained_vs_consts_f] = i;
+            object->num_contained_vs_consts_f++;
         }
     }
     for(i = 0; i < MAX_CONST_I; i++) {

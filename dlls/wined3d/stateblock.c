@@ -48,6 +48,10 @@ HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object) {
     WINED3D_MEMCHECK(object->vertexShaderConstantF);
     object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BOOL) * GL_LIMITS(vshader_constantsF));
     WINED3D_MEMCHECK(object->changed.vertexShaderConstantsF);
+    object->contained_vs_consts_f = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * GL_LIMITS(vshader_constantsF));
+    WINED3D_MEMCHECK(object->contained_vs_consts_f);
+    object->contained_ps_consts_f = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * GL_LIMITS(pshader_constantsF));
+    WINED3D_MEMCHECK(object->contained_ps_consts_f);
 
     list_init(&object->set_vconstantsF);
     list_init(&object->set_pconstantsF);
@@ -274,6 +278,8 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
         HeapFree(GetProcessHeap(), 0, This->changed.vertexShaderConstantsF);
         HeapFree(GetProcessHeap(), 0, This->pixelShaderConstantF);
         HeapFree(GetProcessHeap(), 0, This->changed.pixelShaderConstantsF);
+        HeapFree(GetProcessHeap(), 0, This->contained_vs_consts_f);
+        HeapFree(GetProcessHeap(), 0, This->contained_ps_consts_f);
 
         LIST_FOR_EACH_ENTRY_SAFE(constant, constant2, &This->set_vconstantsF, constants_entry, entry) {
             HeapFree(GetProcessHeap(), 0, constant);
@@ -347,19 +353,18 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         }
 
         /* Vertex Shader Float Constants */
-        for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
-            if (This->changed.vertexShaderConstantsF[i]) {
-                TRACE("Setting %p from %p %d to { %f, %f, %f, %f }\n", This, targetStateBlock, i,
-                    targetStateBlock->vertexShaderConstantF[i * 4],
-                    targetStateBlock->vertexShaderConstantF[i * 4 + 1],
-                    targetStateBlock->vertexShaderConstantF[i * 4 + 2],
-                    targetStateBlock->vertexShaderConstantF[i * 4 + 3]);
+        for (j = 0; j < This->num_contained_vs_consts_f; ++j) {
+            i = This->contained_vs_consts_f[j];
+            TRACE("Setting %p from %p %d to { %f, %f, %f, %f }\n", This, targetStateBlock, i,
+                targetStateBlock->vertexShaderConstantF[i * 4],
+                targetStateBlock->vertexShaderConstantF[i * 4 + 1],
+                targetStateBlock->vertexShaderConstantF[i * 4 + 2],
+                targetStateBlock->vertexShaderConstantF[i * 4 + 3]);
 
-                This->vertexShaderConstantF[i * 4]      = targetStateBlock->vertexShaderConstantF[i * 4];
-                This->vertexShaderConstantF[i * 4 + 1]  = targetStateBlock->vertexShaderConstantF[i * 4 + 1];
-                This->vertexShaderConstantF[i * 4 + 2]  = targetStateBlock->vertexShaderConstantF[i * 4 + 2];
-                This->vertexShaderConstantF[i * 4 + 3]  = targetStateBlock->vertexShaderConstantF[i * 4 + 3];
-            }
+            This->vertexShaderConstantF[i * 4]      = targetStateBlock->vertexShaderConstantF[i * 4];
+            This->vertexShaderConstantF[i * 4 + 1]  = targetStateBlock->vertexShaderConstantF[i * 4 + 1];
+            This->vertexShaderConstantF[i * 4 + 2]  = targetStateBlock->vertexShaderConstantF[i * 4 + 2];
+            This->vertexShaderConstantF[i * 4 + 3]  = targetStateBlock->vertexShaderConstantF[i * 4 + 3];
         }
         
         /* Vertex Shader Integer Constants */
@@ -441,19 +446,18 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         }
 
         /* Pixel Shader Float Constants */
-        for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
-            if (This->changed.pixelShaderConstantsF[i]) {
-                TRACE("Setting %p from %p %d to { %f, %f, %f, %f }\n", This, targetStateBlock, i,
-                    targetStateBlock->pixelShaderConstantF[i * 4],
-                    targetStateBlock->pixelShaderConstantF[i * 4 + 1],
-                    targetStateBlock->pixelShaderConstantF[i * 4 + 2],
-                    targetStateBlock->pixelShaderConstantF[i * 4 + 3]);
+        for (j = 0; j < This->num_contained_ps_consts_f; ++j) {
+            i = This->contained_ps_consts_f[j];
+            TRACE("Setting %p from %p %d to { %f, %f, %f, %f }\n", This, targetStateBlock, i,
+                targetStateBlock->pixelShaderConstantF[i * 4],
+                targetStateBlock->pixelShaderConstantF[i * 4 + 1],
+                targetStateBlock->pixelShaderConstantF[i * 4 + 2],
+                targetStateBlock->pixelShaderConstantF[i * 4 + 3]);
 
-                This->pixelShaderConstantF[i * 4]      = targetStateBlock->pixelShaderConstantF[i * 4];
-                This->pixelShaderConstantF[i * 4 + 1]  = targetStateBlock->pixelShaderConstantF[i * 4 + 1];
-                This->pixelShaderConstantF[i * 4 + 2]  = targetStateBlock->pixelShaderConstantF[i * 4 + 2];
-                This->pixelShaderConstantF[i * 4 + 3]  = targetStateBlock->pixelShaderConstantF[i * 4 + 3];
-            }
+            This->pixelShaderConstantF[i * 4]      = targetStateBlock->pixelShaderConstantF[i * 4];
+            This->pixelShaderConstantF[i * 4 + 1]  = targetStateBlock->pixelShaderConstantF[i * 4 + 1];
+            This->pixelShaderConstantF[i * 4 + 2]  = targetStateBlock->pixelShaderConstantF[i * 4 + 2];
+            This->pixelShaderConstantF[i * 4 + 3]  = targetStateBlock->pixelShaderConstantF[i * 4 + 3];
         }
 
         /* Pixel Shader Integer Constants */
@@ -639,9 +643,9 @@ should really perform a delta so that only the changes get updated*/
         }
 
         /* Vertex Shader Constants */
-        for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
-            if (This->changed.vertexShaderConstantsF[i])
-                IWineD3DDevice_SetVertexShaderConstantF(pDevice, i, This->vertexShaderConstantF + i * 4, 1);
+        for (i = 0; i < This->num_contained_vs_consts_f; i++) {
+            IWineD3DDevice_SetVertexShaderConstantF(pDevice, This->contained_vs_consts_f[i],
+                    This->vertexShaderConstantF + This->contained_vs_consts_f[i] * 4, 1);
         }
 
         for (i = 0; i < This->num_contained_vs_consts_i; i++) {
@@ -663,9 +667,9 @@ should really perform a delta so that only the changes get updated*/
         }
 
         /* Pixel Shader Constants */
-        for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
-            if (This->changed.pixelShaderConstantsF[i])
-                IWineD3DDevice_SetPixelShaderConstantF(pDevice, i, This->pixelShaderConstantF + i * 4, 1);
+        for (i = 0; i < This->num_contained_ps_consts_f; i++) {
+            IWineD3DDevice_SetPixelShaderConstantF(pDevice, This->contained_ps_consts_f[i],
+                    This->pixelShaderConstantF + This->contained_ps_consts_f[i] * 4, 1);
         }
 
         for (i = 0; i < This->num_contained_ps_consts_i; i++) {
