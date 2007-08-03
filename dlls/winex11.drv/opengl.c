@@ -1259,8 +1259,8 @@ int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) {
     return 1;
   }
 
-  return physDev->current_pf;
   TRACE("(%p): returns %d\n", physDev, physDev->current_pf);
+  return physDev->current_pf;
 }
 
 /**
