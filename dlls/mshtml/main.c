@@ -54,7 +54,7 @@ static HINSTANCE shdoclc = NULL;
 static ITypeLib *typelib;
 static ITypeInfo *typeinfos[LAST_tid];
 
-static const REFIID tid_ids[] = {
+static REFIID tid_ids[] = {
     &IID_IHTMLWindow2
 };
 
