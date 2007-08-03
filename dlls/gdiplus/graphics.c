@@ -574,9 +574,8 @@ static void shorten_bezier_amt(GpPointF * pt, REAL amt, BOOL rev)
 static GpStatus draw_polybezier(GpGraphics *graphics, GpPen *pen,
     GDIPCONST GpPointF * pt, INT count, BOOL caps)
 {
-    POINT *pti, curpos;
+    POINT *pti;
     GpPointF *ptcopy;
-    REAL x, y;
     GpStatus status = GenericError;
 
     if(!count)
@@ -595,30 +594,14 @@ static GpStatus draw_polybezier(GpGraphics *graphics, GpPen *pen,
     if(caps){
         if(pen->endcap == LineCapArrowAnchor)
             shorten_bezier_amt(&ptcopy[count-4], pen->width, FALSE);
-        /* FIXME The following is seemingly correct only for baseinset < 0 or
-         * baseinset > ~3. With smaller baseinsets, windows actually
-         * lengthens the bezier line instead of shortening it. */
-        else if((pen->endcap == LineCapCustom) && pen->customend){
-            x = pt[count - 1].X;
-            y = pt[count - 1].Y;
-            shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
-                             pen->width * pen->customend->inset);
-            MoveToEx(graphics->hdc, roundr(pt[count - 1].X), roundr(pt[count - 1].Y), &curpos);
-            LineTo(graphics->hdc, roundr(x), roundr(y));
-            MoveToEx(graphics->hdc, curpos.x, curpos.y, NULL);
-        }
+        else if((pen->endcap == LineCapCustom) && pen->customend)
+            shorten_bezier_amt(&ptcopy[count-4], pen->width * pen->customend->inset,
+                               FALSE);
 
         if(pen->startcap == LineCapArrowAnchor)
             shorten_bezier_amt(ptcopy, pen->width, TRUE);
-        else if((pen->startcap == LineCapCustom) && pen->customstart){
-            x = ptcopy[0].X;
-            y = ptcopy[0].Y;
-            shorten_line_amt(ptcopy[1].X, ptcopy[1].Y, &x, &y,
-                             pen->width * pen->customend->inset);
-            MoveToEx(graphics->hdc, roundr(pt[0].X), roundr(pt[0].Y), &curpos);
-            LineTo(graphics->hdc, roundr(x), roundr(y));
-            MoveToEx(graphics->hdc, curpos.x, curpos.y, NULL);
-        }
+        else if((pen->startcap == LineCapCustom) && pen->customstart)
+            shorten_bezier_amt(ptcopy, pen->width * pen->customend->inset, TRUE);
 
         /* the direction of the line cap is parallel to the direction at the
          * end of the bezier (which, if it has been shortened, is not the same
@@ -650,10 +633,9 @@ end:
 static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF * pt,
     GDIPCONST BYTE * types, INT count, BOOL caps)
 {
-    POINT *pti = GdipAlloc(count * sizeof(POINT)), curpos;
+    POINT *pti = GdipAlloc(count * sizeof(POINT));
     BYTE *tp = GdipAlloc(count);
     GpPointF *ptcopy = GdipAlloc(count * sizeof(GpPointF));
-    REAL x = pt[count - 1].X, y = pt[count - 1].Y;
     INT i, j;
     GpStatus status = GenericError;
 
@@ -686,16 +668,9 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
             case PathPointTypeBezier:
                 if(pen->endcap == LineCapArrowAnchor)
                     shorten_bezier_amt(&ptcopy[count - 4], pen->width, FALSE);
-                else if((pen->endcap == LineCapCustom) && pen->customend){
-                    x = pt[count - 1].X;
-                    y = pt[count - 1].Y;
-                    shorten_line_amt(pt[count - 2].X, pt[count - 2].Y, &x, &y,
-                                     pen->width * pen->customend->inset);
-                    MoveToEx(graphics->hdc, roundr(pt[count - 1].X),
-                             roundr(pt[count - 1].Y), &curpos);
-                    LineTo(graphics->hdc, roundr(x), roundr(y));
-                    MoveToEx(graphics->hdc, curpos.x, curpos.y, NULL);
-                }
+                else if((pen->endcap == LineCapCustom) && pen->customend)
+                    shorten_bezier_amt(&ptcopy[count - 4],
+                                       pen->width * pen->customend->inset, FALSE);
 
                 draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
                     pt[count - 1].X - (ptcopy[count - 1].X - ptcopy[count - 2].X),
@@ -731,15 +706,9 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
             case PathPointTypeBezier:
                 if(pen->startcap == LineCapArrowAnchor)
                     shorten_bezier_amt(&ptcopy[j - 1], pen->width, TRUE);
-                else if((pen->startcap == LineCapCustom) && pen->customstart){
-                    x = pt[j - 1].X;
-                    y = pt[j - 1].Y;
-                    shorten_line_amt(ptcopy[j].X, ptcopy[j].Y, &x, &y,
-                                     pen->width * pen->customstart->inset);
-                    MoveToEx(graphics->hdc, roundr(pt[j - 1].X), roundr(pt[j - 1].Y), &curpos);
-                    LineTo(graphics->hdc, roundr(x), roundr(y));
-                    MoveToEx(graphics->hdc, curpos.x, curpos.y, NULL);
-                }
+                else if((pen->startcap == LineCapCustom) && pen->customstart)
+                    shorten_bezier_amt(&ptcopy[j - 1],
+                                       pen->width * pen->customend->inset, TRUE);
 
                 draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
                     pt[j - 1].X - (ptcopy[j - 1].X - ptcopy[j].X),
