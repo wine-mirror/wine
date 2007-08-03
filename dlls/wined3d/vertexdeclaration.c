@@ -120,11 +120,13 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVerte
         const WINED3DVERTEXELEMENT *elements, size_t element_count) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     HRESULT hr = WINED3D_OK;
+    int i;
+    char isPreLoaded[MAX_STREAMS];
 
     TRACE("(%p) : d3d version %d\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
+    memset(isPreLoaded, 0, sizeof(isPreLoaded));
 
     if (TRACE_ON(d3d_decl)) {
-        int i;
         for (i = 0; i < element_count; ++i) {
             dump_wined3dvertexelement(elements+i);
         }
@@ -137,6 +139,25 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVerte
         hr = WINED3DERR_OUTOFVIDEOMEMORY;
     } else {
         CopyMemory(This->pDeclarationWine, elements, sizeof(WINED3DVERTEXELEMENT) * element_count);
+    }
+
+    /* Do some static analysis on the elements to make reading the declaration more comfortable
+     * for the drawing code
+     *
+     * First, find the Streams used in the declaration. The vertex buffers have to be loaded
+     * when drawing.
+     */
+    This->num_streams = 0;
+    for (i = 0; i < element_count; ++i) {
+
+        /* Filter tesselation pseudo streams*/
+        if(This->pDeclarationWine[i].Stream >= MAX_STREAMS) continue;
+
+        if(!isPreLoaded[This->pDeclarationWine[i].Stream]) {
+            This->streams[This->num_streams] = This->pDeclarationWine[i].Stream;
+            This->num_streams++;
+            isPreLoaded[This->pDeclarationWine[i].Stream] = 1;
+        }
     }
 
     TRACE("Returning\n");

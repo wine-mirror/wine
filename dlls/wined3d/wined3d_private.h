@@ -1225,6 +1225,9 @@ typedef struct IWineD3DVertexDeclarationImpl {
 
     WINED3DVERTEXELEMENT    *pDeclarationWine;
     UINT                    declarationWNumElements;
+
+    DWORD                   streams[MAX_STREAMS];
+    UINT                    num_streams;
 } IWineD3DVertexDeclarationImpl;
 
 extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;

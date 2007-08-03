@@ -156,10 +156,8 @@ void primitiveDeclarationConvertToStridedData(
     WINED3DVERTEXELEMENT *element;
     DWORD stride;
     int reg;
-    char isPreLoaded[MAX_STREAMS];
-    DWORD preLoadStreams[MAX_STREAMS], numPreloadStreams = 0;
-
-    memset(isPreLoaded, 0, sizeof(isPreLoaded));
+    DWORD numPreloadStreams = This->stateBlock->streamIsUP ? 0 : vertexDeclaration->num_streams;
+    DWORD *streams = vertexDeclaration->streams;
 
     /* Check for transformed vertices, disable vertex shader if present */
     strided->u.s.position_transformed = FALSE;
@@ -191,11 +189,6 @@ void primitiveDeclarationConvertToStridedData(
             data    = (BYTE *)This->stateBlock->streamSource[element->Stream];
         } else {
             TRACE("Stream isn't up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
-            if(!isPreLoaded[element->Stream]) {
-                preLoadStreams[numPreloadStreams] = element->Stream;
-                numPreloadStreams++;
-                isPreLoaded[element->Stream] = 1;
-            }
             data    = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[element->Stream], 0, &streamVBO);
             if(fixup) {
                 if( streamVBO != 0) *fixup = TRUE;
@@ -242,7 +235,7 @@ void primitiveDeclarationConvertToStridedData(
      * once in there.
      */
     for(i=0; i < numPreloadStreams; i++) {
-        IWineD3DVertexBuffer_PreLoad(This->stateBlock->streamSource[preLoadStreams[i]]);
+        IWineD3DVertexBuffer_PreLoad(This->stateBlock->streamSource[streams[i]]);
     }
 }
 
