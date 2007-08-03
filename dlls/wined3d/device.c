@@ -4357,7 +4357,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) 
     object->wineD3DDevice= This;
     /** FIXME: object->parent       = parent; **/
     object->parent       = NULL;
-    object->blockType    = WINED3DSBT_ALL;
+    object->blockType    = WINED3DSBT_RECORDED;
     object->ref          = 1;
     object->lpVtbl       = &IWineD3DStateBlock_Vtbl;
 
