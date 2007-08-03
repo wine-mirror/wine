@@ -38,7 +38,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     {
     case DLL_WINE_PREATTACH:
         return FALSE; /* prefer native version */
-        break;
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinst );
         INKOBJ_hInstance = hinst;
