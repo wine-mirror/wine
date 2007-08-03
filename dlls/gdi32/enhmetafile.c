@@ -1172,6 +1172,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_EXTSELECTCLIPRGN:
       {
+        static int extselectcliprgn_cases;
 #if 0
 	const EMREXTSELECTCLIPRGN lpRgn = (const EMREXTSELECTCLIPRGN *)mr;
 	HRGN hRgn = ExtCreateRegion(NULL, lpRgn->cbRgnData, (RGNDATA *)lpRgn->RgnData);
@@ -1180,7 +1181,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	/* ExtSelectClipRgn created a copy of the region */
 	DeleteObject(hRgn);
 #endif
-        FIXME("ExtSelectClipRgn\n");
+        if(!(extselectcliprgn_cases++))
+            FIXME("ExtSelectClipRgn\n");
         break;
       }
 
