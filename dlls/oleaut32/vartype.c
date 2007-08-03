@@ -4153,7 +4153,7 @@ typedef struct DECIMAL_internal
 static HRESULT VARIANT_DI_FromR4(float source, VARIANT_DI * dest);
 static HRESULT VARIANT_DI_FromR8(double source, VARIANT_DI * dest);
 static void VARIANT_DIFromDec(const DECIMAL * from, VARIANT_DI * to);
-static void VARIANT_DecFromDI(VARIANT_DI * from, DECIMAL * to);
+static void VARIANT_DecFromDI(const VARIANT_DI * from, DECIMAL * to);
 
 /************************************************************************
  * VarDecFromR4 (OLEAUT32.193)
@@ -4623,7 +4623,7 @@ static void VARIANT_DIFromDec(const DECIMAL * from, VARIANT_DI * to)
     to->bitsnum[2] = DEC_HI32(from);
 }
 
-static void VARIANT_DecFromDI(VARIANT_DI * from, DECIMAL * to)
+static void VARIANT_DecFromDI(const VARIANT_DI * from, DECIMAL * to)
 {
     if (from->sign) {
         DEC_SIGNSCALE(to) = SIGNSCALE(DECIMAL_NEG, from->scale);
@@ -4672,7 +4672,7 @@ static unsigned char VARIANT_int_divbychar(DWORD * p, unsigned int n, unsigned c
 }
 
 /* check to test if encoded number is a zero. Returns 1 if zero, 0 for nonzero */
-static int VARIANT_int_iszero(DWORD * p, unsigned int n)
+static int VARIANT_int_iszero(const DWORD * p, unsigned int n)
 {
     for (; n > 0; n--) if (*p++ != 0) return 0;
     return 1;
@@ -4683,7 +4683,7 @@ static int VARIANT_int_iszero(DWORD * p, unsigned int n)
    digits when scale > 0 in order to fit an overflowing result. Final overflow
    flag is returned.
  */
-static int VARIANT_DI_mul(VARIANT_DI * a, VARIANT_DI * b, VARIANT_DI * result)
+static int VARIANT_DI_mul(const VARIANT_DI * a, const VARIANT_DI * b, VARIANT_DI * result)
 {
     int r_overflow = 0;
     DWORD running[6];
@@ -4779,7 +4779,7 @@ static int VARIANT_DI_mul(VARIANT_DI * a, VARIANT_DI * b, VARIANT_DI * result)
    hardcoded (period for decimal separator, dash as negative sign). Returns 0 for
    success, nonzero if insufficient space in output buffer.
  */
-static int VARIANT_DI_tostringW(VARIANT_DI * a, WCHAR * s, unsigned int n)
+static int VARIANT_DI_tostringW(const VARIANT_DI * a, WCHAR * s, unsigned int n)
 {
     int overflow = 0;
     DWORD quotient[3];
@@ -4886,7 +4886,7 @@ static void VARIANT_int_shiftleft(DWORD * p, unsigned int n, unsigned int shift)
    Value at v is incremented by the value at p. Any size is supported, provided
    that v is not shorter than p. Any unapplied carry is returned as a result.
  */
-static unsigned char VARIANT_int_add(DWORD * v, unsigned int nv, DWORD * p, 
+static unsigned char VARIANT_int_add(DWORD * v, unsigned int nv, const DWORD * p,
     unsigned int np)
 {
     unsigned char carry = 0;
@@ -4925,7 +4925,7 @@ static unsigned char VARIANT_int_add(DWORD * v, unsigned int nv, DWORD * p,
    was then heavily modified by me (Alex Villacis Lasso) in order to handle
    variably-scaled integers such as the MS DECIMAL representation.
  */
-static void VARIANT_int_div(DWORD * p, unsigned int n, DWORD * divisor,
+static void VARIANT_int_div(DWORD * p, unsigned int n, const DWORD * divisor,
     unsigned int dn)
 {
     unsigned int i;
@@ -5126,7 +5126,8 @@ static int VARIANT_int_addlossy(
    0 if the division was completed (even if quotient is set to 0), or nonzero
    in case of quotient overflow.
  */
-static HRESULT VARIANT_DI_div(VARIANT_DI * dividend, VARIANT_DI * divisor, VARIANT_DI * quotient)
+static HRESULT VARIANT_DI_div(const VARIANT_DI * dividend, const VARIANT_DI * divisor,
+                              VARIANT_DI * quotient)
 {
     HRESULT r_overflow = S_OK;
 
@@ -6342,7 +6343,7 @@ HRESULT WINAPI VarBstrFromI4(LONG lIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
   return VARIANT_BstrFromUInt(ul64, lcid, dwFlags, pbstrOut);
 }
 
-static BSTR VARIANT_BstrReplaceDecimal(WCHAR * buff, LCID lcid, ULONG dwFlags)
+static BSTR VARIANT_BstrReplaceDecimal(const WCHAR * buff, LCID lcid, ULONG dwFlags)
 {
   BSTR bstrOut;
   WCHAR lpDecimalSep[16];
