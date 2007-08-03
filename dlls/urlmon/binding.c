@@ -487,12 +487,14 @@ static HRESULT WINAPI ProtocolStream_Read(IStream *iface, void *pv,
     }
 
     if(read == cb) {
-        *pcbRead = read;
+        if (pcbRead)
+            *pcbRead = read;
         return S_OK;
     }
 
     This->hres = IInternetProtocol_Read(This->protocol, (PBYTE)pv+read, cb-read, &pread);
-    *pcbRead = read + pread;
+    if (pcbRead)
+        *pcbRead = read + pread;
 
     if(This->hres == E_PENDING)
         return E_PENDING;
