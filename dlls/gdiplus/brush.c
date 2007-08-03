@@ -41,6 +41,35 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
 
             (*clone)->gdibrush = CreateBrushIndirect(&(*clone)->lb);
             break;
+        case BrushTypePathGradient:{
+            GpPathGradient *src, *dest;
+            INT count;
+
+            *clone = GdipAlloc(sizeof(GpPathGradient));
+            if (!*clone) return OutOfMemory;
+
+            src = (GpPathGradient*) brush,
+            dest = (GpPathGradient*) *clone;
+            count = src->pathdata.Count;
+
+            memcpy(dest, src, sizeof(GpPathGradient));
+
+            dest->pathdata.Count = count;
+            dest->pathdata.Points = GdipAlloc(count * sizeof(PointF));
+            dest->pathdata.Types = GdipAlloc(count);
+
+            if(!dest->pathdata.Points || !dest->pathdata.Types){
+                GdipFree(dest->pathdata.Points);
+                GdipFree(dest->pathdata.Types);
+                GdipFree(dest);
+                return OutOfMemory;
+            }
+
+            memcpy(dest->pathdata.Points, src->pathdata.Points, count * sizeof(PointF));
+            memcpy(dest->pathdata.Types, src->pathdata.Types, count);
+
+            break;
+        }
         default:
             return NotImplemented;
     }
@@ -161,6 +190,17 @@ GpStatus WINGDIPAPI GdipGetBrushType(GpBrush *brush, GpBrushType *type)
 GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
 {
     if(!brush)  return InvalidParameter;
+
+    switch(brush->bt)
+    {
+        case BrushTypePathGradient:
+            GdipFree(((GpPathGradient*) brush)->pathdata.Points);
+            GdipFree(((GpPathGradient*) brush)->pathdata.Types);
+            break;
+        case BrushTypeSolidColor:
+        default:
+            break;
+    }
 
     DeleteObject(brush->gdibrush);
     GdipFree(brush);
