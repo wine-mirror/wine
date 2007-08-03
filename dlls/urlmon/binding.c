@@ -912,6 +912,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
 static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progress_max)
 {
     FORMATETC formatetc = {0, NULL, 1, -1, TYMED_ISTREAM};
+    BOOL sent_begindownloaddata = FALSE;
 
     TRACE("(%p)->(%d %u %u)\n", This, bscf, progress, progress_max);
 
@@ -939,6 +940,7 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         fill_stream_buffer(This->stream);
 
         This->download_state = DOWNLOADING;
+        sent_begindownloaddata = TRUE;
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                 BINDSTATUS_BEGINDOWNLOADDATA, This->url);
     }
@@ -947,6 +949,9 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         This->download_state = END_DOWNLOAD;
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                 BINDSTATUS_ENDDOWNLOADDATA, This->url);
+    }else if(!sent_begindownloaddata) {
+        IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
+                BINDSTATUS_DOWNLOADINGDATA, This->url);
     }
 
     if(!This->request_locked) {
