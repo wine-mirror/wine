@@ -60,6 +60,7 @@ static struct wine_test *wine_tests;
 static int nr_of_files, nr_of_tests;
 static struct rev_info *rev_infos = NULL;
 static const char whitespace[] = " \t\r\n";
+static const char testexe[] = "_test.exe";
 
 static int running_under_wine (void)
 {
@@ -245,9 +246,8 @@ extract_test (struct wine_test *test, const char *dir, LPTSTR res_name)
     if (!code) report (R_FATAL, "Can't find test resource %s: %d",
                        res_name, GetLastError ());
     test->name = xstrdup( res_name );
-    CharLowerA( test->name );
     test->exename = strmake (NULL, "%s/%s", dir, test->name);
-    exepos = strstr (test->name, "_test.exe");
+    exepos = strstr (test->name, testexe);
     if (!exepos) report (R_FATAL, "Not an .exe file: %s", test->name);
     *exepos = 0;
     test->name = xrealloc (test->name, exepos - test->name + 1);
@@ -433,6 +433,23 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
                    LPTSTR lpszName, LONG_PTR lParam)
 {
     const char *tempdir = (const char *)lParam;
+    char dllname[MAX_PATH];
+    HMODULE dll;
+
+    /* Check if the main dll is present on this system */
+    CharLowerA(lpszName);
+    strcpy(dllname, lpszName);
+    *strstr(dllname, testexe) = 0;
+
+    dll = LoadLibraryExA(dllname, NULL, LOAD_LIBRARY_AS_DATAFILE);
+    if (!dll) {
+        xprintf ("%s:%s_dll_missing start 0 0\n", dllname, dllname);
+        xprintf ("%s_dll_missing: -1 tests executed (-1 marked as todo, -1 failures), -1 skipped.\n", dllname);
+        xprintf ("%s:%s_dll_missing done (0)\n", dllname, dllname);
+        return TRUE;
+    }
+    FreeLibrary(dll);
+
     get_subtests( tempdir, &wine_tests[nr_of_files], lpszName );
     nr_of_tests += wine_tests[nr_of_files].subtest_count;
     nr_of_files++;
