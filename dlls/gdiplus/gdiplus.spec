@@ -333,7 +333,7 @@
 @ stub GdipGetPathGradientFocusScales
 @ stub GdipGetPathGradientGammaCorrection
 @ stub GdipGetPathGradientPath
-@ stub GdipGetPathGradientPointCount
+@ stdcall GdipGetPathGradientPointCount(ptr ptr)
 @ stub GdipGetPathGradientPresetBlend
 @ stub GdipGetPathGradientPresetBlendCount
 @ stub GdipGetPathGradientRect

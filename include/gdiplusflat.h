@@ -92,6 +92,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath*,
     GpPathGradient**);
 GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB,GpSolidFill**);
 GpStatus WINGDIPAPI GdipGetBrushType(GpBrush*,GpBrushType*);
+GpStatus WINGDIPAPI GdipGetPathGradientPointCount(GpPathGradient*,INT*);
 GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush*);
 GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill*,ARGB*);
 GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient*,ARGB);

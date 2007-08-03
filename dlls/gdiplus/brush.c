@@ -60,12 +60,27 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     *grad = GdipAlloc(sizeof(GpPathGradient));
     if (!*grad) return OutOfMemory;
 
+    (*grad)->pathdata.Count = path->pathdata.Count;
+    (*grad)->pathdata.Points = GdipAlloc(path->pathdata.Count * sizeof(PointF));
+    (*grad)->pathdata.Types = GdipAlloc(path->pathdata.Count);
+
+    if(!(*grad)->pathdata.Points || !(*grad)->pathdata.Types){
+        GdipFree((*grad)->pathdata.Points);
+        GdipFree((*grad)->pathdata.Types);
+        GdipFree(*grad);
+        return OutOfMemory;
+    }
+
+    memcpy((*grad)->pathdata.Points, path->pathdata.Points,
+           path->pathdata.Count * sizeof(PointF));
+    memcpy((*grad)->pathdata.Types, path->pathdata.Types, path->pathdata.Count);
+
     (*grad)->brush.lb.lbStyle = BS_SOLID;
     (*grad)->brush.lb.lbColor = col;
     (*grad)->brush.lb.lbHatch = 0;
 
     (*grad)->brush.gdibrush = CreateSolidBrush(col);
-    (*grad)->brush.bt = BrushTypeSolidColor;
+    (*grad)->brush.bt = BrushTypePathGradient;
     (*grad)->centercolor = 0xffffffff;
     (*grad)->wrap = WrapModeClamp;
 
@@ -107,6 +122,17 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
 
     DeleteObject(brush->gdibrush);
     GdipFree(brush);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetPathGradientPointCount(GpPathGradient *grad,
+    INT *count)
+{
+    if(!grad || !count)
+        return InvalidParameter;
+
+    *count = grad->pathdata.Count;
 
     return Ok;
 }
