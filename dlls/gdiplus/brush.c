@@ -116,6 +116,8 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
     (*grad)->gamma = FALSE;
     (*grad)->center.X = 0.0;
     (*grad)->center.Y = 0.0;
+    (*grad)->focus.X = 0.0;
+    (*grad)->focus.Y = 0.0;
 
     return Ok;
 }
@@ -159,6 +161,8 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     /* FIXME: this should be set to the "centroid" of the path by default */
     (*grad)->center.X = 0.0;
     (*grad)->center.Y = 0.0;
+    (*grad)->focus.X = 0.0;
+    (*grad)->focus.Y = 0.0;
 
     return Ok;
 }
@@ -221,6 +225,18 @@ GpStatus WINGDIPAPI GdipGetPathGradientCenterPoint(GpPathGradient *grad,
 
     point->X = grad->center.X;
     point->Y = grad->center.Y;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetPathGradientFocusScales(GpPathGradient *grad,
+    REAL *x, REAL *y)
+{
+    if(!grad || !x || !y)
+        return InvalidParameter;
+
+    *x = grad->focus.X;
+    *y = grad->focus.Y;
 
     return Ok;
 }
@@ -294,6 +310,18 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterPoint(GpPathGradient *grad,
 
     grad->center.X = point->X;
     grad->center.Y = point->Y;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetPathGradientFocusScales(GpPathGradient *grad,
+    REAL x, REAL y)
+{
+    if(!grad)
+        return InvalidParameter;
+
+    grad->focus.X = x;
+    grad->focus.Y = y;
 
     return Ok;
 }

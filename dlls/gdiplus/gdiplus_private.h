@@ -99,6 +99,7 @@ struct GpPathGradient{
     GpWrapMode wrap;
     BOOL gamma;
     GpPointF center;
+    GpPointF focus;
 };
 
 struct GpPath{
