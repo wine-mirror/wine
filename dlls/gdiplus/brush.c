@@ -114,6 +114,8 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
     (*grad)->centercolor = 0xffffffff;
     (*grad)->wrap = wrap;
     (*grad)->gamma = FALSE;
+    (*grad)->center.X = 0.0;
+    (*grad)->center.Y = 0.0;
 
     return Ok;
 }
@@ -154,6 +156,9 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     (*grad)->centercolor = 0xffffffff;
     (*grad)->wrap = WrapModeClamp;
     (*grad)->gamma = FALSE;
+    /* FIXME: this should be set to the "centroid" of the path by default */
+    (*grad)->center.X = 0.0;
+    (*grad)->center.Y = 0.0;
 
     return Ok;
 }
@@ -204,6 +209,18 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
 
     DeleteObject(brush->gdibrush);
     GdipFree(brush);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetPathGradientCenterPoint(GpPathGradient *grad,
+    GpPointF *point)
+{
+    if(!grad || !point)
+        return InvalidParameter;
+
+    point->X = grad->center.X;
+    point->Y = grad->center.Y;
 
     return Ok;
 }
@@ -265,6 +282,18 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
 
     DeleteObject(grad->brush.gdibrush);
     grad->brush.gdibrush = CreateSolidBrush(grad->brush.lb.lbColor);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetPathGradientCenterPoint(GpPathGradient *grad,
+    GpPointF *point)
+{
+    if(!grad || !point)
+        return InvalidParameter;
+
+    grad->center.X = point->X;
+    grad->center.Y = point->Y;
 
     return Ok;
 }

@@ -98,6 +98,7 @@ struct GpPathGradient{
     ARGB centercolor;
     GpWrapMode wrap;
     BOOL gamma;
+    GpPointF center;
 };
 
 struct GpPath{
