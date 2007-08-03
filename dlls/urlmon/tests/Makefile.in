@@ -10,6 +10,7 @@ CTESTS = \
 	generated.c \
 	misc.c \
 	protocol.c \
+	stream.c \
 	url.c
 
 @MAKE_TEST_RULES@
