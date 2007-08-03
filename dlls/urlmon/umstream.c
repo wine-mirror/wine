@@ -378,3 +378,49 @@ static const IStreamVtbl stvt =
     IStream_fnClone
 
 };
+
+/***********************************************************************
+ *		URLOpenBlockingStreamA (URLMON.@)
+ */
+HRESULT WINAPI URLOpenBlockingStreamA(LPUNKNOWN pCaller, LPCSTR szURL,
+                                      LPSTREAM *ppStream, DWORD dwReserved,
+                                      LPBINDSTATUSCALLBACK lpfnCB)
+{
+    FIXME("(%p, %s, %p, 0x%x, %p): stub\n", pCaller, szURL, ppStream, dwReserved, lpfnCB);
+    *ppStream = NULL;
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *		URLOpenBlockingStreamW (URLMON.@)
+ */
+HRESULT WINAPI URLOpenBlockingStreamW(LPUNKNOWN pCaller, LPCWSTR szURL,
+                                      LPSTREAM *ppStream, DWORD dwReserved,
+                                      LPBINDSTATUSCALLBACK lpfnCB)
+{
+    FIXME("(%p, %s, %p, 0x%x, %p): stub\n", pCaller, debugstr_w(szURL), ppStream,
+          dwReserved, lpfnCB);
+    *ppStream = NULL;
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+*		URLOpenStreamA (URLMON.@)
+*/
+HRESULT WINAPI URLOpenStreamA(LPUNKNOWN pCaller, LPCSTR szURL, DWORD dwReserved,
+                              LPBINDSTATUSCALLBACK lpfnCB)
+{
+    FIXME("(%p, %s, 0x%x, %p): stub\n", pCaller, szURL, dwReserved, lpfnCB);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+*		URLOpenStreamW (URLMON.@)
+*/
+HRESULT WINAPI URLOpenStreamW(LPUNKNOWN pCaller, LPCWSTR szURL, DWORD dwReserved,
+                              LPBINDSTATUSCALLBACK lpfnCB)
+{
+    FIXME("(%p, %s, 0x%x, %p): stub\n", pCaller, debugstr_w(szURL), dwReserved,
+          lpfnCB);
+    return E_NOTIMPL;
+}

@@ -70,12 +70,12 @@
 @ stdcall URLDownloadToFileA(ptr str str long ptr)
 @ stdcall URLDownloadToFileW(ptr wstr wstr long ptr)
 @ stub URLDownloadW
-@ stub URLOpenBlockingStreamA
-@ stub URLOpenBlockingStreamW
+@ stdcall URLOpenBlockingStreamA(ptr str ptr long ptr)
+@ stdcall URLOpenBlockingStreamW(ptr wstr ptr long ptr)
 @ stub URLOpenPullStreamA
 @ stub URLOpenPullStreamW
-@ stub URLOpenStreamA
-@ stub URLOpenStreamW
+@ stdcall URLOpenStreamA(ptr str long ptr)
+@ stdcall URLOpenStreamW(ptr wstr long ptr)
 @ stub UrlMkBuildVersion
 @ stdcall UrlMkGetSessionOption(long ptr long ptr long)
 @ stdcall UrlMkSetSessionOption(long ptr long long)
