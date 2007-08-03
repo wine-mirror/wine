@@ -88,6 +88,8 @@ GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics*,SmoothingMode);
 GpStatus WINGDIPAPI GdipSetWorldTransform(GpGraphics*,GpMatrix*);
 
 GpStatus WINGDIPAPI GdipCloneBrush(GpBrush*,GpBrush**);
+GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF*,INT,GpWrapMode,
+    GpPathGradient**);
 GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath*,
     GpPathGradient**);
 GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB,GpSolidFill**);

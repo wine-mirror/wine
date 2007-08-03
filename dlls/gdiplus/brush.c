@@ -48,6 +48,46 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
+    INT count, GpWrapMode wrap, GpPathGradient **grad)
+{
+    COLORREF col = ARGB2COLORREF(0xffffffff);
+
+    if(!points || !grad)
+        return InvalidParameter;
+
+    if(count <= 0)
+        return OutOfMemory;
+
+    *grad = GdipAlloc(sizeof(GpPathGradient));
+    if (!*grad) return OutOfMemory;
+
+    (*grad)->pathdata.Count = count;
+    (*grad)->pathdata.Points = GdipAlloc(count * sizeof(PointF));
+    (*grad)->pathdata.Types = GdipAlloc(count);
+
+    if(!(*grad)->pathdata.Points || !(*grad)->pathdata.Types){
+        GdipFree((*grad)->pathdata.Points);
+        GdipFree((*grad)->pathdata.Types);
+        GdipFree(*grad);
+        return OutOfMemory;
+    }
+
+    memcpy((*grad)->pathdata.Points, points, count * sizeof(PointF));
+    memset((*grad)->pathdata.Types, PathPointTypeLine, count);
+
+    (*grad)->brush.lb.lbStyle = BS_SOLID;
+    (*grad)->brush.lb.lbColor = col;
+    (*grad)->brush.lb.lbHatch = 0;
+
+    (*grad)->brush.gdibrush = CreateSolidBrush(col);
+    (*grad)->brush.bt = BrushTypePathGradient;
+    (*grad)->centercolor = 0xffffffff;
+    (*grad)->wrap = wrap;
+
+    return Ok;
+}
+
 /* FIXME: path gradient brushes not truly supported (drawn as solid brushes) */
 GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     GpPathGradient **grad)
