@@ -944,6 +944,7 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
     }
 
     if(This->stream->hres == S_FALSE || (bscf & BSCF_LASTDATANOTIFICATION)) {
+        This->download_state = END_DOWNLOAD;
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                 BINDSTATUS_ENDDOWNLOADDATA, This->url);
     }
@@ -956,8 +957,7 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
     IBindStatusCallback_OnDataAvailable(This->callback, bscf, progress,
             &formatetc, &This->stgmed);
 
-    if(This->stream->hres == S_FALSE) {
-        This->download_state = END_DOWNLOAD;
+    if(This->download_state == END_DOWNLOAD) {
         IBindStatusCallback_OnStopBinding(This->callback, S_OK, NULL);
     }
 }
