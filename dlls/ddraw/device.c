@@ -5070,6 +5070,11 @@ IDirect3DDeviceImpl_7_CreateStateBlock(IDirect3DDevice7 *iface,
         WARN("BlockHandle == NULL, returning DDERR_INVALIDPARAMS\n");
         return DDERR_INVALIDPARAMS;
     }
+    if(Type != D3DSBT_ALL         && Type != D3DSBT_PIXELSTATE &&
+       Type != D3DSBT_VERTEXSTATE                              ) {
+        WARN("Unexpected stateblock type, returning DDERR_INVALIDPARAMS\n");
+        return DDERR_INVALIDPARAMS;
+    }
 
     EnterCriticalSection(&ddraw_cs);
     *BlockHandle = IDirect3DDeviceImpl_CreateHandle(This);

@@ -121,6 +121,12 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateStateBlock(LPDIRECT3DDEVICE9 iface, D3
    HRESULT hrc = D3D_OK;
    
    TRACE("(%p) Relay\n", This);
+
+   if(Type != D3DSBT_ALL         && Type != D3DSBT_PIXELSTATE &&
+      Type != D3DSBT_VERTEXSTATE                              ) {
+       WARN("Unexpected stateblock type, returning D3DERR_INVALIDCALL\n");
+       return D3DERR_INVALIDCALL;
+   }
    
    object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DStateBlock9Impl));
    if (NULL == object) return E_OUTOFMEMORY;
