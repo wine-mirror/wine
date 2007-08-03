@@ -557,7 +557,7 @@
 @ stub GdipSetPathGradientLinearBlend
 @ stub GdipSetPathGradientPath
 @ stub GdipSetPathGradientPresetBlend
-@ stub GdipSetPathGradientSigmaBlend
+@ stdcall GdipSetPathGradientSigmaBlend(ptr long long)
 @ stdcall GdipSetPathGradientSurroundColorsWithCount(ptr ptr ptr)
 @ stub GdipSetPathGradientTransform
 @ stdcall GdipSetPathGradientWrapMode(ptr long)

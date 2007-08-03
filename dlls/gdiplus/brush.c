@@ -216,6 +216,20 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetPathGradientSigmaBlend(GpPathGradient *grad,
+    REAL focus, REAL scale)
+{
+    static int calls;
+
+    if(!grad || focus < 0.0 || focus > 1.0 || scale < 0.0 || scale > 1.0)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient
     *grad, ARGB *argb, INT *count)
 {
