@@ -84,6 +84,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
     (*grad)->brush.bt = BrushTypePathGradient;
     (*grad)->centercolor = 0xffffffff;
     (*grad)->wrap = wrap;
+    (*grad)->gamma = FALSE;
 
     return Ok;
 }
@@ -123,6 +124,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     (*grad)->brush.bt = BrushTypePathGradient;
     (*grad)->centercolor = 0xffffffff;
     (*grad)->wrap = WrapModeClamp;
+    (*grad)->gamma = FALSE;
 
     return Ok;
 }
@@ -162,6 +164,17 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
 
     DeleteObject(brush->gdibrush);
     GdipFree(brush);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetPathGradientGammaCorrection(GpPathGradient *grad,
+    BOOL *gamma)
+{
+    if(!grad || !gamma)
+        return InvalidParameter;
+
+    *gamma = grad->gamma;
 
     return Ok;
 }
@@ -212,6 +225,17 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
 
     DeleteObject(grad->brush.gdibrush);
     grad->brush.gdibrush = CreateSolidBrush(grad->brush.lb.lbColor);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetPathGradientGammaCorrection(GpPathGradient *grad,
+    BOOL gamma)
+{
+    if(!grad)
+        return InvalidParameter;
+
+    grad->gamma = gamma;
 
     return Ok;
 }
