@@ -102,6 +102,44 @@ my @ignore_srcs = (
     [ 'IDL_S_SRCS',   '\.idl', '_s.c' ],
 );
 
+my %private_headers = (
+    "thread.h" => 1,
+    "win.h" => 1,
+    "wine/list.h" => 1,
+    "wine/mmsystem16.h" => 1,
+    "wine/mscvpdb.h" => 1,
+    "wine/port.h" => 1,
+    "wine/pthread.h" => 1,
+    "wine/rpcfc.h" => 1,
+    "wine/rpcss_shared.h" => 1,
+    "wine/server.h" => 1,
+    "wine/server_protocol.h" => 1,
+    "wine/test.h" => 1,
+    "wine/wgl.h" => 1,
+    "wine/winaspi.h" => 1,
+    "wine/winbase16.h" => 1,
+    "wine/windef16.h" => 1,
+    "wine/wined3d_caps.h" => 1,
+    "wine/wined3d_gl.h" => 1,
+    "wine/wined3d_interface.h" => 1,
+    "wine/wined3d_types.h" => 1,
+    "wine/wingdi16.h" => 1,
+    "wine/winnet16.h" => 1,
+    "wine/winsock16.h" => 1,
+    "wine/winuser16.h" => 1,
+    "wine/wpp.h" => 1
+);
+
+my %private_idl_headers = (
+    "axcore.idl" => 1,
+    "axextend.idl" => 1,
+    "dbinit.idl" => 1,
+    "dbprop.idl" => 1,
+    "dbs.idl" => 1,
+    "devenum.idl" => 1,
+    "dyngraph.idl" => 1
+);
+
 my (@makefiles, %makefiles);
 
 # update a file if changed
@@ -203,40 +241,13 @@ sub parse_makefile($)
     return %make;
 }
 
-if (-d ".git")
-{
-    @makefiles = map { s/\.in$//; $_; } split /\s/, `git ls-files -c Makefile.in \\*/Makefile.in`;
-}
-else
-{
-    @makefiles = map { s/^\.\/(.*)\.in/$1/; $_; } split(/\s/,`find . -name Makefile.in -print`);
-}
-
-foreach my $file (sort values %makerules, @makefiles)
-{
-    my %make = parse_makefile( $file );
-    $makefiles{$file} = \%make;
-}
 
 ################################################################
 # update the makefile list in configure.ac
 
-my @lines = ();
-
-foreach my $var (sort { $makerules{$a} cmp $makerules{$b}; } keys %makerules)
+sub update_makerules(@)
 {
-    push @lines, "$var=$makerules{$var}\n";
-    push @lines, "AC_SUBST_FILE($var)\n\n";
 }
-
-foreach my $var ((sort values %makerules), (sort @makefiles))
-{
-    push @lines, "AC_CONFIG_FILES([$var])\n";
-}
-
-push @lines, "\nAC_OUTPUT\n";
-
-replace_in_file( "configure.ac", '^MAKE_RULES', '^AC_OUTPUT$', @lines);
 
 
 ################################################################
@@ -272,11 +283,25 @@ sub update_winetest(@)
 
 
 ################################################################
-# update the makefile list in Makefile.in
+# update the makefile list in configure.ac and Makefile.in
 
 sub update_makefiles(@)
 {
-    my (@targets, @depends);
+    my (@targets, @depends, @lines);
+
+    foreach my $var (sort { $makerules{$a} cmp $makerules{$b}; } keys %makerules)
+    {
+        push @lines, "$var=$makerules{$var}\n";
+        push @lines, "AC_SUBST_FILE($var)\n\n";
+    }
+
+    foreach my $var ((sort values %makerules), (sort @_))
+    {
+        push @lines, "AC_CONFIG_FILES([$var])\n";
+    }
+
+    push @lines, "\nAC_OUTPUT\n";
+    replace_in_file( "configure.ac", '^MAKE_RULES', '^AC_OUTPUT$', @lines);
 
     foreach my $file (sort values %makerules)
     {
@@ -603,6 +628,37 @@ sub update_progs(@)
 
 
 ################################################################
+# update include/Makefile.in
+
+sub update_includes()
+{
+    return unless -d ".git";
+    my (@h_srcs, @idl_srcs, @tlb_srcs, %subdirs);
+    my @includes = map { s/^include\///; $_; } split /\0/, `git ls-files -c -z include`;
+    foreach my $incl (@includes)
+    {
+        if ($incl =~ /(.*)\//) { $subdirs{$1} = 1; }
+        next if ($private_headers{$incl});
+        if ($incl =~ /stdole2\.idl$/) { push @tlb_srcs, $incl; }
+        elsif ($private_idl_headers{$incl}) { push @h_srcs, $incl; }
+        elsif ($incl =~ /\.h$/) { push @h_srcs, $incl; }
+        elsif ($incl =~ /\.inl$/) { push @h_srcs, $incl; }
+        elsif ($incl =~ /\.idl$/) { push @idl_srcs, $incl; }
+    }
+    replace_in_file( "include/Makefile.in", '^IDL_H_SRCS\s*=', '^INSTALLDIRS',
+                     "IDL_H_SRCS = \\\n\t",
+                     join( " \\\n\t", sort @idl_srcs ),
+                     "\n\nIDL_TLB_SRCS = \\\n\t",
+                     join( " \\\n\t", sort @tlb_srcs ),
+                     "\n\nSRCDIR_INCLUDES = \\\n\t\$(IDL_TLB_SRCS) \\\n\t\$(IDL_H_SRCS) \\\n\t",
+                     join( " \\\n\t", sort @h_srcs ),
+                     "\n\nEXTRASUBDIRS = ",
+                     join( " ", sort keys %subdirs ),
+                     "\n\nINSTALLDIRS = \\\n" );
+}
+
+
+################################################################
 # update the main .gitignore
 
 sub update_gitignore(@)
@@ -635,6 +691,23 @@ sub update_gitignore(@)
                      join("\n", sort keys %ignores), "\n" );
 }
 
+
+if (-d ".git")
+{
+    @makefiles = map { s/\.in$//; $_; } split /\0/, `git ls-files -c -z Makefile.in \\*/Makefile.in`;
+}
+else
+{
+    @makefiles = map { s/^\.\/(.*)\.in/$1/; $_; } split(/\s/,`find . -name Makefile.in -print`);
+}
+
+update_includes();
+
+foreach my $file (sort values %makerules, @makefiles)
+{
+    my %make = parse_makefile( $file );
+    $makefiles{$file} = \%make;
+}
 
 update_makefiles( @makefiles );
 push @ignores, update_ignores( @makefiles );
