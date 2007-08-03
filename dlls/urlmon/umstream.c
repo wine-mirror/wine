@@ -559,10 +559,16 @@ HRESULT WINAPI URLOpenBlockingStreamA(LPUNKNOWN pCaller, LPCSTR szURL,
 
     TRACE("(%p, %s, %p, 0x%x, %p)\n", pCaller, szURL, ppStream, dwReserved, lpfnCB);
 
+    if (!szURL || !ppStream)
+        return E_INVALIDARG;
+
     len = MultiByteToWideChar(CP_ACP, 0, szURL, -1, NULL, 0);
     szURLW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     if (!szURLW)
+    {
+        *ppStream = NULL;
         return E_OUTOFMEMORY;
+    }
     MultiByteToWideChar(CP_ACP, 0, szURL, -1, szURLW, len);
 
     hr = URLOpenBlockingStreamW(pCaller, szURLW, ppStream, dwReserved, lpfnCB);
@@ -584,6 +590,9 @@ HRESULT WINAPI URLOpenBlockingStreamW(LPUNKNOWN pCaller, LPCWSTR szURL,
     TRACE("(%p, %s, %p, 0x%x, %p)\n", pCaller, debugstr_w(szURL), ppStream,
           dwReserved, lpfnCB);
 
+    if (!szURL || !ppStream)
+        return E_INVALIDARG;
+
     blocking_bsc.lpVtbl = &BlockingBindStatusCallbackVtbl;
     blocking_bsc.pBSC = lpfnCB;
 
@@ -601,6 +610,9 @@ HRESULT WINAPI URLOpenStreamA(LPUNKNOWN pCaller, LPCSTR szURL, DWORD dwReserved,
     HRESULT hr;
 
     TRACE("(%p, %s, 0x%x, %p)\n", pCaller, szURL, dwReserved, lpfnCB);
+
+    if (!szURL)
+        return E_INVALIDARG;
 
     len = MultiByteToWideChar(CP_ACP, 0, szURL, -1, NULL, 0);
     szURLW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
@@ -627,6 +639,9 @@ HRESULT WINAPI URLOpenStreamW(LPUNKNOWN pCaller, LPCWSTR szURL, DWORD dwReserved
 
     TRACE("(%p, %s, 0x%x, %p)\n", pCaller, debugstr_w(szURL), dwReserved,
           lpfnCB);
+
+    if (!szURL)
+        return E_INVALIDARG;
 
     async_bsc.lpVtbl = &AsyncBindStatusCallbackVtbl;
     async_bsc.pBSC = lpfnCB;

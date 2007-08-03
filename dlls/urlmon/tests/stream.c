@@ -297,6 +297,11 @@ static void test_URLOpenBlockingStreamW(void)
     IStream *pStream;
     char buffer[256];
 
+    hr = URLOpenBlockingStreamW(NULL, NULL, &pStream, 0, &BindStatusCallback);
+    ok(hr == E_INVALIDARG, "URLOpenBlockingStreamW should have failed with E_INVALIDARG instead of 0x%08x\n", hr);
+    hr = URLOpenBlockingStreamW(NULL, INDEX_HTML, NULL, 0, &BindStatusCallback);
+    ok(hr == E_INVALIDARG, "URLOpenBlockingStreamW should have failed with E_INVALIDARG instead of 0x%08x\n", hr);
+
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(QueryInterface_IServiceProvider);
     SET_EXPECT(OnStartBinding);
@@ -330,6 +335,9 @@ static void test_URLOpenBlockingStreamW(void)
 static void test_URLOpenStreamW(void)
 {
     HRESULT hr;
+
+    hr = URLOpenStreamW(NULL, NULL, 0, &BindStatusCallback);
+    ok(hr == E_INVALIDARG, "URLOpenStreamW should have failed with E_INVALIDARG instead of 0x%08x\n", hr);
 
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(QueryInterface_IServiceProvider);
