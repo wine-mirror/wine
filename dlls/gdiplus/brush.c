@@ -177,6 +177,20 @@ GpStatus WINGDIPAPI GdipGetPathGradientPointCount(GpPathGradient *grad,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorsWithCount(GpPathGradient
+    *grad, ARGB *argb, INT *count)
+{
+    static int calls;
+
+    if(!grad || !argb || !count || (*count < grad->pathdata.Count))
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
 {
     if(!sf || !argb)
@@ -200,6 +214,21 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
     grad->brush.gdibrush = CreateSolidBrush(grad->brush.lb.lbColor);
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient
+    *grad, ARGB *argb, INT *count)
+{
+    static int calls;
+
+    if(!grad || !argb || !count || (*count <= 0) ||
+        (*count > grad->pathdata.Count))
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
 }
 
 GpStatus WINGDIPAPI GdipSetPathGradientWrapMode(GpPathGradient *grad,

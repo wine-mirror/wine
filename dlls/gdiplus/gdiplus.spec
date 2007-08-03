@@ -339,7 +339,7 @@
 @ stub GdipGetPathGradientRect
 @ stub GdipGetPathGradientRectI
 @ stub GdipGetPathGradientSurroundColorCount
-@ stub GdipGetPathGradientSurroundColorsWithCount
+@ stdcall GdipGetPathGradientSurroundColorsWithCount(ptr ptr ptr)
 @ stub GdipGetPathGradientTransform
 @ stub GdipGetPathGradientWrapMode
 @ stub GdipGetPathLastPoint
@@ -558,7 +558,7 @@
 @ stub GdipSetPathGradientPath
 @ stub GdipSetPathGradientPresetBlend
 @ stub GdipSetPathGradientSigmaBlend
-@ stub GdipSetPathGradientSurroundColorsWithCount
+@ stdcall GdipSetPathGradientSurroundColorsWithCount(ptr ptr ptr)
 @ stub GdipSetPathGradientTransform
 @ stdcall GdipSetPathGradientWrapMode(ptr long)
 @ stub GdipSetPathMarker
