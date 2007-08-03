@@ -471,7 +471,7 @@ static void shorten_line_amt(REAL x1, REAL y1, REAL *x2, REAL *y2, REAL amt)
 }
 
 /* Draws lines between the given points, and if caps is true then draws an endcap
- * at the end of the last line.  FIXME: Startcaps not implemented. */
+ * at the end of the last line. */
 static GpStatus draw_polyline(GpGraphics *graphics, GpPen *pen,
     GDIPCONST GpPointF * pt, INT count, BOOL caps)
 {
@@ -570,7 +570,7 @@ static void shorten_bezier_amt(GpPointF * pt, REAL amt, BOOL rev)
 }
 
 /* Draws bezier curves between given points, and if caps is true then draws an
- * endcap at the end of the last line.  FIXME: Startcaps not implemented. */
+ * endcap at the end of the last line. */
 static GpStatus draw_polybezier(GpGraphics *graphics, GpPen *pen,
     GDIPCONST GpPointF * pt, INT count, BOOL caps)
 {
@@ -814,7 +814,6 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
 GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     GDIPCONST WmfPlaceableFileHeader * placeable, GpMetafile **metafile)
 {
-    static int calls;
     IStream *stream = NULL;
     UINT read;
     BYTE* copy;
@@ -823,10 +822,6 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
 
     if(!hwmf || !metafile || !placeable)
         return InvalidParameter;
-
-    if(!(calls++))
-        FIXME("partially implemented\n");
-
     read = GetMetaFileBitsEx(hwmf, 0, NULL);
     if(!read)
         return GenericError;
