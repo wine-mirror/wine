@@ -3771,7 +3771,7 @@ BOOL WINAPI CryptSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv, DWO
 BOOL WINAPI CryptSignAndEncodeCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv,
  DWORD dwKeySpec, DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm,
- const void *pvHashAuxInfo, PBYTE pbEncoded, DWORD *pcbEncoded);
+ const void *pvHashAuxInfo, BYTE *pbEncoded, DWORD *pcbEncoded);
 
 BOOL WINAPI CryptVerifyCertificateSignature(HCRYPTPROV_LEGACY hCryptProv,
  DWORD dwCertEncodingType, const BYTE *pbEncoded, DWORD cbEncoded,

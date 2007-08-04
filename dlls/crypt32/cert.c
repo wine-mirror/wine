@@ -1338,7 +1338,7 @@ BOOL WINAPI CryptSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv,
 BOOL WINAPI CryptSignAndEncodeCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv,
  DWORD dwKeySpec, DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm,
- const void *pvHashAuxInfo, PBYTE pbEncoded, DWORD *pcbEncoded)
+ const void *pvHashAuxInfo, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
     BOOL ret;
     DWORD encodedSize, hashSize;

@@ -186,7 +186,7 @@ BOOL WINAPI I_CryptReadTrustedPublisherDWORDValueFromRegistry(LPCWSTR name,
     return ret;
 }
 
-int WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
+DWORD WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
 {
     static int ret = 8;
     ret++;
