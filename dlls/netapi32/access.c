@@ -29,6 +29,7 @@
 #include "lmaccess.h"
 #include "lmapibuf.h"
 #include "lmerr.h"
+#include "lmuse.h"
 #include "ntsecapi.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
