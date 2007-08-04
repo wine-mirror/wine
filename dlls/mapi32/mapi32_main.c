@@ -25,6 +25,7 @@
 #include "winerror.h"
 #include "objbase.h"
 #include "mapix.h"
+#include "mapiform.h"
 #include "mapi.h"
 #include "wine/debug.h"
 

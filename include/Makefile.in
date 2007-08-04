@@ -209,6 +209,7 @@ SRCDIR_INCLUDES = \
 	mapi.h \
 	mapicode.h \
 	mapidefs.h \
+	mapiform.h \
 	mapiguid.h \
 	mapitags.h \
 	mapiutil.h \
