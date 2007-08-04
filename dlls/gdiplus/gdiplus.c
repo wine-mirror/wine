@@ -32,6 +32,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+static Status WINAPI NotificationHook(ULONG_PTR *token)
+{
+    TRACE("%p\n", token);
+    if(!token)
+        return InvalidParameter;
+
+    return Ok;
+}
+
+static void WINAPI NotificationUnhook(ULONG_PTR token)
+{
+    TRACE("%ld\n", token);
+}
+
 /*****************************************************
  *      DllMain
  */
@@ -57,19 +71,26 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
 Status WINAPI GdiplusStartup(ULONG_PTR *token, const struct GdiplusStartupInput *input,
                              struct GdiplusStartupOutput *output)
 {
-    if(!token)
+    if(!token || !input)
         return InvalidParameter;
 
-    if(input->GdiplusVersion != 1) {
+    TRACE("%p %p %p\n", token, input, output);
+    TRACE("GdiplusStartupInput %d %p %d %d\n", input->GdiplusVersion,
+          input->DebugEventCallback, input->SuppressBackgroundThread,
+          input->SuppressExternalCodecs);
+
+    if(input->GdiplusVersion != 1)
         return UnsupportedGdiplusVersion;
-    } else if ((input->DebugEventCallback) ||
-        (input->SuppressBackgroundThread) || (input->SuppressExternalCodecs)){
-        FIXME("Unimplemented for non-default GdiplusStartupInput\n");
-        return NotImplemented;
-    } else if(output) {
-        FIXME("Unimplemented for non-null GdiplusStartupOutput\n");
-        return NotImplemented;
+
+    if(input->SuppressBackgroundThread){
+        if(!output)
+            return InvalidParameter;
+
+        output->NotificationHook = NotificationHook;
+        output->NotificationUnhook = NotificationUnhook;
     }
+
+    /* FIXME: DebugEventCallback ignored */
 
     return Ok;
 }
