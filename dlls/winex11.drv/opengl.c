@@ -2532,7 +2532,7 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
                 if (hTest) goto get_error;
                 switch (tmp) {
                     case GLX_NONE: piValues[i] = WGL_FULL_ACCELERATION_ARB; break;
-                    case GLX_SLOW_CONFIG: piValues[i] = WGL_NO_ACCELERATION_ARB; break;
+                    case GLX_SLOW_CONFIG: piValues[i] = WGL_GENERIC_ACCELERATION_ARB; break;
                     case GLX_NON_CONFORMANT_CONFIG: piValues[i] = WGL_FULL_ACCELERATION_ARB; break;
                     default:
                         ERR("unexpected Config Caveat(%x)\n", tmp);
