@@ -362,6 +362,20 @@ GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipImageGetFrameDimensionsList(GpImage* image,
+    GUID* dimensionIDs, UINT count)
+{
+    static int calls;
+
+    if(!image || !dimensionIDs)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
 {
     if(!stream || !image)
