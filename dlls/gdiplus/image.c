@@ -36,6 +36,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 typedef void ImageItemData;
 
+#define PIXELFORMATBPP(x) ((x) ? ((x) >> 8) & 255 : 24)
+
 static INT ipicture_pixel_height(IPicture *pic)
 {
     HDC hdcref;
@@ -121,7 +123,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     bmih->biWidth           = width;
     bmih->biHeight          = height;
     /* FIXME: use the rest of the data from format */
-    bmih->biBitCount        = format >> 8;
+    bmih->biBitCount        = PIXELFORMATBPP(format);
     bmih->biCompression     = BI_RGB;
 
     memcpy(bmih + 1, scan0, datalen);
@@ -145,6 +147,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->image.type = ImageTypeBitmap;
     (*bitmap)->width = width;
     (*bitmap)->height = height;
+    (*bitmap)->format = format;
 
     return Ok;
 }
@@ -152,6 +155,10 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
 GpStatus WINGDIPAPI GdipCreateBitmapFromStream(IStream* stream,
     GpBitmap **bitmap)
 {
+    BITMAPINFO bmi;
+    BITMAPCOREHEADER* bmch;
+    OLE_HANDLE hbm;
+    HDC hdc;
     GpStatus stat;
 
     stat = GdipLoadImageFromStream(stream, (GpImage**) bitmap);
@@ -164,24 +171,34 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromStream(IStream* stream,
     (*bitmap)->width = ipicture_pixel_width((*bitmap)->image.picture);
     (*bitmap)->height = ipicture_pixel_height((*bitmap)->image.picture);
 
+    /* get the pixel format */
+    IPicture_get_Handle((*bitmap)->image.picture, &hbm);
+    IPicture_get_CurDC((*bitmap)->image.picture, &hdc);
+
+    bmch = (BITMAPCOREHEADER*) (&bmi.bmiHeader);
+    bmch->bcSize = sizeof(BITMAPCOREHEADER);
+
+    if(!hdc){
+        HBITMAP old;
+        hdc = GetDC(0);
+        old = SelectObject(hdc, (HBITMAP)hbm);
+        GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+        SelectObject(hdc, old);
+        ReleaseDC(0, hdc);
+    }
+    else
+        GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+
+    (*bitmap)->format = (bmch->bcBitCount << 8) | PixelFormatGDI;
+
     return Ok;
 }
 
+/* FIXME: no icm */
 GpStatus WINGDIPAPI GdipCreateBitmapFromStreamICM(IStream* stream,
     GpBitmap **bitmap)
 {
-    GpStatus stat;
-
-    stat = GdipLoadImageFromStreamICM(stream, (GpImage**) bitmap);
-
-    if(stat != Ok)
-        return stat;
-
-    (*bitmap)->image.type = ImageTypeBitmap;
-    (*bitmap)->width = ipicture_pixel_width((*bitmap)->image.picture);
-    (*bitmap)->height = ipicture_pixel_height((*bitmap)->image.picture);
-
-    return Ok;
+    return GdipCreateBitmapFromStream(stream, bitmap);
 }
 
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
@@ -261,6 +278,20 @@ GpStatus WINGDIPAPI GdipGetImageHorizontalResolution(GpImage *image, REAL *res)
         FIXME("not implemented\n");
 
     return NotImplemented;
+}
+
+/* FIXME: test this function for non-bitmap types */
+GpStatus WINGDIPAPI GdipGetImagePixelFormat(GpImage *image, PixelFormat *format)
+{
+    if(!image || !format)
+        return InvalidParameter;
+
+    if(image->type != ImageTypeBitmap)
+        *format = PixelFormat24bppRGB;
+    else
+        *format = ((GpBitmap*) image)->format;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetImageRawFormat(GpImage *image, GUID *format)

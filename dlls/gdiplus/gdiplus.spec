@@ -293,7 +293,7 @@
 @ stub GdipGetImageItemData
 @ stub GdipGetImagePalette
 @ stub GdipGetImagePaletteSize
-@ stub GdipGetImagePixelFormat
+@ stdcall GdipGetImagePixelFormat(ptr ptr)
 @ stdcall GdipGetImageRawFormat(ptr ptr)
 @ stub GdipGetImageThumbnail
 @ stdcall GdipGetImageType(ptr ptr)

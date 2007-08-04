@@ -142,6 +142,7 @@ struct GpBitmap{
     GpImage image;
     INT width;
     INT height;
+    PixelFormat format;
 };
 
 struct GpImageAttributes{
