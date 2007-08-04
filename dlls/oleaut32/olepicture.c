@@ -1443,7 +1443,8 @@ static HRESULT OLEPictureImpl_LoadPNG(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
     ppng_read_info(png_ptr, info_ptr);
 
     if(!(png_ptr->color_type == PNG_COLOR_TYPE_RGB ||
-         png_ptr->color_type == PNG_COLOR_TYPE_PALETTE)){
+         png_ptr->color_type == PNG_COLOR_TYPE_PALETTE ||
+         png_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA)){
         FIXME("Unsupported .PNG type: %d\n", png_ptr->color_type);
         ret = E_FAIL;
         goto pngend;
