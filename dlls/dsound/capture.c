@@ -1494,8 +1494,6 @@ HRESULT IDirectSoundCaptureBufferImpl_Create(
 	    }
 	} else {
 	    DWORD flags = CALLBACK_FUNCTION;
-	    if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
-		flags |= WAVE_DIRECTSOUND;
             err = mmErr(waveInOpen(&(device->hwi),
                 device->drvdesc.dnDevNode, device->pwfx,
                 (DWORD_PTR)DSOUND_capture_callback, (DWORD)device, flags));
@@ -1584,16 +1582,18 @@ HRESULT DirectSoundCaptureDevice_Initialize(
     *ppDevice = device;
     device->guid = devGUID;
 
-    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&(device->driver),0));
-    if ( (err != DS_OK) && (err != DSERR_UNSUPPORTED) ) {
-	WARN("waveInMessage failed; err=%x\n",err);
-	return err;
+    /* Disable the direct sound driver to force emulation if requested. */
+    device->driver = NULL;
+    if (ds_hw_accel > DS_HW_ACCEL_EMULATION)
+    {
+        err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&(device->driver),0));
+        if ( (err != DS_OK) && (err != DSERR_UNSUPPORTED) ) {
+            WARN("waveInMessage failed; err=%x\n",err);
+            return err;
+        }
     }
     err = DS_OK;
 
-    /* Disable the direct sound driver to force emulation if requested. */
-    if (ds_hw_accel == DS_HW_ACCEL_EMULATION)
-	device->driver = NULL;
 
     /* Get driver description */
     if (device->driver) {
