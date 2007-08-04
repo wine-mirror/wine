@@ -413,10 +413,6 @@ UINT WINAPI MsiOpenProductA(LPCSTR, MSIHANDLE*);
 UINT WINAPI MsiOpenProductW(LPCWSTR, MSIHANDLE*);
 #define     MsiOpenProduct WINELIB_NAME_AW(MsiOpenProduct)
 
-UINT WINAPI MsiProvideComponentFromDescriptorA(LPCSTR,LPSTR,DWORD*,DWORD*);
-UINT WINAPI MsiProvideComponentFromDescriptorW(LPCWSTR,LPWSTR,DWORD*,DWORD*);
-#define     MsiProvideComponentFromDescriptor WINELIB_NAME_AW(MsiProvideComponentFromDescriptor)
-
 UINT WINAPI MsiGetProductPropertyA(MSIHANDLE,LPCSTR,LPSTR,DWORD*);
 UINT WINAPI MsiGetProductPropertyW(MSIHANDLE,LPCWSTR,LPWSTR,DWORD*);
 #define     MsiGetProductProperty WINELIB_NAME_AW(MsiGetProductProperty)
