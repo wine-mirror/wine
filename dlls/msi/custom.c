@@ -153,7 +153,8 @@ static LPWSTR msi_get_deferred_action(LPCWSTR action, LPCWSTR actiondata,
         return strdupW(action);
 
     len = lstrlenW(action) + lstrlenW(actiondata) +
-          lstrlenW(usersid) + lstrlenW(prodcode) + 5;
+          lstrlenW(usersid) + lstrlenW(prodcode) +
+          lstrlenW(format) - 7;
     deferred = msi_alloc(len * sizeof(WCHAR));
 
     sprintfW(deferred, format, actiondata, usersid, prodcode, action);
