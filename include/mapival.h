@@ -24,6 +24,8 @@ extern "C" {
 #endif
 
 #include <mapiutil.h>
+#include <stddef.h>
+#include <stdarg.h>
 
 BOOL  WINAPI FBadRglpszW(LPWSTR*,ULONG);
 BOOL  WINAPI FBadRowSet(LPSRowSet);
