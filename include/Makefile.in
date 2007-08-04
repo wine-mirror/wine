@@ -28,6 +28,7 @@ IDL_H_SRCS = \
 	mimeinfo.idl \
 	mlang.idl \
 	mmstream.idl \
+	mscoree.idl \
 	mshtmhst.idl \
 	mshtml.idl \
 	msinkaut.idl \
@@ -85,6 +86,7 @@ SRCDIR_INCLUDES = \
 	commctrl.h \
 	commdlg.h \
 	compobj.h \
+	cor.h \
 	cpl.h \
 	custcntl.h \
 	cvconst.h \

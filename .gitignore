@@ -725,6 +725,7 @@ include/mediaobj.h
 include/mimeinfo.h
 include/mlang.h
 include/mmstream.h
+include/mscoree.h
 include/mshtmhst.h
 include/mshtml.h
 include/msinkaut.h

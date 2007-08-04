@@ -27,6 +27,9 @@
 #include "winreg.h"
 #include "ole2.h"
 
+#include "cor.h"
+#include "mscoree.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
@@ -123,7 +126,7 @@ static LPWSTR get_mono_exe(void)
     return ret;
 }
 
-int WINAPI _CorExeMain(void)
+__int32 WINAPI _CorExeMain(void)
 {
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
@@ -168,7 +171,7 @@ int WINAPI _CorExeMain(void)
     return (int)exit_code;
 }
 
-int WINAPI _CorExeMain2(PBYTE ptrMemory, DWORD cntMemory, LPCWSTR imageName, LPCWSTR loaderName, LPCWSTR cmdLine)
+__int32 WINAPI _CorExeMain2(PBYTE ptrMemory, DWORD cntMemory, LPWSTR imageName, LPWSTR loaderName, LPWSTR cmdLine)
 {
     TRACE("(%p, %u, %s, %s, %s)\n", ptrMemory, cntMemory, debugstr_w(imageName), debugstr_w(loaderName), debugstr_w(cmdLine));
     FIXME("Directly running .NET applications not supported.\n");
@@ -181,12 +184,12 @@ void WINAPI CorExitProcess(int exitCode)
     ExitProcess(exitCode);
 }
 
-void WINAPI _CorImageUnloading(LPCVOID* imageBase)
+VOID WINAPI _CorImageUnloading(PVOID imageBase)
 {
     TRACE("(%p): stub\n", imageBase);
 }
 
-DWORD WINAPI _CorValidateImage(LPCVOID* imageBase, LPCWSTR imageName)
+HRESULT WINAPI _CorValidateImage(PVOID* imageBase, LPCWSTR imageName)
 {
     TRACE("(%p, %s): stub\n", imageBase, debugstr_w(imageName));
     return E_FAIL;
