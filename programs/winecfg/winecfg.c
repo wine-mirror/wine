@@ -464,15 +464,19 @@ static void set_reg_key_ex(HKEY root, const WCHAR *path, const WCHAR *name, cons
 
 void set_reg_key(HKEY root, const char *path, const char *name, const char *value)
 {
-    WCHAR *wpath, *wname, *wvalue;
+    WCHAR *wpath, *wname, *wvalue = NULL;
 
     wpath = HeapAlloc(GetProcessHeap(), 0, (strlen(path)+1)*sizeof(WCHAR));
     wname = HeapAlloc(GetProcessHeap(), 0, (strlen(name)+1)*sizeof(WCHAR));
-    wvalue = HeapAlloc(GetProcessHeap(), 0, (strlen(value)+1)*sizeof(WCHAR));
 
     MultiByteToWideChar(CP_ACP, 0, path, -1, wpath, strlen(path)+1);
     MultiByteToWideChar(CP_ACP, 0, name, -1, wname, strlen(name)+1);
-    MultiByteToWideChar(CP_ACP, 0, value, -1, wvalue, strlen(value)+1);
+
+    if (value)
+    {
+        wvalue = HeapAlloc(GetProcessHeap(), 0, (strlen(value)+1)*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, value, -1, wvalue, strlen(value)+1);
+    }
 
     set_reg_key_ex(root, wpath, wname, wvalue, REG_SZ);
 
