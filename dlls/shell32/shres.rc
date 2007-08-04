@@ -12401,6 +12401,9 @@ IDR_AVI_FINDCOMPUTER AVI searching.avi
 /* BINRES filenuke.avi */
 IDR_AVI_FILENUKE AVI searching.avi
 
+/* BINRES filedelete.avi */
+IDR_AVI_FILEDELETE AVI searching.avi
+
 /*--------------------- END FIXME ------------------------*/
 
 /*

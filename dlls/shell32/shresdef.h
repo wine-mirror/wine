@@ -154,5 +154,6 @@ FIXME: Need to add them, but for now just let them use the same: searching.avi
 #define IDR_AVI_FILEMOVE           160
 #define IDR_AVI_FILECOPY           161
 #define IDR_AVI_FILENUKE           163
+#define IDR_AVI_FILEDELETE         164
 
 #endif
