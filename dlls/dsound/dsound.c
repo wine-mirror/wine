@@ -1514,10 +1514,26 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
 
     hr = DSOUND_PrimaryCreate(device);
     if (hr == DS_OK) {
+        UINT triggertime = DS_TIME_DEL, res = DS_TIME_RES, id;
+        TIMECAPS time;
+
         DSOUND_renderer[device->drvdesc.dnDevNode] = device;
-        timeBeginPeriod(DS_TIME_RES);
-        DSOUND_renderer[device->drvdesc.dnDevNode]->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
-            (DWORD_PTR)DSOUND_renderer[device->drvdesc.dnDevNode], TIME_PERIODIC | TIME_CALLBACK_FUNCTION | TIME_KILL_SYNCHRONOUS);
+        timeGetDevCaps(&time, sizeof(TIMECAPS));
+        TRACE("Minimum timer resolution: %u, max timer: %u\n", time.wPeriodMin, time.wPeriodMax);
+        if (triggertime < time.wPeriodMin)
+            triggertime = time.wPeriodMin;
+        if (res < time.wPeriodMin)
+            res = time.wPeriodMin;
+        if (timeBeginPeriod(res) == TIMERR_NOCANDO)
+            WARN("Could not set minimum resolution, don't expect sound\n");
+        id = timeSetEvent(triggertime, res, DSOUND_timer, (DWORD_PTR)device, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
+        if (!id)
+        {
+            WARN("Timer not created! Retrying without TIME_KILL_SYNCHRONOUS\n");
+            id = timeSetEvent(triggertime, res, DSOUND_timer, (DWORD_PTR)device, TIME_PERIODIC);
+            if (!id) ERR("Could not create timer, sound playback will not occur\n");
+        }
+        DSOUND_renderer[device->drvdesc.dnDevNode]->timerID = id;
     } else {
         WARN("DSOUND_PrimaryCreate failed\n");
     }
