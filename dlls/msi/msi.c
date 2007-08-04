@@ -732,7 +732,7 @@ UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, DWORD attributes)
     return ERROR_SUCCESS;
 }
 
-UINT WINAPI MsiQueryComponentStateA(LPSTR szProductCode, LPSTR szUserSid, MSIINSTALLCONTEXT dwContext, LPCSTR szComponent, INSTALLSTATE *pdwState)
+UINT WINAPI MsiQueryComponentStateA(LPCSTR szProductCode, LPCSTR szUserSid, MSIINSTALLCONTEXT dwContext, LPCSTR szComponent, INSTALLSTATE *pdwState)
 {
     FIXME("(%s, %s, %d, %s, %p): stub!\n", debugstr_a(szProductCode), debugstr_a(szUserSid), dwContext, debugstr_a(szComponent), pdwState);
 
@@ -1009,14 +1009,14 @@ UINT WINAPI MsiProvideAssemblyW( LPCWSTR szAssemblyName, LPCWSTR szAppContext,
 }
 
 UINT WINAPI MsiProvideComponentFromDescriptorA( LPCSTR szDescriptor,
-                LPSTR szPath, DWORD *pcchPath, DWORD *pcchArgs )
+                LPSTR szPath, LPDWORD pcchPath, LPDWORD pcchArgs )
 {
     FIXME("%s %p %p %p\n", debugstr_a(szDescriptor), szPath, pcchPath, pcchArgs );
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
 UINT WINAPI MsiProvideComponentFromDescriptorW( LPCWSTR szDescriptor,
-                LPWSTR szPath, DWORD *pcchPath, DWORD *pcchArgs )
+                LPWSTR szPath, LPDWORD pcchPath, LPDWORD pcchArgs )
 {
     FIXME("%s %p %p %p\n", debugstr_w(szDescriptor), szPath, pcchPath, pcchArgs );
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -1583,9 +1583,9 @@ static UINT WINAPI MSI_ProvideQualifiedComponentEx(LPCWSTR szComponent,
  * MsiProvideQualifiedComponentExW [MSI.@]
  */
 UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
-                LPCWSTR szQualifier, DWORD dwInstallMode, LPWSTR szProduct,
+                LPCWSTR szQualifier, DWORD dwInstallMode, LPCWSTR szProduct,
                 DWORD Unused1, DWORD Unused2, LPWSTR lpPathBuf,
-                DWORD* pcchPathBuf)
+                LPDWORD pcchPathBuf)
 {
     awstring path;
 
@@ -1600,9 +1600,9 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
  * MsiProvideQualifiedComponentExA [MSI.@]
  */
 UINT WINAPI MsiProvideQualifiedComponentExA(LPCSTR szComponent,
-                LPCSTR szQualifier, DWORD dwInstallMode, LPSTR szProduct,
+                LPCSTR szQualifier, DWORD dwInstallMode, LPCSTR szProduct,
                 DWORD Unused1, DWORD Unused2, LPSTR lpPathBuf,
-                DWORD* pcchPathBuf)
+                LPDWORD pcchPathBuf)
 {
     LPWSTR szwComponent, szwQualifier = NULL, szwProduct = NULL;
     UINT r = ERROR_OUTOFMEMORY;
