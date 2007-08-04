@@ -130,7 +130,7 @@ DNS_STATUS WINAPI DnsExtractRecordsFromMessage_W( PDNS_MESSAGE_BUFFER buffer,
  */
 DNS_STATUS WINAPI DnsModifyRecordsInSet_A( PDNS_RECORDA add, PDNS_RECORDA delete,
                                            DWORD options, HANDLE context,
-                                           PIP4_ARRAY servers, PVOID reserved )
+                                           PVOID servers, PVOID reserved )
 {
     FIXME( "(%p,%p,0x%08x,%p,%p,%p) stub\n", add, delete, options,
            context, servers, reserved );
@@ -143,7 +143,7 @@ DNS_STATUS WINAPI DnsModifyRecordsInSet_A( PDNS_RECORDA add, PDNS_RECORDA delete
  */
 DNS_STATUS WINAPI DnsModifyRecordsInSet_UTF8( PDNS_RECORDA add, PDNS_RECORDA delete,
                                               DWORD options, HANDLE context,
-                                              PIP4_ARRAY servers, PVOID reserved )
+                                              PVOID servers, PVOID reserved )
 {
     FIXME( "(%p,%p,0x%08x,%p,%p,%p) stub\n", add, delete, options,
            context, servers, reserved );
@@ -156,7 +156,7 @@ DNS_STATUS WINAPI DnsModifyRecordsInSet_UTF8( PDNS_RECORDA add, PDNS_RECORDA del
  */
 DNS_STATUS WINAPI DnsModifyRecordsInSet_W( PDNS_RECORDW add, PDNS_RECORDW delete,
                                            DWORD options, HANDLE context,
-                                           PIP4_ARRAY servers, PVOID reserved )
+                                           PVOID servers, PVOID reserved )
 {
     FIXME( "(%p,%p,0x%08x,%p,%p,%p) stub\n", add, delete, options,
            context, servers, reserved );
@@ -194,7 +194,7 @@ BOOL WINAPI DnsWriteQuestionToBuffer_W( PDNS_MESSAGE_BUFFER buffer, LPDWORD size
  *
  */
 DNS_STATUS WINAPI DnsReplaceRecordSetA( PDNS_RECORDA set, DWORD options,
-                                        HANDLE context, PIP4_ARRAY servers,
+                                        HANDLE context, PVOID servers,
                                         PVOID reserved )
 {
     FIXME( "(%p,0x%08x,%p,%p,%p) stub\n", set, options, context,
@@ -207,7 +207,7 @@ DNS_STATUS WINAPI DnsReplaceRecordSetA( PDNS_RECORDA set, DWORD options,
  *
  */
 DNS_STATUS WINAPI DnsReplaceRecordSetUTF8( PDNS_RECORDA set, DWORD options,
-                                           HANDLE context, PIP4_ARRAY servers,
+                                           HANDLE context, PVOID servers,
                                            PVOID reserved )
 {
     FIXME( "(%p,0x%08x,%p,%p,%p) stub\n", set, options, context,
@@ -220,7 +220,7 @@ DNS_STATUS WINAPI DnsReplaceRecordSetUTF8( PDNS_RECORDA set, DWORD options,
  *
  */
 DNS_STATUS WINAPI DnsReplaceRecordSetW( PDNS_RECORDW set, DWORD options,
-                                        HANDLE context, PIP4_ARRAY servers,
+                                        HANDLE context, PVOID servers,
                                         PVOID reserved )
 {
     FIXME( "(%p,0x%08x,%p,%p,%p) stub\n", set, options, context,

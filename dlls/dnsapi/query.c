@@ -660,7 +660,7 @@ exit:
  * DnsQuery_A           [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsQuery_A( PCSTR name, WORD type, DWORD options, PIP4_ARRAY servers,
+DNS_STATUS WINAPI DnsQuery_A( PCSTR name, WORD type, DWORD options, PVOID servers,
                               PDNS_RECORDA *result, PVOID *reserved )
 {
     WCHAR *nameW;
@@ -695,7 +695,7 @@ DNS_STATUS WINAPI DnsQuery_A( PCSTR name, WORD type, DWORD options, PIP4_ARRAY s
  * DnsQuery_UTF8              [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PIP4_ARRAY servers,
+DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID servers,
                                  PDNS_RECORDA *result, PVOID *reserved )
 {
     DNS_STATUS ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED;
@@ -737,7 +737,7 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PIP4_ARRA
  * DnsQuery_W              [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsQuery_W( PCWSTR name, WORD type, DWORD options, PIP4_ARRAY servers,
+DNS_STATUS WINAPI DnsQuery_W( PCWSTR name, WORD type, DWORD options, PVOID servers,
                               PDNS_RECORDW *result, PVOID *reserved )
 {
     char *nameU;
