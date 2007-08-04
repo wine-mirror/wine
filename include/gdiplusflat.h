@@ -166,6 +166,7 @@ GpStatus WINGDIPAPI GdipDeleteCustomLineCap(GpCustomLineCap*);
 GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap*,INT,INT,ARGB*);
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT,INT,INT,PixelFormat,BYTE*,
     GpBitmap**);
+GpStatus WINGDIPAPI GdipCreateBitmapFromStream(IStream*,GpBitmap**);
 GpStatus WINGDIPAPI GdipCreateBitmapFromStreamICM(IStream*,GpBitmap**);
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage*);
 GpStatus WINGDIPAPI GdipGetImageBounds(GpImage*,GpRectF*,GpUnit*);
@@ -178,6 +179,7 @@ GpStatus WINGDIPAPI GdipGetImageWidth(GpImage*,UINT*);
 GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile*,MetafileHeader*);
 GpStatus WINGDIPAPI GdipGetPropertyItemSize(GpImage*,PROPID,UINT*);
 GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage*,GDIPCONST GUID*,UINT*);
+GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream*,GpImage**);
 GpStatus WINGDIPAPI GdipLoadImageFromStreamICM(IStream*,GpImage**);
 GpStatus WINGDIPAPI GdipRemovePropertyItem(GpImage*,PROPID);
 GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage*,IStream*,

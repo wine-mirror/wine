@@ -149,6 +149,24 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreateBitmapFromStream(IStream* stream,
+    GpBitmap **bitmap)
+{
+    GpStatus stat;
+
+    stat = GdipLoadImageFromStream(stream, (GpImage**) bitmap);
+
+    if(stat != Ok)
+        return stat;
+
+    /* FIXME: make sure it's actually a bitmap */
+    (*bitmap)->image.type = ImageTypeBitmap;
+    (*bitmap)->width = ipicture_pixel_width((*bitmap)->image.picture);
+    (*bitmap)->height = ipicture_pixel_height((*bitmap)->image.picture);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreateBitmapFromStreamICM(IStream* stream,
     GpBitmap **bitmap)
 {
@@ -344,8 +362,7 @@ GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
     return NotImplemented;
 }
 
-/* FIXME: no ICM */
-GpStatus WINGDIPAPI GdipLoadImageFromStreamICM(IStream* stream, GpImage **image)
+GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
 {
     if(!stream || !image)
         return InvalidParameter;
@@ -360,10 +377,16 @@ GpStatus WINGDIPAPI GdipLoadImageFromStreamICM(IStream* stream, GpImage **image)
         return GenericError;
     }
 
-    /* FIXME: use IPicture_get_Type to get image type */
+    /* FIXME: use IPicture_get_Type to get image type? */
     (*image)->type = ImageTypeUnknown;
 
     return Ok;
+}
+
+/* FIXME: no ICM */
+GpStatus WINGDIPAPI GdipLoadImageFromStreamICM(IStream* stream, GpImage **image)
+{
+    return GdipLoadImageFromStream(stream, image);
 }
 
 GpStatus WINGDIPAPI GdipRemovePropertyItem(GpImage *image, PROPID propId)

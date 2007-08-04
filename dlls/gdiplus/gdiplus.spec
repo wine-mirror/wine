@@ -79,7 +79,7 @@
 @ stub GdipCreateBitmapFromHICON
 @ stub GdipCreateBitmapFromResource
 @ stdcall GdipCreateBitmapFromScan0(long long long long ptr ptr)
-@ stub GdipCreateBitmapFromStream
+@ stdcall GdipCreateBitmapFromStream(ptr ptr)
 @ stdcall GdipCreateBitmapFromStreamICM(ptr ptr)
 @ stub GdipCreateCachedBitmap
 @ stdcall GdipCreateCustomLineCap(ptr ptr long long ptr)
@@ -437,7 +437,7 @@
 @ stub GdipIsVisibleRegionRectI
 @ stub GdipLoadImageFromFile
 @ stub GdipLoadImageFromFileICM
-@ stub GdipLoadImageFromStream
+@ stdcall GdipLoadImageFromStream(ptr ptr)
 @ stdcall GdipLoadImageFromStreamICM(ptr ptr)
 @ stub GdipMeasureCharacterRanges
 @ stub GdipMeasureDriverString
