@@ -24,7 +24,6 @@
 #include <lmcons.h>
 #include <lmerr.h>
 #include <lmshare.h>
-#include <lmbrowsr.h>
 #include <lmaccess.h>
 #include <lmserver.h>
 #include <lmwksta.h>
@@ -33,5 +32,15 @@
 #include <lmjoin.h>
 #include <lmmsg.h>
 #include <lmuse.h>
+/* FIXME: #include <lmalert.h> */
+/* FIXME: #include <lmremutl.h> */
+/* FIXME: #include <lmrepl.h> */
+/* FIXME: #include <lmsvc.h> */
+/* FIXME: #include <lmerrlog.h> */
+/* FIXME: #include <lmconfig.h> */
+/* FIXME: #include <lmaudit.h> */
+
+/* The following are obsolete headers */
+#include <lmbrowsr.h>
 
 #endif
