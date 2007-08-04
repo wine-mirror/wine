@@ -2563,6 +2563,13 @@ PRINTDLG_PS_UpdateDlgStructW(HWND hDlg, PageSetupDataW *pda) {
 	pda->dlga->ptPaperSize.x = pda->dlga->ptPaperSize.y;
 	pda->dlga->ptPaperSize.y = tmp;
     }
+
+    /* Save orientation */
+    if (pda->dlga->ptPaperSize.x > pda->dlga->ptPaperSize.y)
+        dm->u1.s1.dmOrientation = DMORIENT_LANDSCAPE;
+    else
+        dm->u1.s1.dmOrientation = DMORIENT_PORTRAIT;
+
     GlobalUnlock(pda->pdlg.hDevNames);
     GlobalUnlock(pda->pdlg.hDevMode);
     return TRUE;
@@ -3238,6 +3245,7 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{ '_', '_', 'W', 'I', 'N', 'E', '_', 'P', 'A', 'G', 'E', 
 	  'S', 'E', 'T', 'U', 'P', 'D', 'L', 'G', 'D', 'A', 'T', 'A', 0 };
     PageSetupDataW	*pda;
+    LPDEVMODEW          dm;
     BOOL		res = FALSE;
 
     if (uMsg==WM_INITDIALOG) {
@@ -3263,11 +3271,14 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             EnableWindow(GetDlgItem(hDlg, edt6), FALSE);
             EnableWindow(GetDlgItem(hDlg, edt7), FALSE);
 	}
-	/* width larger as height -> landscape */
-	if (pda->dlga->ptPaperSize.x > pda->dlga->ptPaperSize.y)
+
+        dm = GlobalLock(pda->dlga->hDevMode);
+	/* Landscape orientation */
+	if (dm->u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
             CheckRadioButton(hDlg, rad1, rad2, rad2);
 	else /* this is default if papersize is not set */
             CheckRadioButton(hDlg, rad1, rad2, rad1);
+        GlobalUnlock(pda->dlga->hDevMode);
 	if (pda->dlga->Flags & PSD_DISABLEORIENTATION) {
 	    EnableWindow(GetDlgItem(hDlg,rad1),FALSE);
 	    EnableWindow(GetDlgItem(hDlg,rad2),FALSE);
