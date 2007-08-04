@@ -40,10 +40,11 @@ static const struct
 static IMAGE_NT_HEADERS nt_header =
 {
     IMAGE_NT_SIGNATURE, /* Signature */
+    {
 #if defined __i386__
-    { IMAGE_FILE_MACHINE_I386, /* Machine */
+      IMAGE_FILE_MACHINE_I386, /* Machine */
 #elif defined __x86_64__
-    { IMAGE_FILE_MACHINE_AMD64, /* Machine */
+      IMAGE_FILE_MACHINE_AMD64, /* Machine */
 #else
 # error You must specify the machine type
 #endif
