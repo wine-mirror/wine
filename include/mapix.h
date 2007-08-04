@@ -114,6 +114,10 @@ typedef MAPIFREEBUFFER *LPMAPIFREEBUFFER;
 MAPIFREEBUFFER MAPIFreeBuffer;
 #endif
 
+typedef HRESULT (WINAPI MAPIADMINPROFILES)(ULONG,LPPROFADMIN*);
+typedef MAPIADMINPROFILES *LPMAPIADMINPROFILES;
+MAPIADMINPROFILES MAPIAdminProfiles;
+
 /*****************************************************************************
  * IMAPISession interface
  */
