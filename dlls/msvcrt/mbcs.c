@@ -593,7 +593,7 @@ int CDECL _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_
     }
     return 0; /* Matched len bytes */
   }
-  return u_strncmp(str,cmp,len);
+  return u_strncasecmp(str,cmp,len);
 }
 
 /*********************************************************************
