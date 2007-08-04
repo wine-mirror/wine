@@ -25,6 +25,9 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#define IMAGEAPI WINAPI
+#define DBHLPAPI IMAGEAPI
+
 typedef struct _LOADED_IMAGE
 {
     PSTR                        ModuleName;

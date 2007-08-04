@@ -27,6 +27,9 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#define IMAGEAPI WINAPI
+#define DBHLPAPI IMAGEAPI
+
 #define API_VERSION_NUMBER 7 		/* 7 is the default */
 
 /***********************************************************************
