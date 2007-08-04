@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "dwmapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwmapi);
