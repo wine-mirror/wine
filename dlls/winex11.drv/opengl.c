@@ -2279,7 +2279,11 @@ static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAtt
             break;
 
         case WGL_PBUFFER_LOST_ARB:
-            FIXME("unsupported WGL_PBUFFER_LOST_ARB (need glXSelectEvent/GLX_DAMAGED work)\n");
+            /* GLX Pbuffers cannot be lost by default. We can support this by
+             * setting GLX_PRESERVED_CONTENTS to False and using glXSelectEvent
+             * to receive pixel buffer clobber events, however that may or may
+             * not give any benefit */
+            *piValue = GL_FALSE;
             break;
 
         case WGL_TEXTURE_FORMAT_ARB:
