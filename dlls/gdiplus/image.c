@@ -407,6 +407,20 @@ GpStatus WINGDIPAPI GdipImageGetFrameDimensionsList(GpImage* image,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image,
+    GDIPCONST GUID* dimensionID, UINT frameidx)
+{
+    static int calls;
+
+    if(!image || !dimensionID)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
 {
     if(!stream || !image)
