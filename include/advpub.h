@@ -19,7 +19,7 @@
 #define __WINE_ADVPUB_H
 
 #include <setupapi.h>
-/* FIXME: #include <cfgmgr32.h> */
+#include <cfgmgr32.h>
 
 #ifdef __cplusplus
 extern "C" {
