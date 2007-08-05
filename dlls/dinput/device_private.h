@@ -83,7 +83,18 @@ extern int id_to_offset(const DataFormat *df, int id);
 extern int find_property(const DataFormat *df, LPCDIPROPHEADER ph);
 
 /* Common joystick stuff */
+typedef struct
+{
+    LONG lDevMin;
+    LONG lDevMax;
+    LONG lMin;
+    LONG lMax;
+    LONG lDeadZone;
+    LONG lSaturation;
+} ObjProps;
+
 extern DWORD joystick_map_pov(POINTL *p);
+extern LONG joystick_map_axis(ObjProps *props, int val);
 
 /**
  * Callback Data used by specific callback 

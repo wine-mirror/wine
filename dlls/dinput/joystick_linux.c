@@ -76,13 +76,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 #define JOYDEV_NEW "/dev/input/js"
 #define JOYDEV_OLD "/dev/js"
 
-typedef struct {
-    LONG lMin;
-    LONG lMax;
-    LONG lDeadZone;
-    LONG lSaturation;
-} ObjProps;
-
 typedef struct JoystickImpl JoystickImpl;
 static const IDirectInputDevice8AVtbl JoystickAvt;
 static const IDirectInputDevice8WVtbl JoystickWvt;
@@ -520,6 +513,8 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
 
     /* initialize default properties */
     for (i = 0; i < c_dfDIJoystick2.dwNumObjs; i++) {
+        newDevice->props[i].lDevMin = -32767;
+        newDevice->props[i].lDevMax = +32767;
         newDevice->props[i].lMin = 0;
         newDevice->props[i].lMax = 0xffff;
         newDevice->props[i].lDeadZone = newDevice->deadzone;	/* % * 1000 */
@@ -681,23 +676,6 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     return DI_NOEFFECT;
 }
 
-static LONG map_axis(JoystickImpl * This, short val, short index)
-{
-    double    fval = val;
-    double    fmin = This->props[index].lMin;
-    double    fmax = This->props[index].lMax;
-    double    fret;
-
-    fret = (((fval + 32767.0) * (fmax - fmin)) / (32767.0*2.0)) + fmin;
-
-    if (fret >= 0.0)
-        fret += 0.5;
-    else
-        fret -= 0.5;
-
-    return fret;
-}
-
 static void joy_polldev(JoystickImpl *This) {
     struct pollfd plfd;
     struct	js_event jse;
@@ -733,7 +711,7 @@ static void joy_polldev(JoystickImpl *This) {
 
             if (number < 0) return;
             inst_id = DIDFT_MAKEINSTANCE(number) | (number < 8 ? DIDFT_ABSAXIS : DIDFT_POV);
-            value = map_axis(This, jse.value, id_to_object(This->base.data_format.wine_df, inst_id));
+            value = joystick_map_axis(&This->props[id_to_object(This->base.data_format.wine_df, inst_id)], jse.value);
 
             TRACE("changing axis %d => %d\n", jse.number, number);
             switch (number)
