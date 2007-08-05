@@ -1359,7 +1359,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         ReleaseDC(0, hdc);
 
         /* Change the display settings */
-        memset(&devmode, 0, sizeof(DEVMODEW));
+        memset(&devmode, 0, sizeof(devmode));
+        devmode.dmSize       = sizeof(devmode);
         devmode.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
         devmode.dmBitsPerPel = (bpp >= 24) ? 32 : bpp; /* Stupid XVidMode cannot change bpp */
         devmode.dmPelsWidth  = pPresentationParameters->BackBufferWidth;
@@ -2042,6 +2043,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
      * but we don't have any hwnd
      */
 
+    memset(&devmode, 0, sizeof(devmode));
+    devmode.dmSize = sizeof(devmode);
     devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
     devmode.dmBitsPerPel = formatDesc->bpp * 8;
     if(devmode.dmBitsPerPel == 24) devmode.dmBitsPerPel = 32;
