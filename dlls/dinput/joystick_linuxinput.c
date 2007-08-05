@@ -65,6 +65,26 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
+
+/*
+ * Maps POV x & y event values to a DX "clock" position:
+ *         0
+ *   31500    4500
+ * 27000  -1    9000
+ *   22500   13500
+ *       18000
+ */
+DWORD joystick_map_pov(POINTL *p)
+{
+    if (p->x > 0)
+        return p->y < 0 ?  4500 : !p->y ?  9000 : 13500;
+    else if (p->x < 0)
+        return p->y < 0 ? 31500 : !p->y ? 27000 : 22500;
+    else
+        return p->y < 0 ?     0 : !p->y ?    -1 : 18000;
+}
+
+
 #ifdef HAVE_CORRECT_LINUXINPUT_H
 
 #define EVDEVPREFIX	"/dev/input/event"
@@ -139,6 +159,7 @@ struct JoystickImpl
 	struct ObjProps                 props[ABS_MAX];
 
 	int                             axes[ABS_MAX];
+        POINTL                          povs[4];
 
 	/* LUT for KEY_ to offset in rgbButtons */
 	BYTE				buttons[KEY_MAX];
@@ -153,7 +174,6 @@ struct JoystickImpl
 };
 
 static void fake_current_js_state(JoystickImpl *ji);
-static DWORD map_pov(int event_value, int is_x);
 static void find_joydevs(void);
 
 /* This GUID is slightly different from the linux joystick one. Take note. */
@@ -596,31 +616,6 @@ static void fake_current_js_state(JoystickImpl *ji)
 	}
 }
 
-/*
- * Maps an event value to a DX "clock" position:
- *           0
- * 27000    -1 9000
- *       18000
- */
-static DWORD map_pov(int event_value, int is_x) 
-{
-	DWORD ret = -1;
-	if (is_x) {
-		if (event_value<0) {
-			ret = 27000;
-		} else if (event_value>0) {
-			ret = 9000;
-		}
-	} else {
-		if (event_value<0) {
-			ret = 0;
-		} else if (event_value>0) {
-			ret = 18000;
-		}
-	}
-	return ret;
-}
-
 /* convert wine format offset to user format object index */
 static void joy_polldev(JoystickImpl *This)
 {
@@ -678,25 +673,21 @@ static void joy_polldev(JoystickImpl *This)
             case ABS_RZ:        This->js.lRz = value; break;
             case ABS_THROTTLE:  This->js.rglSlider[0] = value; break;
             case ABS_RUDDER:    This->js.rglSlider[1] = value; break;
-	    case ABS_HAT0X:
-	    case ABS_HAT0Y:
-                This->js.rgdwPOV[0] = value = map_pov(ie.value, ie.code==ABS_HAT0X);
+            case ABS_HAT0X: case ABS_HAT0Y: case ABS_HAT1X: case ABS_HAT1Y:
+            case ABS_HAT2X: case ABS_HAT2Y: case ABS_HAT3X: case ABS_HAT3Y:
+            {
+                int idx = (ie.code - ABS_HAT0X) / 2;
+
+                if (ie.code % 2)
+                    This->povs[idx].y = ie.value;
+                else
+                    This->povs[idx].x = ie.value;
+
+                This->js.rgdwPOV[idx] = value = joystick_map_pov(&This->povs[idx]);
                 break;
-	    case ABS_HAT1X:
-	    case ABS_HAT1Y:
-                This->js.rgdwPOV[1] = value = map_pov(ie.value, ie.code==ABS_HAT1X);
-                break;
-	    case ABS_HAT2X:
-	    case ABS_HAT2Y:
-                This->js.rgdwPOV[2] = value  = map_pov(ie.value, ie.code==ABS_HAT2X);
-                break;
-	    case ABS_HAT3X:
-	    case ABS_HAT3Y:
-                This->js.rgdwPOV[3] = value  = map_pov(ie.value, ie.code==ABS_HAT3X);
-                break;
+            }
 	    default:
 		FIXME("unhandled joystick axis event (code %d, value %d)\n",ie.code,ie.value);
-		break;
 	    }
 	    break;
         }

@@ -83,11 +83,6 @@ typedef struct {
     LONG lSaturation;
 } ObjProps;
 
-typedef struct {
-    LONG lX;
-    LONG lY;
-} POV;
-
 typedef struct JoystickImpl JoystickImpl;
 static const IDirectInputDevice8AVtbl JoystickAvt;
 static const IDirectInputDevice8WVtbl JoystickWvt;
@@ -107,7 +102,7 @@ struct JoystickImpl
 	int				*axis_map;
 	int				axes;
 	int				buttons;
-	POV				povs[4];
+        POINTL                          povs[4];
 };
 
 static const GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903fb6bdf7 */
@@ -506,7 +501,10 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
         if (wine_obj < 8)
             df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(wine_obj) | DIDFT_ABSAXIS;
         else
+        {
             df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(wine_obj - 8) | DIDFT_POV;
+            i++; /* POV takes 2 axes */
+        }
     }
     for (i = 0; i < newDevice->buttons; i++)
     {
@@ -700,34 +698,6 @@ static LONG map_axis(JoystickImpl * This, short val, short index)
     return fret;
 }
 
-static LONG calculate_pov(JoystickImpl *This, int index)
-{
-    if (This->povs[index].lX < -16384) {
-        if (This->povs[index].lY < -16384)
-            This->js.rgdwPOV[index] = 31500;
-        else if (This->povs[index].lY > 16384)
-            This->js.rgdwPOV[index] = 22500;
-        else
-            This->js.rgdwPOV[index] = 27000;
-    } else if (This->povs[index].lX > 16384) {
-        if (This->povs[index].lY < -16384)
-            This->js.rgdwPOV[index] = 4500;
-        else if (This->povs[index].lY > 16384)
-            This->js.rgdwPOV[index] = 13500;
-        else
-            This->js.rgdwPOV[index] = 9000;
-    } else {
-        if (This->povs[index].lY < -16384)
-            This->js.rgdwPOV[index] = 0;
-        else if (This->povs[index].lY > 16384)
-            This->js.rgdwPOV[index] = 18000;
-        else
-            This->js.rgdwPOV[index] = -1;
-    }
-
-    return This->js.rgdwPOV[index];
-}
-
 static void joy_polldev(JoystickImpl *This) {
     struct pollfd plfd;
     struct	js_event jse;
@@ -761,70 +731,36 @@ static void joy_polldev(JoystickImpl *This) {
         {
             int number = This->axis_map[jse.number];	/* wine format object index */
 
-            if (number < 12)
-            {
-                inst_id = DIDFT_MAKEINSTANCE(number) | (number < 8 ? DIDFT_ABSAXIS : DIDFT_POV);
-                value = map_axis(This, jse.value, id_to_object(This->base.data_format.wine_df, inst_id));
-                /* FIXME do deadzone and saturation here */
+            if (number < 0) return;
+            inst_id = DIDFT_MAKEINSTANCE(number) | (number < 8 ? DIDFT_ABSAXIS : DIDFT_POV);
+            value = map_axis(This, jse.value, id_to_object(This->base.data_format.wine_df, inst_id));
 
-                TRACE("changing axis %d => %d\n", jse.number, number);
-                switch (number) {
-                case 0:
-                    This->js.lX = value;
-                    break;
-                case 1:
-                    This->js.lY = value;
-                    break;
-                case 2:
-                    This->js.lZ = value;
-                    break;
-                case 3:
-                    This->js.lRx = value;
-                    break;
-                case 4:
-                    This->js.lRy = value;
-                    break;
-                case 5:
-                    This->js.lRz = value;
-                    break;
-                case 6:
-                    This->js.rglSlider[0] = value;
-                    break;
-                case 7:
-                    This->js.rglSlider[1] = value;
-                    break;
-                case 8:
-                    /* FIXME don't go off array */
-                    if (This->axis_map[jse.number + 1] == number)
-                        This->povs[0].lX = jse.value;
-                    else if (This->axis_map[jse.number - 1] == number)
-                        This->povs[0].lY = jse.value;
-                    value = calculate_pov(This, 0);
-                    break;
-                case 9:
-                    if (This->axis_map[jse.number + 1] == number)
-                        This->povs[1].lX = jse.value;
-                    else if (This->axis_map[jse.number - 1] == number)
-                        This->povs[1].lY = jse.value;
-                    value = calculate_pov(This, 1);
-                    break;
-                case 10:
-                    if (This->axis_map[jse.number + 1] == number)
-                        This->povs[2].lX = jse.value;
-                    else if (This->axis_map[jse.number - 1] == number)
-                        This->povs[2].lY = jse.value;
-                    value = calculate_pov(This, 2);
-                    break;
-                case 11:
-                    if (This->axis_map[jse.number + 1] == number)
-                        This->povs[3].lX = jse.value;
-                    else if (This->axis_map[jse.number - 1] == number)
-                        This->povs[3].lY = jse.value;
-                    value = calculate_pov(This, 3);
+            TRACE("changing axis %d => %d\n", jse.number, number);
+            switch (number)
+            {
+                case 0: This->js.lX  = value; break;
+                case 1: This->js.lY  = value; break;
+                case 2: This->js.lZ  = value; break;
+                case 3: This->js.lRx = value; break;
+                case 4: This->js.lRy = value; break;
+                case 5: This->js.lRz = value; break;
+                case 6: This->js.rglSlider[0] = value; break;
+                case 7: This->js.rglSlider[1] = value; break;
+                case 8: case 9: case 10: case 11:
+                {
+                    int idx = number - 8;
+
+                    if (jse.number % 2)
+                        This->povs[idx].y = jse.value;
+                    else
+                        This->povs[idx].x = jse.value;
+
+                    This->js.rgdwPOV[idx] = value = joystick_map_pov(&This->povs[idx]);
                     break;
                 }
-            } else
-                WARN("axis %d not supported\n", number);
+                default:
+                    WARN("axis %d not supported\n", number);
+            }
         }
         if (inst_id >= 0)
             queue_event((LPDIRECTINPUTDEVICE8A)This,

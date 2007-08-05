@@ -82,6 +82,9 @@ extern int id_to_object(LPCDIDATAFORMAT df, int id);
 extern int id_to_offset(const DataFormat *df, int id);
 extern int find_property(const DataFormat *df, LPCDIPROPHEADER ph);
 
+/* Common joystick stuff */
+extern DWORD joystick_map_pov(POINTL *p);
+
 /**
  * Callback Data used by specific callback 
  *  for EnumObject on 'W' interfaces
