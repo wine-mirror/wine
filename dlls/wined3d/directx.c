@@ -1070,6 +1070,8 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
         if (!DEBUG_SINGLE_MODE) {
             DEVMODEW DevModeW;
 
+            ZeroMemory(&DevModeW, sizeof(DevModeW));
+            DevModeW.dmSize = sizeof(DevModeW);
             while (EnumDisplaySettingsExW(NULL, j, &DevModeW, 0)) {
                 j++;
                 switch (Format)
@@ -1124,6 +1126,9 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
         int ModeIdx = 0;
         int i = 0;
         int j = 0;
+
+        ZeroMemory(&DevModeW, sizeof(DevModeW));
+        DevModeW.dmSize = sizeof(DevModeW);
 
         /* If we are filtering to a specific format (D3D9), then need to skip
            all unrelated modes, but if mode is irrelevant (D3D8), then we can
@@ -1221,6 +1226,9 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT A
     if (Adapter == 0) { /* Display */
         int bpp = 0;
         DEVMODEW DevModeW;
+
+        ZeroMemory(&DevModeW, sizeof(DevModeW));
+        DevModeW.dmSize = sizeof(DevModeW);
 
         EnumDisplaySettingsExW(NULL, (DWORD)-1, &DevModeW, 0);
         pMode->Width        = DevModeW.dmPelsWidth;
