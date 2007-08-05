@@ -409,7 +409,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
     GLint       gl_max;
     GLfloat     gl_floatv[2];
     Bool        test = 0;
-    int         major, minor;
+    int         major = 1, minor = 0;
     BOOL        return_value = TRUE;
     int         i;
 
