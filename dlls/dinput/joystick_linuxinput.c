@@ -389,7 +389,9 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
         newDevice->props[idx].havemax = newDevice->joydev->axes[i][AXIS_ABSMAX];
         newDevice->props[idx].wantmin = 0;
         newDevice->props[idx].wantmax = 0xffff;
-        newDevice->props[idx].deadzone = 0;
+        newDevice->props[idx].deadzone = MulDiv(newDevice->joydev->axes[i][AXIS_ABSFLAT], 0xffff,
+             newDevice->props[idx].havemax - newDevice->props[idx].havemin);
+
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numAxes++) | DIDFT_ABSAXIS;
     }
 
@@ -551,26 +553,24 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
  * 'wanted' range. It also autodetects the possible range of the axis and
  * adapts values accordingly.
  */
-static int
-map_axis(JoystickImpl* This, int axis, int val) {
+static int map_axis(JoystickImpl* This, int axis, int val)
+{
     int hmax = This->props[axis].havemax;
     int hmin = This->props[axis].havemin;
     int	wmin = This->props[axis].wantmin;
     int	wmax = This->props[axis].wantmax;
+    int deadz= This->props[axis].deadzone;
     int ret;
 
     /* map the value from the hmin-hmax range into the wmin-wmax range */
     ret = MulDiv( val - hmin, wmax - wmin, hmax - hmin ) + wmin;
 
-    TRACE("hmin=%d hmax=%d wmin=%d wmax=%d val=%d ret=%d\n", hmin, hmax, wmin, wmax, val, ret);
+    if ((ret >= -deadz / 2 ) && (ret <= deadz / 2))
+        ret = (wmax - wmin) / 2  + wmin;
 
-#if 0
-    /* deadzone doesn't work comfortably enough right now. needs more testing*/
-    if ((ret > -deadz/2 ) && (ret < deadz/2)) {
-        FIXME("%d in deadzone, return mid.\n",val);
-	return (wmax-wmin)/2+wmin;
-    }
-#endif
+    TRACE("[%d] hmin=%d hmax=%d wmin=%d wmax=%d deadz=%d val=%d ret=%d\n",
+          axis, hmin, hmax, wmin, wmax, deadz, val, ret);
+
     return ret;
 }
 
@@ -772,6 +772,9 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
         int i;
         TRACE("proprange(%d,%d) all\n", pr->lMin, pr->lMax);
         for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++) {
+          /* Scale dead-zone */
+          This->props[i].deadzone = MulDiv(This->props[i].deadzone, pr->lMax - pr->lMin,
+                                           This->props[i].wantmax - This->props[i].wantmin);
           This->props[i].wantmin = pr->lMin;
           This->props[i].wantmax = pr->lMax;
         }
@@ -780,6 +783,9 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 
         TRACE("proprange(%d,%d) obj=%d\n", pr->lMin, pr->lMax, obj);
         if (obj >= 0) {
+          /* Scale dead-zone */
+          This->props[obj].deadzone = MulDiv(This->props[obj].deadzone, pr->lMax - pr->lMin,
+                                             This->props[obj].wantmax - This->props[obj].wantmin);
           This->props[obj].wantmin = pr->lMin;
           This->props[obj].wantmax = pr->lMax;
         }
