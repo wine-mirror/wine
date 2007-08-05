@@ -667,7 +667,7 @@ static void joy_polldev(JoystickImpl *This)
                 break;
             }
             inst_id = DIDFT_MAKEINSTANCE(axis) | (ie.code < ABS_HAT0X ? DIDFT_ABSAXIS : DIDFT_POV);
-            value = map_axis(This, axis, ie.value);
+            value = map_axis(This, id_to_object(This->base.data_format.wine_df, inst_id), ie.value);
 
 	    switch (ie.code) {
             case ABS_X:         This->js.lX  = value; break;

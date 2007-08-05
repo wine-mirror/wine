@@ -448,7 +448,7 @@ static int offset_to_object(const DataFormat *df, int offset)
     return -1;
 }
 
-static int id_to_object(LPCDIDATAFORMAT df, int id)
+int id_to_object(LPCDIDATAFORMAT df, int id)
 {
     int i;
 

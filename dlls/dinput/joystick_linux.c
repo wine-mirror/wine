@@ -764,7 +764,7 @@ static void joy_polldev(JoystickImpl *This) {
             if (number < 12)
             {
                 inst_id = DIDFT_MAKEINSTANCE(number) | (number < 8 ? DIDFT_ABSAXIS : DIDFT_POV);
-                value = map_axis(This, jse.value, number);
+                value = map_axis(This, jse.value, id_to_object(This->base.data_format.wine_df, inst_id));
                 /* FIXME do deadzone and saturation here */
 
                 TRACE("changing axis %d => %d\n", jse.number, number);
