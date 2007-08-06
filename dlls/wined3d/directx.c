@@ -1230,7 +1230,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT A
         ZeroMemory(&DevModeW, sizeof(DevModeW));
         DevModeW.dmSize = sizeof(DevModeW);
 
-        EnumDisplaySettingsExW(NULL, (DWORD)-1, &DevModeW, 0);
+        EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &DevModeW, 0);
         pMode->Width        = DevModeW.dmPelsWidth;
         pMode->Height       = DevModeW.dmPelsHeight;
         bpp                 = DevModeW.dmBitsPerPel;
