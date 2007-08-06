@@ -346,10 +346,10 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 		    toSend = (((value >> 7) & 0x7f) << 16) | ((value & 0x7f) << 8) | MIDI_CMD_BENDER | ev->data.control.channel;
 		    break;
 		case SND_SEQ_EVENT_PGMCHANGE:
-		    toSend = (ev->data.control.value << 16) | (ev->data.control.param << 8) | MIDI_CMD_PGM_CHANGE | ev->data.control.channel;
+		    toSend = ((ev->data.control.value & 0x7f) << 8) | MIDI_CMD_PGM_CHANGE | ev->data.control.channel;
 		    break;
 		case SND_SEQ_EVENT_CHANPRESS:
-		    toSend = (ev->data.control.value << 16) | (ev->data.control.param << 8) | MIDI_CMD_CHANNEL_PRESSURE | ev->data.control.channel;
+		    toSend = ((ev->data.control.value & 0x7f) << 8) | MIDI_CMD_CHANNEL_PRESSURE | ev->data.control.channel;
 		    break;
                 case SND_SEQ_EVENT_CLOCK:
                     toSend = 0xF8;
