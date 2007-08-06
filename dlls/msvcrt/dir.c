@@ -853,7 +853,7 @@ VOID CDECL _makepath(char * path, const char * drive,
                      const char *directory, const char * filename,
                      const char * extension)
 {
-    char ch;
+    char *p = path;
 
     TRACE("(%s %s %s %s)\n", debugstr_a(drive), debugstr_a(directory),
           debugstr_a(filename), debugstr_a(extension) );
@@ -861,28 +861,30 @@ VOID CDECL _makepath(char * path, const char * drive,
     if ( !path )
         return;
 
-    path[0] = '\0';
     if (drive && drive[0])
     {
-        path[0] = drive[0];
-        path[1] = ':';
-        path[2] = 0;
+        *p++ = drive[0];
+        *p++ = ':';
+        *p = 0;
     }
     if (directory && directory[0])
     {
-        strcat(path, directory);
-        ch = path[strlen(path)-1];
-        if (ch != '/' && ch != '\\')
-            strcat(path,"\\");
+        strcpy(p, directory);
+        p += strlen(directory) - 1;
+        if (*p != '/' && *p != '\\') {
+            strcat(p, "\\");
+            p++;
+        }
+        p++;
     }
     if (filename && filename[0])
     {
-        strcat(path, filename);
+        strcpy(p, filename);
         if (extension && extension[0])
         {
             if ( extension[0] != '.' )
-                strcat(path,".");
-            strcat(path,extension);
+                strcat(p,".");
+            strcat(p,extension);
         }
     }
     TRACE("returning %s\n",path);

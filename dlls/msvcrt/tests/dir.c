@@ -43,8 +43,7 @@ static void test_makepath(void)
     /* this works with native and e.g. Freelancer depends on it */
     strcpy(buffer, "foo");
     _makepath(buffer, NULL, buffer, "dummy.txt", NULL);
-    todo_wine { ok( strcmp(buffer, "foo\\dummy.txt") == 0,
-                    "unexpected result: %s\n", buffer); }
+    ok( strcmp(buffer, "foo\\dummy.txt") == 0, "unexpected result: %s\n", buffer);
 }
 
 static void test_fullpath(void)
