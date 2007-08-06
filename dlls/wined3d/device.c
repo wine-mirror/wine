@@ -237,9 +237,9 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
 
     TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p  Usage(%s)\n", object, debug_d3dusage(vboUsage));
 
-    ENTER_GL();
     /* Make sure that a context is there. Needed in a multithreaded environment. Otherwise this call is a nop */
     ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    ENTER_GL();
 
     /* Make sure that the gl error is cleared. Do not use checkGLcall
       * here because checkGLcall just prints a fixme and continues. However,
@@ -367,9 +367,9 @@ static void CreateIndexBufferVBO(IWineD3DDeviceImpl *This, IWineD3DIndexBufferIm
      */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
 
-    ENTER_GL();
     /* Make sure that a context is there. Needed in a multithreaded environment. Otherwise this call is a nop */
     ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    ENTER_GL();
 
     while(glGetError());
 
@@ -1895,12 +1895,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
 
     if(!This->d3d_initialized) return WINED3DERR_INVALIDCALL;
 
-    ENTER_GL();
     /* I don't think that the interface guarants that the device is destroyed from the same thread
      * it was created. Thus make sure a context is active for the glDelete* calls
      */
     ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-    LEAVE_GL();
 
     TRACE("Deleting high order patches\n");
     for(i = 0; i < PATCHMAP_SIZE; i++) {
@@ -3968,9 +3966,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
      * and this call is quite performance critical, so don't call needlessly
      */
     if(This->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
-        ENTER_GL();
         ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-        LEAVE_GL();
     }
 
     /* ProcessVertices reads from vertex buffers, which have to be assigned. DrawPrimitive and DrawPrimitiveUP
@@ -4402,11 +4398,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
         return WINED3DERR_INVALIDCALL;
     }
 
-    ENTER_GL();
     if(This->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
         ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
     }
     /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
+    ENTER_GL();
     glFlush();
     checkGLcall("glFlush");
     LEAVE_GL();
@@ -4454,16 +4450,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         return WINED3DERR_INVALIDCALL;
     }
 
-    ENTER_GL();
     /* This is for offscreen rendering as well as for multithreading, thus activate the set render target
      * and not the last active one.
      */
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        ENTER_GL();
         apply_fbo_state(iface);
+        LEAVE_GL();
     }
 
     ActivateContext(This, This->render_targets[0], CTXUSAGE_CLEAR);
+    ENTER_GL();
 
     if (Count > 0 && pRects) {
         curRect = pRects;
@@ -5078,9 +5076,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
     }
 
-    ENTER_GL();
-
     ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
+    ENTER_GL();
 
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
@@ -5751,13 +5749,13 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 
     /* Attach src surface to src fbo */
     src_swapchain = get_swapchain(src_surface);
-    ENTER_GL();
     if (src_swapchain) {
         GLenum buffer;
 
         TRACE("Source surface %p is onscreen\n", src_surface);
         ActivateContext(This, src_surface, CTXUSAGE_RESOURCELOAD);
 
+        ENTER_GL();
         GL_EXTCALL(glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0));
         buffer = surface_get_gl_buffer(src_surface, src_swapchain);
         glReadBuffer(buffer);
@@ -5767,11 +5765,13 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         src_rect->y2 = ((IWineD3DSurfaceImpl *)src_surface)->currentDesc.Height - src_rect->y2;
     } else {
         TRACE("Source surface %p is offscreen\n", src_surface);
+        ENTER_GL();
         bind_fbo(iface, GL_READ_FRAMEBUFFER_EXT, &This->src_fbo);
         attach_surface_fbo(This, GL_READ_FRAMEBUFFER_EXT, 0, src_surface);
         glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
         checkGLcall("glReadBuffer()");
     }
+    LEAVE_GL();
 
     /* Attach dst surface to dst fbo */
     dst_swapchain = get_swapchain(dst_surface);
@@ -5781,6 +5781,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         TRACE("Destination surface %p is onscreen\n", dst_surface);
         ActivateContext(This, dst_surface, CTXUSAGE_RESOURCELOAD);
 
+        ENTER_GL();
         GL_EXTCALL(glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0));
         buffer = surface_get_gl_buffer(dst_surface, dst_swapchain);
         glDrawBuffer(buffer);
@@ -5796,6 +5797,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
             ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         }
 
+        ENTER_GL();
         bind_fbo(iface, GL_DRAW_FRAMEBUFFER_EXT, &This->dst_fbo);
         attach_surface_fbo(This, GL_DRAW_FRAMEBUFFER_EXT, 0, dst_surface);
         glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
@@ -5938,8 +5940,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
 
     /* some basic validation checks */
     if(This->cursorTexture) {
-        ENTER_GL();
         ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ENTER_GL();
         glDeleteTextures(1, &This->cursorTexture);
         LEAVE_GL();
         This->cursorTexture = 0;
@@ -6179,8 +6181,8 @@ static void updateSurfaceDesc(IWineD3DSurfaceImpl *surface, WINED3DPRESENT_PARAM
         while (surface->pow2Height < pPresentationParameters->BackBufferHeight) surface->pow2Height <<= 1;
     }
     if(surface->glDescription.textureName) {
-        ENTER_GL();
         ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ENTER_GL();
         glDeleteTextures(1, &surface->glDescription.textureName);
         LEAVE_GL();
         surface->glDescription.textureName = 0;

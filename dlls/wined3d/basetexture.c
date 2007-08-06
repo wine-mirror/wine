@@ -100,8 +100,8 @@ void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface) {
 
     TRACE("(%p) : textureName(%d)\n", This, This->baseTexture.textureName);
     if (This->baseTexture.textureName != 0) {
-        ENTER_GL();
         ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ENTER_GL();
         TRACE("(%p) : Deleting texture %d\n", This, This->baseTexture.textureName);
         glDeleteTextures(1, &This->baseTexture.textureName);
         LEAVE_GL();

@@ -862,8 +862,8 @@ void blt_to_drawable(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *surface) {
         return;
     }
 
-    ENTER_GL();
     ActivateContext(This, This->render_targets[0], CTXUSAGE_BLIT);
+    ENTER_GL();
 
     if(surface->glDescription.target == GL_TEXTURE_2D) {
         glBindTexture(GL_TEXTURE_2D, surface->glDescription.textureName);
@@ -1035,13 +1035,15 @@ void drawPrimitive(IWineD3DDevice *iface,
     }
 
     /* Ok, we will be updating the screen from here onwards so grab the lock */
-    ENTER_GL();
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        ENTER_GL();
         apply_fbo_state(iface);
+        LEAVE_GL();
     }
 
     ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
+    ENTER_GL();
 
     if (This->depth_copy_state == WINED3D_DCS_COPY) {
         depth_copy(iface);
@@ -1251,12 +1253,12 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     patch->has_normals = TRUE;
     patch->has_texcoords = FALSE;
 
-    ENTER_GL();
     /* Simply activate the context for blitting. This disables all the things we don't want and
      * takes care of dirtifying. Dirtifying is preferred over pushing / popping, since drawing the
      * patch (as opposed to normal draws) will most likely need different changes anyway
      */
     ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_BLIT);
+    ENTER_GL();
 
     glMatrixMode(GL_PROJECTION);
     checkGLcall("glMatrixMode(GL_PROJECTION)");

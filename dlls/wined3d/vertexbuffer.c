@@ -64,8 +64,8 @@ static ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface
         if(This->vbo) {
             IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
-            ENTER_GL();
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            ENTER_GL();
             GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
             checkGLcall("glDeleteBuffersARB");
             LEAVE_GL();
@@ -294,8 +294,8 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
 
         if(This->declChanges > VB_MAXDECLCHANGES) {
             FIXME("Too much declaration changes, stopping converting\n");
-            ENTER_GL();
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            ENTER_GL();
             GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
             checkGLcall("glDeleteBuffersARB");
             LEAVE_GL();
@@ -348,10 +348,10 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
          */
         TRACE("No conversion needed, locking directly into the VBO in future\n");
 
-        ENTER_GL();
         if(!device->isInDraw) {
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         }
+        ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
         checkGLcall("glBindBufferARB");
         GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end-start, This->resource.allocatedMemory + start));
@@ -381,10 +381,10 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
                    (int)This->strided.u.s.specular.lpData, /* location */
                    This->strided.u.s.specular.dwType == WINED3DDECLTYPE_SHORT4 || This->strided.u.s.specular.dwType == WINED3DDECLTYPE_D3DCOLOR);
 
-    ENTER_GL();
     if(!device->isInDraw) {
         ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
     }
+    ENTER_GL();
     GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
     checkGLcall("glBindBufferARB");
     GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end - start, data));

@@ -359,7 +359,6 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
              * and the lastActiveRenderTarget member shouldn't matter
              */
             if(swapchain) {
-                ENTER_GL(); /* For ActivateContext */
                 if(swapchain->backBuffer && swapchain->backBuffer[0] != iface) {
                     TRACE("Activating primary back buffer\n");
                     ActivateContext(device, swapchain->backBuffer[0], CTXUSAGE_RESOURCELOAD);
@@ -374,7 +373,6 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
                      */
                     device->lastActiveRenderTarget = (IWineD3DSurface *) 0xdeadbabe;
                 }
-                LEAVE_GL();
             } else {
                 /* May happen during ddraw uninitialization */
                 TRACE("Render target set, but swapchain does not exist!\n");
@@ -383,7 +381,6 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
         }
 
         if (This->glDescription.textureName != 0) { /* release the openGL texture.. */
-            ENTER_GL();
 
             /* Need a context to destroy the texture. Use the currently active render target, but only if
              * the primary render target exists. Otherwise lastActiveRenderTarget is garbage, see above.
@@ -394,6 +391,7 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
             }
 
             TRACE("Deleting texture %d\n", This->glDescription.textureName);
+            ENTER_GL();
             glDeleteTextures(1, &This->glDescription.textureName);
             LEAVE_GL();
         }
@@ -468,11 +466,11 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
     } else {
     TRACE("(%p) : About to load surface\n", This);
 
-    ENTER_GL();
     if(!device->isInDraw) {
         ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
     }
 
+    ENTER_GL();
     glEnable(This->glDescription.target);/* make sure texture support is enabled in this context */
     if (!This->glDescription.level) {
         if (!This->glDescription.textureName) {
@@ -797,8 +795,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
          * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
          * context->last_was_blit set on the unlock.
          */
-        ENTER_GL();
         ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
+        ENTER_GL();
 
         /* Select the correct read buffer, and give some debug output.
          * There is no need to keep track of the current read buffer or reset it, every part of the code
@@ -871,12 +869,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         if (0 != This->glDescription.textureName) {
             /* Now I have to copy thing bits back */
 
-            ENTER_GL();
-
             if(myDevice->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
                 ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
             }
 
+            ENTER_GL();
             /* Make sure that a proper texture unit is selected, bind the texture and dirtify the sampler to restore the texture on the next draw */
             if (GL_SUPPORT(ARB_MULTITEXTURE)) {
                 GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
@@ -1190,8 +1187,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         }
 
         /* Activate the correct context for the render target */
-        ENTER_GL();
         ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
+        ENTER_GL();
 
         if(!swapchain) {
             /* Primary offscreen render target */
@@ -2419,9 +2416,9 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     UINT row;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
 
-    ENTER_GL();
 
     ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
+    ENTER_GL();
     IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
     /* Bind the target texture */
@@ -2506,8 +2503,8 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
-    ENTER_GL();
     ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
+    ENTER_GL();
     IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
     /* Try to use an aux buffer for drawing the rectangle. This way it doesn't need restoring.
@@ -2969,10 +2966,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         /* Now load the surface */
         IWineD3DSurface_PreLoad((IWineD3DSurface *) Src);
 
-        ENTER_GL();
 
         /* Activate the destination context, set it up for blitting */
         ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
+        ENTER_GL();
 
         if(!dstSwapchain) {
             TRACE("Drawing to offscreen buffer\n");

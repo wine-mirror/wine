@@ -61,8 +61,8 @@ static ULONG WINAPI IWineD3DIndexBufferImpl_Release(IWineD3DIndexBuffer *iface) 
         if(This->vbo) {
             IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
-            ENTER_GL();
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            ENTER_GL();
             /* No need to manually unset the buffer. glDeleteBuffers unsets it for the current context,
              * but not for other contexts. However, because the d3d buffer is destroyed the app has to
              * unset it before doing the next draw, thus dirtifying the index buffer state and forcing
@@ -157,12 +157,12 @@ static HRESULT WINAPI IWineD3DIndexBufferImpl_Unlock(IWineD3DIndexBuffer *iface)
     /* For now load in unlock */
     if(locks == 0 && This->vbo && (This->dirtyend - This->dirtystart) > 0) {
         IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-        ENTER_GL();
 
         if(device->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED) {
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         }
 
+        ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, This->vbo));
         checkGLcall("glBindBufferARB");
         GL_EXTCALL(glBufferSubDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB,
