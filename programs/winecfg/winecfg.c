@@ -638,6 +638,7 @@ char **enumerate_values(HKEY root, char *path)
                                 lstrlenW(wret[i]) + 1, NULL, NULL);
             HeapFree(GetProcessHeap(), 0, wret[i]);
         }
+        ret[len] = NULL;
     }
 
     HeapFree(GetProcessHeap(), 0, wpath);
