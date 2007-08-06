@@ -680,7 +680,7 @@ struct IWineD3DDeviceImpl
     WINED3DDEVTYPE                  devType;
 
     IWineD3DSwapChain     **swapchains;
-    uint                    NumberOfSwapChains;
+    UINT                    NumberOfSwapChains;
 
     ResourceList           *resources; /* a linked list to track resources created by the device */
 

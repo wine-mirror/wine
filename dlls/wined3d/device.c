@@ -1890,7 +1890,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroyDepthStencilSurface, D3DCB_DESTROYSWAPCHAINFN D3DCB_DestroySwapChain) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     int sampler;
-    uint i;
+    UINT i;
     TRACE("(%p)\n", This);
 
     if(!This->d3d_initialized) return WINED3DERR_INVALIDCALL;
