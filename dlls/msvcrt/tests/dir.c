@@ -31,6 +31,22 @@
 #include <process.h>
 #include <errno.h>
 
+static void test_makepath(void)
+{
+    char buffer[MAX_PATH];
+
+    _makepath(buffer, "C", "\\foo", "dummy", "txt");
+    ok( strcmp(buffer, "C:\\foo\\dummy.txt") == 0, "unexpected result: %s\n", buffer);
+    _makepath(buffer, "C:", "\\foo\\", "dummy", ".txt");
+    ok( strcmp(buffer, "C:\\foo\\dummy.txt") == 0, "unexpected result: %s\n", buffer);
+
+    /* this works with native and e.g. Freelancer depends on it */
+    strcpy(buffer, "foo");
+    _makepath(buffer, NULL, buffer, "dummy.txt", NULL);
+    todo_wine { ok( strcmp(buffer, "foo\\dummy.txt") == 0,
+                    "unexpected result: %s\n", buffer); }
+}
+
 static void test_fullpath(void)
 {
     char full[MAX_PATH];
@@ -91,4 +107,5 @@ static void test_fullpath(void)
 START_TEST(dir)
 {
     test_fullpath();
+    test_makepath();
 }
