@@ -26,6 +26,8 @@ enum DebugEventLevel
 };
 
 typedef VOID (WINAPI *DebugEventProc)(enum DebugEventLevel, CHAR *);
+typedef Status (WINAPI *NotificationHookProc)(ULONG_PTR *);
+typedef void (WINAPI *NotificationUnhookProc)(ULONG_PTR);
 
 struct GdiplusStartupInput
 {
@@ -49,8 +51,8 @@ struct GdiplusStartupInput
 
 struct GdiplusStartupOutput
 {
-    ULONG_PTR NotificationHook;
-    ULONG_PTR NotificationUnhook;
+    NotificationHookProc NotificationHook;
+    NotificationUnhookProc NotificationUnhook;
 };
 
 #ifdef __cplusplus
