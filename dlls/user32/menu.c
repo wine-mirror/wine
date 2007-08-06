@@ -2668,9 +2668,39 @@ static void MENU_SetCapture( HWND hwnd )
 static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 {
     POPUPMENU *menu = MENU_GetMenu( pmt->hTopMenu );
+    BOOL atEnd = FALSE;
 
-    if( (vk == VK_LEFT &&  menu->FocusedItem == 0 ) ||
-        (vk == VK_RIGHT && menu->FocusedItem == menu->nItems - 1))
+    /* When skipping left, we need to do something special after the
+       first menu.                                                  */
+    if (vk == VK_LEFT && menu->FocusedItem == 0)
+    {
+        atEnd = TRUE;
+    }
+    /* When skipping right, for the non-system menu, we need to
+       handle the last non-special menu item (ie skip any window
+       icons such as MDI maximize, restore or close)             */
+    else if ((vk == VK_RIGHT) && !IS_SYSTEM_MENU(menu))
+    {
+        int i = menu->FocusedItem + 1;
+        while (i < (menu->nItems - 1)) {
+            if ((menu->items[i].wID >= SC_SIZE &&
+                 menu->items[i].wID <= SC_RESTORE)) {
+                i++;
+            } else break;
+        }
+        if (i == (menu->nItems - 1)) {
+            atEnd = TRUE;
+        }
+    }
+    /* When skipping right, we need to cater for the system menu */
+    else if ((vk == VK_RIGHT) && IS_SYSTEM_MENU(menu))
+    {
+        if (menu->FocusedItem == (menu->nItems - 1)) {
+            atEnd = TRUE;
+        }
+    }
+
+    if( atEnd )
     {
         MDINEXTMENU next_menu;
 	HMENU hNewMenu;
@@ -2699,6 +2729,12 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 	        {
 		    menu = MENU_GetMenu( hNewMenu );
 		    id = menu->nItems - 1;
+
+                    /* Skip backwards over any system predefined icons,
+                       eg. MDI close, restore etc icons                 */
+                    while ((id > 0) &&
+                           (menu->items[id].wID >= SC_SIZE &&
+                            menu->items[id].wID <= SC_RESTORE)) id--;
 	        }
 	    }
 	    else if (style & WS_SYSMENU )
