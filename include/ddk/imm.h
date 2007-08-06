@@ -95,6 +95,32 @@ DWORD  WINAPI ImmGetIMCCLockCount(HIMCC);
 HIMCC  WINAPI ImmReSizeIMCC(HIMCC, DWORD);
 DWORD  WINAPI ImmGetIMCCSize(HIMCC);
 
+/* IME Property bits */
+#define IME_PROP_END_UNLOAD             0x0001
+#define IME_PROP_KBD_CHAR_FIRST         0x0002
+#define IME_PROP_IGNORE_UPKEYS          0x0004
+#define IME_PROP_NEED_ALTKEY            0x0008
+#define IME_PROP_NO_KEYS_ON_CLOSE       0x0010
+
+/* for NI_CONTEXTUPDATED */
+#define IMC_SETCONVERSIONMODE           0x0002
+#define IMC_SETSENTENCEMODE             0x0004
+#define IMC_SETOPENSTATUS               0x0006
+
+/* dwAction for ImmNotifyIME */
+#define NI_CONTEXTUPDATED               0x0003
+#define NI_OPENCANDIDATE                0x0010
+#define NI_CLOSECANDIDATE               0x0011
+#define NI_SELECTCANDIDATESTR           0x0012
+#define NI_CHANGECANDIDATELIST          0x0013
+#define NI_FINALIZECONVERSIONRESULT     0x0014
+#define NI_COMPOSITIONSTR               0x0015
+#define NI_SETCANDIDATE_PAGESTART       0x0016
+#define NI_SETCANDIDATE_PAGESIZE        0x0017
+#define NI_IMEMENUSELECTED              0x0018
+
+BOOL WINAPI ImmGenerateMessage(HIMC);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
