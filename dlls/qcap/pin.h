@@ -59,7 +59,9 @@ typedef struct OutputPin
 } OutputPin;
 
 /*** Initializers ***/
-HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl);
+HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES *props,
+                       LPVOID pUserData, QUERYACCEPTPROC pQueryAccept,
+                       LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl);
 
 /* Common */
 HRESULT WINAPI IPinImpl_ConnectedTo(IPin * iface, IPin ** ppPin);

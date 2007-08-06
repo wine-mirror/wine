@@ -29,7 +29,7 @@ typedef struct _Capture Capture;
 Capture *qcap_driver_init(IPin*,USHORT);
 HRESULT qcap_driver_destroy(Capture*);
 HRESULT qcap_driver_set_format(Capture*,AM_MEDIA_TYPE*);
-HRESULT qcap_driver_get_format(Capture*,AM_MEDIA_TYPE**);
+HRESULT qcap_driver_get_format(const Capture*,AM_MEDIA_TYPE**);
 HRESULT qcap_driver_get_prop_range(Capture*,long,long*,long*,long*,long*,long*);
 HRESULT qcap_driver_get_prop(Capture*,long,long*,long*);
 HRESULT qcap_driver_set_prop(Capture*,long,long,long);

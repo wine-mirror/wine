@@ -73,7 +73,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap_v4l);
 
 #ifdef HAVE_LINUX_VIDEODEV_H
 
-typedef void (* Renderer)(Capture *, LPBYTE bufferin, LPBYTE stream);
+typedef void (* Renderer)(const Capture *, LPBYTE bufferin, const BYTE *stream);
 
 struct _Capture
 {
@@ -111,8 +111,8 @@ struct renderlist
     Renderer renderer;
 };
 
-static void renderer_RGB(Capture *capBox, LPBYTE bufferin, LPBYTE stream);
-static void renderer_YUV(Capture *capBox, LPBYTE bufferin, LPBYTE stream);
+static void renderer_RGB(const Capture *capBox, LPBYTE bufferin, const BYTE *stream);
+static void renderer_YUV(const Capture *capBox, LPBYTE bufferin, const BYTE *stream);
 
 static const struct renderlist renderlist_V4l[] = {
     {  0, "NULL renderer",               NULL },
@@ -279,7 +279,7 @@ HRESULT qcap_driver_set_format(Capture *capBox, AM_MEDIA_TYPE * mT)
     return S_OK;
 }
 
-HRESULT qcap_driver_get_format(Capture *capBox, AM_MEDIA_TYPE ** mT)
+HRESULT qcap_driver_get_format(const Capture *capBox, AM_MEDIA_TYPE ** mT)
 {
     VIDEOINFOHEADER *vi;
 
@@ -412,7 +412,7 @@ HRESULT qcap_driver_set_prop(Capture *capBox, long Property, long lValue, long F
     return S_OK;
 }
 
-static void renderer_RGB(Capture *capBox, LPBYTE bufferin, LPBYTE stream)
+static void renderer_RGB(const Capture *capBox, LPBYTE bufferin, const BYTE *stream)
 {
     int depth = renderlist_V4l[capBox->pict.palette].depth;
     int size = capBox->height * capBox->width * depth / 8;
@@ -443,7 +443,7 @@ static void renderer_RGB(Capture *capBox, LPBYTE bufferin, LPBYTE stream)
     }
 }
 
-static void renderer_YUV(Capture *capBox, LPBYTE bufferin, LPBYTE stream)
+static void renderer_YUV(const Capture *capBox, LPBYTE bufferin, const BYTE *stream)
 {
     enum YUV_Format format;
 
@@ -478,7 +478,7 @@ static void renderer_YUV(Capture *capBox, LPBYTE bufferin, LPBYTE stream)
     YUV_To_RGB24(format, bufferin, stream, capBox->width, capBox->height);
 }
 
-static void Resize(Capture * capBox, LPBYTE output, LPBYTE input)
+static void Resize(const Capture * capBox, LPBYTE output, const BYTE *input)
 {
     /* the whole image needs to be reversed,
        because the dibs are messed up in windows */
@@ -927,7 +927,7 @@ HRESULT qcap_driver_set_format(Capture *capBox, AM_MEDIA_TYPE * mT)
     FAIL_WITH_ERR;
 }
 
-HRESULT qcap_driver_get_format(Capture *capBox, AM_MEDIA_TYPE ** mT)
+HRESULT qcap_driver_get_format(const Capture *capBox, AM_MEDIA_TYPE ** mT)
 {
     FAIL_WITH_ERR;
 }

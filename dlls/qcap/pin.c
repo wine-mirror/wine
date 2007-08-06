@@ -223,7 +223,9 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
     return hr;
 }
 
-HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl)
+HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES * props,
+                       LPVOID pUserData, QUERYACCEPTPROC pQueryAccept,
+                       LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl)
 {
     TRACE("\n");
 
