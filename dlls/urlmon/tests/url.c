@@ -774,12 +774,7 @@ static void test_BindToStorage(int protocol, BOOL emul)
     ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n\n", hres);
     if(FAILED(hres))
         return;
-    if(test_protocol == HTTP_TEST ||
-       test_protocol == ABOUT_TEST ||
-       (emul && test_protocol == FILE_TEST)) todo_wine
-        CHECK_CALLED(QueryInterface_IServiceProvider);
-    else
-        CHECK_CALLED(QueryInterface_IServiceProvider);
+    todo_wine CHECK_CALLED(QueryInterface_IServiceProvider);
 
     SET_EXPECT(QueryInterface_IServiceProvider);
     hres = RegisterBindStatusCallback(bctx, &bsc, &previousclb, 0);
@@ -863,10 +858,12 @@ static void test_BindToStorage(int protocol, BOOL emul)
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(OnStartBinding);
     if(emulate_protocol) {
+        todo_wine CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
         CHECK_CALLED(Start);
         CHECK_CALLED(UnlockRequest);
     }else {
         if(test_protocol == HTTP_TEST) {
+            CHECK_NOT_CALLED(QueryInterface_IServiceProvider);
             todo_wine CHECK_CALLED(QueryInterface_IHttpNegotiate);
             todo_wine CHECK_CALLED(BeginningTransaction);
             /* QueryInterface_IHttpNegotiate2 and GetRootSecurityId
