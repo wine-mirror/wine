@@ -108,86 +108,6 @@ static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, Display *disp
     return This->contexts[This->numContexts - 1];
 }
 
-/* Returns an array of compatible FBconfig(s).
- * The array must be freed with XFree. Requires ENTER_GL()
- */
-static GLXFBConfig* pbuffer_find_fbconfigs(
-    IWineD3DDeviceImpl* This,
-    IWineD3DSurfaceImpl* RenderSurface,
-    Display *display) {
-
-    GLXFBConfig* cfgs = NULL;
-    int nCfgs = 0;
-    int attribs[256];
-    int nAttribs = 0;
-
-    IWineD3DSurface *StencilSurface = This->stencilBufferTarget;
-    WINED3DFORMAT BackBufferFormat = RenderSurface->resource.format;
-    WINED3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? ((IWineD3DSurfaceImpl *) StencilSurface)->resource.format : 0;
-
-    /* TODO:
-     *  if StencilSurface == NULL && zBufferTarget != NULL then switch the zbuffer off,
-     *  it StencilSurface != NULL && zBufferTarget == NULL switch it on
-     */
-
-#define PUSH1(att)        attribs[nAttribs++] = (att);
-#define PUSH2(att,value)  attribs[nAttribs++] = (att); attribs[nAttribs++] = (value);
-
-    /* PUSH2(GLX_BIND_TO_TEXTURE_RGBA_ATI, True); examples of this are few and far between (but I've got a nice working one!)*/
-
-    PUSH2(GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT);
-    PUSH2(GLX_X_RENDERABLE,  TRUE);
-    PUSH2(GLX_DOUBLEBUFFER,  TRUE);
-    TRACE("calling makeglcfg\n");
-    D3DFmtMakeGlCfg(BackBufferFormat, StencilBufferFormat, attribs, &nAttribs, FALSE /* alternate */);
-    PUSH1(None);
-    TRACE("calling chooseFGConfig\n");
-    cfgs = glXChooseFBConfig(display,
-                             DefaultScreen(display),
-                             attribs, &nCfgs);
-    if (cfgs == NULL) {
-        /* OK we didn't find the exact config, so use any reasonable match */
-        /* TODO: fill in the 'requested' and 'current' depths, and make sure that's
-           why we failed. */
-        static BOOL show_message = TRUE;
-        if (show_message) {
-            ERR("Failed to find exact match, finding alternative but you may "
-                "suffer performance issues, try changing xfree's depth to match the requested depth\n");
-            show_message = FALSE;
-        }
-        nAttribs = 0;
-        PUSH2(GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT | GLX_WINDOW_BIT);
-        /* PUSH2(GLX_X_RENDERABLE,  TRUE); */
-        PUSH2(GLX_RENDER_TYPE,   GLX_RGBA_BIT);
-        PUSH2(GLX_DOUBLEBUFFER, FALSE);
-        TRACE("calling makeglcfg\n");
-        D3DFmtMakeGlCfg(BackBufferFormat, StencilBufferFormat, attribs, &nAttribs, TRUE /* alternate */);
-        PUSH1(None);
-        cfgs = glXChooseFBConfig(display,
-                                 DefaultScreen(display),
-                                 attribs, &nCfgs);
-    }
-
-    if (cfgs == NULL) {
-        ERR("Could not get a valid FBConfig for (%u,%s)/(%u,%s)\n",
-            BackBufferFormat, debug_d3dformat(BackBufferFormat),
-            StencilBufferFormat, debug_d3dformat(StencilBufferFormat));
-    } else {
-#ifdef EXTRA_TRACES
-        int i;
-        for (i = 0; i < nCfgs; ++i) {
-            TRACE("for (%u,%s)/(%u,%s) found config[%d]@%p\n", BackBufferFormat,
-            debug_d3dformat(BackBufferFormat), StencilBufferFormat,
-            debug_d3dformat(StencilBufferFormat), i, cfgs[i]);
-        }
-#endif
-    }
-#undef PUSH1
-#undef PUSH2
-
-   return cfgs;
-}
-
 /*****************************************************************************
  * CreateContext
  *
@@ -203,7 +123,6 @@ static GLXFBConfig* pbuffer_find_fbconfigs(
 WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, Display *display, Window win) {
     Drawable drawable = win, oldDrawable;
     XVisualInfo *visinfo = NULL;
-    GLXFBConfig *cfgs = NULL;
     GLXContext ctx = NULL, oldCtx;
     WineD3DContext *ret = NULL;
     int s;
@@ -211,16 +130,14 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     TRACE("(%p): Creating a %s context for render target %p\n", This, win ? "onscreen" : "offscreen", target);
 
     if(!win) {
+        long int visualid;
         int attribs[256];
         int nAttribs = 0;
+        int i;
+        int val;
+        int index = -1;
 
         TRACE("Creating a pBuffer drawable for the new context\n");
-
-        cfgs = pbuffer_find_fbconfigs(This, target, display);
-        if(!cfgs) {
-            ERR("Cannot find a frame buffer configuration for the pbuffer\n");
-            goto out;
-        }
 
         attribs[nAttribs++] = GLX_PBUFFER_WIDTH;
         attribs[nAttribs++] = target->currentDesc.Width;
@@ -228,20 +145,37 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         attribs[nAttribs++] = target->currentDesc.Height;
         attribs[nAttribs++] = None;
 
-        visinfo = glXGetVisualFromFBConfig(display, cfgs[0]);
+        visualid = (VisualID)GetPropA(GetDesktopWindow(), "__wine_x11_visual_id");
+        TRACE("Found x visual ID  : %ld\n", visualid);
+
+        /* Search for the fbconfig that corresponds to Wine's default X visual */
+        for(i=0; i < This->adapter->nCfgs; i++)
+        {
+            glXGetFBConfigAttrib(display, This->adapter->cfgs[i], GLX_VISUAL_ID, &val);
+
+            /* We have found the fbconfig :) */
+            if(val == visualid) {
+                index = i;
+                break;
+            }
+        }
+
+        if(index == -1) {
+            ERR("Cannot find an fbconfig corresponding to visualid=%lx\n", visualid);
+            goto out;
+        }
+
+        visinfo = glXGetVisualFromFBConfig(display, This->adapter->cfgs[index]);
         if(!visinfo) {
             ERR("Cannot find a visual for the pbuffer\n");
             goto out;
         }
 
-        drawable = glXCreatePbuffer(display, cfgs[0], attribs);
-
+        drawable = glXCreatePbuffer(display, This->adapter->cfgs[index], attribs);
         if(!drawable) {
             ERR("Cannot create a pbuffer\n");
             goto out;
         }
-        XFree(cfgs);
-        cfgs = NULL;
     } else {
         /* Create an onscreen target */
         XVisualInfo             template;
@@ -396,7 +330,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 
 out:
     if(visinfo) XFree(visinfo);
-    if(cfgs) XFree(cfgs);
     return ret;
 }
 

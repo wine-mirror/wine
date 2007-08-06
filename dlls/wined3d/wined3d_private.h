@@ -1481,8 +1481,6 @@ void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords)
 void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height);
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain);
 
-int D3DFmtMakeGlCfg(WINED3DFORMAT BackBufferFormat, WINED3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate);
-
 /* Math utils */
 void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2);
 
