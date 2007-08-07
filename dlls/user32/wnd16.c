@@ -21,7 +21,6 @@
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "win.h"
-#include "winproc.h"
 #include "user_private.h"
 
 /* handle <--> handle16 conversions */

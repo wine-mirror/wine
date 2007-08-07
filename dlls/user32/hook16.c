@@ -30,7 +30,6 @@
 #include "wine/winuser16.h"
 #include "win.h"
 #include "user_private.h"
-#include "winproc.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hook);

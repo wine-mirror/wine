@@ -36,7 +36,6 @@
 #include "win.h"
 #include "user_private.h"
 #include "controls.h"
-#include "winproc.h"
 #include "wine/server.h"
 #include "wine/list.h"
 #include "wine/debug.h"
