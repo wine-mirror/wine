@@ -257,12 +257,16 @@ static void init_dpi_editbox(HWND hDlg)
     DWORD dwLogpixels;
     char szLogpixels[MAXBUFLEN];
 
+    updating_ui = TRUE;
+
     dwLogpixels = read_logpixels_reg();
     WINE_TRACE("%d\n", (int) dwLogpixels);
 
     szLogpixels[0] = 0;
     sprintf(szLogpixels, "%d", dwLogpixels);
     SendMessage(hDpiEditBox, WM_SETTEXT, 0, (LPARAM) szLogpixels);
+
+    updating_ui = FALSE;
 }
 
 static void init_trackbar(HWND hDlg)
@@ -270,10 +274,14 @@ static void init_trackbar(HWND hDlg)
     HWND hTrackBar = GetDlgItem(hDlg, IDC_RES_TRACKBAR);
     DWORD dwLogpixels;
 
+    updating_ui = TRUE;
+
     dwLogpixels = read_logpixels_reg();
 
     SendMessageW(hTrackBar, TBM_SETRANGE, TRUE, MAKELONG(MINDPI, MAXDPI));
     SendMessageW(hTrackBar, TBM_SETPOS, TRUE, dwLogpixels);
+
+    updating_ui = FALSE;
 }
 
 INT_PTR CALLBACK
@@ -330,8 +338,6 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    break;
 		}
 		case PSN_APPLY: {
-		    int i = SendMessageW(GetDlgItem(hDlg, IDC_RES_TRACKBAR), TBM_GETPOS, 0, 0);
-		    set_reg_key_dword(HKEY_LOCAL_MACHINE, logpixels_reg, "LogPixels", i);
                     apply();
 		    SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
 		    break;
@@ -351,6 +357,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    buf[0] = 0;
 		    sprintf(buf, "%d", i);
 		    SendMessage(GetDlgItem(hDlg, IDC_RES_DPIEDIT), WM_SETTEXT, 0, (LPARAM) buf);
+		    set_reg_key_dword(HKEY_LOCAL_MACHINE, logpixels_reg, "LogPixels", i);
 		    break;
 		}
 	    }
