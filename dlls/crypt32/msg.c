@@ -1742,20 +1742,26 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
     case CMSG_CONTENT_PARAM:
         if (msg->u.signedInfo)
         {
-            CRYPT_DATA_BLOB *blob;
-            DWORD size;
-
-            /* FIXME: does this depend on inner content type? */
-            ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
-             msg->u.signedInfo->content.Content.pbData,
-             msg->u.signedInfo->content.Content.cbData, CRYPT_DECODE_ALLOC_FLAG,
-             NULL, (LPBYTE)&blob, &size);
-            if (ret)
+            if (!strcmp(msg->u.signedInfo->content.pszObjId, szOID_RSA_data))
             {
-                ret = CRYPT_CopyParam(pvData, pcbData, blob->pbData,
-                 blob->cbData);
-                LocalFree(blob);
+                CRYPT_DATA_BLOB *blob;
+                DWORD size;
+
+                ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
+                 msg->u.signedInfo->content.Content.pbData,
+                 msg->u.signedInfo->content.Content.cbData,
+                 CRYPT_DECODE_ALLOC_FLAG, NULL, (LPBYTE)&blob, &size);
+                if (ret)
+                {
+                    ret = CRYPT_CopyParam(pvData, pcbData, blob->pbData,
+                     blob->cbData);
+                    LocalFree(blob);
+                }
             }
+            else
+                ret = CRYPT_CopyParam(pvData, pcbData,
+                 msg->u.signedInfo->content.Content.pbData,
+                 msg->u.signedInfo->content.Content.cbData);
         }
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
