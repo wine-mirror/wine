@@ -363,9 +363,12 @@ char *get_reg_key(HKEY root, const char *path, const char *name, const char *def
 
     wRet = get_reg_keyW(root, wpath, wname, wdef);
 
-    len = WideCharToMultiByte(CP_ACP, 0, wRet, -1, szRet, 0, NULL, NULL);
-    szRet = HeapAlloc(GetProcessHeap(), 0, len);
-    WideCharToMultiByte(CP_ACP, 0, wRet, -1, szRet, len, NULL, NULL);
+    len = WideCharToMultiByte(CP_ACP, 0, wRet, -1, NULL, 0, NULL, NULL);
+    if (len)
+    {
+        szRet = HeapAlloc(GetProcessHeap(), 0, len);
+        WideCharToMultiByte(CP_ACP, 0, wRet, -1, szRet, len, NULL, NULL);
+    }
 
     HeapFree(GetProcessHeap(), 0, wpath);
     HeapFree(GetProcessHeap(), 0, wname);
@@ -397,7 +400,7 @@ static void set_reg_key_ex(HKEY root, const WCHAR *path, const WCHAR *name, cons
 
     assert( path != NULL );
 
-    WINE_TRACE("path=%s, name=%s, value=%p\n", wine_dbgstr_w(path),
+    WINE_TRACE("path=%s, name=%s, value=%s\n", wine_dbgstr_w(path),
                wine_dbgstr_w(name), wine_dbgstr_w(value));
 
     /* firstly, see if we already set this setting  */
