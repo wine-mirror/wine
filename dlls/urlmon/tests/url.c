@@ -105,7 +105,7 @@ static const WCHAR MK_URL[] = {'m','k',':','@','M','S','I','T','S','t','o','r','
 static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
 
 static BOOL stopped_binding = FALSE, emulate_protocol = FALSE;
-static DWORD read = 0;
+static DWORD read = 0, bindf = 0;
 
 static const LPCWSTR urls[] = {
     WINE_ABOUT_URL,
@@ -596,7 +596,7 @@ static HRESULT WINAPI statusclb_GetBindInfo(IBindStatusCallback *iface, DWORD *g
 
     CHECK_EXPECT(GetBindInfo);
 
-    *grfBINDF = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
+    *grfBINDF = bindf;
     cbSize = pbindinfo->cbSize;
     memset(pbindinfo, 0, cbSize);
     pbindinfo->cbSize = cbSize;
@@ -952,6 +952,8 @@ START_TEST(url)
     test_create();
     test_CreateAsyncBindCtx();
     test_CreateAsyncBindCtxEx();
+
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
 
     trace("http test...\n");
     test_BindToStorage(HTTP_TEST, FALSE);
