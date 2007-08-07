@@ -1375,6 +1375,7 @@ HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
 {
     Binding *binding = NULL;
     HRESULT hres;
+    MSG msg;
 
     *ppv = NULL;
 
@@ -1401,6 +1402,15 @@ HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
         IBinding_Release(BINDING(binding));
 
         return hres;
+    }
+
+    while(!(binding->bindf & BINDF_ASYNCHRONOUS) &&
+          binding->download_state != END_DOWNLOAD) {
+        MsgWaitForMultipleObjects(0, NULL, FALSE, 5000, QS_POSTMESSAGE);
+        while (PeekMessageW(&msg, binding->notif_hwnd, WM_USER, WM_USER+117, PM_REMOVE|PM_NOYIELD)) {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
     }
 
     if(binding->stream->init_buf) {
