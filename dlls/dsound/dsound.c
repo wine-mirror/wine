@@ -1414,7 +1414,7 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
     device->driver = NULL;
 
     /* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
-    if (ds_hw_accel > DS_HW_ACCEL_EMULATION)
+    if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
         waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD_PTR)&device->driver, 0);
 
     /* Get driver description */

@@ -1584,7 +1584,7 @@ HRESULT DirectSoundCaptureDevice_Initialize(
 
     /* Disable the direct sound driver to force emulation if requested. */
     device->driver = NULL;
-    if (ds_hw_accel > DS_HW_ACCEL_EMULATION)
+    if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
     {
         err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&(device->driver),0));
         if ( (err != DS_OK) && (err != DSERR_UNSUPPORTED) ) {
@@ -1593,7 +1593,6 @@ HRESULT DirectSoundCaptureDevice_Initialize(
         }
     }
     err = DS_OK;
-
 
     /* Get driver description */
     if (device->driver) {
