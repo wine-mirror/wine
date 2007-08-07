@@ -124,6 +124,12 @@ static enum {
     MK_TEST
 } test_protocol;
 
+static enum {
+    BEFORE_DOWNLOAD,
+    DOWNLOADING,
+    END_DOWNLOAD
+} download_state;
+
 static void test_CreateURLMoniker(LPCWSTR url1, LPCWSTR url2)
 {
     HRESULT hr;
@@ -549,21 +555,31 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
         break;
     case BINDSTATUS_MIMETYPEAVAILABLE:
         CHECK_EXPECT(OnProgress_MIMETYPEAVAILABLE);
+        ok(download_state == BEFORE_DOWNLOAD, "Download state was %d, expected BEFORE_DOWNLOAD\n",
+           download_state);
         break;
     case BINDSTATUS_BEGINDOWNLOADDATA:
         CHECK_EXPECT(OnProgress_BEGINDOWNLOADDATA);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText)
             ok(!lstrcmpW(szStatusText, urls[test_protocol]), "wrong szStatusText\n");
+        ok(download_state == BEFORE_DOWNLOAD, "Download state was %d, expected BEFORE_DOWNLOAD\n",
+           download_state);
+        download_state = DOWNLOADING;
         break;
     case BINDSTATUS_DOWNLOADINGDATA:
         CHECK_EXPECT2(OnProgress_DOWNLOADINGDATA);
+        ok(download_state == DOWNLOADING, "Download state was %d, expected DOWNLOADING\n",
+           download_state);
         break;
     case BINDSTATUS_ENDDOWNLOADDATA:
         CHECK_EXPECT(OnProgress_ENDDOWNLOADDATA);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText)
             ok(!lstrcmpW(szStatusText, urls[test_protocol]), "wrong szStatusText\n");
+        ok(download_state == DOWNLOADING, "Download state was %d, expected DOWNLOADING\n",
+           download_state);
+        download_state = END_DOWNLOAD;
         break;
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
         ok(szStatusText != NULL, "szStatusText == NULL\n");
@@ -613,6 +629,9 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
     BYTE buf[512];
 
     CHECK_EXPECT2(OnDataAvailable);
+    ok(download_state == DOWNLOADING || download_state == END_DOWNLOAD,
+       "Download state was %d, expected DOWNLOADING or END_DOWNLOAD\n",
+       download_state);
     data_available = TRUE;
 
     if (0)
@@ -770,6 +789,7 @@ static void test_BindToStorage(int protocol, BOOL emul)
 
     test_protocol = protocol;
     emulate_protocol = emul;
+    download_state = BEFORE_DOWNLOAD;
     stopped_binding = FALSE;
     data_available = FALSE;
 
