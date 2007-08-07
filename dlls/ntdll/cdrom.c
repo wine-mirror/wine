@@ -1036,6 +1036,13 @@ static NTSTATUS CDROM_Verify(int dev, int fd)
         return STATUS_SUCCESS;
     else
         return STATUS_NO_MEDIA_IN_DEVICE;
+#elif defined(__FreeBSD__)
+    int ret;
+    ret = ioctl(fd, CDIOCSTART, NULL);
+    if(ret == 0)
+        return STATUS_SUCCESS;
+    else
+        return STATUS_NO_MEDIA_IN_DEVICE;
 #else
     FIXME("not implemented for non-linux\n");
     return STATUS_NOT_SUPPORTED;
