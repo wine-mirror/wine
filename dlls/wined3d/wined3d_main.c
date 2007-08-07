@@ -106,7 +106,29 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
        HKEY hkey = 0;
        HKEY appkey = 0;
        DWORD len;
+       WNDCLASSA wc;
+
        wined3d_settings.emulated_textureram = 64*1024*1024;
+
+       /* We need our own window class for a fake window which we use to retrieve GL capabilities */
+       /* We might need CS_OWNDC in the future if we notice strange things on Windows.
+        * Various articles/posts about OpenGL problems on Windows recommend this. */
+       wc.style                = CS_HREDRAW | CS_VREDRAW;
+       wc.lpfnWndProc          = DefWindowProcA;
+       wc.cbClsExtra           = 0;
+       wc.cbWndExtra           = 0;
+       wc.hInstance            = hInstDLL;
+       wc.hIcon                = LoadIconA(NULL, (LPCSTR)IDI_WINLOGO);
+       wc.hCursor              = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
+       wc.hbrBackground        = NULL;
+       wc.lpszMenuName         = NULL;
+       wc.lpszClassName        = "WineD3D_OpenGL";
+
+       if (!RegisterClassA(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+       {
+           ERR("Failed to register window class 'WineD3D_OpenGL'!");
+           return FALSE;
+       }
 
        DisableThreadLibraryCalls(hInstDLL);
 

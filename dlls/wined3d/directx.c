@@ -164,7 +164,8 @@ DWORD minMipLookup[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
 static int             wined3d_fake_gl_context_ref = 0;
 static BOOL            wined3d_fake_gl_context_foreign;
 static BOOL            wined3d_fake_gl_context_available = FALSE;
-static Display*        wined3d_fake_gl_context_display = NULL;
+static HDC             wined3d_fake_gl_context_hdc = NULL;
+static HWND            wined3d_fake_gl_context_hwnd = NULL;
 
 static CRITICAL_SECTION wined3d_fake_gl_context_cs;
 static CRITICAL_SECTION_DEBUG wined3d_fake_gl_context_cs_debug =
@@ -177,7 +178,7 @@ static CRITICAL_SECTION_DEBUG wined3d_fake_gl_context_cs_debug =
 static CRITICAL_SECTION wined3d_fake_gl_context_cs = { &wined3d_fake_gl_context_cs_debug, -1, 0, 0, 0, 0 };
 
 static void WineD3D_ReleaseFakeGLContext(void) {
-    GLXContext glCtx;
+    HGLRC glCtx;
 
     EnterCriticalSection(&wined3d_fake_gl_context_cs);
 
@@ -187,15 +188,21 @@ static void WineD3D_ReleaseFakeGLContext(void) {
         return;
     }
 
-    glCtx = glXGetCurrentContext();
+    glCtx = wglGetCurrentContext();
 
     TRACE_(d3d_caps)("decrementing ref from %i\n", wined3d_fake_gl_context_ref);
     if (0 == (--wined3d_fake_gl_context_ref) ) {
         if(!wined3d_fake_gl_context_foreign && glCtx) {
             TRACE_(d3d_caps)("destroying fake GL context\n");
-            glXMakeCurrent(wined3d_fake_gl_context_display, None, NULL);
-            glXDestroyContext(wined3d_fake_gl_context_display, glCtx);
+            wglMakeCurrent(NULL, NULL);
+            wglDeleteContext(glCtx);
         }
+        if(wined3d_fake_gl_context_hdc)
+            ReleaseDC(wined3d_fake_gl_context_hwnd, wined3d_fake_gl_context_hdc);
+        wined3d_fake_gl_context_hdc = NULL; /* Make sure we don't think that it is still around */
+        if(wined3d_fake_gl_context_hwnd)
+            DestroyWindow(wined3d_fake_gl_context_hwnd);
+        wined3d_fake_gl_context_hwnd = NULL;
         wined3d_fake_gl_context_available = FALSE;
     }
     assert(wined3d_fake_gl_context_ref >= 0);
@@ -205,83 +212,88 @@ static void WineD3D_ReleaseFakeGLContext(void) {
 }
 
 static BOOL WineD3D_CreateFakeGLContext(void) {
-    XVisualInfo* visInfo;
-    GLXContext   glCtx;
+    GLXContext glCtx;
+    HGLRC wglCtx = NULL;
 
     ENTER_GL();
     EnterCriticalSection(&wined3d_fake_gl_context_cs);
 
-    TRACE_(d3d_caps)("getting context...\n");
+    TRACE("getting context...\n");
     if(wined3d_fake_gl_context_ref > 0) goto ret;
     assert(0 == wined3d_fake_gl_context_ref);
 
     wined3d_fake_gl_context_foreign = TRUE;
 
-    if(!wined3d_fake_gl_context_display) {
-        HDC        device_context = GetDC(0);
-
-        wined3d_fake_gl_context_display = get_display(device_context);
-        ReleaseDC(0, device_context);
-    }
-
-    visInfo = NULL;
     glCtx = glXGetCurrentContext();
-
     if (!glCtx) {
-        Drawable     drawable;
-        XVisualInfo  template;
-        Visual*      visual;
-        int          num;
-        XWindowAttributes win_attr;
+        PIXELFORMATDESCRIPTOR pfd;
+        int iPixelFormat;
 
         wined3d_fake_gl_context_foreign = FALSE;
-        drawable = (Drawable) GetPropA(GetDesktopWindow(), "__wine_x11_whole_window");
 
-        TRACE_(d3d_caps)("Creating Fake GL Context\n");
-
-        /* Get the X visual */
-        if (XGetWindowAttributes(wined3d_fake_gl_context_display, drawable, &win_attr)) {
-            visual = win_attr.visual;
-        } else {
-            visual = DefaultVisual(wined3d_fake_gl_context_display, DefaultScreen(wined3d_fake_gl_context_display));
+        /* We need a fake window as a hdc retrieved using GetDC(0) can't be used for much GL purposes */
+        wined3d_fake_gl_context_hwnd = CreateWindowA("WineD3D_OpenGL", "WineD3D fake window", WS_OVERLAPPEDWINDOW,        10, 10, 10, 10, NULL, NULL, NULL, NULL);
+        if(!wined3d_fake_gl_context_hwnd) {
+            ERR("HWND creation failed!\n");
+            goto fail;
         }
-        template.visualid = XVisualIDFromVisual(visual);
-        visInfo = XGetVisualInfo(wined3d_fake_gl_context_display, VisualIDMask, &template, &num);
-        if (!visInfo) {
-            WARN_(d3d_caps)("Error creating visual info for capabilities initialization\n");
+        wined3d_fake_gl_context_hdc = GetDC(wined3d_fake_gl_context_hwnd);
+        if(!wined3d_fake_gl_context_hdc) {
+            ERR("GetDC failed!\n");
             goto fail;
         }
 
+        /* PixelFormat selection */
+        ZeroMemory(&pfd, sizeof(pfd));
+        pfd.nSize      = sizeof(pfd);
+        pfd.nVersion   = 1;
+        pfd.dwFlags    = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW;/*PFD_GENERIC_ACCELERATED*/
+        pfd.iPixelType = PFD_TYPE_RGBA;
+        pfd.cColorBits = 32;
+        pfd.iLayerType = PFD_MAIN_PLANE;
+
+        iPixelFormat = ChoosePixelFormat(wined3d_fake_gl_context_hdc, &pfd);
+        if(!iPixelFormat) {
+            /* If this happens something is very wrong as ChoosePixelFormat barely fails */
+            ERR("Can't find a suitable iPixelFormat\n");
+            goto fail;
+        }
+        DescribePixelFormat(wined3d_fake_gl_context_hdc, iPixelFormat, sizeof(pfd), &pfd);
+        SetPixelFormat(wined3d_fake_gl_context_hdc, iPixelFormat, &pfd);
+
         /* Create a GL context */
-        glCtx = glXCreateContext(wined3d_fake_gl_context_display, visInfo, NULL, GL_TRUE);
-        if (!glCtx) {
+        wglCtx = wglCreateContext(wined3d_fake_gl_context_hdc);
+        if (!wglCtx) {
             WARN_(d3d_caps)("Error creating default context for capabilities initialization\n");
             goto fail;
         }
 
         /* Make it the current GL context */
-        if (!glXMakeCurrent(wined3d_fake_gl_context_display, drawable, glCtx)) {
+        if (!wglMakeCurrent(wined3d_fake_gl_context_hdc, wglCtx)) {
             WARN_(d3d_caps)("Error setting default context as current for capabilities initialization\n");
             goto fail;
         }
-
-        XFree(visInfo);
-
     }
 
   ret:
-    TRACE_(d3d_caps)("incrementing ref from %i\n", wined3d_fake_gl_context_ref);
+    TRACE("incrementing ref from %i\n", wined3d_fake_gl_context_ref);
     wined3d_fake_gl_context_ref++;
     wined3d_fake_gl_context_available = TRUE;
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
     return TRUE;
   fail:
-    if(visInfo) XFree(visInfo);
-    if(glCtx) glXDestroyContext(wined3d_fake_gl_context_display, glCtx);
+    if(wined3d_fake_gl_context_hdc)
+        ReleaseDC(wined3d_fake_gl_context_hwnd, wined3d_fake_gl_context_hdc);
+    wined3d_fake_gl_context_hdc = NULL;
+    if(wined3d_fake_gl_context_hwnd)
+        DestroyWindow(wined3d_fake_gl_context_hwnd);
+    wined3d_fake_gl_context_hwnd = NULL;
+    if(wglCtx) wglDeleteContext(wglCtx);
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
     LEAVE_GL();
     return FALSE;
 }
+
 
 /**********************************************************
  * IUnknown parts follows
@@ -1490,6 +1502,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
     GLXFBConfig* cfgs = NULL;
     int nCfgs = 0;
     int it;
+    Display *display;
     HRESULT hr = WINED3DERR_NOTAVAILABLE;
 
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n",
@@ -1507,9 +1520,10 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 
     /* TODO: Store in adapter structure */
     if (WineD3D_CreateFakeGLContext()) {
-      cfgs = glXGetFBConfigs(wined3d_fake_gl_context_display, DefaultScreen(wined3d_fake_gl_context_display), &nCfgs);
+      display = get_display(wined3d_fake_gl_context_hdc);
+      cfgs = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
       for (it = 0; it < nCfgs; ++it) {
-          if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(wined3d_fake_gl_context_display, cfgs[it], DisplayFormat)) {
+          if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(display, cfgs[it], DisplayFormat)) {
               hr = WINED3D_OK;
               TRACE_(d3d_caps)("OK\n");
               break ;
