@@ -104,7 +104,8 @@ static const WCHAR MK_URL[] = {'m','k',':','@','M','S','I','T','S','t','o','r','
 
 static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
 
-static BOOL stopped_binding = FALSE, emulate_protocol = FALSE;
+static BOOL stopped_binding = FALSE, emulate_protocol = FALSE,
+    data_available = FALSE, http_is_first = TRUE;
 static DWORD read = 0, bindf = 0;
 
 static const LPCWSTR urls[] = {
@@ -612,6 +613,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
     BYTE buf[512];
 
     CHECK_EXPECT2(OnDataAvailable);
+    data_available = TRUE;
 
     if (0)
     {
@@ -768,6 +770,8 @@ static void test_BindToStorage(int protocol, BOOL emul)
 
     test_protocol = protocol;
     emulate_protocol = emul;
+    stopped_binding = FALSE;
+    data_available = FALSE;
 
     SET_EXPECT(QueryInterface_IServiceProvider);
     hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
@@ -837,20 +841,20 @@ static void test_BindToStorage(int protocol, BOOL emul)
         trace( "Network unreachable, skipping tests\n" );
         return;
     }
-    ok(SUCCEEDED(hres), "IMoniker_BindToStorage failed: %08x\n", hres);
     if (!SUCCEEDED(hres)) return;
 
-    if(test_protocol == HTTP_TEST) {
-        todo_wine {
-            ok(unk == NULL, "istr should be NULL\n");
-        }
+    if((bindf & BINDF_ASYNCHRONOUS) && !data_available) {
+        ok(hres == MK_S_ASYNCHRONOUS, "IMoniker_BindToStorage failed: %08x\n", hres);
+        ok(unk == NULL, "istr should be NULL\n");
     }else {
+        ok(hres == S_OK, "IMoniker_BindToStorage failed: %08x\n", hres);
         ok(unk != NULL, "unk == NULL\n");
     }
     if(unk)
         IUnknown_Release(unk);
 
-    while(!stopped_binding && GetMessage(&msg,NULL,0,0)) {
+    while((bindf & BINDF_ASYNCHRONOUS) &&
+          !stopped_binding && GetMessage(&msg,NULL,0,0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -870,8 +874,13 @@ static void test_BindToStorage(int protocol, BOOL emul)
              * called on WinXP but not on Win98 */
             CLEAR_CALLED(QueryInterface_IHttpNegotiate2);
             CLEAR_CALLED(GetRootSecurityId);
-            CHECK_CALLED(OnProgress_FINDINGRESOURCE);
-            CHECK_CALLED(OnProgress_CONNECTING);
+            if(http_is_first) {
+                CHECK_CALLED(OnProgress_FINDINGRESOURCE);
+                CHECK_CALLED(OnProgress_CONNECTING);
+            }else todo_wine {
+                CHECK_NOT_CALLED(OnProgress_FINDINGRESOURCE);
+                CHECK_NOT_CALLED(OnProgress_CONNECTING);
+            }
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
             todo_wine CHECK_CALLED(OnResponse);
             todo_wine { CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE); }
@@ -889,6 +898,9 @@ static void test_BindToStorage(int protocol, BOOL emul)
 
     ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
     ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
+
+    if(test_protocol == HTTP_TEST)
+        http_is_first = FALSE;
 }
 
 static void set_file_url(void)
@@ -952,6 +964,14 @@ START_TEST(url)
     test_create();
     test_CreateAsyncBindCtx();
     test_CreateAsyncBindCtxEx();
+
+    trace("synchronous http test...\n");
+    test_BindToStorage(HTTP_TEST, FALSE);
+
+    trace("synchronous file test...\n");
+    create_file();
+    test_BindToStorage(FILE_TEST, FALSE);
+    DeleteFileW(wszIndexHtml);
 
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
 
