@@ -6,6 +6,7 @@
  * Copyright 2002 Rex Jolliff (rex@lvcablemodem.com)
  *
  * Copyright 1999 Juergen Schmied
+ * Copyright 2007 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -50,378 +51,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-static RTL_CRITICAL_SECTION TIME_GetBias_section;
+static RTL_CRITICAL_SECTION TIME_tz_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
-    0, 0, &TIME_GetBias_section,
+    0, 0, &TIME_tz_section,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": TIME_GetBias_section") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": TIME_tz_section") }
 };
-static RTL_CRITICAL_SECTION TIME_GetBias_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-/* TimeZone registry key values */
-static const WCHAR TZInformationKeyW[] = { 'M','a','c','h','i','n','e','\\',
- 'S','Y','S','T','E','M','\\','C','u','r','r','e','n','t','C','o','n','t','r',
- 'o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','T','i','m','e','z',
- 'o','n','e','I','n','f','o','r','m','a','t','i','o','n', 0};
-static const WCHAR TZStandardStartW[] = {
-  'S','t','a','n','d','a','r','d','s','t','a','r','t', 0};
-static const WCHAR TZDaylightStartW[] = {
-  'D','a','y','l','i','g','h','t','s','t','a','r','t', 0};
-static const WCHAR TZDaylightBiasW[] = {
-    'D','a','y','l','i','g','h','t','B','i','a','s', 0};
-static const WCHAR TZStandardBiasW[] = {
-    'S','t','a','n','d','a','r','d','B','i','a','s', 0};
-static const WCHAR TZBiasW[] = {'B','i','a','s', 0};
-static const WCHAR TZDaylightNameW[] = {
-    'D','a','y','l','i','g','h','t','N','a','m','e', 0};
-static const WCHAR TZStandardNameW[] = {
-    'S','t','a','n','d','a','r','d','N','a','m','e', 0};
-
+static RTL_CRITICAL_SECTION TIME_tz_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 #define SETTIME_MAX_ADJUST 120
-
-/* This structure is used to store strings that represent all of the time zones
- * in the world. (This is used to help GetTimeZoneInformation)
- */
-struct tagTZ_INFO
-{
-    const char *psTZFromUnix;
-    WCHAR psTZWindows[32];
-    int bias;
-    int dst;
-};
-
-static const struct tagTZ_INFO TZ_INFO[] =
-{
-   {"MHT",
-    {'D','a','t','e','l','i','n','e',' ','S','t','a','n','d','a','r','d',' ',
-     'T','i','m','e','\0'}, -720, 0},
-   {"SST",
-    {'S','a','m','o','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m',
-     'e','\0'}, 660, 0},
-   {"HST",
-    {'H','a','w','a','i','i','a','n',' ','S','t','a','n','d','a','r','d',' ',
-     'T','i','m','e','\0'}, 600, 0},
-   {"AKST",
-    {'A','l','a','s','k','a','n',' ','S','t','a','n','d','a','r','d',' ',
-     'T','i','m','e',0}, 540, 0 },
-   {"AKDT",
-    {'A','l','a','s','k','a','n',' ','S','t','a','n','d','a','r','d',' ','T',
-     'i','m','e','\0'}, 480, 1},
-   {"PST",
-    {'P','a','c','i','f','i','c',' ','S','t','a','n','d','a','r','d',' ','T',
-     'i','m','e','\0'}, 480, 0},
-   {"PDT",
-    {'P','a','c','i','f','i','c',' ','S','t','a','n','d','a','r','d',' ','T',
-     'i','m','e','\0'}, 420, 1},
-   {"MST",
-    {'U','S',' ','M','o','u','n','t','a','i','n',' ','S','t','a','n','d','a',
-     'r','d',' ','T','i','m','e','\0'}, 420, 0},
-   {"MDT",
-    {'M','o','u','n','t','a','i','n',' ','S','t','a','n','d','a','r','d',' ',
-     'T','i','m','e','\0'}, 360, 1},
-   {"CST",
-    {'C','e','n','t','r','a','l',' ','A','m','e','r','i','c','a',' ','S','t',
-     'a','n','d','a','r','d',' ','T','i','m','e','\0'}, 360, 0},
-   {"CDT",
-    {'C','e','n','t','r','a','l',' ','S','t','a','n','d','a','r','d',' ','T',
-     'i','m','e','\0'}, 300, 1},
-   {"COT",
-    {'S','A',' ','P','a','c','i','f','i','c',' ','S','t','a','n','d','a','r',
-     'd',' ','T','i','m','e','\0'}, 300, 0},
-   {"PET",
-    {'S','A',' ','P','a','c','i','f','i','c',' ','S','t','a','n','d','a','r',
-     'd',' ','T','i','m','e',0}, 300, 0 },
-   {"EDT",
-    {'E','a','s','t','e','r','n',' ','S','t','a','n','d','a','r','d',' ','T',
-     'i','m','e','\0'}, 240, 1},
-   {"EST",
-    {'U','S',' ','E','a','s','t','e','r','n',' ','S','t','a','n','d','a','r',
-     'd',' ','T','i','m','e','\0'}, 300, 0},
-   {"ECT",
-    {'E','a','s','t','e','r','n',' ','C','e','n','t','r','a','l',' ','S','t','a','n','d','a','r',
-     'd',' ','T','i','m','e','\0'}, 300, 0},
-   {"ADT",
-    {'A','t','l','a','n','t','i','c',' ','S','t','a','n','d','a','r','d',' ',
-     'T','i','m','e','\0'}, 180, 1},
-   {"VET",
-    {'S','A',' ','W','e','s','t','e','r','n',' ','S','t','a','n','d','a','r',
-     'd',' ','T','i','m','e','\0'}, 240, 0},
-   {"CLT",
-    {'P','a','c','i','f','i','c',' ','S','A',' ','S','t','a','n','d','a','r',
-     'd',' ','T','i','m','e','\0'}, 240, 0},
-   {"CLST",
-    {'P','a','c','i','f','i','c',' ','S','A',' ','S','t','a','n','d','a','r',
-     'd',' ','T','i','m','e',0}, 180, 1},
-   {"AST",
-    {'A','t','l','a','n','t','i','c',' ','S','t','a','n','d','a','r','d',' ',
-     'T','i','m','e',0}, 240, 0 },
-   {"NDT",
-    {'N','e','w','f','o','u','n','d','l','a','n','d',' ','S','t','a','n','d',
-     'a','r','d',' ','T','i','m','e','\0'}, 150, 1},
-   {"NST",
-    {'N','e','w','f','o','u','n','d','l','a','n','d',' ','S','t','a','n','d',
-     'a','r','d',' ','T','i','m','e',0}, 210, 0 },
-   {"BRT",
-    {'B','r','a','z','i','l','i','a','n',' ','S','t','a','n','d','a','r','d',
-     ' ','T','i','m','e','\0'}, 180, 0},
-   {"BRST",
-    {'B','r','a','z','i','l','i','a','n',' ','S','u','m','m','e','r',
-     ' ','T','i','m','e','\0'}, 120, 1},
-   {"PYT",
-    {'P','a','r','a','g','u','a','y','a','n',' ',
-     'S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'}, 240, 0},
-   {"PYST",
-    {'P','a','r','a','g','u','a','y','a','n',' ','S','u','m','m','e','r',
-     ' ','T','i','m','e','\0'}, 180, 1},
-   {"ART",
-    {'S','A',' ','E','a','s','t','e','r','n',' ','S','t','a','n','d','a','r',
-     'd',' ','T','i','m','e','\0'}, 180, 0},
-   {"WGST",
-    {'G','r','e','e','n','l','a','n','d',' ','S','t','a','n','d','a','r','d',
-     ' ','T','i','m','e','\0'}, 120, 1},
-   {"GST",
-    {'M','i','d','-','A','t','l','a','n','t','i','c',' ','S','t','a','n','d',
-     'a','r','d',' ','T','i','m','e','\0'}, 120, 0},
-   {"AZOT",
-    {'A','z','o','r','e','s',' ','S','t','a','n','d','a','r','d',' ','T','i',
-     'm','e',0}, 60, 0},
-   {"AZOST",
-    {'A','z','o','r','e','s',' ','S','t','a','n','d','a','r','d',' ','T','i',
-     'm','e','\0'}, 0, 1},
-   {"CVT",
-    {'C','a','p','e',' ','V','e','r','d','e',' ','S','t','a','n','d','a','r',
-     'd',' ','T','i','m','e','\0'}, 60, 0},
-   {"WEST",
-    {'W','e','s','t','e','r','n',' ','E','u','r','o','p','e','a','n',' ','S','u','m','m','e','r',' ','T','i','m','e','\0'}, -60, 1},
-   {"WET",
-    {'G','r','e','e','n','w','i','c','h',' ','S','t','a','n','d','a','r','d',
-     ' ','T','i','m','e','\0'}, 0, 0},
-   {"BST",
-    {'G','M','T',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
-    -60, 1},
-   {"IST",
-    {'I','r','i','s','h',' ','S','u','m','m','e','r',' ','T','i','m','e','\0'},
-    -60, 1},
-   {"GMT",
-    {'G','M','T',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
-    0, 0},
-   {"UTC",
-    {'G','M','T',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
-    0, 0},
-   {"CET",
-    {'C','e','n','t','r','a','l',' ','E','u','r','o','p','e','a','n',' ',
-     'T','i','m','e','\0'}, -60, 0},
-   {"CEST",
-    {'C','e','n','t','r','a','l',' ','E','u','r','o','p','e',' ','S','t','a',
-     'n','d','a','r','d',' ','T','i','m','e','\0'}, -120, 1},
-   {"MET",
-    {'C','e','n','t','r','a','l',' ','E','u','r','o','p','e',' ','S','t','a',
-     'n','d','a','r','d',' ','T','i','m','e','\0'}, -60, 0},
-   {"MEST",
-    {'C','e','n','t','r','a','l',' ','E','u','r','o','p','e',' ','D','a','y',
-     'l','i','g','h','t',' ','T','i','m','e','\0'}, -120, 1},
-   {"WAT",
-    {'W','.',' ','C','e','n','t','r','a','l',' ','A','f','r','i','c','a',' ',
-     'S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'}, -60, 0},
-   {"EEST",
-    {'E','.',' ','E','u','r','o','p','e',' ','S','t','a','n','d','a','r','d',
-     ' ','T','i','m','e','\0'}, -180, 1},
-   {"EET",
-    {'E','g','y','p','t',' ','S','t','a','n','d','a','r','d',' ','T','i','m',
-     'e','\0'}, -120, 0},
-   {"CAT",
-    {'C','e','n','t','r','a','l',' ','A','f','r','i','c','a','n',' '
-    ,'T','i','m','e','\0'}, -120, 0},
-   {"SAST",
-    {'S','o','u','t','h',' ','A','f','r','i','c','a',' ','S','t','a','n','d',
-     'a','r','d',' ','T','i','m','e','\0'}, -120, 0},
-   {"IST",
-    {'I','s','r','a','e','l',' ','S','t','a','n','d','a','r','d',' ','T','i',
-     'm','e','\0'}, -120, 0},
-   {"IDT",
-    {'I','s','r','a','e','l',' ','S','t','a','n','d','a','r','d',' ','T','i',
-     'm','e','\0'}, -180, 1},
-   {"MSK",
-    {'R','u','s','s','i','a','n',' ','S','t','a','n','d','a','r','d',' ','T',
-     'i','m','e','\0'}, -180, 0},
-   {"ADT",
-    {'A','r','a','b','i','c',' ','S','t','a','n','d','a','r','d',' ','T','i',
-     'm','e','\0'}, -240, 1},
-   {"AST",
-    {'A','r','a','b',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',
-     '\0'}, -180, 0},
-   {"MSD",
-    {'R','u','s','s','i','a','n',' ','S','t','a','n','d','a','r','d',' ','T',
-     'i','m','e','\0'}, -240, 1},
-   {"EAT",
-    {'E','.',' ','A','f','r','i','c','a',' ','S','t','a','n','d','a','r','d',
-     ' ','T','i','m','e','\0'}, -180, 0},
-   {"IRST",
-    {'I','r','a','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',
-     0},-210, 0 },
-   {"IRST",
-    {'I','r','a','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',
-     '\0'}, -270, 1},
-   {"GST",
-    {'A','r','a','b','i','a','n',' ','S','t','a','n','d','a','r','d',' ','T',
-     'i','m','e','\0'}, -240, 0},
-   {"AZT",
-    {'C','a','u','c','a','s','u','s',' ','S','t','a','n','d','a','r','d',' ',
-     'T','i','m','e',0}, -240, 0 },
-   {"AZST",
-    {'C','a','u','c','a','s','u','s',' ','S','t','a','n','d','a','r','d',' ',
-     'T','i','m','e','\0'}, -300, 1},
-   {"AFT",
-    {'A','f','g','h','a','n','i','s','t','a','n',' ','S','t','a','n','d','a',
-     'r','d',' ','T','i','m','e','\0'}, -270, 0},
-   {"SAMT",
-    {'S','a','m','a','r','a',' ','S','t','a','n','d','a','r','d',' ','T','i',
-     'm','e','(','W','i','n','t','e','r',')','\0'}, -240, 0},
-   {"SAMST",
-    {'S','a','m','a','r','a',' ','D','a','y','l','i','g','h','t',' ','T','i',
-     'm','e','(','S','u','m','m','e','r',')','\0'}, -300, 1},
-   {"YEKT",
-    {'U','r','a','l','s',' ','S','t','a','n','d','a','r','d',
-     ' ','T','i','m','e',' ','(','W','i','n','t','e','r',')','\0'}, -300, 0},
-   {"YEKST",
-    {'U','r','a','l','s',' ','D','a','y','l','i','g','h','t',
-     ' ','T','i','m','e',' ','(','S','u','m','m','e','r',')','\0'}, -360, 1},
-   {"OMST",
-    {'O','m','s','k',' ','S','t','a','n','d','a','r','d',
-     ' ','T','i','m','e',' ','(','W','i','n','t','e','r',')','\0'}, -360, 0},
-   {"OMSST",
-    {'O','m','s','k',' ','D','a','y','l','i','g','h','t',
-     ' ','T','i','m','e',' ','(','S','u','m','m','e','r',')','\0'}, -420, 1},
-   {"PKT",
-    {'W','e','s','t',' ','A','s','i','a',' ','S','t','a','n','d','a','r','d',
-     ' ','T','i','m','e','\0'}, -300, 0},
-   {"IST",
-    {'I','n','d','i','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m',
-     'e','\0'}, -330, 0},
-   {"NPT",
-    {'N','e','p','a','l',' ','S','t','a','n','d','a','r','d',' ','T','i','m',
-     'e','\0'}, -345, 0},
-   {"ALMST",
-    {'N','.',' ','C','e','n','t','r','a','l',' ','A','s','i','a',' ','S','t',
-     'a','n','d','a','r','d',' ','T','i','m','e','\0'}, -420, 1},
-   {"BDT",
-    {'C','e','n','t','r','a','l',' ','A','s','i','a',' ','S','t','a','n','d',
-     'a','r','d',' ','T','i','m','e','\0'}, -360, 0},
-   {"LKT",
-    {'S','r','i',' ','L','a','n','k','a',' ','S','t','a','n','d','a','r','d',
-     ' ','T','i','m','e','\0'}, -360, 0},
-   {"MMT",
-    {'M','y','a','n','m','a','r',' ','S','t','a','n','d','a','r','d',' ','T',
-     'i','m','e','\0'}, -390, 0},
-   {"ICT",
-    {'S','E',' ','A','s','i','a',' ','S','t','a','n','d','a','r','d',' ','T',
-     'i','m','e','\0'}, -420, 0},
-   {"KRAT",
-    {'N','o','r','t','h',' ','A','s','i','a',' ','S','t','a','n','d','a','r',
-     'd',' ','T','i','m','e',0}, -420, 0},
-   {"KRAST",
-    {'N','o','r','t','h',' ','A','s','i','a',' ','S','t','a','n','d','a','r',
-     'd',' ','T','i','m','e','\0'}, -480, 1},
-   {"IRKT",
-    {'N','o','r','t','h',' ','A','s','i','a',' ','E','a','s','t',' ','S','t',
-     'a','n','d','a','r','d',' ','T','i','m','e',0}, -480, 0},
-   {"CST",
-    {'C','h','i','n','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m',
-     'e','\0'}, -480, 0},
-   {"IRKST",
-    {'N','o','r','t','h',' ','A','s','i','a',' ','E','a','s','t',' ','S','t',
-     'a','n','d','a','r','d',' ','T','i','m','e','\0'}, -540, 1},
-   {"SGT",
-    {'M','a','l','a','y',' ','P','e','n','i','n','s','u','l','a',' ','S','t',
-     'a','n','d','a','r','d',' ','T','i','m','e','\0'}, -480, 0},
-   {"WST",
-    {'W','.',' ','A','u','s','t','r','a','l','i','a',' ','S','t','a','n','d',
-     'a','r','d',' ','T','i','m','e','\0'}, -480, 0},
-   {"WST",
-    {'W','.',' ','A','u','s','t','r','a','l','i','a',' ','S','u','m','m','e',
-     'r',' ','T','i','m','e','\0'}, -540, 1},
-   {"JST",
-    {'T','o','k','y','o',' ','S','t','a','n','d','a','r','d',' ','T','i','m',
-     'e','\0'}, -540, 0},
-   {"KST",
-    {'K','o','r','e','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m',
-     'e','\0'}, -540, 0},
-   {"YAKST",
-    {'Y','a','k','u','t','s','k',' ','S','t','a','n','d','a','r','d',' ','T',
-     'i','m','e','\0'}, -600, 1},
-   {"CST",
-    {'C','e','n','.',' ','A','u','s','t','r','a','l','i','a',' ','S','t','a',
-     'n','d','a','r','d',' ','T','i','m','e','\0'}, -570, 0},
-   {"CST",
-    {'C','e','n','.',' ','A','u','s','t','r','a','l','i','a',' ','D','a','y',
-     'l','i','g','h','t',' ','T','i','m','e','\0'}, -630, 1},
-   {"EST",
-    {'E','.',' ','A','u','s','t','r','a','l','i','a',' ','S','t','a','n','d',
-     'a','r','d',' ','T','i','m','e','\0'}, -600, 0},
-   {"EST",
-    {'E','.',' ','A','u','s','t','r','a','l','i','a',' ','S','t','a','n','d',
-     'a','r','d',' ','T','i','m','e','\0'}, -660, 1},
-   {"GST",
-    {'W','e','s','t',' ','P','a','c','i','f','i','c',' ','S','t','a','n','d',
-     'a','r','d',' ','T','i','m','e','\0'}, -600, 0},
-   {"VLAT",
-    {'V','l','a','d','i','v','o','s','t','o','k',' ','S','t','a','n','d','a',
-     'r','d',' ','T','i','m','e',0}, -600, 0 },
-   {"ChST",
-    {'W','e','s','t',' ','P','a','c','i','f','i','c',' ','S','t','a','n','d',
-     'a','r','d',' ','T','i','m','e',0}, -600, 0},
-   {"VLAST",
-    {'V','l','a','d','i','v','o','s','t','o','k',' ','S','t','a','n','d','a',
-     'r','d',' ','T','i','m','e','\0'}, -660, 1},
-   {"MAGT",
-    {'C','e','n','t','r','a','l',' ','P','a','c','i','f','i','c',' ','S','t',
-     'a','n','d','a','r','d',' ','T','i','m','e',0}, -660, 0},
-   {"MAGST",
-    {'C','e','n','t','r','a','l',' ','P','a','c','i','f','i','c',' ','S','t',
-     'a','n','d','a','r','d',' ','T','i','m','e','\0'}, -720, 1},
-   {"NZST",
-    {'N','e','w',' ','Z','e','a','l','a','n','d',' ','S','t','a','n','d','a',
-     'r','d',' ','T','i','m','e','\0'}, -720, 0},
-   {"NZDT",
-    {'N','e','w',' ','Z','e','a','l','a','n','d',' ','D','a','y','l','i','g',
-     'h','t',' ','T','i','m','e','\0'}, -780, 1},
-   {"FJT",
-    {'F','i','j','i',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',
-     '\0'}, -720, 0},
-   {"TOT",
-    {'T','o','n','g','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m',
-     'e','\0'}, -780, 0},
-   {"NOVT",
-    {'N','.',' ','C','e','n','t','r','a','l',' ','A','s','i','a',' ','S','t',
-     'a','n','d','a','r','d',' ','T','i','m','e',0 }, -360, 0},
-   {"NOVT",
-    {'N','o','v','o','s','i','b','i','r','s','k',' ','S','t','a','n','d','a',
-     'r','d',' ','T','i','m','e','\0'}, -360, 1},
-   {"ANAT",
-    {'A','n','a','d','y','r',' ','S','t','a','n','d','a','r','d',' ','T','i',
-     'm','e','\0'}, -720, 1},
-   {"HKT",
-    {'H','o','n','g',' ','K','o','n','g',' ','S','t','a','n','d','a','r','d',
-     ' ','T','i','m','e','\0'}, -480, 0},
-   {"UYT",
-    {'U','r','u','g','u','a','y','a','n',' ','T','i','m','e','\0'}, 180, 0},
-   {"UYST",
-    {'U','r','u','g','u','a','y','a','n',' ','S','u','m','m','e','r',' ','T',
-    'i','m','e','\0'}, 120, 1},
-   {"MYT",
-    {'M','a','l','a','y','s','i','a','n',' ','T','i','m','e','\0'}, -480, 0},
-   {"PHT",
-    {'P','h','i','l','i','p','p','i','n','e',' ','T','i','m','e','\0'}, -480, 0},
-   {"NOVST",
-    {'N','o','v','o','s','i','b','i','r','s','k',' ','S','u','m','m','e','r',
-     ' ','T','i','m','e','\0'}, -420, 1},
-   {"BOT",
-    {'B','o','l','i','v','i','a','n',' ','T','i','m','e','\0'}, 240, 0},
-   {"UZT",
-    {'U','z','b','e','k','i','s','t','h','a','n',' ','T','i','m','e','\0'}, -300, 0}
-};
 
 #define TICKSPERSEC        10000000
 #define TICKSPERMSEC       10000
@@ -608,7 +247,7 @@ static int TIME_GetBias(time_t utc, int *pdaylight)
     static int last_daylight;
     int ret;
 
-    RtlEnterCriticalSection( &TIME_GetBias_section );
+    RtlEnterCriticalSection( &TIME_tz_section );
     if (utc != last_utc)
     {
         ptm = localtime(&utc);
@@ -622,7 +261,7 @@ static int TIME_GetBias(time_t utc, int *pdaylight)
     *pdaylight = last_daylight;
     ret = last_bias;
 
-    RtlLeaveCriticalSection( &TIME_GetBias_section );
+    RtlLeaveCriticalSection( &TIME_tz_section );
     return ret;
 }
 
@@ -857,63 +496,114 @@ ULONG WINAPI NtGetTickCount(void)
     return (now.QuadPart - server_start_time) / 10000;
 }
 
-
-/***********************************************************************
- *        TIME_GetTZAsStr [internal]
+/* calculate the mday of dst change date, so that for instance Sun 5 Oct 2007
+ * (last Sunday in October of 2007) becomes Sun Oct 28 2007
  *
- * Helper function that returns the given timezone as a string.
- *
- * PARAMS
- *   utc [I] The current utc time.
- *   bias [I] The bias of the current timezone.
- *   dst [I] ??
- *
- * RETURNS
- *   Timezone name.
- *
- * NOTES:
- *   This could be done with a hash table instead of merely iterating through a
- *   table, however with the small amount of entries (60 or so) I didn't think
- *   it was worth it.
+ * Note: year, day and month must be in unix format.
  */
-static const WCHAR* TIME_GetTZAsStr (time_t utc, int bias, int dst)
+static int weekday_to_mday(int year, int day, int mon, int day_of_week)
 {
-   char psTZName[7];
-   struct tm *ptm = localtime(&utc);
-   unsigned int i;
+    struct tm date;
+    time_t tmp;
+    int wday, mday;
 
-   if (!strftime (psTZName, 7, "%Z", ptm))
-   {
-      WARN("strftime error %d\n", errno);
-      return NULL;
-   }
+    /* find first day in the month matching week day of the date */
+    memset(&date, 0, sizeof(date));
+    date.tm_year = year;
+    date.tm_mon = mon;
+    date.tm_mday = -1;
+    date.tm_wday = -1;
+    do
+    {
+        date.tm_mday++;
+        tmp = mktime(&date);
+    } while (date.tm_wday != day_of_week || date.tm_mon != mon);
 
-   for (i=0; i<(sizeof(TZ_INFO) / sizeof(struct tagTZ_INFO)); i++)
-   {
-      if ( strcmp(TZ_INFO[i].psTZFromUnix, psTZName) == 0 &&
-           TZ_INFO[i].bias == bias &&
-           TZ_INFO[i].dst == dst
-         )
-            return TZ_INFO[i].psTZWindows;
-   }
-   FIXME("Can't match system time zone name \"%s\", bias=%d and dst=%d "
-         "to an entry in TZ_INFO. Please add appropriate entry to "
-         "TZ_INFO and submit as patch to wine-patches\n",psTZName,bias,dst);
-   return NULL;
+    mday = date.tm_mday;
+
+    /* find number of week days in the month matching week day of the date */
+    wday = 1; /* 1 - 1st, ...., 5 - last */
+    while (wday < day)
+    {
+        struct tm *tm;
+
+        date.tm_mday += 7;
+        tmp = mktime(&date);
+        tm = localtime(&tmp);
+        if (tm->tm_mon != mon)
+            break;
+        mday = tm->tm_mday;
+        wday++;
+    }
+
+    return mday;
 }
 
-/***  TIME_GetTimeZoneInfoFromReg: helper for GetTimeZoneInformation ***/
-
-
-static int TIME_GetTimeZoneInfoFromReg(RTL_TIME_ZONE_INFORMATION *tzinfo)
+static BOOL match_tz_date(const RTL_SYSTEM_TIME *st, const RTL_SYSTEM_TIME *reg_st)
 {
-    BYTE buf[90];
-    KEY_VALUE_PARTIAL_INFORMATION * KpInfo =
-        (KEY_VALUE_PARTIAL_INFORMATION *) buf;
+    WORD wDay;
+
+    if (st->wMonth != reg_st->wMonth) return FALSE;
+
+    if (!st->wMonth) return TRUE; /* no transition dates */
+
+    wDay = reg_st->wDay;
+    if (!reg_st->wYear) /* date in a day-of-week format */
+        wDay = weekday_to_mday(st->wYear - 1900, reg_st->wDay, reg_st->wMonth - 1, reg_st->wDayOfWeek);
+
+    if (st->wDay != wDay ||
+        st->wHour != reg_st->wHour ||
+        st->wMinute != reg_st->wMinute ||
+        st->wSecond != reg_st->wSecond ||
+        st->wMilliseconds != reg_st->wMilliseconds) return FALSE;
+
+    return TRUE;
+}
+
+static BOOL match_tz_info(const RTL_TIME_ZONE_INFORMATION *tzi, const RTL_TIME_ZONE_INFORMATION *reg_tzi)
+{
+    if (tzi->Bias == reg_tzi->Bias &&
+        match_tz_date(&tzi->StandardDate, &reg_tzi->StandardDate) &&
+        match_tz_date(&tzi->DaylightDate, &reg_tzi->DaylightDate))
+        return TRUE;
+
+    return FALSE;
+}
+
+static BOOL reg_query_value(HKEY hkey, LPCWSTR name, DWORD type, void *data, DWORD count)
+{
+    UNICODE_STRING nameW;
+    char buf[256];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buf;
+
+    if (count > sizeof(buf) - sizeof(KEY_VALUE_PARTIAL_INFORMATION))
+        return FALSE;
+
+    RtlInitUnicodeString(&nameW, name);
+
+    if (NtQueryValueKey(hkey, &nameW, KeyValuePartialInformation,
+                        buf, sizeof(buf), &count))
+        return FALSE;
+
+    if (info->Type != type) return FALSE;
+
+    memcpy(data, info->Data, info->DataLength);
+    return TRUE;
+}
+
+static void find_reg_tz_info(RTL_TIME_ZONE_INFORMATION *tzi)
+{
+    static const WCHAR Time_ZonesW[] = { 'M','a','c','h','i','n','e','\\',
+        'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s',' ','N','T','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'T','i','m','e',' ','Z','o','n','e','s',0 };
     HANDLE hkey;
-    DWORD size;
+    ULONG idx;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
+    WCHAR buf[128];
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -921,43 +611,223 @@ static int TIME_GetTimeZoneInfoFromReg(RTL_TIME_ZONE_INFORMATION *tzinfo)
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, TZInformationKeyW);
-    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) {
-
-#define GTZIFR_N( valkey, tofield) \
-        RtlInitUnicodeString( &nameW, valkey );\
-        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, KpInfo,\
-                    sizeof(buf), &size )) { \
-            if( size >= (sizeof((tofield)) + \
-                    offsetof(KEY_VALUE_PARTIAL_INFORMATION,Data))) { \
-                memcpy(&(tofield), \
-                        KpInfo->Data, sizeof(tofield)); \
-            } \
-        }
-#define GTZIFR_S( valkey, tofield) \
-        RtlInitUnicodeString( &nameW, valkey );\
-        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, KpInfo,\
-                    sizeof(buf), &size )) { \
-            size_t len = (strlenW( (WCHAR*)KpInfo->Data ) + 1) * sizeof(WCHAR); \
-            if (len > sizeof(tofield)) len = sizeof(tofield); \
-            memcpy( tofield, KpInfo->Data, len ); \
-            tofield[(len/sizeof(WCHAR))-1] = 0; \
-        }
-
-        GTZIFR_N( TZStandardStartW,  tzinfo->StandardDate)
-        GTZIFR_N( TZDaylightStartW,  tzinfo->DaylightDate)
-        GTZIFR_N( TZBiasW,          tzinfo->Bias)
-        GTZIFR_N( TZStandardBiasW,  tzinfo->StandardBias)
-        GTZIFR_N( TZDaylightBiasW,  tzinfo->DaylightBias)
-        GTZIFR_S( TZStandardNameW, tzinfo->StandardName)
-        GTZIFR_S( TZDaylightNameW, tzinfo->DaylightName)
-
-#undef GTZIFR_N
-#undef GTZIFR_S
-        NtClose( hkey );
-        return 1;
+    RtlInitUnicodeString(&nameW, Time_ZonesW);
+    if (NtOpenKey(&hkey, KEY_READ, &attr))
+    {
+        WARN("Unable to open the time zones key\n");
+        return;
     }
-    return 0;
+
+    idx = 0;
+    nameW.Buffer = buf;
+    nameW.Length = sizeof(buf);
+    nameW.MaximumLength = sizeof(buf);
+
+    while (!RtlpNtEnumerateSubKey(hkey, &nameW, idx++))
+    {
+        static const WCHAR stdW[] = { 'S','t','d',0 };
+        static const WCHAR dltW[] = { 'D','l','t',0 };
+        static const WCHAR tziW[] = { 'T','Z','I',0 };
+        RTL_TIME_ZONE_INFORMATION reg_tzi;
+        HANDLE hSubkey;
+        struct tz_reg_data
+        {
+            LONG bias;
+            LONG std_bias;
+            LONG dlt_bias;
+            RTL_SYSTEM_TIME std_date;
+            RTL_SYSTEM_TIME dlt_date;
+        } tz_data;
+
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = hkey;
+        attr.ObjectName = &nameW;
+        attr.Attributes = 0;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+        if (NtOpenKey(&hSubkey, KEY_READ, &attr))
+        {
+            WARN("Unable to open subkey %s\n", debugstr_wn(nameW.Buffer, nameW.Length/sizeof(WCHAR)));
+            continue;
+        }
+
+#define get_value(hkey, name, type, data, len) \
+    if (!reg_query_value(hkey, name, type, data, len)) \
+    { \
+        WARN("can't read data from %s\n", debugstr_w(name)); \
+        NtClose(hkey); \
+        continue; \
+    }
+
+        get_value(hSubkey, stdW, REG_SZ, reg_tzi.StandardName, sizeof(reg_tzi.StandardName));
+        get_value(hSubkey, dltW, REG_SZ, reg_tzi.DaylightName, sizeof(reg_tzi.DaylightName));
+        get_value(hSubkey, tziW, REG_BINARY, &tz_data, sizeof(tz_data));
+
+#undef get_value
+
+        reg_tzi.Bias = tz_data.bias;
+        reg_tzi.StandardBias = tz_data.std_bias;
+        reg_tzi.DaylightBias = tz_data.dlt_bias;
+        reg_tzi.StandardDate = tz_data.std_date;
+        reg_tzi.DaylightDate = tz_data.dlt_date;
+
+        TRACE("%s: bias %d\n", debugstr_wn(nameW.Buffer, nameW.Length/sizeof(WCHAR)), reg_tzi.Bias);
+        TRACE("std (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
+            reg_tzi.StandardDate.wDay, reg_tzi.StandardDate.wMonth,
+            reg_tzi.StandardDate.wYear, reg_tzi.StandardDate.wDayOfWeek,
+            reg_tzi.StandardDate.wHour, reg_tzi.StandardDate.wMinute,
+            reg_tzi.StandardDate.wSecond, reg_tzi.StandardDate.wMilliseconds,
+            reg_tzi.StandardBias);
+        TRACE("dst (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
+            reg_tzi.DaylightDate.wDay, reg_tzi.DaylightDate.wMonth,
+            reg_tzi.DaylightDate.wYear, reg_tzi.DaylightDate.wDayOfWeek,
+            reg_tzi.DaylightDate.wHour, reg_tzi.DaylightDate.wMinute,
+            reg_tzi.DaylightDate.wSecond, reg_tzi.DaylightDate.wMilliseconds,
+            reg_tzi.DaylightBias);
+
+        NtClose(hSubkey);
+
+        if (match_tz_info(tzi, &reg_tzi))
+        {
+            memcpy(tzi, &reg_tzi, sizeof(*tzi));
+            NtClose(hkey);
+            return;
+        }
+
+        /* reset len */
+        nameW.Length = sizeof(buf);
+        nameW.MaximumLength = sizeof(buf);
+    }
+
+    NtClose(hkey);
+
+    FIXME("Can't find matching timezone information in the registry for "
+          "bias %d, std (d/m/y): %u/%02u/%04u, dlt (d/m/y): %u/%02u/%04u\n",
+          tzi->Bias,
+          tzi->StandardDate.wDay, tzi->StandardDate.wMonth, tzi->StandardDate.wYear,
+          tzi->DaylightDate.wDay, tzi->DaylightDate.wMonth, tzi->DaylightDate.wYear);
+}
+
+static time_t find_dst_change(unsigned long min, unsigned long max, int *is_dst)
+{
+    time_t start;
+    struct tm *tm;
+
+    start = min;
+    tm = localtime(&start);
+    *is_dst = !tm->tm_isdst;
+    TRACE("starting date isdst %d, %s", !*is_dst, ctime(&start));
+
+    while (min <= max)
+    {
+        time_t pos = (min + max) / 2;
+        tm = localtime(&pos);
+
+        if (tm->tm_isdst != *is_dst)
+            min = pos + 1;
+        else
+            max = pos - 1;
+    }
+    return min;
+}
+
+static void init_tz_info(RTL_TIME_ZONE_INFORMATION *tzi, int *valid_year)
+{
+    struct tm *tm;
+    time_t year_start, year_end, tmp, dlt = 0, std = 0;
+    int is_dst;
+
+    year_start = time(NULL);
+    tm = localtime(&year_start);
+
+    if (*valid_year == tm->tm_year) return;
+
+    memset(tzi, 0, sizeof(*tzi));
+
+    TRACE("tz data will be valid through year %d\n", tm->tm_year + 1900);
+    *valid_year = tm->tm_year;
+
+    tm->tm_isdst = 0;
+    tm->tm_mday = 1;
+    tm->tm_mon = tm->tm_hour = tm->tm_min = tm->tm_sec = tm->tm_wday = tm->tm_yday = 0;
+    year_start = mktime(tm);
+    TRACE("year_start: %s", ctime(&year_start));
+
+    tm->tm_mday = tm->tm_wday = tm->tm_yday = 0;
+    tm->tm_mon = 12;
+    tm->tm_hour = 23;
+    tm->tm_min = tm->tm_sec = 59;
+    year_end = mktime(tm);
+    TRACE("year_end: %s", ctime(&year_end));
+
+    tm = gmtime(&year_start);
+    tzi->Bias = (LONG)(mktime(tm) - year_start) / 60;
+    TRACE("bias: %d\n", tzi->Bias);
+
+    tmp = find_dst_change(year_start, year_end, &is_dst);
+    if (is_dst)
+        dlt = tmp;
+    else
+        std = tmp;
+
+    tmp = find_dst_change(tmp, year_end, &is_dst);
+    if (is_dst)
+        dlt = tmp;
+    else
+        std = tmp;
+
+    TRACE("std: %s", ctime(&std));
+    TRACE("dlt: %s", ctime(&dlt));
+
+    if (dlt == std || !dlt || !std)
+    {
+        TRACE("there is no daylight saving rules in this time zone\n");
+        return;
+    }
+
+    tmp = dlt - tzi->Bias * 60;
+    tm = gmtime(&tmp);
+    TRACE("dlt gmtime: %s", asctime(tm));
+
+    tzi->DaylightBias = -60;
+    tzi->DaylightDate.wYear = tm->tm_year + 1900;
+    tzi->DaylightDate.wMonth = tm->tm_mon + 1;
+    tzi->DaylightDate.wDayOfWeek = tm->tm_wday;
+    tzi->DaylightDate.wDay = tm->tm_mday;
+    tzi->DaylightDate.wHour = tm->tm_hour;
+    tzi->DaylightDate.wMinute = tm->tm_min;
+    tzi->DaylightDate.wSecond = tm->tm_sec;
+    tzi->DaylightDate.wMilliseconds = 0;
+
+    TRACE("daylight (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
+        tzi->DaylightDate.wDay, tzi->DaylightDate.wMonth,
+        tzi->DaylightDate.wYear, tzi->DaylightDate.wDayOfWeek,
+        tzi->DaylightDate.wHour, tzi->DaylightDate.wMinute,
+        tzi->DaylightDate.wSecond, tzi->DaylightDate.wMilliseconds,
+        tzi->DaylightBias);
+
+    tmp = std - tzi->Bias * 60 - tzi->DaylightBias * 60;
+    tm = gmtime(&tmp);
+    TRACE("std gmtime: %s", asctime(tm));
+
+    tzi->StandardBias = 0;
+    tzi->StandardDate.wYear = tm->tm_year + 1900;
+    tzi->StandardDate.wMonth = tm->tm_mon + 1;
+    tzi->StandardDate.wDayOfWeek = tm->tm_wday;
+    tzi->StandardDate.wDay = tm->tm_mday;
+    tzi->StandardDate.wHour = tm->tm_hour;
+    tzi->StandardDate.wMinute = tm->tm_min;
+    tzi->StandardDate.wSecond = tm->tm_sec;
+    tzi->StandardDate.wMilliseconds = 0;
+
+    TRACE("standard (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
+        tzi->StandardDate.wDay, tzi->StandardDate.wMonth,
+        tzi->StandardDate.wYear, tzi->StandardDate.wDayOfWeek,
+        tzi->StandardDate.wHour, tzi->StandardDate.wMinute,
+        tzi->StandardDate.wSecond, tzi->StandardDate.wMilliseconds,
+        tzi->StandardBias);
+
+    find_reg_tz_info(tzi);
 }
 
 /***********************************************************************
@@ -974,28 +844,19 @@ static int TIME_GetTimeZoneInfoFromReg(RTL_TIME_ZONE_INFORMATION *tzinfo)
  */
 NTSTATUS WINAPI RtlQueryTimeZoneInformation(RTL_TIME_ZONE_INFORMATION *tzinfo)
 {
-    time_t gmt;
-    int bias, daylight;
-    const WCHAR *psTZ;
+    static RTL_TIME_ZONE_INFORMATION *cached_tzi;
+    static int current_year = -1;
 
-    memset(tzinfo, 0, sizeof(RTL_TIME_ZONE_INFORMATION));
+    RtlEnterCriticalSection(&TIME_tz_section);
 
-    if( !TIME_GetTimeZoneInfoFromReg(tzinfo))
-    {
-        WARN("TIME_GetTimeZoneInfoFromReg failed\n");
+    if (!cached_tzi)
+        cached_tzi = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*cached_tzi));
 
-        gmt = time(NULL);
-        bias = TIME_GetBias(gmt, &daylight);
-        TRACE("bias %d, daylight %d\n", -bias/60, daylight);
+    init_tz_info(cached_tzi, &current_year);
+    *tzinfo = *cached_tzi;
 
-        tzinfo->Bias = -bias / 60;
-        tzinfo->StandardBias = 0;
-        tzinfo->DaylightBias = -60;
-        tzinfo->StandardName[0]='\0';
-        tzinfo->DaylightName[0]='\0';
-        psTZ = TIME_GetTZAsStr (gmt, (-bias/60), daylight);
-        if (psTZ) strcpyW( tzinfo->StandardName, psTZ );
-        }
+    RtlLeaveCriticalSection(&TIME_tz_section);
+
     return STATUS_SUCCESS;
 }
 

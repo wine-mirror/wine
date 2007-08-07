@@ -246,6 +246,12 @@ static void test_GetTimeZoneInformation(void)
     tz_id = GetTimeZoneInformation(&tzinfo);
     ok(tz_id != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
 
+    trace("tz_id %u (%s)\n", tz_id,
+          tz_id == TIME_ZONE_ID_DAYLIGHT ? "TIME_ZONE_ID_DAYLIGHT" :
+          (tz_id == TIME_ZONE_ID_STANDARD ? "TIME_ZONE_ID_STANDARD" :
+          (tz_id == TIME_ZONE_ID_UNKNOWN ? "TIME_ZONE_ID_UNKNOWN" :
+          "TIME_ZONE_ID_INVALID")));
+
     trace("bias %d\n", tzinfo.Bias);
     trace("standard (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
         tzinfo.StandardDate.wDay, tzinfo.StandardDate.wMonth,
