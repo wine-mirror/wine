@@ -767,7 +767,7 @@ BOOL WINAPI CertCompareIntegerBlob(PCRYPT_INTEGER_BLOB pInt1,
     if (cb1 == cb2)
     {
         if (cb1)
-            ret = !memcmp(pInt1->pbData, pInt1->pbData, cb1);
+            ret = !memcmp(pInt1->pbData, pInt2->pbData, cb1);
         else
             ret = TRUE;
     }
