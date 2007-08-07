@@ -604,6 +604,7 @@ static void testFindCert(void)
     BOOL ret;
     CERT_INFO certInfo = { 0 };
     CRYPT_HASH_BLOB blob;
+    BYTE otherSerialNumber[] = { 2 };
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
@@ -675,6 +676,27 @@ static void testFindCert(void)
     certInfo.Subject.cbData = 0;
     certInfo.Issuer.pbData = subjectName2;
     certInfo.Issuer.cbData = sizeof(subjectName2);
+    context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+     CERT_FIND_SUBJECT_CERT, &certInfo, NULL);
+    ok(context != NULL, "CertFindCertificateInStore failed: %08x\n",
+     GetLastError());
+    if (context)
+    {
+        context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+         CERT_FIND_SUBJECT_CERT, &certInfo.Subject, context);
+        ok(context == NULL, "Expected one cert only\n");
+    }
+    /* The above search matched even though no serial number is set.  A
+     * non-matching serial number will not match.
+     */
+    certInfo.SerialNumber.pbData = otherSerialNumber;
+    certInfo.SerialNumber.cbData = sizeof(otherSerialNumber);
+    context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+     CERT_FIND_SUBJECT_CERT, &certInfo, NULL);
+    ok(context == NULL, "Expected no match\n");
+    /* A matching serial number will match. */
+    certInfo.SerialNumber.pbData = serialNum;
+    certInfo.SerialNumber.cbData = sizeof(serialNum);
     context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
      CERT_FIND_SUBJECT_CERT, &certInfo, NULL);
     ok(context != NULL, "CertFindCertificateInStore failed: %08x\n",

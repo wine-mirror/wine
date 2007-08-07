@@ -906,9 +906,15 @@ static BOOL compare_cert_by_subject_cert(PCCERT_CONTEXT pCertContext,
  DWORD dwType, DWORD dwFlags, const void *pvPara)
 {
     CERT_INFO *pCertInfo = (CERT_INFO *)pvPara;
+    BOOL ret;
 
-    return CertCompareCertificateName(pCertContext->dwCertEncodingType,
+    ret = CertCompareCertificateName(pCertContext->dwCertEncodingType,
      &pCertInfo->Issuer, &pCertContext->pCertInfo->Subject);
+    if (ret && pCertInfo->SerialNumber.cbData)
+        ret = CertCompareIntegerBlob(&pCertContext->pCertInfo->SerialNumber,
+         &pCertInfo->SerialNumber);
+    TRACE("returning %d\n", ret);
+    return ret;
 }
 
 static BOOL compare_cert_by_cert_id(PCCERT_CONTEXT pCertContext, DWORD dwType,
