@@ -1044,7 +1044,7 @@ START_TEST(actctx)
     init_paths();
     if (!init_funcs())
     {
-        skip("Couldn't load kernel32\n");
+        skip("Needed functions are not available\n");
         return;
     }
 
