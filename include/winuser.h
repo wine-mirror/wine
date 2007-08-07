@@ -4475,8 +4475,8 @@ INT_PTR   WINAPI DialogBoxIndirectParamW(HINSTANCE,LPCDLGTEMPLATEW,HWND,DLGPROC,
 INT_PTR   WINAPI DialogBoxParamA(HINSTANCE,LPCSTR,HWND,DLGPROC,LPARAM);
 INT_PTR   WINAPI DialogBoxParamW(HINSTANCE,LPCWSTR,HWND,DLGPROC,LPARAM);
 #define     DialogBoxParam WINELIB_NAME_AW(DialogBoxParam)
-LONG        WINAPI DispatchMessageA(const MSG*);
-LONG        WINAPI DispatchMessageW(const MSG*);
+LRESULT     WINAPI DispatchMessageA(const MSG*);
+LRESULT     WINAPI DispatchMessageW(const MSG*);
 #define     DispatchMessage WINELIB_NAME_AW(DispatchMessage)
 INT       WINAPI DlgDirListA(HWND,LPSTR,INT,INT,UINT);
 INT       WINAPI DlgDirListW(HWND,LPWSTR,INT,INT,UINT);

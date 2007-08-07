@@ -2961,10 +2961,10 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
  *
  * See DispatchMessageW.
  */
-LONG WINAPI DispatchMessageA( const MSG* msg )
+LRESULT WINAPI DispatchMessageA( const MSG* msg )
 {
     WND * wndPtr;
-    LONG retval;
+    LRESULT retval;
     WNDPROC winproc;
 
       /* Process timer messages */
@@ -3033,10 +3033,10 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
  *   ECMA-234, Win32
  *
  */
-LONG WINAPI DispatchMessageW( const MSG* msg )
+LRESULT WINAPI DispatchMessageW( const MSG* msg )
 {
     WND * wndPtr;
-    LONG retval;
+    LRESULT retval;
     WNDPROC winproc;
 
       /* Process timer messages */
