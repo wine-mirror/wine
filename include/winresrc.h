@@ -35,10 +35,10 @@
 #define _WIN32_WINNT 0x0500
 #endif
 
-#include <winuser.h>
-#include <commctrl.h>
-#include <dde.h>
-#include <winnt.h>
+/* FIXME: #include <winuser.rh> */
+/* FIXME: #include <commctrl.rh> */
+/* FIXME: #include <dde.rh> */
+/* FIXME: #include <winnt.rh> */
 #include <dlgs.h>
 #include <winver.h>
 
