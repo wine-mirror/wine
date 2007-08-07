@@ -389,18 +389,16 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
     }
     ossdev->fd = fd;
 
+    ossdev->bOutputEnabled = TRUE;	/* OSS enables by default */
+    ossdev->bInputEnabled  = TRUE;	/* OSS enables by default */
+    if (ossdev->open_access == O_RDONLY)
+        ossdev->bOutputEnabled = FALSE;
+    if (ossdev->open_access == O_WRONLY)
+        ossdev->bInputEnabled = FALSE;
+
     if (ossdev->bTriggerSupport) {
 	int trigger;
-	rc = ioctl(fd, SNDCTL_DSP_GETTRIGGER, &trigger);
-	if (rc != 0) {
-	    ERR("ioctl(%s, SNDCTL_DSP_GETTRIGGER) failed (%s)\n",
-		ossdev->dev_name, strerror(errno));
-	    goto error;
-	}
-	
-    	ossdev->bOutputEnabled = ((trigger & PCM_ENABLE_OUTPUT) == PCM_ENABLE_OUTPUT);
-    	ossdev->bInputEnabled  = ((trigger & PCM_ENABLE_INPUT) == PCM_ENABLE_INPUT);
-
+        trigger = getEnables(ossdev);
         /* If we do not have full duplex, but they opened RDWR 
         ** (as you have to in order for an mmap to succeed)
         ** then we start out with input off
@@ -411,15 +409,7 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
             trigger &= ~PCM_ENABLE_INPUT;
 	    ioctl(fd, SNDCTL_DSP_SETTRIGGER, &trigger);
         }
-    } else {
-    	ossdev->bOutputEnabled = TRUE;	/* OSS enables by default */
-    	ossdev->bInputEnabled  = TRUE;	/* OSS enables by default */
     }
-
-    if (ossdev->open_access == O_RDONLY)
-        ossdev->bOutputEnabled = FALSE;
-    if (ossdev->open_access == O_WRONLY)
-        ossdev->bInputEnabled = FALSE;
 
     return MMSYSERR_NOERROR;
 
