@@ -764,14 +764,53 @@ UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
                                     LPCWSTR szUserSid, MSIINSTALLCONTEXT dwContext,
                                     LPCWSTR szComponent, INSTALLSTATE *pdwState)
 {
-    FIXME("(%s, %s, %d, %s, %p): stub!\n", debugstr_w(szProductCode),
+    WCHAR squished_pc[GUID_SIZE];
+    HKEY hkey;
+    LONG res;
+    DWORD sz;
+    UINT r;
+
+    TRACE("(%s, %s, %d, %s, %p)\n", debugstr_w(szProductCode),
           debugstr_w(szUserSid), dwContext, debugstr_w(szComponent), pdwState);
 
     if (!pdwState)
         return ERROR_INVALID_PARAMETER;
 
-    *pdwState = INSTALLSTATE_UNKNOWN;
-    return ERROR_UNKNOWN_PRODUCT;
+    if (!szProductCode || !*szProductCode || lstrlenW(szProductCode) != GUID_SIZE - 1)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!squash_guid(szProductCode, squished_pc))
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwContext == MSIINSTALLCONTEXT_MACHINE)
+    {
+        r = MSIREG_OpenLocalSystemProductKey(szProductCode, &hkey, FALSE);
+        if (r != ERROR_SUCCESS)
+            return ERROR_UNKNOWN_PRODUCT;
+
+        RegCloseKey(hkey);
+        *pdwState = INSTALLSTATE_UNKNOWN;
+
+        r = MSIREG_OpenLocalSystemComponentKey(szComponent, &hkey, FALSE);
+        if (r != ERROR_SUCCESS)
+            return ERROR_UNKNOWN_COMPONENT;
+
+        sz = 0;
+        res = RegQueryValueExW(hkey, squished_pc, NULL, NULL, NULL, &sz);
+        if (res != ERROR_SUCCESS)
+            return ERROR_UNKNOWN_COMPONENT;
+
+        RegCloseKey(hkey);
+
+        if (sz == 0)
+            *pdwState = INSTALLSTATE_NOTUSED;
+        else
+            *pdwState = INSTALLSTATE_LOCAL;
+
+        return ERROR_SUCCESS;
+    }
+
+    return ERROR_UNKNOWN_COMPONENT;
 }
 
 INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR szProduct)
