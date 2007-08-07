@@ -786,7 +786,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 TRACE("Failed to decode session key\n");
             }
             TRACE("Session key is %s\n", debugstr_a(buffer+3));
-            helper->valid_session_key = TRUE;
             HeapFree(GetProcessHeap(), 0, helper->session_key);
             helper->session_key = HeapAlloc(GetProcessHeap(), 0, bin_len);
             if(!helper->session_key)
@@ -1155,7 +1154,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
             if(strncmp(buffer, "BH ", 3) == 0)
             {
                 TRACE("Helper sent %s\n", debugstr_a(buffer+3));
-                helper->valid_session_key = FALSE;
                 helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
                 /*FIXME: Generate the dummy session key = MD4(MD4(password))*/
                 memset(helper->session_key, 0 , 16);
@@ -1168,7 +1166,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
                     TRACE("Failed to decode session key\n");
                 }
                 TRACE("Session key is %s\n", debugstr_a(buffer+3));
-                helper->valid_session_key = TRUE;
                 helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
                 if(!helper->session_key)
                 {
@@ -1226,7 +1223,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContex
 
     SECUR32_arc4Cleanup(helper->crypt.ntlm.a4i);
     HeapFree(GetProcessHeap(), 0, helper->session_key);
-    helper->valid_session_key = FALSE;
     SECUR32_arc4Cleanup(helper->crypt.ntlm2.send_a4i);
     SECUR32_arc4Cleanup(helper->crypt.ntlm2.recv_a4i);
     HeapFree(GetProcessHeap(), 0, helper->crypt.ntlm2.send_sign_key);

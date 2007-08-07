@@ -70,7 +70,6 @@ typedef struct _NegoHelper {
     int com_buf_size;
     int com_buf_offset;
     BYTE *session_key;
-    BOOL valid_session_key;
     unsigned long neg_flags;
     struct {
         struct {
