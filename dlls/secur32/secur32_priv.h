@@ -61,8 +61,6 @@ typedef struct tag_arc4_info {
 typedef struct _NegoHelper {
     pid_t helper_pid;
     HelperMode mode;
-    SEC_CHAR *password;
-    int pwlen;
     int pipe_in;
     int pipe_out;
     int major;

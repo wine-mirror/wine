@@ -111,7 +111,6 @@ SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
     {
         *new_helper = helper;
         helper->major = helper->minor = helper->micro = -1;
-        helper->password = NULL;
         helper->com_buf = NULL;
         helper->com_buf_size = 0;
         helper->com_buf_offset = 0;
