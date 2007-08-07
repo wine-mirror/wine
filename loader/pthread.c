@@ -37,6 +37,10 @@
 #ifdef HAVE_MACH_MACH_H
 #include <mach/mach.h>
 #endif
+#ifdef HAVE_SYS_THR_H
+#include <sys/ucontext.h>
+#include <sys/thr.h>
+#endif
 
 #include "wine/library.h"
 #include "wine/pthread.h"
@@ -149,6 +153,12 @@ static void init_current_teb( struct wine_pthread_thread_info *info )
     info->tid = pthread_self();  /* this should return the lwp id on solaris */
 #elif defined(__APPLE__)
     info->tid = mach_thread_self();
+#elif defined(__FreeBSD__)
+    {
+        long lwpid;
+        thr_self( &lwpid );
+        info->tid = (int) lwpid;
+    }
 #else
     info->tid = gettid();
 #endif

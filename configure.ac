@@ -325,6 +325,12 @@ AC_CHECK_HEADERS([resolv.h],,,
 
 AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
 
+AC_CHECK_HEADERS([sys/thr.h],,,
+[#include <sys/types.h>
+#if HAVE_UCONTEXT_H
+#include <ucontext.h>
+#endif])
+
 AC_CHECK_HEADERS([pthread_np.h],,,
 [#ifdef HAVE_PTHREAD_H
 #include <pthread.h>

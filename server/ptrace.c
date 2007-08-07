@@ -156,8 +156,17 @@ void sigchld_callback(void)
     }
 }
 
-/* return the Unix pid to use in ptrace calls for a given thread */
+/* return the Unix pid to use in ptrace calls for a given process */
 static int get_ptrace_pid( struct thread *thread )
+{
+#ifdef linux  /* linux always uses thread id */
+    if (thread->unix_tid != -1) return thread->unix_tid;
+#endif
+    return thread->unix_pid;
+}
+
+/* return the Unix tid to use in ptrace calls for a given thread */
+static int get_ptrace_tid( struct thread *thread )
 {
     if (thread->unix_tid != -1) return thread->unix_tid;
     return thread->unix_pid;
@@ -501,7 +510,7 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
 /* retrieve the thread x86 registers */
 void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
-    int i, pid = get_ptrace_pid(thread);
+    int i, pid = get_ptrace_tid(thread);
     long data[8];
 
     /* all other regs are handled on the client side */
@@ -534,7 +543,7 @@ done:
 /* set the thread x86 registers */
 void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
 {
-    int pid = get_ptrace_pid( thread );
+    int pid = get_ptrace_tid( thread );
 
     /* all other regs are handled on the client side */
     assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
@@ -568,7 +577,7 @@ void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned
 /* retrieve the thread x86 registers */
 void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
-    int pid = get_ptrace_pid(thread);
+    int pid = get_ptrace_tid(thread);
     struct dbreg dbregs;
 
     /* all other regs are handled on the client side */
@@ -603,7 +612,7 @@ void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int f
 /* set the thread x86 registers */
 void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
 {
-    int pid = get_ptrace_pid(thread);
+    int pid = get_ptrace_tid(thread);
     struct dbreg dbregs;
 
     /* all other regs are handled on the client side */
