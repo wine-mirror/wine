@@ -71,6 +71,7 @@ void *Context_CreateDataContext(size_t contextSize)
             ret = NULL;
         }
     }
+    TRACE("returning %p\n", ret);
     return ret;
 }
 
@@ -96,6 +97,7 @@ void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned
             InterlockedIncrement(&linkedBase->ref);
         TRACE("%p's ref count is %d\n", context, linkContext->ref);
     }
+    TRACE("returning %p\n", context);
     return context;
 }
 
