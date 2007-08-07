@@ -53,7 +53,8 @@
 #define ASN_FLAGS_MASK 0xe0
 #define ASN_TYPE_MASK  0x1f
 
-WINE_DEFAULT_DEBUG_CHANNEL(crypt);
+WINE_DEFAULT_DEBUG_CHANNEL(cryptasn);
+WINE_DECLARE_DEBUG_CHANNEL(crypt);
 
 struct GenericArray
 {
@@ -132,7 +133,7 @@ BOOL WINAPI CryptDecodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     CryptDecodeObjectFunc pCryptDecodeObject;
     HCRYPTOIDFUNCADDR hFunc;
 
-    TRACE("(0x%08x, %s, %p, %d, 0x%08x, %p, %p)\n", dwCertEncodingType,
+    TRACE_(crypt)("(0x%08x, %s, %p, %d, 0x%08x, %p, %p)\n", dwCertEncodingType,
      debugstr_a(lpszStructType), pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, pcbStructInfo);
 
@@ -3988,7 +3989,7 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     CryptDecodeObjectExFunc decodeFunc = NULL;
     HCRYPTOIDFUNCADDR hFunc = NULL;
 
-    TRACE("(0x%08x, %s, %p, %d, 0x%08x, %p, %p, %p)\n",
+    TRACE_(crypt)("(0x%08x, %s, %p, %d, 0x%08x, %p, %p, %p)\n",
      dwCertEncodingType, debugstr_a(lpszStructType), pbEncoded,
      cbEncoded, dwFlags, pDecodePara, pvStructInfo, pcbStructInfo);
 
@@ -4154,7 +4155,7 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     else if (!strcmp(lpszStructType, szOID_ISSUING_DIST_POINT))
         decodeFunc = CRYPT_AsnDecodeIssuingDistPoint;
     else
-        TRACE("OID %s not found or unimplemented, looking for DLL\n",
+        TRACE_(crypt)("OID %s not found or unimplemented, looking for DLL\n",
          debugstr_a(lpszStructType));
     if (!decodeFunc)
     {
