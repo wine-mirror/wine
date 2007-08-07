@@ -246,7 +246,7 @@ static INT read_logpixels_reg(void)
     DWORD dwLogPixels;
     char *buf  = get_reg_key(HKEY_LOCAL_MACHINE, logpixels_reg,
                              "LogPixels", NULL);
-    dwLogPixels = *buf;
+    dwLogPixels = buf ? *buf : DEFDPI;
     HeapFree(GetProcessHeap(), 0, buf);
     return dwLogPixels;
 }
