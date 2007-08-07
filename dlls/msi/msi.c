@@ -732,9 +732,40 @@ UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, DWORD attributes)
     return ERROR_SUCCESS;
 }
 
-UINT WINAPI MsiQueryComponentStateA(LPCSTR szProductCode, LPCSTR szUserSid, MSIINSTALLCONTEXT dwContext, LPCSTR szComponent, INSTALLSTATE *pdwState)
+UINT WINAPI MsiQueryComponentStateA(LPCSTR szProductCode,
+                                    LPCSTR szUserSid, MSIINSTALLCONTEXT dwContext,
+                                    LPCSTR szComponent, INSTALLSTATE *pdwState)
 {
-    FIXME("(%s, %s, %d, %s, %p): stub!\n", debugstr_a(szProductCode), debugstr_a(szUserSid), dwContext, debugstr_a(szComponent), pdwState);
+    LPWSTR prodcode = NULL, usersid = NULL, comp = NULL;
+    UINT r;
+
+    TRACE("(%s, %s, %d, %s, %p)\n", debugstr_a(szProductCode),
+          debugstr_a(szUserSid), dwContext, debugstr_a(szComponent), pdwState);
+
+    if (szProductCode && !(prodcode = strdupAtoW(szProductCode)))
+        return ERROR_OUTOFMEMORY;
+
+    if (szUserSid && !(usersid = strdupAtoW(szUserSid)))
+            return ERROR_OUTOFMEMORY;
+
+    if (szComponent && !(comp = strdupAtoW(szComponent)))
+            return ERROR_OUTOFMEMORY;
+
+    r = MsiQueryComponentStateW(prodcode, usersid, dwContext, comp, pdwState);
+
+    msi_free(prodcode);
+    msi_free(usersid);
+    msi_free(comp);
+
+    return r;
+}
+
+UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
+                                    LPCWSTR szUserSid, MSIINSTALLCONTEXT dwContext,
+                                    LPCWSTR szComponent, INSTALLSTATE *pdwState)
+{
+    FIXME("(%s, %s, %d, %s, %p): stub!\n", debugstr_w(szProductCode),
+          debugstr_w(szUserSid), dwContext, debugstr_w(szComponent), pdwState);
 
     if (!pdwState)
         return ERROR_INVALID_PARAMETER;

@@ -243,7 +243,7 @@
 247 stub MsiGetProductInfoExA
 248 stub MsiGetProductInfoExW
 249 stdcall MsiQueryComponentStateA(str str long str ptr)
-250 stub MsiQueryComponentStateW
+250 stdcall MsiQueryComponentStateW(wstr wstr long wstr ptr)
 251 stub MsiQueryFeatureStateExA
 252 stub MsiQueryFeatureStateExW
 253 stub MsiDeterminePatchSequenceA
