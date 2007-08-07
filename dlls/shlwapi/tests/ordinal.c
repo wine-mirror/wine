@@ -433,10 +433,7 @@ static void test_GetShellSecurityDescriptor(void)
 
 START_TEST(ordinal)
 {
-  hShlwapi = LoadLibraryA("shlwapi.dll");
-  ok(hShlwapi != 0, "LoadLibraryA failed\n");
-  if (!hShlwapi)
-    return;
+  hShlwapi = GetModuleHandleA("shlwapi.dll");
 
   pGetAcceptLanguagesA = (void*)GetProcAddress(hShlwapi, (LPSTR)14);
   pSHSearchMapInt = (void*)GetProcAddress(hShlwapi, (LPSTR)198);
@@ -450,6 +447,4 @@ START_TEST(ordinal)
   test_alloc_shared();
   test_fdsa();
   test_GetShellSecurityDescriptor();
-
-  FreeLibrary(hShlwapi);
 }

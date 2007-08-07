@@ -1833,8 +1833,7 @@ static void test_PathUnquoteSpaces(void)
 
 START_TEST(path)
 {
-  hShlwapi = LoadLibraryA("shlwapi.dll");
-  if (!hShlwapi) return;
+  hShlwapi = GetModuleHandleA("shlwapi.dll");
 
   test_UrlHash();
   test_UrlGetPart();

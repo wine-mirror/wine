@@ -182,17 +182,10 @@ static void test_CLSIDFromProgIDWrap(void)
 
 START_TEST(clsid)
 {
-  hShlwapi = LoadLibraryA("shlwapi.dll");
-  ok(hShlwapi != 0, "LoadLibraryA failed\n");
-  if (hShlwapi)
-  {
-    pSHLWAPI_269 = (void*)GetProcAddress(hShlwapi, (LPSTR)269);
-    pSHLWAPI_23 = (void*)GetProcAddress(hShlwapi, (LPSTR)23);
-  }
+  hShlwapi = GetModuleHandleA("shlwapi.dll");
+  pSHLWAPI_269 = (void*)GetProcAddress(hShlwapi, (LPSTR)269);
+  pSHLWAPI_23 = (void*)GetProcAddress(hShlwapi, (LPSTR)23);
 
   test_ClassIDs();
   test_CLSIDFromProgIDWrap();
-
-  if (hShlwapi)
-    FreeLibrary(hShlwapi);
 }
