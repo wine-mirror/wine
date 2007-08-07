@@ -89,7 +89,8 @@ typedef struct PullPin
 
 /*** Initializers ***/
 HRESULT InputPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, InputPin * pPinImpl);
-HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl);
+HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES *props, LPVOID pUserData,
+                       QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl);
 HRESULT PullPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, PullPin * pPinImpl);
 
 /*** Constructors ***/

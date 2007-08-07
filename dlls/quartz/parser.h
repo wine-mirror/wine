@@ -55,5 +55,6 @@ typedef struct Parser_OutputPin
     MediaSeekingImpl mediaSeeking;
 } Parser_OutputPin;
 
-HRESULT Parser_AddPin(ParserImpl * This, PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, AM_MEDIA_TYPE * amt, float fSamplesPerSec, DWORD dwSampleSize, DWORD dwLength);
+HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props,
+                      const AM_MEDIA_TYPE * amt, float fSamplesPerSec, DWORD dwSampleSize, DWORD dwLength);
 HRESULT Parser_Create(ParserImpl*, const CLSID*, PFN_PROCESS_SAMPLE, PFN_QUERY_ACCEPT, PFN_PRE_CONNECT, PFN_CLEANUP);

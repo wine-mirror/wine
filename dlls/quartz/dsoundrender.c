@@ -146,7 +146,7 @@ static inline HRESULT DSoundRender_GetPos(DSoundRenderImpl *This, DWORD *pPlayPo
     return hr;
 }
 
-static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, DWORD size)
+static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, const BYTE *data, DWORD size)
 {
     HRESULT hr;
     LPBYTE lpbuf1 = NULL;

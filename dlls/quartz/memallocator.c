@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-void dump_AM_SAMPLE2_PROPERTIES(AM_SAMPLE2_PROPERTIES * pProps)
+void dump_AM_SAMPLE2_PROPERTIES(const AM_SAMPLE2_PROPERTIES * pProps)
 {
     if (!pProps)
     {

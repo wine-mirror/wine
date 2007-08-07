@@ -495,7 +495,8 @@ static const IBaseFilterVtbl Parser_Vtbl =
     Parser_QueryVendorInfo
 };
 
-HRESULT Parser_AddPin(ParserImpl * This, PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, AM_MEDIA_TYPE * amt, float fSamplesPerSec, DWORD dwSampleSize, DWORD dwLength)
+HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props,
+                      const AM_MEDIA_TYPE * amt, float fSamplesPerSec, DWORD dwSampleSize, DWORD dwLength)
 {
     IPin ** ppOldPins;
     HRESULT hr;

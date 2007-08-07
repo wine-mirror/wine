@@ -110,7 +110,9 @@ static HRESULT TransformFilter_InputPin_Construct(const PIN_INFO * pPinInfo, SAM
     return E_FAIL;
 }
 
-static HRESULT TransformFilter_OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+static HRESULT TransformFilter_OutputPin_Construct(const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES *props,
+                                                   LPVOID pUserData, QUERYACCEPTPROC pQueryAccept,
+                                                   LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
     OutputPin * pPinImpl;
 

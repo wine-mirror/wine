@@ -189,7 +189,7 @@ static int add_data(struct Vector * v, const BYTE * pData, int size)
     return index;
 }
 
-static int find_data(struct Vector * v, const BYTE * pData, int size)
+static int find_data(const struct Vector * v, const BYTE * pData, int size)
 {
     int index;
     for (index = 0; index < v->current; index++)
