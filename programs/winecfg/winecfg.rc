@@ -20,6 +20,7 @@
  *
  */
 
+#include "config.h"   /* Needed for the PACKAGE_STRING definition */
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
