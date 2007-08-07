@@ -720,7 +720,29 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
-#ifdef SOUND_MIXER_INFO
+#if defined(SNDCTL_MIXERINFO)
+    {
+        int mixer;
+        if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
+            oss_mixerinfo info;
+            info.dev = 0;
+            if (ioctl(mixer, SNDCTL_MIXERINFO, &info) >= 0) {
+                lstrcpynA(ossdev->ds_desc.szDesc, info.name, sizeof(info.name));
+                strcpy(ossdev->ds_desc.szDrvname, "wineoss.drv");
+                MultiByteToWideChar(CP_ACP, 0, info.name, sizeof(info.name),
+                                    ossdev->out_caps.szPname,
+                                    sizeof(ossdev->out_caps.szPname) / sizeof(WCHAR));
+                TRACE("%s: %s\n", ossdev->mixer_name, ossdev->ds_desc.szDesc);
+                has_mixer = TRUE;
+            } else {
+                WARN("%s: cannot read SNDCTL_MIXERINFO!\n", ossdev->mixer_name);
+            }
+            close(mixer);
+        } else {
+            WARN("open(%s) failed (%s)\n", ossdev->mixer_name , strerror(errno));
+        }
+    }
+#elif defined(SOUND_MIXER_INFO)
     {
         int mixer;
         if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
@@ -874,7 +896,26 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
 
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
-#ifdef SOUND_MIXER_INFO
+#if defined(SNDCTL_MIXERINFO)
+    {
+        int mixer;
+        if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
+            oss_mixerinfo info;
+            info.dev = 0;
+            if (ioctl(mixer, SNDCTL_MIXERINFO, &info) >= 0) {
+                MultiByteToWideChar(CP_ACP, 0, info.name, -1,
+                                    ossdev->in_caps.szPname,
+                                    sizeof(ossdev->in_caps.szPname) / sizeof(WCHAR));
+                TRACE("%s: %s\n", ossdev->mixer_name, ossdev->ds_desc.szDesc);
+            } else {
+                WARN("%s: cannot read SNDCTL_MIXERINFO!\n", ossdev->mixer_name);
+            }
+            close(mixer);
+        } else {
+            WARN("open(%s) failed (%s)\n", ossdev->mixer_name, strerror(errno));
+        }
+    }
+#elif defined(SOUND_MIXER_INFO)
     {
         int mixer;
         if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
@@ -995,7 +1036,23 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
 
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
-#ifdef SOUND_MIXER_INFO
+#if defined(SNDCTL_MIXERINFO)
+    {
+        int mixer;
+        if ((mixer = open(ossdev->mixer_name, O_RDWR|O_NDELAY)) >= 0) {
+            oss_mixerinfo info;
+            info.dev = 0;
+            if (ioctl(mixer, SNDCTL_MIXERINFO, &info) >= 0) {
+                has_mixer = TRUE;
+            } else {
+                WARN("%s: cannot read SNDCTL_MIXERINFO!\n", ossdev->mixer_name);
+            }
+            close(mixer);
+        } else {
+            WARN("open(%s) failed (%s)\n", ossdev->mixer_name , strerror(errno));
+        }
+    }
+#elif defined(SOUND_MIXER_INFO)
     {
         int mixer;
         if ((mixer = open(ossdev->mixer_name, O_RDWR|O_NDELAY)) >= 0) {
