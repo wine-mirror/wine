@@ -2100,25 +2100,19 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                                                    proxyBytesRequired);
 
                     pPI->dwAccessType = lpwai->dwAccessType;
+                    pPI->lpszProxy = NULL;
+                    pPI->lpszProxyBypass = NULL;
                     if (lpwai->lpszProxy)
                     {
                         lstrcpyW(proxy, lpwai->lpszProxy);
+                        pPI->lpszProxy = proxy;
                     }
-                    else
-                    {
-                        *proxy = 0;
-                    }
-                    pPI->lpszProxy = proxy;
 
                     if (lpwai->lpszProxyBypass)
                     {
                         lstrcpyW(proxy_bypass, lpwai->lpszProxyBypass);
+                        pPI->lpszProxyBypass = proxy_bypass;
                     }
-                    else
-                    {
-                        *proxy_bypass = 0;
-                    }
-                    pPI->lpszProxyBypass = proxy_bypass;
                     bSuccess = TRUE;
                 }
                 *lpdwBufferLength = sizeof(INTERNET_PROXY_INFOW) +
@@ -2147,28 +2141,22 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                                                  proxyBytesRequired);
 
                     pPI->dwAccessType = lpwai->dwAccessType;
+                    pPI->lpszProxy = NULL;
+                    pPI->lpszProxyBypass = NULL;
                     if (lpwai->lpszProxy)
                     {
                         WideCharToMultiByte(CP_ACP, 0, lpwai->lpszProxy, -1,
                                             proxy, proxyBytesRequired, NULL, NULL);
+                        pPI->lpszProxy = proxy;
                     }
-                    else
-                    {
-                        *proxy = '\0';
-                    }
-                    pPI->lpszProxy = proxy;
 
                     if (lpwai->lpszProxyBypass)
                     {
                         WideCharToMultiByte(CP_ACP, 0, lpwai->lpszProxyBypass,
                                             -1, proxy_bypass, proxyBypassBytesRequired,
                                             NULL, NULL);
+                        pPI->lpszProxyBypass = proxy_bypass;
                     }
-                    else
-                    {
-                        *proxy_bypass = '\0';
-                    }
-                    pPI->lpszProxyBypass = proxy_bypass;
                     bSuccess = TRUE;
                 }
                 *lpdwBufferLength = sizeof(INTERNET_PROXY_INFOA) +
