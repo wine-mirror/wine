@@ -961,8 +961,105 @@ static BOOL compare_cert_by_cert_id(PCCERT_CONTEXT pCertContext, DWORD dwType,
 static BOOL compare_cert_by_issuer(PCCERT_CONTEXT pCertContext, DWORD dwType,
  DWORD dwFlags, const void *pvPara)
 {
-    return compare_cert_by_subject_cert(pCertContext, dwType, dwFlags,
-     ((PCCERT_CONTEXT)pvPara)->pCertInfo);
+    BOOL ret = FALSE;
+    PCCERT_CONTEXT subject = (PCCERT_CONTEXT)pvPara;
+    PCERT_EXTENSION ext;
+    DWORD size;
+
+    if ((ext = CertFindExtension(szOID_AUTHORITY_KEY_IDENTIFIER,
+     subject->pCertInfo->cExtension, subject->pCertInfo->rgExtension)))
+    {
+        CERT_AUTHORITY_KEY_ID_INFO *info;
+
+        ret = CryptDecodeObjectEx(subject->dwCertEncodingType,
+         X509_AUTHORITY_KEY_ID, ext->Value.pbData, ext->Value.cbData,
+         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+         &info, &size);
+        if (ret)
+        {
+            CERT_ID id;
+
+            if (info->CertIssuer.cbData && info->CertSerialNumber.cbData)
+            {
+                id.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+                memcpy(&id.u.IssuerSerialNumber.Issuer, &info->CertIssuer,
+                 sizeof(CERT_NAME_BLOB));
+                memcpy(&id.u.IssuerSerialNumber.SerialNumber,
+                 &info->CertSerialNumber, sizeof(CRYPT_INTEGER_BLOB));
+                ret = compare_cert_by_cert_id(pCertContext, dwType, dwFlags,
+                 &id);
+            }
+            else if (info->KeyId.cbData)
+            {
+                id.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
+                memcpy(&id.u.KeyId, &info->KeyId, sizeof(CRYPT_HASH_BLOB));
+                ret = compare_cert_by_cert_id(pCertContext, dwType, dwFlags,
+                 &id);
+            }
+            else
+                ret = FALSE;
+            LocalFree(info);
+        }
+    }
+    else if ((ext = CertFindExtension(szOID_AUTHORITY_KEY_IDENTIFIER2,
+     subject->pCertInfo->cExtension, subject->pCertInfo->rgExtension)))
+    {
+        CERT_AUTHORITY_KEY_ID2_INFO *info;
+
+        ret = CryptDecodeObjectEx(subject->dwCertEncodingType,
+         X509_AUTHORITY_KEY_ID2, ext->Value.pbData, ext->Value.cbData,
+         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
+         &info, &size);
+        if (ret)
+        {
+            CERT_ID id;
+
+            if (info->AuthorityCertIssuer.cAltEntry &&
+             info->AuthorityCertSerialNumber.cbData)
+            {
+                PCERT_ALT_NAME_ENTRY directoryName = NULL;
+                DWORD i;
+
+                for (i = 0; !directoryName &&
+                 i < info->AuthorityCertIssuer.cAltEntry; i++)
+                    if (info->AuthorityCertIssuer.rgAltEntry[i].dwAltNameChoice
+                     == CERT_ALT_NAME_DIRECTORY_NAME)
+                        directoryName =
+                         &info->AuthorityCertIssuer.rgAltEntry[i];
+                if (directoryName)
+                {
+                    id.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+                    memcpy(&id.u.IssuerSerialNumber.Issuer,
+                     &directoryName->u.DirectoryName, sizeof(CERT_NAME_BLOB));
+                    memcpy(&id.u.IssuerSerialNumber.SerialNumber,
+                     &info->AuthorityCertSerialNumber,
+                     sizeof(CRYPT_INTEGER_BLOB));
+                    ret = compare_cert_by_cert_id(pCertContext, dwType, dwFlags,
+                     &id);
+                }
+                else
+                {
+                    FIXME("no supported name type in authority key id2\n");
+                    ret = FALSE;
+                }
+            }
+            else if (info->KeyId.cbData)
+            {
+                id.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
+                memcpy(&id.u.KeyId, &info->KeyId, sizeof(CRYPT_HASH_BLOB));
+                ret = compare_cert_by_cert_id(pCertContext, dwType, dwFlags,
+                 &id);
+            }
+            else
+                ret = FALSE;
+            LocalFree(info);
+        }
+    }
+    else
+       ret = compare_cert_by_name(pCertContext,
+        CERT_COMPARE_NAME | CERT_COMPARE_SUBJECT_CERT, dwFlags,
+        &subject->pCertInfo->Issuer);
+    return ret;
 }
 
 PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
