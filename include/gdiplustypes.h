@@ -177,6 +177,15 @@ public:
     REAL Height;
 };
 
+class Rect
+{
+public:
+    INT X;
+    INT Y;
+    INT Width;
+    INT Height;
+};
+
 #else /* end of c++ typedefs */
 
 typedef struct Point
@@ -205,6 +214,14 @@ typedef struct RectF
     REAL Width;
     REAL Height;
 } RectF;
+
+typedef struct Rect
+{
+    INT X;
+    INT Y;
+    INT Width;
+    INT Height;
+} Rect;
 
 typedef enum Status Status;
 

@@ -164,6 +164,8 @@ GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath*,GpPath*,GpLineCap,REAL,
 GpStatus WINGDIPAPI GdipDeleteCustomLineCap(GpCustomLineCap*);
 
 GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap*,INT,INT,ARGB*);
+GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap*,GDIPCONST GpRect*,UINT,
+    PixelFormat,BitmapData*);
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT,INT,INT,PixelFormat,BYTE*,
     GpBitmap**);
 GpStatus WINGDIPAPI GdipCreateBitmapFromStream(IStream*,GpBitmap**);

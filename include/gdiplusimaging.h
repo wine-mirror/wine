@@ -19,6 +19,13 @@
 #ifndef _GDIPLUSIMAGING_H
 #define _GDIPLUSIMAGING_H
 
+enum ImageLockMode
+{
+    ImageLockModeRead           = 1,
+    ImageLockModeWrite          = 2,
+    ImageLockModeUserInputBuf   = 4
+};
+
 #ifdef __cplusplus
 class EncoderParameter
 {
@@ -35,7 +42,21 @@ public:
     UINT Count;
     EncoderParameter Parameter[1];
 };
+
+class BitmapData
+{
+public:
+    UINT Width;
+    UINT Height;
+    INT Stride;
+    PixelFormat PixelFormat;
+    VOID* Scan0;
+    UINT_PTR Reserved;
+};
+
 #else /* end of c++ typedefs */
+
+typedef enum ImageLockMode ImageLockMode;
 
 typedef struct EncoderParameter
 {
@@ -50,6 +71,16 @@ typedef struct EncoderParameters
     UINT Count;
     EncoderParameter Parameter[1];
 } EncoderParameters;
+
+typedef struct BitmapData
+{
+    UINT Width;
+    UINT Height;
+    INT Stride;
+    PixelFormat PixelFormat;
+    VOID* Scan0;
+    UINT_PTR Reserved; /* undocumented: stores the lock mode */
+}BitmapData;
 
 #endif /* end of c typedefs */
 

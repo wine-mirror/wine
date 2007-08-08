@@ -143,6 +143,9 @@ struct GpBitmap{
     INT width;
     INT height;
     PixelFormat format;
+    ImageLockMode lockmode;
+    INT numlocks;
+    BYTE *bitmapbits;   /* pointer to the buffer we passed in BitmapLockBits */
 };
 
 struct GpImageAttributes{

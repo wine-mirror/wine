@@ -88,6 +88,147 @@ GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     return NotImplemented;
 }
 
+/* This function returns a pointer to an array of pixels that represents the
+ * bitmap. The *entire* bitmap is locked according to the lock mode specified by
+ * flags.  It is correct behavior that a user who calls this function with write
+ * privileges can write to the whole bitmap (not just the area in rect).
+ *
+ * FIXME: only used portion of format is bits per pixel. */
+GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
+    UINT flags, PixelFormat format, BitmapData* lockeddata)
+{
+    BOOL bm_is_selected;
+    INT stride, bitspp = PIXELFORMATBPP(format);
+    OLE_HANDLE hbm;
+    HDC hdc;
+    HBITMAP old = NULL;
+    BITMAPINFO bmi;
+    BYTE *buff = NULL;
+    UINT abs_height;
+
+    TRACE("%p %p %d %d %p\n", bitmap, rect, flags, format, lockeddata);
+
+    if(!lockeddata || !bitmap || !rect)
+        return InvalidParameter;
+
+    if(rect->X < 0 || rect->Y < 0 || (rect->X + rect->Width > bitmap->width) ||
+       (rect->Y + rect->Height > bitmap->height) || !flags)
+        return InvalidParameter;
+
+    if(flags & ImageLockModeUserInputBuf)
+        return NotImplemented;
+
+    if((bitmap->lockmode & ImageLockModeWrite) || (bitmap->lockmode &&
+        (flags & ImageLockModeWrite)))
+        return WrongState;
+
+    IPicture_get_Handle(bitmap->image.picture, &hbm);
+    IPicture_get_CurDC(bitmap->image.picture, &hdc);
+    bm_is_selected = (hdc != 0);
+
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biBitCount = 0;
+
+    if(!bm_is_selected){
+        hdc = GetDC(0);
+        old = SelectObject(hdc, (HBITMAP)hbm);
+    }
+
+    /* fill out bmi */
+    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+
+    abs_height = abs(bmi.bmiHeader.biHeight);
+    stride = bmi.bmiHeader.biWidth * bitspp / 8;
+    stride = (stride + 3) & ~3;
+
+    buff = GdipAlloc(stride * abs_height);
+    if(!buff)   return OutOfMemory;
+
+    bmi.bmiHeader.biBitCount = bitspp;
+    GetDIBits(hdc, (HBITMAP)hbm, 0, abs_height, buff, &bmi, DIB_RGB_COLORS);
+
+    if(!bm_is_selected){
+        SelectObject(hdc, old);
+        ReleaseDC(0, hdc);
+    }
+
+    lockeddata->Width = rect->Width;
+    lockeddata->Height = rect->Height;
+    lockeddata->PixelFormat = format;
+    lockeddata->Reserved = flags;
+
+    if(bmi.bmiHeader.biHeight > 0){
+        lockeddata->Stride = -stride;
+        lockeddata->Scan0 = buff + (bitspp / 8) * rect->X +
+                            stride * (abs_height - 1 - rect->Y);
+    }
+    else{
+        lockeddata->Stride = stride;
+        lockeddata->Scan0 = buff + (bitspp / 8) * rect->X + stride * rect->Y;
+    }
+
+    bitmap->lockmode = flags;
+    bitmap->numlocks++;
+
+    if(flags & ImageLockModeWrite)
+        bitmap->bitmapbits = buff;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
+    BitmapData* lockeddata)
+{
+    OLE_HANDLE hbm;
+    HDC hdc;
+    HBITMAP old = NULL;
+    BOOL bm_is_selected;
+    BITMAPINFO bmi;
+
+    if(!bitmap || !lockeddata)
+        return InvalidParameter;
+
+    if(!bitmap->lockmode)
+        return WrongState;
+
+    if(lockeddata->Reserved & ImageLockModeUserInputBuf)
+        return NotImplemented;
+
+    if(lockeddata->Reserved & ImageLockModeRead){
+        if(!(--bitmap->numlocks))
+            bitmap->lockmode = 0;
+
+        GdipFree(lockeddata->Scan0);
+        return Ok;
+    }
+
+    IPicture_get_Handle(bitmap->image.picture, &hbm);
+    IPicture_get_CurDC(bitmap->image.picture, &hdc);
+    bm_is_selected = (hdc != 0);
+
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biBitCount = 0;
+
+    if(!bm_is_selected){
+        hdc = GetDC(0);
+        old = SelectObject(hdc, (HBITMAP)hbm);
+    }
+
+    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+    bmi.bmiHeader.biBitCount = PIXELFORMATBPP(lockeddata->PixelFormat);
+    SetDIBits(hdc, (HBITMAP)hbm, 0, abs(bmi.bmiHeader.biHeight),
+              bitmap->bitmapbits, &bmi, DIB_RGB_COLORS);
+
+    if(!bm_is_selected){
+        SelectObject(hdc, old);
+        ReleaseDC(0, hdc);
+    }
+
+    GdipFree(bitmap->bitmapbits);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     PixelFormat format, BYTE* scan0, GpBitmap** bitmap)
 {

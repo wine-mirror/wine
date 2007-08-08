@@ -41,10 +41,10 @@
 @ stub GdipBitmapGetHistogram
 @ stub GdipBitmapGetHistogramSize
 @ stdcall GdipBitmapGetPixel(ptr long long ptr)
-@ stub GdipBitmapLockBits
+@ stdcall GdipBitmapLockBits(ptr ptr long long ptr)
 @ stub GdipBitmapSetPixel
 @ stub GdipBitmapSetResolution
-@ stub GdipBitmapUnlockBits
+@ stdcall GdipBitmapUnlockBits(ptr ptr)
 @ stub GdipClearPathMarkers
 @ stub GdipCloneBitmapArea
 @ stub GdipCloneBitmapAreaI
