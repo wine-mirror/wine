@@ -70,6 +70,14 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
 
             break;
         }
+        case BrushTypeLinearGradient:
+            *clone = GdipAlloc(sizeof(GpLineGradient));
+            if(!*clone)    return OutOfMemory;
+
+            memcpy(*clone, brush, sizeof(GpLineGradient));
+
+            (*clone)->gdibrush = CreateSolidBrush((*clone)->lb.lbColor);
+            break;
         default:
             return NotImplemented;
     }
@@ -237,6 +245,7 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
             GdipFree(((GpPathGradient*) brush)->pathdata.Types);
             break;
         case BrushTypeSolidColor:
+        case BrushTypeLinearGradient:
         default:
             break;
     }
