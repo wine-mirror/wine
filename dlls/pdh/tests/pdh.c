@@ -374,14 +374,14 @@ static void test_PdhGetRawCounterValue( void )
 
     ret = PdhGetRawCounterValue( counter, NULL, &value );
     ok(ret == ERROR_SUCCESS, "PdhGetRawCounterValue failed 0x%08x\n", ret);
-    ok(value.CStatus == ERROR_SUCCESS, "expected ERROR_SUCCESS got %x", value.CStatus);
+    ok(value.CStatus == ERROR_SUCCESS, "expected ERROR_SUCCESS got %x\n", value.CStatus);
 
     ret = PdhCollectQueryData( query );
     ok(ret == ERROR_SUCCESS, "PdhCollectQueryData failed 0x%08x\n", ret);
 
     ret = PdhGetRawCounterValue( counter, NULL, &value );
     ok(ret == ERROR_SUCCESS, "PdhGetRawCounterValue failed 0x%08x\n", ret);
-    ok(value.CStatus == ERROR_SUCCESS, "expected ERROR_SUCCESS got %x", value.CStatus);
+    ok(value.CStatus == ERROR_SUCCESS, "expected ERROR_SUCCESS got %x\n", value.CStatus);
 
     ret = PdhCloseQuery( query );
     ok(ret == ERROR_SUCCESS, "PdhCloseQuery failed 0x%08x\n", ret);
