@@ -19,18 +19,10 @@
 #ifndef MAPIX_H
 #define MAPIX_H
 
-#ifndef MAPIDEFS_H
 #include <mapidefs.h>
-#endif
-#ifndef MAPICODE_H
 #include <mapicode.h>
-#endif
-#ifndef MAPIGUID_H
 #include <mapiguid.h>
-#endif
-#ifndef MAPITAGS_H
 #include <mapitags.h>
-#endif
 
 #ifdef __cplusplus
 extern "C" {

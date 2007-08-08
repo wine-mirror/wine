@@ -24,9 +24,7 @@
 #endif
 
 #include <winerror.h>
-#ifndef _OBJBASE_H_
 #include <objbase.h>
-#endif
 #include <stddef.h>
 
 /* Some types from other headers */
