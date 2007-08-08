@@ -769,7 +769,7 @@ DNS_STATUS WINAPI DnsQuery_W( PCWSTR name, WORD type, DWORD options, PVOID serve
 }
 
 static DNS_STATUS dns_get_hostname_a( COMPUTER_NAME_FORMAT format,
-                                      LPSTR buffer, PDWORD len )
+                                      PSTR buffer, PDWORD len )
 {
     char name[256];
     DWORD size = sizeof(name);
@@ -788,7 +788,7 @@ static DNS_STATUS dns_get_hostname_a( COMPUTER_NAME_FORMAT format,
 }
 
 static DNS_STATUS dns_get_hostname_w( COMPUTER_NAME_FORMAT format,
-                                      LPWSTR buffer, PDWORD len )
+                                      PWSTR buffer, PDWORD len )
 {
     WCHAR name[256];
     DWORD size = sizeof(name);

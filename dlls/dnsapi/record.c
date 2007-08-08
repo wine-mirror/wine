@@ -539,7 +539,7 @@ error:
  * DnsRecordListFree                       [DNSAPI.@]
  *
  */
-void WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
+VOID WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
 {
     DNS_RECORD *r, *next;
     unsigned int i;
