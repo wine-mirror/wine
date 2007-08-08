@@ -1324,6 +1324,39 @@ end:
     return retval;
 }
 
+GpStatus WINGDIPAPI GdipFillRectangleI(GpGraphics *graphics, GpBrush *brush,
+    INT x, INT y, INT width, INT height)
+{
+    INT save_state;
+    GpPointF ptf[4];
+    POINT pti[4];
+
+    if(!graphics || !brush)
+        return InvalidParameter;
+
+    ptf[0].X = x;
+    ptf[0].Y = y;
+    ptf[1].X = x + width;
+    ptf[1].Y = y;
+    ptf[2].X = x + width;
+    ptf[2].Y = y + height;
+    ptf[3].X = x;
+    ptf[3].Y = y + height;
+
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, brush->gdibrush);
+    SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
+
+    transform_and_round_points(graphics, pti, ptf, 4);
+
+    Polygon(graphics->hdc, pti, 4);
+
+    RestoreDC(graphics->hdc, save_state);
+
+    return Ok;
+}
+
 /* FIXME: Compositing quality is not used anywhere except the getter/setter. */
 GpStatus WINGDIPAPI GdipGetCompositingQuality(GpGraphics *graphics,
     CompositingQuality *quality)

@@ -227,7 +227,7 @@
 @ stdcall GdipFillPolygon(ptr ptr ptr long long)
 @ stdcall GdipFillPolygonI(ptr ptr ptr long long)
 @ stub GdipFillRectangle
-@ stub GdipFillRectangleI
+@ stdcall GdipFillRectangleI(ptr ptr long long long long)
 @ stub GdipFillRectangles
 @ stub GdipFillRectanglesI
 @ stub GdipFillRegion

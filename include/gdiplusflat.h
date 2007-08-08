@@ -74,6 +74,7 @@ GpStatus WINGDIPAPI GdipFillPath(GpGraphics*,GpBrush*,GpPath*);
 GpStatus WINGDIPAPI GdipFillPie(GpGraphics*,GpBrush*,REAL,REAL,REAL,REAL,REAL,REAL);
 GpStatus WINGDIPAPI GdipFillPolygonI(GpGraphics*,GpBrush*,GDIPCONST GpPoint*,INT,
     GpFillMode);
+GpStatus WINGDIPAPI GdipFillRectangleI(GpGraphics*,GpBrush*,INT,INT,INT,INT);
 GpStatus WINGDIPAPI GdipGetCompositingQuality(GpGraphics*,CompositingQuality*);
 GpStatus WINGDIPAPI GdipGetInterpolationMode(GpGraphics*,InterpolationMode*);
 GpStatus WINGDIPAPI GdipGetPageScale(GpGraphics*,REAL*);
