@@ -523,7 +523,7 @@
 @ stub GdipSetEmpty
 @ stub GdipSetImageAttributesCachedBackground
 @ stdcall GdipSetImageAttributesColorKeys(ptr long long long long)
-@ stub GdipSetImageAttributesColorMatrix
+@ stdcall GdipSetImageAttributesColorMatrix(ptr long long ptr ptr long)
 @ stub GdipSetImageAttributesGamma
 @ stub GdipSetImageAttributesNoOp
 @ stub GdipSetImageAttributesOutputChannel

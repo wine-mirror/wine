@@ -62,6 +62,21 @@ GpStatus WINGDIPAPI GdipSetImageAttributesColorKeys(GpImageAttributes *imageattr
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipSetImageAttributesColorMatrix(GpImageAttributes *imageattr,
+    ColorAdjustType type, BOOL enableFlag, GDIPCONST ColorMatrix* colorMatrix,
+    GDIPCONST ColorMatrix* grayMatrix, ColorMatrixFlags flags)
+{
+    static int calls;
+
+    if(!imageattr || !colorMatrix || !grayMatrix)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetImageAttributesWrapMode(GpImageAttributes *imageAttr,
     WrapMode wrap, ARGB argb, BOOL clamp)
 {

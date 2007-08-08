@@ -19,6 +19,18 @@
 #ifndef _GDIPLUSCOLORMATRIX_H
 #define _GDIPLUSCOLORMATRIX_H
 
+struct ColorMatrix
+{
+    REAL m[5][5];
+};
+
+enum ColorMatrixFlags
+{
+    ColorMatrixFlagsDefault    = 0,
+    ColorMatrixFlagsSkipGrays  = 1,
+    ColorMatrixFlagsAltGray    = 2
+};
+
 enum ColorAdjustType
 {
     ColorAdjustTypeDefault,
@@ -33,6 +45,8 @@ enum ColorAdjustType
 #ifndef __cplusplus
 
 typedef enum ColorAdjustType ColorAdjustType;
+typedef enum ColorMatrixFlags ColorMatrixFlags;
+typedef struct ColorMatrix ColorMatrix;
 
 #endif  /* end of c typedefs */
 

@@ -203,6 +203,9 @@ GpStatus WINGDIPAPI GdipCreateImageAttributes(GpImageAttributes**);
 GpStatus WINGDIPAPI GdipDisposeImageAttributes(GpImageAttributes*);
 GpStatus WINGDIPAPI GdipSetImageAttributesColorKeys(GpImageAttributes*,
     ColorAdjustType,BOOL,ARGB,ARGB);
+GpStatus WINGDIPAPI GdipSetImageAttributesColorMatrix(GpImageAttributes*,
+    ColorAdjustType,BOOL,GDIPCONST ColorMatrix*,GDIPCONST ColorMatrix*,
+    ColorMatrixFlags);
 GpStatus WINGDIPAPI GdipSetImageAttributesWrapMode(GpImageAttributes*,WrapMode,
     ARGB,BOOL);
 
