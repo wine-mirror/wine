@@ -104,6 +104,15 @@ struct GpPathGradient{
     GpPointF focus;
 };
 
+struct GpLineGradient{
+    GpBrush brush;
+    GpPointF startpoint;
+    GpPointF endpoint;
+    ARGB startcolor;
+    ARGB endcolor;
+    GpWrapMode wrap;
+};
+
 struct GpPath{
     GpFillMode fill;
     GpPathData pathdata;

@@ -77,6 +77,35 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
+    GDIPCONST GpPointF* endpoint, ARGB startcolor, ARGB endcolor,
+    GpWrapMode wrap, GpLineGradient **line)
+{
+    COLORREF col = ARGB2COLORREF(startcolor);
+
+    if(!line || !startpoint || !endpoint)
+        return InvalidParameter;
+
+    *line = GdipAlloc(sizeof(GpLineGradient));
+    if(!*line)  return OutOfMemory;
+
+    (*line)->brush.lb.lbStyle = BS_SOLID;
+    (*line)->brush.lb.lbColor = col;
+    (*line)->brush.lb.lbHatch = 0;
+    (*line)->brush.gdibrush = CreateSolidBrush(col);
+    (*line)->brush.bt = BrushTypeLinearGradient;
+
+    (*line)->startpoint.X = startpoint->X;
+    (*line)->startpoint.Y = startpoint->Y;
+    (*line)->endpoint.X = endpoint->X;
+    (*line)->endpoint.Y = endpoint->Y;
+    (*line)->startcolor = startcolor;
+    (*line)->endcolor = endcolor;
+    (*line)->wrap = wrap;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
     INT count, GpWrapMode wrap, GpPathGradient **grad)
 {

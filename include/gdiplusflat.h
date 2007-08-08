@@ -49,6 +49,8 @@ GpStatus WINGDIPAPI GdipSetPenWidth(GpPen*,REAL);
 
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC,GpGraphics**);
 GpStatus WINGDIPAPI GdipCreateFromHWND(HWND,GpGraphics**);
+GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF*,GDIPCONST GpPointF*,
+    ARGB,ARGB,GpWrapMode,GpLineGradient**);
 GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE,BOOL,GpMetafile**);
 GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE,BOOL,
     GDIPCONST WmfPlaceableFileHeader*,GpMetafile**);

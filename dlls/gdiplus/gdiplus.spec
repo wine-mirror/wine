@@ -98,7 +98,7 @@
 @ stub GdipCreateHalftonePalette
 @ stub GdipCreateHatchBrush
 @ stdcall GdipCreateImageAttributes(ptr)
-@ stub GdipCreateLineBrush
+@ stdcall GdipCreateLineBrush(ptr ptr long long long ptr)
 @ stub GdipCreateLineBrushFromRect
 @ stub GdipCreateLineBrushFromRectI
 @ stub GdipCreateLineBrushFromRectWithAngle
