@@ -75,6 +75,7 @@ struct DefaultHandler
   const IDataObjectVtbl*     lpvtblIDataObject;
   const IRunnableObjectVtbl* lpvtblIRunnableObject;
   const IAdviseSinkVtbl     *lpvtblIAdviseSink;
+  const IPersistStorageVtbl *lpvtblIPersistStorage;
 
   /* Reference count of this object */
   LONG ref;
@@ -87,6 +88,8 @@ struct DefaultHandler
 
   /* IUnknown implementation of the datacache. */
   IUnknown* dataCache;
+  /* IPersistStorage implementation of the datacache. */
+  IPersistStorage* dataCache_PersistStg;
 
   /* Client site for the embedded object. */
   IOleClientSite* clientSite;
@@ -151,6 +154,11 @@ static inline DefaultHandler *impl_from_IAdviseSink( IAdviseSink *iface )
     return (DefaultHandler *)((char*)iface - FIELD_OFFSET(DefaultHandler, lpvtblIAdviseSink));
 }
 
+static inline DefaultHandler *impl_from_IPersistStorage( IPersistStorage *iface )
+{
+    return (DefaultHandler *)((char*)iface - FIELD_OFFSET(DefaultHandler, lpvtblIPersistStorage));
+}
+
 static void DefaultHandler_Destroy(DefaultHandler* This);
 
 static inline BOOL object_is_running(DefaultHandler *This)
@@ -193,8 +201,9 @@ static HRESULT WINAPI DefaultHandler_NDIUnknown_QueryInterface(
   else if (IsEqualIID(&IID_IRunnableObject, riid))
     *ppvObject = (IRunnableObject*)&This->lpvtblIRunnableObject;
   else if (IsEqualIID(&IID_IPersist, riid) ||
-           IsEqualIID(&IID_IPersistStorage, riid) ||
-           IsEqualIID(&IID_IViewObject, riid) ||
+           IsEqualIID(&IID_IPersistStorage, riid))
+    *ppvObject = &This->lpvtblIPersistStorage;
+  else if (IsEqualIID(&IID_IViewObject, riid) ||
            IsEqualIID(&IID_IViewObject2, riid) ||
            IsEqualIID(&IID_IOleCache, riid) ||
            IsEqualIID(&IID_IOleCache2, riid))
@@ -1451,6 +1460,140 @@ static void WINAPI DefaultHandler_IAdviseSink_OnClose(
     DefaultHandler_Stop(This);
 }
 
+
+/************************************************************************
+ * DefaultHandler_IPersistStorage_QueryInterface
+ *
+ */
+static HRESULT WINAPI DefaultHandler_IPersistStorage_QueryInterface(
+            IPersistStorage*     iface,
+            REFIID               riid,
+            void**               ppvObject)
+{
+  DefaultHandler *This = impl_from_IPersistStorage(iface);
+
+  return IUnknown_QueryInterface(This->outerUnknown, riid, ppvObject);
+}
+
+/************************************************************************
+ * DefaultHandler_IPersistStorage_AddRef
+ *
+ */
+static ULONG WINAPI DefaultHandler_IPersistStorage_AddRef(
+            IPersistStorage*     iface)
+{
+  DefaultHandler *This = impl_from_IPersistStorage(iface);
+
+  return IUnknown_AddRef(This->outerUnknown);
+}
+
+/************************************************************************
+ * DefaultHandler_IPersistStorage_Release
+ *
+ */
+static ULONG WINAPI DefaultHandler_IPersistStorage_Release(
+            IPersistStorage*     iface)
+{
+  DefaultHandler *This = impl_from_IPersistStorage(iface);
+
+  return IUnknown_Release(This->outerUnknown);
+}
+
+/************************************************************************
+ * DefaultHandler_IPersistStorage_GetClassID
+ *
+ */
+static HRESULT WINAPI DefaultHandler_IPersistStorage_GetClassID(
+            IPersistStorage*     iface,
+            CLSID*               clsid)
+{
+  DefaultHandler *This = impl_from_IPersistStorage(iface);
+
+  return IPersistStorage_GetClassID(This->dataCache_PersistStg, clsid);
+}
+
+/************************************************************************
+ * DefaultHandler_IPersistStorage_IsDirty
+ *
+ */
+static HRESULT WINAPI DefaultHandler_IPersistStorage_IsDirty(
+            IPersistStorage*     iface)
+{
+  DefaultHandler *This = impl_from_IPersistStorage(iface);
+
+  return IPersistStorage_IsDirty(This->dataCache_PersistStg);
+}
+
+/************************************************************************
+ * DefaultHandler_IPersistStorage_InitNew
+ *
+ */
+static HRESULT WINAPI DefaultHandler_IPersistStorage_InitNew(
+           IPersistStorage*     iface,
+           IStorage*            pStg)
+{
+  DefaultHandler *This = impl_from_IPersistStorage(iface);
+
+  return IPersistStorage_InitNew(This->dataCache_PersistStg, pStg);
+}
+
+
+/************************************************************************
+ * DefaultHandler_IPersistStorage_Load
+ *
+ */
+static HRESULT WINAPI DefaultHandler_IPersistStorage_Load(
+           IPersistStorage*     iface,
+           IStorage*            pStg)
+{
+  DefaultHandler *This = impl_from_IPersistStorage(iface);
+
+  return IPersistStorage_Load(This->dataCache_PersistStg, pStg);
+}
+
+
+/************************************************************************
+ * DefaultHandler_IPersistStorage_Save
+ *
+ */
+static HRESULT WINAPI DefaultHandler_IPersistStorage_Save(
+           IPersistStorage*     iface,
+           IStorage*            pStgSave,
+           BOOL                 fSaveAsLoad)
+{
+  DefaultHandler *This = impl_from_IPersistStorage(iface);
+
+  return IPersistStorage_Save(This->dataCache_PersistStg, pStgSave, fSaveAsLoad);
+}
+
+
+/************************************************************************
+ * DefaultHandler_IPersistStorage_SaveCompleted
+ *
+ */
+static HRESULT WINAPI DefaultHandler_IPersistStorage_SaveCompleted(
+           IPersistStorage*     iface,
+           IStorage*            pStgNew)
+{
+  DefaultHandler *This = impl_from_IPersistStorage(iface);
+
+  return IPersistStorage_SaveCompleted(This->dataCache_PersistStg, pStgNew);
+}
+
+
+/************************************************************************
+ * DefaultHandler_IPersistStorage_HandsOffStorage
+ *
+ */
+static HRESULT WINAPI DefaultHandler_IPersistStorage_HandsOffStorage(
+            IPersistStorage*     iface)
+{
+  DefaultHandler *This = impl_from_IPersistStorage(iface);
+
+  return IPersistStorage_HandsOffStorage(This->dataCache_PersistStg);
+}
+
+
 /*
  * Virtual function tables for the DefaultHandler class.
  */
@@ -1529,6 +1672,20 @@ static const IAdviseSinkVtbl DefaultHandler_IAdviseSink_VTable =
   DefaultHandler_IAdviseSink_OnClose
 };
 
+static const IPersistStorageVtbl DefaultHander_IPersistStorage_VTable =
+{
+  DefaultHandler_IPersistStorage_QueryInterface,
+  DefaultHandler_IPersistStorage_AddRef,
+  DefaultHandler_IPersistStorage_Release,
+  DefaultHandler_IPersistStorage_GetClassID,
+  DefaultHandler_IPersistStorage_IsDirty,
+  DefaultHandler_IPersistStorage_InitNew,
+  DefaultHandler_IPersistStorage_Load,
+  DefaultHandler_IPersistStorage_Save,
+  DefaultHandler_IPersistStorage_SaveCompleted,
+  DefaultHandler_IPersistStorage_HandsOffStorage
+};
+
 /*********************************************************
  * Methods implementation for the DefaultHandler class.
  */
@@ -1537,6 +1694,7 @@ static DefaultHandler* DefaultHandler_Construct(
   LPUNKNOWN pUnkOuter)
 {
   DefaultHandler* This = NULL;
+  HRESULT hr;
 
   /*
    * Allocate space for the object.
@@ -1574,11 +1732,14 @@ static DefaultHandler* DefaultHandler_Construct(
    * We aggregate with the datacache. Make sure we pass our outer
    * unknown as the datacache's outer unknown.
    */
-  CreateDataCache(This->outerUnknown,
-		  clsid,
-		  &IID_IUnknown,
-		  (void**)&This->dataCache);
-
+  hr = CreateDataCache(This->outerUnknown,
+                       clsid,
+                       &IID_IUnknown,
+                       (void**)&This->dataCache);
+  if(SUCCEEDED(hr))
+    hr = IUnknown_QueryInterface(This->dataCache, &IID_IPersistStorage, (void**)&This->dataCache_PersistStg);
+  if(FAILED(hr))
+    ERR("Unexpected error creating data cache\n");
   /*
    * Initialize the other data members of the class.
    */
@@ -1612,7 +1773,9 @@ static void DefaultHandler_Destroy(
   /* Release our reference to the data cache. */
   if (This->dataCache)
   {
+    IPersistStorage_Release(This->dataCache_PersistStg);
     IUnknown_Release(This->dataCache);
+    This->dataCache_PersistStg = NULL;
     This->dataCache = NULL;
   }
 
