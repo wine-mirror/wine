@@ -82,9 +82,11 @@ struct WineGLInfo {
     int glxVersion[2];
 
     const char *glxServerVersion;
+    const char *glxServerVendor;
     const char *glxServerExtensions;
 
     const char *glxClientVersion;
+    const char *glxClientVendor;
     const char *glxClientExtensions;
 
     const char *glxExtensions;
@@ -148,6 +150,8 @@ static WineGLPixelFormat *WineGLPixelFormatList;
 static int WineGLPixelFormatListSize = 0;
 
 static void X11DRV_WineGL_LoadExtensions(void);
+static BOOL glxRequireVersion(int requiredVersion);
+static BOOL glxRequireExtension(const char *requiredExtension);
 
 static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
   TRACE("  - size / version : %d / %d\n", ppfd->nSize, ppfd->nVersion);
@@ -318,9 +322,11 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     pglXQueryVersion(gdi_display, &WineGLInfo.glxVersion[0], &WineGLInfo.glxVersion[1]);
 
     WineGLInfo.glxServerVersion = pglXQueryServerString(gdi_display, screen, GLX_VERSION);
+    WineGLInfo.glxServerVendor = pglXQueryServerString(gdi_display, screen, GLX_VENDOR);
     WineGLInfo.glxServerExtensions = pglXQueryServerString(gdi_display, screen, GLX_EXTENSIONS);
 
     WineGLInfo.glxClientVersion = pglXGetClientString(gdi_display, GLX_VERSION);
+    WineGLInfo.glxClientVendor = pglXGetClientString(gdi_display, GLX_VENDOR);
     WineGLInfo.glxClientExtensions = pglXGetClientString(gdi_display, GLX_EXTENSIONS);
 
     WineGLInfo.glxExtensions = pglXQueryExtensionsString(gdi_display, screen);
@@ -330,9 +336,9 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     TRACE("GL renderer            : %s.\n", pglGetString(GL_RENDERER));
     TRACE("GLX version            : %d.%d.\n", WineGLInfo.glxVersion[0], WineGLInfo.glxVersion[1]);
     TRACE("Server GLX version     : %s.\n", WineGLInfo.glxServerVersion);
-    TRACE("Server GLX vendor:     : %s.\n", pglXQueryServerString(gdi_display, screen, GLX_VENDOR));
+    TRACE("Server GLX vendor:     : %s.\n", WineGLInfo.glxServerVendor);
     TRACE("Client GLX version     : %s.\n", WineGLInfo.glxClientVersion);
-    TRACE("Client GLX vendor:     : %s.\n", pglXGetClientString(gdi_display, GLX_VENDOR));
+    TRACE("Client GLX vendor:     : %s.\n", WineGLInfo.glxClientVendor);
     TRACE("Direct rendering enabled: %s\n", WineGLInfo.glxDirect ? "True" : "False");
 
     if(vis) XFree(vis);
@@ -348,7 +354,6 @@ static BOOL has_opengl(void)
 {
     static int init_done;
     static void *opengl_handle;
-    const char *glx_extensions;
 
     int error_base, event_base;
 
@@ -449,55 +454,54 @@ LOAD_FUNCPTR(glXFreeMemoryNV)
      * depends on the reported GLX client / server version and on the client / server extension list.
      * Those don't have to be the same.
      *
-     * In general the server GLX information should be used in case of indirect rendering. When direct
-     * rendering is used, the OpenGL client library is responsible for which GLX calls are available.
-     * Nvidia's OpenGL drivers are the best in terms of GLX features. At the moment of writing their
-     * 8762 drivers support 1.3 for the server and 1.4 for the client and they support lots of extensions.
-     * Unfortunately it is much more complicated for Mesa/DRI-based drivers and ATI's drivers.
-     * Both sets of drivers report a server version of 1.2 and the client version can be 1.3 or 1.4.
-     * Further, in case of at least ATI's drivers, one crucial extension needed for our pixel format code
-     * is only available in the list of server extensions and not in the client list.
+     * In general the server GLX information lists the capabilities in case of indirect rendering.
+     * When direct rendering is used, the OpenGL client library is responsible for which GLX calls are
+     * available and in that case the client GLX informat can be used.
+     * OpenGL programs should use the 'intersection' of both sets of information which is advertised
+     * in the GLX version/extension list. When a program does this it works for certain for both
+     * direct and indirect rendering.
      *
-     * The versioning checks below try to take into account the comments from above.
+     * The problem we are having in this area is that ATI's Linux drivers are broken. For some reason
+     * they haven't added some very important GLX extensions like GLX_SGIX_fbconfig to their client
+     * extension list which causes this extension not to be listed. (Wine requires this extension).
+     * ATI advertises a GLX client version of 1.3 which implies that this fbconfig extension among
+     * pbuffers is around.
+     *
+     * In order to provide users of Ati's proprietary drivers with OpenGL support, we need to detect
+     * the ATI drivers and from then on use GLX client information for them.
      */
 
-    /* Depending on the use of direct or indirect rendering we need either the list of extensions
-     * exported by the client or by the server.
-     */
-    if(WineGLInfo.glxDirect)
-        glx_extensions = WineGLInfo.glxClientExtensions;
-    else
-        glx_extensions = WineGLInfo.glxServerExtensions;
-
-    /* Based on the default opengl context we decide whether direct or indirect rendering is used.
-     * In case of indirect rendering we check if the GLX version of the server is 1.2 and else
-     * the client version is checked.
-     */
-    if ((!WineGLInfo.glxDirect && !strcmp("1.2", WineGLInfo.glxServerVersion)) ||
-        (WineGLInfo.glxDirect && !strcmp("1.2", WineGLInfo.glxClientVersion)))
-    {
-        if (NULL != strstr(glx_extensions, "GLX_SGIX_fbconfig")) {
-            pglXChooseFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfigSGIX");
-            pglXGetFBConfigAttrib = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttribSGIX");
-            pglXGetVisualFromFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfigSGIX");
-        } else {
-            ERR(" glx_version is %s and GLX_SGIX_fbconfig extension is unsupported. Expect problems.\n", WineGLInfo.glxClientVersion);
-        }
-    } else {
+    if(glxRequireVersion(3)) {
         pglXChooseFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfig");
         pglXGetFBConfigAttrib = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
         pglXGetVisualFromFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfig");
+        pglXQueryDrawable = (void*)pglXGetProcAddressARB((const GLubyte *) "glXQueryDrawable");
+    } else if(glxRequireExtension("GLX_SGIX_fbconfig")) {
+        pglXChooseFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfigSGIX");
+        pglXGetFBConfigAttrib = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttribSGIX");
+        pglXGetVisualFromFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfigSGIX");
+
+        /* The mesa libGL client library seems to forward glXQueryDrawable to the Xserver, so only
+         * enable this function when the Xserver understand GLX 1.3 or newer
+         */
+        pglXQueryDrawable = NULL;
+     } else if(strcmp("ATI", WineGLInfo.glxClientVendor) == 0) {
+        TRACE("Overriding ATI GLX capabilities!\n");
+        pglXChooseFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfig");
+        pglXGetFBConfigAttrib = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
+        pglXGetVisualFromFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfig");
+        pglXQueryDrawable = (void*)pglXGetProcAddressARB((const GLubyte *) "glXQueryDrawable");
+
+        /* Use client GLX information in case of the ATI drivers. We override the
+         * capabilities over here and not somewhere else as ATI might better their
+         * life in the future. In case they release proper drivers this block of
+         * code won't be called. */
+        WineGLInfo.glxExtensions = WineGLInfo.glxClientExtensions;
+    } else {
+         ERR(" glx_version is %s and GLX_SGIX_fbconfig extension is unsupported. Expect problems.\n", WineGLInfo.glxServerVersion);
     }
 
-    /* The mesa libGL client library seems to forward glXQueryDrawable to the Xserver, so only
-     * enable this function when the Xserver understand GLX 1.3 or newer
-     */
-    if (!strcmp("1.2", WineGLInfo.glxServerVersion))
-        pglXQueryDrawable = NULL;
-    else
-        pglXQueryDrawable = wine_dlsym(RTLD_DEFAULT, "glXQueryDrawable", NULL, 0);
-
-    if (NULL != strstr(glx_extensions, "GLX_ATI_render_texture")) {
+    if(glxRequireExtension("GLX_ATI_render_texture")) {
         pglXBindTexImageARB = (void*)pglXGetProcAddressARB((const GLubyte *) "glXBindTexImageARB");
         pglXReleaseTexImageARB = (void*)pglXGetProcAddressARB((const GLubyte *) "glXReleaseTexImageARB");
         pglXDrawableAttribARB = (void*)pglXGetProcAddressARB((const GLubyte *) "glXDrawableAttribARB");
@@ -2915,7 +2919,7 @@ static BOOL glxRequireVersion(int requiredVersion)
 
 static BOOL glxRequireExtension(const char *requiredExtension)
 {
-    if (strstr(WineGLInfo.glxClientExtensions, requiredExtension) == NULL) {
+    if (strstr(WineGLInfo.glxExtensions, requiredExtension) == NULL) {
         return FALSE;
     }
 
