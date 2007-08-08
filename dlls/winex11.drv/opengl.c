@@ -1009,105 +1009,180 @@ static int ConvertPixelFormatGLXtoWGL(Display *display, int fmt_id)
  */
 int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev, 
 			     const PIXELFORMATDESCRIPTOR *ppfd) {
-  WineGLPixelFormat *fmt;
-  int ret = 0;
-  int value = 0;
-
-  if (!has_opengl()) {
-    ERR("No libGL on this box - disabling OpenGL support !\n");
-    return 0;
-  }
-
-  if (TRACE_ON(opengl)) {
-    TRACE("(%p,%p)\n", physDev, ppfd);
-
-    dump_PIXELFORMATDESCRIPTOR((const PIXELFORMATDESCRIPTOR *) ppfd);
-  }
-
-  wine_tsx11_lock(); 
-  if(!visual) {
-    ERR("Can't get an opengl visual!\n");
-    goto choose_exit;
-  }
-
-  fmt = ConvertPixelFormatWGLtoGLX(gdi_display, 1 /* main visual */, FALSE /* offscreen */, &value);
-  /* In case an fbconfig was found, check if it matches to the requirements of the ppfd */
-  if(!fmt) {
-    ERR("Can't find a matching FBCONFIG_ID for VISUAL_ID 0x%lx!\n", visual->visualid);
-  } else {
-    int dwFlags = 0;
-    int iPixelType = 0;
+    WineGLPixelFormat *fmt = NULL;
+    int ret = 0;
+    int nPixelFormats;
     int value = 0;
+    int i = 0;
+    int bestFormat = -1;
+    int bestColor = -1;
+    int bestAlpha = -1;
+    int bestDepth = -1;
+    int bestStencil = -1;
+    int bestAux = -1;
+    int score;
 
-    /* Pixel type */
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_RENDER_TYPE, &value);
-    if (value & GLX_RGBA_BIT)
-      iPixelType = PFD_TYPE_RGBA;
-    else
-      iPixelType = PFD_TYPE_COLORINDEX;
-
-    if (ppfd->iPixelType != iPixelType) {
-      TRACE("pixel type mismatch\n");
-      goto choose_exit;
+    if (!has_opengl()) {
+        ERR("No libGL on this box - disabling OpenGL support !\n");
+        return 0;
     }
 
-    /* Doublebuffer */
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &value); if (value) dwFlags |= PFD_DOUBLEBUFFER;
-    if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) && (ppfd->dwFlags & PFD_DOUBLEBUFFER)) {
-      if (!(dwFlags & PFD_DOUBLEBUFFER)) {
-        TRACE("dbl buffer mismatch\n");
-        goto choose_exit;
-      }
+    if (TRACE_ON(opengl)) {
+        TRACE("(%p,%p)\n", physDev, ppfd);
+
+        dump_PIXELFORMATDESCRIPTOR((const PIXELFORMATDESCRIPTOR *) ppfd);
     }
 
-    /* Stereo */
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_STEREO, &value); if (value) dwFlags |= PFD_STEREO;
-    if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE) && (ppfd->dwFlags & PFD_STEREO)) {
-      if (!(dwFlags & PFD_STEREO)) {
-        TRACE("stereo mismatch\n");
-        goto choose_exit;
-      }
+    wine_tsx11_lock();
+    ConvertPixelFormatWGLtoGLX(gdi_display, 0, FALSE /* offscreen */, &nPixelFormats);
+    for(i=0; i<nPixelFormats; i++)
+    {
+        int dwFlags = 0;
+        int iPixelType = 0;
+        int alpha=0, color=0, depth=0, stencil=0, aux=0;
+
+        fmt = ConvertPixelFormatWGLtoGLX(gdi_display, i+1 /* 1-based index */, FALSE /* offscreen */, &value);
+        score = 0;
+
+        /* Pixel type */
+        pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_RENDER_TYPE, &value);
+        if (value & GLX_RGBA_BIT)
+            iPixelType = PFD_TYPE_RGBA;
+        else
+            iPixelType = PFD_TYPE_COLORINDEX;
+
+        if (ppfd->iPixelType != iPixelType)
+        {
+            TRACE("pixel type mismatch for iPixelFormat=%d\n", i+1);
+            continue;
+        }
+
+        /* Doublebuffer:
+         * Ignore doublebuffer when PFD_DOUBLEBUFFER_DONTCARE is set. Further if the flag
+         * is not set, we must return a format without double buffering. */
+        pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &value);
+        if (value) dwFlags |= PFD_DOUBLEBUFFER;
+        if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) && ((ppfd->dwFlags^dwFlags) & PFD_DOUBLEBUFFER))
+        {
+            TRACE("dbl buffer mismatch for iPixelFormat=%d\n", i+1);
+            continue;
+        }
+
+        /* Stereo:
+         * Ignore stereo when PFD_STEREO_DONTCARE is set. Further if the flag
+         * is not set, we must return a format without stereo support. */
+        pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_STEREO, &value);
+        if (value) dwFlags |= PFD_STEREO;
+        if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE) && ((ppfd->dwFlags^dwFlags) & PFD_STEREO))
+        {
+            TRACE("stereo mismatch for iPixelFormat=%d\n", i+1);
+            continue;
+        }
+
+        pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_BUFFER_SIZE, &color); /* cColorBits */
+        pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ALPHA_SIZE, &alpha); /* cAlphaBits */
+        pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DEPTH_SIZE, &depth); /* cDepthBits */
+        pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_STENCIL_SIZE, &stencil); /* cStencilBits */
+        pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_AUX_BUFFERS, &aux); /* cAuxBuffers */
+
+        /* Below we will do a number of checks to select the 'best' pixelformat.
+         * We assume the precedence cColorBits > cAlphaBits > cDepthBits > cStencilBits -> cAuxBuffers.
+         * The code works by trying to match the most important options as close as possible.
+         * When a reasonable format is found, we will try to match more options. */
+
+        /* Color bits */
+        if( ((ppfd->cColorBits > bestColor) && (color > bestColor)) ||
+            ((color >= ppfd->cColorBits) && (color < bestColor)) )
+        {
+            bestAlpha = alpha;
+            bestColor = color;
+            bestDepth = depth;
+            bestStencil = stencil;
+            bestAux = aux;
+            bestFormat = i;
+            continue;
+        } else if(bestColor != color) {  /* Do further checks if the format is compatible */
+            TRACE("color mismatch for iPixelFormat=%d\n", i+1);
+            continue;
+        }
+
+        /* Alpha bits */
+        if( ((ppfd->cAlphaBits > bestAlpha) && (alpha > bestAlpha)) ||
+            ((alpha >= ppfd->cAlphaBits) && (alpha < bestAlpha)) )
+        {
+            bestAlpha = alpha;
+            bestColor = color;
+            bestDepth = depth;
+            bestStencil = stencil;
+            bestAux = aux;
+            bestFormat = i;
+            continue;
+        } else if(bestAlpha != alpha) {
+            TRACE("alpha mismatch for iPixelFormat=%d\n", i+1);
+            continue;
+        }
+
+        /* Depth bits */
+        if( ((ppfd->cDepthBits > bestDepth) && (depth > bestDepth)) ||
+            ((depth >= ppfd->cDepthBits) && (depth < bestDepth)) )
+        {
+            bestAlpha = alpha;
+            bestColor = color;
+            bestDepth = depth;
+            bestStencil = stencil;
+            bestAux = aux;
+            bestFormat = i;
+            continue;
+        } else if(bestDepth != depth) {
+            TRACE("depth mismatch for iPixelFormat=%d\n", i+1);
+            continue;
+        }
+
+        /* Stencil bits */
+        if( ((ppfd->cStencilBits > bestStencil) && (stencil > bestStencil)) ||
+            ((stencil >= ppfd->cStencilBits) && (stencil < bestStencil)) )
+        {
+            bestAlpha = alpha;
+            bestColor = color;
+            bestDepth = depth;
+            bestStencil = stencil;
+            bestAux = aux;
+            bestFormat = i;
+            continue;
+        } else if(bestStencil != stencil) {
+            TRACE("stencil mismatch for iPixelFormat=%d\n", i+1);
+            continue;
+        }
+
+        /* Aux buffers */
+        if( ((ppfd->cAuxBuffers > bestAux) && (aux > bestAux)) ||
+            ((aux >= ppfd->cAuxBuffers) && (aux < bestAux)) )
+        {
+            bestAlpha = alpha;
+            bestColor = color;
+            bestDepth = depth;
+            bestStencil = stencil;
+            bestAux = aux;
+            bestFormat = i;
+            continue;
+        } else if(bestAux != aux) {
+            TRACE("aux mismatch for iPixelFormat=%d\n", i+1);
+            continue;
+        }
     }
 
-    /* Alpha bits */
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ALPHA_SIZE, &value);
-    if (ppfd->iPixelType==PFD_TYPE_RGBA && ppfd->cAlphaBits && !value) {
-      TRACE("alpha mismatch\n");
-      goto choose_exit;
+    if(bestFormat == -1) {
+        TRACE("No matching mode was found returning 0\n");
+        ret = 0;
+    }
+    else {
+        ret = bestFormat+1; /* the return value should be a 1-based index */
+        TRACE("Successfully found a matching mode, returning index: %d %x\n", ret, WineGLPixelFormatList[bestFormat-1].fmt_id);
     }
 
-    /* Depth bits */
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DEPTH_SIZE, &value);
-    if (ppfd->cDepthBits && !value) {
-      TRACE("depth mismatch\n");
-      goto choose_exit;
-    }
+    wine_tsx11_unlock();
 
-    /* Stencil bits */
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_STENCIL_SIZE, &value);
-    if (ppfd->cStencilBits && !value) {
-      TRACE("stencil mismatch\n");
-      goto choose_exit;
-    }
-
-    /* Aux buffers */
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_AUX_BUFFERS, &value);
-    if (ppfd->cAuxBuffers && !value) {
-      TRACE("aux mismatch\n");
-      goto choose_exit;
-    }
-
-    /* When we pass all the checks we have found a matching format :) */
-    ret = 1;
-    TRACE("Successfully found a matching mode, returning index: %d\n", ret);
-  }
-
-choose_exit:
-  if(!ret)
-    TRACE("No matching mode was found returning 0\n");
-
-  wine_tsx11_unlock();
-  return ret;
+    return ret;
 }
 
 /**
