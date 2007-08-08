@@ -5010,6 +5010,7 @@ UINT
 
 IUnknown *
 IWineD3D *
+IWineD3DClipper *
 
 %%winedos.dll
 
