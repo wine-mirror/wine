@@ -318,10 +318,6 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
 GpStatus WINGDIPAPI GdipCreateBitmapFromStream(IStream* stream,
     GpBitmap **bitmap)
 {
-    BITMAPINFO bmi;
-    BITMAPCOREHEADER* bmch;
-    OLE_HANDLE hbm;
-    HDC hdc;
     GpStatus stat;
 
     stat = GdipLoadImageFromStream(stream, (GpImage**) bitmap);
@@ -329,30 +325,11 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromStream(IStream* stream,
     if(stat != Ok)
         return stat;
 
-    /* FIXME: make sure it's actually a bitmap */
-    (*bitmap)->image.type = ImageTypeBitmap;
-    (*bitmap)->width = ipicture_pixel_width((*bitmap)->image.picture);
-    (*bitmap)->height = ipicture_pixel_height((*bitmap)->image.picture);
-
-    /* get the pixel format */
-    IPicture_get_Handle((*bitmap)->image.picture, &hbm);
-    IPicture_get_CurDC((*bitmap)->image.picture, &hdc);
-
-    bmch = (BITMAPCOREHEADER*) (&bmi.bmiHeader);
-    bmch->bcSize = sizeof(BITMAPCOREHEADER);
-
-    if(!hdc){
-        HBITMAP old;
-        hdc = GetDC(0);
-        old = SelectObject(hdc, (HBITMAP)hbm);
-        GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
-        SelectObject(hdc, old);
-        ReleaseDC(0, hdc);
+    if((*bitmap)->image.type != ImageTypeBitmap){
+        IPicture_Release((*bitmap)->image.picture);
+        GdipFree(bitmap);
+        return GenericError; /* FIXME: what error to return? */
     }
-    else
-        GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
-
-    (*bitmap)->format = (bmch->bcBitCount << 8) | PixelFormatGDI;
 
     return Ok;
 }
@@ -594,21 +571,68 @@ GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image,
 
 GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
 {
+    IPicture *pic;
+    short type;
+
     if(!stream || !image)
         return InvalidParameter;
 
-    *image = GdipAlloc(sizeof(GpImage));
-    if(!*image) return OutOfMemory;
-
     if(OleLoadPicture(stream, 0, FALSE, &IID_IPicture,
-        (LPVOID*) &((*image)->picture)) != S_OK){
+        (LPVOID*) &pic) != S_OK){
         TRACE("Could not load picture\n");
-        GdipFree(*image);
         return GenericError;
     }
 
-    /* FIXME: use IPicture_get_Type to get image type? */
-    (*image)->type = ImageTypeUnknown;
+    IStream_AddRef(stream);
+
+    IPicture_get_Type(pic, &type);
+
+    if(type == PICTYPE_BITMAP){
+        BITMAPINFO bmi;
+        BITMAPCOREHEADER* bmch;
+        OLE_HANDLE hbm;
+        HDC hdc;
+
+        *image = GdipAlloc(sizeof(GpBitmap));
+        if(!*image) return OutOfMemory;
+        (*image)->type = ImageTypeBitmap;
+
+        (*((GpBitmap**) image))->width = ipicture_pixel_width(pic);
+        (*((GpBitmap**) image))->height = ipicture_pixel_height(pic);
+
+        /* get the pixel format */
+        IPicture_get_Handle(pic, &hbm);
+        IPicture_get_CurDC(pic, &hdc);
+
+        bmch = (BITMAPCOREHEADER*) (&bmi.bmiHeader);
+        bmch->bcSize = sizeof(BITMAPCOREHEADER);
+
+        if(!hdc){
+            HBITMAP old;
+            hdc = GetDC(0);
+            old = SelectObject(hdc, (HBITMAP)hbm);
+            GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+            SelectObject(hdc, old);
+            ReleaseDC(0, hdc);
+        }
+        else
+            GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+
+        (*((GpBitmap**) image))->format = (bmch->bcBitCount << 8) | PixelFormatGDI;
+    }
+    else if(type == PICTYPE_METAFILE || type == PICTYPE_ENHMETAFILE){
+        /* FIXME: missing initialization code */
+        *image = GdipAlloc(sizeof(GpMetafile));
+        if(!*image) return OutOfMemory;
+        (*image)->type = ImageTypeMetafile;
+    }
+    else{
+        *image = GdipAlloc(sizeof(GpImage));
+        if(!*image) return OutOfMemory;
+        (*image)->type = ImageTypeUnknown;
+    }
+
+    (*image)->picture = pic;
 
     return Ok;
 }
