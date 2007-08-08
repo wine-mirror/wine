@@ -3112,7 +3112,7 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
  *****************************************************************************/
 HRESULT WINAPI
 DirectDrawCreateClipper(DWORD Flags,
-                        IDirectDrawClipper **Clipper,
+                        LPDIRECTDRAWCLIPPER *Clipper,
                         IUnknown *UnkOuter)
 {
     IDirectDrawClipperImpl* object;
