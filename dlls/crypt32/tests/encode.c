@@ -1532,8 +1532,8 @@ static void test_decodeAltName(DWORD dwEncoding)
         ok(info->rgAltEntry[0].dwAltNameChoice == CERT_ALT_NAME_REGISTERED_ID,
          "Expected CERT_ALT_NAME_REGISTERED_ID, got %d\n",
          info->rgAltEntry[0].dwAltNameChoice);
-        ok(!strcmp(info->rgAltEntry[0].pszRegisteredID, "1.2.3"),
-         "Expected OID 1.2.3, got %s\n", info->rgAltEntry[0].pszRegisteredID);
+        ok(!strcmp(U(info->rgAltEntry[0]).pszRegisteredID, "1.2.3"),
+           "Expected OID 1.2.3, got %s\n", U(info->rgAltEntry[0]).pszRegisteredID);
         LocalFree(buf);
     }
     ret = CryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME,
