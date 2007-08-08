@@ -1431,7 +1431,7 @@ static void test_granted_access(HANDLE handle, ACCESS_MASK access, int line)
     status = pNtQueryObject( handle, ObjectBasicInformation, &obj_info,
                              sizeof(obj_info), NULL );
     ok_(__FILE__, line)(!status, "NtQueryObject with err: %08x\n", status);
-    ok_(__FILE__, line)(obj_info.GrantedAccess == access, "Gratned access should "
+    ok_(__FILE__, line)(obj_info.GrantedAccess == access, "Granted access should "
         "be 0x%08x, instead of 0x%08x\n", access, obj_info.GrantedAccess);
 }
 
