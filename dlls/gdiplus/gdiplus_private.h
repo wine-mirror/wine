@@ -111,6 +111,7 @@ struct GpLineGradient{
     ARGB startcolor;
     ARGB endcolor;
     GpWrapMode wrap;
+    BOOL gamma;
 };
 
 struct GpPath{

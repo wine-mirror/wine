@@ -102,6 +102,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
     (*line)->startcolor = startcolor;
     (*line)->endcolor = endcolor;
     (*line)->wrap = wrap;
+    (*line)->gamma = FALSE;
 
     return Ok;
 }
@@ -246,6 +247,17 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetLineGammaCorrection(GpLineGradient *line,
+    BOOL *usinggamma)
+{
+    if(!line)
+        return InvalidParameter;
+
+    *usinggamma = line->gamma;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPathGradientCenterPoint(GpPathGradient *grad,
     GpPointF *point)
 {
@@ -312,6 +324,17 @@ GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
         return InvalidParameter;
 
     *argb = sf->color;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetLineGammaCorrection(GpLineGradient *line,
+    BOOL usegamma)
+{
+    if(!line)
+        return InvalidParameter;
+
+    line->gamma = usegamma;
 
     return Ok;
 }
