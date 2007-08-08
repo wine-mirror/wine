@@ -83,7 +83,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
 {
     COLORREF col = ARGB2COLORREF(startcolor);
 
-    if(!line || !startpoint || !endpoint)
+    if(!line || !startpoint || !endpoint || wrap == WrapModeClamp)
         return InvalidParameter;
 
     *line = GdipAlloc(sizeof(GpLineGradient));
@@ -312,6 +312,17 @@ GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
         return InvalidParameter;
 
     *argb = sf->color;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSetLineWrapMode(GpLineGradient *line,
+    GpWrapMode wrap)
+{
+    if(!line || wrap == WrapModeClamp)
+        return InvalidParameter;
+
+    line->wrap = wrap;
 
     return Ok;
 }
