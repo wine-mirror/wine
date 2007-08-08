@@ -36,8 +36,6 @@
 #define XMD_H /* This is to prevent the Xmd.h inclusion bug :-/ */
 #define GL_GLEXT_LEGACY
 #include <GL/gl.h>
-#define GLX_GLXEXT_PROTOTYPES
-#include <GL/glx.h>
 #undef  XMD_H
 
 #undef APIENTRY
@@ -1579,37 +1577,6 @@ typedef void (APIENTRY * PGLFNVERTEXATTRIBPOINTERPROC) (GLuint index, GLint size
 
 
 /****************************************************
- * OpenGL GLX Extensions
- *  defines and functions pointer
- ****************************************************/
-
-
-/****************************************************
- * OpenGL GLX Official Version
- *  defines and functions pointer
- ****************************************************/
-/* GLX_VERSION_1_3 */
-typedef GLXFBConfig * (APIENTRY * PGLXFNGLXGETFBCONFIGSPROC) (Display *dpy, int screen, int *nelements);
-typedef GLXFBConfig * (APIENTRY * PGLXFNGLXCHOOSEFBCONFIGPROC) (Display *dpy, int screen, const int *attrib_list, int *nelements);
-typedef int           (APIENTRY * PGLXFNGLXGETFBCONFIGATTRIBPROC) (Display *dpy, GLXFBConfig config, int attribute, int *value);
-typedef XVisualInfo * (APIENTRY * PGLXFNGLXGETVISUALFROMFBCONFIGPROC) (Display *dpy, GLXFBConfig config);
-typedef GLXWindow     (APIENTRY * PGLXFNGLXCREATEWINDOWPROC) (Display *dpy, GLXFBConfig config, Window win, const int *attrib_list);
-typedef void          (APIENTRY * PGLXFNGLXDESTROYWINDOWPROC) (Display *dpy, GLXWindow win);
-typedef GLXPixmap     (APIENTRY * PGLXFNGLXCREATEPIXMAPPROC) (Display *dpy, GLXFBConfig config, Pixmap pixmap, const int *attrib_list);
-typedef void          (APIENTRY * PGLXFNGLXDESTROYPIXMAPPROC) (Display *dpy, GLXPixmap pixmap);
-typedef GLXPbuffer    (APIENTRY * PGLXFNGLXCREATEPBUFFERPROC) (Display *dpy, GLXFBConfig config, const int *attrib_list);
-typedef void          (APIENTRY * PGLXFNGLXDESTROYPBUFFERPROC) (Display *dpy, GLXPbuffer pbuf);
-typedef void          (APIENTRY * PGLXFNGLXQUERYDRAWABLEPROC) (Display *dpy, GLXDrawable draw, int attribute, unsigned int *value);
-typedef GLXContext    (APIENTRY * PGLXFNGLXCREATENEWCONTEXTPROC) (Display *dpy, GLXFBConfig config, int render_type, GLXContext share_list, Bool direct);
-typedef Bool          (APIENTRY * PGLXFNGLXMAKECONTEXTCURRENTPROC) (Display *dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx);
-typedef GLXDrawable   (APIENTRY * PGLXFNGLXGETCURRENTREADDRAWABLEPROC) (void);
-typedef Display *     (APIENTRY * PGLXFNGLXGETCURRENTDISPLAYPROC) (void);
-typedef int           (APIENTRY * PGLXFNGLXQUERYCONTEXTPROC) (Display *dpy, GLXContext ctx, int attribute, int *value);
-typedef void          (APIENTRY * PGLXFNGLXSELECTEVENTPROC) (Display *dpy, GLXDrawable draw, unsigned long event_mask);
-typedef void          (APIENTRY * PGLXFNGLXGETSELECTEDEVENTPROC) (Display *dpy, GLXDrawable draw, unsigned long *event_mask);
-
-
-/****************************************************
  * Enumerated types
  ****************************************************/
 typedef enum _GL_Vendors {
@@ -1757,6 +1724,9 @@ typedef enum _GL_SupportedExt {
   APPLE_CLIENT_STORAGE,
   /* SGI */
   SGI_VIDEO_SYNC,
+
+  /* WGL extensions */
+  WGL_ARB_PBUFFER,
 
   OPENGL_SUPPORTED_EXT_END
 } GL_SupportedExt;
@@ -2129,16 +2099,6 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNVERTEXATTRIB4USVPROC, glVertexAttrib4usv); \
     USE_GL_FUNC(PGLFNVERTEXATTRIBPOINTERPROC, glVertexAttribPointer); \
 
-#define GLX_EXT_FUNCS_GEN \
-    /** GLX_VERSION_1_3 **/ \
-    USE_GL_FUNC(PGLXFNGLXCREATEPBUFFERPROC,          glXCreatePbuffer); \
-    USE_GL_FUNC(PGLXFNGLXDESTROYPBUFFERPROC,         glXDestroyPbuffer); \
-    USE_GL_FUNC(PGLXFNGLXCREATEPIXMAPPROC,           glXCreatePixmap); \
-    USE_GL_FUNC(PGLXFNGLXDESTROYPIXMAPPROC,          glXDestroyPixmap); \
-    USE_GL_FUNC(PGLXFNGLXCREATENEWCONTEXTPROC,       glXCreateNewContext); \
-    USE_GL_FUNC(PGLXFNGLXMAKECONTEXTCURRENTPROC,     glXMakeContextCurrent); \
-    USE_GL_FUNC(PGLXFNGLXCHOOSEFBCONFIGPROC,         glXChooseFBConfig); \
-
 #undef APIENTRY
 #undef CALLBACK
 #undef WINAPI
@@ -2147,6 +2107,108 @@ typedef enum _GL_SupportedExt {
 #define CALLBACK    __stdcall
 #define WINAPI      __stdcall
 #define APIENTRY    WINAPI
+
+/****************************************************
+ * OpenGL WGL defines and functions pointer
+ ****************************************************/
+
+/* WGL_ARB_extensions_string */
+typedef const char * (WINAPI * WINED3D_PFNWGLGETEXTENSIONSSTRINGARBPROC) (HDC hdc);
+/* WGL_ARB_pixel_format */
+#ifndef WGL_ARB_pixel_format
+#define WGL_ARB_pixel_format 1
+#define WGL_NUMBER_PIXEL_FORMATS_ARB   0x2000
+#define WGL_DRAW_TO_WINDOW_ARB         0x2001
+#define WGL_DRAW_TO_BITMAP_ARB         0x2002
+#define WGL_ACCELERATION_ARB           0x2003
+#define WGL_NEED_PALETTE_ARB           0x2004
+#define WGL_NEED_SYSTEM_PALETTE_ARB    0x2005
+#define WGL_SWAP_LAYER_BUFFERS_ARB     0x2006
+#define WGL_SWAP_METHOD_ARB            0x2007
+#define WGL_NUMBER_OVERLAYS_ARB        0x2008
+#define WGL_NUMBER_UNDERLAYS_ARB       0x2009
+#define WGL_TRANSPARENT_ARB            0x200A
+#define WGL_TRANSPARENT_RED_VALUE_ARB  0x2037
+#define WGL_TRANSPARENT_GREEN_VALUE_ARB 0x2038
+#define WGL_TRANSPARENT_BLUE_VALUE_ARB 0x2039
+#define WGL_TRANSPARENT_ALPHA_VALUE_ARB 0x203A
+#define WGL_TRANSPARENT_INDEX_VALUE_ARB 0x203B
+#define WGL_SHARE_DEPTH_ARB            0x200C
+#define WGL_SHARE_STENCIL_ARB          0x200D
+#define WGL_SHARE_ACCUM_ARB            0x200E
+#define WGL_SUPPORT_GDI_ARB            0x200F
+#define WGL_SUPPORT_OPENGL_ARB         0x2010
+#define WGL_DOUBLE_BUFFER_ARB          0x2011
+#define WGL_STEREO_ARB                 0x2012
+#define WGL_PIXEL_TYPE_ARB             0x2013
+#define WGL_COLOR_BITS_ARB             0x2014
+#define WGL_RED_BITS_ARB               0x2015
+#define WGL_RED_SHIFT_ARB              0x2016
+#define WGL_GREEN_BITS_ARB             0x2017
+#define WGL_GREEN_SHIFT_ARB            0x2018
+#define WGL_BLUE_BITS_ARB              0x2019
+#define WGL_BLUE_SHIFT_ARB             0x201A
+#define WGL_ALPHA_BITS_ARB             0x201B
+#define WGL_ALPHA_SHIFT_ARB            0x201C
+#define WGL_ACCUM_BITS_ARB             0x201D
+#define WGL_ACCUM_RED_BITS_ARB         0x201E
+#define WGL_ACCUM_GREEN_BITS_ARB       0x201F
+#define WGL_ACCUM_BLUE_BITS_ARB        0x2020
+#define WGL_ACCUM_ALPHA_BITS_ARB       0x2021
+#define WGL_DEPTH_BITS_ARB             0x2022
+#define WGL_STENCIL_BITS_ARB           0x2023
+#define WGL_AUX_BUFFERS_ARB            0x2024
+#define WGL_NO_ACCELERATION_ARB        0x2025
+#define WGL_GENERIC_ACCELERATION_ARB   0x2026
+#define WGL_FULL_ACCELERATION_ARB      0x2027
+#define WGL_SWAP_EXCHANGE_ARB          0x2028
+#define WGL_SWAP_COPY_ARB              0x2029
+#define WGL_SWAP_UNDEFINED_ARB         0x202A
+#define WGL_TYPE_RGBA_ARB              0x202B
+#define WGL_TYPE_COLORINDEX_ARB        0x202C
+#endif
+typedef BOOL (WINAPI * WINED3D_PFNWGLGETPIXELFORMATATTRIBIVARBPROC) (HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues);
+typedef BOOL (WINAPI * WINED3D_PFNWGLGETPIXELFORMATATTRIBFVARBPROC) (HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues);
+typedef BOOL (WINAPI * WINED3D_PFNWGLCHOOSEPIXELFORMATARBPROC) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
+/* WGL_ARB_make_current_read */
+typedef BOOL (WINAPI * WINED3D_PFNWGLMAKECONTEXTCURRENTARBPROC) (HDC hDrawDC, HDC hReadDC, HGLRC hglrc);
+typedef HDC (WINAPI * WINED3D_PFNWGLGETCURRENTREADDCARBPROC) (void);
+/* WGL_ARB_pbuffer */
+#ifndef WGL_ARB_pbuffer
+#define WGL_ARB_pbuffer 1
+#define WGL_DRAW_TO_PBUFFER_ARB        0x202D
+#define WGL_MAX_PBUFFER_PIXELS_ARB     0x202E
+#define WGL_MAX_PBUFFER_WIDTH_ARB      0x202F
+#define WGL_MAX_PBUFFER_HEIGHT_ARB     0x2030
+#define WGL_PBUFFER_LARGEST_ARB        0x2033
+#define WGL_PBUFFER_WIDTH_ARB          0x2034
+#define WGL_PBUFFER_HEIGHT_ARB         0x2035
+#define WGL_PBUFFER_LOST_ARB           0x2036
+#endif
+DECLARE_HANDLE(HPBUFFERARB);
+typedef HPBUFFERARB (WINAPI * WINED3D_PFNWGLCREATEPBUFFERARBPROC) (HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList);
+typedef HDC (WINAPI * WINED3D_PFNWGLGETPBUFFERDCARBPROC) (HPBUFFERARB hPbuffer);
+typedef int (WINAPI * WINED3D_PFNWGLRELEASEPBUFFERDCARBPROC) (HPBUFFERARB hPbuffer, HDC hDC);
+typedef BOOL (WINAPI * WINED3D_PFNWGLDESTROYPBUFFERARBPROC) (HPBUFFERARB hPbuffer);
+typedef BOOL (WINAPI * WINED3D_PFNWGLQUERYPBUFFERARBPROC) (HPBUFFERARB hPbuffer, int iAttribute, int *piValue);
+#ifndef WGL_ARB_pixel_format_float
+#define WGL_ARB_pixel_format_float 1
+#define WGL_TYPE_RGBA_FLOAT_ARB        0x21A0
+#endif
+
+#define WGL_EXT_FUNCS_GEN \
+    USE_GL_FUNC(WINED3D_PFNWGLGETEXTENSIONSSTRINGARBPROC, wglGetExtensionsStringARB); \
+    USE_GL_FUNC(WINED3D_PFNWGLGETPIXELFORMATATTRIBIVARBPROC, wglGetPixelFormatAttribivARB); \
+    USE_GL_FUNC(WINED3D_PFNWGLGETPIXELFORMATATTRIBFVARBPROC, wglGetPixelFormatAttribfvARB); \
+    USE_GL_FUNC(WINED3D_PFNWGLCHOOSEPIXELFORMATARBPROC, wglChoosePixelFormatARB); \
+    USE_GL_FUNC(WINED3D_PFNWGLMAKECONTEXTCURRENTARBPROC, wglMakeContextCurrentARB); \
+    USE_GL_FUNC(WINED3D_PFNWGLGETCURRENTREADDCARBPROC, wglGetCurrentReadDCARB); \
+    USE_GL_FUNC(WINED3D_PFNWGLCREATEPBUFFERARBPROC, wglCreatePbufferARB); \
+    USE_GL_FUNC(WINED3D_PFNWGLGETPBUFFERDCARBPROC, wglGetPbufferDCARB); \
+    USE_GL_FUNC(WINED3D_PFNWGLRELEASEPBUFFERDCARBPROC, wglReleasePbufferDCARB); \
+    USE_GL_FUNC(WINED3D_PFNWGLDESTROYPBUFFERARBPROC, wglDestroyPbufferARB); \
+    USE_GL_FUNC(WINED3D_PFNWGLQUERYPBUFFERARBPROC, wglQueryPbufferARB);
+
 
 /****************************************************
  * Structures       
@@ -2208,8 +2270,8 @@ typedef struct _WineD3D_GL_Info {
 
   /** OpenGL EXT and ARB functions ptr */
   GL_EXT_FUNCS_GEN;
-  /** OpenGL GLX functions ptr */
-  GLX_EXT_FUNCS_GEN;
+  /** OpenGL WGL functions ptr */
+  WGL_EXT_FUNCS_GEN;
   /** OpenGL 2.0 functions ptr */
   /* GL2_FUNCS_GEN; */
   /**/

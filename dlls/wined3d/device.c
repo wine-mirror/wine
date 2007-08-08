@@ -51,26 +51,6 @@ const WINED3DLIGHT WINED3D_default_light = {
     0.0                       /* Phi */
 };
 
-/* x11drv GDI escapes */
-#define X11DRV_ESCAPE 6789
-enum x11drv_escape_codes
-{
-    X11DRV_GET_DISPLAY,   /* get X11 display for a DC */
-    X11DRV_GET_DRAWABLE,  /* get current drawable for a DC */
-    X11DRV_GET_FONT,      /* get current X font for a DC */
-};
-
-/* retrieve the X display to use on a given DC */
-static inline Display *get_display( HDC hdc )
-{
-    Display *display;
-    enum x11drv_escape_codes escape = X11DRV_GET_DISPLAY;
-
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
-                    sizeof(display), (LPSTR)&display )) display = NULL;
-    return display;
-}
-
 /* static function declarations */
 static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource);
 
@@ -1212,7 +1192,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     IWineD3DSwapChainImpl  *object; /** NOTE: impl ref allowed since this is a create function **/
     HRESULT                 hr = WINED3D_OK;
     IUnknown               *bufferParent;
-    Display                *display;
 
     TRACE("(%p) : Created Aditional Swap Chain\n", This);
 
@@ -1242,28 +1221,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     }
 
     object->win_handle = GetAncestor(object->win_handle, GA_ROOT);
-    if ( !( object->win = (Window)GetPropA(object->win_handle, "__wine_x11_whole_window") ) ) {
-        ERR("Can't get drawable (window), HWND:%p doesn't have the property __wine_x11_whole_window\n", object->win_handle);
-        return WINED3DERR_NOTAVAILABLE;
-    }
     hDc                = GetDC(object->win_handle);
-    display            = get_display(hDc);
-    ReleaseDC(object->win_handle, hDc);
-    TRACE("Using a display of %p %p\n", display, hDc);
+    TRACE("Using hDc %p\n", hDc);
 
-    if (NULL == display || NULL == hDc) {
-        WARN("Failed to get a display and HDc for Window %p\n", object->win_handle);
-        return WINED3DERR_NOTAVAILABLE;
-    }
-
-    if (object->win == 0) {
-        WARN("Failed to get a valid XVisuial ID for the window %p\n", object->win_handle);
+    if (NULL == hDc) {
+        WARN("Failed to get a HDc for Window %p\n", object->win_handle);
         return WINED3DERR_NOTAVAILABLE;
     }
 
     object->orig_width = GetSystemMetrics(SM_CXSCREEN);
     object->orig_height = GetSystemMetrics(SM_CYSCREEN);
     object->orig_fmt = pixelformat_for_depth(GetDeviceCaps(hDc, BITSPIXEL) * GetDeviceCaps(hDc, PLANES));
+    ReleaseDC(object->win_handle, hDc);
 
     /** MSDN: If Windowed is TRUE and either of the BackBufferWidth/Height values is zero,
      *  then the corresponding dimension of the client area of the hDeviceWindow
@@ -1324,7 +1293,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     object->num_contexts = 1;
 
     ENTER_GL();
-    object->context[0] = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, display, object->win);
+    object->context[0] = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, object->win_handle, FALSE /* pbuffer */);
     LEAVE_GL();
 
     if (!object->context[0]) {
@@ -1332,8 +1301,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         hr = WINED3DERR_NOTAVAILABLE;
         goto error;
     } else {
-        TRACE("Context created (HWND=%p, glContext=%p, Window=%ld)\n",
-               object->win_handle, object->context[0]->glCtx, object->win);
+        TRACE("Context created (HWND=%p, glContext=%p)\n",
+               object->win_handle, object->context[0]->glCtx);
     }
 
    /*********************

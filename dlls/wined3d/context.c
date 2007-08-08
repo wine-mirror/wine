@@ -65,12 +65,12 @@ static void Context_MarkStateDirty(WineD3DContext *context, DWORD state) {
  *
  * Params:
  *  This: Device to add the context for
- *  display: X display this context uses
- *  glCtx: glX context to add
- *  drawable: drawable used with this context.
+ *  hdc: device context
+ *  glCtx: WGL context to add
+ *  pbuffer: optional pbuffer used with this context
  *
  *****************************************************************************/
-static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, Display *display, GLXContext glCtx, Drawable drawable) {
+static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, HWND win_handle, HDC hdc, HGLRC glCtx, HPBUFFERARB pbuffer) {
     WineD3DContext **oldArray = This->contexts;
     DWORD state;
 
@@ -92,9 +92,10 @@ static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, Display *disp
         return NULL;
     }
 
-    This->contexts[This->numContexts]->display = display;
+    This->contexts[This->numContexts]->hdc = hdc;
     This->contexts[This->numContexts]->glCtx = glCtx;
-    This->contexts[This->numContexts]->drawable = drawable;
+    This->contexts[This->numContexts]->pbuffer = pbuffer;
+    This->contexts[This->numContexts]->win_handle = win_handle;
     HeapFree(GetProcessHeap(), 0, oldArray);
 
     /* Mark all states dirty to force a proper initialization of the states on the first use of the context
@@ -116,144 +117,103 @@ static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, Display *disp
  * * Params:
  *  This: Device to activate the context for
  *  target: Surface this context will render to
- *  display: X11 connection
- *  win: Target window. NULL for a pbuffer
+ *  win_handle: handle to the window which we are drawing to
+ *  create_pbuffer: tells whether to create a pbuffer or not
  *
  *****************************************************************************/
-WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, Display *display, Window win) {
-    Drawable drawable = win, oldDrawable;
-    XVisualInfo *visinfo = NULL;
-    GLXContext ctx = NULL, oldCtx;
+WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win_handle, BOOL create_pbuffer) {
+    HDC oldDrawable, hdc;
+    HPBUFFERARB pbuffer = NULL;
+    HGLRC ctx = NULL, oldCtx;
     WineD3DContext *ret = NULL;
     int s;
 
-    TRACE("(%p): Creating a %s context for render target %p\n", This, win ? "onscreen" : "offscreen", target);
+    TRACE("(%p): Creating a %s context for render target %p\n", This, create_pbuffer ? "offscreen" : "onscreen", target);
 
-    if(!win) {
-        long int visualid;
-        int attribs[256];
-        int nAttribs = 0;
-        int i;
-        int val;
-        int index = -1;
+    if(create_pbuffer) {
+        HDC hdc_parent = GetDC(win_handle);
+        int iPixelFormat = 1; /* We only have a single useful format in Wine's OpenGL32, so use this for now. It should be fixed. */
 
         TRACE("Creating a pBuffer drawable for the new context\n");
-
-        attribs[nAttribs++] = GLX_PBUFFER_WIDTH;
-        attribs[nAttribs++] = target->currentDesc.Width;
-        attribs[nAttribs++] = GLX_PBUFFER_HEIGHT;
-        attribs[nAttribs++] = target->currentDesc.Height;
-        attribs[nAttribs++] = None;
-
-        visualid = (VisualID)GetPropA(GetDesktopWindow(), "__wine_x11_visual_id");
-        TRACE("Found x visual ID  : %ld\n", visualid);
-
-        /* Search for the fbconfig that corresponds to Wine's default X visual */
-        for(i=0; i < This->adapter->nCfgs; i++)
-        {
-            glXGetFBConfigAttrib(display, This->adapter->cfgs[i], GLX_VISUAL_ID, &val);
-
-            /* We have found the fbconfig :) */
-            if(val == visualid) {
-                index = i;
-                break;
-            }
-        }
-
-        if(index == -1) {
-            ERR("Cannot find an fbconfig corresponding to visualid=%lx\n", visualid);
-            goto out;
-        }
-
-        visinfo = glXGetVisualFromFBConfig(display, This->adapter->cfgs[index]);
-        if(!visinfo) {
-            ERR("Cannot find a visual for the pbuffer\n");
-            goto out;
-        }
-
-        drawable = glXCreatePbuffer(display, This->adapter->cfgs[index], attribs);
-        if(!drawable) {
+        pbuffer = GL_EXTCALL(wglCreatePbufferARB(hdc_parent, iPixelFormat, target->currentDesc.Width, target->currentDesc.Height, 0));
+        if(!pbuffer) {
             ERR("Cannot create a pbuffer\n");
+            ReleaseDC(win_handle, hdc_parent);
             goto out;
         }
+
+        /* In WGL a pbuffer is 'wrapped' inside a HDC to 'fool' wglMakeCurrent */
+        hdc = GL_EXTCALL(wglGetPbufferDCARB(pbuffer));
+        if(!hdc) {
+            ERR("Cannot get a HDC for pbuffer (%p)\n", pbuffer);
+            GL_EXTCALL(wglDestroyPbufferARB(pbuffer));
+            ReleaseDC(win_handle, hdc_parent);
+            goto out;
+        }
+        ReleaseDC(win_handle, hdc_parent);
     } else {
-        /* Create an onscreen target */
-        XVisualInfo             template;
-        int                     num;
+        PIXELFORMATDESCRIPTOR pfd;
+        int iPixelFormat;
 
-        template.visualid = (VisualID)GetPropA(GetDesktopWindow(), "__wine_x11_visual_id");
-        /* TODO: change this to find a similar visual, but one with a stencil/zbuffer buffer that matches the request
-        (or the best possible if none is requested) */
-        TRACE("Found x visual ID  : %ld\n", template.visualid);
-        visinfo   = XGetVisualInfo(display, VisualIDMask, &template, &num);
-
-        if (NULL == visinfo) {
-            ERR("cannot really get XVisual\n");
+        hdc = GetDC(win_handle);
+        if(hdc == NULL) {
+            ERR("Cannot retrieve a device context!\n");
             goto out;
-        } else {
-            int n, value;
-            /* Write out some debug info about the visual/s */
-            TRACE("Using x visual ID  : %ld\n", template.visualid);
-            TRACE("        visual info: %p\n", visinfo);
-            TRACE("        num items  : %d\n", num);
-            for (n = 0;n < num; n++) {
-                TRACE("=====item=====: %d\n", n + 1);
-                TRACE("   visualid      : %ld\n", visinfo[n].visualid);
-                TRACE("   screen        : %d\n",  visinfo[n].screen);
-                TRACE("   depth         : %u\n",  visinfo[n].depth);
-                TRACE("   class         : %d\n",  visinfo[n].class);
-                TRACE("   red_mask      : %ld\n", visinfo[n].red_mask);
-                TRACE("   green_mask    : %ld\n", visinfo[n].green_mask);
-                TRACE("   blue_mask     : %ld\n", visinfo[n].blue_mask);
-                TRACE("   colormap_size : %d\n",  visinfo[n].colormap_size);
-                TRACE("   bits_per_rgb  : %d\n",  visinfo[n].bits_per_rgb);
-                /* log some extra glx info */
-                glXGetConfig(display, visinfo, GLX_AUX_BUFFERS, &value);
-                TRACE("   gl_aux_buffers  : %d\n",  value);
-                glXGetConfig(display, visinfo, GLX_BUFFER_SIZE ,&value);
-                TRACE("   gl_buffer_size  : %d\n",  value);
-                glXGetConfig(display, visinfo, GLX_RED_SIZE, &value);
-                TRACE("   gl_red_size  : %d\n",  value);
-                glXGetConfig(display, visinfo, GLX_GREEN_SIZE, &value);
-                TRACE("   gl_green_size  : %d\n",  value);
-                glXGetConfig(display, visinfo, GLX_BLUE_SIZE, &value);
-                TRACE("   gl_blue_size  : %d\n",  value);
-                glXGetConfig(display, visinfo, GLX_ALPHA_SIZE, &value);
-                TRACE("   gl_alpha_size  : %d\n",  value);
-                glXGetConfig(display, visinfo, GLX_DEPTH_SIZE ,&value);
-                TRACE("   gl_depth_size  : %d\n",  value);
-                glXGetConfig(display, visinfo, GLX_STENCIL_SIZE, &value);
-                TRACE("   gl_stencil_size : %d\n",  value);
-            }
-            /* Now choose a similar visual ID*/
         }
+
+        /* PixelFormat selection */
+        /* TODO: fill cColorBits/cDepthBits with target->resource.format */
+        ZeroMemory(&pfd, sizeof(pfd));
+        pfd.nSize      = sizeof(pfd);
+        pfd.nVersion   = 1;
+        pfd.dwFlags    = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW;/*PFD_GENERIC_ACCELERATED*/
+        pfd.iPixelType = PFD_TYPE_RGBA;
+        pfd.cColorBits = 32;
+        pfd.cDepthBits = 24;
+        pfd.cStencilBits = 8;
+        pfd.iLayerType = PFD_MAIN_PLANE;
+
+        iPixelFormat = ChoosePixelFormat(hdc, &pfd);
+        if(!iPixelFormat) {
+            /* If this happens something is very wrong as ChoosePixelFormat barely fails */
+            ERR("Can't find a suitable iPixelFormat\n");
+        }
+
+        DescribePixelFormat(hdc, iPixelFormat, sizeof(pfd), &pfd);
+        SetPixelFormat(hdc, iPixelFormat, NULL);
     }
 
-    ctx = glXCreateContext(display, visinfo,
-                           This->numContexts ? This->contexts[0]->glCtx : NULL,
-                           GL_TRUE);
+    ctx = wglCreateContext(hdc);
+    if(This->numContexts) wglShareLists(This->contexts[0]->glCtx, ctx);
+
     if(!ctx) {
-        ERR("Failed to create a glX context\n");
-        if(drawable != win) glXDestroyPbuffer(display, drawable);
+        ERR("Failed to create a WGL context\n");
+        if(create_pbuffer) {
+            GL_EXTCALL(wglReleasePbufferDCARB(pbuffer, hdc));
+            GL_EXTCALL(wglDestroyPbufferARB(pbuffer));
+        }
         goto out;
     }
-    ret = AddContextToArray(This, display, ctx, drawable);
+    ret = AddContextToArray(This, win_handle, hdc, ctx, pbuffer);
     if(!ret) {
         ERR("Failed to add the newly created context to the context list\n");
-        glXDestroyContext(display, ctx);
-        if(drawable != win) glXDestroyPbuffer(display, drawable);
+        wglDeleteContext(ctx);
+        if(create_pbuffer) {
+            GL_EXTCALL(wglReleasePbufferDCARB(pbuffer, hdc));
+            GL_EXTCALL(wglDestroyPbufferARB(pbuffer));
+        }
         goto out;
     }
     ret->surface = (IWineD3DSurface *) target;
-    ret->isPBuffer = win == 0;
+    ret->isPBuffer = create_pbuffer;
     ret->tid = GetCurrentThreadId();
 
     TRACE("Successfully created new context %p\n", ret);
 
     /* Set up the context defaults */
-    oldCtx  = glXGetCurrentContext();
-    oldDrawable = glXGetCurrentDrawable();
-    if(glXMakeCurrent(display, drawable, ctx) == FALSE) {
+    oldCtx  = wglGetCurrentContext();
+    oldDrawable = wglGetCurrentDC();
+    if(wglMakeCurrent(hdc, ctx) == FALSE) {
         ERR("Cannot activate context to set up defaults\n");
         goto out;
     }
@@ -325,11 +285,10 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     }
 
     if(oldDrawable && oldCtx) {
-        glXMakeCurrent(display, oldDrawable, oldCtx);
+        wglMakeCurrent(oldDrawable, oldCtx);
     }
 
 out:
-    if(visinfo) XFree(visinfo);
     return ret;
 }
 
@@ -388,14 +347,16 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
 
     /* check that we are the current context first */
     TRACE("Destroying ctx %p\n", context);
-    if(glXGetCurrentContext() == context->glCtx){
-        glXMakeCurrent(context->display, None, NULL);
+    if(wglGetCurrentContext() == context->glCtx){
+        wglMakeCurrent(NULL, NULL);
     }
 
-    glXDestroyContext(context->display, context->glCtx);
     if(context->isPBuffer) {
-        glXDestroyPbuffer(context->display, context->drawable);
-    }
+        GL_EXTCALL(wglReleasePbufferDCARB(context->pbuffer, context->hdc));
+        GL_EXTCALL(wglDestroyPbufferARB(context->pbuffer));
+    } else ReleaseDC(context->win_handle, context->hdc);
+    wglDeleteContext(context->glCtx);
+
     RemoveContextFromArray(This, context);
 }
 
@@ -671,8 +632,8 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
                      * Create the context on the same server as the primary swapchain. The primary swapchain is exists at this point.
                      */
                     This->pbufferContext = CreateContext(This, targetimpl,
-                            ((IWineD3DSwapChainImpl *) This->swapchains[0])->context[0]->display,
-                            0 /* Window */);
+                            ((IWineD3DSwapChainImpl *) This->swapchains[0])->context[0]->win_handle,
+                            TRUE /* pbuffer */);
                     This->pbufferWidth = targetimpl->currentDesc.Width;
                     This->pbufferHeight = targetimpl->currentDesc.Height;
                    }
@@ -784,9 +745,11 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
     /* Activate the opengl context */
     if(context != This->activeContext) {
-        Bool ret;
-        TRACE("Switching gl ctx to %p, drawable=%ld, ctx=%p\n", context, context->drawable, context->glCtx);
-        ret = glXMakeCurrent(context->display, context->drawable, context->glCtx);
+        BOOL ret;
+        TRACE("Switching gl ctx to %p, hdc=%p ctx=%p\n", context, context->hdc, context->glCtx);
+        LEAVE_GL();
+        ret = wglMakeCurrent(context->hdc, context->glCtx);
+        ENTER_GL();
         if(ret == FALSE) {
             ERR("Failed to activate the new context\n");
         }

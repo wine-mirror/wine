@@ -24,27 +24,6 @@
 #include "wined3d_private.h"
 
 
-/* TODO: move to shared header (or context manager )*/
-/* x11drv GDI escapes */
-#define X11DRV_ESCAPE 6789
-enum x11drv_escape_codes
-{
-    X11DRV_GET_DISPLAY,   /* get X11 display for a DC */
-    X11DRV_GET_DRAWABLE,  /* get current drawable for a DC */
-    X11DRV_GET_FONT,      /* get current X font for a DC */
-};
-
-/* retrieve the X display to use on a given DC */
-static inline Display *get_display( HDC hdc )
-{
-    Display *display;
-    enum x11drv_escape_codes escape = X11DRV_GET_DISPLAY;
-
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
-                    sizeof(display), (LPSTR)&display )) display = NULL;
-    return display;
-}
-
 /*TODO: some of the additional parameters may be required to
     set the gamma ramp (for some weird reason microsoft have left swap gammaramp in device
     but it operates on a swapchain, it may be a good idea to move it to IWineD3DSwapChain for IWineD3D)*/
@@ -199,13 +178,11 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
     if (pSourceRect || pDestRect) FIXME("Unhandled present options %p/%p\n", pSourceRect, pDestRect);
     /* TODO: If only source rect or dest rect are supplied then clip the window to match */
-    TRACE("preseting display %p, drawable %ld\n", This->context[0]->display, This->context[0]->drawable);
+    TRACE("preseting HDC %p\n", This->context[0]->hdc);
 
     /* Don't call checkGLcall, as glGetError is not applicable here */
     if (hDestWindowOverride && This->win_handle != hDestWindowOverride) {
-        HDC hDc;
         WINED3DLOCKED_RECT r;
-        Display *display;
         BYTE *mem;
 
         TRACE("Performing dest override of swapchain %p from window %p to %p\n", This, This->win_handle, hDestWindowOverride);
@@ -216,11 +193,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
              */
             ERR("Cannot change the destination window of the owner of the primary context\n");
         } else {
-            hDc                          = GetDC(hDestWindowOverride);
             This->win_handle             = hDestWindowOverride;
-            This->win                    = (Window)GetPropA( hDestWindowOverride, "__wine_x11_whole_window" );
-            display                      = get_display(hDc);
-            ReleaseDC(hDestWindowOverride, hDc);
 
             /* The old back buffer has to be copied over to the new back buffer. A lockrect - switchcontext - unlockrect
              * would suffice in theory, but it is rather nasty and may cause troubles with future changes of the locking code
@@ -232,7 +205,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
             IWineD3DSurface_UnlockRect(This->backBuffer[0]);
 
             DestroyContext(This->wineD3DDevice, This->context[0]);
-            This->context[0] = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer, display, This->win);
+            This->context[0] = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer, This->win_handle, FALSE /* pbuffer */);
 
             IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_DISCARD);
             memcpy(r.pBits, mem, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
@@ -241,9 +214,9 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         }
     }
 
-    glXSwapBuffers(This->context[0]->display, This->context[0]->drawable); /* TODO: cycle through the swapchain buffers */
+    SwapBuffers(This->context[0]->hdc); /* TODO: cycle through the swapchain buffers */
 
-    TRACE("glXSwapBuffers called, Starting new frame\n");
+    TRACE("SwapBuffers called, Starting new frame\n");
     /* FPS support */
     if (TRACE_ON(fps))
     {
@@ -564,7 +537,7 @@ WineD3DContext *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *
     TRACE("Creating a new context for swapchain %p, thread %d\n", This, GetCurrentThreadId());
 
     ctx = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer,
-                        This->context[0]->display, This->win);
+                        This->context[0]->win_handle, FALSE /* pbuffer */);
     if(!ctx) {
         ERR("Failed to create a new context for the swapchain\n");
         return NULL;

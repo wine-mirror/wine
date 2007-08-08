@@ -520,9 +520,10 @@ struct WineD3DContext {
     char                    texShaderBumpMap;
 
     /* The actual opengl context */
-    GLXContext              glCtx;
-    Drawable                drawable;
-    Display                 *display;
+    HGLRC                   glCtx;
+    HWND                    win_handle;
+    HDC                     hdc;
+    HPBUFFERARB             pbuffer;
     BOOL                    isPBuffer;
 };
 
@@ -534,7 +535,7 @@ typedef enum ContextUsage {
 } ContextUsage;
 
 void ActivateContext(IWineD3DDeviceImpl *device, IWineD3DSurface *target, ContextUsage usage);
-WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, Display *display, Window win);
+WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win, BOOL create_pbuffer);
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
 void apply_fbo_state(IWineD3DDevice *iface);
 
@@ -577,11 +578,9 @@ typedef struct GLPixelFormatDesc GLPixelFormatDesc;
 struct WineD3DAdapter
 {
     POINT                   monitorPoint;
-    Display                 *display;
     WineD3D_GL_Info         gl_info;
     const char              *driver;
     const char              *description;
-    GLXFBConfig             *cfgs;
     int                     nCfgs;
 };
 
@@ -1439,7 +1438,6 @@ typedef struct IWineD3DSwapChainImpl
     unsigned int            num_contexts;
 
     HWND                    win_handle;
-    Window                  win;
 } IWineD3DSwapChainImpl;
 
 extern const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;

@@ -123,26 +123,6 @@ static const struct {
  * Utility functions follow
  **********************************************************/
 
-/* x11drv GDI escapes */
-#define X11DRV_ESCAPE 6789
-enum x11drv_escape_codes
-{
-    X11DRV_GET_DISPLAY,   /* get X11 display for a DC */
-    X11DRV_GET_DRAWABLE,  /* get current drawable for a DC */
-    X11DRV_GET_FONT,      /* get current X font for a DC */
-};
-
-/* retrieve the X display to use on a given DC */
-static inline Display *get_display( HDC hdc )
-{
-    Display *display;
-    enum x11drv_escape_codes escape = X11DRV_GET_DISPLAY;
-
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
-                    sizeof(display), (LPSTR)&display )) display = NULL;
-    return display;
-}
-
 /* Adapters */
 static int numAdapters = 0;
 static struct WineD3DAdapter Adapters[1];
@@ -212,8 +192,7 @@ static void WineD3D_ReleaseFakeGLContext(void) {
 }
 
 static BOOL WineD3D_CreateFakeGLContext(void) {
-    GLXContext glCtx;
-    HGLRC wglCtx = NULL;
+    HGLRC glCtx = NULL;
 
     ENTER_GL();
     EnterCriticalSection(&wined3d_fake_gl_context_cs);
@@ -224,7 +203,7 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
 
     wined3d_fake_gl_context_foreign = TRUE;
 
-    glCtx = glXGetCurrentContext();
+    glCtx = wglGetCurrentContext();
     if (!glCtx) {
         PIXELFORMATDESCRIPTOR pfd;
         int iPixelFormat;
@@ -262,14 +241,14 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
         SetPixelFormat(wined3d_fake_gl_context_hdc, iPixelFormat, &pfd);
 
         /* Create a GL context */
-        wglCtx = wglCreateContext(wined3d_fake_gl_context_hdc);
-        if (!wglCtx) {
+        glCtx = wglCreateContext(wined3d_fake_gl_context_hdc);
+        if (!glCtx) {
             WARN_(d3d_caps)("Error creating default context for capabilities initialization\n");
             goto fail;
         }
 
         /* Make it the current GL context */
-        if (!wglMakeCurrent(wined3d_fake_gl_context_hdc, wglCtx)) {
+        if (!wglMakeCurrent(wined3d_fake_gl_context_hdc, glCtx)) {
             WARN_(d3d_caps)("Error setting default context as current for capabilities initialization\n");
             goto fail;
         }
@@ -288,7 +267,7 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
     if(wined3d_fake_gl_context_hwnd)
         DestroyWindow(wined3d_fake_gl_context_hwnd);
     wined3d_fake_gl_context_hwnd = NULL;
-    if(wglCtx) wglDeleteContext(wglCtx);
+    if(glCtx) wglDeleteContext(glCtx);
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
     LEAVE_GL();
     return FALSE;
@@ -413,17 +392,19 @@ static void select_shader_max_constants(
  **********************************************************/
 
 #define GLINFO_LOCATION (*gl_info)
-BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
+BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     const char *GL_Extensions    = NULL;
-    const char *GLX_Extensions   = NULL;
+    const char *WGL_Extensions   = NULL;
     const char *gl_string        = NULL;
     const char *gl_string_cursor = NULL;
     GLint       gl_max;
     GLfloat     gl_floatv[2];
-    Bool        test = 0;
     int         major = 1, minor = 0;
     BOOL        return_value = TRUE;
     int         i;
+    HDC         hdc;
+    HMODULE     mod_gl;
+    PROC        (WINAPI *p_wglGetProcAddress)(LPCSTR  lpszProc);
 
     /* Make sure that we've got a context */
     /* TODO: CreateFakeGLContext should really take a display as a parameter  */
@@ -431,22 +412,14 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
     if (!WineD3D_CreateFakeGLContext() || wined3d_fake_gl_context_foreign)
         return_value = FALSE;
 
-    TRACE_(d3d_caps)("(%p, %p)\n", gl_info, display);
+    TRACE_(d3d_caps)("(%p)\n", gl_info);
 
     gl_string = (const char *) glGetString(GL_RENDERER);
     if (NULL == gl_string)
 	gl_string = "None";
     strcpy(gl_info->gl_renderer, gl_string);
 
-    /* Fill in the GL info retrievable depending on the display */
-    if (NULL != display) {
-        test = glXQueryVersion(display, &major, &minor);
-        gl_info->glx_version = ((major & 0x0000FFFF) << 16) | (minor & 0x0000FFFF);
-    } else {
-        FIXME("Display must not be NULL, use glXGetCurrentDisplay or getAdapterDisplay()\n");
-    }
     gl_string = (const char *) glGetString(GL_VENDOR);
-
     TRACE_(d3d_caps)("Filling vendor string %s\n", gl_string);
     if (gl_string != NULL) {
         /* Fill in the GL vendor */
@@ -606,10 +579,23 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
     gl_info->vs_arb_constantsF = 0;
     gl_info->ps_arb_constantsF = 0;
 
+    /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 (glXGetProcAddress wrapper) instead of opengl32's */
+    mod_gl = LoadLibraryA("gdi32.dll");
+    if(!mod_gl) {
+        ERR("Can't load gdi32.dll!\n");
+        return FALSE;
+    }
+
+    p_wglGetProcAddress = (void*)GetProcAddress(mod_gl, "wglGetProcAddress");
+    if(!p_wglGetProcAddress) {
+        ERR("Unable to load wglGetProcAddress!\n");
+        return FALSE;
+    }
+
     /* Now work out what GL support this card really has */
-#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) glXGetProcAddressARB( (const GLubyte *) #pfn);
+#define USE_GL_FUNC(type, pfn) gl_info->pfn = (type) p_wglGetProcAddress( (const char *) #pfn);
     GL_EXT_FUNCS_GEN;
-    GLX_EXT_FUNCS_GEN;
+    WGL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 
     /* Retrieve opengl defaults */
@@ -1002,28 +988,32 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
 
 /* TODO: config lookups */
 
-    if (display != NULL) {
-        GLX_Extensions = glXQueryExtensionsString(display, DefaultScreen(display));
-        TRACE_(d3d_caps)("GLX_Extensions reported:\n");
+    /* Make sure there's an active HDC else the WGL extensions will fail */
+    hdc = wglGetCurrentDC();
+    if (hdc) {
+        WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
+        TRACE_(d3d_caps)("WGL_Extensions reported:\n");
 
-        if (NULL == GLX_Extensions) {
-            ERR("   GLX_Extensions returns NULL\n");
+        if (NULL == WGL_Extensions) {
+            ERR("   WGL_Extensions returns NULL\n");
         } else {
-            while (*GLX_Extensions != 0x00) {
-                const char *Start = GLX_Extensions;
+            while (*WGL_Extensions != 0x00) {
+                const char *Start = WGL_Extensions;
                 char ThisExtn[256];
 
                 memset(ThisExtn, 0x00, sizeof(ThisExtn));
-                while (*GLX_Extensions != ' ' && *GLX_Extensions != 0x00) {
-                    GLX_Extensions++;
+                while (*WGL_Extensions != ' ' && *WGL_Extensions != 0x00) {
+                    WGL_Extensions++;
                 }
-                memcpy(ThisExtn, Start, (GLX_Extensions - Start));
+                memcpy(ThisExtn, Start, (WGL_Extensions - Start));
                 TRACE_(d3d_caps)("- %s\n", ThisExtn);
-                if (strstr(ThisExtn, "GLX_SGI_video_sync")) {
-                    gl_info->supported[SGI_VIDEO_SYNC] = TRUE;
+
+                if (strstr(ThisExtn, "WGL_ARB_pbuffer")) {
+                    gl_info->supported[WGL_ARB_PBUFFER] = TRUE;
+                    TRACE_(d3d_caps)("FOUND: WGL_ARB_pbuffer support\n");
                 }
 
-                if (*GLX_Extensions == ' ') GLX_Extensions++;
+                if (*WGL_Extensions == ' ') WGL_Extensions++;
             }
         }
     }
@@ -1306,7 +1296,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
     return WINED3D_OK;
 }
 
-static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(Display *display, GLXFBConfig cfgs, WINED3DFORMAT Format) {
+static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(int iPixelFormat, WINED3DFORMAT Format) {
 #if 0 /* This code performs a strict test between the format and the current X11  buffer depth, which may give the best performance */
   int gl_test;
   int rb, gb, bb, ab, type, buf_sz;
@@ -1374,7 +1364,7 @@ return FALSE;
 #endif
 }
 
-static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(Display *display, GLXFBConfig cfgs, WINED3DFORMAT Format) {
+static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(int iPixelFormat, WINED3DFORMAT Format) {
 #if 0/* This code performs a strict test between the format and the current X11  buffer depth, which may give the best performance */
   int gl_test;
   int db, sb;
@@ -1451,8 +1441,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
     }
 
     for (it = 0; it < Adapters[Adapter].nCfgs; ++it) {
-        if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(Adapters[Adapter].display, Adapters[Adapter].cfgs[it], RenderTargetFormat)) {
-            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(Adapters[Adapter].display, Adapters[Adapter].cfgs[it], DepthStencilFormat)) {
+        if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(it, RenderTargetFormat)) {
+            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(it, DepthStencilFormat)) {
                 TRACE_(d3d_caps)("(%p) : Formats matched\n", This);
                 return WINED3D_OK;
             }
@@ -1499,10 +1489,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
                                             WINED3DFORMAT DisplayFormat, WINED3DFORMAT BackBufferFormat, BOOL Windowed) {
 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    GLXFBConfig* cfgs = NULL;
     int nCfgs = 0;
     int it;
-    Display *display;
     HRESULT hr = WINED3DERR_NOTAVAILABLE;
 
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n",
@@ -1520,19 +1508,18 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 
     /* TODO: Store in adapter structure */
     if (WineD3D_CreateFakeGLContext()) {
-      display = get_display(wined3d_fake_gl_context_hdc);
-      cfgs = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
-      for (it = 0; it < nCfgs; ++it) {
-          if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(display, cfgs[it], DisplayFormat)) {
-              hr = WINED3D_OK;
-              TRACE_(d3d_caps)("OK\n");
-              break ;
-          }
-      }
-      if(cfgs) XFree(cfgs);
-      if(hr != WINED3D_OK)
-          ERR("unsupported format %s\n", debug_d3dformat(DisplayFormat));
-      WineD3D_ReleaseFakeGLContext();
+        nCfgs = DescribePixelFormat(wined3d_fake_gl_context_hdc, 0, 0, NULL);
+        for (it = 0; it < nCfgs; ++it) {
+            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(it, DisplayFormat)) {
+                hr = WINED3D_OK;
+                TRACE_(d3d_caps)("OK\n");
+                break ;
+            }
+        }
+
+        if(hr != WINED3D_OK)
+            ERR("unsupported format %s\n", debug_d3dformat(DisplayFormat));
+        WineD3D_ReleaseFakeGLContext();
     }
 
     if(hr != WINED3D_OK)
@@ -2542,8 +2529,8 @@ ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
     return IUnknown_Release(volumeParent);
 }
 
+#define GLINFO_LOCATION (Adapters[0].gl_info)
 BOOL InitAdapters(void) {
-    HDC     device_context;
     BOOL ret;
     int ps_selected_mode, vs_selected_mode;
 
@@ -2555,42 +2542,32 @@ BOOL InitAdapters(void) {
     TRACE("Initializing adapters\n");
     /* For now only one default adapter */
     {
+        int attribute;
         TRACE("Initializing default adapter\n");
         Adapters[0].monitorPoint.x = -1;
         Adapters[0].monitorPoint.y = -1;
 
-        device_context = GetDC(0);
-        Adapters[0].display = get_display(device_context);
-        ReleaseDC(0, device_context);
-
-        ENTER_GL();
-        if(WineD3D_CreateFakeGLContext()) {
-            Adapters[0].cfgs = glXGetFBConfigs(Adapters[0].display, DefaultScreen(Adapters[0].display), &Adapters[0].nCfgs);
-            WineD3D_ReleaseFakeGLContext();
-        } else {
-            ERR("Failed to create a fake opengl context to find fbconfigs formats\n");
-            LEAVE_GL();
-            return FALSE;
-        }
-        LEAVE_GL();
-
-        ret = IWineD3DImpl_FillGLCaps(&Adapters[0].gl_info, Adapters[0].display);
+        ret = IWineD3DImpl_FillGLCaps(&Adapters[0].gl_info);
         if(!ret) {
             ERR("Failed to initialize gl caps for default adapter\n");
-            XFree(Adapters[0].cfgs);
             HeapFree(GetProcessHeap(), 0, Adapters);
             return FALSE;
         }
         ret = initPixelFormats(&Adapters[0].gl_info);
         if(!ret) {
             ERR("Failed to init gl formats\n");
-            XFree(Adapters[0].cfgs);
             HeapFree(GetProcessHeap(), 0, Adapters);
             return FALSE;
         }
 
         Adapters[0].driver = "Display";
         Adapters[0].description = "Direct3D HAL";
+
+        if (WineD3D_CreateFakeGLContext()) {
+            attribute = WGL_NUMBER_PIXEL_FORMATS_ARB;
+            GL_EXTCALL(wglGetPixelFormatAttribivARB(wined3d_fake_gl_context_hdc, 0, 0, 1, &attribute, &Adapters[0].nCfgs));
+            WineD3D_ReleaseFakeGLContext();
+        }
 
         select_shader_mode(&Adapters[0].gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &Adapters[0].gl_info);
@@ -2601,7 +2578,7 @@ BOOL InitAdapters(void) {
 
     return TRUE;
 }
-
+#undef GLINFO_LOCATION
 
 /**********************************************************
  * IWineD3D VTbl follows
