@@ -71,7 +71,7 @@
 @ stub GdipConvertToEmfPlusToStream
 @ stub GdipCreateAdjustableArrowCap
 @ stub GdipCreateBitmapFromDirectDrawSurface
-@ stub GdipCreateBitmapFromFile
+@ stdcall GdipCreateBitmapFromFile(wstr ptr)
 @ stub GdipCreateBitmapFromFileICM
 @ stub GdipCreateBitmapFromGdiDib
 @ stub GdipCreateBitmapFromGraphics

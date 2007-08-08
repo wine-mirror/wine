@@ -229,6 +229,28 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreateBitmapFromFile(GDIPCONST WCHAR* filename,
+    GpBitmap **bitmap)
+{
+    GpStatus stat;
+    IStream *stream;
+
+    if(!filename || !bitmap)
+        return InvalidParameter;
+
+    stat = GdipCreateStreamOnFile(filename, GENERIC_READ, &stream);
+
+    if(stat != Ok)
+        return stat;
+
+    stat = GdipCreateBitmapFromStream(stream, bitmap);
+
+    if(!stat)
+        IStream_Release(stream);
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     PixelFormat format, BYTE* scan0, GpBitmap** bitmap)
 {
