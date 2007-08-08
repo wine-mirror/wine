@@ -989,6 +989,33 @@ GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     return retval;
 }
 
+GpStatus WINGDIPAPI GdipDrawImageI(GpGraphics *graphics, GpImage *image, INT x,
+    INT y)
+{
+    UINT width, height, srcw, srch;
+
+    if(!graphics || !image)
+        return InvalidParameter;
+
+    GdipGetImageWidth(image, &width);
+    GdipGetImageHeight(image, &height);
+
+    srcw = width * (((REAL) INCH_HIMETRIC) /
+            ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSX)));
+    srch = height * (((REAL) INCH_HIMETRIC) /
+            ((REAL) GetDeviceCaps(graphics->hdc, LOGPIXELSY)));
+
+    if(image->type != ImageTypeMetafile){
+        y += height;
+        height *= -1;
+    }
+
+    IPicture_Render(image->picture, graphics->hdc, x, y, width, height,
+                    0, 0, srcw, srch, NULL);
+
+    return Ok;
+}
+
 /* FIXME: partially implemented */
 GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image,
      GDIPCONST GpPointF *points, INT count, REAL srcx, REAL srcy, REAL srcwidth,

@@ -174,7 +174,7 @@
 @ stub GdipDrawEllipseI
 @ stub GdipDrawImage
 @ stub GdipDrawImageFX
-@ stub GdipDrawImageI
+@ stdcall GdipDrawImageI(ptr ptr long long)
 @ stub GdipDrawImagePointRect
 @ stub GdipDrawImagePointRectI
 @ stub GdipDrawImagePoints
