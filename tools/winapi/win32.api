@@ -2107,7 +2107,7 @@ UINT
 
 DWORD_PTR
 
-%%mciwave.drv
+%%mciwave.dll
 
 %long
 
@@ -2242,7 +2242,7 @@ VOID
 LPCWSTR
 LPWSTR
 
-%%msacm.drv
+%%msacm32.drv
 
 %long
 
