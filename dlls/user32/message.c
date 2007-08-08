@@ -2332,6 +2332,71 @@ static LRESULT send_inter_thread_message( const struct send_message_info *info, 
 
 
 /***********************************************************************
+ *		send_inter_thread_callback
+ */
+static LRESULT send_inter_thread_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+                                           LRESULT *result, void *arg )
+{
+    struct send_message_info *info = arg;
+    info->hwnd   = hwnd;
+    info->msg    = msg;
+    info->wparam = wp;
+    info->lparam = lp;
+    return send_inter_thread_message( info, result );
+}
+
+
+/***********************************************************************
+ *		send_message
+ *
+ * Backend implementation of the various SendMessage functions.
+ */
+static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BOOL unicode )
+{
+    DWORD dest_pid;
+    BOOL ret;
+    LRESULT result;
+
+    if (is_broadcast(info->hwnd))
+    {
+        EnumWindows( broadcast_message_callback, (LPARAM)info );
+        if (res_ptr) *res_ptr = 1;
+        return TRUE;
+    }
+
+    if (!(info->dest_tid = GetWindowThreadProcessId( info->hwnd, &dest_pid ))) return FALSE;
+
+    if (USER_IsExitingThread( info->dest_tid )) return FALSE;
+
+    SPY_EnterMessage( SPY_SENDMESSAGE, info->hwnd, info->msg, info->wparam, info->lparam );
+
+    if (info->dest_tid == GetCurrentThreadId())
+    {
+        result = call_window_proc( info->hwnd, info->msg, info->wparam, info->lparam, unicode, TRUE );
+        if (info->type == MSG_CALLBACK)
+            call_sendmsg_callback( info->callback, info->hwnd, info->msg, info->data, result );
+        ret = TRUE;
+    }
+    else
+    {
+        if (dest_pid != GetCurrentProcessId() && (info->type == MSG_ASCII || info->type == MSG_UNICODE))
+            info->type = MSG_OTHER_PROCESS;
+
+        /* MSG_ASCII can be sent unconverted; everything else needs to be Unicode */
+        if (info->type != MSG_ASCII && !unicode && is_unicode_message( info->msg ))
+            ret = WINPROC_CallProcAtoW( send_inter_thread_callback, info->hwnd, info->msg,
+                                        info->wparam, info->lparam, &result, info );
+        else
+            ret = send_inter_thread_message( info, &result );
+    }
+
+    SPY_ExitMessage( SPY_RESULT_OK, info->hwnd, info->msg, result, info->wparam, info->lparam );
+    if (ret && res_ptr) *res_ptr = result;
+    return ret;
+}
+
+
+/***********************************************************************
  *		MSG_SendInternalMessageTimeout
  *
  * Same as SendMessageTimeoutW but sends the message to a specific thread
@@ -2379,8 +2444,6 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
                                     UINT flags, UINT timeout, PDWORD_PTR res_ptr )
 {
     struct send_message_info info;
-    DWORD dest_pid;
-    LRESULT ret, result;
 
     info.type    = MSG_UNICODE;
     info.hwnd    = hwnd;
@@ -2390,44 +2453,7 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     info.flags   = flags;
     info.timeout = timeout;
 
-    if (is_broadcast(hwnd))
-    {
-        EnumWindows( broadcast_message_callback, (LPARAM)&info );
-        if (res_ptr) *res_ptr = 1;
-        return 1;
-    }
-
-    if (!(info.dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid ))) return 0;
-
-    if (USER_IsExitingThread( info.dest_tid )) return 0;
-
-    SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wparam, lparam );
-
-    if (info.dest_tid == GetCurrentThreadId())
-    {
-        result = call_window_proc( hwnd, msg, wparam, lparam, TRUE, TRUE );
-        ret = 1;
-    }
-    else
-    {
-        if (dest_pid != GetCurrentProcessId()) info.type = MSG_OTHER_PROCESS;
-        ret = send_inter_thread_message( &info, &result );
-    }
-
-    SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, result, wparam, lparam );
-    if (ret && res_ptr) *res_ptr = result;
-    return ret;
-}
-
-static LRESULT send_inter_thread_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
-                                           LRESULT *result, void *arg )
-{
-    struct send_message_info *info = arg;
-    info->hwnd   = hwnd;
-    info->msg    = msg;
-    info->wparam = wp;
-    info->lparam = lp;
-    return send_inter_thread_message( info, result );
+    return send_message( &info, res_ptr, TRUE );
 }
 
 /***********************************************************************
@@ -2437,8 +2463,6 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
                                     UINT flags, UINT timeout, PDWORD_PTR res_ptr )
 {
     struct send_message_info info;
-    DWORD dest_pid;
-    LRESULT ret, result;
 
     info.type    = MSG_ASCII;
     info.hwnd    = hwnd;
@@ -2448,40 +2472,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     info.flags   = flags;
     info.timeout = timeout;
 
-    if (is_broadcast(hwnd))
-    {
-        EnumWindows( broadcast_message_callback, (LPARAM)&info );
-        if (res_ptr) *res_ptr = 1;
-        return 1;
-    }
-
-    if (!(info.dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid ))) return 0;
-
-    if (USER_IsExitingThread( info.dest_tid )) return 0;
-
-    SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wparam, lparam );
-
-    if (info.dest_tid == GetCurrentThreadId())
-    {
-        result = call_window_proc( hwnd, msg, wparam, lparam, FALSE, TRUE );
-        ret = 1;
-    }
-    else if (dest_pid == GetCurrentProcessId())
-    {
-        ret = send_inter_thread_message( &info, &result );
-    }
-    else
-    {
-        /* inter-process message: need to map to Unicode */
-        info.type = MSG_OTHER_PROCESS;
-        if (is_unicode_message( info.msg ))
-            ret = WINPROC_CallProcAtoW( send_inter_thread_callback, info.hwnd, info.msg,
-                                        info.wparam, info.lparam, &result, &info );
-        else ret = send_inter_thread_message( &info, &result );
-    }
-    SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, result, wparam, lparam );
-    if (ret && res_ptr) *res_ptr = result;
-    return ret;
+    return send_message( &info, res_ptr, FALSE );
 }
 
 
@@ -2491,7 +2482,17 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 LRESULT WINAPI SendMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     DWORD_PTR res = 0;
-    SendMessageTimeoutW( hwnd, msg, wparam, lparam, SMTO_NORMAL, 0, &res );
+    struct send_message_info info;
+
+    info.type    = MSG_UNICODE;
+    info.hwnd    = hwnd;
+    info.msg     = msg;
+    info.wparam  = wparam;
+    info.lparam  = lparam;
+    info.flags   = SMTO_NORMAL;
+    info.timeout = 0;
+
+    send_message( &info, &res, TRUE );
     return res;
 }
 
@@ -2502,7 +2503,17 @@ LRESULT WINAPI SendMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     DWORD_PTR res = 0;
-    SendMessageTimeoutA( hwnd, msg, wparam, lparam, SMTO_NORMAL, 0, &res );
+    struct send_message_info info;
+
+    info.type    = MSG_ASCII;
+    info.hwnd    = hwnd;
+    info.msg     = msg;
+    info.wparam  = wparam;
+    info.lparam  = lparam;
+    info.flags   = SMTO_NORMAL;
+    info.timeout = 0;
+
+    send_message( &info, &res, FALSE );
     return res;
 }
 
@@ -2512,17 +2523,7 @@ LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
  */
 BOOL WINAPI SendNotifyMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    return SendNotifyMessageW( hwnd, msg, map_wparam_AtoW( msg, wparam ), lparam );
-}
-
-
-/***********************************************************************
- *		SendNotifyMessageW  (USER32.@)
- */
-BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
-{
     struct send_message_info info;
-    LRESULT result;
 
     if (is_pointer_message(msg))
     {
@@ -2537,22 +2538,31 @@ BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     info.lparam  = lparam;
     info.flags   = 0;
 
-    if (is_broadcast(hwnd))
+    return send_message( &info, NULL, FALSE );
+}
+
+
+/***********************************************************************
+ *		SendNotifyMessageW  (USER32.@)
+ */
+BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    struct send_message_info info;
+
+    if (is_pointer_message(msg))
     {
-        EnumWindows( broadcast_message_callback, (LPARAM)&info );
-        return TRUE;
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        return FALSE;
     }
 
-    if (!(info.dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
+    info.type    = MSG_NOTIFY;
+    info.hwnd    = hwnd;
+    info.msg     = msg;
+    info.wparam  = wparam;
+    info.lparam  = lparam;
+    info.flags   = 0;
 
-    if (USER_IsExitingThread( info.dest_tid )) return TRUE;
-
-    if (info.dest_tid == GetCurrentThreadId())
-    {
-        call_window_proc( hwnd, msg, wparam, lparam, TRUE, TRUE );
-        return TRUE;
-    }
-    return send_inter_thread_message( &info, &result );
+    return send_message( &info, NULL, TRUE );
 }
 
 
@@ -2562,19 +2572,7 @@ BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 BOOL WINAPI SendMessageCallbackA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                   SENDASYNCPROC callback, ULONG_PTR data )
 {
-    return SendMessageCallbackW( hwnd, msg, map_wparam_AtoW( msg, wparam ),
-                                 lparam, callback, data );
-}
-
-
-/***********************************************************************
- *		SendMessageCallbackW  (USER32.@)
- */
-BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                  SENDASYNCPROC callback, ULONG_PTR data )
-{
     struct send_message_info info;
-    LRESULT result;
 
     if (is_pointer_message(msg))
     {
@@ -2591,23 +2589,34 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
     info.data     = data;
     info.flags    = 0;
 
-    if (is_broadcast(hwnd))
+    return send_message( &info, NULL, FALSE );
+}
+
+
+/***********************************************************************
+ *		SendMessageCallbackW  (USER32.@)
+ */
+BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                                  SENDASYNCPROC callback, ULONG_PTR data )
+{
+    struct send_message_info info;
+
+    if (is_pointer_message(msg))
     {
-        EnumWindows( broadcast_message_callback, (LPARAM)&info );
-        return TRUE;
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        return FALSE;
     }
 
-    if (!(info.dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
+    info.type     = MSG_CALLBACK;
+    info.hwnd     = hwnd;
+    info.msg      = msg;
+    info.wparam   = wparam;
+    info.lparam   = lparam;
+    info.callback = callback;
+    info.data     = data;
+    info.flags    = 0;
 
-    if (USER_IsExitingThread( info.dest_tid )) return TRUE;
-
-    if (info.dest_tid == GetCurrentThreadId())
-    {
-        result = call_window_proc( hwnd, msg, wparam, lparam, TRUE, TRUE );
-        call_sendmsg_callback( callback, hwnd, msg, data, result );
-        return TRUE;
-    }
-    return send_inter_thread_message( &info, &result );
+    return send_message( &info, NULL, TRUE );
 }
 
 
