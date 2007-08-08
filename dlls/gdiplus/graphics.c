@@ -82,28 +82,6 @@ static BYTE convert_path_point_type(BYTE type)
     return ret;
 }
 
-static REAL convert_unit(HDC hdc, GpUnit unit)
-{
-    switch(unit)
-    {
-        case UnitInch:
-            return (REAL) GetDeviceCaps(hdc, LOGPIXELSX);
-        case UnitPoint:
-            return ((REAL)GetDeviceCaps(hdc, LOGPIXELSX)) / 72.0;
-        case UnitDocument:
-            return ((REAL)GetDeviceCaps(hdc, LOGPIXELSX)) / 300.0;
-        case UnitMillimeter:
-            return ((REAL)GetDeviceCaps(hdc, LOGPIXELSX)) / 25.4;
-        case UnitWorld:
-            ERR("cannot convert UnitWorld\n");
-            return 0.0;
-        case UnitPixel:
-        case UnitDisplay:
-        default:
-            return 1.0;
-    }
-}
-
 static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
 {
     HPEN gdipen;

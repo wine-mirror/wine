@@ -42,6 +42,7 @@ extern INT arc2polybezier(GpPointF * points, REAL x1, REAL y1, REAL x2, REAL y2,
     REAL startAngle, REAL sweepAngle);
 extern REAL gdiplus_atan2(REAL dy, REAL dx);
 extern GpStatus hresult_to_status(HRESULT res);
+extern REAL convert_unit(HDC hdc, GpUnit unit);
 
 static inline INT roundr(REAL x)
 {
