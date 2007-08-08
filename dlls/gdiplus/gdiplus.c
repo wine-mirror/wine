@@ -27,6 +27,9 @@
 
 #include "objbase.h"
 
+#include "winreg.h"
+#include "shlwapi.h"
+
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 
@@ -245,4 +248,18 @@ REAL gdiplus_atan2(REAL dy, REAL dx)
         return dy > 0.0 ? M_PI_2 : -M_PI_2;
 
     return atan2(dy, dx);
+}
+
+GpStatus hresult_to_status(HRESULT res)
+{
+    switch(res){
+        case S_OK:
+            return Ok;
+        case E_OUTOFMEMORY:
+            return OutOfMemory;
+        case E_INVALIDARG:
+            return InvalidParameter;
+        default:
+            return GenericError;
+    }
 }

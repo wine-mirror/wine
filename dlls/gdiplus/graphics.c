@@ -30,6 +30,9 @@
 #include "olectl.h"
 #include "ole2.h"
 
+#include "winreg.h"
+#include "shlwapi.h"
+
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 #include "wine/debug.h"
@@ -871,6 +874,27 @@ end:
     IStream_Release(stream);
     GdipFree(copy);
     return retval;
+}
+
+GpStatus WINGDIPAPI GdipCreateStreamOnFile(GDIPCONST WCHAR * filename,
+    UINT access, IStream **stream)
+{
+    DWORD dwMode;
+    HRESULT ret;
+
+    if(!stream || !filename)
+        return InvalidParameter;
+
+    if(access & GENERIC_WRITE)
+        dwMode = STGM_SHARE_DENY_WRITE | STGM_WRITE | STGM_CREATE;
+    else if(access & GENERIC_READ)
+        dwMode = STGM_SHARE_DENY_WRITE | STGM_READ | STGM_FAILIFTHERE;
+    else
+        return InvalidParameter;
+
+    ret = SHCreateStreamOnFileW(filename, dwMode, stream);
+
+    return hresult_to_status(ret);
 }
 
 GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
