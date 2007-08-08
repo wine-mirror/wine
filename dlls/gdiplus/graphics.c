@@ -1177,14 +1177,26 @@ GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
     INT y, INT width, INT height)
 {
     INT save_state;
+    GpPointF ptf[4];
+    POINT pti[4];
 
     if(!pen || !graphics)
         return InvalidParameter;
 
+    ptf[0].X = x;
+    ptf[0].Y = y;
+    ptf[1].X = x + width;
+    ptf[1].Y = y;
+    ptf[2].X = x + width;
+    ptf[2].Y = y + height;
+    ptf[3].X = x;
+    ptf[3].Y = y + height;
+
     save_state = prepare_dc(graphics, pen);
     SelectObject(graphics->hdc, GetStockObject(NULL_BRUSH));
 
-    Rectangle(graphics->hdc, x, y, x + width, y + height);
+    transform_and_round_points(graphics, pti, ptf, 4);
+    Polygon(graphics->hdc, pti, 4);
 
     restore_dc(graphics, save_state);
 
