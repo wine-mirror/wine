@@ -2197,6 +2197,47 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
 
 
 /**********************************************************************
+ *		WINPROC_call_window
+ *
+ * Call the window procedure of the specified window.
+ */
+BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                          LRESULT *result, BOOL unicode )
+{
+    WND *wndPtr;
+    WINDOWPROC *proc;
+
+    if (!(wndPtr = WIN_GetPtr( hwnd ))) return FALSE;
+    if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;
+    if (wndPtr->tid != GetCurrentThreadId())
+    {
+        WIN_ReleasePtr( wndPtr );
+        return FALSE;
+    }
+    proc = handle_to_proc( wndPtr->winproc );
+    WIN_ReleasePtr( wndPtr );
+
+    if (!proc) return TRUE;
+
+    if (unicode)
+    {
+        if (proc->procW)
+            call_window_proc( hwnd, msg, wParam, lParam, result, proc->procW );
+        else
+            WINPROC_CallProcWtoA( call_window_proc, hwnd, msg, wParam, lParam, result, proc->procA );
+    }
+    else
+    {
+        if (proc->procA)
+            call_window_proc( hwnd, msg, wParam, lParam, result, proc->procA );
+        else
+            WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wParam, lParam, result, proc->procW );
+    }
+    return TRUE;
+}
+
+
+/**********************************************************************
  *		CallWindowProc (USER.122)
  */
 LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,

@@ -1513,7 +1513,6 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     LRESULT result = 0;
-    WNDPROC winproc;
     CWPSTRUCT cwp;
     CWPRETSTRUCT cwpret;
 
@@ -1535,16 +1534,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, unicode );
 
     /* now call the window procedure */
-    if (unicode)
-    {
-        if (!(winproc = (WNDPROC)GetWindowLongPtrW( hwnd, GWLP_WNDPROC ))) goto done;
-        result = CallWindowProcW( winproc, hwnd, msg, wparam, lparam );
-    }
-    else
-    {
-        if (!(winproc = (WNDPROC)GetWindowLongPtrA( hwnd, GWLP_WNDPROC ))) goto done;
-        result = CallWindowProcA( winproc, hwnd, msg, wparam, lparam );
-    }
+    if (!WINPROC_call_window( hwnd, msg, wparam, lparam, &result, unicode )) goto done;
 
     /* and finally the WH_CALLWNDPROCRET hook */
     cwpret.lResult = result;
@@ -2971,9 +2961,7 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
  */
 LRESULT WINAPI DispatchMessageA( const MSG* msg )
 {
-    WND * wndPtr;
     LRESULT retval;
-    WNDPROC winproc;
 
       /* Process timer messages */
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
@@ -2981,31 +2969,19 @@ LRESULT WINAPI DispatchMessageA( const MSG* msg )
         if (msg->lParam) return CallWindowProcA( (WNDPROC)msg->lParam, msg->hwnd,
                                                  msg->message, msg->wParam, GetTickCount() );
     }
-
-    if (!(wndPtr = WIN_GetPtr( msg->hwnd )))
-    {
-        if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-    if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
-    {
-        if (IsWindow( msg->hwnd )) SetLastError( ERROR_MESSAGE_SYNC_ONLY );
-        else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-    if (wndPtr->tid != GetCurrentThreadId())
-    {
-        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
-        WIN_ReleasePtr( wndPtr );
-        return 0;
-    }
-    winproc = wndPtr->winproc;
-    WIN_ReleasePtr( wndPtr );
+    if (!msg->hwnd) return 0;
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
                       msg->wParam, msg->lParam );
-    retval = CallWindowProcA( winproc, msg->hwnd, msg->message,
-                              msg->wParam, msg->lParam );
+
+    if (!WINPROC_call_window( msg->hwnd, msg->message, msg->wParam, msg->lParam,
+                              &retval, FALSE ))
+    {
+        if (!IsWindow( msg->hwnd )) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        else SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        retval = 0;
+    }
+
     SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
                      msg->wParam, msg->lParam );
 
@@ -3043,9 +3019,7 @@ LRESULT WINAPI DispatchMessageA( const MSG* msg )
  */
 LRESULT WINAPI DispatchMessageW( const MSG* msg )
 {
-    WND * wndPtr;
     LRESULT retval;
-    WNDPROC winproc;
 
       /* Process timer messages */
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
@@ -3053,31 +3027,19 @@ LRESULT WINAPI DispatchMessageW( const MSG* msg )
         if (msg->lParam) return CallWindowProcW( (WNDPROC)msg->lParam, msg->hwnd,
                                                  msg->message, msg->wParam, GetTickCount() );
     }
-
-    if (!(wndPtr = WIN_GetPtr( msg->hwnd )))
-    {
-        if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-    if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
-    {
-        if (IsWindow( msg->hwnd )) SetLastError( ERROR_MESSAGE_SYNC_ONLY );
-        else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-    if (wndPtr->tid != GetCurrentThreadId())
-    {
-        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
-        WIN_ReleasePtr( wndPtr );
-        return 0;
-    }
-    winproc = wndPtr->winproc;
-    WIN_ReleasePtr( wndPtr );
+    if (!msg->hwnd) return 0;
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
                       msg->wParam, msg->lParam );
-    retval = CallWindowProcW( winproc, msg->hwnd, msg->message,
-                              msg->wParam, msg->lParam );
+
+    if (!WINPROC_call_window( msg->hwnd, msg->message, msg->wParam, msg->lParam,
+                              &retval, TRUE ))
+    {
+        if (!IsWindow( msg->hwnd )) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        else SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        retval = 0;
+    }
+
     SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
                      msg->wParam, msg->lParam );
 
