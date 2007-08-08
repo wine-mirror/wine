@@ -48,7 +48,7 @@ static int MSVCRT_new_mode;
 /* FIXME - According to documentation it should be 8*1024, at runtime it returns 16 */ 
 static unsigned int MSVCRT_amblksiz = 16;
 /* FIXME - According to documentation it should be 480 bytes, at runtime default is 0 */
-static size_t MSVCRT_sbh_threshold = 0;
+static MSVCRT_size_t MSVCRT_sbh_threshold = 0;
 
 /*********************************************************************
  *		??2@YAPAXI@Z (MSVCRT.@)
@@ -306,7 +306,7 @@ unsigned int* CDECL __p__amblksiz(void)
 /*********************************************************************
  *		_get_sbh_threshold (MSVCRT.@)
  */
-size_t CDECL _get_sbh_threshold(void)
+MSVCRT_size_t CDECL _get_sbh_threshold(void)
 {
   return MSVCRT_sbh_threshold;
 }
@@ -314,7 +314,7 @@ size_t CDECL _get_sbh_threshold(void)
 /*********************************************************************
  *		_set_sbh_threshold (MSVCRT.@)
  */
-int CDECL _set_sbh_threshold(size_t threshold)
+int CDECL _set_sbh_threshold(MSVCRT_size_t threshold)
 {
   if(threshold > 1016)
      return 0;
@@ -340,8 +340,7 @@ void CDECL _aligned_free(void *memblock)
 /*********************************************************************
  *		_aligned_offset_malloc (MSVCRT.@)
  */
-void * CDECL _aligned_offset_malloc(size_t size, size_t alignment,
-                                    size_t offset)
+void * CDECL _aligned_offset_malloc(MSVCRT_size_t size, MSVCRT_size_t alignment, MSVCRT_size_t offset)
 {
     void *memblock, *temp, **saved;
     TRACE("(%u, %u, %u)\n", size, alignment, offset);
@@ -384,7 +383,7 @@ void * CDECL _aligned_offset_malloc(size_t size, size_t alignment,
 /*********************************************************************
  *		_aligned_malloc (MSVCRT.@)
  */
-void * CDECL _aligned_malloc(size_t size, size_t alignment)
+void * CDECL _aligned_malloc(MSVCRT_size_t size, MSVCRT_size_t alignment)
 {
     TRACE("(%u, %u)\n", size, alignment);
     return _aligned_offset_malloc(size, alignment, 0);
@@ -393,11 +392,11 @@ void * CDECL _aligned_malloc(size_t size, size_t alignment)
 /*********************************************************************
  *		_aligned_offset_realloc (MSVCRT.@)
  */
-void * CDECL _aligned_offset_realloc(void *memblock, size_t size,
-                                     size_t alignment, size_t offset)
+void * CDECL _aligned_offset_realloc(void *memblock, MSVCRT_size_t size,
+                                     MSVCRT_size_t alignment, MSVCRT_size_t offset)
 {
     void * temp, **saved;
-    size_t old_padding, new_padding;
+    MSVCRT_size_t old_padding, new_padding;
     TRACE("(%p, %u, %u, %u)\n", memblock, size, alignment, offset);
 
     if (!memblock)
@@ -463,8 +462,7 @@ void * CDECL _aligned_offset_realloc(void *memblock, size_t size,
 /*********************************************************************
  *		_aligned_realloc (MSVCRT.@)
  */
-void * CDECL _aligned_realloc(void *memblock, size_t size,
-                              size_t alignment)
+void * CDECL _aligned_realloc(void *memblock, MSVCRT_size_t size, MSVCRT_size_t alignment)
 {
     TRACE("(%p, %u, %u)\n", memblock, size, alignment);
     return _aligned_offset_realloc(memblock, size, alignment, 0);
