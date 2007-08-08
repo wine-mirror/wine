@@ -154,6 +154,9 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     } else {
         PIXELFORMATDESCRIPTOR pfd;
         int iPixelFormat;
+        short red, green, blue, alpha;
+        short colorBits;
+        short depthBits, stencilBits;
 
         hdc = GetDC(win_handle);
         if(hdc == NULL) {
@@ -172,6 +175,16 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         pfd.cDepthBits = 24;
         pfd.cStencilBits = 8;
         pfd.iLayerType = PFD_MAIN_PLANE;
+
+        /* Try to match the colorBits of the d3d format */
+        if(getColorBits(target->resource.format, &red, &green, &blue, &alpha, &colorBits))
+            pfd.cColorBits = colorBits;
+
+        /* TODO: get the depth/stencil format from auto depth stencil format */
+        if(getDepthStencilBits(WINED3DFMT_D24S8, &depthBits, &stencilBits)) {
+            pfd.cDepthBits = depthBits;
+            pfd.cStencilBits = stencilBits;
+        }
 
         iPixelFormat = ChoosePixelFormat(hdc, &pfd);
         if(!iPixelFormat) {
