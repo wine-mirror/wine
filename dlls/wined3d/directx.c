@@ -627,14 +627,22 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
         ERR("   GL_Extensions returns NULL\n");
     } else {
         while (*GL_Extensions != 0x00) {
-            const char *Start = GL_Extensions;
+            const char *Start;
             char        ThisExtn[256];
+            size_t      len;
 
-            memset(ThisExtn, 0x00, sizeof(ThisExtn));
-            while (*GL_Extensions != ' ' && *GL_Extensions != 0x00) {
+            while (isspace(*GL_Extensions)) GL_Extensions++;
+            Start = GL_Extensions;
+            while (!isspace(*GL_Extensions) && *GL_Extensions != 0x00) {
                 GL_Extensions++;
             }
-            memcpy(ThisExtn, Start, (GL_Extensions - Start));
+
+            len = GL_Extensions - Start;
+            if (len == 0 || len >= sizeof(ThisExtn))
+                continue;
+
+            memcpy(ThisExtn, Start, len);
+            ThisExtn[len] = '\0';
             TRACE_(d3d_caps)("- %s\n", ThisExtn);
 
             for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i) {
@@ -644,8 +652,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                     break;
                 }
             }
-
-            if (*GL_Extensions == ' ') GL_Extensions++;
         }
 
         if (gl_info->supported[APPLE_FENCE]) {
@@ -998,22 +1004,28 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             ERR("   WGL_Extensions returns NULL\n");
         } else {
             while (*WGL_Extensions != 0x00) {
-                const char *Start = WGL_Extensions;
+                const char *Start;
                 char ThisExtn[256];
+                size_t len;
 
-                memset(ThisExtn, 0x00, sizeof(ThisExtn));
-                while (*WGL_Extensions != ' ' && *WGL_Extensions != 0x00) {
+                while (isspace(*WGL_Extensions)) WGL_Extensions++;
+                Start = WGL_Extensions;
+                while (!isspace(*WGL_Extensions) && *WGL_Extensions != 0x00) {
                     WGL_Extensions++;
                 }
-                memcpy(ThisExtn, Start, (WGL_Extensions - Start));
+
+                len = WGL_Extensions - Start;
+                if (len == 0 || len >= sizeof(ThisExtn))
+                    continue;
+
+                memcpy(ThisExtn, Start, len);
+                ThisExtn[len] = '\0';
                 TRACE_(d3d_caps)("- %s\n", ThisExtn);
 
-                if (strstr(ThisExtn, "WGL_ARB_pbuffer")) {
+                if (!strcmp(ThisExtn, "WGL_ARB_pbuffer")) {
                     gl_info->supported[WGL_ARB_PBUFFER] = TRUE;
                     TRACE_(d3d_caps)("FOUND: WGL_ARB_pbuffer support\n");
                 }
-
-                if (*WGL_Extensions == ' ') WGL_Extensions++;
             }
         }
     }
