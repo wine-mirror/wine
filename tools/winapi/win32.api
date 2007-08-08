@@ -1520,12 +1520,15 @@ TW_MEMREF
 
 %long
 
-DWORD
 HINSTANCE
 HRESULT
 HWND
 UINT
 int
+
+%long --pointer
+
+DWORD_PTR
 
 %str
 
