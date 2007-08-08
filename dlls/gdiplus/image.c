@@ -508,7 +508,7 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,
     if(!(calls++))
         FIXME("not implemented\n");
 
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetPropertyItemSize(GpImage *image, PROPID pid,
