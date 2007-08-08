@@ -1041,12 +1041,12 @@ START_TEST(actctx)
 
     argc = winetest_get_mainargs(&argv);
 
-    init_paths();
     if (!init_funcs())
     {
         skip("Needed functions are not available\n");
         return;
     }
+    init_paths();
 
     if(argc > 2 && !strcmp(argv[2], "manifest1")) {
         test_app_manifest();
