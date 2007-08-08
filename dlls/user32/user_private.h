@@ -185,6 +185,7 @@ enum wm_char_mapping
 struct wm_char_mapping_data
 {
     BYTE lead_byte[WMCHAR_MAP_COUNT];
+    MSG  get_msg;
 };
 
 /* this is the structure stored in TEB->Win32ClientInfo */

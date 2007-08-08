@@ -307,6 +307,18 @@ static inline BOOL check_hwnd_filter( const MSG *msg, HWND hwnd_filter )
     return (msg->hwnd == hwnd_filter || IsChild( hwnd_filter, msg->hwnd ));
 }
 
+/* check for pending WM_CHAR message with DBCS trailing byte */
+static inline BOOL get_pending_wmchar( MSG *msg, UINT first, UINT last, BOOL remove )
+{
+    struct wm_char_mapping_data *data = get_user_thread_info()->wmchar_data;
+
+    if (!data || !data->get_msg.message) return FALSE;
+    if ((first || last) && (first > WM_CHAR || last < WM_CHAR)) return FALSE;
+    if (!msg) return FALSE;
+    *msg = data->get_msg;
+    if (remove) data->get_msg.message = 0;
+    return TRUE;
+}
 
 /***********************************************************************
  *		broadcast_message_callback
@@ -435,39 +447,60 @@ BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping
  *
  * Convert the wparam of a Unicode message to ASCII.
  */
-static WPARAM map_wparam_WtoA( UINT message, WPARAM wparam )
+static void map_wparam_WtoA( MSG *msg, BOOL remove )
 {
-    switch(message)
+    BYTE ch[2];
+    WCHAR wch[2];
+    DWORD len;
+
+    switch(msg->message)
     {
+    case WM_CHAR:
+        if (!HIWORD(msg->wParam))
+        {
+            wch[0] = LOWORD(msg->wParam);
+            ch[0] = ch[1] = 0;
+            RtlUnicodeToMultiByteN( (LPSTR)ch, 2, &len, wch, sizeof(wch[0]) );
+            if (len == 2)  /* DBCS char */
+            {
+                struct wm_char_mapping_data *data = get_user_thread_info()->wmchar_data;
+                if (!data)
+                {
+                    if (!(data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) ))) return;
+                    get_user_thread_info()->wmchar_data = data;
+                }
+                if (remove)
+                {
+                    data->get_msg = *msg;
+                    data->get_msg.wParam = ch[1];
+                }
+                msg->wParam = ch[0];
+                return;
+            }
+        }
+        /* else fall through */
     case WM_CHARTOITEM:
     case EM_SETPASSWORDCHAR:
-    case WM_CHAR:
     case WM_DEADCHAR:
     case WM_SYSCHAR:
     case WM_SYSDEADCHAR:
     case WM_MENUCHAR:
-        {
-            WCHAR wch[2];
-            BYTE ch[2];
-            wch[0] = LOWORD(wparam);
-            wch[1] = HIWORD(wparam);
-            WideCharToMultiByte( CP_ACP, 0, wch, 2, (LPSTR)ch, 2, NULL, NULL );
-            wparam = MAKEWPARAM( ch[0] | (ch[1] << 8), 0 );
-        }
+        wch[0] = LOWORD(msg->wParam);
+        wch[1] = HIWORD(msg->wParam);
+        ch[0] = ch[1] = 0;
+        RtlUnicodeToMultiByteN( (LPSTR)ch, 2, NULL, wch, sizeof(wch) );
+        msg->wParam = MAKEWPARAM( ch[0] | (ch[1] << 8), 0 );
         break;
     case WM_IME_CHAR:
-        {
-            WCHAR wch = LOWORD(wparam);
-            BYTE ch[2];
-
-            if (WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)ch, 2, NULL, NULL ) == 2)
-                wparam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(wparam) );
-            else
-                wparam = MAKEWPARAM( ch[0], HIWORD(wparam) );
-        }
+        wch[0] = LOWORD(msg->wParam);
+        ch[0] = ch[1] = 0;
+        RtlUnicodeToMultiByteN( (LPSTR)ch, 2, &len, wch, sizeof(wch[0]) );
+        if (len == 2)
+            msg->wParam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(msg->wParam) );
+        else
+            msg->wParam = MAKEWPARAM( ch[0], HIWORD(msg->wParam) );
         break;
     }
-    return wparam;
 }
 
 
@@ -2876,9 +2909,10 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
  */
 BOOL WINAPI PeekMessageA( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags )
 {
-    BOOL ret = PeekMessageW( msg, hwnd, first, last, flags );
-    if (ret) msg->wParam = map_wparam_WtoA( msg->message, msg->wParam );
-    return ret;
+    if (get_pending_wmchar( msg, first, last, (flags & PM_REMOVE) )) return TRUE;
+    if (!PeekMessageW( msg, hwnd, first, last, flags )) return FALSE;
+    map_wparam_WtoA( msg, (flags & PM_REMOVE) );
+    return TRUE;
 }
 
 
@@ -2940,8 +2974,9 @@ BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
  */
 BOOL WINAPI GetMessageA( MSG *msg, HWND hwnd, UINT first, UINT last )
 {
+    if (get_pending_wmchar( msg, first, last, TRUE )) return TRUE;
     GetMessageW( msg, hwnd, first, last );
-    msg->wParam = map_wparam_WtoA( msg->message, msg->wParam );
+    map_wparam_WtoA( msg, TRUE );
     return (msg->message != WM_QUIT);
 }
 
