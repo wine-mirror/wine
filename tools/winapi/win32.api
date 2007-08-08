@@ -1990,6 +1990,12 @@ LPMONITOREX
 
 LPWSTR
 
+%%localui.dll
+
+%ptr
+
+PMONITORUI
+
 %%mapi32.dll
 
 %long
