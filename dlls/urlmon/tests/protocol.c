@@ -547,14 +547,14 @@ static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfB
     {
         /* Must be GMEM_FIXED, GMEM_MOVABLE does not work properly
          * with urlmon on native (Win98 and WinXP) */
-        pbindinfo->stgmedData.hGlobal = GlobalAlloc(GPTR, sizeof(szPostData));
-        if (!pbindinfo->stgmedData.hGlobal)
+        U(pbindinfo->stgmedData).hGlobal = GlobalAlloc(GPTR, sizeof(szPostData));
+        if (!U(pbindinfo->stgmedData).hGlobal)
         {
             http_post_test = FALSE;
             skip("Out of memory\n");
             return E_OUTOFMEMORY;
         }
-        lstrcpy((LPSTR)pbindinfo->stgmedData.hGlobal, szPostData);
+        lstrcpy((LPSTR)U(pbindinfo->stgmedData).hGlobal, szPostData);
         pbindinfo->cbstgmedData = sizeof(szPostData)-1;
         pbindinfo->dwBindVerb = BINDVERB_POST;
         pbindinfo->stgmedData.tymed = TYMED_HGLOBAL;

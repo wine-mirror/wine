@@ -25,6 +25,7 @@
 #include <stdarg.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -516,7 +517,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
             WARN("Expected This->bind_info.stgmedData.tymed to be TYMED_HGLOBAL, not %d\n",
                  This->bind_info.stgmedData.tymed);
         else
-            optional = (LPWSTR)This->bind_info.stgmedData.hGlobal;
+            optional = (LPWSTR)This->bind_info.stgmedData.u.hGlobal;
     }
     if (!HttpSendRequestW(This->request, This->full_header, lstrlenW(This->full_header),
                           optional,
