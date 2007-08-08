@@ -93,6 +93,10 @@ static const WCHAR TEST_PART_URL_1[] = {'/','t','e','s','t','/','\0'};
 
 static const WCHAR WINE_ABOUT_URL[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.',
                                        'o','r','g','/','s','i','t','e','/','a','b','o','u','t',0};
+static const WCHAR SHORT_RESPONSE_URL[] =
+        {'h','t','t','p',':','/','/','c','r','o','s','s','o','v','e','r','.',
+         'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
+         'p','o','s','t','t','e','s','t','.','p','h','p',0};
 static const WCHAR ABOUT_BLANK[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 static WCHAR INDEX_HTML[MAX_PATH];
 static const WCHAR ITS_URL[] =
@@ -108,7 +112,7 @@ static BOOL stopped_binding = FALSE, emulate_protocol = FALSE,
     data_available = FALSE, http_is_first = TRUE;
 static DWORD read = 0, bindf = 0;
 
-static const LPCWSTR urls[] = {
+static LPCWSTR urls[] = {
     WINE_ABOUT_URL,
     ABOUT_BLANK,
     INDEX_HTML,
@@ -910,7 +914,7 @@ static void test_BindToStorage(int protocol, BOOL emul)
         }
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == HTTP_TEST)
-            CHECK_CALLED(OnProgress_DOWNLOADINGDATA);
+            CLEAR_CALLED(OnProgress_DOWNLOADINGDATA);
         CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
         CHECK_CALLED(OnDataAvailable);
         CHECK_CALLED(OnStopBinding);
@@ -996,6 +1000,11 @@ START_TEST(url)
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
 
     trace("http test...\n");
+    test_BindToStorage(HTTP_TEST, FALSE);
+
+    trace("http test (short response)...\n");
+    http_is_first = TRUE;
+    urls[HTTP_TEST] = SHORT_RESPONSE_URL;
     test_BindToStorage(HTTP_TEST, FALSE);
 
     trace("about test...\n");
