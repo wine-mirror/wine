@@ -146,6 +146,8 @@ GpStatus WINGDIPAPI GdipStartPathFigure(GpPath*);
 GpStatus WINGDIPAPI GdipTransformPath(GpPath*,GpMatrix*);
 
 GpStatus WINGDIPAPI GdipCloneMatrix(GpMatrix*,GpMatrix**);
+GpStatus WINGDIPAPI GdipCreateLineBrushFromRectI(GDIPCONST GpRect*,ARGB,ARGB,
+    LinearGradientMode,GpWrapMode,GpLineGradient**);
 GpStatus WINGDIPAPI GdipCreateMatrix(GpMatrix**);
 GpStatus WINGDIPAPI GdipCreateMatrix2(REAL,REAL,REAL,REAL,REAL,REAL,GpMatrix**);
 GpStatus WINGDIPAPI GdipCreateMatrix3(GDIPCONST GpRectF *,GDIPCONST GpPointF*,
